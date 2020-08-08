@@ -611,7 +611,7 @@ class Effective
 	 * @param DateTime|null $dateTo
 	 * @param int $userId
 	 * @param int $groupId
-	 * @return float|int
+	 * @return int
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException

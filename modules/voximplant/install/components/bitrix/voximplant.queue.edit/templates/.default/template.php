@@ -8,12 +8,12 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 CJSCore::Init(["socnetlogdest", "voximplant.common", "sidepanel", "ui.hint", "ui.buttons"]);
 
-\Bitrix\Voximplant\Ui\Helper::initLicensePopups();
-
 if ($arResult['ERROR'])
 {
 	ShowError($arResult['ERROR']);
 }
+
+$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 ?>
 <script>
 	BX.message({
@@ -49,7 +49,7 @@ if ($arResult['ERROR'])
 					<span data-hint="<?=htmlspecialcharsbx(GetMessage("VI_CONFIG_EDIT_QUEUE_TYPE_TIP"))?><br><br><?=htmlspecialcharsbx(GetMessage("VI_CONFIG_EDIT_QUEUE_TYPE_TIP_2"))?><br><i><?=htmlspecialcharsbx(GetMessage("VI_CONFIG_EDIT_QUEUE_TYPE_TIP_ASTERISK_3"))?></i>"></span>
 					<? if (!CVoxImplantAccount::IsPro() || CVoxImplantAccount::IsDemo()): ?>
 						<div class="tel-lock-holder-select" title="<?= GetMessage("VI_CONFIG_LOCK_ALT") ?>">
-							<div onclick="BX.Voximplant.showLicensePopup('main')"
+							<div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_call_to_all')"
 								 class="tel-lock tel-lock-half <?= (CVoxImplantAccount::IsDemo() ? 'tel-lock-demo' : '') ?>">
 							</div>
 						</div>
@@ -92,7 +92,7 @@ if ($arResult['ERROR'])
 					</select>
 					<? if (!CVoxImplantAccount::IsPro() || CVoxImplantAccount::IsDemo()): ?>
 						<div class="tel-lock-holder-select" title="<?= GetMessage("VI_CONFIG_LOCK_ALT") ?>">
-							<div onclick="BX.Voximplant.showLicensePopup('main')"
+							<div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_missed_call_forward')"
 								 class="tel-lock tel-lock-half <?= (CVoxImplantAccount::IsDemo() ? 'tel-lock-demo' : '') ?>"></div>
 						</div>
 					<? endif; ?>
@@ -129,7 +129,7 @@ if ($arResult['ERROR'])
 				<label for="vi_allow_intercept"><?= GetMessage("VI_CONFIG_EDIT_ALLOW_INTERCEPT") ?></label>
 				<? if (!\Bitrix\Voximplant\Limits::canInterceptCall() || CVoxImplantAccount::IsDemo()): ?>
 					<div class="tel-lock-holder-select" title="<?= GetMessage("VI_CONFIG_LOCK_ALT") ?>">
-						<div onclick="BX.Voximplant.showLicensePopup('main')"
+						<div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_intercept')"
 							 class="tel-lock tel-lock-half <?= (CVoxImplantAccount::IsDemo() ? 'tel-lock-demo' : '') ?>"></div>
 					</div>
 				<? endif; ?>
@@ -188,7 +188,7 @@ if ($arResult['ERROR'])
 		<?if (!CVoxImplantAccount::IsPro()):?>
 		if (this.options[this.selectedIndex].value == '<?=CVoxImplantConfig::QUEUE_TYPE_ALL?>')
 		{
-			BX.Voximplant.showLicensePopup('main');
+			BX.UI.InfoHelper.show('limit_contact_center_telephony_call_to_all');
 			this.selectedIndex = 0;
 			return false;
 		}
@@ -212,7 +212,7 @@ if ($arResult['ERROR'])
 			var noAnswerSelect = e.target;
 			if (noAnswerSelect.value == '<?=CVoxImplantIncoming::RULE_NEXT_QUEUE?>')
 			{
-				BX.Voximplant.showLicensePopup('main');
+				BX.UI.InfoHelper.show('limit_contact_center_telephony_missed_call_forward');
 				noAnswerSelect.selectedIndex = 0;
 				return false;
 			}

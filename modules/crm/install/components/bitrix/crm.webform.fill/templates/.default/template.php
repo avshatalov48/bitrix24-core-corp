@@ -17,7 +17,7 @@ if ($arParams['VIEW_TYPE'] !== 'frame' && $arResult['IS_EMBEDDING_AVAILABLE'])
 
 if (Loader::includeModule('calendar'))
 {
-	CUtil::InitJSCore(array('userfield_resourcebooking'));
+	\Bitrix\Crm\Integration\Calendar::loadResourcebookingExtention();
 }
 
 /** @var CBitrixComponentTemplate $this */

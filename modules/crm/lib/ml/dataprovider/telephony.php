@@ -70,7 +70,7 @@ class Telephony extends Base
 
 		foreach ($activities as $activity)
 		{
-			if (strpos($activity["ORIGIN_ID"], "VI_callback") === 0)
+			if (mb_strpos($activity["ORIGIN_ID"], "VI_callback") === 0)
 			{
 				$callsCallback++;
 			}
@@ -108,8 +108,9 @@ class Telephony extends Base
 		if(Loader::includeModule("voximplant"))
 		{
 			$origins = array_map(function($act) {return $act["ORIGIN_ID"];}, $activities);
-			$origins = array_filter($origins, function($origin) {return strpos($origin, "VI_") !== false;});
-			$callIds = array_map(function($origin) {return substr($origin, 3);}, $origins);
+			$origins = array_filter($origins, function($origin) {return mb_strpos($origin, "VI_") !== false;});
+			$callIds = array_map(function($origin) {
+				return mb_substr($origin, 3);}, $origins);
 
 			if(count($callIds) > 0)
 			{

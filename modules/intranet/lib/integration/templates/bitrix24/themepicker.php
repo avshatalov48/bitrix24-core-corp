@@ -50,7 +50,7 @@ class ThemePicker
 
 		$this->templateId = $templateId;
 		$this->templatePath = \getLocalPath("templates/".$templateId, BX_PERSONAL_ROOT);
-		$this->siteId = is_string($siteId) ? substr(preg_replace("/[^a-z0-9_]/i", "", $siteId), 0, 2) : SITE_ID;
+		$this->siteId = is_string($siteId)? mb_substr(preg_replace("/[^a-z0-9_]/i", "", $siteId), 0, 2) : SITE_ID;
 
 		if (is_numeric($userId) && $userId > 0)
 		{
@@ -281,7 +281,7 @@ class ThemePicker
 			$theme["bgColor"] = $fields["bgColor"];
 		}
 
-		if (isset($fields["bgImage"]["tmp_name"]) && strlen($fields["bgImage"]["tmp_name"]) > 0)
+		if (isset($fields["bgImage"]["tmp_name"]) && $fields["bgImage"]["tmp_name"] <> '')
 		{
 			$error = \CFile::checkImageFile(
 				$fields["bgImage"],
@@ -290,7 +290,7 @@ class ThemePicker
 				static::MAX_IMAGE_HEIGHT
 			);
 
-			if (strlen($error) > 0)
+			if ($error <> '')
 			{
 				throw new SystemException($error);
 			}
@@ -728,7 +728,7 @@ class ThemePicker
 
 	private function isValidTheme($themeId)
 	{
-		if (!is_string($themeId) || strlen($themeId) <= 0)
+		if (!is_string($themeId) || $themeId == '')
 		{
 			return false;
 		}

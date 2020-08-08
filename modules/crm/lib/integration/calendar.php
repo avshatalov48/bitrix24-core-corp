@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Integration;
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Entity\EntityEditorConfigScope;
+use Bitrix\Main\UI\Extension;
 
 class Calendar
 {
@@ -54,7 +55,6 @@ class Calendar
 		}
 
 		$spotlight = new \Bitrix\Main\UI\Spotlight("CRM_CALENDAR_VIEW");
-		//$spotlight->unsetViewDate($user_id);
 		if(!$spotlight->isViewed($user_id))
 		{
 			\CJSCore::init("spotlight");
@@ -107,7 +107,6 @@ class Calendar
 		}
 
 		$spotlight = new \Bitrix\Main\UI\Spotlight("CRM_CALENDAR_VIEW_MODE_SELECTOR_".$entityName);
-		//$spotlight->unsetViewDate($user_id);
 		if(!$spotlight->isViewed($user_id))
 		{
 			\CJSCore::init("spotlight");
@@ -142,7 +141,7 @@ class Calendar
 	public static function isUserfieldShownInForm($userfield, $entityType, $categoryId = 0)
 	{
 		$map = array();
-		$categoryId = intVal($categoryId);
+		$categoryId = intval($categoryId);
 		if ($entityType == 'CRM_DEAL')
 		{
 			$configId = \Bitrix\Crm\Category\DealCategory::prepareFormID(
@@ -338,4 +337,45 @@ class Calendar
 
 		return $result;
 	}
+
+	public static function loadResourcebookingUserfieldExtention()
+	{
+		if (Extension::getConfig('calendar.resourcebookinguserfield') !== null)
+		{
+			Extension::load(['calendar.resourcebookinguserfield']);
+		}
+		else
+		{
+			Extension::load(['userfield_resourcebooking']);
+		}
+	}
+
+	public static function loadResourcebookingExtention()
+	{
+		if (Extension::getConfig('calendar.resourcebooking') !== null
+			&&
+			Extension::getConfig('ui.vue.components.datepick') !== null)
+		{
+			Extension::load(['calendar.resourcebooking', 'ui.vue.components.datepick']);
+		}
+		else
+		{
+			Extension::load(['userfield_resourcebooking']);
+		}
+	}
+
+	public static function getCalendarSettingsOpenJs($settingsParams = [])
+	{
+		if (Extension::getConfig('calendar.resourcebookinguserfield') !== null)
+		{
+			$js = 'BX.Calendar.ResourcebookingUserfield.openExternalSettingsSlider('.\Bitrix\Main\Web\Json::encode($settingsParams).')';
+		}
+		else
+		{
+			$js = 'BX.Calendar.UserField.ResourceBooking.openExternalSettingsSlider('.\Bitrix\Main\Web\Json::encode($settingsParams).')';
+		}
+		return $js;
+	}
+
+
 }

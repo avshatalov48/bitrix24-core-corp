@@ -49,7 +49,7 @@ $APPLICATION->SetTitle(Loc::getMessage("CRM_1C_START_REPORT_NAME"));
 					</div>
 				</div>
 				<hr class="crm-onec-separator">
-				<div class="crm-onec-install-description"><?=GetMessage("CRM_1C_START_REPORT_INFO_TITLE")?></div>
+				<div class="crm-onec-install-description"><?=GetMessage("CRM_1C_START_REPORT_INFO_TITLE2")?></div>
 			</div>
 		</div>
 

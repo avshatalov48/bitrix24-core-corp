@@ -5,7 +5,7 @@ define("NOT_CHECK_PERMISSIONS", true);
 define("BX_PUBLIC_TOOLS", true);
 
 $site_id = isset($_REQUEST["site"]) && is_string($_REQUEST["site"]) ? trim($_REQUEST["site"]) : "";
-$site_id = substr(preg_replace("/[^a-z0-9_]/i", "", $site_id), 0, 2);
+$site_id = mb_substr(preg_replace("/[^a-z0-9_]/i", "", $site_id), 0, 2);
 define("SITE_ID", $site_id);
 
 $action = isset($_REQUEST["action"]) && is_string($_REQUEST["action"]) ? trim($_REQUEST["action"]) : "";
@@ -397,16 +397,16 @@ if(!$strError)
 
 		if (!$strError)
 		{
-			$pos = strpos($arFile["name"], '?');
+			$pos = mb_strpos($arFile["name"], '?');
 			if ($pos !== false)
 			{
-				$arFile["name"] = substr($arFile["name"], 0, $pos);
+				$arFile["name"] = mb_substr($arFile["name"], 0, $pos);
 			}
 
 			$res = ''.CFile::CheckImageFile(
 				$arFile, 
 				(
-					intval($arPostFields[$ufCode]['SETTINGS']['MAX_ALLOWED_SIZE']) > 0 
+					intval($arPostFields[$ufCode]['SETTINGS']['MAX_ALLOWED_SIZE']) > 0
 						? $arPostFields[$ufCode]['SETTINGS']['MAX_ALLOWED_SIZE'] 
 						: 5000000
 				), 
@@ -479,7 +479,7 @@ if(!$strError)
 				)
 			);
 
-			$arCommentFields["PATH"] = $commentUrl.(strpos($arCommentFields["PATH"], "?") !== false ? "&" : "?")."commentId=#comment_id###comment_id#";
+			$arCommentFields["PATH"] = $commentUrl.(mb_strpos($arCommentFields["PATH"], "?") !== false ? "&" : "?")."commentId=#comment_id###comment_id#";
 			if (!($commentId = CBlogComment::Add($arCommentFields)))
 			{
 				$strError = "Can't add blog comment";
@@ -493,11 +493,11 @@ if(!$strError)
 		if (!$strError)
 		{
 			BXClearCache(true, "/blog/comment/".$post_id."/");			
-			$GLOBALS["DB"]->Query("UPDATE b_blog_image SET COMMENT_ID=".IntVal($commentId)." WHERE BLOG_ID=".IntVal($arBlogPost["BLOG_ID"])." AND POST_ID=".IntVal($post_id)." AND IS_COMMENT = 'Y' AND (COMMENT_ID = 0 OR COMMENT_ID is null) AND USER_ID=".IntVal($GLOBALS["USER"]->GetId())."", true);
+			$GLOBALS["DB"]->Query("UPDATE b_blog_image SET COMMENT_ID=".intval($commentId)." WHERE BLOG_ID=".intval($arBlogPost["BLOG_ID"])." AND POST_ID=".intval($post_id)." AND IS_COMMENT = 'Y' AND (COMMENT_ID = 0 OR COMMENT_ID is null) AND USER_ID=".intval($GLOBALS["USER"]->GetId())."", true);
 
 			if (
 				$arCommentFields["PUBLISH_STATUS"] != BLOG_PUBLISH_STATUS_PUBLISH 
-				&& strlen($arCommentFields["PUBLISH_STATUS"]) > 0
+				&& $arCommentFields["PUBLISH_STATUS"] <> ''
 			)
 			{
 				$strError = "Blog comment hasn't been published";
@@ -681,7 +681,7 @@ if(!$strError)
 					)
 				);
 
-				$urlToPost .= (strpos($urlToPost, "?") !== false ? "&" : "?");
+				$urlToPost .= (mb_strpos($urlToPost, "?") !== false ? "&" : "?");
 
 				$arFields = array(
 					"POST_ID" => $arBlogPost["ID"],

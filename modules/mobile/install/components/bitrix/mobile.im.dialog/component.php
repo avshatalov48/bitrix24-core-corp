@@ -80,7 +80,7 @@ if (!isset($arResult['CONTACT_LIST']['users'][$USER->GetID()]))
 	$arResult['CONTACT_LIST']['users'][$USER->GetID()] = $arUsers['users'][$USER->GetID()];
 }
 
-$jsInit = array('im_mobile_dialog', 'uploader');
+$jsInit = array('im_mobile_dialog', 'uploader', 'mobile.pull.client');
 CJSCore::Init($jsInit);
 
 $arResult["ACTION"] = 'DIALOG';

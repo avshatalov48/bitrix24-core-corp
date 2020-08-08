@@ -5,9 +5,12 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Tasks\Util\Restriction\Bitrix24FilterLimitRestriction;
+use Bitrix\Socialnetwork\WorkgroupTable;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\FilterLimit;
 
-Loc::loadMessages(__FILE__);;
+\Bitrix\Main\Loader::includeModule('socialnetwork');
+
+Loc::loadMessages(__FILE__);
 
 CBitrixComponent::includeComponentClass("bitrix:tasks.base");
 
@@ -53,6 +56,7 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 		static::tryParseStringParameter($this->arParams['SHOW_QUICK_FORM_BUTTON'], 'Y');
 		static::tryParseStringParameter($this->arParams['SHOW_USER_SORT'], 'N');
 		static::tryParseStringParameter($this->arParams['USE_GROUP_SELECTOR'], 'N');
+		static::tryParseStringParameter($this->arParams['PROJECT_VIEW'], 'N');
 		static::tryParseIntegerParameter($this->arParams['GROUP_SELECTOR_LIMIT'], 5);
 		static::tryParseIntegerParameter($this->arParams['GROUP_ID'], 0);
 		static::tryParseIntegerParameter($this->arParams['SPRINT_ID'], 0);
@@ -62,8 +66,8 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 			($this->canCreateGroupTasks($groupId)? 'Y' : 'N')
 		);
 
-        $this->arResult['LIMIT_EXCEEDED'] = Bitrix24FilterLimitRestriction::isLimitExceeded();
-        $this->arResult['LIMITS'] = Bitrix24FilterLimitRestriction::prepareStubInfo();
+        $this->arResult['LIMIT_EXCEEDED'] = FilterLimit::isLimitExceeded();
+        $this->arResult['LIMITS'] = FilterLimit::prepareStubInfo();
         $this->arResult['SPRINTS'] = $this->getSprints();
 	}
 
@@ -95,7 +99,10 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 		// Attention: arResult['USER_ID'] -- current auth user, need for add task, arParams['USER_ID'] - current selected user!
 		$this->arResult['USER_ID'] = \Bitrix\Tasks\Util\User::getId();
 
-		if ($this->arParams['USE_GROUP_SELECTOR'] == 'Y')
+		if (
+			$this->arParams['USE_GROUP_SELECTOR'] === 'Y'
+			|| $this->arParams['PROJECT_VIEW'] === 'Y'
+		)
 		{
 			$context = \Bitrix\Main\Application::getInstance()->getContext();
 			$request = $context->getRequest();
@@ -103,7 +110,9 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 
 			$limit = $this->arParams['GROUP_SELECTOR_LIMIT'];
 			$myGroups = array();
+
 			$currentGroup = $this->arParams['GROUP_ID'];
+
 			if (\Bitrix\Main\Loader::includeModule('socialnetwork'))
 			{
 				// show last viewed groups
@@ -171,11 +180,15 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 					}
 				}
 				$this->arResult['GROUPS'] = array();
+
+				$groupsInfo = $this->getGroupsInfo($myGroups);
+
 				foreach ($myGroups as $gId => $gName)
 				{
 					$this->arResult['GROUPS'][$gId] = array(
 						'id'   => $gId,
-						'text' => truncateText($gName, 50)
+						'text' => truncateText($gName, 50),
+						'image' => $groupsInfo[$gId]['IMAGE_ID'] ? $this->getAvatarSrc($groupsInfo[$gId]['IMAGE_ID']) : ''
 					);
 				}
 			}
@@ -202,6 +215,40 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 		}
 
 		return parent::doPreAction();
+	}
+
+	private function getAvatarSrc($imageId): string
+	{
+		$arFile = \CFile::GetFileArray($imageId);
+		if (is_array($arFile) && array_key_exists('SRC', $arFile))
+		{
+			return $arFile['SRC'];
+		}
+		return '';
+	}
+
+	private function getGroupsInfo($groups): array
+	{
+		$groupIds = array_keys($groups);
+		if (empty($groupIds))
+		{
+			return [];
+		}
+
+		$res = WorkgroupTable::getList([
+			'filter' => [
+				'@ID' => $groupIds
+			],
+			'select' => ['ID', 'IMAGE_ID']
+		]);
+
+		$info = [];
+		while($row = $res->fetch())
+		{
+			$info[$row['ID']] = $row;
+		}
+
+		return $info;
 	}
 
 	/**

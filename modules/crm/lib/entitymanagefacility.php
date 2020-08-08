@@ -886,10 +886,8 @@ class EntityManageFacility
 			// run automation
 			if (!$this->isEntityTypeConvertible($this->registeredTypeId))
 			{
-				Automation\Factory::runOnAdd(
-					$this->registeredTypeId,
-					$this->registeredId
-				);
+				$starter = new Automation\Starter($this->registeredTypeId, $this->registeredId);
+				$starter->runOnAdd();
 			}
 		}
 		elseif ($this->canUpdate() && $this->getPrimaryId() && $this->getPrimaryTypeId())
@@ -903,7 +901,7 @@ class EntityManageFacility
 				$bpErrors
 			);
 
-			// TODO: call Automation\Factory::runOnStatusChanged if status changed.
+			// TODO: call Automation\Starter::runOnUpdate on entity update.
 		}
 
 		return $this;
@@ -1321,7 +1319,8 @@ class EntityManageFacility
 			return null;
 		}
 
-		$result = Automation\Factory::runOnAdd($entityTypeId, $leadId)->getConversionResult();
+		$starter = new Automation\Starter($entityTypeId, $leadId);
+		$result = $starter->runOnAdd()->getConversionResult();
 		if (!$result)
 		{
 			return null;

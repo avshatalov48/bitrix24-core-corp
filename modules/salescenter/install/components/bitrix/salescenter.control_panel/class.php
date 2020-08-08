@@ -1,34 +1,32 @@
 <?php
 
+use Bitrix\Main;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\SalesCenter\Driver;
 use Bitrix\Sale;
-use Bitrix\Salescenter;
 use Bitrix\SalesCenter\Integration\CrmManager;
 use Bitrix\SalesCenter\Integration\PullManager;
 use Bitrix\SalesCenter\Integration\SaleManager;
+use Bitrix\SalesCenter\Integration\RestManager;
+use Bitrix\SalesCenter\Integration\Bitrix24Manager;
+use Bitrix\Rest;
+use Bitrix\SalesCenter;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 class SalesCenterControlPanelComponent extends CBitrixComponent implements Controllerable
 {
-	protected $panelId = 'salescenter-control-panel';
-	protected $deliveryId = 'salescenter-control-panel-delivery';
-	protected $cashboxId = 'salescenter-control-panel-cashbox';
+	protected const PANEL_ID_PAYMENTS = 'salescenter-payments-panel';
+	protected const PANEL_ID_SERVICES = 'salescenter-services-panel';
+	protected const PANEL_ID_PAYMENT_SYSTEMS = 'salescenter-paymentSystems-panel';
 
-	protected $deliveryListTableId = 'tbl_sale_delivery_list';
-	protected $sefFolder = '/shop/settings/';
+	private const LABEL_NEW = 'new';
 
-	/**
-	 * @return mixed|void
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	public function executeComponent()
+	protected $pages;
+
+	public function executeComponent(): void
 	{
 		if(!Loader::includeModule('salescenter'))
 		{
@@ -52,19 +50,38 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 		PullManager::getInstance()->subscribeOnConnect();
 		$this->arResult['managerParams'] = Driver::getInstance()->getManagerParams();
 
-		$this->arResult['panelParams'] = [
-			'id' => $this->panelId,
-			'items' => $this->getPanelItems(),
-		];
+		$paymentItemTiles[] = $this->getCrmStoreTile();
 
-//		$this->arResult['deliveryParams'] = [
-//			'id' => $this->deliveryId,
-//			'items' => $this->getDeliveryPanelItems(),
-//		];
+		foreach ($this->getMarketplaceItemsTile($this->getMarketplaceSalescenterItemCodeList()) as $marketplaceItem)
+		{
+			$paymentItemTiles[] = $marketplaceItem;
+		}
 
-		$this->arResult['cashboxParams'] = [
-			'id' => $this->cashboxId,
-			'items' => array_merge($this->getCashboxItems(), $this->getUserConsentItems()),
+		$paymentItemTiles = array_merge($paymentItemTiles, [
+			$this->getPaymentsInChatTile(),
+			$this->getPaymentsInSmsTile(),
+			$this->getServicesInChatTile(),
+			$this->getServicesInSmsTile(),
+			$this->getConsultationTile(),
+		]);
+
+		if (Bitrix24Manager::getInstance()->isEnabled())
+		{
+			$paymentItemTiles[] = $this->getRecommendationItemTile();
+		}
+
+		$this->arResult['panels'] = [
+			[
+				'id' => static::PANEL_ID_PAYMENTS,
+				'items' => $paymentItemTiles,
+				'itemType' => 'BX.Salescenter.PaymentItem',
+			],
+			[
+				'id' => static::PANEL_ID_PAYMENT_SYSTEMS,
+				'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_SETTINGS_TITLE'),
+				'items' => $this->getPanelItems(),
+				'itemType' => 'BX.Salescenter.PaymentSystemItem',
+			],
 		];
 
 		global $APPLICATION;
@@ -75,249 +92,630 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 
 	/**
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	protected function getPanelItems()
+	protected function getPanelItems() : array
 	{
-		$items = [];
-		$items[] = $this->getStoreChatTile();
-
-		if(CrmManager::getInstance()->isShowSmsTile())
-		{
-			$items[] = $this->getStoreSmsTile();
-		}
-
-		$paySystemList = $this->getPaySystemItems();
-		foreach ($paySystemList as $paySystem)
-		{
-			$items[] = $paySystem;
-		}
-
-		$paySystemExtraList = $this->getPaySystemExtraItems();
-		foreach ($paySystemExtraList as $paySystemExtra)
-		{
-			$items[] = $paySystemExtra;
-		}
-
-		return $items;
-	}
-
-	/**
-	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	protected function getDeliveryPanelItems()
-	{
-		$items = [];
-
-		$deliveryList = $this->getDeliveryItems();
-		foreach ($deliveryList as $delivery)
-		{
-			$items[] = $delivery;
-		}
-
-		$deliveryExtraList = $this->getDeliveryExtraItems();
-		foreach ($deliveryExtraList as $deliveryExtra)
-		{
-			$items[] = $deliveryExtra;
-		}
-
-		return $items;
-	}
-
-	/**
-	 * @return array
-	 */
-	protected function getStoreChatTile()
-	{
-		return [
-			'id' => 'store-chats',
-			'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_STORE_CHAT_TILE'),
-			'image' => $this->getImagePath().'chat.svg',
-			'itemSelected' => Driver::getInstance()->isSalesInChatActive(),
-			'itemSelectedColor' => '#FF5752',
-			'itemSelectedImage' => $this->getImagePath().'chat_s.svg',
+		$items = [
+			$this->getSmsProviderTile(),
+			$this->getPaymentSystemsTile(),
 		];
+
+		if (RestManager::getInstance()->isEnabled() && $this->hasDeliveryMarketplaceApp())
+		{
+			$items[] = $this->getDeliveryTile();
+		}
+
+		if (Driver::getInstance()->isCashboxEnabled())
+		{
+			$items[] = $this->getCashboxesTile();
+		}
+
+		$items[] = $this->getUserConsentTile();
+
+		return $items;
 	}
 
-	protected function getStoreSmsTile()
+	protected function getCrmStoreTile(): array
 	{
+		$userConsentSettingPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.crmstore');
+		$userConsentSettingPath = getLocalPath('components'.$userConsentSettingPath.'/slider.php');
+
 		return [
-			'id' => 'store-sms',
-			'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_STORE_SMS_TILE'),
-			'image' => $this->getImagePath().'sms.svg',
-			'itemSelected' => Driver::getInstance()->isSalesInChatActive(),
-			'itemSelectedColor' => '#EF678B',
-			'itemSelectedImage' => $this->getImagePath().'sms_s.svg',
+			'id' => 'crmstore',
+			'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CRM_STORE_TILE'),
+			'image' => $this->getImagePath().'crm-store-active.svg',
+			'data' => [
+				'isDependsOnConnection' => true,
+				'url' => $userConsentSettingPath,
+				'active' => \Bitrix\SalesCenter\Integration\LandingManager::getInstance()->isSiteExists(),
+				'activeColor' => '#00B4AC',
+				'activeImage' => $this->getImagePath().'crm-store.svg',
+				'label' => self::LABEL_NEW,
+			],
 		];
 	}
 
 	/**
 	 * @return array
 	 */
-	public function getChatTileMenuAction()
+	protected function getPaymentsInChatTile(): array
 	{
-		$result = $this->getPagesMenu();
+		$menu = $this->getPaymentsMenu();
+		$menu[] = [
+			'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CHAT_HOW'),
+			'onclick' => 'BX.Salescenter.Manager.openHowItWorks(arguments[0])',
+		];
 
-		if(!empty($result))
-		{
-			$result['id'] = 'store-chat-menu';
-
-			$result['items'][] = [
-				'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CHAT_HOW'),
-				'onclick' => 'BX.Salescenter.Manager.openHowItWorks(arguments[0])',
-			];
-		}
-
-		return $result;
+		return [
+			'id' => 'payments-chat',
+			'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_PAYMENTS_CHAT_TITLE'),
+			'image' => $this->getImagePath().'payments-chat.svg',
+			'data' => [
+				'isDependsOnConnection' => true,
+				'menu' => $menu,
+				'active' => \Bitrix\SalesCenter\Integration\LandingManager::getInstance()->isSiteExists(),
+				'activeColor' => '#FF5752',
+				'activeImage' => $this->getImagePath().'payments-chat-active.svg',
+			],
+		];
 	}
 
-	/**
-	 * @return array
-	 */
-	public function getSmsTileMenuAction()
+	protected function getPaymentsInSmsTile(): array
 	{
-		$result = $this->getPagesMenu();
+		$menu = $this->getPaymentsMenu();
+		$menu[] = [
+			'delimiter' => true,
+		];
+		$menu[] = [
+			'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CHAT_HOW'),
+			'onclick' => 'BX.Salescenter.Manager.openHowSmsWorks(arguments[0])',
+		];
 
-		if(!empty($result))
-		{
-			$result['id'] = 'store-sms-menu';
+		return [
+			'id' => 'payments-sms',
+			'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_PAYMENTS_SMS_TITLE'),
+			'image' => $this->getImagePath().'payments-sms.svg',
+			'data' => [
+				'isDependsOnConnection' => true,
+				'menu' => $menu,
+				'active' => \Bitrix\SalesCenter\Integration\LandingManager::getInstance()->isSiteExists(),
+				'activeColor' => '#EF678B',
+				'activeImage' => $this->getImagePath().'payments-sms-active.svg',
+			],
+		];
+	}
 
-			$result['items'][] = [
-				'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_SMS_SETTINGS'),
-				'onclick' => 'window.open(\'/crm/configs/sms/\', \'_blank\');',
-			];
-
-			$result['items'][] = [
+	protected function getPaymentsMenu(): array
+	{
+		return [
+			[
+				'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_PAYMENT_SYSTEMS_MENU'),
+				'onclick' => 'BX.Salescenter.ControlPanel.paymentSystemsTileClick();'
+			],
+			[
 				'delimiter' => true,
-			];
-
-			$result['items'][] = [
-				'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_SMS_HOW'),
-				'onclick' => 'BX.Salescenter.Manager.openHowSmsWorks(arguments[0])',
-			];
-		}
-
-		return $result;
+			],
+			[
+				'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_ORDERS_MENU'),
+				'onclick' => 'BX.Salescenter.Manager.openSlider(\'/shop/orders/list/\');',
+			],
+			[
+				'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_DEALS_MENU'),
+				'onclick' => 'BX.Salescenter.Manager.openSlider(\''.CrmManager::getInstance()->getDealsLink().'\');',
+			],
+		];
 	}
 
-	/**
-	 * @return array
-	 */
-	protected function getPagesMenu()
+	protected function getServicesInChatTile(): array
+	{
+		return [
+			'id' => 'services-chat',
+			'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_SERVICES_CHAT_TITLE'),
+			'image' => $this->getImagePath().'services-chat.svg',
+			'data' => [
+				'isDependsOnConnection' => true,
+				'hasPagesMenu' => true,
+				'menu' => $this->getServicesMenu('services-chat'),
+				'active' => Driver::getInstance()->isSalesInChatActive(),
+				'activeColor' => '#FEA800',
+				'activeImage' => $this->getImagePath().'services-chat-active.svg',
+				'reloadAction' => 'getServicesTile',
+			],
+		];
+	}
+
+	protected function getServicesInSmsTile(): array
+	{
+		return [
+			'id' => 'services-sms',
+			'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_SERVICES_SMS_TITLE'),
+			'image' => $this->getImagePath().'services-sms.svg',
+			'data' => [
+				'isDependsOnConnection' => true,
+				'hasPagesMenu' => true,
+				'menu' => $this->getServicesMenu('services-sms'),
+				'active' => Driver::getInstance()->isSalesInChatActive(),
+				'activeColor' => '#2DC5F5',
+				'activeImage' => $this->getImagePath().'services-sms-active.svg',
+				'reloadAction' => 'getServicesTile',
+			],
+		];
+	}
+
+	public function getServicesTileAction(string $id): array
+	{
+		return [
+			'menu' => $this->getServicesMenu($id),
+			'active' => Driver::getInstance()->isSalesInChatActive(),
+		];
+	}
+
+	protected function getServicesMenu(string $id): array
 	{
 		if(!Loader::includeModule('salescenter'))
 		{
 			return [];
 		}
+
+		static $menu;
+		if($menu === null)
+		{
+			$forms = CrmManager::getInstance()->getWebForms();
+			$connectedWebFormIds = \Bitrix\SalesCenter\Integration\LandingManager::getInstance()->getConnectedWebFormIds();
+			$forms = array_filter($forms, function($form) use ($connectedWebFormIds)
+			{
+				return !in_array($form['ID'], $connectedWebFormIds);
+			});
+			$menu = [
+				[
+					'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CHAT_FORM_PAGES_ADD'),
+					'items' => $this->getAddNewPageMenu(true),
+				],
+			];
+			if(\Bitrix\SalesCenter\Integration\LandingManager::getInstance()->isSiteExists())
+			{
+				$menu[] = [
+					'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CHAT_FORM_PAGE_ADD'),
+					'items' => $this->getAddNewWebformPageMenu($forms),
+				];
+			}
+			$menu[] = [
+				'delimiter' => true,
+			];
+			$formPages = $this->getPages(true);
+			foreach($formPages as $page)
+			{
+				$menu[] = $this->getPageMenu($page);
+			}
+			if(!empty($formPages))
+			{
+				$menu[] = [
+					'delimiter' => true,
+				];
+			}
+			if(!\Bitrix\SalesCenter\Integration\LandingManager::getInstance()->isSiteExists())
+			{
+				$menu[] = [
+					'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CHAT_PAGES_CONNECT'),
+					'onclick' => 'BX.Salescenter.ControlPanel.closeMenu();BX.Salescenter.ControlPanel.connectShop(\''.$id.'\');',
+				];
+				$menu[] = [
+					'delimiter' => true,
+				];
+			}
+			$menu[] = [
+				'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CHAT_HOW'),
+				'onclick' => 'BX.Salescenter.Manager.openFormPagesHelp(arguments[0])',
+			];
+		}
+
+		return $menu;
+	}
+
+	protected function getConsultationTile(): array
+	{
+		return [
+			'id' => 'consultations',
+			'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CONSULTATIONS_TILE'),
+			'image' => $this->getImagePath().'consultations.svg',
+			'data' => [
+				'isDependsOnConnection' => true,
+				'hasPagesMenu' => true,
+				'menu' => $this->getConsultationTileActionAction()['menu'],
+				'active' => Driver::getInstance()->isSalesInChatActive(),
+				'activeColor' => '#9BCD00',
+				'activeImage' => $this->getImagePath().'consultations-active.svg',
+				'reloadAction' => 'getConsultationTileAction',
+			],
+		];
+	}
+
+	public function getConsultationTileActionAction(): array
+	{
+		return [
+			'menu' => $this->getConsultationTileMenu(),
+			'active' => Driver::getInstance()->isSalesInChatActive(),
+		];
+	}
+
+	protected function getConsultationTileMenu(): array
+	{
+		$menu = [];
+
+		if(!Loader::includeModule('salescenter'))
+		{
+			return $menu;
+		}
 		if(!Driver::getInstance()->isSalesInChatActive())
 		{
-			return [];
+			return $menu;
 		}
-		$pageList = [
+
+		$menu = [
 			[
 				'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CHAT_PAGES_ADD'),
 				'items' => $this->getAddNewPageMenu(),
 			],
 		];
-		$pageController = new \Bitrix\SalesCenter\Controller\Page();
-		$allPages = $pageController->getList();
-		$pages = $formPages = [];
-		foreach($allPages as $page)
-		{
-			if($page->isWebform())
-			{
-				$formPages[] = $page;
-			}
-			else
-			{
-				$pages[] = $page;
-			}
-		}
+		$pages = $this->getPages();
 		if(!empty($pages))
 		{
-			$pageList [] = [
+			$menu[] = [
 				'delimiter' => true,
 			];
-		}
-		foreach($pages as $page)
-		{
-			$pageList[] = $this->getPageMenu($page);
-		}
-		$forms = CrmManager::getInstance()->getWebForms();
-		$connectedWebFormIds = \Bitrix\SalesCenter\Integration\LandingManager::getInstance()->getConnectedWebFormIds();
-		$forms = array_filter($forms, function($form) use ($connectedWebFormIds)
-		{
-			return !in_array($form['ID'], $connectedWebFormIds);
-		}
-		);
-		$formList = [
-			[
-				'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CHAT_FORM_PAGES_ADD'),
-				'items' => $this->getAddNewPageMenu(true),
-			],
-		];
-		if(\Bitrix\SalesCenter\Integration\LandingManager::getInstance()->isSiteExists())
-		{
-			$formList[] = [
-				'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CHAT_FORM_PAGE_ADD'),
-				'items' => $this->getAddNewWebformPageMenu($forms),
-			];
-		}
-		if(!empty($formPages))
-		{
-			$formList[] = [
-				'delimiter' => true,
-			];
-			foreach($formPages as $page)
+			foreach($pages as $page)
 			{
-				$formList[] = $this->getPageMenu($page);
+				$menu[] = $this->getPageMenu($page);
 			}
 		}
-		$result = [
-			'items' => [
-				[
-					'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CHAT_PAGES'),
-					'items' => $pageList,
-				],
-				[
-					'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CHAT_FORMS'),
-					'items' => $formList,
-				],
-				[
-					'delimiter' => true,
-				],
-			],
-		];
-
 		if(!\Bitrix\SalesCenter\Integration\LandingManager::getInstance()->isSiteExists())
 		{
-			$result['items'][] = [
-				'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CHAT_PAGES_CONNECT'),
-				'onclick' => 'BX.Salescenter.ControlPanel.connectShop();',
-			];
-			$result['items'][] = [
+			$menu[] = [
 				'delimiter' => true,
 			];
+			$menu[] = [
+				'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CHAT_PAGES_CONNECT'),
+				'onclick' => 'BX.Salescenter.ControlPanel.closeMenu();BX.Salescenter.ControlPanel.connectShop(\'consultations\');',
+			];
+		}
+		$menu[] = [
+			'delimiter' => true,
+		];
+		$menu[] = [
+			'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CHAT_HOW'),
+			'onclick' => 'BX.Salescenter.Manager.openCommonPagesHelp(arguments[0])',
+		];
+
+		return $menu;
+	}
+
+	protected function getPaymentSystemsTile(): array
+	{
+		$paySystemPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.paysystem.panel');
+		$paySystemPath = getLocalPath('components'.$paySystemPath.'/slider.php');
+		$paySystemPath = new \Bitrix\Main\Web\Uri($paySystemPath);
+		$paySystemPath->addParams([
+			'analyticsLabel' => 'salescenterClickPaymentTile',
+			'type' => 'main',
+			'mode' => 'main'
+		]);
+
+		$filter = SaleManager::getInstance()->getPaySystemFilter();
+		$isActive = (Sale\Internals\PaySystemActionTable::getCount($filter) > 0);
+
+		return [
+			'id' => 'payment-systems',
+			'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_PAYMENT_SYSTEMS_TILE'),
+			'image' => $this->getImagePath().'payment-systems.svg',
+			'data' => [
+				'url' => $paySystemPath->getLocator(),
+				'active' => $isActive,
+				'activeColor' => '#458CE4',
+				'activeImage' => $this->getImagePath().'payment-systems-active.svg',
+				'reloadAction' => 'getPaymentSystemsTile',
+			],
+		];
+	}
+
+	public function getPaymentSystemsTileAction(): array
+	{
+		Bitrix\Main\Loader::includeModule("sale");
+		Bitrix\Main\Loader::includeModule("salescenter");
+
+		$tile = $this->getPaymentSystemsTile();
+		return [
+			'active' => $tile['data']['active'],
+		];
+	}
+
+	protected function getDeliveryTile(): array
+	{
+		$deliveryPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.delivery.panel');
+		$deliveryPath = getLocalPath('components'.$deliveryPath.'/slider.php');
+		$deliveryPath = new \Bitrix\Main\Web\Uri($deliveryPath);
+		$deliveryPath->addParams([
+			'analyticsLabel' => 'salescenterClickDeliveryTile',
+			'type' => 'main',
+			'mode' => 'main'
+		]);
+
+		$isActive = $this->hasDeliveryInstalledApp();
+
+		return [
+			'id' => 'delivery',
+			'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_DELIVERY_TILE'),
+			'image' => $this->getImagePath().'delivery.svg',
+			'data' => [
+				'url' => $deliveryPath->getLocator(),
+				'active' => $isActive,
+				'activeColor' => '#80A802',
+				'activeImage' => $this->getImagePath().'delivery-active.svg',
+				'reloadAction' => 'getDeliveryTile',
+			],
+		];
+	}
+
+	private function hasDeliveryInstalledApp(): bool
+	{
+		$handlers = (new SalesCenter\Delivery\Handlers\HandlersRepository())
+			->getCollection()
+			->getInstallableInstalledItems();
+
+		if (count($handlers) > 0)
+		{
+			return true;
+		}
+
+		$marketplaceAppCodeList = RestManager::getInstance()->getMarketplaceAppCodeList('delivery');
+		$count = (int)Rest\AppTable::getCount([
+			'=CODE' => $marketplaceAppCodeList,
+			'SCOPE' => '%sale%',
+			'=ACTIVE' => 'Y',
+		]);
+
+		return $count > 0;
+	}
+
+	private function hasDeliveryMarketplaceApp(): bool
+	{
+		$zone = $this->getZone();
+		$partnerItems = RestManager::getInstance()->getByTag([
+			RestManager::TAG_DELIVERY,
+			RestManager::TAG_DELIVERY_RECOMMENDED,
+			$zone
+		]);
+
+		return !empty($partnerItems['ITEMS']);
+	}
+
+	public function getDeliveryTileAction(): array
+	{
+		Bitrix\Main\Loader::includeModule("sale");
+		Bitrix\Main\Loader::includeModule("salescenter");
+
+		$tile = $this->getDeliveryTile();
+		return [
+			'active' => $tile['data']['active'],
+		];
+	}
+
+	protected function getSmsProviderTile(): array
+	{
+		$path = \CComponentEngine::makeComponentPath('bitrix:salescenter.smsprovider.panel');
+		$path = getLocalPath('components'.$path.'/slider.php');
+		$path = new \Bitrix\Main\Web\Uri($path);
+		$path->addParams([
+			'analyticsLabel' => 'salescenterClickSmsProviderTile',
+		]);
+
+		return [
+			'id' => 'smsprovider',
+			'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_SMS_PROVIDER_TILE'),
+			'image' => $this->getImagePath().'sms-provider.svg',
+			'data' => [
+				'url' => $path->getLocator(),
+				'active' => Bitrix\Crm\Integration\SmsManager::canSendMessage(),
+				'activeColor' => '#00BEFA',
+				'activeImage' => $this->getImagePath().'sms-provider-active.svg',
+				'reloadAction' => 'getSmsProviderTile',
+			],
+		];
+	}
+
+	protected function getCashboxesTile(): array
+	{
+		$cashboxPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.cashbox.panel');
+		$cashboxPath = getLocalPath('components'.$cashboxPath.'/slider.php');
+		$cashboxPath = new \Bitrix\Main\Web\Uri($cashboxPath);
+		$cashboxPath->addParams([
+			'analyticsLabel' => 'salescenterClickCashboxTile',
+		]);
+
+		$filter = SaleManager::getInstance()->getCashboxFilter();
+		$isActive = (Sale\Cashbox\Internals\CashboxTable::getCount($filter) > 0);
+
+		return [
+			'id' => 'cashboxes',
+			'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CASHBOXES_TILE_2'),
+			'image' => $this->getImagePath().'cashboxes.svg',
+			'data' => [
+				'url' => $cashboxPath->getLocator(),
+				'active' => $isActive,
+				'activeColor' => '#A763E4',
+				'activeImage' => $this->getImagePath().'cashboxes-active.svg',
+				'reloadAction' => 'getCashboxesTile',
+			],
+		];
+	}
+
+	/**
+	 * @param array $marketplaceCodeList
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function getMarketplaceItemsTile(array $marketplaceCodeList): array
+	{
+		$marketplaceItems = [];
+
+		$zone = $this->getZone();
+		$installedMarketplaceItems = $this->getInstalledMarketplaceItemsByCodes($marketplaceCodeList);
+		foreach ($marketplaceCodeList as $marketplaceCode)
+		{
+			if ($marketplaceApp = RestManager::getInstance()->getMarketplaceAppByCode($marketplaceCode))
+			{
+				$title = $marketplaceApp['LANG'][$zone]['NAME']
+					?? $marketplaceApp['NAME']
+					?? current($marketplaceApp['LANG'])['NAME']
+					?? '';
+
+				if (!empty($marketplaceApp['ICON_PRIORITY']) || !empty($marketplaceApp['ICON']))
+				{
+					$hasOwnIcon = true;
+					$img = $marketplaceApp['ICON_PRIORITY'] ?: $marketplaceApp['ICON'];
+				}
+				else
+				{
+					$hasOwnIcon = false;
+					$img = $this->getImagePath().'marketplace_default.svg';
+				}
+
+				$marketplaceItems[$marketplaceApp['CODE']] = [
+					'id' => $marketplaceApp['CODE'],
+					'title' => $title,
+					'image' => $img,
+					'data' => [
+						'appId' => isset($installedMarketplaceItems[$marketplaceCode])
+							? $installedMarketplaceItems[$marketplaceCode]['ID']
+							: $marketplaceApp['ID'],
+						'code' => $marketplaceApp['CODE'],
+						'itemSubType' => 'marketplaceApp',
+						'active' => isset($installedMarketplaceItems[$marketplaceCode]),
+						'hasOwnIcon' => $hasOwnIcon,
+						'reloadAction' => 'getMarketplaceItemsTile',
+						'label' => self::LABEL_NEW,
+					],
+				];
+			}
+		}
+
+		return $marketplaceItems;
+	}
+
+	/**
+	 * @param $id
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public function getMarketplaceItemsTileAction($id): array
+	{
+		$installedMarketplaceItems = $this->getInstalledMarketplaceItemsByCodes([$id]);
+		return [
+			'active' => isset($installedMarketplaceItems[$id]),
+		];
+	}
+
+	/**
+	 * @param $marketplaceCodeList
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function getInstalledMarketplaceItemsByCodes($marketplaceCodeList): array
+	{
+		$result = [];
+
+		$installedMarketplaceItems = Rest\AppTable::getList([
+			'select' => ['*'],
+			'filter' => [
+				'=CODE' => $marketplaceCodeList,
+				'=ACTIVE' => 'Y',
+			],
+		])->fetchAll();
+
+		foreach ($installedMarketplaceItems as $installedMarketplaceItem)
+		{
+			$result[$installedMarketplaceItem['CODE']] = $installedMarketplaceItem;
 		}
 
 		return $result;
 	}
 
 	/**
-	 * @param array $forms
-	 * @return array
+	 * @return array|string[]
+	 * @throws Main\SystemException
 	 */
-	protected function getAddNewWebformPageMenu(array $forms)
+	private function getMarketplaceSalescenterItemCodeList(): array
+	{
+		$result = [];
+
+		$partnerItems = RestManager::getInstance()->getByTag([
+			RestManager::TAG_SALESCENTER,
+		]);
+		if (!empty($partnerItems['ITEMS']))
+		{
+			foreach ($partnerItems['ITEMS'] as $partnerItem)
+			{
+				$result[] = $partnerItem['CODE'];
+			}
+		}
+
+		return $result;
+	}
+
+	private function getRecommendationItemTile(): array
+	{
+		return [
+			'id' => 'recommendation',
+			'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_RECOMMEND'),
+			'image' => $this->getImagePath().'recommend.svg',
+			'data' => [
+				'active' => false,
+			],
+		];
+	}
+
+	protected function getPages(bool $isWebForm = false): array
+	{
+		$result = [];
+
+		if($this->pages === null)
+		{
+			$pageController = new \Bitrix\SalesCenter\Controller\Page();
+			$this->pages = $pageController->getList();
+		}
+
+		foreach($this->pages as $page)
+		{
+			if($isWebForm)
+			{
+				if($page->isWebform())
+				{
+					$result[] = $page;
+				}
+			}
+			else
+			{
+				if(!$page->isWebform())
+				{
+					$result[] = $page;
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	protected function getAddNewWebformPageMenu(array $forms): array
 	{
 		$list = [
 			[
 				'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CHAT_FORMS_ADD'),
-				'onclick' => 'BX.Salescenter.ControlPanel.hideMenu(\'store-chat-menu\');BX.Salescenter.Manager.addNewForm().then(BX.Salescenter.ControlPanel.reloadStoreChatsMenu);'
+				'onclick' => 'BX.Salescenter.ControlPanel.closeMenu();BX.Salescenter.Manager.addNewForm().then(BX.Salescenter.ControlPanel.dropPageMenus);'
 			],
 		];
 		if(!empty($forms))
@@ -329,7 +727,7 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 			{
 				$list[] = [
 					'text' => htmlspecialcharsbx($form['NAME']),
-					'onclick' => 'BX.Salescenter.ControlPanel.hideMenu(\'store-chat-menu\');BX.Salescenter.Manager.addNewFormPage('.$form['ID'].').then(BX.Salescenter.ControlPanel.reloadStoreChatsMenu);',
+					'onclick' => 'BX.Salescenter.ControlPanel.closeMenu();BX.Salescenter.Manager.addNewFormPage('.$form['ID'].').then(BX.Salescenter.ControlPanel.dropPageMenus);',
 				];
 			}
 		}
@@ -337,11 +735,7 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 		return $list;
 	}
 
-	/**
-	 * @param bool $isWebform
-	 * @return array
-	 */
-	protected function getAddNewPageMenu($isWebform = false)
+	protected function getAddNewPageMenu(bool $isWebform = false): array
 	{
 		$pageStubObject = [];
 		if($isWebform)
@@ -351,20 +745,16 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 		return [
 			[
 				'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CHAT_PAGES_ADD_SITE'),
-				'onclick' => 'BX.Salescenter.ControlPanel.hideMenu(\'store-chat-menu\');BX.Salescenter.Manager.addSitePage('.$isWebform.').then(BX.Salescenter.ControlPanel.reloadStoreChatsMenu);',
+				'onclick' => 'BX.Salescenter.ControlPanel.closeMenu();BX.Salescenter.Manager.addSitePage('.$isWebform.').then(BX.Salescenter.ControlPanel.dropPageMenus);',
 			],
 			[
 				'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CHAT_PAGES_ADD_CUSTOM'),
-				'onclick' => 'BX.Salescenter.ControlPanel.hideMenu(\'store-chat-menu\');BX.Salescenter.Manager.addCustomPage('.CUtil::PhpToJSObject($pageStubObject).').then(BX.Salescenter.ControlPanel.reloadStoreChatsMenu);',
+				'onclick' => 'BX.Salescenter.ControlPanel.closeMenu();BX.Salescenter.Manager.addCustomPage('.CUtil::PhpToJSObject($pageStubObject).').then(BX.Salescenter.ControlPanel.dropPageMenus);',
 			],
 		];
 	}
 
-	/**
-	 * @param \Bitrix\SalesCenter\Model\Page $page
-	 * @return array
-	 */
-	protected function getPageMenu(\Bitrix\SalesCenter\Model\Page $page)
+	protected function getPageMenu(\Bitrix\SalesCenter\Model\Page $page): array
 	{
 		$list = [];
 		$controller = new \Bitrix\SalesCenter\Controller\Page();
@@ -373,14 +763,14 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 		{
 			$list[] = [
 				'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CHAT_PAGES_EDIT'),
-				'onclick' => 'BX.Salescenter.ControlPanel.hideMenu(\'store-chat-menu\');BX.Salescenter.Manager.editLandingPage(\''.$page->getLandingId().'\')',
+				'onclick' => 'BX.Salescenter.ControlPanel.closeMenu();BX.Salescenter.Manager.editLandingPage(\''.$page->getLandingId().'\')',
 			];
 		}
 		else
 		{
 			$list[] = [
 				'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CHAT_PAGES_EDIT'),
-				'onclick' => 'BX.Salescenter.ControlPanel.hideMenu(\'store-chat-menu\');BX.Salescenter.Manager.addCustomPage('.CUtil::PhpToJSObject($pageData).').then(BX.Salescenter.ControlPanel.reloadStoreChatsMenu);',
+				'onclick' => 'BX.Salescenter.ControlPanel.closeMenu();BX.Salescenter.Manager.addCustomPage('.CUtil::PhpToJSObject($pageData).').then(BX.Salescenter.ControlPanel.dropPageMenus);',
 			];
 		}
 		$list[] = [
@@ -391,14 +781,14 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 		{
 			$list[] = [
 				'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CHAT_PAGES_HIDE'),
-				'onclick' => 'BX.Salescenter.ControlPanel.hideMenu(\'store-chat-menu\');BX.Salescenter.Manager.hidePage('.CUtil::PhpToJSObject($pageData).').then(BX.Salescenter.ControlPanel.reloadStoreChatsMenu);',
+				'onclick' => 'BX.Salescenter.ControlPanel.closeMenu();BX.Salescenter.Manager.hidePage('.CUtil::PhpToJSObject($pageData).').then(BX.Salescenter.ControlPanel.dropPageMenus);',
 			];
 		}
 		else
 		{
 			$list[] = [
 				'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CHAT_PAGES_DELETE'),
-				'onclick' => 'BX.Salescenter.Manager.deleteUrl('.CUtil::PhpToJSObject($pageData).').then(BX.Salescenter.ControlPanel.reloadStoreChatsMenu);',
+				'onclick' => 'BX.Salescenter.ControlPanel.closeMenu();BX.Salescenter.Manager.deleteUrl('.CUtil::PhpToJSObject($pageData).').then(BX.Salescenter.ControlPanel.dropPageMenus);',
 			];
 		}
 
@@ -408,280 +798,103 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 		];
 	}
 
-	/**
-	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	protected function getCashboxItems()
+	public function getCashboxesTileAction(): array
 	{
-		if(!Driver::getInstance()->isCashboxEnabled())
-		{
-			$this->arResult['cashboxTitleCode'] = 'SALESCENTER_CONTROL_PANEL_CONSENT_TITLE';
-			return [];
-		}
+		Bitrix\Main\Loader::includeModule("sale");
+		Bitrix\Main\Loader::includeModule("salescenter");
 
-		$cashboxes = [];
-		$cashboxDescriptions = [
-			[
-				'id' => 'atol',
-				'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CASHBOX_ATOL'),
-				'image' => $this->getImagePath().'atol.svg',
-				'itemSelectedColor' => '#ED1B2F',
-				'itemSelectedImage' => $this->getImagePath().'atol_s.svg',
-				'itemSelected' => false,
-				'data' => [
-					'type' => 'cashbox',
-					'handler' => '\\Bitrix\\Sale\\Cashbox\\CashboxAtolFarmV4',
-					'connectPath' => $this->getCashboxEditUrl([
-						'handler' => '\\Bitrix\\Sale\\Cashbox\\CashboxAtolFarmV4',
-						'preview' => 'y',
-					]),
-					'showMenu' => false,
-				],
-			],
-			[
-				'id' => 'orangedata',
-				'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CASHBOX_ORANGE_DATA'),
-				'image' => $this->getImagePath().'orangedata.svg',
-				'itemSelectedColor' => '#FF9A01',
-				'itemSelectedImage' => $this->getImagePath().'orangedata_s.svg',
-				'itemSelected' => false,
-				'data' => [
-					'type' => 'cashbox',
-					'handler' => '\\Bitrix\\Sale\\Cashbox\\CashboxOrangeData',
-					'connectPath' => $this->getCashboxEditUrl([
-						'handler' => '\\Bitrix\\Sale\\Cashbox\\CashboxOrangeData',
-						'preview' => 'y',
-					]),
-					'showMenu' => false,
-				],
-			],
+		$tile = $this->getCashboxesTile();
+
+		return [
+			'active' => $tile['data']['active'],
 		];
-
-		$this->arResult['cashboxTitleCode'] = 'SALESCENTER_CONTROL_PANEL_CASHBOX_CONSENT_TITLE';
-
-		$filter = SaleManager::getInstance()->getCashboxFilter(false);
-		$cashboxList = Sale\Cashbox\Internals\CashboxTable::getList([
-			'select' => ['ID', 'ACTIVE', 'NAME', 'HANDLER'],
-			'filter' => $filter,
-		]);
-		while($cashbox = $cashboxList->fetch())
-		{
-			if(!isset($cashboxes[$cashbox['HANDLER']]))
-			{
-				$cashboxes[$cashbox['HANDLER']] = [];
-			}
-			$cashboxes[$cashbox['HANDLER']][] = $cashbox;
-		}
-
-		foreach($cashboxDescriptions as &$cashboxDescription)
-		{
-			if(isset($cashboxes[$cashboxDescription['data']['handler']]) && is_array($cashboxes[$cashboxDescription['data']['handler']]))
-			{
-				$cashboxDescription['data']['menuItems'] = $this->getCashboxMenu($cashboxes[$cashboxDescription['data']['handler']]);
-				foreach($cashboxes[$cashboxDescription['data']['handler']] as $handlerCashbox)
-				{
-					if($handlerCashbox['ACTIVE'] === 'Y')
-					{
-						$cashboxDescription['itemSelected'] = true;
-					}
-					$cashboxDescription['data']['showMenu'] = true;
-				}
-			}
-		}
-
-		return $cashboxDescriptions;
 	}
 
-	/**
-	 * @param array $cashboxes
-	 * @return array
-	 */
-	protected function getCashboxMenu(array $cashboxes)
-	{
-		$result = [];
-
-		foreach($cashboxes as $cashbox)
-		{
-			if(empty($result))
-			{
-				$result = [
-					[
-						'NAME' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CASHBOX_ADD'),
-						'LINK' => $this->getCashboxEditUrl([
-							'handler' => $cashbox['HANDLER'],
-						]),
-					],
-					[
-						'DELIMITER' => true,
-					],
-				];
-			}
-			$result[] = [
-				'NAME' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CASHBOX_SETTINGS', [
-					'#CASHBOX_NAME#' => htmlspecialcharsbx($cashbox['NAME'])
-				]),
-				'LINK' => $this->getCashboxEditUrl(['id' => $cashbox['ID'], 'handler' => $cashbox['HANDLER']]),
-			];
-		}
-
-		$result[] = [
-			'DELIMITER' => true,
-		];
-
-		$result[] = [
-			'NAME' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CASHBOX_CHECKS'),
-			'LINK' => $this->getCashboxEditUrl([
-				'show_checks' => 'y',
-				'current_date' => 'y',
-			])
-		];
-
-		return $result;
-	}
-
-	/**
-	 * @param array $params
-	 * @return \Bitrix\Main\Web\Uri|false
-	 */
-	protected function getCashboxEditUrl(array $params = [])
-	{
-		static $cashboxPath = null;
-		if($cashboxPath === null)
-		{
-			$cashboxPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.cashbox');
-			$cashboxPath = getLocalPath('components'.$cashboxPath.'/slider.php');
-		}
-
-		if(!$cashboxPath)
-		{
-			return false;
-		}
-
-		$uri = new \Bitrix\Main\Web\Uri($cashboxPath);
-		$uri->addParams($params);
-		return $uri;
-	}
-
-	/**
-	* @param $handler
-	* @return array
-	* @throws \Bitrix\Main\ArgumentException
-	* @throws \Bitrix\Main\ObjectPropertyException
-	* @throws \Bitrix\Main\SystemException
-	*/
-	public function reloadCashboxItemAction($handler = null)
-	{
-		$result = [
-			'menuItems' => []
-		];
-
-		if(!$handler || !Loader::includeModule('salescenter') || !SaleManager::getInstance()->isFullAccess())
-		{
-			return $result;
-		}
-
-		$cashboxItems = $this->getCashboxItems();
-
-		foreach($cashboxItems as $cashboxItem)
-		{
-			if($cashboxItem['data']['handler'] == $handler)
-			{
-				$result['itemSelected'] = $cashboxItem['itemSelected'];
-				$result['menuItems'] = $cashboxItem['data']['menuItems'];
-				$result['showMenu'] = $cashboxItem['data']['showMenu'];
-				break;
-			}
-		}
-
-		return $result;
-	}
-
-	/**
-	 * @return array
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
-	 */
-	protected function getUserConsentItems()
+	protected function getUserConsentTile(): array
 	{
 		$userConsentSettingPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.userconsent');
 		$userConsentSettingPath = getLocalPath('components'.$userConsentSettingPath.'/slider.php');
 
-		$menuItems = [];
-		$userConsent = 0;
-		if ($this->isUserConsentActive() === 'Y')
+		$menu = $this->getUserConsentMenu();
+
+		return [
+			'id' => 'userconsent',
+			'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_USERCONSENT_TILE'),
+			'image' => $this->getImagePath().'userconsent.svg',
+			'data' => [
+				'url' => $userConsentSettingPath,
+				'menu' => $menu,
+				'active' => !empty($menu),
+				'activeColor' => '#2C7AB2',
+				'activeImage' => $this->getImagePath().'userconsent-active.svg',
+				'reloadAction' => 'getUserConsentTile',
+			],
+		];
+	}
+
+	public function getUserConsentTileAction(): array
+	{
+		$menu = $this->getUserConsentMenu();
+
+		return [
+			'active' => !empty($menu),
+			'menu' => $menu,
+		];
+	}
+
+	protected function getUserConsentMenu(): array
+	{
+		$menu = [];
+
+		$userConsentSettingPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.userconsent');
+		$userConsentSettingPath = getLocalPath('components'.$userConsentSettingPath.'/slider.php');
+
+		if ($this->isUserConsentActive())
 		{
-			$userConsent = $this->getUserConsent();
-			if ($userConsent === false)
+			$userConsentId = $this->getUserConsentId();
+			if(!$userConsentId)
 			{
-				$userConsent = $this->getDefaultUserConsent();
+				$userConsentId = $this->getDefaultUserConsentId();
 			}
-
-			if ($userConsent)
+			if($userConsentId)
 			{
-				$userConsentUrl = "/settings/configs/userconsent/consents/{$userConsent}/?AGREEMENT_ID={$userConsent}&apply_filter=Y";
+				$userConsentUrl = "/settings/configs/userconsent/consents/{$userConsentId}/?AGREEMENT_ID={$userConsentId}&apply_filter=Y";
 
-				$menuItems = [
+				$menu = [
 					[
-						'NAME' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_USERCONSENT_EDIT'),
-						'LINK' => $userConsentSettingPath,
+						'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_USERCONSENT_EDIT'),
+						'onclick' => 'BX.Salescenter.ControlPanel.closeMenu();BX.Salescenter.Manager.openSlider(\''.$userConsentSettingPath.'\').then(BX.Salescenter.ControlPanel.reloadUserConsentTile);',
 					],
 					[
-						'NAME' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_USERCONSENT_LIST'),
-						'LINK' => $userConsentUrl,
+						'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_USERCONSENT_LIST'),
+						'onclick' => 'BX.Salescenter.ControlPanel.closeMenu();BX.Salescenter.Manager.openSlider(\''.$userConsentUrl.'\');',
 					]
 				];
 			}
 		}
 
-		return [
-			[
-				'id' => 'userconsent',
-				'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_USERCONSENT_RULES'),
-				'image' => $this->getImagePath().'userconsent.svg',
-				'itemSelectedColor' => '#A061D1',
-				'itemSelected' => (bool)$userConsent,
-				'itemSelectedImage' => $this->getImagePath().'userconsent.svg',
-				'data' => [
-					'type' => 'userconsent',
-					'connectPath' => $userConsentSettingPath,
-					'menuItems' => $menuItems,
-				],
-			],
-		];
+		return $menu;
 	}
 
-	/**
-	 * @return string
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 */
-	private function isUserConsentActive()
+	private function isUserConsentActive(): bool
 	{
-		return Bitrix\Main\Config\Option::get('salescenter', '~SALESCENTER_USER_CONSENT_ACTIVE', 'Y');
+		return (Bitrix\Main\Config\Option::get('salescenter', '~SALESCENTER_USER_CONSENT_ACTIVE', 'Y') === 'Y');
 	}
 
-	/**
-	 * @return string
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 */
-	private function getUserConsent()
+	private function getUserConsentId(): ?int
 	{
-		return Bitrix\Main\Config\Option::get('salescenter', '~SALESCENTER_USER_CONSENT_ID', false);
+		$consent = Bitrix\Main\Config\Option::get('salescenter', '~SALESCENTER_USER_CONSENT_ID');
+		if(!$consent)
+		{
+			return null;
+		}
+
+		return (int)$consent;
 	}
 
-	/**
-	 * @return int
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
-	 */
-	private function getDefaultUserConsent()
+	private function getDefaultUserConsentId(): int
 	{
-		$agreementId = false;
+		$agreementId = 0;
 		if (Loader::includeModule('imopenlines'))
 		{
 			$configManager = new Bitrix\ImOpenLines\Config();
@@ -695,7 +908,7 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 			);
 			foreach ($result as $id => $config)
 			{
-				$agreementId = $config['AGREEMENT_ID'];
+				$agreementId = (int)$config['AGREEMENT_ID'];
 			}
 
 			if ($agreementId)
@@ -706,1475 +919,6 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 		}
 
 		return $agreementId;
-	}
-
-	/**
-	 * @return array
-	 */
-	protected function getPaySystemHandlers()
-	{
-		$fullList = [
-			'cash' => [],
-			'paypal' => [],
-			'sberbankonline' => [],
-			'qiwi' => [],
-			'webmoney' => [],
-			'yandexcheckout' => [
-				'bank_card',
-				'sberbank',
-				'sberbank_sms',
-				'alfabank',
-				'yandex_money',
-				'webmoney',
-				'qiwi'
-			],
-			'uapay' => [],
-			'liqpay' => [],
-		];
-
-		if(!\Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->isEnabled())
-		{
-			return $fullList;
-		}
-
-		if (\Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->isCurrentZone('ru'))
-		{
-			return [
-				'cash' => [],
-				'paypal' => [],
-				'sberbankonline' => [],
-				'qiwi' => [],
-				'webmoney' => [],
-				'yandexcheckout' => [
-					'bank_card',
-					'sberbank',
-					'sberbank_sms',
-					'alfabank',
-					'yandex_money',
-					'webmoney',
-					'qiwi'
-				],
-			];
-		}
-		elseif (\Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->isCurrentZone('ua'))
-		{
-			return [
-				'cash' => [],
-				'paypal' => [],
-				'liqpay' => [],
-				'uapay' => [],
-			];
-		}
-		else
-		{
-			return [
-				'cash' => [],
-				'paypal' => [],
-			];
-		}
-	}
-
-	/**
-	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	protected function getPaySystemItems()
-	{
-		$paySystemPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.paysystem');
-		$paySystemPath = getLocalPath('components'.$paySystemPath.'/slider.php')."?";
-
-		$paySystemHandlerList = $this->getPaySystemHandlers();
-
-		if (
-			SalesCenter\Integration\Bitrix24Manager::getInstance()->isCurrentZone('ua')
-			|| SalesCenter\Integration\IntranetManager::getInstance()->isCurrentZone('ua')
-		)
-		{
-			$paySystemPanel = [
-				'cash',
-				'uapay'
-			];
-		}
-		else
-		{
-			$paySystemPanel = [
-				'cash',
-				'yandexcheckout' => [
-					'sberbank',
-					'sberbank_sms',
-				],
-				'uapay'
-			];
-		}
-
-		$paySystemColorList = [
-			'cash' => '#8EB927',
-			'paypal' => '#243B80',
-			'sberbankonline' => '#2C9B47',
-			'qiwi' => '#E9832C',
-			'webmoney' => '#006FA8',
-			'yandexcheckout' => [
-				'alfabank' => '#EE2A23',
-				'bank_card' => '#19D0C8',
-				'yandex_money' => '#E10505',
-				'sberbank' => '#327D36',
-				'sberbank_sms' => '#327D36',
-				'qiwi' => '#E9832C',
-				'webmoney' => '#006FA8'
-			],
-			'liqpay' => '#7AB72B',
-			'uapay' => '#E41F18',
-		];
-
-		$paySystemSortList = [
-			'cash' => 100,
-			'paypal' => 900,
-			'sberbankonline' => 200,
-			'qiwi' => 1400,
-			'webmoney' => 1500,
-			'yandexcheckout' => [
-				'alfabank' => 1200,
-				'bank_card' => 500,
-				'yandex_money' => 1300,
-				'sberbank' => 600,
-				'sberbank_sms' => 700,
-				'qiwi' => 1600,
-				'webmoney' => 1700
-			],
-			'liqpay' => 1800,
-			'uapay' => 2000
-		];
-
-		$filter = SaleManager::getInstance()->getPaySystemFilter();
-		unset($filter['ACTIVE']);
-		$paySystemIterator = Sale\PaySystem\Manager::getList([
-			'select' => ['ID', 'ACTIVE', 'NAME', 'ACTION_FILE', 'PS_MODE'],
-			'filter' => $filter,
-			'order' => ['ACTIVE' => 'DESC', 'ID' => 'ASC'],
-		]);
-
-		$paySystemActions = $paySystemList = [];
-		foreach ($paySystemIterator as $paySystem)
-		{
-			$paySystemList[$paySystem['ACTION_FILE']][] = $paySystem;
-		}
-
-		foreach ($paySystemHandlerList as $paySystemHandler => $paySystemMode)
-		{
-			if (!$this->isPaySystemHandlerExist($paySystemHandler))
-			{
-				continue;
-			}
-
-			$paySystemItems = $paySystemList[$paySystemHandler];
-			if ($paySystemItems)
-			{
-				foreach ($paySystemItems as $paySystemItem)
-				{
-					$queryParams = [
-						'lang' => LANGUAGE_ID,
-						'publicSidePanel' => 'Y',
-						'ID' => $paySystemItem['ID'],
-						'ACTION_FILE' => $paySystemItem['ACTION_FILE'],
-						'PS_MODE' => $paySystemItem['PS_MODE'],
-					];
-
-					$isPsMode = !empty($paySystemItem['PS_MODE']);
-					if($isPsMode)
-					{
-						foreach ($paySystemMode as $psMode)
-						{
-							if ($psMode === $paySystemItem['PS_MODE'])
-							{
-								if (!isset($paySystemActions[$paySystemItem['ACTION_FILE']]['ACTIVE'][$paySystemItem['PS_MODE']]))
-								{
-									$paySystemActions[$paySystemItem['ACTION_FILE']]['ACTIVE'][$paySystemItem['PS_MODE']] = false;
-									$paySystemActions[$paySystemItem['ACTION_FILE']]['DELIMITER'][$paySystemItem['PS_MODE']] = false;
-								}
-								if ($paySystemItem['ACTIVE'] === 'Y')
-								{
-									$paySystemActions[$paySystemItem['ACTION_FILE']]['ACTIVE'][$paySystemItem['PS_MODE']] = true;
-								}
-								elseif($paySystemActions[$paySystemItem['ACTION_FILE']]['ACTIVE'][$paySystemItem['PS_MODE']] === true && !$paySystemActions[$paySystemItem['ACTION_FILE']]['DELIMITER'][$paySystemItem['PS_MODE']])
-								{
-									$paySystemActions[$paySystemItem['ACTION_FILE']]['ITEMS'][$paySystemItem['PS_MODE']][] = [
-										'DELIMITER' => true,
-									];
-									$paySystemActions[$paySystemItem['ACTION_FILE']]['DELIMITER'][$paySystemItem['PS_MODE']] = true;
-								}
-
-								$paySystemActions[$paySystemItem['ACTION_FILE']]['PS_MODE'] = true;
-
-								$link = $paySystemPath.http_build_query($queryParams);
-								$paySystemActions[$paySystemItem['ACTION_FILE']]['ITEMS'][$paySystemItem['PS_MODE']][] = [
-									'NAME' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_PAYSYSTEM_SETTINGS', [
-										'#PAYSYSTEM_NAME#' => htmlspecialcharsbx($paySystemItem['NAME'])
-									]),
-									'LINK' => $link
-								];
-							}
-							else
-							{
-								if (!isset($paySystemActions[$paySystemHandler]['ITEMS'][$psMode]))
-								{
-									$paySystemActions[$paySystemHandler]['ITEMS'][$psMode] = [];
-								}
-							}
-						}
-					}
-					else
-					{
-						if (!isset($paySystemActions[$paySystemItem['ACTION_FILE']]['ACTIVE']))
-						{
-							$paySystemActions[$paySystemItem['ACTION_FILE']]['ACTIVE'] = false;
-							$paySystemActions[$paySystemItem['ACTION_FILE']]['DELIMITER'] = false;
-						}
-						if ($paySystemItem['ACTIVE'] === 'Y')
-						{
-							$paySystemActions[$paySystemItem['ACTION_FILE']]['ACTIVE'] = true;
-						}
-						elseif($paySystemActions[$paySystemItem['ACTION_FILE']]['ACTIVE'] === true && !$paySystemActions[$paySystemItem['ACTION_FILE']]['DELIMITER'])
-						{
-							$paySystemActions[$paySystemItem['ACTION_FILE']]['ITEMS'][] = [
-								'DELIMITER' => true,
-							];
-							$paySystemActions[$paySystemItem['ACTION_FILE']]['DELIMITER'] = true;
-						}
-
-						$paySystemActions[$paySystemItem['ACTION_FILE']]['PS_MODE'] = false;
-
-						$link = $paySystemPath.http_build_query($queryParams);
-						$paySystemActions[$paySystemItem['ACTION_FILE']]['ITEMS'][] = [
-							'NAME' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_PAYSYSTEM_SETTINGS', [
-								'#PAYSYSTEM_NAME#' => htmlspecialcharsbx($paySystemItem['NAME'])
-							]),
-							'LINK' => $link
-						];
-					}
-				}
-			}
-			else
-			{
-				$handlerModeList = $this->getHandlerModeList($paySystemHandler);
-				if ($handlerModeList)
-				{
-					foreach ($paySystemMode as $psMode)
-					{
-						if (in_array($psMode, $handlerModeList))
-						{
-							$paySystemActions[$paySystemHandler]['PS_MODE'] = true;
-							$paySystemActions[$paySystemHandler]['ACTIVE'][$psMode] = false;
-							$paySystemActions[$paySystemHandler]['ITEMS'][$psMode] = [];
-						}
-					}
-				}
-				else
-				{
-					$paySystemActions[$paySystemHandler] = [
-						'ACTIVE' => false,
-						'PS_MODE' => false,
-					];
-				}
-			}
-		}
-
-		if ($paySystemActions)
-		{
-			$paySystemActions = $this->getPaySystemMenu($paySystemActions);
-		}
-
-		$queryParams = [
-			'lang' => LANGUAGE_ID,
-			'publicSidePanel' => 'Y',
-			'CREATE' => 'Y',
-		];
-
-		$paySystemItems = [];
-		foreach ($paySystemActions as $handler => $paySystem)
-		{
-			if (empty($paySystem) && (!in_array($handler, $paySystemPanel)))
-			{
-				continue;
-			}
-
-			$isActive = false;
-			$title = Loc::getMessage('SALESCENTER_CONTROL_PANEL_PAYSYSTEM_'.strtoupper($handler).'_TITLE');
-
-			if ($paySystem)
-			{
-				$isPsMode = $paySystem['PS_MODE'];
-				if ($isPsMode)
-				{
-					foreach ($paySystem['ITEMS'] as $psMode => $paySystemItem)
-					{
-						if (!isset($paySystemPanel[$handler]))
-						{
-							continue;
-						}
-
-						$type = $psMode;
-						$isActive = $paySystemActions[$handler]['ACTIVE'][$psMode];
-						if (!$isActive && (!in_array($psMode, $paySystemPanel[$handler])))
-						{
-							continue;
-						}
-
-						if (empty($paySystemItem) && (!in_array($psMode, $paySystemPanel[$handler])))
-						{
-							continue;
-						}
-
-						$title = Loc::getMessage('SALESCENTER_CONTROL_PANEL_PAYSYSTEM_'.strtoupper($handler).'_'.strtoupper($psMode).'_TITLE');
-
-						$paySystemItems[] = [
-							'id' => $handler.'_'.$psMode,
-							'sort' => (isset($paySystemSortList[$handler][$psMode]) ? $paySystemSortList[$handler][$psMode] : 100),
-							'title' => $title,
-							'image' => $this->getImagePath().$handler.'_'.$psMode.'.svg',
-							'itemSelectedColor' => $paySystemColorList[$handler][$psMode],
-							'itemSelected' => $isActive,
-							'itemSelectedImage' => $this->getImagePath().$handler.'_'.$psMode.'_s.svg',
-							'data' => [
-								'type' => 'paysystem',
-								'connectPath' => $paySystemPath.http_build_query(
-									array_merge(
-										$queryParams,
-										[
-											'ACTION_FILE' => $handler,
-											'PS_MODE' => $psMode,
-										]
-									)
-								),
-								'menuItems' => $paySystemItem,
-								'showMenu' => !empty($paySystemItem),
-								'paySystemType' => $type,
-							],
-						];
-					}
-				}
-				else
-				{
-					$isActive = $paySystemActions[$handler]['ACTIVE'];
-
-					if (!$isActive && (!in_array($handler, $paySystemPanel)))
-					{
-						continue;
-					}
-					$type = $handler;
-
-					$paySystemItems[] = [
-						'id' => $handler,
-						'sort' => (isset($paySystemSortList[$handler]) ? $paySystemSortList[$handler] : 100),
-						'title' => $title,
-						'image' => $this->getImagePath().$handler.'.svg',
-						'itemSelectedColor' => $paySystemColorList[$handler],
-						'itemSelected' => $isActive,
-						'itemSelectedImage' => $this->getImagePath().$handler.'_s.svg',
-						'data' => [
-							'type' => 'paysystem',
-							'connectPath' => $paySystemPath.http_build_query(array_merge($queryParams, ['ACTION_FILE' => $handler])),
-							'menuItems' => $paySystem['ITEMS'],
-							'showMenu' => !empty($paySystem['ITEMS']),
-							'paySystemType' => $type,
-						],
-					];
-				}
-			}
-			else
-			{
-				$type = $handler;
-				$paySystemItems[] = [
-					'id' => $handler,
-					'sort' => (isset($paySystemSortList[$handler]) ? $paySystemSortList[$handler] : 100),
-					'title' => $title,
-					'image' => $this->getImagePath().$handler.'.svg',
-					'itemSelectedColor' => $paySystemColorList[$handler],
-					'itemSelected' => $isActive,
-					'itemSelectedImage' => $this->getImagePath().$handler.'_s.svg',
-					'data' => [
-						'type' => 'paysystem',
-						'connectPath' => $paySystemPath.http_build_query(array_merge($queryParams, ['ACTION_FILE' => $handler])),
-						'menuItems' => [],
-						'showMenu' => false,
-						'paySystemType' => $type,
-					],
-				];
-			}
-		}
-
-		sortByColumn($paySystemItems, ["sort" => SORT_ASC]);
-
-		return $paySystemItems;
-	}
-
-	/**
-	 * @return array|mixed
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 */
-	private function getYandexCheckoutEmbeddedPaySystem()
-	{
-		$paySystemPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.paysystem');
-		$paySystemPath = getLocalPath('components'.$paySystemPath.'/slider.php')."?";
-
-		$handler = "yandexcheckout";
-		$psMode = "embedded";
-
-		$handlerModeList = $this->getHandlerModeList($handler);
-		if (!in_array($psMode, $handlerModeList))
-		{
-			return [];
-		}
-
-		$paySystemIterator = Sale\PaySystem\Manager::getList([
-			'select' => ['ID', 'ACTIVE', 'NAME', 'ACTION_FILE', 'PS_MODE'],
-			'filter' => [
-				'=ACTION_FILE' => $handler,
-				'=PS_MODE' => $psMode,
-			],
-			'order' => ['ACTIVE' => 'DESC', 'ID' => 'ASC'],
-		]);
-
-		$paySystemActions = $paySystemList = [];
-		foreach ($paySystemIterator as $paySystem)
-		{
-			$paySystemList[$paySystem['ACTION_FILE']][] = $paySystem;
-		}
-
-
-		if (!$this->isPaySystemHandlerExist($handler))
-		{
-			return [];
-		}
-
-		$paySystemItems = $paySystemList[$handler];
-		if ($paySystemItems)
-		{
-			foreach ($paySystemItems as $paySystemItem)
-			{
-				$queryParams = [
-					'lang' => LANGUAGE_ID,
-					'publicSidePanel' => 'Y',
-					'ID' => $paySystemItem['ID'],
-					'ACTION_FILE' => $paySystemItem['ACTION_FILE'],
-					'PS_MODE' => $paySystemItem['PS_MODE'],
-				];
-
-				if(!empty($paySystemItem['PS_MODE']))
-				{
-					if (!isset($paySystemActions[$paySystemItem['ACTION_FILE']]['ACTIVE'][$paySystemItem['PS_MODE']]))
-					{
-						$paySystemActions[$paySystemItem['ACTION_FILE']]['ACTIVE'][$paySystemItem['PS_MODE']] = false;
-						$paySystemActions[$paySystemItem['ACTION_FILE']]['DELIMITER'][$paySystemItem['PS_MODE']] = false;
-					}
-					if ($paySystemItem['ACTIVE'] === 'Y')
-					{
-						$paySystemActions[$paySystemItem['ACTION_FILE']]['ACTIVE'][$paySystemItem['PS_MODE']] = true;
-					}
-					elseif($paySystemActions[$paySystemItem['ACTION_FILE']]['ACTIVE'][$paySystemItem['PS_MODE']] === true && !$paySystemActions[$paySystemItem['ACTION_FILE']]['DELIMITER'][$paySystemItem['PS_MODE']])
-					{
-						$paySystemActions[$paySystemItem['ACTION_FILE']]['ITEMS'][$paySystemItem['PS_MODE']][] = [
-							'DELIMITER' => true,
-						];
-						$paySystemActions[$paySystemItem['ACTION_FILE']]['DELIMITER'][$paySystemItem['PS_MODE']] = true;
-					}
-
-					$paySystemActions[$paySystemItem['ACTION_FILE']]['PS_MODE'] = true;
-
-					$link = $paySystemPath.http_build_query($queryParams);
-					$paySystemActions[$paySystemItem['ACTION_FILE']]['ITEMS'][$paySystemItem['PS_MODE']][] = [
-						'NAME' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_PAYSYSTEM_SETTINGS', [
-							'#PAYSYSTEM_NAME#' => htmlspecialcharsbx($paySystemItem['NAME'])
-						]),
-						'LINK' => $link
-					];
-				}
-			}
-		}
-		else
-		{
-			$handlerModeList = $this->getHandlerModeList($handler);
-			if ($handlerModeList)
-			{
-				if (in_array($psMode, $handlerModeList))
-				{
-					$paySystemActions[$handler]['PS_MODE'] = true;
-					$paySystemActions[$handler]['ACTIVE'][$psMode] = false;
-					$paySystemActions[$handler]['ITEMS'][$psMode] = [];
-				}
-			}
-			else
-			{
-				$paySystemActions[$handler] = [
-					'ACTIVE' => false,
-					'PS_MODE' => false,
-				];
-			}
-		}
-
-		$paySystemFinalActions = [];
-		if ($paySystemActions)
-		{
-			$paySystemFinalActions = [
-				"applepay" => $this->getPaySystemMenu($paySystemActions, ['EMBEDDED_TYPE' => 'applepay']),
-				"googlepay" => $this->getPaySystemMenu($paySystemActions, ['EMBEDDED_TYPE' => 'googlepay']),
-			];
-		}
-
-		$queryParams = [
-			'lang' => LANGUAGE_ID,
-			'publicSidePanel' => 'Y',
-			'CREATE' => 'Y',
-		];
-
-		$isActive = $paySystemActions[$handler]['ACTIVE'][$psMode] ?? false;
-		$menuItems = $paySystemActions[$handler]['ITEMS'][$psMode] ?? [];
-		$showMenu = $menuItems ? true : false;
-
-		$paySystemItems = [
-			[
-				'id' => $handler,
-				'sort' => 2000,
-				'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_PAYSYSTEM_YANDEXCHECKOUT_EMBEDDED_APPLEPAY_TITLE'),
-				'image' => $this->getImagePath().'yandexcheckout_embedded_applepay.svg',
-				'itemSelectedColor' => "#69809F",
-				'itemSelected' => $isActive,
-				'itemSelectedImage' => $this->getImagePath().'yandexcheckout_embedded_applepay_s.svg',
-				'data' => [
-					'type' => 'paysystem',
-					'connectPath' => $paySystemPath.http_build_query(
-						array_merge(
-							$queryParams,
-							[
-								'ACTION_FILE' => $handler,
-								'PS_MODE' => $psMode,
-								'EMBEDDED_TYPE' => 'applepay',
-							]
-						)
-					),
-					'menuItems' => $paySystemFinalActions['applepay'][$handler]['ITEMS'][$psMode] ?? [],
-					'showMenu' => $showMenu,
-					'paySystemType' => $psMode,
-					'additionalParams' => ['EMBEDDED_TYPE' => 'applepay'],
-				],
-			],
-			[
-				'id' => $handler,
-				'sort' => 2100,
-				'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_PAYSYSTEM_YANDEXCHECKOUT_EMBEDDED_GOOGLEPAY_TITLE'),
-				'image' => $this->getImagePath().'yandexcheckout_embedded_googlepay.svg',
-				'itemSelectedColor' => "#397CED",
-				'itemSelected' => $isActive,
-				'itemSelectedImage' => $this->getImagePath().'yandexcheckout_embedded_googlepay_s.svg',
-				'data' => [
-					'type' => 'paysystem',
-					'connectPath' => $paySystemPath.http_build_query(
-						array_merge(
-							$queryParams,
-							[
-								'ACTION_FILE' => $handler,
-								'PS_MODE' => $psMode,
-								'EMBEDDED_TYPE' => 'googlepay',
-							]
-						)
-					),
-					'menuItems' => $paySystemFinalActions['googlepay'][$handler]['ITEMS'][$psMode] ?? [],
-					'showMenu' => $showMenu,
-					'paySystemType' => $psMode,
-					'additionalParams' => ['EMBEDDED_TYPE' => 'googlepay'],
-				],
-			]
-		];
-
-		return $paySystemItems;
-	}
-
-	/**
-	 * @param $handler
-	 * @return array
-	 */
-	private function getHandlerModeList($handler)
-	{
-		/** @var Sale\PaySystem\BaseServiceHandler $className */
-		$className = Sale\PaySystem\Manager::getClassNameFromPath($handler);
-		if (!class_exists($className))
-		{
-			$documentRoot = \Bitrix\Main\Application::getDocumentRoot();
-			$path = Sale\PaySystem\Manager::getPathToHandlerFolder($handler);
-			$fullPath = $documentRoot.$path.'/handler.php';
-			if ($path && \Bitrix\Main\IO\File::isFileExists($fullPath))
-			{
-				require_once $fullPath;
-			}
-		}
-
-		$handlerModeList = [];
-		if (class_exists($className))
-		{
-			$handlerModeList = $className::getHandlerModeList();
-			if ($handlerModeList)
-			{
-				$handlerModeList = array_keys($handlerModeList);
-			}
-		}
-
-		return $handlerModeList;
-	}
-
-	/**
-	 * @return array
-	 */
-	private function getPaySystemExtraItems()
-	{
-		$paySystemPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.paysystem.panel');
-		$paySystemPath = getLocalPath('components'.$paySystemPath.'/slider.php');
-		$paySystemPath = new \Bitrix\Main\Web\Uri($paySystemPath);
-		$paySystemPath->addParams([
-			'analyticsLabel' => 'salescenterClickPaymentTile',
-			'type' => 'extra',
-		]);
-
-		return [
-			[
-				'id' => 'paysystem',
-				'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_PAYSYSTEM_SELECT'),
-				'image' => $this->getImagePath().'paysystem.svg',
-				'selectedColor' => "#E8A312",
-				'selected' => false,
-				'selectedImage' => $this->getImagePath().'paysystem_s.svg',
-				'data' => [
-					'type' => 'paysystem_extra',
-					'connectPath' => $paySystemPath->getLocator(),
-				]
-			]
-		];
-	}
-
-	/**
-	 * @param array $paySystemActions
-	 * @param array $additionalQueryParams
-	 * @return array
-	 */
-	private function getPaySystemMenu(array $paySystemActions, $additionalQueryParams = [])
-	{
-		$paySystemPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.paysystem');
-		$paySystemPath = getLocalPath('components'.$paySystemPath.'/slider.php')."?";
-
-		$name = Loc::getMessage('SALESCENTER_CONTROL_PANEL_PAYSYSTEM_ADD');
-		foreach ($paySystemActions as $handler => $paySystems)
-		{
-			if (!$paySystems || empty($paySystems['ITEMS']))
-			{
-				continue;
-			}
-
-			$queryParams = [
-				'lang' => LANGUAGE_ID,
-				'publicSidePanel' => 'Y',
-				'CREATE' => 'Y',
-				'ACTION_FILE' => strtolower($handler)
-			];
-			if ($additionalQueryParams)
-			{
-				$queryParams = array_merge($queryParams, $additionalQueryParams);
-			}
-
-			if ($paySystems['PS_MODE'])
-			{
-				foreach ($paySystems['ITEMS'] as $psMode => $paySystem)
-				{
-					if (!$paySystem)
-					{
-						continue;
-					}
-
-					$queryParams['PS_MODE'] = $psMode;
-					$link = $paySystemPath.http_build_query($queryParams);
-					array_unshift($paySystemActions[$handler]['ITEMS'][$psMode],
-						[
-							'NAME' => $name,
-							'LINK' => $link
-						],
-						[
-							'DELIMITER' => true
-						]
-					);
-				}
-			}
-			else
-			{
-				$link = $paySystemPath.http_build_query($queryParams);
-				array_unshift($paySystemActions[$handler]['ITEMS'],
-					[
-						'NAME' => $name,
-						'LINK' => $link
-					],
-					[
-						'DELIMITER' => true
-					]
-				);
-			}
-		}
-
-		return $paySystemActions;
-	}
-
-	/**
-	 * @param $handler
-	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 */
-	protected function isPaySystemHandlerExist($handler)
-	{
-		$handlerDirectories = Sale\PaySystem\Manager::getHandlerDirectories();
-		if (Bitrix\Main\IO\File::isFileExists($_SERVER['DOCUMENT_ROOT'].$handlerDirectories['SYSTEM'].$handler.'/handler.php'))
-		{
-			return true;
-		}
-
-		return false;
-	}
-
-	/**
-	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	protected function getDeliveryItems()
-	{
-		$deliveryPanelItems = [];
-
-		$currentDeliveries = $this->getCurrentDeliveries();
-		$deliveryTypes = $this->getDeliveryTypes();
-		foreach ($deliveryTypes as $deliveryType)
-		{
-			$isSelected = false;
-			switch ($deliveryType['TYPE'])
-			{
-				case '\Bitrix\Sale\Delivery\Services\Configurable':
-					$isSelectedConfigurable = [
-						'pickup' => false,
-						'courier' => false,
-					];
-					$configurableItems = [];
-					foreach ($currentDeliveries[$deliveryType['TYPE']]['ITEMS'] as $item)
-					{
-						$stores = Sale\Delivery\ExtraServices\Manager::getStoresFields($item["ID"], false);
-						if ($stores)
-						{
-							if ($item['ACTIVE'] === 'Y')
-							{
-								$isSelectedConfigurable['pickup'] = true;
-							}
-							$configurableItems['pickup'][] = $item;
-						}
-						else
-						{
-							if ($item['ACTIVE'] === 'Y')
-							{
-								$isSelectedConfigurable['courier'] = true;
-							}
-							$configurableItems['courier'][] = $item;
-						}
-					}
-
-					$deliveryPanelItems[] = [
-						'id' => 'pickup',
-						'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_DELIVERY_PICKUP'),
-						'image' => $this->getImagePath().'pickup.svg',
-						'itemSelectedColor' => '#0F629B',
-						'itemSelected' => $isSelectedConfigurable['pickup'],
-						'itemSelectedImage' => $this->getImagePath().'pickup_s.svg',
-						'data' => [
-							'type' => 'delivery',
-							'connectPath' => $deliveryType['LINK'],
-							'menuItems' => $this->getDeliveryMenu($deliveryType['TYPE'], 'PICKUP'),
-							'showMenu' => (isset($configurableItems['pickup'])),
-						],
-					];
-
-					$deliveryPanelItems[] = [
-						'id' => 'courier',
-						'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_DELIVERY_COURIER'),
-						'image' => $this->getImagePath().'courier.svg',
-						'itemSelectedColor' => '#10629B',
-						'itemSelected' => $isSelectedConfigurable['courier'],
-						'itemSelectedImage' => $this->getImagePath().'courier_s.svg',
-						'data' => [
-							'type' => 'delivery',
-							'connectPath' => $deliveryType['LINK'],
-							'menuItems' => $this->getDeliveryMenu($deliveryType['TYPE'], 'COURIER'),
-							'showMenu' => (isset($configurableItems['courier'])),
-						],
-					];
-
-					break;
-				case '\Sale\Handlers\Delivery\AdditionalHandler':
-					if ($deliveryType['SERVICE_TYPE'] == 'RUSPOST')
-					{
-						if (isset($currentDeliveries[$deliveryType['TYPE']])
-							&& in_array($deliveryType['SERVICE_TYPE'], $currentDeliveries[$deliveryType['TYPE']]['TYPE'])
-						)
-						{
-							foreach ($currentDeliveries[$deliveryType['TYPE']]['ITEMS'] as $item)
-							{
-								if ($item['CONFIG']['MAIN']['SERVICE_TYPE'] !== 'RUSPOST')
-								{
-									continue;
-								}
-
-								if ($item['ACTIVE'] === 'Y')
-								{
-									$isSelected = true;
-								}
-							}
-						}
-
-						$deliveryPanelItems[] = [
-							'id' => 'ruspost',
-							'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_DELIVERY_RUS_POST'),
-							'image' => $this->getImagePath().'pochta.svg',
-							'itemSelectedColor' => '#0055A5',
-							'itemSelected' => $isSelected,
-							'itemSelectedImage' => $this->getImagePath().'pochta_s.svg',
-							'data' => [
-								'type' => 'delivery',
-								'connectPath' => $deliveryType['LINK'],
-								'menuItems' => $this->getDeliveryMenu($deliveryType['TYPE'], 'RUSPOST'),
-								'showMenu' => (isset($currentDeliveries[$deliveryType['TYPE']]['ITEMS'])),
-							],
-						];
-					}
-					elseif ($deliveryType['SERVICE_TYPE'] == 'DPD')
-					{
-						if (isset($currentDeliveries[$deliveryType['TYPE']])
-							&& in_array($deliveryType['SERVICE_TYPE'], $currentDeliveries[$deliveryType['TYPE']]['TYPE'])
-						)
-						{
-							foreach ($currentDeliveries[$deliveryType['TYPE']]['ITEMS'] as $item)
-							{
-								if ($item['CONFIG']['MAIN']['SERVICE_TYPE'] !== 'DPD')
-								{
-									continue;
-								}
-
-								if ($item['ACTIVE'] === 'Y')
-								{
-									$isSelected = true;
-								}
-							}
-						}
-
-						if ($isSelected)
-						{
-							$deliveryPanelItems[] = [
-								'id' => 'dpd',
-								'title' => htmlspecialcharsbx($deliveryType['NAME']),
-								'image' => $this->getImagePath().'dpd.svg',
-								'itemSelected' => $isSelected,
-								'itemSelectedColor' => "#DC0032",
-								'itemSelectedImage' => $this->getImagePath().'dpd_s.svg',
-								'data' => [
-									'type' => 'delivery',
-									'connectPath' => $deliveryType['LINK'],
-									'menuItems' => $this->getDeliveryMenu($deliveryType['TYPE'], 'DPD'),
-									'showMenu' => (isset($currentDeliveries[$deliveryType['TYPE']]['ITEMS'])),
-								],
-							];
-						}
-					}
-					elseif ($deliveryType['SERVICE_TYPE'] == 'CDEK')
-					{
-						if (isset($currentDeliveries[$deliveryType['TYPE']])
-							&& in_array($deliveryType['SERVICE_TYPE'], $currentDeliveries[$deliveryType['TYPE']]['TYPE'])
-						)
-						{
-							foreach ($currentDeliveries[$deliveryType['TYPE']]['ITEMS'] as $item)
-							{
-								if ($item['CONFIG']['MAIN']['SERVICE_TYPE'] !== 'CDEK')
-								{
-									continue;
-								}
-
-								if ($item['ACTIVE'] === 'Y')
-								{
-									$isSelected = true;
-								}
-							}
-						}
-
-						if ($isSelected)
-						{
-							$deliveryPanelItems[] = [
-								'id' => 'cdek',
-								'title' => htmlspecialcharsbx($deliveryType['NAME']),
-								'image' => $this->getImagePath().'cdek.svg',
-								'itemSelected' => $isSelected,
-								'itemSelectedColor' => "#57A52C",
-								'itemSelectedImage' => $this->getImagePath().'cdek_s.svg',
-								'data' => [
-									'type' => 'delivery',
-									'connectPath' => $deliveryType['LINK'],
-									'menuItems' => $this->getDeliveryMenu($deliveryType['TYPE'], 'CDEK'),
-									'showMenu' => (isset($currentDeliveries[$deliveryType['TYPE']]['ITEMS'])),
-								],
-							];
-						}
-					}
-
-					break;
-				case '\Sale\Handlers\Delivery\SpsrHandler':
-					if (isset($currentDeliveries[$deliveryType['TYPE']]))
-					{
-						foreach ($currentDeliveries[$deliveryType['TYPE']]['ITEMS'] as $item)
-						{
-							if ($item['ACTIVE'] === 'Y')
-							{
-								$isSelected = true;
-							}
-						}
-					}
-
-					if ($isSelected)
-					{
-						$deliveryPanelItems[] = [
-							'id' => 'spsr',
-							'title' => htmlspecialcharsbx($deliveryType['NAME']),
-							'image' => $this->getImagePath().'spsr_express.svg',
-							'itemSelected' => $isSelected,
-							'itemSelectedColor' => "#013E57",
-							'itemSelectedImage' => $this->getImagePath().'spsr_express_s.svg',
-							'data' => [
-								'type' => 'delivery',
-								'connectPath' => $deliveryType['LINK'],
-								'menuItems' => $this->getDeliveryMenu($deliveryType['TYPE'], 'SPSR'),
-								'showMenu' => (isset($currentDeliveries[$deliveryType['TYPE']]['ITEMS'])),
-							],
-						];
-					}
-
-					break;
-				case '\Sale\Handlers\Delivery\SimpleHandler':
-					if (isset($currentDeliveries[$deliveryType['TYPE']]))
-					{
-						foreach ($currentDeliveries[$deliveryType['TYPE']]['ITEMS'] as $item)
-						{
-							if ($item['ACTIVE'] === 'Y')
-							{
-								$isSelected = true;
-							}
-						}
-					}
-
-					if ($isSelected)
-					{
-						$deliveryPanelItems[] = [
-							'id' => 'simple',
-							'title' => htmlspecialcharsbx($deliveryType['NAME']),
-							'image' => $this->getImagePath().'by_location.svg',
-							'itemSelected' => $isSelected,
-							'itemSelectedColor' => "#177CE2",
-							'itemSelectedImage' => $this->getImagePath().'by_location_s.svg',
-							'data' => [
-								'type' => 'delivery',
-								'connectPath' => $deliveryType['LINK'],
-								'menuItems' => $this->getDeliveryMenu($deliveryType['TYPE'], 'SIMPLE'),
-								'showMenu' => (isset($currentDeliveries[$deliveryType['TYPE']]['ITEMS'])),
-							],
-						];
-					}
-					break;
-			}
-		}
-
-		return $deliveryPanelItems;
-	}
-
-	/**
-	 * @return array
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	protected function getDeliveryTypes()
-	{
-		$classNamesList = \Bitrix\Sale\Delivery\Services\Manager::getHandlersList();
-		$classesToExclude = $this->getDeliveryTypesToExclude();
-
-		$deliveryTypes = [];
-
-		/** @var Bitrix\Sale\Delivery\Services\Base $class */
-		foreach($classNamesList as $class)
-		{
-			if(in_array($class, $classesToExclude) || $class::isProfile())
-				continue;
-
-			$supportedServices = $class::getSupportedServicesList();
-			if(is_array($supportedServices) && !empty($supportedServices))
-			{
-				if (
-					(empty($supportedServices['ERRORS']) || empty($supportedServices['NOTES']))
-					&& is_array($supportedServices)
-				)
-				{
-					foreach($supportedServices as $srvType => $srvParams)
-					{
-						if(!empty($srvParams["NAME"]))
-						{
-							$queryParams = [
-								'lang' => LANGUAGE_ID,
-								'PARENT_ID' => 0,
-								'CREATE' => 'Y',
-								'CLASS_NAME' => $class,
-								'SERVICE_TYPE' => $srvType,
-								'publicSidePanel' => 'Y'
-							];
-
-							$editUrl = $this->sefFolder."sale_delivery_service_edit/?".http_build_query($queryParams);
-							$deliveryTypes[] = [
-								"TYPE" => $class,
-								"SERVICE_TYPE" => $srvType,
-								"NAME" => htmlspecialcharsbx($srvParams["NAME"]),
-								"LINK" => $editUrl
-							];
-						}
-					}
-				}
-			}
-			else
-			{
-				$queryParams = [
-					'lang' => LANGUAGE_ID,
-					'PARENT_ID' => 0,
-					'CREATE' => 'Y',
-					'CLASS_NAME' => $class,
-					'publicSidePanel' => 'Y'
-				];
-
-				$editUrl = $this->sefFolder."sale_delivery_service_edit/?".http_build_query($queryParams);
-				$deliveryTypes[] = [
-					"TYPE" => $class,
-					"NAME" => $class::getClassTitle(),
-					"LINK" => $editUrl
-				];
-			}
-		}
-
-		sortByColumn($deliveryTypes, array("NAME" => SORT_ASC));
-
-		return $deliveryTypes;
-	}
-
-	/**
-	 * @return array
-	 */
-	protected function getDeliveryTypesToExclude()
-	{
-		return [
-			'\Bitrix\Sale\Delivery\Services\Automatic',
-			'\Bitrix\Sale\Delivery\Services\EmptyDeliveryService',
-			'\Bitrix\Sale\Delivery\Services\Group'
-		];
-	}
-
-	/**
-	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	protected function getCurrentDeliveries()
-	{
-		$currentDeliveries = [];
-
-		\Bitrix\Sale\Delivery\Services\Manager::getHandlersList();
-		$deliveryList = Sale\Delivery\Services\Table::getList([
-			"select" => ['ID', 'ACTIVE', 'CONFIG', 'CLASS_NAME']
-		])->fetchAll();
-
-		foreach ($deliveryList as $delivery)
-		{
-			/** @var \Bitrix\Sale\Delivery\Services\Base $class */
-			$class = $delivery['CLASS_NAME'];
-			if($class::isProfile())
-			{
-				continue;
-			}
-
-			$supportedServices = $class::getSupportedServicesList();
-			if(is_array($supportedServices) && !empty($supportedServices))
-			{
-				if (
-					(empty($supportedServices['ERRORS']) || empty($supportedServices['NOTES']))
-					&& is_array($supportedServices)
-				)
-				{
-					foreach ($supportedServices as $srvType => $srvParams)
-					{
-						if ($srvType === $delivery['CONFIG']['MAIN']['SERVICE_TYPE'])
-						{
-							$currentDeliveries[$delivery['CLASS_NAME']]['TYPE'][] = $srvType;
-							$currentDeliveries[$delivery['CLASS_NAME']]['ITEMS'][] = $delivery;
-						}
-					}
-				}
-			}
-			else
-			{
-				$currentDeliveries[$delivery['CLASS_NAME']]['ITEMS'][] = $delivery;
-			}
-		}
-
-		return $currentDeliveries;
-	}
-
-	/**
-	 * @param $class
-	 * @param $type
-	 * @return array
-	 */
-	protected function getDeliveryMenu($class, $type)
-	{
-		$deliveryPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.delivery.panel');
-		$deliveryPath = getLocalPath('components'.$deliveryPath.'/slider.php');
-
-		$deliveryPathAdd = '/shop/settings/sale_delivery_service_edit/?';
-		$queryEdit = [
-			'lang' => LANGUAGE_ID,
-			'PARENT_ID' => 0,
-			'CREATE' => 'Y',
-			'publicSidePanel' => 'Y',
-			'CLASS_NAME' => $class,
-			'SERVICE_TYPE' => $type,
-		];
-
-		$queryList = [
-			'show_delivery_list' => 'Y',
-			'CLASS_NAME' => $class,
-			'SERVICE_TYPE' => $type,
-		];
-
-		$menuItems = [
-			[
-				'NAME' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_DELIVERY_ADD'),
-				'LINK' => $deliveryPathAdd.http_build_query($queryEdit)
-			],
-			[
-				'DELIMITER' => true
-			],
-			[
-				'NAME' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_DELIVERY_LIST'),
-				'LINK' => $deliveryPath."?".http_build_query($queryList),
-				'FILTER' => [
-					'CLASS_NAME' => $class,
-				],
-			]
-		];
-
-		return $menuItems;
-	}
-
-	/**
-	 * @param array $filter
-	 */
-	public function setDeliveryListFilterAction(array $filter)
-	{
-		if (empty($filter))
-		{
-			return;
-		}
-
-		$filterId = 'tmp_filter';
-
-		$filterOption = new \Bitrix\Main\UI\Filter\Options($this->deliveryListTableId);
-		$filterData = $filterOption->getPresets();
-
-		$filterData[$filterId] = $filterData['default_filter'];
-		$filterData[$filterId]['filter_rows'] = implode(',', array_keys($filter));
-		$filterData[$filterId]['fields'] = $filter;
-
-		$filterOption->setDefaultPreset($filterId);
-		$filterOption->setPresets($filterData);
-		$filterOption->save();
-	}
-
-	/**
-	 * @return array
-	 */
-	protected function getDeliveryExtraItems()
-	{
-		$deliveryPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.delivery.panel');
-		$deliveryPath = getLocalPath('components'.$deliveryPath.'/slider.php');
-		$deliveryPathEdit = '/shop/settings/sale_delivery_service_edit/?';
-
-		$queryEdit = [
-			'lang' => LANGUAGE_ID,
-			'PARENT_ID' => 0,
-			'CLASS_NAME' => '\Bitrix\Sale\Delivery\Services\Configurable',
-			'CREATE' => 'Y',
-			'publicSidePanel' => 'Y'
-		];
-
-		$link = $deliveryPathEdit.http_build_query($queryEdit);
-
-		return [
-			[
-				'id' => 'delivery',
-				'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_DELIVERY_SELECT'),
-				'image' => $this->getImagePath().'delivery.svg',
-				'selectedColor' => "#f00",
-				'selected' => false,
-				'selectedImage' => $this->getImagePath().'delivery_s.svg',
-				'data' => [
-					'type' => 'delivery_extra',
-					'connectPath' => $deliveryPath
-				]
-			],
-			[
-				'id' => 'create',
-				'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_DELIVERY_CREATE'),
-				'image' => $this->getImagePath().'create.svg',
-				'selectedColor' => "#f00",
-				'selected' => false,
-				'selectedImage' => $this->getImagePath().'create_s.svg',
-				'data' => [
-					'type' => 'delivery_extra',
-					'connectPath' => $link,
-				]
-			]
-		];
-	}
-
-	/**
-	 * @param $paySystemId
-	 * @param $actionFile
-	 * @param $psMode
-	 * @param array $additionalParams
-	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 */
-	public function reloadPaySystemItemAction($paySystemId = null, $actionFile = null, $psMode = null, $additionalParams = [])
-	{
-		Loader::includeModule('sale');
-
-		if ($paySystemId)
-		{
-			$paySystem = Sale\PaySystem\Manager::getById($paySystemId);
-			if ($paySystem)
-			{
-				$actionFile = $paySystem['ACTION_FILE'];
-				$psMode = $paySystem['PS_MODE'];
-			}
-		}
-
-		if (!$actionFile)
-		{
-			return [
-				'menuItems' => [],
-				'itemSelected' => false,
-				'showMenu' => false
-			];
-		}
-
-		$paySystemPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.paysystem');
-		$paySystemPath = getLocalPath('components'.$paySystemPath.'/slider.php')."?";
-		// $paySystemPath = '/shop/settings/sale_pay_system_edit/?';
-
-		$filter = [
-			'=ACTION_FILE' => $actionFile
-		];
-		if ($psMode)
-		{
-			$filter['=PS_MODE'] = $psMode;
-		}
-
-		$paySystemList = Sale\PaySystem\Manager::getList([
-			'select' => ['ID', 'ACTIVE', 'NAME', 'ACTION_FILE', 'PS_MODE'],
-			'filter' => $filter,
-			'order' => ['ACTIVE' => 'DESC', 'ID' => 'ASC'],
-		])->fetchAll();
-
-		$menuItems = [];
-		$isDelimiterAdded = $isActive = false;
-		foreach ($paySystemList as $paySystem)
-		{
-			$queryParams = [
-				'lang' => LANGUAGE_ID,
-				'publicSidePanel' => 'Y',
-				'ID' => $paySystem['ID'],
-			];
-
-			$link = $paySystemPath.http_build_query($queryParams);
-			$isPsMode = (!empty($paySystem['PS_MODE']));
-
-			if ($paySystem['ACTIVE'] === 'Y')
-			{
-				$isActive = true;
-			}
-			elseif($isActive && !$isDelimiterAdded)
-			{
-				$isDelimiterAdded = true;
-				$menuItems['PAY_SYSTEM'][] = [
-					'DELIMITER' => true,
-				];
-			}
-
-			$menuItems['PS_MODE'] = $isPsMode;
-			$menuItems['PAY_SYSTEM'][] = [
-				'NAME' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_PAYSYSTEM_SETTINGS', [
-					'#PAYSYSTEM_NAME#' => htmlspecialcharsbx($paySystem['NAME'])
-				]),
-				'LINK' => $link
-			];
-		}
-
-		if ($menuItems)
-		{
-			$queryParams = [
-				'lang' => LANGUAGE_ID,
-				'publicSidePanel' => 'Y',
-				'CREATE' => 'Y',
-				'ACTION_FILE' => strtolower($actionFile),
-			];
-			if ($additionalParams)
-			{
-				$queryParams = array_merge($queryParams, $additionalParams);
-			}
-
-			$name = Loc::getMessage('SALESCENTER_CONTROL_PANEL_PAYSYSTEM_ADD');
-			if ($menuItems['PS_MODE'])
-			{
-				$queryParams['PS_MODE'] = strtolower($psMode);
-			}
-			$link = $paySystemPath.http_build_query($queryParams);
-			array_unshift($menuItems['PAY_SYSTEM'],
-				[
-					'NAME' => $name,
-					'LINK' => $link
-				],
-				[
-					'DELIMITER' => true
-				]
-			);
-		}
-
-		return [
-			'itemSelected' => $isActive,
-			'menuItems' => (isset($menuItems['PAY_SYSTEM']) ? $menuItems['PAY_SYSTEM'] : []),
-			'showMenu' => isset($menuItems['PAY_SYSTEM']),
-		];
-	}
-
-	/**
-	 * @param $className
-	 * @param null $serviceType
-	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	public function reloadDeliveryItemAction($className, $serviceType = null)
-	{
-		Loader::includeModule('sale');
-
-		if (!$className)
-		{
-			return [
-				'menuItems' => []
-			];
-		}
-
-		\Bitrix\Sale\Delivery\Services\Manager::getHandlersList();
-		$deliveryList = Sale\Delivery\Services\Table::getList([
-			'select' => ['ID', 'ACTIVE', 'CONFIG', 'CLASS_NAME'],
-			'filter' => ['=CLASS_NAME' => $className],
-		])->fetchAll();
-
-		$menuItems = [];
-		$isActive = false;
-		foreach ($deliveryList as $delivery)
-		{
-			if (isset($delivery['CONFIG']['MAIN']['SERVICE_TYPE']) && $serviceType)
-			{
-				if ($delivery['CONFIG']['MAIN']['SERVICE_TYPE'] !== $serviceType)
-				{
-					continue;
-				}
-			}
-
-			if ($delivery['CLASS_NAME'] === '\Bitrix\Sale\Delivery\Services\Configurable')
-			{
-				if ($serviceType === 'PICKUP')
-				{
-					$stores = Sale\Delivery\ExtraServices\Manager::getStoresFields($delivery["ID"], false);
-					if (!$stores)
-					{
-						continue;
-					}
-				}
-			}
-
-			if ($delivery['ACTIVE'] === 'Y')
-			{
-				$isActive = true;
-			}
-
-			$menuItems = $this->getDeliveryMenu($delivery['CLASS_NAME'], $serviceType);
-		}
-
-		return [
-			'itemSelected' => $isActive,
-			'menuItems' => $menuItems,
-			'showMenu' => isset($menuItems),
-		];
-	}
-
-	/**
-	 * @return array
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
-	 */
-	public function reloadUserConsentAction()
-	{
-		$userConsentSettingPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.userconsent');
-		$userConsentSettingPath = getLocalPath('components'.$userConsentSettingPath.'/slider.php');
-
-		$menuItems = [];
-		$userConsent = 0;
-		if ($this->isUserConsentActive() === 'Y')
-		{
-			$userConsent = $this->getUserConsent();
-			if ($userConsent === false)
-			{
-				$userConsent = $this->getDefaultUserConsent();
-			}
-
-			if ($userConsent)
-			{
-				$userConsentUrl = "/settings/configs/userconsent/consents/{$userConsent}/?AGREEMENT_ID={$userConsent}&apply_filter=Y";
-
-				$menuItems = [
-					[
-						'NAME' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_USERCONSENT_EDIT'),
-						'LINK' => $userConsentSettingPath,
-					],
-					[
-						'NAME' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_USERCONSENT_LIST'),
-						'LINK' => $userConsentUrl,
-					]
-				];
-			}
-		}
-
-		return [
-			'itemSelected' => (bool)$userConsent,
-			'menuItems' => $menuItems
-		];
 	}
 
 	/**
@@ -2191,5 +935,24 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 	protected function getImagePath()
 	{
 		return $this->__path.'/templates/.default/images/';
+	}
+
+	private function getZone()
+	{
+		if (Main\ModuleManager::isModuleInstalled('bitrix24'))
+		{
+			$zone = \CBitrix24::getPortalZone();
+		}
+		else
+		{
+			$iterator = Main\Localization\LanguageTable::getList([
+				'select' => ['ID'],
+				'filter' => ['=DEF' => 'Y', '=ACTIVE' => 'Y']
+			]);
+			$row = $iterator->fetch();
+			$zone = $row['ID'];
+		}
+
+		return $zone;
 	}
 }

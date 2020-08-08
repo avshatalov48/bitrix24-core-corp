@@ -4,7 +4,7 @@
  *
  * @package bitrix
  * @subpackage imopenlines
- * @copyright 2001-2019 Bitrix
+ * @copyright 2001-2020 Bitrix
  */
 
 // widget files
@@ -32,24 +32,20 @@ import {PullClient} from "pull.client";
 // ui
 import {Vue} from "ui.vue";
 import {VuexBuilder} from "ui.vue.vuex";
-import {Cookie} from "./utils/cookie";
 
 // messenger files
-import {ApplicationModel, MessagesModel, DialoguesModel, UsersModel, FilesModel} from 'im.model';
-import {ApplicationController} from 'im.controller';
+import {Controller} from 'im.controller';
 import {
-	DeviceType,
-	DeviceOrientation,
 	RestMethod as ImRestMethod,
 	RestMethodHandler as ImRestMethodHandler,
 	EventType,
 	FileStatus
 } from 'im.const';
-import {Utils} from "im.utils";
-import {LocalStorage} from "im.tools.localstorage";
-import {ImRestAnswerHandler} from "im.provider.rest";
-import {ImPullCommandHandler} from "im.provider.pull";
-import {Logger} from "im.tools.logger";
+
+import {Cookie} from "im.lib.cookie";
+import {Utils} from "im.lib.utils";
+import {LocalStorage} from "im.lib.localstorage";
+import {Logger} from "im.lib.logger";
 
 // TODO change BX.Promise, BX.Main.Date to IMPORT
 
@@ -59,23 +55,52 @@ export class Widget
 
 	constructor(params = {})
 	{
+		this.params = params;
+
+		this.template = null;
+		this.rootNode = this.params.node || document.createElement('div');
+
+		this.messagesQueue = [];
+
 		this.ready = true;
 		this.widgetDataRequested = false;
-
 		this.offline = false;
 
-		this.code = params.code || '';
-		this.host = params.host || '';
-		this.language = params.language || 'en';
-		this.copyright = params.copyright !== false;
-		this.copyrightUrl = this.copyright && params.copyrightUrl? params.copyrightUrl: '';
-		this.buttonInstance = typeof params.buttonInstance === 'object' && params.buttonInstance !== null? params.buttonInstance: null;
+		this.inited = false;
+		this.initEventFired = false;
 
-		this.pageMode = typeof params.pageMode === 'object' && params.pageMode;
+		this.restClient = null;
+
+		this.userRegisterData = {};
+		this.customData = [];
+
+		this.subscribers = {};
+
+		this.configRequestXhr = null;
+
+		this.initParams()
+			.then(() => this.initRestClient())
+			.then(() => this.initPullClient())
+			.then(() => this.initCore())
+			.then(() => this.initWidget())
+			.then(() => this.initComplete())
+		;
+	}
+
+	initParams()
+	{
+		this.code = this.params.code || '';
+		this.host = this.params.host || '';
+		this.language = this.params.language || 'en';
+		this.copyright = this.params.copyright !== false;
+		this.copyrightUrl = this.copyright && this.params.copyrightUrl? this.params.copyrightUrl: '';
+		this.buttonInstance = typeof this.params.buttonInstance === 'object' && this.params.buttonInstance !== null? this.params.buttonInstance: null;
+
+		this.pageMode = typeof this.params.pageMode === 'object' && this.params.pageMode;
 		if (this.pageMode)
 		{
-			this.pageMode.useBitrixLocalize = params.pageMode.useBitrixLocalize === true;
-			this.pageMode.placeholder = document.getElementById(params.pageMode.placeholder);
+			this.pageMode.useBitrixLocalize = this.params.pageMode.useBitrixLocalize === true;
+			this.pageMode.placeholder = document.getElementById(this.params.pageMode.placeholder);
 		}
 
 		if (typeof this.code === 'string')
@@ -96,34 +121,12 @@ export class Widget
 			}
 		}
 
-		this.inited = false;
-		this.initEventFired = false;
-
-		this.restClient = null;
-
-		this.userRegisterData = {};
-		this.customData = [];
-
-		this.localize = this.pageMode && this.pageMode.useBitrixLocalize? window.BX.message: {};
-		if (typeof params.localize === 'object')
-		{
-			this.addLocalize(params.localize);
-		}
-
-		this.subscribers = {};
-		this.dateFormat = null;
-
-		this.messagesQueue = [];
-
-		this.configRequestXhr = null;
-
 		if (this.pageMode && this.pageMode.placeholder)
 		{
 			this.rootNode = this.pageMode.placeholder;
 		}
 		else
 		{
-			this.rootNode = document.createElement('div');
 			if (document.body.firstChild)
 			{
 				document.body.insertBefore(this.rootNode, document.body.firstChild);
@@ -134,28 +137,11 @@ export class Widget
 			}
 		}
 
-		this.template = null;
-
-		window.addEventListener('orientationchange', () =>
+		this.localize = this.pageMode && this.pageMode.useBitrixLocalize? window.BX.message: {};
+		if (typeof this.params.localize === 'object')
 		{
-			if (!this.store)
-			{
-				return;
-			}
-
-			this.store.commit('application/set', {device: {
-				orientation: Utils.device.getOrientation()
-			}});
-
-			if (
-				this.store.state.widget.common.showed
-				&& this.store.state.application.device.type === DeviceType.mobile
-				&& this.store.state.application.device.orientation === DeviceOrientation.horizontal
-			)
-			{
-				document.activeElement.blur();
-			}
-		});
+			this.addLocalize(this.params.localize);
+		}
 
 		let serverVariables = LocalStorage.get(this.getSiteId(), 0, 'serverVariables', false);
 		if (serverVariables)
@@ -163,6 +149,35 @@ export class Widget
 			this.addLocalize(serverVariables);
 		}
 
+		return new Promise((resolve, reject) => resolve());
+	}
+
+	initRestClient()
+	{
+		this.restClient = new WidgetRestClient({endpoint: this.host+'/rest'});
+
+		return new Promise((resolve, reject) => resolve());
+	}
+
+	initPullClient()
+	{
+		this.pullClient = new PullClient({
+			serverEnabled: true,
+			userId: 0,
+			siteId: this.getSiteId(),
+			restClient: this.restClient,
+			skipStorageInit: true,
+			configTimestamp: 0,
+			skipCheckRevision: true,
+			getPublicListMethod: 'imopenlines.widget.operator.get',
+		});
+		this.pullClientInited = false;
+
+		return new Promise((resolve, reject) => resolve());
+	}
+
+	initCore()
+	{
 		let widgetVariables = {
 			common: {
 				host: this.getHost(),
@@ -181,112 +196,47 @@ export class Widget
 				bxLivechatOffline: this.getLocalize('BX_LIVECHAT_OFFLINE'),
 			}
 		};
-		if (params.location && typeof LocationStyle[params.location] !== 'undefined')
-		{
-			widgetVariables.common.location = params.location;
-		}
 		if (
-			Utils.types.isPlainObject(params.styles)
-			&& (params.styles.backgroundColor || params.styles.iconColor)
+			Utils.types.isPlainObject(this.params.styles)
+			&& (this.params.styles.backgroundColor || this.params.styles.iconColor)
 		)
 		{
 			widgetVariables.styles = {};
-			if (params.styles.backgroundColor)
+			if (this.params.styles.backgroundColor)
 			{
-				widgetVariables.styles.backgroundColor = params.styles.backgroundColor;
+				widgetVariables.styles.backgroundColor = this.params.styles.backgroundColor;
 			}
-			if (params.styles.iconColor)
+			if (this.params.styles.iconColor)
 			{
-				widgetVariables.styles.iconColor = params.styles.iconColor;
+				widgetVariables.styles.iconColor = this.params.styles.iconColor;
 			}
 		}
 
-		this.controller = new ApplicationController();
-
-		let applicationVariables = {
-			common: {
-				host: this.getHost(),
-				siteId: this.getSiteId(),
-				languageId: this.language,
-			},
-			device: {
-				type: Utils.device.isMobile()? DeviceType.mobile: DeviceType.desktop,
-				orientation: Utils.device.getOrientation(),
-			},
-			dialog: {
-				messageLimit: this.controller.getDefaultMessageLimit()
-			},
-			saveException: {
-				common: {
-					host: null,
-					siteId: null,
-					languageId: null,
-				},
-				dialog: {
-					messageLimit: null,
-					messageExtraCount: null,
-				}
+		this.controller = new Controller({
+			host: this.getHost(),
+			siteId: this.getSiteId(),
+			userId: 0,
+			languageId: this.language,
+			pull: {client: this.pullClient},
+			rest: {client: this.restClient},
+			localize: this.localize,
+			vuexBuilder: {
+				database: !Utils.browser.isIe(),
+				databaseName: 'imol/widget',
+				databaseType: VuexBuilder.DatabaseType.localStorage,
+				models: [
+					WidgetModel.create().setVariables(widgetVariables)
+				],
 			}
-		};
+		});
 
-		let cacheDialogues = !Utils.browser.isIe();
-
-		new VuexBuilder()
-			.addModel(WidgetModel.create().setVariables(widgetVariables))
-			.addModel(ApplicationModel.create().setVariables(applicationVariables))
-			.addModel(DialoguesModel.create().useDatabase(cacheDialogues).setVariables({host: this.host}))
-			.addModel(MessagesModel.create().useDatabase(cacheDialogues))
-			.addModel(FilesModel.create().useDatabase(cacheDialogues).setVariables({host: this.host, default: {name: this.getLocalize('IM_MESSENGER_MESSAGE_FILE_DELETED')}}))
-			.addModel(UsersModel.create().useDatabase(cacheDialogues).setVariables({host: this.host, default: {name: this.getLocalize('IM_MESSENGER_MESSAGE_USER_ANONYM')}}))
-			.setDatabaseConfig({
-				name: 'imol/widget',
-				type: VuexBuilder.DatabaseType.localStorage,
-				siteId: this.getSiteId(),
-			})
-		.build(result => {
-
-			this.store = result.store;
-			this.storeCollector = result.builder;
-
-			this.initRestClient();
-
-			this.controller.setStore(this.store);
-			this.controller.setRestClient(this.restClient);
-
-			this.controller.setPrepareFilesBeforeSaveFunction(this.prepareFileData.bind(this));
-
-			this.imRestAnswer = ImRestAnswerHandler.create({
-				store: this.store,
-				controller: this.controller,
-			});
-			this.widgetRestAnswer = WidgetRestAnswerHandler.create({
-				widget: this,
-				store: this.store,
-				controller: this.controller,
-			});
-
-			window.dispatchEvent(new CustomEvent('onBitrixLiveChat', {detail: {
-				widget: this,
-				widgetCode: this.code,
-				widgetHost: this.host,
-			}}));
-
-			if (this.callStartFlag)
-			{
-				this.start();
-			}
-
-			if (this.pageMode || this.callOpenFlag)
-			{
-				this.open();
-			}
+		return new Promise((resolve, reject) => {
+			this.controller.ready().then(() => resolve());
 		});
 	}
 
-	initRestClient()
+	initWidget()
 	{
-		this.restClient = new WidgetRestClient({endpoint: this.host+'/rest'});
-
 		if (this.isUserRegistered())
 		{
 			this.restClient.setAuthId(this.getUserHash());
@@ -295,6 +245,44 @@ export class Widget
 		{
 			this.restClient.setAuthId(RestAuth.guest);
 		}
+
+		if (this.params.location && typeof LocationStyle[this.params.location] !== 'undefined')
+		{
+			this.controller.getStore().commit('widget/common', {location: this.params.location});
+		}
+
+		this.controller.application.setPrepareFilesBeforeSaveFunction(this.prepareFileData.bind(this));
+
+		this.controller.addRestAnswerHandler(
+			WidgetRestAnswerHandler.create({
+				widget: this,
+				store: this.controller.getStore(),
+				controller: this.controller,
+			})
+		);
+
+		return new Promise((resolve, reject) => resolve());
+	}
+
+	initComplete()
+	{
+		window.dispatchEvent(new CustomEvent('onBitrixLiveChat', {detail: {
+			widget: this,
+			widgetCode: this.code,
+			widgetHost: this.host,
+		}}));
+
+		if (this.callStartFlag)
+		{
+			this.start();
+		}
+
+		if (this.pageMode || this.callOpenFlag)
+		{
+			this.open();
+		}
+
+		return new Promise((resolve, reject) => resolve());
 	}
 
 	requestWidgetData()
@@ -325,11 +313,11 @@ export class Widget
 		}
 		else
 		{
-			this.restClient.callMethod(RestMethod.widgetConfigGet, {code: this.code}, (xhr) => {this.configRequestXhr = xhr}).then((result) => {
+			this.controller.restClient.callMethod(RestMethod.widgetConfigGet, {code: this.code}, (xhr) => {this.configRequestXhr = xhr}).then((result) => {
 				this.configRequestXhr = null;
 				this.clearError();
 
-				this.executeRestAnswer(RestMethod.widgetConfigGet, result);
+				this.controller.executeRestAnswer(RestMethod.widgetConfigGet, result);
 
 				if (!this.inited)
 				{
@@ -372,7 +360,7 @@ export class Widget
 		{
 			query[RestMethod.widgetDialogGet] = [RestMethod.widgetDialogGet, {config_id: this.getConfigId(), trace_data: this.getCrmTraceData(), custom_data: this.getCustomData()}];
 			query[ImRestMethodHandler.imChatGet] = [ImRestMethod.imChatGet, {dialog_id: '$result['+RestMethod.widgetDialogGet+'][dialogId]'}];
-			query[ImRestMethodHandler.imDialogMessagesGetInit] = [ImRestMethod.imDialogMessagesGet, {chat_id: '$result['+RestMethod.widgetDialogGet+'][chatId]', limit: this.controller.getRequestMessageLimit(), convert_text: 'Y'}];
+			query[ImRestMethodHandler.imDialogMessagesGetInit] = [ImRestMethod.imDialogMessagesGet, {chat_id: '$result['+RestMethod.widgetDialogGet+'][chatId]', limit: this.controller.application.getRequestMessageLimit(), convert_text: 'Y'}];
 		}
 		else
 		{
@@ -382,7 +370,7 @@ export class Widget
 			if (this.userRegisterData.hash || this.getUserHashCookie())
 			{
 				query[RestMethod.widgetDialogGet] = [RestMethod.widgetDialogGet, {config_id: '$result['+RestMethod.widgetConfigGet+'][configId]', trace_data: this.getCrmTraceData(), custom_data: this.getCustomData()}];
-				query[ImRestMethodHandler.imDialogMessagesGetInit] = [ImRestMethod.imDialogMessagesGet, {chat_id: '$result['+RestMethod.widgetDialogGet+'][chatId]', limit: this.controller.getRequestMessageLimit(), convert_text: 'Y'}];
+				query[ImRestMethodHandler.imDialogMessagesGetInit] = [ImRestMethod.imDialogMessagesGet, {chat_id: '$result['+RestMethod.widgetDialogGet+'][chatId]', limit: this.controller.application.getRequestMessageLimit(), convert_text: 'Y'}];
 			}
 			if (this.isUserAgreeConsent())
 			{
@@ -394,7 +382,7 @@ export class Widget
 		query[RestMethod.pullConfigGet] = [RestMethod.pullConfigGet, {'CACHE': 'N'}];
 		query[RestMethod.widgetUserGet] = [RestMethod.widgetUserGet, {}];
 
-		this.restClient.callBatch(query, (response) =>
+		this.controller.restClient.callBatch(query, (response) =>
 		{
 			if (!response)
 			{
@@ -411,7 +399,7 @@ export class Widget
 				this.setError(configGet.error().ex.error, configGet.error().ex.error_description);
 				return false;
 			}
-			this.executeRestAnswer(RestMethod.widgetConfigGet, configGet);
+			this.controller.executeRestAnswer(RestMethod.widgetConfigGet, configGet);
 
 			let userGetResult = response[RestMethod.widgetUserGet];
 			if (userGetResult.error())
@@ -420,7 +408,7 @@ export class Widget
 				this.setError(userGetResult.error().ex.error, userGetResult.error().ex.error_description);
 				return false;
 			}
-			this.executeRestAnswer(RestMethod.widgetUserGet, userGetResult);
+			this.controller.executeRestAnswer(RestMethod.widgetUserGet, userGetResult);
 
 			let chatGetResult = response[ImRestMethodHandler.imChatGet];
 			if (chatGetResult.error())
@@ -429,7 +417,7 @@ export class Widget
 				this.setError(chatGetResult.error().ex.error, chatGetResult.error().ex.error_description);
 				return false;
 			}
-			this.executeRestAnswer(ImRestMethodHandler.imChatGet, chatGetResult);
+			this.controller.executeRestAnswer(ImRestMethodHandler.imChatGet, chatGetResult);
 
 			let dialogGetResult = response[RestMethod.widgetDialogGet];
 			if (dialogGetResult)
@@ -441,7 +429,7 @@ export class Widget
 					return false;
 				}
 
-				this.executeRestAnswer(RestMethod.widgetDialogGet, dialogGetResult);
+				this.controller.executeRestAnswer(RestMethod.widgetDialogGet, dialogGetResult);
 			}
 
 			let dialogMessagesGetResult = response[ImRestMethodHandler.imDialogMessagesGetInit];
@@ -454,12 +442,12 @@ export class Widget
 					return false;
 				}
 
-				this.store.dispatch('dialogues/saveDialog', {
-					dialogId: this.controller.getDialogId(),
-					chatId: this.controller.getChatId(),
+				this.controller.getStore().dispatch('dialogues/saveDialog', {
+					dialogId: this.controller.application.getDialogId(),
+					chatId: this.controller.application.getChatId(),
 				});
 
-				this.executeRestAnswer(ImRestMethodHandler.imDialogMessagesGetInit, dialogMessagesGetResult);
+				this.controller.executeRestAnswer(ImRestMethodHandler.imDialogMessagesGetInit, dialogMessagesGetResult);
 			}
 
 			let userRegisterResult = response[RestMethod.widgetUserRegister];
@@ -471,7 +459,7 @@ export class Widget
 					this.setError(userRegisterResult.error().ex.error, userRegisterResult.error().ex.error_description);
 					return false;
 				}
-				this.executeRestAnswer(RestMethod.widgetUserRegister, userRegisterResult);
+				this.controller.executeRestAnswer(RestMethod.widgetUserRegister, userRegisterResult);
 			}
 
 			let timeShift = 0;
@@ -497,13 +485,7 @@ export class Widget
 			});
 
 			this.requestDataSend = false;
-		}, false, false, Utils.getLogTrackingParams({name: 'widget.init.config', dialog: this.controller.getDialogData()}));
-	}
-
-	executeRestAnswer(command, result, extra)
-	{
-		this.imRestAnswer.execute(command, result, extra);
-		this.widgetRestAnswer.execute(command, result, extra);
+		}, false, false, Utils.getLogTrackingParams({name: 'widget.init.config', dialog: this.controller.application.getDialogData()}));
 	}
 
 	prepareFileData(files)
@@ -561,15 +543,6 @@ export class Widget
 	{
 		let promise = new BX.Promise();
 
-		if (this.pullClient)
-		{
-			if (!this.pullClient.isConnected())
-			{
-				this.pullClient.scheduleReconnect();
-			}
-			promise.resolve(true);
-			return promise;
-		}
 		if (!this.getUserId() || !this.getSiteId() || !this.restClient)
 		{
 			promise.reject({
@@ -578,31 +551,35 @@ export class Widget
 			return promise;
 		}
 
-		this.pullClient = new PullClient({
-			serverEnabled: true,
+		if (this.pullClientInited)
+		{
+			if (!this.pullClient.isConnected())
+			{
+				this.pullClient.scheduleReconnect();
+			}
+			promise.resolve(true);
+			return promise;
+		}
+
+		this.controller.userId = this.getUserId();
+		this.pullClient.userId = this.getUserId();
+		this.pullClient.configTimestamp = config? config.server.config_timestamp: 0;
+		this.pullClient.skipStorageInit = false;
+		this.pullClient.storage = PullClient.StorageManager({
 			userId: this.getUserId(),
-			siteId: this.getSiteId(),
-			restClient: this.restClient,
-			configTimestamp: config? config.server.config_timestamp: 0,
-			skipCheckRevision: true,
+			siteId: this.getSiteId()
 		});
 
 		this.pullClient.subscribe(
-			new ImPullCommandHandler({
-				store: this.store,
-				controller: this.controller,
-			})
-		);
-		this.pullClient.subscribe(
 			new WidgetImPullCommandHandler({
-				store: this.store,
+				store: this.controller.getStore(),
 				controller: this.controller,
 				widget: this,
 			})
 		);
 		this.pullClient.subscribe(
 			new WidgetImopenlinesPullCommandHandler({
-				store: this.store,
+				store: this.controller.getStore(),
 				controller: this.controller,
 				widget: this,
 			})
@@ -638,6 +615,8 @@ export class Widget
 				ex: { error: 'PULL_CONNECTION_ERROR', error_description: 'Pull is not connected.'}
 			});
 		});
+
+		this.pullClientInited = true;
 
 		return promise;
 	}
@@ -690,56 +669,39 @@ export class Widget
 	{
 		if (this.template)
 		{
-			this.store.commit('widget/common', {showed: true});
+			this.controller.getStore().commit('widget/common', {showed: true});
 			return true;
 		}
 
 		this.rootNode.innerHTML = '';
 		this.rootNode.appendChild(document.createElement('div'));
 
-		const widgetContext = this;
-		const controller = this.controller;
-		const restClient = this.restClient;
-		const pullClient = this.pullClient || null;
+		let application = this;
 
-		this.template = Vue.create({
+		return this.controller.createVue(application, {
 			el: this.rootNode.firstChild,
-			store: this.store,
 			template: '<bx-livechat/>',
 			beforeCreate()
 			{
-				this.$bitrixWidget = widgetContext;
-				this.$bitrixController = controller;
-				this.$bitrixRestClient = restClient;
-				this.$bitrixPullClient = pullClient;
-				this.$bitrixMessages = widgetContext.localize;
-
-				widgetContext.sendEvent({
+				application.sendEvent({
 					type: SubscriptionType.widgetOpen,
 					data: {}
 				});
 			},
 			destroyed()
 			{
-				widgetContext.sendEvent({
+				application.sendEvent({
 					type: SubscriptionType.widgetClose,
 					data: {}
 				});
-
-				this.$bitrixWidget.template = null;
-				this.$bitrixWidget.templateAttached = false;
-				this.$bitrixWidget.rootNode.innerHTML = '';
-
-				this.$bitrixWidget = null;
-				this.$bitrixRestClient = null;
-				this.$bitrixPullClient = null;
-				this.$bitrixMessages = null;
+				application.template = null;
+				application.templateAttached = false;
+				application.rootNode.innerHTML = '';
 			}
+		}).then(vue => {
+			this.template = vue;
+			return new Promise((resolve, reject) => resolve());
 		});
-
-		this.controller.setTemplateEngine(this.template);
-
-		return true;
 	}
 
 	detachTemplate()
@@ -772,7 +734,7 @@ export class Widget
 
 		Logger.warn('addMessage', text, file);
 
-		if (!this.controller.isUnreadMessagesLoaded())
+		if (!this.controller.application.isUnreadMessagesLoaded())
 		{
 			this.sendMessage({id: 0, text, file});
 			this.processSendMessages();
@@ -780,7 +742,7 @@ export class Widget
 			return true;
 		}
 
-		this.store.commit('application/increaseDialogExtraCount');
+		this.controller.getStore().commit('application/increaseDialogExtraCount');
 
 		let params = {};
 		if (file)
@@ -788,7 +750,7 @@ export class Widget
 			params.FILE_ID = [file.id];
 		}
 
-		this.store.dispatch('messages/add', {
+		this.controller.getStore().dispatch('messages/add', {
 			chatId: this.getChatId(),
 			authorId: this.getUserId(),
 			text: text,
@@ -798,7 +760,7 @@ export class Widget
 
 			if (!this.isDialogStart())
 			{
-				this.store.commit('widget/common', {dialogStart:true});
+				this.controller.getStore().commit('widget/common', {dialogStart:true});
 			}
 
 			this.messagesQueue.push({
@@ -838,13 +800,13 @@ export class Widget
 			fileType = 'image';
 		}
 
-		if (!this.controller.isUnreadMessagesLoaded())
+		if (!this.controller.application.isUnreadMessagesLoaded())
 		{
 			this.addMessage('', {id: 0, source: fileInput});
 			return true;
 		}
 
-		this.store.dispatch('files/add', {
+		this.controller.getStore().dispatch('files/add', {
 			chatId: this.getChatId(),
 			authorId: this.getUserId(),
 			name: file.name,
@@ -854,7 +816,7 @@ export class Widget
 			image: false,
 			status: FileStatus.upload,
 			progress: 0,
-			authorName: this.controller.getCurrentUser().name,
+			authorName: this.controller.application.getCurrentUser().name,
 			urlPreview: "",
 		}).then(fileId => this.addMessage('', {id: fileId, source: fileInput}));
 
@@ -870,11 +832,11 @@ export class Widget
 			{
 				element.xhr.abort();
 			}
-			this.store.dispatch('messages/delete', {
+			this.controller.getStore().dispatch('messages/delete', {
 				chatId: this.getChatId(),
 				id: element.id,
 			}).then(() => {
-				this.store.dispatch('files/delete', {
+				this.controller.getStore().dispatch('files/delete', {
 					chatId: this.getChatId(),
 					id: element.file.id,
 				});
@@ -907,15 +869,15 @@ export class Widget
 
 	sendMessage(message)
 	{
-		this.controller.stopWriting();
+		this.controller.application.stopWriting();
 
-		let quiteId = this.store.getters['dialogues/getQuoteId'](this.getDialogId());
+		let quiteId = this.controller.getStore().getters['dialogues/getQuoteId'](this.getDialogId());
 		if (quiteId)
 		{
-			let quoteMessage = this.store.getters['messages/getMessage'](this.getChatId(), quiteId);
+			let quoteMessage = this.controller.getStore().getters['messages/getMessage'](this.getChatId(), quiteId);
 			if (quoteMessage)
 			{
-				let user = this.store.getters['users/get'](quoteMessage.authorId);
+				let user = this.controller.getStore().getters['users/get'](quoteMessage.authorId);
 
 				let newMessage = [];
 				newMessage.push("------------------------------------------------------");
@@ -931,7 +893,7 @@ export class Widget
 
 		message.chatId = this.getChatId();
 
-		this.restClient.callMethod(ImRestMethod.imMessageAdd, {
+		this.controller.restClient.callMethod(ImRestMethod.imMessageAdd, {
 			'TEMPLATE_ID': message.id,
 			'CHAT_ID': message.chatId,
 			'MESSAGE': message.text
@@ -940,9 +902,9 @@ export class Widget
 			data: {timMessageType: 'text'},
 			dialog: this.getDialogData()
 		})).then(response => {
-			this.executeRestAnswer(ImRestMethodHandler.imMessageAdd, response, message);
+			this.controller.executeRestAnswer(ImRestMethodHandler.imMessageAdd, response, message);
 		}).catch(error => {
-			this.executeRestAnswer(ImRestMethodHandler.imMessageAdd, error, message);
+			this.controller.executeRestAnswer(ImRestMethodHandler.imMessageAdd, error, message);
 		});
 
 		return true;
@@ -950,9 +912,9 @@ export class Widget
 
 	sendMessageWithFile(message)
 	{
-		this.controller.stopWriting();
+		this.controller.application.stopWriting();
 
-		let fileType = this.store.getters['files/get'](this.getChatId(), message.file.id, true).type;
+		let fileType = this.controller.getStore().getters['files/get'](this.getChatId(), message.file.id, true).type;
 
 		let diskFolderId = this.getDiskFolderId();
 
@@ -980,7 +942,7 @@ export class Widget
 			}];
 		}
 
-		this.restClient.callBatch(query, (response) =>
+		this.controller.restClient.callBatch(query, (response) =>
 		{
 			if (!response)
 			{
@@ -999,7 +961,7 @@ export class Widget
 					this.fileError(this.getChatId(), message.file.id, message.id);
 					return false;
 				}
-				this.executeRestAnswer(ImRestMethodHandler.imDiskFolderGet, diskFolderGet);
+				this.controller.executeRestAnswer(ImRestMethodHandler.imDiskFolderGet, diskFolderGet);
 			}
 
 			let diskId = 0;
@@ -1031,7 +993,7 @@ export class Widget
 
 			message.chatId = this.getChatId();
 
-			this.store.dispatch('files/update', {
+			this.controller.getStore().dispatch('files/update', {
 				chatId: message.chatId,
 				id: message.file.id,
 				fields: {
@@ -1058,7 +1020,7 @@ export class Widget
 
 	fileError(chatId, fileId, messageId = 0)
 	{
-		this.store.dispatch('files/update', {
+		this.controller.getStore().dispatch('files/update', {
 			chatId: chatId,
 			id: fileId,
 			fields: {
@@ -1068,7 +1030,7 @@ export class Widget
 		});
 		if (messageId)
 		{
-			this.store.dispatch('messages/actionError', {
+			this.controller.getStore().dispatch('messages/actionError', {
 				chatId: chatId,
 				id: messageId,
 				retry: false,
@@ -1078,7 +1040,7 @@ export class Widget
 
 	fileCommit(params, message)
 	{
-		this.restClient.callMethod(ImRestMethod.imDiskFileCommit, {
+		this.controller.restClient.callMethod(ImRestMethod.imDiskFileCommit, {
 			chat_id: params.chatId,
 			upload_id: params.uploadId,
 			message: params.messageText,
@@ -1089,36 +1051,36 @@ export class Widget
 			data: {timMessageType: params.fileType},
 			dialog: this.getDialogData()
 		})).then(response => {
-			this.executeRestAnswer(ImRestMethodHandler.imDiskFileCommit, response, message);
+			this.controller.executeRestAnswer(ImRestMethodHandler.imDiskFileCommit, response, message);
 		}).catch(error => {
-			this.executeRestAnswer(ImRestMethodHandler.imDiskFileCommit, error, message);
+			this.controller.executeRestAnswer(ImRestMethodHandler.imDiskFileCommit, error, message);
 		});
 
 		return true;
 	}
 
-	getDialogHistory(lastId, limit = this.controller.getRequestMessageLimit())
+	getDialogHistory(lastId, limit = this.controller.application.getRequestMessageLimit())
 	{
-		this.restClient.callMethod(ImRestMethod.imDialogMessagesGet, {
+		this.controller.restClient.callMethod(ImRestMethod.imDialogMessagesGet, {
 			'CHAT_ID': this.getChatId(),
 			'LAST_ID': lastId,
 			'LIMIT': limit,
 			'CONVERT_TEXT': 'Y'
 		}).then(result => {
-			this.executeRestAnswer(ImRestMethodHandler.imDialogMessagesGet, result);
+			this.controller.executeRestAnswer(ImRestMethodHandler.imDialogMessagesGet, result);
 			this.template.$emit(EventType.dialog.requestHistoryResult, {count: result.data().messages.length});
 		}).catch(result => {
 			this.template.$emit(EventType.dialog.requestHistoryResult, {error: result.error().ex});
 		});
 	}
 
-	getDialogUnread(lastId, limit = this.controller.getRequestMessageLimit())
+	getDialogUnread(lastId, limit = this.controller.application.getRequestMessageLimit())
 	{
 		const promise = new BX.Promise();
 
 		if (!lastId)
 		{
-			lastId = this.store.getters['messages/getLastId'](this.controller.getChatId());
+			lastId = this.controller.getStore().getters['messages/getLastId'](this.controller.application.getChatId());
 		}
 
 		if (!lastId)
@@ -1128,7 +1090,7 @@ export class Widget
 			return promise;
 		}
 
-		this.controller.readMessage(lastId, true, true).then(() =>
+		this.controller.application.readMessage(lastId, true, true).then(() =>
 		{
 			let query = {
 				[ImRestMethodHandler.imDialogRead]: [ImRestMethod.imDialogRead, {
@@ -1146,7 +1108,7 @@ export class Widget
 				}]
 			};
 
-			this.restClient.callBatch(query, (response) =>
+			this.controller.restClient.callBatch(query, (response) =>
 			{
 				if (!response)
 				{
@@ -1159,7 +1121,7 @@ export class Widget
 				let chatGetResult = response[ImRestMethodHandler.imChatGet];
 				if (!chatGetResult.error())
 				{
-					this.executeRestAnswer(ImRestMethodHandler.imChatGet, chatGetResult);
+					this.controller.executeRestAnswer(ImRestMethodHandler.imChatGet, chatGetResult);
 				}
 
 				let dialogMessageUnread = response[ImRestMethodHandler.imDialogMessagesGetUnread];
@@ -1169,7 +1131,7 @@ export class Widget
 				}
 				else
 				{
-					this.executeRestAnswer(ImRestMethodHandler.imDialogMessagesGetUnread, dialogMessageUnread);
+					this.controller.executeRestAnswer(ImRestMethodHandler.imDialogMessagesGetUnread, dialogMessageUnread);
 					this.template.$emit(EventType.dialog.requestUnreadResult, {
 						firstMessageId: dialogMessageUnread.data().messages.length > 0? dialogMessageUnread.data().messages[0].id: 0,
 						count: dialogMessageUnread.data().messages.length
@@ -1197,7 +1159,7 @@ export class Widget
 			sending: false
 		});
 
-		this.controller.setSendingMessageFlag(message.id);
+		this.controller.application.setSendingMessageFlag(message.id);
 
 		this.processSendMessages();
 	}
@@ -1209,13 +1171,13 @@ export class Widget
 			return false;
 		}
 
-		return this.controller.readMessage(messageId);
+		return this.controller.application.readMessage(messageId);
 	}
 
 	quoteMessage(id)
 	{
-		this.store.dispatch('dialogues/update', {
-			dialogId: this.controller.getDialogId(),
+		this.controller.getStore().dispatch('dialogues/update', {
+			dialogId: this.controller.application.getDialogId(),
 			fields: {
 				quoteId: id
 			}
@@ -1224,7 +1186,7 @@ export class Widget
 
 	reactMessage(id, reaction)
 	{
-		this.controller.reactMessage(id, reaction.type, reaction.action);
+		this.controller.application.reactMessage(id, reaction.type, reaction.action);
 	}
 
 	execMessageKeyboardCommand(data)
@@ -1236,7 +1198,7 @@ export class Widget
 
 		let {dialogId, messageId, botId, command, params} = data.params;
 
-		this.restClient.callMethod(ImRestMethod.imMessageCommand, {
+		this.controller.restClient.callMethod(ImRestMethod.imMessageCommand, {
 			'MESSAGE_ID': messageId,
 			'DIALOG_ID': dialogId,
 			'BOT_ID': botId,
@@ -1249,8 +1211,8 @@ export class Widget
 
 	quoteMessageClear()
 	{
-		this.store.dispatch('dialogues/update', {
-			dialogId: this.controller.getDialogId(),
+		this.controller.getStore().dispatch('dialogues/update', {
+			dialogId: this.controller.application.getDialogId(),
 			fields: {
 				quoteId: 0
 			}
@@ -1264,11 +1226,11 @@ export class Widget
 			return false;
 		}
 
-		this.restClient.callMethod(RestMethod.widgetVoteSend, {
+		this.controller.restClient.callMethod(RestMethod.widgetVoteSend, {
 			'SESSION_ID': this.getSessionId(),
 			'ACTION': result
 		}).catch((result) => {
-			this.store.commit('widget/dialog', {userVote: VoteType.none});
+			this.controller.getStore().commit('widget/dialog', {userVote: VoteType.none});
 		});
 
 		this.sendEvent({
@@ -1291,7 +1253,7 @@ export class Widget
 			}],
 			[RestMethod.widgetUserGet]: [RestMethod.widgetUserGet, {}]
 		};
-		this.restClient.callBatch(query, (response) =>
+		this.controller.restClient.callBatch(query, (response) =>
 		{
 			if (!response)
 			{
@@ -1307,7 +1269,7 @@ export class Widget
 				this.setError(userGetResult.error().ex.error, userGetResult.error().ex.error_description);
 				return false;
 			}
-			this.executeRestAnswer(RestMethod.widgetUserGet, userGetResult);
+			this.controller.executeRestAnswer(RestMethod.widgetUserGet, userGetResult);
 
 			this.sendEvent({
 				type: SubscriptionType.userForm,
@@ -1325,11 +1287,11 @@ export class Widget
 	{
 		result = result === true;
 
-		this.store.commit('widget/dialog', {userConsent: result});
+		this.controller.getStore().commit('widget/dialog', {userConsent: result});
 
 		if (result && this.isUserRegistered())
 		{
-			this.restClient.callMethod(RestMethod.widgetUserConsentApply, {
+			this.controller.restClient.callMethod(RestMethod.widgetUserConsentApply, {
 				config_id: this.getConfigId(),
 				consent_url: location.href
 			});
@@ -1342,7 +1304,7 @@ export class Widget
 
 	start()
 	{
-		if (!this.store)
+		if (!this.controller || !this.controller.getStore())
 		{
 			this.callStartFlag = true;
 			return true;
@@ -1359,7 +1321,7 @@ export class Widget
 	open(params = {})
 	{
 		clearTimeout(this.openTimeout);
-		if (!this.store)
+		if (!this.controller.getStore())
 		{
 			this.callOpenFlag = true;
 			return true;
@@ -1406,7 +1368,7 @@ export class Widget
 
 	showNotification(params)
 	{
-		if (!this.store)
+		if (!this.controller.getStore())
 		{
 			console.error('LiveChatWidget.showNotification: method can be called after fired event - onBitrixLiveChat');
 			return false;
@@ -1429,7 +1391,7 @@ export class Widget
 			data: {}
 		});
 
-		if (this.store.state.widget.common.reopen)
+		if (this.controller.getStore().state.widget.common.reopen)
 		{
 			this.open();
 		}
@@ -1456,7 +1418,7 @@ export class Widget
 
 	isConfigDataLoaded()
 	{
-		return this.store.state.widget.common.configId;
+		return this.controller.getStore().state.widget.common.configId;
 	}
 
 	isWidgetDataRequested()
@@ -1466,17 +1428,17 @@ export class Widget
 
 	isChatLoaded()
 	{
-		return this.store.state.application.dialog.chatId > 0;
+		return this.controller.getStore().state.application.dialog.chatId > 0;
 	}
 
 	isSessionActive()
 	{
-		return !this.store.state.widget.dialog.sessionClose;
+		return !this.controller.getStore().state.widget.dialog.sessionClose;
 	}
 
 	isUserAgreeConsent()
 	{
-		return this.store.state.widget.dialog.userConsent;
+		return this.controller.getStore().state.widget.dialog.userConsent;
 	}
 
 	getCrmTraceData()
@@ -1521,7 +1483,7 @@ export class Widget
 
 	isUserLoaded()
 	{
-		return this.store.state.widget.user.id > 0;
+		return this.controller.getStore().state.widget.user.id > 0;
 	}
 
 	getSiteId()
@@ -1536,42 +1498,42 @@ export class Widget
 
 	getConfigId()
 	{
-		return this.store.state.widget.common.configId;
+		return this.controller.getStore().state.widget.common.configId;
 	}
 
 	isDialogStart()
 	{
-		return this.store.state.widget.common.dialogStart;
+		return this.controller.getStore().state.widget.common.dialogStart;
 	}
 
 	getChatId()
 	{
-		return this.store.state.application.dialog.chatId;
+		return this.controller.getStore().state.application.dialog.chatId;
 	}
 
 	getDialogId()
 	{
-		return this.store.state.application.dialog.dialogId;
+		return this.controller.getStore().state.application.dialog.dialogId;
 	}
 
 	getDiskFolderId()
 	{
-		return this.store.state.application.dialog.diskFolderId;
+		return this.controller.getStore().state.application.dialog.diskFolderId;
 	}
 
 	getDialogData(dialogId = this.getDialogId())
 	{
-		return this.store.state.dialogues.collection[dialogId];
+		return this.controller.getStore().state.dialogues.collection[dialogId];
 	}
 
 	getSessionId()
 	{
-		return this.store.state.widget.dialog.sessionId;
+		return this.controller.getStore().state.widget.dialog.sessionId;
 	}
 
 	getUserHash()
 	{
-		return this.store.state.widget.user.hash;
+		return this.controller.getStore().state.widget.user.hash;
 	}
 
 	getUserHashCookie()
@@ -1597,18 +1559,18 @@ export class Widget
 
 	getUserId()
 	{
-		return this.store.state.widget.user.id;
+		return this.controller.getStore().state.widget.user.id;
 	}
 
 	getUserData()
 	{
-		if (!this.store)
+		if (!this.controller.getStore())
 		{
 			console.error('LiveChatWidget.getUserData: method can be called after fired event - onBitrixLiveChat');
 			return false;
 		}
 
-		return this.store.state.widget.user;
+		return this.controller.getStore().state.widget.user;
 	}
 
 	getUserRegisterFields()
@@ -1622,7 +1584,7 @@ export class Widget
 			'gender': this.userRegisterData.gender || '',
 			'position': this.userRegisterData.position || '',
 			'user_hash': this.userRegisterData.hash || this.getUserHashCookie() || '',
-			'consent_url': this.store.state.widget.common.consentUrl? location.href: '',
+			'consent_url': this.controller.getStore().state.widget.common.consentUrl? location.href: '',
 			'trace_data': this.getCrmTraceData(),
 			'custom_data': this.getCustomData()
 		}
@@ -1630,12 +1592,12 @@ export class Widget
 
 	getWidgetLocationCode()
 	{
-		return LocationStyle[this.store.state.widget.common.location];
+		return LocationStyle[this.controller.getStore().state.widget.common.location];
 	}
 
 	setUserRegisterData(params)
 	{
-		if (!this.store)
+		if (!this.controller.getStore())
 		{
 			console.error('LiveChatWidget.getUserData: method can be called after fired event - onBitrixLiveChat');
 			return false;
@@ -1689,15 +1651,15 @@ export class Widget
 
 	setNewAuthToken(authToken = '')
 	{
-		this.storeCollector.clearModelState();
+		this.controller.getStoreBuilder().clearModelState();
 		Cookie.set(null, 'LIVECHAT_HASH', '', {expires: 365*86400, path: '/'});
 
-		this.restClient.setAuthId(RestAuth.guest, authToken);
+		this.controller.restClient.setAuthId(RestAuth.guest, authToken);
 	}
 
 	setCustomData(params)
 	{
-		if (!this.store)
+		if (!this.controller.getStore())
 		{
 			console.error('LiveChatWidget.getUserData: method can be called after fired event - onBitrixLiveChat');
 			return false;
@@ -1755,7 +1717,7 @@ export class Widget
 			localizeDescription = description;
 		}
 
-		this.store.commit('application/set', {error: {
+		this.controller.getStore().commit('application/set', {error: {
 			active: true,
 			code,
 			description: localizeDescription
@@ -1764,7 +1726,7 @@ export class Widget
 
 	clearError()
 	{
-		this.store.commit('application/set', {error: {
+		this.controller.getStore().commit('application/set', {error: {
 			active: false,
 			code: '',
 			description: ''}

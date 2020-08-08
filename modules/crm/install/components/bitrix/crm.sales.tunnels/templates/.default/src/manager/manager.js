@@ -24,6 +24,7 @@ export default class Manager
 		tunnelScheme: TunnelScheme,
 		robotsUrl: string,
 		generatorUrl: string,
+		permissionEditUrl: string,
 		allowWrite: boolean,
 		canEditTunnels: boolean,
 		canAddCategory: boolean,
@@ -41,6 +42,7 @@ export default class Manager
 		this.categoriesOptions = options.categories;
 		this.robotsUrl = options.robotsUrl;
 		this.generatorUrl = options.generatorUrl;
+		this.permissionEditUrl = options.permissionEditUrl;
 		this.tunnelScheme = options.tunnelScheme;
 		this.allowWrite = Boolean(options.allowWrite);
 		this.canEditTunnels = Boolean(options.canEditTunnels);
@@ -207,6 +209,7 @@ export default class Manager
 				sort: 0,
 				robotsSettingsLink: this.robotsUrl,
 				generatorSettingsLink: this.generatorUrl,
+				permissionEditLink: this.permissionEditUrl,
 				lazy: true,
 				isAvailableGenerator: true,
 				showGeneratorRestrictionPopup: () => {},
@@ -264,9 +267,12 @@ export default class Manager
 			'default': options.IS_DEFAULT,
 			stages: options.STAGES,
 			sort: options.SORT,
+			access: options.ACCESS,
 			robotsSettingsLink: this.robotsUrl,
 			generatorSettingsLink: this.generatorUrl,
+			permissionEditLink: this.permissionEditUrl,
 			generatorsCount: options.RC_COUNT,
+			generatorsListUrl: options.RC_LIST_URL,
 			allowWrite: this.allowWrite,
 			canEditTunnels: this.canEditTunnels,
 			isAvailableGenerator: this.isAvailableGenerator,
@@ -299,6 +305,60 @@ export default class Manager
 						{
 							this.showErrorPopup(makeErrorMessageFromResponse({data}));
 						}
+					});
+			})
+			.subscribe('Category:access', (event) => {
+				const {categoryId, access} = event.data;
+
+				Backend
+					.accessCategory({
+						id: categoryId,
+						access : access,
+					})
+					.then(({data}) => {
+						if (data.success)
+						{
+							UI.Notification.Center.notify({
+								content: Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
+								autoHideDelay: 1500,
+								category: 'save',
+							});
+						}
+						else
+						{
+							this.showErrorPopup(makeErrorMessageFromResponse({data}));
+						}
+					}, ({errors}) => {
+						let data = [];
+						errors.forEach(item => data.push(item.message));
+						this.showErrorPopup(makeErrorMessageFromResponse({data : {errors : data}}));
+					});
+			})
+			.subscribe('Category:access:copy', (event) => {
+				const {categoryId, donorCategoryId} = event.data;
+
+				Backend
+					.copyAccessCategory({
+						id: categoryId,
+						donorId : donorCategoryId,
+					})
+					.then(({data}) => {
+						if (data.success)
+						{
+							UI.Notification.Center.notify({
+								content: Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
+								autoHideDelay: 1500,
+								category: 'save',
+							});
+						}
+						else
+						{
+							this.showErrorPopup(makeErrorMessageFromResponse({data}));
+						}
+					}, ({errors}) => {
+						let data = [];
+						errors.forEach(item => data.push(item.message));
+						this.showErrorPopup(makeErrorMessageFromResponse({data : {errors : data}}));
 					});
 			})
 			.subscribe('Category:remove', (event) => {

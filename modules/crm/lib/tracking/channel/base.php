@@ -31,6 +31,7 @@ class Base
 	const Callback = 'callback';
 	const Rest = 'rest';
 	const Order = 'order';
+	const SalesCenter = 'sales-center';
 	const FbLeadAds = 'fb-lead-ads';
 	const VkLeadAds = 'vk-lead-ads';
 
@@ -42,6 +43,9 @@ class Base
 
 	/**	@var Entity\Identificator\ComplexCollection|null $entities Entity collection. */
 	private $entities;
+
+	/**	@var Collection $channels Channel collection. */
+	private $channels;
 
 	/**
 	 * Return true if it is configured.
@@ -61,7 +65,7 @@ class Base
 	 */
 	public static function getNameByCode($code)
 	{
-		return Loc::getMessage('CRM_TRACKING_CHANNEL_BASE_NAME_' . strtoupper($code)) ?: $code;
+		return Loc::getMessage('CRM_TRACKING_CHANNEL_BASE_NAME_'.mb_strtoupper($code)) ?: $code;
 	}
 
 	/**
@@ -72,7 +76,7 @@ class Base
 	 */
 	public static function getGridNameByCode($code)
 	{
-		return Loc::getMessage('CRM_TRACKING_CHANNEL_BASE_GRID_NAME_' . strtoupper($code)) ?: self::getNameByCode($code);
+		return Loc::getMessage('CRM_TRACKING_CHANNEL_BASE_GRID_NAME_'.mb_strtoupper($code)) ?: self::getNameByCode($code);
 	}
 
 	/**
@@ -101,6 +105,21 @@ class Base
 	}
 
 	/**
+	 * Get channels.
+	 *
+	 * @return Collection
+	 */
+	public function getChannels()
+	{
+		if (!$this->channels)
+		{
+			$this->channels = new Collection();
+		}
+
+		return $this->channels;
+	}
+
+	/**
 	 * Return true if supports detecting trace.
 	 *
 	 * @return bool
@@ -116,6 +135,16 @@ class Base
 	 * @return bool
 	 */
 	public function isSupportEntityDetecting()
+	{
+		return $this instanceof Features\EntityDetectable;
+	}
+
+	/**
+	 * Return true if supports detecting channels.
+	 *
+	 * @return bool
+	 */
+	public function isSupportChannelDetecting()
 	{
 		return $this instanceof Features\EntityDetectable;
 	}

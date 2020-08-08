@@ -2,18 +2,32 @@
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-use Bitrix\Main\Loader,
+use Bitrix\Main,
+	Bitrix\Main\Loader,
 	Bitrix\Main\Localization\Loc,
-	Bitrix\Sale,
-	Bitrix\Sale\Delivery,
-	Bitrix\Main\Engine\Contract\Controllerable;
+	Bitrix\SalesCenter\Integration\RestManager,
+	Bitrix\SalesCenter\Integration\Bitrix24Manager,
+	Bitrix\Rest,
+	Bitrix\SalesCenter;
+use Bitrix\Sale\Delivery\Services\Table;
 
 /**
  * Class SalesCenterDeliveryPanel
  */
-class SalesCenterDeliveryPanel extends CBitrixComponent
+class SalesCenterDeliveryPanel extends CBitrixComponent implements Main\Engine\Contract\Controllerable
 {
+	private const MARKETPLACE_CATEGORY_DELIVERY = 'delivery';
+	private const TITLE_LENGTH_LIMIT = 50;
+
 	protected $deliveryPanelId = 'salescenter-extra-delivery';
+
+	/**
+	 * @return array
+	 */
+	public function configureActions()
+	{
+		return [];
+	}
 
 	/**
 	 * @param $arParams
@@ -22,6 +36,13 @@ class SalesCenterDeliveryPanel extends CBitrixComponent
 	public function onPrepareComponentParams($arParams)
 	{
 		return parent::onPrepareComponentParams($arParams);
+	}
+
+	protected function listKeysSignedParameters()
+	{
+		return [
+			'SEF_FOLDER',
+		];
 	}
 
 	/**
@@ -39,12 +60,44 @@ class SalesCenterDeliveryPanel extends CBitrixComponent
 		}
 		Loader::includeModule('sale');
 
-		$this->arResult['deliveryPanelParams'] = [
-			'id' => $this->deliveryPanelId,
-			'items' => $this->getDeliveryPanelItems(),
-		];
+		$this->prepareResult();
 
 		$this->includeComponentTemplate();
+	}
+
+	/**
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function prepareResult(): array
+	{
+		$internalItems = $this->getDeliveryPanelItems();
+
+		if (RestManager::getInstance()->isEnabled())
+		{
+			$recommendedItemCodeList = $this->getMarketplaceRecommendedItemCodeList();
+			$marketplaceItems = $this->getMarketplaceItems($recommendedItemCodeList);
+		}
+
+		$items = array_merge($internalItems, $marketplaceItems);
+
+		if (Bitrix24Manager::getInstance()->isEnabled())
+		{
+			$items[] = $this->getRecommendItem();
+		}
+
+		foreach ($this->getActionboxItems() as $actionboxItem)
+		{
+			$items[] = $actionboxItem;
+		}
+
+		$this->arResult['deliveryPanelParams'] = [
+			'id' => $this->deliveryPanelId,
+			'items' => $items,
+		];
+
+		return $this->arResult;
 	}
 
 	/**
@@ -57,357 +110,367 @@ class SalesCenterDeliveryPanel extends CBitrixComponent
 
 	/**
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws Main\SystemException
 	 */
-	protected function getDeliveryPanelItems()
+	private function getDeliveryPanelItems(): array
 	{
-		$deliveryPanelItems = [];
-		$imagePath = $this->__path.'/templates/.default/images/';
+		$result = [];
 
-		$currentDeliveries = $this->getCurrentDeliveries();
-		$deliveryTypes = $this->getDeliveryTypes();
-		foreach ($deliveryTypes as $deliveryType)
+		$handlers = (new SalesCenter\Delivery\Handlers\HandlersRepository())
+			->getCollection()
+			->getInstallableItems();
+
+		foreach ($handlers as $handler)
 		{
-			$isSelected = false;
-			if (!isset($currentDeliveries[$deliveryType['TYPE']]['TYPE'])
-				|| empty($currentDeliveries[$deliveryType['TYPE']]['TYPE'])
-			)
+			$menuItems = [
+				[
+					'NAME' => Loc::getMessage('SDP_SALESCENTER_DELIVERY_ADD'),
+					'LINK' => $handler->getInstallationLink()
+				],
+				[
+					'DELIMITER' => true
+				],
+			];
+
+			$filter = [
+				'=CLASS_NAME' => $handler->getHandlerClass(),
+			];
+
+			if ($handler->isRestHandler())
 			{
-				$currentDeliveries[$deliveryType['TYPE']]['TYPE'] = [];
+				$filter['%CONFIG'] = $handler->getRestHandlerCode();
 			}
 
-			if (!isset($currentDeliveries[$deliveryType['TYPE']]['ITEMS'])
-				|| empty($currentDeliveries[$deliveryType['TYPE']]['ITEMS'])
-			)
+			$existingItems = Table::getList(
+				[
+					'filter' => $filter,
+				]
+			);
+
+			foreach ($existingItems as $existingItem)
 			{
-				$currentDeliveries[$deliveryType['TYPE']]['ITEMS'] = [];
-			}
-
-			switch ($deliveryType['TYPE'])
-			{
-				case '\Sale\Handlers\Delivery\SpsrHandler':
-					if (isset($currentDeliveries[$deliveryType['TYPE']]))
-					{
-						foreach ($currentDeliveries[$deliveryType['TYPE']]['ITEMS'] as $item)
-						{
-							if ($item['ACTIVE'] === 'Y')
-							{
-								$isSelected = true;
-							}
-						}
-					}
-
-					$deliveryPanelItems[] = [
-						'id' => 'spsr',
-						'title' => $deliveryType['NAME'],
-						'image' => $imagePath.'spsr_express.svg',
-						'itemSelected' => $isSelected,
-						'itemSelectedColor' => "#013E57",
-						'itemSelectedImage' => $imagePath.'spsr_express_s.svg',
-						'data' => [
-							'type' => 'delivery',
-							'connectPath' => $deliveryType['LINK'],
-							'menuItems' => $this->getMenuItems($deliveryType['TYPE'], 'SPSR'),
-							'showMenu' => (isset($currentDeliveries[$deliveryType['TYPE']]['ITEMS'])),
-						],
-					];
-					break;
-				case '\Sale\Handlers\Delivery\AdditionalHandler':
-					if ($deliveryType['SERVICE_TYPE'] == 'DPD')
-					{
-						if (isset($currentDeliveries[$deliveryType['TYPE']])
-							&& in_array(
-								$deliveryType['SERVICE_TYPE'],
-								$currentDeliveries[$deliveryType['TYPE']]['TYPE']
-							)
-						)
-						{
-							foreach ($currentDeliveries[$deliveryType['TYPE']]['ITEMS'] as $item)
-							{
-								if ($item['CONFIG']['MAIN']['SERVICE_TYPE'] !== 'DPD')
-								{
-									continue;
-								}
-
-								if ($item['ACTIVE'] === 'Y')
-								{
-									$isSelected = true;
-								}
-							}
-						}
-
-						$deliveryPanelItems[] = [
-							'id' => 'dpd',
-							'title' => $deliveryType['NAME'],
-							'image' => $imagePath.'dpd.svg',
-							'itemSelected' => $isSelected,
-							'itemSelectedColor' => "#DC0032",
-							'itemSelectedImage' => $imagePath.'dpd_s.svg',
-							'data' => [
-								'type' => 'delivery',
-								'connectPath' => $deliveryType['LINK'],
-								'menuItems' => $this->getMenuItems($deliveryType['TYPE'], 'DPD'),
-								'showMenu' => (in_array('DPD', $currentDeliveries[$deliveryType['TYPE']]['TYPE']))
-							],
-						];
-					}
-					elseif ($deliveryType['SERVICE_TYPE'] == 'CDEK')
-					{
-						if (isset($currentDeliveries[$deliveryType['TYPE']])
-							&& in_array(
-								$deliveryType['SERVICE_TYPE'],
-								$currentDeliveries[$deliveryType['TYPE']]['TYPE']
-							)
-						)
-						{
-							foreach ($currentDeliveries[$deliveryType['TYPE']]['ITEMS'] as $item)
-							{
-								if ($item['CONFIG']['MAIN']['SERVICE_TYPE'] !== 'CDEK')
-								{
-									continue;
-								}
-
-								if ($item['ACTIVE'] === 'Y')
-								{
-									$isSelected = true;
-								}
-							}
-						}
-
-						$deliveryPanelItems[] = [
-							'id' => 'cdek',
-							'title' => $deliveryType['NAME'],
-							'image' => $imagePath.'cdek.svg',
-							'itemSelected' => $isSelected,
-							'itemSelectedColor' => "#57A52C",
-							'itemSelectedImage' => $imagePath.'cdek_s.svg',
-							'data' => [
-								'type' => 'delivery',
-								'connectPath' => $deliveryType['LINK'],
-								'menuItems' => $this->getMenuItems($deliveryType['TYPE'], 'CDEK'),
-								'showMenu' => (in_array('CDEK', $currentDeliveries[$deliveryType['TYPE']]['TYPE']))
-							],
-						];
-					}
-					break;
-				case '\Sale\Handlers\Delivery\SimpleHandler':
-					if (isset($currentDeliveries[$deliveryType['TYPE']]))
-					{
-						foreach ($currentDeliveries[$deliveryType['TYPE']]['ITEMS'] as $item)
-						{
-							if ($item['ACTIVE'] === 'Y')
-							{
-								$isSelected = true;
-							}
-						}
-					}
-
-					$deliveryPanelItems[] = [
-						'id' => 'simple',
-						'title' => $deliveryType['NAME'],
-						'image' => $imagePath.'by_location.svg',
-						'itemSelected' => $isSelected,
-						'itemSelectedColor' => "#177CE2",
-						'itemSelectedImage' => $imagePath.'by_location_s.svg',
-						'data' => [
-							'type' => 'delivery',
-							'connectPath' => $deliveryType['LINK'],
-							'menuItems' => $this->getMenuItems($deliveryType['TYPE'], 'SIMPLE'),
-							'showMenu' => (isset($currentDeliveries[$deliveryType['TYPE']]['ITEMS'])),
-						],
-					];
-					break;
-			}
-		}
-
-		return $deliveryPanelItems;
-	}
-
-	/**
-	 * @return array
-	 */
-	protected function getDeliveryTypesToExclude()
-	{
-		return [
-			'\Bitrix\Sale\Delivery\Services\Automatic',
-			'\Bitrix\Sale\Delivery\Services\Configurable',
-			'\Bitrix\Sale\Delivery\Services\EmptyDeliveryService',
-			'\Bitrix\Sale\Delivery\Services\Group'
-		];
-	}
-
-	/**
-	 * @return array
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	protected function getDeliveryTypes()
-	{
-		$classNamesList = Delivery\Services\Manager::getHandlersList();
-		$classesToExclude = $this->getDeliveryTypesToExclude();
-
-		$deliveryTypes = [];
-
-		/** @var Delivery\Services\Base $class */
-		foreach($classNamesList as $class)
-		{
-			if(in_array($class, $classesToExclude) || $class::isProfile())
-				continue;
-
-			$supportedServices = $class::getSupportedServicesList();
-
-			if(is_array($supportedServices) && !empty($supportedServices))
-			{
-				if (
-					(empty($supportedServices['ERRORS']) || empty($supportedServices['NOTES']))
-					&& is_array($supportedServices)
-				)
-				{
-					foreach($supportedServices as $srvType => $srvParams)
-					{
-						if ($srvType == 'RUSPOST')
-						{
-							continue;
-						}
-
-						if(!empty($srvParams["NAME"]))
-						{
-							$queryParams = [
-								'lang' => LANGUAGE_ID,
-								'PARENT_ID' => 0,
-								'CLASS_NAME' => $class,
-								'SERVICE_TYPE' => $srvType,
-								'publicSidePanel' => 'Y'
-							];
-
-							$editUrl = $this->arParams['SEF_FOLDER']."sale_delivery_service_edit/?".http_build_query($queryParams);
-							$deliveryTypes[] = [
-								"TYPE" => $class,
-								"SERVICE_TYPE" => $srvType,
-								"NAME" => $srvParams["NAME"],
-								"LINK" => $editUrl
-							];
-						}
-					}
-				}
-			}
-			else
-			{
-				$queryParams = [
-					'lang' => LANGUAGE_ID,
-					'PARENT_ID' => 0,
-					'CLASS_NAME' => $class,
-					'publicSidePanel' => 'Y'
-				];
-
-				$editUrl = $this->arParams['SEF_FOLDER']."sale_delivery_service_edit/?".http_build_query($queryParams);
-				$deliveryTypes[] = [
-					"TYPE" => $class,
-					"NAME" => $class::getClassTitle(),
-					"LINK" => $editUrl
+				$menuItems[] = [
+					'NAME' => sprintf(
+						'%s %s',
+						Loc::getMessage('SDP_SALESCENTER_DELIVERY_EDIT'),
+						$existingItem['NAME']
+					),
+					'LINK' => $handler->getEditLink($existingItem['ID'])
 				];
 			}
+
+			//$menuItems[] = $this->buildServiceListAdminLink($handler->getHandlerClass());
+
+			$result[] = [
+				'title' => $handler->getName(),
+				'image' => $handler->getImagePath(),
+				'itemSelectedImage' => $handler->getInstalledImagePath(),
+				'itemSelected' => $handler->isInstalled(),
+				'itemSelectedColor' => $handler->getInstalledColor(),
+				'data' => [
+					'type' => 'delivery',
+					'connectPath' => $handler->getInstallationLink(),
+					'menuItems' => $menuItems,
+					'showMenu' => ($existingItems->getSelectedRowsCount() > 0),
+					'hasOwnIcon' => true,
+				],
+			];
 		}
 
-		sortByColumn($deliveryTypes, array("NAME" => SORT_ASC));
-
-		return $deliveryTypes;
-	}
-
-	/**
-	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	protected function getCurrentDeliveries()
-	{
-		$currentDeliveries = [];
-
-		\Bitrix\Sale\Delivery\Services\Manager::getHandlersList();
-		$deliveryList = Sale\Delivery\Services\Table::getList([
-			"select" => ['ID', 'ACTIVE', 'CONFIG', 'CLASS_NAME']
-		])->fetchAll();
-
-		foreach ($deliveryList as $delivery)
-		{
-			/** @var \Bitrix\Sale\Delivery\Services\Base $class */
-			$class = $delivery['CLASS_NAME'];
-			if($class::isProfile())
-			{
-				continue;
-			}
-
-			$supportedServices = $class::getSupportedServicesList();
-			if(is_array($supportedServices) && !empty($supportedServices))
-			{
-				if (
-					(empty($supportedServices['ERRORS']) || empty($supportedServices['NOTES']))
-					&& is_array($supportedServices)
-				)
-				{
-					foreach ($supportedServices as $srvType => $srvParams)
-					{
-						if ($srvType === $delivery['CONFIG']['MAIN']['SERVICE_TYPE'])
-						{
-							$currentDeliveries[$delivery['CLASS_NAME']]['TYPE'][] = $srvType;
-							$currentDeliveries[$delivery['CLASS_NAME']]['ITEMS'][] = $delivery;
-						}
-					}
-				}
-			}
-			else
-			{
-				$currentDeliveries[$delivery['CLASS_NAME']]['ITEMS'][] = $delivery;
-			}
-		}
-
-		return $currentDeliveries;
+		return $result;
 	}
 
 	/**
 	 * @param $class
-	 * @param $type
 	 * @return array
 	 */
-	protected function getMenuItems($class, $type)
+	private function buildServiceListAdminLink($class)
 	{
 		$deliveryPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.delivery.panel');
 		$deliveryPath = getLocalPath('components'.$deliveryPath.'/slider.php');
 
-		$deliveryPathAdd = '/shop/settings/sale_delivery_service_edit/?';
-		$queryEdit = [
-			'lang' => LANGUAGE_ID,
-			'PARENT_ID' => 0,
-			'CREATE' => 'Y',
-			'publicSidePanel' => 'Y',
-			'CLASS_NAME' => $class,
-			'SERVICE_TYPE' => $type,
-		];
-
 		$queryList = [
 			'show_delivery_list' => 'Y',
 			'CLASS_NAME' => $class,
-			'SERVICE_TYPE' => $type,
 		];
 
-		$menuItems = [
-			[
-				'NAME' => Loc::getMessage('SDP_SALESCENTER_DELIVERY_ADD'),
-				'LINK' => $deliveryPathAdd.http_build_query($queryEdit)
+		return [
+			'NAME' => Loc::getMessage('SDP_SALESCENTER_DELIVERY_LIST'),
+			'LINK' => $deliveryPath."?".http_build_query($queryList),
+			'FILTER' => [
+				'CLASS_NAME' => $class,
 			],
-			[
-				'DELIMITER' => true
+		];
+	}
+
+	/**
+	 * @param array $filter
+	 */
+	public function setDeliveryListFilterAction(array $filter)
+	{
+		if (empty($filter))
+		{
+			return;
+		}
+
+		$filterId = 'tmp_filter';
+
+		$filterOption = new \Bitrix\Main\UI\Filter\Options('tbl_sale_delivery_list');
+		$filterData = $filterOption->getPresets();
+
+		$filterData[$filterId] = $filterData['default_filter'];
+		$filterData[$filterId]['filter_rows'] = implode(',', array_keys($filter));
+		$filterData[$filterId]['fields'] = $filter;
+
+		$filterOption->setDefaultPreset($filterId);
+		$filterOption->setPresets($filterData);
+		$filterOption->save();
+	}
+
+	/**
+	 * @param array $marketplaceItemCodeList
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function getMarketplaceItems(array $marketplaceItemCodeList): array
+	{
+		$installedApps = $this->getMarketplaceInstalledApps();
+		$marketplaceItemCodeList = array_unique(array_merge(array_keys($installedApps), $marketplaceItemCodeList));
+		$zone = $this->getZone();
+		$partnerItemList = [];
+
+		foreach($marketplaceItemCodeList as $marketplaceItemCode)
+		{
+			if ($marketplaceApp = RestManager::getInstance()->getMarketplaceAppByCode($marketplaceItemCode))
+			{
+				$title = $marketplaceApp['LANG'][$zone]['NAME']
+					?? $marketplaceApp['NAME']
+					?? current($marketplaceApp['LANG'])['NAME']
+					?? '';
+
+				if (!empty($marketplaceApp['ICON_PRIORITY']) || !empty($marketplaceApp['ICON']))
+				{
+					$hasOwnIcon = true;
+					$img = $marketplaceApp['ICON_PRIORITY'] ?: $marketplaceApp['ICON'];
+				}
+				else
+				{
+					$hasOwnIcon = false;
+					$img = $this->getImagePath().'marketplace_default.svg';
+				}
+
+				$partnerItemList[] = [
+					'id' => (array_key_exists($marketplaceItemCode, $installedApps)
+						? $installedApps[$marketplaceItemCode]['ID']
+						: $marketplaceApp['ID']
+					),
+					'title' => $this->getFormattedTitle($title),
+					'image' => $img,
+					'itemSelected' => array_key_exists($marketplaceItemCode, $installedApps),
+					'data' => [
+						'type' => 'marketplaceApp',
+						'code' => $marketplaceApp['CODE'],
+						'hasOwnIcon' => $hasOwnIcon,
+					],
+					'sort' => $marketplaceApp['ID'],
+				];
+			}
+		}
+
+		if ($partnerItemList)
+		{
+			Main\Type\Collection::sortByColumn($partnerItemList, ['sort' => SORT_ASC]);
+		}
+
+		return $partnerItemList;
+	}
+
+	/**
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function getMarketplaceInstalledApps(): array
+	{
+		static $marketplaceInstalledApps = [];
+		if(!empty($marketplaceInstalledApps))
+		{
+			return $marketplaceInstalledApps;
+		}
+
+		$marketplaceAppCodeList = RestManager::getInstance()->getMarketplaceAppCodeList(self::MARKETPLACE_CATEGORY_DELIVERY);
+		$appIterator = Rest\AppTable::getList([
+			'select' => [
+				'ID',
+				'CODE',
 			],
-			[
-				'NAME' => Loc::getMessage('SDP_SALESCENTER_DELIVERY_LIST'),
-				'LINK' => $deliveryPath."?".http_build_query($queryList),
-				'FILTER' => [
-					'CLASS_NAME' => $class,
-				],
+			'filter' => [
+				'=CODE' => $marketplaceAppCodeList,
+				'SCOPE' => '%sale%',
+				'=ACTIVE' => 'Y',
+			]
+		]);
+		while ($row = $appIterator->fetch())
+		{
+			$marketplaceInstalledApps[$row['CODE']] = $row;
+		}
+
+		return $marketplaceInstalledApps;
+	}
+
+	/**
+	 * @return array|string[]
+	 * @throws Main\SystemException
+	 */
+	private function getMarketplaceRecommendedItemCodeList(): array
+	{
+		$result = [];
+
+		$zone = $this->getZone();
+		$partnerItems = RestManager::getInstance()->getByTag([
+			RestManager::TAG_DELIVERY,
+			RestManager::TAG_DELIVERY_RECOMMENDED,
+			$zone
+		]);
+		if (!empty($partnerItems['ITEMS']))
+		{
+			foreach ($partnerItems['ITEMS'] as $partnerItem)
+			{
+				$result[] = $partnerItem['CODE'];
+			}
+		}
+
+		return $result;
+	}
+
+	private function getRecommendItem(): array
+	{
+		$feedbackPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.feedback');
+		$feedbackPath = getLocalPath('components'.$feedbackPath.'/slider.php');
+		$feedbackPath = new Main\Web\Uri($feedbackPath);
+
+		$queryParams = [
+			'lang' => LANGUAGE_ID,
+			'feedback_type' => 'delivery_offer',
+		];
+		$feedbackPath->addParams($queryParams);
+
+		return [
+			'id' => 'recommend',
+			'title' => Loc::getMessage('SDP_SALESCENTER_DELIVERY_RECOMMEND'),
+			'image' => $this->getImagePath().'recommend.svg',
+			'data' => [
+				'type' => 'recommend',
+				'connectPath' => $feedbackPath->getLocator(),
 			]
 		];
+	}
 
-		return $menuItems;
+	private function getZone()
+	{
+		if (Main\ModuleManager::isModuleInstalled('bitrix24'))
+		{
+			$zone = \CBitrix24::getPortalZone();
+		}
+		else
+		{
+			$iterator = Main\Localization\LanguageTable::getList([
+				'select' => ['ID'],
+				'filter' => ['=DEF' => 'Y', '=ACTIVE' => 'Y']
+			]);
+			$row = $iterator->fetch();
+			$zone = $row['ID'];
+		}
+
+		return $zone;
+	}
+
+	/**
+	 * @return string
+	 */
+	private function getImagePath(): string
+	{
+		static $imagePath = '';
+		if ($imagePath)
+		{
+			return $imagePath;
+		}
+
+		$componentPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.delivery.panel');
+		$componentPath = getLocalPath('components'.$componentPath);
+
+		$imagePath = $componentPath.'/templates/.default/images/';
+		return $imagePath;
+	}
+
+	/**
+	 * @param string $title
+	 * @return string
+	 */
+	private function getFormattedTitle(string $title): string
+	{
+		if (mb_strlen($title) > self::TITLE_LENGTH_LIMIT)
+		{
+			$title = mb_substr($title, 0, self::TITLE_LENGTH_LIMIT - 3).'...';
+		}
+
+		return $title;
+	}
+
+	/**
+	 * @return array
+	 */
+	private function getActionboxItems(): array
+	{
+		$dynamicItems = [];
+
+		$restItems = RestManager::getInstance()->getActionboxItems(RestManager::ACTIONBOX_PLACEMENT_DELIVERY);
+		if ($restItems)
+		{
+			$dynamicItems = $this->prepareActionboxItems($restItems);
+		}
+
+		return $dynamicItems;
+	}
+
+	/**
+	 * @param array $items
+	 * @return array
+	 */
+	private function prepareActionboxItems(array $items): array
+	{
+		$result = [];
+
+		foreach ($items as $item)
+		{
+			if ($item['SLIDER'] === 'Y')
+			{
+				preg_match("/^(http|https|ftp):\/\/(([A-Z0-9][A-Z0-9_-]*)(\.[A-Z0-9][A-Z0-9_-]*)+)/i", $item['HANDLER'])
+					? $handler = 'landing'
+					: $handler = 'marketplace';
+			}
+			else
+			{
+				$handler = 'anchor';
+			}
+
+			$result[] = [
+				'title' => $item['NAME'],
+				'image' => $item['IMAGE'],
+				'outerImage' => true,
+				'itemSelectedColor' => $item['COLOR'],
+				'data' => [
+					'type' => 'actionbox',
+					'showMenu' => false,
+					'move' => $item['HANDLER'],
+					'handler' => $handler,
+				],
+			];
+		}
+
+		return $result;
 	}
 }

@@ -102,7 +102,7 @@ if (isset($_GET['scope']))
 {
 	$scope = Integrity\DuplicateIndexType::DEFAULT_SCOPE;
 	if ($_GET['scope'] !== Integrity\DuplicateIndexType::DEFAULT_SCOPE)
-		$scope = substr($_GET['scope'], 0, 6);
+		$scope = mb_substr($_GET['scope'], 0, 6);
 	if (Integrity\DuplicateIndexType::checkScopeValue($scope))
 	{
 		$filterScope = $scope;
@@ -362,7 +362,7 @@ if($pageNum <= 0)
 $arResult['PAGE_NUM'] = $pageNum;
 
 $sortTypeID = Integrity\DuplicateIndexType::UNDEFINED;
-$sortBy = isset($_GET['sortBy']) ? strtoupper($_GET['sortBy']) : '';
+$sortBy = isset($_GET['sortBy'])? mb_strtoupper($_GET['sortBy']) : '';
 if($sortBy !== '' && isset($arResult['COLUMNS'][$sortBy]))
 {
 	$sortColumn = $arResult['COLUMNS'][$sortBy];
@@ -389,7 +389,7 @@ $arResult['SORT_TYPE_ID'] = $sortTypeID;
 $arResult['SORT_BY'] = $sortBy;
 
 $sortOrder = $arResult['SORT_ORDER'] = isset($_GET['sortOrder'])
-	&& strtoupper($_GET['sortOrder']) === 'DESC'
+	&& mb_strtoupper($_GET['sortOrder']) === 'DESC'
 	? SORT_DESC : SORT_ASC;
 
 if(empty($selectedTypes))

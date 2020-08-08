@@ -1,5 +1,5 @@
 import {Event, Loc, Tag, Dom, Text, Type, Cache, pos} from 'main.core';
-import {PopupWindow, PopupWindowButton, PopupWindowButtonLink} from 'main.popup';
+import {PopupWindow, PopupWindowButton, PopupWindowButtonLink, Menu} from 'main.popup';
 import Column from '../kanban/column';
 import Grid from '../kanban/grid';
 import Marker from '../marker/marker';
@@ -34,17 +34,19 @@ export class Category extends Event.EventEmitter
 		super();
 
 		Category.instances.push(this);
-
 		this.renderTo = options.renderTo;
 		this.appContainer = options.appContainer;
 		this.id = options.id;
 		this.name = options.name;
+		this.access = options.access;
 		this.sort = Number.parseInt(options.sort);
 		this.default = options.default;
 		this.generatorsCount = Number(options.generatorsCount);
+		this.generatorsListUrl = options.generatorsListUrl;
 		this.stages = options.stages;
 		this.robotsSettingsLink = options.robotsSettingsLink.replace('{category}', this.id);
 		this.generatorSettingsLink = options.generatorSettingsLink;
+		this.permissionEditLink = options.permissionEditLink.replace('{category}', this.id);
 		this.cache = new Cache.MemoryCache();
 		this.drawed = false;
 		this.allowWrite = Boolean(options.allowWrite);
@@ -544,6 +546,26 @@ export class Category extends Event.EventEmitter
 		};
 	}
 
+	/** @private */
+	onRightsLinkClick(event)
+	{
+		event.preventDefault();
+
+		// eslint-disable-next-line
+		BX.SidePanel.Instance.open(
+			this.robotsSettingsLink,
+			{
+				cacheable: false,
+				events: {
+					onClose: () => {
+						this.emit('Category:slider:close');
+						this.emit('Category:slider:robots:close');
+					},
+				},
+			},
+		);
+	}
+
 	getRobotsLink(): HTMLSpanElement
 	{
 		return this.cache.remember('robotsLink', () => {
@@ -693,8 +715,8 @@ export class Category extends Event.EventEmitter
 		titleEditor.focus();
 
 		const title = this.getTitle();
-		const titleLength = title.innerText.length;
 		titleEditor.setSelectionRange(titleLength, titleLength);
+		const titleLength = title.innerText.length;
 	}
 
 	showTitle()
@@ -726,6 +748,7 @@ export class Category extends Event.EventEmitter
 				title: ${value.trim()};
 			`;
 
+			this.name = safeValue;
 			this.emit('Category:title:save', {categoryId: this.id, value: safeValue});
 		}
 	}
@@ -748,6 +771,160 @@ export class Category extends Event.EventEmitter
 	isTitleEditEnabled(): boolean
 	{
 		return Dom.hasClass(this.getEditButton(), 'crm-st-edit-button-active');
+	}
+
+	getOptionButton(): HTMLSpanElement
+	{
+		return this.cache.remember('optionButton', () => {
+			const button = Tag.render`
+				<span 
+					class="crm-st-option-button" 
+					onclick="${this.onOptionButtonClick.bind(this)}" 
+					title="${Loc.getMessage('CRM_ST_EDIT_RIGHTS_CATEGORY')}"
+					> </span>
+			`;
+			return button;
+		});
+	}
+
+	onOptionButtonClick()
+	{
+		const onMenuItemClick = (event, item : MenuItem) => {
+			this.emit('Category:access', {
+				categoryId: this.id,
+				access : item.dataset["access"],
+				onConfirm: () => {
+				},
+				onCancel: () => {
+				},
+			});
+			Dom.addClass(item.getContainer(), "menu-popup-item-accept");
+			Dom.removeClass(item.getContainer(), "menu-popup-no-icon");
+			this.access = item.dataset["access"];
+			this.menuWindow.getMenuItems().forEach((itemOther) => {
+				if (itemOther === item)
+				{
+					return;
+				}
+				Dom.removeClass(itemOther.getContainer(), "menu-popup-item-accept");
+				Dom.addClass(itemOther.getContainer(), "menu-popup-no-icon");
+			});
+			this.menuWindow.close();
+		};
+		const onSubMenuItemClick = (event, item : MenuItem) => {
+			this.emit('Category:access:copy', {
+				categoryId: this.id,
+				donorCategoryId : item.dataset["categoryId"],
+				onConfirm: () => {
+				},
+				onCancel: () => {
+				},
+			});
+			this.access = item.dataset["access"];
+
+			this.menuWindow.getMenuItems().forEach((itemOther) => {
+				if (itemOther.dataset === null)
+				{
+					return;
+				}
+				if (this.access === itemOther.dataset["access"])
+				{
+					Dom.addClass(itemOther.getContainer(), "menu-popup-item-accept");
+					Dom.removeClass(itemOther.getContainer(), "menu-popup-no-icon");
+				}
+				else
+				{
+					Dom.removeClass(itemOther.getContainer(), "menu-popup-item-accept");
+					Dom.addClass(itemOther.getContainer(), "menu-popup-no-icon");
+				}
+			});
+			this.menuWindow.close();
+		};
+
+		let items = Category.instances.
+		filter((category) => {
+			return this.id !== category.id && category.id !== 'stub';
+		}).
+		map((category) => {
+			return {
+				text: category.name,
+				dataset : {
+					categoryId : category.id,
+					access : category.access
+				},
+				onclick : onSubMenuItemClick
+			};
+		});
+
+		this.menuWindow = new Menu({
+			id: `crm-tunnels-menu-${Text.getRandom().toLowerCase()}`,
+			bindElement: this.getOptionButton(),
+			items: ([
+				{
+					text: Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_ALL_FOR_ALL'),
+					dataset: {
+						access: "X"
+					},
+				},
+				{
+					text : Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_NONE_FOR_ALL'),
+					dataset: {
+						access: ""
+					},
+				},
+				{
+					text : Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_OWN_FOR_ALL'),
+					dataset: {
+						access: "A"
+					},
+				},
+				(items.length > 0 ? {
+					text: Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_COPY_FROM_TUNNELS'),
+					items: items
+				} : null),
+				{ delimiter : true },
+				{
+					text : Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_CUSTOM'),
+					dataset: { access: false },
+					className: this.access !== "A" &&  this.access !== "X" && this.access !== ""? "menu-popup-item-accept" : "",
+					href : this.permissionEditLink,
+					target: "_blank",
+					onclick : (event, item) => {
+						item.getMenuWindow().close()
+					}
+				},
+			].
+			filter(preItem => preItem !== null).
+			map((preItem) => {
+				if (preItem.dataset)
+				{
+					if (this.access === preItem.dataset.access)
+					{
+						preItem.className = "menu-popup-item-accept";
+					}
+					if (!preItem.onclick)
+					{
+						preItem.onclick = onMenuItemClick;
+					}
+				}
+				return preItem;
+			})),
+			events: {
+				onClose : function() {
+					Dom.removeClass(this.getOptionButton(), 'crm-st-option-button-active');
+					Dom.removeClass(this.getActionsButtons(), 'crm-st-category-action-buttons-active');
+					setTimeout(this.removeBlur.bind(this), 200);
+				}.bind(this)
+			},
+			angle: true,
+			offsetLeft: 9
+		});
+
+		Dom.addClass(this.getActionsButtons(), 'crm-st-category-action-buttons-active');
+		Dom.addClass(this.getOptionButton(), 'crm-st-option-button-active');
+		this.menuWindow.show();
+
+		this.addBlur();
 	}
 
 	getRemoveButton(): HTMLSpanElement
@@ -931,6 +1108,7 @@ export class Category extends Event.EventEmitter
 			Tag.render`
 				<div class="crm-st-category-action-buttons">
 					${this.canEditTunnels ? this.getEditButton() : ''}
+					${this.canEditTunnels ? this.getOptionButton() : ''}
 					${this.canEditTunnels ? this.getRemoveButton() : ''}
 				</div>
 			`
@@ -1064,7 +1242,7 @@ export class Category extends Event.EventEmitter
 	getGeneratorLinkIcon(): HTMLSpanElement
 	{
 		return this.cache.remember('generatorLinkIcon', () => {
-			const onClick = () => window.top.open('/marketing/rc/');
+			const onClick = () => BX.SidePanel.Instance.open(this.generatorsListUrl);
 			return Tag.render`
 				<span class="crm-st-generator-link-icon" onclick="${onClick}">${this.generatorsCount}</span>
 			`;

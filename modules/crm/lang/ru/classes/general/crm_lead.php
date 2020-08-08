@@ -60,6 +60,7 @@ $MESS["CRM_LEAD_FIELD_ADDRESS_REGION"] = "Район";
 $MESS["CRM_LEAD_FIELD_ADDRESS_PROVINCE"] = "Область";
 $MESS["CRM_LEAD_FIELD_ADDRESS_COUNTRY"] = "Страна";
 $MESS["CRM_LEAD_FIELD_ADDRESS_COUNTRY_CODE"] = "Код страны";
+$MESS["CRM_LEAD_FIELD_ADDRESS_LOC_ADDR_ID"] = "Идентификатор адреса местоположения";
 $MESS["CRM_LEAD_FIELD_PRODUCT_ROWS"] = "Товары";
 $MESS["CRM_LEAD_DELETION_NOT_FOUND"] = "Лид не найден";
 $MESS["CRM_FIELD_COMPARE_COMPANY_ID"] = "Изменено поле \"Компания\"";

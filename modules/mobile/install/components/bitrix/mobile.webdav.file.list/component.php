@@ -36,7 +36,7 @@ function GetRequestTupe($arParams)
 	$arU = array();
 	foreach($arU0 as $v)
 	{
-		if(strlen($v) > 0)
+		if($v <> '')
 		{
 			$arU[] = $v;
 		}
@@ -90,7 +90,7 @@ function GetFilrIcon($compPath, $pathQ, $arParams, $arF)
 	);
 
 	$fIcon = $compPath . "/images/" . "blank.png";
-	$fExtQ = strtolower(GetFileExtension($pathQ));
+	$fExtQ = mb_strtolower(GetFileExtension($pathQ));
 
 	if ($arParams["RESOURCE_TYPE"] == "IBLOCK")
 	{
@@ -108,7 +108,7 @@ function GetFilrIcon($compPath, $pathQ, $arParams, $arF)
 	$arPExt = explode(",", CFile::GetImageExtensions());
 	foreach($arPExt as $v)
 	{
-		if(strtolower(trim($v)) == $fExtQ)
+		if(mb_strtolower(trim($v)) == $fExtQ)
 		{
 			$isPictureExt=true;
 			break;
@@ -265,7 +265,7 @@ else
 $action = array_key_exists("action", $_REQUEST) ? $_REQUEST['action'] : "";
 
 $lng = isset($_REQUEST['lang'])? trim($_REQUEST['lang']): '';
-$lng = substr(preg_replace('/[^a-z0-9_]/i', '', $lng), 0, 2);
+$lng = mb_substr(preg_replace('/[^a-z0-9_]/i', '', $lng), 0, 2);
 
 if ( ! defined('LANGUAGE_ID') )
 {
@@ -380,7 +380,7 @@ if($ob->IsDir())
 //					),
 					"IMAGE" => CheckStrCharsetForJson($fIcon),
 				);
-				if(strlen($fSize . $fDateCreate) > 0)
+				if($fSize . $fDateCreate <> '')
 				{
 					$arQQ["TAGS"] = CheckStrCharsetForJson($fSize ."  " . $fDateCreate);
 				}

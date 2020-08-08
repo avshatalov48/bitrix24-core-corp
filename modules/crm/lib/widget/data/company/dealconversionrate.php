@@ -24,7 +24,7 @@ class DealConversionRate extends DealDataSource
 	/** @return array */
 	public function getList(array $params)
 	{
-		$group = isset($params['group']) ? strtoupper($params['group']) : '';
+		$group = isset($params['group'])? mb_strtoupper($params['group']) : '';
 		if($group !== '' && $group !== self::GROUP_BY_USER && $group !== self::GROUP_BY_DATE)
 		{
 			$group = '';
@@ -191,7 +191,7 @@ class DealConversionRate extends DealDataSource
 			{
 				if(isset($sortItem['name']) && $sortItem['name'] === $name)
 				{
-					$order = isset($sortItem['order']) && strtolower($sortItem['order']) === 'desc'
+					$order = isset($sortItem['order']) && mb_strtolower($sortItem['order']) === 'desc'
 						? SORT_DESC : SORT_ASC;
 					Collection::sortByColumn($results, array($name => $order));
 					break;

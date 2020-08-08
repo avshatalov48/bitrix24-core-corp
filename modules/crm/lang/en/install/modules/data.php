@@ -1,5 +1,5 @@
 <?
-$MESS["CRM_CATALOG_NOT_INSTALLED"] = "CATALOG module is not installed.";
+$MESS["CRM_CATALOG_NOT_INSTALLED"] = "The Commercial Catalog module is not installed.";
 $MESS["CRM_CATALOG_STORE_ADR"] = "944 5th Avenue";
 $MESS["CRM_CATALOG_STORE_DESCR"] = "Here you can find goods from leading global vendors";
 $MESS["CRM_CATALOG_STORE_GPS_N"] = "40.7681635";
@@ -50,7 +50,7 @@ $MESS["CRM_ORD_PROP_SORT_CODE"] = "Sort Code";
 $MESS["CRM_ORD_PROP_STEU"] = " ";
 $MESS["CRM_ORD_PROP_TRN"] = "Tax Reg. No.";
 $MESS["CRM_ORD_PROP_UST_IDNR"] = " ";
-$MESS["CRM_SALE_NOT_INSTALLED"] = "SALE module is not installed.";
+$MESS["CRM_SALE_NOT_INSTALLED"] = "The e-Store module is not installed.";
 $MESS["CRM_SALE_PERSON_TYPE_E"] = "Legal entity";
 $MESS["CRM_SALE_PERSON_TYPE_I"] = "Individual";
 $MESS["CRM_SALE_USER_GROUP_SHOP_BUYER_DESC"] = "User group containing all online store customers";

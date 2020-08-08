@@ -432,7 +432,7 @@ BX.mergeEx(BX.Tasks.Util, {
 
 	fireGlobalTaskEvent: function(type, taskData, options, taskDataUgly)
 	{
-		if(!type)
+		if (!type)
 		{
 			return false;
 		}
@@ -440,11 +440,8 @@ BX.mergeEx(BX.Tasks.Util, {
 		type = type.toString();
 		options = options || {};
 
-		if(
-			type != 'ADD' && type != 'UPDATE' && 
-			type != 'UPDATE_STAGE' &&  type != 'DELETE' && 
-			type != 'NOOP'
-		)
+		var allowedActions = ['ADD', 'UPDATE', 'DELETE', 'NOOP', 'UPDATE_STAGE'];
+		if (allowedActions.indexOf(type.toUpperCase()) === -1)
 		{
 			return false;
 		}
@@ -452,19 +449,18 @@ BX.mergeEx(BX.Tasks.Util, {
 		var eventArgs = [type, {task: taskData, taskUgly: taskDataUgly, options: options}];
 
 		BX.onCustomEvent(window, 'tasksTaskEvent', eventArgs);
-		if(window != window.top) // if we are inside iframe, translate event to the parent window also
+		if (window != window.top) // if we are inside iframe, translate event to the parent window also
 		{
+			var sliders = BX.SidePanel.Instance.getOpenSliders();
+			sliders.forEach(function(slider) {
+				var frameWindow = slider.getFrameWindow();
+				if (frameWindow)
+				{
+					frameWindow.BX.onCustomEvent(frameWindow, 'tasksTaskEvent', eventArgs);
+				}
+			});
 
-			top.BX.onCustomEvent(top.window, 'tasksTaskEvent', eventArgs);
-			BX.onCustomEvent(top.window, 'tasksTaskEvent', eventArgs);
-
-			[].slice.call(top.document.querySelectorAll('iframe'))
-				.forEach(function(iframe) {
-					if (iframe.contentWindow && iframe.contentWindow.BX)
-					{
-						iframe.contentWindow.BX.onCustomEvent(iframe.contentWindow, 'tasksTaskEvent', eventArgs);
-					}
-				})
+			window.top.BX.onCustomEvent(window.top, 'tasksTaskEvent', eventArgs);
 		}
 
 		return true;

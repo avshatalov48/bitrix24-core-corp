@@ -46,7 +46,7 @@ var str = '';
 		<?foreach($arResult['PHONE_GROUPS'] as $arPhoneGroup):?>
 			<div class="crm-phone-group">
 				<?$groupTitle = isset($arPhoneGroup['TITLE']) ? $arPhoneGroup['TITLE'] : ''; ?>
-				<span class="crm-phone-name"><?= strlen($groupTitle) > 0 ? htmlspecialcharsbx($groupTitle).': ' : '' ?></span>
+				<span class="crm-phone-name"><?= $groupTitle <> '' ? htmlspecialcharsbx($groupTitle).': ' : '' ?></span>
 				<span class="crm-phone-number">
 					<?if(!isset($arPhoneGroup['PHONES']) || count($arPhoneGroup['PHONES']) === 0): ?>
 						<span class="crm-phone-text"><?= htmlspecialcharsbx(GetMessage('CRM_NO_PHONES'))?></span>
@@ -55,7 +55,7 @@ var str = '';
 					<? $phoneCount = 0; ?>
 					<?foreach($arPhoneGroup['PHONES'] as $arPhone):?>
 						<?$phone =  isset($arPhone['NUMBER']) ? trim($arPhone['NUMBER']) : '';
-						if(strlen($phone) === 0) continue;?>
+						if($phone == '') continue;?>
 						<span class="crm-phone-text"><?=($phoneCount > 0 ? ', ' : '').htmlspecialcharsbx(isset($arPhone['TITLE']) ? $arPhone['TITLE'] : '')?> </span>
 						<a class="crm-phone-number-link" onclick="addToDescription('<?= htmlspecialcharsbx(str_replace(array('#NAME#', '#PHONE#'), array($groupTitle, $phone), $descrTemplate));?>');" href="<?=CCrmCallToUrl::Format(urlencode($arPhone['NUMBER']))?>"><?=htmlspecialcharsbx($arPhone['NUMBER'])?></a>
 						<?$phoneCount++;?>

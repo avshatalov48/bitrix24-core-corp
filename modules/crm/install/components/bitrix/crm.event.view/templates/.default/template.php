@@ -8,6 +8,7 @@ global $APPLICATION, $USER;
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
+\Bitrix\Main\UI\Extension::load("ui.icons.b24");
 
 if($arResult['ENABLE_CONTROL_PANEL'])
 {
@@ -89,7 +90,9 @@ $prefix = $arResult['GRID_ID'];
 			$photoUrl = isset($arEvent['CREATED_BY_PHOTO_URL']) ? $arEvent['CREATED_BY_PHOTO_URL'] : '';
 			$authorHtml = "<div class = \"crm-client-summary-wrapper\">
 				<div class = \"crm-client-photo-wrapper\">
-					<div class=\"crm-client-def-pic\"><img src=\"{$photoUrl}\" alt=\"\"/></div>
+					<div class=\"ui-icon ui-icon-common-user crm-client-def-pic\">
+						<i style=\"background-image: url({$photoUrl})\"></i>
+					</div>
 				</div>
 				<div class=\"crm-client-info-wrapper\">
 					<div class=\"crm-client-title-wrapper\">
@@ -110,7 +113,7 @@ $prefix = $arResult['GRID_ID'];
 				? CCrmOwnerType::GetDescription(CCrmOwnerType::ResolveID($arEvent['ENTITY_TYPE'])) : '';
 
 			$arColumns['ENTITY_TITLE'] = !empty($arEvent['ENTITY_TITLE'])?
-				'<a href="'.$arEvent['ENTITY_LINK'].'" bx-tooltip-user-id="'.$arEvent['ENTITY_TYPE'].'_'.$arEvent['ENTITY_ID'].'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.'.strtolower($arEvent['ENTITY_TYPE']).'.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon'.($arEvent['ENTITY_TYPE'] == 'LEAD' || $arEvent['ENTITY_TYPE'] == 'DEAL' || $arEvent['ENTITY_TYPE'] == 'QUOTE' ? '_no_photo': '_'.strtolower($arEvent['ENTITY_TYPE'])).'">'.$arEvent['ENTITY_TITLE'].'</a>'
+				'<a href="'.$arEvent['ENTITY_LINK'].'" bx-tooltip-user-id="'.$arEvent['ENTITY_TYPE'].'_'.$arEvent['ENTITY_ID'].'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.'.mb_strtolower($arEvent['ENTITY_TYPE']).'.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon'.($arEvent['ENTITY_TYPE'] == 'LEAD' || $arEvent['ENTITY_TYPE'] == 'DEAL' || $arEvent['ENTITY_TYPE'] == 'QUOTE' ? '_no_photo': '_'.mb_strtolower($arEvent['ENTITY_TYPE'])).'">'.$arEvent['ENTITY_TITLE'].'</a>'
 				: '';
 		}
 		else

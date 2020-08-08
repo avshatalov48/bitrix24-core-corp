@@ -390,7 +390,7 @@ else
 			if(isset($_POST['COMMENTS']))
 			{
 				$comments = isset($_POST['COMMENTS']) ? trim($_POST['COMMENTS']) : '';
-				if($comments !== '' && strpos($comments, '<') !== false)
+				if($comments !== '' && mb_strpos($comments, '<') !== false)
 				{
 					$sanitizer = new CBXSanitizer();
 					$sanitizer->ApplyDoubleEncode(false);
@@ -432,7 +432,7 @@ else
 
 			if(isset($_POST['OPENED']))
 			{
-				$arFields['OPENED'] = strtoupper($_POST['OPENED']) === 'Y' ? 'Y' : 'N';
+				$arFields['OPENED'] = mb_strtoupper($_POST['OPENED']) === 'Y' ? 'Y' : 'N';
 			}
 			elseif(isset($arSrcElement['OPENED']))
 			{
@@ -605,7 +605,7 @@ else
 			if(array_key_exists($productRowSettingsFieldName, $_POST))
 			{
 				$settingsJson = isset($_POST[$productRowSettingsFieldName]) ? strval($_POST[$productRowSettingsFieldName]) : '';
-				$arSettings = strlen($settingsJson) > 0 ? CUtil::JsObjectToPhp($settingsJson) : array();
+				$arSettings = $settingsJson <> '' ? CUtil::JsObjectToPhp($settingsJson) : array();
 				if(is_array($arSettings))
 				{
 					$productRowSettings['ENABLE_DISCOUNT'] = isset($arSettings['ENABLE_DISCOUNT']) ? $arSettings['ENABLE_DISCOUNT'] === 'Y' : false;
@@ -778,13 +778,29 @@ else
 			//Region automation
 			if (class_exists('\Bitrix\Crm\Automation\Factory'))
 			{
-				if (!$isEditMode)
+				if (class_exists('\Bitrix\Crm\Automation\Starter'))
 				{
-					\Bitrix\Crm\Automation\Factory::runOnAdd(\CCrmOwnerType::Deal, $arResult['ELEMENT']['ID']);
+					$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Deal, $arResult['ELEMENT']['ID']);
+					$starter->setContextToMobile()->setUserIdFromCurrent();
+					if (!$isEditMode)
+					{
+						$starter->runOnAdd();
+					}
+					else
+					{
+						$starter->runOnUpdate($arFields, $arSrcElement);
+					}
 				}
-				elseif (isset($arFields['STAGE_ID']) && $arSrcElement['STAGE_ID'] != $arFields['STAGE_ID'])
+				else
 				{
-					\Bitrix\Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Deal, $arResult['ELEMENT']['ID']);
+					if (!$isEditMode)
+					{
+						\Bitrix\Crm\Automation\Factory::runOnAdd(\CCrmOwnerType::Deal, $arResult['ELEMENT']['ID']);
+					}
+					elseif (isset($arFields['STAGE_ID']) && $arSrcElement['STAGE_ID'] != $arFields['STAGE_ID'])
+					{
+						\Bitrix\Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Deal, $arResult['ELEMENT']['ID']);
+					}
 				}
 			}
 			//end automation
@@ -1242,10 +1258,13 @@ if (!empty($sProductsHtml))
 
 //user fields
 $CCrmUserType = new CCrmMobileHelper();
-$CCrmUserType->PrepareUserFields(
+$CCrmUserType->prepareUserFields(
 	$arResult['FIELDS'],
 	CCrmDeal::$sUFEntityID,
-	$arResult['ELEMENT']['ID']
+	$arResult['ELEMENT']['ID'],
+	false,
+	'deal_details',
+	$USER->GetID()
 );
 
 if ($arParams['RESTRICTED_MODE'])

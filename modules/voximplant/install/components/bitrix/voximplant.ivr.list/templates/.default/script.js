@@ -107,7 +107,7 @@
 		}
 		else
 		{
-			BX.Voximplant.showLicensePopup('ivr');
+			BX.UI.InfoHelper.show('limit_contact_center_telephony_ivr');
 		}
 	};
 

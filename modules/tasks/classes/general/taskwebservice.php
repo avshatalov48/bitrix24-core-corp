@@ -135,10 +135,10 @@ class CTasksWebService extends IWebService
 		if (null === $datetime)
 			return time();
 
-		if (intval(substr($datetime, 0, 4)) >= 2037)
-			$datetime = '2037'.substr($datetime, 4);
+		if (intval(mb_substr($datetime, 0, 4)) >= 2037)
+			$datetime = '2037'.mb_substr($datetime, 4);
 
-		return MakeTimeStamp(substr($datetime, 0, 10).' '.substr($datetime, 11, -1), 'YYYY-MM-DD HH:MI:SS');
+		return MakeTimeStamp(mb_substr($datetime, 0, 10).' '.mb_substr($datetime, 11, -1), 'YYYY-MM-DD HH:MI:SS');
 	}
 
 
@@ -265,7 +265,7 @@ class CTasksWebService extends IWebService
 
 			foreach ($arUserFields as $probablyEmail)
 			{
-				if (strpos($probablyEmail,  '@') === false)
+				if (mb_strpos($probablyEmail, '@') === false)
 					continue;
 
 				$probablyEmail = str_replace('#', '', $probablyEmail);
@@ -273,7 +273,7 @@ class CTasksWebService extends IWebService
 				$arFilters[] = array('EMAIL' => $probablyEmail);
 				$arFilters[] = array('LOGIN' => $probablyEmail);
 
-				$probablyLogin = substr($probablyEmail, 0, strpos($probablyEmail, '@'));
+				$probablyLogin = mb_substr($probablyEmail, 0, mb_strpos($probablyEmail, '@'));
 				$arFilters[] = array('LOGIN' => $probablyLogin);
 
 				break;
@@ -308,17 +308,17 @@ class CTasksWebService extends IWebService
 			"modify_common_views" => false,
 		);
 
-		$taskType = StrToLower($taskType);
+		$taskType = mb_strtolower($taskType);
 		if (!in_array($taskType, array("group", "user")))
 			$taskType = "user";
 
-		$ownerId = IntVal($ownerId);
+		$ownerId = intval($ownerId);
 		if ($ownerId <= 0)
 		{
 			$taskType = "user";
 			$ownerId = $GLOBALS["USER"]->GetID();
 		}
-		$ownerId = IntVal($ownerId);
+		$ownerId = intval($ownerId);
 		if ($ownerId <= 0)
 			return $arResult;
 
@@ -342,18 +342,18 @@ class CTasksWebService extends IWebService
 
 	function __InTaskCheckActiveFeature($taskType, $ownerId)
 	{
-		$taskType = StrToLower($taskType);
+		$taskType = mb_strtolower($taskType);
 		if (!in_array($taskType, array("group", "user")))
 			$taskType = "user";
 
-		$ownerId = IntVal($ownerId);
+		$ownerId = intval($ownerId);
 		if ($ownerId <= 0)
 		{
 			$taskType = "user";
 			$ownerId = $GLOBALS["USER"]->GetID();
 		}
 
-		$ownerId = IntVal($ownerId);
+		$ownerId = intval($ownerId);
 		if ($ownerId <= 0)
 			return false;
 
@@ -481,7 +481,7 @@ class CTasksWebService extends IWebService
 			return new CSoapFault('Data error', 'Wrong GUID - '.$listName);
 		}
 
-		if (strlen($attachment) <= 0)
+		if ($attachment == '')
 		{
 			return new CSoapFault('Wrong attachment', 'Wrong attachment');
 		}
@@ -550,9 +550,9 @@ class CTasksWebService extends IWebService
 
 		$listItemID = intval($listItemID);
 
-		$pos = strrpos($url, '/');
+		$pos = mb_strrpos($url, '/');
 		if ($pos)
-			$fileName = ToLower(str_replace(array('/', '\\', '..'), '', substr($url, $pos + 1))); // minor security
+			$fileName = ToLower(str_replace(array('/', '\\', '..'), '', mb_substr($url, $pos + 1))); // minor security
 
 		if (!$fileName)
 			return new CSoapFault('Wrong file', 'Wrong file URL');
@@ -796,11 +796,11 @@ class CTasksWebService extends IWebService
 					$arData['Body'] = str_replace(array("&#10;", "&#13;", '&nbsp;'), "", $arData['Body']);
 					$arData['Body'] = preg_replace("/<![^>]*>/", '', $arData['Body']);
 
-					if (($pos = strpos($arData['Body'], '<BODY>')) !== false)
-						$arData['Body'] = substr($arData['Body'], $pos + 6);
+					if (($pos = mb_strpos($arData['Body'], '<BODY>')) !== false)
+						$arData['Body'] = mb_substr($arData['Body'], $pos + 6);
 					echo $pos.' ';
-					if (($pos = strpos($arData['Body'], '</BODY>')) !== false)
-						$arData['Body'] = substr($arData['Body'], 0, $pos);
+					if (($pos = mb_strpos($arData['Body'], '</BODY>')) !== false)
+						$arData['Body'] = mb_substr($arData['Body'], 0, $pos);
 					echo $pos.' ';
 
 					$TZBias = intval(date('Z'));
@@ -810,8 +810,8 @@ class CTasksWebService extends IWebService
 
 					$arData['MetaInfo_DateComplete'] = $arData['MetaInfo_DateComplete'] ? $this->__makeTS($arData['EndDate']) + $TZBias : '';
 
-					$probablyHtmlInDescription = (strpos($arData['Body'], '<') !== false)
-						&& strpos($arData['Body'], '>');
+					$probablyHtmlInDescription = (mb_strpos($arData['Body'], '<') !== false)
+						&& mb_strpos($arData['Body'], '>');
 
 					$arFields = array(
 						'DESCRIPTION_IN_BBCODE' => ($probablyHtmlInDescription ? 'N' : 'Y'),

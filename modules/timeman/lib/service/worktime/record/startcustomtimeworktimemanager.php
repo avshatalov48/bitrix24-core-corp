@@ -1,10 +1,6 @@
 <?php
 namespace Bitrix\Timeman\Service\Worktime\Record;
 
-use Bitrix\Main\Error;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Timeman\Helper\TimeHelper;
-use Bitrix\Timeman\Model\Schedule\Schedule;
 use Bitrix\Timeman\Model\Worktime\Contract\WorktimeRecordIdStorable;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
 use Bitrix\Timeman\Model\Worktime\Report\WorktimeReport;
@@ -20,8 +16,7 @@ class StartCustomTimeWorktimeManager extends StartWorktimeManager
 		{
 			return $baseResult;
 		}
-		if ($this->getSchedule() &&
-			!Schedule::isScheduleFlexible($this->getSchedule()) && $this->isEmptyEventReason())
+		if ($this->getSchedule() && !$this->getSchedule()->isFlextime() && $this->isEmptyEventReason())
 		{
 			return (new WorktimeServiceResult())
 				->addReasonNeededError();
@@ -38,36 +33,16 @@ class StartCustomTimeWorktimeManager extends StartWorktimeManager
 		return parent::updateRecordFields($record);
 	}
 
-	/**
-	 * @param WorktimeRecord|null $record
-	 * @return WorktimeServiceResult
-	 */
-	protected function verifyAfterUpdatingRecord($record)
+	protected function checkStartGreaterThanNow()
 	{
-		$result = parent::verifyAfterUpdatingRecord($record);
-		if (!$result->isSuccess())
-		{
-			return $result;
-		}
-		if ($record && $this->worktimeRecordForm->recordedStartSeconds !== null)
-		{
-			$startTimestamp = $record->getRecordedStartTimestamp();
-			if ($startTimestamp > TimeHelper::getInstance()->getUtcNowTimestamp())
-			{
-				return $result->addError(new Error(
-						Loc::getMessage('TM_BASE_SERVICE_RESULT_ERROR_START_GREATER_THAN_NOW'),
-						WorktimeServiceResult::ERROR_FOR_USER)
-				);
-			}
-		}
-		return $result;
+		return true;
 	}
 
 	/**
 	 * @param WorktimeRecord $record
 	 * @param $schedule
 	 */
-	public function notifyOfAction($record, $schedule)
+	public function notifyOfActionOldStyle($record, $schedule)
 	{
 		if (!$record->isApproved())
 		{
@@ -81,13 +56,13 @@ class StartCustomTimeWorktimeManager extends StartWorktimeManager
 	 * @param $violationRulesList
 	 * @return array
 	 */
-	public function buildRecordViolations($record, $schedule, $violationRulesList = [])
+	public function buildRecordViolations($record, $schedule)
 	{
 		return $this->buildWorktimeViolations($record, $schedule, [
 			WorktimeViolation::TYPE_LATE_START,
 			WorktimeViolation::TYPE_EARLY_START,
 			WorktimeViolation::TYPE_EDITED_START,
-		], $violationRulesList);
+		]);
 	}
 
 	/**
@@ -123,27 +98,17 @@ class StartCustomTimeWorktimeManager extends StartWorktimeManager
 		return $events;
 	}
 
-	protected function checkIntersectingRecords()
+	protected function checkOverlappingRecords()
 	{
 		return true;
 	}
 
 	private function buildEditedViolations($record)
 	{
-		if (!$this->getSchedule())
-		{
-			return [];
-		}
-		$rules = [$this->getSchedule()->getScheduleViolationRules()];
-		if ($this->getPersonalViolationRules())
-		{
-			$rules[] = $this->getPersonalViolationRules();
-		}
 		return $this->buildWorktimeViolations(
 			$record,
 			$this->getSchedule(),
-			[WorktimeViolation::TYPE_EDITED_START,],
-			$rules
+			[WorktimeViolation::TYPE_EDITED_START,]
 		);
 	}
 }

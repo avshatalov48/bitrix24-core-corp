@@ -18,8 +18,8 @@ if($MOD_RIGHT>='R'):
 
 	// set up form
 	$sHost = $_SERVER['HTTP_HOST'];
-	if (strpos($sHost, ':') !== false)
-		$sHost = substr($sHost, 0, strpos($sHost, ':'));
+	if (mb_strpos($sHost, ':') !== false)
+		$sHost = mb_substr($sHost, 0, mb_strpos($sHost, ':'));
 
 	ob_start();
 	$GLOBALS["APPLICATION"]->IncludeComponent('bitrix:intranet.user.selector',
@@ -106,6 +106,7 @@ if($MOD_RIGHT>='R'):
 		array('path_to_activity_custom_type_list', Loc::getMessage('CRM_OPTIONS_PATH_TO_ACTIVITY_CUSTOM_TYPE_LIST'), '/crm/configs/custom_activity/', Array('text', '40')),
 		array('path_to_start', Loc::getMessage('CRM_OPTIONS_PATH_TO_START'), '/crm/start/', Array('text', '40')),
 		array('path_to_perm_list', Loc::getMessage('CRM_OPTIONS_PATH_TO_PERM_LIST'), '/crm/configs/perms/', Array('text', '40')),
+		array('path_to_config_checker', Loc::getMessage('CRM_OPTIONS_PATH_TO_CONFIG_CHECKER'), '/crm/configs/checker/', Array('text', '40')),
 		array('path_to_order_list', Loc::getMessage('CRM_OPTIONS_PATH_TO_ORDER_LIST'), '/shop/orders/', Array('text', '40')),
 		array('path_to_order_details', Loc::getMessage('CRM_OPTIONS_PATH_TO_ORDER_DETAILS'), '/shop/orders/details/#order_id#/', Array('text', '40')),
 		array('path_to_order_check_details', Loc::getMessage('CRM_OPTIONS_PATH_TO_ORDER_CHECK_DETAILS'), '/shop/orders/check/details/#check_id#/', Array('text', '40')),
@@ -121,12 +122,12 @@ if($MOD_RIGHT>='R'):
 
 if($MOD_RIGHT>='Y' || $USER->IsAdmin()):
 
-	if ($REQUEST_METHOD=='GET' && strlen($RestoreDefaults)>0 && check_bitrix_sessid())
+	if ($REQUEST_METHOD=='GET' && $RestoreDefaults <> '' && check_bitrix_sessid())
 	{
 		COption::RemoveOption($module_id);
 	}
 
-	if($REQUEST_METHOD=='POST' && strlen($Update)>0 && check_bitrix_sessid())
+	if($REQUEST_METHOD=='POST' && $Update <> '' && check_bitrix_sessid())
 	{
 		$arOptions = $arAllOptions;
 		foreach($arOptions as $option)
@@ -152,7 +153,7 @@ if($MOD_RIGHT>='Y' || $USER->IsAdmin()):
 
 		\Bitrix\Crm\Preview\Route::setCrmRoutes();
 
-		if(strlen($_REQUEST["back_url_settings"])>0)
+		if($_REQUEST["back_url_settings"] <> '')
 			LocalRedirect($_REQUEST["back_url_settings"]);
 		else
 			LocalRedirect($APPLICATION->GetCurPage()."?mid=".urlencode($mid)."&lang=".urlencode(LANGUAGE_ID)."&back_url_settings=".urlencode($_REQUEST["back_url_settings"]));

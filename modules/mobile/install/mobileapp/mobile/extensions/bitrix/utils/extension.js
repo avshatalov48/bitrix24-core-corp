@@ -415,6 +415,29 @@
 			}
 
 			return false;
+		},
+		isString(value)
+		{
+			return typeof value === 'string';
+		},
+		isFunction(value)
+		{
+			return typeof value === 'function';
+		},
+		isObjectLike(value)
+		{
+			return !!value && typeof value === 'object';
+		},
+		isNotEmptyString: function(value)
+		{
+			return this.isString(value) && value !== '';
+		},
+		isNotEmptyObject: function(value) {
+			return this.isObjectLike(value) && Object.keys(value).length > 0;
+		},
+		getRandom(length = 8)
+		{
+			return [...Array(length)].map(() => (~~(Math.random() * 36)).toString(36)).join('');
 		}
 	};
 
@@ -455,8 +478,15 @@
 		return result;
 	};
 
-	Application.storage = {
-		setObject: function (key, value)
+	class KeyValueStorage
+	{
+		constructor(id)
+		{
+			this.id = id;
+			this.storageObject = Application.sharedStorage(id);
+		}
+
+		setObject (key, value)
 		{
 			let result = null;
 			if (value && typeof value == "object")
@@ -464,21 +494,22 @@
 				try
 				{
 					result = JSON.stringify(value);
-					Application.sharedStorage().set(key, result);
+					this.storageObject.set(key, result);
 				}
 				catch (e)
 				{
 					//do nothing
 				}
 			}
-		},
-		updateObject: function (key, object = {}, handler = null)
+		}
+
+		updateObject (key, object = {}, handler = null)
 		{
 			let result = null;
 			if (object && typeof object == "object")
 			{
 
-				let savedObject = Application.storage.getObject(key, {});
+				let savedObject = this.getObject(key, {});
 				if (handler)
 				{
 					let result = handler(savedObject, object);
@@ -494,17 +525,18 @@
 				try
 				{
 					result = JSON.stringify(savedObject);
-					Application.sharedStorage().set(key, result);
+					this.storageObject.set(key, result);
 				}
 				catch (e)
 				{
 					//do nothing
 				}
 			}
-		},
-		getObject: function (key, fallback = {})
+		}
+
+		getObject (key, fallback = {})
 		{
-			let result = Object.tryJSONParse(Application.sharedStorage().get(key));
+			let result = Object.tryJSONParse(this.storageObject.get(key));
 			if (result == null)
 			{
 				return fallback;
@@ -519,29 +551,34 @@
 				return result;
 			}
 
-		},
-		setBoolean: function (key, value = false)
+		}
+
+		setBoolean (key, value = false)
 		{
-			Application.storage.set(key, value == true ? "1" : "0");
-		},
-		getBoolean: function (key, fallback = false)
+			this.set(key, value == true ? "1" : "0");
+		}
+
+		getBoolean (key, fallback = false)
 		{
 			let fallbackString = (fallback == true ? "1" : "0");
-			return Boolean(parseInt(Application.storage.get(key, fallbackString)));
-		},
-		setNumber: function (key, value)
+			return Boolean(parseInt(this.get(key, fallbackString)));
+		}
+
+		setNumber (key, value)
 		{
 			value = value? value.toString(): "0";
-			Application.storage.set(key, value);
-		},
-		getNumber: function (key, fallback = null)
+			this.set(key, value);
+		}
+
+		getNumber (key, fallback = null)
 		{
-			const result = Application.storage.get(key, NaN);
+			const result = this.get(key, NaN);
 			return Number.isNaN(result)? fallback: Number(result);
-		},
-		get: function (key, fallback = null)
+		}
+
+		get (key, fallback = null)
 		{
-			let result = Application.sharedStorage().get(key);
+			let result = this.storageObject.get(key);
 			if (result == null && fallback != null)
 			{
 				return fallback;
@@ -549,11 +586,24 @@
 
 			return result;
 
-		},
-		set: function (key, value)
-		{
-			return Application.sharedStorage().set(key, value)
 		}
+
+		set (key, value)
+		{
+			return this.storageObject.set(key, value)
+		}
+
+	}
+
+	let appStorages = {};
+	Application.storage = new KeyValueStorage();
+	Application.storageById = storageId =>{
+		if(!appStorages[storageId])
+		{
+			appStorages[storageId] = new KeyValueStorage(storageId);
+		}
+
+		return appStorages[storageId];
 
 	};
 

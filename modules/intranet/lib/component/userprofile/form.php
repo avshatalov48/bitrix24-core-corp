@@ -50,19 +50,6 @@ class Form
 			}
 		}
 
-		$timeZoneItems = array();
-		if(\CTimeZone::Enabled())
-		{
-			$timeZoneList = \CTimeZone::GetZones();
-			foreach ($timeZoneList as $value => $name)
-			{
-				$timeZoneItems[] = array(
-					"NAME" => $name,
-					"VALUE" => $value
-				);
-			}
-		}
-
 		$personalCountryItems = array(
 			array(
 				"NAME" => Loc::getMessage("INTRANET_USER_PROFILE_FIELD_EMPTY"),
@@ -109,18 +96,21 @@ class Form
 				"name" => "NAME",
 				"type" => "text",
 				"editable" => true,
+				"showAlways" => true
 			),
 			array(
 				"title" => Loc::getMessage("INTRANET_USER_PROFILE_FIELD_LAST_NAME"),
 				"name" => "LAST_NAME",
 				"type" => "text",
 				"editable" => true,
+				"showAlways" => true
 			),
 			array(
 				"title" => Loc::getMessage("INTRANET_USER_PROFILE_FIELD_SECOND_NAME"),
 				"name" => "SECOND_NAME",
 				"type" => "text",
-				"editable" => true
+				"editable" => true,
+				"showAlways" => true
 			),
 			array(
 				"title" => Loc::getMessage("INTRANET_USER_PROFILE_FIELD_EMAIL"),
@@ -208,7 +198,22 @@ class Form
 				"editable" => true
 			),
 			*/
-			array(
+		);
+
+		if(\CTimeZone::Enabled())
+		{
+			$timeZoneItems = array();
+
+			$timeZoneList = \CTimeZone::GetZones();
+			foreach ($timeZoneList as $value => $name)
+			{
+				$timeZoneItems[] = array(
+					"NAME" => $name,
+					"VALUE" => $value
+				);
+			}
+
+			$fields[] = array(
 				"title" => Loc::getMessage("INTRANET_USER_PROFILE_FIELD_TIME_ZONE"),
 				"name" => "TIME_ZONE",
 				"type" => "timezone",
@@ -222,8 +227,9 @@ class Form
 				),
 				"visibilityPolicy" => "edit",
 				"editable" => true
-			),
-		);
+			);
+		}
+
 
 		if (!$isExtranetUser)
 		{
@@ -599,6 +605,8 @@ class Form
 				array('name' => 'PERSONAL_CITY'),
 				array('name' => 'UF_EMPLOYMENT_DATE'),
 				array('name' => 'UF_SKYPE'),
+				array('name' => 'UF_SKYPE_LINK'),
+				array('name' => 'UF_ZOOM'),
 				array('name' => 'TIME_ZONE'),
 			);
 		}
@@ -649,6 +657,8 @@ class Form
 			"PERSONAL_CITY" => $result["User"]["PERSONAL_CITY"],
 			"EMAIL" => $result["User"]["EMAIL"],
 			"UF_SKYPE" => $result["User"]["UF_SKYPE"],
+			"UF_SKYPE_LINK" => $result["User"]["UF_SKYPE_LINK"],
+			"UF_ZOOM" => $result["User"]["UF_ZOOM"],
 			"TIME_ZONE" => [
 				"timeZone" => $result["User"]["TIME_ZONE"],
 				"autoTimeZone" => $result["User"]["AUTO_TIME_ZONE"]
@@ -782,7 +792,7 @@ class Form
 		{
 
 			$fieldData = [
-				"NAME" => (strlen($field["title"]) > 0 ? $field["title"] : $field["name"]),
+				"NAME" => ($field["title"] <> '' ? $field["title"] : $field["name"]),
 				"VALUE" => $field["name"],
 			];
 

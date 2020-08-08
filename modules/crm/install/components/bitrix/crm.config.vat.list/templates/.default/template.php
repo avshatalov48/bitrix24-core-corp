@@ -49,7 +49,7 @@ foreach($arResult['VATS'] as $key => &$arVat)
 		'data' => $arVat,
 		'editable' => $arResult['CAN_EDIT'] ? true : $arColumns,
 		'columns' => array(
-			'C_SORT' => $arVat['C_SORT'],
+			'C_SORT' => $arVat['SORT'],
 			'ACTIVE' => $arVat['ACTIVE'],
 			'NAME' => '<a target="_self" href="'.$arVat['PATH_TO_VAT_EDIT'].'">'.htmlspecialcharsbx($arVat['NAME']).'</a>',
 			'RATE' => $arVat['RATE']
@@ -156,4 +156,3 @@ if ($arResult['VAT_MODE']) :
 	</script>
 	</div><?
 endif;    // if ($arResult['VAT_MODE']) :
-?>

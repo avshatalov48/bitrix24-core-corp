@@ -31,7 +31,7 @@ Vue.component('bx-livechat-form-vote',
 			this.$store.commit('widget/common', {showForm: FormType.none});
 			this.$store.commit('widget/dialog', {userVote: vote});
 
-			this.$root.$bitrixWidget.sendDialogVote(vote);
+			this.$root.$bitrixApplication.sendDialogVote(vote);
 		},
 		hideForm(event)
 		{

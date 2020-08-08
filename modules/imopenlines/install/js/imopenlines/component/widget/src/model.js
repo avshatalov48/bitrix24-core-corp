@@ -9,8 +9,8 @@
 
 import {VuexBuilderModel} from 'ui.vue.vuex';
 
-import {Utils} from 'im.utils';
-import {Cookie} from './utils/cookie';
+import {Utils} from 'im.lib.utils';
+import {Cookie} from "im.lib.cookie";
 import {FormType, LocationStyle, LocationType, VoteType} from "./const";
 
 export class WidgetModel extends VuexBuilderModel
@@ -49,7 +49,8 @@ export class WidgetModel extends VuexBuilderModel
 				textMessages: {
 					bxLivechatOnlineLine1: this.getVariable('textMessages.bxLivechatOnlineLine1', ''),
 					bxLivechatOnlineLine2: this.getVariable('textMessages.bxLivechatOnlineLine2', ''),
-					bxLivechatOffline: this.getVariable('textMessages.bxLivechatOffline', '')
+					bxLivechatOffline: this.getVariable('textMessages.bxLivechatOffline', ''),
+					bxLivechatTitle: '',
 				},
 				online: false,
 				operators: [],
@@ -59,9 +60,12 @@ export class WidgetModel extends VuexBuilderModel
 				reopen: false,
 				dragged: false,
 				textareaHeight: 0,
+				widgetHeight: 0,
+				widgetWidth: 0,
 				showConsent: false,
 				consentUrl: '',
 				dialogStart: false,
+				watchTyping: false,
 			},
 			dialog:
 			{
@@ -70,7 +74,9 @@ export class WidgetModel extends VuexBuilderModel
 				sessionStatus: 0,
 				userVote: VoteType.none,
 				userConsent: false,
+				operatorChatId: 0,
 				operator: {
+					id: 0,
 					name: '',
 					firstName: '',
 					lastName: '',
@@ -109,7 +115,6 @@ export class WidgetModel extends VuexBuilderModel
 				showed: null,
 				showConsent: null,
 				showForm: null,
-				location: null,
 			},
 		}
 	}
@@ -169,6 +174,10 @@ export class WidgetModel extends VuexBuilderModel
 					{
 						state.common.textMessages.bxLivechatOffline = payload.textMessages.bxLivechatOffline;
 					}
+					if (typeof payload.textMessages.bxLivechatTitle === 'string' && payload.textMessages.bxLivechatTitle !== '')
+					{
+						state.common.textMessages.bxLivechatTitle = payload.textMessages.bxLivechatTitle;
+					}
 				}
 				if (typeof payload.dragged === 'boolean')
 				{
@@ -177,6 +186,14 @@ export class WidgetModel extends VuexBuilderModel
 				if (typeof payload.textareaHeight === 'number')
 				{
 					state.common.textareaHeight = payload.textareaHeight;
+				}
+				if (typeof payload.widgetHeight === 'number')
+				{
+					state.common.widgetHeight = payload.widgetHeight;
+				}
+				if (typeof payload.widgetWidth === 'number')
+				{
+					state.common.widgetWidth = payload.widgetWidth;
 				}
 				if (typeof payload.showConsent === 'boolean')
 				{
@@ -203,6 +220,10 @@ export class WidgetModel extends VuexBuilderModel
 				{
 					state.common.dialogStart = payload.dialogStart;
 				}
+				if (typeof payload.watchTyping === 'boolean')
+				{
+					state.common.watchTyping = payload.watchTyping;
+				}
 				if (payload.operators instanceof Array)
 				{
 					state.common.operators = payload.operators;
@@ -217,7 +238,12 @@ export class WidgetModel extends VuexBuilderModel
 				}
 				if (typeof payload.location === 'number' && typeof LocationStyle[payload.location] !== 'undefined')
 				{
-					state.common.location = payload.location;
+					if (state.common.location !== payload.location)
+					{
+						state.common.widgetHeight = 0;
+						state.common.widgetWidth = 0;
+						state.common.location = payload.location;
+					}
 				}
 
 				if (this.isSaveNeeded({common: payload}))
@@ -247,8 +273,16 @@ export class WidgetModel extends VuexBuilderModel
 				{
 					state.dialog.userVote = payload.userVote;
 				}
+				if (typeof payload.operatorChatId === 'number')
+				{
+					state.dialog.operatorChatId = payload.operatorChatId;
+				}
 				if (Utils.types.isPlainObject(payload.operator))
 				{
+					if (typeof payload.operator.id === 'number')
+					{
+						state.dialog.operator.id = payload.operator.id;
+					}
 					if (typeof payload.operator.name === 'string' || typeof payload.operator.name === 'number')
 					{
 						state.dialog.operator.name = payload.operator.name.toString();
@@ -339,6 +373,16 @@ export class WidgetModel extends VuexBuilderModel
 					this.saveState(state);
 				}
 			},
+		}
+	}
+
+	getActions()
+	{
+		return {
+			show: ({ commit }) =>
+			{
+				commit('common', {showed: true});
+			}
 		}
 	}
 }

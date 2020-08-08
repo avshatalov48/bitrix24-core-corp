@@ -73,6 +73,21 @@ class Action extends Base
 			}
 		}
 
+		if (!empty($this->sourceId))
+		{
+			$sourceIds = is_array($this->sourceId) ? $this->sourceId : [$this->sourceId];
+			$listTmp = $list;
+			$list = [];
+			foreach ($listTmp as $item)
+			{
+				$sourceId = $item['TRACKING_SOURCE_ID'] ?? null;
+				if (in_array($sourceId, $sourceIds))
+				{
+					$list[] = $item;
+				}
+			}
+		}
+
 		if (!$this->isGroupedByTrackingSource())
 		{
 			$summary = [

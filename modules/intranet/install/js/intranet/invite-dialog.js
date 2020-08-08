@@ -468,6 +468,14 @@ BX.InviteDialog.getEmail2 = function()
 
 BX.InviteDialog.setEmail2 = function(strEmail1, strEmail2)
 {
+	if (
+		!BX('ADD_SEND_PASSWORD')
+		|| !BX('ADD_SEND_PASSWORD_EMAIL')
+	)
+	{
+		return;
+	}
+
 	if (strEmail2.length > 0)
 	{
 		if (strEmail1.length <= 0)
@@ -494,6 +502,14 @@ BX.InviteDialog.setEmail2 = function(strEmail1, strEmail2)
 
 BX.InviteDialog.setEmail1 = function(strEmail1, strEmail2)
 {
+	if (
+		!BX('ADD_SEND_PASSWORD')
+		|| !BX('ADD_SEND_PASSWORD_EMAIL')
+	)
+	{
+		return;
+	}
+
 	if (strEmail1.length > 0)
 	{
 		BX("ADD_SEND_PASSWORD_EMAIL").innerHTML = "<br>(" + BX.util.htmlspecialchars(strEmail1) + ")";
@@ -518,42 +534,44 @@ BX.InviteDialog.setEmail1 = function(strEmail1, strEmail2)
 BX.InviteDialog.bindSendPasswordEmail = function()
 {
 	if (
-		BX("ADD_SEND_PASSWORD_EMAIL")
-		&& BX("ADD_SEND_PASSWORD")
+		!BX('ADD_SEND_PASSWORD')
+		|| !BX('ADD_SEND_PASSWORD_EMAIL')
 	)
 	{
-		if (BX("ADD_EMAIL"))
-		{
-			BX.bind(BX("ADD_EMAIL"), "bxchange", function()
-				{
-					var strEmail1 = BX.InviteDialog.getEmail1();
-					var strEmail2 = BX.InviteDialog.getEmail2();
-					BX.InviteDialog.setEmail1(strEmail1, strEmail2);
-				}
-			);
-		}
+		return;
+	}
 
-		if (BX("ADD_MAILBOX_USER_connect"))
-		{
-			BX.bind(BX("ADD_MAILBOX_USER_connect"), "change", function()
-				{
-					var strEmail1 = BX.InviteDialog.getEmail1();
-					var strEmail2 = BX.InviteDialog.getEmail2();
-					BX.InviteDialog.setEmail2(strEmail1, strEmail2);
-				}
-			);
-		}
+	if (BX("ADD_EMAIL"))
+	{
+		BX.bind(BX("ADD_EMAIL"), "bxchange", function()
+			{
+				var strEmail1 = BX.InviteDialog.getEmail1();
+				var strEmail2 = BX.InviteDialog.getEmail2();
+				BX.InviteDialog.setEmail1(strEmail1, strEmail2);
+			}
+		);
+	}
 
-		if (BX("ADD_MAILBOX_DOMAIN_connect"))
-		{
-			BX.bind(BX("ADD_MAILBOX_DOMAIN_connect"), "change", function()
-				{
-					var strEmail1 = BX.InviteDialog.getEmail1();
-					var strEmail2 = BX.InviteDialog.getEmail2();
-					BX.InviteDialog.setEmail2(strEmail1, strEmail2);
-				}
-			);
-		}
+	if (BX("ADD_MAILBOX_USER_connect"))
+	{
+		BX.bind(BX("ADD_MAILBOX_USER_connect"), "change", function()
+			{
+				var strEmail1 = BX.InviteDialog.getEmail1();
+				var strEmail2 = BX.InviteDialog.getEmail2();
+				BX.InviteDialog.setEmail2(strEmail1, strEmail2);
+			}
+		);
+	}
+
+	if (BX("ADD_MAILBOX_DOMAIN_connect"))
+	{
+		BX.bind(BX("ADD_MAILBOX_DOMAIN_connect"), "change", function()
+			{
+				var strEmail1 = BX.InviteDialog.getEmail1();
+				var strEmail2 = BX.InviteDialog.getEmail2();
+				BX.InviteDialog.setEmail2(strEmail1, strEmail2);
+			}
+		);
 	}
 };
 
@@ -567,9 +585,16 @@ BX.InviteDialog.bindInviteDialogSubmit = function(oBlock)
 		return;
 	}
 
+	var form = BX.findParent(oBlock, {tagName: "form"});
+	if (BX.type.isDomNode(form))
+	{
+		form.onsubmit = function(){
+			return false;
+		};
+	}
+
 	BX.bind(oBlock, "click", function(e)
 	{
-
 		if(!e) e = window.event;
 
 		this.closeSelectorPopups();
@@ -727,7 +752,8 @@ BX.InviteDialog.bindInviteDialogSubmit = function(oBlock)
 					"ADD_LAST_NAME": document.forms.ADD_DIALOG_FORM["ADD_LAST_NAME"].value,
 					"ADD_POSITION": document.forms.ADD_DIALOG_FORM["ADD_POSITION"].value,
 					"ADD_SEND_PASSWORD": (
-						!!document.forms.ADD_DIALOG_FORM["ADD_SEND_PASSWORD"].checked 
+						document.forms.ADD_DIALOG_FORM["ADD_SEND_PASSWORD"]
+						&& !!document.forms.ADD_DIALOG_FORM["ADD_SEND_PASSWORD"].checked
 							? document.forms.ADD_DIALOG_FORM["ADD_SEND_PASSWORD"].value 
 							: "N"
 					),
@@ -1333,6 +1359,12 @@ BX.InviteDialog.copyRegisterUrl = function()
 		});
 
 		popup.show();
+
+		BX.ajax.runAction('intranet.controller.invite.copyregisterurl', {
+			data: {}
+		}).then(function (response) {
+		}.bind(this), function (response) {
+		}.bind(this));
 	}
 };
 

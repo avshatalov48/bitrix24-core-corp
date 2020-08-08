@@ -136,8 +136,6 @@ abstract class Serial extends Base
 				}
 				$result['graphs'][] = $graph;
 			}
-
-
 		}
 
 		if (static::ENABLE_SORTING)

@@ -18,6 +18,7 @@ $scanButtonID = 'scanButton';
 $mergeButtonID = 'mergeButton';
 $mergeSummaryButtonID = 'mergeSummaryButton';
 $conflictResolvingButtonID = 'conflictResolvingButton';
+$conflictResolvingAlternateButtonID = 'conflictResolvingAlternateButton';
 $progressBarWrapperID = 'progressBar';
 $mergeProgressBarWrapperID = 'mergeProgressBar';
 $mergeListButtonID = 'mergeListButton';
@@ -74,12 +75,18 @@ $conflictResolvingListButtonID = 'conflictResolvingListButton';
 			<div class="crm-dedupe-wizard-start-icon-circle"></div>
 		</div>
 	</div>
-	<div class="crm-dedupe-wizard-start-control-box">
-		<div id="<?=htmlspecialcharsbx($mergeButtonID)?>" class="ui-btn ui-btn-primary crm-dedupe-wizard-start-btn"><?=GetMessage('CRM_DEDUPE_WIZARD_MERGE')?></div>
+	<div class="crm-dedupe-wizard-start-control-box crm-dedupe-wizard-start-control-box-ready-to-merge-state">
+		<div class="crm-dedupe-wizard-start-control-box-item">
+			<div id="<?=htmlspecialcharsbx($mergeButtonID)?>" class="ui-btn ui-btn-primary crm-dedupe-wizard-merge-btn"><?=GetMessage('CRM_DEDUPE_WIZARD_MERGE_AUTO')?></div>
+		</div>
+		<div class="crm-dedupe-wizard-start-control-box-item">
+			<div id="<?=htmlspecialcharsbx($conflictResolvingAlternateButtonID)?>" class="ui-btn ui-btn-light crm-dedupe-wizard-start-btn"><?=GetMessage('CRM_DEDUPE_WIZARD_MANUAL_MERGE')?></div>
+		</div>
 		<div id="<?=htmlspecialcharsbx($mergeProgressBarWrapperID)?>" class="crm-dedupe-wizard-status-bar"></div>
 	</div>
 	<div class="crm-dedupe-wizard-start-description">
-		<p><?=GetMessage('CRM_DEDUPE_WIZARD_MERGING_LEGEND')?></p>
+		<div class="crm-dedupe-wizard-merge-block-auto"><p><?=GetMessage('CRM_DEDUPE_WIZARD_MERGING_LEGEND')?></p></div>
+		<div class="crm-dedupe-wizard-merge-block-manual"><p><?=GetMessage('CRM_DEDUPE_WIZARD_MANUAL_MERGING_LEGEND')?></p></div>
 	</div>
 	<div class="crm-dedupe-wizard-start-link-container">
 		<a id="<?=htmlspecialcharsbx($mergeListButtonID)?>" href="#" class="crm-dedupe-wizard-start-link crm-dedupe-wizard-start-link-light-grey"><?=GetMessage('CRM_DEDUPE_WIZARD_SHOW_DEDUPE_LIST')?></a>
@@ -106,16 +113,21 @@ $conflictResolvingListButtonID = 'conflictResolvingListButton';
 <div id="conflictResolving" class="crm-dedupe-wizard-start-container crm-dedupe-wizard-start-warning" style="display: none">
 	<h1 id="conflictResolvingTitle" class="ui-title-1 crm-dedupe-wizard-start-title"></h1>
 	<h2 id="conflictResolvingSubtitle" class="ui-title-2 crm-dedupe-wizard-start-title-light-text"></h2>
-	<div class="crm-dedupe-wizard-start-description"><?=GetMessage('CRM_DEDUPE_WIZARD_CONFLICT_RESOLVING_LEGEND')?></div>
+	<div class="crm-dedupe-wizard-start-description crm-dedupe-wizard-merge-block-auto"><?=GetMessage('CRM_DEDUPE_WIZARD_CONFLICT_RESOLVING_LEGEND')?></div>
 	<div class="crm-dedupe-wizard-start-icon">
 		<div class="crm-dedupe-wizard-start-icon-cloud crm-dedupe-wizard-start-icon-cloud-blue crm-dedupe-wizard-start-icon-cloud-left-top"></div>
 		<div class="crm-dedupe-wizard-start-icon-cloud crm-dedupe-wizard-start-icon-cloud-left-bottom"></div>
 		<div class="crm-dedupe-wizard-start-icon-cloud crm-dedupe-wizard-start-icon-cloud-blue crm-dedupe-wizard-start-icon-cloud-blue-right crm-dedupe-wizard-start-icon-cloud-right-bottom"></div>
 		<div class="crm-dedupe-wizard-start-icon-cloud crm-dedupe-wizard-start-icon-cloud-right crm-dedupe-wizard-start-icon-cloud-right-top"></div>
-		<div class="crm-dedupe-wizard-start-icon-main">
+		<div class="crm-dedupe-wizard-start-icon-main crm-dedupe-wizard-merge-block-auto">
 			<div class="crm-dedupe-wizard-start-icon-refresh-noarrows crm-dedupe-wizard-start-icon-refresh-noarrows-yellow"></div>
 			<div class="crm-dedupe-wizard-start-icon-alert"></div>
 			<div class="crm-dedupe-wizard-start-icon-circle crm-dedupe-wizard-start-icon-circle-yellow"></div>
+		</div>
+		<div class="crm-dedupe-wizard-start-icon-main crm-dedupe-wizard-merge-block-manual">
+			<div class="crm-dedupe-wizard-start-icon-refresh-noarrows"></div>
+			<div class="crm-dedupe-wizard-start-icon-like"></div>
+			<div class="crm-dedupe-wizard-start-icon-circle"></div>
 		</div>
 	</div>
 	<div id="<?=htmlspecialcharsbx($conflictResolvingButtonID)?>" class="ui-btn ui-btn-primary crm-dedupe-wizard-start-btn"><?=GetMessage('CRM_DEDUPE_WIZARD_MANUAL_MERGE')?></div>
@@ -125,8 +137,8 @@ $conflictResolvingListButtonID = 'conflictResolvingListButton';
 </div>
 
 <div id="finish" class="crm-dedupe-wizard-start-container crm-dedupe-wizard-start-done" style="display: none">
-	<h1 id="finishTitle" class="ui-title-1 crm-dedupe-wizard-start-title crm-dedupe-wizard-start-title-light-text,"><?=GetMessage('CRM_DEDUPE_WIZARD_FINISH_TITLE')?></h1>
-	<h2 class="ui-title-1 crm-dedupe-wizard-start-title crm-dedupe-wizard-start-title-dark-text"><?=GetMessage('CRM_DEDUPE_WIZARD_FINISH_SUBTITLE')?></h2>
+	<h1 id="finishTitle" class="ui-title-1 crm-dedupe-wizard-start-title crm-dedupe-wizard-start-title-light-text"><?=GetMessage('CRM_DEDUPE_WIZARD_FINISH_TITLE')?></h1>
+	<h2 id="finishSubtitle" class="ui-title-1 crm-dedupe-wizard-start-title crm-dedupe-wizard-start-title-dark-text"></h2>
 	<div class="crm-dedupe-wizard-start-icon">
 		<div class="crm-dedupe-wizard-start-icon-cloud crm-dedupe-wizard-start-icon-cloud-blue crm-dedupe-wizard-start-icon-cloud-left-top"></div>
 		<div class="crm-dedupe-wizard-start-icon-cloud crm-dedupe-wizard-start-icon-cloud-left-bottom"></div>
@@ -138,6 +150,9 @@ $conflictResolvingListButtonID = 'conflictResolvingListButton';
 			<div class="crm-dedupe-wizard-start-icon-circle"></div>
 		</div>
 	</div>
+	<?if ($arResult['PATH_TO_ENTITY_LIST']):?>
+	<a href="<?=$arResult['PATH_TO_ENTITY_LIST']?>" class="ui-btn ui-btn-primary"><?=GetMessage('CRM_DEDUPE_WIZARD_BACK_TO_LIST')?></a>
+	<?endif?>
 </div>
 
 <script type="text/javascript">
@@ -186,6 +201,7 @@ $conflictResolvingListButtonID = 'conflictResolvingListButton';
 								{
 									wrapperId: "merging",
 									buttonId: "<?=CUtil::JSEscape($mergeButtonID)?>",
+									alternateButtonId: "<?=CUtil::JSEscape($conflictResolvingAlternateButtonID)?>",
 									listButtonId: "<?=CUtil::JSEscape($mergeListButtonID)?>",
 									titleWrapperId: "mergingTitle",
 									subtitleWrapperId: "mergingSubtitle",
@@ -216,6 +232,7 @@ $conflictResolvingListButtonID = 'conflictResolvingListButton';
 								{
 									wrapperId: "conflictResolving",
 									buttonId: "<?=CUtil::JSEscape($conflictResolvingButtonID)?>",
+									alternateButtonId: "<?=CUtil::JSEscape($conflictResolvingAlternateButtonID)?>",
 									listButtonId: "<?=CUtil::JSEscape($conflictResolvingListButtonID)?>",
 									titleWrapperId: "conflictResolvingTitle",
 									subtitleWrapperId: "conflictResolvingSubtitle",
@@ -226,11 +243,17 @@ $conflictResolvingListButtonID = 'conflictResolvingListButton';
 										}
 								}
 							),
-							finish: BX.Crm.DedupeWizardStep.create(
+							finish: BX.Crm.DedupeWizardMergingFinish.create(
 								"finish",
 								{
 									wrapperId: "finish",
-									titleWrapperId: "finishTitle"
+									titleWrapperId: "finishTitle",
+									subtitleWrapperId: "finishSubtitle",
+									messages:
+										{
+											duplicatesComplete: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_DUPLICATES_COMPLETE')?>",
+											duplicatesCompleteEmpty: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_DUPLICATES_COMPLETE_EMPTY')?>"
+										}
 								}
 							)
 						}

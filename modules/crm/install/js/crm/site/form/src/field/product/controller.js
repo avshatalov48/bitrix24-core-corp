@@ -50,16 +50,29 @@ class Controller extends ListField.Controller
 	{
 		super(options);
 		this.currency = options.currency;
+		this.validators.push(value => {
+			return !value.changeablePrice || value.price > 0;
+		});
 	}
 
 	getOriginalType(): string
 	{
-		return 'list';
+		return this.hasChangeablePrice() ? 'product' : 'list';
+	}
+
+	hasChangeablePrice(): boolean
+	{
+		return this.items.some(item => item.changeablePrice);
 	}
 
 	formatMoney(val)
 	{
 		return Util.Conv.formatMoney(val, this.currency.format);
+	}
+
+	getCurrencyFormatArray()
+	{
+		return this.currency.format.split('#');
 	}
 }
 

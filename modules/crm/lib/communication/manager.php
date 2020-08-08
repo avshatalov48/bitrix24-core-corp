@@ -299,7 +299,7 @@ class Manager
 			$typeID = $fields['TYPE_ID'];
 			$value = isset($fields['VALUE']) ? $fields['VALUE'] : '';
 
-			$key = $elementID.':'.$typeID.':'.md5(strtoupper(trim($value)));
+			$key = $elementID.':'.$typeID.':'.md5(mb_strtoupper(trim($value)));
 			if($deduplicate && isset($results[$key]))
 			{
 				continue;

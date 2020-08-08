@@ -125,14 +125,14 @@ if ($currentStep == 3 && $processActions && empty($errorMessage))
 		"PORT" => $_REQUEST["PORT"],
 		"COOKIE" => false,
 	);
-	if (strlen($_REQUEST["PASSWORD"]) > 0)
+	if ($_REQUEST["PASSWORD"] <> '')
 		$arFields["PASSWORD"] = $_REQUEST["PASSWORD"];
 
-	if (strlen($_REQUEST["SERVER"]) > 0)
+	if ($_REQUEST["SERVER"] <> '')
 	{
 		$arCrmUrl = parse_url($_REQUEST["SERVER"]);
 		$crmUrlHost = $arCrmUrl["host"] ? $arCrmUrl["host"] : $arCrmUrl["path"];
-		$crmUrlScheme = $arCrmUrl["scheme"] ? strtolower($arCrmUrl["scheme"]) : strtolower($_REQUEST["SCHEME"]);
+		$crmUrlScheme = $arCrmUrl["scheme"]? mb_strtolower($arCrmUrl["scheme"]) : mb_strtolower($_REQUEST["SCHEME"]);
 		if (!in_array($crmUrlScheme, array('http', 'https')))
 			$crmUrlScheme = 'http';
 		$crmUrlPort = $arCrmUrl["port"] ? intval($arCrmUrl["port"]) : intval($_REQUEST["PORT"]);
@@ -143,11 +143,11 @@ if ($currentStep == 3 && $processActions && empty($errorMessage))
 		$arFields["PORT"] = $crmUrlPort;
 	}
 
-	if (strlen($arFields["LOGIN"]) <= 0)
+	if ($arFields["LOGIN"] == '')
 		$errorMessage .= GetMessage("BPWC_WNC_EMPTY_LOGIN")."<br>";
-	if (strlen($arFields["SERVER"]) <= 0)
+	if ($arFields["SERVER"] == '')
 		$errorMessage .= GetMessage("BPWC_WNC_EMPTY_URL")."<br>";
-	if (strlen($arFields["PASSWORD"]) <= 0 && $id <= 0)
+	if ($arFields["PASSWORD"] == '' && $id <= 0)
 		$errorMessage .= GetMessage("BPWC_WNC_EMPTY_PASSWORD")."<br>";
 
 	if (empty($errorMessage))
@@ -220,11 +220,11 @@ if ($currentStep == 3 && $processActions && empty($errorMessage))
 			{
 				$errorMessage .= sprintf(GetMessage("CRM_EXT_SALE_C1STATUS")."<br>", $response["STATUS"]["CODE"], $response["STATUS"]["PHRASE"]);
 			}
-			elseif (strpos($response["BODY"], "form_auth") !== false)
+			elseif (mb_strpos($response["BODY"], "form_auth") !== false)
 			{
 				$errorMessage .= GetMessage("CRM_EXT_SALE_C1NO_AUTH")."<br>";
 			}
-			elseif (strpos($response["BODY"], "/bitrix/") === false)
+			elseif (mb_strpos($response["BODY"], "/bitrix/") === false)
 			{
 				$errorMessage .= GetMessage("CRM_EXT_SALE_C1NO_BITRIX")."<br>";
 			}
@@ -450,7 +450,7 @@ if ($processActions && !empty($errorMessage))
 				$lastStatusValue = "";
 				if (intval($arRecord["MODIFICATION_LABEL"]) == 0)
 					$lastStatusValue .= GetMessage("BPWC_WLC_NEED_FIRST_SYNC1");
-				if ($arRecord["LAST_STATUS"] != "" && strtolower(substr($arRecord["LAST_STATUS"], 0, strlen("success"))) != "success")
+				if ($arRecord["LAST_STATUS"] != "" && mb_strtolower(mb_substr($arRecord["LAST_STATUS"], 0, mb_strlen("success"))) != "success")
 					$lastStatusValue .= GetMessage("BPWC_WLC_NEED_FIRST_SYNC3").$arRecord["LAST_STATUS"];
 				if ($lastStatusValue == "")
 					$lastStatusValue .= GetMessage("BPWC_WLC_NEED_FIRST_SYNC2");

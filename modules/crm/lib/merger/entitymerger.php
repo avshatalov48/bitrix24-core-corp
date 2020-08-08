@@ -559,53 +559,6 @@ abstract class EntityMerger
 		$this->innerMergeEntityFields($seed, $targ, $entityFieldInfos, false, $options);
 		EntityMerger::mergeUserFields($seed, $targ, $userFieldInfos, $options);
 
-		//region Recovery
-		//$recoveryData = self::prepareRecoveryData($seed, $entityFieldInfos, $userFieldInfos);
-		//$recoveryData->setEntityTypeID($entityTypeID);
-		//$recoveryData->setEntityID($seedID);
-		//$this->setupRecoveryData($recoveryData, $seed);
-
-		//if(!empty($seedMultiFields))
-		//{
-		//	$recoveryData->setDataItem('MULTI_FIELDS', $seedMultiFields);
-		//}
-
-		//$activityIDs = \CCrmActivity::GetBoundIDs($entityTypeID, $seedID);
-		//if(!empty($activityIDs))
-		//{
-		//	$recoveryData->setDataItem('ACTIVITY_IDS', $activityIDs);
-		//}
-
-		//$eventIDs = array();
-		//$result = \CCrmEvent::GetListEx(
-		//	array('EVENT_REL_ID' => 'ASC'),
-		//	array(
-		//		'ENTITY_TYPE' => $entityTypeName,
-		//		'ENTITY_ID' => $seedID,
-		//		'EVENT_TYPE' => 0,
-		//		'CHECK_PERMISSIONS' => 'N'
-		//	),
-		//	false,
-		//	false,
-		//	array('EVENT_REL_ID')
-		//);
-
-		//if(is_object($result))
-		//{
-		//	while($eventFields = $result->Fetch())
-		//	{
-		//		$eventIDs[] = (int)$eventFields['EVENT_REL_ID'];
-		//	}
-		//}
-		//if(!empty($eventIDs))
-		//{
-		//	$recoveryData->setDataItem('EVENT_IDS', $eventIDs);
-		//}
-
-		//$recoveryData->setUserID($this->userID);
-		//$recoveryData->save();
-		//endregion
-
 		$matches = $this->getRegisteredEntityMatches($entityTypeID, $seedID);
 
 		//region Merge requisites
@@ -1169,6 +1122,20 @@ abstract class EntityMerger
 			);
 		}
 
+		if($conflictResolutionMode === ConflictResolutionMode::MANUAL)
+		{
+			throw new EntityMergerException(
+				\CCrmOwnerType::Undefined,
+				0,
+				self::ROLE_UNDEFINED,
+				EntityMergerException::CONFLICT_OCCURRED,
+				'',
+				0,
+				null,
+				array('conflictResolutionMode' => $conflictResolutionMode)
+			);
+		}
+
 		$seedMap = array();
 		foreach($seeds as $seed)
 		{
@@ -1214,7 +1181,7 @@ abstract class EntityMerger
 						if(in_array($seedID, $sourceIDs))
 						{
 							//\CCrmFieldInfoAttr::Multiple
-							$targ[$fieldID] = $seed[$fieldID];
+							static::applyMappedValue($fieldID, $seed, $targ);
 							break;
 						}
 					}
@@ -1308,6 +1275,11 @@ abstract class EntityMerger
 				$targ[$fieldID] = $seedValueMap[array_keys($seedValueMap)[0]];
 			}
 		}
+	}
+
+	protected static function applyMappedValue(string $fieldID, array &$seed, array &$targ)
+	{
+		$targ[$fieldID] = $seed[$fieldID];
 	}
 
 	/**
@@ -2172,7 +2144,7 @@ abstract class EntityMerger
 
 			$key = $typeID === \CCrmFieldMulti::PHONE
 				? Crm\Integrity\DuplicateCommunicationCriterion::normalizePhone($value)
-				: strtolower($value);
+				: mb_strtolower($value);
 
 			if($key !== '' && !isset($map[$key]))
 			{
@@ -2236,7 +2208,7 @@ abstract class EntityMerger
 
 				$key = $typeID === \CCrmFieldMulti::PHONE
 					? Crm\Integrity\DuplicateCommunicationCriterion::normalizePhone($value)
-					: strtolower($value);
+					: mb_strtolower($value);
 
 				if($key !== '' && !isset($typeMap[$key]))
 				{
@@ -2294,7 +2266,7 @@ abstract class EntityMerger
 
 				$key = $typeID === \CCrmFieldMulti::PHONE
 					? Crm\Integrity\DuplicateCommunicationCriterion::normalizePhone($value)
-					: strtolower($value);
+					: mb_strtolower($value);
 
 				if($key !== '' && (!isset($targMap[$typeID]) || !isset($targMap[$typeID][$key])))
 				{

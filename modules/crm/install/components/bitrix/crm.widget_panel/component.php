@@ -42,7 +42,7 @@ else
 		? (int)$arParams['~NAVIGATION_COUNTER'] : 0;
 }
 
-$entityType = isset($arParams['~ENTITY_TYPE']) ? strtoupper($arParams['~ENTITY_TYPE']) : '';
+$entityType = isset($arParams['~ENTITY_TYPE'])? mb_strtoupper($arParams['~ENTITY_TYPE']) : '';
 $entityTypes = isset($arParams['~ENTITY_TYPES']) && is_array($arParams['~ENTITY_TYPES']) ? $arParams['~ENTITY_TYPES'] : array();
 if(empty($entityTypes))
 {
@@ -71,7 +71,7 @@ if (Bitrix\Main\Loader::includeModule('bitrix24') && !Bitrix\Bitrix24\Feature::i
 		{
 			foreach (new RecursiveIteratorIterator(new RecursiveArrayIterator($parentValue)) as $key => $value)
 			{
-				if ($value == "saletarget")
+				if ($value === "saletarget")
 				{
 					unset($options['rows'][$parentKey]);
 					$options['rows'] = array_values($options['rows']);
@@ -93,14 +93,14 @@ if (!$arResult['USE_DEMO'])
 	$enableDemo = $arResult['ENABLE_DEMO'] = false;
 }
 
-$arParams['ROWS'] = isset($arParams['ROWS']) ? $arParams['ROWS'] : array();
+$arParams['ROWS'] = $arParams['ROWS'] ?? array();
 if(!$enableDemo && isset($options['rows']))
 {
 	$arParams['ROWS'] = $options['rows'];
 }
 
-$arResult['HIDE_FILTER'] = (bool)$arParams['HIDE_FILTER'] ?? false;
-$arParams['FILTER'] = isset($arParams['FILTER']) ? $arParams['FILTER'] : array();
+$arResult['HIDE_FILTER'] = (bool)($arParams['HIDE_FILTER'] ?? false);
+$arParams['FILTER'] = $arParams['FILTER'] ?? array();
 $arResult['FILTER'] = array(
 	array(
 		'id' => 'RESPONSIBLE_ID',

@@ -19,4 +19,8 @@ $MESS["SONET_TASK_DESCRIPTION_1"] = "Fill in your profile data and upload your p
 $MESS["SONET_TASK_DESCRIPTION_2"] = "Invite new employees to join the intranet portal";
 $MESS["SONET_TASK_TITLE_1"] = "Fill in profile data";
 $MESS["SONET_TASK_TITLE_2"] = "Invite new employees";
+$MESS["SONET_USER_TAG_1"] = "cinema";
+$MESS["SONET_USER_TAG_2"] = "sports";
+$MESS["SONET_USER_TAG_3"] = "music";
+$MESS["SONET_USER_TAG_4"] = "travel";
 ?>

@@ -28,9 +28,9 @@ if (!\Bitrix\Main\Loader::includeModule('crm'))
 elseif ($action == 'complete' && !empty($id) && !empty($ownerId))
 {
 	//waiter
-	if (strtolower(substr($id, 0, 1)) == 'w')
+	if (mb_strtolower(mb_substr($id, 0, 1)) == 'w')
 	{
-		$id = substr($id, 1);
+		$id = mb_substr($id, 1);
 		if (
 			($ownerTypeId == \CCrmOwnerType::Lead && \CCrmLead::getById($id))
 			||

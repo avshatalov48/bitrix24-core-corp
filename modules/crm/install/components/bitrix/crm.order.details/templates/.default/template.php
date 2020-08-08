@@ -22,7 +22,7 @@ Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/crm.ord
 /** @var CCrmQuoteDetailsComponent $component */
 
 $guid = $arResult['GUID'];
-$prefix = strtolower($guid);
+$prefix = mb_strtolower($guid);
 $activityEditorID = "{$prefix}_editor";
 echo CCrmViewHelper::RenderOrderShipmentStatusSettings();
 

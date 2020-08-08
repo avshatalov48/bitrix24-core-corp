@@ -22,6 +22,7 @@ BX.namespace('Tasks.Component');
 			{
 				this.callConstruct(BX.Tasks.Component);
 				this.vars.enabled = this.option('enabled');
+				this.vars.taskLimitExceeded = this.option('taskLimitExceeded');
 			},
 
 			bindEvents: function()
@@ -34,10 +35,17 @@ BX.namespace('Tasks.Component');
 
 			onReplicationToggle: function()
 			{
-				this.callRemote('task.template.'+(this.vars.enabled ? 'stopReplication' : 'startReplication'), {
-					id: this.option('entityId')
-				}).then(function(result){
-					if(result.isSuccess())
+				if (!this.vars.enabled && this.vars.taskLimitExceeded)
+				{
+					BX.UI.InfoHelper.show('limit_tasks_recurring_tasks');
+					return;
+				}
+
+				var action = (this.vars.enabled ? 'stopReplication' : 'startReplication');
+				var params = {id: this.option('entityId')};
+
+				this.callRemote('task.template.' + action, params).then(function(result) {
+					if (result.isSuccess())
 					{
 						this.setEnabled(!this.vars.enabled);
 					}

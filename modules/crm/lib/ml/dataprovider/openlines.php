@@ -11,6 +11,8 @@ use Bitrix\Crm\Ml\FeatureBuilder;
 
 class OpenLines extends Base
 {
+	protected const MAX_DIALOGS = 20;
+
 	public function getFeatureMap()
 	{
 		if(!Loader::includeModule("imopenlines") || !Loader::includeModule("im"))
@@ -66,8 +68,9 @@ class OpenLines extends Base
 				"=BINDINGS.OWNER_ID" => $entityId,
 			],
 			"order" => [
-				"START_TIME" => "asc"
-			]
+				"START_TIME" => "desc"
+			],
+			"limit" => static::MAX_DIALOGS
 
 		])->fetchAll();
 

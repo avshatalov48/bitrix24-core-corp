@@ -12,6 +12,7 @@ use Bitrix\Timeman\Model\Schedule\Assignment\Department;
 use Bitrix\Timeman\Model\Schedule\Assignment\Department\ScheduleDepartmentTable;
 use Bitrix\Timeman\Model\Schedule\Assignment\User\ScheduleUser;
 use Bitrix\Timeman\Model\Schedule\Schedule;
+use Bitrix\Timeman\Model\Schedule\ScheduleCollection;
 use Bitrix\Timeman\Model\Schedule\ScheduleTable;
 use Bitrix\Timeman\Model\Schedule\Assignment\User\ScheduleUserTable;
 use Bitrix\Timeman\Model\Schedule\Shift\ShiftTable;
@@ -99,10 +100,10 @@ class ScheduleRepository
 					$query->addOrder('SHIFTS.ID');
 					break;
 				case 'CALENDAR':
-					$query->addSelect('CALENDAR');
-					break;
 				case 'CALENDAR.EXCLUSIONS':
-					$query->addSelect('CALENDAR.EXCLUSIONS');
+				case 'CALENDAR.PARENT_CALENDAR.EXCLUSIONS':
+				case 'CALENDAR.PARENT_CALENDAR.ID':
+					$query->addSelect($with);
 					break;
 				default:
 					break;
@@ -379,8 +380,9 @@ class ScheduleRepository
 
 	public function isScheduleForAllUsers($scheduleId)
 	{
+		$scheduleId = (int)$scheduleId;
 		static $schedulesForAllUsers = [];
-		if (!array_key_exists((int)$scheduleId, $schedulesForAllUsers))
+		if (!array_key_exists($scheduleId, $schedulesForAllUsers))
 		{
 			$schedulesForAllUsers[$scheduleId] = $this->getActiveSchedulesQuery()
 				->addSelect('ID')
@@ -406,6 +408,11 @@ class ScheduleRepository
 		return empty($userScheduleMap) ? [] : reset($userScheduleMap);
 	}
 
+	public function findSchedulesCollectionByUserId($userId)
+	{
+		return ScheduleCollection::createFromArray($this->findSchedulesByUserId($userId));
+	}
+
 	/**
 	 * @param $entityCodesParams
 	 * @return Schedule[]
@@ -425,7 +432,7 @@ class ScheduleRepository
 		{
 			foreach ($userIdsParams as $userIdForSearch)
 			{
-				$entitiesPriorityTree['U' . $userIdForSearch] = $this->departmentRepository->buildUserDepartmentsPriorityTree($userIdForSearch);
+				$entitiesPriorityTree['U' . $userIdForSearch] = $this->departmentRepository->buildUserDepartmentsPriorityTrees($userIdForSearch);
 				$allDepartmentIdsForEntities = array_merge($allDepartmentIdsForEntities, $this->departmentRepository->getAllUserDepartmentIds($userIdForSearch));
 			}
 			$userAssignments = $this->findUserAssignmentsByIds($userIdsParams);

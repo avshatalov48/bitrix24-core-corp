@@ -361,6 +361,22 @@ class CTimeManNotify
 				'PERSONAL_GENDER' => $manager['PERSONAL_GENDER']
 			);
 
+			if (intVal($info["PERSONAL_PHOTO"]) <= 0)
+			{
+				switch($info["PERSONAL_GENDER"])
+				{
+					case "M":
+						$suffix = "male";
+						break;
+					case "F":
+						$suffix = "female";
+						break;
+					default:
+						$suffix = "unknown";
+				}
+				$info["PERSONAL_PHOTO"] = COption::GetOptionInt("socialnetwork", "default_user_picture_".$suffix, false, SITE_ID);
+			}
+
 			if ($manager['ID'] == $arFields["ENTITY_ID"])
 				$arUser = $info;
 
@@ -758,6 +774,46 @@ class CTimeManNotify
 		return false;
 	}
 
+	public static function onAfterForumMessageAdd($id, $arMessage, $topicInfo, $forumInfo, $arFields)
+	{
+		$topicXmlId = null;
+		if ($topicInfo instanceof \Bitrix\Forum\Topic && !empty($topicInfo->getData())
+			&& is_array($topicInfo->getData()) && array_key_exists('XML_ID', $topicInfo->getData()))
+		{
+			$topicXmlId = $topicInfo->getData()['XML_ID'];
+		}
+		elseif (is_array($topicInfo) && array_key_exists('XML_ID', $topicInfo))
+		{
+			$topicXmlId = $topicInfo['XML_ID'];
+		}
+		if ($topicXmlId !== null && strpos($topicXmlId, 'TIMEMAN_ENTRY_') === 0)
+		{
+			if (isset($arFields['PARAM1']) && ($arFields['PARAM1'] === SONET_TIMEMAN_ENTRY_ENTITY || $arFields['PARAM1'] === 'TM'))
+			{
+				return;
+			}
+			$recordId = substr($topicXmlId, strlen('TIMEMAN_ENTRY_'));
+			if (!is_numeric($recordId) || (int)$recordId <= 0)
+			{
+				return;
+			}
+			$recordId = (int)$recordId;
+			$record = WorktimeRecordTable::query()
+				->addSelect('APPROVED_BY')
+				->addSelect('ID')
+				->where('ID', $recordId)
+				->exec()
+				->fetchObject();
+			if (!$record)
+			{
+				return;
+			}
+			\Bitrix\Timeman\Service\DependencyManager::getInstance()
+				->getLiveFeedManager()
+				->continueWorkdayPostTrackingForApprover($record->getId(), $record->getApprovedBy());
+		}
+	}
+
 	public static function onAfterForumCommentAdd($entityType, $entityId, $arFields)
 	{
 		if ($entityType !== 'TM')
@@ -775,7 +831,7 @@ class CTimeManNotify
 		$data = [
 			'ENTRY_ID' => $entityId,
 			'COMMENT_TEXT' => $arFields['MESSAGE']['POST_MESSAGE'],
-			'USER_ID' => $arFields['PARAMS']['USER_ID'],
+			'USER_ID' => $arFields['PARAMS']['AUTHOR_ID'],
 			'FORUM_COMMENT_ADDED' => true,
 			'MESSAGE_ID' => $arFields['MESSAGE']['ID'],
 		];
@@ -792,7 +848,7 @@ class CTimeManNotify
 
 		$arMessFields = Array(
 			"EVENT_ID" => "timeman_entry_comment",
-			"ENTITY_ID" => $arFields["USER_ID"],
+			"ENTITY_ID" => $arFields["ENTRY_ID"],
 			"TEXT_MESSAGE" => $arFields["COMMENT_TEXT"],
 			"MESSAGE" => $arFields["COMMENT_TEXT"],
 			"USER_ID" => $arFields["USER_ID"],

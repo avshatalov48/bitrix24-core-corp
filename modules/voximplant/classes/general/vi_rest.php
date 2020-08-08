@@ -2,9 +2,11 @@
 if(!CModule::IncludeModule('rest'))
 	return;
 
+use Bitrix\Main\Loader;
 use Bitrix\Voximplant\Security;
 use Bitrix\Voximplant\Rest;
 use Bitrix\Voximplant\Integration;
+use Bitrix\Voximplant\StatisticTable;
 
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 
@@ -517,17 +519,23 @@ class CVoxImplantRestService extends IRestService
 					switch ($field)
 					{
 						case 'CALL_START_DATE':
-							$arFilter[$key] = CRestUtil::unConvertDateTime($value);
+							$value = CRestUtil::unConvertDateTime($value);
 							break;
-
 						case 'CALL_TYPE':
-							$arFilter[$operation.'INCOMING'] = $value;
-							unset($arFilter[$key]);
-							break;
-
-						default:
+							$field = 'INCOMING';
 							break;
 					}
+					if($operation == '' && StatisticTable::getEntity()->hasField($field))
+					{
+						$operation = '=';
+					}
+
+					$newKey = $operation . $field;
+					if($key != $newKey)
+					{
+						unset($arFilter[$key]);
+					}
+					$arFilter[$newKey] = $value;
 				}
 			}
 			else
@@ -750,8 +758,15 @@ class CVoxImplantRestService extends IRestService
 	 */
 	public static function getAuthorization($params, $n, $server)
 	{
-		if ($server->getAuthType() !== \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		$allowedAuthTypes = [\Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE => true];
+		if(Loader::includeModule('im') && class_exists('\Bitrix\Im\Call\Auth'))
+		{
+			$allowedAuthTypes[\Bitrix\Im\Call\Auth::AUTH_TYPE] = true;
+		}
+		if (!isset($allowedAuthTypes[$server->getAuthType()]))
+		{
 			throw new \Bitrix\Rest\RestException("This method is only available for internal usage.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 
 		$userId = static::getCurrentUserId();
 		$viUser = new CVoxImplantUser();
@@ -776,8 +791,15 @@ class CVoxImplantRestService extends IRestService
 	 */
 	public static function signOneTimeKey($params, $n, $server)
 	{
-		if ($server->getAuthType() !== \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		$allowedAuthTypes = [\Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE => true];
+		if(Loader::includeModule('im') && class_exists('\Bitrix\Im\Call\Auth'))
+		{
+			$allowedAuthTypes[\Bitrix\Im\Call\Auth::AUTH_TYPE] = true;
+		}
+		if (!isset($allowedAuthTypes[$server->getAuthType()]))
+		{
 			throw new \Bitrix\Rest\RestException("This method is only available for internal usage.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 
 		$voxMain = new CVoxImplantMain(static::getCurrentUserId());
 		$result = $voxMain->GetOneTimeKey($_POST['KEY']);
@@ -797,9 +819,16 @@ class CVoxImplantRestService extends IRestService
 	 */
 	public static function onAuthorizationError($params, $n, $server)
 	{
-		if ($server->getAuthType() !== \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		$allowedAuthTypes = [\Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE => true];
+		if(Loader::includeModule('im') && class_exists('\Bitrix\Im\Call\Auth'))
+		{
+			$allowedAuthTypes[Bitrix\Im\Call\Auth::AUTH_TYPE] = true;
+		}
+		if (!isset($allowedAuthTypes[$server->getAuthType()]))
+		{
 			throw new \Bitrix\Rest\RestException("This method is only available for internal usage.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
-
+		}
+		
 		$voxMain = new CVoxImplantMain(static::getCurrentUserId());
 		$voxMain->ClearUserInfo();
 		$voxMain->ClearAccountInfo();

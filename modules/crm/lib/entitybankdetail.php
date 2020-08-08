@@ -2,10 +2,11 @@
 
 namespace Bitrix\Crm;
 
-use Bitrix\Crm\Invoice\Invoice;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Localization\Translation;
+use Bitrix\Main\Text\Encoding;
 use Bitrix\Crm\Integrity\DuplicateBankDetailCriterion;
 
 Loc::loadMessages(__FILE__);
@@ -16,6 +17,8 @@ class EntityBankDetail
 	const ERR_INVALID_ENTITY_ID     = 202;
 	const ERR_ON_DELETE             = 203;
 	const ERR_NOTHING_TO_DELETE     = 204;
+	const ERR_FIELD_LENGTH_MIN      = 205;
+	const ERR_FIELD_LENGTH_MAX      = 206;
 
 	private static $singleInstance = null;
 
@@ -101,6 +104,8 @@ class EntityBankDetail
 	);
 	private static $rqFieldCountryMap = null;
 	private static $rqFieldTitleMap = null;
+
+	private static $rqFieldValidationMap = null;
 
 	private static $requisite = null;
 
@@ -252,11 +257,152 @@ class EntityBankDetail
 		return (is_array($row)? $row : null);
 	}
 
+	/**
+	 * @param $entityTypeId
+	 * @param $entityId
+	 * @return int
+	 */
+	public function getCountryIdByOwnerEntity($entityTypeId, $entityId)
+	{
+		$countryId = 0;
+		$entityId = (int)$entityId;
+
+		if ($entityTypeId === \CCrmOwnerType::Requisite && $entityId > 0)
+		{
+			$requisite = EntityRequisite::getSingleInstance();
+			$countryId = $requisite->getCountryIdByRequisiteId($entityId);
+		}
+
+		return $countryId;
+	}
+
+	public function getRqFieldValidationMap()
+	{
+		if (self::$rqFieldValidationMap === null)
+		{
+			self::$rqFieldValidationMap = [
+				'RQ_BANK_NAME' => [['type' => 'length', 'params' => ['min' => null, 'max' => 255]]],
+				'RQ_BANK_ADDR' => [['type' => 'length', 'params' => ['min' => null, 'max' => 255]]],
+				'RQ_BANK_ROUTE_NUM' => [['type' => 'length', 'params' => ['min' => null, 'max' => 9]]],
+				'RQ_BIK' => [['type' => 'length', 'params' => ['min' => null, 'max' => 11]]],
+				'RQ_MFO' => [['type' => 'length', 'params' => ['min' => null, 'max' => 6]]],
+				'RQ_ACC_NAME' => [['type' => 'length', 'params' => ['min' => null, 'max' => 150]]],
+				'RQ_ACC_NUM' => [['type' => 'length', 'params' => ['min' => null, 'max' => 34]]],
+				'RQ_IIK' => [['type' => 'length', 'params' => ['min' => null, 'max' => 20]]],
+				'RQ_ACC_CURRENCY' => [['type' => 'length', 'params' => ['min' => null, 'max' => 100]]],
+				'RQ_COR_ACC_NUM' => [['type' => 'length', 'params' => ['min' => null, 'max' => 34]]],
+				'RQ_IBAN' => [['type' => 'length', 'params' => ['min' => null, 'max' => 34]]],
+				'RQ_SWIFT' => [['type' => 'length', 'params' => ['min' => null, 'max' => 11]]],
+				'RQ_BIC' => [['type' => 'length', 'params' => ['min' => null, 'max' => 11]]]
+			];
+		}
+
+		return self::$rqFieldValidationMap;
+	}
+
+	public function checkRqFieldsBeforeSave($bankDetailId, $fields)
+	{
+		$result = new Main\Result();
+
+		$countryId = 0;
+		$bankDetailId = (int)$bankDetailId;
+		$entityTypeId = \CCrmOwnerType::Undefined;
+		$entityId = 0;
+		$isUpdate = ($bankDetailId > 0);
+
+		if (isset($fields['ENTITY_TYPE_ID']))
+		{
+			$entityTypeId = (int)$fields['ENTITY_TYPE_ID'];
+		}
+		if (isset($fields['ENTITY_ID']))
+		{
+			$entityId = (int)$fields['ENTITY_ID'];
+		}
+		if (isset($fields['COUNTRY_ID']))
+		{
+			$countryId = (int)$fields['COUNTRY_ID'];
+		}
+
+		if ($isUpdate && $countryId <= 0)
+		{
+			$countryId = $this->getCountryIdByOwnerEntity($entityTypeId, $entityId);
+		}
+		if ($countryId < 0)
+		{
+			$countryId = 0;
+		}
+
+		$validationMap = $this->getRqFieldValidationMap();
+		$titleMap = $this->getRqFieldTitleMap();
+
+		foreach ($fields as $fieldName => $fieldValue)
+		{
+			if (is_array($validationMap[$fieldName]))
+			{
+				foreach ($validationMap[$fieldName] as $validateInfo)
+				{
+					if (isset($validateInfo['type'])
+						&& is_array($validateInfo['params']))
+					{
+						if ($validateInfo['type'] === 'length')
+						{
+							$params = $validateInfo['params'];
+							$strValue = strval($fieldValue);
+							if ($strValue !== '')
+							{
+								$title = ($countryId > 0 && isset($titleMap[$fieldName][$countryId])) ?
+									$titleMap[$fieldName][$countryId] : $fieldName;
+								$length = mb_strlen($strValue);
+								if (isset($params['min']) && $params['min'] > 0)
+								{
+									if ($length < $params['min'])
+									{
+										$message = Loc::getMessage(
+											'CRM_BANK_DETAIL_FIELD_VALIDATOR_LENGTH_MIN',
+											[
+												'#FIELD_TITLE#' => $title,
+												'#MIN_LENGTH#' => $params['min']
+											]
+										);
+										$result->addError(new Main\Error($message, self::ERR_FIELD_LENGTH_MIN));
+									}
+								}
+
+								if (isset($params['max']) && $params['max'] > 0)
+								{
+									if ($length > $params['max'])
+									{
+										$message = Loc::getMessage(
+											'CRM_BANK_DETAIL_FIELD_VALIDATOR_LENGTH_MAX',
+											[
+												'#FIELD_TITLE#' => $title,
+												'#MAX_LENGTH#' => $params['max']
+											]
+										);
+										$result->addError(new Main\Error($message, self::ERR_FIELD_LENGTH_MAX));
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return $result;
+	}
+
 	public function checkBeforeAdd($fields, $options = array())
 	{
 		unset($fields['ID'], $fields['DATE_MODIFY'], $fields['MODIFY_BY_ID']);
 		$fields['DATE_CREATE'] = new \Bitrix\Main\Type\DateTime();
 		$fields['CREATED_BY_ID'] = \CCrmSecurityHelper::GetCurrentUserID();
+
+		$result = $this->checkRqFieldsBeforeSave(0, $fields);
+		if (!$result->isSuccess())
+		{
+			return $result;
+		}
 
 		global $USER_FIELD_MANAGER, $APPLICATION;
 
@@ -375,6 +521,12 @@ class EntityBankDetail
 			}
 		}
 
+		$result = $this->checkRqFieldsBeforeSave(0, $fields);
+		if (!$result->isSuccess())
+		{
+			return $result;
+		}
+
 		$result = BankDetailTable::add($fields);
 		$id = $result->isSuccess() ? (int)$result->getId() : 0;
 		if ($id > 0)
@@ -400,6 +552,12 @@ class EntityBankDetail
 		unset($fields['ID'], $fields['DATE_CREATE'], $fields['CREATED_BY_ID']);
 		$fields['DATE_MODIFY'] = new \Bitrix\Main\Type\DateTime();
 		$fields['MODIFY_BY_ID'] = \CCrmSecurityHelper::GetCurrentUserID();
+
+		$result = $this->checkRqFieldsBeforeSave($id, $fields);
+		if (!$result->isSuccess())
+		{
+			return $result;
+		}
 
 		// rewrite some fields
 		$entity = RequisiteTable::getEntity();
@@ -636,6 +794,12 @@ class EntityBankDetail
 					$fields[$fieldName] = $field->getDefaultValue();
 				}
 			}
+		}
+
+		$result = $this->checkRqFieldsBeforeSave($id, $fields);
+		if (!$result->isSuccess())
+		{
+			return $result;
 		}
 
 		$result = BankDetailTable::update($id, $fields);
@@ -952,56 +1116,58 @@ class EntityBankDetail
 					}
 				}
 			}
+			$targetEncoding = Translation::getCurrentEncoding();
 			foreach (array_keys($countryIds) as $countryId)
 			{
-				$langId = '';
-				switch ($countryId)
+				$countryCode = EntityPreset::getCountryCodeById($countryId);
+				$countryCodeLower = mb_strtolower($countryCode);
+				$phrasesConfig = [];
+				$filePath= Main\IO\Path::normalize(
+					Main\Application::getDocumentRoot().
+					"/bitrix/modules/crm/lib/requisite/phrases/bankdetail_$countryCodeLower.php"
+				);
+				if (file_exists($filePath))
 				{
-					case 1:                // ru
-						$langId = 'ru';
-						break;
-					case 4:                // by
-						$langId = 'by';
-						break;
-					case 6:                // kz
-						$langId = 'kz';
-						break;
-					case 14:               // ua
-						$langId = 'ua';
-						break;
-					case 46:               // de
-						$langId = 'de';
-						break;
-					case 122:              // us
-						$langId = 'en';
-						break;
+					include($filePath);
 				}
-
-				if (!empty($langId))
+				if (isset($phrasesConfig['encoding'])
+					&& is_string($phrasesConfig['encoding'])
+					&& $phrasesConfig['encoding'] !== ''
+					&& is_array($phrasesConfig['phrases'])
+					&& !empty($phrasesConfig['phrases']))
 				{
-					$messages = Loc::loadLanguageFile(
-						Main\Application::getDocumentRoot().'/bitrix/modules/crm/lib/bankdetail.php',
-						$langId
-					);
+					$phrases = $phrasesConfig['phrases'];
+					$sourceEncoding = mb_strtolower($phrasesConfig['encoding']);
+					$needConvertEncoding = ($sourceEncoding !== $targetEncoding);
 					foreach ($titleMap as $fieldName => &$titlesByCountry)
 					{
 						if (isset($titlesByCountry[$countryId]))
 						{
-							$messageId = 'CRM_BANK_DETAIL_ENTITY_'.$fieldName.'_FIELD';
-							$altMessageId = 'CRM_BANK_DETAIL_ENTITY_'.$fieldName.'_'.strtoupper($langId).'_FIELD';
-							$title = GetMessage($altMessageId);
-
-							if (isset($messages[$altMessageId]))
+							$phraseId = 'CRM_BANK_DETAIL_ENTITY_'.$fieldName.'_'.$countryCode.'_FIELD';
+							if (isset($phrases[$phraseId]))
 							{
-								$titlesByCountry[$countryId] = $messages[$altMessageId];
-							}
-							else if (is_string($title) && !empty($title))
-							{
-								$titlesByCountry[$countryId] = $title;
-							}
-							else if (isset($messages[$messageId]))
-							{
-								$titlesByCountry[$countryId] = $messages[$messageId];
+								if ($needConvertEncoding)
+								{
+									$convertedValue = Encoding::convertEncoding(
+										$phrases[$phraseId],
+										$sourceEncoding,
+										$targetEncoding
+									);
+									$titlesByCountry[$countryId] =
+										is_string($convertedValue) ? $convertedValue : $fieldName;
+								}
+								else
+								{
+									$titlesByCountry[$countryId] = $phrases[$phraseId];
+								}
+								$titlesByCountry[$countryId] = (
+								$needConvertEncoding ?
+									Encoding::convertEncoding(
+										$phrases[$phraseId],
+										$sourceEncoding,
+										$targetEncoding
+									) : $phrases[$phraseId]
+								);
 							}
 						}
 					}

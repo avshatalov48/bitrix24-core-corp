@@ -340,7 +340,7 @@ class Video extends Base
 			),
 			self::getAlternativeExtensions()
 		);
-		if(in_array(strtolower($this->fileExtension), $mp4Formats))
+		if(in_array(mb_strtolower($this->fileExtension), $mp4Formats))
 		{
 			return false;
 		}

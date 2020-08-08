@@ -1,0 +1,97 @@
+<?php
+
+namespace Bitrix\SalesCenter\Delivery\Handlers;
+
+use Bitrix\Main\Localization\Loc;
+use Sale\Handlers\Delivery\Taxi\Yandex\ServiceContainer;
+
+Loc::loadMessages(__FILE__);
+
+/**
+ * Class YandexTaxi
+ * @package Bitrix\SalesCenter\Delivery\Handlers
+ */
+class YandexTaxi extends Base
+{
+	/**
+	 * @inheritDoc
+	 */
+	public function isAvailable(): bool
+	{
+		return ServiceContainer::getRegionalPolicy()->isAvailableInCurrentRegion();
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function getHandlerClass(): string
+	{
+		return '\\' . \Sale\Handlers\Delivery\Taxi\Yandex\YandexTaxi::class;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function getName()
+	{
+		return Loc::getMessage('SALESCENTER_DELIVERY_HANDLERS_YANDEX_TAXI_TITLE');
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function getTypeDescription()
+	{
+		return Loc::getMessage('SALESCENTER_DELIVERY_HANDLERS_YANDEX_TAXI_TYPE_DESCRIPTION');
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function getShortDescription()
+	{
+		return Loc::getMessage('SALESCENTER_DELIVERY_HANDLERS_YANDEX_TAXI_SHORT_DESCRIPTION');
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function getCode(): string
+	{
+		return \Sale\Handlers\Delivery\Taxi\Yandex\YandexTaxi::SERVICE_CODE;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	protected function getImageName(): string
+	{
+		return 'yandex_taxi.png';
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function isInstallable(): bool
+	{
+		return true;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function getInstalledColor()
+	{
+		return '#F7A700';
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function getWizard()
+	{
+		return new \Bitrix\SalesCenter\Delivery\Wizard\YandexTaxi(
+			ServiceContainer::getApi()
+		);
+	}
+}

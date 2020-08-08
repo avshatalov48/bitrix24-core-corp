@@ -2,6 +2,7 @@
 namespace Bitrix\Timeman\Form\Schedule;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Timeman\Helper\EntityCodesHelper;
 use Bitrix\Timeman\Model\Schedule\Schedule;
 
 use Bitrix\Timeman\Helper\Form\Schedule\ScheduleFormHelper;
@@ -271,13 +272,13 @@ class ScheduleForm extends CompositeForm
 			{
 				$this->isForAllUsers = true;
 			}
-			elseif (preg_match('#U[0-9]+#', $codeId) === 1)
+			elseif (EntityCodesHelper::isUser($codeId))
 			{
-				$userIds[(int)substr($codeId, 1)] = true;
+				$userIds[EntityCodesHelper::getUserId($codeId)] = true;
 			}
-			elseif (preg_match('#DR[0-9]+#', $codeId) === 1)
+			elseif (EntityCodesHelper::isDepartment($codeId))
 			{
-				$departmentsIds[(int)substr($codeId, 2)] = true;
+				$departmentsIds[EntityCodesHelper::getDepartmentId($codeId)] = true;
 			}
 		}
 		$this->$departmentsIdsName = array_unique(array_merge($this->$departmentsIdsName, array_keys($departmentsIds)));

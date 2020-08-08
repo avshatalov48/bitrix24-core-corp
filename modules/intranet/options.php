@@ -70,9 +70,9 @@ $childTabControl = new CAdminViewTabControl("childTabControl", $aSubTabs);
 $childTabControl_1 = new \CAdminViewTabControl('childTabControl_1', $aSubTabs_1);
 $childTabControl_2 = new \CAdminViewTabControl('childTabControl_2', $aSubTabs_2);
 
-if($REQUEST_METHOD=="POST" && strlen($Update.$Apply.$RestoreDefaults)>0 && check_bitrix_sessid())
+if($REQUEST_METHOD=="POST" && $Update.$Apply.$RestoreDefaults <> '' && check_bitrix_sessid())
 {
-	if(strlen($RestoreDefaults)>0)
+	if($RestoreDefaults <> '')
 	{
 		COption::RemoveOption("intranet");
 		COption::SetOptionString('intranet', 'options_restore', date('c'));
@@ -96,7 +96,7 @@ if($REQUEST_METHOD=="POST" && strlen($Update.$Apply.$RestoreDefaults)>0 && check
 			}
 		}
 
-		$first_week_day = substr($_REQUEST['first_week_day'], 0, 2);
+		$first_week_day = mb_substr($_REQUEST['first_week_day'], 0, 2);
 		COption::SetOptionString('intranet', 'first_week_day', $first_week_day);
 
 		$tz_transition = $_REQUEST['tz_transition'] == 'Y' ? 'Y' : 'N';
@@ -164,7 +164,7 @@ if($REQUEST_METHOD=="POST" && strlen($Update.$Apply.$RestoreDefaults)>0 && check
 		while(array_key_exists("search_file_extension_".$i, $_REQUEST))
 		{
 			$ext = trim($_REQUEST["search_file_extension_".$i]);
-			if(strlen($ext) > 0)
+			if($ext <> '')
 			{
 				$ar[$ext] = $ext;
 				COption::SetOptionString("intranet", "search_file_extension_".$ext, $ext);
@@ -179,7 +179,7 @@ if($REQUEST_METHOD=="POST" && strlen($Update.$Apply.$RestoreDefaults)>0 && check
 		COption::SetOptionInt('intranet', 'mail_check_period', intval($_REQUEST['mail_check_period']));
 	}
 
-	if(strlen($Update)>0 && strlen($_REQUEST["back_url_settings"])>0)
+	if($Update <> '' && $_REQUEST["back_url_settings"] <> '')
 	{
 		LocalRedirect($_REQUEST["back_url_settings"]);
 	}
@@ -411,7 +411,7 @@ endif;
 		<td valign="top" width="50%">
 			<select name="VACATION_TYPES[]" multiple size="4">
 			<?foreach($vacationTypes as $type):?>
-				<option value="<?=$type['ID']?>" <?=($type['ACTIVE']?' selected':'')?>><?='['.strtolower($type['ID']).'] '.$type['NAME']?></option>
+				<option value="<?=$type['ID']?>" <?=($type['ACTIVE']?' selected':'')?>><?= '['.mb_strtolower($type['ID']).'] '.$type['NAME']?></option>
 			<?endforeach;?>
 			</select>
 		</td>
@@ -552,7 +552,7 @@ if (!empty($arRes))
 {
 	foreach ($arRes as $key => $val)
 	{
-		$userProp[$val['FIELD_NAME']] = strlen($val['EDIT_FORM_LABEL']) > 0
+		$userProp[$val['FIELD_NAME']] = $val['EDIT_FORM_LABEL'] <> ''
 			? $val['EDIT_FORM_LABEL']
 			: $val['FIELD_NAME'];
 	}
@@ -814,7 +814,7 @@ endforeach;
 foreach ($arVariants as $var):
 ?>
 	<tr>
-		<td valign="top"><?echo GetMessage('INTR_OPTION_TZ_TO_'.strtoupper($var).'_DATE')?>: </td>
+		<td valign="top"><?echo GetMessage('INTR_OPTION_TZ_TO_'.mb_strtoupper($var).'_DATE')?>: </td>
 		<td>
 			<select name="tz_transition_<?echo $var?>_tpl" onchange="check_other(this, '<?echo $var?>')" <?echo $tz_transition == 'N' ? 'disabled="disabled"' : ''?>>
 				<option value=""><?echo GetMessage('INTR_OPTION_NOT_SET')?></option>
@@ -825,7 +825,7 @@ foreach ($arTZRules[$var] as $id => $rule):
 	$bFound |= ($rule === ${'tz_transition_'.$var});
 	if ($firstRule == '') $firstRule = $rule;
 ?>
-	<option value="<?echo htmlspecialcharsbx($rule)?>" <?echo ($rule === ${'tz_transition_'.$var} || (!$bFound && $rule == 'other' && ${'tz_transition_'.$var} != '')) ? 'selected="selected"' : ''?>><?echo GetMessage('INTR_OPTION_TZ_TO_'.strtoupper($var).'_DATE_'.$id)?></option>
+	<option value="<?echo htmlspecialcharsbx($rule)?>" <?echo ($rule === ${'tz_transition_'.$var} || (!$bFound && $rule == 'other' && ${'tz_transition_'.$var} != '')) ? 'selected="selected"' : ''?>><?echo GetMessage('INTR_OPTION_TZ_TO_'.mb_strtoupper($var).'_DATE_'.$id)?></option>
 <?
 endforeach;
 ?>
@@ -981,7 +981,7 @@ $childTabControl_1->End();
 <?$tabControl->Buttons();?>
 	<input type="submit" name="Update" value="<?=GetMessage("MAIN_SAVE")?>" title="<?=GetMessage("MAIN_OPT_SAVE_TITLE")?>" />
 	<input type="submit" name="Apply" value="<?=GetMessage("MAIN_APPLY")?>" title="<?=GetMessage("MAIN_OPT_APPLY_TITLE")?>">
-	<?if(strlen($_REQUEST["back_url_settings"])>0):?>
+	<?if($_REQUEST["back_url_settings"] <> ''):?>
 		<input type="button" name="Cancel" value="<?=GetMessage("MAIN_OPT_CANCEL")?>" title="<?=GetMessage("MAIN_OPT_CANCEL_TITLE")?>" onclick="window.location='<?echo htmlspecialcharsbx(CUtil::addslashes($_REQUEST["back_url_settings"]))?>'">
 		<input type="hidden" name="back_url_settings" value="<?=htmlspecialcharsbx($_REQUEST["back_url_settings"])?>">
 	<?endif?>

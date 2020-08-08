@@ -1,12 +1,12 @@
 <?php
 namespace Bitrix\Tasks\Update;
 
-use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Db\SqlQueryException;
+use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Entity\ReferenceField;
@@ -119,7 +119,7 @@ final class FullTasksIndexer extends Stepper
 		$found = false;
 
 		$tasksRes = TaskTable::getList([
-			'select' => ['ID', 'SEARCH_INDEX'],
+			'select' => ['ID'],
 			'filter' => [
 				'>ID' => $params["last_task_id"],
 				'<ID' => $params["last_task_to_index"] + 1,
@@ -133,9 +133,8 @@ final class FullTasksIndexer extends Stepper
 		while ($task = $tasksRes->fetch())
 		{
 			$taskId = $task['ID'];
-			$searchIndex = $task['SEARCH_INDEX'];
 
-			SearchIndex::setTaskSearchIndex($taskId, [], $searchIndex);
+			SearchIndex::setTaskSearchIndex($taskId, []);
 
 			$params["number"]++;
 			$params["last_task_id"] = (int)$taskId;
@@ -225,13 +224,13 @@ final class FullTasksIndexer extends Stepper
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
 	 */
-	private static function fillSourceParams()
+	public static function fillSourceParams(): array
 	{
 		$tasksRes = TaskTable::getList([
 			'select' => ['ID'],
 			'filter' => ['ZOMBIE' => 'N'],
 			'order' => ['ID' => 'ASC'],
-			'count_total' => true
+			'count_total' => true,
 		]);
 		$tasks = $tasksRes->fetchAll();
 		$count = $tasksRes->getCount();
@@ -242,26 +241,34 @@ final class FullTasksIndexer extends Stepper
 
 		if (static::checkForumIncluded())
 		{
-			$connection = Application::getConnection();
-			$commentsCountRes = $connection->query("
-				SELECT COUNT(FM.ID) AS CNT
-				FROM b_tasks T
-				INNER JOIN b_forum_message FM ON FM.TOPIC_ID = T.FORUM_TOPIC_ID AND FM.NEW_TOPIC = 'N'
-				WHERE T.ZOMBIE = 'N'
-			")->fetch();
+			$query = new Query(TaskTable::getEntity());
+			$query->setSelect([new ExpressionField('CNT', 'COUNT(*)')]);
+			$query->registerRuntimeField(
+				'',
+				new ReferenceField(
+					'FM',
+					MessageTable::class,
+					Join::on('this.FORUM_TOPIC_ID', 'ref.TOPIC_ID')
+						->where('ref.NEW_TOPIC', 'N'),
+					['join_type' => 'INNER']
+				)
+			);
+			$query->where('ZOMBIE', 'N');
 
-			$count += (int)$commentsCountRes['CNT'];
+			$commentsCountRes = $query->exec();
+			if ($commentsCount = $commentsCountRes->fetch())
+			{
+				$count += (int)$commentsCount['CNT'];
+			}
 		}
 
-		$params = [
-			"number" => 0,
-			"last_task_id" => 0,
-			"last_task_to_index" => $lastTaskToIndex,
-			"last_comment_id" => 0,
-			"count" => $count,
+		return [
+			'number' => 0,
+			'last_task_id' => 0,
+			'last_task_to_index' => $lastTaskToIndex,
+			'last_comment_id' => 0,
+			'count' => $count,
 		];
-
-		return $params;
 	}
 
 	/**

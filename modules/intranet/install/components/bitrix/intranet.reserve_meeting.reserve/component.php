@@ -5,34 +5,34 @@ if (!CModule::IncludeModule("intranet"))
 if (!CModule::IncludeModule("iblock"))
 	return ShowError(GetMessage("EC_IBLOCK_MODULE_NOT_INSTALLED"));
 
-$iblockId = IntVal($arParams["IBLOCK_ID"]);
+$iblockId = intval($arParams["IBLOCK_ID"]);
 
 $arParams["PAGE_VAR"] = Trim($arParams["PAGE_VAR"]);
-if (StrLen($arParams["PAGE_VAR"]) <= 0)
+if ($arParams["PAGE_VAR"] == '')
 	$arParams["PAGE_VAR"] = "page";
 
 $arParams["MEETING_VAR"] = Trim($arParams["MEETING_VAR"]);
-if (StrLen($arParams["MEETING_VAR"]) <= 0)
+if ($arParams["MEETING_VAR"] == '')
 	$arParams["MEETING_VAR"] = "meeting_id";
 
 $arParams["ITEM_VAR"] = Trim($arParams["ITEM_VAR"]);
-if (StrLen($arParams["ITEM_VAR"]) <= 0)
+if ($arParams["ITEM_VAR"] == '')
 	$arParams["ITEM_VAR"] = "item_id";
 
-$meetingId = IntVal($arParams["MEETING_ID"]);
+$meetingId = intval($arParams["MEETING_ID"]);
 if ($meetingId <= 0)
-	$meetingId = IntVal($_REQUEST[$arParams["MEETING_VAR"]]);
+	$meetingId = intval($_REQUEST[$arParams["MEETING_VAR"]]);
 
-$itemId = IntVal($arParams["ITEM_ID"]);
+$itemId = intval($arParams["ITEM_ID"]);
 if ($itemId <= 0)
-	$itemId = IntVal($_REQUEST[$arParams["ITEM_VAR"]]);
+	$itemId = intval($_REQUEST[$arParams["ITEM_VAR"]]);
 
 $arParams["PATH_TO_MEETING"] = Trim($arParams["PATH_TO_MEETING"]);
-if (StrLen($arParams["PATH_TO_MEETING"]) <= 0)
+if ($arParams["PATH_TO_MEETING"] == '')
 	$arParams["PATH_TO_MEETING"] = HtmlSpecialCharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=meeting&".$arParams["MEETING_VAR"]."=#meeting_id#");
 
 $arParams["PATH_TO_MEETING_LIST"] = Trim($arParams["PATH_TO_MEETING_LIST"]);
-if (StrLen($arParams["PATH_TO_MEETING_LIST"]) <= 0)
+if ($arParams["PATH_TO_MEETING_LIST"] == '')
 	$arParams["PATH_TO_MEETING_LIST"] = HtmlSpecialCharsbx($APPLICATION->GetCurPage());
 
 $arParams['NAME_TEMPLATE'] = $arParams['NAME_TEMPLATE'] ? $arParams['NAME_TEMPLATE'] : CSite::GetNameFormat(false);
@@ -43,7 +43,7 @@ $arParams["SET_NAVCHAIN"] = ($arParams["SET_NAVCHAIN"] == "Y" ? "Y" : "N");
 
 if (!Is_Array($arParams["USERGROUPS_RESERVE"]))
 {
-	if (IntVal($arParams["USERGROUPS_RESERVE"]) > 0)
+	if (intval($arParams["USERGROUPS_RESERVE"]) > 0)
 		$arParams["USERGROUPS_RESERVE"] = array($arParams["USERGROUPS_RESERVE"]);
 	else
 		$arParams["USERGROUPS_RESERVE"] = array();
@@ -70,7 +70,7 @@ if ($arParams["SET_NAVCHAIN"] == "Y")
 if (!$GLOBALS["USER"]->IsAuthorized())
 	$arResult["FatalError"] = GetMessage("INTASK_C29_NEED_AUTH").". ";
 
-if (StrLen($arResult["FatalError"]) <= 0)
+if ($arResult["FatalError"] == '')
 {
 	if (!$GLOBALS["USER"]->IsAdmin()
 		&& Count(Array_Intersect($GLOBALS["USER"]->GetUserGroupArray(), $arParams["USERGROUPS_RESERVE"])) <= 0)
@@ -79,7 +79,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 	}
 }
 
-if (StrLen($arResult["FatalError"]) <= 0)
+if ($arResult["FatalError"] == '')
 {
 	$arSelectFields = array("IBLOCK_ID");
 	foreach ($arResult["ALLOWED_FIELDS"] as $key => $value)
@@ -97,7 +97,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 		$arResult["FatalError"] = GetMessage("INAF_MEETING_NOT_FOUND")." ";
 }
 
-if (StrLen($arResult["FatalError"]) <= 0)
+if ($arResult["FatalError"] == '')
 {
 	$arItem = false;
 
@@ -127,7 +127,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 	}
 }
 
-if (StrLen($arResult["FatalError"]) <= 0)
+if ($arResult["FatalError"] == '')
 {
 	if ($arItem)
 	{
@@ -136,10 +136,10 @@ if (StrLen($arResult["FatalError"]) <= 0)
 	}
 }
 
-if (StrLen($arResult["FatalError"]) <= 0)
+if ($arResult["FatalError"] == '')
 {
 	$bVarsFromForm = false;
-	if ($_SERVER["REQUEST_METHOD"] == "POST" && StrLen($_POST["save"]) > 0 && check_bitrix_sessid())
+	if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["save"] <> '' && check_bitrix_sessid())
 	{
 		$errorMessage = "";
 
@@ -157,7 +157,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 		$regularityEndV = $_REQUEST["regularity_end"];
 		$regularityAdditionalV = $_REQUEST["regularity_additional"];
 
-		if (StrLen($startDateV) <= 0)
+		if ($startDateV == '')
 		{
 			$errorMessage .= GetMessage("INTASK_C29_EMPTY_DATE").". ";
 		}
@@ -168,7 +168,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 				$errorMessage .= Str_Replace("#FORMAT#", $GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATE), GetMessage("INTASK_C29_WRONG_DATE")).". ";
 		}
 
-		if (StrLen($startTimeV) <= 0)
+		if ($startTimeV == '')
 		{
 			$errorMessage .= GetMessage("INTASK_C29_EMPTY_TIME").". ";
 		}
@@ -192,39 +192,39 @@ if (StrLen($arResult["FatalError"]) <= 0)
 			{
 				$arStartTimeVTmp = Explode(":", $startTimeV);
 			}
-			if (Count($arStartTimeVTmp) != 2 || IntVal($arStartTimeVTmp[0]) > 23 || IntVal($arStartTimeVTmp[0]) < 0
+			if (Count($arStartTimeVTmp) != 2 || intval($arStartTimeVTmp[0]) > 23 || intval($arStartTimeVTmp[0]) < 0
 				|| $arStartTimeVTmp[1] != "00" && $arStartTimeVTmp[1] != "30")
 				$errorMessage .= Str_Replace("#FORMAT#", GetMessage("INTASK_C29_HM"), GetMessage("INTASK_C29_WRONG_TIME")).". ";
 		}
 
-		if (StrLen($timeoutTimeV) <= 0)
+		if ($timeoutTimeV == '')
 		{
 			$errorMessage .= GetMessage("INTASK_C29_EMPTY_DURATION").". ";
 		}
 		else
 		{
 			$arTimeoutTimeVTmp = Explode(".", $timeoutTimeV);
-			if (Count($arTimeoutTimeVTmp) != 2 || IntVal($arTimeoutTimeVTmp[0]) > 23 || IntVal($arTimeoutTimeVTmp[0]) < 0
+			if (Count($arTimeoutTimeVTmp) != 2 || intval($arTimeoutTimeVTmp[0]) > 23 || intval($arTimeoutTimeVTmp[0]) < 0
 				|| $arTimeoutTimeVTmp[1] != "0" && $arTimeoutTimeVTmp[1] != "5")
 				$errorMessage .= GetMessage("INTASK_C29_WRONG_DURATION").". ";
 		}
 
-		if (StrLen($nameV) <= 0)
+		if ($nameV == '')
 			$errorMessage .= GetMessage("INTASK_C29_EMPTY_NAME").". ";
 
-		if (StrLen($errorMessage) <= 0)
+		if ($errorMessage == '')
 		{
-			$regularityV = StrToUpper($regularityV);
+			$regularityV = mb_strtoupper($regularityV);
 			if (!In_Array($regularityV, array("NONE", "WEEKLY", "DAILY", "MONTHLY", "YEARLY")))
 				$regularityV = "NONE";
 
 			if ($regularityV != "NONE")
 			{
-				$regularityCountV = IntVal($regularityCountV);
+				$regularityCountV = intval($regularityCountV);
 				if ($regularityCountV <= 0)
 					$regularityCountV = 1;
 
-				if (StrLen($regularityEndV) > 0)
+				if ($regularityEndV <> '')
 				{
 					$regularityEndVTmp = Date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATE), MakeTimeStamp($regularityEndV, FORMAT_DATE));
 					if ($regularityEndVTmp != $regularityEndV)
@@ -240,10 +240,10 @@ if (StrLen($arResult["FatalError"]) <= 0)
 				{
 					foreach ($regularityAdditionalV as $v)
 					{
-						$v = IntVal($v);
+						$v = intval($v);
 						if ($v >= 0 && $v <= 6)
 						{
-							if (StrLen($regularityAdditionalVString) > 0)
+							if ($regularityAdditionalVString <> '')
 								$regularityAdditionalVString .= ",";
 							$regularityAdditionalVString .= $v;
 						}
@@ -259,7 +259,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 			}
 		}
 
-		if (StrLen($errorMessage) <= 0)
+		if ($errorMessage == '')
 		{
 			if ($regularityV == "NONE")
 			{
@@ -319,7 +319,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 			}
 		}
 
-		if (StrLen($errorMessage) <= 0)
+		if ($errorMessage == '')
 		{
 			$arFields = array(
 				"NAME" => $nameV,
@@ -373,10 +373,10 @@ if (StrLen($arResult["FatalError"]) <= 0)
 				CEventCalendar::clearEventsCache($arMeeting["IBLOCK_ID"]);
 		}
 
-		if (StrLen($errorMessage) <= 0)
+		if ($errorMessage == '')
 		{
 			$p = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_MEETING"], array("meeting_id" => $arMeeting["ID"]));
-			$p = $p.(StrPos($p, "?") === false ? "?" : "&")."week_start=".Date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATE), $fromDateTime);
+			$p = $p.(mb_strpos($p, "?") === false ? "?" : "&")."week_start=".Date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATE), $fromDateTime);
 			LocalRedirect($p);
 		}
 		else
@@ -401,7 +401,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 	}
 }
 
-if (StrLen($arResult["FatalError"]) <= 0)
+if ($arResult["FatalError"] == '')
 {
 	$arResult["MEETING"] = $arMeeting;
 
@@ -434,8 +434,8 @@ if (StrLen($arResult["FatalError"]) <= 0)
 			if ($arItem["PROPERTY_PERIOD_TYPE_VALUE"] == "NONE")
 			{
 				$ft = ($ft2 - $ft1) / 3600.0;
-				$arResult["Item"]["TimeoutTime"] = IntVal($ft);
-				$dt = $ft - IntVal($ft);
+				$arResult["Item"]["TimeoutTime"] = intval($ft);
+				$dt = $ft - intval($ft);
 				if ($dt < 0.25)
 					$arResult["Item"]["TimeoutTime"] .= ".0";
 				elseif ($dt >= 0.25 && $dt < 0.75)
@@ -446,8 +446,8 @@ if (StrLen($arResult["FatalError"]) <= 0)
 			else
 			{
 				$ft = $arItem["PROPERTY_EVENT_LENGTH_VALUE"] / 3600.0;
-				$arResult["Item"]["TimeoutTime"] = IntVal($ft);
-				$dt = $ft - IntVal($ft);
+				$arResult["Item"]["TimeoutTime"] = intval($ft);
+				$dt = $ft - intval($ft);
 				if ($dt < 0.25)
 					$arResult["Item"]["TimeoutTime"] .= ".0";
 				elseif ($dt >= 0.25 && $dt < 0.75)
@@ -461,7 +461,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 		else
 		{
 			$arResult["Item"]["StartDate"] = HtmlSpecialCharsbx($_REQUEST["start_date"]);
-			if (StrLen($arResult["Item"]["StartDate"]) <= 0)
+			if ($arResult["Item"]["StartDate"] == '')
 				$arResult["Item"]["StartDate"] = Date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATE));
 
 			$arResult["Item"]["StartTime"] = HtmlSpecialCharsbx($_REQUEST["start_time"]);
@@ -476,7 +476,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 			$arResult["Item"]["RegularityCount"] = HtmlSpecialCharsbx($_REQUEST["regularity_count"]);
 			$arResult["Item"]["RegularityEnd"] = HtmlSpecialCharsbx($_REQUEST["regularity_end"]);
 			$arResult["Item"]["RegularityAdditional"] = HtmlSpecialCharsbx($_REQUEST["regularity_additional"]);
-			if (StrLen($arResult["Item"]["RegularityAdditional"]) <= 0)
+			if ($arResult["Item"]["RegularityAdditional"] == '')
 			{
 				$z = Date("w", MakeTimeStamp($arResult["Item"]["StartDate"], FORMAT_DATE));
 				$arResult["Item"]["RegularityAdditional"] = ($z == 0 ? 6 : $z - 1);

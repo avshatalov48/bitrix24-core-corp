@@ -87,7 +87,7 @@ final class Dispatcher
 	 */
 	public static function restRegister($rest)
 	{
-		$rest = strtolower(trim((string) $rest));
+		$rest = mb_strtolower(trim((string)$rest));
 
 		if (
 			!isset($rest) || $rest == '' ||
@@ -246,9 +246,9 @@ final class Dispatcher
 			$opClassPrefix = '\\Bitrix\\Tasks\\Dispatcher\\';
 			$opClass = $opClassPrefix.'Operation';
 			$opArgs = array('NAMESPACE' => $this->rootNamespace);
-			if(substr($action, 0, 8) == 'runtime:')
+			if(mb_substr($action, 0, 8) == 'runtime:')
 			{
-				$action = substr($action, 8);
+				$action = mb_substr($action, 8);
 				if(!array_key_exists($action, $this->runtimeActions))
 				{
 					$result->getErrors()->add('ILLEGAL_RUNTIME_ACTION', 'Runtime action not found: '.$action, static::ERROR_TYPE_PARSE);

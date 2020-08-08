@@ -332,11 +332,22 @@ if (!empty($arResult["query"]))
 		}
 
 		if (
-			strpos($categoryCode, 'custom_') === 0
+			mb_strpos($categoryCode, 'custom_') === 0
 			&& empty($arResult["CATEGORIES"][$i]["ITEMS"])
 		)
 		{
 			unset($arResult["CATEGORIES"][$i]);
+		}
+
+		if ($categoryCode === "iblock_structure")
+		{
+			foreach($arResult["CATEGORIES"][$i]["ITEMS"] as $key => $item)
+			{
+				if (isset($item["URL"]))
+				{
+					$arResult["CATEGORIES"][$i]["ITEMS"][$key]["URL"] = htmlspecialcharsback($item["URL"]);
+				}
+			}
 		}
 	}
 

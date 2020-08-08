@@ -53,7 +53,7 @@ else
 		'xlsx' => 'xls.png',
 		'zip' => 'zip.png',
 	);
-	$ext = strtolower(getFileExtension($file->getName()));
+	$ext = mb_strtolower(getFileExtension($file->getName()));
 	$icon = isset($icons[$ext]) ? $icons[$ext] : 'blank.png';
 }
 

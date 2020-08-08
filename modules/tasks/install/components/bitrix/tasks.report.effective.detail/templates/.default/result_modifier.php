@@ -1,6 +1,8 @@
 <?php
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\Util\Type\DateTime;
 
 //region TITLE
 $APPLICATION->SetPageProperty("title", Loc::getMessage('TASKS_EFFECTIVE_TITLE_FULL', array('#USER_NAME#'=>htmlspecialcharsbx($arResult['USER_NAME']))));
@@ -57,77 +59,65 @@ if (!function_exists('prepareTaskRowUserBaloonHtml'))
 	}
 }
 
-$arResult['ROWS'] = array();
+$arResult['ROWS'] = [];
 
-if($arResult['VIOLATION_LIST'])
+if ($arResult['VIOLATION_LIST'])
 {
 	$users = [];
-	foreach ($arResult['VIOLATION_LIST'] as $row)
-	{
-		$users[] = $row['TASK_ORIGINATOR_ID'];
-	}
-	$arParams['~USER_NAMES'] = \Bitrix\Tasks\Util\User::getUserName(array_unique($users));
-	$arParams['~USER_DATA'] = \Bitrix\Tasks\Util\User::getData(array_unique($users));
-
 
 	foreach ($arResult['VIOLATION_LIST'] as $item)
 	{
+		$users[] = $item['TASK_ORIGINATOR_ID'];
+	}
+	$users = array_unique($users);
+	$arParams['~USER_NAMES'] = User::getUserName($users);
+	$arParams['~USER_DATA'] = User::getData($users);
+
+	foreach ($arResult['VIOLATION_LIST'] as $item)
+	{
+		$userId = User::getId();
+
 		$groupLink = CComponentEngine::MakePathFromTemplate(
 			$arParams['PATH_TO_GROUP_LIST'],
-			array(
-				"user_id" => \Bitrix\Tasks\Util\User::getId(),
-				"group_id" => $item["GROUP_ID"]
-			)
+			[
+				'user_id' => $userId,
+				'group_id' => $item['GROUP_ID'],
+			]
 		);
-
 		$taskLink = CComponentEngine::MakePathFromTemplate(
 			$arParams['PATH_TO_USER_TASKS_TASK'],
-			array(
-				"user_id" => \Bitrix\Tasks\Util\User::getId(),
-				"task_id" => $item["TASK_ID"],
-				'action' => 'view'
-			)
+			[
+				'user_id' => $userId,
+				'task_id' => $item['TASK_ID'],
+				'action' => 'view',
+			]
 		);
 
-		switch($item['USER_TYPE'])
-		{
-			default: $item['USER_TYPE']='-';break;
-			case 'A': $item['USER_TYPE']= GetMessage('TASKS_USER_TYPE_A2');break;
-			case 'R': $item['USER_TYPE']= GetMessage('TASKS_USER_TYPE_R2');;break;
-		}
-
-		$item['GROUP'] = '<a href="'.$groupLink.'">'.htmlspecialcharsbx($item['GROUP_NAME']).'</a>';
-
-		$item['GROUP'] = '<a href="'.$groupLink.'">'.htmlspecialcharsbx($item['GROUP_NAME']).'</a>';
-		$item['TASK'] = '<a href="'.
-						$taskLink.
-						'">'.
-						htmlspecialcharsbx($item['TASK_TITLE']).
-						'</a> '.($item['TASK_ZOMBIE'] == 'Y' ? '<em>'.GetMessage('TASKS_EFFECTIVE_DETAIL_DELETED').'</em>' : '');
+		$item['USER_TYPE'] = (
+			in_array($item['USER_TYPE'], ['R', 'A'])
+				? Loc::getMessage('TASKS_USER_TYPE_'.$item['USER_TYPE'].'2')
+				: '-'
+		);
 		$item['ORIGINATOR'] = prepareTaskRowUserBaloonHtml($item['TASK_ORIGINATOR_ID'], $item['TASK_ID'], $arParams);
 
-		$item['DEADLINE'] = $item['DEADLINE'] ? \Bitrix\Tasks\Util\Type\DateTime::createFromUserTime($item['DEADLINE'])
-			: '';
-		$item['DATE'] = $item['DATE'] ? formatDateTasks(
-			\Bitrix\Tasks\Util\Type\DateTime::createFromUserTime($item['DATE'])
-		) : '';
-		$item['DATE_REPAIR'] = $item['DATE_REPAIR'] ? formatDateTasks(
-			\Bitrix\Tasks\Util\Type\DateTime::createFromUserTime(
-			$item['DATE_REPAIR']
-			)
-		) : '';
+		$item['GROUP'] = '<a href="'.$groupLink.'">'.htmlspecialcharsbx($item['GROUP_NAME']).'</a>';
+		$item['TASK'] = '<a href="'.$taskLink.'">'.htmlspecialcharsbx($item['TASK_TITLE']).'</a> '
+			.($item['TASK_ZOMBIE'] === 'Y' ? '<em>'.Loc::getMessage('TASKS_EFFECTIVE_DETAIL_DELETED').'</em>' : '');
+
+		foreach (['DATE', 'DATE_REPAIR', 'DEADLINE'] as $key)
+		{
+			$item[$key] = ($item[$key] ? formatDateTasks(DateTime::createFromUserTime($item[$key])) : '');
+		}
 
 		if (!$item['DATE_REPAIR'])
 		{
-			$item['DATE_REPAIR'] = GetMessage('TASKS_VIOLATION_NOT_REPAIR');
+			$item['DATE_REPAIR'] = Loc::getMessage('TASKS_VIOLATION_NOT_REPAIR');
 		}
-		
-		$rowItem = array(
-			"id" => $item["ID"],
-			'columns' => $item
-		);
 
-		$arResult['ROWS'][] = $rowItem;
+		$arResult['ROWS'][] = [
+			'id' => $item['ID'],
+			'columns' => $item,
+		];
 	}
 }
 

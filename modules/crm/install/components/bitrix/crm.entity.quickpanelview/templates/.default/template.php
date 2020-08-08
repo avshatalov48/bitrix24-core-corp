@@ -74,7 +74,7 @@ if(!function_exists('__CrmQuickPanelViewRenderClient'))
 
 				if(!(isset($childData['PREFIX']) && $childData['PREFIX'] !== ''))
 				{
-					$childData['PREFIX'] = strtolower("{$panelID}_{$fieldID}");
+					$childData['PREFIX'] = mb_strtolower("{$panelID}_{$fieldID}");
 				}
 				$enableMultifields = isset($childData['ENABLE_MULTIFIELDS'])
 					? (bool)$childData['ENABLE_MULTIFIELDS'] : true;
@@ -119,7 +119,7 @@ if(!function_exists('__CrmQuickPanelViewRenderSection'))
 			$editable = $enableEditButton = isset($fieldData['editable']) ? $fieldData['editable'] : false;
 			$visible = isset($fieldData['visible']) ? $fieldData['visible'] : true;
 
-			$containerID = $panelID.'_'.$sectionID.'_'.strtolower($fieldID);
+			$containerID = $panelID.'_'.$sectionID.'_'.mb_strtolower($fieldID);
 			echo '<tr id="', htmlspecialcharsbx($containerID), '"',
 				$visible ? '' : ' style="display:none;"',
 				'>';
@@ -162,7 +162,7 @@ if(!function_exists('__CrmQuickPanelViewRenderSection'))
 			{
 				if(isset($data['baseType']) && $data['baseType'] === 'char')
 				{
-					$checked = isset($data['value']) && strtoupper($data['value']) === 'Y';
+					$checked = isset($data['value']) && mb_strtoupper($data['value']) === 'Y';
 				}
 				else
 				{
@@ -197,7 +197,7 @@ if(!function_exists('__CrmQuickPanelViewRenderSection'))
 				echo CCrmViewHelper::PrepareFormMultiField(
 					$entityFields,
 					$typeName,
-					strtolower($panelID).'_'.uniqid(),
+					mb_strtolower($panelID).'_'.uniqid(),
 					null,
 					$options
 				);
@@ -239,7 +239,7 @@ if(!function_exists('__CrmQuickPanelViewRenderSection'))
 					$enableEditButton = false;
 				}
 
-				$guid = strtolower($panelID).'_'.strtolower($data['fieldID']).'_'.uniqid();
+				$guid = mb_strtolower($panelID).'_'.mb_strtolower($data['fieldID']).'_'.uniqid();
 				CCrmViewHelper::RenderResponsiblePanel(
 					array(
 						'FIELD_ID' => $data['fieldID'],

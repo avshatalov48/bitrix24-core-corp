@@ -210,7 +210,7 @@ class CrmDocumentNumeratorsListComponent extends CBitrixComponent implements \Bi
 		{
 			foreach ($numeratorData as $key => $value)
 			{
-				$key = strtoupper(str_replace('n_numerator_', '', $key));
+				$key = mb_strtoupper(str_replace('n_numerator_', '', $key));
 				$numResults[$numeratorData['n_numerator_id']][$key] = $value;
 				if ($key === 'ID')
 				{

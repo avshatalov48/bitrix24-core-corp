@@ -41,7 +41,7 @@ class DealInvoiceStatistics extends DealDataSource
 		$semanticID = $filter->getExtraParam('semanticID', PhaseSemantics::UNDEFINED);
 		$isFinalSemantics = PhaseSemantics::isFinal($semanticID);
 
-		$group = isset($params['group']) ? strtoupper($params['group']) : '';
+		$group = isset($params['group'])? mb_strtoupper($params['group']) : '';
 		if($group !== '' && $group !== self::GROUP_BY_USER && $group !== self::GROUP_BY_DATE)
 		{
 			$group = '';
@@ -60,7 +60,7 @@ class DealInvoiceStatistics extends DealDataSource
 			}
 			if(isset($selectItem['aggregate']))
 			{
-				$aggregate = strtoupper($selectItem['aggregate']);
+				$aggregate = mb_strtoupper($selectItem['aggregate']);
 			}
 		}
 

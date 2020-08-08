@@ -49,7 +49,7 @@ $isInExportMode = false;
 $isStExport = false;    // Step-by-step export mode
 if (!empty($sExportType))
 {
-	$sExportType = strtolower(trim($sExportType));
+	$sExportType = mb_strtolower(trim($sExportType));
 	switch ($sExportType)
 	{
 		case 'csv':
@@ -160,7 +160,7 @@ else
 CUtil::InitJSCore(array('ajax', 'tooltip'));
 
 $arResult['GADGET'] = 'N';
-if (isset($arParams['GADGET_ID']) && strlen($arParams['GADGET_ID']) > 0)
+if (isset($arParams['GADGET_ID']) && $arParams['GADGET_ID'] <> '')
 {
 	$arResult['GADGET'] = 'Y';
 	$arResult['GADGET_ID'] = $arParams['GADGET_ID'];
@@ -178,7 +178,7 @@ if ($hasInternalFilter)
 {
 	if(empty($arParams['GRID_ID_SUFFIX']))
 	{
-		$arParams['GRID_ID_SUFFIX'] = $this->GetParent() !== null ? strtoupper($this->GetParent()->GetName()) : '';
+		$arParams['GRID_ID_SUFFIX'] = $this->GetParent() !== null? mb_strtoupper($this->GetParent()->GetName()) : '';
 	}
 
 	$arFilter = $arParams['INTERNAL_FILTER'];
@@ -196,7 +196,7 @@ if (isset($arParams['WIDGET_DATA_FILTER']) && isset($arParams['WIDGET_DATA_FILTE
 	$enableWidgetFilter = true;
 	$widgetFilter = $arParams['WIDGET_DATA_FILTER'];
 }
-elseif (!$bInternal && isset($_REQUEST['WG']) && strtoupper($_REQUEST['WG']) === 'Y')
+elseif (!$bInternal && isset($_REQUEST['WG']) && mb_strtoupper($_REQUEST['WG']) === 'Y')
 {
 	$enableWidgetFilter = true;
 	$widgetFilter = $_REQUEST;
@@ -1126,6 +1126,12 @@ else
 	$query = new Bitrix\Main\Entity\Query(\Bitrix\Crm\InvoiceTable::getEntity());
 	$subQuery = new Bitrix\Main\Entity\Query(\Bitrix\Crm\InvoiceRecurTable::getEntity());
 
+	$totalQuery = new Bitrix\Main\Entity\Query(\Bitrix\Crm\InvoiceTable::getEntity());
+	$totalQuery->setSelect(['CNT']);
+	$totalQuery->registerRuntimeField(
+		new Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(1)')
+	);
+
 	if (key($arSort))
 	{
 		$recurringSortFields = array(
@@ -1149,7 +1155,7 @@ else
 					$query->addOrder($sortList[$sortKey], $sortValue);
 					if (in_array($sortKey, $recurringSortFields))
 					{
-						$key = strtoupper($sortKey);
+						$key = mb_strtoupper($sortKey);
 						$subQuery->addSelect($key);
 						$query->addSelect("recurring.{$key}", $sortList[$sortKey]);
 					}
@@ -1167,9 +1173,9 @@ else
 
 	foreach ($arSelect as $field)
 	{
-		if (strpos($field, $recurFieldPrefix)!== false)
+		if (mb_strpos($field, $recurFieldPrefix) !== false)
 		{
-			if ($field != "CRM_INVOICE_RECURRING_RESPONSIBLE_ID")
+			if ($field !== "CRM_INVOICE_RECURRING_RESPONSIBLE_ID")
 			{
 				$fieldName = str_replace($recurFieldPrefix, '', $field);
 				$subQuery->addSelect($fieldName);
@@ -1181,7 +1187,7 @@ else
 			$query->addSelect($field);
 		}
 
-		if ($field == 'RESPONSIBLE_ID')
+		if ($field === 'RESPONSIBLE_ID')
 		{
 			$query->addSelect('ASSIGNED_BY');
 		}
@@ -1204,7 +1210,7 @@ else
 		$keyField = preg_replace('/^\W+/', '', $key);
 		if (in_array($keyField, $invoiceFields))
 		{
-			if (strpos($keyField, $recurFieldPrefix)!== false)
+			if (mb_strpos($keyField, $recurFieldPrefix) !== false)
 			{
 				$key = str_replace($recurFieldPrefix, '', $key);
 				$filterSubquery[$key] = $valueFilter;
@@ -1220,18 +1226,21 @@ else
 	{
 		Crm\Search\SearchEnvironment::prepareSearchFilter(CCrmOwnerType::Invoice, $filterQuery);
 		$query->setFilter($filterQuery);
+		$totalQuery->setFilter($filterQuery);
 	}
 
 	if (!empty($filterSubquery))
 		$subQuery->setFilter($filterSubquery);
 
-	$query->registerRuntimeField('',
-		new Bitrix\Main\Entity\ReferenceField('recurring',
-			Bitrix\Main\Entity\Base::getInstanceByQuery($subQuery),
-			array('=this.ID' => 'ref.INVOICE_ID'),
-			array('join_type' => 'INNER')
-		)
+	$subQueryRuntimeField = new Bitrix\Main\Entity\ReferenceField(
+		'recurring',
+		Bitrix\Main\Entity\Base::getInstanceByQuery($subQuery),
+		['=this.ID' => 'ref.INVOICE_ID'],
+		['join_type' => 'INNER']
 	);
+
+	$query->registerRuntimeField('', $subQueryRuntimeField);
+	$totalQuery->registerRuntimeField('', $subQueryRuntimeField);
 
 	$obRes = null;
 	if (!(is_object($USER) && $USER->IsAdmin())
@@ -1253,15 +1262,15 @@ else
 		elseif ($permissionSql !== "")
 		{
 			$query->addFilter('@ID', new Bitrix\Main\DB\SqlExpression($permissionSql));
+			$totalQuery->addFilter('@ID', new Bitrix\Main\DB\SqlExpression($permissionSql));
 		}
 	}
 
 	if (!($obRes instanceof \CDBResult))
 	{
-		$query->countTotal(true);
-		$recurRes = $query->exec();
-		$totalRowsCount = $recurRes->getCount();
-		$query->countTotal(false);
+		$recurRes = $totalQuery->exec();
+		$resultCounting = $recurRes->fetch();
+		$totalRowsCount = $resultCounting['CNT'];
 
 		if(isset($_REQUEST['apply_filter']) && $_REQUEST['apply_filter'] === 'Y')
 		{
@@ -1458,7 +1467,7 @@ while($arInvoice = $obRes->GetNext())
 	}
 }
 
-if ($arResult['GADGET'] != 'Y' && !$isInExportMode)
+if ($arResult['GADGET'] != 'Y' && !($isInExportMode && !$isStExport))
 {
 	if ($totalRowsCount > ($pageSize * ($pageNum - 1) + count($arResult['INVOICE_ID'])))
 	{

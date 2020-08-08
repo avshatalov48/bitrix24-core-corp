@@ -33,7 +33,7 @@ else:
 <?
 foreach ($arParams['USER_PROPERTY'] as $key):
 ?>
-			<td><?=strLen($arResult['USER_PROP'][$key]["EDIT_FORM_LABEL"]) > 0 ? $arResult['USER_PROP'][$key]["EDIT_FORM_LABEL"] : GetMessage('ISL_'.$key)?></td>
+			<td><?=$arResult['USER_PROP'][$key]["EDIT_FORM_LABEL"] <> '' ? $arResult['USER_PROP'][$key]["EDIT_FORM_LABEL"] : GetMessage('ISL_'.$key)?></td>
 <?
 endforeach;
 ?>
@@ -119,7 +119,7 @@ endforeach;
 					break;
 				
 				default:
-					if (substr($key, 0, 3) == 'UF_' && is_array($arResult['USER_PROP'][$key]))
+					if (mb_substr($key, 0, 3) == 'UF_' && is_array($arResult['USER_PROP'][$key]))
 					{
 						$arResult['USER_PROP'][$key]['VALUE'] = $arResult['USERS'][$i][$key];
 						$APPLICATION->IncludeComponent(

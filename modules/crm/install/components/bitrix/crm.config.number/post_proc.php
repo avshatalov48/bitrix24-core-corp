@@ -34,7 +34,7 @@ function applyNumberTemplateSettings($entityName, $template, $number, $prefix, $
 			$strWarning .= GetMessage("CRM_NUMBER_NUMBER_WARNING", array("#NUMBER#" => $number)).'<br>';
 	}
 
-	if(strlen($strWarning) > 0)
+	if($strWarning <> '')
 	{
 		$APPLICATION->ThrowException($strWarning);
 		return;
@@ -43,7 +43,7 @@ function applyNumberTemplateSettings($entityName, $template, $number, $prefix, $
 	// number generation algorithm
 	if (isset($template))
 	{
-		$optionPrefix = (strlen($entityName) > 0) ? $entityName.'_' : '';
+		$optionPrefix = ($entityName <> '') ? $entityName.'_' : '';
 		switch ($template)
 		{
 			case 'NUMBER':
@@ -87,8 +87,8 @@ function checkNumberValue($templateType, $number_data, $number_prefix)
 	{
 		case 'NUMBER':
 
-			if (strlen($number_data) <= 0
-				|| strlen($number_data) > 7
+			if ($number_data == ''
+				|| mb_strlen($number_data) > 7
 				|| intval($number_data) != $number_data
 				|| intval($number_data) < intval(COption::GetOptionString("sale", "number_data", ""))
 			)
@@ -98,8 +98,8 @@ function checkNumberValue($templateType, $number_data, $number_prefix)
 
 		case 'PREFIX':
 
-			if (strlen($number_prefix) <= 0
-				|| strlen($number_prefix) > 7
+			if ($number_prefix == ''
+				|| mb_strlen($number_prefix) > 7
 				|| preg_match('/[^a-zA-Z0-9_-]/', $number_prefix)
 			)
 				$res = false;
@@ -115,7 +115,7 @@ foreach ($_POST as $k => $rnd)
 {
 	if (preg_match('/^rnd_cfg_number_\d{8}/', $k) && preg_match('/^\d{8}$/', $rnd))
 	{
-		$entityName = substr($k, 23 + ((strlen($k) > 23) ? 1 : 0));
+		$entityName = mb_substr($k, 23 + ((mb_strlen($k) > 23)? 1 : 0));
 		if ($entityName === '_')
 			$entityName = '';
 		

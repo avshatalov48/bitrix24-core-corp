@@ -17,11 +17,11 @@ foreach($arParams["SITE_URL"] as $key=>$value)
 {
 	$arParams["ORIG_SITE_URL"][$key] = $value;
 	$value = trim($APPLICATION->ConvertCharset($value, "UTF-8", LANG_CHARSET));
-	if(strlen($value))
+	if($value <> '')
 	{
 		if(
-			substr($value, 0, 7) != "http://"
-			&& substr($value, 0, 8) != "https://"
+			mb_substr($value, 0, 7) != "http://"
+			&& mb_substr($value, 0, 8) != "https://"
 			&& !preg_match('/^[0-9]+$/', $value) #allow b_controller.member.ID
 		)
 		{
@@ -37,7 +37,7 @@ $arParams["COMMAND"] = trim($arParams["COMMAND"]);
 $arParams["ACTION"] = trim($arParams["ACTION"]);
 $arParams["NOTES"] = trim($arParams["NOTES"]);
 $arParams["SEPARATOR"] = trim($arParams["SEPARATOR"]);
-if(!strlen($arParams["SEPARATOR"]))
+if($arParams["SEPARATOR"] == '')
 	$arParams["SEPARATOR"] = ",";
 
 if($arParams["ACCESS_RESTRICTION"]!="IP" && $arParams["ACCESS_RESTRICTION"]!="NONE")
@@ -75,14 +75,14 @@ else
 }
 
 $bDesignMode = $APPLICATION->GetShowIncludeAreas()
-		&& strlen($arParams["COMMAND"]) <= 0
+		&& $arParams["COMMAND"] == ''
 		&& is_object($USER)
 		&& $USER->IsAdmin()
 ;
 
 if(!$bDesignMode)
 {
-	if(!strlen(implode("", $arParams["SITE_URL"]).$arParams["COMMAND"].$arParams["ACTION"]))
+	if(implode("", $arParams["SITE_URL"]).$arParams["COMMAND"].$arParams["ACTION"] == '')
 		return;
 	$APPLICATION->RestartBuffer();
 	header("Pragma: no-cache");
@@ -147,7 +147,7 @@ else
 							"URL" => is_array($site_url)? $site_url[0]: $site_url,
 							"SHARED_KERNEL" => "Y",
 							"DISCONNECTED" => "I",
-							"NAME" => is_array($site_url)? substr($site_url[0], strlen("http://")): $site_url, // w/o http://
+							"NAME" => is_array($site_url)? mb_substr($site_url[0], mb_strlen("http://")) : $site_url, // w/o http://
 							"ACTIVE" => "Y",
 						);
 						if(!CControllerMember::Add($arFields))
@@ -246,7 +246,7 @@ else
 							echo "200 OK\n";
 						}
 					}
-					elseif(strlen($arParams["NOTES"]))
+					elseif($arParams["NOTES"] <> '')
 					{
 						CControllerMember::addHistoryNote($arMember["ID"], $arParams["NOTES"]);
 						CControllerMember::UpdateCounters($arMember["ID"]);
@@ -297,7 +297,7 @@ else
 					else
 						echo "500 ER\n";
 				}
-				elseif(strlen($result))
+				elseif($result <> '')
 				{
 					echo "401 ER\n".$result;
 				}
@@ -307,7 +307,7 @@ else
 				}
 				break;
 			case "password":
-				if(strlen($arParams["ACTION"]))
+				if($arParams["ACTION"] <> '')
 				{
 					$query = '
 						$obUser = new CUser;
@@ -336,11 +336,11 @@ else
 					else
 						echo "500 ER\n";
 				}
-				elseif(!strlen($arParams["ACTION"]) && strlen($result))
+				elseif($arParams["ACTION"] == '' && $result <> '')
 				{
 					echo "210 OK\n".$result;
 				}
-				elseif(strlen($result))
+				elseif($result <> '')
 				{
 					echo "401 ER\n".$result;
 				}
@@ -404,7 +404,7 @@ else
 					echo "210 OK\n";
 					do {
 						if(strncmp($arMember["URL"], "http://", 7)===0)
-							$arMember["URL"] = substr($arMember["URL"], 7);
+							$arMember["URL"] = mb_substr($arMember["URL"], 7);
 						echo
 							$arMember["URL"]
 							,$arParams["SEPARATOR"],"FOUND"

@@ -73,7 +73,7 @@ class CrmBuyerGroupsList extends \CBitrixComponent
 		$this->arResult['GRID_SORT'] = $sorting = $gridOptions->getSorting(['sort' => $defaultSort]);
 
 		$by = key($sorting['sort']);
-		$order = strtoupper(current($sorting['sort'])) === 'ASC' ? 'ASC' : 'DESC';
+		$order = mb_strtoupper(current($sorting['sort'])) === 'ASC' ? 'ASC' : 'DESC';
 
 		$list = [];
 

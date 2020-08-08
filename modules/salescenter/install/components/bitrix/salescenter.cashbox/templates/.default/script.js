@@ -17,6 +17,7 @@
 		BX.Salescenter.Cashbox.closeButtonNode = document.getElementById('ui-button-panel-close');
 		BX.Salescenter.Cashbox.deleteButtonNode = document.getElementById('ui-button-panel-remove');
 		BX.Salescenter.Cashbox.cashboxId = parameters.cashboxId;
+		BX.Salescenter.Cashbox.initialFormData = BX.Salescenter.Cashbox.getAllFormData();
 	};
 
 	BX.Salescenter.Cashbox.renderForm = function()
@@ -106,6 +107,14 @@
 				BX.bind(input, 'change', BX.Salescenter.Cashbox.onChangeOfd);
 			}
 		}
+		if(BX.SidePanel.Instance)
+		{
+			var slider = BX.SidePanel.Instance.getSliderByWindow(window);
+			if(slider)
+			{
+				BX.addCustomEvent(slider, 'SidePanel.Slider:onClose', BX.Salescenter.Cashbox.onCloseSlider.bind(BX.Salescenter.Cashbox))
+			}
+		}
 	};
 
 	BX.Salescenter.Cashbox.onChangeOfd = function()
@@ -139,16 +148,11 @@
 		if(!BX.Salescenter.Cashbox.isProgress)
 		{
 			BX.Salescenter.Cashbox.startProgress();
-			var analyticsLabel = 'salescenterCreateCashbox';
-			if(BX.Salescenter.Cashbox.cashboxId > 0)
-			{
-				analyticsLabel = 'salescenterUpdateCashbox';
-			}
+			
 			BX.ajax.runComponentAction('bitrix:salescenter.cashbox', 'save', {
 				mode: 'class',
 				data: BX.Salescenter.Cashbox.form.getData(),
 				signedParameters: BX.Salescenter.Cashbox.signedParameters,
-				analyticsLabel: analyticsLabel,
 			}).then(function(result)
 			{
 				BX.Salescenter.Cashbox.stopProgress();
@@ -276,7 +280,6 @@
 						data: {
 							id: BX.Salescenter.Cashbox.cashboxId,
 						},
-						analyticsLabel: 'salescenterDeleteCashbox',
 					}).then(function()
 					{
 						BX.Salescenter.Cashbox.stopProgress();
@@ -300,7 +303,7 @@
 		}
 		if(BX.SidePanel.Instance)
 		{
-			BX.SidePanel.Instance.closeAll();
+			BX.SidePanel.Instance.getTopSlider().close();
 		}
 	};
 
@@ -314,6 +317,104 @@
 		{
 			event.preventDefault();
 		}
-	}
+	};
+
+	BX.Salescenter.Cashbox.onCloseSlider = function(event)
+	{
+		var savedInput = document.getElementById('salescenter-form-is-saved');
+		if(savedInput && savedInput.value === 'y')
+		{
+			return true;
+		}
+		var formData = this.getAllFormData();
+		if (this.initialFormData === formData || this.isClose === true)
+		{
+			this.isClose = false;
+			return false;
+		}
+
+		event.action = false;
+
+		if(this.popup)
+		{
+			this.popup.destroy();
+
+		}
+
+		this.popup = new BX.PopupWindow(
+			"salescenter_slider_close_confirmation",
+			null,
+			{
+				autoHide: false,
+				draggable: false,
+				closeByEsc: false,
+				offsetLeft: 0,
+				offsetTop: 0,
+				zIndex: event.slider.zIndex + 100,
+				bindOptions: { forceBindPosition: true },
+				titleBar: BX.message('SCP_POPUP_TITLE'),
+				content: BX.message('SCP_POPUP_CONTENT'),
+				buttons: [
+					new BX.PopupWindowButton(
+						{
+							text : BX.message('SCP_POPUP_BUTTON_CLOSE'),
+							className : "ui-btn ui-btn-success",
+							events: { click: BX.delegate(this.onCloseConfirmButtonClick.bind(this, 'close')) }
+						}
+					),
+					new BX.PopupWindowButtonLink(
+						{
+							text : BX.message('SCP_POPUP_BUTTON_CANCEL'),
+							className : "ui-btn ui-btn-link",
+							events: { click: BX.delegate(this.onCloseConfirmButtonClick.bind(this, 'cancel')) }
+						}
+					)
+				],
+				events: {
+					onPopupClose: function()
+					{
+						this.destroy();
+					}
+				}
+			}
+		);
+		this.popup.show();
+
+		return false;
+	};
+
+	BX.Salescenter.Cashbox.onCloseConfirmButtonClick = function(button)
+	{
+		this.popup.close();
+
+		if(button === "close")
+		{
+			this.isClose = true;
+			BX.SidePanel.Instance.getTopSlider().close();
+		}
+	};
+
+	BX.Salescenter.Cashbox.getAllFormData = function()
+	{
+		var formNode = document.getElementsByTagName('form');
+
+		if (formNode && formNode.length > 0)
+		{
+			var prepared = BX.ajax.prepareForm(formNode[0]),
+				i;
+
+			for (i in prepared.data)
+			{
+				if (prepared.data.hasOwnProperty(i) && i === '')
+				{
+					delete prepared.data[i];
+				}
+			}
+
+			return !!prepared && prepared.data ? JSON.stringify(prepared.data) : '';
+		}
+
+		return '';
+	};
 
 })();

@@ -160,6 +160,11 @@ class CVoxImplantHttp
 
 	public function StartOutgoingCall($userId, $phoneNumber, array $additionalParams = array())
 	{
+		if(\Bitrix\Voximplant\Limits::isRestOnly())
+		{
+			return false;
+		}
+
 		$params = array(
 			'TYPE' => 'phone',
 			'USER_ID' => intval($userId),
@@ -179,6 +184,11 @@ class CVoxImplantHttp
 
 	public function StartCallBack($callbackFromLine, $callbackNumber, $textToPronounce, $voice)
 	{
+		if(\Bitrix\Voximplant\Limits::isRestOnly())
+		{
+			return false;
+		}
+
 		$query = $this->Query(
 			'StartCallBack',
 			Array(
@@ -199,6 +209,11 @@ class CVoxImplantHttp
 
 	public function StartInfoCall($number, $text, array $options, $lineConfig)
 	{
+		if(\Bitrix\Voximplant\Limits::isRestOnly())
+		{
+			return false;
+		}
+
 		$query = $this->Query(
 			'StartInfoCall',
 			Array(
@@ -893,11 +908,6 @@ class CVoxImplantHttp
 
 	private function Query($command, $params = array(), $options = array())
 	{
-		if(\Bitrix\Voximplant\Limits::isRestOnly())
-		{
-			return false;
-		}
-
 		if (strlen($command) <= 0 || !is_array($params))
 		{
 			return false;

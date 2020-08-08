@@ -89,37 +89,43 @@
 			{
 				this.deleteSchedulePopup = {};
 			}
-			this.deleteSchedulePopup[id] = new BX.PopupWindow({
-				id: 'tm-menu-confirm-delete-schedule-' + id,
-				autoHide: true,
-				closeByEsc: true,
-				titleBar: BX.message('TM_SCHEDULE_DELETE_CONFIRM_TITLE'),
-				content: BX.util.htmlspecialchars(BX.message('TM_SCHEDULE_DELETE_CONFIRM').replace('#SCHEDULE_NAME#', name)),
-				buttons: [
-					new BX.PopupWindowButtonLink({
-						text: BX.message('TM_SCHEDULE_DELETE_CONFIRM_NO'),
-						className: 'popup-window-button-link-cancel',
-						events: {
-							click: function (id)
-							{
-								this.deleteSchedulePopup[id].close();
-							}.bind(this, id)
-						}
-					}),
-					new BX.PopupWindowButton({
-						text: BX.message('TM_SCHEDULE_DELETE_CONFIRM_YES'),
-						className: 'popup-window-button-accept',
-						events: {
-							click: function (id)
-							{
-								this.deleteSchedulePopup[id].close();
 
-								this.processDelete(id);
-							}.bind(this, id)
-						}
-					})
-				]
-			});
+			if (!this.deleteSchedulePopup.hasOwnProperty(id))
+			{
+				this.deleteSchedulePopup[id] = new BX.PopupWindow({
+					id: 'tm-menu-confirm-delete-schedule-' + id,
+					autoHide: true,
+					closeByEsc: true,
+					titleBar: BX.message('TM_SCHEDULE_DELETE_CONFIRM_TITLE'),
+					content: BX.util.htmlspecialchars(BX.message('TM_SCHEDULE_DELETE_CONFIRM').replace('#SCHEDULE_NAME#', name)),
+					buttons: [
+						new BX.UI.Button({
+							text: BX.message('TM_SCHEDULE_DELETE_CONFIRM_NO'),
+							className: 'ui-btn ui-btn-danger',
+							events: {
+								click: function (id)
+								{
+									this.deleteButtonDisabled = false;
+									this.deleteSchedulePopup[id].close();
+								}.bind(this, id)
+							}
+						}),
+						new BX.UI.Button({
+							text: BX.message('TM_SCHEDULE_DELETE_CONFIRM_YES'),
+							className: 'ui-btn ui-btn-success',
+							events: {
+								click: function (id)
+								{
+									this.deleteSchedulePopup[id].close();
+
+									this.processDelete(id);
+								}.bind(this, id)
+							}
+						})
+					]
+				});
+			}
+
 			this.deleteSchedulePopup[id].show();
 		},
 		processDelete: function (id)

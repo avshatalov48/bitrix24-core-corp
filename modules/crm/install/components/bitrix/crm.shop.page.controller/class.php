@@ -87,7 +87,7 @@ class CCrmShopPageController extends CBitrixComponent
 	protected function checkUsageStatus()
 	{
 		$requestUrl = Bitrix\Main\Context::getCurrent()->getRequest()->getRequestedPage();
-		if (strpos($requestUrl, "/shop/orders/menu/") === false)
+		if (mb_strpos($requestUrl, "/shop/orders/menu/") === false)
 		{
 			return;
 		}

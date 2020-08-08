@@ -1,0 +1,33 @@
+.crm-address-control-wrap {
+	width: 100%;
+}
+.crm-address-control-wrap-edit {
+	margin-top: -22px;
+}
+.crm-address-control-mode-switch {
+	text-align: right;
+	height: 22px;
+}
+.location-fields-control-block .ui-entity-editor-content-block:last-child {
+	margin-bottom: 2px;
+}
+.location-fields-control-block.crm-address-type-block.visible {
+	margin-top: 5px;
+}
+.crm-address-control-item {
+	margin-bottom: 5px;
+}
+.crm-entity-widget-client-address .crm-address-control-item:last-child
+{
+	margin-bottom: 0;
+}
+.crm-entity-widget-content-block-title-text .tariff-lock {
+	position: relative;
+	z-index: 10;
+	margin-left: 5px;
+}
+.ui-entity-editor-block-title-text .tariff-lock {
+	position: relative;
+	z-index: 10;
+	margin-left: 5px;
+}

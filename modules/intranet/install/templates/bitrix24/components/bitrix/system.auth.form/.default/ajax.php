@@ -1,6 +1,6 @@
 <?require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 
-if($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"])>0 && check_bitrix_sessid())
+if($_SERVER["REQUEST_METHOD"]=="POST" && $_POST["action"] <> '' && check_bitrix_sessid())
 {
 	CUtil::JSPostUnescape();
 	$ajaxResult = array();
@@ -51,7 +51,7 @@ if($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"])>0 && check_bit
 			if (array_key_exists($userOptionNotificationsParamName, $_POST))
 			{
 				$notifications = trim($_POST[$userOptionNotificationsParamName]);
-				if(strlen($notifications) > 0)
+				if($notifications <> '')
 				{
 					$notify[$userOptionNotificationsParamName] = $notifications;
 					$needUpdate = true;

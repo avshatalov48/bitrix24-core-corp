@@ -35,7 +35,8 @@ BX.CrmUISelector = {
 					addTab: (selectorInstance.getOption('addTabCrmContacts') == 'Y' ? 'Y' : 'N'),
 					onlyWithEmail: (selectorInstance.getOption('onlyWithEmail') == 'Y' ? 'Y' : 'N'),
 					prefixType: (BX.type.isNotEmptyString(selectorInstance.getOption('crmPrefixType')) ? selectorInstance.getOption('crmPrefixType') : 'FULL'),
-					returnItemUrl: (selectorInstance.getOption('returnItemUrl') == 'N' ? 'N' : 'Y')
+					returnItemUrl: (selectorInstance.getOption('returnItemUrl') == 'N' ? 'N' : 'Y'),
+					returnMultiEmail: (selectorInstance.getOption('returnMultiEmail') == 'Y' ? 'Y' : 'N')
 				}
 			};
 		}
@@ -50,7 +51,8 @@ BX.CrmUISelector = {
 					onlyWithEmail: (selectorInstance.getOption('onlyWithEmail') == 'Y' ? 'Y' : 'N'),
 					onlyMy: (selectorInstance.getOption('onlyMyCompanies') == 'Y' ? 'Y' : 'N'),
 					prefixType: (BX.type.isNotEmptyString(selectorInstance.getOption('crmPrefixType')) ? selectorInstance.getOption('crmPrefixType') : 'FULL'),
-					returnItemUrl: (selectorInstance.getOption('returnItemUrl') == 'N' ? 'N' : 'Y')
+					returnItemUrl: (selectorInstance.getOption('returnItemUrl') == 'N' ? 'N' : 'Y'),
+					returnMultiEmail: (selectorInstance.getOption('returnMultiEmail') == 'Y' ? 'Y' : 'N')
 				}
 			};
 		}
@@ -64,7 +66,8 @@ BX.CrmUISelector = {
 					addTab: (selectorInstance.getOption('addTabCrmLeads') == 'Y' ? 'Y' : 'N'),
 					onlyWithEmail: (selectorInstance.getOption('onlyWithEmail') == 'Y' ? 'Y' : 'N'),
 					prefixType: (BX.type.isNotEmptyString(selectorInstance.getOption('crmPrefixType')) ? selectorInstance.getOption('crmPrefixType') : 'FULL'),
-					returnItemUrl: (selectorInstance.getOption('returnItemUrl') == 'N' ? 'N' : 'Y')
+					returnItemUrl: (selectorInstance.getOption('returnItemUrl') == 'N' ? 'N' : 'Y'),
+					returnMultiEmail: (selectorInstance.getOption('returnMultiEmail') == 'Y' ? 'Y' : 'N')
 				}
 			};
 		}

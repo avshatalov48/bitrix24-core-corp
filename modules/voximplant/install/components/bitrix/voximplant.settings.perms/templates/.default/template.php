@@ -85,15 +85,6 @@ CUtil::InitJSCore(Array('voximplant.common', 'access', 'sidepanel'));
 	{
 		$buttons[] = 'save';
 	}
-	else
-	{
-		$buttons[] = [
-			'TYPE' => 'save',
-			'NAME' => 'save',
-			'VALUE' => 'Y',
-			'ONCLICK' => 'viOpenTrialPopup(\'vi_crm_source\')',
-		];
-	}
 	$buttons['cancel'] = [
 		'TYPE' => 'cancel',
 		'ONCLICK' => 'BX.SidePanel.Instance.close()',
@@ -146,16 +137,12 @@ CUtil::InitJSCore(Array('voximplant.common', 'access', 'sidepanel'));
 <?
 if(!$arResult['CAN_EDIT'])
 {
-	CBitrix24::initLicenseInfoPopupJS();
+	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 	?>
 	<script type="text/javascript">
-		function viOpenTrialPopup(dialogId)
-		{
-			B24.licenseInfoPopup.show(dialogId, "<?=CUtil::JSEscape($arResult["TRIAL"]['TITLE'])?>", "<?=CUtil::JSEscape($arResult["TRIAL"]['TEXT'])?>");
-		}
 		BX.ready(function()
 		{
-			viOpenTrialPopup('permissions');
+			BX.UI.InfoHelper.show('limit_contact_center_telephony_access_permissions');
 		});
 	</script>
 	<?

@@ -37,7 +37,7 @@ class CControllerTask
 			unset($arFields["ID"]);
 
 		global $DB;
-		if(($ID===false || is_set($arFields, "TASK_ID")) && strlen($arFields["TASK_ID"])<=0)
+		if(($ID===false || is_set($arFields, "TASK_ID")) && $arFields["TASK_ID"] == '')
 			$arMsg[] = array("id"=>"TASK_ID", "text"=> GetMessage("CTRLR_TASK_ERR_ID"));
 		elseif(is_set($arFields, "TASK_ID"))
 		{
@@ -46,7 +46,7 @@ class CControllerTask
 				$arMsg[] = array("id"=>"TASK_ID", "text"=> GetMessage("CTRLR_TASK_ERR_BAD_ID"));
 		}
 
-		if(($ID===false || is_set($arFields, "CONTROLLER_MEMBER_ID")) && Intval($arFields["CONTROLLER_MEMBER_ID"])<=0)
+		if(($ID===false || is_set($arFields, "CONTROLLER_MEMBER_ID")) && intval($arFields["CONTROLLER_MEMBER_ID"])<=0)
 			$arMsg[] = array("id"=>"CONTROLLER_MEMBER_ID", "text"=> GetMessage("CTRLR_TASK_ERR_CLIENTID"));
 
 		if(isset($arFields["INIT_EXECUTE"]))
@@ -57,16 +57,16 @@ class CControllerTask
 			$strSql = "
 				SELECT INIT_EXECUTE
 				FROM b_controller_task
-				WHERE CONTROLLER_MEMBER_ID='".IntVal($arFields["CONTROLLER_MEMBER_ID"])."'
+				WHERE CONTROLLER_MEMBER_ID='".intval($arFields["CONTROLLER_MEMBER_ID"])."'
 				AND TASK_ID='".$DB->ForSQL($arFields["TASK_ID"], 255)."'
 				AND DATE_EXECUTE IS NULL
 			";
 			$dbr = $DB->Query($strSql);
 			while($ar = $dbr->Fetch())
 			{
-				if(intval($ar["INIT_EXECUTE"]) == intval($arFields["INIT_EXECUTE"]))
+				if($ar["INIT_EXECUTE"] == $arFields["INIT_EXECUTE"])
 				{
-					$arMsg[] = array("id"=>"TASK_ID", "text"=> GetMessage("CTRLR_TASK_ERR_ALREADY")." [".IntVal($arFields["CONTROLLER_MEMBER_ID"])."].");
+					$arMsg[] = array("id"=>"TASK_ID", "text"=> GetMessage("CTRLR_TASK_ERR_ALREADY")." [".intval($arFields["CONTROLLER_MEMBER_ID"])."].");
 					break;
 				}
 			}
@@ -84,14 +84,14 @@ class CControllerTask
 					{
 						$arMsg[] = array(
 							"id" => "ID",
-							"text" => $err->GetString()." [".IntVal($arFields["CONTROLLER_MEMBER_ID"])."].",
+							"text" => $err->GetString()." [".intval($arFields["CONTROLLER_MEMBER_ID"])."].",
 						);
 					}
 					else
 					{
 						$arMsg[] = array(
 							"id" => "ID",
-							"text" => "Unknown error."." [".IntVal($arFields["CONTROLLER_MEMBER_ID"])."].",
+							"text" => "Unknown error."." [".intval($arFields["CONTROLLER_MEMBER_ID"])."].",
 						);
 					}
 					break;
@@ -178,7 +178,7 @@ class CControllerTask
 
 		$arFilterNew = Array();
 		foreach($arFilter as $k=>$value)
-			if(is_array($value) || strlen($value)>0 || $value === false)
+			if(is_array($value) || $value <> '' || $value === false)
 				$arFilterNew[$k]=$value;
 
 		$strWhere = $obWhere->GetQuery($arFilterNew);
@@ -216,7 +216,7 @@ class CControllerTask
 		$strSql = "
 			FROM b_controller_task T
 			INNER JOIN b_controller_member M ON T.CONTROLLER_MEMBER_ID = M.ID
-			".(strlen($strWhere) <= 0 ? "" : "WHERE ".$strWhere)."
+			".($strWhere == '' ? "" : "WHERE ".$strWhere)."
 		";
 
 		$strOrder = CControllerAgent::_OrderBy($arOrder, $arFields);
@@ -239,14 +239,14 @@ class CControllerTask
 			$dbr = $DB->Query($strSelect.$strSql.$strOrder, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 		}
 
-		$dbr->is_filtered = (strlen($strWhere) > 0);
+		$dbr->is_filtered = ($strWhere <> '');
 
 		return $dbr;
 	}
 
 	public static function GetByID($ID)
 	{
-		return CControllerTask::GetList(Array(), Array("ID"=>IntVal($ID)));
+		return CControllerTask::GetList(Array(), Array("ID"=>intval($ID)));
 	}
 
 	public static function GetArrayByID($ID)
@@ -336,7 +336,7 @@ class CControllerTask
 				else
 				{
 					$command = 'require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/update_client.php");';
-					if($ar_task["STATUS"]=="P" && strlen($ar_task["INIT_EXECUTE_PARAMS"])>0)
+					if($ar_task["STATUS"]=="P" && $ar_task["INIT_EXECUTE_PARAMS"] <> '')
 						$command .= 'echo trim(CUpdateControllerSupport::Update("'.EscapePHPString($ar_task["INIT_EXECUTE_PARAMS"]).'"));';
 					else
 						$command .= 'echo trim(CUpdateControllerSupport::Update(""));';
@@ -344,10 +344,10 @@ class CControllerTask
 					$res = CControllerMember::RunCommand($ar_task["CONTROLLER_MEMBER_ID"], $command, array(), $ar_task['ID']);
 					if($res!==false)
 					{
-						if(($p = strpos($res, "|"))>0)
+						if(($p = mb_strpos($res, "|"))>0)
 						{
-							$result_code = substr($res, 0, $p);
-							$RESULT = substr($res, $p + 1);
+							$result_code = mb_substr($res, 0, $p);
+							$RESULT = mb_substr($res, $p + 1);
 						}
 						else
 						{
@@ -404,7 +404,7 @@ class CControllerTask
 				break;
 			case 'REMOTE_COMMAND':
 				$arControllerLog['NAME'] = 'REMOTE_COMMAND';
-				if(strlen($ar_task['INIT_EXECUTE_PARAMS'])>0)
+				if($ar_task['INIT_EXECUTE_PARAMS'] <> '')
 					$ar_task['INIT_EXECUTE_PARAMS'] = unserialize($ar_task['INIT_EXECUTE_PARAMS']);
 				else
 					$ar_task['INIT_EXECUTE_PARAMS'] = Array();
@@ -477,25 +477,35 @@ class CControllerTask
 		return $STATUS;
 	}
 
-	public static function ProcessAllTask()
+	public static function ProcessAllTask($limit = 10000)
 	{
+		global $DB;
 		//1. Finish partial
 		//2. Execute new tasks
 		//3. Run low priority tasks
 		foreach (array('P', 'N', 'L') as $status)
 		{
-			$dbrTask = CControllerTask::GetList(
-				array("ID" => "ASC"),
-				array("=STATUS" => $status),
-				false,
-				array("nTopCount" => 10000)
-			);
-			while ($arTask = $dbrTask->Fetch())
+			if ($limit > 0)
 			{
-				$status = CControllerTask::ProcessTask($arTask["ID"]);
-				while ($status === "P")
+				$dbrTask = $DB->Query($DB->TopSQL("
+					SELECT ID
+					FROM b_controller_task
+					WHERE STATUS = '$status'
+					ORDER BY ID ASC
+				", $limit));
+				while ($arTask = $dbrTask->Fetch())
 				{
 					$status = CControllerTask::ProcessTask($arTask["ID"]);
+					while ($status === "P")
+					{
+						$status = CControllerTask::ProcessTask($arTask["ID"]);
+					}
+
+					$limit--;
+					if ($limit <= 0)
+					{
+						break;
+					}
 				}
 			}
 		}

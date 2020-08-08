@@ -9,7 +9,7 @@ define("US_BASE_MODULE", "controller");
 $US_LICENSE_KEY = "";
 if (file_exists($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/controller/license_key.php"))
 	include($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/controller/license_key.php");
-if ($US_LICENSE_KEY == "" || strtoupper($US_LICENSE_KEY) == "DEMO")
+if ($US_LICENSE_KEY == "" || mb_strtoupper($US_LICENSE_KEY) == "DEMO")
 	define("US_LICENSE_KEY", "DEMO");
 else
 	define("US_LICENSE_KEY", $US_LICENSE_KEY);
@@ -70,7 +70,7 @@ if (!$arUpdateList = CUpdateClient::GetUpdatesList($errorMessage, LANG, $stableV
 
 $strError_tmp = "";
 $arClientModules = CUpdateClient::GetCurrentModules($strError_tmp);
-if (StrLen($strError_tmp) > 0)
+if ($strError_tmp <> '')
 	$errorMessage .= $strError_tmp;
 
 if ($arUpdateList)
@@ -82,7 +82,7 @@ if ($arUpdateList)
 	}
 }
 
-if (strlen($errorMessage) > 0)
+if ($errorMessage <> '')
 	echo CAdminMessage::ShowMessage(Array("DETAILS" => $errorMessage, "TYPE" => "ERROR", "MESSAGE" => GetMessage("SUP_ERROR"), "HTML" => true));
 
 ?>
@@ -215,7 +215,7 @@ $tabControl->BeginNextTab();
 						txt += '<form name="license_form">';
 						txt += '<h2><?= GetMessage("SUP_SUBT_LICENCE") ?></h2>';
 						txt += '<table cellspacing="0"><tr><td>';
-						txt += '<iframe name="license_text" src="http://www.bitrixsoft.ru/license-<?= ((LANGUAGE_ID == "ru") ? "ru" : "en") ?>.htm" style="width:450px; height:250px; display:block;"></iframe>';
+						txt += '<iframe name="license_text" src="https://www.bitrixsoft.com/license-<?= ((LANGUAGE_ID == "ru") ? "ru" : "en") ?>.htm" style="width:450px; height:250px; display:block;"></iframe>';
 						txt += '</td></tr><tr><td>';
 						txt += '<input name="agree_license" type="checkbox" value="Y" id="agree_license_id" onclick="AgreeLicenceCheckbox(this)">';
 						txt += '<label for="agree_license_id"><?= GetMessage("SUP_SUBT_AGREE") ?></label>';
@@ -311,7 +311,7 @@ $tabControl->BeginNextTab();
 					}
 				}
 				$strLicenseKeyTmp = CUpdateClient::GetLicenseKey();
-				if (strlen($strLicenseKeyTmp) <= 0 || strtolower($strLicenseKeyTmp) == "demo" || $bLicenseNotFound)
+				if ($strLicenseKeyTmp == '' || mb_strtolower($strLicenseKeyTmp) == "demo" || $bLicenseNotFound)
 				{
 					$bLockControls = True;
 					?>
@@ -328,7 +328,7 @@ $tabControl->BeginNextTab();
 											<td>
 									<?= GetMessage("SUP_SUBK_HINT") ?><br><br>
 									<input TYPE="button" NAME="licence_key_btn" value="<?= GetMessage("SUP_SUBK_BUTTON") ?>" onclick="ShowLicenceKeyForm()"><br><br>
-									<a href="http://<?= ((LANGUAGE_ID == "ru") ? "www.bitrixsoft.ru" : "www.bitrixsoft.com") ?>/bsm_register.php" target="_blank"><?= GetMessage("SUP_SUBK_GET_KEY") ?></a>
+									<a href="https://<?= ((LANGUAGE_ID == "ru") ? "www.1c-bitrix.ru" : "www.bitrixsoft.com") ?>/bsm_register.php" target="_blank"><?= GetMessage("SUP_SUBK_GET_KEY") ?></a>
 											</td>
 										</tr>
 									</table>
@@ -1373,7 +1373,7 @@ $tabControl->BeginNextTab();
 					</tr>
 					<tr>
 						<td><?echo GetMessage("SUP_ACTIVE")?>&nbsp;&nbsp;</td>
-						<td><?echo GetMessage("SUP_ACTIVE_PERIOD", array("#DATE_TO#"=>((strlen($arUpdateList["CLIENT"][0]["@"]["DATE_TO"]) > 0) ? $arUpdateList["CLIENT"][0]["@"]["DATE_TO"] : "<i>N/A</i>"), "#DATE_FROM#" => ((strlen($arUpdateList["CLIENT"]["@"]["DATE_FROM"]) > 0) ? $arUpdateList["CLIENT"][0]["@"]["DATE_FROM"] : "<i>N/A</i>")));?></td>
+						<td><?echo GetMessage("SUP_ACTIVE_PERIOD", array("#DATE_TO#"=>(($arUpdateList["CLIENT"][0]["@"]["DATE_TO"] <> '') ? $arUpdateList["CLIENT"][0]["@"]["DATE_TO"] : "<i>N/A</i>"), "#DATE_FROM#" => (($arUpdateList["CLIENT"]["@"]["DATE_FROM"] <> '') ? $arUpdateList["CLIENT"][0]["@"]["DATE_FROM"] : "<i>N/A</i>")));?></td>
 					</tr>
 					<tr>
 						<td><?echo GetMessage("SUP_SERVER")?>&nbsp;&nbsp;</td>

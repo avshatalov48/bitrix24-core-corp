@@ -28,7 +28,7 @@ $this->IncludeLangFile("edit.php");
 
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/disk/css/legacy_uf_common.css');
 
-$addClass = ((strpos($_SERVER['HTTP_USER_AGENT'], 'Mac OS') !== false) ? 'diskuf-filemacos' : '');
+$addClass = ((mb_strpos($_SERVER['HTTP_USER_AGENT'], 'Mac OS') !== false) ? 'diskuf-filemacos' : '');
 $mess = GetMessage('WD_FILE_LOADING');
 $thumb = <<<HTML
 <td class="files-name">
@@ -145,7 +145,7 @@ foreach ($arResult['FILES'] as $file)
 							$k = 'ext';
 						}
 
-						$f = str_replace(array("#".strtoupper($k)."#", "#".strtolower($k)."#"), htmlspecialcharsbx($v), $f);
+						$f = str_replace(array("#".mb_strtoupper($k)."#", "#".mb_strtolower($k)."#"), htmlspecialcharsbx($v), $f);
 					}
 					?><?=$f?>
 				</tr>

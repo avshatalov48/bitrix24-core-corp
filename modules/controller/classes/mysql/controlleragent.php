@@ -18,8 +18,8 @@ class CControllerAgent
 		{
 			foreach ($arOrder as $by => $order)
 			{
-				$by = strtoupper($by);
-				$order = (strtolower($order) == 'desc'? 'desc': 'asc');
+				$by = mb_strtoupper($by);
+				$order = (mb_strtolower($order) == 'desc'? 'desc': 'asc');
 
 				if (
 					isset($arFields[$by])

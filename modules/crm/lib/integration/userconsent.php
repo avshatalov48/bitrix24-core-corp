@@ -64,7 +64,7 @@ class UserConsent
 		$text .= "</a>";
 
 		$serverName = (Context::getCurrent()->getRequest()->isHttps() ? "https" : "http") . "://";
-		if(defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0)
+		if(defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '')
 		{
 			$serverName .= SITE_SERVER_NAME;
 		}
@@ -225,7 +225,7 @@ class UserConsent
 		$result = array();
 		foreach ($data as $key => $value)
 		{
-			if (substr($key, 0, 3) == 'RQ_')
+			if (mb_substr($key, 0, 3) == 'RQ_')
 			{
 				$result[$key] = $value;
 			}

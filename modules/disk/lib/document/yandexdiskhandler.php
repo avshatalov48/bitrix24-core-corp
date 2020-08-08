@@ -388,7 +388,7 @@ class YandexDiskHandler extends DocumentHandler
 		{
 			$isFolder = $item['type'] === 'dir';
 			$dateTime = new \DateTime($item['modified']);
-			$itemPath = substr($item['path'], 5); //disk:
+			$itemPath = mb_substr($item['path'], 5); //disk:
 			$pseudoId = base64_encode($itemPath);
 			$reformatItems[$pseudoId] = array(
 				'id' => $pseudoId,

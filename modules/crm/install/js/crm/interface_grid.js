@@ -764,19 +764,33 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 			this._id = id;
 			this._settings = settings ? settings : {};
 
+			this._gridReloadHandler = BX.delegate(this.onGridReload, this);
+			this._gridBeforeRequestHandler = BX.delegate(this.onGridDataRequest, this);
+			this._applyCounterFilterHandler = BX.delegate(this.onApplyCounterFilter, this);
+			this._entityConvertHandler = BX.delegate(this.onEntityConvert, this);
+			this._externalEventHandler = BX.delegate(this.onExternalEvent, this);
+
 			//region Row count loader
 			this.initializeRowCountLoader();
-			BX.addCustomEvent(window, "Grid::updated", BX.delegate(this.onGridReload, this));
+			BX.addCustomEvent(window, "Grid::updated", this._gridReloadHandler);
 			//endregion
 
 			this._loaderData = this.getSetting("loaderData", null);
 			if(BX.type.isPlainObject(this._loaderData))
 			{
-				BX.addCustomEvent(window, "Grid::beforeRequest", BX.delegate(this.onGridDataRequest, this));
+				BX.addCustomEvent(window, "Grid::beforeRequest", this._gridBeforeRequestHandler);
 			}
-			BX.addCustomEvent(window, "BX.CrmEntityCounterPanel:applyFilter", BX.delegate(this.onApplyCounterFilter, this));
-			BX.addCustomEvent(window, "Crm.EntityConverter.Converted", BX.delegate(this.onEntityConvert, this));
-			BX.addCustomEvent(window, "onLocalStorageSet", BX.delegate(this.onExternalEvent, this));
+			BX.addCustomEvent(window, "BX.CrmEntityCounterPanel:applyFilter", this._applyCounterFilterHandler);
+			BX.addCustomEvent(window, "Crm.EntityConverter.Converted", this._entityConvertHandler);
+			BX.addCustomEvent(window, "onLocalStorageSet", this._externalEventHandler);
+		},
+		destroy: function()
+		{
+			BX.removeCustomEvent(window, "Grid::updated", this._gridReloadHandler);
+			BX.removeCustomEvent(window, "Grid::beforeRequest", this._gridBeforeRequestHandler);
+			BX.removeCustomEvent(window, "BX.CrmEntityCounterPanel:applyFilter", this._applyCounterFilterHandler);
+			BX.removeCustomEvent(window, "Crm.EntityConverter.Converted", this._entityConvertHandler);
+			BX.removeCustomEvent(window, "onLocalStorageSet", this._externalEventHandler);
 		},
 		getId: function()
 		{
@@ -1307,9 +1321,13 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 						var data = response.DATA;
 						if(data.RESTRICTION)
 						{
-							if(B24.licenseInfoPopup)
+							if (BX.Type.isPlainObject(data.RESTRICTION) && B24 && B24.licenseInfoPopup)
 							{
 								B24.licenseInfoPopup.show('ivr-limit-popup', data.RESTRICTION.HEADER, data.RESTRICTION.CONTENT);
+							}
+							else if (BX.Type.isStringFilled(data.RESTRICTION))
+							{
+								eval(data.RESTRICTION);
 							}
 						}
 						else
@@ -1777,6 +1795,11 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 	BX.CrmUIGridExtension.items = {};
 	BX.CrmUIGridExtension.create = function(id, settings)
 	{
+		if (settings.hasOwnProperty('destroyPreviousExtension') && settings.destroyPreviousExtension &&
+			this.items.hasOwnProperty(id) && this.items[id] instanceof BX.CrmUIGridExtension)
+		{
+			this.items[id].destroy();
+		}
 		var self = new BX.CrmUIGridExtension();
 		self.initialize(id, settings);
 		this.items[id] = self;

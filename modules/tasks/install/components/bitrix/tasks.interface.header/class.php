@@ -23,6 +23,7 @@ class TasksInterfaceHeaderComponent extends TasksBaseComponent
 		self::tryParseStringParameter($this->arParams['SPRINT_SELECTED'], 'N');
 		self::tryParseStringParameter($this->arParams['SHOW_QUICK_FORM'], 'Y');
 		self::tryParseStringParameter($this->arParams['SHOW_VIEW_MODE'], 'Y');
+		self::tryParseStringParameter($this->arParams['PROJECT_VIEW'], 'N');
 		self::tryParseArrayParameter($this->arParams['POPUP_MENU_ITEMS'], array());
 		return parent::checkParameters();
 	}

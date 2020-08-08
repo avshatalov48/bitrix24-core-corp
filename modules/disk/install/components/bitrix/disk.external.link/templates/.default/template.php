@@ -17,20 +17,20 @@ use Bitrix\Main\UI\Extension;
 Extension::load('ui.viewer');
 
 $langId = $component->getLangId();
-switch(strtolower($langId))
+switch(mb_strtolower($langId))
 {
 	case 'en':
 	case 'de':
 	case 'ru':
 	case 'ua':
-		$langForBanner = strtolower($langId);
+	$langForBanner = mb_strtolower($langId);
 		break;
 	default:
 		$langForBanner = Loc::getDefaultLang($langId);
 }
 ?>
 <!DOCTYPE html>
-<html lang="<?= strtolower($langId)?>">
+<html lang="<?= mb_strtolower($langId)?>">
 <head>
 	<meta charset="<?= LANG_CHARSET ?>">
 	<title><?= Loc::getMessage('DISK_EXT_LINK_TITLE') ?></title>

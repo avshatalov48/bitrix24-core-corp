@@ -122,16 +122,14 @@ $APPLICATION->IncludeComponent(
 	);
 }?>
 <?$APPLICATION->IncludeComponent(
-	"bitrix:tasks.filter.v2",
-	"widget",
-	array(
-		"VIEW_TYPE" => 0,
-		"COMMON_FILTER" => array("ONLY_ROOT_TASKS" => "Y"),
+	"bitrix:tasks.widget.rolesfilter",
+	"",
+	[
 		"USER_ID" => $USER->GetID(),
-			"ROLE_FILTER_SUFFIX" => "",
-			"PATH_TO_TASKS" => "/extranet/contacts/personal/user/".$USER->GetID()."/tasks/",
-	),
+		"PATH_TO_TASKS" => "/extranet/contacts/personal/user/".$USER->GetID()."/tasks/",
+		"PATH_TO_TASKS_CREATE" => "/extranet/contacts/personal/user/".$USER->GetID()."/tasks/task/edit/0/",
+	],
 	null,
-	array("HIDE_ICONS" => "N")
+	["HIDE_ICONS" => "N"]
 );?>
 <?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>

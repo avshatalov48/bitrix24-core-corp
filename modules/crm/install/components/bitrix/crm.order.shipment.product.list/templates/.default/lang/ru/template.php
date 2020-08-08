@@ -13,3 +13,4 @@ $MESS["CRM_ORDER_SPLT_CLOSE"] = "Закрыть";
 $MESS["CRM_ORDER_SPLT_DELETE_STORE"] = "Убрать отгрузку с этого склада";
 $MESS["CRM_ORDER_SPLT_BARCODE"] = "Штрихкод";
 $MESS["CRM_ORDER_SPLT_MARKING_CODE"] = "Маркировочный код";
+$MESS["CRM_ORDER_SPLT_ITEMS_HAVE_BARCODES"] = "Товары комплекта содержат штрихкоды";

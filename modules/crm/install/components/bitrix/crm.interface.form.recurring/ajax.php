@@ -12,7 +12,7 @@ use \Bitrix\Crm\Recurring\Calculator,
 	\Bitrix\Main\Type\Date;
 
 $siteId = isset($_REQUEST['SITE_ID']) && is_string($_REQUEST['SITE_ID']) ? $_REQUEST['SITE_ID'] : '';
-$siteId = substr(preg_replace('/[^a-z0-9_]/i', '', $siteId), 0, 2);
+$siteId = mb_substr(preg_replace('/[^a-z0-9_]/i', '', $siteId), 0, 2);
 if (!empty($siteId) && is_string($siteId))
 {
 	define('SITE_ID', $siteId);
@@ -51,7 +51,7 @@ if (!$request->isPost())
 	__CrmRecurringFieldEditEndResponse(array('ERROR' => 'Request method is not allowed.'));
 }
 $request = $request->toArray();
-if (strlen($request['PARAMS']['DEAL_DATEPICKER_BEFORE']) > 0)
+if ($request['PARAMS']['DEAL_DATEPICKER_BEFORE'] <> '')
 {
 	$request['START_DATE'] = $request['PARAMS']['DEAL_DATEPICKER_BEFORE'];
 }
@@ -100,7 +100,7 @@ if ($request['ACTION'] === "GET_DEAL_HINT")
 			{
 				$idLine .= \Bitrix\Main\Localization\Loc::getMessage('SIGN_NUM_WITH_DEAL_ID', array("#DEAL_ID#" => $id)).", ";
 			}
-			$idLine = substr($idLine, 0, -2);
+			$idLine = mb_substr($idLine, 0, -2);
 			$hint = \Bitrix\Main\Localization\Loc::getMessage('NEXT_BASED_ON_DEAL_MULTY', array("#ID_LINE#" => $idLine));
 		}
 	}
@@ -113,9 +113,9 @@ if ($request['ACTION'] === "GET_DEAL_HINT")
 	__CrmRecurringFieldEditEndResponse(array('DATA' => array('HINT' => $hint)));
 }
 
-$startDate = (strlen($request['START_DATE']) > 0) ? $request['START_DATE'] : null;
+$startDate = ($request['START_DATE'] <> '') ? $request['START_DATE'] : null;
 $startDate = new Date($startDate);
-$endDate = (strlen($request['PARAMS']['END_DATE']) > 0) ? $request['PARAMS']['END_DATE'] : null;
+$endDate = ($request['PARAMS']['END_DATE'] <> '') ? $request['PARAMS']['END_DATE'] : null;
 $endDate = new Date($endDate);
 
 $fields = [

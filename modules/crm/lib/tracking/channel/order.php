@@ -7,9 +7,10 @@
  */
 namespace Bitrix\Crm\Tracking\Channel;
 
-use Bitrix\Crm\DealTable;
-use Bitrix\Crm\Entity;
 use Bitrix\Main\Config\Option;
+use Bitrix\Crm\Entity;
+use Bitrix\Crm\DealTable;
+use Bitrix\Crm\Binding\OrderContactCompanyTable;
 
 /**
  * Class Order
@@ -19,6 +20,7 @@ use Bitrix\Main\Config\Option;
 class Order extends Base implements Features\EntityDetectable
 {
 	protected $code = self::Order;
+	protected $isOrderEntitySearched = false;
 
 	/**
 	 * Return true if it is configured.
@@ -27,7 +29,7 @@ class Order extends Base implements Features\EntityDetectable
 	 */
 	public static function isConfigured()
 	{
-		return !empty(static::getDealField());
+		return self::isConfiguredLocal() || self::isConfiguredRemote();
 	}
 
 	/**
@@ -58,20 +60,79 @@ class Order extends Base implements Features\EntityDetectable
 	public function getEntities()
 	{
 		$collection = parent::getEntities();
-		$fieldCode = static::getDealField();
-		if (!$this->getValue() || !$fieldCode || !static::isConfigured())
+		if ($this->isOrderEntitySearched)
 		{
 			return $collection;
 		}
 
+		//$this->isOrderEntitySearched = true;
+		if (!$this->getValue()/* || !static::isConfigured()*/)
+		{
+			return $collection;
+		}
+
+		$this->appendOrderEntities($collection);
+		$this->appendDealEntities($collection);
+
+		return $collection;
+	}
+
+	/**
+	 * Get channels.
+	 *
+	 * @return Collection
+	 */
+	public function getChannels()
+	{
+		$collection = parent::getChannels();
+		$orderId = $this->getEntities()->getIdByTypeId(\CCrmOwnerType::Order);
+		if (!$orderId)
+		{
+			return $collection;
+		}
+
+
+		$collection->setChannel(new SalesCenter());
+
+		return $collection;
+	}
+
+	/**
+	 * Return true if it is configured.
+	 *
+	 * @return bool
+	 */
+	public static function isConfiguredLocal()
+	{
+		return true;
+	}
+
+	/**
+	 * Return true if it is configured remote order receiving.
+	 *
+	 * @return bool
+	 */
+	public static function isConfiguredRemote()
+	{
+		return !empty(static::getDealField());
+	}
+
+	private function appendDealEntities(Entity\Identificator\ComplexCollection $collection)
+	{
+		$fieldCode = static::getDealField();
+		if (!$fieldCode)
+		{
+			return;
+		}
+
 		$row = DealTable::getRow([
 			'select' => ['ID', 'CONTACT_ID', 'COMPANY_ID'],
-			'filter' => [$fieldCode => $this->getValue()],
+			'filter' => ["=$fieldCode" => $this->getValue()],
 			'order' => ['ID' => 'DESC']
 		]);
 		if (!$row)
 		{
-			return $collection;
+			return;
 		}
 
 		$collection->addIdentificator(\CCrmOwnerType::Deal, $row['ID'], true);
@@ -83,8 +144,31 @@ class Order extends Base implements Features\EntityDetectable
 		{
 			$collection->addIdentificator(\CCrmOwnerType::Company, $row['COMPANY_ID'], true);
 		}
+	}
 
-		return $collection;
+	private function appendOrderEntities(Entity\Identificator\ComplexCollection $collection)
+	{
+		$orderId = $this->getValue();
+		$rows = OrderContactCompanyTable::getList([
+			'select' => ['ORDER_ID', 'ENTITY_TYPE_ID', 'ENTITY_ID'],
+			'filter' => [
+				"=ORDER_ID" => $orderId,
+				'=IS_PRIMARY' => 'Y',
+			],
+		])->fetchAll();
+		if (empty($rows))
+		{
+			return;
+		}
+
+		$collection->addIdentificator(\CCrmOwnerType::Order, $orderId, true);
+		foreach ($rows as $row)
+		{
+			if (in_array($row['ENTITY_TYPE_ID'], [\CCrmOwnerType::Company, \CCrmOwnerType::Contact]))
+			{
+				$collection->addIdentificator($row['ENTITY_TYPE_ID'], $row['ENTITY_ID'], true);
+			}
+		}
 	}
 
 	/**

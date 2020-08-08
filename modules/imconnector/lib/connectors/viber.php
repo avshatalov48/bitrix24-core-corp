@@ -13,7 +13,7 @@ use \Bitrix\ImOpenLines\Config,
  * Class Viber
  * @package Bitrix\ImConnector\Connectors
  */
-class Viber
+class Viber extends Base
 {
 	/**
 	 * @param $value

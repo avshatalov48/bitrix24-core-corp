@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Integration\Sender\Rc;
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Sender;
 
 /**
@@ -143,15 +144,38 @@ class Service
 		])->fetchAll();
 
 		return count(
-			$categoryId
+			$categoryId !== null
 				? array_filter(
 						$fields,
 						function ($field) use ($categoryId)
 						{
-							return $field['VALUE'] == $categoryId;
+							return mb_strlen($field['VALUE']) && $field['VALUE'] == $categoryId;
 						}
 					)
 				: $fields
 		);
+	}
+
+	public static function getDealWorkerUrl($categoryId = null)
+	{
+		if (!self::canUse())
+		{
+			return null;
+		}
+
+		$uri = new Uri('/marketing/rc/');
+		$uri->addParams([
+			'apply_filter' => 'Y',
+			'REITERATE' => 'Y',
+			'STATE' => Sender\Dispatch\Semantics::getWorkStates(),
+			'MESSAGE_CODE' => 'rc_deal',
+		]);
+		if ($categoryId !== null)
+		{
+			$uri->addParams([
+				'CATEGORY_ID' => $categoryId == '0' ? 'common' : $categoryId
+			]);
+		}
+		return $uri->getLocator();
 	}
 }

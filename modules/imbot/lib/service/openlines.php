@@ -109,6 +109,46 @@ class Openlines
 		return true;
 	}
 
+	/**
+	 * @param $params
+	 *
+	 * @return bool
+	 */
+	public static function sessionStart($params)
+	{
+		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
+		$query = $http->query(
+			'startDialogSession',
+			$params
+		);
+		if (isset($query->error))
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * @param $params
+	 *
+	 * @return bool
+	 */
+	public static function sessionFinish($params)
+	{
+		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
+		$query = $http->query(
+			'finishDialogSession',
+			$params
+		);
+		if (isset($query->error))
+		{
+			return false;
+		}
+
+		return true;
+	}
+
 	public static function operatorMessageReceived($params)
 	{
 		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);

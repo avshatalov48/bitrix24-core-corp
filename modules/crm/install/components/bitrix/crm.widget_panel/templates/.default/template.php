@@ -27,7 +27,7 @@ if(SITE_TEMPLATE_ID === 'bitrix24')
 	$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'pagetitle-toolbar-field-view flexible-layout crm-toolbar crm-pagetitle-view');
 }
 $quid = $arResult['GUID'];
-$prefix = strtolower($quid);
+$prefix = mb_strtolower($quid);
 $containerID = "{$prefix}_container";
 $settingButtonID = "{$prefix}_settings";
 $disableDemoModeButtonID = "{$prefix}_disable_demo";
@@ -132,7 +132,7 @@ if($arResult['ENABLE_NAVIGATION'])
 		'BINDING' => array(
 			'category' => 'crm.navigation',
 			'name' => 'index',
-			'key' => strtolower($arResult['NAVIGATION_CONTEXT_ID'])
+			'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
 		)
 	);
 

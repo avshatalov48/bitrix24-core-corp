@@ -253,7 +253,7 @@ while($item = $dbRes->GetNext())
 	if ($isEditPermitted && is_array($allStatusList))
 	{
 		$arActions[] = array(
-			"TEXT" => GetMessageJS("M_CRM_INVOICE_LIST_CHANGE_STATUS"),
+			"TEXT" => GetMessage("M_CRM_INVOICE_LIST_CHANGE_STATUS"),
 			"ONCLICK" => "BX.Mobile.Crm.List.showStatusList(".$item['ID'].", ".CUtil::PhpToJSObject($allStatusList).", 'onCrmInvoiceDetailUpdate')",
 		);
 	}
@@ -290,7 +290,7 @@ while($item = $dbRes->GetNext())
 	if (!empty($buttons))
 	{
 		$arActions[] = array(
-			"TEXT" => GetMessageJS("M_CRM_INVOICE_LIST_MORE"),
+			"TEXT" => GetMessage("M_CRM_INVOICE_LIST_MORE"),
 			'ONCLICK' => "new BXMobileApp.UI.ActionSheet({
 							buttons: [" . $buttons . "]
 						}, 'actionSheet').show();",

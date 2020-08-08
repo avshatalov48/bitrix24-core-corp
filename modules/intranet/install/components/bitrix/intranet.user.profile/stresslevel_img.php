@@ -6,7 +6,7 @@ define("NOT_CHECK_PERMISSIONS", true);
 define('BX_SECURITY_SESSION_READONLY', true);
 
 $siteId = (isset($_REQUEST["site"]) && is_string($_REQUEST["site"])) ? trim($_REQUEST["site"]): "";
-$siteId = substr(preg_replace("/[^a-z0-9_]/i", "", $siteId), 0, 2);
+$siteId = mb_substr(preg_replace("/[^a-z0-9_]/i", "", $siteId), 0, 2);
 
 define("SITE_ID", $siteId);
 

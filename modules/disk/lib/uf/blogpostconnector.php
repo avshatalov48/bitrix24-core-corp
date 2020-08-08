@@ -345,7 +345,7 @@ final class BlogPostConnector extends Connector
 							{
 								/** @noinspection PhpDynamicAsStaticMethodCallInspection */
 								$tmp = \CSocNetLogTools::processPath(array("GROUP_URL" => $link), $this->getUser()->getId(), $groupSiteID); // user_id is not important parameter
-								$link = (strlen($tmp["URLS"]["GROUP_URL"]) > 0 ? $tmp["URLS"]["GROUP_URL"] : $link);
+								$link = ($tmp["URLS"]["GROUP_URL"] <> '' ? $tmp["URLS"]["GROUP_URL"] : $link);
 							}
 							$isExtranet = (is_array($GLOBALS["arExtranetGroupID"]) && in_array($vv["ENTITY_ID"], $GLOBALS["arExtranetGroupID"]));
 

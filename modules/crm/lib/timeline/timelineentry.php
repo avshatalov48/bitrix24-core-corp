@@ -298,7 +298,7 @@ class TimelineEntry
 			$added[] = $currentMap[$key];
 		}
 	}
-	protected static function registerBindings($entryID, array $bindings)
+	public static function registerBindings($entryID, array $bindings)
 	{
 		foreach($bindings as $binding)
 		{

@@ -135,12 +135,16 @@ abstract class BaseController
 	 */
 	protected function prepareSuspendedUserFields($entityID)
 	{
+		//Enable preliminary field sets synchronization.
+		//Original fields are not existed in suspended type will be created
+		//Suspended fields are not existed in original type will be deleted
 		$fields = array();
 		$this->transformUserFields(
 			$this->getEntityTypeID(),
 			$entityID,
 			$this->getSuspendedEntityTypeID(),
-			$fields
+			$fields,
+			array('ENABLE_SYNCHRONIZATION' => true, 'SYNCHRONIZATION_OPTIONS' => array('ENABLE_TRIM' => true))
 		);
 		return $fields;
 	}
@@ -157,12 +161,15 @@ abstract class BaseController
 	 */
 	protected function prepareRestoredUserFields($recyclingEntityID)
 	{
+		//Disable preliminary field sets synchronization.
+		//Suspended fields are not existed in original type will be ignored
 		$fields = array();
 		$this->transformUserFields(
 			$this->getSuspendedEntityTypeID(),
 			$recyclingEntityID,
 			$this->getEntityTypeID(),
-			$fields
+			$fields,
+			array('ENABLE_SYNCHRONIZATION' => false)
 		);
 		return $fields;
 	}
@@ -200,6 +207,7 @@ abstract class BaseController
 	 * @param int $srcEntityID Source Entity ID.
 	 * @param int $dstEntityTypeID Destination Entity Type ID.
 	 * @param array $dstFields Destination Fields.
+	 * @param array $options Operation options
 	 * @return void
 	 * @throws Crm\Synchronization\UserFieldSynchronizationException
 	 * @throws Main\ArgumentException
@@ -207,7 +215,7 @@ abstract class BaseController
 	 * @throws Main\ObjectException
 	 * @throws Main\ObjectNotFoundException
 	 */
-	protected function transformUserFields($srcEntityTypeID, $srcEntityID, $dstEntityTypeID, array &$dstFields)
+	protected function transformUserFields($srcEntityTypeID, $srcEntityID, $dstEntityTypeID, array &$dstFields, array $options = array())
 	{
 		if(!\CCrmOwnerType::IsDefined($srcEntityTypeID))
 		{
@@ -244,9 +252,18 @@ abstract class BaseController
 			throw new Main\ArgumentException('Must be greater than zero.', 'srcEntityID');
 		}
 
-		if(Crm\Synchronization\UserFieldSynchronizer::needForSynchronization($srcEntityTypeID, $dstEntityTypeID))
+		$enableSynchronization = !isset($options['ENABLE_SYNCHRONIZATION']) || $options['ENABLE_SYNCHRONIZATION'];
+		$synchronizationOptions = isset($options['SYNCHRONIZATION_OPTIONS']) && is_array($options['SYNCHRONIZATION_OPTIONS'])
+			? $options['SYNCHRONIZATION_OPTIONS'] : array();
+		if($enableSynchronization && Crm\Synchronization\UserFieldSynchronizer::needForSynchronization($srcEntityTypeID, $dstEntityTypeID, '', $synchronizationOptions))
 		{
-			Crm\Synchronization\UserFieldSynchronizer::synchronize($srcEntityTypeID, $dstEntityTypeID);
+			Crm\Synchronization\UserFieldSynchronizer::synchronize(
+				$srcEntityTypeID,
+				$dstEntityTypeID,
+				'',
+				array(),
+				$synchronizationOptions
+			);
 		}
 
 		$intersections = Crm\Synchronization\UserFieldSynchronizer::getIntersection($srcEntityTypeID, $dstEntityTypeID);

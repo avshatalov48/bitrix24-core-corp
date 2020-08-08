@@ -63,7 +63,7 @@ if($mode === 'SAVE')
 
 	$itemID = isset($_POST['ITEM_ID']) ? (int)$_POST['ITEM_ID'] : 0;
 	$fields = isset($_POST['FIELDS']) && is_array($_POST['FIELDS']) ? $_POST['FIELDS'] : array();
-	$isDeafult = isset($_POST['IS_DEFAULT']) && strtoupper($_POST['IS_DEFAULT']) === 'Y';
+	$isDeafult = isset($_POST['IS_DEFAULT']) && mb_strtoupper($_POST['IS_DEFAULT']) === 'Y';
 	if(empty($fields))
 	{
 		__CrmDealCategoryEndJsonResonse(array('ERROR' => 'FIELDS ARE NOT FOUND!'));

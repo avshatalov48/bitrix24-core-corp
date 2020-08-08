@@ -119,7 +119,7 @@ elseif ($action === 'CHECK_ENTITY_EXISTENCE')
 			$title = GetMessage('CRM_STATUS_DELETION_ALERT_TITLE_STATUS');
 			$message = GetMessage('CRM_STATUS_DELETION_ALERT_QUOTE_STATUS');
 		}
-		elseif(strpos($_REQUEST['ENTITY_ID'], 'DEAL_STAGE') === 0)
+		elseif(mb_strpos($_REQUEST['ENTITY_ID'], 'DEAL_STAGE') === 0)
 		{
 			$title = GetMessage('CRM_STATUS_DELETION_ALERT_TITLE_DEAL_STATUS');
 			$message = GetMessage('CRM_STATUS_DELETION_ALERT_DEAL_STATUS');
@@ -137,9 +137,9 @@ elseif ($action === 'CHECK_ENTITY_EXISTENCE')
 elseif($action === 'GET_COLOR')
 {
 	$color = $_REQUEST['COLOR'];
-	$r = ord(pack("H*", substr($color, 1, 2)));
-	$g = ord(pack("H*", substr($color, 3, 2)));
-	$b = ord(pack("H*", substr($color, 5, 2)));
+	$r = ord(pack("H*", mb_substr($color, 1, 2)));
+	$g = ord(pack("H*", mb_substr($color, 3, 2)));
+	$b = ord(pack("H*", mb_substr($color, 5, 2)));
 	$y = 0.21 * $r + 0.72 * $g + 0.07 * $b;
 
 	if ($y < 145)

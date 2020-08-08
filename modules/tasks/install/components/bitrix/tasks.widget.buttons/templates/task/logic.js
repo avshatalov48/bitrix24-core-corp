@@ -141,13 +141,14 @@ BX.namespace('Tasks.Component');
 			doMenuAction: function(menu, e, item)
 			{
 				var code = item.code;
-				if(code)
+
+				if (code)
 				{
-					if(code == 'COPY')
+					if (code == 'COPY')
 					{
 						window.location = this.option('copyUrl');
 					}
-					else if(code == 'CREATE_SUBTASK')
+					else if (code == 'CREATE_SUBTASK')
 					{
 						BX.SidePanel.Instance.open(
 							this.option('createSubtaskUrl')
@@ -156,14 +157,14 @@ BX.namespace('Tasks.Component');
 					else
 					{
 						// do one of the dynamic actions
-						if(code == 'DELETE')
+						if (code == 'DELEGATE')
 						{
-							// BX.Tasks.confirmDelete(BX.message('TASKS_COMMON_TASK_ALT_A')).then(function(){
-								this.doDynamicAction(code);
-							// }.bind(this));
-						}
-						else if(code == 'DELEGATE')
-						{
+							if (this.option('taskLimitExceeded'))
+							{
+								BX.UI.InfoHelper.show('limit_tasks_delegating');
+								return;
+							}
+
 							this.getUserSelector().open();
 						}
 						else if (code == 'REST')
@@ -457,7 +458,7 @@ BX.namespace('Tasks.Component');
 					}
 				);
 
-				if(can['DAYPLAN.ADD'])
+				if (can['DAYPLAN.ADD'])
 				{
 					menu.push({
 						code: 'DAYPLAN.ADD',
@@ -468,18 +469,19 @@ BX.namespace('Tasks.Component');
 					});
 				}
 
-				if(can.DELEGATE)
+				if (can.DELEGATE)
 				{
+					var lock = (this.option('taskLimitExceeded') ? '<span class="tariff-lock"></span>' : '');
 					menu.push({
 						code: 'DELEGATE',
-						text: BX.message('TASKS_DELEGATE_TASK'),
+						text: BX.message('TASKS_DELEGATE_TASK') + lock,
 						title: BX.message('TASKS_DELEGATE_TASK'),
 						className: 'menu-popup-item-delegate',
 						onclick: this.passCtx(this.doMenuAction)
 					});
 				}
 
-				if(can.DEFER)
+				if (can.DEFER)
 				{
 					menu.push({
 						code: 'DEFER',
@@ -490,7 +492,7 @@ BX.namespace('Tasks.Component');
 					});
 				}
 
-				if(can.RENEW)
+				if (can.RENEW)
 				{
 					menu.push({
 						code: 'RENEW',
@@ -501,7 +503,7 @@ BX.namespace('Tasks.Component');
 					});
 				}
 
-				if(can.REMOVE)
+				if (can.REMOVE)
 				{
 					menu.push({
 						code: 'DELETE',

@@ -1,0 +1,2 @@
+<?php
+$MESS['CRM_AUTOMATION_TRIGGER_ORDER_PAID_NAME'] = 'Оплата заказа';

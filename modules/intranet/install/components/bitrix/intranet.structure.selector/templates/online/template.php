@@ -11,7 +11,7 @@ if ($arResult['FILTER_VALUES'][$arParams['FILTER_NAME'].'_IS_ONLINE'])
 	}
 }
 
-$arParams['LIST_URL'] .= strpos($arParams['LIST_URL'], '?') === false ? '?' : '&';
+$arParams['LIST_URL'] .= mb_strpos($arParams['LIST_URL'], '?') === false ? '?' : '&';
 
 $extraUrl = 'set_filter_'.$arParams['FILTER_NAME'].'=Y'
 	.GetFilterParams($arResult['FILTER_PARAMS'], true, $arExtraVars);

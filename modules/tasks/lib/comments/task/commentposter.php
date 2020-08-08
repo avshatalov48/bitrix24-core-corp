@@ -1,0 +1,943 @@
+<?php
+namespace Bitrix\Tasks\Comments\Task;
+
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Comments\Internals\Comment;
+use Bitrix\Tasks\Integration\CRM;
+use Bitrix\Tasks\Integration\Disk;
+use Bitrix\Tasks\Integration\Forum;
+use Bitrix\Tasks\Integration\Mail;
+use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Util\Collection;
+use Bitrix\Tasks\Util\Type\DateTime;
+use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\Util\UserField;
+use CCrmOwnerType;
+use CCrmOwnerTypeAbbr;
+use CTaskItem;
+use CTasks;
+use CTasksTools;
+use TasksException;
+
+Loc::loadMessages(__FILE__);
+
+/**
+ * Class CommentPoster
+ *
+ * @package Bitrix\Tasks\Comments\Task
+ */
+class CommentPoster
+{
+	private static $instances = [];
+	private static $taskNames = [];
+	private static $userNames = [];
+	private static $groupNames = [];
+
+	private $taskId;
+	private $authorId;
+	private $comments;
+	private $deferredPostMode = false;
+
+	/**
+	 * CommentPoster constructor.
+	 *
+	 * @param int $taskId
+	 * @param int $authorId
+	 */
+	protected function __construct(int $taskId, int $authorId)
+	{
+		$this->taskId = $taskId;
+		$this->authorId = $authorId;
+		$this->comments = new Collection();
+
+		$this->disableDeferredPostMode();
+	}
+
+	/**
+	 * Returns current post mode state.
+	 *
+	 * @return bool
+	 */
+	public function getDeferredPostMode(): bool
+	{
+		return $this->deferredPostMode;
+	}
+
+	/**
+	 * Enables deferred post mode.
+	 */
+	public function enableDeferredPostMode(): void
+	{
+		$this->deferredPostMode = true;
+	}
+
+	/**
+	 * Disables deferred post mode.
+	 */
+	public function disableDeferredPostMode(): void
+	{
+		$this->deferredPostMode = false;
+	}
+
+	/**
+	 * Returns existing class instance or creates new.
+	 *
+	 * @param int $taskId
+	 * @param int $authorId
+	 * @return CommentPoster
+	 */
+	public static function getInstance(int $taskId, int $authorId): CommentPoster
+	{
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!isset(static::$instances[$taskId]))
+		{
+			static::$instances[$taskId] = new static($taskId, $authorId);
+		}
+
+		return static::$instances[$taskId];
+	}
+
+	/**
+	 * Pushes new comments to collection.
+	 *
+	 * @param array $comments
+	 */
+	public function addComments(array $comments): void
+	{
+		foreach ($comments as $comment)
+		{
+			/** @var Comment $comment */
+			$this->comments->push($comment);
+		}
+	}
+
+	/**
+	 * Returns first comment of given type from collection or null if there is no comments of such type.
+	 *
+	 * @param int $type
+	 * @return Comment|null
+	 */
+	public function getCommentByType($type = Comment::TYPE_DEFAULT): ?Comment
+	{
+		foreach ($this->comments as $comment)
+		{
+			/** @var Comment $comment */
+			if ($comment->getType() === $type)
+			{
+				return $comment;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Clears comment collection.
+	 */
+	public function clearComments(): void
+	{
+		$this->comments->clear();
+	}
+
+	/**
+	 * @return Comment
+	 */
+	private function getNewChangeComment(): Comment
+	{
+		// $authorName = $this->getUserNames([$this->authorId])[$this->authorId];
+		//
+		// $changeMessageKey = 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES';
+		// $changeMessage = Loc::getMessage($changeMessageKey, ['#AUTHOR#' => $authorName]);
+
+		return new Comment('', $this->authorId, Comment::TYPE_UPDATE, []);
+	}
+
+	/**
+	 * Appends a message about checklist changes.
+	 */
+	public function appendChecklistChangesMessage(): void
+	{
+		if (!($changeComment = $this->getCommentByType(Comment::TYPE_UPDATE)))
+		{
+			$changeComment = $this->getNewChangeComment();
+			$this->addComments([$changeComment]);
+		}
+
+		$partName = 'checklist';
+		if (!$changeComment->isPartExist($partName))
+		{
+			$code = 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_CHECKLIST';
+			$changeComment->addPart(
+				$partName,
+				Loc::getMessage($code),
+				[ $code, []]
+			);
+		}
+	}
+
+	/**
+	 * @param Comment $changeComment
+	 * @param array $changes
+	 */
+	private function appendCrmElementChangesMessage(Comment $changeComment, array $changes): void
+	{
+		$partName = 'crm';
+		$fieldKey = 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_CRM';
+
+		if (!$changeComment->isPartExist($partName))
+		{
+			$changeComment->addPart(
+				$partName,
+				Loc::getMessage($fieldKey)."\n",
+				[ $fieldKey, [] ]
+			);
+		}
+
+		$crmElementChanges = $this->prepareCrmElementChanges($changes['UF_CRM_TASK']);
+		foreach ($crmElementChanges as $type => $change)
+		{
+			$replace = [
+				'#OLD_VALUE#' => $change['OLD'],
+				'#NEW_VALUE#' => $change['NEW'],
+			];
+			$changeComment->appendPartData($partName, [ "{$fieldKey}_{$type}", $replace ]);
+			$changeComment->appendPartText(
+				$partName,
+				Loc::getMessage("{$fieldKey}_{$type}", $replace)."\n"
+			);
+		}
+	}
+
+	/**
+	 * @param array $values
+	 * @return array
+	 */
+	private function prepareCrmElementChanges(array $values): array
+	{
+		$collection = [];
+
+		$oldElements = (explode(',', $values['FROM_VALUE']) ?: []);
+		$newElements = (explode(',', $values['TO_VALUE']) ?: []);
+
+		$uniqueElements = array_unique(array_merge($oldElements, $newElements));
+		sort($uniqueElements);
+
+		foreach ($uniqueElements as $element)
+		{
+			[$type, $id] = explode('_', $element);
+			$typeId = CCrmOwnerType::ResolveID(CCrmOwnerTypeAbbr::ResolveName($type));
+			$title = CCrmOwnerType::GetCaption($typeId, $id);
+			$url = CCrmOwnerType::GetEntityShowPath($typeId, $id);
+
+			if (!isset($collection[$type]))
+			{
+				$collection[$type] = [];
+			}
+			$title = ($title ?: $element);
+			if ($title)
+			{
+				$title = htmlspecialcharsbx($title);
+				$collection[$type][$element] = "<a href='{$url}'>{$title}</a>";
+			}
+		}
+
+		$result = [];
+		$noValue = Loc::getMessage('COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_VALUE_NO');
+
+		foreach ($collection as $type => $typeElements)
+		{
+			$old = array_intersect_key($typeElements, array_flip($oldElements));
+			$new = array_intersect_key($typeElements, array_flip($newElements));
+
+			if (!array_diff_key($old, $new) && !array_diff_key($new, $old))
+			{
+				continue;
+			}
+
+			$result[$type] = [
+				'OLD' => (empty($old) ? $noValue : implode(', ', $old)),
+				'NEW' => (empty($new) ? $noValue : implode(', ', $new)),
+			];
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param Comment $changeComment
+	 * @param array $changes
+	 */
+	private function appendUserFieldChangesMessage(Comment $changeComment, array $changes): void
+	{
+		$partName = 'userField';
+		$fieldKey = 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_USER_FIELD';
+
+		if (!$changeComment->isPartExist($partName))
+		{
+			$changeComment->addPart(
+				$partName,
+				Loc::getMessage($fieldKey)."\n",
+				[ $fieldKey, []]
+			);
+		}
+
+		$userFieldChanges = $this->prepareUserFieldChanges($changes);
+		foreach ($userFieldChanges as $name => $change)
+		{
+			$replace = [
+				'#NAME#' => $name,
+				'#OLD_VALUE#' => $change['OLD'],
+				'#NEW_VALUE#' => $change['NEW'],
+			];
+			$changeComment->appendPartData(
+				$partName,
+				[ "{$fieldKey}_TEMPLATE", $replace ]
+			);
+			$changeComment->appendPartText(
+				$partName,
+				Loc::getMessage("{$fieldKey}_TEMPLATE", $replace)."\n"
+			);
+		}
+	}
+
+	/**
+	 * @param array $changes
+	 * @return array
+	 */
+	private function prepareUserFieldChanges(array $changes): array
+	{
+		$systemUserFields = $this->getSystemFieldCodes();
+		$fn = static function ($field) use ($systemUserFields) {
+			return mb_strpos($field, 'UF_') === 0 && !in_array($field, $systemUserFields, true);
+		};
+		$ufScheme = UserField::getScheme(UserField\Task::getEntityCode(), $this->authorId);
+		$userFields = array_intersect_key($ufScheme, array_filter($changes, $fn, ARRAY_FILTER_USE_KEY));
+
+		$result = [];
+		foreach ($userFields as $name => $data)
+		{
+			$result[$data['EDIT_FORM_LABEL']] = [
+				'OLD' => $changes[$name]['FROM_VALUE'],
+				'NEW' => $changes[$name]['TO_VALUE'],
+			];
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param array $taskData
+	 * @return Comment[]
+	 */
+	private function prepareCommentsOnTaskAdd(array $taskData): array
+	{
+		$creatorId = (int)$taskData['CREATED_BY'];
+		$responsibleId = (int)$taskData['RESPONSIBLE_ID'];
+
+		$users = $this->getUserNames([$this->authorId, $responsibleId]);
+
+		$addComments = [];
+
+		if (!$this->getCommentByType(Comment::TYPE_ADD))
+		{
+			$addMessageKey = 'COMMENT_POSTER_COMMENT_TASK_ADD';
+
+			if ($creatorId === $responsibleId)
+			{
+				$addMessageKey .= '_MYSELF';
+			}
+			else
+			{
+				$addMessageKey .= '_SOMEONE';
+
+				if ($taskData['TASK_CONTROL'] === 'Y')
+				{
+					$addMessageKey .= '_CONTROL';
+				}
+				if (!$taskData['DEADLINE'])
+				{
+					$addMessageKey .= '_DEADLINE';
+				}
+			}
+
+			$replace = [
+				'#AUTHOR#' => $users[$this->authorId],
+				'#RESPONSIBLE#' => $users[$responsibleId],
+			];
+
+			$addMessage = Loc::getMessage($addMessageKey, $replace);
+			$addComments[] = new Comment($addMessage, $this->authorId, Comment::TYPE_ADD, [
+				[ $addMessageKey, $replace]
+			]);
+		}
+
+		return $addComments;
+	}
+
+	/**
+	 * @param array $oldFields
+	 * @param array $newFields
+	 * @param array $changes
+	 * @return array|Comment[]
+	 * @throws TasksException
+	 */
+	private function prepareCommentsOnTaskUpdate(array $oldFields, array $newFields, array $changes): array
+	{
+		if (empty($changes))
+		{
+			return [];
+		}
+
+		return array_merge(
+			$this->prepareChangeComments($oldFields, $newFields, $changes),
+			$this->prepareStatusComments($oldFields, $newFields, $changes)
+		);
+	}
+
+	/**
+	 * @param array $oldFields
+	 * @param array $newFields
+	 * @param array $changes
+	 * @return array|Comment[]
+	 * @throws TasksException
+	 */
+	private function prepareChangeComments(array $oldFields, array $newFields, array $changes): array
+	{
+		unset($changes['STATUS']);
+
+		if (empty($changes))
+		{
+			return [];
+		}
+
+		$changeComments = [];
+
+		if (!($changeComment = $this->getCommentByType(Comment::TYPE_UPDATE)))
+		{
+			$changeComment = $this->getNewChangeComment();
+			$changeComments[] = $changeComment;
+		}
+
+		$appendCrmFields = false;
+		$appendUserFields = false;
+
+		foreach ($changes as $field => $values)
+		{
+			switch ($field)
+			{
+				case 'UF_TASK_WEBDAV_FILES':
+					$field = 'FILES';
+					break;
+
+				case 'UF_CRM_TASK':
+					$appendCrmFields = true;
+					continue 2;
+					break;
+
+				default:
+					if (mb_strpos($field, 'UF_') === 0)
+					{
+						$appendUserFields = true;
+						continue 2;
+					}
+					break;
+			}
+
+			$values = $this->getFieldValues($field, $values);
+			if ($values['NEW'] === false)
+			{
+				continue;
+			}
+
+			$fieldKey = 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_'.$field;
+			$fieldReplaces = ['#OLD_VALUE#' => $values['OLD'], '#NEW_VALUE#' => $values['NEW']];
+			$changeComment->appendPartData('changes', [ $fieldKey, $fieldReplaces ]);
+
+			$field = (Loc::getMessage($fieldKey, $fieldReplaces) ?: $field);
+			$changeComment->appendPartText('changes', $field."\n");
+		}
+
+		if ($appendCrmFields)
+		{
+			$this->appendCrmElementChangesMessage($changeComment, $changes);
+		}
+		if ($appendUserFields)
+		{
+			$this->appendUserFieldChangesMessage($changeComment, $changes);
+		}
+
+		$newDeadlineExist = (array_key_exists('DEADLINE', $newFields) && $newFields['DEADLINE']);
+		$oldDeadlineExist = (array_key_exists('DEADLINE', $oldFields) && $oldFields['DEADLINE']);
+
+		if (array_key_exists('RESPONSIBLE_ID', $changes) && !$oldDeadlineExist && !$newDeadlineExist)
+		{
+			$deadlineMessageKey = 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_DEADLINE';
+			$changeComment->addPart(
+				'deadline',
+				Loc::getMessage($deadlineMessageKey),
+				[ $deadlineMessageKey, []]
+			);
+		}
+
+		return $changeComments;
+	}
+
+	/**
+	 * Returns array of old and new field value.
+	 *
+	 * @param string $field
+	 * @param array $values
+	 * @return array
+	 * @throws TasksException
+	 */
+	private function getFieldValues(string $field, array $values): array
+	{
+		$old = $values['FROM_VALUE'];
+		$new = $values['TO_VALUE'];
+
+		$noValue = Loc::getMessage('COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_VALUE_NO');
+
+		switch ($field)
+		{
+			case 'MARK':
+			case 'PRIORITY':
+			case 'TASK_CONTROL':
+			case 'ALLOW_TIME_TRACKING':
+			case 'ALLOW_CHANGE_DEADLINE':
+				$new = Loc::getMessage("COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_{$field}_{$new}");
+				break;
+
+			case 'PARENT_ID':
+				$tasks = array_filter(array_unique($values), static function ($taskId) {
+					return (int)$taskId > 0;
+				});
+				$taskNames = $this->getTaskNames($tasks);
+				$old = ($taskNames[$old] ?? $noValue);
+				$new = ($taskNames[$new] ?? $noValue);
+				break;
+
+			case 'GROUP_ID':
+				$groups = array_filter(array_unique($values), static function ($groupId) {
+					return (int)$groupId > 0;
+				});
+				$groupNames = $this->getGroupNames($groups);
+				$old = ($groupNames[$old] ?? $noValue);
+				$new = ($groupNames[$new] ?? $noValue);
+				break;
+
+			case 'CREATED_BY':
+			case 'RESPONSIBLE_ID':
+				$new = ($this->getUserNames([$new])[$new] ?: $noValue);
+				break;
+
+			case 'ACCOMPLICES':
+			case 'AUDITORS':
+				$oldUsers = array_filter((explode(',', (string)$old) ?: []));
+				$newUsers = array_filter((explode(',', (string)$new) ?: []));
+				$pureNewUsers = array_diff($newUsers, $oldUsers);
+				if (empty($pureNewUsers))
+				{
+					$new = false;
+					break;
+				}
+				$users = array_filter(array_unique($pureNewUsers), static function ($userId) {
+					return (int)$userId > 0;
+				});
+				$userNames = $this->getUserNames($users);
+				$new = (implode(', ', array_intersect_key($userNames, array_flip($pureNewUsers))) ?: $noValue);
+				break;
+
+			case 'DEADLINE':
+			case 'START_DATE_PLAN':
+			case 'END_DATE_PLAN':
+				$currentTimeFormat = str_replace(FORMAT_DATE . " ", "", FORMAT_DATETIME);
+				$format = 'j F, '.(mb_strtoupper($currentTimeFormat) === 'HH:MI:SS'? 'G:i' : 'g:i a');
+				$old = ($old ? FormatDate($format, MakeTimeStamp(DateTime::createFromTimestamp($old))) : $noValue);
+				$new = ($new ? FormatDate($format, MakeTimeStamp(DateTime::createFromTimestamp($new))) : $noValue);
+				break;
+
+			case 'TAGS':
+				$new = ($new && $new !== '' ? str_replace(',', ', ', $new) : $noValue);
+				break;
+
+			case 'DEPENDS_ON':
+				$oldTasks = (explode(',', $old) ?: []);
+				$newTasks = (explode(',', $new) ?: []);
+				$tasks = array_filter(array_unique(array_merge($oldTasks, $newTasks)), static function ($taskId) {
+					return (int)$taskId > 0;
+				});
+				$taskNames = $this->getTaskNames($tasks);
+				$old = (implode(', ', array_intersect_key($taskNames, array_flip($oldTasks))) ?: $noValue);
+				$new = (implode(', ', array_intersect_key($taskNames, array_flip($newTasks))) ?: $noValue);
+				break;
+
+			case 'TIME_ESTIMATE':
+				$old = $this->prepareTimeEstimate(($old ?: 0));
+				$new = $this->prepareTimeEstimate(($new ?: 0));
+				break;
+
+			case 'FILES':
+			case 'UF_TASK_WEBDAV_FILES':
+			default:
+				break;
+		}
+
+		return [
+			'OLD' => $old,
+			'NEW' => $new,
+		];
+	}
+
+	/**
+	 * @param int $seconds
+	 * @return string
+	 */
+	private function prepareTimeEstimate(int $seconds): string
+	{
+		if (!$seconds)
+		{
+			return '';
+		}
+
+		$minutes = (int)($seconds / 60);
+		$hours = (int)($minutes / 60);
+
+		if ($minutes < 60)
+		{
+			$minutesMessage = CTasksTools::getMessagePlural($minutes, 'TASKS_TASK_DURATION_MINUTES');
+			$duration = "{$minutes} {$minutesMessage}";
+		}
+		elseif ($minutesInRemainder = $minutes % 60)
+		{
+			$hoursMessage = CTasksTools::getMessagePlural($hours, 'TASKS_TASK_DURATION_HOURS');
+			$minutesMessage = CTasksTools::getMessagePlural($minutesInRemainder, 'TASKS_TASK_DURATION_MINUTES');
+
+			$duration = "{$hours} {$hoursMessage} {$minutesInRemainder} {$minutesMessage}";
+		}
+		else
+		{
+			$hoursMessage = CTasksTools::getMessagePlural($hours, 'TASKS_TASK_DURATION_HOURS');
+			$duration = "{$hours} {$hoursMessage}";
+		}
+
+		if ($seconds < 3600 && ($secondsInRemainder = $seconds % 60))
+		{
+			$secondsMessage = CTasksTools::getMessagePlural($secondsInRemainder, 'TASKS_TASK_DURATION_SECONDS');
+			$duration .= " {$secondsInRemainder} {$secondsMessage}";
+		}
+
+		return $duration;
+	}
+
+	/**
+	 * @param array $oldFields
+	 * @param array $newFields
+	 * @param array $changes
+	 * @return array|Comment[]
+	 */
+	private function prepareStatusComments(array $oldFields, array $newFields, array $changes): array
+	{
+		$statusComments = [];
+
+		if (array_key_exists('STATUS', $changes))
+		{
+			$authorName = $this->getUserNames([$this->authorId])[$this->authorId];
+
+			$newStatus = (int)$newFields['STATUS'];
+			$newStatus = ($newStatus === CTasks::STATE_NEW ? CTasks::STATE_PENDING : $newStatus);
+
+			if (!in_array($newStatus, [CTasks::STATE_SUPPOSEDLY_COMPLETED, CTasks::STATE_COMPLETED], true))
+			{
+				return $statusComments;
+			}
+
+			$statusMessageKey = "COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_{$newStatus}";
+
+			if ($newStatus === CTasks::STATE_PENDING)
+			{
+				$oldStatus = (int)$oldFields['REAL_STATUS'];
+				$oldStatus = ($oldStatus === CTasks::STATE_NEW ? CTasks::STATE_PENDING : $oldStatus);
+
+				$statePendingMessages = [
+					CTasks::STATE_IN_PROGRESS => '_PAUSE',
+					CTasks::STATE_SUPPOSEDLY_COMPLETED => '_REDO',
+					CTasks::STATE_COMPLETED => '_RENEW',
+					CTasks::STATE_DEFERRED => '_RENEW',
+				];
+				$statusMessageKey .= $statePendingMessages[$oldStatus];
+			}
+			$replace = ['#AUTHOR#' => $authorName];
+			$statusMessage = Loc::getMessage($statusMessageKey, $replace);
+			$statusComments[] = new Comment($statusMessage, $this->authorId, Comment::TYPE_STATUS, [
+				[ $statusMessageKey, $replace ]
+			]);
+		}
+
+		return $statusComments;
+	}
+
+	/**
+	 * @param array $taskData
+	 * @return array|Comment[]
+	 */
+	private function prepareCommentsOnTaskExpiredSoon(array $taskData): array
+	{
+		$expiredSoonComments = [];
+
+		if (!$this->getCommentByType(Comment::TYPE_EXPIRED_SOON))
+		{
+			$expiredSoonMessageKey = 'COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON';
+			$expiredSoonMessage = Loc::getMessage($expiredSoonMessageKey);
+			$expiredSoonComments[] = new Comment($expiredSoonMessage, $this->authorId, Comment::TYPE_EXPIRED_SOON, [
+				[ $expiredSoonMessageKey, [] ]
+			]);
+		}
+
+		return $expiredSoonComments;
+	}
+
+	/**
+	 * @param array $taskData
+	 * @return Comment[]
+	 */
+	private function prepareCommentsOnTaskExpired(array $taskData): array
+	{
+		$expiredComments = [];
+
+		if (!$this->getCommentByType(Comment::TYPE_EXPIRED))
+		{
+			$expiredMessageKey = 'COMMENT_POSTER_COMMENT_TASK_EXPIRED';
+			$expiredMessage = Loc::getMessage($expiredMessageKey);
+			$expiredComments[] = new Comment($expiredMessage, $this->authorId, Comment::TYPE_EXPIRED, [
+				[ $expiredMessageKey, [] ]
+			]);
+		}
+
+		return $expiredComments;
+	}
+
+	/**
+	 * Builds and posts comments on task add if deferred post mode is off.
+	 *
+	 * @param array $taskData
+	 */
+	public function postCommentsOnTaskAdd(array $taskData): void
+	{
+		$addComments = $this->prepareCommentsOnTaskAdd($taskData);
+		$this->addComments($addComments);
+
+		if ($this->getDeferredPostMode())
+		{
+			return;
+		}
+
+		$this->postComments();
+		$this->clearComments();
+	}
+
+	/**
+	 * Builds and posts comments on task update if deferred post mode is off.
+	 *
+	 * @param array $oldFields
+	 * @param array $newFields
+	 * @param array $changes
+	 * @throws TasksException
+	 */
+	public function postCommentsOnTaskUpdate(array $oldFields, array $newFields, array $changes): void
+	{
+		$updateComments = $this->prepareCommentsOnTaskUpdate($oldFields, $newFields, $changes);
+		$this->addComments($updateComments);
+
+		if ($this->getDeferredPostMode())
+		{
+			return;
+		}
+
+		$this->postComments();
+		$this->clearComments();
+	}
+
+	/**
+	 * Builds and posts comments on task expired soon if deferred post mode is off.
+	 *
+	 * @param array $taskData
+	 */
+	public function postCommentsOnTaskExpiredSoon(array $taskData): void
+	{
+		$expiredSoonComments = $this->prepareCommentsOnTaskExpiredSoon($taskData);
+		$this->addComments($expiredSoonComments);
+
+		if ($this->getDeferredPostMode())
+		{
+			return;
+		}
+
+		$this->postComments();
+		$this->clearComments();
+	}
+
+	/**
+	 * Builds and posts comments on task expired if deferred post mode is off.
+	 *
+	 * @param array $taskData
+	 */
+	public function postCommentsOnTaskExpired(array $taskData): void
+	{
+		$expiredComments = $this->prepareCommentsOnTaskExpired($taskData);
+		$this->addComments($expiredComments);
+
+		if ($this->getDeferredPostMode())
+		{
+			return;
+		}
+
+		$this->postComments();
+		$this->clearComments();
+	}
+
+	/**
+	 * Builds comment text by parts data.
+	 *
+	 * @param array $partsData
+	 */
+	public static function getCommentText(array $partsData)
+	{
+		$result = '';
+		$textList = [];
+
+		foreach($partsData as $partsItems)
+		{
+			if (!is_array($partsItems))
+			{
+				continue;
+			}
+
+			foreach($partsItems as list($messageCode, $replace))
+			{
+				if (empty($messageCode))
+				{
+					continue;
+				}
+				$textList[] = Loc::getMessage($messageCode, (is_array($replace) ? $replace : []));
+			}
+		}
+
+		if (!empty($textList))
+		{
+			$result = implode("\n", $textList);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Posts comments from collection.
+	 */
+	public function postComments(): void
+	{
+		foreach ($this->comments as $comment)
+		{
+			/** @var Comment $comment */
+			Forum\Task\Comment::add($this->taskId, [
+				'AUTHOR_ID' => $comment->getAuthorId(),
+				'POST_MESSAGE' => $comment->getText(),
+				'UF_TASK_COMMENT_TYPE' => $comment->getType(),
+				'AUX' => 'Y',
+				'AUX_DATA' => $comment->getData()
+			]);
+		}
+	}
+
+	/**
+	 * @param array $tasks
+	 * @return array
+	 * @throws TasksException
+	 */
+	private function getTaskNames(array $tasks): array
+	{
+		if (empty($tasks))
+		{
+			return [];
+		}
+
+		$tasksToFind = array_flip(array_diff_key(array_flip($tasks), static::$taskNames));
+
+		if (!empty($tasksToFind))
+		{
+			[$foundedTasks] = CTaskItem::fetchList($this->authorId, [], ['ID' => $tasksToFind], [], ['ID', 'TITLE']);
+			foreach ($foundedTasks as $task)
+			{
+				$taskData = $task->getData(false);
+				static::$taskNames[$taskData['ID']] = $taskData['TITLE'];
+			}
+		}
+
+		return array_intersect_key(static::$taskNames, array_flip($tasks));
+	}
+
+	/**
+	 * @param array $users
+	 * @return array
+	 */
+	private function getUserNames(array $users): array
+	{
+		if (empty($users))
+		{
+			return [];
+		}
+
+		$usersToFind = array_flip(array_diff_key(array_flip($users), static::$userNames));
+
+		if (!empty($usersToFind))
+		{
+			$userNames = User::getUserName($usersToFind);
+			foreach ($userNames as $userId => $userName)
+			{
+				static::$userNames[$userId] = $userName;
+			}
+		}
+
+		return array_intersect_key(static::$userNames, array_flip($users));
+	}
+
+	/**
+	 * @param array $groups
+	 * @return array
+	 */
+	private function getGroupNames(array $groups): array
+	{
+		if (empty($groups))
+		{
+			return [];
+		}
+
+		$groupsToFind = array_flip(array_diff_key(array_flip($groups), static::$groupNames));
+
+		if (!empty($groupsToFind))
+		{
+			$foundedGroups = SocialNetwork\Group::getData($groupsToFind);
+			foreach ($foundedGroups as $groupId => $groupData)
+			{
+				static::$groupNames[$groupId] = $groupData['NAME'];
+			}
+		}
+
+		return array_intersect_key(static::$groupNames, array_flip($groups));
+	}
+
+	/**
+	 * @return array
+	 */
+	private function getSystemFieldCodes(): array
+	{
+		return [
+			CRM\UserField::getMainSysUFCode(),
+			Disk\UserField::getMainSysUFCode(),
+			Mail\UserField::getMainSysUFCode(),
+		];
+	}
+}

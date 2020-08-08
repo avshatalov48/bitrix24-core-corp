@@ -17414,7 +17414,7 @@
 		}
 	}
 
-	BX.reload = function(back_url, bAddClearCache)
+	function reloadInternal(back_url, bAddClearCache)
 	{
 		if (back_url === true)
 		{
@@ -17422,7 +17422,8 @@
 			back_url = null;
 		}
 
-		var new_href = back_url || top.location.href;
+		var topWindow = BX.PageObject.getRootWindow();
+		var new_href = back_url || topWindow.location.href;
 
 		var hashpos = new_href.indexOf('#'), hash = '';
 
@@ -17445,7 +17446,23 @@
 			new_href += (new_href.indexOf('?') == -1 ? '?' : '&') + '_r='+Math.round(Math.random()*10000) + hash;
 		}
 
-		top.location.href = new_href;
+		topWindow.location.href = new_href;
+	}
+
+	BX.reload = function(back_url, bAddClearCache)
+	{
+		if (window !== window.top)
+		{
+			BX.Runtime
+				.loadExtension('main.pageobject')
+				.then(function() {
+					reloadInternal(back_url, bAddClearCache);
+				});
+		}
+		else
+		{
+			reloadInternal(back_url, bAddClearCache);
+		}
 	};
 
 	BX.clearCache = function()
@@ -18953,9 +18970,16 @@ BX.ajax = function(config)
 	if (!config.cache && config.method == 'GET')
 		config.url = BX.ajax._uncache(config.url);
 
-	if (config.method == 'POST' && config.preparePost)
+	if (config.method == 'POST')
 	{
-		config.data = BX.ajax.prepareData(config.data);
+		if (config.preparePost)
+		{
+			config.data = BX.ajax.prepareData(config.data);
+		}
+		else if (getLastContentTypeHeader(config.headers) === 'application/json')
+		{
+			config.data = JSON.stringify(config.data);
+		}
 	}
 
 	var bXHR = true;
@@ -19644,6 +19668,19 @@ BX.ajax.loadJSON = function(url, data, callback, callback_failure)
 	});
 };
 
+var getLastContentTypeHeader = function (headers) {
+	if (!BX.Type.isArray(headers))
+	{
+		return null;
+	}
+	var lastHeader = headers
+		.filter(function (header) {
+			return header.name === 'Content-Type';
+		})
+		.pop();
+
+	return lastHeader ? lastHeader.value : null;
+};
 
 var prepareAjaxGetParameters = function(config)
 {
@@ -19687,7 +19724,25 @@ var prepareAjaxConfig = function(config)
 {
 	config = BX.type.isPlainObject(config) ? config : {};
 
-	if (config.data instanceof FormData)
+	if (typeof config.json !== 'undefined')
+	{
+		if (!BX.type.isPlainObject(config.json))
+		{
+			throw new Error('Wrong `config.json`, plain object expected.')
+		}
+
+		config.headers = config.headers || [];
+		config.headers.push({name: 'Content-Type', value: 'application/json'});
+		config.headers.push({name: 'X-Bitrix-Csrf-Token', value: BX.bitrix_sessid()});
+		if (BX.message.SITE_ID)
+		{
+			config.headers.push({name: 'X-Bitrix-Site-Id', value: BX.message.SITE_ID});
+		}
+
+		config.data = config.json;
+		config.preparePost = false;
+	}
+	else if (config.data instanceof FormData)
 	{
 		config.preparePost = false;
 
@@ -19862,7 +19917,6 @@ BX.ajax.runAction = function(action, config)
 	getParameters.action = action;
 
 	var url = '/bitrix/services/main/ajax.php?' + BX.ajax.prepareData(getParameters);
-
 	return buildAjaxPromiseToRestoreCsrf({
 		method: config.method,
 		dataType: 'json',

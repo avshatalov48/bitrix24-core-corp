@@ -381,11 +381,14 @@
 			if (BX.type.isArray(comment))
 				comment = this.initComment(comment, "", []);
 
-			text = '<div class="feed-add-info-text"><span class="feed-add-info-icon"></span>' +
-					'<b>' + BX.message('FC_ERROR') + '</b><br />' + text + '</div>';
 			if (comment && comment.node)
 			{
-				BX.addClass(comment.node, "feed-com-block-cover-undelivered");
+				comment.node.classList.add('feed-com-block-cover-undelivered');
+				var errorTextNode = comment.node.querySelector('.post-comment-error-text');
+				if (errorTextNode)
+				{
+					errorTextNode.innerHTML = text;
+				}
 
 				var bindUndelivered = (
 					typeof comment.attachments == 'undefined'
@@ -416,26 +419,11 @@
 				{
 					BX.bind(comment.node, 'click', BX.proxy(function(e) {
 						BX.unbindAll(comment.node);
-						BX.removeClass(comment.node, "feed-com-block-cover-undelivered");
+						comment.node.classList.remove('feed-com-block-cover-undelivered');
 						this.handler.comment = comment;
 						this.handler.simpleForm.handleAppData(comment.text, true);
 					}, this));
 				}
-
-/*
-				node = BX.findChild(comment.node, {'tagName' : "DIV", 'className' : "post-comment-text"}, true);
-				if (node)
-					node.innerHTML += text;
-*/
-			}
-			else if (text)
-			{
-/*
-				var container = BX.create("DIV", {
-					attrs : {"className" : ".feed-com-block-cover feed-com-block-cover-error"},
-					html : text});
-				BX.show(node);
-*/
 			}
 		},
 		showNote : function(id, text) {
@@ -577,7 +565,7 @@
 			BX.MPL.superclass.constructor.apply(this, arguments);
 
 			this.thumb = BX.message("MPL_RECORD_THUMB");
-			this.thumbForFile = BX.message("MPL_RECORD_THUMB_FILE");
+			this.scope = "mobile";
 
 			BX.removeCustomEvent(window, 'OnUCFormBeforeShow', this.windowEvents['OnUCFormBeforeShow']);
 			BX.removeCustomEvent(window, 'OnUCFormAfterShow', this.windowEvents['OnUCFormAfterShow']);
@@ -639,7 +627,7 @@
 				var html = window.fcParseTemplate(
 					{ messageFields : { FULL_ID : id, POST_MESSAGE_TEXT : text, POST_TIMESTAMP : (new Date().getTime() / 1000) } },
 					{ DATE_TIME_FORMAT : this.params.DATE_TIME_FORMAT, RIGHTS : this.rights },
-					(BX.type.isArray(attachments) && attachments.length > 0 ? this.thumbForFile : this.thumb)), ob;
+					this.thumb), ob;
 
 				ob = BX.processHTML(html, false);
 				container = BX.create("DIV", {
@@ -724,14 +712,14 @@
 				};
 				BX.defer(func, this)();
 			}
-			BX.addClass(container, "feed-com-block-cover-wait");
+			BX.addClass(container, "post-comment-active-progress");
 			message.node = container;
 			return container;
 		};
 		BX.MPL.prototype.clearThumb = function(message) {
 			if (message && BX(message.node))
 			{
-				BX.removeClass(message.node, "feed-com-block-cover-wait");
+				BX.removeClass(message.node, "post-comment-active-progress");
 			}
 		};
 		BX.MPL.prototype.add = function(newId, data) {
@@ -773,6 +761,8 @@
 					BX.removeClass(waiter, "post-comments-button-waiter-active");
 				}
 			}
+			if (window["BitrixMobile"] && window["BitrixMobile"]["LazyLoad"])
+				setTimeout(function() { window.BitrixMobile.LazyLoad.showImages(); }, 1000);
 			BX.MPL.superclass.buildPagenavigation.apply(this, arguments);
 		};
 		BX.MPL.prototype.completePagenavigation = function() {
@@ -789,12 +779,12 @@
 		BX.MPL.prototype.showWait = function(id) {
 			var container = BX('record-' + this.ENTITY_XML_ID + '-' + id + '-cover');
 			if (id > 0 && container)
-				BX.addClass(container, "feed-com-block-cover-wait");
+				BX.addClass(container, "post-comment-active-progress");
 		};
 		BX.MPL.prototype.closeWait = function(id) {
 			var container = BX('record-' + this.ENTITY_XML_ID + '-' + id + '-cover');
 			if (id > 0 && container)
-				BX.removeClass(container, "feed-com-block-cover-wait");
+				BX.removeClass(container, "post-comment-active-progress");
 		};
 
 		BX.MPL.prototype.showError = function(id, text) {
@@ -816,6 +806,11 @@
 				!BX.type.isArray(menuItems)
 				|| !BX.type.isDomNode(commentNode)
 			)
+			{
+				return;
+			}
+
+			if (commentNode.getAttribute('bx-mpl-menu-show') == 'N')
 			{
 				return;
 			}
@@ -917,7 +912,7 @@
 			}
 
 			if (
-				oMSL != "undefined"
+				typeof oMSL != "undefined"
 				&& BX.type.isFunction(oMSL.copyLink)
 			)
 			{

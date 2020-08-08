@@ -360,12 +360,12 @@ class SupervisorTable extends Entity\DataManager
 															'ELEMENT_ID' => $row['CONTACT_ID']));
 			while ($fm = $res->fetch())
 			{
-				$fm['TYPE_ID'] = strtolower($fm['TYPE_ID']);
+				$fm['TYPE_ID'] = mb_strtolower($fm['TYPE_ID']);
 				if (!in_array($fm['TYPE_ID'], array('phone', 'email', 'im')))
 				{
 					continue;
 				}
-				if ($fm['TYPE_ID'] == 'im' && strpos($fm['VALUE'], 'imol|') !== 0)
+				if ($fm['TYPE_ID'] == 'im' && mb_strpos($fm['VALUE'], 'imol|') !== 0)
 				{
 					continue;
 				}
@@ -413,7 +413,7 @@ class SupervisorTable extends Entity\DataManager
 	 */
 	protected function getUrl($id, $type)
 	{
-		return str_replace(self::$pathMarkers, $id, \CrmCheckPath('PATH_TO_'.strtoupper($type).'_SHOW', '', ''));
+		return str_replace(self::$pathMarkers, $id, \CrmCheckPath('PATH_TO_'.mb_strtoupper($type).'_SHOW', '', ''));
 	}
 
 	/**

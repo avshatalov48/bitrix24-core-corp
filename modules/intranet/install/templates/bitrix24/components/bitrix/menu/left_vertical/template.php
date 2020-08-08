@@ -53,7 +53,7 @@ $groupPopupExists = false;
 
 					$counterId = "";
 					$counter = 0;
-					if (array_key_exists("counter_id", $item["PARAMS"]) && strlen($item["PARAMS"]["counter_id"]) > 0)
+					if (array_key_exists("counter_id", $item["PARAMS"]) && $item["PARAMS"]["counter_id"] <> '')
 					{
 						$counterId = $item["PARAMS"]["counter_id"] == "live-feed" ? "**" : $item["PARAMS"]["counter_id"];
 						$counter = array_key_exists($counterId, $arResult["COUNTERS"]) ? $arResult["COUNTERS"][$counterId] : 0;
@@ -99,7 +99,7 @@ $groupPopupExists = false;
 						$itemClass .= " ".str_replace("_", "-", $itemId);
 					}
 
-					if ($isCompositeMode === false && $counter > 0 && strlen($counterId) > 0)
+					if ($isCompositeMode === false && $counter > 0 && $counterId <> '')
 					{
 						$itemClass .= " menu-item-with-index";
 					}
@@ -159,7 +159,7 @@ $groupPopupExists = false;
 							?><span class="menu-item-link-text <? echo isset($item["PARAMS"]["is_beta"]) ? ' menu-item-link-beta' : ''?>" data-role="item-text"><?
 								echo $item["TEXT"];
 							?></span><?
-							if (strlen($counterId) > 0):
+							if ($counterId <> ''):
 								$itemCounter = "";
 								if ($isCompositeMode === false)
 								{
@@ -168,7 +168,7 @@ $groupPopupExists = false;
 								?><span class="menu-item-index-wrap"><?
 								?><span
 									class="menu-item-index"
-									id="menu-counter-<?=strtolower($item["PARAMS"]["counter_id"])?>"><?=$itemCounter?></span>
+									id="menu-counter-<?= mb_strtolower($item["PARAMS"]["counter_id"])?>"><?=$itemCounter?></span>
 								</span>
 							<?endif ?>
 						</a><?
@@ -299,6 +299,8 @@ $arJSParams = array(
 	"isCompositeMode" => $isCompositeMode,
 	"isCollapsedMode" => CUserOptions::GetOption("intranet", "left_menu_collapsed") === "Y",
 	"showPresetPopup" => $arResult["SHOW_PRESET_POPUP"] ? "Y" : "N",
+	"showImportConfiguration" => $arResult["SHOW_IMPORT_CONFIGURATION"] ? "Y" : "N",
+	"urlImportConfiguration" => $arResult["URL_IMPORT_CONFIGURATION"],
 	"isPublicConverted" => $arResult["IS_PUBLIC_CONVERTED"] ? "Y" : "N",
 	"isCustomPresetAvailable" => $arResult["IS_CUSTOM_PRESET_AVAILABLE"] ? "Y" : "N",
 	"customPresetExists" => $arResult["CUSTOM_PRESET_EXISTS"] ? "Y" : "N"

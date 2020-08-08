@@ -9,7 +9,6 @@
 namespace Bitrix\Tasks\Item\Task\Template;
 
 use Bitrix\Tasks\Internals\Task\Template\AccessTable;
-use Bitrix\Tasks\UI;
 
 final class Access extends \Bitrix\Tasks\Item\SubItem
 {

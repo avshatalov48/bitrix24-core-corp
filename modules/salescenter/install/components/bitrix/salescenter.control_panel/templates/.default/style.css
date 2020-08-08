@@ -38,7 +38,8 @@
 	box-shadow: 0 2px 2px 1px rgba(0,0,0,.14);
 }
 
-.salescenter-item-title {
+.salescenter-item-title,
+.salescenter-marketplace-item-title {
 	position: absolute;
 	left: 0;
 	right: 0;
@@ -60,7 +61,8 @@
 	justify-content: center;
 }
 
-.salescenter-item-image {
+.salescenter-item-image,
+.salescenter-marketplace-item-image {
 	position: absolute;
 	left: 0;
 	right: 0;
@@ -68,6 +70,10 @@
 	bottom: 27px;
 	background-repeat: no-repeat;
 	background-position: center;
+}
+
+.salescenter-marketplace-item-image {
+	background-size: 65%;
 }
 
 .salescenter-item-disabled {
@@ -112,23 +118,33 @@
 
 .salescenter-item-selected .salescenter-item-title { color: #fff; }
 
-.salescenter-item-label {
+.salescenter-item-label-new,
+.salescenter-item-label-new-active {
 	position: absolute;
 	top: -4px;
 	left: 9px;
 	display: flex;
 	padding: 0 5px;
 	border-radius: 30px;
-	background: #fff;
+	background: #2FC6F6;
 	box-shadow: 0 1px 3px rgba(0, 0, 0, .14);
 }
 
-.salescenter-item-label-text {
+.salescenter-item-label-new-active {
+	background: #fff;
+}
+
+.salescenter-item-label-new-text,
+.salescenter-item-label-new-text-active {
 	overflow: hidden;
 	max-width: 130px;
-	color: #525c69;
+	color: #fff;
 	text-transform: uppercase;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	font: 8px/14px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.salescenter-item-label-new-text-active {
+	color: #828B95;
 }

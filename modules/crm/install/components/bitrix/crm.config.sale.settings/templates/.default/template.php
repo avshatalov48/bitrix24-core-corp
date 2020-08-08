@@ -680,9 +680,9 @@ $unSuccessFields = $settings["SORTED_FIELDS"]["UNSUCCESS_FIELDS"];
 <?
 function getColorText($color, &$iconClass, &$blockClass)
 {
-	$r = ord(pack("H*", substr($color, 1, 2)));
-	$g = ord(pack("H*", substr($color, 3, 2)));
-	$b = ord(pack("H*", substr($color, 5, 2)));
+	$r = ord(pack("H*", mb_substr($color, 1, 2)));
+	$g = ord(pack("H*", mb_substr($color, 3, 2)));
+	$b = ord(pack("H*", mb_substr($color, 5, 2)));
 	$y = 0.21 * $r + 0.72 * $g + 0.07 * $b;
 
 	if ($y < 145)

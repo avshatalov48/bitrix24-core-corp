@@ -186,11 +186,12 @@ class WorktimeRepository
 		return $record;
 	}
 
-	public function findLatestRecord($userId)
+	public function findLatestRecord($userId): ?WorktimeRecord
 	{
 		return WorktimeRecordTable::query()
 			->addSelect('*')
 			->addSelect('SCHEDULE')
+			->addSelect('SCHEDULE.SCHEDULE_VIOLATION_RULES')
 			->addSelect('SHIFT')
 			->registerRuntimeField((new Reference('SCHEDULE',
 				ScheduleTable::class,
@@ -207,8 +208,15 @@ class WorktimeRepository
 			->fetchObject();
 	}
 
-	public function findIntersectingRecordByDates($userId, $startTimestamp, $stopTimestamp, $id = 0)
+	public function findOverlappingRecordByDates(WorktimeRecord $record): bool
 	{
+		$userId = $record->getUserId();
+		$startTimestamp = $record->getRecordedStartTimestamp();
+		$stopTimestamp = $record->getRecordedStopTimestamp();
+		$id = $record->getId();
+		$scheduleId = $record->getScheduleId();
+		$shiftId = $record->getShiftId();
+
 		$orFilter = Query::filter()->logic('or');
 		$orFilter->where(
 			Query::filter()->logic('and')
@@ -229,6 +237,14 @@ class WorktimeRepository
 		if ($id > 0)
 		{
 			$query->where('ID', '!=', $id);
+		}
+		if ($scheduleId > 0)
+		{
+			$query->where('SCHEDULE_ID', $scheduleId);
+		}
+		if ($shiftId > 0)
+		{
+			$query->where('SHIFT_ID', $shiftId);
 		}
 
 		$query->where($orFilter);

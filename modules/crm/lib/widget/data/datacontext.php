@@ -19,7 +19,7 @@ class DataContext
 			return false;
 		}
 
-		$contextID = strtoupper($contextID);
+		$contextID = mb_strtoupper($contextID);
 		return $contextID === self::ENTITY || $contextID === self::FUND || $contextID === self::PERCENT;
 	}
 

@@ -153,7 +153,7 @@ if (!empty($arResult["query"]))
 		}
 
 		if (
-			strpos($categoryCode, 'custom_') === 0
+			mb_strpos($categoryCode, 'custom_') === 0
 			&& empty($arResult["CATEGORIES"][$i]["ITEMS"])
 		)
 		{

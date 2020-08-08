@@ -12,12 +12,11 @@
 
 namespace Bitrix\Tasks\Dispatcher\PublicAction;
 
-use Bitrix\Main\Data\Cache;
-use Bitrix\Main\Result;
+use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Item;
 use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Util;
-use CTasks;
 
 final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 {
@@ -201,18 +200,7 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 			// todo: move to \Bitrix\Tasks\Item\Task
 			// this will ONLY delete tags, members, favorites, old depedences, old files, clear cache
 			$task = \CTaskItem::getInstance($id, Util\User::getId());
-
-			try
-            {
-                $task->delete();
-
-                $cache = Cache::createInstance();
-                $cache->clean(CTasks::FILTER_LIMIT_CACHE_KEY, \CTasks::CACHE_TASKS_COUNT_DIR_NAME);
-            }
-            catch(\TasksException $e)
-            {
-
-            }
+			$task->delete();
 		}
 
 		return $result;
@@ -584,5 +572,25 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		$task->update(array('CREATED_BY' => $originatorId));
 
 		return $result;
+	}
+
+	public function mute($id)
+	{
+		return UserOption::add($id, Util\User::getId(), UserOption\Option::MUTED);
+	}
+
+	public function unmute($id)
+	{
+		return UserOption::delete($id, Util\User::getId(), UserOption\Option::MUTED);
+	}
+
+	public function pin($id)
+	{
+		return UserOption::add($id, Util\User::getId(), UserOption\Option::PINNED);
+	}
+
+	public function unpin($id)
+	{
+		return UserOption::delete($id, Util\User::getId(), UserOption\Option::PINNED);
 	}
 }

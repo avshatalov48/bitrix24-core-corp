@@ -8,9 +8,12 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadLanguageFile(__FILE__);
 
-\Bitrix\Main\UI\Extension::load("ui.buttons");
-\Bitrix\Main\UI\Extension::load("ui.buttons.icons");
-\Bitrix\Main\UI\Extension::load("ui.alerts");
+\Bitrix\Main\UI\Extension::load([
+	'ui.buttons',
+	'ui.buttons.icons',
+	'ui.alerts',
+    'ui.info-helper',
+]);
 
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/css/main/table/style.css');
 
@@ -102,10 +105,6 @@ CJSCore::Init(['sidepanel', 'access']);
 				DOCGEN_SETTINGS_PERMS_FEATURE_TEXT: '<?=Loc::getMessage('DOCGEN_SETTINGS_PERMS_FEATURE_TEXT');?>',
 			});
 			BX.DocumentGenerator.Perms.init(BX('docs-perms'), {isPermissionsFeatureEnabled: <?=($arResult['isPermissionsFeatureEnabled'] ? 'true' : 'false');?>});
-			<?if(!$arResult['isPermissionsFeatureEnabled'])
-			{
-				CBitrix24::initLicenseInfoPopupJS('documentgenerator_permissions');
-			}?>
 		})
 	</script>
 	<script type="text/template" id="docgen-new-access-row">

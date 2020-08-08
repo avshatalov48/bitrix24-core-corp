@@ -12,6 +12,7 @@ use Bitrix\Tasks\Internals\Task\TemplateTable;
 
 use Bitrix\Recyclebin\Internals\Entity;
 use Bitrix\Recyclebin\Internals\Contracts\Recyclebinable;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 
 if (Loader::includeModule('recyclebin'))
 {
@@ -167,6 +168,23 @@ if (Loader::includeModule('recyclebin'))
 					'RESTORE' => Loc::getMessage('TASKS_TEMPLATE_RECYCLEBIN_RESTORE_CONFIRM'),
 					'REMOVE' => Loc::getMessage('TASKS_TEMPLATE_RECYCLEBIN_REMOVE_CONFIRM')
 				]
+			];
+		}
+
+		/**
+		 * @return array
+		 * @throws \Bitrix\Main\ObjectPropertyException
+		 * @throws \Bitrix\Main\SystemException
+		 */
+		public static function getAdditionalData(): array
+		{
+			return [
+				'LIMIT_DATA' => [
+					'RESTORE' => [
+						'DISABLE' => TaskLimit::isLimitExceeded(),
+						'SLIDER_CODE' => 'limit_tasks_recycle_bin_restore',
+					],
+				],
 			];
 		}
 	}

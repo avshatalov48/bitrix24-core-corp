@@ -670,7 +670,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 		{
 			$password = $_POST['PASSWORD'];
 		}
-		elseif (isset($_SESSION["DISK_DATA"]["EXT_LINK_PASSWORD"]) && strlen($_SESSION["DISK_DATA"]["EXT_LINK_PASSWORD"]) > 0)
+		elseif (isset($_SESSION["DISK_DATA"]["EXT_LINK_PASSWORD"]) && $_SESSION["DISK_DATA"]["EXT_LINK_PASSWORD"] <> '')
 		{
 			$password = $_SESSION["DISK_DATA"]["EXT_LINK_PASSWORD"];
 		}

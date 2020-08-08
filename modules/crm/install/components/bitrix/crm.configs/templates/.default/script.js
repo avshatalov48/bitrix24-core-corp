@@ -81,5 +81,18 @@ BX.CrmConfigClass = (function ()
 		BX('tab_'+tabId).className = 'sidebar-tab '+sel;
 	};
 
+	//static
+	CrmConfigClass.showInfoHelper = function(articleCode, event)
+	{
+		if(top.BX.UI && top.BX.UI.InfoHelper)
+		{
+			top.BX.UI.InfoHelper.show(articleCode);
+		}
+		if (event)
+		{
+			event.preventDefault();
+		}
+	}
+
 	return CrmConfigClass;
 })();

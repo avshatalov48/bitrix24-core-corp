@@ -58,10 +58,10 @@ if ($arParams['SEF_MODE'] == 'Y')
 
 	foreach ($arUrlTemplates as $url => $value)
 	{
-		if (strlen($arParams['PATH_TO_REPORT_'.strToUpper($url)]) <= 0)
-			$arResult['PATH_TO_REPORT_'.strToUpper($url)] = $arParams['SEF_FOLDER'].$value;
+		if ($arParams['PATH_TO_REPORT_'.mb_strtoupper($url)] == '')
+			$arResult['PATH_TO_REPORT_'.mb_strtoupper($url)] = $arParams['SEF_FOLDER'].$value;
 		else
-			$arResult['PATH_TO_REPORT_'.strToUpper($url)] = $arParams['PATH_TO_'.strToUpper($url)];
+			$arResult['PATH_TO_REPORT_'.mb_strtoupper($url)] = $arParams['PATH_TO_'.mb_strtoupper($url)];
 	}
 }
 else

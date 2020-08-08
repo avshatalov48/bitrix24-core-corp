@@ -41,9 +41,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 				<div class="crm-card-show-user-responsible-title"><?= GetMessage('CRM_CARD_RESPONSIBLE')?>:</div>
 				<div class="crm-card-show-user-responsible-user">
 					<? if($arResult['ENTITY']['RESPONSIBLE']['PHOTO'] != ''): ?>
-						<div class="crm-card-show-user-responsible-user-icon" style="background-image: url(<?=$arResult['ENTITY']['RESPONSIBLE']['PHOTO']?>)"></div>
+						<div class="ui-icon ui-icon-common-user crm-card-show-user-responsible-user-icon"><i style="background-image: url(<?=$arResult['ENTITY']['RESPONSIBLE']['PHOTO']?>)"></i></div>
 					<? else: ?>
-						<div class="crm-card-show-user-responsible-user-icon"></div>
+						<div class="ui-icon ui-icon-common-user crm-card-show-user-responsible-user-icon"><i></i></div>
 					<? endif ?>
 					<div class="crm-card-show-user-responsible-user-info">
 						<a class="crm-card-show-user-responsible-user-name" href="<?=$arResult['ENTITY']['RESPONSIBLE']['PROFILE_PATH']?>" target="_blank">
@@ -176,7 +176,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 												</div>
 											</div>
 											<div class="crm-card-show-detail-info-desc">
-												<div class="crm-card-show-detail-info-desc-item"><?=htmlspecialcharsbx($invoice['PRICE_FORMATTED'])?></div>
+												<div class="crm-card-show-detail-info-desc-item"><?= $invoice['PRICE_FORMATTED']?></div>
 											</div>
 										</div>
 									</div><!--crm-card-show-detail-info-main-content-->
@@ -199,9 +199,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 								<div class="crm-card-show-user-responsible-title"><?= GetMessage('CRM_CARD_RESPONSIBLE')?>:</div>
 								<div class="crm-card-show-user-responsible-user">
 									<? if($arResult['ENTITY']['RESPONSIBLE']['PHOTO'] != ''): ?>
-										<div class="crm-card-show-user-responsible-user-icon" style="background-image: url(<?=$arResult['ENTITY']['RESPONSIBLE']['PHOTO']?>)"></div>
+										<div class="ui-icon ui-icon-common-user crm-card-show-user-responsible-user-icon"><i style="background-image: url(<?=$arResult['ENTITY']['RESPONSIBLE']['PHOTO']?>)"></i></div>
 									<? else: ?>
-										<div class="crm-card-show-user-responsible-user-icon"></div>
+										<div class="ui-icon ui-icon-common-user crm-card-show-user-responsible-user-icon"><i></i></div>
 									<? endif ?>
 									<div class="crm-card-show-user-responsible-user-info">
 										<a class="crm-card-show-user-responsible-user-name" href="<?=$arResult['ENTITY']['RESPONSIBLE']['PROFILE_PATH']?>" target="_blank">

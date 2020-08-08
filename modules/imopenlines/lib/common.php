@@ -3,9 +3,7 @@
 namespace Bitrix\ImOpenLines;
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\IO;
-use Bitrix\Main\Localization\LanguageTable;
-use Bitrix\Main\Application;
+use Bitrix\Main\UserTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -282,5 +280,65 @@ class Common
 	public static function getMaxSessionCount()
 	{
 		return 100;
+	}
+
+	public static function getUserIdByCode(string $userCode)
+	{
+		if (mb_substr($userCode, 0, 5) === 'imol|')
+		{
+			$userCode = mb_substr($userCode, 5);
+		}
+
+		$entity = \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId($userCode);
+		if (empty($entity['connectorUserId']))
+		{
+			return false;
+		}
+
+		$userData = \Bitrix\Main\UserTable::getList([
+			'select' => ['ID', 'EXTERNAL_AUTH_ID'],
+			'filter' => ['=ID' => $entity['connectorUserId']]
+		])->fetch();
+		if ($userData['EXTERNAL_AUTH_ID'] !== 'imconnector')
+		{
+			return false;
+		}
+
+		return $userData['ID'];
+	}
+
+	public static function depersonalizationLinesUser($userId)
+	{
+		$userData = \Bitrix\Main\UserTable::getList([
+			'select' => ['ID', 'EXTERNAL_AUTH_ID', 'PERSONAL_PHOTO', ],
+			'filter' => ['=ID' => $userId]
+		])->fetch();
+		if ($userData['EXTERNAL_AUTH_ID'] !== 'imconnector')
+		{
+			return false;
+		}
+
+		$photo = '';
+		if ($userData['PERSONAL_PHOTO'])
+		{
+			$photo = [
+				'del' => 'Y',
+				'old_file' => $userData['PERSONAL_PHOTO'],
+			];
+		}
+
+		$user = new \CUser();
+		$user->Update($userData['ID'], [
+			'NAME' => Loc::getMessage('IMOL_COMMON_GUEST_NAME'),
+			'LAST_NAME' => '',
+			'EMAIL' => $userData['ID'].'@temporary.temp',
+			'PERSONAL_PHOTO' => $photo,
+			'PERSONAL_PROFESSION' => '',
+			'PERSONAL_WWW' => '',
+			'PERSONAL_GENDER' => '',
+			'WORK_POSITION' => '',
+		]);
+
+		return true;
 	}
 }

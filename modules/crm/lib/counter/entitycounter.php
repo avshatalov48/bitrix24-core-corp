@@ -674,7 +674,7 @@ class EntityCounter extends CounterBase
 	 */
 	public function prepareDetailsPageUrl($url = '')
 	{
-		$urlParams = array('counter' => strtolower($this->getTypeName()), 'clear_nav' => 'Y');
+		$urlParams = array('counter' => mb_strtolower($this->getTypeName()), 'clear_nav' => 'Y');
 		self::externalizeExtras($this->extras, $urlParams);
 
 		if($url === '')
@@ -740,6 +740,10 @@ class EntityCounter extends CounterBase
 		if(isset($params['USER_IDS']))
 		{
 			$queryParams['USER_IDS'] = $params['USER_IDS'];
+		}
+		if(isset($params['STAGE_SEMANTIC_ID']))
+		{
+			$queryParams['STAGE_SEMANTIC_ID'] = $params['STAGE_SEMANTIC_ID'];
 		}
 
 		$queries = $this->prepareQueries($queryParams);

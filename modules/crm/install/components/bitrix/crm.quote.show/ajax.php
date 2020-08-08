@@ -150,7 +150,7 @@ if($mode === 'GET_FORMATTED_SUM')
 }
 if($mode === 'UPDATE')
 {
-	$type = isset($_POST['OWNER_TYPE']) ? strtoupper($_POST['OWNER_TYPE']) : '';
+	$type = isset($_POST['OWNER_TYPE'])? mb_strtoupper($_POST['OWNER_TYPE']) : '';
 	if($type !== CCrmQuote::OWNER_TYPE)
 	{
 		__CrmQuoteShowEndJsonResonse(array('ERROR'=>'OWNER_TYPE IS NOT SUPPORTED!'));
@@ -286,7 +286,7 @@ if($mode === 'GET_ENTITY_SIP_INFO')
 		__CrmQuoteShowEndJsonResonse(array('ERROR'=>'ENITY TYPE IS NOT DEFINED!'));
 	}
 
-	$entityTypeName = isset($m[1]) ? strtoupper($m[1]) : '';
+	$entityTypeName = isset($m[1])? mb_strtoupper($m[1]) : '';
 	if($entityTypeName !== CCrmOwnerType::QuoteName)
 	{
 		__CrmQuoteShowEndJsonResonse(array('ERROR'=>'ENITY TYPE IS NOT DEFINED IS NOT SUPPORTED IN CURRENT CONTEXT!'));

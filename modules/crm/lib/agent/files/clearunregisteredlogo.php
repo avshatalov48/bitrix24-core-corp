@@ -256,7 +256,7 @@ final class ClearUnregisteredLogo extends AgentBase
 			if ($userField['MULTIPLE'] === 'Y')
 			{
 				$ufId = $userField['ID'];
-				$utmEntityTableName = 'b_utm_'.strtolower($ufName);
+				$utmEntityTableName = 'b_utm_'.mb_strtolower($ufName);
 
 				if (in_array($utmEntityTableName, $tablesInformation))
 				{
@@ -316,7 +316,7 @@ final class ClearUnregisteredLogo extends AgentBase
 			else
 			{
 				$ufEntityTableFieldName = $userField['FIELD_NAME'];
-				$utsEntityTableName = 'b_uts_'.strtolower($ufName);
+				$utsEntityTableName = 'b_uts_'.mb_strtolower($ufName);
 
 				if (in_array($utsEntityTableName, $tablesInformation))
 				{

@@ -92,4 +92,15 @@ $MESS["CRM_COMPANY_BATCH_DELETION_COUNT_SUCCEEDED"] = "Успешно удале
 $MESS["CRM_COMPANY_BATCH_DELETION_COUNT_FAILED"] = "Не удалось удалить: #number#.";
 $MESS["CRM_COMPANY_LIST_DEL_PROC_DLG_TITLE"] = "Удаление компаний";
 $MESS["CRM_COMPANY_LIST_DEL_PROC_DLG_SUMMARY"] = "Будет произведено удаление выбранных компаний. Выполнение этой операции может занять продолжительное время.";
+$MESS["CRM_COMPANY_STEPWISE_STATE_TEMPLATE"] = "#processed# из #total#";
+$MESS["CRM_COMPANY_LIST_MERGE_PROC_DLG_TITLE"] = "Объединение компаний";
+$MESS["CRM_COMPANY_LIST_MERGE_PROC_DLG_SUMMARY"] = "Будет произведено объединение выбранных компаний. Выполнение этой операции может занять продолжительное время.";
+$MESS["CRM_COMPANY_ACTION_MERGE"] = "Объединить";
+$MESS["CRM_COMPANY_BATCH_MERGE_COMPLETED"] = "Объединение компаний завершено.";
+$MESS["CRM_COMPANY_BATCH_MERGE_COUNT_SUCCEEDED"] = "Успешно объединено: #number#.";
+$MESS["CRM_COMPANY_BATCH_MERGE_COUNT_FAILED"] = "Не удалось объединить: #number#.";
+$MESS["CRM_COMPANY_CONVERT_ADDRESSES_DLG_TITLE"] = "Перенос старых адресов компаний в реквизиты";
+$MESS["CRM_COMPANY_CONVERT_ADDRESSES_STATE"] = "#processed# из #total#";
+$MESS["CRM_COMPANY_CONVERT_UF_ADDRESSES_DLG_TITLE"] = "Перенос адресов из пользовательского поля в реквизиты компаний";
+$MESS["CRM_COMPANY_CONVERT_UF_ADDRESSES_STATE"] = "#processed# из #total#";
 ?>

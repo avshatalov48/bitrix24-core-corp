@@ -68,7 +68,7 @@ if ($_REQUEST['BLOCK_RELOAD'] != 'Y')
 								<a href="<?=htmlspecialcharsback($arResult["Owner"]["USER_PROFILE_URL"])?>"><?=$userName?></a>
 							</div>
 							<div class="socialnetwork-group-user-position"><?
-								if (IsModuleInstalled("intranet") && strlen($arResult["Owner"]["USER_WORK_POSITION"]) > 0):
+								if (IsModuleInstalled("intranet") && $arResult["Owner"]["USER_WORK_POSITION"] <> ''):
 									?><?=$arResult["Owner"]["USER_WORK_POSITION"]?><?
 								elseif ($arResult["Owner"]["USER_IS_EXTRANET"] == "Y"):
 									?><?=GetMessage("SONET_C6_USER_IS_EXTRANET")?><?
@@ -86,8 +86,12 @@ if ($_REQUEST['BLOCK_RELOAD'] != 'Y')
 	<table cellspacing="0" class="socialnetwork-group-layout">
 		<tr class="socialnetwork-group-layout-row">
 			<td class="socialnetwork-group-layout-left-column"><?=GetMessage("SONET_C6_CREATED")?>:</td>
-			<td class="socialnetwork-group-layout-right-column">
-				<?=FormatDateFromDB($arResult["Group"]["DATE_CREATE"], $arParams["DATE_TIME_FORMAT"], true)?>
+			<td class="socialnetwork-group-layout-right-column"><?
+				echo \CComponentUtil::getDateTimeFormatted([
+					'TIMESTAMP' => MakeTimeStamp($arResult["Group"]["DATE_CREATE"]),
+					'TZ_OFFSET' => \CTimeZone::getOffset()
+				]);
+			?>
 			</td>
 		</tr>
 		<tr class="socialnetwork-group-layout-row">
@@ -138,7 +142,7 @@ if ($_REQUEST['BLOCK_RELOAD'] != 'Y')
 			{
 				if (
 					(is_array($arUserField["VALUE"]) && count($arUserField["VALUE"]) > 0) ||
-					(!is_array($arUserField["VALUE"]) && strlen($arUserField["VALUE"]) > 0)
+					(!is_array($arUserField["VALUE"]) && $arUserField["VALUE"] <> '')
 				)
 				{
 					?><tr class="socialnetwork-group-layout-row">
@@ -178,7 +182,7 @@ if ($_REQUEST['BLOCK_RELOAD'] != 'Y')
 	?></table><?
 
 	if (
-		strlen($arResult["Group"]["DESCRIPTION"]) > 0 &&
+		$arResult["Group"]["DESCRIPTION"] <> '' &&
 		$arResult["Group"]["DESCRIPTION"] !== GetMessage("SONET_GCE_T_DESCR") &&
 		!$arResult["bUserCanRequestGroup"]
 	)
@@ -186,17 +190,17 @@ if ($_REQUEST['BLOCK_RELOAD'] != 'Y')
 		$desc = $arResult["Group"]["DESCRIPTION"];
 		$descEnding = "";
 		$maxLength = 250;
-		if (strlen($desc) > $maxLength)
+		if (mb_strlen($desc) > $maxLength)
 		{
-			$descEnding = substr($desc, $maxLength);
-			$desc = substr($desc, 0, $maxLength);
+			$descEnding = mb_substr($desc, $maxLength);
+			$desc = mb_substr($desc, 0, $maxLength);
 		}
 
 		?><div class="socialnetwork-group-desc-box">
 			<div class="socialnetwork-group-title"><?=GetMessage("SONET_C6_DESCR")?></div>
 			<div class="socialnetwork-group-desc-text"><?
 				echo $desc;
-				if (strlen($descEnding) > 0):
+				if ($descEnding <> ''):
 					?><span class="socialnetwork-group-desc-more">...
 						<span
 							class="socialnetwork-group-desc-more-link"
@@ -274,7 +278,7 @@ if ($_REQUEST['BLOCK_RELOAD'] != 'Y')
 									<a href="<?=htmlspecialcharsback($friend["USER_PROFILE_URL"])?>"><?=$userName?></a>
 								</div>
 								<div class="socialnetwork-group-user-position"><?
-									if (IsModuleInstalled("intranet") && strlen($friend["USER_WORK_POSITION"]) > 0):
+									if (IsModuleInstalled("intranet") && $friend["USER_WORK_POSITION"] <> ''):
 										?><?=$friend["USER_WORK_POSITION"]?><?
 									elseif ($friend["USER_IS_EXTRANET"] == "Y"):
 										?><?=GetMessage("SONET_C6_USER_IS_EXTRANET")?><?
@@ -312,7 +316,7 @@ if ($_REQUEST['BLOCK_RELOAD'] != 'Y')
 							href="<?=htmlspecialcharsbx(
 									!empty($arResult["Urls"]["Invite"])
 										? $arResult["Urls"]["Invite"]
-										: $arResult["Urls"]["Edit"].(strpos($arResult["Urls"]["Edit"], "?") !== false ? "&" : '?')."tab=invite"
+										: $arResult["Urls"]["Edit"].(mb_strpos($arResult["Urls"]["Edit"], "?") !== false ? "&" : '?')."tab=invite"
 							)?>"
 							><?=Loc::getMessage($arResult['Group']['PROJECT'] == 'Y' ? "SONET_C6_ACT_REQU_PROJECT" : "SONET_C6_ACT_REQU")?></a><?
 					}
@@ -403,7 +407,7 @@ if (
 
 	ob_end_clean();
 
-	if (strlen($tagsCloud) > 0)
+	if ($tagsCloud <> '')
 	{
 		?><div class="socialnetwork-group-sidebar-block" style="margin-top: 10px;">
 			<div class="socialnetwork-group-sidebar-block-inner"><?=$tagsCloud?></div>

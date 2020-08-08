@@ -53,6 +53,7 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 
 						<?=($option['DISABLED'] ? 'disabled' : '')?>
 					/>
+					<?=($option['CODE'] === 'TASK_CONTROL' && $arResult['TASK_LIMIT_EXCEEDED']? '<span class="task-field-locked"></span>' : '')?>
 
 					<?if($option['LINK']):?>
                         <a href="<?=htmlspecialcharsbx($option['LINK']['URL'])?>" target="_blank"><?=htmlspecialcharsbx($option['LINK']['TEXT'])?></a>
@@ -71,7 +72,7 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
                             }
                         ?>
                             <div id="<?=$field['ID']?>" class="js-id-wg-optbar-field js-id-wg-optbar-field-<?=$field['TYPE']?>">
-                                <?php include(__DIR__.'/'.strtolower($field['TYPE']).'-field.php')?>
+                                <?php include(__DIR__.'/'.mb_strtolower($field['TYPE']).'-field.php')?>
                             </div>
                         <?endforeach?>
                     </div>

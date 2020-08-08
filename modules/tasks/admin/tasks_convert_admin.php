@@ -22,7 +22,7 @@ function GetTasksList($iblockId, $arOrder = array("SORT" => "ASC"), $arFilter = 
 {
 	$userId = \Bitrix\Tasks\Util\User::getId();
 
-	$iblockId = IntVal($iblockId);
+	$iblockId = intval($iblockId);
 
 	$arFilter["IBLOCK_ID"] = $iblockId;
 	$arFilter["SHOW_NEW"] = "Y";
@@ -57,7 +57,7 @@ function GetTasksList($iblockId, $arOrder = array("SORT" => "ASC"), $arFilter = 
 		$arFields = $obTask->GetFields();
 		foreach ($arFields as $fieldKey => $fieldValue)
 		{
-			if (substr($fieldKey, 0, 1) == "~")
+			if (mb_substr($fieldKey, 0, 1) == "~")
 				continue;
 
 			$arResult[$fieldKey] = $fieldValue;
@@ -91,19 +91,19 @@ function GetTasksList($iblockId, $arOrder = array("SORT" => "ASC"), $arFilter = 
 		{
 			$arResult["PROPERTY_".$propertyKey] = $propertyValue["VALUE"];
 
-			if (strtoupper($propertyKey) == "TASKCOMPLETE")
+			if (mb_strtoupper($propertyKey) == "TASKCOMPLETE")
 			{
 				$ps = intval($propertyValue["VALUE"]);
 				if ($ps > 100)
 					$ps = 100;
 				elseif ($ps < 0)
 					$ps = 0;
-				$arResult["PROPERTY_".$propertyKey."_PRINTABLE"] = '<div class="task-complete-bar-out" title="'.GetMessage("INTASK_L_TASKCOMPLETE", array("#PRC#" => IntVal($propertyValue["VALUE"]))).'">';
+				$arResult["PROPERTY_".$propertyKey."_PRINTABLE"] = '<div class="task-complete-bar-out" title="'.GetMessage("INTASK_L_TASKCOMPLETE", array("#PRC#" => intval($propertyValue["VALUE"]))).'">';
 				if ($ps > 0)
 					$arResult["PROPERTY_".$propertyKey."_PRINTABLE"] .= '<div class="task-complete-bar-in" style="width:'.$ps.'%;"><div class="empty"></div></div>';
 				$arResult["PROPERTY_".$propertyKey."_PRINTABLE"] .= '</div>';
 			}
-			elseif (strlen($propertyValue["USER_TYPE"]) > 0)
+			elseif ($propertyValue["USER_TYPE"] <> '')
 			{
 				if ($propertyValue["USER_TYPE"] == "UserID")
 					$arResult["PROPERTY_".$propertyKey."_PRINTABLE"] = CIntranetTasks::PrepareUserForPrint($propertyValue["VALUE"]);
@@ -207,7 +207,7 @@ function GetTasksList($iblockId, $arOrder = array("SORT" => "ASC"), $arFilter = 
 					$arCurrentUserGroups[] = SONET_ROLES_AUTHORIZED;
 
 				$r = CSocNetUserToGroup::GetUserRole($userId, $ownerId);
-				if (strlen($r) > 0)
+				if ($r <> '')
 					$arCurrentUserGroups[] = $r;
 			}
 			else
@@ -426,7 +426,7 @@ if (CModule::IncludeModule("intranet") && CModule::IncludeModule("tasks"))
 			}
 
 			$sSections = implode(",", $arSections);
-			$newTask["TAGS"] = $newTask["TAGS"].(strlen($task["TAGS"]) > 0 && strlen($sSections) > 0 ? "," : "").$sSections;
+			$newTask["TAGS"] = $newTask["TAGS"].($task["TAGS"] <> '' && $sSections <> '' ? "," : "").$sSections;
 
 			$oTask = new CTasks();
 

@@ -121,37 +121,46 @@ if (typeof(BX.FilterEntitySelector) === "undefined")
 			construct: function()
 			{
 				this.callConstruct(BX.Tasks.Component);
-				// create sub-instances through this.subInstance(), do some initialization, etc
-
-				// do ajax call, like
-				// this.callRemote('this.sampleCreateTask', {data: {TITLE: 'Sample Task'}}).then(function(result){ ... });
-				// dont care about CSRF, SITE_ID and LANGUAGE_ID: it will be sent and checked automatically
 			},
 
 			bindEvents: function()
 			{
+				BX.addCustomEvent('BX.Main.Filter:apply', this.onFilterApply.bind(this));
+				BX.addCustomEvent('SidePanel.Slider:onClose', this.onSliderClose.bind(this));
+
 				var filterId = this.option('filterId');
 				var filter = BX.Main.filterManager.getById(filterId);
-
 				var scope = this.scope();
 
 				BX.bindDelegate(scope, 'click', {
 					tagName: 'a',
 					className: 'js-id-department'
-				}, BX.delegate(function(event) { //TODO
-					console.log('click');
+				}, BX.delegate(function(event) {
 					BX.PreventDefault(event);
-					var id = this.dataset.id;
 					if (!!filter && (filter instanceof BX.Main.Filter))
 					{
 						var filterApi = filter.getApi();
-						filterApi.setFields({ 'UF_DEPARTMENT': { 0: id } });
+						filterApi.setFields({'UF_DEPARTMENT': {0: this.dataset.id}});
 						filterApi.apply();
 					}
 				}));
-			}
+			},
 
-			// add more methods, then call them like this.methodName()
+			onFilterApply: function()
+			{
+				if (this.option('taskLimitExceeded'))
+				{
+					BX.UI.InfoHelper.show('limit_tasks_supervisor_view');
+				}
+			},
+
+			onSliderClose: function(event)
+			{
+				if (event.getSlider().getUrl() === 'ui:info_helper')
+				{
+					window.location.href = this.option('pathToTasks');
+				}
+			}
 		}
 	});
 

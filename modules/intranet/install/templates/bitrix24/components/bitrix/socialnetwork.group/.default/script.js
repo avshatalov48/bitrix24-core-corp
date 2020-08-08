@@ -113,7 +113,7 @@ window.B24SGControl.prototype = {
 
 		_this.showWait();
 
-		var action = (!BX.hasClass(BX("group_menu_subscribe_button"), "webform-button-active") ? "set" : "unset");
+		var action = (!BX.hasClass(BX("group_menu_subscribe_button"), "ui-btn-active") ? "set" : "unset");
 
 		BX.ajax({
 			url: '/bitrix/components/bitrix/socialnetwork.group_menu/ajax.php',
@@ -236,7 +236,7 @@ window.B24SGControl.prototype = {
 					this.showNotifyHint(button, BX.message('SGMSubscribeButtonHintOn'));
 				}
 				BX.adjust(button, { attrs : {title : BX.message('SGMSubscribeButtonTitleOn')} });
-				BX.addClass(button, "webform-button-active");
+				BX.addClass(button, "ui-btn-active");
 			}
 			else
 			{
@@ -245,7 +245,7 @@ window.B24SGControl.prototype = {
 					this.showNotifyHint(button, BX.message('SGMSubscribeButtonHintOff'));
 				}
 				BX.adjust(button, { attrs : {title : BX.message('SGMSubscribeButtonTitleOff')} });
-				BX.removeClass(button, "webform-button-active");
+				BX.removeClass(button, "ui-btn-active");
 			}
 		}
 	},

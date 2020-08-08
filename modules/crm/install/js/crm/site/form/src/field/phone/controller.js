@@ -24,6 +24,16 @@ class Controller extends StringField.Controller
 	{
 		return 'tel';
 	}
+
+	getInputName(): string
+	{
+		return 'phone';
+	}
+
+	getInputAutocomplete(): string
+	{
+		return 'tel';
+	}
 }
 
 export {Controller, Options}

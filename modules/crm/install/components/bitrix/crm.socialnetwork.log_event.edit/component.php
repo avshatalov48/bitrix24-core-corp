@@ -195,7 +195,7 @@ if(!empty($arResult['FEED_DESTINATION']['SELECTED']))
 	{
 		if($value === 'sonetgroups' && empty($arResult['FEED_DESTINATION']['SONETGROUPS'][$groupID]))
 		{
-			$hiddenGroups[] = substr($groupID, 2);
+			$hiddenGroups[] = mb_substr($groupID, 2);
 		}
 	}
 }
@@ -642,7 +642,7 @@ if ($entityTypeName && $entityID)
 			$arResult['FEED_DESTINATION']['SELECTED']['CRM'.$entityTypeName.$entityID] = $types[$entityTypeName];
 		}
 
-		if (!isset($arResult['FEED_DESTINATION'][strtoupper($types[$entityTypeName])]['CRM'.$entityTypeName.$entityID]))
+		if (!isset($arResult['FEED_DESTINATION'][mb_strtoupper($types[$entityTypeName])]['CRM'.$entityTypeName.$entityID]))
 		{
 			switch ($entityTypeName)
 			{
@@ -675,7 +675,7 @@ if ($entityTypeName && $entityID)
 			}
 
 			if ($dbEntity && ($arEntity = $dbEntity->fetch()))
-				$arResult['FEED_DESTINATION'][strtoupper($types[$entityTypeName])]['CRM'.$entityTypeName.$arEntity['ID']] = prepareCrmEntity(strtolower($entityTypeName), $arEntity);
+				$arResult['FEED_DESTINATION'][mb_strtoupper($types[$entityTypeName])]['CRM'.$entityTypeName.$arEntity['ID']] = prepareCrmEntity(mb_strtolower($entityTypeName), $arEntity);
 		}
 	}
 }

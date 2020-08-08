@@ -5,6 +5,7 @@ namespace Bitrix\Disk;
 use Bitrix\Disk\Bitrix24Disk\SubscriberManager;
 use Bitrix\Disk\Document\DocumentHandlersManager;
 use Bitrix\Disk\Internals\DeletedLogManager;
+use Bitrix\Disk\Internals\DeletionNotifyManager;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Internals\Error\IErrorable;
@@ -39,6 +40,8 @@ final class Driver implements IErrorable
 	protected $subscriberManager;
 	/** @var  DeletedLogManager */
 	protected $deletedLogManager;
+	/** @var  DeletionNotifyManager */
+	protected $deletionNotifyManager;
 	/** @var  ErrorCollection */
 	protected $errorCollection;
 	/** @var ExternalLinkAccessControl */
@@ -249,7 +252,7 @@ final class Driver implements IErrorable
 		if($group)
 		{
 			$group = $group->fetch();
-			$data['NAME'] = substr($group['NAME'], 0, 100);
+			$data['NAME'] = mb_substr($group['NAME'], 0, 100);
 		}
 
 		$data['USE_INTERNAL_RIGHTS'] = 1;
@@ -527,6 +530,16 @@ final class Driver implements IErrorable
 		return $this->deletedLogManager;
 	}
 
+	public function getDeletionNotifyManager(): DeletionNotifyManager
+	{
+		if($this->deletionNotifyManager === null)
+		{
+			$this->deletionNotifyManager = new DeletionNotifyManager();
+		}
+
+		return $this->deletionNotifyManager;
+	}
+
 	/**
 	 * Returns REST manager.
 	 *
@@ -737,7 +750,7 @@ final class Driver implements IErrorable
 	{
 		foreach ($required as $item)
 		{
-			if(!isset($inputParams[$item]) || (!$inputParams[$item] && !(is_string($inputParams[$item]) && strlen($inputParams[$item]))))
+			if(!isset($inputParams[$item]) || (!$inputParams[$item] && !(is_string($inputParams[$item]) && mb_strlen($inputParams[$item]))))
 			{
 				throw new ArgumentException("Required params: { {$item} }");
 			}

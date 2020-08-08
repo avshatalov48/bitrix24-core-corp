@@ -144,12 +144,12 @@ class DuplicateOrganizationCriterion extends DuplicateCriterion
 			return '';
 		}
 
-		if(strpos($title, '&') >= 0)
+		if(mb_strpos($title, '&') >= 0)
 		{
 			$title = preg_replace('/\&/', 'and', $title);
 		}
 
-		return strtolower(trim(preg_replace(self::getTypeRegexPattern(), '', $title)));
+		return mb_strtolower(trim(preg_replace(self::getTypeRegexPattern(), '', $title)));
 	}
 	public static function register($entityTypeID, $entityID, $title, $isRaw = true)
 	{
@@ -379,7 +379,7 @@ class DuplicateOrganizationCriterion extends DuplicateCriterion
 		}
 		else
 		{
-			$filter['%TITLE'] = new \CSQLWhereExpression('?s', strtoupper($this->title).'%');
+			$filter['%TITLE'] = new \CSQLWhereExpression('?s', mb_strtoupper($this->title).'%');
 		}
 
 		if(\CCrmOwnerType::IsDefined($entityTypeID))

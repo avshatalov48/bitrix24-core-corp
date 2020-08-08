@@ -137,7 +137,7 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 					'ACTIVE' => 'Y',
 					'CONFIRM_CODE' => false,
 					'UF_DEPARTMENT' => intval($_REQUEST['item']),
-					'!EXTERNAL_AUTH_ID' => array('replica', 'email', 'bot', 'imconnector')
+					'!EXTERNAL_AUTH_ID' => \Bitrix\Main\UserTable::getExternalUserTypes()
 				);
 
 				$dbRes = CUser::GetList(
@@ -345,20 +345,20 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 			$arLastID = array();
 			foreach($arLRU as $val)
 			{
-				if (substr($val, 0, 2) == 'DR')
+				if (mb_substr($val, 0, 2) == 'DR')
 				{
-					$id = substr($val, 2);
+					$id = mb_substr($val, 2);
 					$arLast['DR'][] = $id;
 					$arLastID[$id] = $id;
 				}
-				else if (substr($val, 0, 1) == 'D')
+				else if (mb_substr($val, 0, 1) == 'D')
 				{
-					$id = substr($val, 1);
+					$id = mb_substr($val, 1);
 					$arLast['D'][] = $id;
 					$arLastID[$id] = $id;
 				}
-				else if (substr($val, 0, 2) == 'IU')
-					$arLast['U'][] = substr($val, 2);
+				else if (mb_substr($val, 0, 2) == 'IU')
+					$arLast['U'][] = mb_substr($val, 2);
 			}
 			$dbRes = CIBlockSection::GetList(
 				array('ID' => 'ASC'),

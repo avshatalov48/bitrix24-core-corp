@@ -24,7 +24,7 @@ if(CModule::IncludeModule('crm'))
 	}
 
 	//By default treat field as dynamic (for backward compatibility)
-	$options['is_dynamic'] = !isset($_REQUEST['dynamic']) || strtoupper($_REQUEST['dynamic']) !== 'N';
+	$options['is_dynamic'] = !isset($_REQUEST['dynamic']) || mb_strtoupper($_REQUEST['dynamic']) !== 'N';
 	if(isset($_REQUEST['owner_token']))
 	{
 		$options['owner_token'] = $_REQUEST['owner_token'];

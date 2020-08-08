@@ -32,7 +32,7 @@ if ($arResult['DEFER_LOAD'] === 'Y')
 					<div class="task-detail-info-users-list">
 						<div class="task-detail-info-user">
 							<a href="<?php echo CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER_PROFILE"], array("user_id" => $arResult["TASK"]["CREATED_BY"]))?>" class="task-detail-info-user-avatar"><?
-								?><img src="<?=(isset($arResult["TASK"]["CREATED_BY_PHOTO"]) && strlen($arResult["TASK"]["CREATED_BY_PHOTO"]) > 0 ? $arResult["TASK"]["CREATED_BY_PHOTO"] : "/bitrix/images/1.gif")?>" width="30" height="30"><?
+								?><img src="<?=(isset($arResult["TASK"]["CREATED_BY_PHOTO"]) && $arResult["TASK"]["CREATED_BY_PHOTO"] <> '' ? $arResult["TASK"]["CREATED_BY_PHOTO"] : "/bitrix/images/1.gif")?>" width="30" height="30"><?
 							?></a>
 							<div class="task-detail-info-user-info">
 								<div class="task-detail-info-user-name"><a href="<?php 
@@ -65,7 +65,7 @@ if ($arResult['DEFER_LOAD'] === 'Y')
 					<div class="task-detail-info-users-list">
 						<div class="task-detail-info-user">
 							<a href="<?php echo CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER_PROFILE"], array("user_id" => $arResult["TASK"]["RESPONSIBLE_ID"]))?>" class="task-detail-info-user-avatar"><?
-								?><img src="<?=(isset($arResult["TASK"]["RESPONSIBLE_PHOTO"]) && strlen($arResult["TASK"]["RESPONSIBLE_PHOTO"]) > 0 ? $arResult["TASK"]["RESPONSIBLE_PHOTO"] : "/bitrix/images/1.gif")?>" width="30" height="30"><?
+								?><img src="<?=(isset($arResult["TASK"]["RESPONSIBLE_PHOTO"]) && $arResult["TASK"]["RESPONSIBLE_PHOTO"] <> '' ? $arResult["TASK"]["RESPONSIBLE_PHOTO"] : "/bitrix/images/1.gif")?>" width="30" height="30"><?
 							?></a>
 							<div class="task-detail-info-user-info">
 								<div class="task-detail-info-user-name"><a href="<?php 
@@ -203,8 +203,8 @@ else
 					window.top.BX.TasksIFrameInst.onTaskChanged(<?php
 						$bSkipJsMenu = false;
 						$bIsIe = false;
-						$userAgent = strtolower($_SERVER["HTTP_USER_AGENT"]);
-						if (strpos($userAgent, "opera") === false && strpos($userAgent, "msie") !== false)
+						$userAgent = mb_strtolower($_SERVER["HTTP_USER_AGENT"]);
+						if (mb_strpos($userAgent, "opera") === false && mb_strpos($userAgent, "msie") !== false)
 							$bIsIe = true;
 
 						if (isset($arResult["IS_IFRAME"]) && ($arResult["IS_IFRAME"] === true) && $bIsIe)
@@ -236,7 +236,7 @@ else
 							<div class="task-detail-info-users-list">
 								<div class="task-detail-info-user">
 									<a href="<?php echo CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER_PROFILE"], array("user_id" => $arResult["TASK"]["CREATED_BY"]))?>" class="task-detail-info-user-avatar"><?
-										?><img src="<?=(isset($arResult["TASK"]["CREATED_BY_PHOTO"]) && strlen($arResult["TASK"]["CREATED_BY_PHOTO"]) > 0 ? $arResult["TASK"]["CREATED_BY_PHOTO"] : "/bitrix/images/1.gif")?>" width="30" height="30"><?
+										?><img src="<?=(isset($arResult["TASK"]["CREATED_BY_PHOTO"]) && $arResult["TASK"]["CREATED_BY_PHOTO"] <> '' ? $arResult["TASK"]["CREATED_BY_PHOTO"] : "/bitrix/images/1.gif")?>" width="30" height="30"><?
 									?></a>
 									<div class="task-detail-info-user-info">
 										<div class="task-detail-info-user-name"><a href="<?php 
@@ -297,7 +297,7 @@ else
 								<?if(intval($arResult["TASK"]["RESPONSIBLE_ID"])):?>
 
 									<a href="<?php echo CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER_PROFILE"], array("user_id" => $arResult["TASK"]["RESPONSIBLE_ID"]))?>" class="task-detail-info-user-avatar"><?
-										?><img src="<?=(isset($arResult["TASK"]["RESPONSIBLE_PHOTO"]) && strlen($arResult["TASK"]["RESPONSIBLE_PHOTO"]) > 0 ? $arResult["TASK"]["RESPONSIBLE_PHOTO"] : "/bitrix/images/1.gif")?>" width="30" height="30"><?
+										?><img src="<?=(isset($arResult["TASK"]["RESPONSIBLE_PHOTO"]) && $arResult["TASK"]["RESPONSIBLE_PHOTO"] <> '' ? $arResult["TASK"]["RESPONSIBLE_PHOTO"] : "/bitrix/images/1.gif")?>" width="30" height="30"><?
 									?></a>
 
 								<?else:?>
@@ -529,7 +529,7 @@ else
 							case 'DATE_PLAN':
 
 								$amPmFormatSymbol = 'a';
-								if (strpos(FORMAT_DATETIME, 'TT') !== false)
+								if (mb_strpos(FORMAT_DATETIME, 'TT') !== false)
 									$amPmFormatSymbol = 'A';
 
 								if ($arResult["TASK"]["START_DATE_PLAN"]):?>
@@ -596,7 +596,7 @@ else
 													?> task-detail-grade-none<?php
 												}
 
-												if ( ! $arResult['ALLOWED_ACTIONS']['ACTION_EDIT'] )
+												if ( ! $arResult['ALLOWED_ACTIONS']['ACTION_RATE'] )
 												{
 													?> task-detail-grade-readonly<?php
 												}
@@ -604,7 +604,7 @@ else
 											id="task-detail-grade"
 											<?php
 
-											if ($arResult['ALLOWED_ACTIONS']['ACTION_EDIT'])
+											if ($arResult['ALLOWED_ACTIONS']['ACTION_RATE'])
 											{
 												?> onclick="return tasksDetailPartsNS.ShowGradePopupDetail(
 													<?php echo $arResult["TASK"]["ID"]?>,

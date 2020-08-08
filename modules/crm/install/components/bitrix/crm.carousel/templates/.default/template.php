@@ -8,7 +8,7 @@ CJSCore::Init(array('popup', 'ajax'));
 
 $guid = $component->getGuid();
 
-$prefix = strtolower($guid);
+$prefix = mb_strtolower($guid);
 $wrapperID = "{$prefix}_wrapper";
 $containerID = "{$prefix}_container";
 $forwardButtonID = "{$prefix}_fwd_btn";

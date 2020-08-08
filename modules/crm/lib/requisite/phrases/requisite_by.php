@@ -1,0 +1,29 @@
+<?php
+$phrasesConfig = [
+	'encoding' => 'Windows-1251',
+	'lang' => 'ru',
+	'phrases' => [
+		'CRM_REQUISITE_ENTITY_RQ_NAME_BY_FIELD' => 'Ф.И.О.',
+		'CRM_REQUISITE_ENTITY_RQ_COMPANY_NAME_BY_FIELD' => 'Сокращенное наименование организации',
+		'CRM_REQUISITE_ENTITY_RQ_COMPANY_FULL_NAME_BY_FIELD' => 'Полное наименование организации',
+		'CRM_REQUISITE_ENTITY_RQ_COMPANY_REG_DATE_BY_FIELD' => 'Дата государственной регистрации',
+		'CRM_REQUISITE_ENTITY_RQ_DIRECTOR_BY_FIELD' => 'Ген. директор',
+		'CRM_REQUISITE_ENTITY_RQ_ACCOUNTANT_BY_FIELD' => 'Гл. бухгалтер',
+		'CRM_REQUISITE_ENTITY_RQ_ADDR_BY_FIELD' => 'Адрес',
+		'CRM_REQUISITE_ENTITY_RQ_CONTACT_BY_FIELD' => 'Контактное лицо',
+		'CRM_REQUISITE_ENTITY_RQ_EMAIL_BY_FIELD' => 'E-Mail',
+		'CRM_REQUISITE_ENTITY_RQ_PHONE_BY_FIELD' => 'Телефон',
+		'CRM_REQUISITE_ENTITY_RQ_FAX_BY_FIELD' => 'Факс',
+		'CRM_REQUISITE_ENTITY_RQ_IDENT_DOC_BY_FIELD' => 'Вид документа',
+		'CRM_REQUISITE_ENTITY_RQ_IDENT_DOC_SER_BY_FIELD' => 'серия',
+		'CRM_REQUISITE_ENTITY_RQ_IDENT_DOC_NUM_BY_FIELD' => 'номер',
+		'CRM_REQUISITE_ENTITY_RQ_IDENT_DOC_PERS_NUM_BY_FIELD' => 'личный номер',
+		'CRM_REQUISITE_ENTITY_RQ_IDENT_DOC_DATE_BY_FIELD' => 'дата выдачи',
+		'CRM_REQUISITE_ENTITY_RQ_IDENT_DOC_ISSUED_BY_BY_FIELD' => 'кем выдан',
+		'CRM_REQUISITE_ENTITY_RQ_INN_BY_FIELD' => 'УНП',
+		'CRM_REQUISITE_ENTITY_RQ_OKPO_BY_FIELD' => 'ОКПО',
+		'CRM_REQUISITE_ENTITY_RQ_ST_CERT_NUM_BY_FIELD' => 'Номер св. о гос. регистрации',
+		'CRM_REQUISITE_ENTITY_RQ_ST_CERT_DATE_BY_FIELD' => 'Дата св. о гос. регистрации',
+		'CRM_REQUISITE_ENTITY_RQ_BASE_DOC_BY_FIELD' => 'Основание действия'
+	]
+];

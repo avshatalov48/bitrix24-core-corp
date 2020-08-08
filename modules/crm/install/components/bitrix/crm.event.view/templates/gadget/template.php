@@ -22,7 +22,7 @@ else
 		?>
 		<div class="crm-event-element">
 			<?if($arResult['EVENT_ENTITY_LINK'] == 'Y'):?>
-			<div class="crm-event-element-title"><span><?=GetMessage('CRM_EVENT_ENTITY_'.$arEvent['ENTITY_TYPE'])?></span> <a href="<?=$arEvent['ENTITY_LINK']?>" bx-tooltip-user-id="<?=$arEvent['ENTITY_TYPE']?>_<?=$arEvent['ENTITY_ID']?>" bx-tooltip-loader="<?=htmlspecialcharsbx('/bitrix/components/bitrix/crm.'.strtolower($arEvent['ENTITY_TYPE']).'.show/card.ajax.php')?>" bx-tooltip-classname="crm_balloon<?=($arEvent['ENTITY_TYPE'] == 'LEAD' || $arEvent['ENTITY_TYPE'] == 'DEAL' || $arEvent['ENTITY_TYPE'] == 'QUOTE' ? '_no_photo': '_'.strtolower($arEvent['ENTITY_TYPE']))?>"><?=$arEvent['ENTITY_TITLE']?></a></div>
+			<div class="crm-event-element-title"><span><?=GetMessage('CRM_EVENT_ENTITY_'.$arEvent['ENTITY_TYPE'])?></span> <a href="<?=$arEvent['ENTITY_LINK']?>" bx-tooltip-user-id="<?=$arEvent['ENTITY_TYPE']?>_<?=$arEvent['ENTITY_ID']?>" bx-tooltip-loader="<?=htmlspecialcharsbx('/bitrix/components/bitrix/crm.'.mb_strtolower($arEvent['ENTITY_TYPE']).'.show/card.ajax.php')?>" bx-tooltip-classname="crm_balloon<?=($arEvent['ENTITY_TYPE'] == 'LEAD' || $arEvent['ENTITY_TYPE'] == 'DEAL' || $arEvent['ENTITY_TYPE'] == 'QUOTE' ? '_no_photo': '_'.mb_strtolower($arEvent['ENTITY_TYPE']))?>"><?=$arEvent['ENTITY_TITLE']?></a></div>
 			<?endif;?>
 			<div class="crm-event-element-type"><?=$arEvent['EVENT_NAME']?></div>
 			<div class="crm-event-element-name">

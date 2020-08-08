@@ -56,23 +56,23 @@ if($action === 'ADD_FIELD')
 		__CrmConfigFieldEditEndResponse(array('ERROR' => "The parameter 'data' is not found or empty."));
 	}
 
-	$userTypeID = isset($data['USER_TYPE_ID']) ? strtolower($data['USER_TYPE_ID']) : '';
+	$userTypeID = isset($data['USER_TYPE_ID'])? mb_strtolower($data['USER_TYPE_ID']) : '';
 	$entityID = isset($data['ENTITY_ID']) ? $data['ENTITY_ID'] : '';
 
 	$sort = isset($data['SORT']) ? max(intval($data['SORT']), 100) : 100;
-	$isMultiple = isset($data['MULTIPLE']) ? strtoupper($data['MULTIPLE']) : '';
+	$isMultiple = isset($data['MULTIPLE'])? mb_strtoupper($data['MULTIPLE']) : '';
 	if($isMultiple !== 'Y' && $isMultiple !== 'N')
 	{
 		$isMultiple = 'N';
 	}
 
-	$isMandatory = isset($data['MANDATORY']) ? strtoupper($data['MANDATORY']) : '';
+	$isMandatory = isset($data['MANDATORY'])? mb_strtoupper($data['MANDATORY']) : '';
 	if($isMandatory !== 'Y' && $isMandatory !== 'N')
 	{
 		$isMandatory = 'N';
 	}
 
-	$showInFilter = isset($data['SHOW_FILTER']) ? strtoupper($data['SHOW_FILTER']) : '';
+	$showInFilter = isset($data['SHOW_FILTER'])? mb_strtoupper($data['SHOW_FILTER']) : '';
 	if($showInFilter !== 'Y' && $showInFilter !== 'N')
 	{
 		$showInFilter = 'N';
@@ -158,7 +158,7 @@ if($action === 'ADD_FIELD')
 				$fields['SETTINGS']['DEFAULT_VALUE'] = $defaultValue;
 			}
 			$fields['MULTIPLE'] = 'N';
-			$fields['SETTINGS']['DISPLAY'] = isset($data['DISPLAY']) ? strtoupper($data['DISPLAY']) : 'CHECKBOX';
+			$fields['SETTINGS']['DISPLAY'] = isset($data['DISPLAY'])? mb_strtoupper($data['DISPLAY']) : 'CHECKBOX';
 		}
 		break;
 		case 'datetime':

@@ -1,14 +1,14 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 <?
-if (strlen($arResult["FatalErrorMessage"]) > 0)
+if ($arResult["FatalErrorMessage"] <> '')
 {
 	ShowError($arResult["FatalErrorMessage"]);
 }
 else
 {
-	if (strlen($arResult["ErrorMessage"]) > 0)
+	if ($arResult["ErrorMessage"] <> '')
 		ShowError($arResult["ErrorMessage"]);
-	if (strlen($arResult["SuccessMessage"]) > 0)
+	if ($arResult["SuccessMessage"] <> '')
 		ShowMessage(array("MESSAGE" => $arResult["SuccessMessage"], "TYPE" => "OK"));
 
 	$arButtons = array(

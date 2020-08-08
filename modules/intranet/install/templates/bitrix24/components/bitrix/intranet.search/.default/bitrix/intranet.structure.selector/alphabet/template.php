@@ -9,7 +9,7 @@ if ($arResult['FILTER_VALUES'][$arParams['FILTER_NAME'].'_LAST_NAME'])
 	}
 }
 
-$arParams['LIST_URL'] .= strpos($arParams['LIST_URL'], '?') === false ? '?' : '&';
+$arParams['LIST_URL'] .= mb_strpos($arParams['LIST_URL'], '?') === false ? '?' : '&';
 $arExtraVars = array('show_user' => $arParams['show_user']);
 
 $current_lang = '';
@@ -21,10 +21,10 @@ foreach ($arResult['ALPHABET'] as $lang => $arMess)
 <div id="employee-ABC" class="employee-ABC-popup" style="display:none;">
 <?
 	$alph = $arMess['ISS_TPL_ALPH'];
-	$alph_len = strlen($alph);
+$alph_len = mb_strlen($alph);
 	for ($i = 0; $i < $alph_len; $i++)
 	{
-		$symbol = substr($alph, $i, 1);
+		$symbol = mb_substr($alph, $i, 1);
 		$bCurrent = $arResult['FILTER_VALUES'][$arParams['FILTER_NAME'].'_LAST_NAME'] == $symbol.'%';
 		if ($bCurrent && !$current_lang)
 			$current_lang = $lang;

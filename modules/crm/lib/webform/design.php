@@ -108,7 +108,7 @@ class Design
 						$value = [];
 					}
 					$fontUri = trim(isset($value['uri']) ? (string) $value['uri'] : '');
-					$fontUri = strpos($fontUri, 'https://fonts.googleapis.com/css') === 0 ? $fontUri : '';
+					$fontUri = mb_strpos($fontUri, 'https://fonts.googleapis.com/css') === 0 ? $fontUri : '';
 					$value = [
 						'uri' => $fontUri,
 						'family' => isset($value['family']) ? (string) $value['family'] : ''

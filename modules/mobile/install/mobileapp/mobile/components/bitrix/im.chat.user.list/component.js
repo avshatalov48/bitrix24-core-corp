@@ -174,6 +174,15 @@ ChatUserList.event.onItemSelected = function(event)
 {
 	console.info('ChatUserList.event.onItemSelected', event);
 
+	if (
+		event.params.external_auth_id === 'imconnector'
+		|| event.params.external_auth_id === 'call'
+	)
+	{
+		return false;
+	}
+
+
 	this.base.openUserProfile(event.params.id, {
 		avatar: event.imageUrl,
 		name: event.title,
@@ -314,17 +323,33 @@ ChatUserList.rest.userListGet = function (users)
 						}
 						else if (this.base.userId !== item.id)
 						{
-							item.actions.push({
-								title : BX.message("IM_USER_LIST_OWNER"),
-								identifier : "owner",
-								color : "#aac337"
-							});
-							item.actions.push({
-								title : BX.message("IM_USER_LIST_KICK"),
-								identifier : "kick",
-								destruct : true,
-								color : "#df532d"
-							});
+							if (element.extranet && (
+								element.external_auth_id === 'imconnector'
+								|| element.external_auth_id === 'call'
+							))
+							{
+								item.unselectable = true;
+								item.type = 'info';
+							}
+
+							if (this.base.userId === this.base.dialogOwnerId)
+							{
+								if (!element.extranet)
+								{
+									item.actions.push({
+										title : BX.message("IM_USER_LIST_OWNER"),
+										identifier : "owner",
+										color : "#aac337"
+									});
+								}
+
+								item.actions.push({
+									title : BX.message("IM_USER_LIST_KICK"),
+									identifier : "kick",
+									destruct : true,
+									color : "#df532d"
+								});
+							}
 						}
 					}
 

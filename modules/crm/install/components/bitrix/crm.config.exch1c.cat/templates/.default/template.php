@@ -30,7 +30,7 @@ if (!(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y"))
 }
 
 $path = POST_FORM_ACTION_URI;
-$path.= strripos(POST_FORM_ACTION_URI, "&") ? "&" : "?";
+$path.= mb_strripos(POST_FORM_ACTION_URI, "&")? "&" : "?";
 $path.= bitrix_sessid_get();
 
 $APPLICATION->IncludeComponent("bitrix:ui.form", "", array(

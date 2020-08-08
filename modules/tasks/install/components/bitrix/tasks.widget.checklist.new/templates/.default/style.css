@@ -674,52 +674,67 @@
 
 /*region watcher*/
 .tasks-checklist-item-auditor {
-	color: #2066b0;
-	white-space: nowrap;
-	font: 14px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
-	margin-right: 23px;
 	position: relative;
+	white-space: nowrap;
+	display: -webkit-inline-box;
+	display: -ms-inline-flexbox;
+	display: inline-flex;
+	-webkit-box-align: baseline;
+	-ms-flex-align: baseline;
+	align-items: baseline;
+}
+
+.tasks-checklist-item-auditor-link {
+	color: #2066b0;
+	font: 14px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	border-bottom: 1px solid transparent;
 }
 
-.tasks-checklist-item-auditor:hover { border-bottom: 1px solid; }
+.tasks-checklist-item-auditor-link:hover { border-bottom: 1px solid; }
 
-.tasks-checklist-item-auditor::after {
+.tasks-checklist-item-auditor-icon {
 	content: '';
-	display: block;
-	position: absolute;
-	top: 50%;
+	display: inline-block;
 	width: 20px;
+	position: relative;
+	bottom: -2px;
 	height: 12px;
+	margin-right: 5px;
 	background: no-repeat center right url(images/watcher.svg);
-	margin-top: -5px;
-	right: -23px;
 }
 
 /*endregion*/
 
 /*region responsible*/
 .tasks-checklist-item-accomplice {
-	color: #2066b0;
+	position: relative;
 	white-space: nowrap;
+	display: -webkit-inline-box;
+	display: -ms-inline-flexbox;
+	display: inline-flex;
+	-webkit-box-align: baseline;
+	-ms-flex-align: baseline;
+	align-items: baseline;
+}
+
+.tasks-checklist-item-accomplice-link {
+	color: #2066b0;
 	font: 14px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
-	margin-right: 23px;
 	position: relative;
 	border-bottom: 1px solid transparent;
 }
 
-.tasks-checklist-item-accomplice:hover { border-bottom: 1px solid; }
+.tasks-checklist-item-accomplice-link:hover { border-bottom: 1px solid; }
 
-.tasks-checklist-item-accomplice::after {
+.tasks-checklist-item-accomplice-icon {
 	content: '';
-	display: block;
-	position: absolute;
-	top: 50%;
+	display: inline-block;
 	width: 20px;
+	position: relative;
+	bottom: -6px;
 	height: 18px;
+	margin-right: 5px;
 	background: no-repeat center url(images/responsible.svg);
-	margin-top: -7px;
-	right: -19px;
 }
 
 /*endregion*/

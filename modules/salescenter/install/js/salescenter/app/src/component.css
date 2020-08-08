@@ -1,18 +1,3 @@
-#left-panel {
-	display: -webkit-box;
-	display: -ms-flexbox;
-	display: flex;
-	-webkit-box-orient: vertical;
-	-webkit-box-direction: normal;
-	-ms-flex-direction: column;
-	flex-direction: column;
-	-webkit-box-pack: justify;
-	-ms-flex-pack: justify;
-	justify-content: space-between;
-	max-height: 100%;
-	height: 100vh;
-}
-
 .salescenter-app-wrapper {
 	display: -webkit-box;
 	display: -ms-flexbox;
@@ -46,20 +31,13 @@
 }
 
 .salescenter-app-right-side {
-	box-sizing: border-box;
-	padding: 6px 22px;
-	background-color: #fff;
-	-webkit-box-flex: 1;
-	-ms-flex: 1;
 	flex: 1;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-orient: vertical;
-	-webkit-box-direction: normal;
-	-ms-flex-direction: column;
 	flex-direction: column;
-	overflow-y: auto;
+	overflow: hidden;
+	padding: 15px;
+	background: #e6ebef;
+	margin-bottom: 20px;
 }
 
 /*region helper nav*/
@@ -126,45 +104,36 @@
 }
 
 .salescenter-app-form-wrapper {
+	display: block;
 	position: relative;
-	margin-bottom: 20px;
-	border: 1px solid #f0f3f5;
-	border-radius: 4px;
+	margin-bottom: 14px;
+	border-bottom: 1px solid #f0f3f5;
+	width : 100%;
 }
 
 .salescenter-app-counter {
 	position: absolute;
-	top: -6px;
-	left: -3px;
-	min-width: 16px;
-	height: 16px;
-	border: 1px solid #cdd0d4;
-	border-radius: 8px;
-	background: #fff;
-	padding: 0 3px;
+	top: 42px;
+	left: 0;
+	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-size: 13px;
 	color: #828b95;
-	vertical-align: middle;
-	text-align: center;
-	box-sizing: border-box;
-	font: 10px/14px "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 .salescenter-app-remove {
-	width: 16px;
-	height: 16px;
-	border-radius: 50%;
-	box-sizing: border-box;
-	background-color: #fff;
+	width: 24px;
+	height: 39px;
 	position: absolute;
-	right: -3px;
+	right: -13px;
+	top: 32px;
 	cursor: pointer;
-	top: -5px;
-	opacity: 0;
-	box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.18);
-	transition: 250ms linear all;
+	opacity: .4;
+	transition: .1s;
 }
 
-.salescenter-app-form-wrapper:hover .salescenter-app-remove { opacity: 1; }
+.salescenter-app-remove:hover {
+	opacity: 1;
+}
 
 .salescenter-app-remove:after,
 .salescenter-app-remove:before {
@@ -183,15 +152,17 @@
 .salescenter-app-remove:before { transform: translate(-50%, -50%) rotate(-45deg); }
 
 .salescenter-app-form-container {
-	padding: 11px 7px;
-	background: #f0f3f5;
+	padding: 11px;
 }
 
-.salescenter-app-sale-container { padding: 11px 7px; }
+.salescenter-app-sale-container {
+	padding: 11px;
+}
 
 .salescenter-app-ctl-label-text {
 	display: block;
 	padding-bottom: 4px;
+	white-space: nowrap;
 }
 
 .salescenter-app-form-block-title { padding-left: 7px; }
@@ -201,14 +172,25 @@
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
-	margin-bottom: 7px;
-	padding-bottom: 5px;
+	width: 100%;
 	-webkit-box-align: start;
 	-ms-flex-align: start;
 	align-items: flex-start;
 }
 
-.salescenter-app-form-col { padding: 0 7px; }
+.salescenter-app-form-row-discount {
+	padding: 10px;
+}
+
+.salescenter-app-form-col {
+	padding: 0 7px;
+}
+
+.salescenter-app-form-col-sm {
+	overflow: hidden;
+	max-width: 122px;
+	min-width: 122px;
+}
 
 /*.salescenter-app-form-row-center {*/
 	/*-webkit-box-align: center;*/
@@ -221,7 +203,10 @@
 	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
-.salescenter-app-collapse-link-container { padding-left: 7px; }
+.salescenter-app-collapse-link-container {
+	text-align: right;
+	padding: 0 11px;
+}
 
 .salescenter-app-collapse-link {
 	border-bottom: 1px dashed;
@@ -229,7 +214,53 @@
 	cursor: pointer;
 	text-decoration: none;
 	font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
-	transition: 250ms linear all;
+}
+
+.salescenter-app-collapse-link-hide,
+.salescenter-app-collapse-link-show,
+.salescenter-app-collapse-link-pointer-event {
+	display: inline-block;
+	margin: 8px 0 0 1px;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 13px;
+	color: #80868e;
+	line-height: 20px;
+	border: none;
+	cursor: pointer;
+}
+
+.salescenter-app-collapse-link-pointer-event {
+	opacity: .7;
+	pointer-events: none;
+}
+
+.salescenter-app-collapse-link-show:before,
+.salescenter-app-collapse-link-hide:before {
+	content: '';
+	display: inline-block;
+	vertical-align: top;
+	margin: 2px 5px 0 0;
+	width: 15px;
+	height: 15px;
+	border: 2px solid rgba(0,0,0,.09);
+	border-radius: 100%;
+	box-sizing: border-box;
+	background: center no-repeat;
+}
+
+.salescenter-app-collapse-link-show:before {
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%227%22%20height%3D%227%22%20viewBox%3D%220%200%207%207%22%3E%3Cpath%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M4%2C0%20L4%2C3%20L7%2C3%20L7%2C4%20L4%2C4%20L4%2C7%20L3%2C7%20L3%2C4%20L0%2C4%20L0%2C3%20L3%2C3%20L3%2C0%20L4%2C0%20Z%22%20opacity%3D%22.7%22/%3E%3C/svg%3E');
+	background-position: top 2px center;
+}
+
+.salescenter-app-collapse-link-hide:before {
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%227%22%20height%3D%221%22%20viewBox%3D%220%200%207%201%22%3E%3Crect%20width%3D%227%22%20height%3D%221%22%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20opacity%3D%22.7%22/%3E%3C/svg%3E');
+	background-position: top 5px center;
+}
+
+.salescenter-app-collapse-link-show:hover:before,
+.salescenter-app-collapse-link-hide:hover:before {
+	border: 2px solid rgba(0,0,0,.15);
 }
 
 .salescenter-app-collapse-link:hover {
@@ -239,7 +270,7 @@
 
 .salescenter-app-form-collapse-container {
 	overflow: hidden;
-	transition: 250ms linear ease;
+	width: 100%;
 }
 
 .salescenter-app-form-collapse-container.collapsed { max-height: 0; }
@@ -288,22 +319,52 @@
 
 /*endregion*/
 
-.salescenter-app-add-item-container { margin-bottom: 10px; }
+.salescenter-app-add-item-container {
+	margin-bottom: 10px;
+	padding: 0 11px;
+}
 
 .salescenter-app-add-item-link {
-	border-bottom: 1px dashed;
+	border-bottom: 1px dashed rgba(32, 102, 176, .4);
 	color: #2066b0;
 	text-decoration: none;
 	cursor: pointer;
-	font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	position: relative;
+	transition: all .2s linear;
+	font: 15px "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
-.salescenter-app-add-item-link:hover { text-decoration: none; }
+.salescenter-app-add-item-link:hover {
+	text-decoration: none;
+	border-color: rgba(32, 102, 176, 1);
+}
+
+.salescenter-app-add-item-link-catalog {
+	color: #80868e;
+	border-color: rgba(128, 134, 142, .4);
+	margin-left: 30px;
+	white-space: nowrap;
+}
+
+.salescenter-app-add-item-link-catalog:before {
+	content: '';
+	position: absolute;
+	left: -20px;
+	top: 2px;
+	width: 13px;
+	height: 13px;
+	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2214%22%20height%3D%2213%22%3E%3Cpath%20fill%3D%22%2380868E%22%20fill-rule%3D%22evenodd%22%20d%3D%22M1.07.518l.09.003c1.041.106%203.16.507%205.453%202.002l-.154-.098v10.46c-1.403-1.012-3.07-1.676-5.003-1.993l-.427-.064a.619.619%200%2001-.543-.609V1.136C.486.77.797.484%201.16.52zM12.71.486a.622.622%200%2001.702.613v9.044a.613.613%200%2001-.52.609c-1.098.167-3.708.7-5.585%202.179l.13-.1V2.423C8.772%201.453%2010.39.827%2012.287.543z%22/%3E%3C/svg%3E) no-repeat center;
+}
+
+.salescenter-app-add-item-link-catalog:hover {
+	color: #80868e;
+	border-color: rgba(128, 134, 142, 1);
+}
 
 /*region result container*/
 .salescenter-app-result-container {
-	border-top: 1px solid #edeef0;
-	padding-top: 10px;
+	/*border-top: 1px solid #edeef0;*/
+	/*padding-top: 15px;*/
 }
 
 .salescenter-app-result-grid-row {
@@ -313,23 +374,46 @@
 	-webkit-box-align: center;
 	-ms-flex-align: center;
 	align-items: center;
-	-webkit-box-pack: justify;
-	-ms-flex-pack: justify;
-	justify-content: space-between;
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
-	color: rgba(82, 92, 105, 0.7);
-	margin-bottom: 10px;
+	justify-content: flex-end;
+	font: 15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #525c69;
+	margin-bottom: 5px;
 }
 
-.salescenter-app-result-grid-benefit { color: rgba(122, 148, 19, 0.71); }
+.salescenter-app-result-grid-benefit {
+	color: #6e881a;
+}
 
-.salescenter-app-result-grid-total { color: #525c69; }
+.salescenter-app-result-grid-benefit .salescenter-app-result-grid-item {
+	padding-bottom: 14px;
+	margin-bottom: 7px;
+	border-bottom: 1px solid #f0f3f5;
+}
+
+.salescenter-app-result-grid-total {
+	color: #525c69;
+}
+
+.salescenter-app-result-grid-total-big {
+	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-size: 21px;
+	color: #525c69;
+	text-align: right;
+}
 
 .salescenter-app-page-content {
 	-webkit-box-flex: 1;
 	-ms-flex: 1;
 	flex: 1;
 	position: relative;
+}
+
+/*endregion*/
+
+/*region payment container*/
+.salescenter-app-payment-container {
+	border-top: 1px solid #edeef0;
+	padding-top: 10px;
 }
 
 /*endregion*/
@@ -437,8 +521,8 @@
 /*endregion*/
 
 .ui-sidepanel-sidebar.salescenter-app-sidebar {
-	overflow-y: auto;
-	width: 350px;
+	width: 260px;
+	margin: 0 0 0 -17px;
 }
 
 .btn-send-crm {
@@ -485,7 +569,7 @@
 	background-color: rgba(94,102,117,.76);
 	font: 15px/25px 'OpenSans-SemiBold', "Helvetica Neue", Arial, Helvetica, sans-serif;
 	color: #fff;
-	padding: 0 8px 0 11px;
+	padding: 0 11px;
 }
 
 .salescenter-app-sidebar .salescenter-app-sidebar-menu-active .ui-sidepanel-menu-link .ui-sidepanel-menu-link-text {
@@ -609,5 +693,1762 @@
 	display: flex;
 }
 .salescenter-app-payment-side {
-	padding-top: 12px;
+	flex: 1;
 }
+
+.salescenter-app-payment-by-sms-title {
+	padding: 7px 0 25px 7px;
+	font-family: "OpenSans-Light", Helvetica, Arial, sans-serif;
+	font-size: 22px;
+	color: #333;
+	line-height: 28px;
+}
+
+/*salescenter-app-payment-by-sms-item*/
+
+.salescenter-app-payment-by-sms-item {
+	display: block;
+	position: relative;
+	min-height: 20px;
+	padding: 16px 30px 16px 59px;
+	margin-bottom: 5px;
+	background: #fff;
+}
+
+.salescenter-app-payment-by-sms-item-disabled {
+	background: rgba(255,255,255,7);
+}
+
+.salescenter-app-payment-by-sms-item-disabled-bg {
+	background: #f7f9fa;
+}
+
+/*.salescenter-app-payment-by-sms-item-disabled-bg .salescenter-app-payment-by-sms-item-counter,*/
+.salescenter-app-payment-by-sms-item-disabled-bg .salescenter-app-payment-by-sms-item-counter:after {
+	background: #f7f9fa !important;
+}
+
+.salescenter-app-payment-by-sms-item:last-of-type {
+	margin-bottom: auto;
+}
+
+.salescenter-app-payment-by-sms-item-counter {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 59px;
+	bottom: 0;
+	background: #9dcf00;
+}
+
+.salescenter-app-payment-by-sms-item-current .salescenter-app-payment-by-sms-item-counter {
+	background: #55d0e0;
+}
+
+.salescenter-app-payment-by-sms-item-disabled .salescenter-app-payment-by-sms-item-counter {
+	background: #c9cfd3;
+}
+
+.salescenter-app-payment-by-sms-item-counter:after {
+	content: '';
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	background: #fff;
+	pointer-events: none;
+}
+
+.salescenter-app-payment-by-sms-item-counter-rounder {
+	display: none;
+	position: absolute;
+	width: 40px;
+	height: 40px;
+	top: 9px;
+	left: 11px;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2240%22%20height%3D%2240%22%20viewBox%3D%220%200%2040%2040%22%3E%3Cpath%20fill%3D%22%23fff%22%20fill-rule%3D%22evenodd%22%20d%3D%22M40%2C0%20L40%2C40%20L0%2C40%20L0%2C0%20L40%2C0%20Z%20M33.0123065%2C33.031034%20C30.3796037%2C35.7735235%2027.1166009%2C37.5090846%2023.6863237%2C38.2294586%20L23.9848323%2C39.708797%20C27.791456%2C38.9091904%2031.2911597%2C36.9812959%2034.0684581%2C34.0877984%20L33.0123065%2C33.031034%20Z%20M6.33423862%2C32.3151611%20L5.227496%2C33.3164065%20C5.58083391%2C33.7243627%205.94342283%2C34.1097121%206.38380451%2C34.5438579%20C8.86363532%2C36.9640551%2011.8542961%2C38.6459333%2015.1010327%2C39.494152%20L15.4671377%2C38.030755%20C12.5047646%2C37.2568208%209.69276892%2C35.7097291%207.33594895%2C33.3840432%20C6.98555989%2C33.0382829%206.65165062%2C32.6816477%206.33423862%2C32.3151611%20Z%20M38.9668933%2C14.4986674%20L37.5442506%2C14.9087391%20C38.5231662%2C18.4552289%2038.4563583%2C22.2442496%2037.3350857%2C25.7640679%20L38.7407553%2C26.2312776%20C39.9501733%2C22.4345378%2040.0272912%2C18.340329%2038.9668933%2C14.4986674%20Z%20M1.30873375%2C13.5824326%20C0.0694023672%2C17.3692865%20-0.0393498312%2C21.4626085%200.990830652%2C25.3127404%20L2.41663033%2C24.9142821%20C1.46614337%2C21.3619175%201.56115179%2C17.5740169%202.71039259%2C14.0620598%20L1.30873375%2C13.5824326%20Z%20M24.7456583%2C0.433428588%20L24.390965%2C1.89975731%20C27.4053965%2C2.66097657%2030.2696331%2C4.22013089%2032.6640542%2C6.58292117%20C32.9791779%2C6.89388199%2033.2809721%2C7.21363878%2033.5694241%2C7.54144705%20L34.6681177%2C6.53098742%20C34.346309%2C6.16529724%2034.0185237%2C5.81969952%2033.6153974%2C5.42232396%20C31.0963609%2C2.96413667%2028.0503537%2C1.26796005%2024.7456583%2C0.433428588%20Z%20M15.8610203%2C0.291203016%20C12.0623576%2C1.12146095%208.57897499%2C3.07687689%205.82269203%2C5.9934581%20L6.88599118%2C7.04271084%20C9.49977116%2C4.27692021%2012.7485867%2C2.51598042%2016.170771%2C1.76812598%20L15.8610203%2C0.291203016%20Z%22/%3E%3C/svg%3E') center center no-repeat;
+	background-color: inherit;
+	border-radius: 100%;
+	z-index: 9;
+}
+
+.salescenter-app-payment-by-sms-item-current .salescenter-app-payment-by-sms-item-counter-rounder {
+	background-color: #55d0e0;
+	display: block;
+	animation: salescenter-app-payment-by-sms-item-counter-rounder 4s linear infinite;
+}
+
+@keyframes salescenter-app-payment-by-sms-item-counter-rounder {
+	0% {
+		transform: rotate(0);
+		opacity: 1;
+	}
+	25% {
+		transform: rotate(90deg);
+		opacity: .3;
+	}
+	50% {
+		transform: rotate(180deg);
+		opacity: 3;
+	}
+	75% {
+		transform: rotate(270deg);
+		opacity: .3;
+	}
+	100% {
+		transform: rotate(360deg);
+		opacity: 1;
+	}
+}
+
+.salescenter-app-payment-by-sms-item-counter-number {
+	display: block;
+	position: relative;
+	margin: 14px 0 0 16px;
+	background: inherit;
+	width: 31px;
+	height: 31px;
+	border-radius: 100%;
+	z-index: 99;
+}
+
+.salescenter-app-payment-by-sms-item-current .salescenter-app-payment-by-sms-item-counter-number {
+	background: #55d0e0 !important;
+}
+
+.salescenter-app-payment-by-sms-item-counter-number-checker {
+	content: '';
+	position: absolute;
+	height: 10px;
+	width: 10px;
+	right: -5px;
+	top: 0;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%226%22%20height%3D%225%22%20viewBox%3D%220%200%206%205%22%3E%3Cpolygon%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20points%3D%222.166%202.576%20.993%201.481%200%202.421%202.112%204.405%202.113%204.404%202.167%204.455%205.875%20.94%204.883%200%22/%3E%3C/svg%3E') center center no-repeat;
+	background-color: inherit;
+	border: 2px solid #fff;
+	border-radius: 100%;
+	z-index: 9;
+}
+
+.salescenter-app-payment-by-sms-item-counter-line {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 30px;
+	width: 3px;
+	background: inherit;
+	bottom: 0;
+	opacity: .5;
+	z-index: 9;
+}
+
+.salescenter-app-payment-by-sms-item:first-of-type .salescenter-app-payment-by-sms-item-counter-line {
+	top: 42px;
+}
+
+.salescenter-app-payment-by-sms-item-current .salescenter-app-payment-by-sms-item-counter-line {
+	background: #55d0e0;
+}
+
+.salescenter-app-payment-by-sms-item-counter-number-text {
+	display: block;
+	position: relative;
+	z-index: 9;
+	text-align: center;
+	font: 16px/31px "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	color: #fff;
+}
+
+.salescenter-app-payment-by-sms-item-title {
+	display: flex;
+	overflow: hidden;
+	padding: 0 1px 17px 1px;
+	border-bottom: 1px solid rgba(82,92,105,.1);
+	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-size: 18px;
+	color: #333;
+}
+
+.salescenter-app-payment-by-sms-item-title-text {
+	flex: 1;
+}
+
+.salescenter-app-payment-by-sms-item-title-info {
+	float: right;
+	height: 20px;
+	margin-left: 30px;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 14px;
+	color: #80868e;
+	line-height: 24px;
+	border-bottom:  1px dashed rgba(130,139,149,.4);
+	border-top: 1px solid transparent;
+	cursor: pointer;
+	margin-right: 20px;
+	white-space: nowrap;
+}
+
+.salescenter-app-payment-by-sms-item-title-info:after {
+	content: '';
+	display: inline-block;
+	vertical-align: middle;
+	margin: 0 -20px 0 5px;
+	width: 14px;
+	height: 14px;
+	background: rgba(177,183,197,.74) url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%224%22%20height%3D%229%22%20viewBox%3D%220%200%204%209%22%3E%3Cpath%20fill%3D%22%23fff%22%20d%3D%22M2.29402252%2C2.84923094%20L2.294%2C2.85%20L2.92728351%2C2.85086719%20L2.927%2C7.166%20L3.90606431%2C7.1669153%20L3.90606431%2C8.02772537%20L2.08277839e-13%2C8.02772537%20L2.08277839e-13%2C7.1669153%20L1.147%2C7.166%20L1.147%2C3.723%20L2.08277839e-13%2C3.72367505%20L2.08277839e-13%2C2.84923094%20L2.29402252%2C2.84923094%20Z%20M1.94965327%2C2.48689958e-14%20C2.4917637%2C2.48689958e-14%202.93123103%2C0.435246983%202.93123103%2C0.972151347%20C2.93123103%2C1.50905571%202.4917637%2C1.94430269%201.94965327%2C1.94430269%20C1.40754283%2C1.94430269%200.968075498%2C1.50905571%200.968075498%2C0.972151347%20C0.968075498%2C0.435246983%201.40754283%2C2.48689958e-14%201.94965327%2C2.48689958e-14%20Z%22/%3E%3C/svg%3E') center center no-repeat;
+	border-radius: 100%;
+}
+
+.salescenter-app-payment-by-sms-item-title-info:hover:after {
+	background-color: rgba(177,183,197,.9);
+}
+
+.salescenter-app-payment-by-sms-item-title-info:hover {
+	border-bottom:  1px dashed rgba(130,139,149,.7);
+}
+
+
+.salescenter-app-payment-by-sms-item-title-info--link {
+	color: #2066b0;
+	border-bottom: 1px dashed rgba(32, 102, 176, .4);
+	margin-right: 0;
+}
+
+.salescenter-app-payment-by-sms-item-title-info--link:hover {
+	border-color: rgba(32, 102, 176, 1);
+}
+
+.salescenter-app-payment-by-sms-item-title-info--link:after {
+	content: none;
+}
+
+.salescenter-app-payment-by-sms-item-disabled .salescenter-app-payment-by-sms-item-title {
+	color: rgba(51,51,51,.5);
+}
+
+.salescenter-app-payment-by-sms-item-container {
+	display: block;
+	padding: 20px 0 10px 0;
+}
+
+.salescenter-app-payment-by-sms-item-container-offtop {
+	padding-top: 9px;
+}
+
+.salescenter-app-payment-by-sms-item-container--inline {
+	display: inline-block;
+}
+
+.salescenter-app-payment-by-sms-item-container-sms {
+	display: flex;
+	padding: 10px 0 4px 0;
+}
+
+.salescenter-app-payment-by-sms-item-container-sms-user {
+	display: block;
+	width: 60px;
+}
+
+.salescenter-app-payment-by-sms-item-container-sms-user-avatar {
+	display: block;
+	margin: 4px auto 2px auto;
+	width: 40px;
+	height: 40px;
+	background: #7b8691 url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cpath%20fill%3D%22%23fff%22%20d%3D%22M72.7856666%2C62.2540935%20C72.7856666%2C59.9430795%2069.7566666%2C57.3030635%2063.7856666%2C55.7650542%20C61.7635193%2C55.2035354%2059.8406739%2C54.3318402%2058.0856666%2C53.1810386%20C57.7026666%2C52.9630373%2057.7606666%2C50.945025%2057.7606666%2C50.945025%20L55.8386666%2C50.6530233%20C55.8386666%2C50.4890223%2055.6746666%2C48.0690076%2055.6746666%2C48.0690076%20C57.9746666%2C47.299003%2057.7376666%2C42.7549755%2057.7376666%2C42.7549755%20C59.1976666%2C43.5619804%2060.1486666%2C39.9709586%2060.1486666%2C39.9709586%20C61.8766666%2C34.9769284%2059.2886666%2C35.2779302%2059.2886666%2C35.2779302%20C60.1106666%2C31.5399076%2059.2886666%2C26.0778745%2059.2886666%2C26.0778745%20C58.1386666%2C15.9618133%2040.8186666%2C18.7078299%2042.8716666%2C22.0128499%20C37.8096666%2C21.0788443%2038.9646666%2C32.5639138%2038.9646666%2C32.5639138%20L40.0646666%2C35.5329318%20C37.9086666%2C36.9249402%2039.4066666%2C38.6119504%2039.4796666%2C40.5529621%20C39.5856666%2C43.4179795%2041.3406666%2C42.8249759%2041.3406666%2C42.8249759%20C41.4496666%2C47.5530045%2043.7866666%2C48.1750083%2043.7866666%2C48.1750083%20C44.2266666%2C51.1440262%2043.9526666%2C50.6390232%2043.9526666%2C50.6390232%20L41.8706666%2C50.8890247%20C41.8989236%2C51.5642186%2041.8438415%2C52.240321%2041.7066666%2C52.9020369%20C39.2576666%2C53.9950435%2038.7356666%2C54.6290473%2036.3006666%2C55.6950538%20C31.6006666%2C57.7480662%2026.4926666%2C60.4180824%2025.5856666%2C64.0121041%20C24.6786666%2C67.6061259%2023.0006666%2C75.9951766%2023.0006666%2C75.9951766%20L76.0006666%2C75.9951766%20L72.7856666%2C62.2540935%20Z%22/%3E%3C/svg%3E%0A') center no-repeat;
+	background-size: cover;
+	border-radius: 100%;
+}
+
+.salescenter-app-payment-by-sms-item-container-sms-user-name {
+	display: block;
+	text-align: center;
+	font-family: HelveticaNeue, "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 10px;
+	color: #969BA2;
+}
+
+.salescenter-app-payment-by-sms-item-container-sms-content {
+	flex: 1;
+	position: relative;
+	padding: 0 40px 0 22px;
+}
+
+.salescenter-app-payment-by-sms-item-container-sms-content-edit,
+.salescenter-app-payment-by-sms-item-container-sms-content-lock {
+	position: absolute;
+	width: 40px;
+	height: 46px;
+	top: 0;
+	right: -40px;
+	opacity: .4;
+	cursor: pointer;
+	transition: .1s time;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2014%2014%22%3E%3Cpath%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M16.4358633%2C5.03481936%20L18.9864331%2C7.61224176%20L9.00876666%2C17.563056%20L6.45819647%2C14.9856339%20L16.4358633%2C5.03481936%20Z%20M5.02558382%2C18.6726366%20C5.00146497%2C18.7639157%205.0273066%2C18.8603615%205.09277206%2C18.9275292%20C5.1599603%2C18.9946969%205.25643572%2C19.0205306%205.34774281%2C18.9946969%20L8.19893597%2C18.2265744%20L5.79394162%2C15.8223165%20L5.02558382%2C18.6726366%20Z%22%20transform%3D%22translate%28-5%20-5%29%22/%3E%3C/svg%3E') center no-repeat;
+}
+
+.salescenter-app-payment-by-sms-item-container-sms-content-save {
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%227%22%20height%3D%226%22%20viewBox%3D%220%200%207%206%22%3E%3Cpolygon%20fill%3D%22%23525C6%22%20fill-rule%3D%22evenodd%22%20points%3D%222.446%203.435%201.013%202.002%200%203.015%202.391%205.406%202.447%205.46%206.894%201.013%205.881%200%22/%3E%3C/svg%3E');
+	background-size: 12px;
+}
+
+.salescenter-app-payment-by-sms-item-container-sms-content-edit:hover {
+	opacity: .7;
+}
+
+.salescenter-app-payment-by-sms-item-container-sms-content-lock,
+.salescenter-app-payment-by-sms-item-container-sms-content-lock:hover {
+	opacity: 1;
+	background:  url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%229%22%20height%3D%2213%22%20viewBox%3D%220%200%209%2013%22%3E%3Cpath%20fill%3D%22%2316B9EB%22%20fill-rule%3D%22evenodd%22%20d%3D%22M6.01239287%2C11.1799674%20L4.98278772%2C11.1799674%20L4.98278772%2C9.89734992%20C4.7974873%2C9.74836266%204.67886335%2C9.520731%204.67886335%2C9.26552192%20C4.67886335%2C8.81664196%205.04544143%2C8.45275834%205.49760613%2C8.45275834%20C5.94973915%2C8.45275834%206.31631723%2C8.81664196%206.31631723%2C9.26552192%20C6.31631723%2C9.520731%206.19772496%2C9.74836266%206.01239287%2C9.89734992%20L6.01239287%2C11.1799674%20Z%20M3.25607289%2C4.44717692%20C3.25607289%2C3.21820494%204.25964095%2C2.22192728%205.49757445%2C2.22192728%20C6.73553963%2C2.22192728%207.7391077%2C3.21820494%207.7391077%2C4.44717692%20L7.7391077%2C6.05671995%20L3.25607289%2C6.05671995%20L3.25607289%2C4.44717692%20Z%20M8.92370002%2C6.05671995%20L8.92370002%2C4.44717692%20C8.92370002%2C2.56870473%207.38976098%2C1.04594043%205.49757445%2C1.04594043%20C3.60541961%2C1.04594043%202.07148056%2C2.56870473%202.07148056%2C4.44717692%20L2.07148056%2C6.05671995%20L1.03135922%2C6.05671995%20L1.03135922%2C13.0090392%20L9.96382137%2C13.0090392%20L9.96382137%2C6.05671995%20L8.92370002%2C6.05671995%20Z%22%20transform%3D%22translate%28-1%20-1%29%22/%3E%3C/svg%3E') center no-repeat;
+}
+
+
+.salescenter-app-payment-by-sms-item-container-sms-content-message {
+	float: left;
+	position: relative;
+	padding: 13px 17px;
+	background: #ddf4fd;
+	border-radius: 20px;
+	font-family: HelveticaNeue, "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 14px;
+	color: #0c0c0c;
+	line-height: 20px;
+}
+
+.salescenter-app-payment-by-sms-item-container-sms-content-message-text {
+	display: inline-block;
+	margin: 0;
+	padding: 0;
+}
+
+.salescenter-app-payment-by-sms-item-container-sms-content-message-text-edit {
+	margin: -3px -5px;
+	padding: 3px 5px;
+	background: #fbfeff;
+	border-radius: 10px;
+	outline: none;
+}
+
+.salescenter-app-payment-by-sms-item-container-sms-content-message-link {
+	color: #0b66c3;
+}
+
+.salescenter-app-payment-by-sms-item-container-sms-content-message-link-ref {
+	color: rgba(128,134,142,.7);
+}
+
+.salescenter-app-payment-by-sms-item-container-sms-content-message:before {
+	content: '';
+	width: 19px;
+	height: 17px;
+	position: absolute;
+	top: 20px;
+	left: -12px;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2219%22%20height%3D%2217%22%20viewBox%3D%220%200%2019%2017%22%3E%3Cpath%20fill%3D%22%23ddf4fd%22%20d%3D%22M0.00637011437%2C12.8138411%20C-0.317530323%2C13.9953315%2011.7965124%2C18.9660587%2016.716914%2C15.5718904%20C21.6373155%2C12.1777221%2014.4385337%2C-4.41509258%2012.7422864%2C1.12094297%20C11.0460392%2C6.65697853%200.330270552%2C11.6323507%200.00637011437%2C12.8138411%20Z%22/%3E%3C/svg%3E') center center no-repeat;
+}
+
+.salescenter-app-payment-by-sms-item-container-sms-content-info {
+	clear: both;
+	display: block;
+	padding: 3px 17px;
+	font-family: HelveticaNeue, "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 12px;
+	color: rgba(128,134,142,.7);
+	line-height: 16px;
+}
+
+.salescenter-app-payment-by-sms-item-container-sms-content-info span {
+	display: inline-block;
+	color: rgba(128,134,142,.7);
+	border-bottom: 1px dashed rgba(128,134,142,.4);
+	cursor: pointer;
+}
+
+.salescenter-app-payment-by-sms-item-container-sms-content-info select {
+	font-family: HelveticaNeue, "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 12px;
+	/*color: rgba(128,134,142,1);*/
+	color: #0b66c3;
+	line-height: 16px;
+	background: none;
+	border: none !important;
+	border-radius: 0;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+	outline: none !important;
+	cursor: pointer;
+}
+
+.salescenter-app-payment-by-sms-item-container-sms-content-info a:hover {
+	color: rgba(128,134,142,.7);
+	border-bottom: 1px dashed rgba(128,134,142,.8);
+}
+
+.salescenter-app-payment-by-sms-item-container-payment {
+	margin: -7px -7px -14px -7px;
+	font-size: 0;
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item {
+	width: calc(20% - 14px);
+	display: inline-flex;
+	position: relative;
+	background: #fff;
+	box-shadow: 0 1px 2px 0 rgba(0,0,0,.14);
+	border-radius: 2px;
+	margin: 7px;
+	cursor: pointer;
+	transition: 180ms;
+}
+
+@media (max-width: 1400px) {
+	.salescenter-app-payment-by-sms-item-container-payment-item {
+		width: calc(25% - 14px);
+	}
+}
+
+@media (max-width: 1200px) {
+	.salescenter-app-payment-by-sms-item-container-payment-item {
+		width: calc(33.333% - 14px);
+	}
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item:before {
+	content: '';
+	display: block;
+	padding-top: 55%;
+	pointer-events: none;
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item-contet {
+	position: absolute;
+	padding: 13px;
+	max-width: 100%;
+	max-height: 100%;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	display: flex;
+	justify-content: center;
+	flex-direction: column;
+	text-align: center;
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item-added {
+	flex-direction: column;
+	background: rgba(255,255,255,.66);
+	border: 1px dashed rgba(82,92,105,.18);
+	box-shadow: none;
+	box-sizing: border-box;
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item-added:hover {
+	border: 1px dashed rgba(82, 92, 105, .25);
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item-added-text {
+	opacity: .64;
+	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-size: 13px;
+	color: #525c69;
+	transition: .1s;
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item-added:hover .salescenter-app-payment-by-sms-item-container-payment-item-added-text {
+	opacity: .8;
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item-title-text {
+	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-size: 14px;
+	color: #525c69;
+	transition: .1s;
+	padding: 10px 0 0 0;
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item-img {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+	max-width: 110px;
+	max-height: 70px;
+	object-fit: contain;
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item-added:hover {
+	box-shadow: none !important;
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item-added .salescenter-app-payment-by-sms-item-container-payment-item-contet {
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+	align-items: center;
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item-added .salescenter-app-payment-by-sms-item-container-payment-item-contet:before {
+	content: '';
+	width: 42px;
+	height: 42px;
+	border-radius: 100%;
+	margin-bottom: 7px;
+	transition: .1s;
+	background: rgba(82,92,105,.04) url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2018%2018%22%3E%3Cpath%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M11%2C0%20L11%2C7%20L18%2C7%20L18%2C11%20L11%2C11%20L11%2C18%20L7%2C18%20L7%2C10.999%20L0%2C11%20L0%2C7%20L7%2C6.999%20L7%2C0%20L11%2C0%20Z%22%20opacity%3D%22.363%22/%3E%3C/svg%3E') center no-repeat;
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item-added:hover .salescenter-app-payment-by-sms-item-container-payment-item-contet:before {
+	background-color: rgba(82,92,105,.06);
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item:hover {
+	transform: translateY(-3px);
+	box-shadow: 0 1px 2px 0 rgba(0,0,0,.14);
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item-info {
+	position: absolute;
+	top: 8px;
+	right: 10px;
+	width: 14px;
+	height: 14px;
+	background: rgba(177,183,197,.74) url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%224%22%20height%3D%229%22%20viewBox%3D%220%200%204%209%22%3E%3Cpath%20fill%3D%22%23fff%22%20d%3D%22M2.29402252%2C2.84923094%20L2.294%2C2.85%20L2.92728351%2C2.85086719%20L2.927%2C7.166%20L3.90606431%2C7.1669153%20L3.90606431%2C8.02772537%20L2.08277839e-13%2C8.02772537%20L2.08277839e-13%2C7.1669153%20L1.147%2C7.166%20L1.147%2C3.723%20L2.08277839e-13%2C3.72367505%20L2.08277839e-13%2C2.84923094%20L2.29402252%2C2.84923094%20Z%20M1.94965327%2C2.48689958e-14%20C2.4917637%2C2.48689958e-14%202.93123103%2C0.435246983%202.93123103%2C0.972151347%20C2.93123103%2C1.50905571%202.4917637%2C1.94430269%201.94965327%2C1.94430269%20C1.40754283%2C1.94430269%200.968075498%2C1.50905571%200.968075498%2C0.972151347%20C0.968075498%2C0.435246983%201.40754283%2C2.48689958e-14%201.94965327%2C2.48689958e-14%20Z%22/%3E%3C/svg%3E') center center no-repeat;
+	border-radius: 100%;
+	z-index: 1;
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item-text,
+.salescenter-app-payment-by-sms-item-container-payment-item-text:hover,
+.salescenter-app-payment-by-sms-item-container-payment-item-text-add,
+.salescenter-app-payment-by-sms-item-container-payment-item-text-add:hover {
+	display: inline-block;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 14px;
+	color: #525c69;
+	border-bottom: 1px dashed rgba(130,139,149,.4);
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item-text {
+	margin: 0 8px 8px 0;
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item-text:first-of-type {
+	margin-left: 0;
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item-text:hover {
+	border-bottom-color: rgba(130,139,149,.8);
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item-text-add {
+	color: rgba(130,139,149,.7);
+	transition: all .2s linear;
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item-text-add:hover {
+	color: rgba(130,139,149,1);
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item-text-add + .salescenter-app-payment-by-sms-item-container-payment-item-text-add {
+	margin-left: 15px;
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-inline {
+	margin: 5px 7px 10px 7px;
+}
+
+.salescenter-app-payment-by-sms-timeline {
+	background: #edf1f3;
+	padding: 21px 12px 21px 16px;
+}
+
+.salescenter-app-payment-by-sms-timeline .salescenter-app-payment-by-sms-item-counter:after {
+	background: #edf1f3;
+}
+
+.salescenter-app-payment-by-sms-timeline .salescenter-app-payment-by-sms-item-counter {
+	background: #10c13e;
+	width: 30px;
+}
+
+.salescenter-app-payment-by-sms-timeline .salescenter-app-payment-by-sms-item-counter-number {
+	margin: 4px 0 0 0;
+}
+
+.salescenter-app-payment-by-sms-timeline .salescenter-app-payment-by-sms-item-counter-line {
+	width: 1px;
+	background: #d1d6da;
+	left: 15px;
+	top: -22px;
+	opacity: 1;
+}
+
+.salescenter-app-payment-by-sms-timeline-item {
+	position: relative;
+	padding-left: 44px;
+	color: #57616c;
+}
+
+.salescenter-app-payment-by-sms-timeline-item + .salescenter-app-payment-by-sms-timeline-item {
+	margin-top: 11px;
+}
+
+.salescenter-app-payment-by-sms-timeline-item:last-child .salescenter-app-payment-by-sms-item-counter-line {
+	height: 50px;
+}
+
+.salescenter-app-payment-by-sms-timeline-content {
+	background: #fff;
+	border-radius: 25px;
+	padding: 12px 21px;
+	position: relative;
+}
+
+.salescenter-app-payment-by-sms-timeline-item-payment {
+	color: #fff;
+}
+
+.salescenter-app-payment-by-sms-timeline-item-payment .salescenter-app-payment-by-sms-timeline-content {
+	background: #10c13e;
+	display: flex;
+	align-items: center;
+	padding-top: 14px;
+	padding-bottom: 14px;
+}
+
+.salescenter-app-payment-by-sms-timeline-item-payment .salescenter-app-payment-by-sms-timeline-content::before {
+	top: 22px;
+}
+
+.salescenter-app-payment-by-sms-timeline-item-payment .salescenter-app-payment-by-sms-item-counter-icon {
+	margin-top: 7px;
+}
+
+.salescenter-app-payment-by-sms-timeline-content:before {
+	content: '';
+	position: absolute;
+	top: 20px;
+	left: -15px;
+	width: 15px;
+	height: 1px;
+	background: #d1d6dA;
+}
+
+.salescenter-app-payment-by-sms-timeline-content-text + a {
+	margin-left: 7px;
+}
+
+.salescenter-app-payment-by-sms-item-counter-icon {
+	width: 30px;
+	height: 30px;
+	border-radius: 50%;
+	z-index: 99;
+	display: block;
+	position: relative;
+	margin: 4px 0 0 0;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-color: #10c13e;
+}
+
+.salescenter-app-payment-by-sms-item-counter-icon-sent {
+	background-position: 9px center;
+	background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2214%22%20height%3D%2217%22%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M5.357.722L13.135%208.5l-7.778%207.778v-4.556H.579v-6h4.778v-5z%22/%3E%3C/svg%3E);
+}
+
+.salescenter-app-payment-by-sms-item-counter-icon-cash {
+	background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2215%22%20height%3D%2215%22%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M14.233%204.523c.364.223.617.593.664%201.02l.008.145v1.336h-4.303a2%202%200%2000-1.994%201.851l-.006.15v.999a2%202%200%20001.85%201.994l.15.006%204.302-.001v1.566c0%20.72-.583%201.313-1.327%201.38l-.14.007H1.952A1.85%201.85%200%2001.11%2013.271l-.006-.145V4.524l14.13-.001zm.671%203.521v2.959H9.64V8.045l5.265-.001zm-2.775.42a.925.925%200%20100%201.85.925.925%200%20000-1.85zm.117-8.44l.932%203.48H1.947l-.18-.672L12.246.024z%22/%3E%3C/svg%3E);
+	background-position: top 7px center;
+}
+
+.salescenter-app-payment-by-sms-item-counter-icon-watch {
+	background-position: center 6px;
+	background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2218%22%20height%3D%2217%22%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M8.473.9a7.634%207.634%200%20016.385%2011.821l2.176%202.177c.391.391.389%201.028.004%201.413l-.427.427a1%201%200%2001-1.414-.004l-2.114-2.114A7.634%207.634%200%20118.473.9zm0%202.181a5.453%205.453%200%20103.487%209.645.966.966%200%2001.241-.398l.427-.427a.99.99%200%2001.28-.196%205.453%205.453%200%2000-4.435-8.623zm.001%201.904l.031.011L11.75%206.28c.083.039.115.113.113.238v4.076c0%20.093-.047.182-.11.207l-3.225%201.274a.21.21%200%2001-.135-.003l-3.196-1.264c-.063-.024-.111-.112-.112-.204V6.491c.002-.097.031-.18.112-.217l3.228-1.278c.007-.003.014-.008.021-.01.02-.005.038%200%20.06.01zm-.01.44l-2.68%201.06%202.68%201.06%202.679-1.057-2.679-1.064z%22/%3E%3C/svg%3E);
+}
+
+.salescenter-app-payment-by-sms-item-counter-icon-check {
+	background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAYAAAAmlE46AAAANElEQVQokWNgoAT8////wn/SwAKYRpIBikYiXUcDjTidRoTGBnQ86tSho5EUANNIau7YAACRzsg+rE9//wAAAABJRU5ErkJggg==);
+}
+
+.salescenter-app-payment-by-sms-item-counter-icon-check-sent {
+	background-position: 8px 6px;
+	background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2218%22%20height%3D%2219%22%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M12.94%208.878l4.652%204.651-4.652%204.652v-2.725H8.242v-3.588h4.696v-2.99zM12.892.984a1%201%200%20011%20.994l.014%202.503v.006l.001%203.645a7.03%207.03%200%2000-2.001.04V5.244l-.032-2.26H2.906v11h3.257a7.015%207.015%200%2000-.016%202.001h-4.24a1%201%200%2001-1-1v-13a1%201%200%20011-1h10.985zm-2.986%207v.84c-.412.209-.8.457-1.16.74h-3.84v-1.58h5zm0-3v1.58h-5v-1.58h5z%22/%3E%3C/svg%3E);
+}
+
+.salescenter-app-payment-by-sms-timeline-content-price {
+	position: relative;
+	margin: -3px 13px 0 0;
+	display: inline-block;
+	font: 23px/25px "OpenSans-Semibold", Helvetica, Arial, sans-serif;
+}
+
+.salescenter-app-payment-by-sms-timeline-content-price:before {
+	content: '+';
+}
+
+.salescenter-app-payment-by-sms-timeline-content-price-cur {
+	font-family: 'rubleBitrix', 'OpenSans', sans-serif;
+	opacity: .8;
+}
+
+.salescenter-app-payment-by-sms-timeline-content-text-strong {
+	font-weight: 700;
+	margin-right: 12px;
+}
+
+.salescenter-app-payment-by-sms-timeline-item-disabled .salescenter-app-payment-by-sms-timeline-content {
+	opacity: .6;
+	pointer-events: none;
+}
+
+.salescenter-app-payment-by-sms-timeline-item-disabled .salescenter-app-payment-by-sms-item-counter-icon {
+	background-color: #c9cfd3;
+}
+
+.salescenter-app-payment-by-sms-item-container-select {
+	font-size: 14px;
+	line-height: 20px;
+	color: #525c69;
+	display: flex;
+	align-items: center;
+	margin: 0 7px 20px;
+}
+
+.salescenter-app-payment-by-sms-item-container-select-text {
+	margin-right: 18px;
+}
+
+.salescenter-app-payment-by-sms-item-container-select-inner {
+	border-radius: 17px;
+	background: #e4e7ea;
+	padding: 7px 15px 7px 19px;
+	cursor: pointer;
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.salescenter-app-payment-by-sms-item-container-select-arrow {
+	opacity: .5;
+	transition: opacity .2s linear;
+	position: relative;
+	top: -1px;
+	display: block;
+	width: 6px;
+	height: 6px;
+	border-bottom: 2px solid;
+	border-left: 2px solid;
+	transform: rotate(-45deg);
+	border-color: #525c69;
+	margin-left: 9px;
+}
+
+.salescenter-app-payment-by-sms-item-container-select-inner:hover .salescenter-app-payment-by-sms-item-container-select-arrow {
+	opacity: .8;
+}
+
+.salescenter-app-payment-by-sms-item-container-select-item,
+.salescenter-app-payment-by-sms-select-popup-option {
+	width: 200px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: #525c69;
+}
+
+.salescenter-app-payment-by-sms-select-popup {
+	padding: 5px 0;
+}
+
+.salescenter-app-payment-by-sms-select-popup-option {
+	border-radius: 15px;
+	background: #e4e7ea;
+	padding: 5px 13px;
+	cursor: pointer;
+	color: #525c69;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.salescenter-app-payment-by-sms-select-popup-option + .salescenter-app-payment-by-sms-select-popup-option {
+	margin-top: 9px;
+}
+
+.salescenter-app-payment-by-sms-item-send .salescenter-app-payment-by-sms-item-container {
+	padding-top: 6px;
+	padding-bottom: 10px;
+}
+
+.salescenter-app-payment-by-sms-item-send .salescenter-app-payment-by-sms-item-container-payment-inline {
+	display: flex;
+	align-items: center;
+}
+
+.salescenter-app-payment-by-sms-item-send .salescenter-app-add-item-link {
+	margin-left: 24px;
+}
+
+.salescenter-app-payment-by-sms-item-send .salescenter-app-payment-by-sms-item-counter-number {
+	margin-top: 29px;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2215%22%20height%3D%2215%22%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M6.433%208.487L4.515%206.569%203.159%207.925l3.2%203.2.002-.001.073.073%205.953-5.952-1.356-1.356-4.598%204.598zm1.018%206.415A7.451%207.451%200%20117.451%200a7.451%207.451%200%20010%2014.902z%22/%3E%3C/svg%3E);
+}
+
+.salescenter-app-payment-by-sms-item-send .salescenter-app-payment-by-sms-item-counter-line {
+	width: 1px;
+	left: 31px;
+	top: -5px;
+	bottom: -5px;
+	background: #d1d6da;
+	opacity: 1;
+}
+
+.salescenter-app-payment-by-sms-item-send .salescenter-app-payment-by-sms-item-counter-number:after {
+	content: '';
+	position: absolute;
+	top: 15px;
+	right: -15px;
+	width: 15px;
+	height: 1px;
+	background: #e0e2e4;
+}
+
+.salescenter-app-payment-by-sms-item-disabled.salescenter-app-payment-by-sms-item-send,
+.salescenter-app-payment-by-sms-item-disabled.salescenter-app-payment-by-sms-item-send .salescenter-app-payment-by-sms-item-counter:after {
+	background: #edf1f3;
+}
+
+.salescenter-app-payment-by-sms-item-disabled.salescenter-app-payment-by-sms-item-send .salescenter-app-add-item-link {
+	display: none;
+}
+
+.salescenter-app-payment-by-sms-item-disabled.salescenter-app-payment-by-sms-item-send .ui-btn {
+	opacity: .6;
+	pointer-events: none;
+}
+
+.salescenter-app-input-counter {
+	position: absolute;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	display: block;
+	width: 30px;
+	z-index: 9;
+}
+
+.salescenter-app-input-counter-up,
+.salescenter-app-input-counter-down {
+	position: absolute;
+	width: 100%;
+	left: 0;
+	height: 50%;
+	opacity: .4;
+	cursor: pointer;
+}
+
+.salescenter-app-input-counter-up:hover,
+.salescenter-app-input-counter-down:hover {
+	opacity: 1;
+}
+
+.salescenter-app-input-counter-up {
+	top: 0;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2210%22%20height%3D%227%22%20viewBox%3D%220%200%2010%207%22%3E%3Cpath%20fill%3D%22%23828B95%22%20fill-rule%3D%22evenodd%22%20d%3D%22M4.89431692%2C5.70654635e-13%20L9.78863384%2C4.89431692%20L8.56505461%2C6.11789615%20L4.894%2C2.446%20L1.22357923%2C6.11789615%20L4.7206683e-13%2C4.89431692%20L3.671%2C1.223%20L3.67073769%2C1.22357923%20L4.89431692%2C5.70654635e-13%20Z%22/%3E%3C/svg%3E') center center no-repeat;
+	background-position-y: 9px;
+}
+
+.salescenter-app-input-counter-down {
+	bottom: 0;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2210%22%20height%3D%227%22%20viewBox%3D%220%200%2010%207%22%3E%3Cpath%20fill%3D%22%23828B95%22%20fill-rule%3D%22evenodd%22%20d%3D%22M3.67073769%2C4.89431692%20L3.671%2C4.894%20L1.24344979e-14%2C1.22357923%20L1.22357923%2C-9.48130463e-14%20L4.894%2C3.671%20L8.56505461%2C-4.20061311e-13%20L9.78863384%2C1.22357923%20L4.89431692%2C6.11789615%20L3.67073769%2C4.89431692%20Z%22/%3E%3C/svg%3E') center center no-repeat;
+	background-position-y: 4px;
+}
+
+.ui-sidepanel-menu-item-border .ui-sidepanel-menu-link {
+	height: auto;
+	border-top: 1px solid rgba(82,92,105,.1);
+	border-bottom: 1px solid rgba(82,92,105,.1);
+	padding: 10px 0;
+	margin: 10px 27px 13px 29px;
+}
+
+.ui-sidepanel-menu-item-sm .ui-sidepanel-menu-link-text {
+	font-size: 13px;
+	line-height: normal;
+	color: #878f9b;
+}
+
+.ui-sidepanel-menu-item-sm .ui-sidepanel-menu-link {
+	height: 27px;
+}
+
+.salescenter-app-ctl-label-text-link:hover span {
+	border-bottom: 1px dashed rgba(130,139,149,.8);
+}
+
+.salescenter-app-ctl-label-text-link span,
+.salescenter-app-ctl-label-text-link select {
+	color: #80868e;
+	display: inline-block;
+	border-bottom: 1px dashed rgba(130,139,149,.4);
+	cursor: pointer;
+}
+
+.salescenter-app-ctl-label-text-link select {
+	font-family: HelveticaNeue, "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 13px;
+	/* color: rgba(128,134,142,1); */
+	color: #0b66c3;
+	line-height: 16px;
+	background: none;
+	border: none !important;
+	border-radius: 0;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+	outline: none !important;
+	cursor: pointer;
+}
+
+.salescenter-app-col-currency {
+	position: relative;
+	flex-direction: row;
+	align-items: initial;
+}
+
+.salescenter-app-col-currency .ui-ctl-element {
+	text-align: right;
+	border-right: none;
+	border-radius: 2px 0 0 2px;
+	padding-right: 0 !important;
+}
+
+.salescenter-app-col-currency-symbol {
+	display: flex;
+	flex-direction: column;
+	align-content: center;
+	justify-content: center;
+	max-width: 25px;
+	min-width: 18px;
+	text-align: center;
+	white-space: nowrap;
+	overflow: hidden;
+	padding: 0 5px 0 3px;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 14px;
+	color: rgba(82,92,105,.5);
+	border: 1px solid #c6cdd3;
+	border-left: none;
+	border-radius: 0 2px 2px 0;
+	background-color: #fff;
+	transition: border .3s ease, background-color .3s ease, color .3s ease, padding .3s ease;
+	cursor: pointer;
+}
+
+.salescenter-app-col-currency-symbol-link span {
+	color: #0b66c3;
+	border-top: 1px solid transparent;
+	border-bottom: 1px dashed rgba(39,107,179,.4);
+	cursor: pointer;
+	pointer-events: none;
+}
+
+.salescenter-app-col-currency-symbol-link:hover span {
+	border-color: rgba(39,107,179,.8);
+}
+
+.ui-ctl-element:focus + .salescenter-app-col-currency-symbol,
+.ui-ctl-element:hover + .salescenter-app-col-currency-symbol {
+	border-color: #66afe9;
+}
+
+.ui-ctl-element[disabled] + .salescenter-app-col-currency-symbol {
+	border-color: #c6cdd3;
+	background-color: #f4f4f4;
+	color: #a9adb2;
+	cursor: not-allowed;
+}
+
+.salescenter-app-col-currency .salescenter-app-col-select-hidden {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	width: 30px;
+	z-index: 9;
+	opacity: 0;
+	cursor: pointer;
+}
+
+.salescenter-app-result-grid-total-big .salescenter-app-result-grid-item-currency {
+	flex-basis: 95px;
+	text-align: right;
+	white-space: nowrap;
+	padding-left: 5px
+}
+
+.salescenter-app-result-grid-total-sm .salescenter-app-result-grid-item-currency {
+	flex-basis: 95px;
+	text-align: right;
+	white-space: nowrap;
+	padding-left: 5px;
+}
+
+.salescenter-app-result-grid-item-currency-symbol {
+	padding-left: 5px;
+	color: rgba(82,92,105,.5);
+}
+
+.salescenter-ui-ctl-element {
+	line-height: 39px;
+}
+
+.salescenter-app-payment-by-sms-item-container-alert {
+	display: inline-flex;
+	width: auto;
+	padding: 11px 24px 11px 11px;
+	min-width: calc(100% - 40px);
+	margin-top: 6px;
+}
+
+.salescenter-app-payment-by-sms-item-container-alert a {
+	margin-left: 12px;
+	border-bottom: 1px dashed rgba(32, 102, 176, .4);
+	color: #2066b0;
+	text-decoration: none;
+	cursor: pointer;
+	position: relative;
+	-webkit-transition: all .2s linear;
+	-o-transition: all .2s linear;
+	transition: all .2s linear;
+	font: 15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.salescenter-app-payment-by-sms-item-container-alert a:hover {
+	text-decoration: none;
+	border-color: rgba(32, 102, 176, 1);
+}
+
+.salescenter-app-payment-by-sms-item-container-alert .ui-alert-message {
+	flex: 1;
+}
+
+.salescenter-app-payment-by-sms-item-container-alert-config {
+	font-family: "OpenSans-Bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	text-transform: uppercase;
+	font-size: 12px;
+	color: #535c69;
+	text-align: center;
+	cursor: pointer;
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item-img-del {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 10px;
+	bottom: 10px;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 75%;
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item-img-del-title {
+	bottom: 30px;
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-item-img-del-title +
+.salescenter-app-payment-by-sms-item-container-payment-item-title-text {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 15px;
+	padding: 0 5px;
+}
+
+.salescenter-app-form-col-disabled {
+	pointer-events: none;
+}
+
+.salescenter-app-form-col-prod {
+	align-items: flex-end;
+	display: flex;
+}
+
+.salescenter-app-form-col-img {
+	margin-left: 12px;
+}
+
+.salescenter-app-form-container .adm-fileinput-drag-area,
+.salescenter-app-form-container .adm-fileinput-wrapper-single .adm-fileinput-drag-area {
+	width: 37px;
+	height: 37px;
+}
+
+.salescenter-app-form-container div.adm-fileinput-item div.adm-fileinput-item-preview {
+	width: 39px;
+	height: 39px !important;
+	border: 1px solid #c6cdd3;
+	border-radius: 2px;
+	background: #fff;
+}
+
+.salescenter-app-form-container div.adm-fileinput-item div.adm-fileinput-item-preview:before {
+	height: 39px;
+}
+
+.salescenter-app-form-container .ui-image-input-container,
+.salescenter-app-form-container div.adm-fileinput-item-wrapper {
+	height: 39px !important;
+}
+
+.salescenter-app-form-container .adm-fileinput-item-preview canvas {
+	border: none;
+	border-radius: 0;
+}
+
+.salescenter-app-form-container .ui-image-item-shadow {
+	height: 39px !important;
+	width: 39px !important;
+	bottom: 0;
+	left: 52%;
+	top: 50%;
+}
+
+.salescenter-app-form-container .ui-image-item-shadow:after {
+	transform: rotate(14deg);
+	top: 0;
+	left: 1px;
+	right: 0;
+	height: 101%;
+}
+
+.salescenter-app-form-container .ui-image-input-img-add {
+	width: 22px;
+	height: 22px;
+	background-size: 10px;
+}
+
+.salescenter-app-form-container .ui-image-input-img {
+	max-width: 37px;
+	max-height: 37px;
+	border: none;
+	border-radius: 0;
+}
+
+.salescenter-app-form-container .ui-image-input-img-inner {
+	width: 39px;
+	height: 39px;
+	border: 1px solid #c6cdd3;
+	border-radius: 2px;
+	box-sizing: border-box;
+	margin-right: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: auto;
+	background: #fff;
+	pointer-events: none;
+}
+
+.salescenter-app-form-container .ui-image-input-img-inner:before,
+.salescenter-app-form-container .ui-image-input-img-inner:after {
+	border-radius: 1px;
+}
+
+.salescenter-app-form-container .ui-image-input-img-inner:before {
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: -2px;
+	transform: rotate(6deg);
+}
+
+.salescenter-app-form-container .ui-image-input-img-inner:after {
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: -3px;
+	transform: rotate(13deg);
+	height: 101%;
+}
+
+.salescenter-app-form-container .ui-image-input-img-block {
+	z-index: 1;
+	position: relative;
+}
+
+.salescenter-app-form-col-input {
+	width: calc(100% - 100px);
+	max-width: 540px;
+	min-width: 200px;
+}
+
+/* delivery */
+/*
+.salescenter-delivery {
+	display: block;
+	width: 100%;
+	overflow: hidden;
+	padding: 10px 0 0 0;
+}
+
+.salescenter-delivery-header {
+	display: flex;
+	align-items: center;
+	margin-bottom: 26px;
+	font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+	font-size: 14px;
+	color: #525c69;
+}
+
+.salescenter-delivery-header-method {
+	display: inline-block;
+	margin-right: 13px;
+}
+
+.salescenter-delivery-selector {
+	display: inline-flex;
+	align-items: center;
+	position: relative;
+	height: 34px;
+	border-radius: 17px;
+	box-sizing: border-box;
+	border: 1px solid rgba(82,92,105,.17);
+	font-size: 14px;
+	color: #333;
+	letter-spacing: normal;
+	font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+	transition: .1s;
+}
+
+.salescenter-delivery-selector--dark {
+	background: rgba(121,135,154,.15);
+	border-color: transparent;
+}
+
+.salescenter-delivery-selector--hover {
+	cursor: pointer;
+}
+
+.salescenter-delivery-selector--inline {
+	padding: 0;
+	border-color: transparent;
+}
+
+.salescenter-delivery-selector--checkbox {
+	position: relative;
+	border: 1px solid rgba(82,92,105,.17);
+}
+
+.salescenter-delivery-selector--checkbox:hover {
+	border-color: rgba(82,92,105,.35);
+}
+
+.salescenter-delivery-selector--checkbox .salescenter-delivery-selector-text {
+	margin-left: 5px;
+}
+
+.salescenter-delivery-selector--checkbox input {
+	margin-left: 12px;
+}
+
+.salescenter-delivery-selector--checkbox input + .salescenter-delivery-selector-text:after {
+	content: '';
+	position: absolute;
+	top: -1px;
+	right: -1px;
+	bottom: -1px;
+	left: -1px;
+	border: 2px solid transparent;
+	border-radius: 34px;
+	pointer-events: none;
+	transition: .1s;
+}
+
+.salescenter-delivery-selector--checkbox input:checked + .salescenter-delivery-selector-text:after {
+	border-color: #2fc6f6;
+}
+
+.salescenter-delivery-selector-text {
+	margin: 0 18px;
+}
+
+.salescenter-delivery-selector--inline .salescenter-delivery-selector-text {
+	margin: 0 13px 0 0;
+	color: #80868e;
+	border-bottom: 1px dashed rgba(130,139,149,.4);
+}
+
+.salescenter-delivery-selector--hover:hover .salescenter-delivery-selector--inline,
+.salescenter-delivery-selector--inline .salescenter-delivery-selector-text:hover {
+	border-color: rgba(130,139,149,.8);
+}
+
+.salescenter-delivery-selector-arrow {
+	flex: 1;
+	position: relative;
+	margin: 0 5px 0 -13px;
+	min-width: 26px;
+	height: 100%;
+	opacity: .5;
+	transition: none;
+	cursor: pointer;
+}
+
+.salescenter-delivery-selector-arrow:after {
+	content: '';
+	position: absolute;
+	top: 10px;
+	left: 9px;
+	transform: rotate(-45deg);
+	width: 6px;
+	height: 6px;
+	border-bottom: 2px solid;
+	border-left: 2px solid;
+	border-color: #525c69;
+}
+
+.salescenter-delivery-selector-arrow:hover,
+.salescenter-delivery-selector--hover:hover .salescenter-delivery-selector-arrow {
+	opacity: 1;
+	transition: .1s;
+}
+
+.salescenter-delivery-selector--hover:not(.salescenter-delivery-selector--dark):hover .salescenter-delivery-selector {
+	border-color: rgba(47,198,246,.9);
+}
+
+.salescenter-delivery-car {
+	display: block;
+	white-space: nowrap;
+	margin: 0 -9px 15px -9px;
+}
+
+.salescenter-delivery-car-item {
+	display: inline-block;
+	position: relative;
+	width: 255px;
+	box-sizing: border-box;
+	vertical-align: top;
+	margin: 0 9px;
+	padding: 7px 14px 9px 14px;
+	border: 1px solid rgba(168,173,180,.58);
+	border-radius: 3px;
+	font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+	cursor: pointer;
+}
+
+.salescenter-delivery-car-item:not(.salescenter-delivery-car-item--selected):hover {
+	border-color: rgba(168,173,180,.9);
+}
+
+.salescenter-delivery-car-item--selected {
+	border-color: #2fc6f6;
+}
+
+.salescenter-delivery-car-item--selected:before {
+	content: '';
+	position: absolute;
+	top: -7px;
+	right: -7px;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background: #2fc6f6 url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2212%22%20height%3D%229%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M4.627%205.81L10.402%200%2012%201.607%204.652%209l-.025-.025L4.602%209%200%204.373l1.598-1.607z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E)
+	no-repeat center;
+	box-shadow: 0 2px 4px 0 rgba(0,0,0,.11);
+	z-index: 9;
+}
+
+.salescenter-delivery-car-item--selected:after {
+	content: '';
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	border: 1px solid #2fc6f6;
+	border-radius: 2px;
+	pointer-events: none;
+}
+
+.salescenter-delivery-car-title {
+	display: block;
+	overflow: hidden;
+	margin-bottom: 5px;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	font-family: "OpenSans-SemiBold", Helvetica Neue, Helvetica, Arial, sans-serif;
+	font-size: 14px;
+	color: #333;
+	line-height: 23px;
+}
+
+.salescenter-delivery-car-container {
+	display: flex;
+	align-items: center;
+	overflow: hidden;
+}
+
+.salescenter-delivery-car-image {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 74px;
+	height: 74px;
+	margin: 0 5px;
+	border-radius: 100%;
+	background: rgba(168,173,180,.15);
+}
+
+.salescenter-delivery-car-image img {
+	display: block;
+	max-width: calc(100% - 30px);
+	max-height: calc(100% - 30px);
+	opacity: .5;
+}
+
+.salescenter-delivery-car-item--selected .salescenter-delivery-car-image {
+	background: rgba(47,198,246,.15);
+}
+
+.salescenter-delivery-car-param {
+	flex: 1;
+	display: flex;
+	justify-content: flex-end;
+}
+
+.salescenter-delivery-car-param table {
+	border-collapse: collapse;
+	font-size: 13px;
+	line-height: 21px;
+}
+
+.salescenter-delivery-car-param table td:first-child {
+	padding-left: 0;
+	color: #9ba1aa;
+}
+
+.salescenter-delivery-car-param table td {
+	padding-left: 9px;
+	color: #525c69;
+}
+
+.salescenter-delivery-additionally {
+	margin-bottom: 20px;
+}
+
+.salescenter-delivery-additionally-options {
+	letter-spacing: 5px;
+	padding: 10px 0 0 0;
+}
+
+.salescenter-delivery-additionally-options .salescenter-delivery-selector {
+	margin-bottom: 10px;
+}
+
+.salescenter-delivery-path {
+	display: block;
+	position: relative;
+	padding: 20px 0;
+	border-top: 1px solid rgba(82,92,105,.1);
+	border-bottom: 1px solid rgba(82,92,105,.1);
+}
+
+.salescenter-delivery-path:before {
+	content: '';
+	position: absolute;
+	top: 68px;
+	bottom: 63px;
+	left: 12px;
+	width: 2px;
+	opacity: .37;
+	background: #2fc6f6;
+}
+
+.salescenter-delivery-path-item {
+	display: block;
+	overflow: hidden;
+}
+
+.salescenter-delivery-path-item + .salescenter-delivery-path-item {
+	margin-top: 30px;
+}
+
+.salescenter-delivery-path-title {
+	display: block;
+	overflow: hidden;
+	margin: 0 0 -7px 27px;
+	opacity: .9;
+	font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+	font-size: 13px;
+	line-height: 22px;
+	transition: .1s;
+}
+
+.salescenter-delivery-path-item--editable .salescenter-delivery-path-title {
+	margin-bottom: 5px;
+}
+
+.salescenter-delivery-path-control {
+	display: flex;
+}
+
+.salescenter-delivery-path-control .ui-ctl {
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-start;
+}
+
+.salescenter-delivery-path-icon {
+	min-width: 26px;
+	height: 39px;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2217%22%20height%3D%2224%22%20viewBox%3D%220%200%2017%2024%22%3E%3Cpath%20fill%3D%22%2338B1FF%22%20d%3D%22M8.25031499%2C0%20C3.67588648%2C0%203.37507799e-14%2C3.67444651%203.37507799e-14%2C8.25031499%20C3.37507799e-14%2C12.2273527%202.49276094%2C17.1766304%207.47828281%2C23.0981482%20L7.47830881%2C23.0981263%20C7.83400051%2C23.5205965%208.46482543%2C23.5747313%208.8872957%2C23.2190396%20C8.93318775%2C23.1804015%208.97550967%2C23.137712%209.01374944%2C23.0914876%20C14.0050031%2C17.0580312%2016.50063%2C12.1109737%2016.50063%2C8.25031499%20C16.50063%2C3.67444651%2012.8247435%2C0%208.25031499%2C0%20Z%20M8.25031499%2C11.99928%20C6.15083698%2C11.99928%204.49991%2C10.349793%204.49991%2C8.24887502%20C4.49991%2C6.14939701%206.14939701%2C4.49847003%208.25031499%2C4.49847003%20C10.349793%2C4.49847003%2012.00072%2C6.14795704%2012.00072%2C8.24887502%20C12.00072%2C10.349757%2010.349829%2C11.99928%208.25031499%2C11.99928%20Z%22/%3E%3C/svg%3E') center no-repeat;
+}
+
+.salescenter-delivery-path-icon--green {
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2217%22%20height%3D%2224%22%20viewBox%3D%220%200%2017%2024%22%3E%3Cpath%20fill%3D%22%239dcf00%22%20d%3D%22M8.25031499%2C0%20C3.67588648%2C0%203.37507799e-14%2C3.67444651%203.37507799e-14%2C8.25031499%20C3.37507799e-14%2C12.2273527%202.49276094%2C17.1766304%207.47828281%2C23.0981482%20L7.47830881%2C23.0981263%20C7.83400051%2C23.5205965%208.46482543%2C23.5747313%208.8872957%2C23.2190396%20C8.93318775%2C23.1804015%208.97550967%2C23.137712%209.01374944%2C23.0914876%20C14.0050031%2C17.0580312%2016.50063%2C12.1109737%2016.50063%2C8.25031499%20C16.50063%2C3.67444651%2012.8247435%2C0%208.25031499%2C0%20Z%20M8.25031499%2C11.99928%20C6.15083698%2C11.99928%204.49991%2C10.349793%204.49991%2C8.24887502%20C4.49991%2C6.14939701%206.14939701%2C4.49847003%208.25031499%2C4.49847003%20C10.349793%2C4.49847003%2012.00072%2C6.14795704%2012.00072%2C8.24887502%20C12.00072%2C10.349757%2010.349829%2C11.99928%208.25031499%2C11.99928%20Z%22/%3E%3C/svg%3E');
+}
+
+.salescenter-delivery-path-input {
+	display: inline-flex;
+	align-items: center;
+}
+
+.salescenter-delivery-path-input[contenteditable="false"] {
+	flex: none;
+	display: block;
+	overflow: hidden;
+	max-width: calc(100% - 30px);
+	position: relative;
+	width: auto;
+	margin-left: 1px;
+	padding: 0 !important;
+	max-height: 20px;
+	border: 1px solid transparent !important;
+	border-bottom: 1px dashed rgba(32, 102, 176, .4) !important;
+	color: #2066b0;
+	cursor: pointer;
+	transition: .1s;
+}
+
+.salescenter-delivery-path-control:hover .salescenter-delivery-path-input[contenteditable="false"] {
+	max-width: calc(100% - 56px);
+}
+
+.salescenter-delivery-path-input[contenteditable="false"] + .ui-ctl-icon-search {
+	display: none;
+}
+
+.salescenter-delivery-path-edit {
+	display: none;
+	vertical-align: middle;
+	width: 30px;
+	height: 39px;
+	opacity: 0;
+	cursor: pointer;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2014%2014%22%3E%3Cpath%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M16.4358633%2C5.03481936%20L18.9864331%2C7.61224176%20L9.00876666%2C17.563056%20L6.45819647%2C14.9856339%20L16.4358633%2C5.03481936%20Z%20M5.02558382%2C18.6726366%20C5.00146497%2C18.7639157%205.0273066%2C18.8603615%205.09277206%2C18.9275292%20C5.1599603%2C18.9946969%205.25643572%2C19.0205306%205.34774281%2C18.9946969%20L8.19893597%2C18.2265744%20L5.79394162%2C15.8223165%20L5.02558382%2C18.6726366%20Z%22%20transform%3D%22translate%28-5%20-5%29%22/%3E%3C/svg%3E') center 12px no-repeat;
+	background-size: 12px;
+}
+
+.salescenter-delivery-path-input[contenteditable="false"] +
+.ui-ctl-icon-search +
+.salescenter-delivery-path-edit {
+	display: inline-block;
+}
+
+.salescenter-delivery-path-control:hover
+.salescenter-delivery-path-input[contenteditable="false"] +
+.ui-ctl-icon-search +
+.salescenter-delivery-path-edit {
+	opacity: .4;
+}
+
+.salescenter-delivery-path-control:hover
+.salescenter-delivery-path-input[contenteditable="false"] +
+.ui-ctl-icon-search +
+.salescenter-delivery-path-edit:hover {
+	opacity: .7;
+}
+
+.salescenter-delivery-bottom {
+	display: block;
+	overflow: hidden;
+	padding: 10px 0 0 0;
+}
+
+.salescenter-delivery-bottom-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+}
+
+.salescenter-delivery-bottom-col {
+	display: flex;
+	min-height: 39px;
+	align-items: center;
+	font-family: HelveticaNeue, Helvetica Neue, Helvetica, Arial, sans-serif;
+	font-size: 15px;
+	color: #525c69;
+}
+
+.salescenter-delivery-bottom-col--light {
+	color: #828b95;
+}
+
+.salescenter-delivery-icon-config {
+	display: inline-block;
+	width: 22px;
+	height: 22px;
+	opacity: .4;
+	cursor: pointer;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cpath%20fill%3D%22%23525C69%22%20d%3D%22M15.077904%2C12.6913799%20C14.8239394%2C13.8852057%2013.8850923%2C14.824047%2012.691272%2C15.0779291%20C10.4151847%2C15.561991%208.43795534%2C13.5841867%208.92211446%2C11.308592%20C9.15107628%2C10.2325476%2010.2323767%2C9.15117084%2011.3084244%2C8.92216475%20C13.5840774%2C8.43781009%2015.5620771%2C10.4151746%2015.077904%2C12.6913799%20M19.4145333%2C10.8349653%20L17.8296133%2C10.57054%20L17.8296133%2C10.57054%20C17.7170133%2C10.1101933%2017.554%2C9.66968667%2017.3424133%2C9.25791333%20C17.33352%2C9.24058933%2017.3355867%2C9.219748%2017.3478133%2C9.20459067%20L18.3423333%2C7.97143467%20C18.5581333%2C7.70554267%2018.5483333%2C7.322992%2018.3208267%2C7.06639067%20L17.6904667%2C6.35694%20C17.4619733%2C6.10059467%2017.0830667%2C6.04638667%2016.79404%2C6.228988%20L15.4386133%2C7.08106%20L15.4386133%2C7.08106%20C14.8510133%2C6.67052%2014.18652%2C6.365788%2013.4700133%2C6.18623733%20C13.4510133%2C6.181464%2013.4366%2C6.165956%2013.43336%2C6.14660533%20L13.1735067%2C4.584968%20C13.1178533%2C4.24756667%2012.82588%2C4%2012.4831467%2C4%20L11.5332133%2C4%20C11.1911733%2C4%2010.8982%2C4.24756667%2010.8437867%2C4.584968%20L10.5824933%2C6.147188%20C10.5792533%2C6.16649067%2010.5648667%2C6.181952%2010.5458933%2C6.18670267%20C9.96604%2C6.33202533%209.4214%2C6.56138267%208.92248%2C6.861248%20C8.90566667%2C6.87135467%208.88454667%2C6.87060933%208.86857333%2C6.8592%20L7.60581333%2C5.957996%20C7.32801333%2C5.75951467%206.94642667%2C5.79055333%206.70398667%2C6.03248533%20L6.03289333%2C6.70407467%20C5.79096%2C6.94651867%205.75992%2C7.32811467%205.95893333%2C7.60592933%20L6.86225333%2C8.87121733%20C6.87364%2C8.887168%206.87442667%2C8.90828667%206.86434667%2C8.92509867%20C6.5674%2C9.420164%206.34042667%2C9.96156533%206.19525333%2C10.536148%20C6.19045333%2C10.5551253%206.175%2C10.5694693%206.15572%2C10.5726827%20L4.58493333%2C10.8349893%20C4.24805333%2C10.8906173%204%2C11.1826347%204%2C11.525392%20L4%2C12.474608%20C4%2C12.8173413%204.24805333%2C13.1093827%204.58493333%2C13.1650107%20L6.15566667%2C13.4272947%20C6.17497333%2C13.4305307%206.19045333%2C13.4448987%206.19522667%2C13.4638987%20C6.31332%2C13.933%206.48153333%2C14.3817267%206.70266667%2C14.7994387%20C6.71188%2C14.816856%206.70993333%2C14.8380213%206.69754667%2C14.8533667%20L5.70793333%2C16.0790467%20C5.49288%2C16.344684%205.50190667%2C16.7274907%205.72942667%2C16.9838587%20L6.35929333%2C17.693332%20C6.5878%2C17.950144%206.96692%2C18.0033733%207.25597333%2C17.8212373%20L8.60374667%2C16.974568%20C8.62026667%2C16.9641827%208.64132%2C16.9646027%208.65748%2C16.9755467%20C9.23272%2C17.3642907%209.88164%2C17.6505573%2010.5771867%2C17.8212373%20L10.5771867%2C17.8212373%20L10.8438133%2C19.4149853%20C10.8982267%2C19.7524093%2011.1911733%2C20%2011.5332133%2C20%20L12.4831467%2C20%20C12.8258933%2C20%2013.1178533%2C19.7524333%2013.1735067%2C19.4150093%20L13.4338%2C17.853068%20C13.43704%2C17.8337413%2013.4514533%2C17.8182573%2013.4704533%2C17.8135067%20C14.0428133%2C17.6701867%2014.5803733%2C17.44488%2015.0745867%2C17.1503013%20C15.0914%2C17.140288%2015.11244%2C17.14108%2015.1283467%2C17.1524427%20L16.44492%2C18.0927653%20C16.72224%2C18.2919693%2017.1040933%2C18.26072%2017.34628%2C18.01802%20L18.0176667%2C17.3466413%20C18.2593067%2C17.1049413%2018.2920267%2C16.7235547%2018.09136%2C16.445228%20L17.15412%2C15.1311347%20C17.1427333%2C15.115184%2017.14196%2C15.094088%2017.15204%2C15.0772987%20C17.4498667%2C14.5805587%2017.6780533%2C14.0381093%2017.8224267%2C13.4609413%20C17.8271733%2C13.4419413%2017.8426533%2C13.427528%2017.86196%2C13.4242907%20L19.4150667%2C13.1649653%20C19.7529467%2C13.1093133%2020%2C12.8172947%2020%2C12.4745613%20L20%2C11.5253453%20C19.9994933%2C11.1826347%2019.75244%2C10.8906173%2019.4145333%2C10.8349653%22%20transform%3D%22translate%28-4%20-4%29%22/%3E%3C/svg%3E') center no-repeat;
+	background-size: 10px;
+}
+
+.salescenter-delivery-icon-config:hover {
+	opacity: .6;
+}
+
+.salescenter-delivery-status {
+	display: inline-block;
+	padding: 0 9px;
+	font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+	font-weight: bold;
+	font-size: 10px;
+	color: #525c69;
+	text-align: center;
+	background: #f1f1f1;
+	border-radius: 13.5px;
+}
+
+.salescenter-delivery-status--success {
+	background: rgba(232,238,175,.8);
+	color: #668d13;
+}
+
+span + .salescenter-delivery-status {
+	margin-left: 5px;
+}
+
+.salescenter-delivery-table-total {
+	border-collapse: collapse;
+	text-align: right;
+	margin-bottom: -15px;
+}
+
+.salescenter-delivery-table-total td {
+	white-space: nowrap;
+}
+
+.salescenter-delivery-table-total tr:first-child td {
+	padding-bottom: 5px;
+}
+
+.salescenter-delivery-table-total td:before {
+	content: '';
+	display: inline-block;
+	vertical-align: middle;
+	height: 39px;
+}
+
+.salescenter-delivery-table-total td:first-child {
+	padding-right: 5px;
+}
+
+.salescenter-delivery-table-total td:last-child {
+	min-width: 130px;
+	padding-right: 5px;
+}
+
+.salescenter-delivery-table-total-result {
+	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-size: 21px;
+	color: #525c69;
+	text-align: right;
+}
+
+.salescenter-delivery-table-total-result td {
+	border-top: 1px solid rgba(82,92,105,.1);
+}
+
+.salescenter-delivery-table-total-result td:before {
+	height: 54px;
+}
+
+.salescenter-delivery-table-total-symbol {
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	padding-left: 5px;
+	color: rgba(82,92,105,.5);
+}
+
+.salescenter-delivery-table-total-result .salescenter-delivery-table-total-symbol {
+	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-size: 21px;
+}
+
+.salescenter-delivery-bottom-input-symbol {
+	position: relative;
+	flex-direction: row;
+	align-items: initial;
+}
+
+.salescenter-delivery-bottom-input-symbol .ui-ctl-element {
+	text-align: right;
+	border-right: none;
+	border-radius: 2px 0 0 2px;
+	padding-right: 0 !important;
+}
+
+.salescenter-delivery-bottom-input-symbol span {
+	display: flex;
+	flex-direction: column;
+	align-content: center;
+	justify-content: center;
+	max-width: 25px;
+	min-width: 18px;
+	text-align: center;
+	white-space: nowrap;
+	overflow: hidden;
+	padding: 0 5px 0 3px;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 14px;
+	color: rgba(82,92,105,.5);
+	border: 1px solid #c6cdd3;
+	border-left: none;
+	border-radius: 0 2px 2px 0;
+	background-color: #fff;
+	transition: border .3s ease, background-color .3s ease, color .3s ease, padding .3s ease;
+}
+
+.salescenter-delivery-bottom-input-symbol .ui-ctl-element:focus + span,
+.salescenter-delivery-bottom-input-symbol .ui-ctl-element:hover + span {
+	border-color: #66afe9;
+}
+
+.salescenter-delivery-bottom-update-icon {
+	padding-left: 26px !important;
+}
+
+.salescenter-delivery-bottom-update-icon:after {
+	position: absolute;
+	top: 50%;
+	left: 0;
+	transform: none;
+	display: block;
+	margin-top: -12px;
+	width: 24px;
+	height: 24px;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2215%22%20height%3D%2215%22%20viewBox%3D%220%200%2015%2015%22%3E%3Cpath%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M20%2C11.9567221%20L20%2C6.08704953%20L18.3131479%2C7.77439526%20C16.9397729%2C6.08359388%2014.8491032%2C5%2012.5002468%2C5%20C8.35790686%2C5%205%2C8.35790686%205%2C12.5002468%20C5%2C16.6425868%208.35790686%2C20%2012.5002468%2C20%20C14.2670726%2C20%2015.8877736%2C19.3848939%2017.1698206%2C18.3630081%20L15.2692118%2C16.0309363%20C14.5060063%2C16.6302452%2013.5458285%2C16.991114%2012.5002468%2C16.991114%20C10.0200757%2C16.991114%208.00937963%2C14.980418%208.00937963%2C12.5002468%20C8.00937963%2C10.0200757%2010.0200757%2C8.00888596%2012.5002468%2C8.00888596%20C14.0177719%2C8.00888596%2015.3585651%2C8.76320553%2016.1711371%2C9.91591246%20L14.1303275%2C11.9567221%20L20%2C11.9567221%20Z%22%20transform%3D%22translate%28-5%20-5%29%22/%3E%3C/svg%3E%0A') no-repeat center 4px;
+	content: '';
+	transition: 160ms color linear, 160ms opacity linear, 160ms background-color linear;
+}
+
+*/
+
+/* delivery end */

@@ -221,7 +221,7 @@ $showContainer = $violationForm->showViolationContainer($scheduleForm->isShifted
 							'ID' => 'violation-start-end-notify',
 							'INPUT_NAME' => $violationFormName . '[startEndNotifyUsers][]',
 							'LIST' => $violationForm->startEndNotifyUsers,
-							'USE_SYMBOLIC_ID' => 'Y',
+							'USE_SYMBOLIC_ID' => true,
 							'SELECTOR_OPTIONS' => [
 								'enableUserManager' => 'Y',
 							],
@@ -273,7 +273,7 @@ $showContainer = $violationForm->showViolationContainer($scheduleForm->isShifted
 							'ID' => 'violation-hours-per-day-notify',
 							'INPUT_NAME' => $violationFormName . '[hoursPerDayNotifyUsers][]',
 							'LIST' => $violationForm->hoursPerDayNotifyUsers,
-							'USE_SYMBOLIC_ID' => 'Y',
+							'USE_SYMBOLIC_ID' => true,
 							'SELECTOR_OPTIONS' => [
 								'enableUserManager' => 'Y',
 							],
@@ -328,7 +328,7 @@ $showContainer = $violationForm->showViolationContainer($scheduleForm->isShifted
 							'ID' => 'violation-edit-worktime-notify',
 							'INPUT_NAME' => $violationFormName . '[editWorktimeNotifyUsers][]',
 							'LIST' => $violationForm->editWorktimeNotifyUsers,
-							'USE_SYMBOLIC_ID' => 'Y',
+							'USE_SYMBOLIC_ID' => true,
 							'SELECTOR_OPTIONS' => [
 								'enableUserManager' => 'Y',
 							],
@@ -375,7 +375,7 @@ $showContainer = $violationForm->showViolationContainer($scheduleForm->isShifted
 							'ID' => 'violation-hours-per-period-notify',
 							'INPUT_NAME' => $violationFormName . '[hoursPerPeriodNotifyUsers][]',
 							'LIST' => $violationForm->hoursPerPeriodNotifyUsers,
-							'USE_SYMBOLIC_ID' => 'Y',
+							'USE_SYMBOLIC_ID' => true,
 							'SELECTOR_OPTIONS' => [
 								'enableUserManager' => 'Y',
 							],
@@ -431,7 +431,7 @@ $showContainer = $violationForm->showViolationContainer($scheduleForm->isShifted
 							'ID' => 'shift-time-notify-users-notify',
 							'INPUT_NAME' => $violationFormName . '[shiftTimeNotifyUsers][]',
 							'LIST' => $violationForm->shiftTimeNotifyUsers,
-							'USE_SYMBOLIC_ID' => 'Y',
+							'USE_SYMBOLIC_ID' => true,
 							'SELECTOR_OPTIONS' => [
 								'enableUserManager' => 'Y',
 							],

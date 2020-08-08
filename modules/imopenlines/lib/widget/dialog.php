@@ -122,6 +122,15 @@ class Dialog
 		];
 	}
 
+	/**
+	 * @param $userId
+	 * @param $configId
+	 * @return array|bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public static function get($userId, $configId)
 	{
 		$userId = intval($userId);
@@ -175,22 +184,28 @@ class Dialog
 			'ONLINE' => false
 		];
 
-		$sessionData =\Bitrix\Imopenlines\Model\SessionTable::getList(array(
+		$operatorChatId = 0;
+
+		$userCodeSession = 'livechat|'.$configId.'|'.$chatId.'|'.$userId;
+
+		$sessionData =\Bitrix\Imopenlines\Model\SessionTable::getList([
 			'select' => [
 				'ID',
 				'CLOSED',
 				'VOTE',
 				'STATUS',
+				'OPERATOR_CHAT_ID' => 'CHAT_ID',
 				'CHAT_OPERATOR_ID' => 'CHAT.AUTHOR_ID',
 				'OPERATOR_AVATAR' => 'CHAT.AUTHOR.PERSONAL_PHOTO',
 				'OPERATOR_ONLINE' => 'CHAT.AUTHOR.IS_ONLINE'
 			],
-			'filter' => array(
-				'=USER_CODE' => 'livechat|'.$configId.'|'.$chatId.'|'.$userId
-			),
-			'order' => array('ID' => 'DESC'),
+			'filter' => [
+				'=USER_CODE' => $userCodeSession
+			],
+			'order' => ['ID' => 'DESC'],
 			'limit' => 1
-		))->fetch();
+		])->fetch();
+
 		if ($sessionData)
 		{
 			$sessionId = $sessionData['ID'];
@@ -211,8 +226,14 @@ class Dialog
 
 			if ($sessionData['CHAT_OPERATOR_ID'])
 			{
-				$operator = \Bitrix\ImOpenLines\Queue::getUserData($configId, $sessionData['CHAT_OPERATOR_ID']);
+				$actualLineId = \Bitrix\ImOpenLines\Queue::getActualLineId([
+					'LINE_ID' =>  $configId,
+					'USER_CODE' => $userCodeSession
+				]);
+				$operator = \Bitrix\ImOpenLines\Queue::getUserData($actualLineId, $sessionData['CHAT_OPERATOR_ID']);
 			}
+
+			$operatorChatId = (int)$sessionData['OPERATOR_CHAT_ID'];
 		}
 
 		$userConsent = false;
@@ -231,6 +252,7 @@ class Dialog
 			'USER_VOTE' => $userVote,
 			'USER_CONSENT' => (bool)$userConsent,
 			'OPERATOR' => $operator,
+			'OPERATOR_CHAT_ID' => $operatorChatId
 		];
 	}
 

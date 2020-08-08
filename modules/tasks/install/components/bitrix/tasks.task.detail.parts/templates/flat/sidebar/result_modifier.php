@@ -22,7 +22,7 @@ $dates = array(
 foreach ($dates as $date)
 {
 	$formattedDate = "";
-	if (isset($taskData[$date]) && strlen($taskData[$date]))
+	if (isset($taskData[$date]) && mb_strlen($taskData[$date]))
 	{
 		$formattedDate = \Bitrix\Tasks\UI::formatDateTime(\Bitrix\Tasks\UI::parseDateTime($taskData[$date]), '^'.\Bitrix\Tasks\UI::getDateTimeFormat());
 	}

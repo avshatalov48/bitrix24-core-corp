@@ -18,6 +18,7 @@ require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php');?>
 			'PAGE_URL_LANDING_VIEW' => '/kb/wiki/#site_edit#/view/#landing_edit#/',
 			'PAGE_URL_SITE_SHOW' => '/kb/wiki/#site_edit#/',
 			'PAGE_URL_SITES' => '/kb/',
+			'PAGE_URL_ROLES' => '/kb/roles/',
 			'SHOW_EDIT_PANEL' => 'Y',
 			'CHECK_PERMISSIONS' => 'Y',
 			'DRAFT_MODE' => 'Y'

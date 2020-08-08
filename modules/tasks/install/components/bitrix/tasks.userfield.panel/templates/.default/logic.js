@@ -108,9 +108,7 @@ BX.namespace('Tasks.Component');
 			onItemHide: function(p, id)
 			{
 				var user = this.option('user');
-
-				var useDelete = this.option('restriction').MANAGE && user.IS_SUPER;
-
+				var useDelete = user.IS_SUPER;
 				var title = BX.message(useDelete ? 'TASKS_TUFP_FIELD_HIDE_DELETE_CONFIRM' : 'TASKS_TUFP_FIELD_HIDE_CONFIRM');
 				var params = {
 					id: this.code()+'-fh-confirm-v2',
@@ -122,12 +120,7 @@ BX.namespace('Tasks.Component');
 					] : false
 				};
 
-				BX.Tasks.confirm(
-					title,
-					null,
-					params
-				).then(function(code){
-
+				BX.Tasks.confirm(title, null, params).then(function(code) {
 					if(code == 'continue')
 					{
 						this.setItemStateDisplay(id, false); // hide item
@@ -446,10 +439,16 @@ BX.namespace('Tasks.Component');
 
 			canManage: function()
 			{
-				if(!this.option('restriction').MANAGE && B24)
+				var restriction = this.option('restriction');
+
+				if (!restriction.MANAGE)
 				{
-					B24.licenseInfoPopup.show(this.code(), BX.message('TASKS_TUFP_LICENSE_TITLE'), '<span>'+BX.message('TASKS_TUFP_LICENSE_BODY_V2')+'</span>');
-					return false;
+					if (restriction.TASK_LIMIT_EXCEEDED)
+					{
+						BX.UI.InfoHelper.show('limit_tasks_custom_fields');
+						return false;
+					}
+					return true;
 				}
 
 				return true;

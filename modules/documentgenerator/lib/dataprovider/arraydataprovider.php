@@ -9,8 +9,8 @@ use Bitrix\Main\Localization\Loc;
 
 class ArrayDataProvider extends DataProvider implements \Iterator, \Countable
 {
-	const INDEX_PLACEHOLDER = 'INDEX';
-	const NUMBER_PLACEHOLDER = 'NUMBER';
+	public const INDEX_PLACEHOLDER = 'INDEX';
+	public const NUMBER_PLACEHOLDER = 'NUMBER';
 
 	protected $itemProvider;
 	protected $itemKey;
@@ -23,13 +23,12 @@ class ArrayDataProvider extends DataProvider implements \Iterator, \Countable
 	 */
 	public function __construct($source, array $options = [])
 	{
-		Loc::loadLanguageFile(__FILE__);
 		parent::__construct($source, $options);
 		if(is_array($source))
 		{
 			$this->data = $source;
 		}
-		if(isset($options['ITEM_PROVIDER']) && isset($options['ITEM_NAME']))
+		if(isset($options['ITEM_PROVIDER'], $options['ITEM_NAME']))
 		{
 			$itemTitle = '';
 			if($options['ITEM_TITLE'])
@@ -88,10 +87,10 @@ class ArrayDataProvider extends DataProvider implements \Iterator, \Countable
 			}
 		}
 		$fields[static::NUMBER_PLACEHOLDER] = [
-			'TITLE' => GetMessage('DOCGEN_DATAPROVIDER_ARRAY_NUMBER_TITLE'),
+			'TITLE' => Loc::getMessage('DOCGEN_DATAPROVIDER_ARRAY_NUMBER_TITLE'),
 		];
 		$fields[static::INDEX_PLACEHOLDER] = [
-			'TITLE' => GetMessage('DOCGEN_DATAPROVIDER_ARRAY_INDEX_TITLE'),
+			'TITLE' => Loc::getMessage('DOCGEN_DATAPROVIDER_ARRAY_INDEX_TITLE'),
 		];
 
 		return $fields;
@@ -126,10 +125,42 @@ class ArrayDataProvider extends DataProvider implements \Iterator, \Countable
 		return $value;
 	}
 
+	public function getItemByIndex(int $index)
+	{
+		return $this->getValue($index);
+	}
+
+	public function replaceItem(int $index, $item): ArrayDataProvider
+	{
+		$oldItem = $this->getItemByIndex($index);
+		if(!$oldItem)
+		{
+			throw new \OutOfRangeException('There is no item with index ' . $index);
+		}
+		$this->data[$index] = $item;
+
+		return $this;
+	}
+
+	public function addItem($item): int
+	{
+		$this->data[] = $item;
+
+		return count($this->data);
+	}
+
+	public function deleteItemByIndex(int $index): ArrayDataProvider
+	{
+		unset($this->data[$index]);
+		$this->data = array_values($this->data);
+
+		return $this;
+	}
+
 	/**
 	 * @return string
 	 */
-	public function getItemKey()
+	public function getItemKey(): ?string
 	{
 		return $this->itemKey;
 	}

@@ -24,10 +24,10 @@ class CExternalValueCollection implements ArrayAccess
 	public function exportToArray()
 	{
 		$export = array();
-		$lengthKey = strlen($this->filterName . '_');
+		$lengthKey = mb_strlen($this->filterName.'_');
 		foreach ($this->getFilterSource() as $key => $value)
 		{
-			$export[substr($key, $lengthKey)] = $value;
+			$export[mb_substr($key, $lengthKey)] = $value;
 		}
 		unset($value);
 
@@ -217,7 +217,7 @@ class CExternalValueCollection implements ArrayAccess
 	 */
 	protected function isFilterVar($name)
 	{
-		return 0 === strpos($name, $this->getFilterName());
+		return 0 === mb_strpos($name, $this->getFilterName());
 	}
 
 	/**
@@ -234,9 +234,9 @@ class CExternalValueCollection implements ArrayAccess
 	 */
 	public function offsetExists($offset)
 	{
-		if($isUnsafe = strpos($offset, '~') === 0)
+		if($isUnsafe = mb_strpos($offset, '~') === 0)
 		{
-			$offset = substr($offset, 1);
+			$offset = mb_substr($offset, 1);
 		}
 		$offset = $this->generateName($offset, true);
 
@@ -249,8 +249,8 @@ class CExternalValueCollection implements ArrayAccess
 	 */
 	public function offsetGet($offset)
 	{
-		return (strpos($offset, '~') === 0)?
-			$this->getUnsafeVar(substr($offset, 1)):
+		return (mb_strpos($offset, '~') === 0)?
+			$this->getUnsafeVar(mb_substr($offset, 1)):
 			$this->getVar($offset);
 	}
 
@@ -260,8 +260,8 @@ class CExternalValueCollection implements ArrayAccess
 	 */
 	public function offsetSet($offset, $value)
 	{
-		(strpos($offset, '~') === 0)?
-			$this->setUnsafeVar(substr($offset, 1), $value, true):
+		(mb_strpos($offset, '~') === 0)?
+			$this->setUnsafeVar(mb_substr($offset, 1), $value, true):
 			$this->setVar($offset, $value, true);
 	}
 
@@ -270,9 +270,9 @@ class CExternalValueCollection implements ArrayAccess
 	 */
 	public function offsetUnset($offset)
 	{
-		if (strpos($offset, '~') === 0)
+		if (mb_strpos($offset, '~') === 0)
 		{
-			unset($this->source[$this->generateName(substr($offset, 1), true)]);
+			unset($this->source[$this->generateName(mb_substr($offset, 1), true)]);
 		}
 		else
 		{

@@ -73,9 +73,20 @@ $crm_default_option = array(
 	'path_to_recycle_bin' => '/crm/recyclebin/',
 
 	'path_to_perm_list' => '/crm/configs/perms/',
+	'path_to_config_checker' => '/crm/configs/checker/',
 	'path_to_user_field_edit' => '/crm/configs/fields/#entity_id#/edit/#field_id#/',
 
 	'email_from' => '',
-	'email_template' => ''
+	'email_template' => '',
+
+	'product_catalog_type_id' => '',
+	'default_product_catalog_id' => 0,
+
+	'selected_catalog_group_id' => 0,
+
+	'product_row_tax_uniform' => 'Y',
+
+	'enable_slider' => 'Y',
+	'enable_simple_time_format' => 'Y',
+	'enable_user_name_sorting' => 'N',
 );
-?>

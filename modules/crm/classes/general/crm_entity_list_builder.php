@@ -125,11 +125,11 @@ class CCrmEntityListBuilder
 			}
 			else
 			{
-				if($replace !== '' && strpos($this->sqlData['FROM'], $replace) !== false)
+				if($replace !== '' && mb_strpos($this->sqlData['FROM'], $replace) !== false)
 				{
 					$this->sqlData['FROM'] = str_replace($replace, $sql, $this->sqlData['FROM']);
 				}
-				elseif(stripos($this->sqlData['FROM'], trim($sql)) === false)
+				elseif(mb_stripos($this->sqlData['FROM'], trim($sql)) === false)
 				{
 					if($add2Start)
 					{
@@ -259,7 +259,7 @@ class CCrmEntityListBuilder
 			foreach($arFilter as $filterKey => $filterValue)
 			{
 				//Adapt nested filters for UserTypeSQL
-				if(strpos($filterKey, '__INNER_FILTER') === 0)
+				if(mb_strpos($filterKey, '__INNER_FILTER') === 0)
 				{
 					$ufFilter[] = $filterValue;
 				}
@@ -407,7 +407,7 @@ class CCrmEntityListBuilder
 					$orderSql = $ufSelectSql->GetOrder($orderKey);
 					if(is_string($orderSql) && $orderSql !== '')
 					{
-						$order = strtoupper($order);
+						$order = mb_strtoupper($order);
 						if($order !== 'ASC' && $order !== 'DESC')
 						{
 							$order = 'ASC';
@@ -664,7 +664,7 @@ class CCrmEntityListBuilder
 		}
 		else
 		{
-			$dbType = strtoupper($dbType);
+			$dbType = mb_strtoupper($dbType);
 		}
 
 		if($dbType !== 'MYSQL')

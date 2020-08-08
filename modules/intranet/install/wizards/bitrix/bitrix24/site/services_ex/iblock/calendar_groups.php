@@ -6,13 +6,12 @@ if(!CModule::IncludeModule("iblock"))
 	return;
 
 $iblockID = WizardServices::ImportIBlockFromXML(
-	$WIZARD_SERVICE_RELATIVE_PATH."/xml/_".LANGUAGE_ID."/calendar_groups.xml",
+	WIZARD_SERVICE_RELATIVE_PATH."/xml/_".LANGUAGE_ID."/calendar_groups.xml",
 	$iblockCode = "calendar_groups_extranet",
 	$iblockType = "events",
 	WIZARD_SITE_ID,
 	$permissions = Array(
 		"1" => "X",
-		WIZARD_EXTRANET_ADMIN_GROUP => "X",
 		WIZARD_EXTRANET_GROUP => "R",
 	)
 );

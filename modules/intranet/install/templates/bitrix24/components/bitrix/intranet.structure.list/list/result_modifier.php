@@ -8,7 +8,7 @@ if (!empty($arRes))
 {
 	foreach ($arRes as $key => $val)
 	{
-		$arResult['USER_PROP'][$val["FIELD_NAME"]] = (strLen($val["EDIT_FORM_LABEL"]) > 0 ? $val["EDIT_FORM_LABEL"] : $val["FIELD_NAME"]);
+		$arResult['USER_PROP'][$val["FIELD_NAME"]] = ($val["EDIT_FORM_LABEL"] <> '' ? $val["EDIT_FORM_LABEL"] : $val["FIELD_NAME"]);
 	}
 }
 ?>

@@ -4,6 +4,7 @@ namespace Bitrix\DocumentGenerator\DataProvider;
 
 use Bitrix\DocumentGenerator\DataProvider;
 use Bitrix\Main\Entity\Base;
+use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\SystemException;
 
 abstract class EntityDataProvider extends DataProvider
@@ -88,6 +89,10 @@ abstract class EntityDataProvider extends DataProvider
 			$this->data = [];
 			/** @var \Bitrix\Main\Entity\DataManager $className */
 			$className = $this->getTableClass();
+			if(!is_a($className, DataManager::class, true) || is_object($this->source))
+			{
+				return;
+			}
 			try
 			{
 				$data = $className::getByPrimary($this->source, $this->getGetListParameters())->fetch();

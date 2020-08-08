@@ -24,6 +24,8 @@
 			this.urls = params.urls;
 			this.isExtranetUser = params.isExtranetUser === "Y";
 			this.adminRightsRestricted = params.adminRightsRestricted === "Y";
+			this.delegateAdminRightsRestricted = params.delegateAdminRightsRestricted === "Y";
+			this.isFireUserEnabled = params.isFireUserEnabled === "Y";
 			this.showSonetAdmin = params.showSonetAdmin === "Y";
 			this.languageId = params.languageId;
 			this.siteId = params.siteId;
@@ -161,14 +163,25 @@
 
 			if (this.userStatus === "employee" && this.canEditProfile && !this.isOwnProfile && !this.isCurrentUserIntegrator)
 			{
+				var itemText = BX.message("INTRANET_USER_PROFILE_SET_ADMIN_RIGHTS");
+				if (this.delegateAdminRightsRestricted)
+				{
+					itemText+= "<span class='intranet-user-profile-lock-icon'></span>";
+				}
 				menuItems.push({
-					text: BX.message("INTRANET_USER_PROFILE_SET_ADMIN_RIGHTS"),
-					className: "menu-popup-no-icon",
+					text: itemText,
 					onclick: BX.proxy(function () {
 						BX.proxy_context.popupWindow.close();
 						if (this.adminRightsRestricted)
 						{
-							this.showConfirmPopup(BX.message("INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_CONFIRM"), this.setAdminRights.bind(this));
+							if (this.delegateAdminRightsRestricted)
+							{
+								top.BX.UI.InfoHelper.show('limit_admin_admins');
+							}
+							else
+							{
+								this.showConfirmPopup(BX.message("INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_CONFIRM"), this.setAdminRights.bind(this));
+							}
 						}
 						else
 						{
@@ -185,12 +198,25 @@
 				&& !BX.util.in_array(this.userStatus, ['email', 'shop' ])
 			)
 			{
+				itemText = BX.message("INTRANET_USER_PROFILE_FIRE");
+				if (!this.isFireUserEnabled && this.userStatus !== "integrator")
+				{
+					itemText+= "<span class='intranet-user-profile-lock-icon'></span>";
+				}
+
 				menuItems.push({
-					text: BX.message("INTRANET_USER_PROFILE_FIRE"),
+					text: itemText,
 					className: "menu-popup-no-icon",
 					onclick: BX.proxy(function () {
 						BX.proxy_context.popupWindow.close();
-						this.showConfirmPopup(BX.message("INTRANET_USER_PROFILE_FIRE_CONFIRM"), this.fireUser.bind(this));
+						if (!this.isFireUserEnabled && this.userStatus !== "integrator")
+						{
+							top.BX.UI.InfoHelper.show('limit_dismiss');
+						}
+						else
+						{
+							this.showConfirmPopup(BX.message("INTRANET_USER_PROFILE_FIRE_CONFIRM"), this.fireUser.bind(this));
+						}
 					}, this)
 				});
 			}
@@ -290,8 +316,8 @@
 					new BX.UI.CreateButton({
 						text: BX.message("INTRANET_USER_PROFILE_YES"),
 						events: {
-							click: function () {
-								BX.addClass(this.button, "ui-btn-wait");
+							click: function (button) {
+								button.setWaiting();
 								this.context.close();
 								confirmCallback();
 							}
@@ -550,6 +576,7 @@
 				}
 			}, function (response) {
 				this.hideLoader({loader: loader});
+				this.showErrorPopup(response["errors"][0].message);
 			}.bind(this));
 		},
 

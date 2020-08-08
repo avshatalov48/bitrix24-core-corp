@@ -416,12 +416,12 @@ namespace Bitrix\Tasks\Util
 				$m = floor(($time - $h * 3600) / 60);
 				$s = $time - $h * 3600 - $m * 60;
 
-				if(strlen($m) == 1)
+				if(mb_strlen($m) == 1)
 				{
 					$m = '0'.$m;
 				}
 
-				if(strlen($s) == 1)
+				if(mb_strlen($s) == 1)
 				{
 					$s = '0'.$s;
 				}

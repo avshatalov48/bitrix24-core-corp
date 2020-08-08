@@ -784,7 +784,7 @@ $arResult['FIELDS']['tab_product_rows'][] = array(
 // <-- PRODUCT ROW SECTION
 
 
-if($arResult['ELEMENT']['UF_CONTACT_ID'] && strlen($arResult['ELEMENT']['UF_CONTACT_EMAIL']) > 0)
+if($arResult['ELEMENT']['UF_CONTACT_ID'] && $arResult['ELEMENT']['UF_CONTACT_EMAIL'] <> '')
 {
 	$arResult['COMMUNICATION'] = array(
 		'entityType' => 'CONTACT',
@@ -794,7 +794,7 @@ if($arResult['ELEMENT']['UF_CONTACT_ID'] && strlen($arResult['ELEMENT']['UF_CONT
 		'value' => $arResult['ELEMENT']['UF_CONTACT_EMAIL']
 	);
 }
-elseif($arResult['ELEMENT']['UF_COMPANY_ID'] && strlen($arResult['ELEMENT']['UF_COMPANY_EMAIL']) > 0)
+elseif($arResult['ELEMENT']['UF_COMPANY_ID'] && $arResult['ELEMENT']['UF_COMPANY_EMAIL'] <> '')
 {
 	$arResult['COMMUNICATION'] = array(
 		'entityType' => 'COMPANY',

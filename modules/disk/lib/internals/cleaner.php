@@ -3,14 +3,20 @@
 namespace Bitrix\Disk\Internals;
 
 
+use Bitrix\Disk\BaseObject;
+use Bitrix\Disk\Configuration;
 use Bitrix\Disk\Driver;
+use Bitrix\Disk\File;
+use Bitrix\Disk\Folder;
 use Bitrix\Disk\Internals\Rights\Table\RightSetupSessionTable;
 use Bitrix\Disk\ObjectTtl;
 use Bitrix\Disk\ShowSession;
 use Bitrix\Disk\SystemUser;
+use Bitrix\Disk\Version;
 use Bitrix\Main\Application;
 use Bitrix\Main\FileTable as MainFileTable;
 use Bitrix\Main\Entity\Query;
+use Bitrix\Main\Type\DateTime;
 
 final class Cleaner
 {
@@ -23,7 +29,7 @@ final class Cleaner
 	 */
 	public static function className()
 	{
-		return get_called_class();
+		return self::class;
 	}
 
 	/**
@@ -105,6 +111,218 @@ final class Cleaner
 		}
 
 		return static::className() . "::deleteUnnecessaryFiles({$type}, {$limit});";
+	}
+
+	public static function deleteVersionsByTtlAgent($type = self::DELETE_TYPE_PORTION, $limit = 10): string
+	{
+		self::deleteVersionsByTtl($type, $limit);
+
+		return self::class . "::deleteVersionsByTtlAgent({$type}, {$limit});";
+	}
+
+	public static function deleteVersionsByTtl($type = self::DELETE_TYPE_PORTION, $limit = 10): void
+	{
+		$dayLimit = Configuration::getFileVersionTtl();
+		if ($dayLimit === -1)
+		{
+			return;
+		}
+
+		$portion = $limit;
+		if ($type === self::DELETE_TYPE_TIME)
+		{
+			$portion = 100;
+		}
+
+		$connection = Application::getConnection();
+		$ttlTime = $connection->getSqlHelper()->convertToDbDateTime(
+			DateTime::createFromTimestamp(time() - $dayLimit * 86400)
+		);
+
+		$result = $connection->query( "
+			SELECT v.ID
+			FROM b_disk_version v
+			INNER JOIN b_disk_object obj ON obj.ID = v.OBJECT_ID
+			LEFT JOIN b_disk_attached_object atta ON v.OBJECT_ID = atta.OBJECT_ID AND v.ID = atta.VERSION_ID
+			WHERE
+				atta.OBJECT_ID IS NULL AND
+				v.CREATE_TIME < {$ttlTime} AND
+				v.FILE_ID <> obj.FILE_ID
+			LIMIT {$portion}
+		");
+
+		$versionIds = [];
+		foreach ($result as $row)
+		{
+			$versionIds[] = $row['ID'];
+		}
+
+		if (!$versionIds)
+		{
+			return;
+		}
+
+		$versions = Version::getModelList([
+			'filter' => [
+				'@ID' => $versionIds,
+			]
+		]);
+
+		$startTime = time();
+		foreach ($versions as $version)
+		{
+			if ($type === self::DELETE_TYPE_TIME && (time() - $startTime > $limit))
+			{
+				break;
+			}
+
+			$version->delete(SystemUser::SYSTEM_USER_ID);
+		}
+	}
+
+	public static function deleteTrashCanFilesByTtlAgent($type = self::DELETE_TYPE_PORTION, $limit = 10): string
+	{
+		self::deleteTrashCanFilesByTtl($type, $limit);
+
+		return self::class . "::deleteTrashCanFilesByTtlAgent({$type}, {$limit});";
+	}
+
+	public static function deleteTrashCanFilesByTtl($type = self::DELETE_TYPE_PORTION, $limit = 10): void
+	{
+		$ttl = Configuration::getTrashCanTtl();
+		if ($ttl === -1)
+		{
+			return;
+		}
+
+		$portion = $limit;
+		if ($type === self::DELETE_TYPE_TIME)
+		{
+			$portion = 100;
+		}
+
+		$connection = Application::getConnection();
+		$ttlTime = $connection->getSqlHelper()->convertToDbDateTime(
+			DateTime::createFromTimestamp(time() - $ttl * 86400)
+		);
+		$deletedTypeNone = ObjectTable::DELETED_TYPE_NONE;
+		$fileType = ObjectTable::TYPE_FILE;
+
+		$result = $connection->query( "
+			SELECT obj.ID
+			FROM b_disk_object obj
+			INNER JOIN b_disk_deleted_log_v2 log ON log.OBJECT_ID = obj.ID
+			WHERE
+			    obj.STORAGE_ID = log.STORAGE_ID AND
+			    log.CREATE_TIME < {$ttlTime} AND
+			    obj.DELETED_TYPE > {$deletedTypeNone} AND 
+			    obj.TYPE = {$fileType}
+			LIMIT {$portion}
+		");
+
+		$objectIds = [];
+		foreach ($result as $row)
+		{
+			$objectIds[] = $row['ID'];
+		}
+
+		if (!$objectIds)
+		{
+			return;
+		}
+
+		$objects = BaseObject::getModelList([
+			'filter' => [
+				'@ID' => $objectIds,
+			]
+		]);
+
+		$startTime = time();
+		foreach ($objects as $object)
+		{
+			if ($type === self::DELETE_TYPE_TIME && (time() - $startTime > $limit))
+			{
+				break;
+			}
+
+			if ($object instanceof File)
+			{
+				$object->delete(SystemUser::SYSTEM_USER_ID);
+			}
+		}
+	}
+
+	public static function deleteTrashCanEmptyFolderByTtlAgent($type = self::DELETE_TYPE_PORTION, $limit = 10): string
+	{
+		self::deleteTrashCanEmptyFolderByTtl($type, $limit);
+
+		return self::class . "::deleteTrashCanEmptyFolderByTtlAgent({$type}, {$limit});";
+	}
+
+	public static function deleteTrashCanEmptyFolderByTtl($type = self::DELETE_TYPE_PORTION, $limit = 10): void
+	{
+		$ttl = Configuration::getTrashCanTtl();
+		if ($ttl === -1)
+		{
+			return;
+		}
+
+		$portion = $limit;
+		if ($type === self::DELETE_TYPE_TIME)
+		{
+			$portion = 100;
+		}
+
+		$connection = Application::getConnection();
+		$ttlTime = $connection->getSqlHelper()->convertToDbDateTime(
+			DateTime::createFromTimestamp(time() - $ttl * 86400)
+		);
+		$deletedTypeNone = ObjectTable::DELETED_TYPE_NONE;
+		$folderType = ObjectTable::TYPE_FOLDER;
+
+		$result = $connection->query( "
+			SELECT obj.ID
+			FROM b_disk_object obj
+			INNER JOIN b_disk_deleted_log_v2 log ON log.OBJECT_ID = obj.ID
+			WHERE
+				NOT EXISTS(SELECT 'x' FROM b_disk_object p WHERE p.PARENT_ID = obj.ID) AND
+			    obj.STORAGE_ID = log.STORAGE_ID AND
+			    log.CREATE_TIME < {$ttlTime} AND
+			    obj.DELETED_TYPE > {$deletedTypeNone} AND 
+			    obj.TYPE = {$folderType}
+			LIMIT {$portion}
+		");
+
+		$objectIds = [];
+		foreach ($result as $row)
+		{
+			$objectIds[] = $row['ID'];
+		}
+
+		if (!$objectIds)
+		{
+			return;
+		}
+
+		$objects = BaseObject::getModelList([
+			'filter' => [
+				'@ID' => $objectIds,
+			]
+		]);
+
+		$startTime = time();
+		foreach ($objects as $object)
+		{
+			if ($type === self::DELETE_TYPE_TIME && (time() - $startTime > $limit))
+			{
+				break;
+			}
+
+			if ($object instanceof Folder)
+			{
+				$object->deleteTree(SystemUser::SYSTEM_USER_ID);
+			}
+		}
 	}
 
 	/**
@@ -268,7 +486,7 @@ final class Cleaner
 		{
 			$limit = 100;
 		}
-		if (empty($fromDate) || strlen($fromDate) != 10)
+		if (empty($fromDate) || mb_strlen($fromDate) != 10)
 		{
 			$fromDate = '2018-11-14';
 		}

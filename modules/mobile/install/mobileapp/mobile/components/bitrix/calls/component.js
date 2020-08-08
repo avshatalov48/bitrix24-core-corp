@@ -5,6 +5,7 @@ BX.listeners = {};
 
 // region Constants
 
+console.log("success");
 var Sound = {
 	incoming: "incoming",
 	startCall: "startcall"
@@ -84,9 +85,10 @@ var BLANK_AVATAR = '/bitrix/js/im/images/blank.gif';
 // endregion Constants
 
 // region Common functions
-function timesUp(timestamp)
+function getSecondsAgo(timestamp)
 {
-	return ((Math.abs((new Date()).getTime() - timestamp)) >= eventTimeRange * 1000);
+	let now = (new Date()).getTime();
+	return Math.round(Math.abs(now - timestamp) / 1000);
 }
 
 function preparePush(push)
@@ -147,6 +149,11 @@ var callsModuleWrapper = function ()
 
 callsModuleWrapper.prototype =
     {
+		useCustomTurnServer: BX.componentParameters.get('useCustomTurnServer', false),
+		turnServer: BX.componentParameters.get('turnServer', ''),
+		turnServerLogin: BX.componentParameters.get('turnServerLogin', ''),
+		turnServerPassword: BX.componentParameters.get('turnServerPassword', ''),
+
         UI: {
             state: {
                 "OUTGOING_CALL": "outgoing_call",
@@ -172,6 +179,23 @@ callsModuleWrapper.prototype =
         },
         createPeerConnection: function (params)
         {
+        	if(this.useCustomTurnServer && this.turnServer && 'setIceServers' in calls)
+			{
+				var turnConfig = [
+					{
+						urls: "stun:" + this.turnServer
+					},
+					{
+						urls: "turn:" + this.turnServer,
+						username: this.turnServerLogin,
+						credential: this.turnServerPassword
+					}
+				];
+
+				console.log("setting custom TURN servers");
+				calls.setIceServers(turnConfig)
+			}
+
             calls.createPeerConnection();
         },
         destroyPeerConnection: function (params)
@@ -192,6 +216,7 @@ callsModuleWrapper.prototype =
         },
         setRemoteDescription:function (params)
         {
+			console.log("setRemoteDescription");
             calls.setRemoteDescription(params);
         },
         getUserMedia:function (params)
@@ -200,6 +225,8 @@ callsModuleWrapper.prototype =
         },
         onReconnect:function (params)
         {
+        	console.log("onReconnect");
+
             calls.onReconnect(params);
         },
         setEventListeners:function (params)
@@ -210,10 +237,63 @@ callsModuleWrapper.prototype =
 
 var webrtc = new callsModuleWrapper();
 
+var NativeCallsWrapper = function()
+{
+	this.callbacks = {
+		onReceiveCall: null,
+		onConnectCall: null,
+		onEndCall: null,
+		onErrorCall: null,
+		onOutgoingCall: null,
+	};
+
+	if ('nativeCallService' in window)
+	{
+		this.init();
+	}
+};
+
+NativeCallsWrapper.prototype = {
+	init: function()
+	{
+		window.nativeCallService.setListener(this.onCallEvent.bind(this));
+	},
+
+	onCallEvent: function(eventName, data)
+	{
+		console.log("callkit: ", eventName, data);
+
+		if(this.callbacks[eventName])
+		{
+			this.callbacks[eventName](data);
+		}
+	},
+
+	setEventListener: function(eventName, callback)
+	{
+		this.callbacks[eventName] = callback;
+	},
+
+	getActiveCall: function()
+	{
+		if ('nativeCallService' in window)
+		{
+			return window.nativeCallService.getActiveCall();
+		}
+	},
+
+	endCall: function()
+	{
+		if ('nativeCallService' in window)
+		{
+			return window.nativeCallService.endCall(window.nativeCallService.getActiveCall());
+		}
+	}
+};
+
 MobileWebrtc = function ()
 {
     this.siteDir = (typeof mobileSiteDir == "undefined" ? "/" : mobileSiteDir);
-    this.userId = BX.componentParameters.get('userId', 0);
     this.callUserId = 0;
     this.debug = true;
     this.incomingCallTimeOut = 2;
@@ -226,6 +306,7 @@ MobileWebrtc = function ()
 	this.callInstanceId = '';
 
 	this.opponentReady = false;
+	this.opponentIsMobile = false;
     this.waitTimeout = false;
     this.cancelCallTimeout = 0;
     this.callGroupUsers = [];
@@ -234,6 +315,7 @@ MobileWebrtc = function ()
     this.iceCandidates = [];
     this.iceCandidatesToSend = [];
     this.iceCandidateTimeout = 0;
+    this.connectedAtLeastOnce = false;
     this.userData = {};
     this.redialParameters = {
 		userId: 0,
@@ -245,6 +327,13 @@ MobileWebrtc = function ()
 	this.iceConnectionState = '';
 
 	this.mediaCallback = false;
+
+	this.connectionAttempt = 0;
+	this.waitConnectionAnswerTimeout = null;
+	this.waitConnectionOfferTimeout = null;
+
+	this.nativeCalls = new NativeCallsWrapper();
+	this.nativeCallUUID = '';
 
 	this.init();
 };
@@ -265,6 +354,116 @@ MobileWebrtc.prototype.init = function ()
 	BX.addCustomEvent("onPullEvent-im", this.onPullEvent.bind(this));
 	BX.addCustomEvent("onAppActive", this.onAppActive.bind(this));
 	this.onAppActive();
+	this.checkActiveCall();
+
+	this.nativeCalls.setEventListener("onConnectCall", this.onCallKitConnectCall.bind(this));
+	this.nativeCalls.setEventListener("onEndCall", this.onCallKitEndCall.bind(this));
+	this.nativeCalls.setEventListener("onOutgoingCall", this.onCallKitOutgoingCall.bind(this));
+};
+
+MobileWebrtc.prototype.checkActiveCall = function ()
+{
+	let call = this.nativeCalls.getActiveCall();
+	if(!call || call.currentState != 'onConnectCall')
+	{
+		//console.error("wrong call " + call.payload.id + " state ", call.currentState);
+		return;
+	}
+
+	console.log("starting call ", call);
+
+	this.onCallKitConnectCall(call.payload);
+};
+
+MobileWebrtc.prototype.onCallKitConnectCall = function(data)
+{
+	let callId = data.id;
+	let video = false;
+
+	let extra = {
+		server_time_ago: 5
+	};
+
+	let callParams;
+	let pushParams;
+
+	try {
+		pushParams = JSON.parse(data.params)
+	}
+	catch (e)
+	{
+		console.error(e);
+		return;
+	}
+
+	console.warn(pushParams);
+
+	if(Application.isBackground())
+	{
+		console.warn("waking up p&p");
+		BX.postComponentEvent("onPullForceBackgroundConnect", [], "communication");
+	}
+
+	callParams = pushParams.PARAMS;
+
+	this.onPullCommandInvite(callParams, extra).then(() =>
+	{
+		setTimeout(() =>
+		{
+			webrtc.UI.show(
+				webrtc.UI.state.CONVERSATION,
+				{
+					"data": {},
+					"video": this.video,
+					"caller": {
+						"name": this.getUserName(this.callUserId),
+						"avatar": this.getUserAvatar(this.callUserId)
+					}
+				}
+			);
+
+			setTimeout(() =>
+			{
+				this.onUiAnswer();
+			}, 1100);
+
+		}, 50);
+	}).catch(err => console.error(err));
+};
+
+MobileWebrtc.prototype.onCallKitEndCall = function(data)
+{
+	console.log("onCallKitEndCall", data);
+	//todo: check call uuid
+
+	if(this.callId > 0)
+	{
+		this.connectedAtLeastOnce ? this.sendHangup() : this.sendDecline();
+		this.finishDialog();
+		this.resetState();
+	}
+};
+
+MobileWebrtc.prototype.onCallKitOutgoingCall = function(data)
+{
+	console.log("onCallKitOutgoingCall", data);
+
+	if (this.callId > 0)
+	{
+		console.error("Call already exists");
+		return;
+	}
+
+	var userId = data.senderId;
+	var video = data.hasVideo;
+
+	if(!userId)
+	{
+		navigator.notification.alert(BX.message("IM_M_CALL_ERR_NO_USER_ID"));
+		return;
+	}
+
+	this.startCall(userId, video);
 };
 
 MobileWebrtc.prototype.onAppActive = function ()
@@ -285,11 +484,33 @@ MobileWebrtc.prototype.onAppActive = function ()
 
 		let callParams = push.PARAMS;
 
-		if(!timesUp(callTime*1000))
+		let extra = {
+			server_time_ago: getSecondsAgo(callTime * 1000)
+		};
+		//setTimeout(() => this.startCall(userId, video), 1500);
+		this.onPullCommandInvite(callParams, extra).then(() =>
 		{
-			//setTimeout(() => this.startCall(userId, video), 1500);
-			this.onPullCommandInvite(callParams);
-		}
+			setTimeout(() =>
+			{
+				webrtc.UI.show(
+					webrtc.UI.state.CONVERSATION,
+					{
+						"data": {},
+						"video": this.video,
+						"caller": {
+							"name": this.getUserName(this.callUserId),
+							"avatar": this.getUserAvatar(this.callUserId)
+						}
+					}
+				);
+
+				setTimeout(() =>
+				{
+					this.onUiAnswer();
+				}, 1100);
+
+			}, 50);
+		}).catch(err => console.error(err));
 	}
 };
 
@@ -325,7 +546,7 @@ MobileWebrtc.prototype.attachListeners = function ()
  */
 MobileWebrtc.prototype.getUserId = function ()
 {
-    return this.userId;
+    return parseInt(BX.componentParameters.get('userId', 0), 10);
 };
 
 MobileWebrtc.prototype.getUserAvatar = function(userId)
@@ -384,7 +605,7 @@ MobileWebrtc.prototype.startCall = function (userId, video)
 		}
 
 		this.callId = data.call.ID;
-		var callUserId = data.users.filter(userId => userId != this.userId)[0];
+		var callUserId = data.users.filter(userId => userId != this.getUserId())[0];
 		this.callUserId = parseInt(callUserId);
 
 		webrtc.UI.show(
@@ -401,6 +622,12 @@ MobileWebrtc.prototype.startCall = function (userId, video)
 
 		this.sendInvite();
 		this.cancelCallTimeout = setTimeout(this.cancelCall.bind(this), 30 * 1000);
+	}).catch(err =>
+	{
+		navigator.notification.alert(err.error_description ? err.error_description() : BX.message("IM_M_CALL_ERR"), () => {}, BX.message("MOBILEAPP_ERROR_AUTH"));
+		console.error(err);
+		this.finishDialog();
+		this.resetState();
 	});
 };
 
@@ -412,14 +639,9 @@ MobileWebrtc.prototype.cancelCall = function()
 			callId: this.callId,
 			callInstanceId: this.callInstanceId
 		}).catch(e => console.error(e));
-		this.resetState();
 
-		webrtc.UI.show(
-			webrtc.UI.state.FAIL_CALL,
-			{
-				'message': BX.message('IM_M_CALL_ST_TIMEOUT')
-			}
-		);
+		this.showError(BX.message('IM_M_CALL_ST_TIMEOUT'));
+		this.resetState();
 	}
 };
 
@@ -434,8 +656,9 @@ MobileWebrtc.prototype.sendInvite = function(repeat)
 		video: this.video ? 'Y' : 'N'
 	}).catch(e => {
 		console.error(e);
-		this.resetState();
+
 		this.showError(BX.message('MOBILEAPP_SOME_ERROR'));
+		this.resetState();
 	});
 };
 
@@ -478,7 +701,7 @@ MobileWebrtc.prototype.clearDelayedCallData = function ()
 MobileWebrtc.prototype.resetState = function ()
 {
     this.video = false;
-    this.callId = '';
+    this.callId = 0;
     this.callInstanceId = '';
     this.callChatId = 0;
     this.callUserId = 0;
@@ -488,8 +711,16 @@ MobileWebrtc.prototype.resetState = function ()
     this.iceCandidates = [];
     this.iceCandidatesToSend = [];
     this.opponentReady = false;
+    this.opponentIsMobile = false;
+    this.connectedAtLeastOnce = false;
+
+    this.connectionAttempt = 0;
+    clearTimeout(this.waitConnectionAnswerTimeout);
+    clearTimeout(this.waitConnectionOfferTimeout);
+    clearTimeout(this.checkConnectionTimeout);
 
     webrtc.destroyPeerConnection();
+    this.nativeCalls.endCall();
 };
 
 MobileWebrtc.prototype.storeRedialParameters = function ()
@@ -559,6 +790,8 @@ MobileWebrtc.prototype.finishDialog = function ()
 
 MobileWebrtc.prototype.showError = function(errorMessage)
 {
+	console.trace("error");
+	this.storeRedialParameters();
 	webrtc.UI.show(
 		webrtc.UI.state.FAIL_CALL,
 		{
@@ -569,13 +802,33 @@ MobileWebrtc.prototype.showError = function(errorMessage)
 
 MobileWebrtc.prototype.initReconnect = function ()
 {
-    console.log("Send reconnect");
-    //this.callCommand("reconnect");
-    webrtc.onReconnect();
-    if(this.isInitiator())
-    {
-        webrtc.createPeerConnection();
-    }
+	this.connectionAttempt++;
+	if (this.connectionAttempt > 3)
+	{
+		console.error("Was not able to establish connection after 3 attempts");
+		navigator.notification.alert(BX.message("IM_M_CALL_ERR"), () => {}, BX.message("MOBILEAPP_ERROR_NETWORK"));
+		this.finishDialog();
+		this.resetState();
+		return;
+	}
+
+	this.log("Reconnection attempt #" + this.connectionAttempt);
+
+	if(this.isInitiator())
+	{
+		webrtc.onReconnect();
+		this.peerConnectionInited = false;
+		this.peerConnectionId = "";
+		this.iceCandidates = [];
+		this.iceCandidatesToSend = [];
+		this.remoteSessionDescription = null;
+
+		webrtc.createPeerConnection();
+	}
+	else
+	{
+		this.sendNegotiationNeeded(true);
+	}
 };
 
 /**
@@ -637,11 +890,13 @@ MobileWebrtc.prototype.appendUserData = function(users, hrphoto)
 
 MobileWebrtc.prototype.onUiDecline = function (params)
 {
-	console.log("onUiDecline");
-	BX.rest.callMethod(RestMethods.decline, {
-		callId: this.callId,
-		callInstanceId: this.callInstanceId
-	}).catch(e=>console.error(e));
+	// looks like this event is fired not only on decline, but on normal hangup too
+
+	if(this.callId > 0)
+	{
+		this.connectedAtLeastOnce ? this.sendHangup() : this.sendDecline();
+	}
+
     this.resetState();
 };
 
@@ -653,10 +908,19 @@ MobileWebrtc.prototype.onUiAnswer = function ()
 
     this.getLocalMedia({video: this.video}).then(() =>
 	{
+		console.log("getLocalMedia success, try to execute im.call.answer");
     	BX.rest.callMethod(RestMethods.answer, {
     		callId: this.callId,
 			callInstanceId: this.callInstanceId
-		}).catch(e => console.error(e));
+		}).then(response => {
+			console.warn("success!");
+		}).catch(err =>
+		{
+			navigator.notification.alert(err.error_description ? err.error_description() : BX.message("IM_M_CALL_ERR"), () => {}, BX.message("MOBILEAPP_ERROR_AUTH"));
+			console.error(err);
+			this.finishDialog();
+			this.resetState();
+		});
 	});
 };
 
@@ -677,8 +941,14 @@ MobileWebrtc.prototype.onUiClose = function ()
 
 MobileWebrtc.prototype._onDisconnect = function ()
 {
-    this.peerConnectionInited = false;
-    //send reconnect
+	// looks like this event is fired when UI is closed, not when rtc is disconnected
+
+	if(this.callId > 0)
+	{
+		this.connectedAtLeastOnce ? this.sendHangup() : this.sendDecline();
+	}
+
+	this.resetState();
 };
 
 MobileWebrtc.prototype._onIceCandidateDiscovered = function (params)
@@ -693,7 +963,10 @@ MobileWebrtc.prototype._onPeerConnectionCreated = function ()
 {
 	clearTimeout(this.checkConnectionTimeout);
     this.peerConnectionInited = true;
-    this.peerConnectionId = getUuidv4();
+    if(!this.peerConnectionId)
+	{
+		this.peerConnectionId = getUuidv4();
+	}
     if (this.isInitiator())
     {
         webrtc.createOffer();
@@ -707,9 +980,30 @@ MobileWebrtc.prototype._onPeerConnectionCreated = function ()
 
 MobileWebrtc.prototype._onIceConnectionStateChanged = function (state)
 {
+	this.log("ICE connection state changed " + state);
+
     this.iceConnectionState = state.toLowerCase();
-    clearTimeout(this.checkConnectionTimeout);
-    //this.checkConnectionTimeout = setTimeout(this.reconnectIfNeeded.bind(this), 15000);
+
+    if(this.iceConnectionState === "connected")
+	{
+		this.connectedAtLeastOnce = true;
+		this.connectionAttempt = 0;
+		clearTimeout(this.waitConnectionOfferTimeout);
+		clearTimeout(this.waitConnectionAnswerTimeout);
+		clearTimeout(this.checkConnectionTimeout);
+	}
+    else if (this.iceConnectionState === "failed")
+	{
+		this.initReconnect();
+	}
+    else if (this.iceConnectionState === "disconnected")
+	{
+		this.checkConnectionTimeout = setTimeout(() =>
+			{
+				this.initReconnect();
+			}, 5000
+		);
+	}
 };
 
 MobileWebrtc.prototype._onIceGatheringStateChanged = function (params)
@@ -727,77 +1021,52 @@ MobileWebrtc.prototype._onLocalSessionDescriptionCreated = function (params)
     this.sessionDescription = params;
     if (this.iceCandidates.length > 0)
     {
-    	console.log("Applying pending ice candidates");
+    	this.log("Applying pending ice candidates");
         webrtc.addIceCandidates(this.iceCandidates);
         this.iceCandidates = [];
     }
 
     if(this.isInitiator())
 	{
-		console.log('Sending connection offer');
-		BX.rest.callMethod(RestMethods.connectionoffer, {
-			callId: this.callId,
-			userId: this.callUserId,
-			connectionId: this.peerConnectionId,
-			sdp: this.sessionDescription.sdp,
-			userAgent: 'Bitrix Mobile'
-		}).catch(e => console.error(e));
+		this.sendConnectionOffer();
 	}
 	else
 	{
-		console.log('Sending connection answer');
-		BX.rest.callMethod(RestMethods.connectionanswer, {
-			callId: this.callId,
-			userId: this.callUserId,
-			connectionId: this.peerConnectionId,
-			sdp: this.sessionDescription.sdp,
-			userAgent: 'Bitrix Mobile'
-		}).catch(e => console.error(e));
+		this.sendConnectionAnswer();
 	}
 };
 
 MobileWebrtc.prototype._onError = function (errorData)
 {
-	//TODO handle error
 	console.error(errorData);
-	this.resetState();
-};
-
-MobileWebrtc.prototype.reconnectIfNeeded = function ()
-{
-    if(!this.peerConnectionInited)
-        return false;
-    if(this.iceConnectionState === "completed" || this.iceConnectionState === "stable" || this.iceConnectionState === "connected")
-        return false;
-
-    this.initReconnect();
-};
-
-/**
- *
- * @param {function} onSuccess
- */
-MobileWebrtc.prototype.execIfNotTooLate = function(onSuccess)
-{
-	return (params, extra) =>
+	if (typeof(errorData) !== "object")
 	{
-		const isTooLate = extra.server_time_ago >= eventTimeRange;
-
-		if(isTooLate)
-		{
-			console.log("Call was started too long time ago");
-			return false;
-		}
-
-		return onSuccess.call(this, params, extra);
+		errorData = {}
 	}
+	if (typeof(errorData.error) !== "string")
+	{
+		errorData.error = "";
+	}
+	//TODO handle error better
+
+	if(errorData.code == 400 && errorData.error.startsWith("SDP error"))
+	{
+		navigator.notification.alert(BX.message("MOBILEAPP_ERROR_VIDEO"), () => {}, BX.message("IM_M_CALL_ERR"));
+	}
+	else
+	{
+
+	}
+	this.sendHangup();
+	this.finishDialog();
+	this.resetState();
 };
 
 MobileWebrtc.prototype.onPullEvent = function(command, params, extra)
 {
 	if(command === 'Call::incoming')
 	{
-		this.execIfNotTooLate(this.onPullCommandInvite)(params, extra);
+		this.onPullCommandInvite(params, extra).then(this.showIncomingCall.bind(this)).catch(err => console.error(err));
 		return;
 	}
 
@@ -828,40 +1097,64 @@ MobileWebrtc.prototype.onPullEvent = function(command, params, extra)
 
 MobileWebrtc.prototype.onPullCommandInvite = function(params, extra)
 {
-	if(params.users.length > 2)
+	console.log("Incoming call invite", params);
+
+	return new Promise((resolve, reject) =>
 	{
-		console.log("Call to group");
-		return;
-	}
+		//return reject("debug");
+		const isTooLate = extra.server_time_ago >= eventTimeRange;
 
-	if(params.call.PROVIDER != 'Plain')
-	{
-		console.log("Only peer-to-peer calls are supported");
-		return;
-	}
+		if(isTooLate)
+		{
+			return reject("Call was started too long time ago");
+		}
 
-	if(this.callId)
-	{
-		// send busy
-	}
+		if(params.users.length > 2)
+		{
+			return reject("Call to group");
+		}
 
-	if(params.userData)
-	{
-		this.appendUserData(params.userData.users, params.userData.hrphoto);
-	}
+		if(params.call.PROVIDER != 'Plain')
+		{
+			return reject("Only peer-to-peer calls are supported");
+		}
 
-	this.callId = params.call.ID;
-	this.callUserId = parseInt(params.senderId);
-	this.callInstanceId = getUuidv4();
-	this.video = params.video;
+		if(this.callId)
+		{
+			if (params.call.ID == this.callId)
+			{
+				return reject("Already processing call " + params.call.ID);
+			}
+			else
+			{
+				BX.rest.callMethod(RestMethods.decline, {
+					callId: params.call.ID,
+					callInstanceId: getUuidv4(),
+					code: 486
+				});
+			}
+			return reject("User is busy");
+		}
 
-	this.showIncomingCall();
+		if(params.userData)
+		{
+			this.appendUserData(params.userData.users, params.userData.hrphoto);
+		}
+
+		this.callId = params.call.ID;
+		this.callUserId = parseInt(params.senderId);
+		this.callInstanceId = getUuidv4();
+		this.video = params.video;
+		this.opponentIsMobile = params.isMobile === true;
+
+		resolve();
+	});
 };
 
 
 MobileWebrtc.prototype.onPullCommandHangup = function(params)
 {
-	if(params.senderId == this.userId)
+	if(params.senderId == this.getUserId())
 	{
 		if(params.callInstanceId !== this.callInstanceId)
 		{
@@ -873,30 +1166,8 @@ MobileWebrtc.prototype.onPullCommandHangup = function(params)
 		return;
 	}
 
-	if(params.code == '603')
-	{
-		webrtc.UI.show(
-			webrtc.UI.state.FAIL_CALL,
-			{
-				'message': BX.message("MOBILEAPP_CALL_DECLINE")
-			}
-		);
-	}
-	else if(params.code == '486')
-	{
-		this.storeRedialParameters();
-		webrtc.UI.show(
-			webrtc.UI.state.FAIL_CALL,
-			{
-				'message': BX.message("MOBILEAPP_CALL_BUSY")
-			}
-		);
-	}
-	else
-	{
-		this.finishDialog();
-	}
 	this.resetState();
+	this.finishDialog();
 };
 
 MobileWebrtc.prototype.onPullCommandFinish = function(params)
@@ -914,6 +1185,13 @@ MobileWebrtc.prototype.onPullCommandNegotiationNeeded = function(params)
 {
 	if(this.isInitiator())
 	{
+		if(params.restart)
+		{
+			this.peerConnectionInited = false;
+			this.peerConnectionId = "";
+			webrtc.onReconnect();
+		}
+
 		if(!this.peerConnectionInited)
 		{
 			webrtc.createPeerConnection();
@@ -923,15 +1201,22 @@ MobileWebrtc.prototype.onPullCommandNegotiationNeeded = function(params)
 
 MobileWebrtc.prototype.onPullCommandConnectionOffer = function(params)
 {
-	clearTimeout(this.cancelCallTimeout);
+	clearTimeout(this.waitConnectionOfferTimeout);
+	console.log("this.peerConnectionInited: " + (this.peerConnectionInited ? "true" : "false"));
+	console.log("this.peerConnectionId: " + this.peerConnectionId);
+	console.log("params.connectionId" + params.connectionId);
 	if(this.peerConnectionInited && this.peerConnectionId != params.connectionId)
 	{
-		console.error("do not know what to do");
-		return;
+		console.log("New connection " + params.connectionId + " offer received, initializing new connection");
+		webrtc.onReconnect();
+		this.peerConnectionInited = false;
+		this.peerConnectionId = "";
+		this.iceCandidates = [];
+		this.iceCandidatesToSend = [];
 	}
 
 	this.remoteSessionDescription = params.sdp;
-
+	this.peerConnectionId = params.connectionId;
 	if(this.peerConnectionInited)
 	{
 		webrtc.createAnswer({"sdp": this.remoteSessionDescription});
@@ -939,12 +1224,18 @@ MobileWebrtc.prototype.onPullCommandConnectionOffer = function(params)
 	else
 	{
 		webrtc.createPeerConnection();
-		this.peerConnectionId = params.connectionId;
 	}
 };
 
 MobileWebrtc.prototype.onPullCommandConnectionAnswer = function(params)
 {
+	if(this.peerConnectionInited && this.peerConnectionId != params.connectionId)
+	{
+		console.error("Ignoring connection answer for unknown connection " + params.connectionId);
+		return;
+	}
+
+	clearTimeout(this.waitConnectionAnswerTimeout);
 	webrtc.setRemoteDescription({type: "answer", sdp: params.sdp});
 };
 
@@ -988,11 +1279,12 @@ MobileWebrtc.prototype.onPullCommandUsersInvited = function(params)
 
 MobileWebrtc.prototype.onPullCommandAnswer = function(params)
 {
-	if(params.senderId == this.userId)
+	if(params.senderId == this.getUserId())
 	{
 		if(params.callInstanceId !== this.callInstanceId)
 		{
 			// This user have answered the call somewhere else
+			console.log("This call is answered by the same user elsewhere");
 			this.resetState();
 			this.finishDialog();
 		}
@@ -1001,6 +1293,7 @@ MobileWebrtc.prototype.onPullCommandAnswer = function(params)
 	}
 
 	this.opponentReady = true;
+	this.opponentIsMobile = params.isMobile === true;
 	clearTimeout(this.cancelCallTimeout);
 
 	webrtc.UI.show(webrtc.UI.state.CONVERSATION);
@@ -1042,6 +1335,32 @@ MobileWebrtc.prototype._onUserMediaSuccess = function ()
 	}
 };
 
+MobileWebrtc.prototype.startWaitForConnectionOffer = function()
+{
+	clearTimeout(this.waitConnectionOfferTimeout);
+
+	this.waitConnectionOfferTimeout = setTimeout(() =>
+		{
+			console.error("Did not receive connection offer in time");
+			this.initReconnect();
+		},
+		10000
+	);
+};
+
+MobileWebrtc.prototype.startWaitForConnectionAnswer = function()
+{
+	clearTimeout(this.waitConnectionAnswerTimeout);
+
+	this.waitConnectionAnswerTimeout = setTimeout(() =>
+	{
+		console.error("Did not receive connection answer in time");
+		this.initReconnect();
+	},
+	10000
+	)
+};
+
 MobileWebrtc.prototype.sendMedia = function()
 {
 	if(this.isInitiator())
@@ -1053,12 +1372,104 @@ MobileWebrtc.prototype.sendMedia = function()
 	}
 	else
 	{
-		BX.rest.callMethod(RestMethods.negotiationneeded, {
-			callId: this.callId,
-			userId: this.callUserId,
-			connectionTag: 'main'
-		});
+		this.sendNegotiationNeeded();
 	}
+};
+
+MobileWebrtc.prototype.sendConnectionOffer = function()
+{
+	console.log('Sending connection offer for connection ' + this.peerConnectionId);
+	this.startWaitForConnectionAnswer();
+
+	if(!this.callId)
+	{
+		this.log("Error: call is already finished");
+		return;
+	}
+
+	BX.rest.callMethod(RestMethods.connectionoffer, {
+		callId: this.callId,
+		userId: this.callUserId,
+		connectionId: this.peerConnectionId,
+		sdp: this.sessionDescription.sdp,
+		userAgent: 'Bitrix Mobile'
+	}).catch(err => {
+		console.error(err);
+		navigator.notification.alert(err.error_description ? err.error_description() : BX.message("IM_M_CALL_ERR"), () => {}, BX.message("MOBILEAPP_ERROR_AUTH"));
+		this.finishDialog();
+		this.resetState();
+	});
+};
+
+MobileWebrtc.prototype.sendConnectionAnswer = function()
+{
+	this.log('Sending connection answer for connection ' + this.peerConnectionId);
+	if(!this.callId)
+	{
+		this.log("Error: call is already finished");
+		return;
+	}
+	BX.rest.callMethod(RestMethods.connectionanswer, {
+		callId: this.callId,
+		userId: this.callUserId,
+		connectionId: this.peerConnectionId,
+		sdp: this.sessionDescription.sdp,
+		userAgent: 'Bitrix Mobile'
+	}).catch(err => {
+		console.error(err);
+		navigator.notification.alert(err.error_description ? err.error_description() : BX.message("IM_M_CALL_ERR"), () => {}, BX.message("MOBILEAPP_ERROR_AUTH"));
+		this.finishDialog();
+		this.resetState();
+	});
+
+};
+
+MobileWebrtc.prototype.sendNegotiationNeeded = function(restart)
+{
+	restart = !!restart;
+	console.log("sending negotiation needed");
+
+	if(!this.callId)
+	{
+		this.log("Error: call is already finished");
+		return;
+	}
+
+	this.startWaitForConnectionOffer();
+	BX.rest.callMethod(RestMethods.negotiationneeded, {
+		callId: this.callId,
+		userId: this.callUserId,
+		connectionTag: 'main',
+		restart: restart
+	}).catch(e => console.error(e));
+};
+
+MobileWebrtc.prototype.sendHangup = function()
+{
+	if(!this.callId)
+	{
+		this.log("Error: call is already finished");
+		return;
+	}
+
+	BX.rest.callMethod(RestMethods.hangup, {
+		callId: this.callId,
+		callInstanceId: this.callInstanceId
+	}).catch(e=>console.error(e));
+};
+
+MobileWebrtc.prototype.sendDecline = function()
+{
+	if(!this.callId)
+	{
+		this.log("Error: call is already finished");
+		return;
+	}
+
+	BX.rest.callMethod(RestMethods.hangup, {
+		callId: this.callId,
+		callInstanceId: this.callInstanceId
+	}).catch(e=>console.error(e));
 };
 
 MobileWebrtc.prototype.sendIceCandidates = function()
@@ -1066,10 +1477,29 @@ MobileWebrtc.prototype.sendIceCandidates = function()
 	if (this.iceCandidatesToSend.length === 0)
 		return false;
 
+	console.log("sending ice candidate", {
+		callId: this.callId,
+		userId: this.callUserId,
+		connectionId: this.peerConnectionId,
+		candidates: this.iceCandidatesToSend
+	});
+
+	if(!this.callId)
+	{
+		console.log("call is already finished");
+		return;
+	}
+
 	BX.rest.callMethod(RestMethods.icecandidate, {
 		callId: this.callId,
 		userId: this.callUserId,
+		connectionId: this.peerConnectionId,
 		candidates: this.iceCandidatesToSend
+	}).catch(err => {
+		console.error(err);
+		navigator.notification.alert(err.error_description ? err.error_description() : BX.message("IM_M_CALL_ERR"), () => {}, BX.message("MOBILEAPP_ERROR_NETWORK"));
+		this.finishDialog();
+		this.resetState();
 	});
 
 	this.iceCandidatesToSend = [];
@@ -1077,7 +1507,7 @@ MobileWebrtc.prototype.sendIceCandidates = function()
 
 MobileWebrtc.prototype.isInitiator = function()
 {
-	return this.userId < this.callUserId;
+	return this.getUserId() < this.callUserId;
 };
 
 MobileWebrtc.prototype.logged = function(name, cb)
@@ -1086,8 +1516,63 @@ MobileWebrtc.prototype.logged = function(name, cb)
 	return function()
 	{
 		let params = [name].concat(arguments);
-		console.log.apply(null, params);
+		this.log.apply(this, params);
 		cb.apply(self, arguments);
+	}.bind(this)
+};
+
+MobileWebrtc.prototype.lpad = function(str, length, chr)
+{
+	str = str.toString();
+	chr = chr || ' ';
+
+	if(str.length > length)
+	{
+		return str;
+	}
+
+	var result = '';
+	for(var i = 0; i < length - str.length; i++)
+	{
+		result += chr;
+	}
+
+	return result + str;
+};
+
+MobileWebrtc.prototype.getDateForLog = function()
+{
+	var d = new Date();
+	return d.getFullYear() + "-" + this.lpad(d.getMonth(), 2, '0') + "-" + this.lpad(d.getDate(), 2, '0') + " " + this.lpad(d.getHours(), 2, '0') + ":" + this.lpad(d.getMinutes(), 2, '0') + ":" + this.lpad(d.getSeconds(), 2, '0') + "." + d.getMilliseconds();
+};
+
+MobileWebrtc.prototype.log = function()
+{
+	console.log.apply(null, arguments);
+
+	var text = this.getDateForLog();
+
+	var callId = this.callId;
+	if(!callId)
+	{
+		return;
+	}
+
+	for (var i = 0; i < arguments.length; i++)
+	{
+		try
+		{
+			text = text+' | '+(typeof(arguments[i]) == 'object'? JSON.stringify(arguments[i]): arguments[i]);
+		}
+		catch (e)
+		{
+			text = text+' | (circular structure)';
+		}
+	}
+
+	if (BX && BX.MessengerDebug)
+	{
+		//BX.MessengerDebug.addLog(callId, text);
 	}
 };
 
@@ -2641,5 +3126,7 @@ TelephonyCall.prototype.executeCallback = function (eventName, data)
 
 var mwebrtc = new MobileWebrtc();
 var mtelephony = new MobileTelephony();
+
+console.log("Initialized");
 
 // endregion Initialization

@@ -46,4 +46,22 @@ class PublicDocument extends Document
 	{
 		return parent::showPdfAction($document, $print, $this->getActionUri('getPdf', ['id' => $document->ID, 'hash' => $hash]));
 	}
+
+	public function getAction(\Bitrix\DocumentGenerator\Document $document, \CRestServer $restServer = null, $hash = '')
+	{
+		$allowedPublicData = [
+			'publicUrl' => true,
+			'pdfUrl' => true,
+			'printUrl' => true,
+			'imageUrl' => true,
+			'pullTag' => true,
+		];
+		$result = parent::getAction($document, $restServer);
+		if($result)
+		{
+			$result['document'] = array_intersect_key($result['document'], $allowedPublicData);
+		}
+
+		return $result;
+	}
 }

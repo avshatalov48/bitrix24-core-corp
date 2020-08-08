@@ -51,6 +51,10 @@ class WebHookTrigger extends BaseTrigger
 		{
 			return \CCrmDeal::CheckUpdatePermission($entityId);
 		}
+		elseif ($entityTypeId === \CCrmOwnerType::Order)
+		{
+			return \Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($entityId);
+		}
 		return false;
 	}
 

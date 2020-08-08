@@ -1,7 +1,7 @@
 <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 $rnd = $arResult['RND'];
-$cfgRnd = 'rnd_cfg_number_'.$rnd.((strlen($arResult['ENTITY_NAME']) > 0) ? '_'.$arResult['ENTITY_NAME'] : '');
+$cfgRnd = 'rnd_cfg_number_'.$rnd.(($arResult['ENTITY_NAME'] <> '') ? '_'.$arResult['ENTITY_NAME'] : '');
 ?>
 <input type="hidden" name="<?=$cfgRnd?>" value="<?=$rnd?>"/>
 <table class="bx-edit-table " cellspacing="0" cellpadding="0" border="0">

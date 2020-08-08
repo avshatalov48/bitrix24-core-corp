@@ -10,7 +10,7 @@ $arGadgetParams['PATH_TO_CONTACT_SHOW'] = CrmCheckPath('PATH_TO_CONTACT_SHOW', $
 $arGadgetParams['PATH_TO_COMPANY_SHOW'] = CrmCheckPath('PATH_TO_COMPANY_SHOW', $arGadgetParams['PATH_TO_COMPANY_SHOW'], '/crm/company/show/#company_id#/');
 $arGadgetParams['PATH_TO_USER_PROFILE'] = CrmCheckPath('PATH_TO_USER_PROFILE', $arGadgetParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');	
 	
-if (strlen($arGadgetParams['EVENT_TYPE_LIST']) <= 0)
+if ($arGadgetParams['EVENT_TYPE_LIST'] == '')
 	$arGadgetParams['EVENT_TYPE_LIST'] = '';
 	
 if (!is_array($arGadgetParams) || !array_key_exists('EVENT_COUNT', $arGadgetParams) || $arGadgetParams['EVENT_COUNT'] <= 0)

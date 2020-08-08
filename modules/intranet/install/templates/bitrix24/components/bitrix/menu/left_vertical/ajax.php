@@ -6,7 +6,6 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_befo
 IncludeModuleLangFile(__FILE__);
 global $USER;
 
-
 $setGroupToFavorites = function($groupId, $value = "Y")
 {
 	if (intval($groupId) && $GLOBALS["USER"]->getId() && CModule::IncludeModule("socialnetwork"))
@@ -21,12 +20,12 @@ $setGroupToFavorites = function($groupId, $value = "Y")
 		}
 		catch (Exception $e)
 		{
-			
+
 		}
 	}
 };
 
-if ($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"])>0 && check_bitrix_sessid())
+if ($_SERVER["REQUEST_METHOD"]=="POST" && $_POST["action"] <> '' && check_bitrix_sessid())
 {
 	if (Bitrix\Main\Loader::includeModule("intranet"))
 	{
@@ -250,6 +249,7 @@ if ($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"])>0 && check_bi
 			if (isset($_POST["itemData"]["text"]))
 			{
 				$itemText = trim($_POST["itemData"]["text"]);
+				$itemText = \Bitrix\Main\Text\Emoji::encode($itemText);
 			}
 			if (empty($itemText))
 			{
@@ -308,6 +308,7 @@ if ($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"])>0 && check_bi
 			if (isset($_POST["itemData"]["text"]))
 			{
 				$itemData["TEXT"] = trim($_POST["itemData"]["text"]);
+				$itemData["TEXT"] = \Bitrix\Main\Text\Emoji::encode($itemData["TEXT"]);
 			}
 			if (empty($itemData["TEXT"]))
 			{
@@ -425,7 +426,7 @@ if ($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"])>0 && check_bi
 					$adminOption = array($itemData);
 				}
 
-				COption::SetOptionString("intranet", "left_menu_items_to_all_".$siteID, serialize($adminOption), false, SITE_ID);
+				COption::SetOptionString("intranet", "left_menu_items_to_all_".$siteID, serialize($adminOption), false, $siteID);
 			}
 
 			break;
@@ -453,7 +454,7 @@ if ($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"])>0 && check_bi
 						}
 						else
 						{
-							COption::SetOptionString("intranet", "left_menu_items_to_all_".$siteID, serialize($adminOption), false, SITE_ID);
+							COption::SetOptionString("intranet", "left_menu_items_to_all_".$siteID, serialize($adminOption), false, $siteID);
 						}
 
 						break 2;
@@ -467,7 +468,7 @@ if ($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"])>0 && check_bi
 			if (!$isAdmin || !isset($_POST["menu_item_id"]))
 				break;
 
-			$customItems = COption::GetOptionString("intranet", "left_menu_custom_preset_items", "");
+			$customItems = COption::GetOptionString("intranet", "left_menu_custom_preset_items", "", $siteID);
 
 			if (!empty($customItems))
 			{
@@ -479,11 +480,11 @@ if ($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"])>0 && check_bi
 						unset($customItems[$key]);
 						if (empty($customItems))
 						{
-							COption::RemoveOption("intranet", "left_menu_custom_preset_items");
+							COption::RemoveOption("intranet", "left_menu_custom_preset_items", $siteID);
 						}
 						else
 						{
-							COption::SetOptionString("intranet", "left_menu_custom_preset_items", serialize($customItems), false, SITE_ID);
+							COption::SetOptionString("intranet", "left_menu_custom_preset_items", serialize($customItems), false, $siteID);
 						}
 
 						break;
@@ -491,7 +492,7 @@ if ($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"])>0 && check_bi
 				}
 			}
 
-			$customItemsSort = COption::GetOptionString("intranet", "left_menu_custom_preset_sort", "");
+			$customItemsSort = COption::GetOptionString("intranet", "left_menu_custom_preset_sort", "", $siteID);
 			if (!empty($customItemsSort))
 			{
 				$customItemsSort = unserialize($customItemsSort);
@@ -506,7 +507,7 @@ if ($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"])>0 && check_bi
 					}
 				}
 
-				COption::SetOptionString("intranet", "left_menu_custom_preset_sort", serialize($customItemsSort), false, SITE_ID);
+				COption::SetOptionString("intranet", "left_menu_custom_preset_sort", serialize($customItemsSort), false, $siteID);
 			}
 
 			break;
@@ -514,7 +515,7 @@ if ($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"])>0 && check_bi
 		case "add_favorite_admin":
 			if ($isAdmin)
 			{
-				$adminOption = COption::GetOptionString("intranet", "admin_menu_items");
+				$adminOption = COption::GetOptionString("intranet", "admin_menu_items", "", $siteID);
 				if ($adminOption)
 					$adminOption = unserialize($adminOption);
 				else
@@ -535,7 +536,7 @@ if ($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"])>0 && check_bi
 		case "delete_favorite_admin":
 			if ($isAdmin)
 			{
-				$adminOption = COption::GetOptionString("intranet", "admin_menu_items");
+				$adminOption = COption::GetOptionString("intranet", "admin_menu_items", "", $siteID);
 				if ($adminOption)
 					$adminOption = unserialize($adminOption);
 				else

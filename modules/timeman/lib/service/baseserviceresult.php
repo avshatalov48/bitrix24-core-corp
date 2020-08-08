@@ -36,4 +36,12 @@ class BaseServiceResult extends \Bitrix\Main\Result
 		return $result->isSuccess()
 			   || (!$result->isSuccess() && reset($result->getErrorMessages()) === 'There is no data to update.');
 	}
+
+	/**
+	 * @return Error|null
+	 */
+	public function getFirstError()
+	{
+		return empty($this->getErrors()) ? null : reset($this->getErrors());
+	}
 }

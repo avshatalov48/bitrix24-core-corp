@@ -297,7 +297,7 @@ class Folder extends BaseObject
 
 	private function isDuplicateKeyError(SqlQueryException $exception)
 	{
-		return strpos($exception->getDatabaseMessage(), '(1062)') !== false;
+		return mb_strpos($exception->getDatabaseMessage(), '(1062)') !== false;
 	}
 
 	private function processAdd(array $data, ErrorCollection $errorCollection, $generateUniqueName = false, $countStepsToGenerateName = 0)
@@ -892,6 +892,7 @@ class Folder extends BaseObject
 		}
 
 		$driver->getDeletedLogManager()->finalize();
+		$driver->getDeletionNotifyManager()->send();
 
 		return $success;
 	}
@@ -1243,7 +1244,7 @@ final class SpecificFolder
 		$refClass = new \ReflectionClass(__CLASS__);
 		foreach($refClass->getConstants() as $name => $value)
 		{
-			if(substr($name, 0, 4) === 'CODE')
+			if(mb_substr($name, 0, 4) === 'CODE')
 			{
 				$codes[$value] = $value;
 			}

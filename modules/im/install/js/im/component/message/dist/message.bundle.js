@@ -371,7 +371,15 @@
 	      return this.$store.getters['users/get'](this.message.authorId, true);
 	    },
 	    userAvatar: function userAvatar() {
-	      return this.userData.avatar ? "url('".concat(this.userData.avatar, "')") : '';
+	      if (this.message.params.AVATAR) {
+	        return "url('".concat(this.message.params.AVATAR, "')");
+	      }
+
+	      if (this.userData.avatar) {
+	        return "url('".concat(this.userData.avatar, "')");
+	      }
+
+	      return '';
 	    },
 	    filesData: function filesData() {
 	      var files = this.$store.getters['files/getList'](this.chatId);

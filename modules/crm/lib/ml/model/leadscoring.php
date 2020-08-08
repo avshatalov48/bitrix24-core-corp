@@ -121,8 +121,7 @@ class LeadScoring extends Base
 
 	public function getTrainingSet($fromId, $limit)
 	{
-		$leads = [];
-		$cursor = LeadTable::getList([
+		$rows = LeadTable::getList([
 			"select" => ["ID", "HAS_ACT"],
 			"filter" => [
 				"=STATUS_SEMANTIC_ID" => ["S", "F"],
@@ -138,21 +137,9 @@ class LeadScoring extends Base
 			],
 			"limit" => $limit,
 			"order" => ["ID" => "asc"]
-		]);
+		])->fetchAll();
 
-		while ($row = $cursor->fetch())
-		{
-			$leads[] = $row["ID"];
-		}
-
-		$result = [];
-
-		foreach ($leads as $leadId)
-		{
-			$result[] = $this->buildFeaturesVector($leadId);
-		}
-
-		return $result;
+		return array_column($rows, "ID");
 	}
 
 	public function getPredictionSet($modelName, $fromId, $limit)

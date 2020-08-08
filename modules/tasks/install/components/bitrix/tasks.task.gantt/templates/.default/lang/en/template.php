@@ -31,4 +31,5 @@ $MESS["TASKS_LIST_TRIAL_EXPIRED_TITLE_V2"] = "Available only in Extended Tasks";
 $MESS["TASKS_TITLE"] = "Tasks";
 $MESS["TASKS_TITLE_GROUP_TASKS"] = "Workgroup tasks";
 $MESS["TASKS_TITLE_MY"] = "My tasks";
+$MESS["TASKS_TITLE_PROJECT"] = "Project";
 ?>

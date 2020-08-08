@@ -11,24 +11,39 @@ use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Model\Schedule\Schedule;
 use Bitrix\Timeman\Model\Schedule\ScheduleTable;
 use Bitrix\Timeman\Model\Schedule\Shift\Shift;
+use Bitrix\Timeman\Model\Schedule\Shift\ShiftCollection;
 use Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlan;
 use Bitrix\Timeman\Model\Schedule\Violation\ViolationRulesCollection;
 use Bitrix\Timeman\Model\Schedule\Violation\ViolationRules;
 use Bitrix\Timeman\Model\Schedule\Violation\ViolationRulesTable;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
-use Bitrix\Timeman\Repository\Schedule\ShiftPlanRepository;
+use Bitrix\Timeman\Provider\Schedule\ScheduleProvider;
+use Bitrix\Timeman\Provider\Schedule\ShiftPlanProvider;
 use Bitrix\Timeman\Repository\Schedule\ViolationRulesRepository;
+use Bitrix\Timeman\Repository\Worktime\WorktimeRepository;
+use Bitrix\Timeman\Service\Worktime\Action\ShiftsManager;
+use Bitrix\Timeman\Service\Worktime\Action\WorktimeRecordManager;
+use Bitrix\Timeman\Service\Worktime\Result\WorktimeServiceResult;
 
 class WorktimeAgentManager
 {
 	/** @var ViolationRulesRepository */
 	private $violationRulesRepository;
-	private $shiftPlanRepository;
+	private $shiftPlanProvider;
+	/** @var ScheduleProvider */
+	private $scheduleProvider;
+	private $worktimeRepository;
 
-	public function __construct(ViolationRulesRepository $violationRulesRepository, ShiftPlanRepository $shiftPlanRepository)
+	public function __construct(ViolationRulesRepository $violationRulesRepository,
+								WorktimeRepository $worktimeRepository,
+								ShiftPlanProvider $shiftPlanProvider,
+								ScheduleProvider $scheduleProvider
+	)
 	{
 		$this->violationRulesRepository = $violationRulesRepository;
-		$this->shiftPlanRepository = $shiftPlanRepository;
+		$this->worktimeRepository = $worktimeRepository;
+		$this->shiftPlanProvider = $shiftPlanProvider;
+		$this->scheduleProvider = $scheduleProvider;
 	}
 
 	/**
@@ -96,7 +111,7 @@ class WorktimeAgentManager
 		if ($agentId > 0)
 		{
 			$shiftPlan->setMissedShiftAgentId($agentId);
-			$this->shiftPlanRepository->save($shiftPlan);
+			$this->shiftPlanProvider->save($shiftPlan);
 		}
 	}
 
@@ -401,20 +416,27 @@ class WorktimeAgentManager
 		}
 	}
 
-	/**
-	 * @param WorktimeRecord $record
-	 * @param Schedule|null $schedule
-	 * @param Shift|null $shift
-	 */
-	public function createAutoClosingAgent($record, $schedule, $shift)
+	public function createAutoClosingAgent(WorktimeRecord $record, ?Schedule $schedule, ?Shift $shift)
 	{
-		if (!$schedule || !$schedule->isAutoClosing()
-			|| $record->getRecordedStopTimestamp() > 0
-			|| $record->getAutoClosingAgentId() > 0)
+		$recordManager = new WorktimeRecordManager(
+			$record,
+			$schedule,
+			$shift,
+			TimeHelper::getInstance()->getUserDateTimeNow($record->getUserId()),
+			new ShiftsManager(
+				$record->getUserId(),
+				$this->scheduleProvider->findSchedulesCollectionByUserId($record->getUserId()),
+				$this->shiftPlanProvider
+			)
+		);
+		if (!$recordManager->getSchedule() || !$recordManager->getSchedule()->isAutoClosing()
+			|| $recordManager->getRecord()->getRecordedStopTimestamp() > 0
+			|| $recordManager->getRecord()->getAutoClosingAgentId() > 0
+		)
 		{
 			return;
 		}
-		$recordStopUtcTimestamp = $record->buildStopTimestampForAutoClose($schedule, $shift);
+		$recordStopUtcTimestamp = $recordManager->buildStopTimestampForAutoClose();
 		if ($recordStopUtcTimestamp === null)
 		{
 			return;
@@ -422,18 +444,18 @@ class WorktimeAgentManager
 
 		$agentId = $this->addAgent([
 			'PARAMS' => [
-				'recordId' => $record->getId(),
+				'recordId' => $recordManager->getRecord()->getId(),
 			],
 			'NAME' => 'Bitrix\\Timeman\\Service\\Agent\\AutoCloseWorktimeAgent::runCloseRecord',
 			'MODULE_ID' => 'timeman',
 			'ACTIVE' => 'Y',
 			'IS_PERIOD' => 'N',
-			'NEXT_EXEC' => TimeHelper::getInstance()->createUserDateTimeFromFormat('U', $recordStopUtcTimestamp, $record->getUserId()),
+			'NEXT_EXEC' => TimeHelper::getInstance()->createUserDateTimeFromFormat('U', $recordStopUtcTimestamp, $recordManager->getRecord()->getUserId()),
 			'USER_ID' => false,
 		]);
 		if ($agentId > 0)
 		{
-			$record->setAutoClosingAgentId($agentId);
+			$recordManager->getRecord()->setAutoClosingAgentId($agentId);
 		}
 	}
 
@@ -443,5 +465,71 @@ class WorktimeAgentManager
 		{
 			$this->createAutoClosingAgent($record, $record->obtainSchedule(), $record->obtainShift());
 		}
+	}
+
+	public function deleteAutoClosingAgents(Schedule $schedule, $shiftCollection = null)
+	{
+		$shiftCollection = $shiftCollection === null ? new ShiftCollection() : $shiftCollection;
+		$result = new WorktimeServiceResult();
+
+		$records = $this->worktimeRepository->findAll(
+			['ID', 'AUTO_CLOSING_AGENT_ID',],
+			$this->worktimeRepository->buildOpenRecordsQuery($schedule, $shiftCollection)
+				->where('AUTO_CLOSING_AGENT_ID', '>', 0)
+		);
+		if ($records->count() === 0)
+		{
+			return $result;
+		}
+		$this->deleteAgentsByIds($records->getAutoClosingAgentIdList());
+		$this->worktimeRepository->saveAll($records, ['AUTO_CLOSING_AGENT_ID' => 0]);
+		return $result;
+	}
+
+	public function addAutoClosingAgents(Schedule $schedule, $shiftCollection = null)
+	{
+		$shiftCollection = $shiftCollection === null ? new ShiftCollection() : $shiftCollection;
+		$result = new WorktimeServiceResult();
+		if (!$schedule->isAutoClosing())
+		{
+			return $result;
+		}
+
+		$selectFields = ['*'];
+		if ($shiftCollection->count() === 0)
+		{
+			$selectFields[] = 'SHIFT';
+		}
+		$records = $this->worktimeRepository->findAll(
+			$selectFields,
+			$this->worktimeRepository->buildOpenRecordsQuery($schedule, $shiftCollection)
+		);
+		if ($records->count() === 0)
+		{
+			return $result;
+		}
+		foreach ($records as $record)
+		{
+			$record->defineSchedule($schedule);
+			if ($shiftCollection->count() > 0 && $shiftCollection->getByPrimary($record->getShiftId()))
+			{
+				$record->defineShift($shiftCollection->getByPrimary($record->getShiftId()));
+			}
+		}
+
+		$this->createAutoClosingAgentForRecords($records);
+		foreach ($records as $record)
+		{
+			if ($record->getAutoClosingAgentId() > 0)
+			{
+				$recordToSave = WorktimeRecord::wakeUpRecord([
+					'ID' => $record->getId(),
+				]);
+				$recordToSave->setAutoClosingAgentId($record->getAutoClosingAgentId());
+				$this->worktimeRepository->save($recordToSave);
+			}
+		}
+
+		return $result;
 	}
 }

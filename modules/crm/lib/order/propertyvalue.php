@@ -16,4 +16,8 @@ if (!Main\Loader::includeModule('sale'))
  */
 class PropertyValue extends Sale\PropertyValue
 {
+	public static function getTableEntity()
+	{
+		return \Bitrix\Sale\Internals\OrderPropsValueTable::getEntity();
+	}
 }

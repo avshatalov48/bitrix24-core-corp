@@ -147,11 +147,11 @@
 
 		setProfileData: function(profile)
 		{
-			if (this.uiNodes.avatar)
+			if (this.uiNodes.avatar && profile.PICTURE)
 			{
 				this.uiNodes.avatar.style['background-image'] = 'url(' + profile.PICTURE + ')';
 			}
-			if (this.uiNodes.name)
+			if (this.uiNodes.name && profile.NAME)
 			{
 				this.uiNodes.name.innerText = profile.NAME;
 			}
@@ -185,14 +185,14 @@
 		{
 			if (this.auth.HAS_AUTH)
 			{
+				this.setProfileData(this.auth.PROFILE);
 				if (this.auth.PROFILE)
 				{
-					this.setProfileData(this.auth.PROFILE);
 					this.showBlock(['profile', 'settings', 'form']);
 				}
 				else
 				{
-					this.showBlock(['settings', 'form']);
+					this.showBlock(['profile']);
 				}
 			}
 			else

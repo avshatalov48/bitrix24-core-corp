@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\ImBot\Bot;
 
+use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -9,39 +10,81 @@ class Partner24 extends Network
 {
 	const BOT_CODE = "partner24";
 
+	public const OPTION_BOT_ID = 'partner24_bot_id';
+	public const OPTION_BOT_NAME = 'partner24_name';
+	public const OPTION_BOT_DESC = 'partner24_desc';
+	public const OPTION_BOT_AVATAR = 'partner24_avatar';
+	public const OPTION_BOT_MESSAGES = 'partner24_messages';
+	public const OPTION_BOT_FOR_ALL = 'partner24_for_all';
+	public const OPTION_BOT_ACTIVE = 'partner24_active';
+	public const OPTION_BOT_WAIT_ACTIVATION = 'partner24_wait_activation';
+	public const OPTION_BOT_SUPPORT_CODE = 'partner24_support_code';
+	public const OPTION_BOT_SUPPORT_NAME = 'partner24_support_name';
+	public const OPTION_BOT_REGULAR_SUPPORT = 'partner24_regular_support';
+
+	public const REGULAR_SUPPORT_NONE = 'PARTNER24_REGULAR_NO';
+	public const REGULAR_SUPPORT_INTEGRATOR = 'PARTNER24_REGULAR_INTEGRATOR';
+
+	/**
+	 * @return string
+	 */
 	public static function getSupportLevel()
 	{
 		return Support24::getSupportLevel();
 	}
 
+	/**
+	 * @return string
+	 */
 	public static function getLicenceLanguage()
 	{
 		return Support24::getLicenceLanguage();
 	}
 
+	/**
+	 * @return int[]|null
+	 */
 	private static function getBusinessUsers()
 	{
 		return Support24::getBusinessUsers();
 	}
 
+	/**
+	 * @return int[]
+	 */
 	private static function getAdministrators()
 	{
 		return Support24::getAdministrators();
 	}
 
+	/**
+	 * @return string
+	 */
 	public static function getPartnerName()
 	{
-		return \Bitrix\Main\Config\Option::get('imbot', "partner24_support_name", "");
+		return Main\Config\Option::get('imbot', self::OPTION_BOT_SUPPORT_NAME, "");
 	}
 
+	/**
+	 * @return string
+	 */
 	public static function getBotCode()
 	{
-		return \Bitrix\Main\Config\Option::get('imbot', "partner24_support_code", "");
+		return Main\Config\Option::get('imbot', self::OPTION_BOT_SUPPORT_CODE, "");
 	}
 
+	/**
+	 * Register bot at portal.
+	 *
+	 * @param array $params
+	 * @param string $params['CODE']
+	 * @param string $params['NAME']
+	 *
+	 * @return bool|int
+	 */
 	public static function register(array $params = Array())
 	{
-		if (!\Bitrix\Main\Loader::includeModule('im'))
+		if (!Main\Loader::includeModule('im'))
 		{
 			return false;
 		}
@@ -86,17 +129,25 @@ class Partner24 extends Network
 			$supportName = $search[0]['LINE_NAME'];
 		}
 
-		\Bitrix\Main\Config\Option::set('imbot', "partner24_bot_id", $botId);
-		\Bitrix\Main\Config\Option::set('imbot', "partner24_support_name", $supportName);
+		Main\Config\Option::set('imbot', self::OPTION_BOT_ID, $botId);
+		Main\Config\Option::set('imbot', self::OPTION_BOT_SUPPORT_NAME, $supportName);
 
 		self::updateBotProperties();
 
 		return $botId;
 	}
 
+	/**
+	 * Unregister bot at portal.
+	 *
+	 * @param string $code
+	 * @param bool $serverRequest
+	 *
+	 * @return bool|array
+	 */
 	public static function unRegister($code = '', $serverRequest = true)
 	{
-		if (!\Bitrix\Main\Loader::includeModule('im'))
+		if (!Main\Loader::includeModule('im'))
 			return false;
 
 		global $USER;
@@ -111,14 +162,14 @@ class Partner24 extends Network
 			return false;
 		}
 
-		\Bitrix\Main\Config\Option::set('imbot', "partner24_bot_id", 0);
-		\Bitrix\Main\Config\Option::set('imbot', "network_".$code."_bot_id", 0);
+		Main\Config\Option::set('imbot', self::OPTION_BOT_ID, 0);
+		Main\Config\Option::set('imbot', "network_".$code."_bot_id", 0);
 
-		\Bitrix\Main\Config\Option::set('imbot', "partner24_active", false);
-		\Bitrix\Main\Config\Option::set('imbot', "partner24_wait_activation", false);
+		Main\Config\Option::set('imbot', self::OPTION_BOT_ACTIVE, false);
+		Main\Config\Option::set('imbot', self::OPTION_BOT_WAIT_ACTIVATION, false);
 
-		\Bitrix\Main\Config\Option::set('imbot', "partner24_support_code", '');
-		\Bitrix\Main\Config\Option::set('imbot', "partner24_support_name", '');
+		Main\Config\Option::set('imbot', self::OPTION_BOT_SUPPORT_CODE, '');
+		Main\Config\Option::set('imbot', self::OPTION_BOT_SUPPORT_NAME, '');
 
 		if ($serverRequest)
 		{
@@ -128,95 +179,179 @@ class Partner24 extends Network
 		return $result;
 	}
 
+	/**
+	 * @return bool
+	 */
 	public static function isEnabled()
 	{
 		return self::getBotId() > 0;
 	}
 
+	/**
+	 * @return bool|int
+	 */
 	public static function getBotId()
 	{
-		return \Bitrix\Main\Config\Option::get('imbot', "partner24_bot_id", 0);
+		return Main\Config\Option::get('imbot', self::OPTION_BOT_ID, 0);
 	}
 
+	/**
+	 * @return string
+	 */
 	public static function getBotName()
 	{
-		return \Bitrix\Main\Config\Option::get('imbot', 'partner24_name', '');
+		return Main\Config\Option::get('imbot', self::OPTION_BOT_NAME, '');
 	}
 
+	/**
+	 * @return string
+	 */
 	public static function getBotDesc()
 	{
-		return \Bitrix\Main\Config\Option::get('imbot', 'partner24_desc', '');
+		return Main\Config\Option::get('imbot', self::OPTION_BOT_DESC, '');
 	}
 
+	/**
+	 * @return string
+	 */
 	public static function getBotAvatar()
 	{
-		return \Bitrix\Main\Config\Option::get('imbot', 'partner24_avatar', '');
+		return Main\Config\Option::get('imbot', self::OPTION_BOT_AVATAR, '');
 	}
 
+	/**
+	 * @return bool
+	 */
 	public static function isActiveSupport()
 	{
-		return (bool)\Bitrix\Main\Config\Option::get('imbot', "partner24_active", false);
+		return (bool)Main\Config\Option::get('imbot', self::OPTION_BOT_ACTIVE, false);
 	}
 
+	/**
+	 * @return bool
+	 */
 	public static function isWaitingActivation()
 	{
-		return (bool)\Bitrix\Main\Config\Option::get('imbot', "partner24_wait_activation", false);
+		return (bool)Main\Config\Option::get('imbot', self::OPTION_BOT_WAIT_ACTIVATION, false);
 	}
 
+	/**
+	 * Allows everyone writes to OL.
+	 *
+	 * @return bool
+	 */
 	public static function isActiveSupportForAll()
 	{
-		return (bool)\Bitrix\Main\Config\Option::get('imbot', 'partner24_for_all', false);
+		return (bool)Main\Config\Option::get('imbot', self::OPTION_BOT_FOR_ALL, false);
 	}
 
+	/**
+	 * Checks if integrator has access to partner OL along with regular support active.
+	 *
+	 * @return bool
+	 */
+	public static function allowIntegratorAccessAlongSupport24()
+	{
+		$regulagSupportLevel = Main\Config\Option::get('imbot', self::OPTION_BOT_REGULAR_SUPPORT, self::REGULAR_SUPPORT_NONE);
+
+		return ($regulagSupportLevel === self::REGULAR_SUPPORT_INTEGRATOR);
+	}
+
+	/**
+	 * Allows certain user write to OL.
+	 *
+	 * @param int $userId
+	 *
+	 * @return bool
+	 */
 	public static function isActiveSupportForUser($userId)
 	{
 		if (!self::isActiveSupport())
+		{
 			return false;
+		}
 
 		if (!\CModule::IncludeModule('bitrix24'))
+		{
 			return false;
+		}
 
 		if (self::isActiveSupportForAll())
+		{
 			return true;
+		}
 
-		if (\CBitrix24BusinessTools::isLicenseUnlimited())
-			return true;
+		// temporary remove because free plan is unlimited
+		//if (\CBitrix24BusinessTools::isLicenseUnlimited())
+		//	return true;
 
 		if (self::isUserAdmin($userId) || self::isUserIntegrator($userId))
+		{
 			return true;
+		}
 
 		$users = \CBitrix24BusinessTools::getUnlimUsers();
 		if (in_array($userId, $users))
+		{
 			return true;
+		}
 
 		return false;
 	}
 
+	/**
+	 * @param int $userId
+	 *
+	 * @return bool
+	 */
 	public static function isUserAdmin($userId)
 	{
 		return Support24::isUserAdmin($userId);
 	}
 
+	/**
+	 * @param int $userId
+	 *
+	 * @return bool
+	 */
 	public static function isUserIntegrator($userId)
 	{
 		return Support24::isUserIntegrator($userId);
 	}
 
+	/**
+	 * @return bool
+	 */
 	public static function isNeedUpdateBotFieldsAfterNewMessage()
 	{
 		return false;
 	}
 
+	/**
+	 * @return bool
+	 */
 	public static function isNeedUpdateBotAvatarAfterNewMessage()
 	{
 		return (bool)self::getBotAvatar() !== true;
 	}
 
+	/**
+	 * @param string $command
+	 * @param array $params
+	 *
+	 * @return \Bitrix\ImBot\Error|array
+	 */
 	public static function onAnswerAdd($command, $params)
 	{
 		return self::onReceiveCommand($command, $params);
 	}
 
+	/**
+	 * @param string $command
+	 * @param array $params
+	 *
+	 * @return \Bitrix\ImBot\Error|array
+	 */
 	public static function onReceiveCommand($command, $params)
 	{
 		if (!self::isActiveSupport())
@@ -231,9 +366,15 @@ class Partner24 extends Network
 		return parent::onReceiveCommand($command, $params);
 	}
 
+	/**
+	 * @param string $dialogId
+	 * @param array $joinFields
+	 *
+	 * @return bool
+	 */
 	public static function onWelcomeMessage($dialogId, $joinFields)
 	{
-		if (!\Bitrix\Main\Loader::includeModule('im'))
+		if (!Main\Loader::includeModule('im'))
 			return false;
 
 		$messageFields = $joinFields;
@@ -253,7 +394,7 @@ class Partner24 extends Network
 			}
 
 			$chat = new \CIMChat(self::getBotId());
-			$chat->DeleteUser(substr($dialogId, 4), self::getBotId());
+			$chat->DeleteUser(mb_substr($dialogId, 4), self::getBotId());
 
 			return true;
 		}
@@ -294,9 +435,15 @@ class Partner24 extends Network
 		return true;
 	}
 
+	/**
+	 * @param int $messageId
+	 * @param array $messageFields
+	 *
+	 * @return bool
+	 */
 	public static function onMessageAdd($messageId, $messageFields)
 	{
-		if (!\Bitrix\Main\Loader::includeModule('im'))
+		if (!Main\Loader::includeModule('im'))
 			return false;
 
 		if ($messageFields['MESSAGE_TYPE'] != IM_MESSAGE_PRIVATE)
@@ -351,6 +498,11 @@ class Partner24 extends Network
 		return parent::onMessageAdd($messageId, $messageFields);
 	}
 
+	/**
+	 * @param array $params
+	 *
+	 * @return bool
+	 */
 	public static function onStartWriting($params)
 	{
 		if (self::isActiveSupport())
@@ -368,12 +520,18 @@ class Partner24 extends Network
 		return parent::onStartWriting($params);
 	}
 
+	/**
+	 * @param string $currentCode
+	 * @param string $previousCode
+	 *
+	 * @return bool
+	 */
 	public static function onAfterSupportCodeChange($currentCode = '', $previousCode = '')
 	{
-		if (!\Bitrix\Main\Loader::includeModule('im'))
+		if (!Main\Loader::includeModule('im'))
 			return false;
 
-		if (!\Bitrix\Main\Loader::includeModule('bitrix24'))
+		if (!Main\Loader::includeModule('bitrix24'))
 			return false;
 
 		if (!self::getBotId())
@@ -390,8 +548,8 @@ class Partner24 extends Network
 
 		self::sendMessageForRecent(self::getMessage('CHANGE_CODE'));
 
-		\Bitrix\Main\Config\Option::set('imbot', "network_".$previousCode."_bot_id", 0);
-		\Bitrix\Main\Config\Option::set('imbot', "network_".$currentCode."_bot_id", self::getBotId());
+		Main\Config\Option::set('imbot', "network_".$previousCode."_bot_id", 0);
+		Main\Config\Option::set('imbot', "network_".$currentCode."_bot_id", self::getBotId());
 
 		self::sendRequestFinalizeSession();
 
@@ -414,12 +572,54 @@ class Partner24 extends Network
 		return true;
 	}
 
+	/**
+	 * Finalizes openlines session.
+	 *
+	 * @param array $params
+	 * @param int $params['BOT_ID']
+	 * @param string $params['DIALOG_ID']
+	 * @param int $params['SESSION_ID']
+	 *
+	 * @return bool
+	 */
+	public static function finishDialogSession($params)
+	{
+		if (self::isActiveSupport())
+		{
+			if (isset($params['DIALOG_ID']) && preg_match('/^[0-9]+$/i', $params['DIALOG_ID']))
+			{
+				$userId = (int)$params['DIALOG_ID'];
+
+				if (!self::isUserIntegrator($userId) && self::isActiveSupportForUser($userId))
+				{
+					// Message with survey of the partner support quality.
+					$message = self::getMessage('MESSAGE_QUALITY_SURVEY');
+
+					if (!empty($message))
+					{
+						self::sendMessage([
+							'DIALOG_ID' => $userId,
+							'MESSAGE' => $message,
+							'SYSTEM' => 'N',
+							'URL_PREVIEW' => 'N',
+						]);
+					}
+				}
+			}
+		}
+
+		return parent::finishDialogSession($params);
+	}
+
+	/**
+	 * @return bool
+	 */
 	public static function sendRequestFinalizeSession()
 	{
-		if (!\Bitrix\Main\Loader::includeModule('im'))
+		if (!Main\Loader::includeModule('im'))
 			return false;
 
-		if (!\Bitrix\Main\Loader::includeModule('bitrix24'))
+		if (!Main\Loader::includeModule('bitrix24'))
 			return false;
 
 		if (!self::getBotId())
@@ -444,9 +644,12 @@ class Partner24 extends Network
 		return true;
 	}
 
+	/**
+	 * @return bool
+	 */
 	public static function updateBotProperties()
 	{
-		if (!\Bitrix\Main\Loader::includeModule('im'))
+		if (!Main\Loader::includeModule('im'))
 		{
 			return false;
 		}
@@ -460,7 +663,7 @@ class Partner24 extends Network
 		$userAvatar = \Bitrix\Im\User::uploadAvatar(self::getBotAvatar(), self::getBotId());
 		if ($userAvatar && $botData->getAvatarId() != $userAvatar)
 		{
-			$connection = \Bitrix\Main\Application::getConnection();
+			$connection = Main\Application::getConnection();
 			$connection->query("UPDATE b_user SET PERSONAL_PHOTO = ".intval($userAvatar)." WHERE ID = ".intval(self::getBotId()));
 		}
 
@@ -485,20 +688,36 @@ class Partner24 extends Network
 		return true;
 	}
 
+	/**
+	 * @param string $message
+	 * @param int $userId
+	 *
+	 * @return string
+	 */
 	public static function replacePlaceholders($message, $userId = 0)
 	{
 		return Support24::replacePlaceholders($message, $userId);
 	}
 
+	/**
+	 * @param string $code
+	 *
+	 * @return string
+	 */
 	public static function getMessage($code)
 	{
-		$messages = unserialize(\Bitrix\Main\Config\Option::get('imbot', 'partner24_messages', "a:0:{}"));
+		$messages = unserialize(Main\Config\Option::get('imbot', self::OPTION_BOT_MESSAGES, "a:0:{}"));
 		return isset($messages[$code])? $messages[$code]: '';
 	}
 
+	/**
+	 * @param array $messageFields
+	 *
+	 * @return array
+	 */
 	public static function sendMessage($messageFields)
 	{
-		if (!\Bitrix\Main\Loader::includeModule('im'))
+		if (!Main\Loader::includeModule('im'))
 		{
 			return [];
 		}
@@ -511,7 +730,7 @@ class Partner24 extends Network
 		}
 		else if (isset($messageFields['DIALOG_ID']))
 		{
-			if (preg_match('/^[0-9]{1,}$/i', $messageFields['DIALOG_ID']))
+			if (preg_match('/^[0-9]+$/i', $messageFields['DIALOG_ID']))
 			{
 				$userId = $messageFields['DIALOG_ID'];
 			}
@@ -554,6 +773,11 @@ class Partner24 extends Network
 		return [];
 	}
 
+	/**
+	 * @param array $message
+	 *
+	 * @return bool
+	 */
 	private static function sendMessageForRecent($message)
 	{
 		$query = "
@@ -571,7 +795,7 @@ class Partner24 extends Network
 			and RU.MESSAGE_TYPE = '".IM_MESSAGE_PRIVATE."'
 			and RB.CHAT_ID = RU.CHAT_ID
 		";
-		$dialogs = \Bitrix\Main\Application::getInstance()->getConnection()->query($query)->fetchAll();
+		$dialogs = Main\Application::getInstance()->getConnection()->query($query)->fetchAll();
 
 		foreach ($dialogs as $dialog)
 		{
@@ -602,6 +826,15 @@ class Partner24 extends Network
 		return true;
 	}
 
+	/**
+	 * Activate partner support on portal for certain user.
+	 *
+	 * @param int $userId
+	 * @param string $supportCode
+	 * @param string|null $supportName
+	 *
+	 * @return bool
+	 */
 	public static function activate(int $userId, string $supportCode, string $supportName = null)
 	{
 		if (self::getBotId())
@@ -615,8 +848,8 @@ class Partner24 extends Network
 			return false;
 		}
 
-		\Bitrix\Main\Config\Option::set('imbot', "partner24_active", true);
-		\Bitrix\Main\Config\Option::set('imbot', "partner24_wait_activation", false);
+		Main\Config\Option::set('imbot', self::OPTION_BOT_ACTIVE, true);
+		Main\Config\Option::set('imbot', self::OPTION_BOT_WAIT_ACTIVATION, false);
 
 		Support24::sendMessage([
 			'DIALOG_ID' => 'ADMIN',
@@ -636,6 +869,11 @@ class Partner24 extends Network
 		return true;
 	}
 
+	/**
+	 * @param int $userId
+	 *
+	 * @return bool
+	 */
 	public static function deactivate(int $userId)
 	{
 		if(!self::isActiveSupport())
@@ -648,12 +886,19 @@ class Partner24 extends Network
 
 		self::sendRequestFinalizeSession();
 
-		\Bitrix\Main\Config\Option::set('imbot', "partner24_active", false);
-		\Bitrix\Main\Config\Option::set('imbot', "partner24_wait_activation", false);
+		Main\Config\Option::set('imbot', self::OPTION_BOT_ACTIVE, false);
+		Main\Config\Option::set('imbot', self::OPTION_BOT_WAIT_ACTIVATION, false);
 
 		return true;
 	}
 
+	/**
+	 * @param int $userId
+	 * @param string $supportCode
+	 * @param string|null $supportName
+	 *
+	 * @return bool
+	 */
 	public static function change(int $userId, string $supportCode, string $supportName = null)
 	{
 		$prevSupportCode = self::getBotCode();
@@ -667,14 +912,20 @@ class Partner24 extends Network
 			'ATTACH' => [['MESSAGE' => self::getMessage('PARTNER_INFO_ACTIVATE')]],
 		]);
 
-		\Bitrix\Main\Config\Option::set('imbot', "partner24_active", true);
-		\Bitrix\Main\Config\Option::set('imbot', "partner24_wait_activation", false);
+		Main\Config\Option::set('imbot', self::OPTION_BOT_ACTIVE, true);
+		Main\Config\Option::set('imbot', self::OPTION_BOT_WAIT_ACTIVATION, false);
 
 		Support24::sendRequestFinalizeSession(Partner24::getMessage('SUPPORT_INFO_DEACTIVATE'));
 
 		return true;
 	}
 
+	/**
+	 * @param string $supportCode
+	 * @param string|null $supportName
+	 *
+	 * @return bool
+	 */
 	public static function setOptions(string $supportCode, string $supportName = null)
 	{
 		if (!$supportCode)
@@ -682,12 +933,24 @@ class Partner24 extends Network
 			return false;
 		}
 
-		\Bitrix\Main\Config\Option::set('imbot', "partner24_support_code", $supportCode);
-		\Bitrix\Main\Config\Option::set('imbot', "partner24_support_name", $supportName? $supportName: '');
+		$supportCode = trim($supportCode);
+		if ($supportName)
+		{
+			$supportName = trim($supportName);
+		}
+
+		Main\Config\Option::set('imbot', self::OPTION_BOT_SUPPORT_CODE, $supportCode);
+		Main\Config\Option::set('imbot', self::OPTION_BOT_SUPPORT_NAME, $supportName? $supportName: '');
 
 		return true;
 	}
 
+	/**
+	 * @param string $supportCode
+	 * @param string|null $supportName
+	 *
+	 * @return bool
+	 */
 	public static function sendRequest(string $supportCode, string $supportName = null)
 	{
 		if (self::isActiveSupport())
@@ -706,11 +969,18 @@ class Partner24 extends Network
 		}
 
 		\Bitrix\ImBot\Bot\Support24::execScheduleAction('ADMIN', 'partner_join');
-		\Bitrix\Main\Config\Option::set('imbot', "partner24_wait_activation", true);
+		Main\Config\Option::set('imbot', self::OPTION_BOT_WAIT_ACTIVATION, true);
 
 		return true;
 	}
 
+	/**
+	 * Activate partner support on portal.
+	 *
+	 * @param int $userId
+	 *
+	 * @return bool
+	 */
 	public static function acceptRequest(int $userId)
 	{
 		$supportCode = self::getBotCode();
@@ -719,6 +989,11 @@ class Partner24 extends Network
 		return self::activate($userId, $supportCode, $supportName);
 	}
 
+	/**
+	 * @param int $userId
+	 *
+	 * @return bool
+	 */
 	public static function declineRequest(int $userId)
 	{
 		if (self::isActiveSupport())
@@ -731,9 +1006,9 @@ class Partner24 extends Network
 			return true;
 		}
 
-		\Bitrix\Main\Config\Option::set('imbot', "partner24_support_name", "");
-		\Bitrix\Main\Config\Option::set('imbot', "partner24_active", false);
-		\Bitrix\Main\Config\Option::set('imbot', "partner24_wait_activation", false);
+		Main\Config\Option::set('imbot', self::OPTION_BOT_SUPPORT_NAME, '');
+		Main\Config\Option::set('imbot', self::OPTION_BOT_ACTIVE, false);
+		Main\Config\Option::set('imbot', self::OPTION_BOT_WAIT_ACTIVATION, false);
 
 		return true;
 	}

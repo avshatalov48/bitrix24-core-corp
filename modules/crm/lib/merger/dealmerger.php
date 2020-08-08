@@ -158,7 +158,13 @@ class DealMerger extends EntityMerger
 				$targ['PRODUCT_ROWS'] = $targProductRows;
 			}
 
-			if(!empty($seedProductRows) || !empty($targProductRows))
+			$seedIsManualOpportunity = isset($seed['IS_MANUAL_OPPORTUNITY']) && $seed['IS_MANUAL_OPPORTUNITY'] === 'Y';
+			$targIsManualOpportunity = isset($targ['IS_MANUAL_OPPORTUNITY']) && $targ['IS_MANUAL_OPPORTUNITY'] === 'Y';
+
+			if(
+				!$seedIsManualOpportunity &&
+				!$targIsManualOpportunity &&
+				(!empty($seedProductRows) || !empty($targProductRows)))
 			{
 				//Opportunity is depends on Product Rows. Product Rows will be merged in innerMergeBoundEntities
 				return true;
@@ -466,5 +472,10 @@ class DealMerger extends EntityMerger
 		Timeline\CreationEntry::rebind(\CCrmOwnerType::Deal, $seedID, $targID);
 		Timeline\MarkEntry::rebind(\CCrmOwnerType::Deal, $seedID, $targID);
 		Timeline\CommentEntry::rebind(\CCrmOwnerType::Deal, $seedID, $targID);
+
+		Crm\Tracking\Entity::rebindTrace(
+			\CCrmOwnerType::Deal, $seedID,
+			\CCrmOwnerType::Deal, $targID
+		);
 	}
 }

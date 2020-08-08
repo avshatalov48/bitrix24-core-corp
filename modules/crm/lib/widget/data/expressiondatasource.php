@@ -48,7 +48,7 @@ class ExpressionDataSource extends DataSource
 		}
 
 		$operation = isset($this->settings['operation'])
-			? strtoupper($this->settings['operation']) : '';
+			? mb_strtoupper($this->settings['operation']) : '';
 
 		$arguments = isset($this->settings['arguments']) && is_array($this->settings['arguments'])
 			? $this->settings['arguments'] : array();

@@ -68,7 +68,7 @@ foreach ($arResult['FILES'] as $file)
 	}
 }
 
-if (strlen($jsIds) > 0)
+if ($jsIds <> '')
 {
 	?><script>BitrixMobile.LazyLoad.registerImages([<?=$jsIds?>], typeof oMSL != 'undefined' ? oMSL.checkVisibility : false);</script><?
 }

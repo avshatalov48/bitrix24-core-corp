@@ -32,7 +32,7 @@ class CCrmExternalSaleProxy
 		$dbResult = CCrmExternalSale::GetList(array(), array("ID" => $this->externalSaleId, "ACTIVE" => "Y"));
 		if ($arResult = $dbResult->Fetch())
 		{
-			$scheme = isset($arResult['SCHEME']) ? strtolower($arResult['SCHEME']) : '';
+			$scheme = isset($arResult['SCHEME'])? mb_strtolower($arResult['SCHEME']) : '';
 			$this->scheme = $scheme === 'https' ? 'https' : 'http';
 			$this->server = isset($arResult['SERVER']) ? $arResult['SERVER'] : '';
 			$this->port = isset($arResult['PORT']) ? intval($arResult['PORT']) : 80;
@@ -54,7 +54,7 @@ class CCrmExternalSaleProxy
 		if (is_array($proxySettings) && isset($proxySettings['PROXY_HOST']) && $proxySettings['PROXY_HOST'] !== '')
 		{
 			$this->proxyServer = $proxySettings['PROXY_HOST'];
-			$scheme = isset($proxySettings['PROXY_SCHEME']) ? strtolower($proxySettings['PROXY_SCHEME']) : '';
+			$scheme = isset($proxySettings['PROXY_SCHEME'])? mb_strtolower($proxySettings['PROXY_SCHEME']) : '';
 			$this->proxyScheme = $scheme === 'https' ? 'https' : 'http';
 			$this->proxyPort = isset($proxySettings['PROXY_PORT']) ? intval($proxySettings['PROXY_PORT']) : 80;
 			$this->proxyUserName = isset($proxySettings['PROXY_USERNAME']) ? $proxySettings['PROXY_USERNAME'] : '';
@@ -82,7 +82,7 @@ class CCrmExternalSaleProxy
 	}
 	public function Send(array $request)
 	{
-		$method = isset($request['METHOD']) ? strtoupper($request['METHOD']) : '';
+		$method = isset($request['METHOD'])? mb_strtoupper($request['METHOD']) : '';
 		if($method !== \Bitrix\Main\Web\HttpClient::HTTP_GET && $method !== \Bitrix\Main\Web\HttpClient::HTTP_POST)
 		{
 			throw new Bitrix\Main\ArgumentException("Could not find 'METHOD'.", 'request');

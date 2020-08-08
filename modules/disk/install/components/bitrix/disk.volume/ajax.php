@@ -10,7 +10,7 @@ define('STOP_STATISTICS', true);
 define('BX_SECURITY_SHOW_MESSAGE', true);
 
 $siteId = isset($_REQUEST['SITE_ID']) && is_string($_REQUEST['SITE_ID'])? $_REQUEST['SITE_ID'] : '';
-$siteId = substr(preg_replace('/[^a-z0-9_]/i', '', $siteId), 0, 2);
+$siteId = mb_substr(preg_replace('/[^a-z0-9_]/i', '', $siteId), 0, 2);
 if(!empty($siteId) && is_string($siteId))
 {
 	define('SITE_ID', $siteId);
@@ -200,9 +200,9 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 			$listAction = $this->component->listActions();
 			foreach ($listAction as $action => $description)
 			{
-				if (empty($this->sefPath['PATH_TO_DISK_VOLUME_'.strtoupper($action)]))
+				if (empty($this->sefPath['PATH_TO_DISK_VOLUME_'.mb_strtoupper($action)]))
 				{
-					$this->sefPath['PATH_TO_DISK_VOLUME_'.strtoupper($action)] = $description['sef_path'];
+					$this->sefPath['PATH_TO_DISK_VOLUME_'.mb_strtoupper($action)] = $description['sef_path'];
 				}
 			}
 		}
@@ -912,7 +912,7 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 
 				if ($this->indicatorId != Volume\Storage\Storage::getIndicatorId())
 				{
-					$messageType = strtoupper($this->indicatorId);
+					$messageType = mb_strtoupper($this->indicatorId);
 				}
 			}
 			elseif ($indicator instanceof Volume\Folder)
@@ -1220,7 +1220,7 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 				}
 			}
 
-			if (strpos($this->subTask, 'storage:') === 0)
+			if (mb_strpos($this->subTask, 'storage:') === 0)
 			{
 				$storageSubTask = str_replace('storage:', '', $this->subTask);
 
@@ -1302,7 +1302,7 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 			}
 
 
-			if (strpos($this->subTask, 'trashcan:') === 0)
+			if (mb_strpos($this->subTask, 'trashcan:') === 0)
 			{
 				$storageSubTask = str_replace('trashcan:', '', $this->subTask);
 
@@ -1642,7 +1642,7 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 		if ($this->sefMode)
 		{
 			$path = \CComponentEngine::makePathFromTemplate(
-				$this->sefPath['PATH_TO_DISK_VOLUME_'.strtoupper($action)],
+				$this->sefPath['PATH_TO_DISK_VOLUME_'.mb_strtoupper($action)],
 				$params
 			);
 			$path = str_replace('//', '/', $path);

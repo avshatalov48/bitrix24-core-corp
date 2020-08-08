@@ -170,7 +170,7 @@ else
 			$arErrors = $ID;
 			foreach ($arErrors as $key => $val)
 			{
-				if (strlen($val) <= 0)
+				if ($val == '')
 					unset($arErrors[$key]);
 			}
 			$ID = 0;

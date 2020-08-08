@@ -21,10 +21,10 @@ if($mode === '' && isset($_REQUEST['mode']))
 	$mode = $_REQUEST['mode'];
 }
 
-$mode = strtoupper(trim($mode));
+$mode = mb_strtoupper(trim($mode));
 $arResult['MODE'] = $arParams['MODE'] = $mode;
 
-$enableSearch = $arResult['ENABLE_SEARCH'] = isset($_REQUEST['SEARCH']) && strtoupper($_REQUEST['SEARCH']) === 'Y';
+$enableSearch = $arResult['ENABLE_SEARCH'] = isset($_REQUEST['SEARCH']) && mb_strtoupper($_REQUEST['SEARCH']) === 'Y';
 if($enableSearch)
 {
 	// decode encodeURIComponent params
@@ -150,7 +150,7 @@ $arResult['SERVICE_URL'] = ($arParams["SERVICE_URL"]
 );
 
 
-$format = isset($_REQUEST['FORMAT']) ? strtolower($_REQUEST['FORMAT']) : '';
+$format = isset($_REQUEST['FORMAT'])? mb_strtolower($_REQUEST['FORMAT']) : '';
 // Only JSON format is supported
 if($format !== '' && $format !== 'json')
 {

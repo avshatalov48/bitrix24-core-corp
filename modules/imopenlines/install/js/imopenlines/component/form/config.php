@@ -15,7 +15,7 @@ return [
 		'main.polyfill.core',
 		'ui.vue',
 		'ui.vue.vuex',
-		'im.component.message',
+		'im.view.message',
 	],
 	'skip_core' => true,
 ];

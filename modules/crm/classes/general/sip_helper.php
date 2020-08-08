@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Main\ArgumentException;
+
 class CCrmSipHelper
 {
 	private static $ENABLE_VOX_IMPLANT = null;
@@ -149,25 +152,30 @@ class CCrmSipHelper
 
 				if ($fields['CAN_READ'] && $enableExtendedMode)
 				{
-					$deals = array();
-					$dbDeal = CCrmDeal::GetListEx(
-						array('BEGINDATE' => 'ASC'),
-						array('=ASSOCIATED_CONTACT_ID' => $entityID, 'CLOSED' => 'N', 'CHECK_PERMISSIONS' => $isAdmin ? 'N' : 'Y'),
-						false,
-						array('nTopCount' => 2),
-						array('ID', 'TITLE', 'STAGE_ID', 'OPPORTUNITY', 'CURRENCY_ID', 'CATEGORY_ID'),
-						array('PERMS' => $userPermissions)
-					);
+					$dealIds = static::getDealIds($entityTypeID, $entityID);
 
-					if (is_object($dbDeal))
+					$deals = array();
+					if(count($dealIds) > 0)
 					{
-						while ($dealFields = $dbDeal->Fetch())
+						$dbDeal = CCrmDeal::GetListEx(
+							array('BEGINDATE' => 'ASC'),
+							array('@ID' => $dealIds, 'CLOSED' => 'N', 'CHECK_PERMISSIONS' => $isAdmin ? 'N' : 'Y'),
+							false,
+							array('nTopCount' => 2),
+							array('ID', 'TITLE', 'STAGE_ID', 'OPPORTUNITY', 'CURRENCY_ID', 'CATEGORY_ID'),
+							array('PERMS' => $userPermissions)
+						);
+
+						if (is_object($dbDeal))
 						{
-							$dealID = intval($dealFields['ID']);
-							//$dealFields['CAN_READ'] = CCrmDeal::CheckReadPermission($dealID, $userPermissions);
-							$dealFields['SHOW_URL'] = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Deal, $dealID);
-							$dealFields['FORMATTED_OPPORTUNITY'] = CCrmCurrency::MoneyToString($dealFields['OPPORTUNITY'], $dealFields['CURRENCY_ID']);
-							$deals[] = $dealFields;
+							while ($dealFields = $dbDeal->Fetch())
+							{
+								$dealID = intval($dealFields['ID']);
+								//$dealFields['CAN_READ'] = CCrmDeal::CheckReadPermission($dealID, $userPermissions);
+								$dealFields['SHOW_URL'] = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Deal, $dealID);
+								$dealFields['FORMATTED_OPPORTUNITY'] = CCrmCurrency::MoneyToString($dealFields['OPPORTUNITY'], $dealFields['CURRENCY_ID']);
+								$deals[] = $dealFields;
+							}
 						}
 					}
 
@@ -225,25 +233,29 @@ class CCrmSipHelper
 
 				if ($fields['CAN_READ'] && $enableExtendedMode)
 				{
+					$dealIds = static::getDealIds($entityTypeID, $entityID);
 					$deals = array();
-					$dbDeal = CCrmDeal::GetListEx(
-						array('BEGINDATE' => 'ASC'),
-						array('=COMPANY_ID' => $entityID, 'CLOSED' => 'N', 'CHECK_PERMISSIONS' => $isAdmin ? 'N' : 'Y'),
-						false,
-						array('nTopCount' => 2),
-						array('ID', 'TITLE', 'STAGE_ID', 'OPPORTUNITY', 'CURRENCY_ID', 'CATEGORY_ID'),
-						array('PERMS' => $userPermissions)
-					);
-
-					if (is_object($dbDeal))
+					if (count($dealIds) > 0)
 					{
-						while ($dealFields = $dbDeal->Fetch())
+						$dbDeal = CCrmDeal::GetListEx(
+							array('BEGINDATE' => 'ASC'),
+							array('@ID' => $dealIds, 'CLOSED' => 'N', 'CHECK_PERMISSIONS' => $isAdmin ? 'N' : 'Y'),
+							false,
+							array('nTopCount' => 2),
+							array('ID', 'TITLE', 'STAGE_ID', 'OPPORTUNITY', 'CURRENCY_ID', 'CATEGORY_ID'),
+							array('PERMS' => $userPermissions)
+						);
+
+						if (is_object($dbDeal))
 						{
-							$dealID = intval($dealFields['ID']);
-							//$dealFields['CAN_READ'] = CCrmDeal::CheckReadPermission($dealID, $userPermissions);
-							$dealFields['SHOW_URL'] = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Deal, $dealID);
-							$dealFields['FORMATTED_OPPORTUNITY'] = CCrmCurrency::MoneyToString($dealFields['OPPORTUNITY'], $dealFields['CURRENCY_ID']);
-							$deals[] = $dealFields;
+							while ($dealFields = $dbDeal->Fetch())
+							{
+								$dealID = intval($dealFields['ID']);
+								//$dealFields['CAN_READ'] = CCrmDeal::CheckReadPermission($dealID, $userPermissions);
+								$dealFields['SHOW_URL'] = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Deal, $dealID);
+								$dealFields['FORMATTED_OPPORTUNITY'] = CCrmCurrency::MoneyToString($dealFields['OPPORTUNITY'], $dealFields['CURRENCY_ID']);
+								$deals[] = $dealFields;
+							}
 						}
 					}
 
@@ -403,5 +415,39 @@ class CCrmSipHelper
 		}
 
 		return $fields;
+	}
+
+	public static function getDealIds($entityTypeId, $entityId)
+	{
+		$result = [];
+		$filter = ['CLOSED' => 'N', 'CHECK_PERMISSIONS' => 'N'];
+		switch ($entityTypeId)
+		{
+			case CCrmOwnerType::Contact:
+				$filter['=ASSOCIATED_CONTACT_ID'] = $entityId;
+				break;
+			case CCrmOwnerType::Company:
+				$filter['=COMPANY_ID'] = $entityId;
+				break;
+			default:
+				throw new ArgumentException("Unsupported entity type");
+		}
+
+		$cursor = CCrmDeal::GetListEx(
+			[],
+			$filter,
+			false,
+			['nTopCount' => 1000],
+			['ID']
+		);
+
+		if (is_object($cursor))
+		{
+			while ($deal = $cursor->Fetch())
+			{
+				$result[] = $deal['ID'];
+			}
+		}
+		return $result;
 	}
 }

@@ -1,17 +1,18 @@
 <?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+use Bitrix\Main\Loader,
+	Bitrix\Catalog;
 
-if (!CModule::IncludeModule('crm'))
+if (!Loader::includeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
 	return;
 }
 
-if (!CModule::IncludeModule('catalog'))
+if (!Loader::includeModule('catalog'))
 {
 	ShowError(GetMessage('CRM_CATALOG_MODULE_NOT_INSTALLED'));
 	return;
 }
-
 
 global $USER, $APPLICATION;
 
@@ -76,7 +77,6 @@ if(check_bitrix_sessid())
 {
 	if($_SERVER['REQUEST_METHOD'] == 'POST' && (isset($_POST['save']) || isset($_POST['apply'])))
 	{
-
 		$vatID = isset($_POST['vat_id']) ? intval($_POST['vat_id']) : 0;
 
 		$fields = array();
@@ -84,8 +84,14 @@ if(check_bitrix_sessid())
 		if( $vatID <= 0 && isset($_POST['ID']))
 			$vatID = intval(trim($_POST['ID']));
 
-		if(isset($_POST['C_SORT']))
-			$fields['C_SORT'] = $_POST['C_SORT'];
+		if(isset($_POST['SORT']))
+		{
+			$fields['SORT'] = (int)$_POST['SORT'];
+		}
+		elseif(isset($_POST['C_SORT']))
+		{
+			$fields['SORT'] = (int)$_POST['C_SORT']; // legacy code
+		}
 
 		if(isset($_POST['ACTIVE']))
 			$fields['ACTIVE'] = $_POST['ACTIVE'];
@@ -94,38 +100,47 @@ if(check_bitrix_sessid())
 			$fields['NAME'] = $_POST['NAME'];
 
 		if(isset($_POST['RATE']))
-			$fields['RATE'] = $_POST['RATE'];
+			$fields['RATE'] = (float)$_POST['RATE'];
 
 		$arVat = CCrmVat::GetByID($vatID);
 
 		$errorMsg = '';
 
-		if(is_array($arVat))
+		if (!empty($fields))
 		{
-			$fields['ID'] = $vatID;
-
-			if(!CCatalogVat::Set($fields))
+			if (is_array($arVat))
 			{
-				if ($ex = $GLOBALS['APPLICATION']->GetException())
-					$errorMsg = $ex->GetString();
+				$result = Catalog\VatTable::update($vatID, $fields);
+				if (!$result->isSuccess())
+				{
+					$errorMsg = implode('. ', $result->getErrorMessages());
+					if ($errorMsg === '')
+					{
+						$errorMsg = GetMessage('CRM_VAT_UPDATE_UNKNOWN_ERROR');
+					}
+				}
+				unset($result);
+			}
+			else
+			{
+				$result = Catalog\VatTable::add($fields);
+				if ($result->isSuccess())
+				{
+					$vatID = (int)$result->getId();
+				}
 				else
-					$errorMsg = GetMessage('CRM_VAT_UPDATE_UNKNOWN_ERROR');
+				{
+					$errorMsg = implode('. ', $result->getErrorMessages());
+					if ($errorMsg === '')
+					{
+						$errorMsg = GetMessage('CRM_VAT_ADD_UNKNOWN_ERROR');
+					}
+				}
+				unset($result);
 			}
 		}
-		else
-		{
-			$vatID = CCatalogVat::Set($fields);
 
-			if(intval($vatID) <= 0)
-			{
-				if ($ex = $GLOBALS['APPLICATION']->GetException())
-					$errorMsg = $ex->GetString();
-				else
-					$errorMsg = GetMessage('CRM_VAT_ADD_UNKNOWN_ERROR');
-			}
-		}
-
-		if(strlen($errorMsg)<=0)
+		if($errorMsg == '')
 		{
 			LocalRedirect(
 				isset($_POST['apply'])
@@ -142,7 +157,12 @@ if(check_bitrix_sessid())
 		else
 		{
 			ShowError($errorMsg);
+			if (isset($fields['SORT']))
+			{
+				$fields['C_SORT'] = $fields['SORT'];
+			}
 			$arVat = $fields;
+
 		}
 	}
 	elseif ($_SERVER['REQUEST_METHOD'] == 'GET' &&  isset($_GET['delete']))
@@ -166,7 +186,7 @@ if(check_bitrix_sessid())
 
 $arResult['FIELDS'] = array();
 
-if(strlen($arParams['VAT_ID']) > 0)
+if($arParams['VAT_ID'] <> '')
 {
 	$arResult['FIELDS']['tab_1'][] = array(
 		'id' => 'ID',

@@ -24,7 +24,7 @@ final class Access extends \Bitrix\Tasks\Item\Field\Collection\Item
 
 	public function hasDefaultValue($key, $item)
 	{
-		return true;
+		return false;
 	}
 
 	/**
@@ -34,13 +34,7 @@ final class Access extends \Bitrix\Tasks\Item\Field\Collection\Item
 	 */
 	public function getDefaultValue($key, $item)
 	{
-		// grant full rights to the creator
-		return $this->createValue(array(
-			array(
-				'GROUP_CODE' => 'U'.$item->getUserId(),
-				'TASK_ID' => static::getAccessLevelFullId(),
-			)
-		), $key, $item);
+		return [];
 	}
 
 	/**
@@ -52,24 +46,7 @@ final class Access extends \Bitrix\Tasks\Item\Field\Collection\Item
 	 */
 	public function checkValue($value, $key, $item, array $parameters = array())
 	{
-		if(parent::checkValue($value, $key, $item, $parameters))
-		{
-			// at least one user should have full rights
-			if($value->find(array(
-				'TASK_ID' => static::getAccessLevelFullId()
-			))->count() == 0)
-			{
-				$result = static::obtainResultInstance($parameters);
-				if($result)
-				{
-					$result->addError('ILLEGAL_ACCESS.NO_OWNER', Loc::getMessage('TASKS_ITEM_TASK_TEMPLATE_FIELD_SE_ACCESS_ILLEGAL_OWNER'));
-				}
-			}
-
-			return true;
-		}
-
-		return false;
+		return parent::checkValue($value, $key, $item, $parameters);
 	}
 
 	private static function getAccessLevelFullId()

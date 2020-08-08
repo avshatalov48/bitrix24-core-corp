@@ -94,11 +94,11 @@ abstract class Value
 			$value = trim($value);
 			if($name !== null && $value !== null)
 			{
-				if(strtoupper($value )=== 'Y')
+				if(mb_strtoupper($value) === 'Y')
 				{
 					$value = true;
 				}
-				if(strtoupper($value) === 'N')
+				if(mb_strtoupper($value) === 'N')
 				{
 					$value = false;
 				}

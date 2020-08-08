@@ -1799,6 +1799,20 @@ if(typeof(BX.CrmHistory) === "undefined")
 					}
 				);
 			}
+			else if(providerId === 'CRM_DELIVERY')
+			{
+				return BX.CrmHistoryItemActivity.create(
+					data["ID"],
+					{
+						history: this._history,
+						fixedHistory: this._fixedHistory,
+						container: this._wrapper,
+						activityEditor: this._activityEditor,
+						data: data,
+						vueComponent: BX.Crm.Delivery.Taxi.ActivityCompleted
+					}
+				);
+			}
 		}
 
 		return BX.CrmHistoryItemActivity.create(
@@ -1817,7 +1831,9 @@ if(typeof(BX.CrmHistory) === "undefined")
 		var entityId = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_TYPE_ID", 0);
 		var typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
 
-		if(entityId !== BX.CrmEntityType.enumeration.order)
+		if(entityId !== BX.CrmEntityType.enumeration.order
+			&& entityId !== BX.CrmEntityType.enumeration.orderpayment
+			&& entityId !== BX.CrmEntityType.enumeration.ordershipment)
 		{
 			return null;
 		}
@@ -1847,6 +1863,71 @@ if(typeof(BX.CrmHistory) === "undefined")
 			);
 		}
 	};
+	BX.CrmHistory.prototype.createExternalNotificationItem = function(data)
+	{
+		var typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
+		var changedFieldName = BX.prop.getString(data, 'CHANGED_FIELD_NAME', '');
+
+		if (typeId === BX.CrmTimelineType.modification && changedFieldName === 'STATUS_ID')
+		{
+			return BX.CrmHistoryItemExternalNoticeStatusModification.create(
+				data["ID"],
+				{
+					history: this._history,
+					container: this._wrapper,
+					activityEditor: this._activityEditor,
+					data: data
+				}
+			);
+		}
+
+		return BX.CrmHistoryItemExternalNoticeModification.create(
+			data["ID"],
+			{
+				history: this._history,
+				container: this._wrapper,
+				activityEditor: this._activityEditor,
+				data: data
+			}
+		);
+	};
+
+	BX.CrmHistory.prototype.createDeliveryItem = function(data)
+	{
+		var typeId = BX.prop.getInteger(data, "TYPE_ID", BX.CrmTimelineType.undefined);
+		var typeCategoryId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
+
+		if(typeId !== BX.CrmTimelineType.delivery)
+		{
+			return null;
+		}
+
+		var vueComponentsMap = new Map([
+			[BX.CrmTimelineDeliveryType.taxiEstimationRequest, BX.Crm.Delivery.Taxi.EstimationRequest],
+			[BX.CrmTimelineDeliveryType.taxiCallRequest, BX.Crm.Delivery.Taxi.CallRequest],
+			[BX.CrmTimelineDeliveryType.taxiCancelledByManager, BX.Crm.Delivery.Taxi.CancelledByManager],
+			[BX.CrmTimelineDeliveryType.taxiCancelledByDriver, BX.Crm.Delivery.Taxi.CancelledByDriver],
+			[BX.CrmTimelineDeliveryType.taxiPerformerNotFound, BX.Crm.Delivery.Taxi.PerformerNotFound],
+			[BX.CrmTimelineDeliveryType.taxiSmsProviderIssue, BX.Crm.Delivery.Taxi.SmsProviderIssue],
+			[BX.CrmTimelineDeliveryType.taxiReturnedFinish, BX.Crm.Delivery.Taxi.ReturnedFinish],
+		]);
+
+		if (vueComponentsMap.has(typeCategoryId))
+		{
+			return BX.CrmHistoryItem.create(
+				data["ID"],
+				{
+					history: this._history,
+					fixedHistory: this._fixedHistory,
+					container: this._wrapper,
+					activityEditor: this._activityEditor,
+					data: data,
+					vueComponent: vueComponentsMap.get(typeCategoryId),
+				}
+			);
+		}
+	};
+
 	BX.CrmHistory.prototype.createItem = function(data)
 	{
 		var typeId = BX.prop.getInteger(data, "TYPE_ID", BX.CrmTimelineType.undefined);
@@ -1860,9 +1941,25 @@ if(typeof(BX.CrmHistory) === "undefined")
 		{
 			return this.createOrderEntityItem(data);
 		}
+		else if(typeId === BX.CrmTimelineType.externalNotification)
+		{
+			return this.createExternalNotificationItem(data);
+		}
 		else if(typeId === BX.CrmTimelineType.orderCheck)
 		{
 			return BX.CrmHistoryItemOrcderCheck.create(
+				data["ID"],
+				{
+					history: this._history,
+					container: this._wrapper,
+					activityEditor: this._activityEditor,
+					data: data
+				}
+			);
+		}
+		else if(typeId === BX.CrmTimelineType.finalSummary)
+		{
+			return BX.CrmHistoryItemFinalSummary.create(
 				data["ID"],
 				{
 					history: this._history,
@@ -1915,6 +2012,7 @@ if(typeof(BX.CrmHistory) === "undefined")
 					history: this._history,
 					container: this._wrapper,
 					activityEditor: this._activityEditor,
+					fixedHistory: this._fixedHistory,
 					data: data
 				}
 			);
@@ -2019,6 +2117,10 @@ if(typeof(BX.CrmHistory) === "undefined")
 					data: data
 				}
 			);
+		}
+		else if(typeId === BX.CrmTimelineType.delivery)
+		{
+			return this.createDeliveryItem(data);
 		}
 
 		return BX.CrmHistoryItem.create(
@@ -2721,6 +2823,7 @@ if(typeof BX.CrmSchedule === "undefined")
 		{
 			var typeId = BX.prop.getInteger(entityData, "TYPE_ID", 0);
 			var providerId = BX.prop.getString(entityData, "PROVIDER_ID", "");
+
 			if(typeId === BX.CrmActivityType.email)
 			{
 				return BX.CrmScheduleItemEmail.create(
@@ -2816,6 +2919,19 @@ if(typeof BX.CrmSchedule === "undefined")
 							container: this._wrapper,
 							activityEditor: this._activityEditor,
 							data: data
+						}
+					);
+				}
+				else if(providerId === 'CRM_DELIVERY')
+				{
+					return BX.CrmScheduleItemDelivery.create(
+						itemId,
+						{
+							schedule: this,
+							container: this._wrapper,
+							activityEditor: this._activityEditor,
+							data: data,
+
 						}
 					);
 				}
@@ -3563,6 +3679,13 @@ if(typeof BX.CrmTimelineBaseEditor === "undefined")
 		this._focusHandler = BX.delegate(this.onFocus, this);
 		this._blurHandler = BX.delegate(this.onBlur, this);
 		this._keyupHandler = BX.delegate(this.resizeForm, this);
+		this._delayedKeyupHandler = BX.delegate(
+			function()
+			{
+				setTimeout(this.resizeForm.bind(this), 0);
+			},
+			this
+		);
 
 		this._isVisible = true;
 		this._hideButtonsOnBlur = true;
@@ -3598,6 +3721,8 @@ if(typeof BX.CrmTimelineBaseEditor === "undefined")
 			BX.bind(this._input, "focus", this._focusHandler);
 			BX.bind(this._input, "blur", this._blurHandler);
 			BX.bind(this._input, "keyup", this._keyupHandler);
+			BX.bind(this._input, "cut", this._delayedKeyupHandler);
+			BX.bind(this._input, "paste", this._delayedKeyupHandler);
 
 			this.doInitialize();
 		},
@@ -3738,8 +3863,34 @@ if(typeof BX.CrmTimelineCommentEditor === "undefined")
 	BX.CrmTimelineCommentEditor.prototype.onLoadEditorSuccess = function(result)
 	{
 		var html = BX.prop.getString(BX.prop.getObject(result, "data", {}), "html", '');
-		BX.html(this._editorContainer, html).then(BX.delegate(this.showEditor,this));
+		BX.html(this._editorContainer, html)
+			.then(BX.delegate(this.showEditor,this))
+			.then(BX.delegate(this.addEvents,this));
 	};
+
+	BX.CrmTimelineCommentEditor.prototype.addEvents = function()
+	{
+		BX.addCustomEvent(
+			this._editorContainer.firstElementChild,
+			'onFileIsAppended',
+			BX.delegate(function(id, item) {
+				BX.addClass(this._saveButton, 'ui-btn-disabled');
+				BX.addClass(this._saveButton, 'ui-btn-clock');
+				this._saveButton.removeEventListener("click", this._saveButtonHandler);
+			}, this)
+		);
+
+		BX.addCustomEvent(
+			this._editorContainer.firstElementChild,
+			'onFileIsAdded',
+			BX.delegate(function(file, controller, obj, blob) {
+				BX.removeClass(this._saveButton, 'ui-btn-clock');
+				BX.removeClass(this._saveButton, 'ui-btn-disabled');
+				this._saveButton.addEventListener("click", this._saveButtonHandler);
+			}, this)
+		);
+	};
+
 	BX.CrmTimelineCommentEditor.prototype.showEditor = function()
 	{
 		if (LHEPostForm)
@@ -4474,6 +4625,7 @@ if(typeof BX.CrmTimelineSmsEditor === "undefined")
 		this._isMenuShown = false;
 		this._shownMenuId = null;
 		this._documentSelector = null;
+		this._source = null;
 	};
 	BX.extend(BX.CrmTimelineSmsEditor, BX.CrmTimelineBaseEditor);
 	BX.CrmTimelineSmsEditor.prototype.doInitialize = function()
@@ -4833,6 +4985,12 @@ if(typeof BX.CrmTimelineSmsEditor === "undefined")
 	{
 		this._messageLengthMax = parseInt(this._messageLengthCounterNode.getAttribute('data-length-max'));
 		BX.bind(this._input, 'keyup', this.setMessageLengthCounter.bind(this));
+		BX.bind(this._input, 'cut', this.setMessageLengthCounterDelayed.bind(this));
+		BX.bind(this._input, 'paste', this.setMessageLengthCounterDelayed.bind(this));
+	};
+	BX.CrmTimelineSmsEditor.prototype.setMessageLengthCounterDelayed = function()
+	{
+		setTimeout(this.setMessageLengthCounter.bind(this), 0);
 	};
 	BX.CrmTimelineSmsEditor.prototype.setMessageLengthCounter = function()
 	{
@@ -4877,6 +5035,7 @@ if(typeof BX.CrmTimelineSmsEditor === "undefined")
 					{
 						'site': BX.message('SITE_ID'),
 						'sessid': BX.bitrix_sessid(),
+						'source': this._source,
 						"ACTION": "SAVE_SMS_MESSAGE",
 						"SENDER_ID": this._senderId,
 						"MESSAGE_FROM": this._from,
@@ -4948,6 +5107,7 @@ if(typeof BX.CrmTimelineSmsEditor === "undefined")
 						this._input.focus();
 						this._input.value = this._input.value + result.get('order').title + ' ' + result.get('order').url;
 						this.setMessageLengthCounter();
+						this._source = 'order';
 					}
 				}
 			}.bind(this));
@@ -5015,6 +5175,7 @@ if(typeof BX.CrmTimelineSmsEditor === "undefined")
 			this._input.focus();
 			this._input.value = this._input.value + ' ' + document.getTitle() + ' ' + publicUrl;
 			this.setMessageLengthCounter();
+			this._source = 'document';
 		}.bind(this)).catch(function(error)
 		{
 			console.error(error);
@@ -5166,6 +5327,7 @@ if(typeof BX.CrmTimelineSmsEditor === "undefined")
 				this._input.focus();
 				this._input.value = this._input.value + ' ' + fileName + ' ' + response.data.externalLink.link;
 				this.setMessageLengthCounter();
+				this._source = 'file';
 			}
 		}.bind(this)).catch(function(response)
 		{
@@ -5611,8 +5773,25 @@ if(typeof(BX.CrmTimelineType) === "undefined")
 		restoration: 13,
 		order: 14,
 		orderCheck: 15,
-		scoring: 16
+		scoring: 16,
+		externalNotification: 17,
+		finalSummary: 18,
+		delivery: 19,
 	};
+}
+if(typeof(BX.CrmTimelineDeliveryType) === "undefined")
+{
+	BX.CrmTimelineDeliveryType =
+		{
+			undefined: 0,
+			taxiEstimationRequest: 1,
+			taxiCallRequest: 2,
+			taxiCancelledByManager: 3,
+			taxiCancelledByDriver: 4,
+			taxiPerformerNotFound: 5,
+			taxiSmsProviderIssue: 6,
+			taxiReturnedFinish: 7,
+		};
 }
 
 //region Base Actions
@@ -6474,6 +6653,8 @@ if(typeof(BX.CrmTimelineItem) === "undefined")
 		this._actionContainer = null;
 
 		this._isTerminated = false;
+
+		this._vueComponent = null;
 	};
 	BX.CrmTimelineItem.prototype =
 	{
@@ -6491,6 +6672,8 @@ if(typeof(BX.CrmTimelineItem) === "undefined")
 			this._data = settings['data'];
 
 			this._activityEditor = this.getSetting("activityEditor");
+
+			this._vueComponent = this.getSetting("vueComponent");
 
 			this.doInitialize();
 		},
@@ -6813,19 +6996,23 @@ if(typeof(BX.CrmTimelineItem) === "undefined")
 				{
 					attrs:
 						{
-							className: "crm-entity-stream-content-detail-employee",
+							className: "ui-icon ui-icon-common-user crm-entity-stream-content-detail-employee",
 							href: showUrl,
 							target: "_blank",
 							title: BX.prop.getString(authorInfo, "FORMATTED_NAME", "")
-						}
+						},
+					children: [
+						BX.create('i', {})
+					]
 				}
 			);
 			var imageUrl = BX.prop.getString(authorInfo, "IMAGE_URL", "");
 			if(imageUrl !== "")
 			{
-				link.style.backgroundImage = "url('" + imageUrl + "')";
-				link.style.backgroundSize = "21px";
+				link.children[0].style.backgroundImage = "url('" + imageUrl + "')";
+				link.children[0].style.backgroundSize = "21px";
 			}
+
 			return link;
 		},
 		onActivityCreate: function(activity, data)
@@ -6873,6 +7060,12 @@ if(typeof(BX.CrmTimelineItem) === "undefined")
 	BX.CrmTimelineItem.prototype.openContextMenu = function()
 	{
 		var menuItems = this.prepareContextMenuItems();
+
+		if (typeof IntranetExtensions !== "undefined")
+		{
+			menuItems.push(IntranetExtensions);
+		}
+
 		if(menuItems.length === 0)
 		{
 			return;
@@ -7209,6 +7402,23 @@ if(typeof(BX.CrmHistoryItem) === "undefined")
 	};
 	BX.CrmHistoryItem.prototype.prepareContent = function()
 	{
+		if (this._vueComponent)
+		{
+			var app = new this._vueComponent(
+				{
+					propsData: {
+						self: this,
+						langMessages: BX.CrmTimelineItem.messages,
+						createdAt: this.formatTime(this.getCreatedTime()),
+					}
+				}
+			);
+
+			app.$mount();
+
+			return app.$el;
+		}
+
 		var wrapperClassName = this.getWrapperClassName();
 		if(wrapperClassName !== "")
 		{
@@ -8102,6 +8312,7 @@ if(typeof(BX.CrmHistoryItemComment) === "undefined")
 			|| tagName === 'img'
 			|| BX.hasClass(e.target, "feed-con-file-changes-link-more")
 			|| BX.hasClass(e.target, "feed-com-file-inline")
+			|| BX.type.isNotEmptyString(document.getSelection().toString())
 		)
 		{
 			return;
@@ -8509,7 +8720,12 @@ if(typeof(BX.CrmHistoryItemMark) === "undefined")
 	BX.CrmHistoryItemMark.prototype.getMessage = function(name)
 	{
 		var m = BX.CrmHistoryItemMark.messages;
-		return m.hasOwnProperty(name) ? m[name] : name;
+		if (m.hasOwnProperty(name))
+		{
+			return m[name];
+		}
+
+		return BX.CrmHistoryItemMark.superclass.getMessage.apply(this, [name]);
 	};
 	BX.CrmHistoryItemMark.prototype.getTitle = function()
 	{
@@ -8661,6 +8877,16 @@ if(typeof(BX.CrmHistoryItemMark) === "undefined")
 			{ attrs: { className: "crm-entity-stream-section crm-entity-stream-section-completed" } }
 		);
 
+		if (this.isFixed())
+			BX.addClass(wrapper, 'crm-entity-stream-section-top-fixed');
+
+		//region Context Menu
+		if(this.isContextMenuEnabled())
+		{
+			wrapper.appendChild(this.prepareContextMenuButton());
+		}
+		//endregion
+
 		var content = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-event" } });
 		var header = this.prepareHeaderLayout();
 		if(associatedEntityTypeId === BX.CrmEntityType.enumeration.activity)
@@ -8770,8 +8996,33 @@ if(typeof(BX.CrmHistoryItemMark) === "undefined")
 		wrapper.appendChild(
 			BX.create("DIV", { attrs: { className: "crm-entity-stream-section-content" }, children: [ content ] })
 		);
+
+		if (!this.isReadOnly())
+			wrapper.appendChild(this.prepareFixedSwitcherLayout());
+
 		return wrapper;
 	};
+
+	BX.CrmHistoryItemMark.prototype.prepareContextMenuItems = function ()
+	{
+		if (this._isMenuShown)
+		{
+			return;
+		}
+
+		var menuItems = [];
+
+		if (!this.isReadOnly())
+		{
+			if (this.isFixed() || this._fixedHistory.findItemById(this._id))
+				menuItems.push({ id: "unfasten", text: this.getMessage("menuUnfasten"), onclick: BX.delegate(this.unfasten, this)});
+			else
+				menuItems.push({ id: "fasten", text: this.getMessage("menuFasten"), onclick: BX.delegate(this.fasten, this)});
+		}
+
+		return menuItems;
+	};
+
 	BX.CrmHistoryItemMark.prototype.view = function()
 	{
 		var entityData = this.getAssociatedEntityData();
@@ -8996,14 +9247,22 @@ if(typeof(BX.CrmHistoryItemLink) === "undefined")
 	{
 		var entityData = this.getAssociatedEntityData();
 		var nodes = [];
+		var title = BX.prop.getString(entityData, "TITLE");
+
 		nodes.push(
 			BX.create("A",
 				{
 					attrs: { href: BX.prop.getString(entityData, "SHOW_URL", "#") },
-					text: BX.prop.getString(entityData, "TITLE")
+					text: title
 				}
 			)
 		);
+
+		var legend =  BX.prop.getString(entityData, "LEGEND", "");
+		if (legend !== "")
+		{
+			nodes.push(BX.create("SPAN", { html: " " + legend }));
+		}
 		return nodes;
 	};
 	BX.CrmHistoryItemLink.prototype.getMessage = function(name)
@@ -11924,8 +12183,8 @@ if(typeof(BX.CrmHistoryItemOrderCreation) === "undefined")
 	};
 	BX.CrmHistoryItemOrderCreation.prototype.getHeaderChildren = function()
 	{
-		var statusMessage = this.getMessage("unpaid");
-		var statusClass = "crm-entity-stream-content-event-not-paid";
+		var statusMessage = '';
+		var statusClass = '';
 		var fields = this.getObjectDataParam('FIELDS');
 
 		if (BX.prop.get(fields, 'DONE') === 'Y')
@@ -11938,26 +12197,26 @@ if(typeof(BX.CrmHistoryItemOrderCreation) === "undefined")
 			statusMessage = this.getMessage("canceled");
 			statusClass = "crm-entity-stream-content-event-canceled";
 		}
-		else if (BX.prop.get(fields, 'PAID') === 'Y')
+		else
 		{
-			statusMessage = this.getMessage("paid");
-			statusClass = "crm-entity-stream-content-event-paid";
+			if (BX.prop.get(fields, 'PAID') === 'Y')
+			{
+				statusMessage = this.getMessage("paid");
+				statusClass = "crm-entity-stream-content-event-paid";
+			}
+			else if (BX.prop.get(fields, 'PAID') === 'N')
+			{
+				statusMessage = this.getMessage("unpaid");
+				statusClass = "crm-entity-stream-content-event-not-paid";
+			}
 		}
 
 		return [
 			BX.create("DIV",
 				{
 					attrs: { className: "crm-entity-stream-content-event-title" },
-					children:
-						[
-							BX.create("A",
-								{
-									attrs: { href: "#" },
-									events: { click: this._headerClickHandler },
-									text: this.getTitle()
-								}
-							)
-						]
+					events: { click: this._headerClickHandler },
+					text: this.getTitle(),
 				}
 			),
 			BX.create("SPAN",
@@ -11981,22 +12240,29 @@ if(typeof(BX.CrmHistoryItemOrderCreation) === "undefined")
 		var entityId = this.getAssociatedEntityId();
 		var title = BX.prop.getString(entityData, "TITLE");
 		var showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
+		var legend =  BX.prop.getString(entityData, "LEGEND", "");
+		if(legend !== "")
+		{
+			title += " " + legend;
+		}
 		var nodes = [];
+
 		if(title !== "")
 		{
 			if(showUrl === "" || (entityTypeId === this.getOwnerTypeId() && entityId === this.getOwnerId()))
 			{
-				nodes.push(BX.create("SPAN", { text: title }));
+				nodes.push(BX.create("DIV", {
+					attrs: { className: "crm-entity-stream-content-detail-description" },
+					html: title
+				}));
 			}
 			else
 			{
-				nodes.push(BX.create("A", { attrs: { href: showUrl }, text: title }));
-			}
-
-			var legend =  BX.prop.getString(entityData, "LEGEND", "");
-			if(legend !== "")
-			{
-				nodes.push(BX.create("SPAN", { html: " " + legend }));
+				nodes.push(BX.create("DIV", {
+					attrs: { className: "crm-entity-stream-content-detail-description" },
+					html: title
+				}));
+				nodes.push(BX.create("A", { attrs: { href: showUrl }, text: this.getMessage('urlOrderLink') }));
 			}
 		}
 		return nodes;
@@ -12081,10 +12347,12 @@ if(typeof(BX.CrmHistoryItemOrderModification) === "undefined")
 	BX.CrmHistoryItemOrderModification.prototype.getStatusInfo = function()
 	{
 		var statusInfo = {};
-		var value =
-			classCode = null;
+		var value = null;
+		var classCode = null;
 		var fieldName = this.getTextDataParam("CHANGED_ENTITY");
 		var fields = this.getObjectDataParam('FIELDS');
+		var entityData = this.getAssociatedEntityData();
+
 		if (fieldName === BX.CrmEntityType.names.order)
 		{
 			if (BX.prop.get(fields, 'ORDER_CANCELED') === 'Y')
@@ -12097,16 +12365,43 @@ if(typeof(BX.CrmHistoryItemOrderModification) === "undefined")
 				value = "done";
 				classCode  = "done";
 			}
+			else if (BX.prop.getString(entityData, "VIEWED", '') === 'Y')
+			{
+				value = "viewed";
+				classCode  = "done";
+			}
+			else if (BX.prop.getString(entityData, "SENT", '') === 'Y')
+			{
+				value = "sent";
+				classCode  = "sent";
+			}
 		}
 		if (fieldName === BX.CrmEntityType.names.orderpayment)
 		{
-			value = BX.prop.get(fields, 'ORDER_PAID') === 'Y' ? "paid" : "unpaid";
-			classCode  = BX.prop.get(fields, 'ORDER_PAID') === 'Y' ? "paid" : "not-paid";
+			var psStatusCode = BX.prop.get(fields, 'STATUS_CODE', false);
+			if (psStatusCode)
+			{
+				if (psStatusCode === 'ERROR')
+				{
+					value = "orderPaymentError";
+					classCode = "payment-error";
+				}
+			}
+			else
+			{
+				value = BX.prop.get(fields, 'ORDER_PAID') === 'Y' ? "paid" : "unpaid";
+				classCode  = BX.prop.get(fields, 'ORDER_PAID') === 'Y' ? "paid" : "not-paid";
+			}
 		}
-		else if (fieldName === BX.CrmEntityType.names.ordershipment)
+		else if (fieldName === BX.CrmEntityType.names.ordershipment && BX.prop.get(fields, 'ORDER_DEDUCTED', false))
 		{
 			value = BX.prop.get(fields, 'ORDER_DEDUCTED') === 'Y' ? "deducted" : "unshipped";
 			classCode  = BX.prop.get(fields, 'ORDER_DEDUCTED') === 'Y' ? "shipped" : "not-shipped";
+		}
+		else if (fieldName === BX.CrmEntityType.names.ordershipment && BX.prop.get(fields, 'ORDER_ALLOW_DELIVERY', false))
+		{
+			value = BX.prop.get(fields, 'ORDER_ALLOW_DELIVERY') === 'Y' ? "allowedDelivery" : "disallowedDelivery";
+			classCode  = BX.prop.get(fields, 'ORDER_ALLOW_DELIVERY') === 'Y' ? "allowed-delivery" : "disallowed-delivery";
 		}
 
 		if (value)
@@ -12123,16 +12418,8 @@ if(typeof(BX.CrmHistoryItemOrderModification) === "undefined")
 			BX.create("DIV",
 				{
 					attrs: { className: "crm-entity-stream-content-event-title" },
-					children:
-						[
-							BX.create("A",
-								{
-									attrs: { href: "#" },
-									events: { click: this._headerClickHandler },
-									text: this.getTitle()
-								}
-							)
-						]
+					events: { click: this._headerClickHandler },
+					text: this.getTitle(),
 				}
 			)
 		];
@@ -12162,127 +12449,264 @@ if(typeof(BX.CrmHistoryItemOrderModification) === "undefined")
 		var entityTypeId = this.getAssociatedEntityTypeId();
 		var entityId = this.getAssociatedEntityId();
 		var title = BX.prop.getString(entityData, "TITLE");
+		var htmlTitle = BX.prop.getString(entityData, "HTML_TITLE", "");
 		var showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
 		var nodes = [];
 		if(title !== "")
 		{
 			var descriptionNode = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-detail-description"}});
+
 			if(showUrl === "" || (entityTypeId === this.getOwnerTypeId() && entityId === this.getOwnerId()))
 			{
-				descriptionNode.appendChild(BX.create("SPAN", { text: title }));
+				descriptionNode.appendChild(BX.create("SPAN", { text: title + " " + htmlTitle}));
 			}
 			else
 			{
-				descriptionNode.appendChild(BX.create("A", { attrs: { href: showUrl }, text: title }));
+				if (htmlTitle === "")
+				{
+					descriptionNode.appendChild(BX.create("A", {attrs: {href: showUrl}, text: title}));
+				}
+				else
+				{
+					descriptionNode.appendChild(BX.create("SPAN", { text: title + " "}));
+					descriptionNode.appendChild(BX.create("A", {attrs: {href: showUrl}, text: htmlTitle}));
+				}
 			}
+
 			var legend = BX.prop.getString(entityData, "LEGEND");
 			if(legend !== "")
 			{
 				descriptionNode.appendChild(BX.create("SPAN", { html: " " + legend }));
 			}
+
+			var sublegend = BX.prop.getString(entityData, "SUBLEGEND", '');
+			if (sublegend !== '')
+			{
+				descriptionNode.appendChild(BX.create("BR"));
+				descriptionNode.appendChild(BX.create("SPAN", { html: " " + sublegend}));
+			}
 			nodes.push(descriptionNode);
 		}
 
-		nodes = nodes.concat(this.prepareAdditionalContent());
 		return nodes;
 	};
-	BX.CrmHistoryItemOrderModification.prototype.prepareAdditionalContent = function()
+
+	BX.CrmHistoryItemOrderModification.prototype.prepareViewedContentDetails = function()
 	{
 		var entityData = this.getAssociatedEntityData();
-		var fields =
-			subnodes = [];
-		var sublegend = '';
-		var fieldName = this.getTextDataParam("CHANGED_ENTITY");
-
-		if (fieldName === BX.CrmEntityType.names.orderpayment || fieldName === BX.CrmEntityType.names.order)
+		var entityTypeId = this.getAssociatedEntityTypeId();
+		var entityId = this.getAssociatedEntityId();
+		var title = BX.prop.getString(entityData, "TITLE");
+		var htmlTitle = BX.prop.getString(entityData, "HTML_TITLE", "");
+		var showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
+		var nodes = [];
+		if(title !== "")
 		{
-			var paymentsInfo = BX.prop.get(entityData, "PAYMENTS_INFO", {});
-			fields = this.getObjectDataParam('FIELDS');
-			var payments = BX.prop.getObject(fields, 'PAYMENTS_FIELDS');
-			for (var id in payments)
+			var descriptionNode = BX.create("DIV", {
+				attrs: { className: "crm-entity-stream-content-detail-description"},
+				text: title,
+			});
+			nodes.push(descriptionNode);
+
+			if(entityTypeId === this.getOwnerTypeId() && entityId === this.getOwnerId())
 			{
-				if (!payments.hasOwnProperty(id))
-				{
-					continue;
-				}
-
-				if (BX.type.isNotEmptyObject(paymentsInfo[id]))
-				{
-					payment = paymentsInfo[id];
-					messageCode = (BX.prop.getString(payments[id], "PAID") === "Y") ? "orderPaymentLegendPaid" : "orderPaymentLegendUnpaid";
-					sublegend = " " + this.getMessage(messageCode);
-					sublegend = sublegend
-						.replace("#SUM_WITH_CURRENCY#", BX.prop.getString(payment, 'SUM_WITH_CURRENCY'))
-						.replace("#PAY_SYSTEM_NAME#", BX.util.htmlspecialchars(BX.prop.getString(payment, 'PAY_SYSTEM_NAME')));
-					paymentNode = BX.create("DIV", {
-						attrs: { className: 'crm-entity-stream-content-detail-payment-info' },
-						children: [
-							BX.create("A", {
-								attrs: { href: BX.prop.getString(payment, "SHOW_URL") },
-								text: this.getMessage("orderPayment")
-							}),
-							BX.create("SPAN", {
-								html: sublegend
-							})
-						]
-					});
-
-					subnodes.push(paymentNode);
-				}
+				nodes.push(BX.create("SPAN", { html: htmlTitle }));
+			}
+			else
+			{
+				nodes.push(BX.create("A", { attrs: { href: showUrl }, html: htmlTitle }));
 			}
 		}
-		else if (fieldName === BX.CrmEntityType.names.ordershipment)
-		{
-			var shipmentsInfo = BX.prop.get(entityData, "SHIPMENTS_INFO", {});
-			fields = this.getObjectDataParam('FIELDS');
-			var shipments = BX.prop.getObject(fields, 'SHIPMENTS_FIELDS');
-			for (var id in shipments)
-			{
-				if (!shipments.hasOwnProperty(id))
-				{
-					continue;
-				}
 
-				if (BX.type.isNotEmptyObject(shipmentsInfo[id]))
-				{
-					var shipment = shipmentsInfo[id];
-					messageCode = (BX.prop.getString(shipments[id], "DEDUCTED") === "Y") ? "orderShipmentLegendDeducted" : "orderShipmentLegendUnshipped";
-					deliveryName = BX.util.htmlspecialchars( BX.prop.getString(shipment, 'DELIVERY_NAME'));
-					sublegend = " " + this.getMessage(messageCode).replace("#DELIVERY_NAME#", deliveryName);
-					shipmentNode = BX.create("DIV", {
-						attrs: { className: 'crm-entity-stream-content-detail-payment-info' },
-						children: [
-							BX.create("A", {
-								attrs: { href: BX.prop.getString(shipment, "SHOW_URL") },
-								text: this.getMessage("orderShipment")
-							}),
-							BX.create("SPAN", {
-								html: sublegend
-							})
-						]
-					});
-					subnodes.push(shipmentNode);
-				}
-			}
-		}
-		return subnodes;
+		return nodes;
 	};
+
+	BX.CrmHistoryItemOrderModification.prototype.prepareSentContentDetails = function()
+	{
+		var entityData = this.getAssociatedEntityData();
+		var entityTypeId = this.getAssociatedEntityTypeId();
+		var entityId = this.getAssociatedEntityId();
+		var showUrl = BX.prop.getString(entityData, 'SHOW_URL', '');
+		var fields = this.getObjectDataParam('FIELDS');
+		var dealId = BX.prop.get(fields, 'DEAL_ID', 0);
+		var destination = BX.prop.getString(entityData, 'DESTINATION_TITLE', '');
+		var nodes = [];
+
+		if (!dealId)
+			return nodes;
+
+		var detailNode = BX.create('DIV', { attrs: { className: 'crm-entity-stream-content-detail-order' } });
+		var legend = BX.prop.getString(entityData, 'LEGEND', '');
+		if(showUrl === "" || (entityTypeId === this.getOwnerTypeId() && entityId === this.getOwnerId()))
+		{
+			detailNode.appendChild(BX.create("SPAN", { html: legend}));
+		}
+		else
+		{
+			detailNode.appendChild(BX.create('A', { attrs: { href: showUrl }, html: legend }));
+		}
+
+		if (destination)
+		{
+			detailNode.appendChild(BX.create('SPAN', {
+				attrs: { className: 'crm-entity-stream-content-detail-order-destination' },
+				text: destination,
+			}));
+		}
+
+		nodes.push(detailNode);
+
+		var sliderLinkNode = BX.create('A', {
+			attrs: { href: "#" },
+			text: this.getMessage('orderPaymentProcess'),
+			events: {
+				click: BX.proxy(this.startSalescenterApplication, this),
+			},
+		});
+		nodes.push(sliderLinkNode);
+
+		return nodes;
+	};
+
+	BX.CrmHistoryItemOrderModification.prototype.startSalescenterApplication = function()
+	{
+		BX.loadExt('salescenter.manager').then(function()
+		{
+			var fields = this.getObjectDataParam('FIELDS'),
+				dealId = BX.prop.get(fields, 'DEAL_ID', 0);
+
+			BX.Salescenter.Manager.openApplication({
+				disableSendButton: '',
+				context: 'deal',
+				ownerTypeId: BX.CrmEntityType.enumeration.deal,
+				ownerId: dealId,
+				associatedEntityId: this.getAssociatedEntityId(),
+				associatedEntityTypeId: this.getAssociatedEntityTypeId(),
+			});
+		}.bind(this));
+	};
+
+	BX.CrmHistoryItemOrderModification.prototype.preparePaidPaymentContentDetails = function()
+	{
+		var entityData = this.getAssociatedEntityData(),
+			title = BX.prop.getString(entityData, "TITLE"),
+			date = BX.prop.getString(entityData, "DATE", ""),
+			paySystemName = BX.prop.getString(entityData, "PAY_SYSTEM_NAME", ""),
+			sum = BX.prop.getString(entityData, 'SUM', ''),
+			currency = BX.prop.getString(entityData, 'CURRENCY', ''),
+			nodes = [];
+
+		if(title !== "")
+		{
+			var paymentDetail = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-detail-payment"}});
+			paymentDetail.appendChild(
+				BX.create("DIV", {
+					attrs: { className: "crm-entity-stream-content-detail-payment-value"},
+					children: [
+						BX.create('SPAN', {
+							attrs: { className: "crm-entity-stream-content-detail-payment-text"},
+							html: sum,
+						}),
+						BX.create('SPAN', {
+							attrs: { className: "crm-entity-stream-content-detail-payment-currency"},
+							html: currency,
+						}),
+					]
+				})
+			);
+
+			var logotip = BX.prop.getString(entityData, "LOGOTIP", null);
+			if (logotip)
+			{
+				paymentDetail.appendChild(
+					BX.create("DIV", {
+						attrs: { className: "crm-entity-stream-content-detail-payment-logo"},
+						style: {
+							backgroundImage: "url(" + encodeURI(logotip) + ")",
+						}
+					})
+				);
+			}
+			nodes.push(paymentDetail);
+
+			var descriptionNode = BX.create("DIV", {
+				attrs: { className: "crm-entity-stream-content-detail-description"},
+				children: [
+					BX.create('SPAN', {
+						text: date
+					}),
+					BX.create('SPAN', {
+						attrs: { className: "crm-entity-stream-content-detail-description-info" },
+						text: this.getMessage('orderPaySystemTitle')
+					}),
+					BX.create('SPAN', {
+						text: paySystemName
+					}),
+				]
+			});
+			nodes.push(descriptionNode);
+		}
+
+		return nodes;
+	};
+
 	BX.CrmHistoryItemOrderModification.prototype.prepareContent = function()
 	{
-		var wrapper = BX.create("DIV", { attrs: { className: "crm-entity-stream-section crm-entity-stream-section-history" } });
+		var fields = this.getObjectDataParam('FIELDS'),
+			isPaid = BX.prop.get(fields, 'ORDER_PAID') === 'Y',
+			isClick = BX.prop.get(fields, 'PAY_SYSTEM_CLICK') === 'Y',
+			entityId = this.getAssociatedEntityTypeId();
 
+		if (entityId === BX.CrmEntityType.enumeration.orderpayment && isPaid)
+		{
+			return this.preparePaidPaymentContent();
+		}
+		else if (entityId === BX.CrmEntityType.enumeration.orderpayment && isClick)
+		{
+			return this.prepareClickedPaymentContent();
+		}
+
+		return this.prepareItemOrderContent();
+	};
+
+	BX.CrmHistoryItemOrderModification.prototype.prepareItemOrderContent = function()
+	{
+		var entityData = this.getAssociatedEntityData();
+		var isViewed = BX.prop.getString(entityData, "VIEWED", '') === 'Y';
+		var isSent = BX.prop.getString(entityData, "SENT", '') === 'Y';
+		var fields = this.getObjectDataParam('FIELDS');
+		var psStatusCode = BX.prop.get(fields, 'STATUS_CODE', false);
+
+		var wrapper = BX.create("DIV", { attrs: { className: 'crm-entity-stream-section crm-entity-stream-section-history' } });
 		wrapper.appendChild(
-			BX.create("DIV", { attrs: { className: "crm-entity-stream-section-icon crm-entity-stream-section-icon-store" } })
+			BX.create("DIV", { attrs: { className: 'crm-entity-stream-section-icon ' + this.getIconClassName() } })
 		);
 
 		var content = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-event" } });
 		var header = BX.create("DIV",
-		{
-			attrs: { className: "crm-entity-stream-content-header" },
-			children: this.getHeaderChildren()
-		});
+			{
+				attrs: { className: "crm-entity-stream-content-header" },
+				children: this.getHeaderChildren()
+			});
 
-		var contentChildren = this.prepareContentDetails();
+		var contentChildren = null;
+		if (isViewed)
+		{
+			contentChildren = this.prepareViewedContentDetails();
+		}
+		else if (isSent)
+		{
+			contentChildren = this.prepareSentContentDetails();
+		}
+		else if (psStatusCode === 'ERROR')
+		{
+			contentChildren = this.prepareErrorPaymentContentDetails();
+		}
+		else
+		{
+			contentChildren = this.prepareContentDetails();
+		}
+
 		content.appendChild(header);
 		content.appendChild(
 			BX.create("DIV",
@@ -12306,6 +12730,204 @@ if(typeof(BX.CrmHistoryItemOrderModification) === "undefined")
 
 		return wrapper;
 	};
+
+	BX.CrmHistoryItemOrderModification.prototype.preparePaidPaymentContent = function()
+	{
+		var wrapper = BX.create("DIV", { attrs: { className: 'crm-entity-stream-section' } });
+		wrapper.appendChild(
+			BX.create("DIV", { attrs: { className: 'crm-entity-stream-section-icon crm-entity-stream-section-icon-wallet' } })
+		);
+
+		var header = [
+			BX.create("DIV",
+				{
+					attrs: { className: "crm-entity-stream-content-event-title" },
+					children:
+						[
+							BX.create("A",
+								{
+									attrs: { href: "#" },
+									events: { click: this._headerClickHandler },
+									text: this.getMessage('orderPaymentSuccessTitle')
+								}
+							)
+						]
+				}
+			)
+		];
+		header.push(
+			BX.create("SPAN",
+				{
+					attrs: { className: "crm-entity-stream-content-event-time" },
+					text: this.formatTime(this.getCreatedTime())
+				}
+			)
+		);
+
+		var content = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-event" } });
+		var headerWrap = BX.create("DIV", {
+			attrs: { className: "crm-entity-stream-content-header" },
+			children: header
+		});
+
+		var contentChildren = this.preparePaidPaymentContentDetails();
+		content.appendChild(headerWrap);
+		content.appendChild(
+			BX.create("DIV",
+				{
+					attrs: { className: "crm-entity-stream-content-detail" },
+					children: contentChildren
+				})
+		);
+
+		//region Author
+		var authorNode = this.prepareAuthorLayout();
+		if(authorNode)
+		{
+			content.appendChild(authorNode);
+		}
+		//endregion
+
+		wrapper.appendChild(
+			BX.create("DIV", { attrs: { className: "crm-entity-stream-section-content" }, children: [ content ] })
+		);
+
+		return wrapper;
+	};
+
+	BX.CrmHistoryItemOrderModification.prototype.prepareErrorPaymentContentDetails = function()
+	{
+		var entityData = this.getAssociatedEntityData(),
+			date = BX.prop.getString(entityData, 'DATE', ''),
+			fields = this.getObjectDataParam('FIELDS'),
+			paySystemName = BX.prop.getString(fields, 'PAY_SYSTEM_NAME', ''),
+			paySystemError = BX.prop.getString(fields, 'STATUS_DESCRIPTION', ''),
+			nodes = [];
+
+		var descriptionNode = BX.create('DIV', {
+			attrs: { className: 'crm-entity-stream-content-detail-description'},
+			children: [
+				BX.create('SPAN', {
+					text: date
+				}),
+				BX.create('SPAN', {
+					attrs: { className: 'crm-entity-stream-content-detail-description-info' },
+					text: this.getMessage('orderPaySystemTitle')
+				}),
+				BX.create('SPAN', {
+					text: paySystemName
+				}),
+			]
+		});
+		nodes.push(descriptionNode);
+
+		var errorDetailNode = BX.create('DIV', {
+			attrs: { className: 'crm-entity-stream-content-detail-notice' },
+			html: this.getMessage('orderPaymentStatusErrorReason').replace("#PAYSYSTEM_ERROR#", paySystemError),
+		});
+
+		nodes.push(errorDetailNode);
+
+		return nodes;
+	};
+
+	BX.CrmHistoryItemOrderModification.prototype.prepareClickedPaymentContent = function()
+	{
+		var wrapper = BX.create("DIV", { attrs: { className: 'crm-entity-stream-section crm-entity-stream-section-history' } });
+		wrapper.appendChild(
+			BX.create("DIV", { attrs: { className: 'crm-entity-stream-section-icon ' + this.getIconClassName() } })
+		);
+
+		var header = [
+			BX.create("DIV",
+				{
+					attrs: { className: "crm-entity-stream-content-event-title" },
+					children:
+						[
+							BX.create("A",
+								{
+									attrs: { href: "#" },
+									events: { click: this._headerClickHandler },
+									text: this.getTitle(),
+								}
+							)
+						]
+				}
+			)
+		];
+		header.push(
+			BX.create("SPAN",
+				{
+					attrs: { className: "crm-entity-stream-content-event-time" },
+					text: this.formatTime(this.getCreatedTime())
+				}
+			)
+		);
+
+		var content = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-event" } });
+		var headerWrap = BX.create("DIV", {
+			attrs: { className: "crm-entity-stream-content-header" },
+			children: header
+		});
+
+		var contentChildren = this.prepareClickedPaymentContentDetails();
+		content.appendChild(headerWrap);
+		content.appendChild(
+			BX.create("DIV",
+				{
+					attrs: { className: "crm-entity-stream-content-detail" },
+					children: contentChildren
+				})
+		);
+
+		//region Author
+		var authorNode = this.prepareAuthorLayout();
+		if(authorNode)
+		{
+			content.appendChild(authorNode);
+		}
+		//endregion
+
+		wrapper.appendChild(
+			BX.create("DIV", { attrs: { className: "crm-entity-stream-section-content" }, children: [ content ] })
+		);
+
+		return wrapper;
+	};
+
+	BX.CrmHistoryItemOrderModification.prototype.prepareClickedPaymentContentDetails = function()
+	{
+		var fields = this.getObjectDataParam('FIELDS'),
+			paySystemName = BX.prop.getString(fields, 'PAY_SYSTEM_NAME', ''),
+			nodes = [];
+
+		if(paySystemName !== '')
+		{
+			var descriptionNode = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-detail-description"}});
+			descriptionNode.appendChild(
+				BX.create('SPAN', {
+					attrs: { className: "crm-entity-stream-content-clicked-description-info" },
+					text: this.getMessage('orderPaymentPaySystemClick')
+				})
+			);
+			descriptionNode.appendChild(
+				BX.create('SPAN', {
+					attrs: { className: "crm-entity-stream-content-clicked-description-name" },
+					html: paySystemName
+				})
+			);
+
+			nodes.push(descriptionNode);
+		}
+
+		return nodes;
+	};
+
+	BX.CrmHistoryItemOrderModification.prototype.getIconClassName = function()
+	{
+		return 'crm-entity-stream-section-icon-store';
+	};
+
 	if(typeof(BX.CrmHistoryItemOrderModification.messages) === "undefined")
 	{
 		BX.CrmHistoryItemOrderModification.messages = {};
@@ -12313,6 +12935,408 @@ if(typeof(BX.CrmHistoryItemOrderModification) === "undefined")
 	BX.CrmHistoryItemOrderModification.create = function(id, settings)
 	{
 		var self = new BX.CrmHistoryItemOrderModification();
+		self.initialize(id, settings);
+		return self;
+	};
+}
+
+if (typeof(BX.CrmHistoryItemFinalSummary) === "undefined")
+{
+	BX.CrmHistoryItemFinalSummary = function()
+	{
+		BX.CrmHistoryItemFinalSummary.superclass.constructor.apply(this);
+	};
+
+	BX.extend(BX.CrmHistoryItemFinalSummary, BX.CrmHistoryItem);
+
+	BX.CrmHistoryItemFinalSummary.prototype.getMessage = function(name)
+	{
+		var m = BX.CrmHistoryItemFinalSummary.messages;
+		return m.hasOwnProperty(name) ? m[name] : name;
+	};
+
+	BX.CrmHistoryItemFinalSummary.prototype.getTitle = function()
+	{
+		return this.getMessage('title');
+	};
+
+	BX.CrmHistoryItemFinalSummary.prototype.getHeaderChildren = function()
+	{
+		var children = [
+			BX.create("DIV",
+				{
+					attrs: { className: "crm-entity-stream-content-event-title" },
+					children:
+						[
+							BX.create("A",
+								{
+									attrs: { href: "#" },
+									events: { click: this._headerClickHandler },
+									text: this.getTitle()
+								}
+							)
+						]
+				}
+			)
+		];
+		children.push(
+			BX.create("SPAN",
+			{
+				attrs: { className: "crm-entity-stream-content-event-time" },
+				text: this.formatTime(this.getCreatedTime())
+			}
+		));
+
+		return children;
+	};
+	BX.CrmHistoryItemFinalSummary.prototype.prepareContentDetails = function(data)
+	{
+		var nodes = [];
+
+		var detailNode = BX.create(
+			"DIV",
+			{
+				attrs: { className: "crm-entity-stream-content-detail-table" },
+				children :
+				[
+					this.createOrderDetailBlock(data),
+					this.createBasketBasePriceBlock(data),
+					this.createBasketPriceBlock(data),
+					this.createPaymentBlock(data),
+					this.createSummaryBlock(data),
+				]
+			}
+		);
+
+		nodes.push(detailNode);
+
+		if (data.CHECK && data.CHECK.length > 0)
+		{
+			for (var i in data.CHECK)
+			{
+				nodes.push(this.createCheckBlock(data.CHECK[i]));
+			}
+		}
+
+		return nodes;
+	};
+
+	BX.CrmHistoryItemFinalSummary.prototype.createOrderDetailBlock = function(data)
+	{
+		var blockNode = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-detail-table-row"}});
+
+		var descriptionNode = BX.create("DIV", {attrs: { className: "crm-entity-stream-content-detail-description"}});
+		descriptionNode.appendChild(
+			BX.create("A", {attrs: {href: data.ORDER.SHOW_URL}, text: data.ORDER.TITLE})
+		);
+
+		descriptionNode.appendChild(
+			BX.create(
+				"span",
+				{
+					attrs: { className: "crm-entity-stream-content-event-successful"},
+					text : this.getMessage('orderPaid')
+				}
+			)
+		);
+
+		blockNode.appendChild(descriptionNode);
+
+		var detailCostNode = BX.create("DIV", {attrs: { className: "crm-entity-stream-content-detail-cost"}});
+
+		if (data.BASKET.BASE_PRICE_FORMAT)
+		{
+			detailCostNode.appendChild(
+				BX.create(
+					"span",
+					{
+						attrs: {className: "crm-entity-stream-content-detail-cost-prev"},
+						html: data.ORDER.BASE_PRICE_FORMAT
+					}
+				)
+			);
+		}
+
+		detailCostNode.appendChild(
+			BX.create(
+				"span",
+				{
+					attrs: { className: "crm-entity-stream-content-detail-cost-current"},
+					html : data.ORDER.PRICE_FORMAT
+				}
+			)
+		);
+		blockNode.appendChild(detailCostNode);
+
+		return blockNode;
+	};
+
+	BX.CrmHistoryItemFinalSummary.prototype.createBasketBasePriceBlock = function(data)
+	{
+		var blockNode = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-detail-table-row"}});
+
+		var descriptionNode = BX.create("DIV", {attrs: { className: "crm-entity-stream-content-detail-description"}});
+		descriptionNode.appendChild(
+			BX.create("span", {text: this.getMessage('basketBasePrice')})
+		);
+		blockNode.appendChild(descriptionNode);
+
+		var detailCostNode = BX.create("DIV", {attrs: { className: "crm-entity-stream-content-detail-cost"}});
+		detailCostNode.appendChild(
+			BX.create(
+				"span",
+				{
+					attrs: { className: "crm-entity-stream-content-detail-cost-current"},
+					html : data.BASKET.BASE_PRICE_FORMAT
+				}
+			)
+		);
+		blockNode.appendChild(detailCostNode);
+
+		return blockNode;
+	};
+
+	BX.CrmHistoryItemFinalSummary.prototype.createBasketPriceBlock = function(data)
+	{
+		var blockNode = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-detail-table-row"}});
+
+		var descriptionNode = BX.create("DIV", {attrs: { className: "crm-entity-stream-content-detail-description"}});
+		descriptionNode.appendChild(
+			BX.create("span", {text: this.getMessage('basketPrice')})
+		);
+		blockNode.appendChild(descriptionNode);
+
+		var detailCostNode = BX.create("DIV", {attrs: { className: "crm-entity-stream-content-detail-cost"}});
+		detailCostNode.appendChild(
+			BX.create(
+				"span",
+				{
+					attrs: { className: "crm-entity-stream-content-detail-cost-current"},
+					html : data.BASKET.PRICE_FORMAT
+				}
+			)
+		);
+		blockNode.appendChild(detailCostNode);
+
+		return blockNode;
+	};
+
+	BX.CrmHistoryItemFinalSummary.prototype.createPaymentBlock = function(data)
+	{
+		for (var i in data.PAYMENTS)
+		{
+			var blockNode = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-detail-table-row"}});
+
+			var descriptionNode = BX.create(
+				"DIV",
+				{
+					attrs: { className: "crm-entity-stream-content-detail-description"},
+					children :
+					[
+						BX.create("span", {text: this.getMessage('paymentStatusY')}),
+						BX.create(
+							"span",
+							{
+								attrs: { className: "crm-entity-stream-content-detail-date"},
+								text: ' ' + data.PAYMENTS[i].DATE_PAID
+							}
+						)
+					]
+				}
+			);
+			blockNode.appendChild(descriptionNode);
+
+			var detailCostNode = BX.create("DIV", {attrs: { className: "crm-entity-stream-content-detail-cost"}});
+			detailCostNode.appendChild(
+				BX.create(
+					"span",
+					{
+						attrs: { className: "crm-entity-stream-content-detail-cost-current"},
+						html : data.PAYMENTS[i].PRICE_FORMAT
+					}
+				)
+			);
+			blockNode.appendChild(detailCostNode);
+		}
+
+		return blockNode;
+	};
+
+	BX.CrmHistoryItemFinalSummary.prototype.createSummaryBlock = function(data)
+	{
+		var blockNode = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-detail-table-row"}});
+
+		var descriptionNode = BX.create("DIV", {attrs: { className: "crm-entity-stream-content-detail-description"}});
+		descriptionNode.appendChild(
+			BX.create("span", {text: this.getMessage('sumForPay')})
+		);
+		blockNode.appendChild(descriptionNode);
+
+		var detailCostNode = BX.create("DIV", {attrs: { className: "crm-entity-stream-content-detail-cost"}});
+		detailCostNode.appendChild(
+			BX.create("strong", {html : data.ORDER.SUM_FOR_PAID_FORMAT})
+		);
+		blockNode.appendChild(detailCostNode);
+
+		return blockNode;
+	};
+
+	BX.CrmHistoryItemFinalSummary.prototype.createCheckBlock = function(check)
+	{
+		var blockNode = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-detail-notice"}});
+		blockNode.appendChild(
+			BX.create(
+				"a",
+				{
+					attrs: { href: check.URL, target: '_blank' },
+					text: check.TITLE
+				}
+			)
+		);
+
+		return blockNode;
+	};
+
+	BX.CrmHistoryItemFinalSummary.prototype.prepareContent = function()
+	{
+		var wrapper = BX.create("DIV", { attrs: { className: "crm-entity-stream-section crm-entity-stream-section-payment" } });
+
+		wrapper.appendChild(
+			BX.create("DIV", { attrs: { className: 'crm-entity-stream-section-icon ' + this.getIconClassName() } })
+		);
+
+		var content = BX.create("DIV", { attrs: { className: "crm-entity-stream-section-content" } });
+
+		var contentItem = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-event" } });
+
+		var header = BX.create("DIV",
+		{
+			attrs: { className: "crm-entity-stream-content-header" },
+			children: this.getHeaderChildren()
+		});
+		contentItem.appendChild(header);
+
+		var data = this.getData();
+
+		if (data.RESULT && data.RESULT.length > 0)
+		{
+			for (var i in data.RESULT)
+			{
+				contentItem.appendChild(
+					BX.create("DIV",
+						{
+							attrs: {className: "crm-entity-stream-content-detail"},
+							children: this.prepareContentDetails(data.RESULT[i])
+						})
+				);
+
+				content.appendChild(contentItem);
+			}
+		}
+
+		//region Author
+		var authorNode = this.prepareAuthorLayout();
+		if(authorNode)
+		{
+			content.appendChild(authorNode);
+		}
+		//endregion
+
+		wrapper.appendChild(
+			BX.create("DIV", { attrs: { className: "crm-entity-stream-section-content" }, children: [ content ] })
+		);
+
+		return wrapper;
+	};
+
+	BX.CrmHistoryItemFinalSummary.prototype.getIconClassName = function()
+	{
+		return 'crm-entity-stream-section-icon-complete';
+	};
+
+	if (typeof(BX.CrmHistoryItemFinalSummary.messages) === "undefined")
+	{
+		BX.CrmHistoryItemFinalSummary.messages = {};
+	}
+
+	BX.CrmHistoryItemFinalSummary.create = function(id, settings)
+	{
+		var self = new BX.CrmHistoryItemFinalSummary();
+		self.initialize(id, settings);
+		return self;
+	};
+}
+
+if(typeof(BX.CrmHistoryItemExternalNoticeModification) === "undefined")
+{
+	BX.CrmHistoryItemExternalNoticeModification = function ()
+	{
+		BX.CrmHistoryItemExternalNoticeModification.superclass.constructor.apply(this);
+	};
+	BX.extend(BX.CrmHistoryItemExternalNoticeModification, BX.CrmHistoryItemOrderModification);
+
+	BX.CrmHistoryItemExternalNoticeModification.prototype.getIconClassName = function()
+	{
+		return 'crm-entity-stream-section-icon-restApp';
+	};
+
+	BX.CrmHistoryItemExternalNoticeModification.create = function(id, settings)
+	{
+		var self = new BX.CrmHistoryItemExternalNoticeModification();
+		self.initialize(id, settings);
+		return self;
+	};
+}
+
+if(typeof(BX.CrmHistoryItemExternalNoticeStatusModification) === "undefined")
+{
+	BX.CrmHistoryItemExternalNoticeStatusModification = function ()
+	{
+		BX.CrmHistoryItemExternalNoticeStatusModification.superclass.constructor.apply(this);
+	};
+	BX.extend(BX.CrmHistoryItemExternalNoticeStatusModification, BX.CrmHistoryItemExternalNoticeModification);
+
+	BX.CrmHistoryItemExternalNoticeStatusModification.prototype.prepareContentDetails = function()
+	{
+		var nodes = [];
+		var contentChildren = [];
+
+		if (BX.type.isNotEmptyString(this.getTextDataParam("START_NAME")))
+		{
+			contentChildren.push(
+				BX.create("SPAN",
+					{
+						attrs: {className: "crm-entity-stream-content-detain-info-status"},
+						text: this.getTextDataParam("START_NAME")
+					})
+			);
+			contentChildren.push(
+				BX.create("SPAN",{ attrs: { className: "crm-entity-stream-content-detail-info-separator-icon" } })
+			);
+		}
+
+		if (BX.type.isNotEmptyString(this.getTextDataParam("FINISH_NAME")))
+		{
+			contentChildren.push(
+				BX.create("SPAN",
+					{
+						attrs: { className: "crm-entity-stream-content-detain-info-status" },
+						text: this.getTextDataParam("FINISH_NAME")
+					})
+			);
+		}
+
+		nodes.push(BX.create("DIV",	{
+			attrs: { className: "crm-entity-stream-content-detail-info" },
+			children: contentChildren
+		}));
+
+		return nodes;
+	};
+
+	BX.CrmHistoryItemExternalNoticeStatusModification.create = function(id, settings)
+	{
+		var self = new BX.CrmHistoryItemExternalNoticeStatusModification();
 		self.initialize(id, settings);
 		return self;
 	};
@@ -12335,7 +13359,7 @@ if(typeof(BX.CrmHistoryItemOrcderCheck) === "undefined")
 	};
 	BX.CrmHistoryItemOrcderCheck.prototype.getTitle = function()
 	{
-		return this.getMessage('orderCheck');
+		return this.getMessage('orderCheck') + ' "' + this.getTextDataParam("CHECK_NAME") + '"';
 	};
 	BX.CrmHistoryItemOrcderCheck.prototype.getWrapperClassName = function()
 	{
@@ -12343,12 +13367,23 @@ if(typeof(BX.CrmHistoryItemOrcderCheck) === "undefined")
 	};
 	BX.CrmHistoryItemOrcderCheck.prototype.getHeaderChildren = function()
 	{
-		var statusMessage = this.getMessage("printed");
-		var statusClass = "crm-entity-stream-content-event-successful";
-		if (this.getTextDataParam("PRINTED") !== 'Y')
+		var statusMessage = '';
+		var statusClass = '';
+		var title = this.getTitle();
+
+		if (this.getTextDataParam("SENDED") !== '')
 		{
-			statusMessage = this.getMessage("unprinted");
-			statusClass = "crm-entity-stream-content-event-missing";
+			title = this.getMessage('sendedTitle');
+		}
+		else
+		{
+			statusMessage = this.getMessage("printed");
+			statusClass = "crm-entity-stream-content-event-successful";
+			if (this.getTextDataParam("PRINTED") !== 'Y')
+			{
+				statusMessage = this.getMessage("unprinted");
+				statusClass = "crm-entity-stream-content-event-missing";
+			}
 		}
 
 		return [
@@ -12361,7 +13396,7 @@ if(typeof(BX.CrmHistoryItemOrcderCheck) === "undefined")
 								{
 									attrs: { href: "#" },
 									events: { click: this._headerClickHandler },
-									text: this.getTitle()
+									text: title
 								}
 							)
 						]
@@ -12389,7 +13424,13 @@ if(typeof(BX.CrmHistoryItemOrcderCheck) === "undefined")
 		var nodes = [];
 		if(title !== "")
 		{
-			var descriptionNode = BX.create("DIV", { attrs: { className: 'crm-entity-stream-content-detail-description' } });
+			var isSended = this.getTextDataParam("SENDED") !== '';
+			var className = isSended
+				? 'crm-entity-stream-content-detail-order'
+				: 'crm-entity-stream-content-detail-description'
+			;
+
+			var descriptionNode = BX.create("DIV", { attrs: { className: className } });
 			descriptionNode.appendChild(BX.create("A", {
 				attrs: { href: showUrl},
 				events: {
@@ -12401,23 +13442,39 @@ if(typeof(BX.CrmHistoryItemOrcderCheck) === "undefined")
 				text: title
 			}));
 
-			var legend =  this.getTextDataParam("LEGEND");
+			var legend =  this.getTextDataParam("LEGEND"),
+				legendNode;
 			if(legend !== "")
 			{
-				descriptionNode.appendChild(BX.create("SPAN", { text: " " + legend }));
+				legendNode = BX.create("SPAN", { html: " " + legend });
 			}
 
-			nodes.push(descriptionNode);
+			if (isSended)
+			{
+				nodes.push(descriptionNode);
+				if (legendNode)
+				{
+					nodes.push(legendNode);
+				}
+			}
+			else
+			{
+				if (legendNode)
+				{
+					descriptionNode.appendChild(legendNode);
+				}
+				nodes.push(descriptionNode);
+			}
 		}
 
-		var listUrl = BX.prop.getString(entityData, "LIST_URL", "");
-		if(listUrl)
+		var checkUrl = this.getTextDataParam("CHECK_URL");
+		if (checkUrl)
 		{
 			nodes.push(
 				BX.create("DIV", {
 					attrs: { className: 'crm-entity-stream-content-detail-payment-info' },
 					children: [
-						BX.create("A", { attrs: { href: listUrl }, text: this.getMessage('listLink') })
+						BX.create("A", { attrs: { href: checkUrl, target: '_blank'}, text: this.getMessage('urlLink') })
 					]
 				})
 			);
@@ -12482,6 +13539,8 @@ if(typeof(BX.CrmHistoryItemOrcderCheck) === "undefined")
 		return self;
 	};
 }
+
+
 //endregion
 
 //region Schedule Items
@@ -13386,6 +14445,34 @@ if(typeof(BX.CrmScheduleItemWebForm) === "undefined")
 	BX.CrmScheduleItemWebForm.create = function(id, settings)
 	{
 		var self = new BX.CrmScheduleItemWebForm();
+		self.initialize(id, settings);
+		return self;
+	};
+}
+
+if(typeof(BX.CrmScheduleItemDelivery) === "undefined")
+{
+	BX.CrmScheduleItemDelivery = function()
+	{
+		BX.CrmScheduleItemDelivery.superclass.constructor.apply(this);
+	};
+	BX.extend(BX.CrmScheduleItemDelivery, BX.CrmScheduleItemActivity);
+
+	BX.CrmScheduleItemDelivery.prototype.prepareContent = function(options)
+	{
+		var app = new BX.Crm.Delivery.Taxi.Activity({
+			propsData: {
+				self: this,
+				langMessages: BX.CrmTimelineItem.messages
+			}
+		});
+		app.$mount();
+
+		return app.$el;
+	};
+	BX.CrmScheduleItemDelivery.create = function(id, settings)
+	{
+		var self = new BX.CrmScheduleItemDelivery();
 		self.initialize(id, settings);
 		return self;
 	};

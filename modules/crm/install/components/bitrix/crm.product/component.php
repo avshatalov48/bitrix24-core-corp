@@ -57,7 +57,7 @@ if ($arParams['SEF_MODE'] === 'Y')
 
 	foreach ($arUrlTemplates as $url => $value)
 	{
-		$key = 'PATH_TO_'.strtoupper($url);
+		$key = 'PATH_TO_'.mb_strtoupper($url);
 		$arResult[$key] = isset($arParams[$key][0]) ? $arParams[$key] : $arParams['SEF_FOLDER'].$value;
 	}
 }
@@ -104,11 +104,8 @@ else
 
 $catalogID = CCrmCatalog::EnsureDefaultExists();
 
-// sync iblock url fields with params
-if (IsModuleInstalled('iblock') && CModule::IncludeModule('iblock'))
+if (CModule::IncludeModule('iblock'))
 {
-	$iblock = new CIBlock();
-
 	if (isset($arResult['PATH_TO_PRODUCT_LIST']))
 	{
 		// list page
@@ -121,7 +118,6 @@ if (IsModuleInstalled('iblock') && CModule::IncludeModule('iblock'))
 		$curListPageUrl = COption::GetOptionString('crm', 'product_list_page_url', '');
 		if ($listPageUrl !== $curListPageUrl)
 		{
-			$iblock->Update($catalogID, array('LIST_PAGE_URL' => $listPageUrl));
 			COption::SetOptionString('crm', 'product_list_page_url', $listPageUrl);
 		}
 
@@ -131,7 +127,6 @@ if (IsModuleInstalled('iblock') && CModule::IncludeModule('iblock'))
 		$curSectionPageUrl = COption::GetOptionString('crm', 'product_section_page_url', '');
 		if ($sectionPageUrl !== $curSectionPageUrl)
 		{
-			$iblock->Update($catalogID, array('SECTION_PAGE_URL' => $sectionPageUrl));
 			COption::SetOptionString('crm', 'product_section_page_url', $sectionPageUrl);
 		}
 	}
@@ -143,12 +138,9 @@ if (IsModuleInstalled('iblock') && CModule::IncludeModule('iblock'))
 		$curDetailPageUrl = COption::GetOptionString('crm', 'product_detail_page_url', '');
 		if ($detailPageUrl !== $curDetailPageUrl)
 		{
-			$iblock->Update($catalogID, array('DETAIL_PAGE_URL' => $detailPageUrl));
 			COption::SetOptionString('crm', 'product_detail_page_url', $detailPageUrl);
 		}
 	}
-
-	unset($iblock);
 }
 
 $arResult =

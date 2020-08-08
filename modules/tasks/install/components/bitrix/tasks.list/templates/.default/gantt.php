@@ -683,8 +683,10 @@ if (!isset($arParams["HIDE_VIEWS"]) || $arParams["HIDE_VIEWS"] != "Y")
 	$arComponentParams['TEMPLATES'] = $arResult['TEMPLATES'];
 
 	$filterName = '';
-	if (strlen($arResult['SELECTED_PRESET_NAME']))
-		$filterName .= ': ' . htmlspecialcharsbx($arResult['SELECTED_PRESET_NAME']);
+	if($arResult['SELECTED_PRESET_NAME'] <> '')
+	{
+		$filterName .= ': '.htmlspecialcharsbx($arResult['SELECTED_PRESET_NAME']);
+	}
 
 	$arComponentParams['SELECTED_PRESET_NAME'] = $arResult['SELECTED_PRESET_NAME'];
 

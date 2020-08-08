@@ -189,7 +189,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
-		if(strlen($isReturn) > 0)
+		if($isReturn <> '')
 		{
 			$setResult = $paymentObj->setReturn($isReturn);
 

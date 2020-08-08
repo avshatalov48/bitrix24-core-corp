@@ -5,7 +5,7 @@ use \Bitrix\ImConnector\Library,
 	\Bitrix\ImConnector\Connector,
 	\Bitrix\ImConnector\Model\BotFrameworkTable;
 
-class BotFramework
+class BotFramework extends Base
 {
 	public static function furtherMessageProcessing($message, $userSourceData, $connector, $connectorReal)
 	{

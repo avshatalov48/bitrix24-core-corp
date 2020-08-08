@@ -80,17 +80,17 @@ final class Filter
 				if($c[0] == '!')
 				{
 					$inverse = true;
-					$c = substr($c, 1);
+					$c = mb_substr($c, 1);
 				}
 				if($c[0] == '=')
 				{
 					$equals = static::EQUALITY_STRICT;
-					$c = substr($c, 1);
+					$c = mb_substr($c, 1);
 				}
 				elseif($c[0] == '~')
 				{
 					$equals = static::EQUALITY_REGEXP;
-					$c = substr($c, 1);
+					$c = mb_substr($c, 1);
 				}
 
 				if($c != '')

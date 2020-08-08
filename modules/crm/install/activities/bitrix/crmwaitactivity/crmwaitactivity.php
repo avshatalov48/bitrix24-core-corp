@@ -296,7 +296,7 @@ class CBPCrmWaitActivity extends CBPActivity
 				|| $fieldId === 'CLOSEDATE'
 				|| $field['Type'] === 'UF:date'
 				|| (
-					strpos($fieldId, 'UF_') === 0
+					mb_strpos($fieldId, 'UF_') === 0
 					&& $field['Type'] === 'datetime'
 				)
 			)

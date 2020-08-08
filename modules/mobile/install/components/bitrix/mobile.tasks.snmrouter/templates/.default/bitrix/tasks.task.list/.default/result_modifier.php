@@ -212,7 +212,7 @@ foreach ($arResult["LIST"] as $task)
 	);
 	$arResult["ITEMS"][$task['ID']] = array(
 		"~TITLE" => $task["~TITLE"],
-		"ICON_HTML" => '<span id="bx-task-icon-'.$task["ID"].'" class="mobile-grid-fields-task-icon '.strtolower($arResult["STATUSES"][$task["~STATUS"]]).'"></span>',
+		"ICON_HTML" => '<span id="bx-task-icon-'.$task["ID"].'" class="mobile-grid-fields-task-icon '.mb_strtolower($arResult["STATUSES"][$task["~STATUS"]]).'"></span>',
 		"TITLE" => '<span class="mobile-grid-fields-task-title" id="bx-task-title-'.$task["ID"].'">'.$task["TITLE"].'</span>'.
 			(isset($_POST["ajax"]) && $_POST["ajax"] == "Y" || isset($_REQUEST["search"]) && $arParams["SHOW_SEARCH"] == "Y" ?
 				'<script>BX.Mobile.Tasks.list.addCurrent('.$task["ID"].', '.(CUtil::PhpToJSObject($jsTask)).');</script>' : ''),

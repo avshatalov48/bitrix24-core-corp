@@ -25,8 +25,8 @@ class CWizardSolPanelIntranet
 					if($arSite["ACTIVE"]=="Y")
 						$siteCnt++;
 
-					$arSitesID[] = strtolower($arSite["ID"]);
-					$arSitesPath[] = strtolower($arSite["PATH"]);
+					$arSitesID[] = mb_strtolower($arSite["ID"]);
+					$arSitesPath[] = mb_strtolower($arSite["PATH"]);
 				}
 
 				$newSiteID = "";

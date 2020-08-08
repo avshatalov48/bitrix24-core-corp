@@ -30,7 +30,7 @@ class WidgetImPullCommandHandler
 
 	handleMessageChat(params, extra, command)
 	{
-		if (params.message.senderId != this.controller.getUserId())
+		if (params.message.senderId != this.controller.application.getUserId())
 		{
 			this.widget.sendEvent({
 				type: SubscriptionType.operatorMessage,
@@ -85,7 +85,8 @@ class WidgetImopenlinesPullCommandHandler
 	handleSessionOperatorChange(params, extra, command)
 	{
 		this.store.commit('widget/dialog', {
-			operator: params.operator
+			operator: params.operator,
+			operatorChatId: params.operatorChatId
 		});
 
 		this.widget.sendEvent({
@@ -101,7 +102,7 @@ class WidgetImopenlinesPullCommandHandler
 		this.store.commit('widget/dialog', {
 			sessionId: params.sessionId,
 			sessionStatus: params.sessionStatus,
-			sessionClose: true,
+			sessionClose: params.sessionClose,
 		});
 
 		this.widget.sendEvent({
@@ -111,36 +112,30 @@ class WidgetImopenlinesPullCommandHandler
 				sessionStatus: params.sessionStatus
 			}
 		});
-	}
 
-	handleSessionFinish(params, extra, command)
-	{
-		this.store.commit('widget/dialog', {
-			sessionId: params.sessionId,
-			sessionStatus: params.sessionStatus,
-			sessionClose: true,
-		});
-
-		this.widget.sendEvent({
-			type: SubscriptionType.sessionFinish,
-			data: {
-				sessionId: params.sessionId,
-				sessionStatus: params.sessionStatus
-			}
-		});
-
-		if (!params.spam)
+		if (params.sessionClose)
 		{
-			this.store.commit('widget/dialog', {
-				operator: {
-					name: '',
-					firstName: '',
-					lastName: '',
-					workPosition: '',
-					avatar: '',
-					online: false,
+			this.widget.sendEvent({
+				type: SubscriptionType.sessionFinish,
+				data: {
+					sessionId: params.sessionId,
+					sessionStatus: params.sessionStatus
 				}
 			});
+
+			if (!params.spam)
+			{
+				this.store.commit('widget/dialog', {
+					operator: {
+						name: '',
+						firstName: '',
+						lastName: '',
+						workPosition: '',
+						avatar: '',
+						online: false,
+					}
+				});
+			}
 		}
 	}
 }

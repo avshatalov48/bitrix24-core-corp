@@ -65,7 +65,7 @@ global $APPLICATION;
 			selectorNode.textContent = '<?=GetMessageJS('TASKS_AUTOMATION_CMP_SELECTOR_ITEM_PERSONAL')?>';
 		}
 
-		toolbarNode.insertBefore(selectorNode, toolbarNode.firstChild);
+		toolbarNode.insertBefore(selectorNode, toolbarNode.lastElementChild);
 
 		var menu = null;
 		var groups = <?=\Bitrix\Main\Web\Json::encode($arResult['GROUPS_SELECTOR']['GROUPS'])?>;

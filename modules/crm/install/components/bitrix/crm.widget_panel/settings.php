@@ -38,7 +38,7 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 	{
 		$options = CUserOptions::GetOption('crm.widget_panel', $guid, array());
 		CUtil::decodeURIComponent($_POST);
-		$options['enableDemoMode'] = isset($_POST['enable']) && strtoupper($_POST['enable']) === 'Y' ? 'Y' : 'N';
+		$options['enableDemoMode'] = isset($_POST['enable']) && mb_strtoupper($_POST['enable']) === 'Y' ? 'Y' : 'N';
 		CUserOptions::SetOption('crm.widget_panel', $guid, $options);
 	}
 	elseif($action == 'savelayout' && isset($_POST['layout']))

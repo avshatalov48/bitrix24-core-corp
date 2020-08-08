@@ -254,7 +254,7 @@ function faceidFormatUserInfo($user)
 	// format json response
 	$user['FULL_NAME'] = $user['NAME']." ".$user['LAST_NAME'];
 
-	if (!strlen(trim($user['FULL_NAME'])))
+	if (trim($user['FULL_NAME']) == '')
 	{
 		$user['FULL_NAME'] = $user['LOGIN'];
 	}

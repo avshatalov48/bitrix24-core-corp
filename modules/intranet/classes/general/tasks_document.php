@@ -87,7 +87,7 @@ class CIntranetTasksDocument
 			$arFields = $objResult->GetFields();
 			foreach ($arFields as $fieldKey => $fieldValue)
 			{
-				if (substr($fieldKey, 0, 1) == "~")
+				if (mb_substr($fieldKey, 0, 1) == "~")
 					continue;
 
 				$arResult[$fieldKey] = $fieldValue;
@@ -135,7 +135,7 @@ class CIntranetTasksDocument
 				}
 				$arResult["PROPERTY_".$propertyKey."_PRINTABLE"] = $propertyValue["VALUE"];
 
-				if (strlen($propertyValue["USER_TYPE"]) > 0)
+				if ($propertyValue["USER_TYPE"] <> '')
 				{
 					if ($propertyValue["USER_TYPE"] == "UserID")
 						$arResult["PROPERTY_".$propertyKey."_PRINTABLE"] = CIntranetTasks::PrepareUserForPrint($propertyValue["VALUE"], $nameTemplate, $bShowLogin, $bShowTooltip, $arTooltipParams);
@@ -353,7 +353,7 @@ class CIntranetTasksDocument
 			if (in_array($arProperty["CODE"], array("TaskStatus", "TaskAlert", "VERSION", "FORUM_TOPIC_ID", "FORUM_MESSAGE_CNT", "TASKVERSION")))
 				continue;
 
-			if (strlen(trim($arProperty["CODE"])) > 0)
+			if (trim($arProperty["CODE"]) <> '')
 				$key = "PROPERTY_".$arProperty["CODE"];
 			else
 				$key = "PROPERTY_".$arProperty["ID"];
@@ -366,7 +366,7 @@ class CIntranetTasksDocument
 				"Multiple" => ($arProperty["MULTIPLE"] == "Y"),
 			);
 
-			if (strlen($arProperty["USER_TYPE"]) > 0)
+			if ($arProperty["USER_TYPE"] <> '')
 			{
 				if ($arProperty["USER_TYPE"] == "UserID")
 					$arResult[$key]["Type"] = "user";
@@ -430,9 +430,9 @@ class CIntranetTasksDocument
 		$arKeys = array_keys($arFields);
 		foreach ($arKeys as $key)
 		{
-			if (substr($key, 0, strlen("PROPERTY_")) == "PROPERTY_")
+			if (mb_substr($key, 0, mb_strlen("PROPERTY_")) == "PROPERTY_")
 			{
-				$arPropertyValues[substr($key, strlen("PROPERTY_"))] = $arFields[$key];
+				$arPropertyValues[mb_substr($key, mb_strlen("PROPERTY_"))] = $arFields[$key];
 				unset($arFields[$key]);
 			}
 		}
@@ -480,8 +480,8 @@ class CIntranetTasksDocument
 		$arKeys = array_keys($arFields);
 		foreach ($arKeys as $key)
 		{
-			if (substr($key, 0, strlen("PROPERTY_")) == "PROPERTY_")
-				$arFields["PROPERTY_VALUES"][substr($key, strlen("PROPERTY_"))] = $arFields[$key];
+			if (mb_substr($key, 0, mb_strlen("PROPERTY_")) == "PROPERTY_")
+				$arFields["PROPERTY_VALUES"][mb_substr($key, mb_strlen("PROPERTY_"))] = $arFields[$key];
 		}
 
 		$iblockElementObject = new CIBlockElement();
@@ -510,7 +510,7 @@ class CIntranetTasksDocument
 	function CanUserOperateDocument($operation, $userId, $documentId, $arParameters = array())
 	{
 		$documentId = trim($documentId);
-		if (strlen($documentId) <= 0)
+		if ($documentId == '')
 			return false;
 
 		$iblockId = COption::GetOptionInt("intranet", "iblock_tasks", 0);
@@ -561,7 +561,7 @@ class CIntranetTasksDocument
 				if ($arSect = $dbSectionsChain->Fetch())
 				{
 					$arParameters["TaskType"] = (($arSect["XML_ID"] == "users_tasks") ? "user" : "group");
-					$arParameters["OwnerId"] = IntVal(($arParameters["TaskType"] == "user") ?  $arParameters["Responsible"] : $arSect["XML_ID"]);
+					$arParameters["OwnerId"] = intval(($arParameters["TaskType"] == "user") ?  $arParameters["Responsible"] : $arSect["XML_ID"]);
 				}
 			}
 		}
@@ -577,11 +577,15 @@ class CIntranetTasksDocument
 		elseif ($operation == INTASK_DOCUMENT_OPERATION_DELETE_DOCUMENT)
 			$o = "delete_tasks";
 
-		if (strlen($o) > 0)
+		if ($o <> '' && $arParameters["TaskType"] == 'user')
+		{
+			return false;
+		}
+		if ($o <> '')
 		{
 			$r = CSocNetFeaturesPerms::CanPerformOperation(
 				$userId,
-				(($arParameters["TaskType"] == 'user') ? SONET_ENTITY_USER : SONET_ENTITY_GROUP),
+				SONET_ENTITY_GROUP,
 				$arParameters["OwnerId"],
 				"tasks",
 				$o
@@ -604,7 +608,7 @@ class CIntranetTasksDocument
 						$arParameters["UserGroups"][] = SONET_ROLES_AUTHORIZED;
 
 					$r = CSocNetUserToGroup::GetUserRole($userId, $arParameters["OwnerId"]);
-					if (strlen($r) > 0)
+					if ($r <> '')
 						$arParameters["UserGroups"][] = $r;
 				}
 				else
@@ -697,7 +701,7 @@ class CIntranetTasksDocument
 	public function CanUserOperateDocumentType($operation, $userId, $documentType, $arParameters = array())
 	{
 		$documentType = trim($documentType);
-		if (strlen($documentType) <= 0)
+		if ($documentType == '')
 			return false;
 
 		$iblockId = COption::GetOptionInt("intranet", "iblock_tasks", 0);
@@ -736,14 +740,14 @@ class CIntranetTasksDocument
 				}
 				else
 				{
-					
+
 					$arParameters["UserGroups"][] = SONET_ROLES_ALL;
 
 					if ($GLOBALS["USER"]->IsAuthorized())
 						$arParameters["UserGroups"][] = SONET_ROLES_AUTHORIZED;
 
 					$r = CSocNetUserToGroup::GetUserRole($userId, $ownerId);
-					if (strlen($r) > 0)
+					if ($r <> '')
 						$arParameters["UserGroups"][] = $r;
 				}
 			}
@@ -872,7 +876,7 @@ class CIntranetTasksDocument
 		if ($documentId <= 0)
 			return array();
 
-		$group = strtolower($group);
+		$group = mb_strtolower($group);
 		if ($group == "author")
 		{
 			$db = CIBlockElement::GetList(
@@ -927,7 +931,7 @@ class CIntranetTasksDocument
 			{
 				if ($arSect["XML_ID"] == "users_tasks")
 				{
-					if ($group == strtolower(SONET_RELATIONS_TYPE_FRIENDS))
+					if ($group == mb_strtolower(SONET_RELATIONS_TYPE_FRIENDS))
 					{
 						$db = CSocNetUserRelations::GetRelatedUsers($arTask["PROPERTY_TASKASSIGNEDTO_VALUE"], SONET_RELATIONS_TYPE_FRIENDS);
 						while ($ar = $db->Fetch())
@@ -941,13 +945,13 @@ class CIntranetTasksDocument
 				}
 				else
 				{
-					if ($group == strtolower(SONET_ROLES_OWNER))
+					if ($group == mb_strtolower(SONET_ROLES_OWNER))
 					{
 						$arGroup = CSocNetGroup::GetByID($arSect["XML_ID"]);
 						if ($arGroup)
 							$arR[] = $arGroup["OWNER_ID"];
 					}
-					elseif ($group == strtolower(SONET_ROLES_MODERATOR))
+					elseif ($group == mb_strtolower(SONET_ROLES_MODERATOR))
 					{
 						$db = CSocNetUserToGroup::GetList(
 							array(),
@@ -963,7 +967,7 @@ class CIntranetTasksDocument
 						while ($ar = $db->Fetch())
 							$arR[] = $ar["USER_ID"];
 					}
-					elseif ($group == strtolower(SONET_ROLES_USER))
+					elseif ($group == mb_strtolower(SONET_ROLES_USER))
 					{
 						$db = CSocNetUserToGroup::GetList(
 							array(),

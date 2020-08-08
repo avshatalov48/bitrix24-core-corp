@@ -31,8 +31,6 @@ BX.namespace('Tasks.Component');
 
 			bindEvents: function()
 			{
-				var self = this;
-
 				BX.Tasks.Util.Dispatcher.bindEvent(this.id()+'-buttons', 'button-click', this.onButtonClick.bind(this));
 
 				if(this.option('can').edit)
@@ -47,6 +45,7 @@ BX.namespace('Tasks.Component');
 				BX.bind(BX('saveButton'), 'click', this.onSaveButtonClick.bind(this));
 				BX.bind(BX('cancelButton'), 'click', this.onCancelButtonClick.bind(this));
 				BX.bind(BX('templateViewPopupMenuOptions'), 'click', this.createTemplateMenu.bind(this));
+				BX.bind(BX('subTemplateAdd'), 'click', this.onSubTemplateAddClick.bind(this));
 
 				// show alert on ajax errors, reload page then
 				BX.addCustomEvent("TaskAjaxError", function(errors) {
@@ -54,58 +53,7 @@ BX.namespace('Tasks.Component');
 						BX.reload();
 					});
 				});
-				BX.addCustomEvent('SidePanel.Slider:onClose', function(event) {
-					if (self.checkListChanged && typeof BX.Tasks.CheckListInstance !== 'undefined')
-					{
-						var checkListSlider = BX.Tasks.CheckListInstance.optionManager.slider;
-						if (!checkListSlider || checkListSlider !== event.getSlider())
-						{
-							return;
-						}
-
-						if (!self.showCloseConfirmation)
-						{
-							self.showCloseConfirmation = true;
-							return;
-						}
-
-						event.denyAction();
-
-						var popup = new BX.PopupWindow({
-							titleBar: BX.message('TASKS_TTV_CLOSE_SLIDER_CONFIRMATION_POPUP_HEADER'),
-							content: BX.message('TASKS_TTV_CLOSE_SLIDER_CONFIRMATION_POPUP_CONTENT'),
-							closeIcon: false,
-							buttons: [
-								new BX.PopupWindowButton({
-									text: BX.message('TASKS_TTV_CLOSE_SLIDER_CONFIRMATION_POPUP_BUTTON_CLOSE'),
-									className: 'popup-window-button-accept',
-									events: {
-										click: function() {
-											self.showCloseConfirmation = false;
-											popup.close();
-											checkListSlider.close();
-										}
-									}
-								}),
-								new BX.PopupWindowButton({
-									className: 'popup-window-button popup-window-button-link',
-									text: BX.message('TASKS_TTV_CLOSE_SLIDER_CONFIRMATION_POPUP_BUTTON_CANCEL'),
-									events: {
-										click: function() {
-											popup.close();
-										}
-									}
-								})
-							],
-							events: {
-								onPopupClose: function() {
-									this.destroy();
-								}
-							}
-						});
-						popup.show();
-					}
-				});
+				BX.addCustomEvent('SidePanel.Slider:onClose', this.onSliderClose.bind(this));
 
 				BX.Event.EventEmitter.subscribe('BX.Tasks.CheckListItem:CheckListChanged', function(eventData) {
 					var action = eventData.data.action;
@@ -118,6 +66,64 @@ BX.namespace('Tasks.Component');
 
 					this.toggleFooterWrap(true);
 				}.bind(this));
+			},
+
+			onSliderClose: function(event)
+			{
+				if (!this.checkListChanged || typeof BX.Tasks.CheckListInstance === 'undefined')
+				{
+					return;
+				}
+
+				var checkListSlider = BX.Tasks.CheckListInstance.optionManager.slider;
+				if (!checkListSlider || checkListSlider !== event.getSlider())
+				{
+					return;
+				}
+
+				if (!this.showCloseConfirmation)
+				{
+					this.showCloseConfirmation = true;
+					return;
+				}
+
+				event.denyAction();
+				this.showChecklistCloseSliderPopup(checkListSlider);
+			},
+
+			showChecklistCloseSliderPopup: function(checkListSlider)
+			{
+				if (!this.checklistCloseSliderPopup)
+				{
+					this.checklistCloseSliderPopup = new BX.PopupWindow({
+						titleBar: BX.message('TASKS_TTV_CLOSE_SLIDER_CONFIRMATION_POPUP_HEADER'),
+						content: BX.message('TASKS_TTV_CLOSE_SLIDER_CONFIRMATION_POPUP_CONTENT'),
+						closeIcon: false,
+						buttons: [
+							new BX.PopupWindowButton({
+								text: BX.message('TASKS_TTV_CLOSE_SLIDER_CONFIRMATION_POPUP_BUTTON_CLOSE'),
+								className: 'popup-window-button-accept',
+								events: {
+									click: function() {
+										this.showCloseConfirmation = false;
+										this.checklistCloseSliderPopup.close();
+										checkListSlider.close();
+									}.bind(this)
+								}
+							}),
+							new BX.PopupWindowButton({
+								className: 'popup-window-button popup-window-button-link',
+								text: BX.message('TASKS_TTV_CLOSE_SLIDER_CONFIRMATION_POPUP_BUTTON_CANCEL'),
+								events: {
+									click: function() {
+										this.checklistCloseSliderPopup.close();
+									}.bind(this)
+								}
+							})
+						]
+					});
+				}
+				this.checklistCloseSliderPopup.show();
 			},
 
 			onImportantButtonClick: function(node)
@@ -201,6 +207,15 @@ BX.namespace('Tasks.Component');
 				BX.Tasks.CheckListInstance.activateLoading();
 
 				this.saveCheckList();
+			},
+
+			onSubTemplateAddClick: function(e)
+			{
+				if (this.option('auxData').TASK_LIMIT_EXCEEDED)
+				{
+					e.preventDefault();
+					BX.UI.InfoHelper.show('limit_tasks_templates_subtasks');
+				}
 			},
 
 			saveCheckList: function()

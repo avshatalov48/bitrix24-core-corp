@@ -17,12 +17,12 @@ if ($arResult["LIKE_TEMPLATE"] == 'like_react')
 }
 
 $templateData = $arResult["TEMPLATE_DATA"];
+
 if (isset($templateData["ERROR"]))
 {
-	foreach($templateData["ERROR"] as $error)
-	{
-		?><div class="task-message-label error"><?=htmlspecialcharsbx($error)?></div><?
-	}
+	$APPLICATION->IncludeComponent("bitrix:tasks.error", "", [
+
+	]);
 	return;
 }
 
@@ -32,6 +32,12 @@ $userFields = isset($arResult["AUX_DATA"]["USER_FIELDS"]) ? $arResult["AUX_DATA"
 $diskUfCode = \Bitrix\Tasks\Integration\Disk\UserField::getMainSysUFCode();
 $mailUfCode = \Bitrix\Tasks\Integration\Mail\UserField::getMainSysUFCode();
 $isBitrix24Template = (SITE_TEMPLATE_ID == "bitrix24");
+$taskLimitExceeded = $arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'];
+
+if ($taskLimitExceeded)
+{
+	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
+}
 
 $APPLICATION->ShowViewContent("task_menu");
 
@@ -64,22 +70,23 @@ if ($arParams["ENABLE_MENU_TOOLBAR"])
 	$APPLICATION->IncludeComponent(
 		'bitrix:tasks.interface.filter.buttons',
 		'.default',
-		array(
+		[
+			'ENTITY_ID' => $taskData['ID'],
 			'SECTION' => 'VIEW_TASK',
-			'ADD_BUTTON' => array(
-				'NAME' => Loc::getMessage("TASKS_ADD_TASK_SHORT"),
+			'ADD_BUTTON' => [
+				'NAME' => Loc::getMessage('TASKS_ADD_TASK_SHORT'),
 				'ID' => 'task-detail-create-button',
 				'URL' => CComponentEngine::makePathFromTemplate(
-					$arParams['GROUP_ID'] > 0 ? $arParams['PATH_TO_GROUP_TASKS_TASK'] : $arParams['PATH_TO_USER_TASKS_TASK'],
-					array(
+					($arParams['GROUP_ID'] > 0 ? $arParams['PATH_TO_GROUP_TASKS_TASK'] : $arParams['PATH_TO_USER_TASKS_TASK']),
+					[
 						'user_id' => $arParams['USER_ID'],
 						'group_id' => $arParams['GROUP_ID'],
 						'action' => 'edit',
-						'task_id' => 0
-					)
-				)
-			)
-		)
+						'task_id' => 0,
+					]
+				),
+			],
+		]
 	);
 }
 ?>
@@ -137,7 +144,7 @@ if ($arParams["ENABLE_MENU_TOOLBAR"])
 							'DATA' => $taskData['SE_CHECKLIST'],
 							'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
 							'CONVERTED' => $arResult['DATA']['CHECKLIST_CONVERTED'],
-							'CAN_ADD_ACCOMPLICE' => $can['EDIT'],
+							'CAN_ADD_ACCOMPLICE' => $can['EDIT'] && !$taskLimitExceeded,
 						],
 						null,
 						['HIDE_ICONS' => 'Y', 'ACTIVE_COMPONENT' => 'Y']
@@ -173,7 +180,7 @@ if ($arParams["ENABLE_MENU_TOOLBAR"])
 					?><div class="task-detail-like"><?
 
 						$voteId = "TASK".'_'.$taskData["ID"].'-'.(time()+rand(0, 1000));
-						$emotion = (!empty($templateData["RATING"]["USER_REACTION"]) ? strtoupper($templateData["RATING"]["USER_REACTION"]) : 'LIKE');
+						$emotion = (!empty($templateData["RATING"]["USER_REACTION"])? mb_strtoupper($templateData["RATING"]["USER_REACTION"]) : 'LIKE');
 
 						?><span id="bx-ilike-button-<?=htmlspecialcharsbx($voteId)?>" class="feed-inform-ilike feed-new-like"><?
 							?><span class="bx-ilike-left-wrap<?=(isset($templateData["RATING"]) && isset($templateData["RATING"]["USER_HAS_VOTED"]) && $templateData["RATING"]["USER_HAS_VOTED"] == "Y" ? ' bx-you-like-button' : '')?>"><a href="#like" class="bx-ilike-text"><?=\CRatingsComponentsMain::getRatingLikeMessage($emotion)?></a></span><?
@@ -251,7 +258,9 @@ if ($arParams["ENABLE_MENU_TOOLBAR"])
 								'READ_ONLY' => !$can["EDIT"],
 								'ENTITY_ID' => $taskData["ID"],
 								'ENTITY_ROUTE' => 'task',
-								'PATH_TO_GROUP' => $arParams['PATH_TO_GROUP']
+								'PATH_TO_GROUP' => $arParams['PATH_TO_GROUP'],
+								'GROUP_ID' => (array_key_exists('GROUP_ID', $taskData)) ? $taskData['GROUP_ID'] : 0,
+								'ROLE_KEY' => \Bitrix\Tasks\Access\Role\RoleDictionary::ROLE_AUDITOR
 							),
 							null,
 							array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -333,6 +342,7 @@ if ($arParams["ENABLE_MENU_TOOLBAR"])
 				"TIMER" => $templateData["TIMER"],
 				"PUBLIC_MODE" => $arParams["PUBLIC_MODE"],
 				"REDIRECT_TO_LIST_ON_DELETE" => $arParams['REDIRECT_TO_LIST_ON_DELETE'],
+				"TASK_LIMIT_EXCEEDED" => $taskLimitExceeded,
 			),
 			null,
 			array("HIDE_ICONS" => "Y")
@@ -693,6 +703,7 @@ $APPLICATION->IncludeComponent(
 			"TIMER" => $templateData["TIMER"]
 		),
 		"SHOW_COPY_URL_LINK" => $arParams['SHOW_COPY_URL_LINK'],
+		"TASK_LIMIT_EXCEEDED" => $taskLimitExceeded,
 	),
 	null,
 	array("HIDE_ICONS" => "Y")

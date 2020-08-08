@@ -45,7 +45,7 @@ $arParams['PATH_TO_CONTACT_EDIT'] = CrmCheckPath('PATH_TO_CONTACT_EDIT', $arPara
 $arParams['PATH_TO_USER_PROFILE'] = CrmCheckPath('PATH_TO_USER_PROFILE', $arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
 $arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);
 $arParams['ELEMENT_ID'] = isset($arParams['ELEMENT_ID']) ? (int)$arParams['ELEMENT_ID'] : 0;
-$arParams['REDIRECT_AFTER_SAVE'] = (!isset($arParams['REDIRECT_AFTER_SAVE']) || strtoupper($arParams['REDIRECT_AFTER_SAVE']) === 'Y') ? 'Y' : 'N';
+$arParams['REDIRECT_AFTER_SAVE'] = (!isset($arParams['REDIRECT_AFTER_SAVE']) || mb_strtoupper($arParams['REDIRECT_AFTER_SAVE']) === 'Y') ? 'Y' : 'N';
 
 $isNew = $arParams['ELEMENT_ID'] <= 0;
 $isEditMode = false;
@@ -446,7 +446,7 @@ else
 			if(isset($_POST['COMMENTS']))
 			{
 				$comments = trim($_POST['COMMENTS']);
-				if($comments !== '' && strpos($comments, '<') !== false)
+				if($comments !== '' && mb_strpos($comments, '<') !== false)
 				{
 					$comments = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($comments);
 				}
@@ -1464,10 +1464,10 @@ if (IsModuleInstalled('bizproc') && CBPRuntime::isFeatureEnabled())
 				'id' => 'BP_STATE_NAME_'.$bizProcIndex,
 				'name' => GetMessage('CRM_FIELD_BP_STATE_NAME'),
 				'type' => 'label',
-				'value' => strlen($arDocumentState['STATE_TITLE']) > 0 ? $arDocumentState['STATE_TITLE'] : $arDocumentState['STATE_NAME']
+				'value' => $arDocumentState['STATE_TITLE'] <> '' ? $arDocumentState['STATE_TITLE'] : $arDocumentState['STATE_NAME']
 			);
 		}
-		if (strlen($arDocumentState['ID']) <= 0)
+		if ($arDocumentState['ID'] == '')
 		{
 			ob_start();
 			CBPDocument::StartWorkflowParametersShow(

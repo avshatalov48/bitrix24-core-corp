@@ -103,7 +103,7 @@ class FolderListOptions
 		$possibleColumnForSorting = $this->getPossibleColumnForSorting();
 
 		$byColumn = key($sorting);
-		if(!isset($possibleColumnForSorting[$byColumn]) || (strtolower($sorting[$byColumn]) !== 'desc' && strtolower($sorting[$byColumn]) !== 'asc'))
+		if(!isset($possibleColumnForSorting[$byColumn]) || (mb_strtolower($sorting[$byColumn]) !== 'desc' && mb_strtolower($sorting[$byColumn]) !== 'asc'))
 		{
 			$sorting = array();
 		}
@@ -118,7 +118,7 @@ class FolderListOptions
 
 		if(isset($possibleColumnForSorting[$byColumn]['ALIAS']))
 		{
-			$sortingColumns[$possibleColumnForSorting[$byColumn]['ALIAS']] = strtolower($order[$byColumn]) === 'asc' ? SORT_ASC : SORT_DESC;
+			$sortingColumns[$possibleColumnForSorting[$byColumn]['ALIAS']] = mb_strtolower($order[$byColumn]) === 'asc' ? SORT_ASC : SORT_DESC;
 		}
 
 		if($byColumn !== 'NAME')
@@ -247,7 +247,7 @@ class FolderListOptions
 	 */
 	public function storeViewMode($mode)
 	{
-		$mode = strtolower($mode);
+		$mode = mb_strtolower($mode);
 		if($mode !== self::VIEW_MODE_GRID && $mode !== self::VIEW_MODE_TILE)
 		{
 			$mode = self::VIEW_MODE_GRID;
@@ -267,7 +267,7 @@ class FolderListOptions
 	 */
 	public function storeSortMode($mode)
 	{
-		$mode = strtolower($mode);
+		$mode = mb_strtolower($mode);
 		if($mode !== self::SORT_MODE_ORDINARY && $mode !== self::SORT_MODE_MIX)
 		{
 			$mode = self::SORT_MODE_ORDINARY;
@@ -282,7 +282,7 @@ class FolderListOptions
 
 	public function storeViewSize($size)
 	{
-		$size = strtolower($size);
+		$size = mb_strtolower($size);
 		if($size !== self::VIEW_TILE_SIZE_M && $size !== self::VIEW_TILE_SIZE_XL)
 		{
 			$size = self::VIEW_TILE_SIZE_M;

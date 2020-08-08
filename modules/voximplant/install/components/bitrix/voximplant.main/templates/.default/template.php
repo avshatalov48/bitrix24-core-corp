@@ -22,6 +22,7 @@ function getBalance($amount)
 
 	return $str;
 }
+$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 ?>
 
 <div class="tel-title"></div>
@@ -125,22 +126,15 @@ function getBalance($amount)
 		</div>
 		<?if ($arResult['RECORD_LIMIT']['ENABLE'] && CModule::IncludeModule('bitrix24')):?>
 		<?
-			CBitrix24::initLicenseInfoPopupJS();
 			$arResult["TRIAL_TEXT"] = CVoxImplantMain::GetTrialText();
 		?>
 		<div class="tel-history-block">
 			<div class="tel-history-title"><?=GetMessage("VI_LOCK_RECORD_TITLE")?></div>
       		<?=GetMessage("VI_LOCK_RECORD_TEXT", Array("#LIMIT#" => '<b>'.$arResult['RECORD_LIMIT']['LIMIT'].'</b>', '#REMAINING#' => '<b>'.$arResult['RECORD_LIMIT']['REMAINING'].'</b>'))?>
 			<div class="tel-history-more">
-				<span class="tel-history-more-link" onclick="viOpenTrialPopup('vi_record')"><?=GetMessage("VI_LOCK_RECORD_LINK")?></span>
+				<span class="tel-history-more-link" onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_records')"><?=GetMessage("VI_LOCK_RECORD_LINK")?></span>
 			</div>
 		</div>
-		<script type="text/javascript">
-			function viOpenTrialPopup(dialogId)
-			{
-				B24.licenseInfoPopup.show(dialogId, "<?=CUtil::JSEscape($arResult["TRIAL_TEXT"]['TITLE'])?>", "<?=CUtil::JSEscape($arResult["TRIAL_TEXT"]['TEXT'])?>");
-			}
-		</script>
 		<?endif?>
 	</div>
 <? endif ?>

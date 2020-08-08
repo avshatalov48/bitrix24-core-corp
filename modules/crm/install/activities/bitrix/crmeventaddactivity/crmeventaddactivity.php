@@ -54,11 +54,11 @@ class CBPCrmEventAddActivity
 	{
 		$errors = [];
 
-		if (!array_key_exists('EventType', $arTestProperties) || strlen($arTestProperties['EventType']) <= 0)
+		if (!array_key_exists('EventType', $arTestProperties) || $arTestProperties['EventType'] == '')
 		{
 			$errors[] = array('code' => 'NotExist', 'parameter' => 'EventType', 'message' => GetMessage('BPEAA_EMPTY_TYPE'));
 		}
-		if (!array_key_exists('EventText', $arTestProperties) || strlen($arTestProperties['EventText']) <= 0)
+		if (!array_key_exists('EventText', $arTestProperties) || $arTestProperties['EventText'] == '')
 		{
 			$errors[] = array('code' => 'NotExist', 'EventText' => 'MessageText', 'message' => GetMessage('BPEAA_EMPTY_MESSAGE'));
 		}

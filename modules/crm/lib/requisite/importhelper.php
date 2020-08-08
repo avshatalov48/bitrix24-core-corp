@@ -242,7 +242,8 @@ class ImportHelper
 			'REGION',
 			'PROVINCE',
 			'COUNTRY',
-			'COUNTRY_CODE'
+			'COUNTRY_CODE',
+			'LOC_ADDR_ID'
 		);
 		$rqAddrTypes = array_keys($rqAddrTypeInfos);
 		if (is_array($fields)
@@ -425,7 +426,7 @@ class ImportHelper
 				foreach (EntityRequisite::getBasicExportFieldsInfo() as $fieldName => $fieldInfo)
 				{
 					$fieldTitle = (is_array($fieldInfo) && isset($fieldInfo['title'])) ? $fieldInfo['title'] : '';
-					if (!is_string($fieldTitle) || strlen($fieldTitle) <= 0)
+					if (!is_string($fieldTitle) || $fieldTitle == '')
 						$fieldTitle = $fieldName;
 					$fieldType = (is_array($fieldInfo) && isset($fieldInfo['type'])) ? $fieldInfo['type'] : 'string';
 					$requisiteHeaders[] = array(
@@ -458,7 +459,7 @@ class ImportHelper
 									$rqFieldTitleMap[$fieldName][$countryId] : '';
 							}
 
-							if (!is_string($fieldTitle) || strlen($fieldTitle) <= 0)
+							if (!is_string($fieldTitle) || $fieldTitle == '')
 								$fieldTitle = $fieldName;
 
 							$fieldType = 'string';
@@ -485,7 +486,7 @@ class ImportHelper
 							if ($fieldName === EntityRequisite::ADDRESS)
 							{
 								$addressTypeLabel = GetMessage('CRM_REQUISITE_EXPORT_ADDRESS_TYPE_LABEL');
-								if (!is_string($addressTypeLabel) || strlen($addressTypeLabel) <= 0)
+								if (!is_string($addressTypeLabel) || $addressTypeLabel == '')
 									$addressTypeLabel = $fieldName.'_TYPE';
 								if ($addressLabels === null)
 								{
@@ -504,7 +505,9 @@ class ImportHelper
 								foreach ($addressFields as $addrFieldName)
 								{
 									if ($addrFieldName === 'COUNTRY_CODE')
+									{
 										continue;
+									}
 
 									$requisiteHeaders[] = array(
 										'id' => $rqPrefix."{$fieldName}_{$addrFieldName}|$countryId",
@@ -535,7 +538,7 @@ class ImportHelper
 				foreach (EntityBankDetail::getBasicExportFieldsInfo() as $fieldName => $fieldInfo)
 				{
 					$fieldTitle = (is_array($fieldInfo) && isset($fieldInfo['title'])) ? $fieldInfo['title'] : '';
-					if (!is_string($fieldTitle) || strlen($fieldTitle) <= 0)
+					if (!is_string($fieldTitle) || $fieldTitle == '')
 						$fieldTitle = $fieldName;
 					$fieldType = (is_array($fieldInfo) && isset($fieldInfo['type'])) ? $fieldInfo['type'] : 'string';
 					$requisiteHeaders[] = array(
@@ -559,7 +562,7 @@ class ImportHelper
 					{
 						$fieldTitle = isset($bankDetailRqFieldTitleMap[$fieldName][$countryId]) ?
 							$bankDetailRqFieldTitleMap[$fieldName][$countryId] : '';
-						if (!is_string($fieldTitle) || strlen($fieldTitle) <= 0)
+						if (!is_string($fieldTitle) || $fieldTitle == '')
 							$fieldTitle = $fieldName;
 						$requisiteHeaders[] = array(
 							'id' => $bdPrefix."$fieldName|$countryId",
@@ -688,7 +691,7 @@ class ImportHelper
 		}
 		unset($res, $row);
 
-		if (!is_string($presetName) || strlen($presetName) <= 0 || $countryId <= 0)
+		if (!is_string($presetName) || $presetName == '' || $countryId <= 0)
 			return $result;
 
 		$allowedCountries = EntityRequisite::getAllowedRqFieldCountries();
@@ -841,8 +844,8 @@ class ImportHelper
 		$this->headerById = array();
 		foreach ($headerInfo as $header)
 		{
-			if (is_array($header) && isset($header['id']) && is_string($header['id']) && strlen($header['id']) > 0
-				&& isset($header['group']) && is_string($header['group']) && strlen($header['group']) > 0
+			if (is_array($header) && isset($header['id']) && is_string($header['id']) && $header['id'] <> ''
+				&& isset($header['group']) && is_string($header['group']) && $header['group'] <> ''
 				&& isset($header['countryId']) && $header['countryId'] >= 0 && isset($headerIndex[$header['id']]))
 			{
 				$this->headerById[$header['id']] = $header;
@@ -910,7 +913,7 @@ class ImportHelper
 		$this->rowNumber++;
 
 		$entityKeyValue = $this->parseEntityKey($row);
-		if (!$this->searchNextEntityMode && $this->rowNumber === 1 && strlen($entityKeyValue) <= 0)
+		if (!$this->searchNextEntityMode && $this->rowNumber === 1 && $entityKeyValue == '')
 		{
 			$result->addError(
 				new Main\Error(Loc::getMessage('CRM_RQ_IMP_HLPR_ERR_EMPTY_KEY_FIELDS'), self::ERR_EMPTY_KEY_FIELDS)
@@ -919,7 +922,7 @@ class ImportHelper
 			return $result;
 		}
 
-		if (strlen($entityKeyValue) > 0 && $this->entityKeyValue !== $entityKeyValue)
+		if ($entityKeyValue <> '' && $this->entityKeyValue !== $entityKeyValue)
 		{
 			if ($this->rowNumber === 1)
 			{
@@ -1032,7 +1035,7 @@ class ImportHelper
 					{
 						if (isset($requisiteFields[$fieldName])
 							&& ((is_string($requisiteFields[$fieldName])
-									&& strlen($requisiteFields[$fieldName]) > 0)
+									&& $requisiteFields[$fieldName] <> '')
 								|| !empty($requisiteFields[$fieldName])))
 						{
 							if ($rqDupParams === null)
@@ -1061,7 +1064,7 @@ class ImportHelper
 							{
 								if (isset($bankDetailFields[$fieldName])
 									&& ((is_string($bankDetailFields[$fieldName])
-											&& strlen($bankDetailFields[$fieldName]) > 0)
+											&& $bankDetailFields[$fieldName] <> '')
 										|| !empty($bankDetailFields[$fieldName])))
 								{
 									if ($rqDupParams === null)
@@ -1380,14 +1383,14 @@ class ImportHelper
 							if (!array_key_exists($fieldName, $exRequisiteFields)
 								|| $exRequisiteFields[$fieldName] === null
 								|| (is_string($exRequisiteFields[$fieldName])
-									&& strlen($exRequisiteFields[$fieldName]) <= 0)
+									&& $exRequisiteFields[$fieldName] == '')
 								|| (!is_int($exRequisiteFields[$fieldName])
 									&& empty($exRequisiteFields[$fieldName])))
 							{
 								if (isset($requisiteFields[$fieldName])
 									&& (is_int($requisiteFields[$fieldName])
 										|| (is_string($requisiteFields[$fieldName]
-											&& strlen(is_string($requisiteFields[$fieldName]) > 0)))
+											&& mb_strlen(is_string($requisiteFields[$fieldName]) > 0)))
 										|| !empty($requisiteFields[$fieldName])))
 								{
 									$requisiteFieldsToUpdate[$fieldName] = $requisiteFields[$fieldName];
@@ -1448,7 +1451,8 @@ class ImportHelper
 						'REGION',
 						'PROVINCE',
 						'COUNTRY',
-						'COUNTRY_CODE'
+						'COUNTRY_CODE',
+						'LOC_ADDR_ID'
 					);
 					$rqAddrTypes = array_keys($rqAddrTypeInfos);
 					if (is_array($requisiteFields)
@@ -1612,14 +1616,14 @@ class ImportHelper
 											if (!array_key_exists($fieldName, $exBankDetailFields)
 												|| $exBankDetailFields[$fieldName] === null
 												|| (is_string($exBankDetailFields[$fieldName])
-													&& strlen($exBankDetailFields[$fieldName]) <= 0)
+													&& $exBankDetailFields[$fieldName] == '')
 												|| (!is_int($exBankDetailFields[$fieldName])
 													&& empty($exBankDetailFields[$fieldName])))
 											{
 												if (isset($bankDetailFields[$fieldName])
 													&& (is_int($bankDetailFields[$fieldName])
 														|| (is_string($bankDetailFields[$fieldName]
-															&& strlen(is_string($bankDetailFields[$fieldName]) > 0)))
+															&& mb_strlen(is_string($bankDetailFields[$fieldName]) > 0)))
 														|| !empty($bankDetailFields[$fieldName])))
 												{
 													$bankdetailFieldsToUpdate[$fieldName] =
@@ -1884,7 +1888,7 @@ class ImportHelper
 			$requisiteKey = $res[0];
 			unset($res);
 
-			if ($context['rowNumber'] === 1 && strlen($requisiteKey) <= 0)
+			if ($context['rowNumber'] === 1 && $requisiteKey == '')
 			{
 				$result->addError(
 					new Main\Error(
@@ -1912,7 +1916,7 @@ class ImportHelper
 				}
 				$requisiteFields = $res->getData();
 
-				if (!isset($requisiteFields['NAME']) || strlen($requisiteFields['NAME']) <= 0)
+				if (!isset($requisiteFields['NAME']) || $requisiteFields['NAME'] == '')
 				{
 					$result->addError(
 						new Main\Error(
@@ -1993,7 +1997,7 @@ class ImportHelper
 			$bankDetailKey = $res[0];
 			unset($res);
 
-			if (strlen($bankDetailKey) <= 0)
+			if ($bankDetailKey == '')
 			{
 				$result->addError(
 					new Main\Error(
@@ -2013,7 +2017,7 @@ class ImportHelper
 
 			$bankDetailFields = $res->getData();
 
-			if (!isset($bankDetailFields['NAME']) || strlen($bankDetailFields['NAME']) <= 0)
+			if (!isset($bankDetailFields['NAME']) || $bankDetailFields['NAME'] == '')
 			{
 				$result->addError(
 					new Main\Error(
@@ -2049,7 +2053,7 @@ class ImportHelper
 				foreach (array_keys($headerMap) as $headerId)
 				{
 					$index = $this->headerIndex[$headerId];
-					if (isset($row[$index]) && is_string($row[$index]) && strlen($row[$index]) > 0
+					if (isset($row[$index]) && is_string($row[$index]) && $row[$index] <> ''
 						&& !isset($result['byCountry'][$groupName][$countryId]))
 					{
 						if (!isset($result['byGroup'][$groupName]))
@@ -2077,7 +2081,7 @@ class ImportHelper
 			&& isset($row[$this->headerIndex[$this->rqFieldPrefix.'PRESET_COUNTRY_ID']]))
 		{
 			$value = $row[$this->headerIndex[$this->rqFieldPrefix.'PRESET_COUNTRY_ID']];
-			if (is_string($value) && strlen($value) > 0)
+			if (is_string($value) && $value <> '')
 			{
 				$value = (int)$value;
 				if ($value > 0 && in_array($value, $allowedCountries, true))
@@ -2096,7 +2100,7 @@ class ImportHelper
 				if (is_string($value))
 				{
 					$value = trim($value);
-					if (strlen($value) > 0)
+					if ($value <> '')
 					{
 						$value = array_search($value, $countryList, true);
 						if ($value !== false && in_array($value, $allowedCountries, true))
@@ -2115,7 +2119,7 @@ class ImportHelper
 					&& isset($row[$this->headerIndex[$this->rqFieldPrefix.'PRESET_ID']]))
 				{
 					$value = $row[$this->headerIndex[$this->rqFieldPrefix.'PRESET_ID']];
-					if (is_string($value) && strlen($value) > 0)
+					if (is_string($value) && $value <> '')
 					{
 						$value = (int)trim($value);
 						if ($value < 0)
@@ -2133,10 +2137,10 @@ class ImportHelper
 					$value = $row[$this->headerIndex[$this->rqFieldPrefix.'PRESET_NAME']];
 					if (is_string($value))
 					{
-						if (strlen($value) > 0)
+						if ($value <> '')
 						{
-							if (strlen($value) > 255)
-								$value = substr($value, 0, 255);
+							if (mb_strlen($value) > 255)
+								$value = mb_substr($value, 0, 255);
 							$this->updatePresetCacheByName($value, $countryId);
 							if (is_array(self::$presetCacheByName[$value][$countryId])
 								&& count(self::$presetCacheByName[$value][$countryId]) > 0)
@@ -2240,12 +2244,12 @@ class ImportHelper
 			$countryId = 0;
 		if (!is_string($presetName))
 			$presetName = strval($presetName);
-		if (strlen($presetName) > 255)
-			$presetName = substr($presetName, 0, 255);
+		if (mb_strlen($presetName) > 255)
+			$presetName = mb_substr($presetName, 0, 255);
 
 		if (!isset(self::$presetCacheByName[$presetName][$countryId]))
 		{
-			if (strlen($presetName) > 0)
+			if ($presetName <> '')
 			{
 				$preset = EntityPreset::getSingleInstance();
 				$presetList = array();
@@ -2361,7 +2365,7 @@ class ImportHelper
 				$fieldType = $this->headerById[$headerId]['fieldType'];
 				$isUF = $this->headerById[$headerId]['isUF'];
 			}
-			if (!is_string($fieldName) || strlen($fieldName) <= 0
+			if (!is_string($fieldName) || $fieldName == ''
 				|| ($fieldCountryId > 0 && !isset($presetInfo['FIELD_MAP'][$fieldName])))
 			{
 				continue;
@@ -2438,7 +2442,7 @@ class ImportHelper
 			{
 				$fieldName = $this->headerById[$headerId]['field'];
 			}
-			if (!is_string($fieldName) || strlen($fieldName) <= 0)
+			if (!is_string($fieldName) || $fieldName == '')
 			{
 				continue;
 			}
@@ -2518,7 +2522,7 @@ class ImportHelper
 				$fieldName = $this->headerById[$headerId]['field'];
 				$fieldType = $this->headerById[$headerId]['fieldType'];
 			}
-			if (!is_string($fieldName) || strlen($fieldName) <= 0)
+			if (!is_string($fieldName) || $fieldName == '')
 			{
 				continue;
 			}

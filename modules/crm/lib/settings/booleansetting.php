@@ -28,6 +28,6 @@ class BooleanSetting
 
 	public function get()
 	{
-		return strtoupper(Main\Config\Option::get('crm', $this->name, $this->default ? 'Y' : 'N', '')) === 'Y';
+		return mb_strtoupper(Main\Config\Option::get('crm', $this->name, $this->default? 'Y' : 'N', '')) === 'Y';
 	}
 }

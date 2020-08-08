@@ -190,7 +190,7 @@ class Manager
 				$path = \CFile::getFileSRC($file);
 			}
 
-			if (substr($path, 0, 1) == '/')
+			if (mb_substr($path, 0, 1) == '/')
 			{
 				$path = ResourceManager::getServerAddress() . $path;
 			}

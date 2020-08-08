@@ -6,7 +6,7 @@ define("NOT_CHECK_PERMISSIONS", true);
 define("BX_PUBLIC_TOOLS", true);
 
 $site_id = isset($_REQUEST["site"]) && is_string($_REQUEST["site"]) ? trim($_REQUEST["site"]) : "";
-$site_id = substr(preg_replace("/[^a-z0-9_]/i", "", $site_id), 0, 2);
+$site_id = mb_substr(preg_replace("/[^a-z0-9_]/i", "", $site_id), 0, 2);
 global $APPLICATION, $USER, $DB;
 define("SITE_ID", $site_id);
 define("SITE_TEMPLATE_ID", "mobile_app");
@@ -17,7 +17,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/bx_root.php");
 $action = isset($_REQUEST["action"]) && is_string($_REQUEST["action"]) ? trim($_REQUEST["action"]) : "";
 
 $lng = isset($_REQUEST["lang"]) && is_string($_REQUEST["lang"]) ? trim($_REQUEST["lang"]) : "";
-$lng = substr(preg_replace("/[^a-z0-9_]/i", "", $lng), 0, 2);
+$lng = mb_substr(preg_replace("/[^a-z0-9_]/i", "", $lng), 0, 2);
 
 $ls = isset($_REQUEST["ls"]) && is_string($_REQUEST["ls"]) ? trim($_REQUEST["ls"]) : "";
 $ls_arr = isset($_REQUEST["ls_arr"])? $_REQUEST["ls_arr"]: "";
@@ -70,7 +70,7 @@ if(CModule::IncludeModule("socialnetwork"))
 		if ($arLog = CSocNetLog::GetByID($log_id))
 		{
 			$log_entity_type = $arLog["ENTITY_TYPE"];
-			$arListParams = (strpos($log_entity_type, "CRM") === 0 && IsModuleInstalled("crm")
+			$arListParams = (mb_strpos($log_entity_type, "CRM") === 0 && IsModuleInstalled("crm")
 				? array("IS_CRM" => "Y", "CHECK_CRM_RIGHTS" => "Y")
 				: array("CHECK_RIGHTS" => "Y", "USE_SUBSCRIBE" => "N")
 			);
@@ -123,7 +123,7 @@ if(CModule::IncludeModule("socialnetwork"))
 			elseif (
 				$feature
 				&& array_key_exists("OPERATION_ADD", $arCommentEvent)
-				&& strlen($arCommentEvent["OPERATION_ADD"]) > 0
+				&& $arCommentEvent["OPERATION_ADD"] <> ''
 			)
 			{
 				$bCanAddComments = CSocNetFeaturesPerms::CanPerformOperation(
@@ -225,10 +225,10 @@ if(CModule::IncludeModule("socialnetwork"))
 
 					if (!isset($arResult["strMessage"]))
 					{
-						$pos = strpos($arFile["name"], '?');
+						$pos = mb_strpos($arFile["name"], '?');
 						if ($pos !== false)
 						{
-							$arFile["name"] = substr($arFile["name"], 0, $pos);
+							$arFile["name"] = mb_substr($arFile["name"], 0, $pos);
 						}
 
 						$res = ''.CFile::CheckImageFile(
@@ -293,7 +293,7 @@ if(CModule::IncludeModule("socialnetwork"))
 
 				if (!isset($arResult["strMessage"]))
 				{
-					if (strlen($comment_text) <= 0)
+					if ($comment_text == '')
 					{
 						$arResult["strMessage"] = GetMessage("SONET_LOG_COMMENT_EMPTY");
 					}
@@ -411,7 +411,7 @@ if(CModule::IncludeModule("socialnetwork"))
 							$arResult["arCommentFormatted"]["SOURCE_ID"] = ($arComment["SOURCE_ID"] > 0 ? $arComment["SOURCE_ID"] : $arComment["ID"]);
 
 							if (
-								strlen($arComment["RATING_TYPE_ID"]) > 0
+								$arComment["RATING_TYPE_ID"] <> ''
 								&& intval($arComment["RATING_ENTITY_ID"]) > 0
 							)
 							{
@@ -531,7 +531,7 @@ if(CModule::IncludeModule("socialnetwork"))
 								// parse inline disk object ids
 								if (preg_match_all("#\\[disk file id=(n\\d+)\\]#is".BX_UTF_PCRE_MODIFIER, $arComment["~TEXT_MESSAGE"], $matches))
 								{
-									$inlineDiskObjectIdList = array_map(function($a) { return intval(substr($a, 1)); }, $matches[1]);
+									$inlineDiskObjectIdList = array_map(function($a) { return intval(mb_substr($a, 1)); }, $matches[1]);
 								}
 
 								// parse inline disk attached object ids
@@ -661,7 +661,7 @@ if(CModule::IncludeModule("socialnetwork"))
 					}
 					elseif (
 						isset($comment["MESSAGE"])
-						&& strlen($comment["MESSAGE"]) > 0
+						&& $comment["MESSAGE"] <> ''
 					)
 					{
 						$arResult["strMessage"] = $comment["MESSAGE"];
@@ -729,7 +729,7 @@ if(CModule::IncludeModule("socialnetwork"))
 			{
 				$log_entity_type = $arLog["ENTITY_TYPE"];
 				$arListParams = (
-					strpos($log_entity_type, "CRM") === 0
+				mb_strpos($log_entity_type, "CRM") === 0
 					&& IsModuleInstalled("crm")
 						? array("IS_CRM" => "Y", "CHECK_CRM_RIGHTS" => "Y")
 						: array("CHECK_RIGHTS" => "Y", "USE_SUBSCRIBE" => "N")
@@ -787,7 +787,7 @@ if(CModule::IncludeModule("socialnetwork"))
 		{
 			$log_entity_type = $arLog["ENTITY_TYPE"];
 			$arListParams = (
-				strpos($log_entity_type, "CRM") === 0
+			mb_strpos($log_entity_type, "CRM") === 0
 				&& IsModuleInstalled("crm")
 					? array("IS_CRM" => "Y", "CHECK_CRM_RIGHTS" => "Y")
 					: array("CHECK_RIGHTS" => "Y", "USE_SUBSCRIBE" => "N")
@@ -993,7 +993,7 @@ if(CModule::IncludeModule("socialnetwork"))
 			$arRatingComments = array();
 			if(
 				!empty($arCommentID)
-				&& strlen($rating_entity_type) > 0
+				&& $rating_entity_type <> ''
 			)
 			{
 				$arRatingComments = CRatings::GetRatingVoteResult($rating_entity_type, $arCommentID);
@@ -1020,7 +1020,7 @@ if(CModule::IncludeModule("socialnetwork"))
 					$arResult["arComments"][$key]["EVENT"]["RATING_TOTAL_VOTES"] = 0;
 				}
 
-				if (strlen($rating_entity_type) > 0)
+				if ($rating_entity_type <> '')
 				{
 					$arResult["arComments"][$key]["EVENT_FORMATTED"]["ALLOW_VOTE"] = CRatings::CheckAllowVote(
 						array(
@@ -1121,6 +1121,7 @@ if(CModule::IncludeModule("socialnetwork"))
 						));
 						$arResult["arComments"][$key]['EVENT_FORMATTED']['MESSAGE']  = $handler->getText();
 						$arResult["arComments"][$key]["AUX"] = $handler->getType();
+						$arResult["arComments"][$key]["CAN_DELETE"] = ($handler->canDelete() ? 'Y' : 'N');
 					}
 				}
 			}
@@ -1271,7 +1272,7 @@ if(CModule::IncludeModule("socialnetwork"))
 					),
 					"VISIBLE_RECORDS_COUNT" => $count,
 
-					"VIEW_URL" => str_replace("#log_id#", $arLog["ID"], $arParams["PATH_TO_LOG_ENTRY"]).(strpos($arParams["PATH_TO_LOG_ENTRY"], "?") === false ? "?" : "&")."empty_get_comments=Y",
+					"VIEW_URL" => str_replace("#log_id#", $arLog["ID"], $arParams["PATH_TO_LOG_ENTRY"]).(mb_strpos($arParams["PATH_TO_LOG_ENTRY"], "?") === false ? "?" : "&")."empty_get_comments=Y",
 					"EDIT_URL" => SITE_DIR."mobile/ajax.php?".
 						"action=get_comment_data&mobile_action=get_log_comment_data&".
 						"log_id=".($arLog["ID"])."&".

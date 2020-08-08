@@ -69,3 +69,13 @@ DROP TABLE IF EXISTS b_tasks_effective;
 DROP TABLE IF EXISTS b_tasks_search_index;
 
 DROP TABLE IF EXISTS b_tasks_sprint2;
+
+DROP TABLE IF EXISTS b_tasks_user_option;
+
+DROP TABLE IF EXISTS b_tasks_role;
+
+DROP TABLE IF EXISTS b_tasks_role_relation;
+
+DROP TABLE IF EXISTS b_tasks_permission;
+
+DROP TABLE IF EXISTS b_tasks_template_permission;

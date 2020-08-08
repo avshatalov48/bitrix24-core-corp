@@ -32,7 +32,7 @@ class EmailLinkTrigger extends BaseTrigger
 			$inputUrl = (string) $this->getInputData('URL');
 			$triggerUrl = (string) $trigger['APPLY_RULES']['url'];
 
-			return (strpos($inputUrl, $triggerUrl) === 0);
+			return (mb_strpos($inputUrl, $triggerUrl) === 0);
 		}
 		return true;
 	}

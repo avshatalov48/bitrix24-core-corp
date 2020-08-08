@@ -1,0 +1,79 @@
+.crm-rq-popup-wrapper {
+	margin-top: -8px;
+}
+
+.crm-rq-popup-items-list {}
+
+.crm-rq-popup-item {
+	padding: 12px 20px 13px;
+	border-bottom: 1px solid #f2f2f2;
+}
+
+.crm-rq-popup-items-list .crm-rq-popup-item:last-child {
+	border-bottom: none;
+}
+
+.crm-rq-popup-item-name {
+	font: 15px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #424956;
+	margin-bottom: 6px;
+}
+
+.crm-rq-popup-item-desc {
+	font: 14px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #a1a5ac;
+}
+
+.crm-rq-popup-item-helper {
+	font: 300 12px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #535c69;
+}
+
+.crm-rq-popup-item-add-new {
+	padding: 0;
+}
+
+.crm-rq-popup-item-add-new-btn {
+	border: none;
+	outline: 0;
+	padding: 14px 20px;
+	background-color: #effaff;
+	display: block;
+	width: 100%;
+	text-align: left;
+	cursor: pointer;
+}
+
+.crm-rq-popup-item-add-new-btn-text {
+	font: 14px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #a1a5ac;
+	margin-left: 10px;
+}
+
+.crm-rq-add-rq {
+	cursor: pointer;
+	vertical-align: middle;
+	font: 13px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #80868e;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+	-webkit-box-pack: start;
+	-ms-flex-pack: start;
+	justify-content: flex-start;
+}
+
+.crm-rq-add-rq span { margin-right: 5px; }
+
+.ui-btn.crm-rq-btn {
+	--ui-btn-height: 16px;
+	--ui-btn-icon: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8'%3F%3E%3Csvg width='17px' height='17px' viewBox='0 0 17 17' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'%3E%3Cpath d='M8.66666667,4.66666667 L8.66666667,7.33266667 L11.3333333,7.33333333 L11.3333333,8.66666667 L8.66666667,8.66666667 L8.66666667,11.3333333 L7.33333333,11.3333333 L7.33266667,8.66666667 L4.66666667,8.66666667 L4.66666667,7.33333333 L7.33266667,7.33266667 L7.33333333,4.66666667 L8.66666667,4.66666667 Z' fill='%23fff'%3E%3C/path%3E%3C/svg%3E");
+}
+
+.ui-dropdown-container.rq-dropdown-container
+{
+	margin-bottom: 0;
+}

@@ -16,13 +16,13 @@ $aTabs = array(
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
-if(strlen($_POST['Update'])>0 && check_bitrix_sessid())
+if($_POST['Update'] <> '' && check_bitrix_sessid())
 {
-	if (strlen($_POST['PUBLIC_URL']) > 0 && strlen($_POST['PUBLIC_URL']) < 12)
+	if ($_POST['PUBLIC_URL'] <> '' && mb_strlen($_POST['PUBLIC_URL']) < 12)
 	{
 		$errorMessage = GetMessage('IMBOT_ACCOUNT_ERROR_PUBLIC');
 	}
-	else if(strlen($_POST['Update'])>0)
+	else if($_POST['Update'] <> '')
 	{
 		COption::SetOptionString("imbot", "portal_url", $_POST['PUBLIC_URL']);
 		COption::SetOptionString("imbot", "debug", isset($_POST['DEBUG_MODE']));
@@ -103,7 +103,7 @@ if(strlen($_POST['Update'])>0 && check_bitrix_sessid())
 				"TYPE" => "ERROR",
 				"HTML" => true));
 		}
-		elseif(strlen($Update)>0 && strlen($_REQUEST["back_url_settings"])>0)
+		elseif($Update <> '' && $_REQUEST["back_url_settings"] <> '')
 		{
 			LocalRedirect($_REQUEST["back_url_settings"]);
 		}

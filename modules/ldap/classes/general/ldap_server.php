@@ -34,7 +34,7 @@ class CLdapServer
 			$val = $arFilter[$filter_keys[$i]];
 			$key=$filter_keys[$i];
 			$res = CLdapUtil::MkOperationFilter($key);
-			$key = strtoupper($res["FIELD"]);
+			$key = mb_strtoupper($res["FIELD"]);
 			$cOperationType = $res["OPERATION"];
 			switch($key)
 			{
@@ -83,7 +83,7 @@ class CLdapServer
 
 		for($i=0, $ssCount=count($arSqlSearch); $i<$ssCount; $i++)
 		{
-			if(strlen($arSqlSearch[$i])>0)
+			if($arSqlSearch[$i] <> '')
 			{
 				$is_filtered = true;
 				$strSqlSearch .= " AND  (".$arSqlSearch[$i].") ";
@@ -93,13 +93,13 @@ class CLdapServer
 		$arSqlOrder = Array();
 		foreach($arOrder as $by=>$order)
 		{
-			$order = strtolower($order);
+			$order = mb_strtolower($order);
 			if ($order!="asc")
 				$order = "desc".($DB->type=="ORACLE"?" NULLS LAST":"");
 			else
 				$order = "asc".($DB->type=="ORACLE"?" NULLS FIRST":"");
 
-			switch(strtoupper($by))
+			switch(mb_strtoupper($by))
 			{
 				case "ID":
 				case "NAME":
@@ -143,7 +143,7 @@ class CLdapServer
 			else
 				$strSqlOrder .= ",";
 
-			$strSqlOrder .= strtolower($arSqlOrder[$i]);
+			$strSqlOrder .= mb_strtolower($arSqlOrder[$i]);
 		}
 
 		$strSql .= " WHERE 1=1 ".$strSqlSearch.$strSqlOrder;
@@ -160,7 +160,7 @@ class CLdapServer
 	 */
 	public static function GetByID($ID)
 	{
-		return CLdapServer::GetList(Array(), $arFilter=Array("ID"=>IntVal($ID)));
+		return CLdapServer::GetList(Array(), $arFilter=Array("ID"=>intval($ID)));
 	}
 
 	public static function CheckFields($arFields, $ID=false)
@@ -170,35 +170,35 @@ class CLdapServer
 		$strErrors = "";
 		$arMsg = Array();
 
-		if(($ID===false || is_set($arFields, "NAME")) && strlen($arFields["NAME"])<1)
+		if(($ID===false || is_set($arFields, "NAME")) && mb_strlen($arFields["NAME"]) < 1)
 			$arMsg[] = array("id"=>"NAME", "text"=> GetMessage("LDAP_ERR_EMPTY")." ".GetMessage("LDAP_ERR_NAME"));
 			//$strErrors .= GetMessage("LDAP_ERR_NAME").", ";
 
-		if(($ID===false || is_set($arFields, "SERVER")) && strlen($arFields["SERVER"])<1)
+		if(($ID===false || is_set($arFields, "SERVER")) && mb_strlen($arFields["SERVER"]) < 1)
 			$arMsg[] = array("id"=>"SERVER", "text"=> GetMessage("LDAP_ERR_EMPTY")." ".GetMessage("LDAP_ERR_SERVER"));
 			//$strErrors .= GetMessage("LDAP_ERR_SERVER").", ";
 
-		if(($ID===false || is_set($arFields, "PORT")) && strlen($arFields["PORT"])<1)
+		if(($ID===false || is_set($arFields, "PORT")) && mb_strlen($arFields["PORT"]) < 1)
 			$arMsg[] = array("id"=>"PORT", "text"=> GetMessage("LDAP_ERR_EMPTY")." ".GetMessage("LDAP_ERR_PORT"));
 			//$strErrors .= GetMessage("LDAP_ERR_PORT").", ";
 
-		if(($ID===false || is_set($arFields, "BASE_DN")) && strlen($arFields["BASE_DN"])<1)
+		if(($ID===false || is_set($arFields, "BASE_DN")) && mb_strlen($arFields["BASE_DN"]) < 1)
 			//$strErrors .= GetMessage("LDAP_ERR_BASE_DN").", ";
 			$arMsg[] = array("id"=>"BASE_DN", "text"=> GetMessage("LDAP_ERR_EMPTY")." ".GetMessage("LDAP_ERR_BASE_DN"));
 
-		if(($ID===false || is_set($arFields, "GROUP_FILTER")) && strlen($arFields["GROUP_FILTER"])<1)
+		if(($ID===false || is_set($arFields, "GROUP_FILTER")) && mb_strlen($arFields["GROUP_FILTER"]) < 1)
 			//$strErrors .= GetMessage("LDAP_ERR_GROUP_FILT").", ";
 			$arMsg[] = array("id"=>"GROUP_FILTER", "text"=> GetMessage("LDAP_ERR_EMPTY")." ".GetMessage("LDAP_ERR_GROUP_FILT"));
 
-		if(($ID===false || is_set($arFields, "GROUP_ID_ATTR")) && strlen($arFields["GROUP_ID_ATTR"])<1)
+		if(($ID===false || is_set($arFields, "GROUP_ID_ATTR")) && mb_strlen($arFields["GROUP_ID_ATTR"]) < 1)
 			$arMsg[] = array("id"=>"GROUP_ID_ATTR", "text"=> GetMessage("LDAP_ERR_EMPTY")." ".GetMessage("LDAP_ERR_GROUP_ATTR"));
 			//$strErrors .= GetMessage("LDAP_ERR_GROUP_ATTR").", ";
 
-		if(($ID===false || is_set($arFields, "USER_FILTER")) && strlen($arFields["USER_FILTER"])<1)
+		if(($ID===false || is_set($arFields, "USER_FILTER")) && mb_strlen($arFields["USER_FILTER"]) < 1)
 			$arMsg[] = array("id"=>"USER_FILTER", "text"=> GetMessage("LDAP_ERR_EMPTY")." ".GetMessage("LDAP_ERR_USER_FILT"));
 			//$strErrors .= GetMessage("LDAP_ERR_USER_FILT").", ";
 
-		if(($ID===false || is_set($arFields, "USER_ID_ATTR")) && strlen($arFields["USER_ID_ATTR"])<1)
+		if(($ID===false || is_set($arFields, "USER_ID_ATTR")) && mb_strlen($arFields["USER_ID_ATTR"]) < 1)
 			$arMsg[] = array("id"=>"USER_ID_ATTR", "text"=> GetMessage("LDAP_ERR_EMPTY")." ".GetMessage("LDAP_ERR_USER_ATTR"));
 			//$strErrors .= GetMessage("LDAP_ERR_USER_ATTR").", ";
 
@@ -263,8 +263,8 @@ class CLdapServer
 
 	public static function __UpdateAgentPeriod($server_id, $time)
 	{
-		$server_id = IntVal($server_id);
-		$time = IntVal($time);
+		$server_id = intval($server_id);
+		$time = intval($time);
 
 		CAgent::RemoveAgent("CLdapServer::SyncAgent(".$server_id.");", "ldap");
 		if($time>0)
@@ -284,7 +284,7 @@ class CLdapServer
 		global $DB, $APPLICATION;
 		$APPLICATION->ResetException();
 
-		$ID = IntVal($ID);
+		$ID = intval($ID);
 
 		if(is_set($arFields, "ACTIVE") && $arFields["ACTIVE"]!="Y")
 			$arFields["ACTIVE"]="N";
@@ -367,7 +367,7 @@ class CLdapServer
 	public static function Delete($ID)
 	{
 		global $DB;
-		$ID = IntVal($ID);
+		$ID = intval($ID);
 
 		$strSql = "DELETE FROM b_ldap_group WHERE LDAP_SERVER_ID=".$ID;
 		if(!$DB->Query($strSql, true))
@@ -380,39 +380,39 @@ class CLdapServer
 	public static function GetGroupMap($ID)
 	{
 		global $DB, $APPLICATION;
-		$ID = IntVal($ID);
+		$ID = intval($ID);
 		return $DB->Query("SELECT GROUP_ID, LDAP_GROUP_ID FROM b_ldap_group WHERE LDAP_SERVER_ID=".$ID." AND NOT (GROUP_ID=-1)");
 	}
 
 	public static function GetGroupBan($ID)
 	{
 		global $DB, $APPLICATION;
-		$ID = IntVal($ID);
+		$ID = intval($ID);
 		return $DB->Query("SELECT LDAP_GROUP_ID FROM b_ldap_group WHERE LDAP_SERVER_ID=".$ID." AND GROUP_ID=-1");
 	}
 
 	public static function SetGroupMap($ID, $arFields)
 	{
 		global $DB, $APPLICATION;
-		$ID = IntVal($ID);
+		$ID = intval($ID);
 		$DB->Query("DELETE FROM b_ldap_group WHERE LDAP_SERVER_ID=".$ID);
 		foreach($arFields as $arGroup)
 		{
 			// check whether entry is valid, and if it is - add it
-			if(array_key_exists('GROUP_ID',$arGroup) && ($arGroup['GROUP_ID']>0 || $arGroup['GROUP_ID']==-1) && strlen($arGroup['LDAP_GROUP_ID'])>0)
+			if(array_key_exists('GROUP_ID',$arGroup) && ($arGroup['GROUP_ID']>0 || $arGroup['GROUP_ID']==-1) && $arGroup['LDAP_GROUP_ID'] <> '')
 			{
 				$strSql =
 					"SELECT 'x' ".
 					"FROM b_ldap_group ".
 					"WHERE LDAP_SERVER_ID=".$ID." ".
-					"	AND GROUP_ID = ".IntVal($arGroup['GROUP_ID'])." ".
+					"	AND GROUP_ID = ".intval($arGroup['GROUP_ID'])." ".
 					"	AND LDAP_GROUP_ID = '".$DB->ForSQL($arGroup['LDAP_GROUP_ID'], 255)."' ";
 				$r = $DB->Query($strSql);
 				if(!$r->Fetch())
 				{
 					$strSql =
 						"INSERT INTO b_ldap_group(GROUP_ID, LDAP_GROUP_ID, LDAP_SERVER_ID)".
-						"VALUES(".IntVal($arGroup['GROUP_ID']).", '".$DB->ForSQL($arGroup['LDAP_GROUP_ID'], 255)."', ".$ID.")";
+						"VALUES(".intval($arGroup['GROUP_ID']).", '".$DB->ForSQL($arGroup['LDAP_GROUP_ID'], 255)."', ".$ID.")";
 					$DB->Query($strSql);
 				}
 			}
@@ -462,14 +462,14 @@ class CLdapServer
 
 		// select all users from LDAP
 		$arLdapUsers = array();
-		$ldapLoginAttr = strtolower($oLdapServer->arFields["~USER_ID_ATTR"]);
+		$ldapLoginAttr = mb_strtolower($oLdapServer->arFields["~USER_ID_ATTR"]);
 
 		$APPLICATION->ResetException();
 		$dbLdapUsers = $oLdapServer->GetUserList();
 		$ldpEx = $APPLICATION->GetException();
 
 		while($arLdapUser = $dbLdapUsers->Fetch())
-			$arLdapUsers[strtolower($arLdapUser[$ldapLoginAttr])] = $arLdapUser;
+			$arLdapUsers[mb_strtolower($arLdapUser[$ldapLoginAttr])] = $arLdapUser;
 
 		unset($dbLdapUsers);
 
@@ -481,7 +481,7 @@ class CLdapServer
 		CTimeZone::Enable();
 
 		while($arUser = $dbUsers->Fetch())
-			$arUsers[strtolower($arUser["LOGIN"])] = $arUser;
+			$arUsers[mb_strtolower($arUser["LOGIN"])] = $arUser;
 			
 		unset($dbUsers);
 
@@ -490,7 +490,7 @@ class CLdapServer
 		if(!$ldpEx || $ldpEx->msg != 'LDAP_SEARCH_ERROR')
 			$arDelLdapUsers = array_diff(array_keys($arUsers), array_keys($arLdapUsers));
 
-		if(strlen($oLdapServer->arFields["SYNC_LAST"]) > 0)
+		if($oLdapServer->arFields["SYNC_LAST"] <> '')
 			$syncTime = MakeTimeStamp($oLdapServer->arFields["SYNC_LAST"]);
 		else
 			$syncTime = 0;
@@ -528,8 +528,8 @@ class CLdapServer
 				$ldapTime = time();
 
 				if($syncTime > 0
-					&& strlen($oLdapServer->arFields["SYNC_ATTR"])>0
-					&& preg_match("'([0-9]{4})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})\.0Z'", $arLdapUserFields[strtolower($oLdapServer->arFields["SYNC_ATTR"])], $arTimeMatch)
+					&& $oLdapServer->arFields["SYNC_ATTR"] <> ''
+					&& preg_match("'([0-9]{4})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})\.0Z'", $arLdapUserFields[mb_strtolower($oLdapServer->arFields["SYNC_ATTR"])], $arTimeMatch)
 					)
 				{
 					$ldapTime = gmmktime($arTimeMatch[4], $arTimeMatch[5], $arTimeMatch[6], $arTimeMatch[2], $arTimeMatch[3], $arTimeMatch[1]);
@@ -569,12 +569,6 @@ class CLdapServer
 
 		$oLdapServer->Disconnect();
 		CLdapServer::Update($ldap_server_id, Array("~SYNC_LAST"=>$DB->CurrentTimeFunction()));
-
-		if(CModule::IncludeModule('intranet'))
-		{
-			\Bitrix\Intranet\Internals\UserSubordinationTable::performReInitialization();
-			\Bitrix\Intranet\Internals\UserToDepartmentTable::performReInitialization();
-		}
 
 		if($bUSERGen)
 			unset($USER);

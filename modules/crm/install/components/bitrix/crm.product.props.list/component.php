@@ -142,7 +142,7 @@ $errorMsg = '';
 //Show error message if required
 if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['error']))
 {
-	$errorID = strtolower($_GET['error']);
+	$errorID = mb_strtolower($_GET['error']);
 	if(preg_match('/^crm_err_/', $errorID) === 1)
 	{
 		if(!isset($_SESSION[$errorID]))
@@ -166,7 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_PO
 		{
 			$DB->StartTransaction();
 
-			$id = IntVal($id);
+			$id = intval($id);
 
 			$propertyType = '';
 			$res = CIBlockProperty::GetByID($id);
@@ -180,7 +180,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_PO
 			unset($res, $row);
 
 			$arFields["USER_TYPE"] = "";
-			if (strpos($arFields["PROPERTY_TYPE"], ":"))
+			if(mb_strpos($arFields["PROPERTY_TYPE"], ":"))
 			{
 				list($arFields["PROPERTY_TYPE"], $arFields["USER_TYPE"]) = explode(':', $arFields["PROPERTY_TYPE"], 2);
 			}
@@ -236,7 +236,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_PO
 
 		foreach($arID as $id)
 		{
-			if(strlen($id)<=0)
+			if($id == '')
 				continue;
 
 			switch($action)

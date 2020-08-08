@@ -58,6 +58,16 @@ class Controller extends BaseField.Controller
 	{
 		return 'string';
 	}
+
+	getInputName(): string
+	{
+		return null;
+	}
+
+	getInputAutocomplete (): string
+	{
+		return null;
+	}
 }
 
 export {Controller, Options}

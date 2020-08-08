@@ -2,6 +2,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Tracking;
 /**
  * Bitrix vars
  * Bitrix vars
@@ -96,7 +97,7 @@ $gridManagerCfg = array(
 );
 echo CCrmViewHelper::RenderOrderStatusSettings();
 $prefix = $arResult['GRID_ID'];
-$prefixLC = strtolower($arResult['GRID_ID']);
+$prefixLC = mb_strtolower($arResult['GRID_ID']);
 
 $arResult['GRID_DATA'] = array();
 $arColumns = array();
@@ -292,7 +293,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 		{
 			$basketItem = $item['NAME'];
 
-			if(strlen($item['EDIT_PAGE_URL']) > 0)
+			if($item['EDIT_PAGE_URL'] <> '')
 			{
 				$basketItem = '<a href="'.$item['EDIT_PAGE_URL'].'">'.$basketItem.'</a>';
 			}
@@ -301,7 +302,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 
 			$basketItem .= '<span>'.$item['QUANTITY'].'</span> ';
 
-			if(strlen($item['PRICE']) > 0)
+			if($item['PRICE'] <> '')
 			{
 				$basketItem .= '<span>'.$item["PRICE"].'</span> ';
 			}
@@ -320,7 +321,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 					$propertyString = htmlspecialcharsbx("{$property['NAME']}: {$property['VALUE']}");
 					$propsRow .= "<div>{$propertyString}</div>";
 				}
-				if (strlen($propsRow) > 0)
+				if ($propsRow <> '')
 				{
 					$basketItem .= "<div class='crm-order-list-basket-item-props'>$propsRow</div>";
 				}
@@ -362,7 +363,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 						: Loc::getMessage('CRM_ORDER_LIST_SHIPMENT_NOT_DEDUCTED'))
 				.'</div>';
 
-			if(strlen($item['TRACKING_NUMBER']) > 0)
+			if($item['TRACKING_NUMBER'] <> '')
 			{
 				$shipmentItem .= '<div>'
 						.Loc::getMessage('CRM_ORDER_LIST_SHIPMENT_TRACK_NUMBER').': '
@@ -380,7 +381,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 				$shipmentItem .= '<div class="marked">'.Loc::getMessage('CRM_ORDER_LIST_SHIPMENT_MARKED').'</div>';
 			}
 
-			if(strlen($item['WEIGHT']) > 0)
+			if($item['WEIGHT'] <> '')
 			{
 				$shipmentItem .= '<div>'.Loc::getMessage('CRM_ORDER_LIST_SHIPMENT_WEIGHT').': '.$item["WEIGHT"].'</div> ';
 			}
@@ -569,6 +570,12 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 		) + $arResult['ORDER_UF'][$sKey]
 	);
 
+	Tracking\UI\Grid::appendRows(
+		\CCrmOwnerType::Order,
+		$arOrder['ID'],
+		$resultItem['columns']
+	);
+	
 	$userActivityID = isset($arOrder['USER_ACTIVITY_ID']) ? intval($arOrder['USER_ACTIVITY_ID']) : 0;
 	$commonActivityID = isset($arOrder['C_ACTIVITY_ID']) ? intval($arOrder['C_ACTIVITY_ID']) : 0;
 	if($userActivityID > 0)
@@ -894,7 +901,7 @@ if($arResult['ENABLE_TOOLBAR'])
 		'bitrix:crm.interface.toolbar',
 		'',
 		array(
-			'TOOLBAR_ID' => strtolower($arResult['GRID_ID']).'_toolbar',
+			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']).'_toolbar',
 			'BUTTONS' => array($addButton)
 		),
 		$component,
@@ -998,7 +1005,7 @@ $APPLICATION->IncludeComponent(
 			'BINDING' => array(
 				'category' => 'crm.navigation',
 				'name' => 'index',
-				'key' => strtolower($arResult['NAVIGATION_CONTEXT_ID'])
+				'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
 			)
 		),
 		'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'],

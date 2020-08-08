@@ -49,7 +49,7 @@ final class Viewer
 			'xodt' => 'xodt',
 		);
 
-		return isset($allowedFormat[$extension]) || isset($allowedFormat[strtolower($extension)]);
+		return isset($allowedFormat[$extension]) || isset($allowedFormat[mb_strtolower($extension)]);
 	}
 
 	/**
@@ -65,7 +65,7 @@ final class Viewer
 			'.pdf' => 'pdf',
 		);
 
-		return isset($allowedFormat[$extension]) || isset($allowedFormat[strtolower($extension)]);
+		return isset($allowedFormat[$extension]) || isset($allowedFormat[mb_strtolower($extension)]);
 	}
 
 	/**

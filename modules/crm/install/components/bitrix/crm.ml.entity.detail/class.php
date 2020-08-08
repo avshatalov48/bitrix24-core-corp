@@ -60,9 +60,9 @@ class CCrmMlEntityDetailComponent extends CBitrixComponent
 			];
 		}
 
-		if ($this->arParams['SET_TITLE'] == 'Y')
+		if ($this->arParams['SET_TITLE'] === 'Y')
 		{
-			if($this->model->getState() === \Bitrix\Ml\Model::STATE_READY)
+			if($this->model && $this->model->getState() === \Bitrix\Ml\Model::STATE_READY)
 			{
 				$GLOBALS['APPLICATION']->SetTitle($this->arResult['ITEM']['TITLE']);
 			}

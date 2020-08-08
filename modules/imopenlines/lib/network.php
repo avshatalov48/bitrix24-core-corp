@@ -3,6 +3,9 @@
 namespace Bitrix\ImOpenLines;
 
 use Bitrix\Main,
+	Bitrix\ImBot,
+	Bitrix\ImOpenLines,
+	Bitrix\ImOpenLines\Log,
 	Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -19,7 +22,19 @@ class Network
 		$this->error = new BasicError(null, '', '');
 	}
 
-	public function sendMessage($lineId, $fields)
+	/**
+	 * Sending a message to the network channel.
+	 *
+	 * @param $lineId
+	 * @param $fields
+	 * @param string $userCodeSession
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public function sendMessage($lineId, $fields, $userCodeSession = '')
 	{
 		if (!\Bitrix\Main\Loader::includeModule('imbot'))
 		{
@@ -28,19 +43,24 @@ class Network
 
 		\Bitrix\ImOpenLines\Log::write($fields, 'NETWORK ANSWER');
 
-		$userArray = Array();
+		$userArray = [];
 		if ($fields['message']['user_id'] > 0)
 		{
-			$imolUserData = Queue::getUserData($lineId, $fields['message']['user_id']);
+			$actualLineId = Queue::getActualLineId([
+				'LINE_ID' =>  $lineId,
+				'USER_CODE' => $userCodeSession
+			]);
+
+			$imolUserData = Queue::getUserData($actualLineId, $fields['message']['user_id']);
 			if ($imolUserData)
 			{
-				$userArray = Array(
+				$userArray = [
 					'ID' => $imolUserData['ID'],
 					'NAME' => $imolUserData['FIRST_NAME'],
 					'LAST_NAME' => $imolUserData['LAST_NAME'],
 					'PERSONAL_GENDER' => $imolUserData['GENDER'],
 					'PERSONAL_PHOTO' => $imolUserData['AVATAR']
-				);
+				];
 			}
 			else
 			{
@@ -51,7 +71,7 @@ class Network
 				{
 					$arFileTmp = \CFile::ResizeImageGet(
 						$user->getAvatarId(),
-						array('width' => 300, 'height' => 300),
+						['width' => 300, 'height' => 300],
 						BX_RESIZE_IMAGE_EXACT,
 						false,
 						false,
@@ -60,17 +80,17 @@ class Network
 					$avatarUrl = substr($arFileTmp['src'], 0, 4) == 'http'? $arFileTmp['src']: \Bitrix\ImOpenLines\Common::getServerAddress().$arFileTmp['src'];
 				}
 
-				$userArray = Array(
+				$userArray = [
 					'ID' => $user->getId(),
 					'NAME' => $user->getName(false),
 					'LAST_NAME' => $user->getLastName(false),
 					'PERSONAL_GENDER' => $user->getGender(),
 					'PERSONAL_PHOTO' => $avatarUrl
-				);
+				];
 			}
 		}
 
-		\Bitrix\ImBot\Service\Openlines::operatorMessageAdd(Array(
+		\Bitrix\ImBot\Service\Openlines::operatorMessageAdd([
 			"LINE_ID" => $lineId,
 			"GUID" => $fields['chat']['id'],
 			"MESSAGE_ID" => $fields['im']['message_id'],
@@ -79,7 +99,7 @@ class Network
 			"ATTACH" => $fields['message']['attachments'],
 			"PARAMS" => $fields['message']['params'],
 			"USER" => $userArray
-		));
+		]);
 
 		return true;
 	}
@@ -126,7 +146,17 @@ class Network
 		return true;
 	}
 
-	public function sendStatusWriting($lineId, $fields)
+	/**
+	 * @param $lineId
+	 * @param $fields
+	 * @param string $userCodeSession
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public function sendStatusWriting($lineId, $fields, $userCodeSession = '')
 	{
 		if (!\Bitrix\Main\Loader::includeModule('imbot'))
 		{
@@ -135,19 +165,23 @@ class Network
 
 		\Bitrix\ImOpenLines\Log::write($fields, 'NETWORK START WRITING (SEND)');
 
-		$userArray = Array();
+		$userArray = [];
 		if ($fields['user'] > 0)
 		{
-			$imolUserData = Queue::getUserData($lineId, $fields['user']);
+			$actualLineId = Queue::getActualLineId([
+				'LINE_ID' =>  $lineId,
+				'USER_CODE' => $userCodeSession
+			]);
+			$imolUserData = Queue::getUserData($actualLineId, $fields['user']);
 			if ($imolUserData)
 			{
-				$userArray = Array(
+				$userArray = [
 					'ID' => $imolUserData['ID'],
 					'NAME' => $imolUserData['FIRST_NAME'],
 					'LAST_NAME' => $imolUserData['LAST_NAME'],
 					'PERSONAL_GENDER' => $imolUserData['GENDER'],
 					'PERSONAL_PHOTO' => $imolUserData['AVATAR']
-				);
+				];
 			}
 			else
 			{
@@ -158,7 +192,7 @@ class Network
 				{
 					$arFileTmp = \CFile::ResizeImageGet(
 						$user->getAvatarId(),
-						array('width' => 300, 'height' => 300),
+						['width' => 300, 'height' => 300],
 						BX_RESIZE_IMAGE_EXACT,
 						false,
 						false,
@@ -167,25 +201,79 @@ class Network
 					$avatarUrl = substr($arFileTmp['src'], 0, 4) == 'http'? $arFileTmp['src']: \Bitrix\ImOpenLines\Common::getServerAddress().$arFileTmp['src'];
 				}
 
-				$userArray = Array(
+				$userArray = [
 					'ID' => $user->getId(),
 					'NAME' => $user->getName(false),
 					'LAST_NAME' => $user->getLastName(false),
 					'PERSONAL_GENDER' => $user->getGender(),
 					'PERSONAL_PHOTO' => $avatarUrl
-				);
+				];
 			}
 		}
 
-		\Bitrix\ImBot\Service\Openlines::operatorStartWriting(Array(
+		\Bitrix\ImBot\Service\Openlines::operatorStartWriting([
 			"LINE_ID" => $lineId,
 			"GUID" => $fields['chat']['id'],
 			"USER" => $userArray
-		));
+		]);
 
 		return true;
 	}
 
+	/**
+	 * Event handler for `imopenlines::OnSessionStart`
+	 *
+	 * @param $lineId
+	 * @param $fields
+	 *
+	 * @return bool
+	 */
+	public function sessionStart($lineId, $fields)
+	{
+		if (!Main\Loader::includeModule('imbot'))
+		{
+			$this->error = new BasicError(__METHOD__, 'IMBOT_ERROR', Loc::getMessage('IMOL_NETWORK_IMBOT_LOAD_ERROR'));
+		}
+
+		Log::write($fields, 'NETWORK SESSION START');
+
+		ImBot\Service\Openlines::sessionStart([
+			"LINE_ID" => $lineId,
+			"GUID" => $fields['chat']['id'],
+			"USER" => $fields['user']['id'],
+			"SESSION" => $fields['session']['id'],
+		]);
+
+		return true;
+	}
+
+
+	/**
+	 * Event handler for `imopenlines::OnSessionFinish`
+	 *
+	 * @param $lineId
+	 * @param $fields
+	 *
+	 * @return bool
+	 */
+	public function sessionFinish($lineId, $fields, $userCodeSession = '')
+	{
+		if (!Main\Loader::includeModule('imbot'))
+		{
+			$this->error = new BasicError(__METHOD__, 'IMBOT_ERROR', Loc::getMessage('IMOL_NETWORK_IMBOT_LOAD_ERROR'));
+		}
+
+		Log::write($fields, 'NETWORK SESSION FINISH');
+
+		ImBot\Service\Openlines::sessionFinish([
+			"LINE_ID" => $lineId,
+			"GUID" => $fields['chat']['id'],
+			"USER" => $fields['user']['id'],
+			"SESSION" => $fields['session']['id'],
+		]);
+
+		return true;
+	}
 
 
 

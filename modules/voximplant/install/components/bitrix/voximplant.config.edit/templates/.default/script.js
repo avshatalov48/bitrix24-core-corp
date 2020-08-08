@@ -596,7 +596,7 @@
 			if (defaults.maximumGroups > 0 && groupCount >= defaults.maximumGroups)
 			{
 				e.target.value = e.target.options.item(2).value;
-				BX.Voximplant.showLicensePopup('groups');
+				BX.UI.InfoHelper.show('limit_contact_center_telephony_groups');
 			}
 			else
 			{
@@ -712,7 +712,7 @@
 
 		if(locked && licensePopupId)
 		{
-			BX.Voximplant.showLicensePopup(licensePopupId);
+			BX.UI.InfoHelper.show(licensePopupId);
 			target.checked = false;
 			e.preventDefault();
 		}

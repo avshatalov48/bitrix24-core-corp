@@ -24,7 +24,7 @@ class SalesCenterAdminPageInclude extends CBitrixComponent
 	{
 		$params["SEF_FOLDER"] = (!empty($params["SEF_FOLDER"]) ? $params["SEF_FOLDER"] : "/bitrix/admin/");
 		$params["PAGE_PATH"] = (!empty($params["PAGE_PATH"]) ? $params["PAGE_PATH"] : "");
-		if (strpos($params["PAGE_PATH"], $params["SEF_FOLDER"]) === false)
+		if (mb_strpos($params["PAGE_PATH"], $params["SEF_FOLDER"]) === false)
 		{
 			$params["PAGE_PATH"] = $params["SEF_FOLDER"].$params["PAGE_PATH"];
 		}

@@ -25,7 +25,7 @@ class Helper
 		$categoryId = max(0, $categoryId);
 		if (Factory::isAutomationAvailable($entityTypeId))
 		{
-			$url = '/crm/'.strtolower(\CCrmOwnerType::ResolveName($entityTypeId)).'/automation/'.$categoryId.'/';
+			$url = '/crm/'.mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId)).'/automation/'.$categoryId.'/';
 			if ($entityTypeId === \CCrmOwnerType::Order)
 			{
 				//TODO: crazy shop

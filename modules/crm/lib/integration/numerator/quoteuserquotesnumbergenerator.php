@@ -45,7 +45,7 @@ class QuoteUserQuotesNumberGenerator extends NumberGenerator implements DynamicC
 	/** @inheritdoc */
 	public function parseTemplate($template)
 	{
-		if (strpos($template, self::TEMPLATE_WORD_USER_ID_QUOTES_COUNT) !== false)
+		if (mb_strpos($template, self::TEMPLATE_WORD_USER_ID_QUOTES_COUNT) !== false)
 		{
 			$value = '';
 			$assignedById = QuoteTable::query()

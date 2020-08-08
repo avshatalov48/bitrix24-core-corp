@@ -272,7 +272,7 @@ class DuplicateCommunicationCriterion extends DuplicateCriterion
 				$value = trim($value);
 				if($value !== '')
 				{
-					$result[] = strtolower($value);
+					$result[] = mb_strtolower($value);
 				}
 			}
 		}

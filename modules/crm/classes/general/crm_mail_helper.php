@@ -16,16 +16,16 @@ class CCrmMailHelper
 			return $result;
 		}
 
-		$lbrpos = strpos($str, '<');
-		$rbrpos = strpos($str, '>');
+		$lbrpos = mb_strpos($str, '<');
+		$rbrpos = mb_strpos($str, '>');
 		if($lbrpos !== false && $rbrpos !== false)
 		{
-			$result['NAME'] = trim(substr($str, 0, $lbrpos));
-			$result['EMAIL'] = strtolower(trim(substr($str, $lbrpos + 1, $rbrpos - $lbrpos - 1)));
+			$result['NAME'] = trim(mb_substr($str, 0, $lbrpos));
+			$result['EMAIL'] = mb_strtolower(trim(mb_substr($str, $lbrpos + 1, $rbrpos - $lbrpos - 1)));
 		}
 		else
 		{
-			$result['EMAIL'] = strtolower(trim($str));
+			$result['EMAIL'] = mb_strtolower(trim($str));
 		}
 
 		return $result;

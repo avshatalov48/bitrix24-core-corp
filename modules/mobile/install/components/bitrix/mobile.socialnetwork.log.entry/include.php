@@ -72,7 +72,7 @@ if (!function_exists('__SLMGetLogRecord'))
 			{
 				if (
 					!is_array($arEvent["FIELDS_FORMATTED"]["CACHED_CSS_PATH"]) 
-					&& strlen($arEvent["FIELDS_FORMATTED"]["CACHED_CSS_PATH"]) > 0
+					&& $arEvent["FIELDS_FORMATTED"]["CACHED_CSS_PATH"] <> ''
 				)
 				{
 					$GLOBALS['APPLICATION']->SetAdditionalCSS($arEvent["FIELDS_FORMATTED"]["CACHED_CSS_PATH"]);
@@ -431,7 +431,7 @@ if (!function_exists('__SLMGetLogRecord'))
 
 		$timeFormated = FormatDate(GetMessage("SONET_SLM_FORMAT_TIME"), $timestamp);
 
-		if (strlen($arParams["DATE_TIME_FORMAT"]) <= 0)
+		if ($arParams["DATE_TIME_FORMAT"] == '')
 			$dateTimeFormated = __SMLFormatDate($timestamp);
 		else
 			$dateTimeFormated = FormatDate(
@@ -462,7 +462,7 @@ if (!function_exists('__SLMGetLogRecord'))
 
 		$arEvent["FIELDS_FORMATTED"]["LOG_TIME_FORMAT"] = $timeFormated;
 
-		if (strlen($arParams["DATE_TIME_FORMAT"]) <= 0) // list
+		if ($arParams["DATE_TIME_FORMAT"] == '') // list
 		{
 			if (
 				array_key_exists("EVENT_FORMATTED", $arEvent["FIELDS_FORMATTED"])
@@ -521,7 +521,7 @@ if (!function_exists('__SLMGetLogRecord'))
 						$feature 
 						&& $arCommentEvent 
 						&& array_key_exists("OPERATION_ADD", $arCommentEvent) 
-						&& strlen($arCommentEvent["OPERATION_ADD"]) > 0
+						&& $arCommentEvent["OPERATION_ADD"] <> ''
 					)
 						$GLOBALS["CurUserCanAddComments"][$array_key] = (
 							CSocNetFeaturesPerms::CanPerformOperation(
@@ -615,7 +615,7 @@ if (!function_exists('__SLMGetLogRecord'))
 
 		if (
 			$arParams["SHOW_RATING"] == "Y"
-			&& strlen($arEvent["FIELDS_FORMATTED"]["EVENT"]["RATING_TYPE_ID"]) > 0
+			&& $arEvent["FIELDS_FORMATTED"]["EVENT"]["RATING_TYPE_ID"] <> ''
 			&& intval($arEvent["FIELDS_FORMATTED"]["EVENT"]["RATING_ENTITY_ID"]) > 0
 		)
 			$arEvent["FIELDS_FORMATTED"]["RATING"] = CRatings::GetRatingVoteResult($arEvent["FIELDS_FORMATTED"]["EVENT"]["RATING_TYPE_ID"], $arEvent["FIELDS_FORMATTED"]["EVENT"]["RATING_ENTITY_ID"]);
@@ -819,7 +819,7 @@ if (!function_exists('__SLMAjaxGetComment'))
 			if ($bCheckRights)
 			{
 				if (
-					strpos($arComment["ENTITY_TYPE"], "CRM") === 0
+					mb_strpos($arComment["ENTITY_TYPE"], "CRM") === 0
 					&& IsModuleInstalled("crm")
 				)
 				{
@@ -846,7 +846,7 @@ if (!function_exists('__SLMAjaxGetComment'))
 				$GLOBALS['DB']->DateFormatToPHP(FORMAT_DATE),
 				MakeTimeStamp($arComment["LOG_DATE"])
 			);
-			$timeFormated = FormatDateFromDB($arComment["LOG_DATE"], (stripos($arParams["DATE_TIME_FORMAT"], 'a') || ($arParams["DATE_TIME_FORMAT"] == 'FULL' && IsAmPmMode()) !== false ? 'H:MI T' : 'HH:MI'));
+			$timeFormated = FormatDateFromDB($arComment["LOG_DATE"], (mb_stripos($arParams["DATE_TIME_FORMAT"], 'a') || ($arParams["DATE_TIME_FORMAT"] == 'FULL' && IsAmPmMode()) !== false ? 'H:MI T' : 'HH:MI'));
 			$dateTimeFormated = FormatDate(
 				(!empty($arParams['DATE_TIME_FORMAT']) ? ($arParams['DATE_TIME_FORMAT'] == 'FULL' ? $GLOBALS['DB']->DateFormatToPHP(str_replace(':SS', '', FORMAT_DATETIME)) : $arParams['DATE_TIME_FORMAT']) : $GLOBALS['DB']->DateFormatToPHP(FORMAT_DATETIME)),
 				MakeTimeStamp($arComment["LOG_DATE"])
@@ -870,7 +870,7 @@ if (!function_exists('__SLMAjaxGetComment'))
 					"PATH_TO_USER" => $_REQUEST["p_user"],
 					"NAME_TEMPLATE" => $_REQUEST["nt"],
 					"SHOW_LOGIN" => $_REQUEST["sl"],
-					"AVATAR_SIZE" => $as,
+					"AVATAR_SIZE" => (isset($_REQUEST["as"]) ? intval($_REQUEST["as"]) : 100),
 					"PATH_TO_SMILE" => $_REQUEST["p_smile"]
 				);
 
@@ -979,7 +979,7 @@ if (!function_exists("__logUFfileShowMobile"))
 	function __logUFfileShowMobile($arResult, $arParams)
 	{
 		$result = false;
-		if ($arParams["arUserField"]["FIELD_NAME"] == "UF_SONET_LOG_DOC" || strpos($arParams["arUserField"]["FIELD_NAME"], "UF_SONET_COMMENT_DOC") === 0)
+		if ($arParams["arUserField"]["FIELD_NAME"] == "UF_SONET_LOG_DOC" || mb_strpos($arParams["arUserField"]["FIELD_NAME"], "UF_SONET_COMMENT_DOC") === 0)
 		{
 			if (sizeof($arResult["VALUE"]) > 0)
 			{
@@ -992,10 +992,10 @@ if (!function_exists("__logUFfileShowMobile"))
 					{
 						$name = $arFile["ORIGINAL_NAME"];
 						$ext = '';
-						$dotpos = strrpos($name, ".");
-						if (($dotpos !== false) && ($dotpos+1 < strlen($name)))
-							$ext = substr($name, $dotpos+1);
-						if (strlen($ext) < 3 || strlen($ext) > 5)
+						$dotpos = mb_strrpos($name, ".");
+						if (($dotpos !== false) && ($dotpos + 1 < mb_strlen($name)))
+							$ext = mb_substr($name, $dotpos + 1);
+						if (mb_strlen($ext) < 3 || mb_strlen($ext) > 5)
 							$ext = '';
 						$arFile["EXTENSION"] = $ext;
 						$arFile["LINK"] = "/bitrix/components/bitrix/socialnetwork.log.ex/show_file.php?bp_fid=".$fileID;
@@ -1032,7 +1032,7 @@ if (!class_exists("MSLEUFProcessor"))
 
 				if (preg_match_all("#\\[disk file id=(n\\d+)\\]#is".BX_UTF_PCRE_MODIFIER, $text, $matches))
 				{
-					$commentObjectId = array_map(function($a) { return intval(substr($a, 1)); }, $matches[1]);
+					$commentObjectId = array_map(function($a) { return intval(mb_substr($a, 1)); }, $matches[1]);
 				}
 
 				if (preg_match_all("#\\[disk file id=(\\d+)\\]#is".BX_UTF_PCRE_MODIFIER, $text, $matches))

@@ -92,7 +92,7 @@ if (!empty($arResult["ERROR_MESSAGE"]))
 		?>
 		<span class="bp-task-block-title"><?=GetMessage("BPATL_TASK_TITLE")?>: </span>
 		<?
-		if (strlen($arResult["TASK"]["DESCRIPTION"]) > 0):
+		if ($arResult["TASK"]["DESCRIPTION"] <> ''):
 			echo nl2br($arResult["TASK"]["DESCRIPTION"]);
 		else:
 			echo $arResult["TASK"]["NAME"];

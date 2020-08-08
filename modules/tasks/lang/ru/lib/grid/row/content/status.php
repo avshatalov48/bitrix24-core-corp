@@ -1,0 +1,8 @@
+<?php
+$MESS["TASKS_GRID_ROW_CONTENT_STATUS_1"] = "Новая";
+$MESS["TASKS_GRID_ROW_CONTENT_STATUS_2"] = "Ждет выполнения";
+$MESS["TASKS_GRID_ROW_CONTENT_STATUS_3"] = "Выполняется";
+$MESS["TASKS_GRID_ROW_CONTENT_STATUS_4"] = "Ждет контроля";
+$MESS["TASKS_GRID_ROW_CONTENT_STATUS_5"] = "Завершена";
+$MESS["TASKS_GRID_ROW_CONTENT_STATUS_6"] = "Отложена";
+$MESS["TASKS_GRID_ROW_CONTENT_STATUS_7"] = "Отклонена";

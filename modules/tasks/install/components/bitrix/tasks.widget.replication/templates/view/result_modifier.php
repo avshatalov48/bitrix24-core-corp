@@ -18,4 +18,5 @@ $arResult['JS_DATA'] = array(
 	'enabled' => $arParams['REPLICATE'],
 	'entityId' => $arParams['ENTITY_ID'],
 	'enableSync' => $arParams['ENABLE_SYNC'],
+	'taskLimitExceeded' => $arResult['TASK_LIMIT_EXCEEDED'],
 );

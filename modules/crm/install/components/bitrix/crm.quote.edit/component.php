@@ -1,6 +1,10 @@
 <?php
+
 use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\Integration\StorageType;
+use Bitrix\Crm\Format\TextHelper;
+use Bitrix\Crm\Binding\EntityBinding;
+use Bitrix\Crm\Settings\QuoteSettings;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
@@ -18,8 +22,6 @@ if ($CCrmQuote->cPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'WRITE')
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
 }
-
-use \Bitrix\Crm\Binding\EntityBinding;
 
 $arParams['PATH_TO_QUOTE_LIST'] = CrmCheckPath('PATH_TO_QUOTE_LIST', $arParams['PATH_TO_QUOTE_LIST'], $APPLICATION->GetCurPage());
 $arParams['PATH_TO_QUOTE_SHOW'] = CrmCheckPath('PATH_TO_QUOTE_SHOW', $arParams['PATH_TO_QUOTE_SHOW'], $APPLICATION->GetCurPage().'?quote_id=#quote_id#&show');
@@ -42,10 +44,10 @@ $conversionWizard = null;
 if (isset($_REQUEST['conv_deal_id']) && $_REQUEST['conv_deal_id'] > 0)
 {
 	$srcDealId = intval($_REQUEST['conv_deal_id']);
-	if($srcDealId > 0)
+	if ($srcDealId > 0)
 	{
 		$conversionWizard = \Bitrix\Crm\Conversion\DealConversionWizard::load($srcDealId);
-		if($conversionWizard !== null)
+		if ($conversionWizard !== null)
 		{
 			$arResult['DEAL_ID'] = $srcDealId;
 		}
@@ -79,13 +81,13 @@ $arPersonTypes = $arResult['PERSON_TYPE_IDS'] = CCrmPaySystem::getPersonTypeIDs(
 $bTaxMode = CCrmTax::isTaxMode();
 $arResult['TAX_MODE'] = $bTaxMode ? 'Y' : 'N';
 
-if($bEdit)
+if ($bEdit)
 {
 	CCrmQuote::PrepareConversionPermissionFlags($arParams['ELEMENT_ID'], $arResult, $CCrmQuote->cPerms);
-	if($arResult['CAN_CONVERT'])
+	if ($arResult['CAN_CONVERT'])
 	{
 		$config = \Bitrix\Crm\Conversion\QuoteConversionConfig::load();
-		if($config === null)
+		if ($config === null)
 		{
 			$config = \Bitrix\Crm\Conversion\QuoteConversionConfig::getDefault();
 		}
@@ -103,10 +105,10 @@ $arFields = null;
 if ($conversionWizard !== null)
 {
 	$arFields = array('ID' => 0);
-	if($_SERVER['REQUEST_METHOD'] === 'GET')
+	if ($_SERVER['REQUEST_METHOD'] === 'GET')
 	{
 		$conversionWizard->prepareDataForEdit(CCrmOwnerType::Quote, $arFields, true);
-		if(isset($arFields['PRODUCT_ROWS']))
+		if (isset($arFields['PRODUCT_ROWS']))
 		{
 			$arResult['PRODUCT_ROWS'] = $arFields['PRODUCT_ROWS'];
 		}
@@ -130,18 +132,18 @@ elseif ($bEdit || $bCopy)
 		$arEntityAttr = $CCrmQuote->cPerms->GetEntityAttr('QUOTE', array($arParams['ELEMENT_ID']));
 	if ($bCopy)
 	{
-		if(isset($arFields['QUOTE_NUMBER']))
+		if (isset($arFields['QUOTE_NUMBER']))
 			unset($arFields['QUOTE_NUMBER']);
 
-		if(isset($arFields['~QUOTE_NUMBER']))
+		if (isset($arFields['~QUOTE_NUMBER']))
 			unset($arFields['~QUOTE_NUMBER']);
 
-		if(isset($arFields['LEAD_ID']))
+		if (isset($arFields['LEAD_ID']))
 		{
 			unset($arFields['LEAD_ID']);
 		}
 
-		if(isset($arFields['~LEAD_ID']))
+		if (isset($arFields['~LEAD_ID']))
 		{
 			unset($arFields['~LEAD_ID']);
 		}
@@ -168,22 +170,22 @@ elseif ($bEdit || $bCopy)
 		unset($arQuoteProductRowSettings);
 	}
 
-	if(is_array($arFields))
+	if (is_array($arFields))
 	{
 		//HACK: MSSQL returns '.00' for zero value
-		if(isset($arFields['~OPPORTUNITY']))
+		if (isset($arFields['~OPPORTUNITY']))
 		{
 			$arFields['~OPPORTUNITY'] = $arFields['OPPORTUNITY'] = floatval($arFields['~OPPORTUNITY']);
 		}
-		if(isset($arFields['~OPPORTUNITY_ACCOUNT']))
+		if (isset($arFields['~OPPORTUNITY_ACCOUNT']))
 		{
 			$arFields['~OPPORTUNITY_ACCOUNT'] = $arFields['OPPORTUNITY_ACCOUNT'] = floatval($arFields['~OPPORTUNITY_ACCOUNT']);
 		}
-		if(isset($arFields['~TAX_VALUE']))
+		if (isset($arFields['~TAX_VALUE']))
 		{
 			$arFields['~TAX_VALUE'] = $arFields['TAX_VALUE'] = floatval($arFields['~TAX_VALUE']);
 		}
-		if(isset($arFields['~TAX_VALUE_ACCOUNT']))
+		if (isset($arFields['~TAX_VALUE_ACCOUNT']))
 		{
 			$arFields['~TAX_VALUE_ACCOUNT'] = $arFields['TAX_VALUE_ACCOUNT'] = floatval($arFields['~TAX_VALUE_ACCOUNT']);
 		}
@@ -205,7 +207,7 @@ else
 	/*$extVals =  isset($arParams['~VALUES']) && is_array($arParams['~VALUES']) ? $arParams['~VALUES'] : array();
 	if (count($extVals) > 0)
 	{
-		if(isset($extVals['PRODUCT_ROWS']) && is_array($extVals['PRODUCT_ROWS']))
+		if (isset($extVals['PRODUCT_ROWS']) && is_array($extVals['PRODUCT_ROWS']))
 		{
 			$arResult['PRODUCT_ROWS'] = $extVals['PRODUCT_ROWS'];
 			unset($extVals['PRODUCT_ROWS']);
@@ -514,7 +516,7 @@ if (!$bEdit && !$bCopy)
 // storage type
 $storageTypeId = isset($arFields['STORAGE_TYPE_ID'])
 	? (int)$arFields['STORAGE_TYPE_ID'] : CCrmQuoteStorageType::Undefined;
-if($storageTypeId === CCrmQuoteStorageType::Undefined
+if ($storageTypeId === CCrmQuoteStorageType::Undefined
 	|| !CCrmQuoteStorageType::IsDefined($storageTypeId))
 {
 	$storageTypeId = CCrmQuote::GetDefaultStorageTypeID();
@@ -567,9 +569,9 @@ if ($bCreateFrom && !empty($arResult['QUOTE_REFERER']))
 if ($bPostChecked)
 {
 	$bVarsFromForm = true;
-	if(isset($_POST['cancel']))
+	if (isset($_POST['cancel']))
 	{
-		if(isset($arResult['EXTERNAL_CONTEXT']) && $arResult['EXTERNAL_CONTEXT'] !== '')
+		if (isset($arResult['EXTERNAL_CONTEXT']) && $arResult['EXTERNAL_CONTEXT'] !== '')
 		{
 			$arResult['EXTERNAL_EVENT'] = array(
 				'NAME' => 'onCrmEntityCreate',
@@ -592,151 +594,171 @@ if ($bPostChecked)
 			);
 		}
 	}
-	elseif(isset($_POST['save']) || isset($_POST['saveAndView']) || isset($_POST['saveAndAdd']) || isset($_POST['apply']) || isset($_POST['continue']))
+	elseif (isset($_POST['save']) || isset($_POST['saveAndView']) || isset($_POST['saveAndAdd']) || isset($_POST['apply']) || isset($_POST['continue']))
 	{
-		$content = isset($_POST['CONTENT']) ? trim($_POST['CONTENT']) : '';
-		$terms = isset($_POST['TERMS']) ? trim($_POST['TERMS']) : '';
-		$comments = isset($_POST['COMMENTS']) ? trim($_POST['COMMENTS']) : '';
-		$bSanContent = ($content !== '' && strpos($content, '<'));
-		$bSanTerms = ($terms !== '' && strpos($terms, '<'));
-		$bSanComments = ($comments !== '' && strpos($comments, '<'));
-		if ($bSanContent || $bSanTerms || $bSanComments)
+		$srcElement = ($bEdit || $bCopy) ? $arResult['ELEMENT'] : [];
+		$arFields = [];
+
+		foreach (['CONTENT', 'TERMS', 'COMMENTS'] as $fieldName)
 		{
-			$sanitizer = new CBXSanitizer();
-			$sanitizer->ApplyDoubleEncode(false);
-			$sanitizer->SetLevel(CBXSanitizer::SECURE_LEVEL_MIDDLE);
-			//Crutch for for Chrome line break behaviour in HTML editor.
-			$sanitizer->AddTags(array('div' => array(), 'span'=> array('style')));
-			$sanitizer->AddTags(array('a' => array('href', 'title', 'name', 'style', 'alt', 'target')));
-			$sanitizer->AddTags(array('p' => array()));
-			$sanitizer->AddTags(array('span' => array('style')));
-
-			if($bSanContent)
-				$content = $sanitizer->SanitizeHtml($content);
-			if($bSanTerms)
-				$terms = $sanitizer->SanitizeHtml($terms);
-			if ($bSanComments)
-				$comments = $sanitizer->SanitizeHtml($comments);
+			if (isset($_POST[$fieldName]))
+			{
+				$value = isset($_POST[$fieldName]) ? trim($_POST[$fieldName]) : '';
+				if ($value !== '' && mb_strpos($value, '<') !== false)
+				{
+					$value = TextHelper::sanitizeHtml($value);
+				}
+				$arFields[$fieldName] = $value;
+				$arFields[$fieldName.'_TYPE'] = CCrmContentType::Html;
+				unset($value);
+			}
 		}
-		unset($bSanContent, $bSanTerms, $bSanComments);
+		unset($fieldName);
 
-		$arFields = array(
-			'TITLE' => trim($_POST['TITLE']),
-			'CONTENT' => $content,
-			'CONTENT_TYPE' => CCrmContentType::Html,
-			'TERMS' => $terms,
-			'TERMS_TYPE' => CCrmContentType::Html,
-			'COMMENTS' => $comments,
-			'COMMENTS_TYPE' => CCrmContentType::Html,
-			'STATUS_ID' => trim($_POST['STATUS_ID']),
-			'ASSIGNED_BY_ID' => (int)(is_array($_POST['ASSIGNED_BY_ID']) ? $_POST['ASSIGNED_BY_ID'][0] : $_POST['ASSIGNED_BY_ID'])
-		);
+		$title = isset($_POST['TITLE']) ? trim($_POST['TITLE']) : '';
+		if ($title !== '')
+		{
+			$arFields['TITLE'] = $title;
+		}
+		elseif (isset($srcElement['~TITLE']))
+		{
+			$arFields['TITLE'] = $srcElement['~TITLE'];
+		}
 
-		if ($bTaxMode)
+		if (isset($_POST['STATUS_ID']))
+		{
+			$arFields['STATUS_ID'] = trim($_POST['STATUS_ID']);
+		}
+		elseif (isset($srcElement['~STATUS_ID']))
+		{
+			$arFields['STATUS_ID'] = $srcElement['~STATUS_ID'];
+		}
+
+		if (isset($_POST['ASSIGNED_BY_ID']))
+		{
+			$arFields['ASSIGNED_BY_ID'] = (int)(
+				is_array($_POST['ASSIGNED_BY_ID']) ? $_POST['ASSIGNED_BY_ID'][0] : $_POST['ASSIGNED_BY_ID']
+			);
+		}
+		elseif (isset($srcElement['~ASSIGNED_BY_ID']))
+		{
+			$arFields['ASSIGNED_BY_ID'] = $srcElement['~ASSIGNED_BY_ID'];
+		}
+
+		if (isset($_POST['LOC_CITY']))
 		{
 			$arFields['LOCATION_ID'] = $_POST['LOC_CITY'];
 		}
+		elseif (isset($srcElement['~LOCATION_ID']))
+		{
+			$arFields['LOCATION_ID'] = $srcElement['~LOCATION_ID'];
+		}
 
 		if ($bEdit)
-			$arFields['QUOTE_NUMBER'] = trim($_POST['QUOTE_NUMBER']);
-
-		$arSrcElement = ($bEdit || $bCopy) ? $arResult['ELEMENT'] : array();
-
-		if(isset($_POST['OPENED']))
 		{
-			$arFields['OPENED'] = strtoupper($_POST['OPENED']) === 'Y' ? 'Y' : 'N';
-		}
-		elseif(isset($arSrcElement['OPENED']))
-		{
-			$arFields['OPENED'] = $arSrcElement['OPENED'];
-		}
-		elseif(!$bEdit && !$bCopy)
-		{
-			$arFields['OPENED'] = \Bitrix\Crm\Settings\QuoteSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N';
+			if (isset($_POST['QUOTE_NUMBER']))
+			{
+				$arFields['QUOTE_NUMBER'] = trim($_POST['QUOTE_NUMBER']);
+			}
+			elseif (isset($srcElement['~QUOTE_NUMBER']))
+			{
+				$arFields['QUOTE_NUMBER'] = $srcElement['~QUOTE_NUMBER'];
+			}
 		}
 
-		if(isset($_POST['BEGINDATE']))
+		if (isset($_POST['OPENED']))
+		{
+			$arFields['OPENED'] = mb_strtoupper($_POST['OPENED']) === 'Y' ? 'Y' : 'N';
+		}
+		elseif (isset($srcElement['~OPENED']))
+		{
+			$arFields['OPENED'] = $srcElement['~OPENED'];
+		}
+		elseif (!$bEdit && !$bCopy)
+		{
+			$arFields['OPENED'] = QuoteSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N';
+		}
+
+		if (isset($_POST['BEGINDATE']))
 		{
 			$arFields['BEGINDATE'] = trim($_POST['BEGINDATE']);
 		}
-		elseif(isset($arSrcElement['BEGINDATE']))
+		elseif (isset($srcElement['~BEGINDATE']))
 		{
-			$arFields['BEGINDATE'] = $arSrcElement['BEGINDATE'];
+			$arFields['BEGINDATE'] = $srcElement['~BEGINDATE'];
 		}
 
-		if(isset($_POST['CLOSEDATE']))
+		if (isset($_POST['CLOSEDATE']))
 		{
 			$arFields['CLOSEDATE'] = trim($_POST['CLOSEDATE']);
 		}
-		elseif(isset($arSrcElement['CLOSEDATE']))
+		elseif (isset($srcElement['~CLOSEDATE']))
 		{
-			$arFields['CLOSEDATE'] = $arSrcElement['CLOSEDATE'];
+			$arFields['CLOSEDATE'] = $srcElement['~CLOSEDATE'];
 		}
 
-		if(isset($_POST['CLOSED']))
+		if (isset($_POST['CLOSED']))
 		{
 			$arFields['CLOSED'] = $_POST['CLOSED'] == 'Y' ? 'Y' : 'N';
 		}
-		elseif(isset($arSrcElement['CLOSED']))
+		elseif (isset($srcElement['~CLOSED']))
 		{
-			$arFields['CLOSED'] = $arSrcElement['CLOSED'];
+			$arFields['CLOSED'] = $srcElement['~CLOSED'];
 		}
 
-		if(isset($_POST['OPPORTUNITY']))
+		if (isset($_POST['OPPORTUNITY']))
 		{
 			$arFields['OPPORTUNITY'] = trim($_POST['OPPORTUNITY']);
 		}
-		elseif(isset($arSrcElement['OPPORTUNITY']))
+		elseif (isset($srcElement['~OPPORTUNITY']))
 		{
-			$arFields['OPPORTUNITY'] = $arSrcElement['OPPORTUNITY'];
+			$arFields['OPPORTUNITY'] = $srcElement['~OPPORTUNITY'];
 		}
 
-		if(isset($_POST['TAX_VALUE']))
+		if (isset($_POST['TAX_VALUE']))
 		{
 			$arFields['TAX_VALUE'] = trim($_POST['TAX_VALUE']);
 		}
-		elseif(isset($arSrcElement['TAX_VALUE']))
+		elseif (isset($srcElement['~TAX_VALUE']))
 		{
-			$arFields['TAX_VALUE'] = $arSrcElement['TAX_VALUE'];
+			$arFields['TAX_VALUE'] = $srcElement['~TAX_VALUE'];
 		}
 
-		if(isset($_POST['CURRENCY_ID']))
+		if (isset($_POST['CURRENCY_ID']))
 		{
 			$arFields['CURRENCY_ID'] = $_POST['CURRENCY_ID'];
 		}
-		elseif(isset($arSrcElement['CURRENCY_ID']))
+		elseif (isset($srcElement['~CURRENCY_ID']))
 		{
-			$arFields['CURRENCY_ID'] = $arSrcElement['CURRENCY_ID'];
+			$arFields['CURRENCY_ID'] = $srcElement['~CURRENCY_ID'];
 		}
 
-		// EXCH_RATE -->
 		$currencyID = isset($arFields['CURRENCY_ID']) ? $arFields['CURRENCY_ID'] : '';
-		if(!($currencyID !== '' && CCrmCurrency::IsExists($currencyID)))
+		if (!($currencyID !== '' && CCrmCurrency::IsExists($currencyID)))
 		{
 			$currencyID = $arFields['CURRENCY_ID'] = CCrmCurrency::GetBaseCurrencyID();
 		}
 		$arFields['EXCH_RATE'] = CCrmCurrency::GetExchangeRate($currencyID);
-		// <-- EXCH_RATE
 
-		if(isset($_POST['PRIMARY_ENTITY_TYPE']) && isset($_POST['PRIMARY_ENTITY_ID']))
+		if (isset($_POST['PRIMARY_ENTITY_TYPE']) && isset($_POST['PRIMARY_ENTITY_ID']))
 		{
 			$primaryEntityTypeName = isset($_POST['PRIMARY_ENTITY_TYPE']) ? $_POST['PRIMARY_ENTITY_TYPE'] : '';
 			$primaryEntityTypeID = CCrmOwnerType::ResolveID($primaryEntityTypeName);
 			$primaryEntityID = isset($_POST['PRIMARY_ENTITY_ID']) ? (int)$_POST['PRIMARY_ENTITY_ID'] : 0;
 
-			if($primaryEntityTypeID === CCrmOwnerType::Company)
+			if ($primaryEntityTypeID === CCrmOwnerType::Company)
 			{
-				if($primaryEntityID <= 0)
+				if ($primaryEntityID <= 0)
 				{
 					$arFields['COMPANY_ID'] = 0;
 				}
-				elseif(CCrmCompany::Exists($primaryEntityID))
+				elseif (CCrmCompany::Exists($primaryEntityID))
 				{
 					$arFields['COMPANY_ID'] = $primaryEntityID;
 				}
-				elseif(isset($arSrcElement['COMPANY_ID']))
+				elseif (isset($srcElement['~COMPANY_ID']))
 				{
-					$arFields['COMPANY_ID'] = $arSrcElement['COMPANY_ID'];
+					$arFields['COMPANY_ID'] = $srcElement['~COMPANY_ID'];
 				}
 			}
 			else
@@ -744,7 +766,7 @@ if ($bPostChecked)
 				$arFields['COMPANY_ID'] = 0;
 			}
 
-			if(isset($_POST['SECONDARY_ENTITY_IDS']))
+			if (isset($_POST['SECONDARY_ENTITY_IDS']))
 			{
 				$contactIDs = explode(',', $_POST['SECONDARY_ENTITY_IDS']);
 
@@ -752,7 +774,7 @@ if ($bPostChecked)
 				foreach($contactIDs as $contactID)
 				{
 					$contactID = (int)$contactID;
-					if($contactID > 0 && CCrmContact::Exists($contactID))
+					if ($contactID > 0 && CCrmContact::Exists($contactID))
 					{
 						$effectiveContactIDs[] = $contactID;
 					}
@@ -763,7 +785,7 @@ if ($bPostChecked)
 					$effectiveContactIDs
 				);
 
-				if($primaryEntityTypeID === CCrmOwnerType::Contact && $primaryEntityID > 0)
+				if ($primaryEntityTypeID === CCrmOwnerType::Contact && $primaryEntityID > 0)
 				{
 					EntityBinding::markAsPrimary(
 						$arFields['CONTACT_BINDINGS'],
@@ -784,20 +806,49 @@ if ($bPostChecked)
 				}
 			}
 		}
+		elseif(!$bEdit)
+		{
+			if(isset($_REQUEST['company_id']))
+			{
+				$companyID = (int)$_REQUEST['company_id'];
+				$arFields['COMPANY_ID'] = $companyID > 0 && CCrmCompany::CheckReadPermission($companyID, $userPermissions)
+					? $companyID : 0;
+			}
 
-		if(isset($_POST['MYCOMPANY_ID']))
+			if(isset($_REQUEST['contact_id']))
+			{
+				$contactIDs = is_array($_REQUEST['contact_id']) ? $_REQUEST['contact_id'] : explode(',', $_REQUEST['contact_id']);
+				$effectiveContactIDs = array();
+				foreach($contactIDs as $contactID)
+				{
+					$contactID = (int)$contactID;
+					if($contactID > 0 && CCrmContact::CheckReadPermission($contactID, $userPermissions))
+					{
+						$effectiveContactIDs[] = $contactID;
+					}
+				}
+
+				$arFields['CONTACT_BINDINGS'] = EntityBinding::prepareEntityBindings(
+					CCrmOwnerType::Contact,
+					$effectiveContactIDs
+				);
+				EntityBinding::markFirstAsPrimary($arFields['CONTACT_BINDINGS']);
+			}
+		}
+
+		if (isset($_POST['MYCOMPANY_ID']))
 		{
 			$myCompanyId = (int)$_POST['MYCOMPANY_ID'];
-			if($myCompanyId > 0 && CCrmCompany::CheckReadPermission($myCompanyId))
+			if ($myCompanyId > 0 && CCrmCompany::CheckReadPermission($myCompanyId))
 			{
 				$arFields['MYCOMPANY_ID'] = $myCompanyId;
 			}
 			else
 				$arFields['MYCOMPANY_ID'] = 0;
 		}
-		elseif(isset($arSrcElement['MYCOMPANY_ID']))
+		elseif (isset($srcElement['~MYCOMPANY_ID']))
 		{
-			$arFields['MYCOMPANY_ID'] = $arSrcElement['MYCOMPANY_ID'];
+			$arFields['MYCOMPANY_ID'] = $srcElement['~MYCOMPANY_ID'];
 		}
 
 		$personTypeId = is_array($arFields) ? CCrmQuote::ResolvePersonType($arFields, $arPersonTypes) : 0;
@@ -808,7 +859,7 @@ if ($bPostChecked)
 		$mcBankDetailIdLinked = isset($_POST['MC_BANK_DETAIL_ID']) ? max((int)$_POST['MC_BANK_DETAIL_ID'], 0) : 0;
 
 		$leadID = 0;
-		if(isset($_POST['LEAD_ID']))
+		if (isset($_POST['LEAD_ID']))
 		{
 			$leadID = (int)$_POST['LEAD_ID'];
 		}
@@ -824,7 +875,7 @@ if ($bPostChecked)
 		unset($leadID);
 
 		$dealID = 0;
-		if(isset($_POST['DEAL_ID']))
+		if (isset($_POST['DEAL_ID']))
 		{
 			$dealID = (int)$_POST['DEAL_ID'];
 		}
@@ -841,18 +892,18 @@ if ($bPostChecked)
 		
 		// storage type
 		$storageTypeId = isset($_POST['storageTypeId']) ? intval($_POST['storageTypeId']) : CCrmQuoteStorageType::Undefined;
-		if($storageTypeId === CCrmQuoteStorageType::Undefined
+		if ($storageTypeId === CCrmQuoteStorageType::Undefined
 			|| !CCrmQuoteStorageType::IsDefined($storageTypeId))
 		{
-			if(!$bEdit)
+			if (!$bEdit)
 			{
 				$storageTypeId = CCrmQuote::GetDefaultStorageTypeID();
 			}
 			else
 			{
-				$storageTypeId = isset($arSrcElement['STORAGE_TYPE_ID'])
-					? (int)$arSrcElement['STORAGE_TYPE_ID'] : CCrmQuoteStorageType::Undefined;
-				if($storageTypeId === CCrmQuoteStorageType::Undefined
+				$storageTypeId = isset($srcElement['~STORAGE_TYPE_ID'])
+					? (int)$srcElement['~STORAGE_TYPE_ID'] : CCrmQuoteStorageType::Undefined;
+				if ($storageTypeId === CCrmQuoteStorageType::Undefined
 					|| !CCrmQuoteStorageType::IsDefined($storageTypeId))
 				{
 					$storageTypeId = CCrmQuote::GetDefaultStorageTypeID();
@@ -863,28 +914,28 @@ if ($bPostChecked)
 
 		// files
 		$arPermittedElements = array();
-		if($storageTypeId === CCrmQuoteStorageType::File)
+		if ($storageTypeId === CCrmQuoteStorageType::File)
 		{
 			$arPermittedFiles = array();
 			$arUserFiles = isset($_POST['files']) && is_array($_POST['files']) ? $_POST['files'] : array();
-			if(!empty($arUserFiles) || $bEdit)
+			if (!empty($arUserFiles) || $bEdit)
 			{
 				$arPreviousFiles = array();
-				if($bEdit)
+				if ($bEdit)
 				{
-					CCrmQuote::PrepareStorageElementIDs($arSrcElement);
-					$arPreviousFiles = $arSrcElement['STORAGE_ELEMENT_IDS'];
-					if(is_array($arPreviousFiles) && !empty($arPreviousFiles))
+					CCrmQuote::PrepareStorageElementIDs($srcElement);
+					$arPreviousFiles = $srcElement['~STORAGE_ELEMENT_IDS'];
+					if (is_array($arPreviousFiles) && !empty($arPreviousFiles))
 					{
 						$arPermittedFiles = array_intersect($arUserFiles, $arPreviousFiles);
 					}
 				}
 
 				$uploadControlCID = isset($_POST['uploadControlCID']) ? strval($_POST['uploadControlCID']) : '';
-				if($uploadControlCID !== '' && isset($_SESSION["MFI_UPLOADED_FILES_{$uploadControlCID}"]))
+				if ($uploadControlCID !== '' && isset($_SESSION["MFI_UPLOADED_FILES_{$uploadControlCID}"]))
 				{
 					$uploadedFiles = $_SESSION["MFI_UPLOADED_FILES_{$uploadControlCID}"];
-					if(!empty($uploadedFiles))
+					if (!empty($uploadedFiles))
 					{
 						$arPermittedFiles = array_merge(
 							array_intersect($arUserFiles, $uploadedFiles),
@@ -903,10 +954,10 @@ if ($bPostChecked)
 		{
 			$fileKey = $storageTypeId === CCrmQuoteStorageType::Disk ? 'diskfiles' : 'webdavelements';
 			$arFileIds = isset($_POST[$fileKey]) && is_array($_POST[$fileKey]) ? $_POST[$fileKey] : array();
-			if(!empty($arFileIds) || $bEdit)
+			if (!empty($arFileIds) || $bEdit)
 			{
 				$prevStorageElementIDs = array();
-				if(($bEdit || $bCopy) && is_array($arResult['ELEMENT']['STORAGE_ELEMENT_IDS']))
+				if (($bEdit || $bCopy) && is_array($arResult['ELEMENT']['STORAGE_ELEMENT_IDS']))
 				{
 					$prevStorageElementIDs = $arResult['ELEMENT']['STORAGE_ELEMENT_IDS'];
 				}
@@ -920,6 +971,7 @@ if ($bPostChecked)
 			}
 			unset($arFileIds);
 		}
+		unset($srcElement);
 
 		// person type
 		$arFields['PERSON_TYPE_ID'] = 0;
@@ -931,14 +983,14 @@ if ($bPostChecked)
 		$processProductRows = array_key_exists($productDataFieldName, $_POST);
 		$arProd = array();
 		$taxList = array();
-		if($processProductRows)
+		if ($processProductRows)
 		{
 			$prodJson = isset($_POST[$productDataFieldName]) ? strval($_POST[$productDataFieldName]) : '';
-			$arProd = $arResult['PRODUCT_ROWS'] = strlen($prodJson) > 0 ? CUtil::JsObjectToPhp($prodJson) : array();
+			$arProd = $arResult['PRODUCT_ROWS'] = $prodJson <> '' ? CUtil::JsObjectToPhp($prodJson) : array();
 
-			if(count($arProd) > 0)
+			if (count($arProd) > 0)
 			{
-				if($bCopy || $bCreateFrom)
+				if ($bCopy || $bCreateFrom)
 				{
 					for($rowInd = 0, $rowQty = count($arProd); $rowInd < $rowQty; $rowInd++)
 					{
@@ -962,11 +1014,11 @@ if ($bPostChecked)
 		// Product row settings
 		$productRowSettings = array();
 		$productRowSettingsFieldName = $productDataFieldName.'_SETTINGS';
-		if(array_key_exists($productRowSettingsFieldName, $_POST))
+		if (array_key_exists($productRowSettingsFieldName, $_POST))
 		{
 			$settingsJson = isset($_POST[$productRowSettingsFieldName]) ? strval($_POST[$productRowSettingsFieldName]) : '';
-			$arSettings = strlen($settingsJson) > 0 ? CUtil::JsObjectToPhp($settingsJson) : array();
-			if(is_array($arSettings))
+			$arSettings = $settingsJson <> '' ? CUtil::JsObjectToPhp($settingsJson) : array();
+			if (is_array($arSettings))
 			{
 				$productRowSettings['ENABLE_DISCOUNT'] = isset($arSettings['ENABLE_DISCOUNT']) ? $arSettings['ENABLE_DISCOUNT'] === 'Y' : false;
 				$productRowSettings['ENABLE_TAX'] = isset($arSettings['ENABLE_TAX']) ? $arSettings['ENABLE_TAX'] === 'Y' : false;
@@ -975,7 +1027,7 @@ if ($bPostChecked)
 		unset($productRowSettingsFieldName, $settingsJson, $arSettings);
 
 		$USER_FIELD_MANAGER->EditFormAddFields(CCrmQuote::$sUFEntityID, $arFields);
-		if($conversionWizard !== null)
+		if ($conversionWizard !== null)
 		{
 			$conversionWizard->prepareDataForSave(CCrmOwnerType::Quote, $arFields);
 		}
@@ -1006,7 +1058,7 @@ if ($bPostChecked)
 			{
 				$ID = $CCrmQuote->Add($arFields, true, array('REGISTER_SONET_EVENT' => false));
 				$bSuccess = $ID !== false;
-				if($bSuccess)
+				if ($bSuccess)
 				{
 					$arResult['ELEMENT']['ID'] = $ID;
 				}
@@ -1031,7 +1083,7 @@ if ($bPostChecked)
 			if ($bSuccess)
 			{
 				// Save settings
-				if(is_array($productRowSettings) && count($productRowSettings) > 0)
+				if (is_array($productRowSettings) && count($productRowSettings) > 0)
 				{
 					$arSettings = CCrmProductRow::LoadSettings(CCrmQuote::OWNER_TYPE, $arResult['ELEMENT']['ID']);
 					foreach ($productRowSettings as $k => $v)
@@ -1041,20 +1093,20 @@ if ($bPostChecked)
 				unset($arSettings);
 			}
 
-			if($bSuccess
+			if ($bSuccess
 				//&& !$isExternal // Product rows of external quote are read only
 				&& $processProductRows
 				&& ($bEdit || !empty($arProd)))
 			{
 				// Suppress owner synchronization
 				$bSuccess = $CCrmQuote::SaveProductRows($arResult['ELEMENT']['ID'], $arProd, true, true, false);
-				if(!$bSuccess)
+				if (!$bSuccess)
 				{
 					$arResult['ERROR_MESSAGE'] = GetMessage('PRODUCT_ROWS_SAVING_ERROR');
 				}
 			}
 
-			if($bSuccess)
+			if ($bSuccess)
 			{
 				$DB->Commit();
 			}
@@ -1100,7 +1152,7 @@ if ($bPostChecked)
 			}
 			elseif (isset($_POST['saveAndView']))
 			{
-				if(CCrmQuote::CheckReadPermission($ID))
+				if (CCrmQuote::CheckReadPermission($ID))
 				{
 					LocalRedirect(
 						empty($arResult['QUOTE_REFERER']) ?
@@ -1117,14 +1169,14 @@ if ($bPostChecked)
 			{
 				$conversionWizard->attachNewlyCreatedEntity(\CCrmOwnerType::QuoteName, $ID);
 				$url = $conversionWizard->getRedirectUrl();
-				if($url !== '')
+				if ($url !== '')
 				{
 					LocalRedirect($url);
 				}
 			}
 
 			// save
-			if(isset($arResult['EXTERNAL_CONTEXT']) && $arResult['EXTERNAL_CONTEXT'] !== '')
+			if (isset($arResult['EXTERNAL_CONTEXT']) && $arResult['EXTERNAL_CONTEXT'] !== '')
 			{
 				$info = $arResult['INFO'] = CCrmEntitySelectorHelper::PrepareEntityInfo(
 					CCrmOwnerType::QuoteName,
@@ -1186,7 +1238,7 @@ elseif (isset($_GET['delete']) && check_bitrix_sessid())
 	}
 }
 
-if($conversionWizard !== null && $conversionWizard->hasOriginUrl())
+if ($conversionWizard !== null && $conversionWizard->hasOriginUrl())
 {
 	$arResult['BACK_URL'] = $conversionWizard->getOriginUrl();
 }
@@ -1251,7 +1303,7 @@ $arResult['FIELDS']['tab_1'][] = array(
 );
 
 $currencyID = CCrmCurrency::GetBaseCurrencyID();
-if(isset($arResult['ELEMENT']['CURRENCY_ID']) && $arResult['ELEMENT']['CURRENCY_ID'] !== '')
+if (isset($arResult['ELEMENT']['CURRENCY_ID']) && $arResult['ELEMENT']['CURRENCY_ID'] !== '')
 {
 	$currencyID = $arResult['ELEMENT']['CURRENCY_ID'];
 }
@@ -1344,7 +1396,7 @@ $arResult['FIELDS']['tab_1'][] = array(
 	'type' => 'vertical_checkbox',
 	'params' => array(),
 	'value' => isset($arResult['ELEMENT']['OPENED'])
-		? $arResult['ELEMENT']['OPENED'] : (\Bitrix\Crm\Settings\QuoteSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N'),
+		? $arResult['ELEMENT']['OPENED'] : (QuoteSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N'),
 	'title' => GetMessage('CRM_QUOTE_FIELD_OPENED_TITLE')
 );
 $arResult['FIELDS']['tab_1'][] = array(
@@ -1354,15 +1406,15 @@ $arResult['FIELDS']['tab_1'][] = array(
 );
 
 $companyID = isset($arResult['ELEMENT']['COMPANY_ID']) ? (int)$arResult['ELEMENT']['COMPANY_ID'] : 0;
-if(isset($arResult['ELEMENT']['CONTACT_BINDINGS']))
+if (isset($arResult['ELEMENT']['CONTACT_BINDINGS']))
 {
 	$contactBindings = $arResult['ELEMENT']['CONTACT_BINDINGS'];
 }
-elseif($arParams['ELEMENT_ID'] > 0)
+elseif ($arParams['ELEMENT_ID'] > 0)
 {
 	$contactBindings = \Bitrix\Crm\Binding\QuoteContactTable::getQuoteBindings($arParams['ELEMENT_ID']);
 }
-elseif(isset($arResult['ELEMENT']['CONTACT_ID']))
+elseif (isset($arResult['ELEMENT']['CONTACT_ID']))
 {
 	//For backward compatibility
 	$contactBindings = EntityBinding::prepareEntityBindings(
@@ -1375,7 +1427,7 @@ else
 	$contactBindings = array();
 }
 
-if($companyID > 0 || empty($contactBindings))
+if ($companyID > 0 || empty($contactBindings))
 {
 	$primaryEntityTypeName = CCrmOwnerType::CompanyName;
 	$primaryEntityID = $companyID;
@@ -1384,7 +1436,7 @@ else
 {
 	$primaryEntityTypeName = CCrmOwnerType::ContactName;
 	$primaryBinding = EntityBinding::findPrimaryBinding($contactBindings);
-	if($primaryBinding === null)
+	if ($primaryBinding === null)
 	{
 		$primaryBinding = $contactBindings[0];
 	}
@@ -1524,7 +1576,7 @@ $arResult['FIELDS']['tab_1'][] = array(
 );
 
 // FILES
-if($arResult['ENABLE_WEBDAV'] || $arResult['ENABLE_DISK'])
+if ($arResult['ENABLE_WEBDAV'] || $arResult['ENABLE_DISK'])
 {
 	$sVal = '<div id="'.$arResult['FILES_FIELD_CONTAINER_ID'].'" class="bx-crm-dialog-activity-webdav-container"></div>';
 }
@@ -1695,7 +1747,7 @@ $arResult['FIELDS']['tab_1'][] = array(
 
 $icnt = count($arResult['FIELDS']['tab_1']);
 
-if($conversionWizard !== null)
+if ($conversionWizard !== null)
 {
 	$useUserFieldsFromForm = true;
 	$fileViewer = new \Bitrix\Crm\Conversion\EntityConversionFileViewer(
@@ -1730,7 +1782,7 @@ if ($bCopy)
 	$arResult['ELEMENT']['ID'] = 0;
 }
 
-if(!$arResult['ENABLE_WEBDAV'])
+if (!$arResult['ENABLE_WEBDAV'])
 {
 	$arResult['WEBDAV_SELECT_URL'] = $arResult['WEBDAV_UPLOAD_URL'] = $arResult['WEBDAV_SHOW_URL'] = '';
 }

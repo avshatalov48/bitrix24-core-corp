@@ -84,13 +84,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_PO
 				$arFields['NAME'] = trim($arField['NAME']);
 
 			if(isset($arField['VALUE']))
-				$arFields['VALUE'] = (strlen($arField['VALUE'])<=0) ? False : $arField['VALUE'];
+				$arFields['VALUE'] = ($arField['VALUE'] == '') ? False : $arField['VALUE'];
 
 			if(isset($arField['IS_IN_PRICE']))
 				$arFields['IS_IN_PRICE'] = trim($arField['IS_IN_PRICE']);
 
 			if(isset($arField['APPLY_ORDER']))
-				$arFields['APPLY_ORDER'] = (strlen($arField['APPLY_ORDER'])<=0) ? False : $arField['APPLY_ORDER'];
+				$arFields['APPLY_ORDER'] = ($arField['APPLY_ORDER'] == '') ? False : $arField['APPLY_ORDER'];
 
 			if (count($arFields) > 0)
 			{

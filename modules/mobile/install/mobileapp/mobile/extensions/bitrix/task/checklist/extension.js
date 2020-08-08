@@ -768,7 +768,14 @@
 
 		addMember(webEventName, webEventData, memberType)
 		{
-			UserList.openPicker({allowMultipleSelection: false}).then((data) => {
+			UserList.openPicker({
+				allowMultipleSelection: false,
+				listOptions:{
+					users:{
+						hideUnnamed:true,
+						useRecentSelected:true
+					}
+				}}).then((data) => {
 				if (data.length > 0)
 				{
 					const user = data[0];

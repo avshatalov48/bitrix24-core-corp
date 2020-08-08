@@ -35,10 +35,10 @@ class Proxy implements \ICrmRestProxy
 
 	public function processMethodRequest($name, $nameDetails, $params, $nav, $server)
 	{
-		$name = strtoupper($name);
+		$name = mb_strtoupper($name);
 		if ($name === 'TRIGGER')
 		{
-			$triggerAction = isset($nameDetails[0]) ? strtolower($nameDetails[0]) : 'webhook';
+			$triggerAction = isset($nameDetails[0])? mb_strtolower($nameDetails[0]) : 'webhook';
 
 			if ($triggerAction === 'webhook')
 			{

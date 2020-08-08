@@ -144,14 +144,40 @@ class BaseComponent extends \CBitrixComponent
 			throw new Main\NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
 		}
 		$entityID = $entity->create($fields);
-		if($entityID > 0 && isset($options['startWorkFlows']) && $options['startWorkFlows'])
+		if($entityID > 0)
 		{
-			\CCrmBizProcHelper::AutoStartWorkflows(
-				$entityTypeID,
-				$entityID,
-				\CCrmBizProcEventType::Create,
-				$arErrors
-			);
+			$requisites =  isset($entityData['requisites']) && is_array($entityData['requisites'])
+				? $entityData['requisites']  : array();
+			if(!empty($requisites))
+			{
+				$entityRequisites = array();
+				$entityBankDetails = array();
+				\Bitrix\Crm\EntityRequisite::intertalizeFormData(
+					$requisites,
+					$entityTypeID,
+					$entityRequisites,
+					$entityBankDetails
+				);
+				if (!empty($entityRequisites) || !empty($entityBankDetails))
+				{
+					\Bitrix\Crm\EntityRequisite::saveFormData(
+						$entityTypeID,
+						$entityID,
+						$entityRequisites,
+						$entityBankDetails
+					);
+				}
+			}
+
+			if (isset($options['startWorkFlows']) && $options['startWorkFlows'])
+			{
+				\CCrmBizProcHelper::AutoStartWorkflows(
+					$entityTypeID,
+					$entityID,
+					\CCrmBizProcEventType::Create,
+					$arErrors
+				);
+			}
 		}
 		return $entityID;
 	}
@@ -269,7 +295,7 @@ class BaseComponent extends \CBitrixComponent
 				if(count($presentMultifields) === count($multifields))
 				{
 					$areMultifieldsEquals = true;
-					foreach(array('PHONE', 'EMAIL') as $multifieldType)
+					foreach(['PHONE', 'EMAIL'] as $multifieldType)
 					{
 						$multifieldItems = isset($multifields[$multifieldType])
 							? $multifields[$multifieldType] : array();
@@ -306,20 +332,51 @@ class BaseComponent extends \CBitrixComponent
 			}
 		}
 
-		if(empty($fields))
+		$requisites =  isset($entityData['requisites']) && is_array($entityData['requisites'])
+			? $entityData['requisites']  : array();
+
+		if(empty($fields) && empty($requisites))
 		{
 			return false;
 		}
 
-		$result = $entity->update($entityID, $fields);
-		if($result && isset($options['startWorkFlows']) && $options['startWorkFlows'])
+		$result = true;
+		if(!empty($fields))
 		{
-			\CCrmBizProcHelper::AutoStartWorkflows(
-				$entityTypeID,
-				$entityID,
-				\CCrmBizProcEventType::Edit,
-				$arErrors
-			);
+			$result = $entity->update($entityID, $fields);
+		}
+		if($result)
+		{
+			if(!empty($requisites))
+			{
+				$entityRequisites = array();
+				$entityBankDetails = array();
+				\Bitrix\Crm\EntityRequisite::intertalizeFormData(
+					$requisites,
+					$entityTypeID,
+					$entityRequisites,
+					$entityBankDetails
+				);
+				if (!empty($entityRequisites) || !empty($entityBankDetails))
+				{
+					\Bitrix\Crm\EntityRequisite::saveFormData(
+						$entityTypeID,
+						$entityID,
+						$entityRequisites,
+						$entityBankDetails
+					);
+				}
+			}
+
+			if (isset($options['startWorkFlows']) && $options['startWorkFlows'])
+			{
+				\CCrmBizProcHelper::AutoStartWorkflows(
+					$entityTypeID,
+					$entityID,
+					\CCrmBizProcEventType::Edit,
+					$arErrors
+				);
+			}
 		}
 		return $result;
 	}

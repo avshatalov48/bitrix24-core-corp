@@ -187,7 +187,7 @@ if ($iContactId > 0)
 			);
 			$imageImg = CFile::ShowImage($arFileTmp['src'], 102, 104, "border='0'", '');
 		}
-		if (strlen($imageImg)>0)
+		if ($imageImg <> '')
 			$strPhoto = '<a href="'.$arContact['PATH_TO_CONTACT_SHOW'].'" class="bx-ui-tooltip-info-data-photo" target="_blank">'.$imageImg.'</a>';
 		else
 			$strPhoto = '<a href="'.$arContact['PATH_TO_CONTACT_SHOW'].'" class="bx-ui-tooltip-info-data-photo no-photo" target="_blank"></a>';

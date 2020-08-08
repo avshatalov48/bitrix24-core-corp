@@ -22,4 +22,5 @@ $MESS["TASK_LIST_SESS_EXPIRED"] = "Ваша сессия истекла.";
 $MESS["TASK_LIST_ERROR_CHANGE_DEADLINE"] = "Запрещено менять крайний срок у задачи.";
 $MESS["TASK_ACCESS_NOTIFY_MESSAGE"] = "Прошу вас <a href=\"#URL#\">настроить стадии</a> для работы с задачами на канбане в проекте или делегировать право управления настройками мне.";
 $MESS["TASK_LIST_TASK_MANDATORY_EXISTS"] = "В задаче присутствуют обязательные поля, воспользуйтесь расширенной формой.";
+$MESS["TASK_PROJECT_TITLE"] = "Проект"
 ?>

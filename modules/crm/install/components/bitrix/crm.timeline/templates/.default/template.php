@@ -15,6 +15,7 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/message.js');
 
 Bitrix\Main\UI\Extension::load(array('ui.buttons', 'ui.icons', 'ui.selector'));
+Bitrix\Main\UI\Extension::load(['crm.delivery.taxi']);
 
 //HACK: Preloading files for prevent trembling of player afer load.
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/timeline_player/timeline_player.css');
@@ -54,7 +55,7 @@ if (!$arResult['READ_ONLY'])
 CJSCore::Init($jsLibraries);
 
 $guid = $arResult['GUID'];
-$prefix = strtolower($guid);
+$prefix = mb_strtolower($guid);
 $listContainerID = "{$prefix}_list";
 $editorContainerID = "{$prefix}_editor";
 $menuBarContainerID = "{$prefix}_menu_bar";
@@ -90,19 +91,6 @@ if(!empty($arResult['ERRORS']))
 		ShowError($error);
 	}
 	return;
-}
-
-if($arResult['ENABLE_SALESCENTER'])
-{
-	$APPLICATION->includeComponent('bitrix:spotlight', '', [
-		'ID' => 'crm-timeline-sms-salescenter',
-		'USER_TYPE' => 'ALL',
-		'JS_OPTIONS' => [
-			'targetElement' => '#'.$menuBarContainerID." .crm-entity-stream-section-new-action[data-item-id='sms']",
-			'targetVertex' => 'middle-center',
-			'content' => GetMessage('CRM_TIMELINE_SMS_SALESCENTER_SPOTLIGHT'),
-		]
-	]);
 }
 
 ?>
@@ -362,7 +350,27 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 		</div>
 	</div>
 </div>
+
 <script type="text/javascript">
+	<?
+	if (\Bitrix\Main\Loader::includeModule('intranet'))
+	{
+		$menuExtensions = \Bitrix\Intranet\Binding\Menu::getMenuItems(
+			'crm_timeline',
+			mb_strtolower($arResult['ENTITY_TYPE_NAME']),
+			[
+				'inline' => true,
+				'context' => [
+					'ENTITY_ID' => $arResult['ENTITY_ID']
+				]
+			]
+		);
+		if ($menuExtensions)
+		{
+			echo 'var IntranetExtensions = ' . \CUtil::phpToJSObject($menuExtensions) . ";\n\n";
+		}
+	}
+	?>
 	BX.ready(
 		function()
 		{
@@ -500,6 +508,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 				taskRemove: "<?=GetMessageJS('CRM_TIMELINE_TASK_DELETION_CONFIRM')?>",
 				emailRemove: "<?=GetMessageJS('CRM_TIMELINE_EMAIL_DELETION_CONFIRM')?>",
 				commentRemove: "<?=GetMessageJS('CRM_TIMELINE_COMMENT_DELETION_CONFIRM')?>",
+				deliveryRemove: "<?=GetMessageJS('CRM_TIMELINE_DELIVERY_DELETION_CONFIRM')?>",
 				outgoingCallRemove: "<?=GetMessageJS('CRM_TIMELINE_OUTGOING_CALL_DELETION_CONFIRM')?>",
 				incomingCallRemove: "<?=GetMessageJS('CRM_TIMELINE_INCOMING_CALL_DELETION_CONFIRM')?>",
 				document: "<?=GetMessageJS('CRM_TIMELINE_DOCUMENT')?>",
@@ -562,6 +571,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 					paid: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAID')?>",
 					done: "<?=GetMessageJS('CRM_TIMELINE_ORDER_DONE')?>",
 					canceled: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CANCELED')?>",
+					urlOrderLink: "<?=GetMessageJS('CRM_TIMELINE_ORDER_ORDER_LINK')?>",
 				};
 
 			BX.CrmHistoryItemOrderModification.messages =
@@ -573,12 +583,32 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 					paid: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAID')?>",
 					deducted: "<?=GetMessageJS('CRM_TIMELINE_ORDER_DEDUCTED')?>",
 					unshipped: "<?=GetMessageJS('CRM_TIMELINE_ORDER_UNSHIPPED')?>",
+					viewed: "<?=GetMessageJS('CRM_TIMELINE_ORDER_VIEWED')?>",
+					sent: "<?=GetMessageJS('CRM_TIMELINE_ORDER_SENT')?>",
+					allowedDelivery: "<?=GetMessageJS('CRM_TIMELINE_ORDER_ALLOWED_DELIVERY')?>",
+					disallowedDelivery: "<?=GetMessageJS('CRM_TIMELINE_ORDER_DISALLOWED_DELIVERY')?>",
 					orderPayment: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYMENT_TITLE')?>",
 					orderPaymentLegendPaid: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYMENT_LEGEND_PAID')?>",
 					orderPaymentLegendUnpaid: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYMENT_LEGEND_UNPAID')?>",
+					orderPaymentSuccessTitle: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYMENT_SUCCESS')?>",
+					orderPaySystemTitle: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYSYSTEM_TITLE')?>",
 					orderShipment: "<?=GetMessageJS('CRM_TIMELINE_ORDER_SHIPMENT_TITLE')?>",
 					orderShipmentLegendDeducted: "<?=GetMessageJS('CRM_TIMELINE_ORDER_SHIPMENT_LEGEND_DEDUCTED')?>",
 					orderShipmentLegendUnshipped: "<?=GetMessageJS('CRM_TIMELINE_ORDER_SHIPMENT_LEGEND_UNSHIPPED')?>",
+					orderPaymentError: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYMENT_ERROR')?>",
+					orderPaymentProcess: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYMENT_PROCESS')?>",
+					orderPaymentStatusErrorReason: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYMENT_STATUS_ERROR_REASON_TITLE')?>",
+					orderPaymentPaySystemClick: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYSYSTEM_CLICK')?>",
+				};
+
+			BX.CrmHistoryItemFinalSummary.messages =
+				{
+					title: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_TITLE')?>",
+					orderPaid: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_ORDER_PAID')?>",
+					basketBasePrice: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_BASKET_BASE_PRICE')?>",
+					basketPrice: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_BASKET_PRICE')?>",
+					paymentStatusY: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_PAYMENT_STATUS_Y')?>",
+					sumForPay: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_SUM_FOR_PAY')?>",
 				};
 
 			BX.CrmHistoryItemOrcderCheck.messages =
@@ -586,7 +616,9 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 					orderCheck: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_TITLE')?>",
 					printed: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PRINTED')?>",
 					unprinted: "<?=GetMessageJS('CRM_TIMELINE_ORDER_UNPRINTED')?>",
-					listLink: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_LINK_TO_LIST')?>",
+					sended: "<?=GetMessageJS('CRM_TIMELINE_ORDER_SENDED')?>",
+					urlLink: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_LINK')?>",
+					sendedTitle: "<?=GetMessageJS('CRM_TIMELINE_ORDER_SENDED_TITLE')?>",
 				};
 
 			BX.message({

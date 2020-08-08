@@ -15,19 +15,8 @@ class AddressRequisiteConvertException extends RequisiteConvertException
 	/** @var int */
 	protected $presetID = 0;
 
-	/**
-	 * @param string $entityTypeID Entity type ID.
-	 * @param int $presetID Preset ID.
-	 * @param int $code Error code.
-	 * @param string $file File path.
-	 * @param int $line line number.
-	 * @param \Exception|null $previous Previous error.
-	 */
-	public function __construct($entityTypeID, $presetID = 0, $code = 0, $file = '', $line = 0, \Exception $previous = null)
+	protected function getMessageByCode($code)
 	{
-		$this->entityTypeID = $entityTypeID;
-		$this->presetID = $presetID;
-
 		if($code === self::ACCESS_DENIED)
 		{
 			$message = "Access denied.";
@@ -41,7 +30,23 @@ class AddressRequisiteConvertException extends RequisiteConvertException
 			$message = 'General error';
 		}
 
-		parent::__construct($message, $code, $file, $line, $previous);
+		return $message;
+	}
+
+	/**
+	 * @param int $entityTypeID Entity type ID.
+	 * @param int $presetID Preset ID.
+	 * @param int $code Error code.
+	 * @param string $file File path.
+	 * @param int $line line number.
+	 * @param \Exception|null $previous Previous error.
+	 */
+	public function __construct($entityTypeID, $presetID = 0, $code = 0, $file = '', $line = 0, \Exception $previous = null)
+	{
+		$this->entityTypeID = $entityTypeID;
+		$this->presetID = $presetID;
+
+		parent::__construct($this->getMessageByCode($code), $code, $file, $line, $previous);
 	}
 	/**
 	 * Get entity type ID
@@ -78,6 +83,7 @@ class AddressRequisiteConvertException extends RequisiteConvertException
 		{
 			return GetMessage("CRM_ADDR_CONV_EX_{$entityTypeName}_CREATION_FAILED");
 		}
+
 		return $this->getMessage();
 	}
 }

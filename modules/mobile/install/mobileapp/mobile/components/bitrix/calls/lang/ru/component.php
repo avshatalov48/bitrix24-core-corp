@@ -4,6 +4,8 @@ $MESS["MOBILEAPP_CALL_BUSY"] = "Звонок не состоялся: польз
 $MESS["MOBILEAPP_CALL_DECLINE"] = "Пользователь отменил вызов";
 $MESS["MOBILEAPP_SOME_ERROR"] = "К сожалению, произошла ошибка. Попробуйте позже.";
 $MESS["MOBILEAPP_ERROR_AUTH"] = "Ошибка авторизации";
+$MESS["MOBILEAPP_ERROR_VIDEO"] = "Ошибка согласования параметров видео";
+$MESS["MOBILEAPP_ERROR_NETWORK"] = "Сетевая ошибка";
 $MESS["IM_PHONE_REC_ON"] = "Разговор будет записан";
 $MESS["IM_PHONE_REC_NOW"] = "Идет запись разговора";
 $MESS["IM_PHONE_REC_DONE"] = "Запись разговора сохранена";
@@ -86,6 +88,7 @@ $MESS["IM_M_CALL_ST_TRANSFER_1"] = "Перенаправление звонка:
 $MESS["IM_M_CALL_ERR"] = "Невозможно установить соединение";
 $MESS["IM_M_CALL_ALREADY_FINISHED"] = "Звонок уже завершен";
 $MESS["IM_M_CALL_ALREADY_ANSWERED"] = "Звонок уже принят другим оператором";
+$MESS["IM_M_CALL_ERR_NO_USER_ID"] = "Ошибка: пользователь не найден";
 
 $MESS["IM_CRM_BTN_NEW_CONTACT"] = "Создать новый контакт";
 $MESS["IM_CRM_BTN_NEW_LEAD"] = "Создать новый лид";

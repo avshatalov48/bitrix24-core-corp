@@ -66,7 +66,7 @@ class DealInWork extends DealDataSource
 			$name = 'COUNT';
 		}
 
-		$group = isset($params['group']) ? strtoupper($params['group']) : '';
+		$group = isset($params['group'])? mb_strtoupper($params['group']) : '';
 		if($group !== '' && $group !== self::GROUP_BY_DATE && $group !== self::GROUP_BY_USER)
 		{
 			$group = '';

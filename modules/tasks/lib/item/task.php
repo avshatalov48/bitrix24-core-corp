@@ -9,8 +9,8 @@
 namespace Bitrix\Tasks\Item;
 
 use Bitrix\Main\Localization\Loc;
-
-use Bitrix\Tasks\Manager;
+use Bitrix\Tasks\Access\TaskAccessController;
+use Bitrix\Tasks\Comments\Task\CommentPoster;
 use Bitrix\Tasks\Integration\Search;
 use Bitrix\Tasks\Integration\Pull;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
@@ -20,6 +20,7 @@ use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\Task\FavoriteTable;
 use Bitrix\Tasks\Internals\Task\LogTable;
 use Bitrix\Tasks\Internals\Helper\Task\Dependence;
+use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\User;
@@ -51,6 +52,17 @@ final class Task extends \Bitrix\Tasks\Item
 	public static function getUserFieldControllerClass()
 	{
 		return Util\UserField\Task::getClass();
+	}
+
+	public function save($settings = array())
+	{
+		$result = parent::save($settings);
+		$id = (int) $this->getId();
+		if ($id)
+		{
+			TaskAccessController::getInstance($this->getUserId())->dropItemCache($id);
+		}
+		return $result;
 	}
 
 	protected static function generateMap(array $parameters = array())
@@ -339,8 +351,18 @@ final class Task extends \Bitrix\Tasks\Item
 			$fullTaskData = $this->getData();
 
 			$groupId = $data['GROUP_ID'];
-			$parentId = intval($data['PARENT_ID']);
-			$participants = array_merge([$data['CREATED_BY'], $data['RESPONSIBLE_ID']], $data['ACCOMPLICES'], $data['AUDITORS']);
+			$parentId = (int)$data['PARENT_ID'];
+
+			$participants = [$data['CREATED_BY'], $data['RESPONSIBLE_ID']];
+			if (isset($data['ACCOMPLICES']) && is_array($data['ACCOMPLICES']))
+			{
+				$participants = array_merge($participants, $data['ACCOMPLICES']);
+			}
+			if (isset($data['AUDITORS']) && is_array($data['AUDITORS']))
+			{
+				$participants = array_merge($participants, $data['AUDITORS']);
+			}
+			$participants = array_unique($participants);
 
 			// add to favorite, if parent is in the favorites too
 			if ($parentId && FavoriteTable::check(['TASK_ID' => $parentId, 'USER_ID' => $userId]))
@@ -348,11 +370,21 @@ final class Task extends \Bitrix\Tasks\Item
 				FavoriteTable::add(['TASK_ID' => $taskId, 'USER_ID' => $userId], ['CHECK_EXISTENCE' => false]);
 			}
 
-			\CTasks::__updateViewed($taskId, $data['CREATED_BY'], $onTaskAdd = true); // todo: create processor instead of it
-			Counter::onAfterTaskAdd($data);
-
 			// note that setting occur as is deprecated. use access checker switch off instead
-			$occurAsUserId = (User::getOccurAsId()?: $userId);
+			$occurAsUserId = (User::getOccurAsId() ?: $userId);
+
+			\CTaskNotifications::sendAddMessage(
+				array_merge($data, ['CHANGED_BY' => $occurAsUserId]),
+				['SPAWNED_BY_AGENT' => $data['SPAWNED_BY_AGENT'] === 'Y' || $data['SPAWNED_BY_AGENT'] === true]
+			);
+
+			foreach ($data['AUDITORS'] as $auditorId)
+			{
+				UserOption::add($taskId, $auditorId, UserOption\Option::MUTED);
+			}
+
+			Counter::onAfterTaskAdd($data);
+			Counter::sendPushCounters($participants);
 
 			// changes log
 			$this->addLogRecord([
@@ -367,6 +399,9 @@ final class Task extends \Bitrix\Tasks\Item
 
 			\CTaskSync::addItem($data); // MS Exchange
 
+			$commentPoster = CommentPoster::getInstance($taskId, $data['CREATED_BY']);
+			$commentPoster->postCommentsOnTaskAdd($data);
+
 			$this->sendPullEvents($data, $result);
 
 			$batchState = static::getBatchState();
@@ -376,11 +411,6 @@ final class Task extends \Bitrix\Tasks\Item
 			{
 				$batchState->accumulateArray('GROUP', [$groupId]);
 			}
-
-			\CTaskNotifications::sendAddMessage(
-				array_merge($data, ['CHANGED_BY' => $occurAsUserId]),
-				['SPAWNED_BY_AGENT' => $data['SPAWNED_BY_AGENT'] === 'Y' || $data['SPAWNED_BY_AGENT'] === true]
-			);
 
 			// todo: this should be moved inside PARENT_ID field controller:
 			if ($parentId)

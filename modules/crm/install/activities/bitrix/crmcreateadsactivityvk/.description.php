@@ -26,7 +26,7 @@ $arActivityDescription = array(
 if (CModule::IncludeModule('bitrix24'))
 {
 	$zone = \CBitrix24::getPortalZone();
-	if ($zone === 'ua')
+	if (!in_array($zone, ['ru', 'kz', 'by']))
 	{
 		$arActivityDescription['FILTER'] = ['EXCLUDE' => [\CBPHelper::DISTR_B24]];
 	}

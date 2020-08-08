@@ -279,3 +279,26 @@
 	margin-bottom: 19px;
 	margin-top: 35px;
 }
+
+.intranet-imessage-background-color {
+	background-color: #000000;
+}
+
+.intranet-contact-item-selected .intranet-contact-marketplace-app {
+	background-color: #fff;
+}
+
+.intranet-contact-item-selected .intranet-contact-marketplace-name .intranet-contact-name-text {
+	color: #525c69;
+}
+
+.intranet-marketplace-item-image {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 25px;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 40%;
+}

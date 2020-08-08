@@ -322,6 +322,8 @@ class LeadConverter extends EntityConverter
 				{
 					$entityUpdateOptions['USER_ID'] = $this->contextData['USER_ID'];
 				}
+				//Disable required field check to ensure updated data will be saved.
+				$entityUpdateOptions['DISABLE_USER_FIELD_CHECK'] = true;
 
 				$isNewEntity = self::isNewDestinationEntity($entityTypeName, $entityID, $this->contextData);
 
@@ -554,7 +556,7 @@ class LeadConverter extends EntityConverter
 			$entityCreationOptions = array();
 			if(isset($this->contextData['USER_ID']))
 			{
-				$entityCreationOptions['USER_ID'] = $this->contextData['USER_ID'];
+				$entityCreationOptions['CURRENT_USER'] = $entityCreationOptions['USER_ID'] = $this->contextData['USER_ID'];
 			}
 
 			if(!$this->isUserFieldCheckEnabled())
@@ -747,7 +749,8 @@ class LeadConverter extends EntityConverter
 				//endregion
 
 				//Region automation
-				Crm\Automation\Factory::runOnAdd(\CCrmOwnerType::Deal, $entityID);
+				$starter = new Crm\Automation\Starter(\CCrmOwnerType::Deal, $entityID);
+				$starter->runOnAdd();
 				//end region
 
 				self::setDestinationEntityID(
@@ -815,8 +818,8 @@ class LeadConverter extends EntityConverter
 								array('ADDRESS', 'ADDRESS_2', 'ADDRESS_CITY')
 							);
 
-							$fields = is_object($dbResult) ? $dbResult->Fetch() : null;
-							if(is_array($fields))
+							$addressFields = is_object($dbResult) ? $dbResult->Fetch() : null;
+							if(is_array($addressFields))
 							{
 								$requisite = new EntityRequisite();
 								try
@@ -890,8 +893,8 @@ class LeadConverter extends EntityConverter
 						//endregion
 
 						//region Automation
-						if ($statusID !== 'CONVERTED')
-							Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Lead, $this->entityID);
+						$starter = new 	Crm\Automation\Starter(\CCrmOwnerType::Lead, $this->entityID);
+						$starter->runOnUpdate($fields, $presentFields);
 						//end region
 					}
 				}

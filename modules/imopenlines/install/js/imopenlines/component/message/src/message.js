@@ -8,7 +8,7 @@
  */
 
 import './message.css';
-import 'im.component.message';
+import 'im.view.message';
 
 const FormType = Object.freeze({
 	none: 'none',
@@ -24,7 +24,7 @@ const VoteType = Object.freeze({
 	dislike: 'dislike',
 });
 
-BX.Vue.cloneComponent('bx-imopenlines-message', 'bx-messenger-message',
+BX.Vue.cloneComponent('bx-imopenlines-message', 'bx-im-view-message',
 {
 	methods:
 	{

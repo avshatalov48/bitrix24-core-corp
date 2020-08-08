@@ -8,7 +8,7 @@ class CCrmDateTimeHelper
 	public static function NormalizeDateTime($str)
 	{
 		// Add seconds if omitted
-		if(strpos(CSite::GetTimeFormat(), 'SS') !== false
+		if(mb_strpos(CSite::GetTimeFormat(), 'SS') !== false
 			&& preg_match('/\d{1,2}\s*:\s*\d{1,2}\s*:\s*\d{1,2}/', $str) !== 1)
 		{
 			$str = preg_replace('/\d{1,2}\s*:\s*\d{1,2}/', '$0:00', $str);
@@ -50,7 +50,7 @@ class CCrmDateTimeHelper
 	public static function GetMaxDatabaseDate()
 	{
 		global $DBType;
-		$dbType = strtoupper($DBType);
+		$dbType = mb_strtoupper($DBType);
 		if($dbType === 'MYSQL')
 		{
 			return "'9999-12-31 00:00:00'";

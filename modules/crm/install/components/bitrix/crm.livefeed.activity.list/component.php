@@ -23,7 +23,7 @@ $arResult['PATH_TO_USER_PROFILE'] = $arParams['PATH_TO_USER_PROFILE'] = CrmCheck
 $uid = isset($arParams['UID']) ? $arParams['UID'] : '';
 if($uid === '')
 {
-	$uid = 'crm_'.strtolower(CCrmOwnerType::ResolveName($entityTypeID)).'_'.$entityID.'_feed_activities';
+	$uid = 'crm_'.mb_strtolower(CCrmOwnerType::ResolveName($entityTypeID)).'_'.$entityID.'_feed_activities';
 }
 $arResult['UID'] =$arParams['UID'] = $uid;
 

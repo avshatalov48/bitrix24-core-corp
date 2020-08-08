@@ -48,7 +48,7 @@ class EntitySearchScope
 
 	public static function resolveID($name)
 	{
-		$name = strtoupper(trim($name));
+		$name = mb_strtoupper(trim($name));
 		if($name == '')
 		{
 			return self::UNDEFINED;

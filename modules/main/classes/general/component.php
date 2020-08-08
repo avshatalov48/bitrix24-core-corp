@@ -614,7 +614,7 @@ class CBitrixComponent
 	 * @return mixed
 	 *
 	 */
-	final public function includeComponent($componentTemplate, $arParams, $parentComponent)
+	final public function includeComponent($componentTemplate, $arParams, $parentComponent, $returnResult = false)
 	{
 		if (!$this->__bInited)
 			return null;
@@ -646,7 +646,16 @@ class CBitrixComponent
 			$componentFrame = new \Bitrix\Main\Composite\Internals\AutomaticArea($component);
 			$componentFrame->start();
 
-			$result = $component->executeComponent();
+			if($returnResult)
+			{
+				$component->executeComponent();
+				$result = $component->arResult;
+			}
+			else
+			{
+				$result = $component->executeComponent();
+			}
+
 			$this->__arIncludeAreaIcons = $component->__arIncludeAreaIcons;
 			$frameMode = $component->getFrameMode();
 
@@ -661,7 +670,16 @@ class CBitrixComponent
 			$componentFrame = new \Bitrix\Main\Composite\Internals\AutomaticArea($this);
 			$componentFrame->start();
 
-			$result = $this->__IncludeComponent();
+			if($returnResult)
+			{
+				$this->__IncludeComponent();
+				$result = $this->arResult;
+			}
+			else
+			{
+				$result = $this->__IncludeComponent();
+			}
+
 			$frameMode = $this->getFrameMode();
 
 			$componentFrame->end();

@@ -58,19 +58,19 @@ abstract class EntityBase
 
 	public function getLastID($userID = 0, $enablePermissionCheck = true)
 	{
-		if($userID <= 0)
+		if ($userID <= 0)
 		{
 			$userID = EntityAuthorization::getCurrentUserID();
 		}
 		$userPermissions = EntityAuthorization::getUserPermissions($userID);
 
-		if($enablePermissionCheck && EntityAuthorization::isAdmin($userID))
+		if ($enablePermissionCheck && EntityAuthorization::isAdmin($userID))
 		{
 			$enablePermissionCheck = false;
 		}
 
 		$query = new Main\Entity\Query($this->getDbEntity());
-		if(!$enablePermissionCheck)
+		if (!$enablePermissionCheck)
 		{
 			$query->addSelect('ID');
 			$query->addOrder('ID', 'DESC');
@@ -78,41 +78,28 @@ abstract class EntityBase
 		}
 		else
 		{
-			$permissionSql = $this->buildPermissionSql(
-				array(
-					'alias' => 'L',
-					'permissionType' => 'READ',
-					'options' => array(
-						'PERMS' => $userPermissions,
-						'RAW_QUERY' => array('TOP' => 1, 'SORT_TYPE' => 'DESC')
-					)
-				)
-			);
+			$permissionSql = $this->buildPermissionSql([
+				'alias' => 'L',
+				'permissionType' => 'READ',
+				'options' => ['PERMS' => $userPermissions]
+			]);
 
 			$query->addSelect('ID');
-			if(!is_string($permissionSql))
+			if (!is_string($permissionSql))
 			{
 				return 0;
 			}
-			elseif($permissionSql === '')
+			elseif ($permissionSql === '')
 			{
 				$query->addOrder('ID', 'DESC');
 				$query->setLimit(1);
 			}
 			else
 			{
-				$permissionEntity = Main\Entity\Base::compileEntity(
-					'user_perms',
-					array('ENTITY_ID' => array('data_type' => 'integer')),
-					array('table_name' => "({$permissionSql})")
-				);
-				$query->registerRuntimeField('',
-					new Main\Entity\ReferenceField('PERMS',
-						$permissionEntity,
-						array('=this.ID' => 'ref.ENTITY_ID'),
-						array('join_type' => 'INNER')
-					)
-				);
+				$permissionSql = mb_substr($permissionSql, 7);
+				$query->addOrder('ID', 'DESC');
+				$query->setLimit(1);
+				$query->where('ID', 'in', new \Bitrix\Main\DB\SqlExpression($permissionSql));
 			}
 		}
 
@@ -120,6 +107,7 @@ abstract class EntityBase
 		$field = $dbResult->fetch();
 		return is_array($field) ? (int)$field['ID'] : 0;
 	}
+
 	public function getNewIDs($offsetID, $order = 'DESC', $limit = 100, $userID = 0, $enablePermissionCheck = true)
 	{
 		if($userID <= 0)

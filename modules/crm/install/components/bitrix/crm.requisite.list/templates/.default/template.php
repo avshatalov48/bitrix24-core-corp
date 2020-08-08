@@ -260,7 +260,7 @@ if($arResult['ENABLE_TOOLBAR'])
 		'bitrix:crm.interface.toolbar',
 		'',
 		array(
-			'TOOLBAR_ID' => strtolower($arResult['GRID_ID']).'_toolbar',
+			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']).'_toolbar',
 			'BUTTONS' => $toolbarButtons
 		),
 		$component,

@@ -69,7 +69,7 @@ class CrmSiteButtonEditAjaxController extends \Bitrix\Crm\SiteButton\ComponentCo
 			return;
 		}
 
-		if(strlen($file["name"]) == 0 || intval($file["size"]) == 0)
+		if($file["name"] == '' || intval($file["size"]) == 0)
 		{
 			return;
 		}

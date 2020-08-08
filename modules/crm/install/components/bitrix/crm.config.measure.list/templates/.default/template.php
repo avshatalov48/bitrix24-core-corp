@@ -75,7 +75,7 @@ $APPLICATION->IncludeComponent(
 				'list' => array()
 			),
 		'ACTION_ALL_ROWS' => false,
-		'NAV_OBJECT' => $arResult['MEASURES'],
+		'NAV_OBJECT' => $arResult['DB_LIST'],
 		'FORM_ID' => $arResult['FORM_ID'],
 		'TAB_ID' => $arResult['TAB_ID'],
 		'AJAX_MODE' => 'N'

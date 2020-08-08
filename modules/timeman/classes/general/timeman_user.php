@@ -228,7 +228,7 @@ class CTimeManUser
 			if ($result->isSuccess())
 			{
 				CUser::SetLastActivityDate($this->USER_ID);
-				$recordFields = WorktimeRecordTable::convertFieldsCompatible($result->getWorktimeRecord()->collectValues());
+				$recordFields = WorktimeRecordTable::convertFieldsCompatible($result->getWorktimeRecord()->collectRawValues());
 
 				if (isset($arFields['ACTIVE']) && $recordFields['ACTIVE'] == 'N')
 				{
@@ -459,7 +459,13 @@ class CTimeManUser
 			{
 				$shift = $schedule->obtainShiftByPrimary($lastEntry['SHIFT_ID']);
 			}
-			$recommendedTimestamp = WorktimeRecord::getRecommendedWorktimeStopTimestamp($lastEntry, $schedule, $shift);
+			$manager = DependencyManager::getInstance()
+				->buildWorktimeRecordManager(
+					WorktimeRecord::wakeUpRecord($lastEntry),
+					$schedule,
+					$shift
+				);
+			$recommendedTimestamp = $manager->getRecommendedStopTimestamp();
 			if ($recommendedTimestamp > 0)
 			{
 				return TimeHelper::getInstance()->convertUtcTimestampToDaySeconds(
@@ -531,7 +537,13 @@ class CTimeManUser
 		{
 			$shift = $schedule->obtainShiftByPrimary($recordData['SHIFT_ID']);
 		}
-		return WorktimeRecord::isRecordExpired($recordData, $schedule, $shift);
+		$manager = DependencyManager::getInstance()
+			->buildWorktimeRecordManager(
+				WorktimeRecord::wakeUpRecord($recordData),
+				$schedule,
+				$shift
+			);
+		return $manager->isRecordExpired();
 	}
 
 	/**
@@ -917,7 +929,7 @@ class CTimeManUser
 				->findSchedulesByUserId($this->USER_ID, ['select' => ['ID', 'SCHEDULE_TYPE',]]);
 			foreach ($userSchedules as $userSchedule)
 			{
-				if ($userSchedule->isFlexible())
+				if ($userSchedule->isFlextime())
 				{
 					$this->SETTINGS[$cat]['UF_TM_FREE'] = true;
 					break;

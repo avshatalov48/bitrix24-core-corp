@@ -27,12 +27,6 @@ $MESS["CRM_WEBFORM_LIST_CLOSE"] = "Закрыть";
 $MESS["CRM_WEBFORM_LIST_APPLY"] = "Выполнить";
 $MESS["CRM_WEBFORM_LIST_CANCEL"] = "Отменить";
 $MESS["CRM_WEBFORM_LIST_HIDE_DESC"] = "Скрыть описание";
-$MESS["CRM_WEBFORM_LIST_POPUP_LIMITED_TITLE"] = "Расширенные CRM-формы";
-$MESS["CRM_WEBFORM_LIST_POPUP_LIMITED_TEXT"] = "На вашем тарифном плане есть ограничение по количеству активных CRM-форм. Чтобы добавить новые формы, перейдите на другой тарифный план.
-<br><br>
-В верхнем тарифе \"Компания\" число активных CRM-форм не ограничено.
-<br><br>
-Перейти на расширенный тариф Бесплатно на 30 дней";
 $MESS["CRM_WEBFORM_LIST_ITEM_ACTIVE_BTN_ON"] = "включить";
 $MESS["CRM_WEBFORM_LIST_ITEM_ACTIVE_BTN_OFF"] = "выключить";
 $MESS["CRM_WEBFORM_LIST_ITEM_BTN_GET_SCRIPT"] = "Код на сайт";

@@ -8,6 +8,7 @@ use Bitrix\Main\Grid;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter;
 use Bitrix\Tasks\Manager;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 
 Loc::loadMessages(__FILE__);
 
@@ -97,7 +98,7 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 			$arguments['id'] = $id;
 
 			$todo[] = array(
-				'OPERATION'  => 'task.template.'.strtolower($action),
+				'OPERATION'  => 'task.template.'.mb_strtolower($action),
 				'ARGUMENTS'  => $arguments,
 				'PARAMETERS' => $arParams
 			);
@@ -232,6 +233,11 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 
 		$this->arResult['FILTER']['FIELDS'] = $this->getFilterFields();
 		$this->arResult['FILTER']['PRESETS'] = $this->getFilterPresets();
+	}
+
+	protected function getAuxData()
+	{
+		$this->arResult['TASK_LIMIT_EXCEEDED'] = TaskLimit::isLimitExceeded();
 	}
 
 	/**

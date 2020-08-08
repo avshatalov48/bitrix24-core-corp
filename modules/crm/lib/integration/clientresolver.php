@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\Crm\Integration;
 
+use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Location\Entity\Address;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
@@ -82,10 +84,21 @@ class ClientResolver
 			$countryID = (int)$countryID;
 		}
 
+		if (($countryID === 1 && $propertyTypeID === static::PROP_ITIN
+				&& !RestrictionManager::isDetailsSearchByInnPermitted())
+			|| ($countryID === 14 && $propertyTypeID === static::PROP_SRO
+				&& !RestrictionManager::isDetailsSearchByEdrpouPermitted()))
+		{
+			return [];
+		}
+
+
 		if(!in_array($countryID, static::$allowedCountries, true))
 		{
 			throw new Main\NotSupportedException("Country ID: '{$countryID}' is not supported in current context.");
 		}
+
+		$fieldTitles = (new EntityRequisite)->getFieldsTitles($countryID);
 
 		$dateFormat = Date::convertFormatToPhp(FORMAT_DATE);
 		$nameFormat = Crm\Format\PersonNameFormatter::LastFirstSecondFormat;
@@ -106,7 +119,7 @@ class ClientResolver
 			{
 				$caption = '';
 				$fields = null;
-				$len = strlen(isset($info['INN']) ? $info['INN'] : '');
+				$len = mb_strlen(isset($info['INN'])? $info['INN'] : '');
 				$clientType = self::TYPE_UNKNOWN;
 				if($len === 10)
 				{
@@ -132,6 +145,12 @@ class ClientResolver
 						EntityRequisite::COMPANY_FULL_NAME => $fullName,
 						EntityRequisite::IFNS => isset($info['TAX_REGISTRAR_NAME']) ? $info['TAX_REGISTRAR_NAME'] : ''
 					);
+					$presetId = Crm\EntityPreset::getByXmlId('#CRM_REQUISITE_PRESET_DEF_RU_COMPANY#');
+					if ($presetId > 0)
+					{
+						$fields['PRESET_ID'] = $presetId;
+					}
+
 					$caption = $shortName !== '' ? $shortName : $fullName;
 
 					$registrationDate = isset($info['CREATION_REGISTRATION_DATE'])
@@ -237,17 +256,24 @@ class ClientResolver
 						$city = "{$settlement}, {$city}";
 					}
 
-					$fields['RQ_ADDR'] = array(
-						EntityAddress::Registered => array(
+					$locationAddress = EntityAddress::makeLocationAddressByFields(
+						[
 							'ADDRESS_1' => $address1,
 							'ADDRESS_2' => $address2,
 							'CITY' => $city,
 							'REGION' => $region,
 							'PROVINCE' => $province,
 							'POSTAL_CODE' => $postalCode,
-							'COUNTRY' => GetMessage('CRM_CLIENT_ADDRESS_COUNTRY_RUSSIA'),
-						)
+							'COUNTRY' => GetMessage('CRM_CLIENT_ADDRESS_COUNTRY_RUSSIA')
+						]
 					);
+					if ($locationAddress)
+					{
+						$fields['RQ_ADDR'] = array(
+							EntityAddress::Registered => $locationAddress->toJson()
+						);
+					}
+					unset($locationAddress);
 
 					$directorName = '';
 					$accountantName = '';
@@ -308,11 +334,24 @@ class ClientResolver
 						EntityRequisite::PERSON_FULL_NAME => $fullName,
 						EntityRequisite::IFNS => isset($info['TAX_AUTHORITY_NAME']) ? $info['TAX_AUTHORITY_NAME'] : ''
 					);
+					$presetId = Crm\EntityPreset::getByXmlId('#CRM_REQUISITE_PRESET_DEF_RU_INDIVIDUAL#');
+					if ($presetId > 0)
+					{
+						$fields['PRESET_ID'] = $presetId;
+					}
 				}
 
 				if(is_array($fields))
 				{
-					$results[] = array('caption' => $caption,  'fields' => $fields);
+					$title = $caption;
+					$subtitle = ($fields[EntityRequisite::INN] != '') ?
+						$fieldTitles[EntityRequisite::INN] . ' ' . $fields[EntityRequisite::INN] : '';
+					$results[] = [
+						'caption' => $caption,
+						'title' => $title,
+						'subTitle' => $subtitle,
+						'fields' => $fields
+					];
 				}
 			}
 		}
@@ -339,6 +378,11 @@ class ClientResolver
 					EntityRequisite::COMPANY_FULL_NAME => $fullName,
 					EntityRequisite::COMPANY_DIRECTOR => $director,
 				);
+				$presetId = Crm\EntityPreset::getByXmlId('#CRM_REQUISITE_PRESET_DEF_UA_LEGALENTITY#');
+				if ($presetId > 0)
+				{
+					$fields['PRESET_ID'] = $presetId;
+				}
 				$caption = $shortName !== '' ? $shortName : $fullName;
 
 				$address1 = isset($info['ADDRESS']) ? static::cleanStringValue($info['ADDRESS']) : '';
@@ -346,8 +390,8 @@ class ClientResolver
 				$countryList = Crm\EntityPreset::getCountryList();
 				$countryName = isset($countryList[$countryID]) ? $countryList[$countryID] : '';
 
-				$fields['RQ_ADDR'] = array(
-					EntityAddress::Registered => array(
+				$locationAddress = EntityAddress::makeLocationAddressByFields(
+					[
 						'ADDRESS_1' => $address1,
 						'ADDRESS_2' => $address2,
 						'CITY' => $city,
@@ -355,12 +399,27 @@ class ClientResolver
 						'PROVINCE' => $province,
 						'POSTAL_CODE' => $postalCode,
 						'COUNTRY' => $countryName,
-					)
+					]
 				);
+				if ($locationAddress)
+				{
+					$fields['RQ_ADDR'] = array(
+						EntityAddress::Registered => $locationAddress->toJson()
+					);
+				}
+				unset($locationAddress);
 
 				if(is_array($fields))
 				{
-					$results[] = array('caption' => $caption,  'fields' => $fields);
+					$title = $caption;
+					$subtitle = ($fields[EntityRequisite::EDRPOU] != '') ?
+						$fieldTitles[EntityRequisite::EDRPOU] . ' ' . $fields[EntityRequisite::EDRPOU] : '';
+					$results[] = array(
+						'caption' => $caption,
+						'title' => $title,
+						'subTitle' => $subtitle,
+						'fields' => $fields
+					);
 				}
 			}
 		}
@@ -370,5 +429,47 @@ class ClientResolver
 		}
 
 		return $results;
+	}
+
+	public static function getPropertyTypeByCountry(int $countryId)
+	{
+		if ($countryId === 1 && // ru
+			RestrictionManager::isDetailsSearchByInnPermitted())
+		{
+			$requisiteEntity = new EntityRequisite();
+			$titles = $requisiteEntity->getFieldsTitles($countryId);
+			return [
+				'VALUE' => self::PROP_ITIN,
+				'TITLE' => $titles[EntityRequisite::INN]
+			];
+		}
+		if ($countryId === 14 && // ua
+			RestrictionManager::isDetailsSearchByEdrpouPermitted())
+		{
+			$requisiteEntity = new EntityRequisite();
+			$titles = $requisiteEntity->getFieldsTitles($countryId);
+			return [
+				'VALUE' => self::PROP_SRO,
+				'TITLE' => $titles[EntityRequisite::EDRPOU]
+			];
+		}
+
+		return null;
+	}
+
+	public static function getRestriction(int $countryId)
+	{
+		if ($countryId === 1 && // ru
+			!RestrictionManager::isDetailsSearchByInnPermitted())
+		{
+			return RestrictionManager::getDetailsSearchByInnRestriction();
+		}
+		if ($countryId === 14 && // ua
+			!RestrictionManager::isDetailsSearchByEdrpouPermitted())
+		{
+			return RestrictionManager::getDetailsSearchByEdrpouRestriction();
+		}
+
+		return null;
 	}
 }

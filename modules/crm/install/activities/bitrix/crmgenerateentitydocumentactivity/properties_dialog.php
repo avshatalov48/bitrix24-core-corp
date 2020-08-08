@@ -3,6 +3,7 @@
 
 \Bitrix\Main\Page\Asset::getInstance()->addJs(getLocalPath('activities/bitrix/crmgenerateentitydocumentactivity/script.js'));
 $map = $dialog->getMap();
+$requisitesMap = $map['MyCompanyId']['FullMap'];
 foreach ($map as $fieldId => $field)
 {
 	if($fieldId == 'Values')
@@ -75,6 +76,10 @@ if(is_array($values))
 			documentType: <?=Cutil::PhpToJSObject($dialog->getDocumentType())?>,
 			entityType: '<?=$dialog->getDocumentType()[2];?>',
 			entityTypeId: '<?=intval(\CCrmOwnerType::ResolveID($dialog->getDocumentType()[2]));?>',
+            requisitesMap: <?=CUtil::PhpToJSObject($requisitesMap);?>,
+			selectMyCompanyNodeId: 'id_my_company_id',
+            selectMyCompanyRequisiteNodeId: 'id_my_company_requisite_id',
+            selectMyCompanyBankDetailNodeId: 'id_my_company_bank_detail_id',
 			selectTemplateNodeId: 'id_template_id',
 			selectFieldNodeId: 'add_new_field_select',
 			textFieldNodeId: 'add_new_field_text',

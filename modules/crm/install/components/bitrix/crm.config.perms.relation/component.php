@@ -17,7 +17,7 @@ $restriction = \Bitrix\Crm\Restriction\RestrictionManager::getPermissionControlR
 $arResult['IS_PERMITTED'] = $restriction->hasPermission();
 if(!$arResult['IS_PERMITTED'])
 {
-	$arResult['LOCK_SCRIPT'] = $restriction->preparePopupScript();
+	$arResult['LOCK_SCRIPT'] = $restriction->prepareInfoHelperScript();
 }
 
 CJSCore::Init(array('access', 'window'));

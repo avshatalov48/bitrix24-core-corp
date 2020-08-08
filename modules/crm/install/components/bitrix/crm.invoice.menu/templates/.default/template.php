@@ -17,6 +17,33 @@ global $APPLICATION;
 if (!empty($arResult['BUTTONS']))
 {
 	$type = $arParams['TYPE'];
+
+	if ($arParams['TYPE'] == 'show' && \Bitrix\Main\Loader::includeModule('intranet'))
+	{
+		$APPLICATION->includeComponent(
+			'bitrix:intranet.binding.menu',
+			'',
+			array(
+				'SECTION_CODE' => 'crm_detail',
+				'MENU_CODE' => 'invoice',
+				'CONTEXT' => [
+					'ENTITY_ID' => $arParams['ELEMENT_ID']
+				]
+			)
+		);
+
+		?><script type="text/javascript">
+		BX.ready(function() {
+			var intranetBindingBtn = document.querySelector('.intranet-binding-menu-btn');
+			var invoiceToolbar = BX('crm_invoice_toolbar');
+
+			if (invoiceToolbar && intranetBindingBtn)
+			{
+				invoiceToolbar.insertBefore(intranetBindingBtn, invoiceToolbar.firstChild);
+			}
+		});
+	</script><?
+	}
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.interface.toolbar',
 		$type === 'list' ?  (SITE_TEMPLATE_ID === 'bitrix24' ? 'title' : '') : 'type2',

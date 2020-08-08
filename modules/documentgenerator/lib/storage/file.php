@@ -26,7 +26,7 @@ class File implements Storage
 	public function read($path)
 	{
 		$uri = new Uri($path);
-		if(strlen($uri->getHost()) > 0)
+		if($uri->getHost() <> '')
 		{
 			$path = $this->readFromCloud($path);
 			if(!$path)
@@ -55,9 +55,9 @@ class File implements Storage
 	protected function readFromCloud($path)
 	{
 		$uri = new Uri($path);
-		if(strlen($uri->getHost()) > 0)
+		if($uri->getHost() <> '')
 		{
-			if(strpos($uri->getHost(), \CBXPunycode::PREFIX) === false)
+			if(mb_strpos($uri->getHost(), \CBXPunycode::PREFIX) === false)
 			{
 				$errors = array();
 				if(defined("BX_UTF"))

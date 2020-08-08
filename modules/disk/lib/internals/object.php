@@ -646,4 +646,15 @@ class ObjectTable extends DataManager
 	{
 		return static::getAncestors($objectId, $parameters);
 	}
+
+	/**
+	 * @param $primary
+	 * @param DateTime $dateTime
+	 *
+	 * @return Main\ORM\Data\UpdateResult
+	 */
+	public static function changeSyncDateTime($primary, DateTime $dateTime)
+	{
+		return static::update($primary, ['SYNC_UPDATE_TIME' => $dateTime]);
+	}
 }

@@ -7,15 +7,21 @@ use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Engine\Response;
 use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Tasks\AnalyticLogger;
+use Bitrix\Tasks\Comments;
 use Bitrix\Tasks\Exception;
+use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\SearchIndex;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
+use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Manager;
-use Bitrix\Tasks\Ui\Avatar;
+use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\Type\DateTime;
 use TasksException;
 
@@ -127,9 +133,9 @@ final class Task extends Base
 	 *
 	 * @return array|null
 	 */
-	public function getAction(\CTaskItem $task, array $select = array(), array $params = array())
+	public function getAction(\CTaskItem $task, array $select = [], array $params = [])
 	{
-	    if(!empty($select))
+	    if (!empty($select))
         {
             $select[] = 'FAVORITE';
         }
@@ -147,8 +153,22 @@ final class Task extends Base
 		$this->formatUserInfo($row);
 		$this->formatDateFieldsForOutput($row);
 
+		if (in_array('NEW_COMMENTS_COUNT', $params['select'], true))
+		{
+			$taskId = $task->getId();
+			$userId = $this->getCurrentUser()->getId();
+
+			$newComments = Comments\Task::getNewCommentsCountForTasks([$taskId], $userId);
+			$row['NEW_COMMENTS_COUNT'] = $newComments[$taskId];
+		}
+
 		$action = $this->getAccessAction($task);
 		$row['action'] = $action['allowedActions'][$this->getCurrentUser()->getId()];
+
+		if (isset($params['GET_TASK_LIMIT_EXCEEDED']) && $params['GET_TASK_LIMIT_EXCEEDED'])
+		{
+			$row['TASK_LIMIT_EXCEEDED'] = TaskLimit::isLimitExceeded();
+		}
 
 		return ['task' => $this->convertKeysToCamelCase($row)];
 	}
@@ -171,7 +191,7 @@ final class Task extends Base
 	 *
 	 * @return array
 	 */
-	private function getDateFields():array
+	private function getDateFields(): array
 	{
 		return array_filter(
 			\CTasks::getFieldsInfo(),
@@ -203,7 +223,7 @@ final class Task extends Base
 				$timestamp = strtotime($date);
 				if ($timestamp !== false)
 				{
-					$timestamp += \CTimeZone::GetOffset();
+					$timestamp += \CTimeZone::GetOffset() - DateTime::createFromTimestamp($timestamp)->getSecondGmt();
 					$fields[$fieldName] = ConvertTimeStamp($timestamp, 'FULL');
 				}
 			}
@@ -221,28 +241,25 @@ final class Task extends Base
 	private function formatDateFieldsForOutput(&$row): void
 	{
 		static $dateFields;
-		static $timeZone;
 
 		if (!$dateFields)
 		{
 			$dateFields = $this->getDateFields();
 		}
-		if (!$timeZone)
-		{
-			$localOffset = (new \DateTime())->getOffset();
-			$userOffset =  \CTimeZone::GetOffset(null, true);
 
-			$timeZone = DateTime::getTimeZoneByOffset($localOffset + $userOffset);
-		}
+		$localOffset = (new \DateTime())->getOffset();
+		$userOffset =  \CTimeZone::GetOffset(null, true);
+		$offset = $localOffset + $userOffset;
 
 		foreach ($dateFields as $fieldName => $fieldData)
 		{
 			if ($row[$fieldName])
 			{
-				$date = new DateTime($row[$fieldName], null, $timeZone);
+				$date = new DateTime($row[$fieldName]);
 				if ($date)
 				{
-					$row[$fieldName] = $date->format('c');
+					$newOffset = ($offset > 0 ? '+' : '').UI::formatTimeAmount($offset, 'HH:MI');
+					$row[$fieldName] = mb_substr($date->format('c'), 0, -6).$newOffset;
 				}
 			}
 		}
@@ -353,79 +370,77 @@ final class Task extends Base
 	/**
 	 * Get list all task
 	 *
+	 * @param PageNavigation $pageNavigation
 	 * @param array $filter
 	 * @param array $select
 	 * @param array $group
 	 * @param array $order
 	 * @param array $params
-	 * @param PageNavigation $pageNavigation
-	 *
 	 * @return Response\DataType\Page
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\SystemException
+	 * @throws \Exception
 	 */
-	public function listAction(PageNavigation $pageNavigation, array $filter = array(), array $select = array(),
-							   array $group = array(), array $order = array(), array $params = array())
+	public function listAction(
+		PageNavigation $pageNavigation,
+		array $filter = [],
+		array $select = [],
+		array $group = [],
+		array $order = [],
+		array $params = []
+	): ?Response\DataType\Page
 	{
-		$filter = $this->getFilter($filter);
-
-		if(!$this->checkOrderKeys($order))
+		if (!$this->checkOrderKeys($order))
         {
             $this->addError(new Error(GetMessage('TASKS_FAILED_WRONG_ORDER_FIELD')));
             return null;
         }
 
-		$params['USE_MINIMAL_SELECT_LEGACY'] = 'N'; // VERY VERY BAD HACK! DONT REPEAT IT !
-
-		if (!isset($params['RETURN_ACCESS']))
-		{
-			$params['RETURN_ACCESS'] = 'N'; // VERY VERY BAD HACK! DONT REPEAT IT !
-		}
-
-		$dateFields = array_filter(
-			\CTasks::getFieldsInfo(),
-			function ($item) {// [2]
-				if ($item['type'] == 'datetime')
-				{
-					return $item;
-				}
-
-				return null;
-			}
-		);
+		$filter = $this->getFilter($filter);
+		$dateFields = $this->getDateFields();
 
 		foreach ($filter as $fieldName => $fieldData)
 		{
 			preg_match('#(\w+)#', $fieldName, $m);
 
-			if (array_key_exists($m[1], $dateFields))
+			if (array_key_exists($m[1], $dateFields) && $filter[$fieldName])
 			{
-				if ($filter[$fieldName])
-				{
-					$filter[$fieldName] = DateTime::createFromTimestamp(strtotime($filter[$fieldName]));
-				}
+				$filter[$fieldName] = DateTime::createFromTimestamp(strtotime($filter[$fieldName]));
 			}
 		}
 
-		$getListParams = [
-			'limit'  => $pageNavigation->getLimit(),
-			'offset' => $pageNavigation->getOffset(),
-			'page'   => $pageNavigation->getCurrentPage(),
+		if (isset($params['SIFT_THROUGH_FILTER']))
+		{
+			/** @var Filter $filterInstance */
+			$filterInstance = Filter::getInstance(
+				$params['SIFT_THROUGH_FILTER']['userId'],
+				$params['SIFT_THROUGH_FILTER']['groupId']
+			);
+			$filter = array_merge($filter, $filterInstance->process());
+			unset($filter['ONLY_ROOT_TASKS']);
+		}
 
-			'select'       => $this->prepareSelect($select),
-			'legacyFilter' => !empty($filter) ? $filter : [],
-			'order'        => !empty($order) ? $order : [],
-			'group'        => !empty($group) ? $group : [],
+		$getListParams = [
+			'limit' => $pageNavigation->getLimit(),
+			'offset' => $pageNavigation->getOffset(),
+			'page' => $pageNavigation->getCurrentPage(),
+			'select' => $this->prepareSelect($select),
+			'legacyFilter' => ($filter ?: []),
+			'order' => ($order ?: []),
+			'group' => ($group ?: []),
 		];
 
 		$params['PUBLIC_MODE'] = 'Y'; // VERY VERY BAD HACK! DONT REPEAT IT !
-		$result = Manager\Task::getList($this->getCurrentUser()->getId(), $getListParams, $params);
+		$params['USE_MINIMAL_SELECT_LEGACY'] = 'N'; // VERY VERY BAD HACK! DONT REPEAT IT !
+		$params['RETURN_ACCESS'] = ($params['RETURN_ACCESS'] ?? 'N'); // VERY VERY BAD HACK! DONT REPEAT IT !
 
+		$result = Manager\Task::getList($this->getCurrentUser()->getId(), $getListParams, $params);
 		$list = array_values($result['DATA']);
 
-		$needReturnUserInfo = array_key_exists('RETURN_USER_INFO', $params) && $params['RETURN_USER_INFO'] != 'N';
-
-		foreach ($list as &
-				 $row)
+		foreach ($list as &$row)
 		{
 			if (array_key_exists('STATUS', $row))
 			{
@@ -440,7 +455,7 @@ final class Task extends Base
 
 			$row = $this->convertKeysToCamelCase($row);
 
-			if (\Bitrix\Main\Loader::includeModule('pull') && isset($params['SEND_PULL']) && $params['SEND_PULL'] !='N')
+			if (isset($params['SEND_PULL']) && $params['SEND_PULL'] !== 'N' && Loader::includeModule('pull'))
 			{
 				$users = array_unique(array_merge([$row['CREATED_BY']], [$row['RESPONSIBLE_ID']]));
 				foreach ($users as $userId)
@@ -452,26 +467,26 @@ final class Task extends Base
 		unset($row);
 
 		return new Response\DataType\Page(
-			'tasks', $list, function () use ($getListParams, $params, $result) {
-			$obj = $result['AUX']['OBJ_RES'];
-
-			return $obj->nSelectedCount;
-		}
+			'tasks',
+			$list,
+			function() use ($getListParams, $params, $result)
+			{
+				return $result['AUX']['OBJ_RES']->nSelectedCount;
+			}
 		);
 
 	}
 
-	private function checkOrderKeys($order)
+	/**
+	 * @param $order
+	 * @return bool
+	 */
+	private function checkOrderKeys($order): bool
     {
         $orderKeys = array_keys(array_change_key_case($order, CASE_UPPER));
         $availableKeys = \CTasks::getAvailableOrderFields();
 
-        if(array_diff($orderKeys, $availableKeys))
-        {
-            return false;
-        }
-
-        return true;
+        return empty(array_diff($orderKeys, $availableKeys));
     }
 
 	/**
@@ -627,6 +642,58 @@ final class Task extends Base
 	}
 
 	/**
+	 * @param \CTaskItem $task
+	 * @return array|null
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function muteAction(\CTaskItem $task): ?array
+	{
+		UserOption::add($task->getId(), CurrentUser::get()->getId(), UserOption\Option::MUTED);
+		return $this->getAction($task);
+	}
+
+	/**
+	 * @param \CTaskItem $task
+	 * @return array|null
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function unmuteAction(\CTaskItem $task): ?array
+	{
+		UserOption::delete($task->getId(), CurrentUser::get()->getId(), UserOption\Option::MUTED);
+		return $this->getAction($task);
+	}
+
+	/**
+	 * @param \CTaskItem $task
+	 * @return array|null
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function pinAction(\CTaskItem $task): ?array
+	{
+		UserOption::add($task->getId(), CurrentUser::get()->getId(), UserOption\Option::PINNED);
+		return $this->getAction($task);
+	}
+
+	/**
+	 * @param \CTaskItem $task
+	 * @return array|null
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function unpinAction(\CTaskItem $task): ?array
+	{
+		UserOption::delete($task->getId(), CurrentUser::get()->getId(), UserOption\Option::PINNED);
+		return $this->getAction($task);
+	}
+
+	/**
 	 * Delegate task to another user
 	 *
 	 * @param \CTaskItem $task
@@ -695,7 +762,7 @@ final class Task extends Base
 			$additional = array();
 
 			// use direct query here, avoiding cached CTaskItem::getData(), because $lastTimer['TASK_ID'] unlikely will be in cache
-			list($tasks, $res) = \CTaskItem::fetchList(
+			[$tasks, $res] = \CTaskItem::fetchList(
 				$this->getCurrentUser()->getId(),
 				array(),
 				array('ID' => intval($lastTimer['TASK_ID'])),
@@ -998,7 +1065,7 @@ final class Task extends Base
 				'ID'   => $userId,
 				'NAME' => $userName,
 				'LINK' => $link,
-				'ICON' => Avatar::getPerson($userFields['PERSONAL_PHOTO'])
+				'ICON' => UI\Avatar::getPerson($userFields['PERSONAL_PHOTO'])
 			);
 		}
 

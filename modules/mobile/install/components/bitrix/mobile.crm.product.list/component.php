@@ -31,10 +31,10 @@ if(isset($_GET['currency_id']))
 }
 $arResult['CURRENCY_ID'] = $currencyID;
 
-$listMode = $arParams['LIST_MODE'] = isset($arParams['LIST_MODE']) ? strtoupper($arParams['LIST_MODE']) : '';
+$listMode = $arParams['LIST_MODE'] = isset($arParams['LIST_MODE'])? mb_strtoupper($arParams['LIST_MODE']) : '';
 if(isset($_GET['list_mode']))
 {
-	$listMode = strtoupper($_GET['list_mode']);
+	$listMode = mb_strtoupper($_GET['list_mode']);
 }
 $arResult['LIST_MODE'] = $listMode;
 

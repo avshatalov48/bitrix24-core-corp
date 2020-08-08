@@ -352,9 +352,11 @@ class CCrmSiteButtonEditComponent extends \CBitrixComponent
 
 		/* Copyright */
 		$this->arResult['CAN_REMOVE_COPYRIGHT'] = Manager::canRemoveCopyright();
+		$this->arResult['WEBFORM_RESTRICTION_POPUP'] = \Bitrix\Crm\Restriction\RestrictionManager::getWebformRestriction()->prepareInfoHelperScript();
 
 		/* Multi lines */
 		$this->arResult['CAN_USE_MULTI_LINES'] = Manager::canUseMultiLines();
+		$this->arResult['MULTI_LINES_RESTRICTION_POPUP'] = \Bitrix\Crm\Restriction\RestrictionManager::getImconnectorRestriction()->prepareInfoHelperScript();
 
 		$replaceList = array('id' => $id, 'form_id' => $id);
 		$this->arResult['PATH_TO_BUTTON_LIST'] = CComponentEngine::makePathFromTemplate($this->arParams['PATH_TO_BUTTON_LIST'], $replaceList);

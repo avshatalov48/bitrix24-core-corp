@@ -90,7 +90,7 @@ class CTaskDependence
 			$key = $res["FIELD"];
 			$cOperationType = $res["OPERATION"];
 
-			$key = strtoupper($key);
+			$key = mb_strtoupper($key);
 
 			switch ($key)
 			{
@@ -124,8 +124,8 @@ class CTaskDependence
 		$arSqlOrder = [];
 		foreach ($arOrder as $by => $order)
 		{
-			$by = strtolower($by);
-			$order = strtolower($order);
+			$by = mb_strtolower($by);
+			$order = mb_strtolower($order);
 			if ($order != "asc")
 				$order = "desc";
 

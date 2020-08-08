@@ -16,6 +16,9 @@ $APPLICATION->AddHeadScript("/bitrix/components/bitrix/mobile.socialnetwork.log.
 $APPLICATION->AddHeadScript("/bitrix/components/bitrix/rating.vote/templates/mobile_comment_like/script_attached.js");
 $APPLICATION->AddHeadScript("/bitrix/js/main/rating_like.js");
 $APPLICATION->AddHeadScript(SITE_TEMPLATE_PATH."/components/bitrix/voting.current/.userfield/script.js");
+
+$targetHtml = '';
+
 if (
 	CModule::IncludeModule("vote")
 	&& class_exists("\\Bitrix\\Vote\\UF\\Manager")
@@ -23,7 +26,6 @@ if (
 {
 	$APPLICATION->AddHeadScript("/bitrix/components/bitrix/voting.uf/templates/.default/script.js");
 	\Bitrix\Main\Page\Asset::getInstance()->addString('<link href="'.CUtil::GetAdditionalFileURL('/bitrix/components/bitrix/voting.uf/templates/.default/style.css').'" type="text/css" rel="stylesheet" />');
-	\Bitrix\Main\Page\Asset::getInstance()->addString('<link href="'.CUtil::GetAdditionalFileURL('/bitrix/js/ui/buttons/ui.buttons.css').'" type="text/css" rel="stylesheet" />');
 }
 else if (IsModuleInstalled("vote"))
 {
@@ -42,19 +44,25 @@ $APPLICATION->AddHeadScript(SITE_TEMPLATE_PATH."/bizproc_mobile.js");
 $APPLICATION->SetUniqueJS('live_feed_mobile');
 $APPLICATION->SetUniqueCSS('live_feed_mobile');
 CUtil::InitJSCore(array('date', 'ls', 'fx', 'comment_aux', 'content_view'));
-UI\Extension::load("main.rating"); // js only
-UI\Extension::load("socialnetwork.commentaux"); // lang messages only
+
+UI\Extension::load([
+	'mobile.livefeed',
+	'mobile.diskfile',
+	'ui.buttons',
+	'main.rating'
+]);
 
 if (Loader::includeModule('tasks'))
 {
 	CUtil::InitJSCore(array('tasks', 'tasks_util_query'));
 }
-if (Loader::includeModule('vote'))
+
+if (!empty($arResult['TARGET']))
 {
-	UI\Extension::load("ui.buttons");
+	ob_start();
 }
 
-if (strlen($arResult["FatalError"])>0)
+if ($arResult["FatalError"] <> '')
 {
 	?><span class='errortext'><?=$arResult["FatalError"]?></span><br /><br /><?
 }
@@ -66,6 +74,7 @@ else
 		&& !$arResult["AJAX_CALL"]
 	)
 	{
+		?><div id="post-balloon-container" class="post-balloon-box"></div><?
 		?><div id="lenta_wrapper_global"><?
 	}
 	?>
@@ -83,14 +92,11 @@ else
 	?><script>
 		BX.message({
 			MSLSiteDir: '<?=CUtil::JSEscape(SITE_DIR)?>',
-			MSLPullDownText1: '<?=CUtil::JSEscape(GetMessage("MOBILE_LOG_NEW_PULL"))?>',
-			MSLPullDownText2: '<?=CUtil::JSEscape(GetMessage("MOBILE_LOG_NEW_PULL_RELEASE"))?>',
-			MSLPullDownText3: '<?=CUtil::JSEscape(GetMessage("MOBILE_LOG_NEW_PULL_LOADING"))?>',
 
-            MOBILE_TASKS_VIEW_TAB_TASK: '<?=CUtil::JSEscape(GetMessage("MOBILE_TASKS_VIEW_TAB_TASK"))?>',
-            MOBILE_TASKS_VIEW_TAB_CHECKLIST: '<?=CUtil::JSEscape(GetMessage("MOBILE_TASKS_VIEW_TAB_CHECKLIST"))?>',
-            MOBILE_TASKS_VIEW_TAB_FILES: '<?=CUtil::JSEscape(GetMessage("MOBILE_TASKS_VIEW_TAB_FILES"))?>',
-            MOBILE_TASKS_VIEW_TAB_COMMENT: '<?=CUtil::JSEscape(GetMessage("MOBILE_TASKS_VIEW_TAB_COMMENT"))?>',
+			MOBILE_TASKS_VIEW_TAB_TASK: '<?=CUtil::JSEscape(GetMessage("MOBILE_TASKS_VIEW_TAB_TASK"))?>',
+			MOBILE_TASKS_VIEW_TAB_CHECKLIST: '<?=CUtil::JSEscape(GetMessage("MOBILE_TASKS_VIEW_TAB_CHECKLIST"))?>',
+			MOBILE_TASKS_VIEW_TAB_FILES: '<?=CUtil::JSEscape(GetMessage("MOBILE_TASKS_VIEW_TAB_FILES"))?>',
+			MOBILE_TASKS_VIEW_TAB_COMMENT: '<?=CUtil::JSEscape(GetMessage("MOBILE_TASKS_VIEW_TAB_COMMENT"))?>',
 
 			MSLExtranetSiteId: <?=(!empty($arResult["extranetSiteId"]) ? "'".CUtil::JSEscape($arResult["extranetSiteId"])."'" : "false")?>,
 			MSLExtranetSiteDir: <?=(!empty($arResult["extranetSiteDir"]) ? "'".CUtil::JSEscape($arResult["extranetSiteDir"])."'" : "false")?>
@@ -169,11 +175,8 @@ else
 			MSLPostFormSend: '<?=GetMessageJS("MOBILE_LOG_POST_FORM_SEND")?>',
 			MSLPostDestUA: '<?=GetMessageJS("MOBILE_LOG_POST_FORM_DEST_UA")?>',
 			MSLGroupName: '<?=(!empty($arResult["GROUP_NAME"]) ? CUtil::JSEscape($arResult["GROUP_NAME"]) : '')?>',
-			MSLIsDenyToAll: '<?=($arResult["bDenyToAll"] ? 'Y' : 'N')?>',
-			MSLIsDefaultToAll: '<?=($arResult["bDefaultToAll"] ? 'Y' : 'N')?>',
 			MSLPostFormPhotoCamera: '<?=GetMessageJS("MOBILE_LOG_POST_FORM_PHOTO_CAMERA")?>',
 			MSLPostFormPhotoGallery: '<?=GetMessageJS("MOBILE_LOG_POST_FORM_PHOTO_GALLERY")?>',
-			MSLPostFormUFCode: '<?=CUtil::JSEscape($arResult["postFormUFCode"])?>',
 			MSLIsExtranetSite: '<?=($arResult["bExtranetSite"] ? 'Y' : 'N')?>'
 			<?
 			if (
@@ -223,7 +226,9 @@ else
 			strCounterType: '<?=$arResult["COUNTER_TYPE"]?>',
 			bFollowDefault: <?=($arResult["FOLLOW_DEFAULT"] != "N" ? "true" : "false")?>,
 			bShowExpertMode: <?=($arResult["SHOW_EXPERT_MODE"] == "Y" ? "true" : "false")?>,
-			bExpertMode: <?=($arResult["EXPERT_MODE"] == "Y" ? "true" : "false")?>
+			bExpertMode: <?=($arResult["EXPERT_MODE"] == "Y" ? "true" : "false")?>,
+			ftMinTokenSize: <?=intval($arResult["ftMinTokenSize"])?>,
+			signedParameters: '<?= $this->getComponent()->getSignedParameters() ?>'
 		};
 
 		BX.ready(function() {
@@ -240,7 +245,7 @@ else
 	{
 		if (
 			isset($arResult["GROUP_NAME"])
-			&& strlen($arResult["GROUP_NAME"]) > 0
+			&& $arResult["GROUP_NAME"] <> ''
 		)
 		{
 			$pageTitle = CUtil::JSEscape($arResult["GROUP_NAME"]);
@@ -271,7 +276,7 @@ else
 		}
 		else
 		{
-			$pageTitle = GetMessageJS("MOBILE_LOG_TITLE");
+			$pageTitle = GetMessageJS("MOBILE_LOG_TITLE_NEWS");
 		}
 
 		?><script>
@@ -294,12 +299,6 @@ else
 				MSLShowLogin: '<?=CUtil::JSEscape($arParams["SHOW_LOGIN"])?>',
 				MSLShowRating: '<?=CUtil::JSEscape($arParams["SHOW_RATING"])?>',
 				MSLNextPostMoreTitle: '<?=GetMessageJS("MOBILE_LOG_NEXT_POST_MORE")?>',
-				MSLLogCounter1: '<?=GetMessageJS("MOBILE_LOG_COUNTER_1")?>',
-				MSLLogCounter2: '<?=GetMessageJS("MOBILE_LOG_COUNTER_2")?>',
-				MSLLogCounter3: '<?=GetMessageJS("MOBILE_LOG_COUNTER_3")?>',
-				MSLAddPost: '<?=GetMessageJS("MOBILE_LOG_ADD_POST")?>',
-				MSLMenuItemGroupTasks: '<?=GetMessageJS("MB_TASKS_AT_SOCNET_LOG_CPT_MENU_ITEM_LIST")?>',
-				MSLMenuItemGroupFiles: '<?=GetMessageJS("MOBILE_LOG_GROUP_FILES")?>',
 				MSLPathToTasksRouter: '<?=CUtil::JSEscape($arParams["PATH_TO_TASKS_SNM_ROUTER"])?>',
 				MSLPathToLogEntry: '<?=CUtil::JSEscape($arParams["PATH_TO_LOG_ENTRY"])?>',
 				MSLPathToUser: '<?=CUtil::JSEscape($arParams["PATH_TO_USER"])?>',
@@ -310,44 +309,20 @@ else
 				MSLPathToCrmCompany: '<?=CUtil::JSEscape($arParams["PATH_TO_CRMCOMPANY"])?>',
 				MSLPathToKnowledgeGroup: '<?=CUtil::JSEscape($arResult["KNOWLEDGE_PATH"])?>',
 				MSLTitleKnowledgeGroup: '<?=GetMessageJS("MOBILE_LOG_MENU_KNOWLEDGE")?>',
-				MSLMenuItemFavorites: '<?=GetMessageJS("MOBILE_LOG_MENU_FAVORITES")?>',
-				MSLMenuItemMy: '<?=GetMessageJS("MOBILE_LOG_MENU_MY")?>',
-				MSLMenuItemImportant: '<?=GetMessageJS("MOBILE_LOG_MENU_IMPORTANT")?>',
-				MSLMenuItemRefresh: '<?=GetMessageJS("MOBILE_LOG_MENU_REFRESH")?>',
 				MSLFirstPageLastTS : <?=intval($arResult["dateLastPageTS"])?>,
 				MSLSliderAddPost: '<?=GetMessageJS("MOBILE_LOG_SLIDER_ADD_POST")?>',
 				MSLSliderFavorites: '<?=GetMessageJS("MOBILE_LOG_SLIDER_FAVORITES")?>',
 				MSLMobilePlayerErrorMessage: '<?=GetMessageJS("MOBILE_PLAYER_ERROR_MESSAGE")?>',
 				MSLLoadScriptsNeeded: '<?=(COption::GetOptionString('main', 'optimize_js_files', 'N') == 'Y' ? 'N' : 'Y')?>',
-				MSLLogTitle: '<?=$pageTitle?>',
-				MOBILE_LOG_NEW_ERROR: '<?=GetMessageJS("MOBILE_LOG_NEW_ERROR")?>'
+				MSLLogTitle: '<?=$pageTitle?>'
 				<?
 				if ($arParams["USE_FOLLOW"] == "Y")
 				{
 					?>
-					, MSLFollowY: '<?=GetMessageJS("MOBILE_LOG_FOLLOW_Y")?>'
-					, MSLFollowN: '<?=GetMessageJS("MOBILE_LOG_FOLLOW_N")?>'
 					, MSLMenuItemFollowDefaultY: '<?=GetMessageJS("MOBILE_LOG_MENU_FOLLOW_DEFAULT_Y")?>'
 					, MSLMenuItemFollowDefaultN: '<?=GetMessageJS("MOBILE_LOG_MENU_FOLLOW_DEFAULT_N")?>'
 					, MSLMenuItemExpertModeY: '<?=GetMessageJS("MOBILE_LOG_MENU_EXPERT_MODE_Y")?>'
 					, MSLMenuItemExpertModeN: '<?=GetMessageJS("MOBILE_LOG_MENU_EXPERT_MODE_N")?>'
-					<?
-				}
-
-				if (
-					IsModuleInstalled("timeman")
-					|| IsModuleInstalled("tasks")
-				)
-				{
-					?>
-					, MSLMenuItemWork: '<?=GetMessageJS("MOBILE_LOG_MENU_WORK")?>'
-					<?
-				}
-
-				if (CModule::IncludeModule("lists") && CLists::isFeatureEnabled())
-				{
-					?>
-					, MSLMenuItemBizproc: '<?=GetMessageJS("MOBILE_LOG_MENU_BIZPROC")?>'
 					<?
 				}
 				?>
@@ -371,7 +346,7 @@ else
 		?><div id="empty_comment" style="display: none;"><?
 			?><div class="post-comment-block" style="position: relative;"><?
 				?><div class="post-user-wrap"><?
-					?><div id="empty_comment_avatar" class="avatar"<?=(strlen($arResult["EmptyComment"]["AVATAR_SRC"]) > 0 ? " style=\"background-image:url('".$arResult["EmptyComment"]["AVATAR_SRC"]."');\"" : "")?>></div><?
+					?><div id="empty_comment_avatar" class="avatar"<?=($arResult["EmptyComment"]["AVATAR_SRC"] <> '' ? " style=\"background-image:url('".$arResult["EmptyComment"]["AVATAR_SRC"]."');\"" : "")?>></div><?
 					?><div class="post-comment-cont"><?
 						?><div class="post-comment-author"><?=$arResult["EmptyComment"]["AUTHOR_NAME"]?></div><?
 						?><div class="post-comment-preview-wait"></div><?
@@ -416,15 +391,12 @@ else
 				MSLDestinationHidden8: '<?=GetMessageJS("MOBILE_LOG_DESTINATION_HIDDEN_8")?>',
 				MSLDestinationHidden9: '<?=GetMessageJS("MOBILE_LOG_DESTINATION_HIDDEN_9")?>',
 				MSLDestinationHidden0: '<?=GetMessageJS("MOBILE_LOG_DESTINATION_HIDDEN_0")?>',
-				MSLDeletePostDescription: '<?=GetMessageJS("MOBILE_LOG_DELETE_POST_DESCRIPTION")?>',
-				MSLDeletePostButtonOk: '<?=GetMessageJS("MOBILE_LOG_DELETE_BUTTON_OK")?>',
-				MSLDeletePostButtonCancel: '<?=GetMessageJS("MOBILE_LOG_DELETE_BUTTON_CANCEL")?>',
 				MSLCurrentTime: '<?=time()?>',
 				MSLEmptyDetailCommentFormTitle: '<?=GetMessageJS("MOBILE_LOG_EMPTY_COMMENT_ADD_TITLE")?>',
 				MSLEmptyDetailCommentFormButtonTitle: '<?=GetMessageJS("MOBILE_LOG_EMPTY_COMMENT_ADD_BUTTON_SEND")?>',
 				MSLLoadScriptsNeeded: '<?=(COption::GetOptionString('main', 'optimize_js_files', 'N') == 'Y' ? 'N' : 'Y')?>',
 				MSLMobilePlayerErrorMessage: '<?=GetMessageJS("MOBILE_PLAYER_ERROR_MESSAGE")?>',
-				MSLDateTimeFormat: '<?=CUtil::JSEscape(CDatabase::DateFormatToPHP(strlen($arParams["DATE_TIME_FORMAT"]) > 0 ? $arParams["DATE_TIME_FORMAT"] : FORMAT_DATETIME))?>'
+				MSLDateTimeFormat: '<?=CUtil::JSEscape(CDatabase::DateFormatToPHP($arParams["DATE_TIME_FORMAT"] <> '' ? $arParams["DATE_TIME_FORMAT"] : FORMAT_DATETIME))?>'
 			});
 		</script><?
 	}
@@ -466,16 +438,7 @@ else
 				MSLDestinationHidden9: '<?=GetMessageJS("MOBILE_LOG_DESTINATION_HIDDEN_9")?>',
 				MSLDestinationHidden0: '<?=GetMessageJS("MOBILE_LOG_DESTINATION_HIDDEN_0")?>',
 				MSLMobilePlayerErrorMessage: '<?=GetMessageJS("MOBILE_PLAYER_ERROR_MESSAGE")?>',
-				MSLDateTimeFormat: '<?=CUtil::JSEscape(CDatabase::DateFormatToPHP(strlen($arParams["DATE_TIME_FORMAT"]) > 0 ? $arParams["DATE_TIME_FORMAT"] : FORMAT_DATETIME))?>'
-				<?
-				if ($arParams["USE_FOLLOW"] == "Y")
-				{
-					?>
-					, MSLFollowY: '<?=GetMessageJS("MOBILE_LOG_FOLLOW_Y")?>'
-					, MSLFollowN: '<?=GetMessageJS("MOBILE_LOG_FOLLOW_N")?>'
-					<?
-				}
-				?>
+				MSLDateTimeFormat: '<?=CUtil::JSEscape(CDatabase::DateFormatToPHP($arParams["DATE_TIME_FORMAT"] <> '' ? $arParams["DATE_TIME_FORMAT"] : FORMAT_DATETIME))?>'
 			});
 
 			BX.ready(function() {
@@ -494,13 +457,14 @@ else
 
 	if ($arParams["NEW_LOG_ID"] <= 0)
 	{
+		?><div class="feed-add-post-button" style="" id="feed-add-post-button" onclick="app.exec('showPostForm', oMSL.showNewPostForm());"></div><?
 		?><div class="lenta-wrapper" id="lenta_wrapper"><?
 			?><div class="post-comment-block-scroll post-comment-block-scroll-top" style="" id="post-scroll-button-top" onclick="oMSL.scrollTo('top');"><div class="post-comment-block-scroll-arrow post-comment-block-scroll-arrow-top"></div></div><?
 			?><div class="post-comment-block-scroll post-comment-block-scroll-bottom" style="" id="post-scroll-button-bottom" onclick="oMSL.scrollTo('bottom');"><div class="post-comment-block-scroll-arrow post-comment-block-scroll-arrow-bottom"></div></div><? // scroll
 			?><span id="blog-post-first-after"></span><?
 	}
 
-	if(strlen($arResult["ErrorMessage"])>0)
+	if($arResult["ErrorMessage"] <> '')
 	{
 		?><span class='errortext'><?=$arResult["ErrorMessage"]?></span><br /><br /><?
 	}
@@ -548,40 +512,8 @@ else
 			BX.message({
 				MSLSiteDir: '<?=CUtil::JSEscape(SITE_DIR)?>',
 				MSLLogEntryTitle: '<?=GetMessageJS("MOBILE_LOG_ENTRY_TITLE")?>',
-				MSLSharePost: '<?=GetMessageJS("MOBILE_LOG_SHARE_POST")?>',
-				MSLShareTableOk: '<?=GetMessageJS("MOBILE_LOG_SHARE_TABLE_OK")?>',
-				MSLShareTableCancel: '<?=GetMessageJS("MOBILE_LOG_SHARE_TABLE_CANCEL")?>',
-				MSLIsDenyToAll: '<?=($arResult["bDenyToAll"] ? 'Y' : 'N')?>',
 				MSLEditPost: '<?=GetMessageJS("MOBILE_LOG_EDIT_POST")?>',
-				MSLDeletePost: '<?=GetMessageJS("MOBILE_LOG_DELETE_POST")?>',
-				MSLRefreshComments: '<?=GetMessageJS("MOBILE_LOG_MENU_REFRESH_COMMENTS")?>',
-				MSLCreateTask: '<?=GetMessageJS("MOBILE_LOG_MENU_CREATE_TASK")?>',
-				MSLCreateTaskEntityLink: '<?=GetMessageJS("MOBILE_LOG_CREATE_TASK_LINK")?>',
-				MSLCreateTaskEntityLinkBLOG_POST: '<?=GetMessageJS("MOBILE_LOG_CREATE_TASK_LINK_BLOG_POST")?>',
-				MSLCreateTaskEntityLinkBLOG_COMMENT: '<?=GetMessageJS("MOBILE_LOG_CREATE_TASK_LINK_BLOG_COMMENT")?>',
-				MSLCreateTaskSuccessTitle: '<?=GetMessageJS("MOBILE_LOG_CREATE_TASK_SUCCESS_TITLE")?>',
-				MSLCreateTaskSuccessDescription: '<?=GetMessageJS("MOBILE_LOG_CREATE_TASK_SUCCESS_DESCRIPTION")?>',
-				MSLCreateTaskSuccessButtonCancelTitle: '<?=GetMessageJS("MOBILE_LOG_CREATE_TASK_SUCCESS_BUTTON_CANCEL_TITLE")?>',
-				MSLCreateTaskSuccessButtonOkTitle: '<?=GetMessageJS("MOBILE_LOG_CREATE_TASK_SUCCESS_BUTTON_OK_TITLE")?>',
-				MSLCreateTaskFailureTitle: '<?=GetMessageJS("MOBILE_LOG_CREATE_TASK_FAILURE_TITLE")?>',
-				MSLCreateTaskErrorGetData: '<?=GetMessageJS("MOBILE_LOG_CREATE_TASK_ERROR_GET_DATA")?>',
-				MSLMobilePlayerErrorMessage: '<?=GetMessageJS("MOBILE_PLAYER_ERROR_MESSAGE")?>',
-				MSLCreateTaskTaskPath: '<?=SITE_DIR?>mobile/tasks/snmrouter/?routePage=view&USER_ID=#user_id#&TASK_ID=#task_id#'
-				<?
-				if ($arParams["USE_FOLLOW"] == "Y")
-				{
-					?>
-					, MSLFollowY: '<?=GetMessageJS("MOBILE_LOG_FOLLOW_Y")?>'
-					, MSLFollowN: '<?=GetMessageJS("MOBILE_LOG_FOLLOW_N")?>'
-					<?
-				}
-				?>,
-				MSLTextPanelMenuPhoto: '<?=CUtil::JSEscape(GetMessage("MOBILE_LOG_TEXTPANEL_MENU_PHOTO"))?>',
-				MSLTextPanelMenuGallery: '<?=CUtil::JSEscape(GetMessage("MOBILE_LOG_TEXTPANEL_MENU_GALLERY"))?>',
-				MSLAjaxInterfaceFullURI: '<?=CUtil::JSEscape((CMain::IsHTTPS() ? "https" : "http")."://".$_SERVER["HTTP_HOST"].SITE_DIR.'mobile/ajax.php')?>',
-				MSLDetailPullDownText1: '<?=GetMessageJS("MOBILE_LOG_NEW_PULL")?>',
-				MSLDetailPullDownText2: '<?=GetMessageJS("MOBILE_LOG_NEW_PULL_RELEASE")?>',
-				MSLDetailPullDownText3: '<?=GetMessageJS("MOBILE_LOG_DETAIL_NEW_PULL_LOADING")?>'
+				MSLMobilePlayerErrorMessage: '<?=GetMessageJS("MOBILE_PLAYER_ERROR_MESSAGE")?>'
 			});
 		</script><?
 	}
@@ -601,6 +533,18 @@ else
 			?><div id="post_item_top_wrap" class="post-item-top-wrap post-item-copyable"><?
 				?><div class="post-item-top" id="post_item_top"></div><?
 				?><div class="post-item-post-block" id="post_block_check_cont"></div><?
+				?><div class="post-item-attached-file-wrap post-item-attached-disk-file-wrap" id="post_block_files"></div><?
+
+				$bRatingExtended = (
+				CModule::IncludeModule("mobileapp")
+					? CMobile::getApiVersion() >= 2
+					: intval($APPLICATION->GetPageProperty("api_version")) >= 2
+				);
+
+				if ($bRatingExtended)
+				{
+					?><div class="post-item-inform-wrap-tree" id="rating-footer-wrap"></div><?
+				}
 
 				?><div id="post_inform_wrap_two" class="post-item-inform-wrap"><?
 
@@ -611,7 +555,10 @@ else
 
 					?><span id="comments_control" style="display: none;"><?
 						?><div class="post-item-informers post-item-inform-comments" onclick="oMSL.setFocusOnCommentForm();"><?
-							?><div class="post-item-inform-left"><?=GetMessage('MOBILE_LOG_COMMENT')?></div><?
+							?><div class="post-item-inform-comments-box"><?
+								?><span class="post-item-inform-icon"></span><?
+								?><div class="post-item-inform-left"><?=GetMessage('MOBILE_LOG_COMMENT')?></div><?
+							?></div><?
 						?></div><?
 					?></span><?
 
@@ -623,17 +570,6 @@ else
 						?><div class="post-item-inform-left"></div><?
 					?></div><?
 				?></div><?
-
-				$bRatingExtended = (
-					CModule::IncludeModule("mobileapp")
-						? CMobile::getApiVersion() >= 2
-						: intval($APPLICATION->GetPageProperty("api_version")) >= 2
-				);
-
-				if ($bRatingExtended)
-				{
-					?><div class="post-item-inform-wrap-tree" id="rating-footer-wrap"></div><?
-				}
 
 			?></div><?
 			?><div class="post-comments-wrap" id="post-comments-wrap"><span id="post-comment-last-after"></span></div><?
@@ -657,6 +593,11 @@ else
 
 		$blogPostLivefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
 		$blogPostEventIdList = $blogPostLivefeedProvider->getEventId();
+
+		if ($arResult['TARGET'] == 'ENTRIES_ONLY')
+		{
+			ob_start();
+		}
 
 		foreach ($arResult["Events"] as $arEvent)
 		{
@@ -719,7 +660,10 @@ else
 						"ID" => $arEvent["SOURCE_ID"],
 						"FROM_LOG" => ($arParams['LOG_ID'] <= 0 ? "Y" : "N"),
 						"ADIT_MENU" => $arAditMenu,
-						"IS_LIST" => (intval($arParams["LOG_ID"]) <= 0),
+						"IS_LIST" => (
+								intval($arParams["LOG_ID"]) <= 0
+								|| $arParams["IS_LIST"] == 'Y'
+						),
 						"IS_UNREAD" => $bUnread,
 						"IS_HIDDEN" => false,
 						"LAST_LOG_TS" => ($arResult["LAST_LOG_TS"] > 0 ? $arResult["LAST_LOG_TS"] + $arResult["TZ_OFFSET"] : 0),
@@ -740,8 +684,8 @@ else
 						"USE_FAVORITES" => (isset($arResult["GROUP_READ_ONLY"]) && $arResult["GROUP_READ_ONLY"] == "Y" ? "N" : "Y"),
 						"GROUP_READ_ONLY" => (isset($arResult["GROUP_READ_ONLY"]) && $arResult["GROUP_READ_ONLY"] == "Y" ? "Y" : "N"),
 						"TOP_RATING_DATA" => (!empty($arResult['TOP_RATING_DATA'][$arEvent["ID"]]) ? $arResult['TOP_RATING_DATA'][$arEvent["ID"]] : false),
-						"TARGET" => (isset($arParams["TARGET"]) && strlen($arParams["TARGET"]) > 0 ? $arParams["TARGET"] : false),
-						"SITE_TEMPLATE_ID" => (isset($arParams["SITE_TEMPLATE_ID"]) && strlen($arParams["SITE_TEMPLATE_ID"]) > 0 ? $arParams["SITE_TEMPLATE_ID"] : "")
+						"TARGET" => (isset($arParams["TARGET"]) && $arParams["TARGET"] <> '' ? $arParams["TARGET"] : false),
+						"SITE_TEMPLATE_ID" => (isset($arParams["SITE_TEMPLATE_ID"]) && $arParams["SITE_TEMPLATE_ID"] <> '' ? $arParams["SITE_TEMPLATE_ID"] : "")
 					);
 
 					if ($arParams["USE_FOLLOW"] == "Y")
@@ -751,7 +695,7 @@ else
 					}
 
 					if (
-						strlen($arEvent["RATING_TYPE_ID"])>0
+						$arEvent["RATING_TYPE_ID"] <> ''
 						&& $arEvent["RATING_ENTITY_ID"] > 0
 						&& $arParams["SHOW_RATING"] == "Y"
 					)
@@ -787,7 +731,10 @@ else
 			{
 				$arComponentParams = array_merge($arParams, array(
 						"LOG_ID" => $arEvent["ID"],
-						"IS_LIST" => (intval($arParams["LOG_ID"]) <= 0),
+						"IS_LIST" => (
+							intval($arParams["LOG_ID"]) <= 0
+							|| $arParams["IS_LIST"] == 'Y'
+						),
 						"LAST_LOG_TS" => $arResult["LAST_LOG_TS"],
 						"COUNTER_TYPE" => $arResult["COUNTER_TYPE"],
 						"AJAX_CALL" => $arResult["AJAX_CALL"],
@@ -801,7 +748,7 @@ else
 							"COMMENTS_COUNT" => $arEvent["COMMENTS_COUNT"],
 						),
 						"TOP_RATING_DATA" => (!empty($arResult['TOP_RATING_DATA'][$arEvent["ID"]]) ? $arResult['TOP_RATING_DATA'][$arEvent["ID"]] : false),
-						"TARGET" => (isset($arParams["TARGET"]) && strlen($arParams["TARGET"]) > 0 ? $arParams["TARGET"] : false)
+						"TARGET" => (isset($arParams["TARGET"]) && $arParams["TARGET"] <> '' ? $arParams["TARGET"] : false)
 					)
 				);
 
@@ -823,7 +770,7 @@ else
 				}
 
 				if (
-					strlen($arEvent["RATING_TYPE_ID"])>0
+					$arEvent["RATING_TYPE_ID"] <> ''
 					&& $arEvent["RATING_ENTITY_ID"] > 0
 					&& $arParams["SHOW_RATING"] == "Y"
 				)
@@ -854,6 +801,12 @@ else
 
 
 		} // foreach ($arResult["Events"] as $arEvent)
+
+		if ($arResult['TARGET'] == 'ENTRIES_ONLY')
+		{
+			$targetHtml = ob_get_contents();
+		}
+
 	} // if ($arResult["Events"] && is_array($arResult["Events"]) && count($arResult["Events"]) > 0)
 	elseif (
 		intval($arParams["LOG_ID"]) > 0
@@ -869,11 +822,11 @@ else
 		$res = array(
 			'ERROR_MESSAGE' => \Bitrix\Main\Localization\Loc::getMessage('MOBILE_LOG_ERROR_ENTRY_NOT_FOUND')
 		);
-		echo CUtil::PhpToJSObject($res);
 
 		if(CModule::IncludeModule("compression"))
 			CCompress::DisableCompression();
-		CMain::FinalActions();
+
+		CMain::FinalActions(CUtil::PhpToJSObject($res));
 		die();
 	}
 	elseif (!$arResult["AJAX_CALL"])
@@ -952,14 +905,14 @@ else
 			foreach ($arCSSListNew as $i => $css_path)
 			{
 				if(
-					strtolower(substr($css_path, 0, 7)) != 'http://'
-					&& strtolower(substr($css_path, 0, 8)) != 'https://'
+					mb_strtolower(mb_substr($css_path, 0, 7)) != 'http://'
+					&& mb_strtolower(mb_substr($css_path, 0, 8)) != 'https://'
 				)
 				{
 					$css_file = (
-						($p = strpos($css_path, "?")) > 0
-							? substr($css_path, 0, $p)
-							: $css_path
+					($p = mb_strpos($css_path, "?")) > 0
+						? mb_substr($css_path, 0, $p)
+						: $css_path
 					);
 
 					if(file_exists($_SERVER["DOCUMENT_ROOT"].$css_file))
@@ -1008,11 +961,10 @@ else
 				$res["COUNTER_SERVER_TIME_UNIX"] = $arResult["COUNTER_SERVER_TIME_UNIX"];
 			}
 
-			echo CUtil::PhpToJSObject($res);
-
 			if(CModule::IncludeModule("compression"))
 				CCompress::DisableCompression();
-			CMain::FinalActions();
+
+			CMain::FinalActions(CUtil::PhpToJSObject($res));
 			die();
 		}
 	}
@@ -1021,7 +973,7 @@ else
 		$arParams["NEW_LOG_ID"] <= 0
 		&& (
 			!isset($arParams["TARGET"])
-			|| strlen($arParams["TARGET"]) <= 0
+			|| $arParams["TARGET"] == ''
 		)
 	)
 	{
@@ -1255,11 +1207,10 @@ else
 						$res["COUNTER_SERVER_TIME_UNIX"] = $arResult["COUNTER_SERVER_TIME_UNIX"];
 					}
 
-					echo CUtil::PhpToJSObject($res);
-
 					if(CModule::IncludeModule("compression"))
 						CCompress::DisableCompression();
-					CMain::FinalActions();
+
+					CMain::FinalActions(CUtil::PhpToJSObject($res));
 					die();
 				});
 			}
@@ -1267,6 +1218,7 @@ else
 			{
 				if(CModule::IncludeModule("compression"))
 					CCompress::DisableCompression();
+
 				CMain::FinalActions();
 				die();
 			}
@@ -1288,5 +1240,11 @@ else
 	{
 		?></div><? // lenta_wrapper_global
 	}
+}
+
+if ($targetHtml <> '')
+{
+	$APPLICATION->RestartBuffer();
+	echo $targetHtml;
 }
 ?>

@@ -40,6 +40,7 @@ $MESS["CRM_COLUMN_LIMIT_REPEAT"] = "Max. repeat count";
 $MESS["CRM_COLUMN_MODIFY_BY"] = "Modified by";
 $MESS["CRM_COLUMN_NEXT_EXECUTION"] = "Next invoice date";
 $MESS["CRM_COLUMN_OPPORTUNITY"] = "Income";
+$MESS["CRM_COLUMN_ORDER_STAGE"] = "Deal payment status";
 $MESS["CRM_COLUMN_ORIGINATOR_ID"] = "Web store";
 $MESS["CRM_COLUMN_PROBABILITY"] = "Probability, %";
 $MESS["CRM_COLUMN_PRODUCT"] = "Product";

@@ -9,7 +9,7 @@ if (!CModule::IncludeModule("tasks"))
 
 // initialize path to task
 $arParams["PATH_TO_USER_TASKS_TASK"] = isset($arParams["PATH_TO_USER_TASKS_TASK"]) ? trim($arParams["PATH_TO_USER_TASKS_TASK"]) : "";
-if (strlen($arParams["PATH_TO_USER_TASKS_TASK"]) <= 0)
+if ($arParams["PATH_TO_USER_TASKS_TASK"] == '')
 {
 	$arParams["PATH_TO_USER_TASKS_TASK"] = COption::GetOptionString("tasks", "paths_task_user_action", null, SITE_ID);
 }

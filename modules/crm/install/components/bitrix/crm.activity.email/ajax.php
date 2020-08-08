@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\Config;
 use Bitrix\Main\Localization\Loc;
 
 define('PUBLIC_AJAX_MODE', true);
@@ -72,7 +73,7 @@ class CrmActivityEmailAjax
 			$params = !empty($_REQUEST['log']) ? $_REQUEST['log'] : false;
 			if (!empty($params) && preg_match('/([ab])(\d+)/i', $params, $matches))
 			{
-				$type = strtoupper($matches[1]);
+				$type = mb_strtoupper($matches[1]);
 				$offset = (int) $matches[2];
 			}
 			else
@@ -204,6 +205,8 @@ class CrmActivityEmailAjax
 				}
 			}
 
+			$trackingAvailable = Config\Option::get('main', 'track_outgoing_emails_read', 'Y') == 'Y';
+
 			foreach ($log as $i => $item)
 			{
 				if ($item['DIRECTION'] == \CCrmActivityDirection::Incoming)
@@ -228,6 +231,9 @@ class CrmActivityEmailAjax
 					$item['LOG_TITLE'] = $authors[$authorId]['NAME_FORMATTED'] ?: $item['SETTINGS']['EMAIL_META']['__email'];
 					$item['LOG_IMAGE'] = $authors[$authorId]['IMAGE_URL'];
 				}
+
+				$item['__trackable'] = isset($item['SETTINGS']['IS_BATCH_EMAIL']) && !$item['SETTINGS']['IS_BATCH_EMAIL'];
+				$item['__trackable'] *= $trackingAvailable || $item['SETTINGS']['READ_CONFIRMED'] > 0;
 
 				$log[$i] = $item;
 			}
@@ -266,7 +272,7 @@ class CrmActivityEmailAjax
 						<span class="crm-activity-email-item-date-full">
 							<? if (\CCrmActivityDirection::Outgoing == $item['DIRECTION']): ?>
 								<?=getMessage('CRM_ACT_EMAIL_VIEW_SENT', array('#DATETIME#' => $startDatetimeFormatted)) ?><!--
-								--><? if (isset($item['SETTINGS']['IS_BATCH_EMAIL']) && !$item['SETTINGS']['IS_BATCH_EMAIL']): ?>,
+								--><? if ($item['__trackable']): ?>,
 									<? if (!empty($readDatetimeFormatted)): ?>
 										<?=getMessage('CRM_ACT_EMAIL_VIEW_READ_CONFIRMED', array('#DATETIME#' => $readDatetimeFormatted)) ?>
 									<? else: ?>
@@ -438,6 +444,8 @@ class CrmActivityEmailAjax
 						'viewURL'  => $item['VIEW_URL'],
 						'previewURL' => $item['PREVIEW_URL'],
 						'fileSize' => $item['SIZE'],
+						'objectId' => $file['ID'],
+						'bytes' => $file['BYTES'],
 					);
 				}
 			}
@@ -507,8 +515,8 @@ class CrmActivityEmailAjax
 		$error = false;
 
 		$name   = trim($_REQUEST['name']);
-		$email  = strtolower(trim($_REQUEST['email']));
-		$code   = strtolower(trim($_REQUEST['code']));
+		$email = mb_strtolower(trim($_REQUEST['email']));
+		$code = mb_strtolower(trim($_REQUEST['code']));
 		$public = $_REQUEST['public'] == 'Y';
 
 		if (!check_email($email, true))
@@ -528,7 +536,7 @@ class CrmActivityEmailAjax
 
 			\CUserOptions::setOption('mail', 'pending_from_emails', $pending);
 
-			$key = hash('crc32b', strtolower($name).$email);
+			$key = hash('crc32b', mb_strtolower($name).$email);
 
 			if (empty($code))
 			{
@@ -552,7 +560,7 @@ class CrmActivityEmailAjax
 			}
 			else
 			{
-				if (empty($pending[$key]) || strtolower($pending[$key]['code']) != $code)
+				if (empty($pending[$key]) || mb_strtolower($pending[$key]['code']) != $code)
 					$error = getMessage('CRM_ACT_EMAIL_NEW_FROM_INVALID_CODE');
 
 				if ($error === false)

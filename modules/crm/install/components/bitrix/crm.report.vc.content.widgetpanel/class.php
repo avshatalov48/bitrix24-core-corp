@@ -19,7 +19,7 @@ class CrmReportVcContentWidgetPanel extends CBitrixComponent
 			return;
 		}
 
-		$this->arResult['WIDGET_PANEL_PARAMS'] = $this->arParams['WIDGET_PANEL_PARAMS'];
+		$this->arResult['WIDGET_PANEL_PARAMS'] = $this->arParams['~WIDGET_PANEL_PARAMS'];
 		$this->includeComponentTemplate();
 	}
 }

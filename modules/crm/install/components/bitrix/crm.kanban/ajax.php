@@ -144,7 +144,7 @@ if ($version == 2)
 		$result['ITEMS']['dropzones'] = array_values($result['ITEMS']['dropzones']);
 		$result['ITEMS']['columns'] = array_values($result['ITEMS']['columns']);
 	}
-	else if (!isset($result['data']) && strtolower($action) == 'modifystage')
+	else if (!isset($result['data']) && mb_strtolower($action) == 'modifystage')
 	{
 		$result['data'] = array(
 			'type' => isset($result['type'])

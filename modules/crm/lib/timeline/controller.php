@@ -35,7 +35,7 @@ class Controller
 	}
 	public static function prepareAuthorInfoBulk(array &$items)
 	{
-		$userProfilePath = \COption::GetOptionString('crm', strtolower('PATH_TO_USER_PROFILE'), '');
+		$userProfilePath = \COption::GetOptionString('crm', mb_strtolower('PATH_TO_USER_PROFILE'), '');
 		if($userProfilePath === '')
 		{
 			$userProfilePath = '/company/personal/user/#user_id#/';

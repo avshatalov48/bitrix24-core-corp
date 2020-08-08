@@ -27,7 +27,7 @@ if (!defined("WIZARD_SITE_ID"))
 if (!defined("WIZARD_SITE_DIR"))
 	return;
 
-if (WIZARD_IS_RERUN !== true || WIZARD_B24_TO_CP)	
+if (WIZARD_IS_RERUN !== true || WIZARD_B24_TO_CP)
 {
 	$rsSites = CSite::GetList($by="sort", $order="desc", array());
 	if ($arSite = $rsSites->Fetch())
@@ -35,22 +35,22 @@ if (WIZARD_IS_RERUN !== true || WIZARD_B24_TO_CP)
 		$FORMAT_DATE = $arSite["FORMAT_DATE"];
 		$FORMAT_DATETIME = $arSite["FORMAT_DATETIME"];
 		$FORMAT_NAME = (empty($arSite["FORMAT_NAME"])) ? CSite::GetDefaultNameFormat() : $arSite["FORMAT_NAME"];
-		$EMAIL = $arSite["EMAIL"];		
+		$EMAIL = $arSite["EMAIL"];
 		$LANGUAGE_ID = $arSite["LANGUAGE_ID"];
 		$DOC_ROOT = $arSite["DOC_ROOT"];
 		$CHARSET = $arSite["CHARSET"];
-		$SERVER_NAME = $arSite["SERVER_NAME"];		
+		$SERVER_NAME = $arSite["SERVER_NAME"];
 	}
 	else
 	{
 		$FORMAT_DATE = "DD.MM.YYYY";
 		$FORMAT_DATETIME = "DD.MM.YYYY HH:MI:SS";
 		$FORMAT_NAME = CSite::GetDefaultNameFormat();
-		$EMAIL = COption::GetOptionString("main", "email_from");		
+		$EMAIL = COption::GetOptionString("main", "email_from");
 		$LANGUAGE_ID = LANGUAGE_ID;
-		$DOC_ROOT = "";	
+		$DOC_ROOT = "";
 		$CHARSET = (defined("BX_UTF") ? "UTF-8" : "windows-1251");
-		$SERVER_NAME = $_SERVER["SERVER_NAME"];		
+		$SERVER_NAME = $_SERVER["SERVER_NAME"];
 	}
 
 	$culture = CultureTable::getRow(array('filter'=>array(
@@ -126,7 +126,23 @@ if (WIZARD_IS_RERUN !== true || WIZARD_B24_TO_CP)
 			"ID" => "bitrix:socialnetwork_user",
 			"PATH" => WIZARD_SITE_DIR."contacts/personal.php"
 		)
-	);	
+	);
+	CUrlRewriter::Add(
+		array(
+			"SITE_ID" => WIZARD_SITE_ID,
+			"CONDITION" => "#^".WIZARD_SITE_DIR."marketplace/#",
+			"ID" => "bitrix:rest.marketplace",
+			"PATH" => WIZARD_SITE_DIR."marketplace/index.php"
+		)
+	);
+	CUrlRewriter::Add(
+		array(
+			"SITE_ID" => WIZARD_SITE_ID,
+			"CONDITION" => "#^".WIZARD_SITE_DIR."marketplace/app/#",
+			"ID" => "bitrix:app.layout",
+			"PATH" => WIZARD_SITE_DIR."marketplace/app/index.php"
+		)
+	);
 }
 else
 {

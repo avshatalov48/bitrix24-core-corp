@@ -39,7 +39,7 @@ if (!$curUser || !$curUser->IsAuthorized() || !check_bitrix_sessid() || $_SERVER
 	__CrmConfigPermsEndResponse(array('ERROR' => 'Access denied.'));
 }
 
-$action = isset($_POST['ACTION']) ? strtoupper($_POST['ACTION']) : '';
+$action = isset($_POST['ACTION'])? mb_strtoupper($_POST['ACTION']) : '';
 if($action === 'REBUILD_ENTITY_ATTRS')
 {
 	\Bitrix\Main\Localization\Loc::loadMessages(__FILE__);

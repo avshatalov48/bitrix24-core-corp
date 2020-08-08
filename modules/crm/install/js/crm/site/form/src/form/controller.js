@@ -1,20 +1,25 @@
-import {VueVendorV2} from "../../../../../../../../ui/install/js/ui/vue/vendor/v2/src/prod/vue.js";
+import {VueVendorV2} from "../../../../../../../../ui/install/js/ui/vue/vendor/v2/prod/src/vue.js";
 import * as Type from "./types";
 import * as Field from "../field/registry";
 import * as Pager from "./pager";
 import * as Messages from "./messages";
 import * as Design from "./design";
+import Dependence from "./dependence";
+import Analytics from "./analytics";
+import ReCaptcha from "./recaptcha";
 import {Basket} from "./basket";
 import * as Components from "./components/registry";
 import * as Util from "../util/registry";
+import Event from "../util/event";
 
-let DefaultOptions: Type.Options = {
+const DefaultOptions: Type.Options = {
 	view: 'inline',
 };
 
-class Controller
+class Controller extends Event
 {
 	#id: string;
+	identification: Type.Identification = {};
 	view: Type.View = {type: 'inline'};
 	provider: Object = {};
 	languages: Array = [];
@@ -22,13 +27,13 @@ class Controller
 	messages: Messages.Storage;
 	design: Design.Model;
 
-	#handlers: Handlers = {
-		hide: [],
-		show: [],
-	};
 	#fields: Array<Field.BaseField> = [];
+	#dependence: Dependence;
+	#properties: Object = {};
 	agreements: Array<Field.AgreementField.Controller> = [];
 	basket: Basket;
+	analytics: Analytics;
+	recaptcha: ReCaptcha;
 
 	title: string;
 	buttonCaption: string;
@@ -70,8 +75,15 @@ class Controller
 
 	constructor(options: Type.Options = DefaultOptions)
 	{
+		super(options);
+		this.setGlobalEventNamespace('b24:form');
 		this.messages = new Messages.Storage();
 		this.design = new Design.Model();
+		this.#dependence = new Dependence(this);
+		this.analytics = new Analytics(this);
+		this.recaptcha = new ReCaptcha();
+
+		this.emit(Type.EventTypes.initBefore, options);
 
 		options = this.adjust(options);
 		this.#id = options.id || (
@@ -100,7 +112,7 @@ class Controller
 						.catch((e) => {
 							if (window.console && console.log)
 							{
-								console.log('b24form get `user` error:', e.message);
+								console.log('b24form get `form` error:', e.message);
 							}
 						});
 				}
@@ -137,7 +149,11 @@ class Controller
 			}
 		}
 
+		this.emit(Type.EventTypes.init);
+
 		this.render();
+
+
 	}
 
 	load()
@@ -146,18 +162,24 @@ class Controller
 		{
 			this.disabled = true;
 		}
+
+		if (this.visible)
+		{
+			this.show();
+		}
 	}
 
 	show()
 	{
 		this.visible = true;
-		this.#handlers.show.forEach((handler) => handler(this));
+		this.emitOnce(Type.EventTypes.showFirst);
+		this.emit(Type.EventTypes.show);
 	}
 
 	hide()
 	{
 		this.visible = false;
-		this.#handlers.hide.forEach((handler) => handler(this));
+		this.emit(Type.EventTypes.hide);
 	}
 
 	submit(): boolean
@@ -169,6 +191,14 @@ class Controller
 		{
 			return false;
 		}
+
+		if (!this.recaptcha.isVerified())
+		{
+			this.recaptcha.verify(() => this.submit());
+			return false;
+		}
+
+		this.emit(Type.EventTypes.submit);
 
 		if (!this.provider.submit)
 		{
@@ -185,7 +215,9 @@ class Controller
 
 		let formData = new FormData();
 		formData.set('values', JSON.stringify(this.values()));
+		formData.set('properties', JSON.stringify(this.#properties));
 		formData.set('consents', JSON.stringify(consents));
+		formData.set('recaptcha', this.recaptcha.getResponse());
 
 		let promise;
 		if (typeof this.provider.submit === 'string')
@@ -205,15 +237,19 @@ class Controller
 			promise = this.provider.submit(this, formData);
 		}
 
-		promise.then(data => {
+		promise.then((data: Type.SubmitResponse) => {
 			this.sent = true;
 			this.loading = false;
 			this.stateText = data.message || this.messages.get('stateSuccess');
+			this.emit(Type.EventTypes.sendSuccess, data);
 
 			let redirect = data.redirect || {};
 			if (redirect.url)
 			{
-				let handler = () => window.location = redirect.url;
+				let handler = () => {
+					try { top.location = redirect.url; } catch (e) {}
+					window.location = redirect.url;
+				};
 				if (data.pay)
 				{
 					this.stateButton.text = this.messages.get('stateButtonPay');
@@ -227,6 +263,7 @@ class Controller
 			this.error = true;
 			this.loading = false;
 			this.stateText = this.messages.get('stateError');
+			this.emit(Type.EventTypes.sendError, e);
 		});
 
 		return false;
@@ -262,6 +299,11 @@ class Controller
 	{
 		options = Object.assign({}, DefaultOptions, options);
 
+		if (typeof options.identification === 'object')
+		{
+			this.identification = options.identification;
+		}
+
 		if (options.messages)
 		{
 			this.messages.setMessages(options.messages || {});
@@ -279,14 +321,11 @@ class Controller
 
 		if (options.handlers && typeof options.handlers === 'object')
 		{
-			if (typeof options.handlers.hide === 'function')
-			{
-				this.#handlers.hide.push(options.handlers.hide);
-			}
-			if (typeof options.handlers.show === 'function')
-			{
-				this.#handlers.show(options.handlers.show);
-			}
+			Object.keys(options.handlers).forEach(key => this.subscribe(key, options.handlers[key]));
+		}
+		if (options.properties && typeof options.properties === 'object')
+		{
+			Object.keys(options.properties).forEach(key => this.setProperty(key, options.properties[key]));
 		}
 
 		if (typeof options.title !== 'undefined')
@@ -334,6 +373,14 @@ class Controller
 		if (typeof options.design !== 'undefined')
 		{
 			this.design.adjust(options.design);
+		}
+		if (typeof options.recaptcha !== 'undefined')
+		{
+			this.recaptcha.adjust(options.recaptcha);
+		}
+		if (Array.isArray(options.dependencies))
+		{
+			this.#dependence.setDependencies(options.dependencies);
 		}
 
 
@@ -460,6 +507,9 @@ class Controller
 			options.design = this.design;
 
 			let field = Field.Factory.create(options);
+			field.subscribeAll((data, obj, type) => {
+				this.emit('field:' + type, {data, type, field: obj});
+			});
 			page.fields.push(field);
 			this.#fields.push(field);
 		});
@@ -470,11 +520,6 @@ class Controller
 	getId()
 	{
 		return this.#id;
-	}
-
-	delete()
-	{
-		return null;
 	}
 
 	valid()
@@ -492,6 +537,30 @@ class Controller
 			acc[field.name] = field.values();
 			return acc;
 		}, {});
+	}
+
+	getFields(): Field.BaseField
+	{
+		return this.#fields;
+	}
+
+	setProperty(key: string, value: string)
+	{
+		if (!key || typeof key !== 'string')
+		{
+			return;
+		}
+		if (typeof value !== 'string')
+		{
+			value = '';
+		}
+
+		this.#properties[key] = value;
+	}
+
+	getProperty(key: string)
+	{
+		return this.#properties[key];
 	}
 
 	isOnState()
@@ -520,6 +589,14 @@ class Controller
 				</component>			
 			`,
 		});
+	}
+
+	destroy()
+	{
+		this.emit(Type.EventTypes.destroy);
+		this.unsubscribeAll();
+		this.#vue.$destroy();
+		this.#vue = null;
 	}
 }
 

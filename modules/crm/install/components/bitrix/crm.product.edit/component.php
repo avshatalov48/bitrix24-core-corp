@@ -29,7 +29,7 @@ $productID = isset($arParams['PRODUCT_ID']) ? intval($arParams['PRODUCT_ID']) : 
 if ($productID <= 0)
 {
 	$productIDParName = isset($arParams['PRODUCT_ID_PAR_NAME']) ? strval($arParams['PRODUCT_ID_PAR_NAME']) : '';
-	if (strlen($productIDParName) == 0)
+	if ($productIDParName == '')
 	{
 		$productIDParName = 'product_id';
 	}
@@ -111,7 +111,7 @@ if (check_bitrix_sessid())
 		if (isset($_POST['NAME']))
 		{
 			$productFields['NAME'] = trim($_POST['NAME']);
-			if(strlen($productFields['NAME']) > 255)
+			if(mb_strlen($productFields['NAME']) > 255)
 			{
 				$errors[] = GetMessage('CRM_PRODUCT_NAME_IS_TOO_LONG');
 			}
@@ -126,7 +126,7 @@ if (check_bitrix_sessid())
 		{
 			$description = isset($_POST['DESCRIPTION']) ? trim($_POST['DESCRIPTION']) : '';
 			$productFields['DESCRIPTION_TYPE'] = 'text';
-			$isNeedSanitize = (!$bAjaxSubmit && $description !== '' && (strpos($description, '<') !== false));
+			$isNeedSanitize = (!$bAjaxSubmit && $description !== '' && (mb_strpos($description, '<') !== false));
 			if ($isNeedSanitize)
 			{
 				$description = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($description);
@@ -319,13 +319,17 @@ if (check_bitrix_sessid())
 					{
 						if (is_array($value))
 						{
-							if (strlen($value['VALUE']))
+							if($value['VALUE'] <> '')
+							{
 								$arPropsValues[$arProp['ID']][$key] = doubleval($value['VALUE']);
+							}
 						}
 						else
 						{
-							if (strlen($value))
+							if($value <> '')
+							{
 								$arPropsValues[$arProp['ID']][$key] = doubleval($value);
+							}
 						}
 					}
 				}
@@ -333,13 +337,17 @@ if (check_bitrix_sessid())
 				{
 					if (is_array($_POST[$propID]))
 					{
-						if (strlen($_POST[$propID]['VALUE']))
+						if($_POST[$propID]['VALUE'] <> '')
+						{
 							$arPropsValues[$arProp['ID']] = doubleval($_POST[$propID]['VALUE']);
+						}
 					}
 					else
 					{
-						if (strlen($_POST[$propID]))
+						if($_POST[$propID] <> '')
+						{
 							$arPropsValues[$arProp['ID']] = doubleval($_POST[$propID]);
+						}
 					}
 				}
 			}
@@ -348,7 +356,7 @@ if (check_bitrix_sessid())
 				$arPropsValues[$arProp['ID']] = $_POST[$propID];
 			}
 		}
-		if(count($arPropsValues) || $isCopyMode)
+		if(!empty($arPropsValues) || $isCopyMode)
 		{
 			$productFields['PROPERTY_VALUES'] = $arPropsValues;
 			if($postProductID > 0)
@@ -362,10 +370,6 @@ if (check_bitrix_sessid())
 				);
 				while($arPropV = $dbPropV->Fetch())
 				{
-					if (isset($arPropV['USER_TYPE']) && !empty($arPropV['USER_TYPE'])
-						&& !array_key_exists($arPropV['USER_TYPE'], $arPropUserTypeList))
-						continue;
-
 					$propID = $arPropV['ID'];
 					$propValId = $arPropV['PROPERTY_VALUE_ID'];
 
@@ -477,7 +481,7 @@ if (check_bitrix_sessid())
 					{
 						$currencyTo = isset($_POST['currencyTo']) ? $_POST['currencyTo'] : '';
 						$currencyFrom = isset($row['CURRENCY_ID']) ? $row['CURRENCY_ID'] : '';
-						if (strlen($currencyFrom) > 0 && strlen($currencyTo) > 0 && $currencyFrom !== $currencyTo)
+						if ($currencyFrom <> '' && $currencyTo <> '' && $currencyFrom !== $currencyTo)
 							$row['PRICE'] = CCrmCurrency::ConvertMoney(doubleval($row['PRICE']), $currencyFrom, $currencyTo);
 						$ajaxResponse['productData'] = $row;
 						$measureInfo = array();
@@ -908,7 +912,7 @@ foreach ($arProps as $propID => $arProp)
 			);
 			if ($arProp['MULTIPLE'] == 'Y')
 			{
-				if (is_array($arProp['DEFAULT_VALUE']) || strlen($arProp['DEFAULT_VALUE']))
+				if (is_array($arProp['DEFAULT_VALUE']) || mb_strlen($arProp['DEFAULT_VALUE']))
 					$propsFormData[$propID]['n1'] = array('VALUE' => '', 'DESCRIPTION' => '');
 			}
 		}
@@ -1001,7 +1005,7 @@ foreach ($arProps as $propID => $arProp)
 			);
 			if ($arProp['MULTIPLE'] == 'Y')
 			{
-				if (is_array($arProp['DEFAULT_VALUE']) || strlen($arProp['DEFAULT_VALUE']))
+				if (is_array($arProp['DEFAULT_VALUE']) || mb_strlen($arProp['DEFAULT_VALUE']))
 					$propsFormData[$propID]['n1'] = array('VALUE' => '', 'DESCRIPTION' => '');
 			}
 		}

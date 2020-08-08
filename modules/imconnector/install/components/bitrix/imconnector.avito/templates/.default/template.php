@@ -35,8 +35,6 @@ if ($arParams['INDIVIDUAL_USE'] !== 'Y')
 }
 
 $iconCode = Connector::getIconByConnector($arResult['CONNECTOR']);
-$clientIdPlaceholder = $arResult['placeholder']['client_id'] ? Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_PLACEHOLDER') : Loc::getMessage('IMCONNECTOR_COMPONENT_AVITO_CLIENT_ID');
-$clientSecretPlaceholder = $arResult['placeholder']['client_secret'] ? Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_PLACEHOLDER') : Loc::getMessage('IMCONNECTOR_COMPONENT_AVITO_CLIENT_SECRET');
 ?>
 
 <form action="<?=$arResult['URL']['DELETE']?>" method="post" id="form_delete_<?=$arResult['CONNECTOR']?>">
@@ -55,7 +53,7 @@ if (empty($arResult['PAGE'])) //case when not first open
 			</div>
 			<div class="imconnector-field-box">
 				<?php
-				if ($arResult['STATUS']) //case when connection competed
+				if ($arResult['STATUS']) //case when connection completed
 				{
 					?>
 					<div class="imconnector-field-main-subtitle">
@@ -65,9 +63,6 @@ if (empty($arResult['PAGE'])) //case when not first open
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_AVITO_CHANGE_ANY_TIME')?>
 					</div>
 					<div class="ui-btn-container">
-						<a href="<?=$arResult['URL']['SIMPLE_FORM']?>" class="ui-btn ui-btn-primary show-preloader-button">
-							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_CHANGE_SETTING')?>
-						</a>
 						<button class="ui-btn ui-btn-light-border"
 								onclick="popupShow(<?=CUtil::PhpToJSObject($arResult['CONNECTOR'])?>)">
 							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_DISABLE')?>
@@ -153,7 +148,7 @@ else
 			</div>
 			<div class="imconnector-field-box">
 				<?php
-				if (empty($arResult['INFO_CONNECTION']))
+				if (empty($arResult['FORM']['INFO_CONNECTION']))
 				{
 					?>
 					<div class="imconnector-field-main-subtitle">
@@ -178,58 +173,43 @@ else
 				?>
 			</div>
 		</div>
-		<?include 'messages.php'?>
-		<div class="imconnector-field-section imconnector-field-section-control">
-			<form action="<?=$arResult['URL']['SIMPLE_FORM']?>"
-				  method="post">
-				<input type="hidden" name="<?=$arResult['CONNECTOR']?>_form" value="true">
-				<input type="hidden" name="<?=$arResult['CONNECTOR']?>_active">
-				<?=bitrix_sessid_post()?>
-				<div class="imconnector-field-box imconnector-field-control-box-border">
-					<div class="imconnector-field-box-subtitle">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_AVITO_CLIENT_ID')?>
-					</div>
-					<div class="imconnector-field-control-box">
-						<input type="text"
-							   class="imconnector-field-control-input imconnector-input-data"
-							   id="imconnector-avito-client-id"
-							   name="client_id"
-							   value="<?=$arResult['FORM']['client_id']?>"
-							   placeholder="<?=$clientIdPlaceholder?>">
-					</div>
-					<div class="imconnector-field-box-subtitle">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_AVITO_CLIENT_SECRET')?>
-					</div>
-					<div class="imconnector-field-control-box">
-						<input type="text"
-							   class="imconnector-field-control-input imconnector-input-data"
-							   id="imconnector-avito-client-secret"
-							   name="client_secret"
-							   value="<?=$arResult['FORM']['client_secret']?>"
-							   placeholder="<?=$clientSecretPlaceholder?>">
-					</div>
-					<div class="imconnector-field-control-box">
-						<button class="ui-btn ui-btn-success"
-								id="webform-small-button-have-chat"
-								name="<?=$arResult['CONNECTOR']?>_save"
-								value="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT')?>">
-							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT')?>
-						</button>
+	</div>
+	<?include 'messages.php'?>
+	<?if ($arResult['STATUS'])
+	{
+		include 'info.php';
+	}
+	else
+	{
+		?>
+		<div class="imconnector-field-container">
+			<div class="imconnector-field-section">
+				<div class="imconnector-field-main-title">
+					<?= Loc::getMessage('IMCONNECTOR_COMPONENT_AVITO_AUTHORIZATION') ?>
+				</div>
+				<div class="imconnector-field-box">
+					<div class="imconnector-field-box-content">
+						<?= Loc::getMessage('IMCONNECTOR_COMPONENT_AVITO_LOG_IN_OAUTH') ?>
 					</div>
 				</div>
-			</form>
-			<?php
-			if (empty($arResult['INFO_CONNECTION']))
-			{
-				include 'connection-help.php';
-			}
-			else
-			{
-				include 'info.php';
-			}
-			?>
+				<?php
+				if ($arResult['FORM']['USER']['URI'] !== '')
+				{
+					?>
+					<div class="imconnector-field-social-connector">
+						<div class="connector-icon ui-icon ui-icon-service-<?= $iconCode ?> imconnector-field-social-connector-icon">
+							<i></i></div>
+						<div class="ui-btn ui-btn-light-border"
+							 onclick="BX.util.popup('<?= htmlspecialcharsbx(CUtil::JSEscape($arResult['FORM']['USER']['URI'])) ?>', 700, 525)">
+							<?= Loc::getMessage('IMCONNECTOR_COMPONENT_AVITO_AUTHORIZE') ?>
+						</div>
+					</div>
+					<?
+				}
+				?>
+			</div>
 		</div>
-	</div>
-	<?php
+		<?php
+	}
 }
 ?>

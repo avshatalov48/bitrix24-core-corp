@@ -9,4 +9,5 @@ $MESS["SERVICES_MENU_MARKETING_RETURN_CUSTOMER"] = "Генератор прод�
 $MESS["SERVICES_MENU_MARKETING_CONFIG"] = "Настройки";
 $MESS["SERVICES_MENU_MARKETING_ROLE"] = "Права доступа";
 $MESS["SERVICES_MENU_MARKETING_CONTACT"] = "Список адресов";
+$MESS["SERVICES_MENU_MARKETING_YANDEX_TOLOKA"] = "Яндекс.Толока";
 ?>

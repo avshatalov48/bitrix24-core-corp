@@ -93,7 +93,7 @@ class DocumentController extends Internals\Controller
 
 	protected function isActionWithExistsFile()
 	{
-		return in_array(strtolower($this->realActionName), array(
+		return in_array(mb_strtolower($this->realActionName), array(
 			//'start' => 'start',
 			'show' => 'show',
 			'publish' => 'publish',
@@ -115,7 +115,7 @@ class DocumentController extends Internals\Controller
 		if($actionName != 'start' && $this->request->getQuery('document_action') != 'start')
 		{
 			//todo hack. SocServ set backurl!
-			if(strpos($_SERVER['HTTP_REFERER'], 'tools/oauth') !== false)
+			if(mb_strpos($_SERVER['HTTP_REFERER'], 'tools/oauth') !== false)
 			{
 				$uri = \CHTTP::urlDeleteParams($this->request->getRequestUri(), array("sessid", "document_action"));
 				$uri = \CHTTP::urlAddParams($uri, array('document_action' => 'start'));
@@ -476,7 +476,8 @@ class DocumentController extends Internals\Controller
 			$this->sendJsonErrorResponse();
 		}
 
-		if($this->documentHandler instanceof GoogleHandler)
+		$defaultHandlerForView = Driver::getInstance()->getDocumentHandlersManager()->getDefaultHandlerForView();
+		if($this->documentHandler instanceof GoogleHandler && $defaultHandlerForView instanceof GoogleViewerHandler)
 		{
 			$fileDataNew = $this->documentHandler->repackDocument($fileData);
 			if($fileDataNew)
@@ -858,7 +859,8 @@ class DocumentController extends Internals\Controller
 			$this->sendJsonErrorResponse();
 		}
 
-		if($this->documentHandler instanceof GoogleHandler)
+		$defaultHandlerForView = Driver::getInstance()->getDocumentHandlersManager()->getDefaultHandlerForView();
+		if($this->documentHandler instanceof GoogleHandler && $defaultHandlerForView instanceof GoogleViewerHandler)
 		{
 			$fileDataNew = $this->documentHandler->repackDocument($fileData);
 			if($fileDataNew)

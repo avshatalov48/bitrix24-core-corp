@@ -103,7 +103,7 @@ abstract class DocumentHandler implements IErrorable
 			'xodt' => 'xodt',
 		);
 
-		return isset($allowedFormat[$extension]) || isset($allowedFormat[strtolower($extension)]);
+		return isset($allowedFormat[$extension]) || isset($allowedFormat[mb_strtolower($extension)]);
 	}
 
 	/**
@@ -123,7 +123,7 @@ abstract class DocumentHandler implements IErrorable
 			'.ppt' => '.pptx',
 		);
 
-		return isset($convertFormat[$extension]) || isset($convertFormat[strtolower($extension)]);
+		return isset($convertFormat[$extension]) || isset($convertFormat[mb_strtolower($extension)]);
 	}
 
 	public static function getConvertExtension($extension)
@@ -140,9 +140,9 @@ abstract class DocumentHandler implements IErrorable
 		{
 			return $convertFormat[$extension];
 		}
-		if(isset($convertFormat[strtolower($extension)]))
+		if(isset($convertFormat[mb_strtolower($extension)]))
 		{
-			return $convertFormat[strtolower($extension)];
+			return $convertFormat[mb_strtolower($extension)];
 		}
 		return null;
 	}
@@ -373,7 +373,7 @@ abstract class DocumentHandler implements IErrorable
 			$headers = $http->getHeaders();
 
 			$headerAuthenticate = $headers->get('WWW-Authenticate');
-			if(is_string($headerAuthenticate) && strpos($headerAuthenticate, 'insufficient') !== false)
+			if(is_string($headerAuthenticate) && mb_strpos($headerAuthenticate, 'insufficient') !== false)
 			{
 				$this->errorCollection->add(array(
 					new Error('Insufficient scope (403)', self::ERROR_CODE_INSUFFICIENT_SCOPE)
@@ -409,7 +409,7 @@ abstract class DocumentHandler implements IErrorable
 	protected function recoverExtensionInName(&$fileName, $mimeType)
 	{
 		$originalExtension = TypeFile::getExtensionByMimeType($mimeType);
-		$newExtension = strtolower(trim(getFileExtension($fileName), '.'));
+		$newExtension = mb_strtolower(trim(getFileExtension($fileName), '.'));
 		if ($originalExtension != $newExtension)
 		{
 			$fileName = getFileNameWithoutExtension($fileName) . '.' . $originalExtension;

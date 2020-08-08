@@ -58,9 +58,9 @@ final class Text
 	public static function cleanTrashCanSuffix($string)
 	{
 		if(
-			substr($string, -1) !== 'i' ||
-			strlen($string) < 17 ||
-			substr($string, -16, 1) !== 'i' ||
+			mb_substr($string, -1) !== 'i' ||
+			mb_strlen($string) < 17 ||
+			mb_substr($string, -16, 1) !== 'i' ||
 			!(
 				preg_match('%i[0-9a-z]{0,4}[0-9]{10,12}i$%iU' . BX_UTF_PCRE_MODIFIER, $string) ||
 				preg_match('%i[0-9]{11}[a-z]{3}i$%iU' . BX_UTF_PCRE_MODIFIER, $string) //our cp old version
@@ -70,7 +70,7 @@ final class Text
 			return $string;
 		}
 
-		return substr($string, 0, -16);
+		return mb_substr($string, 0, -16);
 	}
 
 	/**
@@ -120,7 +120,7 @@ final class Text
 	public static function correctFolderName($folderName)
 	{
 		$folderName = self::correctObjectName($folderName);
-		if(substr($folderName, -1) === '.')
+		if(mb_substr($folderName, -1) === '.')
 		{
 			return rtrim($folderName, '.');
 		}

@@ -128,10 +128,10 @@ $communicationsData = htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($arResult
 					<span class="crm-activity-popup-timeline-detail-link"
 						data-state="<?=$arResult['DETAIL_MODE']? 'open' : ''?>"
 						data-role="view-mode-switcher"
-						data-label-short="<?=GetMessage('CRM_ACTIVITY_PLANNER_SHORT')?>"
-						data-label-detail="<?=GetMessage('CRM_ACTIVITY_PLANNER_DETAIL')?>"
+						data-label-short="<?=GetMessage('CRM_ACTIVITY_PLANNER_SHORT_1')?>"
+						data-label-detail="<?=GetMessage('CRM_ACTIVITY_PLANNER_DETAIL_1')?>"
 						data-animation-duration="300">
-						<?=GetMessage('CRM_ACTIVITY_PLANNER_DETAIL')?>
+						<?=GetMessage('CRM_ACTIVITY_PLANNER_DETAIL_1')?>
 					</span>
 				</div><!--crm-activity-popup-timeline-detail-->
 			</div><!--crm-activity-popup-timeline-container-->
@@ -149,13 +149,13 @@ $communicationsData = htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($arResult
 						case 'TEXT':?>
 							<div class="crm-activity-popup-info-location-container">
 								<span class="crm-activity-popup-info-location-text"><?=htmlspecialcharsbx($field['LABEL'])?>:</span>
-								<input type="text" name="<?=strtolower($name)?>" value="<?=htmlspecialcharsbx($field['VALUE'])?>" class="crm-activity-popup-info-location" <?if($field['PLACEHOLDER'] != ''):?>placeholder="<?=htmlspecialcharsbx($field['PLACEHOLDER'])?>"<?endif?> data-role="focus-on-show">
+								<input type="text" name="<?= mb_strtolower($name)?>" value="<?=htmlspecialcharsbx($field['VALUE'])?>" class="crm-activity-popup-info-location" <?if($field['PLACEHOLDER'] != ''):?>placeholder="<?=htmlspecialcharsbx($field['PLACEHOLDER'])?>"<?endif?> data-role="focus-on-show">
 							</div><?
 							break;
 						case 'TEXTAREA':?>
 							<div class="crm-activity-popup-info-person-detail-description">
 								<label class="crm-activity-popup-info-person-detail-description-name"><?=htmlspecialcharsbx($field['LABEL'])?>:</label>
-								<textarea name="<?=strtolower($name)?>" class="crm-activity-popup-info-person-detail-description-input" <?if($field['PLACEHOLDER'] != ''):?>placeholder="<?=htmlspecialcharsbx($field['PLACEHOLDER'])?>"<?endif?>><?=htmlspecialcharsbx($field['VALUE'])?></textarea>
+								<textarea name="<?= mb_strtolower($name)?>" class="crm-activity-popup-info-person-detail-description-input" <?if($field['PLACEHOLDER'] != ''):?>placeholder="<?=htmlspecialcharsbx($field['PLACEHOLDER'])?>"<?endif?>><?=htmlspecialcharsbx($field['VALUE'])?></textarea>
 							</div><?
 						break;
 						case 'COMMUNICATIONS': ?>

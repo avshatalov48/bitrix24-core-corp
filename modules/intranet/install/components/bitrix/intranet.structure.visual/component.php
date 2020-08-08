@@ -1,4 +1,7 @@
 <?
+
+use Bitrix\Main\Config\Option;
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 if (!CModule::IncludeModule('intranet'))
@@ -22,7 +25,7 @@ $arParams['IBLOCK_ID'] = intval($arParams['IBLOCK_ID']);
 if ($arParams['IBLOCK_ID'] <= 0)
 	$arParams['IBLOCK_ID'] = COption::GetOptionInt('intranet', 'iblock_structure', 0);
 
-if (strlen($arParams["NAME_TEMPLATE"]) <= 0)
+if ($arParams["NAME_TEMPLATE"] == '')
 	$arParams["NAME_TEMPLATE"] = CSite::GetNameFormat();
 
 $arParams['MAX_DEPTH'] = 3;
@@ -163,22 +166,6 @@ if (isset($_REQUEST['action']) && $arResult['CAN_EDIT'] && check_bitrix_sessid()
 						$obUser = new CUser();
 						if ($obUser->Update($user_id, array('UF_DEPARTMENT' => array_unique($arDpt))))
 						{
-							$dbRes = \Bitrix\Intranet\Internals\UserToDepartmentTable::getList(array(
-								'filter' => array(
-									'USER_ID' => $user_id,
-									'DEPARTMENT_ID' => $dpt_from
-								)
-							));
-
-							if ($userDepRow = $dbRes->fetch())
-							{
-								\Bitrix\Intranet\Internals\UserToDepartmentTable::update($userDepRow['ID'], array(
-									'fields' => array(
-										'DEPARTMENT_ID' => $dpt_id
-									)
-								));
-							}
-
 							if ($type != 1)
 							{
 								$arUndo[] = array(
@@ -702,6 +689,22 @@ if ($this->StartResultCache(false, $arParams['IBLOCK_ID'].'|'.$arResult['CAN_EDI
 					$arRes['PROFILE_URL'] = str_replace(array('#ID#', '#USER_ID#'), $arRes['ID'], $arParams['PROFILE_URL']);
 				}
 
+				if (intval($arRes["PERSONAL_PHOTO"]) <= 0)
+				{
+					switch($arRes["PERSONAL_GENDER"])
+					{
+						case "M":
+							$suffix = "male";
+							break;
+						case "F":
+							$suffix = "female";
+							break;
+						default:
+							$suffix = "unknown";
+					}
+					$arRes["PERSONAL_PHOTO"] = Option::get('socialnetwork', 'default_user_picture_'.$suffix, false, SITE_ID);
+				}
+
 				if ($arRes['PERSONAL_PHOTO'] > 0)
 				{
 					$arRes['PERSONAL_PHOTO'] = CIntranetUtils::InitImage($arRes['PERSONAL_PHOTO'], 100, 100, BX_RESIZE_IMAGE_EXACT);
@@ -744,6 +747,22 @@ if ($this->StartResultCache(false, $arParams['IBLOCK_ID'].'|'.$arResult['CAN_EDI
 				$CACHE_MANAGER->RegisterTag("intranet_user_".$arRes['ID']);
 
 				$last_id = $arRes['ID'];
+
+				if (intval($arRes["PERSONAL_PHOTO"]) <= 0)
+				{
+					switch($arRes["PERSONAL_GENDER"])
+					{
+						case "M":
+							$suffix = "male";
+							break;
+						case "F":
+							$suffix = "female";
+							break;
+						default:
+							$suffix = "unknown";
+					}
+					$arRes["PERSONAL_PHOTO"] = Option::get('socialnetwork', 'default_user_picture_'.$suffix, false, SITE_ID);
+				}
 
 				if ($arRes['PERSONAL_PHOTO'] > 0)
 				{

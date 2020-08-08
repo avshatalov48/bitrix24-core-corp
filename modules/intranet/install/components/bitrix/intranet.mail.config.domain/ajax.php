@@ -202,9 +202,9 @@ class CIntranetMailConfigDomainAjax
 		if ($error === false)
 		{
 			if (!empty($_REQUEST['sdomain']))
-				$domain = strtolower($_REQUEST['sdomain']);
+				$domain = mb_strtolower($_REQUEST['sdomain']);
 			else if (!empty($_REQUEST['domain']))
-				$domain = strtolower($_REQUEST['domain']);
+				$domain = mb_strtolower($_REQUEST['domain']);
 			else
 				$error = GetMessage('INTR_MAIL_FORM_ERROR');
 		}
@@ -225,7 +225,7 @@ class CIntranetMailConfigDomainAjax
 					if (empty($_REQUEST['eula']) || $_REQUEST['eula'] != 'Y')
 						$error = GetMessage('INTR_MAIL_FORM_ERROR');
 				}
-				else if (strtolower(reset($crDomains['result'])) != $domain)
+				else if (mb_strtolower(reset($crDomains['result'])) != $domain)
 				{
 					$error = CMail::getErrorMessage(CMail::ERR_API_OP_DENIED);
 				}
@@ -324,8 +324,8 @@ class CIntranetMailConfigDomainAjax
 					'SITE_ID'      => self::$siteId,
 					'ACTIVE'       => 'Y',
 					'SERVICE_TYPE' => 'crdomain',
-					'NAME'         => strtolower($_REQUEST['domain']),
-					'SERVER'       => strtolower($_REQUEST['domain']),
+					'NAME'         => mb_strtolower($_REQUEST['domain']),
+					'SERVER'       => mb_strtolower($_REQUEST['domain']),
 					'ENCRYPTION'   => $_REQUEST['public'] == 'Y' ? 'N' : 'Y'
 				));
 

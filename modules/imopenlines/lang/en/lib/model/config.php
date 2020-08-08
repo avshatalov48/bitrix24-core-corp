@@ -51,6 +51,7 @@ $MESS["CONFIG_ENTITY_VOTE_MESSAGE_2_DISLIKE_FIELD"] = "Negative rating text (cat
 $MESS["CONFIG_ENTITY_VOTE_MESSAGE_2_LIKE_FIELD"] = "Positive rating text (category 2)";
 $MESS["CONFIG_ENTITY_VOTE_MESSAGE_2_TEXT_FIELD"] = "Rating request text (category 2)";
 $MESS["CONFIG_ENTITY_VOTE_MESSAGE_FIELD"] = "Send customer rating request";
+$MESS["CONFIG_ENTITY_WATCH_TYPING_FIELD"] = "Live Typing";
 $MESS["CONFIG_ENTITY_WELCOME_BOT_ENABLE_FIELD"] = "Connect chat bot when creating a session";
 $MESS["CONFIG_ENTITY_WELCOME_BOT_JOIN_FIELD"] = "Type of chat bot connection";
 $MESS["CONFIG_ENTITY_WELCOME_BOT_LEFT_FIELD"] = "Chat bot deactivation mode";

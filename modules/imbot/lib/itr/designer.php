@@ -95,12 +95,12 @@ class Designer
 		}
 		else if ($menuItemAction['TYPE'] == Item::TYPE_QUEUE)
 		{
-			$chat = new \Bitrix\Imopenlines\Chat(substr($this->dialogId, 4));
+			$chat = new \Bitrix\Imopenlines\Chat(mb_substr($this->dialogId, 4));
 			$chat->endBotSession();
 		}
 		else if ($menuItemAction['TYPE'] == Item::TYPE_USER)
 		{
-			$chat = new \Bitrix\Imopenlines\Chat(substr($this->dialogId, 4));
+			$chat = new \Bitrix\Imopenlines\Chat(mb_substr($this->dialogId, 4));
 			$chat->transfer(Array(
 				'FROM' => $this->botId,
 				'TO' => $menuItemAction['USER_ID'],
@@ -123,8 +123,8 @@ class Designer
 			if ($botId)
 			{
 				$chat = new \CIMChat($this->botId);
-				$chat->AddUser(substr($this->dialogId, 4), $botId);
-				$chat->DeleteUser(substr($this->dialogId, 4), $this->botId);
+				$chat->AddUser(mb_substr($this->dialogId, 4), $botId);
+				$chat->DeleteUser(mb_substr($this->dialogId, 4), $this->botId);
 			}
 			else if ($menuItemAction['ERROR_TEXT'])
 			{
@@ -138,7 +138,7 @@ class Designer
 		}
 		else if ($menuItemAction['TYPE'] == Item::TYPE_FINISH)
 		{
-			$chat = new \Bitrix\Imopenlines\Chat(substr($this->dialogId, 4));
+			$chat = new \Bitrix\Imopenlines\Chat(mb_substr($this->dialogId, 4));
 			$chat->answer($this->botId);
 			$chat->finish();
 		}

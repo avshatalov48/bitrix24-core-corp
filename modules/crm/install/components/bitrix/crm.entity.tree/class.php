@@ -265,13 +265,13 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 		$params = $this->arParams;
 		$enableSlider = \CCrmOwnerType::IsSliderEnabled(\CCrmOwnerType::ResolveID($type));
 
-		$pathKey = 'PATH_TO_'.strtoupper($type).($enableSlider ? '_DETAILS' : '_SHOW');
+		$pathKey = 'PATH_TO_'.mb_strtoupper($type).($enableSlider ? '_DETAILS' : '_SHOW');
 		$url = !array_key_exists($pathKey, $params) || $params[$pathKey] == ''
 				? \CrmCheckPath($pathKey, '', '')
 				: $params[$pathKey];
 		if (isset($params['ADDITIONAL_PARAMS']) && $params['ADDITIONAL_PARAMS'])
 		{
-			$url .= ((strpos($url, '?') === false) ? '?' : '&') . $params['ADDITIONAL_PARAMS'];
+			$url .= ((mb_strpos($url, '?') === false) ? '?' : '&') . $params['ADDITIONAL_PARAMS'];
 		}
 
 		return $url;
@@ -306,7 +306,7 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 			$row['RESPONSIBLE_FORMATTED_NAME'] = $this->formatUserName($row, 'RESPONSIBLE');
 			$row['RESPONSIBLE_URL'] = \CComponentEngine::MakePathFromTemplate(
 				$this->arParams['PATH_TO_USER_PROFILE'],
-				array('user_id' => $row['RESPONSIBLE'])
+				array('user_id' => $row['RESPONSIBLE_ID'])
 			);
 		}
 		if (array_key_exists('PRICE', $row) && array_key_exists('CURRENCY', $row))
@@ -372,11 +372,11 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 	 */
 	protected function addChainItem(array $parent, $entityCode, $key=false)
 	{
-		$entityCode = strtolower($entityCode);
+		$entityCode = mb_strtolower($entityCode);
 		$provider = $this->getProviderName($entityCode);
 		if ($key === false)
 		{
-			$key = strtoupper($entityCode).'_ID';
+			$key = mb_strtoupper($entityCode).'_ID';
 		}
 
 		if (!$parent[$key] || !class_exists($provider))
@@ -402,9 +402,9 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 				),
 				'limit' => 1
 			);
-			if (isset($this->selectPresets[strtoupper($entityCode)]))
+			if (isset($this->selectPresets[mb_strtoupper($entityCode)]))
 			{
-				$params['select'] = $this->selectPresets[strtoupper($entityCode)];
+				$params['select'] = $this->selectPresets[mb_strtoupper($entityCode)];
 			}
 			$parent = $provider::getList($params)->fetch(\Bitrix\Main\Text\Converter::getHtmlConverter());
 		}
@@ -572,8 +572,8 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 	{
 		//init params
 		$contragents = array();
-		$entityCode = strtolower($entityCode);
-		$contragent = strtoupper($entityCode);
+		$entityCode = mb_strtolower($entityCode);
+		$contragent = mb_strtoupper($entityCode);
 		$provider = $this->getProviderName($entityCode);
 		if (isset($this->selectPresets[$contragent]))
 		{
@@ -597,16 +597,29 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 			{
 				$filter['SYSTEM'] = 'N';
 			}
+
+			$runtime = [
+				new Bitrix\Main\Entity\ReferenceField('RESPONSIBLE',
+					'\Bitrix\Main\UserTable',
+					['=this.RESPONSIBLE_ID' => 'ref.ID'],
+					['join_type' => 'LEFT']
+				)
+			];
+
+			if ($entityCode === 'order')
+			{
+				$runtime[] =
+					new Bitrix\Main\Entity\ReferenceField('DEAL',
+						'\Bitrix\Crm\Binding\OrderDealTable',
+						['=this.ID' => 'ref.ORDER_ID'],
+						['join_type' => 'LEFT']
+					);
+			}
+
 			$params = array(
 				'filter' => $filter,
 				'limit' => $this->blockSize,
-				'runtime' => array(
-					new Bitrix\Main\Entity\ReferenceField('RESPONSIBLE',
-						'\Bitrix\Main\UserTable',
-						array('=this.RESPONSIBLE_ID' => 'ref.ID'),
-						array('join_type' => 'LEFT')
-					)
-				)
+				'runtime' => $runtime
 			);
 			if ($this->blockPage > 1)
 			{
@@ -701,6 +714,12 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 					case $this->codes['deal']:
 						$entityItem['SUB_ENTITY'][$this->codes['quote']] = $this->getSubEntity(array('DEAL_ID' => $id), $this->codes['quote']);
 						$entityItem['SUB_ENTITY'][$this->codes['invoice']] = $this->getSubEntity(array('UF_DEAL_ID' => $id), $this->codes['invoice']);
+						$entityItem['SUB_ENTITY'][$this->codes['order']] = $this->getSubEntity(
+							[
+								'DEAL.DEAL_ID' => $id
+							],
+							$this->codes['order']
+						);
 						break;
 					case $this->codes['quote']:
 						$entityItem['SUB_ENTITY'][$this->codes['invoice']] = $this->getSubEntity(array('UF_QUOTE_ID' => $id), $this->codes['invoice']);
@@ -838,7 +857,7 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 
 		$params = $this->arParams;
 		$id = trim($params['ENTITY_ID']);
-		$type = strtoupper(trim($params['ENTITY_TYPE_NAME']));
+		$type = mb_strtoupper(trim($params['ENTITY_TYPE_NAME']));
 
 		//get base items
 		if ($id > 0 && $type != '')

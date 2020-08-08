@@ -140,7 +140,7 @@ class PhraseIndexSearch
 		}
 
 		$enabledLanguages = Translate\Config::getEnabledLanguages();
-		$languageUpperKeys = array_combine($enabledLanguages, array_map('strtoupper', $enabledLanguages));
+		$languageUpperKeys = array_combine($enabledLanguages, array_map('mb_strtoupper', $enabledLanguages));
 
 		$selectedLanguages = array();
 		foreach ($languageUpperKeys as $langId => $langUpper)
@@ -214,7 +214,7 @@ class PhraseIndexSearch
 				$useLike = false;
 				foreach ($codes as $code)
 				{
-					if (strpos($code, '%') !== false)
+					if (mb_strpos($code, '%') !== false)
 					{
 						$useLike = true;
 						break;
@@ -240,7 +240,7 @@ class PhraseIndexSearch
 				$useLike = false;
 				foreach ($codes as $code)
 				{
-					if (strpos($code, '%') !== false)
+					if (mb_strpos($code, '%') !== false)
 					{
 						$useLike = true;
 						break;
@@ -284,19 +284,19 @@ class PhraseIndexSearch
 				$runtime[] = new Main\ORM\Fields\ExpressionField('CODE_UPPER', 'UPPER(%s)', 'CODE');
 				if (in_array(self::SEARCH_METHOD_EQUAL, $filterIn['CODE_ENTRY']))
 				{
-					$filterOut['=CODE_UPPER'] = strtoupper($filterIn['PHRASE_CODE']);
+					$filterOut['=CODE_UPPER'] = mb_strtoupper($filterIn['PHRASE_CODE']);
 				}
 				elseif (in_array(self::SEARCH_METHOD_START_WITH, $filterIn['CODE_ENTRY']))
 				{
-					$filterOut['=%CODE_UPPER'] = strtoupper($filterIn['PHRASE_CODE']).'%';
+					$filterOut['=%CODE_UPPER'] = mb_strtoupper($filterIn['PHRASE_CODE']).'%';
 				}
 				elseif (in_array(self::SEARCH_METHOD_END_WITH, $filterIn['CODE_ENTRY']))
 				{
-					$filterOut['=%CODE_UPPER'] = '%'.strtoupper($filterIn['PHRASE_CODE']);
+					$filterOut['=%CODE_UPPER'] = '%'.mb_strtoupper($filterIn['PHRASE_CODE']);
 				}
 				else
 				{
-					$filterOut['=%CODE_UPPER'] = '%'.strtoupper($filterIn['PHRASE_CODE']).'%';
+					$filterOut['=%CODE_UPPER'] = '%'.mb_strtoupper($filterIn['PHRASE_CODE']).'%';
 				}
 			}
 		}
@@ -317,9 +317,9 @@ class PhraseIndexSearch
 		};
 		$trimSlash = function(&$val)
 		{
-			if (strpos($val, '%') === false)
+			if (mb_strpos($val, '%') === false)
 			{
-				if (substr($val, -4) === '.php')
+				if (mb_substr($val, -4) === '.php')
 				{
 					$val = '/'. trim($val, '/');
 				}
@@ -342,7 +342,7 @@ class PhraseIndexSearch
 				{
 					if (!empty($testPath) && trim($testPath) !== '')
 					{
-						if (strpos($testPath, '/') === false)
+						if (mb_strpos($testPath, '/') === false)
 						{
 							$pathNameIncludes[] = $testPath;
 						}
@@ -393,7 +393,7 @@ class PhraseIndexSearch
 				{
 					if (!empty($testPath) && trim($testPath) !== '')
 					{
-						if (strpos($testPath, '/') === false)
+						if (mb_strpos($testPath, '/') === false)
 						{
 							$pathNameExcludes[] = $testPath;
 						}
@@ -488,7 +488,7 @@ class PhraseIndexSearch
 				$textStr = preg_replace("/\W+$/i".BX_UTF_PCRE_MODIFIER, '', $textStr);
 				$textStr = preg_replace("/\b\w{1,4}\b/i".BX_UTF_PCRE_MODIFIER, '', $textStr);
 				$textStr = preg_replace("/\W+/i".BX_UTF_PCRE_MODIFIER, ' ', $textStr);
-				if (strlen($textStr) > 4)
+				if (mb_strlen($textStr) > 4)
 				{
 					if ($exact)
 					{

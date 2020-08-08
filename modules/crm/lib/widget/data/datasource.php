@@ -175,7 +175,7 @@ abstract class DataSource
 	 */
 	public function getPresetFullName()
 	{
-		return isset($this->settings['presetName']) ? strtoupper($this->settings['presetName']) : '';
+		return isset($this->settings['presetName'])? mb_strtoupper($this->settings['presetName']) : '';
 	}
 	/**
 	 * Get data preset name
@@ -183,7 +183,7 @@ abstract class DataSource
 	 */
 	public function getPresetName()
 	{
-		$name = isset($this->settings['presetName']) ? strtoupper($this->settings['presetName']) : '';
+		$name = isset($this->settings['presetName'])? mb_strtoupper($this->settings['presetName']) : '';
 		$parts = explode('::', $name);
 		return is_array($parts) && count($parts) >= 2 ? $parts[1] : $name;
 	}
@@ -360,7 +360,7 @@ abstract class DataSource
 
 		$userID = \CCrmSecurityHelper::GetCurrentUserID();
 		$cacheID .= '_'.ConvertDateTime(getmicrotime()).'_'.$userID;
-		$cacheDir = '/crm/start/widget/'.md5(__CLASS__).'/'.substr($userID,0,2).'/';
+		$cacheDir = '/crm/start/widget/'.md5(__CLASS__).'/'.mb_substr($userID, 0, 2).'/';
 
 		$this->cache = new \CPHPCache();
 		if ($this->cache->InitCache(86410, $cacheID, $cacheDir))

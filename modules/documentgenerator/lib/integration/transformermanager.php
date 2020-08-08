@@ -270,10 +270,10 @@ final class TransformerManager implements InterfaceCallback
 	}
 
 	/**
-	 * @return false|string
+	 * @return null|string
 	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public function getPullTag()
+	public function getPullTag(): ?string
 	{
 		if(Loader::includeModule("pull"))
 		{
@@ -282,7 +282,7 @@ final class TransformerManager implements InterfaceCallback
 			return $pullTag;
 		}
 
-		return false;
+		return null;
 	}
 
 	/**

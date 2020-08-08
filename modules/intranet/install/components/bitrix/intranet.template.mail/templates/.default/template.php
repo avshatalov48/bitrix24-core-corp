@@ -24,7 +24,11 @@ else
 	$logoPath = $this->getFolder()."/images/lang/".\Bitrix\Main\Localization\Loc::getDefaultLang(LANGUAGE_ID)."/logo.png";
 }
 
-if ($arParams["TEMPLATE_TYPE"] == "USER_INVITATION" || $arParams["TEMPLATE_TYPE"] == "EXTRANET_INVITATION")
+if (
+	$arParams["TEMPLATE_TYPE"] == "USER_INVITATION"
+	|| $arParams["TEMPLATE_TYPE"] == "EXTRANET_INVITATION"
+	|| $arParams["TEMPLATE_TYPE"] == "USER_ADD"
+)
 {
 	?>
 	<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; padding:0; width: 100%;">
@@ -55,7 +59,7 @@ if ($arParams["TEMPLATE_TYPE"] == "USER_INVITATION" || $arParams["TEMPLATE_TYPE"
 																<td align="left" valign="middle" style="text-align: left; padding:0 0 0 7px; height: 45px; vertical-align: middle;">
 																	<span style="color: #525c69; font-size: 16px; font-family: Helvetica Neue, Helvetica, Arial, sans-serif;">
 																		<?=GetMessage("INTRANET_INVITE_TEXT", array(
-																			"#NAME#" => "<b style=\"color: #525c69; font-size: 16px; font-family: Helvetica Neue, Helvetica, Arial, sans-serif;\">".$arResult["USER_NAME"]."</b>",
+																			"#NAME#" => "<b style=\"color: #525c69; font-size: 16px; font-family: Helvetica Neue, Helvetica, Arial, sans-serif;\">".htmlspecialcharsbx($arResult["USER_NAME"])."</b>",
 																			"#BLOCK_START#" => "<b style=\"font-size:22px;\"><span style=\"color: #2fc7f7\">",
 																			"#BLOCK_MIDDLE#" => "</span><span style=\"color: #215f98\">",
 																			"#BLOCK_END#" => "</span></b>"
@@ -190,7 +194,7 @@ if ($arParams["TEMPLATE_TYPE"] == "IM_NEW_NOTIFY" || $arParams["TEMPLATE_TYPE"] 
 											<tr>
 												<td align="left" style="text-align: left; padding: 5px 0;">
 													<span style="color: #2066b0; font-size: 19px; font-family: Helvetica Neue, Helvetica, Arial, sans-serif;">
-														<?=GetMessage("INTRANET_MAIL_TITLE_".$arParams["TEMPLATE_TYPE"], array("#NAME#" => "<span style=\"font-weight: bold;\">".$arParams["FROM_USER"]."</span>"))?>
+														<?=GetMessage("INTRANET_MAIL_TITLE_".$arParams["TEMPLATE_TYPE"], array("#NAME#" => "<span style=\"font-weight: bold;\">".htmlspecialcharsbx($arParams["FROM_USER"])."</span>"))?>
 													</span>
 												</td>
 											</tr>

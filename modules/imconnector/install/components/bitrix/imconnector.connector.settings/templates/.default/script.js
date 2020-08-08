@@ -329,7 +329,10 @@
 			this.onChangeDestination();
 			BX.addCustomEvent(this.node, 'select', BX.proxy(this.select, this));
 			BX.addCustomEvent(this.node, 'unSelect', BX.proxy(this.unSelect, this));
-			BX.addCustomEvent(this.node, 'delete', BX.proxy(this.delete, this));
+			if(this.delete)
+			{
+				BX.addCustomEvent(this.node, 'delete', BX.proxy(this.delete, this));
+			}
 			BX.addCustomEvent(this.node, 'openDialog', BX.proxy(this.openDialog, this));
 			BX.addCustomEvent(this.node, 'closeDialog', BX.proxy(this.closeDialog, this));
 			BX.addCustomEvent(this.node, 'closeSearch', BX.proxy(this.closeSearch, this));

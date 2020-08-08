@@ -5,6 +5,7 @@ type CategoryOptions = {
 	appContainer: HTMLDivElement,
 	id: string | number,
 	name: string,
+	access: string | boolean,
 	sort: number | string,
 	default: boolean,
 	stages: {
@@ -14,8 +15,10 @@ type CategoryOptions = {
 	},
 	robotsSettingsLink: string,
 	generatorSettingsLink: string,
+	permissionEditLink: string,
 	lazy: boolean,
 	generatorsCount: number,
+	generatorsListUrl: string,
 	allowWrite: boolean,
 	canEditTunnels: boolean,
 	canAddCategory: boolean,

@@ -6,7 +6,7 @@ define("NOT_CHECK_PERMISSIONS", true);
 define("BX_PUBLIC_TOOLS", true);
 
 $site_id = isset($_REQUEST["site"]) && is_string($_REQUEST["site"]) ? trim($_REQUEST["site"]) : "";
-$site_id = substr(preg_replace("/[^a-z0-9_]/i", "", $site_id), 0, 2);
+$site_id = mb_substr(preg_replace("/[^a-z0-9_]/i", "", $site_id), 0, 2);
 
 define("SITE_ID", $site_id);
 
@@ -15,7 +15,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/bx_root.php");
 $action = isset($_REQUEST["action"]) && is_string($_REQUEST["action"]) ? trim($_REQUEST["action"]) : "";
 
 $lng = isset($_REQUEST["lang"]) && is_string($_REQUEST["lang"]) ? trim($_REQUEST["lang"]) : "";
-$lng = substr(preg_replace("/[^a-z0-9_]/i", "", $lng), 0, 2);
+$lng = mb_substr(preg_replace("/[^a-z0-9_]/i", "", $lng), 0, 2);
 
 $ls = isset($_REQUEST["ls"]) && is_string($_REQUEST["ls"]) ? trim($_REQUEST["ls"]) : "";
 $ls_arr = isset($_REQUEST["ls_arr"])? $_REQUEST["ls_arr"]: "";

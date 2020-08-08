@@ -64,7 +64,7 @@ if (isset($arParams['INPUT_VALUE']))
 			array(
 				'arUserField' => $arUserField,
 				'bVarsFromForm' => false,
-				'form_name' => isset($arParams['FORM_NAME']) && strlen($arParams['FORM_NAME']) > 0 ? 'form_'.$arParams['FORM_NAME'] : '',
+				'form_name' => isset($arParams['FORM_NAME']) && $arParams['FORM_NAME'] <> '' ? 'form_'.$arParams['FORM_NAME'] : '',
 			),
 			false,
 			array('HIDE_ICONS' => 'Y')

@@ -49,8 +49,8 @@ class CCrmRole
 			$arOrder = Array('ID' => 'DESC');
 		foreach ($arOrder as $by => $order)
 		{
-			$by = strtoupper($by);
-			$order = strtolower($order);
+			$by = mb_strtoupper($by);
+			$order = mb_strtolower($order);
 			if($order != 'asc')
 				$order = 'desc';
 
@@ -158,7 +158,7 @@ class CCrmRole
 			return $arRel;
 
 		foreach ($arRel as &$sRel)
-			$sRel = $DB->ForSql(strtoupper($sRel));
+			$sRel = $DB->ForSql(mb_strtoupper($sRel));
 		$sin = implode("','", $arRel);
 
 		if (isset($arResult[$sin]))
@@ -324,7 +324,7 @@ class CCrmRole
 			if (!isset($arFields['RELATION']) || !is_array($arFields['RELATION']))
 				$arFields['RELATION'] = array();
 			$sUpdate = $DB->PrepareUpdate('b_crm_role', $arFields, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
-			if (strlen($sUpdate) > 0)
+			if ($sUpdate <> '')
 				$DB->Query("UPDATE b_crm_role SET $sUpdate WHERE ID = $ID", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 
 			$this->SetRoleRelation($ID, $arFields['RELATION']);
@@ -354,7 +354,7 @@ class CCrmRole
 		if (($ID == false || isset($arFields['NAME'])) && empty($arFields['NAME']))
 			$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_IS_MISSING', array('%FIELD_NAME%' => GetMessage('CRM_FIELD_NAME')))."<br />";
 
-		if(strlen($this->LAST_ERROR) > 0)
+		if($this->LAST_ERROR <> '')
 			return false;
 
 		return true;
@@ -379,5 +379,55 @@ class CCrmRole
 			'WRITE' => array('-' => 'X'),
 			'DELETE' => array('-' => 'X')
 		);
+	}
+
+	public static function normalizePermissions(array $permissions): array
+	{
+		foreach ($permissions as $entityTypeName => $entityPermissions)
+		{
+			if (!is_array($entityPermissions))
+			{
+				$entityPermissions = [];
+				$permissions[$entityTypeName] = [];
+			}
+
+			foreach ($entityPermissions as $permissionType => $permissionsForType)
+			{
+				if (!is_array($permissionsForType))
+				{
+					$permissionsForType = [];
+					$permissions[$entityTypeName][$permissionType] = [];
+				}
+
+				$defaultPermissionValue = '-';
+				foreach ($permissionsForType as $fieldName => $permissionValue)
+				{
+					if ($fieldName === '-') // default permission
+					{
+						$defaultPermissionValue = trim($permissionValue);
+					}
+				}
+				foreach ($permissionsForType as $fieldName => $permissionValues)
+				{
+					if ($fieldName !== '-')
+					{
+						if (!is_array($permissionValues))
+						{
+							$permissionValues = [];
+							$permissions[$entityTypeName][$permissionType][$fieldName] = [];
+						}
+						foreach ($permissionValues as $fieldValue => $permissionValue)
+						{
+							if (trim($permissionValue) === $defaultPermissionValue)
+							{
+								// if permission for this field value equals to default permission, use inheritance:
+								$permissions[$entityTypeName][$permissionType][$fieldName][$fieldValue] = '-';
+							}
+						}
+					}
+				}
+			}
+		}
+		return $permissions;
 	}
 }

@@ -84,7 +84,7 @@ $inputPrefix = $arParams['INPUT_PREFIX'];
 								<?endif?>
 
 								<span class="task-options-item-param"><?=htmlspecialcharsbx($block['TITLE'])?></span>
-								<div class="task-options-item-open-inner">
+								<div class="task-options-item-open-inner <?=($block['RESTRICTED']? 'tasks-btn-restricted' : '')?>">
 
 									<?=$block['HTML']?>
 

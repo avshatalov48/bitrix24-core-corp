@@ -27,6 +27,9 @@ class CIntranetRestService extends IRestService
 				\CRestUtil::PLACEMENTS => array(
 					self::CONTACT_CENTER_PLACEMENT => array()
 				),
+			),
+			'intranet' => array(
+				\CRestUtil::PLACEMENTS => \Bitrix\Intranet\Binding\Menu::getRestMap()
 			)
 		);
 	}
@@ -297,5 +300,3 @@ class CIntranetRestService extends IRestService
 		return $perm  >= 'U';
 	}
 }
-
-?>

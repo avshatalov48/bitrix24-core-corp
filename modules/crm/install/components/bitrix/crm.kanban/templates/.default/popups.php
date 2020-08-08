@@ -80,7 +80,7 @@ use \Bitrix\Crm\Conversion\LeadConversionScheme;
 	<div class="crm-kanban-popup-wrapper">
 		<div class="crm-kanban-popup-convert-list">
 			<?foreach (LeadConversionScheme::getJavaScriptDescriptions(true) as $code => $value):?>
-			<div class="kanban-converttype" data-type="<?= strtolower($code);?>" onclick="BX.Crm.KanbanComponent.leadConvert('<?= \CUtil::JSEscape($code);?>');"><?= htmlspecialcharsbx($value);?></div>
+			<div class="kanban-converttype" data-type="<?= mb_strtolower($code);?>" onclick="BX.Crm.KanbanComponent.leadConvert('<?= \CUtil::JSEscape($code);?>');"><?= htmlspecialcharsbx($value);?></div>
 			<?endforeach;?>
 			<div class="kanban-converttype" data-type="select" onclick="BX.Crm.KanbanComponent.leadConvert('SELECT');"><?= Loc::getMessage('CRM_KANBAN_POPUP_LEAD_SELECT');?></div>
 		</div>

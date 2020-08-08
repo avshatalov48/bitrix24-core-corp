@@ -8,21 +8,31 @@
 
 namespace Bitrix\Tasks\Item\Access\Task;
 
+use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotImplementedException;
-use Bitrix\Main\UserAccessTable;
 
-use Bitrix\Tasks\Item;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\Model\TemplateModel;
+use Bitrix\Tasks\Access\Permission\PermissionDictionary;
+use Bitrix\Tasks\Access\Permission\TasksTemplatePermissionTable;
+use Bitrix\Tasks\Access\TemplateAccessController;
 use Bitrix\Tasks\Item\Result;
-use Bitrix\Tasks\Internals\RunTime;
-use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Provider\TemplateProvider;
 use Bitrix\Tasks\Util\User;
 
 Loc::loadMessages(__FILE__);
 
 final class Template extends \Bitrix\Tasks\Item\Access
 {
-	private static $accessCodes = null;
+	private const LEGACY_LEVELS = [
+		'full',
+		'read'
+	];
+
+	/* @var TemplateAccessController $accessController */
+	private $accessController;
+	private $templateModel;
 
 	/**
 	 * Alters query parameters to check access rights on database side
@@ -33,34 +43,69 @@ final class Template extends \Bitrix\Tasks\Item\Access
 	 */
 	public function addDataBaseAccessCheck($query, array $parameters = array())
 	{
-		if(!$this->isEnabled())
+		global $DB, $USER_FIELD_MANAGER;
+
+		$provider = new TemplateProvider($DB, $USER_FIELD_MANAGER);
+		$res = $provider->getList(
+			['ID' => SORT_DESC],
+			[
+				'BASE_TEMPLATE_ID' => 0
+			],
+			['ID'],
+			[
+				'USER_ID' => (int) User::getId(),
+				'USER_IS_ADMIN' => false
+			],
+			[]
+		);
+
+		$templateIds = [0];
+		while ($row = $res->Fetch())
 		{
-			return $query;
+			$templateIds[] = $row['ID'];
 		}
 
-		return RunTime::apply($query, array(
-			RunTime\Task\Template::getAccessCheck(array(
-				'OPERATION_NAME' => array(
-					'read'
-				),
-				'USER_ID' => $parameters['USER_ID'],
-			))
-		));
+		$query['filter']['@ID'] = new SqlExpression(implode(',', $templateIds));
+
+		return $query;
 	}
 
 	public function canRead($item, $userId = 0)
 	{
-		return $this->askEightBall($item, $userId, 'read');
+		$accessController = $this->getAccessController($item->getUserId());
+		$res = $accessController->check(ActionDictionary::ACTION_TEMPLATE_READ, $this->getTemplateModel($item));
+		return $this->makeResult($res, 'read');
+	}
+
+	public function canFetchData($item, $userId = 0)
+	{
+		return $this->canRead($item, $userId);
 	}
 
 	public function canUpdate($item, $userId = 0)
 	{
-		return $this->askEightBall($item, $userId, 'update');
+		$accessController = $this->getAccessController($item->getUserId());
+		$res = $accessController->check(ActionDictionary::ACTION_TEMPLATE_EDIT, $this->getTemplateModel($item));
+		return $this->makeResult($res, 'update');
 	}
 
 	public function canDelete($item, $userId = 0)
 	{
-		return $this->askEightBall($item, $userId, 'delete');
+		$accessController = $this->getAccessController($item->getUserId());
+		$res = $accessController->check(ActionDictionary::ACTION_TEMPLATE_REMOVE, $this->getTemplateModel($item));
+		return $this->makeResult($res, 'delete');
+	}
+
+	public function canCreate($item, $userId = 0)
+	{
+		$accessController = $this->getAccessController($item->getUserId());
+		$res = $accessController->check(ActionDictionary::ACTION_TEMPLATE_CREATE, $this->getTemplateModel($item));
+		return $this->makeResult($res, 'create');
+	}
+
+	public function canUpdateRights($item, $userId = 0)
+	{
+		return $this->canUpdate($item, $userId);
 	}
 
 	/**
@@ -87,8 +132,7 @@ final class Template extends \Bitrix\Tasks\Item\Access
 			$result->addError('ILLEGAL_ARGUMENT', 'Illegal argument');
 		}
 
-		$level = User::getAccessLevel('TASK_TEMPLATE', $level);
-		if(!$level)
+		if(!in_array($level, self::LEGACY_LEVELS))
 		{
 			$result->addError('ILLEGAL_ARGUMENT', 'Unknown access level to grant');
 		}
@@ -102,20 +146,23 @@ final class Template extends \Bitrix\Tasks\Item\Access
 		if($result->isSuccess())
 		{
 			$wereErrors = false;
-			$saveResults = array();
-
-			$dc = Item\Task\Template\Access::getDataSourceClass();
-
-			// todo: there could be several levels to add
+			$saveResults = [];
 
 			$saveResult = new \Bitrix\Tasks\Util\Result();
 
-			// just add through orm
-			$addResult = $dc::add(array(
-				'ENTITY_ID' => $templateId,
-				'GROUP_CODE' => $groupCode,
-				'TASK_ID' => $level['ID'],
-			));
+			$neededLevel = PermissionDictionary::TEMPLATE_VIEW;
+
+			if ($level === 'full')
+			{
+				$neededLevel = PermissionDictionary::TEMPLATE_FULL;
+			}
+
+			$addResult = TasksTemplatePermissionTable::add([
+				'TEMPLATE_ID' 		=> $templateId,
+				'ACCESS_CODE' 		=> $groupCode,
+				'PERMISSION_ID' 	=> $neededLevel,
+				'VALUE' 			=> 1
+			]);
 			if(!$addResult->isSuccess())
 			{
 				$saveResult->adoptErrors($addResult);
@@ -159,8 +206,8 @@ final class Template extends \Bitrix\Tasks\Item\Access
 		if($result->isSuccess())
 		{
 			// just kill them all at low level, without any check
-			$dc = Item\Task\Template\Access::getDataSourceClass();
-			$grants = $dc::getList(array('filter' => array('=ENTITY_ID' => $templateId)))->fetchAll();
+			$dc = TasksTemplatePermissionTable::class;
+			$grants = $dc::getList(array('filter' => array('=TEMPLATE_ID' => $templateId)))->fetchAll();
 			$wereErrors = false;
 			$delResults = array();
 			foreach($grants as $grant)
@@ -185,128 +232,40 @@ final class Template extends \Bitrix\Tasks\Item\Access
 		return $result;
 	}
 
-	/**
-	 * Checks if $userId can do operation $operation on template $item.
-	 * See
-	 * \Bitrix\Tasks\Internals\RunTime\Task\Template::getAccessCheckSql()
-	 * for SQL-equivalent of this.
-	 *
-	 * @param Item $item
-	 * @param $userId
-	 * @param $operation
-	 * @return Result
-	 */
-	private function askEightBall($item, $userId, $operation)
+	private function getAccessController($userId = 0): TemplateAccessController
+	{
+		if (!$this->accessController)
+		{
+			$userId = ($userId ?: (int) User::getId());
+			$this->accessController = new TemplateAccessController($userId);
+		}
+		return $this->accessController;
+	}
+
+	private function getTemplateModel($item)
+	{
+		if (!$this->templateModel)
+		{
+			$this->templateModel = TemplateModel::createFromId((int) $item->id);
+		}
+		return $this->templateModel;
+	}
+
+	private function makeResult($res, $operation)
 	{
 		$result = new Result();
-
-		if (!$userId)
-		{
-			$userId = $item->getUserId();
-		}
 
 		if (!$this->isEnabled())
 		{
 			return $result;
 		}
 
-		// in socnet super-admin mode we can do everything
-		if ($userId == User::getId() && SocialNetwork\User::isAdmin($userId))
+		if (!$res)
 		{
-			return $result;
+			$result->addError('ACCESS_DENIED', Loc::getMessage('TASKS_TASK_TEMPLATE_ACCESS_DENIED', array(
+				'#OP_NAME#' => Loc::getMessage('TASKS_COMMON_OP_'.ToUpper($operation))
+			)));
 		}
-
-		$transState = $item->getTransitionState();
-		if ($transState && $transState->isInProgress())
-		{
-			// we are in transition state, everything is allowed
-			return $result;
-		}
-
-		if ($item->getId()) // check only for existing item
-		{
-			$allowed = false;
-
-			// pristine means "the one that is in the database currently"
-			$this->disable(); // disable rights checking when getting SE_ACCESS, because of possible fall into endless recursion
-
-			if ($item->isFieldModified('SE_ACCESS'))
-			{
-				$access = $item->offsetGetPristine('SE_ACCESS');
-			}
-			else
-			{
-				// it could be already cached...
-				$access = $item['SE_ACCESS'];
-			}
-
-			$this->enable(); // enable rights checking back
-
-			if ($access instanceof Item\Collection && $access->count()) // access info is available
-			{
-				$operationId = User::mapAccessOperationNames('task_template', [$operation]);
-				$operationId = $operationId[$operation];
-
-				if ($operationId)
-				{
-					// need to find if $userId has record for operation $operation
-					/** @var Item\Task\Template\Access $rule */
-					foreach ($access as $rule)
-					{
-						$proceed = false;
-						$entityId = $rule->getGroupId();
-						$entityPrefix = $rule->getGroupPrefix();
-						$entityCode = $entityPrefix . $entityId;
-
-						if ($entityPrefix == 'U')
-						{
-							$proceed = $entityId == $userId;
-						}
-						else if ($entityPrefix == 'SG' || $entityPrefix == 'DR')
-						{
-							if (!static::$accessCodes[$userId])
-							{
-								$accessCodes = UserAccessTable::getList([
-									'select' => ['ACCESS_CODE'],
-									'filter' => [
-										'=USER_ID' => $userId,
-										'!PROVIDER_ID' => 'group'
-									]
-								])->fetchAll();
-
-								foreach ($accessCodes as $key => $value)
-								{
-									$code = $value['ACCESS_CODE'];
-
-									if ($str = strstr($code, '_'))
-									{
-										$code = str_replace($str, '', $code);
-									}
-
-									static::$accessCodes[$userId][] = $code;
-								}
-							}
-
-							$proceed = in_array($entityCode, static::$accessCodes[$userId]);
-						}
-
-						if ($proceed && User::checkAccessOperationInLevel($operationId, $rule['TASK_ID']))
-						{
-							$allowed = true;
-							break;
-						}
-					}
-				}
-			}
-
-			if(!$allowed)
-			{
-				$result->addError('ACCESS_DENIED', Loc::getMessage('TASKS_TASK_TEMPLATE_ACCESS_DENIED', array(
-					'#OP_NAME#' => Loc::getMessage('TASKS_COMMON_OP_'.ToUpper($operation))
-				)));
-			}
-		}
-
 		return $result;
 	}
 }

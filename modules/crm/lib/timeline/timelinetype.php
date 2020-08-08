@@ -19,4 +19,7 @@ class TimelineType
 	const ORDER = 14;
 	const ORDER_CHECK = 15;
 	const SCORING = 16;
+	const EXTERNAL_NOTICE = 17;
+	const FINAL_SUMMARY = 18;
+	const DELIVERY = 19;
 }

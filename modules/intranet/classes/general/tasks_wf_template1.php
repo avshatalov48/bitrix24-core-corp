@@ -39,14 +39,14 @@ foreach ($ar111 as $k111 => $v111)
 }
 
 $a = array(
-	"SRE" => array(GetMessage("INTASK_WF_TMPL_HACK_SRE"), strlen(GetMessage("INTASK_WF_TMPL_HACK_SRE"))),
-	"IPE" => array(GetMessage("INTASK_WF_TMPL_HACK_IPE"), strlen(GetMessage("INTASK_WF_TMPL_HACK_IPE"))),
-	"CE" => array(GetMessage("INTASK_WF_TMPL_HACK_CE"), strlen(GetMessage("INTASK_WF_TMPL_HACK_CE"))),
-	"CLE" => array(GetMessage("INTASK_WF_TMPL_HACK_CLE"), strlen(GetMessage("INTASK_WF_TMPL_HACK_CLE"))),
-	"WE" => array(GetMessage("INTASK_WF_TMPL_HACK_WE"), strlen(GetMessage("INTASK_WF_TMPL_HACK_WE"))),
-	"DE" => array(GetMessage("INTASK_WF_TMPL_HACK_DE"), strlen(GetMessage("INTASK_WF_TMPL_HACK_DE"))),
-	"NS" => array(GetMessage("INTASK_WF_TMPL_HACK_NS"), strlen(GetMessage("INTASK_WF_TMPL_HACK_NS"))),
-	"AE" => array(GetMessage("INTASK_WF_TMPL_HACK_AE"), strlen(GetMessage("INTASK_WF_TMPL_HACK_AE"))),
+	"SRE" => array(GetMessage("INTASK_WF_TMPL_HACK_SRE"), mb_strlen(GetMessage("INTASK_WF_TMPL_HACK_SRE"))),
+	"IPE" => array(GetMessage("INTASK_WF_TMPL_HACK_IPE"), mb_strlen(GetMessage("INTASK_WF_TMPL_HACK_IPE"))),
+	"CE" => array(GetMessage("INTASK_WF_TMPL_HACK_CE"), mb_strlen(GetMessage("INTASK_WF_TMPL_HACK_CE"))),
+	"CLE" => array(GetMessage("INTASK_WF_TMPL_HACK_CLE"), mb_strlen(GetMessage("INTASK_WF_TMPL_HACK_CLE"))),
+	"WE" => array(GetMessage("INTASK_WF_TMPL_HACK_WE"), mb_strlen(GetMessage("INTASK_WF_TMPL_HACK_WE"))),
+	"DE" => array(GetMessage("INTASK_WF_TMPL_HACK_DE"), mb_strlen(GetMessage("INTASK_WF_TMPL_HACK_DE"))),
+	"NS" => array(GetMessage("INTASK_WF_TMPL_HACK_NS"), mb_strlen(GetMessage("INTASK_WF_TMPL_HACK_NS"))),
+	"AE" => array(GetMessage("INTASK_WF_TMPL_HACK_AE"), mb_strlen(GetMessage("INTASK_WF_TMPL_HACK_AE"))),
 );
 if (defined("BX_UTF") && BX_UTF && LANGUAGE_ID == "ru")
 {

@@ -49,7 +49,9 @@ class Manager
 			throw new Main\AccessDeniedException(Loc::getMessage('CRM_PERMISSION_DENIED'));
 		}
 
-		Crm\Exclusion\Store::addFromEntity($entityTypeID, $entityID);
+		$comment = $params['COMMENT'] ?? null;
+
+		Crm\Exclusion\Store::addFromEntity($entityTypeID, $entityID, $comment);
 
 		if($entityTypeID === \CCrmOwnerType::Deal)
 		{
@@ -162,6 +164,22 @@ class Manager
 				{
 					$error = ($ex instanceof \CApplicationException)
 						? $ex->GetString() : Loc::getMessage('CRM_EXCLUSION_DEAL_DELETION_ERROR');
+					throw new Main\ObjectException($error);
+				}
+			}
+		}
+
+		if($entityTypeID === \CCrmOwnerType::Lead)
+		{
+			$leadEntity = new \CCrmLead(false);
+			if(!$leadEntity->Delete($entityID))
+			{
+				/** @var \CApplicationException $ex */
+				$ex = $APPLICATION->GetException();
+				if($ex)
+				{
+					$error = ($ex instanceof \CApplicationException)
+						? $ex->GetString() : Loc::getMessage('CRM_EXCLUSION_LEAD_DELETION_ERROR');
 					throw new Main\ObjectException($error);
 				}
 			}

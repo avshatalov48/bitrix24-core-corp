@@ -135,7 +135,7 @@ final class FieldManager implements IErrorable
 			if(!is_array($conf))
 			{
 				$conf = array(
-					'orm_alias' => strtoupper(StringHelper::camel2snake($name)),
+					'orm_alias' => mb_strtoupper(StringHelper::camel2snake($name)),
 					'class' => $conf,
 					'load' => null,
 					'select' => '*',
@@ -149,7 +149,7 @@ final class FieldManager implements IErrorable
 
 			if(!isset($conf['orm_alias']))
 			{
-				$conf['orm_alias'] = strtoupper(StringHelper::camel2snake($name));
+				$conf['orm_alias'] = mb_strtoupper(StringHelper::camel2snake($name));
 			}
 
 			$normalizedFields[$name] = $conf;

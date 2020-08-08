@@ -6,11 +6,12 @@
  * @copyright 2001-2014 Bitrix
  */
 
+use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Socialnetwork;
 use Bitrix\Main\UserTable;
-use Bitrix\Main\FinderDestTable;
+use Bitrix\Intranet\Invitation;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -52,6 +53,7 @@ class CIntranetInviteDialog
 
 		$ID_ADDED = 0;
 
+		$bitrix24Installed = ModuleManager::isModuleInstalled('bitrix24');
 		$iDepartmentId = intval($arFields["DEPARTMENT_ID"]);
 
 		$siteIdByDepartmentId = self::getUserSiteId(array(
@@ -67,7 +69,7 @@ class CIntranetInviteDialog
 		$strLastName = trim($arFields["ADD_LAST_NAME"]);
 		$strPosition = trim($arFields["ADD_POSITION"]);
 
-		if (strlen($strEmail) > 0)
+		if ($strEmail <> '')
 		{
 			$filter = array(
 				"=EMAIL"=> $strEmail
@@ -75,7 +77,7 @@ class CIntranetInviteDialog
 
 			if (Loader::includeModule('socialnetwork'))
 			{
-				$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array('bot', 'imconnector', 'replica', 'sale', 'shop', 'saleanonymous'));
+				$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array('bot', 'imconnector', 'replica', 'sale', 'saleanonymous'));
 				if (!empty($externalAuthIdList))
 				{
 					$filter['!@EXTERNAL_AUTH_ID'] = $externalAuthIdList;
@@ -89,8 +91,13 @@ class CIntranetInviteDialog
 
 			if ($arUser = $rsUser->Fetch())
 			{
-				if ($arUser["EXTERNAL_AUTH_ID"] == 'email')
+				if ($arUser["EXTERNAL_AUTH_ID"] == 'email' || $arUser["EXTERNAL_AUTH_ID"] == 'shop')
 				{
+					if ($arUser["EXTERNAL_AUTH_ID"] == 'shop' && Loader::includeModule("crm"))
+					{
+						$arGroups[] = \Bitrix\Crm\Order\BuyerGroup::getSystemGroupId();
+					}
+
 					$ID_TRANSFERRED = self::TransferEmailUser($arUser["ID"], array(
 						"GROUP_ID" => $arGroups,
 						"UF_DEPARTMENT" => $iDepartmentId,
@@ -114,7 +121,7 @@ class CIntranetInviteDialog
 					}
 				}
 				elseif (
-					ModuleManager::isModuleInstalled('bitrix24')
+					$bitrix24Installed
 					&& !ModuleManager::isModuleInstalled('extranet')
 					&& $arUser["EXTERNAL_AUTH_ID"] == 'socservices'
 					&& $iDepartmentId > 0
@@ -159,13 +166,13 @@ class CIntranetInviteDialog
 			}
 		}
 
-		if (strlen($strEmail) <= 0)
+		if ($strEmail == '')
 		{
 			if (
 				!isset($arFields["ADD_MAILBOX_ACTION"])
 				|| !in_array($arFields["ADD_MAILBOX_ACTION"], array("create", "connect"))
-				|| strlen($arFields['ADD_MAILBOX_USER']) <= 0
-				|| strlen($arFields['ADD_MAILBOX_DOMAIN']) <= 0
+				|| $arFields['ADD_MAILBOX_USER'] == ''
+				|| $arFields['ADD_MAILBOX_DOMAIN'] == ''
 			)
 			{
 				$strError = GetMessage("BX24_INVITE_DIALOG_ERROR_EMPTY_EMAIL");
@@ -198,6 +205,10 @@ class CIntranetInviteDialog
 			{
 				$arUser["CONFIRM_CODE"] = randString(8);
 			}
+			else
+			{
+				$arUser["B24NETWORK_CHECKWORD"] = randString(16);
+			}
 
 			$obUser = new CUser;
 			$ID_ADDED = $obUser->Add($arUser);
@@ -215,6 +226,13 @@ class CIntranetInviteDialog
 			}
 			else
 			{
+				$userFields = $arUser;
+				$userFields['ID'] = $ID_ADDED;
+				foreach(GetModuleEvents("intranet", "OnRegisterUser", true) as $arEvent)
+				{
+					ExecuteModuleEventEx($arEvent, [ $userFields ]);
+				}
+
 				if (self::getSendPassword())
 				{
 					$db_events = GetModuleEvents("main", "OnUserInitialize", true);
@@ -222,12 +240,30 @@ class CIntranetInviteDialog
 					{
 						ExecuteModuleEventEx($arEvent, array($ID_ADDED, $arUser));
 					}
+
+					$event = new Event(
+						'intranet',
+						'onUserAdded',
+						[
+							'originatorId' => $USER->getId(),
+							'userId' => [ $ID_ADDED ],
+							'type' => Invitation::TYPE_EMAIL
+						]
+					);
+					$event->send();
+				}
+				else
+				{
+					Invitation::add([
+						'USER_ID' => $ID_ADDED,
+						'TYPE' => Invitation::TYPE_EMAIL
+					]);
 				}
 
 				if (
 					$bExtranet
 					&& !IsModuleInstalled("extranet")
-					&& !IsModuleInstalled("bitrix24")
+					&& !$bitrix24Installed
 				)
 				{
 					$bExtranet = false;
@@ -241,19 +277,38 @@ class CIntranetInviteDialog
 					$rsSites = CSite::GetByID($siteIdByDepartmentId);
 					$arSite = $rsSites->Fetch();
 					$serverName = (
-						strlen($arSite["SERVER_NAME"]) > 0
+						$arSite["SERVER_NAME"] <> ''
 							? $arSite["SERVER_NAME"]
 							: (
-								defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0
+								defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> ''
 									? SITE_SERVER_NAME
 									: COption::GetOptionString("main", "server_name", "")
 							)
 					);
 
-					$url = (CMain::IsHTTPS() ? "https" : "http")."://".$serverName.$arSite["DIR"];
+					if ($bitrix24Installed && Loader::includeModule('socialservices'))
+					{
+						$b24NetworkTransport = new CBitrix24NetOAuthInterface();
+						$uri = new \Bitrix\Main\Web\Uri(defined('B24NETWORK_NODE') ? B24NETWORK_NODE : 'https://www.bitrix24.net');
+
+						$uri->setPath('/invite/');
+						$uri->addParams([
+							'user_lang' => LANGUAGE_ID,
+							'client_id' => $b24NetworkTransport->getAppID(),
+							'profile_id' => $ID_ADDED,
+							'checkword' => $arUser["B24NETWORK_CHECKWORD"],
+							'accepted' => 'yes'
+						]);
+						$url = $uri->getLocator();
+					}
+					else
+					{
+						$url = (CMain::IsHTTPS() ? "https" : "http") . "://" . $serverName . $arSite["DIR"];
+					}
 					$event->SendImmediate("INTRANET_USER_ADD", $siteIdByDepartmentId, array(
 						"EMAIL_TO" => $arUser["EMAIL"],
 						"LINK" => $url,
+						"USER_ID_FROM" => $USER->GetID(),
 						"PASSWORD" => $strPassword,
 						"USER_TEXT" => $messageText
 					));
@@ -272,7 +327,7 @@ class CIntranetInviteDialog
 							"USER_TEXT" => ''
 						));
 					}
-					elseif (IsModuleInstalled("bitrix24"))
+					elseif ($bitrix24Installed)
 					{
 						$event->SendImmediate("BITRIX24_USER_INVITATION", $siteIdByDepartmentId, array(
 							"EMAIL_FROM" => $USER->GetEmail(),
@@ -306,11 +361,11 @@ class CIntranetInviteDialog
 
 		$arEmailToRegister = array();
 		$arEmailToReinvite = array();
-		$arEmailUserId = $arExtranetUserId = array();
+		$arUserForTransferId = $arExtranetUserId = $arShopUserId = array();
 
 		$arEmailExist = array();
 		$bExtranetUser = false;
-		$bExtranetInstalled = (IsModuleInstalled("extranet") && strlen(COption::GetOptionString("extranet", "extranet_site")) > 0);
+		$bExtranetInstalled = (IsModuleInstalled("extranet") && COption::GetOptionString("extranet", "extranet_site") <> '');
 
 		if ($arFields["EMAIL"] <> '' || $arFields['PHONE'] <> '')
 		{
@@ -353,7 +408,7 @@ class CIntranetInviteDialog
 				}
 				else
 				{
-					if(strlen($addr) > 0 && check_email($addr))
+					if($addr <> '' && check_email($addr))
 					{
 						$arEmail[] = $addr;
 						$emailCnt++;
@@ -381,7 +436,7 @@ class CIntranetInviteDialog
 
 					if (Loader::includeModule('socialnetwork'))
 					{
-						$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array('bot', 'imconnector', 'replica', 'sale', 'shop', 'saleanonymous'));
+						$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array('bot', 'imconnector', 'replica', 'sale', 'saleanonymous'));
 						if (!empty($externalAuthIdList))
 						{
 							$filter['!@USER.EXTERNAL_AUTH_ID'] = $externalAuthIdList;
@@ -401,7 +456,7 @@ class CIntranetInviteDialog
 
 					if (Loader::includeModule('socialnetwork'))
 					{
-						$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array('bot', 'imconnector', 'replica', 'sale', 'shop', 'saleanonymous'));
+						$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array('bot', 'imconnector', 'replica', 'sale', 'saleanonymous'));
 						if (!empty($externalAuthIdList))
 						{
 							$filter['!@EXTERNAL_AUTH_ID'] = $externalAuthIdList;
@@ -429,9 +484,13 @@ class CIntranetInviteDialog
 
 					$bFound = true;
 
-					if ($arUser["EXTERNAL_AUTH_ID"] == 'email')
+					if ($arUser["EXTERNAL_AUTH_ID"] == 'email' || $arUser["EXTERNAL_AUTH_ID"] == 'shop')
 					{
-						$arEmailUserId[] = $arUser["ID"];
+						$arUserForTransferId[] = $arUser["ID"];
+						if ($arUser["EXTERNAL_AUTH_ID"] == 'shop')
+						{
+							$arShopUserId[] = $arUser["ID"];
+						}
 					}
 					elseif (
 						$arUser["CONFIRM_CODE"] != ""
@@ -545,7 +604,7 @@ class CIntranetInviteDialog
 			if(
 				empty($arEmailToRegister)
 				&& empty($arEmailToReinvite)
-				&& empty($arEmailUserId)
+				&& empty($arUserForTransferId)
 				&& empty($arExtranetUserId)
 			)
 			{
@@ -553,9 +612,9 @@ class CIntranetInviteDialog
 					(
 					!empty($arEmailExist)
 						? (
-					count($arEmailExist) > 1
-						? GetMessage("BX24_INVITE_DIALOG_USER_EXIST_ERROR2", array("#EMAIL_LIST#" => implode(', ', $arEmailExist)))
-						: GetMessage("BX24_INVITE_DIALOG_USER_EXIST_ERROR1", array("#EMAIL#" => $arEmailExist[0]))
+							count($arEmailExist) > 1
+								? GetMessage("BX24_INVITE_DIALOG_USER_EXIST_ERROR2", array("#EMAIL_LIST#" => implode(', ', $arEmailExist)))
+								: GetMessage("BX24_INVITE_DIALOG_USER_EXIST_ERROR1", array("#EMAIL#" => $arEmailExist[0]))
 					)
 						: GetMessage("BX24_INVITE_DIALOG_ERROR_EMPTY_EMAIL_LIST")
 					)
@@ -579,7 +638,7 @@ class CIntranetInviteDialog
 
 		if (
 			!empty($arEmailToRegister)
-			|| !empty($arEmailUserId)
+			|| !empty($arUserForTransferId)
 			|| !empty($arExtranetUserId)
 		)
 		{
@@ -630,13 +689,19 @@ class CIntranetInviteDialog
 			$arGroups = self::getUserGroups($siteIdByDepartmentId, $bExtranetUser);
 		}
 
-		// transfer email users to employees or extranet
-		if (!empty($arEmailUserId))
+		// transfer email or shop users to employees or extranet
+		if (!empty($arUserForTransferId))
 		{
-			foreach ($arEmailUserId as $emailUserId)
+			$arShopGroups = $arGroups;
+			if (Loader::includeModule("crm"))
 			{
-				$ID_TRANSFERRED = self::TransferEmailUser($emailUserId, array(
-					"GROUP_ID" => $arGroups,
+				$arShopGroups[] = \Bitrix\Crm\Order\BuyerGroup::getSystemGroupId();
+			}
+
+			foreach ($arUserForTransferId as $transferUserId)
+			{
+				$ID_TRANSFERRED = self::TransferEmailUser($transferUserId, array(
+					"GROUP_ID" => (in_array($transferUserId, $arShopUserId)) ? $arShopGroups : $arGroups,
 					"UF_DEPARTMENT" => $arFields["UF_DEPARTMENT"],
 					"SITE_ID" => $siteIdByDepartmentId
 				));
@@ -685,6 +750,7 @@ class CIntranetInviteDialog
 		//register users
 		if (!empty($arEmailToRegister))
 		{
+			$invitedUserIdList = [];
 			foreach ($arEmailToRegister as $userData)
 			{
 				if($isPhone)
@@ -708,6 +774,7 @@ class CIntranetInviteDialog
 				else
 				{
 					$arCreatedUserId[] = $ID;
+					$invitedUserIdList[] = $ID;
 					$userData['ID'] = $ID;
 
 					if(!$isPhone)
@@ -719,6 +786,14 @@ class CIntranetInviteDialog
 						//TODO: invite user self::InviteUserByPhone($userData);
 					}
 				}
+			}
+
+			if (!empty($invitedUserIdList))
+			{
+				Invitation::add([
+					'USER_ID' => $invitedUserIdList,
+					'TYPE' => ($isPhone ? Invitation::TYPE_PHONE : Invitation::TYPE_EMAIL)
+				]);
 			}
 		}
 
@@ -828,10 +903,14 @@ class CIntranetInviteDialog
 			}
 			else
 			{
-				$arCreatedUserId[] = $ID;
 				$userData['ID'] = $ID;
 
 				self::InviteUser($userData, $messageText, array('checkB24' => false));
+
+				Invitation::add([
+					'USER_ID' => [ $ID ],
+					'TYPE' => Invitation::TYPE_EMAIL
+				]);
 
 				return $ID;
 			}
@@ -933,6 +1012,17 @@ class CIntranetInviteDialog
 
 		$obUser = new CUser;
 		$res = $obUser->Add($arUser);
+
+		if ($res)
+		{
+			$userFields = $arUser;
+			$userFields['ID'] = $res;
+			foreach(GetModuleEvents("intranet", "OnRegisterUser", true) as $arEvent)
+			{
+				ExecuteModuleEventEx($arEvent, [ $userFields ]);
+			}
+		}
+
 		return ($res? $res : preg_split("/<br>/", $obUser->LAST_ERROR));
 	}
 
@@ -1088,7 +1178,7 @@ class CIntranetInviteDialog
 					&& preg_match('/^(SGN\d+)$/', $group_code, $match)
 					&& is_array($arGroupName)
 					&& isset($arGroupName[$match[1]])
-					&& strlen($arGroupName[$match[1]]) > 0
+					&& $arGroupName[$match[1]] <> ''
 					&& CModule::IncludeModule("extranet")
 					&& (
 						CSocNetUser::IsCurrentUserModuleAdmin(SITE_ID, false)
@@ -1191,7 +1281,7 @@ class CIntranetInviteDialog
 
 		if (
 			array_key_exists('LAST_LOGIN', $arParams['user_fields'])
-			&& strlen(trim($arParams['user_fields']['LAST_LOGIN'])) <= 0 // do not check CONFIRM_CODE, please
+			&& trim($arParams['user_fields']['LAST_LOGIN']) == '' // do not check CONFIRM_CODE, please
 			&& CModule::IncludeModule("socialnetwork")
 		)
 		{
@@ -1322,7 +1412,7 @@ class CIntranetInviteDialog
 
 		if (
 			isset($arParams["NAME"])
-			&& strlen($arParams["NAME"]) > 0
+			&& $arParams["NAME"] <> ''
 		)
 		{
 			$arFields["NAME"] = $arParams["NAME"];
@@ -1334,7 +1424,7 @@ class CIntranetInviteDialog
 
 		if (
 			isset($arParams["LAST_NAME"])
-			&& strlen($arParams["LAST_NAME"]) > 0
+			&& $arParams["LAST_NAME"] <> ''
 		)
 		{
 			$arFields["LAST_NAME"] = $arParams["LAST_NAME"];
@@ -1346,7 +1436,7 @@ class CIntranetInviteDialog
 
 		if (
 			isset($arParams["POSITION"])
-			&& strlen($arParams["POSITION"]) > 0
+			&& $arParams["POSITION"] <> ''
 		)
 		{
 			$arFields["POSITION"] = $arParams["POSITION"];
@@ -1370,6 +1460,11 @@ class CIntranetInviteDialog
 			foreach(GetModuleEvents("intranet", "OnAfterTransferEMailUser", true) as $arEvent)
 			{
 				ExecuteModuleEventEx($arEvent, array($arUser));
+			}
+
+			foreach(GetModuleEvents("intranet", "OnRegisterUser", true) as $arEvent)
+			{
+				ExecuteModuleEventEx($arEvent, [ $arFields ]);
 			}
 
 			self::sentTransferNotification($arUser, $arFields, $arParams);
@@ -1462,7 +1557,7 @@ class CIntranetInviteDialog
 
 		if (
 			isset($arParams["POSITION"])
-			&& strlen($arParams["POSITION"]) > 0
+			&& $arParams["POSITION"] <> ''
 		)
 		{
 			$arFields["POSITION"] = $arParams["POSITION"];
@@ -1486,6 +1581,10 @@ class CIntranetInviteDialog
 			foreach(GetModuleEvents("intranet", "OnAfterTransferExtranetUser", true) as $arEvent)
 			{
 				ExecuteModuleEventEx($arEvent, array($arUser));
+			}
+			foreach(GetModuleEvents("intranet", "OnRegisterUser", true) as $arEvent)
+			{
+				ExecuteModuleEventEx($arEvent, [ $arFields ]);
 			}
 
 			self::sentTransferNotification($arUser, $arFields, $arParams);
@@ -1533,10 +1632,10 @@ class CIntranetInviteDialog
 			$rsSites = CSite::GetByID($siteIdToSend);
 			$arSite = $rsSites->Fetch();
 			$serverName = (
-				strlen($arSite["SERVER_NAME"]) > 0
+				$arSite["SERVER_NAME"] <> ''
 					? $arSite["SERVER_NAME"]
 					: (
-						defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0
+						defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> ''
 							? SITE_SERVER_NAME
 							: COption::GetOptionString("main", "server_name", "")
 					)
@@ -1611,10 +1710,10 @@ class CIntranetInviteDialog
 		$rsSites = CSite::GetByID($siteId);
 		$arSite = $rsSites->Fetch();
 		$serverName = (
-			strlen($arSite["SERVER_NAME"]) > 0
+			$arSite["SERVER_NAME"] <> ''
 				? $arSite["SERVER_NAME"]
 				: (
-			defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0
+			defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> ''
 				? SITE_SERVER_NAME
 				: COption::GetOptionString("main", "server_name", "")
 			)

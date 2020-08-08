@@ -114,7 +114,7 @@ class CCrmEntityMergeComponentAjaxController extends Main\Engine\Controller
 
 		return true;
 	}
-	public function markAsNonDuplicatesAction($entityTypeName, $leftEntityID, $rightEntityID, $indexType, array $matches)
+	public function markAsNonDuplicatesAction($entityTypeName, $leftEntityID, $rightEntityID, $indexType, array $matches, array $queueInfoParams = [])
 	{
 		$entityTypeID = \CCrmOwnerType::ResolveID($entityTypeName);
 		if(!\CCrmOwnerType::IsDefined($entityTypeID))
@@ -167,7 +167,36 @@ class CCrmEntityMergeComponentAjaxController extends Main\Engine\Controller
 			return false;
 		}
 
-		return true;
+		if (
+			empty($queueInfoParams) ||
+			!array_key_exists('typeNames', $queueInfoParams) ||
+			!array_key_exists('scope', $queueInfoParams) ||
+			!array_key_exists('offset', $queueInfoParams)
+		)
+		{
+			return true;
+		}
+
+		$typeNames = $queueInfoParams['typeNames'];
+		$scope = $queueInfoParams['scope'];
+		$offset = $queueInfoParams['offset'];
+
+		$typeIDs = array();
+		foreach($typeNames as $typeName)
+		{
+			$typeID = Crm\Integrity\DuplicateIndexType::resolveID($typeName);
+			if($typeID !== Crm\Integrity\DuplicateIndexType::UNDEFINED)
+			{
+				$typeIDs[] = $typeID;
+			}
+		}
+
+		$entityTypeID = CCrmOwnerType::ResolveID($entityTypeName);
+
+		$component = $this->getComponent();
+		$component->setEntityTypeID($entityTypeID);
+		$list = $component->getDedupeQueueList($typeIDs, $scope);
+		return ['QUEUE_INFO' => [ 'length' => $list ? $list->getRootItemCount() : 0, 'offset' => (int)$offset ] ];
 	}
 	public function mergeAction($entityTypeName, array $seedEntityIds, $targEntityId, array $map)
 	{

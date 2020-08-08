@@ -1,7 +1,12 @@
 <?php
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks;
+use Bitrix\Tasks\Integration\SocialNetwork;
 
 Loc::loadMessages(__FILE__);
 
@@ -14,31 +19,27 @@ $this->SetViewTarget("sidebar", 200);
 		<div class="sidebar-widget-top-title">
 			<a href="<?=$arParams['PATH_TO_TASKS']?>"><?=GetMessage("TASKS_FILTER_TITLE")?></a>
 		</div>
-
 		<?php
-			$path = \Bitrix\Tasks\Integration\Socialnetwork\UI\Task::getActionPath();
-			$url = \Bitrix\Tasks\UI\Task::makeActionUrl($path);
+			$path = Socialnetwork\UI\Task::getActionPath();
+			$url = Tasks\UI\Task::makeActionUrl($path);
 		?>
-
 		<a class="plus-icon" href="<?=$url?>"></a>
 	</div>
 	<div class="sidebar-widget-item-wrap">
 		<?php
-			foreach($arResult["ROLES"] as $roleCodename => $roleData)
+			foreach ($arResult["ROLES"] as $role)
 			{
-				$counter = $roleData['COUNTER'] > 99 ? '99+' : $roleData['COUNTER'];
-
-				$counterViolation = $roleData['COUNTER_VIOLATIONS'] > 99 ? '99+' : $roleData['COUNTER_VIOLATIONS'];
+				$counter = ($role['COUNTER'] > 99 ? '99+' : $role['COUNTER']);
+				$counterViolation = ($role['COUNTER_VIOLATIONS'] > 99 ? '99+' : $role['COUNTER_VIOLATIONS']);
 				?>
-
-				<a class="task-item" href="<?=$roleData['HREF']?>">
-					<span class="task-item-text"><?=$roleData['TITLE']?></span>
+				<a class="task-item" href="<?=$role['HREF']?>">
+					<span class="task-item-text"><?=$role['TITLE']?></span>
 					<span class="task-item-index-wrap">
 						<span class="task-item-index"><?=$counter?></span>
 						<span class="task-item-counter-wrap">
 							<span class="task-item-counter"><?=$counterViolation?></span>
 						</span>
-				</span>
+					</span>
 				</a>
 		<?php
 			}

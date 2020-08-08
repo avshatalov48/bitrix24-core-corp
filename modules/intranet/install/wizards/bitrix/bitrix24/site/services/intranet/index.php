@@ -6,7 +6,7 @@ if(!CModule::IncludeModule("intranet"))
 	return;
 
 $arCurPhpVer = Explode(".", PhpVersion());
-if (IntVal($arCurPhpVer[0]) < 5)
+if (intval($arCurPhpVer[0]) < 5)
 	return;
 
 \Bitrix\Main\Entity\Base::destroy(\Bitrix\Main\UserTable::getEntity());

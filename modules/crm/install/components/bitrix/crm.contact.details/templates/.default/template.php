@@ -9,7 +9,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @var CCrmEntityProgressBarComponent $component */
 
 $guid = $arResult['GUID'];
-$prefix = strtolower($guid);
+$prefix = mb_strtolower($guid);
 $activityEditorID = "{$prefix}_editor";
 
 $APPLICATION->IncludeComponent(
@@ -79,7 +79,7 @@ $APPLICATION->IncludeComponent(
 			'GUID' => "{$guid}_editor",
 			'CONFIG_ID' => $arResult['EDITOR_CONFIG_ID'],
 			'ENTITY_CONFIG' => $arResult['ENTITY_CONFIG'],
-			//'ENTITY_CONTROLLERS' => $arResult['ENTITY_CONTROLLERS'],
+			'ENTITY_CONTROLLERS' => $arResult['ENTITY_CONTROLLERS'],
 			'DUPLICATE_CONTROL' => $arResult['DUPLICATE_CONTROL'],
 			'ENTITY_FIELDS' => $arResult['ENTITY_FIELDS'],
 			'ENTITY_DATA' => $arResult['ENTITY_DATA'],

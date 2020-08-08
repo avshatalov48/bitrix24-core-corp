@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_PO
 			}
 		}
 
-		if(strlen($errorMsg) > 0)
+		if($errorMsg <> '')
 			ShowError($errorMsg);
 
 		unset($_POST['ID'], $_REQUEST['ID']); // otherwise the filter will work
@@ -187,7 +187,7 @@ if(is_array($sort) && count($sort) > 0)
 	reset($sort);
 	$by = key($sort);
 	$order = $sort[$by] == 'asc' ? SORT_ASC : SORT_DESC;
-	sortByColumn($locations, array( strtoupper($by) => $order));
+	sortByColumn($locations, array(mb_strtoupper($by) => $order));
 }
 
 $arResult['LOCS'] = array();

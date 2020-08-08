@@ -12,16 +12,17 @@ if (\Bitrix\Main\Loader::includeModule("bitrix24"))
 
 if (IsModuleInstalled("timeman") && \Bitrix\Main\Loader::includeModule('timeman'))
 {
-	$APPLICATION->IncludeComponent(
+	$APPLICATION->includeComponent(
 		"bitrix:ui.sidepanel.wrapper",
 		"",
-		array(
+		[
 			"POPUP_COMPONENT_NAME" => "bitrix:timeman.worktime.stats",
 			"POPUP_COMPONENT_TEMPLATE_NAME" => "",
-			"POPUP_COMPONENT_PARAMS" => array(
+			"POPUP_COMPONENT_PARAMS" => [
 				'SCHEDULE_ID' => $_REQUEST['SCHEDULE_ID'],
-			)
-		)
+			],
+			"USE_UI_TOOLBAR" => "Y"
+		]
 	);
 }
 elseif (!(!IsModuleInstalled("timeman") && in_array($licenseType, array("company", "edu", "nfr"))))

@@ -29,7 +29,8 @@ class ProviderManager
 				Livefeed::getId()        => Livefeed::className(),
 				ExternalChannel::getId() => ExternalChannel::className(),
 				Request::getId()         => Request::className(),
-				RestApp::getId()         => RestApp::className()
+				RestApp::getId()         => RestApp::className(),
+				Delivery::getId()         => Delivery::className(),
 			);
 
 			if(Visit::isAvailable())

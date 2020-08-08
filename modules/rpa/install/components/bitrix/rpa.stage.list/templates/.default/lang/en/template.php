@@ -1,0 +1,14 @@
+<?
+$MESS["RPA_STAGES_COMMON_STAGES_LABEL"] = "Additional stages";
+$MESS["RPA_STAGES_FAIL_STAGE_LABEL"] = "Unsuccessful stages";
+$MESS["RPA_STAGES_FAIL_STAGE_TITLE"] = "Failed";
+$MESS["RPA_STAGES_FINAL_STAGES_TITLE"] = "Final stages";
+$MESS["RPA_STAGES_FIRST_STAGE_LABEL"] = "Initial stage";
+$MESS["RPA_STAGES_NEW_STAGE_NAME"] = "New stage";
+$MESS["RPA_STAGES_STAGE_ADD"] = "Add stage";
+$MESS["RPA_STAGES_STAGE_CHANGE_TITLE"] = "Edit name";
+$MESS["RPA_STAGES_STAGE_PANEL_COLOR"] = "Change color";
+$MESS["RPA_STAGES_STAGE_PANEL_RELOAD"] = "Reset view";
+$MESS["RPA_STAGES_SUCCESS_STAGE_LABEL"] = "Successful stage";
+$MESS["RPA_STAGES_SUCCESS_STAGE_TITLE"] = "Success";
+?>

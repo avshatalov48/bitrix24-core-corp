@@ -252,6 +252,8 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 			'ENABLED_MOD_ZIP' => ZipNginx\Configuration::isEnabled(),
 			'ENABLED_EXTERNAL_LINK' => Configuration::isEnabledExternalLink(),
 			'ENABLED_OBJECT_LOCK' => Configuration::isEnabledObjectLock(),
+			'ENABLED_TRASHCAN_TTL' => Configuration::getTrashCanTtl() !== -1,
+			'TRASHCAN_TTL' => Configuration::getTrashCanTtl(),
 			'CLOUD_DOCUMENT' => $this->getConfigurationOfCloudDocument(),
 			'PATH_TO_DISK_VOLUME' => $this->buildPathToDiskVolume(),
 			'PATH_TO_USER_TRASHCAN_LIST' => $this->storage->getProxyType()->getBaseUrlTashcanList(),
@@ -794,10 +796,10 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 					);
 
 					$actions[] = array(
-						"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_SHOW_HISTORY'),
+						'text' => Loc::getMessage('DISK_FOLDER_LIST_ACT_SHOW_HISTORY'),
 						'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_history.svg',
 						'className' => 'disk-folder-list-context-menu-item',
-						"onclick" =>  "BX.SidePanel.Instance.open('{$linkOnHistory}')",
+						'onclick' =>  Bitrix24Manager::isFeatureEnabled('disk_file_history')? "BX.SidePanel.Instance.open('{$linkOnHistory}')" : "BX.UI.InfoHelper.show('limit_office_version_storage');",
 					);
 				}
 			}
@@ -1294,6 +1296,12 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 				$filter['PARENT_ID'] = $this->folder->getId();
 				$filter['DELETED_TYPE'] = ObjectTable::DELETED_TYPE_CHILD;
 			}
+
+			$ttl = Configuration::getTrashCanTtl();
+			if ($ttl !== -1)
+			{
+				$filter['>DELETE_TIME'] = DateTime::createFromTimestamp(time() - $ttl * 86400);
+			}
 		}
 		else
 		{
@@ -1397,7 +1405,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 			{}
 		}
 
-		if (!empty($filterData['CREATE_TIME_to']) > 0)
+		if (!empty($filterData['CREATE_TIME_to']))
 		{
 			try
 			{
@@ -1417,7 +1425,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 			{}
 		}
 
-		if (!empty($filterData['UPDATE_TIME_to']) > 0)
+		if (!empty($filterData['UPDATE_TIME_to']))
 		{
 			try
 			{
@@ -1437,7 +1445,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 			{}
 		}
 
-		if (!empty($filterData['DELETE_TIME_to']) > 0)
+		if (!empty($filterData['DELETE_TIME_to']))
 		{
 			try
 			{
@@ -1576,7 +1584,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 				}
 				$url = $this->arParams['PATH_TO_DISK_START_BIZPROC'];
 				$url .= "?back_url=".urlencode($this->application->getCurPageParam());
-				$url .= (strpos($url, "?") === false ? "?" : "&")."workflow_template_id=".$workflowTemplate["ID"].$old.'&'.bitrix_sessid_get();
+				$url .= (mb_strpos($url, "?") === false ? "?" : "&")."workflow_template_id=".$workflowTemplate["ID"].$old.'&'.bitrix_sessid_get();
 				$temporary[$workflowTemplate["ID"]] = $workflowTemplate;
 				$temporary[$workflowTemplate["ID"]]['NAME'] = $templateName;
 				$temporary[$workflowTemplate["ID"]]['URL'] = $url;
@@ -1694,14 +1702,14 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 						'<div class="bizproc-item-title">'.htmlspecialcharsbx($documentState["TEMPLATE_NAME"]).': '.
 						'<span class="bizproc-item-title bizproc-state-title" style="">'.
 						'<a href="'.$exportData["OPEN_URL"].'?action=showBp">'.
-						(strlen($documentState["STATE_TITLE"]) > 0 ? htmlspecialcharsbx($documentState["STATE_TITLE"]) : htmlspecialcharsbx($documentState["STATE_NAME"])).
+						($documentState["STATE_TITLE"] <> '' ? htmlspecialcharsbx($documentState["STATE_TITLE"]) : htmlspecialcharsbx($documentState["STATE_NAME"])).
 						'</a>'.
 						'</span>'.
 						'</div>';
 					$columnsBizProc['BIZPROC'] = str_replace("'", "\"", $columnsBizProc['BIZPROC']);
 
 					$bizprocIcon["BIZPROC"] = "<div class=\"element-bizproc-status bizproc-statuses ".
-						(!(strlen($documentState["ID"]) <= 0 || strlen($documentState["WORKFLOW_STATUS"]) <= 0) ?
+						(!($documentState["ID"] == '' || $documentState["WORKFLOW_STATUS"] == '') ?
 							'bizproc-status-'.(empty($tasksWorkflow) ? "inprogress" : "attention") : '').
 						"\" onmouseover='BX.hint(this, \"".addslashes($columnsBizProc["BIZPROC"])."\")'></div>";
 
@@ -1734,7 +1742,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 					{
 						$tasksWorkflow = CBPDocument::getUserTasksForWorkflow($this->getUser()->GetID(), $documentState["ID"]);
 						if (!$inprogress)
-							$inprogress = (strlen($documentState['ID']) > 0 && strlen($documentState['WORKFLOW_STATUS']) > 0);
+							$inprogress = ($documentState['ID'] <> '' && $documentState['WORKFLOW_STATUS'] <> '');
 						if (!empty($tasksWorkflow))
 						{
 							foreach ($tasksWorkflow as $val)

@@ -49,7 +49,7 @@ $arData = array();
 $enableSearchByID = true;
 if(isset($_REQUEST['ENABLE_SEARCH_BY_ID']))
 {
-	$enableSearchByID = strtoupper($_REQUEST['ENABLE_SEARCH_BY_ID']) === 'Y';
+	$enableSearchByID = mb_strtoupper($_REQUEST['ENABLE_SEARCH_BY_ID']) === 'Y';
 }
 
 if ($enableSearchByID && is_numeric($search))
@@ -63,7 +63,7 @@ elseif (preg_match('/(.*)\[(\d+?)\]/i'.BX_UTF_PCRE_MODIFIER, $search, $arMatches
 }
 else
 {
-	if (strlen($search) < 3)
+	if (mb_strlen($search) < 3)
 		__CrmProductListEndResponse(null);
 
 	$arFilter['ACTIVE'] = 'Y';
@@ -71,9 +71,9 @@ else
 }
 
 $dstCurrencyID = isset($_REQUEST['CURRENCY_ID']) ? trim($_REQUEST['CURRENCY_ID']) : '';
-$dstCurrency = strlen($dstCurrencyID) > 0 ? CCrmCurrency::GetByID($dstCurrencyID) : CCrmCurrency::GetBaseCurrency();
+$dstCurrency = $dstCurrencyID <> '' ? CCrmCurrency::GetByID($dstCurrencyID) : CCrmCurrency::GetBaseCurrency();
 
-$enableRawPrices = (isset($_REQUEST['ENABLE_RAW_PRICES']) && strtoupper($_REQUEST['ENABLE_RAW_PRICES']) === 'Y');
+$enableRawPrices = (isset($_REQUEST['ENABLE_RAW_PRICES']) && mb_strtoupper($_REQUEST['ENABLE_RAW_PRICES']) === 'Y');
 $limit = isset($_REQUEST['LIMIT']) ? intval($_REQUEST['LIMIT']) : 5;
 
 $arNavStartParams = false;
@@ -102,7 +102,7 @@ while ($arRes = $obRes->Fetch())
 	foreach ($arVatsSelect as $fieldName)
 		$arRes[$fieldName] = null;
 	$nameUpper = ToUpper($arRes['NAME']);
-	$pos = strpos($nameUpper, $searchUpper);
+	$pos = mb_strpos($nameUpper, $searchUpper);
 	$arRes['RANK1'] = ($pos === false) ? 0 : $pos + 1;
 	$arProductId[] = $arRes['ID'];
 	$arProducts[$arRes['ID']] = $arRes;
@@ -127,7 +127,7 @@ foreach ($arSort['ID'] as $id)
 {
 	$arRes = $arProducts[$id];
 	$srcCurrencyID = isset($arRes['CURRENCY_ID']) ? $arRes['CURRENCY_ID'] : 0;
-	if(strlen($dstCurrencyID) > 0 && strlen($srcCurrencyID) > 0  && $dstCurrencyID != $srcCurrencyID)
+	if($dstCurrencyID <> '' && $srcCurrencyID <> ''  && $dstCurrencyID != $srcCurrencyID)
 	{
 		$arRes['PRICE'] = CCrmCurrency::ConvertMoney($arRes['PRICE'], $srcCurrencyID, $dstCurrencyID);
 		$arRes['CURRENCY_ID'] = $dstCurrencyID;

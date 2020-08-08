@@ -9,7 +9,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @var CCrmEntityProgressBarComponent $component */
 
 $guid = $arResult['GUID'];
-$prefix = strtolower($guid);
+$prefix = mb_strtolower($guid);
 $activityEditorID = "{$prefix}_editor";
 
 \Bitrix\Main\UI\Extension::load(["crm.scoringbutton"]);

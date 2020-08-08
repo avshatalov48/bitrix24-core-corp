@@ -233,7 +233,7 @@ if($arParams['TYPE'] === 'list')
 			'MYCOMPANY_MODE' => ($isMyCompanyMode ? 'Y' : 'N'),
 			'NAVIGATION_CONTEXT_ID' => $entityType
 		);
-		if (isset($_REQUEST['WG']) && strtoupper($_REQUEST['WG']) === 'Y')
+		if (isset($_REQUEST['WG']) && mb_strtoupper($_REQUEST['WG']) === 'Y')
 		{
 			$widgetDataFilter = \Bitrix\Crm\Widget\Data\Company\DataSource::extractDetailsPageUrlParams($_REQUEST);
 			if (!empty($widgetDataFilter))
@@ -318,7 +318,7 @@ if($arParams['TYPE'] === 'list')
 			$arResult['BUTTONS'][] = array(
 				'TEXT' => GetMessage('COMPANY_DEDUPE'),
 				'TITLE' => GetMessage('COMPANY_DEDUPE_TITLE'),
-				'ONCLICK' => $restriction->preparePopupScript(),
+				'ONCLICK' => $restriction->prepareInfoHelperScript(),
 				'MENU_ICON' => 'grid-lock'
 			);
 		}

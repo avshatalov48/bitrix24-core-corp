@@ -51,7 +51,7 @@ $bSubordinateOnly         = (isset($arParams["SUBORDINATE_ONLY"]) && $arParams["
 $arResult["NAME"]  = htmlspecialcharsbx($arParams["NAME"]);
 $arResult["~NAME"] = $arParams["NAME"];
 
-if (!isset($arParams["NAME_TEMPLATE"]) || strlen($arParams["NAME_TEMPLATE"]) <= 0)
+if (!isset($arParams["NAME_TEMPLATE"]) || $arParams["NAME_TEMPLATE"] == '')
 {
 	$arParams["NAME_TEMPLATE"] = CSite::GetNameFormat();
 }

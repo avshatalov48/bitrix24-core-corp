@@ -551,7 +551,7 @@ foreach ($arFields as $GROUP_ID => $arGroupFields):
 				break;
 			default: ?>
 			<td class="content-edit-form-field-input" colspan="2"><?
-				if (substr($FIELD, 0, 3) == 'UF_' && !in_array($FIELD, array("UF_SKYPE", "UF_WEB_SITES"))):
+				if (mb_substr($FIELD, 0, 3) == 'UF_' && !in_array($FIELD, array("UF_SKYPE", "UF_WEB_SITES"))):
 					$APPLICATION->IncludeComponent(
 						'bitrix:system.field.edit',
 						$arResult['USER_PROPERTY_ALL'][$FIELD]['USER_TYPE_ID'],
@@ -586,7 +586,7 @@ foreach ($arFields as $GROUP_ID => $arGroupFields):
 <?
 
 
-if (substr($_REQUEST['backurl'],0,1) != "/")
+if (mb_substr($_REQUEST['backurl'], 0, 1) != "/")
 	$_REQUEST['backurl'] = "/".$_REQUEST['backurl'];
 ?>
 <tr>

@@ -104,7 +104,7 @@ class CCrmExternalChannelImportPreset
 
 	public static function getList()
 	{
-		if(($options = static::getOption()) && strlen($options) > 0)
+		if(($options = static::getOption()) && $options <> '')
 		{
 			$options = unserialize($options);
 		}

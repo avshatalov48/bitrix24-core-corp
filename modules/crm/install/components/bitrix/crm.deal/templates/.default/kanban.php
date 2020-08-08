@@ -37,7 +37,7 @@ if (in_array($request->get('type'), array('csv', 'excel')))
 						'#category_id#',
 						$categoryID,
 						$arResult['PATH_TO_DEAL_CATEGORY']);
-	if (strpos($curPage, $pathKanbanCategory) !== false)
+	if (mb_strpos($curPage, $pathKanbanCategory) !== false)
 	{
 		LocalRedirect(str_replace(
 						$pathKanbanCategory,
@@ -45,7 +45,7 @@ if (in_array($request->get('type'), array('csv', 'excel')))
 						$curPage
 					), true);
 	}
-	elseif (strpos($curPage, $arResult['PATH_TO_DEAL_KANBAN']) !== false)
+	elseif (mb_strpos($curPage, $arResult['PATH_TO_DEAL_KANBAN']) !== false)
 	{
 		LocalRedirect(str_replace(
 						$arResult['PATH_TO_DEAL_KANBAN'],
@@ -245,7 +245,7 @@ else
 				'BINDING' => array(
 					'category' => 'crm.navigation',
 					'name' => 'index',
-					'key' => strtolower($arResult['NAVIGATION_CONTEXT_ID'])
+					'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
 				)
 			)
 		),
@@ -275,5 +275,13 @@ else
 			'PATH_TO_DEAL_KANBANCATEGORY' => $arResult['PATH_TO_DEAL_KANBANCATEGORY']
 		),
 		$component
+	);
+
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.deal.checker',
+		'',
+		['CATEGORY_ID' => $categoryID],
+		null,
+		['HIDE_ICONS' => 'Y']
 	);
 }

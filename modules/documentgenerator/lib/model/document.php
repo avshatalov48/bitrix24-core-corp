@@ -132,7 +132,7 @@ class DocumentTable extends FileModel
 			'UPDATE %s SET %s WHERE %s',
 			$connection->getSqlHelper()->quote($entity->getDbTableName()),
 			$connection->getSqlHelper()->prepareUpdate($entity->getDbTableName(), [
-				'PROVIDER' => strtolower($newProvider),
+				'PROVIDER' => mb_strtolower($newProvider),
 				'VALUE' => $newValue,
 			])[0],
 			Main\ORM\Query\Query::buildFilterSql($entity, $filter)

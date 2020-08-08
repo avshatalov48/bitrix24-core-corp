@@ -371,8 +371,8 @@ class CCrmStartPageComponentCRMCounters {
 					$res = array();
 					foreach ($return as $k => $v)
 					{
-						if (strpos($k, 'ASSIGNED_BY_') === 0)
-							$k = substr($k, 12);
+						if (mb_strpos($k, 'ASSIGNED_BY_') === 0)
+							$k = mb_substr($k, 12);
 						$res[$k] = $v;
 					}
 					$return = $res;

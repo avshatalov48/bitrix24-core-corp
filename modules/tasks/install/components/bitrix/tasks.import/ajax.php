@@ -377,7 +377,7 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 		{
 			if (isset($fields[$key]) && !empty($fields[$key]))
 			{
-				$currentKey = strtoupper($fields[$key]);
+				$currentKey = mb_strtoupper($fields[$key]);
 				$data = trim(htmlspecialcharsback($data));
 
 				if ($data == '')

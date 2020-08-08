@@ -48,7 +48,7 @@ else
 }
 
 $arParams["PATH_TO_PROFILE_SECURITY"] = trim($arParams["PATH_TO_PROFILE_SECURITY"]);
-if(strlen($arParams["PATH_TO_PROFILE_SECURITY"])<=0)
+if($arParams["PATH_TO_PROFILE_SECURITY"] == '')
 	$arParams["PATH_TO_PROFILE_SECURITY"] = SITE_DIR."company/personal/user/#user_id#/security/";
 $arResult["PATH_TO_PROFILE_SECURITY"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_PROFILE_SECURITY"], array("user_id" => $USER->GetID()));
 

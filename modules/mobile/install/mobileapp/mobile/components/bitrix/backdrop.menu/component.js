@@ -4,6 +4,7 @@
 
 (function()
 {
+
 	class BackdropMenuComponent
 	{
 		constructor(params)
@@ -25,7 +26,6 @@
 
 		init()
 		{
-
 			this.rootWidget.setItems(this.config.items, this.config.sections);
 			this.rootWidget.setListener((eventName, params) =>
 			{
@@ -33,11 +33,9 @@
 				{
 					this.itemSelected(params);
 				}
-				else if (eventName === 'onViewRemoved')
-				{
-					this.destroy();
-				}
 			});
+
+			this.postEvent('inited');
 		}
 
 		itemSelected(params)
@@ -53,7 +51,10 @@
 			}
 			else
 			{
-				this.rootWidget.close(() => this.postEvent('selected', {id: params.id, sectionCode: params.sectionCode}));
+				this.rootWidget.close(() => {
+					this.postEvent('selected', {id: params.id, sectionCode: params.sectionCode});
+					this.postEvent('destroyed');
+				});
 			}
 		}
 
@@ -75,17 +76,14 @@
 			});
 		}
 
-		destroy()
-		{
-			this.postEvent('destroyed');
-		}
-
 		postEvent(name, params = {})
 		{
 			if (!this.componentId)
 			{
 				return false;
 			}
+
+			console.log('Post event', name, params);
 
 			if (this.componentId === 'web')
 			{

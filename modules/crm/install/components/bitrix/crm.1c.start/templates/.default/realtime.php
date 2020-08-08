@@ -31,7 +31,7 @@ $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . 
 				<img class="crm-onec-logo" src="<?=$templateFolder?>/images/1c-logo.svg" alt="">
 			</div>
 			<div class="crm-onec-header-right-block">
-				<div class="crm-onec-header-title"><?=Loc::getMessage("CRM_1C_START_REALTIME_INFO_TITLE")?></div>
+				<div class="crm-onec-header-title"><?=Loc::getMessage("CRM_1C_START_REALTIME_INFO_TITLE2")?></div>
 				<div class="crm-onec-header-futures-container">
 					<div class="crm-onec-header-futures-block">
 						<span class="crm-onec-header-futures">
@@ -53,7 +53,7 @@ $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . 
 					</div>
 				</div>
 				<hr class="crm-onec-separator">
-				<div class="crm-onec-install-description"><?=GetMessage("CRM_1C_START_REALTIME_INSTALL_INFO")?></div>
+				<div class="crm-onec-install-description"><?=GetMessage("CRM_1C_START_REALTIME_INSTALL_INFO2")?></div>
 			</div>
 		</div>
 		<hr class="crm-onec-separator">

@@ -167,6 +167,7 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 			}
 			$this->arResult['USER_CONSENT_EMAIL'] = $email;
 		}
+		$this->arResult['RESTRICTION_POPUP'] = \Bitrix\Crm\Restriction\RestrictionManager::getWebformLimitRestriction()->preparePopupScript();
 	}
 
 	protected function getFormCountByActivity($isActive = true)

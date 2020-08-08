@@ -126,11 +126,20 @@ class CCrmQuoteDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			$this->arParams['PATH_TO_PRODUCT_EDIT'],
 			$APPLICATION->GetCurPage().'?product_id=#product_id#&edit'
 		);
-		$this->arResult['PATH_TO_PRODUCT_SHOW'] = CrmCheckPath(
-			'PATH_TO_PRODUCT_SHOW',
-			$this->arParams['PATH_TO_PRODUCT_SHOW'],
-			$APPLICATION->GetCurPage().'?product_id=#product_id#&show'
-		);
+
+		if (Main\Loader::includeModule('catalog') && \Bitrix\Catalog\Config\State::isProductCardSliderEnabled())
+		{
+			$catalogId = CCrmCatalog::EnsureDefaultExists();
+			$this->arResult['PATH_TO_PRODUCT_SHOW'] = "/shop/catalog/{$catalogId}/product/#product_id#/";
+		}
+		else
+		{
+			$this->arResult['PATH_TO_PRODUCT_SHOW'] = CrmCheckPath(
+				'PATH_TO_PRODUCT_SHOW',
+				$this->arParams['PATH_TO_PRODUCT_SHOW'],
+				$APPLICATION->GetCurPage().'?product_id=#product_id#&show'
+			);
+		}
 
 		$ufEntityID = $this->getUserFieldEntityID();
 		$enableUfCreation = \CCrmAuthorizationHelper::CheckConfigurationUpdatePermission();
@@ -358,7 +367,8 @@ class CCrmQuoteDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				'PATH_TO_PRODUCT_SHOW' => $this->arResult['PATH_TO_PRODUCT_SHOW'],
 				'INIT_LAYOUT' => 'N',
 				'INIT_EDITABLE' => $this->mode === ComponentMode::VIEW ? 'N' : 'Y',
-				'ENABLE_MODE_CHANGE' => 'N'
+				'ENABLE_MODE_CHANGE' => 'N',
+				'USE_ASYNC_ADD_PRODUCT' => 'Y'
 			),
 			false,
 			array('HIDE_ICONS' => 'Y', 'ACTIVE_COMPONENT'=>'Y')

@@ -400,11 +400,11 @@ class IBlockElementProperty
 		{
 			$value['VALUE'] = array_diff($value['VALUE'], array(''));
 			$value['VALUE'] = implode(',', $value['VALUE']);
-			return strlen(trim($value['VALUE'], "\n\r\t"));
+			return mb_strlen(trim($value['VALUE'], "\n\r\t"));
 		}
 		else
 		{
-			return strlen(trim($value['VALUE'], "\n\r\t"));
+			return mb_strlen(trim($value['VALUE'], "\n\r\t"));
 		}
 	}
 
@@ -557,11 +557,11 @@ class IBlockElementProperty
 			$entityName = \CCrmOwnerType::getCaption(
 				\CCrmOwnerType::resolveID(\CCrmOwnerTypeAbbr::resolveName($parts[0])), $parts[1], false);
 
-			$defaultType = strtolower(static::$listDefaultEntityKey[$parts[0]]);
+			$defaultType = mb_strtolower(static::$listDefaultEntityKey[$parts[0]]);
 			$entityUrl = \CComponentEngine::makePathFromTemplate(
 				Option::get('crm', 'path_to_'.$defaultType.'_show'), array(''.$defaultType.'_id' => $parts[1]));
 
-			$valueView[strtoupper($defaultType)][] = '[url='.$entityUrl.']'.$entityName.'[/url]';
+			$valueView[mb_strtoupper($defaultType)][] = '[url='.$entityUrl.']'.$entityName.'[/url]';
 		}
 		elseif($defaultType !== '')
 		{
@@ -571,11 +571,11 @@ class IBlockElementProperty
 				false
 			);
 
-			$defaultType = strtolower($defaultType);
+			$defaultType = mb_strtolower($defaultType);
 			$entityUrl = \CComponentEngine::makePathFromTemplate(
 				Option::get('crm', 'path_to_'.$defaultType.'_show'), array(''.$defaultType.'_id' => $value));
 
-			$valueView[strtoupper($defaultType)][] = '[url='.$entityUrl.']'.$entityName.'[/url]';
+			$valueView[mb_strtoupper($defaultType)][] = '[url='.$entityUrl.']'.$entityName.'[/url]';
 		}
 	}
 

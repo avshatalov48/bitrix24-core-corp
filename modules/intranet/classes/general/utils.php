@@ -520,17 +520,17 @@ class CIntranetUtils
 
 	public static function makeGUID($data)
 	{
-		if (strlen($data) !== 32) return false;
+		if (mb_strlen($data) !== 32) return false;
 		else return
 			'{'.
-				substr($data, 0, 8).'-'.substr($data, 8, 4).'-'.substr($data, 12, 4).'-'.substr($data, 16, 4).'-'.substr($data, 20).
+			mb_substr($data, 0, 8).'-'.mb_substr($data, 8, 4).'-'.mb_substr($data, 12, 4).'-'.mb_substr($data, 16, 4).'-'.mb_substr($data, 20).
 			'}';
 	}
 
 	public static function checkGUID($data)
 	{
 		$data = str_replace(array('{', '-', '}'), '', $data);
-		if (strlen($data) !== 32 || preg_match('/[^a-z0-9]/i', $data)) return false;
+		if (mb_strlen($data) !== 32 || preg_match('/[^a-z0-9]/i', $data)) return false;
 		else return $data;
 	}
 
@@ -584,7 +584,7 @@ class CIntranetUtils
 					// 'TYPE' => string
 				// )
 
-				if (strlen($arSectionParams['XML_ID']) !== 32)
+				if (mb_strlen($arSectionParams['XML_ID']) !== 32)
 				{
 					$arSectionParams[$fld_EXTERNAL_ID] = md5($arSectionParams['TYPE'].'_'.$arSectionParams['ID'].'_'.RandString(8));
 					// Set XML_ID
@@ -609,7 +609,7 @@ class CIntranetUtils
 					}
 				}
 
-				if (strlen($arSectionParams[$fld_EXTERNAL_ID]) !== 32)
+				if (mb_strlen($arSectionParams[$fld_EXTERNAL_ID]) !== 32)
 				{
 					$arSectionParams[$fld_EXTERNAL_ID] = md5($arSectionParams['IBLOCK_ID'].'_'.$arSectionParams['ID'].'_'.RandString(8));
 
@@ -623,7 +623,7 @@ class CIntranetUtils
 			{
 				$rsSites = CSite::GetByID(SITE_ID);
 				$arSite = $rsSites->Fetch();
-				if (strlen($arSite["NAME"]) > 0)
+				if ($arSite["NAME"] <> '')
 					$arSectionParams['PREFIX'] = $arSite["NAME"];
 				else
 					$arSectionParams['PREFIX'] = COption::GetOptionString('main', 'site_name', GetMessage('INTR_OUTLOOK_PREFIX_CONTACTS'));
@@ -653,7 +653,7 @@ class CIntranetUtils
 				$rsSites = CSite::GetByID(SITE_ID);
 				$arSite = $rsSites->Fetch();
 
-				if (strlen($arSite["NAME"]) > 0)
+				if ($arSite["NAME"] <> '')
 					$arSectionParams['PREFIX'] = $arSite["NAME"];
 				else
 					$arSectionParams['PREFIX'] = COption::GetOptionString('main', 'site_name', GetMessage('INTR_OUTLOOK_PREFIX_CONTACTS'));
@@ -689,7 +689,7 @@ class CIntranetUtils
 			{
 				$rsSites = CSite::GetByID(SITE_ID);
 				$arSite = $rsSites->Fetch();
-				if (strlen($arSite["NAME"]) > 0)
+				if ($arSite["NAME"] <> '')
 					$arSectionParams['PREFIX'] = $arSite["NAME"];
 				else
 					$arSectionParams['PREFIX'] = COption::GetOptionString('main', 'site_name', GetMessage('INTR_OUTLOOK_PREFIX_CONTACTS'));
@@ -707,14 +707,14 @@ class CIntranetUtils
 			return '';
 		}
 
-		if (substr($arSectionParams['LINK_URL'], -9) == 'index.php')
-			$arSectionParams['LINK_URL'] = substr($arSectionParams['LINK_URL'], 0, -9);
+		if (mb_substr($arSectionParams['LINK_URL'], -9) == 'index.php')
+			$arSectionParams['LINK_URL'] = mb_substr($arSectionParams['LINK_URL'], 0, -9);
 
-		if (substr($arSectionParams['LINK_URL'], -4) != '.php' && substr($arSectionParams['LINK_URL'], -1) != '/')
+		if (mb_substr($arSectionParams['LINK_URL'], -4) != '.php' && mb_substr($arSectionParams['LINK_URL'], -1) != '/')
 			$arSectionParams['LINK_URL'] .= '/';
 
 		// another dirty hack to avoid some M$ stssync protocol restrictions
-		if (substr($arSectionParams['LINK_URL'], -1) != '/')
+		if (mb_substr($arSectionParams['LINK_URL'], -1) != '/')
 			$arSectionParams['LINK_URL'] .= '/';
 
 		$type_script = $type;
@@ -773,6 +773,7 @@ class CIntranetUtils
 			array(
 				"arUserField" => $arUserField,
 				'bVarsFromForm' => $bVarsFromForm,
+				'mode' => 'main.edit_simple'
 			),
 			null,
 			array('HIDE_ICONS' => 'Y')
@@ -794,7 +795,7 @@ class CIntranetUtils
 		if (!CModule::IncludeModule("iblock"))
 			return false;
 
-		$ID = IntVal($ID);
+		$ID = intval($ID);
 
 		$dbIBlock = CIBlock::GetByID($ID);
 		$arIBlock = $dbIBlock->GetNext();
@@ -810,7 +811,7 @@ class CIntranetUtils
 	public static function ShowIBlockByID($arEntityDesc, $strEntityURL, $arParams)
 	{
 		$url = str_replace("#SITE_DIR#", SITE_DIR, $arEntityDesc["LIST_PAGE_URL"]);
-		if (strpos($url, "/") === 0)
+		if (mb_strpos($url, "/") === 0)
 			$url = "/".ltrim($url, "/");
 
 		$name = "<a href=\"".$url."\">".$arEntityDesc["NAME"]."</a>";
@@ -1264,7 +1265,7 @@ class CIntranetUtils
 
 		$arSections = array();
 
-		if (!$USER_ID)
+		if (!$USER_ID && $USER)
 			$USER_ID = $USER->GetID();
 
 		if ($USER_ID)
@@ -1832,7 +1833,7 @@ class CIntranetUtils
 
 		if (!empty($_SERVER["QUERY_STRING"]))
 		{
-			if (strrpos($firstPagePath, "?") === false)
+			if (mb_strrpos($firstPagePath, "?") === false)
 			{
 				$firstPagePath .= "?".$_SERVER["QUERY_STRING"];
 			}

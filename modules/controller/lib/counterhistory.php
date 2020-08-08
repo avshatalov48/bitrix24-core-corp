@@ -70,12 +70,10 @@ class CounterHistoryTable extends Main\Entity\DataManager
 			),
 			'COMMAND_FROM' => array(
 				'data_type' => 'text',
-				'required' => true,
 				'title' => Loc::getMessage('COUNTER_HISTORY_ENTITY_COMMAND_FROM_FIELD'),
 			),
 			'COMMAND_TO' => array(
 				'data_type' => 'text',
-				'required' => true,
 				'title' => Loc::getMessage('COUNTER_HISTORY_ENTITY_COMMAND_TO_FIELD'),
 			),
 			'USER' => array(

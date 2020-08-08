@@ -71,7 +71,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		}
 
 		//call automation trigger
-		if (CreationMethod::isDocumentCreatedByPublic($document))
+		if (CreationMethod::isDocumentCreatedByPublic($document) || CreationMethod::isDocumentCreatedByRest($document))
 		{
 			$template = $document->getTemplate();
 			DocumentCreateTrigger::execute(
@@ -267,9 +267,9 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 			$this->fields = array_merge($this->fields, $fields);
 			foreach($this->fields as $placeholder => $field)
 			{
-				if(substr($placeholder, 0, 3) == 'UF_')
+				if(mb_substr($placeholder, 0, 3) == 'UF_')
 				{
-					if(substr($placeholder, -7) == '_SINGLE')
+					if(mb_substr($placeholder, -7) == '_SINGLE')
 					{
 						unset($this->fields[$placeholder]);
 					}
@@ -617,7 +617,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 			{
 				foreach($value as $val)
 				{
-					if(strpos($val, '|') !== false)
+					if(mb_strpos($val, '|') !== false)
 					{
 						$array = explode('|', $val);
 						$val = $array[0];
@@ -627,7 +627,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 			}
 			else
 			{
-				if(strpos($value, '|') !== false)
+				if(mb_strpos($value, '|') !== false)
 				{
 					$array = explode('|', $value);
 					$value = $array[0];

@@ -11,6 +11,7 @@ use Bitrix\Timeman\Model\Schedule\Assignment\User\ScheduleUser;
 use Bitrix\Timeman\Model\Schedule\Schedule;
 use Bitrix\Timeman\Model\Schedule\Shift\ShiftCollection;
 use Bitrix\Timeman\Provider\Schedule\ScheduleProvider;
+use Bitrix\Timeman\Service\Agent\WorktimeAgentManager;
 use Bitrix\Timeman\Service\BaseService;
 use Bitrix\Timeman\Service\BaseServiceResult;
 use Bitrix\Timeman\Service\Exception\BaseServiceException;
@@ -30,14 +31,14 @@ class ScheduleService extends BaseService
 	private $assignmentsService;
 	/** @var ViolationRulesService */
 	private $violationRulesService;
-	private $worktimeService;
+	private $worktimeAgentManager;
 
 	public function __construct(
 		CalendarService $calendarService,
 		ShiftService $shiftService,
 		ScheduleAssignmentsService $assignmentsService,
 		ViolationRulesService $violationRulesService,
-		WorktimeService $worktimeService,
+		WorktimeAgentManager $worktimeAgentManager,
 		ScheduleProvider $scheduleProvider
 	)
 	{
@@ -46,7 +47,7 @@ class ScheduleService extends BaseService
 		$this->calendarService = $calendarService;
 		$this->scheduleProvider = $scheduleProvider;
 		$this->violationRulesService = $violationRulesService;
-		$this->worktimeService = $worktimeService;
+		$this->worktimeAgentManager = $worktimeAgentManager;
 	}
 
 	/**
@@ -71,7 +72,7 @@ class ScheduleService extends BaseService
 			$schedule->setCalendar($calendarResult->getCalendar());
 
 			# shifts
-			if (!$schedule->isFlexible())
+			if (!$schedule->isFlextime())
 			{
 				$this->safeRun($this->createShifts($schedule, $scheduleForm));
 			}
@@ -124,7 +125,7 @@ class ScheduleService extends BaseService
 			// todo $schedule->setScheduleViolationRules($violationRules);
 
 			# shifts
-			if ($schedule->isFlexible())
+			if ($schedule->isFlextime())
 			{
 				$this->safeRun($this->removeShifts($schedule));
 			}
@@ -137,19 +138,19 @@ class ScheduleService extends BaseService
 				$shiftCollection = $updatedEndIdsResult->getData()[0];
 				if ($wasAutoClosing && $autoClosingAfterUpdate && $shiftCollection->count() > 0)
 				{
-					$this->worktimeService->deleteAutoClosingAgents($schedule, $shiftCollection);
-					$this->worktimeService->addAutoClosingAgents($schedule, $shiftCollection);
+					$this->worktimeAgentManager->deleteAutoClosingAgents($schedule, $shiftCollection);
+					$this->worktimeAgentManager->addAutoClosingAgents($schedule, $shiftCollection);
 				}
 			}
 
 			# auto close records
 			if ($wasAutoClosing && !$autoClosingAfterUpdate)
 			{
-				$this->worktimeService->deleteAutoClosingAgents($schedule);
+				$this->worktimeAgentManager->deleteAutoClosingAgents($schedule);
 			}
 			elseif (!$wasAutoClosing && $autoClosingAfterUpdate)
 			{
-				$this->worktimeService->addAutoClosingAgents($schedule);
+				$this->worktimeAgentManager->addAutoClosingAgents($schedule);
 			}
 
 			# users
@@ -254,7 +255,7 @@ class ScheduleService extends BaseService
 	 */
 	private function editSchedule($schedule, $scheduleForm)
 	{
-		// todo-annabo because of uncontrolled cascade saving
+		// because of uncontrolled cascade saving
 		$scheduleToUpdate = Schedule::wakeUp($schedule->collectRawValues());
 		foreach ([$schedule, $scheduleToUpdate] as $updatingSchedule)
 		{

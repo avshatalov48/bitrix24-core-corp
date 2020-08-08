@@ -32,6 +32,7 @@ create table if not exists b_timeman_entries
 	SCHEDULE_ID int(10) unsigned not null default 0,
 	SHIFT_ID int(10) unsigned not null default 0,
 	APPROVED tinyint(3) unsigned not null default 1,
+	APPROVED_BY int(18) unsigned not null default 0,
 	AUTO_CLOSING_AGENT_ID int unsigned not null default 0,
 	PRIMARY KEY pk_b_timeman_entries (ID),
 	INDEX ix_b_timeman_entries_1 (USER_ID, DATE_START),
@@ -149,6 +150,8 @@ CREATE TABLE IF NOT EXISTS b_timeman_work_schedule (
 	CONTROLLED_ACTIONS TINYINT(3) UNSIGNED NOT NULL DEFAULT '3',
 	ALLOWED_DEVICES VARCHAR(255) NOT NULL DEFAULT '',
 	WORKTIME_RESTRICTIONS TEXT NOT NULL,
+	DELETED_BY INT UNSIGNED NOT NULL DEFAULT '0',
+	DELETED_AT VARCHAR(30) NOT NULL DEFAULT '',
 	PRIMARY KEY (ID)
 );
 

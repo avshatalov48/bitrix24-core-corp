@@ -38,148 +38,153 @@ $columnsToIgnore = ['FLAG_COMPLETE', 'RESPONSIBLE_ID', 'CREATED_BY'];
 	<thead>
 	<tr>
 		<?php foreach ($arParams['COLUMNS'] as $field):
-			if (in_array($field, $columnsToIgnore))
+			if (in_array($field, $columnsToIgnore, true))
 			{
 				continue;
 			}
 
-			$header = Loc::getMessage('TASKS_EXCEL_' . $field);
-			if ($header == null && array_key_exists($field, $arParams['UF']))
+			$header = Loc::getMessage('TASKS_EXCEL_'.$field);
+			if ($header === null && array_key_exists($field, $arParams['UF']))
 			{
 				$header = $arParams['UF'][$field]['EDIT_FORM_LABEL'];
 			}
-			?>
-			<th><?=$header?></th>
-		<?php endforeach ?>
+			?><th><?=$header?></th>
+		<?php endforeach;?>
 	</tr>
 	</thead>
 
 	<tbody>
-	<?php foreach ($arResult["LIST"] as $task): ?>
+	<?php foreach ($arResult['EXPORT_LIST'] as $task):?>
 		<tr>
 			<?php
 			foreach ($arParams['COLUMNS'] as $field)
 			{
-				if (in_array($field, $columnsToIgnore))
+				if (in_array($field, $columnsToIgnore, true))
 				{
 					continue;
 				}
 
+				$prefix = '';
 				$columnValue = $task[$field];
 
 				switch ($field)
 				{
-					case "TITLE":
-						// due to http://jabber.bx/view.php?id=39850
-						if (!array_key_exists('__LEVEL', $task) && preg_match('/^[0-9 \t]*$/', $columnValue))
+					case 'TITLE':
+						if (array_key_exists('__LEVEL', $task))
 						{
-							$columnValue = $task[$field] . ' ';
+							$prefix = str_repeat('&nbsp;&nbsp;&nbsp;', $task['__LEVEL']);
+						}
+						else if (preg_match('/^[0-9 \t]*$/', $columnValue))
+						{
+							// due to http://jabber.bx/view.php?id=39850
+							$columnValue = $task[$field].' ';
 						}
 						break;
 
-					case "ORIGINATOR_NAME":
-					case "RESPONSIBLE_NAME":
+					case 'ORIGINATOR_NAME':
+					case 'RESPONSIBLE_NAME':
 						$map = [
 							'ORIGINATOR_NAME' => 'CREATED_BY',
-							'RESPONSIBLE_NAME' => 'RESPONSIBLE_ID'
+							'RESPONSIBLE_NAME' => 'RESPONSIBLE_ID',
 						];
+						$role = $map[$field];
 
-						if (!array_key_exists($map[$field], $task))
+						if (!array_key_exists($role, $task))
 						{
 							continue;
 						}
 
-						if (!array_key_exists($task[$map[$field]], $userCache))
+						$userId = $task[$role];
+						if (!array_key_exists($userId, $userCache))
 						{
-							$rsUser = CUser::GetByID($task[$map[$field]]);
-							if ($arUser = $rsUser->GetNext())
+							$userResult = CUser::GetByID($userId);
+							if ($user = $userResult->GetNext())
 							{
-								$userCache[$task[$map[$field]]] = htmlspecialchars_decode(
+								$userCache[$userId] = htmlspecialchars_decode(
 									tasksFormatNameShort(
-										$arUser["NAME"],
-										$arUser["LAST_NAME"],
-										$arUser["LOGIN"],
-										$arUser["SECOND_NAME"],
-										$arParams["NAME_TEMPLATE"]
+										$user['NAME'],
+										$user['LAST_NAME'],
+										$user['LOGIN'],
+										$user['SECOND_NAME'],
+										$arParams['NAME_TEMPLATE']
 									)
 								);
 							}
 						}
 
-						$columnValue = $userCache[$task[$map[$field]]];
+						$columnValue = $userCache[$userId];
 						break;
 
-					case "GROUP_NAME":
+					case 'GROUP_NAME':
 						if (!array_key_exists('GROUP_ID', $task))
 						{
 							continue;
 						}
 
-						if (!array_key_exists($task['GROUP_ID'], $groupCache))
+						$groupId = $task['GROUP_ID'];
+						if (!array_key_exists($groupId, $groupCache))
 						{
-							$group = Group::getData([$task['GROUP_ID']]);
-							$groupCache[$task['GROUP_ID']] = htmlspecialcharsbx($group[$task['GROUP_ID']]['NAME']);
+							$group = Group::getData([$groupId]);
+							$groupCache[$groupId] = htmlspecialcharsbx($group[$groupId]['NAME']);
 						}
 
-						$columnValue = $groupCache[$task['GROUP_ID']];
+						$columnValue = $groupCache[$groupId];
 						break;
 
-					case "PRIORITY":
-						$columnValue = Loc::GetMessage("TASKS_PRIORITY_" . $columnValue);
+					case 'PRIORITY':
+						$columnValue = Loc::getMessage('TASKS_PRIORITY_'.$columnValue);
 						break;
 
-					case "TAG":
+					case 'TAG':
 						if (is_array($columnValue) && !empty($columnValue))
 						{
-							$columnValue = join(', ', $columnValue);
+							$columnValue = implode(', ', $columnValue);
 						}
 						break;
 
-					case "STATUS":
-					case "REAL_STATUS":
-						$columnValue = Loc::GetMessage("TASKS_STATUS_" . $task["REAL_STATUS"]);
+					case 'STATUS':
+					case 'REAL_STATUS':
+						$columnValue = Loc::getMessage('TASKS_STATUS_'.$task['REAL_STATUS']);
 						break;
 
-					case "MARK":
-						$columnValue = (
-							$columnValue? Loc::GetMessage("TASKS_MARK_" . $columnValue) : Loc::GetMessage("TASKS_MARK_NONE")
-						);
+					case 'MARK':
+						$columnValue = Loc::getMessage('TASKS_MARK_'.($columnValue ?: 'NONE'));
 						break;
 
-					case "TIME_ESTIMATE":
-					case "TIME_SPENT_IN_LOGS":
+					case 'TIME_ESTIMATE':
+					case 'TIME_SPENT_IN_LOGS':
 						if ($columnValue)
 						{
 							$columnValue = sprintf(
 								'%02d:%02d:%02d',
-								floor($columnValue / 3600),       // hours
+								floor($columnValue / 3600), // hours
 								floor($columnValue / 60) % 60, // minutes
-								$columnValue % 60                       // seconds
+								$columnValue % 60 // seconds
 							);
 						}
 						else
 						{
-							$columnValue = "";
+							$columnValue = '';
 						}
 						break;
 
-					case "GROUP_ID":
+					case 'GROUP_ID':
 						if ($columnValue && CSocNetGroup::CanUserViewGroup($USER->GetID(), $columnValue))
 						{
-							$arGroup = CSocNetGroup::GetByID($columnValue);
-							if ($arGroup)
+							$group = CSocNetGroup::GetByID($columnValue);
+							if ($group)
 							{
-								$columnValue = $arGroup["NAME"];
+								$columnValue = $group['NAME'];
 							}
 						}
 
 						if (!$columnValue)
 						{
-							$columnValue = "";
+							$columnValue = '';
 						}
 						break;
 
-					case "UF_CRM_TASK":
+					case 'UF_CRM_TASK':
 						if (!empty($columnValue))
 						{
 							$collection = [];
@@ -187,10 +192,9 @@ $columnsToIgnore = ['FLAG_COMPLETE', 'RESPONSIBLE_ID', 'CREATED_BY'];
 
 							foreach ($columnValue as $value)
 							{
-								$crmElement = explode('_', $value);
-								$type = $crmElement[0];
+								[$type, $id] = explode('_', $value);
 								$typeId = CCrmOwnerType::ResolveID(CCrmOwnerTypeAbbr::ResolveName($type));
-								$title = CCrmOwnerType::GetCaption($typeId, $crmElement[1]);
+								$title = CCrmOwnerType::GetCaption($typeId, $id);
 
 								if (!isset($collection[$type]))
 								{
@@ -204,7 +208,7 @@ $columnsToIgnore = ['FLAG_COMPLETE', 'RESPONSIBLE_ID', 'CREATED_BY'];
 							}
 
 							ob_start();
-							if ($collection)
+							if (!empty($collection))
 							{
 								$prevType = null;
 
@@ -217,12 +221,12 @@ $columnsToIgnore = ['FLAG_COMPLETE', 'RESPONSIBLE_ID', 'CREATED_BY'];
 
 									if ($type !== $prevType)
 									{
-										echo Loc::GetMessage('TASKS_LIST_CRM_TYPE_' . $type) . ': ';
+										echo Loc::getMessage('TASKS_LIST_CRM_TYPE_'.$type).': ';
 									}
 
 									$prevType = $type;
 
-									echo implode(', ', $items) . ';';
+									echo implode(', ', $items).';';
 								}
 							}
 
@@ -230,37 +234,58 @@ $columnsToIgnore = ['FLAG_COMPLETE', 'RESPONSIBLE_ID', 'CREATED_BY'];
 						}
 						else
 						{
-							$columnValue = "";
+							$columnValue = '';
 						}
 						break;
 
 					default:
-						if ($columnValue == 'Y' || $columnValue == 'N')
+						if (mb_strpos($field, 'UF_CRM_TASK_') === 0)
 						{
-							$columnValue = Loc::GetMessage("TASKS_EXCEL_COLUMN_" . $columnValue);
-						}
+							$titles = [];
+							$values = $task['UF_CRM_TASK'];
+							$allNames = CCrmOwnerType::GetAllNames();
+							$currentName = str_replace('UF_CRM_TASK_', '', $field);
 
-						if (is_array($columnValue))
+							if (!is_array($values) || empty($values) || !in_array($currentName, $allNames, true))
+							{
+								continue;
+							}
+
+							sort($values);
+
+							foreach ($values as $value)
+							{
+								[$type, $id] = explode('_', $value);
+								$name = CCrmOwnerTypeAbbr::ResolveName($type);
+
+								if ($name === $currentName)
+								{
+									$typeId = CCrmOwnerType::ResolveID($name);
+									$titles[] = CCrmOwnerType::GetCaption($typeId, $id);
+								}
+							}
+
+							$columnValue = implode(', ', $titles);
+						}
+						else if (is_array($columnValue))
 						{
 							if (!empty($columnValue))
 							{
-								$columnValue = join(', ', $columnValue);
+								$columnValue = implode(', ', $columnValue);
 							}
 						}
-						else if (trim($columnValue) == "")
+						else if (in_array(mb_strtoupper($columnValue), ['Y', 'N']))
 						{
-							$columnValue = "";
+							$columnValue = Loc::getMessage('TASKS_EXCEL_COLUMN_'.$columnValue);
+						}
+						else if (trim($columnValue) === '')
+						{
+							$columnValue = '';
 						}
 						break;
 				}
 
-				echo '<td>' .
-					(
-						$field == 'TITLE' && array_key_exists('__LEVEL', $task)
-						? str_repeat('&nbsp;&nbsp;&nbsp;', $task['__LEVEL'])
-						: ''
-					) .
-					htmlspecialcharsbx($columnValue) . '</td>';
+				echo '<td>'.$prefix.htmlspecialcharsbx($columnValue).'</td>';
 			}
 			?>
 		</tr>

@@ -28,7 +28,7 @@ if (!checkAccountNumberValue(
 		$strWarning .= GetMessage("CRM_ACCOUNT_NUMBER_NUMBER_WARNING", array("#NUMBER#" => $_POST["account_number_number"])).'<br>';
 }
 
-if(strlen($strWarning) > 0)
+if($strWarning <> '')
 {
 	$APPLICATION->ThrowException($strWarning);
 	return;
@@ -80,8 +80,8 @@ function checkAccountNumberValue($templateType, $number_data, $number_prefix)
 	{
 		case 'NUMBER':
 
-			if (strlen($number_data) <= 0
-				|| strlen($number_data) > 7
+			if ($number_data == ''
+				|| mb_strlen($number_data) > 7
 				|| intval($number_data) != $number_data
 				|| intval($number_data) < intval(COption::GetOptionString("sale", "account_number_data", ""))
 				)
@@ -91,8 +91,8 @@ function checkAccountNumberValue($templateType, $number_data, $number_prefix)
 
 		case 'PREFIX':
 
-			if (strlen($number_prefix) <= 0
-				|| strlen($number_prefix) > 7
+			if ($number_prefix == ''
+				|| mb_strlen($number_prefix) > 7
 				|| preg_match('/[^a-zA-Z0-9_-]/', $number_prefix)
 				)
 				$res = false;

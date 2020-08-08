@@ -1,7 +1,44 @@
 ;(function () {
 	'use strict';
 
-	BX.namespace('BX.SaleCenterPaySystem.TileGrid');
+	BX.namespace('BX.SaleCenterPaySystem');
+
+	BX.SaleCenterPaySystem = {
+		paySystem: null,
+		paySystemApp: null,
+		mode: "main",
+		signedParameters: null,
+
+		init: function(config)
+		{
+			this.mode = config.mode;
+			this.paySystemParams = config.paySystemParams;
+			this.paySystemAppParams = config.paySystemAppParams;
+			this.signedParameters = config.signedParameters;
+
+			this.paySystem = new BX.TileGrid.Grid(this.paySystemParams);
+			this.paySystem.draw();
+
+			if (this.mode === "main")
+			{
+				this.paySystemApp = new BX.TileGrid.Grid(this.paySystemAppParams);
+				this.paySystemApp.draw();
+			}
+		},
+
+		reloadSlider: function(responseData)
+		{
+			if(responseData.paySystemPanelParams)
+			{
+				this.paySystem.redraw(responseData.paySystemPanelParams);
+			}
+
+			if(responseData.paySystemAppPanelParams && (this.mode === "main"))
+			{
+				this.paySystemApp.redraw(responseData.paySystemAppPanelParams);
+			}
+		}
+	};
 
 	/**
 	 *
@@ -9,7 +46,7 @@
 	 * @extends {BX.TileGrid.Item}
 	 * @constructor
 	 */
-	BX.SaleCenterPaySystem.TileGrid.Item = function(options)
+	BX.SaleCenterPaySystem.TileGrid = function(options)
 	{
 		BX.TileGrid.Item.apply(this, arguments);
 
@@ -18,26 +55,27 @@
 		this.itemSelected = options.itemSelected;
 		this.itemSelectedColor = options.itemSelectedColor;
 		this.itemSelectedImage = options.itemSelectedImage;
+		this.outerImage = options.outerImage || false;
 		this.layout = {
 			container: null,
 			image: null,
 			title: null,
-			clipTitle: null,
-			company: null,
-			controls: null,
-			buttonAction: null,
-			price: null
 		};
 		this.data = options.data || {};
 	};
 
-	BX.SaleCenterPaySystem.TileGrid.Item.prototype =
+	BX.SaleCenterPaySystem.TileGrid.prototype =
 	{
 		__proto__: BX.TileGrid.Item.prototype,
 		constructor: BX.TileGrid.Item,
 
 		getContent: function()
 		{
+			if(this.data.type === "counter")
+			{
+				return this.getItemCounter();
+			}
+
 			if(!this.layout.wrapper)
 			{
 				this.layout.wrapper = BX.create('div', {
@@ -52,7 +90,8 @@
 							children: [
 								this.getImage(),
 								this.getTitle(),
-								this.getStatus()
+								this.getStatus(),
+								this.getLabel(),
 							],
 						})
 					],
@@ -65,7 +104,10 @@
 				});
 			}
 
-			this.itemSelected ? this.setSelected() : null;
+			if (this.itemSelected || this.data.type === 'actionbox')
+			{
+				this.setSelected();
+			}
 
 			return this.layout.wrapper;
 		},
@@ -74,14 +116,22 @@
 		{
 			if(!this.layout.image)
 			{
-				this.layout.image = BX.create('div', {
+				var logo = BX.create('div', {
 					props: {
 						className: 'salescenter-paysystem-item-image'
 					},
 					style: {
-						backgroundImage: this.image ? 'url(' + this.image + ')' : null
+						top: this.data.recommendation ? '22px' : null,
+						backgroundSize: this.outerImage ? '50px' : '',
+						backgroundImage: this.image ? 'url(' + encodeURI(this.image) + ')' : null
 					}
 				});
+
+				if (this.data.type === 'marketplaceApp' && this.data.hasOwnIcon)
+				{
+					logo.style.backgroundSize = '35% auto';
+				}
+				this.layout.image = logo;
 			}
 
 			return this.layout.image;
@@ -101,11 +151,30 @@
 			return this.layout.itemSelected;
 		},
 
-		setSelected: function()
+		getLabel: function()
 		{
-			if(!this.itemSelected)
+			if (!this.data.recommendation)
 				return;
 
+			this.layout.itemLabel = BX.create('div', {
+				props: {
+					className: 'salescenter-item-label'
+				},
+				children: [
+					BX.create('div', {
+						props: {
+							className: 'salescenter-item-label-text'
+						},
+						text: BX.message('SALESCENTER_CONTROL_PANEL_ITEM_LABEL_RECOMMENDATION')
+					})
+				]
+			});
+
+			return this.layout.itemLabel;
+		},
+
+		setSelected: function()
+		{
 			BX.addClass(this.layout.wrapper, 'salescenter-paysystem-item-selected');
 
 			if(this.itemSelectedImage)
@@ -117,37 +186,39 @@
 			{
 				this.layout.wrapper.style.backgroundColor = this.itemSelectedColor;
 			}
-
-			this.layout.itemSelected = BX.create('div', {
-				props: {
-					className: 'salescenter-paysystem-item-status-selected'
-				}
-			});
-
-			this.layout.wrapper.appendChild(this.layout.itemSelected);
 		},
 
-		setUnselected: function()
+		isDarkColor: function(hex)
 		{
-			if(this.itemSelected)
+			if(hex.substring(0,1) === '#')
 			{
-				return;
+				hex = hex.substring(1);
 			}
 
-			BX.removeClass(this.layout.wrapper, 'salescenter-paysystem-item-selected');
-
-			if(this.image)
+			if (!this.isValidColor(hex))
 			{
-				this.layout.image.style.backgroundImage = 'url(' + this.image + ')';
+				return false;
 			}
 
-			this.layout.wrapper.style.backgroundColor = '';
-
-			var itemSelected = this.layout.wrapper.querySelector('.salescenter-paysystem-item-status-selected');
-			if(itemSelected)
+			if (hex.length === 3)
 			{
-				itemSelected.parentNode.removeChild(itemSelected);
+				hex = hex.replace(/([a-f0-9])/gi, "$1$1");
 			}
+
+			hex = hex.toLowerCase();
+
+			var bigint = parseInt(hex, 16);
+			var red = (bigint >> 16) & 255;
+			var green = (bigint >> 8) & 255;
+			var blue = bigint & 255;
+
+			var brightness = (red * 299 + green * 587 + blue * 114) / 1000;
+			return brightness < 200;
+		},
+
+		isValidColor: function(hex)
+		{
+			return BX.type.isNotEmptyString(hex) && hex.match(/^([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/);
 		},
 
 		getTitle: function()
@@ -156,51 +227,213 @@
 			{
 				this.layout.title = BX.create('div', {
 					props: {
-						className: 'salescenter-paysystem-item-title'
+						className: this.data.type === 'marketplaceApp'
+							? 'salescenter-paysystem-marketplace-app-item-title'
+							: 'salescenter-paysystem-item-title',
 					},
 					text: this.title
 				});
+
+				if(this.itemSelected && this.itemSelectedColor)
+				{
+					this.layout.title.style.color = this.isDarkColor(this.itemSelectedColor) ? '#fff': '#525c69';
+				}
 			}
 
 			return this.layout.title;
 		},
 
-		onClick: function()
+		getItemCounter: function()
 		{
-			BX.Salescenter.Manager.addAnalyticAction({
-				analyticsLabel: 'salescenterClickPaymentTile',
-				isConnected: this.itemSelected ? 'y' : 'n',
-				type: this.data.paySystemType,
-			});
-			var sliderOptions = {
-				allowChangeHistory: false,
-				width: 1000,
+			return BX.create("div", {
+				props: {
+					className: "salescenter-paysystem-item salescenter-paysystem-integration-marketplace-tile-item salescenter-paysystem-integration-marketplace-tile-counter"
+				},
+				children: [
+					BX.create('div', {
+						props: {
+							className: "salescenter-paysystem-integration-marketplace-tile-counter-head"
+						},
+						children: [
+							BX.create('div', {
+								props: {
+									className: "salescenter-paysystem-integration-marketplace-tile-counter-name"
+								},
+								text: this.title
+							}),
+							BX.create('div', {
+								props: {
+									className: "salescenter-paysystem-integration-marketplace-tile-counter-value"
+								},
+								text: this.data.count
+							}),
+						]
+					}),
+					BX.create('div', {
+						props: {
+							className: "salescenter-paysystem-integration-marketplace-tile-counter-link-box"
+						},
+						children: [
+							BX.create('div', {
+								props: {
+									className: "salescenter-paysystem-integration-marketplace-tile-counter-link"
+								},
+								text: this.data.description
+							})
+						]
+					})
+				],
 				events: {
-					onLoad: function (e)
+					click: function()
 					{
-						this.itemData = JSON.stringify({
-							itemSelected: this.itemSelected,
-							menuItems: this.data.menuItems,
-							showMenu: this.data.showMenu
-						});
-					}.bind(this),
-					onClose: function (e)
-					{
-						var slider = e.getSlider();
-						this.setPaySystemItemHandler(slider);
+						this.onClick();
 					}.bind(this)
 				}
-			};
+			})
+		},
 
-			if(!this.itemSelected && !this.data.showMenu)
+		openRestAppLayout: function(applicationId, appCode)
+		{
+			BX.ajax.runComponentAction("bitrix:salescenter.paysystem.panel", "getRestApp", {
+				data: {
+					code: appCode
+				}
+			}).then(function(response)
 			{
+				var app = response.data;
+				if(app.TYPE === "A")
+				{
+					this.showRestApplication(appCode);
+				}
+				else
+				{
+					BX.rest.AppLayout.openApplication(applicationId);
+				}
+			}.bind(this)).catch(function(response)
+			{
+				this.restAppErrorPopup(" ", response.errors.pop().message);
+			}.bind(this));
+		},
+
+		restAppErrorPopup: function(title, text)
+		{
+			var popup = new BX.PopupWindow('rest-app-error-alert', null, {
+				closeIcon: true,
+				closeByEsc: true,
+				autoHide: false,
+				titleBar: title,
+				content: text,
+				zIndex: 16000,
+				overlay: {
+					color: 'gray',
+					opacity: 30
+				},
+				buttons: [
+					new BX.PopupWindowButton({
+						'id': 'close',
+						'text': BX.message('SPP_SALESCENTER_JS_POPUP_CLOSE'),
+						'events': {
+							'click': function(){
+								popup.close();
+							}
+						}
+					})
+				],
+				events: {
+					onPopupClose: function() {
+						this.destroy();
+					},
+					onPopupDestroy: function() {
+						popup = null;
+					}
+				}
+			});
+			popup.show();
+		},
+
+		onClick: function()
+		{
+			if(this.data.type === 'paysystem')
+			{
+				BX.Salescenter.Manager.addAnalyticAction({
+					analyticsLabel: 'salescenterClickPaymentTile',
+					isConnected: this.itemSelected ? 'y' : 'n',
+					type: this.data.paySystemType,
+				});
+				var sliderOptions = {
+					allowChangeHistory: false,
+					width: 1000,
+					events: {
+						onClose: this.reload.bind(this, BX.SaleCenterPaySystem.mode, BX.SaleCenterPaySystem.signedParameters)
+					}
+				};
+
+				if(!this.itemSelected && !this.data.showMenu)
+				{
+					BX.SidePanel.Instance.open(this.data.connectPath, sliderOptions);
+				}
+				else
+				{
+					this.showItemMenu(this, {
+						sliderOptions: sliderOptions
+					});
+				}
+			}
+			else if(this.data.type === 'paysystem_extra')
+			{
+				var sliderOptions = {
+					allowChangeHistory: false,
+					events: {
+						onClose: this.reload.bind(this, "main", BX.SaleCenterPaySystem.signedParameters)
+					}
+				};
 				BX.SidePanel.Instance.open(this.data.connectPath, sliderOptions);
 			}
-			else
+			else if(this.data.type === "counter")
 			{
-				this.showItemMenu(this, {
-					sliderOptions: sliderOptions
-				});
+				BX.SidePanel.Instance.open(this.data.connectPath);
+			}
+			else if(this.data.type === "integration")
+			{
+				window.open(this.data.url);
+			}
+			else if(this.data.type === "marketplaceApp")
+			{
+				if (this.itemSelected)
+				{
+					this.openRestAppLayout(this.id, this.data.code);
+				}
+				else
+				{
+					this.showRestApplication(this.data.code);
+				}
+			}
+			else if(this.data.type === 'actionbox')
+			{
+				if (this.data.handler === 'anchor')
+				{
+					window.open (this.data.move);
+				}
+				else if (this.data.handler === 'marketplace')
+				{
+					BX.rest.Marketplace.open({PLACEMENT: this.data.move});
+				}
+				else if (this.data.handler === 'landing')
+				{
+					var dataMove = this.data.move;
+					BX.SidePanel.Instance.open('salecenter', {
+						contentCallback: function () {
+							return "<iframe src='" + dataMove + "'" +
+								" style='width: 100%; height:" +
+								" -webkit-calc(100vh - 20px); height:" +
+								" calc(100vh - 20px);'></iframe>";
+						}
+					});
+				}
+			}
+			else if(this.data.type === 'recommend')
+			{
+				BX.SidePanel.Instance.open(this.data.connectPath, {width: 735});
 			}
 		},
 
@@ -269,59 +502,6 @@
 			item.moreTabsMenu.popupWindow.show();
 		},
 
-		setPaySystemItemHandler: function(slider)
-		{
-			var sliderIframe, innerDoc, paySystemId, actionFile, psMode, url;
-			sliderIframe = slider.iframe;
-			innerDoc = sliderIframe.contentDocument || sliderIframe.contentWindow.document;
-
-			url = new URL(window.location.href + slider.url);
-			paySystemId = url.searchParams.get("ID");
-			actionFile = url.searchParams.get("ACTION_FILE");
-			psMode = url.searchParams.get("PS_MODE");
-
-			if (paySystemId || actionFile)
-			{
-				this.reloadPaySystemItem(paySystemId, actionFile, psMode);
-			}
-		},
-
-		reloadPaySystemItem: function(paySystemId, actionFile, psMode)
-		{
-			var self = this;
-			BX.ajax.runComponentAction(
-				'bitrix:salescenter.control_panel',
-				'reloadPaySystemItem',
-				{
-					mode: 'class',
-					data: {
-						paySystemId: paySystemId,
-						actionFile: actionFile,
-						psMode: psMode
-					}
-				}
-			).then(function(response)
-			{
-				self.itemSelected = response.data.itemSelected;
-				if (self.itemSelected)
-				{
-					self.setSelected();
-				}
-				else
-				{
-					self.setUnselected();
-				}
-
-				self.data.menuItems = response.data.menuItems;
-				self.data.showMenu = response.data.showMenu;
-
-				if (self.itemData !== JSON.stringify(response.data))
-				{
-					top.BX.addCustomEvent('SalescenterPaysystemPanelReload', BX.proxy(self.reloadPage, self));
-				}
-			});
-		},
-
 		reloadPage: function()
 		{
 			var previousSlider = BX.SidePanel.Instance.getPreviousSlider(BX.SidePanel.Instance.getSliderByWindow(window));
@@ -331,7 +511,40 @@
 					: top
 			);
 
-			parentWindow.window.location.reload();
+			if (parentWindow)
+			{
+				parentWindow.window.location.reload();
+			}
+		},
+
+		showRestApplication: function(appCode)
+		{
+			var applicationUrlTemplate = "/marketplace/detail/#app#/";
+			var url = applicationUrlTemplate.replace("#app#", encodeURIComponent(appCode));
+			BX.SidePanel.Instance.open(url, {
+				allowChangeHistory: false,
+				events: {
+					onClose: this.reload.bind(this, "main", BX.SaleCenterPaySystem.signedParameters)
+				}
+			});
+		},
+
+		reload: function(mode, signedParameters)
+		{
+			BX.ajax.runComponentAction(
+				"bitrix:salescenter.paysystem.panel",
+				"getComponentResult",
+				{
+					mode: "ajax",
+					data: {
+						mode: mode,
+						signedParameters: signedParameters,
+					}
+				}
+			).then(function(response)
+			{
+				BX.SaleCenterPaySystem.reloadSlider(response.data);
+			});
 		}
 	};
 })();

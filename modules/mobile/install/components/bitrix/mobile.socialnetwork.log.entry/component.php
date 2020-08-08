@@ -33,12 +33,12 @@ if (!$USER->IsAuthorized())
 $arParams["PATH_TO_USER"] = trim($arParams["PATH_TO_USER"]);
 $arParams["PATH_TO_GROUP"] = trim($arParams["PATH_TO_GROUP"]);
 $arParams["PATH_TO_SMILE"] = trim($arParams["PATH_TO_SMILE"]);
-if (strlen($arParams["PATH_TO_SMILE"]) <= 0)
+if ($arParams["PATH_TO_SMILE"] == '')
 	$arParams["PATH_TO_SMILE"] = "/bitrix/images/socialnetwork/smile/";
 
-$arParams["GROUP_ID"] = IntVal($arParams["GROUP_ID"]); // group page
-$arParams["USER_ID"] = IntVal($arParams["USER_ID"]); // profile page
-$arParams["LOG_ID"] = IntVal($arParams["LOG_ID"]); // log entity page
+$arParams["GROUP_ID"] = intval($arParams["GROUP_ID"]); // group page
+$arParams["USER_ID"] = intval($arParams["USER_ID"]); // profile page
+$arParams["LOG_ID"] = intval($arParams["LOG_ID"]); // log entity page
 
 $arResult["LAST_LOG_TS"] = intval($arParams["LAST_LOG_TS"]);
 $arResult["COUNTER_TYPE"] = $arParams["COUNTER_TYPE"];
@@ -79,7 +79,14 @@ $arResult["bTasksAvailable"] = (
 		!Loader::includeModule('bitrix24')
 		|| CBitrix24BusinessTools::isToolAvailable($USER->getId(), "tasks")
 	)
-	&& CSocNetFeaturesPerms::CurrentUserCanPerformOperation(SONET_ENTITY_USER, $USER->getId(), "tasks", "create_tasks")
+	&& (
+		(
+			Loader::includeModule('tasks')
+			&& class_exists('\Bitrix\Tasks\Access\TaskAccessController')
+			&& \Bitrix\Tasks\Access\TaskAccessController::can($USER->getId(), \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_CREATE)
+		)
+		|| CSocNetFeaturesPerms::CurrentUserCanPerformOperation(SONET_ENTITY_USER, $USER->getId(), "tasks", "create_tasks")
+	)
 );
 
 if (isset($arParams["CURRENT_PAGE_DATE"]))
@@ -306,16 +313,19 @@ if ($arEvent)
 						'logId' => $arParams["LOG_ID"],
 					));
 					$arCommentTmp['EVENT_FORMATTED']['MESSAGE']  = $handler->getText();
-					$arCommentTmp["AUX"] = $handler->getType();
+
 					$arCommentsFullList[$key] = $arCommentTmp;
 				}
+
+				$arCommentsFullList[$key]["AUX"] = $handler->getType();
+				$arCommentsFullList[$key]["CAN_DELETE"] = $handler->canDelete();
 			}
 		}
 
 		$arResult["NEW_COMMENTS"] = 0;
 
 		if (
-			$arResult["COUNTER_TYPE"] == "**" 
+			$arResult["COUNTER_TYPE"] == "**"
 			|| $arParams["LOG_ID"] > 0
 		)
 		{
@@ -359,7 +369,7 @@ if ($arEvent)
 					)
 				)
 				{
-					// 
+					//
 				}
 				else
 				{
@@ -384,7 +394,7 @@ if ($arEvent)
 			if(
 				!empty($arCommentID)
 				&& $arParams["SHOW_RATING"] == "Y"
-				&& strlen($rating_entity_type) > 0
+				&& $rating_entity_type <> ''
 			)
 				$arResult["RATING_COMMENTS"] = CRatings::GetRatingVoteResult($rating_entity_type, $arCommentID);
 		}
@@ -454,6 +464,11 @@ if ($arEvent)
 }
 
 $arResult["Event"] = $arEvent;
+
+$arResult["isCurrentUserEventOwner"] = (
+	($arEvent['EVENT']['USER_ID'] == $USER->getId())
+	|| \CSocNetUser::isCurrentUserModuleAdmin(SITE_ID, false)
+);
 
 $this->IncludeComponentTemplate();
 ?>

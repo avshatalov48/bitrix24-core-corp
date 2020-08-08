@@ -125,7 +125,7 @@ if (!function_exists('CrmEntityTreeDrawActivity'))
 								{
 									$visual = array(
 										'title' => $provider::getTypeName($item['PROVIDER_TYPE_ID'], $item['DIRECTION']),
-										'icon' => 'crm-doc-droplist-item-' . strtolower($provider::getId())
+										'icon' => 'crm-doc-droplist-item-'.mb_strtolower($provider::getId())
 									);
 								}
 								elseif (isset($activityTypes[$item['TYPE_ID'] .'_'. $item['DIRECTION']]))
@@ -452,20 +452,17 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 				<div class="crm-doc-cart<?= $selected ? ' crm-tree-active' : ''?><?= $counter == 1 ? ' crm-doc-cart-top' : ''?>">
 					<div class="crm-doc-cart-info">
 						<a href="<?= $item['URL']?>" target="_top" class="crm-doc-cart-title crm-doc-cart-title-invoice crm-tree-link" data-id="<?= $item['ID']?>" data-type="<?= $item['TREE_TYPE']?>"><?
-							?><span class="crm-doc-gray"><?= $lang[strtoupper($item['TREE_TYPE'])]?><?= $item['ACCOUNT_NUMBER']?>:</span> <?
-							?><?= strlen($item['ORDER_TOPIC']) > 0 ? $item['ORDER_TOPIC'] : Loc::getMessage('CRM_ENTITY_TREE_UNTITLED')?><?
+							?><span class="crm-doc-gray"><?= $lang[mb_strtoupper($item['TREE_TYPE'])]?><?= $item['ACCOUNT_NUMBER']?>:</span> <?
+							?><?= $item['ORDER_TOPIC'] <> '' ? $item['ORDER_TOPIC'] : Loc::getMessage('CRM_ENTITY_TREE_UNTITLED')?><?
 						?></a>
 						<?if ($item['RESPONSIBLE_ID'] > 0):?>
 						<div class="crm-doc-info-text"><?= $lang['ASSIGNED_BY']?>:
-						<?
-						echo CCrmViewHelper::PrepareUserBaloonHtml(
-									array(
-										'PREFIX' => 'INVOICE_'.$item['ID'].'_'.$item['RESPONSIBLE_ID'],
-										'USER_ID' => $item['RESPONSIBLE_ID'],
-										'USER_NAME'=> $item['RESPONSIBLE_FORMATTED_NAME'],
-										'USER_PROFILE_URL' => $item['RESPONSIBLE_URL']
-							)
-						)
+						<?=CCrmViewHelper::PrepareUserBaloonHtml([
+								'PREFIX' => 'INVOICE_'.$item['ID'].'_'.$item['RESPONSIBLE_ID'],
+								'USER_ID' => $item['RESPONSIBLE_ID'],
+								'USER_NAME'=> $item['RESPONSIBLE_FORMATTED_NAME'],
+								'USER_PROFILE_URL' => $item['RESPONSIBLE_URL']
+							]);
 						?>
 						</div>
 						<?endif;?>

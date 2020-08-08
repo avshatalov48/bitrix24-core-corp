@@ -16,7 +16,7 @@ if (isset($_GET["RELOAD"]) && $_GET["RELOAD"] == "Y")
 {
 	return; //Live Feed Ajax
 }
-else if (strpos($_SERVER["REQUEST_URI"], "/historyget/") > 0)
+else if (mb_strpos($_SERVER["REQUEST_URI"], "/historyget/") > 0)
 {
 	return;
 }
@@ -36,6 +36,7 @@ CModule::IncludeModule("intranet");
 	"intranet.sidepanel.bitrix24",
 	"socialnetwork.slider",
 	"calendar.sliderloader",
+	"ui.notification"
 ]);
 
 Loc::loadMessages($_SERVER["DOCUMENT_ROOT"]."/bitrix/templates/".SITE_TEMPLATE_ID."/header.php");
@@ -337,8 +338,11 @@ if ($isBitrix24Cloud)
 						}
 
 						$APPLICATION->IncludeComponent(
-							"bitrix:search.title",
-							(COption::GetOptionString("intranet", "search_title_old", "") == "Y" ? ".default_old" : ""),
+							(ModuleManager::isModuleInstalled("search") ? "bitrix:search.title" : "bitrix:intranet.search.title"),
+							(
+								ModuleManager::isModuleInstalled("search")
+								&& COption::GetOptionString("intranet", "search_title_old", "") == "Y" ? ".default_old" : ""
+							),
 							array_merge(
 								array(
 									"CHECK_DATES" => "N",

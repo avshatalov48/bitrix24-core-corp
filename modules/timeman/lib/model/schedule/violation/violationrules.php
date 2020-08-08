@@ -83,9 +83,9 @@ class ViolationRules extends EO_ViolationRules
 		$userIds = [];
 		foreach ($users as $userSymbol)
 		{
-			if (preg_match('#U[0-9]+#', $userSymbol) === 1)
+			if (EntityCodesHelper::isUser($userSymbol))
 			{
-				$userIds[] = (int)substr($userSymbol, 1);
+				$userIds[] = EntityCodesHelper::getUserId($userSymbol);
 			}
 		}
 		if ($fromUserId && $this->needToNotifyManager($groupName))

@@ -101,9 +101,7 @@ this.BX = this.BX || {};
 
 	  return data;
 	}
-	var Form =
-	/*#__PURE__*/
-	function () {
+	var Form = /*#__PURE__*/function () {
 	  function Form(id) {
 	    var _this = this;
 

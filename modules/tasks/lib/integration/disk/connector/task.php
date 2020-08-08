@@ -67,7 +67,10 @@ class Task extends StubConnector
 		return $this::$pathToTask;
 	}
 
-	protected function getDestinations()
+	/**
+	 * @return array
+	 */
+	protected function getDestinations(): array
 	{
 		if ($this->taskPostData === null)
 		{
@@ -82,17 +85,21 @@ class Task extends StubConnector
 
 		foreach ($possibleMembers as $role => $idKey)
 		{
-			if (!empty($this->taskPostData[$idKey]))
+			if (
+				array_key_exists($idKey, $this->taskPostData)
+				&& ($userId = $this->taskPostData[$idKey])
+				&& !array_key_exists($userId, $members)
+			)
 			{
-				$members[$this->taskPostData[$idKey]] = [
+				$members[$userId] = [
 					'NAME' => \CUser::formatName('#NAME# #LAST_NAME#', [
 						'NAME' => $this->taskPostData[$role.'_NAME'],
 						'LAST_NAME' => $this->taskPostData[$role.'_LAST_NAME'],
 						'SECOND_NAME' => $this->taskPostData[$role.'_SECOND_NAME'],
-						'ID' => $this->taskPostData[$idKey],
+						'ID' => $userId,
 						'LOGIN' => $this->taskPostData[$role.'_LOGIN'],
 					], true, false),
-					'LINK' => \CComponentEngine::makePathFromTemplate($this->getPathToUser(), ['user_id' => $this->taskPostData[$idKey]]),
+					'LINK' => \CComponentEngine::makePathFromTemplate($this->getPathToUser(), ['user_id' => $userId]),
 					'AVATAR_SRC' => Ui\Avatar::getPerson($this->taskPostData[$role.'_PHOTO']),
 					'IS_EXTRANET' => 'N',
 				];

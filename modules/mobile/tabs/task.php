@@ -1,11 +1,11 @@
 <?php
 namespace Bitrix\Mobile\AppTabs;
 
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Query\Filter;
 use Bitrix\Mobile\Tab\Tabable;
-use Bitrix\MobileApp\Janative\Utils;
-
+use Bitrix\MobileApp\Janative\Manager;
+use Bitrix\MobileApp\Mobile;
 
 class Task implements Tabable
 {
@@ -34,7 +34,7 @@ class Task implements Tabable
 
 	private function getDataInternal()
 	{
-		if ((\Bitrix\MobileApp\Mobile::getPlatform() == "ios" && \Bitrix\MobileApp\Mobile::getSystemVersion() < 11) || \Bitrix\MobileApp\Mobile::getApiVersion() < 28)
+		if (Mobile::getApiVersion() < 28 || (Mobile::getPlatform() == "ios" && Mobile::getSystemVersion() < 11))
 		{
 			return [
 				"sort" => 400,
@@ -43,59 +43,37 @@ class Task implements Tabable
 				"page" => ["url" => $this->context->siteDir . "mobile/tasks/snmrouter/"],
 			];
 		}
-		else
-		{
-			$defaultViewType = Option::get('tasks', 'view_type', 'view_all');
 
-			return [
-				"sort" => 400,
-				"imageName" => "task",
-				"badgeCode" => "tasks",
-				"component" => [
-					"name" => "JSStackComponent",
-					"title" => GetMessage("MD_COMPONENT_TASKS_LIST"),
-					"componentCode" => "tasks.list",
-					"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("tasks.list"),
-					"rootWidget" => [
-						'name' => 'tasks.list',
-						'settings' => [
-							'useSearch' => true,
-							'objectName' => 'list',
-							'menuSections' => [
-								['id' => "presets"],
-								['id' => "counters", 'itemTextColor' => "#f00"]
-							],
-							'menuItems' => [
-								[
-									'id' => "view_all",
-									'title' => Loc::getMessage('TASKS_ROLE_VIEW_ALL'),
-									'sectionCode' => 'presets',
-									'showAsTitle' => true, 'badgeCount' => 0
-								],
-								['id' => "view_role_responsible", 'title' => Loc::getMessage('TASKS_ROLE_RESPONSIBLE'), 'sectionCode' => 'presets', 'showAsTitle' => true, 'badgeCount' => 0],
-								['id' => "view_role_accomplice", 'title' => Loc::getMessage('TASKS_ROLE_ACCOMPLICE'), 'sectionCode' => 'presets', 'showAsTitle' => true, 'badgeCount' => 0],
-								['id' => "view_role_auditor", 'title' => Loc::getMessage('TASKS_ROLE_AUDITOR'), 'sectionCode' => 'presets', 'showAsTitle' => true, 'badgeCount' => 0],
-								['id' => "view_role_originator", 'title' => Loc::getMessage('TASKS_ROLE_ORIGINATOR'), 'sectionCode' => 'presets', 'showAsTitle' => true, 'badgeCount' => 0]
-							],
-							'filter' => $defaultViewType
-						]
+		return [
+			"sort" => 400,
+			"imageName" => "task",
+			"badgeCode" => "tasks",
+			"id" => "tasks",
+			"component" => [
+				"name" => "JSStackComponent",
+				"title" => GetMessage("MD_COMPONENT_TASKS_LIST"),
+				"componentCode" => "tasks.list",
+				"scriptPath" => Manager::getComponentPath("tasks.list"),
+				"rootWidget" => [
+					'name' => 'tasks.list',
+					'settings' => [
+						'useSearch' => true,
+						'useLargeTitleMode' => true,
+						'objectName' => 'list',
 					],
-
-
-					"params" => [
-						"COMPONENT_CODE" => "tasks.list",
-						"USER_ID" => $this->context->userId,
-						"SITE_ID" => $this->context->siteId,
-						"LANGUAGE_ID" => LANGUAGE_ID,
-						"SITE_DIR" => $this->context->siteDir,
-						"PATH_TO_TASK_ADD" => $this->context->siteDir . "mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#",
-						"MESSAGES" => [
-
-						]
-					]
-				]
-			];
-		}
+				],
+				"params" => [
+					"COMPONENT_CODE" => "tasks.list",
+					"USER_ID" => $this->context->userId,
+					"SITE_ID" => $this->context->siteId,
+					"LANGUAGE_ID" => LANGUAGE_ID,
+					"SITE_DIR" => $this->context->siteDir,
+					"PATH_TO_TASK_ADD" => $this->context->siteDir . "mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#",
+					"MIN_SEARCH_SIZE" => Filter\Helper::getMinTokenSize(),
+					"MESSAGES" => [],
+				],
+			],
+		];
 	}
 
 	public function getData()
@@ -171,5 +149,15 @@ class Task implements Tabable
 	public function setContext($context)
 	{
 		$this->context = $context;
+	}
+
+	public function getShortTitle()
+	{
+		return Loc::getMessage("TAB_NAME_TASKS_LIST_SHORT");
+	}
+
+	public function getId()
+	{
+		return "tasks";
 	}
 }

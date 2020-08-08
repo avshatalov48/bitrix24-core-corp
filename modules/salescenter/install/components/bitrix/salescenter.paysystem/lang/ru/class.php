@@ -11,5 +11,3 @@ $MESS["SP_RP_EDIT_DESCR"] = "Редактировать";
 $MESS["SP_RP_DELETE_DESCR"] = "Удалить";
 $MESS["SP_RP_CONFIRM_DEL_MESSAGE"] = "Вы уверены, что хотите удалить это ограничение?";
 $MESS["SP_PAYMENT_SUB_TITLE"] = "(оплата через #SUB_TITLE#)";
-$MESS["SP_PAYSYSTEM_YANDEXCHECKOUT_EMBEDDED_APPLEPAY_TITLE"] = "Apple Pay";
-$MESS["SP_PAYSYSTEM_YANDEXCHECKOUT_EMBEDDED_GOOGLEPAY_TITLE"] = "Google Pay";

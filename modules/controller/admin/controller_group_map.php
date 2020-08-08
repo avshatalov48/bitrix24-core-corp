@@ -101,7 +101,7 @@ if ($adminList->EditAction() && $USER->CanDoOperation("controller_auth_manage"))
 		$errors = array();
 		foreach ($controls as $controlName)
 		{
-			if (strlen($fields[$controlName]) <= 0)
+			if ($fields[$controlName] == '')
 			{
 				$errors[] = Loc::getMessage("CONTROLLER_GROUP_MAP_".$controlName."_ERROR");
 			}
@@ -176,7 +176,7 @@ $nav = new \Bitrix\Main\UI\AdminPageNavigation("nav-controller-group-map");
 
 $groupMapList = GroupMapTable::getList(array(
 	'filter' => $filter,
-	'order' => array(strtoupper($by) => $order),
+	'order' => array(mb_strtoupper($by) => $order),
 	'count_total' => true,
 	'offset' => $nav->getOffset(),
 	'limit' => $nav->getLimit(),

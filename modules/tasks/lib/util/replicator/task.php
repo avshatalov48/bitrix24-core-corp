@@ -8,8 +8,12 @@
 
 namespace Bitrix\Tasks\Util\Replicator;
 
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\Model\TaskModel;
+use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\CheckList\CheckListFacade;
 use Bitrix\Tasks\CheckList\Internals\CheckList;
+use Bitrix\Tasks\Comments\Task\CommentPoster;
 use Bitrix\Tasks\Util\Error;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Item;
@@ -264,6 +268,13 @@ abstract class Task
 			$dstInstance = $conversionResult->getInstance();
 			$dstInstance->setData($dataMixin);
 
+			$taskModel = TaskModel::createFromTaskItem($dstInstance);
+			if (!TaskAccessController::can($userId, ActionDictionary::ACTION_TASK_SAVE, null, $taskModel))
+			{
+				$creationResult->getErrors()->add('ACCESS_DENIED.RESPONSIBLE_AND_ORIGINATOR_NOT_ALLOWED');
+				return $creationResult;
+			}
+
 			$saveResult = $dstInstance->save();
 			if(!$saveResult->isSuccess()) // but was not able to save it
 			{
@@ -271,14 +282,19 @@ abstract class Task
 			}
 			else
 			{
+				$resultId = $dstInstance->getId();
+
+				$commentPoster = CommentPoster::getInstance($resultId, $userId);
+				$commentPoster->enableDeferredPostMode();
+				$commentPoster->clearComments();
+
 				$sourceId = $source->getId();
 				$toCheckListFacade = static::getToCheckListFacade();
 				$fromCheckListFacade = static::getFromCheckListFacade();
 
 				$checkListItems = $fromCheckListFacade::getByEntityId($sourceId);
 				$checkListItems = array_map(
-					static function($item)
-					{
+					static function($item) {
 						$item['COPIED_ID'] = $item['ID'];
 						unset($item['ID']);
 						return $item;
@@ -286,7 +302,7 @@ abstract class Task
 					$checkListItems
 				);
 
-				$checkListRoots = $toCheckListFacade::getObjectStructuredRoots($checkListItems, $dstInstance->getId(), $userId);
+				$checkListRoots = $toCheckListFacade::getObjectStructuredRoots($checkListItems, $resultId, $userId);
 				foreach ($checkListRoots as $root)
 				{
 					/** @var CheckList $root */

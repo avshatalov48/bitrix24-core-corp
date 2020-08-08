@@ -33,7 +33,7 @@ class Base
 	public static function getNameByCode($code)
 	{
 		$code = $code === 'organic' ? 'another' : $code;
-		return Loc::getMessage('CRM_TRACKING_SOURCE_BASE_NAME_' . strtoupper($code)) ?: $code;
+		return Loc::getMessage('CRM_TRACKING_SOURCE_BASE_NAME_'.mb_strtoupper($code)) ?: $code;
 	}
 
 	/**
@@ -45,7 +45,7 @@ class Base
 	public static function getShortNameByCode($code)
 	{
 		$code = $code === 'organic' ? 'another' : $code;
-		return Loc::getMessage('CRM_TRACKING_SOURCE_BASE_SHORT_NAME_' . strtoupper($code)) ?: self::getNameByCode($code);
+		return Loc::getMessage('CRM_TRACKING_SOURCE_BASE_SHORT_NAME_'.mb_strtoupper($code)) ?: self::getNameByCode($code);
 	}
 
 	/**

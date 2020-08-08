@@ -108,6 +108,7 @@ type Options = {
 	style: ?Style;
 	border: ?boolean|Border;
 	shadow: ?boolean;
+	compact: ?boolean;
 	backgroundImage: ?UrlString;
 };
 
@@ -132,6 +133,7 @@ class Model
 		right: false
 	};
 	shadow: boolean = false;
+	compact: boolean = false;
 	style: Style = null;
 	backgroundImage: UrlString = null;
 
@@ -152,6 +154,7 @@ class Model
 			this.setFont(theme.font || {});
 			this.setBorder(theme.border || {});
 			this.setShadow(theme.shadow || false);
+			this.setCompact(theme.compact || false);
 			this.setColor(Object.assign(
 				{
 					primary: '',
@@ -195,6 +198,11 @@ class Model
 			this.setShadow(options.shadow);
 		}
 
+		if (typeof options.compact !== 'undefined')
+		{
+			this.setCompact(options.compact);
+		}
+
 		if (typeof options.border !== 'undefined')
 		{
 			this.setBorder(options.border);
@@ -225,6 +233,11 @@ class Model
 	setShadow (shadow: boolean)
 	{
 		this.shadow = !!shadow;
+	}
+
+	setCompact (compact: boolean)
+	{
+		this.compact = !!compact;
 	}
 
 	setBackgroundImage (url: UrlString)

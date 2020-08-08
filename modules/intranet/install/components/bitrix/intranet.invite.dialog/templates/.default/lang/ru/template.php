@@ -46,6 +46,7 @@ $MESS["BX24_INVITE_DIALOG_ADD_NAME_TITLE"] = "Имя";
 $MESS["BX24_INVITE_DIALOG_ADD_LAST_NAME_TITLE"] = "Фамилия";
 $MESS["BX24_INVITE_DIALOG_ADD_POSITION_TITLE"] = "Должность";
 $MESS["BX24_INVITE_DIALOG_ADD_SEND_PASSWORD_TITLE"] = "Отправить логин и пароль на указанный e-mail";
+$MESS["BX24_INVITE_DIALOG_ADD_WO_CONFIRMATION_TITLE"] = "Без подтверждения";
 $MESS["BX24_INVITE_DIALOG_ERROR_EXTRANET_NO_SONET_GROUP_INVITE"] = "Для приглашения внешних пользователей необходимо указать группу";
 $MESS["BX24_INVITE_DIALOG_ERROR_EXTRANET_NO_SONET_GROUP_ADD"] = "Для добавления внешних пользователей необходимо указать группу";
 $MESS["BX24_INVITE_DIALOG_MAIL_MAILBOX_ACTION_CREATE"] = "создать ящик";

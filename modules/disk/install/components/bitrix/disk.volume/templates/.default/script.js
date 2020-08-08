@@ -28,7 +28,7 @@ BX.Disk.MeasureClass = (function ()
 		this.stepper = BX("bx-disk-volume-stepper");
 		this.suppressStepperAlert = param.suppressStepperAlert || false;
 		this.stepperAlert = BX("bx-disk-volume-stepper-alert");
-		BX.addCustomEvent(window, "onStepperHasBeenFinished", BX.proxy(this.stepperFinished,this));
+		BX.Event.EventEmitter.subscribe("onStepperHasBeenFinished", BX.proxy(this.stepperFinished,this));
 		setTimeout(BX.proxy(this.initStepperHints, this), 100);
 		setTimeout(BX.proxy(this.stepperAddCancelButton, this), 110);
 		setTimeout(BX.proxy(this.initLocalLinks, this), 120);
@@ -1087,7 +1087,7 @@ BX.Disk.MeasureClass = (function ()
 			setTimeout(BX.proxy(this.stepperAddCancelButton, this), 100);
 
 			BX.show(this.stepper);
-			BX.addCustomEvent(window, "onStepperHasBeenFinished", BX.proxy(this.stepperFinished,this));
+			//BX.addCustomEvent(window, "onStepperHasBeenFinished", BX.proxy(this.stepperFinished,this));
 
 			BX.hide(BX('bx-disk-volume-reload-warning'));
 

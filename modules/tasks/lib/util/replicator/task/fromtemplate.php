@@ -10,6 +10,7 @@ namespace Bitrix\Tasks\Util\Replicator\Task;
 
 use Bitrix\Main\Localization\Loc;
 
+use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\Item;
@@ -104,88 +105,92 @@ final class FromTemplate extends Util\Replicator\Task
 		// now for each destination create sub-tasks according to the sub-templates, if any
 		$data = $this->getSubItemData($source->getId());
 
-		if(!empty($data)) // has sub-templates
+		if (empty($data))
 		{
-			$order = $this->getCreationOrder($data, $source->getId(), $destination->getId());
+			Template::leaveBatchState();
+			return $result;
+		}
 
-			if(!$order)
-			{
-				$result->getErrors()->add('ILLEGAL_STRUCTURE.LOOP', Loc::getMessage('TASKS_REPLICATOR_SUBTREE_LOOP'));
-			}
-			else
-			{
-				// disable copying disk files for each sub-task
-				// todo: impove this later
-				$this->getConverter()->setConfig('UF.FILTER', array('!=USER_TYPE_ID' => 'disk_file'));
+		$order = $this->getCreationOrder($data, $source->getId());
 
-				foreach($destinations as $destination)
+		if(!$order)
+		{
+			$result->getErrors()->add('ILLEGAL_STRUCTURE.LOOP', Loc::getMessage('TASKS_REPLICATOR_SUBTREE_LOOP'));
+		}
+		else
+		{
+			// disable copying disk files for each sub-task
+			// todo: impove this later
+			$this->getConverter()->setConfig('UF.FILTER', array('!=USER_TYPE_ID' => 'disk_file'));
+
+			foreach($destinations as $destination)
+			{
+				//////////////////////////////
+
+				$src2dstId = array($source->getId() => $destination->getId());
+
+				$cTree = $order;
+
+				$walkQueue = array($source->getId());
+				while(!empty($walkQueue)) // walk sub-item tree
 				{
-					//////////////////////////////
+					$topTemplate = array_shift($walkQueue);
 
-					$src2dstId = array($source->getId() => $destination->getId());
-
-					$cTree = $order;
-
-					$walkQueue = array($source->getId());
-					while(!empty($walkQueue)) // walk sub-item tree
+					if(is_array($cTree[$topTemplate]))
 					{
-						$topTemplate = array_shift($walkQueue);
-
-						if(is_array($cTree[$topTemplate]))
+						// create all sub template on that tree level
+						foreach($cTree[$topTemplate] as $template)
 						{
-							// create all sub template on that tree level
-							foreach($cTree[$topTemplate] as $template)
+							$dataMixin = array_merge(array(
+								'PARENT_ID' => $src2dstId[$topTemplate],
+							), $parameters);
+
+							$creationResult = $this->saveItemFromSource($data[$template], $dataMixin, $userId);
+							if($creationResult->isSuccess())
 							{
-								$dataMixin = array_merge(array(
-									'PARENT_ID' => $src2dstId[$topTemplate],
-								), $parameters);
+								$walkQueue[] = $template; // walk further on that template
+								$src2dstId[$template] = $creationResult->getInstance()->getId();
+							}
+							else
+							{
+								$wereErrors = true;
 
-								$creationResult = $this->saveItemFromSource($data[$template], $dataMixin, $userId);
-								if($creationResult->isSuccess())
+								$errors = $creationResult->getErrors();
+								$neededError = $errors->find(array('CODE' => 'ACCESS_DENIED.RESPONSIBLE_AND_ORIGINATOR_NOT_ALLOWED'));
+
+								if ($errors->count() == 1 && !$neededError->isEmpty())
 								{
-									$walkQueue[] = $template; // walk further on that template
-									$src2dstId[$template] = $creationResult->getInstance()->getId();
-								}
-								else
-								{
-									$wereErrors = true;
+									$data[$template]['CREATED_BY'] = $userId;
 
-									$errors = $creationResult->getErrors();
-									$neededError = $errors->find(array('CODE' => 'ACCESS_DENIED.RESPONSIBLE_AND_ORIGINATOR_NOT_ALLOWED'));
-
-									if ($errors->count() == 1 && !$neededError->isEmpty())
+									$creationResult->getErrors()->clear();
+									$creationResult = $this->saveItemFromSource($data[$template], $dataMixin, $userId);
+									if ($creationResult->isSuccess())
 									{
-										$data[$template]['CREATED_BY'] = $userId;
+										$walkQueue[] = $template;
+										$src2dstId[$template] = $creationResult->getInstance()->getId();
 
-										$creationResult->getErrors()->clear();
-										$creationResult = $this->saveItemFromSource($data[$template], $dataMixin, $userId);
-										if ($creationResult->isSuccess())
-										{
-											$walkQueue[] = $template;
-											$src2dstId[$template] = $creationResult->getInstance()->getId();
-
-											$wereErrors = false;
-										}
+										$wereErrors = false;
 									}
 								}
-
-								$created->push($creationResult); // add sub-item creation result
 							}
+
+							$created->push($creationResult); // add sub-item creation result
 						}
-						unset($cTree[$topTemplate]);
 					}
-
-					//////////////////////////////
+					unset($cTree[$topTemplate]);
 				}
 
-				if($wereErrors)
-				{
-					$result->addError('SUB_ITEMS_CREATION_FAILURE', 'Some of the sub-tasks was not properly created');
-				}
-
-				$result->setData($created);
+				//////////////////////////////
 			}
+
+			if($wereErrors)
+			{
+				$result->addError('SUB_ITEMS_CREATION_FAILURE', 'Some of the sub-tasks was not properly created');
+			}
+
+			$result->setData($created);
 		}
+
 
 		Template::leaveBatchState();
 

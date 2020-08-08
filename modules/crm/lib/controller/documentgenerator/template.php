@@ -109,7 +109,7 @@ class Template extends Base
 		{
 			$filterMap = array_map(function($item)
 			{
-				return str_replace('\\', '\\\\', strtolower($item));
+				return str_replace('\\', '\\\\', mb_strtolower($item));
 			}, $providersMap);
 			$filter['provider.provider'] = str_ireplace(array_keys($providersMap), $filterMap, $filter['entityTypeId']);
 			unset($filter['entityTypeId']);

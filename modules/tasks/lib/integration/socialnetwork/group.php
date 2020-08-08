@@ -174,4 +174,105 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 
 		return $safe;
 	}
+
+	public static function getLastViewedProject($userId): int
+	{
+		$res = \Bitrix\Socialnetwork\WorkgroupViewTable::getList(array(
+			'select' => array(
+				'GROUP_ID'
+			),
+			'filter' => array(
+				'USER_ID' => $userId,
+				'=GROUP.ACTIVE' => 'Y',
+				'=GROUP.CLOSED' => 'N'
+			),
+			'order' => array(
+				'DATE_VIEW' => 'DESC'
+			)
+		));
+		while ($row = $res->fetch())
+		{
+			if (self::canReadGroupTasks($userId, $row['GROUP_ID']))
+			{
+				$lastGroupId = $row['GROUP_ID'];
+				break;
+			}
+		}
+		if (!$lastGroupId)
+		{
+			// get by date activity
+			$res = \CSocNetUserToGroup::GetList(
+				array(
+					'GROUP_DATE_ACTIVITY' => 'DESC'
+				),
+				array(
+					'USER_ID' => $userId,
+					'!ROLE' => array(
+						SONET_ROLES_BAN,
+						SONET_ROLES_REQUEST
+					),
+					'USER_ACTIVE' => 'Y',
+					'GROUP_ACTIVE' => 'Y'
+				),
+				false, false,
+				array(
+					'GROUP_ID'
+				)
+			);
+			while ($row = $res->fetch())
+			{
+				if (self::canReadGroupTasks($userId, $row['GROUP_ID']))
+				{
+					$lastGroupId = $row['GROUP_ID'];
+					break;
+				}
+			}
+		}
+		return (int) $lastGroupId;
+	}
+
+	public static function setLastViewedProject($userId, int $groupId)
+	{
+		if (!$groupId)
+		{
+			return true;
+		}
+
+		\Bitrix\Socialnetwork\WorkgroupViewTable::set(array(
+			'GROUP_ID' => $groupId,
+			'USER_ID' => $userId
+		));
+	}
+
+	public static function canReadGroupTasks($userId, $groupId)
+	{
+		static $access = [];
+
+		if (
+			array_key_exists($userId, $access)
+			&& array_key_exists($groupId, $access[$userId])
+		)
+		{
+			return $access[$userId][$groupId];
+		}
+
+		$activeFeatures = \CSocNetFeatures::GetActiveFeaturesNames(SONET_ENTITY_GROUP, $groupId);
+		if (!is_array($activeFeatures) || !array_key_exists('tasks', $activeFeatures))
+		{
+			$access[$userId][$groupId] = false;
+			return $access[$userId][$groupId];
+		}
+
+		$featurePerms = \CSocNetFeaturesPerms::CurrentUserCanPerformOperation(SONET_ENTITY_GROUP, array($groupId), 'tasks', 'view_all');
+		$bCanViewGroup = is_array($featurePerms) && isset($featurePerms[$groupId]) && $featurePerms[$groupId];
+		if (!$bCanViewGroup)
+		{
+			$featurePerms = \CSocNetFeaturesPerms::CurrentUserCanPerformOperation(SONET_ENTITY_GROUP, array($groupId), 'tasks', 'view');
+			$bCanViewGroup = is_array($featurePerms) && isset($featurePerms[$groupId]) && $featurePerms[$groupId];
+		}
+
+		$access[$userId][$groupId] = $bCanViewGroup;
+
+		return $access[$userId][$groupId];
+	}
 }

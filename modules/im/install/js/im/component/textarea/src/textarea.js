@@ -465,7 +465,7 @@ Vue.component('bx-messenger-textarea',
 		},
 		onKeyUp(event)
 		{
-			this.$emit('keyup', event);
+			this.$emit('keyup', {event, text: this.currentMessage});
 			this.textChangeEvent();
 		},
 		onPaste(event)
@@ -495,6 +495,8 @@ Vue.component('bx-messenger-textarea',
 				return false;
 			}
 			this.insertText(event.text, event.breakline, event.position, event.cursor, event.focus);
+
+			this.$emit('keyup', {event, text: this.currentMessage});
 
 			return true;
 		},

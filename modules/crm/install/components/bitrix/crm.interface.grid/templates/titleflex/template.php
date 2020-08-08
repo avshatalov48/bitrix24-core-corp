@@ -28,7 +28,7 @@ $asset->addJs('/bitrix/js/crm/dialog.js');
 
 $gridID = isset($arParams['~GRID_ID']) ? $arParams['~GRID_ID'] : '';
 $prefix = $gridID;
-$prefixLC = strtolower($gridID);
+$prefixLC = mb_strtolower($gridID);
 
 $nameTemplate = isset($arParams['~NAME_TEMPLATE']) ? $arParams['~NAME_TEMPLATE'] : '';
 $extension = isset($arParams['~EXTENSION']) && is_array($arParams['~EXTENSION'])
@@ -103,7 +103,7 @@ if(isset($arParams['~ENABLE_ROW_COUNT_LOADER']) && $arParams['~ENABLE_ROW_COUNT_
 {
 	$rowCountHtml = str_replace(
 		array('%prefix%', '%all%', '%show%'),
-		array(CUtil::JSEscape(strtolower($gridID)), GetMessage('CRM_ALL'), GetMessage('CRM_SHOW_ROW_COUNT')),
+		array(CUtil::JSEscape(mb_strtolower($gridID)), GetMessage('CRM_ALL'), GetMessage('CRM_SHOW_ROW_COUNT')),
 		'<div id="%prefix%_row_count_wrapper">%all%: <a id="%prefix%_row_count" href="#">%show%</a></div>'
 	);
 }
@@ -175,6 +175,7 @@ if(is_array($extensionConfig))
 	$extensionMessages = isset($extension['MESSAGES']) && is_array($extension['MESSAGES']) ? $extension['MESSAGES'] : array();
 	$extensionMessages['deletionWarning'] = GetMessage('CRM_INTERFACE_GRID_DELETION_WARNING');
 	$extensionMessages['goToDetails'] = GetMessage('CRM_INTERFACE_GRID_GO_TO_DETAILS');
+	$extensionConfig['destroyPreviousExtension'] = true;
 	?>
 	<script type="text/javascript">
 		BX.ready(

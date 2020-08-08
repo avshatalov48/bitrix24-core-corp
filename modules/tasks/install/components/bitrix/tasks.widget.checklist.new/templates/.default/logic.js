@@ -12,9 +12,14 @@ BX.Tasks.CheckList = (function()
 			treeStructure: this.treeStructure,
 			canDrag: this.optionManager.getCanDrag()
 		});
+		this.clickEventHandler = new BX.Tasks.CheckList.ClickEventHandler({
+			treeStructure: this.treeStructure
+		});
 		this.loader = new BX.Loader({target: this.renderTo});
 
 		this.setOptionManager(this.treeStructure);
+		this.setClickEventHandler(this.treeStructure);
+
 		this.saveStableTreeStructure();
 		this.bindControls();
 		this.render();
@@ -84,6 +89,16 @@ BX.Tasks.CheckList = (function()
 		treeStructure.optionManager = this.optionManager;
 		treeStructure.getDescendants().forEach(function(descendant) {
 			self.setOptionManager(descendant);
+		});
+	};
+
+	CheckList.prototype.setClickEventHandler = function(treeStructure)
+	{
+		var self = this;
+
+		treeStructure.clickEventHandler = this.clickEventHandler;
+		treeStructure.getDescendants().forEach(function(descendant) {
+			self.setClickEventHandler(descendant);
 		});
 	};
 
@@ -219,7 +234,10 @@ BX.Tasks.CheckList = (function()
 
 		this.treeStructure = this.loadStableTreeStructure();
 		this.dragndrop.treeStructure = this.treeStructure;
+		this.clickEventHandler.treeStructure = this.treeStructure;
+
 		this.setOptionManager(this.treeStructure);
+		this.setClickEventHandler(this.treeStructure);
 
 		while (this.renderTo.lastChild)
 		{
@@ -292,7 +310,7 @@ BX.Tasks.CheckList = (function()
 		];
 
 		validAreas.forEach(function(area) {
-			if (area !== null)
+			if (!validAreaDetected && area !== null)
 			{
 				validAreaDetected = true;
 			}
@@ -308,6 +326,72 @@ BX.Tasks.CheckList = (function()
 	};
 
 	return CheckList;
+})();
+
+BX.Tasks.CheckList.ClickEventHandler = (function()
+{
+	var ClickEventHandler = function()
+	{
+		this.pos = {x: 0, y: 0};
+		this.time = 0;
+		this.timeoutHandle = 0;
+		this.clicked = 0;
+	};
+
+	ClickEventHandler.prototype.registerClickDoneCallback = function(callback)
+	{
+		this.callback = callback;
+	};
+
+	ClickEventHandler.prototype.handleMouseDown = function(e)
+	{
+		if (this.timeoutHandle > 0)
+		{
+			this.clearTimeout();
+		}
+
+		this.time = new Date().valueOf();
+		this.pos = {x: e.clientX, y: e.clientY};
+	};
+
+	ClickEventHandler.prototype.handleMouseUp = function(e)
+	{
+		if (this.timeoutHandle > 0)
+		{
+			this.clearTimeout();
+		}
+
+		if ((new Date().valueOf() - this.time) < 400 && Math.abs(this.pos.x - e.clientX) < 2)
+		{
+			this.clicked += 1;
+
+			if (this.clicked < 2)
+			{
+				this.timeoutHandle = window.setTimeout(this.callback, 150);
+				setTimeout(this.clearClicked.bind(this), 200);
+			}
+			else
+			{
+				this.clearTimeout();
+				setTimeout(this.clearClicked.bind(this), 200);
+			}
+		}
+
+		this.time = 0;
+	};
+
+	ClickEventHandler.prototype.clearTimeout = function()
+	{
+		window.clearTimeout(this.timeoutHandle);
+		this.timeoutHandle = 0;
+	};
+
+	ClickEventHandler.prototype.clearClicked = function()
+	{
+		this.clicked = 0;
+	};
+
+	return ClickEventHandler;
 })();
 
 BX.Tasks.CheckList.OptionManager = (function()

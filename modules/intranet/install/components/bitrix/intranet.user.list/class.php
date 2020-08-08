@@ -498,7 +498,7 @@ class CIntranetUserListComponent extends UserList
 						break;
 					default:
 				}
-				$result[$by] = strtoupper($order);
+				$result[$by] = mb_strtoupper($order);
 			}
 		}
 		else
@@ -526,7 +526,7 @@ class CIntranetUserListComponent extends UserList
 		$fieldName = trim($fieldName, '!=<>%*');
 		return (
 			in_array($fieldName, $this->availableEntityFields)
-			|| strpos($fieldName, '.') !== false
+			|| mb_strpos($fieldName, '.') !== false
 		);
 	}
 
@@ -720,14 +720,14 @@ class CIntranetUserListComponent extends UserList
 		$value = (isset($params['VALUE']) ?  $params['VALUE'] : '');
 
 		if (
-			strlen($filterFieldName) <= 0
+			$filterFieldName == ''
 			|| intval($value) <= 0
 		)
 		{
 			return;
 		}
 
-		$fieldName = (isset($params['FIELD_NAME']) && strlen($params['FIELD_NAME']) > 0 ? $params['FIELD_NAME'] : $filterFieldName);
+		$fieldName = (isset($params['FIELD_NAME']) && $params['FIELD_NAME'] <> '' ? $params['FIELD_NAME'] : $filterFieldName);
 		$operation = (isset($params['OPERATION']) ?  $params['OPERATION'] : '=');
 
 		if (
@@ -745,14 +745,14 @@ class CIntranetUserListComponent extends UserList
 		$value = (isset($params['VALUE']) ?  $params['VALUE'] : '');
 
 		if (
-			strlen($filterFieldName) <= 0
-			|| strlen(trim($value, '%')) <= 0
+			$filterFieldName == ''
+			|| trim($value, '%') == ''
 		)
 		{
 			return;
 		}
 
-		$fieldName = (isset($params['FIELD_NAME']) && strlen($params['FIELD_NAME']) > 0 ? $params['FIELD_NAME'] : $filterFieldName);
+		$fieldName = (isset($params['FIELD_NAME']) && $params['FIELD_NAME'] <> '' ? $params['FIELD_NAME'] : $filterFieldName);
 		$operation = (isset($params['OPERATION']) ?  $params['OPERATION'] : '%=');
 
 		if (in_array($fieldName, $this->arParams['USER_PROPERTY_LIST']))
@@ -768,25 +768,25 @@ class CIntranetUserListComponent extends UserList
 		$valueTo = (isset($params['VALUE_TO']) ?  $params['VALUE_TO'] : '');
 
 		if (
-			strlen($filterFieldName) <= 0
+			$filterFieldName == ''
 			|| (
-				strlen($valueFrom) <= 0
-				&& strlen($valueTo) <= 0
+				$valueFrom == ''
+				&& $valueTo == ''
 			)
 		)
 		{
 			return;
 		}
 
-		$fieldName = (isset($params['FIELD_NAME']) && strlen($params['FIELD_NAME']) > 0 ? $params['FIELD_NAME'] : $filterFieldName);
+		$fieldName = (isset($params['FIELD_NAME']) && $params['FIELD_NAME'] <> '' ? $params['FIELD_NAME'] : $filterFieldName);
 
 		if (in_array($fieldName, $this->arParams['USER_PROPERTY_LIST']))
 		{
-			if (strlen($valueFrom) > 0)
+			if ($valueFrom <> '')
 			{
 				$filter['>='.$fieldName] = $valueFrom;
 			}
-			if (strlen($valueTo) > 0)
+			if ($valueTo <> '')
 			{
 				$filter['<='.$fieldName] = $valueTo;
 			}
@@ -912,7 +912,7 @@ class CIntranetUserListComponent extends UserList
 		if (isset($gridFilter['TAGS']))
 		{
 			$tagsSearchValue = trim($gridFilter['TAGS']);
-			if (strlen($tagsSearchValue) > 0)
+			if ($tagsSearchValue <> '')
 			{
 				$result['%=TAGS.NAME'] = $tagsSearchValue.'%';
 			}
@@ -1129,7 +1129,7 @@ class CIntranetUserListComponent extends UserList
 			}
 			elseif (
 				!is_array($field['VALUE'])
-				&& strlen($field['VALUE']) > 0
+				&& $field['VALUE'] <> ''
 			)
 			{
 				$value = intval($field['VALUE']);
@@ -1148,7 +1148,7 @@ class CIntranetUserListComponent extends UserList
 
 		foreach($stringFieldsList as $field)
 		{
-			if (strlen($field['VALUE']) > 0)
+			if ($field['VALUE'] <> '')
 			{
 				$this->addFilterString($result, [
 					'FILTER_FIELD_NAME' => $field['FILTER_FIELD_NAME'],
@@ -1197,6 +1197,16 @@ class CIntranetUserListComponent extends UserList
 			elseif (!in_array($key, $ufCodesList))
 			{
 				continue;
+			}
+			elseif (
+				!empty($ufList[$key])
+				&& !empty($ufList[$key]['SHOW_FILTER'])
+				&& !empty($ufList[$key]['USER_TYPE_ID'])
+				&& $ufList[$key]['USER_TYPE_ID'] == 'string'
+				&& $ufList[$key]['SHOW_FILTER'] == 'E'
+			)
+			{
+				$result[$key] = $value.'%';
 			}
 			else
 			{

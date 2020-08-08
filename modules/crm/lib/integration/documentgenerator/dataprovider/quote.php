@@ -155,6 +155,7 @@ class Quote extends ProductsDataProvider implements Nameable
 	protected function getHiddenFields()
 	{
 		return array_merge(parent::getHiddenFields(), [
+			'STATUS_ID',
 			'BEGINDATE_SHORT',
 			'CLOSEDATE_SHORT',
 			'MYCOMPANY_ID',
@@ -193,5 +194,10 @@ class Quote extends ProductsDataProvider implements Nameable
 		}
 
 		return $this->contacts;
+	}
+
+	protected function getStatusEntityId(): ?string
+	{
+		return 'QUOTE_STATUS';
 	}
 }

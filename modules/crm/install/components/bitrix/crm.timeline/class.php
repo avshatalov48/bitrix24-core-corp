@@ -133,7 +133,7 @@ class CCrmTimelineComponent extends CBitrixComponent
 			? $this->arParams['~WAIT_TARGET_DATES'] : array();
 		$this->arResult['WAIT_CONFIG'] = \CUserOptions::GetOption(
 			'crm.timeline.wait',
-			strtolower($this->guid),
+			mb_strtolower($this->guid),
 			array()
 		);
 
@@ -193,7 +193,7 @@ class CCrmTimelineComponent extends CBitrixComponent
 				{
 					$this->arResult['ADDITIONAL_TABS'][] = array(
 						'id' => 'activity_rest_'.$placementHandler['APP_ID'].'_'.$placementHandler['ID'],
-						'name' => strlen($placementHandler['TITLE']) > 0
+						'name' => $placementHandler['TITLE'] <> ''
 							? $placementHandler['TITLE']
 							: $placementHandler['APP_NAME'],
 					);
@@ -339,8 +339,8 @@ class CCrmTimelineComponent extends CBitrixComponent
 
 	public function prepareHistoryFilter()
 	{
-		$this->arResult['HISTORY_FILTER_ID'] = $this->historyFilterID = strtolower($this->entityTypeName).'_'.$this->entityID.'_timeline_history';
-		$this->arResult['HISTORY_FILTER_PRESET_ID'] = strtolower($this->entityTypeName).'_timeline_history';
+		$this->arResult['HISTORY_FILTER_ID'] = $this->historyFilterID = mb_strtolower($this->entityTypeName).'_'.$this->entityID.'_timeline_history';
+		$this->arResult['HISTORY_FILTER_PRESET_ID'] = mb_strtolower($this->entityTypeName).'_timeline_history';
 		$this->arResult['HISTORY_FILTER_PRESETS'] = array(
 			'communications' => array(
 				'name' => Loc::getMessage('CRM_TIMELINE_FILTER_PRESET_COMMUNICATIONS'),
@@ -463,7 +463,7 @@ class CCrmTimelineComponent extends CBitrixComponent
 				'ID', 'OWNER_ID', 'OWNER_TYPE_ID',
 				'TYPE_ID', 'PROVIDER_ID', 'PROVIDER_TYPE_ID', 'ASSOCIATED_ENTITY_ID', 'DIRECTION',
 				'SUBJECT', 'STATUS', 'DESCRIPTION', 'DESCRIPTION_TYPE',
-				'DEADLINE', 'RESPONSIBLE_ID'
+				'DEADLINE', 'RESPONSIBLE_ID', 'SETTINGS'
 			),
 			array('QUERY_OPTIONS' => array('LIMIT' => 100, 'OFFSET' => 0))
 		);

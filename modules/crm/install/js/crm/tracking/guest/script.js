@@ -36,11 +36,13 @@
 				if (!isNaN(lifespan) && lifespan)
 				{
 					TagTracker.lifespan = lifespan;
+					RefTracker.lifespan = lifespan;
 				}
 			}
 
 			TraceTracker.collect();
 			TagTracker.collect();
+			RefTracker.collect();
 			PageTracker.collect();
 			this.checkReturn();
 
@@ -183,7 +185,7 @@
 			options = options || {};
 			var trace = {
 				url: window.location.href,
-				ref: document.referrer,
+				ref: RefTracker.getData().ref,
 				device: {
 					isMobile: webPacker.browser.isMobile()
 				},
@@ -216,7 +218,7 @@
 		},
 		collect: function ()
 		{
-			if (!TagTracker.isSourceDetected())
+			if (!TagTracker.isSourceDetected() && !RefTracker.detect().newest)
 			{
 				return;
 			}
@@ -258,7 +260,7 @@
 		getGaId: function ()
 		{
 			var id;
-			if (window.ga)
+			if (typeof window.ga === 'function')
 			{
 				ga(function(tracker) {
 					id = tracker.get('clientId');
@@ -268,7 +270,7 @@
 					return id;
 				}
 
-				if (ga.getAll)
+				if (ga.getAll && ga.getAll()[0])
 				{
 					id = ga.getAll()[0].get('clientId');
 				}
@@ -414,6 +416,95 @@
 				webPacker.ls.setItem(this.lsPageKey, data)
 				:
 				webPacker.cookie.setItem(this.lsPageKey, data);
+		}
+	};
+
+	var RefTracker = {
+		lifespan: 28,
+		lsKey: 'b24_crm_guest_ref',
+		sameRefLifeSpan: 3600,
+		detect: function ()
+		{
+			var r = {
+				detected: false,
+				existed: false,
+				expired: false,
+				newest: false,
+				value: null
+			};
+			var ref = document.referrer;
+			if (!ref)
+			{
+				return r;
+			}
+
+			var a = document.createElement('a');
+			a.href = ref;
+			if (!a.hostname)
+			{
+				return r;
+			}
+
+			if (a.hostname === window.location.hostname)
+			{
+				return r;
+			}
+
+			r.value = ref;
+			r.detected = true;
+			if (ref !== this.getData().ref)
+			{
+				r.newest = true;
+				return r;
+			}
+
+			r.existed = true;
+			if (this.getTs(true) - this.getTs() > this.sameRefLifeSpan)
+			{
+				r.expired = true;
+				return r;
+			}
+
+			return false;
+		},
+		getTs: function (currentOnly)
+		{
+			return (currentOnly ? null : parseInt(this.getData().ts)) || parseInt(Date.now() / 1000);
+		},
+		getData: function ()
+		{
+			return (webPacker.ls.isSupported() ?
+				webPacker.ls.getItem(this.lsKey, this.getTtl())
+				:
+				null) || {};
+		},
+		clear: function ()
+		{
+			webPacker.ls.removeItem(this.lsKey);
+		},
+		getTtl: function ()
+		{
+			return this.lifespan * 3600 * 24;
+		},
+		collect: function ()
+		{
+			var result = this.detect();
+			if (!result.detected)
+			{
+				return;
+			}
+
+			if (result.expired)
+			{
+				this.clear();
+				return;
+			}
+
+			webPacker.ls.setItem(
+				this.lsKey,
+				{ts: this.getTs(), ref: result.value},
+				this.getTtl()
+			);
 		}
 	};
 

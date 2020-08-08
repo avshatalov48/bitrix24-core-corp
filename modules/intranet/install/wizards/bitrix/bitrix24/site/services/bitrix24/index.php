@@ -16,11 +16,10 @@ if (file_exists($_SERVER["DOCUMENT_ROOT"]."/.dev") && file_exists($devUpdater))
 	include($devUpdater);
 }
 
-
 // GOOGLE KEY FOR ADDRESS UF
 
 \CBitrix24::setFilemanGoogleKey();
-
+\CBitrix24::setLocationGoogleKey();
 
 if(!Bitrix\Main\Loader::includeModule("rest"))
 {
@@ -112,8 +111,8 @@ CAgent::AddAgent('\\Bitrix\\ImOpenLines\\Security\\Helper::installRolesAgent();'
 
 wizardInstallImopenlinesChatApps();
 
-
-
+/** @see \Bitrix\SalesCenter\Driver::installImApplicationAgent() */
+\CAgent::AddAgent('\\Bitrix\\SalesCenter\\Driver::installImApplicationAgent();', 'salescenter', "N", 450, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+450, "FULL"));
 
 // wizard functions
 
@@ -166,7 +165,7 @@ function wizardInstallImopenlinesChatApps()
 
 function wizardChatAppsUploadIcon($iconName)
 {
-	if (strlen($iconName) <= 0)
+	if ($iconName == '')
 		return false;
 
 	$iconId = false;

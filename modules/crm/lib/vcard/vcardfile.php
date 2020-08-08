@@ -89,7 +89,7 @@ class VCardFile
 
 		if($this->encoding === 'B' || $this->encoding === 'BASE64')
 		{
-			$type = $this->type !== '' ? strtolower($this->type) : 'jpg';
+			$type = $this->type !== ''? mb_strtolower($this->type) : 'jpg';
 			if($type === '' || !in_array($type, explode(',', \CFile::GetImageExtensions()), true))
 			{
 				$type = 'jpg';
@@ -111,7 +111,7 @@ class VCardFile
 			$fileInfo = \CFile::MakeFileArray($this->value);
 		}
 
-		return is_array($fileInfo) && strlen(\CFile::CheckImageFile($fileInfo)) === 0
+		return is_array($fileInfo) && \CFile::CheckImageFile($fileInfo) == ''
 			? $fileInfo : null;
 	}
 
@@ -122,9 +122,9 @@ class VCardFile
 	{
 		$item = new VCardFile();
 		$item->value = $attr->getValue();
-		$item->valueType = strtoupper($attr->getFirstParamValue('VALUE', ''));;
-		$item->type = strtoupper($attr->getFirstParamValue('TYPE', ''));
-		$item->encoding = strtoupper($attr->getFirstParamValue('ENCODING', ''));
+		$item->valueType = mb_strtoupper($attr->getFirstParamValue('VALUE', ''));;
+		$item->type = mb_strtoupper($attr->getFirstParamValue('TYPE', ''));
+		$item->encoding = mb_strtoupper($attr->getFirstParamValue('ENCODING', ''));
 
 		return $item;
 	}

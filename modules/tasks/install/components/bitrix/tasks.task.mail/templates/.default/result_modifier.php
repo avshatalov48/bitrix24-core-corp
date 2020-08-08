@@ -49,7 +49,7 @@ if(is_array($arResult['DATA']['TASK'][$code]))
 
 // members
 $sender =& $arResult['DATA']['MEMBERS']['SENDER'];
-$sender['AVATAR'] = UI::getAvatar($sender['PERSONAL_PHOTO']);
+$sender['AVATAR'] = UI::getAvatar($sender['PERSONAL_PHOTO'], 50, 50, true);
 if(!$sender['AVATAR'])
 {
 	$sender['AVATAR'] = $arResult['TEMPLATE_FOLDER'].'/img/noavatar.gif';

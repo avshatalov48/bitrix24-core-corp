@@ -15,6 +15,44 @@ IncludeModuleLangFile(__FILE__);
 $sTableID = "t_controller_counter_history";
 $lAdmin = new CAdminList($sTableID);
 
+if ($USER->CanDoOperation("controller_counters_manage") && $arID = $lAdmin->GroupAction())
+{
+	foreach ($arID as $ID)
+	{
+		if ($ID == '')
+			continue;
+		$ID = intval($ID);
+
+		switch ($_REQUEST['action'])
+		{
+		case "restore":
+			$rsHistory = CControllerCounter::GetHistory(array("=ID" => $ID));
+			$historyRecord = $rsHistory->Fetch();
+			if ($historyRecord)
+			{
+				$rs = CControllerCounter::GetList(array(), array("=ID" => $historyRecord["COUNTER_ID"]));
+				if ($rs->Fetch())
+				{
+					CControllerCounter::Update($historyRecord["COUNTER_ID"], array(
+						"NAME" => $historyRecord["NAME"],
+						"COMMAND" => $historyRecord["COMMAND_FROM"],
+					));
+				}
+				else
+				{
+					CAgent::RemoveAgent("CControllerCounter::DeleteValuesAgent(".$historyRecord["COUNTER_ID"].");", "controller");
+					CControllerCounter::Add(array(
+						"ID" => $historyRecord["COUNTER_ID"],
+						"NAME" => $historyRecord["NAME"],
+						"COMMAND" => $historyRecord["COMMAND_FROM"],
+					));
+				}
+			}
+			break;
+		}
+	}
+}
+
 $arFilterRows = array(
 	GetMessage("CTRL_MEMB_HIST_FIELD"),
 );
@@ -24,55 +62,84 @@ $filter = new CAdminFilter(
 	$arFilterRows
 );
 
-$arFilterFields = Array(
+$arFilterFields = array(
 	"find_id",
-	"find_field",
+	"find_name",
+	"find_command",
 );
 
 $adminFilter = $lAdmin->InitFilter($arFilterFields);
 
-$arFilter = array(
-	"=COUNTER_ID" => $find_id,
-);
-foreach ($arFilter as $k => $v)
-	if (!strlen($v))
-		unset($arFilter[$k]);
+$arFilter = array();
+if ($find_id)
+{
+	$arFilter["=COUNTER_ID"] = $find_id;
+}
+if ($find_name)
+{
+	$arFilter["%NAME"] = $find_name;
+}
+if ($find_command)
+{
+	$arFilter[] = array(
+		"LOGIC" => "OR",
+		"%COMMAND_FROM" => $find_command,
+		"%COMMAND_TO" => $find_command,
+	);
+}
 
 $arHeaders = array(
 	array(
+		"id" => "COUNTER_ID",
+		"content" => GetMessage("CTRL_COUNTER_HIST_COUNTER_ID"),
+		"default" => true,
+	),
+	array(
 		"id" => "TIMESTAMP_X",
-		"content" => GetMessage("CTRL_CONTER_HIST_TIMESTAMP_X"),
+		"content" => GetMessage("CTRL_COUNTER_HIST_TIMESTAMP_X"),
 		"default" => true,
 	),
 	array(
 		"id" => "USER_ID",
-		"content" => GetMessage("CTRL_CONTER_HIST_USER_ID"),
+		"content" => GetMessage("CTRL_COUNTER_HIST_USER_ID"),
+		"default" => true,
+	),
+	array(
+		"id" => "NAME",
+		"content" => GetMessage("CTRL_COUNTER_HIST_NAME"),
 		"default" => true,
 	),
 	array(
 		"id" => "COMMAND",
-		"content" => GetMessage("CTRL_CONTER_HIST_COMMAND"),
+		"content" => GetMessage("CTRL_COUNTER_HIST_COMMAND"),
 		"default" => true,
 	),
 	array(
 		"id" => "COMMAND_FROM",
-		"content" => GetMessage("CTRL_CONTER_HIST_COMMAND_FROM"),
+		"content" => GetMessage("CTRL_COUNTER_HIST_COMMAND_FROM"),
 		"default" => false,
 	),
 	array(
 		"id" => "COMMAND_TO",
-		"content" => GetMessage("CTRL_CONTER_HIST_COMMAND_TO"),
+		"content" => GetMessage("CTRL_COUNTER_HIST_COMMAND_TO"),
 		"default" => false,
 	),
 );
 
 $lAdmin->AddHeaders($arHeaders);
 
+$allCounters = array();
+$rsData = CControllerCounter::GetList();
+while ($arCounter = $rsData->Fetch())
+{
+	$allCounters[$arCounter["ID"]] = $arCounter;
+}
+
 $rsData = CControllerCounter::GetHistory($arFilter);
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 
-$lAdmin->NavText($rsData->GetNavPrint(GetMessage("CTRL_CONTER_HIST_NAVSTRING")));
+$lAdmin->NavText($rsData->GetNavPrint(GetMessage("CTRL_COUNTER_HIST_NAVSTRING")));
 
 while ($arRes = $rsData->Fetch())
 {
@@ -81,15 +148,51 @@ while ($arRes = $rsData->Fetch())
 	$row->AddViewField("TIMESTAMP_X", htmlspecialcharsEx($arRes['TIMESTAMP_X']));
 	adminListAddUserLink($row, "USER_ID", $arRes['USER_ID'], $arRes['USER_ID_USER']);
 
-	$cmd_from = htmlspecialcharsEx($arRes['COMMAND_FROM']);
-	$cmd_to = htmlspecialcharsEx($arRes['COMMAND_TO']);
-	$cmd_diff = getCounterCommandDiff($cmd_from, $cmd_to);
-	$cmd_html = str_replace("\n", "<br>", $cmd_diff);
-	$cmd_html = str_replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;", $cmd_html);
-	$row->AddViewField("COMMAND", '<span class="command-code">'.$cmd_html.'</span>');
+	if (isset($allCounters[$arRes["COUNTER_ID"]]))
+	{
+		$row->AddViewField("COUNTER_ID", '<a href="controller_counter_edit.php?ID='.intval($arRes['COUNTER_ID']).'&amp;lang='.LANGUAGE_ID.'">'.intval($arRes['COUNTER_ID']).'</a>');
+	}
 
+	if (!$arRes['COMMAND_FROM'])
+	{
+		$row->AddViewField("COMMAND", '<pre>'.htmlspecialcharsEx($arRes['COMMAND_TO']).'</pre>');
+		$row->AddViewField("NAME", '<span class="command-code-add">'.htmlspecialcharsEx($arRes['NAME']).'</span>');
+	}
+	elseif (!$arRes['COMMAND_TO'])
+	{
+		$row->AddViewField("COMMAND", '<pre>'.htmlspecialcharsEx($arRes['COMMAND_FROM']).'</pre>');
+		$row->AddViewField("NAME", '<span class="command-code-del">'.htmlspecialcharsEx($arRes['NAME']).'</span>');
+	}
+	else
+	{
+		$cmd_from = htmlspecialcharsEx($arRes['COMMAND_FROM']);
+		$cmd_to = htmlspecialcharsEx($arRes['COMMAND_TO']);
+		$cmd_diff = getCounterCommandDiff($cmd_from, $cmd_to);
+		$cmd_html = str_replace("\n", "<br>", $cmd_diff);
+		$cmd_html = str_replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;", $cmd_html);
+		$row->AddViewField("COMMAND", '<span class="command-code">'.$cmd_html.'</span>');
+	}
 	$row->AddViewField("COMMAND_FROM", '<pre>'.htmlspecialcharsEx($arRes['COMMAND_FROM']).'</pre>');
 	$row->AddViewField("COMMAND_TO", '<pre>'.htmlspecialcharsEx($arRes['COMMAND_TO']).'</pre>');
+
+	if ($USER->CanDoOperation("controller_counters_manage"))
+	{
+		$arActions = array();
+		if ($arRes['COMMAND_FROM'])
+		{
+			$arActions[] = array(
+				"ICON" => "edit",
+				"DEFAULT" => "N",
+				"TEXT" => GetMessage("CTRL_COUNTER_HIST_MENU_RESTORE"),
+				"ACTION" => "if(confirm('".GetMessage("CTRL_COUNTER_HIST_MENU_RESTORE_ALERT")."')) ".$lAdmin->ActionDoGroup($arRes["ID"], "restore"),
+			);
+		}
+
+		if ($arActions)
+		{
+			$row->AddActions($arActions);
+		}
+	}
 }
 
 $lAdmin->AddFooter(
@@ -100,9 +203,9 @@ $lAdmin->AddFooter(
 
 $aContext = array(
 	array(
-		"TEXT" => GetMessage("CTRL_CONTER_HIST_BACK"),
+		"TEXT" => GetMessage("CTRL_COUNTER_HIST_BACK"),
 		"LINK" => "controller_counter_edit.php?ID=".intval($adminFilter['find_id'])."&lang=".LANGUAGE_ID,
-		"TITLE" => GetMessage("CTRL_CONTER_HIST_BACK_TITLE"),
+		"TITLE" => GetMessage("CTRL_COUNTER_HIST_BACK_TITLE"),
 		"ICON" => "btn_edit",
 	),
 );
@@ -111,15 +214,27 @@ $lAdmin->AddAdminContextMenu($aContext);
 
 $lAdmin->CheckListMode();
 
-$APPLICATION->SetTitle(GetMessage("CTRL_CONTER_HIST_TITLE"));
+$APPLICATION->SetTitle(GetMessage("CTRL_COUNTER_HIST_TITLE"));
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_after.php");
 ?>
 <form name="form1" method="GET" action="<? echo $APPLICATION->GetCurPage() ?>?">
 	<? $filter->Begin(); ?>
 	<tr>
-		<td nowrap><?=GetMessage("CTRL_CONTER_HIST_COUNTER_ID")?>:</td>
+		<td nowrap><?=GetMessage("CTRL_COUNTER_HIST_COUNTER_ID")?>:</td>
 		<td nowrap>
 			<input type="text" name="find_id" value="<? echo htmlspecialcharsbx($adminFilter['find_id']) ?>" size="47">
+		</td>
+	</tr>
+	<tr>
+		<td nowrap><?=GetMessage("CTRL_COUNTER_HIST_NAME")?>:</td>
+		<td nowrap>
+			<input type="text" name="find_name" value="<? echo htmlspecialcharsbx($adminFilter['find_name']) ?>" size="47">
+		</td>
+	</tr>
+	<tr>
+		<td nowrap><?=GetMessage("CTRL_COUNTER_HIST_COMMAND")?>:</td>
+		<td nowrap>
+			<input type="text" name="find_command" value="<? echo htmlspecialcharsbx($adminFilter['find_command']) ?>" size="47">
 		</td>
 	</tr>
 	<? $filter->Buttons(array("table_id" => $sTableID, "url" => $APPLICATION->GetCurPage(), "form" => "form1"));

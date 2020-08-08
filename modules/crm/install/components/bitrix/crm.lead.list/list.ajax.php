@@ -285,7 +285,8 @@ elseif ($action === 'SAVE_PROGRESS')
 		);
 
 		//Region automation
-		\Bitrix\Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Lead, $ID);
+		$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $ID);
+		$starter->setUserIdFromCurrent()->runOnUpdate($arFields, []);
 		//end region
 
 		__CrmLeadListEndResponse(array('TYPE' => $targetTypeName, 'ID' => $ID, 'VALUE' => $statusID));
@@ -768,7 +769,7 @@ elseif ($action === 'DELETE')
 	$totalItemQty = 0;
 	$processedItemQty = isset($progressData['PROCESSED_ITEMS']) ? $progressData['PROCESSED_ITEMS'] : 0;
 
-	$processAll = isset($params['PROCESS_ALL']) && strtoupper($params['PROCESS_ALL']) === 'Y';
+	$processAll = isset($params['PROCESS_ALL']) && mb_strtoupper($params['PROCESS_ALL']) === 'Y';
 	$slotLength = 5;
 	$effectiveItemIDs = array();
 	if(!$processAll)
@@ -918,9 +919,9 @@ elseif ($action === 'PREPARE_BATCH_CONVERSION')
 	$gridID = isset($params['GRID_ID']) ? $params['GRID_ID'] : '';
 	$IDs = isset($params['IDS']) && is_array($params['IDS']) ? $params['IDS'] : array();
 	$enableUserFieldCheck = !isset($params['ENABLE_USER_FIELD_CHECK'])
-		|| strtoupper($params['ENABLE_USER_FIELD_CHECK']) === 'Y';
+		|| mb_strtoupper($params['ENABLE_USER_FIELD_CHECK']) === 'Y';
 	$enableConfigCheck = !isset($params['ENABLE_CONFIG_CHECK'])
-		|| strtoupper($params['ENABLE_CONFIG_CHECK']) === 'Y';
+		|| mb_strtoupper($params['ENABLE_CONFIG_CHECK']) === 'Y';
 
 	$configParams = isset($params['CONFIG']) && is_array($params['CONFIG']) ? $params['CONFIG'] : array();
 	$config = new \Bitrix\Crm\Conversion\LeadConversionConfig();

@@ -57,7 +57,7 @@ if ($arParams['SEF_MODE'] === 'Y')
 
 	foreach ($arUrlTemplates as $url => $value)
 	{
-		$key = 'PATH_TO_REQUISITE_'.strtoupper($url);
+		$key = 'PATH_TO_REQUISITE_'.mb_strtoupper($url);
 		$arResult[$key] = isset($arParams[$key][0]) ? $arParams[$key] : $arParams['SEF_FOLDER'].$value;
 	}
 }

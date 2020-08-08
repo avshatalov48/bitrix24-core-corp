@@ -17,3 +17,4 @@ $MESS["IMOL_TRACKER_BUTTON_CANCEL"] = "Отменить";
 $MESS["IMOL_SESSION_ERROR_NO_IMOL_CONFIGURATION"] = "Не удалось загрузить конфигурацию открытых линий";
 $MESS["IMOL_SESSION_ERROR_NO_USER_CODE"] = "Отсутствует обязательное поле USER_CODE";
 $MESS["IMOL_SESSION_ERROR_NO_CHAT"] = "Не удалось загрузить чат";
+$MESS["IMOL_SESSION_ERROR_NO_LAST_SESSION"] = "Не удалось получить последнюю сессию";

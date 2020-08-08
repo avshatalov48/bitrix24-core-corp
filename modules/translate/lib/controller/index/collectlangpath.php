@@ -97,7 +97,7 @@ class CollectLangPath
 					}
 				}
 
-				if (substr($testPath, -4) === '.php')
+				if (mb_substr($testPath, -4) === '.php')
 				{
 					if (!Translate\IO\Path::isLangDir($testPath))
 					{

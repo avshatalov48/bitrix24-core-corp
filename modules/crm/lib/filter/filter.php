@@ -124,6 +124,20 @@ class Filter
 	{
 	}
 
+	protected function getDateFieldNames()
+	{
+		$result = [];
+		$fields = $this->getFields();
+		foreach ($fields as $field)
+		{
+			if ($field->getType() === 'date')
+			{
+				$result[] = $field->getName();
+			}
+		}
+		return $result;
+	}
+
 	/**
 	 * Prepare list filter params.
 	 * @param array $filter Source Filter.
@@ -140,7 +154,7 @@ class Filter
 			}
 			elseif (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $match))
 			{
-				if ($v != '' && ($match[1] == 'DATE_CREATE' || $match[1] == 'DATE_MODIFY') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
+				if ($v != '' && in_array($match[1], $this->getDateFieldNames()) && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
 				{
 					$v = \CCrmDateTimeHelper::SetMaxDayTime($v);
 				}

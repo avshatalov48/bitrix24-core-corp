@@ -23,7 +23,7 @@ class CDiskInterfaceToolbarComponent extends BaseComponent
 		}
 		else
 		{
-			$this->arParams['TOOLBAR_ID'] = 'toolbar_' . (strtolower(randString(5)));
+			$this->arParams['TOOLBAR_ID'] = 'toolbar_' .(mb_strtolower(randString(5)));
 		}
 		if(empty($this->arParams['DROPDOWN_FILTER']) || !is_array($this->arParams['DROPDOWN_FILTER']))
 		{

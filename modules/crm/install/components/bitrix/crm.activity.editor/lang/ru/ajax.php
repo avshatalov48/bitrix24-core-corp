@@ -12,6 +12,7 @@ $MESS['CRM_COMMUNICATION_TAB_COMPANY'] = 'Компания';
 $MESS['CRM_COMMUNICATION_TAB_CONTACT'] = 'Контакт';
 $MESS['CRM_ACTIVITY_EMAIL_EMPTY_FROM_FIELD'] = "Пожалуйста, укажите отправителя в поле 'от кого'.";
 $MESS['CRM_ACTIVITY_EMAIL_EMPTY_TO_FIELD'] = "Пожалуйста, укажите получателя в поле 'кому'.";
+$MESS['CRM_ACTIVITY_EMAIL_MAX_SIZE_EXCEED'] = "Превышен максимальный размер вложений (#SIZE#)";
 $MESS['CRM_ACTIVITY_INVALID_EMAIL'] = "'#VALUE#' не является правильным e-mail адресом.";
 $MESS['CRM_ACTIVITY_RESPONSIBLE_NOT_FOUND'] = "Не удалось найти ответственного за действие пользователя.";
 $MESS['CRM_INCOMING_CALL_ACTION_DEFAULT_SUBJECT_EXT'] = 'Входящий звонок #TITLE#';

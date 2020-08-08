@@ -5,7 +5,7 @@ $APPLICATION->AddHeadString('<script type="text/javascript" src="'
 	.'"></script>', true, \Bitrix\Main\Page\AssetLocation::AFTER_JS_KERNEL);
 $APPLICATION->SetPageProperty('BodyClass', 'lenta-page');
 
-if (strlen($arResult["FatalErrorMessage"]) > 0)
+if ($arResult["FatalErrorMessage"] <> '')
 {
 	?>
 	<span class='errortext' style="color: red"><?= $arResult["FatalErrorMessage"] ?></span>
@@ -13,7 +13,7 @@ if (strlen($arResult["FatalErrorMessage"]) > 0)
 	return;
 }
 
-if (strlen($arResult["ErrorMessage"]) > 0)
+if ($arResult["ErrorMessage"] <> '')
 {
 	?>
 	<span class='errortext' style="color: red"><?= $arResult["ErrorMessage"] ?></span><br /><br />
@@ -114,7 +114,7 @@ else: foreach($arResult["RECORDS"] as $record):
 							<div class="bp-task-block">
 								<span class="bp-task-block-title"><?=GetMessage("BPATL_TASK_TITLE")?>: </span>
 								<?
-								if (strlen($task["DESCRIPTION"]) > 0):
+								if ($task["DESCRIPTION"] <> ''):
 									echo nl2br($task["DESCRIPTION"]);
 								else:
 									echo $task["NAME"];

@@ -31,7 +31,7 @@ final class Task extends \Bitrix\Tasks\Integration\Mail
 
 		// message can not be empty, so if only attachments supplied, use dummy message
 		if (
-			strlen($message) <= 0
+			$message == ''
 			&& count($attachments) > 0
 		)
 		{
@@ -41,7 +41,7 @@ final class Task extends \Bitrix\Tasks\Integration\Mail
 		if (
 			$taskId <= 0
 			|| $userId <= 0
-			|| strlen($message) <= 0
+			|| $message == ''
 		)
 		{
 			return false;
@@ -60,6 +60,7 @@ final class Task extends \Bitrix\Tasks\Integration\Mail
 			\Bitrix\Tasks\Integration\Forum\Task\Comment::add($taskId, array(
 				'POST_MESSAGE' => $message,
 				'AUTHOR_ID' => $userId,
+				'SOURCE_ID' => 'EMAIL',
 				'UF_FORUM_MESSAGE_DOC' => $files,
 			));
 		}
@@ -92,7 +93,7 @@ final class Task extends \Bitrix\Tasks\Integration\Mail
 
 		if (
 			$userId <= 0
-			|| strlen($siteId) <= 0
+			|| $siteId == ''
 		)
 		{
 			return false;

@@ -61,7 +61,7 @@ $isSupervisor = CCrmPerms::IsAdmin($currentUserID)
 
 if($isSupervisor && isset($_REQUEST['super']))
 {
-	$isSupervisor = strtoupper($_REQUEST['super']) === 'Y';
+	$isSupervisor = mb_strtoupper($_REQUEST['super']) === 'Y';
 }
 
 $guid = 'contact_widget';

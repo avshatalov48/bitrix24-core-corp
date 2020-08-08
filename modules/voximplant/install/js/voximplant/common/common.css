@@ -1401,7 +1401,7 @@
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	margin: 0 0 3px 0;
+	margin: 0 0 10px 0;
 	height: 40px;
 	/*border-bottom: 1px solid rgba(82,92,105,.1);*/
 }
@@ -1409,8 +1409,8 @@
 .voximplant-marketplace-tile-img-item {
 	display: inline-block;
 	width: 130px;
-	height: 60px; 
-	background-size: contain;
+	height: 40px;
+	background-size: cover;
 	background-position: center;
 	background-repeat: no-repeat;
 }
@@ -1584,13 +1584,9 @@
 	margin: 20px;
 }
 
-.voximplant-marketplace-default-icon .voximplant-marketplace-tile-img {
-	margin: 0 0 10px 0;
-}
-
 .voximplant-marketplace-default-icon .voximplant-marketplace-tile-img-item {
-	width: 42px;
-	height: 42px;
+	width: 40px;
+	height: 40px;
 	border-radius: 100%;
 	background-color: #ff5752;
 	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2021%2022%22%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M10.415.008c-.022.006-.044.02-.067.03l-10%203.959c-.25.117-.34.373-.348.673v12.743c.003.285.152.556.349.632l9.902%203.916a.651.651%200%200%200%20.416.01l9.991-3.947c.197-.08.344-.356.342-.642V4.752c.005-.388-.091-.616-.35-.735L10.6.04c-.068-.035-.122-.05-.185-.031zm.059%201.357l8.299%203.294-8.299%203.274L2.168%204.65l8.306-3.284z%22/%3E%3C/svg%3E');

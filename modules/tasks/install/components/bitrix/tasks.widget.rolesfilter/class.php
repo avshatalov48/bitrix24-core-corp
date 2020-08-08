@@ -1,20 +1,27 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Tasks\Util\User;
-use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Main;
 use Bitrix\Main\Application;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Util\User;
 
 Loc::loadMessages(__FILE__);
 
 CBitrixComponent::includeComponentClass("bitrix:tasks.base");
 
+/**
+ * Class TasksWidgetRolesfilterComponent
+ */
 class TasksWidgetRolesfilterComponent extends TasksBaseComponent
 {
+	/**
+	 * Function checks and prepares all the parameters passed
+	 */
 	protected function checkParameters()
 	{
 		$arParams = &$this->arParams;
@@ -37,82 +44,115 @@ class TasksWidgetRolesfilterComponent extends TasksBaseComponent
 		$this->arResult['ROLES'] = $this->getRoles();
 	}
 
-	private function getRoles()
+	/**
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\DB\SqlQueryException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function getRoles(): array
 	{
-		$roles = array();
+		$roles = [];
 		$countersId = $this->roleCodeToCounterId();
+
 		foreach (Counter\Role::getRoles() as $roleId => $role)
 		{
-			$roles[$roleId] = array(
+			$roleCode = $role['CODE'];
+			$roles[$roleId] = [
 				'TITLE' => $role['TITLE'],
-				'COUNTER' => $this->getCounter($role['CODE']),
-				'COUNTER_VIOLATIONS' => $this->getCounterViolations($role['CODE']),
-				'COUNTER_ID' => 'tasks_'.$countersId[$role['CODE']],
-				'HREF' => $this->getRoleUrl($role['ID'])
-			);
+				'COUNTER_ID' => 'tasks_'.$countersId[$roleCode],
+				'COUNTER' => $this->getCounter($roleCode),
+				'COUNTER_VIOLATIONS' => $this->getCounterViolations($roleCode),
+				'HREF' => $this->getRoleUrl($role['ID']),
+			];
 		}
 
 		return $roles;
 	}
 
-	private function getCounter($roleCode)
+	/**
+	 * @param string $roleCode
+	 * @return int
+	 * @throws Main\Db\SqlQueryException
+	 */
+	private function getCounter(string $roleCode): int
 	{
-		$types = $this->roleCodeToUserType();
-		$userType = $types[ $roleCode ];
+		$counter = 0;
 
-				$sql = "
-					SELECT 
-						COUNT(tm.TASK_ID) as COUNT
-					FROM 
-						b_tasks_member as tm
-						JOIN b_tasks as t ON t.ID = tm.TASK_ID
-					WHERE 
-						tm.USER_ID = {$this->arParams['USER_ID']}
-						".($userType == 'O' ? 'AND tm.USER_ID != t.RESPONSIBLE_ID' : '')."
-						AND tm.TYPE = '{$userType}'
-						AND t.ZOMBIE = 'N'
-						AND t.STATUS < ".CTasks::STATE_SUPPOSEDLY_COMPLETED." /*4 > STATE_NEW(1), STATE_PENDING(2), STATE_IN_PROGRESS(3)*/
-				";
+		$userType = $this->roleCodeToUserType()[$roleCode];
+		$statuses = [
+			CTasks::STATE_PENDING,
+			CTasks::STATE_IN_PROGRESS,
+			CTasks::STATE_SUPPOSEDLY_COMPLETED,
+			CTasks::STATE_DEFERRED,
+		];
+		$statuses = implode(',', $statuses);
 
-
-		$result = Application::getConnection()->query($sql)->fetch();
-		if(!$result || !array_key_exists('COUNT', $result))
+		$res = Application::getConnection()->query("
+			SELECT COUNT(DISTINCT T.ID) as COUNT
+			FROM b_tasks T
+				INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID
+			WHERE 
+				TM.USER_ID = {$this->arParams['USER_ID']}
+				".($userType === 'O' ? 'AND TM.USER_ID != T.RESPONSIBLE_ID' : '')."
+				AND TM.TYPE = '{$userType}'
+				AND T.ZOMBIE = 'N'
+				AND T.STATUS IN ({$statuses})
+		");
+		if ($row = $res->fetch())
 		{
-			return 0;
+			$counter = (int)$row['COUNT'];
 		}
 
-		return $result['COUNT'];
+		return ($counter ?: 0);
 	}
 
-	private function roleCodeToUserType()
+	/**
+	 * @return string[]
+	 */
+	private function roleCodeToUserType(): array
 	{
-		return array(
-			Counter\Role::AUDITOR => 'U',
-			Counter\Role::ACCOMPLICE => 'A',
+		return [
 			Counter\Role::RESPONSIBLE => 'R',
+			Counter\Role::ACCOMPLICE => 'A',
 			Counter\Role::ORIGINATOR => 'O',
-		);
+			Counter\Role::AUDITOR => 'U',
+		];
 	}
 
-
-	private function roleCodeToCounterId()
-	{
-		return array(
-			Counter\Role::AUDITOR => Counter\Name::AUDITOR,
-			Counter\Role::ACCOMPLICE => Counter\Name::ACCOMPLICES,
-			Counter\Role::RESPONSIBLE => Counter\Name::MY,
-			Counter\Role::ORIGINATOR => Counter\Name::ORIGINATOR,
-		);
-	}
-
-	private function getCounterViolations($roleCode)
+	/**
+	 * @param string $roleCode
+	 * @return bool|int|mixed
+	 * @throws Main\ArgumentException
+	 * @throws Main\DB\SqlQueryException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function getCounterViolations(string $roleCode)
 	{
 		$countersId = $this->roleCodeToCounterId();
-
 		return Counter::getInstance($this->arParams['USER_ID'])->get($countersId[$roleCode]);
 	}
 
-	private function getRoleUrl($roleId)
+	/**
+	 * @return array
+	 */
+	private function roleCodeToCounterId(): array
+	{
+		return [
+			Counter\Role::RESPONSIBLE => Counter\Name::MY,
+			Counter\Role::ACCOMPLICE => Counter\Name::ACCOMPLICES,
+			Counter\Role::ORIGINATOR => Counter\Name::ORIGINATOR,
+			Counter\Role::AUDITOR => Counter\Name::AUDITOR,
+		];
+	}
+
+	/**
+	 * @param $roleId
+	 * @return string
+	 */
+	private function getRoleUrl($roleId): string
 	{
 		return $this->arParams['PATH_TO_TASKS'].'?F_CANCEL=Y&F_STATE=sR'.base_convert($roleId, 10, 32);
 	}

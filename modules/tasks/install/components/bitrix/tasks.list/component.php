@@ -336,18 +336,18 @@ if (
 __checkForum($arParams["FORUM_ID"]);
 
 $arParams["TASK_VAR"] = trim($arParams["TASK_VAR"]);
-if (strlen($arParams["TASK_VAR"]) <= 0)
+if ($arParams["TASK_VAR"] == '')
 	$arParams["TASK_VAR"] = "task_id";
 
 $arParams["GROUP_VAR"] = isset($arParams["GROUP_VAR"]) ? trim($arParams["GROUP_VAR"]) : "";
-if (strlen($arParams["GROUP_VAR"]) <= 0)
+if ($arParams["GROUP_VAR"] == '')
 	$arParams["GROUP_VAR"] = "group_id";
 
 $arParams["ACTION_VAR"] = trim($arParams["ACTION_VAR"]);
-if (strlen($arParams["ACTION_VAR"]) <= 0)
+if ($arParams["ACTION_VAR"] == '')
 	$arParams["ACTION_VAR"] = "action";
 
-if (strlen($arParams["PAGE_VAR"]) <= 0)
+if ($arParams["PAGE_VAR"] == '')
 	$arParams["PAGE_VAR"] = "page";
 
 if ( ! isset($arParams['USE_FILTER_V2']) )
@@ -511,7 +511,7 @@ if (
 	isset($_GET['F_STATE'])
 	&& (
 		is_array($_GET['F_STATE'])
-		|| (strlen($_GET['F_STATE']) > 2)
+		|| (mb_strlen($_GET['F_STATE']) > 2)
 	)
 )
 {
@@ -534,8 +534,8 @@ if ( ! (isset($_GET['VIEW']) || isset($arParams['VIEW_MODE'])) )
 		{
 			try
 			{
-				$symbol = substr($switchStateTo, 0, 2);
-				$value = CTaskListState::decodeState(substr($switchStateTo, 2));
+				$symbol = mb_substr($switchStateTo, 0, 2);
+				$value = CTaskListState::decodeState(mb_substr($switchStateTo, 2));
 
 				switch ($symbol)
 				{
@@ -657,22 +657,22 @@ $arResult['KNOWN_COLUMNS'] = CTaskColumnList::get();
 //user paths
 // PATH_* block again...
 $arParams["PATH_TO_USER_TASKS"] = trim($arParams["PATH_TO_USER_TASKS"]);
-if (strlen($arParams["PATH_TO_USER_TASKS"]) <= 0)
+if ($arParams["PATH_TO_USER_TASKS"] == '')
 {
 	$arParams["PATH_TO_USER_TASKS"] = COption::GetOptionString("tasks", "paths_task_user", null, SITE_ID);
 }
 $arParams["PATH_TO_USER_TASKS_TASK"] = trim($arParams["PATH_TO_USER_TASKS_TASK"]);
-if (strlen($arParams["PATH_TO_USER_TASKS_TASK"]) <= 0)
+if ($arParams["PATH_TO_USER_TASKS_TASK"] == '')
 {
 	$arParams["PATH_TO_USER_TASKS_TASK"] = COption::GetOptionString("tasks", "paths_task_user_action", null, SITE_ID);
 }
 $arParams["PATH_TO_USER_TASKS_REPORT"] = trim($arParams["PATH_TO_USER_TASKS_REPORT"]);
-if (strlen($arParams["PATH_TO_USER_TASKS_REPORT"]) <= 0)
+if ($arParams["PATH_TO_USER_TASKS_REPORT"] == '')
 {
 	$arParams["PATH_TO_USER_TASKS_REPORT"] = htmlspecialcharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=user_tasks_report&".$arParams["USER_VAR"]."=#user_id#");
 }
 $arParams["PATH_TO_USER_TASKS_TEMPLATES"] = trim($arParams["PATH_TO_USER_TASKS_TEMPLATES"]);
-if (strlen($arParams["PATH_TO_USER_TASKS_TEMPLATES"]) <= 0)
+if ($arParams["PATH_TO_USER_TASKS_TEMPLATES"] == '')
 {
 	$arParams["PATH_TO_USER_TASKS_TEMPLATES"] = htmlspecialcharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=user_tasks_templates&".$arParams["USER_VAR"]."=#user_id#");
 }
@@ -680,23 +680,23 @@ $arParams["PATH_TO_USER_PROFILE"] = trim($arParams["PATH_TO_USER_PROFILE"]);
 
 //group paths
 $arParams["PATH_TO_GROUP_TASKS"] = trim($arParams["PATH_TO_GROUP_TASKS"]);
-if (strlen($arParams["PATH_TO_GROUP_TASKS"]) <= 0)
+if ($arParams["PATH_TO_GROUP_TASKS"] == '')
 {
 	$arParams["PATH_TO_GROUP_TASKS"] = COption::GetOptionString("tasks", "paths_task_group", null, SITE_ID);
 }
 $arParams["PATH_TO_GROUP_TASKS_TASK"] = trim($arParams["PATH_TO_GROUP_TASKS_TASK"]);
-if (strlen($arParams["PATH_TO_GROUP_TASKS_TASK"]) <= 0)
+if ($arParams["PATH_TO_GROUP_TASKS_TASK"] == '')
 {
 	$arParams["PATH_TO_GROUP_TASKS_TASK"] = COption::GetOptionString("tasks", "paths_task_group_action", null, SITE_ID);
 }
 $arParams["PATH_TO_GROUP_TASKS_REPORT"] = trim($arParams["PATH_TO_GROUP_TASKS_REPORT"]);
-if (strlen($arParams["PATH_TO_GROUP_TASKS_REPORT"]) <= 0)
+if ($arParams["PATH_TO_GROUP_TASKS_REPORT"] == '')
 {
 	$arParams["PATH_TO_GROUP_TASKS_REPORT"] = htmlspecialcharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=group_tasks_report&".$arParams["GROUP_VAR"]."=#group_id#");
 }
 $arParams["PATH_TO_USER_TASKS_TEMPLATES"] = isset($arParams["PATH_TO_USER_TASKS_TEMPLATES"]) ? trim($arParams["PATH_TO_USER_TASKS_TEMPLATES"]) : "";
 $arParams["PATH_TO_USER_TEMPLATES_TEMPLATE"] = isset($arParams["PATH_TO_USER_TEMPLATES_TEMPLATE"]) ? trim($arParams["PATH_TO_USER_TEMPLATES_TEMPLATE"]) : "";
-if (strlen($arParams["PATH_TO_USER_TEMPLATES_TEMPLATE"]) <= 0)
+if ($arParams["PATH_TO_USER_TEMPLATES_TEMPLATE"] == '')
 {
 	if (!isset($arParams["TEMPLATE_VAR"]))
 	{
@@ -708,7 +708,7 @@ $arParams["PATH_TO_TASKS_TEMPLATES"] = str_replace("#user_id#", $arParams["USER_
 // PATH_* block end
 
 // this should be in template params
-$arParams["NAV_TEMPLATE"] = (isset($arParams["NAV_TEMPLATE"]) && strlen($arParams["NAV_TEMPLATE"]) > 0 ? $arParams["NAV_TEMPLATE"] : "arrows");
+$arParams["NAV_TEMPLATE"] = (isset($arParams["NAV_TEMPLATE"]) && $arParams["NAV_TEMPLATE"] <> '' ? $arParams["NAV_TEMPLATE"] : "arrows");
 
 $arResult["ADVANCED_STATUSES"] = array(
 	array("TITLE" => GetMessage("TASKS_FILTER_ALL"), "FILTER" => array()),
@@ -801,7 +801,7 @@ if (isset($_GET["F_SEARCH"]))
 	{
 		$_GET["F_META::ID_OR_NAME"] = intval($_GET["F_SEARCH"]);
 	}
-	elseif (strlen(trim($_GET["F_SEARCH"])))
+	elseif(mb_strlen(trim($_GET["F_SEARCH"])))
 	{
 		$_GET["F_TITLE"] = $_GET["F_SEARCH"];
 	}
@@ -859,7 +859,7 @@ if ((isset($_GET["F_ADVANCED"]) && $_GET["F_ADVANCED"] == "Y") || (isset($_SESSI
 		}
 	}
 
-	if (strlen($fTitle = tasksGetFilter("F_TITLE")) > 0)
+	if ($fTitle = tasksGetFilter("F_TITLE") <> '')
 	{
 		$arFilter["%TITLE"] = $fTitle;
 		$arResult["ADV_FILTER"]["F_TITLE"] = $fTitle;
@@ -889,43 +889,43 @@ if ((isset($_GET["F_ADVANCED"]) && $_GET["F_ADVANCED"] == "Y") || (isset($_SESSI
 		$arResult["ADV_FILTER"]["F_AUDITOR"] = $fAuditor;
 	}
 
-	if (strlen($fTags = tasksGetFilter("F_TAGS")) > 0)
+	if ($fTags = tasksGetFilter("F_TAGS") <> '')
 	{
 		$arFilter["TAG"] = array_map("trim", explode(",", $fTags));
 		$arResult["ADV_FILTER"]["F_TAGS"] = $fTags;
 	}
 
-	if (strlen($fDateFrom = tasksGetFilter("F_DATE_FROM")) > 0)
+	if ($fDateFrom = tasksGetFilter("F_DATE_FROM") <> '')
 	{
 		$arFilter[">=CREATED_DATE"] = $fDateFrom;
 		$arResult["ADV_FILTER"]["F_DATE_FROM"] = $fDateFrom;
 	}
 
-	if (strlen($fDateTo = tasksGetFilter("F_DATE_TO")) > 0)
+	if ($fDateTo = tasksGetFilter("F_DATE_TO") <> '')
 	{
 		$arFilter["<=CREATED_DATE"] = $fDateTo;
 		$arResult["ADV_FILTER"]["F_DATE_TO"] = $fDateTo;
 	}
 
-	if (strlen($fClosedFrom = tasksGetFilter("F_CLOSED_FROM")) > 0)
+	if ($fClosedFrom = tasksGetFilter("F_CLOSED_FROM") <> '')
 	{
 		$arFilter[">=CLOSED_DATE"] = $fClosedFrom;
 		$arResult["ADV_FILTER"]["F_CLOSED_FROM"] = $fClosedFrom;
 	}
 
-	if (strlen($fClosedTo = tasksGetFilter("F_CLOSED_TO")) > 0)
+	if ($fClosedTo = tasksGetFilter("F_CLOSED_TO") <> '')
 	{
 		$arFilter["<=CLOSED_DATE"] = $fClosedTo;
 		$arResult["ADV_FILTER"]["F_CLOSED_TO"] = $fClosedTo;
 	}
 
-	if (strlen($fActiveFrom = tasksGetFilter("F_ACTIVE_FROM")) > 0)
+	if ($fActiveFrom = tasksGetFilter("F_ACTIVE_FROM") <> '')
 	{
 		$arFilter["ACTIVE"]["START"] = $fActiveFrom;
 		$arResult["ADV_FILTER"]["F_ACTIVE_FROM"] = $fActiveFrom;
 	}
 
-	if (strlen($fActiveTo = tasksGetFilter("F_ACTIVE_TO")) > 0)
+	if ($fActiveTo = tasksGetFilter("F_ACTIVE_TO") <> '')
 	{
 		$arFilter["ACTIVE"]["END"] = $fActiveTo;
 		$arResult["ADV_FILTER"]["F_ACTIVE_TO"] = $fActiveTo;
@@ -1223,7 +1223,7 @@ foreach ($sortingColumns as $column)
 		continue;
 	}
 
-	$ascDirection = stripos($arResult["SORTD"], "ASC") !== false;
+	$ascDirection = mb_stripos($arResult["SORTD"], "ASC") !== false;
 
 	$defaultDirection = "ASC";
 	$reverseDirection = "DESC";

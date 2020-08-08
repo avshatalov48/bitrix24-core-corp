@@ -155,7 +155,8 @@ CREATE TABLE b_disk_version
 
 	PRIMARY KEY (ID),
 
-	KEY IX_DISK_V_1 (OBJECT_ID)
+	KEY IX_DISK_V_1 (OBJECT_ID),
+	KEY IX_DISK_V_2 (CREATE_TIME, OBJECT_ID, FILE_ID)
 );
 
 CREATE TABLE b_disk_right
@@ -487,4 +488,12 @@ CREATE TABLE b_disk_volume_deleted_log
 	PRIMARY KEY (ID),
 
 	KEY IX_DISK_VL_CL_1 (STORAGE_ID)
+);
+
+CREATE TABLE b_disk_attached_view_type
+(
+	ENTITY_TYPE varchar(100) not null,
+	ENTITY_ID int(11) not null,
+	VALUE varchar(20) default null,
+	primary key (ENTITY_TYPE, ENTITY_ID)
 );

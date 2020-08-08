@@ -15,8 +15,8 @@ class CIntranetTasks
 		if (!CModule::IncludeModule("socialnetwork") && !CModule::IncludeModule("iblock"))
 			return;
 
-		$iblockId = IntVal($iblockId);
-		$taskId = IntVal($taskId);
+		$iblockId = intval($iblockId);
+		$taskId = intval($taskId);
 
 		if (!isset($GLOBALS["USER"]) || !is_object($GLOBALS["USER"]))
 		{
@@ -31,8 +31,8 @@ class CIntranetTasks
 		);
 		while ($arTasksCustomProp = $dbTasksCustomProps->Fetch())
 		{
-			$ind = ((StrLen($arTasksCustomProp["CODE"]) > 0) ? $arTasksCustomProp["CODE"] : $arTasksCustomProp["ID"]);
-			$arTasksCustomProps[StrToUpper($ind)] = $arTasksCustomProp;
+			$ind = (($arTasksCustomProp["CODE"] <> '') ? $arTasksCustomProp["CODE"] : $arTasksCustomProp["ID"]);
+			$arTasksCustomProps[mb_strtoupper($ind)] = $arTasksCustomProp;
 		}
 
 		$dbTasksList = CIBlockElement::GetList(
@@ -67,7 +67,7 @@ class CIntranetTasks
 			if ($arSect = $dbSectionsChain->Fetch())
 			{
 				$taskType = (($arSect["XML_ID"] == "users_tasks") ? "user" : "group");
-				$taskOwnerId = IntVal(($taskType == "user") ?  $arTask["PROPERTY_".$arTasksCustomProps["TASKASSIGNEDTO"]["ID"]."_VALUE"] : $arSect["XML_ID"]);
+				$taskOwnerId = intval(($taskType == "user") ?  $arTask["PROPERTY_".$arTasksCustomProps["TASKASSIGNEDTO"]["ID"]."_VALUE"] : $arSect["XML_ID"]);
 			}
 
 			if (!In_Array($taskType, array("user", "group")) || $taskOwnerId <= 0)
@@ -107,7 +107,7 @@ class CIntranetTasks
 		if ($iblockId <= 0)
 			return;
 
-		$taskId = IntVal($taskId);
+		$taskId = intval($taskId);
 
 		if (!isset($GLOBALS["USER"]) || !is_object($GLOBALS["USER"]))
 		{
@@ -309,7 +309,7 @@ class CIntranetTasks
 			$arFields = $obTask->GetFields();
 			foreach ($arFields as $fieldKey => $fieldValue)
 			{
-				if (substr($fieldKey, 0, 1) == "~")
+				if (mb_substr($fieldKey, 0, 1) == "~")
 					continue;
 
 				$arResult[$fieldKey] = $fieldValue;
@@ -343,19 +343,19 @@ class CIntranetTasks
 			{
 				$arResult["PROPERTY_".$propertyKey] = $propertyValue["VALUE"];
 
-				if (strtoupper($propertyKey) == "TASKCOMPLETE")
+				if (mb_strtoupper($propertyKey) == "TASKCOMPLETE")
 				{
 					$ps = intval($propertyValue["VALUE"]);
 					if ($ps > 100)
 						$ps = 100;
 					elseif ($ps < 0)
 						$ps = 0;
-					$arResult["PROPERTY_".$propertyKey."_PRINTABLE"] = '<div class="task-complete-bar-out" title="'.GetMessage("INTASK_L_TASKCOMPLETE", array("#PRC#" => IntVal($propertyValue["VALUE"]))).'">';
+					$arResult["PROPERTY_".$propertyKey."_PRINTABLE"] = '<div class="task-complete-bar-out" title="'.GetMessage("INTASK_L_TASKCOMPLETE", array("#PRC#" => intval($propertyValue["VALUE"]))).'">';
 					if ($ps > 0)
 						$arResult["PROPERTY_".$propertyKey."_PRINTABLE"] .= '<div class="task-complete-bar-in" style="width:'.$ps.'%;"><div class="empty"></div></div>';
 					$arResult["PROPERTY_".$propertyKey."_PRINTABLE"] .= '</div>';
 				}
-				elseif (strlen($propertyValue["USER_TYPE"]) > 0)
+				elseif ($propertyValue["USER_TYPE"] <> '')
 				{
 					if ($propertyValue["USER_TYPE"] == "UserID")
 						$arResult["PROPERTY_".$propertyKey."_PRINTABLE"] = CIntranetTasks::PrepareUserForPrint($propertyValue["VALUE"]);
@@ -456,7 +456,7 @@ class CIntranetTasks
 						$arCurrentUserGroups[] = SONET_ROLES_AUTHORIZED;
 
 					$r = CSocNetUserToGroup::GetUserRole($USER->GetID(), $ownerId);
-					if (strlen($r) > 0)
+					if ($r <> '')
 						$arCurrentUserGroups[] = $r;
 				}
 				else
@@ -582,7 +582,7 @@ class CIntranetTasks
 			$arFields = $obTask->GetFields();
 			foreach ($arFields as $fieldKey => $fieldValue)
 			{
-				if (substr($fieldKey, 0, 1) == "~")
+				if (mb_substr($fieldKey, 0, 1) == "~")
 					continue;
 
 				$arResult[$fieldKey] = $fieldValue;
@@ -616,19 +616,19 @@ class CIntranetTasks
 			{
 				$arResult["PROPERTY_".$propertyKey] = $propertyValue["VALUE"];
 
-				if (strtoupper($propertyKey) == "TASKCOMPLETE")
+				if (mb_strtoupper($propertyKey) == "TASKCOMPLETE")
 				{
 					$ps = intval($propertyValue["VALUE"]);
 					if ($ps > 100)
 						$ps = 100;
 					elseif ($ps < 0)
 						$ps = 0;
-					$arResult["PROPERTY_".$propertyKey."_PRINTABLE"] = '<div class="task-complete-bar-out" title="'.GetMessage("INTASK_L_TASKCOMPLETE", array("#PRC#" => IntVal($propertyValue["VALUE"]))).'">';
+					$arResult["PROPERTY_".$propertyKey."_PRINTABLE"] = '<div class="task-complete-bar-out" title="'.GetMessage("INTASK_L_TASKCOMPLETE", array("#PRC#" => intval($propertyValue["VALUE"]))).'">';
 					if ($ps > 0)
 						$arResult["PROPERTY_".$propertyKey."_PRINTABLE"] .= '<div class="task-complete-bar-in" style="width:'.$ps.'%;"><div class="empty"></div></div>';
 					$arResult["PROPERTY_".$propertyKey."_PRINTABLE"] .= '</div>';
 				}
-				elseif (strlen($propertyValue["USER_TYPE"]) > 0)
+				elseif ($propertyValue["USER_TYPE"] <> '')
 				{
 					if ($propertyValue["USER_TYPE"] == "UserID")
 						$arResult["PROPERTY_".$propertyKey."_PRINTABLE"] = CIntranetTasks::PrepareUserForPrint($propertyValue["VALUE"], $nameTemplate, $bShowLogin, $bShowTooltip, $arTooltipParams);
@@ -729,7 +729,7 @@ class CIntranetTasks
 						$arCurrentUserGroups[] = SONET_ROLES_AUTHORIZED;
 
 					$r = CSocNetUserToGroup::GetUserRole($USER->GetID(), $ownerId);
-					if (strlen($r) > 0)
+					if ($r <> '')
 						$arCurrentUserGroups[] = $r;
 				}
 				else
@@ -974,7 +974,7 @@ class CIntranetTasks
 			$arFields[$key]["EDITABLE_RESPONSIBLE"] = $arFields[$key]["Editable"];
 			$arFields[$key]["IS_REQUIRED"] = $arFields[$key]["Required"];
 			$arFields[$key]["FILTERABLE"] = $arFields[$key]["Filterable"];
-			$arFields[$key]["PSORT"] = array_key_exists(strtoupper($key), $arSort) ? $arSort[strtoupper($key)] : 1000;
+			$arFields[$key]["PSORT"] = array_key_exists(mb_strtoupper($key), $arSort) ? $arSort[mb_strtoupper($key)] : 1000;
 		}
 
 		return $arFields;
@@ -987,11 +987,11 @@ class CIntranetTasks
 		{
 			$arFields[$key] = $key;
 
-			$key1 = strtoupper($key);
+			$key1 = mb_strtoupper($key);
 			$arFields[$key1] = $key;
 
-			if (substr($key1, 0, strlen("PROPERTY_")) == "PROPERTY_")
-				$arFields[substr($key1, strlen("PROPERTY_"))] = $key;
+			if (mb_substr($key1, 0, mb_strlen("PROPERTY_")) == "PROPERTY_")
+				$arFields[mb_substr($key1, mb_strlen("PROPERTY_"))] = $key;
 			if ($key1 == "IBLOCK_SECTION_ID")
 				$arFields["IBLOCK_SECTION"] = $key;
 		}
@@ -1001,7 +1001,7 @@ class CIntranetTasks
 
 	function IsTasksFeatureActive($taskType, $ownerId)
 	{
-		$taskType = strtolower($taskType);
+		$taskType = mb_strtolower($taskType);
 		if (!in_array($taskType, array("group", "user")))
 			$taskType = "user";
 
@@ -1018,21 +1018,37 @@ class CIntranetTasks
 		return CSocNetFeatures::IsActiveFeature((($taskType == 'user') ? SONET_ENTITY_USER : SONET_ENTITY_GROUP), $ownerId, "tasks");
 	}
 
+	/**
+	 * @param $taskType
+	 * @param $ownerId
+	 * @param $operation
+	 * @return bool
+	 *
+	 * @Deprecated
+	 */
 	function CanCurrentUserPerformOperation($taskType, $ownerId, $operation)
 	{
+		if (
+			CModule::IncludeModule("tasks")
+			&& class_exists('\Bitrix\Tasks\Access\ActionDictionary')
+		)
+		{
+			return false;
+		}
+
 		global $USER;
 
-		$taskType = StrToLower($taskType);
+		$taskType = mb_strtolower($taskType);
 		if (!in_array($taskType, array("group", "user")))
-			$taskType = "user";
+    		$taskType = "user";
 
-		$ownerId = IntVal($ownerId);
+		$ownerId = intval($ownerId);
 		if ($ownerId <= 0)
 		{
 			$taskType = "user";
 			$ownerId = $USER->GetID();
 		}
-		$ownerId = IntVal($ownerId);
+		$ownerId = intval($ownerId);
 		if ($ownerId <= 0)
 			return false;
 
@@ -1077,8 +1093,8 @@ class CIntranetTasks
 			$dbIBlockProps = CIBlock::GetProperties($iblockId);
 			while ($arIBlockProps = $dbIBlockProps->Fetch())
 			{
-				$ind = ((StrLen($arIBlockProps["CODE"]) > 0) ? $arIBlockProps["CODE"] : $arIBlockProps["ID"]);
-				$arIBlockProperties[StrToUpper($ind)] = $arIBlockProps;
+				$ind = (($arIBlockProps["CODE"] <> '') ? $arIBlockProps["CODE"] : $arIBlockProps["ID"]);
+				$arIBlockProperties[mb_strtoupper($ind)] = $arIBlockProps;
 			}
 
 			$arTasksProps = array(
@@ -1455,7 +1471,7 @@ class CIntranetTasks
 			$dbRes = CIBlockProperty::GetPropertyEnum("TaskStatus", Array("SORT" => "ASC"), Array("IBLOCK_ID" => $iblockId));
 			while ($arRes = $dbRes->Fetch())
 			{
-				$arTaskStatusTmp[StrToUpper($arRes["XML_ID"])] = $arRes["ID"];
+				$arTaskStatusTmp[mb_strtoupper($arRes["XML_ID"])] = $arRes["ID"];
 				$arTaskStatusTmpAlt[$arRes["ID"]] = $arRes["XML_ID"];
 			}
 
@@ -1523,7 +1539,7 @@ class CIntranetTasks
 						$v = $arOldTasksWFsTmp[$arResult["PROPERTY_TASKSTATUS_ENUM_ID"]];
 						$v = str_replace(
 							array("#TPT_TASK_ID_LEN#", "#TPT_TASK_ID#", "#TPT_WORKFLOW_ID_LEN#", "#TPT_WORKFLOW_ID#", "#TPT_DOCUMENT_LEN1#", "#TPT_DOCUMENT_LEN2#", "#TPT_DOCUMENT_LEN3#", "#TPT_DOCUMENT_ROOT#", "#TPT_OWNER_ID#", "#TPT_TASK_TYPE_LEN#", "#TPT_TASK_TYPE#", "#TPT_PATH_TEMPLATE_LEN#", "#TPT_PATH_TEMPLATE#", "#TPT_FORUM_ID#", "#TPT_IBLOCKID_ID#"),
-							array(strlen($arResult["ID"]), $arResult["ID"], strlen($workflowId), $workflowId, 25 + strlen($_SERVER["DOCUMENT_ROOT"]), 25 + strlen($_SERVER["DOCUMENT_ROOT"]), 34 + strlen($_SERVER["DOCUMENT_ROOT"]), $_SERVER["DOCUMENT_ROOT"], $ownerIdTmp, strlen($taskTypeTmp), $taskTypeTmp, strlen($pathTemplate), $pathTemplate, $forumId, $iblockId),
+							array(mb_strlen($arResult["ID"]), $arResult["ID"], mb_strlen($workflowId), $workflowId, 25 + mb_strlen($_SERVER["DOCUMENT_ROOT"]), 25 + mb_strlen($_SERVER["DOCUMENT_ROOT"]), 34 + mb_strlen($_SERVER["DOCUMENT_ROOT"]), $_SERVER["DOCUMENT_ROOT"], $ownerIdTmp, mb_strlen($taskTypeTmp), $taskTypeTmp, mb_strlen($pathTemplate), $pathTemplate, $forumId, $iblockId),
 							$v
 						);
 						CBPWorkflowPersister::__InsertWorkflowHack($workflowId, $v);
@@ -1577,7 +1593,7 @@ class CIntranetTasks
 				$arCurrentUserGroups[] = SONET_ROLES_AUTHORIZED;
 
 			$r = CSocNetUserToGroup::GetUserRole($userId, $arTask["OwnerId"]);
-			if (strlen($r) > 0)
+			if ($r <> '')
 				$arCurrentUserGroups[] = $r;
 		}
 
@@ -1715,7 +1731,7 @@ class CIntranetTasks
 		if ($iblockId <= 0)
 			return;
 
-		$ownerId = IntVal($ownerId);
+		$ownerId = intval($ownerId);
 		if (!In_Array($taskType, array("user", "group")))
 			$taskType = "user";
 
@@ -1726,12 +1742,12 @@ class CIntranetTasks
 			array()
 		);
 		if ($arUserOptionTmp = $dbUserOptionsList->Fetch())
-			$newID = IntVal($arUserOptionTmp["ID"]);
+			$newID = intval($arUserOptionTmp["ID"]);
 
 		$arTaskStatus = array();
 		$dbRes = CIBlockProperty::GetPropertyEnum("TASKSTATUS", Array("SORT" => "ASC"), Array("IBLOCK_ID" => $iblockId));
 		while ($arRes = $dbRes->Fetch())
-			$arTaskStatus[StrToUpper($arRes["XML_ID"])] = $arRes;
+			$arTaskStatus[mb_strtoupper($arRes["XML_ID"])] = $arRes;
 
 		if ($taskType == "group")
 		{
@@ -2407,26 +2423,39 @@ class CIntranetTasks
 		if (!$arUserSettings)
 			$errorMessage .= GetMessage("INTL_VIEW_NOT_FOUND").".";
 
-		if (StrLen($errorMessage) <= 0)
+		if ($errorMessage == '')
 		{
 			if ($arUserSettings["IBLOCK_ID"] != $iblockId || $arUserSettings["TASK_TYPE"] != $taskType || $arUserSettings["OWNER_ID"] != $ownerId)
 				$errorMessage .= GetMessage("INTL_WRONG_VIEW").".";
 		}
 
-		if (StrLen($errorMessage) <= 0)
+		if ($errorMessage == '')
 		{
 			if ($arUserSettings["COMMON"] != "N")
 			{
-				$canModifyCommon = (
-					$taskType == 'user' && CSocNetFeaturesPerms::CanPerformOperation($GLOBALS["USER"]->GetID(), SONET_ENTITY_USER, $ownerId, "tasks", 'modify_common_views')
-					|| $taskType == 'group' && CSocNetFeaturesPerms::CanPerformOperation($GLOBALS["USER"]->GetID(), SONET_ENTITY_GROUP, $ownerId, "tasks", 'modify_common_views')
-				);
+				if (
+					!CModule::IncludeModule('tasks')
+					|| !class_exists('\Bitrix\Tasks\Access\ActionDictionary')
+				)
+				{
+					$canModifyCommon = (
+						$taskType == 'user' && CSocNetFeaturesPerms::CanPerformOperation($GLOBALS["USER"]->GetID(), SONET_ENTITY_USER, $ownerId, "tasks", 'modify_common_views')
+						|| $taskType == 'group' && CSocNetFeaturesPerms::CanPerformOperation($GLOBALS["USER"]->GetID(), SONET_ENTITY_GROUP, $ownerId, "tasks", 'modify_common_views')
+					);
+				}
+				else
+				{
+					$canModifyCommon = (
+						$taskType == 'group' && CSocNetFeaturesPerms::CanPerformOperation($GLOBALS["USER"]->GetID(), SONET_ENTITY_GROUP, $ownerId, "tasks", 'modify_common_views')
+					);
+				}
+
 				if (!$canModifyCommon)
 					$errorMessage .= GetMessage("INTL_NO_VIEW_PERMS").".";
 			}
 		}
 
-		if (StrLen($errorMessage) <= 0)
+		if ($errorMessage == '')
 		{
 			CUserOptions::DeleteOption($userSettingsCategory, $userSettingsNamePart.$delViewId, $arUserSettings["COMMON"] == "Y" ? true : false, $GLOBALS["USER"]->GetID());
 		}

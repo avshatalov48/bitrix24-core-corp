@@ -69,6 +69,8 @@ elseif(\Bitrix\Main\Loader::includeModule('fileman') && class_exists('Bitrix\Fil
 	$arResult['SHOW_GOOGLE_API_KEY_FIELD'] = true;
 }
 
+$arResult['SHOW_ADDRESS_FORMAT'] = \Bitrix\Main\Loader::includeModule('location');
+
 $arResult["DATE_FORMATS"] = array("DD.MM.YYYY", "DD/MM/YYYY", "MM.DD.YYYY", "MM/DD/YYYY", "YYYY/MM/DD", "YYYY-MM-DD");
 $arResult["TIME_FORMATS"] = array("HH:MI:SS", "H:MI:SS T");
 $arResult["NAME_FORMATS"] = CSite::GetNameTemplates();
@@ -554,6 +556,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST"  && (isset($_POST["save_settings"]) )&&
 	else
 		COption::SetOptionString("tasks", "create_overdue_chats", "N", false);
 
+	\Bitrix\Main\Config\Option::set(
+		'main',
+		'collect_geo_data',
+		(empty($_POST['collect_geo_data']) ? 'N' : 'Y')
+	);
+
+	\Bitrix\Main\Config\Option::set(
+		'main',
+		'track_outgoing_emails_read',
+		(empty($_POST['track_outgoing_emails_read']) ? 'N' : 'Y')
+	);
+
+	\Bitrix\Main\Config\Option::set(
+		'main',
+		'track_outgoing_emails_click',
+		(empty($_POST['track_outgoing_emails_click']) ? 'N' : 'Y')
+	);
+
 //im chat
 	if (CModule::IncludeModule('im'))
 	{
@@ -617,10 +637,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST"  && (isset($_POST["save_settings"]) )&&
 			}
 		}
 		Bitrix\Security\Mfa\Otp::setMandatoryUsing(isset($_POST["security_otp"]) ? true : false);
+
+		if ($_POST["send_otp_push"] <> '')
+			COption::SetOptionString("intranet", "send_otp_push", "Y");
+		else
+			COption::SetOptionString("intranet", "send_otp_push", "N");
 	}
 
 	if ($arResult["IS_BITRIX24"])
 	{
+		if (strlen($_POST["general_chat_message_admin_rights"])>0)
+			COption::SetOptionString("im", "general_chat_message_admin_rights", true);
+		else
+			COption::SetOptionString("im", "general_chat_message_admin_rights", false);
+
 		$manualModulesChangedList = [];
 		//features
 		if (isset($_POST["feature_crm"]) && !IsModuleInstalled("crm"))
@@ -806,6 +836,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST"  && (isset($_POST["save_settings"]) )&&
 		}
 	}
 
+	if(isset($_REQUEST['address_format_code']) && $arResult['SHOW_ADDRESS_FORMAT'])
+	{
+		\Bitrix\Location\Infrastructure\FormatCode::setCurrent($_REQUEST['address_format_code']);
+	}
+
 	//gdpr
 	if ($arResult["IS_BITRIX24"])
 	{
@@ -897,12 +932,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST"  && (isset($_POST["save_settings"]) )&&
 	}
 }
 
+$arResult["SECURITY_MODULE"] = false;
 if (Bitrix\Main\Loader::includeModule("security"))
 {
+	$arResult["SECURITY_MODULE"] = true;
 	$arResult["SECURITY_IS_USER_OTP_ACTIVE"] = CSecurityUser::IsUserOtpActive($USER->GetID());
 	$arResult["SECURITY_OTP"] = Bitrix\Security\Mfa\Otp::isMandatoryUsing();
 	$arResult["SECURITY_OTP_DAYS"] = Bitrix\Security\Mfa\Otp::getSkipMandatoryDays();
 }
+
+$arResult["IM_MODULE"] = Bitrix\Main\ModuleManager::isModuleInstalled("im");
 
 if ($arResult["IS_BITRIX24"])
 {
@@ -952,6 +991,26 @@ if($arResult['SHOW_GOOGLE_API_KEY_FIELD'])
 	if($arResult['IS_BITRIX24'])
 	{
 		$arResult['GOOGLE_API_KEY_HOST'] = \Bitrix\Main\Config\Option::get('bitrix24', 'google_map_api_key_host');
+	}
+}
+
+if($arResult['SHOW_ADDRESS_FORMAT'])
+{
+	$arResult['LOCATION_ADDRESS_FORMAT_CODE'] = \Bitrix\Location\Infrastructure\FormatCode::getCurrent();
+	$arResult['LOCATION_ADDRESS_FORMAT_LIST'] = [];
+	$arResult['LOCATION_ADDRESS_FORMAT_DESCRIPTION_LIST'] = [];
+	$arResult['LOCATION_ADDRESS_FORMAT_DESCRIPTION'] = [];
+	$sanitizer = new CBXSanitizer();
+
+	foreach(\Bitrix\Location\Service\FormatService::getInstance()->findAll(LANGUAGE_ID) as $format)
+	{
+		$arResult['LOCATION_ADDRESS_FORMAT_LIST'][$format->getCode()] = $format->getName();
+		$arResult['LOCATION_ADDRESS_FORMAT_DESCRIPTION_LIST'][$format->getCode()] = $format->getDescription();
+
+		if($format->getCode() === $arResult['LOCATION_ADDRESS_FORMAT_CODE'])
+		{
+			$arResult['LOCATION_ADDRESS_FORMAT_DESCRIPTION'] = $sanitizer->SanitizeHtml($format->getDescription());
+		}
 	}
 }
 

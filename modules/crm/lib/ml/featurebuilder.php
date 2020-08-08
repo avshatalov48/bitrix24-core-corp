@@ -85,7 +85,7 @@ class FeatureBuilder
 
 		// remove short words
 		$words = explode(" ", $result);
-		$words = array_filter($words, function($word) {return strlen($word) > 3 && \Bitrix\Main\Text\UtfSafeString::checkEncoding($word);});
+		$words = array_filter($words, function($word) {return mb_strlen($word) > 3 && \Bitrix\Main\Text\UtfSafeString::checkEncoding($word);});
 
 		if($maxWords > 0)
 		{

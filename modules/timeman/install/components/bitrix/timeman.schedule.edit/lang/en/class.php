@@ -37,7 +37,7 @@ $MESS["TIMEMAN_SCHEDULE_EDIT_HINT_OFFSET_START_END_DAY"] = "A certain period of 
 <br><br>A violation notification will be sent if an employee clocks in after 9:15 AM Mo-Fri or after 10:15 AM on Saturday and similarly clocks out earlier than 17:45 PM Mo-Fri and earlier than 14:45 PM on Saturday.";
 $MESS["TIMEMAN_SCHEDULE_EDIT_HINT_RELATIVE_START_END_DAY"] = "Employee can clock in and clock out within the specified time interval. If he or she violates the schedule, the persons selected below will be notified.
 <br><br>Example: a supervisor specified that an employee can clock in from 8:00 AM until 10:00 AM and clock out from 5:00 PM until 7:00 PM. 
-<br><br>If the employee clocks in before 8:00 AM or after 10:00 PM, and/or clocks out before 5:00 PM or after 7:00 PM, the supervisor receives a notification.";
+<br><br>If the employee clocks in before 8:00 AM or after 10:00 AM, and/or clocks out before 5:00 PM or after 7:00 PM, the supervisor receives a notification.";
 $MESS["TIMEMAN_SCHEDULE_EDIT_HINT_RESTRICTION_MAX_START_OFFSET"] = "Example: an employee's shift starts at 9:00 but they are allowed to start an hour earlier if so needed. Therefore, the employee should not start their shift earlier than 8:00.";
 $MESS["TIMEMAN_SCHEDULE_EDIT_HOLIDAYS_1_QUARTER"] = "Quarter 1";
 $MESS["TIMEMAN_SCHEDULE_EDIT_HOLIDAYS_2_QUARTER"] = "Quarter 2";

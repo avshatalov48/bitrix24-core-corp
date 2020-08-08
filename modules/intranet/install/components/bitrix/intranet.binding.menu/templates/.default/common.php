@@ -4,27 +4,28 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-$id = 'intranet_binding_menu_crm_switcher';
-?>
-<?if (count($arResult['ITEMS']) == 1):
-	$item = array_shift($arResult['ITEMS']);
-	?>
-	<a class="ui-btn ui-btn-light-border ui-btn-no-caps ui-btn-themes" <?
-	?>href="<?= $item['href'];?>" <?
-	if ($item['onclick']){?> onclick="<?=$item['onclick']; ?>; return false;" <?}?>>
-		<?= $item['text'];?>
-	</a>
-<?else:?>
-	<div id="<?= $id;?>" class="ui-btn ui-btn-light-border ui-btn-no-caps ui-btn-themes">
-		<?= $arResult['DEFAULT_BUTTON_NAME'];?>
-	</div>
-<?endif;?>
+use \Bitrix\Main\Localization\Loc;
+use \Bitrix\Main\UI\Extension;
 
-<?if ($arResult['ADDITIONAL']):?>
-	<div class="ui-btn-split" id="<?= $id;?>_additional">
-		<div class="ui-btn-menu"></div>
-	</div>
-<?endif;?>
+Loc::loadMessages(__DIR__ . '/template.php');
+Extension::load(['marketplace']);
+
+$id = 'intranet_binding_menu_' . $arParams['SECTION_CODE'];
+$frequency = $arResult['FREQUENCY_MENU_ITEM'];
+$isSwitcher = in_array($this->getPageName(), ['crm_switcher', 'tasks_switcher']);
+?>
+
+<div class="ui-btn-split ui-btn-light-border ui-btn-themes intranet-binding-menu-btn <?= $isSwitcher ? ' intranet-binding-menu-btn-round' : '';?>">
+	<a href="<?= $frequency ? $frequency['href'] : '#';?>" <?
+	?><?if (!$frequency){?>data-slider-ignore-autobinding="true"<?}?> <?
+	   ?>id="<?= $id;?>_top" class="ui-btn-main" <?if (isset($frequency['onclick'])){?>onclick="<?= htmlspecialcharsbx($frequency['onclick']);?>; return false;"<?}?>>
+		<?= $arResult['FREQUENCY_MENU_ITEM']
+			? $arResult['FREQUENCY_MENU_ITEM']['text']
+			: Loc::getMessage('INTRANET_CMP_BIND_MENU_BUTTON_NAME');
+		?>
+	</a>
+	<span class="ui-btn-menu" id="<?= $id;?>"></span>
+</div>
 
 <script type="text/javascript">
 	BX.ready(function()
@@ -32,7 +33,11 @@ $id = 'intranet_binding_menu_crm_switcher';
 		(new BX.Intranet.Binding.Menu(
 			'<?= $id;?>',
 			<?= \CUtil::phpToJSObject($arResult['ITEMS']);?>,
-			<?= \CUtil::phpToJSObject($arResult['ADDITIONAL']);?>
+			{
+				bindingId: '<?= \CUtil::jsEscape($arResult['BINDING_ID']);?>',
+				ajaxPath: '<?= \CUtil::jsEscape($this->getComponent()->getPath());?>/ajax.php',
+				frequencyItem: <?= \CUtil::phpToJSObject($frequency);?>
+			}
 		)).binding();
 	});
 </script>

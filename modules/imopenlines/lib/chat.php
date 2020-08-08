@@ -283,6 +283,7 @@ class Chat
 
 					if ($skipSession)
 					{
+						//TODO: Replace with the method \Bitrix\ImOpenLines\Chat::parseLiveChatEntityId
 						list(, $lineId) = explode('|', $this->chat['ENTITY_ID']);
 						$configManager = new Config();
 						$config = $configManager->get($lineId);
@@ -357,7 +358,7 @@ class Chat
 						Im::addMessage(Array(
 							"FROM_USER_ID" => $userId,
 							"TO_CHAT_ID" => $this->chat['ID'],
-							"MESSAGE" => Loc::getMessage('IMOL_CHAT_ANSWER_'.$userAnswer->getGender(), Array('#USER#' => '[USER='.$userAnswer->getId().']'.$userAnswer->getFullName(false).'[/USER]')),
+							"MESSAGE" => Loc::getMessage('IMOL_CHAT_ANSWER_'.$userAnswer->getGender(), Array('#USER#' => '[USER='.$userAnswer->getId().'][/USER]')),
 							"SYSTEM" => 'Y',
 						));
 					}
@@ -416,8 +417,8 @@ class Chat
 					"FROM_USER_ID" => $userId,
 					"TO_CHAT_ID" => $this->chat['ID'],
 					"MESSAGE" => Loc::getMessage('IMOL_CHAT_INTERCEPT_'.$newOwner->getGender(), Array(
-						'#USER_1#' => '[USER='.$newOwner->getId().']'.$newOwner->getFullName(false).'[/USER]',
-						'#USER_2#' => '[USER='.$previousOwner->getId().']'.$previousOwner->getFullName(false).'[/USER]'
+						'#USER_1#' => '[USER='.$newOwner->getId().'][/USER]',
+						'#USER_2#' => '[USER='.$previousOwner->getId().'][/USER]'
 					)),
 					"SYSTEM" => 'Y',
 				));
@@ -469,7 +470,7 @@ class Chat
 						Im::addMessage(Array(
 							"FROM_USER_ID" => $userId,
 							"TO_CHAT_ID" => $this->chat['ID'],
-							"MESSAGE" => Loc::getMessage('IMOL_CHAT_SKIP_'.$userSkip->getGender(), Array('#USER#' => '[USER='.$userSkip->getId().']'.$userSkip->getFullName(false).'[/USER]')),
+							"MESSAGE" => Loc::getMessage('IMOL_CHAT_SKIP_'.$userSkip->getGender(), Array('#USER#' => '[USER='.$userSkip->getId().'][/USER]')),
 							"SYSTEM" => 'Y',
 						));
 					}
@@ -728,13 +729,13 @@ class Chat
 				else if ($lineFromId == $queueId)
 				{
 					$message = Loc::getMessage('IMOL_CHAT_SKIP_'.$userFrom->getGender(), [
-						'#USER#' => '[USER='.$userFrom->getId().']'.$userFrom->getFullName(false).'[/USER]',
+						'#USER#' => '[USER='.$userFrom->getId().'][/USER]',
 					]);
 				}
 				else
 				{
 					$message = Loc::getMessage('IMOL_CHAT_TRANSFER_LINE_'.$userFrom->getGender(), [
-						'#USER_FROM#' => '[USER='.$userFrom->getId().']'.$userFrom->getFullName(false).'[/USER]',
+						'#USER_FROM#' => '[USER='.$userFrom->getId().'][/USER]',
 						'#LINE_FROM#' => '[b]'.$lineFrom.'[/b]',
 						'#LINE_TO#' => '[b]'.$lineTo.'[/b]',
 					]);
@@ -828,8 +829,8 @@ class Chat
 				if ($transferUserId > 0 && $params['FROM'] > 0 && ($mode == self::TRANSFER_MODE_MANUAL || $mode == self::TRANSFER_MODE_BOT))
 				{
 					$message = Loc::getMessage('IMOL_CHAT_TRANSFER_'.$userFrom->getGender(), [
-							'#USER_FROM#' => '[USER='.$userFrom->getId().']'.$userFrom->getFullName(false).'[/USER]',
-							'#USER_TO#' => '[USER='.$userTo->getId().']'.$userTo->getFullName(false).'[/USER]']
+							'#USER_FROM#' => '[USER='.$userFrom->getId().'][/USER]',
+							'#USER_TO#' => '[USER='.$userTo->getId().'][/USER]']
 					);
 				}
 				else if(empty($transferUserId))
@@ -838,7 +839,7 @@ class Chat
 				}
 				else
 				{
-					$message = Loc::getMessage('IMOL_CHAT_NEXT_IN_QUEUE_NEW', ['#USER_TO#' => '[USER='.$userTo->getId().']'.$userTo->getFullName(false).'[/USER]']);
+					$message = Loc::getMessage('IMOL_CHAT_NEXT_IN_QUEUE_NEW', ['#USER_TO#' => '[USER='.$userTo->getId().'][/USER]']);
 				}
 
 				OperatorTransferTable::Add([
@@ -1262,7 +1263,7 @@ class Chat
 				{
 					$user = ImUser::getInstance($userId);
 					$message = Loc::getMessage('IMOL_CHAT_MARK_SPAM_'.$user->getGender(), Array(
-						'#USER#' => '[USER='.$user->getId().']'.$user->getFullName(false).'[/USER]',
+						'#USER#' => '[USER='.$user->getId().'][/USER]',
 					));
 
 					Im::addMessage(Array(
@@ -1429,7 +1430,7 @@ class Chat
 							"TO_CHAT_ID" => $this->chat['ID'],
 							"SYSTEM" => 'Y',
 							"MESSAGE" => Loc::getMessage('IMOL_CHAT_CLOSE_FOR_OPEN_'.$user->getGender(), Array(
-								'#USER#' => '[USER='.$user->getId().']'.$user->getFullName(false).'[/USER]',
+								'#USER#' => '[USER='.$user->getId().'][/USER]',
 							)),
 						));
 
@@ -2076,13 +2077,19 @@ class Chat
 					$parsedUserCode = Session\Common::parseUserCode($this->chat['ENTITY_ID']);
 					if (\Bitrix\ImOpenLines\Connector::isLiveChat($parsedUserCode['CONNECTOR_ID']))
 					{
+						$lineId = Queue::getActualLineId([
+							'LINE_ID' =>  $parsedUserCode['CONFIG_ID'],
+							'USER_CODE' => $this->chat['ENTITY_ID']
+						]);
+
 						Pull\Event::add($parsedUserCode['CONNECTOR_USER_ID'], Array(
 							'module_id' => 'imopenlines',
 							'command' => 'sessionOperatorChange',
 							'params' => Array(
 								'chatId' => (int)$parsedUserCode['EXTERNAL_CHAT_ID'],
+								'operatorChatId' => (int)$this->chat['ID'],
 								'operator' => Rest::objectEncode(
-									Queue::getUserData($parsedUserCode['CONFIG_ID'], $fields['AUTHOR_ID'])
+									Queue::getUserData($lineId, $fields['AUTHOR_ID'])
 								)
 							)
 						));
@@ -2182,11 +2189,11 @@ class Chat
 
 				if($userCrm === true)
 				{
-					$message = Loc::getMessage('IMOL_CHAT_ASSIGN_OPERATOR_CRM_NEW', ['#USER#' => '[USER='.$toUserId.']'.$userName.'[/USER]']);
+					$message = Loc::getMessage('IMOL_CHAT_ASSIGN_OPERATOR_CRM_NEW', ['#USER#' => '[USER='.$toUserId.'][/USER]']);
 				}
 				else
 				{
-					$message = Loc::getMessage('IMOL_CHAT_ASSIGN_OPERATOR_NEW', ['#USER#' => '[USER='.$toUserId.']'.$userName.'[/USER]']);
+					$message = Loc::getMessage('IMOL_CHAT_ASSIGN_OPERATOR_NEW', ['#USER#' => '[USER='.$toUserId.'][/USER]']);
 				}
 			}
 			else
@@ -2229,43 +2236,32 @@ class Chat
 		elseif($this->isDataLoaded())
 		{
 			$session = new Session();
-			$resultLoad = $session->load([
+			$resultLoadSession = $session->load([
 				'USER_CODE' => $this->chat['ENTITY_ID']
 			]);
-			if ($resultLoad)
+			if ($resultLoadSession)
 			{
 				if($this->validationAction($session->getData('CHAT_ID')))
 				{
 					$messageId = false;
 					if ($type == self::TEXT_WELCOME)
 					{
-						if ($session->getConfig('WELCOME_MESSAGE') == 'Y' && $session->getConfig('SOURCE') != 'network')
-						{
-							$messageId = Im::addMessage(Array(
-								"TO_CHAT_ID" => $this->chat['ID'],
-								"MESSAGE" => $session->getConfig('WELCOME_MESSAGE_TEXT'),
-								"SYSTEM" => 'Y',
-								"IMPORTANT_CONNECTOR" => 'Y',
-								"PARAMS" => Array(
-									"CLASS" => "bx-messenger-content-item-ol-output"
-								)
-							));
-						}
+						$messageId = (new AutomaticAction\Welcome($session))->sendMessage();
 					}
 					elseif($type == self::TEXT_DEFAULT)
 					{
 						if (!empty($message))
 						{
 							$messageId = Im::addMessage(
-								Array(
+								[
 									"TO_CHAT_ID" => $this->chat['ID'],
 									"MESSAGE" => $message,
 									"SYSTEM" => 'Y',
 									"IMPORTANT_CONNECTOR" => 'Y',
-									"PARAMS" => Array(
+									"PARAMS" => [
 										"CLASS" => "bx-messenger-content-item-ol-output"
-									)
-								)
+									]
+								]
 							);
 						}
 					}
@@ -2274,8 +2270,6 @@ class Chat
 				}
 			}
 		}
-
-
 
 		return $result;
 	}
@@ -2291,6 +2285,7 @@ class Chat
 	{
 		$this->update(array('ENTITY_ID' => $entityId));
 
+		//TODO: Replace with the method \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId
 		$entity = explode('|', $entityId);
 
 		if (strtolower($entity[0] == 'livechat'))
@@ -2502,15 +2497,26 @@ class Chat
 	 */
 	public static function onAppLang($icon, $lang = null)
 	{
-		$title = Loc::getMessage('IMOL_CHAT_APP_ICON_QUICK_TITLE', null, $lang);
-		$description = Loc::getMessage('IMOL_CHAT_APP_ICON_QUICK_DESCRIPTION', null, $lang);
+		if ($icon === 'quick')
+		{
+			$title = Loc::getMessage('IMOL_CHAT_APP_ICON_QUICK_TITLE', null, $lang);
+			$description = Loc::getMessage('IMOL_CHAT_APP_ICON_QUICK_DESCRIPTION', null, $lang);
 
-		$result = false;
-		if (strlen($title) > 0)
+			$result = false;
+			if (strlen($title) > 0)
+			{
+				$result = [
+					'TITLE' => $title,
+					'DESCRIPTION' => $description,
+					'COPYRIGHT' => ''
+				];
+			}
+		}
+		else if ($icon === 'imessage')
 		{
 			$result = [
-				'TITLE' => $title,
-				'DESCRIPTION' => $description,
+				'TITLE' => 'Apple Business Chat extension',
+				'DESCRIPTION' => '',
 				'COPYRIGHT' => ''
 			];
 		}
@@ -2544,6 +2550,50 @@ class Chat
 	}
 
 	/**
+	 * Parsing entity Id into components for open line chat.
+	 *
+	 * @param $entityId
+	 * @return array
+	 */
+	public static function parseLinesChatEntityId($entityId)
+	{
+		$result = [
+			'connectorId' => null,
+			'lineId' => null,
+			'connectorChatId' => null,
+			'connectorUserId' => null
+		];
+
+		if(!empty($entityId))
+		{
+			list($result['connectorId'], $result['lineId'], $result['connectorChatId'], $result['connectorUserId']) = explode('|', $entityId);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Parsing entity Id into components for open live chat.
+	 *
+	 * @param $entityId
+	 * @return array
+	 */
+	public static function parseLiveChatEntityId($entityId)
+	{
+		$result = [
+			'connectorId' => null,
+			'lineId' => null,
+		];
+
+		if(!empty($entityId))
+		{
+			list($result['connectorId'], $result['lineId']) = explode('|', $entityId);
+		}
+
+		return $result;
+	}
+
+	/**
 	 * @deprecated Use \Bitrix\ImOpenLines\Crm\Common::getLastChatIdByCrmEntity instead.
 	 *
 	 * @param $crmEntityType
@@ -2557,5 +2607,81 @@ class Chat
 	public static function getLastChatIdByCrmEntity($crmEntityType, $crmEntityId): int
 	{
 		return \Bitrix\ImOpenLines\Crm\Common::getLastChatIdByCrmEntity($crmEntityType, $crmEntityId);
+	}
+
+	public static function hasAccess(int $chatId): bool
+	{
+		if (!Main\Loader::includeModule('im'))
+		{
+			return false;
+		}
+
+		$chat = \Bitrix\Im\Model\ChatTable::getByPrimary($chatId, ['select' => ['TYPE', 'ENTITY_TYPE', 'ENTITY_DATA_1']])->fetch();
+		if (!$chat)
+		{
+			return false;
+		}
+
+		if (!(
+			$chat['TYPE'] === \Bitrix\Im\Chat::TYPE_OPEN_LINE
+			|| $chat['TYPE'] === \Bitrix\Im\Chat::TYPE_GROUP && $chat['ENTITY_TYPE'] === 'LINES'
+		))
+		{
+			return false;
+		}
+
+		$crmEntityType = null;
+		$crmEntityId = null;
+
+		if ($chat['ENTITY_DATA_1'] <> '')
+		{
+			$fieldData = explode("|", $chat['ENTITY_DATA_1']);
+			if ($fieldData[0] === 'Y')
+			{
+				$crmEntityType = $fieldData[1];
+				$crmEntityId = $fieldData[2];
+			}
+		}
+
+		return \Bitrix\ImOpenLines\Config::canJoin($chatId, $crmEntityType, $crmEntityId);
+	}
+
+	public static function getChatIdBySession(int $sessionId)
+	{
+		if (!$sessionId)
+		{
+			return null;
+		}
+
+		$session = \Bitrix\ImOpenLines\Model\SessionTable::getById($sessionId)->fetch();
+		if (!$session)
+		{
+			return null;
+		}
+
+		return (int)$session['CHAT_ID'];
+	}
+
+	public static function getChatIdByUserCode(string $userCode)
+	{
+		if (!Main\Loader::includeModule('im'))
+		{
+			return null;
+		}
+
+		$chatData = \Bitrix\Im\Model\ChatTable::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'=ENTITY_TYPE' => 'LINES',
+				'=ENTITY_ID' => $userCode,
+			]
+		])->fetch();
+
+		if (!$chatData)
+		{
+			return null;
+		}
+
+		return $chatData['ID'];
 	}
 }

@@ -126,7 +126,6 @@ else
 		);
 	}
 }
-
 ?>
 
 <script type="text/javascript">
@@ -168,17 +167,9 @@ else
 			?>
 				{ text : "<?=GetMessageJS("B24_UPGRADE_LICENSE")?>", className : "menu-popup-no-icon", onclick : "if (BX.getClass('B24.upgradeButtonRedirect')) B24.upgradeButtonRedirect(<?=CUtil::PhpToJSObject($arJsParams)?>)"},
 			<?endif?>
-			<?if (1) foreach (Binding\Menu::getMenuItems('top_panel', 'user_menu') as $bindingMenu):?>
-				{
-					text: "<?= \CUtil::jsEscape($bindingMenu['text']);?>",
-					href: "<?= \CUtil::jsEscape($bindingMenu['href']);?>",
-					//666
-					<?if (isset($bindingMenu['onclick'])):?>
-					onclick: function(){<?= $bindingMenu['onclick'];?>; BX.PreventDefault();},
-					<?endif;?>
-					items: <?= \CUtil::phpToJSObject(isset($bindingMenu['items']) ? $bindingMenu['items'] : []);?>
-				},
-			<?endforeach;?>
+			<?if (($bindingItems = Binding\Menu::getMenuItems('top_panel', 'user_menu', ['inline' => true, 'context' => ['USER_ID' => $USER->GetID()]]))):?>
+				<?= \CUtil::phpToJSObject($bindingItems);?>,
+			<?endif;?>
 				{ text : "<?=GetMessageJS("AUTH_LOGOUT")?>", className : "menu-popup-no-icon", href : "/auth/?logout=yes&backurl=" + encodeURIComponent(B24.getBackUrl()) }
 			],
 			{
@@ -198,9 +189,7 @@ else
 	<span class="user-img user-default-avatar" <?if ($arResult["USER_PERSONAL_PHOTO_SRC"]):?>style="background: url('<?=$arResult["USER_PERSONAL_PHOTO_SRC"]?>') no-repeat center; background-size: cover;"<?endif?>></span><span class="user-name" id="user-name"><?=$arResult["USER_NAME"]?></span>
 </div>
 
-
 <?
-
 $imBarExists =
 	CModule::IncludeModule("im") &&
 	CBXFeatures::IsFeatureEnabled("WebMessenger") &&

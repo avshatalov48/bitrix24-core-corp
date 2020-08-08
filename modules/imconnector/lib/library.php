@@ -22,17 +22,16 @@ class Library
 	const ID_LIVE_CHAT_CONNECTOR = 'livechat';
 	const ID_REAL_BOT_FRAMEWORK_CONNECTOR = 'botframework';
 	const ID_REAL_BOT_FRAMEWORK_KIK_CONNECTOR = 'botframework.kik';
-	const ID_INSTAGRAM_CONNECTOR = 'instagram';
 	const ID_FBINSTAGRAM_CONNECTOR = 'fbinstagram';
 	const ID_VIBER_CONNECTOR = 'viber';
 	const ID_YANDEX_CONNECTOR = 'yandex';
 	const ID_WECHAT_CONNECTOR = 'wechat';
 	const ID_NETWORK_CONNECTOR = 'network';
 	const ID_FB_COMMENTS_CONNECTOR = 'facebookcomments';
+	const ID_IMESSAGE_CONNECTOR = 'imessage';
+	const ID_OLX_CONNECTOR = 'olx';
 
 	const COMPONENT_NAME_REST = 'bitrix:imconnector.rest';
-
-	const INSTAGRAM_MAX_COUNT = 100;
 
 	const SCOPE_REST_IMCONNECTOR = 'imopenlines';
 
@@ -79,6 +78,7 @@ class Library
 	const ERROR_IMCONNECTOR_REST_NAME_REQUIRED = 'NAME_REQUIRED';
 	const ERROR_IMCONNECTOR_REST_ICON_REQUIRED = 'ICON_REQUIRED';
 	const ERROR_IMCONNECTOR_REST_NO_APPLICATION_ID = 'NO_APPLICATION_ID';
+	const ERROR_IMCONNECTOR_REST_NO_PLACEMENT_HANDLER = 'NO_PLACEMENT_HANDLER';
 	const ERROR_IMCONNECTOR_REST_GENERAL_CONNECTOR_REGISTRATION_ERROR = 'GENERAL_CONNECTOR_REGISTRATION_ERROR';
 
 	/** const error connector server*/
@@ -95,6 +95,9 @@ class Library
 
 	const EVENT_RECEIVED_STATUS_DELIVERY = "OnReceivedStatusDelivery";
 	const EVENT_RECEIVED_STATUS_READING = "OnReceivedStatusReading";
+
+	public const EVENT_RECEIVED_STATUS_BLOCK = 'OnReceivedStatusBlock';
+	public const EVENT_RECEIVED_TYPING_STATUS = 'OnReceivedStatusWrites';
 
 	const EVENT_STATUS_ADD = "OnAddStatusConnector";
 	const EVENT_STATUS_UPDATE = "OnUpdateStatusConnector";
@@ -121,6 +124,10 @@ class Library
 		],
 	];
 
+	public const AUTO_DELETE_BLOCK = [
+		'imessage', 'vkgroup'
+	];
+
 	/** @var array A list of connectors, which works without servers */
 	public static $noServerConnectors = array(
 		'livechat',
@@ -132,8 +139,7 @@ class Library
 		'facebookcomments',
 		'botframework.twilio',
 		'botframework.emailoffice365',
-		'fbinstagram',
-		'instagram'
+		self::ID_FBINSTAGRAM_CONNECTOR,
 	);
 
 	/** @var array A list of connectors that support group chat.*/
@@ -141,7 +147,6 @@ class Library
 		'botframework.slack',
 		'botframework.skype',
 		'botframework.groupme',
-		'instagram'
 	);
 
 	/** @var array A list of connectors, where it is impossible to send automatic newsletter.*/
@@ -151,8 +156,7 @@ class Library
 		'facebookcomments',
 		'botframework.slack',
 		'botframework.groupme',
-		'fbinstagram',
-		'instagram'
+		self::ID_FBINSTAGRAM_CONNECTOR,
 	);
 
 	/** @var array */
@@ -168,8 +172,7 @@ class Library
 	/** @var array */
 	public static $listConnectorDelInternalMessages = array(
 		'facebookcomments',
-		'fbinstagram',
-		'instagram',
+		self::ID_FBINSTAGRAM_CONNECTOR,
 
 		'botframework.slack',
 	);
@@ -177,23 +180,31 @@ class Library
 	/** @var array */
 	public static $listConnectorDelExternalMessages = array(
 		'facebookcomments',
-		'fbinstagram',
-		'instagram',
+		self::ID_FBINSTAGRAM_CONNECTOR,
 	);
 
 	/** @var array A list of connectors, where it is not necessary to send the signature.*/
 	public static $listNotNeedSignature = array(
 		'facebookcomments',
 		'botframework.twilio',
-		'fbinstagram',
-		'instagram',
+		self::ID_FBINSTAGRAM_CONNECTOR,
 		'viber',
 		'yandex'
 	);
 
+	/** @var array A list of connectors, where we use rich links on operator side.*/
+	public static $listConnectorWithRichLinks = array(
+		'imessage'
+	);
+
+	/** @var array A list of connectors, where we send writing status.*/
+	public static $listConnectorWritingStatus = [
+		'imessage'
+	];
+
 	public static $listSingleThreadGroupChats = array(
 		'facebookcomments',
-		'fbinstagram',
+		self::ID_FBINSTAGRAM_CONNECTOR,
 	);
 
 	/** @var array Association mime type of the file and its corresponding expansion */

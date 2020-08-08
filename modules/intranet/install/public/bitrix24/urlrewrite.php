@@ -66,16 +66,15 @@ $arUrlRewrite = array(
 		"PATH" => "/pub/form.php",
 	),
 	array(
-		"CONDITION" => "#^/pub/conference/([0-9a-zA-Z_]+?)/?\$#",
-		"RULE" => "publicId=\$1",
-		"ID" => "bitrix:im.conference",
-		"PATH" => "/pub/conference.php",
-	),
-	array(
 		"CONDITION" => "#^/mobile/disk/(?<hash>[0-9]+)/download#",
 		"RULE" => "download=1&objectId=\$1",
 		"ID" => "bitrix:mobile.disk.file.detail",
 		"PATH" => "/mobile/disk/index.php",
+	),
+	array(
+		"CONDITION" => "#^/video/([\\.\\-0-9a-zA-Z]+)(/?)([^/]*)#",
+		"RULE" => "alias=\$1&videoconf",
+		"PATH" => "/desktop_app/router.php",
 	),
 	array(
 		"CONDITION" => "#^/online/([\\.\\-0-9a-zA-Z]+)(/?)([^/]*)#",
@@ -271,6 +270,12 @@ $arUrlRewrite = array(
 		"RULE" => "",
 		"ID" => "bitrix:app.layout",
 		"PATH" => "/marketplace/app/index.php",
+	),
+	array(
+		"CONDITION" => "#^/marketplace/view/([a-zA-Z0-9\\.\\_]+)/.*#",
+		"RULE" => "APP=\$1",
+		"ID" => "bitrix:app.layout",
+		"PATH" => "/marketplace/view/index.php",
 	),
 	array(
 		"CONDITION" => "#^/timeman/meeting/#",
@@ -608,6 +613,12 @@ $arUrlRewrite = array(
 		"PATH" => "/marketing/rc.php",
 	),
 	array(
+		"CONDITION" => "#^/marketing/toloka/#",
+		"RULE" => "",
+		"ID" => "",
+		"PATH" => "/marketing/toloka.php",
+	),
+	array(
 		"CONDITION" => "#^/marketing/config/role/#",
 		"RULE" => "",
 		"ID" => "",
@@ -704,10 +715,28 @@ $arUrlRewrite = array(
 		"PATH" => "/rpa/index.php",
 	),
 	array(
+		"CONDITION" => "#^/extranet/marketplace/app/#",
+		"RULE" => "",
+		"ID" => "bitrix:app.layout",
+		"PATH" => "/extranet/marketplace/app/index.php",
+	),
+	array(
 		"CONDITION" => "#^/extranet/marketplace/#",
 		"RULE" => "",
 		"ID" => "bitrix:rest.marketplace",
 		"PATH" => "/extranet/marketplace/index.php",
+	),
+	array(
+		"CONDITION" => "#^/shop/catalog/#",
+		"RULE" => "",
+		"ID" => "bitrix:catalog.productcard.controller",
+		"PATH" => "/shop/catalog/index.php",
+	),
+	array (
+		'CONDITION' => '#^/crm/catalog/#',
+		'RULE' => '',
+		'ID' => 'bitrix:crm.catalog.controller',
+		'PATH' => '/crm/catalog/index.php',
 	),
 );
 ?>

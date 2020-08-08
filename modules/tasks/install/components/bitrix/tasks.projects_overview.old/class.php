@@ -82,7 +82,7 @@ class CTasksDepartmentsOverviewComponent extends CBitrixComponent
 					array('group_id' => $groupId)
 				);
 
-				if (strpos($groupTasksPath, '?') !== false)
+				if (mb_strpos($groupTasksPath, '?') !== false)
 					$groupTasksPath .= '&';
 				else
 					$groupTasksPath .= '?';

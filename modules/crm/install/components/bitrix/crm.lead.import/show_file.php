@@ -12,7 +12,7 @@ if(CModule::IncludeModule('crm'))
 {
 	global $APPLICATION;
 
-	$fileName = isset($_REQUEST['name']) ? strtolower($_REQUEST['name']) : '';
+	$fileName = isset($_REQUEST['name'])? mb_strtolower($_REQUEST['name']) : '';
 	if($fileName === 'errata')
 	{
 		$errataFileDir = isset($_SESSION['CRM_IMPORT_TEMP_DIR']) ? $_SESSION['CRM_IMPORT_TEMP_DIR'] : '';

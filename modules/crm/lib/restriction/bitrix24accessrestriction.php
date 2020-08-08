@@ -19,6 +19,13 @@ class Bitrix24AccessRestriction extends AccessRestriction
 	/**
 	* @return string
 	*/
+	public function prepareInfoHelperScript()
+	{
+		return $this->restrictionInfo->prepareInfoHelperScript();
+	}
+	/**
+	* @return string
+	*/
 	public function getHtml()
 	{
 		return $this->restrictionInfo->getHtml();

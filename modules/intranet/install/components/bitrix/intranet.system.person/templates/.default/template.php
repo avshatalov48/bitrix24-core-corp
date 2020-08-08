@@ -191,7 +191,7 @@ endif;
 								echo htmlspecialcharsbx($dept_name);
 							else
 							{
-								if (strlen(trim($arParams["PATH_TO_CONPANY_DEPARTMENT"])) > 0)
+								if (trim($arParams["PATH_TO_CONPANY_DEPARTMENT"]) <> '')
 									echo '<a href="',CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_CONPANY_DEPARTMENT"], array("ID" => $dept_id)),'">',htmlspecialcharsbx($dept_name),'</a>';
 								else
 									echo '<a href="',$arParams['STRUCTURE_PAGE'].'?set_filter_',$arParams['STRUCTURE_FILTER'],'=Y&',$arParams['STRUCTURE_FILTER'],'_UF_DEPARTMENT=',$dept_id,'">',htmlspecialcharsbx($dept_name),'</a>';
@@ -202,7 +202,7 @@ endif;
 					break;
 
 				default:
-					if (substr($key, 0, 3) == 'UF_' && is_array($arResult['USER_PROP'][$key]))
+					if (mb_substr($key, 0, 3) == 'UF_' && is_array($arResult['USER_PROP'][$key]))
 					{
 						$arResult['USER_PROP'][$key]['VALUE'] = $value;
 						$APPLICATION->IncludeComponent(

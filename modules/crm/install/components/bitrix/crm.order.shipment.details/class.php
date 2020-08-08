@@ -181,6 +181,14 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 			if($this->entityID > 0)
 			{
 				$this->shipment = Crm\Order\Manager::getShipmentObject($this->entityID);
+
+				if(!$this->shipment)
+				{
+					$this->addError(new Main\Error(Loc::getMessage('CRM_ORDER_SD_SHIPMENT_NOT_FOUND')));
+					$this->showErrors();
+					return;
+				}
+
 				$order = $this->shipment->getCollection()->getOrder();
 
 				if($order)
@@ -216,6 +224,13 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 		elseif(!$this->shipment)
 		{
 			$this->shipment = $shipments->getItemById($this->entityID);
+
+			if(!$this->shipment)
+			{
+				$this->addError(new Main\Error(Loc::getMessage('CRM_ORDER_SD_SHIPMENT_NOT_FOUND')));
+				$this->showErrors();
+				return;
+			}
 		}
 
 		$this->arResult['SITE_ID'] = $order->getSiteId();
@@ -229,7 +244,7 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 			? $this->arParams['EDITOR_CONFIG_ID'] : 'order_shipment_details';
 		//endregion
 
-		if(strlen($this->entityData['STATUS_ID']) > 0 )
+		if($this->entityData['STATUS_ID'] <> '' )
 			$this->arResult['PROGRESS_SEMANTICS'] = Order\OrderStatus::getStatusSemantics($this->entityData['STATUS_ID']);
 		else
 			$this->arResult['PROGRESS_SEMANTICS'] = '';
@@ -494,12 +509,12 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 				'type' => 'money',
 				'editable' => false,
 				'data' => array(
-					'affectedFields' => array('CURRENCY', 'PRICE_DELIVERY_CALCULATED'),
+					'affectedFields' => array('CURRENCY', 'EXPECTED_PRICE_DELIVERY'),
 					'currency' => array(
 						'name' => 'CURRENCY',
 						'items'=> \CCrmInstantEditorHelper::PrepareListOptions(CCrmCurrencyHelper::PrepareListItems())
 					),
-					'amount' => 'PRICE_DELIVERY_CALCULATED',
+					'amount' => 'EXPECTED_PRICE_DELIVERY',
 					'formatted' => 'FORMATTED_PRICE_DELIVERY_CALCULATED',
 					'formattedWithCurrency' => 'FORMATTED_PRICE_DELIVERY_CALCULATED_WITH_CURRENCY'
 				)
@@ -884,10 +899,9 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 
 		if(!empty($this->entityData['DELIVERY_STORES_LIST']))
 		{
-			$this->entityData['DELIVERY_STORES_LIST'] = array_merge(
-				[0 => ['ID' => 0, 'TITLE' => Loc::getMessage('CRM_ORDER_SD_NOT_CHOSEN')]],
-				$this->entityData['DELIVERY_STORES_LIST']
-			);
+			$this->entityData['DELIVERY_STORES_LIST'] =
+				[0 => ['ID' => 0, 'TITLE' => Loc::getMessage('CRM_ORDER_SD_NOT_CHOSEN')]] +
+				$this->entityData['DELIVERY_STORES_LIST'];
 		}
 
 		if(isset($this->entityData['DELIVERY_STORES_LIST'][$this->entityData['DELIVERY_STORE_ID']]['TITLE']))
@@ -947,15 +961,15 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 			$this->entityData['ERRORS'] = $calcPrice->getErrorMessages();
 		}
 
-		$this->entityData['PRICE_DELIVERY_CALCULATED'] = $calcPrice->getPrice();
+		$this->entityData['EXPECTED_PRICE_DELIVERY'] = $calcPrice->getPrice();
 
 		$this->entityData['FORMATTED_PRICE_DELIVERY_CALCULATED_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString(
-			$this->entityData['PRICE_DELIVERY_CALCULATED'],
+			$this->entityData['EXPECTED_PRICE_DELIVERY'],
 			$this->entityData['CURRENCY'],
 			''
 		);
 		$this->entityData['FORMATTED_PRICE_DELIVERY_CALCULATED'] = \CCrmCurrency::MoneyToString(
-			$this->entityData['PRICE_DELIVERY_CALCULATED'],
+			$this->entityData['EXPECTED_PRICE_DELIVERY'],
 			$this->entityData['CURRENCY'],
 			'#'
 		);
@@ -1015,7 +1029,7 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 
 				$html = $this->getDiscountsViewHtml($discounts);
 
-				if(strlen($html) > 0)
+				if($html <> '')
 				{
 					$this->entityData['DISCOUNTS_VIEW'] = $html;
 				}

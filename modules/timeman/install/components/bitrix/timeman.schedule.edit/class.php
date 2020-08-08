@@ -10,6 +10,7 @@ use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Timeman\Form\Schedule\ScheduleForm;
 use Bitrix\Timeman\Form\Schedule\ViolationForm;
+use Bitrix\Timeman\Helper\EntityCodesHelper;
 use Bitrix\Timeman\Helper\Form\Schedule\CalendarFormHelper;
 use Bitrix\Timeman\Helper\Form\Schedule\ScheduleFormHelper;
 use Bitrix\Timeman\Helper\UserHelper;
@@ -93,6 +94,8 @@ class TimemanScheduleComponent extends \Bitrix\Timeman\Component\BaseComponent
 				$editingSchedule = $this->scheduleRepository->findByIdWith($this->arResult['SCHEDULE_ID'], [
 					'CALENDAR',
 					'CALENDAR.EXCLUSIONS',
+					'CALENDAR.PARENT_CALENDAR.ID',
+					'CALENDAR.PARENT_CALENDAR.EXCLUSIONS',
 					'SHIFTS',
 					'DEPARTMENTS',
 					'USER_ASSIGNMENTS',
@@ -149,11 +152,11 @@ class TimemanScheduleComponent extends \Bitrix\Timeman\Component\BaseComponent
 		$this->arResult['hintEditDay'] = Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_HINT_EDIT_DAY');
 		if ($this->arResult['ENTITY_CODE'])
 		{
-			if (preg_match('#U[0-9]+#', $this->arResult['ENTITY_CODE']))
+			if (EntityCodesHelper::isUser($this->arResult['ENTITY_CODE']))
 			{
 				$this->arResult['ENTITY_TYPE_USER'] = true;
 				$user = $this->scheduleRepository->getUsersBaseQuery()
-					->where('ID', substr($this->arResult['ENTITY_CODE'], 1))
+					->where('ID', EntityCodesHelper::getUserId($this->arResult['ENTITY_CODE']))
 					->exec()
 					->fetch();
 				if (!$user)
@@ -162,10 +165,10 @@ class TimemanScheduleComponent extends \Bitrix\Timeman\Component\BaseComponent
 				}
 				$this->arResult['ENTITY_NAME'] = UserHelper::getInstance()->getFormattedName($user);
 			}
-			elseif (preg_match('#DR[0-9]+#', $this->arResult['ENTITY_CODE']))
+			elseif (EntityCodesHelper::isDepartment($this->arResult['ENTITY_CODE']))
 			{
 				$this->arResult['ENTITY_TYPE_USER'] = false;
-				$arDepartmentsData = CIntranetUtils::GetDepartmentsData([substr($this->arResult['ENTITY_CODE'], 2)]);
+				$arDepartmentsData = CIntranetUtils::getDepartmentsData([EntityCodesHelper::getDepartmentId($this->arResult['ENTITY_CODE'])]);
 				if ($arDepartmentsData !== false && !empty($arDepartmentsData))
 				{
 					$this->arResult['ENTITY_NAME'] = reset($arDepartmentsData);
@@ -188,7 +191,7 @@ class TimemanScheduleComponent extends \Bitrix\Timeman\Component\BaseComponent
 		if ($this->arResult['VIOLATIONS_ONLY'])
 		{
 			$this->arResult['canUpdatePersonalViolations'] = $this->userPermissionsManager->canUpdateViolationRules($this->arResult['ENTITY_CODE']);
-			if ($editingSchedule->isFlexible())
+			if ($editingSchedule->isFlextime())
 			{
 				return $this->showError(Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_ERROR_NO_VIOLATION_CONTROL'));
 			}
@@ -274,8 +277,7 @@ class TimemanScheduleComponent extends \Bitrix\Timeman\Component\BaseComponent
 	private function fillCalendarsData(ScheduleForm $scheduleForm)
 	{
 		$this->arResult['calendarTemplates'] = [];
-		$systemCalendars = $this->calendarRepository
-			->findByCodesWithExclusions(CalendarTable::getSystemCalendarCodes());
+		$systemCalendars = $this->calendarRepository->findByCodesWithExclusions(CalendarTable::getSystemCalendarCodes());
 		foreach ($systemCalendars as $systemCalendar)
 		{
 			$name = Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_SYSTEM_CALENDAR_HOLIDAYS_SINGLE_TITLE_' . strtoupper($systemCalendar->getSystemCode()));

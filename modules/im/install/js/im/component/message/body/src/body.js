@@ -321,6 +321,23 @@ Vue.component('bx-messenger-message-body',
 			};
 		},
 
+		userName()
+		{
+			if (this.message.params.NAME)
+			{
+				return this.message.params.NAME;
+			}
+
+			if (!this.showAvatar)
+			{
+				return this.user.name;
+			}
+			else
+			{
+				return this.user.firstName ? this.user.firstName : this.user.name;
+			}
+		},
+
 		...Vuex.mapState({
 			application: state => state.application,
 		})
@@ -331,7 +348,7 @@ Vue.component('bx-messenger-message-body',
 				<div class="bx-im-message-content">
 					<span class="bx-im-message-content-box">
 						<template v-if="showName && messageType == MessageType.opponent">
-							<div :class="['bx-im-message-content-name', referenceContentNameClassName]" :style="{color: user.color}" @click="clickByUserName({user: user, event: $event})">{{!showAvatar? user.name: (user.firstName? user.firstName: user.name)}}</div>
+							<div :class="['bx-im-message-content-name', referenceContentNameClassName]" :style="{color: user.color}" @click="clickByUserName({user: user, event: $event})">{{userName}}</div>
 						</template>
 						<div :class="['bx-im-message-content-body', referenceContentBodyClassName]">
 							<template v-if="contentType == ContentType.audio">

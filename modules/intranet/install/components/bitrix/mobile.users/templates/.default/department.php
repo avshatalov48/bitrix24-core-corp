@@ -24,11 +24,11 @@ if(!empty($arResult["users"]))
 	$prL = "";
 	foreach($arResult["users"] as $id => $item)
 	{
-		if(substr($item["LAST_NAME"], 0, 1) != $prL)
+		if(mb_substr($item["LAST_NAME"], 0, 1) != $prL)
 		{
 			$prLL = $prL;
-			$prL = substr($item["LAST_NAME"], 0, 1);
-			if(!($_REQUEST["AJAX_CALL"] == "Y" && strlen($prLL) <= 0))
+			$prL = mb_substr($item["LAST_NAME"], 0, 1);
+			if(!($_REQUEST["AJAX_CALL"] == "Y" && $prLL == ''))
 			{
 				?>
 				<div style="color: #333399; border-bottom: 2px #DDDDDD solid; margin: 5px; font-weight: bold; font-size: 16px;"><?=$prL?></div>

@@ -50,15 +50,6 @@ $langRoot = BX_ROOT . '/modules/crm/lang/' . LANGUAGE_ID . '/';
 \CJSCore::registerExt('crm_partial_entity_editor', array(
 	'js' => array('/bitrix/js/crm/partial_entity_editor.js', '/bitrix/js/crm/dialog.js')
 ));
-\CJSCore::registerExt('crm_entity_editor', array(
-	'css' => array('/bitrix/components/bitrix/crm.entity.editor/templates/.default/style.css'),
-	'js' => array(
-		'/bitrix/components/bitrix/crm.entity.editor/templates/.default/script.js',
-		'/bitrix/js/crm/interface_form.js',
-		'/bitrix/js/crm/entity_event.js',
-		'/bitrix/components/bitrix/crm.entity.editor/templates/.default/js/control.js'
-	)
-));
 \CJSCore::registerExt('popup_menu', array(
 	'js' => array('/bitrix/js/main/popup_menu.js')
 ));
@@ -89,7 +80,7 @@ $langRoot = BX_ROOT . '/modules/crm/lang/' . LANGUAGE_ID . '/';
 	'crm_visit_tracker',
 	'crm_activity_type',
 	'crm_partial_entity_editor',
-	'crm_entity_editor',
+	'crm.entity-editor',
 	'popup_menu',
 	'currency',
 	'core_money_editor',
@@ -154,6 +145,12 @@ include 'editors.php';
 			{
 				change: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_ED_CHANGE'));?>",
 				cancel: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_ED_CANCEL'));?>"
+			};
+
+			BX.CRM.Kanban.Item.messages =
+			{
+				company: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_COMPANY')) ?>",
+				contact: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_CONTACT')) ?>"
 			};
 
 			Kanban = new BX.CRM.Kanban.Grid(

@@ -2,7 +2,7 @@ var ChatDialogBackground = {};
 
 ChatDialogBackground['LIGHT_GRAY'] = {
 	color: '#F4FCFE',
-	url: '/bitrix/js/mobile/component/im/dialog/src/images/background/light_gray_v1.svg',
+	url: '/bitrix/js/mobile/im/application/dialog/src/images/background/light_gray_v1.svg',
 	width: '270',
 	height: 'auto',
 	dark: false
@@ -10,7 +10,7 @@ ChatDialogBackground['LIGHT_GRAY'] = {
 
 ChatDialogBackground['LIGHT_GREEN'] = {
 	color: '#E7F8D2',
-	url: '/bitrix/js/mobile/component/im/dialog/src/images/background/light_green_v1.svg',
+	url: '/bitrix/js/mobile/im/application/dialog/src/images/background/light_green_v1.svg',
 	width: '270',
 	height: 'auto',
 	dark: false
@@ -18,7 +18,7 @@ ChatDialogBackground['LIGHT_GREEN'] = {
 
 ChatDialogBackground['PINK'] = {
 	color: '#fedee3',
-	url: '/bitrix/js/mobile/component/im/dialog/src/images/background/pink_v1.svg',
+	url: '/bitrix/js/mobile/im/application/dialog/src/images/background/pink_v1.svg',
 	width: '270',
 	height: 'auto',
 	dark: false
@@ -26,7 +26,7 @@ ChatDialogBackground['PINK'] = {
 
 ChatDialogBackground['CREAMY'] = {
 	color: '#fff6da',
-	url: '/bitrix/js/mobile/component/im/dialog/src/images/background/creamy_v1.svg',
+	url: '/bitrix/js/mobile/im/application/dialog/src/images/background/creamy_v1.svg',
 	width: '270',
 	height: 'auto',
 	dark: false
@@ -34,7 +34,7 @@ ChatDialogBackground['CREAMY'] = {
 
 ChatDialogBackground['DARK'] = {
 	color: '#19232C',
-	url: '/bitrix/js/mobile/component/im/dialog/src/images/background/dark_v1.svg',
+	url: '/bitrix/js/mobile/im/application/dialog/src/images/background/dark_v1.svg',
 	width: '270',
 	height: 'auto',
 	dark: true

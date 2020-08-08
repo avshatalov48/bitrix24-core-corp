@@ -54,7 +54,7 @@ class OpenLineManager
 		}
 
 		$typeID = $items[1];
-		$suffix = strtoupper(preg_replace('/[^a-z0-9]/i', '', $typeID));
+		$suffix = mb_strtoupper(preg_replace('/[^a-z0-9]/i', '', $typeID));
 		$text = Loc::getMessage("CRM_OPEN_LINE_{$suffix}");
 		if($text === null)
 		{

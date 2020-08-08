@@ -69,7 +69,7 @@ class CrmOrderPropsFormEditUserBlockController
 				array('%ID%', '%ID_LOWER%', '%CAPTION%', '%DISPLAY_CLASS%'),
 				array(
 					$blockId,
-					strtolower($blockId),
+					mb_strtolower($blockId),
 					$this->blocks[$blockId]['NAV_CAPTION'],
 					$this->blocks[$blockId]['IS_FIXED'] ? 'crm-orderform-display-none' : ''
 				),
@@ -115,7 +115,7 @@ class CrmOrderPropsFormEditUserBlockController
 			array('%ID%', '%ID_LOWER%', '%CAPTION%', '%CONTENT%', '%IS_FIXED%', '%FIXED_CLASS%'),
 			array(
 				$this->blocks[$blockId]['ID'],
-				strtolower($this->blocks[$blockId]['ID']),
+				mb_strtolower($this->blocks[$blockId]['ID']),
 				$this->blocks[$blockId]['CAPTION'],
 				$this->blocks[$blockId]['CONTENT'],
 				$this->blocks[$blockId]['IS_FIXED'] ? 'Y' : 'N',

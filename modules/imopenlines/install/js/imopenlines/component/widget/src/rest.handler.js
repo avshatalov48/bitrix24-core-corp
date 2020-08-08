@@ -7,11 +7,11 @@
  * @copyright 2001-2019 Bitrix
  */
 
-import {BaseRestAnswerHandler} from "im.provider.rest";
-import {LocalStorage} from "im.tools.localstorage";
+import {BaseRestHandler} from "im.provider.rest";
+import {LocalStorage} from "im.lib.localstorage";
 import {SubscriptionType} from "./const";
 
-class WidgetRestAnswerHandler extends BaseRestAnswerHandler
+class WidgetRestAnswerHandler extends BaseRestHandler
 {
 	constructor(props = {})
 	{
@@ -31,6 +31,7 @@ class WidgetRestAnswerHandler extends BaseRestAnswerHandler
 			online: data.online,
 			consentUrl: data.consentUrl,
 			connectors: data.connectors || [],
+			watchTyping: data.watchTyping,
 		});
 
 		this.store.commit('application/set', {disk: data.disk});
@@ -44,9 +45,9 @@ class WidgetRestAnswerHandler extends BaseRestAnswerHandler
 		this.widget.restClient.setAuthId(data.hash);
 
 		let previousData = [];
-		if (typeof this.store.state.messages.collection[this.controller.getChatId()] !== 'undefined')
+		if (typeof this.store.state.messages.collection[this.controller.application.getChatId()] !== 'undefined')
 		{
-			previousData = this.store.state.messages.collection[this.controller.getChatId()];
+			previousData = this.store.state.messages.collection[this.controller.application.getChatId()];
 		}
 		this.store.commit('messages/initCollection', {chatId: data.chatId, messages: previousData});
 
@@ -96,7 +97,6 @@ class WidgetRestAnswerHandler extends BaseRestAnswerHandler
 
 		this.store.commit('widget/dialog', data);
 
-
 		this.store.commit('application/set', {dialog: {
 			chatId: data.chatId,
 			dialogId: 'chat'+data.chatId,
@@ -104,12 +104,20 @@ class WidgetRestAnswerHandler extends BaseRestAnswerHandler
 		}});
 	}
 
+	handleImDialogMessagesGetInitSuccess(data)
+	{
+		this.handleImDialogMessagesGetSuccess(data);
+	}
+
 	handleImDialogMessagesGetSuccess(data)
 	{
 		if (data.messages && data.messages.length > 0 && !this.widget.isDialogStart())
 		{
 			this.store.commit('widget/common', {
-				dialogStart:true
+				dialogStart: true
+			});
+			this.store.commit('widget/dialog', {
+				userConsent: true
 			});
 		}
 	}

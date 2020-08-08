@@ -44,7 +44,7 @@ Availability implies:<br>
 - the agent is not dismissed,<br>
 - the agent is not on leave,<br>
 - the agent has clocked in (if Working Time Management is enabled) or their system status is online.<br><br>
-Disable this option if you what the system to assign conversations irrespective of agent status.";
+Disable this option if you want the system to assign conversations irrespective of agent status.";
 $MESS["IMOL_CONFIG_EDIT_CLOSE_ACTION"] = "Conversation closing action";
 $MESS["IMOL_CONFIG_EDIT_CLOSE_ACTION_NEW"] = "If enquiry is processed and completed";
 $MESS["IMOL_CONFIG_EDIT_CLOSE_FORM_ID"] = "CRM form";
@@ -172,12 +172,12 @@ $MESS["IMOL_CONFIG_EDIT_SAVE"] = "Save";
 $MESS["IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_OPTION_ANSWERED"] = "waiting for user reaction";
 $MESS["IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_OPTION_ANSWERED_NEW"] = "replied to";
 $MESS["IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_OPTION_CLOSED"] = "closed";
-$MESS["IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_TIP"] = "<b>Answered</b>: excludes chats to which an agent replied at least once, and closed and pending rating chats as well.
-<br><br><b>Waiting for user reaction</b>: excludes chats to which an agent has replied and is now waiting for reaction. Closed and pending rating chats are excluded as well.<br><br>
-<b>Closed</b>: excludes closed and pending rating chats.";
-$MESS["IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_TIP_NEW"] = "<b>Answered</b>: excludes enquiries to which an agent replied at least once; also closed and pending rating enquiries.
-<br><br><b>Waiting for user reaction</b>: excludes enquiries to which an agent has replied and is now waiting for reaction. Closed and pending rating enquiries are excluded as well.<br><br>
-<b>Closed</b>: excludes closed and pending rating enquiries.";
+$MESS["IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_TIP"] = "<b>Answered</b>: excludes chats to which an agent replied at least once; also excludes both closed chats and chats awaiting for rating.
+<br><br><b>Waiting for user reaction</b>: excludes chats to which an agent has replied and is now waiting for reaction. Both closed chats and chats awaiting for rating are excluded as well.<br><br>
+<b>Closed</b>: excludes both closed chats and chats awaiting for rating.";
+$MESS["IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_TIP_NEW"] = "<b>Answered</b>: excludes enquiries to which an agent replied at least once; also closed enquiries and enquiries awaiting for rating.
+<br><br><b>Waiting for user reaction</b>: excludes enquiries to which an agent has replied and is now waiting for reaction. Both closed enquiries and enquiries awaiting for rating are excluded as well.<br><br>
+<b>Closed</b>: excludes both closed enquiries and enquiries awaiting for rating.";
 $MESS["IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_TITLE"] = "Exclude chats:";
 $MESS["IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_TITLE_NEW"] = "Ignore enquiries in this status when calculating distribution";
 $MESS["IMOL_CONFIG_EDIT_VOTE_BEFORE_FINISH"] = "Allow user to rate ongoing conversation";
@@ -195,6 +195,8 @@ $MESS["IMOL_CONFIG_EDIT_VOTE_MESSAGE_LIKE_NEW"] = "Positive rating*";
 $MESS["IMOL_CONFIG_EDIT_VOTE_MESSAGE_NEW"] = "Ask a client to rate agent performance. <a class=\"bx-helpdesk-link\" onclick=\"top.BX.Helper.show('redirect=detail&code=5667405'); return false;\">Details</a>";
 $MESS["IMOL_CONFIG_EDIT_VOTE_MESSAGE_TEXT_NEW"] = "Rating request text*";
 $MESS["IMOL_CONFIG_EDIT_WARNINGS"] = "Warning";
+$MESS["IMOL_CONFIG_EDIT_WATCH_TYPING"] = "Live Typing";
+$MESS["IMOL_CONFIG_EDIT_WATCH_TYPING_DESC"] = "Improve your agents' response time and make your customers happy by your immediate response. The agent can see the text a customer is typing which considerably reduces time required to come up with a reply.";
 $MESS["IMOL_CONFIG_EDIT_WELCOME_BOT_JOIN"] = "Activate chat bot";
 $MESS["IMOL_CONFIG_EDIT_WELCOME_BOT_JOIN_ALWAYS"] = "Each time a client starts conversation";
 $MESS["IMOL_CONFIG_EDIT_WELCOME_BOT_JOIN_FIRST"] = "Only the first time a client starts conversation";

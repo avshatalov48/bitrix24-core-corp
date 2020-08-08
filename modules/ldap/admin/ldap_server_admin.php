@@ -85,9 +85,9 @@ if($MOD_RIGHT=="W" && $arID = $lAdmin->GroupAction())
 
 	foreach($arID as $ID)
 	{
-		if(strlen($ID)<=0)
+		if($ID == '')
 			continue;
-		$ID = IntVal($ID);
+		$ID = intval($ID);
 
 		switch($_REQUEST['action'])
 		{

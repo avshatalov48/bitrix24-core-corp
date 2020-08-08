@@ -16,27 +16,34 @@ use Bitrix\DocumentGenerator\Storage\BFile;
 use Bitrix\DocumentGenerator\Storage\Disk;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Event;
+use Bitrix\Main\EventManager;
+use Bitrix\Main\EventResult;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Numerator\Numerator;
 use Bitrix\Main\ORM\Query\Query;
+use Bitrix\Main\Web\Uri;
 
 final class Driver
 {
-	const MODULE_ID = 'documentgenerator';
-	const REST_MODULE_ID = 'rest';
-	const DEFAULT_DATA_PATH = '/bitrix/modules/documentgenerator/data/';
-
-	const NUMERATOR_TYPE = 'DOCUMENT';
+	public const MODULE_ID = 'documentgenerator';
+	public const REST_MODULE_ID = 'rest';
+	public const NUMERATOR_TYPE = 'DOCUMENT';
 
 	protected $usersPermissions = [];
+	protected $dataProviderManager;
+	protected $documentClassName;
+	protected $templateClassName;
+	protected $userPermissionsClassName;
 
 	/** @var  Driver */
 	private static $instance;
 
 	private function __construct()
 	{
+		$this->initClasses();
 	}
 
 	private function __clone()
@@ -47,7 +54,7 @@ final class Driver
 	 * Returns Singleton of Driver
 	 * @return Driver
 	 */
-	public static function getInstance()
+	public static function getInstance(): Driver
 	{
 		if (!isset(self::$instance))
 		{
@@ -57,15 +64,39 @@ final class Driver
 		return self::$instance;
 	}
 
+	public function getDataProviderManager(): DataProviderManager
+	{
+		return $this->dataProviderManager;
+	}
+
+	/**
+	 * @return Document
+	 */
+	public function getDocumentClassName(): string
+	{
+		return $this->documentClassName;
+	}
+
+	/**
+	 * @return Template
+	 */
+	public function getTemplateClassName(): string
+	{
+		return $this->templateClassName;
+	}
+
 	public function isEnabled(): bool
 	{
-		return (class_exists('\DOMDocument', true) && class_exists('\ZipArchive', true));
+		return (
+			class_exists('\DOMDocument', true)
+			&& class_exists('\ZipArchive', true)
+		);
 	}
 
 	/**
 	 * @return Storage
 	 */
-	public function getDefaultStorage()
+	public function getDefaultStorage(): Storage
 	{
 		$storageType = Option::get('documentgenerator', 'default_storage_type');
 		if($storageType && is_a($storageType, Storage::class, true))
@@ -84,30 +115,27 @@ final class Driver
 	/**
 	 * @return int
 	 */
-	public function getUserId()
+	public function getUserId(): int
 	{
 		global $USER;
 		if(is_object($USER))
 		{
-			return CurrentUser::get()->getId();
+			return (int) CurrentUser::get()->getId();
 		}
 
 		return 0;
 	}
 
-	/**
-	 * @return string
-	 */
-	protected function getDefaultNumeratorId()
+	protected function getDefaultNumeratorId(): int
 	{
-		return Option::get(self::MODULE_ID, 'default_numerator', 0);
+		return (int) Option::get(self::MODULE_ID, 'default_numerator', 0);
 	}
 
 	/**
 	 * @param $id
 	 * @return $this
 	 */
-	protected function setDefaultNumeratorId($id)
+	protected function setDefaultNumeratorId(int $id): Driver
 	{
 		Option::set(self::MODULE_ID, 'default_numerator', $id);
 
@@ -115,10 +143,10 @@ final class Driver
 	}
 
 	/**
-	 * @param null $source
-	 * @return false|Numerator
+	 * @param $source
+	 * @return null|Numerator
 	 */
-	public function getDefaultNumerator($source = null)
+	public function getDefaultNumerator($source = null): ?Numerator
 	{
 		$numeratorId = $this->getDefaultNumeratorId();
 		$numerator = Numerator::load($numeratorId, $source);
@@ -141,7 +169,7 @@ final class Driver
 			}
 			else
 			{
-				$numerator = false;
+				$numerator = null;
 			}
 		}
 
@@ -152,13 +180,13 @@ final class Driver
 	 * @param $providerClassName
 	 * @param $moduleId
 	 * @param $placeholder
-	 * @return \Bitrix\Main\Web\Uri|bool
+	 * @return Uri|null
 	 */
-	public function getPlaceholdersListUri($providerClassName = null, $moduleId = null, $placeholder = null)
+	public function getPlaceholdersListUri($providerClassName = null, $moduleId = null, $placeholder = null): ?Uri
 	{
 		if($providerClassName && !DataProviderManager::checkProviderName($providerClassName, $moduleId))
 		{
-			return false;
+			return null;
 		}
 
 		static $componentPath = null;
@@ -172,16 +200,16 @@ final class Driver
 		}
 		if(!$componentPath)
 		{
-			return false;
+			return null;
 		}
-		$uri = new \Bitrix\Main\Web\Uri($componentPath);
+		$uri = new Uri($componentPath);
 		if($moduleId)
 		{
 			$uri->addParams(['module' => $moduleId]);
 		}
 		if($providerClassName)
 		{
-			$uri->addParams(['provider' => strtolower($providerClassName), 'apply_filter' => 'Y']);
+			$uri->addParams(['provider' => mb_strtolower($providerClassName), 'apply_filter' => 'Y']);
 		}
 		if($placeholder)
 		{
@@ -194,7 +222,7 @@ final class Driver
 	/**
 	 * @return array
 	 */
-	public function getRegionsList()
+	public function getRegionsList(): array
 	{
 		Loc::loadLanguageFile(__FILE__);
 		$regions = $this->getDefaultRegions();
@@ -211,7 +239,7 @@ final class Driver
 	/**
 	 * @return array
 	 */
-	public function getDefaultRegions()
+	public function getDefaultRegions(): array
 	{
 		return [
 			'ru' => [
@@ -266,7 +294,7 @@ final class Driver
 	 * @return array
 	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public function getCurrentRegion()
+	public function getCurrentRegion(): array
 	{
 		$region = [];
 
@@ -298,11 +326,11 @@ final class Driver
 	 * @param $languageId
 	 * @return array
 	 */
-	protected function getRegionByLanguageId($languageId)
+	protected function getRegionByLanguageId(string $languageId): array
 	{
 		foreach($this->getRegionsList() as $region => $description)
 		{
-			if($description['LANGUAGE_ID'] == $languageId)
+			if($description['LANGUAGE_ID'] === $languageId)
 			{
 				return $description;
 			}
@@ -311,11 +339,63 @@ final class Driver
 		return [];
 	}
 
+	protected function initClasses(): void
+	{
+		$classes = $this->collectClasses();
+		foreach($this->getDefaultClasses() as $name => $className)
+		{
+			if(
+				isset($classes[$name])
+				&& is_string($classes[$name])
+				&& is_a($classes[$name], $className, true))
+			{
+				$className = $classes[$name];
+			}
+
+			if(strpos($name, 'ClassName'))
+			{
+				$this->$name = $className;
+			}
+			else
+			{
+				$this->$name = new $className();
+			}
+		}
+	}
+
+	protected function collectClasses(): array
+	{
+		$classes = [];
+
+		$event = new Event(static::MODULE_ID, 'onDriverCollectClasses');
+		EventManager::getInstance()->send($event);
+		foreach($event->getResults() as $result)
+		{
+			if($result->getType() === EventResult::SUCCESS && is_array($result->getParameters()))
+			{
+				/** @noinspection SlowArrayOperationsInLoopInspection */
+				$classes = array_merge($classes, $result->getParameters());
+			}
+		}
+
+		return $classes;
+	}
+
+	protected function getDefaultClasses(): array
+	{
+		return [
+			'documentClassName' => Document::class,
+			'templateClassName' => Template::class,
+			'userPermissionsClassName' => UserPermissions::class,
+			'dataProviderManager' => DataProviderManager::class,
+		];
+	}
+
 	/**
 	 * @param $userId
 	 * @return UserPermissions
 	 */
-	public function getUserPermissions($userId = null)
+	public function getUserPermissions(int $userId = null): UserPermissions
 	{
 		if($userId === null)
 		{
@@ -324,7 +404,7 @@ final class Driver
 
 		if(!isset($this->usersPermissions[$userId]))
 		{
-			$this->usersPermissions[$userId] = new UserPermissions($userId);
+			$this->usersPermissions[$userId] = new $this->userPermissionsClassName($userId);
 		}
 
 		return $this->usersPermissions[$userId];
@@ -379,10 +459,10 @@ final class Driver
 		{
 			return '';
 		}
-		$provider = trim(strtolower($provider), '\\');
+		$provider = trim(mb_strtolower($provider), '\\');
 		/** @var Filterable $provider */
 		$extendedList = $provider::getExtendedList();
-		$templateProviders = TemplateProviderTable::getList(['filter' => ['=PROVIDER' => strtolower($provider)]])->fetchAll();
+		$templateProviders = TemplateProviderTable::getList(['filter' => ['=PROVIDER' => mb_strtolower($provider)]])->fetchAll();
 		foreach($templateProviders as $templateProvider)
 		{
 			TemplateProviderTable::delete($templateProvider);
@@ -538,11 +618,11 @@ final class Driver
 		return '';
 	}
 	//endregion
-
+	//region events
 	/**
 	 * @return array
 	 */
-	public static function onRestServiceBuildDescription()
+	public static function onRestServiceBuildDescription(): array
 	{
 		return [
 			static::MODULE_ID => [
@@ -554,11 +634,12 @@ final class Driver
 	/**
 	 * @return array
 	 */
-	public static function onGetDependentModule()
+	public static function onGetDependentModule(): array
 	{
 		return [
 			'MODULE_ID' => static::MODULE_ID,
 			'USE' => ['PUBLIC_SECTION'],
 		];
 	}
+	//endregion
 }

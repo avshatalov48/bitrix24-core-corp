@@ -92,7 +92,7 @@ class CCrmLocations
 	{
 		if(CSaleLocation::isLocationProMigrated())
 		{
-			if(!strlen($locID))
+			if($locID == '')
 				return '';
 
 			if((string) $locID === (string) intval($locID))

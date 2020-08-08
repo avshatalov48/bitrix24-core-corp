@@ -134,8 +134,8 @@ class CAllCrmProductRow
 		}
 
 		$arFields['TAX_RATE'] = isset($arFields['TAX_RATE']) ? round(doubleval($arFields['TAX_RATE']), 2) : 0;
-		$arFields['TAX_INCLUDED'] = isset($arFields['TAX_INCLUDED']) && strtoupper($arFields['TAX_INCLUDED']) === 'Y' ? 'Y' : 'N';
-		$arFields['CUSTOMIZED'] = isset($arFields['CUSTOMIZED']) && strtoupper($arFields['CUSTOMIZED']) === 'Y' ? 'Y' : 'N';
+		$arFields['TAX_INCLUDED'] = isset($arFields['TAX_INCLUDED']) && mb_strtoupper($arFields['TAX_INCLUDED']) === 'Y' ? 'Y' : 'N';
+		$arFields['CUSTOMIZED'] = isset($arFields['CUSTOMIZED']) && mb_strtoupper($arFields['CUSTOMIZED']) === 'Y' ? 'Y' : 'N';
 
 		$ID = $DB->Add(CCrmProductRow::TABLE_NAME, $arFields);
 		if($ID === false)
@@ -301,12 +301,12 @@ class CAllCrmProductRow
 
 		if($arFields['TAX_INCLUDED'])
 		{
-			$arFields['TAX_INCLUDED'] = strtoupper($arFields['TAX_INCLUDED']) === 'Y' ? 'Y' : 'N';
+			$arFields['TAX_INCLUDED'] = mb_strtoupper($arFields['TAX_INCLUDED']) === 'Y' ? 'Y' : 'N';
 		}
 
 		if($arFields['CUSTOMIZED'])
 		{
-			$arFields['CUSTOMIZED'] = strtoupper($arFields['CUSTOMIZED']) === 'Y' ? 'Y' : 'N';
+			$arFields['CUSTOMIZED'] = mb_strtoupper($arFields['CUSTOMIZED']) === 'Y' ? 'Y' : 'N';
 		}
 
 		$sUpdate = trim($DB->PrepareUpdate(CCrmProductRow::TABLE_NAME, $arFields));
@@ -530,7 +530,7 @@ class CAllCrmProductRow
 			return '';
 		}
 
-		$ownerType = strtoupper($ownerType);
+		$ownerType = mb_strtoupper($ownerType);
 		if($ownerType === 'D')
 		{
 			return CCrmOwnerType::DealName;
@@ -565,7 +565,7 @@ class CAllCrmProductRow
 	 */
 	protected static function SynchronizeOwner($ownerType, $ownerID, $checkPerms = true, $totalInfo = array())
 	{
-		$ownerType = strtoupper(strval($ownerType));
+		$ownerType = mb_strtoupper(strval($ownerType));
 		$ownerID = intval($ownerID);
 
 		if($ownerType === 'D')
@@ -859,16 +859,9 @@ class CAllCrmProductRow
 			$rowID = isset($arRow['ID']) ? (int)$arRow['ID'] : 0;
 			$productID = $arRow['PRODUCT_ID'] = isset($arRow['PRODUCT_ID']) ? (int)$arRow['PRODUCT_ID'] : 0;
 			$productName = $arRow['PRODUCT_NAME'] = isset($arRow['PRODUCT_NAME']) ? $arRow['PRODUCT_NAME'] : '';
-			$arRow['PRICE'] = isset($arRow['PRICE']) ? round((double)$arRow['PRICE'], 2) : 0.0;
-			$arRow['PRICE_EXCLUSIVE'] = isset($arRow['PRICE_EXCLUSIVE']) ? round((double)$arRow['PRICE_EXCLUSIVE'], 2) : 0.0;
-			$arRow['PRICE_NETTO'] = isset($arRow['PRICE_NETTO']) ? round((double)$arRow['PRICE_NETTO'], 2) : 0.0;
-			$arRow['PRICE_BRUTTO'] = isset($arRow['PRICE_BRUTTO']) ? round((double)$arRow['PRICE_BRUTTO'], 2) : 0.0;
-			$arRow['QUANTITY'] = isset($arRow['QUANTITY']) ? round((double)$arRow['QUANTITY'], 4) : 1;
-			$arRow['TAX_RATE'] = isset($arRow['TAX_RATE']) ? round((double)$arRow['TAX_RATE'], 2) : 0.0;
-			$arRow['TAX_INCLUDED'] = isset($arRow['TAX_INCLUDED']) ? ($arRow['TAX_INCLUDED'] === 'Y' ? 'Y' : 'N') : 'N';
 			$arRow['MEASURE_CODE'] = isset($arRow['MEASURE_CODE']) ? (int)$arRow['MEASURE_CODE'] : 0;
 			$arRow['MEASURE_NAME'] = isset($arRow['MEASURE_NAME']) ? $arRow['MEASURE_NAME'] : '';
-			$arRow['CUSTOMIZED'] = isset($arRow['CUSTOMIZED']) && strtoupper($arRow['CUSTOMIZED']) === 'Y' ? 'Y' : 'N';
+			$arRow['CUSTOMIZED'] = isset($arRow['CUSTOMIZED']) && mb_strtoupper($arRow['CUSTOMIZED']) === 'Y' ? 'Y' : 'N';
 			$arRow['SORT'] = isset($arRow['SORT']) ? (int)$arRow['SORT'] : 0;
 
 			if($productID > 0 && $productName !== '' && isset($products[$productID]))
@@ -882,56 +875,10 @@ class CAllCrmProductRow
 				}
 			}
 
-			$inclusivePrice = $arRow['PRICE'];
-			$exclusivePrice = $arRow['PRICE_EXCLUSIVE'];
-			if($exclusivePrice == 0.0 &&  $inclusivePrice != 0.0)
+			$prices = static::preparePrices($arRow, $currencyID, $exchRate);
+			if (false === $prices)
 			{
-				$exclusivePrice = self::CalculateExclusivePrice($inclusivePrice, $arRow['TAX_RATE']);
-			}
-
-			$arRow['DISCOUNT_TYPE_ID'] = isset($arRow['DISCOUNT_TYPE_ID']) ? intval($arRow['DISCOUNT_TYPE_ID']) : 0;
-			if(!\Bitrix\Crm\Discount::isDefined($arRow['DISCOUNT_TYPE_ID']))
-			{
-				$arRow['DISCOUNT_TYPE_ID'] = \Bitrix\Crm\Discount::PERCENTAGE;
-				$arRow['DISCOUNT_RATE'] = 0.0;
-			}
-			$discountTypeID = $arRow['DISCOUNT_TYPE_ID'];
-
-			if($discountTypeID === \Bitrix\Crm\Discount::PERCENTAGE)
-			{
-				if(!isset($arRow['DISCOUNT_RATE']))
-				{
-					self::RegisterError("Discount Rate (DISCOUNT_RATE) is required if Percentage Discount Type (DISCOUNT_TYPE_ID) is defined.");
-					return false;
-				}
-				$discountRate = round(doubleval($arRow['DISCOUNT_RATE']), 2);
-
-				if(isset($arRow['DISCOUNT_SUM']))
-				{
-					$discountSum = round(doubleval($arRow['DISCOUNT_SUM']), 2);
-				}
-				else
-				{
-					$discountSum = round(\Bitrix\Crm\Discount::calculateDiscountSum($exclusivePrice, $discountRate), 2);
-				}
-			}
-			else//if($discountTypeID === \Bitrix\Crm\Discount::MONETARY)
-			{
-				if(!isset($arRow['DISCOUNT_SUM']))
-				{
-					self::RegisterError("Discount Sum (DISCOUNT_SUM) is required if Monetary Discount Type (DISCOUNT_TYPE_ID) is defined.");
-					return false;
-				}
-				$discountSum = round(doubleval($arRow['DISCOUNT_SUM']), 2);
-
-				if(isset($arRow['DISCOUNT_RATE']))
-				{
-					$discountRate = round(doubleval($arRow['DISCOUNT_RATE']), 2);
-				}
-				else
-				{
-					$discountRate = \Bitrix\Crm\Discount::calculateDiscountRate(($exclusivePrice + $discountSum), $exclusivePrice);
-				}
+				return false;
 			}
 
 			$measureCode = $arRow['MEASURE_CODE'];
@@ -949,33 +896,27 @@ class CAllCrmProductRow
 				'OWNER_ID' => $ownerID,
 				'PRODUCT_ID' => $productID,
 				'PRODUCT_NAME' => $productName,
-				'PRICE' => $inclusivePrice,
-				'PRICE_EXCLUSIVE' => $exclusivePrice,
-				'PRICE_NETTO' => $arRow['PRICE_NETTO'],
-				'PRICE_BRUTTO' => $arRow['PRICE_BRUTTO'],
-				'QUANTITY'=> $arRow['QUANTITY'],
-				'DISCOUNT_TYPE_ID' => $discountTypeID,
-				'DISCOUNT_SUM' => $discountSum,
-				'DISCOUNT_RATE' => $discountRate,
-				'TAX_RATE' => $arRow['TAX_RATE'],
-				'TAX_INCLUDED' => isset($arRow['TAX_INCLUDED']) ? ($arRow['TAX_INCLUDED'] === 'Y' ? 'Y' : 'N') : 'N',
+
+				'PRICE' => $prices['PRICE'],
+				'PRICE_EXCLUSIVE' => $prices['PRICE_EXCLUSIVE'],
+				'PRICE_NETTO' => $prices['PRICE_NETTO'],
+				'PRICE_BRUTTO' => $prices['PRICE_BRUTTO'],
+				'QUANTITY'=> $prices['QUANTITY'],
+				'DISCOUNT_TYPE_ID' => $prices['DISCOUNT_TYPE_ID'],
+				'DISCOUNT_SUM' => $prices['DISCOUNT_SUM'],
+				'DISCOUNT_RATE' => $prices['DISCOUNT_RATE'],
+				'TAX_RATE' => $prices['TAX_RATE'],
+				'TAX_INCLUDED' => $prices['TAX_INCLUDED'],
+
 				'MEASURE_CODE' => $measureCode,
 				'MEASURE_NAME' => $arRow['MEASURE_NAME'],
 				'CUSTOMIZED' => 'Y', //Is always enabled for disable requests to product catalog
 				'SORT' => $arRow['SORT']
 			);
 
-			$accData = CCrmAccountingHelper::PrepareAccountingData(
-				array(
-					'CURRENCY_ID' => $currencyID,
-					'SUM' => $safeRow['PRICE'],
-					'EXCH_RATE' => $exchRate
-				)
-			);
-
-			if(is_array($accData))
+			if(isset($prices['PRICE_ACCOUNT']))
 			{
-				$safeRow['PRICE_ACCOUNT'] = $accData['ACCOUNT_SUM'];
+				$safeRow['PRICE_ACCOUNT'] = $prices['PRICE_ACCOUNT'];
 			}
 
 			$arSafeRows[] = &$safeRow;
@@ -1068,6 +1009,109 @@ class CAllCrmProductRow
 		{
 			self::SynchronizeOwner($ownerType, $ownerID, $checkPerms, $totalInfo);
 		}
+		return $result;
+	}
+
+	protected static function preparePrices($product, $currencyID, $exchRate)
+	{
+		$result = [];
+
+		$result['PRICE'] = isset($product['PRICE']) ? round((double)$product['PRICE'], 2) : 0.0;
+		$result['PRICE_EXCLUSIVE'] = isset($product['PRICE_EXCLUSIVE']) ? round((double)$product['PRICE_EXCLUSIVE'], 2) : 0.0;
+		$result['QUANTITY'] = isset($product['QUANTITY']) ? round((double)$product['QUANTITY'], 4) : 1;
+		$result['TAX_RATE'] = isset($product['TAX_RATE']) ? round((double)$product['TAX_RATE'], 2) : 0.0;
+		$result['TAX_INCLUDED'] = isset($product['TAX_INCLUDED']) ? ($product['TAX_INCLUDED'] === 'Y' ? 'Y' : 'N') : 'N';
+		$result['DISCOUNT_TYPE_ID'] = isset($product['DISCOUNT_TYPE_ID']) ? intval($product['DISCOUNT_TYPE_ID']) : 0;
+
+		$inclusivePrice = $result['PRICE'];
+		$exclusivePrice = $result['PRICE_EXCLUSIVE'];
+		if($exclusivePrice == 0.0 && $inclusivePrice != 0.0)
+		{
+			$exclusivePrice =  round(self::CalculateExclusivePrice($inclusivePrice, $result['TAX_RATE']), 2);
+		}
+
+		if(!\Bitrix\Crm\Discount::isDefined($result['DISCOUNT_TYPE_ID']))
+		{
+			$result['DISCOUNT_TYPE_ID'] = \Bitrix\Crm\Discount::PERCENTAGE;
+			$product['DISCOUNT_RATE'] = 0.0;
+		}
+		$discountTypeID = $result['DISCOUNT_TYPE_ID'];
+
+		if($discountTypeID === \Bitrix\Crm\Discount::PERCENTAGE)
+		{
+			if(!isset($product['DISCOUNT_RATE']))
+			{
+				self::RegisterError("Discount Rate (DISCOUNT_RATE) is required if Percentage Discount Type (DISCOUNT_TYPE_ID) is defined.");
+				return false;
+			}
+			$discountRate = round(doubleval($product['DISCOUNT_RATE']), 2);
+
+			if(isset($product['DISCOUNT_SUM']))
+			{
+				$discountSum = round(doubleval($product['DISCOUNT_SUM']), 2);
+			}
+			else
+			{
+				$discountSum = round(\Bitrix\Crm\Discount::calculateDiscountSum($exclusivePrice, $discountRate), 2);
+			}
+		}
+		else//if($discountTypeID === \Bitrix\Crm\Discount::MONETARY)
+		{
+			if(!isset($product['DISCOUNT_SUM']))
+			{
+				self::RegisterError("Discount Sum (DISCOUNT_SUM) is required if Monetary Discount Type (DISCOUNT_TYPE_ID) is defined.");
+				return false;
+			}
+			$discountSum = round(doubleval($product['DISCOUNT_SUM']), 2);
+
+			if(isset($product['DISCOUNT_RATE']))
+			{
+				$discountRate = round(doubleval($product['DISCOUNT_RATE']), 2);
+			}
+			else
+			{
+				$discountRate = \Bitrix\Crm\Discount::calculateDiscountRate(($exclusivePrice + $discountSum), $exclusivePrice);
+			}
+		}
+
+		if (isset($product['PRICE_NETTO']))
+		{
+			$priceNetto = $product['PRICE_NETTO'];
+		}
+		else
+		{
+			$priceNetto = $exclusivePrice + $discountSum;
+		}
+		$result['PRICE_NETTO'] = round((double)$priceNetto, 2);
+
+		if (isset($product['PRICE_BRUTTO']))
+		{
+			$result['PRICE_BRUTTO'] = round((double)$product['PRICE_BRUTTO'], 2);
+		}
+		else
+		{
+			$result['PRICE_BRUTTO'] = round(static::CalculateInclusivePrice($priceNetto, $result['TAX_RATE']), 2);
+		}
+
+		$result['PRICE'] = $inclusivePrice;
+		$result['PRICE_EXCLUSIVE'] = $exclusivePrice;
+		$result['DISCOUNT_TYPE_ID'] = $discountTypeID;
+		$result['DISCOUNT_SUM'] = $discountSum;
+		$result['DISCOUNT_RATE'] = $discountRate;
+
+		$accData = CCrmAccountingHelper::PrepareAccountingData(
+			array(
+				'CURRENCY_ID' => $currencyID,
+				'SUM' => $result['PRICE'],
+				'EXCH_RATE' => $exchRate
+			)
+		);
+
+		if(is_array($accData))
+		{
+			$result['PRICE_ACCOUNT'] = $accData['ACCOUNT_SUM'];
+		}
+
 		return $result;
 	}
 

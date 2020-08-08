@@ -32,9 +32,11 @@ class Auth
 		// imopenlines
 		'imopenlines.widget.dialog.get',
 		'imopenlines.widget.user.get',
+		'imopenlines.widget.operator.get',
 		'imopenlines.widget.user.consent.apply',
 		'imopenlines.widget.vote.send',
 		'imopenlines.widget.form.send',
+
 		// pull
 		'server.time',
 		'pull.config.get',

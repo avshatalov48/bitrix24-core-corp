@@ -7,7 +7,7 @@ use Bitrix\DocumentGenerator\Nameable;
 use Bitrix\DocumentGenerator\Template;
 use Bitrix\Main\Localization\Loc;
 
-final class Document extends DataProvider
+class Document extends DataProvider
 {
 	/**
 	 * Returns list of value names for this Provider.

@@ -26,4 +26,5 @@ $MESS["IMCONNECTOR_REST_CONNECTOR_ID_REQUIRED"] = "Не указан ID конн
 $MESS["IMCONNECTOR_REST_NAME_REQUIRED"] = "Не указано имя коннектора";
 $MESS["IMCONNECTOR_REST_ICON_REQUIRED"] = "Не указана иконка коннектора";
 $MESS["IMCONNECTOR_REST_NO_APPLICATION_ID"] = "Не удалось получить ID приложения";
+$MESS["IMCONNECTOR_REST_NO_PLACEMENT_HANDLER"] = "Не удалось получить URL обработчика встраивания";
 $MESS["IMCONNECTOR_REST_GENERAL_CONNECTOR_REGISTRATION_ERROR"] = "Общая ошибка регистрации коннектора";

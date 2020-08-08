@@ -1,4 +1,5 @@
 <?
+$MESS["TASKS_CALENDAR_COLLAPSED_ENTRIES_NAME"] = "Tasks";
 $MESS["TASKS_CALENDAR_NEW_TASK"] = "New task";
 $MESS["TASKS_CALENDAR_NOTIFY_CHANGE_DEADLINE"] = "Task deadline changed to #date#";
 $MESS["TASKS_CLOSE_PAGE_CONFIRM"] = "The changes you have made may be lost.";
@@ -18,4 +19,5 @@ $MESS["TASKS_LIST_TRIAL_EXPIRED_TITLE_V2"] = "Available only in Bitrix24's Advan
 $MESS["TASKS_TITLE"] = "Tasks";
 $MESS["TASKS_TITLE_GROUP_TASKS"] = "Workgroup tasks";
 $MESS["TASKS_TITLE_MY"] = "My tasks";
+$MESS["TASKS_TITLE_PROJECT"] = "Project";
 ?>

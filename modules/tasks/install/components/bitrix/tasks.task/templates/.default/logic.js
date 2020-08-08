@@ -308,7 +308,6 @@ BX.namespace('Tasks.Component');
 
 				this.bindControl('cancel-button', 'click', BX.delegate(this.onCancelButtonClick, this));
 				this.bindControl('title', 'keyup', BX.delegate(this.onTitleChange, this));
-				this.bindControl('to-checklist', 'mousedown', BX.delegate(this.onToCheckListMouseDown, this));
 				this.bindControl('to-checklist', 'click', BX.delegate(this.onToCheckListClick, this));
 
 				var elements = this.scope().getElementsByClassName("js-id-wg-optbar-flag-match-work-time");
@@ -695,32 +694,33 @@ BX.namespace('Tasks.Component');
 						flagNode.value = node.checked ? 'Y' : 'N';
 					}
 
+					if (
+						(flagName === 'REPLICATE' || flagName === 'SAVE_AS_TEMPLATE')
+						&& flagNode.value === 'Y'
+						&& this.option('auxData').TASK_LIMIT_EXCEEDED
+					)
+					{
+						node.checked = false;
+						BX.UI.InfoHelper.show('limit_tasks_recurring_tasks');
+					}
+
 					this.processToggleFlag(flagName, flagNode.value == 'Y');
 				}
 			},
 
 			processToggleFlag: function(name, value)
 			{
-				if(name == 'REPLICATE')
+				if (name == 'REPLICATE')
 				{
-					var panel = this.control('replication-panel');
-
-					if (value) // checkbox was just checked
+					var taskLimitExceeded = this.option('auxData').TASK_LIMIT_EXCEEDED;
+					if (!taskLimitExceeded || (taskLimitExceeded && !value))
 					{
-						// make invisible
-						BX.Tasks.Util.fadeSlideToggleByClass(panel);
+						BX.Tasks.Util.fadeSlideToggleByClass(this.control('replication-panel'));
+						this.toggleOption('SAVE_AS_TEMPLATE', value);
+						this.switchOption('SAVE_AS_TEMPLATE', value);
 					}
-					else // checkbox was just UNchecked
-					{
-						BX.Tasks.Util.fadeSlideToggleByClass(
-							panel
-						);
-					}
-
-					this.toggleOption('SAVE_AS_TEMPLATE', value);
-					this.switchOption('SAVE_AS_TEMPLATE', value);
 				}
-				if(name == 'TASK_PARAM_1')
+				else if (name == 'TASK_PARAM_1')
 				{
 					this.toggleDateParameters(value);
 				}
@@ -889,46 +889,7 @@ BX.namespace('Tasks.Component');
 				}
 			},
 
-			getEditorSelectedText: function()
-			{
-				var text = '';
-				var container = this.control('editor-container');
-				var isBbCode = container.querySelector('.bxhtmled-iframe-cnt').style.display === 'none';
-
-				if (isBbCode)
-				{
-					var textArea = container.querySelector('.bxhtmled-textarea');
-					var start = textArea.selectionStart;
-					var end = textArea.selectionEnd;
-
-					text = textArea.value.substring(start, end);
-				}
-				else
-				{
-					var editor = container.querySelector('.bx-editor-iframe').contentDocument;
-					if (editor.getSelection)
-					{
-						var selection = editor.getSelection().getRangeAt(0);
-						text = selection.commonAncestorContainer.innerText || selection.toString() || '';
-					}
-					else if (editor.selection)
-					{
-						text = editor.selection.createRange().text;
-					}
-				}
-
-				return text;
-			},
-
-			onToCheckListMouseDown: function()
-			{
-				if (!this.editorSelectedText || this.editorSelectedText === '')
-				{
-					this.editorSelectedText = this.getEditorSelectedText();
-				}
-			},
-
-			onToCheckListClick: function()
+			showToCheckListHint: function()
 			{
 				var hintPopup = new BX.PopupWindow({
 					bindElement: this.control('to-checklist'),
@@ -946,61 +907,89 @@ BX.namespace('Tasks.Component');
 						}
 					}
 				});
+				hintPopup.show();
+				setTimeout(function() {
+					hintPopup.close();
+				}, 2000);
+			},
 
-				if (this.editorSelectedText !== '')
+			getEditorSelectedText: function()
+			{
+				var text = '';
+				var container = this.control('editor-container');
+				var isBbCode = (container.querySelector('.bxhtmled-iframe-cnt').style.display === 'none');
+
+				if (isBbCode)
 				{
-					var titles = this.editorSelectedText.split(/\r\n|\r|\n/g);
-					if (titles.length > 0)
+					var textArea = container.querySelector('.bxhtmled-textarea');
+					var start = textArea.selectionStart;
+					var end = textArea.selectionEnd;
+
+					text = textArea.value.substring(start, end);
+				}
+				else
+				{
+					var editor = container.querySelector('.bx-editor-iframe').contentDocument;
+					if (editor.getSelection)
 					{
-						var treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
-
-						if (treeStructure.getDescendantsCount() === 0)
-						{
-							var items = this.getCheckListItemsFromTitles(titles);
-
-							BX.Tasks.CheckListInstance.addCheckList().then(function(newCheckList) {
-								items.forEach(function(item) {
-									newCheckList.addCheckListItem(item);
-								});
-								newCheckList.handleTaskOptions();
-
-								BX('checklistFromDescription').value = 'fromDescription';
-							});
-
-							if (BX.hasClass(this.control('checklist'), 'invisible'))
-							{
-								this.toggleBlock('checklist');
-							}
-						}
-						else
-						{
-							var menu = new BX.PopupMenuWindow({
-								bindElement: this.control('to-checklist'),
-								items: this.getToCheckListPopupMenuItems(titles),
-							});
-
-							menu.show();
-						}
+						text = editor.getSelection().toString();
 					}
-					else
+					else if (editor.selection)
 					{
-						hintPopup.show();
+						text = editor.selection.createRange().text;
+					}
+				}
 
-						setTimeout(function() {
-							hintPopup.close();
-						}, 2000);
+				return text;
+			},
+
+			getTitlesFromText: function(text)
+			{
+				if (text === '')
+				{
+					return [];
+				}
+
+				return text.split(/\r\n|\r|\n/g);
+			},
+
+			onToCheckListClick: function()
+			{
+				var text = this.getEditorSelectedText();
+				var titles = this.getTitlesFromText(text);
+
+				if (titles.length <= 0)
+				{
+					this.showToCheckListHint();
+					return;
+				}
+
+				var treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
+				if (treeStructure.getDescendantsCount() === 0)
+				{
+					var items = this.getCheckListItemsFromTitles(titles);
+
+					BX.Tasks.CheckListInstance.addCheckList().then(function(newCheckList) {
+						items.forEach(function(item) {
+							newCheckList.addCheckListItem(item);
+						});
+						newCheckList.handleTaskOptions();
+						BX('checklistFromDescription').value = 'fromDescription';
+					});
+
+					if (BX.hasClass(this.control('checklist'), 'invisible'))
+					{
+						this.toggleBlock('checklist');
 					}
 				}
 				else
 				{
-					hintPopup.show();
-
-					setTimeout(function() {
-						hintPopup.close();
-					}, 2000);
+					var menu = new BX.PopupMenuWindow({
+						bindElement: this.control('to-checklist'),
+						items: this.getToCheckListPopupMenuItems(titles)
+					});
+					menu.show();
 				}
-
-				this.editorSelectedText = '';
 			},
 
 			getToCheckListPopupMenuItems: function(titles)

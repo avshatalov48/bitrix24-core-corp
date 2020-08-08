@@ -9,6 +9,10 @@
 namespace Bitrix\Tasks\Item\Access;
 
 use Bitrix\Main\DB\SqlExpression;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\Model\TaskModel;
+use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Item\Result;
 use Bitrix\Tasks\Util\User;
@@ -16,6 +20,9 @@ use Bitrix\Tasks\Internals\Runtime;
 
 final class Task extends \Bitrix\Tasks\Item\Access
 {
+	private $accessController;
+	private $taskModel;
+
 	/**
 	 * Alters query parameters to check access rights on database side
 	 *
@@ -52,136 +59,73 @@ final class Task extends \Bitrix\Tasks\Item\Access
 
 	public function canCreate($item, $userId = 0)
 	{
-		$result = new Result();
-
-		if(!$this->isEnabled())
-		{
-			return $result;
-		}
-
-		$userId = $item->getUserId();
-		if(!User::isSuper($userId)) // no access check for admins
-		{
-			$rErrors = $result->getErrors();
-			$data = $item;
-
-			$state = $item->getTransitionState();
-			if($state->isInProgress())
-			{
-				$data = $state;
-			}
-
-			// todo: this should be in Item\Task::checkData(), but not in access controller!
-			if($data['RESPONSIBLE_ID'] != $userId && $data['CREATED_BY'] != $userId)
-			{
-				$rErrors->add('RESPONSIBLE_AND_ORIGINATOR_NOT_ALLOWED', 'You can not add task from other person to another person');
-			}
-
-			$groupId = intval($data['GROUP_ID']);
-			if($groupId)
-			{
-				if(!Group::can($groupId, Group::ACTION_CREATE_TASKS, $userId))
-				{
-					$rErrors->add('PROJECT_ACCESS_DENIED', 'You are not allowed to create tasks in the group [group: '.$groupId.', user: '.$userId.']');
-				}
-			}
-		}
-
-		return $result;
+		$accessController = $this->getAccessController($item->getUserId());
+		$res = $accessController->check(ActionDictionary::ACTION_TASK_SAVE, TaskModel::createNew(), $this->getTaskModel($item));
+		return $this->makeResult($res, 'update');
 	}
 
 	public function canUpdate($item, $userId = 0)
 	{
+		$accessController = $this->getAccessController($item->getUserId());
+		$res = $accessController->check(ActionDictionary::ACTION_TASK_SAVE, TaskModel::createFromId($item->getId()), $this->getTaskModel($item));
+		return $this->makeResult($res, 'update');
+	}
+
+	public function canRead($item, $userId = 0)
+	{
+		$accessController = $this->getAccessController($item->getUserId());
+		$res = $accessController->check(ActionDictionary::ACTION_TASK_READ, $this->getTaskModel($item));
+		return $this->makeResult($res, 'read');
+	}
+
+	public function canDelete($item, $userId = 0)
+	{
+		$accessController = $this->getAccessController($item->getUserId());
+		$res = $accessController->check(ActionDictionary::ACTION_TASK_REMOVE, $this->getTaskModel($item));
+		return $this->makeResult($res, 'delete');
+	}
+
+	public function canFetchData($item, $userId = 0)
+	{
+		$accessController = $this->getAccessController($item->getUserId());
+		$res = $accessController->check(ActionDictionary::ACTION_TASK_READ, $this->getTaskModel($item));
+		return $this->makeResult($res, 'read');
+	}
+
+	private function getAccessController($userId = 0): TaskAccessController
+	{
+		if (!$this->accessController)
+		{
+			$userId = ($userId ?: (int) User::getId());
+			$this->accessController = new TaskAccessController($userId);
+		}
+		return $this->accessController;
+	}
+
+	private function getTaskModel($item)
+	{
+		if (!$this->taskModel)
+		{
+			$this->taskModel = TaskModel::createFromTaskItem($item);
+		}
+		return $this->taskModel;
+	}
+
+	private function makeResult($res, $operation)
+	{
 		$result = new Result();
 
-		if(!$this->isEnabled())
+		if (!$this->isEnabled())
 		{
 			return $result;
 		}
 
-		/*
-		 //todo
-			$actionChangeDeadlineFields = array('DEADLINE', 'START_DATE_PLAN', 'END_DATE_PLAN', 'DURATION');
-			$arGivenFieldsNames = array_keys($arFields);
-
-			if (
-				array_key_exists('CREATED_BY', $arFields)
-				&& ( ! $this->isActionAllowed(self::ACTION_CHANGE_DIRECTOR) )
-			)
-			{
-				throw new TasksException('Access denied for originator to be updated', TasksException::TE_ACTION_NOT_ALLOWED);
-			}
-
-			if (
-				// is there fields to be checked for ACTION_CHANGE_DEADLINE?
-				array_intersect($actionChangeDeadlineFields, $arGivenFieldsNames)
-				&& ( ! $this->isActionAllowed(self::ACTION_CHANGE_DEADLINE) )
-			)
-			{
-				throw new TasksException('Access denied for plan dates to be updated', TasksException::TE_ACTION_NOT_ALLOWED);
-			}
-
-			// Get list of fields, except just checked above
-			$arGeneralFields = array_diff(
-				$arGivenFieldsNames,
-				array_merge($actionChangeDeadlineFields, array('CREATED_BY'))
-			);
-
-			// Is there is something more for update?
-			if ( ! empty($arGeneralFields) )
-			{
-				if ( ! $this->isActionAllowed(self::ACTION_EDIT) )
-					throw new TasksException('Access denied for task to be updated', TasksException::TE_ACTION_NOT_ALLOWED);
-			}
-		 */
-
+		if (!$res)
+		{
+			$result->addError('ACCESS_DENIED', Loc::getMessage('TASKS_TASK_ACCESS_DENIED', array(
+				'#OP_NAME#' => Loc::getMessage('TASKS_COMMON_OP_'.ToUpper($operation))
+			)));
+		}
 		return $result;
 	}
-
-	/**
-	 * todo: this method should return RESULT!!!
-	 *
-	 * @param $item
-	 * @param int $userId
-	 * @return bool
-	 */
-//	public function canUpdatePlanDates($item, $userId = 0)
-//	{
-//		$userId = intval($userId);
-//		if(!$userId)
-//		{
-//			$userId = $item->getUserId();
-//		}
-//
-//		return User::isSuper($userId) || $this->isRoleCreatorOrDirectorOfCreator($item, $userId) || (
-//			$item['RESPONSIBLE_ID'] == $userId
-//			&&
-//			$item['ALLOW_CHANGE_DEADLINE'] == 'Y'
-//		);
-//	}
-
-	// todo: refactor role mechanism, to be able to add new user-specified roles
-	// todo: there will be system pre-defined roles, for backward compatibility
-	// todo: avoid getting the entire task data when checking rights, it is better to do it in a lazy manner
-//	private function isRoleCreatorOrDirectorOfCreator($item, $userId)
-//	{
-//		if($item['CREATED_BY'] == $userId)
-//		{
-//			return true;
-//		}
-//
-//		return array_key_exists($item['CREATED_BY'], $this->getSubordinate($userId));
-//	}
-
-//	private function getSubordinate($userId)
-//	{
-//		static $cache = array();
-//
-//		if(!array_key_exists($userId, $cache))
-//		{
-//			$cache[$userId] = array_flip(\Bitrix\Tasks\Integration\Intranet\User::getSubordinate($userId, null, true));
-//		}
-//
-//		return $cache[$userId];
-//	}
 }

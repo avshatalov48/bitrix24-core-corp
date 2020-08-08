@@ -66,7 +66,7 @@ if ($ID > 0)
 
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
-if ($ID <= 0 && strlen($_REQUEST['member_id']) > 0)
+if ($ID <= 0 && $_REQUEST['member_id'] <> '')
 {
 	$dbr_member = CControllerMember::GetByGuid($_REQUEST['member_id']);
 	if ($ar_member = $dbr_member->Fetch())
@@ -102,7 +102,7 @@ if (
 	}
 	else
 	{
-		if (strlen($_REQUEST['back_url']) > 0)
+		if ($_REQUEST['back_url'] <> '')
 			LocalRedirect($_REQUEST['back_url']);
 		else
 			LocalRedirect($APPLICATION->GetCurPage()."?lang=".LANG."&ID=".$ID."&".$tabControl->ActiveTabParam());
@@ -112,7 +112,7 @@ if (
 $sRegistrationMode = "";
 if ($ID <= 0)
 {
-	if (strlen($_REQUEST['TICKET_ID']) > 0 && strlen($_REQUEST['SECRET_ID']) > 0)
+	if ($_REQUEST['TICKET_ID'] <> '' && $_REQUEST['SECRET_ID'] <> '')
 		$sRegistrationMode = "ticket";
 	else
 		$sRegistrationMode = "password";
@@ -124,7 +124,7 @@ if (
 	$_SERVER["REQUEST_METHOD"] == "POST"
 	&& !$message
 	&& $_REQUEST['unregister'] != 'Y'
-	&& (strlen($_POST['save']) > 0 || strlen($_POST['save_ext']) > 0 || strlen($_POST['apply']) > 0)
+	&& ($_POST['save'] <> '' || $_POST['save_ext'] <> '' || $_POST['apply'] <> '')
 	&& (
 		$USER->CanDoOperation("controller_member_edit")
 		|| $USER->CanDoOperation("controller_member_add")
@@ -200,7 +200,7 @@ if (
 		{
 			$arFields["SECRET_ID"] = $_REQUEST["SECRET_ID"];
 			$arFields["DISCONNECTED"] = "N";
-			if (strlen($_REQUEST["ADMIN_LOGIN"]) < 0 || strlen($_REQUEST["ADMIN_PASSWORD"]) <= 0)
+			if ($_REQUEST["ADMIN_LOGIN"] == '' || $_REQUEST["ADMIN_PASSWORD"] == '')
 			{
 				$e = new CApplicationException(GetMessage("CTRLR_MEM_EDIT_ERR5"));
 				$message = new CAdminMessage(GetMessage("CTRLR_MEM_EDIT_ERR4"), $e);
@@ -227,7 +227,7 @@ if (
 			}
 			elseif ($sRegistrationMode == "password")
 			{
-				if (strlen($_REQUEST["ADMIN_LOGIN"]) < 0 || strlen($_REQUEST["ADMIN_PASSWORD"]) <= 0)
+				if ($_REQUEST["ADMIN_LOGIN"] == '' || $_REQUEST["ADMIN_PASSWORD"] == '')
 				{
 					$e = new CApplicationException(GetMessage("CTRLR_MEM_EDIT_ERR5"));
 					$message = new CAdminMessage(GetMessage("CTRLR_MEM_EDIT_ERR4"), $e);
@@ -254,7 +254,7 @@ if (
 		}
 		else
 		{
-			if (strlen($save) > 0)
+			if ($save <> '')
 			{
 				if ($back_url == '')
 					LocalRedirect("controller_member_admin.php?lang=".LANG);
@@ -269,8 +269,8 @@ if (
 
 ClearVars();
 $str_ACTIVE = "Y";
-if (strlen($_REQUEST['MEMBER_ID']) > 0)
-	$str_MEMBER_ID = htmlspecialcharsbx(substr($_REQUEST['MEMBER_ID'], 0, 32));
+if ($_REQUEST['MEMBER_ID'] <> '')
+	$str_MEMBER_ID = htmlspecialcharsbx(mb_substr($_REQUEST['MEMBER_ID'], 0, 32));
 else
 	$str_MEMBER_ID = "m".\Bitrix\Main\Security\Random::getString(31);
 
@@ -425,11 +425,11 @@ if (method_exists($USER_FIELD_MANAGER, 'showscript'))
 	<?=bitrix_sessid_post()?>
 	<? echo GetFilterHiddens("find_"); ?>
 
-	<? if ($ID == 0 && (strlen($_REQUEST['SECRET_ID']) > 0 || $_REQUEST["reconnect_id"] > 0)): ?>
+	<? if ($ID == 0 && ($_REQUEST['SECRET_ID'] <> '' || $_REQUEST["reconnect_id"] > 0)): ?>
 		<input type="hidden" name="SECRET_ID" value="<?=$str_SECRET_ID?>">
 	<? endif ?>
 
-	<? if ($ID == 0 && strlen($_REQUEST['TICKET_ID']) > 0): ?>
+	<? if ($ID == 0 && $_REQUEST['TICKET_ID'] <> ''): ?>
 		<input type="hidden" name="TICKET_ID" value="<?=htmlspecialcharsbx($_REQUEST["TICKET_ID"])?>">
 	<? endif ?>
 	<? if ($back_url != ''): ?>
@@ -461,13 +461,13 @@ if (method_exists($USER_FIELD_MANAGER, 'showscript'))
 			</tr>
 		<? endif ?>
 	<? endif ?>
-	<? if (strlen($str_DATE_CREATE) > 0): ?>
+	<? if ($str_DATE_CREATE <> ''): ?>
 		<tr>
 			<td align="right" width="40%"><? echo GetMessage("CTRLR_MEM_EDIT_CREATED") ?></td>
 			<td><? echo $str_DATE_CREATE, " ", $str_CREATED_BY_USER ?></td>
 		</tr>
 	<? endif; ?>
-	<? if (strlen($str_TIMESTAMP_X) > 0): ?>
+	<? if ($str_TIMESTAMP_X <> ''): ?>
 		<tr>
 			<td align="right" width="40%"><? echo GetMessage("CTRLR_MEM_EDIT_MODIFIED") ?></td>
 			<td><? echo $str_TIMESTAMP_X, " ", $str_MODIFIED_BY_USER ?></td>
@@ -488,13 +488,13 @@ if (method_exists($USER_FIELD_MANAGER, 'showscript'))
 		<td>
 			<select name="PROTOCOL">
 				<option value="http://">http://</option>
-				<option value="https://"<? if (strtolower(substr($str_URL, 0, 8)) == "https://") echo " selected" ?>>
+				<option value="https://"<? if (mb_strtolower(mb_substr($str_URL, 0, 8)) == "https://") echo " selected" ?>>
 					https://
 				</option>
 			</select>
 			<?
-			if (strpos($str_URL, "://") > 0)
-				$str_URL = substr($str_URL, strpos($str_URL, "://") + 3);
+			if (mb_strpos($str_URL, "://") > 0)
+				$str_URL = mb_substr($str_URL, mb_strpos($str_URL, "://") + 3);
 			?>
 			<input type="text" name="URL" size="42" maxlength="255" value="<?=$str_URL?>">
 		</td>

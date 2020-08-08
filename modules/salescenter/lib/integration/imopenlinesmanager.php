@@ -3,7 +3,8 @@
 namespace Bitrix\SalesCenter\Integration;
 
 use Bitrix\Crm\Tracking\Channel\Imol;
-use Bitrix\ImOpenLines\Im;
+use Bitrix\ImOpenLines\Im,
+	Bitrix\ImOpenLines\SalesCenter as ImOlSalesCenter;
 use Bitrix\ImOpenLines\Model\SessionTable;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Error;
@@ -11,7 +12,8 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Web\Uri;
-use Bitrix\Sale\Order;
+use Bitrix\Crm\Order\Order;
+use Bitrix\Crm;
 use Bitrix\SalesCenter\Driver;
 use Bitrix\SalesCenter\Model\Meta;
 use Bitrix\SalesCenter\Model\Page;
@@ -192,7 +194,7 @@ class ImOpenLinesManager extends Base
 			if($this->sessionInfo === null)
 			{
 				$this->sessionInfo = SessionTable::getList([
-					'select' => ['ID', 'CRM', 'CRM_ACTIVITY_ID', 'USER_ID', 'CHAT_ID', 'SOURCE'],
+					'select' => ['ID', 'CRM', 'CRM_ACTIVITY_ID', 'USER_ID', 'CHAT_ID', 'SOURCE', 'CONFIG_ID'],
 					'filter' => [
 						'=ID' => $this->sessionId,
 					]
@@ -220,26 +222,76 @@ class ImOpenLinesManager extends Base
 	}
 
 	/**
+	 * Sending a landing page or CRM form
+	 *
 	 * @param Page $page
 	 * @param $dialogId
 	 * @return Result
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function sendPage(Page $page, $dialogId)
 	{
 		$result = new Result();
 		if($this->isEnabled())
 		{
-			$messageId = Im::addMessage([
+			$fieldsMessage = [
 				'DIALOG_ID' => $dialogId,
 				'AUTHOR_ID' => Driver::getInstance()->getUserId(),
 				'FROM_USER_ID' => Driver::getInstance()->getUserId(),
 				'PARAMS' => $this->createImParamsByPage($page),
 				'MESSAGE' => $this->createImMessageByPage($page),
-			]);
-			if(!$messageId)
+			];
+
+			if($page->isWebform())
 			{
-				global $APPLICATION;
-				$result->addError(new Error($APPLICATION->LAST_ERROR));
+				$imOlMessage = new ImOlSalesCenter\Form(ImOlSalesCenter\Form::normalizeChatId($dialogId));
+				$imOlMessage->setFormIds($this->getWebFormIdsByPage($page));
+			}
+			else
+			{
+				$imOlMessage = new ImOlSalesCenter\Other(ImOlSalesCenter\Other::normalizeChatId($dialogId));
+			}
+
+			$imOlMessage->setMessage($fieldsMessage);
+
+			$resultSendMessage = $imOlMessage->send();
+
+			if(!$resultSendMessage->isSuccess())
+			{
+				$result->addErrors($resultSendMessage->getErrors());
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param Page $page
+	 * @return array
+	 */
+	protected function getWebFormIdsByPage(Page $page): array
+	{
+		$result = [];
+		if ($page->isWebform())
+		{
+			$landingPageId = $page->getLandingId();
+			if ($landingPageId > 0)
+			{
+				$forms = LandingManager::getInstance()->getConnectedWebForms();
+				foreach ($forms as $form)
+				{
+					$landingWebForm = (int)$form['formId'];
+					if ($landingPageId === (int)$form['landingId'])
+					{
+						if (!in_array($landingWebForm, $result, true))
+						{
+							$result[] = $landingWebForm;
+						}
+					}
+				}
 			}
 		}
 
@@ -331,9 +383,14 @@ class ImOpenLinesManager extends Base
 	 *
 	 * @param Order $order
 	 * @param $dialogId
+	 * @param array $paymentData
 	 * @return Result
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function sendOrderMessage(Order $order, $dialogId)
+	public function sendOrderMessage(Order $order, $dialogId, array $paymentData = []): Result
 	{
 		$result = new Result();
 
@@ -345,19 +402,26 @@ class ImOpenLinesManager extends Base
 				$result->addError(new Error('Page not found'));
 				return $result;
 			}
-
-			$messageId = Im::addMessage([
+			$fieldsMessage = [
 				'DIALOG_ID' => $dialogId,
 				'AUTHOR_ID' => Driver::getInstance()->getUserId(),
 				'FROM_USER_ID' => Driver::getInstance()->getUserId(),
 				'PARAMS' => $this->createImParamsByOrder($order, $urlInfo['url']),
 				'MESSAGE' => $this->createImMessageByOrder($order, $urlInfo['url'])
-			]);
+			];
 
-			if(!$messageId)
+			$imOlMessage = new ImOlSalesCenter\Payment(ImOlSalesCenter\Payment::normalizeChatId($dialogId));
+			$imOlMessage->setMessage($fieldsMessage);
+			if(!empty($paymentData))
 			{
-				global $APPLICATION;
-				$result->addError(new Error($APPLICATION->LAST_ERROR));
+				$imOlMessage->setData($paymentData);
+			}
+
+			$resultSendMessage = $imOlMessage->send();
+
+			if(!$resultSendMessage->isSuccess())
+			{
+				$result->addErrors($resultSendMessage->getErrors());
 			}
 
 			$notifyResult = $this->sendOrderCheckWarning($order, $dialogId);
@@ -486,6 +550,33 @@ class ImOpenLinesManager extends Base
 					global $APPLICATION;
 					$result->addError(new Error($APPLICATION->LAST_ERROR));
 				}
+			}
+
+			if ($dialogs)
+			{
+				$bindings = [
+					[
+						'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
+						'ENTITY_ID' => $order->getId()
+					]
+				];
+
+				if ($order->getDealBinding())
+				{
+					$bindings[] = [
+						'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+						'ENTITY_ID' => $order->getDealBinding()->getDealId()
+					];
+				}
+
+				Crm\Timeline\OrderCheckController::getInstance()->onSendCheckToIm(
+					$checkId,
+					[
+						'ORDER_FIELDS' => $order->getFieldValues(),
+						'SETTINGS' => ['SENDED' => 'Y'],
+						'BINDINGS' => $bindings
+					]
+				);
 			}
 		}
 
@@ -896,7 +987,11 @@ class ImOpenLinesManager extends Base
 	protected function getPageUrlWithParameters(Page $page): string
 	{
 		$manager = Driver::getInstance()->getFieldsManager();
-		$manager->setIds($this->getCrmInfo());
+		$crmInfo = $this->getCrmInfo();
+		if($crmInfo)
+		{
+			$manager->setIds($crmInfo);
+		}
 
 		return $manager->getUrlWithParameters($page);
 	}

@@ -5,26 +5,26 @@ if (!CModule::IncludeModule("intranet"))
 if (!CModule::IncludeModule("iblock"))
 	return ShowError(GetMessage("EC_IBLOCK_MODULE_NOT_INSTALLED"));
 
-$iblockId = IntVal($arParams["IBLOCK_ID"]);
+$iblockId = intval($arParams["IBLOCK_ID"]);
 
 $arParams["PAGE_VAR"] = Trim($arParams["PAGE_VAR"]);
-if (StrLen($arParams["PAGE_VAR"]) <= 0)
+if ($arParams["PAGE_VAR"] == '')
 	$arParams["PAGE_VAR"] = "page";
 
 $arParams["MEETING_VAR"] = Trim($arParams["MEETING_VAR"]);
-if (StrLen($arParams["MEETING_VAR"]) <= 0)
+if ($arParams["MEETING_VAR"] == '')
 	$arParams["MEETING_VAR"] = "meeting_id";
 
-$meetingId = IntVal($arParams["MEETING_ID"]);
+$meetingId = intval($arParams["MEETING_ID"]);
 if ($meetingId <= 0)
-	$meetingId = IntVal($_REQUEST[$arParams["MEETING_VAR"]]);
+	$meetingId = intval($_REQUEST[$arParams["MEETING_VAR"]]);
 
 $arParams["PATH_TO_MEETING"] = Trim($arParams["PATH_TO_MEETING"]);
-if (StrLen($arParams["PATH_TO_MEETING"]) <= 0)
+if ($arParams["PATH_TO_MEETING"] == '')
 	$arParams["PATH_TO_MEETING"] = HtmlSpecialCharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=meeting&".$arParams["MEETING_VAR"]."=#meeting_id#");
 
 $arParams["PATH_TO_MEETING_LIST"] = Trim($arParams["PATH_TO_MEETING_LIST"]);
-if (StrLen($arParams["PATH_TO_MEETING_LIST"]) <= 0)
+if ($arParams["PATH_TO_MEETING_LIST"] == '')
 	$arParams["PATH_TO_MEETING_LIST"] = HtmlSpecialCharsbx($APPLICATION->GetCurPage());
 
 $arParams["SET_TITLE"] = ($arParams["SET_TITLE"] == "Y" ? "Y" : "N");
@@ -32,7 +32,7 @@ $arParams["SET_NAVCHAIN"] = ($arParams["SET_NAVCHAIN"] == "Y" ? "Y" : "N");
 
 if (!Is_Array($arParams["USERGROUPS_MODIFY"]))
 {
-	if (IntVal($arParams["USERGROUPS_MODIFY"]) > 0)
+	if (intval($arParams["USERGROUPS_MODIFY"]) > 0)
 		$arParams["USERGROUPS_MODIFY"] = array($arParams["USERGROUPS_MODIFY"]);
 	else
 		$arParams["USERGROUPS_MODIFY"] = array();
@@ -120,7 +120,7 @@ if ($arParams["SET_NAVCHAIN"] == "Y")
 if (!$GLOBALS["USER"]->IsAuthorized())
 	$arResult["FatalError"] = GetMessage("INTASK_C36_SHOULD_AUTH").". ";
 
-if (StrLen($arResult["FatalError"]) <= 0)
+if ($arResult["FatalError"] == '')
 {
 	if (!$GLOBALS["USER"]->IsAdmin()
 		&& Count(Array_Intersect($GLOBALS["USER"]->GetUserGroupArray(), $arParams["USERGROUPS_MODIFY"])) <= 0)
@@ -129,7 +129,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 	}
 }
 
-if (StrLen($arResult["FatalError"]) <= 0)
+if ($arResult["FatalError"] == '')
 {
 	$arMeeting = false;
 
@@ -152,23 +152,23 @@ if (StrLen($arResult["FatalError"]) <= 0)
 	}
 }
 
-if (StrLen($arResult["FatalError"]) <= 0)
+if ($arResult["FatalError"] == '')
 {
 	$bVarsFromForm = false;
-	if ($_SERVER["REQUEST_METHOD"] == "POST" && StrLen($_POST["save"]) > 0 && check_bitrix_sessid())
+	if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["save"] <> '' && check_bitrix_sessid())
 	{
 		$errorMessage = "";
 
 		$nameV = $_REQUEST["name"];
 		$descriptionV = $_REQUEST["description"];
-		$uf_floorV = IntVal($_REQUEST["uf_floor"]);
-		$uf_placeV = IntVal($_REQUEST["uf_place"]);
+		$uf_floorV = intval($_REQUEST["uf_floor"]);
+		$uf_placeV = intval($_REQUEST["uf_place"]);
 		$uf_phoneV = $_REQUEST["uf_phone"];
 
-		if (StrLen($nameV) <= 0)
+		if ($nameV == '')
 			$errorMessage .= GetMessage("INTASK_C36_EMPTY_NAME").". ";
 
-		if (StrLen($errorMessage) <= 0)
+		if ($errorMessage == '')
 		{
 			$sanitizer = new \CBXSanitizer();
 			$sanitizer->setLevel(\CBXSanitizer::SECURE_LEVEL_LOW);
@@ -204,7 +204,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 				CIBlockSection::ReSort($iblockId);
 		}
 
-		if (StrLen($errorMessage) <= 0)
+		if ($errorMessage == '')
 		{
 			LocalRedirect(CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_MEETING_LIST"], array()));
 		}
@@ -222,7 +222,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 	}
 }
 
-if (StrLen($arResult["FatalError"]) <= 0)
+if ($arResult["FatalError"] == '')
 {
 	$arResult["MEETING"] = $arMeeting;
 

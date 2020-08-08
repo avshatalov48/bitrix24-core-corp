@@ -13,4 +13,5 @@ return [
 	'chat/const/background',
 	'user/profile',
 	'pull/client/events',
+	'intranet/invite',
 ];

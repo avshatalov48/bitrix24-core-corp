@@ -17,8 +17,8 @@ use Bitrix\Ml\Client;
 
 class ModelTrainer
 {
-	const RECORDS_LIMIT = 50;
-	const LOCK_NAME = "crm-ml-training-lock";
+	const RECORDS_LIMIT = 25;
+	protected const LOCK_NAME = "crm-ml-training-lock";
 
 	/**
 	 * Executes next part of the training request.
@@ -51,7 +51,7 @@ class ModelTrainer
 			return "";
 		}
 
-		if(!Lock::get(static::LOCK_NAME))
+		if(!Lock::get(static::getLockName()))
 		{
 			// repeat iteration later
 			return __CLASS__ . "::run({$trainingId});";
@@ -90,20 +90,34 @@ class ModelTrainer
 		}
 
 		$trainingSet = $model->getTrainingSet($lastId, static::RECORDS_LIMIT);
+		$trainingSetWithFeatures = [];
 		$client = new Client();
 		if(count($trainingSet) > 0)
 		{
+			foreach ($trainingSet as $entityId)
+			{
+				// Writing LAST_ID before building features because buildFeaturesVector can run too long (or even fail)
+				// in some extreme cases, so we will skip broken entity next time.
+				ModelTrainingTable::update(
+					$trainingId,
+					[
+						"STATE" => TrainingState::GATHERING,
+						"LAST_ID" => $entityId
+					]
+				);
+				$trainingSetWithFeatures[] = $model->buildFeaturesVector($entityId);
+			}
+
 			$appendResult = $client->appendLearningData([
 				"modelName" => $model->getName(),
-				"records" => $trainingSet
+				"records" => $trainingSetWithFeatures
 			]);
 
 			if($appendResult->isSuccess())
 			{
-				$newLastId = $trainingSet[count($trainingSet) - 1][$rowIdField];
 				$successRecords = 0;
 				$failedRecords = 0;
-				foreach ($trainingSet as $trainingRecord)
+				foreach ($trainingSetWithFeatures as $trainingRecord)
 				{
 					if($trainingRecord[$targetField] === "Y")
 					{
@@ -117,7 +131,6 @@ class ModelTrainer
 				ModelTrainingTable::update(
 					$trainingId,
 					[
-						"LAST_ID" => $newLastId,
 						"STATE" => TrainingState::GATHERING,
 						"RECORDS_SUCCESS" => new SqlExpression("?# + ?i", "RECORDS_SUCCESS", $successRecords),
 						"RECORDS_FAILED" => new SqlExpression("?# + ?i", "RECORDS_FAILED", $failedRecords)
@@ -128,7 +141,7 @@ class ModelTrainer
 			}
 
 			// repeat iteration later
-			Lock::release(static::LOCK_NAME);
+			Lock::release(static::getLockName());
 			return __CLASS__ . "::run({$trainingId});";
 		}
 		else
@@ -147,13 +160,13 @@ class ModelTrainer
 				);
 
 				// success
-				Lock::release(static::LOCK_NAME);
+				Lock::release(static::getLockName());
 				return "";
 			}
 			else
 			{
 				// repeat iteration later
-				Lock::release(static::LOCK_NAME);
+				Lock::release(static::getLockName());
 				return __CLASS__ . "::run({$trainingId});";
 			}
 		}
@@ -210,5 +223,10 @@ class ModelTrainer
 			"STATE" => TrainingState::CANCELED,
 			"DATE_FINISH" => new DateTime()
 		]);
+	}
+
+	public static function getLockName()
+	{
+		return static::LOCK_NAME . "_" . \CMain::getServerUniqID();
 	}
 }

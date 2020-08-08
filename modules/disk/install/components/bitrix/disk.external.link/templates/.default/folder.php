@@ -26,13 +26,13 @@ Extension::load([
 ]);
 
 $langId = $component->getLangId();
-switch(strtolower($langId))
+switch(mb_strtolower($langId))
 {
 	case 'en':
 	case 'de':
 	case 'ru':
 	case 'ua':
-		$langForBanner = strtolower($langId);
+	$langForBanner = mb_strtolower($langId);
 		break;
 	default:
 		$langForBanner = Loc::getDefaultLang($langId);

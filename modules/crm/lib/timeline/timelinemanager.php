@@ -44,9 +44,19 @@ class TimelineManager
 			return CommentController::getInstance();
 		}
 
+		if($typeID === TimelineType::EXTERNAL_NOTICE)
+		{
+			return ExternalNoticeController::getInstance();
+		}
+
 		if($typeID === TimelineType::DOCUMENT)
 		{
 			return DocumentController::getInstance();
+		}
+
+		if($typeID === TimelineType::DELIVERY)
+		{
+			return DeliveryController::getInstance();
 		}
 
 		if($assocEntityTypeID === \CCrmOwnerType::Activity)

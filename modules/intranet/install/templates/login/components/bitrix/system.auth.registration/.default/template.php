@@ -32,7 +32,7 @@ else
 	<?endif?>
 	<noindex>
 	<form method="post" action="<?=$arResult["AUTH_URL"]?>" name="bform">
-		<?if (strlen($arResult["BACKURL"]) > 0):?>
+		<?if ($arResult["BACKURL"] <> ''):?>
 			<input type="hidden" name="backurl" value="<?=$arResult["BACKURL"]?>" />
 		<?endif?>
 			<input type="hidden" name="AUTH_FORM" value="Y" />
@@ -89,7 +89,7 @@ else
 				<?// ********************* User properties ***************************************************?>
 				<?if($arResult["USER_PROPERTIES"]["SHOW"] == "Y"):?>
 					<div class="login-item">
-						<?=strlen(trim($arParams["USER_PROPERTY_NAME"])) > 0 ? $arParams["USER_PROPERTY_NAME"] : GetMessage("USER_TYPE_EDIT_TAB")?>
+						<?=trim($arParams["USER_PROPERTY_NAME"]) <> '' ? $arParams["USER_PROPERTY_NAME"] : GetMessage("USER_TYPE_EDIT_TAB")?>
 					</div>
 					<?foreach ($arResult["USER_PROPERTIES"]["DATA"] as $FIELD_NAME => $arUserField):?>
 					<div class="login-item">

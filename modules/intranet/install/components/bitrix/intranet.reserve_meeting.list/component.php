@@ -8,27 +8,27 @@ if (!CModule::IncludeModule("iblock"))
 $iblockId = Trim($arParams["IBLOCK_ID"]);
 
 $arParams["PAGE_VAR"] = Trim($arParams["PAGE_VAR"]);
-if (StrLen($arParams["PAGE_VAR"]) <= 0)
+if ($arParams["PAGE_VAR"] == '')
 	$arParams["PAGE_VAR"] = "page";
 
 $arParams["MEETING_VAR"] = Trim($arParams["MEETING_VAR"]);
-if (StrLen($arParams["MEETING_VAR"]) <= 0)
+if ($arParams["MEETING_VAR"] == '')
 	$arParams["MEETING_VAR"] = "meeting_id";
 
 $arParams["PATH_TO_MEETING_LIST"] = Trim($arParams["PATH_TO_MEETING_LIST"]);
-if (StrLen($arParams["PATH_TO_MEETING_LIST"]) <= 0)
+if ($arParams["PATH_TO_MEETING_LIST"] == '')
 	$arParams["PATH_TO_MEETING_LIST"] = HtmlSpecialCharsbx($APPLICATION->GetCurPage());
 
 $arParams["PATH_TO_MEETING"] = Trim($arParams["PATH_TO_MEETING"]);
-if (StrLen($arParams["PATH_TO_MEETING"]) <= 0)
+if ($arParams["PATH_TO_MEETING"] == '')
 	$arParams["PATH_TO_MEETING"] = HtmlSpecialCharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=meeting&".$arParams["MEETING_VAR"]."=#meeting_id#");
 
 $arParams["PATH_TO_RESERVE_MEETING"] = Trim($arParams["PATH_TO_RESERVE_MEETING"]);
-if (StrLen($arParams["PATH_TO_RESERVE_MEETING"]) <= 0)
+if ($arParams["PATH_TO_RESERVE_MEETING"] == '')
 	$arParams["PATH_TO_RESERVE_MEETING"] = HtmlSpecialCharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=reserve_meeting&".$arParams["MEETING_VAR"]."=#meeting_id#&".$arParams["ITEM_VAR"]."=#item_id#");
 
 $arParams["PATH_TO_MODIFY_MEETING"] = Trim($arParams["PATH_TO_MODIFY_MEETING"]);
-if (StrLen($arParams["PATH_TO_MODIFY_MEETING"]) <= 0)
+if ($arParams["PATH_TO_MODIFY_MEETING"] == '')
 	$arParams["PATH_TO_MODIFY_MEETING"] = HtmlSpecialCharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=modify_meeting&".$arParams["MEETING_VAR"]."=#meeting_id#");
 
 $arParams["SET_TITLE"] = ($arParams["SET_TITLE"] == "Y" ? "Y" : "N");
@@ -36,7 +36,7 @@ $arParams["SET_NAVCHAIN"] = ($arParams["SET_NAVCHAIN"] == "Y" ? "Y" : "N");
 
 if (!Is_Array($arParams["USERGROUPS_MODIFY"]))
 {
-	if (IntVal($arParams["USERGROUPS_MODIFY"]) > 0)
+	if (intval($arParams["USERGROUPS_MODIFY"]) > 0)
 		$arParams["USERGROUPS_MODIFY"] = array($arParams["USERGROUPS_MODIFY"]);
 	else
 		$arParams["USERGROUPS_MODIFY"] = array();
@@ -44,7 +44,7 @@ if (!Is_Array($arParams["USERGROUPS_MODIFY"]))
 
 if (!Is_Array($arParams["USERGROUPS_RESERVE"]))
 {
-	if (IntVal($arParams["USERGROUPS_RESERVE"]) > 0)
+	if (intval($arParams["USERGROUPS_RESERVE"]) > 0)
 		$arParams["USERGROUPS_RESERVE"] = array($arParams["USERGROUPS_RESERVE"]);
 	else
 		$arParams["USERGROUPS_RESERVE"] = array();
@@ -55,9 +55,9 @@ $arResult["FatalError"] = "";
 if (!CIBlockRights::UserHasRightTo($iblockId, $iblockId, 'element_read'))
 	$arResult["FatalError"] .= GetMessage("INTS_NO_IBLOCK_PERMS").".";
 
-if (StrLen($arResult["FatalError"]) <= 0)
+if ($arResult["FatalError"] == '')
 {
-	$deleteMeetingId = IntVal($_REQUEST["delete_meeting_id"]);
+	$deleteMeetingId = intval($_REQUEST["delete_meeting_id"]);
 
 	if ($deleteMeetingId > 0 && check_bitrix_sessid() && $GLOBALS["USER"]->IsAuthorized() 
 		&& ($GLOBALS["USER"]->IsAdmin() 
@@ -146,18 +146,18 @@ if ($arParams["SET_TITLE"] == "Y")
 if ($arParams["SET_NAVCHAIN"] == "Y")
 	$APPLICATION->AddChainItem(GetMessage("INTASK_C36_PAGE_TITLE"));
 
-if (StrLen($arResult["FatalError"]) <= 0)
+if ($arResult["FatalError"] == '')
 {
 	for ($i = 0; $i < 3; $i++)
 	{
 		$orderBy = (Array_Key_Exists("order_by_".$i, $_REQUEST) ? $_REQUEST["order_by_".$i] : $arParams["ORDER_BY_".$i]);
 		$orderDir = (Array_Key_Exists("order_dir_".$i, $_REQUEST) ? $_REQUEST["order_dir_".$i] : $arParams["ORDER_DIR_".$i]);
 
-		$orderBy = StrToUpper(Trim($orderBy));
+		$orderBy = mb_strtoupper(Trim($orderBy));
 		if (Array_Key_Exists($orderBy, $arResult["ALLOWED_FIELDS"]) && $arResult["ALLOWED_FIELDS"][$orderBy]["ORDERABLE"])
 		{
 			$arParams["ORDER_BY_".$i] = $orderBy;
-			$arParams["ORDER_DIR_".$i] = StrToUpper(Trim($orderDir));
+			$arParams["ORDER_DIR_".$i] = mb_strtoupper(Trim($orderDir));
 			if (!In_Array($arParams["ORDER_DIR_".$i], array("ASC", "DESC")))
 				$arParams["ORDER_DIR_".$i] = "ASC";
 		}
@@ -170,19 +170,19 @@ if (StrLen($arResult["FatalError"]) <= 0)
 
 	foreach ($arParams as $key => $value)
 	{
-		if (StrToUpper(SubStr($key, 0, 4)) != "FLT_")
+		if (mb_strtoupper(mb_substr($key, 0, 4)) != "FLT_")
 			continue;
-		if (!Is_Array($value) && StrLen($value) <= 0 || Is_Array($value) && Count($value) <= 0)
+		if (!Is_Array($value) && $value == '' || Is_Array($value) && Count($value) <= 0)
 			continue;
 
-		$key = StrToUpper(SubStr($key, 4));
+		$key = mb_strtoupper(mb_substr($key, 4));
 
 		$op = "";
-		$opTmp = SubStr($key, 0, 1);
+		$opTmp = mb_substr($key, 0, 1);
 		if (In_Array($opTmp, array("!", "<", ">")))
 		{
 			$op = $opTmp;
-			$key = SubStr($key, 1);
+			$key = mb_substr($key, 1);
 		}
 
 		if (Array_Key_Exists($key, $arResult["ALLOWED_FIELDS"]) && $arResult["ALLOWED_FIELDS"][$key]["FILTERABLE"])
@@ -210,19 +210,19 @@ if (StrLen($arResult["FatalError"]) <= 0)
 
 	foreach ($_REQUEST as $key => $value)
 	{
-		if (StrToUpper(SubStr($key, 0, 4)) != "FLT_")
+		if (mb_strtoupper(mb_substr($key, 0, 4)) != "FLT_")
 			continue;
-		if (!Is_Array($value) && StrLen($value) <= 0 || Is_Array($value) && Count($value) <= 0)
+		if (!Is_Array($value) && $value == '' || Is_Array($value) && Count($value) <= 0)
 			continue;
 
-		$key = StrToUpper(SubStr($key, 4));
+		$key = mb_strtoupper(mb_substr($key, 4));
 
 		$op = "";
-		$opTmp = SubStr($key, 0, 1);
+		$opTmp = mb_substr($key, 0, 1);
 		if (In_Array($opTmp, array("!", "<", ">")))
 		{
 			$op = $opTmp;
-			$key = SubStr($key, 1);
+			$key = mb_substr($key, 1);
 		}
 
 		if (Array_Key_Exists($key, $arResult["ALLOWED_FIELDS"]) && $arResult["ALLOWED_FIELDS"][$key]["FILTERABLE"])
@@ -250,19 +250,19 @@ if (StrLen($arResult["FatalError"]) <= 0)
 }
 
 
-if (StrLen($arResult["FatalError"]) <= 0)
+if ($arResult["FatalError"] == '')
 {
 	$arOrderBy = array();
 	for ($i = 0; $i < 3; $i++)
 	{
-		if (StrLen($arParams["ORDER_BY_".$i]) <= 0)
+		if ($arParams["ORDER_BY_".$i] == '')
 			continue;
 		
 		$orderBy = $arParams["ORDER_BY_".$i];
 
 		if (Array_Key_Exists($orderBy, $arResult["ALLOWED_FIELDS"]) && $arResult["ALLOWED_FIELDS"][$orderBy]["ORDERABLE"])
 		{
-			$arParams["ORDER_DIR_".$i] = (StrToUpper($arParams["ORDER_DIR_".$i]) == "ASC" ? "ASC" : "DESC");
+			$arParams["ORDER_DIR_".$i] = (mb_strtoupper($arParams["ORDER_DIR_".$i]) == "ASC" ? "ASC" : "DESC");
 			$arOrderBy[$orderBy] = $arParams["ORDER_DIR_".$i];
 		}
 	}
@@ -280,11 +280,11 @@ if (StrLen($arResult["FatalError"]) <= 0)
 		foreach ($arParams["FILTER"] as $key => $value)
 		{
 			$op = "";
-			$opTmp = SubStr($key, 0, 1);
+			$opTmp = mb_substr($key, 0, 1);
 			if (In_Array($opTmp, array("!", "<", ">")))
 			{
 				$op = $opTmp;
-				$key = SubStr($key, 1);
+				$key = mb_substr($key, 1);
 			}
 
 			if (Array_Key_Exists($key, $arResult["ALLOWED_FIELDS"]) && $arResult["ALLOWED_FIELDS"][$key]["FILTERABLE"])
@@ -293,7 +293,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 	}
 }
 
-if (StrLen($arResult["FatalError"]) <= 0)
+if ($arResult["FatalError"] == '')
 {
 	$arNavStartParams = array("nPageSize" => $arParams["ITEMS_COUNT"], "bShowAll" => false, "bDescPageNumbering" => false);
 	$arNavigation = CDBResult::GetNavParams($arNavStartParams);
@@ -346,7 +346,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 			);
 
 			$p = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_MEETING_LIST"], array());
-			$p .= (StrPos($p, "?") === false ? "?" : "&")."delete_meeting_id=".$arMeeting["ID"]."&".bitrix_sessid_get();
+			$p .= (mb_strpos($p, "?") === false ? "?" : "&")."delete_meeting_id=".$arMeeting["ID"]."&".bitrix_sessid_get();
 
 			$arMeeting["ACTIONS"][] = array(
 				"ICON" => "",

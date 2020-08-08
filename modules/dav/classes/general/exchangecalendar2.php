@@ -1186,7 +1186,7 @@ if (!class_exists("CDavExchangeCalendar"))
 				if(!empty($rt))
 					$itemBody .= "      <".$rt.">\r\n";
 
-				if (isset($arFields["RecurringInterval"]))
+				if (isset($arFields["RecurringInterval"]) && !in_array($arFields['RecurringType'], ['MONTHLY', 'YEARLY']))
 					$itemBody .= "       <Interval>".$arFields["RecurringInterval"]."</Interval>\r\n";
 				if (isset($arFields["RecurringDaysOfWeek"]))
 				{
@@ -1198,9 +1198,17 @@ if (!class_exists("CDavExchangeCalendar"))
 				}
 
 				// TODO: mantis:#67383
-				if ($arFields["RecurringType"] == "MONTHLY")
+				if ($arFields["RecurringType"] == "MONTHLY" || $arFields["RecurringType"] == "YEARLY")
 				{
-					//$itemBody .= "       <DayOfMonth>1"."</DayOfMonth>\r\n";
+					$dateInstance = date_create($arFields['RecurringStartDate']);
+					$day = $dateInstance->format('j');
+					$itemBody .= "       <DayOfMonth>".$day."</DayOfMonth>\r\n";
+				}
+				if ($arFields["RecurringType"] == "YEARLY")
+				{
+					$dateInstance = date_create($arFields['RecurringStartDate']);
+					$month = $dateInstance->format('n');
+					$itemBody .= "       <Month>".$month."</Month>\r\n";
 				}
 
 				$itemBody .= "      </".$rt.">\r\n";
@@ -1342,7 +1350,12 @@ if (!class_exists("CDavExchangeCalendar"))
 			if ($exchangeUseLogin == "N")
 				$arUserFilter["!UF_BXDAVEX_MAILBOX"] = false;
 
-			$dbUserList = CUser::GetList($by = "UF_BXDAVEX_CALSYNC", $order = "asc", $arUserFilter, array("SELECT" => array("ID", "LOGIN", "UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC")));
+			$dbUserList = CUser::GetList($by = "UF_BXDAVEX_CALSYNC",
+				$order = "asc",
+				$arUserFilter,
+				array("SELECT" => array("UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"),
+					"FIELDS" => array('ID', 'LOGIN'),
+					"NAV_PARAMS" => array("nTopCount" => $maxNumber)));
 
 			$usersToSync = array();
 			$handledUsers = array();
@@ -1665,7 +1678,8 @@ if (!class_exists("CDavExchangeCalendar"))
 				$by = "",
 				$order = "",
 				array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false, "ID_EQUAL_EXACT" => $userId),
-				array("SELECT" => array("ID", "LOGIN", "UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"))
+				array("SELECT" => array("UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"),
+					"FIELDS" => array('ID', 'LOGIN'))
 			);
 			if ($arUser = $dbUserList->Fetch())
 			{
@@ -1714,7 +1728,8 @@ if (!class_exists("CDavExchangeCalendar"))
 				$by = "",
 				$order = "",
 				array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false, "ID_EQUAL_EXACT" => $userId),
-				array("SELECT" => array("ID", "LOGIN", "UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"))
+				array("SELECT" => array("UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"),
+					"FIELDS" => array('ID', 'LOGIN'))
 			);
 			if ($arUser = $dbUserList->Fetch())
 			{
@@ -1781,7 +1796,8 @@ if (!class_exists("CDavExchangeCalendar"))
 				$by = "",
 				$order = "",
 				array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false, "ID_EQUAL_EXACT" => $userId),
-				array("SELECT" => array("ID", "LOGIN", "UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"))
+				array("SELECT" => array("UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"),
+					"FIELDS" => array('ID', 'LOGIN'))
 			);
 			if ($arUser = $dbUserList->Fetch())
 			{
@@ -1826,7 +1842,8 @@ if (!class_exists("CDavExchangeCalendar"))
 				$by = "",
 				$order = "",
 				array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false, "ID_EQUAL_EXACT" => $userId),
-				array("SELECT" => array("ID", "LOGIN", "UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"))
+				array("SELECT" => array("UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"),
+					"FIELDS" => array('ID', 'LOGIN'))
 			);
 			if ($arUser = $dbUserList->Fetch())
 			{
@@ -1875,7 +1892,8 @@ if (!class_exists("CDavExchangeCalendar"))
 				$by = "",
 				$order = "",
 				array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false, "ID_EQUAL_EXACT" => $userId),
-				array("SELECT" => array("ID", "LOGIN", "UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"))
+				array("SELECT" => array("UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"),
+					"FIELDS" => array('ID', 'LOGIN'))
 			);
 			if ($arUser = $dbUserList->Fetch())
 			{
@@ -1927,7 +1945,8 @@ if (!class_exists("CDavExchangeCalendar"))
 				$by = "",
 				$order = "",
 				array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false, "ID_EQUAL_EXACT" => $userId),
-				array("SELECT" => array("ID", "LOGIN", "UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"))
+				array("SELECT" => array("UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"),
+					"FIELDS" => array('ID', 'LOGIN'))
 			);
 			if ($arUser = $dbUserList->Fetch())
 			{
@@ -1963,7 +1982,8 @@ if (!class_exists("CDavExchangeCalendar"))
 				$by = "",
 				$order = "",
 				array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false, "ID_EQUAL_EXACT" => $userId),
-				array("SELECT" => array("ID", "LOGIN", "UF_BXDAVEX_MAILBOX"))
+				array("SELECT" => array("UF_BXDAVEX_MAILBOX"),
+					"FIELDS" => array('ID', 'LOGIN'))
 			);
 			if ($arUser = $dbUserList->Fetch())
 			{

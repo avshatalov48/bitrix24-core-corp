@@ -1315,7 +1315,7 @@ if (IsModuleInstalled('bizproc') && CModule::IncludeModule('bizproc') && CBPRunt
 			'value' => $sVal
 		);
 	}
-	elseif (isset($_REQUEST['bizproc_log']) && strlen($_REQUEST['bizproc_log']) > 0)
+	elseif (isset($_REQUEST['bizproc_log']) && $_REQUEST['bizproc_log'] <> '')
 	{
 		ob_start();
 		$APPLICATION->IncludeComponent('bitrix:bizproc.log',
@@ -1345,7 +1345,7 @@ if (IsModuleInstalled('bizproc') && CModule::IncludeModule('bizproc') && CBPRunt
 			'value' => $sVal
 		);
 	}
-	elseif (isset($_REQUEST['bizproc_start']) && strlen($_REQUEST['bizproc_start']) > 0)
+	elseif (isset($_REQUEST['bizproc_start']) && $_REQUEST['bizproc_start'] <> '')
 	{
 		ob_start();
 		$APPLICATION->IncludeComponent('bitrix:bizproc.workflow.start',

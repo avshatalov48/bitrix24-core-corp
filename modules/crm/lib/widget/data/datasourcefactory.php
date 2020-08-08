@@ -10,7 +10,7 @@ abstract class DataSourceFactory
 	}
 	public static function create(array $settings, $userID = 0, $enablePermissionCheck = true)
 	{
-		$name = isset($settings['name']) ? strtoupper($settings['name']) : '';
+		$name = isset($settings['name'])? mb_strtoupper($settings['name']) : '';
 		if($name === DealSumStatistics::TYPE_NAME)
 		{
 			return new DealSumStatistics($settings, $userID, $enablePermissionCheck);

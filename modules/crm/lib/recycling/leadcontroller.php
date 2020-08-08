@@ -377,6 +377,7 @@ class LeadController extends BaseController
 
 		$this->rebuildSearchIndex($newEntityID);
 		$this->startRecoveryWorkflows($newEntityID);
+		//TODO: start automation???
 
 		return true;
 	}

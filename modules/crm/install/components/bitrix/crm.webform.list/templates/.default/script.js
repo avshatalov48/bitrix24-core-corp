@@ -18,6 +18,7 @@ var CrmWebFormList = function(params)
 		this.detailPageUrlTemplate = params.detailPageUrlTemplate;
 		this.adsPageUrlTemplate = params.adsPageUrlTemplate;
 		this.actionRequestUrl = params.actionRequestUrl;
+		this.restrictionPopup = params.restrictionPopup;
 
 		this.mess = params.mess || {};
 		this.viewList = params.viewList || {};
@@ -781,16 +782,7 @@ CrmWebFormListItem.prototype =
 
 				if(data.limited)
 				{
-					if(!B24 || !B24['licenseInfoPopup'])
-					{
-						return;
-					}
-
-					B24.licenseInfoPopup.show(
-						'crm_webform_activation',
-						this.caller.mess.dlgActiveCountLimitedTitle,
-						'<span>' + this.caller.mess.dlgActiveCountLimitedText + '</span>'
-					);
+					eval(this.caller.restrictionPopup);
 				}
 				else
 				{

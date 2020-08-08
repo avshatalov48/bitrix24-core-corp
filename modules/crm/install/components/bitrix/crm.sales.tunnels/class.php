@@ -29,6 +29,7 @@ class SalesTunnels extends CBitrixComponent
 		if ($categories === null)
 		{
 			$allCategories = DealCategory::getAll(true);
+
 			$categories = [];
 			$tunnelScheme = static::getTunnelScheme();
 
@@ -74,11 +75,25 @@ class SalesTunnels extends CBitrixComponent
 				}
 
 				$category['RC_COUNT'] = Service::getDealWorkerCount($category['ID']);
+				$category['RC_LIST_URL'] = Service::getDealWorkerUrl($category['ID']);
 				$category['STAGES'] = $reducedStages;
+
+				$permissions = DealCategory::getPermissionById($category['ID']);
+				$access = null;
+				array_walk_recursive ($permissions, function ($item) use (&$access) {
+					if ($access === null)
+					{
+						$access  = $item;
+					}
+					else if ($access !== false && $access !== $item)
+					{
+						$access = false;
+					}
+				});
+				$category['ACCESS'] = ($access === false || !in_array($access, [BX_CRM_PERM_ALL, BX_CRM_PERM_SELF, BX_CRM_PERM_NONE]) ? false : $access);
 				$categories[] = $category;
 			}
 		}
-
 		return $categories;
 	}
 
@@ -154,6 +169,8 @@ class SalesTunnels extends CBitrixComponent
 		$this->arResult['allowWrite'] = $this->isCrmAdmin();
 		$this->arResult['canEditTunnels'] = static::canCurrentUserEditTunnels();
 		$this->arResult['restrictionPopup'] = $this->getRestrictionPopup();
+		$this->arResult['showRobotsRestrictionPopup'] = $this->getRobotsRestrictionPopup();
+		$this->arResult['showGeneratorRestrictionPopup'] = $this->getGeneratorRestrictionPopup();
 
 		list($this->arResult['canAddCategory'], $this->arResult['categoriesQuantityLimit']) = $this->getLimits();
 
@@ -195,6 +212,17 @@ HTML;
 	private function getRestrictionPopup()
 	{
 		$restriction = Crm\Restriction\RestrictionManager::getDealCategoryLimitRestriction();
-		return $restriction->preparePopupScript();
+		return $restriction->prepareInfoHelperScript();
+	}
+
+	private function getRobotsRestrictionPopup()
+	{
+		$restriction = Crm\Restriction\RestrictionManager::getAutomationRestriction();
+		return $restriction->prepareInfoHelperScript();
+	}
+	private function getGeneratorRestrictionPopup()
+	{
+		$restriction = Crm\Restriction\RestrictionManager::getGeneratorRestriction();
+		return $restriction->prepareInfoHelperScript();
 	}
 }

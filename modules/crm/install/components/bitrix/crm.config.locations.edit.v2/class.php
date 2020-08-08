@@ -131,7 +131,7 @@ class CBitrixCrmConfigLocationEdit2Component extends CBitrixComponent
 		$this->componentData['FORM_ROWS'] = Helper::getDetailPageRows();
 
 		$this->dbResult['CALCULATED_BACK_URL'] = false;
-		if(strlen($this->dbResult['REQUEST']['GET']['return_url']))
+		if($this->dbResult['REQUEST']['GET']['return_url'] <> '')
 		{
 			$this->dbResult['SPECIFIED_BACK_URL'] = $this->dbResult['REQUEST']['GET']['return_url'];
 			$this->dbResult['CALCULATED_BACK_URL'] = $this->dbResult['REQUEST']['GET']['return_url'];
@@ -313,7 +313,7 @@ class CBitrixCrmConfigLocationEdit2Component extends CBitrixComponent
 		{
 			$required = $row['required'];
 
-			if(!$required && substr($code, 0, 5) == 'NAME_')
+			if(!$required && mb_substr($code, 0, 5) == 'NAME_')
 				$required = true;
 
 			$this->arResult['FIELDS'][] = array(
@@ -474,7 +474,7 @@ class CBitrixCrmConfigLocationEdit2Component extends CBitrixComponent
 	public static function tryParseString(&$fld, $default = false)
 	{
 		$fld = trim((string)$fld);
-		if(!strlen($fld) && $default !== false)
+		if(!mb_strlen($fld) && $default !== false)
 			$fld = $default;
 
 		$fld = htmlspecialcharsbx($fld);
@@ -491,7 +491,7 @@ class CBitrixCrmConfigLocationEdit2Component extends CBitrixComponent
 	public static function tryParseStringStrict(&$fld, $default = false)
 	{
 		$fld = trim((string)$fld);
-		if(!strlen($fld) && $default !== false)
+		if(!mb_strlen($fld) && $default !== false)
 			$fld = $default;
 
 		$fld = preg_replace('#[^a-z0-9_-]#i', '', $fld);

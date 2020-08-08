@@ -122,11 +122,11 @@ ChatDialog.openDialog = function(dialogId)
 			}
 			else if (BXIM.messenger.chat[chatId].type == 'open')
 			{
-				description = BX.message('IM_CL_OPEN_CHAT');
+				description = BX.message('IM_CL_OPEN_CHAT_NEW');
 			}
 			else
 			{
-				description = BX.message('IM_CL_CHAT_2');
+				description = BX.message('IM_CL_CHAT_NEW');
 			}
 
 			dialogTitleParams = {

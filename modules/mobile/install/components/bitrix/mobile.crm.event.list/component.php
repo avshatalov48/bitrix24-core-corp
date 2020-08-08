@@ -17,7 +17,7 @@ if (!CCrmPerms::IsAccessEnabled())
 global $APPLICATION;
 $arResult['RUBRIC'] = array('ENABLED' => false);
 
-$enablePaging = $arResult['ENABLE_PAGING'] = isset($_GET['PAGING']) && strtoupper($_GET['PAGING']) === 'Y';
+$enablePaging = $arResult['ENABLE_PAGING'] = isset($_GET['PAGING']) && mb_strtoupper($_GET['PAGING']) === 'Y';
 $entityTypeID = $arResult['ENTITY_TYPE_ID'] = isset($_GET['entity_type_id']) ? intval($_GET['entity_type_id']) : 0;
 $entityID = $arResult['ENTITY_ID'] = isset($_GET['entity_id']) ? intval($_GET['entity_id']) : 0;
 
@@ -130,9 +130,9 @@ while($item = $dbRes->Fetch())
 		{
 			$item['EVENT_INFO'] = strip_tags($arEventDescr['INFO'], '<br>');
 
-			if (strlen($item['EVENT_INFO'])>255)
+			if (mb_strlen($item['EVENT_INFO']) > 255)
 			{
-				$item['EVENT_TEXT_1'] = '<div id="event_desc_short_'.$item['ID'].'">'.substr(($item['EVENT_INFO']), 0, 252).'...</div>';
+				$item['EVENT_TEXT_1'] = '<div id="event_desc_short_'.$item['ID'].'">'.mb_substr(($item['EVENT_INFO']), 0, 252).'...</div>';
 			}
 			else
 				$item['EVENT_TEXT_1'] = !empty($item['EVENT_INFO'])? ($item['EVENT_INFO']): '';
@@ -250,7 +250,7 @@ $arResult['SERVICE_URL'] = SITE_DIR.'bitrix/components/bitrix/mobile.crm.event.l
 //<-- NEXT_PAGE_URL, SEARCH_PAGE_URL, SERVICE_URL
 $arResult['IS_FILTERED'] = !empty($filter);
 
-$format = isset($_REQUEST['FORMAT']) ? strtolower($_REQUEST['FORMAT']) : '';
+$format = isset($_REQUEST['FORMAT'])? mb_strtolower($_REQUEST['FORMAT']) : '';
 // Only JSON format is supported
 if($format !== '' && $format !== 'json')
 {

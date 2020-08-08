@@ -78,7 +78,7 @@ class EntityConversionConfig
 		$results = array();
 		foreach($this->items as $k => $v)
 		{
-			$results[strtolower(\CCrmOwnerType::ResolveName($k))] = $v->toJavaScript();
+			$results[mb_strtolower(\CCrmOwnerType::ResolveName($k))] = $v->toJavaScript();
 		}
 		return $results;
 	}

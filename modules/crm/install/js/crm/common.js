@@ -4174,7 +4174,8 @@ if(typeof(BX.CrmDupController) === "undefined")
 					data:
 						{
 							"ACTION" : "FIND_DUPLICATES",
-							"PARAMS": params
+							"PARAMS": params,
+							"sessid": BX.bitrix_sessid()
 						},
 					onsuccess: BX.delegate(this._onSearchRequestSuccsess, this),
 					onfailure: BX.delegate(this._onSearchRequestFailure, this)
@@ -4407,7 +4408,7 @@ if(typeof(BX.CrmDupController) === "undefined")
 				{
 					"controller": this,
 					"anchor": anchor,
-					"position": this.getSetting("searcSummaryPosition", "left")
+					"position": this.getSetting("searchSummaryPosition", "bottom")
 				}
 			);
 			this._searchSummary.show();
@@ -6821,6 +6822,8 @@ if(typeof(BX.CrmDuplicateSummaryPopup) === "undefined")
 			}
 
 			var anglePosition = "right";
+			var offsetLeft = 0;
+			var offsetTop = 0;
 			if(position === "top")
 			{
 				anglePosition = "bottom";
@@ -6828,6 +6831,7 @@ if(typeof(BX.CrmDuplicateSummaryPopup) === "undefined")
 			else if(position === "bottom")
 			{
 				anglePosition = "top";
+				offsetLeft = 40;
 			}
 			else if(position === "right")
 			{
@@ -6855,6 +6859,8 @@ if(typeof(BX.CrmDuplicateSummaryPopup) === "undefined")
 					content: this._prepareContent(),
 					className : "crm-tip-popup",
 					angle: { position: anglePosition },
+					offsetLeft: offsetLeft,
+					offsetTop: offsetTop,
 					lightShadow : true
 				}
 			);
@@ -6944,7 +6950,7 @@ if(typeof(BX.CrmDuplicateSummaryPopup) === "undefined")
 				var itemLink = BX.create(
 					"SPAN",
 					{
-						attrs: { className: "crm-tip-popup-link" },
+						attrs: { className: "ui-link ui-link-dotted" },
 						text: infos[groupId]["total"]
 					}
 				);

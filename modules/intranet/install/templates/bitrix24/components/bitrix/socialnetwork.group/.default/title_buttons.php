@@ -35,37 +35,31 @@ $APPLICATION->AddHeadScript('/bitrix/templates/bitrix24/components/bitrix/social
 
 <div class="socialnetwork-group-title-buttons">
 	<? if (in_array($arResult["CurrentUserPerms"]["UserRole"], array(SONET_ROLES_OWNER, SONET_ROLES_MODERATOR, SONET_ROLES_USER))):
+		$APPLICATION->includeComponent(
+			'bitrix:intranet.binding.menu',
+			'',
+			array(
+				'SECTION_CODE' => 'socialnetwork',
+				'MENU_CODE' => 'group_notifications',
+				'CONTEXT' => [
+					'GROUP_ID' => $arResult['Group']['ID']
+				]
+			)
+		);
 		if ($arResult["bChatActive"])
 		{
 			?>
-			<span
-					id="group_menu_chat_button"
-					class="
-						webform-small-button
-						webform-small-button-transparent
-						bx24-top-toolbar-button
-						socialnetwork-group-chat-button
-					"
+			<button id="group_menu_chat_button" class="ui-btn ui-btn-light-border ui-btn-icon-chat ui-btn-themes"
 					title="<?=GetMessage($arResult['Group']['PROJECT'] == 'Y' ? "SONET_SGM_T_CHAT_TITLE_PROJECT" : "SONET_SGM_T_CHAT_TITLE")?>"
 					onclick="BXIM.openMessenger('sg<?=$arResult["Group"]["ID"]?>');"
-			>
-				<span class="webform-small-button-icon"></span>
-			</span>
+			></button>
 			<?
 		}
 		?>
-		<span
-			id="group_menu_subscribe_button"
-			class="
-				webform-small-button
-				webform-small-button-transparent
-				bx24-top-toolbar-button
-				socialnetwork-group-notification-button
-				<?=($arResult["bSubscribed"] ? " webform-button-active" : "")?>"
-			title="<?=GetMessage("SONET_SGM_T_NOTIFY_TITLE_".($arResult["bSubscribed"] ? "ON" : "OFF"))?>"
-			onclick="B24SGControl.getInstance().setSubscribe(event);"
-		>
-			<span class="webform-small-button-icon"></span>
-		</span>
+		<button id="group_menu_subscribe_button" class="ui-btn ui-btn-light-border ui-btn-icon-follow ui-btn-themes
+				<?=($arResult["bSubscribed"] ? " ui-btn-active" : "")?>"
+				title="<?=GetMessage("SONET_SGM_T_NOTIFY_TITLE_".($arResult["bSubscribed"] ? "ON" : "OFF"))?>"
+				onclick="B24SGControl.getInstance().setSubscribe(event);"
+		></button>
 	<? endif ?>
 </div>

@@ -14,7 +14,7 @@ CJSCore::Init(array('crm_entity_editor'));
 
 $guid = $arResult['GUID'];
 $jsGuid = CUtil::JSEscape($guid);
-$prefix = strtolower($guid);
+$prefix = mb_strtolower($guid);
 $activityEditorID = "{$prefix}_editor";
 
 $APPLICATION->IncludeComponent(
@@ -74,7 +74,7 @@ if(isset($arResult['ORIGIN_ID']) && $arResult['ORIGIN_ID'] !== '')
 	$editorContext['ORIGIN_ID'] = $arResult['ORIGIN_ID'];
 }
 
-if(strlen($arResult['ENTITY_DATA']['TRACKING_NUMBER']) > 0)
+if($arResult['ENTITY_DATA']['TRACKING_NUMBER'] <> '')
 {
 	$trackingNumber  = CUtil::JSEscape($arResult['ENTITY_DATA']['TRACKING_NUMBER']);
 	$onClick = "crmOrderShipment_{$jsGuid}.trackingStatusUpdate({$arResult['ENTITY_DATA']['ID']}, \"{$trackingNumber}\"); return false;";

@@ -255,7 +255,12 @@
 			self._loadItemsGrid(function(pageHtml)
 			{
 				self._itemsState = 'loaded';
-				gridContainer.innerHTML = pageHtml;
+				var html = BX.processHTML(pageHtml);
+				if(html.SCRIPT)
+				{
+					BX.ajax.processScripts(html.SCRIPT);
+				}
+				gridContainer.innerHTML = html.HTML;
 			});
 
 		}

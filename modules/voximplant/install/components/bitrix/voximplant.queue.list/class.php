@@ -101,7 +101,7 @@ class CVoximplantQueueListComponent extends \CBitrixComponent
 		);
 		$result["GRID_ID"] = $this->gridId;
 		$result["CAN_CREATE_GROUP"] = Limits::canCreateGroup();
-		$result["CREATE_QUEUE_URL"] = $result["CAN_CREATE_GROUP"] ?  CVoxImplantMain::GetPublicFolder().'editgroup.php?ID=0' : 'javascript: BX.Voximplant.showLicensePopup(\'groups\');';
+		$result["CREATE_QUEUE_URL"] = $result["CAN_CREATE_GROUP"] ?  CVoxImplantMain::GetPublicFolder().'editgroup.php?ID=0' : 'javascript: BX.UI.InfoHelper.show(\'limit_contact_center_telephony_groups\');';
 
 		return $result;
 	}

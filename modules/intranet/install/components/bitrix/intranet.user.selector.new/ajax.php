@@ -17,7 +17,7 @@ const SHOW_FROM_EXACT_GROUP = 4;
 
 $SITE_ID = '';
 if (isset($_GET["SITE_ID"]) && is_string($_GET['SITE_ID']))
-	$SITE_ID = substr(preg_replace("/[^a-z0-9_]/i", "", $_GET["SITE_ID"]), 0, 2);
+	$SITE_ID = mb_substr(preg_replace("/[^a-z0-9_]/i", "", $_GET["SITE_ID"]), 0, 2);
 
 if($SITE_ID != '')
 	define("SITE_ID", $SITE_ID);
@@ -50,7 +50,7 @@ elseif ($_GET["SHOW_EXTRANET_USERS"] == "NONE")
 }
 
 if (isset($_GET["GROUP_SITE_ID"]) && is_string($_GET["GROUP_SITE_ID"]))
-	$GLOBALS["GROUP_SITE_ID"] = substr(preg_replace("/[^a-z0-9_]/i", "", $_GET["GROUP_SITE_ID"]), 0, 2);
+	$GLOBALS["GROUP_SITE_ID"] = mb_substr(preg_replace("/[^a-z0-9_]/i", "", $_GET["GROUP_SITE_ID"]), 0, 2);
 elseif($SITE_ID != '')
 	$GLOBALS["GROUP_SITE_ID"] = $SITE_ID;
 

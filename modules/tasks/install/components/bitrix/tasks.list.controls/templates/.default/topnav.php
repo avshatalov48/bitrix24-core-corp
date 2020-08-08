@@ -81,7 +81,7 @@ if ($arParams["SHOW_SECTIONS_BAR"] === "Y")
 		$counter = "";
 		if ($arParams["SHOW_SECTION_COUNTERS"] === "Y")
 		{
-			$counterName = $counters[strtolower($roleCodename)];
+			$counterName = $counters[mb_strtolower($roleCodename)];
 
 			$counter = $oCounters->get($counterName);
 		}
@@ -91,11 +91,11 @@ if ($arParams["SHOW_SECTIONS_BAR"] === "Y")
 			$arParams["PATH_TO_REPORTS"] = $arParams["SECTION_URL_PREFIX"]."report/";
 		}
 
-		$role = strtolower($roleCodename);
+		$role = mb_strtolower($roleCodename);
 		$menuItems[] = array(
 			"TEXT" => trim($arRoleData["TITLE"]),
 			"URL" => $href.'&STATUS[]=2&STATUS[]=3&ROLEID='.$role.'&apply_filter=Y',
-			"ID" => strtolower($role),
+			"ID" => mb_strtolower($role),
 			"IS_ACTIVE" => $selected,
 			"COUNTER" => $counter > 0 ? $counter : "",
 			// do not update counters dynamically if I am at other user`s list now
@@ -489,8 +489,10 @@ if ($arParams['SHOW_FILTER_BAR'] === 'Y')
 				?><div class="task-main-top-menu-advanced-filter">&nbsp;<?
 
 				$filterName = '';
-				if (strlen($arParams['SELECTED_PRESET_NAME']))
-					$filterName .= ': ' . $arParams['SELECTED_PRESET_NAME'];
+				if($arParams['SELECTED_PRESET_NAME'] <> '')
+				{
+					$filterName .= ': '.$arParams['SELECTED_PRESET_NAME'];
+				}
 
 				if ($arParams["VIEW_TYPE"] == "gantt")
 				{

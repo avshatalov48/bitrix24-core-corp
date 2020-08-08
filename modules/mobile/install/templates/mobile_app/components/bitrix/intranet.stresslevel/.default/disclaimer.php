@@ -3,14 +3,13 @@
 use Bitrix\Main\Localization\Loc;
 
 \Bitrix\Main\UI\Extension::load(['ui.buttons']);
-\Bitrix\Main\Page\Asset::getInstance()->addString('<link href="'.\CUtil::getAdditionalFileURL('/bitrix/js/ui/buttons/ui.buttons.css').'" type="text/css" rel="stylesheet" />');
 
 ?><div class="mobile-text-body">
 	<div class="mobile-text-wrapper">
 		<div class="mobile-text-wrapper-inner">
 			<div class="mobile-text-title"><?=Loc::getMessage('INTRANET_STRESSLEVEL_TEMPLATE_DISCLAIMER_ATTENTION')?></div><?
 
-			echo Loc::getMessage('INTRANET_STRESSLEVEL_TEMPLATE_DISCLAIMER_'.strtoupper($arResult['DISCLAIMER_TYPE']).'_TEXT', [
+			echo Loc::getMessage('INTRANET_STRESSLEVEL_TEMPLATE_DISCLAIMER_'.mb_strtoupper($arResult['DISCLAIMER_TYPE']).'_TEXT', [
 				'#P#' => '<p class="mobile-text">',
 				'#A_TERMS_BEGIN#' => '<a href="'.Loc::getMessage('INTRANET_STRESSLEVEL_TEMPLATE_DISCLAIMER_TERMS_LINK').'" target="_blank">',
 				'#A_TERMS_END#' => '</a>',

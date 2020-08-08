@@ -300,7 +300,7 @@ final class ExternalLink extends Internals\Model
 		{
 			return false;
 		}
-		return strpos($fileData['CONTENT_TYPE'], 'image/') === 0;
+		return mb_strpos($fileData['CONTENT_TYPE'], 'image/') === 0;
 	}
 
 	/**

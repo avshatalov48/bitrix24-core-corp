@@ -230,7 +230,7 @@ if($_SERVER['REQUEST_METHOD'] == "POST" && $_POST['save'] != "" && check_bitrix_
 				$arActFields[$i] = trim($arActFields[$i]);
 
 				$typeTmp = $_POST["TYPE_".$arActFields[$i]."_".$tabNumber];
-				$pref = (strlen($typeTmp) <= 0) ? "VALUE1_" : (($typeTmp === "ORDER") ? "VALUE2_" : (($typeTmp === "PROPERTY") ? "VALUE3_" : ""));
+				$pref = ($typeTmp == '') ? "VALUE1_" : (($typeTmp === "ORDER") ? "VALUE2_" : (($typeTmp === "PROPERTY") ? "VALUE3_" : ""));
 				if ($pref != "")
 				{
 					$valueTmp = $_POST[$pref.$arActFields[$i]."_".$tabNumber];
@@ -246,17 +246,17 @@ if($_SERVER['REQUEST_METHOD'] == "POST" && $_POST['save'] != "" && check_bitrix_
 			$i = 0;
 			foreach($_POST as $k => $v)
 			{
-				if(strpos($k, "REKV_".$tabNumber) !== false && strlen($v) > 0)
+				if(mb_strpos($k, "REKV_".$tabNumber) !== false && $v <> '')
 				{
-					$ind = substr($k, strrpos($k, "_")+1);
+					$ind = mb_substr($k, mb_strrpos($k, "_") + 1);
 
 					$typeTmp = $_POST["TYPE_REKV_".$ind."_".$tabNumber];
-					$pref = (strlen($typeTmp) <= 0) ? "VALUE1_REKV_" : (($typeTmp === "ORDER") ? "VALUE2_REKV_" : (($typeTmp === "PROPERTY") ? "VALUE3_REKV_" : ""));
+					$pref = ($typeTmp == '') ? "VALUE1_REKV_" : (($typeTmp === "ORDER") ? "VALUE2_REKV_" : (($typeTmp === "PROPERTY") ? "VALUE3_REKV_" : ""));
 					if ($pref != "")
 					{
 						$valueTmp = $_POST[$pref.$ind."_".$tabNumber];
 
-						if(strlen($v) > 0 && strlen($valueTmp) > 0)
+						if($v <> '' && $valueTmp <> '')
 						{
 							$arParams["REKV_".$i] = array(
 								"TYPE" => $typeTmp,
@@ -269,7 +269,7 @@ if($_SERVER['REQUEST_METHOD'] == "POST" && $_POST['save'] != "" && check_bitrix_
 				}
 			}
 		}
-		if(IntVal($arExportProfile[$personTypeId])>0)
+		if(intval($arExportProfile[$personTypeId])>0)
 			$res = ExportOneCCRM::Update($arExportProfile[$personTypeId], Array("PERSON_TYPE_ID" => $personTypeId, "VARS" => serialize($arParams)));
 		else
 			$res = ExportOneCCRM::Add(Array("PERSON_TYPE_ID" => $personTypeId, "VARS" => serialize($arParams)));
@@ -330,12 +330,12 @@ while($arExport = $dbExport->Fetch())
 			$personType1C = ($v === "Y") ? "FIZ" : "UR";
 			continue;
 		}
-		if(strlen($v["NAME"]) > 0)
+		if($v["NAME"] <> '')
 		{
 			$k = str_replace("REKV_", "REKV_n", $k);
 			$expParams[$arExport["PERSON_TYPE_ID"]][$k]["NAME"] = $v["NAME"];
 		}
-		if(strpos($k, "REKV_") !== false)
+		if(mb_strpos($k, "REKV_") !== false)
 		{
 			$expRekvParams[$personTypeTabNumbers[$arExport["PERSON_TYPE_ID"]]][$k]["NAME"] = $v["NAME"];
 			$expRekvParams[$personTypeTabNumbers[$arExport["PERSON_TYPE_ID"]]][$k]["TYPE"] = $v["TYPE"];

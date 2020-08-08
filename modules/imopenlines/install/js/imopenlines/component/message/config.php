@@ -13,7 +13,7 @@ return [
 	],
 	'rel' => [
 		'main.polyfill.core',
-		'im.component.message',
+		'im.view.message',
 	],
 	'skip_core' => true,
 ];

@@ -34,7 +34,7 @@ final class Helper extends \Bitrix\Tasks\Internals\DataBase\Helper\Common
 		$toTable = $dbHelper->forSql(trim($toTable));
 		$fromTable = $dbHelper->forSql(trim($fromTable));
 
-		if(!strlen($toTable) || !strlen($toTable) || !is_array($fldMap) || empty($fldMap) || empty($fldCondition))
+		if(!mb_strlen($toTable) || !mb_strlen($toTable) || !is_array($fldMap) || empty($fldMap) || empty($fldCondition))
 			return false;
 
 		// update tab1 set aa = tab2.bb, cc = tab2.dd from tab1 join tab2 on tab1.ee = tab2.ff
@@ -69,7 +69,7 @@ final class Helper extends \Bitrix\Tasks\Internals\DataBase\Helper\Common
 		$indexName = trim($indexName);
 		$tableName = $dbHelper->forSql(trim($tableName));
 
-		if(!strlen($indexName) || !strlen($tableName))
+		if(!mb_strlen($indexName) || !mb_strlen($tableName))
 			return false;
 
 		$res = $dbConnection->query("SELECT si.name Key_name
@@ -96,7 +96,7 @@ final class Helper extends \Bitrix\Tasks\Internals\DataBase\Helper\Common
 		$indexName = $dbHelper->forSql(trim($indexName));
 		$tableName = $dbHelper->forSql(trim($tableName));
 
-		if(!strlen($indexName) || !strlen($tableName))
+		if(!mb_strlen($indexName) || !mb_strlen($tableName))
 			return false;
 
 		if(!static::checkIndexNameExists($indexName, $tableName))

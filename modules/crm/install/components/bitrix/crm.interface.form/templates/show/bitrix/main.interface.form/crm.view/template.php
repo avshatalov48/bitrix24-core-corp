@@ -124,7 +124,7 @@ foreach($arResult["TABS"] as &$tab):
 		$isEmptyField = empty($val) && $type !== 'crm_activity_list' && $type !== 'crm_deal_list' && $type !== 'crm_quote_list' && $type !== 'crm_invoice_list' && $type !== 'crm_company_list' && $type !== 'crm_contact_list' && $type !== 'crm_requisite_list' && $type !== 'crm_event_view' && $field['id'] !== 'COMMENTS' && $type !== 'crm_automation' && $type !== 'crm_lists_element';
 
 		// HACK: CHECK FOR USER FIELD EMPTY WRAPPER
-		if(!$isEmptyField && strpos($field['id'], 'UF_') === 0 && preg_match('/^<span[^>]*><\/span>$/i', $val) === 1)
+		if(!$isEmptyField && mb_strpos($field['id'], 'UF_') === 0 && preg_match('/^<span[^>]*><\/span>$/i', $val) === 1)
 			$isEmptyField = true;
 
 		$arSections[$sectionIndex]['FIELDS_DATA'][] = array(
@@ -316,13 +316,13 @@ foreach($arResult["TABS"] as &$tab):
 							$enableLazyLoad = isset($componentData['enableLazyLoad']) ? $componentData['enableLazyLoad'] : false;
 							if(is_string($enableLazyLoad))
 							{
-								$enableLazyLoad = strtoupper($enableLazyLoad) === 'Y';
+								$enableLazyLoad = mb_strtoupper($enableLazyLoad) === 'Y';
 							}
 							if($enableLazyLoad === true)
 							{
 								unset($componentData['enableLazyLoad']);
 
-								$prefix = strtolower("{$arParams['FORM_ID']}_{$field['id']}");
+								$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 								$activityListContainerID = $prefix.'_activity_list_wrapper';
 								?><div id="<?=htmlspecialcharsbx($activityListContainerID)?>"></div>
 								<script type="text/javascript">
@@ -364,7 +364,7 @@ foreach($arResult["TABS"] as &$tab):
 
 							if(is_string($enableLazyLoad))
 							{
-								$enableLazyLoad = strtoupper($enableLazyLoad) === 'Y';
+								$enableLazyLoad = mb_strtoupper($enableLazyLoad) === 'Y';
 							}
 							if($enableLazyLoad === true)
 							{
@@ -373,12 +373,12 @@ foreach($arResult["TABS"] as &$tab):
 
 								if($contextID !== '')
 								{
-									$loaderID = strtolower($contextID);
+									$loaderID = mb_strtolower($contextID);
 									$eventViewContainerID = "{$loaderID}_wrapper";
 								}
 								else
 								{
-									$prefix = strtolower("{$arParams['FORM_ID']}_{$field['id']}");
+									$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 									$loaderID = "{$prefix}_events";
 									$eventViewContainerID = "{$prefix}_event_view_wrapper";
 								}
@@ -421,13 +421,13 @@ foreach($arResult["TABS"] as &$tab):
 							$enableLazyLoad = isset($componentData['enableLazyLoad']) ? $componentData['enableLazyLoad'] : false;
 							if(is_string($enableLazyLoad))
 							{
-								$enableLazyLoad = strtoupper($enableLazyLoad) === 'Y';
+								$enableLazyLoad = mb_strtoupper($enableLazyLoad) === 'Y';
 							}
 							if($enableLazyLoad === true)
 							{
 								unset($componentData['enableLazyLoad']);
 
-								$prefix = strtolower("{$arParams['FORM_ID']}_{$field['id']}");
+								$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 								$dealListContainerID = $prefix.'_deal_list_wrapper';
 								?><div id="<?=htmlspecialcharsbx($dealListContainerID)?>"></div>
 								<script type="text/javascript">
@@ -467,13 +467,13 @@ foreach($arResult["TABS"] as &$tab):
 							$enableLazyLoad = isset($componentData['enableLazyLoad']) ? $componentData['enableLazyLoad'] : false;
 							if(is_string($enableLazyLoad))
 							{
-								$enableLazyLoad = strtoupper($enableLazyLoad) === 'Y';
+								$enableLazyLoad = mb_strtoupper($enableLazyLoad) === 'Y';
 							}
 							if($enableLazyLoad === true)
 							{
 								unset($componentData['enableLazyLoad']);
 
-								$prefix = strtolower("{$arParams['FORM_ID']}_{$field['id']}");
+								$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 								$quoteListContainerID = $prefix.'_quote_list_wrapper';
 								?><div id="<?=htmlspecialcharsbx($quoteListContainerID)?>"></div>
 								<script type="text/javascript">
@@ -513,13 +513,13 @@ foreach($arResult["TABS"] as &$tab):
 							$enableLazyLoad = isset($componentData['enableLazyLoad']) ? $componentData['enableLazyLoad'] : false;
 							if(is_string($enableLazyLoad))
 							{
-								$enableLazyLoad = strtoupper($enableLazyLoad) === 'Y';
+								$enableLazyLoad = mb_strtoupper($enableLazyLoad) === 'Y';
 							}
 							if($enableLazyLoad === true)
 							{
 								unset($componentData['enableLazyLoad']);
 
-								$prefix = strtolower("{$arParams['FORM_ID']}_{$field['id']}");
+								$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 								$invoiceListContainerID = $prefix.'_invoice_list_wrapper';
 								?><div id="<?=htmlspecialcharsbx($invoiceListContainerID)?>"></div>
 								<script type="text/javascript">
@@ -559,13 +559,13 @@ foreach($arResult["TABS"] as &$tab):
 							$enableLazyLoad = isset($componentData['enableLazyLoad']) ? $componentData['enableLazyLoad'] : false;
 							if(is_string($enableLazyLoad))
 							{
-								$enableLazyLoad = strtoupper($enableLazyLoad) === 'Y';
+								$enableLazyLoad = mb_strtoupper($enableLazyLoad) === 'Y';
 							}
 							if($enableLazyLoad === true)
 							{
 								unset($componentData['enableLazyLoad']);
 
-								$prefix = strtolower("{$arParams['FORM_ID']}_{$field['id']}");
+								$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 								$companyListContainerID = $prefix.'_company_list_wrapper';
 								?><div id="<?=htmlspecialcharsbx($companyListContainerID)?>"></div>
 								<script type="text/javascript">
@@ -605,13 +605,13 @@ foreach($arResult["TABS"] as &$tab):
 							$enableLazyLoad = isset($componentData['enableLazyLoad']) ? $componentData['enableLazyLoad'] : false;
 							if(is_string($enableLazyLoad))
 							{
-								$enableLazyLoad = strtoupper($enableLazyLoad) === 'Y';
+								$enableLazyLoad = mb_strtoupper($enableLazyLoad) === 'Y';
 							}
 							if($enableLazyLoad === true)
 							{
 								unset($componentData['enableLazyLoad']);
 
-								$prefix = strtolower("{$arParams['FORM_ID']}_{$field['id']}");
+							$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 								$contactListContainerID = $prefix.'_contact_list_wrapper';
 								?><div id="<?=htmlspecialcharsbx($contactListContainerID)?>"></div>
 								<script type="text/javascript">
@@ -651,12 +651,12 @@ foreach($arResult["TABS"] as &$tab):
 								$componentData['enableLazyLoad'] : false;
 							if(is_string($enableLazyLoad))
 							{
-								$enableLazyLoad = strtoupper($enableLazyLoad) === 'Y';
+								$enableLazyLoad = mb_strtoupper($enableLazyLoad) === 'Y';
 							}
 							unset($componentData['enableLazyLoad']);
 
 							$iblockId = isset($componentParams['IBLOCK_ID']) ? $componentParams['IBLOCK_ID'] : 0;
-							$prefix = strtolower("{$arParams['FORM_ID']}_{$field['id']}");
+						$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 							$containerId = $prefix.'_lists_wrapper_'.$iblockId;
 							$serviceUrl = '/bitrix/components/bitrix/lists.element.attached.crm/lazyload.ajax.php?&site='
 								.SITE_ID.'&'.bitrix_sessid_get().'';
@@ -697,13 +697,13 @@ foreach($arResult["TABS"] as &$tab):
 							$enableLazyLoad = isset($componentData['enableLazyLoad']) ? $componentData['enableLazyLoad'] : false;
 							if(is_string($enableLazyLoad))
 							{
-								$enableLazyLoad = strtoupper($enableLazyLoad) === 'Y';
+								$enableLazyLoad = mb_strtoupper($enableLazyLoad) === 'Y';
 							}
 							if($enableLazyLoad === true)
 							{
 								unset($componentData['enableLazyLoad']);
 
-								$prefix = strtolower("{$arParams['FORM_ID']}_{$field['id']}");
+								$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 								$requisiteListContainerID = $prefix.'_requisite_list_wrapper';
 								?><div id="<?=htmlspecialcharsbx($requisiteListContainerID)?>"></div>
 								<script type="text/javascript">
@@ -743,13 +743,13 @@ foreach($arResult["TABS"] as &$tab):
 							$enableLazyLoad = isset($componentData['enableLazyLoad']) ? $componentData['enableLazyLoad'] : false;
 							if(is_string($enableLazyLoad))
 							{
-								$enableLazyLoad = strtoupper($enableLazyLoad) === 'Y';
+								$enableLazyLoad = mb_strtoupper($enableLazyLoad) === 'Y';
 							}
 							if($enableLazyLoad === true)
 							{
 								unset($componentData['enableLazyLoad']);
 
-								$prefix = strtolower("{$arParams['FORM_ID']}_{$field['id']}");
+							$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 								$automationContainerID = $prefix.'_crm_automation_wrapper';
 								?><div id="<?= htmlspecialcharsbx($automationContainerID) ?>"></div>
 								<script type="text/javascript">

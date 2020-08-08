@@ -145,6 +145,7 @@ class TaskTable extends Entity\DataManager
 				'data_type' => 'integer',
 			),
 			new DateTimeField('CLOSED_DATE'),
+			new DateTimeField('ACTIVITY_DATE'),
 			'GUID' => array(
 				'data_type' => 'string',
 				'validation' => array(__CLASS__, 'validateGuid'),
@@ -240,9 +241,6 @@ class TaskTable extends Entity\DataManager
 				'default_value' => '1',
 			),
 
-            'SEARCH_INDEX' => array(
-                'data_type' => 'string'
-            ),
 		);
 	}
 	/**

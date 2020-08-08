@@ -49,7 +49,7 @@ class Honorific
 
 			if($statusID === '')
 			{
-				$statusID = 'HNR_'.strtoupper($defaultLangID).'_'.($i + 1);
+				$statusID = 'HNR_'.mb_strtoupper($defaultLangID).'_'.($i + 1);
 			}
 
 			if($name === '' || isset($items[$statusID]))

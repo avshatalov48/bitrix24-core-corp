@@ -568,9 +568,9 @@ if ($bPostChecked)
 		$content = isset($_POST['CONTENT']) ? trim($_POST['CONTENT']) : '';
 		$terms = isset($_POST['TERMS']) ? trim($_POST['TERMS']) : '';
 		$comments = isset($_POST['COMMENTS']) ? trim($_POST['COMMENTS']) : '';
-		$bSanContent = ($content !== '' && strpos($content, '<'));
-		$bSanTerms = ($terms !== '' && strpos($terms, '<'));
-		$bSanComments = ($comments !== '' && strpos($comments, '<'));
+		$bSanContent = ($content !== '' && mb_strpos($content, '<'));
+		$bSanTerms = ($terms !== '' && mb_strpos($terms, '<'));
+		$bSanComments = ($comments !== '' && mb_strpos($comments, '<'));
 		if ($bSanContent || $bSanTerms || $bSanComments)
 		{
 			$sanitizer = new CBXSanitizer();
@@ -613,7 +613,7 @@ if ($bPostChecked)
 
 		if(isset($_POST['OPENED']))
 		{
-			$arFields['OPENED'] = strtoupper($_POST['OPENED']) === 'Y' ? 'Y' : 'N';
+			$arFields['OPENED'] = mb_strtoupper($_POST['OPENED']) === 'Y' ? 'Y' : 'N';
 		}
 		elseif(isset($arSrcElement['OPENED']))
 		{
@@ -885,7 +885,7 @@ if ($bPostChecked)
 		if(array_key_exists($productRowSettingsFieldName, $_POST))
 		{
 			$settingsJson = isset($_POST[$productRowSettingsFieldName]) ? strval($_POST[$productRowSettingsFieldName]) : '';
-			$arSettings = strlen($settingsJson) > 0 ? CUtil::JsObjectToPhp($settingsJson) : array();
+			$arSettings = $settingsJson <> '' ? CUtil::JsObjectToPhp($settingsJson) : array();
 			if(is_array($arSettings))
 			{
 				$productRowSettings['ENABLE_DISCOUNT'] = isset($arSettings['ENABLE_DISCOUNT']) ? $arSettings['ENABLE_DISCOUNT'] === 'Y' : false;
@@ -1542,10 +1542,12 @@ $arResult['FIELDS'][] = array(
 
 //user fields
 $CCrmUserType = new CCrmMobileHelper();
-$CCrmUserType->PrepareUserFields(
+$CCrmUserType->prepareUserFields(
 	$arResult['FIELDS'],
 	CCrmQuote::$sUFEntityID,
-	$arResult['ELEMENT']['ID']
+	$arResult['ELEMENT']['ID'],
+	false,
+	'quote_details'
 );
 
 if ($bCopy)

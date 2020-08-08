@@ -25,14 +25,14 @@ $entityID = $arResult['ENTITY_ID'] = isset($arParams['ENTITY_ID']) ? intval($arP
 $uid = isset($arParams['UID']) ? $arParams['UID'] : '';
 if($uid === '')
 {
-	$uid = 'crm_'.strtolower(CCrmOwnerType::ResolveName($entityTypeID)).'_'.$entityID.'_feed';
+	$uid = 'crm_'.mb_strtolower(CCrmOwnerType::ResolveName($entityTypeID)).'_'.$entityID.'_feed';
 }
 $arResult['UID'] =$arParams['UID'] = $uid;
 
 $slEventEditorUID = isset($arParams['SL_EVENT_EDITOR_UID']) ? $arParams['SL_EVENT_EDITOR_UID'] : '';
 if($slEventEditorUID === '')
 {
-	$slEventEditorUID = 'crm_'.strtolower(CCrmOwnerType::ResolveName($entityTypeID)).'_'.$entityID.'_sl_event_editor';
+	$slEventEditorUID = 'crm_'.mb_strtolower(CCrmOwnerType::ResolveName($entityTypeID)).'_'.$entityID.'_sl_event_editor';
 }
 $arResult['SL_EVENT_EDITOR_UID'] = $arParams['SL_EVENT_EDITOR_UID'] = $slEventEditorUID;
 

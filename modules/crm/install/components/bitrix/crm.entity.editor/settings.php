@@ -64,7 +64,7 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 	elseif($action === 'save')
 	{
 		$scope = isset($_POST['scope'])
-			? strtoupper($_POST['scope']) : \Bitrix\Crm\Entity\EntityEditorConfigScope::UNDEFINED;
+			? mb_strtoupper($_POST['scope']) : \Bitrix\Crm\Entity\EntityEditorConfigScope::UNDEFINED;
 		if(!\Bitrix\Crm\Entity\EntityEditorConfigScope::isDefined($scope))
 		{
 			$scope = \Bitrix\Crm\Entity\EntityEditorConfigScope::PERSONAL;
@@ -118,7 +118,7 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 	elseif($action === 'reset')
 	{
 		$scope = isset($_POST['scope'])
-			? strtoupper($_POST['scope']) : \Bitrix\Crm\Entity\EntityEditorConfigScope::UNDEFINED;
+			? mb_strtoupper($_POST['scope']) : \Bitrix\Crm\Entity\EntityEditorConfigScope::UNDEFINED;
 		if(!\Bitrix\Crm\Entity\EntityEditorConfigScope::isDefined($scope))
 		{
 			$scope = \Bitrix\Crm\Entity\EntityEditorConfigScope::PERSONAL;
@@ -167,7 +167,7 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 	elseif($action === 'setScope')
 	{
 		$scope = isset($_POST['scope'])
-			? strtoupper($_POST['scope']) : \Bitrix\Crm\Entity\EntityEditorConfigScope::UNDEFINED;
+			? mb_strtoupper($_POST['scope']) : \Bitrix\Crm\Entity\EntityEditorConfigScope::UNDEFINED;
 
 		if(\Bitrix\Crm\Entity\EntityEditorConfigScope::isDefined($scope))
 		{

@@ -233,19 +233,6 @@ $arParams['NAME_TEMPLATE'] = isset($arParams['NAME_TEMPLATE']) ? str_replace(arr
 
 $arResult["AJAX_PATH"] = '/mobile/?mobile_action=mobile_crm_deal_actions';
 
-/*$arParams['PULL_TAG'] = $arResult['PULL_TAG'] = isset($arParams['PULL_TAG']) ? $arParams['PULL_TAG'] : 'CRM_DEAL_CHANGE';
-$arParams['PULL_UPDATE_CMD'] = $arResult['PULL_UPDATE_CMD'] = isset($arParams['PULL_UPDATE_CMD']) ? $arParams['PULL_UPDATE_CMD'] : 'crm_deal_update';
-$arParams['PULL_DELETE_CMD'] = $arResult['PULL_DELETE_CMD'] = isset($arParams['PULL_DELETE_CMD']) ? $arParams['PULL_DELETE_CMD'] : 'crm_deal_delete';
-
-$mode = isset($arParams['MODE']) ? $arParams['MODE'] : '';
-if($mode === '' && isset($_REQUEST['mode']))
-{
-	$mode = $_REQUEST['mode'];
-}
-$mode = strtoupper(trim($mode));
-$arResult['MODE'] = $arParams['MODE'] = $mode;
-*/
-
 $finalStageID = CCrmDeal::GetFinalStageID();
 $finalStageSort = CCrmDeal::GetFinalStageSort();
 
@@ -355,7 +342,7 @@ while($item = $dbRes->GetNext())
 	if ($isEditPermitted)
 	{
 		$arActions[] = array(
-			"TEXT" => GetMessageJS("M_CRM_DEAL_LIST_CHANGE_STAGE"),
+			"TEXT" => GetMessage("M_CRM_DEAL_LIST_CHANGE_STAGE"),
 			"ONCLICK" => "BX.Mobile.Crm.List.showStatusList(" . $item['ID'] . ", " . CUtil::PhpToJSObject(
 				$jsStageList) . ", 'onCrmDealDetailUpdate')",
 		);
@@ -366,7 +353,7 @@ while($item = $dbRes->GetNext())
 		if ($canConvert["CONVERSION_PERMITTED"])
 		{
 			$arActions[] = array(
-				'TEXT' => GetMessageJS("M_CRM_DEAL_LIST_CREATE_BASE"),
+				'TEXT' => GetMessage("M_CRM_DEAL_LIST_CREATE_BASE"),
 				'ONCLICK' => "BX.Mobile.Crm.Deal.ListConverter.showConvertDialog('" . $item['ID'] . "', " . CUtil::PhpToJSObject($canConvert) . ");",
 				'DISABLE' => false
 			);
@@ -446,7 +433,7 @@ while($item = $dbRes->GetNext())
 	if (!empty($buttons))
 	{
 		$arActions[] = array(
-			"TEXT" => GetMessageJS("M_CRM_DEAL_LIST_MORE"),
+			"TEXT" => GetMessage("M_CRM_DEAL_LIST_MORE"),
 			'ONCLICK' => "new BXMobileApp.UI.ActionSheet({
 							buttons: [" . $buttons . "]
 						}, 'actionSheet').show();",

@@ -1565,7 +1565,7 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 						props:
 						{
 							type: "text",
-							className: "pagetitle-item",
+							className: "pagetitle-item crm-pagetitle-item",
 							value: this._model.getCaption()
 						}
 					}
@@ -1669,6 +1669,7 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 			}
 
 			var wrapper = this._pageTitle.parentNode ? this._pageTitle.parentNode : this._pageTitle;
+			BX.addClass(wrapper, "crm-pagetitle")
 			var enableNarrowSize = wrapper.offsetWidth <= 480 && this._model.getCaption().length >= 40;
 			if(enableNarrowSize && !BX.hasClass(wrapper, "pagetitle-narrow"))
 			{
@@ -9270,6 +9271,8 @@ if(typeof BX.Crm.EntityEditorSection === "undefined")
 
 		this._fieldSelector = null;
 		this._stub = null;
+
+		this._detailButton = null;
 	};
 	BX.extend(BX.Crm.EntityEditorSection, BX.Crm.EntityEditorControl);
 	BX.Crm.EntityEditorSection.prototype.doSetActive = function()
@@ -9435,6 +9438,29 @@ if(typeof BX.Crm.EntityEditorSection === "undefined")
 				text: this.getMessage(isViewMode ? "change" : "cancel")
 			}
 		);
+
+		var url = BX.prop.getString(this.getEditor()._settings, "entityDetailsUrl", "");
+		if (this.getEditor().isEmbedded() && url.length)
+		{
+			var sections = this.getEditor().getControls().filter(function(control)
+			{
+				return (control instanceof BX.Crm.EntityEditorSection);
+			});
+
+			if (sections.length && sections[0] === this)
+			{
+				this._detailButton = BX.create("a",
+					{
+						attrs: {
+							className: "crm-entity-widget-detail-btn",
+							href: url
+						},
+						text: this.getMessage("openDetails")
+					}
+				);
+			}
+		}
+
 		if(!this._enableToggling)
 		{
 			this._toggleButton.style.display = "none";
@@ -9478,9 +9504,13 @@ if(typeof BX.Crm.EntityEditorSection === "undefined")
 			this._titleActions = BX.create('div',
 				{
 					props: { className: 'crm-entity-widget-actions-block' },
-					children : [ this._toggleButton ]
+					children : [ this._toggleButton]
 				}
 			);
+			if (this._detailButton)
+			{
+				this._titleActions.appendChild(this._detailButton);
+			}
 
 			this._titleWrapper = BX.create('div',
 				{

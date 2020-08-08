@@ -2,7 +2,7 @@
 
 if($arParams['USE_TITLE_TARGET'] !== 'N')
 {
-	$arParams["TITLE_TARGET"] = isset($arParams["TITLE_TARGET"]) && strlen($arParams["TITLE_TARGET"]) ? $arParams["TITLE_TARGET"] : "pagetitle";
+	$arParams["TITLE_TARGET"] = isset($arParams["TITLE_TARGET"]) && mb_strlen($arParams["TITLE_TARGET"]) ? $arParams["TITLE_TARGET"] : "pagetitle";
 	if(SITE_TEMPLATE_ID === "bitrix24")
 	{
 		$this->SetViewTarget($arParams["TITLE_TARGET"], 100);
@@ -166,8 +166,8 @@ if($arParams['USE_TITLE_TARGET'] !== 'N')
 }
 
 $defaultMenuTarget = SITE_TEMPLATE_ID === "bitrix24" ? "above_pagetitle" : "task_menu";
-$arParams["MENU_TARGET"] = isset($arParams["MENU_TARGET"]) && strlen($arParams["MENU_TARGET"]) ? $arParams["MENU_TARGET"] : $defaultMenuTarget;
-$arParams["CONTROLS_TARGET"] = isset($arParams["CONTROLS_TARGET"]) && strlen($arParams["CONTROLS_TARGET"]) ? $arParams["CONTROLS_TARGET"] : "task_menu";
+$arParams["MENU_TARGET"] = isset($arParams["MENU_TARGET"]) && mb_strlen($arParams["MENU_TARGET"]) ? $arParams["MENU_TARGET"] : $defaultMenuTarget;
+$arParams["CONTROLS_TARGET"] = isset($arParams["CONTROLS_TARGET"]) && mb_strlen($arParams["CONTROLS_TARGET"]) ? $arParams["CONTROLS_TARGET"] : "task_menu";
 
 if(SITE_TEMPLATE_ID === "bitrix24")
 {

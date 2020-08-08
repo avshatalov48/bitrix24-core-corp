@@ -52,8 +52,8 @@ if($arResult['ENABLE_WEBDAV'])
 	CCrmComponentHelper::RegisterScriptLink('/bitrix/js/crm/webdav_uploader.js');
 }
 
-$prefixUpper = strtoupper($arResult['PREFIX']);
-$prefixLower = strtolower($arResult['PREFIX']);
+$prefixUpper = mb_strtoupper($arResult['PREFIX']);
+$prefixLower = mb_strtolower($arResult['PREFIX']);
 
 $containerID = $arResult['CONTAINER_ID'];
 $hasOwnContainer = false;
@@ -79,7 +79,7 @@ if($enableToolbar && $toolbarID === '')
 	$hasOwnToolbar = true;
 }
 
-$toolbarID = strtolower($toolbarID);
+$toolbarID = mb_strtolower($toolbarID);
 
 $userFullName = '';
 $curUser = CCrmSecurityHelper::GetCurrentUser();
@@ -458,7 +458,9 @@ endif;
 
 				BX.message(
 					{
-						"CRM_TASK_CREATION_PATH": "<?=CUtil::JSEscape(\Bitrix\Main\Config\Option::get('socialnetwork', 'user_page', SITE_DIR.'company/personal/').'user/#user_id#/tasks/task/edit/0/')?>"
+						"CRM_TASK_CREATION_PATH": "<?=CUtil::JSEscape(\Bitrix\Main\Config\Option::get('socialnetwork', 'user_page', SITE_DIR.'company/personal/').'user/#user_id#/tasks/task/edit/0/')?>",
+						"CRM_TASK_EDIT_PATH": "<?=CUtil::JSEscape(\Bitrix\Main\Config\Option::get('socialnetwork', 'user_page', SITE_DIR.'company/personal/').'user/#user_id#/tasks/task/edit/#task_id#/')?>",
+						"CRM_TASK_VIEW_PATH": "<?=CUtil::JSEscape(\Bitrix\Main\Config\Option::get('socialnetwork', 'user_page', SITE_DIR.'company/personal/').'user/#user_id#/tasks/task/view/#task_id#/')?>"
 					}
 				);
 

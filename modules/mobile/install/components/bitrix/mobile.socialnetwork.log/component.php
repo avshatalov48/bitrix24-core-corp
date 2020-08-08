@@ -20,7 +20,7 @@ $arParams["SUBSCRIBE_ONLY"] = (defined("DisableSonetLogVisibleSubscr") && Disabl
 if ($_REQUEST["skip_subscribe"] == "Y")
 	$arParams["SUBSCRIBE_ONLY"] = "N";
 
-if (!array_key_exists("USE_FOLLOW", $arParams) || strLen($arParams["USE_FOLLOW"]) <= 0)
+if (!array_key_exists("USE_FOLLOW", $arParams) || $arParams["USE_FOLLOW"] == '')
 	$arParams["USE_FOLLOW"] = "Y";
 
 if (defined("DisableSonetLogFollow") && DisableSonetLogFollow === true)
@@ -40,12 +40,12 @@ $arParams["RATING_TYPE"] = "like";
 $arParams["PATH_TO_USER"] = trim($arParams["PATH_TO_USER"]);
 $arParams["PATH_TO_GROUP"] = trim($arParams["PATH_TO_GROUP"]);
 $arParams["PATH_TO_SMILE"] = trim($arParams["PATH_TO_SMILE"]);
-if (strlen($arParams["PATH_TO_SMILE"]) <= 0)
+if ($arParams["PATH_TO_SMILE"] == '')
 	$arParams["PATH_TO_SMILE"] = "/bitrix/images/socialnetwork/smile/";
 
-$arParams["GROUP_ID"] = IntVal($arParams["GROUP_ID"]); // group page
-$arParams["USER_ID"] = IntVal($arParams["USER_ID"]); // profile page
-$arParams["LOG_ID"] = IntVal($arParams["LOG_ID"]); // log entity page
+$arParams["GROUP_ID"] = intval($arParams["GROUP_ID"]); // group page
+$arParams["USER_ID"] = intval($arParams["USER_ID"]); // profile page
+$arParams["LOG_ID"] = intval($arParams["LOG_ID"]); // log entity page
 
 $arParams["NAME_TEMPLATE"] = $arParams["NAME_TEMPLATE"] ? $arParams["NAME_TEMPLATE"] : CSite::GetNameFormat();
 $arParams["NAME_TEMPLATE_WO_NOBR"] = str_replace(
@@ -67,7 +67,7 @@ $arParams["COMMENTS_IN_EVENT"] = (isset($arParams["COMMENTS_IN_EVENT"]) && intva
 if (
 	$_REQUEST["ACTION"] == "CONVERT"
 	&& $arParams["LOG_ID"] <= 0
-	&& strlen($_REQUEST["ENTITY_TYPE_ID"]) > 0
+	&& $_REQUEST["ENTITY_TYPE_ID"] <> ''
 	&& intval($_REQUEST["ENTITY_ID"]) > 0
 )
 {
@@ -234,11 +234,11 @@ if ($arParams["LOG_ID"] <= 0)
 
 		if ($_REQUEST["preset_filter_id"] == "clearall")
 			$preset_filter_id = false;
-		elseif(array_key_exists("preset_filter_id", $_REQUEST) && strlen($_REQUEST["preset_filter_id"]) > 0)
+		elseif(array_key_exists("preset_filter_id", $_REQUEST) && $_REQUEST["preset_filter_id"] <> '')
 			$preset_filter_id = $_REQUEST["preset_filter_id"];
 
 		if (
-			strlen($preset_filter_id) > 0
+			$preset_filter_id <> ''
 			&& array_key_exists($preset_filter_id, $arResult["PresetFilters"])
 			&& is_array($arResult["PresetFilters"][$preset_filter_id])
 			&& array_key_exists("FILTER", $arResult["PresetFilters"][$preset_filter_id])
@@ -284,7 +284,7 @@ else
 $arResult["SHOW_HIDDEN"] = $arParams["SHOW_HIDDEN"];
 $arParams["PAGE_SIZE"] = (intval($arParams["PAGE_SIZE"]) > 0 ? $arParams["PAGE_SIZE"] : 7);
 
-if(strlen($arParams["PATH_TO_USER_BLOG_POST"]) > 0)
+if($arParams["PATH_TO_USER_BLOG_POST"] <> '')
 	$arParams["PATH_TO_USER_MICROBLOG_POST"] = $arParams["PATH_TO_USER_BLOG_POST"];
 
 if (intval($arParams["PHOTO_COUNT"]) <= 0)
@@ -411,7 +411,7 @@ if (
 	elseif ($arParams["EVENT_ID"])
 		$arFilter["EVENT_ID"] = CSocNetLogTools::FindFullSetByEventID($arParams["EVENT_ID"]);
 
-	if (IntVal($arParams["CREATED_BY_ID"]) > 0) // from preset
+	if (intval($arParams["CREATED_BY_ID"]) > 0) // from preset
 		$arFilter["USER_ID"] = $arParams["CREATED_BY_ID"];
 }
 
@@ -558,8 +558,8 @@ if ($arParams["SUBSCRIBE_ONLY"] == "Y")
 			&& $arEntityTypeTmp["HAS_MY"] == "Y"
 			&& array_key_exists("CLASS_MY", $arEntityTypeTmp)
 			&& array_key_exists("METHOD_MY", $arEntityTypeTmp)
-			&& strlen($arEntityTypeTmp["CLASS_MY"]) > 0
-			&& strlen($arEntityTypeTmp["METHOD_MY"]) > 0
+			&& $arEntityTypeTmp["CLASS_MY"] <> ''
+			&& $arEntityTypeTmp["METHOD_MY"] <> ''
 			&& method_exists($arEntityTypeTmp["CLASS_MY"], $arEntityTypeTmp["METHOD_MY"])
 		)
 		{
@@ -702,7 +702,7 @@ if (
 		||
 		(
 			$arParams["LOG_ID"] <= 0
-			&& strlen($counterLastDate) > 0
+			&& $counterLastDate <> ''
 		)
 	)
 )

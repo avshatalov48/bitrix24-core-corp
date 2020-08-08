@@ -95,7 +95,7 @@ class CIntranetUserProfilePasswordComponent extends \CBitrixComponent implements
 	{
 		global $USER;
 
-		if(empty($data) || strlen($data['PASSWORD']) <= 0)
+		if(empty($data) || $data['PASSWORD'] == '')
 		{
 			$this->errorCollection[] = new Error(Loc::getMessage('INTRANET_USER_PROFILE_NOTHING_TO_SAVE'));
 			return null;

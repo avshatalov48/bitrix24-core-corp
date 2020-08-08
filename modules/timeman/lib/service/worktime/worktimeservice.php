@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Timeman\Service\Worktime;
 
+use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\ORM\Objectify\Values;
@@ -8,55 +9,56 @@ use Bitrix\Main\Result;
 use Bitrix\Timeman\Form\Worktime\WorktimeRecordForm;
 use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Model\Schedule\Schedule;
-use Bitrix\Timeman\Model\Schedule\Shift\ShiftCollection;
+use Bitrix\Timeman\Model\Schedule\Shift\Shift;
 use Bitrix\Timeman\Model\Worktime\Contract\WorktimeRecordIdStorable;
 use Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEvent;
 use Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEventTable;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
-use Bitrix\Timeman\Repository\Schedule\ViolationRulesRepository;
 use Bitrix\Timeman\Repository\Worktime\WorktimeRepository;
 use Bitrix\Timeman\Service\Agent\WorktimeAgentManager;
 use Bitrix\Timeman\Service\BaseService;
 use Bitrix\Timeman\Service\BaseServiceResult;
+use Bitrix\Timeman\Service\Worktime\Action\WorktimeAction;
+use Bitrix\Timeman\Service\Worktime\Action\WorktimeActionList;
 use Bitrix\Timeman\Service\Worktime\Notification\WorktimeNotificationService;
 use Bitrix\Timeman\Service\Worktime\Record;
-use Bitrix\Timeman\Service\Worktime\Record\WorktimeRecordManagerFactory;
+use Bitrix\Timeman\Service\Worktime\Record\WorktimeManagerFactory;
 use Bitrix\Timeman\Service\Worktime\Result\WorktimeServiceResult;
 
 Loc::loadMessages(__FILE__);
 
 class WorktimeService extends BaseService
 {
-	/** @var Record\WorktimeManager */
-	protected $recordManager;
 	/** @var WorktimeActionList */
 	private $actionList;
 	/** @var WorktimeRepository */
 	private $worktimeRepository;
 	/** @var WorktimeNotificationService */
 	private $notificationService;
-	/** @var WorktimeRecordManagerFactory */
-	private $recordManagerFactory;
+	/** @var WorktimeManagerFactory */
+	private $worktimeManagerFactory;
 	/** @var WorktimeRecordForm */
 	private $recordForm;
-	private $violationRulesRepository;
 	private $worktimeAgentManager;
+	private $liveFeedManager;
+	/** @var Record\WorktimeManager|null */
+	private $worktimeManager;
 
 	public function __construct(
-		WorktimeRecordManagerFactory $recordFactory,
+		WorktimeManagerFactory $recordFactory,
 		WorktimeAgentManager $worktimeAgentManager,
 		WorktimeActionList $actionList,
 		WorktimeRepository $worktimeRepository,
-		ViolationRulesRepository $violationRulesRepository,
-		WorktimeNotificationService $notificationService
+		WorktimeNotificationService $notificationService,
+		WorktimeLiveFeedManager $liveFeedManager
 	)
 	{
-		$this->recordManagerFactory = $recordFactory;
+		$this->worktimeManagerFactory = $recordFactory;
 		$this->worktimeAgentManager = $worktimeAgentManager;
 		$this->actionList = $actionList;
 		$this->worktimeRepository = $worktimeRepository;
-		$this->violationRulesRepository = $violationRulesRepository;
 		$this->notificationService = $notificationService;
+		$this->liveFeedManager = $liveFeedManager;
 	}
 
 	/**
@@ -192,10 +194,16 @@ class WorktimeService extends BaseService
 
 		return $this->processWorktimeAction($this->recordForm,
 			function () use ($recordForm, $record) {
-				return (new WorktimeServiceResult())
-					->setShift($record->obtainShift())
-					->setSchedule($record->obtainSchedule())
-					->setWorktimeRecord($record);
+				return $this->checkActionEligibility(
+					[
+						$this->actionList->buildApproveAction(
+							$record,
+							$record->obtainSchedule(),
+							$record->obtainShift(),
+							TimeHelper::getInstance()->getUserDateTimeNow($record->getUserId())
+						),
+					]
+				);
 			}
 		);
 	}
@@ -208,45 +216,39 @@ class WorktimeService extends BaseService
 	private function processWorktimeAction($recordForm, $checkActionCallback)
 	{
 		return $this->wrapAction(function () use ($recordForm, $checkActionCallback) {
-			/** @var WorktimeServiceResult $result */
-			$this->safeRun($result = $checkActionCallback());
+			/** @var WorktimeServiceResult $actionListResult */
+			$this->safeRun($actionListResult = $checkActionCallback());
 
 			$this->safeRun(
-				$buildingRecordResult = $this->getRecordManager()
-					->buildActualRecord(
-						$result->getSchedule(),
-						$result->getShift(),
-						$result->getWorktimeRecord(),
-						$this->getPersonalViolationRules(
-							$result->getSchedule() ? $result->getSchedule()->getId() : null,
-							$result->getWorktimeRecord() ? $result->getWorktimeRecord()->getUserId() : $recordForm->userId
-						)
-					)
+				$buildingRecordResult = $this->getWorktimeManager()
+					->buildActualRecord($actionListResult->getWorktimeAction(), $this->worktimeRepository)
 			);
 
 			$actualRecord = $buildingRecordResult->getWorktimeRecord();
 			if (empty($actualRecord->collectValues(Values::CURRENT)))
 			{
 				return (new WorktimeServiceResult())
-					->setSchedule($result->getSchedule())
-					->setShift($result->getShift())
+					->setSchedule($actionListResult->getSchedule())
+					->setShift($actionListResult->getShift())
 					->setWorktimeRecord($actualRecord);
 			}
-			$worktimeEvents = $this->getRecordManager()->buildEvents($actualRecord);
+
+			$worktimeEvents = $this->getWorktimeManager()->buildEvents($actualRecord);
+			$this->runBeforeRecordSave($actualRecord);
 
 			$this->safeRun($this->save($actualRecord, $worktimeEvents));
 			// we need ID, so we save and then updating if needed
-			$this->runAfterRecordBuild($actualRecord, $result->getSchedule(), $result->getShift(), $recordForm->getFirstEventName());
+			$this->runAfterRecordSave($actualRecord, $actionListResult->getSchedule(), $actionListResult->getShift(), $recordForm->getFirstEventName());
 
-			if ($result->getSchedule())
+			if ($actionListResult->getSchedule())
 			{
-				$this->sendNotifications($actualRecord, $result->getSchedule());
+				$this->sendNotifications($actualRecord, $actionListResult->getSchedule());
 			}
 
 			return (new WorktimeServiceResult())
 				->setWorktimeRecord($actualRecord)
-				->setSchedule($result->getSchedule())
-				->setShift($result->getShift())
+				->setSchedule($actionListResult->getSchedule())
+				->setShift($actionListResult->getShift())
 				->setWorktimeEvents($worktimeEvents);
 		});
 	}
@@ -258,73 +260,6 @@ class WorktimeService extends BaseService
 	private function buildActionList($userId, $userDate = null)
 	{
 		return $this->actionList->buildPossibleActionsListForUser($userId, $userDate);
-	}
-
-	public function addAutoClosingAgents(Schedule $schedule, $shiftCollection = null)
-	{
-		$shiftCollection = $shiftCollection === null ? new ShiftCollection() : $shiftCollection;
-		$result = new WorktimeServiceResult();
-		if (!$schedule->isAutoClosing())
-		{
-			return $result;
-		}
-
-		$selectFields = ['*'];
-		if ($shiftCollection->count() === 0)
-		{
-			$selectFields[] = 'SHIFT';
-		}
-		$records = $this->worktimeRepository->findAll(
-			$selectFields,
-			$this->worktimeRepository->buildOpenRecordsQuery($schedule, $shiftCollection)
-		);
-		if ($records->count() === 0)
-		{
-			return $result;
-		}
-		foreach ($records as $record)
-		{
-			$record->defineSchedule($schedule);
-			if ($shiftCollection->count() > 0 && $shiftCollection->getByPrimary($record->getShiftId()))
-			{
-				$record->defineShift($shiftCollection->getByPrimary($record->getShiftId()));
-			}
-		}
-
-		$this->worktimeAgentManager->createAutoClosingAgentForRecords($records);
-		foreach ($records as $record)
-		{
-			if ($record->getAutoClosingAgentId() > 0)
-			{
-				$this->worktimeRepository->save(
-					WorktimeRecord::wakeUpRecord([
-						'ID' => $record->getId(),
-						'AUTO_CLOSING_AGENT_ID' => $record->getAutoClosingAgentId(),
-					])
-				);
-			}
-		}
-
-		return $result;
-	}
-
-	public function deleteAutoClosingAgents(Schedule $schedule, $shiftCollection = null)
-	{
-		$shiftCollection = $shiftCollection === null ? new ShiftCollection() : $shiftCollection;
-		$result = new WorktimeServiceResult();
-
-		$records = $this->worktimeRepository->findAll(
-			['ID', 'AUTO_CLOSING_AGENT_ID',],
-			$this->worktimeRepository->buildOpenRecordsQuery($schedule, $shiftCollection)
-				->where('AUTO_CLOSING_AGENT_ID', '>', 0)
-		);
-		if ($records->count() === 0)
-		{
-			return $result;
-		}
-		$this->worktimeAgentManager->deleteAgentsByIds($records->getAutoClosingAgentIdList());
-		$this->worktimeRepository->saveAll($records, ['AUTO_CLOSING_AGENT_ID' => 0]);
-		return $result;
 	}
 
 	protected function wrapResultOnException($result)
@@ -367,14 +302,9 @@ class WorktimeService extends BaseService
 
 	private function sendNotifications(WorktimeRecord $worktimeRecord, Schedule $schedule)
 	{
-		$this->getRecordManager()->notifyOfAction($worktimeRecord, $schedule);
-		$rules = [$schedule->obtainScheduleViolationRules()];
-		$personalViolationRules = $this->getPersonalViolationRules($worktimeRecord->getScheduleId(), $worktimeRecord->getUserId());
-		if ($personalViolationRules)
-		{
-			$rules[] = $personalViolationRules;
-		}
-		$violations = $this->getRecordManager()->buildRecordViolations($worktimeRecord, $schedule, $rules);
+		$this->getWorktimeManager()->notifyOfActionOldStyle($worktimeRecord, $schedule);
+
+		$violations = $this->getWorktimeManager()->buildRecordViolations($worktimeRecord, $schedule);
 		$this->notificationService->sendViolationsNotifications(
 			$schedule,
 			$violations,
@@ -392,71 +322,68 @@ class WorktimeService extends BaseService
 		$result = new WorktimeServiceResult();
 		if (empty($actions))
 		{
-			return $result->addProhibitedActionError(WorktimeServiceResult::ERROR_FOR_USER);
+			return $result->addProhibitedActionError(WorktimeServiceResult::ERROR_FOR_USER, WorktimeServiceResult::ERROR_EMPTY_ACTIONS);
 		}
 		if (count($actions) > 1)
 		{
-			// todo-annabo interface should send schedule/shift id, so we can choose the right action
-			return $result->addProhibitedActionError(WorktimeServiceResult::ERROR_FOR_USER);
+			// todo interface should send schedule/shift id, so we can choose the right action
+			return $result->addProhibitedActionError(WorktimeServiceResult::ERROR_FOR_USER, WorktimeServiceResult::ERROR_MULTI_ACTIONS);
 		}
 		/** @var WorktimeAction $action */
 		$action = reset($actions);
+		if ($action->getRecord() && !$action->getRecordManager())
+		{
+			return $result->addError(new Error('WorktimeAction must have WorktimeRecordManager instance ' . __FILE__ . ':' . __LINE__));
+		}
+
 		$result->setShift($action->getShift());
 		$result->setSchedule($action->getSchedule());
 		$result->setWorktimeRecord($action->getRecord());
+		$result->setWorktimeAction($action);
 		return $result;
 	}
 
 	/**
 	 * @return Record\WorktimeManager
 	 */
-	private function getRecordManager()
+	private function getWorktimeManager()
 	{
-		if ($this->recordManager === null)
+		if ($this->worktimeManager === null)
 		{
 			if (!$this->recordForm)
 			{
 				throw new ObjectException(WorktimeRecordForm::class . ' is required');
 			}
-			$this->recordManager = $this->recordManagerFactory->buildRecordManager($this->recordForm);
+			$this->worktimeManager = $this->worktimeManagerFactory->buildManager($this->recordForm);
 		}
-		return $this->recordManager;
+		return $this->worktimeManager;
 	}
 
-	private function getPersonalViolationRules($scheduleId, $userId)
-	{
-		if ($scheduleId > 0 && $userId > 0)
-		{
-			return $this->violationRulesRepository->findFirstByScheduleIdAndEntityCode($scheduleId, 'U' . $userId);
-		}
-		return null;
-	}
-
-	/**
-	 * @param WorktimeRecord $actualRecord
-	 * @param Schedule $schedule
-	 * @param \Bitrix\Timeman\Model\Schedule\Shift\Shift $shift
-	 */
-	private function runAfterRecordBuild(WorktimeRecord $actualRecord, $schedule, $shift, $eventType)
+	private function runAfterRecordSave(WorktimeRecord $record, ?Schedule $schedule, ?Shift $shift, $eventType)
 	{
 		if ($schedule && $schedule->isAutoClosing() &&
-			$actualRecord->getRecordedStopTimestamp() === 0 &&
-			$actualRecord->getAutoClosingAgentId() === 0)
+			$record->getRecordedStopTimestamp() === 0 &&
+			$record->getAutoClosingAgentId() === 0)
 		{
 			switch ($eventType)
 			{
 				case WorktimeEventTable::EVENT_TYPE_START:
 				case WorktimeEventTable::EVENT_TYPE_EDIT_START:
 				case WorktimeEventTable::EVENT_TYPE_START_WITH_ANOTHER_TIME:
-					$this->worktimeAgentManager->createAutoClosingAgent($actualRecord, $schedule, $shift);
+					$this->worktimeAgentManager->createAutoClosingAgent($record, $schedule, $shift);
 					break;
 				default:
 					break;
 			}
 		}
-		if (!empty($actualRecord->collectValues(Values::CURRENT)))
+		if (!empty($record->collectValues(Values::CURRENT)))
 		{
-			$this->worktimeRepository->save($actualRecord);
+			$this->worktimeRepository->save($record);
 		}
+	}
+
+	private function runBeforeRecordSave(WorktimeRecord $actualRecord)
+	{
+		$this->getWorktimeManager()->onBeforeRecordSave($actualRecord, $this->liveFeedManager);
 	}
 }

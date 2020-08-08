@@ -24,7 +24,8 @@
 	box-shadow: 0 2px 2px 1px rgba(0,0,0,.14);
 }
 
-.salescenter-delivery-item-title {
+.salescenter-delivery-item-title,
+.salescenter-delivery-marketplace-app-item-title {
 	position: absolute;
 	left: 0;
 	right: 0;
@@ -46,14 +47,19 @@
 	justify-content: center;
 }
 
-.salescenter-delivery-item-image {
+.salescenter-delivery-item-image,
+.salescenter-delivery-marketplace-item-image {
 	position: absolute;
 	left: 0;
 	right: 0;
-	top: 0;
-	bottom: 27px;
+	top: 10px;
+	bottom: 34px;
 	background-repeat: no-repeat;
 	background-position: center;
+}
+
+.salescenter-delivery-marketplace-item-image {
+	background-size: 65%;
 }
 
 .salescenter-delivery-item-status-selected {

@@ -6,10 +6,8 @@
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 
-Extension::load("ui.buttons");
-Extension::load("ui.buttons.icons");
+Extension::load(['ui.buttons', 'ui.dialogs.messagebox', 'ui.buttons.icons']);
 CJSCore::Init(['date']);
-
 \Bitrix\Main\Page\Asset::getInstance()->addJS('/bitrix/js/timeman/component/basecomponent.js');
 \Bitrix\Main\Page\Asset::getInstance()->addJS('/bitrix/components/bitrix/timeman.schedule.shiftplan/templates/.default/js/table.js');
 $APPLICATION->setTitle(htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_PLAN_TITLE', ['#SCHEDULE_NAME#' => $arResult['SCHEDULE_NAME']])));
@@ -49,7 +47,8 @@ $APPLICATION->includeComponent('bitrix:timeman.worktime.grid', '', [
 		new BX.Timeman.Component.Schedule.ShiftPlan({
 			scheduleId: <?= CUtil::PhpToJSObject($arResult['SCHEDULE_ID'])?>,
 			gridId: <?= CUtil::PhpToJSObject($arResult['GRID_ID'])?>,
-			isSlider: <?= CUtil::PhpToJSObject($arResult['isSlider']);?>
+			isSlider: <?= CUtil::PhpToJSObject($arResult['isSlider']);?>,
+			errorCodeOverlappingPlans: <?= CUtil::PhpToJSObject($arResult['errorCodeOverlappingPlans']);?>
 		});
 	});
 </script>

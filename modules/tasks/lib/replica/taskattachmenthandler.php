@@ -94,7 +94,7 @@ class TaskAttachmentHandler extends \Bitrix\Replica\Client\AttachmentHandler
 		if ($this->replaceGuidsWithFiles($fields))
 		{
 			$update = $sqlHelper->prepareUpdate("b_tasks", $fields);
-			if (strlen($update[0]) > 0)
+			if ($update[0] <> '')
 			{
 				$sql = "UPDATE ".$sqlHelper->quote("b_tasks")." SET ".$update[0]." WHERE ID = ".$taskId;
 				$connection->query($sql);

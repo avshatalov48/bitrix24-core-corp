@@ -50,7 +50,7 @@ class CTaskTags
 			}
 		}
 
-		if (!is_set($arFields, "NAME") || strlen(trim($arFields["NAME"])) <= 0)
+		if (!is_set($arFields, "NAME") || trim($arFields["NAME"]) == '')
 		{
 			$arMsg[] = array("text" => GetMessage("TASKS_BAD_NAME"), "id" => "ERROR_BAD_TASKS_NAME");
 		}
@@ -95,7 +95,7 @@ class CTaskTags
 			$key = $res["FIELD"];
 			$cOperationType = $res["OPERATION"];
 
-			$key = strtoupper($key);
+			$key = mb_strtoupper($key);
 
 			switch ($key)
 			{
@@ -148,8 +148,8 @@ class CTaskTags
 		$arSqlOrder = [];
 		foreach ($arOrder as $by => $order)
 		{
-			$by = strtolower($by);
-			$order = strtolower($order);
+			$by = mb_strtolower($by);
+			$order = mb_strtolower($order);
 			if ($order != "asc")
 				$order = "desc";
 

@@ -922,6 +922,23 @@ class CAdminUiList extends CAdminList
 						case "html":
 							$editValue = $field["edit"]["value"];
 							break;
+						case "money":
+							$moneyAttributes = $field["edit"]["attributes"];
+							$editValue = [
+								'PRICE' => $moneyAttributes['PRICE'],
+								'CURRENCY' => $moneyAttributes['CURRENCY'],
+								'ATTRIBUTES' => $moneyAttributes['ATTRIBUTES'],
+							];
+
+							if (is_array($moneyAttributes['HIDDEN']))
+							{
+								$editValue['HIDDEN'] = [];
+								foreach ($moneyAttributes['HIDDEN'] as $hiddenItem)
+								{
+									$editValue['HIDDEN'][$hiddenItem['NAME']] = $hiddenItem['VALUE'];
+								}
+							}
+							break;
 					}
 				}
 				else
@@ -1071,6 +1088,12 @@ class CAdminUiList extends CAdminList
 				break;
 			case "html":
 				$editable = array("TYPE" => Types::CUSTOM, "HTML" => $field["edit"]["value"]);
+				break;
+			case "money":
+				$editable = array(
+					"TYPE" => Types::MONEY,
+					"CURRENCY_LIST" => $field["edit"]["attributes"]["CURRENCY_LIST"],
+				);
 				break;
 			default:
 				$editable = array("TYPE" => Types::TEXT);
@@ -1651,6 +1674,11 @@ class CAdminUiListRow extends CAdminListRow
 		{
 			if (isset($action["SEPARATOR"]))
 				continue;
+
+			if (empty($action["ACTION"]) && !empty($action["ONCLICK"]))
+			{
+				$action["ACTION"] = $action["ONCLICK"];
+			}
 
 			if (!empty($action["LINK"]) && empty($action["ACTION"]))
 			{

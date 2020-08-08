@@ -146,7 +146,8 @@ BX.namespace('Tasks.Component');
 					return new this.constructor.ItemManager({
 						scope: this.scope(),
 						data: this.option('data'),
-						preRendered: true
+						preRendered: true,
+						taskLimitExceeded: this.option('taskLimitExceeded')
 					});
 				});
 			}
@@ -166,6 +167,16 @@ BX.namespace('Tasks.Component');
 			types: {}
 		},
 		methods: {
+			openAddForm: function()
+			{
+				if (this.option('taskLimitExceeded'))
+				{
+					BX.UI.InfoHelper.show('limit_tasks_templates_subtasks');
+					return;
+				}
+
+				this.callMethod(BX.Tasks.PopupItemSet, 'openAddForm');
+			},
 
 			checkSelectorLoaded: function()
 			{
@@ -279,10 +290,10 @@ BX.namespace('Tasks.Component');
 			{
 				BX.addCustomEvent(selector, 'on-change', BX.delegate(this.itemsChanged, this));
 
-				if(typeof this.instances.window != 'undefined')
+				if (typeof this.instances.window != 'undefined' && this.instances.window)
 				{
-					BX.addCustomEvent(this.instances.window, "onAfterPopupShow", function(){
-						setTimeout(function(){
+					BX.addCustomEvent(this.instances.window, "onAfterPopupShow", function() {
+						setTimeout(function() {
 							selector.searchInput.focus();
 						}, 100);
 					});

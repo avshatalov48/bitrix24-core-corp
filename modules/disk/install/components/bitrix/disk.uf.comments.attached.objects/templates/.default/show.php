@@ -83,7 +83,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 			?></div>
 		</div><?
 
-		if (strlen($jsIds) > 0)
+		if ($jsIds <> '')
 		{
 			?><script>BX.LazyLoad.registerImages([<?=$jsIds?>], null, {dataSrcName: "thumbSrc"});</script><?
 		}

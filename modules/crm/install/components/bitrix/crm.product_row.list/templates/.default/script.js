@@ -129,12 +129,13 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 			var addBtnId = this.getSetting('addBtnID', ''),
 				addBtn = BX(addBtnId);
 
-			if(addBtn) {
-				BX.bind(
-					addBtn,
-					"click",
-					BX.delegate(this._handleAddBtnClick, this)
-				);
+			if(addBtn)
+			{
+				if (!this.isProductCardEnabled())
+				{
+					BX.bind(addBtn, "click", BX.delegate(this._handleAddBtnClick, this));
+				}
+
 				this._topButtons.push(addBtn);
 			}
 
@@ -187,6 +188,11 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 
 			BX.addCustomEvent('InitiateInvoiceSumTotalChange', BX.delegate(this._handleRequestFromInvoiceOwner, this));
 			BX.addCustomEvent('InvoiceAjaxSubmitResponse', BX.delegate(this._handleInvoiceAjaxSubmitResponse, this));
+
+			if (this.isProductCardEnabled())
+			{
+				BX.addCustomEvent('SidePanel.Slider:onMessage', this.handleSliderMessage.bind(this));
+			}
 
 			this._discountExists = this.getSetting("_discountExistsInit", false);
 			this._taxExists = this.getSetting("_taxExistsInit", false);
@@ -341,6 +347,80 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 		setSetting:function(name, value)
 		{
 			this._settings[name] = value;
+		},
+		isProductCardEnabled:function()
+		{
+			return this.getSetting('newProductCard', false) === true;
+		},
+		reinitialize : function (products)
+		{
+			var i;
+
+			for (i in this._products)
+			{
+				if (this._products.hasOwnProperty(i))
+				{
+					this._products[i].clean();
+				}
+			}
+
+			this._products = [];
+
+			var table = this.getTable();
+			
+			for (i in products)
+			{
+				if (!products.hasOwnProperty(i))
+				{
+					continue;
+				}
+				var row = this._createRow();
+				table.tBodies[0].appendChild(row);
+
+				var productElement = BX.CrmProduct.create(
+					this._prepareProductSettings(products[i]),
+					row,
+					this
+				);
+				productElement.layout();
+
+				this._products[this._products.length++] = productElement;
+			}
+
+			this.calculateTotals(false);
+			
+		},
+		_createRow: function ()
+		{
+			var rowIdPrefix = this.getSetting("rowIdPrefix", "");
+			var exampleRow = BX(rowIdPrefix + "#N#");
+			var rowNumber, rowIndex;
+			var row = BX.clone(exampleRow, true);
+			var nProducts = this._products.length;
+
+			rowNumber = this.getNextRowNumber();
+			rowIndex = rowNumber - 1;
+			row.id = row.id.replace("#N#", rowIndex);
+			row.className = (rowNumber % 2) === 0 ? "crm-items-table-even-row" : "crm-items-table-odd-row";
+			
+			BX.findChildren(row, function (el) {
+				if (el && BX.type.isElementNode(el))
+				{
+					if (el.id)
+					{
+						var elId = el.id;
+						if (elId && elId.indexOf("#N#") >= 0)
+							el.id = elId.replace("#N#", rowIndex);
+					}
+					if (el.className === 'crm-item-num')
+						BX.setTextContent(el, (nProducts + 1).toString() + ".");
+				}
+			}, true);
+			
+			row.style.display = "";
+			
+			return row;
+
 		},
 		handleBeforeSearch: function(data)
 		{
@@ -521,7 +601,7 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 					this.productRowAdd();
 			}
 		},
-		handleProductChoice: function(data, skipFocus)
+		handleProductChoice: function(data, skipFocus, product)
 		{
 			skipFocus = !!skipFocus;
 			var item = typeof(data['product']) != 'undefined' && typeof(data['product'][0]) != 'undefined' ? data['product'][0] : null;
@@ -536,7 +616,7 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 			{
 				id: item['id'],
 				name: item['title'],
-				quantity: 1.0,
+				quantity: product instanceof BX.CrmProduct ? product.getQuantity() : 1.0,
 				price: typeof(customData['price']) != 'undefined' ? parseFloat(customData['price']) : 0.0,
 				customized: false,
 				measureCode: typeof(measure['code']) !== 'undefined' ? parseInt(measure['code']) : 0,
@@ -544,11 +624,25 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 				tax: typeof(customData['tax']) !== 'undefined' ? customData['tax'] : {}
 			};
 			if (this._viewMode)
+			{
 				this.toggleMode();
-			this._addItem(itemData, true);
+			}
+
+			if (product)
+			{
+				this._setItem(product, itemData);
+			}
+			else
+			{
+				this._addItem(itemData, true);
+			}
+
 			if (!skipFocus)
+			{
 				this.focusLastRow();
-			obCrm[this._dlgId].ClearSelectItems();
+			}
+
+			obCrm[this._dlgId] && obCrm[this._dlgId].ClearSelectItems();
 		},
 		handleProductChoiceById: function(productId)
 		{
@@ -579,7 +673,7 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 				onfailure: BX.delegate(this.onProductChoiceByIdFailure, this)
 			});
 		},
-		onProductChoiceByIdSuccess: function(response)
+		onProductChoiceByIdSuccess: function(response, product)
 		{
 			var data;
 			if (response && response["data"])
@@ -588,7 +682,7 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 				if (data[0])
 				{
 					data = {"product": [data[0]]};
-					this.handleProductChoice(data, true);
+					this.handleProductChoice(data, true, product);
 				}
 			}
 		},
@@ -648,6 +742,59 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 		_ondeleteItemRequestFailure: function(data)
 		{
 			this._processAjaxError(data);
+		},
+		handleSliderMessage: function(sliderEvent)
+		{
+			if (sliderEvent.getEventId() === 'Catalog.ProductCard::onCreate')
+			{
+				var slider = sliderEvent.getSender();
+				if (slider)
+				{
+					var sliderEventData = sliderEvent.getData();
+					var sliderData = slider.getData();
+
+					if (sliderData.has('product'))
+					{
+						this.handleProductAddFromSlider(sliderEventData, sliderData.get('product'));
+					}
+					else
+					{
+						this.handleProductAddFromSlider(sliderEventData);
+					}
+
+					if (sliderEventData.sender && sliderEventData.sender._enableCloseConfirmation)
+					{
+						sliderEventData.sender._enableCloseConfirmation = false;
+					}
+
+					slider.close();
+				}
+			}
+		},
+		handleProductAddFromSlider: function(data, product)
+		{
+			if (!data || !data.entityId)
+				return;
+
+			BX.ajax({
+				'url': this.getSetting('productSearchUrl', ''),
+				'method': 'POST',
+				'dataType': 'json',
+				'data':
+					{
+						'MODE': 'SEARCH',
+						'RESULT_WITH_VALUE': 'Y',
+						'CURRENCY_ID': this.getCurrencyId(),
+						'ENABLE_RAW_PRICES': 'Y',
+						'ENABLE_SEARCH_BY_ID': 'Y',
+						'MULTI': 'N',
+						'VALUE': data.entityId,
+						'LIMIT': 1
+					},
+				onsuccess: function (response) {
+					this.onProductChoiceByIdSuccess(response, product);
+				}.bind(this)
+			});
 		},
 		handleProductAdd: function(data)
 		{
@@ -1245,8 +1392,13 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 				}
 			}
 		},
-		calculateTotals: function()
+		calculateTotals: function(needMarkAsChanged)
 		{
+			if (typeof(needMarkAsChanged) === "undefined")
+			{
+				needMarkAsChanged = true;
+			}
+
 			var productData = [];
 			for(var i = 0; i < this._products.length; i++)
 			{
@@ -1271,7 +1423,13 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 
 				productData.push(item);
 			}
-
+			
+			var successCallback = this._updateCalculatedTotals;
+			if (!needMarkAsChanged)
+			{
+				successCallback = this._updateNoDemandCalculatedTotals;
+			}
+			
 			BX.ajax(
 				{
 					'url': this._serviceUrl,
@@ -1291,7 +1449,7 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 						'ALLOW_LD_TAX': this.isLDTaxAllowed() ? 'Y' : 'N',
 						'LD_TAX_PRECISION': this.getSetting('taxListPercentPrecision', 2)
 					},
-					onsuccess: BX.delegate(this._onCalculateTotalsRequestSuccess, this),
+					onsuccess: BX.delegate(successCallback, this),
 					onfailure: BX.delegate(this._onCalculateTotalsRequestFailure, this)
 				}
 			);
@@ -1367,7 +1525,7 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 		{
 			this.calculateTotals();
 		},
-		_onCalculateTotalsRequestSuccess: function(data)
+		_updateCalculatedTotals: function(data)
 		{
 			if(this._processAjaxError(data))
 			{
@@ -1385,7 +1543,25 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 				this.refreshTaxList();
 			}
 		},
-		refreshTotals: function(totals)
+		_updateNoDemandCalculatedTotals: function(data)
+		{
+			if(this._processAjaxError(data))
+			{
+				return;
+			}
+
+			if(typeof(data['TOTALS']) != 'undefined')
+			{
+				this.refreshTotals(data['TOTALS'], false)
+			}
+
+			if (typeof(data['LD_TAXES']) != 'undefined')
+			{
+				this.setSetting('LDTaxes', data['LD_TAXES']);
+				this.refreshTaxList();
+			}
+		},
+		refreshTotals: function(totals, needMarkAsChanged)
 		{
 			var ttl, s, el;
 
@@ -1433,7 +1609,7 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 				s = BX.type.isNotEmptyString(totals['TOTAL_SUM_FORMATTED']) ? totals['TOTAL_SUM_FORMATTED'] : '';
 				ttl = typeof(totals['TOTAL_SUM']) != 'undefined' ? parseFloat(totals['TOTAL_SUM']).toFixed(2) : '0.00';
 				el.innerHTML = s !== '' ? s : this._currencyFormat.replace(/(^|[^&])#/, '$1' + ttl);
-				BX.onCustomEvent(this, 'sumTotalChange', [ttl, totals]);
+				BX.onCustomEvent(this, 'sumTotalChange', [ttl, totals, needMarkAsChanged]);
 			}
 			this.switchTotalElements();
 		},
@@ -4304,30 +4480,108 @@ if (typeof(BX.CrmProduct) === "undefined")
 		{
 			if(BX.hasClass(element, "crm-item-inp-arrow"))
 			{
-				var productShowUrl = this._getProductShowUrl();
-				if(productShowUrl)
-					window.open(productShowUrl);
+				this._openProductCardUrl(this._getProductShowUrl());
 			}
-			else if(BX.hasClass(element, "crm-item-inp-plus"))
+			else if (BX.hasClass(element, "crm-item-inp-plus"))
 			{
-				this.createInCatalogViaDialog((BX.type.isDomNode(element)) ? element : null);
+				if (this._editor.isProductCardEnabled())
+				{
+					this._openNewProductCardUrl();
+				}
+				else
+				{
+					this.createInCatalogViaDialog((BX.type.isDomNode(element)) ? element : null);
+				}
+			}
+		},
+		_openNewProductCardUrl: function()
+		{
+			this.saveSettings();
+
+			var defMeasureId = 0;
+			var defMeasureInfo = this._editor.getSetting("defaultMeasure", null);
+			if (defMeasureInfo)
+			{
+				if (defMeasureInfo.hasOwnProperty("ID"))
+				{
+					defMeasureId = defMeasureInfo["ID"];
+				}
+			}
+			var measureId = this.getMeasureIdByCode(this.getMeasureCode());
+			if (measureId === 0)
+			{
+				measureId = defMeasureId;
+			}
+
+			var taxId = 0;
+			var taxIncluded = "N";
+			if (this._editor.isTaxAllowed())
+			{
+				var taxRate = parseFloat(this.getTaxRate());
+				taxId = this._editor.getTaxIdByValue(taxRate);
+				taxIncluded = (taxId !== 0 && this.getSetting('TAX_INCLUDED', false)) ? "Y" : "N";
+			}
+
+			var productFields = {
+				"NAME": this.getSetting(this._fixProductName ? "FIXED_PRODUCT_NAME" : "PRODUCT_NAME", ""),
+				"CURRENCY": this._editor.getCurrencyId(),
+				"QUANTITY": this.getQuantity(),
+				"PRICE": (taxIncluded === "Y") ? this.getSetting("PRICE_BRUTTO", 0.0).toFixed(2) : this.getSetting("PRICE_NETTO", 0.0).toFixed(2),
+				"MEASURE": measureId,
+				"VAT_ID": taxId,
+				"VAT_INCLUDED": taxIncluded
+			};
+
+			var url = this._getProductShowUrlByProductId(0);
+			var options;
+
+			if (BX.Reflection.getClass('BX.SidePanel.Instance'))
+			{
+				var rule = BX.SidePanel.Instance.getUrlRule(url);
+				options = rule && rule.options ? BX.clone(rule.options) : {};
+				options.requestMethod = 'post';
+				options.requestParams = {
+					external_fields: productFields
+				};
+				options.data = {
+					product: this
+				};
+			}
+
+			this._openProductCardUrl(url, options);
+		},
+		_openProductCardUrl: function(url, options)
+		{
+			if (BX.type.isNotEmptyString(url))
+			{
+				if (this._editor.isProductCardEnabled() && BX.Reflection.getClass('BX.SidePanel.Instance'))
+				{
+					BX.SidePanel.Instance.open(url, options);
+				}
+				else
+				{
+					window.open(url);
+				}
 			}
 		},
 		_getProductShowUrl: function()
 		{
+			return this._getProductShowUrlByProductId(this.getProductId());
+		},
+		_getProductShowUrlByProductId: function(productId)
+		{
 			var url = null,
-				pathTemplate,
-				productID;
+				pathTemplate;
 
-			if(this._editor)
+			if (this._editor)
 			{
 				pathTemplate = this._editor.getPathToProductShow();
-				if(pathTemplate && typeof(pathTemplate) === "string" && pathTemplate.length > 0)
+				if (pathTemplate && typeof (pathTemplate) === "string" && pathTemplate.length > 0)
 				{
-					productID = parseInt(this.getProductId());
-					if(productID > 0)
+					productId = parseInt(productId);
+					if (BX.type.isNumber(productId))
 					{
-						url = pathTemplate.replace("#product_id#", productID);
+						url = pathTemplate.replace("#product_id#", productId);
 					}
 				}
 			}
@@ -5512,8 +5766,8 @@ if (typeof(BX.Crm.PageEventsManagerClass) === "undefined")
 				for (var i = 0; i < this.eventHandlers[eventName].length; i++)
 				{
 					BX.removeCustomEvent(this, eventName, this.eventHandlers[eventName][i]);
-					delete this.eventHandlers[eventName][i];
 				}
+				delete this.eventHandlers[eventName];
 			}
 		}
 	};

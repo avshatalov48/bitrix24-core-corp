@@ -91,10 +91,10 @@ class CCrmContactWS extends IWebService
 		if (null === $datetime)
 			return time();
 
-		if (intval(substr($datetime, 0, 4)) >= 2037)
-			$datetime = '2037'.substr($datetime, 4);
+		if (intval(mb_substr($datetime, 0, 4)) >= 2037)
+			$datetime = '2037'.mb_substr($datetime, 4);
 
-		return MakeTimeStamp(substr($datetime, 0, 10).' '.substr($datetime, 11, -1), 'YYYY-MM-DD HH:MI:SS');
+		return MakeTimeStamp(mb_substr($datetime, 0, 10).' '.mb_substr($datetime, 11, -1), 'YYYY-MM-DD HH:MI:SS');
 	}
 
 	public function GetList($listName)
@@ -171,7 +171,7 @@ class CCrmContactWS extends IWebService
 
 		$version = $arRes['VERSION'] ? $arRes['VERSION'] : 1;
 
-		if (strlen($arRes['PHOTO']) > 0)
+		if ($arRes['PHOTO'] <> '')
 		{
 			$arImage = self::InitImage($arRes['PHOTO'], 100, 100);
 			$obRow->setAttribute('ows_Attachments', ';#'.CHTTP::URN2URI($arImage['CACHE']['src']).';#'.self::makeGUID(md5($arRes['PHOTO'])).',1;#');
@@ -256,9 +256,9 @@ class CCrmContactWS extends IWebService
 		$bUpdateFields = false;
 
 		$tsLastFieldsChange = COption::GetOptionString('crm', 'ws_contacts_last_fields_change', false);
-		if (strlen($changeToken) > 0)
+		if ($changeToken <> '')
 		{
-			if ($pos = strpos($changeToken, ';'))
+			if ($pos = mb_strpos($changeToken, ';'))
 			{
 				list($newChangeToken, $page, $last_change) = explode(';', $changeToken);
 
@@ -681,17 +681,17 @@ class CCrmContactWS extends IWebService
 
 	public static function makeGUID($data)
 	{
-		if (strlen($data) !== 32) return false;
+		if (mb_strlen($data) !== 32) return false;
 		else return
 			'{'.
-				substr($data, 0, 8).'-'.substr($data, 8, 4).'-'.substr($data, 12, 4).'-'.substr($data, 16, 4).'-'.substr($data, 20).
+			mb_substr($data, 0, 8).'-'.mb_substr($data, 8, 4).'-'.mb_substr($data, 12, 4).'-'.mb_substr($data, 16, 4).'-'.mb_substr($data, 20).
 			'}';
 	}
 
 	protected static function checkGUID($data)
 	{
 		$data = str_replace(array('{', '-', '}'), '', $data);
-		if (strlen($data) !== 32 || preg_match('/[^a-z0-9]/i', $data)) return false;
+		if (mb_strlen($data) !== 32 || preg_match('/[^a-z0-9]/i', $data)) return false;
 		else return $data;
 	}
 

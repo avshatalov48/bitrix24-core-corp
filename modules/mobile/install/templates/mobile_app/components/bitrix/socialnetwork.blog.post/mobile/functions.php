@@ -5,7 +5,7 @@ if (!function_exists("__blogUFfileShowMobile"))
 	function __blogUFfileShowMobile($arResult, $arParams)
 	{
 		$result = false;
-		if ($arParams['arUserField']['FIELD_NAME'] == 'UF_BLOG_POST_DOC' || strpos($arParams['arUserField']['FIELD_NAME'], 'UF_BLOG_COMMENT_DOC') === 0)
+		if ($arParams['arUserField']['FIELD_NAME'] == 'UF_BLOG_POST_DOC' || mb_strpos($arParams['arUserField']['FIELD_NAME'], 'UF_BLOG_COMMENT_DOC') === 0)
 		{
 			if (sizeof($arResult['VALUE']) > 0)
 			{
@@ -18,10 +18,10 @@ if (!function_exists("__blogUFfileShowMobile"))
 					{
 						$name = $arFile['ORIGINAL_NAME'];
 						$ext = '';
-						$dotpos = strrpos($name, ".");
-						if (($dotpos !== false) && ($dotpos+1 < strlen($name)))
-							$ext = substr($name, $dotpos+1);
-						if (strlen($ext) < 3 || strlen($ext) > 5)
+						$dotpos = mb_strrpos($name, ".");
+						if (($dotpos !== false) && ($dotpos + 1 < mb_strlen($name)))
+							$ext = mb_substr($name, $dotpos + 1);
+						if (mb_strlen($ext) < 3 || mb_strlen($ext) > 5)
 							$ext = '';
 						$arFile['EXTENSION'] = $ext;
 						$arFile['LINK'] = SITE_DIR."mobile/ajax.php?mobile_action=blog_image&bp_fid=".$fileID;

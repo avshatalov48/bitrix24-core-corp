@@ -53,7 +53,10 @@ class Handler
 
 		$resultParams = false;
 
-		if ($action == \Bitrix\Main\UI\Selector\Actions::GET_TREE_ITEM_DATA)
+		if (
+			$action == \Bitrix\Main\UI\Selector\Actions::GET_TREE_ITEM_DATA
+			&& \Bitrix\Intranet\Util::isIntranetUser()
+		)
 		{
 			$requestFields = $event->getParameter('requestFields');
 			if (
@@ -63,7 +66,7 @@ class Handler
 				&& !empty($requestFields['options']['categoryId'])
 				&& (
 					intval($requestFields['options']['categoryId']) > 0
-					|| strtoupper($requestFields['options']['categoryId']) == 'EX'
+					|| mb_strtoupper($requestFields['options']['categoryId']) == 'EX'
 				)
 				&& Loader::includeModule('socialnetwork')
 			)

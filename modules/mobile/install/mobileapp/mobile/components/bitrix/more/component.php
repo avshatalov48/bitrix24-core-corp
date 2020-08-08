@@ -7,6 +7,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Socialnetwork\Controller\User\StressLevel;
 use Bitrix\Socialnetwork\Item\UserWelltory;
+use Bitrix\Intranet\Invitation;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -17,6 +18,8 @@ global $USER, $CACHE_MANAGER;
 
 CModule::IncludeModule("mobile");
 CModule::IncludeModule("mobileapp");
+
+Loc::loadMessages(__DIR__ . '/.mobile_menu.php');
 
 function sortMenu($item, $anotherItem)
 {
@@ -34,6 +37,35 @@ function sortMenu($item, $anotherItem)
 
 	return -1;
 }
+
+$isExtranetUser = (\CModule::includeModule("extranet") && !\CExtranet::isIntranetUser());
+
+$canInviteUsers = (
+	Loader::includeModule('intranet')
+	&& Invitation::canCurrentUserInvite()
+);
+
+$registerUrl = (
+	$canInviteUsers
+		? Invitation::getRegisterUrl()
+		: ''
+);
+
+$registerAdminConfirm = (
+	$canInviteUsers
+		? Invitation::getRegisterAdminConfirm()
+		: false
+);
+
+$disableRegisterAdminConfirm = !Invitation::canListDelete();
+
+$registerSharingMessage = (
+	$canInviteUsers
+		? Invitation::getRegisterSharingMessage()
+		: ''
+);
+
+$rootStructureSectionId = Invitation::getRootStructureSectionId();
 
 $userId = $USER->getId();
 $arResult = [];
@@ -361,8 +393,17 @@ array_walk($arResult["menu"], function (&$section) use (&$counterList) {
 	}
 });
 
-
-$arResult["counterList"] = $counterList;
+$arResult = array_merge($arResult, [
+	"counterList" => $counterList,
+	"invite" => [
+		"canInviteUsers" => $canInviteUsers,
+		"registerUrl" => $registerUrl,
+		"registerAdminConfirm" => $registerAdminConfirm,
+		"disableRegisterAdminConfirm" => $disableRegisterAdminConfirm,
+		"registerSharingMessage" => $registerSharingMessage,
+		"rootStructureSectionId" => $rootStructureSectionId
+	]
+]);
 
 unset($obCache);
 

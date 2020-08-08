@@ -1,8 +1,10 @@
 <?php
 namespace Bitrix\Tasks\Rest\Controllers;
-use Bitrix\Main\Error;
+
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\UI\PageNavigation;
-use Bitrix\Tasks\Item;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\TemplateAccessController;
 use Bitrix\Main\Engine\Response;
 use Bitrix\Tasks\Item\Task\Template as TaskTemplate;
 
@@ -28,6 +30,12 @@ class Template extends Base
 	 */
 	public function addAction(array $fields, array $params = array())
 	{
+
+		if (!TemplateAccessController::can(CurrentUser::get()->getId(), ActionDictionary::ACTION_TEMPLATE_CREATE))
+		{
+			return false;
+		}
+
 		$template = new \CTaskTemplates;
 		$templateId = $template->Add($fields, $params);
 
@@ -45,6 +53,11 @@ class Template extends Base
 	 */
 	public function updateAction($templateId, array $fields, array $params = array())
 	{
+		if (!TemplateAccessController::can(CurrentUser::get()->getId(), ActionDictionary::ACTION_TEMPLATE_EDIT, $templateId))
+		{
+			return false;
+		}
+
 		$template = new \CTaskTemplates;
 		$result = $template->Update($templateId, $fields, $params);
 
@@ -61,6 +74,11 @@ class Template extends Base
 	 */
 	public function deleteAction($templateId, array $params = array())
 	{
+		if (!TemplateAccessController::can(CurrentUser::get()->getId(), ActionDictionary::ACTION_TEMPLATE_EDIT, $templateId))
+		{
+			return false;
+		}
+
 		return \CTaskTemplates::Delete($templateId, $params);
 	}
 

@@ -48,7 +48,8 @@ $APPLICATION->IncludeComponent(
 		"AUX_DATA_SELECT" => array(
 			"COMPANY_WORKTIME",
 			"USER_FIELDS"
-		)
+		),
+		"ACTION" => "view"
 	),
 	null,
 	array("HIDE_ICONS" => "Y")

@@ -110,12 +110,18 @@ a.socialnetwork-group-title-link:hover {
 	font-size: 13px;
 	white-space: nowrap;
 	vertical-align: top;
+	max-width: 120px;
 }
 
 .socialnetwork-group-layout-right-column {
 	padding: 16px 0 16px 0;
 	color: #000;
 	vertical-align: top;
+	max-width: 120px;
+}
+
+.socialnetwork-group-sidebar-tag-box {
+	overflow: hidden;
 }
 
 .socialnetwork-group-description-table {
@@ -370,7 +376,7 @@ a.socialnetwork-group-title-link:hover {
 }
 
 .socialnetwork-group-title-buttons {
-	width: 277px;
+	margin-left: 15px;
 }
 
 .socialnetwork-group-actions-button .webform-small-button-icon {

@@ -1,0 +1,122 @@
+
+
+.crm-rq-wrapper {
+	max-width: 500px;
+}
+.crm-rq-wrapper.crm-rq-wrapper-loading
+{
+	min-height: 200px;
+	min-width: 500px;
+}
+.crm-rq-org-list {}
+
+.crm-rq-org-item {
+	padding: 9px 18px 13px;
+	border: 1px solid #e9ebee;
+	border-radius: 2px;
+	margin-bottom: 14px;
+	transition: 250ms linear all;
+	position: relative;
+	cursor: pointer;
+}
+
+/*.crm-rq-org-item:hover,*/
+.crm-rq-org-item.crm-rq-org-item-selected {
+	background-color: #f5f8f9;
+	border-color: #f5f8f9;
+}
+
+.crm-rq-org-item::after,
+.crm-rq-org-item::before {
+	content: '';
+	position: absolute;
+	top: -10px;
+	right: 10px;
+	opacity: 0;
+	transition: 250ms linear transform;
+}
+
+.crm-rq-org-item::after {
+	display: block;
+	width: 20px;
+	height: 20px;
+	background-color: #9dcf00;
+	border-radius: 50%;
+	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.11);
+	z-index: 10;
+}
+
+.crm-rq-org-item::before {
+	box-sizing: border-box;
+	background-color: transparent;
+	width: 7px;
+	height: 11px;
+	border: 2px solid #fff;
+	transform: rotate(45deg) translate(-2px, 6px);
+	z-index: 20;
+	border-top: none;
+	border-left: none;
+}
+
+.crm-rq-org-item.crm-rq-org-item-selected::after,
+.crm-rq-org-item.crm-rq-org-item-selected::before {opacity: 1;}
+
+.crm-rq-org-name {
+	font: bold 14px/22px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #424956;
+}
+
+.crm-rq-org-description {
+	font: 14px/22px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #424956;
+	margin-bottom: 11px;
+}
+
+.crm-rq-org-requisite-title {
+	font: 12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #a3a9b1;
+	margin-bottom: 13px;
+}
+
+.crm-rq-org-requisite-list {}
+
+.crm-rq-org-requisite-item {
+	display: block;
+	margin-bottom: 15px;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	align-items: flex-start;
+}
+
+.crm-rq-org-requisite-btn {
+	margin-right: 20px;
+	margin-top: 3px;
+}
+
+.crm-rq-org-requisite-info {
+	font: 14px/22px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #424956;
+	display: block;
+}
+
+.crm-rq-org-requisite-item-selected,
+.crm-rq-org-requisite-item:hover .crm-rq-org-requisite-info {
+	color: #222;
+	cursor: pointer;
+}
+.crm-entity-widget-requisite-links
+{
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-pack: justify;
+	-ms-flex-pack: justify;
+	justify-content: space-between;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center
+}
+.crm-entity-widget-content-block-field-container.crm-entity-widget-content-block-field-requisites {
+	margin-bottom: 5px;
+}

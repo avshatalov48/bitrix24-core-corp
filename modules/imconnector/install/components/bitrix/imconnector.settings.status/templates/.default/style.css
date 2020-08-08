@@ -94,3 +94,7 @@
 .imconnector-contact-item-selected .imconnector-contact-logo {
 	border-color: rgba(255, 255, 255, .3);
 }
+
+.imconnector-imessage-background-color {
+	background-color: #000000;
+}

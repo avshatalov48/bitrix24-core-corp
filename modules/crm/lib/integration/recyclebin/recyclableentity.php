@@ -1,15 +1,13 @@
 <?php
 namespace Bitrix\Crm\Integration\Recyclebin;
 
+use Bitrix\Crm\Integration\Bitrix24Manager;
 use Bitrix\Main;
 use Bitrix\Recyclebin;
 
-class RecyclableEntity implements Recyclebin\Internals\Contracts\Recyclebinable
+abstract class RecyclableEntity implements Recyclebin\Internals\Contracts\Recyclebinable
 {
-	public static function getEntityName()
-	{
-		throw new Main\NotImplementedException('Method '.__METHOD__.' must be implemented by successor');
-	}
+	abstract public static function getEntityName();
 
 	public static function createRecycleBinEntity($entityID)
 	{
@@ -25,23 +23,15 @@ class RecyclableEntity implements Recyclebin\Internals\Contracts\Recyclebinable
 	 * Recover entity from Recycle Bin.
 	 * @param Recyclebin\Internals\Entity $entity
 	 * @return bool|void
-	 * @throws Main\NotImplementedException
 	 */
-	public static function moveFromRecyclebin(Recyclebin\Internals\Entity $entity)
-	{
-		throw new Main\NotImplementedException('Method '.__METHOD__.' must be implemented by successor');
-	}
+	abstract public static function moveFromRecyclebin(Recyclebin\Internals\Entity $entity);
 
 	/**
 	 * Erase entity from Recycle Bin.
 	 * @param Recyclebin\Internals\Entity $entity
 	 * @return Main\Result|void
-	 * @throws Main\NotImplementedException
 	 */
-	public static function removeFromRecyclebin(Recyclebin\Internals\Entity $entity)
-	{
-		throw new Main\NotImplementedException('Method '.__METHOD__.' must be implemented by successor');
-	}
+	abstract public static function removeFromRecyclebin(Recyclebin\Internals\Entity $entity);
 
 	/**
 	 * Prepare entity view.
@@ -56,13 +46,9 @@ class RecyclableEntity implements Recyclebin\Internals\Contracts\Recyclebinable
 
 	/**
 	 * Get message array for Recycle Bin action's notification
-	 * @throws Main\NotImplementedException
 	 * @return array|void
 	 */
-	public static function getNotifyMessages()
-	{
-		throw new Main\NotImplementedException('Method '.__METHOD__.' must be implemented by successor');
-	}
+	abstract public static function getNotifyMessages();
 
 	protected static function prepareDataSlots(Recyclebin\Internals\Entity $entity)
 	{
@@ -88,6 +74,7 @@ class RecyclableEntity implements Recyclebin\Internals\Contracts\Recyclebinable
 		}
 		return $slots;
 	}
+
 	protected static function prepareDataSlotMap(Recyclebin\Internals\Entity $entity)
 	{
 		$slotMap = array();
@@ -102,5 +89,19 @@ class RecyclableEntity implements Recyclebin\Internals\Contracts\Recyclebinable
 			}
 		}
 		return $slotMap;
+	}
+
+	public static function getAdditionalData(): array
+	{
+		return [
+			static::getEntityName() => [
+				'LIMIT_DATA' => [
+					'RESTORE' => [
+						'DISABLE' => !Bitrix24Manager::isFeatureEnabled('recyclebin'),
+						'SLIDER_CODE' => 'limit_crm_recyclebin_restore',
+					]
+				]
+			]
+		];
 	}
 }

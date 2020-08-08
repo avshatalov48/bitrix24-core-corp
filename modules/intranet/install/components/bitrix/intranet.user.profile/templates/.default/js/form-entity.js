@@ -201,9 +201,9 @@ namespace.EntityEditor.prototype =
 					text: BX.message("INTRANET_USER_PROFILE_APP_SEND"),
 					className: "ui-btn-primary",
 					events: {
-						click: BX.proxy(function () {
-							BX.addClass(BX.proxy_context.button, "ui-btn-wait");
-							var popup = BX.proxy_context.context;
+						click: BX.proxy(function (button) {
+							button.setWaiting();
+							var popup = button.context;
 
 							BX.ajax.runAction('intranet.controller.sms.sendsmsforapp', {
 								data: {

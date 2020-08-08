@@ -18,7 +18,7 @@ if($mode === '' && isset($_REQUEST['mode']))
 {
 	$mode = $_REQUEST['mode'];
 }
-$mode = strtoupper(trim($mode));
+$mode = mb_strtoupper(trim($mode));
 $arResult['MODE'] = $arParams['MODE'] = $mode;
 
 $contextID = isset($arParams['CONTEXT_ID']) ? $arParams['CONTEXT_ID'] : '';

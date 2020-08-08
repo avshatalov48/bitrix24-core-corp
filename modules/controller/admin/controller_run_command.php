@@ -65,7 +65,7 @@ if (isset($_REQUEST["save"]) && check_bitrix_sessid())
 		}
 		$i++;
 	}
-	while (strlen(CUserOptions::GetOption("controller_run_command", "query".$i, '')))
+	while(CUserOptions::GetOption("controller_run_command", "query".$i, '') <> '')
 	{
 		CUserOptions::DeleteOption("controller_run_command", "query".$i);
 		$i++;
@@ -113,7 +113,7 @@ if (
 			if (is_numeric($id))
 				$arFilterID[] = $id;
 			else
-				$arFilterNAME[] = strtoupper($id);
+				$arFilterNAME[] = mb_strtoupper($id);
 		}
 
 		if (!empty($arFilterID) || !empty($arFilterNAME))

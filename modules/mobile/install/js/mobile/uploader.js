@@ -212,7 +212,7 @@
 					this.loaders[taskId] = null;
 				}
 
-				let taskIndex = this.taskIds.indexOf(taskId);
+				var taskIndex = this.taskIds.indexOf(taskId);
 				if (taskIndex >= 0)
 				{
 					if (this.taskIds.length == 1)

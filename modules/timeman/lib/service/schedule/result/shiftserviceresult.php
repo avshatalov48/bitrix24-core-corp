@@ -5,55 +5,14 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Timeman\Model\Schedule\Schedule;
 use Bitrix\Timeman\Model\Schedule\Shift\Shift;
-use Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlan;
 use Bitrix\Timeman\Service\BaseServiceResult;
 
 class ShiftServiceResult extends BaseServiceResult
 {
 	/** @var Shift $shift */
 	private $shift;
-	/** @var Shift[] $shifts */
-	private $shifts;
-	/** @var ShiftPlan $shiftPlan */
-	private $shiftPlan;
 	/** @var Schedule */
 	private $schedule;
-
-	/**
-	 * @return ShiftPlan
-	 */
-	public function getShiftPlan()
-	{
-		return $this->shiftPlan;
-	}
-
-	/**
-	 * @param ShiftPlan $shiftPlan
-	 * @return $this
-	 */
-	public function setShiftPlan($shiftPlan)
-	{
-		$this->shiftPlan = $shiftPlan;
-		return $this;
-	}
-
-	/**
-	 * @param Shift[] $shifts
-	 * @return $this
-	 */
-	public function setShifts($shifts)
-	{
-		$this->shifts = $shifts;
-		return $this;
-	}
-
-	/**
-	 * @return Shift[]
-	 */
-	public function getShifts()
-	{
-		return $this->shifts;
-	}
 
 	/**
 	 * @return Shift
@@ -76,12 +35,6 @@ class ShiftServiceResult extends BaseServiceResult
 	public function addShiftNotFoundError()
 	{
 		$this->addError(new Error(Loc::getMessage('TM_BASE_SERVICE_RESULT_ERROR_SHIFT_NOT_FOUND')));
-		return $this;
-	}
-
-	public function addShiftPlanNotFoundError()
-	{
-		$this->addError(new Error(Loc::getMessage('TM_BASE_SERVICE_RESULT_ERROR_SHIFT_PLAN_NOT_FOUND')));
 		return $this;
 	}
 

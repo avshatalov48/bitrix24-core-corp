@@ -2,6 +2,10 @@
 include('InAppNotifier');
 
 (() => {
+	const pathToExtension = '/bitrix/mobileapp/mobile/extensions/bitrix/task/taskcard/';
+	const apiVersion = Application.getApiVersion();
+	const platform = Application.getPlatform();
+
 	class Request
 	{
 		constructor(namespace = 'tasks.task.')
@@ -45,22 +49,40 @@ include('InAppNotifier');
 		}
 	}
 
+	class Options
+	{
+		constructor()
+		{
+			this.storageName = 'tasks.task.view.options';
+			this.defaultOptions = {
+				swipeShowHelper: {
+					value: 0,
+					limit: 1,
+				},
+			};
+		}
+
+		get()
+		{
+			return Application.storage.getObject(this.storageName, this.defaultOptions);
+		}
+
+		set(options)
+		{
+			Application.storage.setObject(this.storageName, options);
+		}
+
+		update(optionName, optionValue)
+		{
+			Application.storage.updateObject(this.storageName, {[optionName]: optionValue});
+		}
+	}
+
 	class TaskCardHandler
 	{
-		constructor(taskCard, task, getTaskInfo)
+		constructor(taskCard)
 		{
 			this.taskCard = taskCard;
-			this.task = task;
-
-			if (getTaskInfo)
-			{
-				this.taskInfo = this.task.getTaskInfo();
-				this.taskCard.setTaskInfo(this.taskInfo);
-			}
-			else
-			{
-				this.taskInfo = this.taskCard.getTaskInfo();
-			}
 		}
 
 		closeForm()
@@ -68,83 +90,9 @@ include('InAppNotifier');
 			this.taskCard.back();
 		}
 
-		setIsChecked(isChecked)
+		setTaskInfo(taskInfo)
 		{
-			const checked = (typeof isChecked === 'boolean' ? isChecked : this.task.isCompleted);
-			this.setTaskInfo({checked});
-		}
-
-		setIsCheckable(isCheckable)
-		{
-			const canCheck = this.task.can.complete || this.task.can.approve || this.task.can.renew;
-			const checkable = (typeof isCheckable === 'boolean' ? isCheckable : canCheck);
-
-			this.setTaskInfo({checkable});
-		}
-
-		setDeadline(deadline)
-		{
-			this.setTaskInfo({deadline});
-		}
-
-		setResponsibleIcon(responsibleIcon)
-		{
-			this.setTaskInfo({responsibleIcon});
-		}
-
-		setState(newState = null)
-		{
-			const currentState = (!newState ? this.task.getState() : this.task.statesList[newState]);
-
-			if (this.task.isCompleted || currentState === null)
-			{
-				if (this.taskInfo && this.taskInfo.styles && this.taskInfo.styles.state)
-				{
-					delete this.taskInfo.styles.state;
-				}
-				this.setTaskInfo({state: '', styles: this.taskInfo.styles});
-			}
-			else
-			{
-				const {message, backgroundColor, fontColor} = currentState;
-				const currentStyles = this.taskInfo.styles || {};
-
-				currentStyles.state = {
-					backgroundColor,
-					font: {
-						color: fontColor,
-						fontStyle: 'semibold',
-					},
-				};
-
-				this.setTaskInfo({state: message, styles: currentStyles});
-			}
-		}
-
-		updateActions(newActions)
-		{
-			const actions = newActions || this.task.getActions();
-			this.setTaskInfo({actions});
-		}
-
-		updateMessageCount(newMessageCount = null)
-		{
-			const messageCount = newMessageCount || this.task.getMessageCount() || 0;
-			this.setTaskInfo({messageCount});
-		}
-
-		updateNewCommentsCount(newCommentsCount)
-		{
-			this.setTaskInfo({newCommentsCount: newCommentsCount || this.task.newCommentsCount});
-		}
-
-		setTaskInfo(newProperties)
-		{
-			Object.keys(newProperties).forEach((key) => {
-				this.taskInfo[key] = newProperties[key];
-			});
-
-			this.taskCard.setTaskInfo(this.taskInfo);
+			this.taskCard.setTaskInfo(taskInfo);
 		}
 	}
 
@@ -157,6 +105,7 @@ include('InAppNotifier');
 				'TITLE',
 				'STATUS',
 				'CREATED_BY',
+				'ACTIVITY_DATE',
 				'RESPONSIBLE_ID',
 				'ACCOMPLICES',
 				'AUDITORS',
@@ -168,6 +117,8 @@ include('InAppNotifier');
 				'CHECKLIST',
 				'GROUP_ID',
 				'ALLOW_CHANGE_DEADLINE',
+				'IS_MUTED',
+				'IS_PINNED',
 			];
 		}
 
@@ -222,12 +173,13 @@ include('InAppNotifier');
 			this.userId = userId || parseInt(BX.componentParameters.get('USER_ID', 0), 10);
 			this.taskId = BX.componentParameters.get('TASK_ID', 0);
 			this.guid = BX.componentParameters.get('GUID', '');
-			this.getTaskInfo = BX.componentParameters.get('GET_TASK_INFO', false);
 
 			this.currentUser = result.settings.userInfo;
-			this.task = new Task(this.currentUser);
+			this.deadlines = result.deadlines;
 
+			this.task = new Task(this.currentUser);
 			this.rest = new Request();
+			this.options = new Options();
 			this.taskCardHandler = null;
 			this.taskPopupMenu = null;
 		}
@@ -256,45 +208,62 @@ include('InAppNotifier');
 
 		onMobileGridFormDataChange(eventData)
 		{
-			const {nodeName, nodeValue, dateValue, responsibleIcon} = eventData;
+			console.log('onMobileGridFormDataChange', eventData);
+
+			const {nodeName, nodeValue, dateValue, responsibleIcon, formId} = eventData;
+
+			if (formId !== `MOBILE_TASK_VIEW_${this.guid.replace(/-/g, '')}`)
+			{
+				return;
+			}
+
 			switch (nodeName)
 			{
 				case 'data[DEADLINE]':
 					if (dateValue || (!dateValue && nodeValue === ''))
 					{
-						this.changeDeadline(dateValue ? Date.parse(dateValue) : null);
+						this.updateTask({
+							deadline: dateValue ? Date.parse(dateValue) : null,
+							activityDate: Date.now(),
+						});
 					}
 					break;
 
 				case 'data[SE_RESPONSIBLE][0][ID]':
 					if (typeof responsibleIcon !== 'undefined' && nodeValue)
 					{
-						const currentResponsibleId = this.task.responsible.id;
 						let formattedIcon = 'images/avatar.png';
-
 						if (responsibleIcon !== '')
 						{
 							formattedIcon = responsibleIcon.replace(/^url\(["']?/, '').replace(/["']?\)$/, '');
 						}
 
-						this.task.responsible.id = nodeValue;
-						if (this.taskCardHandler)
-						{
-							this.taskCardHandler.setResponsibleIcon(formattedIcon);
-							this.taskCardHandler.setState();
-							this.taskCardHandler.updateMessageCount();
-						}
-
-						this.setResponsibleById(nodeValue).then(
-							() => {
-								console.log('onMobileGridFormDataChange::setResponsibleById::then.resolve');
-								this.task.save();
+						this.updateTask({
+							responsible: {
+								id: nodeValue,
+								icon: formattedIcon,
 							},
-							() => {
-								console.log('onMobileGridFormDataChange::setResponsibleById::then.reject');
-								this.task.responsible.id = currentResponsibleId;
-							}
-						);
+							activityDate: Date.now(),
+						});
+
+						(new Request('user.'))
+							.call('search', {
+								IMAGE_RESIZE: 'small',
+								FILTER: {
+									ID: nodeValue,
+								},
+							})
+							.then((response) => {
+								const user = response.result[0];
+								this.updateTask({
+									responsible: {
+										id: user.ID,
+										name: TaskCard.getFormattedName(user),
+										icon: encodeURI(user.PERSONAL_PHOTO),
+										link: '',
+									},
+								});
+							});
 					}
 					break;
 
@@ -315,455 +284,38 @@ include('InAppNotifier');
 
 		onCommentsRead(eventData)
 		{
-			if (this.task.id !== eventData.taskId)
+			if (this.task.id === eventData.taskId)
+			{
+				this.updateTask({newCommentsCount: 0});
+			}
+		}
+
+		onPullComment(data)
+		{
+			console.log('tasks.view.native::onPullComment');
+
+			const [entityType, entityId] = data.entityXmlId.split('_');
+			const returnConditions = {
+				wrongEntityType: entityType !== 'TASK',
+				wrongEntityId: entityId !== this.task.id,
+				myComment: Number(data.ownerId) === Number(this.currentUser.id),
+			};
+			let shouldReturn = false;
+
+			Object.keys(returnConditions).forEach((condition) => {
+				if (!shouldReturn && returnConditions[condition])
+				{
+					console.log(`tasks.view.native::onPullComment.${condition}`);
+					shouldReturn = true;
+				}
+			});
+
+			if (shouldReturn)
 			{
 				return;
 			}
 
-			this.task.newCommentsCount = 0;
-			if (this.taskCardHandler)
-			{
-				this.taskCardHandler.updateNewCommentsCount();
-			}
-		}
-
-		redrawTaskPopupMenu()
-		{
-			this.taskPopupMenu.setData(this.popupMenuItems, [{id: '0'}], (eventName, item) => {
-				if (eventName === 'onItemSelected')
-				{
-					const itemsMap = this.popupMenuItemsMap;
-					if (Object.keys(itemsMap).includes(item.id))
-					{
-						itemsMap[item.id].action.apply(this);
-					}
-				}
-			});
-		}
-
-		setResponsibleById(responsibleId)
-		{
-			return new Promise((resolve, reject) => {
-				const userRequest = new Request('user.');
-				userRequest.call('search', {
-					IMAGE_RESIZE: 'small',
-					FILTER: {
-						ID: responsibleId,
-					},
-				}).then((response) => {
-					const user = response.result[0];
-					this.task.responsible = {
-						id: user.ID,
-						name: TaskCard.getFormattedName(user),
-						icon: encodeURI(user.PERSONAL_PHOTO),
-						link: '',
-					};
-					resolve(response);
-				}).catch((response) => {
-					reject(response);
-				});
-			});
-		}
-
-		changeDeadline(deadline)
-		{
-			this.task.deadline = deadline;
-			if (this.taskCardHandler)
-			{
-				this.taskCardHandler.setDeadline(deadline);
-				this.taskCardHandler.setState();
-				this.taskCardHandler.updateMessageCount();
-			}
-		}
-
-		changeResponsible(responsible)
-		{
-			this.task.responsible = {
-				id: responsible.params.id,
-				name: responsible.title,
-				icon: responsible.imageUrl,
-				link: '',
-			};
-			if (this.taskCardHandler)
-			{
-				this.taskCardHandler.setResponsibleIcon(encodeURI(responsible.imageUrl));
-			}
-		}
-
-		onItemChecked(isChecked)
-		{
-			if (isChecked)
-			{
-				this.complete();
-			}
-			else
-			{
-				this.renew();
-			}
-		}
-
-		openNewTaskPage()
-		{
-			const guid = TaskCard.getGuid();
-			let url = result.settings.taskPaths.add
-				.replace(/#taskId#/gi, 0)
-				.replace(/#userId#/gi, this.currentUser.id)
-				.replace(/#salt#/gi, new Date().getTime());
-			url = `${url}&GUID=${guid}`;
-
-			if (Application.getApiVersion() >= 33)
-			{
-				PageManager.openComponent('JSStackComponent', {
-					componentCode: 'tasks.edit',
-					scriptPath: availableComponents['tasks.view'].publicUrl,
-					rootWidget: {
-						name: 'web',
-						settings: {
-							objectName: 'taskcard',
-							modal: true,
-							cache: false,
-							page: {
-								url,
-								titleParams: {text: BX.message('TASKS_TASK_DETAIL_TASK_NEW_TASK_TITLE')},
-							},
-						},
-					},
-					params: {
-						MODE: 'edit',
-						COMPONENT_CODE: 'tasks.view',
-						USER_ID: this.userId || 0,
-						TASK_ID: 0,
-						GUID: guid,
-					},
-				});
-			}
-			else
-			{
-				PageManager.openPage({url, cache: false, modal: true});
-			}
-		}
-
-		openNewSubTaskPage()
-		{
-			const guid = TaskCard.getGuid();
-			let url = result.settings.taskPaths.addSub
-				.replace(/#taskId#/gi, 0)
-				.replace(/#parentTaskId#/gi, this.task.id)
-				.replace(/#userId#/gi, this.currentUser.id)
-				.replace(/#salt#/gi, new Date().getTime());
-			url = `${url}&GUID=${guid}`;
-
-			if (Application.getApiVersion() >= 33)
-			{
-				PageManager.openComponent('JSStackComponent', {
-					componentCode: 'tasks.edit',
-					scriptPath: availableComponents['tasks.view'].publicUrl,
-					rootWidget: {
-						name: 'web',
-						settings: {
-							objectName: 'taskcard',
-							modal: true,
-							cache: false,
-							page: {
-								url,
-								titleParams: {text: BX.message('TASKS_TASK_DETAIL_TASK_NEW_SUBTASK_TITLE')},
-							},
-						},
-					},
-					params: {
-						MODE: 'edit',
-						COMPONENT_CODE: 'tasks.view',
-						USER_ID: this.userId || 0,
-						TASK_ID: 0,
-						GUID: guid,
-					},
-				});
-			}
-			else
-			{
-				PageManager.openPage({url, cache: false, modal: true});
-			}
-		}
-
-		openEditTaskPage()
-		{
-			const guid = TaskCard.getGuid();
-			let url = result.settings.taskPaths.update
-				.replace(/#taskId#/gi, this.task.id)
-				.replace(/#userId#/gi, this.currentUser.id)
-				.replace(/#salt#/gi, new Date().getTime());
-			url = `${url}&GUID=${guid}`;
-
-			if (Application.getApiVersion() >= 33)
-			{
-				PageManager.openComponent('JSStackComponent', {
-					componentCode: 'tasks.edit',
-					scriptPath: availableComponents['tasks.view'].publicUrl,
-					rootWidget: {
-						name: 'web',
-						settings: {
-							objectName: 'taskcard',
-							modal: true,
-							cache: false,
-							page: {
-								url,
-								titleParams: {text: BX.message('TASKS_TASK_DETAIL_TASK_EDIT_TITLE')},
-							},
-						},
-					},
-					params: {
-						MODE: 'edit',
-						COMPONENT_CODE: 'tasks.view',
-						USER_ID: this.userId || 0,
-						TASK_ID: this.taskId,
-						GUID: guid,
-					},
-				});
-			}
-			else
-			{
-				PageManager.openPage({url, cache: false, modal: true});
-			}
-		}
-
-		complete()
-		{
-			this.task.status = Task.statusList.completed;
-			if (this.taskCardHandler)
-			{
-				this.taskCardHandler.setIsChecked(true);
-				this.taskCardHandler.setState();
-				this.taskCardHandler.updateMessageCount();
-			}
-
-			this.task.complete().then(() => {
-				if (this.taskCardHandler)
-				{
-					this.taskCardHandler.updateActions();
-				}
-				this.redrawTaskPopupMenu();
-			});
-		}
-
-		renew()
-		{
-			this.task.status = Task.statusList.pending;
-			if (this.taskCardHandler)
-			{
-				this.taskCardHandler.setIsChecked(false);
-				this.taskCardHandler.setState();
-				this.taskCardHandler.updateMessageCount();
-			}
-
-			this.task.renew().then(() => {
-				if (this.taskCardHandler)
-				{
-					this.taskCardHandler.updateActions();
-				}
-				this.redrawTaskPopupMenu();
-			});
-		}
-
-		start()
-		{
-			this.task.status = Task.statusList.inprogress;
-			this.task.start().then(() => {
-				if (this.taskCardHandler)
-				{
-					this.taskCardHandler.updateActions();
-				}
-				this.redrawTaskPopupMenu();
-			});
-		}
-
-		pause()
-		{
-			this.task.status = Task.statusList.pending;
-			this.task.pause().then(() => {
-				if (this.taskCardHandler)
-				{
-					this.taskCardHandler.updateActions();
-				}
-				this.redrawTaskPopupMenu();
-			});
-		}
-
-		approve()
-		{
-			this.task.status = Task.statusList.completed;
-			this.task.approve().then(() => this.redrawTaskPopupMenu());
-		}
-
-		disapprove()
-		{
-			this.task.status = Task.statusList.pending;
-			this.task.disapprove().then(() => this.redrawTaskPopupMenu());
-		}
-
-		delegate()
-		{
-			UserList.openPicker({allowMultipleSelection: false}).then((data) => {
-				if (data.length > 0)
-				{
-					this.changeResponsible(data[0]);
-					this.task.delegate().then(() => BX.postWebEvent('tasks.view.native::onTaskUpdate', {
-						taskId: this.task.id,
-						responsible: true,
-					}, true));
-				}
-			});
-		}
-
-		remove()
-		{
-			dialogs.showActionSheet({
-				title: BX.message('TASKS_TASK_DETAIL_CONFIRM_REMOVE'),
-				callback: (item) => {
-					if (item.id === 'yes')
-					{
-						InAppNotifier.showNotification({
-							title: BX.message('TASKS_TASK_DETAIL_TASK_WAS_REMOVED'),
-							backgroundColor: '#333333',
-						});
-
-						this.rest.call('delete', {taskId: this.task.id});
-						if (this.taskCardHandler)
-						{
-							this.taskCardHandler.closeForm();
-						}
-					}
-				},
-				items: TaskCard.getRemoveSheetItems(),
-			});
-		}
-
-		addToFavorite()
-		{
-			this.task.rawAccess['favorite.add'] = false;
-			this.task.rawAccess['favorite.delete'] = true;
-
-			BX.postWebEvent('tasks.view.native::onTaskUpdate', {taskId: this.task.id, favorite: true}, true);
-			this.redrawTaskPopupMenu();
-
-			this.task.favorite().add().then(() => {}, () => {
-				this.task.rawAccess['favorite.add'] = true;
-				this.task.rawAccess['favorite.delete'] = false;
-
-				BX.postWebEvent('tasks.view.native::onTaskUpdate', {taskId: this.task.id, favorite: false}, true);
-				this.redrawTaskPopupMenu();
-			});
-		}
-
-		removeFromFavorite()
-		{
-			this.task.rawAccess['favorite.add'] = true;
-			this.task.rawAccess['favorite.delete'] = false;
-
-			BX.postWebEvent('tasks.view.native::onTaskUpdate', {taskId: this.task.id, favorite: false}, true);
-			this.redrawTaskPopupMenu();
-
-			this.task.favorite().remove().then(() => {}, () => {
-				this.task.rawAccess['favorite.add'] = false;
-				this.task.rawAccess['favorite.delete'] = true;
-
-				BX.postWebEvent('tasks.view.native::onTaskUpdate', {taskId: this.task.id, favorite: true}, true);
-				this.redrawTaskPopupMenu();
-			});
-		}
-
-		unfollow()
-		{
-			const currentUserId = Number(this.currentUser.id);
-
-			this.task.auditors = this.task.auditors.filter(item => item !== currentUserId);
-			if (!this.task.isMember(currentUserId))
-			{
-				this.task.stopWatch();
-				if (this.taskCardHandler)
-				{
-					this.taskCardHandler.closeForm();
-				}
-			}
-			else
-			{
-				if (this.taskCardHandler)
-				{
-					this.taskCardHandler.updateActions();
-				}
-			}
-		}
-
-		onItemAction(action)
-		{
-			switch (action.identifier)
-			{
-				default:
-					break;
-
-				case 'changeDeadline':
-					dialogs.showDatePicker(
-						{
-							title: BX.message('TASKS_TASK_DETAIL_DEADLINE_DATE_PICKER'),
-							type: 'datetime',
-							value: this.task.deadline,
-						},
-						(eventName, newTs) => {
-							if (!newTs)
-							{
-								return;
-							}
-							this.changeDeadline(newTs);
-
-							console.log('tasks.view.native::onItemAction::changeDeadline');
-							BX.postWebEvent('tasks.view.native::onItemAction', {
-								taskId: this.task.id,
-								taskGuid: this.guid,
-								name: 'deadline',
-								values: {deadline: newTs},
-							});
-						}
-					);
-					break;
-
-				case 'changeResponsible':
-					UserList.openPicker({
-						allowMultipleSelection: false,
-						title: BX.message("TASKS_TASK_DETAIL_TITLE_RESPONSIBLE"),
-					}).then((users) => {
-						if (users.length > 0)
-						{
-							console.log('tasks.view.native::onItemAction::changeResponsible');
-
-							this.changeResponsible(users[0]);
-							BX.postWebEvent('tasks.view.native::onItemAction', {
-								taskId: this.task.id,
-								taskGuid: this.guid,
-								name: 'responsible',
-								values: {
-									user: this.task.responsible,
-								},
-							});
-						}
-					});
-
-					break;
-
-				case 'start':
-					this.start();
-					break;
-
-				case 'pause':
-					this.pause();
-					break;
-
-				case 'remove':
-					this.remove();
-					break;
-
-				case 'unfollow':
-					this.unfollow();
-					break;
-			}
+			this.updateTask({newCommentsCount: this.task.newCommentsCount + 1});
 		}
 
 		onPullUpdate(data)
@@ -776,19 +328,20 @@ include('InAppNotifier');
 				return;
 			}
 
-			this.rest.call('get', {taskId, select: TaskCard.selectFields}).then(
+			this.rest.call('get', {
+				taskId,
+				select: TaskCard.selectFields,
+				params: {
+					GET_TASK_LIMIT_EXCEEDED: true,
+				},
+			}).then(
 				(response) => {
 					const {task} = response.result;
 
-					this.task.status = task.status;
-					this.task.rawAccess = task.action;
+					this.task.setData(task);
+					this.taskLimitExceeded = task.taskLimitExceeded;
 
-					if (this.taskCardHandler)
-					{
-						this.taskCardHandler.setIsCheckable();
-						this.taskCardHandler.setIsChecked();
-						this.taskCardHandler.updateActions();
-					}
+					this.updateTask();
 				},
 				response => console.log('tasks.view.native::onPullUpdate.get.error', response)
 			);
@@ -814,112 +367,595 @@ include('InAppNotifier');
 			}
 		}
 
-		onPullComment(data)
+		updateTask(fields = {})
 		{
-			console.log('tasks.view.native::onPullComment');
+			BX.onViewLoaded(() => {
+				const has = Object.prototype.hasOwnProperty;
 
-			const [entityType, entityId] = data.ENTITY_XML_ID.split('_');
-			const returnConditions = {
-				wrongEntityType: entityType !== 'TASK',
-				wrongEntityId: entityId !== this.task.id,
-				myComment: Number(data.OWNER_ID) === Number(this.currentUser.id),
-			};
-			let shouldReturn = false;
+				Object.keys(fields).forEach((key) => {
+					if (has.call(this.task, key) || has.call(Object.getPrototypeOf(this.task), key))
+					{
+						this.task[key] = fields[key];
+					}
+				});
 
-			Object.keys(returnConditions).forEach((condition) => {
-				if (!shouldReturn && returnConditions[condition])
-				{
-					console.log(`tasks.view.native::onPullComment.${condition}`);
-					shouldReturn = true;
-				}
+				this.updateTaskCardInfo();
 			});
+		}
 
-			if (shouldReturn)
-			{
-				return;
-			}
-
-			this.task.newCommentsCount += 1;
+		updateTaskCardInfo()
+		{
 			if (this.taskCardHandler)
 			{
-				this.taskCardHandler.updateNewCommentsCount();
+				this.taskCardHandler.setTaskInfo(this.getTaskInfo());
 			}
 		}
 
-		updateTask(taskData)
+		getTaskInfo()
 		{
-			console.log(taskData);
+			let taskInfo = this.task.getTaskInfo();
+
+			taskInfo = this.handleItemActions(taskInfo);
+
+			return taskInfo;
 		}
 
-		get popupMenuItemsMap()
+		handleItemActions(taskInfo)
 		{
-			return {
-				addTask: {
-					title: BX.message('TASKS_TASK_DETAIL_TASK_ADD'),
-					iconUrl: '/bitrix/mobileapp/mobile/components/bitrix/tasks.view/images/mobile-task-view-popup-add.png',
-					action: this.openNewTaskPage,
-				},
-				addSubTask: {
-					title: BX.message('TASKS_TASK_DETAIL_TASK_ADD_SUBTASK'),
-					iconUrl: '/bitrix/mobileapp/mobile/components/bitrix/tasks.view/images/mobile-task-view-popup-add.png',
-					action: this.openNewSubTaskPage,
-				},
-				'favorite.add': {
-					title: BX.message('TASKS_TASK_DETAIL_BTN_ADD_FAVORITE_TASK'),
-					iconUrl: '/bitrix/mobileapp/mobile/components/bitrix/tasks.view/images/mobile-task-view-popup-add-favorite.png',
-					action: this.addToFavorite,
-				},
-				'favorite.remove': {
-					title: BX.message('TASKS_TASK_DETAIL_BTN_DELETE_FAVORITE_TASK'),
-					iconUrl: '/bitrix/mobileapp/mobile/components/bitrix/tasks.view/images/mobile-task-view-popup-delete-favorite.png',
-					action: this.removeFromFavorite,
-				},
-				start: {
-					title: BX.message('TASKS_TASK_DETAIL_BTN_START_TASK'),
-					iconUrl: '/bitrix/mobileapp/mobile/components/bitrix/tasks.view/images/mobile-task-view-popup-start.png',
-					action: this.start,
-				},
-				complete: {
-					title: BX.message('TASKS_TASK_DETAIL_BTN_CLOSE_TASK'),
-					iconUrl: '/bitrix/mobileapp/mobile/components/bitrix/tasks.view/images/mobile-task-view-popup-finish.png',
-					action: this.complete,
-				},
-				renew: {
-					title: BX.message('TASKS_TASK_DETAIL_BTN_RENEW_TASK'),
-					iconUrl: '/bitrix/mobileapp/mobile/components/bitrix/tasks.view/images/mobile-task-view-popup-renew.png',
-					action: this.renew,
-				},
-				pause: {
-					title: BX.message('TASKS_TASK_DETAIL_BTN_PAUSE_TASK'),
-					iconUrl: '/bitrix/mobileapp/mobile/components/bitrix/tasks.view/images/mobile-task-view-popup-pause.png',
-					action: this.pause,
-				},
-				disapprove: {
-					title: BX.message('TASKS_TASK_DETAIL_BTN_REDO_TASK'),
-					iconUrl: '/bitrix/mobileapp/mobile/components/bitrix/tasks.view/images/mobile-task-view-popup-renew.png',
-					action: this.disapprove,
-				},
-				approve: {
-					title: BX.message('TASKS_TASK_DETAIL_BTN_APPROVE_TASK'),
-					iconUrl: '/bitrix/mobileapp/mobile/components/bitrix/tasks.view/images/mobile-task-view-popup-finish.png',
-					action: this.approve,
-				},
-				delegate: {
-					title: BX.message('TASKS_TASK_DETAIL_BTN_DELEGATE_TASK'),
-					iconUrl: '/bitrix/mobileapp/mobile/components/bitrix/tasks.view/images/mobile-task-view-popup-delegate.png',
-					action: this.delegate,
-				},
-				update: {
-					title: BX.message('TASKS_TASK_DETAIL_BTN_EDIT'),
-					iconUrl: '/bitrix/mobileapp/mobile/components/bitrix/tasks.view/images/mobile-task-view-popup-edit.png',
-					action: this.openEditTaskPage,
-				},
-				remove: {
-					title: BX.message('TASKS_TASK_DETAIL_BTN_REMOVE'),
-					iconUrl: '/bitrix/mobileapp/mobile/components/bitrix/tasks.view/images/mobile-task-view-popup-delete.png',
-					action: this.remove,
-				},
+			const notAllowedActions = ['pin', 'unpin', 'read'];
+			let {actions} = taskInfo;
+
+			actions = actions.filter(action => !notAllowedActions.includes(action.identifier));
+
+			if (platform === 'ios')
+			{
+				const leftSwipeActions = actions.filter(action => action.position === 'left');
+
+				if (actions.length > 4 + leftSwipeActions.length)
+				{
+					const swipeActions = leftSwipeActions.concat([Task.actions.more]);
+					const popupActions = [];
+
+					actions.filter(action => !leftSwipeActions.includes(action)).forEach((action) => {
+						if (swipeActions.length < 4 + leftSwipeActions.length)
+						{
+							swipeActions.push(action);
+						}
+						else
+						{
+							popupActions.push({
+								id: action.identifier,
+								title: action.title,
+								iconUrl: Task.popupImageUrls[action.identifier],
+								textColor: action.textColor,
+								sectionCode: 'default',
+							});
+						}
+					});
+
+					popupActions.push(Task.actions.cancel);
+
+					actions = swipeActions;
+					taskInfo.params.popupActions = popupActions;
+				}
+			}
+			else
+			{
+				actions = actions.map((action) => {
+					action.iconUrl = Task.popupImageUrls[action.identifier];
+					return action;
+				});
+
+				taskInfo.menuMode = 'dialog';
+			}
+
+			taskInfo.actions = actions;
+
+			return taskInfo;
+		}
+
+		handleSwipeActionsShow(taskInfo)
+		{
+			taskInfo.showSwipeActions = false;
+
+			const {swipeShowHelper} = this.options.get();
+			if (swipeShowHelper.value < swipeShowHelper.limit)
+			{
+				taskInfo.showSwipeActions = true;
+				swipeShowHelper.value += 1;
+
+				const name = (obj => Object.keys(obj)[0]);
+				this.options.update(name({swipeShowHelper}), swipeShowHelper);
+			}
+
+			return taskInfo;
+		}
+
+		onItemChecked(isChecked)
+		{
+			if (isChecked)
+			{
+				this.complete();
+			}
+			else
+			{
+				this.renew();
+			}
+		}
+
+		onItemAction(action)
+		{
+			switch (action.identifier)
+			{
+				case 'changeDeadline':
+					this.onChangeDeadlineAction();
+					break;
+
+				case 'changeResponsible':
+					this.onChangeResponsibleAction();
+					break;
+
+				case 'start':
+					this.onStartAction();
+					break;
+
+				case 'pause':
+					this.onPauseAction();
+					break;
+
+				case 'mute':
+					this.onMuteAction();
+					break;
+
+				case 'unmute':
+					this.onUnmuteAction();
+					break;
+
+				case 'unfollow':
+					this.onUnfollowAction();
+					break;
+
+				case 'remove':
+					this.onRemoveAction();
+					break;
+
+				case 'more':
+					this.onMoreAction();
+					return;
+
+				default:
+					break;
+			}
+		}
+
+		// actions
+		onChangeDeadlineAction()
+		{
+			const pickerParams = {
+				title: BX.message('TASKS_TASK_DETAIL_DEADLINE_DATE_PICKER'),
+				type: 'datetime',
+				value: this.task.deadline,
 			};
+
+			if (apiVersion >= 34)
+			{
+				pickerParams.items = [];
+
+				Object.keys(Task.deadlines).forEach((key) => {
+					pickerParams.items.push({
+						name: Task.deadlines[key].name,
+						value: this.deadlines[key] * 1000,
+					});
+				});
+			}
+
+			dialogs.showDatePicker(
+				pickerParams,
+				(eventName, newTs) => {
+					if (!newTs)
+					{
+						return;
+					}
+					this.updateTask({deadline: newTs, activityDate: Date.now()});
+
+					console.log('tasks.view.native::onItemAction::changeDeadline');
+					BX.postWebEvent('tasks.view.native::onItemAction', {
+						taskId: this.task.id,
+						taskGuid: this.guid,
+						name: 'deadline',
+						values: {deadline: newTs},
+					});
+				}
+			);
+		}
+
+		onChangeResponsibleAction()
+		{
+			UserList.openPicker({
+				title: BX.message('TASKS_TASK_DETAIL_TITLE_RESPONSIBLE'),
+				allowMultipleSelection: false,
+				listOptions: {
+					users: {
+						hideUnnamed: true,
+						useRecentSelected: true,
+					},
+				},
+			}).then((users) => {
+				if (users.length > 0)
+				{
+					const user = users[0];
+
+					this.updateTask({
+						responsible: {
+							id: user.params.id,
+							name: user.title,
+							icon: user.imageUrl,
+							link: '',
+						},
+						activityDate: Date.now(),
+					});
+
+					console.log('tasks.view.native::onItemAction::changeResponsible');
+					BX.postWebEvent('tasks.view.native::onItemAction', {
+						taskId: this.task.id,
+						taskGuid: this.guid,
+						name: 'responsible',
+						values: {
+							user: this.task.responsible,
+						},
+					});
+				}
+			});
+		}
+
+		onMuteAction()
+		{
+			this.updateTask({isMuted: true});
+			this.task.mute();
+		}
+
+		onUnmuteAction()
+		{
+			this.updateTask({isMuted: false});
+			this.task.unmute();
+		}
+
+		onMoreAction()
+		{
+			const taskItemData = this.getTaskInfo();
+			const actionsPopup = dialogs.createPopupMenu();
+			actionsPopup.setData(taskItemData.params.popupActions, [{id: 'default'}], (eventName, item) => {
+				if (eventName === 'onItemSelected')
+				{
+					this.onActionsPopupItemSelected(item);
+				}
+			});
+			actionsPopup.setPosition('center');
+			actionsPopup.show();
+		}
+
+		onActionsPopupItemSelected(item)
+		{
+			switch (item.id)
+			{
+				case 'mute':
+					this.onMuteAction();
+					break;
+
+				case 'unmute':
+					this.onUnmuteAction();
+					break;
+
+				case 'unfollow':
+					this.onUnfollowAction();
+					break;
+
+				case 'remove':
+					this.onRemoveAction();
+					break;
+
+				case 'cancel':
+					return;
+
+				default:
+					break;
+			}
+
+			this.updateTask({});
+		}
+
+		openNewTaskPage()
+		{
+			const taskId = 0;
+			const title = BX.message('TASKS_TASK_DETAIL_TASK_NEW_TASK_TITLE');
+			const guid = TaskCard.getGuid();
+			let url = result.settings.taskPaths.add
+				.replace(/#taskId#/gi, 0)
+				.replace(/#userId#/gi, this.currentUser.id)
+				.replace(/#salt#/gi, new Date().getTime());
+			url = `${url}&GUID=${guid}`;
+
+			this.openTaskPage(url, guid, title, taskId);
+		}
+
+		openNewSubTaskPage()
+		{
+			const taskId = 0;
+			const title = BX.message('TASKS_TASK_DETAIL_TASK_NEW_SUBTASK_TITLE');
+			const guid = TaskCard.getGuid();
+			let url = result.settings.taskPaths.addSub
+				.replace(/#taskId#/gi, 0)
+				.replace(/#parentTaskId#/gi, this.task.id)
+				.replace(/#userId#/gi, this.currentUser.id)
+				.replace(/#salt#/gi, new Date().getTime());
+			url = `${url}&GUID=${guid}`;
+
+			this.openTaskPage(url, guid, title, taskId);
+		}
+
+		openEditTaskPage()
+		{
+			const taskId = this.taskId;
+			const title = BX.message('TASKS_TASK_DETAIL_TASK_EDIT_TITLE');
+			const guid = TaskCard.getGuid();
+			let url = result.settings.taskPaths.update
+				.replace(/#taskId#/gi, this.task.id)
+				.replace(/#userId#/gi, this.currentUser.id)
+				.replace(/#salt#/gi, new Date().getTime());
+			url = `${url}&GUID=${guid}`;
+
+			this.openTaskPage(url, guid, title, taskId);
+		}
+
+		openTaskPage(url, guid, title, taskId)
+		{
+			if (Application.getApiVersion() >= 33)
+			{
+				PageManager.openComponent('JSStackComponent', {
+					componentCode: 'tasks.edit',
+					scriptPath: availableComponents['tasks.view'].publicUrl,
+					rootWidget: {
+						name: 'web',
+						settings: {
+							objectName: 'taskcard',
+							modal: true,
+							cache: false,
+							page: {
+								url,
+								titleParams: {text: title},
+							},
+						},
+					},
+					params: {
+						MODE: 'edit',
+						COMPONENT_CODE: 'tasks.view',
+						USER_ID: this.userId || 0,
+						TASK_ID: taskId,
+						GUID: guid,
+					},
+				});
+			}
+			else
+			{
+				PageManager.openPage({url, cache: false, modal: true});
+			}
+		}
+
+		addToFavorite()
+		{
+			const taskId = this.task.id;
+
+			this.task.rawAccess['favorite.add'] = false;
+			this.task.rawAccess['favorite.delete'] = true;
+
+			BX.postWebEvent('tasks.view.native::onTaskUpdate', {taskId, favorite: true}, true);
+			this.redrawTaskPopupMenu();
+
+			this.task.favorite().add().then(() => {}, () => {
+				this.task.rawAccess['favorite.add'] = true;
+				this.task.rawAccess['favorite.delete'] = false;
+
+				BX.postWebEvent('tasks.view.native::onTaskUpdate', {taskId, favorite: false}, true);
+				this.redrawTaskPopupMenu();
+			});
+		}
+
+		removeFromFavorite()
+		{
+			const taskId = this.task.id;
+
+			this.task.rawAccess['favorite.add'] = true;
+			this.task.rawAccess['favorite.delete'] = false;
+
+			BX.postWebEvent('tasks.view.native::onTaskUpdate', {taskId, favorite: false}, true);
+			this.redrawTaskPopupMenu();
+
+			this.task.favorite().remove().then(() => {}, () => {
+				this.task.rawAccess['favorite.add'] = false;
+				this.task.rawAccess['favorite.delete'] = true;
+
+				BX.postWebEvent('tasks.view.native::onTaskUpdate', {taskId, favorite: true}, true);
+				this.redrawTaskPopupMenu();
+			});
+		}
+
+		onStartAction()
+		{
+			this.task.rawAccess.start = false;
+			this.task.rawAccess.pause = true;
+
+			this.updateTask({
+				status: Task.statusList.inprogress,
+				activityDate: Date.now(),
+			});
+			this.redrawTaskPopupMenu();
+
+			this.task.start().then(() => {
+				this.updateTask();
+				this.redrawTaskPopupMenu();
+			});
+		}
+
+		onPauseAction()
+		{
+			this.task.rawAccess.start = true;
+			this.task.rawAccess.pause = false;
+
+			this.updateTask({
+				status: Task.statusList.pending,
+				activityDate: Date.now(),
+			});
+			this.redrawTaskPopupMenu();
+
+			this.task.pause().then(() => {
+				this.updateTask();
+				this.redrawTaskPopupMenu();
+			});
+		}
+
+		complete()
+		{
+			this.updateTask({
+				status: Task.statusList.completed,
+				activityDate: Date.now(),
+			});
+			this.redrawTaskPopupMenu();
+
+			this.task.complete().then(() => {
+				this.updateTask();
+				this.redrawTaskPopupMenu();
+			});
+		}
+
+		renew()
+		{
+			this.updateTask({
+				status: Task.statusList.pending,
+				activityDate: Date.now(),
+			});
+			this.redrawTaskPopupMenu();
+
+			this.task.renew().then(() => {
+				this.updateTask();
+				this.redrawTaskPopupMenu();
+			});
+		}
+
+		approve()
+		{
+			this.updateTask({
+				status: Task.statusList.completed,
+				activityDate: Date.now(),
+			});
+			this.redrawTaskPopupMenu();
+
+			this.task.approve().then(() => {
+				this.updateTask();
+				this.redrawTaskPopupMenu();
+			});
+		}
+
+		disapprove()
+		{
+			this.updateTask({
+				status: Task.statusList.pending,
+				activityDate: Date.now(),
+			});
+			this.redrawTaskPopupMenu();
+
+			this.task.disapprove().then(() => {
+				this.updateTask();
+				this.redrawTaskPopupMenu();
+			});
+		}
+
+		delegate()
+		{
+			UserList.openPicker({
+				allowMultipleSelection: false,
+				listOptions: {
+					users: {
+						hideUnnamed: true,
+						useRecentSelected: true,
+					},
+				},
+			}).then((users) => {
+				if (users.length > 0)
+				{
+					const user = users[0];
+
+					this.updateTask({
+						responsible: {
+							id: user.params.id,
+							name: user.title,
+							icon: user.imageUrl,
+							link: '',
+						},
+						activityDate: Date.now(),
+					});
+					this.task.delegate().then(() => BX.postWebEvent('tasks.view.native::onTaskUpdate', {
+						taskId: this.task.id,
+						responsible: true,
+					}, true));
+				}
+			});
+		}
+
+		onRemoveAction()
+		{
+			dialogs.showActionSheet({
+				title: BX.message('TASKS_TASK_DETAIL_CONFIRM_REMOVE'),
+				callback: (item) => {
+					if (item.id === 'yes')
+					{
+						InAppNotifier.showNotification({
+							title: BX.message('TASKS_TASK_DETAIL_TASK_WAS_REMOVED'),
+							backgroundColor: '#333333',
+						});
+
+						this.rest.call('delete', {taskId: this.task.id});
+						if (this.taskCardHandler)
+						{
+							this.taskCardHandler.closeForm();
+						}
+					}
+				},
+				items: TaskCard.getRemoveSheetItems(),
+			});
+		}
+
+		onUnfollowAction()
+		{
+			const currentUserId = Number(this.currentUser.id);
+
+			this.task.auditors = this.task.auditors.filter(item => item !== currentUserId);
+			if (!this.task.isMember(currentUserId))
+			{
+				this.task.stopWatch();
+				if (this.taskCardHandler)
+				{
+					this.taskCardHandler.closeForm();
+				}
+			}
+			else
+			{
+				this.updateTask({activityDate: Date.now()});
+			}
+		}
+
+		// task popup menu
+		redrawTaskPopupMenu()
+		{
+			this.taskPopupMenu.setData(this.popupMenuItems, [{id: '0'}], (eventName, item) => {
+				if (eventName === 'onItemSelected')
+				{
+					const itemsMap = this.popupMenuItemsMap;
+					if (Object.keys(itemsMap).includes(item.id))
+					{
+						itemsMap[item.id].action.apply(this);
+					}
+				}
+			});
 		}
 
 		get popupMenuItems()
@@ -936,6 +972,7 @@ include('InAppNotifier');
 						id: item,
 						title: itemsMap[item].title,
 						iconUrl: itemsMap[item].iconUrl,
+						disable: itemsMap[item].disable || false,
 					});
 				}
 			});
@@ -947,6 +984,80 @@ include('InAppNotifier');
 		{
 			const has = Object.prototype.hasOwnProperty;
 			return has.call(this.task.can, right) && Boolean(this.task.can[right]);
+		}
+
+		get popupMenuItemsMap()
+		{
+			const urlPrefix = `${pathToExtension}/images/mobile-taskcard-popup-`;
+
+			return {
+				addTask: {
+					title: BX.message('TASKS_TASK_DETAIL_TASK_ADD'),
+					iconUrl: `${urlPrefix}add.png`,
+					action: this.openNewTaskPage,
+				},
+				addSubTask: {
+					title: BX.message('TASKS_TASK_DETAIL_TASK_ADD_SUBTASK'),
+					iconUrl: `${urlPrefix}add.png`,
+					action: this.openNewSubTaskPage,
+				},
+				'favorite.add': {
+					title: BX.message('TASKS_TASK_DETAIL_BTN_ADD_FAVORITE_TASK'),
+					iconUrl: `${urlPrefix}add-favorite.png`,
+					action: this.addToFavorite,
+				},
+				'favorite.remove': {
+					title: BX.message('TASKS_TASK_DETAIL_BTN_DELETE_FAVORITE_TASK'),
+					iconUrl: `${urlPrefix}delete-favorite.png`,
+					action: this.removeFromFavorite,
+				},
+				start: {
+					title: BX.message('TASKS_TASK_DETAIL_BTN_START_TASK'),
+					iconUrl: `${urlPrefix}start.png`,
+					action: this.onStartAction,
+				},
+				complete: {
+					title: BX.message('TASKS_TASK_DETAIL_BTN_CLOSE_TASK'),
+					iconUrl: `${urlPrefix}finish.png`,
+					action: this.complete,
+				},
+				renew: {
+					title: BX.message('TASKS_TASK_DETAIL_BTN_RENEW_TASK'),
+					iconUrl: `${urlPrefix}renew.png`,
+					action: this.renew,
+				},
+				pause: {
+					title: BX.message('TASKS_TASK_DETAIL_BTN_PAUSE_TASK'),
+					iconUrl: `${urlPrefix}pause.png`,
+					action: this.onPauseAction,
+				},
+				disapprove: {
+					title: BX.message('TASKS_TASK_DETAIL_BTN_REDO_TASK'),
+					iconUrl: `${urlPrefix}renew.png`,
+					action: this.disapprove,
+				},
+				approve: {
+					title: BX.message('TASKS_TASK_DETAIL_BTN_APPROVE_TASK'),
+					iconUrl: `${urlPrefix}finish.png`,
+					action: this.approve,
+				},
+				delegate: {
+					title: BX.message('TASKS_TASK_DETAIL_BTN_DELEGATE_TASK'),
+					iconUrl: `${urlPrefix}delegate.png`,
+					action: this.delegate,
+					disable: this.taskLimitExceeded,
+				},
+				update: {
+					title: BX.message('TASKS_TASK_DETAIL_BTN_EDIT'),
+					iconUrl: `${urlPrefix}edit.png`,
+					action: this.openEditTaskPage,
+				},
+				remove: {
+					title: BX.message('TASKS_TASK_DETAIL_BTN_REMOVE'),
+					iconUrl: `${urlPrefix}delete.png`,
+					action: this.onRemoveAction,
+				},
+			};
 		}
 	}
 
@@ -961,17 +1072,26 @@ include('InAppNotifier');
 
 			this.mode = 'view';
 
-			this.rest.call('get', {taskId: this.taskId, select: TaskCard.selectFields}).then((response) => {
+			this.rest.call('get', {
+				taskId: this.taskId,
+				select: TaskCard.selectFields,
+				params: {
+					GET_TASK_LIMIT_EXCEEDED: true,
+				},
+			}).then((response) => {
 				const {task} = response.result;
+				task.newCommentsCount = 0;
+
 				this.task.setData(task);
+				this.taskLimitExceeded = task.taskLimitExceeded;
 
 				BX.onViewLoaded(() => {
-					this.taskCardHandler = new TaskCardHandler(taskcard, this.task, this.getTaskInfo);
-					this.taskCardHandler.setState();
-					this.taskCardHandler.updateMessageCount();
-					this.taskCardHandler.updateNewCommentsCount();
-
+					this.taskCardHandler = new TaskCardHandler(taskcard);
 					this.checklistController = new ChecklistController(this.taskId, this.userId, this.guid, this.mode);
+
+					const taskInfo = this.getTaskInfo();
+					this.taskCardHandler.setTaskInfo(this.handleSwipeActionsShow(taskInfo));
+					this.taskCardHandler.setTaskInfo(this.handleSwipeActionsShow(taskInfo));
 
 					this.taskPopupMenu = dialogs.createPopupMenu();
 					this.taskPopupMenu.setPosition('center');

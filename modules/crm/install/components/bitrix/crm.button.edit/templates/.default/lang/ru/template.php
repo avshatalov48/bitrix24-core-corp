@@ -66,8 +66,6 @@ $MESS["CRM_WEBFORM_EDIT_HELLO_DEF_NAME"] = "Ольга Кравченко";
 $MESS["CRM_WEBFORM_EDIT_HELLO_DEF_TEXT"] = "Здравствуйте! Готова помочь вам. Напишите мне, если у вас появятся вопросы.";
 $MESS["CRM_WEBFORM_EDIT_REMOVE_LOGO"] = "убрать подпись";
 $MESS["CRM_WEBFORM_EDIT_REMOVE_LOGO_BX"] = "Заряжено Битрикс24";
-$MESS["CRM_WEBFORM_EDIT_POPUP_LIMITED_TITLE"] = "Расширенная CRM";
-$MESS["CRM_WEBFORM_EDIT_POPUP_LIMITED_TEXT"] = "Отключить подпись можно только на коммерческих тарифных планах";
 $MESS["CRM_BUTTON_EDIT_CLOSE"] = "Закрыть";
 $MESS["CRM_BUTTON_EDIT_ERROR_ACTION"] = "Произошла ошибка. Действие отменено.";
 $MESS["CRM_BUTTON_EDIT_DELETE_CONFIRM"] = "Удалить это фото?";
@@ -96,6 +94,10 @@ $MESS["CRM_BUTTON_EDIT_OPENLINE_USE_MULTI_LINES"] = "подключить кан
 $MESS["CRM_BUTTON_EDIT_OPENLINE_ADD"] = "добавить открытую линию";
 $MESS["CRM_BUTTON_EDIT_OPENLINE_REMOVE"] = "отключить";
 $MESS["CRM_BUTTON_EDIT_OPENLINE_ANOTHER_CHANNELS_EMPTY"] = "Вы можете создавать открытые линии и подключать каналы из них.";
-$MESS["CRM_BUTTON_EDIT_OPENLINE_MULTI_POPUP_LIMITED_TEXT"] = "Подключить дополнительные каналы можно только на коммерческих тарифных планах.";
 $MESS["CRM_BUTTON_EDIT_BTN_CHANGE"] = "изменить";
+$MESS["CRM_BUTTON_EDIT_WARN_SETTING_FILENAME"] = "Код виджета работает с ошибками!
+В настройках главного модуля необходимо включить настройку \"Сохранять исходные имена загружаемых файлов\".
+Обратитесь к администратору вашего Битрикс24.
+После включения настройки вы можете копировать код виджета.
+";
 ?>

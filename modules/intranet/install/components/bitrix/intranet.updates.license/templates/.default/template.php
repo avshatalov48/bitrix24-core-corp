@@ -68,7 +68,7 @@
 
 			<tr>
 				<td class="content-edit-form-field-name content-edit-form-field-name-left"><?echo GetMessage("SUP_ACTIVE_TITLE")?></td>
-				<td class="content-edit-form-field-input"><?echo GetMessage("SUP_ACTIVE_PERIOD_TO", array("#DATE_TO#"=>((strlen($arResult["UPDATE_LIST"]["CLIENT"][0]["@"]["DATE_TO_FORMAT"]) > 0) ? $arResult["UPDATE_LIST"]["CLIENT"][0]["@"]["DATE_TO_FORMAT"] : "<i>N/A</i>")));?></td>
+				<td class="content-edit-form-field-input"><?echo GetMessage("SUP_ACTIVE_PERIOD_TO", array("#DATE_TO#"=>(($arResult["UPDATE_LIST"]["CLIENT"][0]["@"]["DATE_TO_FORMAT"] <> '') ? $arResult["UPDATE_LIST"]["CLIENT"][0]["@"]["DATE_TO_FORMAT"] : "<i>N/A</i>")));?></td>
 				<td class="content-edit-form-field-error"></td>
 			</tr>
 		<?endif;?>

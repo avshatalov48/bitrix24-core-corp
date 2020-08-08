@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Timeman\Provider\Schedule;
 
+use Bitrix\Main\EO_User_Collection;
 use Bitrix\Timeman\Helper\EntityCodesHelper;
 use Bitrix\Timeman\Model\Schedule\Assignment\Department\ScheduleDepartment;
 use Bitrix\Timeman\Model\Schedule\Assignment\User\ScheduleUser;
@@ -215,7 +216,7 @@ class ScheduleProvider extends ScheduleRepository
 				->setScheduleId($schedule->getId())
 				->setIsIncluded();
 		}
-		$map = $this->buildUserToDepartmentsMapByAssignments($schedule->obtainUserAssignments(), $departments);
+		$map = $this->buildUserToDepartmentsMapByAssignments($schedule->obtainUserAssignments()->getAll(), $departments->getAll());
 		return EntityCodesHelper::extractUserIdsFromEntityCodes(array_keys($map));
 	}
 

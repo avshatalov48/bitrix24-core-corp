@@ -89,7 +89,7 @@ class OrderContactCompanyTable extends Entity\DataManager
 
 		$sort = isset($data['SORT']) ? (int)$data['SORT'] : 0;
 		$roleID = isset($data['ROLE_ID']) ? (int)$data['ROLE_ID'] : 0;
-		$primary = isset($data['IS_PRIMARY']) && strtoupper($data['IS_PRIMARY']) === 'Y' ? 'Y' : 'N';
+		$primary = isset($data['IS_PRIMARY']) && mb_strtoupper($data['IS_PRIMARY']) === 'Y' ? 'Y' : 'N';
 
 		$connection = Main\Application::getConnection();
 		$queries = $connection->getSqlHelper()->prepareMerge(

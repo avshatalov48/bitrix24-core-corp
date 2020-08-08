@@ -284,7 +284,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() && $arResult["I
 		if(isset($_POST['COMMENTS']))
 		{
 			$comments = isset($_POST['COMMENTS']) ? trim($_POST['COMMENTS']) : '';
-			if($comments !== '' && strpos($comments, '<') !== false)
+			if($comments !== '' && mb_strpos($comments, '<') !== false)
 			{
 				$sanitizer = new CBXSanitizer();
 				$sanitizer->ApplyDoubleEncode(false);
@@ -429,7 +429,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() && $arResult["I
 
 		if(isset($_POST['OPENED']))
 		{
-			$arFields['OPENED'] = strtoupper($_POST['OPENED']) === 'Y' ? 'Y' : 'N';
+			$arFields['OPENED'] = mb_strtoupper($_POST['OPENED']) === 'Y' ? 'Y' : 'N';
 		}
 		elseif(!$bEdit)
 		{
@@ -499,7 +499,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() && $arResult["I
 		if(array_key_exists($productRowSettingsFieldName, $_POST))
 		{
 			$settingsJson = isset($_POST[$productRowSettingsFieldName]) ? strval($_POST[$productRowSettingsFieldName]) : '';
-			$arSettings = strlen($settingsJson) > 0 ? CUtil::JsObjectToPhp($settingsJson) : array();
+			$arSettings = $settingsJson <> '' ? CUtil::JsObjectToPhp($settingsJson) : array();
 			if(is_array($arSettings))
 			{
 				$productRowSettings['ENABLE_DISCOUNT'] = isset($arSettings['ENABLE_DISCOUNT']) ? $arSettings['ENABLE_DISCOUNT'] === 'Y' : false;
@@ -601,13 +601,29 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() && $arResult["I
 		//Region automation
 		if (class_exists('\Bitrix\Crm\Automation\Factory'))
 		{
-			if (!$bEdit)
+			if (class_exists('\Bitrix\Crm\Automation\Starter'))
 			{
-				\Bitrix\Crm\Automation\Factory::runOnAdd(\CCrmOwnerType::Lead, $arResult['ELEMENT']['ID']);
+				$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $arResult['ELEMENT']['ID']);
+				$starter->setContextToMobile()->setUserIdFromCurrent();
+				if(!$bEdit)
+				{
+					$starter->runOnAdd();
+				}
+				else
+				{
+					$starter->runOnUpdate($arFields, is_array($arResult['ELEMENT']) ? $arResult['ELEMENT'] : []);
+				}
 			}
-			elseif (isset($arFields['STATUS_ID']) && is_array($arResult['ELEMENT']) && $arFields['STATUS_ID'] != $arResult['ELEMENT']['STATUS_ID'])
+			else
 			{
-				\Bitrix\Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Lead, $arResult['ELEMENT']['ID']);
+				if (!$bEdit)
+				{
+					\Bitrix\Crm\Automation\Factory::runOnAdd(\CCrmOwnerType::Lead, $arResult['ELEMENT']['ID']);
+				}
+				elseif (isset($arFields['STATUS_ID']) && is_array($arResult['ELEMENT']) && $arFields['STATUS_ID'] != $arResult['ELEMENT']['STATUS_ID'])
+				{
+					\Bitrix\Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Lead, $arResult['ELEMENT']['ID']);
+				}
 			}
 		}
 		//end automation
@@ -1013,12 +1029,16 @@ if ($arResult["IS_EDIT_PERMITTED"])
 else
 	$fieldType = 'label';
 
+if (isset($arResult['ELEMENT']['~COMMENTS']) && $arResult['MODE'] == "EDIT")
+{
+	$arResult['ELEMENT']['~COMMENTS'] = htmlspecialcharsback($arResult['ELEMENT']['~COMMENTS']);
+}
 $arResult['FIELDS'][] = array(
 	'id' => 'COMMENTS',
 	'name' => GetMessage('CRM_FIELD_COMMENTS'),
 	'params' => array(),
 	'type' => $fieldType,
-	'value' => isset($arResult['ELEMENT']['~COMMENTS']) ? htmlspecialcharsback($arResult['ELEMENT']['~COMMENTS']) : ''
+	'value' => $arResult['ELEMENT']['~COMMENTS']
 );
 
 // Product rows
@@ -1096,10 +1116,13 @@ if (!empty($sProductsHtml))
 
 //user fields
 $CCrmUserType = new CCrmMobileHelper();
-$CCrmUserType->PrepareUserFields(
+$CCrmUserType->prepareUserFields(
 	$arResult['FIELDS'],
 	CCrmLead::$sUFEntityID,
-	$arResult['ELEMENT']['ID']
+	$arResult['ELEMENT']['ID'],
+	false,
+	'lead_details',
+	$USER->GetID()
 );
 
 if ($arParams['RESTRICTED_MODE'])

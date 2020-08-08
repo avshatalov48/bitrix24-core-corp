@@ -2,39 +2,43 @@
 
 namespace Bitrix\Tasks\Internals\Counter;
 
+use Bitrix\Main;
+use Bitrix\Main\Application;
 use Bitrix\Main\Event;
+use Bitrix\Tasks\Comments\Task\CommentPoster;
 use Bitrix\Tasks\Integration\Bizproc;
 use Bitrix\Tasks\Internals\Counter;
-use Bitrix\Tasks\Internals\Effective;
 use Bitrix\Tasks\Item\Task;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
+use CAgent;
+use CTasks;
+use CTimeZone;
 
+/**
+ * Class Agent
+ *
+ * @package Bitrix\Tasks\Internals\Counter
+ */
 class Agent
 {
-	const EVENT_TASK_EXPIRED = 'OnTaskExpired';
-	const EVENT_TASK_EXPIRED_SOON = 'OnTaskExpiredSoon';
+	public const EVENT_TASK_EXPIRED = 'OnTaskExpired';
+	public const EVENT_TASK_EXPIRED_SOON = 'OnTaskExpiredSoon';
 
-	public static function add($taskId, DateTime $deadline, $forceExpired = false)
+	/**
+	 * @param $taskId
+	 * @param DateTime $deadline
+	 * @param bool $forceExpired
+	 * @return bool
+	 */
+	public static function add($taskId, DateTime $deadline, bool $forceExpired = false): bool
 	{
-		$adminId = User::getAdminId();
-		$task = Task::getInstance($taskId, ($adminId ?: 1));
-
-		if (!$task || in_array($task->status, array(\CTasks::STATE_COMPLETED, \CTasks::STATE_SUPPOSEDLY_COMPLETED)))
-		{
-			return false;
-		}
-
-		$expired = Counter::getExpiredTime();
-		$expiredSoon = Counter::getExpiredSoonTime();
-		$now = new Datetime();
-
-		if ($now->checkLT($expired))
+		if (Counter::isDeadlineExpired($deadline))
 		{
 			$soon = '';
-			$agentStart = $now;
+			$agentStart = new DateTime();
 		}
-		else if ($forceExpired || ($expired->checkLT($deadline) && $expiredSoon->checkGT($deadline)))
+		else if ($forceExpired || Counter::isDeadlineExpiredSoon($deadline))
 		{
 			$soon = '';
 			$agentStart = $deadline;
@@ -42,159 +46,113 @@ class Agent
 		else
 		{
 			$soon = 'Soon';
-			$agentStart = $expiredSoon->checkLT($deadline) ? $deadline : $expired;
+			$agentStart = $deadline;
+			$agentStart->addSecond(-Counter::getDeadlineTimeLimit());
 		}
 
 		$agentName = self::getClass()."::expired{$soon}({$taskId});";
+		$agentStart = ($agentStart ?: new DateTime());
 
 		self::remove($taskId);
-		if(!$agentStart)
-		{
-			$agentStart = $now;
-		}
-
-		\CAgent::AddAgent($agentName, 'tasks', 'Y', 0, '', 'Y', $agentStart);
+		CAgent::AddAgent($agentName, 'tasks', 'Y', 0, '', 'Y', $agentStart);
 
 		return true;
 	}
 
-	private static function recountSoon($taskId)
+	/**
+	 * @param $taskId
+	 */
+	public static function remove($taskId): void
 	{
-		$adminId = User::getAdminId();
-		$task = Task::getInstance($taskId, ($adminId ?: 1));
-
-		if (!$task || in_array($task->status, array(\CTasks::STATE_COMPLETED, \CTasks::STATE_SUPPOSEDLY_COMPLETED)))
-		{
-			return false;
-		}
-
-		$responsible = Counter::getInstance($task->responsibleId, $task->groupId);
-		$responsible->recount(Counter\Name::MY_EXPIRED);
-		$responsible->recount(Counter\Name::MY_EXPIRED_SOON);
-
-		if ($task->accomplices)
-		{
-			foreach ($task->accomplices as $userId)
-			{
-				$responsible = Counter::getInstance($userId, $task->groupId);
-				$responsible->recount(Counter\Name::ACCOMPLICES_EXPIRED);
-				$responsible->recount(Counter\Name::ACCOMPLICES_EXPIRED_SOON);
-			}
-		}
-
-		return true;
+		CAgent::RemoveAgent(self::getClass()."::expired({$taskId});", 'tasks');
+		CAgent::RemoveAgent(self::getClass()."::expiredSoon({$taskId});", 'tasks');
 	}
 
-	public static function remove($taskId)
+	/**
+	 * @return string
+	 */
+	public static function getClass(): string
 	{
-		\CAgent::RemoveAgent(self::getClass()."::expired({$taskId});", 'tasks');
-		\CAgent::RemoveAgent(self::getClass()."::expiredSoon({$taskId});", 'tasks');
+		return static::class;
 	}
 
-	public static function getClass()
+	/**
+	 * @param $taskId
+	 * @return string
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function expired($taskId): string
 	{
-		return get_called_class();
-	}
+		$task = Task::getInstance($taskId, User::getAdminId());
+		$statesCompleted = [CTasks::STATE_DEFERRED, CTasks::STATE_COMPLETED, CTasks::STATE_SUPPOSEDLY_COMPLETED];
 
-	public static function expired($taskId)
-	{
-		$adminId = User::getAdminId();
-		$task = Task::getInstance($taskId, ($adminId ?: 1));
-
-		if (!$task)
+		if (
+			!$task
+			|| !$task['RESPONSIBLE_ID']
+			|| in_array((int)$task['STATUS'], $statesCompleted, true)
+			|| !($taskData = $task->getData())
+			|| !array_key_exists('CREATED_BY', $taskData)
+			|| !$taskData['CREATED_BY']
+		)
 		{
 			return '';
 		}
 
-		$status = (int)$task['STATUS'];
-		$groupId = (int)$task['GROUP_ID'];
-		$responsibleId = (int)$task['RESPONSIBLE_ID'];
+		Counter::onTaskExpired($task);
 
-		$statesCompleted = [\CTasks::STATE_DEFERRED, \CTasks::STATE_COMPLETED, \CTasks::STATE_SUPPOSEDLY_COMPLETED];
+		$commentPoster = CommentPoster::getInstance($taskId, (int)$taskData['CREATED_BY']);
+		$commentPoster->postCommentsOnTaskExpired($taskData);
 
-		if (!$responsibleId || in_array($status, $statesCompleted, true))
-		{
-			return false;
-		}
-
-		$responsible = Counter::getInstance($responsibleId, $groupId);
-		$responsible->recount(Counter\Name::MY_EXPIRED_SOON);
-		$responsible->recount(Counter\Name::MY_EXPIRED);
-
-		$originator = Counter::getInstance($task['CREATED_BY'], $groupId);
-		$originator->recount(Counter\Name::ORIGINATOR_EXPIRED);
-
-		if (!Effective::checkActiveViolations($taskId, $responsibleId, $groupId))
-		{
-			Effective::modify($responsibleId, 'R', $task, $groupId, true);
-		}
-
-		foreach ($task['AUDITORS'] as $userId)
-		{
-			if ($userId)
-			{
-				$auditor = Counter::getInstance($userId, $groupId);
-				$auditor->recount(Counter\Name::AUDITOR_EXPIRED);
-			}
-		}
-
-		foreach ($task['ACCOMPLICES'] as $userId)
-		{
-			$userId = (int)$userId;
-			if ($userId)
-			{
-				$accomplice = Counter::getInstance($userId, $groupId);
-				$accomplice->recount(Counter\Name::ACCOMPLICES_EXPIRED);
-				$accomplice->recount(Counter\Name::ACCOMPLICES_EXPIRED_SOON);
-
-				if ($userId !== $responsibleId && !Effective::checkActiveViolations($taskId, $userId, $groupId))
-				{
-					Effective::modify($userId, 'A', $task, $groupId, true);
-				}
-			}
-		}
-
-		$event = new Event("tasks", self::EVENT_TASK_EXPIRED, ['TASK_ID' => $task->getId(), 'TASK' => $task->getData()]);
+		$event = new Event('tasks', self::EVENT_TASK_EXPIRED, [
+			'TASK_ID' => $taskId,
+			'TASK' => $taskData,
+		]);
 		$event->send();
 
-		if ($taskData = $task->getData())
-		{
-			Bizproc\Listener::onTaskExpired($task->getId(), $taskData);
-		}
+		Bizproc\Listener::onTaskExpired($taskId, $taskData);
 
 		return '';
 	}
 
-	public static function expiredSoon($taskId)
+	/**
+	 * @param $taskId
+	 * @return string
+	 * @throws Main\SystemException
+	 */
+	public static function expiredSoon($taskId): string
 	{
-		if (!self::recountSoon($taskId))
+		$task = Task::getInstance($taskId, User::getAdminId());
+		$statesCompleted = [CTasks::STATE_DEFERRED, CTasks::STATE_COMPLETED, CTasks::STATE_SUPPOSEDLY_COMPLETED];
+
+		if (!$task || !$task['RESPONSIBLE_ID'] || !($taskData = $task->getData()))
 		{
 			return '';
 		}
 
-		$adminId = User::getAdminId();
-		$task = Task::getInstance($taskId, ($adminId ?: 1));
-
-		if (!$task || in_array($task->status, [\CTasks::STATE_COMPLETED, \CTasks::STATE_SUPPOSEDLY_COMPLETED]))
+		if ($taskData['DEADLINE'])
 		{
-			return false;
+			self::add($taskId, $taskData['DEADLINE'], true);
 		}
 
-		$taskId = $task->getId();
-		$taskData = $task->getData();
+		if (in_array((int)$taskData['STATUS'], $statesCompleted, true))
+		{
+			return '';
+		}
 
-		$event = new Event("tasks", self::EVENT_TASK_EXPIRED_SOON, ['TASK_ID' => $taskId, 'TASK' => $taskData]);
+		Counter::onTaskExpiredSoon($task);
+
+		$commentPoster = CommentPoster::getInstance($taskId, (int)$taskData['CREATED_BY']);
+		$commentPoster->postCommentsOnTaskExpiredSoon($taskData);
+
+		$event = new Event('tasks', self::EVENT_TASK_EXPIRED_SOON, [
+			'TASK_ID' => $taskId,
+			'TASK' => $taskData,
+		]);
 		$event->send();
 
-		if ($taskData)
-		{
-			Bizproc\Listener::onTaskExpiredSoon($taskId, $taskData);
-		}
-
-		if ($task->deadline)
-		{
-			self::add($taskId, $task->deadline, true);
-		}
+		Bizproc\Listener::onTaskExpiredSoon($taskId, $taskData);
 
 		return '';
 	}
@@ -207,61 +165,76 @@ class Agent
 		return '';
 	}
 
-	public static function install()
+	/**
+	 * @param int $delay
+	 * @return string
+	 *
+	 * @deprecated
+	 * @see \Bitrix\Tasks\Update\ExpiredAgentCreator
+	 */
+	public static function install($delay = 10): string
 	{
-		$res = \CAgent::GetList(array(), array('MODULE_ID' => 'tasks', 'NAME' => '%Agent::expired%'));
+		$res = CAgent::GetList([], ['MODULE_ID' => 'tasks', 'NAME' => '%Agent::expired%']);
 		while ($t = $res->Fetch())
 		{
-			\CAgent::Delete($t['ID']);
+			CAgent::Delete($t['ID']);
 		}
 
-		\CTimeZone::Disable();
-		\CAgent::AddAgent(
-			'\Bitrix\Tasks\Internals\Counter\Agent::installNextStep(0);',
-			'tasks',
-			'N',
-			30,
-			'',
-			'Y',
-			ConvertTimeStamp(time()+10, "FULL")
-		);
-		\CTimeZone::Enable();
+		$res = CAgent::GetList([], ['MODULE_ID' => 'tasks', 'NAME' => '%Counter\Agent::installNextStep%']);
+		while ($t = $res->Fetch())
+		{
+			CAgent::Delete($t['ID']);
+		}
+
+		$agentName = '\Bitrix\Tasks\Internals\Counter\Agent::installNextStep(0);';
+		$agentTime = ConvertTimeStamp(time() + $delay, "FULL");
+
+		CTimeZone::Disable();
+		CAgent::AddAgent($agentName, 'tasks', 'N', 30, '', 'Y', $agentTime);
+		CTimeZone::Enable();
 
 		return '';
 	}
 
-	public static function installNextStep($lastId = 0)
+	/**
+	 * @param int $lastId
+	 * @return string
+	 * @throws Main\Db\SqlQueryException
+	 *
+	 * @deprecated
+	 * @see \Bitrix\Tasks\Update\ExpiredAgentCreator
+	 */
+	public static function installNextStep($lastId = 0): string
 	{
-		global $DB;
-		$limit = 50;
 		$lastId = (int)$lastId;
 		$found = false;
 
-		$res = $DB->Query(
-			"
-			SELECT ID, DEADLINE FROM b_tasks 
+		$res = Application::getConnection()->query("
+			SELECT ID, DEADLINE
+			FROM b_tasks 
 			WHERE 
-			  ZOMBIE='N' AND 
-			  STATUS < 4 AND
-			  DEADLINE <> '' AND
-              ID > {$lastId}
-			LIMIT {$limit}
+		  		ZOMBIE = 'N'
+		  		AND STATUS < 4
+		  		AND DEADLINE IS NOT NULL
+		  		AND DEADLINE <> ''
+		  		AND DEADLINE > NOW()
+		  		AND ID > {$lastId}
+			LIMIT 100
 		");
+		while ($task = $res->fetch())
+		{
+			$taskId = $task['ID'];
+			$deadline = DateTime::createFromInstance($task['DEADLINE']);
 
-		while ($t = $res->Fetch())
-		{
-			self::add($t['ID'], DateTime::createFrom($t['DEADLINE']));
-			$lastId = $t['ID'];
-			$found = true;
+			if ($taskId && $deadline)
+			{
+				self::add($taskId, $deadline);
+
+				$lastId = $taskId;
+				$found = true;
+			}
 		}
 
-		if($found)
-		{
-			return "\\Bitrix\\Tasks\\Internals\\Counter\\Agent::installNextStep({$lastId});";
-		}
-		else
-		{
-			return '';
-		}
+		return ($found ? "\\Bitrix\\Tasks\\Internals\\Counter\\Agent::installNextStep({$lastId});" : "");
 	}
 }

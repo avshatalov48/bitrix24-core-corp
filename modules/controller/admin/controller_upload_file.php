@@ -24,8 +24,8 @@ $filename = Rel2Abs("/", trim($_REQUEST['filename']));
 $path_to = Rel2Abs("/", trim($_REQUEST['path_to'])."/");
 
 if(
-	strlen($filename) > 0
-	&& strlen($path_to) > 0
+	$filename <> ''
+	&& $path_to <> ''
 	&& check_bitrix_sessid()
 )
 {

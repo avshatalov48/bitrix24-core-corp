@@ -410,7 +410,9 @@ class RightsManager implements IErrorable
 			$filter['DOMAIN'] = $domain;
 		}
 
-		return RightTable::deleteBatch($filter);
+		RightTable::deleteBatch($filter);
+
+		return true;
 	}
 
 	public function generateDomain($domain, $id)
@@ -425,7 +427,7 @@ class RightsManager implements IErrorable
 
 	public function getIdBySharingDomain($domain)
 	{
-		return substr($domain, strlen(self::DOMAIN_SHARING . '-'));
+		return mb_substr($domain, mb_strlen(self::DOMAIN_SHARING.'-'));
 	}
 
 	public function getBizProcDomain($id)
@@ -488,7 +490,7 @@ class RightsManager implements IErrorable
 		$refClass = new \ReflectionClass($this);
 		foreach($refClass->getConstants() as $name => $value)
 		{
-			if(substr($name, 0, 3) === 'OP_')
+			if(mb_substr($name, 0, 3) === 'OP_')
 			{
 				$operations[$value] = $value;
 			}

@@ -12,7 +12,7 @@ $enableMoreButton = false;
 $labelText = '';
 $requisitePresetSelectorIndex = 0;
 foreach($arParams["BUTTONS"] as $item):
-	if ($item['LABEL'] === true)
+	if (isset($item['LABEL']) && $item['LABEL'] === true)
 	{
 		$labelText = isset($item['TEXT']) ? $item['TEXT'] : '';
 		continue;
@@ -31,14 +31,14 @@ foreach($arParams["BUTTONS"] as $item):
 	$text = isset($item['TEXT']) ? $item['TEXT'] : '';
 	$title = isset($item['TITLE']) ? $item['TITLE'] : '';
 	$type = isset($item['TYPE']) ? $item['TYPE'] : 'context';
-	$alignment = isset($item['ALIGNMENT']) ? strtolower($item['ALIGNMENT']) : '';
+	$alignment = isset($item['ALIGNMENT'])? mb_strtolower($item['ALIGNMENT']) : '';
+
+	$params = isset($item['PARAMS']) ? $item['PARAMS'] : array();
 
 	if ($type === 'crm-requisite-preset-selector')
 	{
 		if ($requisitePresetSelectorIndex === 0)
 			\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/requisite.js');
-
-		$params = isset($item['PARAMS']) ? $item['PARAMS'] : array();
 
 		$containerId = $toolbarID.'_crm-requisite-toolbar-editor_'.$requisitePresetSelectorIndex;
 		?>
@@ -74,7 +74,6 @@ foreach($arParams["BUTTONS"] as $item):
 	}
 	elseif($type === 'crm-context-menu')
 	{
-		$params = isset($item['PARAMS']) ? $item['PARAMS'] : array();
 		$iconClassName = 'crm-menu-bar-btn';
 		if(isset($item['HIGHLIGHT']) && $item['HIGHLIGHT'])
 		{
@@ -144,7 +143,16 @@ foreach($arParams["BUTTONS"] as $item):
 			?><span class="crm-toolbar-alignment-<?=htmlspecialcharsbx($alignment)?>"><?
 		}
 		$onclick = isset($item['ONCLICK']) ? $item['ONCLICK'] : '';
-		?><a class="<?=$iconClassName !== '' ? htmlspecialcharsbx($iconClassName) : ''?>" href="<?=htmlspecialcharsbx($link)?>" title="<?=htmlspecialcharsbx($title)?>" <?=$onclick !== '' ? ' onclick="'.htmlspecialcharsbx($onclick).'; return false;"' : ''?>><span class="crm-toolbar-btn-icon"></span><span><?=htmlspecialcharsbx($text)?></span></a><?
+		$dataAttrs = '';
+		if (!empty($item['ATTRIBUTES']) && is_array($item['ATTRIBUTES']))
+		{
+			foreach ($item['ATTRIBUTES'] as $key => $value)
+			{
+				$dataAttrs .= ' '.$key.'="'.htmlspecialcharsbx($value).'"';
+			}
+
+		}
+		?><a class="<?=$iconClassName !== '' ? htmlspecialcharsbx($iconClassName) : ''?>" href="<?=htmlspecialcharsbx($link)?>" title="<?=htmlspecialcharsbx($title)?>" <?=$onclick !== '' ? ' onclick="'.htmlspecialcharsbx($onclick).'; return false;"' : ''?><?=$dataAttrs;?>><span class="crm-toolbar-btn-icon"></span><span><?=htmlspecialcharsbx($text)?></span></a><?
 		if($alignment !== '')
 		{
 			?></span><?

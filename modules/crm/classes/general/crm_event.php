@@ -143,7 +143,7 @@ class CCrmEvent
 	}
 	public function Share($srcEntity, $dstEntities, $typeName)
 	{
-		$typeName = strtoupper(strval($typeName));
+		$typeName = mb_strtoupper(strval($typeName));
 		if($typeName === '')
 		{
 			return;
@@ -468,22 +468,40 @@ class CCrmEvent
 		$sOrder = '';
 		foreach($arSort as $key => $val)
 		{
-			$ord = (strtoupper($val) <> 'ASC'? 'DESC':'ASC');
-			switch (strtoupper($key))
+			$ord = (mb_strtoupper($val) <> 'ASC'? 'DESC':'ASC');
+			switch(mb_strtoupper($key))
 			{
-				case 'ID':	$sOrder .= ', CER.ID '.$ord; break;
-				case 'CREATED_BY_ID':	$sOrder .= ', CE.CREATED_BY_ID '.$ord; break;
-				case 'EVENT_TYPE':	$sOrder .= ', CE.EVENT_TYPE '.$ord; break;
-				case 'ENTITY_TYPE':	$sOrder .= ', CER.ENTITY_TYPE '.$ord; break;
-				case 'ENTITY_ID':	$sOrder .= ', CER.ENTITY_ID '.$ord; break;
-				case 'EVENT_ID':	$sOrder .= ', CE.EVENT_ID '.$ord; break;
-				case 'DATE_CREATE':	$sOrder .= ', CE.DATE_CREATE '.$ord; break;
-				case 'EVENT_NAME':	$sOrder .= ', CE.EVENT_NAME 	 '.$ord; break;
-				case 'ENTITY_FIELD':	$sOrder .= ', CER.ENTITY_FIELD 	 '.$ord; break;
+				case 'ID':
+					$sOrder .= ', CER.ID '.$ord;
+					break;
+				case 'CREATED_BY_ID':
+					$sOrder .= ', CE.CREATED_BY_ID '.$ord;
+					break;
+				case 'EVENT_TYPE':
+					$sOrder .= ', CE.EVENT_TYPE '.$ord;
+					break;
+				case 'ENTITY_TYPE':
+					$sOrder .= ', CER.ENTITY_TYPE '.$ord;
+					break;
+				case 'ENTITY_ID':
+					$sOrder .= ', CER.ENTITY_ID '.$ord;
+					break;
+				case 'EVENT_ID':
+					$sOrder .= ', CE.EVENT_ID '.$ord;
+					break;
+				case 'DATE_CREATE':
+					$sOrder .= ', CE.DATE_CREATE '.$ord;
+					break;
+				case 'EVENT_NAME':
+					$sOrder .= ', CE.EVENT_NAME 	 '.$ord;
+					break;
+				case 'ENTITY_FIELD':
+					$sOrder .= ', CER.ENTITY_FIELD 	 '.$ord;
+					break;
 			}
 		}
 
-		if (strlen($sOrder)<=0)
+		if ($sOrder == '')
 			$sOrder = 'CER.ID DESC';
 
 		$strSqlOrder = ' ORDER BY '.TrimEx($sOrder,',');
@@ -668,7 +686,7 @@ class CCrmEvent
 
 		$err_mess = (self::err_mess()).'<br>Function: Delete<br>Line: ';
 
-		$ID = IntVal($ID);
+		$ID = intval($ID);
 
 		$db_events = GetModuleEvents('crm', 'OnBeforeCrmEventDelete');
 		while($arEvent = $db_events->Fetch())
@@ -724,8 +742,8 @@ class CCrmEvent
 
 		$err_mess = (self::err_mess()).'<br>Function: SetAssignedByElement<br>Line: ';
 
-		$assignedId = IntVal($assignedId);
-		$entityId = IntVal($entityId);
+		$assignedId = intval($assignedId);
+		$entityId = intval($entityId);
 
 		if ($entityType == '' || $entityId == 0)
 			return false;

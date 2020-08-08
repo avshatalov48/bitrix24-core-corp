@@ -97,7 +97,7 @@ if (CUpdateClient::Lock())
 			}
 		}
 		$strLicenseKeyTmp = CUpdateClient::GetLicenseKey();
-		$bLicenseNotFound = strlen($strLicenseKeyTmp) <= 0 || strtolower($strLicenseKeyTmp) == "demo" || $bLicenseNotFound;
+		$bLicenseNotFound = $strLicenseKeyTmp == '' || mb_strtolower($strLicenseKeyTmp) == "demo" || $bLicenseNotFound;
 
 		$arResult["IS_LICENSE_FOUND"] = !$bLicenseNotFound;
 

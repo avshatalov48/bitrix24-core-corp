@@ -38,14 +38,14 @@ class SalesFunnelBoard
 
 		$firstRow = DashboardRow::factoryWithHorizontalCells(1);
 		$firstRow->setWeight(1);
-		$funnel = self::buildSalesFunnel();
+		$funnel = static::buildSalesFunnel();
 		$funnel->setWeight($firstRow->getLayoutMap()['elements'][0]['id']);
 		$firstRow->addWidgets($funnel);
 		$board->addRows($firstRow);
 
 		$secondRow = DashboardRow::factoryWithHorizontalCells(1);
 		$secondRow->setWeight(2);
-		$salesFunnelGridByManager = self::buildManagerEfficiencyGrid();
+		$salesFunnelGridByManager = static::buildManagerEfficiencyGrid();
 		$salesFunnelGridByManager->setWeight($secondRow->getLayoutMap()['elements'][0]['id']);
 		$secondRow->addWidgets($salesFunnelGridByManager);
 
@@ -57,7 +57,7 @@ class SalesFunnelBoard
 	/**
 	 * @return Widget
 	 */
-	private static function buildSalesFunnel()
+	protected static function buildSalesFunnel()
 	{
 		$widget = new Widget();
 		$widget->setGId(Util::generateUserUniqueId());

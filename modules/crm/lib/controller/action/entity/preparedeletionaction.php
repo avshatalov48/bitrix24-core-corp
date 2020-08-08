@@ -43,7 +43,7 @@ class PrepareDeletionAction extends Main\Engine\Action
 		{
 			sort($entityIDs, SORT_NUMERIC);
 			$hash = md5(
-				\CCrmOwnerType::ResolveName($entityTypeID).':'.strtoupper($gridID).':'.implode(',', $entityIDs)
+				\CCrmOwnerType::ResolveName($entityTypeID).':'.mb_strtoupper($gridID).':'.implode(',', $entityIDs)
 			);
 
 			$_SESSION['CRM_ENTITY_DELETION_DATA'][$hash] = [
@@ -78,7 +78,7 @@ class PrepareDeletionAction extends Main\Engine\Action
 			ksort($filterFields, SORT_STRING);
 			$hash = md5(
 				\CCrmOwnerType::ResolveName($entityTypeID)
-				.':'.strtoupper($gridID)
+				.':'.mb_strtoupper($gridID)
 				.':'.implode(',', array_map(function($k, $v){ return "{$k}:{$v}"; }, array_keys($filterFields), $filterFields))
 			);
 

@@ -34,7 +34,7 @@ export class ApplicationModel extends VuexBuilderModel
 			{
 				if(typeof payload.pages === 'object')
 				{
-					state.pages = payload.pages;
+					state.pages = payload.pages        ;
 					this.saveState(state);
 				}
 			},

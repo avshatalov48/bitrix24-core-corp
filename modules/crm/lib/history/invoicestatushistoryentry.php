@@ -161,6 +161,14 @@ class InvoiceStatusHistoryEntry
 		$latest = self::getLatest($ownerID);
 		if($latest['STATUS_ID'] === $statusID)
 		{
+			InvoiceStatusHistoryTable::synchronize(
+				$ownerID,
+				array(
+					'RESPONSIBLE_ID' => $responsibleID,
+					'BILL_DATE' => $billDate,
+					'PAY_BEFORE_DATE' => $payBeforeDate
+				)
+			);
 			return false;
 		}
 

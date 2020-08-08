@@ -10,7 +10,7 @@ $component = $this->getComponent();
 use Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\UI;
 
-if (strlen($arResult["FatalError"]) > 0)
+if ($arResult["FatalError"] <> '')
 {
 	?><span class='errortext'><?=$arResult["FatalError"]?></span><br/><br/><?
 	return;
@@ -21,7 +21,7 @@ UI\Extension::load("ui.buttons");
 UI\Extension::load("ui.alerts");
 UI\Extension::load("socialnetwork.common");
 
-if (strlen($arResult["ErrorMessage"]) > 0)
+if ($arResult["ErrorMessage"] <> '')
 {
 	?><span class='errortext'><?=$arResult["ErrorMessage"]?></span><br/><br/><?
 }
@@ -65,7 +65,7 @@ elseif ($arResult["bUserCanRequestGroup"])
 						</tr><?
 					}
 
-					if (strlen($arResult["Group"]["DESCRIPTION"]) > 0)
+					if ($arResult["Group"]["DESCRIPTION"] <> '')
 					{
 						?><tr class="ext-header-center-row">
 							<td class="socialnetwork-group-description-left-col"><?=GetMessage("SONET_C6_DESCR")?>:</td>
@@ -84,7 +84,7 @@ elseif ($arResult["bUserCanRequestGroup"])
 								)
 								|| (
 									!is_array($arUserField["VALUE"])
-									&& strlen($arUserField["VALUE"]) > 0
+									&& $arUserField["VALUE"] <> ''
 								)
 							)
 							{

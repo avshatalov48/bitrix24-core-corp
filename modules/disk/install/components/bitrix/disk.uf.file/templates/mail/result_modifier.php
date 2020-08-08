@@ -5,9 +5,9 @@ use Bitrix\Disk\Security\ParameterSigner;
  * @var $arParams array
  * @var $arResult array
  */
-if (strpos($this->__page, "show") === 0 && !($arParams["RECIPIENT_ID"] > 0 && !empty($arParams["SITE_ID"]) && CModule::IncludeModule('mail')))
+if (mb_strpos($this->__page, "show") === 0 && !($arParams["RECIPIENT_ID"] > 0 && !empty($arParams["SITE_ID"]) && CModule::IncludeModule('mail')))
 	$arResult["FILES"] = array();
-else if (strpos($this->__page, "show") === 0)
+else if (mb_strpos($this->__page, "show") === 0)
 {
 	$arSize = array_change_key_case((is_array($arParams["SIZE"][ $file["ID"]]) ? $arParams["SIZE"][ $file["ID"]] : array("width" => 0, "height" => 0)), CASE_LOWER);
 	$arParams["MAX_SIZE"] = array_change_key_case((is_array($arParams["MAX_SIZE"]) ? $arParams["MAX_SIZE"] : array("width" => 600, "height" => 600)), CASE_LOWER);

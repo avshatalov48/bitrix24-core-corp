@@ -4,7 +4,9 @@
 		diskufMenuNumber = 0,
 		currentDialog = null,
 		currentService = null,
-		repo = {};
+		repo = {},
+		showRepo = {};
+
 	BX.namespace("BX.Disk");
 	if (BX.Disk.UF)
 		return;
@@ -19,6 +21,13 @@
 			this.values = (params.values || []);
 			this.prefix = 'diskuf-doc';
 			this.onUploaderIsAlmostInited = BX.delegate(this.onUploaderIsAlmostInited, this);
+
+			this._checkFileName = this.checkFileName.bind(this);
+			this._selectFolder = this.selectFolder.bind(this);
+			this._openSection = this.openSection.bind(this);
+			this._selectItem = this.selectItem.bind(this);
+			this._unSelectItem = this.unSelectItem.bind(this);
+
 			BX.addCustomEvent(window, "onUploaderIsAlmostInited", this.onUploaderIsAlmostInited);
 
 			this.agent = BX.Uploader.getInstance({
@@ -152,6 +161,7 @@
 						BX.bind(controllerClouds[i], 'click', BX.proxy(this.showSelectDialogCloudImport, this));
 					}
 				}
+
 				return false;
 			},
 			addFile : function(file)
@@ -606,15 +616,6 @@
 				while(urlMove.indexOf('&&') >= 0)
 					urlMove = urlMove.replace('&&', '&');
 
-				if (!this._checkFileName)
-				{
-					this._checkFileName = BX.proxy(this.checkFileName, this);
-					this._selectFolder = BX.proxy(this.selectFolder, this);
-					this._openSection = BX.proxy(this.openSection, this);
-					this._selectItem = BX.proxy(this.selectItem, this);
-					this._unSelectItem = BX.proxy(this.unSelectItem, this);
-				}
-
 				var nodeFileTR = (row || BX('disk-edit-attach'+element_id)),
 					nodeFileName = BX.findChild(nodeFileTR, {'className':'f-wrap'}, true);
 
@@ -924,6 +925,7 @@
 					}
 				}
 				this.agent.onAttach(ar, ar);
+
 				BX.removeCustomEvent(BX.DiskFileDialog, 'loadItems', this._openSection);
 			},
 
@@ -1258,39 +1260,120 @@ BX.Disk.UF.showTransformationUpgradePopup = function(event)
 	);
 };
 
+BX.Disk.UFShowController = function(params) {
+	if (!BX.type.isPlainObject(params))
+	{
+		params = {};
+	}
 
+	this.entityType = (BX.type.isNotEmptyString(params.entityType) ? params.entityType : '');
+	this.entityId = (parseInt(params.entityId) > 0 ? params.entityId : '');
+	this.signedParameters = (BX.type.isNotEmptyString(params.signedParameters) ? params.signedParameters : '');
+	this.loader = null;
 
+	this.container = (
+		BX.type.isNotEmptyString(params.nodeId)
+			? document.getElementById(params.nodeId)
+			: null
+	);
 
+	if (this.container)
+	{
+		var
+			toggleViewlink = this.container.querySelector('.disk-uf-file-switch-control');
 
+		if (toggleViewlink)
+		{
+			BX.Event.bind(toggleViewlink, 'click', BX.Disk.UFShowController.onToggleView);
+		}
+	}
 
+	if (BX.type.isNotEmptyString(params.nodeId))
+	{
+		showRepo[params.nodeId] = this;
+	}
+};
 
+BX.Disk.UFShowController.getInstance = function(nodeId)
+{
+	return (
+		BX.type.isNotEmptyString(nodeId)
+		&& showRepo[nodeId]
+			? showRepo[nodeId]
+			: null
+	);
+};
 
+BX.Disk.UFShowController.onToggleView = function(event)
+{
+	var
+		container = event.currentTarget.closest('.diskuf-files-toggle-container'),
+		viewType = event.currentTarget.getAttribute('data-bx-view-type');
 
+	if (
+		!BX.type.isDomNode(container)
+		|| !BX.type.isNotEmptyString(container.id)
+	)
+	{
+		return;
+	}
 
+	var
+		controller = BX.Disk.UFShowController.getInstance(container.id);
 
+	if (controller)
+	{
+		controller.toggleViewType({
+			viewType: viewType
+		});
+	}
 
+	event.preventDefault();
+};
 
+BX.Disk.UFShowController.prototype.toggleViewType = function(params)
+{
+	this.showToggleViewLoader();
 
+	BX.ajax.runComponentAction('bitrix:disk.uf.file', 'toggleViewType', {
+		mode: 'class',
+		signedParameters: this.signedParameters,
+		data: {
+			params: {
+				viewType: params.viewType
+			}
+		}
+	}).then(function(response) {
+		this.hideToggleViewLoader();
+		BX.clean(this.container);
+		BX.html(this.container, response.data.html);
 
+	}.bind(this), function(response) {
 
+		this.hideToggleViewLoader();
 
+	});
+};
 
+BX.Disk.UFShowController.prototype.showToggleViewLoader = function(params)
+{
+	this.container.classList.add('diskuf-files-toggle-container-active');
 
+	this.loader = new BX.Loader({
+		target: this.container
+	});
+	this.loader.show();
+};
 
+BX.Disk.UFShowController.prototype.hideToggleViewLoader = function(params)
+{
+	this.container.classList.remove('diskuf-files-toggle-container-active');
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+	if (this.loader)
+	{
+		this.loader.destroy();
+	}
+};
 
 	window.DiskCreateDocument = function(documentType, event)
 	{

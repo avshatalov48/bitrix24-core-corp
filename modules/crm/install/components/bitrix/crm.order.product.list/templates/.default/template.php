@@ -168,7 +168,7 @@ foreach($arResult['PRODUCTS'] as $product)
 				</div>';
 		}
 	}
-	elseif (!$isReadOnly)
+	elseif (!$isReadOnly && $product['CUSTOM_PRICE'] != 'Y')
 	{
 		$discountsHtml = Loc::getMessage('CRM_ORDER_PL_DISCOUNTS_ABSENT');
 
@@ -279,7 +279,7 @@ foreach($arResult['PRODUCTS'] as $product)
 	}
 	else
 	{
-		$quantityInnerHtml = '<input id="crm-product-quantity-'.$product['BASKET_CODE'].'" name="'.$namePrefix.'[QUANTITY]" type="number" value="'.(float)$product['QUANTITY'].'" class="crm-order-product-control-amount-field"> '.$product['MEASURE_TEXT'];
+		$quantityInnerHtml = '<input id="crm-product-quantity-'.$product['BASKET_CODE'].'" name="'.$namePrefix.'[QUANTITY]" type="number" step="'.$product['MEASURE_RATIO'].'" value="'.(float)$product['QUANTITY'].'" class="crm-order-product-control-amount-field"> '.$product['MEASURE_TEXT'];
 	}
 	$quantityColumn = '
 		<div class="crm-order-product-control-amount">'
@@ -486,7 +486,7 @@ if (!$isReadOnly)
 		'bitrix:crm.interface.toolbar',
 		'',
 		[
-			'TOOLBAR_ID' => strtolower($arResult['GRID_ID']).'_toolbar',
+			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']).'_toolbar',
 			'BUTTONS' => $buttons
 		],
 		$component,
@@ -634,7 +634,7 @@ if(is_array($arResult['COUPONS_LIST']))
 						array_filter(
 							$arParams,
 							function($k){
-								return strpos($k, '~') !== 0;
+								return mb_strpos($k, '~') !== 0;
 							},
 							ARRAY_FILTER_USE_KEY
 					))?>,

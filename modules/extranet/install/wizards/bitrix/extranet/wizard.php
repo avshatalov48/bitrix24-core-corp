@@ -586,7 +586,10 @@ class DataInstallStep extends CWizardStep
 		if (COption::GetOptionString("main", "wizard_extranet_rerun") == "Y")
 			define("WIZARD_IS_RERUN", true);
 
-		if(WIZARD_IS_RERUN === true)
+		if(
+			defined('WIZARD_IS_RERUN')
+			&& WIZARD_IS_RERUN === true
+		)
 		{
 			$rsSites = CSite::GetByID(COption::GetOptionString("extranet", "extranet_site"));
 			if ($arSite = $rsSites->Fetch())
@@ -704,7 +707,10 @@ class DataInstallStep extends CWizardStep
 		if (COption::GetOptionString("main", "wizard_extranet_rerun") == "Y")
 			define("WIZARD_IS_RERUN", true);
 		
-		if (WIZARD_IS_RERUN === true)
+		if (
+			defined('WIZARD_IS_RERUN')
+			&& WIZARD_IS_RERUN === true
+		)
 		{
 			$rsSites = CSite::GetByID(COption::GetOptionString("extranet", "extranet_site"));
 			if ($arSite = $rsSites->Fetch())

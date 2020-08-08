@@ -16,7 +16,7 @@ use \Bitrix\ImOpenLines\Network,
 use	\Bitrix\ImConnector,
 	\Bitrix\ImConnector\Connectors\Viber,
 	\Bitrix\ImConnector\Connectors\Yandex,
-	\Bitrix\ImConnector\Connectors\Instagram,
+	\Bitrix\ImConnector\Connectors\FbInstagram,
 	\Bitrix\ImConnector\Connectors\BotFramework,
 	\Bitrix\ImConnector\Connectors\FacebookComments;
 
@@ -224,11 +224,14 @@ final class Output
 	 *
 	 * @param array $data An array of data describing the message.
 	 * @return Result
+	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\ArgumentNullException
 	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function sendMessage(array $data)
+	public function sendMessage(array $data): Result
 	{
 		$result = new Result();
 
@@ -247,12 +250,18 @@ final class Output
 			{
 				foreach ($data as $cell=>$value)
 				{
+					//Processing for native messages
+					$value = InteractiveMessage\Output::sendMessageProcessing($value, $this->connector);
+
+					//Processing for native messages
+					$value = Connector::sendMessageProcessing($value);
+
 					//Hack is designed for the Microsoft Bot Framework
 					$value = BotFramework::sendMessageProcessing($value, $this->connector);
 					//Hack is designed for the Viber
 					$value = Viber::sendMessageProcessing($value, $this->connector, $this->line);
-					//Hack is designed for the Instagram
-					$value = Instagram::sendMessageProcessing($value, $this->connector);
+					//Hack is designed for the Instagram Facebook
+					$value = FbInstagram::sendMessageProcessing($value, $this->connector);
 					//Hack is designed for the Yandex
 					$value = Yandex::sendMessageProcessing($value, $this->connector, $this->line);
 					//Hack is designed for the FacebookComments
@@ -279,8 +288,10 @@ final class Output
 	 *
 	 * @param array $data An array of data describing the message.
 	 * @return Result
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
-	public function updateMessage(array $data)
+	public function updateMessage(array $data): Result
 	{
 		$result = new Result();
 
@@ -323,8 +334,10 @@ final class Output
 	 *
 	 * @param array $data An array of data describing the message.
 	 * @return Result
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
-	public function deleteMessage(array $data)
+	public function deleteMessage(array $data): Result
 	{
 		$result = new Result();
 

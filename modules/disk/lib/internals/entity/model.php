@@ -29,13 +29,13 @@ class Model extends \Bitrix\Disk\Internals\Model
 	 */
 	public function __call($name, $arguments)
 	{
-		$name = strtolower($name);
-		if (substr($name, 0, 3) !== 'get')
+		$name = mb_strtolower($name);
+		if (mb_substr($name, 0, 3) !== 'get')
 		{
 			return null;
 		}
 
-		$possibleReference = substr($name, 3);
+		$possibleReference = mb_substr($name, 3);
 
 		if (isset($this->lazyAttributes[$possibleReference]) || $this->isLoadedAttribute($possibleReference))
 		{

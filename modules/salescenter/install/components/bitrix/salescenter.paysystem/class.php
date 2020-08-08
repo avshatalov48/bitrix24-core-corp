@@ -127,7 +127,10 @@ class SalesCenterPaySystemComponent extends CBitrixComponent
 		$this->arResult['AUTH']['HAS_AUTH'] = false;
 		$this->arResult['AUTH']['CAN_AUTH'] = false;
 		$this->arResult['AUTH']['PROFILE'] = false;
-		if ($this->arResult['PAYSYSTEM_HANDLER'] === 'yandexcheckout')
+
+		[$className] = PaySystem\Manager::includeHandler($this->arResult['PAYSYSTEM_HANDLER']);
+		$this->arResult['PAYSYSTEM_HANDLER_CLASS_NAME'] = $className;
+		if (mb_strtolower($className) === mb_strtolower(\Sale\Handlers\PaySystem\YandexCheckoutHandler::class))
 		{
 			$this->initYandexAuthAdapter();
 
@@ -144,20 +147,12 @@ class SalesCenterPaySystemComponent extends CBitrixComponent
 			}
 		}
 
-		$this->arResult['PAYSYSTEM_HANDLER_STYLE'] = strtolower($this->arResult['PAYSYSTEM_HANDLER']);
-		$this->arResult['PAYSYSTEM_HANDLER_FULL'] = strtoupper($this->arResult['PAYSYSTEM_HANDLER']);
+		$this->arResult['PAYSYSTEM_HANDLER_STYLE'] = mb_strtolower($this->arResult['PAYSYSTEM_HANDLER']);
+		$this->arResult['PAYSYSTEM_HANDLER_FULL'] = mb_strtoupper($this->arResult['PAYSYSTEM_HANDLER']);
 		if ($this->arResult['PAYSYSTEM_PS_MODE'])
 		{
-			$this->arResult['PAYSYSTEM_HANDLER_STYLE'] = strtolower($this->arResult['PAYSYSTEM_HANDLER'].'-'.$this->arResult['PAYSYSTEM_PS_MODE']);
-			$this->arResult['PAYSYSTEM_HANDLER_FULL'] = strtoupper($this->arResult['PAYSYSTEM_HANDLER'].'_'.$this->arResult['PAYSYSTEM_PS_MODE']);
-
-			if ($this->request->get('EMBEDDED_TYPE'))
-			{
-				$this->arResult['PAYSYSTEM_HANDLER_FULL'] = strtoupper($this->arResult['PAYSYSTEM_HANDLER_FULL']
-					.'_'
-					.$this->request->get('EMBEDDED_TYPE')
-				);
-			}
+			$this->arResult['PAYSYSTEM_HANDLER_STYLE'] = mb_strtolower($this->arResult['PAYSYSTEM_HANDLER'].'-'.$this->arResult['PAYSYSTEM_PS_MODE']);
+			$this->arResult['PAYSYSTEM_HANDLER_FULL'] = mb_strtoupper($this->arResult['PAYSYSTEM_HANDLER'].'_'.$this->arResult['PAYSYSTEM_PS_MODE']);
 		}
 
 		$this->checkAvailabilityCashbox();
@@ -257,24 +252,21 @@ class SalesCenterPaySystemComponent extends CBitrixComponent
 		{
 			$paySystemDescription["NAME"] = $paySystemDescription["FULL_NAME"] = $data['NAME'];
 		}
-		elseif (isset($psTitle))
+		else
 		{
-			$paySystemDescription["NAME"] = $paySystemDescription["FULL_NAME"] = $psTitle;
+			$handlerList = PaySystem\Manager::getHandlerList();
+			foreach ($handlerList as $handlerType)
+			{
+				if (array_key_exists($handler, $handlerType))
+				{
+					$paySystemDescription["NAME"] = $paySystemDescription["FULL_NAME"] = $handlerType[$handler];
+				}
+			}
 		}
 
 		if ($psMode)
 		{
-			$psModeName = '';
-			if ($embeddedType = $this->request->get('EMBEDDED_TYPE'))
-			{
-				$psModeName = Loc::getMessage("SP_PAYSYSTEM_".strtoupper($handler."_".$psMode."_".$embeddedType)."_TITLE");
-			}
-
-			if (!$psModeName)
-			{
-				$psModeName = $this->getHandlerModeName($handler, $psMode);
-			}
-
+			$psModeName = $this->getHandlerModeName($handler, $psMode);
 			if ($psModeName)
 			{
 				$paySystemDescription['MODE_NAME'] = $psModeName;
@@ -287,11 +279,7 @@ class SalesCenterPaySystemComponent extends CBitrixComponent
 			}
 		}
 
-		if (isset($psDescription))
-		{
-			$paySystemDescription['DESCRIPTION'] = $psDescription;
-		}
-		elseif (isset($description))
+		if (isset($description))
 		{
 			if (is_array($description))
 			{
@@ -309,11 +297,6 @@ class SalesCenterPaySystemComponent extends CBitrixComponent
 			if (Main\IO\File::isFileExists($_SERVER['DOCUMENT_ROOT'].'/bitrix/images/sale/sale_payments/'.$fullPath.'.png'))
 			{
 				$paySystemDescription['LOGO'] = '/bitrix/images/sale/sale_payments/'.$fullPath.'.png';
-			}
-
-			if (!$paySystemDescription['LOGO'] && $this->request->get('EMBEDDED_TYPE'))
-			{
-				$paySystemDescription['LOGO'] = $this->getLogoPath().$handler.'_'.$psMode.'_'.$this->request->get('EMBEDDED_TYPE').'.png';
 			}
 		}
 
@@ -403,13 +386,5 @@ class SalesCenterPaySystemComponent extends CBitrixComponent
 		}
 
 		return true;
-	}
-
-	/**
-	 * @return string
-	 */
-	private function getLogoPath()
-	{
-		return $this->__path.'/templates/.default/images/logo/';
 	}
 }

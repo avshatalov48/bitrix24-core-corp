@@ -17,7 +17,7 @@ if (!function_exists("getLeftMenuItemLink"))
 	{
 		$settings = CUserOptions::GetOption("UI", $sectionId);
 		return
-			is_array($settings) && isset($settings["firstPageLink"]) && strlen($settings["firstPageLink"]) ?
+			is_array($settings) && isset($settings["firstPageLink"]) && mb_strlen($settings["firstPageLink"]) ?
 				$settings["firstPageLink"] :
 				$defaultLink;
 	}

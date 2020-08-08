@@ -152,6 +152,14 @@ var WebSocketConnector = function (delegate, params)
 		});
 		BX.addCustomEvent("onAppPaused", () => this.disconnect(1000, "App is in background"));
 	}
+
+	BX.addCustomEvent("onPullForceBackgroundConnect", () => {
+		console.warn("Forced connection in background");
+		if(Application.isBackground())
+		{
+			this.connect();
+		}
+	})
 };
 
 WebSocketConnector.prototype = {

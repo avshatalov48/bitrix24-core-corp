@@ -90,7 +90,7 @@ $gridManagerCfg = array(
 );
 echo CCrmViewHelper::RenderOrderStatusSettings();
 $prefix = $arResult['GRID_ID'];
-$prefixLC = strtolower($arResult['GRID_ID']);
+$prefixLC = mb_strtolower($arResult['GRID_ID']);
 
 $arResult['GRID_DATA'] = array();
 $arColumns = array();
@@ -193,7 +193,7 @@ foreach($arResult['ORDER_PAYMENT'] as $sKey => $payment)
 			'CURRENCY' => CCrmCurrency::GetCurrencyName($payment['CURRENCY']),
 			'PAY_SYSTEM_FULL' => $paySystemFull,
 			'PAID' => Loc::getMessage($messageCode),
-			'USER_ID' => strlen($payment['BUYER_FORMATTED_NAME']) > 0 ? '<a href="/'.$payment['PATH_TO_BUYER'].'">'.$payment['BUYER_FORMATTED_NAME'].'</a>' : ''
+			'USER_ID' => $payment['BUYER_FORMATTED_NAME'] <> '' ? '<a href="/'.$payment['PATH_TO_BUYER'].'">'.$payment['BUYER_FORMATTED_NAME'].'</a>' : ''
 		)
 	);
 
@@ -320,7 +320,7 @@ if($arResult['ENABLE_TOOLBAR'])
 		'bitrix:crm.interface.toolbar',
 		'',
 		array(
-			'TOOLBAR_ID' => strtolower($arResult['GRID_ID']).'_toolbar',
+			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']).'_toolbar',
 			'BUTTONS' => array($addButton)
 		),
 		$component,
@@ -378,7 +378,7 @@ $APPLICATION->IncludeComponent(
 			'BINDING' => array(
 				'category' => 'crm.navigation',
 				'name' => 'index',
-				'key' => strtolower($arResult['NAVIGATION_CONTEXT_ID'])
+				'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
 			)
 		),
 		'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'],

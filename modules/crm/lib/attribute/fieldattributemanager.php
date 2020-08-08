@@ -40,9 +40,19 @@ class FieldAttributeManager
 
 	public static function processPhaseModification($phaseID, $entityTypeID, $entityScope, array $phases)
 	{
+		if(!is_int($entityTypeID))
+		{
+			$entityTypeID = (int)$entityTypeID;
+		}
+
 		$connection = Main\HttpApplication::getConnection();
+		$helper = $connection->getSqlHelper();
+
+		$scopeSql = $helper->forSql($entityScope);
+		$phaseSql = $helper->forSql($phaseID);
+
 		$dbResult = $connection->query(
-			"SELECT * FROM b_crm_field_attr WHERE ENTITY_TYPE_ID = {$entityTypeID} AND ENTITY_SCOPE = '{$entityScope}' AND (START_PHASE = '{$phaseID}' OR FINISH_PHASE = '{$phaseID}')"
+			"SELECT * FROM b_crm_field_attr WHERE ENTITY_TYPE_ID = {$entityTypeID} AND ENTITY_SCOPE = '{$scopeSql}' AND (START_PHASE = '{$phaseSql}' OR FINISH_PHASE = '{$phaseSql}')"
 		);
 
 		while($fields = $dbResult->fetch())
@@ -81,6 +91,31 @@ class FieldAttributeManager
 			);
 		}
 
+		$results = self::getUserFieldAttributes($entityTypeID, $entityScope);
+
+		$configs = array();
+		foreach ($results as $fieldName => $fieldData)
+		{
+			$configs[$fieldName] = array();
+			foreach ($fieldData as $typeID => $typeData)
+			{
+				$config = array('typeId' => $typeID, 'groups' => array());
+				foreach ($typeData as $phaseGroupTypeID => $phaseGroupTypeData)
+				{
+					$config['groups'][] = array(
+						'phaseGroupTypeId' => $phaseGroupTypeID,
+						'items' => $phaseGroupTypeData
+					);
+				}
+				$configs[$fieldName][] = $config;
+			}
+		}
+
+		return $configs;
+	}
+
+	private static function getUserFieldAttributes(int $entityTypeID, string $entityScope):array
+	{
 		$query = new Main\Entity\Query(Crm\Attribute\Entity\FieldAttributeTable::getEntity());
 		//$query->addSelect('ID');
 		$query->addSelect('TYPE_ID');
@@ -121,25 +156,7 @@ class FieldAttributeManager
 				'finishPhaseId' => $fields['FINISH_PHASE']
 			);
 		}
-
-		$configs = array();
-		foreach ($results as $fieldName => $fieldData)
-		{
-			$configs[$fieldName] = array();
-			foreach ($fieldData as $typeID => $typeData)
-			{
-				$config = array('typeId' => $typeID, 'groups' => array());
-				foreach ($typeData as $phaseGroupTypeID => $phaseGroupTypeData)
-				{
-					$config['groups'][] = array(
-						'phaseGroupTypeId' => $phaseGroupTypeID,
-						'items' => $phaseGroupTypeData
-					);
-				}
-				$configs[$fieldName][] = $config;
-			}
-		}
-		return $configs;
+		return $results;
 	}
 	public static function saveEntityConfiguration(array $config, $fieldName, $entityTypeID, $entityScope)
 	{
@@ -179,7 +196,7 @@ class FieldAttributeManager
 						'START_PHASE' => '',
 						'FINISH_PHASE' => '',
 						'PHASE_GROUP_TYPE_ID' => FieldAttributePhaseGroupType::ALL,
-						'IS_CUSTOM_FIELD' => (strpos($fieldName, 'UF_') === 0) ? 'Y' : 'N'
+						'IS_CUSTOM_FIELD' => (mb_strpos($fieldName, 'UF_') === 0) ? 'Y' : 'N'
 					)
 				);
 				break;
@@ -206,7 +223,7 @@ class FieldAttributeManager
 						'START_PHASE' => $startPhaseID,
 						'FINISH_PHASE' => $finishPhaseID,
 						'PHASE_GROUP_TYPE_ID' => $phaseGroupTypeID,
-						'IS_CUSTOM_FIELD' => (strpos($fieldName, 'UF_') === 0) ? 'Y' : 'N'
+						'IS_CUSTOM_FIELD' => (mb_strpos($fieldName, 'UF_') === 0) ? 'Y' : 'N'
 					)
 				);
 			}

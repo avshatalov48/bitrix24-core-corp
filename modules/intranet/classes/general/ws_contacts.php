@@ -93,10 +93,10 @@ class CIntranetContactsWS extends IWebService
 		if (null === $datetime)
 			return time();
 
-		if (intval(substr($datetime, 0, 4)) >= 2037)
-			$datetime = '2037'.substr($datetime, 4);
+		if (intval(mb_substr($datetime, 0, 4)) >= 2037)
+			$datetime = '2037'.mb_substr($datetime, 4);
 
-		return MakeTimeStamp(substr($datetime, 0, 10).' '.substr($datetime, 11, -1), 'YYYY-MM-DD HH:MI:SS');
+		return MakeTimeStamp(mb_substr($datetime, 0, 10).' '.mb_substr($datetime, 11, -1), 'YYYY-MM-DD HH:MI:SS');
 	}
 
 	function GetList($listName)
@@ -306,9 +306,9 @@ class CIntranetContactsWS extends IWebService
 		$tsLastFieldsChange = COption::GetOptionString('intranet', 'ws_contacts_last_fields_change', false);
 		$this->bGetImages = COption::GetOptionString('intranet', 'ws_contacts_get_images', 'Y') == 'Y';
 
-		if (strlen($changeToken) > 0)
+		if ($changeToken <> '')
 		{
-			if ($pos = strpos($changeToken, ';'))
+			if ($pos = mb_strpos($changeToken, ';'))
 			{
 				list($newChangeToken, $page, $last_change) = explode(';', $changeToken);
 

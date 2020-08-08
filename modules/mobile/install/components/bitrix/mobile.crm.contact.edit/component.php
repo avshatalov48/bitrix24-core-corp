@@ -34,7 +34,7 @@ $arParams['PATH_TO_CONTACT_SHOW'] = CrmCheckPath('PATH_TO_CONTACT_SHOW', $arPara
 $arParams['PATH_TO_CONTACT_EDIT'] = CrmCheckPath('PATH_TO_CONTACT_EDIT', $arParams['PATH_TO_CONTACT_EDIT'], $APPLICATION->GetCurPage().'?contact_id=#contact_id#&edit');
 $arParams['PATH_TO_USER_PROFILE'] = CrmCheckPath('PATH_TO_USER_PROFILE', $arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
 $arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);
-$arParams['REDIRECT_AFTER_SAVE'] = (!isset($arParams['REDIRECT_AFTER_SAVE']) || strtoupper($arParams['REDIRECT_AFTER_SAVE']) === 'Y') ? 'Y' : 'N';
+$arParams['REDIRECT_AFTER_SAVE'] = (!isset($arParams['REDIRECT_AFTER_SAVE']) || mb_strtoupper($arParams['REDIRECT_AFTER_SAVE']) === 'Y') ? 'Y' : 'N';
 
 $isEditMode = false;
 $isCopyMode = false;
@@ -437,9 +437,13 @@ else
 		{
 			$arFields = array(
 				'NAME' => trim($_POST['NAME']),
-				'LAST_NAME' => trim($_POST['LAST_NAME']),
-				'SECOND_NAME' => trim($_POST['SECOND_NAME'])
+				'LAST_NAME' => trim($_POST['LAST_NAME'])
 			);
+
+			if(isset($_POST['SECOND_NAME']))
+			{
+				$arFields['SECOND_NAME'] = trim($_POST['SECOND_NAME']);
+			}
 
 			if(isset($_POST['HONORIFIC']))
 			{
@@ -548,7 +552,7 @@ else
 			if(isset($_POST['COMMENTS']))
 			{
 				$comments = trim($_POST['COMMENTS']);
-				if($comments !== '' && strpos($comments, '<') !== false)
+				if($comments !== '' && mb_strpos($comments, '<') !== false)
 				{
 					$sanitizer = new CBXSanitizer();
 					$sanitizer->ApplyDoubleEncode(false);
@@ -1275,10 +1279,13 @@ $arResult['FIELDS'][] = array(
 
 //user fields
 $CCrmUserType = new CCrmMobileHelper();
-$CCrmUserType->PrepareUserFields(
+$CCrmUserType->prepareUserFields(
 	$arResult['FIELDS'],
 	CCrmContact::$sUFEntityID,
-	$arResult['ELEMENT']['ID']
+	$arResult['ELEMENT']['ID'],
+	false,
+	'contact_details',
+	$USER->GetID()
 );
 
 if ($arParams['RESTRICTED_MODE'])

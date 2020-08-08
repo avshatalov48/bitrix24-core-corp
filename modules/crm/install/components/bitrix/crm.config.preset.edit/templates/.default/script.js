@@ -332,29 +332,36 @@ BX.Crm.PresetFieldListManagerClass = (function ()
 				);
 			}
 
-			// FIELD_TITLE
-			tab.appendChild(this.dlg.elements.fieldTitleWrapper = BX.create("TR", {
-				children: [
-					BX.create("TD", {"children": [BX.create(
-						"LABEL", {
-							html: this.getMessage('fieldTitleTitle') + ':'
-						}
-					)]}),
-					BX.create("TD", {"children": [this.dlg.elements.fieldTitle = BX.create(
-						'INPUT',
-						{
-							attrs: {
-								"class": "bx-crm-edit-input"
-							},
-							props:
-							{
-								type: "text",
-								value: this.dlg.fieldData.FIELD_TITLE
-							}
-						}
-					)]})
-				]
-			}));
+			if (!this.dlg.fieldData.OPTIONS || !BX.prop.getBoolean(this.dlg.fieldData.OPTIONS, 'disableTitleEdit', false))
+			{
+				// FIELD_TITLE
+				tab.appendChild(this.dlg.elements.fieldTitleWrapper = BX.create("TR", {
+					children: [
+						BX.create("TD", {
+							"children": [BX.create(
+								"LABEL", {
+									html: this.getMessage('fieldTitleTitle') + ':'
+								}
+							)]
+						}),
+						BX.create("TD", {
+							"children": [this.dlg.elements.fieldTitle = BX.create(
+								'INPUT',
+								{
+									attrs: {
+										"class": "bx-crm-edit-input"
+									},
+									props:
+										{
+											type: "text",
+											value: this.dlg.fieldData.FIELD_TITLE
+										}
+								}
+							)]
+						})
+					]
+				}));
+			}
 
 			// SORT
 			tab.appendChild(BX.create("TR", {
@@ -438,7 +445,8 @@ BX.Crm.PresetFieldListManagerClass = (function ()
 				}
 			}
 
-			fieldTitle = fieldTitleInput.value;
+			var hasTitle = !!fieldTitleInput;
+			fieldTitle = hasTitle ? fieldTitleInput.value : '';
 			if (fieldTitle.length > 255)
 			{
 				alert(this.getMessage('longFieldTitleError'));
@@ -450,7 +458,7 @@ BX.Crm.PresetFieldListManagerClass = (function ()
 				actionField.value = "ADD_FIELD";
 				fieldIdField.value = 0;
 				fieldNameField.value = fieldNameSelect.value;
-				fieldTitleField.value = fieldTitleInput.value;
+				fieldTitleField.value = hasTitle ? fieldTitleInput.value : '';
 				inShortListField.value = (inShortListCheckbox.checked ? "Y" : "N");
 				sortField.value = sortInput.value;
 
@@ -487,7 +495,10 @@ BX.Crm.PresetFieldListManagerClass = (function ()
 				actionField.value = "edit";
 				fieldIdField.value = this.dlg.fieldId;
 				fieldNameField.value = "";
-				fieldTitleField.value = this.dlg.fieldData.FIELD_TITLE = fieldTitleInput.value;
+				if (hasTitle)
+				{
+					fieldTitleField.value = this.dlg.fieldData.FIELD_TITLE = fieldTitleInput.value;
+				}
 				inShortListField.value = this.dlg.fieldData.IN_SHORT_LIST = (inShortListCheckbox.checked ? "Y" : "N");
 				sortField.value = this.dlg.fieldData.SORT = sortInput.value;
 			}

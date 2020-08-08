@@ -66,7 +66,7 @@ class CLDAP
 
 	function BindAdmin()
 	{
-		if(strlen($this->arFields["ADMIN_LOGIN"]) <= 0)
+		if($this->arFields["ADMIN_LOGIN"] == '')
 			return false;
 
 		return $this->Bind(
@@ -88,7 +88,7 @@ class CLDAP
 			$password = $APPLICATION->ConvertCharset($password, SITE_CHARSET, "utf-8");
 		}
 
-		if(strpos($password, "\0") !== false || strlen($password) <= 0)
+		if(mb_strpos($password, "\0") !== false || $password == '')
 			return false;
 
 		if(intval($this->arFields["CONNECTION_TYPE"]) == CLDAP::CONNECTION_TYPE_TLS)
@@ -154,7 +154,7 @@ class CLDAP
 
 		if(is_array($values) && $values['count']==1)
 		{
-			if($this->arFields["CONVERT_UTF8"]=="Y" && strtolower(SITE_CHARSET) != "utf-8")
+			if($this->arFields["CONVERT_UTF8"]=="Y" && mb_strtolower(SITE_CHARSET) != "utf-8")
 				return $APPLICATION->ConvertCharset($values[0], "utf-8", SITE_CHARSET);
 
 			return $values[0];
@@ -162,7 +162,7 @@ class CLDAP
 
 		unset($values['count']);
 
-		if($this->arFields["CONVERT_UTF8"]=="Y" && strtolower(SITE_CHARSET) != "utf-8")
+		if($this->arFields["CONVERT_UTF8"]=="Y" && mb_strtolower(SITE_CHARSET) != "utf-8")
 			foreach($values as $key=>$val)
 				$values[$key] = $APPLICATION->ConvertCharset($val, "utf-8", SITE_CHARSET);
 
@@ -173,7 +173,7 @@ class CLDAP
 	{
 		global $APPLICATION;
 
-		if(strlen($this->arFields['BASE_DN'])<=0)
+		if($this->arFields['BASE_DN'] == '')
 			return false;
 
 		$arBaseDNs = explode(";", $this->arFields['BASE_DN']);
@@ -232,7 +232,7 @@ class CLDAP
 									continue;
 
 								$bPhotoAttr = in_array($attributes[$j], self::$PHOTO_ATTRIBS);
-								$info[$i][strtolower($attributes[$j])] = $bPhotoAttr ? $values : $this->WorkAttr($values);
+								$info[$i][mb_strtolower($attributes[$j])] = $bPhotoAttr ? $values : $this->WorkAttr($values);
 							}
 							if(!is_set($info[$i], 'dn'))
 							{
@@ -273,7 +273,7 @@ class CLDAP
 	protected function setFieldAsAttr(array $attrArray, $fieldName)
 	{
 		$field = isset($this->arFields["~".$fieldName]) ? $this->arFields["~".$fieldName] : $this->arFields[$fieldName];
-		$field = strtolower($field);
+		$field = mb_strtolower($field);
 
 		if(!in_array($field, $attrArray))
 			$attrArray[] = $field;
@@ -285,7 +285,7 @@ class CLDAP
 	function GetGroupListArray($query = '')
 	{
 		$group_filter = $this->arFields['GROUP_FILTER'];
-		if(strlen(trim($group_filter))>0 && substr(trim($group_filter), 0, 1)!='(')
+		if(trim($group_filter) <> '' && mb_substr(trim($group_filter), 0, 1) != '(')
 			$group_filter = '('.trim($group_filter).')';
 		$query = '(&'.$group_filter.$query.')';
 
@@ -311,10 +311,10 @@ class CLDAP
 				return false;
 
 			$arGroups = array();
-			$group_id_attr = strtolower($this->arFields['GROUP_ID_ATTR']);
+			$group_id_attr = mb_strtolower($this->arFields['GROUP_ID_ATTR']);
 
 			if(is_set($this->arFields, 'GROUP_NAME_ATTR'))
-				$group_name_attr = strtolower($this->arFields['GROUP_NAME_ATTR']);
+				$group_name_attr = mb_strtolower($this->arFields['GROUP_NAME_ATTR']);
 			else
 				$group_name_attr = false;
 
@@ -353,11 +353,11 @@ class CLDAP
 		$LOGIN = $arArgs["LOGIN"];
 		$PASSWORD = $arArgs["PASSWORD"];
 
-		if(strlen($LOGIN)<=0 || strlen($PASSWORD)<=0)
+		if($LOGIN == '' || $PASSWORD == '')
 			return false;
 
 		$arFilter = Array("ACTIVE"=>"Y");
-		$p = strpos($LOGIN, "\\");
+		$p = mb_strpos($LOGIN, "\\");
 
 		if( $p===false && COption::GetOptionString("ldap", "ntlm_auth_without_prefix", "Y") != "Y")
 		{
@@ -365,8 +365,8 @@ class CLDAP
 		}
 		elseif( $p > 0 )
 		{
-			$arFilter["CODE"] = substr($LOGIN, 0, $p);
-			$LOGIN = substr($LOGIN, $p+1);
+			$arFilter["CODE"] = mb_substr($LOGIN, 0, $p);
+			$LOGIN = mb_substr($LOGIN, $p + 1);
 		}
 
 		$arParams = Array(
@@ -405,9 +405,9 @@ class CLDAP
 				if(!$arLdapUser = $xLDAP->FindUser($LOGIN, $PASSWORD))
 				{
 
-					if(isset($arArgs["OTP"]) && strlen($arArgs["OTP"]) > 0)
-						if(substr($PASSWORD, -6) == $arArgs["OTP"])
-							$arLdapUser = $xLDAP->FindUser($LOGIN, substr($PASSWORD, 0, -6));	//It can be with otp
+					if(isset($arArgs["OTP"]) && $arArgs["OTP"] <> '')
+						if(mb_substr($PASSWORD, -6) == $arArgs["OTP"])
+							$arLdapUser = $xLDAP->FindUser($LOGIN, mb_substr($PASSWORD, 0, -6));	//It can be with otp
 				}
 
 				if($arLdapUser)
@@ -478,13 +478,13 @@ class CLDAP
 		{
 			if($arRes[$fieldName]["MULTIPLE"]=="Y")
 			{
-				if (is_array($arLdapUser[strtolower($attr)]))
-					$result = array_values($arLdapUser[strtolower($attr)]);
+				if (is_array($arLdapUser[mb_strtolower($attr)]))
+					$result = array_values($arLdapUser[mb_strtolower($attr)]);
 				else
-					$result = array($arLdapUser[strtolower($attr)]);
+					$result = array($arLdapUser[mb_strtolower($attr)]);
 			}
-			else if (!empty($arLdapUser[strtolower($attr)]))
-				$result = $arLdapUser[strtolower($attr)];
+			else if (!empty($arLdapUser[mb_strtolower($attr)]))
+				$result = $arLdapUser[mb_strtolower($attr)];
 			else if (!empty($arRes[$fieldName]['SETTINGS']['DEFAULT_VALUE']))
 			{
 				if (is_array($arRes[$fieldName]['SETTINGS']['DEFAULT_VALUE']))
@@ -499,17 +499,17 @@ class CLDAP
 		}
 		elseif(preg_match("/(.*)&([0-9]+)/", $attr, $arMatch))
 		{
-			if(intval($arLdapUser[strtolower($arMatch[1])]) & intval($arMatch[2]))
+			if(intval($arLdapUser[mb_strtolower($arMatch[1])]) & intval($arMatch[2]))
 				$result = "N";
 			else
 				$result = "Y";
 		}
 		elseif ($fieldName == "PERSONAL_PHOTO")
 		{
-			if($arLdapUser[strtolower($attr)] == "")
+			if($arLdapUser[mb_strtolower($attr)] == "")
 				return false;
 
-			$fExt = CLdapUtil::GetImgTypeBySignature($arLdapUser[strtolower($attr)][0]);
+			$fExt = CLdapUtil::GetImgTypeBySignature($arLdapUser[mb_strtolower($attr)][0]);
 
 			if(!$fExt)
 				return false;
@@ -519,7 +519,7 @@ class CLDAP
 
 			$fname = "ad_".rand().".".$fExt;
 
-			if(!file_put_contents($tmpDir.$fname,$arLdapUser[strtolower($attr)][0]))
+			if(!file_put_contents($tmpDir.$fname,$arLdapUser[mb_strtolower($attr)][0]))
 				return false;
 
 			$result = array(
@@ -529,7 +529,7 @@ class CLDAP
 			);
 		}
 		else
-			$result = $arLdapUser[strtolower($attr)];
+			$result = $arLdapUser[mb_strtolower($attr)];
 
 		if(is_null($result))
 			$result = false;
@@ -539,11 +539,11 @@ class CLDAP
 
 	public static function OnFindExternalUser($login)
 	{
-		if(strlen($login) <= 0)
+		if($login == '')
 			return 0;
 
 		$filter = array("ACTIVE" => "Y");
-		$p = strpos($login, "\\");
+		$p = mb_strpos($login, "\\");
 
 		if($p === false && COption::GetOptionString("ldap", "ntlm_auth_without_prefix", "Y") != "Y")
 		{
@@ -551,8 +551,8 @@ class CLDAP
 		}
 		elseif( $p > 0 )
 		{
-			$filter["CODE"] = substr($login, 0, $p);
-			$login = substr($login, $p+1);
+			$filter["CODE"] = mb_substr($login, 0, $p);
+			$login = mb_substr($login, $p + 1);
 		}
 
 		$dbServ = CLdapServer::GetList(array(),	$filter);
@@ -586,9 +586,9 @@ class CLDAP
 
 		$arFields = array(
 			'DN'				=> $arLdapUser['dn'],
-			'LOGIN'				=> $arLdapUser[strtolower($this->arFields['~USER_ID_ATTR'])],
+			'LOGIN'				=> $arLdapUser[mb_strtolower($this->arFields['~USER_ID_ATTR'])],
 			'EXTERNAL_AUTH_ID'	=> 'LDAP#'.$this->arFields['ID'],
-			'LDAP_GROUPS'		=> $arLdapUser[strtolower($this->arFields['~USER_GROUP_ATTR'])],
+			'LDAP_GROUPS'		=> $arLdapUser[mb_strtolower($this->arFields['~USER_GROUP_ATTR'])],
 		);
 
 		// for each field, do the conversion
@@ -647,10 +647,10 @@ class CLDAP
 
 		if ($this->arFields['USER_GROUP_ACCESSORY'] == 'Y')
 		{
-			$primarygroupid_name_attr = strtolower($this->arFields['GROUP_ID_ATTR']);
-			$primarygrouptoken_name_attr = strtolower($this->arFields['USER_GROUP_ATTR']);
-			$userIdAttr = strtolower($this->arFields['USER_ID_ATTR']);
-			$groupMemberAttr = strtolower($this->arFields['GROUP_MEMBERS_ATTR']);
+			$primarygroupid_name_attr = mb_strtolower($this->arFields['GROUP_ID_ATTR']);
+			$primarygrouptoken_name_attr = mb_strtolower($this->arFields['USER_GROUP_ATTR']);
+			$userIdAttr = mb_strtolower($this->arFields['USER_ID_ATTR']);
+			$groupMemberAttr = mb_strtolower($this->arFields['GROUP_MEMBERS_ATTR']);
 		}
 
 		$arAllGroups = $this->GetGroupListArray();
@@ -879,7 +879,7 @@ class CLDAP
 		$query = '';
 		foreach($arFilter as $key=>$value)
 		{
-			$key = strtoupper($key);
+			$key = mb_strtoupper($key);
 			switch($key)
 			{
 				case 'GROUP_ID':
@@ -893,7 +893,7 @@ class CLDAP
 						$value = array($value);
 					foreach($value as $group)
 					{
-						if(strlen($group)<=0)
+						if($group == '')
 							continue;
 						$temp_cnt++;
 						$temp .= '('.$this->arFields['USER_GROUP_ATTR'].'='.$this->specialchars($group).')';
@@ -904,7 +904,7 @@ class CLDAP
 		}
 
 		$user_filter = $this->arFields['USER_FILTER'];
-		if(strlen(trim($user_filter))>0 && substr(trim($user_filter), 0, 1)!='(')
+		if(trim($user_filter) <> '' && mb_substr(trim($user_filter), 0, 1) != '(')
 			$user_filter = '('.trim($user_filter).')';
 		$query = '(&'.$user_filter.$query.')';
 		$arResult = $this->Query($query);
@@ -915,7 +915,7 @@ class CLDAP
 	{
 		$user_filter = $this->arFields['USER_FILTER'];
 
-		if(strlen(trim($user_filter)) > 0 && substr(trim($user_filter), 0, 1) != '(')
+		if(trim($user_filter) <> '' && mb_substr(trim($user_filter), 0, 1) != '(')
 		{
 			$user_filter = '('.trim($user_filter).')';
 		}
@@ -949,32 +949,33 @@ class CLDAP
 	{
 		global $USER;
 
-		if ($USER->IsAuthorized())
+		if($USER->IsAuthorized())
 			return;
 
 		if(!array_key_exists("AUTH_TYPE", $_SERVER) || ($_SERVER["AUTH_TYPE"] != "NTLM" && $_SERVER["AUTH_TYPE"] != "Negotiate"))
 			return;
 
 		$ntlm_varname = trim(COption::GetOptionString('ldap', 'ntlm_varname', 'REMOTE_USER'));
+		$LOGIN = isset($_SERVER[$ntlm_varname]) ? (string)$_SERVER[$ntlm_varname] : '';
 
-		if (array_key_exists($ntlm_varname, $_SERVER) && strlen($LOGIN = $_SERVER[$ntlm_varname]) > 0)
+		if($LOGIN !== '')
 		{
 			$DOMAIN = "";
 
-			if(($pos = strpos($LOGIN, "\\")) !== false)
+			if(($pos = mb_strpos($LOGIN, "\\")) !== false)
 			{
-				$DOMAIN = substr($LOGIN, 0, $pos);
-				$LOGIN = substr($LOGIN, $pos + 1);
+				$DOMAIN = mb_substr($LOGIN, 0, $pos);
+				$LOGIN = mb_substr($LOGIN, $pos + 1);
 			}
-			elseif($_SERVER["AUTH_TYPE"] == "Negotiate" && (($pos = strpos($LOGIN, "@")) !== false))
+			elseif($_SERVER["AUTH_TYPE"] == "Negotiate" && (($pos = mb_strpos($LOGIN, "@")) !== false))
 			{
-				$LOGIN = substr($LOGIN, 0, $pos);
-				$DOMAIN = substr($LOGIN, $pos + 1);
+				$DOMAIN = mb_substr($LOGIN, $pos + 1);
+				$LOGIN = mb_substr($LOGIN, 0, $pos);
 			}
 
 			$arFilterServer = array('ACTIVE' => 'Y');
 
-			if(strlen($DOMAIN) > 0)
+			if($DOMAIN <> '')
 			{
 				$arFilterServer['CODE'] = $DOMAIN;
 			}
@@ -1156,7 +1157,7 @@ class CLDAP
 			{
 				if($bAddNew)
 				{
-					if(strlen($arLdapUser["EMAIL"]) <= 0)
+					if($arLdapUser["EMAIL"] == '')
 					{
 						$arLdapUser["EMAIL"] = COption::GetOptionString("ldap", "default_email", 'no@email');
 					}
@@ -1250,7 +1251,7 @@ class CLDAP
 		{
 			$ldapError = ldap_error($this->conn);
 
-			if(strlen($ldapError) > 0)
+			if($ldapError <> '')
 				$result = "\nldap_error: '".$ldapError."'\nldap_errno: '".ldap_errno($this->conn)."'";
 		}
 

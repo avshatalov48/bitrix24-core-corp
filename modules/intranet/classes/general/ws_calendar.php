@@ -98,10 +98,10 @@ class CIntranetCalendarWS extends IWebService
 		if (null === $datetime)
 			return time();
 
-		if (intval(substr($datetime, 0, 4)) >= 2037)
-			$datetime = '2037'.substr($datetime, 4);
+		if (intval(mb_substr($datetime, 0, 4)) >= 2037)
+			$datetime = '2037'.mb_substr($datetime, 4);
 
-		return MakeTimeStamp(substr($datetime, 0, 10).' '.substr($datetime, 11, -1), 'YYYY-MM-DD HH:MI:SS');
+		return MakeTimeStamp(mb_substr($datetime, 0, 10).' '.mb_substr($datetime, 11, -1), 'YYYY-MM-DD HH:MI:SS');
 	}
 
 	function __getRMIblockID()
@@ -613,8 +613,8 @@ class CIntranetCalendarWS extends IWebService
 			elseif ($arData['_command'] == 'New' || $arData['_command'] == 'Update')
 			{
 				$q = ToLower($arData['Description']);
-				if (($pos = strrpos($q, '</body>')) !== false) $arData['Description'] = substr($arData['Description'], 0, $pos);
-				if (($pos = strpos($q, '<body>')) !== false) $arData['Description'] = substr($arData['Description'], $pos + 6);
+				if (($pos = mb_strrpos($q, '</body>')) !== false) $arData['Description'] = mb_substr($arData['Description'], 0, $pos);
+				if (($pos = mb_strpos($q, '<body>')) !== false) $arData['Description'] = mb_substr($arData['Description'], $pos + 6);
 
 				$arData['Description'] = str_replace('</DIV>', "\r\n</DIV>", $arData['Description']);
 				$arData['Description'] = str_replace(array("&#10;", "&#13;"), "", $arData['Description']);

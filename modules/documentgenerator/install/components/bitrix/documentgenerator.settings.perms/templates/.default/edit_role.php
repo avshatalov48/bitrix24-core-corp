@@ -9,9 +9,12 @@ use Bitrix\DocumentGenerator\UserPermissions;
 
 Loc::loadLanguageFile(__FILE__);
 
-\Bitrix\Main\UI\Extension::load("ui.buttons");
-\Bitrix\Main\UI\Extension::load("ui.buttons.icons");
-\Bitrix\Main\UI\Extension::load("ui.alerts");
+\Bitrix\Main\UI\Extension::load([
+	'ui.buttons',
+	'ui.buttons.icons',
+	'ui.alerts',
+	'ui.info-helper',
+]);
 
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/css/main/table/style.css');
 
@@ -86,10 +89,6 @@ CJSCore::Init(['sidepanel']);
 				DOCGEN_SETTINGS_PERMS_FEATURE_TEXT: '<?=Loc::getMessage('DOCGEN_SETTINGS_PERMS_FEATURE_TEXT');?>',
 			});
 			BX.DocumentGenerator.Role.init({isPermissionsFeatureEnabled: <?=($arResult['isPermissionsFeatureEnabled'] ? 'true' : 'false');?>});
-			<?if(!$arResult['isPermissionsFeatureEnabled'])
-			{
-				CBitrix24::initLicenseInfoPopupJS('documentgenerator_permissions');
-			}?>
 		})
 	</script>
 <?

@@ -1,10 +1,10 @@
 <?
 return [
 	"rel" => [
-		"mobile.component.im.dialog",
-		"mobile:mobile_ui",
-		"mobile:mobile_tools",
-		"mobile:mobile_uploader",
+		"mobile.im.application.dialog",
+		"mobile_ui",
+		"mobile_tools",
+		"mobile_uploader",
 	],
 	"deps" => [
 		"menu/backdrop",

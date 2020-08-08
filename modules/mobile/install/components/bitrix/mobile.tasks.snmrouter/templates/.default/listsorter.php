@@ -15,7 +15,7 @@ if (
 	isset($_GET['F_STATE'])
 	&& (
 		is_array($_GET['F_STATE'])
-		|| (strlen($_GET['F_STATE']) > 2)
+		|| (mb_strlen($_GET['F_STATE']) > 2)
 	)
 )
 {
@@ -33,8 +33,8 @@ foreach ($arSwitchStateTo as $switchStateTo)
 	{
 		try
 		{
-			$symbol = substr($switchStateTo, 0, 2);
-			$value = CTaskListState::decodeState(substr($switchStateTo, 2));
+			$symbol = mb_substr($switchStateTo, 0, 2);
+			$value = CTaskListState::decodeState(mb_substr($switchStateTo, 2));
 
 			switch ($symbol)
 			{

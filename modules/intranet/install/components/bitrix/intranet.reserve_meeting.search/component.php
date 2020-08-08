@@ -8,22 +8,22 @@ if (!CModule::IncludeModule("iblock"))
 $iblockId = Trim($arParams["IBLOCK_ID"]);
 
 $arParams["PAGE_VAR"] = Trim($arParams["PAGE_VAR"]);
-if (StrLen($arParams["PAGE_VAR"]) <= 0)
+if ($arParams["PAGE_VAR"] == '')
 	$arParams["PAGE_VAR"] = "page";
 
 $arParams["MEETING_VAR"] = Trim($arParams["MEETING_VAR"]);
-if (StrLen($arParams["MEETING_VAR"]) <= 0)
+if ($arParams["MEETING_VAR"] == '')
 	$arParams["MEETING_VAR"] = "meeting_id";
 
 $arParams["PATH_TO_MEETING"] = Trim($arParams["PATH_TO_MEETING"]);
-if (StrLen($arParams["PATH_TO_MEETING"]) <= 0)
+if ($arParams["PATH_TO_MEETING"] == '')
 	$arParams["PATH_TO_MEETING"] = HtmlSpecialCharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=meeting&".$arParams["MEETING_VAR"]."=#meeting_id#");
 
 $arParams["PATH_TO_RESERVE_MEETING"] = Trim($arParams["PATH_TO_RESERVE_MEETING"]);
-if (StrLen($arParams["PATH_TO_RESERVE_MEETING"]) <= 0)
+if ($arParams["PATH_TO_RESERVE_MEETING"] == '')
 	$arParams["PATH_TO_RESERVE_MEETING"] = HtmlSpecialCharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=reserve_meeting&".$arParams["MEETING_VAR"]."=#meeting_id#&".$arParams["ITEM_VAR"]."=#item_id#");
 
-$arParams["ITEMS_COUNT"] = IntVal($arParams["ITEMS_COUNT"]);
+$arParams["ITEMS_COUNT"] = intval($arParams["ITEMS_COUNT"]);
 if ($arParams["ITEMS_COUNT"] <= 0)
 	$arParams["ITEMS_COUNT"] = 20;
 
@@ -47,25 +47,25 @@ if ($arParams["SET_TITLE"] == "Y")
 if ($arParams["SET_NAVCHAIN"] == "Y")
 	$APPLICATION->AddChainItem(GetMessage("INTASK_C36_PAGE_TITLE"));
 
-if (StrLen($arResult["FatalError"]) <= 0)
+if ($arResult["FatalError"] == '')
 {
 	$arFilter = array("IBLOCK_ID" => $iblockId, "ACTIVE" => "Y");
 
 	foreach ($_REQUEST as $key => $value)
 	{
-		if (StrToUpper(SubStr($key, 0, 4)) != "FLT_")
+		if (mb_strtoupper(mb_substr($key, 0, 4)) != "FLT_")
 			continue;
-		if (!Is_Array($value) && StrLen($value) <= 0 || Is_Array($value) && Count($value) <= 0)
+		if (!Is_Array($value) && $value == '' || Is_Array($value) && Count($value) <= 0)
 			continue;
 
-		$key = StrToUpper(SubStr($key, 4));
+		$key = mb_strtoupper(mb_substr($key, 4));
 
 		$op = "";
-		$opTmp = SubStr($key, 0, 1);
+		$opTmp = mb_substr($key, 0, 1);
 		if (In_Array($opTmp, array("!", "<", ">")))
 		{
 			$op = $opTmp;
-			$key = SubStr($key, 1);
+			$key = mb_substr($key, 1);
 		}
 
 		if ($key == "UF_PLACE")
@@ -142,7 +142,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 	}
 }
 
-if (StrLen($arResult["FatalError"]) <= 0)
+if ($arResult["FatalError"] == '')
 {
 	$fltDateFrom = Date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATE));
 	$fltDateTo = Date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATE));
@@ -152,12 +152,12 @@ if (StrLen($arResult["FatalError"]) <= 0)
 
 	foreach ($_REQUEST as $key => $value)
 	{
-		if (StrToUpper(SubStr($key, 0, 4)) != "FLT_")
+		if (mb_strtoupper(mb_substr($key, 0, 4)) != "FLT_")
 			continue;
-		if (Is_Array($value) || StrLen($value) <= 0)
+		if (Is_Array($value) || $value == '')
 			continue;
 
-		$key = StrToUpper(SubStr($key, 4));
+		$key = mb_strtoupper(mb_substr($key, 4));
 
 		switch ($key)
 		{
@@ -173,17 +173,17 @@ if (StrLen($arResult["FatalError"]) <= 0)
 				break;
 			case "TIME_FROM":
 				$fltTimeFromTmp = Explode(":", $value);
-				if (Count($fltTimeFromTmp) == 2 && IntVal($fltTimeFromTmp[0]) >= 0 && IntVal($fltTimeFromTmp[0]) < 24 && ($fltTimeFromTmp[1] == "00" || $fltTimeFromTmp[1] == "30"))
+				if (Count($fltTimeFromTmp) == 2 && intval($fltTimeFromTmp[0]) >= 0 && intval($fltTimeFromTmp[0]) < 24 && ($fltTimeFromTmp[1] == "00" || $fltTimeFromTmp[1] == "30"))
 					$fltTimeFrom = $value;
 				break;
 			case "TIME_TO":
 				$fltTimeToTmp = Explode(":", $value);
-				if (Count($fltTimeToTmp) == 2 && IntVal($fltTimeToTmp[0]) >= 0 && IntVal($fltTimeToTmp[0]) < 24 && ($fltTimeToTmp[1] == "00" || $fltTimeToTmp[1] == "30"))
+				if (Count($fltTimeToTmp) == 2 && intval($fltTimeToTmp[0]) >= 0 && intval($fltTimeToTmp[0]) < 24 && ($fltTimeToTmp[1] == "00" || $fltTimeToTmp[1] == "30"))
 					$fltTimeTo = $value;
 				break;
 			case "DURATION":
 				$fltDurationTmp = Explode(".", $value);
-				if (Count($fltDurationTmp) == 2 && IntVal($fltDurationTmp[0]) >= 0 && IntVal($fltDurationTmp[0]) < 24 && ($fltDurationTmp[1] == "0" || $fltDurationTmp[1] == "5"))
+				if (Count($fltDurationTmp) == 2 && intval($fltDurationTmp[0]) >= 0 && intval($fltDurationTmp[0]) < 24 && ($fltDurationTmp[1] == "0" || $fltDurationTmp[1] == "5"))
 					$fltDuration = $value;
 				break;
 		}
@@ -207,7 +207,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 		$arMonthlyPeriods = array();
 		$arYearlyPeriods = array();
 
-		$n = IntVal(Round(($fltDateTimeToTmp - $fltDateTimeFromTmp) / 86400));
+		$n = intval(Round(($fltDateTimeToTmp - $fltDateTimeFromTmp) / 86400));
 		$arWeeklyPeriods[0] = array(
 			"year" => Date("Y", $fltDateTimeFromTmp),
 			"monthFrom" => Date("n", $fltDateTimeFromTmp),
@@ -340,13 +340,13 @@ if (StrLen($arResult["FatalError"]) <= 0)
 
 			if ($arElement["PROPERTY_PERIOD_TYPE_VALUE"] == "DAILY")
 			{
-				$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = IntVal($arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
+				$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = intval($arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
 				if ($arElement["PROPERTY_PERIOD_COUNT_VALUE"] <= 0)
 					$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = 1;
 
 				if ($fltDateTimeFromTmp > $fromTime || $fltDateTimeToTmp <= $fromTime)
 				{
-					$dayShift = (IntVal(Round(($fltDateTimeFromTmp - $fromTimeDateOnly) / 86400)) % $arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
+					$dayShift = (intval(Round(($fltDateTimeFromTmp - $fromTimeDateOnly) / 86400)) % $arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
 					if ($dayShift > 0)
 						$dayShift = $arElement["PROPERTY_PERIOD_COUNT_VALUE"] - $dayShift;
 
@@ -370,17 +370,17 @@ if (StrLen($arResult["FatalError"]) <= 0)
 			}
 			elseif ($arElement["PROPERTY_PERIOD_TYPE_VALUE"] == "WEEKLY")
 			{
-				$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = IntVal($arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
+				$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = intval($arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
 				if ($arElement["PROPERTY_PERIOD_COUNT_VALUE"] <= 0)
 					$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = 1;
 
 				$arPeriodAdditional = array();
-				if (StrLen($arElement["PROPERTY_PERIOD_ADDITIONAL_VALUE"]) > 0)
+				if ($arElement["PROPERTY_PERIOD_ADDITIONAL_VALUE"] <> '')
 				{
 					$arPeriodAdditionalTmp = Explode(",", $arElement["PROPERTY_PERIOD_ADDITIONAL_VALUE"]);
 					foreach ($arPeriodAdditionalTmp as $v)
 					{
-						$v = IntVal($v);
+						$v = intval($v);
 						if ($v >= 0)
 							$arPeriodAdditional[] = $v;
 					}
@@ -397,14 +397,14 @@ if (StrLen($arResult["FatalError"]) <= 0)
 					{
 						if ($arPeriod["weekTimeStart"] > $fromTime || $arPeriod["weekTimeEnd"] <= $fromTime)
 						{
-							$wdw = IntVal(Date("w", $fromTime));
+							$wdw = intval(Date("w", $fromTime));
 							if ($wdw == 0)
 								$wdw = 7;
 
 							$wd = Date("j", $fromTime) - $wdw + 1;
 							$wts = MkTime(0, 0, 0, Date("n", $fromTime), $wd, Date("Y", $fromTime));
 
-							$weekShift = IntVal(Round(($arPeriod["weekTimeStart"] - $wts) / 604800));
+							$weekShift = intval(Round(($arPeriod["weekTimeStart"] - $wts) / 604800));
 							if ($weekShift % $arElement["PROPERTY_PERIOD_COUNT_VALUE"] != 0)
 								continue;
 						}
@@ -429,7 +429,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 			}
 			elseif ($arElement["PROPERTY_PERIOD_TYPE_VALUE"] == "MONTHLY")
 			{
-				$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = IntVal($arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
+				$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = intval($arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
 				if ($arElement["PROPERTY_PERIOD_COUNT_VALUE"] <= 0)
 					$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = 1;
 
@@ -468,7 +468,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 			}
 			elseif ($arElement["PROPERTY_PERIOD_TYPE_VALUE"] == "YEARLY")
 			{
-				$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = IntVal($arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
+				$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = intval($arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
 				if ($arElement["PROPERTY_PERIOD_COUNT_VALUE"] <= 0)
 					$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = 1;
 
@@ -682,7 +682,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 				if ($iterator < $resTimeFromTmp && ($resTimeFromTmp - $iterator) / 3600.0 >= $fltDurationDbl)
 				{
 					$uri = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_RESERVE_MEETING"], array("meeting_id" => $key, "item_id" => 0));
-					$uri .= HtmlSpecialCharsbx((StrPos($uri, "?") === false ? "?" : "&")."start_date=".Date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATE), $iterator)."&start_time=".Date("H:i", $iterator)."&timeout_time=".$fltDuration);
+					$uri .= HtmlSpecialCharsbx((mb_strpos($uri, "?") === false ? "?" : "&")."start_date=".Date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATE), $iterator)."&start_time=".Date("H:i", $iterator)."&timeout_time=".$fltDuration);
 
 					$arResult["ITEMS"][] = array(
 						"MEETING_ID" => $key,
@@ -703,7 +703,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 			foreach ($value["TIME_ITEMS"] as $key1 => $value1)
 			{
 				$uri = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_RESERVE_MEETING"], array("meeting_id" => $key, "item_id" => 0));
-				$uri .= HtmlSpecialCharsbx((StrPos($uri, "?") === false ? "?" : "&")."start_date=".Date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATE), $value1["FROM"])."&start_time=".Date("H:i", $value1["FROM"])."&timeout_time=".$fltDuration);
+				$uri .= HtmlSpecialCharsbx((mb_strpos($uri, "?") === false ? "?" : "&")."start_date=".Date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATE), $value1["FROM"])."&start_time=".Date("H:i", $value1["FROM"])."&timeout_time=".$fltDuration);
 
 				$arResult["ITEMS"][] = array(
 					"MEETING_ID" => $key,

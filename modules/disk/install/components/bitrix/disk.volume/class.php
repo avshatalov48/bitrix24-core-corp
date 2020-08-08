@@ -620,11 +620,11 @@ class CDiskVolumeComponent extends BaseComponent
 			foreach ($listAction as $action => $description)
 			{
 				if (
-					empty($this->arParams['PATH_TO_DISK_VOLUME_'.strtoupper($action)]) &&
+					empty($this->arParams['PATH_TO_DISK_VOLUME_'.mb_strtoupper($action)]) &&
 					!empty($description['sef_path'])
 				)
 				{
-					$this->arParams['PATH_TO_DISK_VOLUME_'.strtoupper($action)] = $description['sef_path'];
+					$this->arParams['PATH_TO_DISK_VOLUME_'.mb_strtoupper($action)] = $description['sef_path'];
 				}
 			}
 		}
@@ -1405,12 +1405,12 @@ class CDiskVolumeComponent extends BaseComponent
 			}
 
 			$find = '';
-			if (!empty($filter['FIND']) && strlen(trim($filter['FIND'])) > 0)
+			if (!empty($filter['FIND']) && trim($filter['FIND']) <> '')
 			{
 				$find = $filter['%TITLE'] = trim($filter['FIND']);
 			}
 			$title = '';
-			if (!empty($filter['TITLE']) && strlen(trim($filter['TITLE'])) > 0)
+			if (!empty($filter['TITLE']) && trim($filter['TITLE']) <> '')
 			{
 				$title = $filter['%TITLE'] = trim($filter['TITLE']);
 			}
@@ -3064,7 +3064,7 @@ class CDiskVolumeComponent extends BaseComponent
 		if ($this->arParams['SEF_MODE'] === 'Y')
 		{
 			$path = \CComponentEngine::makePathFromTemplate(
-				$this->arParams['PATH_TO_DISK_VOLUME_'.strtoupper($action)],
+				$this->arParams['PATH_TO_DISK_VOLUME_'.mb_strtoupper($action)],
 				$params
 			);
 			$path = str_replace('//', '/', $path);

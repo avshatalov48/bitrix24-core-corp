@@ -17,7 +17,7 @@ if (!empty($arRes))
 {
 	foreach ($arRes as $key => $val)
 	{
-		$userProp[$val["FIELD_NAME"]] = '* '.(strlen($val["EDIT_FORM_LABEL"]) > 0 ? $val["EDIT_FORM_LABEL"] : $val["FIELD_NAME"]);
+		$userProp[$val["FIELD_NAME"]] = '* '.($val["EDIT_FORM_LABEL"] <> '' ? $val["EDIT_FORM_LABEL"] : $val["FIELD_NAME"]);
 	}
 }
 

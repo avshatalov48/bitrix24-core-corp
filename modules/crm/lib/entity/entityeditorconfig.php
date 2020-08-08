@@ -71,7 +71,7 @@ class EntityEditorConfig
 						? (int)$this->extras['LEAD_CUSTOMER_TYPE'] : Crm\CustomerType::UNDEFINED;
 					if($customerType !== Crm\CustomerType::UNDEFINED && $customerType !== Crm\CustomerType::GENERAL)
 					{
-						$prefix = strtolower(Crm\CustomerType::resolveName($customerType));
+						$prefix = mb_strtolower(Crm\CustomerType::resolveName($customerType));
 					}
 					$optionName = $prefix !== '' ? "{$prefix}_lead_details" : 'lead_details';
 					break;

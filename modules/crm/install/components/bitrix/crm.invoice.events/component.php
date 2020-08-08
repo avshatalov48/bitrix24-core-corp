@@ -86,7 +86,7 @@ $arResult['VIEW_ID'] = isset($arParams['VIEW_ID']) ? $arParams['VIEW_ID'] : '';
 $filterFieldPrefix = $bInternal ? "{$arResult['TAB_ID']}_{$arResult['VIEW_ID']}" : '';
 if($bInternal)
 {
-	$filterFieldPrefix = strtoupper($arResult['TAB_ID']).'_'.strtoupper($arResult['VIEW_ID']).'_';
+	$filterFieldPrefix = mb_strtoupper($arResult['TAB_ID']).'_'.mb_strtoupper($arResult['VIEW_ID']).'_';
 }
 
 $arResult['FILTER_FIELD_PREFIX'] = $filterFieldPrefix;
@@ -94,10 +94,14 @@ $arResult['FILTER_FIELD_PREFIX'] = $filterFieldPrefix;
 $tabParamName = $arResult['FORM_ID'] !== '' ? $arResult['FORM_ID'].'_active_tab' : 'active_tab';
 $activeTabID = isset($_REQUEST[$tabParamName]) ? $_REQUEST[$tabParamName] : '';
 
-if(strlen($arResult['VIEW_ID']))
-	$arResult['GRID_ID'] = $arResult['INTERNAL'] ? 'CRM_INTERNAL_INVOICE_EVENTS_'.$arResult['TAB_ID'].'_'.$arResult['VIEW_ID']: 'CRM_INVOICE_EVENTS';
+if($arResult['VIEW_ID'] <> '')
+{
+	$arResult['GRID_ID'] = $arResult['INTERNAL']? 'CRM_INTERNAL_INVOICE_EVENTS_'.$arResult['TAB_ID'].'_'.$arResult['VIEW_ID'] : 'CRM_INVOICE_EVENTS';
+}
 else
-	$arResult['GRID_ID'] = $arResult['INTERNAL'] ? 'CRM_INTERNAL_INVOICE_EVENTS_'.$arResult['TAB_ID'] : 'CRM_INVOICE_EVENTS';
+{
+	$arResult['GRID_ID'] = $arResult['INTERNAL']? 'CRM_INTERNAL_INVOICE_EVENTS_'.$arResult['TAB_ID'] : 'CRM_INVOICE_EVENTS';
+}
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST'
 	&& check_bitrix_sessid()
@@ -166,7 +170,7 @@ if (!$bInternal)
 		'filter_change_my' => array('name' => GetMessage('CRM_PRESET_CREATE_MY'), 'fields' => array( 'USER_ID' => $currentUserID, 'USER_ID_name' => $currentUserName))
 	);
 }
-elseif(isset($arParams['SHOW_INTERNAL_FILTER']) && strtoupper(strval($arParams['SHOW_INTERNAL_FILTER'])) === 'Y')
+elseif(isset($arParams['SHOW_INTERNAL_FILTER']) && mb_strtoupper(strval($arParams['SHOW_INTERNAL_FILTER'])) === 'Y')
 {
 	$arResult['FILTER'] = array(
 		array('id' => "{$filterFieldPrefix}ID", 'name' => 'ID', 'default' => false),
@@ -234,7 +238,7 @@ if (($arResult['TAB_ID'] === '' || $arResult['TAB_ID'] === $activeTabID)
 
 $arGridFilter = $CGridOptions->GetFilter($arResult['FILTER']);
 
-$prefixLength = strlen($filterFieldPrefix);
+$prefixLength = mb_strlen($filterFieldPrefix);
 
 if($prefixLength == 0)
 {
@@ -244,7 +248,7 @@ else
 {
 	foreach($arGridFilter as $key=>&$value)
 	{
-		$arFilter[substr($key, $prefixLength)] = $value;
+		$arFilter[mb_substr($key, $prefixLength)] = $value;
 	}
 }
 unset($value);
@@ -383,9 +387,9 @@ while ($arEvent = $obRes->Fetch())
 	{
 		$arEvent['EVENT_INFO'] = strip_tags($arEventDescr['INFO'], '<br>');
 
-		if (strlen($arEvent['EVENT_INFO'])>255)
+		if (mb_strlen($arEvent['EVENT_INFO']) > 255)
 		{
-			$arEvent['EVENT_DESC'] = '<div id="event_desc_short_'.$arEvent['ID'].'">'.substr(($arEvent['EVENT_INFO']), 0, 252).'... <a href="#more" onclick="crm_event_desc('.$arEvent['ID'].')">'.GetMessage('CRM_EVENT_DESC_MORE').'</a></div>';
+			$arEvent['EVENT_DESC'] = '<div id="event_desc_short_'.$arEvent['ID'].'">'.mb_substr(($arEvent['EVENT_INFO']), 0, 252).'... <a href="#more" onclick="crm_event_desc('.$arEvent['ID'].')">'.GetMessage('CRM_EVENT_DESC_MORE').'</a></div>';
 			$arEvent['EVENT_DESC'] .= '<div id="event_desc_full_'.$arEvent['ID'].'" style="display: none">'.($arEvent['EVENT_INFO']).'</div>';
 		}
 		else

@@ -17,7 +17,7 @@ class CCrmEntityHelper
 			return false;
 		}
 
-		$entityTypeAbbr = strtoupper($match[1]);
+		$entityTypeAbbr = mb_strtoupper($match[1]);
 		$entityID = intval($match[2]);
 		$entityTypeID = CCrmOwnerType::ResolveID($entityTypeAbbr);
 		$entityTypeName = CCrmOwnerType::ResolveName($entityTypeID);

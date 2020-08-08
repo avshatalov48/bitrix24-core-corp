@@ -235,7 +235,7 @@ class RequisiteListComponent extends \CBitrixComponent
 		$gridIdSuffix =
 			isset($this->arParams['GRID_ID_SUFFIX']) ? strval($this->arParams['GRID_ID_SUFFIX']) : '';
 		if (empty($gridIdSuffix))
-			$gridIdSuffix = $this->GetParent() !== null ? strtoupper($this->GetParent()->GetName()) : '';
+			$gridIdSuffix = $this->GetParent() !== null? mb_strtoupper($this->GetParent()->GetName()) : '';
 		$this->gridId = preg_replace(
 			'/[^a-z0-9_]/i', '',
 			'CRM_REQUISITE_LIST_V15'.($this->bInternal && !empty($gridIdSuffix) ? '_'.$gridIdSuffix : '')
@@ -452,7 +452,7 @@ class RequisiteListComponent extends \CBitrixComponent
 			$newSort = array();
 			foreach ($this->sort as $fieldName => $sortType)
 			{
-				$upperSortType = strtoupper($sortType);
+				$upperSortType = mb_strtoupper($sortType);
 				if (!isset($allowedSorts[$fieldName]) || ($upperSortType !== 'ASC' && $upperSortType !== 'DESC'))
 				{
 					$newSort = array();

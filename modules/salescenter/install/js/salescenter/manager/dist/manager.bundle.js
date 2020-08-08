@@ -2,9 +2,7 @@ this.BX = this.BX || {};
 (function (exports,rest_client,main_core) {
 	'use strict';
 
-	var Manager =
-	/*#__PURE__*/
-	function () {
+	var Manager = /*#__PURE__*/function () {
 	  function Manager() {
 	    babelHelpers.classCallCheck(this, Manager);
 	  }
@@ -739,7 +737,67 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "openHowToConfigPaySystem",
 	    value: function openHowToConfigPaySystem(event) {
-	      Manager.openHelper(event, 'redirect=detail&code=9600843', 'pay_system_connect');
+	      Manager.openHelper(event, 'redirect=detail&code=10460164', 'pay_system_connect');
+	    }
+	  }, {
+	    key: "openHowToConfigSkbPaySystem",
+	    value: function openHowToConfigSkbPaySystem(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=11538458', 'pay_system_connect');
+	    }
+	  }, {
+	    key: "openHowToConfigBePaidPaySystem",
+	    value: function openHowToConfigBePaidPaySystem(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=11538452', 'pay_system_connect');
+	    }
+	  }, {
+	    key: "openHowToConfigLiqPayPaySystem",
+	    value: function openHowToConfigLiqPayPaySystem(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=11814321', 'pay_system_connect');
+	    }
+	  }, {
+	    key: "openHowToConfigUaPayPaySystem",
+	    value: function openHowToConfigUaPayPaySystem(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=11825299', 'pay_system_connect');
+	    }
+	  }, {
+	    key: "openHowToUseOfflineCashBox",
+	    value: function openHowToUseOfflineCashBox(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=11271760', 'cashbox_connect');
+	    }
+	  }, {
+	    key: "openHowToConfigCashBox",
+	    value: function openHowToConfigCashBox(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=11120562', 'cashbox_connect');
+	    }
+	  }, {
+	    key: "openHowToSell",
+	    value: function openHowToSell(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=11274792', 'crmstore_connect');
+	    }
+	  }, {
+	    key: "openHowToWork",
+	    value: function openHowToWork(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=11553526', 'companycontacts_connect');
+	    }
+	  }, {
+	    key: "openWhatClientSee",
+	    value: function openWhatClientSee(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=11278264', 'client_view');
+	    }
+	  }, {
+	    key: "openHowPayDealWorks",
+	    value: function openHowPayDealWorks(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=11274792', 'pay_deal');
+	    }
+	  }, {
+	    key: "openFormPagesHelp",
+	    value: function openFormPagesHelp(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=9606749', 'forms');
+	    }
+	  }, {
+	    key: "openCommonPagesHelp",
+	    value: function openCommonPagesHelp(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=9604717', 'common_pages');
 	    }
 	  }, {
 	    key: "openHelper",
@@ -777,6 +835,44 @@ this.BX = this.BX || {};
 	      });
 	    }
 	  }, {
+	    key: "openFeedbackFormParams",
+	    value: function openFeedbackFormParams(event, params) {
+	      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+	      if (event && main_core.Type.isFunction(event.preventDefault)) {
+	        event.preventDefault();
+	      }
+
+	      if (!main_core.Type.isPlainObject(params)) {
+	        params = {};
+	      }
+
+	      var url = new main_core.Uri('/bitrix/components/bitrix/salescenter.feedback/slider.php').setQueryParams(params).toString();
+	      return Manager.openSlider(url, options);
+	    }
+	  }, {
+	    key: "openFeedbackPayOrderForm",
+	    value: function openFeedbackPayOrderForm(event) {
+	      if (event && main_core.Type.isFunction(event.preventDefault)) {
+	        event.preventDefault();
+	      }
+
+	      return Manager.openSlider('/bitrix/components/bitrix/salescenter.feedback/slider.php?feedback_type=pay_order', {
+	        width: 735
+	      });
+	    }
+	  }, {
+	    key: "openFeedbackDeliveryOfferForm",
+	    value: function openFeedbackDeliveryOfferForm(event) {
+	      if (event && main_core.Type.isFunction(event.preventDefault)) {
+	        event.preventDefault();
+	      }
+
+	      return Manager.openSlider('/bitrix/components/bitrix/salescenter.feedback/slider.php?feedback_type=delivery_offer', {
+	        width: 735
+	      });
+	    }
+	  }, {
 	    key: "openApplication",
 	    value: function openApplication() {
 	      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
@@ -787,13 +883,9 @@ this.BX = this.BX || {};
 	      }
 
 	      return new Promise(function (resolve, reject) {
-	        Manager.openSlider(url.toString(), {
-	          width: 873
-	        }).then(function (slider) {
+	        Manager.openSlider(url.toString()).then(function (slider) {
 	          resolve(slider.getData());
-	        }).catch(function (reason) {
-	          reject(reason);
-	        });
+	        }).catch(function (reason) {});
 	      });
 	    }
 	  }, {
@@ -804,6 +896,10 @@ this.BX = this.BX || {};
 	          reject('wrong params');
 	        }
 
+	        params = babelHelpers.objectSpread({}, params, {
+	          action: 'salescenter.manager.addAnalytic',
+	          sessid: BX.bitrix_sessid()
+	        });
 	        var request = new XMLHttpRequest();
 	        var url = new main_core.Uri('/bitrix/services/main/ajax.php');
 	        url.setQueryParams(params);

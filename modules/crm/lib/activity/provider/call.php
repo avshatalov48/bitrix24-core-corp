@@ -276,7 +276,7 @@ class Call extends Base
 			)
 		);
 
-		$callId = strpos($activity['ORIGIN_ID'], 'VI_') === false ? null : substr($activity['ORIGIN_ID'], 3);
+		$callId = mb_strpos($activity['ORIGIN_ID'], 'VI_') === false? null : mb_substr($activity['ORIGIN_ID'], 3);
 		$callInfo = VoxImplantManager::getCallInfo($callId);
 		if($callInfo)
 		{
@@ -311,7 +311,7 @@ class Call extends Base
 			$activityId = $formData['id'];
 			$activityFields = \CCrmActivity::GetByID($activityId, false);
 
-			$callId = strpos($activityFields['ORIGIN_ID'], 'VI_') === false ? null : substr($activityFields['ORIGIN_ID'], 3);
+			$callId = mb_strpos($activityFields['ORIGIN_ID'], 'VI_') === false? null : mb_substr($activityFields['ORIGIN_ID'], 3);
 			if($callId)
 			{
 				VoxImplantManager::saveComment($callId, $formData['comment']);
@@ -383,7 +383,7 @@ class Call extends Base
 			'',
 			array(
 				'ACTIVITY' => $activity,
-				'CALL_ID' => (strpos($activity['ORIGIN_ID'], 'VI_') === false ? null : substr($activity['ORIGIN_ID'], 3)),
+				'CALL_ID' => (mb_strpos($activity['ORIGIN_ID'], 'VI_') === false? null : mb_substr($activity['ORIGIN_ID'], 3)),
 			)
 		);
 		return ob_get_clean();

@@ -1,6 +1,6 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 <?
-if (strlen($arResult["FatalError"]) > 0)
+if ($arResult["FatalError"] <> '')
 {
 	?>
 	<span class='errortext'><?=$arResult["FatalError"]?></span><br /><br />
@@ -8,7 +8,7 @@ if (strlen($arResult["FatalError"]) > 0)
 }
 else
 {
-	if (strlen($arResult["ErrorMessage"]) > 0)
+	if ($arResult["ErrorMessage"] <> '')
 	{
 		?>
 		<span class='errortext'><?=$arResult["ErrorMessage"]?></span><br /><br />
@@ -20,19 +20,19 @@ else
 	<tr>
 		<td colspan="2"><?=$arResult['MEETING']['DESCRIPTION'] ?></td>
 	</tr>
-	<?if (StrLen($arResult["MEETING"]["UF_FLOOR"]) > 0):?>
+	<?if ($arResult["MEETING"]["UF_FLOOR"] <> ''):?>
 	<tr>
 		<td width="10%"><?= GetMessage("INTASK_C25T_FLOOR") ?>:</td>
 		<td width="90%"><?= $arResult["MEETING"]["UF_FLOOR"] ?></td>
 	</tr>
 	<?endif;?>
-	<?if (StrLen($arResult["MEETING"]["UF_PLACE"]) > 0):?>
+	<?if ($arResult["MEETING"]["UF_PLACE"] <> ''):?>
 	<tr>
 		<td><?= GetMessage("INTASK_C25T_PLACE") ?>:</td>
 		<td><?= $arResult["MEETING"]["UF_PLACE"] ?></td>
 	</tr>
 	<?endif;?>
-	<?if (StrLen($arResult["MEETING"]["UF_PHONE"]) > 0):?>
+	<?if ($arResult["MEETING"]["UF_PHONE"] <> ''):?>
 	<tr>
 		<td><?= GetMessage("INTASK_C25T_PHONE") ?>:</td>
 		<td><?= $arResult["MEETING"]["UF_PHONE"] ?></td>
@@ -81,7 +81,7 @@ else
 					if (In_Array($i, $arParams["WEEK_HOLIDAYS"]))
 						continue;
 					?>
-					<th class="intask-cell" align="center" width="<?= IntVal(100 / (7 - Count($arParams["WEEK_HOLIDAYS"]))) ?>%"><?= $ar[$i] ?></th>
+					<th class="intask-cell" align="center" width="<?= intval(100 / (7 - Count($arParams["WEEK_HOLIDAYS"]))) ?>%"><?= $ar[$i] ?></th>
 				<?endfor;?>
 			</tr>
 			<tr class="intask-row">
@@ -150,10 +150,10 @@ else
 									);
 									?>
 									<br />
-									<?if (StrLen($arResult["ITEMS"][$arResult["ITEMS_MATRIX"][$j][$i]]["EDIT_ITEM_URI"]) > 0):?>
+									<?if ($arResult["ITEMS"][$arResult["ITEMS_MATRIX"][$j][$i]]["EDIT_ITEM_URI"] <> ''):?>
 										<br /><a href="<?= $arResult["ITEMS"][$arResult["ITEMS_MATRIX"][$j][$i]]["EDIT_ITEM_URI"] ?>"><?= GetMessage("INTASK_C25T_EDIT") ?></a>
 									<?endif;?>
-									<?if (StrLen($arResult["ITEMS"][$arResult["ITEMS_MATRIX"][$j][$i]]["CLEAR_URI"]) > 0):?>
+									<?if ($arResult["ITEMS"][$arResult["ITEMS_MATRIX"][$j][$i]]["CLEAR_URI"] <> ''):?>
 										<br /><a onclick="if(confirm('<?= GetMessage("INTASK_C25T_CLEAR_CONF") ?>'))window.location='<?= $arResult["ITEMS"][$arResult["ITEMS_MATRIX"][$j][$i]]["CLEAR_URI"] ?>';" href="javascript:void(0)"><?= GetMessage("INTASK_C25T_CLEAR") ?></a>
 									<?endif;?>
 								</td><?
@@ -162,7 +162,7 @@ else
 						else
 						{
 							?><td class="intask-cell notreserved<?=$currentDay ? ' current' : ''?>" title="<?= GetMessage("INTASK_C25T_DBL_CLICK") ?>" ondblclick="window.location='<?= CUtil::addslashes($arResult["CellClickUri"]) ?>start_date=<?= Date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATE), MkTime(0, 0, 0, $arResult["WEEK_START_ARRAY"]["m"], $arResult["WEEK_START_ARRAY"]["d"] + $j - 1, $arResult["WEEK_START_ARRAY"]["Y"])) ?>&amp;start_time=<?
-							$h1 = IntVal($i / 2);
+							$h1 = intval($i / 2);
 							if ($h1 < 10)
 								$h1 = "0".$h1;
 							$i1 = ($i % 2 != 0 ? "30" : "00");

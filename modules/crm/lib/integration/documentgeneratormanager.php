@@ -168,7 +168,7 @@ class DocumentGeneratorManager
 			foreach($providers as $provider)
 			{
 				/** @var Nameable $provider */
-				$className = strtolower($provider);
+				$className = mb_strtolower($provider);
 				$result[$className] = [
 					'NAME' => $provider::getLangName(),
 					'CLASS' => $className,
@@ -209,7 +209,12 @@ class DocumentGeneratorManager
 	 */
 	public static function onDeleteDocument(Event $event)
 	{
-		$document = Document::loadById($event->getParameter('primary'));
+		$primary = $event->getParameter('primary');
+		if(is_array($primary))
+		{
+			$primary = $primary['ID'] ?? 0;
+		}
+		$document = Document::loadById($primary);
 		if($document)
 		{
 			$provider = $document->getProvider();
@@ -338,7 +343,7 @@ class DocumentGeneratorManager
 		if($provider && $entityId > 0)
 		{
 			return DocumentTable::deleteList([
-				'=PROVIDER' => strtolower($provider),
+				'=PROVIDER' => mb_strtolower($provider),
 				'VALUE' => $entityId
 			]);
 		}

@@ -11,8 +11,8 @@ abstract class Xml extends Body
 	/** @var \DOMXPath */
 	protected $xpath;
 
-	const DOCUMENT_NODE_NAME = 'document';
-	const BODY_NODE_NAME = 'body';
+	public const DOCUMENT_NODE_NAME = 'document';
+	public const BODY_NODE_NAME = 'body';
 
 	/**
 	 * @return array
@@ -23,11 +23,10 @@ abstract class Xml extends Body
 		$names = array_unique($names);
 		foreach($names as $key => $name)
 		{
-			if(substr($name, -(strlen(static::BLOCK_START_PLACEHOLDER) + 1)) == '.'.static::BLOCK_START_PLACEHOLDER)
-			{
-				unset($names[$key]);
-			}
-			if(substr($name, -(strlen(static::BLOCK_END_PLACEHOLDER) + 1)) == '.'.static::BLOCK_END_PLACEHOLDER)
+			if(
+				mb_strpos($name, static::BLOCK_START_PLACEHOLDER)
+				|| mb_strpos($name, static::BLOCK_END_PLACEHOLDER)
+			)
 			{
 				unset($names[$key]);
 			}
@@ -43,7 +42,7 @@ abstract class Xml extends Body
 	 * @param \DOMXPath|null $xpath
 	 * @return array
 	 */
-	protected function findPlaceholderNodes($placeholder, \DOMXPath $xpath = null)
+	protected function findPlaceholderNodes(string $placeholder, \DOMXPath $xpath = null): array
 	{
 		if(!$xpath)
 		{
@@ -71,7 +70,7 @@ abstract class Xml extends Body
 	 * @param \DOMXPath|null $xpath
 	 * @return bool|\DOMElement
 	 */
-	protected function findPlaceholderNode($placeholder, \DOMXPath $xpath = null)
+	protected function findPlaceholderNode(string $placeholder, \DOMXPath $xpath = null): ?\DOMElement
 	{
 		$nodes = $this->findPlaceholderNodes($placeholder, $xpath);
 		if(count($nodes) > 0)
@@ -79,7 +78,7 @@ abstract class Xml extends Body
 			return $nodes[0];
 		}
 
-		return false;
+		return null;
 	}
 
 	/**
@@ -114,7 +113,7 @@ abstract class Xml extends Body
 		$this->document = new \DOMDocument();
 		$this->document->loadXML($this->content);
 		$this->xpath = new \DOMXPath($this->document);
-		foreach($this->getNamespaces() as $prefix => $namespaceUri)
+		foreach(static::getNamespaces() as $prefix => $namespaceUri)
 		{
 			$this->xpath->registerNamespace($prefix, $namespaceUri);
 		}
@@ -151,7 +150,7 @@ abstract class Xml extends Body
 	 * @param bool $saveBreakLines
 	 * @return string
 	 */
-	protected function prepareTextValue($text, $saveBreakLines = true)
+	protected function prepareTextValue(string $text, bool $saveBreakLines = true): string
 	{
 		if($saveBreakLines)
 		{
@@ -172,6 +171,7 @@ abstract class Xml extends Body
 		{
 			$text = str_replace('{__SystemBreakLine}', $this->getBreakLineTag(), $text);
 		}
+
 		return $text;
 	}
 
@@ -180,13 +180,13 @@ abstract class Xml extends Body
 	 * @param bool $insert
 	 * @return string
 	 */
-	public static function getRandomId($prefix = '', $insert = false)
+	public static function getRandomId(string $prefix = '', bool $insert = false): string
 	{
 		static $randomIds = [];
 
 		do
 		{
-			$number = rand(200, 10000);
+			$number = random_int(200, 10000);
 			$id = $prefix.$number;
 			if(!isset($randomIds[$id]))
 			{
@@ -204,7 +204,7 @@ abstract class Xml extends Body
 	 * @param \DOMDocument $document
 	 * @param \DOMNode $node
 	 */
-	public static function appendXmlToNode($xml, \DOMDocument $document, \DOMNode $node)
+	public static function appendXmlToNode(string $xml, \DOMDocument $document, \DOMNode $node)
 	{
 		$xml = static::getValidXmlWithContent($xml);
 		$temporaryDocument = new \DOMDocument();
@@ -222,7 +222,7 @@ abstract class Xml extends Body
 	 * @param \DOMDocument $document
 	 * @param \DOMNode $node
 	 */
-	public static function insertXmlBeforeNode($xml, \DOMDocument $document, \DOMNode $node)
+	public static function insertXmlBeforeNode(string $xml, \DOMDocument $document, \DOMNode $node)
 	{
 		$xml = static::getValidXmlWithContent($xml);
 		$temporaryDocument = new \DOMDocument();
@@ -273,12 +273,16 @@ abstract class Xml extends Body
 	 * @param array $namespaces
 	 * @return string
 	 */
-	public static function getValidXmlWithContent($content = '', $mainPrefix = '', array $namespaces = [])
+	public static function getValidXmlWithContent(
+		string $content = '',
+		string $mainPrefix = '',
+		array $namespaces = []
+	): string
 	{
 		$documentNodeName = static::getDocumentNodeName($mainPrefix);
 		$bodyNodeName = static::getBodyNodeName($mainPrefix);
 		$namespaces = array_merge(static::getNamespaces(), $namespaces);
-		if(strpos($content, '<'.$documentNodeName) !== false)
+		if(mb_strpos($content, '<'.$documentNodeName) !== false)
 		{
 			// todo add attributes with namespaces to document node
 			return $content;
@@ -303,7 +307,7 @@ abstract class Xml extends Body
 	 * @param string $mainPrefix
 	 * @return string
 	 */
-	public static function getDocumentNodeName($mainPrefix = '')
+	public static function getDocumentNodeName(string $mainPrefix = ''): string
 	{
 		$documentNodeName = static::DOCUMENT_NODE_NAME;
 		if(empty($mainPrefix))
@@ -322,7 +326,7 @@ abstract class Xml extends Body
 	 * @param string $mainPrefix
 	 * @return string
 	 */
-	public static function getBodyNodeName($mainPrefix = '')
+	public static function getBodyNodeName(string $mainPrefix = ''): string
 	{
 		$bodyNodeName = static::BODY_NODE_NAME;
 		if(empty($mainPrefix))

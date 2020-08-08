@@ -49,6 +49,7 @@
 	font-size: 13px;
 	background: rgba(255,255,255,.15);
 	margin-right: 20px;
+	font-family: 'OpenSans-SemiBold', "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 .bitrix24-dark-theme .ui-btn.ui-btn-light-border.crm-robot-btn {

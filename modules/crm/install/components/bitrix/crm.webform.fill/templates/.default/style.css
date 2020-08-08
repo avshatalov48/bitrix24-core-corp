@@ -949,6 +949,10 @@ textarea.crm-webform-textarea {
 	line-height: 36px;
 }
 
+a.crm-webform-bottom-link:hover, a.crm-webform-bottom-link:focus {
+	text-decoration: none;
+}
+
 .crm-webform-bottom-text {
 	display: inline-block;
 	margin: 0 0 0 -2px;

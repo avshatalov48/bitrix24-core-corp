@@ -17,7 +17,7 @@ if(
 		$APPLICATION->RestartBuffer();
 		return;
 	}
-	elseif(strlen($_POST["EMAIL"]) > 0)
+	elseif($_POST["EMAIL"] <> '')
 	{
 		$ID = RegisterNewUser(SITE_ID, $_POST);
 		if(is_array($ID))

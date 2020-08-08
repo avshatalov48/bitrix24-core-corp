@@ -121,7 +121,7 @@ class EntityEditor
 		$mappedFields = $wizard->mapEntityFields($entityTypeID, array('ENABLE_FILES' => false));
 		foreach($mappedFields as $k => $v)
 		{
-			if(strpos($k, 'UF_CRM') === 0)
+			if(mb_strpos($k, 'UF_CRM') === 0)
 			{
 				$userFields[$k] = $v;
 			}
@@ -179,7 +179,7 @@ class EntityEditor
 			$typeName === 'crm_quote'
 		)
 		{
-			$entityTypeID = \CCrmOwnerType::ResolveID(substr($typeName, 4));
+			$entityTypeID = \CCrmOwnerType::ResolveID(mb_substr($typeName, 4));
 			if($entityTypeID === \CCrmOwnerType::Undefined)
 			{
 				return false;
@@ -210,7 +210,7 @@ class EntityEditor
 			$value = $time->format($format);
 		}
 
-		if(strpos($name, 'UF_') !== 0)
+		if(mb_strpos($name, 'UF_') !== 0)
 		{
 			//System Field
 			$entityData[$name] = $value;
@@ -253,7 +253,7 @@ class EntityEditor
 		$queryParams = $request->getQueryList()->toArray();
 		foreach($queryParams as $k => $v)
 		{
-			$k = strtoupper($k);
+			$k = mb_strtoupper($k);
 			if(!isset($fieldInfos[$k]))
 			{
 				continue;

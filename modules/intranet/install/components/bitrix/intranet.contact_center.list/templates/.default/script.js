@@ -483,8 +483,7 @@
 				if (items[i].classList.contains('intranet-contact-item-selected'))
 				{
 					var iconBlock = items[i].querySelector('.intranet-contact-logo');
-
-					if (iconBlock.classList.contains('ui-icon-service-common'))
+					if (iconBlock && iconBlock.classList.contains('ui-icon-service-common'))
 					{
 						color = colorList[colorIterator];
 						colorIterator = (colorIterator < colorList.length - 1) ? colorIterator + 1 : 0;
@@ -537,6 +536,43 @@
 	{
 		var appearance = new BX.ContactCenter.Appearance(params);
 		var ajax = new BX.ContactCenter.Ajax(params, appearance);
+	};
+
+	BX.ContactCenter.MarketplaceApp = function(applicationId, appCode)
+	{
+		this.openRestAppLayout(applicationId, appCode);
+	};
+
+	BX.ContactCenter.MarketplaceApp.prototype =
+	{
+		openRestAppLayout: function(applicationId, appCode)
+		{
+			BX.ajax.runComponentAction(
+				"bitrix:intranet.contact_center.list",
+				"getRestApp",
+				{
+					mode: 'class',
+					data: {
+						code: appCode
+					}
+				}
+			).then(function(response) {
+				if(response.data.TYPE === "A")
+				{
+					this.showRestApplication(appCode);
+				}
+				else
+				{
+					BX.rest.AppLayout.openApplication(applicationId);
+				}
+			});
+		},
+		showRestApplication: function(appCode)
+		{
+			var applicationUrlTemplate = "/marketplace/detail/#app#/";
+			var url = applicationUrlTemplate.replace("#app#", encodeURIComponent(appCode));
+			BX.SidePanel.Instance.open(url, {allowChangeHistory: false});
+		},
 	};
 
 })();

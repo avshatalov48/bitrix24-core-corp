@@ -12,26 +12,46 @@ const FieldAgreement = {
 				@click.capture="requestConsent"
 				onclick="this.blur()"
 			>
-			<span class="b24-form-control-desc">
-				<a :href="href" :target="target"
-					@click="requestConsent" 
-				>{{ field.label }}</a>
+			<span v-if="field.isLink()" class="b24-form-control-desc"
+				@click.capture="onLinkClick"
+				v-html="link"
+			></span>
+			<span v-else class="b24-form-control-desc">
+				<span class="b24-form-field-agreement-link">{{ field.label }}</span>
 			</span>
 			<span v-show="field.required" class="b24-form-control-required">*</span>
 			<field-item-alert v-bind:field="field"></field-item-alert>	
 		</label>
 	`,
 	computed: {
-		target()
+		link()
 		{
-			return this.field.isLink() ? '_blank' : null;
-		},
-		href()
-		{
-			return this.field.isLink() ? this.field.options.content : null;
+			let url = this.field.options.content.url.trim();
+			if (!/^http:|^https:/.test(url))
+			{
+				return '';
+			}
+
+			const node = document.createElement('div');
+			node.textContent = url;
+			url = node.innerHTML;
+
+			node.textContent = this.field.label;
+			const label = node.innerHTML;
+
+			return label
+				.replace('%', `<a href="${url}" target="_blank" class="b24-form-field-agreement-link">`)
+				.replace('%', '</a>');
 		},
 	},
 	methods: {
+		onLinkClick(e)
+		{
+			if (e.target.tagName.toUpperCase() === 'A')
+			{
+				return this.requestConsent(e);
+			}
+		},
 		requestConsent(e)
 		{
 			this.field.consentRequested = true;

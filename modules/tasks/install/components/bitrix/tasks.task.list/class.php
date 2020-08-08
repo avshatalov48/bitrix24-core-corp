@@ -12,12 +12,22 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 /** This is alfa version of component! Don't use it! */
 /** !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
+use Bitrix\Main\Engine\Response\Converter;
+use Bitrix\Main\Entity\Query;
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Fields\ExpressionField;
+use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Tasks\Access;
 use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Helper\Grid;
+use Bitrix\Tasks\Integration\Disk\Connector\Task as ConnectorTask;
 use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Internals\Task\TagTable;
 use Bitrix\Tasks\Manager;
+use Bitrix\Tasks\Grid\Row;
+use Bitrix\Tasks\Ui\Controls\Column;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\User;
 
@@ -48,24 +58,139 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 	public static function getAllowedMethods()
 	{
-		return array(
-			'setViewState'
-		);
+		return [
+			'setViewState',
+			'getNearTasks',
+			'prepareGridRowsForTasks',
+		];
 	}
 
-	public static function setViewState(array $state)
+	/**
+	 * @param array $state
+	 * @return array
+	 */
+	public static function setViewState(array $state): array
 	{
-		$filter = Filter::getInstance(\Bitrix\Tasks\Util\User::getId());
-		$stateInstance = $filter->getListStateInstance(); // todo
-		$stateInstance->setState($state);
+		$userId = User::getId();
+		$stateInstance = Filter::getInstance($userId)->getListStateInstance(); // todo
+		if ($stateInstance)
+		{
+			$stateInstance->setState($state);
+			$stateInstance->saveState();
+		}
 
-		$stateInstance->saveState();
-
-		return array();
+		return [];
 	}
 
-	protected static function checkRequiredModules(array &$arParams, array &$arResult, Collection $errors,
-												   array $auxParams = array())
+	/**
+	 * @param $taskId
+	 * @param array $navigation
+	 * @param array $arParams
+	 * @return bool[]
+	 */
+	public static function getNearTasks($taskId, array $navigation, array $arParams = []): array
+	{
+		/** @var Filter $filter */
+		$filter = Filter::getInstance($arParams['USER_ID'], $arParams['GROUP_ID']);
+
+		$pageNumber = $navigation['pageNumber'];
+		$pageSize = $navigation['pageSize'];
+
+		$getListParameters = [
+			'select' => ['ID'],
+			'legacyFilter' => $filter->process(),
+			'order' => $arParams['GET_LIST_PARAMETERS']['order'],
+			'NAV_PARAMS' => [
+				'iNumPage' => $pageNumber,
+				'iNumPageSize' => ($pageNumber - 1) * $pageSize,
+				'nPageSize' => $pageSize,
+			],
+		];
+		$parameters = [
+			'RETURN_ACCESS' => 'N',
+			'USE_MINIMAL_SELECT_LEGACY' => 'N',
+			'MAKE_ACCESS_FILTER' => true,
+		];
+
+		$falseResult = [
+			'before' => false,
+			'after' => false,
+		];
+
+		$tasks = array_keys(Manager\Task::getList($arParams['USER_ID'], $getListParameters, $parameters)['DATA']);
+		if (empty($tasks) || ($index = array_search((int)$taskId, $tasks, true)) === false)
+		{
+			return $falseResult;
+		}
+
+		return [
+			'before' => ($index === count($tasks) - 1 ? false : $tasks[$index + 1]),
+			'after' => ($index === 0 ? false : $tasks[$index - 1]),
+		];
+	}
+
+	/**
+	 * @param array $taskIds
+	 * @param array $data
+	 * @param array $arParams
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function prepareGridRowsForTasks(array $taskIds, array $data = [], array $arParams = []): array
+	{
+		if (empty($data))
+		{
+			$parameters = [
+				'MAKE_ACCESS_FILTER' => true,
+			];
+			$getListParameters = [
+				'select' => array_keys(\CTasks::getFieldsInfo()),
+				'legacyFilter' => ['ID' => $taskIds],
+			];
+			$tasks = Manager\Task::getList(User::getId(), $getListParameters, $parameters)['DATA'];
+
+			$tagResult = TagTable::getList([
+				'select' => ['TASK_ID', 'NAME'],
+				'filter' => ['TASK_ID' => array_keys($tasks)],
+			]);
+			while ($tag = $tagResult->fetch())
+			{
+				$taskId = $tag['TASK_ID'];
+				$tasks[$taskId]['TAG'][] = $tag['NAME'];
+			}
+		}
+		else
+		{
+			$converter = new Converter(
+				Converter::TO_UPPER
+				| Converter::TO_SNAKE
+				| Converter::KEYS
+				| Converter::RECURSIVE
+			);
+			$tasks = $converter->process($data);
+		}
+
+		$gridRows = [];
+		foreach ($tasks as $taskId => $taskData)
+		{
+			$gridRows[$taskId] = [
+				'content' => Row::prepareContent($taskData, $arParams),
+				'actions' => Row::prepareActions($taskData, $arParams),
+			];
+		}
+
+		return $gridRows;
+	}
+
+	protected static function checkRequiredModules(
+		array &$arParams,
+		array &$arResult,
+		Collection $errors,
+		array $auxParams = []
+	)
 	{
 		if (!Loader::includeModule('socialnetwork'))
 		{
@@ -77,62 +202,69 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 		if (!Loader::includeModule('forum'))
 		{
-			$errors->add('FORUM_MODULE_NOT_INSTALLED', Loc::getMessage("TASKS_TL_FORUM_MODULE_NOT_INSTALLED"));
+			$errors->add(
+				'FORUM_MODULE_NOT_INSTALLED',
+				Loc::getMessage("TASKS_TL_FORUM_MODULE_NOT_INSTALLED")
+			);
 		}
 
 		return $errors->checkNoFatals();
 	}
 
-	protected static function checkBasicParameters(array &$arParams, array &$arResult, Collection $errors,
-												   array $auxParams = array())
+	protected static function checkBasicParameters(
+		array &$arParams,
+		array &$arResult,
+		Collection $errors,
+		array $auxParams = []
+	)
 	{
-		static::tryParseIntegerParameter(
-			$arParams['GROUP_ID'],
-			0
-		); // GROUP_ID > 0 indicates we display this component inside a socnet group
-
-		$arParams['IS_MOBILE'] = (array_key_exists('PATH_TO_SNM_ROUTER', $arParams));
+		// GROUP_ID > 0 indicates we display this component inside a socnet group
+		static::tryParseIntegerParameter($arParams['GROUP_ID'], 0);
 
 		return $errors->checkNoFatals();
 	}
 
-	protected static function checkPermissions(array &$arParams, array &$arResult, Collection $errors,
-											   array $auxParams = array())
+	protected static function checkPermissions(
+		array &$arParams,
+		array &$arResult,
+		Collection $errors,
+		array $auxParams = []
+	)
 	{
 		parent::checkPermissions($arParams, $arResult, $errors, $auxParams);
 
+		$groupId = $arParams['GROUP_ID'];
+
 		// check group access here
-		if ($arParams["GROUP_ID"] > 0)
+		if ($groupId > 0)
 		{
 			// can we see all tasks in this group?
 			$featurePerms = CSocNetFeaturesPerms::CurrentUserCanPerformOperation(
 				SONET_ENTITY_GROUP,
-				array($arParams['GROUP_ID']),
+				[$groupId],
 				'tasks',
 				'view_all'
 			);
-
-			$canViewGroup = is_array($featurePerms) &&
-							isset($featurePerms[$arParams['GROUP_ID']]) &&
-							$featurePerms[$arParams['GROUP_ID']];
+			$canViewGroup = is_array($featurePerms) && isset($featurePerms[$groupId]) && $featurePerms[$groupId];
 
 			if (!$canViewGroup)
 			{
 				// okay, can we see at least our own tasks in this group?
 				$featurePerms = CSocNetFeaturesPerms::CurrentUserCanPerformOperation(
 					SONET_ENTITY_GROUP,
-					array($arParams['GROUP_ID']),
+					[$groupId],
 					'tasks',
 					'view'
 				);
-				$canViewGroup = is_array($featurePerms) &&
-								isset($featurePerms[$arParams['GROUP_ID']]) &&
-								$featurePerms[$arParams['GROUP_ID']];
+				$canViewGroup = is_array($featurePerms) && isset($featurePerms[$groupId]) && $featurePerms[$groupId];
 			}
 
 			if (!$canViewGroup)
 			{
-				$errors->add('ACCESS_TO_GROUP_DENIED', Loc::getMessage('TASKS_TL_ACCESS_TO_GROUP_DENIED'));
+				$errors->add(
+					'ACCESS_TO_GROUP_DENIED',
+					Loc::getMessage('TASKS_TL_ACCESS_TO_GROUP_DENIED')
+				);
 			}
 		}
 
@@ -145,7 +277,11 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 		$arParams =& $this->arParams;
 
-		static::tryParseIntegerParameter($arParams['GROUP_ID'], 0);
+		$arParams['IS_MOBILE'] = (array_key_exists('PATH_TO_SNM_ROUTER', $arParams));
+
+		// allows to see other user`s tasks, if have permissions
+		static::tryParseIntegerParameter($arParams['USER_ID'], $this->userId);
+		static::tryParseStringParameter($arParams['PROJECT_VIEW'], 'N');
 
 		static::tryParseIntegerParameter($arParams['FORUM_ID'], 0); // forum id to keep comments in
 		if ($arParams['FORUM_ID'])
@@ -159,12 +295,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 			$arParams['SCRUM_BACKLOG'] = 'N';
 		}
 
-		static::tryParseIntegerParameter(
-			$arParams['USER_ID'],
-			$this->userId
-		); // allows to see other user`s tasks, if have permissions
-
-		$this->exportAs = array_key_exists('EXPORT_AS', $_REQUEST) ? $_REQUEST['EXPORT_AS'] : false;
+		$this->exportAs = (array_key_exists('EXPORT_AS', $_REQUEST) ? $_REQUEST['EXPORT_AS'] : false);
 		if ($this->exportAs !== false)
 		{
 			$arParams['USE_PAGINATION'] = false;
@@ -172,39 +303,114 @@ class TasksTaskListComponent extends TasksBaseComponent
 		}
 		else
 		{
-			static::tryParseBooleanParameter(
-				$arParams['USE_PAGINATION'],
-				true
-			); // enable or disable CDResult-driven page navigation in this component
-			static::tryParseNonNegativeIntegerParameter($arParams['PAGINATION_PAGE_SIZE'], 10); // lines-on-page amount
+			// enable or disable CDResult-driven page navigation in this component
+			static::tryParseBooleanParameter($arParams['USE_PAGINATION'], true);
+			static::tryParseNonNegativeIntegerParameter($arParams['PAGINATION_PAGE_SIZE'], 10);
 		}
 	}
 
-	protected function needGroupByGroups()
+	/**
+	 * @return bool
+	 */
+	protected function isMyList(): bool
+	{
+		return (int)$this->arParams['USER_ID'] === (int)$this->userId;
+	}
+
+	/**
+	 * @return bool
+	 */
+	protected function canUsePin(): bool
+	{
+		return $this->isMyList()
+			&& $this->arParams['GROUP_ID'] === 0;
+	}
+
+	protected function disableGrouping(string $field, string $direction): void
+	{
+		if ($this->arParams['PROJECT_VIEW'] !== 'Y')
+		{
+			return;
+		}
+
+		$listState = \CTaskListState::getInstance(User::getId());
+		if ($listState->isSubmode(\CTaskListState::VIEW_SUBMODE_WITH_GROUPS))
+		{
+			$listState->switchOffSubmode(\CTaskListState::VIEW_SUBMODE_WITH_GROUPS);
+		}
+	}
+
+	/**
+	 * @return bool
+	 */
+	protected function needGroupByGroups(): bool
 	{
 		return $this->arParams['GROUP_ID'] == 0;
 	}
 
-	protected function isGroupByProjectMode()
+	/**
+	 * @return bool
+	 */
+	protected function isGroupByProjectMode(): bool
 	{
 		$listState = \CTaskListState::getInstance(User::getId());
-		$submodes = $listState->getSubmodes();
-
-		return $submodes['VIEW_SUBMODE_WITH_GROUPS']['SELECTED'] == 'Y';
+		return $listState->isSubmode(\CTaskListState::VIEW_SUBMODE_WITH_GROUPS);
 	}
 
-	protected function needGroupBySubTasks()
+	/**
+	 * @return bool
+	 */
+	protected function needGroupBySubTasks(): bool
 	{
-		$submodes = \CTaskListState::getInstance(User::getId())->getSubmodes();
+		$listState = \CTaskListState::getInstance(User::getId());
+		return $listState->isSubmode(\CTaskListState::VIEW_SUBMODE_WITH_SUBTASKS);
+	}
 
-		return $submodes['VIEW_SUBMODE_WITH_SUBTASKS']['SELECTED'] == 'Y';
+	/**
+	 * @return array|string[][]
+	 */
+	private function getDefaultSorting(): array
+	{
+		return [
+			'sort' => ['ACTIVITY_DATE' => 'desc'],
+			'vars' => ['by' => 'by', 'order' => 'order'],
+		];
 	}
 
 	protected function doPreAction()
 	{
+		if (
+			$this->exportAs
+			&& !Access\TaskAccessController::can($this->userId, Access\ActionDictionary::ACTION_TASK_EXPORT)
+		)
+		{
+			$this->errors->add(
+				'ACCESS_DENIED',
+				Loc::getMessage('TASKS_COMMON_ACCESS_DENIED'),
+				\Bitrix\Tasks\Util\Error::TYPE_FATAL
+			);
+		}
+
 		$this->grid = Grid::getInstance($this->arParams["USER_ID"], $this->arParams["GROUP_ID"]);
 		$this->filter = Filter::getInstance($this->arParams["USER_ID"], $this->arParams["GROUP_ID"]);
 
+		$this->arResult['USER_ID'] = $this->userId;
+		$this->arResult['OWNER_ID'] = $this->arParams['USER_ID'];
+
+		$this->arParams['DEFAULT_ROLEID'] = $this->filter->getDefaultRoleId();
+
+		$order = $this->getOrder();
+		unset($order['GROUP_ID'], $order['IS_PINNED']);
+
+		reset($order);
+		$field = key($order);
+		$direction = current($order);
+		$direction = ($direction ? explode(',', $direction)[0] : 'asc');
+
+		$this->disableGrouping($field, $direction);
+
+		static::tryParseStringParameter($this->arParams['FILTER_ID'], $this->filter->getId());
+		static::tryParseStringParameter($this->arParams['GRID_ID'], $this->grid->getId());
 		static::tryParseStringParameter(
 			$this->arParams['NEED_GROUP_BY_GROUPS'],
 			$this->needGroupByGroups() ? 'Y' : 'N'
@@ -214,14 +420,18 @@ class TasksTaskListComponent extends TasksBaseComponent
 			$this->needGroupBySubTasks() ? 'Y' : 'N'
 		);
 
+		$this->arParams['SORT'] = [
+			$field => $direction,
+		];
+		$this->arParams['SORT_FIELD'] = $field;
+		$this->arParams['SORT_FIELD_DIR'] = $direction;
+
+		$this->arParams['IS_MY_LIST'] = $this->isMyList();
+		$this->arParams['CAN_USE_PIN'] = $this->canUsePin();
+
 		$this->arResult['GROUP_BY_PROJECT'] = $this->isGroupByProjectMode();
-
-		$this->arParams['DEFAULT_ROLEID'] = $this->filter->getDefaultRoleId();
-
-		static::tryParseStringParameter($this->arParams['FILTER_ID'], $this->filter->getId());
-		static::tryParseStringParameter($this->arParams['GRID_ID'], $this->grid->getId());
-
-		$this->arResult['MESSAGES'] = array();
+		$this->arResult['GROUP_BY_SUBTASK'] = ($this->arParams['NEED_GROUP_BY_SUBTASKS'] === 'Y');
+		$this->arResult['MESSAGES'] = [];
 
 		$calendarSettings = $this->getCalendarSettings();
 		$this->arResult['CALENDAR_SETTINGS'] = $calendarSettings['CALENDAR_SETTINGS'];
@@ -258,7 +468,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 							array_map(
 								function($expandedId)
 								{
-									if (strpos($expandedId, 'group_') === false)
+									if (mb_strpos($expandedId, 'group_') === false)
 									{
 										return $expandedId;
 									}
@@ -324,7 +534,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 					foreach ($holidays as $day)
 					{
 						$day = trim($day);
-						list($day, $month) = explode('.', $day);
+						[$day, $month] = explode('.', $day);
 						$day = intval($day);
 						$month = intval($month);
 
@@ -556,27 +766,8 @@ class TasksTaskListComponent extends TasksBaseComponent
 			$this->arResult['USER'] = $users[$this->arParams['USER_ID']];
 		}
 
-		$order = $this->getOrder();
-		unset($order['GROUP_ID']);
-		$sortFields = array_keys($order);
-		$this->arParams['SORT_FIELD'] = $sortFields[0];
-
-		$fieldDir = $order[$this->arParams['SORT_FIELD']];
-		if (!$fieldDir)
-		{
-			$fieldDir = 'asc';
-		}
-		else
-		{
-			$fieldDir = explode(',', $fieldDir);
-			$fieldDir = $fieldDir[0];
-		}
-		$this->arParams['SORT_FIELD_DIR'] = $fieldDir;
-
-		$this->arResult["CAN"] = array(
-			"SORT" => $this->canSortTasks()
-		);
-
+		$this->arResult['CAN'] = ['SORT' => $this->canSortTasks()];
+		$this->arResult['SORTING'] = $this->grid->getOptions()->getSorting($this->getDefaultSorting());
 
 		$oTimer = CTaskTimerManager::getInstance(\Bitrix\Tasks\Util\User::getId());
 		$this->arParams['TIMER']  = $oTimer->getRunningTask(true);	// false => allow use static cache
@@ -593,16 +784,31 @@ class TasksTaskListComponent extends TasksBaseComponent
 				$columns[] = 'PARENT_ID';
 			}
 
-			$columns[] = 'PRIORITY';
-			$columns[] = 'FAVORITE';
-			$columns[] = 'COMMENTS_COUNT';
-			$columns[] = 'ALLOW_CHANGE_DEADLINE';
-			$columns[] = 'ALLOW_TIME_TRACKING';
-			$columns[] = 'TIME_SPENT_IN_LOGS';
-			$columns[] = 'TIME_ESTIMATE';
-			$columns[] = 'VIEWED_DATE';
+			$preferredColumns = [
+				'ID',
+				'STATUS',
+				'CREATED_BY',
+				'RESPONSIBLE_ID',
+				'AUDITORS',
+				'ACCOMPLICES',
+				'CHANGED_DATE',
+				'ACTIVITY_DATE',
+				'DEADLINE',
+				'COMMENTS_COUNT',
+				'NEW_COMMENTS_COUNT',
+				'GROUP_ID',
+				'PRIORITY',
+				'ALLOW_CHANGE_DEADLINE',
+				'ALLOW_TIME_TRACKING',
+				'TIME_SPENT_IN_LOGS',
+				'TIME_ESTIMATE',
+				'VIEWED_DATE',
+				'FAVORITE',
+				'IS_MUTED',
+				'IS_PINNED',
+			];
 
-			$columns = array_merge($columns, array_keys($this->getUF()));
+			$columns = array_merge($columns, $preferredColumns, array_keys($this->getUF()));
 		}
 
 		return array_unique($columns);
@@ -623,12 +829,17 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 	protected function getOrder()
 	{
-		$gridSort = array();
-		$sortResult = array();
+		$gridSort = [];
+		$sortResult = [];
 
 		if ($this->isGroupByProjectMode())
 		{
 			$sortResult['GROUP_ID'] = 'asc';
+		}
+
+		if ($this->canUsePin())
+		{
+			$sortResult['IS_PINNED'] = 'desc';
 		}
 
 		$request = \Bitrix\Main\Context::getCurrent()->getRequest();
@@ -637,39 +848,21 @@ class TasksTaskListComponent extends TasksBaseComponent
 		{
 			$gridSort['SORTING'] = 'asc';
 		}
-		else if ($request->get('SORTF') != null &&
-			in_array($request->get('SORTF'), \Bitrix\Tasks\Ui\Controls\Column::getFieldsForSorting())
-		)
+		else if ($request->get('SORTF') != null && in_array($request->get('SORTF'), Column::getFieldsForSorting()))
 		{
-			$sortResult[$request->get('SORTF')] = $request->get('SORTD') ? $request->get('SORTD') : 'asc';
+			$sortResult[$request->get('SORTF')] = ($request->get('SORTD') ?: 'asc');
+
 			$this->grid->getOptions()->setSorting($request->get('SORTF'), $sortResult[$request->get('SORTF')]);
 			$this->grid->getOptions()->save();
 		}
 		else
 		{
-			$gridSort = $this->grid->getOptions()->GetSorting(
-				array(
-					'sort' => array('DEADLINE' => 'desc,nulls', 'ID' => 'asc'),
-					'vars' => array('by' => 'by', 'order' => 'order')
-				)
-			);
-			$gridSort = $gridSort['sort'];
+			$gridSort = $this->grid->getOptions()->GetSorting($this->getDefaultSorting())['sort'];
 		}
 
-		if (isset($gridSort["SORTING"]))
+		if (isset($gridSort['SORTING']))
 		{
-			//			$sortResult = array_merge(
-			//				$sortResult,
-			//				array(
-			//					"SORTING"         => "asc",
-			//					"STATUS_COMPLETE" => "asc",
-			//					"DEADLINE"        => "asc,nulls",
-			//					"ID"              => "asc",
-			//				)
-			//			);
-			$sortResult = array(
-				"SORTING" => "asc"
-			);
+			$sortResult = ['SORTING' => 'asc'];
 		}
 		else
 		{
@@ -682,9 +875,9 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 			foreach ($sortResult as $key => &$value)
 			{
-				if (in_array($key, array('DEADLINE')))
+				if ($key === 'DEADLINE')
 				{
-					$value = $value.',nulls';
+					$value .= ',nulls';
 				}
 			}
 		}
@@ -692,22 +885,23 @@ class TasksTaskListComponent extends TasksBaseComponent
 		return $sortResult;
 	}
 
-	private function canSortTasks()
+	/**
+	 * @return bool
+	 */
+	private function canSortTasks(): bool
 	{
-		$currentGroupId = $this->arParams["GROUP_ID"];
-		$canSortTasks = false;
-
-		if ($currentGroupId)
+		if ($this->arParams['SORT_FIELD'] !== 'SORTING')
 		{
-			$canSortTasks = $this->arParams["SORT_FIELD"] === "SORTING" &&
-							SocialNetwork\Group::can($currentGroupId, SocialNetwork\Group::ACTION_SORT_TASKS);
-		}
-		else
-		{
-			$canSortTasks = $this->arParams["SORT_FIELD"] === "SORTING" && $this->userId == $this->arParams["USER_ID"];
+			return false;
 		}
 
-		return $canSortTasks;
+		$groupId = $this->arParams['GROUP_ID'];
+
+		return (
+			$groupId
+				? SocialNetwork\Group::can($groupId, SocialNetwork\Group::ACTION_SORT_TASKS)
+				: $this->isMyList()
+		);
 	}
 
 	protected function mergeWithTags(array $items)
@@ -717,7 +911,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 			return array();
 		}
 
-		$res = \Bitrix\Tasks\Internals\Task\TagTable::getList(array(
+		$res = TagTable::getList(array(
 			'select' => array(
 				'TASK_ID', 'NAME'
 			),
@@ -802,37 +996,31 @@ class TasksTaskListComponent extends TasksBaseComponent
 	{
 		$this->grid->getOptions()->resetExpandedRows();
 
-		$parameters = ['ERRORS' => $this->errors];
-		$parameters['MAKE_ACCESS_FILTER'] = true;
-
-		//region NAV
-		$navPageSize = $this->getPageSize();
-		//endregion
-
-		$getListParameters = [
-			'order'        => $this->getOrder(),
-			'select'       => $this->getSelect(),
-			'legacyFilter' => $this->listParameters['filter'],
+		$parameters = [
+			'MAKE_ACCESS_FILTER' => true,
+			'ERRORS' => $this->errors,
 		];
-
+		$getListParameters = [
+			'select' => $this->getSelect(),
+			'legacyFilter' => $this->listParameters['filter'],
+			'order' => $this->getOrder(),
+		];
 
 		if ($this->exportAs === false)
 		{
 			$getListParameters['NAV_PARAMS'] = [
-				'nPageSize'          => $navPageSize,
+				'nPageSize' => $this->getPageSize(),
 				'bDescPageNumbering' => false,
-				'NavShowAll'         => false,
-				'bShowAll'           => false,
-				'showAlways'         => false,
-				'SHOW_ALWAYS'        => false
+				'NavShowAll' => false,
+				'bShowAll' => false,
+				'showAlways' => false,
+				'SHOW_ALWAYS' => false,
 			];
 		}
-
 		if (isset($this->listParameters['filter']['PARENT_ID']))
 		{
 			$getListParameters['NAV_PARAMS']['NavShowAll'] = true;
 		}
-
 		if (array_key_exists('clear_nav', $_REQUEST) && $_REQUEST['clear_nav'] == 'Y')
 		{
 			$getListParameters['NAV_PARAMS']['iNumPage'] = 1;
@@ -852,28 +1040,70 @@ class TasksTaskListComponent extends TasksBaseComponent
 			$mgrResult['DATA'] = $this->mergeWithTags($mgrResult['DATA']);
 		}
 
-		$this->arResult['LIST'] = $mgrResult['DATA'];
+		$this->arParams['GET_LIST_PARAMETERS'] = $getListParameters;
 		$this->arResult['GET_LIST_PARAMS'] = $getListParameters;
+		$this->arResult['LIST'] = $mgrResult['DATA'];
 		$this->arResult['SUB_TASK_COUNTERS'] = $this->processSubTaskCounters();
 
 		if ($this->arParams['SCRUM_BACKLOG'] == 'Y')
 		{
-			$this->arResult['LIST'] = $this->collapseParents(
-				$this->arResult['LIST']
-			);
+			$this->arResult['LIST'] = $this->collapseParents($this->arResult['LIST']);
 		}
 
+		$this->arResult['LIST'] = $this->setFilesCount($this->arResult['LIST']);
+		$this->arResult['LIST'] = $this->setCheckListCount($this->arResult['LIST']);
+
 		//region NAV
-		$this->arResult['NAV_OBJECT'] = $mgrResult['AUX']['OBJ_RES'];
-		$this->arResult['NAV_OBJECT']->NavStart($navPageSize, false);
+		/** @var \CDBResult $navigation */
+		$navigation = $mgrResult['AUX']['OBJ_RES'];
+		$navigation->NavStart($this->getPageSize(), false);
+
+		$this->arResult['NAV_OBJECT'] = $navigation;
+		$this->arResult['TOTAL_RECORD_COUNT'] = $navigation->NavRecordCount;
 		$this->arResult['PAGE_SIZES'] = $this->pageSizes;
-		$this->arResult['TOTAL_RECORD_COUNT'] = $this->arResult['NAV_OBJECT']->NavRecordCount;
 		//endregion
 
 		if ($this->errors->checkHasFatals())
 		{
 			return;
 		}
+	}
+
+	private function setFilesCount(array $list)
+	{
+		if (Loader::includeModule('disk'))
+		{
+			$cntIds = ConnectorTask::getFilesCount(array_keys($list));
+			foreach ($cntIds as $taskId => $count)
+			{
+				$list[$taskId]['COUNT_FILES'] = $count;
+			}
+		}
+
+		return $list;
+	}
+
+	private function setCheckListCount(array $list)
+	{
+		$query = new Query(Bitrix\Tasks\Internals\Task\CheckListTable::getEntity());
+		$query->setSelect(['TASK_ID', 'IS_COMPLETE', new ExpressionField('CNT', 'COUNT(TASK_ID)')]);
+		$query->setFilter(['TASK_ID' => array_keys($list), ]);
+		$query->setGroup(['TASK_ID', 'IS_COMPLETE']);
+		$query->registerRuntimeField('', new ReferenceField(
+			'IT',
+			Bitrix\Tasks\Internals\Task\CheckListTreeTable::class,
+			Join::on('this.ID', 'ref.CHILD_ID')->where('ref.LEVEL', 1),
+			['join_type' => 'INNER']
+		));
+
+		$res = $query->exec();
+		while ($row = $res->fetch())
+		{
+			$checkList =& $list[$row['TASK_ID']]['CHECK_LIST'];
+			$checkList[$row['IS_COMPLETE'] == 'Y' ? 'COMPLETE' : 'WORK'] = $row['CNT'];
+		}
+
+		return $list;
 	}
 
 	protected function getPageSize()
@@ -968,7 +1198,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 				$this->arResult['LIST'] = $list;
 				//endregion
 
-				$this->IncludeComponentTemplate('export_'.strtolower($this->exportAs));
+				$this->IncludeComponentTemplate('export_'.mb_strtolower($this->exportAs));
 
 				parent::doFinalActions();
 			}

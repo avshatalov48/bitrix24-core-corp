@@ -55,8 +55,10 @@ const FieldString = {
 		<div class="b24-form-control-container b24-form-control-icon-after">
 			<input class="b24-form-control"
 				:type="field.getInputType()"
+				:name="field.getInputName()"
 				:class="inputClasses"
 				:readonly="readonly"
+				:autocomplete="field.getInputAutocomplete()"
 				v-model="value"
 				@blur="$emit('input-blur', $event)"
 				@focus="$emit('input-focus', $event)"
@@ -90,7 +92,11 @@ const FieldString = {
 		onInput()
 		{
 			let value = this.field.normalize(this.value);
-			this.value = this.field.format(value);
+			value = this.field.format(value);
+			if (this.value !== value)
+			{
+				this.value = value;
+			}
 		},
 	}
 };

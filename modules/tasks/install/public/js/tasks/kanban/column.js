@@ -13,6 +13,7 @@
 	BX.Tasks.Kanban.Column = function(options)
 	{
 		BX.Kanban.Column.apply(this, arguments);
+		this.bindEvents();
 
 		this.sortButton = null;
 	};
@@ -20,6 +21,16 @@
 	BX.Tasks.Kanban.Column.prototype = {
 		__proto__: BX.Kanban.Column.prototype,
 		constructor: BX.Tasks.Kanban.Column,
+
+		bindEvents: function()
+		{
+			BX.addCustomEvent("Kanban.Grid:onItemDragStop", function() {
+				if(this.getGrid().isRealtimeMode())
+				{
+					this.hideDragTarget();
+				}
+			}.bind(this));
+		},
 		
 		/**
 		 * Customize title buttons.

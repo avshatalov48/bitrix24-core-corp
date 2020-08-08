@@ -58,7 +58,7 @@
 
 			this.restQueue = {};
 
-			this.loadCache().catch(() =>
+			this.loadCache().then(() =>
 			{
 				if (!this.requestConfigDataLoaded)
 				{
@@ -78,7 +78,7 @@
 				{
 					if (items.length <= 0)
 					{
-						promise.reject(false);
+						promise.fulfill(false);
 						return false;
 					}
 

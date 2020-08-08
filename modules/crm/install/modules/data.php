@@ -1125,12 +1125,12 @@ foreach ($fixedPresetList as $presetList)
 		continue;
 	}
 
-	if (substr($presetList['XML_ID'], -13) === '_LEGALENTITY#' || substr($presetList['XML_ID'], -9) === '_COMPANY#')
+	if (mb_substr($presetList['XML_ID'], -13) === '_LEGALENTITY#' || mb_substr($presetList['XML_ID'], -9) === '_COMPANY#')
 	{
 		$currentPresetInfo['CRM_COMPANY'] = $presetList;
 		$currentMap[$presetList['XML_ID']] = 'CRM_COMPANY';
 	}
-	elseif (substr($presetList['XML_ID'], -8) === '_PERSON#')
+	elseif (mb_substr($presetList['XML_ID'], -8) === '_PERSON#')
 	{
 		$currentPresetInfo['CRM_CONTACT'] = $presetList;
 		$currentMap[$presetList['XML_ID']] = 'CRM_CONTACT';
@@ -1714,7 +1714,7 @@ global $APPLICATION;
 foreach ($groupsData as $groupData)
 {
 	$groupId = $groupObject->add($groupData);
-	if (strlen($groupObject->LAST_ERROR) <= 0 && $groupId)
+	if ($groupObject->LAST_ERROR == '' && $groupId)
 	{
 		foreach($groupData["BASE_RIGHTS"] as $moduleId => $letter)
 		{
@@ -1743,7 +1743,7 @@ $dbGroupList = CGroup::GetListEx(
 		'STRING_ID' => 'CRM_SHOP_BUYER'
 	],
 	false, false,
-	['ID']
+	['ID', 'NAME']
 );
 if ($arGroup = $dbGroupList->Fetch())
 {

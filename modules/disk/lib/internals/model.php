@@ -86,14 +86,14 @@ abstract class Model implements \ArrayAccess, IErrorable
 		foreach($aliases as $prefix => &$aliasData)
 		{
 			$subEntity = array();
-			$pos = strlen($prefix);
+			$pos = mb_strlen($prefix);
 			$entityName = $aliasData['alias'][$prefix];
 			if(!empty($aliasData['already_calc']))
 			{
 				list($start, $end) = $aliasData['already_calc'];
 				foreach(array_splice($attributes, $start, $end) as $name => $value)
 				{
-					$subEntity[substr($name, $pos)] = $value;
+					$subEntity[mb_substr($name, $pos)] = $value;
 				}
 				unset($name, $value);
 			}
@@ -105,9 +105,9 @@ abstract class Model implements \ArrayAccess, IErrorable
 				$currentEntity = null;
 				foreach($attributes as $name => $value)
 				{
-					if(substr($name, 0, $pos) === $prefix)
+					if(mb_substr($name, 0, $pos) === $prefix)
 					{
-						$subEntity[substr($name, $pos)] = $value;
+						$subEntity[mb_substr($name, $pos)] = $value;
 						unset($attributes[$name]);
 
 						if($start === null)
@@ -464,11 +464,11 @@ abstract class Model implements \ArrayAccess, IErrorable
 	protected static function getAliasForRef($ref, $prevConcreteRefModelAlias = '', $prevConcreteRefOrmAlias = '')
 	{
 		$select = array();
-		$firstDot = strpos($ref, '.');
+		$firstDot = mb_strpos($ref, '.');
 		$concreteRef = $ref;
 		if($firstDot !== false)
 		{
-			$concreteRef = substr($ref, 0, $firstDot);
+			$concreteRef = mb_substr($ref, 0, $firstDot);
 		}
 
 		$conf = static::getReferenceConf($concreteRef);
@@ -499,7 +499,7 @@ abstract class Model implements \ArrayAccess, IErrorable
 		{
 			/** @var Model $classNextRef */
 			$classNextRef = $conf['class'];
-			list($selectFromRef, $aliasData) = $classNextRef::getAliasForRef(ltrim(strstr($ref, '.'), '.'), $prevConcreteRefModelAlias . $concreteRef . 'REF_', ltrim($prevConcreteRefOrmAlias . '.' . $conf['orm_alias'], '.'));
+			list($selectFromRef, $aliasData) = $classNextRef::getAliasForRef(ltrim(mb_strstr($ref, '.'), '.'), $prevConcreteRefModelAlias . $concreteRef . 'REF_', ltrim($prevConcreteRefOrmAlias . '.' . $conf['orm_alias'], '.'));
 
 			$select = array_merge($select, $selectFromRef);
 		}
@@ -554,7 +554,7 @@ abstract class Model implements \ArrayAccess, IErrorable
 	{
 		foreach ($required as $item)
 		{
-			if(!isset($inputParams[$item]) || (!$inputParams[$item] && !(is_string($inputParams[$item]) && strlen($inputParams[$item]))))
+			if(!isset($inputParams[$item]) || (!$inputParams[$item] && !(is_string($inputParams[$item]) && mb_strlen($inputParams[$item]))))
 			{
 				//todo create validator! this is trash.
 				if($item === 'CREATED_BY' || $item === 'UPDATED_BY' || $item === 'DELETED_BY')

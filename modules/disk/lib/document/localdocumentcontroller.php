@@ -41,7 +41,7 @@ class LocalDocumentController extends Internals\Controller
 
 	public static function isLocalService($serviceName)
 	{
-		return strtolower($serviceName) === self::CODE;
+		return mb_strtolower($serviceName) === self::CODE;
 	}
 
 	public static function getCode()
@@ -78,7 +78,7 @@ class LocalDocumentController extends Internals\Controller
 
 	protected function isActionWithExistsFile()
 	{
-		return strtolower($this->realActionName) != 'publishblank';
+		return mb_strtolower($this->realActionName) != 'publishblank';
 	}
 
 	protected function prepareParams()

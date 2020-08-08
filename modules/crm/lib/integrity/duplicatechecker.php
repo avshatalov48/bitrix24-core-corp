@@ -107,10 +107,10 @@ abstract class DuplicateChecker
 		}
 		foreach ($fieldNames as $fieldName)
 		{
-			$fieldNameLength = strlen($fieldName);
-			if ($fieldNameLength > 3 && 'RQ.' === substr($fieldName, 0, 3)
-				&& $fieldName !== 'RQ.BD' && ($fieldNameLength < 6 || 'RQ.BD.' !== substr($fieldName, 0, 6))
-				&& !in_array(substr($fieldName, 3), array_keys($requisiteFieldGroups))
+			$fieldNameLength = mb_strlen($fieldName);
+			if ($fieldNameLength > 3 && 'RQ.' === mb_substr($fieldName, 0, 3)
+				&& $fieldName !== 'RQ.BD' && ($fieldNameLength < 6 || 'RQ.BD.' !== mb_substr($fieldName, 0, 6))
+				&& !in_array(mb_substr($fieldName, 3), array_keys($requisiteFieldGroups))
 			)
 			{
 				throw new Main\NotSupportedException(
@@ -247,8 +247,8 @@ abstract class DuplicateChecker
 		}
 		foreach ($fieldNames as $fieldName)
 		{
-			if (strlen($fieldName) > 6 && 'RQ.BD.' === substr($fieldName, 0, 3)
-				&& !in_array(substr($fieldName, 6), array_keys($bankDetailFieldGroups))
+			if (mb_strlen($fieldName) > 6 && 'RQ.BD.' === mb_substr($fieldName, 0, 3)
+				&& !in_array(mb_substr($fieldName, 6), array_keys($bankDetailFieldGroups))
 			)
 			{
 				throw new Main\NotSupportedException(

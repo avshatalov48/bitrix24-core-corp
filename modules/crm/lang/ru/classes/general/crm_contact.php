@@ -50,6 +50,7 @@ $MESS["CRM_CONTACT_FIELD_ADDRESS_REGION"] = "Район";
 $MESS["CRM_CONTACT_FIELD_ADDRESS_PROVINCE"] = "Область";
 $MESS["CRM_CONTACT_FIELD_ADDRESS_COUNTRY"] = "Страна";
 $MESS["CRM_CONTACT_FIELD_ADDRESS_COUNTRY_CODE"] = "Код страны";
+$MESS["CRM_CONTACT_FIELD_ADDRESS_LOC_ADDR_ID"] = "Идентификатор адреса местоположения";
 $MESS["CRM_FIELD_COMPARE_HONORIFIC"] = "Изменено поле \"Обращение\"";
 $MESS["CRM_FIELD_COMPARE_COMPANIES_REMOVED"] = "Удалена связь с компаниями";
 $MESS["CRM_FIELD_COMPARE_COMPANIES_ADDED"] = "Добавлена связь с компаниями";

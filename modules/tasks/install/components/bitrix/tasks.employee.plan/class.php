@@ -266,24 +266,18 @@ class TasksEmployeePlanComponent extends TasksBaseComponent
 		$uParams['order'] = array('NAME' => 'asc', 'LAST_NAME' => 'asc');
 		$uParams['filter'] = array(
 			'=ACTIVE' => 'Y',
-			'!=EXTERNAL_AUTH_ID' => User::getArtificialExternalAuthIds(), // not an artificial user
+			'!=EXTERNAL_AUTH_ID' => \Bitrix\Main\UserTable::getExternalUserTypes(), // not an artificial user
 		);
 
 		if($params['DEPARTMENT_UF_EXISTS'])
 		{
-			$constraint = Intranet\Internals\Runtime\UserDepartment::getUserPrimaryDepartmentField();
+			$constraint = Intranet\Internals\Runtime\UserDepartment::getUserDepartmentField(['REF_FIELD' => 'ID']);
+
 			if(!empty($constraint['runtime'])) // else wont able to include runtime
 			{
-				$uParams = Bitrix\Tasks\Internals\RunTime::apply($uParams, array(
-					$constraint,
-					Intranet\Internals\Runtime\Department::get(array(
-						'REF_FIELD' => 'this.PD'
-					)),
-				));
+				$uParams = Bitrix\Tasks\Internals\RunTime::apply($uParams, [$constraint]);
 
-				$uParams['filter']['!=PD.DEPARTMENT_ID'] = false; // not an extranet user
-				$uParams['filter']['=DEP.ACTIVE'] = true;
-				$uParams['select'] = array('DEPARTMENT_ID' => 'PD.DEPARTMENT_ID') + $uParams['select'];
+				$uParams['select'] = array('DEPARTMENT_ID' => 'DEP.ID') + $uParams['select'];
 				$uParams['order'] = array('DEP.LEFT_MARGIN' => 'asc') + $uParams['order'];
 			}
 			else
@@ -324,7 +318,7 @@ class TasksEmployeePlanComponent extends TasksBaseComponent
 						$subDeps = array_merge($subDeps, Department::getSubIds($v, false, true)); // get all sub-departments for departments specified
 					}
 
-					$uParams['filter']['PD.DEPARTMENT_ID'] = array_unique($subDeps);
+					$uParams['filter']['DEP.ID'] = array_unique($subDeps);
 				}
 			}
 
@@ -333,8 +327,6 @@ class TasksEmployeePlanComponent extends TasksBaseComponent
 				$uParams['filter'][] = $uMemberFilter;
 			}
 		}
-
-		$uParams['group'] = $uParams['select']; // distinct
 
 		return $uParams;
 	}
@@ -474,26 +466,24 @@ class TasksEmployeePlanComponent extends TasksBaseComponent
 		}
 		else
 		{
-			$constraint = Intranet\Internals\Runtime\UserDepartment::getUserPrimaryDepartmentField();
+			$constraint = Intranet\Internals\Runtime\UserDepartment::getUserDepartmentField(['REF_FIELD' => 'ID']);
 
 			if(!empty($constraint))
 			{
 				$users = array();
-				$res = UserTable::getList(Runtime::apply(array(
-					'filter' => array(
-						'=ACTIVE' => 'Y', // user is active
-						'!PD.DEPARTMENT_ID' => false, // not an extranet user
-						'=DEP.ACTIVE' => true, // department is active
-						'!=EXTERNAL_AUTH_ID' => User::getArtificialExternalAuthIds(), // not an artificial user
+				$res = UserTable::getList(Runtime::apply(
+					array(
+						'filter' => array(
+							'=ACTIVE' => 'Y', // user is active
+							'!=EXTERNAL_AUTH_ID' => \Bitrix\Main\UserTable::getExternalUserTypes(), // not an artificial user
+						),
+						'select' => User::getPublicDataKeys() + ['DEPARTMENT_ID' => 'DEP.ID'],
+						'order' => ['NAME', 'LAST_NAME', 'ID', 'DEP.DEPTH_LEVEL' => 'DESC', 'DEP.LEFT_MARGIN' => 'DESC'],
 					),
-					'select' => User::getPublicDataKeys() + array('DEPARTMENT_ID' => 'PD.DEPARTMENT_ID'),
-					'order' => array('NAME' => 'asc', 'LAST_NAME' => 'asc'),
-				), array(
-					$constraint,
-					Intranet\Internals\Runtime\Department::get(array(
-						'REF_FIELD' => 'this.PD'
-					)),
-				)));
+					array(
+						$constraint,
+					)
+				));
 				while($item = $res->fetch())
 				{
 					$users[$item['ID']] = $item;

@@ -44,7 +44,7 @@ if(!Bitrix\Crm\Integration\Bitrix24Manager::isAccessEnabled(CCrmOwnerType::Lead)
 }
 elseif (\Bitrix\Main\Loader::includeModule('calendar'))
 {
-	\CJSCore::Init(array('userfield_resourcebooking'));
+	Calendar::loadResourcebookingUserfieldExtention();
 	$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
 	if($isBitrix24Template)
 	{
@@ -143,7 +143,7 @@ elseif (\Bitrix\Main\Loader::includeModule('calendar'))
 			'ADDITIONAL_SETTINGS_MENU_ITEMS' => array(
 				array(
 					'TEXT' => Loc::getMessage('CRM_CALENDAR_SETTINGS'),
-					'ONCLICK' => 'BX.Calendar.UserField.ResourceBooking.openExternalSettingsSlider('.\Bitrix\Main\Web\Json::encode($settingsParams).')'
+					'ONCLICK' => Calendar::getCalendarSettingsOpenJs($settingsParams)
 				)
 			)
 		),

@@ -53,7 +53,7 @@ $optionsJson = \Bitrix\Main\Web\Json::encode($options);
 								<?if (!empty($communication['FM']['PHONE'])):
 									reset($communication['FM']['PHONE']);
 									$fm = current($communication['FM']['PHONE']);
-									$entityType = 'CRM_'.strtoupper(CCrmOwnerType::ResolveName($communication['ENTITY_TYPE_ID']));
+									$entityType = 'CRM_'.mb_strtoupper(CCrmOwnerType::ResolveName($communication['ENTITY_TYPE_ID']));
 									$entityID = $communication['ENTITY_ID'];
 								?>
 								<div class="crm-task-list-person-info-phone-block">

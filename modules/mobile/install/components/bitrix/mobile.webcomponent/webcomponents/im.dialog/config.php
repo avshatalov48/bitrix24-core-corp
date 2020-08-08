@@ -1,13 +1,17 @@
 <?
+CModule::IncludeModule('mobileapp');
+
 return [
 	"rel" => [
-		"main:date",
-		"main:ls",
-		"main:fx",
-		"main:user",
-		"mobile:mobile_ui",
-		"mobile:mobile_tools",
-		"mobile:mobile_uploader",
+		"date",
+		"ls",
+		"fx",
+		"user",
+		"mobile_ui",
+		"mobile_tools",
+		"mobile_uploader",
+		"mobile_fastclick",
+		"mobile_gesture"
 	],
 	"deps" => [
 		"chat/uploaderconst",

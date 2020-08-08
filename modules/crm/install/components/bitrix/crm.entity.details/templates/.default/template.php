@@ -203,7 +203,7 @@ $exclusionConfirmDialogContentHelp = GetMessage("CRM_ENT_DETAIL_EXCLUDE_DIALOG_M
 		{
 			BX.Crm.Page.initialize();
 
-			BX.Crm.Page.context = '<?=\CUtil::jsEscape(strtolower($entityTypeName)) ?>-<?=intval($entityID) ?>';
+			BX.Crm.Page.context = '<?=\CUtil::jsEscape(mb_strtolower($entityTypeName)) ?>-<?=intval($entityID) ?>';
 
 			BX.Crm.EntityDetailManager.messages =
 			{

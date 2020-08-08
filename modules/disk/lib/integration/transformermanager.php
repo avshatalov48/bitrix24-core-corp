@@ -201,7 +201,7 @@ class TransformerManager implements InterfaceCallback
 		$transformFormats = array($view->getPreviewExtension());
 		$transformParams = array('id' => $file->getId(), 'fileId' => $file->getFileId(), 'queue' => static::QUEUE_NAME);
 		$viewExtension = $view->getViewExtension();
-		$fileExtension = strtolower($file->getExtension());
+		$fileExtension = mb_strtolower($file->getExtension());
 		if($view::isAlwaysTransformToViewFormat())
 		{
 			$transformFormats[] = $viewExtension;

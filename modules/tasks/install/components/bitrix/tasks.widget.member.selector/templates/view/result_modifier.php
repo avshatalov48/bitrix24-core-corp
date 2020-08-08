@@ -77,4 +77,5 @@ $arResult['JS_DATA'] = array(
 		'SG' => $gUrl,
 		'U' => $uUrl,
 	),
+	'taskLimitExceeded' => $arResult['TASK_LIMIT_EXCEEDED'],
 );

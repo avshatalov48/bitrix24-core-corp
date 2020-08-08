@@ -44,7 +44,7 @@ if (!CCrmAuthorizationHelper::CheckConfigurationUpdatePermission($currentUserPer
 
 CUtil::JSPostUnescape();
 $action = isset($_POST['ACTION']) ? $_POST['ACTION'] : '';
-if(strlen($action) == 0)
+if($action == '')
 {
 	__ajaxEndJsonResonse(array('ERROR' => 'Invalid request. The "Action" parameter is not found.'));
 }
@@ -57,7 +57,7 @@ if($action == 'SAVE_BINDINGS')
 	{
 		__ajaxEndJsonResonse(array('ERROR' => 'Invalid request. The "ID" parameter is not found.'));
 	}
-	$ID = strtoupper($ID);
+	$ID = mb_strtoupper($ID);
 
 	$bindings = isset($params['BINDINGS']) ? $params['BINDINGS'] : array();
 	if(!is_array($bindings))

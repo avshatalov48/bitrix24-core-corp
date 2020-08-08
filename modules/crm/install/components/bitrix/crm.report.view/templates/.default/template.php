@@ -391,6 +391,39 @@ while ($arRes = $obRes->Fetch())
 		</select>
 	</div>
 
+	<div class="filter-field filter-field-eventType chfilter-field-WEBFORM_ID" callback="RTFilter_chooseBoolean">
+		<label for="%ID%" class="filter-field-title">%TITLE% "%COMPARE%"</label>
+		<select id="%ID%" name="%NAME%" class="filter-dropdown" caller="true">
+			<option value=""><?=GetMessage('CRM_REPORT_INCLUDE_ALL')?></option>
+			<? $webFormNames = Bitrix\Crm\WebForm\Manager::getListNames(); ?>
+			<? foreach($webFormNames as $key => $val){ ?>
+			<option value="<?=htmlspecialcharsbx($key)?>"><?=htmlspecialcharsbx($val)?></option>
+			<?}?>
+		</select>
+	</div>
+
+	<div class="filter-field filter-field-eventType chfilter-field-INVOICE_UTS.DEAL_BY.WEBFORM_ID" callback="RTFilter_chooseBoolean">
+		<label for="%ID%" class="filter-field-title">%TITLE% "%COMPARE%"</label>
+		<select id="%ID%" name="%NAME%" class="filter-dropdown" caller="true">
+			<option value=""><?=GetMessage('CRM_REPORT_INCLUDE_ALL')?></option>
+			<? $webFormNames = Bitrix\Crm\WebForm\Manager::getListNames(); ?>
+			<? foreach($webFormNames as $key => $val){ ?>
+			<option value="<?=htmlspecialcharsbx($key)?>"><?=htmlspecialcharsbx($val)?></option>
+			<?}?>
+		</select>
+	</div>
+
+	<div class="filter-field filter-field-eventType chfilter-field-DEAL_OWNER.WEBFORM_ID" callback="RTFilter_chooseBoolean">
+		<label for="%ID%" class="filter-field-title">%TITLE% "%COMPARE%"</label>
+		<select id="%ID%" name="%NAME%" class="filter-dropdown" caller="true">
+			<option value=""><?=GetMessage('CRM_REPORT_INCLUDE_ALL')?></option>
+			<? $webFormNames = Bitrix\Crm\WebForm\Manager::getListNames(); ?>
+			<? foreach($webFormNames as $key => $val){ ?>
+			<option value="<?=htmlspecialcharsbx($key)?>"><?=htmlspecialcharsbx($val)?></option>
+			<?}?>
+		</select>
+	</div>
+
 	<div class="filter-field filter-field-eventType chfilter-field-COMPANY_BY.COMPANY_TYPE_BY.STATUS_ID" callback="RTFilter_chooseBoolean">
 		<label for="%ID%" class="filter-field-title">%TITLE% "%COMPARE%"</label>
 		<select id="%ID%" name="%NAME%" class="filter-dropdown" caller="true">

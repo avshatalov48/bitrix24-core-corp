@@ -24,7 +24,8 @@
 	box-shadow: 0 2px 2px 1px rgba(0,0,0,.14);
 }
 
-.salescenter-paysystem-item-title {
+.salescenter-paysystem-item-title,
+.salescenter-paysystem-marketplace-app-item-title {
 	position: absolute;
 	left: 0;
 	right: 0;
@@ -87,7 +88,8 @@
 	overflow-x: visible;
 }
 
-.salescenter-paysystem-title {
+.salescenter-paysystem-title,
+.salescenter-paysystem-title-app {
 	color: #333;
 	font: 16px/22px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
 	margin-bottom: 13px;
@@ -96,3 +98,94 @@
 }
 
 .salescenter-paysystem-item-selected .salescenter-paysystem-item-title { color: #fff; }
+
+.salescenter-paysystem-integration-marketplace-tile-item {
+	padding: 10px;
+	background: #fff;
+	text-align: center;
+	transition: box-shadow .3s, transform .3s;
+	box-shadow: 0 1px 2px rgba(0,0,0,.15);
+	cursor: pointer;
+}
+
+
+.salescenter-paysystem-integration-marketplace-tile-counter {
+	background: #9dcf00;
+	color: #fff;
+}
+
+.salescenter-paysystem-integration-marketplace-tile-counter-head {
+	text-align: left;
+}
+
+.salescenter-paysystem-integration-marketplace-tile-counter-name {
+	display: block;
+	font: 10px 'OpenSans-SemiBold', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	text-transform: uppercase;
+	opacity: .8;
+}
+
+.salescenter-paysystem-integration-marketplace-tile-counter-value {
+	display: block;
+	max-width: 100%;
+	font: 34px 'OpenSans-Light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.salescenter-paysystem-integration-marketplace-tile-counter-link-box {
+	position: relative;
+	display: block;
+	text-align: right;
+	top: 25px;
+}
+
+.salescenter-paysystem-integration-marketplace-tile-counter-link {
+	padding: 0 22px 0 0;
+	cursor: pointer;
+}
+
+.salescenter-paysystem-integration-marketplace-tile-counter-link:after {
+	content: '';
+	position: absolute;
+	top: 7px;
+	right: 0;
+	width: 15px;
+	height: 5px;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2015%205%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M12%202V0l3%202.5L12%205V3H0V2h12z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E') no-repeat;
+	transition: opacity .3s;
+	opacity: .7;
+}
+
+.salescenter-paysystem-integration-marketplace-tile-counter-link:hover:after {
+	opacity: 1;
+}
+
+.salescenter-item-label {
+	position: absolute;
+	top: 6px;
+	left: -1px;
+	height: 16px;
+	background: #2FC6F6;
+}
+
+.salescenter-item-label:after {
+	content: '';
+	position: absolute;
+	border-right: 5px solid transparent;
+	border-left: 4px solid #2FC6F6;
+	border-bottom: 8px solid #2FC6F6;
+	border-top: 8px solid #2FC6F6;
+}
+
+.salescenter-item-label-text {
+	overflow: hidden;
+	color: #FFFFFF;
+	text-transform: uppercase;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font: 8px/11px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	padding-left: 6px;
+	display: inline-block;
+}

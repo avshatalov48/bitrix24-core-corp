@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') // process data from popup dialog
 		$arResult['BACK_URL'] = isset($_POST['BACK_URL']) ? $_POST['BACK_URL'] : '';
 		$arResult['TAX_TYPE'] = isset($_POST['TAX_TYPE']) ? $_POST['TAX_TYPE'] : '';
 
-		if(strlen($arResult['TAX_TYPE']) > 0)
+		if($arResult['TAX_TYPE'] <> '')
 		{
 			if($arResult['TAX_TYPE'] == 'tax')
 				CCrmTax::unSetVatMode();

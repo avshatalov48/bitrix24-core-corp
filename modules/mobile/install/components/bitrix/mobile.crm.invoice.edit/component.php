@@ -586,9 +586,9 @@ else
 			}
 
 			$comments = trim($_POST['COMMENTS']);
-			$bSanitizeComments = ($comments !== '' && strpos($comments, '<'));
+			$bSanitizeComments = ($comments !== '' && mb_strpos($comments, '<'));
 			$userDescription = trim($_POST['USER_DESCRIPTION']);
-			$bSanitizeUserDescription = ($userDescription !== '' && strpos($userDescription, '<'));
+			$bSanitizeUserDescription = ($userDescription !== '' && mb_strpos($userDescription, '<'));
 			if($bSanitizeComments || $bSanitizeUserDescription)
 			{
 				$sanitizer = new CBXSanitizer();
@@ -640,14 +640,14 @@ else
 				$bStatusFailed = CCrmStatusInvoice::isStatusFailed($arFields['STATUS_ID']);
 			if ($bStatusSuccess)
 			{
-				$arFields['PAY_VOUCHER_NUM'] = isset($_POST['PAY_VOUCHER_NUM']) ? substr(trim($_POST['PAY_VOUCHER_NUM']), 0, 20) : '';
+				$arFields['PAY_VOUCHER_NUM'] = isset($_POST['PAY_VOUCHER_NUM'])? mb_substr(trim($_POST['PAY_VOUCHER_NUM']), 0, 20) : '';
 				$arFields['DATE_MARKED'] = $statusParams['PAY_VOUCHER_DATE'] = isset($_POST['PAY_VOUCHER_DATE']) ? trim($_POST['PAY_VOUCHER_DATE']) : null;
-				$arFields['REASON_MARKED'] = isset($_POST['REASON_MARKED_SUCCESS']) ? substr(trim($_POST['REASON_MARKED_SUCCESS']), 0, 255) : '';
+				$arFields['REASON_MARKED'] = isset($_POST['REASON_MARKED_SUCCESS'])? mb_substr(trim($_POST['REASON_MARKED_SUCCESS']), 0, 255) : '';
 			}
 			elseif ($bStatusFailed)
 			{
 				$arFields['DATE_MARKED'] = isset($_REQUEST['DATE_MARKED']) ? trim($_POST['DATE_MARKED']) : null;
-				$arFields['REASON_MARKED'] = isset($_REQUEST['REASON_MARKED']) ? substr(trim($_REQUEST['REASON_MARKED']), 0, 255) : '';
+				$arFields['REASON_MARKED'] = isset($_REQUEST['REASON_MARKED'])? mb_substr(trim($_REQUEST['REASON_MARKED']), 0, 255) : '';
 			}
 
 			$processProductRows = array_key_exists($productDataFieldName, $_POST);
@@ -674,7 +674,7 @@ else
 			if(array_key_exists($productRowSettingsFieldName, $_POST))
 			{
 				$settingsJson = isset($_POST[$productRowSettingsFieldName]) ? strval($_POST[$productRowSettingsFieldName]) : '';
-				$arSettings = strlen($settingsJson) > 0 ? CUtil::JsObjectToPhp($settingsJson) : array();
+				$arSettings = $settingsJson <> '' ? CUtil::JsObjectToPhp($settingsJson) : array();
 				if(is_array($arSettings))
 				{
 					$productRowSettings['ENABLE_DISCOUNT'] = isset($arSettings['ENABLE_DISCOUNT']) ? $arSettings['ENABLE_DISCOUNT'] === 'Y' : false;
@@ -1339,7 +1339,7 @@ if (CCrmContact::CheckReadPermission() && CCrmCompany::CheckReadPermission())
 					$arParams['ACTIVITY_EDIT_URL_TEMPLATE'],
 					array('owner_type' => $emailOwnerTypeName, 'owner_id' => $emailOwnerID, 'type_id' => CCrmActivityType::Email)
 				),
-				array('comm[]' => strtolower(CCrmOwnerType::CompanyName).'_'.$arResult['ELEMENT']['UF_COMPANY_ID'])
+				array('comm[]' => mb_strtolower(CCrmOwnerType::CompanyName).'_'.$arResult['ELEMENT']['UF_COMPANY_ID'])
 			);
 		}
 	}
@@ -1404,7 +1404,7 @@ if (CCrmContact::CheckReadPermission() && CCrmCompany::CheckReadPermission())
 					$arParams['ACTIVITY_EDIT_URL_TEMPLATE'],
 					array('owner_type' => $emailOwnerTypeName, 'owner_id' => $emailOwnerID, 'type_id' => CCrmActivityType::Email)
 				),
-				array('comm[]' => strtolower(CCrmOwnerType::ContactName).'_'.$arResult['ELEMENT']['UF_CONTACT_ID'])
+				array('comm[]' => mb_strtolower(CCrmOwnerType::ContactName).'_'.$arResult['ELEMENT']['UF_CONTACT_ID'])
 			);
 		}
 	}
@@ -1694,11 +1694,12 @@ else
 
 //user fields
 $CCrmUserType = new CCrmMobileHelper();
-$CCrmUserType->PrepareUserFields(
+$CCrmUserType->prepareUserFields(
 	$arResult['FIELDS'],
 	CCrmInvoice::$sUFEntityID,
 	$arResult['ELEMENT']['ID'],
-	$conversionWizard !== null ? true : false
+	($conversionWizard !== null),
+	'invoice_details'
 );
 
 if ($bCopy)

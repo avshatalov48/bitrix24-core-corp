@@ -15,6 +15,9 @@ use Bitrix\Timeman\Helper\EntityCodesHelper;
 use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Model\Schedule\Schedule;
 use Bitrix\Timeman\Model\Schedule\ScheduleTable;
+use Bitrix\Timeman\Model\Schedule\Shift\Shift;
+use Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlan;
+use Bitrix\Timeman\Model\User\UserCollection;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
 use Bitrix\Timeman\Service\DependencyManager;
 use Bitrix\Timeman\Service\Worktime\Violation\WorktimeViolationManager;
@@ -68,6 +71,7 @@ class Grid
 	private $dateTimeFormat;
 	/** @var Timeman\Model\User\User */
 	private $currentUser;
+	private $recordManagers = [];
 
 	protected function __construct($id, $options = [])
 	{
@@ -115,9 +119,10 @@ class Grid
 	 * @param array $violationRulesMap
 	 * @param array $options
 	 */
-	public function fillRowsDataWithTemplateParams(&$departmentToUsers, Timeman\Model\User\UserCollection $usersCollection, $recordsByUserDate, $scheduleCollection, $shiftPlansByUserShiftDate, $violationRulesMap)
+	public function fillRowsDataWithTemplateParams(&$departmentToUsers, UserCollection $usersCollection, $recordsByUserDate, $scheduleCollection, $shiftPlansByUserShiftDate, $violationRulesMap, $recordManagers)
 	{
 		$this->userViolationRulesMap = $violationRulesMap;
+		$this->recordManagers = $recordManagers;
 		$absenceData = [];
 		if ($this->options['SHOW_USER_ABSENCES'])
 		{
@@ -169,7 +174,7 @@ class Grid
 	 * @param $options
 	 * @param $cellRecords
 	 * @param $shiftPlansByUserShiftDate
-	 * @param $user
+	 * @param Timeman\Model\User\User $user
 	 * @param $recordsByUserDate
 	 * @return TemplateParams[]
 	 */
@@ -199,7 +204,8 @@ class Grid
 						// draw record for this shift
 						$skipShift = true;
 						$plan = $shiftPlansByUserShiftDate[$cellRecord->getUserId()][$shift->getId()][$periodDateFormatted];
-						$templateParams = new TemplateParams($user, $this->currentUser, $cellRecord, $schedule, $shift, $plan, $drawingDate, $this->options['isShiftplan']);
+						$templateParams = $this->buildTemplateParams($user, $cellRecord, $schedule, $shift, $plan, $drawingDate);
+
 						$this->addViolationsToTemplateParams($templateParams, $user, $absenceData);
 
 						$cellTemplateParamsList[] = $templateParams;
@@ -210,17 +216,17 @@ class Grid
 					continue;
 				}
 				//
-				$plan = $shiftPlansByUserShiftDate[$user['ID']][$shift->getId()][$periodDateFormatted];
+				$plan = $shiftPlansByUserShiftDate[$user->getId()][$shift->getId()][$periodDateFormatted];
 				if ($plan)
 				{
 					// draw shiftplan
-					$templateParams = new TemplateParams($user, $this->currentUser, null, $schedule, $shift, $plan, $drawingDate, $this->options['isShiftplan']);
+					$templateParams = $this->buildTemplateParams($user, null, $schedule, $shift, $plan, $drawingDate);
 					$cellTemplateParamsList[] = $templateParams;
 				}
 				elseif ($this->options['showAddShiftPlanBtn'])
 				{
 					// draw btn to add shiftplan for this shift
-					$templateParams = new TemplateParams($user, $this->currentUser, null, $schedule, $shift, null, $drawingDate, $this->options['isShiftplan']);
+					$templateParams = $this->buildTemplateParams($user, null, $schedule, $shift, null, $drawingDate);
 					$templateParams->showAddShiftPlanBtn = true;
 
 					$cellTemplateParamsList[] = $templateParams;
@@ -251,7 +257,7 @@ class Grid
 			{
 				$shift = $schedule->obtainShiftByPrimary($record->getShiftId());
 			}
-			$templateParams = new TemplateParams($user, $this->currentUser, $record, $schedule, $shift, $plan, $drawingDate, $this->options['isShiftplan']);
+			$templateParams = $this->buildTemplateParams($user, $record, $schedule, $shift, $plan, $drawingDate);
 			$this->addViolationsToTemplateParams($templateParams, $user, $absenceData);
 			$cellTemplateParamsList[] = $templateParams;
 		}
@@ -259,7 +265,7 @@ class Grid
 		// then absence data
 		if ($userAbsence = $this->buildAbsenceByUserDate($user, $periodDateFormatted, $absenceData))
 		{
-			$templateParams = new TemplateParams($user, $this->currentUser, null, null, null, null, $drawingDate, $this->options['isShiftplan']);
+			$templateParams = $this->buildTemplateParams($user, null, null, null, null, $drawingDate);
 			$templateParams->absence = $userAbsence;
 			$cellTemplateParamsList[] = $templateParams;
 		}
@@ -745,7 +751,7 @@ class Grid
 
 						$dayIsEnded = $record->getRecordedStopTimestamp() > 0;
 						$dayIsApproved = $record->isApproved();
-						$expired = $record->isExpired($templateParams->schedule, $templateParams->shift);
+						$expired = $templateParams->isRecordExpired();
 						if (!$dayIsApproved || $expired)
 						{
 							$statsResult[$userId]['TOTAL_NOT_APPROVED_WORKDAYS']++;
@@ -878,7 +884,7 @@ class Grid
 	/**
 	 * @param WorktimeRecord $record
 	 * @param Schedule $schedule
-	 * @param Timeman\Model\Schedule\Shift\Shift $shift
+	 * @param Shift $shift
 	 * @param array $absenceData
 	 * @return array
 	 */
@@ -1396,5 +1402,52 @@ class Grid
 		}
 		$violations = $this->buildViolations($templateParams->record, $templateParams->schedule, $templateParams->shift, $absenceData, $templateParams->shiftPlan);
 		$templateParams->setViolations($violations, $recordUser['PERSONAL_GENDER']);
+	}
+
+	private function buildTemplateParams(Timeman\Model\User\User $user, ?WorktimeRecord $record, ?Schedule $schedule, ?Shift $shift, ?ShiftPlan $plan, $drawingDate)
+	{
+		$recordManager = null;
+		if ($record)
+		{
+			if ($this->recordManagers[$record->getId()] === null)
+			{
+				$this->recordManagers[$record->getId()] = DependencyManager::getInstance()
+					->buildWorktimeRecordManager(
+						$record,
+						$schedule,
+						$shift
+					);
+			}
+			$recordManager = $this->recordManagers[$record->getId()];
+		}
+		return new TemplateParams($user, $this->currentUser, $recordManager, $schedule, $shift, $plan, $drawingDate, $this->options['isShiftplan']);
+	}
+
+	public function getUserToShowWorktime()
+	{
+		return $this->getUsersRequestParam();
+	}
+
+	private function getUsersRequestParam()
+	{
+		return Main\Application::getInstance()->getContext()->getRequest()->get('USERS');
+	}
+
+	public function isUsersWorktimeShowing()
+	{
+		$result = $this->getUsersRequestParam();
+		return !empty($result) && EntityCodesHelper::isUser($result);
+	}
+
+	public function anyFilterApplied()
+	{
+		return !empty(Main\Application::getInstance()->getContext()->getRequest()->get('USERS'))
+			   || $this->isUserFilterApplied()
+			   || $this->isDepartmentFilterApplied()
+			   || $this->isShowUsersWithRecordsOnly()
+			   || $this->isFilterByApprovedApplied()
+			   || !empty($this->getFilterFindText())
+			   || $this->showWithShiftPlansOnly()
+			   || $this->isSchedulesFilterApplied();
 	}
 }

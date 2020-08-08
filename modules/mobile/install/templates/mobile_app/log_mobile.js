@@ -5,8 +5,11 @@ if (BX.MSL)
 	return;
 
 BX.MobileSonetLog = function () {
-}
+};
 
+/**
+ * @deprecated
+ */
 BX.MobileSonetLog.prototype.DBCheck = function(oCallback)
 {
 	if (app.db != undefined)
@@ -28,6 +31,9 @@ BX.MobileSonetLog.prototype.DBCheck = function(oCallback)
 		return false;
 };
 
+/**
+ * @deprecated
+ */
 BX.MobileSonetLog.prototype.DBDelete = function(sonetGroupID)
 {
 	if (parseInt(sonetGroupID) <= 0)
@@ -57,6 +63,9 @@ BX.MobileSonetLog.prototype.DBDelete = function(sonetGroupID)
 		return false;
 };
 
+/**
+ * @deprecated
+ */
 BX.MobileSonetLog.prototype.DBSave = function(oData, sonetGroupID)
 {
 	if (parseInt(sonetGroupID) <= 0)
@@ -122,6 +131,9 @@ BX.MobileSonetLog.prototype.DBSave = function(oData, sonetGroupID)
 		return false;
 };
 
+/**
+ * @deprecated
+ */
 BX.MobileSonetLog.prototype.DBLoad = function(oCallback, sonetGroupID)
 {
 	if (parseInt(sonetGroupID) <= 0)

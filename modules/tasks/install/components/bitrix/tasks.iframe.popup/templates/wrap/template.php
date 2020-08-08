@@ -41,6 +41,7 @@ if($edit)
 		"TEMPLATE",
 		"RELATEDTASK",
 	);
+	$parameters['ACTION'] = 'edit';
 }
 else
 {
@@ -56,6 +57,7 @@ else
 		"ELAPSEDTIME",
 		"DAYPLAN"
 	);
+	$parameters['ACTION'] = 'view';
 }
 
 $parameters['AUX_DATA_SELECT'] = array(

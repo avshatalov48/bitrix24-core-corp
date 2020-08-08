@@ -1,0 +1,7 @@
+<?
+$MESS["INTRANET_USTAT_ONLINE_STARTED_DAY"] = "Работают";
+$MESS["INTRANET_USTAT_ONLINE_FINISHED_DAY"] = "Завершили";
+$MESS["INTRANET_USTAT_ONLINE_HINT"] = "Сотрудников онлайн";
+$MESS["INTRANET_USTAT_ONLINE_USERS"] = "Сотрудники онлайн";
+$MESS["INTRANET_USTAT_ONLINE_EMPTY"] = "Нет данных";
+?>

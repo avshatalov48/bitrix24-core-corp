@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Integration\Report\Handler;
 
 use Bitrix\Crm\UI\Filter\EntityHandler;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Request;
@@ -27,6 +28,12 @@ if (!Loader::includeModule("report"))
 abstract class Base extends BaseReport
 {
 	const FILTER_FIELDS_PREFIX = '';
+
+	const DEFAULT_AVATAR_WIDTH = 42;
+	const DEFAULT_AVATAR_HEIGHT = 42;
+
+	protected static $userFields = [];
+	protected static $requiredUserFieldsList = ['ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME','PERSONAL_PHOTO'];
 
 	/**
 	 * @param array|Request $requestParameters
@@ -58,7 +65,7 @@ abstract class Base extends BaseReport
 		return $filterParameters[$filterId];
 	}
 
-	private function getFilter()
+	protected function getFilter()
 	{
 		static $filter;
 		if ($filter)
@@ -96,7 +103,7 @@ abstract class Base extends BaseReport
 				continue;
 			}
 
-			if (strpos($field['id'], static::FILTER_FIELDS_PREFIX) === 0)
+			if (mb_strpos($field['id'], static::FILTER_FIELDS_PREFIX) === 0)
 			{
 				$newFieldKeyList = explode(static::FILTER_FIELDS_PREFIX, $field['id']);
 				$newFieldKey = $newFieldKeyList[1];
@@ -109,29 +116,33 @@ abstract class Base extends BaseReport
 
 		foreach ($filterParameters as $key => $value)
 		{
-			if (strpos($key, 'TIME_PERIOD') === 0)
+			if (mb_strpos($key, 'TIME_PERIOD') === 0)
 			{
 				$mutatedFilterParameters[$key] = $value;
 				continue;
 			}
-			if (strpos($key, 'PREVIOUS_PERIOD') === 0)
-			{
-				$mutatedFilterParameters[$key] = $value;
-				continue;
-			}
-
-
-			if (strpos($key, 'FIND') === 0)
+			if (mb_strpos($key, 'PREVIOUS_PERIOD') === 0)
 			{
 				$mutatedFilterParameters[$key] = $value;
 				continue;
 			}
 
-			if (strpos($key, static::FILTER_FIELDS_PREFIX) === 0)
+
+			if (mb_strpos($key, 'FIND') === 0)
+			{
+				$mutatedFilterParameters[$key] = $value;
+				continue;
+			}
+
+			if (mb_strpos($key, static::FILTER_FIELDS_PREFIX) === 0)
 			{
 				$newKeyList = explode(static::FILTER_FIELDS_PREFIX, $key);
 				$newKey = $newKeyList[1];
-				$mutatedFilterParameters[$newKey] = $value;
+				$normalizedKey = $this->extractFieldId($newKey);
+				if (isset($preparedFieldList[$normalizedKey]))
+				{
+					$mutatedFilterParameters[$newKey] = $value;
+				}
 			}
 		}
 
@@ -455,13 +466,37 @@ abstract class Base extends BaseReport
 		return round($spentTimeValue, 2) . ' ' . Loc::getMessage("CRM_REPORT_BASE_HANDLER_DEAL_SPENT_TIME_{$spentTimeUnit}");
 	}
 
+	public function preloadUserInfo(array $userIds)
+	{
+		$missingUserIds = array_diff($userIds, array_keys(static::$userFields));
+		if (count($missingUserIds) === 0)
+		{
+			return;
+		}
+
+		$cursor = UserTable::getList([
+			'select' => static::$requiredUserFieldsList,
+			'filter' => [
+				'=ID' => $missingUserIds
+			]
+		]);
+
+		foreach ($cursor->getIterator() as $row)
+		{
+			static::$userFields[$row['ID']] = $row;
+		}
+	}
+
 	/**
 	 * Returns [id, name, link, icon] for the specified use id.
 	 *
 	 * @param int $userId Id of the user.
+	 * @param array $params Additional optional parameters
+	 *   <li> avatarWidth int
+	 *   <li> avatarHeight int
 	 * @return array|null
 	 */
-	public function getUserInfo($userId)
+	public function getUserInfo($userId, array $params = [])
 	{
 		static $users = [];
 
@@ -482,7 +517,9 @@ abstract class Base extends BaseReport
 		$template = '/company/personal/user/#user_id#/';
 		$link = \CComponentEngine::makePathFromTemplate($template, $replaceList);
 
-		$userFields = UserTable::getRowById($userId);
+		$this->preloadUserInfo([$userId]);
+		$userFields = static::$userFields[$userId];
+
 		if (!$userFields)
 		{
 			return ['name' => Loc::getMessage('CRM_REPORT_BASE_USER_DEFAULT_NAME')];
@@ -506,7 +543,10 @@ abstract class Base extends BaseReport
 		// prepare icon
 		$fileTmp = \CFile::ResizeImageGet(
 			$userFields['PERSONAL_PHOTO'],
-			['width' => 42, 'height' => 42],
+			[
+				'width' => $params['avatarWidth'] ?? static::DEFAULT_AVATAR_WIDTH,
+				'height' => $params['avatarHeight'] ?? static::DEFAULT_AVATAR_HEIGHT
+			],
 			BX_RESIZE_IMAGE_EXACT,
 			false
 		);
@@ -520,5 +560,38 @@ abstract class Base extends BaseReport
 		];
 
 		return $users[$userId];
+	}
+
+	public static function getPreviousPeriod(DateTime $from, DateTime $to)
+	{
+		$difference = $to->getTimestamp() - $from->getTimestamp();
+
+		if($difference < 0)
+		{
+			throw new ArgumentException("Date from should be earlier than date to");
+		}
+
+		$to = clone $from;
+		$fromTimestamp = $from->getTimestamp() - $difference;
+		$from = DateTime::createFromTimestamp($fromTimestamp);
+
+		return [$from, $to];
+	}
+
+	private function extractFieldId(string $fieldId)
+	{
+		$postfixes = [
+			'_datesel', '_month', '_quarter', '_year', '_days', // date
+			'_numsel', // number
+			'_from', '_to', // date and number ranges
+		];
+		foreach ($postfixes as $postfix)
+		{
+			if (mb_substr($fieldId, -($postfixLen = mb_strlen($postfix))) === $postfix)
+			{
+				return mb_substr($fieldId, 0, -$postfixLen);
+			}
+		}
+		return $fieldId;
 	}
 }

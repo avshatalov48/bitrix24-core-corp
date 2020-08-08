@@ -7,7 +7,7 @@ define("DisableEventsCheck", true);
 
 $siteId = '';
 if (isset($_REQUEST['site_id']) && is_string($_REQUEST['site_id']))
-	$siteId = substr(preg_replace('/[^a-z0-9_]/i', '', $_REQUEST['site_id']), 0, 2);
+	$siteId = mb_substr(preg_replace('/[^a-z0-9_]/i', '', $_REQUEST['site_id']), 0, 2);
 
 if (!$siteId)
 	define('SITE_ID', $siteId);
@@ -37,7 +37,7 @@ if (empty($action))
 	die('Unknown action!');
 
 $APPLICATION->ShowAjaxHead();
-$action = strtoupper($action);
+$action = mb_strtoupper($action);
 
 $sendResponse = function($data, array $errors = array(), $plain = false)
 {
@@ -83,7 +83,7 @@ switch ($action)
 		if ($entityType !== \CCrmOwnerType::CompanyName && $entityType !== \CCrmOwnerType::ContactName)
 			die('Incorrect request');
 
-		$optionName = 'portrait_'.strtolower($entityType);
+		$optionName = 'portrait_'.mb_strtolower($entityType);
 		$optionId = isset($entityContext['dealCategoryId']) ? (int)$entityContext['dealCategoryId'] : 'primary';
 		$isManual = (isset($_REQUEST['is_manual']) && $_REQUEST['is_manual'] === 'Y');
 		$value = isset($_REQUEST['load_target']) ? (int)$_REQUEST['load_target'] : 0;

@@ -17,6 +17,7 @@ $MESS["MOBILE_CHAT_SYSTEM_MESSAGE"] = "Системное сообщение";
 $MESS["MOBILE_MESSAGE_MENU_REPLY"] = "Ответить";
 $MESS["MOBILE_MESSAGE_MENU_COPY"] = "Копировать";
 $MESS['MOBILE_MESSAGE_MENU_COPY_SUCCESS'] = "Текст скопирован в буфер обмена";
+$MESS["MOBILE_MESSAGE_MENU_SELECT_TEXT"] = "Выделить текст";
 $MESS["MOBILE_MESSAGE_MENU_QUOTE"] = "Цитировать";
 $MESS["MOBILE_MESSAGE_MENU_UNREAD"] = "Отметить как непрочитанное";
 $MESS["MOBILE_MESSAGE_MENU_READ"] = "Отметить как прочитанное";

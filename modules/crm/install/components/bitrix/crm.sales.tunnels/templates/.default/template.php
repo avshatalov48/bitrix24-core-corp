@@ -20,15 +20,10 @@ Extension::load([
 	'sidepanel',
 	'ui.notification',
 	'dd',
+	'ui.popup',
 ]);
 
-if (!Rc\Service::isAvailable())
-{
-	Rc\Service::initJsExtensions();
-}
-
 ?>
-
 <div class="crm-st">
 	<div class="crm-st-container">
 		<div class="crm-st-categories"> </div>
@@ -47,6 +42,19 @@ $this->SetViewTarget('pagetitle', 100);
 ?>
 
 <div class="pagetitle-container">
+	<?
+	if (\Bitrix\Main\Loader::includeModule('intranet'))
+	{
+		$APPLICATION->includeComponent(
+			'bitrix:intranet.binding.menu',
+			'',
+			array(
+				'SECTION_CODE' => 'crm_tunnels',
+				'MENU_CODE' => 'deal'
+			)
+		);
+	}
+	?>
 	<button class="ui-btn ui-btn-icon-info ui-btn-light-border crm-st-help-button"><?=Loc::getMessage('CRM_ST_HELP_BUTTON')?></button>
 	<? if ($arResult['canEditTunnels']) : ?>
 		<button class="ui-btn ui-btn-primary crm-st-add-category-btn-top"><?=Loc::getMessage('CRM_ST_ADD_FUNNEL_BUTTON')?></button>
@@ -69,13 +77,6 @@ $APPLICATION->includeComponent(
 	]
 );
 
-if (Loader::includeModule('bitrix24'))
-{
-	$APPLICATION->IncludeComponent("bitrix:bitrix24.limit.lock", "", array(
-		"FEATURE_GROUP_NAME" => "crm_automation_deal"
-	));
-}
-
 ?>
 <script>
 	BX.message(<?=CUtil::phpToJsObject(Loc::loadLanguageFile(__FILE__))?>);
@@ -90,23 +91,17 @@ if (Loader::includeModule('bitrix24'))
 		categoriesQuantityLimit: <?=CUtil::phpToJsObject($arResult['categoriesQuantityLimit'])?>,
 		robotsUrl: '/crm/deal/automation/{category}/',
 		generatorUrl: '<?=Rc\Service::getPathToAddDeal()?>',
+		permissionEditUrl: '<?=CUtil::JSEscape(\Bitrix\Main\Config\Option::get('crm', 'path_to_perm_list'))?>/',
 		allowWrite: true,
 		canEditTunnels: <?=CUtil::phpToJsObject($arResult['canEditTunnels'])?>,
 		restrictionPopupCode: <?=CUtil::phpToJsObject($arResult['restrictionPopup'])?>,
 		isAvailableGenerator: <?=CUtil::phpToJsObject(Rc\Service::isAvailable())?>,
 		showGeneratorRestrictionPopup: function() {
-			<?=Rc\Service::getJsAvailablePopupShower()?>
+			<?=$arResult['showGeneratorRestrictionPopup']?>
 		},
 		isAvailableRobots: <?=CUtil::phpToJsObject(Factory::isAutomationAvailable(\CCrmOwnerType::Deal))?>,
 		showRobotsRestrictionPopup: function() {
-			if (BX.Bitrix24 && BX.Bitrix24.LicenseInfoPopup)
-			{
-				BX.Bitrix24.LicenseInfoPopup.show(
-					'crm_automation_deal',
-					BX.message('CRM_ST_ROBOTS_POPUP_TITLE'),
-					BX.message('CRM_ST_ROBOTS_POPUP_TEXT'),
-				);
-			}
+			<?=$arResult['showRobotsRestrictionPopup']?>
 		}
 	});
 </script>

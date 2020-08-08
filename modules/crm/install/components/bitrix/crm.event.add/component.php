@@ -160,7 +160,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST')
 							);
 						}
 						//Region automation
-						\Bitrix\Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Lead, $entityID);
+						$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $entityID);
+						$starter->setUserIdFromCurrent()->runOnUpdate($arField, []);
 						//end region
 					}
 				}
@@ -261,7 +262,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST')
 							);
 						}
 						//Region automation
-						\Bitrix\Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Deal, $entityID);
+						$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Deal, $entityID);
+						$starter->setUserIdFromCurrent()->runOnUpdate($arField, []);
 						//end region
 					}
 				}
@@ -320,7 +322,7 @@ else
 	$arResult['ENTITY_TITLE'] = GetMessage('CRM_EVENT_DEFAULT_TITLE');
 	$arResult['EVENT_TYPE'] = $arParams['EVENT_TYPE'];
 
-	$arResult['FREEZE_EVENT_ID'] = isset($arParams['FREEZE_EVENT_ID']) ? strtoupper($arParams['FREEZE_EVENT_ID']) : '';
+	$arResult['FREEZE_EVENT_ID'] = isset($arParams['FREEZE_EVENT_ID'])? mb_strtoupper($arParams['FREEZE_EVENT_ID']) : '';
 
 	if($arParams['EVENT_TYPE'] === 'PHONE')
 	{

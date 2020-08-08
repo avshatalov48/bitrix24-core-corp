@@ -60,7 +60,7 @@ div.bizproc-statuses{width:22px;height:18px;margin-right:6px;float: right;backgr
 	height: 100%;
 }
 
-.disk-folder-list-sorting {
+.disk-folder-list-sorting, .disk-folder-list-trashcan-info {
 	display: inline-block;
 	vertical-align: middle;
 	height: 26px;
@@ -75,7 +75,7 @@ div.bizproc-statuses{width:22px;height:18px;margin-right:6px;float: right;backgr
 	height: 100%;
 }
 
-.disk-folder-list-sorting-text {
+.disk-folder-list-sorting-text, .disk-folder-list-trashcan-info-text {
 	display: inline-block;
 	vertical-align: middle;
 	position: relative;
@@ -86,7 +86,11 @@ div.bizproc-statuses{width:22px;height:18px;margin-right:6px;float: right;backgr
 	cursor: pointer;
 }
 
-.bitrix24-light-theme .disk-folder-list-sorting-text {
+.disk-folder-list-trashcan-info > .disk-folder-list-trashcan-info-text {
+	cursor: auto;
+}
+
+.bitrix24-light-theme .disk-folder-list-sorting-text, .bitrix24-light-theme .disk-folder-list-trashcan-info-text {
 	color: #fff;
 }
 
@@ -124,6 +128,18 @@ div.bizproc-statuses{width:22px;height:18px;margin-right:6px;float: right;backgr
 
 .bitrix24-light-theme .disk-folder-list-sorting + .disk-folder-list-view {
 	border-left: 1px solid rgba(255, 255, 255, .4);
+}
+
+.disk-folder-list-sorting .disk-folder-list-trashcan-info-text {
+	border-left: 1px solid rgba(82,92,105,.1);
+	padding-right: 10px;
+	margin-right: 10px;
+}
+
+.bitrix24-light-theme .disk-folder-list-trashcan-info-text {
+	border-right: 1px solid rgba(255, 255, 255, .4);
+	padding-right: 10px;
+	margin-right: 10px;
 }
 
 .disk-folder-list-view-item {

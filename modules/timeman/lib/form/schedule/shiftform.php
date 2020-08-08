@@ -4,7 +4,6 @@ namespace Bitrix\Timeman\Form\Schedule;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Model\Schedule\Shift\Shift;
-use Bitrix\Timeman\Model\Schedule\Shift\ShiftTable;
 use Bitrix\Timeman\Util\Form\BaseForm;
 use Bitrix\Timeman\Util\Form\Filter;
 
@@ -26,7 +25,7 @@ class ShiftForm extends BaseForm
 	/** @var TimeHelper */
 	private $timeHelper;
 
-	public function __construct(Shift $shift = null)
+	public function __construct(?Shift $shift = null)
 	{
 		$this->timeHelper = TimeHelper::getInstance();
 		if ($shift)
@@ -79,8 +78,8 @@ class ShiftForm extends BaseForm
 				->configureIntegerOnly(true, $intError)
 			,
 			(new Filter\Validator\NumberValidator('workDays'))
-				->configureMax(6543210, $maxError)
 				->configureMin(0, $minError)
+				->configureMax(1234567, $maxError)
 				->configureIntegerOnly(true, $intError)
 			,
 		];
@@ -101,28 +100,23 @@ class ShiftForm extends BaseForm
 		];
 	}
 
-	public function getWorkdaysOptions()
-	{
-		return ShiftTable::getWorkdaysOptions();
-	}
-
-	public function hasWorkDays()
+	public function hasWorkDays(): bool
 	{
 		return $this->workDays !== '';
 	}
 
 	public function getFormattedStartTime($defaultStartTime = 9 * 60 * 60)
 	{
-		return $this->timeHelper->convertSecondsToHoursMinutesAmPm(isset($this->startTime) ? $this->startTime : $defaultStartTime);
+		return $this->timeHelper->convertSecondsToHoursMinutesAmPm($this->startTime ?? $defaultStartTime);
 	}
 
 	public function getFormattedEndTime($defaultEndTime = 18 * 60 * 60)
 	{
-		return $this->timeHelper->convertSecondsToHoursMinutesAmPm(isset($this->endTime) ? $this->endTime : $defaultEndTime);
+		return $this->timeHelper->convertSecondsToHoursMinutesAmPm($this->endTime ?? $defaultEndTime);
 	}
 
 	public function getFormattedBreakDuration($defaultBreakDuration = 1 * 60 * 60)
 	{
-		return $this->timeHelper->convertSecondsToHoursMinutes(isset($this->breakDuration) ? $this->breakDuration : $defaultBreakDuration);
+		return $this->timeHelper->convertSecondsToHoursMinutes($this->breakDuration ?? $defaultBreakDuration);
 	}
 }

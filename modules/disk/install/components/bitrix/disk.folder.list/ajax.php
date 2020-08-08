@@ -28,7 +28,7 @@ define('BX_SECURITY_SHOW_MESSAGE', true);
 define("NOT_CHECK_PERMISSIONS", true);
 
 $siteId = isset($_REQUEST['SITE_ID']) && is_string($_REQUEST['SITE_ID'])? $_REQUEST['SITE_ID'] : '';
-$siteId = substr(preg_replace('/[^a-z0-9_]/i', '', $siteId), 0, 2);
+$siteId = mb_substr(preg_replace('/[^a-z0-9_]/i', '', $siteId), 0, 2);
 if(!empty($siteId) && is_string($siteId))
 {
 	define('SITE_ID', $siteId);
@@ -325,11 +325,24 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 					'CAN_FORWARD' => false,
 				), $newExtendedRightsReformat, $this->errorCollection);
 
-				$event = new Event(Driver::INTERNAL_MODULE_ID, "onAfterAjaxActionCreateFolderWithSharing", array($sharings));
-				$event->send();
+				if (is_array($sharings))
+				{
+					$destinationCodes = [];
+					foreach($sharings as $key => $sharing)
+					{
+						$destinationCodes[] = $sharing->getToEntity();
+					}
+
+					if (!empty($destinationCodes))
+					{
+						\Bitrix\Main\FinderDestTable::merge([
+							"CONTEXT" => "DISK_SHARE",
+							"CODE" => \Bitrix\Main\FinderDestTable::convertRights(array_unique($destinationCodes))
+						]);
+					}
+				}
 			}
 			unset($right);
-
 		}
 
 		$this->sendJsonSuccessResponse(array(
@@ -1048,8 +1061,22 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 						'CAN_FORWARD' => false,
 					), $needToAdd, $this->errorCollection);
 
-					$event = new Event(Driver::INTERNAL_MODULE_ID, "onAfterAjaxActionAppendSharing", array($sharings));
-					$event->send();
+					if (is_array($sharings))
+					{
+						$destinationCodes = [];
+						foreach($sharings as $key => $sharing)
+						{
+							$destinationCodes[] = $sharing->getToEntity();
+						}
+
+						if (!empty($destinationCodes))
+						{
+							\Bitrix\Main\FinderDestTable::merge([
+								"CONTEXT" => "DISK_SHARE",
+								"CODE" => \Bitrix\Main\FinderDestTable::convertRights(array_unique($destinationCodes))
+							]);
+						}
+					}
 				}
 			}
 		}
@@ -1129,8 +1156,22 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 					'CAN_FORWARD' => false,
 				), $needToAdd, $this->errorCollection);
 
-				$event = new Event(Driver::INTERNAL_MODULE_ID, "onAfterAjaxActionChangeSharingAndRights", array($sharings));
-				$event->send();
+				if (is_array($sharings))
+				{
+					$destinationCodes = [];
+					foreach($sharings as $key => $sharing)
+					{
+						$destinationCodes[] = $sharing->getToEntity();
+					}
+
+					if (!empty($destinationCodes))
+					{
+						\Bitrix\Main\FinderDestTable::merge([
+							"CONTEXT" => "DISK_SHARE",
+							"CODE" => \Bitrix\Main\FinderDestTable::convertRights(array_unique($destinationCodes))
+						]);
+					}
+				}
 			}
 			if($needToOverwrite)
 			{
@@ -1915,7 +1956,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		$data = $this->request->getPost('data');
 		foreach($data['data'] as $key => $value)
 		{
-			$res = strpos($key, $search);
+			$res = mb_strpos($key, $search);
 			if($res === 0)
 			{
 				foreach($this->request->getPost('required') as $checkString)

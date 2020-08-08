@@ -168,7 +168,7 @@ class Store
 		}
 		catch (SqlQueryException $exception)
 		{
-			if (strpos($exception->getDatabaseMessage(), '(1062)') === false)
+			if (mb_strpos($exception->getDatabaseMessage(), '(1062)') === false)
 			{
 				throw $exception;
 			}

@@ -20,9 +20,7 @@ Class intranet extends CModule
 	{
 		$arModuleVersion = array();
 
-		$path = str_replace("\\", "/", __FILE__);
-		$path = substr($path, 0, strlen($path) - strlen("/index.php"));
-		include($path."/version.php");
+		include(__DIR__.'/version.php');
 
 		if (is_array($arModuleVersion) && array_key_exists("VERSION", $arModuleVersion))
 		{
@@ -44,11 +42,11 @@ Class intranet extends CModule
 		global $DB, $APPLICATION;
 
 		$arCurPhpVer = Explode(".", PhpVersion());
-		if (IntVal($arCurPhpVer[0]) < 5)
+		if (intval($arCurPhpVer[0]) < 5)
 			return true;
 
 		if (!$DB->Query("SELECT 'x' FROM b_intranet_sharepoint ", true))
-			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/'.$this->MODULE_ID.'/install/db/'.strtolower($DB->type).'/install.sql');
+			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/'.$this->MODULE_ID.'/install/db/'.mb_strtolower($DB->type).'/install.sql');
 
 		if (!empty($errors))
 		{
@@ -85,14 +83,9 @@ Class intranet extends CModule
 
 		RegisterModuleDependences("main", "OnBeforeProlog", "intranet", "CIntranetEventHandlers", "OnCreatePanel");
 
-		// subordination cache
-		RegisterModuleDependences("iblock", "OnAfterIBlockSectionAdd", "intranet", "CIntranetEventHandlers", "OnAfterIBlockSectionAdd");
-		RegisterModuleDependences("iblock", "OnAfterIBlockSectionUpdate", "intranet", "CIntranetEventHandlers", "OnAfterIBlockSectionUpdate");
-		RegisterModuleDependences("iblock", "OnAfterIBlockSectionDelete", "intranet", "CIntranetEventHandlers", "OnAfterIBlockSectionDelete");
 		// OnAfterUserAdd was already bound above, so skip it
 		RegisterModuleDependences("main", "OnBeforeUserUpdate", "intranet", "CIntranetEventHandlers", "OnBeforeUserUpdate");
 		RegisterModuleDependences("main", "OnAfterUserUpdate", "intranet", "CIntranetEventHandlers", "OnAfterUserUpdate");
-		RegisterModuleDependences("main", "OnAfterUserDelete", "intranet", "CIntranetEventHandlers", "OnAfterUserDelete");
 		RegisterModuleDependences("socialservices", "OnAfterSocServUserAdd", "intranet", "CIntranetEventHandlers", "OnAfterSocServUserAdd");
 
 		// cache
@@ -152,6 +145,7 @@ Class intranet extends CModule
 		RegisterModuleDependences("disk", "OnAfterDiskFirstUsageByDay", "intranet", "\\Bitrix\\Intranet\\UStat\\DiskEventHandler", "onAfterDiskFirstUsageByDayEvent");
 		RegisterModuleDependences("im", "OnAfterMessagesAdd", "intranet", "\\Bitrix\\Intranet\\UStat\\ImEventHandler", "onAfterMessagesAddEvent");
 		RegisterModuleDependences("im", "OnCallStart", "intranet", "\\Bitrix\\Intranet\\UStat\\ImEventHandler", "onCallStartEvent");
+		RegisterModuleDependences('im', 'OnGetNotifySchema', 'intranet', '\Bitrix\Intranet\Integration\Im', 'onGetNotifySchema');
 		RegisterModuleDependences("main", "OnAddRatingVote", "intranet", "\\Bitrix\\Intranet\\UStat\\LikesEventHandler", "onAddRatingVoteEvent");
 		RegisterModuleDependences("mobileapp", "OnMobileInit", "intranet", "\\Bitrix\\Intranet\\UStat\\MobileEventHandler", "onMobileInitEvent");
 		RegisterModuleDependences("blog", "OnPostAdd", "intranet", "\\Bitrix\\Intranet\\UStat\\SocnetEventHandler", "onPostAddEvent");
@@ -174,6 +168,7 @@ Class intranet extends CModule
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->registerEventHandler('main', 'onApplicationScopeError', 'intranet', '\Bitrix\Intranet\PublicApplication', 'onApplicationScopeError');
 		$eventManager->registerEventHandler('socialservices', '\Bitrix\Socialservices\User::'.\Bitrix\Main\Entity\DataManager::EVENT_ON_AFTER_ADD, 'intranet', 'CIntranetEventHandlers', 'OnAfterSocServUserAdd');
+		$eventManager->registerEventHandler('security', 'onOtpRequired', 'intranet', '\Bitrix\Intranet\Integration\Security', 'onOtpRequired');
 
 		// for main user online status
 		$eventManager->registerEventHandlerCompatible('main', 'onUserOnlineStatusGetCustomOfflineStatus', 'intranet', '\Bitrix\Intranet\UserAbsence', 'onUserOnlineStatusGetCustomOfflineStatus');
@@ -191,6 +186,10 @@ Class intranet extends CModule
 		$eventManager->registerEventHandler('main', 'OnUISelectorGetProviderByEntityType', 'intranet', '\Bitrix\Intranet\Integration\Main\UISelector\Handler', 'OnUISelectorGetProviderByEntityType');
 		$eventManager->registerEventHandler('main', 'OnUISelectorActionProcessAjax', 'intranet', '\Bitrix\Intranet\Integration\Main\UISelector\Handler', 'OnUISelectorActionProcessAjax');
 
+		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationEntity', 'intranet', '\Bitrix\Intranet\Integration\Rest\Configuration\Controller', 'getEntityList');
+		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationExport', 'intranet', '\Bitrix\Intranet\Integration\Rest\Configuration\Controller', 'onExport');
+		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationImport', 'intranet', '\Bitrix\Intranet\Integration\Rest\Configuration\Controller', 'onImport');
+
 		CAgent::AddAgent('\\Bitrix\\Intranet\\UStat\\UStat::recountHourlyCompanyActivity();', "intranet", "N", 60);
 		CAgent::AddAgent('\\Bitrix\\Intranet\\UStat\\UStat::recount();', "intranet", "N", 3600);
 
@@ -200,6 +199,9 @@ Class intranet extends CModule
 			CAgent::AddAgent("CIntranetSharepoint::AgentQueue();", "intranet", "N", 300);
 			CAgent::AddAgent("CIntranetSharepoint::AgentUpdate();", "intranet", "N", 3600);
 		}
+
+		\Bitrix\Main\Loader::includeModule('intranet');
+		\Bitrix\Intranet\Integration\Timeman\Worktime::registerEventHandler();
 
 		$arFields = Array(
 			"ACTIVE" => "N",
@@ -230,9 +232,6 @@ Class intranet extends CModule
 
 		$this->InstallUserFields();
 
-		\Bitrix\Intranet\Internals\UserSubordinationTable::reInitialize();
-		\Bitrix\Intranet\Internals\UserToDepartmentTable::reInitialize();
-
 		return true;
 	}
 
@@ -246,7 +245,7 @@ Class intranet extends CModule
 		global $DB;
 
 		$arCurPhpVer = Explode(".", PhpVersion());
-		if (IntVal($arCurPhpVer[0]) < 5)
+		if (intval($arCurPhpVer[0]) < 5)
 			return true;
 
 		$sIn = "'INTRANET_USER_INVITATION'";
@@ -356,7 +355,24 @@ Class intranet extends CModule
 
 	function InstallUserFields()
 	{
-		$arMess = self::__GetMessagesForAllLang(__DIR__.'/property_names.php', array('UF_PHONE_INNER','UF_1C','UF_INN','UF_DISTRICT','UF_SKYPE','UF_TWITTER','UF_FACEBOOK','UF_LINKEDIN','UF_XING','UF_WEB_SITES','UF_SKILLS','UF_INTERESTS','UF_DEPARTMENT'));
+		$arMess = self::__GetMessagesForAllLang(__DIR__.'/property_names.php', array(
+			'UF_PHONE_INNER',
+			'UF_1C',
+			'UF_INN',
+			'UF_DISTRICT',
+			'UF_SKYPE',
+			'UF_SKYPE_LINK',
+			'UF_ZOOM',
+			'UF_TWITTER',
+			'UF_FACEBOOK',
+			'UF_LINKEDIN',
+			'UF_XING',
+			'UF_WEB_SITES',
+			'UF_SKILLS',
+			'UF_INTERESTS',
+			'UF_DEPARTMENT',
+			'UF_EMPLOYMENT_DATE'
+		));
 
 		$arProperties = Array(
 
@@ -430,7 +446,33 @@ Class intranet extends CModule
 				'SHOW_IN_LIST' => 'Y',
 				'EDIT_IN_LIST' => 'Y',
 				'IS_SEARCHABLE' => 'Y',
-				'SETTINGS' => array('PATTERN' => '<a href="callto:#VALUE#">#VALUE#</a>'),
+				'SETTINGS' => array('PATTERN' => '<a href="skype://#VALUE#">#VALUE#</a>'),
+			),
+			'UF_SKYPE_LINK' => array(
+				'ENTITY_ID' => 'USER',
+				'FIELD_NAME' => 'UF_SKYPE_LINK',
+				'USER_TYPE_ID' => 'url',
+				'XML_ID' => 'UF_SKYPE_LINK',
+				'SORT' => 100,
+				'MULTIPLE' => 'N',
+				'MANDATORY' => 'N',
+				'SHOW_FILTER' => 'N',
+				'SHOW_IN_LIST' => 'Y',
+				'EDIT_IN_LIST' => 'Y',
+				'IS_SEARCHABLE' => 'Y',
+			),
+			'UF_ZOOM' => array(
+				'ENTITY_ID' => 'USER',
+				'FIELD_NAME' => 'UF_ZOOM',
+				'USER_TYPE_ID' => 'url',
+				'XML_ID' => 'UF_ZOOM',
+				'SORT' => 100,
+				'MULTIPLE' => 'N',
+				'MANDATORY' => 'N',
+				'SHOW_FILTER' => 'N',
+				'SHOW_IN_LIST' => 'Y',
+				'EDIT_IN_LIST' => 'Y',
+				'IS_SEARCHABLE' => 'Y',
 			),
 			'UF_TWITTER' => array(
 				'ENTITY_ID' => 'USER',
@@ -523,7 +565,7 @@ Class intranet extends CModule
 				'EDIT_IN_LIST' => 'Y',
 				'IS_SEARCHABLE' => 'Y',
 			),
-			Array(
+			'UF_DEPARTMENT' => array(
 				'ENTITY_ID' => 'USER',
 				'FIELD_NAME' => 'UF_DEPARTMENT',
 				'USER_TYPE_ID' => 'iblock_section',
@@ -585,7 +627,7 @@ Class intranet extends CModule
 		global $APPLICATION;
 		$curPhpVer = PhpVersion();
 		$arCurPhpVer = Explode(".", $curPhpVer);
-		if (IntVal($arCurPhpVer[0]) < 5)
+		if (intval($arCurPhpVer[0]) < 5)
 		{
 			$this->errors = array(GetMessage("INTR_PHP_L439", array("#VERS#" => $curPhpVer)));
 			$GLOBALS["errors"] = $this->errors;
@@ -630,7 +672,7 @@ Class intranet extends CModule
 			$MESS = \Bitrix\Main\Localization\Loc::loadLanguageFile($file, $strLID);
 			foreach ($MessID as $strMessID)
 			{
-				if (0 >= strlen($strMessID))
+				if ($strMessID == '')
 					continue;
 				$arResult[$strMessID][$strLID] = (isset($MESS[$strMessID]) ? $MESS[$strMessID] : $strDefMess);
 			}

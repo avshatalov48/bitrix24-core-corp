@@ -157,6 +157,45 @@ class OrderShipmentController extends EntityController
 			self::pushHistoryEntry($historyEntryID, $tag, 'timeline_activity_add');
 		}
 	}
+
+	public function onDeducted($ownerID, array $params)
+	{
+		if (!is_int($ownerID))
+		{
+			$ownerID = (int)$ownerID;
+		}
+
+		if ($ownerID <= 0)
+		{
+			throw new Main\ArgumentException('Owner ID must be greater than zero.', 'ownerID');
+		}
+
+		$settings = is_array($params['SETTINGS']) ? $params['SETTINGS'] : [];
+		$shipmentFields = is_array($params['FIELDS']) ? $params['FIELDS'] : [];
+		$bindings = $params['BINDINGS'] ?? [];
+
+		$authorId = self::resolveCreatorID($shipmentFields);
+		if (!empty($settings))
+		{
+			$historyEntryID = OrderEntry::create([
+				'ENTITY_ID' => $ownerID,
+				'TYPE_CATEGORY_ID' => TimelineType::MODIFICATION,
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::OrderShipment,
+				'AUTHOR_ID' => $authorId,
+				'BINDINGS' => $bindings,
+				'SETTINGS' => $settings
+			]);
+
+			if($historyEntryID > 0)
+			{
+				foreach($bindings as $binding)
+				{
+					$tag = TimelineEntry::prepareEntityPushTag($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']);
+					self::pushHistoryEntry($historyEntryID, $tag, 'timeline_activity_add');
+				}
+			}
+		}
+	}
 	public function updateSettingFields($ownerID, $entryTypeID, array $fields)
 	{
 		$result = new Main\Result();
@@ -232,17 +271,17 @@ class OrderShipmentController extends EntityController
 	{
 		$authorID = 0;
 
-		if ($authorID <= 0 && isset($fields['RESPONSIBLE_ID']))
+		if (isset($fields['RESPONSIBLE_ID']))
 		{
 			$authorID = (int)$fields['RESPONSIBLE_ID'];
 		}
 
-		if ($authorID <= 0 && isset($fields['ORDER_CREATED_BY']))
+		if ($authorID === 0 && isset($fields['ORDER_CREATED_BY']))
 		{
 			$authorID = (int)$fields['ORDER_CREATED_BY'];
 		}
 
-		if($authorID <= 0)
+		if ($authorID === 0)
 		{
 			//Set portal admin as default creator
 			$authorID = 1;
@@ -276,7 +315,7 @@ class OrderShipmentController extends EntityController
 	public function prepareHistoryDataModel(array $data, array $options = null)
 	{
 		$typeID = isset($data['TYPE_ID']) ? (int)$data['TYPE_ID'] : TimelineType::UNDEFINED;
-		$settings = $data['SETTINGS'];
+		$settings = is_array($data['SETTINGS']) ? $data['SETTINGS'] : [];
 		if($typeID === TimelineType::CREATION)
 		{
 			$base = isset($settings['BASE']) ? $settings['BASE'] : null;
@@ -340,6 +379,16 @@ class OrderShipmentController extends EntityController
 			}
 			unset($data['SETTINGS']);
 		}
+		elseif($typeID === TimelineType::ORDER)
+		{
+			$data['TITLE'] = \CCrmOwnerType::GetDescription(\CCrmOwnerType::OrderShipment);
+			$data['ASSOCIATED_ENTITY']['TITLE'] = Loc::getMessage(
+				'CRM_SHIPMENT_DEDUCT_TITLE',
+				['#ACCOUNT_NUMBER#' => $data['ASSOCIATED_ENTITY']['TITLE']]
+			);
+			$data = array_merge($data, $settings);
+			unset($data['SETTINGS']);
+		}
 		return parent::prepareHistoryDataModel($data, $options);
 	}
 
@@ -362,7 +411,7 @@ class OrderShipmentController extends EntityController
 		$currentStageID = isset($currentFields['STATUS_ID']) ? $currentFields['STATUS_ID'] : $prevStageID;
 
 		$authorID = self::resolveEditorID($currentFields);
-		if (strlen($prevStageID) > 0 && $prevStageID !== $currentStageID)
+		if ($prevStageID <> '' && $prevStageID !== $currentStageID)
 		{
 			$stageNames = DeliveryStatus::getListInCrmFormat();
 

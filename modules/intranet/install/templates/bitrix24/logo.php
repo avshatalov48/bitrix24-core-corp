@@ -10,7 +10,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 //These settings are set in intranet.configs
 $siteLogo = Intranet\Util::getClientLogo();
 $siteTitle = trim(COption::GetOptionString("bitrix24", "site_title", ""));
-if (strlen($siteTitle) <= 0)
+if ($siteTitle == '')
 {
 	$siteTitle =
 		ModuleManager::isModuleInstalled("bitrix24")

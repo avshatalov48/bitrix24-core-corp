@@ -47,6 +47,9 @@ elseif ($_REQUEST["mobile_action"] == "save_device_token")
 
 		if (CModule::IncludeModule("pull"))
 		{
+			$voipType = $_REQUEST["device_type"] === \CPushDescription::TYPE_APPLE && isset($_REQUEST["device_token_voip"]) ? \CPushDescription::TYPE_APPLE_VOIP : null;
+			$tokenVoip = $_REQUEST["device_token_voip"] ?? null;
+
 			$dbres = CPullPush::GetList(Array(), Array("DEVICE_ID" => $uuid));
 			$arToken = $dbres->Fetch();
 
@@ -56,6 +59,8 @@ elseif ($_REQUEST["mobile_action"] == "save_device_token")
 				"DEVICE_TYPE" => $_REQUEST["device_type"],
 				"DEVICE_ID" => $_REQUEST["uuid"],
 				"DEVICE_TOKEN" => $token,
+				"VOIP_TYPE" => $voipType,
+				"VOIP_TOKEN" => $tokenVoip,
 				"DATE_AUTH"=>ConvertTimeStamp(getmicrotime(),"FULL"),
 				"APP_ID" => "Bitrix24" . (CMobile::$isDev ? "_bxdev" : "")
 			);

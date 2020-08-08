@@ -47,7 +47,7 @@ class SmartMigrationWebdavLogger extends \Bitrix\Main\Diag\FileExceptionHandlerL
 			$this->logFile = $options["file"];
 
 		$this->logFile = preg_replace("'[\\\\/]+'", "/", $this->logFile);
-		if ((substr($this->logFile, 0, 1) !== "/") && !preg_match("#^[a-z]:/#", $this->logFile))
+		if ((mb_substr($this->logFile, 0, 1) !== "/") && !preg_match("#^[a-z]:/#", $this->logFile))
 			$this->logFile = Application::getDocumentRoot()."/".$this->logFile;
 
 		$this->logFileHistory = $this->logFile.".old." . time();
@@ -1098,8 +1098,8 @@ class SmartMigrationWebdav
 			{
 				list($connectorClass, $moduleId) = $userFieldManager->getConnectorDataByEntityType($userFieldRow['ENTITY_ID']);
 
-				$tableNameUf = "b_utm_".strtolower($entityName);
-				$tableNameSingleUf = "b_uts_".strtolower($entityName);
+				$tableNameUf = "b_utm_".mb_strtolower($entityName);
+				$tableNameSingleUf = "b_uts_".mb_strtolower($entityName);
 
 				if($entityName == 'SONET_LOG')
 				{
@@ -1207,7 +1207,7 @@ class SmartMigrationWebdav
 			else
 			{
 				list($connectorClass, $moduleId) = $userFieldManager->getConnectorDataByEntityType($userFieldRow['ENTITY_ID']);
-				$tableNameSingleUf = "b_uts_".strtolower($entityName);
+				$tableNameSingleUf = "b_uts_".mb_strtolower($entityName);
 				$moduleId = $sqlHelper->forSql($moduleId);
 				$connectorClass = $sqlHelper->forSql($connectorClass);
 
@@ -1300,7 +1300,7 @@ class SmartMigrationWebdav
 						'forum' => 'forum_message',
 					) as $eventId => $connectedEntityName)
 					{
-						$tableNameUfConnected = "b_utm_".strtolower($connectedEntityName);
+						$tableNameUfConnected = "b_utm_".mb_strtolower($connectedEntityName);
 						$eventId = $this->sqlHelper->forSql($eventId);
 
 						if(!$this->connection->isTableExists($tableNameUfConnected))
@@ -1360,7 +1360,7 @@ class SmartMigrationWebdav
 						'wiki_comment' => 'forum_message',
 					) as $eventId => $connectedEntityName)
 					{
-						$tableNameUfConnected = "b_utm_".strtolower($connectedEntityName);
+						$tableNameUfConnected = "b_utm_".mb_strtolower($connectedEntityName);
 						$eventId = $this->sqlHelper->forSql($eventId);
 
 						if(!$this->connection->isTableExists($tableNameUfConnected))
@@ -2169,7 +2169,7 @@ class SmartMigrationWebdav
 		$extLinkData = array(
 			'OBJECT_ID' => !empty($extLinkRow['DISK_ID'])? $extLinkRow['DISK_ID'] : null,
 			'CREATED_BY' => $extLinkRow['USER_ID'],
-			'HASH' => substr($extLinkRow['HASH'], 0, 32),
+			'HASH' => mb_substr($extLinkRow['HASH'], 0, 32),
 			'DESCRIPTION' => $extLinkRow['DESCRIPTION'],
 			'DOWNLOAD_COUNT' => $extLinkRow['DOWNLOAD_COUNT'],
 			'TYPE' => ExternalLinkTable::TYPE_MANUAL,
@@ -2431,8 +2431,8 @@ class SmartMigrationWebdav
 				)
 					$folder = "contacts";
 
-				$siteDocRoot = (strlen($arSite["DOC_ROOT"]) > 0 ? $arSite["DOC_ROOT"] : $_SERVER["DOCUMENT_ROOT"]);
-				$siteDir = (strlen($arSite["DIR"]) > 0 ? $arSite["DIR"] : "/");
+				$siteDocRoot = ($arSite["DOC_ROOT"] <> '' ? $arSite["DOC_ROOT"] : $_SERVER["DOCUMENT_ROOT"]);
+				$siteDir = ($arSite["DIR"] <> '' ? $arSite["DIR"] : "/");
 
 				$filePath = $siteDocRoot.$siteDir.'.left.menu_ext.php';
 				$fp = null;
@@ -3002,7 +3002,7 @@ class SmartMigrationWebdav
 		unset($diskTask);
 		$iblockTask = $this->getIblockTaskById($taskId);
 		$taskFields = array(
-			'NAME' => substr($iblockTask['TITLE'], 0, 80) . ' (custom)',
+			'NAME' => mb_substr($iblockTask['TITLE'], 0, 80).' (custom)',
 			'DESCRIPTION' => $iblockTask['DESC'],
 			'BINDING' => 'module',
 			'MODULE_ID' => Driver::INTERNAL_MODULE_ID,
@@ -3830,7 +3830,7 @@ class SmartMigrationWebdav
 		{
 			$this->abortIfNeeded();
 
-			if(strlen($version['VERSION_DOC']) > 0)
+			if($version['VERSION_DOC'] <> '')
 			{
 				if($this->useGZipCompression)
 				{
@@ -3860,7 +3860,7 @@ class SmartMigrationWebdav
 			$fullPath = $version['VERSION_DOC']['PROPERTIES']['FILE']['VALUE'];
 			$handlerId = '';
 			$filename = bx_basename($fullPath);
-			if(substr($fullPath, 0, 4) == "http")
+			if(mb_substr($fullPath, 0, 4) == "http")
 			{
 				if(!$isCloud)
 				{
@@ -3878,12 +3878,12 @@ class SmartMigrationWebdav
 				}
 
 				$handlerId = $bucket->ID;
-				$subDir = trim(substr(getDirPath($fullPath), strlen($bucket->getFileSRC('/'))), '/');
+				$subDir = trim(mb_substr(getDirPath($fullPath), mb_strlen($bucket->getFileSRC('/'))), '/');
 				$contentType = \Bitrix\Disk\TypeFile::getMimeTypeByFilename($filename);
 			}
 			else
 			{
-				$subDir = trim(substr(getDirPath($fullPath), strlen('/'. $uploadDir)), '/');
+				$subDir = trim(mb_substr(getDirPath($fullPath), mb_strlen('/'.$uploadDir)), '/');
 				$contentType = $this->getContentType($fullPath, $filename);
 			}
 
@@ -4542,11 +4542,11 @@ class SmartMigrationWebdav
 			'UF_USE_BP' => true,
 		);
 
-		$oldTableNameUf = "b_utm_".strtolower($oldName);
-		$oldTableNameSingleUf = "b_uts_".strtolower($oldName);
-		$newTableNameUf = "b_utm_".strtolower($newName);
-		$newTableNameSingleUf = "b_uts_".strtolower($newName);
-		$isFolder = strpos($newName, 'FILE') === false;
+		$oldTableNameUf = "b_utm_".mb_strtolower($oldName);
+		$oldTableNameSingleUf = "b_uts_".mb_strtolower($oldName);
+		$newTableNameUf = "b_utm_".mb_strtolower($newName);
+		$newTableNameSingleUf = "b_uts_".mb_strtolower($newName);
+		$isFolder = mb_strpos($newName, 'FILE') === false;
 		$externalColumn = $isFolder? 'WEBDAV_SECTION_ID' : 'WEBDAV_ELEMENT_ID';
 
 		$columns = array();
@@ -4662,8 +4662,8 @@ class SmartMigrationWebdav
 		{
 			$strTable = "b_iblock_element_property";
 		}
-		$tableNameUf = "b_utm_".strtolower($entityNewName);
-		$tableNameSingleUf = "b_uts_".strtolower($entityNewName);
+		$tableNameUf = "b_utm_".mb_strtolower($entityNewName);
+		$tableNameSingleUf = "b_uts_".mb_strtolower($entityNewName);
 
 		$sqlHelper = $this->connection->getSqlHelper();
 		$listElementAll = array();
@@ -4693,9 +4693,9 @@ class SmartMigrationWebdav
 			}
 
 			$userTypeEntity = new \CUserTypeEntity();
-			$symbolicName = empty($prop['CODE'])? $propId : strtoupper($prop['CODE']);
+			$symbolicName = empty($prop['CODE'])? $propId : mb_strtoupper($prop['CODE']);
 			$xmlId = empty($prop['CODE'])? $propId : $prop['CODE'];
-			$fieldName = substr('UF_' . $symbolicName, 0, 20);
+			$fieldName = mb_substr('UF_'.$symbolicName, 0, 20);
 			if($mappedUfType == 'iblock_section' || $mappedUfType == 'iblock_element')
 			{
 				$settingsArray = array(
@@ -4871,7 +4871,7 @@ class SmartMigrationWebdav
 
 	protected function mapTypeElementPropertyToUfType(array $prop)
 	{
-		$prop['PROPERTY_TYPE'] = strtoupper($prop['PROPERTY_TYPE']);
+		$prop['PROPERTY_TYPE'] = mb_strtoupper($prop['PROPERTY_TYPE']);
 		switch($prop['PROPERTY_TYPE'])
 		{
 			case 'N':

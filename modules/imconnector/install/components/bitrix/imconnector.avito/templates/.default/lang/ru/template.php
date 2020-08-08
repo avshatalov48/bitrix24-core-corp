@@ -13,3 +13,7 @@ $MESS['IMCONNECTOR_COMPONENT_AVITO_CONNECT_HELP'] = '<div class="imconnector-fie
 				<div class="imconnector-field-button-name"><span class="imconnector-field-box-text-bold">Подключить</span> Avito аккаунт</div>';
 $MESS['IMCONNECTOR_COMPONENT_AVITO_INSTRUCTION_TITLE'] = '<span class="imconnector-field-box-text-bold">Инструкция</span> по получению данных аккаунта:';
 $MESS['IMCONNECTOR_COMPONENT_AVITO_INFO'] = 'Информация';
+$MESS['IMCONNECTOR_COMPONENT_AVITO_AUTHORIZATION'] = 'Авторизация';
+$MESS['IMCONNECTOR_COMPONENT_AVITO_LOG_IN'] = 'Авторизуйтесь под аккаунтом, который имеет действующий тариф или подписку Авито.';
+$MESS['IMCONNECTOR_COMPONENT_AVITO_AUTHORIZE'] = 'Авторизоваться';
+$MESS['IMCONNECTOR_COMPONENT_AVITO_LOG_IN_OAUTH'] = 'Авторизуйтесь под аккаунтом Авито.';

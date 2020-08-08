@@ -24,7 +24,7 @@ else
 $arResult["NAME"] = htmlspecialcharsbx($arParams["NAME"]);
 $arResult["~NAME"] = $arParams["NAME"];
 
-if (strlen($arParams["NAME_TEMPLATE"]) <= 0)
+if ($arParams["NAME_TEMPLATE"] == '')
 	$arParams["NAME_TEMPLATE"] = CSite::GetNameFormat();
 
 $arSubDeps = CTasks::GetSubordinateDeps();

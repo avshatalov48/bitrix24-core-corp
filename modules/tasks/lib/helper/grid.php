@@ -84,14 +84,15 @@ class Grid extends Common
 				);
 				break;
 			default:*/
-		$defaultColumns = array(
+		$defaultColumns = [
 			'TITLE',
+			'ACTIVITY_DATE',
 			'DEADLINE',
-			'CREATED_BY',
 			'ORIGINATOR_NAME',
-			'RESPONSIBLE_ID',
-			'RESPONSIBLE_NAME'
-		);
+			'RESPONSIBLE_NAME',
+			'GROUP_NAME',
+			'TAG',
+		];
 
 		/*break;
 }

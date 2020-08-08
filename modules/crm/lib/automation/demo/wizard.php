@@ -137,13 +137,13 @@ class Wizard
 
 	private static function getRobots($entityTypeId, $version = 1)
 	{
-		$prefix = strtolower(\CCrmOwnerType::ResolveName($entityTypeId));
+		$prefix = mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId));
 		return static::loadFromFile('robots', $prefix.'_'.$version);
 	}
 
 	private static function getTriggers($entityTypeId, $version = 1)
 	{
-		$prefix = strtolower(\CCrmOwnerType::ResolveName($entityTypeId));
+		$prefix = mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId));
 		return static::loadFromFile('triggers', $prefix.'_'.$version);
 	}
 

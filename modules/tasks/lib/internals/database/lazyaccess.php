@@ -96,9 +96,9 @@ abstract class LazyAccess extends \Bitrix\Tasks\Util\Type\Dictionary
 	public function __call($name, array $arguments)
 	{
 		// todo: implement functional way of setting and getting fields: i.e. setFieldDescription() and getFieldDescription()
-		if(strpos('getField', $name) == 0)
+		if(mb_strpos('getField', $name) == 0)
 		{
-			$name = substr($name, 8); // strip getField
+			$name = mb_substr($name, 8); // strip getField
 			$name = $this->getMap()->decodeCamelFieldName($name);
 			if($name)
 			{

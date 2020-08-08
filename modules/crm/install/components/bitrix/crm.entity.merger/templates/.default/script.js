@@ -33,8 +33,6 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 
 		this._editorHeaders = null;
 		this._editorColumns = null;
-		this._editorMergerColumns = null;
-		this._editorButtons = null;
 		this._editorWrappers = null;
 
 		this._dedupeConfig = null;
@@ -142,8 +140,6 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 			this._editors = {};
 			this._editorHeaders = null;
 			this._editorColumns = null;
-			this._editorButtons = null;
-			this._editorMergerColumns = null;
 			this._editorWrappers = null;
 
 			BX.clean(this._secondaryEditorHeaderContainer);
@@ -253,7 +249,15 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 						}
 
 						this._dedupeCriterionData = BX.prop.getObject(params, "dedupeCriterionData", {});
-						this.setupByEntityInfos(entityInfos);
+						this.animateColumns(
+							function()
+							{
+								this.animateSidebar(
+									function(){ this.setupByEntityInfos(entityInfos); }.bind(this)
+								);
+							}.bind(this)
+						);
+
 						this._isDedupeQueueRequestRunning = false;
 						promise.fulfill(true);
 					}.bind(this)
@@ -558,6 +562,7 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 
 			var buttons = this.getEditorButtons();
 			var columns = this.getMergerColumns();
+			var detailButtons = this.getDetailButtons();
 
 			this._editorColumns = [];
 			for (var i = 0; i < buttons.length; i++)
@@ -566,6 +571,7 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 					entityId: parseInt(buttons[i].getAttribute("data-entity-id")),
 					button: buttons[i],
 					column: columns[i],
+					detailButton: detailButtons[i],
 					label: buttons[i].querySelector(".crm-entity-merger-column-btn-label")
 				});
 			}
@@ -574,21 +580,15 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 		},
 		getMergerColumns: function()
 		{
-			if(!this._editorMergerColumns)
-			{
-				this._editorMergerColumns = document.querySelectorAll('.crm-entity-merger-column-item');
-			}
-
-			return this._editorMergerColumns;
+			return document.querySelectorAll('.crm-entity-merger-column-item');
+		},
+		getDetailButtons: function()
+		{
+			return document.querySelectorAll('.crm-entity-widget-detail-btn');
 		},
 		getEditorButtons: function()
 		{
-			if(!this._editorButtons)
-			{
-				this._editorButtons = document.querySelectorAll('.crm-entity-merger-column-btn');
-			}
-
-			return this._editorButtons;
+			return document.querySelectorAll('.crm-entity-merger-column-btn');
 		},
 		getEntityDetailsUrl: function(entityId)
 		{
@@ -837,16 +837,6 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 
 			this._scroller = BX.Crm.EntityMergerScroller.create();
 			this._scroller.layout();
-			this.columnContainer = document.body.querySelector('.crm-entity-merger-column-container');
-
-			if(!this._scroller.outerColumnContainer.classList.contains('crm-entity-merger-right-ear-shown'))
-			{
-				this.columnContainer.style.width = '100' + '%';
-			}
-			else
-			{
-				this.columnContainer.style.width = 'auto';
-			}
 
 			this._scrollerY = BX.Crm.EntityMergerVerticalScroller.create();
 			this._scrollerY.layout();
@@ -896,6 +886,7 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 			{
 				BX.remove(column["button"]);
 				BX.remove(column["column"]);
+				this._editorColumns = null;
 			}
 		},
 		getEntityCreationDate: function(entityId)
@@ -1182,6 +1173,18 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 			{
 				if(this.isQueueEnabled())
 				{
+					BX.localStorage.set(
+						"onCrmEntityMergeSkip",
+						{
+							entityTypeId: this.getEntityTypeId(),
+							entityTypeName: this.getEntityTypeName(),
+							context: this._externalContextId,
+							length: this._dedupeQueueInfo["length"],
+							skipped: BX.prop.getInteger(this._dedupeQueueInfo, 'skipped', 0) + 1
+						},
+						10
+					);
+
 					//Just reload current queue position
 					this.addQueueOffset(0).then(
 						function(success)
@@ -1195,6 +1198,19 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 				}
 				else
 				{
+					BX.localStorage.set(
+						"onCrmEntityMergeSkip",
+						{
+							entityTypeId: this.getEntityTypeId(),
+							entityTypeName: this.getEntityTypeName(),
+							context: this._externalContextId,
+							seedEntityIds: this.getSecondaryEntityIds(),
+							targEntityId: this.getPrimaryEntityId(),
+							skipped: BX.prop.getInteger(this._dedupeQueueInfo, 'skipped', 0) + 1
+						},
+						100
+					);
+
 					window.setTimeout(
 						function(){ this.close(); }.bind(this),
 						0
@@ -1330,10 +1346,10 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 						//reload selected primary entity
 						window.setTimeout(
 							function()
-							{
-								this.removeOnloadState();
-								this.setupPrimaryEntity(this._primaryEntityId, true);
-							}.bind(this),
+								{
+									this.removeOnloadState();
+									this.setupPrimaryEntity(this._primaryEntityId, true);
+								}.bind(this),
 							0
 						);
 					}
@@ -1373,9 +1389,10 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 				return;
 			}
 
-			for(var i = 0, length = this._editorColumns.length; i < length; i++)
+			var columns = this.getEditorColumns();
+			for(var i = 0, length = columns.length; i < length; i++)
 			{
-				var currentItem = this._editorColumns[i];
+				var currentItem = columns[i];
 
 				if(currentItem === item)
 				{
@@ -1430,7 +1447,6 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 				}
 
 				var innerItem = this._editors[item].getContainer();
-
 				innerItem.closest(".crm-entity-merger-column-item").classList.add("crm-entity-merger-column-onload-state");
 				this.entityWrapper.classList.add('crm-entity-merger-onload-sidebar-state');
 			}
@@ -1622,6 +1638,7 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 				{
 					BX.onCustomEvent(this, "onMergeComplete");
 
+					var skipped = BX.prop.getInteger(this._dedupeQueueInfo, 'skipped', 0);
 					var data = BX.prop.getObject(response, "data", {});
 					if(this.isQueueEnabled())
 					{
@@ -1640,7 +1657,8 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 								entityTypeId: this.getEntityTypeId(),
 								entityTypeName: this.getEntityTypeName(),
 								context: this._externalContextId,
-								length: this._dedupeQueueInfo["length"]
+								length: this._dedupeQueueInfo["length"],
+								skipped: skipped
 							},
 							10
 						);
@@ -1664,7 +1682,8 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 								entityTypeName: this.getEntityTypeName(),
 								context: this._externalContextId,
 								seedEntityIds: secondaryEntityIds,
-								targEntityId: primaryEntityId
+								targEntityId: primaryEntityId,
+								skipped: skipped
 							},
 							100
 						);
@@ -1722,11 +1741,24 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 							rightEntityID: entityId,
 							indexType: BX.prop.getInteger(criterionData, 'typeId', 0),
 							matches: BX.prop.getObject(criterionData, 'matches', {}),
+							queueInfoParams: {
+								typeNames: BX.prop.getArray(this._dedupeConfig, "typeNames", []),
+								scope: BX.prop.getString(this._dedupeConfig, "scope", ""),
+								offset: this._dedupeQueueInfo["offset"]
+							}
 						}
 				}
 			).then(
 				function(response)
 				{
+					var skipped = BX.prop.getInteger(this._dedupeQueueInfo, 'skipped', 0);
+					var data = BX.prop.getObject(response, "data", {});
+					var queueInfo = BX.prop.getObject(data, "QUEUE_INFO", null);
+					if (queueInfo)
+					{
+						this._dedupeQueueInfo = queueInfo;
+					}
+					this._dedupeQueueInfo['skipped'] = skipped + 1;
 					this.clearSecondaryEntityLayout(entityId);
 					this.processSecondaryEntityRemoval();
 				}.bind(this)
@@ -1807,12 +1839,14 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 
 			if (rightEar)
 			{
-				rightEar.remove();
+				// rightEar.remove();
+				rightEar.parentNode.removeChild(rightEar);
 			}
 
 			if (leftEar)
 			{
-				leftEar.remove();
+				// leftEar.remove();
+				leftEar.parentNode.removeChild(leftEar);
 			}
 
 			var delay = 0;
@@ -1898,9 +1932,6 @@ if(typeof BX.Crm.EntityMergerHeader === "undefined")
 		this._markAsNonDuplicateButton = null;
 		this._markAsNonDuplicateButtonHandler = BX.delegate(this.onMarkAsNonDuplicateButtonClick, this);
 
-		this._openButton = null;
-		this._openButtonHandler = BX.delegate(this.onOpenButtonClick, this);
-
 		this._primaryEntityChangeHandler = BX.delegate(this.onPrimaryEntityChange, this);
 
 		this._hasLayout = false;
@@ -1978,20 +2009,26 @@ if(typeof BX.Crm.EntityMergerHeader === "undefined")
 										]
 								}
 							),
-							this._title
+							BX.create("span",
+								{
+									props: { className: "crm-entity-merger-column-btn-link-dark-box" },
+									children:
+										[
+											BX.create("a",
+												{
+													props: { className: "crm-entity-merger-column-btn-link-dark", href: "#" },
+													children: [ this._title ]
+												}
+											)
+										],
+								}
+							)
 						]
 				}
 			);
+
 			BX.bind(this._label, "click", BX.delegate(this.onLabelClick, this));
 			this._container.appendChild(this._label);
-
-			this._openButton = BX.create("a",
-				{
-					props: { className: "crm-entity-merger-column-btn-link", href: "#" },
-					text: this.getMessage("open"),
-					events: { click: this._openButtonHandler }
-				}
-			);
 
 			this._markAsNonDuplicateButton = BX.create("a",
 				{
@@ -2003,7 +2040,7 @@ if(typeof BX.Crm.EntityMergerHeader === "undefined")
 			this._buttonWrapper = BX.create("div",
 				{
 					props: { className: "crm-entity-merger-column-btn-link-box" },
-					children: [ this._openButton, this._markAsNonDuplicateButton ]
+					children: [ this._markAsNonDuplicateButton ]
 				}
 			);
 			this._container.appendChild(this._buttonWrapper);
@@ -2070,7 +2107,7 @@ if(typeof BX.Crm.EntityMergerHeader === "undefined")
 		{
 			this.adjustLayout();
 		},
-		onOpenButtonClick: function(e)
+		onHeaderButtonClick: function(e)
 		{
 			this._merger.openEntityDetails(this._entityId);
 			e.preventDefault();
@@ -2113,6 +2150,7 @@ if(typeof BX.Crm.EntityMergerVerticalScroller === "undefined")
 		this.columnContainer = document.body.querySelector('.crm-entity-merger-column-container');
 		this.sidebarColumn = document.body.querySelector('.crm-entity-merger-sidebar-inner');
 		this.bottomPanel = document.body.querySelector('.ui-button-panel-wrapper');
+		this.bottomPanelHeader = document.body.querySelector('#queueStatisticsWrapper');
 		this.skeleton = document.body.querySelector('.crm-entity-merger-sidebar-skeleton');
 	};
 	BX.Crm.EntityMergerVerticalScroller.prototype =
@@ -2141,7 +2179,7 @@ if(typeof BX.Crm.EntityMergerVerticalScroller === "undefined")
 				{
 					this.skeleton.style.height = this.columnContainer.scrollHeight + 'px';
 				}
-				this.sidebarColumn.style.height = this.slider.clientHeight - (this.sidebarColumn.getBoundingClientRect().top + this.bottomPanel.offsetHeight) + 'px';
+				this.sidebarColumn.style.height = window.innerHeight - (this.sidebarColumn.getBoundingClientRect().top + this.bottomPanel.offsetHeight) + 'px';
 			}
 			else
 			{
@@ -2217,6 +2255,26 @@ if(typeof BX.Crm.EntityMergerScroller === "undefined")
 			BX.bind(window, "resize", this.adjustEars.bind(this));
 			BX.bind(this.columnInner, "scroll", this.adjustEars.bind(this));
 			BX.bind(window, "resize", this.centerEarsByContainerHeight.bind(this));
+			BX.bind(this.outerColumnContainer, "scroll", this.getColumnContainerWidth.bind(this));
+			BX.bind(window, "resize", this.getColumnContainerWidth.bind(this));
+			setTimeout(function(){this.getColumnContainerWidth()}.bind(this),100);
+			// this.getColumnContainerWidth();
+		},
+		getColumnContainerWidth: function()
+		{
+			var columnContainer = this.outerColumnContainer.querySelector('.crm-entity-merger-column-head');
+			var headerContainer = this.outerColumnContainer.querySelector('.crm-entity-merger-column-container');
+
+			if(!this.outerColumnContainer.classList.contains('crm-entity-merger-right-ear-shown'))
+			{
+				columnContainer.style.width = '100' + '%';
+				headerContainer.style.width = '100' + '%';
+			}
+			else
+			{
+				columnContainer.style.width = 'auto';
+				headerContainer.style.width = 'auto';
+			}
 		},
 		adjustEars: function()
 		{
@@ -2303,7 +2361,7 @@ if(typeof BX.Crm.EntityMergerScroller === "undefined")
 
 			if(slider)
 			{
-				columnContainer.style.height = slider.clientHeight - (columnContainer.getBoundingClientRect().top + bottomPanel.offsetHeight) + 'px';
+				columnContainer.style.height = window.innerHeight - (columnContainer.getBoundingClientRect().top + bottomPanel.offsetHeight) + 'px';
 			}
 			else
 			{
@@ -3434,6 +3492,8 @@ if(typeof BX.Crm.EntityMergerPanel === "undefined")
 
 			BX.addCustomEvent(this._merger, "onMergeError", BX.delegate(this.onMergeComplete, this));
 			BX.addCustomEvent(this._merger, "onPostponeError", BX.delegate(this.onPostponeError, this));
+
+			window.setTimeout(function() {this.adjustVisibility();}.bind(this),0);
 		},
 		layout: function()
 		{
@@ -3466,7 +3526,7 @@ if(typeof BX.Crm.EntityMergerPanel === "undefined")
 
 			this.adjustLayout();
 		},
-		adjustLayout: function()
+		adjustVisibility: function()
 		{
 			var isQueueEnabled = this._merger.isQueueEnabled();
 			var isDeduplicationMode = this._merger.isDeduplicationMode();
@@ -3483,12 +3543,21 @@ if(typeof BX.Crm.EntityMergerPanel === "undefined")
 				queueStatisticsWrapper.style.display = isQueueEnabled ? "" : "none";
 			}
 
+			window.setTimeout(function() {
+				BX.UI.ButtonPanel.pinner.onChange();
+			},0);
+
 			var queueNavigationButton = BX("queueNavigationButton");
 			if(queueNavigationButton)
 			{
 				queueNavigationButton.style.display = isQueueEnabled ? "" : "none";
 			}
 
+		},
+		adjustLayout: function()
+		{
+			this.adjustVisibility();
+			var isQueueEnabled = this._merger.isQueueEnabled();
 			if(isQueueEnabled)
 			{
 				var currentQueueLength = this._merger.getDedupeQueueLength();

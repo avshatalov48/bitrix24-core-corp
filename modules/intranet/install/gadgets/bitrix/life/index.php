@@ -54,7 +54,7 @@ $arGadgetParams["ACTIVE_DATE_FORMAT"] = ($arGadgetParams["ACTIVE_DATE_FORMAT"] ?
 	Array("HIDE_ICONS"=>"Y")
 );?>
 
-<?if(strlen($arGadgetParams["LIST_URL"])>0):?>
+<?if($arGadgetParams["LIST_URL"] <> ''):?>
 <br />
 <div align="right"><a href="<?=htmlspecialcharsbx($arGadgetParams["LIST_URL"])?>"><?echo GetMessage("GD_LIFE_ALL")?></a> <a href="<?=htmlspecialcharsbx($arGadgetParams["LIST_URL"])?>"><img width="7" height="7" border="0" src="/images/icons/arrows.gif" /></a>
 <br /></div>

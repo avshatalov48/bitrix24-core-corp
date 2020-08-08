@@ -90,7 +90,7 @@ $gridManagerCfg = array(
 );
 echo CCrmViewHelper::RenderOrderStatusSettings();
 $prefix = $arResult['GRID_ID'];
-$prefixLC = strtolower($arResult['GRID_ID']);
+$prefixLC = mb_strtolower($arResult['GRID_ID']);
 
 $arResult['GRID_DATA'] = array();
 $arColumns = array();
@@ -151,15 +151,15 @@ foreach($arResult['ORDER_SHIPMENT'] as $sKey => $arOrderShipment)
 	}
 
 	$deliveryService = '';
-	$deliveryServiceName = strlen($arOrderShipment['DELIVERY_SERVICE_NAME']) > 0 ? $arOrderShipment['DELIVERY_SERVICE_NAME'] : $arOrderShipment['DELIVERY_NAME'];
+	$deliveryServiceName = $arOrderShipment['DELIVERY_SERVICE_NAME'] <> '' ? $arOrderShipment['DELIVERY_SERVICE_NAME'] : $arOrderShipment['DELIVERY_NAME'];
 	$deliveryServiceName = htmlspecialcharsbx($deliveryServiceName);
 
-	if(strlen($arOrderShipment['DELIVERY_SERVICE_LOGOTIP']) > 0)
+	if($arOrderShipment['DELIVERY_SERVICE_LOGOTIP'] <> '')
 	{
 		$deliveryService .= '<div><img height="50" src="'.$arOrderShipment['DELIVERY_SERVICE_LOGOTIP'].'"></div>';
 	}
 
-	if(strlen($deliveryServiceName) > 0)
+	if($deliveryServiceName <> '')
 	{
 		$deliveryService .= '<div>'.$deliveryServiceName.'</div>';
 	}
@@ -278,7 +278,7 @@ if($arResult['ENABLE_TOOLBAR'])
 		'bitrix:crm.interface.toolbar',
 		'',
 		array(
-			'TOOLBAR_ID' => strtolower($arResult['GRID_ID']).'_toolbar',
+			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']).'_toolbar',
 			'BUTTONS' => array($addButton)
 		),
 		$component,
@@ -351,7 +351,7 @@ $APPLICATION->IncludeComponent(
 			'BINDING' => array(
 				'category' => 'crm.navigation',
 				'name' => 'index',
-				'key' => strtolower($arResult['NAVIGATION_CONTEXT_ID'])
+				'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
 			)
 		),
 		'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'],

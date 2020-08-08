@@ -122,7 +122,7 @@ abstract class BaseFormFilter
 		if ($errors)
 		{
 			$result = new Result();
-			$result->addError(new Error(Loc::getMessage($errors[0], array_merge($params, $errors[1])), $errors[0])); // todo-annabo check loc
+			$result->addError(new Error(Loc::getMessage($errors[0], array_merge($params, $errors[1])), $errors[0]));
 			$this->addError($form, $fieldName, $result);
 		}
 	}

@@ -95,7 +95,7 @@ elseif ($arResult["SHOW_MODE"] == "WorkflowParameters")
 										<label class="bizproc-field-name">
 											<?=($arParameter["Required"] ? "<span class=\"required\">*</span> " : "")?>
 											<span class="bizproc-field-title"><?=htmlspecialcharsbx($arParameter["Name"])?></span><?
-											if (strlen($arParameter["Description"]) > 0):
+											if ($arParameter["Description"] <> ''):
 												?><span class="bizproc-field-description"> (<?=htmlspecialcharsbx($arParameter["Description"])?>)</span><?
 											endif;
 											?>:
@@ -161,7 +161,7 @@ elseif ($arResult["SHOW_MODE"] == "WorkflowParameters")
 									<label class="bizproc-field-name">
 										<?=($arParameter["Required"] ? "<span class=\"required\">*</span> " : "")?>
 										<span class="bizproc-field-title"><?=htmlspecialcharsbx($arParameter["Name"])?></span><?
-										if (strlen($arParameter["Description"]) > 0):
+										if ($arParameter["Description"] <> ''):
 											?><span class="bizproc-field-description"> (<?=htmlspecialcharsbx($arParameter["Description"])?>)</span><?
 										endif;
 										?>:
@@ -203,7 +203,7 @@ elseif ($arResult["SHOW_MODE"] == "SelectWorkflow" && (count($arResult["TEMPLATE
 				<div class="bizproc-item-title">
 					<a href="<?=$arResult["TEMPLATES"][$workflowTemplate["ID"]]["URL"]?>"><?=$workflowTemplate["NAME"]?></a>
 				</div>
-				<?if (strlen($workflowTemplate["DESCRIPTION"]) > 0):?>
+				<?if ($workflowTemplate["DESCRIPTION"] <> ''):?>
 				<div class="bizproc-item-description">
 					<?= $workflowTemplate["DESCRIPTION"] ?>
 				</div>
@@ -220,7 +220,7 @@ elseif ($arResult["SHOW_MODE"] == "SelectWorkflow" && (count($arResult["TEMPLATE
 				<div class="bizproc-item-title">
 					<a href="<?=$arResult["TEMPLATES_OLD"][$workflowTemplate["ID"]]["URL"]?>"><?=$workflowTemplate["NAME"]?></a>
 				</div>
-				<?if (strlen($workflowTemplate["DESCRIPTION"]) > 0):?>
+				<?if ($workflowTemplate["DESCRIPTION"] <> ''):?>
 					<div class="bizproc-item-description">
 						<?= $workflowTemplate["DESCRIPTION"] ?>
 					</div>

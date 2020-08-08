@@ -23,22 +23,17 @@
 		},
 		onDurationPopupToggleClick: function (event)
 		{
-			if (!this.durationPopup)
-			{
-				this.durationPopup = this.buildBreakTimePopup(event);
-				var breakTimeContent = BX.create('span', {
-					props: {
-						className: 'timeman-schedule-form-title-break-duration-parts-wrapper'
-					},
-					children: [
-						this.buildDurationPopupInput(BX.message('TIMEMAN_SHIFT_EDIT_POPUP_FORMAT_HOUR'), 'hour'),
-						this.buildDurationPopupInput(BX.message('TIMEMAN_SHIFT_EDIT_POPUP_FORMAT_MINUTE'), 'min')
-					]
-				});
-				this.durationPopup.setContent(breakTimeContent);
-			}
-
-			this.durationPopup.setBindElement(event.currentTarget);
+			this.durationPopup = this.buildBreakTimePopup(event);
+			var breakTimeContent = BX.create('span', {
+				props: {
+					className: 'timeman-schedule-form-title-break-duration-parts-wrapper'
+				},
+				children: [
+					this.buildDurationPopupInput(BX.message('TIMEMAN_SHIFT_EDIT_POPUP_FORMAT_HOUR'), 'hour'),
+					this.buildDurationPopupInput(BX.message('TIMEMAN_SHIFT_EDIT_POPUP_FORMAT_MINUTE'), 'min')
+				]
+			});
+			this.durationPopup.setContent(breakTimeContent);
 
 			this.durationPopup.show();
 		},
@@ -126,6 +121,7 @@
 			return new BX.PopupWindow('timeman-break-time-' + Math.random(), event.currentTarget, {
 				titleBar: BX.message('TIMEMAN_SHIFT_EDIT_POPUP_PICK_TIME_TITLE'),
 				autoHide: true,
+				bindElement: event.currentTarget,
 				closeByEsc: true,
 				angle: true,
 				contentColor: 'white',

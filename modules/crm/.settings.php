@@ -7,6 +7,7 @@ return array(
 				'\\Bitrix\\Crm\\Controller' => 'api',
 				'\\Bitrix\\Crm\\Integration' => 'integration',
 				'\\Bitrix\\Crm\\Controller\\Site' => 'site',
+				'\\Bitrix\\Crm\\Controller\\Requisite' => 'requisite'
 			),
 			'restIntegration' => [
 				'enabled' => true,

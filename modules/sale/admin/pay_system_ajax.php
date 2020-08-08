@@ -5,6 +5,7 @@ use Bitrix\Main\Application;
 use Bitrix\Sale\Services\PaySystem\Restrictions\Manager;
 use Bitrix\Sale\BusinessValue;
 use Bitrix\Main\IO;
+use Bitrix\Sale\PaySystem\Domain\Verification;
 
 define("NO_KEEP_STATISTIC", true);
 define("NO_AGENT_STATISTIC", true);
@@ -32,7 +33,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/lib/cashbox/inputs/
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 
-if(strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bitrix_sessid())
+if($arResult["ERROR"] == '' && $saleModulePermissions >= "W" && check_bitrix_sessid())
 {
 	$action = ($request->get('action') !== null) ? trim($request->get('action')): '';
 
@@ -59,7 +60,7 @@ if(strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bit
 			foreach ($paramsStructure as $name => $param)
 			{
 				$paramsField .= "<tr>".
-					"<td>".(strlen($param["LABEL"]) > 0 ? $param["LABEL"].": " : "")."</td>".
+					"<td>".($param["LABEL"] <> '' ? $param["LABEL"].": " : "")."</td>".
 					"<td>".\Bitrix\Sale\Internals\Input\Manager::getEditHtml("RESTRICTION[".$name."]", $param, (isset($params[$name]) ? $params[$name] : null))."</td>".
 					"</tr>";
 			}
@@ -98,10 +99,10 @@ if(strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bit
 			if ($arResult["ERROR"] == '')
 			{
 				$fields = array(
-						"SERVICE_ID" => $paySystemId,
-						"SERVICE_TYPE" => Manager::SERVICE_TYPE_PAYMENT,
-						"SORT" => $sort,
-						"PARAMS" => $params
+					"SERVICE_ID" => $paySystemId,
+					"SERVICE_TYPE" => Manager::SERVICE_TYPE_PAYMENT,
+					"SORT" => $sort,
+					"PARAMS" => $params
 				);
 
 				/** @var \Bitrix\Sale\Result $res */
@@ -160,7 +161,7 @@ if(strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bit
 			if (class_exists($className))
 			{
 				$modeList = $className::getHandlerModeList();
-				$isOrderHandler = strpos($handler, 'orderdocument') === 0;
+				$isOrderHandler = mb_strpos($handler, 'orderdocument') === 0;
 				if ($modeList || $isOrderHandler)
 				{
 					if ($modeList)
@@ -298,6 +299,27 @@ if(strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bit
 					}
 				}
 			}
+
+			$entityName = $handler;
+			if ($psMode)
+			{
+				$entityName .= $psMode;
+			}
+			$arResult["DOMAIN_VERIFICATION"]["NEED_VERIFICATION"] = Verification\Manager::needVerification($entityName);
+			if ($arResult["DOMAIN_VERIFICATION"]["NEED_VERIFICATION"])
+			{
+				$domainVerificationFormUrl = \CComponentEngine::makeComponentPath('bitrix:sale.domain.verification.form');
+				$domainVerificationFormUrl = getLocalPath('components'.$domainVerificationFormUrl.'/slider.php');
+				$domainVerificationFormUrl = new \Bitrix\Main\Web\Uri($domainVerificationFormUrl);
+				$domainVerificationFormUrl->addParams([
+					'analyticsLabel' => 'paySystemDomainVerification',
+					'entity' => $entityName,
+					'manager' => Verification\Manager::class,
+				]);
+
+				$arResult["DOMAIN_VERIFICATION"]["FORM_LINK"] = $domainVerificationFormUrl;
+			}
+
 			ob_start();
 			$businessValueControl->renderMap(array('CONSUMER_KEY' => $consumerKey));
 			$arResult["BUS_VAL"] = ob_get_contents();
@@ -330,16 +352,16 @@ else
 {
 	if ($request->get('mode') == 'settings')
 		getRestrictionHtml($request->get('ID'));
-	elseif(strlen($arResult["ERROR"]) <= 0)
+	elseif($arResult["ERROR"] == '')
 		$arResult["ERROR"] = "Error! Access denied";
 }
 
-if(strlen($arResult["ERROR"]) > 0)
+if($arResult["ERROR"] <> '')
 	$arResult["RESULT"] = "ERROR";
 else
 	$arResult["RESULT"] = "OK";
 
-if(strtolower(SITE_CHARSET) != 'utf-8')
+if(mb_strtolower(SITE_CHARSET) != 'utf-8')
 	$arResult = $APPLICATION->ConvertCharsetArray($arResult, SITE_CHARSET, 'utf-8');
 
 header('Content-Type: application/json');

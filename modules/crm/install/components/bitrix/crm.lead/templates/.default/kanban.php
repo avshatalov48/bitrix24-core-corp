@@ -154,7 +154,7 @@ else
 				'BINDING' => array(
 					'category' => 'crm.navigation',
 					'name' => 'index',
-					'key' => strtolower($arResult['NAVIGATION_CONTEXT_ID'])
+					'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
 				)
 			)
 		),

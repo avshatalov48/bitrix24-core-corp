@@ -31,7 +31,7 @@ if ($arCurrentValues["B_CUR_USER_LIST"] != 'Y')
 		if($ar=CIBlockType::GetByIDLang($arr["ID"], LANGUAGE_ID))
 		{
 			$arIBlockType[$arr["ID"]] = "[".$arr["ID"]."] ".$ar["NAME"];
-			if (strpos($arr["ID"], 'event') !== false || strpos($arr["ID"], 'calendar') !== false && $arIBlockTypeDef === false)
+			if (mb_strpos($arr["ID"], 'event') !== false || mb_strpos($arr["ID"], 'calendar') !== false && $arIBlockTypeDef === false)
 				$arIBlockTypeDef = $arr["ID"];
 		}
 	}

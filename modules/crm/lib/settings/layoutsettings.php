@@ -58,8 +58,6 @@ class LayoutSettings
 	{
 		$this->enableSlider->set($enabled);
 	}
-
-
 	/**
 	 * Check if dedupe wizard enabled for duplicate control
 	 * @return bool

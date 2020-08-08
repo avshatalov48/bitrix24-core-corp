@@ -319,11 +319,11 @@ class Giphy extends Base
 
 	public static function onCommandLang($command, $lang = null)
 	{
-		$title = Loc::getMessage('IMBOT_GIPHY_COMMAND_'.strtoupper($command).'_TITLE', null, $lang);
-		$params = Loc::getMessage('IMBOT_GIPHY_COMMAND_'.strtoupper($command).'_PARAMS', null, $lang);
+		$title = Loc::getMessage('IMBOT_GIPHY_COMMAND_'.mb_strtoupper($command).'_TITLE', null, $lang);
+		$params = Loc::getMessage('IMBOT_GIPHY_COMMAND_'.mb_strtoupper($command).'_PARAMS', null, $lang);
 
 		$result = false;
-		if (strlen($title) > 0)
+		if ($title <> '')
 		{
 			$result = Array(
 				'TITLE' => $title,
@@ -336,12 +336,12 @@ class Giphy extends Base
 
 	public static function onAppLang($icon, $lang = null)
 	{
-		$title = Loc::getMessage('IMBOT_GIPHY_ICON_'.strtoupper($icon).'_TITLE', null, $lang);
-		$description = Loc::getMessage('IMBOT_GIPHY_ICON_'.strtoupper($icon).'_DESCRIPTION', null, $lang);
+		$title = Loc::getMessage('IMBOT_GIPHY_ICON_'.mb_strtoupper($icon).'_TITLE', null, $lang);
+		$description = Loc::getMessage('IMBOT_GIPHY_ICON_'.mb_strtoupper($icon).'_DESCRIPTION', null, $lang);
 		$copyright = Loc::getMessage('IMBOT_GIPHY_ICON_COPYRIGHT', null, $lang);
 
 		$result = false;
-		if (strlen($title) > 0)
+		if ($title <> '')
 		{
 			$result = Array(
 				'TITLE' => $title,

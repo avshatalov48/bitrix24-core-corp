@@ -720,15 +720,18 @@ BX.Crm.RequisitePopupFormManagerClass = (function ()
 				var countryId = form.getCountryId();
 				var typeId = "";
 				var inputName = "";
+				var featureName = "";
 				switch (countryId)
 				{
 					case 1:
 						typeId = BX.Crm.RequisiteFieldType.itin;
 						inputName = "RQ_INN";
+						featureName = "detailsSearchByInn";
 						break;
 					case 14:
 						typeId = BX.Crm.RequisiteFieldType.sro;
 						inputName = "RQ_EDRPOU";
+						featureName = "detailsSearchByEdrpou";
 						break;
 				}
 
@@ -746,6 +749,13 @@ BX.Crm.RequisitePopupFormManagerClass = (function ()
 					var input = this.getFieldControl(inputName);
 					if(input)
 					{
+						var features = form.getSetting("features", null);
+						if (!BX.type.isPlainObject(features))
+						{
+							features = {};
+						}
+						var scriptIndex = featureName + "InfoScript";
+						var popupScript = (features.hasOwnProperty(scriptIndex)) ? features[scriptIndex] : null;
 						controller = BX.Crm.RequisiteFieldController.create(
 							inputName,
 							{
@@ -753,7 +763,9 @@ BX.Crm.RequisitePopupFormManagerClass = (function ()
 								typeId: typeId,
 								input: input,
 								serviceUrl: this.requisiteAjaxUrl,
-								callbacks: {onFieldsLoad: BX.delegate(this.setupFields, this)}
+								callbacks: {onFieldsLoad: BX.delegate(this.setupFields, this)},
+								tariffLock: (!features.hasOwnProperty(featureName) || features[featureName] === 'N'),
+								tariffLockPopupScript: popupScript
 							}
 						);
 
@@ -972,6 +984,8 @@ if(typeof(BX.Crm.RequisiteFieldController) === "undefined")
 		this._isActive = false;
 
 		this._dialog = null;
+
+		this._tariffLock = null;
 	};
 	BX.Crm.RequisiteFieldController.prototype =
 	{
@@ -995,6 +1009,7 @@ if(typeof(BX.Crm.RequisiteFieldController) === "undefined")
 			}
 
 			this.activate();
+			this.showLock();
 		},
 		getId: function()
 		{
@@ -1084,6 +1099,54 @@ if(typeof(BX.Crm.RequisiteFieldController) === "undefined")
 				"search-inp-loading"
 			);
 		},
+		showLock: function()
+		{
+			var parent, i, found, popupScript;
+			if (this.getSetting("tariffLock", false) && BX.type.isDomNode(this._input))
+			{
+				parent = this._input;
+				found = false;
+				for (i = 0; i < 10; i++)
+				{
+					parent = parent.parentNode;
+					if (parent && parent.tagName === "TR" && parent.className === "crm-offer-row")
+					{
+						found = true;
+						break;
+					}
+				}
+				if (found)
+				{
+					parent = parent.querySelector("div.crm-offer-info-label-wrap");
+					if (parent)
+					{
+						this._tariffLock = BX.create("SPAN", { attrs: { "className": "tariff-lock" } });
+						if (parent.firstChild)
+						{
+							parent.insertBefore(this._tariffLock, parent.firstChild);
+						}
+						else
+						{
+							parent.appendChild(this._tariffLock);
+						}
+						popupScript = this.getSetting("tariffLockPopupScript", null);
+						if (popupScript)
+						{
+							this._tariffLock.setAttribute("onclick", popupScript);
+							this._tariffLock.style.cursor = "pointer";
+						}
+					}
+				}
+			}
+		},
+		hideLock: function()
+		{
+			if (this.getSetting("tariffLock", false) && BX.type.isDomNode(this._tariffLock))
+			{
+				BX.remove(this._tariffLock);
+				this._tariffLock = null;
+			}
+		},
 		closeDialog: function()
 		{
 			if(this._dialog)
@@ -1102,22 +1165,29 @@ if(typeof(BX.Crm.RequisiteFieldController) === "undefined")
 
 			this.showLoader();
 
-			BX.ajax(
-				{
-					url: this._serviceUrl,
-					method: "POST",
-					dataType: "json",
-					data:
+			if (this.getSetting("tariffLock", false))
+			{
+				window.setTimeout(BX.delegate(this.onRequestFailure, this), 1000);
+			}
+			else
+			{
+				BX.ajax(
 					{
-						"ACTION": "RESOLVE_EXTERNAL_CLIENT",
-						"PROPERTY_TYPE_ID": this._typeId,
-						"PROPERTY_VALUE": this._needle,
-						"COUNTRY_ID": this._countryId
-					},
-					onsuccess: BX.delegate(this.onSearchRequestSuccess, this),
-					onfailure: BX.delegate(this.onRequestFailure, this)
-				}
-			);
+						url: this._serviceUrl,
+						method: "POST",
+						dataType: "json",
+						data:
+							{
+								"ACTION": "RESOLVE_EXTERNAL_CLIENT",
+								"PROPERTY_TYPE_ID": this._typeId,
+								"PROPERTY_VALUE": this._needle,
+								"COUNTRY_ID": this._countryId
+							},
+						onsuccess: BX.delegate(this.onSearchRequestSuccess, this),
+						onfailure: BX.delegate(this.onRequestFailure, this)
+					}
+				);
+			}
 		},
 		onKeyPress: function(e)
 		{
@@ -1231,6 +1301,7 @@ if(typeof(BX.Crm.RequisiteFieldController) === "undefined")
 		destroy: function()
 		{
 			this.deactivate();
+			this.hideLock();
 
 			this._id = "";
 			this._settings = {};

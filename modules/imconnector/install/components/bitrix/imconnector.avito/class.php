@@ -7,7 +7,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use \Bitrix\Main\Loader,
 	\Bitrix\Main\Data\Cache,
 	\Bitrix\Main\LoaderException,
-	\Bitrix\Main\Localization\Loc;
+	\Bitrix\Main\Localization\Loc,
+	\Bitrix\Main\Web\Uri;
 use \Bitrix\ImConnector\Output,
 	\Bitrix\ImConnector\Status,
 	\Bitrix\ImConnector\Library,
@@ -76,238 +77,115 @@ class ImConnectorAvito extends CBitrixComponent
 		$this->cacheId = Connector::getCacheIdConnector($this->arParams['LINE'], $this->connector);
 	}
 
-	public function saveForm()
+	protected function setStatus($status, $resetError = true): void
+	{
+		$this->arResult['STATUS'] = $status;
+
+		$this->status->setConnection($status);
+		$this->arResult['CONNECTION_STATUS'] = $status;
+		$this->status->setRegister($status);
+		$this->arResult['REGISTER_STATUS'] = $status;
+
+		if ($resetError)
+		{
+			$this->status->setError(false);
+			$this->arResult['ERROR_STATUS'] = false;
+		}
+	}
+
+	public function saveForm(): void
 	{
 		//If been sent the current form
-		if ($this->request->isPost() && !empty($this->request[$this->connector. '_form']))
+		if ($this->request->isPost() && !empty($this->request[$this->connector . '_form']) && check_bitrix_sessid())
 		{
-			//If the session actual
-			if (check_bitrix_sessid())
+			//Activation
+			if($this->request[$this->connector. '_active'] && empty($this->arResult['ACTIVE_STATUS']))
 			{
-				if ($this->request[$this->connector. '_active'] && empty($this->arResult['ACTIVE_STATUS']))
+				$this->status->setActive(true);
+				$this->arResult['ACTIVE_STATUS'] = true;
+
+				//Reset cache
+				$this->cleanCache();
+			}
+
+			if (!empty($this->arResult['ACTIVE_STATUS']))
+			{
+				if ($this->request[$this->connector. '_del'])
 				{
-					$this->status->setActive(true);
-					$this->arResult['ACTIVE_STATUS'] = true;
+					$rawDelete = $this->connectorOutput->deleteConnector();
+
+					if($rawDelete->isSuccess())
+					{
+						Status::delete($this->connector, $this->arParams['LINE']);
+						$this->arResult['STATUS'] = false;
+						$this->arResult['ACTIVE_STATUS'] = false;
+						$this->arResult['CONNECTION_STATUS'] = false;
+						$this->arResult['REGISTER_STATUS'] = false;
+						$this->arResult['ERROR_STATUS'] = false;
+						$this->arResult['DATA_STATUS'] = false;
+						$this->arResult['PAGE'] = '';
+					}
+					else
+					{
+						$this->error[] = Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_NO_DISABLE');
+					}
 
 					//Reset cache
 					$this->cleanCache();
 				}
-
-				if (!empty($this->arResult['ACTIVE_STATUS']))
-				{
-					//If saving
-					if ($this->request[$this->connector. '_save'])
-					{
-						foreach ($this->listOptions as $value)
-						{
-							if (!empty($this->request[$value]))
-							{
-								$this->arResult['FORM'][$value] = $this->request[$value];
-							}
-						}
-
-						if (!empty($this->arResult['FORM']))
-						{
-							if (!empty($this->arResult['REGISTER_STATUS']))
-							{
-								$this->connectorOutput->unregister();
-							}
-
-							$saved = $this->connectorOutput->saveSettings($this->arResult['FORM']);
-
-							if ($saved->isSuccess())
-							{
-								$this->messages[] = Loc::getMessage('IMCONNECTOR_COMPONENT_AVITO_OK_SAVE');
-								$this->arResult['SAVE_STATUS'] = true;
-
-								$this->status->setError(false);
-								$this->arResult['ERROR_STATUS'] = false;
-							}
-							else
-							{
-								$this->error[] = Loc::getMessage('IMCONNECTOR_COMPONENT_AVITO_NO_SAVE');
-								$this->arResult['SAVE_STATUS'] = false;
-
-								$this->status->setConnection(false);
-								$this->arResult['CONNECTION_STATUS'] = false;
-								$this->status->setRegister(false);
-								$this->arResult['REGISTER_STATUS'] = false;
-
-								$this->arResult['STATUS'] = false;
-							}
-						}
-						else
-						{
-							$this->error[] = Loc::getMessage('IMCONNECTOR_COMPONENT_AVITO_NO_DATA_SAVE');
-						}
-
-						//Reset cache
-						$this->cleanCache();
-
-						if ($this->arResult['SAVE_STATUS'])
-						{
-							$testConnect = $this->connectorOutput->testConnect();
-
-							if ($testConnect->isSuccess())
-							{
-								$this->messages[] = Loc::getMessage('IMCONNECTOR_COMPONENT_AVITO_OK_CONNECT');
-
-								$this->status->setConnection(true);
-								$this->arResult['CONNECTION_STATUS'] = true;
-
-								$this->status->setError(false);
-								$this->arResult['ERROR_STATUS'] = false;
-							}
-							else
-							{
-								$this->error[] = Loc::getMessage('IMCONNECTOR_COMPONENT_AVITO_NO_CONNECT');
-
-								$testConnect->getResult();
-
-								$this->status->setConnection(false);
-								$this->arResult['CONNECTION_STATUS'] = false;
-
-								$this->status->setRegister(false);
-								$this->arResult['REGISTER_STATUS'] = false;
-
-								$this->arResult['STATUS'] = false;
-							}
-
-							//Reset cache
-							$this->cleanCache();
-
-							if ($this->arResult['CONNECTION_STATUS'])
-							{
-								$register = $this->connectorOutput->register();
-
-								if ($register->isSuccess())
-								{
-									$this->messages[] = Loc::getMessage('IMCONNECTOR_COMPONENT_AVITO_OK_REGISTER');
-
-									$this->status->setRegister(true);
-									$this->arResult['REGISTER_STATUS'] = true;
-									$this->arResult['STATUS'] = true;
-
-									$this->status->setError(false);
-									$this->arResult['ERROR_STATUS'] = false;
-								}
-								else
-								{
-									$this->error[] = Loc::getMessage('IMCONNECTOR_COMPONENT_AVITO_NO_REGISTER');
-
-									$this->status->setRegister(false);
-									$this->arResult['REGISTER_STATUS'] = false;
-
-									$this->arResult['STATUS'] = false;
-								}
-
-								//Reset cache
-								$this->cleanCache();
-							}
-						}
-					}
-
-					if ($this->request[$this->connector. '_del'])
-					{
-						$rawDelete = $this->connectorOutput->deleteConnector();
-
-						if($rawDelete->isSuccess())
-						{
-							Status::delete($this->connector, $this->arParams['LINE']);
-							$this->arResult['STATUS'] = false;
-							$this->arResult['ACTIVE_STATUS'] = false;
-							$this->arResult['CONNECTION_STATUS'] = false;
-							$this->arResult['REGISTER_STATUS'] = false;
-							$this->arResult['ERROR_STATUS'] = false;
-							$this->arResult['PAGE'] = '';
-						}
-						else
-						{
-							$this->error[] = Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_NO_DISABLE');
-						}
-
-						//Reset cache
-						$this->cleanCache();
-					}
-				}
-			}
-			else
-			{
-				$this->error[] = Loc::getMessage('IMCONNECTOR_COMPONENT_AVITO_SESSION_HAS_EXPIRED');
 			}
 		}
 	}
 
-	public function constructionForm()
+	public function constructionForm(): void
 	{
 		global $APPLICATION;
 
-		$this->arResult['NAME'] = Connector::getNameConnectorReal($this->connector);
+		$this->arResult["NAME"] = Connector::getNameConnectorReal($this->connector);
 
-		$this->arResult['URL']['DELETE'] = $APPLICATION->GetCurPageParam('', array($this->pageId, 'open_block'));;
-		$this->arResult['URL']['SIMPLE_FORM'] = $APPLICATION->GetCurPageParam($this->pageId . '=simple_form', array($this->pageId, 'open_block'));
+		$this->arResult["URL"]["DELETE"] = $APPLICATION->GetCurPageParam("", array($this->pageId, "open_block", "action"));
+		$this->arResult["URL"]["SIMPLE_FORM"] = $APPLICATION->GetCurPageParam($this->pageId . "=simple_form", array($this->pageId, "open_block", "action"));
 
-		if ($this->arResult['ACTIVE_STATUS'])
+		if ($this->arResult["ACTIVE_STATUS"])
 		{
-			if (!empty($this->arResult['PAGE']))
+			//Reset cache
+			if(!empty($this->arResult['PAGE']))
 			{
-				$settings = $this->connectorOutput->getAuthorizationInformation();
-
-				$result = $settings->getResult();
-
-				foreach ($this->listOptions as $value)
-				{
-					if (empty($this->arResult['FORM'][$value]))
-					{
-						if (empty($result['SETTINGS'][$value]))
-						{
-							$this->arResult['FORM'][$value] = $result['SETTINGS'][$value];
-						}
-						else
-						{
-							$this->arResult['SAVE_STATUS'] = true;
-							$this->arResult['placeholder'][$value] = true;
-						}
-					}
-				}
-
-				if (!empty($result['CLIENT_ID']))
-				{
-					$this->arResult['CLIENT_ID'] = $result['CLIENT_ID'];
-				}
-
-				if (!empty($result['CLIENT_SECRET']))
-				{
-					$this->arResult['CLIENT_SECRET'] = $result['CLIENT_SECRET'];
-				}
+				$this->cleanCache();
 			}
 
-			if ($this->arResult['STATUS'])
+			$cache = Cache::createInstance();
+			if ($cache->initCache(Library::CACHE_TIME_COMPONENT, $this->cacheId, Library::CACHE_DIR_COMPONENT))
 			{
-				$cache = Cache::createInstance();
+				$this->arResult['FORM'] = $cache->getVars();
+			}
+			elseif ($cache->startDataCache())
+			{
+				$uri = new Uri(Library::getCurrentUri());
+				$params = array('reload' => 'Y', 'ajaxid' => $this->arParams['AJAX_ID'], $this->pageId => 'simple_form');
 
-				if ($cache->initCache(Library::CACHE_TIME_COMPONENT, $this->cacheId, Library::CACHE_DIR_COMPONENT))
+				$uri->addParams($params);
+
+				$infoOAuth = $this->connectorOutput->getAuthorizationInformation(urlencode($uri->getUri()));
+				if ($infoOAuth->isSuccess())
 				{
-					$this->arResult['INFO_CONNECTION'] = $cache->getVars();
+					$this->arResult['FORM'] = $infoOAuth->getResult();
+
+					if (!empty($this->arResult['FORM']['TOKEN']))
+					{
+						$registerResult = $this->connectorOutput->register();
+						if ($registerResult->isSuccess())
+						{
+							$this->setStatus(true);
+						}
+					}
+					$cache->endDataCache($this->arResult['FORM']);
 				}
-				elseif ($cache->startDataCache())
+				else
 				{
-					$infoConnect = $this->connectorOutput->infoConnect();
-					if($infoConnect->isSuccess())
-					{
-						$infoConnectData = $infoConnect->getData();
-						$this->arResult['INFO_CONNECTION'] =  [
-							'ID' => $infoConnectData['id'],
-							'URL_IM' => $infoConnectData['url_im']
-						];
-
-						$cache->endDataCache($this->arResult['INFO_CONNECTION']);
-					}
-					else
-					{
-						$this->arResult['INFO_CONNECTION'] = array();
-						$cache->abortDataCache();
-					}
+					$this->arResult['FORM'] = [];
+					$this->error[] = Loc::getMessage('IMCONNECTOR_COMPONENT_AVITO_ERROR_REQUEST_INFORMATION_FROM_SERVER');
+					$cache->abortDataCache();
 				}
 			}
 		}

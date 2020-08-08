@@ -57,7 +57,7 @@ class LiveChatManager
 			$add['URL_CODE_PUBLIC'] = self::prepareAlias($fields['URL_CODE_PUBLIC']);
 			$add['URL_CODE_PUBLIC_ID'] = \Bitrix\Im\Alias::add(Array(
 				'ALIAS' => $add['URL_CODE_PUBLIC'],
-				'ENTITY_TYPE' => \Bitrix\Im\Alias::ENTITY_TYPE_OPEN_LINE,
+				'ENTITY_TYPE' => \Bitrix\Im\Alias::ENTITY_TYPE_LIVECHAT,
 				'ENTITY_ID' => $this->id
 			));
 
@@ -71,7 +71,7 @@ class LiveChatManager
 				else
 				{
 					$result = \Bitrix\Im\Alias::addUnique(Array(
-						'ENTITY_TYPE' => \Bitrix\Im\Alias::ENTITY_TYPE_OPEN_LINE,
+						'ENTITY_TYPE' => \Bitrix\Im\Alias::ENTITY_TYPE_LIVECHAT,
 						'ENTITY_ID' => $this->id
 					));
 					$add['URL_CODE_PUBLIC'] = $result['ALIAS'];
@@ -81,7 +81,7 @@ class LiveChatManager
 		}
 
 		$result = \Bitrix\Im\Alias::addUnique(Array(
-			'ENTITY_TYPE' => \Bitrix\Im\Alias::ENTITY_TYPE_OPEN_LINE,
+			'ENTITY_TYPE' => \Bitrix\Im\Alias::ENTITY_TYPE_LIVECHAT,
 			'ENTITY_ID' => $this->id
 		));
 		$add['URL_CODE'] = $result['ALIAS'];
@@ -138,7 +138,7 @@ class LiveChatManager
 		return $result->isSuccess();
 	}
 
-	public function update($fields)
+	public function update($fields, $options = [])
 	{
 		$prevConfig = $this->get();
 
@@ -173,7 +173,7 @@ class LiveChatManager
 				{
 					$fields['URL_CODE_PUBLIC_ID'] = \Bitrix\Im\Alias::add(Array(
 						'ALIAS' => $fields['URL_CODE_PUBLIC'],
-						'ENTITY_TYPE' => \Bitrix\Im\Alias::ENTITY_TYPE_OPEN_LINE,
+						'ENTITY_TYPE' => \Bitrix\Im\Alias::ENTITY_TYPE_LIVECHAT,
 						'ENTITY_ID' => $this->id
 					));
 					if ($fields['URL_CODE_PUBLIC_ID'])
@@ -227,11 +227,21 @@ class LiveChatManager
 		}
 
 		$result = Model\LivechatTable::update($this->id, $update);
-		if ($result->isSuccess() && $this->config)
+		if ($result->isSuccess())
 		{
-			foreach ($update as $key => $value)
+			if ($this->config)
 			{
-				$this->config[$key] = $value;
+				foreach ($update as $key => $value)
+				{
+					$this->config[$key] = $value;
+				}
+			}
+			if ($options['CLEAN_CACHE_CONNECTOR'] && \Bitrix\Main\Loader::includeModule('imconnector'))
+			{
+				\Bitrix\ImConnector\Connector::cleanCacheConnector(
+					$this->id,
+					\Bitrix\ImConnector\Connector::getCacheIdConnector($this->id, 'livechat')
+				);
 			}
 		}
 
@@ -290,7 +300,7 @@ class LiveChatManager
 		$orm = \Bitrix\Im\Model\AliasTable::getList(Array(
 			'filter' => Array(
 				'=ALIAS' => $alias,
-				'=ENTITY_TYPE' => \Bitrix\Im\Alias::ENTITY_TYPE_OPEN_LINE,
+				'=ENTITY_TYPE' => \Bitrix\Im\Alias::ENTITY_TYPE_LIVECHAT,
 				'!=ENTITY_ID' => $this->id
 			)
 		));

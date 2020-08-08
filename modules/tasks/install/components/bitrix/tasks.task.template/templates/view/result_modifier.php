@@ -298,6 +298,7 @@ $arResult['JS_DATA']= array(
 		'USER_ID' => $arParams['USER_ID'],
 		'PRIORITY' => $template['PRIORITY'],
 	),
+	'auxData' => $arResult['AUX_DATA'],
 	'can' => array(
 		'edit' => $template->canEdit(),
 	),

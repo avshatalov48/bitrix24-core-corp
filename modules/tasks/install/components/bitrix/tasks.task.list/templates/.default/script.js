@@ -1,32 +1,21 @@
 BX.namespace('BX.Tasks.Grid');
 
-BX.addCustomEvent(window, 'onTasksQuickFormExecuted', counterUpdate);
-function counterUpdate()
-{
-	var filterId = BX.Tasks.GridActions.gridId || null;
-	if (filterId)
-	{
-		var filterObject = BX.Main.filterManager.getById(filterId);
-		var fields = filterObject.getFilterFieldsValues();
-		var roleid = fields.ROLEID || 'view_all';//debugger
-
-		BX.onCustomEvent("Tasks.Toolbar.Reload", [roleid]); //FIRE
-	}
-}
-
-
 BX.Tasks.GridActions = {
     gridId: null,
 	groupSelector: null,
 	registeredTimerNodes: {},
 	defaultPresetId: '',
 
-	initPopupBaloon: function(mode, searchField, groupIdField) {
-    	
+	checkCanMove: function()
+	{
+		return !BX.Tasks.GridInstance || BX.Tasks.GridInstance.checkCanMove();
+	},
+
+	initPopupBalloon: function(mode, searchField, groupIdField)
+	{
         this.groupSelector = null;
 
-		BX.bind(BX(searchField + '_control'), 'click', BX.delegate(function(){
-
+		BX.bind(BX(searchField + '_control'), 'click', BX.delegate(function() {
 			if (!this.groupSelector)
 			{
 				this.groupSelector = new BX.Tasks.Integration.Socialnetwork.NetworkSelector({
@@ -47,133 +36,119 @@ BX.Tasks.GridActions = {
 					this.groupSelector.close();
 				}, this));
 			}
-
 			this.groupSelector.open();
-
 		}, this));
 	},
-	filter: function(tag)
+
+	filter: function(options)
 	{
 		var filterManager = BX.Main.filterManager.getById(this.gridId);
-		if(!filterManager)
+		if (!filterManager)
 		{
 			alert('BX.Main.filterManager not initialised');
 			return;
 		}
-
 		var fields = filterManager.getFilterFieldsValues();
-		fields.TAG = tag;
-
 		var filterApi = filterManager.getApi();
+
+		Object.keys(options).forEach(function(key) {
+			fields[key] = options[key];
+		});
+
 		filterApi.setFields(fields);
 		filterApi.apply();
 	},
 
-    action: function (code, taskId, args) {
-        switch (code) {
-            default:
-                this.doAction(code, taskId, args);
-                break;
-			case 'add2Timeman':
-				if(BX.addTaskToPlanner)
-					BX.addTaskToPlanner(taskId);
-				else if(window.top.BX.addTaskToPlanner)
-					window.top.BX.addTaskToPlanner(taskId);
-				break;
-            case 'delete':
-                // BX.Tasks.confirmDelete(BX.message('TASKS_COMMON_TASK_ALT_A')).then(function () {
-                    this.doAction(code, taskId, args);
-
-                // }.bind(this));
-                break;
-        }
+    action: function(code, taskId, args)
+	{
+		if (code === 'add2Timeman')
+		{
+			if (BX.addTaskToPlanner)
+			{
+				BX.addTaskToPlanner(taskId);
+			}
+			else if (window.top.BX.addTaskToPlanner)
+			{
+				window.top.BX.addTaskToPlanner(taskId);
+			}
+		}
+		else
+		{
+			this.doAction(code, taskId, args);
+		}
     },
-    confirmGroupAction: function (gridId) {
+
+	doAction: function(code, taskId, args)
+	{
+		args = args || {};
+		args['id'] = taskId;
+
+		this.getQuery(code).add('task.' + code.toLowerCase(), args, {}, BX.delegate(function (errors, data) {
+			if (!errors.checkHasErrors())
+			{
+				if (data.OPERATION == 'task.delete')
+				{
+					BX.Tasks.Util.fireGlobalTaskEvent('DELETE', {ID: taskId});
+					BX.UI.Notification.Center.notify({content: BX.message('TASKS_DELETE_SUCCESS')});
+				}
+				if (!this.gridId)
+				{
+					window.location.href = window.location.href;
+					return;
+				}
+				if (!this.checkCanMove())
+				{
+					this.reloadRow(taskId);
+				}
+			}
+		}, this));
+	},
+
+	getQuery: function(code)
+	{
+		var viewType = BX.message('_VIEW_TYPE');
+		var url = '/bitrix/components/bitrix/tasks.base/ajax.php?_CODE=' + (code || '') + '&viewType=' + viewType;
+
+		if (!this.query)
+		{
+			this.query = new BX.Tasks.Util.Query({url: url, autoExec: true});
+		}
+
+		return this.query;
+	},
+
+	reloadRow: function(taskId)
+	{
+		var grid = BX.Main.gridManager.getById(this.gridId);
+		if (grid && grid.hasOwnProperty('instance'))
+		{
+			grid.instance.updateRow(taskId.toString());
+		}
+	},
+
+	reloadGrid: function()
+	{
+		if (BX.Bitrix24 && BX.Bitrix24.Slider && BX.Bitrix24.Slider.getLastOpenPage())
+		{
+			BX.Bitrix24.Slider.destroy(BX.Bitrix24.Slider.getLastOpenPage().getUrl());
+		}
+
+		var grid = BX.Main.gridManager.getById(this.gridId);
+		if (grid && grid.hasOwnProperty('instance'))
+		{
+			grid.instance.reloadTable('POST', {apply_filter: 'Y', clear_nav: 'Y'});
+		}
+	},
+
+    confirmGroupAction: function(gridId)
+	{
         BX.Tasks.confirm(BX.message('TASKS_CONFIRM_GROUP_ACTION')).then(function () {
             BX.Main.gridManager.getById(gridId).instance.sendSelected();
-			counterUpdate();
         }.bind(this));
     },
 
-    doAction: function (code, taskId, args) {
-        args = args || {};
-        args['id'] = taskId;
-
-        // add action
-        this.getQuery(code).add('task.' + code.toLowerCase(), args, {}, BX.delegate(function (errors, data) {
-
-            if (!errors.checkHasErrors()) {
-                if (data.OPERATION == 'task.delete') {
-                    BX.Tasks.Util.fireGlobalTaskEvent('DELETE', {ID: taskId});
-
-					BX.UI.Notification.Center.notify({
-						content: BX.message('TASKS_DELETE_SUCCESS')
-					});
-                }
-
-                if (!this.gridId) {
-                    window.location.href = window.location.href;
-                    return;
-                }
-
-                this.reloadRow(taskId);
-            }
-        }, this));
-
-    },
-    reloadGrid: function()
-    {
-
-		if (BX.Bitrix24 && BX.Bitrix24.Slider && BX.Bitrix24.Slider.getLastOpenPage())
-		{
-			BX.Bitrix24.Slider.destroy(
-				BX.Bitrix24.Slider.getLastOpenPage().getUrl()
-			);
-		}
-
-		var reloadParams = { apply_filter: 'Y', clear_nav: 'Y' };
-		var gridObject = BX.Main.gridManager.getById(this.gridId);
-
-		if (gridObject.hasOwnProperty('instance'))
-		{
-			gridObject.instance.reloadTable('POST', reloadParams);
-		}
-
-		var filterObject = BX.Main.filterManager.getById(this.gridId);
-		var fields = filterObject.getFilterFieldsValues();
-		var roleid = fields.ROLEID || 'view_all';
-		BX.onCustomEvent("Tasks.Toolbar.Reload", [roleid]); //FIRE
-	},
-    reloadRow: function(taskId)
-    {
-        reloadParams = {apply_filter: 'Y', clear_nav: 'Y'};
-        gridObject = BX.Main.gridManager.getById(this.gridId);
-        if (gridObject.hasOwnProperty('instance'))
-            gridObject.instance.updateRow(taskId.toString());
-
-		var filterObject = BX.Main.filterManager.getById(this.gridId);
-		var fields = filterObject.getFilterFieldsValues();
-		var roleid = fields.ROLEID || 'view_all';//debugger
-		BX.onCustomEvent("Tasks.Toolbar.Reload", [roleid]); //FIRE
-    },
-
-    getQuery: function (code) {
-    	var code = code || '';
-    	var viewType = BX.message('_VIEW_TYPE');
-
-    	var url = '/bitrix/components/bitrix/tasks.base/ajax.php?_CODE=' + code + '&viewType=' + viewType;
-		console.log(url);
-        if (!this.query) {
-            this.query = new BX.Tasks.Util.Query({
-				url: url,
-                autoExec: true
-            });
-        }
-
-        return this.query;
-    },
-    onDeadlineChangeClick: function (taskId, node, curDeadline) {
-
+    onDeadlineChangeClick: function(taskId, node, curDeadline)
+	{
         curDeadline = curDeadline || (new Date).getDate();
 
         BX.calendar({
@@ -215,15 +190,17 @@ BX.Tasks.GridActions = {
                         }
                     );
 					BX.CJSTask.ajaxUrl = path;
-                    BX.Tasks.GridActions.reloadRow(taskId);
-
+					if (!BX.Tasks.GridActions.checkCanMove())
+					{
+						BX.Tasks.GridActions.reloadRow(taskId);
+					}
                 };
             })(node, taskId)
         });
-
     },
 
-    onMarkChangeClick: function (taskId, bindElement, currentValues) {
+    onMarkChangeClick: function(taskId, bindElement, currentValues)
+	{
         BX.TaskGradePopup.show(
             taskId,
             bindElement,
@@ -235,52 +212,65 @@ BX.Tasks.GridActions = {
                 }
             }
         );
-
         BX.addClass(bindElement, "task-grade-and-report-selected");
 
         return false;
     },
 
-    __onGradePopupClose: function () {
+    __onGradePopupClose: function()
+	{
         BX.removeClass(this.bindElement, "task-grade-and-report-selected");
     },
 
-    __onGradePopupChange: function () {
-        this.bindElement.className = "task-grade-and-report" + (this.listValue !== "NULL" ? " task-grade-" + this.listItem.className : "") + (this.report ? " task-in-report" : "");
+    __onGradePopupChange: function()
+	{
+        this.bindElement.className = "task-grade-and-report"
+			+ (this.listValue !== "NULL" ? " task-grade-" + this.listItem.className : "")
+			+ (this.report ? " task-in-report" : "");
         this.bindElement.title = BX.message("TASKS_MARK") + ": " + this.listItem.name;
 
-        BX.Tasks.GridActions.action('update', this.id, {data: {MARK: this.listValue === "NULL" ? "" : this.listValue}});
+        BX.Tasks.GridActions.action('update', this.id, {data: {
+        	MARK: (this.listValue === "NULL" ? "" : this.listValue)
+        }});
     },
 
-	renderTimerItem : function (taskId, timeSpentInLogs, timeEstimate, isRunning, taskTimersTotalValue, canStartTimeTracking)
+	renderTimerItem: function(taskId, timeSpentInLogs, timeEstimate, isRunning, taskTimersTotalValue, canStartTimeTracking)
 	{
+		canStartTimeTracking = canStartTimeTracking || false;
+
 		var className = 'task-timer-inner';
 		var timeSpent = timeSpentInLogs + taskTimersTotalValue;
-		var canStartTimeTracking = canStartTimeTracking || false;
 
 		if (isRunning)
+		{
 			className = className + ' task-timer-play';
+		}
 		else if (canStartTimeTracking)
+		{
 			className = className + ' task-timer-pause';
+		}
 		else
+		{
 			className = className + ' task-timer-clock';
+		}
 
-		if ((timeEstimate > 0) && (timeSpent > timeEstimate))
+		if (timeEstimate > 0 && timeSpent > timeEstimate)
+		{
 			className = className + ' task-timer-overdue';
+		}
 
 		return (
 			BX.create("span", {
-				props : {
-					id : 'task-timer-block-' + taskId,
-					className : "task-timer-block"
+				props: {
+					id: 'task-timer-block-' + taskId,
+					className: "task-timer-block"
 				},
-				events : {
-					click : (function(taskId, canStartTimeTracking){
-						return function(){
+				events: {
+					click: (function(taskId, canStartTimeTracking) {
+						return function() {
 							if (BX.hasClass(BX('task-timer-block-inner-' + taskId), 'task-timer-play'))
 							{
 								BX.TasksTimerManager.stop(taskId);
-
 							}
 							else if (canStartTimeTracking)
 							{
@@ -289,24 +279,24 @@ BX.Tasks.GridActions = {
 						}
 					})(taskId, canStartTimeTracking)
 				},
-				children : [
+				children: [
 					BX.create("span", {
-						props : {
-							id : 'task-timer-block-inner-' + taskId,
-							className : className
+						props: {
+							id: 'task-timer-block-inner-' + taskId,
+							className: className
 						},
-						children : [
+						children: [
 							BX.create("span", {
-								props : {
-									className : 'task-timer-icon'
+								props: {
+									className: 'task-timer-icon'
 								}
 							}),
 							BX.create("span", {
-								props : {
-									id : 'task-timer-block-value-' + taskId,
-									className : 'task-timer-time'
+								props: {
+									id: 'task-timer-block-value-' + taskId,
+									className: 'task-timer-time'
 								},
-								text : BX.Tasks.GridActions.renderTimerTimes(timeSpent, timeEstimate, isRunning)
+								text: BX.Tasks.GridActions.renderTimerTimes(timeSpent, timeEstimate, isRunning)
 							})
 						]
 					})
@@ -315,23 +305,22 @@ BX.Tasks.GridActions = {
 		);
 	},
 
-	renderTimerTimes : function(timeSpent, timeEstimate, isRunning)
+	renderTimerTimes: function(timeSpent, timeEstimate, isRunning)
 	{
 		var str = '';
-		var bShowSeconds = false;
+		var showSeconds = !!isRunning;
 
-		if (isRunning)
-			bShowSeconds = true;
-
-		str = BX.Tasks.GridActions.renderSecondsToHHMMSS(timeSpent, bShowSeconds);
+		str = BX.Tasks.GridActions.renderSecondsToHHMMSS(timeSpent, showSeconds);
 
 		if (timeEstimate > 0)
+		{
 			str = str + ' / ' + BX.Tasks.GridActions.renderSecondsToHHMMSS(timeEstimate, false);
+		}
 
-		return (str);
+		return str;
 	},
 
-	renderSecondsToHHMMSS : function(totalSeconds, bShowSeconds)
+	renderSecondsToHHMMSS: function(totalSeconds, showSeconds)
 	{
 		var pad = '00';
 		var hours = '';
@@ -349,22 +338,20 @@ BX.Tasks.GridActions = {
 			minutes += Math.ceil(totalSeconds / 60) % 60;
 		}
 
-		var result = pad.substring(0, 2 - hours.length) + hours
-			+ ':' + pad.substring(0, 2 - minutes.length) + minutes;
+		var result = pad.substring(0, 2 - hours.length) + hours + ':' + pad.substring(0, 2 - minutes.length) + minutes;
 
-		if (bShowSeconds)
+		if (showSeconds)
 		{
 			seconds = '' + totalSeconds % 60;
 			result = result + ':' + pad.substring(0, 2 - seconds.length) + seconds;
 		}
 
-		return (result);
+		return result;
 	},
 
-	redrawTimerNode : function (taskId, timeSpentInLogs, timeEstimate, isRunning, taskTimersTotalValue, canStartTimeTracking)
+	redrawTimerNode: function(taskId, timeSpentInLogs, timeEstimate, isRunning, taskTimersTotalValue, canStartTimeTracking)
 	{
 		var taskTimerBlock = BX('task-timer-block-' + taskId);
-
 		var newTaskTimerBlock = BX.Tasks.GridActions.renderTimerItem(
 			taskId,
 			timeSpentInLogs,
@@ -376,10 +363,7 @@ BX.Tasks.GridActions = {
 
 		if (taskTimerBlock)
 		{
-			taskTimerBlock.parentNode.replaceChild(
-				newTaskTimerBlock,
-				taskTimerBlock
-			);
+			taskTimerBlock.parentNode.replaceChild(newTaskTimerBlock, taskTimerBlock);
 		}
 		else
 		{
@@ -400,44 +384,48 @@ BX.Tasks.GridActions = {
 					this.registeredTimerNodes[taskId] = this.__getTimerChangeCallback(taskId);
 					BX.addCustomEvent(window, 'onTaskTimerChange', this.registeredTimerNodes[taskId]);
 				}
-
 			}
 		}
 	},
 
-	removeTimerNode : function (taskId)
+	removeTimerNode: function(taskId)
 	{
-		var taskTimerBlock = BX('task-timer-block-' + taskId);
-
 		if (this.registeredTimerNodes[taskId])
+		{
 			BX.removeCustomEvent(window, 'onTaskTimerChange', this.registeredTimerNodes[taskId]);
+		}
 
+		var taskTimerBlock = BX('task-timer-block-' + taskId);
 		if (taskTimerBlock)
+		{
 			taskTimerBlock.parentNode.removeChild(taskTimerBlock);
+		}
 	},
 
-	__getTimerChangeCallback : function(selfTaskId)
+	__getTimerChangeCallback: function(selfTaskId)
 	{
 		var state = null;
 
-		return function(params)
-		{
+		return function(params) {
 			var switchStateTo   = null;
 			var innerTimerBlock = null;
 
 			if (params.action === 'refresh_daemon_event')
 			{
-				if (params.taskId !== selfTaskId)
+				if (Number(params.taskId) !== Number(selfTaskId))
 				{
 					if (state === 'paused')
+					{
 						return;
-					else
-						switchStateTo = 'paused';
+					}
+					switchStateTo = 'paused';
 				}
 				else
 				{
 					if (state !== 'playing')
+					{
 						switchStateTo = 'playing';
+					}
 
 					BX.Tasks.GridActions.redrawTimerNode(
 						params.taskId,
@@ -452,31 +440,32 @@ BX.Tasks.GridActions = {
 			else if (params.action === 'start_timer')
 			{
 				if (
-					(selfTaskId == params.taskId)
+					Number(selfTaskId) === Number(params.taskId)
 					&& params.timerData
-					&& (selfTaskId == params.timerData.TASK_ID)
+					&& Number(selfTaskId) === Number(params.timerData.TASK_ID)
 				)
 				{
 					switchStateTo = 'playing';
 				}
 				else
-					switchStateTo = 'paused';	// other task timer started, so we need to be paused
+				{
+					switchStateTo = 'paused'; // other task timer started, so we need to be paused
+				}
 			}
 			else if (params.action === 'stop_timer')
 			{
-				if (selfTaskId == params.taskId)
+				if (Number(selfTaskId) == Number(params.taskId))
+				{
 					switchStateTo = 'paused';
+				}
 			}
 			else if (params.action === 'init_timer_data')
 			{
 				if (params.data.TIMER)
 				{
-					if (params.data.TIMER.TASK_ID == selfTaskId)
+					if (Number(params.data.TIMER.TASK_ID) === Number(selfTaskId))
 					{
-						if (params.data.TIMER.TIMER_STARTED_AT > 0)
-							switchStateTo = 'playing';
-						else
-							switchStateTo = 'paused';
+						switchStateTo = (params.data.TIMER.TIMER_STARTED_AT > 0 ? 'playing' : 'paused');
 					}
 					else if (params.data.TIMER.TASK_ID > 0)
 					{
@@ -489,11 +478,7 @@ BX.Tasks.GridActions = {
 			if (switchStateTo !== null)
 			{
 				innerTimerBlock = BX('task-timer-block-inner-' + selfTaskId);
-
-				if (
-					innerTimerBlock
-					&& ( ! BX.hasClass(innerTimerBlock, 'task-timer-clock') )
-				)
+				if (innerTimerBlock && !BX.hasClass(innerTimerBlock, 'task-timer-clock'))
 				{
 					if (switchStateTo === 'paused')
 					{
@@ -511,12 +496,716 @@ BX.Tasks.GridActions = {
 			}
 		}
 	}
-
 };
 
 BX(function() {
 	"use strict";
 
+	BX.Tasks.Grid = function(options)
+	{
+		this.grid = BX.Main.gridManager.getInstanceById(options.gridId);
+
+		this.userId = Number(options.userId);
+		this.ownerId = Number(options.ownerId);
+		this.groupId = Number(options.groupId);
+
+		this.sorting = options.sorting;
+		this.groupByGroups = (options.groupByGroups === 'true');
+		this.groupBySubTasks = (options.groupBySubTasks === 'true');
+		this.arParams = options.arParams;
+
+		this.taskList = new Map();
+		this.comments = new Map();
+
+		this.query = new BX.Tasks.Util.Query({
+			url: '/bitrix/components/bitrix/tasks.task.list/ajax.php'
+		});
+
+		this.isMyList = this.userId === this.ownerId;
+		this.canPin = !this.groupId;
+
+		this.updateCanMove();
+		this.init(options);
+	};
+
+	BX.Tasks.Grid.prototype = {
+		init: function(options)
+		{
+			this.bindEvents();
+			this.fillTasksList(options.taskList);
+			this.handleGridRows();
+		},
+
+		bindEvents: function()
+		{
+			var eventHandlers = {
+				comment_add: this.onPullComment,
+				comment_read_all: this.onPullCommentReadAll,
+				task_view: this.onPullView,
+				task_remove: this.onPullRemove,
+				user_option_changed: this.onUserOptionChanged
+			};
+
+			BX.addCustomEvent('onPullEvent-tasks', function(command, params) {
+				if (eventHandlers[command])
+				{
+					eventHandlers[command].apply(this, [params]);
+				}
+			}.bind(this));
+
+			BX.addCustomEvent('BX.Main.grid:sort', function(column, grid) {
+				if (grid === this.grid)
+				{
+					this.sorting.sort = {};
+					this.sorting.sort[column.sort_by] = column.sort_order;
+				}
+			}.bind(this));
+
+			BX.addCustomEvent('BX.Main.grid:paramsUpdated', function() {
+				this.updateCanMove();
+				this.handleGridRows();
+				this.taskList.clear();
+				this.getRows()
+					.map(function(row) {
+						return row.getId();
+					})
+					.filter(function(id) {
+						return id !== 'template_0';
+					})
+					.forEach(function(id) {
+						this.taskList.set(id);
+					}.bind(this));
+			}.bind(this));
+
+			BX.addCustomEvent('BX.Tasks.Filter.group', function(grid, groupType, value) {
+				if (this.grid === grid)
+				{
+					this[groupType] = value;
+				}
+			}.bind(this));
+		},
+
+		updateCanMove: function()
+		{
+			this.canMove = (
+				this.isMyList
+				&& this.sorting.sort.ACTIVITY_DATE
+				&& this.sorting.sort.ACTIVITY_DATE === 'desc'
+				&& !this.groupByGroups
+				&& !this.groupBySubTasks
+			);
+		},
+
+		checkCanMove: function()
+		{
+			return this.canMove;
+		},
+
+		fillTasksList: function(taskList)
+		{
+			Object.keys(taskList).forEach(function(key) {
+				this.taskList.set(key);
+			}.bind(this));
+		},
+
+		handleGridRows: function()
+		{
+			this.getRows().forEach(function(row) {
+				var node = row.getNode();
+				if (BX.data(node, 'pinned') === 'Y')
+				{
+					BX.addClass(node, 'tasks-list-item-pinned');
+				}
+				else
+				{
+					BX.removeClass(node, 'tasks-list-item-pinned');
+				}
+			});
+		},
+
+		reloadToolbar: function()
+		{
+			var filterId = this.getGrid().getId() || null;
+			if (filterId)
+			{
+				var roleId = 'view_all';
+				var filterObject = BX.Main.filterManager.getById(filterId);
+				if (filterObject)
+				{
+					var fields = filterObject.getFilterFieldsValues();
+					roleId = fields.ROLEID || roleId;
+				}
+				BX.onCustomEvent('Tasks.Toolbar.Reload', [roleId]);
+			}
+		},
+
+		onPullView: function(data)
+		{
+			this.reloadToolbar();
+
+			if (this.userId !== Number(data.USER_ID))
+			{
+				return;
+			}
+
+			if (this.isRowExist(data.TASK_ID.toString()))
+			{
+				var params = {
+					taskIds: [data.TASK_ID],
+					arParams: this.arParams
+				};
+
+				this.query.run('this.prepareGridRowsForTasks', params).then(function(result) {
+					if (result.data)
+					{
+						Object.keys(result.data).forEach(function(taskId) {
+							if (this.isRowExist(taskId))
+							{
+								this.updateActivityDateCell(
+									this.getRowById(taskId),
+									result.data[taskId].content.ACTIVITY_DATE
+								);
+							}
+						}.bind(this));
+					}
+				}.bind(this));
+				this.query.execute();
+			}
+		},
+
+		onPullCommentReadAll: function(data)
+		{
+			this.reloadToolbar();
+
+			if (this.userId !== Number(data.USER_ID) || this.groupId !== Number(data.GROUP_ID))
+			{
+				return;
+			}
+
+			var params = {
+				taskIds: Array.from(this.taskList.keys()),
+				arParams: this.arParams
+			};
+
+			this.query.run('this.prepareGridRowsForTasks', params).then(function(result) {
+				if (result.data)
+				{
+					Object.keys(result.data).forEach(function(taskId) {
+						if (this.isRowExist(taskId))
+						{
+							this.updateActivityDateCell(
+								this.getRowById(taskId),
+								result.data[taskId].content.ACTIVITY_DATE
+							);
+						}
+					}.bind(this));
+
+					this.reloadToolbar();
+				}
+			}.bind(this));
+			this.query.execute();
+		},
+
+		updateActivityDateCell: function(row, activityContent)
+		{
+			var activityCell = row.getCellById('ACTIVITY_DATE');
+			if (activityCell)
+			{
+				if (this.checkCanMove())
+				{
+					row.setCellsContent({ACTIVITY_DATE: activityContent});
+				}
+				else
+				{
+					var div = document.createElement('div');
+					div.innerHTML = activityContent;
+
+					var oldCounter = activityCell.querySelector('.ui-counter');
+					var newCounter = div.firstChild.querySelector('.ui-counter');
+
+					if (newCounter)
+					{
+						if (oldCounter)
+						{
+							BX.replace(oldCounter, newCounter);
+						}
+						else
+						{
+							var counterContainer = activityCell.querySelector('.task-counter-container');
+							if (counterContainer)
+							{
+								counterContainer.appendChild(newCounter);
+							}
+						}
+					}
+					else
+					{
+						BX.remove(oldCounter);
+					}
+				}
+			}
+		},
+
+		onPullComment: function(data)
+		{
+			this.reloadToolbar();
+
+			if (this.checkComment(data))
+			{
+				var xmlId = data.entityXmlId.split('_');
+				if (xmlId)
+				{
+					this.checkTask(xmlId[1]);
+				}
+			}
+		},
+
+		onPullRemove: function(data)
+		{
+			this.reloadToolbar();
+
+			if (this.checkCanMove())
+			{
+				this.removeItem(data.TASK_ID.toString());
+			}
+		},
+
+		onUserOptionChanged: function(data)
+		{
+			this.reloadToolbar();
+
+			if (!this.checkCanMove() || this.userId !== Number(data.USER_ID))
+			{
+				return;
+			}
+
+			var taskId = data.TASK_ID.toString();
+
+			switch (Number(data.OPTION))
+			{
+				case 1:
+					this.onMuteChanged(taskId);
+					break;
+
+				case 2:
+					if (this.canPin)
+					{
+						this.onPinChanged(taskId, data.ADDED);
+					}
+					break;
+
+				default:
+					break;
+			}
+		},
+
+		onMuteChanged: function(taskId)
+		{
+			if (this.isRowExist(taskId))
+			{
+				var params = {
+					taskIds: [taskId],
+					arParams: this.arParams
+				};
+
+				this.query.run('this.prepareGridRowsForTasks', params).then(function(result) {
+					if (result.data)
+					{
+						Object.keys(result.data).forEach(function(taskId) {
+							if (this.isRowExist(taskId))
+							{
+								var rowData = result.data[taskId];
+								var row = this.getRowById(taskId);
+								row.setCellsContent({
+									TITLE: rowData.content.TITLE,
+									ACTIVITY_DATE: rowData.content.ACTIVITY_DATE
+								});
+								row.setActions(rowData.actions);
+							}
+						}.bind(this));
+					}
+				}.bind(this));
+				this.query.execute();
+			}
+		},
+
+		onPinChanged: function(taskId, added)
+		{
+			var params = {
+				taskId: taskId,
+				navigation: {
+					pageNumber: this.getPageNumber(),
+					pageSize: this.getPageSize()
+				},
+				arParams: this.arParams
+			};
+
+			this.query.run('this.getNearTasks', params).then(function(result) {
+				if (result.data)
+				{
+					var before = result.data.before;
+					var after = result.data.after;
+
+					if ((before && this.isRowExist(before)) || (after && this.isRowExist(after)))
+					{
+						var parameters = {
+							action: 'pinChanged',
+							added: added,
+							before: before,
+							after: after
+						};
+						this.updateItem(taskId, null, parameters);
+					}
+					else
+					{
+						this.removeItem(taskId);
+					}
+				}
+			}.bind(this));
+			this.query.execute();
+		},
+
+		checkComment: function(data)
+		{
+			var xmlId = data.entityXmlId.split('_');
+			if (!xmlId)
+			{
+				return false;
+			}
+
+			var entityType = xmlId[0];
+			var taskId = xmlId[1];
+
+			if (entityType !== 'TASK')
+			{
+				return false;
+			}
+
+			if (!this.comments.has(taskId))
+			{
+				this.comments.set(taskId, new Set());
+			}
+
+			var taskComments = this.comments.get(taskId);
+			var messageId = data.messageId;
+			var participants = data.participants.map(function(id) {
+				return id.toString();
+			})
+
+			if (taskComments.has(messageId))
+			{
+				return false;
+			}
+
+			taskComments.add(messageId);
+
+			return (participants.includes(this.userId.toString()) || this.groupId === data.groupId);
+		},
+
+		checkTask: function(taskId)
+		{
+			BX.ajax.runAction('tasks.task.list', {data: {
+				filter: {ID: taskId},
+				params: {
+					RETURN_ACCESS: 'Y',
+					SIFT_THROUGH_FILTER: {
+						userId: this.ownerId,
+						groupId: this.groupId
+					}
+				}
+			}}).then(function(response) {
+				if (this.checkCanMove())
+				{
+					if (response.data.tasks.length > 0)
+					{
+						this.updateItem(taskId, response.data.tasks[0]);
+					}
+					else if (this.taskList.has(taskId))
+					{
+						this.removeItem(taskId);
+					}
+				}
+				else if (this.isRowExist(taskId))
+				{
+					if (response.data.tasks.length > 0)
+					{
+						var params = {
+							taskIds: [taskId],
+							data: {},
+							arParams: this.arParams
+						};
+						params.data[taskId] = response.data.tasks[0];
+
+						this.query.run('this.prepareGridRowsForTasks', params).then(function(result) {
+							if (result.data)
+							{
+								Object.keys(result.data).forEach(function(taskId) {
+									if (this.isRowExist(taskId))
+									{
+										this.updateActivityDateCell(
+											this.getRowById(taskId),
+											result.data[taskId].content.ACTIVITY_DATE
+										);
+									}
+								}.bind(this));
+							}
+						}.bind(this));
+						this.query.execute();
+					}
+					else
+					{
+						this.removeItem(taskId);
+					}
+				}
+			}.bind(this));
+		},
+
+		updateItem: function(taskId, rowData, parameters)
+		{
+			rowData = rowData || null;
+			parameters = parameters || {};
+
+			if (!this.taskList.has(taskId))
+			{
+				this.taskList.set(taskId);
+				this.addGridRow(taskId, rowData, parameters);
+			}
+			else
+			{
+				this.updateGridRow(taskId, rowData, parameters);
+			}
+		},
+
+		addGridRow: function(rowId, rowData, parameters)
+		{
+			var params = {
+				taskIds: [rowId],
+				data: {},
+				arParams: this.arParams
+			};
+			if (rowData)
+			{
+				params.data[rowId] = rowData;
+			}
+
+			this.query.run('this.prepareGridRowsForTasks', params).then(function(result) {
+				if (result.data && result.data[rowId])
+				{
+					this.getGrid().hideEmptyStub();
+
+					var rowData = result.data[rowId];
+					var templateRow = this.getGrid().getTemplateRow();
+					templateRow.setId(rowId);
+					templateRow.setCellsContent(rowData.content);
+					templateRow.setActions(rowData.actions);
+					templateRow.makeCountable();
+					templateRow.show();
+
+					this.handlePinProp(templateRow);
+					this.moveGridRow(rowId, parameters);
+					this.highlightGridRow(rowId);
+					this.handleGridRows();
+
+					this.getGrid().bindOnRowEvents();
+					this.getGrid().updateCounterDisplayed();
+					this.getGrid().updateCounterSelected();
+				}
+			}.bind(this));
+			this.query.execute();
+		},
+
+		updateGridRow: function(rowId, rowData, parameters)
+		{
+			if (this.isRowExist(rowId))
+			{
+				var params = {
+					taskIds: [rowId],
+					data: {},
+					arParams: this.arParams
+				};
+				if (rowData)
+				{
+					params.data[rowId] = rowData;
+				}
+
+				this.query.run('this.prepareGridRowsForTasks', params).then(function(result) {
+					if (result.data && result.data[rowId])
+					{
+						var rowData = result.data[rowId];
+						var row = this.getRowById(rowId);
+						row.setCellsContent(rowData.content);
+						row.setActions(rowData.actions);
+
+						this.handlePinProp(row);
+						this.moveGridRow(rowId, parameters);
+						this.highlightGridRow(rowId);
+						this.handleGridRows();
+					}
+				}.bind(this));
+				this.query.execute();
+			}
+		},
+
+		removeItem: function(id)
+		{
+			if (this.isRowExist(id))
+			{
+				this.taskList.delete(id);
+				this.highlightGridRow(id).then(function() {
+					this.getGrid().removeRow(id);
+				}.bind(this));
+			}
+		},
+
+		moveGridRow: function(rowId, parameters)
+		{
+			this.getGrid().getRows().reset();
+
+			switch (parameters.action)
+			{
+				case 'pinChanged':
+					this.moveRow(rowId, parameters.after, parameters.before);
+					break;
+
+				default:
+					var row = this.getRowById(rowId);
+					var isPinned = (row && (this.getRowProp(row, 'pinned') === 'Y'));
+					this.moveRow(rowId, (isPinned ? 0 : this.getLastPinnedRowId()), this.getFirstRowId());
+					break;
+			}
+		},
+
+		moveRow: function(rowId, after, before)
+		{
+			if (after)
+			{
+				this.getGrid().getRows().insertAfter(rowId, after);
+			}
+			else if (before)
+			{
+				this.getGrid().getRows().insertBefore(rowId, before);
+			}
+		},
+
+		getLastPinnedRowId: function()
+		{
+			var lastPinnedRowId = 0;
+
+			this.getRows().reverse().forEach(function(row) {
+				if (!lastPinnedRowId && this.getRowProp(row, 'pinned') === 'Y')
+				{
+					lastPinnedRowId = this.getRowProp(row, 'id');
+				}
+			}.bind(this));
+
+			return lastPinnedRowId;
+		},
+
+		getFirstRowId: function()
+		{
+			var rows = this.getRows();
+			return (rows.length ? this.getRowProp(rows[0], 'id') : 0);
+		},
+
+		handlePinProp: function(row)
+		{
+			var isPinned = !!row.getCellById('TITLE').querySelector('.task-title-pin');
+			this.setRowProp(row, 'pinned', (isPinned ? 'Y' : 'N'))
+		},
+
+		highlightGridRow: function(rowId)
+		{
+			var promise = new BX.Promise();
+
+			if (this.isRowExist(rowId))
+			{
+				var node = this.getRowNodeById(rowId);
+
+				BX.addClass(node, 'task-list-item-highlighted');
+				setTimeout(function() {
+					BX.removeClass(node, 'task-list-item-highlighted');
+					promise.fulfill();
+				}.bind(this), 1000);
+			}
+
+			return promise;
+		},
+
+		getGrid: function()
+		{
+			return this.grid;
+		},
+
+		getRows: function()
+		{
+			return this.getGrid().getRows().getBodyChild();
+		},
+
+		isRowExist: function(id)
+		{
+			return this.getRowById(id) !== null;
+		},
+
+		getRowById: function(id)
+		{
+			return this.getGrid().getRows().getById(id);
+		},
+
+		getRowNodeById: function(id)
+		{
+			return this.getRowById(id).getNode();
+		},
+
+		getRowProp: function(row, propName)
+		{
+			return BX.data(row.getNode(), propName);
+		},
+
+		setRowProp: function(row, propName, propValue)
+		{
+			row.getNode().setAttribute('data-' + propName, propValue);
+		},
+
+		getPageNumber: function()
+		{
+			var pageNumber = 1;
+			var navPanel = this.getGrid().getContainer().querySelector('.main-grid-nav-panel');
+			if (navPanel)
+			{
+				var pagination = navPanel.querySelector('.main-ui-pagination');
+				if (pagination)
+				{
+					var activePagination = pagination.querySelector('.main-ui-pagination-active');
+					if (activePagination)
+					{
+						pageNumber = activePagination.innerText;
+					}
+				}
+			}
+
+			return pageNumber;
+		},
+
+		getPageSize: function()
+		{
+			var pageSize = 50;
+			var selector = BX(this.getGrid().getContainerId() + '_' + this.getGrid().settings.get('pageSizeId'));
+
+			if (selector)
+			{
+				pageSize = BX.data(selector, 'value');
+			}
+
+			return pageSize;
+		},
+	};
+
+	BX.addCustomEvent('tasksTaskEvent', BX.delegate(function(type, data) {
+		if (!BX.Tasks.GridActions.checkCanMove())
+		{
+			BX.Tasks.GridActions.reloadGrid();
+		}
+	}, this));
 
 	BX.addCustomEvent("SidePanel.Slider:onCloseByEsc", function(event) {
 		var reg = /tasks\/task\/edit/;
@@ -527,82 +1216,67 @@ BX(function() {
 		}
 	});
 
-	BX.addCustomEvent('Tasks.TopMenu:onItem', function(roleId, url){
+	BX.addCustomEvent('BX.Main.Filter:apply', function(filterId, data, ctx) {
+		var stringUrl = window.location.href;
+		var url = new URL(stringUrl);
+		var state = url.searchParams.get('F_STATE');
+		var newUrl = (state === 'sR' ? stringUrl.replace('&F_STATE=sR', '') : stringUrl);
+
+		window.history.replaceState(null, null, newUrl);
+	}.bind(this));
+
+	BX.addCustomEvent('Tasks.TopMenu:onItem', function(roleId, url) {
 		var filterManager = BX.Main.filterManager.getById(BX.Tasks.GridActions.gridId);
-		if(!filterManager)
+		if (!filterManager)
 		{
 			alert('BX.Main.filterManager not initialised');
 			return;
 		}
 
 		var fields = {
-			preset_id: BX.Tasks.GridActions.defaultPresetId
+			preset_id: BX.Tasks.GridActions.defaultPresetId,
+			additional: {ROLEID: (roleId === 'view_all' ? 0 : roleId)}
 		};
-
-		if(roleId != 'view_all')
-		{
-			fields.additional = { ROLEID: roleId };
-		}
-		else
-		{
-			fields.additional = { ROLEID: 0 };
-		}
-
 		var filterApi = filterManager.getApi();
 		filterApi.setFilter(fields);
 
 		window.history.pushState(null, null, url);
 	});
 
-	BX.addCustomEvent('Tasks.Toolbar:onItem', function(counterId){
+	BX.addCustomEvent('Tasks.Toolbar:onItem', function(counterId) {
 		var filterManager = BX.Main.filterManager.getById(BX.Tasks.GridActions.gridId);
-		if(!filterManager)
+		if (!filterManager)
 		{
 			alert('BX.Main.filterManager not initialised');
 			return;
 		}
 		var filterApi = filterManager.getApi();
+		var filterFields = filterManager.getFilterFieldsValues();
 
-
-		if(Number(counterId) === 8388608) //\CTaskListState::VIEW_TASK_CATEGORY_WAIT_CTRL
+		if (Number(counterId) === 12582912 || Number(counterId) === 6291456)
 		{
-			// debugger
-			var fields = {STATUS:{0:'4'}};
-			var f = filterManager.getFilterFieldsValues();
-			if (f.hasOwnProperty('ROLEID') && f.ROLEID != '')
-			{
-				fields.ROLEID = f.ROLEID;
-			}
-			else
-			{
-				fields.ROLEID = 'view_role_originator';
-			}
-
-			//\CTasks::STATE_SUPPOSEDLY_COMPLETED
+			var fields = {
+				ROLEID: (filterFields.hasOwnProperty('ROLEID') ? filterFields.ROLEID : 0),
+				PROBLEM: counterId
+			};
 			filterApi.setFields(fields);
 			filterApi.apply();
 		}
 		else
 		{
-			// debugger
-			var fields = {additional:{}};
-			var f = filterManager.getFilterFieldsValues();
-			if(f.hasOwnProperty('ROLEID'))
+			fields = {
+				preset_id: BX.Tasks.GridActions.defaultPresetId,
+				additional: {
+					PROBLEM: counterId,
+				}
+			};
+			if (filterFields.hasOwnProperty('ROLEID'))
 			{
-				fields.additional.ROLEID = f.ROLEID;
+				fields.additional.ROLEID = filterFields.ROLEID;
 			}
-			fields.preset_id= BX.Tasks.GridActions.defaultPresetId;
-			fields.additional.PROBLEM= counterId;
-
 			filterApi.setFilter(fields);
 		}
 	});
-
-	BX.addCustomEvent("tasksTaskEvent", BX.delegate(function(type, data)
-	{
-		// BX.Tasks.GridActions.reloadRow(data.task.ID);
-		BX.Tasks.GridActions.reloadGrid();
-	}, this));
 
 	BX.Tasks.Grid.Sorting = function(options)
 	{

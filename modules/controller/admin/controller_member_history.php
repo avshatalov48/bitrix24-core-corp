@@ -36,7 +36,7 @@ $arFilter = array(
 	"=FIELD" => $find_field,
 );
 foreach ($arFilter as $k => $v)
-	if (!strlen($v))
+	if ($v == '')
 		unset($arFilter[$k]);
 
 $arHeaders = array(

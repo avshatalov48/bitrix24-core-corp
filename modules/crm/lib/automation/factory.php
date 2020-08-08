@@ -21,13 +21,19 @@ class Factory
 		//\CCrmOwnerType::Invoice,
 	);
 
+	private static $limitedEntityTypes = [
+		\CCrmOwnerType::Lead,
+		\CCrmOwnerType::Deal,
+	];
+
 	private static $triggerRegistry;
-	private static $featuresCache = array();
 
 	private static $targets = [];
 
 	private static $newActivities = [];
 	private static $conversionResults = [];
+
+	private static $limitationCache = [];
 
 	public static function isAutomationAvailable($entityTypeId, $ignoreLicense = false)
 	{
@@ -36,17 +42,98 @@ class Factory
 
 		if (!$ignoreLicense && Loader::includeModule('bitrix24'))
 		{
-			$feature = 'crm_automation_'.strtolower(\CCrmOwnerType::ResolveName($entityTypeId));
+			$feature = 'crm_automation_'.mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId));
+			$is = Feature::isFeatureEnabled($feature);
 
-			if (!isset(static::$featuresCache[$feature]))
+			if (!$is && self::isLimitationSupported() && in_array($entityTypeId, self::$limitedEntityTypes))
 			{
-				static::$featuresCache[$feature] = Feature::isFeatureEnabled($feature);
+				$is = Feature::isFeatureEnabled($feature.'_limited');
 			}
 
-			return static::$featuresCache[$feature];
+			return $is;
 		}
 
 		return true;
+	}
+
+	public static function isAutomationRunnable(int $entityTypeId): bool
+	{
+		if (static::isAutomationAvailable($entityTypeId))
+		{
+			if (self::isAutomationLimited($entityTypeId))
+			{
+				return !self::isOverLimited($entityTypeId);
+			}
+
+			return true;
+		}
+
+		return false;
+	}
+
+	public static function isAutomationLimited(int $entityTypeId): bool
+	{
+		if (Loader::includeModule('bitrix24'))
+		{
+			$feature = 'crm_automation_'.mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId));
+			$is = Feature::isFeatureEnabled($feature);
+
+			if ($is)
+			{
+				return false;
+			}
+
+			return (
+				in_array($entityTypeId, self::$limitedEntityTypes)
+				&& Feature::isFeatureEnabled($feature.'_limited')
+			);
+		}
+
+		return false;
+	}
+
+	public static function getRobotsLimit(int $entityTypeId): int
+	{
+		if (static::isAutomationLimited($entityTypeId))
+		{
+			return (int) Feature::getVariable('crm_automation_robots_limit');
+		}
+		return 0;
+	}
+
+	private static function isOverLimited($entityTypeId): bool
+	{
+		$limit = static::getRobotsLimit($entityTypeId);
+
+		if ($limit <= 0)
+		{
+			return false;
+		}
+
+		if (isset(self::$limitationCache[$entityTypeId]))
+		{
+			return self::$limitationCache[$entityTypeId];
+		}
+
+		$target = self::createTarget($entityTypeId);
+		$statuses = $target->getEntityStatuses();
+
+		$triggersCnt = count($target->getTriggers($statuses));
+
+		if ($triggersCnt > $limit)
+		{
+			return self::$limitationCache[$entityTypeId] = true;
+		}
+
+		$documentType = \CCrmBizProcHelper::ResolveDocumentType($entityTypeId);
+		$robotsCnt = \Bitrix\Bizproc\Automation\Helper::countAllRobots($documentType, $statuses);
+
+		return self::$limitationCache[$entityTypeId] = ($triggersCnt + $robotsCnt > $limit);
+	}
+
+	private static function isLimitationSupported()
+	{
+		return method_exists(\Bitrix\Bizproc\Automation\Helper::class, 'countAllRobots');
 	}
 
 	public static function canUseBizprocDesigner()
@@ -54,12 +141,7 @@ class Factory
 		if (Loader::includeModule('bitrix24'))
 		{
 			$feature = 'crm_automation_designer';
-			if (!isset(static::$featuresCache[$feature]))
-			{
-				static::$featuresCache[$feature] = Feature::isFeatureEnabled($feature);
-			}
-
-			return static::$featuresCache[$feature];
+			return Feature::isFeatureEnabled($feature);
 		}
 
 		return true;
@@ -89,7 +171,7 @@ class Factory
 
 		$result = new Result();
 
-		if (empty($entityId) || !static::isAutomationAvailable($entityTypeId))
+		if (empty($entityId) || !static::isAutomationRunnable($entityTypeId))
 		{
 			$result->addError(new Error('not available'));
 			return $result;
@@ -110,7 +192,7 @@ class Factory
 	{
 		$result = new Result();
 
-		if (empty($entityId) || !static::isAutomationAvailable($entityTypeId))
+		if (empty($entityId) || !static::isAutomationRunnable($entityTypeId))
 		{
 			$result->addError(new Error('not available'));
 			return $result;
@@ -207,6 +289,8 @@ class Factory
 		{
 			self::$triggerRegistry = [];
 			foreach ([
+					Trigger\ResponsibleChangedTrigger::className(),
+					Trigger\FieldChangedTrigger::className(),
 					Trigger\EmailTrigger::className(),
 					Trigger\EmailSentTrigger::className(),
 					Trigger\EmailReadTrigger::className(),
@@ -218,8 +302,11 @@ class Factory
 					Trigger\InvoiceTrigger::className(),
 					Trigger\PaymentTrigger::className(),
 					Trigger\AllowDeliveryTrigger::className(),
+					Trigger\FillTrackingNumberTrigger::className(),
+					Trigger\ShipmentChangedTrigger::className(),
 					Trigger\DeductedTrigger::className(),
 					Trigger\OrderCanceledTrigger::className(),
+					Trigger\OrderPaidTrigger::className(),
 					Trigger\WebHookTrigger::className(),
 					Trigger\VisitTrigger::className(),
 					Trigger\GuestReturnTrigger::className(),

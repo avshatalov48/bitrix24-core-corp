@@ -133,14 +133,14 @@ class SearchAction extends Search\SearchAction
 			if($scope === EntitySearchScope::INDEX)
 			{
 				$filter = array('FIND' => $searchQuery);
-				$filter['=IS_MY_COMPANY'] = isset($options['isMyCompany']) && strtoupper($options['isMyCompany']) === 'Y'
+				$filter['=IS_MY_COMPANY'] = isset($options['isMyCompany']) && mb_strtoupper($options['isMyCompany']) === 'Y'
 					? 'Y' : 'N';
 				SearchEnvironment::convertEntityFilterValues(\CCrmOwnerType::Company, $filter);
 			}
 			else //if($scope === EntitySearchScope::DENOMINATION)
 			{
 				$filter = array('%TITLE' => $searchQuery);
-				$filter['=IS_MY_COMPANY'] = isset($options['isMyCompany']) && strtoupper($options['isMyCompany']) === 'Y'
+				$filter['=IS_MY_COMPANY'] = isset($options['isMyCompany']) && mb_strtoupper($options['isMyCompany']) === 'Y'
 					? 'Y' : 'N';
 			}
 
@@ -701,7 +701,7 @@ class SearchAction extends Search\SearchAction
 				array(
 					'=ENTITY_ID' => $entityTypeName,
 					'@ELEMENT_ID' => $entityIDs,
-					'@TYPE_ID' => array('PHONE' , 'EMAIL')
+					'@TYPE_ID' => ['PHONE', 'EMAIL']
 				)
 			);
 
@@ -719,7 +719,7 @@ class SearchAction extends Search\SearchAction
 					$attributes[$entityKey] = array();
 				}
 
-				$key = strtolower($fields['TYPE_ID']);
+				$key = mb_strtolower($fields['TYPE_ID']);
 				if(!isset($attributes[$entityKey][$key]))
 				{
 					$attributes[$entityKey][$key] = array();

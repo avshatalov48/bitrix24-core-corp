@@ -343,36 +343,36 @@ final class CTaskRestService extends IRestService
 
 		CTaskAssert::assert($taskId >= 1);
 
-		switch (strtolower($arHandler['EVENT_NAME']))
+		switch(mb_strtolower($arHandler['EVENT_NAME']))
 		{
 			case 'ontaskadd':
-				$arEventFields['FIELDS_BEFORE']        = 'undefined';
-				$arEventFields['FIELDS_AFTER']         =  array('ID' => $taskId);
+				$arEventFields['FIELDS_BEFORE'] = 'undefined';
+				$arEventFields['FIELDS_AFTER'] = array('ID' => $taskId);
 				$arEventFields['IS_ACCESSIBLE_BEFORE'] = 'N';
-				$arEventFields['IS_ACCESSIBLE_AFTER']  = 'undefined';
-			break;
+				$arEventFields['IS_ACCESSIBLE_AFTER'] = 'undefined';
+				break;
 
 			case 'ontaskupdate':
-				$arEventFields['FIELDS_BEFORE']        =  array('ID' => $taskId);
-				$arEventFields['FIELDS_AFTER']         =  array('ID' => $taskId);
+				$arEventFields['FIELDS_BEFORE'] = array('ID' => $taskId);
+				$arEventFields['FIELDS_AFTER'] = array('ID' => $taskId);
 				$arEventFields['IS_ACCESSIBLE_BEFORE'] = 'undefined';
-				$arEventFields['IS_ACCESSIBLE_AFTER']  = 'undefined';
-			break;
+				$arEventFields['IS_ACCESSIBLE_AFTER'] = 'undefined';
+				break;
 
 			case 'ontaskdelete':
-				$arEventFields['FIELDS_BEFORE']        =  array('ID' => $taskId);
-				$arEventFields['FIELDS_AFTER']         = 'undefined';
+				$arEventFields['FIELDS_BEFORE'] = array('ID' => $taskId);
+				$arEventFields['FIELDS_AFTER'] = 'undefined';
 				$arEventFields['IS_ACCESSIBLE_BEFORE'] = 'undefined';
-				$arEventFields['IS_ACCESSIBLE_AFTER']  = 'N';
-			break;
+				$arEventFields['IS_ACCESSIBLE_AFTER'] = 'N';
+				break;
 
 			default:
 				throw new Exception(
 					'tasks\' RPC event handler: onEventFilter: '
-					. 'not allowed $arHandler[\'EVENT_NAME\']: ' 
-					. $arHandler['EVENT_NAME']
+					.'not allowed $arHandler[\'EVENT_NAME\']: '
+					.$arHandler['EVENT_NAME']
 				);
-			break;
+				break;
 		}
 
 		return ($arEventFields);

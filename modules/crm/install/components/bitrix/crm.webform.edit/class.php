@@ -92,7 +92,7 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 				{
 					$unknownItemKeys = array_diff(
 						array_keys($item),
-						array('ID', 'VALUE', 'PRICE', 'DISCOUNT', 'NAME', 'SELECTED')
+						array('ID', 'VALUE', 'PRICE', 'CUSTOM_PRICE', 'DISCOUNT', 'NAME', 'SELECTED')
 					);
 					if(count($unknownItemKeys) == 0)
 					{
@@ -980,6 +980,8 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 
 		/* Copyright */
 		$this->arResult['CAN_REMOVE_COPYRIGHT'] = $this->crmWebForm->canRemoveCopyright();
+		$this->arResult['RESTRICTION_POPUP'] = \Bitrix\Crm\Restriction\RestrictionManager::getWebformRestriction()->prepareInfoHelperScript();
+
 
 		/* External analytics data */
 		$this->arResult['EXTERNAL_ANALYTICS_DATA'] = $this->crmWebForm->getExternalAnalyticsData();

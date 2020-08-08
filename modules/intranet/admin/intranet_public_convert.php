@@ -82,7 +82,7 @@ if($REQUEST_METHOD=="POST" && check_bitrix_sessid())
 
 						$content = file_get_contents($_SERVER["DOCUMENT_ROOT"].$site['DIR']."timeman/meeting/index.php");
 
-						if ($content && strpos($content, "services/meeting/") !== false)
+						if ($content && mb_strpos($content, "services/meeting/") !== false)
 						{
 							$content = str_replace("services/meeting/", "timeman/meeting/", $content);
 							file_put_contents($_SERVER["DOCUMENT_ROOT"].$site['DIR']."timeman/meeting/index.php", $content);
@@ -224,7 +224,7 @@ if($REQUEST_METHOD=="POST" && check_bitrix_sessid())
 				{
 					$content = file_get_contents($indexPath);
 
-					if ($content && strpos($content, "bitrix:socialnetwork.log.ex") !== false)
+					if ($content && mb_strpos($content, "bitrix:socialnetwork.log.ex") !== false)
 					{
 						CopyDirFiles(
 							$_SERVER['DOCUMENT_ROOT'].$site['DIR']."index.php",

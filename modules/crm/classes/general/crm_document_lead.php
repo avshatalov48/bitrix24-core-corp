@@ -24,7 +24,7 @@ class CCrmDocumentLead extends CCrmDocument
 	public static function getEntityFields($entityType)
 	{
 		\Bitrix\Main\Localization\Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/components/bitrix/crm.'.
-			strtolower($entityType).'.edit/component.php');
+			mb_strtolower($entityType).'.edit/component.php');
 
 		$addressLabels = Crm\EntityAddress::getShortLabels();
 		$printableFieldNameSuffix = ' ('.GetMessage('CRM_FIELD_BP_TEXT').')';
@@ -142,6 +142,13 @@ class CCrmDocumentLead extends CCrmDocument
 				'Name' => GetMessage('CRM_FIELD_SECOND_NAME'),
 				'Type' => 'string',
 				'Filterable' => true,
+				'Editable' => true,
+				'Required' => false,
+			),
+			'HONORIFIC' => array(
+				'Name' => GetMessage('CRM_FIELD_HONORIFIC'),
+				'Type' => 'select',
+				'Options' => CCrmStatus::GetStatusListEx('HONORIFIC'),
 				'Editable' => true,
 				'Required' => false,
 			),
@@ -415,7 +422,7 @@ class CCrmDocumentLead extends CCrmDocument
 			$fieldType = $arDocumentFields[$key]["Type"];
 			if (in_array($fieldType, array("phone", "email", "im", "web"), true))
 			{
-				CCrmDocument::PrepareEntityMultiFields($arFields, strtoupper($fieldType));
+				CCrmDocument::PrepareEntityMultiFields($arFields, mb_strtoupper($fieldType));
 				continue;
 			}
 
@@ -425,9 +432,9 @@ class CCrmDocumentLead extends CCrmDocument
 				$ar = array();
 				foreach ($arFields[$key] as $v1)
 				{
-					if (substr($v1, 0, strlen("user_")) == "user_")
+					if (mb_substr($v1, 0, mb_strlen("user_")) == "user_")
 					{
-						$ar[] = substr($v1, strlen("user_"));
+						$ar[] = mb_substr($v1, mb_strlen("user_"));
 					}
 					else
 					{
@@ -439,7 +446,7 @@ class CCrmDocumentLead extends CCrmDocument
 
 				$arFields[$key] = $ar;
 			}
-			elseif ($fieldType == "select" && substr($key, 0, 3) == "UF_")
+			elseif ($fieldType == "select" && mb_substr($key, 0, 3) == "UF_")
 			{
 				self::InternalizeEnumerationField('CRM_LEAD', $arFields, $key);
 			}
@@ -523,7 +530,8 @@ class CCrmDocumentLead extends CCrmDocument
 		}
 
 		//Region automation
-		Crm\Automation\Factory::runOnAdd(\CCrmOwnerType::Lead, $id);
+		$starter = new Crm\Automation\Starter(\CCrmOwnerType::Lead, $id);
+		$starter->setContextToBizproc()->runOnAdd();
 		//End region
 
 		if ($id && $id > 0 && $useTransaction)
@@ -537,6 +545,11 @@ class CCrmDocumentLead extends CCrmDocument
 	public static function UpdateDocument($documentId, $arFields, $modifiedById = null)
 	{
 		global $DB;
+
+		if(empty($arFields))
+		{
+			return;
+		}
 
 		$arDocumentID = self::GetDocumentInfo($documentId);
 		if (empty($arDocumentID))
@@ -562,7 +575,7 @@ class CCrmDocumentLead extends CCrmDocument
 			$fieldType = $arDocumentFields[$key]["Type"];
 			if (in_array($fieldType, array("phone", "email", "im", "web"), true))
 			{
-				CCrmDocument::PrepareEntityMultiFields($arFields, strtoupper($fieldType));
+				CCrmDocument::PrepareEntityMultiFields($arFields, mb_strtoupper($fieldType));
 				continue;
 			}
 
@@ -572,9 +585,9 @@ class CCrmDocumentLead extends CCrmDocument
 				$ar = array();
 				foreach ($arFields[$key] as $v1)
 				{
-					if (substr($v1, 0, strlen("user_")) == "user_")
+					if (mb_substr($v1, 0, mb_strlen("user_")) == "user_")
 					{
-						$ar[] = substr($v1, strlen("user_"));
+						$ar[] = mb_substr($v1, mb_strlen("user_"));
 					}
 					else
 					{
@@ -586,7 +599,7 @@ class CCrmDocumentLead extends CCrmDocument
 
 				$arFields[$key] = $ar;
 			}
-			elseif ($fieldType == "select" && substr($key, 0, 3) == "UF_")
+			elseif ($fieldType == "select" && mb_substr($key, 0, 3) == "UF_")
 			{
 				self::InternalizeEnumerationField('CRM_LEAD', $arFields, $key);
 			}
@@ -630,8 +643,8 @@ class CCrmDocumentLead extends CCrmDocument
 			$arFields['COMMENTS'] = static::sanitizeCommentsValue($arFields['COMMENTS']);
 		}
 
-		//check STATUS_ID changes
-		$statusChanged = false;
+		//check STATUS_ID changes for automation
+		$arPresentFields = [];
 		if (isset($arFields['STATUS_ID']))
 		{
 			$dbDocumentList = CCrmLead::GetListEx(
@@ -642,8 +655,6 @@ class CCrmDocumentLead extends CCrmDocument
 				array('ID', 'STATUS_ID')
 			);
 			$arPresentFields = $dbDocumentList->Fetch();
-			if ($arPresentFields['STATUS_ID'] != $arFields['STATUS_ID'])
-				$statusChanged = true;
 		}
 
 		$useTransaction = static::shouldUseTransaction();
@@ -697,10 +708,8 @@ class CCrmDocumentLead extends CCrmDocument
 		}
 
 		//Region automation
-		if ($statusChanged)
-		{
-			Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Lead, $arDocumentID['ID']);
-		}
+		$starter = new Crm\Automation\Starter(\CCrmOwnerType::Lead, $arDocumentID['ID']);
+		$starter->setContextToBizproc()->runOnUpdate($arFields, $arPresentFields);
 		//End region
 
 		if ($res && $useTransaction)

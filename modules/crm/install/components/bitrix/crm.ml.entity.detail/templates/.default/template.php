@@ -11,7 +11,7 @@ $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background pagetitle-toolbar-field-view");
 
 $settingsButton = new \Bitrix\UI\Buttons\SettingsButton([
-	"classList" => $arResult["MODEL"]->getState() === \Bitrix\Ml\Model::STATE_READY ? [] : ["crm-ml-button-hidden"],
+	"classList" => ($arResult["MODEL"] && $arResult["MODEL"]->getState() === \Bitrix\Ml\Model::STATE_READY) ? [] : ["crm-ml-button-hidden"],
 	"menu" => [
 		"items" => [
 			[

@@ -13,6 +13,7 @@ use \Bitrix\ImOpenLines,
 	\Bitrix\ImOpenLines\Config,
 	\Bitrix\ImOpenLines\Session,
 	\Bitrix\ImOpenLines\Tools\Lock,
+	\Bitrix\ImOpenLines\AutomaticAction,
 	\Bitrix\ImOpenLines\Model\SessionCheckTable;
 
 Loc::loadMessages(__FILE__);
@@ -31,6 +32,8 @@ abstract class Queue
 	protected $config = [];
 	/**Chat*/
 	protected $chat = null;
+
+	protected $cacheRemoveSession = [];
 
 	/**
 	 * Queue constructor.
@@ -119,15 +122,32 @@ abstract class Queue
 	 * Basic check that the operator is active.
 	 *
 	 * @param $userId
+	 * @param bool $ignorePause
 	 * @return bool
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\LoaderException
 	 * @throws \Bitrix\Main\ObjectException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function isOperatorActive($userId)
+	public function isOperatorActive($userId, bool $ignorePause = false)
 	{
-		return ImOpenLines\Queue::isOperatorActive($userId, Config::isTimeManActive(), $this->config['CHECK_AVAILABLE']);
+		return ImOpenLines\Queue::isOperatorActive($userId, $this->config['CHECK_AVAILABLE'], $ignorePause);
+	}
+
+	/**
+	 * Are there any available operators in the line.
+	 *
+	 * @param bool $ignorePause
+	 *
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function isOperatorsActiveLine(bool $ignorePause = false): bool
+	{
+		return ImOpenLines\Queue::isOperatorsActiveLine($this->config['ID'], $this->config['CHECK_AVAILABLE'], $ignorePause);
 	}
 
 	/**
@@ -241,10 +261,7 @@ abstract class Queue
 			{
 				$result['DATE_QUEUE']->add($defaultQueueTime . ' SECONDS');
 
-				if($this->sessionManager->checkWorkTime())
-				{
-					$result['DATE_NO_ANSWER'] = (new DateTime())->add($this->config['NO_ANSWER_TIME'] . ' SECONDS');
-				}
+				$result['DATE_NO_ANSWER'] = (new DateTime())->add($this->config['NO_ANSWER_TIME'] . ' SECONDS');
 
 				//CRM
 				if ($crmManager && $isGroupByChat == false && $this->config['CRM'] == 'Y' && $crmManager->isLoaded() && $this->config['CRM_FORWARD'] == 'Y')
@@ -400,6 +417,78 @@ abstract class Queue
 	}
 
 	/**
+	 * The automatic action for an incoming message from an external source
+	 *
+	 * @param bool $finish
+	 * @param bool $vote
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function automaticActionAddMessage($finish = false, $vote = false)
+	{
+		if($this->isRemoveSession($finish, $vote))
+		{
+			$this->transferOperatorNotAvailable();
+		}
+
+		return true;
+	}
+
+	/**
+	 * Do I need to remove the session from the operator?
+	 *
+	 * @param bool $finish
+	 * @param bool $vote
+	 * @param bool $noCache
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function isRemoveSession($finish = false, $vote = false, $noCache = false): bool
+	{
+		$result = false;
+
+		if(!$noCache && isset($this->cacheRemoveSession[$this->session['ID']]))
+		{
+			$result = $this->cacheRemoveSession[$this->session['ID']];
+		}
+		else
+		{
+			if(
+				!$this->sessionManager->isNowCreated() &&
+				$finish !== true &&
+				$vote !== true)
+			{
+				if(
+					!empty($this->session['OPERATOR_ID']) &&
+					$this->session['PAUSE'] != 'Y' &&
+					$this->session['STATUS'] >= Session::STATUS_ANSWER
+				)
+				{
+					if (!ImOpenLines\Queue::isOperatorSingleInLine($this->session['CONFIG_ID'], $this->session['OPERATOR_ID']))
+					{
+						if(!$this->isOperatorActive($this->session['OPERATOR_ID'], true))
+						{
+							$result = true;
+						}
+					}
+				}
+			}
+
+			$this->cacheRemoveSession[$this->session['ID']] = $result;
+		}
+
+		return $result;
+	}
+
+	/**
 	 * Check the operator responsible for CRM on the possibility of transfer of chat.
 	 *
 	 * @param $userId
@@ -426,18 +515,9 @@ abstract class Queue
 	{
 		$reasonReturn = ImOpenLines\Queue::REASON_OPERATOR_NOT_AVAILABLE;
 
-		if(
-			!empty($this->session['OPERATOR_ID']) &&
-			$this->session['PAUSE'] != 'Y'
-		)
-		{
-			if(!$this->isOperatorActive($this->session['OPERATOR_ID']))
-			{
-				ImOpenLines\Queue::returnSessionToQueue($this->session['ID'], $reasonReturn);
+		ImOpenLines\Queue::returnSessionToQueue($this->session['ID'], $reasonReturn);
 
-				ImOpenLines\Queue::transferToNextSession(false, ImOpenLines\Queue\Event::COUNT_SESSIONS_REALTIME, $this->config['ID']);
-			}
-		}
+		ImOpenLines\Queue::transferToNextSession(false, ImOpenLines\Queue\Event::COUNT_SESSIONS_REALTIME, $this->config['ID']);
 	}
 
 	/**

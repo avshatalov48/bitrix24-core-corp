@@ -14,7 +14,8 @@ use \Bitrix\ImConnector\Chat,
 	\Bitrix\ImConnector\Result,
 	\Bitrix\ImConnector\Library,
 	\Bitrix\ImConnector\Connector,
-	\Bitrix\ImConnector\Connectors\Instagram,
+	\Bitrix\ImConnector\Connectors\Olx,
+	\Bitrix\ImConnector\InteractiveMessage,
 	\Bitrix\ImConnector\Connectors\BotFramework;
 
 Loc::loadMessages(__FILE__);
@@ -91,35 +92,37 @@ class ReceivingMessage
 	 *
 	 * @return Result
 	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 * @throws \Bitrix\Main\IO\FileNotFoundException
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function receiving()
+	public function receiving(): Result
 	{
 		$result = new Result();
-		$statusDelivered = array();
+		$statusDelivered = [];
 
 		//Message about the delivery
 		foreach ($this->data as $message)
 		{
-			$statusDelivered[] = array(
-				'chat' => array(
+			$statusDelivered[] = [
+				'chat' => [
 					'id' => $message['chat']['id']
-				),
-				'message' => array(
+				],
+				'message' => [
 					'id' => $message['message']['id']
-				)
-			);
+				]
+			];
 
 			if (!empty($message['extra']['last_message_id']))
 			{
 				Chat::setLastMessage(
-					array(
+					[
 						'EXTERNAL_CHAT_ID' => $message['chat']['id'],
 						'CONNECTOR' => $this->connector,
 						'EXTERNAL_MESSAGE_ID' => $message['extra']['last_message_id']
-					)
+					]
 				);
 			}
 		}
@@ -129,241 +132,253 @@ class ReceivingMessage
 			$this->connectorOutput->setStatusDelivered($statusDelivered);
 		}
 
+		$interactiveMessage = InteractiveMessage\Input::initialization($this->connector);
+
 		foreach ($this->data as $cell => $message)
 		{
 			$resultMessage = new Result();
 			unset($event);
 
-			//parse full name into first name and surname
-			if(Library::isEmpty($message['user']['last_name']))
+			$message = $interactiveMessage->setMessage($message)
+				->processing();
+
+			$isSendMessage = $interactiveMessage->isSendMessage();
+
+			if($isSendMessage)
 			{
-				$fullName = explode(' ', $message['user']['name']);
-				if(count($fullName) == 2)
+				//parse full name into first name and surname
+				if(Library::isEmpty($message['user']['last_name']))
 				{
-					if($this->connector == 'instagram')
-					{
-						$message['user']['name'] = $fullName[1];
-						$message['user']['last_name'] = $fullName[0];
-					}
-					else
+					$fullName = explode(' ', $message['user']['name']);
+					if(count($fullName) === 2)
 					{
 						$message['user']['name'] = $fullName[0];
 						$message['user']['last_name'] = $fullName[1];
 					}
 				}
-			}
 
-			//Hack is designed for the Microsoft Bot Framework
-			$userSourceData = $message['user'];
-			//Getting user id
-			$user = $this->processingUser($message['user']);
-			if($user->isSuccess())
-				$message['user'] = $user->getResult();
-			else
-				$resultMessage->addErrors($user->getErrors());
+				//Hack is designed for the Microsoft Bot Framework
+				$userSourceData = $message['user'];
 
-			//Handling attachments
-			if($resultMessage->isSuccess() && !empty($message['message']['attachments']))
-			{
-				foreach ($message['message']['attachments'] as $attachment)
-				{
-					//Forwarded message
-					if(!Library::isEmpty($attachment['forward']))
-					{
-						$text = self::formationQuotedText($attachment['forward']);
-
-						$message['message']['text'] = "------------------------------------------------------\n" .
-							$text .  "\n[b]" . Loc::getMessage("IMCONNECTOR_FORWARDED_MESSAGE") . "[/B]\n" .
-							$message['message']['text'] .
-							"\n------------------------------------------------------\n";
-					}
-					//Answered message
-					if(!Library::isEmpty($attachment['reply']))
-					{
-						$text = self::formationQuotedText($attachment['reply']);
-
-						$message['message']['text'] = "------------------------------------------------------\n" .
-							$text . "\n" . $message['message']['text'] . "\n------------------------------------------------------\n";
-					}
-					//Geolocation
-					if(!empty($attachment['location']))
-					{
-						$text = Loc::getMessage("IMCONNECTOR_MAPS_NAME");
-						if(!Library::isEmpty($attachment['location']['title']) && !Library::isEmpty($attachment['location']['text']))
-							$text = $attachment['location']['title'] . "\n" . $attachment['location']['text'];
-						elseif(!Library::isEmpty($attachment['location']['title']))
-							$text = $attachment['location']['title'];
-						elseif(!Library::isEmpty($attachment['location']['text']))
-							$text = $attachment['location']['text'];
-
-						$message['message']['text'] = $message['message']['text'] . "\n" . $text . "\n" . "https://yandex.ru/maps/?ll=" . $attachment['location']['coordinates']['longitude'] . "," . $attachment['location']['coordinates']['latitude'] . "&z=14&pt=" . $attachment['location']['coordinates']['longitude'] . "," . $attachment['location']['coordinates']['latitude'] . ",comma";
-					}
-					//Contact
-					if(!empty($attachment['contact']))
-					{
-						if(!Library::isEmpty($attachment['contact']['name']))
-							$message['message']['text'] .= "\n" . Loc::getMessage("IMCONNECTOR_CONTACT_NAME") . $attachment['contact']['name'];
-						if(!Library::isEmpty($attachment['contact']['phone']))
-							$message['message']['text'] .= "\n" . Loc::getMessage("IMCONNECTOR_CONTACT_PHONE") . $attachment['contact']['phone'];
-					}
-					//Wall
-					if(!empty($attachment['wall']))
-					{
-						$message['message']['text'] .= "\n[URL=" . $attachment['wall']['url'] . "]" . Loc::getMessage("IMCONNECTOR_WALL_TEXT");
-						if(!Library::isEmpty($attachment['wall']['name']))
-							$message['message']['text'] .= " " . $attachment['wall']['name'];
-						if(!empty($attachment['wall']['date']))
-							$message['message']['text'] .= " " . Loc::getMessage("IMCONNECTOR_WALL_DATE_TEXT") . " " . DateTime::createFromTimestamp($attachment['wall']['date'])->toString();
-						$message['message']['text'] .= "[/URL]";
-
-						if(!Library::isEmpty($attachment['wall']['text']))
-							$message['message']['text'] .= "\n" . $attachment['wall']['text'];
-					}
-				}
-			}
-
-			/*if($resultMessage->isSuccess() && !empty($message['message']['url']))
-			{
-				$message['message']['keyboard'] = Array(
-					Array(
-						"TEXT" => Loc::getMessage("IMCONNECTOR_COMMENT_IN_FACEBOOK"),
-						"LINK" => $message['message']['url'],
-						"BG_COLOR" => "#29619b",
-						"TEXT_COLOR" => "#fff",
-						"DISPLAY" => "LINE",
-					)
-				);
-				unset($message['message']['url']);
-			}*/
-
-			if($resultMessage->isSuccess() && !empty($message['chat']['url']))
-			{
-				if ($this->connector === 'facebookcomments')
-				{
-					$message['chat']['description'] = Loc::getMessage('IMCONNECTOR_LINK_TO_ORIGINAL_POST_IN_FACEBOOK', ['#LINK#' => $message['chat']['url']]);
-				}
-				elseif ($this->connector === 'instagram' || $this->connector === 'fbinstagram')
-				{
-					$message['chat']['description'] = Loc::getMessage('IMCONNECTOR_LINK_TO_ORIGINAL_POST_IN_INSTAGRAM', ['#LINK#' => $message['chat']['url']]);
-				}
-				elseif ($this->connector === 'avito')
-				{
-					$message['chat']['description'] = Loc::getMessage('IMCONNECTOR_LINK_TO_AVITO_AD', ['#LINK#' => $message['chat']['url']]);
-				}
+				//Getting user id
+				$user = $this->processingUser($message['user']);
+				if($user->isSuccess())
+					$message['user'] = $user->getResult();
 				else
+					$resultMessage->addErrors($user->getErrors());
+
+				//Handling attachments
+				if($resultMessage->isSuccess() && !empty($message['message']['attachments']))
 				{
-					$message['chat']['description'] = Loc::getMessage("IMCONNECTOR_LINK_TO_ORIGINAL_POST", array('#LINK#' => $message['chat']['url']));
-				}
-
-				unset($message['chat']['url']);
-			}
-
-			if($resultMessage->isSuccess() && !Library::isEmpty($message['message']['date']))
-				$message['message']['date'] = DateTime::createFromTimestamp($message['message']['date']);
-
-			if($resultMessage->isSuccess() && !empty($message['message']['files']))
-			{
-				$files = $this->saveFiles($message['message']['files']);
-				if(!$files->isSuccess())
-					$resultMessage->addErrors($files->getErrors());
-				$message['message']['files'] = $files->getResult();
-			}
-
-			if($resultMessage->isSuccess() && !empty($message['message']['failed_big_file']))
-				$message['message']['text'] = Loc::getMessage("IMCONNECTOR_WARNING_LARGE_FILE") . $message['message']['text'];
-
-			if($resultMessage->isSuccess() &&
-				(empty($message['user']) || empty($message['chat']) ||
-					(Library::isEmpty($message['message']['text']) && empty($message['message']['files']) && $message['type_message'] != 'message_del'
-					)
-				))
-				$resultMessage->addError(new Error(Loc::getMessage('IMCONNECTOR_NOT_ALL_THE_REQUIRED_DATA'), Library::ERROR_IMCONNECTOR_NOT_ALL_THE_REQUIRED_DATA, __METHOD__, $message));
-
-			if($resultMessage->isSuccess() && !Library::isEmpty($message['message']['text']))
-			{
-				if (\Bitrix\Main\Application::isUtfMode())
-				{
-					$message['message']['text'] = Emoji::decode($message['message']['text']);
-				}
-				else
-				{
-					$message['message']['text'] = preg_replace('/:([A-F0-9]{8}):/i', '(emoji)', $message['message']['text']);
-				}
-			}
-
-			if($resultMessage->isSuccess())
-			{
-				unset($typeMessage);
-
-				if(!empty($message['type_message']))
-				{
-					$typeMessage = $message['type_message'];
-					unset($message['type_message']);
-				}
-
-				$connectorReal = Connector::getConnectorRealId($this->connector);
-
-				if(empty($typeMessage) || $typeMessage == 'message' || $typeMessage == 'message_update')
-				{
-					//Hack is designed for the Microsoft Bot Framework
-					BotFramework::furtherMessageProcessing($message, $userSourceData, $this->connector, $connectorReal);
-
-					if(empty($typeMessage) || $typeMessage == 'message')
+					foreach ($message['message']['attachments'] as $attachment)
 					{
-						//Hack is designed for the Instagram
-						Instagram::newCommentProcessing($message, $this->connector, $this->line);
+						//Forwarded message
+						if(!Library::isEmpty($attachment['forward']))
+						{
+							$text = self::formationQuotedText($attachment['forward']);
 
-						$event = $this->sendEvent($message, Library::EVENT_RECEIVED_MESSAGE);
+							$message['message']['text'] = "------------------------------------------------------\n" .
+								$text .  "\n[b]" . Loc::getMessage("IMCONNECTOR_FORWARDED_MESSAGE") . "[/B]\n" .
+								$message['message']['text'] .
+								"\n------------------------------------------------------\n";
+						}
+						//Answered message
+						if(!Library::isEmpty($attachment['reply']))
+						{
+							$text = self::formationQuotedText($attachment['reply']);
+
+							$message['message']['text'] = "------------------------------------------------------\n" .
+								$text . "\n" . $message['message']['text'] . "\n------------------------------------------------------\n";
+						}
+						//Geolocation
+						if(!empty($attachment['location']))
+						{
+							$text = Loc::getMessage("IMCONNECTOR_MAPS_NAME");
+							if(!Library::isEmpty($attachment['location']['title']) && !Library::isEmpty($attachment['location']['text']))
+								$text = $attachment['location']['title'] . "\n" . $attachment['location']['text'];
+							elseif(!Library::isEmpty($attachment['location']['title']))
+								$text = $attachment['location']['title'];
+							elseif(!Library::isEmpty($attachment['location']['text']))
+								$text = $attachment['location']['text'];
+
+							$message['message']['text'] = $message['message']['text'] . "\n" . $text . "\n" . "https://yandex.ru/maps/?ll=" . $attachment['location']['coordinates']['longitude'] . "," . $attachment['location']['coordinates']['latitude'] . "&z=14&pt=" . $attachment['location']['coordinates']['longitude'] . "," . $attachment['location']['coordinates']['latitude'] . ",comma";
+						}
+						//Contact
+						if(!empty($attachment['contact']))
+						{
+							if(!Library::isEmpty($attachment['contact']['name']))
+								$message['message']['text'] .= "\n" . Loc::getMessage("IMCONNECTOR_CONTACT_NAME") . $attachment['contact']['name'];
+							if(!Library::isEmpty($attachment['contact']['phone']))
+								$message['message']['text'] .= "\n" . Loc::getMessage("IMCONNECTOR_CONTACT_PHONE") . $attachment['contact']['phone'];
+						}
+						//Wall
+						if(!empty($attachment['wall']))
+						{
+							$message['message']['text'] .= "\n[URL=" . $attachment['wall']['url'] . "]" . Loc::getMessage("IMCONNECTOR_WALL_TEXT");
+							if(!Library::isEmpty($attachment['wall']['name']))
+								$message['message']['text'] .= " " . $attachment['wall']['name'];
+							if(!empty($attachment['wall']['date']))
+								$message['message']['text'] .= " " . Loc::getMessage("IMCONNECTOR_WALL_DATE_TEXT") . " " . DateTime::createFromTimestamp($attachment['wall']['date'])->toString();
+							$message['message']['text'] .= "[/URL]";
+
+							if(!Library::isEmpty($attachment['wall']['text']))
+								$message['message']['text'] .= "\n" . $attachment['wall']['text'];
+						}
+					}
+				}
+
+				/*if($resultMessage->isSuccess() && !empty($message['message']['url']))
+				{
+					$message['message']['keyboard'] = Array(
+						Array(
+							"TEXT" => Loc::getMessage("IMCONNECTOR_COMMENT_IN_FACEBOOK"),
+							"LINK" => $message['message']['url'],
+							"BG_COLOR" => "#29619b",
+							"TEXT_COLOR" => "#fff",
+							"DISPLAY" => "LINE",
+						)
+					);
+					unset($message['message']['url']);
+				}*/
+
+				if($resultMessage->isSuccess() && !empty($message['chat']['url']))
+				{
+					if ($this->connector === 'facebookcomments')
+					{
+						$message['chat']['description'] = Loc::getMessage('IMCONNECTOR_LINK_TO_ORIGINAL_POST_IN_FACEBOOK', ['#LINK#' => $message['chat']['url']]);
+					}
+					elseif ($this->connector === Library::ID_FBINSTAGRAM_CONNECTOR)
+					{
+						$message['chat']['description'] = Loc::getMessage('IMCONNECTOR_LINK_TO_ORIGINAL_POST_IN_INSTAGRAM', ['#LINK#' => $message['chat']['url']]);
+					}
+					elseif ($this->connector === 'avito')
+					{
+						$message['chat']['description'] = Loc::getMessage('IMCONNECTOR_LINK_TO_AVITO_AD', ['#LINK#' => $message['chat']['url']]);
 					}
 					else
 					{
-						$event = $this->sendEvent($message, Library::EVENT_RECEIVED_MESSAGE_UPDATE);
+						$message['chat']['description'] = Loc::getMessage("IMCONNECTOR_LINK_TO_ORIGINAL_POST", array('#LINK#' => $message['chat']['url']));
+					}
+
+					unset($message['chat']['url']);
+				}
+
+				if($resultMessage->isSuccess() && !Library::isEmpty($message['message']['date']))
+					$message['message']['date'] = DateTime::createFromTimestamp($message['message']['date']);
+
+				if($resultMessage->isSuccess() && !empty($message['message']['files']))
+				{
+					$files = $this->saveFiles($message['message']['files']);
+					if(!$files->isSuccess())
+						$resultMessage->addErrors($files->getErrors());
+					$message['message']['files'] = $files->getData();
+				}
+
+				if($resultMessage->isSuccess() && !empty($message['message']['failed_big_file']))
+					$message['message']['text'] = Loc::getMessage("IMCONNECTOR_WARNING_LARGE_FILE") . $message['message']['text'];
+
+				if($resultMessage->isSuccess() &&
+					(empty($message['user']) || empty($message['chat']) ||
+						(Library::isEmpty($message['message']['text']) &&
+							empty($message['message']['files']) &&
+							$message['type_message'] !== 'message_del' &&
+							$message['type_message'] !== 'typing_start'
+						)
+					))
+					$resultMessage->addError(new Error(Loc::getMessage('IMCONNECTOR_NOT_ALL_THE_REQUIRED_DATA'), Library::ERROR_IMCONNECTOR_NOT_ALL_THE_REQUIRED_DATA, __METHOD__, $message));
+
+				if($resultMessage->isSuccess() && !Library::isEmpty($message['message']['text']))
+				{
+					if (\Bitrix\Main\Application::isUtfMode())
+					{
+						$message['message']['text'] = Emoji::decode($message['message']['text']);
+					}
+					else
+					{
+						$message['message']['text'] = preg_replace('/:([A-F0-9]{8}):/i', '(emoji)', $message['message']['text']);
 					}
 				}
-				elseif($typeMessage == 'post')
-				{
-					//Hack is designed for the Instagram
-					Instagram::newMediaProcessing($message, $this->connector, $this->line);
 
-					$event = $this->sendEvent($message, Library::EVENT_RECEIVED_POST);
-				}
-				elseif($typeMessage == 'post_update')
+				if ($message['message']['disable_crm'] === 'Y' && $resultMessage->isSuccess())
 				{
-					$event = $this->sendEvent($message, Library::EVENT_RECEIVED_POST_UPDATE);
-				}
-				elseif($typeMessage == 'message_del')
-				{
-					$event = $this->sendEvent($message, Library::EVENT_RECEIVED_MESSAGE_DEL);
+					$message['extra']['disable_tracker'] = 'Y';
+					unset($message['message']['disable_crm']);
 				}
 
-				if(!empty($event) && !$event->isSuccess())
-					$resultMessage->addErrors($event->getErrors());
+				if($resultMessage->isSuccess())
+				{
+					unset($typeMessage);
+
+					if(!empty($message['type_message']))
+					{
+						$typeMessage = $message['type_message'];
+						unset($message['type_message']);
+					}
+
+					$connectorReal = Connector::getConnectorRealId($this->connector);
+
+					if(empty($typeMessage) || $typeMessage == 'message' || $typeMessage == 'message_update')
+					{
+						//Hack is designed for the Microsoft Bot Framework
+						BotFramework::furtherMessageProcessing($message, $userSourceData, $this->connector, $connectorReal);
+
+						if(empty($typeMessage) || $typeMessage == 'message')
+						{
+							//OLX hack
+							$message = Olx::newMessageProcessing($message, $this->connector, $this->line);
+
+							$event = $this->sendEvent($message, Library::EVENT_RECEIVED_MESSAGE);
+						}
+						else
+						{
+							$event = $this->sendEvent($message, Library::EVENT_RECEIVED_MESSAGE_UPDATE);
+						}
+					}
+					elseif($typeMessage == 'post')
+					{
+						$event = $this->sendEvent($message, Library::EVENT_RECEIVED_POST);
+					}
+					elseif($typeMessage == 'post_update')
+					{
+						$event = $this->sendEvent($message, Library::EVENT_RECEIVED_POST_UPDATE);
+					}
+					elseif($typeMessage == 'message_del')
+					{
+						$event = $this->sendEvent($message, Library::EVENT_RECEIVED_MESSAGE_DEL);
+					}
+					elseif($typeMessage === 'typing_start')
+					{
+						$event = $this->sendEvent($message, Library::EVENT_RECEIVED_TYPING_STATUS);
+					}
+
+					if(!empty($event) && !$event->isSuccess())
+						$resultMessage->addErrors($event->getErrors());
+				}
+
+				if($resultMessage->isSuccess() && (!isset($event) || $event->isSuccess()))
+				{
+					$this->data[$cell]['SUCCESS'] = true;
+				}
+				else
+				{
+					$this->data[$cell]['SUCCESS'] = false;
+
+					if(isset($event) && $event->isSuccess())
+					{
+						$this->data[$cell]['ERRORS'] = $event->getErrorMessages();
+					}
+					elseif(!$resultMessage->isSuccess())
+					{
+						$this->data[$cell]['ERRORS'] = $resultMessage->getErrorMessages();
+					}
+				}
+
+				$this->data[$cell] = array_merge($this->data[$cell], $message);
 			}
+			//end foreach
 
-			if($resultMessage->isSuccess() && (!isset($event) || $event->isSuccess()))
-			{
-				$this->data[$cell]['SUCCESS'] = true;
-			}
-			else
-			{
-				$this->data[$cell]['SUCCESS'] = false;
-
-				if(isset($event) && $event->isSuccess())
-				{
-					$this->data[$cell]['ERRORS'] = $event->getErrorMessages();
-				}
-				elseif(!$resultMessage->isSuccess())
-				{
-					$this->data[$cell]['ERRORS'] = $resultMessage->getErrorMessages();
-				}
-			}
-
-			$this->data[$cell] = array_merge($this->data[$cell], $message);
+			$result->setResult($this->data);
 		}
-		//end foreach
-
-		$result->setResult($this->data);
-
 		return $result;
 	}
 
@@ -376,144 +391,48 @@ class ReceivingMessage
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	private function processingUser($user)
+	private function processingUser($user): Result
 	{
 		$result = new Result();
 
-		if(Library::isEmpty($user['id']))
-		{
-			$result->addError(new Error(Loc::getMessage('IMCONNECTOR_PROXY_NO_USER_IM'), Library::ERROR_CONNECTOR_PROXY_NO_USER_IM, __METHOD__, $user));
-		}
-		else
-		{
-			$raw = UserTable::getList(
-				array(
-					'select' => array(
-						'ID',
-						'MD5' => 'UF_CONNECTOR_MD5'
-					),
-					'filter' => array(
-						'=EXTERNAL_AUTH_ID' => Library::NAME_EXTERNAL_USER,
-						'=XML_ID' => $this->connector . '|' . $user['id']
-					),
-					'limit' => 1
-				)
-			);
+		$userFieldsResult = Connector::getUserByUserCode($user, $this->connector);
+		$cUser = new \CUser;
 
-			$cUser = new \CUser;
-			if($userFields = $raw->fetch())
+		if ($userFieldsResult->isSuccess())
+		{
+			$userFields = $userFieldsResult->getResult();
+
+			if (is_array($userFields))
 			{
 				$userId = $userFields['ID'];
 
-				if($userFields['MD5'] != md5(serialize($user)))
+				if ($userFields['MD5'] !== md5(serialize($user)))
 				{
-
-					$fields = $this->preparationUserFields($user);
-
-					$cUser->Update($userId, $fields);
+					$fields = Connector::initializationConnectorHandler($this->connector)->preparationUserFields($user, $userId);
+					if(!empty($fields))
+					{
+						$cUser->Update($userId, $fields);
+					}
 				}
 			}
-			else
-			{
-				$fields = $this->preparationUserFields($user);
+		}
+		else
+		{
+			$fields = Connector::initializationConnectorHandler($this->connector)->preparationNewUserFields($user);
 
-				$fields['LOGIN'] = Library::MODULE_ID . '_' . md5($user['id'] . '_' . randString(5));
-				$fields['PASSWORD'] = md5($fields['LOGIN'].'|'.rand(1000,9999).'|'.time());
-				$fields['CONFIRM_PASSWORD'] = $fields['PASSWORD'];
-				$fields['EXTERNAL_AUTH_ID'] = Library::NAME_EXTERNAL_USER;
-				$fields['XML_ID'] =  $this->connector . '|' . $user['id'];
-				$fields['ACTIVE'] = 'Y';
+			$userId = $cUser->Add($fields);
+		}
 
-				$userId = $cUser->Add($fields);
-			}
-
-			if (empty($userId))
-				$result->addError(new Error(Loc::getMessage('IMCONNECTOR_PROXY_NO_ADD_USER'), Library::ERROR_CONNECTOR_PROXY_NO_ADD_USER, __METHOD__));
-			else
-				$result->setResult($userId);
+		if (empty($userId))
+		{
+			$result->addError(new Error(Loc::getMessage('IMCONNECTOR_PROXY_NO_ADD_USER'), Library::ERROR_CONNECTOR_PROXY_NO_ADD_USER, __METHOD__));
+		}
+		else
+		{
+			$result->setResult($userId);
 		}
 
 		return $result;
-	}
-
-	/**
-	 * Preparation of user fields before saving or adding.
-	 *
-	 * @param array $user An array describing the user.
-	 * @return array Given the right format array description user.
-	 * @throws \Bitrix\Main\IO\FileNotFoundException
-	 */
-	private function preparationUserFields($user)
-	{
-		//The hash of the data
-		$fields = array(
-			'UF_CONNECTOR_MD5' => md5(serialize($user))
-		);
-		//TODO: Hack to bypass the option of deleting the comment
-		if(isset($user['name']))
-		{
-			//Name
-			if(Library::isEmpty($user['name']))
-				$fields['NAME'] = '';
-			else
-				$fields['NAME'] = $user['name'];
-		}
-		//Surname
-		if(Library::isEmpty($user['last_name']))
-			$fields['LAST_NAME'] = '';
-		else
-			$fields['LAST_NAME'] = $user['last_name'];
-
-		if(Library::isEmpty($fields['NAME']) && Library::isEmpty($fields['LAST_NAME']))
-		{
-			if(Library::isEmpty($user['title']))
-				$fields['NAME'] = Loc::getMessage("IMCONNECTOR_GUEST_USER");
-			else
-				$fields['NAME'] = $user['title'];
-		}
-
-		//The link to the profile
-		if(empty($user['url']))
-			$fields['PERSONAL_WWW'] = '';
-		else
-			$fields['PERSONAL_WWW'] = $user['url'];
-		//Sex
-		if(empty($user['gender']))
-		{
-			$fields['PERSONAL_GENDER'] = '';
-		}
-		else
-		{
-			if($user['gender'] == 'male')
-				$fields['PERSONAL_GENDER'] = 'M';
-			elseif($user['gender'] == 'female')
-				$fields['PERSONAL_GENDER'] = 'F';
-		}
-		//Personal photo
-		if(empty($user['picture']))
-		{
-			//$fields['PERSONAL_PHOTO'] = array('del' => 'Y');
-		}
-		else
-		{
-			$fields['PERSONAL_PHOTO'] = self::downloadFile($user['picture']);
-			//$fields['PERSONAL_PHOTO'] = \CFile::MakeFileArray($user['picture']['url']);
-		}
-
-		if(!Library::isEmpty($user['title']))
-			$fields['TITLE'] = $user['title'];
-
-		if (!Library::isEmpty($user['email']))
-		{
-			$fields['EMAIL'] = $user['email'];
-		}
-
-		if (!Library::isEmpty($user['phone']))
-		{
-			$fields['PERSONAL_MOBILE'] = $user['phone'];
-		}
-
-		return $fields;
 	}
 
 	/**
@@ -523,7 +442,7 @@ class ReceivingMessage
 	 * @return array|bool
 	 * @throws \Bitrix\Main\IO\FileNotFoundException
 	 */
-	private function downloadFile($file)
+	public static function downloadFile($file)
 	{
 		if(empty($file['url']))
 		{
@@ -531,7 +450,12 @@ class ReceivingMessage
 		}
 		else
 		{
-			$httpClient = new HttpClient(array("redirect" => true));
+			$httpClient = new HttpClient(
+				[
+					'redirect' => true,
+					'disableSslVerification' => true
+				]
+			);
 			$httpClient->setHeader('User-Agent', 'Bitrix Connector Client');
 
 			if(!empty($file['headers']) && is_array($file['headers']))
@@ -543,9 +467,13 @@ class ReceivingMessage
 			}
 
 			if(Library::isEmpty($file['name']))
+			{
 				$fileName = Library::getNameFile($file['url']);
+			}
 			else
+			{
 				$fileName = $file['name'];
+			}
 
 			$tempFilePath = \CFile::GetTempName('', $fileName);
 
@@ -558,7 +486,10 @@ class ReceivingMessage
 
 				//Correct handling of links with redirect
 				$effectiveUrl = $httpClient->getEffectiveUrl();
-				if($effectiveUrl != $file['url'])
+				if(
+					Library::isEmpty($file['name']) &&
+					$effectiveUrl != $file['url']
+				)
 				{
 					$fileName = Library::getNameFile($effectiveUrl);
 				}
@@ -606,29 +537,25 @@ class ReceivingMessage
 	 *
 	 * @param array $files Array with list of files.
 	 * @return Result
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 * @throws \Bitrix\Main\IO\FileNotFoundException
 	 */
-	private function saveFiles($files)
+	private function saveFiles($files): Result
 	{
 		$result = new Result();
+		$resultSaveFiles = [];
 
 		foreach ($files as $cell => $file)
 		{
-			$file = $this->downloadFile($file);
-			if($file)
+			$resultSaveFile = Connector::initializationConnectorHandler($this->connector)->saveFile($file);
+			if(!empty($resultSaveFile))
 			{
-				$files[$cell] = \CFile::SaveFile(
-					$file,
-					Library::MODULE_ID
-				);
-			}
-			else
-			{
-				unset($files[$cell]);
+				$resultSaveFiles[$cell] = $resultSaveFile;
 			}
 		}
 
-		$result->setResult($files);
+		$result->setData($resultSaveFiles);
 
 		return $result;
 	}
@@ -640,7 +567,7 @@ class ReceivingMessage
 	 * @param string $eventName The name of the event.
 	 * @return Result
 	 */
-	private function sendEvent($data, $eventName = Library::EVENT_RECEIVED_MESSAGE)
+	private function sendEvent($data, $eventName = Library::EVENT_RECEIVED_MESSAGE): Result
 	{
 		$result = new Result();
 		$data["connector"] = $this->connector;

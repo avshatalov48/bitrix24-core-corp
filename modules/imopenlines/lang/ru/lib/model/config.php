@@ -47,6 +47,7 @@ $MESS["CONFIG_ENTITY_WELCOME_BOT_JOIN_FIELD"] = "Тип подключения �
 $MESS["CONFIG_ENTITY_WELCOME_BOT_LEFT_FIELD"] = "Тип отключения чат-бота во время сессии";
 $MESS["CONFIG_ENTITY_CATEGORY_ENABLE_FIELD"] = "Доступность категорий";
 $MESS["CONFIG_ENTITY_CATEGORY_ID_FIELD"] = "ID категории по умолчанию";
+$MESS["CONFIG_ENTITY_WATCH_TYPING_FIELD"] = "Наблюдение за набором текста";
 $MESS["CONFIG_ENTITY_WELCOME_MESSAGE_FIELD"] = "Отправить автоответ на первое сообщение";
 $MESS["CONFIG_ENTITY_WELCOME_MESSAGE_TEXT_FIELD_NEW"] = "Текст автоответа на первое сообщение";
 $MESS["CONFIG_ENTITY_VOTE_MESSAGE_FIELD"] = "Отправлять запрос оценки качества обслуживания";

@@ -137,6 +137,11 @@ class DealDataProvider extends EntityDataProvider
 			);
 		}
 
+		$result['ORDER_STAGE'] = $this->createField(
+			'ORDER_STAGE',
+			array('type' => 'list', 'default' => false, 'partial' => true)
+		);
+
 		$result['BEGINDATE'] = $this->createField(
 			'BEGINDATE',
 			array('type' => 'date')
@@ -341,6 +346,13 @@ class DealDataProvider extends EntityDataProvider
 			return array(
 				'params' => array('multiple' => 'Y'),
 				'items' => DealCategory::getStageList(max($categoryID, 0))
+			);
+		}
+		elseif($fieldID === 'ORDER_STAGE')
+		{
+			return array(
+				'params' => array('multiple' => 'Y'),
+				'items' => Crm\Order\OrderStage::getList()
 			);
 		}
 		elseif($fieldID === 'STAGE_SEMANTIC_ID' || $fieldID === 'STAGE_SEMANTIC_ID_FROM_HISTORY')

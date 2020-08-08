@@ -179,7 +179,7 @@ class UtmTable extends Entity\DataManager
 		$codeList = self::getCodeList();
 		foreach ($codeList as $code)
 		{
-			$fieldName = strtoupper($code);
+			$fieldName = mb_strtoupper($code);
 			$tableAlias = 'U_' . $fieldName;
 			$resultList[$fieldName] = array(
 				'FIELD' => "{$tableAlias}.VALUE",

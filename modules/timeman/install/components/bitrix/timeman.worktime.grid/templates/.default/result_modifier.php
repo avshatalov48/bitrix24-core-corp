@@ -17,46 +17,44 @@ use Bitrix\Timeman\Helper\UserHelper;
 foreach ($arResult['DEPARTMENT_USERS_DATA'] as $departmentData)
 {
 	$departmentId = $departmentData['ID'];
-	$drawnDepartmentSeparator = false;
-	foreach ($departmentData['USERS'] as $userData)
+	if ($arResult['DRAW_DEPARTMENT_SEPARATOR'])
 	{
-		$user = $usersCollection->getByPrimary($userData['ID']);
-		/** @var \Bitrix\Timeman\Model\User\User $user */
-		if (!$drawnDepartmentSeparator && $arResult['DRAW_DEPARTMENT_SEPARATOR'])
+		$hintChain = '';
+		foreach ($departmentData['CHAIN'] as $chainIndex => $chainDepartment)
 		{
-			$hintChain = '';
-			foreach ($departmentData['CHAIN'] as $chainIndex => $chainDepartment)
+			if ($chainIndex > 0)
 			{
-				if ($chainIndex > 0)
-				{
-					$hintChain .= '<span class="tm-departments-delimiter"> &mdash; </span>';
-				}
-				$hintChain .= htmlspecialcharsbx($chainDepartment['NAME']);
+				$hintChain .= '<span class="tm-departments-delimiter"> &mdash; </span>';
 			}
-			$url = !empty($departmentData['URL']) ? $departmentData['URL'] : '#';
-			$depName = '<a data-hint-no-icon ' . ($arResult['isSlider'] ? ' target="_blank" ' : '') . '
+			$hintChain .= htmlspecialcharsbx($chainDepartment['NAME']);
+		}
+		$url = !empty($departmentData['URL']) ? $departmentData['URL'] : '#';
+		$depName = '<a data-hint-no-icon ' . ($arResult['isSlider'] ? ' target="_blank" ' : '') . '
 				data-hint="' . htmlspecialcharsbx($hintChain) . '"
 				href="' . $url . '">'
-					   . htmlspecialcharsbx($departmentData['NAME'])
-					   . '</a>';
+				   . htmlspecialcharsbx($departmentData['NAME'])
+				   . '</a>';
 
-			$departmentSeparatorHtml = '<span class="tm-department-name">' . $depName . '</span>';
-			if ($arResult['canReadSettings'] && $arResult['showUserWorktimeSettings'])
-			{
-				$departmentSeparatorHtml .= '<span class="timeman-grid-settings-icon timeman-grid-settings-icon-time"
+		$departmentSeparatorHtml = '<span class="tm-department-name">' . $depName . '</span>';
+		if ($arResult['canReadSettings'] && $arResult['showUserWorktimeSettings'])
+		{
+			$departmentSeparatorHtml .= '<span class="timeman-grid-settings-icon timeman-grid-settings-icon-time"
 					data-entity-code="' . \Bitrix\Timeman\Helper\EntityCodesHelper::buildDepartmentCode($departmentData['ID']) . '"
 					data-role="timeman-settings-toggle"
 					data-id="' . htmlspecialcharsbx($departmentData['ID']) . '"
 					data-type="department"></span>';
-			}
-
-			$arResult['ROWS'][] = [
-				'columns' => [
-					'USER_NAME' => $departmentSeparatorHtml,
-				],
-			];
-			$drawnDepartmentSeparator = true;
 		}
+
+		$arResult['ROWS'][] = [
+			'columns' => [
+				'USER_NAME' => $departmentSeparatorHtml,
+			],
+		];
+	}
+	foreach ($departmentData['USERS'] as $userData)
+	{
+		$user = $usersCollection->getByPrimary($userData['ID']);
+		/** @var \Bitrix\Timeman\Model\User\User $user */
 
 		$data = [
 			'FORMATTED_NAME' => $user->buildFormattedName(),
@@ -86,6 +84,10 @@ foreach ($arResult['DEPARTMENT_USERS_DATA'] as $departmentData)
 			$cellHtml = ob_get_clean();
 			$date = array_key_exists('date', $worktimeCellData) ? $worktimeCellData['date'] : $worktimeCellData['id'];
 			$columnClasses[$worktimeCellData['id']] = 'js-' . TemplateParams::getDayCellIdByData($user->getId(), $date);
+			if (!empty($arResult['HOLIDAYS'][$user->getId()][$worktimeCellData['id']]) && $arResult['HOLIDAYS'][$user->getId()][$worktimeCellData['id']] === true)
+			{
+				$columnClasses[$worktimeCellData['id']] .= ' tm-worktime-list-holiday-cell';
+			}
 			$columns[$worktimeCellData['id']] = $cellHtml;
 		}
 		if ($arResult['GRID_OPTIONS']['SHOW_STATS_COLUMNS'])

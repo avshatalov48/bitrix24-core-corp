@@ -1,5 +1,7 @@
 <? if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
+use Bitrix\Main\Localization\Loc;
+
 Bitrix\Main\Page\Asset::getInstance()->addJs("/bitrix/js/main/hot_keys.js");
 
 $selfFolderUrl = "/shop/settings/";
@@ -253,6 +255,9 @@ $APPLICATION->IncludeComponent(
 ?>
 
 <script>
+	BX.message({
+		SHOP_SLIDER_TITLE_PRODUCT: '<?=CUtil::JSEscape(Loc::getMessage('SHOP_SLIDER_TITLE_PRODUCT'))?>'
+	});
 	BX.ready(function() {
 		new BX.Sale.ShopPublic();
 	});

@@ -142,7 +142,7 @@ $APPLICATION->IncludeComponent(
 	)
 );
 
-$crmEmail = strtolower(COption::GetOptionString('crm', 'mail', ''));
+$crmEmail = mb_strtolower(COption::GetOptionString('crm', 'mail', ''));
 if ($arResult['ELEMENT']['ID'] == 0 && $crmEmail != ''):
 ?><div class="crm_notice_message"><?=GetMessage('CRM_IMPORT_SNS', Array('%EMAIL%' => $crmEmail, '%ARROW%' => '<span class="crm_notice_arrow"></span>'));?></div><?
 endif;

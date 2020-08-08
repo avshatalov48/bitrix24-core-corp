@@ -26,6 +26,7 @@ var BackdropMenuIcon = {
 	user_plus: 'user_plus_v1.png',
 	users: 'users_v1.png',
 	circle_plus: 'circle_plus_v1.png',
+	select_text: 'select_text_v1.png',
 };
 
 var BackdropMenuIconPath = '/bitrix/mobileapp/mobile/extensions/bitrix/menu/backdrop/images/';

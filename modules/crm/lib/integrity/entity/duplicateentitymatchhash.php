@@ -64,7 +64,7 @@ class DuplicateEntityMatchHashTable extends Entity\DataManager
 			{
 				$isPrimary = $data['IS_PRIMARY'] ? 'Y' : 'N';
 			}
-			elseif(is_string($data['IS_PRIMARY']) && strtoupper(trim($data['IS_PRIMARY'])) === 'Y')
+			elseif(is_string($data['IS_PRIMARY']) && mb_strtoupper(trim($data['IS_PRIMARY'])) === 'Y')
 			{
 				$isPrimary = 'Y';
 			}

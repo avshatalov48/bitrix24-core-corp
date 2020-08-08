@@ -9,6 +9,13 @@ const Wrapper = {
 			designStyleNode: null,
 		};
 	},
+	beforeDestroy()
+	{
+		if (this.designStyleNode)
+		{
+			this.designStyleNode.parentElement.removeChild(this.designStyleNode);
+		}
+	},
 	methods: {
 		classes()
 		{

@@ -322,6 +322,7 @@ class ContactCenter
 
 				$selected = false;
 				$selectedOrder = false;
+				$connectionInfoHelperLimit = false;
 
 				if (!empty($statusList[$code]))
 				{
@@ -350,6 +351,16 @@ class ContactCenter
 					}
 				}
 
+				//Hack for apple business chat
+				if(
+					$code === 'imessage' &&
+					$selected === false &&
+					\Bitrix\ImConnector\Limit::canUseIMessage() !== true
+				)
+				{
+					$connectionInfoHelperLimit = \Bitrix\ImConnector\Limit::INFO_HELPER_LIMIT_CONNECTOR_IMESSAGE;
+				}
+
 				$isAddItemToList = $this->isAddItemToList($filter["ACTIVE"], $selected);
 
 				if ($isAddItemToList)
@@ -358,6 +369,7 @@ class ContactCenter
 						"NAME" => $connector["name"],
 						"LINK" => !empty($connector["link"]) ? $connector["link"] : \CUtil::JSEscape( $linkTemplate . "?ID=" . $code),
 						"SELECTED" => $selected,
+						"CONNECTION_INFO_HELPER_LIMIT" => $connectionInfoHelperLimit,
 						"LOGO_CLASS" => "ui-icon ui-icon-service-" . $codeMap[$code]
 					);
 
@@ -365,6 +377,7 @@ class ContactCenter
 					{
 						$isAddItemToList = $this->isAddItemToList($filter["ACTIVE"], $selectedOrder);
 
+						//Hack for vkgroup order
 						if ($isAddItemToList)
 						{
 							$uri = new Uri($itemsList["vkgroup"]["LINK"]);
@@ -373,6 +386,7 @@ class ContactCenter
 								"NAME" => Loc::getMessage("CONTACT_CENTER_IMOPENLINES_VK_ORDER"),
 								"LINK" => \CUtil::JSEscape($uri->getUri()),
 								"SELECTED" => $selectedOrder,
+								"CONNECTION_INFO_HELPER_LIMIT" => false,
 								"LOGO_CLASS" => "ui-icon ui-icon-service-" . $codeMap["vkgrouporder"]
 							);
 						}
@@ -409,7 +423,15 @@ class ContactCenter
 		}
 		else
 		{
-			$itemsList = array(
+			$itemsList = [];
+
+			$marketplaceApps = $this->getMarketplaceAppsByTag(['contact_center', 'partners', static::getZone()]);
+			if (!empty($marketplaceApps['ITEMS']))
+			{
+				$itemsList = $this->prepareMarketplaceApps($marketplaceApps);
+			}
+
+			$itemsList = array_merge($itemsList, array(
 				'ccplacement' => array(
 					"NAME" => Loc::getMessage("CONTACT_CENTER_REST_CC_PLACEMENT"),
 					"LOGO_CLASS" => "ui-icon ui-icon-service-rest-contact-center",
@@ -425,7 +447,7 @@ class ContactCenter
 					"LOGO_CLASS" => "ui-icon ui-icon-service-telephonybot",
 					"SELECTED" => false
 				)
-			);
+			));
 
 			$dynamicItems = $this->getDynamicItems();
 
@@ -462,7 +484,7 @@ class ContactCenter
 				$app = $appList[$placement["APP_ID"]];
 				$selected = ($app["ACTIVE"] == \Bitrix\Rest\AppTable::ACTIVE);
 				$itemsList[$app["CODE"]] = array (
-					"NAME" => (strlen($placement["TITLE"]) > 0) ? $placement["TITLE"] : $placement["APP_NAME"],
+					"NAME" => ($placement["TITLE"] <> '') ? $placement["TITLE"] : $placement["APP_NAME"],
 					"LINK" =>  \CUtil::JSEscape(SITE_DIR . "marketplace/app/" . $app["ID"] . "/"),
 					"SELECTED" => $selected,
 					"PLACEMENT_ID" => $placement["ID"],
@@ -478,6 +500,36 @@ class ContactCenter
 	}
 
 	/**
+	 * Return true if portal is cloud.
+	 *
+	 * @return bool
+	 */
+	public static function isCloud()
+	{
+		return Loader::includeModule('bitrix24');
+	}
+
+	/**
+	 * Return true if region is Russian.
+	 *
+	 * @return bool
+	 */
+	public static function isRegionRussian()
+	{
+		return in_array(self::getZone(), ['ru', 'kz', 'by']);
+	}
+
+	private static function getZone()
+	{
+		if (self::isCloud())
+		{
+			return \CBitrix24::getPortalZone();
+		}
+
+		return \CIntranetUtils::getPortalZone();
+	}
+
+	/**
 	 * Return items from sale module
 	 *
 	 * @param array $filter
@@ -487,15 +539,19 @@ class ContactCenter
 	{
 		$result = new Result();
 
-		$result->setData(array(
-			'sale' => array(
-				"NAME" => Loc::getMessage("CONTACT_CENTER_REST_ESHOP"),
-				"LOGO_CLASS" => "ui-icon ui-icon-service-import",
-				"SELECTED" => (\Bitrix\Rest\AppTable::getRow(['filter'=>[
-					'ACTIVE' => 'Y',
-					'CODE' => 'bitrix.eshop']]))
-			)
-		));
+		$data = static::isRegionRussian() ?
+			array(
+				'sale' => array(
+					"NAME" => Loc::getMessage("CONTACT_CENTER_REST_ESHOP"),
+					"LOGO_CLASS" => "ui-icon ui-icon-service-import",
+					"SELECTED" => (\Bitrix\Rest\AppTable::getRow(['filter'=>[
+						'ACTIVE' => 'Y',
+						'CODE' => 'bitrix.eshop']])),
+					"ONCLICK" => "BX.SidePanel.Instance.open('/marketplace/detail/bitrix.eshop/')"
+				)
+			):array();
+
+		$result->setData($data);
 
 		return $result;
 	}
@@ -571,6 +627,90 @@ class ContactCenter
 		}
 
 		return $result;
+	}
+
+	private function getMarketplaceAppsByTag(array $tag, bool $page = false, bool $pageSize = false)
+	{
+		$cacheTtl = 43200;
+		$cacheId = md5(serialize([$tag, $page, $pageSize]));
+		$cachePath = '/intranet/contact_center/tag/';
+		$cache = Application::getInstance()->getCache();
+		if($cache->initCache($cacheTtl, $cacheId, $cachePath))
+		{
+			$marketplaceApps = $cache->getVars();
+		}
+		else
+		{
+			$marketplaceApps = \Bitrix\Rest\Marketplace\Client::getByTag($tag, $page, $pageSize);
+			if(!empty($marketplaceApps['ITEMS']))
+			{
+				$cache->startDataCache();
+				$cache->endDataCache($marketplaceApps);
+			}
+		}
+
+		return $marketplaceApps;
+	}
+
+	private function prepareMarketplaceApps(array $marketplaceApps): array
+	{
+		$result = [];
+
+		$installedMarketplaceApps = $this->getInstalledMarketplaceApps();
+		foreach ($marketplaceApps['ITEMS'] as $marketplaceApp)
+		{
+			$onclick = "BX.SidePanel.Instance.open('/marketplace/detail/{$marketplaceApp['CODE']}/')";
+			if (isset($installedMarketplaceApps[$marketplaceApp['CODE']]))
+			{
+				$applicationId = $installedMarketplaceApps[$marketplaceApp['CODE']]['ID'];
+				$appCode = $installedMarketplaceApps[$marketplaceApp['CODE']]['CODE'];
+				$onclick = "new BX.ContactCenter.MarketplaceApp('{$applicationId}', '{$appCode}')";
+			}
+
+			$title = $marketplaceApp['NAME'];
+			if (strlen($title) > 50)
+			{
+				$title = substr($title, 0, 50).'...';
+			}
+
+			$img = $marketplaceApp['ICON_PRIORITY'] ?: $marketplaceApp['ICON'];
+			$img = str_replace(' ', '%20', $img);
+
+			$result[$marketplaceApp['CODE']] = [
+				"NAME" => $title,
+				"LOGO_CLASS" => 'ui-icon intranet-contact-marketplace-app',
+				"IMAGE" => $img,
+				"ONCLICK" => $onclick,
+				"SELECTED" => isset($installedMarketplaceApps[$marketplaceApp['CODE']]),
+				"MARKETPLACE_APP" => true,
+			];
+		}
+
+		\Bitrix\Main\Type\Collection::sortByColumn($result, ['SELECTED' => SORT_DESC]);
+
+		return $result;
+	}
+
+	private function getInstalledMarketplaceApps(): array
+	{
+		static $marketplaceInstalledApps = [];
+		if(!empty($marketplaceInstalledApps))
+		{
+			return $marketplaceInstalledApps;
+		}
+
+		$appIterator = \Bitrix\Rest\AppTable::getList([
+			'select' => ['ID', 'CODE'],
+			'filter' => [
+				'=ACTIVE' => 'Y',
+			]
+		]);
+		while ($row = $appIterator->fetch())
+		{
+			$marketplaceInstalledApps[$row['CODE']] = $row;
+		}
+
+		return $marketplaceInstalledApps;
 	}
 
 	/**
@@ -817,12 +957,12 @@ class ContactCenter
 				}
 
 				$linkedFormsIds = \Bitrix\Crm\Ads\AdsForm::getLinkedForms($type);
-				$name = (Loc::getMessage("CONTACT_CENTER_ADS_FORM_" . strtoupper($type)) ? : \Bitrix\Crm\Ads\AdsForm::getServiceTypeName($type));
+				$name = (Loc::getMessage("CONTACT_CENTER_ADS_FORM_".mb_strtoupper($type)) ? : \Bitrix\Crm\Ads\AdsForm::getServiceTypeName($type));
 
 				if ($filter["IS_LOAD_INNER_ITEMS"] !== "N")
 				{
 					$linkedItems = array();
-					$shortName = (Loc::getMessage("CONTACT_CENTER_ADS_FORM_SHORTNAME_" . strtoupper($type)) ? : \Bitrix\Crm\Ads\AdsForm::getServiceTypeName($type));
+					$shortName = (Loc::getMessage("CONTACT_CENTER_ADS_FORM_SHORTNAME_".mb_strtoupper($type)) ? : \Bitrix\Crm\Ads\AdsForm::getServiceTypeName($type));
 					$notLinkedItems = $list;
 
 					foreach ($linkedFormsIds as $id)
@@ -1015,9 +1155,9 @@ class ContactCenter
 
 		foreach ($modules as $module)
 		{
-			if (in_array(strtolower($module), $this->modules))
+			if (in_array(mb_strtolower($module), $this->modules))
 			{
-				$result[] = strtolower($module);
+				$result[] = mb_strtolower($module);
 			}
 		}
 

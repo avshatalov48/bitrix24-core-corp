@@ -28,7 +28,7 @@ if (is_array($arParams['FIELDS']))
 
 		$arResult['ITEMS'][] = array(
 			'CODE' => $utmCode,
-			'NAME' => strtolower($utmCode),
+			'NAME' => mb_strtolower($utmCode),
 			'VALUE' => urldecode($value)
 		);
 	}

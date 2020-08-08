@@ -268,7 +268,7 @@ class QuoteConverter extends EntityConverter
 				&& \CCrmBizProcHelper::HasParameterizedAutoWorkflows($entityTypeID, \CCrmBizProcEventType::Create))
 			{
 				throw new EntityConversionException(
-					\CCrmOwnerType::Lead,
+					\CCrmOwnerType::Quote,
 					$entityTypeID,
 					EntityConversionException::TARG_DST,
 					EntityConversionException::HAS_WORKFLOWS
@@ -307,7 +307,7 @@ class QuoteConverter extends EntityConverter
 			$entityCreationOptions = array();
 			if(isset($this->contextData['USER_ID']))
 			{
-				$entityCreationOptions['USER_ID'] = $this->contextData['USER_ID'];
+				$entityCreationOptions['CURRENT_USER'] = $entityCreationOptions['USER_ID'] = $this->contextData['USER_ID'];
 			}
 
 			if(!$this->isUserFieldCheckEnabled())
@@ -420,7 +420,8 @@ class QuoteConverter extends EntityConverter
 					$arErrors
 				);
 
-				Crm\Automation\Factory::runOnAdd(\CCrmOwnerType::Deal, $entityID);
+				$starter = new Crm\Automation\Starter(\CCrmOwnerType::Deal, $entityID);
+				$starter->runOnAdd();
 				//endregion
 
 				$this->resultData[\CCrmOwnerType::DealName] = $entityID;

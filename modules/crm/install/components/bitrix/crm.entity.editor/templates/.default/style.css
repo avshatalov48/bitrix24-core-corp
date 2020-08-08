@@ -361,6 +361,24 @@ span.crm-entity-widget-client-connect-btn { margin-left: 25px; }
 	100% { opacity: 1; }
 }
 
+.crm-entity-widget-detail-btn {
+	display: inline-block;
+	border-bottom: 1px dashed rgba(39, 107, 179, .4);
+	color: #2067b0;
+	text-decoration: none;
+	transition: border-bottom 0.2s linear;
+	cursor: pointer;
+}
+
+.crm-entity-merger-sidebar-inner .crm-entity-widget-detail-btn,
+.crm-entity-widget-hidden-btn.crm-entity-widget-detail-btn {
+	display: none;
+}
+
+.crm-entity-widget-detail-btn:hover {
+	border-bottom: 1px dashed transparent;
+}
+
 .crm-entity-card-widget-edit .crm-entity-widget-content-block { opacity: 1; }
 
 .crm-entity-widget-content-block,
@@ -1710,7 +1728,10 @@ a.crm-entity-widget-client-box-name:hover { color: #3f51b5; }
 
 .crm-entity-widget-content-block-products-item:last-child td { border-bottom: none; }
 
-td.crm-entity-widget-content-block-products-item-name { }
+td.crm-entity-widget-content-block-products-item-name {
+	word-break: break-all;
+	word-break: break-word;
+}
 
 td.crm-entity-widget-content-block-products-price {
 	padding-left: 20px;
@@ -3009,14 +3030,14 @@ div.crm-entity-widget-content-block-radio-label {
 .crm-entity-card-widget-create-field-item-title {
 	display: block;
 	margin-bottom: 2px;
-	color: #000;
-	font: 600 14px/19px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #333;
+	font: 14px/19px "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 .crm-entity-card-widget-create-field-item-desc {
 	display: block;
 	color: #828b95;
-	font: 400 13px/18px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 400 13px/18px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 .crm-entity-widget-content-hide {

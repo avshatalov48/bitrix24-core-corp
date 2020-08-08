@@ -1,36 +1,17 @@
 <?php
 namespace Bitrix\Timeman\Service\Worktime\Record;
 
-use Bitrix\Main\Error;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEvent;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
-use Bitrix\Timeman\Service\Worktime\Result\WorktimeServiceResult;
+use Bitrix\Timeman\Service\Worktime\WorktimeLiveFeedManager;
 
 class ApproveWorktimeManager extends WorktimeManager
 {
 	private $wasAlreadyApproved = false;
 
-	protected function verifyAfterUpdatingRecord($record)
+	protected function checkStartGreaterThanNow()
 	{
-		$result = parent::verifyAfterUpdatingRecord($record);
-		if (!$result->isSuccess())
-		{
-			return $result;
-		}
-		if ($record && $this->worktimeRecordForm->recordedStartSeconds !== null)
-		{
-			$startTimestamp = $record->getRecordedStartTimestamp();
-			if ($startTimestamp > TimeHelper::getInstance()->getUtcNowTimestamp())
-			{
-				return $result->addError(new Error(
-						Loc::getMessage('TM_BASE_SERVICE_RESULT_ERROR_START_GREATER_THAN_NOW'),
-						WorktimeServiceResult::ERROR_FOR_USER)
-				);
-			}
-		}
-		return $result;
+		return true;
 	}
 
 	protected function verifyBeforeProcessUpdatingRecord()
@@ -54,7 +35,15 @@ class ApproveWorktimeManager extends WorktimeManager
 		return $record;
 	}
 
-	public function notifyOfAction($record, $schedule)
+	public function onBeforeRecordSave(WorktimeRecord $record, WorktimeLiveFeedManager $liveFeedManager)
+	{
+		if (!$this->wasAlreadyApproved && $record->isApproved())
+		{
+			$liveFeedManager->stopWorkdayPostTrackingForApprover($record->getId(), $record->getApprovedBy());
+		}
+	}
+
+	public function notifyOfActionOldStyle($record, $schedule)
 	{
 		if ($this->wasAlreadyApproved)
 		{
@@ -81,8 +70,8 @@ class ApproveWorktimeManager extends WorktimeManager
 		];
 	}
 
-	protected function checkIntersectingRecords()
+	protected function checkOverlappingRecords()
 	{
-		return true;
+		return false;
 	}
 }

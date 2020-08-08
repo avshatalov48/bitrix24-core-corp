@@ -2,6 +2,7 @@
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Config\Option;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -46,6 +47,32 @@ if (
 )
 {
 	$arResult["IS_ADMIN"] = "Y";
+
+	$appImport = Option::get("rest", "import_configuration_app", '');
+	if ($appImport != '')
+	{
+		try
+		{
+			$appList = \Bitrix\Main\Web\Json::decode($appImport);
+			$app = array_shift($appList);
+			if ($app && Loader::includeModule('rest'))
+			{
+				$arResult["SHOW_IMPORT_CONFIGURATION"] = 'Y';
+				$url = \Bitrix\Rest\Marketplace\Url::getConfigurationImportAppUrl($app);
+				$uri = new Bitrix\Main\Web\Uri($url);
+				$uri->addParams(
+					[
+						'create_install' => 'Y'
+					]
+				);
+				$arResult['URL_IMPORT_CONFIGURATION'] = $uri->getUri();
+			}
+		}
+		catch (\Bitrix\Main\ArgumentException $e)
+		{
+			Option::set("rest", "import_configuration_app", '');
+		}
+	}
 }
 
 $arResult["IS_EXTRANET"] = isModuleInstalled("extranet") && SITE_ID == COption::GetOptionString("extranet", "extranet_site");
@@ -175,7 +202,7 @@ if (is_array($userItems) && !empty($userItems))
 	foreach ($userItems as $item)
 	{
 		$newItems[$item["ID"]] = array(
-			"TEXT" => htmlspecialcharsbx($item["TEXT"]),
+			"TEXT" => htmlspecialcharsbx(\Bitrix\Main\Text\Emoji::decode($item["TEXT"])),
 			"LINK" => htmlspecialcharsbx($item["LINK"]),
 			"PERMISSION" => "X",
 			"PARAMS" => array(

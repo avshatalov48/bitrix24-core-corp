@@ -2,7 +2,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 global $APPLICATION;
 
-if(isset($arParams['~ENABLE_TACTILE_INTERFACE']) && strtoupper($arParams['~ENABLE_TACTILE_INTERFACE']) === 'Y')
+if(isset($arParams['~ENABLE_TACTILE_INTERFACE']) && mb_strtoupper($arParams['~ENABLE_TACTILE_INTERFACE']) === 'Y')
 {
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.interface.form.tactile',

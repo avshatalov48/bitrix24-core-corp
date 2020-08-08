@@ -122,7 +122,7 @@ class ChannelCallback implements iProvider
 		$type = self::getType();
 		$widget = array(
 			'id' => $type,
-			'title' => Loc::getMessage('CRM_BUTTON_MANAGER_TYPE_NAME_' . strtoupper($type)),
+			'title' => Loc::getMessage('CRM_BUTTON_MANAGER_TYPE_NAME_'.mb_strtoupper($type)),
 			'script' => WebFormScript::getCrmButtonWidget(
 				$id,
 				array(
@@ -198,7 +198,7 @@ class ChannelCallback implements iProvider
 	 */
 	public static function getName()
 	{
-		return Loc::getMessage('CRM_BUTTON_MANAGER_TYPE_NAME_' . strtoupper(self::getType()));
+		return Loc::getMessage('CRM_BUTTON_MANAGER_TYPE_NAME_'.mb_strtoupper(self::getType()));
 	}
 
 	/**

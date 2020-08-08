@@ -17,6 +17,8 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Text\HtmlFilter;
 
+\Bitrix\Main\UI\Extension::load('mobile.diskfile');
+
 Loc::loadMessages(__FILE__);
 
 $templateData = $arResult["TEMPLATE_DATA"];
@@ -40,8 +42,9 @@ $APPLICATION->SetPageProperty('BodyClass', 'task-card-page');
 Asset::getInstance()->addJs(SITE_TEMPLATE_PATH.'/log_mobile.js');
 Asset::getInstance()->addJs($templateFolder.'/../.default/script.js');
 
-$arResult["FORM_ID"] = 'MOBILE_TASK_VIEW';
-$arResult["GRID_ID"] = 'MOBILE_TASK_VIEW';
+$guid = str_replace('-', '', $arParams["GUID"]);
+$arResult["FORM_ID"] = "MOBILE_TASK_VIEW_{$guid}";
+$arResult["GRID_ID"] = "MOBILE_TASK_VIEW_{$guid}";
 
 $task = &$arResult["DATA"]["TASK"];
 $can = $arResult["CAN"]["TASK"]["ACTION"];
@@ -62,6 +65,8 @@ if ($timerTask['TASK_ID'] === $taskId)
 	$task["TIME_SPENT_IN_LOGS"] += $timerTask['RUN_TIME'];
 }
 
+$taskLimitExceeded = $arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'];
+
 ob_start();
 $APPLICATION->IncludeComponent(
 	'bitrix:tasks.widget.checklist.new',
@@ -72,7 +77,7 @@ $APPLICATION->IncludeComponent(
 		'DATA' => $task['SE_CHECKLIST'],
 		'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
 		'CONVERTED' => $arResult['DATA']['CHECKLIST_CONVERTED'],
-		'CAN_ADD_ACCOMPLICE' => $can['EDIT'],
+		'CAN_ADD_ACCOMPLICE' => $can['EDIT'] && !$taskLimitExceeded,
 		'TASK_GUID' => $arParams['GUID'],
 		'DISK_FOLDER_ID' => $arResult['AUX_DATA']['DISK_FOLDER_ID'],
 	],
@@ -138,8 +143,6 @@ $url = CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_USER_TASKS_EDI
 			'TABS' => array( // Tabs to show for mobile version it is redundant just to keep compatibility with web version
 				array(
 					"id" => "task_base",
-					"title" => GetMessage("MB_TASKS_BASE_SETTINGS"),
-					"name" => GetMessage("MB_TASKS_BASE_SETTINGS"),
 					"fields" => array(
 						array(
 							"class" => "bx-tasks-title",
@@ -218,26 +221,31 @@ $url = CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_USER_TASKS_EDI
 									).
 									"</span></label>"
 							) : null),
-						(($mark = array(
-							"NULL" => GetMessage('MB_TASKS_TASK_SETTINGS_MARK_NULL'),
-							"P" => GetMessage('MB_TASKS_TASK_SETTINGS_MARK_P'),
-							"N" => GetMessage('MB_TASKS_TASK_SETTINGS_MARK_N'))) &&
-						($task["MARK"] = ($task["MARK"] == "N" || $task["MARK"] == "P" ? $task["MARK"] : "NULL")) &&
-						$can["EDIT"] ?
-							array(
-								"type" => "select",
-								"class" => "bx-tasks-task-mark bx-tasks-task-mark-".$task["MARK"],
-								"id" => "data[MARK]",
-								"name" => GetMessage("MB_TASKS_TASK_SETTINGS_MARK"),
-								"items" => $mark,
-								"value" => $task["MARK"]
-							) : array(
-								"type" => "label",
-								"class" => "bx-tasks-task-mark bx-tasks-task-mark-".$task["MARK"],
-								"id" => "data[MARK]",
-								"name" => GetMessage("MB_TASKS_TASK_SETTINGS_MARK"),
-								"value" => $mark[$task["MARK"]]
-							)),
+						(
+							($mark = [
+								"NULL" => GetMessage('MB_TASKS_TASK_SETTINGS_MARK_NULL'),
+								"P" => GetMessage('MB_TASKS_TASK_SETTINGS_MARK_P'),
+								"N" => GetMessage('MB_TASKS_TASK_SETTINGS_MARK_N')
+							])
+							&& ($task["MARK"] = ($task["MARK"] == "N" || $task["MARK"] == "P" ? $task["MARK"] : "NULL"))
+							&& $can["EDIT"]
+							&& !$taskLimitExceeded
+								? [
+									"type" => "select",
+									"class" => "bx-tasks-task-mark bx-tasks-task-mark-".$task["MARK"],
+									"id" => "data[MARK]",
+									"name" => GetMessage("MB_TASKS_TASK_SETTINGS_MARK"),
+									"items" => $mark,
+									"value" => $task["MARK"],
+								]
+								: [
+									"type" => "label",
+									"class" => "bx-tasks-task-mark bx-tasks-task-mark-".$task["MARK"],
+									"id" => "data[MARK]",
+									"name" => GetMessage("MB_TASKS_TASK_SETTINGS_MARK"),
+									"value" => $mark[$task["MARK"]],
+								]
+						),
 						array(
 							"type" => ($can["EDIT"] ? "select-user" : "user"),
 							"id" => "data[SE_RESPONSIBLE][0][ID]",
@@ -255,22 +263,28 @@ $url = CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_USER_TASKS_EDI
 							"canDrop" => false
 						),
 						(
-							(!empty($task["SE_AUDITOR"]) || $can["EDIT"]) ? [
+							!empty($task["SE_AUDITOR"]) || ($can["EDIT"] && !$taskLimitExceeded)
+							? [
 								"type" => ($can["EDIT"] ? "select-users" : "users"),
 								"id" => "data[SE_AUDITOR][]",
 								"name" => GetMessage("MB_TASKS_TASK_SETTINGS_AUDITORS"),
 								"items" => $task["SE_AUDITOR"],
 								"value" => (!empty($task["SE_AUDITOR"]) ? $task["AUDITORS"] : '0'),
-							] : null
+								"canAdd" => !$taskLimitExceeded,
+							]
+							: null
 						),
 						(
-							(!empty($task["SE_ACCOMPLICE"]) || $can["EDIT"]) ? [
+							!empty($task["SE_ACCOMPLICE"]) || ($can["EDIT"] && !$taskLimitExceeded)
+							? [
 								"type" => ($can["EDIT"] ? "select-users" : "users"),
 								"id" => "data[SE_ACCOMPLICE][]",
 								"name" => GetMessage("MB_TASKS_TASK_SETTINGS_ACCOMPLICES"),
 								"items" => $task["SE_ACCOMPLICE"],
 								"value" => (!empty($task["SE_ACCOMPLICE"]) ? $task["ACCOMPLICES"] : '0'),
-							] : null
+								"canAdd" => !$taskLimitExceeded,
+							]
+							: null
 						),
 						(is_array($arResult["AUX_DATA"]) && is_array($arResult["AUX_DATA"]["USER_FIELDS"]) &&
 						array_key_exists("UF_TASK_WEBDAV_FILES", $arResult["AUX_DATA"]["USER_FIELDS"]) &&
@@ -386,14 +400,46 @@ $component->arResult["HTML"] = [
 	<?php
 	$voteId = HtmlFilter::encode("TASK".'_'.$taskId.'-'.(time() + random_int(0, 1000)));
 	$userReaction = $arResult["RATING"][$arResult["Post"]["ID"]]["USER_REACTION"];
-	$emotion = (!empty($userReaction) ? strtoupper($userReaction) : 'LIKE');
+	$emotion = (!empty($userReaction)? mb_strtoupper($userReaction) : 'LIKE');
 
 	$userHasVoted = isset($templateData["RATING"]["USER_HAS_VOTED"]) && $templateData["RATING"]["USER_HAS_VOTED"] === 'Y';
 	$totalVotes = (int)$templateData["RATING"]["TOTAL_VOTES"];
 	$totalPositiveVotes = (int)$templateData["RATING"]["TOTAL_POSITIVE_VOTES"];
 	$totalNegativeVotes = (int)$templateData["RATING"]["TOTAL_NEGATIVE_VOTES"];
 	?>
-
+	<div class="post-item-inform-wrap-tree" id="rating-footer-wrap">
+		<div class="feed-post-emoji-top-panel-outer">
+			<div class="feed-post-emoji-top-panel-box <?=($totalPositiveVotes > 0 ? 'feed-post-emoji-top-panel-container-active' : '')?>"
+				 id="feed-post-emoji-top-panel-container-<?=$voteId?>">
+				<?php
+				$APPLICATION->IncludeComponent(
+					"bitrix:rating.vote",
+					"like_react",
+					array(
+						"MOBILE" => "Y",
+						"ENTITY_TYPE_ID" => "TASK",
+						"ENTITY_ID" => $taskId,
+						"OWNER_ID" => $task["CREATED_BY"],
+						"USER_VOTE" => $templateData["RATING"]["USER_VOTE"],
+						"USER_REACTION" => $arResult["RATING"]["USER_REACTION"],
+						"USER_HAS_VOTED" => $templateData["RATING"]["USER_HAS_VOTED"],
+						"TOTAL_VOTES" => $totalVotes,
+						"TOTAL_POSITIVE_VOTES" => $totalPositiveVotes,
+						"TOTAL_NEGATIVE_VOTES" => $totalNegativeVotes,
+						"TOTAL_VALUE" => $templateData["RATING"]["TOTAL_VALUE"],
+						"REACTIONS_LIST" => $arResult["RATING"]["REACTIONS_LIST"],
+						"PATH_TO_USER_PROFILE" => $arParams["~PATH_TO_USER"],
+						'TOP_DATA' => (!empty($arResult['TOP_RATING_DATA']) ? $arResult['TOP_RATING_DATA'] : false),
+						'VOTE_ID' => $voteId,
+						'TYPE' => 'POST'
+					),
+					$component->__parent,
+					array("HIDE_ICONS" => "Y")
+				);
+				?>
+			</div>
+		</div>
+	</div>
 	<div id="post_inform_wrap_two" class="post-item-inform-wrap">
 		<span class="post-item-informers bx-ilike-block" id="rating_block_<?=$taskId?>"
 			  data-counter="<?=$totalVotes?>">
@@ -412,38 +458,6 @@ $component->arResult["HTML"] = [
 	</div>
 </div>
 
-<div class="post-item-inform-wrap-tree" id="rating-footer-wrap">
-	<div class="feed-post-emoji-top-panel-outer">
-		<div class="feed-post-emoji-top-panel-box <?=($totalPositiveVotes > 0 ? 'feed-post-emoji-top-panel-container-active' : '')?>"
-			 id="feed-post-emoji-top-panel-container-<?=$voteId?>">
-			<?php
-			$APPLICATION->IncludeComponent(
-				"bitrix:rating.vote",
-				"like_react",
-				array(
-					"MOBILE" => "Y",
-					"ENTITY_TYPE_ID" => "TASK",
-					"ENTITY_ID" => $taskId,
-					"OWNER_ID" => $task["CREATED_BY"],
-					"USER_VOTE" => $templateData["RATING"]["USER_VOTE"],
-					"USER_REACTION" => $arResult["RATING"]["USER_REACTION"],
-					"USER_HAS_VOTED" => $templateData["RATING"]["USER_HAS_VOTED"],
-					"TOTAL_VOTES" => $totalVotes,
-					"TOTAL_POSITIVE_VOTES" => $totalPositiveVotes,
-					"TOTAL_NEGATIVE_VOTES" => $totalNegativeVotes,
-					"TOTAL_VALUE" => $templateData["RATING"]["TOTAL_VALUE"],
-					"REACTIONS_LIST" => $arResult["RATING"]["REACTIONS_LIST"],
-					"PATH_TO_USER_PROFILE" => $arParams["~PATH_TO_USER"],
-					'TOP_DATA' => (!empty($arResult['TOP_RATING_DATA']) ? $arResult['TOP_RATING_DATA'] : false),
-					'VOTE_ID' => $voteId,
-				),
-				$component->__parent,
-				array("HIDE_ICONS" => "Y")
-			);
-			?>
-		</div>
-	</div>
-</div>
 <div id="task-comments-block"><?=$taskCommentsHtml?></div>
 
 <input class="task-detail-left-bottom-options-button" id="options_button" type="button" />

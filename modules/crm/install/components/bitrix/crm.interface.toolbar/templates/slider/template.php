@@ -59,6 +59,23 @@ $this->SetViewTarget('inside_pagetitle', 10000);
 
 ?><div id="<?=htmlspecialcharsbx($toolbarID)?>" class="pagetitle-container pagetitle-align-right-container crm-pagetitle-btn-box"><?
 
+$bindingMenuMask = '/(lead|deal|invoice|quote|company|contact).*?([\d]+)/i';
+if (preg_match($bindingMenuMask, $arParams['TOOLBAR_ID'], $bindingMenuMatches) &&
+	\Bitrix\Main\Loader::includeModule('intranet'))
+{
+	$APPLICATION->includeComponent(
+		'bitrix:intranet.binding.menu',
+		'',
+		array(
+			'SECTION_CODE' => 'crm_detail',
+			'MENU_CODE' => $bindingMenuMatches[1],
+			'CONTEXT' => [
+				'ID' => $bindingMenuMatches[2]
+			]
+		)
+	);
+}
+
 if($communicationPanel)
 {
 		$data = isset($communicationPanel['DATA']) && is_array($communicationPanel['DATA']) ? $communicationPanel['DATA'] : array();
@@ -176,39 +193,6 @@ if($enableMoreButton)
 	</script><?
 }
 
-if(!empty($restAppButtons))
-{
-	\CJSCore::Init(array('applayout'));
-	for($i = 0, $length = count($restAppButtons); $i < $length; $i++)
-	{
-		$button = $restAppButtons[$i];
-		$buttonID = "crm_rest_app_group_{$i}";
-		$buttonTitle = htmlspecialcharsbx($button['NAME']);
-		$data = isset($button['DATA']) && is_array($button['DATA']) ? $button['DATA'] : array();
-		$ownerInfo = isset($data['OWNER_INFO']) && is_array($data['OWNER_INFO']) ? $data['OWNER_INFO'] : array();
-		unset($data['OWNER_INFO']);
-
-		?><button id="<?=$buttonID?>" title="<?=$buttonTitle?>" class="ui-btn ui-btn-md ui-btn-light-border ui-btn-dropdown ui-btn-themes crm-btn-dropdown-rest-app">
-		<?=$buttonTitle?>
-	</button>
-		<script type="text/javascript">
-			BX.ready(
-				function()
-				{
-					BX.InterfaceToolBarRestAppButton.create(
-						"<?=$buttonID?>",
-						{
-							"button": BX("<?=$buttonID?>"),
-							"data": <?=CUtil::PhpToJSObject($data)?>,
-							"ownerInfo": <?=CUtil::PhpToJSObject($ownerInfo)?>
-						}
-					);
-				}
-			);
-		</script><?
-	}
-}
-
 if($documentButton)
 {
 	$documentButtonId = $toolbarID.'_document';
@@ -286,7 +270,7 @@ foreach($items as $item)
 		$isPermitted = isset($params['IS_PERMITTED']) ? (bool)$params['IS_PERMITTED'] : false;
 		$lockScript = isset($params['LOCK_SCRIPT']) ? $params['LOCK_SCRIPT'] : '';
 
-		$hintKey = 'enable_'.strtolower($name).'_hint';
+		$hintKey = 'enable_'.mb_strtolower($name).'_hint';
 		$hint = isset($params['HINT']) ? $params['HINT'] : array();
 
 		$enableHint = !empty($hint);
@@ -307,7 +291,7 @@ foreach($items as $item)
 			Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/crm.js');
 		}
 
-		?><div class="ui-btn-double ui-btn-primary">
+		?><div class="ui-btn-split ui-btn-primary">
 			<button id="<?=htmlspecialcharsbx($labelID);?>" class="ui-btn-main"><?=htmlspecialcharsbx($schemeDescr)?></button>
 			<button id="<?=htmlspecialcharsbx($buttonID);?>" class="ui-btn-extra"></button>
 		</div>

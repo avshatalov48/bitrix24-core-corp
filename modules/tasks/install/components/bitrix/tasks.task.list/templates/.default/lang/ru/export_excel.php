@@ -34,6 +34,7 @@ $MESS["TASKS_EXCEL_GROUP_NAME"] = "Проект";
 $MESS["TASKS_EXCEL_TAG"] = "Тэги";
 
 $MESS["TASKS_EXCEL_CHANGED_DATE"] = "Дата изменения";
+$MESS["TASKS_EXCEL_ACTIVITY_DATE"] = "Активность";
 $MESS["TASKS_EXCEL_ALLOW_TIME_TRACKING"] = "Учитывать рабочее время";
 $MESS["TASKS_EXCEL_ALLOW_CHANGE_DEADLINE"] = "Разрешено изменять крайний срок";
 $MESS["TASKS_EXCEL_UF_CRM_TASK"] = "CRM";

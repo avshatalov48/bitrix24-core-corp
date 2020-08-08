@@ -111,6 +111,7 @@ if($mode === 'GET_CLIENT_INFO')
 		array(
 			'ENTITY_EDITOR_FORMAT' => true,
 			'REQUIRE_REQUISITE_DATA' => $isReadPermitted,
+			'REQUIRE_EDIT_REQUISITE_DATA' => true,
 			'REQUIRE_MULTIFIELDS' => $isReadPermitted,
 			'USER_PERMISSIONS' => $userPermissions,
 			'NAME_TEMPLATE' => $nameTemplate,
@@ -177,6 +178,7 @@ if($mode === 'GET_CLIENT_INFOS')
 		? $params['NAME_TEMPLATE'] : \Bitrix\Crm\Format\PersonNameFormatter::getFormat();
 
 	$data = array();
+	$iteration= 0;
 	foreach($entityIDs as $entityID)
 	{
 		$isReadPermitted = CCrmContact::CheckReadPermission($entityID, $userPermissions);
@@ -186,11 +188,13 @@ if($mode === 'GET_CLIENT_INFOS')
 			array(
 				'ENTITY_EDITOR_FORMAT' => true,
 				'REQUIRE_REQUISITE_DATA' => $isReadPermitted,
+				'REQUIRE_EDIT_REQUISITE_DATA' => ($iteration === 0), // load full requisite data for first item only (due to performance optimisation)
 				'REQUIRE_MULTIFIELDS' => $isReadPermitted,
 				'USER_PERMISSIONS' => $userPermissions,
 				'NAME_TEMPLATE' => $nameTemplate,
 			)
 		);
+		$iteration++;
 	}
 	__CrmContactShowEndJsonResonse(array('DATA' => $data));
 }
@@ -215,7 +219,7 @@ if($mode === 'GET_ENTITY_SIP_INFO')
 		__CrmContactShowEndJsonResonse(array('ERROR'=>'ENITY TYPE IS NOT DEFINED!'));
 	}
 
-	$entityTypeName = isset($m[1]) ? strtoupper($m[1]) : '';
+	$entityTypeName = isset($m[1])? mb_strtoupper($m[1]) : '';
 	if($entityTypeName !== CCrmOwnerType::ContactName)
 	{
 		__CrmContactShowEndJsonResonse(array('ERROR'=>'ENITY TYPE IS NOT SUPPORTED IN CURRENT CONTEXT!'));
@@ -465,7 +469,7 @@ if($mode === 'SAVE_SELECTED_BINDING')
 	);
 }
 
-$type = isset($_POST['OWNER_TYPE']) ? strtoupper($_POST['OWNER_TYPE']) : '';
+$type = isset($_POST['OWNER_TYPE'])? mb_strtoupper($_POST['OWNER_TYPE']) : '';
 if($type !== 'C')
 {
 	__CrmContactShowEndJsonResonse(array('ERROR'=>'OWNER_TYPE IS NOT SUPPORTED!'));
@@ -545,7 +549,7 @@ if($mode === 'UPDATE')
 		$entity = new CCrmContact();
 		$disableUserFieldCheck = !$hasUserFields
 			&& isset($_POST['DISABLE_USER_FIELD_CHECK'])
-			&& strtoupper($_POST['DISABLE_USER_FIELD_CHECK']) === 'Y';
+			&& mb_strtoupper($_POST['DISABLE_USER_FIELD_CHECK']) === 'Y';
 
 		if($entity->Update($ID, $arFields, true, true, array('REGISTER_SONET_EVENT' => true, 'DISABLE_USER_FIELD_CHECK' => $disableUserFieldCheck)))
 		{
@@ -562,7 +566,7 @@ if($mode === 'UPDATE')
 			for($i = 0; $i < $count; $i++)
 			{
 				$fieldName = $fieldNames[$i];
-				if(strpos($fieldName, 'FM.') === 0)
+				if(mb_strpos($fieldName, 'FM.') === 0)
 				{
 					//Filed name like 'FM.PHONE.WORK.1279'
 					$fieldParams = explode('.', $fieldName);

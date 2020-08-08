@@ -7,6 +7,7 @@ use Bitrix\Tasks\CheckList\Template\TemplateCheckListConverterHelper;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Item\Task\Template;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\Type\ArrayOption;
 use Bitrix\Tasks\Util\Type\StructureChecker;
 use Bitrix\Tasks\Util;
@@ -49,6 +50,7 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 			// check task access
 			$id = intval($arParams[static::getParameterAlias('ID')]);
 			$arResult['ITEM'] = new Template($id, $arResult['USER_ID']);
+
 			if(!$arResult['ITEM']->canRead(null))
 			{
 				$errors->add('ACCESS_DENIED', Loc::getMessage('TASKS_TTTC_NOT_FOUND_OR_NOT_ACCESSIBLE'));
@@ -121,7 +123,7 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 
 		// base template
 		$baseTemplateId = intval($request['BASE_TEMPLATE']);
-		if($baseTemplateId)
+		if($baseTemplateId && !TaskLimit::isLimitExceeded())
 		{
 			$this->template['BASE_TEMPLATE_ID'] = $baseTemplateId;
 		}
@@ -193,6 +195,8 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 			'COMPANY_WORKTIME' => static::getCompanyWorkTime(),
 			'HINT_STATE' => \Bitrix\Tasks\UI::getHintState(),
 		);
+
+		$this->arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'] = TaskLimit::isLimitExceeded();
 
 		parent::getAuxData();
 	}

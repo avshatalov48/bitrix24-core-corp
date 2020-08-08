@@ -87,7 +87,7 @@ if ($USER->CanDoOperation("controller_group_manage") && $arID = $lAdmin->GroupAc
 
 	foreach ($arID as $ID)
 	{
-		if (strlen($ID) <= 0)
+		if ($ID == '')
 			continue;
 		$ID = intval($ID);
 

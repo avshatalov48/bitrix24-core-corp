@@ -62,7 +62,7 @@ abstract class CAllCrmSonetSubscription
 		}
 
 		$reset = (bool)$reset;
-		$optionName = strtolower(CCrmOwnerType::ResolveName($entityTypeID)).'_sl_subscr_import';
+		$optionName = mb_strtolower(CCrmOwnerType::ResolveName($entityTypeID)).'_sl_subscr_import';
 		if($reset || CUserOptions::GetOption('crm', $optionName, 'N', $userID) !== 'Y')
 		{
 			self::GetCurrent()->ImportResponsibility($entityTypeID, $userID, 5000);

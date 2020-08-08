@@ -109,7 +109,7 @@ class EntityCounterType
 			return self::UNDEFINED;
 		}
 
-		$typeName = strtoupper($typeName);
+		$typeName = mb_strtoupper($typeName);
 		if($typeName === self::IDLE_NAME)
 		{
 			return self::IDLE;

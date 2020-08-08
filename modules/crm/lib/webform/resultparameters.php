@@ -281,7 +281,7 @@ class ResultParameters
 		$utmDictionary = Crm\UtmTable::getCodeList();
 		foreach ($this->getPlaceholders() as $placeholderCode => $placeholderValue)
 		{
-			$utmName = strtoupper($placeholderCode);
+			$utmName = mb_strtoupper($placeholderCode);
 			if (!in_array($utmName, $utmDictionary))
 			{
 				continue;

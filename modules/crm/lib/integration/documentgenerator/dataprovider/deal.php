@@ -209,7 +209,7 @@ class Deal extends ProductsDataProvider implements Nameable, Filterable
 	{
 		return [
 			'NAME' => static::getLangName().' ('.$category['NAME'].')',
-			'PROVIDER' => strtolower(static::class).'_category_'.$category['ID'],
+			'PROVIDER' => mb_strtolower(static::class).'_category_'.$category['ID'],
 		];
 	}
 

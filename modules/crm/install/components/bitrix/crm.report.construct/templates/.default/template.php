@@ -79,7 +79,7 @@ else:
 				)
 			);
 
-			var popupTitle = '<?=CUtil::JSEscape(htmlspecialcharsbx(GetMessage('REPORT_POPUP_COLUMN_TITLE_'.strtoupper($arResult['REPORT_OWNER_ID']))))?>';
+			var popupTitle = '<?=CUtil::JSEscape(htmlspecialcharsbx(GetMessage('REPORT_POPUP_COLUMN_TITLE_'.mb_strtoupper($arResult['REPORT_OWNER_ID']))))?>';
 
 			BX.findChild(
 					BX('reports-add_col-popup-cont'),
@@ -171,6 +171,33 @@ endif;
 			<option value=""><?=GetMessage('CRM_REPORT_INCLUDE_ALL')?></option>
 			<? $arResult['enumValues']['SOURCE_ID'] = CCrmStatus::GetStatusList('SOURCE'); ?>
 			<? foreach($arResult['enumValues']['SOURCE_ID'] as $key => $val): ?>
+			<option value="<?=htmlspecialcharsbx($key)?>"><?=htmlspecialcharsbx($val)?></option>
+			<? endforeach; ?>
+		</select>
+	</span>
+	<span name="report-filter-value-control-WEBFORM_ID" class="report-filter-vcc">
+		<select class="reports-filter-select-small" name="value">
+			<option value=""><?=GetMessage('CRM_REPORT_INCLUDE_ALL')?></option>
+			<? $arResult['enumValues']['WEBFORM_ID'] = Bitrix\Crm\WebForm\Manager::getListNames(); ?>
+			<? foreach($arResult['enumValues']['WEBFORM_ID'] as $key => $val): ?>
+			<option value="<?=htmlspecialcharsbx($key)?>"><?=htmlspecialcharsbx($val)?></option>
+			<? endforeach; ?>
+		</select>
+	</span>
+	<span name="report-filter-value-control-INVOICE_UTS.DEAL_BY.WEBFORM_ID" class="report-filter-vcc">
+		<select class="reports-filter-select-small" name="value">
+			<option value=""><?=GetMessage('CRM_REPORT_INCLUDE_ALL')?></option>
+			<? $arResult['enumValues']['WEBFORM_ID'] = Bitrix\Crm\WebForm\Manager::getListNames(); ?>
+			<? foreach($arResult['enumValues']['WEBFORM_ID'] as $key => $val): ?>
+			<option value="<?=htmlspecialcharsbx($key)?>"><?=htmlspecialcharsbx($val)?></option>
+			<? endforeach; ?>
+		</select>
+	</span>
+	<span name="report-filter-value-control-DEAL_OWNER.WEBFORM_ID" class="report-filter-vcc">
+		<select class="reports-filter-select-small" name="value">
+			<option value=""><?=GetMessage('CRM_REPORT_INCLUDE_ALL')?></option>
+			<? $arResult['enumValues']['WEBFORM_ID'] = Bitrix\Crm\WebForm\Manager::getListNames(); ?>
+			<? foreach($arResult['enumValues']['WEBFORM_ID'] as $key => $val): ?>
 			<option value="<?=htmlspecialcharsbx($key)?>"><?=htmlspecialcharsbx($val)?></option>
 			<? endforeach; ?>
 		</select>

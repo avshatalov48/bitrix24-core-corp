@@ -41,7 +41,7 @@ $MESS["IMBOT_NETWORK_FDC_30_MESSAGE_7"] = "It's been a week since we've met and 
 $MESS["IMBOT_NETWORK_FDC_30_MESSAGE_15"] = "Hey, I can't believe it's been two weeks already :)[br]
 Let us know if I can be of any assistance. I am here to help you to understand Bitrix24 better.";
 $MESS["IMBOT_NETWORK_FDC_30_MESSAGE_23"] = "Hey, I hate to be pesky, but I just want to let you know that you have only 7 days left to chat with me as your Online Assistant :)[br]
-Let’s discuss what you need to know about the product more.";
+Let's discuss what you need to know about the product more.";
 $MESS["IMBOT_NETWORK_FDC_30_MESSAGE_25"] = "Hello! Did you know Bitrix Inc. has a vast network of partners? They are IT companies providing system configuration, development and deployment services.
 The partners will help you squeeze the most of Bitrix24, configure your system for optimum performance and educate employees. Anything from simple tasks to large scale projects.
 

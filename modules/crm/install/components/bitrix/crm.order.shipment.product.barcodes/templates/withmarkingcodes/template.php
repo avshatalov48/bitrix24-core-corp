@@ -10,7 +10,7 @@ Loc::loadMessages(__FILE__);
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/themes/.default/crm-entity-show.css');
 
-if(strlen($arResult['ADDITIONAL_CSS_PATH']) > 0)
+if($arResult['ADDITIONAL_CSS_PATH'] <> '')
 {
 	\Bitrix\Main\Page\Asset::getInstance()->addCss($arResult['ADDITIONAL_CSS_PATH']);
 }

@@ -39,8 +39,28 @@ class OpenLineTrigger extends BaseTrigger
 			&& $trigger['APPLY_RULES']['config_id'] > 0
 		)
 		{
-			return (int)$trigger['APPLY_RULES']['config_id'] === (int)$this->getInputData('CONFIG_ID');
+			if (
+				(int)$trigger['APPLY_RULES']['config_id'] !== (int)$this->getInputData('CONFIG_ID')
+			)
+			{
+				return false;
+			}
 		}
+
+		$msg = $this->getInputData('MESSAGE');
+		if (
+			$msg
+			&& is_array($trigger['APPLY_RULES'])
+			&& !empty($trigger['APPLY_RULES']['msg_text'])
+		)
+		{
+			$msgText = $msg['PLAIN_TEXT'] ?? $msg['TEXT'];
+			if ($msgText)
+			{
+				return (mb_stripos($msgText, $trigger['APPLY_RULES']['msg_text']) !== false);
+			}
+		}
+
 		return true;
 	}
 

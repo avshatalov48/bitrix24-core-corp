@@ -11,6 +11,7 @@ use Bitrix\Main;
 use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
+use Bitrix\SalesCenter;
 use Bitrix\Crm\UI\Webpack;
 use Bitrix\Crm\SiteButton;
 
@@ -308,8 +309,8 @@ class Form
 			// captcha
 			if($result['USE_CAPTCHA'] == 'Y')
 			{
-				$hasCaptchaKey = ((strlen(ReCaptcha::getKey()) > 0) ? 1 : 0) + ((strlen(ReCaptcha::getSecret()) > 0) ? 1 : 0);
-				$hasCaptchaDefaultKey = strlen(ReCaptcha::getDefaultKey()) > 0 && strlen(ReCaptcha::getDefaultSecret()) > 0;
+				$hasCaptchaKey = ((ReCaptcha::getKey() <> '') ? 1 : 0) + ((ReCaptcha::getSecret() <> '') ? 1 : 0);
+				$hasCaptchaDefaultKey = ReCaptcha::getDefaultKey() <> '' && ReCaptcha::getDefaultSecret() <> '';
 				if ($hasCaptchaKey == 1 || ($hasCaptchaKey == 0 && !$hasCaptchaDefaultKey))
 				{
 					$this->errors[] = Loc::getMessage('CRM_WEBFORM_FORM_ERROR_CAPTCHA_KEY');
@@ -657,7 +658,7 @@ class Form
 		return $this->params['PRESET_FIELDS'];
 	}
 
-	public function getDependencies()
+	public function getDependencies($opposites = true)
 	{
 		$dependencyList = array();
 		foreach($this->params['DEPENDENCIES'] as $dependency)
@@ -673,6 +674,11 @@ class Form
 					'value' => $dependency['DO_VALUE'],
 				),
 			);
+
+			if (!$opposites)
+			{
+				continue;
+			}
 
 			// add mirror dependency
 			if($dependency['IF_ACTION'] != 'change')
@@ -766,6 +772,9 @@ class Form
 						if ($price !== null)
 						{
 							$preparedItem['price'] = $price;
+							$preparedItem['changeablePrice'] = isset($item['CUSTOM_PRICE'])
+								&& $item['CUSTOM_PRICE'] === 'Y'
+								&& Manager::isOrdersAvailable();
 							$preparedItem['discount'] = $discount ?: 0;
 							$preparedItem['price_formatted'] = \CCrmCurrency::MoneyToString($price, $currencyId);
 						}
@@ -974,6 +983,16 @@ class Form
 	}
 
 	/*
+	 * Fill.
+	 *
+	 * @return Fill
+	 * */
+	public function fill()
+	{
+		return new Fill($this);
+	}
+
+	/*
 	 * Add result.
 	 *
 	 * @param array $resultFields Result fields.
@@ -1037,7 +1056,6 @@ class Form
 
 				$valuesA = $fields[$dep['if']['fieldname']]['values'];
 				$valueB = $dep['if']['value'];
-				$isSuccess = false;
 				switch($dep['if']['operation'])
 				{
 					case '!=':
@@ -1151,6 +1169,7 @@ class Form
 				{
 					$productValue['id'] = $value['id'] ?: 0;
 					$productValue['quantity'] = $value['quantity'] ?: 1;
+					$productValue['price'] = $value['price'] ?: null;
 				}
 				else
 				{
@@ -1172,7 +1191,9 @@ class Form
 				$product = [
 					'ID' => $productId,
 					'NAME' => $item['title'],
-					'PRICE' => $item['price'],
+					'PRICE' => $item['changeablePrice'] && $productValue['price']
+						? $productValue['price']
+						: $item['price'],
 					'DISCOUNT' => $item['discount'] ?: 0,
 					'QUANTITY' => $productValue['quantity'],
 				];
@@ -1205,6 +1226,7 @@ class Form
 			'COMMON_FIELDS' => isset($resultParameters['COMMON_FIELDS']) ? $resultParameters['COMMON_FIELDS'] : array(),
 			'COMMON_DATA' => $resultParameters['COMMON_DATA'],
 			'PLACEHOLDERS' => isset($resultParameters['PLACEHOLDERS']) ? $resultParameters['PLACEHOLDERS'] : array(),
+			'DISABLE_FIELD_CHECKING' => $resultParameters['DISABLE_FIELD_CHECKING'] ?? false,
 			'ORIGIN_ID' => isset($resultParameters['ORIGIN_ID']) ? $resultParameters['ORIGIN_ID'] : null,
 			'ENTITY_SCHEME' => $this->params['ENTITY_SCHEME'],
 			'INVOICE_SETTINGS' => $this->params['INVOICE_SETTINGS'],
@@ -1265,9 +1287,19 @@ class Form
 			if($this->isPayable())
 			{
 				$resultEntity = $result->getResultEntity();
-				if($resultEntity && $resultEntity->getInvoiceId())
+				if ($resultEntity)
 				{
-					$resultRedirectUrl = \CAllCrmInvoice::getPublicLink($resultEntity->getInvoiceId());
+					$resultRedirectUrl = null;
+					if ($resultEntity->getOrderId())
+					{
+						$urlInfo = SalesCenter\Integration\LandingManager::getInstance()->getUrlInfoByOrderId($resultEntity->getOrderId());
+						$resultRedirectUrl = $urlInfo['url'] ?? null;
+					}
+					elseif($resultEntity->getInvoiceId())
+					{
+						$resultRedirectUrl = \CAllCrmInvoice::getPublicLink($resultEntity->getInvoiceId());
+					}
+
 					if($resultRedirectUrl)
 					{
 						$redirectUrl = new \Bitrix\Main\Web\Uri($resultRedirectUrl);
@@ -1339,11 +1371,6 @@ class Form
 			{
 				return false;
 			}
-		}
-
-		if (!empty($this->getDependencies()))
-		{
-			return false;
 		}
 
 		return true;
@@ -1447,7 +1474,7 @@ class Form
 		return \CBitrix24::IsLicensePaid();
 	}
 
-	protected static function getMaxActivatedFormLimit()
+	public static function getMaxActivatedFormLimit()
 	{
 		return intval(Option::get('crm', '~crm_webform_max_activated', 99999));
 	}
@@ -1501,7 +1528,7 @@ class Form
 	public static function onBitrix24LicenseChange(\Bitrix\Main\Event $event)
 	{
 		preg_match("/(project|tf|team)$/is", $event->getParameter(0), $matches);
-		$licenseType = strtolower($matches[0]);
+		$licenseType = mb_strtolower($matches[0]);
 		if ($licenseType)
 		{
 			$maxActivated = null;

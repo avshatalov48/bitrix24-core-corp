@@ -83,7 +83,7 @@ class Fragment
 	 */
 	public function __construct(array $parameters)
 	{
-		if (isset($parameters['INDICATOR_TYPE']) && strlen($parameters['INDICATOR_TYPE']) > 0)
+		if (isset($parameters['INDICATOR_TYPE']) && $parameters['INDICATOR_TYPE'] <> '')
 		{
 			$this->indicatorType = $parameters['INDICATOR_TYPE'];
 		}
@@ -91,7 +91,7 @@ class Fragment
 		{
 			$this->storageId = $parameters['STORAGE_ID'];
 		}
-		if (isset($parameters['TITLE']) && strlen($parameters['TITLE']) > 0)
+		if (isset($parameters['TITLE']) && $parameters['TITLE'] <> '')
 		{
 			$this->title = $parameters['TITLE'];
 		}
@@ -103,15 +103,15 @@ class Fragment
 		{
 			$this->fileId = $parameters['FILE_ID'];
 		}
-		if (isset($parameters['MODULE_ID']) && strlen($parameters['MODULE_ID']) > 0)
+		if (isset($parameters['MODULE_ID']) && $parameters['MODULE_ID'] <> '')
 		{
 			$this->moduleId = $parameters['MODULE_ID'];
 		}
-		if (isset($parameters['ENTITY_TYPE']) && strlen($parameters['ENTITY_TYPE']) > 0)
+		if (isset($parameters['ENTITY_TYPE']) && $parameters['ENTITY_TYPE'] <> '')
 		{
 			$this->entityType = $parameters['ENTITY_TYPE'];
 		}
-		if (isset($parameters['ENTITY_ID']) && strlen($parameters['ENTITY_ID']) > 0)
+		if (isset($parameters['ENTITY_ID']) && $parameters['ENTITY_ID'] <> '')
 		{
 			$this->entityId = $parameters['ENTITY_ID'];
 		}

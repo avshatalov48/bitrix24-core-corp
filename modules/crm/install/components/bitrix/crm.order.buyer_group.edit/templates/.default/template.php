@@ -7,7 +7,7 @@ use \Bitrix\Main\Localization\Loc;
  * @var array $arResult
  */
 
-$this->addExternalCss('/bitrix/components/bitrix/crm.entity.editor/templates/.default/style.css');
+$this->addExternalCss('/bitrix/js/crm/entity-editor/css/style.css');
 
 \Bitrix\Main\UI\Extension::load('ui.buttons');
 ?>

@@ -9,6 +9,7 @@ use Bitrix\DocumentGenerator\Nameable;
 use Bitrix\DocumentGenerator\Value;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use google\protobuf\php\Extension;
 
 class Money extends Value implements Nameable
 {
@@ -18,7 +19,7 @@ class Money extends Value implements Nameable
 	 * @param string $modifier
 	 * @return string
 	 */
-	public function toString($modifier = null)
+	public function toString($modifier = null): string
 	{
 		if($this->value === null)
 		{
@@ -32,12 +33,50 @@ class Money extends Value implements Nameable
 			{
 				$isMoney = 'N';
 			}
-			$result = Number2Word_Rus($this->value, $isMoney, $options['CURRENCY_ID']);
-			if($result != '')
+			$result = Number2Word_Rus(round($this->value, 2), $isMoney, $options['CURRENCY_ID']);
+			if($result !== '')
 			{
 				return $result;
 			}
 		}
+
+		$isShowSign = isset($options['WITH_ZEROS']) && $options['WITH_ZEROS'] === true;
+
+		// use CrmCurrency to safely process strings with huge numbers
+		if($this->value !== '' && filter_var($this->value, FILTER_VALIDATE_INT|FILTER_VALIDATE_FLOAT) === false)
+		{
+			$result = $this->formatUsingCrmCurrency($options);
+		}
+		else
+		{
+			$format = \CCurrencyLang::GetFormatDescription($options['CURRENCY_ID']);
+
+			$format['HIDE_ZERO'] = ($isShowSign ? 'N' : 'Y');
+
+			$result = \CCurrencyLang::formatValue(
+				$this->value,
+				$format,
+				(!isset($options['NO_SIGN']) || $options['NO_SIGN'] !== true)
+			);
+		}
+
+		$regionLanguageId = DataProviderManager::getInstance()->getRegionLanguageId();
+		if($regionLanguageId !== LANGUAGE_ID && $isShowSign)
+		{
+			$regionCurrencySymbol = static::getCurrencySymbol($options['CURRENCY_ID'], $regionLanguageId);
+			$languageCurrencySymbol = static::getCurrencySymbol($options['CURRENCY_ID'], LANGUAGE_ID);
+
+			if($regionCurrencySymbol !== $languageCurrencySymbol)
+			{
+				$result = str_replace($languageCurrencySymbol, $regionCurrencySymbol, $result);
+			}
+		}
+
+		return $result;
+	}
+
+	protected function formatUsingCrmCurrency(array $options): string
+	{
 		if(isset($options['WITH_ZEROS']) && $options['WITH_ZEROS'] === true)
 		{
 			$this->disableZeros();
@@ -52,17 +91,6 @@ class Money extends Value implements Nameable
 			$formatString = '#';
 		}
 		$result = \CCrmCurrency::MoneyToString($this->value, $options['CURRENCY_ID'], $formatString);
-		$regionLanguageId = DataProviderManager::getInstance()->getRegionLanguageId();
-		if($regionLanguageId != LANGUAGE_ID && $formatString != '#')
-		{
-			$regionCurrencySymbol = static::getCurrencySymbol($options['CURRENCY_ID'], $regionLanguageId);
-			$languageCurrencySymbol = $this->getCurrencySymbol($options['CURRENCY_ID'], LANGUAGE_ID);
-
-			if($regionCurrencySymbol != $languageCurrencySymbol)
-			{
-				$result = str_replace($languageCurrencySymbol, $regionCurrencySymbol, $result);
-			}
-		}
 		$this->enableZeros();
 
 		return $result;
@@ -72,7 +100,7 @@ class Money extends Value implements Nameable
 	 * @param $modifier
 	 * @return array
 	 */
-	protected function getOptions($modifier = null)
+	protected function getOptions($modifier = null): array
 	{
 		$options = parent::getOptions($modifier);
 		if(!isset($options['CURRENCY_ID']) || empty($options['CURRENCY_ID']))
@@ -86,7 +114,7 @@ class Money extends Value implements Nameable
 	/**
 	 * @return array
 	 */
-	protected static function getAliases()
+	protected static function getAliases(): array
 	{
 		return [
 			'CurId' => 'CURRENCY_ID',
@@ -99,7 +127,7 @@ class Money extends Value implements Nameable
 	/**
 	 * @return array
 	 */
-	protected static function getDefaultOptions()
+	protected static function getDefaultOptions(): array
 	{
 		return [
 			'CURRENCY_ID' => static::getDefaultCurrencyId(),
@@ -109,7 +137,7 @@ class Money extends Value implements Nameable
 	/**
 	 * @return string
 	 */
-	protected static function getDefaultCurrencyId()
+	protected static function getDefaultCurrencyId(): string
 	{
 		return \CCrmCurrency::GetBaseCurrencyID();
 	}
@@ -162,14 +190,12 @@ class Money extends Value implements Nameable
 			}
 			if(!is_array(static::$currencyInfo[$currencyId][$languageId]))
 			{
-				if($languageId != LANGUAGE_ID)
+				if($languageId !== LANGUAGE_ID)
 				{
 					return static::getCurrencySymbol($currencyId,LANGUAGE_ID);
 				}
-				else
-				{
-					return false;
-				}
+
+				return false;
 			}
 
 			return trim(static::$currencyInfo[$currencyId][$languageId]['FORMAT_STRING'], " \n\r\t#");
@@ -190,7 +216,7 @@ class Money extends Value implements Nameable
 	/**
 	 * @return string
 	 */
-	public static function getLangName()
+	public static function getLangName(): string
 	{
 		Loc::loadLanguageFile(__FILE__);
 		return Loc::getMessage('CRM_DOCGEN_VALUE_MONEY_TITLE');

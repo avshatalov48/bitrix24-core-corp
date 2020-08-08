@@ -192,6 +192,8 @@
 				this.popupMenuItems = result.popupMenuItems;
 			}
 
+			BX.componentParameters.set("invite", result.invite);
+
 			if (menuStructure)
 			{
 				items = [];
@@ -382,6 +384,36 @@
 			{ filter: {id: id}, element: data }
 		]);
 	};
+
 	BX.onCustomEvent("onMenuLoaded", [this.result]);
+	let lastNotification = Application.getLastNotification();
+	if(lastNotification["intent"] && lastNotification["intent"] === "calendar_sync")
+	{
+		if (Application.getPlatform() === "ios")
+		{
+			BX.ajax({
+				url: "/bitrix/tools/dav_profile.php?action=token&params[resources]=caldav",
+				dataType: "json",
+				method: "GET"
+			}).then(response =>
+			{
+				if (response.token)
+				{
+					let urlPath = "/bitrix/tools/dav_profile.php?action=payload&params[resources]="
+						+ "caldav"
+						+ "&params[access_token]=";
+					Application.openUrl(currentDomain + urlPath + response.token);
+				}
+			}).catch(e => console.error(e));
+		}
+		else
+		{
+			if(typeof Application["davSyncEnable"] !== "undefined")
+			{
+				Application.davSyncEnable("calendar");
+			}
+		}
+
+	}
 }).bind(this)();
 

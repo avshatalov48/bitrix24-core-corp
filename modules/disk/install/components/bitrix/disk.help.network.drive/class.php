@@ -44,8 +44,8 @@ class CDiskHelpNetworkDriveComponent extends BaseComponent
 				if ($match[3] == '5.0') $clientOs = "Windows 2000";
 				elseif ($match[3] == '5.1') $clientOs = "Windows XP";
 				elseif ($match[3] == '5.2') $clientOs = "Windows 2003";
-				elseif ($match[3] == '6.0' && strpos($client, 'SLCC1') !== false) $clientOs = "Windows Vista";
-				elseif ($match[3] == '6.0' && strpos($client, 'SLCC2') !== false) $clientOs = "Windows 2008";
+				elseif ($match[3] == '6.0' && mb_strpos($client, 'SLCC1') !== false) $clientOs = "Windows Vista";
+				elseif ($match[3] == '6.0' && mb_strpos($client, 'SLCC2') !== false) $clientOs = "Windows 2008";
 				elseif ($match[3] == '6.0') $clientOs = "Windows Vista"; // may be 2008
 				elseif ($match[3] == '6.1') $clientOs = "Windows 7";
 				elseif ($match[3] == '6.2') $clientOs = "Windows 8";

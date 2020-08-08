@@ -15,7 +15,7 @@ if (!CCrmPerms::IsAccessEnabled())
 
 global $APPLICATION;
 
-$enablePaging = $arResult['ENABLE_PAGING'] = isset($_REQUEST['PAGING']) && strtoupper($_REQUEST['PAGING']) === 'Y';
+$enablePaging = $arResult['ENABLE_PAGING'] = isset($_REQUEST['PAGING']) && mb_strtoupper($_REQUEST['PAGING']) === 'Y';
 $entityID = $arResult['ENTITY_ID'] = isset($_REQUEST['entity_id']) ? intval($_REQUEST['entity_id']) : 0;
 if($entityID <= 0)
 {
@@ -178,7 +178,7 @@ else
 $arResult['SERVICE_URL'] = '';
 //<-- NEXT_PAGE_URL, SEARCH_PAGE_URL, SERVICE_URL
 
-$format = isset($_REQUEST['FORMAT']) ? strtolower($_REQUEST['FORMAT']) : '';
+$format = isset($_REQUEST['FORMAT'])? mb_strtolower($_REQUEST['FORMAT']) : '';
 // Only JSON format is supported
 if($format !== '' && $format !== 'json')
 {

@@ -43,7 +43,7 @@ class TemplateUserTable extends Main\Entity\DataManager
 	 */
 	public static function addSocialGroupAccessSuffix($code)
 	{
-		if(substr($code, 0, 2) === 'SG' && substr($code, -2) !== '_K')
+		if(mb_substr($code, 0, 2) === 'SG' && mb_substr($code, -2) !== '_K')
 		{
 			$code .= '_K';
 		}
@@ -57,9 +57,9 @@ class TemplateUserTable extends Main\Entity\DataManager
 	 */
 	public static function removeSocialGroupAccessSuffix($code)
 	{
-		if(substr($code, 0, 2) === 'SG' && substr($code, -2) === '_K')
+		if(mb_substr($code, 0, 2) === 'SG' && mb_substr($code, -2) === '_K')
 		{
-			$code = substr($code, 0, -2);
+			$code = mb_substr($code, 0, -2);
 		}
 
 		return $code;

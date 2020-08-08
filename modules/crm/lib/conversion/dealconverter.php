@@ -283,7 +283,7 @@ class DealConverter extends EntityConverter
 			$entityCreationOptions = array();
 			if(isset($this->contextData['USER_ID']))
 			{
-				$entityCreationOptions['USER_ID'] = $this->contextData['USER_ID'];
+				$entityCreationOptions['CURRENT_USER'] = $entityCreationOptions['USER_ID'] = $this->contextData['USER_ID'];
 			}
 
 			if(!$this->isUserFieldCheckEnabled())

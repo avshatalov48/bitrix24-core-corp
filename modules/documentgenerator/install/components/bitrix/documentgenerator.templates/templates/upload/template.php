@@ -194,8 +194,7 @@ if(isset($arResult['TEMPLATE']) && isset($arResult['TEMPLATE']['ID']))
 						'allowAddSocNetGroup' => 'N',
 						'allowSearchEmailUsers' => 'N',
 						'allowSearchCrmEmailUsers' => 'N',
-						'allowSearchNetworkUsers' => 'N',
-						'allowSonetGroupsAjaxSearchFeatures' => 'N',
+						'allowSearchNetworkUsers' => 'N'
 					)
 				),
 				false,

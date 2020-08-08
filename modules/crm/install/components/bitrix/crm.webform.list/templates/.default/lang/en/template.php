@@ -43,12 +43,6 @@ $MESS["CRM_WEBFORM_LIST_NOTIFY_USER_CONSENT_TITLE"] = "-";
 $MESS["CRM_WEBFORM_LIST_PLUGIN_BTN_MORE"] = "more";
 $MESS["CRM_WEBFORM_LIST_PLUGIN_DESC"] = "Install the widget to your website and communicate with your clients inside your Bitrix24. You'll get a ready-to-go communication toolbox: Live Chat, callbacks and CRM forms. Installing the widget is extremely simple: just select your site's platform and we'll tell you what you should do next.";
 $MESS["CRM_WEBFORM_LIST_PLUGIN_TITLE"] = "CMS Plug-ins";
-$MESS["CRM_WEBFORM_LIST_POPUP_LIMITED_TEXT"] = "Your current plan limits the number of CRM forms you can have. In order to add new forms, please upgrade your plan. 
-<br><br>
-TIP: Selected commercial plans come with unlimited CRM forms.
-<br><br>
-Try Bitrix24 Professional free for 30 days.";
-$MESS["CRM_WEBFORM_LIST_POPUP_LIMITED_TITLE"] = "Extended CRM forms";
 $MESS["CRM_WEBFORM_LIST_SUCCESS_ACTION"] = "Action completed successfully.";
 $MESS["CRM_WEBFORM_LIST_SUCCESS_ACTION_CACHE_CLEANED"] = "Consent applied; form updated.";
 ?>

@@ -136,7 +136,7 @@ else
 	$DIR_NAME = "/".COption::GetOptionString("main", "upload_dir", "upload")."/1c_intranet";
 	$ABS_FILE_NAME = false;
 	$WORK_DIR_NAME = false;
-	if(isset($_GET["filename"]) && (strlen($_GET["filename"])>0))
+	if(isset($_GET["filename"]) && ($_GET["filename"] <> ''))
 	{
 		//This check for 1c server on linux
 		$filename = preg_replace("#^(/tmp/|upload/1c/webdata)#", "", $_GET["filename"]);
@@ -151,16 +151,13 @@ else
 		if(!$bBadFile)
 		{
 			$FILE_NAME = rel2abs($_SERVER["DOCUMENT_ROOT"].$DIR_NAME, "/".$filename);
-			if((strlen($FILE_NAME) > 1) && ($FILE_NAME === "/".$filename))
+			if((mb_strlen($FILE_NAME) > 1) && ($FILE_NAME === "/".$filename))
 			{
 				$ABS_FILE_NAME = $_SERVER["DOCUMENT_ROOT"].$DIR_NAME.$FILE_NAME;
-				$WORK_DIR_NAME = substr($ABS_FILE_NAME, 0, strrpos($ABS_FILE_NAME, "/")+1);
+				$WORK_DIR_NAME = mb_substr($ABS_FILE_NAME, 0, mb_strrpos($ABS_FILE_NAME, "/") + 1);
 			}
 		}
 	}
-
-	\Bitrix\Intranet\Internals\UserSubordinationTable::delayReInitialization();
-	\Bitrix\Intranet\Internals\UserToDepartmentTable::delayReInitialization();
 
 	if(($_GET["mode"] == "file") && $ABS_FILE_NAME)
 	{
@@ -178,7 +175,7 @@ else
 			if($fp = fopen($ABS_FILE_NAME, "ab"))
 			{
 				$result = fwrite($fp, $DATA);
-				if($result === (function_exists("mb_strlen") ? mb_strlen($DATA, 'latin1'): strlen($DATA)))
+				if($result === (function_exists("mb_strlen")? mb_strlen($DATA, 'latin1') : mb_strlen($DATA)))
 				{
 					echo "success";
 					if($_SESSION["BX_CML2_IMPORT"]["zip"])
@@ -489,9 +486,6 @@ else
 	{
 		echo "failure\n",GetMessage("CC_BSC1_ERROR_UNKNOWN_COMMAND");
 	}
-
-	\Bitrix\Intranet\Internals\UserSubordinationTable::performReInitialization();
-	\Bitrix\Intranet\Internals\UserToDepartmentTable::performReInitialization();
 }
 
 $contents = ob_get_contents();

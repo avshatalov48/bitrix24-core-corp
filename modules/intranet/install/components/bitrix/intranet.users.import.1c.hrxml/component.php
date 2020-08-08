@@ -101,9 +101,6 @@ elseif(!CModule::IncludeModule('iblock'))
 }
 else
 {
-	\Bitrix\Intranet\Internals\UserSubordinationTable::delayReInitialization();
-	\Bitrix\Intranet\Internals\UserToDepartmentTable::delayReInitialization();
-
 	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/classes/general/hrxml.php");
 	$first = microtime(1);
 	$obMeta = new CUserHRXMLImport();
@@ -128,9 +125,6 @@ else
 	}
 
 	echo $obMeta->PrepareAnswer($xml->ApplicationArea);
-
-	\Bitrix\Intranet\Internals\UserSubordinationTable::performReInitialization();
-	\Bitrix\Intranet\Internals\UserToDepartmentTable::performReInitialization();
 }
 
 $contents = ob_get_contents();

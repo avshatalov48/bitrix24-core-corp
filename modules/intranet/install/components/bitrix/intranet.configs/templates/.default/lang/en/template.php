@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CAL_OPTION_FIRSTDAY_FR"] = "Friday";
 $MESS["CAL_OPTION_FIRSTDAY_MO"] = "Monday";
 $MESS["CAL_OPTION_FIRSTDAY_SA"] = "Saturday";
@@ -18,6 +18,9 @@ $MESS["CONFIG_CLIENT_LOGO"] = "Company logo";
 $MESS["CONFIG_CLIENT_LOGO_DESCR"] = "Your logo must be a <b>PNG</b> file.<br/>Maximum dimensions are 222px x 55px.";
 $MESS["CONFIG_CLIENT_LOGO_DESC_RETINA"] = "Your logo must be a <b>PNG</b> file.<br/>Maximum dimensions are 444px x 110px.";
 $MESS["CONFIG_CLIENT_LOGO_RETINA"] = "High DPI logo (retina)";
+$MESS["CONFIG_COLLECT_GEO_DATA"] = "Enable geolocation data collection";
+$MESS["CONFIG_COLLECT_GEO_DATA_CONFIRM"] = "Please note that in certain jurisdictions you need an explicit user's consent to process device geolocation data.";
+$MESS["CONFIG_COLLECT_GEO_DATA_OK"] = "Accept";
 $MESS["CONFIG_COMPANY_NAME"] = "Company name";
 $MESS["CONFIG_COMPANY_TITLE_NAME"] = "Company name to display in the header";
 $MESS["CONFIG_CREATE_OVERDUE_CHATS"] = "Create chat on overdue task with all task participants";
@@ -65,7 +68,6 @@ $MESS["CONFIG_FEATURES_TITLE"] = "Services";
 $MESS["CONFIG_GDRP_APP1"] = "GDPR for employees";
 $MESS["CONFIG_GDRP_APP2"] = "GDPR for CRM";
 $MESS["CONFIG_GDRP_LABEL1"] = "Product updates, special offers, webinar invitations, newsletter digests";
-$MESS["CONFIG_GDRP_LABEL11"] = "(according to the <a href=\"https://www.bitrix24.ru/about/advertising.php\" target=\"_blank\">Agreement</a>)";
 $MESS["CONFIG_GDRP_LABEL2"] = "Training materials";
 $MESS["CONFIG_GDRP_LABEL3"] = "I accept the Data Processing Agreement";
 $MESS["CONFIG_GDRP_LABEL4"] = "Customer legal name*";
@@ -73,6 +75,7 @@ $MESS["CONFIG_GDRP_LABEL5"] = "Primary contact name*";
 $MESS["CONFIG_GDRP_LABEL6"] = "Title*";
 $MESS["CONFIG_GDRP_LABEL7"] = "Date*";
 $MESS["CONFIG_GDRP_LABEL8"] = "Notification Email Address*";
+$MESS["CONFIG_GDRP_LABEL11"] = "(according to the <a href=\"https://www.bitrix24.ru/about/advertising.php\" target=\"_blank\">Agreement</a>)";
 $MESS["CONFIG_GDRP_TITLE1"] = "I consent to receiving emails from Bitrix, Inc. containing:";
 $MESS["CONFIG_GDRP_TITLE2"] = "If you accept the Data Processing Agreement, you must also provide the following information:";
 $MESS["CONFIG_GDRP_TITLE3"] = "Personal data processing apps:";
@@ -80,9 +83,15 @@ $MESS["CONFIG_HEADER_GDRP"] = "GDPR Compliance";
 $MESS["CONFIG_HEADER_SECUTIRY"] = "Security settings";
 $MESS["CONFIG_HEADER_SETTINGS"] = "Settings";
 $MESS["CONFIG_IM_CHAT_RIGHTS"] = "Allow users to send messages to General chat";
+$MESS["CONFIG_IM_GENERSL_CHAT_MESSAGE_ADMIN_RIGHTS"] = "Post administrator assigned and administrator changed notifications to General chat";
 $MESS["CONFIG_IM_GENERSL_CHAT_MESSAGE_JOIN"] = "Notify about new hires in general chat";
 $MESS["CONFIG_IM_GENERSL_CHAT_MESSAGE_LEAVE"] = "Notify about employee/user dismissal in general chat";
+$MESS["CONFIG_IP_HELP_TEXT2"] = "Users without admin permissions won't be able to access this Bitrix24 from any IP address that doesn't match the specified range.
+Once logged in, the user will see an error page informing them that access from their IP was denied.
+You can watch attempts to log on to Bitrix24 from any IP address in the Event log.";
 $MESS["CONFIG_IP_TITLE"] = "IP restrictions (allow access only from specified IP addresses or addresses ranges. Example: 192.168.0.7; 192.168.0.1-192.168.0.100)";
+$MESS["CONFIG_LIMIT_MAX_TIME_IN_DOCUMENT_HISTORY"] = "Document versions are kept for #NUM# days.";
+$MESS["CONFIG_LOCATION_ADDRESS_FORMAT"] = "Address format";
 $MESS["CONFIG_LOGO_24"] = "Add \"24\" to company logo";
 $MESS["CONFIG_MARKETPLACE_MORE"] = "Learn more";
 $MESS["CONFIG_MARKETPLACE_TITLE"] = "Migrate data to Bitrix24 from other systems";
@@ -96,6 +105,8 @@ $MESS["CONFIG_NAME_FORMAT"] = "Name format";
 $MESS["CONFIG_NAME_GOOGLE_API_HOST_HINT"] = "The key was obtained for domain <b>#domain#</b>. If you can't get Google Maps working, change key settings or <a href=\"https://developers.google.com/maps/documentation/javascript/get-api-key\" target=\"_blank\">get a new one</a>.";
 $MESS["CONFIG_NAME_GOOGLE_API_KEY"] = "Google API integration preferences";
 $MESS["CONFIG_NAME_GOOGLE_API_KEY_FIELD"] = "Google Maps API for Bitrix24 integration key";
+$MESS["CONFIG_NAME_GOOGLE_API_KEY_FIELD2"] = "Google Maps JavaScript API, Places API and Geocoding API browser key";
+$MESS["CONFIG_NAME_GOOGLE_API_KEY_FIELD_BACKEND"] = "Google Places API and Geocoding API server key";
 $MESS["CONFIG_NAME_GOOGLE_API_KEY_HINT"] = "A Google API key is required to use maps. To get your key, please <a href=\"https://developers.google.com/maps/documentation/javascript/get-api-key\" target=\"_blank\">use this form</a>.";
 $MESS["CONFIG_NETWORK_AVAILABLE"] = "Allow users of my Bitrix24 communicate in global Bitrix24 Network";
 $MESS["CONFIG_NETWORK_AVAILABLE_NOT_CONFIRMED"] = "This feature will be available once the administrator has confirmed the account.";
@@ -151,6 +162,7 @@ $MESS["CONFIG_OTP_SECURITY_SWITCH_OFF_INFO"] = "Notice that unchecking this opti
 $MESS["CONFIG_PHONE_NUMBER_DEFAULT_COUNTRY"] = "Phone number format: default country";
 $MESS["CONFIG_SAVE"] = "Save";
 $MESS["CONFIG_SAVE_SUCCESSFULLY"] = "Settings have been updated successfully";
+$MESS["CONFIG_SEND_OTP_PUSH"] = "Send chat and push notifications about authentication attempt, <br>also include the sign in code (only for time-based OTP)";
 $MESS["CONFIG_SHOW_FIRED_EMPLOYEES"] = "Show dismissed employees";
 $MESS["CONFIG_SHOW_YEAR_FOR_FEMALE"] = "Show date of birth in female profiles";
 $MESS["CONFIG_STRESSLEVEL_AVAILABLE"] = "Allow to measure and show stress level in user profile";
@@ -160,6 +172,12 @@ $MESS["CONFIG_TIME_FORMAT_24"] = "24 hour";
 $MESS["CONFIG_TOALL_DEL"] = "delete";
 $MESS["CONFIG_TOALL_RIGHTS"] = "Settings for \"All employees\" option";
 $MESS["CONFIG_TOALL_RIGHTS_ADD"] = "Add";
+$MESS["CONFIG_TRACK_OUTGOING_EMAILS_CLICK"] = "Track link clicks in outgoing emails";
+$MESS["CONFIG_TRACK_OUTGOING_EMAILS_CLICK_HINT"] = "CRM triggers can track user link clicks.
+With these triggers, you can create automation rules to send a notification when a customer or an employee opens a link.";
+$MESS["CONFIG_TRACK_OUTGOING_EMAILS_READ"] = "Track read status of outgoing emails";
+$MESS["CONFIG_TRACK_OUTGOING_EMAILS_READ_HINT"] = "The system will track if the outgoing messages were actually opened by their respective recipients, and mark these messages as read.
+This option is available for emails send from the CRM, CRM Marketing, Bitrix24 Email and automation rules. It also enables the \"Email read\" trigger.";
 $MESS["CONFIG_URL_PREVIEW_ENABLE"] = "Enable rich media links";
 $MESS["CONFIG_WEBDAV_ALLOW_AUTOCONNECT_SHARE_GROUP_FOLDER"] = "Automatically connect Group Drive when<br/>user joins group";
 $MESS["CONFIG_WEBDAV_SERVICES_GLOBAL"] = "Activate document editing via external<br/>services (Google Docs, MS Office Online and others)";
@@ -177,4 +195,3 @@ $MESS["DAY_OF_WEEK_5"] = "Friday";
 $MESS["DAY_OF_WEEK_6"] = "Saturday";
 $MESS["config_rating_label_likeN"] = "Voted \"Like\" button text";
 $MESS["config_rating_label_likeY"] = "Unvoted \"Like\" button text";
-?>

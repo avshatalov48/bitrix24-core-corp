@@ -208,7 +208,7 @@ class Marta extends Base
 			return true;
 		}
 
-		if (strpos($messageFields['MESSAGE'], self::EDIT_PHRASE) !== false && \Bitrix\Im\User::getInstance($messageFields['FROM_USER_ID'])->isExtranet())
+		if (mb_strpos($messageFields['MESSAGE'], self::EDIT_PHRASE) !== false && \Bitrix\Im\User::getInstance($messageFields['FROM_USER_ID'])->isExtranet())
 		{
 			$messageFields['MESSAGE'] = str_replace(self::EDIT_PHRASE, '', $messageFields['MESSAGE']);
 		}
@@ -618,7 +618,7 @@ class Marta extends Base
 		if (\Bitrix\Main\Loader::includeModule('intranet') && \Bitrix\Main\Loader::includeModule('calendar'))
 		{
         	$calendarUrl = \CCalendar::GetPathForCalendarEx($userId);
-			$calendarEventUrl = $calendarUrl.((strpos($calendarUrl, "?") === false) ? '?' : '&').'EVENT_ID=';
+			$calendarEventUrl = $calendarUrl.((mb_strpos($calendarUrl, "?") === false) ? '?' : '&').'EVENT_ID=';
 
 			$attach = new \CIMMessageParamAttach(1, \CIMMessageParamAttach::CHAT);
 
@@ -872,12 +872,12 @@ class Marta extends Base
 
 	public static function onAppLang($icon, $lang = null)
 	{
-		$title = Loc::getMessage('IMBOT_ICON_'.strtoupper($icon).'_TITLE', null, $lang);
-		$description = Loc::getMessage('IMBOT_ICON_'.strtoupper($icon).'_DESCRIPTION', null, $lang);
+		$title = Loc::getMessage('IMBOT_ICON_'.mb_strtoupper($icon).'_TITLE', null, $lang);
+		$description = Loc::getMessage('IMBOT_ICON_'.mb_strtoupper($icon).'_DESCRIPTION', null, $lang);
 		$copyright = '';
 
 		$result = false;
-		if (strlen($title) > 0)
+		if ($title <> '')
 		{
 			$result = Array(
 				'TITLE' => $title,

@@ -65,7 +65,4 @@ $MESS["BT_SALE_GIFT_DISCOUNT_DESCR"] = "Подарунок";
 $MESS["BT_SALE_ACT_GROUP_BASKET_DESCR_EXT"] = "до товарів, для яких";
 $MESS["BT_SALE_ACT_MAX_DISCOUNT_GROUP_BASKET_DESCR"] = ", але не більш";
 $MESS["BT_SALE_ACT_MAX_DISCOUNT_ON_GROUP_BASKET_ERROR_CONDITION"] = "Неможливо встановити обмеження на розмір максимальної знижки на загальну суму товарів";
-$MESS["BT_SALE_ACT_GROUP_DELETE_CONTROL"] = "Видалити дію";
-$MESS["BT_SALE_ACT_GROUP_SELECT_CONTROL"] = "Вибрати дію";
-$MESS["BT_SALE_ACT_GROUP_ADD_CONTROL"] = "Додати дію";
 ?>

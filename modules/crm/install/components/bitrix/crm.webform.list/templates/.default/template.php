@@ -142,7 +142,7 @@ $descImagePath .= ".png";
 						<div class="crm-webform-list-widget-content-lead-ads-cont">
 							<?foreach ($item['ADS_FORM'] as $adsFormService):
 								$top = empty($top) ? 20 : $top + 20;
-								$typeUpped = strtoupper($adsFormService['TYPE']);
+								$typeUpped = mb_strtoupper($adsFormService['TYPE']);
 								if ($adsFormService['HAS_LINKS']):
 								?>
 									<a
@@ -372,6 +372,7 @@ $descImagePath .= ".png";
 				'detailPageUrlTemplate' => $arParams['PATH_TO_WEB_FORM_EDIT'],
 				'adsPageUrlTemplate' => $arParams['PATH_TO_WEB_FORM_ADS'],
 				'actionRequestUrl' => $this->getComponent()->getPath() . '/ajax.php',
+				'restrictionPopup' => $arResult["RESTRICTION_POPUP"],
 				'filterList' => $arResult['FILTER'],
 				'mess' => array(
 					'successAction' => Loc::getMessage('CRM_WEBFORM_LIST_SUCCESS_ACTION'),
@@ -381,8 +382,6 @@ $descImagePath .= ".png";
 					'dlgBtnApply' => Loc::getMessage('CRM_WEBFORM_LIST_APPLY'),
 					'dlgBtnCancel' => Loc::getMessage('CRM_WEBFORM_LIST_CANCEL'),
 					'dlgBtnCopy' => Loc::getMessage('CRM_WEBFORM_LIST_ITEM_PUBLIC_LINK_COPY'),
-					'dlgActiveCountLimitedTitle' => Loc::getMessage('CRM_WEBFORM_LIST_POPUP_LIMITED_TITLE'),
-					'dlgActiveCountLimitedText' => Loc::getMessage('CRM_WEBFORM_LIST_POPUP_LIMITED_TEXT'),
 					'dlgGetScriptTitle' => Loc::getMessage('CRM_WEBFORM_LIST_ITEM_BTN_GET_SCRIPT'),
 					'actionFormCacheCleaned' => Loc::getMessage('CRM_WEBFORM_LIST_SUCCESS_ACTION_CACHE_CLEANED'),
 				)

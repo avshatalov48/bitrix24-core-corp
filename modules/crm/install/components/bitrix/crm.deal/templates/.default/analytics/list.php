@@ -17,8 +17,6 @@ else
 
 	$applyFilter = \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getQuery('apply_filter') === 'Y';
 
-
-
 	if($isBitrix24Template)
 	{
 		$this->EndViewTarget();
@@ -36,27 +34,16 @@ else
 		$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'crm-toolbar-modifier');
 	}
 
-
-
-
-
-
 	if($isBitrix24Template)
 	{
 		$this->SetViewTarget('inside_pagetitle', 100);
 	}
-
-
 
 	if($isBitrix24Template)
 	{
 		$this->EndViewTarget();
 	}
 	$APPLICATION->ShowViewContent('crm-grid-filter');
-
-
-
-
 
 	if(\Bitrix\Main\ModuleManager::isModuleInstalled('rest'))
 	{
@@ -74,7 +61,6 @@ else
 			array('HIDE_ICONS' => 'Y')
 		);
 	}
-
 
 	$APPLICATION->IncludeComponent(
 		'bitrix:ui.sidepanel.wrapper',
@@ -109,6 +95,5 @@ else
 			]
 		]
 	);
-
 }
 ?>

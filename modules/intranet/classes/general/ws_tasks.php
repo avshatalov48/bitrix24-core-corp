@@ -141,10 +141,10 @@ class CIntranetTasksWS extends IWebService
 		if (null === $datetime)
 			return time();
 
-		if (intval(substr($datetime, 0, 4)) >= 2037)
-			$datetime = '2037'.substr($datetime, 4);
+		if (intval(mb_substr($datetime, 0, 4)) >= 2037)
+			$datetime = '2037'.mb_substr($datetime, 4);
 
-		return MakeTimeStamp(substr($datetime, 0, 10).' '.substr($datetime, 11, -1), 'YYYY-MM-DD HH:MI:SS');
+		return MakeTimeStamp(mb_substr($datetime, 0, 10).' '.mb_substr($datetime, 11, -1), 'YYYY-MM-DD HH:MI:SS');
 	}
 
 	function __makeUser($USER_ID)
@@ -305,7 +305,7 @@ class CIntranetTasksWS extends IWebService
 
 		if ($USER_ID <= 0)
 		{
-			$arUserFields = explode(',', substr($FIELDS, 1));
+			$arUserFields = explode(',', mb_substr($FIELDS, 1));
 			$arKeywords = preg_split('/[^\w@.]+/', $arUserFields[1]);
 
 			$arFilters = array(
@@ -351,17 +351,17 @@ class CIntranetTasksWS extends IWebService
 			"modify_common_views" => false,
 		);
 
-		$taskType = StrToLower($taskType);
+		$taskType = mb_strtolower($taskType);
 		if (!in_array($taskType, array("group", "user")))
 			$taskType = "user";
 
-		$ownerId = IntVal($ownerId);
+		$ownerId = intval($ownerId);
 		if ($ownerId <= 0)
 		{
 			$taskType = "user";
 			$ownerId = $GLOBALS["USER"]->GetID();
 		}
-		$ownerId = IntVal($ownerId);
+		$ownerId = intval($ownerId);
 		if ($ownerId <= 0)
 			return $arResult;
 
@@ -376,7 +376,7 @@ class CIntranetTasksWS extends IWebService
 			else
 				$arResult[$key] = CSocNetFeaturesPerms::CanPerformOperation(
 					$GLOBALS["USER"]->GetID(),
-					(($taskType == 'user') ? SONET_ENTITY_USER : SONET_ENTITY_GROUP),
+					SONET_ENTITY_GROUP,
 					$ownerId,
 					"tasks",
 					$key
@@ -388,18 +388,18 @@ class CIntranetTasksWS extends IWebService
 
 	function __InTaskCheckActiveFeature($taskType, $ownerId)
 	{
-		$taskType = StrToLower($taskType);
+		$taskType = mb_strtolower($taskType);
 		if (!in_array($taskType, array("group", "user")))
 			$taskType = "user";
 
-		$ownerId = IntVal($ownerId);
+		$ownerId = intval($ownerId);
 		if ($ownerId <= 0)
 		{
 			$taskType = "user";
 			$ownerId = $GLOBALS["USER"]->GetID();
 		}
 
-		$ownerId = IntVal($ownerId);
+		$ownerId = intval($ownerId);
 		if ($ownerId <= 0)
 			return false;
 
@@ -582,7 +582,7 @@ class CIntranetTasksWS extends IWebService
 			return new CSoapFault('Data error', 'Wrong GUID - '.$listName);
 		}
 
-		if (strlen($attachment) <= 0)
+		if ($attachment == '')
 		{
 			return new CSoapFault('Wrong attachment', 'Wrong attachment');
 		}
@@ -653,9 +653,9 @@ class CIntranetTasksWS extends IWebService
 		$dbRes = CIBlockElement::GetByID($listItemID);
 		if (($obElement = $dbRes->GetNextElement()) && CIntranetTasksDocument::CanUserOperateDocument(INTASK_DOCUMENT_OPERATION_WRITE_DOCUMENT, 			$USER->GetID(),	$listItemID, array()))
 		{
-			$pos = strrpos($url, '/');
+			$pos = mb_strrpos($url, '/');
 			if ($pos)
-				$fileName = ToLower(str_replace(array('/', '\\', '..'), '', substr($url, $pos+1))); // minor security
+				$fileName = ToLower(str_replace(array('/', '\\', '..'), '', mb_substr($url, $pos + 1))); // minor security
 
 			if (!$fileName)
 				return new CSoapFault('Wrong file', 'Wrong file URL');
@@ -965,11 +965,11 @@ class CIntranetTasksWS extends IWebService
 					$arData['Body'] = str_replace(array("&#10;", "&#13;", '&nbsp;'), "", $arData['Body']);
 					$arData['Body'] = preg_replace("/<![^>]*>/", '', $arData['Body']);
 
-					if (($pos = strpos($arData['Body'], '<BODY>')) !== false)
-						$arData['Body'] = substr($arData['Body'], $pos+6);
+					if (($pos = mb_strpos($arData['Body'], '<BODY>')) !== false)
+						$arData['Body'] = mb_substr($arData['Body'], $pos + 6);
 					echo $pos.' ';
-					if (($pos = strpos($arData['Body'], '</BODY>')) !== false)
-						$arData['Body'] = substr($arData['Body'], 0, $pos);
+					if (($pos = mb_strpos($arData['Body'], '</BODY>')) !== false)
+						$arData['Body'] = mb_substr($arData['Body'], 0, $pos);
 					echo $pos.' ';
 
 					$TZBias = intval(date('Z'));
@@ -1034,7 +1034,7 @@ class CIntranetTasksWS extends IWebService
 							{
 								foreach ($arElement as $fld => $value)
 								{
-									if (substr($fld, 0, 9) == 'PROPERTY_')
+									if (mb_substr($fld, 0, 9) == 'PROPERTY_')
 									{
 										if (!$arFields[$fld] && $fld != 'PROPERTY_TaskFiles')
 										{

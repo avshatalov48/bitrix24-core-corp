@@ -106,8 +106,8 @@ class VCardPhone
 	{
 		$item = new VCardPhone();
 		$item->value = $attr->getValue();
-		$item->valueType = strtoupper($attr->getFirstParamValue('VALUE', 'text'));
-		$item->types = array_map('strtoupper', $attr->getParamValues('TYPE'));
+		$item->valueType = mb_strtoupper($attr->getFirstParamValue('VALUE', 'text'));
+		$item->types = array_map('mb_strtoupper', $attr->getParamValues('TYPE'));
 		return $item;
 	}
 }

@@ -61,7 +61,7 @@
 			currentAmount = +currentAmount || 0;
 			prevAmount = +prevAmount || 0;
 
-			if(currentAmount == prevAmount || currentAmount == 0 || prevAmount == 0)
+			if(currentAmount === 0 || prevAmount === 0)
 			{
 				return '<div style="color:grey;">&mdash;</div>';
 			}
@@ -71,7 +71,7 @@
 			}
 
 			var classList = "crm-report-sales-dynamics-modal-percent-value";
-			var percent = Math.floor(ratio * 100);
+			var percent = Math.round(ratio * 100);
 			if (percent > 0)
 			{
 				classList += " green";
@@ -93,10 +93,6 @@
 			if (field.id === 'TIME_PERIOD')
 			{
 				this.timePeriodField = field;
-				console.log("init TIME_PERIOD", field);
-				/*field.subscribe('BX.Filter.Field:change', (changeEvent) => {
-					console.log(changeEvent.data.value);
-				});*/
 
 				field.subscribe('BX.Filter.Field:change', this.onTimePeriodChange.bind(this));
 			}
@@ -108,7 +104,6 @@
 
 		onTimePeriodChange: function(event)
 		{
-			console.log('change TIME_PERIOD', this.timePeriodField, event.data.value);
 			var previousValue = this.preparePreviousPeriodValue(event.data.value);
 
 			this.previousPeriodField.setValue(previousValue);

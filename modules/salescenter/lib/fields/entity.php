@@ -60,7 +60,7 @@ abstract class Entity
 
 	public function getName(): string
 	{
-		return Loc::getMessage('SALESCENTER_FIELDS_ENTITY_'.strtoupper(static::getCode()));
+		return Loc::getMessage('SALESCENTER_FIELDS_ENTITY_'.mb_strtoupper(static::getCode()));
 	}
 
 	public function loadData(int $id): ?array

@@ -52,7 +52,7 @@ foreach ($arUFLead as $_arUfLead)
 	foreach ($arUFContact as $_arUFContact)
 	{
 		if ($_arUfLead['USER_TYPE_ID'] == $_arUFContact['USER_TYPE_ID'] &&
-			strtolower(trim($_arUfLead['EDIT_FORM_LABEL'])) == strtolower(trim($_arUFContact['EDIT_FORM_LABEL'])))
+			mb_strtolower(trim($_arUfLead['EDIT_FORM_LABEL'])) == mb_strtolower(trim($_arUFContact['EDIT_FORM_LABEL'])))
 		{
 			$arResult['ELEMENT']['CONTACT'][$_arUFContact['FIELD_NAME']] = $arFields[$_arUfLead['FIELD_NAME']];
 			break;
@@ -133,12 +133,12 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			$entityPrefix = $sEntity.'_';
 			foreach ($_POST as $k => $v)
 			{
-				if (strpos($k, $entityPrefix) !== 0)
+				if (mb_strpos($k, $entityPrefix) !== 0)
 				{
 					continue;
 				}
 
-				$fieldKey = substr($k, strlen($entityPrefix));
+				$fieldKey = mb_substr($k, mb_strlen($entityPrefix));
 				// Make an exception for CONTACT_ID and COMPANY_ID - special fields.
 				if(isset($entityFields[$fieldKey])
 					||($sEntity === 'CONTACT' && $fieldKey === 'CONTACT_ID')
@@ -425,7 +425,8 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 						}
 
 						//Region automation
-						\Bitrix\Crm\Automation\Factory::runOnAdd(\CCrmOwnerType::Deal, $iDealId);
+						$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Deal, $iDealId);
+						$starter->setUserIdFromCurrent()->runOnAdd();
 						//end region
 					}
 				}
@@ -443,7 +444,9 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 					$arErrors
 				);
 				//Region automation
-				\Bitrix\Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Lead, $arParams['ELEMENT_ID']);
+				$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $arParams['ELEMENT_ID']);
+				$starter->setUserIdFromCurrent();
+				$starter->runOnUpdate($arFields['LEAD'], []);
 				//end region
 			}
 

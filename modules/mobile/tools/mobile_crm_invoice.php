@@ -28,7 +28,7 @@ if(!function_exists('__CrmShowEndJsonResonse'))
 	}
 }
 
-if($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"])>0 && check_bitrix_sessid())
+if($_SERVER["REQUEST_METHOD"]=="POST" && $_POST["action"] <> '' && check_bitrix_sessid())
 {
 	$action = $_POST["action"];
 
@@ -171,7 +171,7 @@ if($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"])>0 && check_bit
 				__CrmShowEndJsonResonse(array('ERROR'=>'COULD NOT FIND ORDER!'));
 			}
 
-			if (strlen($arOrder["SUM_PAID"]) > 0)
+			if ($arOrder["SUM_PAID"] <> '')
 				$arOrder["PRICE"] -= $arOrder["SUM_PAID"];
 
 			$service = \Bitrix\Sale\PaySystem\Manager::getObjectById($arOrder["PAY_SYSTEM_ID"]);
@@ -223,7 +223,7 @@ if($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"])>0 && check_bit
 			}
 
 			$invNum = isset($_REQUEST['INVOICE_NUM']) ? preg_replace('/[^a-zA-Z0-9_-]/', '', $_REQUEST['INVOICE_NUM']) : '';
-			$fileName = 'invoice_'.(strlen($invNum) > 0 ? $invNum : strval($invoice_id)).'.pdf';
+			$fileName = 'invoice_'.($invNum <> '' ? $invNum : strval($invoice_id)).'.pdf';
 
 			$fileData = array(
 				'name' => $fileName,

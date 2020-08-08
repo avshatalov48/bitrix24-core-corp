@@ -3,10 +3,14 @@ namespace Bitrix\Timeman\Model\Schedule\ShiftPlan;
 
 use Bitrix\Timeman\Form\Schedule\ShiftPlanForm;
 use Bitrix\Timeman\Helper\TimeHelper;
+use Bitrix\Timeman\Model\Schedule\Schedule;
 use Bitrix\Timeman\Model\Schedule\Shift\Shift;
 
 class ShiftPlan extends EO_ShiftPlan
 {
+	/** @var Schedule|null */
+	private $schedule;
+
 	public static function create(ShiftPlanForm $shiftPlanForm)
 	{
 		$shiftPlan = new static($default = false);
@@ -82,9 +86,30 @@ class ShiftPlan extends EO_ShiftPlan
 		}
 	}
 
-	public function buildShiftStartDateTimeUtc($shift = null)
+	public function buildShiftStartDateTimeUtc(Shift $shift)
 	{
-		$shift = $this->obtainShift() ? $this->obtainShift() : $shift;
 		return $shift->buildUtcStartByShiftplan($this);
+	}
+
+	public function obtainSchedule()
+	{
+		if ($this->schedule instanceof Schedule)
+		{
+			return $this->schedule;
+		}
+		try
+		{
+			return $this->get('SCHEDULE') ? $this->get('SCHEDULE') : null;
+		}
+		catch (\Exception $exc)
+		{
+			return null;
+		}
+	}
+
+	public function defineSchedule(?Schedule $schedule)
+	{
+		$this->schedule = $schedule;
+		return $this;
 	}
 }

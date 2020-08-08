@@ -779,6 +779,18 @@ if(!$isInternal
 				'VALUE' => 'merge',
 				'ONCHANGE' => array(
 					array(
+						'ACTION' => Bitrix\Main\Grid\Panel\Actions::CREATE,
+						'DATA' => array(
+							array_merge(
+								$applyButton,
+								['SETTINGS' => [
+									'minSelectedRows' => 2,
+									'buttonId' => 'apply_button'
+								]]
+							)
+						)
+					),
+					array(
 						'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
 						'DATA' => array(array('JS' => "BX.CrmUIGridExtension.applyAction('{$gridManagerID}', 'merge')"))
 					)
@@ -810,6 +822,9 @@ if(!$isInternal
 			'NAME' => GetMessage('CRM_LEAD_ACTION_DELETE'),
 			'VALUE' => 'delete',
 			'ONCHANGE' => array(
+				array(
+					'ACTION' => Bitrix\Main\Grid\Panel\Actions::RESET_CONTROLS,
+				),
 				array(
 					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
 					'DATA' => array(array('JS' => "BX.CrmUIGridExtension.applyAction('{$gridManagerID}', 'delete')"))
@@ -1026,7 +1041,7 @@ $APPLICATION->IncludeComponent(
 			'BINDING' => array(
 				'category' => 'crm.navigation',
 				'name' => 'index',
-				'key' => strtolower($arResult['NAVIGATION_CONTEXT_ID'])
+				'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
 			)
 		),
 		'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'],

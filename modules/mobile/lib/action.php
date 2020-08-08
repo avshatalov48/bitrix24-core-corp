@@ -36,7 +36,7 @@ class Action
 		{
 
 			$isSessidValid = true;
-			if ($actionDesc["needBitrixSessid"] == true || (array_key_exists("sessid", $_REQUEST) && strlen($_REQUEST["sessid"]) > 0))
+			if ($actionDesc["needBitrixSessid"] == true || (array_key_exists("sessid", $_REQUEST) && $_REQUEST["sessid"] <> ''))
 			{
 				$isSessidValid = check_bitrix_sessid();
 			}

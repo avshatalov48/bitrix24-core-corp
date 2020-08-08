@@ -80,7 +80,7 @@ final class Helper extends \Bitrix\Tasks\Internals\DataBase\Helper\Common
 		$toTable = $dbHelper->forSql(trim($toTable));
 		$fromTable = $dbHelper->forSql(trim($fromTable));
 
-		if(!strlen($toTable) || !strlen($toTable) || !is_array($fldMap) || empty($fldMap) || empty($fldCondition))
+		if(!mb_strlen($toTable) || !mb_strlen($toTable) || !is_array($fldMap) || empty($fldMap) || empty($fldCondition))
 			return false;
 
 		// update tab1 set (aa,bb) = (select aa,bb from tab2 where tab2.cc = tab1.dd) where exists (select 1 from tab2 where tab2.cc = tab1.dd)
@@ -116,7 +116,7 @@ final class Helper extends \Bitrix\Tasks\Internals\DataBase\Helper\Common
 		$indexName = trim($indexName);
 		$tableName = $dbHelper->forSql(trim($tableName));
 
-		if(!strlen($indexName) || !strlen($tableName))
+		if(!mb_strlen($indexName) || !mb_strlen($tableName))
 			return false;
 
 		$res = $dbConnection->query("SELECT INDEX_NAME as Key_name FROM USER_IND_COLUMNS WHERE TABLE_NAME = '".ToUpper($tableName)."'");
@@ -138,7 +138,7 @@ final class Helper extends \Bitrix\Tasks\Internals\DataBase\Helper\Common
 		$indexName = $dbHelper->forSql(trim($indexName));
 		$tableName = $dbHelper->forSql(trim($tableName));
 
-		if(!strlen($indexName) || !strlen($tableName))
+		if(!mb_strlen($indexName) || !mb_strlen($tableName))
 			return false;
 
 		if(!static::checkIndexNameExists($indexName, $tableName))
@@ -195,7 +195,7 @@ final class Helper extends \Bitrix\Tasks\Internals\DataBase\Helper\Common
 
 	protected static function checkSequenceExistsForTable($tableName)
 	{
-		if(!strlen($tableName))
+		if($tableName == '')
 			return false;
 
 		$dbConnection = Main\HttpApplication::getConnection();
@@ -212,7 +212,7 @@ final class Helper extends \Bitrix\Tasks\Internals\DataBase\Helper\Common
 	public static function resetAutoIncrement($tableName, $startIndex = 1)
 	{
 		$startIndex = intval($startIndex);
-		if($startIndex <= 0 || !strlen($tableName))
+		if($startIndex <= 0 || !mb_strlen($tableName))
 			return false;
 
 		$dbConnection = Main\HttpApplication::getConnection();
@@ -220,7 +220,7 @@ final class Helper extends \Bitrix\Tasks\Internals\DataBase\Helper\Common
 
 		$tableName = $dbHelper->forSql(trim($tableName));
 
-		if(strlen($tableName) > 27) // too long
+		if(mb_strlen($tableName) > 27) // too long
 			return false;
 
 		$sqName = 'SQ_'.ToUpper($dbHelper->forSql($tableName));

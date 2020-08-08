@@ -168,12 +168,12 @@ class Collect
 					$this->encoding = $encodingOut = 'utf-8';
 				}
 
-				$this->convertEncoding = (strtolower($encodingIn) !== strtolower($encodingOut));
+				$this->convertEncoding = (mb_strtolower($encodingIn) !== mb_strtolower($encodingOut));
 			}
 
 			// assembly date
 			$assemblyDate = $this->controller->getRequest()->get('assemblyDate');
-			if ($assemblyDate !== null && preg_replace("/[\D]+/", "", $assemblyDate) && strlen($assemblyDate) == 8)
+			if ($assemblyDate !== null && preg_replace("/[\D]+/", "", $assemblyDate) && mb_strlen($assemblyDate) == 8)
 			{
 				$this->assemblyDate = $assemblyDate;
 			}
@@ -189,13 +189,29 @@ class Collect
 
 			if (!$this->hasErrors())
 			{
-				$tempDir = Translate\IO\Directory::generateTemporalDirectory('translate');
-				$tempDir = $tempDir->createSubdirectory($this->languageId);
+				$exportFolder = Translate\Config::getExportFolder();
+				if (!empty($exportFolder))
+				{
+					$tempDir = new Translate\IO\Directory($exportFolder.'/'.$this->languageId);
+					if ($tempDir->isExists())
+					{
+						$tempDir->wipe();
+					}
+					else
+					{
+						$tempDir->create();
+					}
+				}
+				else
+				{
+					$tempDir = Translate\IO\Directory::generateTemporalDirectory('translate');
+					$tempDir = $tempDir->createSubdirectory($this->languageId);
+				}
 				$this->tmpFolderPath = $tempDir->getPhysicalPath(). '/';
 				if (!$tempDir->isExists())
 				{
 					$this->addError(
-						new Error(Loc::getMessage('TR_ERROR_CREATE_TARGET_FOLDER', array('#PATH#' => $this->tmpFolderPath)))
+						new Error(Loc::getMessage('TR_ERROR_CREATE_TEMP_FOLDER', array('#PATH#' => $this->tmpFolderPath)))
 					);
 				}
 			}
@@ -362,7 +378,7 @@ class Collect
 
 			$messagePlaceholders = array(
 				'#TOTAL_FILES#' => $this->totalFileCount,
-				'#LANG#' => strtoupper($this->languageId),
+				'#LANG#' => mb_strtoupper($this->languageId),
 				'#PATH#' => '~tmp~',
 			);
 			$result['SUMMARY'] = Loc::getMessage('TR_LANGUAGE_COLLECTED_FOLDER', $messagePlaceholders);
@@ -404,7 +420,7 @@ class Collect
 					continue;
 				}
 
-				if ((substr($name, -4) === '.php') && is_file($fullPath))
+				if ((mb_substr($name, -4) === '.php') && is_file($fullPath))
 				{
 					$files[$storeFolderRelPath.'/'.$name] = $fullPath;
 				}

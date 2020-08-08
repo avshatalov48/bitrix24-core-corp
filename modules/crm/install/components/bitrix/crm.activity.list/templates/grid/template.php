@@ -192,7 +192,7 @@ foreach($arResult['ITEMS'] as &$item)
 		}
 		elseif (isset($item['PROVIDER_ID']))
 		{
-			$typeClassName = 'crm-activity-'.strtolower($item['PROVIDER_ID']);
+			$typeClassName = 'crm-activity-'.mb_strtolower($item['PROVIDER_ID']);
 			if (
 				isset($item['DIRECTION']) &&
 				(
@@ -224,7 +224,7 @@ foreach($arResult['ITEMS'] as &$item)
 	}
 	$subjectHtml .= '</div>';
 
-	$completed = isset($item['~COMPLETED']) ? strtoupper($item['~COMPLETED']) : 'N';
+	$completed = isset($item['~COMPLETED'])? mb_strtoupper($item['~COMPLETED']) : 'N';
 	if($completed === 'Y'):
 		$completedClassName = 'crm-activity-completed';
 		$completedTitle = GetMessage('CRM_ACTION_COMPLETED');
@@ -239,9 +239,9 @@ foreach($arResult['ITEMS'] as &$item)
 	$description = isset($item['DESCRIPTION_RAW']) ? $item['DESCRIPTION_RAW'] : '';
 
 	$enableDescriptionCut = isset($item['ENABLE_DESCRIPTION_CUT']) ? $item['ENABLE_DESCRIPTION_CUT'] : false;
-	if($enableDescriptionCut && strlen($description) > 256)
+	if($enableDescriptionCut && mb_strlen($description) > 256)
 	{
-		$description = substr($description, 0, 256).'<a href="#" onclick="BX.CrmActivityEditor.items[\''.$gridEditorID.'\'].viewActivity('.$item['ID'].', {}); return false;">...</a>';
+		$description = mb_substr($description, 0, 256).'<a href="#" onclick="BX.CrmActivityEditor.items[\''.$gridEditorID.'\'].viewActivity('.$item['ID'].', {}); return false;">...</a>';
 	}
 
 	$arRowData =
@@ -362,7 +362,8 @@ foreach($arResult['ITEMS'] as &$item)
 		'files' => isset($item['FILES']) ? $item['FILES'] : array(),
 		'webdavelements' => isset($item['WEBDAV_ELEMENTS']) ? $item['WEBDAV_ELEMENTS'] : array(),
 		'diskfiles' => isset($item['DISK_FILES']) ? $item['DISK_FILES'] : array(),
-		'associatedEntityID' => isset($item['~ASSOCIATED_ENTITY_ID']) ? intval($item['~ASSOCIATED_ENTITY_ID']) : 0
+		'associatedEntityID' => isset($item['~ASSOCIATED_ENTITY_ID']) ? intval($item['~ASSOCIATED_ENTITY_ID']) : 0,
+		'customViewLink' => (($provider && !is_null($provider::getCustomViewLink($item))) ? $provider::getCustomViewLink($item) : ''),
 	);
 
 	if(!$commLoaded)
@@ -411,7 +412,7 @@ if($arResult['NEED_FOR_CONVERTING_OF_TASKS'])
 ?></div><?
 
 $enableToolbar = $arResult['ENABLE_TOOLBAR'];
-$toolbarID =  strtolower("{$gridEditorID}_toolbar");
+$toolbarID = mb_strtolower("{$gridEditorID}_toolbar");
 $useQuickFilter = $arResult['USE_QUICK_FILTER'];
 
 $APPLICATION->IncludeComponent(
@@ -735,7 +736,7 @@ $APPLICATION->IncludeComponent(
 			'BINDING' => array(
 				'category' => 'crm.navigation',
 				'name' => 'index',
-				'key' => strtolower($arResult['NAVIGATION_CONTEXT_ID'])
+				'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
 			)
 		),
 		'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'],

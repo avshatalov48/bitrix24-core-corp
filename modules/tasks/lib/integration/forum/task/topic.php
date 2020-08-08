@@ -72,13 +72,10 @@ final class Topic extends \Bitrix\Tasks\Integration\Forum
 			return;
 		}
 
-		$entityId = (int) $entityId;
-
 		if ($entityType === 'TK')
 		{
 			// todo: probably use low-level orm here
-			$oTask = new \CTasks();
-			$oTask->update($entityId, array('FORUM_TOPIC_ID' => $topicId));
+			(new \CTasks())->update($entityId, ['FORUM_TOPIC_ID' => $topicId], ['SEND_UPDATE_PULL_EVENT' => false]);
 		}
 
 		return true;

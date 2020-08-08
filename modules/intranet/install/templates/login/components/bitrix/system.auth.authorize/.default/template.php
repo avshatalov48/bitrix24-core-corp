@@ -30,7 +30,7 @@ ShowMessage($arResult['ERROR_MESSAGE']);
 <form name="form_auth" method="post" target="_top" action="<?=$arResult["AUTH_URL"]?>">
 	<input type="hidden" name="AUTH_FORM" value="Y" />
 	<input type="hidden" name="TYPE" value="AUTH" />
-	<?if (strlen($arResult["BACKURL"]) > 0):?>
+	<?if ($arResult["BACKURL"] <> ''):?>
 	<input type="hidden" name="backurl" value="<?=$arResult["BACKURL"]?>" />
 	<?endif?>
 	<?foreach ($arResult["POST"] as $key => $value):?>
@@ -100,7 +100,7 @@ ShowMessage($arResult['ERROR_MESSAGE']);
 	}
 
 	BX.ready(function() {
-		BX.focus(document.forms["form_auth"]["<?=(strlen($arResult["LAST_LOGIN"]) > 0 ? "USER_PASSWORD" : "USER_LOGIN" )?>"]);
+		BX.focus(document.forms["form_auth"]["<?=($arResult["LAST_LOGIN"] <> '' ? "USER_PASSWORD" : "USER_LOGIN" )?>"]);
 		//BX.bind(BX("submit-button"), "click", function(event) {document.forms["form_auth"].submit(); });
 		BX.bind(document.forms["form_auth"], "keypress", fireEnterKey);
 	});

@@ -67,7 +67,7 @@ foreach($arResult['PRODUCTS'] as $product)
 		$setButtonHtml = '<span class="main-grid-plus-button"></span>';
 	}
 	$innerNameHtml = '';
-	if (!$isReadOnly)
+	if ($arResult['CAN_UPDATE_ORDER'])
 	{
 		$innerNameHtml = '
 			<input type="hidden" name="'.$namePrefix.'[BASKET_ID]" value="'.(float)$product['BASKET_ID'].'">					
@@ -85,6 +85,7 @@ foreach($arResult['PRODUCTS'] as $product)
 
 	//region AMOUNT
 	$innerAmountHtml = '';
+	$product['AMOUNT'] = (float)$product['AMOUNT'];
 	if (!$isReadOnly)
 	{
 		$innerAmountHtml = '
@@ -93,7 +94,7 @@ foreach($arResult['PRODUCTS'] as $product)
 				name="'.$namePrefix.'[AMOUNT]" 
 				style="width: 60px; display: inline;" 
 				type="number" 
-				value="'.(float)$product['AMOUNT'].'" 
+				value="'.$product['AMOUNT'].'" 
 				class="crm-entity-widget-content-input"
 				onchange="'.$jsObjName.'.onDataChanged(); return false;"					
 			>
@@ -101,7 +102,11 @@ foreach($arResult['PRODUCTS'] as $product)
 	}
 	else
 	{
-		$innerAmountHtml = (float)$product['AMOUNT'];
+		$innerAmountHtml = $product['AMOUNT'].'<input 
+			id="crm-product-amount-'.$product['BASKET_CODE'].'"			 
+			name="'.$namePrefix.'[AMOUNT]" 
+			type="hidden" 
+			value="'.$product['AMOUNT'].'">';
 	}
 	//eng region
 
@@ -184,7 +189,10 @@ foreach($arResult['PRODUCTS'] as $product)
 		}
 		else
 		{
-			$storeQuantityInnerHtml = '#QUANTITY#';
+			$storeQuantityInnerHtml = '#QUANTITY#'.'<input 				 
+				name="PRODUCT[#BASKET_CODE#][BARCODE_INFO][#STORE_ID#][QUANTITY]" 
+				type="hidden" 
+				value="#QUANTITY#">';
 		}
 		$storeQuantityTmpl =
 			'<div class="crm-order-product-control-amount"  data-ps-basketcode="#BASKET_CODE#" data-ps-store-id="#STORE_ID#" style="padding-bottom: 10px;">'.
@@ -197,20 +205,39 @@ foreach($arResult['PRODUCTS'] as $product)
 				'<span class="crm-entity-widget-content-block-value">#AMOUNT# #MEASURE_TEXT#</span>'.
 			'</div>';
 
-		if (!$isReadOnly)
+		if($product['IS_SET_PARENT'] === 'Y')
 		{
-			if($product['BARCODE_MULTI'] == 'Y' || $product['IS_SUPPORTED_MARKING_CODE'] == 'Y')
+			$storeBarcodeTmpl = '';
+
+			if(is_array($product['SET_ITEMS']))
 			{
-				$storeBarcodeTmpl .= $storeBarcodeTmplB;
-			}
-			else
-			{
-				$storeBarcodeTmpl .=  $storeBarcodeTmplI;
+				foreach ($product['SET_ITEMS'] as $item)
+				{
+					if($item['IS_SUPPORTED_MARKING_CODE'] === 'Y' || !empty($item['BARCODE_INFO']))
+					{
+						$storeBarcodeTmpl = Loc::getMessage('CRM_ORDER_SPLT_ITEMS_HAVE_BARCODES');
+						break;
+					}
+				}
 			}
 		}
 		else
 		{
-			$storeBarcodeTmpl = '#BARCODE_ID#';
+			if ($arResult['CAN_UPDATE_ORDER'])
+			{
+				if($product['BARCODE_MULTI'] == 'Y' || $product['IS_SUPPORTED_MARKING_CODE'] == 'Y')
+				{
+					$storeBarcodeTmpl .= $storeBarcodeTmplB;
+				}
+				else
+				{
+					$storeBarcodeTmpl .=  $storeBarcodeTmplI;
+				}
+			}
+			else
+			{
+				$storeBarcodeTmpl = '#BARCODE_ID#';
+			}
 		}
 
 		$usedStoresCount = 0;
@@ -325,7 +352,7 @@ if (!$isReadOnly && $arResult['DEDUCTED'] != 'Y')
 		'bitrix:crm.interface.toolbar',
 		'',
 		[
-			'TOOLBAR_ID' => strtolower($arResult['GRID_ID']).'_toolbar',
+			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']).'_toolbar',
 			'BUTTONS' => $buttons
 		],
 		$component,
@@ -401,7 +428,7 @@ $APPLICATION->IncludeComponent(
 					siteId: '<?=$arResult['ORDER_SITE_ID']?>',
 					languageId: '<?=LANGUAGE_ID?>',
 
-					<?if(!empty($product['STORE_BARCODE_INFO'])):?>
+					<?if(!empty($storeBarcodeInfo)):?>
 						storeTmpl: '<?=CUtil::JSEscape($storeTmpl)?>',
 						storeQuantityTmpl: '<?=CUtil::JSEscape($storeQuantityTmpl)?>',
 						storeBarcodeTmplI: '<?=CUtil::JSEscape($storeBarcodeTmplI)?>',
@@ -414,7 +441,7 @@ $APPLICATION->IncludeComponent(
 						array_filter(
 							$arParams,
 							function($k){
-								return strpos($k, '~') !== 0;
+								return mb_strpos($k, '~') !== 0;
 							},
 							ARRAY_FILTER_USE_KEY
 					))?>,

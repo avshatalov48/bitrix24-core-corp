@@ -17,12 +17,12 @@ if(SITE_TEMPLATE_ID === 'bitrix24')
 	\Bitrix\Main\Page\Asset::getInstance()->addCss("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
 }
 $guid = $arResult['GUID']."_editor";
-$prefix = strtolower($guid);
+$prefix = mb_strtolower($guid);
 $activityEditorID = "{$prefix}_editor";
 //	$readOnly = $arResult['READ_ONLY'];
 $containerId = "{$guid}_container";
 
-$wrapperId = "wrapper_".strtolower($prefix);
+$wrapperId = "wrapper_".mb_strtolower($prefix);
 
 $editorContext = array(
 	'CATEGORY_ID' => $arResult['CATEGORY_ID'],

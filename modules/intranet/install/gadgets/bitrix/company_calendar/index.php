@@ -4,7 +4,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 $arGadgetParams["DETAIL_URL"] = (isset($arGadgetParams["CALENDAR_TYPE"]) ? $arGadgetParams["DETAIL_URL"]:"/about/calendar.php");
 $arGadgetParams["CALENDAR_TYPE"] = (isset($arGadgetParams["CALENDAR_TYPE"]) ? $arGadgetParams["CALENDAR_TYPE"]:"company_calendar");
 
-$arGadgetParams["EVENTS_COUNT"] = IntVal($arGadgetParams["EVENTS_COUNT"]);
+$arGadgetParams["EVENTS_COUNT"] = intval($arGadgetParams["EVENTS_COUNT"]);
 $arGadgetParams["EVENTS_COUNT"] = ($arGadgetParams["EVENTS_COUNT"]>0 && $arGadgetParams["EVENTS_COUNT"]<=50 ? $arGadgetParams["EVENTS_COUNT"] : "5");
 $calendar2 = COption::GetOptionString("intranet", "calendar_2", "N") == "Y" && CModule::IncludeModule("calendar");
 ?>
@@ -37,7 +37,7 @@ $calendar2 = COption::GetOptionString("intranet", "calendar_2", "N") == "Y" && C
 	);?>
 <?endif;?>
 
-<?if(strlen($arGadgetParams["DETAIL_URL"])>0):?>
+<?if($arGadgetParams["DETAIL_URL"] <> ''):?>
 <br />
 <div align="right"><a href="<?=htmlspecialcharsbx($arGadgetParams["DETAIL_URL"])?>"><?echo GetMessage("GD_COMPANY_CALENDAR_ALL")?></a> <a href="<?=htmlspecialcharsbx($arGadgetParams["DETAIL_URL"])?>"><img width="7" height="7" border="0" src="/images/icons/arrows.gif" /></a>
 <br /></div>

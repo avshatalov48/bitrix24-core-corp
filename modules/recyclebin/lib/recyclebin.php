@@ -61,7 +61,7 @@ class Recyclebin
 					foreach ($recyclebinFiles as $storage)
 					{
 						unset($storage['ID'], $storage['RECYCLEBIN_ID']);
-						
+
 						$files[$storage['FILE_ID']] = $storage;
 					}
 				}
@@ -93,6 +93,37 @@ class Recyclebin
 		$entityData = $module['LIST'][$entity->getEntityType()];
 
 		return $entityData['HANDLER'];
+	}
+
+	/**
+	 * @return array
+	 */
+	public static function getAdditionalData(): array
+	{
+		$additionalData = [];
+
+		$event = new Event("recyclebin", "onAdditionalDataRequest");
+		$event->send();
+
+		if ($event->getResults())
+		{
+			foreach ($event->getResults() as $eventResult)
+			{
+				if ($eventResult->getType() === EventResult::SUCCESS)
+				{
+					$params = $eventResult->getParameters();
+					if (empty($params) || !isset($params['ADDITIONAL_DATA']) || empty($params['ADDITIONAL_DATA']))
+					{
+						continue;
+					}
+
+					$moduleId = $eventResult->getModuleId();
+					$additionalData[$moduleId] = $params;
+				}
+			}
+		}
+
+		return $additionalData;
 	}
 
 	public static function getAvailableModules()
@@ -151,7 +182,11 @@ class Recyclebin
 		{
 			return false;
 		}
-		if (!User::isSuper() && !User::isAdmin())
+		if (
+			!User::isSuper()
+			&& !User::isAdmin()
+			&& empty($params['skipAdminRightsCheck'])
+		)
 		{
 			throw new AccessDeniedException('Access Denied');
 		}

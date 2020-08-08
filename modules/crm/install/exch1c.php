@@ -84,7 +84,7 @@ if ($firstPass)
 	if (!empty($iblockType))
 	{
 		$strSql = '';
-		switch(strtoupper($DBType))
+		switch(mb_strtoupper($DBType))
 		{
 			case 'MYSQL':
 			case 'ORACLE':

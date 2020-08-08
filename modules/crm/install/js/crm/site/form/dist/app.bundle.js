@@ -5963,24 +5963,159 @@
       }
     };
 
-    var Item = function Item(options) {
-      babelHelpers.classCallCheck(this, Item);
-      babelHelpers.defineProperty(this, "value", '');
-      babelHelpers.defineProperty(this, "label", '');
-      babelHelpers.defineProperty(this, "selected", false);
-      this.selected = !!options.selected;
+    var Event =
+    /*#__PURE__*/
+    function () {
+      function Event() {
+        babelHelpers.classCallCheck(this, Event);
 
-      if (Type.defined(options.label)) {
-        this.label = options.label;
+        _namespace.set(this, {
+          writable: true,
+          value: []
+        });
+
+        _subscribers.set(this, {
+          writable: true,
+          value: []
+        });
+
+        _emittedOnce.set(this, {
+          writable: true,
+          value: []
+        });
       }
 
-      if (Type.defined(options.value)) {
-        this.value = options.value;
+      babelHelpers.createClass(Event, [{
+        key: "setGlobalEventNamespace",
+        value: function setGlobalEventNamespace() {
+          for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+            args[_key] = arguments[_key];
+          }
+
+          babelHelpers.classPrivateFieldSet(this, _namespace, args);
+        }
+      }, {
+        key: "emitOnce",
+        value: function emitOnce(type, data) {
+          if (babelHelpers.classPrivateFieldGet(this, _emittedOnce).indexOf(type) < 0) {
+            this.emit(type, data);
+          }
+        }
+      }, {
+        key: "emit",
+        value: function emit(type, data) {
+          var _this = this;
+
+          babelHelpers.classPrivateFieldGet(this, _emittedOnce).push(type);
+          babelHelpers.classPrivateFieldGet(this, _subscribers).forEach(function (subscriber) {
+            if (!subscriber.type || subscriber.type === type) {
+              subscriber.callback.call(_this, data, _this, type);
+            }
+          });
+
+          if (babelHelpers.classPrivateFieldGet(this, _namespace).length === 0) {
+            return;
+          }
+
+          window.dispatchEvent(new window.CustomEvent([].concat(babelHelpers.toConsumableArray(babelHelpers.classPrivateFieldGet(this, _namespace)), [type]).join(':'), {
+            detail: {
+              object: this,
+              type: type,
+              data: data
+            }
+          }));
+        }
+      }, {
+        key: "subscribe",
+        value: function subscribe(type, callback) {
+          if (!type || typeof callback !== 'function') {
+            return;
+          }
+
+          babelHelpers.classPrivateFieldGet(this, _subscribers).push({
+            type: type,
+            callback: callback
+          });
+        }
+      }, {
+        key: "subscribeAll",
+        value: function subscribeAll(callback) {
+          babelHelpers.classPrivateFieldGet(this, _subscribers).push({
+            type: null,
+            callback: callback
+          });
+        }
+      }, {
+        key: "unsubscribe",
+        value: function unsubscribe(type, callback) {
+          babelHelpers.classPrivateFieldSet(this, _subscribers, babelHelpers.classPrivateFieldGet(this, _subscribers).filter(function (subscriber) {
+            return subscriber.type !== type || subscriber.callback !== callback;
+          }));
+        }
+      }, {
+        key: "unsubscribeAll",
+        value: function unsubscribeAll() {
+          babelHelpers.classPrivateFieldSet(this, _subscribers, []);
+        }
+      }]);
+      return Event;
+    }();
+
+    var _namespace = new WeakMap();
+
+    var _subscribers = new WeakMap();
+
+    var _emittedOnce = new WeakMap();
+
+    var Item =
+    /*#__PURE__*/
+    function (_Event) {
+      babelHelpers.inherits(Item, _Event);
+
+      function Item(options) {
+        var _this;
+
+        babelHelpers.classCallCheck(this, Item);
+        _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Item).call(this, options));
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "events", {
+          changeSelected: 'change:selected'
+        });
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "value", '');
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "label", '');
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "_selectedInternal", false);
+        _this._selectedInternal = !!options.selected;
+
+        if (Type.defined(options.label)) {
+          _this.label = options.label;
+        }
+
+        if (Type.defined(options.value)) {
+          _this.value = options.value;
+        }
+
+        return _this;
       }
-    };
+
+      babelHelpers.createClass(Item, [{
+        key: "selected",
+        get: function get() {
+          return this._selectedInternal;
+        },
+        set: function set(value) {
+          this._selectedInternal = value;
+          this.emit(this.events.changeSelected);
+        }
+      }]);
+      return Item;
+    }(Event);
 
     var Field = {
-      props: ['field'],
+      props: {
+        field: {
+          type: Controller,
+          required: true
+        }
+      },
       components: {},
       template: "\n\t\t<transition name=\"b24-form-field-a-slide\">\n\t\t\t<div class=\"b24-form-field\"\n\t\t\t\t:class=\"classes\"\n\t\t\t\tv-show=\"field.visible\"\n\t\t\t>\n\t\t\t\t<div v-if=\"field.isComponentDuplicable\">\n\t\t\t\t<transition-group name=\"b24-form-field-a-slide\" tag=\"div\">\n\t\t\t\t\t<component v-bind:is=\"field.getComponentName()\"\n\t\t\t\t\t\tv-for=\"(item, itemIndex) in field.items\"\n\t\t\t\t\t\tv-bind:key=\"field.id\"\n\t\t\t\t\t\tv-bind:field=\"field\"\n\t\t\t\t\t\tv-bind:itemIndex=\"itemIndex\"\n\t\t\t\t\t\tv-bind:item=\"item\"\n\t\t\t\t\t\t@input-blur=\"onBlur\"\n\t\t\t\t\t\t@input-focus=\"onFocus\"\n\t\t\t\t\t\t@input-key-down=\"onKeyDown\"\n\t\t\t\t\t></component>\n\t\t\t\t</transition-group>\t\n\t\t\t\t\t<a class=\"b24-form-control-add-btn\"\n\t\t\t\t\t\tv-if=\"field.multiple\"\n\t\t\t\t\t\t@click=\"addItem\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ field.messages.get('fieldAdd') }}\n\t\t\t\t\t</a>\t\n\t\t\t\t</div>\n\t\t\t\t<div v-if=\"!field.isComponentDuplicable\">\n\t\t\t\t\t<component v-bind:is=\"field.getComponentName()\"\n\t\t\t\t\t\tv-bind:key=\"field.id\"\n\t\t\t\t\t\tv-bind:field=\"field\"\n\t\t\t\t\t\t@input-blur=\"onBlur\"\n\t\t\t\t\t\t@input-focus=\"onFocus\"\n\t\t\t\t\t\t@input-key-down=\"onKeyDown\"\n\t\t\t\t\t></component>\t\t\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t",
       computed: {
@@ -6004,7 +6139,11 @@
           return list;
         },
         hasErrors: function hasErrors() {
-          return this.field.validated && !this.field.focused && !this.field.valid();
+          if (!this.field.validated || this.field.focused) {
+            return false;
+          }
+
+          return !this.field.valid();
         }
       },
       methods: {
@@ -6013,10 +6152,16 @@
         },
         onFocus: function onFocus() {
           this.field.focused = true;
+          this.field.emit(this.field.events.focus);
         },
         onBlur: function onBlur() {
+          var _this = this;
+
           this.field.focused = false;
           this.field.valid();
+          setTimeout(function () {
+            _this.field.emit(_this.field.events.blur);
+          }, 350);
         },
         onKeyDown: function onKeyDown(e) {
           var value = e.key;
@@ -6177,6 +6322,7 @@
           right: false
         });
         babelHelpers.defineProperty(this, "shadow", false);
+        babelHelpers.defineProperty(this, "compact", false);
         babelHelpers.defineProperty(this, "style", null);
         babelHelpers.defineProperty(this, "backgroundImage", null);
         this.adjust(options);
@@ -6195,6 +6341,7 @@
             this.setFont(theme.font || {});
             this.setBorder(theme.border || {});
             this.setShadow(theme.shadow || false);
+            this.setCompact(theme.compact || false);
             this.setColor(Object.assign({
               primary: '',
               primaryText: '',
@@ -6230,6 +6377,10 @@
             this.setShadow(options.shadow);
           }
 
+          if (typeof options.compact !== 'undefined') {
+            this.setCompact(options.compact);
+          }
+
           if (typeof options.border !== 'undefined') {
             this.setBorder(options.border);
           }
@@ -6257,6 +6408,11 @@
         key: "setShadow",
         value: function setShadow(shadow) {
           this.shadow = !!shadow;
+        }
+      }, {
+        key: "setCompact",
+        value: function setCompact(compact) {
+          this.compact = !!compact;
         }
       }, {
         key: "setBackgroundImage",
@@ -6409,7 +6565,8 @@
 
     var Controller =
     /*#__PURE__*/
-    function () {
+    function (_Event) {
+      babelHelpers.inherits(Controller, _Event);
       babelHelpers.createClass(Controller, [{
         key: "getComponentName",
         value: function getComponentName() {
@@ -6444,17 +6601,28 @@
       }]);
 
       function Controller() {
+        var _this;
+
         var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : DefaultOptions;
         babelHelpers.classCallCheck(this, Controller);
-        babelHelpers.defineProperty(this, "options", DefaultOptions);
-        babelHelpers.defineProperty(this, "items", []);
-        babelHelpers.defineProperty(this, "validated", false);
-        babelHelpers.defineProperty(this, "focused", false);
-        babelHelpers.defineProperty(this, "validators", []);
-        babelHelpers.defineProperty(this, "normalizers", []);
-        babelHelpers.defineProperty(this, "formatters", []);
-        babelHelpers.defineProperty(this, "filters", []);
-        this.adjust(options);
+        _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller).call(this, options));
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "events", {
+          blur: 'blur',
+          focus: 'focus',
+          changeSelected: 'change:selected'
+        });
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "options", DefaultOptions);
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "items", []);
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "validated", false);
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "focused", false);
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "validators", []);
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "normalizers", []);
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "formatters", []);
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "filters", []);
+
+        _this.adjust(options);
+
+        return _this;
       }
 
       babelHelpers.createClass(Controller, [{
@@ -6522,14 +6690,23 @@
       }, {
         key: "validate",
         value: function validate(value) {
-          var _this = this;
+          var _this2 = this;
 
           if (value === '') {
             return true;
           }
 
           return !this.validators.some(function (validator) {
-            return !validator.call(_this, value);
+            return !validator.call(_this2, value);
+          });
+        }
+      }, {
+        key: "hasValidValue",
+        value: function hasValidValue() {
+          var _this3 = this;
+
+          return this.values().some(function (value) {
+            return value !== '' && _this3.validate(value);
           });
         }
       }, {
@@ -6548,7 +6725,11 @@
       }, {
         key: "valid",
         value: function valid() {
-          var _this2 = this;
+          var _this4 = this;
+
+          if (!this.visible) {
+            return true;
+          }
 
           this.validated = true;
           var items = this.selectedItems();
@@ -6558,7 +6739,7 @@
           }
 
           return !items.some(function (item) {
-            return !_this2.validate(item.value);
+            return !_this4.validate(item.value);
           });
         }
       }, {
@@ -6569,11 +6750,20 @@
       }, {
         key: "addItem",
         value: function addItem(options) {
+          var _this5 = this;
+
           if (options.selected && !this.multiple && this.values().length > 0) {
             options.selected = false;
           }
 
           var item = this.constructor.createItem(options);
+          item.subscribe(item.events.changeSelected, function (data, obj, type) {
+            _this5.emit(_this5.events.changeSelected, {
+              data: data,
+              type: type,
+              item: obj
+            });
+          });
           this.items.push(item);
           return item;
         }
@@ -6602,7 +6792,7 @@
       }, {
         key: "adjust",
         value: function adjust() {
-          var _this3 = this;
+          var _this6 = this;
 
           var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : DefaultOptions;
           this.options = Object.assign({}, this.options, options);
@@ -6665,12 +6855,12 @@
           }
 
           items.forEach(function (item) {
-            return _this3.addItem(item);
+            return _this6.addItem(item);
           });
         }
       }]);
       return Controller;
-    }();
+    }(Event);
 
     var Dropdown = {
       props: ['marginTop', 'maxHeight', 'width', 'visible', 'title'],
@@ -6695,8 +6885,12 @@
           var _this = this;
 
           if (val) {
+            this.$emit('visible:on');
             document.addEventListener('mouseup', this.listenerBind);
           } else {
+            setTimeout(function () {
+              return _this.$emit('visible:off');
+            }, 0);
             document.removeEventListener('mouseup', this.listenerBind);
           }
 
@@ -7027,11 +7221,15 @@
     };
     var FieldString = {
       mixins: [MixinString],
-      template: "\n\t\t<div class=\"b24-form-control-container b24-form-control-icon-after\">\n\t\t\t<input class=\"b24-form-control\"\n\t\t\t\t:type=\"field.getInputType()\"\n\t\t\t\t:class=\"inputClasses\"\n\t\t\t\t:readonly=\"readonly\"\n\t\t\t\tv-model=\"value\"\n\t\t\t\t@blur=\"$emit('input-blur', $event)\"\n\t\t\t\t@focus=\"$emit('input-focus', $event)\"\n\t\t\t\t@click=\"$emit('input-click', $event)\"\n\t\t\t\t@input=\"onInput\"\n\t\t\t\t@keydown=\"$emit('input-key-down', $event)\"\n\t\t\t>\n\t\t\t<div class=\"b24-form-control-label\">\n\t\t\t\t{{ label }} \n\t\t\t\t<span class=\"b24-form-control-required\"\n\t\t\t\t\tv-show=\"field.required\"\n\t\t\t\t>*</span>\t\t\t\t\n\t\t\t</div>\n\t\t\t<div class=\"b24-form-icon-after b24-form-icon-remove\"\n\t\t\t\t:title=\"field.messages.get('fieldRemove')\"\n\t\t\t\tv-if=\"itemIndex > 0\"\n\t\t\t\t@click=\"deleteItem\"\n\t\t\t></div>\n\t\t\t<div class=\"b24-form-icon-after b24-form-icon-remove\"\n\t\t\t\t:title=\"buttonClear\"\n\t\t\t\tv-if=\"buttonClear && itemIndex === 0 && value\"\n\t\t\t\t@click=\"clearItem\"\n\t\t\t></div>\n\t\t\t<field-item-alert\n\t\t\t\tv-bind:field=\"field\"\n\t\t\t\tv-bind:item=\"item\"\n\t\t\t></field-item-alert>\n\t\t</div>\n\t",
+      template: "\n\t\t<div class=\"b24-form-control-container b24-form-control-icon-after\">\n\t\t\t<input class=\"b24-form-control\"\n\t\t\t\t:type=\"field.getInputType()\"\n\t\t\t\t:name=\"field.getInputName()\"\n\t\t\t\t:class=\"inputClasses\"\n\t\t\t\t:readonly=\"readonly\"\n\t\t\t\t:autocomplete=\"field.getInputAutocomplete()\"\n\t\t\t\tv-model=\"value\"\n\t\t\t\t@blur=\"$emit('input-blur', $event)\"\n\t\t\t\t@focus=\"$emit('input-focus', $event)\"\n\t\t\t\t@click=\"$emit('input-click', $event)\"\n\t\t\t\t@input=\"onInput\"\n\t\t\t\t@keydown=\"$emit('input-key-down', $event)\"\n\t\t\t>\n\t\t\t<div class=\"b24-form-control-label\">\n\t\t\t\t{{ label }} \n\t\t\t\t<span class=\"b24-form-control-required\"\n\t\t\t\t\tv-show=\"field.required\"\n\t\t\t\t>*</span>\t\t\t\t\n\t\t\t</div>\n\t\t\t<div class=\"b24-form-icon-after b24-form-icon-remove\"\n\t\t\t\t:title=\"field.messages.get('fieldRemove')\"\n\t\t\t\tv-if=\"itemIndex > 0\"\n\t\t\t\t@click=\"deleteItem\"\n\t\t\t></div>\n\t\t\t<div class=\"b24-form-icon-after b24-form-icon-remove\"\n\t\t\t\t:title=\"buttonClear\"\n\t\t\t\tv-if=\"buttonClear && itemIndex === 0 && value\"\n\t\t\t\t@click=\"clearItem\"\n\t\t\t></div>\n\t\t\t<field-item-alert\n\t\t\t\tv-bind:field=\"field\"\n\t\t\t\tv-bind:item=\"item\"\n\t\t\t></field-item-alert>\n\t\t</div>\n\t",
       methods: {
         onInput: function onInput() {
           var value = this.field.normalize(this.value);
-          this.value = this.field.format(value);
+          value = this.field.format(value);
+
+          if (this.value !== value) {
+            this.value = value;
+          }
         }
       }
     };
@@ -7055,6 +7253,16 @@
         key: "getInputType",
         value: function getInputType() {
           return 'string';
+        }
+      }, {
+        key: "getInputName",
+        value: function getInputName() {
+          return null;
+        }
+      }, {
+        key: "getInputAutocomplete",
+        value: function getInputAutocomplete() {
+          return null;
         }
       }, {
         key: "isComponentDuplicable",
@@ -7200,6 +7408,16 @@
         value: function getInputType() {
           return 'email';
         }
+      }, {
+        key: "getInputName",
+        value: function getInputName() {
+          return 'email';
+        }
+      }, {
+        key: "getInputAutocomplete",
+        value: function getInputAutocomplete() {
+          return 'email';
+        }
       }], [{
         key: "type",
         value: function type() {
@@ -7234,6 +7452,16 @@
       babelHelpers.createClass(Controller, [{
         key: "getInputType",
         value: function getInputType() {
+          return 'tel';
+        }
+      }, {
+        key: "getInputName",
+        value: function getInputName() {
+          return 'phone';
+        }
+      }, {
+        key: "getInputAutocomplete",
+        value: function getInputAutocomplete() {
           return 'tel';
         }
       }], [{
@@ -7349,7 +7577,7 @@
 
     var FieldBool = {
       mixins: [MixinField],
-      template: "\t\n\t\t<label class=\"b24-form-control-container\"\n\t\t\t@click.capture=\"$emit('input-click', $event)\"\n\t\t>\n\t\t\t<input type=\"checkbox\" \n\t\t\t\tv-model=\"field.item().selected\"\n\t\t\t\t@blur=\"$emit('input-blur', this)\"\n\t\t\t\t@focus=\"$emit('input-focus', this)\"\n\t\t\t\tonclick=\"this.blur()\"\n\t\t\t>\n\t\t\t<span class=\"b24-form-control-desc\">{{ field.label }}</span>\n\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\n\t\t</label>\n\t"
+      template: "\t\n\t\t<label class=\"b24-form-control-container\"\n\t\t\t@click.capture=\"$emit('input-click', $event)\"\n\t\t>\n\t\t\t<input type=\"checkbox\" \n\t\t\t\tv-model=\"field.item().selected\"\n\t\t\t\t@blur=\"$emit('input-blur')\"\n\t\t\t\t@focus=\"$emit('input-focus')\"\n\t\t\t>\n\t\t\t<span class=\"b24-form-control-desc\">{{ field.label }}</span>\n\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\n\t\t</label>\n\t"
     };
 
     var Controller$7 =
@@ -7379,7 +7607,7 @@
 
     var FieldCheckbox = {
       mixins: [MixinField],
-      template: "\n\t\t<div class=\"b24-form-control-container\">\n\t\t\t<span class=\"b24-form-control-label\">\n\t\t\t\t{{ field.label }} \n\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t</span>\n\n\t\t\t<label class=\"b24-form-control\"\n\t\t\t\tv-for=\"item in field.items\"\n\t\t\t\t:class=\"{'b24-form-control-checked': item.selected}\"\n\t\t\t>\n\t\t\t\t<input :type=\"field.type\" \n\t\t\t\t\t:value=\"item.value\"\n\t\t\t\t\tv-model=\"selected\"\n\t\t\t\t\t@blur=\"$emit('input-blur', this)\"\n\t\t\t\t\t@focus=\"$emit('input-focus', this)\"\n\t\t\t\t\tonclick=\"this.blur()\"\n\t\t\t\t>\n\t\t\t\t<span class=\"b24-form-control-desc\">{{ item.label }}</span>\n\t\t\t</label>\n\t\t\t<field-item-image-slider v-bind:field=\"field\"></field-item-image-slider>\n\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\n\t\t</div>\n\t"
+      template: "\n\t\t<div class=\"b24-form-control-container\">\n\t\t\t<span class=\"b24-form-control-label\">\n\t\t\t\t{{ field.label }} \n\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t</span>\n\n\t\t\t<label class=\"b24-form-control\"\n\t\t\t\tv-for=\"item in field.items\"\n\t\t\t\t:class=\"{'b24-form-control-checked': item.selected}\"\n\t\t\t>\n\t\t\t\t<input :type=\"field.type\" \n\t\t\t\t\t:value=\"item.value\"\n\t\t\t\t\tv-model=\"selected\"\n\t\t\t\t\t@blur=\"$emit('input-blur')\"\n\t\t\t\t\t@focus=\"$emit('input-focus')\"\n\t\t\t\t>\n\t\t\t\t<span class=\"b24-form-control-desc\">{{ item.label }}</span>\n\t\t\t</label>\n\t\t\t<field-item-image-slider v-bind:field=\"field\"></field-item-image-slider>\n\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\n\t\t</div>\n\t"
     };
 
     var Controller$8 =
@@ -7504,7 +7732,7 @@
 
     var FieldFileItem = {
       props: ['field', 'itemIndex', 'item'],
-      template: "\n\t\t<div>\n\t\t\t<div v-if=\"file.content\" class=\"b24-form-control-file-item\">\n\t\t\t\t<div class=\"b24-form-control-file-item-preview\">\n\t\t\t\t\t<img class=\"b24-form-control-file-item-preview-image\" \n\t\t\t\t\t\t:src=\"file.content\"\n\t\t\t\t\t>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"b24-form-control-file-item-name\">\n\t\t\t\t\t<span class=\"b24-form-control-file-item-name-text\">\n\t\t\t\t\t\t{{ file.name }}\n\t\t\t\t\t</span>\n\t\t\t\t\t<div style=\"display: none;\" class=\"b24-form-control-file-item-preview-image-popup\">\n\t\t\t\t\t\t<img>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div @click.prevent=\"removeFile\" class=\"b24-form-control-file-item-remove\"></div>\n\t\t\t</div>\n\t\t\t<div v-show=\"!file.content\" class=\"b24-form-control-file-item-empty\">\n\t\t\t\t<label class=\"b24-form-control\">\n\t\t\t\t\t{{ field.messages.get('fieldFileChoose') }}\n\t\t\t\t\t<input type=\"file\" style=\"display: none;\"\n\t\t\t\t\t\tref=\"inputFiles\"\n\t\t\t\t\t\t@change=\"setFiles\"\n\t\t\t\t\t\t@blur=\"$emit('input-blur', this)\"\n\t\t\t\t\t\t@focus=\"$emit('input-focus', this)\"\n\t\t\t\t\t>\n\t\t\t\t</label>\n\t\t\t</div>\n\t\t</div>\n\t",
+      template: "\n\t\t<div>\n\t\t\t<div v-if=\"file.content\" class=\"b24-form-control-file-item\">\n\t\t\t\t<div class=\"b24-form-control-file-item-preview\">\n\t\t\t\t\t<img class=\"b24-form-control-file-item-preview-image\" \n\t\t\t\t\t\t:src=\"file.content\"\n\t\t\t\t\t>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"b24-form-control-file-item-name\">\n\t\t\t\t\t<span class=\"b24-form-control-file-item-name-text\">\n\t\t\t\t\t\t{{ file.name }}\n\t\t\t\t\t</span>\n\t\t\t\t\t<div style=\"display: none;\" class=\"b24-form-control-file-item-preview-image-popup\">\n\t\t\t\t\t\t<img>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div @click.prevent=\"removeFile\" class=\"b24-form-control-file-item-remove\"></div>\n\t\t\t</div>\n\t\t\t<div v-show=\"!file.content\" class=\"b24-form-control-file-item-empty\">\n\t\t\t\t<label class=\"b24-form-control\">\n\t\t\t\t\t{{ field.messages.get('fieldFileChoose') }}\n\t\t\t\t\t<input type=\"file\" style=\"display: none;\"\n\t\t\t\t\t\tref=\"inputFiles\"\n\t\t\t\t\t\t@change=\"setFiles\"\n\t\t\t\t\t\t@blur=\"$emit('input-blur')\"\n\t\t\t\t\t\t@focus=\"$emit('input-focus')\"\n\t\t\t\t\t>\n\t\t\t\t</label>\n\t\t\t</div>\n\t\t</div>\n\t",
       computed: {
         value: {
           get: function get() {
@@ -7566,7 +7794,7 @@
       components: {
         'field-file-item': FieldFileItem
       },
-      template: "\n\t\t<div class=\"b24-form-control-container\">\n\t\t\t<div class=\"b24-form-control-label\">\n\t\t\t\t{{ field.label }}\n\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t</div>\n\t\t\t<div class=\"b24-form-control-filelist\">\n\t\t\t\t<field-file-item\n\t\t\t\t\tv-for=\"(item, itemIndex) in field.items\"\n\t\t\t\t\tv-bind:key=\"field.id\"\n\t\t\t\t\tv-bind:field=\"field\"\n\t\t\t\t\tv-bind:itemIndex=\"itemIndex\"\n\t\t\t\t\tv-bind:item=\"item\"\n\t\t\t\t></field-file-item>\n\t\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\n\t\t\t</div>\n\t\t</div>\n\t",
+      template: "\n\t\t<div class=\"b24-form-control-container\">\n\t\t\t<div class=\"b24-form-control-label\">\n\t\t\t\t{{ field.label }}\n\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t</div>\n\t\t\t<div class=\"b24-form-control-filelist\">\n\t\t\t\t<field-file-item\n\t\t\t\t\tv-for=\"(item, itemIndex) in field.items\"\n\t\t\t\t\tv-bind:key=\"field.id\"\n\t\t\t\t\tv-bind:field=\"field\"\n\t\t\t\t\tv-bind:itemIndex=\"itemIndex\"\n\t\t\t\t\tv-bind:item=\"item\"\n\t\t\t\t\t@input-blur=\"$emit('input-blur')\"\n\t\t\t\t\t@input-focus=\"$emit('input-focus')\"\n\t\t\t\t></field-file-item>\n\t\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\n\t\t\t</div>\n\t\t</div>\n\t",
       created: function created() {
         if (this.field.multiple) {
           this.field.addSingleEmptyItem();
@@ -7657,7 +7885,7 @@
     var FieldListItem = {
       mixins: [fieldListMixin],
       props: ['field', 'item', 'itemSubComponent'],
-      template: "\n\t\t<div class=\"b24-form-control-container b24-form-control-icon-after\">\n\t\t\t<input readonly=\"\" type=\"text\" class=\"b24-form-control\"\n\t\t\t\t:value=\"itemLabel\"\n\t\t\t\t:class=\"classes\"\n\t\t\t\t@click.capture=\"toggleSelector\"\n\t\t\t>\n\t\t\t<div class=\"b24-form-control-label\">\n\t\t\t\t{{ field.label }}\n\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t</div>\n\t\t\t<div class=\"b24-form-icon-after b24-form-icon-remove\"\n\t\t\t\tv-if=\"item.selected\"\n\t\t\t\t@click.capture=\"unselect\"\n\t\t\t\t:title=\"field.messages.get('fieldListUnselect')\"\n\t\t\t></div>\n\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\n\t\t\t<field-item-dropdown \n\t\t\t\t:marginTop=\"0\" \n\t\t\t\t:visible=\"dropDownOpened\"\n\t\t\t\t:title=\"field.label\"\n\t\t\t\t@close=\"closeDropDown()\"\n\t\t\t>\n\t\t\t\t<item-selector\n\t\t\t\t\t:field=\"field\"\n\t\t\t\t\t@select=\"select\"\n\t\t\t\t></item-selector>\n\t\t\t</field-item-dropdown>\n\t\t\t<field-item-image-slider \n\t\t\t\tv-if=\"item.selected && field.bigPic\" \n\t\t\t\t:field=\"field\" \n\t\t\t\t:item=\"item\"\n\t\t\t></field-item-image-slider>\n\t\t\t<component v-if=\"item.selected && itemSubComponent\" :is=\"itemSubComponent\"\n\t\t\t\t:key=\"field.id\"\n\t\t\t\t:field=\"field\"\n\t\t\t\t:item=\"item\"\n\t\t\t></component>\n\t\t</div>\n\t",
+      template: "\n\t\t<div class=\"b24-form-control-container b24-form-control-icon-after\">\n\t\t\t<input readonly=\"\" type=\"text\" class=\"b24-form-control\"\n\t\t\t\t:value=\"itemLabel\"\n\t\t\t\t:class=\"classes\"\n\t\t\t\t@click.capture=\"toggleSelector\"\n\t\t\t>\n\t\t\t<div class=\"b24-form-control-label\">\n\t\t\t\t{{ field.label }}\n\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t</div>\n\t\t\t<div class=\"b24-form-icon-after b24-form-icon-remove\"\n\t\t\t\tv-if=\"item.selected\"\n\t\t\t\t@click.capture=\"unselect\"\n\t\t\t\t:title=\"field.messages.get('fieldListUnselect')\"\n\t\t\t></div>\n\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\n\t\t\t<field-item-dropdown \n\t\t\t\t:marginTop=\"0\" \n\t\t\t\t:visible=\"dropDownOpened\"\n\t\t\t\t:title=\"field.label\"\n\t\t\t\t@close=\"closeDropDown()\"\n\t\t\t\t@visible:on=\"$emit('visible:on')\"\n\t\t\t\t@visible:off=\"$emit('visible:off')\"\n\t\t\t>\n\t\t\t\t<item-selector\n\t\t\t\t\t:field=\"field\"\n\t\t\t\t\t@select=\"select\"\n\t\t\t\t></item-selector>\n\t\t\t</field-item-dropdown>\n\t\t\t<field-item-image-slider \n\t\t\t\tv-if=\"item.selected && field.bigPic\" \n\t\t\t\t:field=\"field\" \n\t\t\t\t:item=\"item\"\n\t\t\t></field-item-image-slider>\n\t\t\t<component v-if=\"item.selected && itemSubComponent\" :is=\"itemSubComponent\"\n\t\t\t\t:key=\"field.id\"\n\t\t\t\t:field=\"field\"\n\t\t\t\t:item=\"item\"\n\t\t\t></component>\n\t\t</div>\n\t",
       computed: {
         itemLabel: function itemLabel() {
           if (!this.item || !this.item.selected) {
@@ -7683,7 +7911,7 @@
       components: {
         'field-list-item': FieldListItem
       },
-      template: "\n\t\t<div>\n\t\t\t<field-list-item\n\t\t\t\tv-for=\"(item, itemIndex) in getItems()\"\n\t\t\t\t:key=\"itemIndex\"\n\t\t\t\t:field=\"field\"\n\t\t\t\t:item=\"item\"\n\t\t\t\t:itemSubComponent=\"itemSubComponent\"\n\t\t\t></field-list-item>\n\t\t\t\t\t\t\n\t\t\t<a class=\"b24-form-control-add-btn\"\n\t\t\t\tv-if=\"isAddVisible()\"\n\t\t\t\t@click=\"toggleSelector\"\n\t\t\t>\n\t\t\t\t{{ field.messages.get('fieldAdd') }}\n\t\t\t</a>\n\t\t\t<field-item-dropdown \n\t\t\t\t:marginTop=\"0\" \n\t\t\t\t:visible=\"dropDownOpened\"\n\t\t\t\t:title=\"field.label\"\n\t\t\t\t@close=\"closeDropDown()\"\n\t\t\t>\n\t\t\t\t<item-selector\n\t\t\t\t\t:field=\"field\"\n\t\t\t\t\t@select=\"select\"\n\t\t\t\t></item-selector>\n\t\t\t</field-item-dropdown>\n\t\t</div>\n\t",
+      template: "\n\t\t<div>\n\t\t\t<field-list-item\n\t\t\t\tv-for=\"(item, itemIndex) in getItems()\"\n\t\t\t\t:key=\"itemIndex\"\n\t\t\t\t:field=\"field\"\n\t\t\t\t:item=\"item\"\n\t\t\t\t:itemSubComponent=\"itemSubComponent\"\n\t\t\t\t@visible:on=\"$emit('input-focus')\"\n\t\t\t\t@visible:off=\"$emit('input-blur')\"\n\t\t\t></field-list-item>\n\t\t\t\t\t\t\n\t\t\t<a class=\"b24-form-control-add-btn\"\n\t\t\t\tv-if=\"isAddVisible()\"\n\t\t\t\t@click=\"toggleSelector\"\n\t\t\t>\n\t\t\t\t{{ field.messages.get('fieldAdd') }}\n\t\t\t</a>\n\t\t\t<field-item-dropdown \n\t\t\t\t:marginTop=\"0\" \n\t\t\t\t:visible=\"dropDownOpened\"\n\t\t\t\t:title=\"field.label\"\n\t\t\t\t@close=\"closeDropDown()\"\n\t\t\t\t@visible:on=\"$emit('input-focus')\"\n\t\t\t\t@visible:off=\"$emit('input-blur')\"\n\t\t\t>\n\t\t\t\t<item-selector\n\t\t\t\t\t:field=\"field\"\n\t\t\t\t\t@select=\"select\"\n\t\t\t\t></item-selector>\n\t\t\t</field-item-dropdown>\n\t\t</div>\n\t",
       computed: {
         itemSubComponent: function itemSubComponent() {
           return null;
@@ -7761,14 +7989,20 @@
         babelHelpers.classCallCheck(this, Item$$1);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Item$$1).call(this, options));
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "pics", []);
-        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "price", 0);
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "discount", 0);
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "changeablePrice", false);
 
         if (Array.isArray(options.pics)) {
           _this.pics = options.pics;
         }
 
-        _this.price = Conv.number(options.price);
+        var price = Conv.number(options.price);
+        _this.changeablePrice = !!options.changeablePrice;
+
+        if (_this.changeablePrice) {
+          price = null;
+        }
+
         _this.discount = Conv.number(options.discount);
         var quantity = Type.object(options.quantity) ? options.quantity : {};
         _this.quantity = {
@@ -7790,8 +8024,14 @@
 
         _this.value = {
           id: value.id || '',
-          quantity: value.quantity || _this.quantity.min || _this.quantity.step
+          quantity: value.quantity || _this.quantity.min || _this.quantity.step,
+          price: price
         };
+
+        if (_this.changeablePrice) {
+          _this.value.changeablePrice = true;
+        }
+
         return _this;
       }
 
@@ -7834,6 +8074,14 @@
         value: function getDiscounts() {
           return this.discount * this.value.quantity;
         }
+      }, {
+        key: "price",
+        get: function get() {
+          return this.value.price;
+        },
+        set: function set(val) {
+          this.value.price = val;
+        }
       }]);
       return Item$$1;
     }(Item);
@@ -7853,7 +8101,72 @@
         'field-list-sub-item': FieldProductSubItem
       }
     };
-    var FieldProduct = {
+    var FieldProductPriceOnly = {
+      mixins: [MixinField],
+      template: "\n\t\t<div class=\"b24-form-control-container\">\n\t\t\t<span class=\"b24-form-control-label\">\n\t\t\t\t{{ field.label }} \n\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t</span>\n\t\t\t\n\t\t\t<label class=\"b24-form-control\"\n\t\t\t\tv-for=\"(item, itemIndex) in field.items\"\n\t\t\t\t:key=\"itemIndex\"\n\t\t\t\t:class=\"{'b24-form-control-checked': item.selected, 'b24-form-control-product-custom-price': item.changeablePrice}\"\n\t\t\t\t@click=\"onItemClick\"\n\t\t\t>\n\t\t\t\t<input \n\t\t\t\t\t:type=\"field.multiple ? 'checkbox' : 'radio'\"\n\t\t\t\t\t:value=\"item.value\"\n\t\t\t\t\tv-model=\"selected\"\n\t\t\t\t\t@blur=\"$emit('input-blur')\"\n\t\t\t\t\t@focus=\"$emit('input-focus')\"\n\t\t\t\t\tv-show=\"!field.hasChangeablePrice()\"\n\t\t\t\t>\n\t\t\t\t<span class=\"b24-form-control-desc\"\n\t\t\t\t\tv-show=\"!item.changeablePrice\"\n\t\t\t\t\tv-html=\"field.formatMoney(item.price)\"\n\t\t\t\t></span> \n\n\t\t\t\t<span class=\"b24-form-control-desc\"\n\t\t\t\t\tv-if=\"item.changeablePrice && getCurrencyLeft()\"\n\t\t\t\t\t:style=\"getCurrencyStyles(item)\" \n\t\t\t\t\tv-html=\"getCurrencyLeft()\"\n\t\t\t\t></span>\n\t\t\t\t<input type=\"number\" step=\"1\" class=\"b24-form-control-input-text\"\n\t\t\t\t\tv-if=\"item.changeablePrice\"\n\t\t\t\t\t:placeholder=\"isFocused(item) ? '' : field.messages.get('fieldProductAnotherSum')\"\n\t\t\t\t\tv-model=\"item.price\"\n\t\t\t\t\t@input=\"onInput\"\n\t\t\t\t\t@focus=\"onFocus(item)\"\n\t\t\t\t\t@blur=\"onBlur\"\n\t\t\t\t\t@keydown=\"onKeyDown\"\n\t\t\t\t>\n\t\t\t\t<span class=\"b24-form-control-desc\"\n\t\t\t\t\tv-if=\"item.changeablePrice && getCurrencyRight()\"\n\t\t\t\t\t:style=\"getCurrencyStyles(item)\"\n\t\t\t\t\tv-html=\"getCurrencyRight()\"\n\t\t\t\t></span>\n\t\t\t\t\n\t\t\t\t<field-item-alert\n\t\t\t\t\tv-if=\"item.changeablePrice\"\n\t\t\t\t\t:field=\"field\"\n\t\t\t\t\t:item=\"item\"\n\t\t\t\t></field-item-alert>\n\t\t\t</label>\n\t\t</div>\n\t",
+      data: function data() {
+        return {
+          focusedItem: null
+        };
+      },
+      computed: {
+        itemSubComponent: function itemSubComponent() {
+          return null;
+        }
+      },
+      methods: {
+        onItemClick: function onItemClick(e) {
+          var node = e.target.querySelector('.b24-form-control-input-text');
+
+          if (node) {
+            node.focus();
+          }
+        },
+        getCurrencyLeft: function getCurrencyLeft() {
+          return this.field.getCurrencyFormatArray()[0] || '';
+        },
+        getCurrencyRight: function getCurrencyRight() {
+          return this.field.getCurrencyFormatArray()[1] || '';
+        },
+        getCurrencyStyles: function getCurrencyStyles(item) {
+          return {
+            visibility: item.price || this.isFocused(item) ? null : 'hidden'
+          };
+        },
+        isFocused: function isFocused(item) {
+          return this.focusedItem === item;
+        },
+        onFocus: function onFocus(item) {
+          this.selected = item.value;
+          this.focusedItem = item;
+        },
+        onBlur: function onBlur() {
+          this.focusedItem = null;
+        },
+        onInput: function onInput() {
+          var value = this.field.normalize(this.value);
+          value = this.field.format(value);
+
+          if (this.value !== value) {
+            this.value = value;
+          }
+        },
+        onKeyDown: function onKeyDown(e) {
+          var val = e.key;
+
+          if (!/[^\d]/.test(val || '')) {
+            return;
+          }
+
+          if (val === 'Esc' || val === 'Delete' || val === 'Backspace') {
+            return;
+          }
+
+          e.preventDefault();
+        }
+      }
+    };
+    var FieldProductStandard = {
       mixins: [FieldList],
       components: {
         'field-list-item': FieldProductItem
@@ -7863,6 +8176,19 @@
           return 'field-list-sub-item';
         }
       }
+    };
+    var FieldProduct = {
+      mixins: [MixinField],
+      components: {
+        FieldProductStandard: FieldProductStandard,
+        FieldProductPriceOnly: FieldProductPriceOnly
+      },
+      methods: {
+        getProductComponent: function getProductComponent() {
+          return this.field.hasChangeablePrice() ? 'FieldProductPriceOnly' : 'FieldProductStandard';
+        }
+      },
+      template: "<component :is=\"getProductComponent()\" :field=\"field\"></component>"
     };
 
     var Controller$d =
@@ -7892,18 +8218,35 @@
         babelHelpers.classCallCheck(this, Controller);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller).call(this, options));
         _this.currency = options.currency;
+
+        _this.validators.push(function (value) {
+          return !value.changeablePrice || value.price > 0;
+        });
+
         return _this;
       }
 
       babelHelpers.createClass(Controller, [{
         key: "getOriginalType",
         value: function getOriginalType() {
-          return 'list';
+          return this.hasChangeablePrice() ? 'product' : 'list';
+        }
+      }, {
+        key: "hasChangeablePrice",
+        value: function hasChangeablePrice() {
+          return this.items.some(function (item) {
+            return item.changeablePrice;
+          });
         }
       }, {
         key: "formatMoney",
         value: function formatMoney(val) {
           return Conv.formatMoney(val, this.currency.format);
+        }
+      }, {
+        key: "getCurrencyFormatArray",
+        value: function getCurrencyFormatArray() {
+          return this.currency.format.split('#');
         }
       }]);
       return Controller;
@@ -8575,6 +8918,16 @@
           return 'string';
         }
       }, {
+        key: "getInputName",
+        value: function getInputName() {
+          return null;
+        }
+      }, {
+        key: "getInputAutocomplete",
+        value: function getInputAutocomplete() {
+          return null;
+        }
+      }, {
         key: "isComponentDuplicable",
         get: function get() {
           return true;
@@ -8614,16 +8967,29 @@
 
     var FieldAgreement = {
       mixins: [MixinField],
-      template: "\t\n\t\t<label class=\"b24-form-control-container\">\n\t\t\t<input type=\"checkbox\" \n\t\t\t\tv-model=\"field.item().selected\"\n\t\t\t\t@blur=\"$emit('input-blur', this)\"\n\t\t\t\t@focus=\"$emit('input-focus', this)\"\n\t\t\t\t@click.capture=\"requestConsent\"\n\t\t\t\tonclick=\"this.blur()\"\n\t\t\t>\n\t\t\t<span class=\"b24-form-control-desc\">\n\t\t\t\t<a :href=\"href\" :target=\"target\"\n\t\t\t\t\t@click=\"requestConsent\" \n\t\t\t\t>{{ field.label }}</a>\n\t\t\t</span>\n\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\t\n\t\t</label>\n\t",
+      template: "\t\n\t\t<label class=\"b24-form-control-container\">\n\t\t\t<input type=\"checkbox\" \n\t\t\t\tv-model=\"field.item().selected\"\n\t\t\t\t@blur=\"$emit('input-blur', this)\"\n\t\t\t\t@focus=\"$emit('input-focus', this)\"\n\t\t\t\t@click.capture=\"requestConsent\"\n\t\t\t\tonclick=\"this.blur()\"\n\t\t\t>\n\t\t\t<span v-if=\"field.isLink()\" class=\"b24-form-control-desc\"\n\t\t\t\t@click.capture=\"onLinkClick\"\n\t\t\t\tv-html=\"link\"\n\t\t\t></span>\n\t\t\t<span v-else class=\"b24-form-control-desc\">\n\t\t\t\t<span class=\"b24-form-field-agreement-link\">{{ field.label }}</span>\n\t\t\t</span>\n\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\t\n\t\t</label>\n\t",
       computed: {
-        target: function target() {
-          return this.field.isLink() ? '_blank' : null;
-        },
-        href: function href() {
-          return this.field.isLink() ? this.field.options.content : null;
+        link: function link() {
+          var url = this.field.options.content.url.trim();
+
+          if (!/^http:|^https:/.test(url)) {
+            return '';
+          }
+
+          var node = document.createElement('div');
+          node.textContent = url;
+          url = node.innerHTML;
+          node.textContent = this.field.label;
+          var label = node.innerHTML;
+          return label.replace('%', "<a href=\"".concat(url, "\" target=\"_blank\" class=\"b24-form-field-agreement-link\">")).replace('%', '</a>');
         }
       },
       methods: {
+        onLinkClick: function onLinkClick(e) {
+          if (e.target.tagName.toUpperCase() === 'A') {
+            return this.requestConsent(e);
+          }
+        },
         requestConsent: function requestConsent(e) {
           this.field.consentRequested = true;
 
@@ -8673,7 +9039,7 @@
       babelHelpers.createClass(Controller$$1, [{
         key: "isLink",
         value: function isLink() {
-          return typeof this.options.content === 'string';
+          return !!this.options.content.url;
         }
       }, {
         key: "applyConsent",
@@ -8716,7 +9082,17 @@
         return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller).call(this, options));
       }
 
-      babelHelpers.createClass(Controller, null, [{
+      babelHelpers.createClass(Controller, [{
+        key: "getInputName",
+        value: function getInputName() {
+          return 'name';
+        }
+      }, {
+        key: "getInputAutocomplete",
+        value: function getInputAutocomplete() {
+          return 'given-name';
+        }
+      }], [{
         key: "type",
         value: function type() {
           return 'name';
@@ -8735,7 +9111,17 @@
         return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller).call(this, options));
       }
 
-      babelHelpers.createClass(Controller, null, [{
+      babelHelpers.createClass(Controller, [{
+        key: "getInputName",
+        value: function getInputName() {
+          return 'secondname';
+        }
+      }, {
+        key: "getInputAutocomplete",
+        value: function getInputAutocomplete() {
+          return 'additional-name';
+        }
+      }], [{
         key: "type",
         value: function type() {
           return 'second-name';
@@ -8754,7 +9140,17 @@
         return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller).call(this, options));
       }
 
-      babelHelpers.createClass(Controller, null, [{
+      babelHelpers.createClass(Controller, [{
+        key: "getInputName",
+        value: function getInputName() {
+          return 'lastname';
+        }
+      }, {
+        key: "getInputAutocomplete",
+        value: function getInputAutocomplete() {
+          return 'family-name';
+        }
+      }], [{
         key: "type",
         value: function type() {
           return 'last-name';
@@ -8831,7 +9227,118 @@
       return Controller$$1;
     }(Controller);
 
-    var controllers = [Controller$1, Controller$3, Controller$2, Controller$4, Controller$5, Controller$6, Controller$7, Controller$8, Controller$a, Controller$9, Controller$b, Controller$c, Controller$d, Controller$e, Controller$f, Controller$g, Controller$h, Controller$i, Controller$j, Controller$k, Controller$l];
+    var loadAppPromise = null;
+    var isValidatorAdded = false;
+    var FieldResourceBooking = {
+      props: ['field'],
+      template: "\n\t\t<div></div>\n\t",
+      mounted: function mounted() {
+        var _this = this;
+
+        var loadField = function loadField() {
+          if (!window.BX || !window.BX.Calendar || !window.BX.Calendar.Resourcebooking) {
+            return;
+          }
+
+          _this.liveFieldController = BX.Calendar.Resourcebooking.getLiveField({
+            wrap: _this.$el,
+            field: _this.field.booking,
+            actionAgent: function actionAgent(action, options) {
+              var formData = new FormData();
+              var data = options.data || {};
+
+              for (var key in data) {
+                if (!data.hasOwnProperty(key)) {
+                  continue;
+                }
+
+                var value = data[key];
+
+                if (babelHelpers.typeof(value) === 'object') {
+                  value = JSON.stringify(value);
+                }
+
+                formData.set(key, value);
+              }
+
+              return window.b24form.App.post(_this.$root.form.identification.address + '/bitrix/services/main/ajax.php?action=' + action, formData).then(function (response) {
+                return response.json();
+              });
+            }
+          });
+
+          if (_this.liveFieldController && typeof _this.liveFieldController.check === 'function' && !isValidatorAdded) {
+            _this.field.validators.push(function () {
+              return _this.liveFieldController.check();
+            });
+
+            isValidatorAdded = true;
+          }
+
+          _this.liveFieldController.subscribe('change', function (event) {
+            _this.field.items = [];
+            (event.data || []).filter(function (value) {
+              return !!value;
+            }).forEach(function (value) {
+              _this.field.addItem({
+                value: value,
+                selected: true
+              });
+            });
+          });
+        };
+
+        var scriptLink = module.properties && module.properties.resourcebooking ? module.properties.resourcebooking.link : null;
+
+        if (!loadAppPromise) {
+          loadAppPromise = new Promise(function (resolve, reject) {
+            var node = document.createElement('script');
+            node.src = scriptLink + '?' + (Date.now() / 60000 | 0);
+            node.onload = resolve;
+            node.onerror = reject;
+            document.head.appendChild(node);
+          });
+        }
+
+        loadAppPromise.then(loadField)
+        /*.catch((e) => {
+        this.message = 'App load failed:' + e;
+        })*/
+        ;
+      },
+      methods: {}
+    };
+
+    var Controller$m =
+    /*#__PURE__*/
+    function (_BaseField$Controller) {
+      babelHelpers.inherits(Controller$$1, _BaseField$Controller);
+
+      function Controller$$1(options) {
+        var _this;
+
+        babelHelpers.classCallCheck(this, Controller$$1);
+        _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
+        _this.booking = options.booking;
+        _this.multiple = true;
+        return _this;
+      }
+
+      babelHelpers.createClass(Controller$$1, null, [{
+        key: "type",
+        value: function type() {
+          return 'resourcebooking';
+        }
+      }, {
+        key: "component",
+        value: function component() {
+          return FieldResourceBooking;
+        }
+      }]);
+      return Controller$$1;
+    }(Controller);
+
+    var controllers = [Controller$1, Controller$3, Controller$2, Controller$4, Controller$5, Controller$6, Controller$7, Controller$8, Controller$a, Controller$9, Controller$b, Controller$c, Controller$d, Controller$e, Controller$f, Controller$g, Controller$h, Controller$i, Controller$j, Controller$k, Controller$l, Controller$m];
     var component = Controller.component();
     component.components = Object.assign({}, component.components || {}, controllers.reduce(function (accum, controller) {
       accum['field-' + controller.type()] = controller.component();
@@ -8872,6 +9379,21 @@
       return Factory;
     }();
 
+    var EventTypes = {
+      initBefore: 'init:before',
+      init: 'init',
+      show: 'show',
+      showFirst: 'show:first',
+      hide: 'hide',
+      submit: 'submit',
+      submitBefore: 'submit:before',
+      sendSuccess: 'send:success',
+      sendError: 'send:error',
+      destroy: 'destroy',
+      fieldFocus: 'field:focus',
+      fieldBlur: 'field:blur',
+      fieldChangeSelected: 'field:change:selected'
+    };
     var ViewTypes = ['inline', 'popup', 'panel', 'widget'];
     var ViewPositions = ['left', 'center', 'right'];
     var ViewVerticals = ['top', 'bottom'];
@@ -8979,6 +9501,480 @@
       return Page;
     }();
 
+    var _OppositeActionTypes;
+    var ConditionEvents = {
+      change: 'change'
+    };
+    var Operations = {
+      equal: '=',
+      notEqual: '!=',
+      greater: '>',
+      greaterOrEqual: '>=',
+      less: '<',
+      lessOrEqual: '<=',
+      empty: 'empty',
+      any: 'any',
+      contain: 'contain',
+      notContain: '!contain'
+    };
+    var OperationAliases = {
+      notEqual: '<>'
+    };
+    var ActionTypes = {
+      show: 'show',
+      hide: 'hide',
+      change: 'change'
+    };
+    var OppositeActionTypes = (_OppositeActionTypes = {}, babelHelpers.defineProperty(_OppositeActionTypes, ActionTypes.hide, ActionTypes.show), babelHelpers.defineProperty(_OppositeActionTypes, ActionTypes.show, ActionTypes.hide), _OppositeActionTypes);
+
+    var Manager =
+    /*#__PURE__*/
+    function () {
+      function Manager(form) {
+        babelHelpers.classCallCheck(this, Manager);
+
+        _form.set(this, {
+          writable: true,
+          value: void 0
+        });
+
+        _list.set(this, {
+          writable: true,
+          value: []
+        });
+
+        babelHelpers.classPrivateFieldSet(this, _form, form);
+        babelHelpers.classPrivateFieldGet(this, _form).subscribeAll(this.onFormEvent.bind(this));
+      }
+
+      babelHelpers.createClass(Manager, [{
+        key: "onFormEvent",
+        value: function onFormEvent(data, obj, type) {
+          if (babelHelpers.classPrivateFieldGet(this, _list).length === 0) {
+            return;
+          }
+
+          var event;
+
+          switch (type) {
+            case EventTypes.fieldChangeSelected:
+              event = ConditionEvents.change;
+              break;
+
+            case EventTypes.fieldBlur:
+            default:
+              return;
+          }
+
+          this.trigger(data.field, event);
+        }
+      }, {
+        key: "setDependencies",
+        value: function setDependencies() {
+          var _this = this;
+
+          var deps = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+          babelHelpers.classPrivateFieldSet(this, _list, []);
+          deps.forEach(function (dep) {
+            return _this.addDependence(dep);
+          });
+          babelHelpers.classPrivateFieldGet(this, _form).getFields().forEach(function (field) {
+            return _this.trigger(field, ConditionEvents.change);
+          });
+        }
+      }, {
+        key: "addDependence",
+        value: function addDependence(dep) {
+          if (babelHelpers.typeof(dep) !== 'object' || babelHelpers.typeof(dep.condition) !== 'object' || babelHelpers.typeof(dep.action) !== 'object') {
+            return;
+          }
+
+          if (!dep.condition.target || !dep.condition.event || !ConditionEvents[dep.condition.event]) {
+            return;
+          }
+
+          if (!dep.action.target || !dep.action.type || !ActionTypes[dep.action.type]) {
+            return;
+          }
+
+          dep.condition.operation = ConditionOperations.indexOf(dep.condition.operation) > 0 ? dep.condition.operation : Operations.equal;
+          var item = {
+            condition: babelHelpers.objectSpread({
+              target: '',
+              event: '',
+              value: '',
+              operation: ''
+            }, dep.condition),
+            action: babelHelpers.objectSpread({
+              target: '',
+              type: '',
+              value: ''
+            }, dep.action)
+          };
+          babelHelpers.classPrivateFieldGet(this, _list).push(item);
+        }
+      }, {
+        key: "trigger",
+        value: function trigger(field, event) {
+          var _this2 = this;
+
+          babelHelpers.classPrivateFieldGet(this, _list).forEach(function (dep) {
+            // 1. check event
+            if (dep.condition.event !== event) {
+              return;
+            } // 2. check target
+
+
+            if (dep.condition.target !== field.name) {
+              return;
+            } // 3.check value&operation
+
+
+            var isOpposite = field.values().filter(function (value) {
+              return _this2.compare(value, dep.condition.value, dep.condition.operation);
+            }).length === 0; // 4. run action
+
+            babelHelpers.classPrivateFieldGet(_this2, _form).getFields().forEach(function (field) {
+              if (dep.action.target !== field.name) {
+                return;
+              }
+
+              var actionType = dep.action.type;
+
+              if (isOpposite) {
+                actionType = OppositeActionTypes[dep.action.type];
+
+                if (!actionType) {
+                  return;
+                }
+              }
+
+              _this2.runAction(babelHelpers.objectSpread({}, dep.action, {
+                type: actionType
+              }), field);
+            });
+          });
+        }
+      }, {
+        key: "runAction",
+        value: function runAction(action, field) {
+          switch (action.type) {
+            case ActionTypes.change:
+              //field.visible = true;
+              return;
+
+            case ActionTypes.show:
+              field.visible = true;
+              return;
+
+            case ActionTypes.hide:
+              field.visible = false;
+              return;
+          }
+        }
+      }, {
+        key: "compare",
+        value: function compare(a, b, operation) {
+          switch (operation) {
+            case Operations.greater:
+              return parseFloat(a) > parseFloat(b);
+
+            case Operations.greaterOrEqual:
+              return parseFloat(a) >= parseFloat(b);
+
+            case Operations.less:
+              return parseFloat(a) < parseFloat(b);
+
+            case Operations.lessOrEqual:
+              return parseFloat(a) <= parseFloat(b);
+
+            case Operations.empty:
+              return !a;
+
+            case Operations.any:
+              return !!a;
+
+            case Operations.contain:
+              return a.indexOf(b) >= 0;
+
+            case Operations.notContain:
+              return a.indexOf(b) < 0;
+
+            case Operations.notEqual:
+              return a !== b;
+
+            case Operations.equal:
+            default:
+              return a === b;
+          }
+        }
+      }]);
+      return Manager;
+    }();
+
+    var _form = new WeakMap();
+
+    var _list = new WeakMap();
+
+    var ConditionOperations = [];
+
+    for (var operationName in Operations) {
+      ConditionOperations.push(Operations[operationName]);
+    }
+
+    for (var _operationName in OperationAliases) {
+      ConditionOperations.push(Operations[_operationName]);
+    }
+
+    var Analytics$1 =
+    /*#__PURE__*/
+    function () {
+      function Analytics$$1(form) {
+        babelHelpers.classCallCheck(this, Analytics$$1);
+
+        _form$1.set(this, {
+          writable: true,
+          value: void 0
+        });
+
+        _isStartSent.set(this, {
+          writable: true,
+          value: false
+        });
+
+        _filledFields.set(this, {
+          writable: true,
+          value: []
+        });
+
+        babelHelpers.classPrivateFieldSet(this, _form$1, form);
+        babelHelpers.classPrivateFieldGet(this, _form$1).subscribeAll(this.onFormEvent.bind(this));
+      }
+
+      babelHelpers.createClass(Analytics$$1, [{
+        key: "onFormEvent",
+        value: function onFormEvent(data, obj, type) {
+          switch (type) {
+            case EventTypes.showFirst:
+              this.send('view');
+              break;
+
+            case EventTypes.fieldFocus:
+              if (!babelHelpers.classPrivateFieldGet(this, _isStartSent)) {
+                babelHelpers.classPrivateFieldSet(this, _isStartSent, true);
+                this.send('start');
+              }
+
+              break;
+
+            case EventTypes.fieldBlur:
+              var field = data.field;
+
+              if (babelHelpers.classPrivateFieldGet(this, _filledFields).indexOf(field.name) < 0 && field.hasValidValue()) {
+                babelHelpers.classPrivateFieldGet(this, _filledFields).push(field.name);
+                this.send('field', [{
+                  from: '%name%',
+                  to: field.label
+                }, {
+                  from: '%code%',
+                  to: field.name
+                }]);
+              }
+
+              break;
+
+            case EventTypes.sendSuccess:
+              this.send('end');
+              break;
+          }
+        }
+      }, {
+        key: "send",
+        value: function send(type) {
+          var replace = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+
+          /** @var Object webPacker */
+          if (!webPacker || !module || !type) {
+            return;
+          }
+          /**	@var Object[Type.Analytics] opt */
+
+
+          var opt = module.properties.analytics;
+
+          if (!opt || !opt[type]) {
+            return;
+          }
+
+          var action = opt[type].name;
+          var page = opt[type].code;
+          replace.forEach(function (item) {
+            action = action.replace(item.from, item.to);
+            page = page.replace(item.from, item.to);
+          }); //////////// google
+
+          var gaEventCategory = opt.category.replace('%name%', babelHelpers.classPrivateFieldGet(this, _form$1).title).replace('%form_id%', babelHelpers.classPrivateFieldGet(this, _form$1).identification.id);
+          var gaEventAction = opt.template.name.replace('%name%', action).replace('%form_id%', babelHelpers.classPrivateFieldGet(this, _form$1).identification.id);
+          webPacker.analytics.trackGa('event', gaEventCategory, gaEventAction);
+
+          if (page) {
+            var gaPageName = opt.template.code.replace('%code%', page).replace('%form_id%', babelHelpers.classPrivateFieldGet(this, _form$1).identification.id);
+            webPacker.analytics.trackGa('pageview', gaPageName);
+          } //////////// yandex
+
+
+          var yaEventName = opt.eventTemplate.code.replace('%code%', page).replace('%form_id%', babelHelpers.classPrivateFieldGet(this, _form$1).identification.id);
+          webPacker.analytics.trackYa(yaEventName);
+        }
+      }]);
+      return Analytics$$1;
+    }();
+
+    var _form$1 = new WeakMap();
+
+    var _isStartSent = new WeakMap();
+
+    var _filledFields = new WeakMap();
+
+    var ReCaptcha$1 =
+    /*#__PURE__*/
+    function () {
+      function ReCaptcha$$1() {
+        babelHelpers.classCallCheck(this, ReCaptcha$$1);
+
+        _key.set(this, {
+          writable: true,
+          value: void 0
+        });
+
+        _use.set(this, {
+          writable: true,
+          value: false
+        });
+
+        _widgetId.set(this, {
+          writable: true,
+          value: void 0
+        });
+
+        _response.set(this, {
+          writable: true,
+          value: void 0
+        });
+
+        _target.set(this, {
+          writable: true,
+          value: void 0
+        });
+
+        _callback.set(this, {
+          writable: true,
+          value: void 0
+        });
+      }
+
+      babelHelpers.createClass(ReCaptcha$$1, [{
+        key: "adjust",
+        value: function adjust(options) {
+          if (typeof options.key !== "undefined") {
+            babelHelpers.classPrivateFieldSet(this, _key, options.key);
+          }
+
+          if (typeof options.use !== "undefined") {
+            babelHelpers.classPrivateFieldSet(this, _use, options.use);
+          }
+        }
+      }, {
+        key: "canUse",
+        value: function canUse() {
+          return babelHelpers.classPrivateFieldGet(this, _use) && this.getKey();
+        }
+      }, {
+        key: "isVerified",
+        value: function isVerified() {
+          return !this.canUse() || !!babelHelpers.classPrivateFieldGet(this, _response);
+        }
+      }, {
+        key: "getKey",
+        value: function getKey() {
+          if (babelHelpers.classPrivateFieldGet(this, _key)) {
+            return babelHelpers.classPrivateFieldGet(this, _key);
+          }
+          /** @var Object webPacker */
+
+
+          if (webPacker && module) {
+            return (module.properties.recaptcha || {}).key;
+          }
+
+          return null;
+        }
+      }, {
+        key: "getResponse",
+        value: function getResponse() {
+          return babelHelpers.classPrivateFieldGet(this, _response);
+        }
+      }, {
+        key: "verify",
+        value: function verify(callback) {
+          if (!window.grecaptcha) {
+            return;
+          }
+
+          if (callback) {
+            babelHelpers.classPrivateFieldSet(this, _callback, callback);
+          }
+
+          babelHelpers.classPrivateFieldSet(this, _response, '');
+          window.grecaptcha.execute(babelHelpers.classPrivateFieldGet(this, _widgetId));
+        }
+      }, {
+        key: "render",
+        value: function render(target) {
+          var _this = this;
+
+          if (!window.grecaptcha) {
+            return;
+          }
+
+          babelHelpers.classPrivateFieldSet(this, _target, target);
+          babelHelpers.classPrivateFieldSet(this, _widgetId, window.grecaptcha.render(target, {
+            sitekey: this.getKey(),
+            //this.#key,
+            badge: 'inline',
+            size: 'invisible',
+            callback: function callback(response) {
+              babelHelpers.classPrivateFieldSet(_this, _response, response);
+
+              if (babelHelpers.classPrivateFieldGet(_this, _callback)) {
+                babelHelpers.classPrivateFieldGet(_this, _callback).call(_this);
+                babelHelpers.classPrivateFieldSet(_this, _callback, null);
+              }
+            },
+            'error-callback': function errorCallback() {
+              babelHelpers.classPrivateFieldSet(_this, _response, '');
+            },
+            'expired-callback': function expiredCallback() {
+              babelHelpers.classPrivateFieldSet(_this, _response, '');
+            }
+          }));
+        }
+      }]);
+      return ReCaptcha$$1;
+    }();
+
+    var _key = new WeakMap();
+
+    var _use = new WeakMap();
+
+    var _widgetId = new WeakMap();
+
+    var _response = new WeakMap();
+
+    var _target = new WeakMap();
+
+    var _callback = new WeakMap();
+
     var Basket =
     /*#__PURE__*/
     function () {
@@ -9004,6 +10000,12 @@
       babelHelpers.createClass(Basket, [{
         key: "has",
         value: function has() {
+          if (babelHelpers.classPrivateFieldGet(this, _fields).some(function (field) {
+            return field.hasChangeablePrice();
+          })) {
+            return false;
+          }
+
           return babelHelpers.classPrivateFieldGet(this, _fields).length > 0;
         }
       }, {
@@ -9018,7 +10020,7 @@
       }, {
         key: "formatMoney",
         value: function formatMoney(val) {
-          return Conv.formatMoney(val, babelHelpers.classPrivateFieldGet(this, _currency).format);
+          return Conv.formatMoney(val.toFixed(2), babelHelpers.classPrivateFieldGet(this, _currency).format);
         }
       }, {
         key: "sum",
@@ -9374,10 +10376,50 @@
       methods: {}
     };
 
+    var loaded = false;
+    var ReCaptcha$2 = {
+      props: ['form'],
+      mounted: function mounted() {
+        var _this = this;
+
+        if (!this.canUse()) {
+          return;
+        }
+
+        if (loaded) {
+          this.renderCaptcha();
+          return;
+        }
+
+        loaded = true;
+        var node = document.createElement('SCRIPT');
+        node.setAttribute("type", "text/javascript");
+        node.setAttribute("async", "");
+        node.setAttribute("src", 'https://www.google.com/recaptcha/api.js');
+
+        node.onload = function () {
+          return window.grecaptcha.ready(function () {
+            return _this.renderCaptcha();
+          });
+        };
+
+        (document.getElementsByTagName('head')[0] || document.documentElement).appendChild(node);
+      },
+      template: "<div v-if=\"canUse()\" class=\"b24-form-recaptcha\"><div></div></div>",
+      methods: {
+        canUse: function canUse() {
+          return this.form.recaptcha.canUse();
+        },
+        renderCaptcha: function renderCaptcha() {
+          this.form.recaptcha.render(this.$el.children[0]);
+        }
+      }
+    };
+
     var Form = {
       props: {
         form: {
-          type: Controller$m
+          type: Controller$n
         }
       },
       components: {
@@ -9385,9 +10427,10 @@
         'agreement-block': AgreementBlock,
         'state-block': StateBlock,
         'pager-block': PagerBlock,
-        'basket-block': BasketBlock
+        'basket-block': BasketBlock,
+        'recaptcha-block': ReCaptcha$2
       },
-      template: "\n\t\t<div class=\"b24-form-wrapper\"\n\t\t\t:class=\"classes()\"\n\t\t>\n\t\t\t<div v-if=\"form.title || form.desc\" class=\"b24-form-header b24-form-padding-side\">\n\t\t\t\t<div v-if=\"form.title\" class=\"b24-form-header-title\">{{ form.title }}</div>\n\t\t\t\t<div class=\"b24-form-header-description\"\n\t\t\t\t\tv-if=\"form.desc\"\n\t\t\t\t\tv-html=\"form.desc\"\n\t\t\t\t></div>\n\t\t\t</div>\n\t\t\t<div v-else class=\"b24-form-header-padding\"></div>\n\n\t\t\t<div class=\"b24-form-content b24-form-padding-side\">\n\t\t\t\t<form \n\t\t\t\t\tmethod=\"post\"\n\t\t\t\t\tnovalidate\n\t\t\t\t\t@submit=\"submit\"\n\t\t\t\t\tv-if=\"form.pager\"\n\t\t\t\t>\n\t\t\t\t\t<component v-bind:is=\"'pager-block'\"\n\t\t\t\t\t\tv-bind:key=\"form.id\"\n\t\t\t\t\t\tv-bind:pager=\"form.pager\"\n\t\t\t\t\t\tv-if=\"form.pager.iterable()\"\n\t\t\t\t\t></component>\n\t\t\t\t\t\t\t\t\n\t\t\t\t\t<div>\t\t\n\t\t\t\t\t\t<component v-bind:is=\"'field'\"\n\t\t\t\t\t\t\tv-for=\"field in form.pager.current().fields\"\n\t\t\t\t\t\t\tv-bind:key=\"field.id\"\n\t\t\t\t\t\t\tv-bind:field=\"field\"\n\t\t\t\t\t\t></component>\n\t\t\t\t\t</div>\t\n\t\t\t\t\t\n\t\t\t\t\t<component v-bind:is=\"'agreement-block'\"\n\t\t\t\t\t\tv-bind:key=\"form.id\"\n\t\t\t\t\t\tv-bind:fields=\"form.agreements\"\n\t\t\t\t\t\tv-bind:view=\"form.view\"\n\t\t\t\t\t\tv-bind:messages=\"form.messages\"\n\t\t\t\t\t\tv-if=\"form.pager.ended()\"\n\t\t\t\t\t></component>\n\t\t\t\t\t\n\t\t\t\t\t<component v-bind:is=\"'basket-block'\"\n\t\t\t\t\t\tv-bind:key=\"form.id\"\n\t\t\t\t\t\tv-bind:basket=\"form.basket\"\n\t\t\t\t\t\tv-bind:messages=\"form.messages\"\n\t\t\t\t\t></component>\n\t\t\t\t\t\n\t\t\t\t\t<div class=\"b24-form-btn-container\">\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.beginning()\" \n\t\t\t\t\t\t\t@click.prevent=\"prevPage()\"\t\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn b24-form-btn-white b24-form-btn-border\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navBack') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.ended()\"\n\t\t\t\t\t\t\t@click.prevent=\"nextPage()\"\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navNext') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"form.pager.ended()\"\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"submit\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.buttonCaption }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t\n\t\t\t\t\t<span style=\"color: red;\" v-show=\"false && hasErrors\">\n\t\t\t\t\t\tDebug: fill fields\n\t\t\t\t\t</span>\n\t\t\t\t</form>\n\t\t\t</div>\n\t\t\t\n\t\t\t<state-block v-bind:key=\"form.id\" v-bind:form=\"form\"></state-block>\n\t\t\t<div class=\"b24-form-sign\" v-if=\"form.useSign\">\n\t\t\t\t<select v-show=\"false\" v-model=\"form.messages.language\">\n\t\t\t\t\t<option v-for=\"language in form.languages\" \n\t\t\t\t\t\tv-bind:value=\"language\"\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ language }}\n\t\t\t\t\t</option>\t\t\t\t\n\t\t\t\t</select>\n\t\t\t\n\t\t\t\t<span class=\"b24-form-sign-text\">{{ form.messages.get('sign') }}</span>\n\t\t\t\t<span class=\"b24-form-sign-bx\">{{ getSignBy() }}</span>\n\t\t\t\t<span class=\"b24-form-sign-24\">24</span>\t\t\t\n\t\t\t</div>\t\t\t\n\t\t</div>\n\t",
+      template: "\n\t\t<div class=\"b24-form-wrapper\"\n\t\t\t:class=\"classes()\"\n\t\t>\n\t\t\t<div v-if=\"form.title || form.desc\" class=\"b24-form-header b24-form-padding-side\">\n\t\t\t\t<div v-if=\"form.title\" class=\"b24-form-header-title\">{{ form.title }}</div>\n\t\t\t\t<div class=\"b24-form-header-description\"\n\t\t\t\t\tv-if=\"form.desc\"\n\t\t\t\t\tv-html=\"form.desc\"\n\t\t\t\t></div>\n\t\t\t</div>\n\t\t\t<div v-else class=\"b24-form-header-padding\"></div>\n\n\t\t\t<div class=\"b24-form-content b24-form-padding-side\">\n\t\t\t\t<form \n\t\t\t\t\tmethod=\"post\"\n\t\t\t\t\tnovalidate\n\t\t\t\t\t@submit=\"submit\"\n\t\t\t\t\tv-if=\"form.pager\"\n\t\t\t\t>\n\t\t\t\t\t<component v-bind:is=\"'pager-block'\"\n\t\t\t\t\t\tv-bind:key=\"form.id\"\n\t\t\t\t\t\tv-bind:pager=\"form.pager\"\n\t\t\t\t\t\tv-if=\"form.pager.iterable()\"\n\t\t\t\t\t></component>\n\t\t\t\t\t\t\t\t\n\t\t\t\t\t<div>\t\t\n\t\t\t\t\t\t<component v-bind:is=\"'field'\"\n\t\t\t\t\t\t\tv-for=\"field in form.pager.current().fields\"\n\t\t\t\t\t\t\tv-bind:key=\"field.id\"\n\t\t\t\t\t\t\tv-bind:field=\"field\"\n\t\t\t\t\t\t></component>\n\t\t\t\t\t</div>\t\n\t\t\t\t\t\n\t\t\t\t\t<component v-bind:is=\"'agreement-block'\"\n\t\t\t\t\t\tv-bind:key=\"form.id\"\n\t\t\t\t\t\tv-bind:fields=\"form.agreements\"\n\t\t\t\t\t\tv-bind:view=\"form.view\"\n\t\t\t\t\t\tv-bind:messages=\"form.messages\"\n\t\t\t\t\t\tv-if=\"form.pager.ended()\"\n\t\t\t\t\t></component>\n\t\t\t\t\t\n\t\t\t\t\t<component v-bind:is=\"'basket-block'\"\n\t\t\t\t\t\tv-bind:key=\"form.id\"\n\t\t\t\t\t\tv-bind:basket=\"form.basket\"\n\t\t\t\t\t\tv-bind:messages=\"form.messages\"\n\t\t\t\t\t></component>\n\t\t\t\t\t\n\t\t\t\t\t<div class=\"b24-form-btn-container\">\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.beginning()\" \n\t\t\t\t\t\t\t@click.prevent=\"prevPage()\"\t\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn b24-form-btn-white b24-form-btn-border\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navBack') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.ended()\"\n\t\t\t\t\t\t\t@click.prevent=\"nextPage()\"\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navNext') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"form.pager.ended()\"\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"submit\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.buttonCaption }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t\n\t\t\t\t\t<span style=\"color: red;\" v-show=\"false && hasErrors\">\n\t\t\t\t\t\tDebug: fill fields\n\t\t\t\t\t</span>\n\t\t\t\t</form>\n\t\t\t</div>\n\t\t\t\n\t\t\t<state-block v-bind:key=\"form.id\" v-bind:form=\"form\"></state-block>\n\t\t\t\n\t\t\t<recaptcha-block :form=\"form\"></recaptcha-block>\n\t\t\t\n\t\t\t<div class=\"b24-form-sign\" v-if=\"form.useSign\">\n\t\t\t\t<select v-show=\"false\" v-model=\"form.messages.language\">\n\t\t\t\t\t<option v-for=\"language in form.languages\" \n\t\t\t\t\t\tv-bind:value=\"language\"\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ language }}\n\t\t\t\t\t</option>\t\t\t\t\n\t\t\t\t</select>\n\t\t\t\n\t\t\t\t<span class=\"b24-form-sign-text\">{{ form.messages.get('sign') }}</span>\n\t\t\t\t<span class=\"b24-form-sign-bx\">{{ getSignBy() }}</span>\n\t\t\t\t<span class=\"b24-form-sign-24\">24</span>\t\t\t\n\t\t\t</div>\t\t\t\n\t\t</div>\n\t",
       computed: {
         hasErrors: function hasErrors() {
           return this.form.validated && !this.form.valid();
@@ -9432,6 +10475,10 @@
             list.push('b24-form-shadow');
           }
 
+          if (this.form.design.compact) {
+            list.push('b24-form-compact');
+          }
+
           var border = this.form.design.border;
 
           for (var pos in border) {
@@ -9457,6 +10504,11 @@
         return {
           designStyleNode: null
         };
+      },
+      beforeDestroy: function beforeDestroy() {
+        if (this.designStyleNode) {
+          this.designStyleNode.parentElement.removeChild(this.designStyleNode);
+        }
       },
       methods: {
         classes: function classes() {
@@ -9602,54 +10654,60 @@
       view: 'inline'
     };
 
-    var Controller$m =
+    var Controller$n =
     /*#__PURE__*/
-    function () {
+    function (_Event) {
+      babelHelpers.inherits(Controller$$1, _Event);
+
       function Controller$$1() {
-        var _this = this;
+        var _this;
 
         var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : DefaultOptions$4;
         babelHelpers.classCallCheck(this, Controller$$1);
+        _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
 
-        _id.set(this, {
+        _id.set(babelHelpers.assertThisInitialized(_this), {
           writable: true,
           value: void 0
         });
 
-        babelHelpers.defineProperty(this, "view", {
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "identification", {});
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "view", {
           type: 'inline'
         });
-        babelHelpers.defineProperty(this, "provider", {});
-        babelHelpers.defineProperty(this, "languages", []);
-        babelHelpers.defineProperty(this, "language", 'en');
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "provider", {});
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "languages", []);
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "language", 'en');
 
-        _handlers.set(this, {
-          writable: true,
-          value: {
-            hide: [],
-            show: []
-          }
-        });
-
-        _fields$1.set(this, {
+        _fields$1.set(babelHelpers.assertThisInitialized(_this), {
           writable: true,
           value: []
         });
 
-        babelHelpers.defineProperty(this, "agreements", []);
-        babelHelpers.defineProperty(this, "useSign", false);
-        babelHelpers.defineProperty(this, "date", {
+        _dependence.set(babelHelpers.assertThisInitialized(_this), {
+          writable: true,
+          value: void 0
+        });
+
+        _properties.set(babelHelpers.assertThisInitialized(_this), {
+          writable: true,
+          value: {}
+        });
+
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "agreements", []);
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "useSign", false);
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "date", {
           dateFormat: 'DD.MM.YYYY',
           dateTimeFormat: 'DD.MM.YYYY HH:mm:ss',
           sundayFirstly: false
         });
-        babelHelpers.defineProperty(this, "currency", {
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "currency", {
           code: 'USD',
           title: '$',
           format: '$#'
         });
 
-        _personalisation.set(this, {
+        _personalisation.set(babelHelpers.assertThisInitialized(_this), {
           writable: true,
           value: {
             title: '',
@@ -9657,51 +10715,59 @@
           }
         });
 
-        babelHelpers.defineProperty(this, "validated", false);
-        babelHelpers.defineProperty(this, "visible", true);
-        babelHelpers.defineProperty(this, "loading", false);
-        babelHelpers.defineProperty(this, "disabled", false);
-        babelHelpers.defineProperty(this, "sent", false);
-        babelHelpers.defineProperty(this, "error", false);
-        babelHelpers.defineProperty(this, "stateText", '');
-        babelHelpers.defineProperty(this, "stateButton", {
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "validated", false);
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "visible", true);
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "loading", false);
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "disabled", false);
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "sent", false);
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "error", false);
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "stateText", '');
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "stateButton", {
           text: '',
           handler: null
         });
 
-        _vue.set(this, {
+        _vue.set(babelHelpers.assertThisInitialized(_this), {
           writable: true,
           value: void 0
         });
 
-        this.messages = new Storage();
-        this.design = new Model();
-        options = this.adjust(options);
-        babelHelpers.classPrivateFieldSet(this, _id, options.id || Math.random().toString().split('.')[1] + Math.random().toString().split('.')[1]);
-        this.provider = options.provider || {};
+        _this.setGlobalEventNamespace('b24:form');
 
-        if (this.provider.form) {
-          this.loading = true;
+        _this.messages = new Storage();
+        _this.design = new Model();
+        babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _dependence, new Manager(babelHelpers.assertThisInitialized(_this)));
+        _this.analytics = new Analytics$1(babelHelpers.assertThisInitialized(_this));
+        _this.recaptcha = new ReCaptcha$1();
 
-          if (this.provider.form) {
-            if (typeof this.provider.form === 'string') ; else if (typeof this.provider.form === 'function') {
-              this.provider.form().then(function (options) {
+        _this.emit(EventTypes.initBefore, options);
+
+        options = _this.adjust(options);
+        babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _id, options.id || Math.random().toString().split('.')[1] + Math.random().toString().split('.')[1]);
+        _this.provider = options.provider || {};
+
+        if (_this.provider.form) {
+          _this.loading = true;
+
+          if (_this.provider.form) {
+            if (typeof _this.provider.form === 'string') ; else if (typeof _this.provider.form === 'function') {
+              _this.provider.form().then(function (options) {
                 _this.adjust(options);
 
                 _this.load();
               }).catch(function (e) {
                 if (window.console && console.log) {
-                  console.log('b24form get `user` error:', e.message);
+                  console.log('b24form get `form` error:', e.message);
                 }
               });
             }
           }
         } else {
-          this.load();
+          _this.load();
 
-          if (this.provider.user) {
-            if (typeof this.provider.user === 'string') ; else if (this.provider.user instanceof Promise) {
-              this.provider.user.then(function (user) {
+          if (_this.provider.user) {
+            if (typeof _this.provider.user === 'string') ; else if (_this.provider.user instanceof Promise) {
+              _this.provider.user.then(function (user) {
                 _this.setValues(user);
 
                 return user;
@@ -9710,13 +10776,17 @@
                   console.log('b24form get `user` error:', e.message);
                 }
               });
-            } else if (babelHelpers.typeof(this.provider.user) === 'object') {
-              this.setValues(this.provider.user);
+            } else if (babelHelpers.typeof(_this.provider.user) === 'object') {
+              _this.setValues(_this.provider.user);
             }
           }
         }
 
-        this.render();
+        _this.emit(EventTypes.init);
+
+        _this.render();
+
+        return _this;
       }
 
       babelHelpers.createClass(Controller$$1, [{
@@ -9725,31 +10795,28 @@
           if (babelHelpers.classPrivateFieldGet(this, _fields$1).length === 0) {
             this.disabled = true;
           }
+
+          if (this.visible) {
+            this.show();
+          }
         }
       }, {
         key: "show",
         value: function show() {
-          var _this2 = this;
-
           this.visible = true;
-          babelHelpers.classPrivateFieldGet(this, _handlers).show.forEach(function (handler) {
-            return handler(_this2);
-          });
+          this.emitOnce(EventTypes.showFirst);
+          this.emit(EventTypes.show);
         }
       }, {
         key: "hide",
         value: function hide() {
-          var _this3 = this;
-
           this.visible = false;
-          babelHelpers.classPrivateFieldGet(this, _handlers).hide.forEach(function (handler) {
-            return handler(_this3);
-          });
+          this.emit(EventTypes.hide);
         }
       }, {
         key: "submit",
         value: function submit() {
-          var _this4 = this;
+          var _this2 = this;
 
           this.error = false;
           this.sent = false;
@@ -9757,6 +10824,15 @@
           if (!this.valid()) {
             return false;
           }
+
+          if (!this.recaptcha.isVerified()) {
+            this.recaptcha.verify(function () {
+              return _this2.submit();
+            });
+            return false;
+          }
+
+          this.emit(EventTypes.submit);
 
           if (!this.provider.submit) {
             return true;
@@ -9769,7 +10845,9 @@
           this.loading = true;
           var formData = new FormData();
           formData.set('values', JSON.stringify(this.values()));
+          formData.set('properties', JSON.stringify(babelHelpers.classPrivateFieldGet(this, _properties)));
           formData.set('consents', JSON.stringify(consents));
+          formData.set('recaptcha', this.recaptcha.getResponse());
           var promise;
 
           if (typeof this.provider.submit === 'string') {
@@ -9787,27 +10865,36 @@
           }
 
           promise.then(function (data) {
-            _this4.sent = true;
-            _this4.loading = false;
-            _this4.stateText = data.message || _this4.messages.get('stateSuccess');
+            _this2.sent = true;
+            _this2.loading = false;
+            _this2.stateText = data.message || _this2.messages.get('stateSuccess');
+
+            _this2.emit(EventTypes.sendSuccess, data);
+
             var redirect = data.redirect || {};
 
             if (redirect.url) {
               var handler = function handler() {
-                return window.location = redirect.url;
+                try {
+                  top.location = redirect.url;
+                } catch (e) {}
+
+                window.location = redirect.url;
               };
 
               if (data.pay) {
-                _this4.stateButton.text = _this4.messages.get('stateButtonPay');
-                _this4.stateButton.handler = handler;
+                _this2.stateButton.text = _this2.messages.get('stateButtonPay');
+                _this2.stateButton.handler = handler;
               }
 
               setTimeout(handler, (redirect.delay || 0) * 1000);
             }
           }).catch(function (e) {
-            _this4.error = true;
-            _this4.loading = false;
-            _this4.stateText = _this4.messages.get('stateError');
+            _this2.error = true;
+            _this2.loading = false;
+            _this2.stateText = _this2.messages.get('stateError');
+
+            _this2.emit(EventTypes.sendError, e);
           });
           return false;
         }
@@ -9837,10 +10924,14 @@
       }, {
         key: "adjust",
         value: function adjust() {
-          var _this5 = this;
+          var _this3 = this;
 
           var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : DefaultOptions$4;
           options = Object.assign({}, DefaultOptions$4, options);
+
+          if (babelHelpers.typeof(options.identification) === 'object') {
+            this.identification = options.identification;
+          }
 
           if (options.messages) {
             this.messages.setMessages(options.messages || {});
@@ -9857,13 +10948,15 @@
 
 
           if (options.handlers && babelHelpers.typeof(options.handlers) === 'object') {
-            if (typeof options.handlers.hide === 'function') {
-              babelHelpers.classPrivateFieldGet(this, _handlers).hide.push(options.handlers.hide);
-            }
+            Object.keys(options.handlers).forEach(function (key) {
+              return _this3.subscribe(key, options.handlers[key]);
+            });
+          }
 
-            if (typeof options.handlers.show === 'function') {
-              babelHelpers.classPrivateFieldGet(this, _handlers).show(options.handlers.show);
-            }
+          if (options.properties && babelHelpers.typeof(options.properties) === 'object') {
+            Object.keys(options.properties).forEach(function (key) {
+              return _this3.setProperty(key, options.properties[key]);
+            });
           }
 
           if (typeof options.title !== 'undefined') {
@@ -9894,10 +10987,10 @@
 
           if (Array.isArray(options.agreements)) {
             options.agreements.forEach(function (fieldOptions) {
-              fieldOptions.messages = _this5.messages;
-              fieldOptions.design = _this5.design;
+              fieldOptions.messages = _this3.messages;
+              fieldOptions.design = _this3.design;
 
-              _this5.agreements.push(new Controller$g(fieldOptions));
+              _this3.agreements.push(new Controller$g(fieldOptions));
             });
           }
 
@@ -9910,6 +11003,14 @@
 
           if (typeof options.design !== 'undefined') {
             this.design.adjust(options.design);
+          }
+
+          if (typeof options.recaptcha !== 'undefined') {
+            this.recaptcha.adjust(options.recaptcha);
+          }
+
+          if (Array.isArray(options.dependencies)) {
+            babelHelpers.classPrivateFieldGet(this, _dependence).setDependencies(options.dependencies);
           }
 
           if (options.node) {
@@ -9992,7 +11093,7 @@
       }, {
         key: "setFields",
         value: function setFields(fieldOptionsList) {
-          var _this6 = this;
+          var _this4 = this;
 
           babelHelpers.classPrivateFieldSet(this, _fields$1, []);
           var page = new Page(this.title);
@@ -10001,28 +11102,35 @@
           fieldOptionsList.forEach(function (options) {
             switch (options.type) {
               case 'page':
-                page = new Page(options.label || _this6.title);
+                page = new Page(options.label || _this4.title);
 
-                _this6.pager.add(page);
+                _this4.pager.add(page);
 
                 return;
 
               case 'date':
               case 'datetime':
-                options.format = options.type === 'date' ? _this6.date.dateFormat : _this6.date.dateTimeFormat;
-                options.sundayFirstly = _this6.date.sundayFirstly;
+                options.format = options.type === 'date' ? _this4.date.dateFormat : _this4.date.dateTimeFormat;
+                options.sundayFirstly = _this4.date.sundayFirstly;
                 break;
 
               case 'product':
-                options.currency = _this6.currency;
+                options.currency = _this4.currency;
                 break;
             }
 
-            options.messages = _this6.messages;
-            options.design = _this6.design;
+            options.messages = _this4.messages;
+            options.design = _this4.design;
             var field = Factory.create(options);
+            field.subscribeAll(function (data, obj, type) {
+              _this4.emit('field:' + type, {
+                data: data,
+                type: type,
+                field: obj
+              });
+            });
             page.fields.push(field);
-            babelHelpers.classPrivateFieldGet(_this6, _fields$1).push(field);
+            babelHelpers.classPrivateFieldGet(_this4, _fields$1).push(field);
           });
           this.pager.removeEmpty();
           this.basket = new Basket(babelHelpers.classPrivateFieldGet(this, _fields$1), this.currency);
@@ -10031,11 +11139,6 @@
         key: "getId",
         value: function getId() {
           return babelHelpers.classPrivateFieldGet(this, _id);
-        }
-      }, {
-        key: "delete",
-        value: function _delete() {
-          return null;
         }
       }, {
         key: "valid",
@@ -10056,6 +11159,29 @@
           }, {});
         }
       }, {
+        key: "getFields",
+        value: function getFields() {
+          return babelHelpers.classPrivateFieldGet(this, _fields$1);
+        }
+      }, {
+        key: "setProperty",
+        value: function setProperty(key, value) {
+          if (!key || typeof key !== 'string') {
+            return;
+          }
+
+          if (typeof value !== 'string') {
+            value = '';
+          }
+
+          babelHelpers.classPrivateFieldGet(this, _properties)[key] = value;
+        }
+      }, {
+        key: "getProperty",
+        value: function getProperty(key) {
+          return babelHelpers.classPrivateFieldGet(this, _properties)[key];
+        }
+      }, {
         key: "isOnState",
         value: function isOnState() {
           return this.disabled || this.error || this.sent || this.loading;
@@ -10073,19 +11199,127 @@
             template: "\n\t\t\t\t<component v-bind:is=\"'b24-form-' + form.view.type\"\n\t\t\t\t\t:key=\"form.id\"\n\t\t\t\t\t:form=\"form\"\n\t\t\t\t>\n\t\t\t\t\t<b24-form\n\t\t\t\t\t\tv-bind:key=\"form.id\"\n\t\t\t\t\t\tv-bind:form=\"form\"\n\t\t\t\t\t></b24-form>\n\t\t\t\t</component>\t\t\t\n\t\t\t"
           }));
         }
+      }, {
+        key: "destroy",
+        value: function destroy() {
+          this.emit(EventTypes.destroy);
+          this.unsubscribeAll();
+          babelHelpers.classPrivateFieldGet(this, _vue).$destroy();
+          babelHelpers.classPrivateFieldSet(this, _vue, null);
+        }
       }]);
       return Controller$$1;
-    }();
+    }(Event);
 
     var _id = new WeakMap();
 
-    var _handlers = new WeakMap();
-
     var _fields$1 = new WeakMap();
+
+    var _dependence = new WeakMap();
+
+    var _properties = new WeakMap();
 
     var _personalisation = new WeakMap();
 
     var _vue = new WeakMap();
+
+    function performEventOfWidgetFormInit(b24options, options) {
+      var compatibleData = createEventData(b24options, options);
+      BX.SiteButton.onWidgetFormInit(compatibleData);
+
+      if (options.fields && babelHelpers.typeof(compatibleData.fields) === 'object' && babelHelpers.typeof(compatibleData.fields.values) === 'object') {
+        Object.keys(compatibleData.fields.values).forEach(function (key) {
+          options.fields.filter(function (field) {
+            return field.name === key;
+          }).forEach(function (field) {
+            return field.value = compatibleData.fields.values[key];
+          });
+        });
+      }
+
+      if (babelHelpers.typeof(compatibleData.presets) === 'object') {
+        options.properties = options.properties || {};
+        Object.keys(compatibleData.presets).forEach(function (key) {
+          options.properties[key] = compatibleData.presets[key];
+        });
+      }
+
+      if (babelHelpers.typeof(compatibleData.handlers) === 'object') {
+        options.handlers = options.handlers || {};
+        Object.keys(compatibleData.handlers).forEach(function (key) {
+          var value = compatibleData.handlers[key];
+
+          if (typeof value !== "function") {
+            return;
+          }
+
+          var type;
+          var handler;
+
+          switch (key) {
+            case 'load':
+              type = EventTypes.init;
+
+              handler = function handler(data, form) {
+                value(compatibleData, form);
+              };
+
+              break;
+
+            case 'fill':
+              type = EventTypes.fieldBlur;
+
+              handler = function handler(data) {
+                var field = data.field;
+                value(field.name, field.values());
+              };
+
+              break;
+
+            case 'send':
+              type = EventTypes.sendSuccess;
+
+              if (typeof value === "function") {
+                handler = function handler(data, form) {
+                  value(Object.assign(form.getFields().reduce(function (acc, field) {
+                    acc[field.name] = field.multiple ? field.values() : field.value();
+                    return acc;
+                  }, {}), data || {}), form);
+                };
+              }
+
+              break;
+
+            case 'unload':
+              type = EventTypes.destroy;
+
+              handler = function handler(data, form) {
+                value(compatibleData, form);
+              };
+
+              break;
+          }
+
+          if (type) {
+            options.handlers[type] = handler ? handler : value;
+          }
+        });
+      }
+    }
+
+    function createEventData(b24options) {
+      return {
+        id: b24options.id,
+        sec: b24options.sec,
+        lang: b24options.lang,
+        address: b24options.address,
+        handlers: {},
+        presets: {},
+        fields: {
+          values: {}
+        }
+      };
+    }
 
     /** @requires module:webpacker */
 
@@ -10123,13 +11357,17 @@
       }, {
         key: "create",
         value: function create(options) {
-          var form = new Controller$m(options);
+          var form = new Controller$n(options);
           babelHelpers.classPrivateFieldGet(this, _forms).push(form);
           return form;
         }
       }, {
         key: "remove",
-        value: function remove(id) {}
+        value: function remove(id) {
+          babelHelpers.classPrivateFieldSet(this, _forms, babelHelpers.classPrivateFieldGet(this, _forms).filter(function (form) {
+            return form.getId() !== id;
+          }));
+        }
       }, {
         key: "post",
         value: function post(uri, body, headers) {
@@ -10146,6 +11384,8 @@
       }, {
         key: "createForm24",
         value: function createForm24(b24options, options) {
+          var _this = this;
+
           options.provider = options.provider || {};
 
           if (!options.provider.user) {
@@ -10173,7 +11413,17 @@
           options.languages = module.languages || [];
           options.messages = options.messages || {};
           options.messages = Object.assign(module.messages, options.messages || {});
-          return this.create(options);
+          options.identification = {
+            type: 'b24',
+            id: b24options.id,
+            sec: b24options.sec,
+            address: b24options.address
+          };
+          var instance = this.create(options);
+          instance.subscribe(EventTypes.destroy, function () {
+            return _this.remove(instance.getId());
+          });
+          return instance;
         }
       }, {
         key: "createWidgetForm24",
@@ -10192,12 +11442,12 @@
             position: positions[pos][0],
             vertical: positions[pos][1]
           };
-          options.handlers = {
-            hide: function hide() {
-              BX.SiteButton.onWidgetClose();
-            }
-          };
-          return b24form.App.createForm24(b24options, options);
+          performEventOfWidgetFormInit(b24options, options);
+          var instance = this.createForm24(b24options, options);
+          instance.subscribe(EventTypes.hide, function () {
+            return BX.SiteButton.onWidgetClose();
+          });
+          return instance;
         }
       }, {
         key: "getUserProvider24",
@@ -10259,7 +11509,7 @@
       }, {
         key: "getSubmitProvider24",
         value: function getSubmitProvider24(b24options) {
-          var _this = this;
+          var _this2 = this;
 
           return function (form, formData) {
             var trace = b24options.usedBySiteButton && BX.SiteButton ? BX.SiteButton.getTrace() : window.b24Tracker && b24Tracker.guest ? b24Tracker.guest.getTrace() : null;
@@ -10269,7 +11519,7 @@
             formData.set('trace', trace);
             formData.set('entities', JSON.stringify(b24options.entities || []));
             formData.set('security_sign', b24options.sign);
-            return _this.post(b24options.address + '/bitrix/services/main/ajax.php?action=crm.site.form.fill', formData).then(function (response) {
+            return _this2.post(b24options.address + '/bitrix/services/main/ajax.php?action=crm.site.form.fill', formData).then(function (response) {
               return response.json();
             }).then(function (data) {
               if (data.error) {
@@ -10286,7 +11536,7 @@
       }, {
         key: "initFormScript24",
         value: function initFormScript24(b24options) {
-          var _this2 = this;
+          var _this3 = this;
 
           var options = b24options.data; // noinspection JSUnresolvedVariable
 
@@ -10302,17 +11552,18 @@
               return;
             }
 
-            node.setAttribute('data-b24-loaded', true);
             var attributes = node.getAttribute('data-b24-form').split('/');
 
             if (attributes[1] !== b24options.id || attributes[2] !== b24options.sec) {
               return;
             }
 
+            node.setAttribute('data-b24-loaded', true);
+
             switch (attributes[0]) {
               case 'auto':
                 setTimeout(function () {
-                  _this2.createForm24(b24options, Object.assign({}, options, {
+                  _this3.createForm24(b24options, Object.assign({}, options, {
                     view: b24options.views.auto
                   })).show();
                 }, (b24options.views.auto.delay || 1) * 1000);
@@ -10325,7 +11576,7 @@
                   var form;
                   clickElement.addEventListener('click', function () {
                     if (!form) {
-                      form = _this2.createForm24(b24options, Object.assign({}, options, {
+                      form = _this3.createForm24(b24options, Object.assign({}, options, {
                         view: b24options.views.click
                       }));
                     }
@@ -10340,7 +11591,7 @@
                 var target = document.createElement('div');
                 node.parentElement.insertBefore(target, node);
 
-                _this2.createForm24(b24options, Object.assign({}, options, {
+                _this3.createForm24(b24options, Object.assign({}, options, {
                   node: target
                 }));
 

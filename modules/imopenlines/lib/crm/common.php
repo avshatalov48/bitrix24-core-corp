@@ -691,7 +691,7 @@ class Common
 				{
 					$entityId = str_replace('imol|', '',  $activity['ASSOCIATED_ENTITY']['COMMUNICATION']['VALUE']);
 					$filter = [
-						'ENTITY_TYPE' => \Bitrix\Im\Alias::ENTITY_TYPE_OPEN_LINE,
+						'ENTITY_TYPE' => 'LINES',
 						'ENTITY_ID' => $entityId
 					];
 

@@ -19,6 +19,7 @@ $APPLICATION->SetAdditionalCSS('/bitrix/components/bitrix/crm.product.search.dia
 
 $APPLICATION->AddHeadScript('/bitrix/js/crm/crm.js');
 $APPLICATION->AddHeadScript('/bitrix/js/main/dd.js');
+\CJSCore::Init(array("loader"));
 
 $bCanAddProduct = $arResult['CAN_ADD_PRODUCT'];
 if ($bCanAddProduct)
@@ -28,7 +29,7 @@ $bInitEditable = ((isset($arResult['INIT_EDITABLE']) ? $arResult['INIT_EDITABLE'
 $bHideModeButton = ((isset($arResult['HIDE_MODE_BUTTON']) ? $arResult['HIDE_MODE_BUTTON'] : false) || $readOnly);
 $enableCustomProducts = $arResult['ENABLE_CUSTOM_PRODUCTS'];
 $containerID = $arResult['PREFIX'].'_container';
-$currencyText = CCrmViewHelper::getCurrencyText($arResult['CURRENCY_ID']);
+$currencyText = CCrmCurrency::getCurrencyText($arResult['CURRENCY_ID']);
 $nProductRows = count($arResult['PRODUCT_ROWS']);
 $additionalClasses = $dataTabs = "";
 if ($arResult['ALLOW_TAX'] && $arResult['ENABLE_TAX'] && $arResult['ENABLE_DISCOUNT'])
@@ -47,469 +48,34 @@ else if ($arResult['ENABLE_DISCOUNT'])
 	$additionalClasses = " crm-items-list-sale";
 }
 
-// Product properties
-$arPropUserTypeList = &$arResult['PRODUCT_PROPS_USER_TYPES'];
-$visibleFields =
-	is_array($arResult['PRODUCT_CREATE_DLG_VISIBLE_FIELDS'])
-		? $arResult['PRODUCT_CREATE_DLG_VISIBLE_FIELDS'] : array();
-$bMultipleListType = false;
-foreach($arResult['PRODUCT_PROPS'] as $propID => $arProp)
+$productCreateDialogSettings = null;
+if ($arResult['USE_ASYNC_ADD_PRODUCT'])
 {
-	if (isset($arProp['USER_TYPE']) && !empty($arProp['USER_TYPE'])
-		&& !array_key_exists($arProp['USER_TYPE'], $arPropUserTypeList)
-	)
-		continue;
-
-	$bMultipleListType = ($arProp['PROPERTY_TYPE'] === 'L' && $arProp['MULTIPLE'] === 'Y' && empty($arProp['USER_TYPE']));
-	$skip = !CCrmProductHelper::IsFieldVisible($bMultipleListType ? $propID.'[]' : $propID, $visibleFields);
-	$defaultValue = array(
-		'n0' => array(
-			'VALUE' => $arProp['DEFAULT_VALUE'],
-			'DESCRIPTION' => '',
-		)
-	);
-	if ($arProp['MULTIPLE'] == 'Y')
+	$productCreateDialogSettings = [
+		'lazyLoad' => true,
+		'bindToElement' => false,
+		'signedParameters' =>  $component->getSignedParameters(),
+		'componentName' =>  $component->getName()
+	];
+}
+if (!$arResult['USE_ASYNC_ADD_PRODUCT'])
+{
+	if (isset($arResult['PRODUCT_CREATE_DLG_SETTINGS']))
 	{
-		if (is_array($arProp['DEFAULT_VALUE']) || strlen($arProp['DEFAULT_VALUE']))
-			$defaultValue['n1'] = array('VALUE' => '', 'DESCRIPTION' => '');
-	}
-
-	if (isset($arProp['USER_TYPE']) && !empty($arProp['USER_TYPE'])
-		&& is_array($arPropUserTypeList[$arProp['USER_TYPE']])
-		&& $arProp['MULTIPLE'] == 'Y'
-		&& array_key_exists('GetPublicEditHTMLMulty', $arPropUserTypeList[$arProp['USER_TYPE']])
-	)
-	{
-		$arProp['PROPERTY_USER_TYPE'] = $arPropUserTypeList[$arProp['USER_TYPE']];
-		$html = call_user_func_array(
-			$arPropUserTypeList[$arProp['USER_TYPE']]['GetPublicEditHTMLMulty'],
-			array(
-				$arProp,
-				$defaultValue,
-				array(
-					'VALUE' => $propID,
-					'DESCRIPTION' => '',
-					'FORM_NAME' => $arResult['PRODUCT_CREATE_DLG_SETTINGS']['formId'],
-					'MODE' => 'FORM_FILL',
-				),
-			)
+		$productCreateDialogSettings = $component->prepareCreateDialogFields(
+			$arResult['PRODUCT_CREATE_DLG_SETTINGS'],
+			$arResult['PRODUCT_PROPS'],
+			$arResult['PRODUCT_PROPS_USER_TYPES'],
+			$arResult['PRODUCT_CREATE_DLG_VISIBLE_FIELDS'],
+			$arParams['~PATH_TO_PRODUCT_FILE']
 		);
-
-		$arResult['PRODUCT_CREATE_DLG_SETTINGS']['messages'][$propID] = $arProp['NAME'];
-		$arResult['PRODUCT_CREATE_DLG_SETTINGS']['fields'][] = array(
-			'textCode' => $propID,
-			'type' => 'custom',
-			'value' => $html,
-			'skip' => $skip ? 'Y' : 'N',
-			'required' => $arProp['IS_REQUIRED']=='Y'? 'Y' : 'N'
-		);
-	}
-	else if (
-		isset($arProp['USER_TYPE']) && !empty($arProp['USER_TYPE'])
-		&& is_array($arPropUserTypeList[$arProp['USER_TYPE']])
-		&& array_key_exists('GetPublicEditHTML', $arPropUserTypeList[$arProp['USER_TYPE']])
-	)
-	{
-		$arProp['PROPERTY_USER_TYPE'] = $arPropUserTypeList[$arProp['USER_TYPE']];
-		if ($arProp['MULTIPLE'] == 'Y')
-		{
-			$html = '<table id="tbl'.$propID.'">';
-			foreach($defaultValue as $key => $value)
-			{
-				$html .= '<tr><td>'.call_user_func_array($arPropUserTypeList[$arProp['USER_TYPE']]['GetPublicEditHTML'],
-						array(
-							$arProp,
-							$value,
-							array(
-								'VALUE' => $propID.'['.$key.'][VALUE]',
-								'DESCRIPTION' => '',
-								'FORM_NAME' => $arResult['PRODUCT_CREATE_DLG_SETTINGS']['formId'],
-								'MODE' => 'FORM_FILL',
-								'COPY' => $arResult['COPY_ID'] > 0,
-							),
-						)).'</td></tr>';
-			}
-			$html .= '</table>';
-			if ($arProp['USER_TYPE'] !== 'HTML')
-				$html .= '<input type="button" onclick="addNewTableRow(\'tbl'.$propID.'\')" value="'.GetMessage('CRM_PRODUCT_PROP_ADD_BUTTON').'">';
-
-			$arResult['PRODUCT_CREATE_DLG_SETTINGS']['messages'][$propID] = $arProp['NAME'];
-			$arResult['PRODUCT_CREATE_DLG_SETTINGS']['fields'][] = array(
-				'textCode' => $propID,
-				'type' => 'custom',
-				'value' => $html,
-				'skip' => $skip ? 'Y' : 'N',
-				'required' => $arProp['IS_REQUIRED']=='Y'? 'Y' : 'N'
-			);
-		}
-		else
-		{
-			foreach($defaultValue as $key => $value)
-			{
-				$html = call_user_func_array($arPropUserTypeList[$arProp['USER_TYPE']]['GetPublicEditHTML'],
-					array(
-						$arProp,
-						$value,
-						array(
-							'VALUE' => $propID.'['.$key.'][VALUE]',
-							'DESCRIPTION' => '',
-							'FORM_NAME' => $arResult['PRODUCT_CREATE_DLG_SETTINGS']['formId'],
-							'MODE' => 'FORM_FILL',
-						),
-					));
-				break;
-			}
-			$arResult['PRODUCT_CREATE_DLG_SETTINGS']['messages'][$propID] = $arProp['NAME'];
-			$arResult['PRODUCT_CREATE_DLG_SETTINGS']['fields'][] = array(
-				'textCode' => $propID,
-				'type' => 'custom',
-				'value' => $html,
-				'skip' => $skip ? 'Y' : 'N',
-				'required' => $arProp['IS_REQUIRED']=='Y'? 'Y' : 'N'
-			);
-		}
-	}
-	else if ($arProp['PROPERTY_TYPE'] == 'N')
-	{
-		if ($arProp['MULTIPLE'] == 'Y')
-		{
-			$html = '<table id="tbl'.$propID.'">';
-			foreach($defaultValue as $key => $value)
-				$html .= '<tr><td><input type="text" name="'.$propID.'['.$key.'][VALUE]" value="'.$value['VALUE'].'"></td></tr>';
-			$html .= '</table>';
-			$html .= '<input type="button" onclick="addNewTableRow(\'tbl'.$propID.'\')" value="'.GetMessage('CRM_PRODUCT_PROP_ADD_BUTTON').'">';
-		}
-		else
-		{
-			foreach($defaultValue as $key => $value)
-				$html = '<input type="text" name="'.$propID.'['.$key.'][VALUE]" value="'.$value['VALUE'].'">';
-		}
-
-		$arResult['PRODUCT_CREATE_DLG_SETTINGS']['messages'][$propID] = $arProp['NAME'];
-		$arResult['PRODUCT_CREATE_DLG_SETTINGS']['fields'][] = array(
-			'textCode' => $propID,
-			'type' => 'custom',
-			'value' => $html,
-			'skip' => $skip ? 'Y' : 'N',
-			'required' => $arProp['IS_REQUIRED']=='Y'? 'Y' : 'N'
-		);
-	}
-	else if ($arProp['PROPERTY_TYPE'] == 'S')
-	{
-		$nCols = intval($arProp['COL_COUNT']);
-		$nCols = ($nCols > 100) ? 100 : $nCols;
-		if ($arProp['MULTIPLE'] == 'Y')
-		{
-			$html = '<table id="tbl'.$propID.'">';
-			if ($arProp['ROW_COUNT'] > 1)
-			{
-				foreach($defaultValue as $key => $value)
-				{
-					$html .= '<tr><td><textarea name="'.$propID.'['.$key.'][VALUE]" rows="'.intval($arProp['ROW_COUNT']).'" cols="'.$nCols.'">'.$value['VALUE'].'</textarea></td></tr>';
-				}
-			}
-			else
-			{
-				foreach($defaultValue as $key => $value)
-				{
-					$html .= '<tr><td><input type="text" name="'.$propID.'['.$key.'][VALUE]" value="'.$value['VALUE'].'"></td></tr>';
-				}
-			}
-			$html .= '</table>';
-			$html .= '<input type="button" onclick="addNewTableRow(\'tbl'.$propID.'\')" value="'.GetMessage('CRM_PRODUCT_PROP_ADD_BUTTON').'">';
-		}
-		else
-		{
-			if ($arProp['ROW_COUNT'] > 1)
-			{
-				foreach($defaultValue as $key => $value)
-				{
-					$html = '<textarea name="'.$propID.'['.$key.'][VALUE]" rows="'.intval($arProp['ROW_COUNT']).'" cols="'.$nCols.'">'.$value['VALUE'].'</textarea>';
-				}
-			}
-			else
-			{
-				foreach($defaultValue as $key => $value)
-				{
-					$html = '<input type="text" name="'.$propID.'['.$key.'][VALUE]" value="'.$value['VALUE'].'" size="'.$nCols.'">';
-				}
-			}
-		}
-		unset($nCols);
-
-		$arResult['PRODUCT_CREATE_DLG_SETTINGS']['messages'][$propID] = $arProp['NAME'];
-		$arResult['PRODUCT_CREATE_DLG_SETTINGS']['fields'][] = array(
-			'textCode' => $propID,
-			'type' => 'custom',
-			'value' => $html,
-			'skip' => $skip ? 'Y' : 'N',
-			'required' => $arProp['IS_REQUIRED']=='Y'? 'Y' : 'N'
-		);
-	}
-	else if ($arProp['PROPERTY_TYPE'] == 'L')
-	{
-		$items = array('' => GetMessage('CRM_PRODUCT_PROP_NO_VALUE'));
-		$prop_enums = CIBlockProperty::GetPropertyEnum($arProp['ID']);
-		$defaultValue = '';
-		while($ar_enum = $prop_enums->Fetch())
-		{
-			$items[$ar_enum['ID']] = $ar_enum['VALUE'];
-			if ('Y' === $ar_enum['DEF'])
-			{
-				if ($defaultValue === '')
-					$defaultValue = array($ar_enum['ID']);
-				else if (is_array($defaultValue))
-					$defaultValue[] = $ar_enum['ID'];
-			}
-		}
-		if ($arProp['MULTIPLE'] == 'Y')
-		{
-			$arResult['PRODUCT_CREATE_DLG_SETTINGS']['messages'][$propID.'[]'] = $arProp['NAME'];
-			$rowCount = 5;
-			if (isset($arProp['ROW_COUNT']) && intval($arProp['ROW_COUNT']) > 0)
-				$rowCount = intval($arProp['ROW_COUNT']);
-			$arResult['PRODUCT_CREATE_DLG_SETTINGS']['fields'][] = array(
-				'textCode' => $propID.'[]',
-				'type' => 'select',
-				'value' => $defaultValue,
-				'items' => CCrmViewHelper::prepareSelectItemsForJS($items),
-				'skip' => $skip ? 'Y' : 'N',
-				'required' => $arProp['IS_REQUIRED']=='Y'? 'Y' : 'N',
-				'params' => array('size' => $rowCount, 'multiple' => 'multiple')
-			);
-			unset($rowCount);
-		}
-		else
-		{
-			$arResult['PRODUCT_CREATE_DLG_SETTINGS']['messages'][$propID] = $arProp['NAME'];
-			$arResult['PRODUCT_CREATE_DLG_SETTINGS']['fields'][] = array(
-				'textCode' => $propID,
-				'type' => 'select',
-				'value' => $defaultValue,
-				'items' => CCrmViewHelper::prepareSelectItemsForJS($items),
-				'skip' => $skip ? 'Y' : 'N',
-				'required' => $arProp['IS_REQUIRED']=='Y'? 'Y' : 'N'
-			);
-		}
-	}
-	else if ($arProp['PROPERTY_TYPE'] == 'F')
-	{
-		if ($arProp['MULTIPLE'] == 'Y')
-		{
-			$html = '<table id="tbl'.$propID.'">';
-			foreach($defaultValue as $key => $value)
-			{
-				$html .= '<tr><td>';
-
-				$obFile = new CCrmProductFile(
-					$arResult['PRODUCT_ID'],
-					$propID,
-					$value['VALUE']
-				);
-
-				$obFileControl = new CCrmProductFileControl($obFile, $propID.'['.$key.'][VALUE]');
-
-				$html .= $obFileControl->GetHTML(array(
-					'max_size' => 102400,
-					'max_width' => 150,
-					'max_height' => 150,
-					'url_template' => $arParams['~PATH_TO_PRODUCT_FILE'],
-					'a_title' => GetMessage('CRM_PRODUCT_FILE_ENLARGE'),
-					'download_text' => GetMessage('CRM_PRODUCT_FILE_DOWNLOAD'),
-				));
-
-				$html .= '</td></tr>';
-			}
-			$html .= '</table>';
-			$html .= '<input type="button" onclick="addNewTableRow(\'tbl'.$propID.'\')" value="'.GetMessage('CRM_PRODUCT_PROP_ADD_BUTTON').'">';
-
-			$arResult['PRODUCT_CREATE_DLG_SETTINGS']['messages'][$propID] = $arProp['NAME'];
-			$arResult['PRODUCT_CREATE_DLG_SETTINGS']['fields'][] = array(
-				'textCode' => $propID,
-				'type' => 'custom',
-				'value' => $html,
-				'skip' => $skip ? 'Y' : 'N',
-				'required' => $arProp['IS_REQUIRED']=='Y'? 'Y' : 'N'
-			);
-		}
-		else
-		{
-			foreach($defaultValue as $key => $value)
-			{
-				$obFile = new CCrmProductFile(
-					$arResult['PRODUCT_ID'],
-					$propID,
-					$value['VALUE']
-				);
-
-				$obFileControl = new CCrmProductFileControl($obFile, $propID.'['.$key.'][VALUE]');
-
-				$html = $obFileControl->GetHTML(array(
-					'max_size' => 102400,
-					'max_width' => 150,
-					'max_height' => 150,
-					'url_template' => $arParams['~PATH_TO_PRODUCT_FILE'],
-					'a_title' => GetMessage('CRM_PRODUCT_FILE_ENLARGE'),
-					'download_text' => GetMessage('CRM_PRODUCT_FILE_DOWNLOAD'),
-				));
-
-				$arResult['PRODUCT_CREATE_DLG_SETTINGS']['messages'][$propID] = $arProp['NAME'];
-				$arResult['PRODUCT_CREATE_DLG_SETTINGS']['fields'][] = array(
-					'textCode' => $propID,
-					'type' => 'custom',
-					'value' => $html,
-					'skip' => $skip ? 'Y' : 'N',
-					'required' => $arProp['IS_REQUIRED']=='Y'? 'Y' : 'N'
-				);
-			}
-		}
-	}
-	else if ($arProp['PROPERTY_TYPE'] == 'G')
-	{
-	}
-	else if ($arProp['PROPERTY_TYPE'] == 'E')
-	{
-		if ($arProp['IS_REQUIRED']=='Y')
-			$items = array();
-		else
-			$items = array('' => GetMessage('CRM_PRODUCT_PROP_NO_VALUE'));
-
-		$rsElements = CIBlockElement::GetList(array('NAME' => 'ASC'), array('IBLOCK_ID' => $arProp['LINK_IBLOCK_ID']), false, false, array('ID', 'NAME'));
-		while($ar = $rsElements->Fetch())
-			$items[$ar['ID']] = $ar['NAME'];
-
-		ob_start();
-
-		$arValues = array();
-		if (is_array($defaultValue))
-		{
-			foreach(array_keys($defaultValue) as $key)
-				if ($key > 0 && array_key_exists($key, $items))
-					$arValues[] = $items[$key].' ['.$key.']';
-		}
-		?><input type="hidden" name="<?echo $propID?>[]" value=""><? //This will emulate empty input
-		$control_id = $APPLICATION->IncludeComponent(
-			'bitrix:main.lookup.input',
-			'elements',
-			array(
-				'INPUT_NAME' => $propID,
-				'INPUT_NAME_STRING' => 'inp_'.$propID,
-				'INPUT_VALUE_STRING' => implode("\n", $arValues),
-				'START_TEXT' => GetMessage('CRM_PRODUCT_PROP_START_TEXT'),
-				'MULTIPLE' => $arProp['MULTIPLE'],
-				//These params will go throught ajax call to ajax.php in template
-				'IBLOCK_TYPE_ID' => $arResult['CATALOG_TYPE_ID'],
-				'IBLOCK_ID' => $arProp['LINK_IBLOCK_ID'],
-				'SOCNET_GROUP_ID' => '',
-			), $component, array('HIDE_ICONS' => 'Y')
-		);
-
-		$name = $APPLICATION->IncludeComponent(
-			'bitrix:main.tree.selector',
-			'elements',
-			array(
-				'INPUT_NAME' => $propID,
-				'ONSELECT' => 'jsMLI_'.$control_id.'.SetValue',
-				'MULTIPLE' => $arProp['MULTIPLE'],
-				'SHOW_INPUT' => 'N',
-				'SHOW_BUTTON' => 'N',
-				'GET_FULL_INFO' => 'Y',
-				'START_TEXT' => GetMessage('CRM_PRODUCT_PROP_START_TEXT'),
-				'NO_SEARCH_RESULT_TEXT' => GetMessage('CRM_PRODUCT_PROP_NO_SEARCH_RESULT_TEXT'),
-				//These params will go throught ajax call to ajax.php in template
-				'IBLOCK_TYPE_ID' => $arResult['CATALOG_TYPE_ID'],
-				'IBLOCK_ID' => $arProp['LINK_IBLOCK_ID'],
-				'SOCNET_GROUP_ID' => '',
-			), $component, array('HIDE_ICONS' => 'Y')
-		);
-		?><a href="javascript:void(0)" onclick="<?=$name?>.SetValue([]); <?=$name?>.Show()"><?echo GetMessage('CRM_PRODUCT_PROP_CHOOSE_ELEMENT')?></a><?
-
-		$html = ob_get_contents();
-		ob_end_clean();
-
-		$arResult['PRODUCT_CREATE_DLG_SETTINGS']['messages'][$propID] = $arProp['NAME'];
-		$arResult['PRODUCT_CREATE_DLG_SETTINGS']['fields'][] = array(
-			'textCode' => $propID,
-			'type' => 'custom',
-			'value' => $html,
-			'skip' => $skip ? 'Y' : 'N',
-			'required' => $arProp['IS_REQUIRED']=='Y'? 'Y' : 'N'
-		);
-	}
-	else if ($arProp['MULTIPLE'] == 'Y')
-	{
-		$html = '<table id="tbl'.$propID.'">';
-		foreach($defaultValue as $key => $value)
-			$html .= '<tr><td><input type="text" name="'.$propID.'['.$key.'][VALUE]" value="'.$value['VALUE'].'"></td></tr>';
-		$html .= '</table>';
-		$html .= '<input type="button" onclick="addNewTableRow(\'tbl'.$propID.'\')" value="'.GetMessage('CRM_PRODUCT_PROP_ADD_BUTTON').'">';
-
-		$arResult['PRODUCT_CREATE_DLG_SETTINGS']['messages'][$propID] = $arProp['NAME'];
-		$arResult['PRODUCT_CREATE_DLG_SETTINGS']['fields'][] = array(
-			'textCode' => $propID,
-			'type' => 'custom',
-			'value' => $html,
-			'skip' => $skip ? 'Y' : 'N',
-			'required' => $arProp['IS_REQUIRED']=='Y'? 'Y' : 'N'
-		);
-	}
-	else if (is_array($defaultValue) && array_key_exists('VALUE', $defaultValue))
-	{
-		$arResult['PRODUCT_CREATE_DLG_SETTINGS']['messages'][$propID.'[VALUE]'] = $arProp['NAME'];
-		$arResult['PRODUCT_CREATE_DLG_SETTINGS']['fields'][] = array(
-			'textCode' => $propID.'[VALUE]',
-			'type' => 'text',
-			'value' => $defaultValue['VALUE'],
-			'skip' => $skip ? 'Y' : 'N',
-			'required' => $arProp['IS_REQUIRED']=='Y'? 'Y' : 'N'
-		);
-	}
-	else
-	{
-		$arResult['PRODUCT_CREATE_DLG_SETTINGS']['messages'][$propID] = $arProp['NAME'];
-		$arResult['PRODUCT_CREATE_DLG_SETTINGS']['fields'][] = array(
-			'textCode' => $propID,
-			'type' => 'text',
-			'skip' => $skip ? 'Y' : 'N',
-			'required' => $arProp['IS_REQUIRED']=='Y'? 'Y' : 'N'
-		);
+		$productCreateDialogSettings['lazyLoad'] = false;
 	}
 }
-unset($bMultipleListType);
 
-// order fields by settings
-if (is_array($visibleFields) && count($visibleFields) > 0
-	&& is_array($arResult['PRODUCT_CREATE_DLG_SETTINGS']['fields'])
-	&& count($arResult['PRODUCT_CREATE_DLG_SETTINGS']['fields']) > 0)
-{
-	$fields = $arResult['PRODUCT_CREATE_DLG_SETTINGS']['fields'];
-	$fieldsIndex = array();
-	foreach ($fields as $index => $field)
-	{
-		$fieldsIndex[$field['textCode']] = array(
-			'index' => $index,
-			'ordered' => false
-		);
-	}
-	$orderedFields = array();
-	foreach ($visibleFields as $fieldName)
-	{
-		if (isset($fieldsIndex[$fieldName]))
-		{
-			$orderedFields[] = $fields[$fieldsIndex[$fieldName]['index']];
-			$fieldsIndex[$fieldName]['ordered'] = true;
-		}
-	}
-	foreach ($fieldsIndex as $index)
-	{
-		if ($index['ordered'] === false)
-		{
-			$orderedFields[] = $fields[$index['index']];
-		}
-	}
-	$arResult['PRODUCT_CREATE_DLG_SETTINGS']['fields'] = $orderedFields;
-	unset($fields, $fieldsIndex, $index, $field, $orderedFields, $fieldName);
-}
+$showChoiceButton = true;
+$newProductCardEnabled = \Bitrix\Main\Loader::includeModule('catalog')
+	&& \Bitrix\Catalog\Config\State::isProductCardSliderEnabled();
 ?>
 <div id="<?=$containerID?>" class="crm-items-list-wrap<?=$additionalClasses?>" data-tabs="<?=$dataTabs?>"><?
 $choiceProductBtnID = $arResult['PREFIX'].'_select_product_button';
@@ -517,9 +83,23 @@ $addProductBtnID = $arResult['PREFIX'].'_add_product_button';
 $modeBtnID = $arResult['PREFIX'].'_edit_rows_button';
 $addRowBtnID = $arResult['PREFIX'].'_add_row_button';
 //$buttonContainerID = $arResult['PREFIX'].'_product_button_container';
-?>  <div class="crm-items-table-top-bar"><span id="crm-l-space" class="<?= $arResult['ALLOW_TAX'] ? 'crm-items-table-bar-l' : 'crm-items-table-bar-l-wtax' ?>"><span id="<?=$choiceProductBtnID?>" class="webform-small-button"<?= ($arResult['INVOICE_MODE']) ? ' style="display: none;"' : '' ?>><span class="webform-small-button-left"></span><span class="webform-small-button-text"><?=htmlspecialcharsbx(GetMessage('CRM_FF_CHOISE_3'))?></span><span class="webform-small-button-right"></span></span><?
-	if ($bCanAddProduct):
-		?><span id="<?=$addProductBtnID?>" class="webform-small-button"<?= ($arResult['INVOICE_MODE']) ? ' style="display: none;"' : '' ?>><span class="webform-small-button-left"></span><span class="webform-small-button-text"><?=htmlspecialcharsbx(GetMessage('CRM_FF_ADD_CUSTOM_1'))?></span><span class="webform-small-button-right"></span></span><?
+	?><div class="crm-items-table-top-bar"><span id="crm-l-space" class="<?= $arResult['ALLOW_TAX'] ? 'crm-items-table-bar-l' : 'crm-items-table-bar-l-wtax' ?>"><?
+	if ($newProductCardEnabled):
+		if ($showChoiceButton):
+			?><span id="<?=$choiceProductBtnID?>" class="webform-small-button"<?= ($arResult['INVOICE_MODE']) ? ' style="display: none;"' : '' ?>><span class="webform-small-button-left"></span><span class="webform-small-button-text"><?=htmlspecialcharsbx(GetMessage('CRM_FF_CHOISE_3'))?></span><span class="webform-small-button-right"></span></span><?
+		endif;
+		if ($bCanAddProduct):
+			?><a id="<?=$addProductBtnID?>"
+			href="<?=str_replace('#product_id#', 0, CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PRODUCT_SHOW']))?>"
+			class="ui-btn ui-btn-primary"
+			<?=$arResult['INVOICE_MODE'] ? ' style="display: none;"' : ''?>
+			><?=htmlspecialcharsbx(GetMessage('CRM_FF_ADD_CUSTOM_1'))?></a><?
+		endif;
+	else:
+		?><span id="<?=$choiceProductBtnID?>" class="webform-small-button"<?= ($arResult['INVOICE_MODE']) ? ' style="display: none;"' : '' ?>><span class="webform-small-button-left"></span><span class="webform-small-button-text"><?=htmlspecialcharsbx(GetMessage('CRM_FF_CHOISE_3'))?></span><span class="webform-small-button-right"></span></span><?
+		if ($bCanAddProduct):
+			?><span id="<?=$addProductBtnID?>" class="webform-small-button"<?= ($arResult['INVOICE_MODE']) ? ' style="display: none;"' : '' ?>><span class="webform-small-button-left"></span><span class="webform-small-button-text"><?=htmlspecialcharsbx(GetMessage('CRM_FF_ADD_CUSTOM_1'))?></span><span class="webform-small-button-right"></span></span><?
+		endif;
 	endif;
 ?></span><span class="crm-items-table-tab crm-items-table-sale" id="crm-top-sale-tab" style="<?= $nProductRows === 0 ? 'display: none;' : '' ?>"><span class="crm-items-table-tab-inner"><input class="crm-items-checkbox" id="crm-top-sale-checkbox" type="checkbox"<?= $arResult['ENABLE_DISCOUNT'] ? ' checked="checked"' : '' ?>/><label class="crm-items-label" for="crm-top-sale-checkbox"><?=GetMessage('CRM_PRODUCT_SHOW_DISCOUNT')?></label></span></span><span class="crm-items-table-tab-spacer" id="crm-top-spacer" style="<?= $nProductRows === 0 ? 'display: none;' : '' ?>"></span><?
 if($arResult['ALLOW_TAX']):
@@ -559,6 +139,7 @@ $jsEventsManagerId = 'PageEventsManager_'.$arResult['COMPONENT_ID'];
 		$measures = \Bitrix\Crm\Measure::getMeasures(100);
 		$productTotalContainerID = $arResult['PREFIX'].'_product_sum_total_container';
 		$rowIdPrefix = $arResult['PREFIX'].'_product_row_';
+
 		$productEditorCfg = array(
 			'sessid' => bitrix_sessid(),
 			'serviceUrl'=> '/bitrix/components/bitrix/crm.product_row.list/ajax.php?'.bitrix_sessid_get(),
@@ -579,8 +160,7 @@ $jsEventsManagerId = 'PageEventsManager_'.$arResult['COMPONENT_ID'];
 			'productTotalContainerID' => $productTotalContainerID,
 			'choiceBtnID' => $choiceProductBtnID,
 			'addBtnID' => $addProductBtnID,
-			'productCreateDialogSettings' =>
-				isset($arResult['PRODUCT_CREATE_DLG_SETTINGS']) ? $arResult['PRODUCT_CREATE_DLG_SETTINGS'] : null,
+			'productCreateDialogSettings' => $productCreateDialogSettings,
 			'modeBtnID' => $modeBtnID,
 			'addRowBtnID' => $addRowBtnID,
 			'canAddProduct' => $bCanAddProduct,
@@ -616,7 +196,8 @@ $jsEventsManagerId = 'PageEventsManager_'.$arResult['COMPONENT_ID'];
 			'rowIdPrefix' => $rowIdPrefix,
 			'items' => array(),
 			'jsEventsManagerId' => $jsEventsManagerId,
-			'initLayout' => $arResult['INIT_LAYOUT']
+			'initLayout' => $arResult['INIT_LAYOUT'],
+			'newProductCard' => $newProductCardEnabled
 		);
 
 		$productEditorCfg['hideTaxIncludedColumn'] = $arResult['HIDE_TAX_INCLUDED_COLUMN'];
@@ -771,7 +352,7 @@ $jsEventsManagerId = 'PageEventsManager_'.$arResult['COMPONENT_ID'];
 							<span class="crm-item-move-btn"></span><span id="<?= ($rowID.'_NUM') ?>" class="crm-item-num"><?=($i+1).'.'?></span>
 						</span>
 						<span class="crm-item-inp-wrap">
-							<input id="<?=$rowID.'_PRODUCT_NAME'?>" class="crm-item-name-inp" type="text" value="<?=$htmlValues['PRODUCT_NAME']?>" autocomplete="off"/><span class="crm-item-inp-btn<? echo ($productID > 0) ? ' crm-item-inp-arrow' : ($bCanAddProduct ? ' crm-item-inp-plus' : ''); ?>"></span>
+							<input id="<?=$rowID.'_PRODUCT_NAME'?>" class="crm-item-name-inp" type="text" value="<?=$htmlValues['PRODUCT_NAME']?>" autocomplete="off" placeholder="<?=GetMessage('CRM_PRODUCT_BEFORE_SEARCH_TITLE')?>"/><span class="crm-item-inp-btn<? echo ($productID > 0) ? ' crm-item-inp-arrow' : ($bCanAddProduct ? ' crm-item-inp-plus' : ''); ?>"></span>
 						</span>
 					</span>
 					<span class="crm-item-cell-view"<?= ($bInitEditable && empty($fixedProductName)) ? ' style="display: none;"' : '' ?>>
@@ -891,7 +472,7 @@ $jsEventsManagerId = 'PageEventsManager_'.$arResult['COMPONENT_ID'];
 	</table>
 	<?
 	if ($enableCustomProducts):
-	?><div class="crm-items-add-row-wrap"><a id="<?=$addRowBtnID?>" class="crm-items-add-row" href="#"<?= $readOnly ? ' style="display: none;"' : '' ?>><?=GetMessage('CRM_PRODUCT_ROW_ADD_ROW')?></a></div><?
+	?><div class="crm-items-add-row-wrap"><a id="<?=$addRowBtnID?>" class="crm-items-add-row" href="#"<?= $readOnly ? ' style="display: none;"' : '' ?>><?=$showChoiceButton ? GetMessage('CRM_PRODUCT_ROW_BTN_ADD') : GetMessage('CRM_FF_CHOISE_3')?></a></div><?
 	endif;    // if ($enableCustomProducts):
 	?>
 	<!-- example row -->
@@ -904,7 +485,7 @@ $jsEventsManagerId = 'PageEventsManager_'.$arResult['COMPONENT_ID'];
 							<span class="crm-item-move-btn"></span><span id="<?= ($rowIdPrefix.'#N#_NUM') ?>" class="crm-item-num"></span>
 						</span>
 						<span class="crm-item-inp-wrap">
-							<input id="<?= ($rowIdPrefix.'#N#_PRODUCT_NAME') ?>" class="crm-item-name-inp" type="text" value=""  autocomplete="off"/><span class="crm-item-inp-btn"></span>
+							<input id="<?= ($rowIdPrefix.'#N#_PRODUCT_NAME') ?>" class="crm-item-name-inp" type="text" value=""  autocomplete="off" placeholder="<?=GetMessage('CRM_PRODUCT_BEFORE_SEARCH_TITLE')?>"/><span class="crm-item-inp-btn"></span>
 						</span>
 					</span>
 					<span class="crm-item-cell-view">

@@ -30,7 +30,7 @@ if (!isset($arParams["EVENT_NAME"]))
 $effectiveEntityTypes = array();
 $userPerms = CCrmPerms::GetCurrentUserPermissions();
 
-$entityTypeName = strtoupper($entityType);
+$entityTypeName = mb_strtoupper($entityType);
 if(CCrmAuthorizationHelper::CheckReadPermission($entityTypeName, 0, $userPerms))
 {
 	$effectiveEntityType = $entityTypeName;

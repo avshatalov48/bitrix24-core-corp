@@ -73,6 +73,8 @@ if(!function_exists('__CrmActivityListRenderItems'))
 			{
 				$item = &$items[$i];
 
+				$provider = CCrmActivity::GetActivityProvider($item);
+
 				if(($showMode == 'NOT_COMPLETED' && $item['COMPLETED'] == 'Y')
 					|| $showMode == 'COMPLETED' && $item['COMPLETED'] == 'N')
 				{
@@ -128,7 +130,8 @@ if(!function_exists('__CrmActivityListRenderItems'))
 					'files' => $item['FILES'],
 					'webdavelements' => $item['WEBDAV_ELEMENTS'],
 					'associatedEntityID' => isset($item['~ASSOCIATED_ENTITY_ID']) ? intval($item['~ASSOCIATED_ENTITY_ID']) : 0,
-					'communications' => $commData
+					'communications' => $commData,
+					'customViewLink' => (($provider && !is_null($provider::getCustomViewLink($item))) ? $provider::getCustomViewLink($item) : ''),
 				);
 
 				if(isset($item['OWNER_TYPE_ID']) && isset($item['OWNER_ID']))
@@ -235,8 +238,8 @@ if(!function_exists('__CrmActivityListRenderItems'))
 	</ul>
 </div>
 <?
-	$prefixUpper = strtoupper($arResult['PREFIX']);
-	$prefixLower = strtolower($arResult['PREFIX']);
+$prefixUpper = mb_strtoupper($arResult['PREFIX']);
+$prefixLower = mb_strtolower($arResult['PREFIX']);
 
 	$editorCfg['PREFIX'] = $prefixUpper.'_RECENT';
 	$editorCfg['EDITOR_ID'] = $recentEditorID;

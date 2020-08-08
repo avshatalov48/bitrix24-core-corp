@@ -5,6 +5,12 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
 
+if(SITE_TEMPLATE_ID === 'bitrix24')
+{
+	$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+	$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') . 'no-paddings pagetitle-toolbar-field-view flexible-layout crm-pagetitle-view crm-toolbar');
+}
+
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.control_panel',
 	'',
@@ -32,6 +38,18 @@ $APPLICATION->IncludeComponent(
 	),
 	$component
 );
+
+$this->SetViewTarget('below_pagetitle');
+?>
+	<div class="crm-recyclebin-list-toolbar">
+		<div class="crm-recyclebin-list-config">
+			<div class="crm-recyclebin-list-info">
+				<span class="crm-recyclebin-list-info-text"><?= Loc::getMessage('CRM_RECYCLE_LIST_TTL_NOTICE', ['#TTL_DAY#' => $arResult['TTL']]) ?></span>
+			</div>
+		</div>
+	</div>
+<?php
+$this->EndViewTarget();
 
  $APPLICATION->IncludeComponent(
 	'bitrix:recyclebin.list',

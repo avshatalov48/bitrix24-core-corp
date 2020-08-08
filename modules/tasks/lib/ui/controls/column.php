@@ -13,6 +13,7 @@ class Column
 	{
 		return array(
 			'SORTING',
+			'ACTIVITY_DATE',
 			'ID',
 			'TITLE',
 			'DEADLINE',
@@ -24,7 +25,7 @@ class Column
 			'ALLOW_TIME_TRACKING',
 			'CREATED_DATE',
 			'CHANGED_DATE',
-			'CLOSED_DATE'
+			'CLOSED_DATE',
 		);
 	}
 }

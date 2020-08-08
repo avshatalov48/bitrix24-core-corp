@@ -157,14 +157,14 @@ elseif ($action === 'SAVE_PROGRESS')
 	$statusParams['STATE_FAILED'] = (isset($_REQUEST['VALUE']) && $statusSort[$_REQUEST['VALUE']] >= $statusSort['D']) ? true : false;
 	if ($statusParams['STATE_SUCCESS'])
 	{
-		$statusParams['PAY_VOUCHER_NUM'] = isset($_REQUEST['PAY_VOUCHER_NUM']) ? substr(trim($_REQUEST['PAY_VOUCHER_NUM']), 0, 20) : '';
+		$statusParams['PAY_VOUCHER_NUM'] = isset($_REQUEST['PAY_VOUCHER_NUM'])? mb_substr(trim($_REQUEST['PAY_VOUCHER_NUM']), 0, 20) : '';
 		$statusParams['DATE_MARKED'] = $statusParams['PAY_VOUCHER_DATE'] = isset($_REQUEST['PAY_VOUCHER_DATE']) ? trim($_POST['PAY_VOUCHER_DATE']) : null;
-		$statusParams['REASON_MARKED'] = isset($_REQUEST['REASON_MARKED_SUCCESS']) ? substr(trim($_REQUEST['REASON_MARKED_SUCCESS']), 0, 255) : '';
+		$statusParams['REASON_MARKED'] = isset($_REQUEST['REASON_MARKED_SUCCESS'])? mb_substr(trim($_REQUEST['REASON_MARKED_SUCCESS']), 0, 255) : '';
 	}
 	elseif ($statusParams['STATE_FAILED'])
 	{
 		$statusParams['DATE_MARKED'] = isset($_REQUEST['DATE_MARKED']) ? trim($_POST['DATE_MARKED']) : null;
-		$statusParams['REASON_MARKED'] = isset($_REQUEST['REASON_MARKED']) ? substr(trim($_REQUEST['REASON_MARKED']), 0, 255) : '';
+		$statusParams['REASON_MARKED'] = isset($_REQUEST['REASON_MARKED'])? mb_substr(trim($_REQUEST['REASON_MARKED']), 0, 255) : '';
 	}
 
 	$targetTypeName = CCrmOwnerType::ResolveName(CCrmOwnerType::Invoice);
@@ -499,7 +499,7 @@ if ($action === 'GET_ROW_COUNT')
 				if (in_array($key, $invoiceFields))
 				{
 					$fieldName = str_replace('~','',$fieldName);
-					if (strpos($fieldName, $recurFieldPrefix)!== false)
+					if (mb_strpos($fieldName, $recurFieldPrefix) !== false)
 					{
 						$filterSubquery[str_replace($recurFieldPrefix, '', $fieldName)] = $value;
 					}

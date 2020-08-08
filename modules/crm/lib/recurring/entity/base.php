@@ -22,6 +22,7 @@ abstract class Base
 	abstract public function activate($invoiceId);
 	abstract public function deactivate($invoiceId);
 	abstract public function getList(array $parameters = array());
+	abstract public function getRuntimeTemplateField() : array;
 
 	/**
 	 * @return bool

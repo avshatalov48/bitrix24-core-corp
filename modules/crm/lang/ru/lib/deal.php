@@ -49,4 +49,6 @@ $MESS["CRM_DEAL_ENTITY_IS_WORK_FIELD"] = "В работе";
 $MESS["CRM_DEAL_ENTITY_HAS_PRODUCTS_FIELD"] = "Содержит товары";
 $MESS["CRM_DEAL_ENTITY_ORIGINATOR_BY_FIELD"] = "Привязка";
 $MESS["CRM_DEAL_ENTITY_CATEGORY_ID_FIELD"] = "Направление сделки";
+$MESS["CRM_DEAL_ENTITY_WEBFORM_ID_FIELD"] = "Создана CRM-формой";
+$MESS["CRM_DEAL_ENTITY_ORDER_STAGE_FIELD"] = "Статус оплаты сделки";
 ?>

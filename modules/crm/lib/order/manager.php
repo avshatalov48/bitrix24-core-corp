@@ -21,6 +21,8 @@ final class Manager
 	const ORDER_PAYMENT_DOCUMENT_TYPE_RETURN = 0x02;
 	const ORDER_PAYMENT_DOCUMENT_TYPE_VOUCHER = 0x01;
 
+	const TOTAL_COUNT_CACHE_ID =  'crm_order_total_count';
+
 	/**
 	 * @param $id
 	 * @param $statusId
@@ -44,7 +46,7 @@ final class Manager
 		if($id <= 0)
 			return $result;
 
-		if(strlen($statusId) <= 0)
+		if($statusId == '')
 			return $result;
 
 		$order = Order::load($id);
@@ -69,7 +71,7 @@ final class Manager
 
 		if (OrderStatus::getSemanticID($statusId) == Crm\PhaseSemantics::FAILURE)
 		{
-			if(strlen($reasonCanceled) > 0)
+			if($reasonCanceled <> '')
 			{
 				$res = $order->setField('REASON_CANCELED', $reasonCanceled);
 				if(!$res->isSuccess())
@@ -511,6 +513,27 @@ final class Manager
 			$payment->setField('SUM', $order->getPrice());
 		}
 		return $order;
+	}
+
+	/**
+	 * @return int
+	 */
+	public static function countTotal()
+	{
+		if(defined('BX_COMP_MANAGED_CACHE') && $GLOBALS['CACHE_MANAGER']->Read(600, self::TOTAL_COUNT_CACHE_ID, 'b_sale_order'))
+		{
+			return $GLOBALS['CACHE_MANAGER']->Get(self::TOTAL_COUNT_CACHE_ID);
+		}
+
+		$dbRes = Order::getList(['count_total' => true]);
+		$count = $dbRes->getCount();
+
+		if(defined('BX_COMP_MANAGED_CACHE'))
+		{
+			$GLOBALS['CACHE_MANAGER']->Set(self::TOTAL_COUNT_CACHE_ID, $count);
+		}
+
+		return $count;
 	}
 
 	public static function getUfId()

@@ -3,6 +3,7 @@
 namespace Bitrix\Disk\Rest;
 
 use Bitrix\Disk\Driver;
+use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Internals\Error\IErrorable;
@@ -32,7 +33,7 @@ final class RestManager extends IRestService implements IErrorable
 
 	private function getMethods()
 	{
-		return array(
+		return array_filter([
 			'disk.storage.getFields',
 			'disk.storage.get',
 			'disk.storage.rename',
@@ -68,8 +69,8 @@ final class RestManager extends IRestService implements IErrorable
 			'disk.file.restore',
 			'disk.file.uploadVersion',
 			'disk.file.getExternalLink',
-			'disk.file.getVersions',
-			'disk.file.restoreFromVersion',
+			Bitrix24Manager::isFeatureEnabled('disk_file_history')? 'disk.file.getVersions' : null,
+			Bitrix24Manager::isFeatureEnabled('disk_file_history')? 'disk.file.restoreFromVersion': null,
 			'disk.file.listAllowedOperations',
 
 			'disk.version.get',
@@ -80,7 +81,7 @@ final class RestManager extends IRestService implements IErrorable
 
 			\CRestUtil::METHOD_DOWNLOAD, //'disk.file.download' 'disk.version.download'
 			\CRestUtil::METHOD_UPLOAD, //'disk.folder.upload'
-		);
+		]);
 	}
 
 	/**

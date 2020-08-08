@@ -16,7 +16,7 @@ class Bitrix24Email
 	}
 	public static function isSignatureEnabled()
 	{
-		return strtoupper(\COption::GetOptionString('crm', 'enable_b24_email_sign', 'Y')) === 'Y';
+		return mb_strtoupper(\COption::GetOptionString('crm', 'enable_b24_email_sign', 'Y')) === 'Y';
 	}
 	public static function enableSignature($enable)
 	{

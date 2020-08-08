@@ -113,6 +113,8 @@ const FieldListItem = {
 				:visible="dropDownOpened"
 				:title="field.label"
 				@close="closeDropDown()"
+				@visible:on="$emit('visible:on')"
+				@visible:off="$emit('visible:off')"
 			>
 				<item-selector
 					:field="field"
@@ -171,6 +173,8 @@ const FieldList = {
 				:field="field"
 				:item="item"
 				:itemSubComponent="itemSubComponent"
+				@visible:on="$emit('input-focus')"
+				@visible:off="$emit('input-blur')"
 			></field-list-item>
 						
 			<a class="b24-form-control-add-btn"
@@ -184,6 +188,8 @@ const FieldList = {
 				:visible="dropDownOpened"
 				:title="field.label"
 				@close="closeDropDown()"
+				@visible:on="$emit('input-focus')"
+				@visible:off="$emit('input-blur')"
 			>
 				<item-selector
 					:field="field"

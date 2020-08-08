@@ -41,6 +41,7 @@ class TasksTopmenuComponent extends TasksBaseComponent
 		static::tryParseStringParameter($arParams['SHOW_SECTION_MANAGE'], 'A');
 
 		static::tryParseStringParameter($arParams['MARK_SECTION_PROJECTS'], 'N');
+		static::tryParseStringParameter($arParams['MARK_SECTION_PROJECTS_LIST'], 'N');
 		static::tryParseStringParameter($arParams['MARK_ACTIVE_ROLE'], 'N');
 		static::tryParseStringParameter($arParams['MARK_SECTION_MANAGE'], 'N');
 		static::tryParseStringParameter($arParams['MARK_SECTION_REPORTS'], 'N');
@@ -48,6 +49,7 @@ class TasksTopmenuComponent extends TasksBaseComponent
 		static::tryParseStringParameter($arParams['MARK_SPECIAL_PRESET'], 'N');
 		static::tryParseStringParameter($arParams['MARK_SECTION_ALL'], 'N');
 		static::tryParseStringParameter($arParams['MARK_TEMPLATES'], 'N');
+		static::tryParseStringParameter($arParams['PROJECT_VIEW'], 'N');
 		static::tryParseStringParameter($arParams['LOGGED_USER_ID'], User::getId());
 		static::tryParseStringParameter(
 			$arParams['TASKS_GROUP_CREATE_URL_TEMPLATE'],
@@ -61,7 +63,7 @@ class TasksTopmenuComponent extends TasksBaseComponent
 	{
 		if ($this->arParams['GROUP_ID'] > 0)
 		{
-			$this->arParams['SHOW_SECTION_PROJECTS'] = 'N';
+			// $this->arParams['SHOW_SECTION_PROJECTS'] = 'N';
 			$this->arParams['SHOW_SECTION_TEMPLATES'] = 'N';
 		}
 
@@ -108,16 +110,18 @@ class TasksTopmenuComponent extends TasksBaseComponent
 		return parent::doPostAction();
 	}
 
-	private function isAccessToCounters()
+	private function isAccessToCounters(): bool
 	{
-		return ($this->arParams['USER_ID'] == $this->userId) ||
-			   User::isAdmin() ||
-			   \Bitrix\Tasks\Integration\Bitrix24\User::isAdmin() ||
-			   CTasks::IsSubordinate($this->arParams['USER_ID'], $this->userId);
+		return (int)$this->arParams['USER_ID'] === (int)$this->userId
+			|| User::isSuper()
+			|| CTasks::IsSubordinate($this->arParams['USER_ID'], $this->userId);
 	}
 
 	protected function doPreAction()
 	{
+		$this->arResult['USER_ID'] = (int)$this->userId;
+		$this->arResult['OWNER_ID'] = (int)$this->arParams['USER_ID'];
+
 		$this->arResult['ROLES'] = $this->getRoles();
 		$this->arResult['TOTAL'] = Counter::getInstance($this->arParams['USER_ID'])->get(Counter\Name::TOTAL);
 

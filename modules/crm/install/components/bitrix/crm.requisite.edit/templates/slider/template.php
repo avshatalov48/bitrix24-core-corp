@@ -132,7 +132,7 @@ if (!empty($arResult['REQUISITE_REFERER']))
 
 $tactileSettings = array('DRAG_PRIORITY' => 50, 'ENABLE_SECTION_DRAG' => 'N');
 $formId = $arResult['FORM_ID'];
-$wrapperId = "wrapper_".strtolower($formId);
+$wrapperId = "wrapper_".mb_strtolower($formId);
 
 ?><div id="<?=htmlspecialcharsbx($wrapperId)?>"><?
 $APPLICATION->IncludeComponent(
@@ -185,7 +185,9 @@ $APPLICATION->IncludeComponent(
 				enableFieldMasquerading: <?=$enableFieldMasquerading ? 'true' : 'false'?>,
 				fieldNameTemplate: "<?=CUtil::JSEscape($fieldNameTemplate)?>",
 				lastInForm: <?=$arResult['IS_LAST_IN_FORM'] === 'Y' ? 'true' : 'false'?>,
-				externalRequisiteSearchConfig: <?=CUtil::PhpToJSObject($externalRequisiteSearchConfig)?>
+				externalRequisiteSearchConfig: <?=CUtil::PhpToJSObject($externalRequisiteSearchConfig)?>,
+				features: <?php echo CUtil::PhpToJSObject(is_array($arResult['FEATURES']) ?
+					$arResult['FEATURES'] : []);?>
 			}
 		);
 

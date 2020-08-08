@@ -3,7 +3,7 @@ define('NO_KEEP_STATISTIC', true);
 define('NO_AGENT_STATISTIC', true);
 define('NOT_CHECK_PERMISSIONS', true);
 
-$siteID = isset($_REQUEST['site']) ? substr(preg_replace('/[^a-z0-9_]/i', '', $_REQUEST['site']), 0, 2) : '';
+$siteID = isset($_REQUEST['site'])? mb_substr(preg_replace('/[^a-z0-9_]/i', '', $_REQUEST['site']), 0, 2) : '';
 if($siteID !== '')
 {
 	define('SITE_ID', $siteID);
@@ -64,7 +64,7 @@ else
 	}
 }
 
-$response = new Main\HttpResponse(Main\Application::getInstance()->getContext());
+$response = new Main\HttpResponse();
 $response->addHeader('Content-Type', 'application/json');
 $response->flush(Main\Web\Json::encode($result));
 

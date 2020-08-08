@@ -13,19 +13,18 @@ use Bitrix\Timeman\Model\Schedule\Violation\ViolationRules;
 use Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEvent;
 use Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEventTable;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
-use Bitrix\Timeman\Repository\Schedule\ShiftPlanRepository;
+use Bitrix\Timeman\Repository\Schedule\ViolationRulesRepository;
 use Bitrix\Timeman\Repository\Worktime\WorktimeRepository;
 use Bitrix\Timeman\Service\Worktime\Result\WorktimeServiceResult;
 use Bitrix\Timeman\Service\Worktime\Violation\WorktimeViolationManager;
 use Bitrix\Timeman\Service\Worktime\Violation\WorktimeViolationParams;
-use Bitrix\Timeman\Service\Worktime\WorktimeAction;
+use Bitrix\Timeman\Service\Worktime\Action\WorktimeAction;
+use Bitrix\Timeman\Service\Worktime\WorktimeLiveFeedManager;
 
 Loc::loadMessages(__FILE__);
 
 abstract class WorktimeManager
 {
-	/** @var WorktimeRepository */
-	protected $worktimeRepository;
 	/** @var WorktimeRecordForm */
 	protected $worktimeRecordForm;
 	/** @var Schedule */
@@ -34,70 +33,61 @@ abstract class WorktimeManager
 	private $record;
 	/** @var Shift */
 	private $shift;
-	/** @var WorktimeViolationManager */
+	private $recordManager;
+
 	private $violationManager;
-	private $personalViolationRules;
-	private $shiftPlanRepository;
+	private $violationRulesRepository;
 
 	public function __construct(WorktimeViolationManager $violationManager,
-								WorktimeRecordForm $worktimeRecordForm,
-								WorktimeRepository $worktimeRepository,
-								ShiftPlanRepository $shiftPlanRepository)
+								ViolationRulesRepository $violationRulesRepository,
+								WorktimeRecordForm $worktimeRecordForm
+	)
 	{
 		$builder = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
-		$allowedConsumerClasses = [
-			'Bitrix\Timeman\Service\Worktime\Record\WorktimeRecordManagerFactory',
-		];
-		if (count($builder) < 2 || !isset($builder[1]['class']) ||
-			!in_array($builder[1]['class'], $allowedConsumerClasses, true)
-		)
+		$allowedConsumerClass = WorktimeManagerFactory::class;
+		if (!isset($builder[1]['class']) || $builder[1]['class'] !== $allowedConsumerClass)
 		{
-			throw new SystemException('Need to be instantiated by ' . implode(' or ', $allowedConsumerClasses));
+			throw new SystemException(static::class . ' need to be instantiated by ' . $allowedConsumerClass);
 		}
 		$this->worktimeRecordForm = clone $worktimeRecordForm;
 		$this->violationManager = $violationManager;
-		$this->worktimeRepository = $worktimeRepository;
-		$this->shiftPlanRepository = $shiftPlanRepository;
+		$this->violationRulesRepository = $violationRulesRepository;
 	}
 
-	public function notifyOfAction($record, $schedule)
+	public function notifyOfActionOldStyle($record, $schedule)
+	{
+	}
+
+	public function onBeforeRecordSave(WorktimeRecord $record, WorktimeLiveFeedManager $liveFeedManager)
 	{
 	}
 
 	/**
 	 * @param WorktimeRecord $record
 	 * @param Schedule $schedule
-	 * @param ViolationRules[] $violationRulesList
 	 * @return \Bitrix\Timeman\Service\Worktime\Violation\WorktimeViolation[]
 	 */
-	protected function buildWorktimeViolations($record, $schedule, $types = [], $violationRulesList = [])
+	protected function buildWorktimeViolations($record, $schedule, $types = [])
 	{
-		if (empty($violationRulesList) && $schedule)
+		if (!$schedule || !$record)
 		{
-			$violationRulesList = [$schedule->obtainScheduleViolationRules()];
+			return [];
 		}
 		$result = [];
-		$plan = null;
-		if (Schedule::isScheduleShifted($schedule))
-		{
-			$plan = $this->shiftPlanRepository->findActiveByRecord($record);
-		}
+		$violationRulesList = array_filter([$schedule->obtainScheduleViolationRules(), $this->getPersonalViolationRules()]);
+
 		foreach ($violationRulesList as $violationRules)
 		{
-			$result = array_merge(
-				$result,
-				$this->violationManager->buildViolations(
-					(new WorktimeViolationParams())
-						->setShift($schedule ? $schedule->obtainShiftByPrimary($record->getShiftId()) : null)
-						->setSchedule($schedule)
-						->setViolationRules($violationRules)
-						->setShiftPlan($plan)
-						->setRecord($record),
-					$types
-				)
+			$result[] = $this->violationManager->buildViolations(
+				(new WorktimeViolationParams())
+					->setShift($this->getShift())
+					->setSchedule($schedule)
+					->setViolationRules($violationRules)
+					->setRecord($record),
+				$types
 			);
 		}
-		return $result;
+		return empty($result) ? [] : array_merge(...$result);
 	}
 
 	/**
@@ -106,10 +96,20 @@ abstract class WorktimeManager
 	 * @param ViolationRules[] $violationRulesList
 	 * @return array
 	 */
-	public function buildRecordViolations($record, $schedule, $violationRulesList = [])
+	public function buildRecordViolations($record, $schedule)
 	{
 		return [];
 	}
+
+	protected function isExpired()
+	{
+		if ($this->recordManager && $this->getRecord())
+		{
+			return $this->recordManager->isRecordExpired();
+		}
+		return false;
+	}
+
 
 	public function validateBeforeProcess()
 	{
@@ -123,15 +123,18 @@ abstract class WorktimeManager
 	public function buildEvents($record)
 	{
 		$eventForm = $this->worktimeRecordForm->getFirstEventForm();
-		$recordedTimestamp = null;
-
+		if (!$eventForm)
+		{
+			return [];
+		}
 		return [
 			WorktimeEvent::create(
 				$eventForm->eventName,
 				$record->getUserId(),
 				$record->getId(),
-				$recordedTimestamp,
-				$eventForm->reason
+				null,
+				$eventForm->reason,
+				$this->worktimeRecordForm->device
 			),
 		];
 	}
@@ -167,7 +170,7 @@ abstract class WorktimeManager
 	 * @param WorktimeRecord|null $record
 	 * @return WorktimeServiceResult
 	 */
-	protected function verifyAfterUpdatingRecord($record)
+	private function verifyAfterUpdatingRecord(?WorktimeRecord $record, WorktimeRepository $worktimeRepository)
 	{
 		$result = new WorktimeServiceResult();
 		if ($record)
@@ -181,19 +184,28 @@ abstract class WorktimeManager
 					)
 				);
 			}
-			if ($this->checkIntersectingRecords())
+			if ($this->checkOverlappingRecords())
 			{
-				if ($this->worktimeRepository->findIntersectingRecordByDates(
-					$record->getUserId(),
-					$record->getRecordedStartTimestamp(),
-					$record->getRecordedStopTimestamp(),
-					$record->getId()
-				))
+				if ($worktimeRepository->findOverlappingRecordByDates($record))
 				{
 					return $result->addError(new Error(
 							Loc::getMessage('TM_BASE_SERVICE_RESULT_ERROR_OTHER_RECORD_FOR_DATES_EXISTS'),
 							WorktimeServiceResult::ERROR_FOR_USER)
 					);
+				}
+			}
+			if ($this->checkStartGreaterThanNow())
+			{
+				if ($record && $this->worktimeRecordForm->recordedStartSeconds !== null)
+				{
+					$startTimestamp = $record->getRecordedStartTimestamp();
+					if ($startTimestamp > TimeHelper::getInstance()->getUtcNowTimestamp())
+					{
+						return $result->addError(new Error(
+								Loc::getMessage('TM_BASE_SERVICE_RESULT_ERROR_START_GREATER_THAN_NOW'),
+								WorktimeServiceResult::ERROR_FOR_USER)
+						);
+					}
 				}
 			}
 		}
@@ -204,12 +216,12 @@ abstract class WorktimeManager
 	 * @param WorktimeAction $action
 	 * @return WorktimeServiceResult
 	 */
-	public function buildActualRecord($schedule, $shift, $record, $personalViolationRules = null)
+	public function buildActualRecord($action, WorktimeRepository $worktimeRepository)
 	{
-		$this->schedule = $schedule;
-		$this->shift = $shift;
-		$this->record = $record;
-		$this->personalViolationRules = $personalViolationRules;
+		$this->schedule = $action->getSchedule();
+		$this->shift = $action->getShift();
+		$this->record = $action->getRecord();
+		$this->recordManager = $action->getRecordManager();
 		$verifyResult = $this->verifyBeforeProcessUpdatingRecord();
 		if (!$verifyResult->isSuccess())
 		{
@@ -225,7 +237,7 @@ abstract class WorktimeManager
 				)
 			);
 		}
-		$verifyResultAfter = $this->verifyAfterUpdatingRecord($record);
+		$verifyResultAfter = $this->verifyAfterUpdatingRecord($record, $worktimeRepository);
 		if (!$verifyResultAfter->isSuccess())
 		{
 			return WorktimeServiceResult::createByResult($verifyResultAfter);
@@ -338,9 +350,20 @@ abstract class WorktimeManager
 	/**
 	 * @return ViolationRules|null
 	 */
-	protected function getPersonalViolationRules()
+	protected function getPersonalViolationRules(): ?ViolationRules
 	{
-		return $this->personalViolationRules;
+		static $personalViolationRules = false;
+		if ($personalViolationRules === false)
+		{
+			$personalViolationRules = null;
+			if ($this->getRecord() && $this->getRecord()->getScheduleId() > 0 && $this->getRecord()->getId() > 0)
+			{
+				$personalViolationRules = $this->violationRulesRepository->findFirstByScheduleIdAndEntityCode(
+					$this->getRecord()->getScheduleId(), 'U' . $this->getRecord()->getId()
+				);
+			}
+		}
+		return $personalViolationRules;
 	}
 
 	/**
@@ -361,10 +384,15 @@ abstract class WorktimeManager
 
 	protected function needToSaveCompatibleReports()
 	{
-		return !$this->getSchedule() || !$this->getSchedule()->isFlexible();
+		return !$this->getSchedule() || !$this->getSchedule()->isFlextime();
 	}
 
-	protected function checkIntersectingRecords()
+	protected function checkOverlappingRecords()
+	{
+		return false;
+	}
+
+	protected function checkStartGreaterThanNow()
 	{
 		return false;
 	}

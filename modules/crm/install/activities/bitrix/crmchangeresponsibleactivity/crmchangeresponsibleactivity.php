@@ -129,7 +129,7 @@ class CBPCrmChangeResponsibleActivity extends CBPActivity
 
 	private function getResponsibleFieldName($documentId)
 	{
-		if (strpos($documentId[2], 'ORDER_') === 0 || strpos($documentId[2], 'INVOICE_') === 0)
+		if (mb_strpos($documentId[2], 'ORDER_') === 0 || mb_strpos($documentId[2], 'INVOICE_') === 0)
 		{
 			return 'RESPONSIBLE_ID';
 		}

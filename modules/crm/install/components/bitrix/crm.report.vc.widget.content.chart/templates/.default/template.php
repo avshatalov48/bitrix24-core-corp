@@ -40,23 +40,49 @@ $lastStageCode = end($stages);
     <tr class="crm-report-chart-tr crm-report-chart-widget">
 		<td colspan="<?=count($arResult['DATA']['stages'])?>">
 			<div class="crm-report-chart-through-funnel-widget-conversion crm-report-chart-funnel-through-funnel-widget-conversion-inline">
-				<?if($arParams['IS_COSTABLE'] && !$arParams['IS_TRAFFIC']):?>
-					<div class="crm-report-chart-through-funnel-widget-title"><?=Loc::getMessage('CRM_REPORT_VC_W_C_CHART_STAGE_ROI')?></div>
+
+				<?
+				if($arParams['IS_COSTABLE'] && !$arParams['IS_TRAFFIC'])
+				{
+					$colorCode = 'roi';
+					$colorCaption = Loc::getMessage('CRM_REPORT_VC_W_C_CHART_STAGE_ROI');
+				}
+				else
+				{
+					$colorCode = 'conversion';
+					$colorCaption = Loc::getMessage('CRM_REPORT_VC_W_C_CHART_STAGE_CONV_FULL');
+				}
+
+				?>
+				<div class="crm-report-chart-through-funnel-widget-title"><?=$colorCaption?></div>
 					<div class="crm-report-chart-through-funnel-widget-value-box">
+					<?
+
+					$val = $arResult['DATA'][$colorCode];
+					if (is_array($val))
+					{
+						$conversionColor = htmlspecialcharsbx($val['color']);
+						$conversionText = htmlspecialcharsbx($val['text']);
+						$conversionValue = htmlspecialcharsbx($val['value']);
+						$conversionValue = str_replace('%', '', $conversionValue);
+						echo '<div class="crm-report-chart-grid-rating">'
+							. '<div class="crm-report-chart-through-funnel-widget-value">' . $conversionValue . '</div>'
+							. '<div class="crm-report-chart-through-funnel-widget-percent">% &nbsp;</div>'
+							. '<div class="crm-report-chart-grid-rating-icon" style="background: ' . $conversionColor . '; margin-top: 6px;"></div>'
+							. '<div class="crm-report-chart-grid-rating-text" style="color: ' . $conversionColor . '; margin-top: 6px;">' . $conversionText . '</div>'
+							. '</div>';
+					}
+					else
+					{
+						?>
 						<div class="crm-report-chart-through-funnel-widget-value">
-							<?=htmlspecialcharsbx($arResult['DATA']['roi'])?>
+							<?=htmlspecialcharsbx($val)?>
 						</div>
 						<div class="crm-report-chart-through-funnel-widget-percent">%</div>
-					</div>
-				<?else:?>
-					<div class="crm-report-chart-through-funnel-widget-title"><?=Loc::getMessage('CRM_REPORT_VC_W_C_CHART_STAGE_CONV_FULL')?></div>
-					<div class="crm-report-chart-through-funnel-widget-value-box">
-						<div class="crm-report-chart-through-funnel-widget-value">
-							<?=htmlspecialcharsbx($arResult['DATA']['conversion'])?>
-						</div>
-						<div class="crm-report-chart-through-funnel-widget-percent">%</div>
-					</div>
-				<?endif;?>
+						<?
+					}
+					?>
+				</div>
 			</div>
 		</td>
 	</tr>

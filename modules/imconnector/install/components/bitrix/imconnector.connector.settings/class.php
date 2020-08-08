@@ -96,16 +96,49 @@ class ImConnectorConnectorSettings extends \CBitrixComponent
 			}
 
 			if(empty($this->arResult['LINE']) && $id === 0)
+			{
 				$config['ACTIVE'] = true;
+			}
 			elseif(!empty($this->arResult['LINE']) && $config['ID'] == $this->arResult['LINE'])
+			{
 				$config['ACTIVE'] = true;
+			}
 
-			$config['URL'] = str_replace(array('#ID#', '#LINE#'), array($this->arResult['ID'], $config['ID']), $this->arResult['PATH_TO_CONNECTOR_LINE']);
+			$config['URL'] = str_replace(array('#ID#', '#LINE#'), [$this->arResult['ID'], $config['ID']], $this->arResult['PATH_TO_CONNECTOR_LINE']);
 
-			if (!empty($this->request['group_orders']))
+			if (
+				!empty($this->request['group_orders']) ||
+				//TODO: For iMessage
+					(
+						!empty($this->request['page_imess']) &&
+						$this->request['page_imess'] == 'connection' &&
+						!empty($this->request['business_id'])
+					)
+				//END iMessage
+			)
 			{
 				$uri = new Uri($config['URL']);
-				$uri->addParams(array('group_orders' => htmlspecialcharsbx($this->request['group_orders'])));
+				if(!empty($this->request['group_orders']))
+				{
+					$uri->addParams(['group_orders' => htmlspecialcharsbx($this->request['group_orders'])]);
+				}
+
+				//TODO: For iMessage
+				if(
+					!empty($this->request['page_imess']) &&
+					$this->request['page_imess'] == 'connection' &&
+					!empty($this->request['business_id'])
+				)
+				{
+					$uri->addParams(['business_id' => htmlspecialcharsbx($this->request['business_id'])]);
+					$uri->addParams(['page_imess' => htmlspecialcharsbx($this->request['page_imess'])]);
+
+					if(!empty($this->request['business_name']))
+					{
+						$uri->addParams(['business_name' => htmlspecialcharsbx($this->request['business_name'])]);
+					}
+				}
+				//END iMessage
 				$config['URL'] = $uri->getUri();
 			}
 

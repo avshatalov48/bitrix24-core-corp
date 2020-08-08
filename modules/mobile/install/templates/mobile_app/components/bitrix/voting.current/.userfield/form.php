@@ -31,5 +31,5 @@ $this->IncludeLangFile("form.php");
 	);
 ?></div><?
 ?><a href="javascript:void(0);" class="bx-vote-button bx-vote-button-vote" id="vote-do-<?=$arParams["UID"]?>"><?=GetMessage("VOTE_SUBMIT_BUTTON")?></a><?
-?><a class="bx-vote-button bx-vote-button-result" href="<?=(strlen($arParams["ACTION_PAGE"]) > 0 ? $arParams["ACTION_PAGE"] : $APPLICATION->GetCurPageParam("view_result=Y",
+?><a class="bx-vote-button bx-vote-button-result" href="<?=($arParams["ACTION_PAGE"] <> '' ? $arParams["ACTION_PAGE"] : $APPLICATION->GetCurPageParam("view_result=Y",
 	array("VOTE_ID","VOTING_OK","VOTE_SUCCESSFULL", "view_result", "view_form", "sessid", "AJAX_RESULT", "AJAX_POST", "VOTE_ID")))?>" id="vote-view-<?=$arParams["UID"]?>"><?=GetMessage("VOTE_SUBMIT_RESULTS")?></a>

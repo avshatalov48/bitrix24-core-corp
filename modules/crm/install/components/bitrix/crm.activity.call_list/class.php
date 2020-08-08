@@ -53,12 +53,9 @@ class CrmActivityCallListComponent extends \CBitrixComponent
 		
 		if(!\Bitrix\Crm\CallList\CallList::isAvailable())
 		{
-			$result->setData(array(
-				'RESTRICTION' => array(
-					'HEADER' => Bitrix\Crm\CallList\CallList::getLicensePopupHeader(),
-					'CONTENT' => \Bitrix\Crm\CallList\CallList::getLicensePopupContent()
-				)
-			));
+			$result->setData([
+				'RESTRICTION' => \Bitrix\Crm\Restriction\RestrictionManager::getCallListRestriction()->prepareInfoHelperScript()
+			]);
 			return $result;
 		}
 

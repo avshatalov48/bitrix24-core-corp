@@ -131,7 +131,7 @@ class FileIndexSearch
 		}
 
 		$enabledLanguages = Translate\Config::getEnabledLanguages();
-		$languageUpperKeys = array_combine($enabledLanguages, array_map('strtoupper', $enabledLanguages));
+		$languageUpperKeys = array_combine($enabledLanguages, array_map('mb_strtoupper', $enabledLanguages));
 
 		$selectedLanguages = array();
 		foreach ($languageUpperKeys as $langId => $langUpper)
@@ -258,7 +258,7 @@ class FileIndexSearch
 		};
 		$trimSlash = static function(&$val)
 		{
-			if (substr($val, -4) === '.php')
+			if (mb_substr($val, -4) === '.php')
 			{
 				$val = '/'. trim($val, '/');
 			}
@@ -280,7 +280,7 @@ class FileIndexSearch
 				{
 					if (!empty($testPath) && trim($testPath) !== '')
 					{
-						if (strpos($testPath, '/') === false)
+						if (mb_strpos($testPath, '/') === false)
 						{
 							$pathNameIncludes[] = $testPath;
 						}
@@ -331,7 +331,7 @@ class FileIndexSearch
 				{
 					if (!empty($testPath) && trim($testPath) !== '')
 					{
-						if (strpos($testPath, '/') === false)
+						if (mb_strpos($testPath, '/') === false)
 						{
 							$pathNameExcludes[] = $testPath;
 						}

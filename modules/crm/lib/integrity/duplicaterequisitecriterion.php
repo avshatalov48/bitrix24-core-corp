@@ -171,7 +171,7 @@ class DuplicateRequisiteCriterion extends DuplicateCriterion
 			$value = preg_replace('/[^0-9]/i', '', $value);
 			if($value !== '')
 			{
-				$result[] = strtolower($value);
+				$result[] = mb_strtolower($value);
 			}
 		}
 		return array_unique($result);

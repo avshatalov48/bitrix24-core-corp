@@ -22,3 +22,4 @@ DROP TABLE IF EXISTS b_disk_right_setup_session;
 DROP TABLE IF EXISTS b_disk_tmp_simple_right;
 DROP TABLE IF EXISTS b_disk_volume;
 DROP TABLE IF EXISTS b_disk_volume_deleted_log;
+DROP TABLE IF EXISTS b_disk_attached_view_type;

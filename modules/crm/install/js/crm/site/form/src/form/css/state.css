@@ -14,8 +14,9 @@
 	position: absolute;
 	top: 0;
 	left: 0;
-	bottom: 0;
+	bottom: -5px;
 	right: 0;
+	background-color: #fff;
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
@@ -25,9 +26,8 @@
 	-webkit-box-pack: center;
 	-ms-flex-pack: center;
 	justify-content: center;
-	padding-bottom: 0;
+	padding-bottom: 15px;
 	z-index: 15;
-	/*border-radius: 5px 5px 0 0;*/
 }
 
 /*region b24-form-loader*/

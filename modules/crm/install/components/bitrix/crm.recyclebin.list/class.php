@@ -14,9 +14,12 @@ Main\Loader::includeModule('recyclebin');
 
 class CCrmRecyclebinListComponent extends \CBitrixComponent
 {
+	private const TTL = 30;
+
 	public function executeComponent()
 	{
 		$this->arResult['GRID_ID'] = 'CRM_RECYCLE_BIN';
+		$this->arResult['TTL'] = self::TTL;
 
 		$this->arResult['ENTITY_TYPE_NAME'] = isset($this->arParams['~ENTITY_TYPE_NAME'])
 			? $this->arParams['~ENTITY_TYPE_NAME'] : '';

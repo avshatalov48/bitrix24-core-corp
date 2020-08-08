@@ -213,6 +213,8 @@ class Order extends \CCrmDocument
 			),
 		];
 
+		$fields += self::getShippingFields();
+
 		self::appendReferenceFields(
 			$fields,
 			\CCrmDocumentContact::getEntityFields(\CCrmOwnerType::ContactName),
@@ -298,6 +300,7 @@ class Order extends \CCrmDocument
 			$fields['PRICE_FORMATTED'] = \CCrmCurrency::MoneyToString($fields['PRICE'], $fields['CURRENCY']);
 
 			self::fillResponsibleFields($responsibleId, $fields);
+			self::fillShippingFields($order, $fields);
 			self::fillBuyerFields($buyerId, $fields);
 			self::fillShopFields($order, $fields);
 			self::convertDateFields($fields);
@@ -384,6 +387,32 @@ class Order extends \CCrmDocument
 	public static function getEntityName($entity)
 	{
 		return Loc::getMessage('CRM_BP_DOCUMENT_ORDER_ENTITY_NAME');
+	}
+
+	private static function getShippingFields()
+	{
+		return [
+			'SHIPPING.ALL.TRACKING_NUMBER' => [
+				'Name' => Loc::getMessage('CRM_BP_DOCUMENT_ORDER_FIELD_SHIPPING_TRACK_NUMBERS'),
+				'Type' => 'string',
+				'Multiple' => true
+			]
+		];
+	}
+
+	private static function fillShippingFields(Crm\Order\Order $order, array &$fields)
+	{
+		$fields['SHIPPING.ALL.TRACKING_NUMBER'] = [];
+
+		$collection = $order->getShipmentCollection()->getNotSystemItems();
+		/** @var \Bitrix\Sale\Shipment $shipment */
+		foreach ($collection as $shipment)
+		{
+			if ($num = $shipment->getField('TRACKING_NUMBER'))
+			{
+				$fields['SHIPPING.ALL.TRACKING_NUMBER'][] = $num;
+			}
+		}
 	}
 
 	public function getDocumentName($documentId)

@@ -76,6 +76,7 @@ function __MSLOnPostRead(node, e)
 			post_id : node.getAttribute("bx-data-post-id"),
 			options : [{ post_id : node.getAttribute("bx-data-post-id"), name : "BLOG_POST_IMPRTNT", value : "Y"}],
 			sessid : BX.bitrix_sessid()};
+
 		BX.ajax({
 			method : 'GET',
 			url : BX.message('SITE_DIR') + 'mobile/index.php?' + BX.ajax.prepareData(data),
@@ -120,6 +121,10 @@ function __MSLOnFeedPreInit(params) // only for the list
 	BX.addCustomEvent("onFrameDataReceivedBefore", function(obCache) {
 		BitrixMobile.LazyLoad.clearImages();
 	});
+	BX.addCustomEvent("BX.LazyLoad:ImageLoaded", function() {
+		var windowSize = BX.GetWindowSize();
+		window.maxScroll = windowSize.scrollHeight - windowSize.innerHeight - 190;
+	});
 
 	BX.addCustomEvent("onFrameDataReceived", function(obCache) {
 		window.isPullDownEnabled = false;
@@ -127,7 +132,6 @@ function __MSLOnFeedPreInit(params) // only for the list
 		window.isFrameDataReceived = true;
 		app.pullDownLoadingStop();
 		BitrixMobile.LazyLoad.showImages(true);
-		BX.localStorage.set('mobileLivefeedRefreshTS',  Math.round(new Date().getTime() / 1000), 86400*30);
 	});
 
 	BX.addCustomEvent("onFrameDataProcessed", function(blocks, bFromCache) {
@@ -252,6 +256,7 @@ function __MSLOnFeedInit(params)
 
 	oMSL.bFollowDefault = !!params.bFollowDefault;
 	oMSL.groupID = parseInt(params.groupID);
+	oMSL.ftMinTokenSize = parseInt(params.ftMinTokenSize);
 
 	oMSL.bShowExpertMode = !!params.bShowExpertMode;
 	oMSL.bExpertMode = !!params.bExpertMode;
@@ -259,6 +264,7 @@ function __MSLOnFeedInit(params)
 	oMSL.bDetailEmptyPage = bEmptyPage;
 	oMSL.curUrl = params.curUrl;
 	oMSL.appCacheDebug = !!params.appCacheDebug;
+	oMSL.pageType = (logID <= 0 && !bEmptyPage ? 'list' : 'detail');
 
 	if (!bAjaxCall)
 	{
@@ -276,51 +282,12 @@ function __MSLOnFeedInit(params)
 		logID <= 0
 		&& !bEmptyPage
 		&& !bAjaxCall
-		&& !bReload
 	)
 	{
-		oMSL.registerBlocksToCheck();
-
-		if (
-			typeof window.bFeedInitialized != 'undefined'
-			&& window.bFeedInitialized
-		)
+		if (!bReload)
 		{
-			if (!bAjaxCall)
-			{
-				BX.ready(function() {
-					var windowSize = BX.GetWindowSize();
-					window.maxScroll = windowSize.scrollHeight - windowSize.innerHeight - 190;
-					setTimeout(function() {
-
-						oMSL.checkNodesHeight();
-
-						BX.onCustomEvent(window, 'BX.UserContentView.onRegisterViewAreaListCall', [{
-							containerId: 'lenta_wrapper',
-							className: 'post-item-contentview',
-							fullContentClassName: 'post-item-full-content'
-						}]);
-					}, 1000);
-				});
-			}
-			return;
+			oMSL.initSearchBar();
 		}
-		else
-		{
-			BX.ready(function() {
-				BX.onCustomEvent(window, 'BX.UserContentView.onInitCall', [{
-					mobile: true,
-					ajaxUrl: BX.message('MSLSiteDir') + 'mobile/ajax.php',
-					commentsContainerId: 'post-comments-wrap',
-					commentsClassName: 'post-comment-wrap'
-				}]);
-			});
-
-			window.bFeedInitialized = true;
-		}
-
-		window.arLikeRandomID = {};
-		window.LiveFeedID = parseInt(Math.random() * 100000);
 
 		oMSL.listPageMenuItems = [];
 
@@ -329,17 +296,27 @@ function __MSLOnFeedInit(params)
 			BX.ready(function()
 			{
 				oMSL.listPageMenuItems.push({
-					name: BX.message('MSLAddPost'),
+					id: 'addPost',
+					name: BX.message('MOBILE_EXT_LIVEFEED_LIST_MENU_ADD_POST'),
 					image: "/bitrix/templates/mobile_app/images/lenta/menu/pencil.png",
 					action: function()
 					{
-						app.exec('showPostForm', oMSL.showNewPostForm());
+						oMSL.initPostForm({
+							groupId: groupID,
+							callback: function() {
+								app.exec('showPostForm', oMSL.showNewPostForm({
+									groupId: groupID
+								}));
+							}
+						});
 					},
 					arrowFlag: false
 				});
 
 				oMSL.listPageMenuItems.push({
-					name: BX.message('MSLMenuItemGroupTasks'),
+					id: 'groupTasks',
+					name: BX.message('MOBILE_EXT_LIVEFEED_LIST_MENU_GROUP_TASKS'),
+					image: "/bitrix/templates/mobile_app/images/lenta/menu/n_check.png",
 					icon: 'checkbox',
 					arrowFlag: true,
 					action: function() {
@@ -363,7 +340,9 @@ function __MSLOnFeedInit(params)
 				});
 
 				oMSL.listPageMenuItems.push({
-					name: BX.message('MSLMenuItemGroupFiles'),
+					id: 'groupFiles',
+					name: BX.message('MOBILE_EXT_LIVEFEED_LIST_MENU_GROUP_FILES'),
+					image: "/bitrix/templates/mobile_app/images/lenta/menu/files.png",
 					action: function(){
 						app.openBXTable({
 							url: (BX.message('MobileSiteDir') ? BX.message('MobileSiteDir') : '/') + 'mobile/?mobile_action=disk_folder_list&type=group&path=/&entityId=' + groupID,
@@ -380,6 +359,7 @@ function __MSLOnFeedInit(params)
 				if (BX.message('MSLPathToKnowledgeGroup'))
 				{
 					oMSL.listPageMenuItems.push({
+						id: 'knowledge',
 						name: BX.message('MSLTitleKnowledgeGroup'),
 						image:"/bitrix/templates/mobile_app/images/lenta/menu/knowledge_base.png",
 						action: function(){
@@ -392,8 +372,15 @@ function __MSLOnFeedInit(params)
 					});
 				}
 
-				oMSL.showPageMenu('list');
+				oMSL.initPageMenu('list');
 			});
+
+			setTimeout(function() {
+				BX.MobileLivefeed.Instance.setPageId('list_group_' + groupID);
+				BX.MobileLivefeed.Instance.setOptions({
+					groupId: groupID
+				});
+			}, 0); // instead of on ready
 		}
 		else
 		{
@@ -404,88 +391,108 @@ function __MSLOnFeedInit(params)
 					if (!bFiltered)
 					{
 						oMSL.listPageMenuItems.push({
-							name: BX.message('MSLAddPost'),
+							id: 'addPost',
+							name: BX.message('MOBILE_EXT_LIVEFEED_LIST_MENU_ADD_POST'),
 							image: "/bitrix/templates/mobile_app/images/lenta/menu/pencil.png",
 							action: function()
 							{
-								app.exec('showPostForm', oMSL.showNewPostForm());
+								oMSL.initPostForm({
+									groupId: groupID,
+									callback: function() {
+										app.exec('showPostForm', oMSL.showNewPostForm());
+									}
+								});
 							},
 							arrowFlag: false
 						});
 
-						if (BX.message('MSLMenuItemWork'))
+						if (
+							BX.message('MOBILE_EXT_LIVEFEED_TASKS_INSTALLED') == 'Y'
+							|| BX.message('MOBILE_EXT_LIVEFEED_TIMEMAN_INSTALLED') == 'Y'
+						)
 						{
 							oMSL.listPageMenuItems.push({
-								name: BX.message('MSLMenuItemWork'),
+								id: 'presetWork',
+								name: BX.message('MOBILE_EXT_LIVEFEED_LIST_MENU_PRESET_WORK'),
 								image: "/bitrix/templates/mobile_app/images/lenta/menu/work.png",
 								arrowFlag: true,
 								action: function() {
 									app.loadPageBlank({
 										url: (BX.message('MobileSiteDir') ? BX.message('MobileSiteDir') : '/') + "mobile/index.php?work=Y",
 										cache: false,
-										bx24ModernStyle: true
+										bx24ModernStyle: true,
+										useSearchBar: true
 									});
 								}
 							});
 						}
 
 						oMSL.listPageMenuItems.push({
-							name: BX.message('MSLMenuItemFavorites'),
+							id: 'presetFavorites',
+							name: BX.message('MOBILE_EXT_LIVEFEED_LIST_MENU_PRESET_FAVORITES'),
 							image: "/bitrix/templates/mobile_app/images/lenta/menu/favorite.png",
 							arrowFlag: true,
 							action: function() {
 								app.loadPageBlank({
 									url: (BX.message('MobileSiteDir') ? BX.message('MobileSiteDir') : '/') + "mobile/index.php?favorites=Y",
 									cache: false,
-									bx24ModernStyle: true
+									bx24ModernStyle: true,
+									useSearchBar: true
 								});
 							}
 						});
 
 						oMSL.listPageMenuItems.push({
-							name: BX.message('MSLMenuItemMy'),
+							id: 'presetMy',
+							name: BX.message('MOBILE_EXT_LIVEFEED_LIST_MENU_PRESET_MY'),
 							image: "/bitrix/templates/mobile_app/images/lenta/menu/mine.png",
 							arrowFlag: true,
 							action: function() {
 								app.loadPageBlank({
 									url: (BX.message('MobileSiteDir') ? BX.message('MobileSiteDir') : '/') + "mobile/index.php?my=Y",
 									cache: false,
-									bx24ModernStyle: true
+									bx24ModernStyle: true,
+									useSearchBar: true
 								});
 							}
 						});
 
 						oMSL.listPageMenuItems.push({
-							name: BX.message('MSLMenuItemImportant'),
+							id: 'presetImportant',
+							name: BX.message('MOBILE_EXT_LIVEFEED_LIST_MENU_PRESET_IMPORTANT'),
 							image: "/bitrix/templates/mobile_app/images/lenta/menu/important.png",
 							arrowFlag: true,
 							action: function() {
 								app.loadPageBlank({
 									url: (BX.message('MobileSiteDir') ? BX.message('MobileSiteDir') : '/') + "mobile/index.php?important=Y",
 									cache: false,
-									bx24ModernStyle: true
+									bx24ModernStyle: true,
+									useSearchBar: true
 								});
 							}
 						});
 
-						if (BX.message('MSLMenuItemBizproc'))
+						if (BX.message('MOBILE_EXT_LIVEFEED_LISTS_INSTALLED') == 'Y')
 						{
 							oMSL.listPageMenuItems.push({
-								name: BX.message('MSLMenuItemBizproc'),
+								id: 'presetBizproc',
+								name: BX.message('MOBILE_EXT_LIVEFEED_LIST_MENU_PRESET_BIZPROC'),
 								image: "/bitrix/templates/mobile_app/images/lenta/menu/workflow.png",
 								arrowFlag: true,
 								action: function() {
 									app.loadPageBlank({
 										url: (BX.message('MobileSiteDir') ? BX.message('MobileSiteDir') : '/') + "mobile/index.php?bizproc=Y",
 										cache: false,
-										bx24ModernStyle: true
+										bx24ModernStyle: true,
+										useSearchBar: true
 									});
 								}
 							});
 						}
 
 						oMSL.listPageMenuItems.push({
-							name: BX.message('MSLMenuItemRefresh'),
+							id: 'refresh',
+							name: BX.message('MOBILE_EXT_LIVEFEED_LIST_MENU_REFRESH'),
 							image: "/bitrix/templates/mobile_app/images/lenta/menu/n_refresh.png",
 							arrowFlag: false,
 							action: function() {
@@ -496,6 +503,7 @@ function __MSLOnFeedInit(params)
 						if (oMSL.bUseFollow)
 						{
 							oMSL.listPageMenuItems.push({
+								id: 'followDefault',
 								name: (
 									oMSL.getFollowDefaultValue()
 										? BX.message('MSLMenuItemFollowDefaultY')
@@ -515,6 +523,7 @@ function __MSLOnFeedInit(params)
 						if (oMSL.bShowExpertMode)
 						{
 							oMSL.listPageMenuItems.push({
+								id: 'expertMode',
 								name: (
 									oMSL.bExpertMode
 										? BX.message('MSLMenuItemExpertModeY')
@@ -531,235 +540,188 @@ function __MSLOnFeedInit(params)
 							});
 						}
 
-						oMSL.showPageMenu('list');
-
-						app.addButtons({
-							addPostButton:{
-								type: "edit",
-								style:"custom",
-								callback:function(){
-									app.exec('showPostForm', oMSL.showNewPostForm());
-								}
-							}
-						});
-					}
-					else
-					{
-						BXMobileApp.UI.Page.TopBar.title.setText(BX.message('MSLLogTitle'));
-						BXMobileApp.UI.Page.TopBar.title.setCallback("");
-						BXMobileApp.UI.Page.TopBar.title.show();
+						oMSL.initPageMenu('list');
 					}
 				}, 1000);
+
+				BX.MobileLivefeed.Instance.setPageId('list');
 			});
 		}
 
-		var selectedDestinations = {
-			a_users: [],
-			b_groups: []
-		};
+		setTimeout(function()
+		{
+			BX.MobileLivefeed.Instance.setOptions({
+				signedParameters: (BX.type.isNotEmptyString(params.signedParameters) ? params.signedParameters : {})
+			});
+		}, 0); // instead of on ready
 
-		oMSL.clearPostFormDestination(selectedDestinations, groupID); // to work before DBLoad
-
-		BX.MSL.DBLoad(
+		if (!bReload)
+		{
+			setTimeout(function()
 			{
-				onLoad: function (obResult)
+				BX.MobileLivefeed.PublicationQueueInstance.emit('onFeedReady');
+			}, 0); // instead of on ready
+
+			oMSL.registerBlocksToCheck();
+
+			if (
+				typeof window.bFeedInitialized != 'undefined'
+				&& window.bFeedInitialized
+			)
+			{
+				BX.ready(function() {
+					BX.MobileLivefeed.Instance.recalcMaxScroll();
+
+					setTimeout(function() {
+
+						oMSL.checkNodesHeight();
+
+						BX.onCustomEvent(window, 'BX.UserContentView.onRegisterViewAreaListCall', [{
+							containerId: 'lenta_wrapper',
+							className: 'post-item-contentview',
+							fullContentClassName: 'post-item-full-content'
+						}]);
+					}, 1000);
+				});
+				return;
+			}
+			else
+			{
+				BX.ready(function() {
+					BX.onCustomEvent(window, 'BX.UserContentView.onInitCall', [{
+						mobile: true,
+						ajaxUrl: BX.message('MSLSiteDir') + 'mobile/ajax.php',
+						commentsContainerId: 'post-comments-wrap',
+						commentsClassName: 'post-comment-wrap'
+					}]);
+				});
+
+				window.bFeedInitialized = true;
+			}
+
+			window.arLikeRandomID = {};
+			window.LiveFeedID = parseInt(Math.random() * 100000);
+
+			if (groupID <= 0)
+			{
+				BX.ready(function()
 				{
-					var i = null;
-
-					selectedDestinations = {
-						a_users: [],
-						b_groups: []
-					};
-
-					if (
-						typeof obResult.SPERM != 'undefined'
-						&& typeof obResult.SPERM.U != 'undefined'
-						&& obResult.SPERM.U != null
-					)
+					setTimeout(function()
 					{
-						for (i = 0; i < obResult.SPERM.U.length; i++)
+						if (!bFiltered)
 						{
-							if (obResult.SPERM.U[i] == 'UA')
-							{
-								if (BX.message('MSLIsDenyToAll') != 'Y')
-								{
-									oMSL.addPostFormDestination(
-										selectedDestinations,
-										{
-											type: 'UA'
+/*
+								app.addButtons({
+									addPostButton:{
+										type: "edit",
+										style:"custom",
+										callback:function(){
+											app.exec('showPostForm', oMSL.showNewPostForm());
 										}
-									);
-								}
-							}
-							else
-							{
-								oMSL.addPostFormDestination(
-									selectedDestinations,
-									{
-										type: 'U',
-										id: obResult.SPERM.U[i].replace('U', ''),
-										name: (
-											typeof obResult.SPERM_NAME != 'undefined'
-											&& typeof obResult.SPERM_NAME.U != 'undefined'
-											&& typeof obResult.SPERM_NAME.U[i] != 'undefined'
-											&& obResult.SPERM_NAME.U[i] != null
-												? obResult.SPERM_NAME.U[i]
-												: ''
-										)
 									}
-								);
-							}
+								});
+*/
 						}
-					}
-
-					if (
-						typeof obResult.SPERM != 'undefined'
-						&& typeof obResult.SPERM.SG != 'undefined'
-						&& obResult.SPERM.SG != null
-					)
-					{
-						for (i = 0; i < obResult.SPERM.SG.length; i++)
+						else
 						{
-							oMSL.addPostFormDestination(
-								selectedDestinations,
-								{
-									type: 'SG',
-									id:  obResult.SPERM.SG[i].replace('SG', ''),
-									name: (
-										typeof obResult.SPERM_NAME.SG[i] != 'undefined'
-										&& typeof obResult.SPERM_NAME.SG != 'undefined'
-										&& typeof obResult.SPERM_NAME.SG[i] != 'undefined'
-										&& obResult.SPERM_NAME.SG[i] != null
-											? obResult.SPERM_NAME.SG[i]
-											: ''
-									)
-								}
-							);
+							BXMobileApp.UI.Page.TopBar.title.setText(BX.message('MSLLogTitle'));
+							BXMobileApp.UI.Page.TopBar.title.setCallback("");
+							BXMobileApp.UI.Page.TopBar.title.show();
 						}
-					}
+					}, 1000);
+				});
+			}
+			oMSL.initPostForm({
+				groupId: groupID
+			});
 
-					if (
-						typeof obResult.POST_MESSAGE != 'undefined'
-						&& obResult.POST_MESSAGE != null
-					)
-					{
-						oMSL.setPostFormParams({
-							messageText: oMSL.unParseMentions(obResult.POST_MESSAGE)
-						});
-					}
-				},
-				onEmpty: function (obResult)
+			BXMobileApp.addCustomEvent("onBlogPostDelete", function(params) {
+				oMSL.pullDownAndRefresh();
+			});
+
+			BX.ready(function()
+			{
+				if (
+					bFiltered
+					&& window.platform == "android"
+				)
 				{
-					selectedDestinations = {
-						a_users: [],
-						b_groups: []
-					};
-					oMSL.clearPostFormDestination(selectedDestinations, groupID);
+					BX.addCustomEvent('onOpenPageBefore', function() {
+						oMSL.pullDownAndRefresh();
+					});
 				}
-			},
-			(groupID > 0 ? groupID : false)
-		);
-
-		oMSL.setPostFormParams({
-			selectedRecipients: selectedDestinations
-		});
-
-		oMSL.setPostFormExtraData({
-			messageUFCode: BX.message('MSLPostFormUFCode')
-		});
-
-		BXMobileApp.addCustomEvent("onMPFSent", function(post_data)
-		{
-			oMSL.onMPFSent(post_data, groupID);
-		});
-
-		BXMobileApp.addCustomEvent("onBlogPostDelete", function(params) {
-			oMSL.pullDownAndRefresh();
-		});
-
-		BX.ready(function()
-		{
-			if (
-				bFiltered
-				&& window.platform == "android"
-			)
-			{
-				BX.addCustomEvent('onOpenPageBefore', function() {
-					oMSL.pullDownAndRefresh();
-				});
-			}
-		});
-
-		BX.addCustomEvent("onStreamRefresh", function(data) {
-			document.location.replace(document.location.href);
-		});
-
-		BXMobileApp.addCustomEvent("onLogEntryRead", function(data) {
-			__MSLLogEntryRead(data.log_id, data.ts, (data.bPull === true || data.bPull === 'YES'));
-		});
-
-		BXMobileApp.addCustomEvent("onCommentsGet", function(data) {
-			if (
-				typeof window.arLogTs['entry_' + data.log_id] != 'undefined'
-				&& window.arLogTs['entry_' + data.log_id] != null
-			)
-			{
-				arLogTs['entry_' + data.log_id] = data.ts;
-			}
-		});
-
-		BXMobileApp.addCustomEvent("onLogEntryCommentAdd", function(data) {
-			oMSL.onLogEntryCommentAdd(data.log_id);
-		});
-
-		// old one
-		BXMobileApp.addCustomEvent("onLogEntryRatingLike", function(data) {
-			oMSL.onLogEntryRatingLike({
-				ratingId: data.rating_id,
-				voteAction: data.voteAction,
-				logId: data.logId
 			});
-		});
 
-		BXMobileApp.addCustomEvent("onLogEntryImpPostRead", function(data) {
-			if (BX('important_post_' + data.postId))
-			{
-				oMSL.onLogEntryImpPostRead({
-					node: BX('important_post_' + data.postId)
-				});
-			}
-		});
-
-		BXMobileApp.addCustomEvent("onLogEntryFollow", function(data)
-		{
-			oMSL.setFollow({
-				logId: data.logId,
-				pageId: data.pageId,
-				bOnlyOn: (typeof data.bOnlyOn != 'undefined' && data.bOnlyOn == 'Y'),
-				bRunEvent: false
+			BXMobileApp.addCustomEvent("onLogEntryRead", function(data) {
+				__MSLLogEntryRead(data.log_id, data.ts, (data.bPull === true || data.bPull === 'YES'));
 			});
-		});
 
-		BXMobileApp.addCustomEvent("onLogEntryFavorites", function(data)
-		{
-			oMSL.onLogEntryFavorites(data.log_id, data.page_id);
-		});
+			BXMobileApp.addCustomEvent("onCommentsGet", function(data) {
+				if (
+					typeof window.arLogTs['entry_' + data.log_id] != 'undefined'
+					&& window.arLogTs['entry_' + data.log_id] != null
+				)
+				{
+					arLogTs['entry_' + data.log_id] = data.ts;
+				}
+			});
 
-		BXMobileApp.addCustomEvent("onLogEntryCommentsNumRefresh", function(data)
-		{
-			oMSL.onLogEntryCommentAdd(data.log_id, data.num);
-		});
+			BXMobileApp.addCustomEvent("onLogEntryCommentAdd", function(data) {
+				oMSL.onLogEntryCommentAdd(data.log_id);
+			});
 
-		BXMobileApp.addCustomEvent("onLogEntryPostUpdated", function(data)
-		{
-			oMSL.onLogEntryPostUpdated(data);
-		});
+			// old one
+			BXMobileApp.addCustomEvent("onLogEntryRatingLike", function(data) {
+				oMSL.onLogEntryRatingLike({
+					ratingId: data.rating_id,
+					voteAction: data.voteAction,
+					logId: data.logId
+				});
+			});
 
-		BX.MobileUI.addLivefeedLongTapHandler(BX("lenta_wrapper_global"), {
-			likeNodeClass: "post-item-informer-like",
-			copyItemClass: "post-item-copyable",
-			copyTextClass: "post-item-copytext"
-		});
+			BXMobileApp.addCustomEvent("onLogEntryImpPostRead", function(data) {
+				if (BX('important_post_' + data.postId))
+				{
+					oMSL.onLogEntryImpPostRead({
+						node: BX('important_post_' + data.postId)
+					});
+				}
+			});
+
+			BXMobileApp.addCustomEvent("onLogEntryFollow", function(data)
+			{
+				oMSL.setFollow({
+					logId: data.logId,
+					pageId: data.pageId,
+					bOnlyOn: (typeof data.bOnlyOn != 'undefined' && data.bOnlyOn == 'Y'),
+					bRunEvent: false
+				});
+			});
+
+			BXMobileApp.addCustomEvent("onLogEntryFavorites", function(data)
+			{
+				oMSL.onLogEntryFavorites(data.log_id, data.page_id);
+			});
+
+			BXMobileApp.addCustomEvent("onLogEntryCommentsNumRefresh", function(data)
+			{
+				oMSL.onLogEntryCommentAdd(data.log_id, data.num);
+			});
+
+			BXMobileApp.addCustomEvent("onLogEntryPostUpdated", function(data)
+			{
+				oMSL.onLogEntryPostUpdated(data);
+			});
+
+
+
+
+			BX.MobileUI.addLivefeedLongTapHandler(BX("lenta_wrapper_global"), {
+				likeNodeClass: "post-item-informer-like",
+				copyItemClass: "post-item-copyable",
+				copyTextClass: "post-item-copytext"
+			});
+		}
 	}
 	else if (bEmptyPage)
 	{
@@ -769,28 +731,16 @@ function __MSLOnFeedInit(params)
 
 		BX.ready(function()
 		{
-			BX.addCustomEvent('onMPFSentEditStart', function() {
-				app.showPopupLoader({text:""});
-			});
-
 			__MSLDrawDetailPage();
 			BX.addCustomEvent('onOpenPageBefore', function() { __MSLDrawDetailPage(); } );
-			BXMobileApp.addCustomEvent('onEditedPostInserted', function(data) {
-				app.hidePopupLoader();
-				oMSL.drawDetailPageText(data);
-				BXMobileApp.onCustomEvent('onLogEntryPostUpdated', data, true);
-			});
 
 			BXMobileApp.addCustomEvent('onEditedPostFailed', function() {
 				app.hidePopupLoader();
 			});
 
-			BX.MSL.viewImageBind(
-				'post_block_check_cont',
-				{
-					tag: 'IMG',
-					attr: 'data-bx-image'
-				}
+			BX.MobileImageViewer.viewImageBind(
+				'post_item_top_wrap',
+				'img[data-bx-image]'
 			);
 		});
 
@@ -818,18 +768,10 @@ function __MSLOnFeedInit(params)
 
 		BX.ready(function()
 		{
+			BX.MobileLivefeed.Instance.setPageId('detail_' + logID);
+
 			oMSL.registerBlocksToCheck();
 			setTimeout(function() { oMSL.checkNodesHeight(); }, 100);
-
-			BX.addCustomEvent('onMPFSentEditStart', function() {
-				app.showPopupLoader({text:""});
-			});
-
-			BXMobileApp.addCustomEvent('onEditedPostInserted', function(data) {
-				app.hidePopupLoader();
-				oMSL.drawDetailPageText(data);
-				BXMobileApp.onCustomEvent('onLogEntryPostUpdated', data, true);
-			});
 		});
 
 		if (BX("post_item_top_wrap_" + logID))
@@ -856,6 +798,19 @@ function __MSLOnFeedInit(params)
 		});
 	}
 
+	if (
+		!bAjaxCall
+		&& !bReload
+	)
+	{
+		BX.ready(function() {
+			BXMobileApp.addCustomEvent('onEditedPostInserted', function(data) {
+				app.hidePopupLoader();
+				oMSL.drawDetailPageText(data);
+				BXMobileApp.onCustomEvent('onLogEntryPostUpdated', data, true);
+			});
+		});
+	}
 	if (!bAjaxCall)
 	{
 		BX.ready(function()
@@ -865,8 +820,10 @@ function __MSLOnFeedInit(params)
 				&& !bEmptyPage
 			)
 			{
-				var windowSize = BX.GetWindowSize();
-				window.maxScroll = windowSize.scrollHeight - windowSize.innerHeight - 190;
+				setTimeout(function() {
+					BX.MobileLivefeed.Instance.recalcMaxScroll();
+				}, 0); // ready is not enough
+
 				oMSL.initScroll(true);
 
 				if (!bReload)
@@ -1018,17 +975,20 @@ function __MSLOnFeedInit(params)
 		}
 	});
 
-	BX.addCustomEvent('MobilePlayer:onError', oMSL.onMobilePlayerError);
+	BX.Event.EventEmitter.subscribe(
+		'MobilePlayer:onError',
+		oMSL.onMobilePlayerError
+	);
 }
 
 function __MSLOnFeedScroll()
 {
 	var windowScroll = BX.GetWindowScrollPos();
 	if (
-		windowScroll.scrollTop >= window.maxScroll
+		windowScroll.scrollTop >= BX.MobileLivefeed.Instance.getMaxScroll()
 		&& (
 			windowScroll.scrollTop > 0 // refresh patch
-			|| window.maxScroll > 0
+			|| BX.MobileLivefeed.Instance.getMaxScroll() > 0
 		)
 		&& !window.bRefreshing
 	)
@@ -1062,8 +1022,7 @@ function __MSLOnFeedScroll()
 					oMSL.processAjaxBlock(data.PROPS, {
 						type: 'next',
 						callback: function () {
-							var windowSize = BX.GetWindowSize();
-							window.maxScroll = windowSize.scrollHeight - windowSize.innerHeight - 190;
+							BX.MobileLivefeed.Instance.recalcMaxScroll();
 
 							oMSL.registerBlocksToCheck();
 							setTimeout(BX.delegate(oMSL.checkNodesHeight, oMSL), 100);
@@ -1194,6 +1153,21 @@ function __MSLOpenLogEntryNew(params, event)
 		);
 	}
 
+	var lentaItemNode = document.getElementById('lenta_item_' + params.log_id);
+	if (lentaItemNode)
+	{
+		var inlineScriptNode = lentaItemNode.parentNode.querySelector("span[data-type='inline-script']");
+		if (inlineScriptNode)
+		{
+			params.inlineScript = inlineScriptNode.innerHTML;
+		}
+	}
+
+	if (BX('post_block_files_' + params.log_id))
+	{
+		params.filesBlockText = BX('post_block_files_' + params.log_id).innerHTML;
+	}
+
 	if (BX('post_more_limiter_' + params.log_id))
 	{
 		params.showMoreButton = (BX('post_more_limiter_' + params.log_id).style.display != 'none');
@@ -1280,12 +1254,12 @@ function __MSLDrawDetailPage()
 
 function __MSLDetailMoveBottom()
 {
-	document.body.scrollTop = document.body.scrollHeight;
+	window.scrollTo(0, document.body.scrollHeight);
 }
 
 function __MSLDetailMoveTop()
 {
-	document.body.scrollTop = 0;
+	window.scrollTo(0, 0);
 }
 
 function __MSLLogEntryRead(log_id, ts, bPull)
@@ -1313,6 +1287,14 @@ function __MSLLogEntryRead(log_id, ts, bPull)
 			BX.remove(BX('informer_comments_new_' + log_id));
 			BX.remove(BX('informer_comments_all_' + log_id));
 			BX('informer_comments_' + log_id).innerHTML = val;
+
+			var
+				commentsControlNode = BX('informer_comments_' + log_id).closest('.post-item-informers');
+
+			if (commentsControlNode)
+			{
+				commentsControlNode.classList.remove('post-item-inform-likes-active');
+			}
 		}
 	}
 	if (BX('lenta_item_' + log_id))
@@ -1439,7 +1421,7 @@ function __MSLGetNewPosts()
 {
 }
 
-function __MSLRefresh(bScroll)
+function __MSLRefresh(bScroll, params)
 {
 	bScroll = !!bScroll;
 
@@ -1453,17 +1435,30 @@ function __MSLRefresh(bScroll)
 
 	BX.addClass(BX('lenta_notifier'), 'lenta-notifier-waiter');
 
-	BX.onCustomEvent('onBeforeMobileLivefeedRefresh', [{}]);
-
-	oMSL.refreshNeeded = false;
-	oMSL.refreshStarted = true;
-	oMSL.hideRefreshNeededNotifier();
+	BX.MobileLivefeed.Instance.setRefreshNeeded(false);
+	BX.MobileLivefeed.Instance.setRefreshStarted(true);
+	BX.MobileLivefeed.BalloonNotifierInstance.hideRefreshNeededNotifier();
+	BX.MobileLivefeed.NotificationBarInstance.hideAll();
 
 	bRefreshing = true;
 
 	var reload_url = document.location.href;
-	reload_url = reload_url.replace("&RELOAD=Y", "").replace("RELOAD=Y&", "").replace("RELOAD=Y", "").replace("&RELOAD_JSON=Y", "").replace("RELOAD_JSON=Y&", "").replace("RELOAD_JSON=Y", "");
-	reload_url += (reload_url.indexOf('?') !== -1 ? "&" : "?") + 'RELOAD=Y&RELOAD_JSON=Y';
+
+	reload_url = BX.util.remove_url_param(reload_url, [ 'RELOAD', 'RELOAD_JSON', 'FIND' ]);
+	reload_url = BX.util.add_url_param(reload_url, {
+		RELOAD: 'Y',
+		RELOAD_JSON: 'Y'
+	});
+
+	if (
+		BX.type.isPlainObject(params)
+		&& BX.type.isNotEmptyString(params.find)
+	)
+	{
+		reload_url = BX.util.add_url_param(reload_url, {
+			FIND: params.find
+		});
+	}
 
 	var headers = [
 		{ name: "BX-ACTION-TYPE", value: "get_dynamic" },
@@ -1482,10 +1477,14 @@ function __MSLRefresh(bScroll)
 		headers: headers,
 		callback: function(data)
 		{
-			oMSL.refreshStarted = false;
-			oMSL.refreshNeeded = false;
+			oMSL.xhr.refresh = null;
+			BX.MobileLivefeed.Instance.setRefreshStarted(false);
+			BX.MobileLivefeed.Instance.setRefreshNeeded(false);
 
 			BX.removeClass(BX('lenta_notifier'), 'lenta-notifier-waiter');
+			app.pullDownLoadingStop();
+			app.exec("hideSearchBarProgress");
+
 			if (
 				typeof data != 'undefined'
 				&& typeof (data.PROPS) != 'undefined'
@@ -1495,10 +1494,9 @@ function __MSLRefresh(bScroll)
 			{
 				BitrixMobile.LazyLoad.clearImages();
 				BX.clearNodeCache();
-				app.pullDownLoadingStop();
 				app.hidePopupLoader();
-				oMSL.hideNotifier();
-				oMSL.hideRefreshNeededNotifier();
+				BX.MobileLivefeed.BalloonNotifierInstance.hideNotifier();
+				BX.MobileLivefeed.BalloonNotifierInstance.hideRefreshNeededNotifier();
 
 				if (typeof (data.COUNTER_TO_CLEAR) != 'undefined')
 				{
@@ -1560,8 +1558,6 @@ function __MSLRefresh(bScroll)
 					}
 				});
 
-				BX.localStorage.set('mobileLivefeedRefreshTS',  Math.round(new Date().getTime() / 1000), 86400*30);
-
 				if (bScroll)
 				{
 					BitrixAnimation.animate({
@@ -1571,7 +1567,7 @@ function __MSLRefresh(bScroll)
 						transition : BitrixAnimation.makeEaseOut(BitrixAnimation.transitions.quart),
 						step : function(state)
 						{
-							document.body.scrollTop = state.scroll;
+							window.scrollTo(0, state.scroll);
 						},
 						complete : function(){}
 					});
@@ -1591,7 +1587,6 @@ function __MSLRefresh(bScroll)
 			}
 			else
 			{
-				app.pullDownLoadingStop();
 				__MSLRefreshError(true);
 			}
 
@@ -1599,16 +1594,20 @@ function __MSLRefresh(bScroll)
 		},
 		callback_failure: function()
 		{
-			oMSL.refreshStarted = false;
-			oMSL.refreshNeeded = false;
+			oMSL.xhr.refresh = null;
+			BX.MobileLivefeed.Instance.setRefreshStarted(false);
+			BX.MobileLivefeed.Instance.setRefreshNeeded(false);
 
 			BX.removeClass(BX('lenta_notifier'), 'lenta-notifier-waiter');
-
 			app.pullDownLoadingStop();
+			app.exec("hideSearchBarProgress");
+
 			__MSLRefreshError(true);
 			bRefreshing = false;
 		}
 	});
+
+	oMSL.xhr.refresh = BMAjaxWrapper.xhr;
 }
 
 function __MSLPullDownInit(enable, bRefresh)
@@ -1627,13 +1626,14 @@ function __MSLPullDownInit(enable, bRefresh)
 		)
 		{
 			BXMobileApp.UI.Page.Refresh.setParams({
-				pulltext: BX.message('MSLPullDownText1'),
+				pulltext: BX.message('MOBILE_EXT_LIVEFEED_NEW_PULL'),
 				backgroundColor: '#E7E9EB',
-				downtext: BX.message('MSLPullDownText2'),
-				loadtext: BX.message('MSLPullDownText3'),
+				downtext: BX.message('MOBILE_EXT_LIVEFEED_NEW_PULL_RELEASE'),
+				loadtext: BX.message('MOBILE_EXT_LIVEFEED_NEW_PULL_LOADING'),
 				callback: function() {
 					if (!window.isPullDownLocked)
 					{
+						app.exec("hideSearchBar");
 						__MSLRefresh(true);
 					}
 				}
@@ -1695,12 +1695,6 @@ function __MSLDetailPullDownInit(enable)
 						&& logID != null
 					)
 					{
-						var iconFailed = BX.findChild(BX('post-comments-wrap'), { className: 'post-comments-failed-outer' }, true, false);
-						if (!!iconFailed)
-						{
-							BX.cleanNode(iconFailed, true);
-						}
-
 						// get comments when pulldown
 						oMSL.getComments({
 							ts: ts,
@@ -1716,10 +1710,10 @@ function __MSLDetailPullDownInit(enable)
 			};
 
 			BXMobileApp.UI.Page.Refresh.setParams({
-				pulltext: BX.message('MSLDetailPullDownText1'),
+				pulltext: BX.message('MOBILE_EXT_LIVEFEED_NEW_PULL'),
 				backgroundColor: '#E7E9EB',
-				downtext: BX.message('MSLDetailPullDownText2'),
-				loadtext: BX.message('MSLDetailPullDownText3'),
+				downtext: BX.message('MOBILE_EXT_LIVEFEED_NEW_PULL_RELEASE'),
+				loadtext: BX.message('MOBILE_EXT_LIVEFEED_DETAIL_NEW_PULL_LOADING'),
 				callback: callbackFunction
 			});
 			BXMobileApp.UI.Page.Refresh.setEnabled(true);
@@ -1768,11 +1762,14 @@ function __MSLRefreshErrorScroll()
 	__MSLRefreshError(false);
 }
 
-function __MSLSetFavorites(log_id)
+function __MSLSetFavorites(log_id, favoritesBlock)
 {
-	var favoritesBlock = BX("log_entry_favorites_" + log_id);
-
 	if (!favoritesBlock)
+	{
+		favoritesBlock = BX('log_entry_favorites_' + log_id);
+	}
+
+	if (!BX(favoritesBlock))
 	{
 		return;
 	}
@@ -1780,13 +1777,16 @@ function __MSLSetFavorites(log_id)
 	var strFavoritesOld = (favoritesBlock.getAttribute("data-favorites") == "Y" ? "Y" : "N");
 	var strFavoritesNew = (strFavoritesOld == "Y" ? "N" : "Y");
 
-	if (strFavoritesOld == "Y")
+	if (favoritesBlock.classList.contains('lenta-item-fav'))
 	{
-		BX.removeClass(favoritesBlock, 'lenta-item-fav-active');
-	}
-	else
-	{
-		BX.addClass(favoritesBlock, 'lenta-item-fav-active');
+		if (strFavoritesOld == "Y")
+		{
+			BX.removeClass(favoritesBlock, 'lenta-item-fav-active');
+		}
+		else
+		{
+			BX.addClass(favoritesBlock, 'lenta-item-fav-active');
+		}
 	}
 
 	favoritesBlock.setAttribute("data-favorites", strFavoritesNew);
@@ -1801,28 +1801,25 @@ function __MSLSetFavorites(log_id)
 			b24statAction: (strFavoritesNew == 'Y' ? 'addFavorites' : 'removeFavorites'),
 			b24statContext: 'mobile'
 		}
-	}, {
-		success: function(response) {
-			if (response.data.success)
+	}).then(function(response) {
+		if (response.data.success)
+		{
+			if (strFavoritesNew == "Y")
 			{
-				if (strFavoritesNew == "Y")
-				{
-					oMSL.setFollow({
-						logId: log_id,
-						bOnlyOn: true,
-						bRunEvent: true,
-						bAjax: false
-					});
-				}
-
-				BXMobileApp.onCustomEvent('onLogEntryFavorites', {
-					log_id: log_id,
-					page_id: (BX.message('MSLPageId') != undefined ? BX.message('MSLPageId') : '')
-				}, true);
+				oMSL.setFollow({
+					logId: log_id,
+					bOnlyOn: true,
+					bRunEvent: true,
+					bAjax: false
+				});
 			}
-		},
-		failure: function(response) {
+
+			BXMobileApp.onCustomEvent('onLogEntryFavorites', {
+				log_id: log_id,
+				page_id: (BX.message('MSLPageId') != undefined ? BX.message('MSLPageId') : '')
+			}, true);
 		}
+	}, function(response) {
 	});
 
 	return false;
@@ -1922,7 +1919,6 @@ function blogCommentsNativeInputCallback(params)
 		)
 	)
 	{
-		bLockCommentSending = true;
 		oPreviewComment = oMSL.showPreviewComment(text);
 		app.clearInput();
 	}
@@ -1959,8 +1955,6 @@ function blogCommentsNativeInputCallback(params)
 		processData : true,
 		callback: function(ajax_response)
 		{
-			bLockCommentSending = false;
-
 			if (
 				typeof ajax_response == 'object'
 				&& typeof ajax_response.TEXT != 'undefined'
@@ -2023,7 +2017,6 @@ function blogCommentsNativeInputCallback(params)
 		},
 		callback_failure: function()
 		{
-			bLockCommentSending = false;
 			oMSL.showCommentAlert({
 				nodeId: (data.act == 'add' ? oPreviewComment : nodeId),
 				action:	data.act,
@@ -2217,9 +2210,8 @@ __MSLSendError = function(message, url, linenumber)
 			url: url,
 			lineNumber: linenumber,
 		}
-	}, {
-		success: function(response) {},
-		failure: function(response) {}
+	}).then(function(response) {
+	}, function(response) {
 	});
 };
 
@@ -2231,20 +2223,11 @@ __MSLSendErrorEval = function(script)
 BitrixMSL = function ()
 {
 	this.scriptsAttached = [];
-	this.refreshNeeded = false;
-	this.refreshStarted = false;
 	this.counterTimeout = null;
 	this.detailPageId = '';
 	this.logId = false;
 	this.commentsType = false;
 	this.entityXMLId = '';
-
-	this.commentLoadingFilesStack = false;
-	this.commentProgressBarAnimation = false;
-	this.commentProgressBarState = 0;
-
-	this.sendCommentWritingList = [];
-	this.sendCommentWritingListTimeout = [];
 
 	this.commentTextCurrent = '';
 	this.arMention = [];
@@ -2252,8 +2235,6 @@ BitrixMSL = function ()
 	this.bUseFollow = true;
 	this.bFollow = true;
 	this.bFollowDefault = true;
-
-	this.bUseTasks = false;
 
 	this.bShowExpertMode = true;
 	this.bExpertMode = false;
@@ -2290,6 +2271,12 @@ BitrixMSL = function ()
 
 	this.classes = {
 		postItemBlockFull: 'post-item-post-block-full'
+	};
+
+	this.findTextMode = false; // for the live search, not used now
+
+	this.xhr = {
+		refresh: null
 	};
 };
 
@@ -2339,11 +2326,11 @@ BitrixMSL.prototype.loadScripts = function()
 	}
 };
 
-BitrixMSL.prototype.pullDownAndRefresh = function()
+BitrixMSL.prototype.pullDownAndRefresh = function(params)
 {
 	app.exec("pullDownLoadingStart");
 	window.isPullDownLocked = true;
-	__MSLRefresh(true);
+	__MSLRefresh(true, params);
 };
 
 BitrixMSL.prototype.shareBlogPost = function(data)
@@ -2354,11 +2341,11 @@ BitrixMSL.prototype.shareBlogPost = function(data)
 BitrixMSL.prototype.deleteBlogPost = function(data)
 {
 	app.confirm({
-		title: BX.message('MSLDeletePost'),
-		text : BX.message('MSLDeletePostDescription'),
+		title: BX.message('MOBILE_EXT_LIVEFEED_DELETE_CONFIRM_TITLE'),
+		text : BX.message('MOBILE_EXT_LIVEFEED_DELETE_CONFIRM_DESCRIPTION'),
 		buttons : [
-			BX.message('MSLDeletePostButtonOk'),
-			BX.message('MSLDeletePostButtonCancel')
+			BX.message('MOBILE_EXT_LIVEFEED_DELETE_CONFIRM_BUTTON_OK'),
+			BX.message('MOBILE_EXT_LIVEFEED_DELETE_CONFIRM_BUTTON_CANCEL')
 		],
 		callback : function (btnNum)
 		{
@@ -2389,12 +2376,13 @@ BitrixMSL.prototype.deleteBlogPost = function(data)
 					callback: function(response_data)
 					{
 						app.hidePopupLoader();
+
 						if (
-							typeof response_data.SUCCESS != 'undefined'
+							BX.type.isNotEmptyString(response_data.SUCCESS)
 							&& response_data.SUCCESS == 'Y'
 						)
 						{
-							BXMobileApp.onCustomEvent('onBlogPostDelete', {}, true);
+							BXMobileApp.onCustomEvent('onBlogPostDelete', {}, true, true);
 							app.closeController({drop: true});
 						}
 					},
@@ -2687,6 +2675,8 @@ BitrixMSL.prototype.drawDetailPage = function(data)
 {
 	var bReopen = false;
 
+	BX.MobileLivefeed.Instance.setPageId('detail_' + data.log_id);
+
 	if (BX('post_log_id'))
 	{
 		var existingLogID = parseInt(BX('post_log_id').getAttribute('data-log-id'));
@@ -2731,7 +2721,6 @@ BitrixMSL.prototype.drawDetailPage = function(data)
 		bUseFollow: (typeof data.use_follow == 'undefined' || data.use_follow != 'NO'),
 		bFollow: (typeof data.follow == 'undefined' || data.follow != 'N'),
 		feed_id:  (typeof data.feed_id != 'undefined' ? data.feed_id : null),
-		bUseTasks: (typeof data.use_tasks != 'undefined' && data.use_tasks == 'Y'),
 		entryParams: {
 			destinations: (typeof data.destinations != 'undefined' ? data.destinations : null),
 			post_perm: (typeof data.post_perm != 'undefined' ? data.post_perm : null),
@@ -3060,16 +3049,35 @@ BitrixMSL.prototype.drawDetailPageText = function(data)
 
 	var postBlock = (logId && BX('post_block_check_cont_' + logId) ? BX('post_block_check_cont_' + logId) : BX('post_block_check_cont'));
 	var postTopBlock = (logId && BX('post_item_top_' + logId) ? BX('post_item_top_' + logId) : BX('post_item_top'));
+	var filesBlock = (logId && BX('post_block_files_' + logId) ? BX('post_block_files_' + logId) : BX('post_block_files'));
+
+	if (postBlock || filesBlock)
+	{
+		BitrixMobile.LazyLoad.clearImages();
+	}
 
 	if (postBlock)
 	{
 		postBlock.innerHTML = '';
-		BitrixMobile.LazyLoad.clearImages();
-
-		if (typeof data.detailText != 'undefined')
+		if (BX.type.isNotEmptyString(data.detailText))
 		{
 			postBlock.innerHTML = data.detailText;
-			postScripts += oMSL.parseAndExecCode(data.detailText, 0, false, true);
+			if (BX.type.isNotEmptyString(data.inlineScript))
+			{
+				postBlock.innerHTML += data.inlineScript;
+			}
+
+			postScripts += oMSL.parseAndExecCode(postBlock.innerHTML, 0, false, true);
+		}
+	}
+
+	if (filesBlock)
+	{
+		filesBlock.innerHTML = '';
+		if (BX.type.isNotEmptyString(data.filesBlockText))
+		{
+			filesBlock.innerHTML = data.filesBlockText;
+			postScripts += oMSL.parseAndExecCode(data.filesBlockText, 0, false, true);
 		}
 	}
 
@@ -3113,6 +3121,15 @@ BitrixMSL.prototype.onLogEntryPostUpdated = function(data)
 		}
 
 		if (
+			typeof data.filesBlockText !== 'undefined'
+			&& BX('post_block_files_' + parseInt(data.logID))
+		)
+		{
+			BX('post_block_files_' + parseInt(data.logID)).innerHTML = data.filesBlockText;
+			postScripts += oMSL.parseAndExecCode(data.filesBlockText, 0, false, true);
+		}
+
+		if (
 			typeof data.topText !== 'undefined'
 			&& BX('post_item_top_' + parseInt(data.logID))
 		)
@@ -3152,7 +3169,9 @@ BitrixMSL.prototype.changeCounter = function(cnt, zeroTS, serverTime)
 
 	if (parseInt(oMSL.counterValue) > 0)
 	{
-		oMSL.showNotifier(oMSL.counterValue);
+		BX.MobileLivefeed.BalloonNotifierInstance.showNotifier({
+			counterValue: oMSL.counterValue
+		});
 	}
 	else
 	{
@@ -3160,19 +3179,19 @@ BitrixMSL.prototype.changeCounter = function(cnt, zeroTS, serverTime)
 		{
 			if (zeroTime > oMSL.iframeCacheTs) // counter is null but cache is too old
 			{
-				oMSL.refreshNeeded = true;
+				BX.MobileLivefeed.Instance.setRefreshNeeded(true);
 			}
 
 			if (
-				oMSL.refreshNeeded
-				&& !oMSL.refreshStarted
+				BX.MobileLivefeed.Instance.getRefreshNeeded()
+				&& !BX.MobileLivefeed.Instance.getRefreshStarted()
 			)
 			{
-				oMSL.showRefreshNeededNotifier();
+				BX.MobileLivefeed.BalloonNotifierInstance.showRefreshNeededNotifier();
 			}
 			else
 			{
-				oMSL.hideNotifier();
+				BX.MobileLivefeed.BalloonNotifierInstance.hideNotifier();
 			}
 
 			clearTimeout(oMSL.counterTimeout);
@@ -3256,8 +3275,9 @@ BitrixMSL.prototype.deleteComment = function(params)
 		return;
 	}
 
-	commentType = (typeof params.commentType == 'undefined' ? 'log' : params.commentType);
-	nodeId = (typeof params.nodeId == 'undefined' ? "" : params.nodeId);
+	var
+		commentType = (typeof params.commentType == 'undefined' ? 'log' : params.commentType),
+		nodeId = (typeof params.nodeId == 'undefined' ? "" : params.nodeId);
 
 	oMSL.showCommentWait({
 		nodeId: nodeId,
@@ -3277,7 +3297,6 @@ BitrixMSL.prototype.deleteComment = function(params)
 			'data': '',
 			'callback': function(response)
 			{
-				bLockCommentSending = false;
 				if (
 					response != "*"
 					&& response.length > 0
@@ -3304,7 +3323,6 @@ BitrixMSL.prototype.deleteComment = function(params)
 			},
 			'callback_failure': function()
 			{
-				bLockCommentSending = false;
 				oMSL.showCommentAlert({
 					nodeId: nodeId,
 					action: 'delete',
@@ -3472,220 +3490,6 @@ BitrixMSL.prototype.createCommentInputForm = function(params)
 	BXMobileApp.UI.Page.TextPanel.setParams(params);
 	BXMobileApp.UI.Page.TextPanel.clear();
 	BXMobileApp.UI.Page.TextPanel.show();
-};
-
-BitrixMSL.prototype.drawPullComment = function(params)
-{
-	this.showNewPullComment(params, 'entry-comment-' + params["FULL_ID"].join('-'));
-	BXMobileApp.onCustomEvent('onLogEntryRead', {
-		log_id: tmp_log_id,
-		ts: params["POST_TIMESTAMP"],
-		bPull: true
-	}, true); // just for TS
-};
-
-BitrixMSL.prototype.showNewPullComment = function(params, nodeId)
-{
-	if(!BX(nodeId))
-	{
-		var postCard  = document.body;
-
-		params["POST_TIMESTAMP"] = parseInt(params["POST_TIMESTAMP"]) + parseInt(BX.message('USER_TZ_OFFSET')) + parseInt(BX.message('SERVER_TZ_OFFSET'));
-		params["POST_DATETIME_FORMATTED"] = (BX.date.format("d F Y", params["POST_TIMESTAMP"]) == BX.date.format("d F Y")
-			? BX.date.format((BX.message("MSLDateTimeFormat").indexOf('a') >= 0 ? 'g:i a' : 'G:i'), params["POST_TIMESTAMP"], false, true)
-			: BX.date.format(BX.message("MSLDateTimeFormat"), params["POST_TIMESTAMP"], false, true)
-		);
-
-		var
-			UFNode = null,
-			ratingNode = null;
-
-		if (
-			typeof (params["POST_MESSAGE_TEXT_MOBILE"]) != 'undefined'
-			&& params["POST_MESSAGE_TEXT_MOBILE"].length > 0
-			&& params["POST_MESSAGE_TEXT_MOBILE"] != 'NO'
-		)
-		{
-			this.parseAndExecCode(params["POST_MESSAGE_TEXT_MOBILE"]);
-		}
-
-		if (
-			typeof (params["AFTER_MOBILE"]) != 'undefined'
-			&& params["AFTER_MOBILE"].length > 0
-			&& params["AFTER_MOBILE"] != 'NO'
-		)
-		{
-			UFNode = BX.create('DIV', {
-				props: {
-					className: 'post-item-attached-file-wrap',
-					id: nodeId + '-files'
-				},
-				html: params["AFTER_MOBILE"]
-			});
-
-			this.parseAndExecCode(params["AFTER_MOBILE"]);
-		}
-
-		if (
-			typeof (params["BEFORE_ACTIONS_MOBILE"]) != 'undefined'
-			&& params["BEFORE_ACTIONS_MOBILE"].length > 0
-			&& params["BEFORE_ACTIONS_MOBILE"] != 'NO'
-		)
-		{
-			ratingNode = BX.create('SPAN', {
-				html: params["BEFORE_ACTIONS_MOBILE"]
-			});
-
-			this.parseAndExecCode(params["BEFORE_ACTIONS_MOBILE"]);
-		}
-
-		var replyNode = oMSL.buildCommentReplyNode({
-			EVENT: {
-				USER_ID: params.AUTHOR.ID
-			},
-			CREATED_BY: {
-				FORMATTED: params.AUTHOR.NAME
-			}
-		});
-
-		BX('post-comment-last-after').parentNode.insertBefore(BX.create('DIV', {
-			attrs: {
-				id: nodeId
-			},
-			props: {
-				className: 'post-comment-block'
-			},
-			children: [
-				BX.create('DIV', {
-					props: {
-						className: 'post-user-wrap'
-					},
-					children: [
-						BX.create('DIV', {
-							props: {
-								className: 'avatar'
-							},
-							style: {
-								backgroundImage: (
-									typeof (params["AUTHOR"]["AVATAR"]) != 'undefined'
-									&& params["AUTHOR"]["AVATAR"].length > 0 && params["AUTHOR"]["AVATAR"] != 'NO'
-										? "url('" + params["AUTHOR"]["AVATAR"] + "')"
-										: ""
-								)
-							},
-							children: []
-						}),
-						BX.create('DIV', {
-							props: {
-								className: 'post-comment-cont'
-							},
-							children: [
-								BX.create('A', {
-									attrs: {
-										href: oMSL.replaceUserPath(params["AUTHOR"]["URL"])
-									},
-									props: {
-										className: 'post-comment-author'
-									},
-									html: params["AUTHOR"]["NAME"]
-								}),
-								BX.create('DIV', {
-									props: {
-										className: 'post-comment-time'
-									},
-									html: params["POST_DATETIME_FORMATTED"]
-								})
-							]
-						})
-					]
-				}),
-				BX.create('DIV', {
-					props: {
-						className: 'post-comment-text',
-						id: nodeId + '-text'
-					},
-					html: (
-						typeof params["POST_MESSAGE_TEXT_MOBILE"] != 'undefined' && params["POST_MESSAGE_TEXT_MOBILE"].length > 0  && params["POST_MESSAGE_TEXT_MOBILE"] != 'NO'
-							? oMSL.replaceUserPath(params["POST_MESSAGE_TEXT_MOBILE"])
-							: params["POST_MESSAGE_TEXT"]
-					)
-				}),
-				UFNode,
-				ratingNode,
-				replyNode
-			]
-		}), BX('post-comment-last-after'));
-
-		var maxScrollTop = postCard.scrollHeight - postCard.offsetHeight;
-
-		setTimeout(function() {
-			if (
-				postCard.scrollTop >= (maxScrollTop - 120)
-				&& postCard
-			)
-			{
-				BitrixAnimation.animate({
-					duration : 1000,
-					start : { scroll : postCard.scrollTop },
-					finish : { scroll : postCard.scrollTop + 140 },
-					transition : BitrixAnimation.makeEaseOut(BitrixAnimation.transitions.quart),
-					step : function(state)
-					{
-						postCard.scrollTop = state.scroll;
-					},
-					complete : function(){}
-				});
-			}
-			BX.addClass(BX(nodeId), "post-comment-new-transition");
-		}, 0);
-
-		setTimeout(function() {
-			BitrixMobile.LazyLoad.showImages();
-
-			BX.MSL.viewImageBind(nodeId + '-text', { tag: 'IMG', attr: 'data-bx-image' });
-			if (UFNode != null)
-			{
-				BX.MSL.viewImageBind(nodeId + '-files', { tag: 'IMG', attr: 'data-bx-image' });
-			}
-		}, 500);
-
-		// increment comment counters both in post card and LiveFeed
-
-		var log_id = BX.message('MSLLogId');
-		var old_value = 0;
-		var val = 0;
-
-		if (
-			BX('informer_comments_' + log_id)
-			&& !BX('informer_comments_new_' + log_id)
-		)
-		{
-			old_value = (BX('informer_comments_' + log_id).innerHTML.length > 0 ? parseInt(BX('informer_comments_' + log_id).innerHTML) : 0);
-			val = old_value + 1;
-			BX('informer_comments_' + log_id).innerHTML = val;
-		}
-		else if (BX('informer_comments_common'))
-		{
-			old_value = (BX('informer_comments_common').innerHTML.length > 0 ? parseInt(BX('informer_comments_common').innerHTML) : 0);
-			val = old_value + 1;
-			BX('informer_comments_common').innerHTML = val;
-		}
-
-		if (BX('comcntleave-all'))
-		{
-			old_value = (BX('comcntleave-all').innerHTML.length > 0 ? parseInt(BX('comcntleave-all').innerHTML) : 0);
-			val = old_value + 1;
-			BX('comcntleave-all').innerHTML = val;
-		}
-
-		if (
-			typeof (tmp_log_id) != 'undefined'
-			&& parseInt(tmp_log_id) > 0
-		)
-		{
-			BXMobileApp.onCustomEvent('onLogEntryCommentAdd', { log_id: tmp_log_id }, true);
-		}
-	}
 };
 
 BitrixMSL.prototype.parseAndExecCode = function(text, timeout, bExec, bReturnScripts)
@@ -3861,54 +3665,11 @@ BitrixMSL.prototype.showCommentMenu = function(arButtons)
 	action.show();
 };
 
-BitrixMSL.prototype.showTextPanelMenu = function()
-{
-	var action = new BXMobileApp.UI.ActionSheet({
-			buttons: [
-				{
-					title: BX.message('MSLTextPanelMenuPhoto'),
-					callback: function()
-					{
-						app.takePhoto({
-							source: 1,
-							correctOrientation: true,
-							targetWidth: 1000,
-							targetHeight: 1000,
-							callback: function(fileURI)
-							{
-								oMSL.uploadCommentFile(fileURI);
-							}
-						});
-					}
-				},
-				{
-					title: BX.message('MSLTextPanelMenuGallery'),
-					callback: function()
-					{
-						app.takePhoto({
-							targetWidth: 1000,
-							targetHeight: 1000,
-							callback: function(fileURI)
-							{
-								oMSL.uploadCommentFile(fileURI);
-							}
-						});
-					}
-				}
-			]
-		},
-		"textPanelSheet"
-	);
-	action.show();
-};
-
 BitrixMSL.prototype.InitDetail = function(params)
 {
-	this.commentLoadingFilesStack = [];
 	this.commentsType = (typeof (params.commentsType) != 'undefined' && params.commentsType == 'blog' ? 'blog' : 'log');
 	this.entityXMLId = (typeof (params.entityXMLId) != 'undefined' ? params.entityXMLId : '');
 	this.bFollow = !(typeof (params.bFollow) != 'undefined' && !params.bFollow);
-	this.bUseTasks = (typeof (params.bUseTasks) != 'undefined' && params.bUseTasks);
 	this.commentTextCurrent = '';
 	this.arMention = [];
 	this.iDetailTs = (typeof (params.TS) != 'undefined' ? params.TS : 0);
@@ -3992,7 +3753,7 @@ BitrixMSL.prototype.InitDetail = function(params)
 };
 
 	this.detailPageMenuItems = this.buildDetailPageMenu(this.menuData);
-	this.showPageMenu('detail');
+	this.initPageMenu('detail');
 };
 
 BitrixMSL.prototype.showNewComment = function(params)
@@ -4275,7 +4036,7 @@ BitrixMSL.prototype.showPreviewComment = function(text)
 				transition : BitrixAnimation.makeEaseOut(BitrixAnimation.transitions.quart),
 				step : function(state)
 				{
-					postCard.scrollTop = state.scroll;
+					window.scrollTo(0, state.scroll);
 				},
 				complete : function(){}
 			});
@@ -4410,115 +4171,25 @@ BitrixMSL.prototype.alertPreviewComment = function(params)
 	}
 };
 
-BitrixMSL.prototype.showCommentProgressBar = function(commentNode)
-{
-	if (
-		typeof (commentNode) == 'undefined'
-		|| !BX(commentNode)
-	)
-	{
-		return;
-	}
-
-	BX.findChild(commentNode, { className: 'post-comment-text' }, true, false).appendChild(BX.create('DIV', {
-		props: {
-			id: commentNode.id + '-progressbar-cont',
-			className: 'comment-loading'
-		},
-		style: {
-			display: 'none'
-		},
-		children: [
-			BX.create('DIV', {
-				props: {
-					id: commentNode.id + '-progressbar-label',
-					className: 'newpost-progress-label'
-				}
-			}),
-			BX.create('DIV', {
-				props: {
-					id: commentNode.id + '-progressbar-ind',
-					className: 'newpost-progress-indicator'
-				}
-			})
-		]
-	}));
-	BX(commentNode.id + '-progressbar-cont').style.display = 'block';
-	var loading_id = Math.floor(Math.random() * 100000) + 1;
-	oMSL.commentLoadingFilesStack[oMSL.commentLoadingFilesStack.length] = loading_id;
-	clearInterval(oMSL.commentProgressBarAnimation);
-	oMSL.commentProgressBarAnimation = BitrixAnimation.animate({
-		duration : oMSL.commentLoadingFilesStack.length * 5000,
-		start: {
-			width: parseInt(oMSL.commentProgressBarState / oMSL.commentLoadingFilesStack.length) + 10
-		},
-		finish: {
-			width: 90
-		},
-		transition: BitrixAnimation.makeEaseOut(BitrixAnimation.transitions.linear),
-		step : function(state)
-		{
-			BX(commentNode.id + '-progressbar-ind').style.width = state.width + '%';
-			oMSL.commentProgressBarState = state.width;
-		},
-		complete : function()
-		{
-			oMSL.commentProgressBarState = 0;
-		}
-	});
-
-	return loading_id;
-};
-
-BitrixMSL.prototype.hideCommentProgressBar = function(loadingId, commentNode)
-{
-	if (
-		typeof (commentNode) == 'undefined'
-		|| !BX(commentNode)
-	)
-	{
-		return;
-	}
-
-	var newLoadingFilesStack = [];
-
-	for (var i = 0; i < this.commentLoadingFilesStack.length; i++)
-	{
-		if (this.commentLoadingFilesStack[i] != loadingId)
-		{
-			newLoadingFilesStack[newLoadingFilesStack.length] = this.commentLoadingFilesStack[i];
-		}
-	}
-
-	this.commentLoadingFilesStack = newLoadingFilesStack;
-
-	if (this.commentLoadingFilesStack.length == 0)
-	{
-		clearInterval(this.commentProgressBarAnimation);
-		this.commentProgressBarState = 0;
-		BX(commentNode.id + '-progressbar-ind').style.width = '100%';
-
-		setTimeout(function() {
-			if (BX(commentNode.id + '-progressbar-cont'))
-			{
-				BX(commentNode.id + '-progressbar-cont').style.display = 'none';
-			}
-		}, 2000);
-	}
-};
-
 BitrixMSL.prototype.setFollow = function(params)
 {
-	var logId = (typeof params.logId != 'undefined' ? parseInt(params.logId) : 0);
-	var pageId = (typeof params.pageId != 'undefined' ? params.pageId : false);
-	var bOnlyOn = (typeof params.bOnlyOn != 'undefined' ? params.bOnlyOn : false);
+	var
+		logId = (typeof params.logId != 'undefined' ? parseInt(params.logId) : 0),
+		pageId = (typeof params.pageId != 'undefined' ? params.pageId : false),
+		bOnlyOn = (typeof params.bOnlyOn != 'undefined' ? params.bOnlyOn : false),
+		bRunEvent = (typeof params.bRunEvent != 'undefined' ? params.bRunEvent : true),
+		bAjax = (typeof params.bAjax != 'undefined' ? params.bAjax : false),
+		menuNode = (typeof params.menuNode != 'undefined' && BX(params.menuNode) ? BX(params.menuNode) : null);
+
+	if (!menuNode)
+	{
+		menuNode = BX('log-entry-menu-' + logId);
+	}
 
 	if (bOnlyOn == 'NO')
 	{
 		bOnlyOn = false;
 	}
-	var bRunEvent = (typeof params.bRunEvent != 'undefined' ? params.bRunEvent : true);
-	var bAjax = (typeof params.bAjax != 'undefined' ? params.bAjax : false);
 
 	var followBlock = BX('log_entry_follow_' + logId);
 	if (!followBlock)
@@ -4532,54 +4203,74 @@ BitrixMSL.prototype.setFollow = function(params)
 		followWrap = BX('post_item_top_wrap');
 	}
 
+	var strFollowOld = null;
+
+	if (menuNode)
+	{
+		strFollowOld = (menuNode.getAttribute("data-follow") == "Y" ? "Y" : "N");
+	}
+	else if (followBlock)
+	{
+		strFollowOld = (followBlock.getAttribute("data-follow") == "Y" ? "Y" : "N");
+	}
+
+	if (!strFollowOld)
+	{
+		return false;
+	}
+
+	var strFollowNew = (strFollowOld == "Y" ? "N" : "Y");
+
 	if (
-		followBlock
-		&& (
+		(
 			!BX.type.isNotEmptyString(this.detailPageId)
 			|| this.detailPageId != pageId
 		)
-	)
-	{
-		var strFollowOld = (followBlock.getAttribute("data-follow") == "Y" ? "Y" : "N");
-		var strFollowNew = (strFollowOld == "Y" ? "N" : "Y");
-
-		if (
+		&& (
 			!bOnlyOn
 			|| strFollowOld == "N"
 		)
+	)
+	{
+		if (followBlock)
 		{
 			BX.removeClass(followBlock, (strFollowOld == "Y" ? 'post-item-follow-active' : 'post-item-follow'));
 			BX.addClass(followBlock, (strFollowOld == "Y" ? 'post-item-follow' : 'post-item-follow-active'));
 			followBlock.setAttribute("data-follow", strFollowNew);
-			if (bRunEvent)
-			{
-				BXMobileApp.onCustomEvent('onLogEntryFollow', {
-					logId: logId,
-					pageId: (BX.type.isNotEmptyString(oMSL.detailPageId) ? oMSL.detailPageId : ''),
-					bOnlyOn: (bOnlyOn ? 'Y' : 'N')
-				}, true);
-			}
+		}
+		if (menuNode)
+		{
+			menuNode.setAttribute("data-follow", strFollowNew);
+		}
 
-			if (
-				!this.getFollowDefaultValue()
-				&& followWrap
-			)
-			{
-				if (strFollowOld == "Y")
-				{
-					BX.removeClass(followWrap, 'post-item-follow');
-				}
-				else
-				{
-					BX.addClass(followWrap, 'post-item-follow');
-				}
-			}
+		if (bRunEvent)
+		{
+			BXMobileApp.onCustomEvent('onLogEntryFollow', {
+				logId: logId,
+				pageId: (BX.type.isNotEmptyString(oMSL.detailPageId) ? oMSL.detailPageId : ''),
+				bOnlyOn: (bOnlyOn ? 'Y' : 'N')
+			}, true);
+		}
 
-			if (BX.type.isNotEmptyString(this.detailPageId))
+		if (
+			!this.getFollowDefaultValue()
+			&& followWrap
+		)
+		{
+			if (strFollowOld == "Y")
 			{
-				this.setFollowValue(strFollowNew == "Y");
-				this.setFollowMenuItemName();
+				BX.removeClass(followWrap, 'post-item-follow');
 			}
+			else
+			{
+				BX.addClass(followWrap, 'post-item-follow');
+			}
+		}
+
+		if (BX.type.isNotEmptyString(this.detailPageId))
+		{
+			this.setFollowValue(strFollowNew == "Y");
+			this.setFollowMenuItemName();
 		}
 	}
 
@@ -4594,54 +4285,24 @@ BitrixMSL.prototype.setFollow = function(params)
 			analyticsLabel: {
 				b24statAction: (strFollowNew == 'Y' ? 'setFollow' : 'setUnfollow')
 			}
-		}, {
-			success: function(response) {
-				if (!response.data.success)
-				{
-					if (followBlock)
-					{
-						BX.removeClass(followBlock, (strFollowOld == "Y" ? 'post-item-follow' : 'post-item-follow-active'));
-						BX.addClass(followBlock, (strFollowOld == "Y" ? 'post-item-follow-active' : 'post-item-follow'));
-						followBlock.setAttribute("data-follow", strFollowOld);
-					}
-
-					if (BX.type.isNotEmptyString(this.detailPageId))
-					{
-						this.setFollowValue(strFollowOld == "Y");
-						this.setFollowMenuItemName();
-					}
-
-					if (
-						!this.getFollowDefaultValue()
-						&& followWrap
-					)
-					{
-						if (strFollowOld == "Y")
-						{
-							BX.addClass(followWrap, 'post-item-follow');
-						}
-						else
-						{
-							BX.removeClass(followWrap, 'post-item-follow');
-						}
-					}
-
-					if (this.getLogId() > 0)
-					{
-						BXMobileApp.onCustomEvent('onLogEntryFollow', {
-							logId: logId,
-							pageId: (BX.type.isNotEmptyString(this.detailPageId) ? this.detailPageId : ''),
-							bOnlyOn: (bOnlyOn ? 'Y' : 'N')
-						}, true);
-					}
-				}
-			}.bind(this),
-			failure: function(response) {
+		}).then(function(response) {
+			if (!response.data.success)
+			{
 				if (followBlock)
 				{
 					BX.removeClass(followBlock, (strFollowOld == "Y" ? 'post-item-follow' : 'post-item-follow-active'));
 					BX.addClass(followBlock, (strFollowOld == "Y" ? 'post-item-follow-active' : 'post-item-follow'));
 					followBlock.setAttribute("data-follow", strFollowOld);
+				}
+				if (menuNode)
+				{
+					menuNode.setAttribute("data-follow", strFollowOld);
+				}
+
+				if (BX.type.isNotEmptyString(this.detailPageId))
+				{
+					this.setFollowValue(strFollowOld == "Y");
+					this.setFollowMenuItemName();
 				}
 
 				if (
@@ -4659,13 +4320,48 @@ BitrixMSL.prototype.setFollow = function(params)
 					}
 				}
 
-				if (BX.type.isNotEmptyString(this.detailPageId))
+				if (this.getLogId() > 0)
 				{
-					this.setFollowValue(strFollowOld == "Y");
-					this.setFollowMenuItemName();
+					BXMobileApp.onCustomEvent('onLogEntryFollow', {
+						logId: logId,
+						pageId: (BX.type.isNotEmptyString(this.detailPageId) ? this.detailPageId : ''),
+						bOnlyOn: (bOnlyOn ? 'Y' : 'N')
+					}, true);
 				}
-			}.bind(this)
-		});
+			}
+		}.bind(this), function(response) {
+			if (followBlock)
+			{
+				BX.removeClass(followBlock, (strFollowOld == "Y" ? 'post-item-follow' : 'post-item-follow-active'));
+				BX.addClass(followBlock, (strFollowOld == "Y" ? 'post-item-follow-active' : 'post-item-follow'));
+				followBlock.setAttribute("data-follow", strFollowOld);
+			}
+			if (menuNode)
+			{
+				menuNode.setAttribute("data-follow", strFollowOld);
+			}
+
+			if (
+				!this.getFollowDefaultValue()
+				&& followWrap
+			)
+			{
+				if (strFollowOld == "Y")
+				{
+					BX.addClass(followWrap, 'post-item-follow');
+				}
+				else
+				{
+					BX.removeClass(followWrap, 'post-item-follow');
+				}
+			}
+
+			if (BX.type.isNotEmptyString(this.detailPageId))
+			{
+				this.setFollowValue(strFollowOld == "Y");
+				this.setFollowMenuItemName();
+			}
+		}.bind(this));
 	}
 
 	return false;
@@ -4776,31 +4472,26 @@ BitrixMSL.prototype.changeListMode = function(post_data, successCallbackFunc, fa
 			b24statAction: statAction,
 			b24statContext: 'mobile'
 		}
-
-	},
+	}).then(function(response) {
+		app.hidePopupLoader();
+		if (response.data.success)
 		{
-		success: function(response) {
-			app.hidePopupLoader();
-			if (response.data.success)
-			{
-				successCallbackFunc(post_data);
-			}
-			else
-			{
-				if (!BX.type.isNotEmptyString(oMSL.detailPageId))
-				{
-					failCallbackFunc(post_data);
-				}
-			}
-		}.bind(this),
-		failure: function(response) {
-			app.hidePopupLoader();
-			if (!BX.type.isNotEmptyString(oMSL.detailPageId))
+			successCallbackFunc(post_data);
+		}
+		else
+		{
+			if (!BX.type.isNotEmptyString(this.detailPageId))
 			{
 				failCallbackFunc(post_data);
 			}
 		}
-	});
+	}.bind(this), function(response) {
+		app.hidePopupLoader();
+		if (!BX.type.isNotEmptyString(this.detailPageId))
+		{
+			failCallbackFunc(post_data);
+		}
+	}.bind(this));
 };
 
 
@@ -4913,195 +4604,6 @@ BitrixMSL.prototype.getComment = function(params)
 	}
 };
 
-BitrixMSL.prototype.uploadCommentFile = function(fileURI)
-{
-	var oPreviewComment = oMSL.showPreviewComment('');
-	var loadingId = oMSL.showCommentProgressBar(oPreviewComment);
-
-	function win(r)
-	{
-		var arResult = JSON.parse(r.response)
-
-		if (
-			typeof arResult.SUCCESS == 'undefined'
-			|| arResult.SUCCESS != 'Y'
-		)
-		{
-			fail_1try();
-		}
-		else
-		{
-			oMSL.hideCommentProgressBar(loadingId, oPreviewComment);
-			if (
-				oMSL.commentsType == 'blog'
-				&& (
-					typeof arResult.BLOG_COMMENT_ID != 'undefined'
-					|| parseInt(arResult.BLOG_COMMENT_ID) > 0
-				)
-			)
-			{
-				oMSL.getComment({
-					oPreviewComment: oPreviewComment,
-					commentId: (oMSL.commentsType == 'blog' ? arResult.BLOG_COMMENT_ID : false),
-					entryId: (oMSL.commentsType == 'blog' ? commentVarBlogPostID : false),
-					commentType: oMSL.commentsType
-				});
-			}
-			else if	(
-				oMSL.commentsType == 'log'
-				&& (
-					typeof arResult.commentID != 'undefined'
-					|| parseInt(arResult.commentID) > 0
-				)
-			)
-			{
-				oMSL.showNewComment({
-					arComment: arResult["arCommentFormatted"],
-					bIncrementCounters: true,
-					oPreviewComment: oPreviewComment,
-					bShowImages: true,
-					bClearForm: false
-				});
-				__MSLDetailMoveBottom();
-
-				oMSL.setFollow({
-					logId: oMSL.getLogId(),
-					bOnlyOn: true
-				});
-			}
-		}
-	}
-
-	function fail_1try(error)
-	{
-		app.BasicAuth({
-			'success': function(auth_data)
-			{
-				options.params.sessid = auth_data.sessid_md5;
-				ft.upload(fileURI, BX.message('MSLAjaxInterfaceFullURI'), win, fail_2try, options);
-			},
-			'failture': function()
-			{
-				oMSL.hideCommentProgressBar(loadingId, oPreviewComment);
-
-				oMSL.showCommentAlert({
-					nodeId: oPreviewComment,
-					action: 'upload_comment_photo',
-					commentType: 'blog',
-					callback: function() {
-						oMSL.uploadCommentFile(fileURI);
-					}
-				});
-			}
-		});
-	}
-
-	function fail_2try(error)
-	{
-		oMSL.hideCommentProgressBar(loadingId, oPreviewComment);
-
-		oMSL.showCommentAlert({
-			nodeId: oPreviewComment,
-			action: 'upload_comment_photo',
-			commentType: 'blog',
-			callback: function() {
-				oMSL.uploadCommentFile(fileURI);
-			}
-		});
-	}
-
-	var options = new FileUploadOptions();
-	options.fileKey = 'file';
-	options.fileName = fileURI.substr(fileURI.lastIndexOf('/') + 1);
-	options.mimeType = "image/jpeg";
-	options.params = {
-		mobile_action: 'file_upload_' + oMSL.commentsType,
-		action: 'file_comment_upload',
-		commentsType: oMSL.commentsType,
-		sessid: BX.bitrix_sessid(),
-		site: BX.message("SITE_ID"),
-		lang: BX.message("MSLLangId"),
-		nt: BX.message('MSLNameTemplate'),
-		sl: BX.message('MSLShowLogin'),
-		p_user: BX.message('MSLPathToUser'),
-		p_bpost: commentVarPathToBlogPost,
-		as: commentVarAvatarSize,
-		dtf: commentVarDateTimeFormat,
-		sr: BX.message('MSLShowRating')
-	};
-
-	if (oMSL.commentsType == 'blog')
-	{
-		options.params.post_id = commentVarBlogPostID;
-	}
-	else
-	{
-		options.params.log_id = oMSL.getLogId();
-	}
-
-	options.chunkedMode = false;
-
-	var ft = new FileTransfer();
-	ft.upload(fileURI, BX.message('MSLAjaxInterfaceFullURI'), win, fail_1try, options);
-};
-
-BitrixMSL.prototype.sendCommentWriting = function(xmlId, text)
-{
-	xmlId = (typeof (xmlId) != 'undefined' ? xmlId : '');
-	text = (typeof text != 'undefined' ? text : '');
-
-	if (xmlId.length <= 0)
-	{
-		return;
-	}
-
-	if (this.sendCommentWritingList[xmlId])
-	{
-		return;
-	}
-
-	clearTimeout(this.sendCommentWritingListTimeout[xmlId]);
-	this.sendCommentWritingList[xmlId] = true;
-
-	var BMAjaxWrapper = new MobileAjaxWrapper;
-	BMAjaxWrapper.Wrap({
-		type: 'json',
-		method: 'POST',
-		url: BX.message('MSLSiteDir') + 'mobile/ajax.php',
-		data: {
-			sessid: BX.bitrix_sessid(),
-			site: BX.message('SITE_ID'),
-			lang: BX.message('MSLLangId'),
-			nt: BX.message('MSLNameTemplate'),
-			sl: BX.message('MSLShowLogin'),
-			as: commentVarAvatarSize,
-			action: 'send_comment_writing',
-			mobile_action: 'send_comment_writing',
-			ENTITY_XML_ID: xmlId
-		},
-		callback: function(response_data) {},
-		callback_failure: function(response_data) {}
-	});
-
-	this.sendCommentWritingListTimeout[xmlId] = setTimeout(BX.delegate(function()
-	{
-		this.endCommentWriting(xmlId);
-	}, this), 30000);
-};
-
-BitrixMSL.prototype.endCommentWriting = function(xmlId)
-{
-	xmlId = (typeof (xmlId) != 'undefined' ? xmlId : '');
-
-	if (xmlId.length <= 0)
-	{
-		return;
-	}
-
-	clearTimeout(this.sendCommentWritingListTimeout[xmlId]);
-	this.sendCommentWritingList[xmlId] = false;
-};
-
 BitrixMSL.prototype.setFocusOnComments = function(type)
 {
 	type = (type == 'list' ? 'list' : 'form');
@@ -5118,12 +4620,12 @@ BitrixMSL.prototype.setFocusOnComments = function(type)
 			var firstNewComment = BX.findChild(BX('post-comments-wrap'), { className : 'post-comment-block-new' }, true);
 			if (firstNewComment)
 			{
-				document.body.scrollTop = firstNewComment.offsetTop;
+				window.scrollTo(0, firstNewComment.offsetTop);
 			}
 			else
 			{
 				var firstComment = BX.findChild(BX('post-comments-wrap'), { className : 'post-comment-block' }, true);
-				document.body.scrollTop = (firstComment ? firstComment.offsetTop : 0);
+				window.scrollTo(0, (firstComment ? firstComment.offsetTop : 0));
 			}
 		}
 	}
@@ -5140,7 +4642,14 @@ BitrixMSL.prototype.setFocusOnCommentForm = function()
 
 BitrixMSL.prototype.buildDetailPageMenu = function(data)
 {
-	var menuItems = [];
+	var
+		menuItems = [],
+		menuNode = null;
+
+	if (Application.getApiVersion() >= 34)
+	{
+		menuNode = document.getElementById('log-entry-menu-' + this.getLogId());
+	}
 
 	if (data.entry_type == 'blog')
 	{
@@ -5152,47 +4661,13 @@ BitrixMSL.prototype.buildDetailPageMenu = function(data)
 		};
 
 		if (
-			false
-			&& typeof data.destinations != 'undefined'
-		)
-		{
-			if (typeof data.destinations.U != 'undefined')
-			{
-				for (key in data.destinations.U)
-				{
-					if (data.destinations.U.hasOwnProperty(key))
-					{
-						var objUser = data.destinations.U[key];
-						if (typeof objUser.ID != 'undefined')
-						{
-							arSelectedDestinations.a_users.push(parseInt(objUser.ID) > 0 ? parseInt(objUser.ID) : 0);
-						}
-					}
-				}
-			}
-
-			if (typeof data.destinations.SG != 'undefined')
-			{
-				for (key in data.destinations.SG)
-				{
-					if (
-						data.destinations.SG.hasOwnProperty(key)
-						&& parseInt(key) > 0
-					)
-					{
-						arSelectedDestinations.b_groups.push(parseInt(key));
-					}
-				}
-			}
-		}
-
-		if (
 			arSelectedDestinations.a_users.length > 0
 			|| arSelectedDestinations.b_groups.length > 0
 		)
 		{
 			menuItems.push({
-				name: BX.message('MSLSharePost'),
+				id: 'sharePost',
+				name: BX.message('MOBILE_EXT_LIVEFEED_POST_MENU_SHARE'),
 				action: function()
 				{
 					app.openTable({
@@ -5208,13 +4683,14 @@ BitrixMSL.prototype.buildDetailPageMenu = function(data)
 						modal: true,
 						selected: arSelectedDestinations,
 						alphabet_index: true,
-						okname: BX.message('MSLShareTableOk'),
-						cancelname: BX.message('MSLShareTableCancel'),
-						outsection: (BX.message('MSLIsDenyToAll') != 'Y')
+						okname: BX.message('MOBILE_EXT_LIVEFEED_SHARE_TABLE_BUTTON_OK'),
+						cancelname: BX.message('MOBILE_EXT_LIVEFEED_SHARE_TABLE_BUTTON_CANCEL'),
+						outsection: (BX.message('MOBILE_EXT_LIVEFEED_DEST_TO_ALL_DENIED') != 'Y')
 					});
 				},
 				arrowFlag: false,
-				icon: "add"
+				icon: "add",
+				image: "/bitrix/templates/mobile_app/images/lenta/menu/n_plus.png",
 			});
 		}
 
@@ -5224,7 +4700,8 @@ BitrixMSL.prototype.buildDetailPageMenu = function(data)
 		)
 		{
 			menuItems.push({
-				name: BX.message('MSLEditPost'),
+				id: 'editPost',
+				name: BX.message('MOBILE_EXT_LIVEFEED_POST_MENU_EDIT'),
 				action: function() {
 					oMSL.editBlogPost({
 						feed_id: data.feed_id,
@@ -5233,32 +4710,55 @@ BitrixMSL.prototype.buildDetailPageMenu = function(data)
 				},
 				arrowFlag: false,
 				icon: 'edit',
-				feature: 'edit'
+				feature: 'edit',
+				image: "/bitrix/templates/mobile_app/images/lenta/menu/pencil.png",
 			});
 
 			menuItems.push({
-				name: BX.message('MSLDeletePost'),
+				id: 'deletePost',
+				name: BX.message('MOBILE_EXT_LIVEFEED_POST_MENU_DELETE'),
 				action: function() {
 					oMSL.deleteBlogPost({
 						'post_id': parseInt(data.post_id)
 					});
 				},
 				arrowFlag: false,
-				icon: "delete"
+				icon: "delete",
+				iconName: "delete",
+//				image: "/bitrix/templates/mobile_app/images/lenta/menu/n_cross.png",
 			});
 		}
 	}
 
 	if (
+		menuNode
+		&& menuNode.getAttribute('data-use-favorites') == 'Y'
+	)
+	{
+		menuItems.push({
+			id: 'favoritesPost',
+			name: BX.message('MOBILE_EXT_LIVEFEED_POST_MENU_FAVORITES_' + menuNode.getAttribute('data-favorites')),
+			image: "/bitrix/templates/mobile_app/images/lenta/menu/favorite.png",
+			action: function()
+			{
+				__MSLSetFavorites(this.getLogId(), menuNode);
+			}.bind(this),
+			arrowFlag: false,
+			feature: 'favorites'
+		});
+	}
+
+	if (
 		oMSL.bUseFollow
 		&& (
-			typeof data.read_only == 'undefined'
+			!BX.type.isNotEmptyString(data.read_only)
 			|| data.read_only != 'Y'
 		)
 	)
 	{
 		menuItems.push({
-			name: (oMSL.getFollowValue() ? BX.message('MSLFollowY') : BX.message('MSLFollowN')),
+			id: 'followPost',
+			name: (oMSL.getFollowValue() ? BX.message('MOBILE_EXT_LIVEFEED_POST_MENU_FOLLOW_Y') : BX.message('MOBILE_EXT_LIVEFEED_POST_MENU_FOLLOW_N')),
 			image: "/bitrix/templates/mobile_app/images/lenta/menu/eye.png",
 			action: function()
 			{
@@ -5276,7 +4776,8 @@ BitrixMSL.prototype.buildDetailPageMenu = function(data)
 	}
 
 	menuItems.push({
-		name: BX.message('MSLRefreshComments'),
+		id: 'refreshPostComments',
+		name: BX.message('MOBILE_EXT_LIVEFEED_POST_MENU_REFRESH_COMMENTS'),
 		image: "/bitrix/templates/mobile_app/images/lenta/menu/n_refresh.png",
 		action: function() {
 			if (oMSL.bDetailEmptyPage)
@@ -5299,19 +4800,41 @@ BitrixMSL.prototype.buildDetailPageMenu = function(data)
 	});
 
 	if (
-		oMSL.bUseTasks
+		BX.type.isNotEmptyString(data.post_content_type_id)
+		&& BX.type.isNumber(data.post_content_id)
+		&& data.post_content_id > 0
+	)
+	{
+		menuItems.push({
+			id: 'getPostLink',
+			name: BX.message('MOBILE_EXT_LIVEFEED_POST_MENU_GET_LINK'),
+			image: "/bitrix/templates/mobile_app/images/lenta/menu/link.png",
+			action: function() {
+				this.copyPostLink({
+					contentTypeId: data.post_content_type_id,
+					contentId: parseInt(data.post_content_id)
+				});
+			}.bind(this),
+			arrowFlag: false
+		});
+	}
+
+	if (
+		BX.message('MOBILE_EXT_LIVEFEED_USE_TASKS') == 'Y'
 		&& BX.type.isNotEmptyString(data.post_content_type_id)
 		&& BX.type.isNumber(data.post_content_id) && data.post_content_id > 0
 	)
 	{
 		menuItems.push({
-			name: BX.message('MSLCreateTask'),
+			id: 'createTask',
+			name: BX.message('MOBILE_EXT_LIVEFEED_POST_MENU_CREATE_TASK'),
 			image: "/bitrix/templates/mobile_app/images/lenta/menu/n_check.png",
 			action: function()
 			{
 				oMSL.createTask({
 					entityType: data.post_content_type_id,
-					entityId: parseInt(data.post_content_id)
+					entityId: parseInt(data.post_content_id),
+					logId: oMSL.getLogId()
 				});
 				return false;
 			},
@@ -5322,35 +4845,382 @@ BitrixMSL.prototype.buildDetailPageMenu = function(data)
 	return menuItems;
 };
 
-BitrixMSL.prototype.showPageMenu = function(type)
+BitrixMSL.prototype.getPageMenuItems = function(type)
 {
 	type = (type == 'detail' ? 'detail' : 'list');
-	var menuItems = (type == 'detail' ? this.detailPageMenuItems : this.listPageMenuItems);
-	var title = (type == 'detail'
-		? (BX.message("MSLLogEntryTitle") != null ? BX.message("MSLLogEntryTitle") : '')
-		: (BX.message("MSLLogTitle") != null ? BX.message("MSLLogTitle") : '')
-	);
+	return (type == 'detail' ? this.detailPageMenuItems : this.listPageMenuItems);
+};
+
+BitrixMSL.prototype.showPageMenu = function()
+{
+	if (this.pageType == 'detail')
+	{
+		this.detailPageMenuItems = this.buildDetailPageMenu(this.menuData);
+	}
+
+	var menuItems = this.getPageMenuItems(this.pageType);
 
 	if (menuItems.length > 0)
 	{
-		app.menuCreate({
-			items: menuItems
-		});
+		var
+			popupMenuItems = [],
+			popupMenuActions = {};
 
-		BXMobileApp.UI.Page.TopBar.title.setText(title);
-		BXMobileApp.UI.Page.TopBar.title.setCallback(function ()
+		for(var i = 0; i < menuItems.length; i++)
 		{
-			app.menuShow();
+			popupMenuItems.push({
+				id: menuItems[i].id,
+				title: menuItems[i].name,
+				iconUrl: (BX.type.isNotEmptyString(menuItems[i].image) ? menuItems[i].image : ''),
+				iconName: (BX.type.isNotEmptyString(menuItems[i].iconName) ? menuItems[i].iconName : ''),
+				sectionCode: 'defaultSection'
+			});
+
+			popupMenuActions[menuItems[i].id] = menuItems[i].action;
+		}
+
+		app.exec('setPopupMenuData', {
+			items: popupMenuItems,
+			sections: [
+				{
+					id: 'defaultSection'
+				}
+			],
+			callback: function(event) {
+				if (event.eventName == 'onDataSet')
+				{
+					app.exec("showPopupMenu");
+				}
+				else if (
+					event.eventName == 'onItemSelected'
+					&& BX.type.isNotEmptyObject(event.item)
+					&& BX.type.isNotEmptyString(event.item.id)
+					&& typeof popupMenuActions[event.item.id] != 'undefined'
+				)
+				{
+					popupMenuActions[event.item.id]();
+				}
+			}
 		});
-		BXMobileApp.UI.Page.TopBar.title.show();
+	}
+};
+
+BitrixMSL.prototype.initPageMenu = function(type)
+{
+	type = (type == 'detail' ? 'detail' : 'list');
+	var
+		menuItems = this.getPageMenuItems(type),
+		title = (
+			type == 'detail'
+				? (BX.message("MSLLogEntryTitle") != null ? BX.message("MSLLogEntryTitle") : '')
+				: (BX.message("MSLLogTitle") != null ? BX.message("MSLLogTitle") : '')
+		);
+
+	if (menuItems.length > 0)
+	{
+		if (Application.getApiVersion() >= 34)
+		{
+			BXMobileApp.UI.Page.TopBar.title.params.largeMode = true;
+			BXMobileApp.UI.Page.TopBar.title._applyParams();
+
+			oMSL.initPagePopupMenu();
+		}
+		else
+		{
+			app.menuCreate({
+				items: menuItems
+			});
+			BXMobileApp.UI.Page.TopBar.title.setCallback(function ()
+			{
+				app.menuShow();
+			});
+		}
 	}
 	else
 	{
-		BXMobileApp.UI.Page.TopBar.title.setText(title);
-		BXMobileApp.UI.Page.TopBar.title.setCallback("");
-		BXMobileApp.UI.Page.TopBar.title.show();
+		if (Application.getApiVersion() >= 34)
+		{
+
+		}
+		else
+		{
+			BXMobileApp.UI.Page.TopBar.title.setCallback("");
+		}
 	}
+
+	BXMobileApp.UI.Page.TopBar.title.setText(title);
+	BXMobileApp.UI.Page.TopBar.title.show();
 };
+
+BitrixMSL.prototype.showPostMenu = function(event)
+{
+	var target = null;
+
+	if (
+		BX.type.isString(event.target.getAttribute('data-menu-type'))
+		&& event.target.getAttribute('data-menu-type') == 'post'
+	)
+	{
+		target = event.target;
+	}
+	else
+	{
+		target = BX.findParent(event.target, { className: 'lenta-menu' }, { className: 'post-item-top' } );
+	}
+
+	if (!BX(target))
+	{
+		return event.preventDefault();
+	}
+
+	var
+		popupMenuItems = [],
+		popupMenuActions = {},
+		useFavorites = (
+			BX.type.isString(target.getAttribute('data-use-favorites'))
+			&& target.getAttribute('data-use-favorites') == 'Y'
+				? 'Y'
+				: 'N'
+		),
+		favoritesValue = (
+			useFavorites == 'Y'
+			&& BX.type.isString(target.getAttribute('data-favorites'))
+			&& target.getAttribute('data-favorites') == 'Y'
+				? 'Y'
+				: 'N'
+		),
+		useFollow = (
+			BX.type.isString(target.getAttribute('data-use-follow'))
+			&& target.getAttribute('data-use-follow') == 'Y'
+				? 'Y'
+				: 'N'
+		),
+		followValue = (
+			useFavorites == 'Y'
+			&& BX.type.isString(target.getAttribute('data-follow'))
+			&& target.getAttribute('data-follow') == 'Y'
+				? 'Y'
+				: 'N'
+		),
+		logId = (
+			BX.type.isString(target.getAttribute('data-log-id'))
+			&& parseInt(target.getAttribute('data-log-id')) > 0
+				? parseInt(target.getAttribute('data-log-id'))
+				: 0
+		),
+		postId = (
+			BX.type.isString(target.getAttribute('data-post-id'))
+			&& parseInt(target.getAttribute('data-post-id')) > 0
+				? parseInt(target.getAttribute('data-post-id'))
+				: 0
+		),
+		postPerms = (
+			BX.type.isString(target.getAttribute('data-post-perm'))
+				? target.getAttribute('data-post-perm')
+				: 'R'
+		),
+		contentTypeId = (
+			BX.type.isString(target.getAttribute('data-content-type-id'))
+				? target.getAttribute('data-content-type-id')
+				: null
+		),
+		contentId = (
+			BX.type.isString(target.getAttribute('data-content-id'))
+				? parseInt(target.getAttribute('data-content-id'))
+				: 0
+		);
+
+	if (
+		postId > 0
+		&& postPerms == 'W'
+	)
+	{
+		popupMenuItems.push({
+			id: 'edit',
+			title: BX.message('MOBILE_EXT_LIVEFEED_POST_MENU_EDIT'),
+			iconUrl: '/bitrix/templates/mobile_app/images/lenta/menu/pencil.png',
+			sectionCode: 'defaultSection',
+			action: function()
+			{
+				this.editBlogPost({
+					feed_id: window.LiveFeedID,
+					post_id: postId
+				});
+			}.bind(this)
+		});
+
+		popupMenuItems.push({
+			id: 'delete',
+			title: BX.message('MOBILE_EXT_LIVEFEED_POST_MENU_DELETE'),
+			iconName: 'delete',
+//			iconUrl: '/bitrix/templates/mobile_app/images/lenta/menu/n_cross.png',
+			sectionCode: 'defaultSection',
+			action: function()
+			{
+				this.deleteBlogPost({
+					post_id: postId
+				});
+			}.bind(this)
+		});
+	}
+
+	if (
+		useFavorites == 'Y'
+		&& logId > 0
+	)
+	{
+		popupMenuItems.push({
+			id: 'favorites',
+			title: BX.message('MOBILE_EXT_LIVEFEED_POST_MENU_FAVORITES_' + favoritesValue),
+			iconUrl: '/bitrix/templates/mobile_app/images/lenta/menu/favorite.png',
+			sectionCode: 'defaultSection',
+			action: function()
+			{
+				__MSLSetFavorites(logId, target);
+			}
+		});
+	}
+
+	if (
+		useFollow
+		&& logId > 0
+	)
+	{
+		popupMenuItems.push({
+			id: 'follow',
+			title: BX.message('MOBILE_EXT_LIVEFEED_POST_MENU_FOLLOW_' + followValue),
+			iconUrl: '/bitrix/templates/mobile_app/images/lenta/menu/eye.png',
+			sectionCode: 'defaultSection',
+			action: function()
+			{
+				this.setFollow({
+					logId: logId,
+					menuNode: target,
+					pageId: this.pageId,
+					bOnlyOn: false,
+					bAjax: true,
+					bRunEvent: true
+				});
+			}.bind(this)
+		});
+	}
+
+	if (
+		BX.type.isNotEmptyString(contentTypeId)
+		&& contentId > 0
+	)
+	{
+		popupMenuItems.push({
+			id: 'getPostLink',
+			title: BX.message('MOBILE_EXT_LIVEFEED_POST_MENU_GET_LINK'),
+			iconUrl: '/bitrix/templates/mobile_app/images/lenta/menu/link.png',
+			sectionCode: 'defaultSection',
+			action: function()
+			{
+				this.copyPostLink({
+					contentTypeId: contentTypeId,
+					contentId: contentId
+				});
+			}.bind(this)
+		});
+	}
+
+	if (
+		BX.message('MOBILE_EXT_LIVEFEED_USE_TASKS') == 'Y'
+		&& BX.type.isNotEmptyString(contentTypeId)
+		&& contentId > 0
+		&& logId > 0
+	)
+	{
+		popupMenuItems.push({
+			id: 'createTask',
+			title: BX.message('MOBILE_EXT_LIVEFEED_POST_MENU_CREATE_TASK'),
+			iconUrl: '/bitrix/templates/mobile_app/images/lenta/menu/n_check.png',
+			sectionCode: 'defaultSection',
+			action: function()
+			{
+				this.createTask({
+					entityType: contentTypeId,
+					entityId: contentId,
+					logId: logId
+				});
+				return false;
+			}.bind(this)
+		});
+	}
+
+	if (popupMenuItems.length <= 0)
+	{
+		return event.preventDefault();
+	}
+
+	for(var i = 0; i < popupMenuItems.length; i++)
+	{
+		popupMenuActions[popupMenuItems[i].id] = popupMenuItems[i].action;
+	}
+
+	app.exec('setPopupMenuData', {
+		position: 'center',
+		items: popupMenuItems,
+		sections: [
+			{
+				id: 'defaultSection'
+			}
+		],
+		callback: function(event) {
+			if (event.eventName == 'onDataSet')
+			{
+				app.exec("showPopupMenu");
+			}
+			else if (
+				event.eventName == 'onItemSelected'
+				&& BX.type.isNotEmptyObject(event.item)
+				&& BX.type.isNotEmptyString(event.item.id)
+				&& typeof popupMenuActions[event.item.id] != 'undefined'
+			)
+			{
+				popupMenuActions[event.item.id]();
+			}
+		}
+	});
+
+	return event.preventDefault();
+};
+
+BitrixMSL.prototype.copyPostLink = function(params)
+{
+	var
+		contentTypeId = (BX.type.isNotEmptyString(params.contentTypeId) ? params.contentTypeId: ''),
+		contentId = (BX.type.isNumber(params.contentId) && params.contentId > 0 ? params.contentId : 0);
+
+	if (
+		!BX.type.isNotEmptyString(contentTypeId)
+		|| contentId <= 0
+	)
+	{
+		return;
+	}
+
+	var BMAjaxWrapper = new MobileAjaxWrapper;
+	BMAjaxWrapper.runAction('socialnetwork.api.livefeed.getRawEntryData', {
+		data: {
+			params: {
+				entityType: contentTypeId,
+				entityId: contentId,
+				logId: this.getLogId(),
+				additionalParams: {
+					getLivefeedUrl: 'Y',
+					absoluteUrl: 'Y',
+					returnFields: [ 'LIVEFEED_URL' ]
+				}
+			}
+		}
+	}).then(function(response) {
+		this.copyLinkSuccess(response.data);
+	}.bind(this), function(response) {
+	});
+};
+
 
 BitrixMSL.prototype.setFollowMenuItemName = function()
 {
@@ -5363,9 +5233,9 @@ BitrixMSL.prototype.setFollowMenuItemName = function()
 			&& menuItem.feature == 'follow'
 		)
 		{
-			menuItem.name = (oMSL.getFollowValue() ? BX.message('MSLFollowY') : BX.message('MSLFollowN'));
+			menuItem.name = (oMSL.getFollowValue() ? BX.message('MOBILE_EXT_LIVEFEED_POST_MENU_FOLLOW_Y') : BX.message('MOBILE_EXT_LIVEFEED_POST_MENU_FOLLOW_N'));
 			this.detailPageMenuItems[i] = menuItem;
-			this.showPageMenu('detail');
+			this.initPageMenu('detail');
 			break;
 		}
 	}
@@ -5384,7 +5254,7 @@ BitrixMSL.prototype.setDefaultFollowMenuItemName = function()
 		{
 			menuItem.name = (oMSL.getFollowDefaultValue() ? BX.message('MSLMenuItemFollowDefaultY') : BX.message('MSLMenuItemFollowDefaultN'));
 			this.listPageMenuItems[i] = menuItem;
-			this.showPageMenu('list');
+			this.initPageMenu('list');
 			break;
 		}
 	}
@@ -5403,7 +5273,7 @@ BitrixMSL.prototype.setExpertModeMenuItemName = function()
 		{
 			menuItem.name = (oMSL.bExpertMode ? BX.message('MSLMenuItemExpertModeY') : BX.message('MSLMenuItemExpertModeN'));
 			this.listPageMenuItems[i] = menuItem;
-			this.showPageMenu('list');
+			this.initPageMenu('list');
 			break;
 		}
 	}
@@ -5546,6 +5416,11 @@ BitrixMSL.prototype.unParseMentions = function(text)
 
 BitrixMSL.prototype.expandText = function(id)
 {
+	if (!document.body.classList.contains('post-card'))
+	{
+		return;
+	}
+
 	var checkBlock = (
 		typeof id == 'undefined'
 		|| id == null
@@ -5554,51 +5429,53 @@ BitrixMSL.prototype.expandText = function(id)
 			: BX('post_block_check_cont_' + id)
 	);
 
-	if (checkBlock)
+	if (!checkBlock)
 	{
-		if (BX.hasClass(checkBlock, "post-item-post-block"))
-		{
-			BX.addClass(checkBlock, this.classes.postItemBlockFull);
-			BX.removeClass(checkBlock, 'post-item-post-block');
-		}
-		else if (BX.hasClass(checkBlock, "lenta-info-block-wrapp"))
-		{
-			BX.addClass(checkBlock, 'lenta-info-block-wrapp-full');
-			BX.removeClass(checkBlock, 'lenta-info-block-wrapp');
-		}
+		return;
+	}
 
-		var nodeMoreOverlay = checkBlock.querySelector('.post-more-block');
-		if (nodeMoreOverlay)
-		{
-			nodeMoreOverlay.style.display = "none";
-		}
+	if (BX.hasClass(checkBlock, "post-item-post-block"))
+	{
+		BX.addClass(checkBlock, this.classes.postItemBlockFull);
+		BX.removeClass(checkBlock, 'post-item-post-block');
+	}
+	else if (BX.hasClass(checkBlock, "lenta-info-block-wrapp"))
+	{
+		BX.addClass(checkBlock, 'lenta-info-block-wrapp-full');
+		BX.removeClass(checkBlock, 'lenta-info-block-wrapp');
+	}
 
-		if (BX('post_more_limiter_' + id))
-		{
-			BX('post_more_limiter_' + id).style.display = "none";
-		}
-		else if (BX('post_more_limiter'))
-		{
-			BX('post_more_limiter').style.display = "none";
-		}
+	var nodeMoreOverlay = checkBlock.querySelector('.post-more-block');
+	if (nodeMoreOverlay)
+	{
+		nodeMoreOverlay.style.display = "none";
+	}
 
-		var arImages = BX.findChildren(checkBlock, { tagName: "img" }, true);
+	if (BX('post_more_limiter_' + id))
+	{
+		BX('post_more_limiter_' + id).style.display = "none";
+	}
+	else if (BX('post_more_limiter'))
+	{
+		BX('post_more_limiter').style.display = "none";
+	}
 
-		if (BX.type.isArray(arImages))
+	var arImages = BX.findChildren(checkBlock, { tagName: "img" }, true);
+
+	if (BX.type.isArray(arImages))
+	{
+		for (var i = 0; i < arImages.length; i++)
 		{
-			for (var i = 0; i < arImages.length; i++)
+			if (
+				BX.type.isString(arImages[i].getAttribute('data-src'))
+				&& arImages[i].getAttribute('data-src').length > 0
+				&& !!arImages[i].id
+			)
 			{
-				if (
-					BX.type.isString(arImages[i].getAttribute('data-src'))
-					&& arImages[i].getAttribute('data-src').length > 0
-					&& !!arImages[i].id
-				)
-				{
-					BitrixMobile.LazyLoad.registerImage(arImages[i].id);
-				}
+				BitrixMobile.LazyLoad.registerImage(arImages[i].id);
 			}
-			BitrixMobile.LazyLoad.showImages(false);
 		}
+		BitrixMobile.LazyLoad.showImages(false);
 	}
 };
 
@@ -5702,181 +5579,36 @@ BitrixMSL.prototype.afterEdit = function(postResponseData, logId) // in livefeed
 {
 	logId = (typeof logId != 'undefined' ? parseInt(logId) : 0);
 
-	var newPostId = 'new_post_ajax_' + Math.random();
 	var newPostNode = BX.create('DIV', {
-		props: {
-			id: newPostId
-		},
 		html: postResponseData.text
 	});
 	BX('blog-post-first-after').parentNode.insertBefore(newPostNode, BX('blog-post-first-after').nextSibling);
 
+	var
+		detailTextNode = BX.findChild(newPostNode, { className: 'post-item-post-block' }, true),
+		topNode = BX.findChild(newPostNode, { className: 'post-item-top' }, true),
+		filesNode = BX.findChild(newPostNode, { className: 'post-item-attached-file-wrap' }, true);
+
 	if (
 		logId > 0
-		&& BX('post_block_check_cont_' + logId)
-		&& BX('post_item_top_' + logId)
+		&& detailTextNode
+		&& topNode
 	)
 	{
-		BXMobileApp.onCustomEvent('onEditedPostInserted', {
-			detailText: BX('post_block_check_cont_' + logId).innerHTML,
-			topText: BX('post_item_top_' + logId).innerHTML,
-			nodeID: newPostId,
+		var postData = {
+			detailText: detailTextNode.innerHTML,
+			topText: topNode.innerHTML,
 			logID: logId
-		}, true);
-	}
-	BX.cleanNode(newPostNode, true);
-	BitrixMobile.LazyLoad.showImages();
-};
-
-BitrixMSL.prototype.onMPFSent = function(post_data, groupID)
-{
-	var postId = (
-		typeof post_data.data.post_id != 'undefined'
-			? parseInt(post_data.data.post_id)
-			: 0
-	);
-
-	if (
-		post_data.LiveFeedID != window.LiveFeedID
-		&& postId <= 0
-	)
-	{
-		return;
-	}
-
-	window.scrollTo(0,0);
-
-	if (postId <= 0)
-	{
-		app.showPopupLoader({text:""});
-	}
-
-	post_data.data.response_type = 'json';
-
-	var url = (typeof post_data.ajaxUrl != 'undefined' ? post_data.ajaxUrl : oMSL.curUrl);
-	url = BX.util.add_url_param(url, {
-		b24statAction: (postId > 0 ? "editLogEntry" : "addLogEntry"),
-		b24statContext: "mobile"
-	});
-
-	var BMAjaxWrapper = new MobileAjaxWrapper;
-	BMAjaxWrapper.Wrap({
-		type: 'json',
-		method: 'POST',
-		url: url,
-		data: post_data.data,
-		processData : true,
-		callback: function(post_response_data)
+		};
+		if (filesNode)
 		{
-			app.hidePopupLoader();
-
-			var selectedDestinations = {
-				a_users: [],
-				b_groups: []
-			};
-
-			if (
-				postId <= 0
-				&& (
-					typeof (post_response_data.error) == "undefined"
-					|| post_response_data.error.length <= 0
-				)
-				&& post_response_data.text.length > 0
-			) // add
-			{
-				BX.localStorage.set('mobileLivefeedRefreshTS',  Math.round(new Date().getTime() / 1000), 86400*30);
-				oMSL.refreshNeeded = false;
-				oMSL.counterValue = 0;
-				oMSL.hideRefreshNeededNotifier();
-				oMSL.hideNotifier();
-
-				BX.MSL.DBDelete(groupID);
-
-				oMSL.clearPostFormDestination(selectedDestinations, groupID);
-				oMSL.setPostFormParams({
-					selectedRecipients: selectedDestinations
-				});
-				oMSL.setPostFormParams({
-					messageText: ''
-				});
-
-				app.showPopupLoader({text:""});
-				__MSLRefresh(true);
-			}
-			else if (
-				postId > 0
-				&& (
-					typeof (post_response_data.error) == "undefined"
-					|| post_response_data.error.length <= 0
-				)
-			) // edit
-			{
-				BXMobileApp.onCustomEvent('onAfterEdit', {
-					postResponseData: post_response_data,
-					postData: post_data
-				}, true);
-			}
-			else
-			{
-				if (postId <= 0) // only when add
-				{
-					BX.MSL.DBSave(post_data.data, groupID);
-
-					oMSL.buildSelectedDestinations(
-						post_data.data,
-						selectedDestinations
-					);
-
-					oMSL.setPostFormParams({
-						selectedRecipients: selectedDestinations
-					});
-
-					oMSL.setPostFormParams({
-						messageText: post_data.data.POST_MESSAGE
-					});
-				}
-
-				oMSL.showPostError({
-					errorText: post_response_data.error,
-					feedId: window.LiveFeedID
-				});
-			}
-		},
-		callback_failure: function()
-		{
-			app.hidePopupLoader();
-
-			if (postId <= 0) // only when add
-			{
-				BX.MSL.DBSave(post_data.data, groupID);
-
-				var selectedDestinations = {
-					a_users: [],
-					b_groups: []
-				};
-
-				oMSL.buildSelectedDestinations(
-					post_data.data,
-					selectedDestinations
-				);
-
-				oMSL.setPostFormParams({
-					selectedRecipients: selectedDestinations
-				});
-
-				oMSL.setPostFormParams({
-					messageText: post_data.data.POST_MESSAGE
-				});
-			}
-
-			oMSL.showPostError({
-				errorText: '',
-				feedId: window.LiveFeedID
-			});
-
-			BXMobileApp.onCustomEvent('onEditedPostFailed', {}, true);
+			postData.filesBlockText = filesNode.innerHTML;
 		}
-	});
+
+		BXMobileApp.onCustomEvent('onEditedPostInserted', postData, true, true);
+	}
+
+	BitrixMobile.LazyLoad.showImages();
 };
 
 BitrixMSL.prototype.onLogEntryFavorites = function(log_id, page_id)
@@ -6256,16 +5988,12 @@ BitrixMSL.prototype.checkVisibility = function(image)
 
 BitrixMSL.prototype.checkImageOffset = function(img)
 {
-	if (BX.hasClass(img.parentNode, "post-item-attached-img-block"))
+	if (!BX.hasClass(img.parentNode, "post-item-attached-img-block")) //Inline post image
 	{
-		//Attached post image
-		return img.parentNode.parentNode.offsetTop < 315;
-	}
-	else
-	{
-		//Inline post image
 		return img.offsetTop < 315;
 	}
+
+	return true;
 };
 
 BitrixMSL.prototype.isPostFull = function()
@@ -6419,20 +6147,22 @@ BitrixMSL.prototype.checkScrollButton = function()
 {
 	oMSL.windowSize = BX.GetWindowSize();
 
-	var maxScroll = (oMSL.windowSize.scrollHeight - oMSL.windowSize.innerHeight - 100); // (this.keyboardShown ? 500 : 300)
+	var
+		scrollTop = window.scrollY, // document.body.scrollTop
+		maxScroll = (oMSL.windowSize.scrollHeight - oMSL.windowSize.innerHeight - 100); // (this.keyboardShown ? 500 : 300)
 
 	oMSL.showScrollButtonBottom = !(
 		((oMSL.windowSize.scrollHeight - oMSL.windowSize.innerHeight) <= 0) // short page
 		|| (
-			document.body.scrollTop >= maxScroll // too much low
+			scrollTop >= maxScroll // too much low
 			&& (
-				document.body.scrollTop > 0 // refresh patch
+				scrollTop > 0 // refresh patch
 				|| maxScroll > 0
 			)
 		)
 	);
 
-	oMSL.showScrollButtonTop = (document.body.scrollTop > 200);
+	oMSL.showScrollButtonTop = (scrollTop > 200);
 
 	oMSL.showHideScrollButton();
 };
@@ -6491,7 +6221,9 @@ BitrixMSL.prototype.scrollTo = function(type)
 
 	oMSL.showHideScrollButton();
 
-	var finishValue = null;
+	var
+		startValue = window.scrollY, // document.body.scrollTop
+		finishValue = null;
 
 	if (type == 'bottom')
 	{
@@ -6504,12 +6236,12 @@ BitrixMSL.prototype.scrollTo = function(type)
 
 	BitrixAnimation.animate({
 		duration : 500,
-		start : { scroll : document.body.scrollTop },
+		start : { scroll : startValue },
 		finish : { scroll : finishValue },
 		transition : BitrixAnimation.makeEaseOut(BitrixAnimation.transitions.quart),
 		step : function(state)
 		{
-			document.body.scrollTop = state.scroll;
+			window.scrollTo(0, state.scroll);
 		},
 		complete : function() {
 			oMSL.canCheckScrollButton = true;
@@ -6556,6 +6288,18 @@ BitrixMSL.prototype.getComments = function(params)
 	}
 	oMSL.showEmptyCommentsBlockWaiter(BX('post-comments-wrap'), true);
 
+	var ratingEmojiSelectorPopup = document.querySelector('.feed-post-emoji-popup-container');
+	if (ratingEmojiSelectorPopup)
+	{
+		ratingEmojiSelectorPopup.style.top = 0;
+		ratingEmojiSelectorPopup.style.left = 0;
+		ratingEmojiSelectorPopup.classList.remove('feed-post-emoji-popup-active');
+		ratingEmojiSelectorPopup.classList.remove('feed-post-emoji-popup-active-final');
+		ratingEmojiSelectorPopup.classList.remove('feed-post-emoji-popup-active-final-item');
+		ratingEmojiSelectorPopup.classList.add('feed-post-emoji-popup-invisible-final');
+		ratingEmojiSelectorPopup.classList.add('feed-post-emoji-popup-invisible-final-mobile');
+	}
+
 	var BMAjaxWrapper = new MobileAjaxWrapper;
 
 	oMSL.emptyCommentsXhr = BMAjaxWrapper.Wrap({
@@ -6587,7 +6331,7 @@ BitrixMSL.prototype.getComments = function(params)
 			{
 				oMSL.menuData.post_perm = get_data.POST_PERM;
 				oMSL.detailPageMenuItems = oMSL.buildDetailPageMenu(oMSL.menuData);
-				oMSL.showPageMenu('detail');
+				oMSL.initPageMenu('detail');
 			}
 
 			if (BX.type.isNotEmptyString(get_data.TEXT))
@@ -6707,30 +6451,25 @@ BitrixMSL.prototype.getComments = function(params)
 BitrixMSL.prototype.refreshPostDetail = function()
 {
 	var BMAjaxWrapper = new MobileAjaxWrapper;
-
-	var xhr = BMAjaxWrapper.runAction('socialnetwork.api.livefeed.mobileGetDetail', {
+	BMAjaxWrapper.runAction('socialnetwork.api.livefeed.mobileGetDetail', {
 		data: {
 			logId: this.getLogId()
 		}
-	}, {
-		success: function(response) {
-			if (
-				BX.type.isPlainObject(response.data)
-				&& BX.type.isNotEmptyString(response.data.html)
-				&& BX('post_block_check_cont')
-			)
-			{
-				BX.html(BX('post_block_check_cont'), response.data.html);
-				this.registerEmptyBlockToCheck();
-				setTimeout(function() {
-					this.checkNodesHeight();
-					BitrixMobile.LazyLoad.showImages(); // when refresh
-				}.bind(this), 500);
-			}
-		}.bind(this),
-		failure: function(response) {
-
+	}).then(function(response) {
+		if (
+			BX.type.isPlainObject(response.data)
+			&& BX.type.isNotEmptyString(response.data.html)
+			&& BX('post_block_check_cont')
+		)
+		{
+			BX.html(BX('post_block_check_cont'), response.data.html);
+			this.registerEmptyBlockToCheck();
+			setTimeout(function() {
+				this.checkNodesHeight();
+				BitrixMobile.LazyLoad.showImages(); // when refresh
+			}.bind(this), 500);
 		}
+	}.bind(this), function(response) {
 	});
 };
 
@@ -6760,141 +6499,137 @@ BitrixMSL.prototype.createTask = function(params)
 {
 	app.showPopupLoader();
 
-	BX.ajax({
-		url: BX.message('MobileSiteDir') ? BX.message('MobileSiteDir') + 'mobile/' : '/mobile/',
-		method: 'POST',
-		dataType: 'json',
+	BMAjaxWrapper.runAction('socialnetwork.api.livefeed.getRawEntryData', {
 		data: {
-			sessid : BX.bitrix_sessid(),
-			site : BX.message('SITE_ID'),
-			ENTITY_TYPE : params.entityType,
-			ENTITY_ID : params.entityId,
-			action : 'get_raw_data',
-			mobile_action : 'get_raw_data',
 			params: {
-				getSonetGroupAvailableList: true,
-				getLivefeedUrl: true,
-				checkParams: {
-					feature: 'tasks',
-					operation: 'create_tasks'
+				entityType: params.entityType,
+				entityId: params.entityId,
+				logId: (BX.type.isNumber(params.logId) ? params.logId : null),
+				additionalParams: {
+					getSonetGroupAvailable: 'Y',
+					getLivefeedUrl: 'Y',
+					checkPermissions: {
+						feature: 'tasks',
+						operation: 'create_tasks'
+					}
 				}
 			}
-		},
-		onsuccess: BX.proxy(function(data)
-		{
-			if (
-				typeof data.TITLE != 'undefined'
-				&& typeof data.DESCRIPTION != 'undefined'
-				&& typeof data.DISK_OBJECTS != 'undefined'
-				&& (
-					BX.type.isNotEmptyString(data.TITLE)
-					|| BX.type.isNotEmptyString(data.DESCRIPTION)
-				)
-				&& BX.type.isNotEmptyString(data.LIVEFEED_URL)
+		}
+	}).then(function(response) {
+
+		var data = response.data;
+
+		if (
+			typeof data.TITLE != 'undefined'
+			&& typeof data.DESCRIPTION != 'undefined'
+			&& typeof data.DISK_OBJECTS != 'undefined'
+			&& (
+				BX.type.isNotEmptyString(data.TITLE)
+				|| BX.type.isNotEmptyString(data.DESCRIPTION)
 			)
-			{
-				var taskDescription = oMSL.formatTaskDescription(data.DESCRIPTION, data.LIVEFEED_URL, params.entityType, (BX.type.isNotEmptyString(data.SUFFIX) ? data.SUFFIX : ''));
-				var taskData = {
-					TITLE: data.TITLE,
-					DESCRIPTION: taskDescription,
-					RESPONSIBLE_ID: BX.message('USER_ID'),
-					CREATED_BY: BX.message('USER_ID'),
-					UF_TASK_WEBDAV_FILES: data.DISK_OBJECTS
-				};
+			&& BX.type.isNotEmptyString(data.LIVEFEED_URL)
+		)
+		{
+			var taskDescription = this.formatTaskDescription(data.DESCRIPTION, data.LIVEFEED_URL, params.entityType, (BX.type.isNotEmptyString(data.SUFFIX) ? data.SUFFIX : ''));
+			var taskData = {
+				TITLE: data.TITLE,
+				DESCRIPTION: taskDescription,
+				RESPONSIBLE_ID: BX.message('USER_ID'),
+				CREATED_BY: BX.message('USER_ID'),
+				UF_TASK_WEBDAV_FILES: data.DISK_OBJECTS
+			};
 
-				var sonetGroupId = [];
-				if (typeof data.GROUPS_AVAILABLE != 'undefined')
+			var sonetGroupId = [];
+			if (typeof data.GROUPS_AVAILABLE != 'undefined')
+			{
+				for (var i in data.GROUPS_AVAILABLE)
 				{
-					for (var i in data.GROUPS_AVAILABLE)
+					if (data.GROUPS_AVAILABLE.hasOwnProperty(i))
 					{
-						if (data.GROUPS_AVAILABLE.hasOwnProperty(i))
-						{
-							sonetGroupId.push(data.GROUPS_AVAILABLE[i]);
-						}
+						sonetGroupId.push(data.GROUPS_AVAILABLE[i]);
 					}
 				}
+			}
 
-				if (sonetGroupId.length == 1)
+			if (sonetGroupId.length == 1)
+			{
+				taskData.GROUP_ID = parseInt(sonetGroupId[0]);
+			}
+
+			(new BX.Tasks.Util.Query({url: (BX.message('MobileSiteDir') ? BX.message('MobileSiteDir') + 'mobile/' : '/mobile/') + '?mobile_action=task_ajax'})).add(
+				'task.add',
 				{
-					taskData.GROUP_ID = parseInt(sonetGroupId[0]);
-				}
+					data: taskData
+				},
+				{},
+				{
+					onExecuted: BX.proxy(function(errors, data)
+					{
+						app.hidePopupLoader();
 
-				(new BX.Tasks.Util.Query({url: (BX.message('MobileSiteDir') ? BX.message('MobileSiteDir') + 'mobile/' : '/mobile/') + '?mobile_action=task_ajax'})).add(
-					'task.add',
-					{
-						data: taskData
-					},
-					{},
-					{
-						onExecuted: BX.proxy(function(errors, data)
+						if (
+							typeof data != 'undefined'
+							&& typeof data.RESULT != 'undefined'
+							&& typeof data.RESULT.DATA != 'undefined'
+							&& typeof data.RESULT.DATA.ID != 'undefined'
+							&& parseInt(data.RESULT.DATA.ID) > 0
+						)
 						{
-							app.hidePopupLoader();
+							this.createTaskSetContentSuccess(data.RESULT.DATA.ID);
 
-							if (
-								typeof data != 'undefined'
-								&& typeof data.RESULT != 'undefined'
-								&& typeof data.RESULT.DATA != 'undefined'
-								&& typeof data.RESULT.DATA.ID != 'undefined'
-								&& parseInt(data.RESULT.DATA.ID) > 0
-							)
-							{
-								oMSL.createTaskSetContentSuccess(data.RESULT.DATA.ID);
-
-								BX.ajax({
-									url: BX.message('MobileSiteDir') ? BX.message('MobileSiteDir') + 'mobile/' : '/mobile/',
-									method: 'POST',
-									dataType: 'json',
-									data: {
-										sessid : BX.bitrix_sessid(),
-										POST_ENTITY_TYPE : (BX.type.isNotEmptyString(params.postEntityType) ? params.postEntityType : params.entityType),
-										ENTITY_TYPE : params.entityType,
-										ENTITY_ID : params.entityId,
-										TASK_ID : data.RESULT.DATA.ID,
-										action : 'create_task_comment',
-										mobile_action : 'create_task_comment'
+							BMAjaxWrapper.runAction('socialnetwork.api.livefeed.createTaskComment', {
+								data: {
+									params: {
+										postEntityType: (BX.type.isNotEmptyString(params.postEntityType) ? params.postEntityType : params.entityType),
+										entityType: params.entityType,
+										entityId: params.entityId,
+										taskId: data.RESULT.DATA.ID,
+										logId: (BX.type.isNumber(params.logId) ? params.logId : null)
 									}
-								});
-							}
-							else
-							{
-								oMSL.createTaskSetContentFailure(errors.getMessages());
-							}
-                        }, this)
-					}
-				).execute();
-			}
-			else
-			{
-				app.hidePopupLoader();
-				oMSL.createTaskSetContentFailure([
-					BX.message('MSLCreateTaskErrorGetData')
-				]);
-			}
-		}, this),
-		onfailure: function(data)
+								}
+							}).then(function(response) {
+							}, function(response) {
+							});
+						}
+						else
+						{
+							this.createTaskSetContentFailure(errors.getMessages());
+						}
+					}, this)
+				}
+			).execute();
+		}
+		else
 		{
 			app.hidePopupLoader();
-			oMSL.createTaskSetContentFailure([
-				BX.message('MSLCreateTaskErrorGetData')
+			this.createTaskSetContentFailure([
+				BX.message('MOBILE_EXT_LIVEFEED_CREATE_TASK_ERROR_GET_DATA')
 			]);
 		}
-	});
+
+	}.bind(this), function(response) {
+		app.hidePopupLoader();
+		this.createTaskSetContentFailure([
+			BX.message('MOBILE_EXT_LIVEFEED_CREATE_TASK_ERROR_GET_DATA')
+		]);
+
+	}.bind(this));
 };
 
 BitrixMSL.prototype.createTaskSetContentSuccess = function(taskId)
 {
 	app.confirm({
-		title: BX.message('MSLCreateTaskSuccessTitle'),
-		text: BX.message('MSLCreateTaskSuccessDescription'),
+		title: BX.message('MOBILE_EXT_LIVEFEED_CREATE_TASK_SUCCESS_TITLE'),
+		text: BX.message('MOBILE_EXT_LIVEFEED_CREATE_TASK_SUCCESS_DESCRIPTION'),
 		buttons: [
-			BX.message('MSLCreateTaskSuccessButtonCancelTitle'),
-			BX.message('MSLCreateTaskSuccessButtonOkTitle')
+			BX.message('MOBILE_EXT_LIVEFEED_CREATE_TASK_SUCCESS_BUTTON_CANCEL'),
+			BX.message('MOBILE_EXT_LIVEFEED_CREATE_TASK_SUCCESS_BUTTON_OK')
 		],
 		callback: function (buttonId) {
 			if (buttonId == 2)
 			{
 				app.loadPageBlank({
-					url: BX.message('MSLCreateTaskTaskPath').replace('#user_id#', BX.message('USER_ID')).replace('#task_id#', taskId),
+					url: BX.message('MOBILE_EXT_LIVEFEED_TASK_PATH').replace('#user_id#', BX.message('USER_ID')).replace('#task_id#', taskId),
 					bx24ModernStyle: true
 				});
 			}
@@ -6905,8 +6640,59 @@ BitrixMSL.prototype.createTaskSetContentSuccess = function(taskId)
 BitrixMSL.prototype.createTaskSetContentFailure = function(errors)
 {
 	app.alert({
-		title: BX.message('MSLCreateTaskFailureTitle'),
+		title: BX.message('MOBILE_EXT_LIVEFEED_CREATE_TASK_FAILURE_TITLE'),
 		text: errors.join('. ')
+	});
+};
+
+BitrixMSL.prototype.copyLink = function(params)
+{
+	var
+		entityType = (BX.type.isNotEmptyString(params.entityType) ? params.entityType : ''),
+		entityId = (parseInt(params.entityId) > 0 ? parseInt(params.entityId) : 0);
+
+	if (
+		!BX.type.isNotEmptyString(entityType)
+		|| entityId <= 0
+
+	)
+	{
+		return;
+	}
+
+	var BMAjaxWrapper = new MobileAjaxWrapper;
+	BMAjaxWrapper.runAction('socialnetwork.api.livefeed.getRawEntryData', {
+		data: {
+			params: {
+				entityType: entityType,
+				entityId: entityId,
+				additionalParams: {
+					getLivefeedUrl: 'Y',
+					absoluteUrl: 'Y',
+					returnFields: [ 'LIVEFEED_URL' ]
+				}
+			}
+		}
+	}).then(function(response) {
+		this.copyLinkSuccess(response.data);
+	}.bind(this), function(response) {
+	});
+};
+
+BitrixMSL.prototype.copyLinkSuccess = function(data)
+{
+	if (!BX.type.isNotEmptyString(data.LIVEFEED_URL))
+	{
+		return;
+	}
+
+	app.exec("copyToClipboard", { text: data.LIVEFEED_URL });
+
+	BX.MobileLivefeed.NotificationBarInstance.showInfo({
+		id: 'copy',
+		text: BX.message('MOBILE_EXT_LIVEFEED_POST_MENU_GET_LINK_SUCCESS'),
+		groupId: 'clipboard',
+		maxLines: 1
 	});
 };
 
@@ -6979,9 +6765,13 @@ BitrixMSL.prototype.getPostFormExtraData = function()
 
 BitrixMSL.prototype.showNewPostForm = function(params)
 {
+	if (!BX.type.isNotEmptyObject(params))
+	{
+		params = {};
+	}
+
 	var entityType = (
-		typeof params != 'undefined'
-		&& typeof params.entityType != 'undefined'
+		BX.type.isNotEmptyString(params.entityType)
 			? params.entityType
 			: 'post'
 	);
@@ -7029,35 +6819,24 @@ BitrixMSL.prototype.showNewPostForm = function(params)
 								{}
 							);
 
-							var isNewPost = !(typeof postData.post_id != 'undefined' && parseInt(postData.post_id) > 0);
-							if (!isNewPost)
+							if (postData.postVirtualId)
 							{
-								BX.onCustomEvent('onMPFSentEditStart', {});
+								postData.ufCode = ufCode;
+								postData.contentType = 'post';
 
-								oMSL.onMPFSent({
-									ajaxUrl: BX.message('MSLSiteDir') + 'mobile/index.php',
-									data: postData,
-									LiveFeedID: null // may be feed_id
-								}, 0);
-							}
-							else
-							{
-								BXMobileApp.onCustomEvent('onMPFSent', {
-									data: postData,
-									LiveFeedID: window.LiveFeedID
-								}, true, isNewPost);
+								oMSL.initPostForm({
+									groupId: (params.groupId ? params.groupId : null)
+								});
+
+								BXMobileApp.onCustomEvent('Livefeed.PublicationQueue::setItem', {
+									key: postData.postVirtualId,
+									item: postData,
+									pageId: BX.MobileLivefeed.Instance.getPageId(),
+									groupId: (params.groupId ? params.groupId : null)
+								}, true);
 							}
 						}
-						else if (entityType == 'comment')
-						{
-							BXMobileApp.onCustomEvent('onMPFCommentSent', {
-								data: postData,
-								detailPageId: data.extraData.commentType + '_' + parseInt(data.extraData.postId),
-								nodeId: data.extraData.nodeId,
-								ufCode: ufCode
-							}, true);
-						}
-					}) ;
+					}, function() {}) ;
 				}
 			},
 			name: BX.message('MSLPostFormSend')
@@ -7246,7 +7025,7 @@ BitrixMSL.prototype.getPostFormRecipientsDataSource = function()
 {
 	return {
 		return_full_mode: "YES",
-		outsection: (BX.message('MSLIsDenyToAll') != 'Y' ? "YES" : "NO"),
+		outsection: (BX.message('MOBILE_EXT_LIVEFEED_DEST_TO_ALL_DENIED') != 'Y' ? "YES" : "NO"),
 		okname: BX.message('MSLPostFormTableOk'),
 		cancelname: BX.message('MSLPostFormTableCancel'),
 		multiple: "YES",
@@ -7257,16 +7036,28 @@ BitrixMSL.prototype.getPostFormRecipientsDataSource = function()
 	};
 };
 
+BitrixMSL.prototype.getDiskUploadFolder = function()
+{
+
+};
+
 BitrixMSL.prototype.buildPostFormFiles = function(postData, attachedFiles, params)
 {
 	var promise = new Promise(function(resolve, reject)
 	{
-		ufCode = params.ufCode;
-		if (typeof attachedFiles != 'undefined' && attachedFiles.length > 0)
+		var ufCode = params.ufCode;
+
+		postData.postVirtualId = parseInt(Math.random() * 100000);
+		postData.tasksList = [];
+
+		if (
+			typeof attachedFiles != 'undefined'
+			&& attachedFiles.length > 0
+		)
 		{
 			var readedFileCount = 0;
 			var fileTotal = attachedFiles.length;
-			var fileCountIncriment = (function(){
+			var fileCountIncrement = (function(){
 				readedFileCount++;
 				if(readedFileCount >= fileTotal)
 				{
@@ -7275,33 +7066,63 @@ BitrixMSL.prototype.buildPostFormFiles = function(postData, attachedFiles, param
 				}
 			}).bind(this);
 
+			var
+				uploadTasks = [],
+				taskId = null,
+				isNewFileOnDevice = null,
+				isFileFromBitrix24Disk = null,
+				mimeType = null;
+
 			attachedFiles.forEach(function(fileData)
 			{
-				var isFileFromBitrix24Disk = (typeof fileData["VALUE"] != 'undefined') // Android
-					|| (typeof fileData["dataAttributes"] != 'undefined' && typeof fileData["dataAttributes"]["VALUE"] != 'undefined')// iOS
-				var isNewFileOnDevice = (typeof fileData["id"] == "undefined" || typeof fileData["id"] != "number");
-				if(fileData["url"] && isNewFileOnDevice && !isFileFromBitrix24Disk)
+				isFileFromBitrix24Disk = (
+					typeof fileData.VALUE != 'undefined'  // Android
+					|| (
+						typeof fileData.id != 'undefined'
+						&& parseInt(fileData.id) > 0
+					) // disk object
+					|| (
+						BX.type.isNotEmptyObject(fileData.dataAttributes)
+						&& typeof fileData.dataAttributes.VALUE != 'undefined'
+					) // iOS and modern Android too
+					|| (
+						BX.type.isNotEmptyString(fileData.ufCode)
+						&& fileData.ufCode == ufCode
+					)
+				);
+
+				isNewFileOnDevice = (
+					typeof fileData.url == 'undefined'
+					|| typeof fileData.id != 'number'
+				);
+
+				if(
+					fileData.url
+					&& isNewFileOnDevice
+					&& !isFileFromBitrix24Disk
+				)
 				{
-					BX.FileUtils.readFileByPath(fileData["url"], "readAsDataURL")
-						.then(function(content)
-						{
-							if (typeof postData.attachedFilesRaw == 'undefined')
-							{
-								postData.attachedFilesRaw = [];
-							}
+					taskId = 'postTask_' + parseInt(Math.random() * 100000);
+					mimeType = BX.MobileUtils.getFileMimeType(fileData.type);
 
-							var file = fileData;
-							file["base64"] = content.substring(content.indexOf(";base64,")+8, content.length);
-							postData.attachedFilesRaw.push(file);
-							fileCountIncriment();
-						})
-						.catch(function(error){
-							console.log(error);
-							fileCountIncriment();
-						})
+					uploadTasks.push({
+						taskId: taskId,
+						type: fileData.type,
+						mimeType: mimeType,
+						folderId: parseInt(BX.message('MOBILE_EXT_UTILS_USER_FOLDER_FOR_SAVED_FILES')),
+						chunk: parseInt(BX.message('MOBILE_EXT_UTILS_MAX_UPLOAD_CHUNK_SIZE')),
+						params: {
+							postVirtualId: postData.postVirtualId
+						},
+						name: fileData.name,
+						url: fileData.url,
+						previewUrl: (fileData.previewUrl ? fileData.previewUrl : null),
+						resize: BX.MobileUtils.getResizeOptions(fileData.type)
+					});
+					postData.tasksList.push(taskId);
 				}
-				else {
-
+				else
+				{
 					if(isFileFromBitrix24Disk)
 					{
 						if (typeof postData[ufCode] == 'undefined')
@@ -7309,19 +7130,31 @@ BitrixMSL.prototype.buildPostFormFiles = function(postData, attachedFiles, param
 							postData[ufCode] = [];
 						}
 
-						if (typeof fileData["VALUE"] != 'undefined')
+						if (typeof fileData.VALUE != 'undefined')
 						{
-							postData[ufCode].push(fileData["VALUE"]);
+							postData[ufCode].push(fileData.VALUE);
+						}
+						else if (parseInt(fileData.id) > 0)
+						{
+							postData[ufCode].push(parseInt(fileData.id));
 						}
 						else
 						{
-							postData[ufCode].push(fileData["dataAttributes"]["VALUE"]);
+							postData[ufCode].push(fileData.dataAttributes.VALUE);
 						}
 					}
 
-					fileCountIncriment();
+					fileCountIncrement();
 				}
-			});
+			}.bind(this));
+
+			if (uploadTasks.length > 0)
+			{
+				BXMobileApp.onCustomEvent('onFileUploadTaskReceived', {
+					files: uploadTasks
+				}, true);
+			}
+			resolve();
 		}
 		else
 		{
@@ -7337,6 +7170,7 @@ BitrixMSL.prototype.buildPostFormFiles = function(postData, attachedFiles, param
 
 BitrixMSL.prototype.postProgressingFiles = function(postData, attachedFiles, params)
 {
+	var ufCode = params.ufCode;
 	if (typeof postData[ufCode] == 'undefined')
 	{
 		postData[ufCode] = [];
@@ -7379,7 +7213,10 @@ BitrixMSL.prototype.buildPostFormDestinations = function(postData, selectedRecip
 	var prefix = null,
 		id = null,
 		name = null,
-		key = null;
+		key = null,
+		value = null;
+
+	postData['DEST'] = [];
 
 	if (typeof selectedRecipients.a_users != 'undefined')
 	{
@@ -7410,12 +7247,14 @@ BitrixMSL.prototype.buildPostFormDestinations = function(postData, selectedRecip
 						: selectedRecipients.a_users[key].name
 				);
 
-				postData.SPERM[prefix].push(
+				value = (
 					id == 0
 						? 'UA'
 						: 'U' + id
 				);
 
+				postData.SPERM[prefix].push(value);
+				postData.DEST.push(value);
 				postData.SPERM_NAME[prefix].push(name);
 			}
 		}
@@ -7450,7 +7289,10 @@ BitrixMSL.prototype.buildPostFormDestinations = function(postData, selectedRecip
 						: selectedRecipients.b_groups[key].name
 				);
 
-				postData.SPERM[prefix].push('SG' + id);
+				value = 'SG' + id;
+
+				postData.SPERM[prefix].push(value);
+				postData.DEST.push(value);
 				postData.SPERM_NAME[prefix].push(name);
 			}
 		}
@@ -7465,7 +7307,11 @@ BitrixMSL.prototype.buildPostFormDestinations = function(postData, selectedRecip
 			{
 				postData.SPERM[prefix] = [];
 			}
-			postData.SPERM[prefix].push(hiddenRecipients[key]['TYPE'] + hiddenRecipients[key]['ID']);
+
+			value = (hiddenRecipients[key]['TYPE'] + hiddenRecipients[key]['ID']);
+
+			postData.SPERM[prefix].push(value);
+			postData.DEST.push(value);
 		}
 	}
 };
@@ -7557,7 +7403,8 @@ BitrixMSL.prototype.buildPostFormRequestStub = function(params)
 			decode: 'Y',
 			SPERM: {},
 			SPERM_NAME: {},
-			MOBILE: 'Y'
+			MOBILE: 'Y',
+			PARSE_PREVIEW: 'Y'
 		};
 
 		if (
@@ -7607,25 +7454,144 @@ BitrixMSL.prototype.buildPostFormRequestStub = function(params)
 	return oRequest;
 };
 
-BitrixMSL.prototype.showPostError = function(params)
+BitrixMSL.prototype.initPostForm = function(params)
 {
-	var errorText = (typeof params.errorText != 'undefined' && params.errorText.length > 0 ? params.errorText : false);
-	var notifyBar = new BXMobileApp.UI.NotificationBar(
+	if (!BX.type.isNotEmptyObject(params))
 	{
-		message: (errorText ? errorText : BX.message('MOBILE_LOG_NEW_ERROR')),
-		color: "#affb0000",
-		textColor: "#ffffff",
-		useLoader: false,
-		align: "center",
-		autoHideTimeout: 30000,
-		hideOnTap: true,
-		onTap: function(notificationParams)
-		{
-			app.exec('showPostForm', oMSL.showNewPostForm());
-		},
-		id: parseInt(Math.random() * 100000)
+		params = {};
+	}
+
+	var
+		groupId = (params.groupId ? params.groupId : false),
+		callback = (params.callback ? params.callback : function() {}),
+		selectedDestinations = {
+			a_users: [],
+			b_groups: []
+		};
+
+	oMSL.clearPostFormDestination(selectedDestinations, groupId); // to work before DBLoad
+
+	oMSL.setPostFormExtraDataArray({
+		postId: false,
+		postAuthorId: false,
+		logId: false,
+		messageUFCode: BX.message('MOBILE_EXT_LIVEFEED_POST_UF_CODE')
 	});
-	notifyBar.show();
+
+	oMSL.setPostFormParams({
+		selectedRecipients: selectedDestinations,
+		messageText: '',
+		messageFiles: []
+	});
+
+	setTimeout(function() {
+		BX.MobileLivefeed.DatabaseUnsentPostInstance.load(
+			{
+				onLoad: function (obResult)
+				{
+					var i = null;
+
+					selectedDestinations = {
+						a_users: [],
+						b_groups: []
+					};
+
+					if (
+						typeof obResult.SPERM != 'undefined'
+						&& typeof obResult.SPERM.U != 'undefined'
+						&& obResult.SPERM.U != null
+					)
+					{
+						for (i = 0; i < obResult.SPERM.U.length; i++)
+						{
+							if (obResult.SPERM.U[i] == 'UA')
+							{
+								if (BX.message('MOBILE_EXT_LIVEFEED_DEST_TO_ALL_DENIED') != 'Y')
+								{
+									oMSL.addPostFormDestination(
+										selectedDestinations,
+										{
+											type: 'UA'
+										}
+									);
+								}
+							}
+							else
+							{
+								oMSL.addPostFormDestination(
+									selectedDestinations,
+									{
+										type: 'U',
+										id: obResult.SPERM.U[i].replace('U', ''),
+										name: (
+											typeof obResult.SPERM_NAME != 'undefined'
+											&& typeof obResult.SPERM_NAME.U != 'undefined'
+											&& typeof obResult.SPERM_NAME.U[i] != 'undefined'
+											&& obResult.SPERM_NAME.U[i] != null
+												? obResult.SPERM_NAME.U[i]
+												: ''
+										)
+									}
+								);
+							}
+						}
+					}
+
+					if (
+						typeof obResult.SPERM != 'undefined'
+						&& typeof obResult.SPERM.SG != 'undefined'
+						&& obResult.SPERM.SG != null
+					)
+					{
+						for (i = 0; i < obResult.SPERM.SG.length; i++)
+						{
+							oMSL.addPostFormDestination(
+								selectedDestinations,
+								{
+									type: 'SG',
+									id:  obResult.SPERM.SG[i].replace('SG', ''),
+									name: (
+										typeof obResult.SPERM_NAME.SG[i] != 'undefined'
+										&& typeof obResult.SPERM_NAME.SG != 'undefined'
+										&& typeof obResult.SPERM_NAME.SG[i] != 'undefined'
+										&& obResult.SPERM_NAME.SG[i] != null
+											? obResult.SPERM_NAME.SG[i]
+											: ''
+									)
+								}
+							);
+						}
+					}
+
+					oMSL.setPostFormParams({
+						selectedRecipients: selectedDestinations
+					});
+
+					if (
+						typeof obResult.POST_MESSAGE != 'undefined'
+						&& obResult.POST_MESSAGE != null
+					)
+					{
+						oMSL.setPostFormParams({
+							messageText: oMSL.unParseMentions(obResult.POST_MESSAGE)
+						});
+					}
+
+					callback();
+				},
+				onEmpty: function (obResult)
+				{
+					selectedDestinations = {
+						a_users: [],
+						b_groups: []
+					};
+					oMSL.clearPostFormDestination(selectedDestinations, groupId);
+					callback();
+				}
+			},
+			groupId
+		);
+	}, 0); // instead of on ready
 };
 
 BitrixMSL.prototype.clearPostFormDestination = function(selectedDestinations, groupID)
@@ -7661,7 +7627,7 @@ BitrixMSL.prototype.clearPostFormDestination = function(selectedDestinations, gr
 			}
 		}
 	}
-	else if (BX.message('MSLIsDefaultToAll') == 'Y')
+	else if (BX.message('MOBILE_EXT_LIVEFEED_DEST_TO_ALL_DEFAULT') == 'Y')
 	{
 		oMSL.addPostFormDestination(
 			selectedDestinations,
@@ -7758,84 +7724,6 @@ BitrixMSL.prototype.processAjaxBlock = function(block, params)
 	}
 };
 
-BitrixMSL.prototype.showNotifier = function(cnt)
-{
-	cnt = parseInt(cnt);
-	cnt_cent = cnt % 100;
-
-	var reminder = cnt % 10;
-	var suffix = '';
-
-	if (
-		cnt_cent >= 10
-		&& cnt_cent < 15
-	)
-	{
-		suffix = 3;
-	}
-	else if (reminder == 0)
-	{
-		suffix = 3;
-	}
-	else if (reminder == 1)
-	{
-		suffix = 1;
-	}
-	else if (
-		reminder == 2
-		|| reminder == 3
-		|| reminder == 4
-	)
-	{
-		suffix = 2;
-	}
-	else
-	{
-		suffix = 3;
-	}
-
-	if (oMSL.refreshNeeded)
-	{
-		BX("lenta_notifier_cnt").innerHTML = (cnt ? cnt + '+' : "");
-		oMSL.hideRefreshNeededNotifier();
-	}
-	else
-	{
-		BX("lenta_notifier_cnt").innerHTML = cnt || "";
-	}
-
-	BX("lenta_notifier_cnt_title").innerHTML = BX.message('MSLLogCounter' + suffix);
-	BX.addClass(BX("lenta_notifier"), "lenta-notifier-shown");
-};
-
-BitrixMSL.prototype.hideNotifier = function()
-{
-	if (BX.hasClass(BX("lenta_notifier"), "lenta-notifier-shown"))
-	{
-		BX.removeClass(BX("lenta_notifier"), "lenta-notifier-shown");
-	}
-};
-
-BitrixMSL.prototype.showRefreshNeededNotifier = function()
-{
-	BX.removeClass(BX("lenta_notifier"), "lenta-notifier-shown");
-
-	var refreshNeededBlock = BX("lenta_notifier_2");
-	if (refreshNeededBlock)
-	{
-		BX.addClass(refreshNeededBlock, "lenta-notifier-shown");
-	}
-};
-
-BitrixMSL.prototype.hideRefreshNeededNotifier = function()
-{
-	var refreshNeededBlock = BX("lenta_notifier_2");
-	if (refreshNeededBlock)
-	{
-		BX.removeClass(refreshNeededBlock, "lenta-notifier-shown");
-	}
-};
-
 BitrixMSL.prototype.onUpdateSocnetCountersHandler = function(params)
 {
 	oMSL.bCounterReceived = true;
@@ -7889,13 +7777,10 @@ BitrixMSL.prototype.registerBlocksToCheck = function()
 
 	if (rootNode)
 	{
-		lentaItemsList = BX.findChildren(rootNode, { className: 'post-wrap'}, true);
-		if (
-			lentaItemsList === null
-			|| lentaItemsList.length <= 0
-		)
+		lentaItemsList = rootNode.querySelectorAll('.post-wrap');
+		if (lentaItemsList.length <= 0)
 		{
-			lentaItemsList = BX.findChildren(rootNode, { className: 'lenta-item'}, true);
+			lentaItemsList = rootNode.querySelectorAll('.lenta-item');
 		}
 	}
 
@@ -7939,8 +7824,13 @@ BitrixMSL.prototype.registerEmptyBlockToCheck = function()
 };
 
 
-BitrixMSL.prototype.onMobilePlayerError = function(player, src)
+BitrixMSL.prototype.onMobilePlayerError = function(event)
 {
+	var
+		eventData = event.getData(),
+		player = eventData[0],
+		src = eventData[1];
+
 	if(!BX.type.isDomNode(player))
 	{
 		return;
@@ -8021,8 +7911,161 @@ BitrixMSL.prototype.getCopyText = function(block)
 	return decodeHtml(BX.util.strip_tags(text));
 };
 
-oMSL = new BitrixMSL;
-window.oMSL = oMSL;
+BitrixMSL.prototype.initPagePopupMenu = function()
+{
+	if (Application.getApiVersion() >= 34)
+	{
+		var buttons = [];
+
+		if(!oMSL.logId)
+		{
+			buttons.push({
+				type: 'search',
+				callback: function ()
+				{
+					app.exec("showSearchBar");
+				}
+			});
+		}
+
+		var menuItems = this.getPageMenuItems(this.pageType);
+
+		if (
+			BX.type.isArray(menuItems)
+			&& menuItems.length > 0
+		)
+		{
+			buttons.push({
+				type: 'more',
+				callback: function ()
+				{
+					this.showPageMenu(this.pageType);
+				}.bind(this),
+			});
+		}
+
+		app.exec("setRightButtons", {
+			items: buttons
+		});
+	}
+};
+
+BitrixMSL.prototype.initSearchBar = function()
+{
+	if (Application.getApiVersion() >= 34)
+	{
+		BX.addCustomEvent(window, "BX.MobileLF:onSearchBarTextChanged", BX.debounce(this.searchBarEventCallback, 1500, this));
+		BX.addCustomEvent(window, "BX.MobileLF:onSearchBarCancelButtonClicked", this.searchBarEventCallback.bind(this));
+		BX.addCustomEvent(window, "BX.MobileLF:onSearchBarSearchButtonClicked", this.searchBarEventCallback.bind(this));
+
+		BXMobileApp.UI.Page.params.set({
+			useSearchBar: true
+		});
+
+		app.exec('setParamsSearchBar', {
+			params: {
+				callback: function(event) {
+					if (
+						BX.util.in_array(event.eventName, [ /* 'onUserTypeText',*/ 'onSearchButtonClicked' ])
+						&& BX.type.isPlainObject(event.data)
+						&& BX.type.isString(event.data.text)
+					)
+					{
+						if (event.data.text.length >= this.ftMinTokenSize)
+						{
+							this.findTextMode = true;
+						}
+
+						var eventName = null;
+						switch (event.eventName)
+						{
+/*
+						case 'onUserTypeText':
+							eventName = 'BX.MobileLF:onSearchBarTextChanged';
+							break;
+ */
+							case 'onSearchButtonClicked':
+								eventName = 'BX.MobileLF:onSearchBarSearchButtonClicked';
+								break;
+							default:
+						}
+						if (eventName)
+						{
+							BX.onCustomEvent(window, eventName, [{
+								text: event.data.text
+							}]);
+						}
+					}
+					else if (BX.util.in_array(event.eventName, [ 'onCancelButtonClicked', 'onSearchHide' ]))
+					{
+						BX.onCustomEvent(window, 'BX.MobileLF:onSearchBarCancelButtonClicked', []);
+					}
+				}.bind(this)
+			}
+		});
+	}
+};
+
+BitrixMSL.prototype.searchBarEventCallback = function(params)
+{
+	var text = (BX.type.isPlainObject(params) && BX.type.isNotEmptyString(params.text) ? params.text : '');
+
+	if (
+		text.length >= this.ftMinTokenSize
+//		|| this.findTextMode
+	)
+	{
+		app.exec("showSearchBarProgress");
+		__MSLRefresh(true, {
+			find: text
+		});
+	}
+	else if (this.findTextMode)
+	{
+		if (this.xhr.refresh != null)
+		{
+			this.xhr.refresh.abort();
+		}
+		app.exec("hideSearchBarProgress");
+
+		BX.frameCache.readCacheWithID('framecache-block-feed', function(params) {
+			if (
+				!BX.type.isArray(params.items)
+				|| !BX('bxdynamic_feed_refresh')
+			)
+			{
+				return;
+			}
+
+			for (var key = 0; key < params.items.length; key++)
+			{
+				if (
+					BX.type.isNotEmptyString(params.items[key].ID)
+					&& params.items[key].ID == 'framecache-block-feed'
+				)
+				{
+					BX.html(BX('bxdynamic_feed_refresh'), params.items[key].CONTENT);
+					__MSLDetailMoveTop();
+					setTimeout(function(){
+						BitrixMobile.LazyLoad.showImages();
+					}, 1000);
+					break;
+				}
+			}
+		}.bind(this));
+	}
+
+	if (text.length < this.ftMinTokenSize)
+	{
+		this.findTextMode = false;
+	}
+};
+
+if (!window.oMSL)
+{
+	oMSL = new BitrixMSL;
+	window.oMSL = oMSL;
+}
 
 function openTaskComponentByTaskId(e, taskId, data) {
 	data = data || {};

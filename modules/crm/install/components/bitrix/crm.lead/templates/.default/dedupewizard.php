@@ -39,6 +39,7 @@ $APPLICATION->IncludeComponent(
 		'GUID' => 'lead_dedupe_wizard',
 		'ENTITY_TYPE_ID' => CCrmOwnerType::Lead,
 		'PATH_TO_MERGER' => '/crm/lead/merge/',
-		'PATH_TO_DEDUPE_LIST' => '/crm/lead/dedupelist/'
+		'PATH_TO_DEDUPE_LIST' => '/crm/lead/dedupelist/',
+		'PATH_TO_ENTITY_LIST' => '/crm/lead/',
 	]
 );

@@ -85,7 +85,7 @@ class EntityConversionMapItem
 
 	public static function isDynamicField($fieldID)
 	{
-		return strpos($fieldID, 'UF_') === 0;
+		return mb_strpos($fieldID, 'UF_') === 0;
 	}
 
 	public function externalize()

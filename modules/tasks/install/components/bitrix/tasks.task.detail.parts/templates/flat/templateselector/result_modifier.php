@@ -12,7 +12,7 @@ if(is_array($arResult['TEMPLATE_DATA']['DATA']['TEMPLATES']))
 		$menuItems[] = array(
 			'ID' => $template['ID'],
 			'TITLE' => $template['TITLE'],
-			'URL' => $commonUrl.(strpos($commonUrl, "?") === false ? "?" : "&")."TEMPLATE=".$template["ID"]
+			'URL' => $commonUrl.(mb_strpos($commonUrl, "?") === false ? "?" : "&")."TEMPLATE=".$template["ID"]
 		);
 	}
 }

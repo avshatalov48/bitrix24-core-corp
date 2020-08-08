@@ -30,7 +30,7 @@ abstract class Type
 
 	public static function convertBooleanUserFieldValue($value)
 	{
-		if (strtolower($value) == 'n')
+		if (mb_strtolower($value) == 'n')
 		{
 			return false;
 		}

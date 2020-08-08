@@ -8,7 +8,7 @@ $arParams['USER_ID'] = $GLOBALS['USER']->GetId();
 CUserOptions::SetOption("mobile", "calendar_first_visit", "N");
 
 // Limits
-if (strlen($arParams["INIT_DATE"]) > 0 && strpos($arParams["INIT_DATE"], '.') !== false)
+if ($arParams["INIT_DATE"] <> '' && mb_strpos($arParams["INIT_DATE"], '.') !== false)
 	$ts = CCalendar::Timestamp($arParams["INIT_DATE"]);
 else
 	$ts = time();

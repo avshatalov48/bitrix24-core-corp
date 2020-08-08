@@ -124,6 +124,15 @@ class TasksImportComponent extends TasksBaseComponent
 		$this->arResult['IMPORT_FILE_PARAMETERS']['FILE_NAME'] = Loc::getMessage('TASKS_IMPORT_FIELDS_FILE_NAME');
 	}
 
+	protected function doPreAction()
+	{
+		if (!\Bitrix\Tasks\Access\TaskAccessController::can($this->userId, \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_IMPORT))
+		{
+			$this->errors->add('ACCESS_DENIED', Loc::getMessage('TASKS_COMMON_ACCESS_DENIED'), \Bitrix\Tasks\Util\Error::TYPE_FATAL);
+		}
+		return parent::doPreAction();
+	}
+
 	protected function doPostAction()
 	{
 		$application = Application::getInstance();
@@ -324,18 +333,18 @@ class TasksImportComponent extends TasksBaseComponent
 			foreach ($fetchedArray as $value)
 			{
 				$resultLine .= $value.$this->arResult['IMPORT_FILE_PARAMETERS']['SEPARATOR'];
-				if (strlen($resultLine) > 50)
+				if (mb_strlen($resultLine) > 50)
 				{
 					break;
 				}
 			}
 
-			if (strlen($resultLine) > 50)
+			if (mb_strlen($resultLine) > 50)
 			{
 				break;
 			}
 		}
-		$resultLine = substr($resultLine, 0, 50);
+		$resultLine = mb_substr($resultLine, 0, 50);
 
 		$encodedResult = array();
 		foreach ($this->arResult['CHARSETS'] as $charset)
@@ -347,7 +356,7 @@ class TasksImportComponent extends TasksBaseComponent
 			);
 
 			$questionsCount = substr_count($encodedResult[$charset], '?');
-			$maxQuestionsCount = strlen($encodedResult[$charset]) * 1 / 3;
+			$maxQuestionsCount = mb_strlen($encodedResult[$charset]) * 1 / 3;
 
 			if ($questionsCount > $maxQuestionsCount)
 			{
@@ -405,14 +414,21 @@ class TasksImportComponent extends TasksBaseComponent
 			$fileEncoding = $this->arResult['IMPORT_FILE_PARAMETERS']['FOUND_FILE_ENCODING'];
 		}
 
-		if ($fileEncoding !== 'auto' && $fileEncoding !== strtolower(SITE_CHARSET))
+		if ($fileEncoding !== 'auto' && $fileEncoding !== mb_strtolower(SITE_CHARSET))
 		{
 			$convertCharsetErrorMsg = '';
 
 			//HACK: Remove UTF-8 BOM
-			if ($fileEncoding === 'UTF-8' && substr($data, 0, 3) === "\xEF\xBB\xBF")
+			if ($fileEncoding === 'UTF-8')
 			{
-				$data = substr($data, 3);
+				if (is_string($data) && mb_substr($data, 0, 3) === "\xEF\xBB\xBF")
+				{
+					$data = mb_substr($data, 3);
+				}
+				elseif (is_array($data) && is_string($data[0]) && mb_substr($data[0], 0, 3) === "\xEF\xBB\xBF")
+				{
+					$data[0] = mb_substr($data[0], 3);
+				}
 			}
 
 			$data = Encoding::convertEncoding($data, $fileEncoding, SITE_CHARSET, $convertCharsetErrorMsg);

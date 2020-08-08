@@ -274,7 +274,7 @@
 }
 
 /* tasks.interface.toolbar */
-.tasks-counter {
+.tasks-counters {
 	color: #fff;
 }
 
@@ -305,23 +305,13 @@
 }
 
 .pagetitle-below .tasks-counter-text,
-.pagetitle-below .tasks-counter-number,
 .pagetitle-below .task-status-text-color-overdue, .pagetitle-below .task-status-text-color-overdue:hover {
 	color: #fff !important;
-}
-
-.pagetitle-below .tasks-counter-number {
-	border: 1px solid rgba(255,255,255,.4);
-	background: rgba(255,255,255,.15);
 }
 
 .pagetitle-below .tasks-counter-container:hover .tasks-counter-inner:after {
 	border: 1px solid rgba(255,255,255,.4);
 	background: rgba(255,255,255,.15);
-}
-
-.pagetitle-below .tasks-counter-container:hover .tasks-counter-number {
-	background: transparent;
 }
 
 .pagetitle-toolbar-field-view .webform-small-button-separate-wrap {
@@ -609,10 +599,11 @@
 	border: 1px solid #fff;
 }
 
-.calendar-view-switcher-list-item-active {
-	border-bottom: 2px solid rgba(255,255,255,.4);
+.calendar-view-switcher-list-item-active,
+.calendar-view-switcher-list-item:hover {
+	border-bottom: 2px solid rgba(255, 255, 255, 1);
 }
 
 .calendar-pagetitle-view .pagetitle-below {
-	border-top: 1px solid rgba(255,255,255,.4);
+	border-top: 1px solid rgba(255, 255, 255, .4);
 }

@@ -63,7 +63,10 @@ BX.namespace('Tasks.Component');
 						min: this.option('min'),
 						max: this.option('max'),
 
-						path: this.option('path')
+						path: this.option('path'),
+
+						role: this.option('role'),
+						taskLimitExceeded: this.option('taskLimitExceeded'),
 					});
 
 					mgr.bindEvent('change-by-user', this.onChangeByUser.bind(this));
@@ -220,6 +223,20 @@ BX.namespace('Tasks.Component');
 				data.AVATAR_CSS = data.AVATAR ? "background: url('"+data.AVATAR+"') center no-repeat; background-size: 35px;" : '';
 
 				return data;
+			},
+
+			openAddForm: function()
+			{
+				var userType = this.option('role');
+				var taskLimitExceeded = this.option('taskLimitExceeded');
+
+				if ((userType === 'ACCOMPLICES' || userType === 'AUDITORS') && taskLimitExceeded)
+				{
+					BX.UI.InfoHelper.show('limit_tasks_observers_participants');
+					return;
+				}
+
+				this.callMethod(BX.Tasks.UserItemSet, 'openAddForm');
 			},
 
 			// sync all on popup close

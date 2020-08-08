@@ -175,7 +175,7 @@ class FieldSynchronizer
 
 		if (!empty($code))
 		{
-			if (substr($code, 0, strlen($name)) === $name)
+			if (mb_substr($code, 0, mb_strlen($name)) === $name)
 			{
 				$name = $code;
 			}
@@ -667,7 +667,7 @@ class FieldSynchronizer
 		}
 
 		// skip wrong named fields
-		if (strpos($fieldId, '.') !== false || strpos($fieldId, '[') !== false || strpos($fieldId, ']') !== false)
+		if (mb_strpos($fieldId, '.') !== false || mb_strpos($fieldId, '[') !== false || mb_strpos($fieldId, ']') !== false)
 		{
 			return false;
 		}

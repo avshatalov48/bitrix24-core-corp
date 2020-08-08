@@ -191,9 +191,9 @@ final class Manager
 	 */
 	public static function getFolderFromClassName($className)
 	{
-		$pos = strrpos($className, '\\');
+		$pos = mb_strrpos($className, '\\');
 		if ($pos !== false)
-			$className = substr($className, $pos + 1);
+			$className = mb_substr($className, $pos + 1);
 
 		$folder = str_replace('Handler', '', $className);
 		$folder = self::sanitize($folder);
@@ -369,7 +369,7 @@ final class Manager
 						$isAvailable = null;
 						$isIndependent = null;
 
-						if (strpos($item->getName(), '.description') !== false)
+						if (mb_strpos($item->getName(), '.description') !== false)
 						{
 							$handlerName = $handler->getName();
 
@@ -401,7 +401,7 @@ final class Manager
 
 								$handlerName = str_replace(Path::normalize($documentRoot), '', $handler->getPath());
 							}
-							$group = (strpos($type, 'SYSTEM') !== false) ? 'SYSTEM' : 'USER';
+							$group = (mb_strpos($type, 'SYSTEM') !== false) ? 'SYSTEM' : 'USER';
 
 							if (!isset($result[$group][$handlerName]))
 							{
@@ -429,7 +429,7 @@ final class Manager
 
 				if (!$isDescriptionExist)
 				{
-					$group = (strpos($type, 'SYSTEM') !== false) ? 'SYSTEM' : 'USER';
+					$group = (mb_strpos($type, 'SYSTEM') !== false) ? 'SYSTEM' : 'USER';
 					$handlerName = str_replace($documentRoot, '', $handler->getPath());
 					$result[$group][$handlerName] = $handler->getName();
 				}
@@ -447,16 +447,16 @@ final class Manager
 	 */
 	public static function getClassNameFromPath($path)
 	{
-		$pos = strrpos($path, '/');
+		$pos = mb_strrpos($path, '/');
 
-		if ($pos == strlen($path))
+		if ($pos == mb_strlen($path))
 		{
-			$path = substr($path, 0, $pos - 1);
-			$pos = strrpos($path, '/');
+			$path = mb_substr($path, 0, $pos - 1);
+			$pos = mb_strrpos($path, '/');
 		}
 
 		if ($pos !== false)
-			$path = substr($path, $pos+1);
+			$path = mb_substr($path, $pos + 1);
 
 		return "Sale\\Handlers\\PaySystem\\".$path.'Handler';
 	}
@@ -496,7 +496,7 @@ final class Manager
 	{
 		$documentRoot = Application::getDocumentRoot();
 
-		if (strpos($folder, '/') !== false)
+		if (mb_strpos($folder, '/') !== false)
 		{
 			return $folder;
 		}
@@ -621,12 +621,11 @@ final class Manager
 		{
 			if (File::isFileExists($documentRoot.$path.'/handler.php'))
 			{
-				list($className) = self::includeHandler($path);
-				if (class_exists($className))
+				$actionFile = self::getFolderFromClassName(self::getClassNameFromPath($path));
+				[$className] = self::includeHandler($actionFile);
+				if (class_exists($className) && is_subclass_of($className, IPayable::class))
 				{
-					$interfaces = class_implements($className);
-					if (array_key_exists('Bitrix\Sale\PaySystem\IPayable', $interfaces))
-						$result = $className::getStructure($paySystemId);
+					$result = $className::getStructure($paySystemId);
 				}
 			}
 		}
@@ -668,6 +667,10 @@ final class Manager
 			'PAYSYSTEM' => array('NAME' => Loc::getMessage('SALE_PS_MANAGER_GROUP_PAYSYSTEM'), 'SORT' => 500),
 			'PS_OTHER' => array('NAME' => Loc::getMessage('SALE_PS_MANAGER_GROUP_PS_OTHER'), 'SORT' => 10000),
 			'CONNECT_SETTINGS_UAPAY' => array('NAME' => Loc::getMessage('SALE_PS_MANAGER_GROUP_CONNECT_SETTINGS_UAPAY'), 'SORT' => 100),
+			'CONNECT_SETTINGS_ADYEN' => array('NAME' => Loc::getMessage('SALE_PS_MANAGER_GROUP_CONNECT_SETTINGS_ADYEN'), 'SORT' => 100),
+			'CONNECT_SETTINGS_APPLE_PAY' => array('NAME' => Loc::getMessage('SALE_PS_MANAGER_GROUP_CONNECT_SETTINGS_APPLE_PAY'), 'SORT' => 200),
+			'CONNECT_SETTINGS_SKB' => array('NAME' => Loc::getMessage('SALE_PS_MANAGER_GROUP_CONNECT_SETTINGS_SKB'), 'SORT' => 100),
+			'CONNECT_SETTINGS_BEPAID' => array('NAME' => Loc::getMessage('SALE_PS_MANAGER_GROUP_CONNECT_SETTINGS_BEPAID'), 'SORT' => 100),
 		);
 	}
 

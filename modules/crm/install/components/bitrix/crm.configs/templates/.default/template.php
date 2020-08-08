@@ -83,40 +83,55 @@ if($arResult['PERM_CONFIG'])
 	$items['tab_content_rights']['PERMS']['ICON_CLASS'] = 'img-permissions';
 	$items['tab_content_rights']['PERMS']['NAME'] = GetMessage("CRM_CONFIGS_PERMS");
 
-	if($arResult['IS_BIZPRPOC_ENABLED'])
+	$bpHelperUrl = 'javascript:BX.CrmConfigClass.showInfoHelper(\'limit_crm_bp_automation\', event)';
+	$automationHelperUrl = 'javascript:BX.CrmConfigClass.showInfoHelper(\'limit_crm_robots\', event)';
+
+	$items['tab_content_automation']['BP']['URL'] = $siteDir.'/crm/configs/bp/';
+	$items['tab_content_automation']['BP']['ICON_CLASS'] = 'img-bp';
+	$items['tab_content_automation']['BP']['NAME'] = GetMessage("CRM_CONFIGS_BP");
+
+	if (!$arResult['IS_BIZPRPOC_ENABLED'])
 	{
-		$items['tab_content_automation']['BP']['URL'] = $siteDir.'/crm/configs/bp/';
-		$items['tab_content_automation']['BP']['ICON_CLASS'] = 'img-bp';
-		$items['tab_content_automation']['BP']['NAME'] = GetMessage("CRM_CONFIGS_BP");
+		$items['tab_content_automation']['BP']['URL'] = $bpHelperUrl;
+		$items['tab_content_automation']['BP']['LOCKED'] = true;
 	}
 
-	if($arResult['IS_AUTOMATION_LEAD_ENABLED'])
+	$items['tab_content_automation']['AUTOMATION_LEAD']['URL'] = $siteDir.'/crm/configs/automation/LEAD/0/';
+	$items['tab_content_automation']['AUTOMATION_LEAD']['ICON_CLASS'] = 'img-automation';
+	$items['tab_content_automation']['AUTOMATION_LEAD']['NAME'] = GetMessage("CRM_CONFIGS_AUTOMATION_LEAD");
+
+	if(!$arResult['IS_AUTOMATION_LEAD_ENABLED'])
 	{
-		$items['tab_content_automation']['AUTOMATION_LEAD']['URL'] = $siteDir.'/crm/configs/automation/LEAD/0/';
-		$items['tab_content_automation']['AUTOMATION_LEAD']['ICON_CLASS'] = 'img-automation';
-		$items['tab_content_automation']['AUTOMATION_LEAD']['NAME'] = GetMessage("CRM_CONFIGS_AUTOMATION_LEAD");
+		$items['tab_content_automation']['AUTOMATION_LEAD']['URL'] = $automationHelperUrl;
+		$items['tab_content_automation']['AUTOMATION_LEAD']['LOCKED'] = true;
 	}
 
-	if($arResult['IS_AUTOMATION_DEAL_ENABLED'])
+	$items['tab_content_automation']['AUTOMATION_DEAL']['URL'] = $siteDir.'/crm/configs/automation/DEAL/0/';
+	$items['tab_content_automation']['AUTOMATION_DEAL']['ICON_CLASS'] = 'img-automation';
+	$items['tab_content_automation']['AUTOMATION_DEAL']['NAME'] = GetMessage("CRM_CONFIGS_AUTOMATION_DEAL");
+
+	if(!$arResult['IS_AUTOMATION_DEAL_ENABLED'])
 	{
-		$items['tab_content_automation']['AUTOMATION_DEAL']['URL'] = $siteDir.'/crm/configs/automation/DEAL/0/';
-		$items['tab_content_automation']['AUTOMATION_DEAL']['ICON_CLASS'] = 'img-automation';
-		$items['tab_content_automation']['AUTOMATION_DEAL']['NAME'] = GetMessage("CRM_CONFIGS_AUTOMATION_DEAL");
+		$items['tab_content_automation']['AUTOMATION_DEAL']['URL'] = $automationHelperUrl;
+		$items['tab_content_automation']['AUTOMATION_DEAL']['LOCKED'] = true;
 	}
 
-	if($arResult['IS_AUTOMATION_ORDER_ENABLED'])
+	$items['tab_content_automation']['AUTOMATION_ORDER']['URL'] = $siteDir.'/crm/configs/automation/ORDER/0/';
+	$items['tab_content_automation']['AUTOMATION_ORDER']['ICON_CLASS'] = 'img-automation';
+	$items['tab_content_automation']['AUTOMATION_ORDER']['NAME'] = GetMessage("CRM_CONFIGS_AUTOMATION_ORDER");
+
+	if(!$arResult['IS_AUTOMATION_ORDER_ENABLED'])
 	{
-		$items['tab_content_automation']['AUTOMATION_ORDER']['URL'] = $siteDir.'/crm/configs/automation/ORDER/0/';
-		$items['tab_content_automation']['AUTOMATION_ORDER']['ICON_CLASS'] = 'img-automation';
-		$items['tab_content_automation']['AUTOMATION_ORDER']['NAME'] = GetMessage("CRM_CONFIGS_AUTOMATION_ORDER");
+		$items['tab_content_automation']['AUTOMATION_ORDER']['URL'] = $automationHelperUrl;
+		$items['tab_content_automation']['AUTOMATION_ORDER']['LOCKED'] = true;
 	}
 
-	if($arResult['IS_AUTOMATION_INVOICE_ENABLED'])
+	/*if($arResult['IS_AUTOMATION_INVOICE_ENABLED'])
 	{
 		$items['tab_content_automation']['AUTOMATION_INVOICE']['URL'] = $siteDir.'/crm/configs/automation/INVOICE/0/';
 		$items['tab_content_automation']['AUTOMATION_INVOICE']['ICON_CLASS'] = 'img-automation';
 		$items['tab_content_automation']['AUTOMATION_INVOICE']['NAME'] = GetMessage("CRM_CONFIGS_AUTOMATION_INVOICE");
-	}
+	}*/
 
 	if (\Bitrix\Main\Config\Option::get('crm', 'mail_box', 0) > 0)
 	{
@@ -323,7 +338,10 @@ foreach($tabs as $tabId => $tabName)
 					<? foreach($contentList as $itemData): ?>
 						<a href="<?=$itemData['URL']?>" class="view-report-wrapper-inner-item">
 							<span class="view-report-wrapper-inner-img <?=$itemData['ICON_CLASS']?>"></span>
-							<span class="view-report-wrapper-inner-title"><?=$itemData['NAME']?></span>
+							<span class="view-report-wrapper-inner-title">
+								<?=$itemData['NAME']?>
+								<?if (!empty($itemData['LOCKED'])):?><span class="tariff-lock"></span><?endif?>
+							</span>
 						</a>
 					<? endforeach; ?>
 					<div class="view-report-wrapper-inner-clarification">

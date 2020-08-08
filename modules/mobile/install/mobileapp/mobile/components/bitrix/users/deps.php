@@ -1,4 +1,6 @@
 <?
 return [
-	"user/list", "user/profile"
+	"user/list", 
+	"user/profile",
+	"intranet/invite"
 ];

@@ -1,4 +1,9 @@
 <?
+
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\ModuleManager;
+use Bitrix\Socialnetwork\ComponentHelper;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 /** @var CBitrixComponent $this */
@@ -52,7 +57,10 @@ $arParams["PATH_TO_LOG_ENTRY_EMPTY"] .= (strpos($arParams["PATH_TO_LOG_ENTRY_EMP
 
 $arParams["GROUP_ID"] = IntVal($arParams["GROUP_ID"]); // group page
 $arParams["USER_ID"] = IntVal($arParams["USER_ID"]); // profile page
-$arParams["LOG_ID"] = IntVal($arParams["LOG_ID"]); // log entity page
+$arParams["LOG_ID"] = IntVal($arParams["LOG_ID"]); // log entity pag
+
+$request = \Bitrix\Main\Context::getCurrent()->getRequest();
+$arParams['FIND'] = ($request->get('FIND') ? trim($request->get('FIND')) : '');
 
 $arParams["NAME_TEMPLATE"] = $arParams["NAME_TEMPLATE"] ? $arParams["NAME_TEMPLATE"] : CSite::GetNameFormat();
 $arParams["SHOW_RATING"] = (isset($arParams["SHOW_RATING"]) ? $arParams["SHOW_RATING"] : "Y");
@@ -195,6 +203,9 @@ if ($arParams["EMPTY_PAGE"] != "Y")
 {
 	CSocNetTools::InitGlobalExtranetArrays();
 
+	$config = \Bitrix\Main\Application::getConnection()->getConfiguration();
+	$arResult["ftMinTokenSize"] = (isset($config["ft_min_token_size"]) ? $config["ft_min_token_size"] : \CSQLWhere::FT_MIN_TOKEN_SIZE);
+
 	$arResult["Events"] = false;
 
 	$arFilter = array();
@@ -243,6 +254,19 @@ if ($arParams["EMPTY_PAGE"] != "Y")
 				{
 					$arResult["GROUP_READ_ONLY"] = 'Y';
 				}
+			}
+		}
+
+		if (strlen($arParams['FIND']) > 0)
+		{
+			$fullTextEnabled = \Bitrix\Socialnetwork\LogIndexTable::getEntity()->fullTextIndexEnabled('CONTENT');
+			$operation = ($fullTextEnabled ? '*' : '*%');
+			if (
+				!$fullTextEnabled
+				|| strlen($arParams['FIND']) >= $arResult["ftMinTokenSize"]
+			)
+			{
+				$arFilter[$operation.'CONTENT'] = \Bitrix\Socialnetwork\Item\LogIndex::prepareToken($arParams['FIND']);
 			}
 		}
 
@@ -412,6 +436,51 @@ if ($arParams["EMPTY_PAGE"] != "Y")
 		}
 	}
 
+	if (!ComponentHelper::checkLivefeedTasksAllowed())
+	{
+		$eventIdFilter = $arFilter['EVENT_ID'];
+		$notEventIdFilter = $arFilter['!EVENT_ID'];
+
+		if (empty($notEventIdFilter))
+		{
+			$notEventIdFilter = [];
+		}
+		elseif(!is_array($notEventIdFilter))
+		{
+			$notEventIdFilter = [ $notEventIdFilter ];
+		}
+
+		if (empty($eventIdFilter))
+		{
+			$eventIdFilter = [];
+		}
+		elseif(!is_array($eventIdFilter))
+		{
+			$eventIdFilter = [ $eventIdFilter ];
+		}
+
+		if (ModuleManager::isModuleInstalled('tasks'))
+		{
+			$notEventIdFilter = array_merge($notEventIdFilter, [ 'tasks' ]);
+			$eventIdFilter = array_filter($eventIdFilter, function($eventId) { return ($eventId != 'tasks'); });
+		}
+		if (
+			ModuleManager::isModuleInstalled('crm')
+			&& Option::get('crm', 'enable_livefeed_merge', 'N') == 'Y'
+		)
+		{
+			$notEventIdFilter = array_merge($notEventIdFilter, [ 'crm_activity_add' ]);
+			$eventIdFilter = array_filter($eventIdFilter, function($eventId) { return ($eventId != 'crm_activity_add'); });
+		}
+
+		if (!empty($notEventIdFilter))
+		{
+			$arFilter['!EVENT_ID'] = $notEventIdFilter;
+		}
+
+		$arFilter['EVENT_ID'] = $eventIdFilter;
+	}
+
 	if (intval($arParams["GROUP_ID"]) > 0)
 	{
 		$arResult["COUNTER_TYPE"] = "SG".intval($arParams["GROUP_ID"]);
@@ -425,6 +494,12 @@ if ($arParams["EMPTY_PAGE"] != "Y")
 	)
 	{
 		$arResult["COUNTER_TYPE"] = "CRM_**";
+	}
+	elseif (strlen($arParams['FIND']) > 0)
+	{
+		$arParams['SET_LOG_COUNTER'] = 'N';
+		$arParams['SET_LOG_PAGE_CACHE'] = 'N';
+		$arParams['USE_FOLLOW'] = 'N';
 	}
 	else
 	{
@@ -786,7 +861,14 @@ if (
 	}
 }
 
-$arResult["SHOW_EXPERT_MODE"] = ($USER->IsAuthorized() && IsModuleInstalled('tasks') ? 'Y' : 'N');
+$arResult["SHOW_EXPERT_MODE"] = (
+	ComponentHelper::checkLivefeedTasksAllowed()
+	&& ModuleManager::isModuleInstalled('tasks')
+	&& $USER->isAuthorized()
+		? 'Y'
+		: 'N'
+);
+
 if ($arResult["SHOW_EXPERT_MODE"] == 'Y')
 {
 	$arResult["EXPERT_MODE"] = 'N';
@@ -804,12 +886,12 @@ if ($arResult["SHOW_EXPERT_MODE"] == 'Y')
 	}
 }
 
-$bAllowToAll = \Bitrix\Socialnetwork\ComponentHelper::getAllowToAllDestination();
+$bAllowToAll = ComponentHelper::getAllowToAllDestination();
 
 $arResult["bExtranetSite"] = (CModule::IncludeModule("extranet") && CExtranet::IsExtranetSite());
 $arResult["extranetSiteId"] = (
-	\Bitrix\Main\ModuleManager::isModuleInstalled('extranet')
-		? \Bitrix\Main\Config\Option::get('extranet', 'extranet_site', false)
+	ModuleManager::isModuleInstalled('extranet')
+		? Option::get('extranet', 'extranet_site', false)
 		: false
 );
 if ($arResult["extranetSiteId"])
@@ -848,7 +930,7 @@ if ($arResult["bExtranetSite"])
 }
 
 $arResult["bDiskInstalled"] = (
-	\Bitrix\Main\Config\Option::get('disk', 'successfully_converted', false)
+	Option::get('disk', 'successfully_converted', false)
 	&& IsModuleInstalled('disk')
 );
 

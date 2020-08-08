@@ -26,7 +26,7 @@ class CIntranetSearchConverters
 			foreach($extensions as $extension)
 			{
 				$command = trim(COption::GetOptionString("intranet", "search_file_extension_exe_".$extension, ""));
-				if(strpos($command, "#FILE_NAME#") !== false || strpos($command, "#SHORT_FILE_NAME#") !== false )
+				if(mb_strpos($command, "#FILE_NAME#") !== false || mb_strpos($command, "#SHORT_FILE_NAME#") !== false )
 				{
 					$arExternalConverters[".".$extension] = array(
 						"exe" => $command,
@@ -49,10 +49,10 @@ class CIntranetSearchConverters
 			//Check by file extension
 			if(!$ext)
 			{
-				$p = strrpos($absolute_path, ".");
+				$p = mb_strrpos($absolute_path, ".");
 				if($p !== false)
 				{
-					$ext = substr($absolute_path, $p);
+					$ext = mb_substr($absolute_path, $p);
 				}
 			}
 
@@ -109,11 +109,13 @@ class CIntranetSearchConverters
 						}
 						$tags = "";
 				}
-				if(strlen($result))
+				if($result <> '')
 				{
 					$file_name = end(explode('/', $absolute_path));
 					if(CUtil::DetectUTF8(urlencode($file_name)))
+					{
 						$file_name = $APPLICATION->ConvertCharset($file_name, "UTF-8", LANG_CHARSET);
+					}
 					return array(
 						"TITLE" => $file_name,
 						"CONTENT" => $APPLICATION->ConvertCharset($result, "UTF-8", LANG_CHARSET),
@@ -179,19 +181,19 @@ class CIntranetSearchConverter
 
 	function ProcessExec($program, $absolute_path)
 	{
-		if(is_array($program) && strpos($program["exe"], "catdoc") === 0 && function_exists("bx_catdoc"))
+		if(is_array($program) && mb_strpos($program["exe"], "catdoc") === 0 && function_exists("bx_catdoc"))
 		{
 			return bx_catdoc($absolute_path);
 		}
-		elseif(is_array($program) && strpos($program["exe"], "catppt") === 0 && function_exists("bx_catppt"))
+		elseif(is_array($program) && mb_strpos($program["exe"], "catppt") === 0 && function_exists("bx_catppt"))
 		{
 			return bx_catppt($absolute_path);
 		}
-		elseif(is_array($program) && strpos($program["exe"], "xls2csv") === 0 && function_exists("bx_catxls"))
+		elseif(is_array($program) && mb_strpos($program["exe"], "xls2csv") === 0 && function_exists("bx_catxls"))
 		{
 			return bx_catxls($absolute_path);
 		}
-		elseif(is_array($program) && strpos($program["exe"], "pdftotext") === 0 && function_exists("bx_catpdf"))
+		elseif(is_array($program) && mb_strpos($program["exe"], "pdftotext") === 0 && function_exists("bx_catpdf"))
 		{
 			return bx_catpdf($absolute_path);
 		}
@@ -200,12 +202,12 @@ class CIntranetSearchConverter
 			if (is_array($program))
 			{
 				$cd = $program["cd"];
-				if (strlen($cd) > 0 && file_exists($cd) && is_dir($cd))
+				if ($cd <> '' && file_exists($cd) && is_dir($cd))
 					chdir($cd);
 				$program = $program["exe"];
 			}
 
-			$isWin = substr(PHP_OS, 0, 3) == 'WIN';
+			$isWin = mb_substr(PHP_OS, 0, 3) == 'WIN';
 			$escapeArg = function($arg) use ($isWin)
 			{
 				// invalid symbols: !"$*@\` and \x0A and \xFF
@@ -216,9 +218,9 @@ class CIntranetSearchConverter
 				);
 			};
 
-			if (strpos($program, "#FILE_NAME#") !== false)
+			if (mb_strpos($program, "#FILE_NAME#") !== false)
 				$program = str_replace("#FILE_NAME#", $escapeArg($absolute_path), $program);
-			if (strpos($program, "#SHORT_FILE_NAME#") !== false)
+			if (mb_strpos($program, "#SHORT_FILE_NAME#") !== false)
 			{
 				$short_name = "";
 				exec(sprintf(
@@ -265,7 +267,7 @@ class CIntranetSearchConverter_docx extends CIntranetSearchConverter
 		$content = "";
 		while($data = zip_entry_read($entry, 102400))
 		{
-			$text_len = defined('BX_UTF')? mb_strlen($data, 'latin1'): strlen($data);
+			$text_len = defined('BX_UTF')? mb_strlen($data, 'latin1') : mb_strlen($data);
 			$this->Check_pcre_limit($text_len);
 
 			$data = str_replace("</w:p>", "\n", $data);//Paragraf
@@ -273,7 +275,7 @@ class CIntranetSearchConverter_docx extends CIntranetSearchConverter
 			$content .= preg_replace('#[\s\n\r]+#', ' ', $data);
 		}
 
-		$text_len = defined('BX_UTF')? mb_strlen($content, 'latin1'): strlen($content);
+		$text_len = defined('BX_UTF')? mb_strlen($content, 'latin1') : mb_strlen($content);
 		$this->Check_pcre_limit($text_len);
 
 		return preg_replace("#(<.*?>)#", "", $content);
@@ -297,7 +299,7 @@ class CIntranetSearchConverter_xlsx extends CIntranetSearchConverter
 		$data = zip_entry_read($entry, zip_entry_filesize($entry));
 		if($data)
 		{
-			$text_len = defined('BX_UTF')? mb_strlen($data, 'latin1'): strlen($data);
+			$text_len = defined('BX_UTF')? mb_strlen($data, 'latin1') : mb_strlen($data);
 			$this->Check_pcre_limit($text_len);
 			if(preg_match_all("#<(t|v)>(.*?)</\\1>#is", $data, $match))
 			{
@@ -326,7 +328,7 @@ class CIntranetSearchConverter_pptx extends CIntranetSearchConverter
 		$data = zip_entry_read($entry, zip_entry_filesize($entry));
 		if($data)
 		{
-			$text_len = defined('BX_UTF')? mb_strlen($data, 'latin1'): strlen($data);
+			$text_len = defined('BX_UTF')? mb_strlen($data, 'latin1') : mb_strlen($data);
 			$this->Check_pcre_limit($text_len);
 			if(preg_match_all("#<(a:t)>(.*?)</\\1>#is", $data, $match))
 			{
@@ -354,14 +356,14 @@ class CIntranetSearchConverter_odt extends CIntranetSearchConverter
 		$content = "";
 		while($data = zip_entry_read($entry, 102400))
 		{
-			$text_len = defined('BX_UTF')? mb_strlen($data, 'latin1'): strlen($data);
+			$text_len = defined('BX_UTF')? mb_strlen($data, 'latin1') : mb_strlen($data);
 			$this->Check_pcre_limit($text_len);
 
 			$data = preg_replace("#(<.*?>)#", " ", $data);
 			$content .= preg_replace('#[\s\n\r]+#', ' ', $data);
 		}
 
-		$text_len = defined('BX_UTF')? mb_strlen($content, 'latin1'): strlen($content);
+		$text_len = defined('BX_UTF')? mb_strlen($content, 'latin1') : mb_strlen($content);
 		$this->Check_pcre_limit($text_len);
 
 		return preg_replace("#(<.*?>)#", "", $content);
@@ -385,7 +387,7 @@ class CIntranetSearchConverter_ods extends CIntranetSearchConverter_odt
 		$data = zip_entry_read($entry, zip_entry_filesize($entry));
 		if($data)
 		{
-			$text_len = defined('BX_UTF')? mb_strlen($data, 'latin1'): strlen($data);
+			$text_len = defined('BX_UTF')? mb_strlen($data, 'latin1') : mb_strlen($data);
 			$this->Check_pcre_limit($text_len);
 			if(preg_match_all("#<(text:p)>(.*?)</\\1>#is", $data, $match))
 			{
@@ -707,10 +709,10 @@ class CIntranetSearch
 	{
 		global $DB;
 
-		if($NS["MODULE"]=="intranet" && strlen($NS["ID"])>0)
+		if($NS["MODULE"]=="intranet" && $NS["ID"] <> '')
 		{
-			$entity = substr($NS["ID"], 0, 1);
-			$ID = substr($NS["ID"], 1);
+			$entity = mb_substr($NS["ID"], 0, 1);
+			$ID = mb_substr($NS["ID"], 1);
 		}
 		else
 		{
@@ -728,7 +730,7 @@ class CIntranetSearch
 			);
 			//When extranet module is installed and configured
 			//we should not search for users w/o departments assigned
-			if(IsModuleInstalled('extranet') && strlen(COption::GetOptionString("extranet", "extranet_site")))
+			if(IsModuleInstalled('extranet') && mb_strlen(COption::GetOptionString("extranet", "extranet_site")))
 				$arFilter["!UF_DEPARTMENT"] = false;
 
 			$rsUsers = CUser::GetList($by = "ID", $order = "asc", $arFilter);
@@ -774,11 +776,11 @@ class CIntranetSearch
 
 	function OnSearchGetURL($arFields)
 	{
-		if($arFields["MODULE_ID"] !== "intranet" || substr($arFields["URL"], 0, 1) !== "=")
+		if($arFields["MODULE_ID"] !== "intranet" || mb_substr($arFields["URL"], 0, 1) !== "=")
 			return $arFields["URL"];
 
 		parse_str(ltrim($arFields["URL"], "="), $arr);
-		if(substr($arFields["ITEM_ID"], 0, 1) === "U")
+		if(mb_substr($arFields["ITEM_ID"], 0, 1) === "U")
 		{
 			$url = COption::GetOptionString("intranet", "search_user_url");
 			$url = str_replace("#USER_ID#", $arr["ID"], $url);
@@ -823,7 +825,7 @@ class CIntranetSearch
 				}
 				elseif(
 					IsModuleInstalled('extranet')
-					&& strlen(COption::GetOptionString("extranet", "extranet_site")) >= 0
+					&& mb_strlen(COption::GetOptionString("extranet", "extranet_site")) >= 0
 					&& intval($UF_DEPARTMENT) <= 0
 				)
 				{

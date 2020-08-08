@@ -15,7 +15,7 @@ class BlankFileData extends FileData
 	{
 		parent::__construct();
 
-		$type = trim(strtolower($type), '.');
+		$type = trim(mb_strtolower($type), '.');
 		if (!$this->issetType($type))
 		{
 			throw new SystemException("Could not find type '{$type}' in BlankFile");

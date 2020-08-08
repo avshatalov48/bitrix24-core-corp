@@ -1,6 +1,6 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-if (strlen($arParams["NAME_TEMPLATE"]) <= 0)
+if ($arParams["NAME_TEMPLATE"] == '')
 	$arParams["NAME_TEMPLATE"] = CSite::GetNameFormat();
 
 $arParams["TITLE_NAME_TEMPLATE"] = str_replace(
@@ -160,7 +160,7 @@ else
 	$EC->Show(array(
 		'initDate' => $arParams["INIT_DATE"],
 		'weekHolidays' => $arParams['WEEK_HOLIDAYS'],
-		'workTime' => array(intVal($arParams['WORK_TIME_START']), intVal($arParams['WORK_TIME_END'])),
+		'workTime' => array(intval($arParams['WORK_TIME_START']), intval($arParams['WORK_TIME_END'])),
 		'yearHolidays' => $arParams['YEAR_HOLIDAYS'],
 	));
 
@@ -179,7 +179,7 @@ else
 	{
 		$feature = "calendar";
 		$arEntityActiveFeatures = CSocNetFeatures::GetActiveFeaturesNames((($arParams['OWNER_TYPE'] == "GROUP") ? SONET_ENTITY_GROUP : SONET_ENTITY_USER), $arParams['OWNER_ID']);
-		$strFeatureTitle = ((array_key_exists($feature, $arEntityActiveFeatures) && StrLen($arEntityActiveFeatures[$feature]) > 0) ? $arEntityActiveFeatures[$feature] : GetMessage("EC_SONET_CALENDAR"));
+		$strFeatureTitle = ((array_key_exists($feature, $arEntityActiveFeatures) && $arEntityActiveFeatures[$feature] <> '') ? $arEntityActiveFeatures[$feature] : GetMessage("EC_SONET_CALENDAR"));
 		$arParams["STR_TITLE"] = $strFeatureTitle;
 	}
 	else

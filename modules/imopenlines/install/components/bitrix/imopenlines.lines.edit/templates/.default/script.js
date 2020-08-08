@@ -342,8 +342,8 @@
 					new BX.UI.Button({
 						text : BX.message('IMOL_CONFIG_EDIT_DELETE_THIS_OPENLINE_BUTTON'),
 						color: BX.UI.Button.Color.DANGER,
-						onclick: function(button, event) {
-							BX.addClass(button.button, "ui-btn-wait");
+						onclick: function(button) {
+							button.setWaiting();
 							BX.OpenLinesConfigEdit.deleteOpenLine();
 						}
 					}),
@@ -967,6 +967,7 @@
 				'name' : null,
 				'searchInput' : null,
 				'extranetUser' :  (this.p['EXTRANET_USER'] == "Y"),
+				'userSearchArea' : 'I',
 				'bindMainPopup' : { node : null, 'offsetTop' : '5px', 'offsetLeft': '15px'},
 				'bindSearchPopup' : { node : null, 'offsetTop' : '5px', 'offsetLeft': '15px'},
 				departmentSelectDisable : true,

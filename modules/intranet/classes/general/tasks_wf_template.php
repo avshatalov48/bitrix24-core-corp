@@ -25,7 +25,7 @@ $arStates = array(
 				"Permission" => array("responsible", "author", "A"),
 				"NextState" => "NotAccepted",
 				"Mail" => array(
-					'MessageUserFrom' => array('user_1'),
+					'MessageUserFrom' => array('user_{=Document:MODIFIED_BY}'),
 					'MessageUserTo' => array("responsible", "author", "trackers"),
 				),
 				"Body" => array(
@@ -100,7 +100,7 @@ $arStates = array(
 				"Permission" => array("responsible", "author", "A"),
 				"NextState" => "NotAccepted",
 				"Mail" => array(
-					'MessageUserFrom' => array('user_1'),
+					'MessageUserFrom' => array('user_{=Document:MODIFIED_BY}'),
 					'MessageUserTo' => array("responsible", "author", "trackers"),
 				),
 				"Body" => array(
@@ -183,7 +183,7 @@ $arStates = array(
 				"Permission" => array("responsible", "A"),
 				"NextState" => "NotAccepted",
 				"Mail" => array(
-					'MessageUserFrom' => array('user_1'),
+					'MessageUserFrom' => array('user_{=Document:MODIFIED_BY}'),
 					'MessageUserTo' => array("responsible", "author", "trackers"),
 				),
 				"Body" => array(
@@ -293,7 +293,7 @@ $arStates = array(
 				"Permission" => array("responsible", "A"),
 				"NextState" => "NotAccepted",
 				"Mail" => array(
-					'MessageUserFrom' => array('user_1'),
+					'MessageUserFrom' => array('user_{=Document:MODIFIED_BY}'),
 					'MessageUserTo' => array("responsible", "author", "trackers"),
 				),
 				"Body" => array(
@@ -376,7 +376,7 @@ $arStates = array(
 				"Permission" => array("responsible", "A"),
 				"NextState" => "NotAccepted",
 				"Mail" => array(
-					'MessageUserFrom' => array('user_1'),
+					'MessageUserFrom' => array('user_{=Document:MODIFIED_BY}'),
 					'MessageUserTo' => array("responsible", "author", "trackers"),
 				),
 				"Body" => array(
@@ -482,7 +482,7 @@ foreach ($arStatesKeys as $stateKey)
 			);
 		}
 
-		if (array_key_exists("NextState", $arEventTmp) && strlen($arEventTmp["NextState"]) > 0)
+		if (array_key_exists("NextState", $arEventTmp) && $arEventTmp["NextState"] <> '')
 		{
 			$arChildrenTmp2[] = array(
 				"Type" => "SetFieldActivity",

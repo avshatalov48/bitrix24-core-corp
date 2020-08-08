@@ -147,18 +147,6 @@ foreach($ufFields as $fieldCode => $field)
 	}
 }
 
-$accessFilled = true;
-if(is_object($template['SE_ACCESS']) && $template['SE_ACCESS']->count() == 1)
-{
-	$first = $template['SE_ACCESS']->first();
-	$level = \Bitrix\Tasks\Util\User::getAccessLevel('task_template', 'full');
-	if($level && $first['GROUP_CODE'] == 'U'.$template['CREATED_BY'] && $first['TASK_ID'] == $level['ID'])
-	{
-		// this is the default rights, do not show them
-		$accessFilled = false;
-	}
-}
-
 $arResult['TEMPLATE_DATA']['BLOCKS'] = array(
 	'SE_CHECKLIST' => array(
 		'FILLED' => array_key_exists('SE_CHECKLIST', $template)
@@ -210,7 +198,7 @@ $arResult['TEMPLATE_DATA']['BLOCKS'] = array(
 		'FILLED' => $template['DEPENDS_ON'] && !$template['DEPENDS_ON']->isEmpty()
 	),
 	'ACCESS' => array(
-		'FILLED' => $accessFilled
+		'FILLED' => true
 	),
 );
 
@@ -339,3 +327,4 @@ $arResult['JS_DATA']['startDate'] = $helper->detectUnitType($matchWorkTime, $tem
 $arResult['JS_DATA']['duration'] = $helper->detectUnitType($matchWorkTime, $template['END_DATE_PLAN_AFTER'] - $template['START_DATE_PLAN_AFTER']);
 $arResult['JS_DATA']['auxData'] = $arResult['AUX_DATA'];
 $arResult['JS_DATA']['currentUser'] = $users[$arParams['USER_ID']];
+$arResult['JS_DATA']['taskLimitExceeded'] = $arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'];

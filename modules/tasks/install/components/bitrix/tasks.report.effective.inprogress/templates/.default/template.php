@@ -5,44 +5,48 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 
-\Bitrix\Main\UI\Extension::load("ui.alerts");
+Extension::load(['ui.alerts']);
 
 Loc::loadMessages(__FILE__);
-$isIFrame = $_REQUEST['IFRAME'] == 'Y';
+
+$isIFrame = ($_REQUEST['IFRAME'] === 'Y');
+$taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
 
 if (isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
 {
-$APPLICATION->RestartBuffer(); //сбрасываем весь вывод
-?>
-<!DOCTYPE html>
-<html>
-<head>
-	<? $APPLICATION->ShowHead(); ?>
-</head>
-<body class="template-<?=SITE_TEMPLATE_ID?> <? $APPLICATION->ShowProperty(
-	"BodyClass"
-); ?> <? if ($isSideSlider):?>task-iframe-popup-side-slider<? endif ?>" onload="window.top.BX.onCustomEvent(window.top, 'tasksIframeLoad');" onunload="window.top.BX.onCustomEvent(window.top, 'tasksIframeUnload');">
-<div class="tasks-iframe-header">
-	<div class="pagetitle-wrap">
-		<div class="pagetitle-inner-container">
-			<div class="pagetitle-menu" id="pagetitle-menu"><?
-				$APPLICATION->ShowViewContent("pagetitle")
-				?></div>
-			<div class="pagetitle" <? if ($isIFrame): ?>style="padding-left: 20px;padding-right:20px;"<? endif ?>>
-				<span id="pagetitle" class="pagetitle-item"><? $APPLICATION->ShowTitle(
-						false
-					); ?><? if ($existingTask):?>
-						<span class="task-page-link-btn js-id-copy-page-url" title="<?=Loc::getMessage(
-							'TASKS_TIP_TEMPLATE_COPY_CURRENT_URL'
-						)?>"></span><? endif ?></span>
+	$APPLICATION->RestartBuffer(); //сбрасываем весь вывод
+	?>
+	<!DOCTYPE html>
+	<html>
+	<head>
+		<? $APPLICATION->ShowHead(); ?>
+	</head>
+	<body class="template-<?=SITE_TEMPLATE_ID?> <?$APPLICATION->ShowProperty("BodyClass");?> <?if($isSideSlider):?>task-iframe-popup-side-slider<?php endif?> <?if($taskLimitExceeded):?>task-report-locked<?php endif?>"
+		  onload="window.top.BX.onCustomEvent(window.top, 'tasksIframeLoad');"
+		  onunload="window.top.BX.onCustomEvent(window.top, 'tasksIframeUnload');">
+	<div class="tasks-iframe-header">
+		<div class="pagetitle-wrap">
+			<div class="pagetitle-inner-container">
+				<div class="pagetitle-menu" id="pagetitle-menu"><?
+					$APPLICATION->ShowViewContent("pagetitle")
+					?></div>
+				<div class="pagetitle" <? if ($isIFrame): ?>style="padding-left: 20px;padding-right:20px;"<? endif ?>>
+					<span id="pagetitle" class="pagetitle-item"><? $APPLICATION->ShowTitle(
+							false
+						); ?><? if ($existingTask):?>
+							<span class="task-page-link-btn js-id-copy-page-url" title="<?=Loc::getMessage(
+								'TASKS_TIP_TEMPLATE_COPY_CURRENT_URL'
+							)?>"></span><? endif ?></span>
+				</div>
 			</div>
 		</div>
 	</div>
-</div>
-<? } ?>
+<?}?>
 
-<?
+<?php
 if (isset($arResult["ERROR"]) && !empty($arResult["ERROR"]))
 {
 	foreach ($arResult["ERROR"] as $error)
@@ -61,6 +65,11 @@ if (isset($arResult["ERROR"]) && !empty($arResult["ERROR"]))
 	}
 
 	return;
+}
+
+if ($taskLimitExceeded)
+{
+	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
 }
 ?>
 
@@ -85,7 +94,7 @@ if (isset($arResult["ERROR"]) && !empty($arResult["ERROR"]))
 	$component,
 	array('HIDE_ICONS' => true)
 ); ?>
-<div class="task-iframe-workarea" <? if ($isIFrame): ?>style="padding:0 20px;"<? endif ?>>
+<div class="task-iframe-workarea <?if($taskLimitExceeded):?>task-report-locked<?php endif?>" <?if($isIFrame):?>style="padding:0 20px;"<?php endif?>>
 	<?php
 	$APPLICATION->IncludeComponent(
 		'bitrix:main.ui.grid',
@@ -124,7 +133,16 @@ if (isset($arResult["ERROR"]) && !empty($arResult["ERROR"]))
 	?>
 </div>
 
-<?
+<script type="text/javascript">
+	BX.ready(function() {
+		new BX.Tasks.TasksReportEffectiveInProgress(<?=Json::encode([
+			'taskLimitExceeded' => $arResult['TASK_LIMIT_EXCEEDED'],
+			'pathToTasks' => str_replace('#user_id#', $arParams['USER_ID'], $arParams['PATH_TO_USER_TASKS']),
+		])?>);
+	});
+</script>
+
+<?php
 if (isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
 {
 	require($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/epilog_after.php');

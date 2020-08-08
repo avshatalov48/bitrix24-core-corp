@@ -24,7 +24,7 @@ CJSCore::RegisterExt('mobile_ui', array(
 	'js' => '/bitrix/js/mobile/mobile_ui.js',
 	'lang' => '/bitrix/modules/mobile/lang/'.LANGUAGE_ID.'/mobile_ui_messages.php',
 	'css' => '/bitrix/js/mobile/css/mobile_ui.css',
-	'rel' => array('mobileapp:mobile_fastclick', 'mobileapp:mobile_gesture'),
+	'rel' => array('mobile_fastclick', 'mobile_gesture'),
 ));
 CJSCore::RegisterExt('mobile_crm', array(
 	'js'   => '/bitrix/js/mobile/mobile_crm.js',

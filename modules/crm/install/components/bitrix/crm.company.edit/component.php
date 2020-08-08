@@ -342,7 +342,7 @@ else
 			if(isset($_POST['COMMENTS']))
 			{
 				$comments = isset($_POST['COMMENTS']) ? trim($_POST['COMMENTS']) : '';
-				if($comments !== '' && strpos($comments, '<') !== false)
+				if($comments !== '' && mb_strpos($comments, '<') !== false)
 				{
 					$comments = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($comments);
 				}
@@ -489,7 +489,7 @@ else
 
 			if(isset($_POST['OPENED']))
 			{
-				$arFields['OPENED'] = strtoupper($_POST['OPENED']) === 'Y' ? 'Y' : 'N';
+				$arFields['OPENED'] = mb_strtoupper($_POST['OPENED']) === 'Y' ? 'Y' : 'N';
 			}
 			elseif(!$isEditMode)
 			{
@@ -1518,10 +1518,10 @@ if (IsModuleInstalled('bizproc') && CBPRuntime::isFeatureEnabled())
 				'id' => 'BP_STATE_NAME_'.$bizProcIndex,
 				'name' => GetMessage('CRM_FIELD_BP_STATE_NAME'),
 				'type' => 'label',
-				'value' => strlen($arDocumentState['STATE_TITLE']) > 0 ? $arDocumentState['STATE_TITLE'] : $arDocumentState['STATE_NAME']
+				'value' => $arDocumentState['STATE_TITLE'] <> '' ? $arDocumentState['STATE_TITLE'] : $arDocumentState['STATE_NAME']
 			);
 		}
-		if (strlen($arDocumentState['ID']) <= 0)
+		if ($arDocumentState['ID'] == '')
 		{
 			ob_start();
 			CBPDocument::StartWorkflowParametersShow(

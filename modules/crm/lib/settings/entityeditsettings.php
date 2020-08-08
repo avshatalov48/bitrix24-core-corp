@@ -24,7 +24,7 @@ class EntityEditSettings
 	{
 		if(!$this->config)
 		{
-			$result = \CUserOptions::GetOption('crm.entity.editor', strtolower($this->configID).'_opts', null);
+			$result = \CUserOptions::GetOption('crm.entity.editor', mb_strtolower($this->configID).'_opts', null);
 			$this->config = is_array($result) ? $result : array();
 		}
 		return $this->config;

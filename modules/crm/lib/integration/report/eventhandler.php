@@ -2,7 +2,6 @@
 
 namespace Bitrix\Crm\Integration\Report;
 
-use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Integration\Report\AnalyticBoard\MyReports\ActivityAnalyticBoard;
 use Bitrix\Crm\Integration\Report\AnalyticBoard\MyReports\CompanyAnalyticBoard;
 use Bitrix\Crm\Integration\Report\AnalyticBoard\MyReports\ContactAnalyticBoard;
@@ -10,17 +9,23 @@ use Bitrix\Crm\Integration\Report\AnalyticBoard\MyReports\CrmStartAnalyticBoard;
 use Bitrix\Crm\Integration\Report\AnalyticBoard\MyReports\DealAnalyticBoard;
 use Bitrix\Crm\Integration\Report\AnalyticBoard\MyReports\InvoiceAnalyticBoard;
 use Bitrix\Crm\Integration\Report\AnalyticBoard\MyReports\LeadAnalyticBoard;
+use Bitrix\Crm\Integration\Report\Dashboard\Customers\FinancialRating;
+use Bitrix\Crm\Integration\Report\Dashboard\Customers\RegularCustomers;
+use Bitrix\Crm\Integration\Report\Dashboard\Managers\ManagersRating;
 use Bitrix\Crm\Integration\Report\Dashboard\MyReports;
 use Bitrix\Crm\Integration\Report\Dashboard\LeadAnalytic\CommonLead;
 use Bitrix\Crm\Integration\Report\Dashboard\LeadAnalytic\NewLead;
 use Bitrix\Crm\Integration\Report\Dashboard\LeadAnalytic\RepeatLead;
 use Bitrix\Crm\Integration\Report\Dashboard\Sales\SalesFunnelByStageHistory;
+use Bitrix\Crm\Integration\Report\Dashboard\ShopReports\SalesOrderFunnelBoard;
+use Bitrix\Crm\Integration\Report\Dashboard\ShopReports\SalesOrderFunnelByStageHistory;
+use Bitrix\Crm\Integration\Report\Dashboard\ShopReports\SalesOrderBuyerBoard;
 use Bitrix\Crm\Integration\Report\Dashboard\Sales\SalesPeriodCompare;
 use Bitrix\Crm\Integration\Report\Dashboard\Sales\SalesDynamic;
 use Bitrix\Crm\Integration\Report\Dashboard\Sales\SalesFunnelBoard;
 use Bitrix\Crm\Integration\Report\Dashboard\Sales\SalesPlanBoard;
-use Bitrix\Crm\Integration\Report\Filter\Base;
 use Bitrix\Crm\Integration\Report\Filter\ClientBaseFilter;
+use Bitrix\Crm\Integration\Report\Filter\Customers\DealBasedFilter;
 use Bitrix\Crm\Integration\Report\Filter\Deal\SalesDynamicFilter;
 use Bitrix\Crm\Integration\Report\Filter\Deal\SalesPeriodCompareFilter;
 use Bitrix\Crm\Integration\Report\Filter\Lead\CommonLead as CommonLeadFilter;
@@ -29,11 +34,13 @@ use Bitrix\Crm\Integration\Report\Filter\Lead\RepeatLead as RepeatLeadBoard;
 use Bitrix\Crm\Integration\Report\Filter\ManagerEfficiencyFilter;
 use Bitrix\Crm\Integration\Report\Filter\MyReportsFilter;
 use Bitrix\Crm\Integration\Report\Filter\SalesFunnelFilter;
+use Bitrix\Crm\Integration\Report\Filter\SalesOrderFunnelFilter;
 use Bitrix\Crm\Integration\Report\Handler\Client;
 use Bitrix\Crm\Integration\Report\Handler\Company;
 use Bitrix\Crm\Integration\Report\Handler\Contact;
 use Bitrix\Crm\Integration\Report\Handler\Deal;
 use Bitrix\Crm\Integration\Report\Handler\Lead;
+use Bitrix\Crm\Integration\Report\Handler\Managers\Rating;
 use Bitrix\Crm\Integration\Rest\AppPlacement;
 use Bitrix\Crm\Settings\LeadSettings;
 use Bitrix\Main\Localization\Loc;
@@ -67,6 +74,7 @@ class EventHandler
 	const BATCH_MANAGER_EFFICIENCY = 'manager_efficiency';
 	const BATCH_CLIENTS = 'clients';
 	const BATCH_MY_REPORTS = 'my_reports';
+	const BATCH_INTERNET_SHOP = 'sale_internet_shop';
 
 	const MANAGER_EFFICIENCY_BOARD_KEY = 'crm_manager_efficiency';
 	const CLIENT_BASE_BOARD_KEY = 'crm_client_base';
@@ -179,22 +187,18 @@ class EventHandler
 			$leadAnalytics->setStepperIds(['crm' => ['Bitrix\Crm\Agent\History\LeadStatusSupposedHistory']]);
 			$analyticPageList[] = $leadAnalytics;
 
-			$leadAnalytics = new AnalyticBoard(RepeatLead::BOARD_KEY);
-			$leadAnalytics->setBatchKey(self::BATCH_LEAD);
-			$leadAnalytics->setTitle(Loc::getMessage('CRM_REPORT_REPEATED_LEAD_BOARD_TITLE'));
-			$leadAnalytics->setFilter(new RepeatLeadBoard(RepeatLead::BOARD_KEY));
-			$leadAnalytics->addFeedbackButton();
+			if(LeadSettings::getCurrent()->isAutoGenRcEnabled())
+			{
+				$leadAnalytics = new AnalyticBoard(RepeatLead::BOARD_KEY);
+				$leadAnalytics->setBatchKey(self::BATCH_LEAD);
+				$leadAnalytics->setTitle(Loc::getMessage('CRM_REPORT_REPEATED_LEAD_BOARD_TITLE'));
+				$leadAnalytics->setFilter(new RepeatLeadBoard(RepeatLead::BOARD_KEY));
+				$leadAnalytics->addFeedbackButton();
+				$leadAnalytics->setStepperEnabled(true);
+				$leadAnalytics->setStepperIds(['crm' => ['Bitrix\Crm\Agent\History\LeadStatusSupposedHistory']]);
+				$analyticPageList[] = $leadAnalytics;
+			}
 
-			$repeatedSaleDisabledComponentParams = [
-				'NAME' => 'bitrix:crm.report.analytics.limit',
-				'TEMPLATE_NAME' => 'withoutrepeated',
-			];
-			$leadAnalytics->setLimit($repeatedSaleDisabledComponentParams, !LeadSettings::getCurrent()->isAutoGenRcEnabled());
-
-
-			$leadAnalytics->setStepperEnabled(true);
-			$leadAnalytics->setStepperIds(['crm' => ['Bitrix\Crm\Agent\History\LeadStatusSupposedHistory']]);
-			$analyticPageList[] = $leadAnalytics;
 		}
 
 		$salesFunnel = new AnalyticBoard(SalesFunnelBoard::BOARD_KEY);
@@ -257,24 +261,13 @@ class EventHandler
 		$managerEfficiency = new AnalyticBoard();
 		$managerEfficiency->setBatchKey(self::BATCH_MANAGER_EFFICIENCY);
 		$managerEfficiency->setTitle(Loc::getMessage('CRM_REPORT_MANAGER_EFFICIENCY_BOARD_TITLE'));
-		$managerEfficiency->setBoardKey(self::MANAGER_EFFICIENCY_BOARD_KEY);
-		$managerEfficiency->setFilter(new ManagerEfficiencyFilter(self::MANAGER_EFFICIENCY_BOARD_KEY));
-		$managerEfficiency->setDisabled(true);
+		$managerEfficiency->setBoardKey(ManagersRating::BOARD_KEY);
+		$managerEfficiency->setFilter(new DealBasedFilter(ManagersRating::BOARD_KEY));
 		$managerEfficiency->addFeedbackButton();
 		$managerEfficiency->setLimit(static::getLimitComponentParams(self::MANAGER_EFFICIENCY_BOARD_KEY), Limit::isAnalyticsLimited(self::MANAGER_EFFICIENCY_BOARD_KEY));
 		$analyticPageList[] = $managerEfficiency;
 
-		$managerEfficiencyDynamics = new AnalyticBoard();
-		$managerEfficiencyDynamics->setBatchKey(self::BATCH_MANAGER_EFFICIENCY);
-		$managerEfficiencyDynamics->setTitle(Loc::getMessage('CRM_REPORT_EFFICIENCY_DYNAMIC_BOARD_TITLE'));
-		$managerEfficiencyDynamics->setBoardKey('manager_efficiency_dynamics');
-		$managerEfficiencyDynamics->setFilter(new ManagerEfficiencyFilter('manager_efficiency_dynamics'));
-		$managerEfficiencyDynamics->setDisabled(true);
-		$managerEfficiencyDynamics->addFeedbackButton();
-		$managerEfficiencyDynamics->setLimit(static::getLimitComponentParams('manager_efficiency_dynamics'), Limit::isAnalyticsLimited('manager_efficiency_dynamics'));
-		$analyticPageList[] = $managerEfficiencyDynamics;
-
-		$contactDynamic = new AnalyticBoard();
+		/*$contactDynamic = new AnalyticBoard();
 		$contactDynamic->setBatchKey(self::BATCH_CLIENTS);
 		$contactDynamic->setTitle(Loc::getMessage('CRM_REPORT_CONTACT_DYNAMIC_BOARD_TITLE'));
 		$contactDynamic->setBoardKey(self::CONTACT_DYNAMIC);
@@ -292,23 +285,21 @@ class EventHandler
 		$companyDynamic->setDisabled(true);
 		$companyDynamic->addFeedbackButton();
 		$companyDynamic->setLimit(static::getLimitComponentParams('company_dynamic'), Limit::isAnalyticsLimited('company_dynamic'));
-		$analyticPageList[] = $companyDynamic;
+		$analyticPageList[] = $companyDynamic;*/
 
 		$stableCustomers = new AnalyticBoard();
 		$stableCustomers->setBatchKey(self::BATCH_CLIENTS);
 		$stableCustomers->setTitle(Loc::getMessage('CRM_REPORT_STABLE_CLIENTS_BOARD_TITLE'));
-		$stableCustomers->setBoardKey('stable_customers');
-		$stableCustomers->setFilter(new ClientBaseFilter('stable_customers'));
-		$stableCustomers->setDisabled(true);
+		$stableCustomers->setBoardKey(RegularCustomers::BOARD_KEY);
+		$stableCustomers->setFilter(new DealBasedFilter(RegularCustomers::BOARD_KEY));
 		$stableCustomers->addFeedbackButton();
 		$analyticPageList[] = $stableCustomers;
 
 		$financeRating = new AnalyticBoard();
 		$financeRating->setBatchKey(self::BATCH_CLIENTS);
 		$financeRating->setTitle(Loc::getMessage('CRM_REPORT_FINANCE_RATING_BOARD_TITLE'));
-		$financeRating->setBoardKey('finance_rating');
-		$financeRating->setFilter(new ClientBaseFilter('finance_rating'));
-		$financeRating->setDisabled(true);
+		$financeRating->setBoardKey(FinancialRating::BOARD_KEY);
+		$financeRating->setFilter(new DealBasedFilter(FinancialRating::BOARD_KEY));
 		$financeRating->addFeedbackButton();
 		$analyticPageList[] = $financeRating;
 
@@ -375,7 +366,7 @@ class EventHandler
 			new BoardButton('
 				<div class="ui-btn-split ui-btn-light-border ui-btn-themes"> 
 					<button id="crm-report-deal-category" class="ui-btn-main">
-						'.htmlspecialcharsbx(DealCategory::getName(MyReports\DealBoard::getCurrentCategory())).'
+						'.htmlspecialcharsbx(MyReports\DealBoard::getCurrentCategoryName()).'
 					</button> 
 					<button class="ui-btn-menu" onclick="BX.Crm.Report.DealWidgetBoard.onSelectCategoryButtonClick(this);"></button> 
 				</div>
@@ -416,6 +407,37 @@ class EventHandler
 		$myReportActivity->addButton(static::getAddWidgetButton());
 		$analyticPageList[] = $myReportActivity;
 
+		if (\Bitrix\Main\Loader::includeModule('sale'))
+		{
+			$salesOrderFunnel = new AnalyticBoard(SalesOrderFunnelBoard::BOARD_KEY);
+			$salesOrderFunnel->setBatchKey(self::BATCH_INTERNET_SHOP);
+			$salesOrderFunnel->setBoardKey(SalesOrderFunnelBoard::BOARD_KEY);
+			$salesOrderFunnel->setTitle(Loc::getMessage('CRM_REPORT_SALES_FUNNEL_BY_HISTORY_BOARD_TITLE'));
+			$salesOrderFunnel->setFilter(new SalesOrderFunnelFilter(SalesOrderFunnelBoard::BOARD_KEY));
+			$salesOrderFunnel->setLimit(static::getLimitComponentParams(SalesOrderFunnelBoard::BOARD_KEY), Limit::isAnalyticsLimited(SalesOrderFunnelBoard::BOARD_KEY));
+			$salesOrderFunnel->addFeedbackButton();
+
+			$analyticPageList[] = $salesOrderFunnel;
+
+			$salesOrderFunnelWithHistory = new AnalyticBoard(SalesOrderFunnelByStageHistory::BOARD_KEY);
+			$salesOrderFunnelWithHistory->setBatchKey(self::BATCH_INTERNET_SHOP);
+			$salesOrderFunnelWithHistory->setBoardKey(SalesOrderFunnelByStageHistory::BOARD_KEY);
+			$salesOrderFunnelWithHistory->setTitle(Loc::getMessage('CRM_REPORT_SALES_FUNNEL_BOARD_TITLE'));
+			$salesOrderFunnelWithHistory->setFilter(new SalesOrderFunnelFilter(SalesOrderFunnelByStageHistory::BOARD_KEY));
+			$salesOrderFunnelWithHistory->addFeedbackButton();
+			$salesOrderFunnelWithHistory->setLimit(static::getLimitComponentParams(SalesOrderFunnelByStageHistory::BOARD_KEY), Limit::isAnalyticsLimited(SalesOrderFunnelByStageHistory::BOARD_KEY));
+			$analyticPageList[] = $salesOrderFunnelWithHistory;
+
+			$salesOrderBuyer = new AnalyticBoard(SalesOrderBuyerBoard::BOARD_KEY);
+			$salesOrderBuyer->setBatchKey(self::BATCH_INTERNET_SHOP);
+			$salesOrderBuyer->setBoardKey(SalesOrderBuyerBoard::BOARD_KEY);
+			$salesOrderBuyer->setTitle(Loc::getMessage('CRM_REPORT_SALES_ORDER_BUYER_BOARD_TITLE'));
+			$salesOrderBuyer->setFilter(new SalesOrderFunnelFilter(SalesOrderBuyerBoard::BOARD_KEY));
+			$salesOrderBuyer->addFeedbackButton();
+			$salesOrderBuyer->setLimit(static::getLimitComponentParams(SalesOrderBuyerBoard::BOARD_KEY), Limit::isAnalyticsLimited(SalesOrderBuyerBoard::BOARD_KEY));
+			$analyticPageList[] = $salesOrderBuyer;
+		}
+
 		$restApps = \Bitrix\Crm\Integration\Rest\AppPlacementManager::getHandlerInfos(AppPlacement::ANALYTICS_MENU);
 		foreach ($restApps as $categoryName => $apps)
 		{
@@ -448,6 +470,9 @@ class EventHandler
 		$reportHandlerCollection[] = new Contact();
 		$reportHandlerCollection[] = new Company();
 		$reportHandlerCollection[] = new Deal();
+		$reportHandlerCollection[] = new Handler\Order\StatusGrid();
+		$reportHandlerCollection[] = new Handler\Order\ResponsibleGrid();
+		$reportHandlerCollection[] = new Handler\Order\BuyersGrid();
 		$reportHandlerCollection[] = new Handler\SalesDynamics\PrimaryGraph();
 		$reportHandlerCollection[] = new Handler\SalesDynamics\ReturnGraph();
 		$reportHandlerCollection[] = new Handler\SalesDynamics\WonLostAmount();
@@ -455,6 +480,12 @@ class EventHandler
 		$reportHandlerCollection[] = new Handler\SalesDynamics\Conversion();
 		$reportHandlerCollection[] = new Handler\SalesPeriodCompare\GraphCurrent();
 		$reportHandlerCollection[] = new Handler\SalesPeriodCompare\GraphPrevious();
+		$reportHandlerCollection[] = new Handler\Customers\RegularCustomers();
+		$reportHandlerCollection[] = new Handler\Customers\RegularCustomersGrid();
+		$reportHandlerCollection[] = new Handler\Customers\FinancialRatingGraph();
+		$reportHandlerCollection[] = new Handler\Customers\FinancialRatingGrid();
+		$reportHandlerCollection[] = new Handler\Managers\RatingGraph();
+		$reportHandlerCollection[] = new Handler\Managers\RatingGrid();
 
 		return $reportHandlerCollection;
 	}
@@ -476,6 +507,12 @@ class EventHandler
 		$viewsList[] = new View\TrafficGrid();
 		$viewsList[] = new View\SalesDynamicsGraph();
 		$viewsList[] = new View\SalesDynamicsGrid();
+		$viewsList[] = new View\Managers\ManagersRatingGraph();
+		$viewsList[] = new View\Managers\ManagersRatingGrid();
+		$viewsList[] = new View\Customers\RegularCustomersGraph();
+		$viewsList[] = new View\Customers\RegularCustomersGrid();
+		$viewsList[] = new View\Customers\FinancialRatingGraph();
+		$viewsList[] = new View\Customers\FinancialRatingGrid();
 		$viewsList[] = new View\MyReports\ActivityReport();
 		$viewsList[] = new View\MyReports\CompanyReport();
 		$viewsList[] = new View\MyReports\ContactReport();
@@ -483,6 +520,7 @@ class EventHandler
 		$viewsList[] = new View\MyReports\DealReport();
 		$viewsList[] = new View\MyReports\InvoiceReport();
 		$viewsList[] = new View\MyReports\LeadReport();
+		$viewsList[] = new View\ShopReports\SaleBuyersGrid();
 
 		return $viewsList;
 	}
@@ -523,6 +561,11 @@ class EventHandler
 		$dashboards[] = Dashboard\Ad\TrafficEfficiency::get();
 		$dashboards[] = Dashboard\Ad\AdPayback::get();
 
+		$dashboards[] = ManagersRating::get();
+
+		$dashboards[] = RegularCustomers::get();
+		$dashboards[] = FinancialRating::get();
+
 		$dashboards[] = MyReports\ActivityBoard::get();
 		$dashboards[] = MyReports\CompanyBoard::get();
 		$dashboards[] = MyReports\ContactBoard::get();
@@ -530,6 +573,10 @@ class EventHandler
 		$dashboards[] = MyReports\DealBoard::get();
 		$dashboards[] = MyReports\InvoiceBoard::get();
 		$dashboards[] = MyReports\LeadBoard::get();
+
+		$dashboards[] = SalesOrderFunnelBoard::get();
+		$dashboards[] = SalesOrderFunnelByStageHistory::get();
+		$dashboards[] = SalesOrderBuyerBoard::get();
 
 		return $dashboards;
 	}

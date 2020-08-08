@@ -109,7 +109,7 @@ class CTaskMembers
 			$key = $res["FIELD"];
 			$cOperationType = $res["OPERATION"];
 
-			$key = strtoupper($key);
+			$key = mb_strtoupper($key);
 
 			switch ($key)
 			{
@@ -137,7 +137,7 @@ class CTaskMembers
 		$strSqlSearch = "";
 		$arSqlSearchCnt = count($arSqlSearch);
 		for ($i = 0; $i < $arSqlSearchCnt; $i++)
-			if (strlen($arSqlSearch[$i]) > 0)
+			if ($arSqlSearch[$i] <> '')
 				$strSqlSearch .= " AND ".$arSqlSearch[$i]." ";
 
 		$strSql = "
@@ -154,8 +154,8 @@ class CTaskMembers
 		$arSqlOrder = [];
 		foreach ($arOrder as $by => $order)
 		{
-			$by    = strtolower($by);
-			$order = strtolower($order);
+			$by = mb_strtolower($by);
+			$order = mb_strtolower($order);
 
 			if ($order != "asc")
 				$order = "desc";

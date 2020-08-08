@@ -50,3 +50,5 @@ $MESS['CRM_REPORT_MY_REPORTS_INVOICE'] = 'Счета';
 $MESS['CRM_REPORT_MY_REPORTS_ACTIVITY'] = 'Мои дела';
 $MESS['CRM_REPORT_MY_REPORTS_ADD'] = 'Добавить отчёт';
 
+$MESS['CRM_REPORT_SALES_ORDER_BUYER_BOARD_TITLE'] = 'Постоянные покупатели';
+

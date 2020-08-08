@@ -244,7 +244,7 @@ final class OrderBuilderRest extends \Bitrix\Sale\Helpers\Order\Builder\OrderBui
 			if (
 				isset($clientProperties[$property->getPropertyId()])
 				&& !is_array($property->getValue())
-				&& !strlen($property->getValue())
+				&& !mb_strlen($property->getValue())
 			)
 			{
 				$property->setValue($clientProperties[$property->getPropertyId()]);

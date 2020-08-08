@@ -428,10 +428,11 @@ class ActualRanking
 		switch ($this->entityTypeId)
 		{
 			case \CCrmOwnerType::Contact:
-				$fieldName = 'CONTACT_ID';
+				$fieldName = 'BINDING_CONTACT_ID';
+				$filterFieldName = 'BINDING_CONTACT.CONTACT_ID';
 				break;
 			case \CCrmOwnerType::Company:
-				$fieldName = 'COMPANY_ID';
+				$fieldName = $filterFieldName = 'COMPANY_ID';
 				break;
 			default:
 				return null;
@@ -441,8 +442,8 @@ class ActualRanking
 
 		$queryId = null;
 		$rankedList = array();
-		$query->setSelect(array($fieldName, 'MAX_ID'));
-		$query->whereIn($fieldName, $this->list);
+		$query->setSelect(array($fieldName => $filterFieldName, 'MAX_ID'));
+		$query->whereIn($filterFieldName, $this->list);
 		$query->registerRuntimeField(new ORM\Fields\ExpressionField('MAX_DATE_MODIFY', 'MAX(%s)', 'DATE_MODIFY'));
 		$query->registerRuntimeField(new ORM\Fields\ExpressionField('MAX_DATE_CREATE', 'MAX(%s)', 'DATE_CREATE'));
 		$query->registerRuntimeField(new ORM\Fields\ExpressionField('MAX_ID', 'MAX(%s)', 'ID'));
@@ -485,7 +486,7 @@ class ActualRanking
 
 			$rankingEntitiesResult = $rankingEntitiesQuery
 				->setSelect(['ID'])
-				->where($fieldName, $this->entityId)
+				->where($filterFieldName, $this->entityId)
 				->setOrder([
 					'DATE_MODIFY' => 'DESC',
 					'DATE_CREATE' => 'DESC',

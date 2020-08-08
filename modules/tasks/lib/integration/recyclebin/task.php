@@ -5,10 +5,10 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\Result;
-use Bitrix\Main\Localization\Loc;
-
+use Bitrix\Socialnetwork\LogTable;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Internals\TaskTable;
@@ -18,8 +18,10 @@ use Bitrix\Tasks\Internals\Task\SortingTable;
 use Bitrix\Tasks\Internals\Task\ViewedTable;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
 use Bitrix\Tasks\Internals\Helper\Task\Dependence;
-use Bitrix\Tasks\Kanban\TaskStageTable;
+use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Kanban\StagesTable;
+use Bitrix\Tasks\Kanban\TaskStageTable;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
 
@@ -195,7 +197,7 @@ if (Loader::includeModule('recyclebin'))
 				$log->Add($logFields);
 
 				$cache = Cache::createInstance();
-				$cache->clean(CTasks::FILTER_LIMIT_CACHE_KEY, CTasks::CACHE_TASKS_COUNT_DIR_NAME);
+				$cache->clean(CTasks::CACHE_TASKS_COUNT, CTasks::CACHE_TASKS_COUNT_DIR_NAME);
 			}
 			catch (\Exception $e)
 			{
@@ -220,6 +222,8 @@ if (Loader::includeModule('recyclebin'))
 					'FORCE_RECOUNT_COUNTER' => 'Y',
 					'PIN_IN_STAGE' => false
 				]);
+
+				Integration\SocialNetwork\Log::showLogByTaskId($taskId);
 			}
 			catch (\Exception $e)
 			{
@@ -375,6 +379,7 @@ if (Loader::includeModule('recyclebin'))
 				\CTaskReminders::DeleteByTaskID($taskId);
 				FavoriteTable::deleteByTaskId($taskId, ['LOW_LEVEL' => true]);
 				SortingTable::deleteByTaskId($taskId);
+				UserOption::deleteByTaskId($taskId);
 				TaskStageTable::clearTask($taskId);
 				TaskCheckListFacade::deleteByEntityIdOnLowLevel($taskId);
 
@@ -410,6 +415,8 @@ if (Loader::includeModule('recyclebin'))
 				$result->addError(new Error($e->getMessage(), $e->getCode()));
 			}
 
+			Integration\SocialNetwork\Log::deleteLogByTaskId($taskId);
+
 			return $result;
 		}
 
@@ -437,6 +444,23 @@ if (Loader::includeModule('recyclebin'))
 					'RESTORE' => Loc::getMessage('TASKS_RECYCLEBIN_RESTORE_CONFIRM'),
 					'REMOVE' => Loc::getMessage('TASKS_RECYCLEBIN_REMOVE_CONFIRM')
 				]
+			];
+		}
+
+		/**
+		 * @return array
+		 * @throws \Bitrix\Main\ObjectPropertyException
+		 * @throws \Bitrix\Main\SystemException
+		 */
+		public static function getAdditionalData(): array
+		{
+			return [
+				'LIMIT_DATA' => [
+					'RESTORE' => [
+						'DISABLE' => TaskLimit::isLimitExceeded(),
+						'SLIDER_CODE' => 'limit_tasks_recycle_bin_restore',
+					],
+				],
 			];
 		}
 	}

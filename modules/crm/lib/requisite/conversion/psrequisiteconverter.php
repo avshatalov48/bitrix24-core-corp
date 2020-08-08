@@ -811,9 +811,9 @@ class PSRequisiteConverter
 						{
 							$curPsLocalization = 'ru';
 						}
-						else if (count($matches) === 3 && strlen($matches[2]) > 2)
+						else if (count($matches) === 3 && mb_strlen($matches[2]) > 2)
 						{
-							$curPsLocalization = substr($matches[2], 1, 2);
+							$curPsLocalization = mb_substr($matches[2], 1, 2);
 						}
 					}
 					$origPsaParams = \CSalePaySystemAction::UnSerializeParams($arPaySys['PSA_PARAMS']);
@@ -871,7 +871,7 @@ class PSRequisiteConverter
 										$allParamsEmpty = 'N';
 
 									$convInfo = $convMap[$psType][$curPsLocalization][$presetCountryId][$paramName];
-									if (isset($convInfo['MAX_LENGTH']) && strlen($value) <= $convInfo['MAX_LENGTH'])
+									if (isset($convInfo['MAX_LENGTH']) && mb_strlen($value) <= $convInfo['MAX_LENGTH'])
 									{
 										if (!empty($value) && isset($convInfo['ENTITY_ABBR']))
 										{

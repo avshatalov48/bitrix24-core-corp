@@ -157,10 +157,10 @@ class Script
 		if (Loader::includeModule('bitrix24') && !\CBitrix24::isCustomDomain())
 		{
 			$url = new Uri($url);
-			if (strpos($url->getPath(), '/pub/') === 0)
+			if (mb_strpos($url->getPath(), '/pub/') === 0)
 			{
 				$url = $url->setPath(
-					'/' . $url->getHost() . substr($url->getPath(), 4)
+					'/'.$url->getHost().mb_substr($url->getPath(), 4)
 				)->setHost('bitrix24public.com')->getLocator();
 			}
 		}
@@ -197,9 +197,9 @@ class Script
 
 		$uri = new Uri($result);
 		$result = $uri->getLocator();
-		if (substr($result, -1) == '/')
+		if (mb_substr($result, -1) == '/')
 		{
-			$result = substr($result, 0, -1);
+			$result = mb_substr($result, 0, -1);
 		}
 
 		return $result;
@@ -207,7 +207,7 @@ class Script
 
 	public static function getPublicUrl(array $formData)
 	{
-		$link = self::getDomain() . self::$defaultFormPath;
+		$link = self::getDomain() . self::$defaultFormPathSef;
 		$link = str_replace(
 			array('#id#', '#form_id#', '#form_code#', '#form_sec#'),
 			array($formData['ID'], $formData['ID'], $formData['CODE'], $formData['SECURITY_CODE']),

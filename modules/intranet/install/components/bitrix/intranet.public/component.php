@@ -47,7 +47,7 @@ if ($arParams["SEF_MODE"] == "Y")
 
 	foreach ($arUrlTemplates as $url => $value)
 	{
-		$arResult["PATH_TO_".strToUpper($url)] = $arParams["SEF_FOLDER"].$value;
+		$arResult["PATH_TO_".mb_strtoupper($url)] = $arParams["SEF_FOLDER"].$value;
 	}
 
 	if ($_REQUEST["auth"] == "Y")

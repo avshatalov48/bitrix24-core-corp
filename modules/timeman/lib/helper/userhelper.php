@@ -33,9 +33,9 @@ class UserHelper
 		}
 		global $USER;
 		$userId = 0;
-		if ($USER && is_object($USER) && $USER->isAuthorized())
+		if ($USER && is_object($USER) && $USER->isAuthorized() && $USER->getId() > 0)
 		{
-			$userId = $USER->getID();
+			$userId = $USER->getId();
 		}
 		return $userId;
 	}

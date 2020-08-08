@@ -36,7 +36,7 @@
 }
 .crm-tracking-entity-details-edit:after {
 	content: '';
-	background: url(/bitrix/components/bitrix/crm.entity.editor/templates/.default/images/icons-sprite.svg) no-repeat center -246px;
+	background: url(/bitrix/js/crm/entity-editor/css/images/icons-sprite.svg) no-repeat center -246px;
 	padding: 10px;
 	opacity: 0.5;
 }

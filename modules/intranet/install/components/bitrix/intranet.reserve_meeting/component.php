@@ -47,7 +47,7 @@ if ($arParams["SEF_MODE"] == "Y")
 	CComponentEngine::InitComponentVariables($componentPage, $arComponentVariables, $arVariableAliases, $arVariables);
 
 	foreach ($arUrlTemplates as $url => $value)
-		$arResult["PATH_TO_".strToUpper($url)] = $arParams["SEF_FOLDER"].$value;
+		$arResult["PATH_TO_".mb_strtoupper($url)] = $arParams["SEF_FOLDER"].$value;
 	$arResult["PATH_TO_MEETING_LIST"] = $arParams["SEF_FOLDER"].$arUrlTemplates["index"];
 }
 else

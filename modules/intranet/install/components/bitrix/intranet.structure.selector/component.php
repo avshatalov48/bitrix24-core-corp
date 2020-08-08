@@ -5,13 +5,13 @@ if (!CModule::IncludeModule('intranet'))
 	return;
 
 $arParams['FILTER_NAME'] = 
-		(strlen($arParams["FILTER_NAME"])<=0 || !preg_match("/^[A-Za-z_][A-Za-z0-9_]*$/", $arParams["FILTER_NAME"])) ? 
+		($arParams["FILTER_NAME"] == '' || !preg_match("/^[A-Za-z_][A-Za-z0-9_]*$/", $arParams["FILTER_NAME"])) ?
 		'find_' : $arParams['FILTER_NAME'];
 
 InitBVar($arParams['FILTER_DEPARTMENT_SINGLE']);
 InitBVar($arParams['FILTER_SESSION']);
 
-$arParams['LIST_PAGE'] = strlen($arParams['LIST_PAGE']) > 0 ? $arParams['LIST_PAGE'] : $APPLICATION->GetCurPage();
+$arParams['LIST_PAGE'] = $arParams['LIST_PAGE'] <> '' ? $arParams['LIST_PAGE'] : $APPLICATION->GetCurPage();
 
 $arUserFields = $GLOBALS['USER_FIELD_MANAGER']->GetUserFields('USER', 0, LANGUAGE_ID);
 $arResult['UF_DEPARTMENT_field'] = $arUserFields['UF_DEPARTMENT'];
@@ -39,14 +39,14 @@ $arResult['FILTER_PARAMS'] = array(
 	$arParams['FILTER_NAME'].'_IS_ONLINE',
 );
 
-$filter_action = strlen($_REQUEST['set_filter_'.$arParams['FILTER_NAME']]) > 0 ? 'set' : 'get';
+$filter_action = $_REQUEST['set_filter_'.$arParams['FILTER_NAME']] <> '' ? 'set' : 'get';
 
 InitFilterEx($arResult['FILTER_PARAMS'], $arParams['FILTER_NAME'], $filter_action, $arParams['FILTER_SESSION'] == 'Y');
 $arResult['bVarsFromForm'] = true;
 
 $arResult['FILTER_VALUES'] = array();
 
-if (strlen($_REQUEST['del_filter_'.$arParams['FILTER_NAME']]) > 0) 
+if ($_REQUEST['del_filter_'.$arParams['FILTER_NAME']] <> '') 
 {
 	$arResult['bVarsFromForm'] = false;
 	DelFilterEx($arResult['FILTER_PARAMS'], $arParams['FILTER_NAME'], $arParams['FILTER_SESSION'] == 'Y');

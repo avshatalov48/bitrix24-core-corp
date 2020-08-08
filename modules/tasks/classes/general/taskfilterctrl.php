@@ -815,7 +815,7 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 
 		if ( ! (
 			isset($arPresetData['Name'])
-			&& (strlen($arPresetData['Name']) <= 100)
+			&& (mb_strlen($arPresetData['Name']) <= 100)
 			&& isset($arPresetData['Parent'])
 			&& isset($arPresetData['Condition'])
 			&& is_array($arPresetData['Condition'])
@@ -1090,7 +1090,7 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 			&& (count($arPresetData) === 3)
 			&& isset($arPresetData['Name'], $arPresetData['Parent'], $arPresetData['Condition'])
 			&& ($arPresetData['Parent'] === self::ROOT_PRESET)
-			&& (strlen($arPresetData['Name']))
+			&& (mb_strlen($arPresetData['Name']))
 			&& is_array($arPresetData['Condition'])
 		);
 
@@ -1138,7 +1138,7 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 		foreach ($arItem as $itemName => $itemData)
 		{
 			CTaskAssert::assert(
-				(strlen($itemName) > 2)
+				(mb_strlen($itemName) > 2)
 				|| CTaskAssert::isLaxIntegers($itemName)
 			);
 
@@ -1148,7 +1148,7 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 				continue;
 			}
 
-			if (substr($itemName, 0, 12) === '::SUBFILTER-')
+			if (mb_substr($itemName, 0, 12) === '::SUBFILTER-')
 			{
 				$arResult[$itemName] = self::convertItemForImport($itemData);
 				continue;
@@ -1334,7 +1334,7 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 
 		foreach ($arItem as $itemName => $itemData)
 		{
-			CTaskAssert::assert(strlen($itemName) > 2);
+			CTaskAssert::assert(mb_strlen($itemName) > 2);
 
 			if ($itemName === '::LOGIC')
 			{
@@ -1342,7 +1342,7 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 				continue;
 			}
 
-			if (substr($itemName, 0, 12) === '::SUBFILTER-')
+			if (mb_substr($itemName, 0, 12) === '::SUBFILTER-')
 			{
 				$arResult[$itemName] = self::convertItemForExport($itemData);
 				continue;
@@ -1360,7 +1360,7 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 				if (preg_match($pattern, $itemName))
 				{
 					$operation = $operationCode;
-					$itemName  = substr($itemName, strlen($operationPrefix));
+					$itemName = mb_substr($itemName, mb_strlen($operationPrefix));
 					break;
 				}
 			}

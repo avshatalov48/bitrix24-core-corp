@@ -529,7 +529,7 @@ else
 			if(isset($_POST['COMMENTS']))
 			{
 				$comments = isset($_POST['COMMENTS']) ? trim($_POST['COMMENTS']) : '';
-				if($comments !== '' && strpos($comments, '<') !== false)
+				if($comments !== '' && mb_strpos($comments, '<') !== false)
 				{
 					$comments = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($comments);
 				}
@@ -565,7 +565,7 @@ else
 
 			if(isset($_POST['OPENED']))
 			{
-				$arFields['OPENED'] = strtoupper($_POST['OPENED']) === 'Y' ? 'Y' : 'N';
+				$arFields['OPENED'] = mb_strtoupper($_POST['OPENED']) === 'Y' ? 'Y' : 'N';
 			}
 			elseif(isset($arSrcElement['OPENED']))
 			{
@@ -739,7 +739,7 @@ else
 			if($processProductRows)
 			{
 				$prodJson = isset($_POST[$productDataFieldName]) ? strval($_POST[$productDataFieldName]) : '';
-				$arProd = $arResult['PRODUCT_ROWS'] = strlen($prodJson) > 0 ? CUtil::JsObjectToPhp($prodJson) : array();
+				$arProd = $arResult['PRODUCT_ROWS'] = $prodJson <> '' ? CUtil::JsObjectToPhp($prodJson) : array();
 
 				if(count($arProd) > 0)
 				{
@@ -763,7 +763,7 @@ else
 			if(array_key_exists($productRowSettingsFieldName, $_POST))
 			{
 				$settingsJson = isset($_POST[$productRowSettingsFieldName]) ? strval($_POST[$productRowSettingsFieldName]) : '';
-				$arSettings = strlen($settingsJson) > 0 ? CUtil::JsObjectToPhp($settingsJson) : array();
+				$arSettings = $settingsJson <> '' ? CUtil::JsObjectToPhp($settingsJson) : array();
 				if(is_array($arSettings))
 				{
 					$productRowSettings['ENABLE_DISCOUNT'] = isset($arSettings['ENABLE_DISCOUNT']) ? $arSettings['ENABLE_DISCOUNT'] === 'Y' : false;
@@ -814,15 +814,15 @@ else
 
 					if ($_POST['RECUR_PARAM']['RECURRING_SWITCHER'] === 'Y' && Bitrix\Crm\Recurring\Manager::isAllowedExpose(Bitrix\Crm\Recurring\Manager::DEAL))
 					{
-						if (strlen($_POST['RECUR_PARAM']['START_DATE']) > 0)
+						if ($_POST['RECUR_PARAM']['START_DATE'] <> '')
 							$recurringList['START_DATE'] = new \Bitrix\Main\Type\Date($_POST['RECUR_PARAM']['START_DATE']);
 
-						if (strlen($_POST['RECUR_PARAM']['DEAL_DATEPICKER_BEFORE']) > 0)
+						if ($_POST['RECUR_PARAM']['DEAL_DATEPICKER_BEFORE'] <> '')
 						{
 							$recurringList['START_DATE'] = new \Bitrix\Main\Type\Date($_POST['RECUR_PARAM']['DEAL_DATEPICKER_BEFORE']);
 						}
 
-						if (strlen($_POST['RECUR_PARAM']['END_DATE']) > 0)
+						if ($_POST['RECUR_PARAM']['END_DATE'] <> '')
 						{
 							$recurringList['LIMIT_DATE'] = new \Bitrix\Main\Type\Date($_POST['RECUR_PARAM']['END_DATE']);
 						}
@@ -902,15 +902,15 @@ else
 
 					if ($_POST['RECUR_PARAM']['RECURRING_SWITCHER'] === 'Y' && Bitrix\Crm\Recurring\Manager::isAllowedExpose(Bitrix\Crm\Recurring\Manager::DEAL))
 					{
-						if (strlen($_POST['RECUR_PARAM']['START_DATE']) > 0)
+						if ($_POST['RECUR_PARAM']['START_DATE'] <> '')
 							$recurringList['START_DATE'] = new \Bitrix\Main\Type\Date($_POST['RECUR_PARAM']['START_DATE']);
 
-						if (strlen($_POST['RECUR_PARAM']['DEAL_DATEPICKER_BEFORE']) > 0)
+						if ($_POST['RECUR_PARAM']['DEAL_DATEPICKER_BEFORE'] <> '')
 						{
 							$recurringList['START_DATE'] = new \Bitrix\Main\Type\Date($_POST['RECUR_PARAM']['DEAL_DATEPICKER_BEFORE']);
 						}
 
-						if (strlen($_POST['RECUR_PARAM']['END_DATE']) > 0
+						if ($_POST['RECUR_PARAM']['END_DATE'] <> ''
 							&& $_POST['RECUR_PARAM']['REPEAT_TILL'] === 'date')
 						{
 							$recurringList['LIMIT_DATE'] = new \Bitrix\Main\Type\Date($_POST['RECUR_PARAM']['END_DATE']);
@@ -1061,13 +1061,15 @@ else
 			if ($_POST['RECUR_PARAM']['RECURRING_SWITCHER'] !== 'Y')
 			{
 				//Region automation
+				$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Deal, $arResult['ELEMENT']['ID']);
+				$starter->setUserIdFromCurrent();
 				if (!$isEditMode)
 				{
-					\Bitrix\Crm\Automation\Factory::runOnAdd(\CCrmOwnerType::Deal, $arResult['ELEMENT']['ID']);
+					$starter->runOnAdd();
 				}
-				elseif (isset($arFields['STAGE_ID']) && $arSrcElement['STAGE_ID'] != $arFields['STAGE_ID'])
+				else
 				{
-					\Bitrix\Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Deal, $arResult['ELEMENT']['ID']);
+					$starter->runOnUpdate($arFields, $arSrcElement);
 				}
 				//end automation
 			}
@@ -1934,10 +1936,10 @@ if (IsModuleInstalled('bizproc') && CBPRuntime::isFeatureEnabled() && $arParams[
 				'id' => 'BP_STATE_NAME_'.$bizProcIndex,
 				'name' => GetMessage('CRM_FIELD_BP_STATE_NAME'),
 				'type' => 'label',
-				'value' => strlen($arDocumentState['STATE_TITLE']) > 0 ? $arDocumentState['STATE_TITLE'] : $arDocumentState['STATE_NAME']
+				'value' => $arDocumentState['STATE_TITLE'] <> '' ? $arDocumentState['STATE_TITLE'] : $arDocumentState['STATE_NAME']
 			);
 		}
-		if (strlen($arDocumentState['ID']) <= 0)
+		if ($arDocumentState['ID'] == '')
 		{
 			ob_start();
 			CBPDocument::StartWorkflowParametersShow(

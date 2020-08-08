@@ -76,6 +76,26 @@ Vue.component('bx-livechat-head',
 
 			return false;
 		},
+		chatTitle(state)
+		{
+			return state.widget.common.textMessages.bxLivechatTitle
+				|| state.widget.common.configName
+				|| this.localize.BX_LIVECHAT_TITLE
+		},
+		operatorName(state)
+		{
+			if (!this.showName)
+				return '';
+
+			return state.widget.dialog.operator.firstName? state.widget.dialog.operator.firstName: state.widget.dialog.operator.name
+		},
+		operatorDescription(state)
+		{
+			if (!this.showName)
+				return '';
+
+			return state.widget.dialog.operator.workPosition? state.widget.dialog.operator.workPosition: this.localize.BX_LIVECHAT_USER;
+		},
 		localize()
 		{
 			return Vue.getFilteredPhrases('BX_LIVECHAT_', this.$root.$bitrixMessages);
@@ -101,7 +121,7 @@ Vue.component('bx-livechat-head',
 		<div class="bx-livechat-head-wrap">
 			<template v-if="isWidgetDisabled">
 				<div class="bx-livechat-head" :style="customBackgroundStyle">
-					<div class="bx-livechat-title">{{widget.common.configName || localize.BX_LIVECHAT_TITLE}}</div>
+					<div class="bx-livechat-title">{{chatTitle}}</div>
 					<div class="bx-livechat-control-box">
 						<button v-if="!widget.common.pageMode" class="bx-livechat-control-btn bx-livechat-control-btn-close" :title="localize.BX_LIVECHAT_CLOSE_BUTTON" @click="close"></button>
 					</div>
@@ -109,7 +129,7 @@ Vue.component('bx-livechat-head',
 			</template>
 			<template v-else-if="application.error.active">
 				<div class="bx-livechat-head" :style="customBackgroundStyle">
-					<div class="bx-livechat-title">{{widget.common.configName || localize.BX_LIVECHAT_TITLE}}</div>
+					<div class="bx-livechat-title">{{chatTitle}}</div>
 					<div class="bx-livechat-control-box">
 						<button v-if="!widget.common.pageMode" class="bx-livechat-control-btn bx-livechat-control-btn-close" :title="localize.BX_LIVECHAT_CLOSE_BUTTON" @click="close"></button>
 					</div>
@@ -117,7 +137,7 @@ Vue.component('bx-livechat-head',
 			</template>
 			<template v-else-if="!widget.common.configId">
 				<div class="bx-livechat-head" :style="customBackgroundStyle">
-					<div class="bx-livechat-title">{{widget.common.configName || localize.BX_LIVECHAT_TITLE}}</div>
+					<div class="bx-livechat-title">{{chatTitle}}</div>
 					<div class="bx-livechat-control-box">
 						<button v-if="!widget.common.pageMode" class="bx-livechat-control-btn bx-livechat-control-btn-close" :title="localize.BX_LIVECHAT_CLOSE_BUTTON" @click="close"></button>
 					</div>
@@ -126,7 +146,7 @@ Vue.component('bx-livechat-head',
 			<template v-else>
 				<div class="bx-livechat-head" :style="customBackgroundStyle">
 					<template v-if="!showName">
-						<div class="bx-livechat-title">{{widget.common.configName || localize.BX_LIVECHAT_TITLE}}</div>
+						<div class="bx-livechat-title">{{chatTitle}}</div>
 					</template>
 					<template v-else>
 						<div class="bx-livechat-user bx-livechat-status-online">
@@ -142,8 +162,8 @@ Vue.component('bx-livechat-head',
 							</template>
 						</div>
 						<div class="bx-livechat-user-info">
-							<div class="bx-livechat-user-name">{{widget.dialog.operator.firstName? widget.dialog.operator.firstName: widget.dialog.operator.name}}</div>
-							<div class="bx-livechat-user-position">{{widget.dialog.operator.workPosition? widget.dialog.operator.workPosition: localize.BX_LIVECHAT_USER}}</div>
+							<div class="bx-livechat-user-name">{{operatorName}}</div>
+							<div class="bx-livechat-user-position">{{operatorDescription}}</div>
 						</div>
 					</template>
 					<div class="bx-livechat-control-box">

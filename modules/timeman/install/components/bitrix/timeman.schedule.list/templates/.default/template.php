@@ -32,7 +32,7 @@ foreach ($arResult['ITEMS'] as $item)
 			$gridActions[] = [
 				'TITLE' => Loc::getMessage('TM_SCHEDULE_LIST_ACTION_PLAN'),
 				'TEXT' => htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_LIST_ACTION_PLAN')),
-				'HREF' => $urlManager->getUriTo('scheduleShiftplan', ['SCHEDULE_ID' => $item['ID']]),
+				'HREF' => $urlManager->getUriTo($urlManager::URI_SCHEDULE_SHIFTPLAN, ['SCHEDULE_ID' => $item['ID']]),
 			];
 		}
 	}
@@ -41,7 +41,7 @@ foreach ($arResult['ITEMS'] as $item)
 		$gridActions[] = [
 			'TITLE' => htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_LIST_ACTION_WORKTIME_STATS')),
 			'TEXT' => htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_LIST_ACTION_WORKTIME_STATS')),
-			'HREF' => $urlManager->getUriTo('worktimeStats'),
+			'HREF' => $urlManager->getUriTo($urlManager::URI_WORKTIME_STATS),
 		];
 	}
 
@@ -51,7 +51,7 @@ foreach ($arResult['ITEMS'] as $item)
 		$gridActions[] = [
 			'TITLE' => htmlspecialcharsbx($updateText),
 			'TEXT' => htmlspecialcharsbx($updateText),
-			'ONCLICK' => 'BX.Timeman.Component.Schedule.List' . CUtil::JSEscape($component->getComponentId()) . '.onEditScheduleClick(event, ' . intval($item['ID']) . ')',
+			'HREF' => $urlManager->getUriTo($urlManager::URI_SCHEDULE_UPDATE, ['SCHEDULE_ID' => $item['ID']]),
 			'DEFAULT' => true,
 		];
 	}

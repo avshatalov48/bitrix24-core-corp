@@ -8,7 +8,7 @@ $arrAddFields = array();
 $sFirstAddField = '';
 foreach($arResult['FIELDS']['tab_1'] as $field):		
 	$field['id'] = 'COMPANY_'.$field['id'];		
-	if (strpos($field['id'], 'UF_') !== false):
+	if (mb_strpos($field['id'], 'UF_') !== false):
 		if ($field['required'] == 'Y'):
 			$arrAddRequiredFields[] = $field;
 		else:

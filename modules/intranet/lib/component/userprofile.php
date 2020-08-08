@@ -150,7 +150,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		if (Loader::includeModule('dav'))
 		{
 			$this->arParams["PATH_TO_USER_SYNCHRONIZE"] = trim($this->arParams["PATH_TO_USER_SYNCHRONIZE"]);
-			if (strlen($this->arParams["PATH_TO_USER_SYNCHRONIZE"]) <= 0)
+			if ($this->arParams["PATH_TO_USER_SYNCHRONIZE"] == '')
 				$this->arParams["PATH_TO_USER_SYNCHRONIZE"] = htmlspecialcharsbx($APPLICATION->GetCurPage()."?".$this->arParams["PAGE_VAR"]."=user_synchronize&".$this->arParams["USER_VAR"]."=#user_id#");
 
 			$urls["Synchronize"] = \CComponentEngine::MakePathFromTemplate($this->arParams["PATH_TO_USER_SYNCHRONIZE"], array("user_id" => $this->arParams["ID"]));
@@ -230,7 +230,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 				'WORK_CITY', 'WORK_COUNTRY', 'WORK_COMPANY', 'WORK_DEPARTMENT',
 				'PERSONAL_PROFESSION', 'WORK_NOTES'
 			),
-			"SELECT" => array("UF_DEPARTMENT", "UF_PHONE_INNER", "UF_SKYPE")
+			"SELECT" => array("UF_DEPARTMENT", "UF_PHONE_INNER", "UF_SKYPE", "UF_SKYPE_LINK", "UF_ZOOM")
 		);
 
 		$dbUser = \CUser::GetList(($by="id"), ($order="asc"), $filter, $params);
@@ -244,6 +244,22 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			}
 		}
 
+		if (intval($user["PERSONAL_PHOTO"]) <= 0)
+		{
+			switch($user["PERSONAL_GENDER"])
+			{
+				case "M":
+					$suffix = "male";
+					break;
+				case "F":
+					$suffix = "female";
+					break;
+				default:
+					$suffix = "unknown";
+				}
+				$user["PERSONAL_PHOTO"] = Option::get('socialnetwork', 'default_user_picture_'.$suffix, false, SITE_ID);
+		}
+
 		$user["PHOTO"] = self::getUserPhoto($user["PERSONAL_PHOTO"], 212);
 
 		$fullName = array(
@@ -253,9 +269,9 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		);
 		$user["FULL_NAME"] = \CUser::FormatName(\CSite::GetNameFormat(), $fullName);
 
-		if (strlen($user["PERSONAL_WWW"]) > 0)
+		if ($user["PERSONAL_WWW"] <> '')
 		{
-			$user["PERSONAL_WWW"] = ((strpos($user["PERSONAL_WWW"], "http") === false) ? "http://" : "").$user["PERSONAL_WWW"];
+			$user["PERSONAL_WWW"] = ((mb_strpos($user["PERSONAL_WWW"], "http") === false) ? "http://" : "").$user["PERSONAL_WWW"];
 		}
 
 		$user["ONLINE_STATUS"] = \CUser::GetOnlineStatus($this->arParams["ID"], MakeTimeStamp($user["LAST_ACTIVITY_DATE"], "YYYY-MM-DD HH-MI-SS"));
@@ -318,6 +334,11 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			return null;
 		}
 
+		if (isset($data["UF_DEPARTMENT"]) && empty($data["UF_DEPARTMENT"][0]))
+		{
+			unset($data["UF_DEPARTMENT"]);
+		}
+
 		$fields = array(
 			'NAME', 'LAST_NAME', 'SECOND_NAME', 'PERSONAL_GENDER', 'PERSONAL_BIRTHDAY',
 			'EMAIL', 'PERSONAL_MOBILE', 'PERSONAL_WWW',  'PERSONAL_COUNTRY', 'PERSONAL_CITY', 'PERSONAL_STATE',
@@ -331,7 +352,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		$newFields = array();
 		foreach ($fields as $key)
 		{
-			if ($key == 'PASSWORD' && strlen($data['PASSWORD']) <= 0)
+			if ($key == 'PASSWORD' && $data['PASSWORD'] == '')
 			{
 				unset($data['PASSWORD']);
 				unset($data['CONFIRM_PASSWORD']);
@@ -541,10 +562,25 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 					'ACTIVE' => 'Y',
 					'CONFIRM_CODE' => false,
 					'IS_REAL_USER' => "Y"
-				), array('FIELDS' => array("ID", "NAME", "LAST_NAME", "SECOND_NAME", "LOGIN", "WORK_POSITION", "PERSONAL_PHOTO")));
+				), array('FIELDS' => array("ID", "NAME", "LAST_NAME", "SECOND_NAME", "LOGIN", "WORK_POSITION", "PERSONAL_PHOTO", "PERSONAL_GENDER")));
 
 				while($subUser = $dbUsers->GetNext())
 				{
+					if (intval($subUser["PERSONAL_PHOTO"]) <= 0)
+					{
+						switch($subUser["PERSONAL_GENDER"])
+						{
+							case "M":
+								$suffix = "male";
+								break;
+							case "F":
+								$suffix = "female";
+								break;
+							default:
+								$suffix = "unknown";
+						}
+						$subUser["PERSONAL_PHOTO"] = Option::get('socialnetwork', 'default_user_picture_'.$suffix, false, SITE_ID);
+					}
 
 					$subUser["FULL_NAME"] = \CUser::FormatName(\CSite::GetNameFormat(), $subUser, true, false);
 					$subUser["PHOTO"] = self::getUserPhoto($subUser["PERSONAL_PHOTO"], 100);
@@ -559,6 +595,22 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			$managers = \CIntranetUtils::GetDepartmentManager($user["UF_DEPARTMENT"], $user["ID"], true);
 			foreach ($managers as $key => $manager)
 			{
+				if (intval($manager["PERSONAL_PHOTO"]) <= 0)
+				{
+					switch($manager["PERSONAL_GENDER"])
+					{
+						case "M":
+							$suffix = "male";
+							break;
+						case "F":
+							$suffix = "female";
+							break;
+						default:
+							$suffix = "unknown";
+					}
+					$manager["PERSONAL_PHOTO"] = Option::get('socialnetwork', 'default_user_picture_'.$suffix, false, SITE_ID);
+				}
+
 				$manager["FULL_NAME"] = \CUser::FormatName(\CSite::GetNameFormat(), $manager, true, false);
 				$manager["PHOTO"] = self::getUserPhoto($manager["PERSONAL_PHOTO"], 100);
 				$manager["LINK"] = \CComponentEngine::MakePathFromTemplate($this->arParams['PATH_TO_USER'], array("user_id" => $manager["ID"]));
@@ -587,9 +639,13 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			$user['SUBORDINATE'] = $vars['SUBORDINATE'];
 		}
 
-		if ($user["STATUS"] == 'extranet')
+		if (
+			$user["STATUS"] == 'extranet'
+			|| $this->getCurrentUserStatus() == 'extranet'
+		)
 		{
 			$user['MANAGERS'] = array();
+			$user['SUBORDINATE'] = array();
 		}
 	}
 
@@ -742,6 +798,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 	protected function checkNumAdminRestrictions()
 	{
 		$this->arResult["adminRightsRestricted"] = false;
+		$this->arResult["delegateAdminRightsRestricted"] = false;
 
 		if ($this->arResult["isCloud"])
 		{
@@ -776,6 +833,11 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 						if ($licenseType == "company")
 						{
 							$this->arResult["isCompanyTariff"] = true;
+						}
+
+						if (!\Bitrix\Bitrix24\Feature::isFeatureEnabled("delegation_admin_rights"))
+						{
+							$this->arResult["delegateAdminRightsRestricted"] = true;
 						}
 					}
 				}

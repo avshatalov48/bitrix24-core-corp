@@ -7,11 +7,15 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class OrderPaymentController
+ * @package Bitrix\Crm\Timeline
+ */
 class OrderPaymentController extends EntityController
 {
-	//region Singleton
 	/** @var OrderPaymentController|null */
 	protected static $instance = null;
+
 	/**
 	 * @return OrderPaymentController
 	 */
@@ -23,12 +27,23 @@ class OrderPaymentController extends EntityController
 		}
 		return self::$instance;
 	}
-	//endregion
-	//region EntityController
+
+	/**
+	 * @return int
+	 */
 	public function getEntityTypeID()
 	{
 		return \CCrmOwnerType::OrderPayment;
 	}
+
+	/**
+	 * @param $ownerID
+	 * @param array $params
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	public function onCreate($ownerID, array $params)
 	{
 		if(!is_int($ownerID))
@@ -124,9 +139,81 @@ class OrderPaymentController extends EntityController
 			);
 		}
 	}
-	public function onModify($ownerID, array $params)
+
+	/**
+	 * @param $ownerId
+	 * @param array $params
+	 * @throws Main\ArgumentException
+	 */
+	public function onPaid($ownerId, array $params)
 	{
+		return $this->notifyOrderPaymentEntry($ownerId, $params);
 	}
+
+	/**
+	 * @param $ownerId
+	 * @param array $params
+	 * @throws Main\ArgumentException
+	 */
+	public function onClick($ownerId, array $params)
+	{
+		$params['SETTINGS']['FIELDS']['PAY_SYSTEM_CLICK'] = 'Y';
+		return $this->notifyOrderPaymentEntry($ownerId, $params);
+	}
+
+	/**
+	 * @param $ownerId
+	 * @param array $params
+	 * @throws Main\ArgumentException
+	 */
+	private function notifyOrderPaymentEntry($ownerId, array $params)
+	{
+		if (!is_int($ownerId))
+		{
+			$ownerId = (int)$ownerId;
+		}
+		if ($ownerId <= 0)
+		{
+			throw new Main\ArgumentException('Owner ID must be greater than zero.', 'ownerID');
+		}
+
+		$settings = is_array($params['SETTINGS']) ? $params['SETTINGS'] : [];
+		$paymentFields = is_array($params['FIELDS']) ? $params['FIELDS'] : [];
+		$bindings = $params['BINDINGS'] ?? [];
+
+		$authorId = self::resolveCreatorID($paymentFields);
+		if (!empty($settings))
+		{
+			$historyEntryID = OrderEntry::create([
+				'ENTITY_ID' => $ownerId,
+				'TYPE_CATEGORY_ID' => TimelineType::MODIFICATION,
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::OrderPayment,
+				'AUTHOR_ID' => $authorId,
+				'BINDINGS' => $bindings,
+				'SETTINGS' => $settings
+			]);
+
+			if ($historyEntryID > 0)
+			{
+				foreach ($bindings as $binding)
+				{
+					$tag = TimelineEntry::prepareEntityPushTag($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']);
+					self::pushHistoryEntry($historyEntryID, $tag, 'timeline_activity_add');
+				}
+			}
+		}
+	}
+
+	/**
+	 * @param $ownerID
+	 * @param $entryTypeID
+	 * @param array $fields
+	 * @return Main\Result
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	public function updateSettingFields($ownerID, $entryTypeID, array $fields)
 	{
 		$result = new Main\Result();
@@ -180,6 +267,14 @@ class OrderPaymentController extends EntityController
 
 		return $result;
 	}
+
+	/**
+	 * @param $ID
+	 * @return Main\ORM\Fields\ScalarField[]|null
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	protected static function getEntity($ID)
 	{
 		$payment = Payment::getList(	array(
@@ -193,21 +288,26 @@ class OrderPaymentController extends EntityController
 
 		return is_object($payment) ? $payment->getFields() : null;
 	}
+
+	/**
+	 * @param array $fields
+	 * @return int
+	 */
 	protected static function resolveCreatorID(array $fields)
 	{
 		$authorID = 0;
 
-		if ($authorID <= 0 && isset($fields['RESPONSIBLE_ID']))
+		if (isset($fields['RESPONSIBLE_ID']))
 		{
 			$authorID = (int)$fields['RESPONSIBLE_ID'];
 		}
 
-		if ($authorID <= 0 && isset($fields['ORDER_CREATED_BY']))
+		if ($authorID === 0 && isset($fields['ORDER_CREATED_BY']))
 		{
 			$authorID = (int)$fields['ORDER_CREATED_BY'];
 		}
 
-		if($authorID <= 0)
+		if($authorID === 0)
 		{
 			//Set portal admin as default creator
 			$authorID = 1;
@@ -215,23 +315,18 @@ class OrderPaymentController extends EntityController
 
 		return $authorID;
 	}
-	/** @ToDo Change EditorId */
-	protected static function resolveEditorID(array $fields)
-	{
-		$authorID = 0;
 
-		if($authorID <= 0)
-		{
-			//Set portal admin as default editor
-			$authorID = 1;
-		}
-
-		return $authorID;
-	}
+	/**
+	 * @param array $data
+	 * @param array|null $options
+	 * @return array
+	 */
 	public function prepareHistoryDataModel(array $data, array $options = null)
 	{
 		$typeID = isset($data['TYPE_ID']) ? (int)$data['TYPE_ID'] : TimelineType::UNDEFINED;
-		$settings = $data['SETTINGS'];
+		$settings = is_array($data['SETTINGS']) ? $data['SETTINGS'] : [];
+		$fields = $settings['FIELDS'];
+
 		if($typeID === TimelineType::CREATION)
 		{
 			$base = isset($settings['BASE']) ? $settings['BASE'] : null;
@@ -281,9 +376,26 @@ class OrderPaymentController extends EntityController
 
 			unset($data['SETTINGS']);
 		}
-		elseif($typeID === TimelineType::MODIFICATION)
+		elseif($typeID === TimelineType::ORDER)
 		{
+			if (!empty($fields['PAY_SYSTEM_CLICK']) && $fields['PAY_SYSTEM_CLICK'] === 'Y')
+			{
+				$data['TITLE'] = Loc::getMessage('CRM_PAYMENT_PAYSYSTEM_CLICK_TITLE');
+				$data['ASSOCIATED_ENTITY']['CLICK'] = 'Y';
+			}
+			else
+			{
+				$data['TITLE'] = \CCrmOwnerType::GetDescription(\CCrmOwnerType::OrderPayment);
+				$data['ASSOCIATED_ENTITY']['TITLE'] = Loc::getMessage(
+					'CRM_PAYMENT_PAID_TITLE',
+					['#ACCOUNT_NUMBER#' => $data['ASSOCIATED_ENTITY']['TITLE']]
+				);
+			}
+
+			$data = array_merge($data, $settings);
+			unset($data['SETTINGS']);
 		}
+
 		return parent::prepareHistoryDataModel($data, $options);
 	}
 }

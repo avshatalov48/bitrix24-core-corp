@@ -4,15 +4,18 @@
  * @package bitrix
  * @subpackage sale
  * @copyright 2001-2015 Bitrix
- * 
+ *
  * @access private
- * 
+ *
  * This class should be used in components, inside agent functions, in rest, ajax and more, bringing unification to all places and processes
  */
 
 namespace Bitrix\Tasks\Manager\Task;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Access\TemplateAccessController;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\Model\TemplateModel;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\Integration\SocialNetwork;
@@ -32,7 +35,7 @@ final class Template extends \Bitrix\Tasks\Manager
 
 		$result = array(
 			'DATA' => array(),
-			'CAN' => array(), 
+			'CAN' => array(),
 			'ERRORS' => $errors
 		);
 
@@ -192,6 +195,7 @@ final class Template extends \Bitrix\Tasks\Manager
 	 */
 	public static function getList($userId, array $listParameters = [], array $parameters = [])
 	{
+		$userId = (int) $userId;
 		$errors = static::ensureHaveErrorCollection($parameters);
 
 		// todo: get rid of LIST_PARAMETERS, if can. Move limit, filter, sort, etc.. to the first level
@@ -233,9 +237,20 @@ final class Template extends \Bitrix\Tasks\Manager
 			$listParameters['select']
 		);
 
+		$accessController = new TemplateAccessController((int) $userId);
+
 		$items = [];
 		while ($row = $res->Fetch())
 		{
+			$templateId = (int) $row['ID'];
+			$templateModel = TemplateModel::createFromId($templateId);
+			$accessRequest = [
+				ActionDictionary::ACTION_TEMPLATE_READ => null,
+				ActionDictionary::ACTION_TEMPLATE_CREATE => null,
+				ActionDictionary::ACTION_TEMPLATE_REMOVE => null,
+				ActionDictionary::ACTION_TEMPLATE_EDIT => null,
+			];
+
 			$row['ACCOMPLICES'] = unserialize($row['ACCOMPLICES']);
 			$row['AUDITORS'] = unserialize($row['AUDITORS']);
 			$row['RESPONSIBLES'] = unserialize($row['RESPONSIBLES']);
@@ -244,7 +259,9 @@ final class Template extends \Bitrix\Tasks\Manager
 			$row['DEPENDS_ON'] = unserialize($row['DEPENDS_ON']);
 
 			$row['REPLICATE_PARAMS'] = unserialize($row['REPLICATE_PARAMS']);
-			$items[$row['ID']] = $row;
+			$row['ALLOWED_ACTIONS'] = $accessController->batchCheck($accessRequest, $templateModel);
+
+			$items[$templateId] = $row;
 		}
 
 		$childCounts = \Bitrix\Tasks\Internals\Helper\Task\Template\Dependence::getDirectChildCount(
@@ -254,23 +271,9 @@ final class Template extends \Bitrix\Tasks\Manager
 			)
 		);
 
-		// need to calculate available operations
-		$ops = \Bitrix\Tasks\Util\User::getAccessOperationsForEntity('task_template');
-		$allowed = \Bitrix\Tasks\Internals\Helper\Task\Template\Access::getAvailableOperations(
-			array_keys($items),
-			array(
-				'USER_ID' => $userId
-			)
-		);
-		foreach ($allowed as $itemId => $itemOps)
+		foreach ($childCounts as $itemId => $count)
 		{
-			$flipped = array();
-			foreach ($itemOps as $opId)
-			{
-				$flipped[ToUpper($ops[$opId]['NAME'])] = true;
-			}
-			$items[$itemId]['ALLOWED_ACTIONS'] = $flipped;
-			$items[$itemId]['CHILDS_COUNT'] = (int)$childCounts[$itemId];
+			$items[$itemId]['CHILDS_COUNT'] = (int) $count;
 		}
 
 		return [
@@ -335,7 +338,7 @@ final class Template extends \Bitrix\Tasks\Manager
 			unset($dataToAdd['DEPENDS_ON']);
 			foreach($dataToAdd as $key => $v)
 			{
-				if(strpos($key, static::SE_PREFIX) === 0)
+				if(mb_strpos($key, static::SE_PREFIX) === 0)
 				{
 					unset($dataToAdd[$key]);
 				}

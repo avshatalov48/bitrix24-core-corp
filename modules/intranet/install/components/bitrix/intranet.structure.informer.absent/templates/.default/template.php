@@ -6,7 +6,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 $today = mktime(0, 0, 0);
 
 $cur_url = $APPLICATION->GetCurPageParam('', array('absence_mode')); 
-$cur_url .= strpos($cur_url,'?')===false?'?':'&';
+$cur_url .= mb_strpos($cur_url, '?') === false?'?':'&';
 ?>
 <a name="informer_absent"></a>
 <div class="bx-absent-layout-include">
@@ -16,9 +16,9 @@ foreach ($arResult['MODES_LIST'] as $mode):
 	if ($i++ > 0) echo '&nbsp;|&nbsp;';
 	
 	if ($arParams['mode']==$mode):
-?><b><?echo GetMessage('INTR_ISIA_TPL_'.strtoupper($mode))?></b><?
+?><b><?echo GetMessage('INTR_ISIA_TPL_'.mb_strtoupper($mode))?></b><?
 	else:
-?><a href="<?=$cur_url ?>absence_mode=<?=$mode ?>#informer_absent"><?=getMessage('INTR_ISIA_TPL_'.strtoupper($mode)) ?></a><?
+?><a href="<?=$cur_url ?>absence_mode=<?=$mode ?>#informer_absent"><?=getMessage('INTR_ISIA_TPL_'.mb_strtoupper($mode)) ?></a><?
 	endif;
 endforeach;
 	?></div>
@@ -36,7 +36,7 @@ if (count($arResult['ENTRIES']) > 0)
 			break;
 
 		$hint_text = '<b>'.htmlspecialcharsbx($arEntry['NAME']).'</b>'
-			.(strlen($arEntry['DESCRIPTION']) > 0 ? '<br />'.htmlspecialcharsbx($arEntry['DESCRIPTION']) : '')
+			.($arEntry['DESCRIPTION'] <> '' ? '<br />'.htmlspecialcharsbx($arEntry['DESCRIPTION']) : '')
 			.'<br /><br />'.$arEntry['DATE_FROM'].' - '.$arEntry['DATE_TO'];
 ?>
 	<div class="bx-user-info" id="bx_absence_<?=$arEntry['ID']?>" onmouseover="new BXHint('<?echo CUtil::JSEscape($hint_text)?>', this)">

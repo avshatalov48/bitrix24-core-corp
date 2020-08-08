@@ -1,238 +1,103 @@
-<?
+<?php
 
-IncludeModuleLangFile(__FILE__);
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\UserField\Types\ElementType;
 
+Loc::loadMessages(__FILE__);
+
+/**
+ * Class CUserTypeCrm
+ * @deprecated
+ */
 class CUserTypeCrm extends CUserTypeString
 {
-	function GetUserTypeDescription()
+	function getUserTypeDescription()
 	{
-		return array(
-			'USER_TYPE_ID' => 'crm',
-			'CLASS_NAME' => 'CUserTypeCrm',
-			'DESCRIPTION' => GetMessage('USER_TYPE_CRM_DESCRIPTION'),
-			'BASE_TYPE' => 'string',
-		);
+		return ElementType::getUserTypeDescription();
 	}
 
-	function PrepareSettings($arUserField)
+	function prepareSettings($userField)
 	{
-		$entityType['LEAD'] = $arUserField['SETTINGS']['LEAD'] == 'Y'? 'Y': 'N';
-		$entityType['CONTACT'] = $arUserField['SETTINGS']['CONTACT'] == 'Y'? 'Y': 'N';
-		$entityType['COMPANY'] = $arUserField['SETTINGS']['COMPANY'] == 'Y'? 'Y': 'N';
-		$entityType['DEAL'] = $arUserField['SETTINGS']['DEAL'] == 'Y'? 'Y': 'N';
-		$entityType['ORDER'] = $arUserField['SETTINGS']['ORDER'] == 'Y'? 'Y': 'N';
-
-		$iEntityType = 0;
-		foreach($entityType as $result)
-			if ($result == 'Y') $iEntityType++;
-
-		$entityType['LEAD'] = ($iEntityType == 0)? "Y": $entityType['LEAD'];
-
-		return array(
-			'LEAD'	 =>  $entityType['LEAD'],
-			'CONTACT'=>  $entityType['CONTACT'],
-			'COMPANY'=>  $entityType['COMPANY'],
-			'DEAL'	 =>  $entityType['DEAL'],
-			'ORDER'	 =>  $entityType['ORDER'],
-		);
+		return ElementType::prepareSettings($userField);
 	}
 
-	function GetSettingsHTML($arUserField = false, $arHtmlControl, $bVarsFromForm)
+	function getSettingsHtml($userField = false, $additionalParameters, $varsFromForm)
 	{
-		$result = '';
-		$entityTypeLead = 'Y';
-		$entityTypeContact = 'Y';
-		$entityTypeCompany = 'Y';
-		$entityTypeDeal = 'Y';
-		$entityTypeOrder = 'Y';
-
-		if($bVarsFromForm)
-		{
-			$entityTypeLead = $GLOBALS[$arHtmlControl['NAME']]['LEAD'] == 'Y'? 'Y': 'N';
-			$entityTypeContact = $GLOBALS[$arHtmlControl['NAME']]['CONTACT'] == 'Y'? 'Y': 'N';
-			$entityTypeCompany = $GLOBALS[$arHtmlControl['NAME']]['COMPANY'] == 'Y'? 'Y': 'N';
-			$entityTypeDeal = $GLOBALS[$arHtmlControl['NAME']]['DEAL'] == 'Y'? 'Y': 'N';
-			$entityTypeOrder = $GLOBALS[$arHtmlControl['NAME']]['ORDER'] == 'Y'? 'Y': 'N';
-		}
-		elseif(is_array($arUserField))
-		{
-			$entityTypeLead = $arUserField['SETTINGS']['LEAD'] == 'Y'? 'Y': 'N';
-			$entityTypeContact = $arUserField['SETTINGS']['CONTACT'] == 'Y'? 'Y': 'N';
-			$entityTypeCompany = $arUserField['SETTINGS']['COMPANY'] == 'Y'? 'Y': 'N';
-			$entityTypeDeal = $arUserField['SETTINGS']['DEAL'] == 'Y'? 'Y': 'N';
-			$entityTypeOrder = $arUserField['SETTINGS']['ORDER'] == 'Y'? 'Y': 'N';
-		}
-
-		$result .= '
-		<tr valign="top">
-			<td>'.GetMessage("USER_TYPE_CRM_ENTITY_TYPE").':</td>
-			<td>
-				<input type="checkbox" name="'.$arHtmlControl["NAME"].'[LEAD]" value="Y" '.($entityTypeLead=="Y"? 'checked="checked"': '').'> '.GetMessage('USER_TYPE_CRM_ENTITY_TYPE_LEAD').' <br/>
-				<input type="checkbox" name="'.$arHtmlControl["NAME"].'[CONTACT]" value="Y" '.($entityTypeContact=="Y"? 'checked="checked"': '').'> '.GetMessage('USER_TYPE_CRM_ENTITY_TYPE_CONTACT').'<br/>
-				<input type="checkbox" name="'.$arHtmlControl["NAME"].'[COMPANY]" value="Y" '.($entityTypeCompany=="Y"? 'checked="checked"': '').'> '.GetMessage('USER_TYPE_CRM_ENTITY_TYPE_COMPANY').'<br/>
-				<input type="checkbox" name="'.$arHtmlControl["NAME"].'[DEAL]" value="Y" '.($entityTypeDeal=="Y"? 'checked="checked"': '').'> '.GetMessage('USER_TYPE_CRM_ENTITY_TYPE_DEAL').'<br/>
-				<input type="checkbox" name="'.$arHtmlControl["NAME"].'[ORDER]" value="Y" '.($entityTypeOrder=="Y"? 'checked="checked"': '').'> '.GetMessage('USER_TYPE_CRM_ENTITY_TYPE_ORDER').'<br/>
-			</td>
-		</tr>
-		';
-		return $result;
+		return ElementType::getSettingsHtml($userField, $additionalParameters, $varsFromForm);
 	}
 
-	function GetEditFormHTML($arUserField, $arHtmlControl)
+	function getEditFormHtml($userField, $additionalParameters)
 	{
-		$arUserField['VALUE'] = $arHtmlControl['VALUE'];
-		ob_start();
-		$GLOBALS['APPLICATION']->IncludeComponent(
-			'bitrix:system.field.edit',
-			'crm',
-			array('arUserField' => $arUserField),
-			false,
-			array('HIDE_ICONS' => 'Y')
-		);
-		$html = ob_get_contents();
-		ob_end_clean();
-		return $html;
+		return ElementType::renderEditForm($userField, $additionalParameters);
 	}
 
-	function GetEditFormHTMLMulty($arUserField, $arHtmlControl)
+	function getEditFormHtmlMulty($userField, $additionalParameters)
 	{
-		return self::GetEditFormHTML($arUserField, $arHtmlControl);
+		return ElementType::renderEditForm($userField, $additionalParameters);
 	}
 
-	function GetFilterHTML($arUserField, $arHtmlControl)
+	function getFilterHtml($userField, $additionalParameters)
 	{
-		return '<input type="text" '.
-			'name="'.$arHtmlControl["NAME"].'" '.
-			'size="'.$arUserField["SETTINGS"]["SIZE"].'" '.
-			'value="'.$arHtmlControl["VALUE"].'"'.
-			'>';
+		return ElementType::getFilterHtml($userField, $additionalParameters);
 	}
 
-	function GetAdminListViewHTML($arUserField, $arHtmlControl)
+	function getAdminListViewHtml($userField, $additionalParameters)
 	{
-		if (strlen($arHtmlControl['VALUE'])>0)
-			return $arHtmlControl['VALUE'];
-		else
-			return '&nbsp;';
+		return ElementType::renderAdminListView($userField, $additionalParameters);
 	}
 
-	function GetAdminListEditHTML($arUserField, $arHtmlControl)
+	function getAdminListViewHtmlMulty($userField, $additionalParameters)
 	{
-		return '<div>'.$arHtmlControl['VALUE'].'</div>';
+		return ElementType::renderAdminListView($userField, $additionalParameters);
 	}
 
-	function CheckFields($arUserField, $value)
+	function getAdminListEditHtml($userField, $additionalParameters)
 	{
-		$aMsg = array();
-
-		return $aMsg;
+		return ElementType::getAdminListEditHTML($userField, $additionalParameters);
 	}
 
-	function CheckPermission($arUserField, $userID = false)
+	function getAdminListEditHtmlMulty($userField, $additionalParameters)
 	{
-		//permission check is disabled
-		if($userID === false)
-		{
-			return true;
-		}
-
-		if (!CModule::IncludeModule('crm'))
-		{
-			return false;
-		}
-
-		$userID = intval($userID);
-		$userPerms = $userID > 0 ?
-			CCrmPerms::GetUserPermissions($userID) : CCrmPerms::GetCurrentUserPermissions();
-
-		return CCrmPerms::IsAccessEnabled($userPerms);
+		return ElementType::renderAdminListEdit($userField, $additionalParameters);
 	}
 
-	function OnSearchIndex($arUserField)
+	function checkFields($userField, $value)
 	{
-		if(is_array($arUserField['VALUE']))
-			return implode("\r\n", $arUserField['VALUE']);
-		else
-			return $arUserField['VALUE'];
+		return ElementType::checkFields($userField, $value);
 	}
 
-	static function GetShortEntityType($sEntity)
+	function checkPermission($userField, $userId = false)
 	{
-		$sShortEntityType = '';
-		switch ($sEntity)
-		{
-			case 'DEAL': $sShortEntityType = 'D'; break;
-			case 'CONTACT': $sShortEntityType = 'C'; break;
-			case 'COMPANY': $sShortEntityType = 'CO'; break;
-			case 'ORDER': $sShortEntityType = 'O'; break;
-			case 'LEAD':
-			default : $sShortEntityType = 'L'; break;
-		}
-		return $sShortEntityType;
+		return ElementType::checkPermission($userField, $userId);
 	}
 
-	static function GetLongEntityType($sEntity)
+	function onSearchIndex($userField)
 	{
-		$sLongEntityType = '';
-		switch ($sEntity)
-		{
-			case 'D': $sLongEntityType = 'DEAL'; break;
-			case 'C': $sLongEntityType = 'CONTACT'; break;
-			case 'CO': $sLongEntityType = 'COMPANY'; break;
-			case 'O': $sLongEntityType = 'ORDER'; break;
-			case 'L':
-			default : $sLongEntityType = 'LEAD'; break;
-		}
-		return $sLongEntityType;
+		return ElementType::onSearchIndex($userField);
+	}
+
+	static function getShortEntityType($entityTypeName)
+	{
+		return ElementType::getShortEntityType($entityTypeName);
+	}
+
+	static function getLongEntityType($entityTypeName)
+	{
+		return ElementType::getLongEntityType($entityTypeName);
 	}
 
 	public static function getPublicText($userField)
 	{
-		$entityTypeMap = array();
-		$settings = isset($userField['SETTINGS']) && is_array($userField['SETTINGS']) ? $userField['SETTINGS'] : array();
-		foreach($settings as $entityTypeName => $flag)
-		{
-			if(strtoupper($flag) === 'Y')
-			{
-				$entityTypeMap[CCrmOwnerType::ResolveID($entityTypeName)] = true;
-			}
-		}
+		return ElementType::renderText($userField);
+	}
 
-		$primaryEntityTypeID = CCrmOwnerType::Undefined;
-		if(count($entityTypeMap) > 0)
-		{
-			reset($entityTypeMap);
-			$primaryEntityTypeID = key($entityTypeMap);
-		}
+	public static function getPublicView($userField, $additionalParameters = [])
+	{
+		return ElementType::renderView($userField, $additionalParameters);
+	}
 
-		$results = array();
-		$value = static::normalizeFieldValue($userField['VALUE']);
-		if(count($value) > 0 && $value[0] !== null)
-		{
-			foreach($value as $slug)
-			{
-				if(is_numeric($slug))
-				{
-					$results[] = CCrmOwnerType::GetCaption($primaryEntityTypeID, $slug, false);
-				}
-				else
-				{
-					$parts = explode('_', $slug);
-					if(count($parts) <= 1)
-					{
-						continue;
-					}
-
-					$entityTypeID = \CCrmOwnerTypeAbbr::ResolveTypeID($parts[0]);
-					if(isset($entityTypeMap[$entityTypeID]))
-					{
-						$results[] = CCrmOwnerType::GetCaption($entityTypeID, $parts[1], false);
-					}
-				}
-			}
-		}
-		return implode(', ', $results);
+	public static function getPublicEdit($userField, $additionalParameters = [])
+	{
+		return ElementType::renderEdit($userField, $additionalParameters);
 	}
 }
-
-?>

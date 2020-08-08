@@ -38,7 +38,7 @@ if ($_REQUEST['MODE'] == 'SEARCH')
 
 	if (
 		$EXTERNAL == "E" 
-		&& strlen($site) > 0 
+		&& $site <> '' 
 		&& !CExtranet::IsIntranetUser()
 	)
 	{
@@ -120,7 +120,7 @@ if ($_REQUEST['MODE'] == 'SEARCH')
 				$arUsersToFilter[] = $arRequests["USER_ID"];
 		}
 	}
-	elseif ($EXTERNAL == 'A' && strlen($site) > 0 && CModule::IncludeModule("extranet") && CExtranet::IsExtranetSite($site))
+	elseif ($EXTERNAL == 'A' && $site <> '' && CModule::IncludeModule("extranet") && CExtranet::IsExtranetSite($site))
 	{
 		if ($GLOBALS["APPLICATION"]->GetGroupRight("socialnetwork", false, "Y", "Y", array($site, false)) >= "W"):
 			$arUsersToFilter = CExtranet::GetExtranetGroupUsers();
@@ -160,7 +160,7 @@ if ($_REQUEST['MODE'] == 'SEARCH')
 				die();
 			}
 		}
-		elseif (strlen($matches[1]) > 0)
+		elseif ($matches[1] <> '')
 			$search = $matches[1];
 	}
 

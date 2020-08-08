@@ -9,10 +9,11 @@
 
 import {Vue} from "ui.vue";
 import {Vuex} from "ui.vue.vuex";
-import {Utils} from "im.utils";
-import {Logger} from "im.tools.logger";
-import {FormType, VoteType, LocationStyle, LanguageType} from "../const";
+import {Utils} from "im.lib.utils";
+import {Logger} from "im.lib.logger";
+import {FormType, VoteType, LocationStyle, LocationType, LanguageType} from "../const";
 import {DeviceType, DeviceOrientation, EventType} from "im.const";
+import {md5} from "main.md5";
 
 /**
  * @notice Do not mutate or clone this component! It is under development.
@@ -27,6 +28,16 @@ Vue.component('bx-livechat',
 			viewPortMetaWidgetNode: null,
 			storedMessage: '',
 			storedFile: null,
+			widgetMinimumHeight: 435,
+			widgetMinimumWidth: 340,
+			widgetBaseHeight: 557,
+			widgetBaseWidth: 435,
+			widgetMargin: 50,
+			widgetAvailableHeight: 0,
+			widgetAvailableWidth: 0,
+			widgetCurrentHeight: 0,
+			widgetCurrentWidth: 0,
+			widgetDrag: false,
 			textareaFocused: false,
 			textareaDrag: false,
 			textareaHeight: 100,
@@ -39,11 +50,19 @@ Vue.component('bx-livechat',
 		this.onCreated();
 
 		document.addEventListener('keydown', this.onWindowKeyDown);
+		if(!Utils.device.isMobile() && !this.widget.common.pageMode)
+		{
+			window.addEventListener('resize', this.getAvailableSpaceFunc = Utils.throttle(this.getAvailableSpace, 50));
+		}
 		this.$root.$on('requestShowForm', this.onRequestShowForm);
 	},
 	beforeDestroy()
 	{
 		document.removeEventListener('keydown', this.onWindowKeyDown);
+		if(!Utils.device.isMobile() && !this.widget.common.pageMode)
+		{
+			window.removeEventListener('resize', this.getAvailableSpaceFunc);
+		}
 		this.$root.$off('requestShowForm', this.onRequestShowForm);
 
 		this.onTextareaDragEventRemove();
@@ -57,7 +76,62 @@ Vue.component('bx-livechat',
 
 		textareaHeightStyle(state)
 		{
-			return 'flex: 0 0 '+this.textareaHeight+'px;'
+			return {flex: '0 0 '+this.textareaHeight+'px'};
+		},
+		textAreaBottomMargin()
+		{
+			if (!this.widget.common.copyright && !this.isBottomLocation)
+			{
+				return {marginBottom: '5px'};
+			}
+			return '';
+		},
+		widgetBaseSizes()
+		{
+			return {
+				width: this.widgetBaseWidth,
+				height: this.widgetBaseHeight,
+			}
+		},
+		widgetHeightStyle()
+		{
+			if(Utils.device.isMobile() || this.widget.common.pageMode)
+			{
+				return;
+			}
+
+			if (this.widgetAvailableHeight < this.widgetBaseSizes.height || this.widgetAvailableHeight < this.widgetCurrentHeight)
+			{
+				this.widgetCurrentHeight = Math.max(this.widgetAvailableHeight, this.widgetMinimumHeight);
+			}
+
+			return this.widgetCurrentHeight+'px';
+		},
+		widgetWidthStyle()
+		{
+			if(Utils.device.isMobile() || this.widget.common.pageMode)
+			{
+				return;
+			}
+
+			if (this.widgetAvailableWidth < this.widgetBaseSizes.width || this.widgetAvailableWidth < this.widgetCurrentWidth)
+			{
+				this.widgetCurrentWidth = Math.max(this.widgetAvailableWidth, this.widgetMinimumWidth);
+			}
+
+			return this.widgetCurrentWidth+'px';
+		},
+		userSelectStyle()
+		{
+			return this.widgetDrag ? 'none' : 'auto';
+		},
+		isBottomLocation()
+		{
+			return [LocationType.bottomLeft, LocationType.bottomMiddle, LocationType.bottomRight].includes(this.widget.common.location);
+		},
+		isLeftLocation()
+		{
+			return [LocationType.bottomLeft, LocationType.topLeft, LocationType.topMiddle].includes(this.widget.common.location);
 		},
 		localize()
 		{
@@ -225,6 +299,22 @@ Vue.component('bx-livechat',
 			this.onBeforeClose();
 			this.$store.commit('widget/common', {showed: false});
 		},
+		getAvailableSpace()
+		{
+			if (this.isBottomLocation)
+			{
+				let bottomPosition = this.$refs.widgetWrapper.getBoundingClientRect().bottom;
+				let widgetBottomMargin = window.innerHeight - bottomPosition;
+				this.widgetAvailableHeight = window.innerHeight - this.widgetMargin - widgetBottomMargin;
+			}
+			else
+			{
+				let topPosition = this.$refs.widgetWrapper.getBoundingClientRect().top;
+				this.widgetAvailableHeight = window.innerHeight - this.widgetMargin - topPosition;
+			}
+
+			this.widgetAvailableWidth = window.innerWidth - this.widgetMargin * 2;
+		},
 		showLikeForm()
 		{
 			if (this.offline)
@@ -282,7 +372,7 @@ Vue.component('bx-livechat',
 		{
 			this.$store.commit('widget/common', {showConsent: false});
 
-			this.$root.$bitrixWidget.sendConsentDecision(true);
+			this.$root.$bitrixApplication.sendConsentDecision(true);
 
 			if (this.storedMessage || this.storedFile)
 			{
@@ -307,7 +397,7 @@ Vue.component('bx-livechat',
 			this.$store.commit('widget/common', {showForm : FormType.none});
 			this.$store.commit('widget/common', {showConsent : false});
 
-			this.$root.$bitrixWidget.sendConsentDecision(false);
+			this.$root.$bitrixApplication.sendConsentDecision(false);
 
 			if (this.storedMessage)
 			{
@@ -377,19 +467,26 @@ Vue.component('bx-livechat',
 				}
 
 				setTimeout(() => {
-					this.$store.commit('widget/common', {showed: true});
+					this.$store.dispatch('widget/show');
 				}, 50);
 			}
 			else
 			{
-				this.$store.commit('widget/common', {showed: true});
+				this.$store.dispatch('widget/show').then(() => {
+					this.widgetCurrentHeight = this.widgetBaseSizes.height;
+					this.widgetCurrentWidth = this.widgetBaseSizes.width;
+					this.getAvailableSpace();
+
+					this.widgetCurrentHeight = this.widget.common.widgetHeight || this.widgetCurrentHeight;
+					this.widgetCurrentWidth = this.widget.common.widgetWidth || this.widgetCurrentWidth;
+				});
 			}
 
 			this.textareaHeight = this.widget.common.textareaHeight || this.textareaHeight;
 
-			this.$store.commit('files/initCollection', {chatId: this.$root.$bitrixWidget.getChatId()});
-			this.$store.commit('messages/initCollection', {chatId: this.$root.$bitrixWidget.getChatId()});
-			this.$store.commit('dialogues/initCollection', {dialogId: this.$root.$bitrixWidget.getDialogId(), fields: {
+			this.$store.commit('files/initCollection', {chatId: this.$root.$bitrixApplication.getChatId()});
+			this.$store.commit('messages/initCollection', {chatId: this.$root.$bitrixApplication.getChatId()});
+			this.$store.commit('dialogues/initCollection', {dialogId: this.$root.$bitrixApplication.getDialogId(), fields: {
 				entityType: 'LIVECHAT',
 				type: 'livechat'
 			}});
@@ -420,7 +517,7 @@ Vue.component('bx-livechat',
 		},
 		onAfterClose()
 		{
-			this.$root.$bitrixWidget.close();
+			this.$root.$bitrixApplication.close();
 		},
 		onRequestShowForm(event)
 		{
@@ -467,11 +564,11 @@ Vue.component('bx-livechat',
 		},
 		onDialogRequestHistory(event)
 		{
-			this.$root.$bitrixWidget.getDialogHistory(event.lastId);
+			this.$root.$bitrixApplication.getDialogHistory(event.lastId);
 		},
 		onDialogRequestUnread(event)
 		{
-			this.$root.$bitrixWidget.getDialogUnread(event.lastId);
+			this.$root.$bitrixApplication.getDialogUnread(event.lastId);
 		},
 		onDialogMessageClickByUserName(event)
 		{
@@ -480,11 +577,11 @@ Vue.component('bx-livechat',
 		},
 		onDialogMessageClickByUploadCancel(event)
 		{
-			this.$root.$bitrixWidget.cancelUploadFile(event.file.id);
+			this.$root.$bitrixApplication.cancelUploadFile(event.file.id);
 		},
 		onDialogMessageClickByKeyboardButton(event)
 		{
-			this.$root.$bitrixWidget.execMessageKeyboardCommand(event);
+			this.$root.$bitrixApplication.execMessageKeyboardCommand(event);
 		},
 		onDialogMessageClickByCommand(event)
 		{
@@ -494,7 +591,7 @@ Vue.component('bx-livechat',
 			}
 			else if (event.type === 'send')
 			{
-				this.$root.$bitrixWidget.addMessage(event.value);
+				this.$root.$bitrixApplication.addMessage(event.value);
 			}
 			else
 			{
@@ -508,25 +605,53 @@ Vue.component('bx-livechat',
 		onDialogMessageRetryClick(event)
 		{
 			Logger.warn('Message retry:', event);
-			this.$root.$bitrixWidget.retrySendMessage(event.message);
+			this.$root.$bitrixApplication.retrySendMessage(event.message);
 		},
 		onDialogReadMessage(event)
 		{
-			this.$root.$bitrixWidget.readMessage(event.id);
+			this.$root.$bitrixApplication.readMessage(event.id);
 		},
 		onDialogQuoteMessage(event)
 		{
-			this.$root.$bitrixWidget.quoteMessage(event.message.id);
+			this.$root.$bitrixApplication.quoteMessage(event.message.id);
 		},
 		onDialogMessageReactionSet(event)
 		{
-			this.$root.$bitrixWidget.reactMessage(event.message.id, event.reaction);
+			this.$root.$bitrixApplication.reactMessage(event.message.id, event.reaction);
 		},
 		onDialogClick(event)
 		{
 			if (this.widget.common.showForm !== FormType.none)
 			{
 				this.$store.commit('widget/common', {showForm: FormType.none});
+			}
+		},
+		onTextareaKeyUp(event)
+		{
+			if (
+				this.widget.common.watchTyping
+				&& this.widget.dialog.sessionId
+				&& !this.widget.dialog.sessionClose
+				&& this.widget.dialog.operator.id
+				&& this.widget.dialog.operatorChatId
+				&& this.$root.$bitrixPullClient.isPublishingEnabled()
+			)
+			{
+				let infoString = md5(
+					this.widget.dialog.sessionId
+					+ '/' + this.application.dialog.chatId
+					+ '/' + this.widget.user.id
+				);
+				this.$root.$bitrixPullClient.sendMessage(
+					[this.widget.dialog.operator.id],
+					'imopenlines',
+					'linesMessageWrite',
+					{
+						text: event.text,
+						infoString,
+						operatorChatId: this.widget.dialog.operatorChatId
+					}
+				);
 			}
 		},
 		onTextareaSend(event)
@@ -556,7 +681,7 @@ Vue.component('bx-livechat',
 			}
 
 			this.hideForm();
-			this.$root.$bitrixWidget.addMessage(event.text);
+			this.$root.$bitrixApplication.addMessage(event.text);
 
 			if (event.focus)
 			{
@@ -567,7 +692,7 @@ Vue.component('bx-livechat',
 		},
 		onTextareaWrites(event)
 		{
-			this.$root.$bitrixController.startWriting();
+			this.$root.$bitrixController.application.startWriting();
 		},
 		onTextareaFocus(event)
 		{
@@ -589,9 +714,9 @@ Vue.component('bx-livechat',
 		},
 		onTextareaBlur(event)
 		{
-			if (!this.widget.common.copyright && this.widget.common.copyright !== this.$root.$bitrixWidget.copyright)
+			if (!this.widget.common.copyright && this.widget.common.copyright !== this.$root.$bitrixApplication.copyright)
 			{
-				this.widget.common.copyright = this.$root.$bitrixWidget.copyright;
+				this.widget.common.copyright = this.$root.$bitrixApplication.copyright;
 				this.$nextTick(() => {
 					this.$root.$emit(EventType.dialog.scrollToBottom, {force: true});
 				});
@@ -701,7 +826,7 @@ Vue.component('bx-livechat',
 				return false;
 			}
 
-			this.$root.$bitrixWidget.uploadFile(fileInput);
+			this.$root.$bitrixApplication.uploadFile(fileInput);
 		},
 		onTextareaAppButtonClick(event)
 		{
@@ -723,7 +848,7 @@ Vue.component('bx-livechat',
 		},
 		onPullRequestConfig(event)
 		{
-			this.$root.$bitrixWidget.recoverPullConnection();
+			this.$root.$bitrixApplication.recoverPullConnection();
 		},
 		onSmilesSelectSmile(event)
 		{
@@ -735,7 +860,105 @@ Vue.component('bx-livechat',
 		},
 		onQuotePanelClose()
 		{
-			this.$root.$bitrixWidget.quoteMessageClear();
+			this.$root.$bitrixApplication.quoteMessageClear();
+		},
+		onWidgetStartDrag(event)
+		{
+			if (this.widgetDrag)
+			{
+				return;
+			}
+
+			this.widgetDrag = true;
+
+			event = event.changedTouches ? event.changedTouches[0] : event;
+
+			this.widgetDragCursorStartPointY = event.clientY;
+			this.widgetDragCursorStartPointX = event.clientX;
+			this.widgetDragHeightStartPoint = this.widgetCurrentHeight;
+			this.widgetDragWidthStartPoint = this.widgetCurrentWidth;
+
+			this.onWidgetDragEventAdd();
+		},
+		onWidgetContinueDrag(event)
+		{
+			if (!this.widgetDrag)
+			{
+				return;
+			}
+
+			event = event.changedTouches ? event.changedTouches[0] : event;
+
+			this.widgetDragCursorControlPointY = event.clientY;
+			this.widgetDragCursorControlPointX = event.clientX;
+
+			let widgetHeight = 0;
+
+			if (this.isBottomLocation)
+			{
+				widgetHeight = Math.max(
+					Math.min(this.widgetDragHeightStartPoint + this.widgetDragCursorStartPointY - this.widgetDragCursorControlPointY, this.widgetAvailableHeight),
+					this.widgetMinimumHeight
+				);
+			}
+			else
+			{
+				widgetHeight = Math.max(
+					Math.min(this.widgetDragHeightStartPoint - this.widgetDragCursorStartPointY + this.widgetDragCursorControlPointY, this.widgetAvailableHeight),
+					this.widgetMinimumHeight
+				);
+			}
+
+			let widgetWidth = 0;
+			if (this.isLeftLocation)
+			{
+				widgetWidth = Math.max(
+					Math.min(this.widgetDragWidthStartPoint - this.widgetDragCursorStartPointX + this.widgetDragCursorControlPointX, this.widgetAvailableWidth),
+					this.widgetMinimumWidth
+				);
+			}
+			else
+			{
+				widgetWidth = Math.max(
+					Math.min(this.widgetDragWidthStartPoint + this.widgetDragCursorStartPointX - this.widgetDragCursorControlPointX, this.widgetAvailableWidth),
+					this.widgetMinimumWidth
+				);
+			}
+
+			if (this.widgetCurrentHeight !== widgetHeight)
+			{
+				this.widgetCurrentHeight = widgetHeight;
+			}
+
+			if (this.widgetCurrentWidth !== widgetWidth)
+			{
+				this.widgetCurrentWidth = widgetWidth;
+			}
+		},
+		onWidgetStopDrag()
+		{
+			if (!this.widgetDrag)
+			{
+				return;
+			}
+
+			this.widgetDrag = false;
+
+			this.onWidgetDragEventRemove();
+
+			this.$store.commit('widget/common', {widgetHeight: this.widgetCurrentHeight, widgetWidth: this.widgetCurrentWidth});
+		},
+		onWidgetDragEventAdd()
+		{
+			document.addEventListener('mousemove', this.onWidgetContinueDrag);
+			document.addEventListener('mouseup', this.onWidgetStopDrag);
+			document.addEventListener('mouseleave', this.onWidgetStopDrag);
+		},
+		onWidgetDragEventRemove()
+		{
+			document.removeEventListener('mousemove', this.onWidgetContinueDrag);
+			document.removeEventListener('mouseup', this.onWidgetStopDrag);
+			document.removeEventListener('mouseleave', this.onWidgetStopDrag);
 		},
 		onWindowKeyDown(event)
 		{
@@ -770,8 +993,9 @@ Vue.component('bx-livechat',
 	},
 	template: `
 		<transition enter-active-class="bx-livechat-show" leave-active-class="bx-livechat-close" @after-leave="onAfterClose">
-			<div :class="widgetClassName" v-if="widget.common.showed">
+			<div :class="widgetClassName" v-if="widget.common.showed" :style="{height: widgetHeightStyle, width: widgetWidthStyle, userSelect: userSelectStyle}" ref="widgetWrapper">
 				<div class="bx-livechat-box">
+					<div v-if="isBottomLocation" class="bx-livechat-widget-resize-handle" @mousedown="onWidgetStartDrag"></div>
 					<bx-livechat-head :isWidgetDisabled="widgetMobileDisabled" @like="showLikeForm" @history="showHistoryForm" @close="close"/>
 					<template v-if="widgetMobileDisabled">
 						<bx-livechat-body-orientation-disabled/>
@@ -796,11 +1020,11 @@ Vue.component('bx-livechat',
 							</div>
 						</template>
 						<template v-else-if="widget.common.dialogStart">
-							<bx-pull-status :canReconnect="true" @reconnect="onPullRequestConfig"/>
+							<bx-pull-component-status :canReconnect="true" @reconnect="onPullRequestConfig"/>
 							<div :class="['bx-livechat-body', {'bx-livechat-body-with-message': showMessageDialog}]" key="with-message">
 								<template v-if="showMessageDialog">
 									<div class="bx-livechat-dialog">
-										<bx-messenger-dialog
+										<bx-im-view-dialog
 											:userId="application.common.userId" 
 											:dialogId="application.dialog.dialogId"
 											:chatId="application.dialog.chatId"
@@ -835,7 +1059,7 @@ Vue.component('bx-livechat',
 									<bx-livechat-body-loading/>
 								</template>
 								
-								<bx-messenger-quote-panel :id="quotePanelData.id" :title="quotePanelData.title" :description="quotePanelData.description" :color="quotePanelData.color" @close="onQuotePanelClose"/>
+								<bx-im-view-quote-panel :id="quotePanelData.id" :title="quotePanelData.title" :description="quotePanelData.description" :color="quotePanelData.color" @close="onQuotePanelClose"/>
 								
 								<keep-alive include="bx-livechat-smiles">
 									<template v-if="widget.common.showForm == FormType.like && widget.common.vote.enable">
@@ -856,9 +1080,9 @@ Vue.component('bx-livechat',
 								</keep-alive>
 							</div>
 						</template>	
-						<div class="bx-livechat-textarea" :style="textareaHeightStyle" ref="textarea">
+						<div class="bx-livechat-textarea" :style="[textareaHeightStyle, textAreaBottomMargin]" ref="textarea">
 							<div class="bx-livechat-textarea-resize-handle" @mousedown="onTextareaStartDrag" @touchstart="onTextareaStartDrag"></div>
-							<bx-messenger-textarea
+							<bx-im-view-textarea
 								:siteId="application.common.siteId"
 								:userId="application.common.userId"
 								:dialogId="application.dialog.dialogId"
@@ -875,15 +1099,31 @@ Vue.component('bx-livechat',
 								@writes="onTextareaWrites" 
 								@send="onTextareaSend" 
 								@focus="onTextareaFocus" 
-								@blur="onTextareaBlur" 
+								@blur="onTextareaBlur"
+								@keyup="onTextareaKeyUp" 
 								@edit="logEvent('edit message', $event)"
 								@fileSelected="onTextareaFileSelected"
 								@appButtonClick="onTextareaAppButtonClick"
 							/>
 						</div>
+						<div v-if="!widget.common.copyright && !isBottomLocation" class="bx-livechat-nocopyright-resize-wrap" style="position: relative;">
+							<div class="bx-livechat-widget-resize-handle" @mousedown="onWidgetStartDrag"></div>
+						</div>
 						<bx-livechat-form-consent @agree="agreeConsentWidow" @disagree="disagreeConsentWidow"/>
 						<template v-if="widget.common.copyright">
-							<bx-livechat-footer/>
+							<div class="bx-livechat-copyright">	
+								<template v-if="widget.common.copyrightUrl">
+									<a class="bx-livechat-copyright-link" :href="widget.common.copyrightUrl" target="_blank">
+										<span class="bx-livechat-logo-name">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>
+										<span class="bx-livechat-logo-icon"></span>
+									</a>
+								</template>
+								<template v-else>
+									<span class="bx-livechat-logo-name">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>
+									<span class="bx-livechat-logo-icon"></span>
+								</template>
+								<div v-if="!isBottomLocation" class="bx-livechat-widget-resize-handle" @mousedown="onWidgetStartDrag"></div>
+							</div>
 						</template>
 					</template>
 				</div>

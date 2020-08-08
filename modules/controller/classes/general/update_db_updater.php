@@ -127,7 +127,7 @@ if (!function_exists("DBUpdaterCheckUpdates"))
 		$errorMessage = "";
 		$arDBVersionsNew = CUpdateClient::GetCurrentModules($errorMessage, false);
 
-		if (StrLen($errorMessage) <= 0)
+		if ($errorMessage == '')
 		{
 			$f = fopen(US_DB_VERSIONS_FILE, "w");
 			fwrite($f, "<"."?\n");
@@ -175,9 +175,9 @@ if (!function_exists("DBUpdaterCheckUpdates"))
 
 	function DBUpdaterUpdateFromVersion($moduleID, $dbVersion)
 	{
-		if (StrLen($moduleID) <= 0)
+		if ($moduleID == '')
 			return;
-		if (StrLen($dbVersion) <= 0)
+		if ($dbVersion == '')
 			return;
 
 		$errorMessage = "";
@@ -193,21 +193,21 @@ if (!function_exists("DBUpdaterCheckUpdates"))
 					if ($dir == "." || $dir == "..")
 						continue;
 
-					if (substr($dir, 0, 7) == "updater")
+					if (mb_substr($dir, 0, 7) == "updater")
 					{
 						if (is_file($_SERVER["DOCUMENT_ROOT"].US_SAVE_UPDATERS_DIR."/".$moduleID."/".$dir))
 						{
-							$num = substr($dir, 7, strlen($dir) - 11);
-							if (substr($dir, strlen($dir) - 9) == "_post.php")
-								$num = substr($dir, 7, strlen($dir) - 16);
+							$num = mb_substr($dir, 7, mb_strlen($dir) - 11);
+							if (mb_substr($dir, mb_strlen($dir) - 9) == "_post.php")
+								$num = mb_substr($dir, 7, mb_strlen($dir) - 16);
 
 							$arUpdaters[] = array("/".$dir, Trim($num));
 						}
 						elseif (file_exists($_SERVER["DOCUMENT_ROOT"].US_SAVE_UPDATERS_DIR."/".$moduleID."/".$dir."/index.php"))
 						{
-							$num = substr($dir, 7);
-							if (substr($dir, strlen($dir) - 5) == "_post")
-								$num = substr($dir, 7, strlen($dir) - 12);
+							$num = mb_substr($dir, 7);
+							if (mb_substr($dir, mb_strlen($dir) - 5) == "_post")
+								$num = mb_substr($dir, 7, mb_strlen($dir) - 12);
 
 							$arUpdaters[] = array("/".$dir."/index.php", Trim($num));
 						}
@@ -237,14 +237,14 @@ if (!function_exists("DBUpdaterCheckUpdates"))
 				$errorMessageTmp = "";
 
 				CUpdateClient::RunUpdaterScript($_SERVER["DOCUMENT_ROOT"].US_SAVE_UPDATERS_DIR."/".$moduleID.$arUpdaters[$i1][0], $errorMessageTmp, "", $moduleID);
-				if (strlen($errorMessageTmp) > 0)
+				if ($errorMessageTmp <> '')
 					$errorMessage .= str_replace("#MODULE#", $moduleID, str_replace("#VER#", $arUpdaters[$i1][1], GetMessage("SUPP_UK_UPDN_ERR"))).": ".$errorMessageTmp.".<br>";
 
 				DBUpdaterCollectDBVersionsNew("N", $moduleID, $arUpdaters[$i1][1]);
 			}
 		}
 
-		if (StrLen($errorMessage) > 0)
+		if ($errorMessage <> '')
 			CControllerClient::SendMessage("SITE_UPDATE_KERNEL_DB", "N", $errorMessage);
 	}
 }

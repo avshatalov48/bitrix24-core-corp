@@ -865,7 +865,11 @@ class StagesTable extends Entity\DataManager
 							)
 						)->fetch())
 						{
-							TaskStageTable::add($fields);
+							try
+							{
+								TaskStageTable::add($fields);
+							}
+							catch (\Exception $e){}
 						}
 					}
 				}

@@ -12,11 +12,11 @@
 import 'main.polyfill.customevent';
 
 // vue components
-import 'pull.components.status';
+import 'pull.component.status';
 import 'ui.vue.components.smiles';
-import 'im.component.dialog';
-import 'im.component.textarea';
-import 'im.component.quotepanel';
+import 'im.view.dialog';
+import 'im.view.textarea';
+import 'im.view.quotepanel';
 import 'imopenlines.component.message';
 import 'imopenlines.component.form';
 
@@ -25,7 +25,7 @@ import "./widget.css";
 import {VoteType, LocationStyle, SubscriptionType} from "./const";
 
 // widget utils
-import {Cookie} from "./utils/cookie";
+import {Cookie} from "im.lib.cookie";
 import {WidgetPublicManager} from "./public";
 
 // widget components

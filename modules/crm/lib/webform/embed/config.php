@@ -30,7 +30,7 @@ class Config
 	 * @param int $formId Form ID.
 	 * @return static
 	 */
-	public function createById($formId)
+	public static function createById($formId)
 	{
 		return new static(new Webform\Form($formId));
 	}
@@ -74,6 +74,10 @@ class Config
 				'currency' => $this->getCurrency(),
 				'fields' => $this->getFields(),
 				'agreements' => $this->getAgreements(),
+				'dependencies' => $this->getDependencies(),
+				'recaptcha' => [
+					'use' => $this->form->isUsedCaptcha()
+				],
 			]
 		];
 	}
@@ -106,7 +110,7 @@ class Config
 					$value,
 					function ($v)
 					{
-						return is_bool($v) ? true : strlen($v) > 0;
+						return is_bool($v) ? true : $v <> '';
 					}
 				);
 				if (count($value) > 0)
@@ -116,7 +120,7 @@ class Config
 			}
 			else
 			{
-				if (strlen($value) > 0)
+				if ($value <> '')
 				{
 					continue;
 				}
@@ -159,15 +163,27 @@ class Config
 					$type = $field['type'];
 					switch ($type)
 					{
+						case 'resourcebooking':
+							if (!$field['multiple'])
+							{
+								$options['booking'] = [
+									'name' => $field['name'],
+									'caption' => $field['caption'],
+									'entity_field_name' => $field['entity_field_name'],
+									'settings_data' => $field['settings_data'],
+								];
+							}
+							break;
 						case 'checkbox':
 							if (!$field['multiple'])
 							{
 								$type = 'bool';
 								$options['checked'] = false;
+								$options['value'] = 'Y';
 							}
 							break;
 						case 'typed_string':
-							$stringType = strtolower($field['entity_field_name']);
+							$stringType = mb_strtolower($field['entity_field_name']);
 							switch ($stringType)
 							{
 								case 'phone':
@@ -260,6 +276,7 @@ class Config
 							'discount' => $item['discount'],
 							'pics' => [],
 							'quantity' => [],
+							'changeablePrice' => !empty($item['changeablePrice']),
 							//quantity: {min: 2, max: 50, step: 2, unit: 'רע.'},
 							//'discount' => isset($item['discount']) ? $item['discount'] : 0,
 						];
@@ -361,6 +378,75 @@ class Config
 	}
 
 	/**
+	 * Get dependencies.
+	 *
+	 * @return array
+	 */
+	public function getDependencies()
+	{
+		$deps = $this->form->get()['DEPENDENCIES'];
+		if (empty($deps))
+		{
+			return [];
+		}
+
+		$fieldsBySection = [];
+		$currentSection = false;
+		foreach ($this->getFields() as $field)
+		{
+			if ($field['type'] === 'layout' && $field['content']['type'] === 'section')
+			{
+				$currentSection = $field['name'];
+			}
+			elseif ($field['type'] === 'page')
+			{
+				$currentSection = null;
+			}
+
+			if($currentSection)
+			{
+				$fieldsBySection[$currentSection][] = $field['name'];
+			}
+		}
+
+		$list = [];
+		foreach ($deps as $dep)
+		{
+			$condition = [
+				'target' => $dep['IF_FIELD_CODE'],
+				'event' => $dep['IF_ACTION'],
+				'value' => $dep['IF_VALUE'],
+				'operation' => $dep['IF_VALUE_OPERATION'],
+			];
+
+			if (!empty($fieldsBySection[$dep['DO_FIELD_CODE']]))
+			{
+				$fieldNames = $fieldsBySection[$dep['DO_FIELD_CODE']];
+			}
+			else
+			{
+				$fieldNames = [$dep['DO_FIELD_CODE']];
+			}
+
+			foreach ($fieldNames as $fieldName)
+			{
+				$action = [
+					'target' => $fieldName,
+					'type' => $dep['DO_ACTION'],
+					'value' => $dep['DO_VALUE'],
+				];
+
+				$list[] = [
+					'condition' => $condition,
+					'action' => $action,
+				];
+			}
+		}
+
+		return $list;
+	}
+
+	/**
 	 * Get agreements.
 	 *
 	 * @return array
@@ -375,7 +461,32 @@ class Config
 		}
 
 		$data = $this->form->get();
-		if ($data['USE_LICENCE'] !== 'Y' || !$data['AGREEMENT_ID'])
+		if ($data['USE_LICENCE'] !== 'Y')
+		{
+			return $result;
+		}
+
+		$agreements = [];
+		if ($data['AGREEMENT_ID'])
+		{
+			$agreements[] = [
+				'ID' => $data['AGREEMENT_ID'],
+				'CHECKED' => $data['LICENCE_BUTTON_IS_CHECKED'] === 'Y',
+			];
+		}
+		$agreementRows = WebForm\Internals\AgreementTable::getList([
+			'select' => ['AGREEMENT_ID', 'CHECKED'],
+			'filter' => ['=FORM_ID' => $this->form->getId()]
+		]);
+		foreach ($agreementRows as $agreementRow)
+		{
+			$agreements[] = [
+				'ID' => $agreementRow['AGREEMENT_ID'],
+				'CHECKED' => $agreementRow['CHECKED'] === 'Y',
+			];
+		}
+
+		if (empty($agreements))
 		{
 			return $result;
 		}
@@ -385,26 +496,26 @@ class Config
 			'fields' => array_column($this->getFields(), 'label')
 		);
 
-		$agreementIds = [$data['AGREEMENT_ID']];
-		foreach ($agreementIds as $agreementId)
+		foreach ($agreements as $agreementData)
 		{
-			$agreement = new Main\UserConsent\Agreement($agreementId, $replace);
+			$agreement = new Main\UserConsent\Agreement($agreementData['ID'], $replace);
 			if (!$agreement->isActive() || !$agreement->isExist())
 			{
 				continue;
 			}
 
-			$name = "AGREEMENT_$agreementId";
+			$name = "AGREEMENT_" . $agreementData['ID'];
 			$result[] = [
 				'id' => $name,
 				'name' => $name,
-				'label' => $agreement->getLabelText(),
+				'label' => $agreement->getLabel(),
 				'value' => 'Y',
 				'required' => true,
-				'checked' => $data['LICENCE_BUTTON_IS_CHECKED'] === 'Y',
+				'checked' => $agreementData['CHECKED'],
 				'content' => [
 					'title' => $agreement->getTitle(),
 					'text' => $agreement->getText(true),
+					'url' => $agreement->getUrl(),
 				],
 			];
 		}

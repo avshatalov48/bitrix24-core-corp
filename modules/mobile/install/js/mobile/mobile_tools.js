@@ -183,7 +183,7 @@
 					useNewStyle: true
 				},
 				{
-					exp: /\/company\/personal\/user\/(\d+)\/$/gi,
+					exp: /\/company\/personal\/user\/(\d+)\/[$|#]/gi,
 					replace: "/mobile/users/?user_id=$1",
 					useNewStyle: true
 				},
@@ -195,7 +195,20 @@
 				{
 					exp: /\/workgroups\/group\/(\d+)\//gi,
 					replace: "/mobile/?group_id=$1",
-					useNewStyle: true
+					useNewStyle: true,
+					params:{
+						useSearchBar:true,
+						cache:false
+					}
+				},
+				{
+					exp: /\/mobile\/log\/\?group_id=(\d+)/gi,
+					replace: "/mobile/?group_id=$1",
+					useNewStyle: true,
+					params:{
+						useSearchBar:true,
+						cache:false
+					}
 				}
 			];
 
@@ -209,6 +222,11 @@
 						url: mobileLink,
 						bx24ModernStyle: mobileRegReplace[i].useNewStyle
 					};
+
+					if(typeof mobileRegReplace[i].params == "object" && mobileRegReplace[i].params != null)
+					{
+						params = Object.assign(params, mobileRegReplace[i].params);
+					}
 					break;
 				}
 			}

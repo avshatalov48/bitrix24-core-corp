@@ -327,6 +327,8 @@ if(empty($arResult['NOTIFY'])):?>
 
 			BXMobileApp.onCustomEvent("onNotificationsOpen", {lastId: lastId}, true);
 
+			BXMobileApp.Events.postToComponent("chatdialog::notification::readAll", [{}, true], 'im.recent');
+
 			if (lastId > 0)
 			{
 				BX.ajax({
@@ -349,6 +351,10 @@ if(empty($arResult['NOTIFY'])):?>
 		BXMobileApp.addCustomEvent("onBeforeNotificationsReload", function(){
 			app.titleAction("setParams", {text: "<?=GetMessage("NM_TITLE_2")?>", useProgress: true});
 		});
+
+		BXMobileApp.addCustomEvent("onNotifyRefresh", function(){
+			location.reload();
+		})
 	</script>
 <?
 function getNotifyParamsHtml($params)
@@ -402,7 +408,7 @@ function getNotifyParamsHtml($params)
 				foreach ($attach['GRID'] as $gridNode)
 				{
 					$width = $gridNode['WIDTH'] ? 'width: '.$gridNode['WIDTH'].'px' : '';
-					$subResult .= '<span class="bx-messenger-attach-block bx-messenger-attach-block-'.(strtolower($gridNode['DISPLAY'])).'" style="'.($gridNode['DISPLAY'] == 'LINE' ? $width : '').'">
+					$subResult .= '<span class="bx-messenger-attach-block bx-messenger-attach-block-'.(mb_strtolower($gridNode['DISPLAY'])).'" style="'.($gridNode['DISPLAY'] == 'LINE' ? $width : '').'">
 							<div class="bx-messenger-attach-block-name" style="'.($gridNode['DISPLAY'] == 'ROW' ? $width : '').'">'.$gridNode['NAME'].'</div>
 							<div class="bx-messenger-attach-block-value" style="'.($gridNode['COLOR'] ? 'color: '.$gridNode['COLOR'] : '').'">'.$gridNode['VALUE'].'</div>
 						</span>';

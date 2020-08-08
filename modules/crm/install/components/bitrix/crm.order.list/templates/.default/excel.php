@@ -71,7 +71,7 @@ else
 	}
 	unset($personTypeId);
 
-	foreach ($arResult['ORDER'] as $i => &$orderFields)
+	foreach ($arResult['ORDER'] as $orderId => $orderFields)
 	{
 		$productRows = $showProductRows && isset($orderFields['PRODUCT_ROWS']) ? $orderFields['PRODUCT_ROWS'] : array();
 		if(count($productRows) == 0)
@@ -80,6 +80,7 @@ else
 		}
 		$orderData = array();
 		$personTypeId = $orderFields['PERSON_TYPE_ID'];
+		$ufFields = $arResult['ORDER_UF'][$orderId];
 		foreach($productRows as $productRow)
 		{
 			?><tr><?
@@ -94,7 +95,7 @@ else
 				$headerID = $arHead['id'];
 				if(!isset($orderData[$headerID]))
 				{
-					switch($arHead['id'])
+					switch($headerID)
 					{
 						case 'SOURCE':
 							$orderData['SOURCE'] = htmlspecialcharsbx(trim($arPersonTypes[$orderFields['SOURCE']]));
@@ -190,10 +191,20 @@ else
 							$orderData[$headerID] = !empty($preparedBasket) ? implode(', ', $preparedBasket) : '';
 							break;
 						default:
-							if (is_array($orderFields[$headerID]))
-								$orderData[$headerID] = implode(', ', $orderFields[$headerID]);
+							$currentValue = $orderFields[$headerID];
+							if (isset($ufFields[$headerID]))
+							{
+								$currentValue = $ufFields[$headerID];
+							}
+
+							if (is_array($currentValue))
+							{
+								$orderData[$headerID] = implode(', ', $currentValue);
+							}
 							else
-								$orderData[$headerID] = strval($orderFields[$headerID]);
+							{
+								$orderData[$headerID] = (string)($currentValue);
+							}
 					}
 				}
 				if(isset($orderData[$headerID]))

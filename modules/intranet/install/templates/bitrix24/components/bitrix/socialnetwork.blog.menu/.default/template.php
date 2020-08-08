@@ -16,7 +16,7 @@ if ($arResult["showAll"] == "Y")
 {
 	$menuItems = array();
 
-	if(strlen($arResult["PATH_TO_MINE"]) > 0)
+	if($arResult["PATH_TO_MINE"] <> '')
 	{
 		$link = $arResult["PATH_TO_MINE"];
 		if ($request->get('IFRAME') == 'Y')
@@ -54,7 +54,7 @@ if ($arResult["showAll"] == "Y")
 		);
 	}
 
-	if (strlen($arResult["urlToDraft"]) > 0 && IntVal($arResult["CntToDraft"]) > 0)
+	if ($arResult["urlToDraft"] <> '' && intval($arResult["CntToDraft"]) > 0)
 	{
 		$link = $arResult["urlToDraft"];
 		if ($request->get('IFRAME') == 'Y')
@@ -72,7 +72,7 @@ if ($arResult["showAll"] == "Y")
 		);
 	}
 
-	if (strlen($arResult["urlToModeration"]) > 0 && IntVal($arResult["CntToModerate"]) > 0)
+	if ($arResult["urlToModeration"] <> '' && intval($arResult["CntToModerate"]) > 0)
 	{
 		$link = $arResult["urlToModeration"];
 		if ($request->get('IFRAME') == 'Y')
@@ -91,8 +91,8 @@ if ($arResult["showAll"] == "Y")
 	}
 
 	if (
-		strlen($arResult["urlToTags"]) > 0
-		&& IntVal($arResult["CntTags"]) > 0
+		$arResult["urlToTags"] <> ''
+		&& intval($arResult["CntTags"]) > 0
 	)
 	{
 		$link = $arResult["urlToTags"];

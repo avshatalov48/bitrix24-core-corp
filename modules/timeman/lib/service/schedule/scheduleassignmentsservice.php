@@ -178,6 +178,7 @@ final class ScheduleAssignmentsService extends BaseService
 		if ($scheduleForm->isForAllUsers === true && $schedule->getIsForAllUsers() !== true)
 		{
 			$this->safeRun(ScheduleTable::update($scheduleId, ['IS_FOR_ALL_USERS' => true]));
+			$schedule->setIsForAllUsers(true);
 		}
 		$oldAssignmentsForm = new ScheduleForm($schedule);
 

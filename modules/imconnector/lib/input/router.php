@@ -25,21 +25,34 @@ class Router
 	 * @param string|null $line ID of the open line.
 	 * @param array $data Data array.
 	 * @return Result
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 * @throws \Bitrix\Main\IO\FileNotFoundException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
-	static public function receiving($command, $connector, $line = null, $data = array())
+	public static function receiving($command, $connector, $line = null, $data = array()): Result
 	{
 		$result = new Result();
 
 		if(empty($command))
+		{
 			$result->addError(new Error(Loc::getMessage('IMCONNECTOR_NOT_SPECIFIED_CORRECT_COMMAND'), Library::ERROR_IMCONNECTOR_NOT_SPECIFIED_CORRECT_COMMAND, __METHOD__, array('$command' => $command, '$connector' => $connector, '$line' => $line, '$data' => $data)));
+		}
+
 
 		if(empty($connector) && Connector::isConnector($connector, true))
+		{
 			$result->addError(new Error(Loc::getMessage('IMCONNECTOR_NOT_SPECIFIED_CORRECT_CONNECTOR'), Library::ERROR_IMCONNECTOR_NOT_SPECIFIED_CORRECT_CONNECTOR, __METHOD__, array('$command' => $command, '$connector' => $connector, '$line' => $line, '$data' => $data)));
+		}
 
 		if($result->isSuccess())
 		{
 			if(!is_array($data))
-				$data = array($data);
+			{
+				$data = [$data];
+			}
 
 			switch ($command)
 			{
@@ -52,13 +65,12 @@ class Router
 					{
 						$receivingHandlers = new ReceivingMessage($connector, $line, $data);
 						$receivingHandlers->receiving();
-						break;
 					}
 					else
 					{
 						$result->addError(new Error(Loc::getMessage('IMCONNECTOR_NOT_ACTIVE_LINE'), Library::ERROR_IMCONNECTOR_NOT_ACTIVE_LINE, __METHOD__, array('$command' => $command, '$connector' => $connector, '$line' => $line, '$data' => $data)));
-						break;
 					}
+					break;
 				case 'receivingStatusDelivery'://To receive a delivery status
 					$receivingHandlers = new ReceivingStatusDelivery($connector, $line, $data);
 					$receivingHandlers->receiving();
@@ -69,6 +81,10 @@ class Router
 					break;
 				case 'deactivateConnector'://The disconnection of the connector due to the connection with the specified data on a different portal or lines
 					$receivingHandlers = new DeactivateConnector($connector, $line, $data);
+					$receivingHandlers->receiving();
+					break;
+				case 'receivingStatusBlock':
+					$receivingHandlers = new ReceivingStatusBlock($connector, $line, $data);
 					$receivingHandlers->receiving();
 					break;
 				default:

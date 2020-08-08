@@ -577,6 +577,33 @@ class CDavExchangeClientRequest
 		$this->body .= "</soap:Envelope>";
 	}
 
+	public function CreateGetRoomListsBody()
+	{
+		$this->body  = "<"."?xml version=\"1.0\" encoding=\"utf-8\"?".">\r\n";
+		$this->body .= "<soap:Envelope xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" \r\n".
+               "xmlns:soap = \"http://schemas.xmlsoap.org/soap/envelope/\" \r\n".
+               "xmlns:t = \"http://schemas.microsoft.com/exchange/services/2006/types\" \r\n".
+               "xmlns:m = \"http://schemas.microsoft.com/exchange/services/2006/messages\">\r\n";
+		$this->body .= " <soap:Body>\r\n";
+		$this->body .= "  <m:GetRoomLists />\r\n";
+		$this->body .= " </soap:Body>\r\n";
+		$this->body .= "</soap:Envelope>";
+	}
+
+	public function CreateGetRoomsBody()
+	{
+		$this->body  = "<"."?xml version=\"1.0\" encoding=\"utf-8\"?".">\r\n";
+		$this->body .= "<soap:Envelope xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" \r\n".
+			"xmlns:soap = \"http://schemas.xmlsoap.org/soap/envelope/\" \r\n".
+			"xmlns:t = \"http://schemas.microsoft.com/exchange/services/2006/types\" \r\n".
+			"xmlns:m = \"http://schemas.microsoft.com/exchange/services/2006/messages\">\r\n";
+		$this->body .= " <soap:Body>\r\n";
+		$this->body .= "  <m:GetRooms>\r\n";
+		$this->body .= "  </m:GetRooms>\r\n";
+		$this->body .= " </soap:Body>\r\n";
+		$this->body .= "</soap:Envelope>";
+	}
+
 	public function ToString()
 	{
 		$buffer = sprintf("%s %s HTTP/1.0\r\n", $this->method, $this->path);

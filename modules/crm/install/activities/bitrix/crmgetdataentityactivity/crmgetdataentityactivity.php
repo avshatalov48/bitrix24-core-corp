@@ -66,7 +66,7 @@ class CBPCrmGetDataEntityActivity extends CBPActivity
 		{
 			foreach ($this->EntityFields as $fieldId => $fieldName)
 			{
-				if (strpos($fieldId, 'UF_CRM') === 0)
+				if (mb_strpos($fieldId, 'UF_CRM') === 0)
 					$selectedUfFields[] = $fieldId;
 			}
 		}

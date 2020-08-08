@@ -357,7 +357,7 @@ class EntityLink
 			{
 				if ($entityTypeName === null)
 				{
-					$entityTypeName = ucfirst(strtolower(\CCrmOwnerType::ResolveName($entityTypeId)));
+					$entityTypeName = ucfirst(mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId)));
 				}
 				throw new Main\SystemException(
 					"Requisite with ID '$requisiteId' can not be tied to the $entityTypeName ".
@@ -387,7 +387,7 @@ class EntityLink
 			$clientEntityId = (int)$clientSellerInfo['CLIENT_ENTITY_ID'];
 			if ($clientEntityTypeId !== $rqEntityTypeId || $clientEntityId !== $rqEntityId)
 			{
-				$clientEntityTypeName = ucfirst(strtolower(\CCrmOwnerType::ResolveName($clientEntityTypeId)));
+				$clientEntityTypeName = ucfirst(mb_strtolower(\CCrmOwnerType::ResolveName($clientEntityTypeId)));
 				throw new Main\SystemException(
 					"The Requisite with ID '$requisiteId' is not assigned to $clientEntityTypeName ".
 						"with ID '$clientEntityId'.",
@@ -440,7 +440,7 @@ class EntityLink
 			{
 				if ($entityTypeName === null)
 				{
-					$entityTypeName = ucfirst(strtolower(\CCrmOwnerType::ResolveName($entityTypeId)));
+					$entityTypeName = ucfirst(mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId)));
 				}
 				throw new Main\SystemException(
 					"Requisite of your company with ID '$requisiteId' can not be tied to the $entityTypeName ".
@@ -627,7 +627,7 @@ class EntityLink
 			if ($connection instanceof Main\DB\MssqlConnection
 				|| $connection instanceof Main\DB\OracleConnection)
 			{
-				$tableName = strtoupper($tableName);
+				$tableName = mb_strtoupper($tableName);
 			}
 			$connection->queryExecute(
 				"DELETE FROM {$tableName} WHERE (REQUISITE_ID = {$requisiteId} AND MC_REQUISITE_ID = 0) OR ".

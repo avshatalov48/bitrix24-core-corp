@@ -5,37 +5,111 @@ BX.namespace('BX.Tasks');
 BX.Tasks.InterfaceFilterButtons = function(options)
 {
 	this.section = options.section;
+	this.entityId = options.entityId;
+	this.muted = options.muted;
 	this.checklistShowCompleted = options.checklistShowCompleted;
-	this.optionsMenuButton = this.getOptionsMenuButton();
 
+	this.initButtons();
 	this.bindControls();
 };
 
 BX.Tasks.InterfaceFilterButtons.prototype = {
 	constructor: BX.Tasks.InterfaceFilterButtons,
 
-	bindControls: function()
+	initButtons: function()
 	{
-		BX.bind(this.optionsMenuButton, 'click', this.createTaskMenu.bind(this));
+		this.muteButton = this.getMuteButton();
+		this.optionsMenuButton = this.getOptionsMenuButton();
+	},
+
+	getMuteButton: function()
+	{
+		var id = '';
+
+		switch (this.section)
+		{
+			case 'VIEW_TASK':
+				id = 'taskViewMute';
+				break;
+
+			default:
+				break;
+		}
+
+		return BX(id);
 	},
 
 	getOptionsMenuButton: function()
 	{
 		var id = '';
 
-		if (this.section === 'EDIT_TASK')
+		switch (this.section)
 		{
-			id = 'taskEditPopupMenuOptions';
-		}
-		else if (this.section === 'VIEW_TASK')
-		{
-			id = 'taskViewPopupMenuOptions';
+			case 'EDIT_TASK':
+				id = 'taskEditPopupMenuOptions';
+				break;
+
+			case 'VIEW_TASK':
+				id = 'taskViewPopupMenuOptions';
+				break;
+
+			default:
+				break;
 		}
 
 		return BX(id);
 	},
 
-	createTaskMenu: function()
+	bindControls: function()
+	{
+		var binds = [
+			{
+				control: this.muteButton,
+				action: 'click',
+				method: this.onMuteButtonClick.bind(this)
+			},
+			{
+				control: this.optionsMenuButton,
+				action: 'click',
+				method: this.onOptionsMenuButtonClick.bind(this)
+			}
+		];
+		binds.forEach(function(params) {
+			if (params.control)
+			{
+				BX.bind(params.control, params.action, params.method);
+			}
+		});
+	},
+
+	onMuteButtonClick: function()
+	{
+		if (this.muteInProgress)
+		{
+			return;
+		}
+		this.muteInProgress = true;
+
+		var action = 'tasks.task.' + (this.muted ? 'unmute' : 'mute');
+		var config = {
+			data: {
+				taskId: this.entityId
+			}
+		};
+
+		BX.ajax.runAction(action, config).then(function() {
+			var oldClass = (this.muted ? 'ui-btn-icon-follow' : 'ui-btn-icon-unfollow');
+			var newClass = (this.muted ? 'ui-btn-icon-unfollow' : 'ui-btn-icon-follow');
+
+			BX.removeClass(this.muteButton, oldClass);
+			BX.addClass(this.muteButton, newClass);
+
+			this.muted = !this.muted;
+			this.muteInProgress = false;
+		}.bind(this));
+	},
+
+	onOptionsMenuButtonClick: function()
 	{
 		var menuItemsList = [
 			{
@@ -98,5 +172,5 @@ BX.Tasks.InterfaceFilterButtons.prototype = {
 		);
 
 		menu.popupWindow.show();
-	},
+	}
 };

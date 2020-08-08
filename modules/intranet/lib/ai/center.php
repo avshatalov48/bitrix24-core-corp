@@ -82,7 +82,7 @@ class Center
 
 		$scoringExists = false;
 		$mlInstalled = false;
-		if(Loader::includeModule("ml") && false)
+		if(Loader::includeModule("ml") && Loader::includeModule("crm") && class_exists("Bitrix\Crm\Ml\Scoring"))
 		{
 			$mlInstalled = true;
 			$modelNames = Scoring::getAvailableModelNames();

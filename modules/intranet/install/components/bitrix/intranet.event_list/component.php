@@ -1,12 +1,12 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 $arParams["IBLOCK_ID"] = trim($arParams["IBLOCK_ID"]);
-$arParams["IBLOCK_SECTION_ID"] = intVal($arParams["IBLOCK_SECTION_ID"]);
+$arParams["IBLOCK_SECTION_ID"] = intval($arParams["IBLOCK_SECTION_ID"]);
 $arParams['B_CUR_USER_LIST'] = $arParams['B_CUR_USER_LIST'] == 'Y';
-$arParams["FUTURE_MONTH_COUNT"] = intVal($arParams["FUTURE_MONTH_COUNT"]);
+$arParams["FUTURE_MONTH_COUNT"] = intval($arParams["FUTURE_MONTH_COUNT"]);
 
 $curUserId = $USER->IsAuthorized() ? $USER->GetID() : '';
-$from_ = (strlen($arParams["INIT_DATE"]) == 0 && strpos($arParams["INIT_DATE"], '.') === false) ? date("Ymd") : 0;
+$from_ = ($arParams["INIT_DATE"] == '' && mb_strpos($arParams["INIT_DATE"], '.') === false) ? date("Ymd") : 0;
 
 $calendar2 = COption::GetOptionString("intranet", "calendar_2", "N") == "Y";
 if ($calendar2 && CModule::IncludeModule("calendar"))
@@ -46,7 +46,7 @@ if($this->StartResultCache(false, array($arParams['B_CUR_USER_LIST']? $curUserId
 	CModule::IncludeModule("socialnetwork");
 
 	// Limits
-	if (strlen($arParams["INIT_DATE"]) > 0 && strpos($arParams["INIT_DATE"], '.') !== false)
+	if ($arParams["INIT_DATE"] <> '' && mb_strpos($arParams["INIT_DATE"], '.') !== false)
 		$ts = MakeTimeStamp($arParams["INIT_DATE"], getTSFormat());
 	else
 		$ts = MakeTimeStamp(date(getDateFormat(false)), getTSFormat());
@@ -67,9 +67,9 @@ if($this->StartResultCache(false, array($arParams['B_CUR_USER_LIST']? $curUserId
 	elseif (is_array($arEvents))
 	{
 		$limitTromTS = MakeTimeStamp($fromLimit, getTSFormat());
-		if (strpos($arParams['DETAIL_URL'], '?') !== FALSE)
-			$arParams['DETAIL_URL'] = substr($arParams['DETAIL_URL'], 0, strpos($arParams['DETAIL_URL'], '?'));
-		$arParams['DETAIL_URL'] = str_replace('#user_id#', $curUserId, strtolower($arParams['DETAIL_URL']));
+		if (mb_strpos($arParams['DETAIL_URL'], '?') !== FALSE)
+			$arParams['DETAIL_URL'] = mb_substr($arParams['DETAIL_URL'], 0, mb_strpos($arParams['DETAIL_URL'], '?'));
+		$arParams['DETAIL_URL'] = str_replace('#user_id#', $curUserId, mb_strtolower($arParams['DETAIL_URL']));
 
 		for ($i = 0, $l = count($arEvents); $i < $l; $i++)
 		{
@@ -96,7 +96,7 @@ if($this->StartResultCache(false, array($arParams['B_CUR_USER_LIST']? $curUserId
 		}
 
 		usort($arResult['ITEMS'], 'eventsSort');
-		array_splice($arResult['ITEMS'], intVal($arParams['EVENTS_COUNT']));
+		array_splice($arResult['ITEMS'], intval($arParams['EVENTS_COUNT']));
 	}
 
 	$this->SetResultCacheKeys(array());

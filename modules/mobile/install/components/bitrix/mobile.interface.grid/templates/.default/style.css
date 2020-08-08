@@ -25,6 +25,11 @@ body{
 	text-decoration: none;
 }
 
+.mobile-grid-field-data img {
+	max-width:100%;
+	height:auto;
+}
+
 .mobile-grid-field-phone .mobile-grid-field-icon,
 .mobile-grid-field-mail .mobile-grid-field-icon {
 	position: absolute;

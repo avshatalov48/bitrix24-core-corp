@@ -68,7 +68,7 @@ class SearchMap
 
 		if($length > 0)
 		{
-			$value = substr($value, 0, $length);
+			$value = mb_substr($value, 0, $length);
 		}
 
 		$value = SearchEnvironment::prepareToken($value);
@@ -134,7 +134,7 @@ class SearchMap
 			return;
 		}
 
-		$length = strlen($value);
+		$length = mb_strlen($value);
 
 		//Right bound. We will stop when 3 characters are left.
 		$bound = $length - 2;
@@ -142,7 +142,7 @@ class SearchMap
 		{
 			for($i = 0; $i < $bound; $i++)
 			{
-				$fragment = substr($value, $i);
+				$fragment = mb_substr($value, $i);
 				if(!isset($this->data[$fragment]))
 				{
 					$this->addText($fragment);
@@ -168,10 +168,10 @@ class SearchMap
 			return;
 		}
 
-		$length = strlen($phone);
-		if($length >= 10 && substr($phone, 0, 1) === '7')
+		$length = mb_strlen($phone);
+		if($length >= 10 && mb_substr($phone, 0, 1) === '7')
 		{
-			$altPhone = '8'.substr($phone, 1);
+			$altPhone = '8'.mb_substr($phone, 1);
 			if(!isset($this->data[$altPhone]))
 			{
 				$this->data[$altPhone] = true;
@@ -184,7 +184,7 @@ class SearchMap
 		{
 			for($i = 0; $i < $bound; $i++)
 			{
-				$fragment = substr($phone, $i);
+				$fragment = mb_substr($phone, $i);
 				if(!isset($this->data[$fragment]))
 				{
 					$this->data[$fragment] = true;

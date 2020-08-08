@@ -17,7 +17,7 @@ CUtil::InitJSCore(['popup']);
 \Bitrix\Main\UI\Extension::load("ui.buttons");
 \Bitrix\Main\UI\Extension::load("ui.buttons.icons");
 
-$toolbarId = strtolower($arResult['GRID_ID']).'_toolbar';
+$toolbarId = mb_strtolower($arResult['GRID_ID']).'_toolbar';
 
 Toolbar::addFilter([
 	'GRID_ID' => $arResult['GRID_ID'],

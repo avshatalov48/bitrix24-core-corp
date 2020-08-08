@@ -88,7 +88,8 @@ $APPLICATION->IncludeComponent(
 		'NAV_OBJECT' => $arResult['CURRENCIES'],
 		'FORM_ID' => $arResult['FORM_ID'],
 		'TAB_ID' => $arResult['TAB_ID'],
-		'AJAX_MODE' => 'Y'
+		'AJAX_MODE' => 'Y',
+		'AJAX_OPTION_HISTORY' => 'N',
 		//'FILTER' => $arResult['FILTER']
 	),
 	$component

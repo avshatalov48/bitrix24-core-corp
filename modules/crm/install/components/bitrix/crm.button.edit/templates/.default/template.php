@@ -10,6 +10,7 @@ use \Bitrix\Main\UI\Extension;
 /** @var array $arParams */
 
 Extension::load("ui.hint");
+Extension::load("ui.alerts");
 Extension::load("ui.buttons");
 Extension::load("ui.buttons.icons");
 
@@ -89,14 +90,13 @@ $getFormattedScript = function ($script)
 			'dictionaryPathEdit' => $arResult['BUTTON_ITEMS_DICTIONARY_PATH_EDIT'],
 			'linesData' => $arResult['LINES_DATA'],
 			'canRemoveCopyright' => $arResult['CAN_REMOVE_COPYRIGHT'],
+			'showWebformRestrictionPopup' => $arResult['WEBFORM_RESTRICTION_POPUP'],
 			'canUseMultiLines' => $arResult['CAN_USE_MULTI_LINES'],
+			'showMultilinesRestrictionPopup' => $arResult['MULTI_LINES_RESTRICTION_POPUP'],
 			'pathToButtonList' => $arParams['PATH_TO_BUTTON_LIST'],
 			'actionRequestUrl' => $this->getComponent()->getPath() . '/ajax.php',
 			'langs' => $arResult['LANGUAGES']['LIST'],
 			'mess' => array(
-				'dlgRemoveCopyrightTitle' => Loc::getMessage('CRM_WEBFORM_EDIT_POPUP_LIMITED_TITLE'),
-				'dlgRemoveCopyrightText' => Loc::getMessage('CRM_WEBFORM_EDIT_POPUP_LIMITED_TEXT'),
-				'dlgMultiLinesText' => Loc::getMessage('CRM_BUTTON_EDIT_OPENLINE_MULTI_POPUP_LIMITED_TEXT'),
 				'errorAction' => Loc::getMessage('CRM_BUTTON_EDIT_ERROR_ACTION'),
 				'dlgBtnClose' => Loc::getMessage('CRM_BUTTON_EDIT_CLOSE'),
 				'deleteConfirmation' => Loc::getMessage('CRM_BUTTON_EDIT_DELETE_CONFIRM'),
@@ -767,6 +767,13 @@ function ShowIntranetButtonItemPageInterface($type, $list, $mode, $target = 'ITE
 							<div class="crm-button-edit-insert-code-inner">
 								<div data-bx-webform-script-copy-text class="crm-button-edit-insert-code-item"><?=$getFormattedScript($arResult['SCRIPT'])?></div>
 							</div>
+							<?if (\Bitrix\Main\Config\Option::get('main', 'save_original_file_name') !== 'Y'):?>
+							<div class="ui-alert ui-alert-danger ui-alert-icon-warning">
+								<span class="ui-alert-message">
+									<?=Loc::getMessage('CRM_BUTTON_EDIT_WARN_SETTING_FILENAME')?>
+								</span>
+							</div>
+							<?endif;?>
 							<div class="crm-button-edit-insert-code-button">
 								<a data-bx-webform-script-copy-btn="" class="crm-button-edit-insert-code-button-item webform-small-button webform-small-button-blue">
 									<?=Loc::getMessage('CRM_WEBFORM_EDIT_COPY_TO_CLIPBOARD')?>
@@ -1090,9 +1097,7 @@ function getCrmButtonEditTemplateLine($replace = array(), $pathAdd = null)
 			</div>
 			<div class="crm-button-edit-channel-lines-inner-create-button-container">
 				<a data-bx-slider-href="" data-line-edit="" href="" class="crm-button-edit-channel-lines-inner-create-button-item"><?=Loc::getMessage('CRM_WEBFORM_EDIT_CHANNEL_EDIT')?></a>
-				<?if ($pathAdd):?>
-					<a data-bx-slider-href="" data-line-add="" href="<?=htmlspecialcharsbx($pathAdd)?>" class="crm-button-edit-channel-lines-inner-create-button-item"><?=Loc::getMessage('CRM_WEBFORM_EDIT_CHANNEL_ADD')?></a>
-				<?else:?>
+				<?if (!$pathAdd):?>
 					<span data-line-remove="" class="crm-button-edit-channel-lines-inner-create-button-item"><?=Loc::getMessage('CRM_BUTTON_EDIT_OPENLINE_REMOVE')?></span>
 				<?endif;?>
 			</div>

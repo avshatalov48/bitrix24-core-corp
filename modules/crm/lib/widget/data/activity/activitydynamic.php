@@ -223,7 +223,7 @@ class ActivityDynamic extends DataSource
 								$id = "#{$g["id"]}#";
 								$caption = htmlspecialcharsbx($g["caption"]);
 								$caption = ($g["url"] !== '' ? '<a target="_blank" href="' . htmlspecialcharsbx($g["url"]) . '#activityDynamic" title="' . $caption . '">' . $caption . '</a>' : '<span title="' . $caption . '">' . $caption . '</span>');
-								if (strpos($html, $id) === false)
+								if (mb_strpos($html, $id) === false)
 								{
 									if ($status !== "active")
 									{

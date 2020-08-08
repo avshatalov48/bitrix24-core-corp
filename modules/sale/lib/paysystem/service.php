@@ -43,6 +43,9 @@ class Service
 	/** @var bool */
 	protected $isClone = false;
 
+	/** @var Context  */
+	protected $context;
+
 	/**
 	 * Service constructor.
 	 * @param $fields
@@ -55,6 +58,8 @@ class Service
 
 		$this->fields = $fields;
 		$this->handler = new $className($handlerType, $this);
+
+		$this->context = new Context();
 	}
 
 	/**
@@ -156,6 +161,10 @@ class Service
 
 			/** @var ServiceResult $result */
 			$result = $this->handler->refund($payment, $refundableSum);
+			if (!$result->isSuccess())
+			{
+				Logger::addError(get_class($this->handler).': refund: '.implode("\n", $result->getErrorMessages()));
+			}
 
 			return $result;
 		}
@@ -183,7 +192,7 @@ class Service
 			return $processResult;
 		}
 
-		$debugInfo = implode("\n", $request->toArray());
+		$debugInfo = http_build_query($request->toArray(), "", "\n");
 		if (empty($debugInfo))
 		{
 			$debugInfo = file_get_contents("php://input");
@@ -1099,6 +1108,14 @@ class Service
 	public function setTemplateMode($mode)
 	{
 		$this->handler->setInitiateMode($mode);
+	}
+
+	/**
+	 * @return Context
+	 */
+	public function getContext(): Context
+	{
+		return $this->context;
 	}
 
 	/**

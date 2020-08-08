@@ -2,34 +2,28 @@
 namespace Bitrix\Disk\Copy\Integration;
 
 use Bitrix\Disk\Driver;
-use Bitrix\Disk\File;
 use Bitrix\Disk\Folder;
 use Bitrix\Main\Config\Option;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Socialnetwork\Copy\Integration\Feature;
-use Bitrix\Socialnetwork\Copy\Integration\Helper;
 
-class Group implements Feature, Helper
+class Group implements Feature
 {
-	private $stepper;
-
 	private $executiveUserId;
 	private $features = [];
 	private $securityContext;
 
-	private $moduleId = "disk";
-	private $queueOption = "DiskGroupQueue";
-	private $checkerOption = "DiskGroupChecker_";
-	private $stepperOption = "DiskGroupStepper_";
-	private $errorOption = "DiskGroupError_";
+	const MODULE_ID = "disk";
+	const QUEUE_OPTION = "DiskGroupQueue";
+	const CHECKER_OPTION = "DiskGroupChecker_";
+	const STEPPER_OPTION = "DiskGroupStepper_";
+	const STEPPER_CLASS = GroupStepper::class;
+	const ERROR_OPTION = "DiskGroupError_";
 
 	public function __construct($executiveUserId = 0, array $features = [])
 	{
 		$this->executiveUserId = $executiveUserId;
 		$this->features = $features;
 		$this->securityContext = Driver::getInstance()->getFakeSecurityContext();
-
-		$this->stepper = GroupStepper::class;
 	}
 
 	public function copy($groupId, $copiedGroupId)
@@ -49,7 +43,7 @@ class Group implements Feature, Helper
 
 			if (!in_array("onlyFolders", $this->features))
 			{
-				Option::set($this->moduleId, $this->checkerOption.$copiedGroupId, "Y");
+				Option::set(self::MODULE_ID, self::CHECKER_OPTION.$copiedGroupId, "Y");
 
 				$dataToCopy = [
 					"groupId" => $groupId,
@@ -57,11 +51,11 @@ class Group implements Feature, Helper
 					"executiveUserId" => $this->executiveUserId,
 					"mapFolderIds" => $mapFolderIds
 				];
-				Option::set($this->moduleId, $this->stepperOption.$copiedGroupId, serialize($dataToCopy));
+				Option::set(self::MODULE_ID, self::STEPPER_OPTION.$copiedGroupId, serialize($dataToCopy));
 
 				$agent = \CAgent::getList([], [
-					"MODULE_ID" => $this->moduleId,
-					"NAME" => $this->stepper."::execAgent();"
+					"MODULE_ID" => self::MODULE_ID,
+					"NAME" => GroupStepper::class."::execAgent();"
 				])->fetch();
 				if (!$agent)
 				{
@@ -97,56 +91,11 @@ class Group implements Feature, Helper
 
 	private function addToQueue(int $copiedGroupId)
 	{
-		$option = Option::get($this->moduleId, $this->queueOption, "");
+		$option = Option::get(self::MODULE_ID, self::QUEUE_OPTION, "");
 		$option = ($option !== "" ? unserialize($option) : []);
 		$option = (is_array($option) ? $option : []);
 
 		$option[] = $copiedGroupId;
-		Option::set($this->moduleId, $this->queueOption, serialize($option));
-	}
-
-	/**
-	 * Returns a module id for work with options.
-	 * @return string
-	 */
-	public function getModuleId()
-	{
-		return $this->moduleId;
-	}
-
-	/**
-	 * Returns a map of option names.
-	 *
-	 * @return array
-	 */
-	public function getOptionNames()
-	{
-		return [
-			"queue" => $this->queueOption,
-			"checker" => $this->checkerOption,
-			"stepper" => $this->stepperOption,
-			"error" => $this->errorOption
-		];
-	}
-
-	/**
-	 * Returns a link to stepper class.
-	 * @return string
-	 */
-	public function getLinkToStepperClass()
-	{
-		return $this->stepper;
-	}
-
-	/**
-	 * Returns a text map.
-	 * @return array
-	 */
-	public function getTextMap()
-	{
-		return [
-			"title" => Loc::getMessage("GROUP_STEPPER_PROGRESS_TITLE"),
-			"error" => Loc::getMessage("GROUP_STEPPER_PROGRESS_ERROR")
-		];
+		Option::set(self::MODULE_ID, self::QUEUE_OPTION, serialize($option));
 	}
 }

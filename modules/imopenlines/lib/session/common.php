@@ -19,6 +19,7 @@ class Common
 	 */
 	public static function parseUserCode($userCode)
 	{
+		//TODO: Replace with the method \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId
 		list($connectorId, $configId, $externalChatId, $connectorUserId) = explode('|', $userCode);
 
 		return array(

@@ -19,7 +19,7 @@ if($typeID === '' && isset($_REQUEST['type_id']))
 	$typeID = $_REQUEST['type_id'];
 }
 
-$typeID = strtoupper(trim($typeID));
+$typeID = mb_strtoupper(trim($typeID));
 
 if($typeID === '')
 {
@@ -35,7 +35,7 @@ if($mode === '' && isset($_REQUEST['mode']))
 	$mode = $_REQUEST['mode'];
 }
 
-$mode = strtoupper(trim($mode));
+$mode = mb_strtoupper(trim($mode));
 $arResult['MODE'] = $arParams['MODE'] = $mode;
 
 $contextID = isset($arParams['CONTEXT_ID']) ? $arParams['CONTEXT_ID'] : '';
@@ -47,8 +47,8 @@ $arResult['CONTEXT_ID'] = $arParams['CONTEXT_ID'] = $contextID;
 
 $UID = isset($arParams['UID']) ? $arParams['UID'] : '';
 $UID = $UID === ''
-	? 'mobile_crm_status_list_'.strtolower($typeID)
-	: str_replace('#TYPE_ID#', strtolower($typeID), $UID);
+	? 'mobile_crm_status_list_'.mb_strtolower($typeID)
+	: str_replace('#TYPE_ID#', mb_strtolower($typeID), $UID);
 $arResult['UID'] = $arParams['UID'] = $UID;
 
 $arResult['ITEMS'] = CCrmStatus::GetStatus($typeID);

@@ -22,11 +22,6 @@ BX.Intranet.Bitrix24.Slider.prototype =
 
 	applyHacks: function()
 	{
-		if (!BX.MessengerWindow && window.BXIM)
-		{
-			window.BXIM.closeMessenger();
-		}
-
 		this.adjustBackgroundSize();
 
 		var verticalScrollWidth = window.innerWidth - document.documentElement.clientWidth;
@@ -66,7 +61,7 @@ BX.Intranet.Bitrix24.Slider.prototype =
 		//These hacks can influence the IM Bar height. Leave this code below IM Bar hacks.
 		this.getHeader().style.paddingRight = verticalScrollWidth + "px";
 		this.getHeader().style.marginRight = "-" + verticalScrollWidth + "px";
-		
+
 		//BX.addCustomEvent("OnMessengerWindowShowPopup", this.handleMessengerOpen);
 		BX.addCustomEvent("BX.Helper:onShow", this.handleHelperShow);
 
@@ -198,9 +193,13 @@ BX.Intranet.Bitrix24.Slider.prototype =
 		{
 			return 0;
 		}
+		else if (BX.type.isNumber(this.getData().get("topBoundary")))
+		{
+			return this.getData().get("topBoundary");
+		}
 		else
 		{
-			return this.getPanel() && !this.isMessengerOpen() ? BX.pos(this.getPanel()).bottom : 0;
+			return this.getPanel()? BX.pos(this.getPanel()).bottom : 0;
 		}
 	},
 
@@ -224,7 +223,17 @@ BX.Intranet.Bitrix24.Slider.prototype =
 		else
 		{
 			var windowWidth = BX.browser.IsMobile() ? window.innerWidth : document.documentElement.clientWidth;
-			return this.getImBar() && !this.isMessengerOpen() ? windowWidth - BX.pos(this.getImBar()).left : 0;
+			if (this.getImBar())
+			{
+				if (this.isMessengerOpen())
+				{
+					return 0;
+				}
+
+				return windowWidth - BX.pos(this.getImBar()).left;
+			}
+
+			return 0;
 		}
 	},
 

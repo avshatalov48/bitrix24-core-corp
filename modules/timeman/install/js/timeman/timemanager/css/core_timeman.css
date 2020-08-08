@@ -123,7 +123,8 @@
 	margin: 0;
 }
 
-.tm-webform-button-play, .tm-webform-button-pause {
+.tm-webform-button-play,
+.tm-webform-button-pause {
 	margin-right: 8px;
 	padding-left: 15px;
 	padding-right: 15px;
@@ -135,8 +136,9 @@
 .tm-webform-button-play .webform-button-icon { background: url(../images/timeman-sprite.2.1.png) no-repeat -30px -11px;  width: 7px; margin: 4px 6px 0 0; }
 
 
-.tm-webform-button-play .text-pause {display: none;}
-.tm-webform-button-pause .text-play {display: none;}
+.tm-btn-pause .text-pause,
+.tm-btn-start .text-start { display: none; }
+
 .tm-popup-relaunch-btn {
 	margin-left: 8px;
 }

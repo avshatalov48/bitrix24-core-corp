@@ -136,4 +136,10 @@ class Timeline extends Main\Engine\Controller
 
 		return new \Bitrix\Main\Engine\Response\Component('bitrix:main.post.form', '', $editorParameters);
 	}
+
+	public function onReceiveAction($entityId, $entitTypeId, $settings)
+	{
+		return $externalController = \Bitrix\Crm\Timeline\ExternalNoticeController::getInstance()
+			->onReceive($entityId, $entitTypeId, $settings);
+	}
 }

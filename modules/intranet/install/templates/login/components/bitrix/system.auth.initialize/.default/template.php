@@ -46,7 +46,7 @@ $APPLICATION->SetTitle(GetMessage("CT_MAIN_REG_INIT_TITLE"));?>
 					</span>
 			</div>
 
-			<?if (strlen(trim($arResult["CHECKWORD"])) <= 0):?>
+			<?if (trim($arResult["CHECKWORD"]) == ''):?>
 				<div class="login-item">
 					<span class="login-label"><?echo GetMessage("CT_MAIN_REG_INIT_CHECKWORD_TITLE")?>:</span>
 					<input class="login-inp" type="text" name="CHECKWORD" class="auth-input" maxlength="50" value="<?echo $arResult["CHECKWORD"]?>" size="17" />

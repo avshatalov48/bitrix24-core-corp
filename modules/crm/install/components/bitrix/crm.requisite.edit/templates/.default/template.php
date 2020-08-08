@@ -201,7 +201,8 @@ if($arResult['INNER_FORM_MODE'] === 'Y')
 			enableFieldMasquerading: <?=$enableFieldMasquerading ? 'true' : 'false'?>,
 			fieldNameTemplate: "<?=CUtil::JSEscape($fieldNameTemplate)?>",
 			lastInForm: <?=$arResult['IS_LAST_IN_FORM'] === 'Y' ? 'true' : 'false'?>,
-			externalRequisiteSearchConfig: <?=CUtil::PhpToJSObject($externalRequisiteSearchConfig)?>
+			externalRequisiteSearchConfig: <?=CUtil::PhpToJSObject($externalRequisiteSearchConfig)?>,
+			features: <?php echo CUtil::PhpToJSObject(is_array($arResult['FEATURES']) ? $arResult['FEATURES'] : []); ?>
 		};
 		BX.Crm.RequisiteEditFormManager.create(formId, requisiteEditFormParams);
 	});

@@ -15,6 +15,16 @@ class Config
 {
 	static private $error = null;
 
+	/**
+	 * @param $code
+	 * @return array|bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public static function getByCode($code)
 	{
 		self::clearError();
@@ -30,10 +40,10 @@ class Config
 			return false;
 		}
 
-		$result = \Bitrix\ImOpenLines\Model\LivechatTable::getList(Array(
+		$result = \Bitrix\ImOpenLines\Model\LivechatTable::getList([
 			'select' => ['CONFIG_ID', 'TEXT_PHRASES'],
 			'filter' => ['=URL_CODE' => $code]
-		))->fetch();
+		])->fetch();
 		if (!$result)
 		{
 			self::setError(__METHOD__, 'CONFIG_ERROR', Loc::getMessage('IMOL_WIDGET_CONFIG_CONFIG_ERROR'));
@@ -62,7 +72,7 @@ class Config
 			}
 		}
 
-		$connectors = Array();
+		$connectors = [];
 		$activeConnectors = \Bitrix\ImConnector\Connector::infoConnectorsLine($result['CONFIG_ID']);
 
 		$classMap = \Bitrix\ImConnector\Connector::getIconClassMap();
@@ -71,12 +81,12 @@ class Config
 			if (\Bitrix\ImOpenLines\Connector::isLiveChat($code) || empty($params['url']))
 				continue;
 
-			$connectors[] = Array(
+			$connectors[] = [
 				'TITLE' => $params['name']? $params['name']:'',
 				'CODE' => $code,
 				'ICON' => $classMap[$code],
 				'LINK' => $params['url_im']? $params['url_im']: $params['url'],
-			);
+			];
 		}
 
 		$maxFileSize = \CUtil::Unformat(ini_get("post_max_size"));
@@ -110,7 +120,8 @@ class Config
 				'MESSAGE_LIKE' => (string)$config['VOTE_MESSAGE_1_LIKE'],
 				'MESSAGE_DISLIKE' => (string)$config['VOTE_MESSAGE_1_DISLIKE'],
 			],
-			'TEXT_MESSAGES' => $result['TEXT_PHRASES']
+			'TEXT_MESSAGES' => $result['TEXT_PHRASES'],
+			'WATCH_TYPING' => $config['WATCH_TYPING'] === 'Y'
 		];
 	}
 

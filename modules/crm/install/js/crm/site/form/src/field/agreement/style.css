@@ -7,10 +7,14 @@
 	line-height: 1;
 }
 
-.b24-form-field-agreement .b24-form-control-desc a {
+.b24-form-field-agreement .b24-form-field-agreement-link {
 	font-size: 11px;
-	text-decoration: none !important;
 	line-height: 1;
+	cursor: pointer;
+}
+.b24-form-field-agreement a.b24-form-field-agreement-link {
+	color: #007eff;
+	text-decoration: underline;
 }
 
 .b24-form-field-agreement .b24-form-control-required {

@@ -26,7 +26,7 @@ else if ($arParams['ENTITY_TYPE'] == 'INVOICE')
 }
 else
 {
-	$path = '/bitrix/components/bitrix/crm.' . strtolower($arParams['ENTITY_TYPE']) . '.list/filter.ajax.php'
+	$path = '/bitrix/components/bitrix/crm.'.mb_strtolower($arParams['ENTITY_TYPE']) . '.list/filter.ajax.php'
 			. '?filter_id=' . urlencode($gridId) . '&siteID=' . SITE_ID . '&' . bitrix_sessid_get();
 	$lasyLoadParams = array(
 		'GET_LIST' => $path . '&action=list',

@@ -98,8 +98,8 @@ if(!empty($arResult['ERRORS']))
 					$isUnderstated = $typeInfo['IS_UNDERSTATED'];
 
 					$scopePostfix = (isset($typeInfo['SCOPE']) && !empty($typeInfo['SCOPE'])) ?
-						'_'.strtolower($typeInfo['SCOPE']) : '';
-					$controlID = $listID.'_'.strtolower($typeInfo['NAME']).$scopePostfix;
+						'_'.mb_strtolower($typeInfo['SCOPE']) : '';
+					$controlID = $listID.'_'.mb_strtolower($typeInfo['NAME']).$scopePostfix;
 					if (!isset($controlsByScope[$scope]))
 						$controlsByScope[$scope] = array();
 					$controlsByScope[$scope][] = $controlID;
@@ -222,7 +222,9 @@ foreach($arResult['ITEMS'] as $item)
 			?><div class="crm-client-summary-wrapper">
 			<? if($imageUrl === '') { ?>
 				<div class="crm-client-photo-wrapper empty">
-					<div class="crm-avatar crm-avatar-user"></div>
+					<div class="ui-icon ui-icon-common-user crm-avatar crm-avatar-user">
+						<i></i>
+					</div>
 				</div>
 			<?
 				}
@@ -273,7 +275,7 @@ foreach($arResult['ITEMS'] as $item)
 				if($rootEntityCommTotal > 1)
 				{
 					?><div class="crm-multi-field-popup-wrapper">
-						<span id="<?=htmlspecialcharsbx($itemID)?>_show_<?=strtolower($colName)?>" class="crm-multi-field-popup-button"><?=GetMessage('CRM_DEDUPE_LIST_SHOW_MORE_MULTI_FIELD_VALUES')?> <?=($rootEntityCommTotal - 1)?></span>
+						<span id="<?=htmlspecialcharsbx($itemID)?>_show_<?= mb_strtolower($colName)?>" class="crm-multi-field-popup-button"><?=GetMessage('CRM_DEDUPE_LIST_SHOW_MORE_MULTI_FIELD_VALUES')?> <?=($rootEntityCommTotal - 1)?></span>
 					</div><?
 				}
 				?></div><?
@@ -303,7 +305,7 @@ foreach($arResult['ITEMS'] as $item)
 				if($rootEntityFieldTotal > 1)
 				{
 					?><div class="crm-multi-field-popup-wrapper">
-					<span id="<?=htmlspecialcharsbx($itemID)?>_show_<?=strtolower($colName)?>" class="crm-multi-field-popup-button"><?=GetMessage('CRM_DEDUPE_LIST_SHOW_MORE_MULTI_FIELD_VALUES')?> <?=($rootEntityFieldTotal - 1)?></span>
+					<span id="<?=htmlspecialcharsbx($itemID)?>_show_<?= mb_strtolower($colName)?>" class="crm-multi-field-popup-button"><?=GetMessage('CRM_DEDUPE_LIST_SHOW_MORE_MULTI_FIELD_VALUES')?> <?=($rootEntityFieldTotal - 1)?></span>
 					</div><?
 				}
 				?></div><?
@@ -468,8 +470,8 @@ if($arResult['NEED_FOR_REBUILD_DUP_INDEX'])
 		{
 			BX.CrmDuplicateManager.messages =
 			{
-				"rebuild<?=ucfirst(strtolower($entityTypeName))?>IndexDlgTitle": "<?=GetMessageJS("CRM_DEDUPE_LIST_{$entityTypeName}_REBUILD_DUP_INDEX_DLG_TITLE")?>",
-				"rebuild<?=ucfirst(strtolower($entityTypeName))?>IndexDlgSummary": "<?=GetMessageJS("CRM_DEDUPE_LIST_{$entityTypeName}_REBUILD_DUP_INDEX_DLG_SUMMARY")?>"
+				"rebuild<?=ucfirst(mb_strtolower($entityTypeName))?>IndexDlgTitle": "<?=GetMessageJS("CRM_DEDUPE_LIST_{$entityTypeName}_REBUILD_DUP_INDEX_DLG_TITLE")?>",
+				"rebuild<?=ucfirst(mb_strtolower($entityTypeName))?>IndexDlgSummary": "<?=GetMessageJS("CRM_DEDUPE_LIST_{$entityTypeName}_REBUILD_DUP_INDEX_DLG_SUMMARY")?>"
 			};
 			BX.CrmLongRunningProcessDialog.messages =
 			{
@@ -484,7 +486,7 @@ if($arResult['NEED_FOR_REBUILD_DUP_INDEX'])
 				"mgr",
 				{
 					entityTypeName: "<?=CUtil::JSEscape($entityTypeName)?>",
-					serviceUrl: "<?=SITE_DIR?>bitrix/components/bitrix/crm.<?=strtolower($entityTypeName)?>.list/list.ajax.php?&<?=bitrix_sessid_get()?>"
+					serviceUrl: "<?=SITE_DIR?>bitrix/components/bitrix/crm.<?=mb_strtolower($entityTypeName)?>.list/list.ajax.php?&<?=bitrix_sessid_get()?>"
 				}
 			);
 			BX.addCustomEvent(

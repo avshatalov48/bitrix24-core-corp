@@ -12,6 +12,7 @@ if($arResult['IFRAME'])
 {
 	$APPLICATION->RestartBuffer();
 	\CJSCore::init();
+	\Bitrix\Main\UI\Extension::load("ui.hint");
 	?><!DOCTYPE html>
 	<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<?=LANGUAGE_ID ?>" lang="<?=LANGUAGE_ID ?>">
 	<head>
@@ -28,7 +29,7 @@ if($arResult['IFRAME'])
 		Bitrix\Main\Page\Asset::getInstance()->setJsToBody(true);
 		Bitrix\Main\Page\Asset::getInstance()->addString('
 			<script>
-				(function() {
+				BX.ready(function() {
 					var slider = top.BX && top.BX.SidePanel && top.BX.SidePanel.Instance.getSliderByWindow(window);
 					if(!slider)
 					{
@@ -41,7 +42,7 @@ if($arResult['IFRAME'])
 				    {
 				        slider.setPrintable(true);
 				    }
-				})();
+				});
 			</script>
 		', false, \Bitrix\Main\Page\AssetLocation::AFTER_CSS);
 		?>

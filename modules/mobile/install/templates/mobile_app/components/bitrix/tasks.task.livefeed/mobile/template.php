@@ -32,7 +32,7 @@ if ($arParams["TYPE"] !== 'comment')
 			<div class="lenta-info-block-description-text"><?=htmlspecialcharsbx($arParams["~MESSAGE_24_2"])?></div>
 		</div><?
 	}
-	elseif (strlen($arParams["MESSAGE_24_2"]) > 0 && strlen($arParams["CHANGES_24"]) > 0)
+	elseif ($arParams["MESSAGE_24_2"] <> '' && $arParams["CHANGES_24"] <> '')
 	{
 		?><div class="lenta-info-block-description">
 			<div class="lenta-info-block-description-title"><?=htmlspecialcharsbx($arParams["MESSAGE_24_2"])?>:</div>

@@ -505,7 +505,7 @@ class CDataInstallWizardStep extends CWizardStep
 				<div id="error_notice">
 					<div class="inst-note-block inst-note-block-red">
 						<div class="inst-note-block-icon"></div>
-						<div class="inst-note-block-label">'.GetMessage("INST_ERROR_OCCURED").'</div><br />
+						<div class="inst-note-block-label">'.GetMessage("INST_ERROR_OCCURED").'</div><br style="clear:both" />
 						<div class="inst-note-block-text">'.GetMessage("INST_ERROR_NOTICE").'<div id="error_text"></div></div>
 					</div>
 				</div>

@@ -30,10 +30,10 @@ $arParams['FORM_NAME'] = preg_match('/^[a-zA-Z0-9_]+$/', $arParams['FORM_NAME'])
 $arParams['INPUT_NAME'] = preg_match('/^[a-zA-Z0-9_]+$/', $arParams['INPUT_NAME']) ? $arParams['INPUT_NAME'] : false;
 if (empty($arParams['NAME']))
 {
-	$arParams['NAME'] = strtolower($arParams['INPUT_NAME']);
+	$arParams['NAME'] = mb_strtolower($arParams['INPUT_NAME']);
 }
 $arParams['SITE_ID'] = preg_match('/^[a-zA-Z0-9_]+$/', $arParams['SITE_ID']) ? $arParams['SITE_ID'] : false;
-if(strlen($arParams['SITE_ID']) <= 0 || strlen($arParams['SITE_ID']) > 2)
+if($arParams['SITE_ID'] == '' || mb_strlen($arParams['SITE_ID']) > 2)
 	$arParams['SITE_ID'] = SITE_ID;
 $arParams['IS_EXTRANET'] = $arParams['IS_EXTRANET'] == 'Y' ? 'Y' : 'N'; // whether to show input field.
 

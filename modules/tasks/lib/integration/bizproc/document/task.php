@@ -294,24 +294,6 @@ class Task implements \IBPWorkflowDocument
 				'Name' => Loc::getMessage('TASKS_BP_DOCUMENT_PARENT_ID'),
 				'Type' => 'int',
 			],
-			//'MULTITASK' => [
-			//	'Name' => Loc::getMessage('TASKS_BP_DOCUMENT_MULTITASK'),
-			//	'Type' => 'bool',
-			//],
-			//'SITE_ID' => [
-			//	'Name' => Loc::getMessage('TASKS_BP_DOCUMENT_SITE_ID'),
-			//	'Type' => 'string',
-			//],
-			'DECLINE_REASON' => [
-				'Name' => Loc::getMessage('TASKS_BP_DOCUMENT_DECLINE_REASON'),
-				'Type' => 'string',
-				'Editable' => true
-			],
-			//'STAGE_ID' => [
-			//	'Name' => Loc::getMessage('TASKS_BP_DOCUMENT_STAGE_ID'),
-			//	'Type' => 'int',
-			//	'Editable' => true
-			//],
 			'ACCOMPLICES' => [
 				'Name' => Loc::getMessage('TASKS_BP_DOCUMENT_ACCOMPLICES'),
 				'Type' => 'user',
@@ -425,7 +407,6 @@ class Task implements \IBPWorkflowDocument
 			//string
 			'TITLE',
 			'DESCRIPTION',
-			'DECLINE_REASON',
 			'TAGS',
 
 			//int
@@ -576,12 +557,12 @@ class Task implements \IBPWorkflowDocument
 
 	public static function resolvePersonId($documentType)
 	{
-		return (int) substr($documentType, strlen('TASK_USER_'));
+		return (int)mb_substr($documentType, mb_strlen('TASK_USER_'));
 	}
 
 	public static function isPersonalTask($documentType)
 	{
-		return (strpos($documentType, 'TASK_USER_') === 0);
+		return (mb_strpos($documentType, 'TASK_USER_') === 0);
 	}
 
 	public static function resolvePlanTaskType($userId)
@@ -591,12 +572,12 @@ class Task implements \IBPWorkflowDocument
 
 	public static function resolvePlanId($documentType)
 	{
-		return (int) substr($documentType, strlen('TASK_PLAN_'));
+		return (int)mb_substr($documentType, mb_strlen('TASK_PLAN_'));
 	}
 
 	public static function isPlanTask($documentType)
 	{
-		return (strpos($documentType, 'TASK_PLAN_') === 0);
+		return (mb_strpos($documentType, 'TASK_PLAN_') === 0);
 	}
 
 	public static function resolveProjectTaskType($projectId)
@@ -606,12 +587,12 @@ class Task implements \IBPWorkflowDocument
 
 	public static function resolveProjectId($documentType)
 	{
-		return (int) substr($documentType, strlen('TASK_PROJECT_'));
+		return (int)mb_substr($documentType, mb_strlen('TASK_PROJECT_'));
 	}
 
 	public static function isProjectTask($documentType)
 	{
-		return (strpos($documentType, 'TASK_PROJECT_') === 0);
+		return (mb_strpos($documentType, 'TASK_PROJECT_') === 0);
 	}
 
 	public static function getDocumentName($documentId)
@@ -626,7 +607,7 @@ class Task implements \IBPWorkflowDocument
 
 	public static function createAutomationTarget($documentType)
 	{
-		if (strpos($documentType, 'TASK_') === 0)
+		if (mb_strpos($documentType, 'TASK_') === 0)
 		{
 			return Factory::createTarget($documentType);
 		}

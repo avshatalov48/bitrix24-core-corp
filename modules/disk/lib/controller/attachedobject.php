@@ -117,6 +117,9 @@ final class AttachedObject extends Engine\Controller
 			return;
 		}
 
-		return Response\BFile::createByFileId($file->getFileId(), $attachedObject->getName());
+		$response = Response\BFile::createByFileId($file->getFileId(), $attachedObject->getName());
+		$response->setCacheTime(Disk\Configuration::DEFAULT_CACHE_TIME);
+
+		return $response;
 	}
 }

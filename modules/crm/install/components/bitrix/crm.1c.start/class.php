@@ -83,7 +83,7 @@ class OnecStartComponent extends CBitrixComponent
 
 			foreach ($arUrlTemplates as $url => $value)
 			{
-				$key = 'PATH_TO_ONEC_'.strtoupper($url);
+				$key = 'PATH_TO_ONEC_'.mb_strtoupper($url);
 				$arResult[$key] = isset($this->arParams[$key][0]) ? $this->arParams[$key] : $this->arParams['SEF_FOLDER'].$value;
 			}
 		}
@@ -134,6 +134,8 @@ class OnecStartComponent extends CBitrixComponent
 				break;
 			case 'index':
 				$this->arResult['TILE_ID'] = "crm-onec";
+				$this->arResult['PLACEMENT_ITEMS_ID'] = "crm-onec-placement";
+				$this->arResult['PLACEMENT_ITEMS'] = [];
 
 				$appSettings = COption::GetOptionString("rest", "options_".\Bitrix\Rest\AppTable::getByClientId(\CRestUtil::BITRIX_1C_APP_CODE)['CLIENT_ID'], "");
 				if (!empty($appSettings))
@@ -190,7 +192,7 @@ class OnecStartComponent extends CBitrixComponent
 					if ($license_name = COption::GetOptionString("main", "~controller_group_name"))
 					{
 						preg_match("/(project|tf)$/is", $license_name, $matches);
-						if (strlen($matches[0]) > 0)
+						if ($matches[0] <> '')
 							$exch1cEnabled = false;
 					}
 				}
@@ -216,6 +218,30 @@ class OnecStartComponent extends CBitrixComponent
 							"url" => "/onec/doc/"
 						)
 					);
+
+					if(\Bitrix\Main\Loader::includeModule('rest'))
+					{
+						$placement = \Bitrix\Crm\Integration\Rest\AppPlacement::ONEC_PAGE;
+						$placementHandlerList = \Bitrix\Rest\PlacementTable::getHandlersList($placement);
+
+						if(count($placementHandlerList) > 0)
+						{
+							foreach($placementHandlerList as $placementHandler)
+							{
+								$this->arResult['PLACEMENT_ITEMS'][] = [
+									'ID' => $placementHandler['ID'],
+									'NAME' => $placementHandler['TITLE'] <> ''
+										? $placementHandler['TITLE']
+										: $placementHandler['APP_NAME'],
+									'CODE' => $placement,
+									'APP_ID' => $placementHandler['APP_ID'],
+									'PLACEMENT_ID' => $placementHandler['ID'],
+									'OPTIONS' => []
+
+								];
+							}
+						}
+					}
 				}
 
 				$this->arResult['SYNCHRO_TILE_ID'] = "crm-onec-synchro";

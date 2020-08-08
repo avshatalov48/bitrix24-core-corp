@@ -51,13 +51,13 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'
 
 	$mailBoxID = isset($_POST['MAILBOX_ID']) ? intval($_POST['MAILBOX_ID']) : -1;
 	$mailFilterID = intval(COption::GetOptionString('crm', 'mail_filter', 0));
-	$email = strtolower(isset($_POST['POP3_EMAIL']) ? $_POST['POP3_EMAIL'] : COption::GetOptionString('crm', 'mail', ''));
+	$email = mb_strtolower(isset($_POST['POP3_EMAIL'])? $_POST['POP3_EMAIL'] : COption::GetOptionString('crm', 'mail', ''));
 
 	$emailLocalPart = isset($_POST['SMTP_EMAIL']) ? $_POST['SMTP_EMAIL'] : '';
 	if($emailLocalPart === '')
 	{
-		$atpos = strpos($email, '@');
-		$emailLocalPart = $atpos > 0 ? substr($email, 0, $atpos) : $email;
+		$atpos = mb_strpos($email, '@');
+		$emailLocalPart = $atpos > 0? mb_substr($email, 0, $atpos) : $email;
 	}
 
 	$arMailBox = array();
@@ -297,7 +297,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'
 	$arSettings['EMAIL_LOCAL_PART'] = $emailLocalPart;
 	$arSettings['MAILBOX_ID'] = $mailBoxID;
 
-	if (strlen($errorMsg) > 0)
+	if ($errorMsg <> '')
 	{
 		ShowError($errorMsg);
 	}
@@ -305,12 +305,12 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'
 	{
 		COption::SetOptionString('crm', 'mail_box', $mailBoxID);
 		COption::SetOptionString('crm', 'mail_filter', $mailFilterID);
-		COption::SetOptionString('crm', 'mail', strtolower($email));
+		COption::SetOptionString('crm', 'mail', mb_strtolower($email));
 
 		$contactResponsibleID = isset($_POST['CONTACT_RESPONSIBLE_ID']) ? intval($_POST['CONTACT_RESPONSIBLE_ID']) : 0;
 		COption::SetOptionString('crm', 'email_contact_responsible_id', $contactResponsibleID);
 
-		$createLead = isset($_POST['CREATE_LEAD_FOR_NEW_ADDRESSER']) ? strtoupper($_POST['CREATE_LEAD_FOR_NEW_ADDRESSER']) : 'N';
+		$createLead = isset($_POST['CREATE_LEAD_FOR_NEW_ADDRESSER'])? mb_strtoupper($_POST['CREATE_LEAD_FOR_NEW_ADDRESSER']) : 'N';
 		if($createLead !== 'Y' && $createLead !== 'N')
 		{
 			$createLead = 'N';
@@ -341,13 +341,13 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'
 // Settings initialization -->
 if(!isset($arSettings['EMAIL']))
 {
-	$arSettings['EMAIL'] = strtolower(COption::GetOptionString('crm', 'mail', ''));
+	$arSettings['EMAIL'] = mb_strtolower(COption::GetOptionString('crm', 'mail', ''));
 	if($arSettings['EMAIL'] !== '')
 	{
-		$atpos = strpos($arSettings['EMAIL'], '@');
+		$atpos = mb_strpos($arSettings['EMAIL'], '@');
 		if ($atpos > 0)
 		{
-			$arSettings['EMAIL_LOCAL_PART'] = substr($arSettings['EMAIL'], 0, $atpos);
+			$arSettings['EMAIL_LOCAL_PART'] = mb_substr($arSettings['EMAIL'], 0, $atpos);
 		}
 	}
 }
@@ -433,7 +433,7 @@ $arSettings['CONTACT_RESPONSIBLE_ID'] = intval(COption::GetOptionString('crm', '
 $arSettings['CONTACT_RESPONSIBLE_NAME'] = $arSettings['CONTACT_RESPONSIBLE_ID'] > 0
 	? CCrmViewHelper::GetFormattedUserName($arSettings['CONTACT_RESPONSIBLE_ID']) : '';
 
-$arSettings['CREATE_LEAD_FOR_NEW_ADDRESSER'] = strtoupper(COption::GetOptionString('crm', 'email_create_lead_for_new_addresser', 'Y'));
+$arSettings['CREATE_LEAD_FOR_NEW_ADDRESSER'] = mb_strtoupper(COption::GetOptionString('crm', 'email_create_lead_for_new_addresser', 'Y'));
 $arSettings['LEAD_RESPONSIBLE_ID'] = intval(COption::GetOptionString('crm', 'email_lead_responsible_id', 0));
 $arSettings['LEAD_RESPONSIBLE_NAME'] = $arSettings['LEAD_RESPONSIBLE_ID'] > 0
 	? CCrmViewHelper::GetFormattedUserName($arSettings['LEAD_RESPONSIBLE_ID']) : '';

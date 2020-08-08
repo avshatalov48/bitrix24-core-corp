@@ -1,8 +1,13 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-use \Bitrix\Bitrix24\Feature;
+use Bitrix\Bitrix24\Feature;
+use Bitrix\Main\Localization\Loc;
+
+\CJsCore::init(array('access'));
+
+\Bitrix\Main\UI\Extension::load(['ui.hint', 'ui.dialogs.messagebox']);
+
 ?>
-<?CJSCore::Init(array("access"));?>
 
 <?if(isset($_GET['success'])): ?>
 	<div class="content-edit-form-notice-successfully">
@@ -59,19 +64,32 @@ use \Bitrix\Bitrix24\Feature;
 		</tr>
 		<?endif?>
 
-		<?if (
-			$arResult["IS_BITRIX24"] && \Bitrix\Bitrix24\Feature::isFeatureEnabled("remove_logo24")
-			|| !$arResult["IS_BITRIX24"]
-		):
+		<?
 			$logo24show = COption::GetOptionString("bitrix24", "logo24show", "Y");
+			if ($arResult["IS_BITRIX24"] && !Feature::isFeatureEnabled("remove_logo24"))
+			{
+				$logo24show = "Y";
+			}
 		?>
 		<tr>
-			<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="logo24"><?=GetMessage('CONFIG_LOGO_24')?></label></td>
-			<td class="content-edit-form-field-input"><input type="checkbox" id="logo24" name="logo24" <?if ($logo24show == "" || $logo24show == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
+			<td class="content-edit-form-field-name content-edit-form-field-name-left">
+				<label for="logo24"><?=GetMessage('CONFIG_LOGO_24')?></label>
+				<?if ($arResult["IS_BITRIX24"] && !Feature::isFeatureEnabled("remove_logo24")):?>
+				<span class="tariff-lock" style="padding-left: 9px" onclick="BX.UI.InfoHelper.show('limit_admin_logo24');"></span>
+				<?endif?>
+			</td>
+			<td class="content-edit-form-field-input">
+				<input
+					type="checkbox"
+					id="logo24"
+					name="logo24"
+					<?if ($logo24show == "" || $logo24show == "Y"):?>checked<?endif?>
+					class="content-edit-form-field-input-selector"
+					<?if ($arResult["IS_BITRIX24"] && !Feature::isFeatureEnabled("remove_logo24")):?>disabled<?endif?>
+				/>
+			</td>
 			<td class="content-edit-form-field-error"></td>
 		</tr>
-		<?endif?>
-
 
 		<tr data-field-id="congig_date">
 			<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_DATE_FORMAT')?></td>
@@ -180,6 +198,32 @@ use \Bitrix\Bitrix24\Feature;
 			</td>
 		</tr>
 
+		<?if($arResult['SHOW_ADDRESS_FORMAT']):?>
+			<tr>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_LOCATION_ADDRESS_FORMAT')?></td>
+				<td class="content-edit-form-field-input">
+					<select id="location_address_format_select" name="address_format_code">
+					<?foreach($arResult['LOCATION_ADDRESS_FORMAT_LIST'] as $code => $name):?>
+						<option
+								value="<?=htmlspecialcharsbx($code)?>"
+								<?=$arResult['LOCATION_ADDRESS_FORMAT_CODE'] === $code ? ' selected' : ''?>>
+								<?=htmlspecialcharsbx($name)?>
+						</option>
+					<?endforeach;?>
+					</select>
+
+					<div class="config_notify_message" id="location_address_format_description">
+						<?=$arResult['LOCATION_ADDRESS_FORMAT_DESCRIPTION']?>
+					</div>
+
+				</td>
+			</tr>
+			<tr>
+				<td colspan="3">
+				</td>
+			</tr>
+		<?endif;?>
+
 		<?if ($arResult["IS_BITRIX24"]):?>
 	<!-- Organization type-->
 		<tr>
@@ -250,27 +294,42 @@ use \Bitrix\Bitrix24\Feature;
 		<?endif?>
 
 		<tr>
-			<td class="content-edit-form-field-name content-edit-form-field-name-left">
+			<td class="content-edit-form-field-name content-edit-form-field-name-left" style="padding-top: 10px">
 				<label for="disk_version_limit_per_file"><?=GetMessage('CONFIG_DISK_VERSION_LIMIT_PER_FILE')?></label>
-				<?if ($arResult["IS_BITRIX24"] && !Feature::isFeatureEnabled("disk_version_limit_per_file")):?>
+				<?if ($arResult["IS_BITRIX24"])
+				{
+					if (!Feature::isFeatureEnabled("disk_version_limit_per_file"))
+					{
+						CBitrix24::initLicenseInfoPopupJS("disk_version_limit_per_file");
+						?>
+						<img src="<?=$this->GetFolder();?>/images/lock.png" data-role="config-disk-version-limit-per-file" style="position: relative;bottom: -1px; margin-left: 5px;"/>
+						<script>
+							BX.ready(function(){
+								var lock4 = document.querySelector("[data-role='config-disk-version-limit-per-file']");
+								if (lock4)
+								{
+									BX.bind(lock4, "click", function(){
+										B24.licenseInfoPopup.show('disk_version_limit_per_file', '<?=GetMessageJS("CONFIG_DISK_LIMIT_LOCK_POPUP_TITLE")?>',
+											'<?=GetMessageJS("CONFIG_DISK_LIMIT_HISTORY_LOCK_POPUP_TEXT")?>');
+									});
+								}
+							});
+						</script>
 					<?
-					CBitrix24::initLicenseInfoPopupJS("disk_version_limit_per_file");
-					?>
-					<img src="<?=$this->GetFolder();?>/images/lock.png" data-role="config-disk-version-limit-per-file" style="position: relative;bottom: -1px; margin-left: 5px;"/>
-					<script>
-						BX.ready(function(){
-							var lock4 = document.querySelector("[data-role='config-disk-version-limit-per-file']");
-							if (lock4)
-							{
-								BX.bind(lock4, "click", function(){
-									B24.licenseInfoPopup.show('disk_version_limit_per_file', '<?=GetMessageJS("CONFIG_DISK_LIMIT_LOCK_POPUP_TITLE")?>',
-										'<?=GetMessageJS("CONFIG_DISK_LIMIT_HISTORY_LOCK_POPUP_TEXT")?>');
-								});
-							}
-						});
-					</script>
-				<?endif?>
+					}
 
+					$maxTimeInDocumentHistory = Feature::getVariable('disk_file_history_ttl');
+					?>
+					<br>
+					<span><?=Loc::getMessage("CONFIG_LIMIT_MAX_TIME_IN_DOCUMENT_HISTORY", [
+						"#NUM#" => $maxTimeInDocumentHistory
+					])?></span>
+					<a href="javascript:void(0)" onclick="BX.UI.InfoHelper.show('limit_max_time_in_document_history')">
+						<?=Loc::getMessage("CONFIG_MORE")?>
+					</a>
+				<?
+				}
+				?>
 			</td>
 			<td class="content-edit-form-field-input">
 				<select name="disk_version_limit_per_file" <?if ($arResult["IS_BITRIX24"] && !Feature::isFeatureEnabled("disk_version_limit_per_file")) echo "disabled";?>>
@@ -487,6 +546,14 @@ use \Bitrix\Bitrix24\Feature;
 			<td class="content-edit-form-field-error"></td>
 		</tr>
 
+		<?if ($arResult["IS_BITRIX24"]):?>
+			<tr>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="general_chat_message_admin_rights"><?=GetMessage('CONFIG_IM_GENERSL_CHAT_MESSAGE_ADMIN_RIGHTS')?></label></td>
+				<td class="content-edit-form-field-input"><input type="checkbox" name="general_chat_message_admin_rights" id="general_chat_message_admin_rights" <?if (COption::GetOptionString("im", "general_chat_message_admin_rights", true)):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
+				<td class="content-edit-form-field-error"></td>
+			</tr>
+		<?endif?>
+
 		<tr>
 			<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="url_preview_enable"><?=GetMessage('CONFIG_URL_PREVIEW_ENABLE')?></label></td>
 			<td class="content-edit-form-field-input"><input type="checkbox" name="url_preview_enable" id="url_preview_enable" <?if (COption::GetOptionString("main", "url_preview_enable", "N") == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
@@ -643,6 +710,45 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 			<td class="content-edit-form-field-error"></td>
 		</tr>
 
+		<tr>
+			<td class="content-edit-form-field-name content-edit-form-field-name-left">
+				<label for="collect_geo_data"><?=Loc::getMessage('CONFIG_COLLECT_GEO_DATA') ?></label>
+			</td>
+			<td class="content-edit-form-field-input">
+				<input type="checkbox" name="collect_geo_data" id="collect_geo_data" value="Y"
+					onclick="BX.Bitrix24.Configs.Functions.geoDataSwitch(this); "
+					<? if (\Bitrix\Main\Config\Option::get('main', 'collect_geo_data', 'N') == 'Y'): ?> checked<? endif ?>
+					class="content-edit-form-field-input-selector">
+			</td>
+			<td class="content-edit-form-field-error"></td>
+		</tr>
+
+		<tr>
+			<td class="content-edit-form-field-name content-edit-form-field-name-left">
+				<label for="track_outgoing_emails_read"><?=Loc::getMessage('CONFIG_TRACK_OUTGOING_EMAILS_READ') ?></label>
+				<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage('CONFIG_TRACK_OUTGOING_EMAILS_READ_HINT')) ?>"></span>
+			</td>
+			<td class="content-edit-form-field-input">
+				<input type="checkbox" name="track_outgoing_emails_read" id="track_outgoing_emails_read" value="Y"
+					<? if (\Bitrix\Main\Config\Option::get('main', 'track_outgoing_emails_read', 'Y') == 'Y'): ?> checked<? endif ?>
+					class="content-edit-form-field-input-selector">
+			</td>
+			<td class="content-edit-form-field-error"></td>
+		</tr>
+
+		<tr>
+			<td class="content-edit-form-field-name content-edit-form-field-name-left">
+				<label for="track_outgoing_emails_click"><?=Loc::getMessage('CONFIG_TRACK_OUTGOING_EMAILS_CLICK') ?></label>
+				<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage('CONFIG_TRACK_OUTGOING_EMAILS_CLICK_HINT')) ?>"></span>
+			</td>
+			<td class="content-edit-form-field-input">
+				<input type="checkbox" name="track_outgoing_emails_click" id="track_outgoing_emails_click" value="Y"
+					<? if (\Bitrix\Main\Config\Option::get('main', 'track_outgoing_emails_click', 'Y') == 'Y'): ?> checked<? endif ?>
+					class="content-edit-form-field-input-selector">
+			</td>
+			<td class="content-edit-form-field-error"></td>
+		</tr>
+
 	<!-- GDPR for Europe-->
 		<?
 		if ($arResult["IS_BITRIX24"])
@@ -750,6 +856,10 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 		?>
 	<!-- //GDPR for Europe-->
 
+	<?
+	if ($arResult["SECURITY_MODULE"])
+	{
+	?>
 	<!-- secutity -->
 		<tr>
 			<td class="content-edit-form-header" colspan="3" >
@@ -772,6 +882,18 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 			</td>
 			<td class="content-edit-form-field-error"></td>
 		</tr>
+		<?
+		if ($arResult["IM_MODULE"])
+		{
+		?>
+		<tr>
+			<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="send_otp_push"><?echo GetMessage("CONFIG_SEND_OTP_PUSH")?></label></td>
+			<td class="content-edit-form-field-input"><input type="checkbox" name="send_otp_push" id="send_otp_push" <?if (COption::GetOptionString("intranet", "send_otp_push", "Y") <> "N"):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
+			<td class="content-edit-form-field-error"></td>
+		</tr>
+		<?
+		}
+		?>
 		<tr>
 			<td colspan="3">
 				<div class="config_notify_message" style="margin: 10px 20px 10px 20px">
@@ -785,8 +907,9 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 				</div>
 			</td>
 		</tr>
-
 	<?
+	}
+
 	if ($arResult["IS_BITRIX24"])
 	{
 	?>
@@ -822,23 +945,23 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 		</tr>
 	<!--ip -->
 		<?
+		$arCurIpRights = $arResult["IP_RIGHTS"];
+		if (!is_array($arCurIpRights))
+			$arCurIpRights = array();
+		$access = new CAccess();
+		$arNames = $access->GetNames(array_keys($arCurIpRights));
+		?>
+		<tr>
+			<td class="content-edit-form-header " colspan="3" >
+				<div class="content-edit-form-header-wrap content-edit-form-header-wrap-blue"><?=GetMessage('CONFIG_IP_TITLE')?></div>
+			</td>
+		</tr>
+		<?
 		if (Feature::isFeatureEnabled("ip_access_rights"))
 		{
-			$arCurIpRights = $arResult["IP_RIGHTS"];
-			if (!is_array($arCurIpRights))
-				$arCurIpRights = array();
-			$access = new CAccess();
-			$arNames = $access->GetNames(array_keys($arCurIpRights));
-			?>
-			<tr>
-				<td class="content-edit-form-header " colspan="3" >
-					<div class="content-edit-form-header-wrap content-edit-form-header-wrap-blue"><?=GetMessage('CONFIG_IP_TITLE')?></div>
-				</td>
-			</tr>
-			<?
 			foreach($arCurIpRights as $right => $arIps)
 			{
-			?>
+				?>
 				<tr data-bx-right="<?=$right?>">
 					<td class="content-edit-form-field-name">
 						<?=(!empty($arNames[$right]["provider"]) ? $arNames[$right]["provider"].": " : "").$arNames[$right]["name"]?>
@@ -856,18 +979,30 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 						</div>
 					</td>
 				</tr>
-			<?
+				<?
 			}
-			?>
-			<tr id="ip_add_right_button">
-				<td class="content-edit-form-field-name content-edit-form-field-name-left"></td>
-				<td class="content-edit-form-field-input" colspan="2">
-					<a href="javascript:void(0)" class="bx-action-href" onclick="B24ConfigsIpObj.ShowIpAccessPopup(B24ConfigsIpObj.arCurIpRights);"><?=GetMessage("CONFIG_TOALL_RIGHTS_ADD")?></a>
-				</td>
-			</tr>
-		<?
 		}
 		?>
+		<tr id="ip_add_right_button">
+			<td class="content-edit-form-field-name content-edit-form-field-name-left"></td>
+			<td class="content-edit-form-field-input" colspan="2">
+				<a href="javascript:void(0)" class="bx-action-href" data-role="ip-add-button"><?
+					echo GetMessage("CONFIG_TOALL_RIGHTS_ADD");
+					if (!Feature::isFeatureEnabled("ip_access_rights")):
+						?><span class="tariff-lock" style="padding-left: 9px"></span><?
+					endif;
+				?></a>
+			</td>
+		</tr>
+
+		<tr>
+			<td colspan="3">
+				<div class="config_notify_message" style="margin: 10px 20px 10px 20px">
+					<?=Loc::getMessage("CONFIG_IP_HELP_TEXT2")?>
+				</div>
+			</td>
+		</tr>
+
 		<?if (LANGUAGE_ID == "ru"):?>
 		<!-- marketplace -->
 		<tr>
@@ -919,14 +1054,23 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 			</td>
 		</tr>
 		<tr>
-			<td class="content-edit-form-field-name" style="width:370px; padding-right:30px"><?=GetMessage('CONFIG_NAME_GOOGLE_API_KEY_FIELD')?></td>
+			<td class="content-edit-form-field-name" style="width:370px; padding-right:30px"><?=GetMessage('CONFIG_NAME_GOOGLE_API_KEY_FIELD2')?></td>
 			<td class="content-edit-form-field-input" colspan="2">
 				<a name="google_api_key"></a>
 				<input class="content-edit-form-field-input-text" name="google_api_key" value="<?=\Bitrix\Main\Text\HtmlFilter::encode($arResult['GOOGLE_API_KEY'])?>">
 			</td>
 		</tr>
+		<?if($arResult['SHOW_GOOGLE_API_KEY_FIELD_BACKEND']):?>
+			<tr>
+				<td class="content-edit-form-field-name" style="width:370px; padding-right:30px"><?=GetMessage('CONFIG_NAME_GOOGLE_API_KEY_FIELD_BACKEND')?></td>
+				<td class="content-edit-form-field-input" colspan="2">
+					<a name="google_api_key_backend"></a>
+					<input class="content-edit-form-field-input-text" name="google_api_key_backend" value="<?=\Bitrix\Main\Text\HtmlFilter::encode($arResult['GOOGLE_API_KEY_BACK'])?>">
+				</td>
+			</tr>
+		<?endif;?>
 <?
-		if(strlen($arResult['GOOGLE_API_KEY_HOST']) > 0 && strlen($arResult['GOOGLE_API_KEY']) > 0):
+		if($arResult['GOOGLE_API_KEY_HOST'] <> '' && $arResult['GOOGLE_API_KEY'] <> ''):
 ?>
 			<tr>
 				<td colspan="3">
@@ -967,10 +1111,15 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 <br/><br/><br/><br/>
 <!-- logo -->
 <?
-if ($arResult["IS_BITRIX24"] && Feature::isFeatureEnabled("set_logo") || !$arResult["IS_BITRIX24"])
+$clientLogoID = "";
+$clientLogoRetinaID = "";
+$isLogoFeatureAvailable = $arResult["IS_BITRIX24"] && Feature::isFeatureEnabled("set_logo") || !$arResult["IS_BITRIX24"];
+
+if ($isLogoFeatureAvailable)
 {
 	$clientLogoID = COption::GetOptionInt("bitrix24", "client_logo", "");
 	$clientLogoRetinaID = COption::GetOptionInt("bitrix24", "client_logo_retina", "");
+}
 ?>
 <table id="content-edit-form-config" class="content-edit-form" cellspacing="0" cellpadding="0">
 	<tr>
@@ -993,9 +1142,14 @@ if ($arResult["IS_BITRIX24"] && Feature::isFeatureEnabled("set_logo") || !$arRes
 				<?=bitrix_sessid_post();?>
 				<div>
 					<label for="clientLogo" class="config-webform-field-upload" style="margin-top:10px;vertical-align: middle;" onmouseup="BX.removeClass(this,'content-edit-form-button-press')" onmousedown="BX.addClass(this, 'content-edit-form-button-press')">
-						<span class=""><span class="content-edit-form-button-left"></span><span class="content-edit-form-button-text"><?=GetMessage('CONFIG_ADD_LOGO_BUTTON')?></span><span class="content-edit-form-button-right"></span></span>
-						<input type="file" name="client_logo" id="clientLogo" value=""/>
+						<span class="ui-btn ui-btn-light-border <?=($isLogoFeatureAvailable ? "" : "ui-btn-disabled")?>"><?=GetMessage('CONFIG_ADD_LOGO_BUTTON')?></span>
+						<?if (!$isLogoFeatureAvailable): ?>
+							<span class="tariff-lock" style="padding-left: 9px" onclick="BX.UI.InfoHelper.show('limit_admin_logo');"></span>
+						<?else:?>
+							<input type="file" name="client_logo" id="clientLogo" value=""/>
+						<?endif?>
 					</label>
+
 					<br/><br/>
 					<div id="configWaitLogo" style="display:none;"><img src="<?=$this->GetFolder();?>/images/wait.gif"/></div>
 
@@ -1021,8 +1175,12 @@ if ($arResult["IS_BITRIX24"] && Feature::isFeatureEnabled("set_logo") || !$arRes
 				<!-- retina -->
 				<div style="margin-top:20px">
 					<label for="clientLogoretina" class="config-webform-field-upload" style="margin-top:10px;vertical-align: middle;" onmouseup="BX.removeClass(this,'content-edit-form-button-press')" onmousedown="BX.addClass(this, 'content-edit-form-button-press')">
-						<span class=""><span class="content-edit-form-button-left"></span><span class="content-edit-form-button-text"><?=GetMessage('CONFIG_ADD_LOGO_BUTTON')?></span><span class="content-edit-form-button-right"></span></span>
-						<input type="file" name="client_logo_retina" id="clientLogoretina" value=""/>
+						<span class="ui-btn ui-btn-light-border <?=($isLogoFeatureAvailable ? "" : "ui-btn-disabled")?>"><?=GetMessage('CONFIG_ADD_LOGO_BUTTON')?></span>
+						<?if (!$isLogoFeatureAvailable): ?>
+							<span class="tariff-lock" style="padding-left: 9px" onclick="BX.UI.InfoHelper.show('limit_admin_logo');"></span>
+						<?else:?>
+							<input type="file" name="client_logo_retina" id="clientLogoretina" value=""/>
+						<?endif?>
 					</label>
 					<br/><br/>
 					<div id="configWaitLogoretina" style="display:none;"><img src="<?=$this->GetFolder();?>/images/wait.gif"/></div>
@@ -1039,9 +1197,6 @@ if ($arResult["IS_BITRIX24"] && Feature::isFeatureEnabled("set_logo") || !$arRes
 		</td>
 	</tr>
 </table>
-<?
-}
-?>
 
 <?
 if (isset($_GET["otp"]))
@@ -1105,18 +1260,39 @@ if (isset($_GET["otp"]))
 		LogoDeleteConfirm: '<?=GetMessageJS("CONFIG_ADD_LOGO_DELETE_CONFIRM")?>',
 		CONFIG_OTP_SECURITY_SWITCH_OFF_INFO: '<?=GetMessageJS("CONFIG_OTP_SECURITY_SWITCH_OFF_INFO")?>',
 		CONFIG_OTP_ADMIN_IS_REQUIRED_INFO: '<?=GetMessageJS("CONFIG_OTP_ADMIN_IS_REQUIRED_INFO")?>',
-		CONFIG_DISK_EXTENDED_FULLTEXT_INFO: "<?=GetMessageJS("CONFIG_DISK_EXTENDED_FULLTEXT_INFO")?>"
+		CONFIG_DISK_EXTENDED_FULLTEXT_INFO: "<?=GetMessageJS("CONFIG_DISK_EXTENDED_FULLTEXT_INFO")?>",
+		CONFIG_COLLECT_GEO_DATA: '<?=\CUtil::jsEscape(Loc::getMessage('CONFIG_COLLECT_GEO_DATA')) ?>',
+		CONFIG_COLLECT_GEO_DATA_CONFIRM: '<?=\CUtil::jsEscape(Loc::getMessage('CONFIG_COLLECT_GEO_DATA_CONFIRM')) ?>',
+		CONFIG_COLLECT_GEO_DATA_OK: '<?=\CUtil::jsEscape(Loc::getMessage('CONFIG_COLLECT_GEO_DATA_OK')) ?>'
 	});
 
 	var B24ConfigsLogo = new BX.Bitrix24.Configs.LogoClass("<?=CUtil::JSEscape(POST_FORM_ACTION_URI)?>");
 
 	BX.ready(function(){
 		BX.Bitrix24.Configs.Functions.init();
+
+		<?if($arResult['SHOW_ADDRESS_FORMAT']):?>
+			BX.Bitrix24.Configs.Functions.addressFormatList = <?=CUtil::PhpToJSObject($arResult['LOCATION_ADDRESS_FORMAT_DESCRIPTION_LIST'])?>;
+		<?endif;?>
+
+		<?if ($arResult["IS_BITRIX24"]):?>
+			var B24ConfigsIpObj = new BX.Bitrix24.Configs.IpSettingsClass(<?=CUtil::PhpToJSObject(array_keys($arCurIpRights))?>);
+			var ipAddButton = document.querySelector("[data-role='ip-add-button']");
+			if (BX.type.isDomNode(ipAddButton))
+			{
+				BX.bind(ipAddButton, "click", function(){
+					<?if (Feature::isFeatureEnabled("ip_access_rights")):?>
+						B24ConfigsIpObj.ShowIpAccessPopup(B24ConfigsIpObj.arCurIpRights);
+					<?else:?>
+						BX.UI.InfoHelper.show('limit_admin_ip');
+				<?endif?>
+				});
+			}
+		<?endif?>
 	});
 
-	<?if ($arResult["IS_BITRIX24"] && Feature::isFeatureEnabled("ip_access_rights")):?>
-	var B24ConfigsIpObj = new BX.Bitrix24.Configs.IpSettingsClass(<?=CUtil::PhpToJSObject(array_keys($arCurIpRights))?>);
-	<?endif?>
+	BX.UI.Hint.init(BX('configPostForm'));
+
 	<?if ($arResult['SHOW_RENAME_POPUP']):?>
 		BX.ready(function(){
 			if (typeof BX.Bitrix24.renamePortal != 'undefined')

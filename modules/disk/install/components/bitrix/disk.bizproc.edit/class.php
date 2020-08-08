@@ -63,7 +63,7 @@ class CDiskBizprocEditComponent extends BaseComponent implements SidePanelWrappa
 	protected function processBeforeAction($actionName)
 	{
 		parent::processBeforeAction($actionName);
-		if(strlen($this->arParams['STORAGE_ID']) <= 0)
+		if($this->arParams['STORAGE_ID'] == '')
 		{
 			ShowError(Loc::getMessage('ACCESS_DENIED').' '.Loc::getMessage('BIZPROC_WFEDIT_ERROR_TYPE'));
 			return false;
@@ -298,7 +298,7 @@ class CDiskBizprocEditComponent extends BaseComponent implements SidePanelWrappa
 			header("HTTP/1.1 200 OK");
 			header("Content-Type: application/force-download; name=\"bp-".$this->arResult['ID'].".bpt\"");
 			header("Content-Transfer-Encoding: binary");
-			header("Content-Length: ".(function_exists('mb_strlen')?mb_strlen($datum, 'ISO-8859-1'):strlen($datum)));
+			header("Content-Length: ".(function_exists('mb_strlen')? mb_strlen($datum, 'ISO-8859-1') : mb_strlen($datum)));
 			header("Content-Disposition: attachment; filename=\"bp-".$this->arResult['ID'].".bpt\"");
 			header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
 			header("Expires: 0");
@@ -346,7 +346,7 @@ class CDiskBizprocEditComponent extends BaseComponent implements SidePanelWrappa
 			{
 				$response = "
 					<script>
-						alert('".Loc::getMessage('BIZPROC_WFEDIT_IMPORT_ERROR').(strlen($error) > 0 ? ': '.$error : '' )."');
+						alert('".Loc::getMessage('BIZPROC_WFEDIT_IMPORT_ERROR').($error <> '' ? ': '.$error : '' )."');
 						window.location = '".str_replace('#ID#', $this->arResult['ID'], $this->arResult['EDIT_PAGE_TEMPLATE'])."';
 					</script>
 				";

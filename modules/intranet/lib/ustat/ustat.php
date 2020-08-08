@@ -486,9 +486,9 @@ class UStat
 			// back-format keys
 			foreach ($row as $k => $v)
 			{
-				if (substr($k, -4) === '_SUM')
+				if (mb_substr($k, -4) === '_SUM')
 				{
-					$row[substr($k, 0, -4)] = $v;
+					$row[mb_substr($k, 0, -4)] = $v;
 					unset($row[$k]);
 				}
 			}
@@ -1038,9 +1038,9 @@ class UStat
 			// back-format keys
 			foreach ($row as $k => $v)
 			{
-				if (substr($k, -4) === '_SUM')
+				if (mb_substr($k, -4) === '_SUM')
 				{
-					$row[substr($k, 0, -4)] = $v;
+					$row[mb_substr($k, 0, -4)] = $v;
 					unset($row[$k]);
 				}
 			}
@@ -1493,9 +1493,9 @@ class UStat
 		{
 			foreach ($row as $k => $v)
 			{
-				if (substr($k, -4) === '_SUM')
+				if (mb_substr($k, -4) === '_SUM')
 				{
-					$row[substr($k, 0, -4)] = $v;
+					$row[mb_substr($k, 0, -4)] = $v;
 					unset($row[$k]);
 				}
 			}

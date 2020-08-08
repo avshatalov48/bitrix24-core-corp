@@ -45,11 +45,6 @@ class Stage
 			}
 		}
 
-		if (empty($result))
-		{
-			$result = false;
-		}
-
 		return $result;
 	}
 

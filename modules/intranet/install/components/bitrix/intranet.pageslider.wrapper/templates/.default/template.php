@@ -21,6 +21,8 @@ global $APPLICATION;
 	<title><?$APPLICATION->ShowTitle()?></title>
 </head>
 <body class="intranet-slider-frame-popup template-<?= SITE_TEMPLATE_ID ?> <? $APPLICATION->ShowProperty('BodyClass'); ?>" onload="window.top.BX.onCustomEvent(window.top, 'crmEntityIframeLoad');" onunload="window.top.BX.onCustomEvent(window.top, 'crmEntityIframeUnload');">
+
+	<?php if ($arParams['SHOW_TITLE'] == 'Y'): ?>
 	<div class="pagetitle-wrap">
 		<div class="pagetitle-inner-container">
 			<div class="pagetitle-menu" id="pagetitle-menu">
@@ -31,6 +33,7 @@ global $APPLICATION;
 			</div>
 		</div>
 	</div>
+	<?php endif; ?>
 
 	<div id="crm-frame-popup-workarea">
 		<div id="sidebar"><? $APPLICATION->ShowViewContent("sidebar"); ?></div>

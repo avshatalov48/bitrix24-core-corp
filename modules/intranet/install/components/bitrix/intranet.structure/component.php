@@ -18,7 +18,7 @@ if (!$arParams['FILTER_NAME'])
 $perm = CIBlock::GetPermission($arParams['IBLOCK_ID'] ? $arParams['IBLOCK_ID'] : COption::GetOptionInt('intranet', 'iblock_structure', 0));
 $arResult['USER_CAN_SET_HEAD'] = $perm >= 'W';
 
-if (strlen(trim($arParams["NAME_TEMPLATE"])) <= 0)
+if (trim($arParams["NAME_TEMPLATE"]) == '')
 	$arParams["NAME_TEMPLATE"] = CSite::GetNameFormat();
 $arParams['SHOW_LOGIN'] = $arParams['SHOW_LOGIN'] != "N" ? "Y" : "N";
 

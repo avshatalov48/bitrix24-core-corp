@@ -10,6 +10,10 @@ $MESS["TASKS_PANEL_TAB_APPLICATIONS"] = "Приложения";
 $MESS["TASKS_PANEL_TAB_EFFECTIVE"] = "Эффективность";
 $MESS["TASKS_PANEL_TAB_TEMPLATES"] = "Шаблоны";
 $MESS["TASKS_PANEL_TAB_ALL"] = "Все";
+$MESS["TASKS_PANEL_TAB_CONFIG_PERMISSIONS"] = "Права доступа";
+$MESS["TASKS_PANEL_TAB_TASKS"] = "Задачи";
+
+$MESS["TASKS_PANEL_TAB_TASKS"] = "Задачи";
 
 $MESS["TASKS_PANEL_TEXT_EFFECTIVE"] = "<strong>Эффективность</strong> – инструмент для учета количества текущих задач, а также контроля сроков их выполнения.";
 

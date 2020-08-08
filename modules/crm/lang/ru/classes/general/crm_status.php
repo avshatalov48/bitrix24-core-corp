@@ -84,3 +84,5 @@ $MESS["CRM_STATUS_FIELD_NAME"] = "Название";
 $MESS["CRM_STATUS_FIELD_NAME_INIT"] = "Название по умолчанию";
 $MESS["CRM_STATUS_FIELD_SYSTEM"] = "Системный";
 $MESS["CRM_STATUS_FIELD_EXTRA"] = "Дополнительные поля";
+$MESS["CRM_STATUS_ERR_STATUS_ID_MAX_LENGTH_EXCEEDED"] = "Превышена максимальная длина идентификатора статуса: #MAX_LENGTH#.";
+$MESS["CRM_STATUS_ERR_NOT_FOUND"] = "Статус не найден";

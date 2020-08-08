@@ -10,6 +10,7 @@
 
 namespace Bitrix\Tasks\Integration\Mail;
 
+use Bitrix\Main\Loader;
 use Bitrix\Tasks\Util\Error\Collection;
 
 final class User extends \Bitrix\Tasks\Integration\Mail
@@ -107,6 +108,11 @@ final class User extends \Bitrix\Tasks\Integration\Mail
 		else
 		{
 			$users[$email] = $id;
+		}
+
+		if (Loader::includeModule('intranet') && class_exists('\Bitrix\Intranet\Integration\Mail\EmailUser'))
+		{
+			\Bitrix\Intranet\Integration\Mail\EmailUser::invite($id);
 		}
 
 		return $id;

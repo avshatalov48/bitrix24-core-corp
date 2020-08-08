@@ -535,7 +535,7 @@ if ($arResult['RESTRICTED_LICENCE'] == 'Y')
 						<span class="crm-recur-option-fn"><?=Loc::getMessage('CRM_RECURRING_FILTER_DATE_PAYMENT_AFTER_EXPOSING')?></span>
 					</div>
 				</div>
-				<div id="crm-recur-email-block"	class="<?= (strlen($arResult['EMAIL_LIST'][0]['text']) > 0) ? "" : " crm-recur-invisible"?>">
+				<div id="crm-recur-email-block"	class="<?= ($arResult['EMAIL_LIST'][0]['text'] <> '') ? "" : " crm-recur-invisible"?>">
 					<div id="crm-recurring-empty-owner-email" class="errortext"></div>
 
 					<label for="crm-recurring-email">

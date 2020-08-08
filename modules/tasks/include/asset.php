@@ -225,6 +225,7 @@ $assets = array(
 	array(
 		'code' => 'task_kanban',
 		'js'  => array(
+			$assetRoot.'kanban/actions.js',
 			$assetRoot.'kanban/grid.js',
 			$assetRoot.'kanban/item.js',
 			$assetRoot.'kanban/column.js',

@@ -85,6 +85,21 @@ class CalendarRepository
 		return $res;
 	}
 
+	public function findAllBy($fieldsToSelect, $filter = null)
+	{
+		$resultQuery = CalendarTable::query();
+		foreach ($fieldsToSelect as $fieldToSelect)
+		{
+			$resultQuery->addSelect($fieldToSelect);
+		}
+		if ($filter)
+		{
+			$resultQuery->where($filter);
+		}
+		return $resultQuery->exec()
+			->fetchCollection();
+	}
+
 	/**
 	 * @param $calendarId
 	 * @param null $year

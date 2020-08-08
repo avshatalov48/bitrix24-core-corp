@@ -564,6 +564,7 @@
 						BX.hasClass(ev.target, "crm-kanban-column-add-item-button") ||
 						currentColumn.isQuickFormEditor(ev.target) ||
 						currentColumn.isQuickFormPopup(ev.target) ||
+						!currentColumn.isBoundToDocument(ev.target) ||
 						ev.target.className === "crm-entity-widget-btn-close" ||
 						ev.target.className === "crm-widget-employee-remove" ||
 						ev.target.getAttribute("data-bx-role") === "file-delete" ||
@@ -681,6 +682,16 @@
 			return BX.findParent(target, {
 				className: "popup-window"
 			});
+		},
+
+		/**
+		 * Is target bound to document or was removed in another callback of this onclick event?
+		 * @param {Element} target
+		 * @return {boolean}
+		 */
+		isBoundToDocument: function(target)
+		{
+			return !!target.closest('body');
 		},
 
 		/**

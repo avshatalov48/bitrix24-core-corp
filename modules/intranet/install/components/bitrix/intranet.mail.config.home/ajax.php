@@ -132,7 +132,7 @@ class CIntranetMailConfigHomeAjax
 				$error = GetMessage('INTR_MAIL_AJAX_ERROR');
 
 			foreach ($services as $i => $item)
-				$services[$i]['server'] = strtolower($item['server']);
+				$services[$i]['server'] = mb_strtolower($item['server']);
 		}
 
 		if ($error === false)
@@ -180,7 +180,7 @@ class CIntranetMailConfigHomeAjax
 			}
 			else if ($services[$serviceId]['type'] == 'domain')
 			{
-				if ($services[$serviceId]['server'] != strtolower($_REQUEST['domain']))
+				if ($services[$serviceId]['server'] != mb_strtolower($_REQUEST['domain']))
 				{
 					$error = CMail::getErrorMessage(CMail::ERR_API_OP_DENIED);
 				}
@@ -233,7 +233,7 @@ class CIntranetMailConfigHomeAjax
 
 			if ($services[$serviceId]['type'] == 'controller')
 			{
-				if (strtolower(trim($_REQUEST['domain'])) == 'bitrix24.com')
+				if (mb_strtolower(trim($_REQUEST['domain'])) == 'bitrix24.com')
 				{
 					$error = getMessage('INTR_MAIL_FORM_ERROR');
 				}
@@ -270,7 +270,7 @@ class CIntranetMailConfigHomeAjax
 			}
 			else if ($services[$serviceId]['type'] == 'crdomain')
 			{
-				if ($services[$serviceId]['server'] != strtolower($_REQUEST['domain']))
+				if ($services[$serviceId]['server'] != mb_strtolower($_REQUEST['domain']))
 					$error = GetMessage('INTR_MAIL_FORM_ERROR');
 
 				if (!$USER->isAdmin() && !$USER->canDoOperation('bitrix24_config') && $services[$serviceId]['encryption'] != 'N')
@@ -310,7 +310,7 @@ class CIntranetMailConfigHomeAjax
 			}
 			else if ($services[$serviceId]['type'] == 'domain')
 			{
-				if ($services[$serviceId]['server'] != strtolower($_REQUEST['domain']))
+				if ($services[$serviceId]['server'] != mb_strtolower($_REQUEST['domain']))
 					$error = GetMessage('INTR_MAIL_FORM_ERROR');
 
 				if (!$USER->isAdmin() && !$USER->canDoOperation('bitrix24_config') && $services[$serviceId]['encryption'] != 'N')
@@ -369,10 +369,10 @@ class CIntranetMailConfigHomeAjax
 				if (!$services[$serviceId]['link'])
 				{
 					$regExp = '/^(https?:\/\/)?((?:[a-z0-9](?:-*[a-z0-9])*\.?)+)(:[0-9]+)?(\/.*)?$/i';
-					if (preg_match($regExp, trim($mbData['LINK']), $matches) && strlen($matches[2]) > 0)
+					if (preg_match($regExp, trim($mbData['LINK']), $matches) && $matches[2] <> '')
 					{
 						$mbData['LINK'] = $matches[0];
-						if (strlen($matches[1]) == 0)
+						if ($matches[1] == '')
 							$mbData['LINK'] = 'http://' . $mbData['LINK'];
 					}
 					else
@@ -384,7 +384,7 @@ class CIntranetMailConfigHomeAjax
 				if (!$services[$serviceId]['server'])
 				{
 					$regExp = '/^(?:(?:http|https|ssl|tls|imap):\/\/)?((?:[a-z0-9](?:-*[a-z0-9])*\.?)+)$/i';
-					if (preg_match($regExp, trim($mbData['SERVER']), $matches) && strlen($matches[1]) > 0)
+					if (preg_match($regExp, trim($mbData['SERVER']), $matches) && $matches[1] <> '')
 						$mbData['SERVER'] = $matches[1];
 					else
 						$error = getMessage('INTR_MAIL_FORM_ERROR');
@@ -422,8 +422,8 @@ class CIntranetMailConfigHomeAjax
 								}
 								else
 								{
-									$mbData['NAME']     = strtolower(trim($response['email']));
-									$mbData['LOGIN']    = strtolower(trim($response['email']));
+									$mbData['NAME'] = mb_strtolower(trim($response['email']));
+									$mbData['LOGIN'] = mb_strtolower(trim($response['email']));
 									$mbData['PASSWORD'] = "\x00oauth\x00google\x00".$USER->getId();
 
 									$oauthFulfilled = true;
@@ -464,8 +464,8 @@ class CIntranetMailConfigHomeAjax
 								{
 									if (!empty($response['emails']['account']))
 									{
-										$mbData['NAME']     = strtolower(trim($response['emails']['account']));
-										$mbData['LOGIN']    = strtolower(trim($response['emails']['account']));
+										$mbData['NAME'] = mb_strtolower(trim($response['emails']['account']));
+										$mbData['LOGIN'] = mb_strtolower(trim($response['emails']['account']));
 										$mbData['PASSWORD'] = "\x00oauth\x00liveid\x00".$USER->getId();
 
 										$oauthFulfilled = true;
@@ -1181,7 +1181,7 @@ class CIntranetMailConfigHomeAjax
 					$email = rtrim($email);
 
 					$blacklist[$i] = null;
-					if (strpos($email, '@') === false)
+					if (mb_strpos($email, '@') === false)
 					{
 						if (check_email(sprintf('email@%s', $email)))
 							$blacklist[$i] = $email;

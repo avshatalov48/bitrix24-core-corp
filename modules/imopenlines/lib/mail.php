@@ -389,10 +389,10 @@ class Mail
 				}
 				else
 				{
-					$authorName = \Bitrix\ImOpenLines\Connector::getOperatorName($session['CONFIG_ID'], $message['senderId']);
+					$authorName = \Bitrix\ImOpenLines\Connector::getOperatorName($session['CONFIG_ID'], $message['senderId'], $session['USER_CODE']);
 				}
 
-				$authorAvatar = \Bitrix\ImOpenLines\Connector::getOperatorAvatar($session['CONFIG_ID'], $message['senderId']);
+				$authorAvatar = \Bitrix\ImOpenLines\Connector::getOperatorAvatar($session['CONFIG_ID'], $message['senderId'], $session['USER_CODE']);
 				if ($authorAvatar)
 				{
 					$authorAvatar = substr($authorAvatar, 0, 4) != 'http'? \Bitrix\ImOpenLines\Common::getServerAddress().$authorAvatar: $authorAvatar;

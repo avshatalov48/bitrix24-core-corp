@@ -43,7 +43,7 @@ class OutlookCsvFileImport extends CsvFileImport
 		$result = array();
 		foreach($headerMap as $k => $v)
 		{
-			$code = strtoupper(str_replace(' ', '', $k));
+			$code = mb_strtoupper(str_replace(' ', '', $k));
 			$result[$code] = $v;
 		}
 		return $result;
@@ -54,7 +54,7 @@ class OutlookCsvFileImport extends CsvFileImport
 	}
 	public function setHeaderLanguage($langID)
 	{
-		$this->headerLanguage = strtolower($langID);
+		$this->headerLanguage = mb_strtolower($langID);
 	}
 	public function isCompatibilityModeEnabled()
 	{
@@ -169,7 +169,7 @@ class OutlookCsvFileImport extends CsvFileImport
 		$phoneInfos = $this->getPhones($data);
 		foreach($phoneInfos as &$phoneInfo)
 		{
-			$valueType = strtoupper($phoneInfo['VALUE_TYPE']);
+			$valueType = mb_strtoupper($phoneInfo['VALUE_TYPE']);
 			if($valueType === 'BUSINESS')
 			{
 				$valueType = 'WORK';
@@ -275,7 +275,7 @@ class OutlookCsvFileImport extends CsvFileImport
 
 		foreach(self::$phoneTypes as $type)
 		{
-			$typeUC = strtoupper($type);
+			$typeUC = mb_strtoupper($type);
 
 			$keys = array("{$typeUC}_PHONE", "{$typeUC}_PHONE_2");
 			foreach($keys as $key)
@@ -347,7 +347,7 @@ class OutlookCsvFileImport extends CsvFileImport
 		$result = array();
 		foreach(self::$addressTypes as $type)
 		{
-			$typeUC = strtoupper($type);
+			$typeUC = mb_strtoupper($type);
 
 			$info = $this->getAddress(
 				$data,
@@ -458,7 +458,7 @@ class OutlookCsvFileImport extends CsvFileImport
 			self::$fieldMatchCodes = array();
 		}
 
-		return (self::$fieldMatchCodes[$fieldID] = strtoupper(str_replace(' ', '', $fieldName)));
+		return (self::$fieldMatchCodes[$fieldID] = mb_strtoupper(str_replace(' ', '', $fieldName)));
 	}
 	protected static function getHeaderAliases($langID, $enableCompatibilityMode = false)
 	{
@@ -472,7 +472,7 @@ class OutlookCsvFileImport extends CsvFileImport
 				$result[$fieldID] = $field['NAME'];
 				if($enableCompatibilityMode)
 				{
-					$result[$fieldID] = strtoupper(str_replace(' ', '', $result[$fieldID]));
+					$result[$fieldID] = mb_strtoupper(str_replace(' ', '', $result[$fieldID]));
 				}
 			}
 			unset($field);
@@ -491,7 +491,7 @@ class OutlookCsvFileImport extends CsvFileImport
 				$result[$fieldID] = isset($messages[$key]) ? $messages[$key] : $field['NAME'];
 				if($enableCompatibilityMode)
 				{
-					$result[$fieldID] = strtoupper(str_replace(' ', '', $result[$fieldID]));
+					$result[$fieldID] = mb_strtoupper(str_replace(' ', '', $result[$fieldID]));
 				}
 			}
 			unset($field);

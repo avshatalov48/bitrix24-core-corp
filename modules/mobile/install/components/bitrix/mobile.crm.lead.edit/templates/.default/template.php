@@ -17,10 +17,7 @@ $APPLICATION->IncludeComponent(
 	array(
 		'FORM_ID' => $formId,
 		'THEME_GRID_ID' => $formId,
-		'TABS' => array(array(
-			"id" => "crm_lead",
-			"fields" => $arResult['FIELDS']
-		)),
+		'TABS' => $arResult['FIELDS'],
 		"RESTRICTED_MODE" => $arParams["RESTRICTED_MODE"]
 	),
 	$component,

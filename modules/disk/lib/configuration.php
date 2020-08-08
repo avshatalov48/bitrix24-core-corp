@@ -13,7 +13,8 @@ use Bitrix\Main\UI\Viewer\Transformation\Video;
 
 final class Configuration
 {
-	const REVISION_API = 8;
+	public const DEFAULT_CACHE_TIME = 60;
+	public const REVISION_API       = 8;
 
 	public static function isEnabledDefaultEditInUf()
 	{
@@ -308,6 +309,28 @@ final class Configuration
 			) == 'Y';
 
 		return $allow;
+	}
+
+	public static function getFileVersionTtl(): int
+	{
+		$dayLimit = Bitrix24Manager::getFeatureVariable('disk_file_history_ttl');
+		if ($dayLimit !== null)
+		{
+			return (int)$dayLimit;
+		}
+
+		return (int)Option::get(Driver::INTERNAL_MODULE_ID, 'disk_file_history_ttl', -1);
+	}
+
+	public static function getTrashCanTtl(): int
+	{
+		$ttl = Bitrix24Manager::getFeatureVariable('disk_trashcan_ttl');
+		if ($ttl !== null)
+		{
+			return (int)$ttl;
+		}
+
+		return (int)Option::get(Driver::INTERNAL_MODULE_ID, 'disk_trashcan_ttl', -1);
 	}
 }
 

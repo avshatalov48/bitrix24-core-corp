@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Main\Application;
+use Bitrix\Main\Event;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Voximplant\StatisticTable;
@@ -422,6 +423,15 @@ if(is_array($params))
 				}
 
 				CVoxImplantOutgoing::restartCallback($callbackParameters);
+			}
+			else if($params["COMMAND"] == "ConferenceFinished")
+			{
+				$event = new Event("voximplant", "onConferenceFinished", [
+					'CONFERENCE_CALL_ID' => $params['PORTAL_CALL_ID'],
+					'SESSION_ID' => $params['SESSION_ID'],
+					'LOG_URL' => $params['LOG_URL'],
+				]);
+				$event->send();
 			}
 		}
 		else

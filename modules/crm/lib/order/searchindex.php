@@ -76,7 +76,7 @@ class SearchIndex
 			'PARAM1' => \CCrmOwnerType::OrderName,
 			'PARAM2' => $this->order->getId(),
 			'BODY' => implode("\n", $bodyElements),
-			'TAGS' => 'sale,'.strtolower(\CCrmOwnerType::OrderName).','.\CCrmOwnerType::GetDescription(\CCrmOwnerType::Order)
+			'TAGS' => 'sale,'.mb_strtolower(\CCrmOwnerType::OrderName).','.\CCrmOwnerType::GetDescription(\CCrmOwnerType::Order)
 		);
 
 		return $arResult;

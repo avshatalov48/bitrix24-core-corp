@@ -1,6 +1,7 @@
-<?
+<?php
 $MESS["CRM_EDITOR_CANCEL"] = "Cancel";
 $MESS["CRM_EDITOR_FIELD_CLIENT"] = "Client";
+$MESS["CRM_EDITOR_FIELD_COMPANY"] = "Company";
 $MESS["CRM_EDITOR_FIELD_OPPORTUNITY_WITH_CURRENCY"] = "Amount and currency";
 $MESS["CRM_EDITOR_SAVE"] = "Save";
 $MESS["CRM_KANBAN_ACTIVITY_CHANGE_DEAL"] = "You don't have any scheduled activities. Move the deal stage, <span class=\"crm-kanban-item-activity-link\">plan an activity</span> or engage a wait.";
@@ -52,7 +53,7 @@ $MESS["CRM_KANBAN_NOTIFY_LEAD_STATUS"] = "Leads moved to status: #statusName#";
 $MESS["CRM_KANBAN_NOTIFY_QUOTE_DELETE"] = "Quotes deleted";
 $MESS["CRM_KANBAN_NOTIFY_QUOTE_SETASSIGNED"] = "Quotes assigned to responsible person: #assignedName#";
 $MESS["CRM_KANBAN_NOTIFY_QUOTE_STATUS"] = "Quotes moved to status: #statusName#";
-$MESS["CRM_KANBAN_NOTIFY_TEXT"] = "Only your Bitrix24's administrator can create a new stage. Please send them a message or talk to them to add the task stages you require.";
+$MESS["CRM_KANBAN_NOTIFY_TEXT2"] = "Only your Bitrix24 administrator can create or edit a stage. Please send a notification or ask them personally to add the stages you require.";
 $MESS["CRM_KANBAN_NOTIFY_TITLE"] = "Insufficient permissions.";
 $MESS["CRM_KANBAN_NO_EMAIL"] = "No e-mail";
 $MESS["CRM_KANBAN_NO_IM"] = "No chat communication";
@@ -99,4 +100,3 @@ $MESS["CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_LEAD"] = "Some of the leads cann
 $MESS["CRM_KANBAN_SHOW_CC"] = "Show Contact center block";
 $MESS["MAIN_KANBAN_COLUMN_TITLE_PLACEHOLDER"] = "Name";
 $MESS["MAIN_KANBAN_DROPZONE_CANCEL"] = "Cancel";
-?>

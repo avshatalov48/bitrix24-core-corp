@@ -4,6 +4,8 @@
 
 (() =>
 {
+	const pathToExtension = '/bitrix/mobileapp/mobile/extensions/bitrix/task/';
+
 	class TaskView
 	{
 		/**
@@ -20,45 +22,14 @@
 					scriptPath: data.path,
 					componentCode: "tasks.list",
 					params: data.params,
+					title: BX.message('MOBILE_TASKS_LIST_TITLE'),
 					rootWidget: {
 						name: "tasks.list",
 						settings: {
 							objectName: "list",
 							filter: "view_all",
 							useSearch: true,
-							menuSections: [{id: "presets"}, {id: "counters", itemTextColor: "#f00"}],
-							menuItems: [
-								{
-									'id': "view_all",
-									'title': BX.message("TASKS_ROLE_VIEW_ALL"),
-									'sectionCode': 'presets',
-									'showAsTitle': true,
-									'badgeCount': 0
-								},
-								{
-									'id': "view_role_accomplice",
-									'title': BX.message("TASKS_ROLE_ACCOMPLICE"),
-									'sectionCode': 'presets',
-									'showAsTitle': true,
-									'badgeCount': 0
-								},
-								{
-									'id': "view_role_auditor",
-									'title': BX.message("TASKS_ROLE_AUDITOR"),
-									'sectionCode': 'presets',
-									'showAsTitle': true,
-									'badgeCount': 0
-								},
-								{
-
-									'id': "view_role_originator",
-									'title': BX.message("TASKS_ROLE_ORIGINATOR"),
-									'sectionCode': 'presets',
-									'showAsTitle': true,
-									'badgeCount': 0
-								},
-
-							]
+							useLargeTitleMode: true,
 						},
 					}
 				}
@@ -69,39 +40,22 @@
 
 	class Task
 	{
-		static get statesList()
+		static checkMatchDates(date, datesToMatch)
 		{
-			const statePrefix = 'MOBILE_TASKS_TASK_CARD_STATE';
-			const backgroundColor = '#18ff5752';
-			const fontColor = '#ff5752';
+			let isMatch = false;
 
-			return {
-				isExpired: {
-					message: BX.message(`${statePrefix}_EXPIRED`),
-					fontColor,
-					backgroundColor,
-				},
-				isExpiredSoon: {
-					message: BX.message(`${statePrefix}_EXPIRED_SOON`),
-					fontColor,
-					backgroundColor,
-				},
-				isNew: {
-					message: BX.message(`${statePrefix}_NEW`),
-					fontColor,
-					backgroundColor,
-				},
-				isWaitCtrl: {
-					message: BX.message(`${statePrefix}_SUPPOSEDLY_COMPLETED`),
-					fontColor,
-					backgroundColor,
-				},
-				isWoDeadline: {
-					message: BX.message(`${statePrefix}_WITHOUT_DEADLINE`),
-					fontColor,
-					backgroundColor,
-				},
-			};
+			datesToMatch.forEach((dateToMatch) => {
+				if (!isMatch)
+				{
+					isMatch = (
+						date.getDate() === dateToMatch.getDate()
+						&& date.getMonth() === dateToMatch.getMonth()
+						&& date.getFullYear() === dateToMatch.getFullYear()
+					);
+				}
+			});
+
+			return isMatch;
 		}
 
 		static get statusList()
@@ -115,13 +69,90 @@
 			};
 		}
 
+		static get userOptions()
+		{
+			return {
+				muted: 1,
+				pinned: 2,
+			};
+		}
+
 		static get counterColors()
 		{
-			const red = '#ff5752';
 			return {
-				isNew: red,
-				expired: red,
-				waitCtrl: red,
+				green: '#9DCF00',
+				red: '#FF5752',
+				gray: '#A8ADB4',
+			};
+		}
+
+		static get backgroundColors()
+		{
+			return {
+				default: '#FFFFFF',
+				pinned: '#F4F5F7',
+			};
+		}
+
+		static get actions()
+		{
+			const titlePrefix = 'MOBILE_TASKS_TASK_CARD_VIEW_ACTION';
+			return {
+				more: {
+					identifier: 'more',
+					title: BX.message(`${titlePrefix}_MORE`),
+					iconName: 'more',
+					color: '#848E9E',
+					position: 'right',
+				},
+				cancel: {
+					id: 'cancel',
+					title: BX.message(`${titlePrefix}_CANCEL`),
+					textColor: '#828B95',
+					sectionCode: 'default',
+					showTopSeparator: true,
+				},
+			};
+		}
+
+		static get deadlines()
+		{
+			const statePrefix = 'MOBILE_TASKS_TASK_CARD_DEADLINE_STATE';
+			return {
+				today: {
+					name: BX.message(`${statePrefix}_TODAY`),
+				},
+				tomorrow: {
+					name: BX.message(`${statePrefix}_TOMORROW`),
+				},
+				thisWeek: {
+					name: BX.message(`${statePrefix}_THIS_WEEK`),
+				},
+				nextWeek: {
+					name: BX.message(`${statePrefix}_NEXT_WEEK`),
+				},
+				moreThanTwoWeeks: {
+					name: BX.message(`${statePrefix}_MORE_THAN_TWO_WEEKS`),
+				},
+			};
+		}
+
+		static get popupImageUrls()
+		{
+			const urlPrefix = `${pathToExtension}images/mobile-task-popup-`;
+			const urlPostfix = '.png';
+			return {
+				changeDeadline: `${urlPrefix}deadline${urlPostfix}`,
+				changeResponsible: `${urlPrefix}responsible${urlPostfix}`,
+				start: `${urlPrefix}start${urlPostfix}`,
+				pause: `${urlPrefix}pause${urlPostfix}`,
+				read: `${urlPrefix}read${urlPostfix}`,
+				pin: `${urlPrefix}pin${urlPostfix}`,
+				unpin: `${urlPrefix}unpin${urlPostfix}`,
+				mute: `${urlPrefix}mute${urlPostfix}`,
+				unmute: `${urlPrefix}unmute${urlPostfix}`,
+				unfollow: `${urlPrefix}unfollow${urlPostfix}`,
+				remove: `${urlPrefix}remove${urlPostfix}`,
 			};
 		}
 
@@ -138,9 +169,11 @@
 			this.error = false;
 
 			this.deadline = null;
-			this.timeTracking = false;
+			this.activityDate = null;
 			this.status = Task.statusList.pending;
 			this.subStatus = Task.statusList.pending;
+			this.isMuted = false;
+			this.isPinned = false;
 			this.notViewed = false;
 			this.messageCount = 0;
 			this.commentsCount = 0;
@@ -167,11 +200,11 @@
 			this.creator = row.creator;
 			this.responsible = row.responsible;
 
-			this.timeTracking = (row.allowTimeTracking === 'Y');
-
 			this.commentsCount = row.commentsCount;
 			this.newCommentsCount = row.newCommentsCount;
 
+			this.isMuted = row.isMuted === 'Y';
+			this.isPinned = row.isPinned === 'Y';
 			this.notViewed = row.notViewed === 'Y';
 
 			this.accomplices = row.accomplices || [];
@@ -180,7 +213,10 @@
 			this.rawAccess = row.action;
 
 			const deadline = Date.parse(row.deadline);
+			const activityDate = Date.parse(row.activityDate);
+
 			this.deadline = (deadline > 0 ? deadline : null);
+			this.activityDate = (activityDate > 0 ? activityDate : null);
 
 			if (
 				Number(this.currentUser.id) === Number(row.creator.id)
@@ -351,9 +387,94 @@
 			return this.isResponsible(userId) || this.isAccomplice(userId);
 		}
 
+		isPureDoer(userId = null)
+		{
+			return this.isDoer(userId) && !this.isCreator(userId);
+		}
+
+		get isToday()
+		{
+			if (!this.deadline)
+			{
+				return false;
+			}
+
+			const deadline = new Date(this.deadline);
+			const today = new Date();
+
+			return deadline && Task.checkMatchDates(deadline, [today]);
+		}
+
+		get isTomorrow()
+		{
+			if (!this.deadline)
+			{
+				return false;
+			}
+
+			const deadline = new Date(this.deadline);
+			const tomorrow = new Date();
+			tomorrow.setDate(tomorrow.getDate() + 1);
+
+			return deadline && Task.checkMatchDates(deadline, [tomorrow]);
+		}
+
+		get isThisWeek()
+		{
+			if (!this.deadline)
+			{
+				return false;
+			}
+
+			const deadline = new Date(this.deadline);
+			const today = new Date();
+			const thisWeekDays = [];
+
+			for (let i = 1; i <= 7; i++)
+			{
+				const first = today.getDate() - today.getDay() + i;
+				const day = new Date(today.setDate(first));
+				thisWeekDays.push(day);
+			}
+
+			return deadline && Task.checkMatchDates(deadline, thisWeekDays);
+		}
+
+		get isNextWeek()
+		{
+			if (!this.deadline)
+			{
+				return false;
+			}
+
+			const deadline = new Date(this.deadline);
+			const nextWeekDays = [];
+			const nextWeekDay = new Date();
+			nextWeekDay.setDate(nextWeekDay.getDate() + 7);
+
+			for (let i = 1; i <= 7; i++)
+			{
+				const first = nextWeekDay.getDate() - nextWeekDay.getDay() + i;
+				const day = new Date(nextWeekDay.setDate(first));
+				nextWeekDays.push(day);
+			}
+
+			return deadline && Task.checkMatchDates(deadline, nextWeekDays);
+		}
+
+		get isMoreThanTwoWeeks()
+		{
+			return true;
+		}
+
 		get isNew()
 		{
 			return this.notViewed || [-2, 1].includes(this.subStatus);
+		}
+
+		get isNewCounts()
+		{
+			return this.isNew && this.isPureDoer();
 		}
 
 		get isWaitCtrl()
@@ -361,12 +482,35 @@
 			return this.status === Task.statusList.waitCtrl;
 		}
 
-		get isExpired()
+		get isWaitCtrlCounts()
 		{
-			const date = new Date();
-			return this.deadline
-				&& this.deadline <= date.getTime()
-				&& !this.isWaitCtrl;
+			return this.isWaitCtrl && this.isCreator() && !this.isResponsible();
+		}
+
+		get isCompleted()
+		{
+			return this.status === Task.statusList.completed;
+		}
+
+		get isCompletedCounts()
+		{
+			return this.isCompleted || (this.isWaitCtrl && !this.isCreator());
+		}
+
+		get isDeferred()
+		{
+			return this.status === Task.statusList.deferred;
+		}
+
+		get isWoDeadline()
+		{
+			return !this.deadline;
+		}
+
+		get isWoDeadlineCounts()
+		{
+			const onePersonTask = (this.isCreator() && this.isResponsible());
+			return this.isWoDeadline && ((this.isCreator() || this.isResponsible()) && !onePersonTask);
 		}
 
 		get isExpiredSoon()
@@ -374,23 +518,141 @@
 			const date = new Date();
 			date.setDate(date.getDate() + 1);
 
-			return this.deadline
-				&& this.deadline <= date.getTime()
-				&& !this.isWaitCtrl
+			return this.deadline && this.deadline <= date.getTime();
+		}
+
+		get isExpiredSoonCounts()
+		{
+			return this.isExpiredSoon
 				&& !this.isExpired
-				&& this.isDoer();
+				&& this.isPureDoer()
+				&& !this.isCompletedCounts;
 		}
 
-		get isWoDeadline()
+		get isExpired()
 		{
-			const onePersonTask = this.isCreator() && this.isResponsible();
-			return !this.deadline && ((this.isCreator() || this.isResponsible()) && !onePersonTask);
+			const date = new Date();
+			return this.deadline && this.deadline <= date.getTime();
 		}
 
-		get isCompleted()
+		get isExpiredCounts()
 		{
-			return this.status === Task.statusList.completed
-				|| (this.status === Task.statusList.waitCtrl && this.isDoer() && !this.isCreator());
+			return this.isExpired && this.isPureDoer() && !this.isCompletedCounts;
+		}
+
+		get expiredTime()
+		{
+			const expiredStatePrefix = 'MOBILE_TASKS_TASK_CARD_DEADLINE_STATE_EXPIRED';
+			const extensions = {
+				year: {
+					value: 31536000,
+					message: BX.message(`${expiredStatePrefix}_YEAR`),
+				},
+				month: {
+					value: 2592000,
+					message: BX.message(`${expiredStatePrefix}_MONTH`),
+				},
+				week: {
+					value: 604800,
+					message: BX.message(`${expiredStatePrefix}_WEEK`),
+				},
+				day: {
+					value: 86400,
+					message: BX.message(`${expiredStatePrefix}_DAY`),
+				},
+				hour: {
+					value: 3600,
+					message: BX.message(`${expiredStatePrefix}_HOUR`),
+				},
+				minute: {
+					value: 60,
+					message: BX.message(`${expiredStatePrefix}_MINUTE`),
+				},
+			};
+
+			const date = new Date();
+			let delta = (date.getTime() - this.deadline) / 1000;
+			let expiredTime = false;
+
+			Object.keys(extensions).forEach((key) => {
+				const value = Math.floor(delta / extensions[key].value);
+				if (!expiredTime && value >= 1)
+				{
+					expiredTime = extensions[key].message.replace('#TIME#', value);
+					return;
+				}
+				delta -= value * extensions[key].value;
+			});
+
+			return expiredTime || extensions.minute.message.replace('#TIME#', 1);
+		}
+
+		get statesList()
+		{
+			const statePrefix = 'MOBILE_TASKS_TASK_CARD_DEADLINE_STATE';
+			const deadline = new Date(this.deadline);
+			const deadlineTime = deadline.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+
+			return {
+				isCompleted: {
+					message: '',
+					fontColor: '',
+					backgroundColor: '',
+				},
+				isDeferred: {
+					message: BX.message('MOBILE_TASKS_TASK_CARD_STATE_DEFERRED'),
+					fontColor: '#333333',
+					backgroundColor: '#FFFFFF',
+					border: {
+						color: '#A8ADB4',
+						width: 2,
+					},
+				},
+				isWaitCtrl: {
+					message: BX.message('MOBILE_TASKS_TASK_CARD_STATE_SUPPOSEDLY_COMPLETED'),
+					fontColor: '#333333',
+					backgroundColor: '#FFFFFF',
+					border: {
+						color: '#F7A700',
+						width: 2,
+					},
+				},
+				isExpired: {
+					message: this.expiredTime,
+					fontColor: '#FFFFFF',
+					backgroundColor: '#FF6864',
+				},
+				isToday: {
+					message: BX.message(`${statePrefix}_TODAY`) + ` ${deadlineTime}`,
+					fontColor: '#FFFFFF',
+					backgroundColor: '#F9B933',
+				},
+				isTomorrow: {
+					message: BX.message(`${statePrefix}_TOMORROW`),
+					fontColor: '#FFFFFF',
+					backgroundColor: '#A5C933',
+				},
+				isThisWeek: {
+					message: BX.message(`${statePrefix}_THIS_WEEK`),
+					fontColor: '#FFFFFF',
+					backgroundColor: '#59D1F8',
+				},
+				isNextWeek: {
+					message: BX.message(`${statePrefix}_NEXT_WEEK`),
+					fontColor: '#FFFFFF',
+					backgroundColor: '#3AD4CC',
+				},
+				isWoDeadline: {
+					message: BX.message(`${statePrefix}_NO_DEADLINE`),
+					fontColor: '#828B95',
+					backgroundColor: '#E2E9EC',
+				},
+				isMoreThanTwoWeeks: {
+					message: BX.message(`${statePrefix}_MORE_THAN_TWO_WEEKS`),
+					fontColor: '#FFFFFF',
+					backgroundColor: '#C2C6CB',
+				},
+			};
 		}
 
 		get can()
@@ -411,44 +673,30 @@
 				decline: this.rawAccess && this.rawAccess.decline,
 				'favorite.add': this.rawAccess && this.rawAccess['favorite.add'],
 				'favorite.remove': this.rawAccess && this.rawAccess['favorite.delete'],
+				unfollow: this.isAuditor(),
+				changePin: true,
+				changeMute: true,
+				read: true,
 			};
 		}
 
-		getMessageCount()
+		getMessageInfo()
 		{
-			let count = 0;
+			let count = this.newCommentsCount || 0;
+			let color = Task.counterColors.green;
 
-			if (this.isCompleted || this.status > Task.statusList.waitCtrl)
-			{
-				return count;
-			}
-
-			if (this.isWaitCtrl)
-			{
-				return count + 1;
-			}
-
-			if (this.isExpired)
+			if (this.isExpired && !this.isCompletedCounts && !this.isWaitCtrlCounts && !this.isDeferred)
 			{
 				count += 1;
+				color = Task.counterColors.red;
 			}
 
-			if (this.isExpiredSoon)
+			if (this.isMuted)
 			{
-				count += 1;
+				color = Task.counterColors.gray;
 			}
 
-			if (this.isWoDeadline)
-			{
-				count += 1;
-			}
-
-			if (this.isNew && this.isDoer() && !this.isCreator())
-			{
-				count += 1;
-			}
-
-			return count;
+			return {count, color};
 		}
 
 		save()
@@ -549,6 +797,134 @@
 							this.error = true;
 
 							reject(response);
+						}
+					);
+			});
+		}
+
+		mute()
+		{
+			this.isMuted = true;
+
+			return new Promise((resolve, reject) => {
+				(new Request())
+					.call('mute', {
+						taskId: this.id,
+					})
+					.then(
+						(response) => {
+							console.log(response.result.task);
+							this.error = false;
+
+							resolve();
+						},
+						(response) => {
+							console.log(response);
+							this.error = true;
+
+							reject();
+						}
+					);
+			});
+		}
+
+		unmute()
+		{
+			this.isMuted = false;
+
+			return new Promise((resolve, reject) => {
+				(new Request())
+					.call('unmute', {
+						taskId: this.id,
+					})
+					.then(
+						(response) => {
+							console.log(response.result.task);
+							this.error = false;
+
+							resolve();
+						},
+						(response) => {
+							console.log(response);
+							this.error = true;
+
+							reject();
+						}
+					);
+			});
+		}
+
+		pin()
+		{
+			this.isPinned = true;
+
+			return new Promise((resolve, reject) => {
+				(new Request())
+					.call('pin', {
+						taskId: this.id,
+					})
+					.then(
+						(response) => {
+							console.log(response.result.task);
+							this.error = false;
+
+							resolve();
+						},
+						(response) => {
+							console.log(response);
+							this.error = true;
+
+							reject();
+						}
+					);
+			});
+		}
+
+		unpin()
+		{
+			this.isPinned = false;
+
+			return new Promise((resolve, reject) => {
+				(new Request())
+					.call('unpin', {
+						taskId: this.id,
+					})
+					.then(
+						(response) => {
+							console.log(response.result.task);
+							this.error = false;
+
+							resolve();
+						},
+						(response) => {
+							console.log(response);
+							this.error = true;
+
+							reject();
+						}
+					);
+			});
+		}
+
+		read()
+		{
+			this.newCommentsCount = 0;
+
+			return new Promise((resolve, reject) => {
+				(new Request())
+					.call('view.update', {taskId: this.id})
+					.then(
+						(response) => {
+							console.log(response.result.task);
+							this.error = false;
+
+							resolve();
+						},
+						(response) => {
+							console.log(response);
+							this.error = true;
+
+							reject();
 						}
 					);
 			});
@@ -866,25 +1242,43 @@
 		getTaskInfo(withActions = true)
 		{
 			const state = this.getState() || {message: '', backgroundColor: '', fontColor: ''};
+			const messageInfo = this.getMessageInfo();
 
 			return {
 				id: this.id,
 				title: this.title || '',
-				checked: this.isCompleted,
+				checked: this.isCompletedCounts,
 				checkable: this.can.complete || this.can.approve || this.can.renew,
-				deadline: this.deadline || 0,
 				state: state.message,
-				messageCount: this.getMessageCount(),
-				newCommentsCount: this.newCommentsCount,
+				date: this.activityDate / 1000,
+				messageCount: messageInfo.count,
 				creatorIcon: this.creator.icon,
 				responsibleIcon: this.responsible.icon,
-				actions: (withActions ? this.getActions() : []),
+				actions: (withActions ? this.getSwipeActions() : []),
+				params: {},
 				styles: {
 					state: {
 						backgroundColor: state.backgroundColor,
 						font: {
 							color: state.fontColor,
 							fontStyle: 'semibold',
+						},
+						border: state.border,
+					},
+					counter: {
+						backgroundColor: messageInfo.color,
+					},
+					date: {
+						image: {
+							name: (this.isPinned ? 'message_pin' : ''),
+						},
+						font: {
+							size: 13,
+						},
+					},
+					title: {
+						additionalImage: {
+							name: (this.isMuted ? 'name_status_mute' : ''),
 						},
 					},
 				},
@@ -893,7 +1287,7 @@
 
 		getState()
 		{
-			const states = Task.statesList;
+			const states = this.statesList;
 			let currentState = null;
 
 			Object.keys(states).forEach((key) => {
@@ -908,7 +1302,7 @@
 
 		getStates()
 		{
-			const states = Task.statesList;
+			const states = this.statesList;
 			const currentStates = {};
 
 			Object.keys(states).forEach((key) => {
@@ -921,49 +1315,71 @@
 			return currentStates;
 		}
 
-		getActions()
+		getSwipeActions()
 		{
+			const titlePrefix = 'MOBILE_TASKS_TASK_CARD_VIEW_ACTION';
 			const actions = {
 				changeDeadline: {
 					identifier: 'changeDeadline',
-					title: BX.message('MOBILE_TASKS_TASK_CARD_VIEW_ACTION_CHANGE_DEADLINE'),
-					iconName: 'term',
-					color: '#ff8f30',
+					title: BX.message(`${titlePrefix}_CHANGE_DEADLINE`),
+					iconName: 'action_term',
+					color: '#F2A100',
 					position: 'right',
 				},
 				changeResponsible: {
 					identifier: 'changeResponsible',
-					title: BX.message('MOBILE_TASKS_TASK_CARD_VIEW_ACTION_CHANGE_RESPONSIBLE'),
-					iconName: 'userlist',
-					color: '#0064c1',
+					title: BX.message(`${titlePrefix}_CHANGE_RESPONSIBLE`),
+					iconName: 'action_userlist',
+					color: '#2F72B9',
 					position: 'right',
 				},
 				start: {
 					identifier: 'start',
-					title: BX.message('MOBILE_TASKS_TASK_CARD_VIEW_ACTION_START'),
-					iconName: 'start',
-					color: '#00c7f3',
+					title: BX.message(`${titlePrefix}_START`),
+					iconName: 'action_start',
+					color: '#38C4D6',
 					position: 'right',
 				},
 				pause: {
 					identifier: 'pause',
-					title: BX.message('MOBILE_TASKS_TASK_CARD_VIEW_ACTION_PAUSE'),
-					iconName: 'finish',
-					color: '#00c7f3',
+					title: BX.message(`${titlePrefix}_PAUSE`),
+					iconName: 'action_finish',
+					color: '#38C4D6',
 					position: 'right',
 				},
-				remove: {
-					identifier: 'remove',
-					title: BX.message('MOBILE_TASKS_TASK_CARD_VIEW_ACTION_REMOVE'),
-					iconName: 'delete',
-					color: '#ff5b50',
+				read: {
+					identifier: 'read',
+					title: BX.message(`${titlePrefix}_READ`),
+					iconName: 'action_read',
+					color: '#E57BB6',
+					position: 'left',
+				},
+				changePin: {
+					identifier: (this.isPinned ? 'unpin' : 'pin'),
+					title: BX.message(`${titlePrefix}_${this.isPinned ? 'UNPIN' : 'PIN'}`),
+					iconName: `action_${(this.isPinned ? 'unpin' : 'pin')}`,
+					color: '#468EE5',
+					position: 'left',
+				},
+				changeMute: {
+					identifier: (this.isMuted ? 'unmute' : 'mute'),
+					title: BX.message(`${titlePrefix}_${this.isMuted ? 'UNMUTE' : 'MUTE'}`),
+					iconName: `action_${(this.isMuted ? 'unmute' : 'mute')}`,
+					color: '#8BC84B',
 					position: 'right',
 				},
 				unfollow: {
 					identifier: 'unfollow',
-					title: BX.message('MOBILE_TASKS_TASK_CARD_VIEW_ACTION_DONT_FOLLOW'),
-					iconName: 'unfollow',
-					color: '#2fc6f6',
+					title: BX.message(`${titlePrefix}_DONT_FOLLOW`),
+					iconName: 'action_unfollow',
+					color: '#AF6D4D',
+					position: 'right',
+				},
+				remove: {
+					identifier: 'remove',
+					title: BX.message(`${titlePrefix}_REMOVE`),
+					iconName: 'action_remove',
+					color: '#6E7B8F',
 					position: 'right',
 				},
 			};
@@ -975,15 +1391,6 @@
 					currentActions.push(actions[key]);
 				}
 			});
-
-			if (
-				currentActions.length < 4
-				&& !currentActions.includes(actions.unfollow)
-				&& this.isAuditor(this.currentUser.id)
-			)
-			{
-				currentActions.push(actions.unfollow);
-			}
 
 			return currentActions;
 		}

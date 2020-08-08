@@ -20,6 +20,7 @@ import * as SecondNameField from './secondname/controller';
 import * as LastNameField from './lastname/controller';
 import * as CompanyNameField from './companyname/controller';
 import * as LayoutField from './layout/controller';
+import * as ResourceBookingField from './resourcebooking/controller';
 
 
 let controllers = [
@@ -44,6 +45,7 @@ let controllers = [
 	LastNameField.Controller,
 	CompanyNameField.Controller,
 	LayoutField.Controller,
+	ResourceBookingField.Controller,
 ];
 let component = BaseField.Controller.component();
 component.components = Object.assign(

@@ -1,4 +1,5 @@
 <?php
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 CBitrixComponent::includeComponentClass("bitrix:tasks.base");
@@ -44,38 +45,42 @@ class TasksTaskDetailPartsComponent extends TasksBaseComponent
 	 */
 	private function includeLegacy()
 	{
-		$cUserId = \Bitrix\Tasks\Util\User::getId();
+		$userId = \Bitrix\Tasks\Util\User::getId();
 
 		try
 		{
-			$this->arResult['LOGGED_IN_USER'] = (int) $cUserId;
-			$this->arResult['DEFER_LOAD'] = 'N';		// by default
-
-			$alreadyEscaped = array('ALLOWED_ACTIONS', 'CHECKLIST_ITEMS', 'TASK', 'TASK_ID', 'NAME_TEMPLATE', 'TIMER');
-
-			foreach ($alreadyEscaped as $paramName)
-			{
-				if (isset($this->arParams['~' . $paramName]))
-					$this->arResult[$paramName] = $this->arParams['~' . $paramName];
-			}
-
-			if ( ! isset($this->arParams['FIRE_ON_CHANGED_EVENT']) )
-				$this->arParams['FIRE_ON_CHANGED_EVENT'] = 'N';
-
-			if (isset($this->arParams['DEFER_LOAD']))
-				$this->arResult['DEFER_LOAD'] = $this->arParams['DEFER_LOAD'];
-
+			$this->arResult['LOGGED_IN_USER'] = $userId;
+			$this->arResult['DEFER_LOAD'] = 'N';
 			$this->arResult['IS_IFRAME'] = $this->arParams['~IS_IFRAME'];
 
-			$this->arParams["PUBLIC_MODE"] = isset($this->arParams["PUBLIC_MODE"]) &&
-				($this->arParams["PUBLIC_MODE"] === true || $this->arParams["PUBLIC_MODE"] === "Y");
+			$this->arResult['TASK_LIMIT_EXCEEDED'] = static::tryParseBooleanParameter($this->arParams['TASK_LIMIT_EXCEEDED']);
 
-			$this->arResult['INNER_HTML'] = 'N';
-			if (isset($this->arParams['INNER_HTML']) && ($this->arParams['INNER_HTML'] === 'Y'))
-				$this->arResult['INNER_HTML'] = 'Y';
+			$alreadyEscaped = ['ALLOWED_ACTIONS', 'CHECKLIST_ITEMS', 'TASK', 'TASK_ID', 'NAME_TEMPLATE', 'TIMER'];
+			foreach ($alreadyEscaped as $paramName)
+			{
+				$param = $this->arParams['~'.$paramName];
+				if (isset($param))
+				{
+					$this->arResult[$paramName] = $param;
+				}
+			}
 
-			$arWhiteList = array();
-			$arKnownModes = array('VIEW TASK', 'CREATE TASK FORM');
+			if (!isset($this->arParams['FIRE_ON_CHANGED_EVENT']))
+			{
+				$this->arParams['FIRE_ON_CHANGED_EVENT'] = 'N';
+			}
+			if (isset($this->arParams['DEFER_LOAD']))
+			{
+				$this->arResult['DEFER_LOAD'] = $this->arParams['DEFER_LOAD'];
+			}
+
+			$this->arParams["PUBLIC_MODE"] = isset($this->arParams["PUBLIC_MODE"])
+				&& ($this->arParams["PUBLIC_MODE"] === true || $this->arParams["PUBLIC_MODE"] === "Y");
+
+			$this->arResult['INNER_HTML'] = ($this->arParams['INNER_HTML'] === 'Y' ? 'Y' : 'N');
+
+			$arWhiteList = [];
+			$arKnownModes = ['VIEW TASK', 'CREATE TASK FORM'];
 
 			if ($this->arParams['MODE'] === 'VIEW TASK')
 			{
@@ -108,7 +113,7 @@ class TasksTaskDetailPartsComponent extends TasksBaseComponent
 					elseif ( ! empty($_POST['CHECKLIST_ITEM_ID']) )
 					{
 						if ($this->arParams['TASK_ID'] > 0)
-							$oTask = CTaskItem::getInstance($this->arParams['TASK_ID'], $cUserId);
+							$oTask = CTaskItem::getInstance($this->arParams['TASK_ID'], $userId);
 
 						if (
 							($this->arParams['TASK_ID'] > 0)
@@ -210,7 +215,7 @@ class TasksTaskDetailPartsComponent extends TasksBaseComponent
 									'[0x05b70569] Can\'t create checklist item, exception $e->getCode() = ' . $e->getCode()
 									. ', file: ' . $e->getFile() . ', line: ' . $e->getLine() . ', data: '
 									. serialize(array(
-										'LOGGED_USER_ID' => $cUserId,
+										'LOGGED_USER_ID' => $userId,
 										'TASK_ID' => $arTaskData['ID'],
 										'CREATED_BY' => $arTaskData['CREATED_BY'],
 										'RESPONSIBLE_ID' => $arTaskData['RESPONSIBLE_ID'],

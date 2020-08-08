@@ -282,7 +282,7 @@ final class TemplateHelper
 			// todo: also, when we move to php 5.4, there closure bindTo() can be done, in case of closure passed
 			$this->methods[$name] = $cb;
 
-			if(ToLower(substr($name, 0, 14)) == 'templateaction')
+			if(ToLower(mb_substr($name, 0, 14)) == 'templateaction')
 			{
 				$this->runtimeActions[$name] = $cb;
 			}

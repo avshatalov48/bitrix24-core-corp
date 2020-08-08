@@ -27,6 +27,13 @@ CopyDirFiles(
 	$exclude = "bitrix"
 );
 
+CopyDirFiles(
+	$_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/rest/install/public/marketplace/',
+	WIZARD_SITE_PATH."/marketplace/",
+	$rewrite = (WIZARD_B24_TO_CP) ? true : false,
+	$recursive = true
+);
+
 CWizardUtil::ReplaceMacrosRecursive(WIZARD_SITE_PATH, Array("SITE_DIR" => WIZARD_SITE_DIR));
 
 $APPLICATION->SetFileAccessPermission(

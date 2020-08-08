@@ -116,7 +116,7 @@ if (Bitrix\Main\Loader::includeModule('rest'))
 		{
 			$this->arResult['ADDITIONAL_TABS'][] = [
 				'ID'   => 'activity_rest_'.$placementHandler['APP_ID'].'_'.$placementHandler['ID'],
-				'NAME' => strlen($placementHandler['TITLE']) > 0 ? $placementHandler['TITLE'] : $placementHandler['APP_NAME'],
+				'NAME' => $placementHandler['TITLE'] <> '' ? $placementHandler['TITLE'] : $placementHandler['APP_NAME'],
 
 				'ONCLICK'=> 'BX.rest.AppLayout.openApplication(
 					"'.$placementHandler['APP_ID'].'",
@@ -181,5 +181,6 @@ $arResult['JS_DATA'] = [
 	'listUrl'            => $arParams["PATH_TO_TASKS"],
 	'goToListOnDelete'   => $arParams["REDIRECT_TO_LIST_ON_DELETE"],
 	'additional_actions' => $actions,
-	'additional_tabs'    => $this->arResult['ADDITIONAL_TABS']
+	'additional_tabs'    => $this->arResult['ADDITIONAL_TABS'],
+	'taskLimitExceeded' => $arResult['TASK_LIMIT_EXCEEDED'],
 ];

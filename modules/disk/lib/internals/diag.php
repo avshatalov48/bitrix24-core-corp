@@ -284,7 +284,7 @@ final class Diag
 					);
 				}
 
-				if(($this->sqlBehavior & self::SQL_DETECT_LIKE) && stripos($query->getSql(), 'upper') !== false)
+				if(($this->sqlBehavior & self::SQL_DETECT_LIKE) && mb_stripos($query->getSql(), 'upper') !== false)
 				{
 					$this->log(array(
 						'Oh... LIKE UPPER... Delete! Destroy!',
@@ -341,7 +341,7 @@ final class Diag
 		$functionStack = $filesStack = '';
 		for($i = 1; $i < count($backtrace); $i++)
 		{
-			if(strlen($functionStack) > 0)
+			if($functionStack <> '')
 			{
 				$functionStack .= " < ";
 			}

@@ -1,0 +1,7 @@
+<?php
+$MESS["CRM_CONFIGURATION_MANIFEST_ACTION_DESCRIPTION_VERTICAL_CRM"] = "Click \"Export\" to save your CRM preset to a file";
+$MESS["CRM_CONFIGURATION_MANIFEST_BLOCK_TITLE_VERTICAL_CRM"] = "Export CRM solution preset";
+$MESS["CRM_CONFIGURATION_MANIFEST_DESCRIPTION_VERTICAL_CRM"] = "Get a ready to use CRM for your business in only a few minutes!";
+$MESS["CRM_CONFIGURATION_MANIFEST_PAGE_TITLE_VERTICAL_CRM"] = "Export CRM solution preset";
+$MESS["CRM_CONFIGURATION_MANIFEST_TITLE_VERTICAL_CRM"] = "CRM solution preset";
+?>

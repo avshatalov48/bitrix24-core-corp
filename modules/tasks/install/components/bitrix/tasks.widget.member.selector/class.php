@@ -31,6 +31,8 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 		static::tryParseArrayParameter($this->arParams['ATTRIBUTE_PASS'], $supportedAttributes);
 		$this->arParams['ATTRIBUTE_PASS'] = array_intersect($this->arParams['ATTRIBUTE_PASS'], $supportedAttributes);
 
+		$this->arResult['TASK_LIMIT_EXCEEDED'] = static::tryParseBooleanParameter($this->arParams['TASK_LIMIT_EXCEEDED']);
+
 		return $this->errors->checkNoFatals();
 	}
 }

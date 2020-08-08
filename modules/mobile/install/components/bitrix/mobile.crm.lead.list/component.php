@@ -296,7 +296,7 @@ while($item = $dbRes->GetNext())
 		if (count($declineStatusList) > 1)
 		{
 			$arActions[] = array(
-				"TEXT" => GetMessageJS("M_CRM_LEAD_LIST_DECLINE"),
+				"TEXT" => GetMessage("M_CRM_LEAD_LIST_DECLINE"),
 				"ONCLICK" => "BX.Mobile.Crm.List.showStatusList(" . $item['ID'] . ", " . CUtil::PhpToJSObject($declineStatusList) . ")",
 				'DISABLE' => in_array($curStatusId, array_keys($declineStatusList)) ? true : false
 			);
@@ -304,7 +304,7 @@ while($item = $dbRes->GetNext())
 		else
 		{
 			$arActions[] = array(
-				"TEXT" => GetMessageJS("M_CRM_LEAD_LIST_JUNK"),
+				"TEXT" => GetMessage("M_CRM_LEAD_LIST_JUNK"),
 				"ONCLICK" => "BX.Mobile.Crm.List.changeStatus('" . $item["ID"] . "', " . CUtil::PhpToJSObject(array(
 							"STATUS_ID" => $allStatusList["JUNK"]["STATUS_ID"],
 							"NAME" => $allStatusList["JUNK"]["NAME"],
@@ -328,7 +328,7 @@ while($item = $dbRes->GetNext())
 	if ($isEditPermitted && $canConvert["CONVERSION_PERMITTED"])
 	{
 		$arActions[] = array(
-			'TEXT' => GetMessageJS("M_CRM_LEAD_LIST_CREATE_BASE"),
+			'TEXT' => GetMessage("M_CRM_LEAD_LIST_CREATE_BASE"),
 			'ONCLICK' => "BX.Mobile.Crm.Lead.ListConverter.showConvertDialog('".$item['ID']."', ".CUtil::PhpToJSObject($canConvert).");",
 			'DISABLE' => false
 		);
@@ -394,7 +394,7 @@ while($item = $dbRes->GetNext())
 	if (!empty($buttons))
 	{
 		$arActions[] = array(
-			"TEXT" => GetMessageJS("M_CRM_LEAD_LIST_MORE"),
+			"TEXT" => GetMessage("M_CRM_LEAD_LIST_MORE"),
 			'ONCLICK' => "new BXMobileApp.UI.ActionSheet({
 							buttons: [" . $buttons . "]
 						}, 'actionSheet').show();",

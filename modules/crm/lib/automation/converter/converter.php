@@ -81,13 +81,13 @@ class Converter
 		return $this;
 	}
 
-	public function execute()
+	public function execute(array $contextData = null)
 	{
 		$result = new Result();
 
 		$this->synchronizeFields();
 
-		if (!$this->wizard->execute())
+		if (!$this->wizard->execute($contextData))
 		{
 			$errorText = $this->wizard->getErrorText();
 			$result->addError(new Error($errorText));

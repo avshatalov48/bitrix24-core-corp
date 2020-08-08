@@ -13,6 +13,7 @@ class PublicApplication extends \Bitrix\Main\Authentication\Application
 	protected $validUrls = array(
 		"/desktop_app/",
 		"/online/",
+		"/video/",
 		"/docs/pub/",
 		"/pub/",
 		"/rest/",

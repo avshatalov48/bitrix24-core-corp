@@ -13,7 +13,7 @@ CJSCore::Init(array('crm_entity_editor'));
 /** @var CCrmQuoteDetailsComponent $component */
 
 $guid = $arResult['GUID'];
-$prefix = strtolower($guid);
+$prefix = mb_strtolower($guid);
 $activityEditorID = "{$prefix}_editor";
 
 $APPLICATION->IncludeComponent(

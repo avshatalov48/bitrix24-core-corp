@@ -81,7 +81,7 @@ if (!function_exists('__SLMGetLogRecord'))
 
 		$timeFormated = FormatDate(GetMessage("SONET_SLM_FORMAT_TIME"), $timestamp);
 
-		if (strlen($arParams["DATE_TIME_FORMAT"]) <= 0)
+		if ($arParams["DATE_TIME_FORMAT"] == '')
 			$dateTimeFormated = __SMLFormatDate($timestamp);
 		else
 			$dateTimeFormated = FormatDate(
@@ -118,7 +118,7 @@ if (!function_exists('__SLMGetLogRecord'))
 		$arEvents["FIELDS_FORMATTED"]["COMMENTS_COUNT"] = $arEvents["COMMENTS_COUNT"];
 		$arEvents["FIELDS_FORMATTED"]["TMP_ID"] = $arEvents["TMP_ID"];
 
-		if (strlen($arParams["DATE_TIME_FORMAT"]) <= 0) // list
+		if ($arParams["DATE_TIME_FORMAT"] == '') // list
 		{
 			if (
 				array_key_exists("EVENT_FORMATTED", $arEvents["FIELDS_FORMATTED"])
@@ -196,7 +196,7 @@ if (!function_exists('__SLMGetLogRecord'))
 						$feature 
 						&& $arCommentEvent 
 						&& array_key_exists("OPERATION_ADD", $arCommentEvent) 
-						&& strlen($arCommentEvent["OPERATION_ADD"]) > 0
+						&& $arCommentEvent["OPERATION_ADD"] <> ''
 					)
 						$GLOBALS["CurUserCanAddComments"][$array_key] = (CSocNetFeaturesPerms::CanPerformOperation($GLOBALS["USER"]->GetID(), $arEvents["ENTITY_TYPE"], $arEvents["ENTITY_ID"], ($feature == "microblog" ? "blog" : $feature), $arCommentEvent["OPERATION_ADD"]) ? "Y" : "N");
 					else

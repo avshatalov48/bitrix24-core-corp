@@ -126,12 +126,18 @@ $APPLICATION->RestartBuffer();
 	$template = $arResult['ITEM'];
 	$inputPrefix = 'ACTION[0][ARGUMENTS][data]';
 	$editMode = !!$template->getId();
-
 	$blockData = $arResult['TEMPLATE_DATA']['BLOCKS'];
 	$jsData = $arResult['JS_DATA'];
+	$taskLimitExceeded = $arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'];
+	$lockClass = ($taskLimitExceeded ? 'tasks-btn-restricted' : '');
 
 	$taskUrlTemplate = str_replace(array('#task_id#', '#action#'), array('{{VALUE}}', 'view'), $arParams['PATH_TO_TASKS_TASK_ORIGINAL']);
 	$userProfileUrlTemplate = str_replace('#user_id#', '{{VALUE}}', $arParams['PATH_TO_USER_PROFILE']);
+
+	if ($taskLimitExceeded)
+	{
+		$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
+	}
 	?>
 
 	<div id="<?=$helper->getScopeId()?>" class="tasks">
@@ -350,6 +356,7 @@ $APPLICATION->RestartBuffer();
 					'EMAIL',
 				),
 				'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_ACCOMPLICE'],
+				'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
 			),
 			$helper->getComponent(),
 			array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -360,6 +367,7 @@ $APPLICATION->RestartBuffer();
 			'HTML' => ob_get_clean(),
 			'IS_PINABLE' => true,
 			'FILLED' => $blockData['SE_ACCOMPLICE']['FILLED'],
+			'RESTRICTED' => $taskLimitExceeded,
 		);
 
 		ob_start();
@@ -378,6 +386,7 @@ $APPLICATION->RestartBuffer();
 					'EMAIL',
 				),
 				'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_AUDITOR'],
+				'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
 			),
 			$helper->getComponent(),
 			array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -388,6 +397,7 @@ $APPLICATION->RestartBuffer();
 			'HTML' => ob_get_clean(),
 			'IS_PINABLE' => true,
 			'FILLED' => $blockData['SE_AUDITOR']['FILLED'],
+			'RESTRICTED' => $taskLimitExceeded,
 		);
 
 		ob_start();
@@ -533,6 +543,7 @@ $APPLICATION->RestartBuffer();
 					'TEMPLATE_CONTROLLER_ID' => $helper->getId().'-options',
 					'INPUT_PREFIX' => $inputPrefix,
 					'OPTIONS' => $options,
+					'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
 				),
 				$helper->getComponent(),
 				array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -549,21 +560,10 @@ $APPLICATION->RestartBuffer();
 
 		$blocks['STATIC'][] = $dates;
 
-
-
-
-
-
-
-
-
-
-
-
         ob_start();
         $replicationEnabled = !$template['BASE_TEMPLATE_ID'] && $template['TPARAM_TYPE'] != 1;
         ?>
-                <label class="js-id-hint-help js-id-task-template-edit-hint-replication task-field-label task-field-label-repeat" data-hint-enabled="<?=!intval($replicationEnabled)?>" data-hint-text="<?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_NO_REPLICATION_TEMPLATE_NOTICE', array('#TPARAM_FOR_NEW_USER#' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TPARAM_TYPE')))?>">
+                <label class="js-id-hint-help js-id-task-template-edit-hint-replication task-field-label task-field-label-repeat <?=$lockClass?>" data-hint-enabled="<?=!intval($replicationEnabled)?>" data-hint-text="<?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_NO_REPLICATION_TEMPLATE_NOTICE', array('#TPARAM_FOR_NEW_USER#' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TPARAM_TYPE')))?>">
                     <input class="js-id-task-template-edit-flag js-id-task-template-edit-flag-replication task-options-checkbox"
                            data-target="replication"
                            data-flag-name="REPLICATE"
@@ -614,7 +614,7 @@ $APPLICATION->RestartBuffer();
 		//////// DYNAMIC ///////////////////////////////////////////////
 
 		$DYNAMICBlocks = array(
-			'PROJECT', 'CRM', 'USER_FIELDS', /*'REPLICATION',*/ 'TIME_MANAGER', 'TAG', 'RELATED_TASK', 'PARENT', 'ACCESS',
+			'PROJECT', 'CRM', 'USER_FIELDS', /*'REPLICATION',*/ 'TIME_MANAGER', 'TAG', 'RELATED_TASK', 'PARENT', /*'ACCESS',*/ 'ACCESS_TEMPLATE'
 		);
 
 		foreach($DYNAMICBlocks as $blockCode)
@@ -782,7 +782,7 @@ $APPLICATION->RestartBuffer();
 					<input class="js-id-task-template-edit-parent-type-task" type="hidden" name="<?=$inputPrefix?>[PARENT_ID]" value="<?=intval($template['PARENT_ID'])?>" />
 					<input class="js-id-task-template-edit-parent-type-template" type="hidden" name="<?=$inputPrefix?>[BASE_TEMPLATE_ID]" value="<?=(intval($template['PARENT_ID']) ? 0 : intval($template['BASE_TEMPLATE_ID']))?>" />
 
-					<div class="tasks-parent-selector">
+					<div class="tasks-parent-selector <?=$lockClass?>">
 						<?$APPLICATION->IncludeComponent(
 							'bitrix:tasks.widget.related.selector',
 							'',
@@ -791,6 +791,7 @@ $APPLICATION->RestartBuffer();
 								'MAX' => 1,
 								'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_PARENTITEM'],
 								'TYPES' => array($typeTask ? 'TASK' : 'TASK_TEMPLATE'), // this could be changed at runtime on js
+								'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
 							),
 							$helper->getComponent(),
 							array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -812,6 +813,26 @@ $APPLICATION->RestartBuffer();
 						'CAN_UPDATE' => $template->canUpdateRights(),
 						'USER_DATA' => $arResult['DATA']['USER'],
 						'DATA' => $template['SE_ACCESS'],
+						'EDIT_MODE' => $editMode,
+						'TEMPLATE_ID' => $template->getId(),
+					),
+					$helper->getComponent(),
+					array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
+				);
+			}
+			elseif($blockCode == 'ACCESS_TEMPLATE')
+			{
+				$APPLICATION->IncludeComponent(
+					'bitrix:tasks.widget.template.access',
+					'',
+					array(
+						'TEMPLATE_CONTROLLER_ID' => $helper->getId().'-rights',
+						'INPUT_PREFIX' => $inputPrefix.'[SE_TEMPLATE_ACCESS]',
+						'ENTITY_CODE' => 'task_template',
+						'CAN_READ' => 'Y',
+						'CAN_UPDATE' => $template->canUpdateRights(),
+						'USER_DATA' => $arResult['DATA']['USER'],
+						'PERMISSIONS' => $template->getAccessPermissions(),
 						'EDIT_MODE' => $editMode,
 						'TEMPLATE_ID' => $template->getId(),
 					),
@@ -849,6 +870,7 @@ $APPLICATION->RestartBuffer();
 					'IS_PINABLE' => $arParams['ENABLE_FOOTER_UNPIN'],
 					'BUTTONS' => ['save', 'cancel'],
                 ],
+				'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
 			],
 			null, //$helper->getComponent(),
 			["HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y"]

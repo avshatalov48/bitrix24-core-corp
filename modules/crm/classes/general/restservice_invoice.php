@@ -68,14 +68,14 @@ class CCrmInvoiceRestUtil
 
 		if (is_array($params))
 		{
-			$index = strtolower($name);
+			$index = mb_strtolower($name);
 			if (array_key_exists($index, $params))
 			{
 				$result = $params[$index];
 			}
 			else
 			{
-				$index = strtoupper($index);
+				$index = mb_strtoupper($index);
 				if (array_key_exists($index, $params))
 					$result = $params[$index];
 			}
@@ -90,14 +90,14 @@ class CCrmInvoiceRestUtil
 
 		if (is_array($params))
 		{
-			$index = strtolower($name);
+			$index = mb_strtolower($name);
 			if (is_array($params[$index]) && count($params[$index]) > 0)
 			{
 				$result = $params[$index];
 			}
 			else
 			{
-				$index = strtoupper($index);
+				$index = mb_strtoupper($index);
 				if (is_array($params[$index]) && count($params[$index]) > 0)
 					$result = $params[$index];
 			}
@@ -219,26 +219,26 @@ class CCrmInvoiceRestService extends IRestService
 		$fields = array();
 		foreach ($fieldsInfo as $fName => $fInfo)
 		{
-			if (substr($fName, 0, 19) === 'INVOICE_PROPERTIES.')
+			if (mb_substr($fName, 0, 19) === 'INVOICE_PROPERTIES.')
 			{
-				if (substr($fName, 18) === '.{}')
+				if (mb_substr($fName, 18) === '.{}')
 				{
 					$definition = array('key' => self::makeFieldInfo($fInfo));
 					$fields['INVOICE_PROPERTIES']['definition'] = $definition;
 				}
-				elseif (substr($fName, 18) === '.{}.')
+				elseif (mb_substr($fName, 18) === '.{}.')
 					$fields['INVOICE_PROPERTIES']['definition']['value'] = self::makeFieldInfo($fInfo);
 			}
-			elseif (substr($fName, 0, 13) === 'PRODUCT_ROWS.')
+			elseif (mb_substr($fName, 0, 13) === 'PRODUCT_ROWS.')
 			{
-				if (substr($fName, 12) === '.[]')
+				if (mb_substr($fName, 12) === '.[]')
 				{
 					$definition = array('row' => array());
 					$fields['PRODUCT_ROWS']['definition'] = $definition;
 				}
-				elseif (substr($fName, 12, 4) === '.[].')
+				elseif (mb_substr($fName, 12, 4) === '.[].')
 				{
-					$subName = substr($fName, 16);
+					$subName = mb_substr($fName, 16);
 					$fieldInfo = self::makeFieldInfo($fInfo);
 					$name = \CCrmProductRow::GetFieldCaption($subName);
 					$fieldInfo['title'] = !empty($name) ? $name : $subName;
@@ -295,8 +295,8 @@ class CCrmInvoiceRestService extends IRestService
 		// sanitize
 		$comments = isset($fields['COMMENTS']) ? trim($fields['COMMENTS']) : '';
 		$userDescription = isset($fields['USER_DESCRIPTION']) ? trim($fields['USER_DESCRIPTION']) : '';
-		$bSanitizeComments = ($comments !== '' && strpos($comments, '<'));
-		$bSanitizeUserDescription = ($userDescription !== '' && strpos($userDescription, '<'));
+		$bSanitizeComments = ($comments !== '' && mb_strpos($comments, '<'));
+		$bSanitizeUserDescription = ($userDescription !== '' && mb_strpos($userDescription, '<'));
 		if ($bSanitizeComments || $bSanitizeUserDescription)
 		{
 			$sanitizer = new CBXSanitizer();
@@ -486,8 +486,8 @@ class CCrmInvoiceRestService extends IRestService
 		$updateUserDescription = isset($fields['USER_DESCRIPTION']);
 		$comments = $updateComments ? trim($fields['COMMENTS']) : '';
 		$userDescription = $updateUserDescription ? trim($fields['USER_DESCRIPTION']) : '';
-		$bSanitizeComments = ($comments !== '' && strpos($comments, '<'));
-		$bSanitizeUserDescription = ($userDescription !== '' && strpos($userDescription, '<'));
+		$bSanitizeComments = ($comments !== '' && mb_strpos($comments, '<'));
+		$bSanitizeUserDescription = ($userDescription !== '' && mb_strpos($userDescription, '<'));
 		if ($bSanitizeComments || $bSanitizeUserDescription)
 		{
 			$sanitizer = new CBXSanitizer();
@@ -761,18 +761,18 @@ class CCrmInvoiceRestService extends IRestService
 	public static function processEvent(array $arParams, array $arHandler)
 	{
 		$eventName = $arHandler['EVENT_NAME'];
-		if(strpos(strtoupper($eventName), 'ONCRMINVOICE') !== 0)
+		if(mb_strpos(mb_strtoupper($eventName), 'ONCRMINVOICE') !== 0)
 		{
 			throw new RestException("The Event \"{$eventName}\" is not supported in current context");
 		}
 
-		$action = substr($eventName, 12);
+		$action = mb_substr($eventName, 12);
 		if($action === false || $action === '')
 		{
 			throw new RestException("The Event \"{$eventName}\" is not supported in current context");
 		}
 
-		$action = strtoupper($action);
+		$action = mb_strtoupper($action);
 		switch($action)
 		{
 			case 'ADD':
@@ -1902,6 +1902,7 @@ class CCrmInvoiceRestService extends IRestService
 			$userFields = CCrmInvoice::GetUserFields();
 			foreach ($arOrder as $fieldName => $sortName)
 			{
+				$sortName = mb_strtoupper($sortName);
 				if (isset($fieldsInfo[$fieldName])
 					&& $fieldsInfo[$fieldName]['order'] === true
 					&& ($sortName === 'ASC' || $sortName === 'DESC'))
@@ -2252,7 +2253,7 @@ class CCrmInvoiceRestService extends IRestService
 			}
 
 			$fileID = isset($v['id']) ? intval($v['id']) : 0;
-			$removeFile = isset($v['remove']) && is_string($v['remove']) && strtoupper($v['remove']) === 'Y';
+			$removeFile = isset($v['remove']) && is_string($v['remove']) && mb_strtoupper($v['remove']) === 'Y';
 			$fileData = isset($v['fileData']) ? $v['fileData'] : '';
 
 			if(!self::isIndexedArray($fileData))
@@ -2374,7 +2375,7 @@ class CCrmInvoiceRestService extends IRestService
 
 	private static function externalizeFile($ownerTypeID, $ownerID, $fieldName, $fileID, $dynamic = true)
 	{
-		$ownerTypeName = strtolower(CCrmOwnerType::ResolveName($ownerTypeID));
+		$ownerTypeName = mb_strtolower(CCrmOwnerType::ResolveName($ownerTypeID));
 		if($ownerTypeName === '')
 		{
 			return '';
@@ -2427,7 +2428,7 @@ class CCrmInvoiceRestService extends IRestService
 			}
 
 			$elementID = isset($v['id']) ? intval($v['id']) : 0;
-			$removeElement = isset($v['remove']) && is_string($v['remove']) && strtoupper($v['remove']) === 'Y';
+			$removeElement = isset($v['remove']) && is_string($v['remove']) && mb_strtoupper($v['remove']) === 'Y';
 			$fileData = isset($v['fileData']) ? $v['fileData'] : '';
 
 			if(!self::isIndexedArray($fileData))
@@ -2603,7 +2604,7 @@ class CCrmInvoiceRestService extends IRestService
 			}
 
 			$fileID = isset($v['id']) ? intval($v['id']) : 0;
-			$removeElement = isset($v['remove']) && is_string($v['remove']) && strtoupper($v['remove']) === 'Y';
+			$removeElement = isset($v['remove']) && is_string($v['remove']) && mb_strtoupper($v['remove']) === 'Y';
 			$fileData = isset($v['fileData']) ? $v['fileData'] : '';
 
 			if(!self::isIndexedArray($fileData))

@@ -416,7 +416,7 @@ class VoximplantStartComponent extends \CBitrixComponent
 		}
 
 		static $result = null;
-		if(!is_null($result))
+		if($result !== null)
 		{
 			return $result;
 		}
@@ -464,6 +464,10 @@ class VoximplantStartComponent extends \CBitrixComponent
 	public function getAppIcon($appCode)
 	{
 		$marketplaceItems = $this->getPartnerApps();
+		if($marketplaceItems === null || !is_array($marketplaceItems["ITEMS"]))
+		{
+			return "";
+		}
 
 		foreach ($marketplaceItems["ITEMS"] as $k => $item)
 		{
@@ -514,7 +518,7 @@ class VoximplantStartComponent extends \CBitrixComponent
 		{
 			foreach ($marketplaceItems['ITEMS'] as $item)
 			{
-				if(is_null($item['INSTALLED_APP']))
+				if($item['INSTALLED_APP'] === null)
 				{
 					$result[] = [
 						'id' => $item['ID'],
@@ -538,7 +542,7 @@ class VoximplantStartComponent extends \CBitrixComponent
 		];
 
 		$integrationsUrl = static::INTEGRATIONS_URL;
-		if(\Bitrix\Main\Context::getCurrent()->getLanguage() != "en")
+		if(\Bitrix\Main\Context::getCurrent()->getLanguage() !== "en")
 		{
 			$integrationsUrl .= \Bitrix\Main\Context::getCurrent()->getLanguage() . "/";
 		}

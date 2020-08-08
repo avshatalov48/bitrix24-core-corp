@@ -16,9 +16,7 @@ Class controller extends CModule
 	{
 		$arModuleVersion = array();
 
-		$path = str_replace("\\", "/", __FILE__);
-		$path = substr($path, 0, strlen($path) - strlen("/index.php"));
-		include($path."/version.php");
+		include(__DIR__.'/version.php');
 
 		$this->MODULE_VERSION = $arModuleVersion["VERSION"];
 		$this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
@@ -37,7 +35,7 @@ Class controller extends CModule
 		RegisterModule("controller");
 		if (!$DB->Query("SELECT 'x' FROM b_controller_member WHERE 1=0", true))
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/controller/install/db/".strtolower($DB->type)."/install.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/controller/install/db/".mb_strtolower($DB->type)."/install.sql");
 			if (!$this->errors)
 			{
 				$DB->Query("
@@ -78,7 +76,7 @@ Class controller extends CModule
 		if (!array_key_exists("savedata", $arParams) || ($arParams["savedata"] != "Y"))
 		{
 			if ($DB->Query("SELECT 'x' FROM b_controller_member", true))
-				$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/controller/install/db/".strtolower($DB->type)."/uninstall.sql");
+				$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/controller/install/db/".mb_strtolower($DB->type)."/uninstall.sql");
 		}
 
 		UnRegisterModuleDependences("perfmon", "OnGetTableSchema", "controller", "controller", "OnGetTableSchema");

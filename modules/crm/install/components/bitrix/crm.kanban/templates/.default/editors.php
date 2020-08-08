@@ -5,7 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 // tmp for compatibility with activity editor
-$prefix = strtolower('kanban_activity');
+$prefix = mb_strtolower('kanban_activity');
 $activityEditorID = "{$prefix}_editor";
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.activity.editor',

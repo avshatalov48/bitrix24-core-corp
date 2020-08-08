@@ -667,7 +667,24 @@ class Task extends Activity\Provider\Base
 					\CCrmActivity::getSubsidiaryEntityBindingMap($ownerTypeId, $ownerId)
 				);
 			}
-			$activity['BINDINGS'] = array_values($bindingMap);
+			$bindings = array_values($bindingMap);
+			if(count($bindings) > 1)
+			{
+				//Lead and Deals will be at beginning of list for take activity ownership
+				usort(
+					$bindings,
+					function($a, $b)
+					{
+						if($a['OWNER_TYPE_ID'] == $b['OWNER_TYPE_ID'])
+						{
+							return 0;
+						}
+						return $a['OWNER_TYPE_ID'] > $b['OWNER_TYPE_ID'] ? 1 : -1;
+					}
+				);
+			}
+			$activity['BINDINGS'] = $bindings;
+
 		}
 
 		if(!empty($activity['BINDINGS']))

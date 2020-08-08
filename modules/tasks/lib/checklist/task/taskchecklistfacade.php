@@ -7,9 +7,12 @@ use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\SystemException;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\AnalyticLogger;
 use Bitrix\Tasks\CheckList\CheckListFacade;
 use Bitrix\Tasks\CheckList\Internals\CheckList;
+use Bitrix\Tasks\Comments\Task\CommentPoster;
 use Bitrix\Tasks\Internals\SearchIndex;
 use Bitrix\Tasks\Internals\Task\CheckList\MemberTable;
 use Bitrix\Tasks\Internals\Task\CheckListTable;
@@ -76,7 +79,7 @@ class TaskCheckListFacade extends CheckListFacade
 	 *
 	 * @return string
 	 */
-	public static function getCheckListTree()
+	public static function getCheckListTree(): string
 	{
 		return TaskCheckListTree::class;
 	}
@@ -86,7 +89,7 @@ class TaskCheckListFacade extends CheckListFacade
 	 *
 	 * @return string
 	 */
-	public static function getCheckListDataController()
+	public static function getCheckListDataController(): string
 	{
 		return CheckListTable::getClass();
 	}
@@ -96,7 +99,7 @@ class TaskCheckListFacade extends CheckListFacade
 	 *
 	 * @return string
 	 */
-	public static function getCheckListTreeDataController()
+	public static function getCheckListTreeDataController(): string
 	{
 		return TaskCheckListTree::getDataController();
 	}
@@ -106,7 +109,7 @@ class TaskCheckListFacade extends CheckListFacade
 	 *
 	 * @return string
 	 */
-	public static function getCheckListMemberDataController()
+	public static function getCheckListMemberDataController(): string
 	{
 		return MemberTable::getClass();
 	}
@@ -144,7 +147,7 @@ class TaskCheckListFacade extends CheckListFacade
 	 * @throws LoaderException
 	 * @throws SqlQueryException
 	 */
-	public static function doAddPostActions($taskId, $userId, $checkList)
+	public static function doAddPostActions($taskId, $userId, $checkList): void
 	{
 		$checkListLog = new TaskCheckListLog($taskId, $userId, null, $checkList);
 
@@ -155,6 +158,7 @@ class TaskCheckListFacade extends CheckListFacade
 		else
 		{
 			$checkListLog->logAddingChanges();
+			static::postChangesComment($taskId, $userId);
 			SearchIndex::setTaskSearchIndex($taskId);
 		}
 	}
@@ -169,7 +173,7 @@ class TaskCheckListFacade extends CheckListFacade
 	 * @throws LoaderException
 	 * @throws SqlQueryException
 	 */
-	public static function doUpdatePostActions($taskId, $userId, $oldCheckList, $newCheckList)
+	public static function doUpdatePostActions($taskId, $userId, $oldCheckList, $newCheckList): void
 	{
 		$checkListLog = new TaskCheckListLog($taskId, $userId, $oldCheckList, $newCheckList);
 
@@ -183,6 +187,7 @@ class TaskCheckListFacade extends CheckListFacade
 		else
 		{
 			$checkListLog->logUpdatingChanges();
+			static::postChangesComment($taskId, $userId);
 			SearchIndex::setTaskSearchIndex($taskId);
 		}
 	}
@@ -197,7 +202,7 @@ class TaskCheckListFacade extends CheckListFacade
 	 * @throws LoaderException
 	 * @throws SqlQueryException
 	 */
-	public static function doDeletePostActions($taskId, $userId, $data = [])
+	public static function doDeletePostActions($taskId, $userId, $data = []): void
 	{
 		if (static::getDeferredActionsMode())
 		{
@@ -208,6 +213,8 @@ class TaskCheckListFacade extends CheckListFacade
 				$checkListLog = new TaskCheckListLog($taskId, $userId);
 				$collectedData = $checkListLog->getActionFields(TaskCheckListLog::ACTION_DELETE, $itemsToLog);
 				$checkListLog->logItemsChanges($collectedData);
+
+				static::postChangesComment($taskId, $userId);
 			}
 		}
 		else
@@ -216,6 +223,8 @@ class TaskCheckListFacade extends CheckListFacade
 
 			$checkListLog = new TaskCheckListLog($taskId, $userId, $checkList);
 			$checkListLog->actionRemove($checkList->getFields()['TITLE']);
+
+			static::postChangesComment($taskId, $userId);
 		}
 
 		SearchIndex::setTaskSearchIndex($taskId);
@@ -230,7 +239,7 @@ class TaskCheckListFacade extends CheckListFacade
 	 * @throws ArgumentTypeException
 	 * @throws SqlQueryException
 	 */
-	public static function doMergePostActions($taskId, $userId, $data = [])
+	public static function doMergePostActions($taskId, $userId, $data = []): void
 	{
 		if (static::$collectedData)
 		{
@@ -241,9 +250,29 @@ class TaskCheckListFacade extends CheckListFacade
 		{
 			$checkListLog = new TaskCheckListLog($taskId, $userId);
 			$checkListLog->logItemsChanges(static::$collectedData);
+
+			static::postChangesComment($taskId, $userId);
 		}
 
 		static::logToAnalyticsFile($data['PARAMETERS']);
+	}
+
+	/**
+	 * @param $taskId
+	 * @param $userId
+	 */
+	private static function postChangesComment($taskId, $userId): void
+	{
+		return;
+
+		$commentPoster = CommentPoster::getInstance($taskId, $userId);
+		$commentPoster->appendChecklistChangesMessage();
+
+		if (!$commentPoster->getDeferredPostMode())
+		{
+			$commentPoster->postComments();
+			$commentPoster->clearComments();
+		}
 	}
 
 	/**
@@ -252,7 +281,7 @@ class TaskCheckListFacade extends CheckListFacade
 	 * @param array $fields
 	 * @return array
 	 */
-	public static function getFieldsForTable($fields)
+	public static function getFieldsForTable($fields): array
 	{
 		return [
 			'TASK_ID' => $fields['ENTITY_ID'],
@@ -269,10 +298,10 @@ class TaskCheckListFacade extends CheckListFacade
 	 * @param int $userId
 	 * @return void
 	 */
-	protected static function fillCommonAccessActions($taskId, $userId)
+	protected static function fillCommonAccessActions($taskId, $userId): void
 	{
 		$actions = array_keys(self::ACTIONS['COMMON']);
-		$task = \CTaskItem::getInstanceFromPool($taskId, $userId);
+		$task = CTaskItem::getInstanceFromPool($taskId, $userId);
 
 		if (!$task->checkCanRead())
 		{
@@ -281,8 +310,8 @@ class TaskCheckListFacade extends CheckListFacade
 		}
 
 		static::$commonAccessActions[$taskId][$userId] = [
-			self::ACTION_ADD => $task->isActionAllowed(CTaskItem::ACTION_CHECKLIST_ADD_ITEMS),
-			self::ACTION_REORDER => $task->isActionAllowed(CTaskItem::ACTION_CHECKLIST_REORDER_ITEMS),
+			self::ACTION_ADD => $task->checkAccess(ActionDictionary::ACTION_CHECKLIST_ADD),
+			self::ACTION_REORDER => $task->checkAccess(ActionDictionary::ACTION_CHECKLIST_EDIT),
 		];
 	}
 
@@ -292,20 +321,20 @@ class TaskCheckListFacade extends CheckListFacade
 	 * @param int $userId
 	 * @return void
 	 */
-	protected static function fillItemAccessActions($taskId, $checkList, $userId)
+	protected static function fillItemAccessActions($taskId, $checkList, $userId): void
 	{
 		$actions = array_keys(self::ACTIONS['ITEM']);
-		$task = \CTaskItem::getInstanceFromPool($taskId, $userId);
+		$task = CTaskItem::getInstanceFromPool($taskId, $userId);
 		$checkListId = $checkList->getFields()['ID'];
 
-		if ($task->isActionAllowed(CTaskItem::ACTION_EDIT))
+		if ($task->checkAccess(ActionDictionary::ACTION_TASK_EDIT))
 		{
 			static::$itemAccessActions[$taskId][$userId][$checkListId] = array_fill_keys($actions, true);
 			return;
 		}
 
 		$isCreator = ($userId === $checkList->getFields()['CREATED_BY']);
-		$isExecutant = (bool)$task->isUserRole(CTaskItem::ROLE_RESPONSIBLE | CTaskItem::ROLE_ACCOMPLICE);
+		$isExecutant = $task->checkAccess(ActionDictionary::ACTION_TASK_EDIT);
 
 		if (!$task->checkCanRead())
 		{
@@ -325,7 +354,7 @@ class TaskCheckListFacade extends CheckListFacade
 	 *
 	 * @param string $message
 	 */
-	public static function logError($message)
+	public static function logError($message): void
 	{
 		CTaskAssert::log($message, CTaskAssert::ELL_ERROR);
 		Util::log($message);
@@ -336,7 +365,7 @@ class TaskCheckListFacade extends CheckListFacade
 	 *
 	 * @param array $parameters
 	 */
-	private static function logToAnalyticsFile($parameters)
+	private static function logToAnalyticsFile($parameters): void
 	{
 		$analyticsData = $parameters['analyticsData'];
 
@@ -356,5 +385,10 @@ class TaskCheckListFacade extends CheckListFacade
 				AnalyticLogger::logToFile($action, $tag, $label);
 			}
 		}
+	}
+
+	protected static function getAccessControllerClass(): string
+	{
+		return TaskAccessController::class;
 	}
 }

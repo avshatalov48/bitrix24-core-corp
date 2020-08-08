@@ -31,6 +31,7 @@ $arParams['PATH_TO_MIGRATION'] = SITE_DIR."marketplace/category/migration/";
 $arResult['PATH_TO_LEAD_WIDGET'] = CrmCheckPath('PATH_TO_LEAD_WIDGET', $arParams['PATH_TO_LEAD_WIDGET'],$APPLICATION->GetCurPage()."?widget");
 $arResult['PATH_TO_LEAD_KANBAN'] = CrmCheckPath('PATH_TO_LEAD_KANBAN', $arParams['PATH_TO_LEAD_KANBAN'],$APPLICATION->GetCurPage()."?kanban");
 $arResult['PATH_TO_LEAD_CALENDAR'] = CrmCheckPath('PATH_TO_LEAD_CALENDAR', $arParams['PATH_TO_LEAD_CALENDAR'],$APPLICATION->GetCurPage()."?calendar");
+$arResult['PATH_TO_CONFIG_CHECKER'] = CComponentEngine::MakePathFromTemplate(\COption::GetOptionString('crm', 'path_to_config_checker'));
 
 $arParams['ELEMENT_ID'] = isset($arParams['ELEMENT_ID']) ? intval($arParams['ELEMENT_ID']) : 0;
 
@@ -352,7 +353,7 @@ if($arParams['TYPE'] === 'list')
 			'PATH_TO_LEAD_CALENDAR' => $arResult['PATH_TO_LEAD_CALENDAR'],
 			'NAVIGATION_CONTEXT_ID' => $entityType
 		);
-		if (isset($_REQUEST['WG']) && strtoupper($_REQUEST['WG']) === 'Y')
+		if (isset($_REQUEST['WG']) && mb_strtoupper($_REQUEST['WG']) === 'Y')
 		{
 			$widgetDataFilter = \Bitrix\Crm\Widget\Data\LeadDataSource::extractDetailsPageUrlParams($_REQUEST);
 			if (!empty($widgetDataFilter))
@@ -432,7 +433,7 @@ if($arParams['TYPE'] === 'list')
 			$arResult['BUTTONS'][] = array(
 				'TEXT' => GetMessage('LEAD_DEDUPE'),
 				'TITLE' => GetMessage('LEAD_DEDUPE_TITLE'),
-				'ONCLICK' => $restriction->preparePopupScript(),
+				'ONCLICK' => $restriction->prepareInfoHelperScript(),
 				'MENU_ICON' => 'grid-lock'
 			);
 		}
@@ -440,6 +441,15 @@ if($arParams['TYPE'] === 'list')
 
 	if(\Bitrix\Main\Loader::includeModule('rest') && is_callable('\Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl'))
 	{
+		if ($bConfig)
+		{
+			$arResult['BUTTONS'][] = [
+				'TEXT' => GetMessage("CONFIG_CHECKER"),
+				'TITLE' => GetMessage("CONFIG_CHECKER_TITLE"),
+				'ONCLICK' => 'BX.SidePanel.Instance.open(\''.$arResult["PATH_TO_CONFIG_CHECKER"].'\');'
+			];
+			$arResult["IS_NEED_TO_CHECK"] = true;
+		}
 		$url = \Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl('crm_lead', 'setting_list');
 		$arResult['BUTTONS'][] = [
 			'TEXT' => GetMessage('LEAD_VERTICAL_CRM'),

@@ -30,7 +30,7 @@ class CCrmChannelPanelComponent extends CBitrixComponent
 	//region Methods
 	public static function getSettings($guid)
 	{
-		$settings = CUserOptions::GetOption('crm.channel_panel', strtolower($guid), null);
+		$settings = CUserOptions::GetOption('crm.channel_panel', mb_strtolower($guid), null);
 		if(!is_array($settings))
 		{
 			$settings = array('enabled' => 'Y');
@@ -39,7 +39,7 @@ class CCrmChannelPanelComponent extends CBitrixComponent
 	}
 	public static function saveSettings($guid, array $settings)
 	{
-		CUserOptions::SetOption('crm.channel_panel', strtolower($guid), $settings);
+		CUserOptions::SetOption('crm.channel_panel', mb_strtolower($guid), $settings);
 	}
 	public static function markAsEnabled($guid, $enabled)
 	{
@@ -50,7 +50,7 @@ class CCrmChannelPanelComponent extends CBitrixComponent
 	public static function checkIfEnabled($guid)
 	{
 		$settings = self::getSettings($guid);
-		return !isset($settings['enabled']) || strtoupper($settings['enabled']) === 'Y';
+		return !isset($settings['enabled']) || mb_strtoupper($settings['enabled']) === 'Y';
 	}
 	public function __construct($component = null)
 	{
@@ -205,7 +205,7 @@ class CCrmChannelPanelComponent extends CBitrixComponent
 	}
 	public function isEnabled()
 	{
-		return !isset($this->settings['enabled']) || strtoupper($this->settings['enabled']) === 'Y';
+		return !isset($this->settings['enabled']) || mb_strtoupper($this->settings['enabled']) === 'Y';
 	}
 	public function isAutoRewindEnabled()
 	{

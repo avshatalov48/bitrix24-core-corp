@@ -94,19 +94,25 @@ class CVoxImplantOutgoing
 
 		$checkExtensionCursor = \Bitrix\Main\UserTable::getList(Array(
 			'select' => Array('ID', 'IS_ONLINE', 'UF_VI_PHONE', 'ACTIVE'),
-			'filter' => Array('=UF_PHONE_INNER' => intval($phoneNumber), '=ACTIVE' => 'Y'),
+			'filter' => Array('=UF_PHONE_INNER' => $phoneNumber, '=ACTIVE' => 'Y'),
 		));
 		if($checkExtensionCursor->fetch())
 		{
 			return false;
 		}
 
-		$cursor = VI\ConfigTable::getList(array(
-			'select' => array('SEARCH_ID', 'LINE_PREFIX'),
-			'filter' => array(
+		$cursor = VI\ConfigTable::getList([
+			'select' => [
+				'SEARCH_ID',
+				'LINE_PREFIX',
+				'RENTED_NUMBER' => 'NUMBER.NUMBER',
+				'CALLER_ID_NUMBER' => 'CALLER_ID.NUMBER'
+			],
+			'filter' => [
 				'=CAN_BE_SELECTED' => 'Y',
-			)
-		));
+				'=PORTAL_MODE' => [CVoxImplantConfig::MODE_SIP, CVoxImplantConfig::MODE_RENT, CVoxImplantConfig::MODE_LINK]
+			]
+		]);
 		while ($row = $cursor->fetch())
 		{
 			$currentPrefix = (string)$row['LINE_PREFIX'];
@@ -115,7 +121,7 @@ class CVoxImplantOutgoing
 
 			if($currentPrefix == substr($phoneNumber, 0, strlen($currentPrefix)))
 			{
-				return $row['SEARCH_ID'];
+				return $row['SEARCH_ID'] ?: $row['RENTED_NUMBER'] ?: $row['RENTED_GROUP_NUMBER'] ?: $row['CALLER_ID_NUMBER'];
 			}
 		}
 		return false;

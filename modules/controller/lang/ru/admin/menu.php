@@ -17,5 +17,7 @@ $MESS["CTRLR_MENU_UPLOAD_NAME"]="Передача файла";
 $MESS["CTRLR_MENU_UPLOAD_TITLE"]="Передача файла на подчиненные контроллеру сайты";
 $MESS["CTRLR_MENU_COUNTERS"]="Счетчики";
 $MESS["CTRLR_MENU_COUNTERS_TITLE"]="Настройка счетчиков";
+$MESS["CTRLR_MENU_COUNTERS_HISTORY"]="История";
+$MESS["CTRLR_MENU_COUNTERS_HISTORY_TITLE"]="История счетчиков";
 $MESS["CTRLR_MENU_AUTH"]="Авторизация";
 ?>

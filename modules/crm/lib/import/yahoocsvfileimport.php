@@ -92,7 +92,7 @@ class YahooCsvFileImport extends CsvFileImport
 		$phoneInfos = $this->getPhones($data);
 		foreach($phoneInfos as &$phoneInfo)
 		{
-			$valueType = strtoupper($phoneInfo['VALUE_TYPE']);
+			$valueType = mb_strtoupper($phoneInfo['VALUE_TYPE']);
 			$result["PHONE_{$valueType}"] = $phoneInfo['VALUE'];
 		}
 		unset($phoneInfo);
@@ -100,7 +100,7 @@ class YahooCsvFileImport extends CsvFileImport
 		$websiteInfos = $this->getWebsites($data);
 		foreach($websiteInfos as &$websiteInfo)
 		{
-			$valueType = strtoupper($websiteInfo['VALUE_TYPE']);
+			$valueType = mb_strtoupper($websiteInfo['VALUE_TYPE']);
 			if($valueType === 'PERSONAL')
 			{
 				$valueType = 'HOME';
@@ -120,7 +120,7 @@ class YahooCsvFileImport extends CsvFileImport
 		$imInfos = $this->getInstantMessengers($data);
 		foreach($imInfos as $imInfo)
 		{
-			$valueType = strtoupper($imInfo['VALUE_TYPE']);
+			$valueType = mb_strtoupper($imInfo['VALUE_TYPE']);
 			$this->addMultifieldValue('IM', $valueType, $imInfo['VALUE'], $result);
 		}
 		unset($imInfo);

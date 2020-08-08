@@ -2,77 +2,84 @@
 namespace Bitrix\Tasks\Kanban;
 
 use \Bitrix\Main\Type\DateTime;
-use \Bitrix\Main\Context;
 use \Bitrix\Tasks\Util\Calendar;
-
-class DateTimeTimeLine extends DateTime
-{
-	/**
-	 * Border of day (0 - first, 1 - second).
-	 * @var int
-	 */
-	protected $border = null;
-
-	/**
-	 * Converts date to string, using Culture and global timezone settings.
-	 * @param Context\Culture $culture Culture contains datetime format.
-	 * @return string
-	 */
-	public function toString(Context\Culture $culture = null)
-	{
-		if (\CTimeZone::Enabled())
-		{
-			$userTime = clone $this;
-			$userTime->toUserTime();
-
-			$format = static::getFormat($culture);
-
-			if ($this->border === 0)
-			{
-				$format = str_replace(['H', 'i', 's'], '00', $format);
-			}
-			else if ($this->border === 1)
-			{
-				$format = str_replace(['H', 'i', 's'], [23, 59, 59], $format);
-			}
-
-			return $userTime->format($format);
-		}
-		else
-		{
-			return parent::toString($culture);
-		}
-	}
-
-	/**
-	 * Set time value.
-	 * @param int $hour Hour value.
-	 * @param int $minute Minute value.
-	 * @param int $second Second value.
-	 * @param int $microseconds Microseconds value.
-	 * @return DateTimeTimeLine
-	 */
-	public function setTime($hour, $minute, $second = 0, $microseconds = 0)
-	{
-		if ($hour == 23 && $minute == 59 && $second == 59)
-		{
-			$this->border = 1;
-		}
-		else if ($hour == 0 && $minute == 0 && $second == 0)
-		{
-			$this->border = 0;
-		}
-		else
-		{
-			$this->border = null;
-		}
-		$this->value->setTime($hour, $minute, $second, $microseconds);
-		return $this;
-	}
-}
 
 class TimeLineTable// *Table for unity structure
 {
+	/**
+	 * Local storage of client's date.
+	 * @var string
+	 */
+	protected static $dateClient = '';
+
+	/**
+	 * Local storage of client's date and time.
+	 * @var string
+	 */
+	protected static $timeClient = '';
+
+	/**
+	 * Sets client's date.
+	 * @param string $dateClient Client's date.
+	 * @return void
+	 */
+	public static function setDateClient($dateClient)
+	{
+		if (is_string($dateClient))
+		{
+			self::$dateClient = $dateClient;
+		}
+	}
+
+	/**
+	 * Returns client's date.
+	 * @return string
+	 */
+	public static function getDateClient()
+	{
+		if (self::$dateClient)
+		{
+			return self::$dateClient;
+		}
+		return date(self::getDatePhpFormat(FORMAT_DATE));
+	}
+
+	/**
+	 * Sets client's date and time.
+	 * @param string $timeClient Client's date.
+	 * @return void
+	 */
+	public static function setDateTimeClient($timeClient)
+	{
+		if (is_string($timeClient))
+		{
+			self::$timeClient = $timeClient;
+		}
+	}
+
+	/**
+	 * Returns client's date and time.
+	 * @return string
+	 */
+	public static function getDateTimeClient()
+	{
+		if (self::$timeClient)
+		{
+			return self::$timeClient;
+		}
+		return date(self::getDatePhpFormat(FORMAT_DATETIME));
+	}
+
+	/**
+	 * Returns format for date php function.
+	 * @param string $formatTpl Format template.
+	 * @return string
+	 */
+	protected static function getDatePhpFormat($formatTpl = FORMAT_DATETIME)
+	{
+		return \Bitrix\Main\Type\Date::convertFormatToPhp($formatTpl);
+	}
+
 	/**
 	 * Gets stages for timeline.
 	 * @return array
@@ -86,20 +93,22 @@ class TimeLineTable// *Table for unity structure
 			return $timeLineStages;
 		}
 
-		$date = new DateTimeTimeLine;
-		$currentWeekDay = date('N', $date->getTimestamp());
+		$timeClient = self::getDateTimeClient();
+		$dateClient1 = self::getDateClient();
+		$dateClient2 = $dateClient1 . ' 23:59:59';
 
-		$date1 = new DateTimeTimeLine;
-		$date2 = new DateTimeTimeLine;
-		$date3 = new DateTimeTimeLine;
-		$date4 = new DateTimeTimeLine;
+		$format = self::getDatePhpFormat();
+		$timeClientTS = \MakeTimeStamp($timeClient);
+		$dateClient31TS = \MakeTimeStamp($dateClient1);
+		$dateClient2TS = \MakeTimeStamp($dateClient2);
+		$currentWeekDay = date('N', $timeClientTS);
 
 		$timeLineStages = [
 			// overdue
 			'PERIOD1' => [
 				'COLOR' => 'FF5752',
 				'FILTER' => [
-					'<=DEADLINE' => $date1
+					'<=DEADLINE' => date($format, $timeClientTS)
 				],
 				'UPDATE' => [],
 				'UPDATE_ACCESS' => false
@@ -108,11 +117,11 @@ class TimeLineTable// *Table for unity structure
 			'PERIOD2' => [
 				'COLOR' => '9DCF00',
 				'FILTER' => [
-					'>DEADLINE' => $date1,
-					'<=DEADLINE' => $date2->setTime(23, 59, 59)
+					'>DEADLINE' => date($format, $timeClientTS),
+					'<=DEADLINE' => date($format, $dateClient2TS)
 				],
 				'UPDATE' => [
-					'DEADLINE' => self::getClosestWorkHour($date1)
+					'DEADLINE' => self::getClosestWorkHour($dateClient2TS)
 				],
 				'UPDATE_ACCESS' => \CTaskItem::ACTION_CHANGE_DEADLINE
 			],
@@ -120,13 +129,11 @@ class TimeLineTable// *Table for unity structure
 			'PERIOD3' => [
 				'COLOR' => '2FC6F6',
 				'FILTER' => [
-					'>DEADLINE' => $date2,
-					'<=DEADLINE' => $date3
-										->add('+' . (7 - $currentWeekDay) . ' days')
-										->setTime(23, 59, 59)
+					'>DEADLINE' => date($format, $dateClient2TS),
+					'<=DEADLINE' => date($format, ($endTimeWeek = $dateClient2TS + (7 - $currentWeekDay) * 86400))
 				],
 				'UPDATE' => [
-					'DEADLINE' => self::getClosestWorkHour($date3)
+					'DEADLINE' => self::getClosestWorkHour($endTimeWeek)
 				],
 				'UPDATE_ACCESS' => \CTaskItem::ACTION_CHANGE_DEADLINE
 			],
@@ -134,13 +141,11 @@ class TimeLineTable// *Table for unity structure
 			'PERIOD4' => [
 				'COLOR' => '55D0E0',
 				'FILTER' => [
-					'>DEADLINE' => $date3,
-					'<=DEADLINE' => $date4
-										->add('+' . (2*7 - $currentWeekDay) . ' days')
-										->setTime(23, 59, 59)
+					'>DEADLINE' => date($format, $endTimeWeek),
+					'<=DEADLINE' => date($format, ($endTimeNextWeek = $endTimeWeek + 7 * 86400))
 				],
 				'UPDATE' => [
-					'DEADLINE' => self::getClosestWorkHour($date4)
+					'DEADLINE' => self::getClosestWorkHour($endTimeNextWeek)
 				],
 				'UPDATE_ACCESS' => \CTaskItem::ACTION_CHANGE_DEADLINE
 			],
@@ -157,13 +162,12 @@ class TimeLineTable// *Table for unity structure
 			],
 			// over next week
 			'PERIOD6' => [
-				($date5 = clone $date4),
 				'COLOR' => '468EE5',
 				'FILTER' => [
-					'>DEADLINE' => $date4,
+					'>DEADLINE' => date($format, $endTimeNextWeek),
 				],
 				'UPDATE' => [
-					'DEADLINE' => self::getClosestWorkHour($date5->add('+1 week'))
+					'DEADLINE' => self::getClosestWorkHour($endTimeNextWeek + 7 * 86400)
 				],
 				'UPDATE_ACCESS' => \CTaskItem::ACTION_CHANGE_DEADLINE
 			],
@@ -173,30 +177,30 @@ class TimeLineTable// *Table for unity structure
 	}
 
 	/**
-	 * Gets first work hour in the past or in the future.
-	 * @param DateTime $date Some date.
-	 * @param bool $past In the past by default.
-	 * @return DateTime
+	 * Gets first work day in the past.
+	 * @param int $timeStamp Timestamp.
+	 * @return string|bool
 	 */
-	public static function getClosestWorkHour(DateTime $date, $past = true)
+	public static function getClosestWorkHour($timeStamp)
 	{
-		static $timeOffset = null;
 		static $daysOff = null;
 		static $calendarSettings = null;
 
-		$date = clone $date;
-
-		if ($timeOffset === null)
+		// compatibility
+		if ($timeStamp instanceof DateTime)
 		{
-			$timeOffset = time() + \CTimeZone::getOffset();
+			$timeStamp = $timeStamp->getTimestamp();
+		}
+		if (!is_int($timeStamp))
+		{
+			return false;
 		}
 
+		// prepare days off
 		if ($calendarSettings === null)
 		{
 			$calendarSettings = Calendar::getSettings();
 		}
-
-		// prepare days off
 		if ($daysOff === null)
 		{
 			$daysOff = [
@@ -251,13 +255,13 @@ class TimeLineTable// *Table for unity structure
 		}
 
 		// get in the past, first work day
-		$count = 0;
-		while ($date->getTimestamp() > $timeOffset)
+		$attempt = 0;
+		while ($timeStamp > time())
 		{
-			$timeDate = $date->getTimestamp();
-			$nDate = date('n', $timeDate);// month's day
-			$jDate = date('j', $timeDate);// day without zero
-			$wDate = date('w', $timeDate);// week's day
+			$attempt++;
+			$nDate = date('n', $timeStamp);// month's day
+			$jDate = date('j', $timeStamp);// day without zero
+			$wDate = date('w', $timeStamp);// week's day
 
 			if (
 				(
@@ -268,44 +272,28 @@ class TimeLineTable// *Table for unity structure
 				in_array($wDate, $daysOff[0])
 			)
 			{
-				if ($past)
-				{
-					$date->add('-1 day');
-				}
-				else
-				{
-					$date->add('+1 day');
-				}
+				$timeStamp -= 86400;
 			}
 			else
 			{
 				break;
 			}
-			if (++$count >= 365)
-			{
-				break;
-			}
 		}
 
-		// if date is overdue
-		if ($date->getTimestamp() < $timeOffset)
-		{
-			$date = new DateTime;
-		}
+		// we set start time of the day
+		$timeStamp = \MakeTimeStamp(date(self::getDatePhpFormat(FORMAT_DATE), $timeStamp));
 
-		// set hour in selected day
+		// then plus end hour and end minutes
 		if (
 			isset($calendarSettings['HOURS']['END']['H']) &&
 			isset($calendarSettings['HOURS']['END']['M'])
 		)
 		{
-			$date->setTime(
-				$calendarSettings['HOURS']['END']['H'],
-				$calendarSettings['HOURS']['END']['M']
-			);
-			$date->add((-1 * \CTimeZone::getOffset()) . ' seconds');
+			$timeStamp += $calendarSettings['HOURS']['END']['H'] * 3600;
+			$timeStamp += $calendarSettings['HOURS']['END']['M'] * 60;
 		}
 
-		return $date;
+		// and get new date fomat
+		return date(self::getDatePhpFormat(FORMAT_DATETIME), $timeStamp);
 	}
 }

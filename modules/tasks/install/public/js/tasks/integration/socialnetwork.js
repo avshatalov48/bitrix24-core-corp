@@ -8,7 +8,7 @@ BX.namespace('BX.Tasks.Integration');
 
 	BX.Tasks.Integration.Socialnetwork = {};
 
-	var dataCache = false;
+	var dataCache = {};
 	var dataFetchingInProgress = false;
 	var popupOpenedId = false;
 
@@ -24,9 +24,15 @@ BX.namespace('BX.Tasks.Integration');
 			popupOffsetTop: 0,
 			popupOffsetLeft: 0,
 			syncLast: true,
-			lastSelectedContext: 'TASKS'
+			lastSelectedContext: 'TASKS',
 		},
 		methods: {
+			getDataCache: function()
+			{
+				var role = this.getRole();
+				return dataCache[role];
+			},
+
 			construct: function()
 			{
 				this.callConstruct(BX.Tasks.Util.Widget);
@@ -43,6 +49,17 @@ BX.namespace('BX.Tasks.Integration');
 				this.vars.changed = false;
 			},
 
+			getRole: function()
+			{
+				targetInput = this.control('search');
+				role = 'U';
+				if (targetInput && targetInput.dataset && targetInput.dataset.role)
+				{
+					role = targetInput.dataset.role;
+				}
+				return role;
+			},
+
 			initialize: function()
 			{
 				if(this.dialogInitialized())
@@ -51,7 +68,7 @@ BX.namespace('BX.Tasks.Integration');
 				}
 				else
 				{
-					if(dataCache === false)
+					if(!this.getDataCache())
 					{
 						// no data loaded previously
 						this.fetchDestinationData();
@@ -157,12 +174,25 @@ BX.namespace('BX.Tasks.Integration');
 			{
 				if(!dataFetchingInProgress)
 				{
+					var targetInput = this.control('search');
+					var params = {code: 'get_destination_data'};
+
+					params.role = this.getRole();
+					params.groupId = 0;
+					// debugger;
+					if (targetInput && targetInput.dataset && targetInput.dataset.groupid)
+					{
+						params.groupId = targetInput.dataset.groupid;
+					}
+
 					dataFetchingInProgress = true;
                     // send immediately, regardless the delay
                     this.getQuery().add(
 	                    'integration.socialnetwork.getdestinationdata',
-	                    {context: this.option('lastSelectedContext')},
-	                    {code: 'get_destination_data'}
+						// arguments
+						{context: this.option('lastSelectedContext')},
+						// parameters
+	                    params
                     ).execute();
 				}
 			},
@@ -197,7 +227,8 @@ BX.namespace('BX.Tasks.Integration');
 					{
 						if(result.data['get_destination_data'].SUCCESS)
 						{
-							dataCache = result.data['get_destination_data'].RESULT;
+							role = this.getRole();
+							dataCache[role] = result.data['get_destination_data'].RESULT;
 							this.initializeDialog();
 						}
 					}
@@ -361,7 +392,7 @@ BX.namespace('BX.Tasks.Integration');
 				{
 					this.vars.snldId = BX.util.hashCode(Math.random().toString());
 					var scope = this.scope();
-					var inputName = 'name-'+this.id();
+					var inputName = 'name-' + this.id();
 					var input = this.control('search');
 
 					if(input)
@@ -375,6 +406,8 @@ BX.namespace('BX.Tasks.Integration');
 					var modeUser = this.option('mode') == 'user';
 					var modeGroup = this.option('mode') == 'group';
 
+					var cache = this.getDataCache();
+
 					var parameters = {
 						name : this.vars.snldId,
 						searchInput : input || null,
@@ -386,17 +419,17 @@ BX.namespace('BX.Tasks.Integration');
 							|| modeAll
 							|| (
 								modeGroup
-								&& (typeof dataCache.SONETGROUPS_LIMITED != 'undefined' && dataCache.SONETGROUPS_LIMITED == 'Y')
+								&& (typeof cache.SONETGROUPS_LIMITED != 'undefined' && cache.SONETGROUPS_LIMITED == 'Y')
 							)
 						),
 						useClientDatabase: !modeGroup,
 						allowUserSearch: !modeGroup,
-						allowSonetGroupsAjaxSearch: (typeof dataCache.SONETGROUPS_LIMITED != 'undefined' && dataCache.SONETGROUPS_LIMITED == 'Y'),
+						allowSonetGroupsAjaxSearch: (typeof cache.SONETGROUPS_LIMITED != 'undefined' && cache.SONETGROUPS_LIMITED == 'Y'),
 						enableProjects: modeGroup,
 						departmentSelectDisable: !modeAll,
 
 						// set if we can add new entities in the selector
-						allowAddUser: dataCache.CAN_ADD_MAIL_USERS,//this.option('useAdd'),
+						allowAddUser: cache.CAN_ADD_MAIL_USERS,//this.option('useAdd'),
 						allowAddSocNetGroup: false,
 
 						callback : {
@@ -425,26 +458,26 @@ BX.namespace('BX.Tasks.Integration');
 					}
 
 					parameters.items = {
-						users: modeUser || modeAll ? (dataCache.USERS || {}) : {},
-						emails: modeUser || modeAll ? (dataCache.EMAILS || {}) : {},
+						users: modeUser || modeAll ? (cache.USERS || {}) : {},
+						emails: modeUser || modeAll ? (cache.EMAILS || {}) : {},
 						groups: modeAll ? {'UA' : {'id' : 'UA', 'name': BX.message('TASKS_WIDGET_ACCESS_ALL_EMPLOYEES')}} : {},
-						department: modeUser || modeAll ? (dataCache.DEPARTMENT || {}) : {},
-						departmentRelation: modeUser || modeAll ? (dataCache.DEPARTMENT_RELATION || {}) : {},
-						sonetgroups: modeGroup || modeAll ? (dataCache.SONETGROUPS || {}) : {},
-						projects: modeGroup || modeAll ? (dataCache.PROJECTS || {}) : {}
+						department: modeUser || modeAll ? (cache.DEPARTMENT || {}) : {},
+						departmentRelation: modeUser || modeAll ? (cache.DEPARTMENT_RELATION || {}) : {},
+						sonetgroups: modeGroup || modeAll ? (cache.SONETGROUPS || {}) : {},
+						projects: modeGroup || modeAll ? (cache.PROJECTS || {}) : {}
 					};
 					parameters.itemsLast = {
-						users: modeUser || modeAll ? (dataCache.LAST.USERS || {}) : {},
-						emails: modeUser || modeAll ? (dataCache.LAST.EMAILS || {}) : {},
+						users: modeUser || modeAll ? (cache.LAST.USERS || {}) : {},
+						emails: modeUser || modeAll ? (cache.LAST.EMAILS || {}) : {},
 						groups: modeAll ? {'UA' : true} : {},
-						department: modeAll ? dataCache.LAST.DEPARTMENT : {},
-						sonetgroups: modeGroup || modeAll ? (dataCache.LAST.SONETGROUPS || {}) : {},
-						projects: modeGroup || modeAll ? (dataCache.LAST.PROJECTS || {}) : {}
+						department: modeAll ? cache.LAST.DEPARTMENT : {},
+						sonetgroups: modeGroup || modeAll ? (cache.LAST.SONETGROUPS || {}) : {},
+						projects: modeGroup || modeAll ? (cache.LAST.PROJECTS || {}) : {}
 					};
-					parameters.itemsSelected = dataCache.SELECTED || {};
-					parameters.allowSearchNetworkUsers = dataCache.NETWORK_ENABLED;
-					parameters.showVacations = dataCache.SHOW_VACATIONS;
-					parameters.usersVacation = (dataCache.USERS_VACATION || {});
+					parameters.itemsSelected = cache.SELECTED || {};
+					parameters.allowSearchNetworkUsers = cache.NETWORK_ENABLED;
+					parameters.showVacations = cache.SHOW_VACATIONS;
+					parameters.usersVacation = (cache.USERS_VACATION || {});
 
 					if (modeGroup)
 					{
@@ -457,12 +490,12 @@ BX.namespace('BX.Tasks.Integration');
 					{
 						var params = {
 							formName: this.vars.snldId,
-							inputName: 'name-'+this.id(),
+							inputName: 'name-' + this.id(),
 							sendAjax: (
 								modeUser
 								|| (
 									modeGroup
-									&& (typeof dataCache.SONETGROUPS_LIMITED != 'undefined' && dataCache.SONETGROUPS_LIMITED == 'Y')
+									&& (typeof cache.SONETGROUPS_LIMITED != 'undefined' && cache.SONETGROUPS_LIMITED == 'Y')
 								)
 							)
 						};
@@ -491,7 +524,7 @@ BX.namespace('BX.Tasks.Integration');
 
 			clearDataCache: function()
 			{
-				dataCache = false;
+				dataCache = {};
 			}
 		}
 	});

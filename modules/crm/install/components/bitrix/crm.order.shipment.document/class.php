@@ -5,6 +5,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 use Bitrix\Crm;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Component\ComponentError;
+use Bitrix\Main\Type\Date;
 
 Loc::loadMessages(__FILE__);
 
@@ -94,7 +95,14 @@ class CCrmOrderShipmentDocumentComponent extends \CBitrixComponent
 		$this->arResult['ENTITY_DATA'] = array();
 		if (!empty($shipment))
 		{
-			$this->arResult['ENTITY_DATA'] = $shipment->getFieldValues();
+			$entityData = $shipment->getFieldValues();
+			if ($entityData['DELIVERY_DOC_DATE'])
+			{
+				$date = new Date($entityData['DELIVERY_DOC_DATE']);
+				$entityData['DELIVERY_DOC_DATE'] = $date->toString();
+			}
+
+			$this->arResult['ENTITY_DATA'] = $entityData;
 		}
 		elseif (!empty($this->arParams['ENTITY_DATA']) && is_array($this->arParams['ENTITY_DATA']))
 		{

@@ -26,10 +26,12 @@ use Bitrix\Tasks\Manager\Task;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Error\Collection;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\Util\Type\Structure;
 use Bitrix\Tasks\Util\Type\StructureChecker;
 use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\Access\Model\TaskModel;
 
 Loc::loadMessages(__FILE__);
 
@@ -99,24 +101,97 @@ class TasksTaskComponent extends TasksBaseComponent
 			$taskId = intval($arParams[static::getParameterAlias('ID')]);
 			if($taskId)
 			{
-				try
-				{
-					$arResult['TASK_INSTANCE'] = CTaskItem::getInstanceFromPool($taskId, $arResult['USER_ID']);
-					$access = $arResult['TASK_INSTANCE']->checkCanRead();
-				}
-				catch(TasksException $e)
-				{
-					$access = false;
-				}
-
-				if(!$access)
-				{
-					$errors->add('ACCESS_DENIED.NO_TASK', Loc::getMessage('TASKS_TT_NOT_FOUND_OR_NOT_ACCESSIBLE'));
-				}
+				$arResult['TASK_INSTANCE'] = CTaskItem::getInstanceFromPool($taskId, $arResult['USER_ID']);
 			}
 		}
 
 		return $errors->checkNoFatals();
+	}
+
+	protected static function checkRights(array $arParams, array $arResult, array $auxParams): ?Util\Error
+	{
+		$error = new Util\Error(Loc::getMessage('TASKS_TT_NOT_FOUND_OR_NOT_ACCESSIBLE'), 'ACCESS_DENIED.NO_TASK');
+
+		$request = null;
+		if (array_key_exists('REQUEST', $auxParams))
+		{
+			$request = $auxParams['REQUEST'];
+			if ($request instanceof \Bitrix\Main\Type\ParameterDictionary)
+			{
+				$request = $request->toArray();
+			}
+		}
+
+		$taskId = (int) $arParams[static::getParameterAlias('ID')];
+		if (
+			!$taskId
+			&& $request
+		)
+		{
+			if ($request['ACTION'][0]['ARGUMENTS']['taskId'])
+			{
+				$taskId = (int) $request['ACTION'][0]['ARGUMENTS']['taskId'];
+			}
+			elseif ($request['ACTION'][0]['ARGUMENTS']['params']['TASK_ID'])
+			{
+				$taskId = (int) $request['ACTION'][0]['ARGUMENTS']['params']['TASK_ID'];
+			}
+		}
+		$groupId = (int) $arParams['GROUP_ID'];
+
+		$oldTask = $taskId ? TaskModel::createFromId($taskId) : TaskModel::createNew($groupId);
+		$newTask = $request && isset($request['ACTION'][0]['ARGUMENTS']['data'])
+			? TaskModel::createFromRequest($request['ACTION'][0]['ARGUMENTS']['data'])
+			: null;
+
+		$accessCheckParams = $newTask;
+
+		$action = Tasks\Access\ActionDictionary::ACTION_TASK_READ;
+
+		if (
+			$request
+			&& $request['ACTION'][0]['OPERATION'] === 'task.add'
+		)
+		{
+			$action = Tasks\Access\ActionDictionary::ACTION_TASK_SAVE;
+
+			// Crutch.
+			// Temporary stub to disable creation subtask if user has no access.
+			// It's make me cry.
+			if (count($newTask->getMembers(Tasks\Access\Role\RoleDictionary::ROLE_RESPONSIBLE)) <= 1)
+			{
+				$error->setType(Util\Error::TYPE_ERROR);
+			}
+			$error->setCode('ERROR_TASK_CREATE_ACCESS_DENIED');
+			$error->setMessage(Loc::getMessage('TASKS_TASK_CREATE_ACCESS_DENIED'));
+		}
+		else if (
+			$request
+			&& $request['ACTION'][0]['OPERATION'] === 'TasksTaskComponent.saveCheckList'
+		)
+		{
+			$action = Tasks\Access\ActionDictionary::ACTION_CHECKLIST_SAVE;
+			$accessCheckParams = isset($request['ACTION'][0]['ARGUMENTS']['items']) ? $request['ACTION'][0]['ARGUMENTS']['items'] : [];
+			$error->setType(Util\Error::TYPE_ERROR);
+			$error->setMessage(Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'));
+		}
+		else if ($arParams['ACTION'] === "edit" && $taskId)
+		{
+			$action = Tasks\Access\ActionDictionary::ACTION_TASK_EDIT;
+		}
+		else if ($arParams['ACTION'] === "edit")
+		{
+			$action = Tasks\Access\ActionDictionary::ACTION_TASK_CREATE;
+		}
+
+		$res = (new Tasks\Access\TaskAccessController($arResult['USER_ID']))->check($action, $oldTask, $accessCheckParams);
+
+		if (!$res)
+		{
+			return $error;
+		}
+
+		return null;
 	}
 
 	protected static function checkRestrictions(array &$arParams, array &$arResult, Collection $errors)
@@ -293,7 +368,7 @@ class TasksTaskComponent extends TasksBaseComponent
 				// merge errors
 				if(!empty($op['ERRORS']))
 				{
-					$this->errors->addForeignErrors($op['ERRORS'], array('CHANGE_TYPE_TO' => static::ERROR_TYPE_TASK_SAVE_ERROR));
+					$this->errors->addForeignErrors($op['ERRORS'], array('CHANGE_TYPE_TO' => Util\Error::TYPE_ERROR));
 				}
 
 				$this->formData = Task::normalizeData($op['ARGUMENTS']['data']);
@@ -408,6 +483,14 @@ class TasksTaskComponent extends TasksBaseComponent
 		$additional = $request['ADDITIONAL'];
 		if($additional && $additional['SAVE_AS_TEMPLATE'] == 'Y') // user specified he wanted to create template by this task
 		{
+			if (!Tasks\Access\TemplateAccessController::can($this->userId, Tasks\Access\ActionDictionary::ACTION_TEMPLATE_CREATE))
+			{
+				$this->errors->addWarning(
+					'SAVE_AS_TEMPLATE_ERROR',
+					Loc::getMessage('TASKS_TT_SAVE_AS_TEMPLATE_ERROR_MESSAGE_PREFIX') . ': ' . Loc::getMessage('TASKS_TEMPLATE_CREATE_FORBIDDEN')
+				);
+				return;
+			}
 			$task = new \Bitrix\Tasks\Item\Task($taskId, $this->userId); // todo: use Task::getInstance($taskId, $this->userId) here, when ready
 			if($task['REPLICATE'] != 'Y')
 			{
@@ -460,6 +543,10 @@ class TasksTaskComponent extends TasksBaseComponent
 								$saveResult->loadErrors($checkListSaveResult->getErrors());
 							}
 						}
+
+						\Bitrix\Tasks\Item\Access\Task\Template::grantAccessLevel($template->getId(), 'U'.$this->userId, 'full', array(
+							'CHECK_RIGHTS' => false,
+						));
 					}
 
 					if (!$saveResult->isSuccess())
@@ -483,23 +570,32 @@ class TasksTaskComponent extends TasksBaseComponent
 		}
 	}
 
-	protected function createSubTasks($taskId)
+	/**
+	 * @param $taskId
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\Db\SqlQueryException
+	 * @throws \Bitrix\Main\NotImplementedException
+	 * @throws \Bitrix\Main\ObjectException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	protected function createSubTasks($taskId): void
 	{
+		$tasks = [$taskId];
 		$responsibles = $this->getResponsibles();
-		$tasks = array(
-			$taskId
-		);
 
-		if(count($responsibles) > 1)
+		if (count($responsibles) > 1)
 		{
 			$op = $this->getTaskActionResult();
 
 			// create one more task for each responsible
-			if(!empty($op['ARGUMENTS']['data']))
+			if (!empty($op['ARGUMENTS']['data']))
 			{
 				$fields = $op['ARGUMENTS']['data'];
 
-				$checkListItems = $fields['SE_CHECKLIST'];
+				$checkListItems = array_filter($fields['SE_CHECKLIST'], static function($item) {
+					return is_array($item);
+				});
 				$checkListItemsExists = (is_array($checkListItems) && !empty($checkListItems));
 				unset($fields['SE_CHECKLIST']);
 
@@ -513,9 +609,9 @@ class TasksTaskComponent extends TasksBaseComponent
 					}
 				}
 
-				foreach($responsibles as $user)
+				foreach ($responsibles as $user)
 				{
-					if($fields[Task\Originator::getCode(true)]['ID'] == $user['ID'])
+					if ($fields[Task\Originator::getCode(true)]['ID'] == $user['ID'])
 					{
 						continue; // do not copy to creator
 					}
@@ -526,16 +622,22 @@ class TasksTaskComponent extends TasksBaseComponent
 					$subTask['MULTITASK'] = 'N';
 
 					$subResult = $subTask->transform(new Tasks\Item\Converter\Task\ToTask());
-					if($subResult->isSuccess())
+					if ($subResult->isSuccess())
 					{
 						$subResult = $subTask->save();
-						if($subResult->isSuccess())
+						if ($subResult->isSuccess())
 						{
+							$subTaskId = $subTask->getId();
+
+							$commentPoster = Tasks\Comments\Task\CommentPoster::getInstance($subTaskId, $this->userId);
+							$commentPoster->enableDeferredPostMode();
+							$commentPoster->clearComments();
+
 							if ($checkListItemsExists)
 							{
 								$checkListRoots = TaskCheckListFacade::getObjectStructuredRoots(
 									$checkListItems,
-									$subResult->getInstance()->getId(),
+									$subTaskId,
 									$this->userId,
 									'PARENT_NODE_ID'
 								);
@@ -551,14 +653,14 @@ class TasksTaskComponent extends TasksBaseComponent
 								}
 							}
 
-							$tasks[] = $subTask->getId();
+							$tasks[] = $subTaskId;
 						}
 					}
 				}
 			}
 		}
 
-		foreach($tasks as $taskId)
+		foreach ($tasks as $taskId)
 		{
 			$this->createSubTasksBySource($taskId);
 		}
@@ -568,41 +670,50 @@ class TasksTaskComponent extends TasksBaseComponent
 	{
 		$source = $this->getDataSource();
 
-		if(intval($source['ID']))
+		if (!intval($source['ID']))
 		{
-			$replicator = null;
-			// clone subtasks or create them by template
-			if($source['TYPE'] == static::DATA_SOURCE_TEMPLATE)
-			{
-				$replicator = new Util\Replicator\Task\FromTemplate();
-			}
-			elseif($source['TYPE'] == static::DATA_SOURCE_TASK)
-			{
-				$replicator = new Util\Replicator\Task\FromTask();
-			}
+			return;
+		}
 
-			if($replicator)
-			{
-				$parameters = ['MULTITASKING' => false];
+		$replicator = null;
+		// clone subtasks or create them by template
+		if($source['TYPE'] == static::DATA_SOURCE_TEMPLATE)
+		{
+			$replicator = new Util\Replicator\Task\FromTemplate();
+		}
+		elseif($source['TYPE'] == static::DATA_SOURCE_TASK)
+		{
+			$replicator = new Util\Replicator\Task\FromTask();
+		}
 
-				if ($source['TYPE'] == static::DATA_SOURCE_TEMPLATE)
+		if(!$replicator)
+		{
+			return;
+		}
+
+		$parameters = ['MULTITASKING' => false];
+
+		if ($source['TYPE'] == static::DATA_SOURCE_TEMPLATE)
+		{
+			$templates = Util::getOption('propagate_to_sub_templates');
+			if ($templates)
+			{
+				$templates = unserialize($templates);
+				if (in_array((int)$source['ID'], $templates))
 				{
-					$templates = Util::getOption('propagate_to_sub_templates');
-					if ($templates)
-					{
-						$templates = unserialize($templates);
-						if (in_array((int)$source['ID'], $templates))
-						{
-							$taskData = $this->arResult['ACTION_RESULT']['task_action']['ARGUMENTS']['data'];
+					$taskData = $this->arResult['ACTION_RESULT']['task_action']['ARGUMENTS']['data'];
 
-							$parameters['RESPONSIBLE_ID'] = current($taskData['SE_RESPONSIBLE'])['ID'];
-							$parameters['GROUP_ID'] = $taskData['SE_PROJECT']['ID'];
-						}
-					}
+					$parameters['RESPONSIBLE_ID'] = current($taskData['SE_RESPONSIBLE'])['ID'];
+					$parameters['GROUP_ID'] = $taskData['SE_PROJECT']['ID'];
 				}
-
-				$replicator->produceSub($source['ID'], $taskId, $parameters, $this->userId);
 			}
+		}
+
+		$result = $replicator->produceSub($source['ID'], $taskId, $parameters, $this->userId);
+
+		foreach ($result->getErrors() as $error)
+		{
+			$this->errors->add($error->getCode(), Loc::getMessage('TASKS_TT_NOT_FOUND_OR_NOT_ACCESSIBLE'), Util\Error::TYPE_ERROR);
 		}
 	}
 
@@ -1040,6 +1151,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			//'FORWARD' => \Bitrix\Tasks\Integration\Mail\Task::getReplyTo($this->userId, $this->arResult['DATA']['TASK']['ID'], 'dummy', SITE_ID)
 		);
 		$this->arResult['AUX_DATA']['DISK_FOLDER_ID'] = Integration\Disk::getFolderForUploadedFiles($this->userId)->getData()['FOLDER_ID'];
+		$this->arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'] = TaskLimit::isLimitExceeded();
 	}
 
 	protected function getDataTemplates()
@@ -1295,13 +1407,12 @@ class TasksTaskComponent extends TasksBaseComponent
 	{
 		parent::doPostAction();
 
-		if($this->errors->checkNoFatals())
+		if ($this->errors->checkNoFatals())
 		{
-			if($this->task != null)
+			if ($this->task != null)
 			{
 				// set this task as viewed and update its view time
-				CTasks::UpdateViewed($this->task->getId(), $this->userId);
-
+				Tasks\Internals\Task\ViewedTable::set($this->task->getId(), $this->userId);
 				$this->arResult['DATA']['EFFECTIVE'] = $this->getEffective();
 			}
 
@@ -1438,7 +1549,7 @@ class TasksTaskComponent extends TasksBaseComponent
 	{
 		foreach($data as $key => $value)
 		{
-			if(strpos((string) $key, Manager::SE_PREFIX) === 0)
+			if(mb_strpos((string)$key, Manager::SE_PREFIX) === 0)
 			{
 				unset($data[$key]);
 			}

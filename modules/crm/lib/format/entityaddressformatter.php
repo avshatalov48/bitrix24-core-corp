@@ -385,22 +385,22 @@ class EntityAddressFormatter
 		{
 			if($city !== '')
 			{
-				$lines[] = strtoupper($city);
+				$lines[] = mb_strtoupper($city);
 			}
 
 			if($region !== '')
 			{
-				$lines[] = strtoupper($region);
+				$lines[] = mb_strtoupper($region);
 			}
 
 			if($province !== '')
 			{
-				$lines[] = strtoupper($province);
+				$lines[] = mb_strtoupper($province);
 			}
 
 			if($postalCode !== '')
 			{
-				$lines[] = strtoupper($postalCode);
+				$lines[] = mb_strtoupper($postalCode);
 			}
 
 			if($country !== '')
@@ -428,14 +428,14 @@ class EntityAddressFormatter
 
 			if($postalCode !== '')
 			{
-				$localities[] = strtoupper($postalCode);
+				$localities[] = mb_strtoupper($postalCode);
 			}
 
 			$lines[] = implode(' ', $localities);
 
 			if($country !== '')
 			{
-				$lines[] = strtoupper($country);
+				$lines[] = mb_strtoupper($country);
 			}
 		}
 

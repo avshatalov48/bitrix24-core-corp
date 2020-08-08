@@ -259,21 +259,12 @@ if (in_array($action, array("get_group_list", "get_usergroup_list")))
 			$CACHE_MANAGER->RegisterTag("sonet_group");
 
 			$data = Array();
-
-			$arSonetGroups = CSocNetLogDestination::GetSocnetGroup(
-				array(
-						"features" => array("blog", array("premoderate_post", "moderate_post", "write_post", "full_post")),
-						"THUMBNAIL_SIZE_WIDTH" => 100,
-						"THUMBNAIL_SIZE_HEIGHT" => 100
-				)
-			);
-/*
 			$params = array(
 				"THUMBNAIL_SIZE_WIDTH" => 100,
 				"THUMBNAIL_SIZE_HEIGHT" => 100
 			);
 
-			if (strlen(trim($feature)) > 0)
+			if (trim($feature) <> '')
 			{
 				$operations = \Bitrix\Socialnetwork\Integration\Main\UISelector\SonetGroups::getFeatureOperations($feature);
 				if (!empty($operations))
@@ -283,7 +274,7 @@ if (in_array($action, array("get_group_list", "get_usergroup_list")))
 			}
 
 			$arSonetGroups = CSocNetLogDestination::GetSocnetGroup($params);
-*/
+
 			foreach ($arSonetGroups as $arSocnetGroup)
 			{
 				$tmpData = Array(

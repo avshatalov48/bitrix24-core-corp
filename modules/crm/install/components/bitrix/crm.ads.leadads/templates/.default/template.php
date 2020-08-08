@@ -19,7 +19,7 @@ $crmFormId = $arParams['CRM_FORM_ID'];
 $provider = $arParams['PROVIDER'];
 $data = $arResult['DATA'];
 $type = htmlspecialcharsbx($provider['TYPE']);
-$typeUpped = strtoupper($type);
+$typeUpped = mb_strtoupper($type);
 
 $crmFormSuccessUrl = $data['CRM_FORM_RESULT_SUCCESS_URL'];
 

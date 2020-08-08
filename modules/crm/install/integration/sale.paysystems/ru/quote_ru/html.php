@@ -594,9 +594,9 @@ $text = '';
 if($sellerInfo['NAME'] || $customerInfo['NAME'])
 {
 	$boldCount = 0;
-	$text = (is_string($sellerInfo['NAME']) && strlen($sellerInfo['NAME']) > 0) ? $sellerInfo['NAME'] : '';
+	$text = (is_string($sellerInfo['NAME']) && $sellerInfo['NAME'] <> '') ? $sellerInfo['NAME'] : '';
 	$cols[0][$colRows[0]++] = $text;
-	$text = (is_string($customerInfo['NAME']) && strlen($customerInfo['NAME']) > 0) ? $customerInfo['NAME'] : '';
+	$text = (is_string($customerInfo['NAME']) && $customerInfo['NAME'] <> '') ? $customerInfo['NAME'] : '';
 	$cols[1][$colRows[1]++] = $text;
 	$boldCount = max($colRows);
 }

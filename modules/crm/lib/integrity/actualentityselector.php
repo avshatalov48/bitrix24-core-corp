@@ -311,13 +311,13 @@ class ActualEntitySelector
 	 */
 	public function __call($name, $arguments)
 	{
-		$operation = substr($name, 0, 3);
+		$operation = mb_substr($name, 0, 3);
 		if (!in_array($operation, ['get', 'set'], true))
 		{
 			throw new SystemException("Unknown method name `$name`");
 		}
 
-		$action = lcfirst(substr($name, 3));
+		$action = lcfirst(mb_substr($name, 3));
 		if ($action)
 		{
 			return call_user_func_array([$this, $operation], array_merge([$action], $arguments));
@@ -452,14 +452,14 @@ class ActualEntitySelector
 		// prepare codes
 		$expectSingle = false;
 		$codes = [$code];
-		if (substr($code, -3) === 'yId')
+		if (mb_substr($code, -3) === 'yId')
 		{
-			$codes[] = substr($code, 0,-3) . 'ies';
+			$codes[] = mb_substr($code, 0, -3).'ies';
 			$expectSingle = true;
 		}
-		else if (substr($code, -2) === 'Id')
+		else if (mb_substr($code, -2) === 'Id')
 		{
-			$codes[] = substr($code, 0,-2) . 's';
+			$codes[] = mb_substr($code, 0, -2).'s';
 			$expectSingle = true;
 		}
 
@@ -516,13 +516,13 @@ class ActualEntitySelector
 
 		// prepare $codes
 		$codes = [$code];
-		if (substr($code, -3) === 'yId')
+		if (mb_substr($code, -3) === 'yId')
 		{
-			$codes[] = substr($code, 0,-3) . 'ies';
+			$codes[] = mb_substr($code, 0, -3).'ies';
 		}
-		elseif (substr($code, -2) === 'Id')
+		elseif (mb_substr($code, -2) === 'Id')
 		{
-			$codes[] = substr($code, 0,-2) . 's';
+			$codes[] = mb_substr($code, 0, -2).'s';
 		}
 
 		// set value
@@ -694,11 +694,11 @@ class ActualEntitySelector
 
 				if ($isLeadRC)
 				{
-					if ($leadRow['CONTACT_ID'])
+					if ($leadRow['CONTACT_ID'] && !$this->getContactId())
 					{
 						$this->setEntity(\CCrmOwnerType::Contact, $leadRow['CONTACT_ID'], true);
 					}
-					if ($leadRow['COMPANY_ID'])
+					if ($leadRow['COMPANY_ID'] && !$this->getCompanyId())
 					{
 						$this->setEntity(\CCrmOwnerType::Company, $leadRow['COMPANY_ID'], true);
 					}
@@ -715,11 +715,11 @@ class ActualEntitySelector
 				]);
 				foreach ($dealRows as $dealRow)
 				{
-					if ($dealRow['CONTACT_ID'])
+					if ($dealRow['CONTACT_ID'] && !$this->getContactId())
 					{
 						$this->setEntity(\CCrmOwnerType::Contact, $dealRow['CONTACT_ID'], true);
 					}
-					if ($dealRow['COMPANY_ID'])
+					if ($dealRow['COMPANY_ID'] && !$this->getCompanyId())
 					{
 						$this->setEntity(\CCrmOwnerType::Company, $dealRow['COMPANY_ID'], true);
 					}
@@ -740,11 +740,11 @@ class ActualEntitySelector
 				]);
 				foreach ($orderRows as $orderRow)
 				{
-					if ($orderRow['ENTITY_TYPE_ID'] == \CCrmOwnerType::Contact)
+					if ($orderRow['ENTITY_TYPE_ID'] == \CCrmOwnerType::Contact && !$this->getContactId())
 					{
 						$this->setEntity(\CCrmOwnerType::Contact, $orderRow['ENTITY_ID'], true);
 					}
-					if ($orderRow['ENTITY_TYPE_ID'] == \CCrmOwnerType::Company)
+					if ($orderRow['ENTITY_TYPE_ID'] == \CCrmOwnerType::Company && !$this->getCompanyId())
 					{
 						$this->setEntity(\CCrmOwnerType::Company, $orderRow['ENTITY_ID'], true);
 					}

@@ -105,11 +105,11 @@ if(isset($arParams['AVAILABLE_FIELDS']))
 	$arResult['AVAILABLE_FIELDS'] = $arParams['AVAILABLE_FIELDS'];
 }
 
-$formIDLower = strtolower($arParams['FORM_ID']);
+$formIDLower = mb_strtolower($arParams['FORM_ID']);
 $containerID = 'container_'.$formIDLower;
 $undoContainerID = 'undo_container_'.$formIDLower;
 
-$mode = isset($arParams['MODE']) ? strtoupper($arParams['MODE']) : 'EDIT';
+$mode = isset($arParams['MODE'])? mb_strtoupper($arParams['MODE']) : 'EDIT';
 $isVisible = $mode !== 'VIEW' || !isset($arResult['OPTIONS']['show_in_view_mode']) || $arResult['OPTIONS']['show_in_view_mode'] === 'Y';
 ?><div id="<?=$undoContainerID?>"></div>
 <div id="<?=$containerID?>" class="bx-interface-form bx-crm-edit-form"<?=!$isVisible ? ' style="display:none;"' : ''?>>
@@ -152,7 +152,7 @@ else
 	endif;
 }
 
-$prefix = isset($arParams['~PREFIX']) ? strtolower($arParams['~PREFIX']) : '';
+$prefix = isset($arParams['~PREFIX'])? mb_strtolower($arParams['~PREFIX']) : '';
 $sectionWrapperID = $formIDLower.'_section_wrapper';
 ?><div id="<?=$sectionWrapperID?>" class="crm-offer-main-wrap"><?
 $sipManagerRequired = false;
@@ -164,7 +164,7 @@ if($enableSectionDrag && isset($settings['ENABLE_SECTION_DRAG']))
 }
 
 foreach($arSections as &$arSection):
-	$sectionNodePrefix = strtolower($arSection['SECTION_ID']);
+	$sectionNodePrefix = mb_strtolower($arSection['SECTION_ID']);
 	if($prefix !== "")
 		$sectionNodePrefix = "{$prefix}_{$sectionNodePrefix}";
 
@@ -198,7 +198,7 @@ foreach($arSections as &$arSection):
 	</tr><?
 	$fieldCount = 0;
 	foreach($arSection['FIELDS'] as &$field):
-		$fieldNodePrefix = strtolower($field["id"]);
+		$fieldNodePrefix = mb_strtolower($field["id"]);
 		if($prefix !== "")
 			$fieldNodePrefix = "{$prefix}_{$fieldNodePrefix}";
 
@@ -295,7 +295,7 @@ foreach($arSections as &$arSection):
 			<?
 		elseif($field['type'] === 'lhe'):
 			$params = isset($field['componentParams']) ? $field['componentParams'] : array();
-			$params['id'] = strtolower("{$arParams['FORM_ID']}_{$field['id']}");
+			$params['id'] = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 
 			// rewrite bReplaceTabToNbsp option
 			if (is_array($params) && isset($params['bReplaceTabToNbsp']) && !$params['bReplaceTabToNbsp'])
@@ -358,7 +358,7 @@ foreach($arSections as &$arSection):
 					$addressTypeDesc[$typeInfo['id']] = $typeInfo['desc'];
 			}
 			$currentAddressTypeID = Bitrix\Crm\EntityAddress::Primary;
-			$createAddressButtonID = strtolower("{$arParams['FORM_ID']}_{$field['id']}_add");
+			$createAddressButtonID = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}_add");
 			$addressLabels = Bitrix\Crm\EntityAddress::getLabels();
 
 			$addressDataWrapperID = "{$fieldNodePrefix}_data_wrap";
@@ -395,7 +395,7 @@ foreach($arSections as &$arSection):
 										array($addressTypeID, 'wrapper'),
 										$fielNameTemplate
 									);
-								$itemWrapperID = strtolower($itemWrapperID);
+								$itemWrapperID = mb_strtolower($itemWrapperID);
 								$itemTitle = isset($addressTypeDesc[$addressTypeID]) ?
 									$addressTypeDesc[$addressTypeID] :
 									Bitrix\Crm\EntityAddress::getTypeDescription($addressTypeID);
@@ -637,7 +637,7 @@ foreach($arSections as &$arSection):
 						break;
 					case 'custom':
 						{
-							$isUserField = strpos($field['id'], 'UF_') === 0;
+							$isUserField = mb_strpos($field['id'], 'UF_') === 0;
 							$wrap = isset($field['wrap']) && $field['wrap'] === true;
 							if($isUserField):
 								?>
@@ -655,7 +655,7 @@ foreach($arSections as &$arSection):
 						break;
 					case 'checkbox':
 					case 'vertical_checkbox':
-						$chkBxId = strtolower($field['id']).'_chbx';
+						$chkBxId = mb_strtolower($field['id']).'_chbx';
 						?><input type="hidden" name="<?=$field['id']?>" value="N">
 						<input class="crm-offer-checkbox" type="checkbox" id="<?=$chkBxId?>" name="<?=$field['id']?>" value="Y"<?=($val == 'Y'? ' checked':'')?><?=$params?>/>
 						<label class="crm-offer-label" for="<?=$chkBxId?>"><?=htmlspecialcharsEx($field['name'])?></label><?
@@ -895,7 +895,7 @@ foreach($arSections as &$arSection):
 											?>,
 											false,
 											false,
-											['<?=CUtil::JSEscape(strtolower($entityType))?>'],
+											['<?=CUtil::JSEscape(mb_strtolower($entityType))?>'],
 											<?=CUtil::PhpToJsObject(CCrmEntitySelectorHelper::PrepareCommonMessages())?>,
 											true,
 											{
@@ -954,7 +954,7 @@ foreach($arSections as &$arSection):
 							$context = isset($params['CONTEXT']) ? $params['CONTEXT'] : '';
 							$entityID = $inputValue = isset($params['INPUT_VALUE']) ? $params['INPUT_VALUE'] : '';
 							$entityType = isset($params['ENTITY_TYPE']) ? $params['ENTITY_TYPE'] : '';
-							switch (substr($entityID, 0, 2))
+							switch(mb_substr($entityID, 0, 2))
 							{
 								case 'C_':
 									$valEntityType = 'contact';
@@ -965,7 +965,7 @@ foreach($arSections as &$arSection):
 								default:
 									$valEntityType = '';
 							}
-							$entityID = intval(substr($entityID, intval(strpos($entityID, '_')) + 1));
+							$entityID = intval(mb_substr($entityID, intval(mb_strpos($entityID, '_')) + 1));
 							$rqLinkedId = isset($params['REQUISITE_LINKED_ID']) ? intval($params['REQUISITE_LINKED_ID']) : 0;
 							$rqLinkedInputId = '';
 							$bdLinkedId = isset($params['BANK_DETAIL_LINKED_ID']) ? intval($params['BANK_DETAIL_LINKED_ID']) : 0;
@@ -2120,7 +2120,7 @@ bxForm_<?=$arParams["FORM_ID"]?>.EnableSigleSubmit(true);
 				{
 					formId: "<?=$arParams['FORM_ID']?>",
 					form: bxForm_<?=$arParams["FORM_ID"]?>,
-					mode: <?=strtoupper($arParams["MODE"]) === 'VIEW' ? 'BX.CrmFormMode.view' : 'BX.CrmFormMode.edit'?>,
+					mode: <?=mb_strtoupper($arParams["MODE"]) === 'VIEW' ? 'BX.CrmFormMode.view' : 'BX.CrmFormMode.edit'?>,
 					prefix: "<?=CUtil::JSEscape($prefix)?>",
 					sectionWrapperId: "<?=$sectionWrapperID?>",
 					undoContainerId: "<?=$undoContainerID?>",

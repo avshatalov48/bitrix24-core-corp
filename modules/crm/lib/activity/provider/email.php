@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Activity\Provider;
 
 use Bitrix\Crm\Automation\Trigger\EmailSentTrigger;
+use Bitrix\Main\Config;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Activity;
 use Bitrix\Crm\Activity\CommunicationStatistics;
@@ -193,6 +194,11 @@ class Email extends Activity\Provider\Base
 		}
 		else
 		{
+			if (Config\Option::get('main', 'track_outgoing_emails_read', 'Y') != 'Y')
+			{
+				return null;
+			}
+
 			$result['STATUS_TEXT'] = Loc::getMessage('CRM_ACTIVITY_PROVIDER_EMAIL_STATUS_SENT');
 		}
 		return $result;
@@ -208,7 +214,7 @@ class Email extends Activity\Provider\Base
 			if (preg_match('/<crm\.activity\.((\d+)-[0-9a-z]+)@[^>]+>/i', sprintf('<%s>', $inReplyTo), $matches))
 			{
 				$matchActivity = \CCrmActivity::getById($matches[2], false);
-				if ($matchActivity && strtolower($matchActivity['URN']) == strtolower($matches[1]))
+				if ($matchActivity && mb_strtolower($matchActivity['URN']) == mb_strtolower($matches[1]))
 					$targetActivity = $matchActivity;
 			}
 
@@ -217,7 +223,7 @@ class Email extends Activity\Provider\Base
 				$res = Activity\MailMetaTable::getList(array(
 					'select' => array('ACTIVITY_ID'),
 					'filter' => array(
-						'=MSG_ID_HASH' => md5(strtolower($inReplyTo))
+						'=MSG_ID_HASH' => md5(mb_strtolower($inReplyTo))
 					),
 				));
 
@@ -243,7 +249,7 @@ class Email extends Activity\Provider\Base
 			if ($urnInfo['ID'] > 0)
 			{
 				$matchActivity = \CCrmActivity::getById($urnInfo['ID'], false);
-				if (!empty($matchActivity) && strtolower($matchActivity['URN']) == strtolower($urnInfo['URN']))
+				if (!empty($matchActivity) && mb_strtolower($matchActivity['URN']) == mb_strtolower($urnInfo['URN']))
 					$targetActivity = $matchActivity;
 			}
 		}

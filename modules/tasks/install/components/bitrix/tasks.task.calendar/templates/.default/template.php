@@ -11,6 +11,10 @@ $isIFrame = $_REQUEST['IFRAME'] == 'Y';
 Loc::loadMessages(__FILE__);
 CUtil::InitJSCore(array('popup', 'tooltip', 'tasks_util_query', 'task_info_popup', 'task-popups', 'CJSTask'));
 
+\Bitrix\Main\UI\Extension::load([
+	'ui.counter',
+]);
+
 $APPLICATION->AddHeadScript("/bitrix/components/bitrix/tasks.list/templates/.default/script.js");
 $APPLICATION->AddHeadScript("/bitrix/components/bitrix/tasks.list/templates/.default/gantt-view.js");
 $APPLICATION->AddHeadScript("/bitrix/js/tasks/task-iframe-popup.js");
@@ -349,47 +353,62 @@ BX.ready(function(){
 });
 //endregion
 
+//region Tasks.TopMenu::onItem
+BX.addCustomEvent('Tasks.TopMenu:onItem', function(roleId, url) {
+	var filterManager = BX.Main.filterManager.getById("<?=HtmlFilter::encode($arParams["FILTER_ID"])?>");
+	if (!filterManager)
+	{
+		alert('BX.Main.filterManager not initialised');
+		return;
+	}
+
+	var fields = {
+		preset_id: "<?=HtmlFilter::encode($arResult["DEFAULT_PRESET_KEY"])?>",
+		additional: {ROLEID: (roleId === 'view_all' ? 0 : roleId)}
+	};
+	var filterApi = filterManager.getApi();
+	filterApi.setFilter(fields);
+
+	window.history.pushState(null, null, url);
+});
+//endregion
+
 //region Tasks.Toolbar:onItem
 BX.addCustomEvent('Tasks.Toolbar:onItem', function(counterId)
 {
-	var
-		fields, f,
-		filterId = "<?= HtmlFilter::encode($arParams["FILTER_ID"])?>",
-		defaultPresetId = "<?= HtmlFilter::encode($arResult["DEFAULT_PRESET_KEY"])?>",
-		filterManager = BX.Main.filterManager.getById(filterId);
-
-	if(!filterManager)
+	var filterManager = BX.Main.filterManager.getById("<?=HtmlFilter::encode($arParams["FILTER_ID"])?>");
+	if (!filterManager)
 	{
 		alert('BX.Main.filterManager not initialised');
 		return;
 	}
 	var filterApi = filterManager.getApi();
-	if(Number(counterId) === <?= \CTaskListState::VIEW_TASK_CATEGORY_WAIT_CTRL?>)
-	{
-		fields = {STATUS:{0:'4'}};
-		f = filterManager.getFilterFieldsValues();
-		if (f.hasOwnProperty('ROLEID') && f.ROLEID != '')
-		{
-			fields.ROLEID = f.ROLEID;
-		}
-		else
-		{
-			fields.ROLEID = 'view_role_originator';
-		}
+	var filterFields = filterManager.getFilterFieldsValues();
 
+	if (
+		Number(counterId) === <?=\CTaskListState::VIEW_TASK_CATEGORY_NEW_COMMENTS?>
+		|| Number(counterId) === <?=\CTaskListState::VIEW_TASK_CATEGORY_EXPIRED?>
+	)
+	{
+		var fields = {
+			ROLEID: (filterFields.hasOwnProperty('ROLEID') ? filterFields.ROLEID : 0),
+			PROBLEM: counterId
+		};
 		filterApi.setFields(fields);
 		filterApi.apply();
 	}
 	else
 	{
-		fields = {additional:{}};
-		f = filterManager.getFilterFieldsValues();
-		if(f.hasOwnProperty('ROLEID'))
+		fields = {
+			preset_id: "<?= HtmlFilter::encode($arResult["DEFAULT_PRESET_KEY"])?>",
+			additional: {
+				PROBLEM: counterId,
+			}
+		};
+		if (filterFields.hasOwnProperty('ROLEID'))
 		{
-			fields.additional.ROLEID = f.ROLEID;
+			fields.additional.ROLEID = filterFields.ROLEID;
 		}
-		fields.preset_id= defaultPresetId;
-		fields.additional.PROBLEM= counterId;
 		filterApi.setFilter(fields);
 	}
 });
@@ -412,6 +431,7 @@ if ($isBitrix24Template)
 		'FILTER' => $arResult['FILTER'],
 		'PRESETS' => $arResult['PRESETS'],
 		'SHOW_QUICK_FORM' => 'N',
+		'PROJECT_VIEW' => $arParams['PROJECT_VIEW'],
 		'GET_LIST_PARAMS' => $arResult['GET_LIST_PARAMS'],
 		'COMPANY_WORKTIME' => $arResult['COMPANY_WORKTIME'],
 		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
@@ -421,6 +441,7 @@ if ($isBitrix24Template)
 		'MARK_ACTIVE_ROLE' => $arParams['MARK_ACTIVE_ROLE'],
 		'MARK_SECTION_ALL' => $arParams['MARK_SECTION_ALL'],
 		'MARK_SPECIAL_PRESET' => $arParams['MARK_SPECIAL_PRESET'],
+		'MARK_SECTION_PROJECTS' => $arParams['MARK_SECTION_PROJECTS'],
 		'PATH_TO_USER_TASKS' => $arParams['PATH_TO_USER_TASKS'],
 		'PATH_TO_USER_TASKS_TASK' => $arParams['PATH_TO_USER_TASKS_TASK'],
 		'PATH_TO_USER_TASKS_VIEW' => $arParams['PATH_TO_USER_TASKS_VIEW'],

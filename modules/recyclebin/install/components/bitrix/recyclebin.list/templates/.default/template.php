@@ -63,11 +63,12 @@ if ($isBitrix24Template)
 <?
 if(\CModule::IncludeModule('bitrix24'))
 {
+	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
 	$APPLICATION->IncludeComponent(
 		"bitrix:bitrix24.limit.lock",
 		"",
 		array(
-			"FEATURE_GROUP_NAME" => "recyclebin"
+//			"FEATURE_GROUP_NAME" => "recyclebin"
 		)
 	);
 }

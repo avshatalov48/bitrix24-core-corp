@@ -123,6 +123,10 @@ class CCrmTrackingEntityDetailsComponent extends CBitrixComponent
 
 			if (empty($site) && !$source)
 			{
+				$traces[$traceId] = [
+					'ROW' => $trace,
+				];
+
 				continue;
 			}
 

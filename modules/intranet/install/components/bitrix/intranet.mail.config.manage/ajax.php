@@ -137,22 +137,22 @@ class CIntranetMailConfigManageAjax
 						if (preg_match('/^(?<sid>\d+):(?<login>[^@]+)@(?<domain>[^@]+)$/i', trim($_REQUEST['MAILBOX']), $matches))
 						{
 							$serviceId = $matches['sid'];
-							$domain    = strtolower($matches['domain']);
-							$login     = strtolower($matches['login']);
+							$domain = mb_strtolower($matches['domain']);
+							$login = mb_strtolower($matches['login']);
 						}
 					}
 					else
 					{
 						$serviceId = $_REQUEST['sservice'];
-						$domain    = strtolower($_REQUEST['sdomain']);
-						$login     = strtolower($_REQUEST['suser']);
+						$domain = mb_strtolower($_REQUEST['sdomain']);
+						$login = mb_strtolower($_REQUEST['suser']);
 					}
 				}
 				else
 				{
 					$serviceId = $_REQUEST['cservice'];
-					$domain    = strtolower($_REQUEST['cdomain']);
-					$login     = strtolower($_REQUEST['cuser']);
+					$domain = mb_strtolower($_REQUEST['cdomain']);
+					$login = mb_strtolower($_REQUEST['cuser']);
 					$password  = $_REQUEST['password'];
 					$password2 = $_REQUEST['password2'];
 				}
@@ -210,7 +210,7 @@ class CIntranetMailConfigManageAjax
 				}
 				else if ($service['type'] == 'domain')
 				{
-					if (strtolower($service['server']) != $domain)
+					if (mb_strtolower($service['server']) != $domain)
 						$error = GetMessage('INTR_MAIL_FORM_ERROR');
 				}
 			}
@@ -226,7 +226,7 @@ class CIntranetMailConfigManageAjax
 		{
 			if ($service['type'] == 'controller')
 			{
-				if (strtolower(trim($domain)) == 'bitrix24.com')
+				if (mb_strtolower(trim($domain)) == 'bitrix24.com')
 				{
 					$error = getMessage('INTR_MAIL_FORM_ERROR');
 				}
@@ -383,7 +383,7 @@ class CIntranetMailConfigManageAjax
 						$res = CMailbox::delete($userMailbox['ID']);
 						if (in_array($userMailbox['SERVER_TYPE'], array('domain', 'controller', 'crdomain')) && $res)
 						{
-							list($login_tmp, $domain_tmp) = explode('@', strtolower($userMailbox['LOGIN']), 2);
+							list($login_tmp, $domain_tmp) = explode('@', mb_strtolower($userMailbox['LOGIN']), 2);
 							if (empty($domainUsers['vacant'][$userMailbox['SERVICE_ID']]))
 								$domainUsers['vacant'][$userMailbox['SERVICE_ID']] = array();
 							if (empty($domainUsers['vacant'][$userMailbox['SERVICE_ID']][$domain_tmp]))
@@ -457,7 +457,7 @@ class CIntranetMailConfigManageAjax
 				if (!empty($mailbox))
 				{
 					$mailboxId = $mailbox['ID'];
-					list($login, $domain) = explode('@', strtolower($mailbox['LOGIN']), 2);
+					list($login, $domain) = explode('@', mb_strtolower($mailbox['LOGIN']), 2);
 					$service = \CIntranetMailSetupHelper::getDomainService($mailbox['SERVICE_ID']);
 				}
 			}
@@ -555,7 +555,7 @@ class CIntranetMailConfigManageAjax
 			$res = \CMailbox::delete($mailbox['ID']);
 			if (in_array($mailbox['SERVER_TYPE'], array('domain', 'controller', 'crdomain')) && $res)
 			{
-				list($login_tmp, $domain_tmp) = explode('@', strtolower($mailbox['LOGIN']), 2);
+				list($login_tmp, $domain_tmp) = explode('@', mb_strtolower($mailbox['LOGIN']), 2);
 				$domainUsers['vacant'][$mailbox['SERVICE_ID']] = array(
 					$domain_tmp => array($login_tmp),
 				);
@@ -665,7 +665,7 @@ class CIntranetMailConfigManageAjax
 					$email = rtrim($email);
 
 					$blacklist[$i] = null;
-					if (strpos($email, '@') === false)
+					if (mb_strpos($email, '@') === false)
 					{
 						if (check_email(sprintf('email@%s', $email)))
 							$blacklist[$i] = $email;

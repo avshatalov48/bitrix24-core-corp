@@ -51,13 +51,13 @@
 						var data = response.DATA;
 						if (data.RESTRICTION)
 						{
-							if (B24.licenseInfoPopup)
+							if (BX.Type.isPlainObject(data.RESTRICTION) && B24 && B24.licenseInfoPopup)
 							{
-								B24.licenseInfoPopup.show(
-									"ivr-limit-popup",
-									data.RESTRICTION.HEADER,
-									data.RESTRICTION.CONTENT
-								);
+								B24.licenseInfoPopup.show('ivr-limit-popup', data.RESTRICTION.HEADER, data.RESTRICTION.CONTENT);
+							}
+							else if (BX.Type.isStringFilled(data.RESTRICTION))
+							{
+								eval(data.RESTRICTION);
 							}
 						}
 						else

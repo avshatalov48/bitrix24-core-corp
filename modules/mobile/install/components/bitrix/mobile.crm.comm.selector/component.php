@@ -31,10 +31,10 @@ $commType = '';
 $ownerID = 0;
 $ownerTypeID = CCrmOwnerType::Undefined;
 
-$commType = $arParams['COMMUNICATION_TYPE'] = isset($arParams['COMMUNICATION_TYPE']) ? strtoupper($arParams['COMMUNICATION_TYPE']) : '';
+$commType = $arParams['COMMUNICATION_TYPE'] = isset($arParams['COMMUNICATION_TYPE'])? mb_strtoupper($arParams['COMMUNICATION_TYPE']) : '';
 if($commType == '' && isset($_REQUEST['type']))
 {
-	$commType = $arParams['COMMUNICATION_TYPE'] = strtoupper($_REQUEST['type']);
+	$commType = $arParams['COMMUNICATION_TYPE'] = mb_strtoupper($_REQUEST['type']);
 }
 
 if($commType === '')
@@ -67,7 +67,7 @@ $arResult['OWNER_TYPE_ID'] = $ownerTypeID;
 $arResult['SHOW_SEARCH_PANEL'] = 'Y';
 
 $needle = '';
-$enableSearch = $arResult['ENABLE_SEARCH'] = isset($_REQUEST['SEARCH']) && strtoupper($_REQUEST['SEARCH']) === 'Y';
+$enableSearch = $arResult['ENABLE_SEARCH'] = isset($_REQUEST['SEARCH']) && mb_strtoupper($_REQUEST['SEARCH']) === 'Y';
 if($enableSearch)
 {
 	// decode encodeURIComponent params
@@ -919,7 +919,7 @@ $arResult['RELOAD_URL_TEMPLATE'] = $APPLICATION->GetCurPageParam(
 $arResult['SEARCH_PLACEHOLDER'] = GetMessage("M_CRM_COMM_SELECT_SEARCH_PLACEHOLDER_{$commType}");
 
 //$arResult['SERVICE_URL'] = SITE_DIR.'bitrix/components/bitrix/mobile.crm.comm.selector/ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get();
-$format = isset($_REQUEST['FORMAT']) ? strtolower($_REQUEST['FORMAT']) : '';
+$format = isset($_REQUEST['FORMAT'])? mb_strtolower($_REQUEST['FORMAT']) : '';
 // Only JSON format is supported
 if($format !== '' && $format !== 'json')
 {

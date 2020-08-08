@@ -2,11 +2,17 @@
 namespace Bitrix\Tasks\Integration\Bizproc;
 
 use Bitrix\Main;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 
 class Listener
 {
 	public static function onTaskAdd($id, array $fields)
 	{
+		if (TaskLimit::isLimitExceeded())
+		{
+			return false;
+		}
+
 		//fix creation from template
 		if (!isset($fields['STATUS']))
 		{
@@ -38,6 +44,11 @@ class Listener
 
 	public static function onTaskUpdate($id, array $fields, array $previousFields)
 	{
+		if (TaskLimit::isLimitExceeded())
+		{
+			return false;
+		}
+
 		$projectId = isset($fields['GROUP_ID']) ? $fields['GROUP_ID'] : $previousFields['GROUP_ID'];
 		$statusChanged = (isset($fields['STATUS']) && (string)$fields['STATUS'] !== (string)$previousFields['STATUS']);
 
@@ -112,6 +123,11 @@ class Listener
 
 	public static function onPlanTaskStageUpdate($memberId, $taskId, $stageId)
 	{
+		if (TaskLimit::isLimitExceeded())
+		{
+			return false;
+		}
+
 		$planDocumentType = Document\Task::resolvePlanTaskType($memberId);
 		//run automation
 		Automation\Factory::runOnStatusChanged($planDocumentType, $taskId);
@@ -132,6 +148,11 @@ class Listener
 
 	public static function onTaskExpired($id, array $fields)
 	{
+		if (TaskLimit::isLimitExceeded())
+		{
+			return false;
+		}
+
 		//Run project trigger
 		if ($fields['GROUP_ID'] > 0)
 		{
@@ -150,6 +171,11 @@ class Listener
 
 	public static function onTaskExpiredSoon($id, array $fields)
 	{
+		if (TaskLimit::isLimitExceeded())
+		{
+			return false;
+		}
+
 		//Run project trigger
 		if ($fields['GROUP_ID'] > 0)
 		{

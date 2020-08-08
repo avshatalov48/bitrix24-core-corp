@@ -1,12 +1,15 @@
 <?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+use Bitrix\Main,
+	Bitrix\Main\Loader,
+	Bitrix\Catalog;
 
-if (!CModule::IncludeModule('crm'))
+if (!Loader::includeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
 	return;
 }
 
-if (!CModule::IncludeModule('catalog'))
+if (!Loader::includeModule('catalog'))
 {
 	ShowError(GetMessage('CRM_CATALOG_MODULE_NOT_INSTALLED'));
 	return;
@@ -50,16 +53,17 @@ if ($arResult['VAT_MODE'])
 		if ($errNumber === 0)
 			$result[$arResult['AJAX_PARAM_NAME']] = $arResult['PRODUCT_ROW_TAX_UNIFORM'];
 		echo CUtil::PhpToJSObject($result);
+		unset($result);
 		exit();
 	}
 }
 
 $arResult['HEADERS'] = array(
 	array('id' => 'ID', 'name' => GetMessage('CRM_COLUMN_ID'), 'sort' => 'ID', 'default' => false, 'editable' => false),
-	array('id' => 'NAME', 'name' => GetMessage('CRM_COLUMN_NAME'), 'sort' => 'name', 'default' => true, 'editable' => true),
-	array('id' => 'RATE', 'name' => GetMessage('CRM_COLUMN_RATE'), 'sort' => 'rate', 'default' => true, 'editable' => true),
-	array('id' => 'ACTIVE', 'name' => GetMessage('CRM_COLUMN_ACTIVE'), 'sort' => 'active', 'default' => true, 'editable' => true, 'type'=>'checkbox'),
-	array('id' => 'C_SORT', 'name' => GetMessage('CRM_COLUMN_C_SORT'), 'sort' => 'c_sort', 'default' => true, 'editable' => true)
+	array('id' => 'NAME', 'name' => GetMessage('CRM_COLUMN_NAME'), 'sort' => 'NAME', 'default' => true, 'editable' => true),
+	array('id' => 'RATE', 'name' => GetMessage('CRM_COLUMN_RATE'), 'sort' => 'RATE', 'default' => true, 'editable' => true),
+	array('id' => 'ACTIVE', 'name' => GetMessage('CRM_COLUMN_ACTIVE'), 'sort' => 'ACTIVE', 'default' => true, 'editable' => true, 'type'=>'checkbox'),
+	array('id' => 'C_SORT', 'name' => GetMessage('CRM_COLUMN_C_SORT'), 'sort' => 'SORT', 'default' => true, 'editable' => true)
 );
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_POST['action_button_'.$arResult['GRID_ID']]))
@@ -96,26 +100,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_PO
 	{
 		foreach($_POST['FIELDS'] as $ID => $arField)
 		{
+			$ID = (int)$ID;
 			$arFields = array();
-
-			$arFields['ID'] = $ID;
 
 			if(isset($arField['NAME']))
 				$arFields['NAME'] = trim($arField['NAME']);
 
-			if(isset($arField['C_SORT']))
-				$arFields['C_SORT'] = $arField['C_SORT'];
+			if (isset($arField['SORT']))
+			{
+				$arFields['SORT'] = (int)$arField['SORT'];
+			}
+			elseif(isset($arField['C_SORT']))
+			{
+				$arFields['SORT'] = (int)$arField['C_SORT']; // legacy code
+			}
 
 			if(isset($arField['ACTIVE']))
 				$arFields['ACTIVE'] = $arField['ACTIVE'];
 
 			if(isset($arField['RATE']))
-				$arFields['RATE'] = trim($arField['RATE']);
+				$arFields['RATE'] = (float)trim($arField['RATE']);
 
-			if (count($arFields) > 0)
+			if (!empty($arFields))
 			{
-				if(!CCatalogVat::Set($arFields))
+				if ($ID > 0)
+				{
+					$result = Catalog\VatTable::update($ID, $arFields);
+				}
+				else
+				{
+					$result = Catalog\VatTable::add($arFields);
+				}
+				if (!$result->isSuccess())
+				{
 					ShowError(GetMessage('CRM_VAT_UPDATE_GENERAL_ERROR'));
+				}
+				unset($result);
 			}
 		}
 	}
@@ -155,7 +175,7 @@ $gridOptions = new CCrmGridOptions($arResult['GRID_ID']);
 
 $gridSorting = $gridOptions->GetSorting(
 	array(
-		'sort' => array('c_sort' => 'desc'),
+		'sort' => array('SORT' => 'desc'),
 		'vars' => array('by' => 'by', 'order' => 'order')
 	)
 );
@@ -168,9 +188,10 @@ $allVats = CCrmVat::GetAll();
 foreach($allVats as $k => $v)
 {
 	$arVat = array();
-	$arVat['ID'] = $arVat['~ID'] = intval($k); // Key is Currency ID
+	$arVat['ID'] = $arVat['~ID'] = $k; // Key is Currency ID
 	$arVat['NAME'] = $v['NAME'];
-	$arVat['C_SORT'] = $arVat['~C_SORT'] = intval($v['C_SORT']);
+	$arVat['C_SORT'] = $arVat['~C_SORT'] = (int)$v['SORT'];
+	$arVat['SORT'] = $arVat['~SORT'] = (int)$v['SORT'];
 	$arVat['ACTIVE'] = $arVat['~ACTIVE'] = $v['ACTIVE'] == 'Y' ? 'Y' : 'N';
 	$arVat['RATE'] = $arVat['~RATE'] = $v['RATE'];
 
@@ -195,20 +216,32 @@ foreach($allVats as $k => $v)
 			array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $k, 'sessid' => bitrix_sessid())
 		);
 
-	$arVat['~NAME'] = htmlspecialcharsBack($arVat['NAME']);
+	$arVat['~NAME'] = $arVat['NAME'];
 	$vats[] = $arVat;
 }
 
-if(is_array($sort) && count($sort) > 0)
+if (!empty($sort) && is_array($sort))
 {
+	$translateKeys = [
+		'id' => 'ID',
+		'name' => 'NAME',
+		'rate' => 'RATE',
+		'active' => 'ACTIVE',
+		'c_sort' => 'SORT'
+	];
 	// Process only first expression
 	reset($sort);
 	$by = key($sort);
+	if (isset($translateKeys[$by]))
+	{
+		$by = $translateKeys[$by];
+	}
+
 	$order = $sort[$by] == 'asc' ? SORT_ASC : SORT_DESC;
 
-	if(in_array($by, array('ID', 'NAME', 'RATE', 'ACTIVE', 'C_SORT'), true))
+	if (in_array($by, array('ID', 'NAME', 'RATE', 'ACTIVE', 'SORT'), true))
 	{
-		sortByColumn($vats, array($by => $order));
+		Main\Type\Collection::sortByColumn($vats, array($by => $order));
 	}
 }
 
@@ -221,4 +254,3 @@ for($i = 0; $i < $rowCount; $i++)
 }
 
 $this->IncludeComponentTemplate();
-?>

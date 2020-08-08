@@ -13,7 +13,17 @@ $action = isset($_REQUEST['ACTION']) ? $_REQUEST['ACTION'] : '';
  */
 define(
 	'NO_AGENT_CHECK',
-	!in_array($action, array('REBUILD_SEARCH_CONTENT', 'BUILD_TIMELINE', 'BUILD_DUPLICATE_INDEX'), true)
+	!in_array(
+		$action,
+		[
+			'REBUILD_SEARCH_CONTENT',
+			'BUILD_TIMELINE',
+			'BUILD_DUPLICATE_INDEX',
+			'CONVERT_ADDRESSES',
+			'CONVERT_UF_ADDRESSES'
+		],
+		true
+	)
 );
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
@@ -39,6 +49,8 @@ if (!CModule::IncludeModule('crm'))
 }
 
 use Bitrix\Crm;
+use Bitrix\Crm\Agent\Requisite\CompanyAddressConvertAgent;
+use Bitrix\Crm\Agent\Requisite\CompanyUfAddressConvertAgent;
 
 $userPerms = CCrmPerms::GetCurrentUserPermissions();
 if(!CCrmPerms::IsAuthorized())
@@ -845,5 +857,64 @@ elseif ($action === 'CONVERT_REQUISITES')
 			)
 		);
 	}
+}
+elseif ($action === 'CONVERT_ADDRESSES')
+{
+	/** @var CompanyAddressConvertAgent $agent */
+	$agent = CompanyAddressConvertAgent::getInstance();
+	$isAgentEnabled = $agent->isEnabled();
+	if ($isAgentEnabled)
+	{
+		if (!$agent->isActive())
+		{
+			$agent->enable(false);
+			$isAgentEnabled = false;
+		}
+	}
+	if(!$isAgentEnabled)
+	{
+		__CrmCompanyListEndResponse(array('STATUS' => 'COMPLETED'));
+	}
+
+	$progressData = $agent->getProgressData();
+	__CrmCompanyListEndResponse(
+		[
+			'STATUS' => 'PROGRESS',
+			'PROCESSED_ITEMS' => $progressData['PROCESSED_ITEMS'],
+			'TOTAL_ITEMS' => $progressData['TOTAL_ITEMS'],
+		]
+	);
+}
+elseif ($action === 'CONVERT_UF_ADDRESSES')
+{
+	/** @var CompanyUfAddressConvertAgent $agent */
+	$agent = CompanyUfAddressConvertAgent::getInstance();
+	$isAgentEnabled = $agent->isEnabled();
+	if ($isAgentEnabled)
+	{
+		if (!$agent->isActive())
+		{
+			if (CCrmOwnerType::IsDefined($agent->getSourceEntityTypeId()))
+			{
+				// Disable if was running but is not active
+				// Source entity type is known only after start the agent
+				$agent->enable(false);
+			}
+			$isAgentEnabled = false;
+		}
+	}
+	if(!$isAgentEnabled)
+	{
+		__CrmCompanyListEndResponse(array('STATUS' => 'COMPLETED'));
+	}
+
+	$progressData = $agent->getProgressData();
+	__CrmCompanyListEndResponse(
+		[
+			'STATUS' => 'PROGRESS',
+			'PROCESSED_ITEMS' => $progressData['PROCESSED_ITEMS'],
+			'TOTAL_ITEMS' => $progressData['TOTAL_ITEMS'],
+		]
+	);
 }
 ?>

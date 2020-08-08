@@ -501,7 +501,7 @@ class PresetEditComponent extends \CBitrixComponent
 								}
 								unset($data);
 								if (!empty($fields) && isset($fields['FIELD_TITLE'])
-									&& is_string($fields['FIELD_TITLE']) && strlen($fields['FIELD_TITLE']) > 0)
+									&& is_string($fields['FIELD_TITLE']) && $fields['FIELD_TITLE'] <> '')
 								{
 									$this->requisite->updateUserFieldTitle($index, $fields['FIELD_TITLE']);
 									$modified++;

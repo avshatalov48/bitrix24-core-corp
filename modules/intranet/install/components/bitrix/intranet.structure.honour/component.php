@@ -5,7 +5,7 @@ if (!CModule::IncludeModule('intranet')) return;
 
 $arParams['NUM_USERS'] = intval($arParams['NUM_USERS']);
 
-if (strlen(trim($arParams["NAME_TEMPLATE"])) <= 0)
+if (trim($arParams["NAME_TEMPLATE"]) == '')
 	$arParams["NAME_TEMPLATE"] = CSite::GetNameFormat();
 $arParams['SHOW_LOGIN'] = $arParams['SHOW_LOGIN'] != "N" ? "Y" : "N";
 

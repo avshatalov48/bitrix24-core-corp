@@ -190,10 +190,10 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 
 						$trimValue = trim($value['VALUE'], " \t\n\r");
 
-						if (substr($key, 0, 1) == 'n' && strlen($trimValue) > 0 && isset($arListMap[$trimValue]))
+						if (mb_substr($key, 0, 1) == 'n' && $trimValue <> '' && isset($arListMap[$trimValue]))
 							continue;
 
-						if (substr($key, 0, 1) === 'n')
+						if (mb_substr($key, 0, 1) === 'n')
 						{
 							$value['XML_ID'] = md5(uniqid('', true));
 						}
@@ -211,7 +211,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 					$arField['LIST'] = array();
 
 				//Import values from textarea
-				if(isset($_POST['LIST_TEXT_VALUES']) && strlen($_POST['LIST_TEXT_VALUES']))
+				if(isset($_POST['LIST_TEXT_VALUES']) && mb_strlen($_POST['LIST_TEXT_VALUES']))
 				{
 					foreach(explode("\n", $_POST['LIST_TEXT_VALUES']) as $value_line)
 					{
@@ -466,8 +466,7 @@ if($bVarsFromForm)
 		$arResult['FIELD']['ROWS'] = isset($_POST['ROWS']) ? $_POST['ROWS'] : 1;
 	}
 
-	if ($_POST['USER_TYPE_ID'] == 'boolean'
-	|| $_POST['USER_TYPE_ID'] == 'crm_status')
+	if ($_POST['USER_TYPE_ID'] === 'boolean')
 	{
 		$arResult['FIELD']['MULTIPLE'] = 'N';
 		$arResult['DISABLE_MULTIPLE'] = true;
@@ -494,7 +493,7 @@ if($bVarsFromForm)
 		{
 			if(array_key_exists('n'.$n, $arResult['LIST']))
 			{
-				if(strlen($arResult['LIST']['n'.$n]['VALUE']) > 0)
+				if($arResult['LIST']['n'.$n]['VALUE'] <> '')
 					break;
 				else
 					unset($arResult['LIST']['n'.$n]);

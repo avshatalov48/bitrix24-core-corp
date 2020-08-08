@@ -84,6 +84,6 @@ class EntityValidator
 		{
 			return !empty($value);
 		}
-		return strlen($this->entityFields[$fieldName]) > 0;
+		return $this->entityFields[$fieldName] <> '';
 	}
 }

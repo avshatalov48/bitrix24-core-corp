@@ -26,16 +26,16 @@ if($_SERVER["REQUEST_METHOD"]=="POST" && check_bitrix_sessid() && isset($_POST["
 if($_SERVER["REQUEST_METHOD"]=="POST" && check_bitrix_sessid() && isset($_POST["ACTIVATE_COUPON_BUTTON"]))
 {
 	$coupon = $APPLICATION->UnJSEscape($_REQUEST["COUPON"]);
-	if (StrLen($coupon) <= 0)
+	if ($coupon == '')
 		$errorMessage .= GetMessage("SUPA_ACE_CPN").". ";
 
-	if (StrLen($errorMessage) <= 0)
+	if ($errorMessage == '')
 	{
 		if (!CUpdateClient::ActivateCoupon($coupon, $errorMessage, LANGUAGE_ID))
 			$errorMessage .= GetMessage("SUPA_ACE_ACT").". ";
 	}
 
-	if (StrLen($errorMessage) <= 0)
+	if ($errorMessage == '')
 	{
 		CUpdateClient::AddMessage2Log("Coupon activated", "UPD_SUCCESS");
 
@@ -60,54 +60,54 @@ if (isset($arUpdateList["CLIENT"]) && !isset($arUpdateList["UPDATE_SYSTEM"]) && 
 if ($arResult["NEED_ACTIVATE"] && $_SERVER["REQUEST_METHOD"]=="POST" && check_bitrix_sessid() && isset($_POST["ACTIVATE_BUTTON"]))
 {
 	$name = $APPLICATION->UnJSEscape($_REQUEST["NAME"]);
-	if (strlen($name) <= 0)
+	if ($name == '')
 		$errorMessage .= GetMessage("SUPA_AERR_NAME").". ";
 
 	$email = $APPLICATION->UnJSEscape($_REQUEST["EMAIL"]);
-	if (strlen($email) <= 0)
+	if ($email == '')
 		$errorMessage .= GetMessage("SUPA_AERR_EMAIL").". ";
 	elseif (!CUpdateSystem::CheckEMail($email))
 		$errorMessage .= GetMessage("SUPA_AERR_EMAIL1").". ";
 
 	$siteUrl = $APPLICATION->UnJSEscape($_REQUEST["SITE_URL"]);
-	if (strlen($siteUrl) <= 0)
+	if ($siteUrl == '')
 		$errorMessage .= GetMessage("SUPA_AERR_URI").". ";
 
 	$phone = $APPLICATION->UnJSEscape($_REQUEST["PHONE"]);
-	if (strlen($phone) <= 0)
+	if ($phone == '')
 		$errorMessage .= GetMessage("SUPA_AERR_PHONE").". ";
 
 	$contactEMail = $APPLICATION->UnJSEscape($_REQUEST["CONTACT_EMAIL"]);
-	if (strlen($contactEMail) <= 0)
+	if ($contactEMail == '')
 		$errorMessage .= GetMessage("SUPA_AERR_CONTACT_EMAIL").". ";
 	elseif (!CUpdateSystem::CheckEMail($contactEMail))
 		$errorMessage .= GetMessage("SUPA_AERR_CONTACT_EMAIL1").". ";
 
 	$contactPerson = $APPLICATION->UnJSEscape($_REQUEST["CONTACT_PERSON"]);
-	if (strlen($contactPerson) <= 0)
+	if ($contactPerson == '')
 		$errorMessage .= GetMessage("SUPA_AERR_CONTACT_PERSON").". ";
 
 	$contactPhone = $APPLICATION->UnJSEscape($_REQUEST["CONTACT_PHONE"]);
-	if (strlen($contactPhone) <= 0)
+	if ($contactPhone == '')
 		$errorMessage .= GetMessage("SUPA_AERR_CONTACT_PHONE").". ";
 
 	$generateUser = $APPLICATION->UnJSEscape($_REQUEST["GENERATE_USER"]);
 	if ($generateUser == "Y")
 	{
 		$userName = $APPLICATION->UnJSEscape($_REQUEST["USER_NAME"]);
-		if (strlen($userName) <= 0)
+		if ($userName == '')
 			$errorMessage .= GetMessage("SUPA_AERR_FNAME").". ";
 		$userLastName = $APPLICATION->UnJSEscape($_REQUEST["USER_LAST_NAME"]);
-		if (strlen($userLastName) <= 0)
+		if ($userLastName == '')
 			$errorMessage .= GetMessage("SUPA_AERR_LNAME").". ";
 		$userLogin = $APPLICATION->UnJSEscape($_REQUEST["USER_LOGIN_A"]);
-		if (strlen($userLogin) <= 0)
+		if ($userLogin == '')
 			$errorMessage .= GetMessage("SUPA_AERR_LOGIN").". ";
-		elseif (strlen($userLogin) < 3)
+		elseif (mb_strlen($userLogin) < 3)
 			$errorMessage .= GetMessage("SUPA_AERR_LOGIN1").". ";
 		$userPassword = $APPLICATION->UnJSEscape($_REQUEST["USER_PASSWORD"]);
 		$userPasswordConfirm = $APPLICATION->UnJSEscape($_REQUEST["USER_PASSWORD_CONFIRM"]);
-		if (strlen($userPassword) <= 0)
+		if ($userPassword == '')
 			$errorMessage .= GetMessage("SUPA_AERR_PASSW").". ";
 		if ($userPassword != $userPasswordConfirm)
 			$errorMessage .= GetMessage("SUPA_AERR_PASSW_CONF").". ";
@@ -115,13 +115,13 @@ if ($arResult["NEED_ACTIVATE"] && $_SERVER["REQUEST_METHOD"]=="POST" && check_bi
 	else
 	{
 		$userLogin = $APPLICATION->UnJSEscape($_REQUEST["USER_LOGIN"]);
-		if (strlen($userLogin) <= 0)
+		if ($userLogin == '')
 			$errorMessage .= GetMessage("SUPA_AERR_LOGIN").". ";
-		elseif (strlen($userLogin) < 3)
+		elseif (mb_strlen($userLogin) < 3)
 			$errorMessage .= GetMessage("SUPA_AERR_LOGIN1").". ";
 	}
 
-	if (strlen($errorMessage) <= 0)
+	if ($errorMessage == '')
 	{
 		$contactInfo = $APPLICATION->UnJSEscape($_REQUEST["CONTACT_INFO"]);
 
@@ -143,7 +143,7 @@ if ($arResult["NEED_ACTIVATE"] && $_SERVER["REQUEST_METHOD"]=="POST" && check_bi
 		CUpdateClient::ActivateLicenseKey($arFields, $errorMessage, LANGUAGE_ID);
 	}
 
-	if (StrLen($errorMessage) <= 0)
+	if ($errorMessage == '')
 	{
 		CUpdateClient::AddMessage2Log("Licence activated", "UPD_SUCCESS");
 	}

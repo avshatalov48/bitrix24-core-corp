@@ -12,7 +12,7 @@ if (!is_array($arGadgetParams) || !array_key_exists('TASK_COUNT', $arGadgetParam
 $arFilter = array();	
 $arSort = array();	
 
-if (strlen($arGadgetParams['TASK_TYPE_LIST']) <= 0)
+if ($arGadgetParams['TASK_TYPE_LIST'] == '')
 	$arGadgetParams['TASK_TYPE_LIST'] = '';
 
 if (!empty($arGadgetParams['SORT']) && !empty($arGadgetParams['SORT_BY']))

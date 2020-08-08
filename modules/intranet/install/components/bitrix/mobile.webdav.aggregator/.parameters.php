@@ -40,7 +40,7 @@ $rsIBlock = CIBlock::GetList(Array("sort" => "asc"), Array("TYPE" => $arCurrentV
 while($arr=$rsIBlock->Fetch())
 {
     if ($iIblockDefault <= 0)
-        $iIblockDefault = intVal($arr["ID"]);
+        $iIblockDefault = intval($arr["ID"]);
     $arIBlock[$arr["ID"]] = "[".$arr["ID"]."] ".$arr["NAME"];
 }
 

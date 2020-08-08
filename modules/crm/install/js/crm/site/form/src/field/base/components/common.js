@@ -44,10 +44,12 @@ const Dropdown = {
 		{
 			if (val)
 			{
+				this.$emit('visible:on');
 				document.addEventListener('mouseup', this.listenerBind);
 			}
 			else
 			{
+				setTimeout(() => this.$emit('visible:off'), 0);
 				document.removeEventListener('mouseup', this.listenerBind);
 			}
 			if (window.innerWidth <= 530)

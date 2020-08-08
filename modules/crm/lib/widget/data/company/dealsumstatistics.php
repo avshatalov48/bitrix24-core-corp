@@ -57,7 +57,7 @@ class DealSumStatistics extends DealDataSource
 			}
 			foreach ($params['group'] as $g)
 			{
-				$g = strtoupper($g);
+				$g = mb_strtoupper($g);
 				if ($g === self::GROUP_BY_USER
 					|| $g === self::GROUP_BY_DATE)
 				{
@@ -67,9 +67,9 @@ class DealSumStatistics extends DealDataSource
 		}
 
 		$enableGroupKey = isset($params['group']) &&
-				is_string($params['group']) &&
-				isset($params['enableGroupKey']) &&
-				$params['enableGroupKey'] === true ? strtoupper($params['group']) : false;
+		is_string($params['group']) &&
+		isset($params['enableGroupKey']) &&
+		$params['enableGroupKey'] === true? mb_strtoupper($params['group']) : false;
 
 		/** @var array $select */
 		$select = isset($params['select']) && is_array($params['select']) ? $params['select'] : array();
@@ -84,7 +84,7 @@ class DealSumStatistics extends DealDataSource
 			}
 			if(isset($selectItem['aggregate']))
 			{
-				$aggregate = strtoupper($selectItem['aggregate']);
+				$aggregate = mb_strtoupper($selectItem['aggregate']);
 			}
 		}
 

@@ -45,6 +45,10 @@ class DealTable extends Main\ORM\Data\DataManager
 			'OPPORTUNITY' => array(
 				'data_type' => 'float'
 			),
+			'IS_MANUAL_OPPORTUNITY' => array(
+				'data_type' => 'boolean',
+				'values' => array('N', 'Y')
+			),
 			'CURRENCY_ID' => array(
 				'data_type' => 'string'
 			),
@@ -284,6 +288,9 @@ class DealTable extends Main\ORM\Data\DataManager
 			'ORIGIN_ID' => array(
 				'data_type' => 'string'
 			),
+			'ORDER_STAGE' => array(
+				'data_type' => 'string'
+			),
 			'ORIGINATOR_ID' => array(
 				'data_type' => 'string'
 			),
@@ -313,7 +320,12 @@ class DealTable extends Main\ORM\Data\DataManager
 				DealStageHistoryWithSupposedTable::class,
 				Main\ORM\Query\Join::on('this.ID', 'ref.OWNER_ID'),
 				array('join_type' => 'INNER')
-			)
+			),
+			new ReferenceField(
+				'BINDING_CONTACT',
+				Binding\DealContactTable::class,
+				Main\ORM\Query\Join::on('this.ID', 'ref.DEAL_ID')
+			),
 		);
 
 		$codeList = UtmTable::getCodeList();

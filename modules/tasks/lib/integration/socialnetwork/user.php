@@ -8,6 +8,8 @@
 
 namespace Bitrix\Tasks\Integration\SocialNetwork;
 
+use Bitrix\Socialnetwork\UserToGroupTable;
+
 final class User extends \Bitrix\Tasks\Integration\SocialNetwork
 {
 	public static function isAdmin($userId = 0)
@@ -18,5 +20,40 @@ final class User extends \Bitrix\Tasks\Integration\SocialNetwork
 		}
 
 		return false;
+	}
+
+	/**
+	 * @param $groupId
+	 * @param $operation
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function getUsersCanPerformOperation($groupId, $operation): array
+	{
+		$users = [];
+
+		if (!static::includeModule())
+		{
+			return $users;
+		}
+
+		$role = \CSocNetFeaturesPerms::GetOperationPerm(SONET_ENTITY_GROUP, $groupId, 'tasks', $operation);
+		$usersRes = UserToGroupTable::getList([
+			'select' => ['USER_ID'],
+			'filter' => [
+				'GROUP_ID' => $groupId,
+				'USER.ACTIVE' => 'Y',
+				'<=ROLE' => $role,
+			],
+			'order' => ['DATE_CREATE' => 'ASC'],
+		]);
+		while ($user = $usersRes->fetch())
+		{
+			$users[] = $user['USER_ID'];
+		}
+
+		return array_unique($users);
 	}
 }

@@ -22,7 +22,7 @@ $arActivityDescription = array(
 	),
 );
 
-if ($documentType[0] === 'tasks' && strpos($documentType[2], 'TASK_USER_') === 0)
+if ($documentType[0] === 'tasks' && mb_strpos($documentType[2], 'TASK_USER_') === 0)
 {
 	$arActivityDescription['EXCLUDED'] = true;
 }

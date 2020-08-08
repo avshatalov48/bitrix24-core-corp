@@ -8,6 +8,7 @@ use Bitrix\Main\Component\ParameterSigner;
 use Bitrix\Bitrix24\Integrator;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Event;
 
 class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Controller
 {
@@ -70,6 +71,15 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 			return false;
 		}
 
+		if (
+			Loader::includeModule("bitrix24")
+			&& !Bitrix\Bitrix24\Feature::isFeatureEnabled("user_dismissal")
+			&& !Integrator::isIntegrator($this->userId)
+		)
+		{
+			return false;
+		}
+
 		$user = new CUser;
 		$res = $user->Update($this->userId, array("ACTIVE" => "N"));
 
@@ -103,6 +113,8 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 
 	public function deleteUserAction()
 	{
+		global $APPLICATION;
+
 		if (!$this->canEditProfile())
 		{
 			return false;
@@ -113,7 +125,19 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 
 		if (!$res)
 		{
-			$this->addError(new \Bitrix\Main\Error($user->LAST_ERROR));
+			$error = "";
+			if (!empty($user->LAST_ERROR))
+			{
+				$error = $user->LAST_ERROR;
+			}
+			else
+			{
+				$ex = $APPLICATION->GetException();
+				$error = $ex->GetString();
+			}
+
+			$this->addError(new \Bitrix\Main\Error($error));
+
 			return false;
 		}
 
@@ -292,147 +316,29 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 
 	protected function getGroupsId(&$employeesGroupId, &$portalAdminGroupId)
 	{
-		$employeesGroupId = "";
-		$portalAdminGroupId = "";
-
-		if (ModuleManager::isModuleInstalled("bitrix24"))
-		{
-			$employeesGroupId = "11";
-			$portalAdminGroupId = "12";
-		}
-		else
-		{
-			$dbGroup = \CGroup::GetList($by, $order, ["STRING_ID" => implode("|", ["EMPLOYEES_".SITE_ID, "PORTAL_ADMINISTRATION_".SITE_ID])]);
-			while ($group = $dbGroup->Fetch())
-			{
-				if ($group["STRING_ID"] === "EMPLOYEES_".SITE_ID)
-				{
-					$employeesGroupId = $group["ID"];
-				}
-				elseif ($group["STRING_ID"] === "PORTAL_ADMINISTRATION_".SITE_ID)
-				{
-					$portalAdminGroupId = $group["ID"];
-				}
-			}
-		}
+		\Bitrix\Intranet\Util::getGroupsId($employeesGroupId, $portalAdminGroupId);
 	}
 
 	public function setAdminRightsAction()
 	{
-		global $USER;
+		$currentUser = CurrentUser::get();
 
-		if (
-			!(
-				Loader::includeModule("bitrix24") && \CBitrix24::IsPortalAdmin(CurrentUser::get()->getId())
-				|| CurrentUser::get()->isAdmin()
-			)
-		)
-		{
-			return false;
-		}
-
-		$userData = \Bitrix\Main\UserTable::getList(array(
-			"select" => array('ID', 'UF_DEPARTMENT', 'ACTIVE'),
-			"filter" => array(
-				"=ID" => $this->userId
-			),
-		))->fetch();
-
-		if (
-			!is_array($userData['UF_DEPARTMENT']) // is extranet
-			|| empty($userData['UF_DEPARTMENT'][0])
-			|| $userData['ACTIVE'] !== "Y"
-		)
-		{
-			return false;
-		}
-
-		$removeRightsFromCurrentAdmin = false;
-
-		//groups for bitrix24 cloud
-		if (\Bitrix\Main\Loader::includeModule("bitrix24") && !\CBitrix24::isMoreAdminAvailable())
-		{
-			$removeRightsFromCurrentAdmin = true;
-		}
-
-		$this->getGroupsId($employeesGroupId, $portalAdminGroupId);
-
-		$currentUserGroups = CUser::GetUserGroup($this->userId);
-		foreach ($currentUserGroups as $groupKey => $group)
-		{
-			if ($group == $employeesGroupId)
-			{
-				unset($currentUserGroups[$groupKey]);
-			}
-		}
-		$currentUserGroups[] = "1";
-		$currentUserGroups[] = $portalAdminGroupId;
-		$user = new \CUser();
-		$user->Update($this->userId, ['GROUP_ID' => $currentUserGroups]);
-
-		//remove rights from current admin because of limit
-		if ($removeRightsFromCurrentAdmin)
-		{
-			$currentAdminGroups = \CUser::GetUserGroup($USER->GetID());
-			foreach ($currentAdminGroups as $groupKey => $group)
-			{
-				if ($group == 1 || $group == $portalAdminGroupId)
-				{
-					unset($currentAdminGroups[$groupKey]);
-				}
-			}
-			$currentAdminGroups[] = $employeesGroupId;
-
-			$user->Update($USER->GetID(), ['GROUP_ID' => $currentAdminGroups]);
-		}
-
-		return true;
+		return \Bitrix\Intranet\Util::setAdminRights([
+			'userId' => $this->userId,
+			'currentUserId' => $currentUser->getId(),
+			'isCurrentUserAdmin' => $currentUser->isAdmin()
+		]);
 	}
 
 	public function removeAdminRightsAction()
 	{
-		global $USER;
+		$currentUser = CurrentUser::get();
 
-		if (
-			!(
-				Loader::includeModule("bitrix24") && \CBitrix24::IsPortalAdmin(CurrentUser::get()->getId())
-				|| CurrentUser::get()->isAdmin()
-			)
-		)
-		{
-			return false;
-		}
-
-		$userData = \Bitrix\Main\UserTable::getList(array(
-			"select" => array('ID', 'UF_DEPARTMENT', 'ACTIVE'),
-			"filter" => array(
-				"=ID" => $this->userId
-			),
-		))->fetch();
-
-		if (
-			!is_array($userData['UF_DEPARTMENT']) // is extranet
-			|| empty($userData['UF_DEPARTMENT'][0])
-		)
-		{
-			return false;
-		}
-
-		$this->getGroupsId($employeesGroupId, $portalAdminGroupId);
-
-		$currentUserGroups = \CUser::GetUserGroup($this->userId);
-		foreach ($currentUserGroups as $groupKey => $group)
-		{
-			if ($group == 1 || $group == $portalAdminGroupId)
-			{
-				unset($currentUserGroups[$groupKey]);
-			}
-		}
-		$currentUserGroups[] = $employeesGroupId;
-		$user = new \CUser();
-		$user->Update($this->userId, ['GROUP_ID' => $currentUserGroups]);
-
-		return true;
+		return \Bitrix\Intranet\Util::removeAdminRights([
+			'userId' => $this->userId,
+			'currentUserId' => $currentUser->getId(),
+			'isCurrentUserAdmin' => $currentUser->isAdmin()
+		]);
 	}
 
 	public function sendSmsForAppAction($phone = "")
@@ -552,7 +458,7 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		{
 			return false;
 		}
-		
+
 		$newFieldsView = array();
 
 		if (is_array($fieldsView))

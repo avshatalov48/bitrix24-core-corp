@@ -21,7 +21,7 @@ class CControllerGroup
 			unset($arFields["ID"]);
 
 		global $DB;
-		if (($ID === false || is_set($arFields, "NAME")) && strlen($arFields["NAME"]) <= 0)
+		if (($ID === false || is_set($arFields, "NAME")) && $arFields["NAME"] == '')
 			$arMsg[] = array("id" => "NAME", "text" => GetMessage("CTRLR_GRP_ERR_NAME"));
 
 		if (isset($arFields["UPDATE_PERIOD"]) && ($arFields["UPDATE_PERIOD"] < 0 || trim($arFields["UPDATE_PERIOD"]) == ''))
@@ -239,16 +239,16 @@ class CControllerGroup
 
 		$arFilterNew = Array();
 		foreach ($arFilter as $k => $value)
-			if (strlen($value) > 0 || $value === false)
+			if ($value <> '' || $value === false)
 				$arFilterNew[$k] = $value;
 
 		$strWhere = "1 = 1";
 		$r = $obWhere->GetQuery($arFilterNew);
-		if (strlen($r) > 0)
+		if ($r <> '')
 			$strWhere .= " AND (".$r.") ";
 
 		$r = $obUserFieldsSql->GetFilter();
-		if (strlen($r) > 0)
+		if ($r <> '')
 			$strWhere .= " AND (".$r.") ";
 
 		$strSql = "
@@ -272,7 +272,7 @@ class CControllerGroup
 		";
 
 		$dbr = $DB->Query($strSql);
-		$dbr->is_filtered = (strlen($strWhere) > 0);
+		$dbr->is_filtered = ($strWhere <> '');
 		return $dbr;
 	}
 
@@ -311,7 +311,7 @@ class CControllerGroup
 
 		$arUpdateFields = array(
 			"~DATE_CREATE" => $DB->CurrentTimeFunction(),
-			"INIT_EXECUTE" => (strlen($php_script)? $php_script: false),
+			"INIT_EXECUTE" => ($php_script <> ''? $php_script : false),
 			"INIT_EXECUTE_PARAMS" => (count($arParameters)? serialize($arParameters): false),
 		);
 		$arUpdateBinds = array();
@@ -327,7 +327,7 @@ class CControllerGroup
 		$arInsertFields = array(
 			"~DATE_CREATE" => $DB->CurrentTimeFunction(),
 			"TASK_ID" => $task_id,
-			"INIT_EXECUTE" => (strlen($php_script)? $php_script: false),
+			"INIT_EXECUTE" => ($php_script <> ''? $php_script : false),
 			"INIT_EXECUTE_PARAMS" => (count($arParameters)? serialize($arParameters): false),
 			"DATE_EXECUTE" => false,
 		);
@@ -581,7 +581,7 @@ class CControllerGroupSettings
 			{
 				if (isset($arDefValues[$mname][$id]))
 					$str .= 'CControllerClient::SetOptionString("'.EscapePHPString($mname).'", "'.EscapePHPString($id).'", "'.EscapePHPString($arDefValues[$mname][$id]).'");'."\r\n";
-				elseif (substr($id, 0, 2) != '__')
+				elseif (mb_substr($id, 0, 2) != '__')
 					$str .= 'CControllerClient::RestoreOption("'.EscapePHPString($mname).'", "'.EscapePHPString($id).'");'."\r\n";
 			}
 		}
@@ -609,7 +609,7 @@ class CControllerGroupSettings
 
 						$task_id = $arPermissions[$module_id];
 
-						if (strlen($task_id) > 1 && (!is_array($arUniqTasks[$module_id]) || !in_array($task_id, $arUniqTasks[$module_id])))
+						if (mb_strlen($task_id) > 1 && (!is_array($arUniqTasks[$module_id]) || !in_array($task_id, $arUniqTasks[$module_id])))
 						{
 							$arUniqTasks[$module_id][] = $task_id;
 							$dbr_task = CTask::GetList(Array(), Array('NAME' => $task_id, 'MODULE_ID' => $module_id, "BINDING" => 'module'));
@@ -736,7 +736,7 @@ class IControllerGroupOption
 		{
 			if (isset($arValues[$id]))
 				$str .= 'CControllerClient::SetOptionString("'.EscapePHPString($this->id).'", "'.EscapePHPString($id).'", "'.EscapePHPString($arValues[$id]).'");'."\r\n";
-			elseif (substr($id, 0, 2) != '__')
+			elseif (mb_substr($id, 0, 2) != '__')
 				$str .= 'CControllerClient::RestoreOption("'.EscapePHPString($this->id).'", "'.EscapePHPString($id).'");'."\r\n";
 		}
 		return $str;

@@ -76,7 +76,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 		{
 			$this->arParams['RELATIVE_PATH'] = $this->arParams['SEF_FOLDER'];
 		}
-		elseif (!is_null($this->request->get('relUrl')) && strlen($this->request->get('relUrl')) > 0)
+		elseif (!is_null($this->request->get('relUrl')) && $this->request->get('relUrl') <> '')
 		{
 			$this->arParams['RELATIVE_PATH'] = $this->request->get('relUrl');
 		}
@@ -319,9 +319,16 @@ class CrmVolumeComponent extends \CBitrixComponent
 				}
 
 				$this->includeComponentTemplate('');
+
+				if ($this->isAjaxRequest())
+				{
+					\CMain::FinalActions();
+					die();
+				}
 				break;
 			}
 		}
+
 	}
 
 
@@ -1183,7 +1190,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 			}
 
 			// remove end date selected period
-			if (strpos($key, '<=') === 0)
+			if (mb_strpos($key, '<=') === 0)
 			{
 				unset($filter[$key]);
 			}
@@ -1197,7 +1204,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 			}
 
 			// remove end date selected period
-			if (strpos($key, '>=') === 0)
+			if (mb_strpos($key, '>=') === 0)
 			{
 				// convert start to end date period
 				$key1 = str_replace('>=', '<=', $key);
@@ -1560,7 +1567,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 				continue;
 			}
 
-			$keyUpper = strtoupper($key);
+			$keyUpper = mb_strtoupper($key);
 			$actions = array();
 			if (isset($report['CAN_CLEAR_ENTITY']) && $report['CAN_CLEAR_ENTITY'] === true)
 			{
@@ -1829,7 +1836,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 		if ($this->arParams['SEF_MODE'] === 'Y')
 		{
 			$path = \CComponentEngine::makePathFromTemplate(
-				$this->arParams['PATH_TO_CRM_VOLUME_'.strtoupper($action)],
+				$this->arParams['PATH_TO_CRM_VOLUME_'.mb_strtoupper($action)],
 				$params
 			);
 			$path = str_replace('//', '/', $path);

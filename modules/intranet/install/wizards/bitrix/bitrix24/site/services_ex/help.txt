@@ -24,7 +24,6 @@ WIZARD_IS_RERUN - повторный запуск мастера? (true/false)
 IDшники групп пользователей
 
 WIZARD_EXTRANET_GROUP
-WIZARD_EXTRANET_ADMIN_GROUP
 
 
 ----Переводы----

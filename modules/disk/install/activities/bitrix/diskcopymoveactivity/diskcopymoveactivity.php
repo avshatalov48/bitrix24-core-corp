@@ -48,6 +48,11 @@ class CBPDiskCopyMoveActivity
 
 	private function getTargetFolder($entityType, $entityId)
 	{
+		if (is_array($entityId))
+		{
+			$entityId = current($entityId);
+		}
+
 		if ($entityType == 'folder')
 		{
 			return \Bitrix\Disk\Folder::loadById($entityId);

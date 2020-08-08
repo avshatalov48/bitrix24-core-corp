@@ -227,7 +227,7 @@ class Result extends Model
 		}
 
 
-		if($field['required'] && count($values) == 0)
+		if($field['required'] && count($values) == 0 && empty($this->params['DISABLE_FIELD_CHECKING']))
 		{
 			$this->errors[] = Loc::getMessage('CRM_WEBFORM_RESULT_ERROR_REQUIRED_FIELD_EMPTY', array('%field%', $field['caption']));
 			return false;

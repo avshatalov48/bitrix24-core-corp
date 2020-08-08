@@ -137,7 +137,8 @@ class CBPCrmCopyDealActivity
 		}
 
 		//Region automation
-		\Bitrix\Crm\Automation\Factory::runOnAdd(\CCrmOwnerType::Deal, $newDealId);
+		$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Deal, $newDealId);
+		$starter->setContextToBizproc()->runOnAdd();
 		//End region
 
 		return CBPActivityExecutionStatus::Closed;

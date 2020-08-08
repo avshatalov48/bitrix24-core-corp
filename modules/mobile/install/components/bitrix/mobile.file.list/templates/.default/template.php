@@ -28,7 +28,7 @@ if (
 			{
 				?><div class="fl-block" id="mfl_item_<?=$arFile["id"]?>"><?
 					?><div class="fl-delete-btn"><i data-removable-icon="true" class="fl-delete-minus"></i></div><?
-					?><div class="avatar fl-avatar" style="background:<?=(strlen($arFile["src"]) > 0 ? "url('".$arFile["src"]."')" : "")?>; background-size:50px 50px;"></div><?
+					?><div class="avatar fl-avatar" style="background:<?=($arFile["src"] <> '' ? "url('".$arFile["src"]."')" : "")?>; background-size:50px 50px;"></div><?
 					?><div class="fl-delete-right-btn-wrap" data-removable-btn="true"><?
 						?><?=GetMessage("MOBILE_MFU_DELETE")?><?
 						?><div class="fl-delete-right-btn-block"><div class="fl-delete-right-btn"><?=GetMessage("MOBILE_MFU_DELETE")?></div></div><?
@@ -41,7 +41,7 @@ if (
 			{
 				?><div class="fl-block" id="mfl_element_<?=$arElement["id"]?>"><?
 					?><div class="fl-delete-btn"><i data-removable-icon="true" class="fl-delete-minus"></i></div><?
-					?><div class="avatar fl-avatar" style="background:<?=(strlen($arElement["src"]) > 0 ? "url('".$arElement["src"]."')" : "")?>; background-size:50px 50px;"></div><?
+					?><div class="avatar fl-avatar" style="background:<?=($arElement["src"] <> '' ? "url('".$arElement["src"]."')" : "")?>; background-size:50px 50px;"></div><?
 					?><div class="fl-delete-right-btn-wrap" data-removable-btn="true"><?
 						?><?=GetMessage("MOBILE_MFU_DELETE")?><?
 						?><div class="fl-delete-right-btn-block"><div class="fl-delete-right-btn"><?=GetMessage("MOBILE_MFU_DELETE")?></div></div><?

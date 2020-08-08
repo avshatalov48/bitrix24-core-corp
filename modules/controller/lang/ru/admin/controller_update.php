@@ -54,8 +54,8 @@ $MESS["SUP_SUBA_RI_URI1"] = "Все домены, которые будут ис
 $MESS["SUP_SUBA_RI_PHONE"] = "Телефон владельца данной копии";
 $MESS["SUP_SUBA_RI_PHONE1"] = "Телефон владельца данной копии (организации или частного лица)";
 $MESS["SUP_SUBA_USERINFO"] = "Пользователь на сайте продукта";
-$MESS["SUP_SUBA_UI_HINT"] = "Если вы еще не зарегистрированы на сайте <a href=\"http://www.bitrixsoft.ru\" target=\"_blank\">www.bitrixsoft.ru</a>, убедитесь, что флаг \"Создать пользователя\" установлен, и введите свои данные (имя, фамилию, логин и пароль) в соответствующие поля формы. Регистрация на сайте www.bitrixsoft.ru даст вам возможность пользоваться автоматизированной службой <a href=\"http://www.bitrixsoft.ru/support/\" target=\"_blank\">технической поддержки</a> и <a href=\"http://www.bitrixsoft.ru/support/forum/\" target=\"_blank\">закрытым форумом</a> для решения возникающих вопросов.";
-$MESS["SUP_SUBA_UI_CREATE"] = "Создать пользователя на сайте www.bitrixsoft.ru";
+$MESS["SUP_SUBA_UI_HINT"] = "Если вы еще не зарегистрированы на сайте <a href=\"https://www.1c-bitrix.ru\" target=\"_blank\">www.1c-bitrix.ru</a>, убедитесь, что флаг \"Создать пользователя\" установлен, и введите свои данные (имя, фамилию, логин и пароль) в соответствующие поля формы. Регистрация на сайте www.1c-bitrix.ru даст вам возможность пользоваться автоматизированной службой <a href=\"https://www.1c-bitrix.ru/support/\" target=\"_blank\">технической поддержки</a> и <a href=\"https://www.1c-bitrix.ru/support/forum/\" target=\"_blank\">закрытым форумом</a> для решения возникающих вопросов.";
+$MESS["SUP_SUBA_UI_CREATE"] = "Создать пользователя на сайте www.1c-bitrix.ru";
 $MESS["SUP_SUBA__UI_NAME"] = "Ваше имя";
 $MESS["SUP_SUBA_UI_LASTNAME"] = "Ваша фамилия";
 $MESS["SUP_SUBA_UI_LOGIN"] = "Логин (не менее 3 символов)";

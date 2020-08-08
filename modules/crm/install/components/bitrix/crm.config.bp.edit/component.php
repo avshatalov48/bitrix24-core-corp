@@ -82,7 +82,7 @@ $arResult['~BP_EDIT_URL'] = str_replace(	array('#entity_id#'),	array($arResult['
 $arResult['BP_EDIT_URL'] = htmlspecialcharsbx($arResult['~BP_EDIT_URL']);
 
 $arTemplate = null;
-if (strlen($arResult['BP_ID']) > 0)
+if ($arResult['BP_ID'] <> '')
 {
 	$db_res = CBPWorkflowTemplateLoader::GetList(
 		array($by => $order),

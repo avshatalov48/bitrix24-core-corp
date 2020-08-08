@@ -2,12 +2,13 @@
 
 namespace Bitrix\Tasks\Helper;
 
+use Bitrix\Main;
 use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\SearchIndex;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
-use Bitrix\Tasks\Util\Restriction\Bitrix24FilterLimitRestriction;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\FilterLimit;
 
 class Filter extends Common
 {
@@ -29,7 +30,7 @@ class Filter extends Common
 			$filter = $filterOptions->getFilter();
 
 			$fState = $request->get('F_STATE');
-			if ($fState && !is_array($fState) && substr($fState, 0, 2) == 'sR')
+			if ($fState && !is_array($fState) && mb_substr($fState, 0, 2) == 'sR')
 			{
 				$roleCode = $request->get('F_STATE');
 
@@ -106,7 +107,9 @@ class Filter extends Common
 				'fields' => array(
 					'STATUS' => array(
 						\CTasks::STATE_PENDING,
-						\CTasks::STATE_IN_PROGRESS
+						\CTasks::STATE_IN_PROGRESS,
+						\CTasks::STATE_SUPPOSEDLY_COMPLETED,
+						\CTasks::STATE_DEFERRED,
 					)
 				)
 			),
@@ -155,15 +158,31 @@ class Filter extends Common
 		return $presets;
 	}
 
-	public function process()
+	/**
+	 * @return array
+	 */
+	public function process(): array
 	{
-		$arrFilter = array_merge($this->processMainFilter(), $this->processUFFilter());
+		$filter = array_merge(
+			$this->processMainFilter(),
+			$this->processUFFilter()
+		);
+		$filter = $this->postProcess($filter);
 
-		$arrFilter['ZOMBIE'] = 'N';
-		$arrFilter['CHECK_PERMISSIONS'] = 'Y';
-		$arrFilter['ONLY_ROOT_TASKS'] = 'Y';
+		return $filter;
+	}
 
-		return $arrFilter;
+	/**
+	 * @param array $filter
+	 * @return array
+	 */
+	private function postProcess(array $filter): array
+	{
+		$filter['ZOMBIE'] = 'N';
+		$filter['CHECK_PERMISSIONS'] = 'Y';
+		$filter['ONLY_ROOT_TASKS'] = 'Y';
+
+		return $filter;
 	}
 
 	private function processUFFilter()
@@ -269,7 +288,7 @@ class Filter extends Common
 			return $filter;
 		}
 
-		if ($this->getFilterFieldData('FIND') && !Bitrix24FilterLimitRestriction::isLimitExceeded())
+		if ($this->getFilterFieldData('FIND') && !FilterLimit::isLimitExceeded())
 		{
 			$operator = (($isFullTextIndexEnabled = SearchIndexTable::isFullTextIndexEnabled())? '*' : '*%');
 			$value = SearchIndex::prepareStringToSearch($this->getFilterFieldData('FIND'), $isFullTextIndexEnabled);
@@ -340,18 +359,22 @@ class Filter extends Common
 	}
 
 	/**
-	 * @param $filter
-	 * @return mixed
+	 * @param array $filter
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\ArgumentNullException
+	 * @throws Main\ArgumentOutOfRangeException
+	 * @throws Main\SystemException
 	 */
-	private function postProcessMainFilter($filter)
+	private function postProcessMainFilter(array $filter): array
 	{
 		$prefix = "::SUBFILTER-";
-		$searchKey = $prefix . 'COMMENT_SEARCH_INDEX';
+		$searchKey = $prefix.'COMMENT_SEARCH_INDEX';
+		$statusKey = $prefix.'STATUS';
 
-		if (isset($filter[$prefix . 'PARAMS']['::REMOVE-MEMBER']))
+		if (isset($filter[$prefix.'PARAMS']['::REMOVE-MEMBER']))
 		{
-			unset($filter[$prefix . 'ROLEID']['MEMBER']);
-			unset($filter[$prefix . 'PARAMS']['::REMOVE-MEMBER']);
+			unset($filter[$prefix.'ROLEID']['MEMBER'], $filter[$prefix.'PARAMS']['::REMOVE-MEMBER']);
 		}
 
 		if (isset($filter[$searchKey]))
@@ -363,7 +386,20 @@ class Filter extends Common
 			$value = SearchIndex::prepareStringToSearch(current($filter[$searchKey]), $isFullTextIndexEnabled);
 
 			unset($filter[$searchKey][$key]);
-			$filter[$searchKey][$operator . $key] = $value;
+			$filter[$searchKey][$operator.$key] = $value;
+		}
+
+		if (isset($filter[$statusKey]))
+		{
+			$filter[$statusKey] = [
+				'::LOGIC' => 'OR',
+				'::SUBFILTER-1' => $filter[$statusKey],
+				'::SUBFILTER-2' => [
+					'WITH_NEW_COMMENTS' => 'Y',
+					'REAL_STATUS' => \CTasks::STATE_COMPLETED,
+					'MEMBER' => $this->getUserId(),
+				],
+			];
 		}
 
 		return $filter;
@@ -694,6 +730,15 @@ class Filter extends Common
 			);
 		}
 
+		if (in_array('CREATED_DATE', $fields))
+		{
+			$filter['ACTIVITY_DATE'] = array(
+				'id' => 'ACTIVITY_DATE',
+				'name' => Loc::getMessage('TASKS_FILTER_ACTIVITY_DATE'),
+				'type' => 'date'
+			);
+		}
+
 		$uf = $this->getUF();
 		if (!empty($uf))
 		{
@@ -752,7 +797,7 @@ class Filter extends Common
 						'selector' => array(
 							'TYPE' => 'companies',
 							'DATA' => array(
-								'ID' => strtolower($item['FIELD_NAME']),
+								'ID' => mb_strtolower($item['FIELD_NAME']),
 								'FIELD_ID' => $item['FIELD_NAME'],
 								'ENTITY_TYPE_NAMES' => $entityTypeNames,
 								'IS_MULTIPLE' => 'Y'
@@ -803,7 +848,8 @@ class Filter extends Common
 			'TAG',
 			'ACTIVE',
 			'ROLEID',
-			'COMMENT'
+			'COMMENT',
+			'ACTIVITY_DATE'
 		);
 
 		if ($this->getGroupId() == 0)
@@ -827,7 +873,8 @@ class Filter extends Common
 			\CTaskListState::VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES,
 			\CTaskListState::VIEW_TASK_CATEGORY_EXPIRED,
 			\CTaskListState::VIEW_TASK_CATEGORY_WAIT_CTRL,
-			\CTaskListState::VIEW_TASK_CATEGORY_DEFERRED
+			\CTaskListState::VIEW_TASK_CATEGORY_DEFERRED,
+			\CTaskListState::VIEW_TASK_CATEGORY_NEW_COMMENTS,
 		);
 
 		foreach ($taskCategories as $categoryId)
@@ -919,81 +966,15 @@ class Filter extends Common
 
 		switch ($row['id'])
 		{
-			default:
-				if ($field)
-				{
-					$arrFilter[$row['id']] = $field;
-				}
-				break;
-			case 'PARAMS':
-				foreach ($field as $item)
-				{
-					switch ($item)
-					{
-						case 'FAVORITE':
-							$arrFilter["FAVORITE"] = 'Y';
-							break;
-						case 'MARKED':
-							$arrFilter["!MARK"] = false;
-							break;
-						case 'OVERDUED':
-							$arrFilter["OVERDUED"] = "Y";
-							break;
-						case 'IN_REPORT':
-							$arrFilter["ADD_IN_REPORT"] = "Y";
-							break;
-						case 'SUBORDINATE':
-							// Don't set SUBORDINATE_TASKS for admin, it will cause all tasks to be showed
-							if (!\Bitrix\Tasks\Util\User::isSuper())
-							{
-								$arrFilter["SUBORDINATE_TASKS"] = "Y";
-							}
-							break;
-						case 'ANY_TASK':
-							$arrFilter['::REMOVE-MEMBER'] = true; // hack
-							break;
-					}
-				}
-				break;
 			case 'STATUS':
 				$arrFilter['REAL_STATUS'] = $field; //TODO!!!
-				break;
-			case 'ROLEID':
-				switch ($field)
-				{
-					default:
-						if (!$this->getGroupId())
-						{
-							$arrFilter['MEMBER'] = $this->getUserId();
-						}
-						break;
-
-					case 'view_role_responsible':
-						$arrFilter['=RESPONSIBLE_ID'] = $this->getUserId();
-						break;
-
-					case 'view_role_originator':
-						$arrFilter['=CREATED_BY'] = $this->getUserId();
-						$arrFilter['!REFERENCE:RESPONSIBLE_ID'] = 'CREATED_BY';
-						break;
-
-					case 'view_role_accomplice':
-						$arrFilter['=ACCOMPLICE'] = $this->getUserId();
-						break;
-
-					case 'view_role_auditor':
-						$arrFilter['=AUDITOR'] = $this->getUserId();
-						break;
-				}
 				break;
 
 			case 'PROBLEM':
 				switch ($field)
 				{
 					case Counter\Type::TYPE_WO_DEADLINE:
-						$roleId = $this->getFilterFieldData('ROLEID');
-
-						switch ($roleId)
+						switch ($this->getFilterFieldData('ROLEID'))
 						{
 							case Counter\Role::RESPONSIBLE:
 								$arrFilter['!CREATED_BY'] = $this->getUserId();
@@ -1016,12 +997,12 @@ class Filter extends Common
 										'::LOGIC' => 'OR',
 										'::SUBFILTER-R' => [
 											'!CREATED_BY' => $userId,
-											'RESPONSIBLE_ID' => $userId
+											'RESPONSIBLE_ID' => $userId,
 										],
 										'::SUBFILTER-O' => [
 											'CREATED_BY' => $userId,
-											'!RESPONSIBLE_ID' => $userId
-										]
+											'!RESPONSIBLE_ID' => $userId,
+										],
 									];
 								}
 								break;
@@ -1030,7 +1011,13 @@ class Filter extends Common
 						break;
 
 					case Counter\Type::TYPE_EXPIRED:
+						if ($this->getGroupId() > 0)
+						{
+							$arrFilter['MEMBER'] = $this->getUserId();
+						}
 						$arrFilter['<=DEADLINE'] = Counter::getExpiredTime();
+						$arrFilter['IS_MUTED'] = 'N';
+						$arrFilter['REAL_STATUS'] = [\CTasks::STATE_PENDING, \CTasks::STATE_IN_PROGRESS];
 						break;
 
 					case Counter\Type::TYPE_EXPIRED_CANDIDATES:
@@ -1053,8 +1040,89 @@ class Filter extends Common
 						$arrFilter['REAL_STATUS'] = \CTasks::STATE_DEFERRED;
 						break;
 
+					case Counter\Type::TYPE_NEW_COMMENTS:
+						if ($this->getGroupId() > 0)
+						{
+							$arrFilter['MEMBER'] = $this->getUserId();
+						}
+						$arrFilter['WITH_NEW_COMMENTS'] = 'Y';
+						$arrFilter['IS_MUTED'] = 'N';
+						break;
+
 					default:
 						break;
+				}
+				break;
+
+			case 'ROLEID':
+				switch ($field)
+				{
+					case 'view_role_responsible':
+						$arrFilter['=RESPONSIBLE_ID'] = $this->getUserId();
+						break;
+
+					case 'view_role_originator':
+						$arrFilter['=CREATED_BY'] = $this->getUserId();
+						$arrFilter['!REFERENCE:RESPONSIBLE_ID'] = 'CREATED_BY';
+						break;
+
+					case 'view_role_accomplice':
+						$arrFilter['=ACCOMPLICE'] = $this->getUserId();
+						break;
+
+					case 'view_role_auditor':
+						$arrFilter['=AUDITOR'] = $this->getUserId();
+						break;
+
+					default:
+						if (!$this->getGroupId())
+						{
+							$arrFilter['MEMBER'] = $this->getUserId();
+						}
+						break;
+				}
+				break;
+
+			case 'PARAMS':
+				foreach ($field as $item)
+				{
+					switch ($item)
+					{
+						case 'FAVORITE':
+							$arrFilter["FAVORITE"] = 'Y';
+							break;
+
+						case 'MARKED':
+							$arrFilter["!MARK"] = false;
+							break;
+
+						case 'OVERDUED':
+							$arrFilter["OVERDUED"] = "Y";
+							break;
+
+						case 'IN_REPORT':
+							$arrFilter["ADD_IN_REPORT"] = "Y";
+							break;
+
+						case 'SUBORDINATE':
+							// Don't set SUBORDINATE_TASKS for admin, it will cause all tasks to be showed
+							if (!\Bitrix\Tasks\Util\User::isSuper())
+							{
+								$arrFilter["SUBORDINATE_TASKS"] = "Y";
+							}
+							break;
+
+						case 'ANY_TASK':
+							$arrFilter['::REMOVE-MEMBER'] = true; // hack
+							break;
+					}
+				}
+				break;
+
+			default:
+				if ($field)
+				{
+					$arrFilter[$row['id']] = $field;
 				}
 				break;
 		}

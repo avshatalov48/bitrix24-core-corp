@@ -3,7 +3,7 @@
 $siteId = '';
 if(isset($_REQUEST['site_id']) && is_string($_REQUEST['site_id']))
 {
-	$siteId = substr(preg_replace('/[^a-z0-9_]/i', '', $_REQUEST['site_id']), 0, 2);
+	$siteId = mb_substr(preg_replace('/[^a-z0-9_]/i', '', $_REQUEST['site_id']), 0, 2);
 }
 
 if($siteId)
@@ -46,6 +46,7 @@ if (($showChecks = $request->get('show_checks')) && $showChecks == 'y')
 }
 else
 {
+	$isPlainView = $isUsePadding = ($request->get('handler') !== 'offline');
 	$APPLICATION->IncludeComponent(
 		'bitrix:ui.sidepanel.wrapper',
 		'',
@@ -59,7 +60,8 @@ else
 				'isFrame' => $request->get('IFRAME') === 'Y',
 				'preview' => $request->get('preview') === 'y',
 			],
-			'PLAIN_VIEW' => $request->get('preview') === 'y',
+			'PLAIN_VIEW' => $isPlainView,
+			'USE_PADDING' => $isUsePadding,
 		]
 	);
 }

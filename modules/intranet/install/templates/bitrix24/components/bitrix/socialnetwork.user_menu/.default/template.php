@@ -100,7 +100,7 @@ if (
 				'CLASS' => '',
 				'URL' => SITE_DIR."company/personal/user/".$arResult["User"]["ID"]."/tasks/task/edit/0/"
 			),
-			'IS_ACTIVE' => (strpos($requestUri, $arResult["Urls"]['tasks']) === 0)
+			'IS_ACTIVE' => (mb_strpos($requestUri, $arResult["Urls"]['tasks']) === 0)
 		)
 	));
 }
@@ -120,7 +120,7 @@ if (
 			"ID" => "calendar",
 			"TEXT" => $arResult["Title"]['calendar'],
 			"ON_CLICK" => "BX.SidePanel.Instance.open('".$uri->getUri()."', { width: 1000, loader: '".$this->getFolder()."/images/slider/calendar.min.svg' })",
-			'IS_ACTIVE' => (strpos($requestUri, $arResult["Urls"]['calendar']) === 0)
+			'IS_ACTIVE' => (mb_strpos($requestUri, $arResult["Urls"]['calendar']) === 0)
 		)
 	));
 }
@@ -140,7 +140,7 @@ if (
 			"ID" => "files",
 			"TEXT" => $arResult["Title"]['files'],
 			"ON_CLICK" => "BX.SidePanel.Instance.open('".$uri->getUri()."', { width: 1000, loader: '".$this->getFolder()."/images/slider/disk.min.svg' })",
-			'IS_ACTIVE' => (strpos($requestUri, $arResult["Urls"]['files']) === 0)
+			'IS_ACTIVE' => (mb_strpos($requestUri, $arResult["Urls"]['files']) === 0)
 		)
 	));
 }
@@ -163,7 +163,7 @@ if (
 				loader: '".$this->getFolder()."/images/slider/livefeed.min.svg', 
 				width: 1000 
 			})",
-			'IS_ACTIVE' => (strpos($requestUri, $arResult["Urls"]['blog']) === 0)
+			'IS_ACTIVE' => (mb_strpos($requestUri, $arResult["Urls"]['blog']) === 0)
 		)
 	));
 }
@@ -192,7 +192,7 @@ if (
 		'COUNTER_ID' => 'effective_counter',
 		'ID' => 'effective_counter',
 		'CLASS' => 'effective_counter',
-		'IS_ACTIVE' => (strpos($requestUri, $efficiencyUrl) === 0)
+		'IS_ACTIVE' => (mb_strpos($requestUri, $efficiencyUrl) === 0)
 	);
 }
 

@@ -141,7 +141,11 @@ class Invoice extends ProductsDataProvider implements Nameable
 				'TAX_INCLUDED' => isset($product['VAT_INCLUDED']) ? $product['VAT_INCLUDED'] : 'N',
 				'MEASURE_CODE' => isset($product['MEASURE_CODE']) ? $product['MEASURE_CODE'] : '',
 				'MEASURE_NAME' => isset($product['MEASURE_NAME']) ? $product['MEASURE_NAME'] : '',
-				'CUSTOMIZED' => isset($product['CUSTOM_PRICE']) ? $product['CUSTOM_PRICE'] : 'N',
+				// for some reason there is 'N' in CUSTOM_PRICE, though there should be 'Y'
+				// now we assume that it is always 'Y'
+				// fix for bug 119482
+				//'CUSTOMIZED' => isset($product['CUSTOM_PRICE']) ? $product['CUSTOM_PRICE'] : 'N',
+				'CUSTOMIZED' => 'Y',
 				'CURRENCY_ID' => $this->getCurrencyId(),
 			];
 		}
@@ -232,5 +236,10 @@ class Invoice extends ProductsDataProvider implements Nameable
 				'UF_QUOTE_ID',
 			],
 		]);
+	}
+
+	protected function getStatusEntityId(): ?string
+	{
+		return 'INVOICE_STATUS';
 	}
 }

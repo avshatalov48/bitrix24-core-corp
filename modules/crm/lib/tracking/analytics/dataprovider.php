@@ -21,6 +21,8 @@ class DataProvider
 	protected $group = [];
 	protected $dateFrom;
 	protected $dateTo;
+	/** @var int[]|null $sourceId */
+	protected $sourceId;
 
 	public function __construct()
 	{
@@ -58,9 +60,20 @@ class DataProvider
 
 	public function setSourceId($sourceId)
 	{
+		if (is_array($sourceId))
+		{
+			$sourceId = array_map('intval', $sourceId);
+			$sourceId = array_filter($sourceId);
+		}
+		else
+		{
+			$sourceId = [];
+		}
+		$this->sourceId = $sourceId;
+		unset($this->filter['=' . Provider\Base::TrackingSourceId]);
 		if (!empty($sourceId))
 		{
-			$this->filter['=' . Provider\Base::TrackingSourceId] = $sourceId;
+			$this->filter['=' . Provider\Base::TrackingSourceId] = $this->sourceId;
 		}
 		return $this;
 	}
@@ -111,11 +124,16 @@ class DataProvider
 		}
 
 		$list[] = new Provider\Deal($this->filter, $this->group);
+		$list[] = new Provider\Order($this->filter, $this->group);
+
 		$list[] = new Provider\CompleteDeal($this->filter, $this->group);
+		$list[] = new Provider\CompleteOrder($this->filter, $this->group);
 
 		foreach ($list as $item)
 		{
-			$item->setPeriod($this->dateFrom, $this->dateTo);
+			/** @var Provider\Base $item */
+			$item->setPeriod($this->dateFrom, $this->dateTo)
+				->setSourceId($this->sourceId);
 		}
 
 		return $list;

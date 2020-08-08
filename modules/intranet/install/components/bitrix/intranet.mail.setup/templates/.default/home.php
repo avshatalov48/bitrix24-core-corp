@@ -85,7 +85,7 @@ foreach ($arParams['SERVICES'] as $id => $settings)
 		{
 			$domainSettings = $settings;
 			$domainStatus = isset($arParams['DOMAIN_STATUS']['stage']) ? $arParams['DOMAIN_STATUS']['stage'] : false;
-			$domainAdded  = strtolower($domainStatus) == 'added';
+			$domainAdded  = mb_strtolower($domainStatus) == 'added';
 		}
 	}
 }
@@ -103,9 +103,9 @@ if (!empty($arParams['MAILBOX']))
 	if (!is_array($arParams['MAILBOX']['OPTIONS']['imap']['outcome']))
 		$arParams['MAILBOX']['OPTIONS']['imap']['outcome'] = array();
 
-	if (strpos($arParams['MAILBOX']['NAME'], '@') > 0)
+	if (mb_strpos($arParams['MAILBOX']['NAME'], '@') > 0)
 		$emailAddress = $arParams['MAILBOX']['NAME'];
-	elseif (strpos($arParams['MAILBOX']['LOGIN'], '@') > 0)
+	elseif (mb_strpos($arParams['MAILBOX']['LOGIN'], '@') > 0)
 		$emailAddress = $arParams['MAILBOX']['LOGIN'];
 
 	$isOauthMailbox = false;
@@ -1611,7 +1611,7 @@ else
 							<? if ($settings['type'] != 'imap') continue; ?>
 							<? $hasImap = true; ?>
 							<a class="mail-set-serv" id="imap-<?=$id ?>-link" href="#imap-<?=$id ?>" name="imap-link"
-								<? if (strlen($settings['name']) > 15): ?> style="font-size: 18px; "<? endif ?>
+								<? if (mb_strlen($settings['name']) > 15): ?> style="font-size: 18px; "<? endif ?>
 								onclick="toggleImapForm(this, <?=$id ?>); return false; "><?
 								if ($settings['icon']): ?><img src="<?=$settings['icon'] ?>" alt="<?=htmlspecialcharsbx($settings['name']) ?>"><? else: ?>&nbsp;<?=htmlspecialcharsbx($settings['name']) ?>&nbsp;<? endif
 							?></a>

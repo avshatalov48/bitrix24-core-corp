@@ -14,6 +14,30 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 class SalesCenterFeedbackComponent extends CBitrixComponent
 {
+	private const FEEDBACK_TYPE_FEEDBACK = 'feedback';
+	private const FEEDBACK_TYPE_PAY_ORDER = 'pay_order';
+	private const FEEDBACK_TYPE_PAYSYSTEM_OFFER = 'paysystem_offer';
+	private const FEEDBACK_TYPE_PAYSYSTEM_SBP_OFFER = 'paysystem_sbp_offer';
+	private const FEEDBACK_TYPE_SMSPROVIDER_OFFER = 'smsprovider_offer';
+	private const FEEDBACK_TYPE_DELIVERY_OFFER = 'delivery_offer';
+
+	private $template = '';
+
+	public function onPrepareComponentParams($arParams)
+	{
+		if (empty($arParams['FEEDBACK_TYPE']))
+		{
+			$arParams['FEEDBACK_TYPE'] = self::FEEDBACK_TYPE_FEEDBACK;
+		}
+
+		if ($arParams['FEEDBACK_TYPE'] === self::FEEDBACK_TYPE_PAYSYSTEM_SBP_OFFER)
+		{
+			$this->template = 'newform';
+		}
+
+		return parent::onPrepareComponentParams($arParams);
+	}
+
 	public function executeComponent()
 	{
 		if(!\Bitrix\Main\Loader::includeModule('salescenter'))
@@ -29,7 +53,31 @@ class SalesCenterFeedbackComponent extends CBitrixComponent
 			return;
 		}
 
-		$this->arResult = Bitrix24Manager::getInstance()->getFeedbackFormInfo(LANGUAGE_ID);
+		if ($this->arParams['FEEDBACK_TYPE'] === self::FEEDBACK_TYPE_FEEDBACK)
+		{
+			$this->arResult = Bitrix24Manager::getInstance()->getFeedbackFormInfo(LANGUAGE_ID);
+		}
+		elseif ($this->arParams['FEEDBACK_TYPE'] === self::FEEDBACK_TYPE_PAYSYSTEM_OFFER)
+		{
+			$this->arResult = Bitrix24Manager::getInstance()->getFeedbackPaySystemOfferFormInfo(LANGUAGE_ID);
+		}
+		elseif ($this->arParams['FEEDBACK_TYPE'] === self::FEEDBACK_TYPE_SMSPROVIDER_OFFER)
+		{
+			$this->arResult = Bitrix24Manager::getInstance()->getFeedbackSmsProviderOfferFormInfo(LANGUAGE_ID);
+		}
+		elseif ($this->arParams['FEEDBACK_TYPE'] === self::FEEDBACK_TYPE_PAY_ORDER)
+		{
+			$this->arResult = Bitrix24Manager::getInstance()->getFeedbackPayOrderFormInfo(LANGUAGE_ID);
+		}
+		elseif ($this->arParams['FEEDBACK_TYPE'] === self::FEEDBACK_TYPE_DELIVERY_OFFER)
+		{
+			$this->arResult = Bitrix24Manager::getInstance()->getFeedbackDeliveryOfferFormInfo(LANGUAGE_ID);
+		}
+		elseif ($this->arParams['FEEDBACK_TYPE'] === self::FEEDBACK_TYPE_PAYSYSTEM_SBP_OFFER)
+		{
+			$this->arResult = Bitrix24Manager::getInstance()->getFeedbackPaySystemSbpOfferFormInfo(LANGUAGE_ID);
+		}
+
 		$this->arResult['type'] = 'slider_inline';
 		$this->arResult['fields']['values']['CONTACT_EMAIL'] = CurrentUser::get()->getEmail();
 		$this->arResult['presets'] = [
@@ -45,7 +93,7 @@ class SalesCenterFeedbackComponent extends CBitrixComponent
 			'is_other_website_url' => $this->getBooleanPhrase($this->hasPagesFromAnotherSite()),
 		];
 
-		$this->includeComponentTemplate();
+		$this->includeComponentTemplate($this->template);
 	}
 
 	/**

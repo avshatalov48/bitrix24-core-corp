@@ -30,8 +30,7 @@ $APPLICATION->IncludeComponent(
 		'PATH_TO_REPORT_LIST' => isset($arResult['PATH_TO_REPORT_LIST']) ? $arResult['PATH_TO_REPORT_LIST'] : '',
 		'PATH_TO_DEAL_FUNNEL' => isset($arResult['PATH_TO_DEAL_FUNNEL']) ? $arResult['PATH_TO_DEAL_FUNNEL'] : '',
 		'PATH_TO_EVENT_LIST' => isset($arResult['PATH_TO_EVENT_LIST']) ? $arResult['PATH_TO_EVENT_LIST'] : '',
-		'PATH_TO_PRODUCT_LIST' => isset($arResult['PATH_TO_PRODUCT_LIST']) ? $arResult['PATH_TO_PRODUCT_LIST'] : '',
-		//'COUNTER_EXTRAS' => array('DEAL_CATEGORY_ID' => $categoryID)
+		'PATH_TO_PRODUCT_LIST' => isset($arResult['PATH_TO_PRODUCT_LIST']) ? $arResult['PATH_TO_PRODUCT_LIST'] : ''
 	),
 	$component
 );
@@ -42,7 +41,7 @@ if(!Bitrix\Crm\Integration\Bitrix24Manager::isAccessEnabled(CCrmOwnerType::Deal)
 }
 elseif (\Bitrix\Main\Loader::includeModule('calendar'))
 {
-	\CJSCore::Init(array('userfield_resourcebooking'));
+	Calendar::loadResourcebookingUserfieldExtention();
 	$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
 	if($isBitrix24Template)
 	{
@@ -99,42 +98,6 @@ elseif (\Bitrix\Main\Loader::includeModule('calendar'))
 	{
 		$this->SetViewTarget('inside_pagetitle', 100);
 	}
-
-//	if ($arResult['RESTRICTED_RECURRING'] !== 'Y')
-//	{
-//		$APPLICATION->IncludeComponent(
-//			'bitrix:crm.entity.list.switcher',
-//			'',
-//			array(
-//				'ENTITY_TYPE' => \CCrmOwnerType::Deal,
-//				'NAVIGATION_ITEMS' => array(
-//					array(
-//						'id' => 'list',
-//						'name' => GetMessage('CRM_DEAL_LIST_SWITCHER_LIST'),
-//						'active' =>$arResult['IS_RECURRING'] !== 'Y',
-//						'url' =>  $categoryID < 0
-//							? $arResult['PATH_TO_DEAL_LIST']
-//							: CComponentEngine::makePathFromTemplate(
-//								$arResult['PATH_TO_DEAL_CATEGORY'],
-//								array('category_id' => $categoryID)
-//							)
-//					),
-//					array(
-//						'id' => 'recur',
-//						'name' => GetMessage('CRM_DEAL_LIST_SWITCHER_RECUR'),
-//						'active' => $arResult['IS_RECURRING'] === 'Y',
-//						'url' =>  $categoryID < 0
-//							? $arResult['PATH_TO_DEAL_RECUR']
-//							: CComponentEngine::makePathFromTemplate(
-//								$arResult['PATH_TO_DEAL_RECUR_CATEGORY'],
-//								array('category_id' => $categoryID)
-//							)
-//					)
-//				)
-//			),
-//			$component
-//		);
-//	}
 
 	if($isBitrix24Template)
 	{
@@ -227,7 +190,7 @@ elseif (\Bitrix\Main\Loader::includeModule('calendar'))
 			'ADDITIONAL_SETTINGS_MENU_ITEMS' => array(
 				array(
 					'TEXT' => Loc::getMessage('CRM_CALENDAR_SETTINGS'),
-					'ONCLICK' => 'BX.Calendar.UserField.ResourceBooking.openExternalSettingsSlider('.\Bitrix\Main\Web\Json::encode($settingsParams).')'
+					'ONCLICK' => Calendar::getCalendarSettingsOpenJs($settingsParams)
 				)
 			)
 		),
@@ -293,5 +256,13 @@ elseif (\Bitrix\Main\Loader::includeModule('calendar'))
 	);
 
 	Calendar::showViewModeCalendarSpotlight(CCrmOwnerType::DealName);
+
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.deal.checker',
+		'',
+		['CATEGORY_ID' => $categoryID],
+		null,
+		['HIDE_ICONS' => 'Y']
+	);
 }
 ?>

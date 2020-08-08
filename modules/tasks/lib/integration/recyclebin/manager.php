@@ -10,25 +10,45 @@ class Manager
 	const TASKS_TEMPLATE_RECYCLEBIN_ENTITY = 'tasks_template';
 	const MODULE_ID = 'tasks';
 
-	public static function OnModuleSurvey()
+	/**
+	 * @return EventResult
+	 */
+	public static function OnModuleSurvey(): EventResult
 	{
 		$data = [];
 
-		$data[self::TASKS_RECYCLEBIN_ENTITY] = array(
+		$data[self::TASKS_RECYCLEBIN_ENTITY] = [
 			'NAME'    => Loc::getMessage('TASKS_RECYCLEBIN_ENTITY_NAME'),
-			'HANDLER' => \Bitrix\Tasks\Integration\Recyclebin\Task::class
-		);
-
-		$data[self::TASKS_TEMPLATE_RECYCLEBIN_ENTITY] = array(
+			'HANDLER' => Task::class,
+		];
+		$data[self::TASKS_TEMPLATE_RECYCLEBIN_ENTITY] = [
 			'NAME'    => Loc::getMessage('TASKS_TEMPLATE_RECYCLEBIN_ENTITY_NAME'),
-			'HANDLER' => \Bitrix\Tasks\Integration\Recyclebin\Template::class
-		);
+			'HANDLER' => Template::class,
+		];
 
 		return new EventResult(
-			EventResult::SUCCESS, [
-			'NAME' => Loc::getMessage('TASKS_RECYCLEBIN_MODULE_NAME'),
-			'LIST' => $data
-		], self::MODULE_ID
+			EventResult::SUCCESS,
+			['NAME' => Loc::getMessage('TASKS_RECYCLEBIN_MODULE_NAME'), 'LIST' => $data],
+			self::MODULE_ID
+		);
+	}
+
+	/**
+	 * @return EventResult
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function onAdditionalDataRequest(): EventResult
+	{
+		$additionalData = [
+			self::TASKS_RECYCLEBIN_ENTITY => Task::getAdditionalData(),
+			self::TASKS_TEMPLATE_RECYCLEBIN_ENTITY => Template::getAdditionalData(),
+		];
+
+		return new EventResult(
+			EventResult::SUCCESS,
+			['NAME' => Loc::getMessage('TASKS_RECYCLEBIN_MODULE_NAME'), 'ADDITIONAL_DATA' => $additionalData],
+			self::MODULE_ID
 		);
 	}
 }

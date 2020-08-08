@@ -58,7 +58,7 @@ $isSupervisor = CCrmPerms::IsAdmin($currentUserID)
 
 if($isSupervisor && isset($_REQUEST['super']))
 {
-	$isSupervisor = strtoupper($_REQUEST['super']) === 'Y';
+	$isSupervisor = mb_strtoupper($_REQUEST['super']) === 'Y';
 }
 
 $categoryID = isset($arResult['VARIABLES']['category_id']) ? (int)$arResult['VARIABLES']['category_id'] : -1;

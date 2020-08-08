@@ -23,6 +23,16 @@ class Controller extends StringField.Controller
 	{
 		return 'email';
 	}
+
+	getInputName(): string
+	{
+		return 'email';
+	}
+
+	getInputAutocomplete(): string
+	{
+		return 'email';
+	}
 }
 
 export {Controller, Options}

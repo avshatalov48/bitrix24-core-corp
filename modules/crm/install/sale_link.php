@@ -1955,7 +1955,7 @@ foreach($arPaySystems as $val)
 
 	$updateFields = array('PAY_SYSTEM_ID' => $id);
 
-	if (strpos($val['ACTION_FILE'], '/') !== false)
+	if (mb_strpos($val['ACTION_FILE'], '/') !== false)
 		$pathImg = $_SERVER["DOCUMENT_ROOT"].$val["ACTION_FILE"]."/logo.gif";
 	else
 		$pathImg = $_SERVER["DOCUMENT_ROOT"].\Bitrix\Sale\PaySystem\Manager::getPathToHandlerFolder($val["ACTION_FILE"])."/logo.gif";
@@ -2169,7 +2169,7 @@ if (!empty($arCatalogId) && !$bError)
 					// update iblock element xml_id
 					$local_err = 0;
 					$strSql = '';
-					switch(strtoupper($DBType))
+					switch(mb_strtoupper($DBType))
 					{
 						case 'MYSQL':
 							$strSql = PHP_EOL.
@@ -2204,7 +2204,7 @@ if (!empty($arCatalogId) && !$bError)
 					{
 						// insert catalog products
 						$strSql = '';
-						switch(strtoupper($DBType))
+						switch(mb_strtoupper($DBType))
 						{
 							case 'MYSQL':
 							case 'ORACLE':
@@ -2223,15 +2223,15 @@ if (!empty($arCatalogId) && !$bError)
 					{
 						//set base prices
 						$strSql = '';
-						switch(strtoupper($DBType))
+						switch(mb_strtoupper($DBType))
 						{
 							case 'MYSQL':
 							case 'ORACLE':
 							case 'MSSQL':
-							$strSql = PHP_EOL.
-								'INSERT INTO b_catalog_price (PRODUCT_ID, CATALOG_GROUP_ID, PRICE, CURRENCY)'.PHP_EOL.
-								"\t".'SELECT CP.ID, '.$basePriceId.', CP.PRICE, CP.CURRENCY_ID FROM b_crm_product CP'.PHP_EOL.
-								"\t".'WHERE ID NOT IN (SELECT CPR.PRODUCT_ID FROM b_catalog_price CPR WHERE CPR.CATALOG_GROUP_ID = '.$basePriceId.')'.PHP_EOL;
+								$strSql = PHP_EOL.
+									'INSERT INTO b_catalog_price (PRODUCT_ID, CATALOG_GROUP_ID, PRICE, CURRENCY)'.PHP_EOL.
+									"\t".'SELECT CP.ID, '.$basePriceId.', CP.PRICE, CP.CURRENCY_ID FROM b_crm_product CP'.PHP_EOL.
+									"\t".'WHERE ID NOT IN (SELECT CPR.PRODUCT_ID FROM b_catalog_price CPR WHERE CPR.CATALOG_GROUP_ID = '.$basePriceId.')'.PHP_EOL;
 								break;
 						}
 						if (!$strSql || !$DB->Query($strSql, true))
@@ -2291,4 +2291,17 @@ if(!$bError)
 	}
 
 	\Bitrix\Crm\Order\Permissions\Order::copyPermsFromInvoices();
+}
+
+if(Main\ModuleManager::isModuleInstalled('intranet'))
+{
+	if (!Main\Config\Option::get("sale", "sale_ps_success_path", false))
+	{
+		Main\Config\Option::set("sale", "sale_ps_success_path", "/pub/payment_result.php?action=success");
+	}
+
+	if (!Main\Config\Option::get("sale", "sale_ps_fail_path", false))
+	{
+		Main\Config\Option::set("sale", "sale_ps_fail_path", "/pub/payment_result.php?action=fail");
+	}
 }

@@ -1,4 +1,5 @@
 import * as Util from '../../util/registry';
+import Event from '../../util/event';
 
 type Options = {
 	value: ?string;
@@ -7,15 +8,19 @@ type Options = {
 };
 
 
-class Item
+class Item extends Event
 {
+	events: Object = {
+		changeSelected: 'change:selected',
+	};
 	value: ?string = '';
 	label: string = '';
-	selected: boolean = false;
+	_selectedInternal: boolean = false;
 
 	constructor(options: Options)
 	{
-		this.selected = !!options.selected;
+		super(options);
+		this._selectedInternal = !!options.selected;
 		if (Util.Type.defined(options.label))
 		{
 			this.label = options.label;
@@ -24,6 +29,17 @@ class Item
 		{
 			this.value = options.value;
 		}
+	}
+
+	get selected()
+	{
+		return this._selectedInternal;
+	}
+
+	set selected(value)
+	{
+		this._selectedInternal = value;
+		this.emit(this.events.changeSelected);
 	}
 }
 

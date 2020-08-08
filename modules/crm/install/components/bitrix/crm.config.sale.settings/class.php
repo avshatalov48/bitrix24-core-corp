@@ -100,7 +100,7 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 					$optionName = $field;
 
 					if (!isset($post[$fieldName]) || ((is_array($post[$fieldName]) && empty($post[$fieldName]))
-						|| (is_string($post[$fieldName]) && strlen($post[$fieldName]) <= 0)))
+						|| (is_string($post[$fieldName]) && $post[$fieldName] == '')))
 					{
 						continue;
 					}
@@ -123,7 +123,7 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 						case "subscribe_prod":
 							$subscribeProdList = array();
 							$subscribeProd = COption::GetOptionString("sale", "subscribe_prod", "");
-							if (strlen($subscribeProd) > 0)
+							if ($subscribeProd <> '')
 							{
 								$subscribeProdList = unserialize($subscribeProd);
 							}
@@ -337,7 +337,7 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 						}
 						$iPrevSort = $field["SORT"];
 
-						if (substr($id, 0, 1) == "n")
+						if (mb_substr($id, 0, 1) == "n")
 						{
 							if (trim($field["VALUE"]) == "")
 							{
@@ -463,7 +463,7 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 	private static function ord($string)
 	{
 		$ord = "";
-		$len = strlen($string);
+		$len = mb_strlen($string);
 		if ($len <= 0)
 		{
 			return 0;
@@ -735,7 +735,7 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 
 		$subscribeProdList = array();
 		$subscribeProd = COption::GetOptionString("sale", "subscribe_prod", "");
-		if (strlen($subscribeProd) > 0)
+		if ($subscribeProd <> '')
 		{
 			$subscribeProdList = unserialize($subscribeProd);
 		}
@@ -1104,14 +1104,25 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 
 		$options = array();
 
+		$options[] = array(
+			"id" => "product_card_section",
+			"name" => Loc::getMessage("CRM_CF_PRODUCT_CARD"),
+			"type" => "section"
+		);
+
+		if (Catalog\Config\Feature::isCommonProductProcessingEnabled())
+		{
+			$options[] = array(
+				"id" => $this->optionPrefix."product_card_slider_enabled",
+				"name" => Loc::getMessage("CRM_CF_PRODUCT_CARD_SLIDER_ENABLED"),
+				"type" => "checkbox",
+				"value" => \Bitrix\Catalog\Config\State::isProductCardSliderEnabled(),
+			);
+		}
+
 		//todo different regions
 		if (true)
 		{
-			$options[] = array(
-				"id" => "product_card_section",
-				"name" => Loc::getMessage("CRM_CF_PRODUCT_CARD"),
-				"type" => "section"
-			);
 			$options[] = array(
 				"id" => $this->optionPrefix."default_product_vat_included",
 				"name" => Loc::getMessage("CRM_CF_PRODUCT_DEFAULT_VAT_INCLUDED"),
@@ -1203,7 +1214,7 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 			),
 			"catalog" => array(
 				"default_use_store_control", "enable_reservation", "default_product_vat_included",
-				"subscribe_repeated_notify"
+				"subscribe_repeated_notify", "product_card_slider_enabled"
 			),
 			"crm" => array("order_default_responsible_id")
 		);

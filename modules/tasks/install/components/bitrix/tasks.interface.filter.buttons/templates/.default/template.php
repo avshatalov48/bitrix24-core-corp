@@ -1,5 +1,10 @@
-<?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+<?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\UI\Extension;
@@ -54,8 +59,7 @@ elseif ($section === 'EDIT_TASK')
 }
 elseif ($section === 'VIEW_TASK')
 {
-	// получить список встроенных приложений
-	if (\Bitrix\Main\Loader::includeModule('rest'))
+	if (Loader::includeModule('rest'))
 	{
 		?>
 		<div class="task-top-panel-restapp">
@@ -73,11 +77,12 @@ elseif ($section === 'VIEW_TASK')
 		</div>
 		<?php
 	}
-
 	$button = $arParams['ADD_BUTTON'];
+	$mutedClass = ($arResult['DATA']['MUTED'] ? 'follow' : 'unfollow');
 	?>
+	<button id="taskViewMute" class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-<?=$mutedClass?>"></button>
 	<button id="taskViewPopupMenuOptions" class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting"></button>
-	<span class="ui-btn-double ui-btn-primary">
+	<span class="ui-btn-split ui-btn-primary">
 		<a class="ui-btn-main" href="<?=HtmlFilter::encode($button['URL'])?>" id="<?=HtmlFilter::encode($button['ID'])?>-btn">
 			<?=HtmlFilter::encode($button['NAME'])?>
 		</a>
@@ -98,6 +103,8 @@ elseif ($section === 'VIEW_TASK')
 
 		new BX.Tasks.InterfaceFilterButtons(<?=Json::encode([
 			'section' => $section,
+			'entityId' => $arResult['ENTITY_ID'],
+			'muted' => $arResult['DATA']['MUTED'],
 			'checklistShowCompleted' => $arResult['DATA']['CHECKLIST_OPTION_SHOW_COMPLETED'],
 		])?>);
 	});

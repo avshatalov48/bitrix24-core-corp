@@ -22,7 +22,7 @@ if(!function_exists('__CrmEntitySummaryIsDisplayable'))
 	function __CrmEntitySummaryIsDisplayable(&$item, $displayEmpty = true)
 	{
 		$id = isset($item['ID']) ? $item['ID'] : '';
-		$type = isset($item['TYPE']) ? strtoupper($item['TYPE']) : '';
+		$type = isset($item['TYPE'])? mb_strtoupper($item['TYPE']) : '';
 		$params = isset($item['PARAMS']) && is_array($item['PARAMS']) ? $item['PARAMS'] : array();
 		$value = isset($item['VALUE']) ? $item['VALUE'] : '';
 
@@ -51,7 +51,7 @@ if(!function_exists('__CrmEntitySummaryIsDisplayable'))
 			return false;
 		}
 
-		if(strpos($id, 'UF_') === 0)
+		if(mb_strpos($id, 'UF_') === 0)
 		{
 			// HACK: CHECK FOR USER FIELD EMPTY WRAPPER
 			return preg_match('/^(\s*<[a-z0-9]+[^>]*>\s*<\/[a-z0-9]+>\s*)+$/i', $value) !== 1;
@@ -71,7 +71,7 @@ if(!function_exists('__CrmEntitySummaryRenderSingleSectionItem'))
 		}
 
 		$params = isset($item['PARAMS']) && is_array($item['PARAMS']) ? $item['PARAMS'] : array();
-		$type = isset($params['TYPE']) ? strtoupper($params['TYPE']) : '';
+		$type = isset($params['TYPE'])? mb_strtoupper($params['TYPE']) : '';
 
 		if ($type === 'CUSTOM')
 		{
@@ -97,7 +97,7 @@ if(!function_exists('__CrmEntitySummaryRenderHorSectionItem'))
 {
 	function __CrmEntitySummaryRenderHorSectionItem(&$item)
 	{
-		$type = isset($item['TYPE']) ? strtoupper($item['TYPE']) : '';
+		$type = isset($item['TYPE'])? mb_strtoupper($item['TYPE']) : '';
 		$title = isset($item['TITLE']) ? $item['TITLE'] : '';
 		if($title !== '')
 		{
@@ -203,7 +203,7 @@ if(!function_exists('__CrmEntitySummaryRenderHorSectionItem'))
 			if($valueCount > 1)
 			{
 				$prefix = isset($params['PREFIX']) ? $params['PREFIX'] : '';
-				$anchorID = ($prefix !== '' ? "{$prefix}_" : '').strtolower($typeName);
+				$anchorID = ($prefix !== ''? "{$prefix}_" : '').mb_strtolower($typeName);
 				echo '<span class="crm-client-contacts-block-text-list-icon" id="', htmlspecialcharsbx($anchorID), '"',
 				' onclick="',
 				CCrmViewHelper::PrepareMultiFieldValuesPopup($anchorID, $anchorID, $typeName, $values, $valueTypes, $options),
@@ -422,7 +422,7 @@ if(!function_exists('__CrmEntitySummaryRenderHorSectionItem'))
 			$enableAutoWidth = isset($block['AUTO_WIDTH']) ? $block['AUTO_WIDTH'] : false;
 			$className = $isFold ? 'crm-detail-info-fold crm-detail-lead-resize' : 'crm-detail-info-extend';
 			$isDisplayed = $isFold ? $isFolded : !$isFolded;
-			$layout = isset($block['LAYOUT']) ? strtoupper($block['LAYOUT']) : '';
+			$layout = isset($block['LAYOUT'])? mb_strtoupper($block['LAYOUT']) : '';
 			if($layout === 'HORIZONTAL'):
 				$sections = isset($block['SECTIONS']) ? $block['SECTIONS'] : null;
 				if(!is_array($sections) || empty($sections)) continue;
@@ -435,7 +435,7 @@ if(!function_exists('__CrmEntitySummaryRenderHorSectionItem'))
 					?><td class="crm-detail-info-block<?= $enableAutoWidth ? ' crm-detail-info-block-width-auto' : ''?>"><?
 						foreach($items as &$item):
 							if(!__CrmEntitySummaryIsDisplayable($item)) continue;
-							$type = isset($item['TYPE']) ? strtoupper($item['TYPE']) : '';
+							$type = isset($item['TYPE'])? mb_strtoupper($item['TYPE']) : '';
 							?><div class="crm-detail-info-item"><?
 								if($enableAutoWidth):
 									?><div class="crm-detail-no-float"><?

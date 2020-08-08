@@ -54,7 +54,7 @@ $data = [
 		],
 		'YANDEX_CHECKOUT_RETURN_URL' => [
 			'NAME' => Loc::getMessage('SALE_HPS_YANDEX_CHECKOUT_RETURN_URL'),
-			'DESCRIPTION' => Loc::getMessage('SALE_HPS_YANDEX_CHECKOUT_RETURN_URL_DESC'),
+			'DESCRIPTION' => Loc::getMessage('SALE_HPS_YANDEX_CHECKOUT_RETURN_URL_DESC_2'),
 			'SORT' => 300,
 			'GROUP' => 'CONNECT_SETTINGS_YANDEX',
 		],
@@ -73,6 +73,7 @@ $data = [
 	]
 ];
 
+/** @noinspection TypeUnsafeComparisonInspection */
 if (Option::get('sale', 'YANDEX_CHECKOUT_OAUTH', false) == false)
 {
 	$data['CODES']['YANDEX_CHECKOUT_SHOP_ID'] = [

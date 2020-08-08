@@ -56,9 +56,9 @@ if(!function_exists('__CrmDedupeListErrorText'))
 		}
 
 		$title = CCrmOwnerType::GetCaption($entityTypeID, $entityID, false);
-		if(strlen($title) > 20)
+		if(mb_strlen($title) > 20)
 		{
-			$title = substr($title, 0, 17).'...';
+			$title = mb_substr($title, 0, 17).'...';
 		}
 
 		if($code === Merger\EntityMergerException::READ_DENIED)
@@ -135,7 +135,7 @@ if ($action === 'GET_DUPLICATE_ENTITIES')
 		__CrmDedupeListEndResponse(array('ERROR' => 'Matches is not defined.'));
 	}
 
-	$enableRanking = isset($_POST['ENABLE_RANKING']) && strtoupper($_POST['ENABLE_RANKING']) === 'Y';
+	$enableRanking = isset($_POST['ENABLE_RANKING']) && mb_strtoupper($_POST['ENABLE_RANKING']) === 'Y';
 	$enablePermissionCheck = !CCrmPerms::IsAdmin($currentUserID);
 	$entityInfos = array();
 
@@ -440,7 +440,7 @@ elseif($action === 'REBUILD_DEDUPE_INDEX')
 
 	$currentScope = Integrity\DuplicateIndexType::DEFAULT_SCOPE;
 	if (isset($params['CURRENT_SCOPE']) && !empty($params['CURRENT_SCOPE']))
-		$currentScope = substr($params['CURRENT_SCOPE'], 0, 6);
+		$currentScope = mb_substr($params['CURRENT_SCOPE'], 0, 6);
 	if (!Integrity\DuplicateIndexType::checkScopeValue($currentScope))
 	{
 		__CrmDedupeListEndResponse(array('ERROR' => 'Scope is invalid.'));
@@ -565,7 +565,7 @@ elseif($action === 'REBUILD_DEDUPE_INDEX')
 }
 elseif($action === 'GET_MERGE_COLLISIONS')
 {
-	$entityTypeName = isset($_POST['ENTITY_TYPE_NAME']) ? strtoupper($_POST['ENTITY_TYPE_NAME']) : '';
+	$entityTypeName = isset($_POST['ENTITY_TYPE_NAME'])? mb_strtoupper($_POST['ENTITY_TYPE_NAME']) : '';
 	$entityTypeID = CCrmOwnerType::ResolveID($entityTypeName);
 	if($entityTypeID === CCrmOwnerType::Undefined)
 	{
@@ -621,7 +621,7 @@ elseif($action === 'GET_MERGE_COLLISIONS')
 }
 elseif($action === 'MERGE')
 {
-	$entityTypeName = isset($_POST['ENTITY_TYPE_NAME']) ? strtoupper($_POST['ENTITY_TYPE_NAME']) : '';
+	$entityTypeName = isset($_POST['ENTITY_TYPE_NAME'])? mb_strtoupper($_POST['ENTITY_TYPE_NAME']) : '';
 	$entityTypeID = CCrmOwnerType::ResolveID($entityTypeName);
 	if($entityTypeID === CCrmOwnerType::Undefined)
 	{
@@ -681,7 +681,7 @@ elseif($action === 'MERGE')
 }
 elseif($action === 'REGISTER_MISMATCH')
 {
-	$entityTypeName = isset($_POST['ENTITY_TYPE_NAME']) ? strtoupper($_POST['ENTITY_TYPE_NAME']) : '';
+	$entityTypeName = isset($_POST['ENTITY_TYPE_NAME'])? mb_strtoupper($_POST['ENTITY_TYPE_NAME']) : '';
 	$entityTypeID = CCrmOwnerType::ResolveID($entityTypeName);
 	if($entityTypeID === CCrmOwnerType::Undefined)
 	{

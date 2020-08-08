@@ -546,7 +546,7 @@ class CIntranetMailSetupComponent extends CBitrixComponent
 				{
 					case 'imap':
 						$arCols['EMAIL'] = $mailbox['LOGIN'];
-						if (strpos($mailbox['LOGIN'], '@') === false)
+						if (mb_strpos($mailbox['LOGIN'], '@') === false)
 							$arCols['EMAIL'] .= '<br><span style="font-weight: normal; ">imap://'.$mailbox['SERVER'].':'.$mailbox['PORT'].'</span>';
 						$arCols['ADD'] = '<a href="#" onclick="mb.create('.$user['ID'].'); return false; ">'.GetMessage('INTR_MAIL_MANAGE_CHANGE').'</a>';
 						break;

@@ -675,6 +675,8 @@ if(typeof(BX.Crm.RequisiteFormManager) === "undefined")
 			var externalRequisiteSearchConfig = BX.type.isPlainObject(eventArgs["externalRequisiteSearchConfig"]) ?
 				eventArgs["externalRequisiteSearchConfig"] : {};
 
+			var features = (BX.type.isPlainObject(eventArgs["features"])) ? eventArgs["features"] : {};
+
 			var form = BX.Crm.RequisiteInnerForm.create(
 				formId,
 				{
@@ -683,6 +685,7 @@ if(typeof(BX.Crm.RequisiteFormManager) === "undefined")
 					countryId: countryId,
 					enableClientResolution: enableClientResolution,
 					externalRequisiteSearchConfig: externalRequisiteSearchConfig,
+					features: features,
 					containerId: containerId,
 					elementId: elementId,
 					enableFieldMasquerading: enableFieldMasquerading,
@@ -906,15 +909,18 @@ if(typeof(BX.Crm.RequisiteInnerForm) === "undefined")
 
 			var typeId = "";
 			var inputName = "";
+			var featureName = "";
 			switch (this._countryId)
 			{
 				case 1:
 					typeId = BX.Crm.RequisiteFieldType.itin;
 					inputName = "RQ_INN";
+					featureName = "detailsSearchByInn";
 					break;
 				case 14:
 					typeId = BX.Crm.RequisiteFieldType.sro;
 					inputName = "RQ_EDRPOU";
+					featureName = "detailsSearchByEdrpou";
 					break;
 			}
 
@@ -932,6 +938,13 @@ if(typeof(BX.Crm.RequisiteInnerForm) === "undefined")
 				var input =  this.getFieldControl(inputName);
 				if(input && this._enableClientResolution)
 				{
+					var features = this.getSetting("features", null);
+					if (!BX.type.isPlainObject(features))
+					{
+						features = {};
+					}
+					var scriptIndex = featureName + "InfoScript";
+					var popupScript = (features.hasOwnProperty(scriptIndex)) ? features[scriptIndex] : null;
 					controller = BX.Crm.RequisiteFieldController.create(
 						inputName,
 						{
@@ -939,7 +952,9 @@ if(typeof(BX.Crm.RequisiteInnerForm) === "undefined")
 							typeId: typeId,
 							input: input,
 							serviceUrl: this._serviceUrl,
-							callbacks: { onFieldsLoad: BX.delegate(this.setupFields, this) }
+							callbacks: { onFieldsLoad: BX.delegate(this.setupFields, this) },
+							tariffLock: (!features.hasOwnProperty(featureName) || features[featureName] === 'N'),
+							tariffLockPopupScript: popupScript
 						}
 					);
 					if (isExternalRequisiteSearchEnabled)

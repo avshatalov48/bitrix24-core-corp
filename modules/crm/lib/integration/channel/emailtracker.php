@@ -82,7 +82,7 @@ class EmailTracker extends ChannelTracker
 			{
 				$this->mailboxMap[$mailbox['ID']] = array(
 					"USER_ID" => isset($mailbox['USER_ID']) ? (int)$mailbox['USER_ID'] : 0,
-					"NAME" => (strpos($mailbox['NAME'], '@') !== false ? $mailbox['NAME'] : (strpos($mailbox['LOGIN'], '@') !== false ? $mailbox['LOGIN'] : ''))
+					"NAME" => (mb_strpos($mailbox['NAME'], '@') !== false ? $mailbox['NAME'] : (mb_strpos($mailbox['LOGIN'], '@') !== false ? $mailbox['LOGIN'] : ''))
 				);
 			}
 		}

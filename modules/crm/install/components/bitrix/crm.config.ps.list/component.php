@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_PO
 				$arFields['ACTIVE'] = trim($arField['ACTIVE']);
 
 			if(isset($arField['SORT']))
-				$arFields['SORT'] = (strlen($arField['SORT']) > 0) ? $arField['SORT'] : 100;
+				$arFields['SORT'] = ($arField['SORT'] <> '') ? $arField['SORT'] : 100;
 
 			if (count($arFields) > 0)
 			{
@@ -155,7 +155,7 @@ while ($paySystem = $dbPaySystems->fetch())
 	$tmpPS["HANDLER"] = $paySystem["ACTION_FILE"];
 
 	$quotePostfix = '';
-	if (strpos($paySystem["ACTION_FILE"], 'quote') !== false)
+	if (mb_strpos($paySystem["ACTION_FILE"], 'quote') !== false)
 		$quotePostfix = '_QUOTE';
 
 	$tmpPS['DESCRIPTION'] = array(

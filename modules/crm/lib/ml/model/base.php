@@ -194,11 +194,11 @@ abstract class Base implements \JsonSerializable
 	}
 
 	/**
-	 * Should return array of records to train the model.
+	 * Should return array of the ids of the entities, that should be used for building the next part of the training set
 	 *
 	 * @param int $fromId Id of the starting entity.
 	 * @param int $limit Maximum count of the records in the training subset.
-	 * @return array
+	 * @return int[]
 	 */
 	abstract public function getTrainingSet($fromId, $limit);
 

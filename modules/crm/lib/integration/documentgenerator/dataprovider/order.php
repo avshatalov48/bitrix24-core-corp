@@ -8,13 +8,17 @@ use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
 use Bitrix\DocumentGenerator\DataProvider\User;
 use Bitrix\DocumentGenerator\DataProviderManager;
+use Bitrix\DocumentGenerator\Nameable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Internals;
-use Bitrix\DocumentGenerator\Nameable;
+use Bitrix\Sale\PropertyBase;
+use Bitrix\Sale\Registry;
 
 class Order extends ProductsDataProvider implements Nameable
 {
+	protected static $properties;
+
 	protected $order;
 	protected $contacts;
 
@@ -23,7 +27,15 @@ class Order extends ProductsDataProvider implements Nameable
 		if($this->fields === null)
 		{
 			parent::getFields();
-			Loc::loadMessages(__FILE__);
+
+			$orderProperties = static::getProperties();
+			foreach($orderProperties as &$property)
+			{
+				$property['VALUE'] = [$this, 'getPropertyValue'];
+			}
+			unset($property);
+			$this->fields = array_merge($this->fields, $orderProperties);
+
 			$this->fields['DATE_INSERT']['TYPE'] = static::FIELD_TYPE_DATE;
 			$this->fields['DATE_UPDATE']['TYPE'] = static::FIELD_TYPE_DATE;
 			$this->fields['DATE_PAYED']['TYPE'] = static::FIELD_TYPE_DATE;
@@ -227,6 +239,7 @@ class Order extends ProductsDataProvider implements Nameable
 		foreach($this->products as $product)
 		{
 			$this->data['TOTAL_RAW'] += $product->getRawValue('PRICE_RAW_SUM');
+			$this->data['TOTAL_DISCOUNT'] += $product->getRawValue('QUANTITY') * $product->getRawValue('DISCOUNT_SUM');
 		}
 
 		$taxes = $this->loadTaxes();
@@ -235,7 +248,6 @@ class Order extends ProductsDataProvider implements Nameable
 			$this->data['TOTAL_TAX'] += $tax->getRawValue('VALUE');
 		}
 
-		$this->data['TOTAL_DISCOUNT'] = $order->getDiscountPrice();
 		$this->data['TOTAL_QUANTITY'] = array_sum($order->getBasket()->getQuantityList());
 		$this->data['TOTAL_SUM'] = $order->getPrice();
 		$this->data['TOTAL_BEFORE_TAX'] = $this->data['TOTAL_SUM'] - $this->data['TOTAL_TAX'];
@@ -263,6 +275,10 @@ class Order extends ProductsDataProvider implements Nameable
 			{
 				foreach($taxes as $taxInfo)
 				{
+					if($taxInfo['CODE'] === 'VAT')
+					{
+						continue;
+					}
 					$tax = new Tax([
 						'NAME' => $taxInfo['NAME'],
 						'VALUE' => new Money($taxInfo['VALUE_MONEY'], ['CURRENCY_ID' => $currencyID, 'WITH_ZEROS' => true]),
@@ -324,17 +340,19 @@ class Order extends ProductsDataProvider implements Nameable
 				$result[] = [
 					'OWNER_ID' => $this->source,
 					'OWNER_TYPE' => $this->getCrmProductOwnerType(),
-					'PRODUCT_ID' => isset($product['PRODUCT_ID']) ? $product['PRODUCT_ID'] : 0,
-					'NAME' => isset($product['NAME']) ? $product['NAME'] : '',
+					'PRODUCT_ID' => $product['PRODUCT_ID'] ?? 0,
+					'NAME' => $product['NAME'] ?? '',
 					'PRICE' => $product['PRICE'],
-					'QUANTITY' => isset($product['QUANTITY']) ? $product['QUANTITY'] : 0,
+					'QUANTITY' => (float) ($product['QUANTITY'] ?? 0),
 					'DISCOUNT_TYPE_ID' => Discount::MONETARY,
 					'DISCOUNT_SUM' => $product['DISCOUNT_PRICE'],
+					'PRICE_BRUTTO' => $product['BASE_PRICE'],
+					'DISCOUNT_RATE' => $product['DISCOUNT_RATE'] ?? ($product['DISCOUNT_PRICE'] * 100 / $product['BASE_PRICE']),
 					'TAX_RATE' => $product['VAT_RATE'] * 100,
-					'TAX_INCLUDED' => isset($product['VAT_INCLUDED']) ? $product['VAT_INCLUDED'] : 'N',
-					'MEASURE_CODE' => isset($product['MEASURE_CODE']) ? $product['MEASURE_CODE'] : '',
-					'MEASURE_NAME' => isset($product['MEASURE_NAME']) ? $product['MEASURE_NAME'] : '',
-					'CUSTOMIZED' => isset($product['CUSTOM_PRICE']) ? $product['CUSTOM_PRICE'] : 'N',
+					'TAX_INCLUDED' => $product['VAT_INCLUDED'] ?? 'N',
+					'MEASURE_CODE' => $product['MEASURE_CODE'] ?? '',
+					'MEASURE_NAME' => $product['MEASURE_NAME'] ?? '',
+					'CUSTOMIZED' => $product['CUSTOM_PRICE'] ?? 'N',
 					'CURRENCY_ID' => $this->getCurrencyId(),
 				];
 			}
@@ -511,5 +529,60 @@ class Order extends ProductsDataProvider implements Nameable
 			'PRODUCTS_QUANT',
 			'COMPANY_ID',
 		]);
+	}
+
+	protected static function getProperties(): array
+	{
+		if(static::$properties === null)
+		{
+			static::$properties = [];
+
+			$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+			/** @var PropertyBase $propertyClassName */
+			$propertyClassName = $registry->getPropertyClassName();
+			$orderProperties = $propertyClassName::getList([
+				'filter' => [
+					'ACTIVE' => 'Y',
+				],
+			]);
+			while($property = $orderProperties->fetch())
+			{
+				$field = [
+					'TITLE' => $property['NAME'],
+				];
+				if($property['IS_PHONE'] === 'Y')
+				{
+					$field['TYPE'] = static::FIELD_TYPE_PHONE;
+				}
+				static::$properties['PROPERTY_'.$property['ID']] = $field;
+			}
+		}
+
+		return static::$properties;
+	}
+
+	public function getPropertyValue(string $placeholder)
+	{
+		if(!preg_match('#^PROPERTY_(\d+)$#', $placeholder, $matches))
+		{
+			return null;
+		}
+		$propertyId = (int) $matches[1];
+		if($propertyId <= 0)
+		{
+			return null;
+		}
+
+		$order = $this->getOrder();
+		if($order)
+		{
+			$property = $order->getPropertyCollection()->getItemByOrderPropertyId($propertyId);
+			if($property)
+			{
+				return $property->getValue();
+			}
+		}
+
+		return null;
 	}
 }

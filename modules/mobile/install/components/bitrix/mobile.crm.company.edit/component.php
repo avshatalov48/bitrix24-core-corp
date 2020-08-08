@@ -297,7 +297,7 @@ else
 			if(isset($_POST['COMMENTS']))
 			{
 				$comments = isset($_POST['COMMENTS']) ? trim($_POST['COMMENTS']) : '';
-				if($comments !== '' && strpos($comments, '<') !== false)
+				if($comments !== '' && mb_strpos($comments, '<') !== false)
 				{
 					$sanitizer = new CBXSanitizer();
 					$sanitizer->ApplyDoubleEncode(false);
@@ -450,7 +450,7 @@ else
 
 			if(isset($_POST['OPENED']))
 			{
-				$arFields['OPENED'] = strtoupper($_POST['OPENED']) === 'Y' ? 'Y' : 'N';
+				$arFields['OPENED'] = mb_strtoupper($_POST['OPENED']) === 'Y' ? 'Y' : 'N';
 			}
 			elseif(!$isEditMode)
 			{
@@ -1195,10 +1195,13 @@ if (CCrmContact::CheckReadPermission(0, $userPermissions))
 
 //user fields
 $CCrmUserType = new CCrmMobileHelper();
-$CCrmUserType->PrepareUserFields(
+$CCrmUserType->prepareUserFields(
 	$arResult['FIELDS'],
 	CCrmCompany::$sUFEntityID,
-	$arResult['ELEMENT']['ID']
+	$arResult['ELEMENT']['ID'],
+	false,
+	'company_details',
+	$USER->GetID()
 );
 
 if ($arParams['RESTRICTED_MODE'])

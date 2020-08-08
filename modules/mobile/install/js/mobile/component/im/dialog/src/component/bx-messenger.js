@@ -72,7 +72,7 @@ Vue.component('bx-messenger',
 
 			return {
 				id: this.dialog.quoteId,
-				title: user? user.name: '',
+				title: message.params.NAME ? message.params.NAME : (user ? user.name: ''),
 				color: user? user.color: '',
 				description: Utils.text.purify(message.text, message.params, files, this.localize)
 			};

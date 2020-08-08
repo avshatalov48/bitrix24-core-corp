@@ -1,8 +1,11 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 
+use Bitrix\Main\Text\HtmlFilter;
+
 CJSCore::Init(array('mobile_interface'));
 ?>
+
 <?if ($arParams["SHOW_SEARCH"] == "Y"):?>
 <div class="mobile-grid-field mobile-grid-field-search">
 	<img src="<?=$this->GetFolder()?>/images/icon-search2x.png" srcset="<?=$this->GetFolder()?>/images/icon-search2x.png 2x" alt="">
@@ -98,10 +101,43 @@ if (is_array($arResult["ITEMS"]) && !empty($arResult["ITEMS"]))
 									?>
 									<div class="mobile-grid-field mobile-grid-field-name">
 										<span class="mobile-grid-field-data">
-											<?=$item["FIELDS"][$field["id"]]?>
+											<?php
+												$isFirst = true;
+												$fieldValue = $item['FIELDS'][$field['id']];
+												if(!empty($field['USER_TYPE']['USE_FIELD_COMPONENT']))
+												{
+													$uf = [
+														'USER_TYPE_ID' => $field['TYPE_ID'],
+														'VALUE' => $fieldValue,
+														'SETTINGS' => $field['SETTINGS']
+													];
+
+													$params = [
+														'mediaType' => \Bitrix\Main\Component\BaseUfComponent::MEDIA_TYPE_MOBILE,
+														'mode' => \Bitrix\Main\Component\BaseUfComponent::MODE_DEFAULT
+													];
+
+													print (new \Bitrix\Main\UserField\Renderer($uf, $params))->render();
+												}
+												elseif(is_array($fieldValue))
+												{
+													foreach ($fieldValue as $fieldValueItem)
+													{
+														if (!$isFirst){
+															print '<br>';
+														}
+														$isFirst = false;
+														print $fieldValueItem;
+													}
+												}
+												else
+												{
+													print $fieldValue;
+												}
+											?>
 										</span>
 										<span class="mobile-grid-field-textarea-title">
-											<?=$field["name"]?>
+											<?= HtmlFilter::encode($field['name']) ?>
 										</span>
 									</div>
 									<?

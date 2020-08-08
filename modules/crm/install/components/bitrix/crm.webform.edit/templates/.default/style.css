@@ -1902,6 +1902,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 	display: -webkit-flex;
 	display: -ms-flexbox;
 	display: flex;
+	align-items: baseline;
 	overflow: hidden;
 }
 
@@ -1929,6 +1930,13 @@ span.crm-webform-edit-task-options-destination-wrap {
 	-webkit-flex: 1;
 	-ms-flex: 1;
 	flex: 1;
+}
+
+
+.crm-webform-edit-task-options-account-setup-goods-price-custom {
+	margin: 0 10px 0 0;
+	display: flex;
+	align-items: center;
 }
 
 .crm-webform-edit-task-options-account-setup-new-goods-name,
@@ -1967,8 +1975,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 
 .crm-webform-edit-task-options-account-setup-goods > .crm-webform-edit-task-edit-deal-stage-close,
 .crm-webform-edit-task-options-account-setup-new-goods > .crm-webform-edit-task-edit-deal-stage-date-input {
-	position: relative;
-	right: 0;
+	position: static;
 	-webkit-box-ordinal-group: 2;
 	-moz-box-ordinal-group: 2;
 	-ms-flex-order: 2;

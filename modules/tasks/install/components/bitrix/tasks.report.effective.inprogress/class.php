@@ -6,6 +6,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\UI\PageNavigation;
+use Bitrix\Tasks\Util\Error\Collection;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\User;
 
 Loc::loadMessages(__FILE__);
@@ -15,20 +18,32 @@ CBitrixComponent::includeComponentClass("bitrix:tasks.report.effective.detail");
 
 class TasksReportEffectiveInprogressComponent extends TasksReportEffectiveDetailComponent
 {
-	protected static function checkPermissions(array &$arParams, array &$arResult,
-											   \Bitrix\Tasks\Util\Error\Collection $errors, array $auxParams = array())
+	protected static function checkBasicParameters(array &$arParams, array &$arResult, Collection $errors, array $auxParams = [])
 	{
-		$currentUser = User::getId();
-		$viewedUser = $arParams['USER_ID'];
-
-		$isAccessible =
-			$currentUser == $viewedUser ||
-			User::isSuper($currentUser) ||
-			User::isBossRecursively($currentUser, $viewedUser);
+		$isAccessible = (array_key_exists('USER_ID', $arParams) && (int)$arParams['USER_ID']);
 
 		if (!$isAccessible)
 		{
-			$errors->add('TASKS_MODULE_ACCESS_DENIED', Loc::getMessage("TASKS_COMMON_ACCESS_DENIED"));
+			$errors->add('TASKS_MODULE_ACCESS_DENIED', Loc::getMessage('TASKS_COMMON_ACCESS_DENIED'));
+		}
+
+		return $errors->checkNoFatals();
+	}
+
+	protected static function checkPermissions(array &$arParams, array &$arResult, Collection $errors, array $auxParams = [])
+	{
+		$currentUser = User::getId();
+		$viewedUser = (int)$arParams['USER_ID'];
+
+		$isAccessible = (
+			$currentUser === $viewedUser
+			|| User::isSuper($currentUser)
+			|| User::isBossRecursively($currentUser, $viewedUser)
+		);
+
+		if (!$isAccessible)
+		{
+			$errors->add('TASKS_MODULE_ACCESS_DENIED', Loc::getMessage('TASKS_COMMON_ACCESS_DENIED'));
 		}
 
 		return $errors->checkNoFatals();
@@ -36,20 +51,34 @@ class TasksReportEffectiveInprogressComponent extends TasksReportEffectiveDetail
 
 	protected function getData()
 	{
-		$this->getTasksList();
+		$taskLimitExceeded = TaskLimit::isLimitExceeded();
+
+		if (!$taskLimitExceeded)
+		{
+			$this->getTasksList();
+		}
+		else
+		{
+			$nav = new PageNavigation('nav');
+			$nav->allowAllRecords(true)->setPageSize($this->getPageSize())->initFromUri();
+			$nav->setRecordCount(0);
+
+			$this->arResult['NAV_OBJECT'] = $nav;
+			$this->arResult['LIST'] = [];
+		}
+
 		$this->arParams['HEADERS'] = $this->getGridHeaders();
+		$this->arResult['TASK_LIMIT_EXCEEDED'] = $taskLimitExceeded;
 	}
 
 	private function getTasksList()
 	{
-
 		$filterData = $this->getFilterData();
 
 		$userId = $this->arParams['USER_ID'];
-
 		$groupId = array_key_exists('GROUP_ID', $filterData) ? $filterData['GROUP_ID'] : 0;
 
-		$nav = new \Bitrix\Main\UI\PageNavigation("nav");
+		$nav = new PageNavigation("nav");
 		$nav->allowAllRecords(true)->setPageSize($this->getPageSize())->initFromUri();
 
 		$sql = "

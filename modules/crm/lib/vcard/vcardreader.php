@@ -58,7 +58,7 @@ class VCardReader
 
 		do
 		{
-			$pos = stripos($this->buffer, 'BEGIN:VCARD', 0);
+			$pos = mb_stripos($this->buffer, 'BEGIN:VCARD', 0);
 		}
 		while($pos === false && $this->readToBuffer());
 
@@ -71,7 +71,7 @@ class VCardReader
 
 		do
 		{
-			$pos = stripos($this->buffer, 'END:VCARD', $beginPos + 11); // 11 is strlen('BEGIN:VCARD')
+			$pos = mb_stripos($this->buffer, 'END:VCARD', $beginPos + 11); // 11 is strlen('BEGIN:VCARD')
 		}
 		while($pos === false && $this->readToBuffer());
 
@@ -83,8 +83,8 @@ class VCardReader
 		$endPos = $pos;
 
 		$borderPos = $endPos + 9; // 9 is strlen('END:VCARD')
-		$this->elementContent = substr($this->buffer, $beginPos, $borderPos - $beginPos);
-		$this->buffer = substr($this->buffer, $borderPos);
+		$this->elementContent = mb_substr($this->buffer, $beginPos, $borderPos - $beginPos);
+		$this->buffer = mb_substr($this->buffer, $borderPos);
 		$this->elementBorderPosition = $this->filePosition - Main\Text\BinaryString::getLength($this->buffer);
 
 		return $this->elementContent !== '';

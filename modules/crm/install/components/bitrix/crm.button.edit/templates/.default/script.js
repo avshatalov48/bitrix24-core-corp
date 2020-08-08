@@ -59,35 +59,25 @@ var CrmButtonEditor = function(params) {
 
 		if(!this.canRemoveCopyright)
 		{
-			BX.bind(BX('COPYRIGHT_REMOVED_CONT'), 'click', BX.proxy(function(e){
-				if(!B24 || !B24['licenseInfoPopup'])
+			BX.bind(BX('COPYRIGHT_REMOVED_CONT'), 'click', BX.proxy(function(e) {
+				if (BX.type.isNotEmptyString(params.showWebformRestrictionPopup))
 				{
-					return;
+					e.preventDefault();
+					eval(params.showWebformRestrictionPopup);
+					return false;
 				}
-
-				e.preventDefault();
-				B24.licenseInfoPopup.show(
-					'crm_sitebutton_copyright',
-					this.mess.dlgRemoveCopyrightTitle,
-					'<span>' + this.mess.dlgRemoveCopyrightText + '</span>'
-				);
 			}, this));
 		}
 
 		if(!this.canUseMultiLines)
 		{
-			BX.bind(BX('USE_MULTI_LINES'), 'click', BX.proxy(function(e){
-				if(!B24 || !B24['licenseInfoPopup'])
+			BX.bind(BX('USE_MULTI_LINES'), 'click', BX.proxy(function(e) {
+				if (BX.type.isNotEmptyString(params.showWebformRestrictionPopup))
 				{
-					return;
+					e.preventDefault();
+					eval(params.showMultilinesRestrictionPopup);
+					return false;
 				}
-
-				e.preventDefault();
-				B24.licenseInfoPopup.show(
-					'crm_sitebutton_ol_multi',
-					this.mess.dlgRemoveCopyrightTitle,
-					'<span>' + this.mess.dlgMultiLinesText + '</span>'
-				);
 			}, this));
 		}
 	};

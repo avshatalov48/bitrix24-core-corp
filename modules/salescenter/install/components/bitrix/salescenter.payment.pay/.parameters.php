@@ -14,6 +14,13 @@ $arComponentParameters = [
 			"DEFAULT" => "",
 			"COLS" => 25,
 			"PARENT" => "BASE",
+		],
+		"ALLOW_PAYMENT_REDIRECT" => [
+			"NAME" => GetMessage("SPP_ALLOW_PAYMENT_REDIRECT"),
+			"TYPE" => "CHECKBOX",
+			"DEFAULT" => "Y",
+			"COLS" => 25,
+			"PARENT" => "BASE",
 		]
 	]
 ];

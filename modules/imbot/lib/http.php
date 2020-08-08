@@ -95,7 +95,7 @@ class Http
 
 	public function query($command, $params = array(), $waitResponse = false)
 	{
-		if (strlen($command) <= 0 || !is_array($params) || !$this->botId)
+		if ($command == '' || !is_array($params) || !$this->botId)
 			return false;
 
 		foreach ($params as $key => $value)
@@ -126,6 +126,7 @@ class Http
 			"socketTimeout" => 20,
 			"streamTimeout" => 60,
 			"waitResponse" => $waitResponse,
+			"disableSslVerification" => true,
 		));
 		$httpClient->setHeader('User-Agent', 'Bitrix Bot Client ('.$this->botId.')');
 		$httpClient->setHeader('x-bitrix-licence', $this->licenceCode);

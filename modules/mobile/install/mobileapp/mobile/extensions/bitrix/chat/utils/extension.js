@@ -165,3 +165,38 @@ ChatUtils.htmlspecialcharsback = function(str)
 
 	return str.replace(/\&quot;/g, '"').replace(/&#39;/g, "'").replace(/\&lt;/g, '<').replace(/\&gt;/g, '>').replace(/\&amp;/g, '&').replace(/\&nbsp;/g, ' ');
 };
+
+ChatUtils.throttle = function(callback, wait, context = this) {
+	let timeout = null;
+	let callbackArgs = null;
+
+	const nextCallback = () => {
+		callback.apply(context, callbackArgs);
+		timeout = null;
+	};
+
+	return function() {
+		if (!timeout)
+		{
+			callbackArgs = arguments;
+			timeout = setTimeout(nextCallback, wait);
+		}
+	};
+};
+
+ChatUtils.debounce = function(callback, wait, context = this){
+	let timeout = null;
+	let callbackArgs = null;
+
+	const nextCallback = () => {
+		callback.apply(context, callbackArgs);
+	};
+
+	return function()
+	{
+		callbackArgs = arguments;
+
+		clearTimeout(timeout);
+		timeout = setTimeout(nextCallback, wait);
+	}
+};

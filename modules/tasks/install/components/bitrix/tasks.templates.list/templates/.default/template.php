@@ -105,11 +105,13 @@ if ($arParams['HIDE_FILTER'] != 'Y')
 		); ?>
 	</div>
 
-	<div class="pagetitle-container pagetitle-align-right-container">
-		<a class="ui-btn ui-btn-primary ui-btn-icon-add tasks-filter-btn-add" href="<?=$templateAddUrl?>">
-			<?=GetMessage('TASKS_TEMPLATE_ADD')?>
-		</a>
-	</div>
+	<? if (\Bitrix\Tasks\Access\TemplateAccessController::can($arParams['USER_ID'], \Bitrix\Tasks\Access\ActionDictionary::ACTION_TEMPLATE_CREATE)): ?>
+		<div class="pagetitle-container pagetitle-align-right-container">
+			<a class="ui-btn ui-btn-primary ui-btn-icon-add tasks-filter-btn-add" href="<?=$templateAddUrl?>">
+				<?=GetMessage('TASKS_TEMPLATE_ADD')?>
+			</a>
+		</div>
+	<? endif; ?>
 
 	<? if (!$isBitrix24Template): ?>
 	</div>

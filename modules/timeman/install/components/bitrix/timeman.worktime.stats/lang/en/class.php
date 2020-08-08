@@ -1,20 +1,5 @@
 <?
 $MESS["TIMEMAN_MODULE_NOT_INSTALLED"] = "The \"Working Time Management\" module is not installed.";
-$MESS["TMR_ADDITONAL"] = "Clock-ins and clock-outs";
-$MESS["TMR_STATS"] = "Statistics";
-$MESS["TM_SCHEDULE_DELETE_CONFIRM"] = "Do you really want to delete \"#SCHEDULE_NAME#\"?";
-$MESS["TM_SCHEDULE_DELETE_CONFIRM_NO"] = "Cancel";
-$MESS["TM_SCHEDULE_DELETE_CONFIRM_TITLE"] = "Confirm action";
-$MESS["TM_SCHEDULE_DELETE_CONFIRM_YES"] = "Delete";
-$MESS["TM_SCHEDULE_LIST_ACTION_DELETE"] = "Delete";
-$MESS["TM_SCHEDULE_LIST_ACTION_EDIT"] = "Edit";
-$MESS["TM_SCHEDULE_LIST_ACTION_READ"] = "View";
-$MESS["TM_SCHEDULE_PLAN_ADD"] = "Add";
-$MESS["TM_SCHEDULE_PLAN_UNBIND_USER_CONFIRM"] = "Are sure you want to unassign the employee from the schedule?";
-$MESS["TM_SCHEDULE_PLAN_USER_ADD"] = "Add employee";
 $MESS["TM_WORKTIME_SCHEDULE_STATS_TITLE"] = "#SCHEDULE_NAME# worktime";
 $MESS["TM_WORKTIME_STATS_TITLE"] = "Worktime";
-$MESS["TM_WORKTIME_STATS_VIOLATIONS_COMMON_MENU_TITLE"] = "General";
-$MESS["TM_WORKTIME_STATS_VIOLATIONS_MENU_TITLE"] = "Violations";
-$MESS["TM_WORKTIME_STATS_VIOLATIONS_MENU_TITLE_PERSONAL"] = "Personal";
 ?>

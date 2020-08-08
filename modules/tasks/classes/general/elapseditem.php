@@ -8,6 +8,8 @@
 
 use Bitrix\Tasks\Integration\Rest\ElapsedTimeTable;
 use Bitrix\Tasks\Util\User;
+use \Bitrix\Tasks\TaskTable;
+use \Bitrix\Tasks\Access\ActionDictionary;
 
 final class CTaskElapsedItem extends CTaskSubItemAbstract
 {
@@ -44,7 +46,7 @@ final class CTaskElapsedItem extends CTaskSubItemAbstract
 			&& is_string($arFields['COMMENT_TEXT'])
 		);
 
-		if ( ! $oTaskItem->isActionAllowed(CTaskItem::ACTION_ELAPSED_TIME_ADD) )
+		if ( ! $oTaskItem->checkAccess(ActionDictionary::ACTION_TASK_ELAPSED_TIME) )
 			throw new TasksException('', TasksException::TE_ACTION_NOT_ALLOWED);
 
 		if (!isset($arFields['USER_ID']) || $arFields['USER_ID'] == '0')
@@ -57,7 +59,7 @@ final class CTaskElapsedItem extends CTaskSubItemAbstract
 
 		// Reset tagged system cache by tag 'tasks_user_' . $userId for each task member
 		self::__resetSystemWideTasksCacheByTag($oTaskItem->getData(false));
-		
+
 		if ($id === false)
 		{
 			throw new TasksException('', TasksException::TE_ACTION_FAILED_TO_BE_PROCESSED);
@@ -77,7 +79,7 @@ final class CTaskElapsedItem extends CTaskSubItemAbstract
 
 		// Reset tagged system cache by tag 'tasks_user_' . $userId for each task member
 		$this->resetSystemWideTasksCacheByTag();
-		
+
 		// Reset cache
 		$this->resetCache();
 
@@ -128,7 +130,7 @@ final class CTaskElapsedItem extends CTaskSubItemAbstract
 			|| CTasksTools::IsPortalB24Admin($this->executiveUserId);
 
 		if ($actionId === self::ACTION_ELAPSED_TIME_ADD)
-			$isActionAllowed = $this->oTaskItem->isActionAllowed(CTaskItem::ACTION_ELAPSED_TIME_ADD);
+			$isActionAllowed = $this->oTaskItem->checkAccess(ActionDictionary::ACTION_TASK_ELAPSED_TIME);
 		elseif (($actionId === self::ACTION_ELAPSED_TIME_MODIFY) || ($actionId === self::ACTION_ELAPSED_TIME_REMOVE))
 		{
 			$arItemData = $this->getData($bEscape = false);
@@ -394,7 +396,7 @@ final class CTaskElapsedItem extends CTaskSubItemAbstract
 	 * This method is not part of public API.
 	 * Its purpose is for internal use only.
 	 * It can be changed without any notifications
-	 * 
+	 *
 	 * @access private
 	 */
 	public static function getManifest()

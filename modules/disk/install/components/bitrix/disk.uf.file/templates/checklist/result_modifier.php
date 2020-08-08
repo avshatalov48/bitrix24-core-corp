@@ -5,7 +5,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 	die();
 }
 
-if (strpos($this->__page, "show") === 0)
+if (mb_strpos($this->__page, "show") === 0)
 {
 	$arParams["THUMB_SIZE"] = array_change_key_case(is_array($arParams["THUMB_SIZE"]) ? $arParams["THUMB_SIZE"] : array("width" => 69, "height" => 69), CASE_LOWER);
 	$arParams["MAX_SIZE"] = array_change_key_case((is_array($arParams["MAX_SIZE"]) ? $arParams["MAX_SIZE"] : array("width" => 800, "height" => 800)), CASE_LOWER);
@@ -21,7 +21,7 @@ if (strpos($this->__page, "show") === 0)
 		}
 		elseif (array_key_exists("IMAGE", $file))
 		{
-			$src = $file["PREVIEW_URL"].(strpos($file["PREVIEW_URL"], "?") === false ? "?" : "&");
+			$src = $file["PREVIEW_URL"].(mb_strpos($file["PREVIEW_URL"], "?") === false ? "?" : "&");
 			$file["THUMB"] = array(
 				"src" => $src.http_build_query(array_merge($arParams["THUMB_SIZE"], array("exact" => "Y", 'signature' => ParameterSigner::getImageSignature($file['ID'], $arParams["THUMB_SIZE"]["width"], $arParams["THUMB_SIZE"]["height"])))),
 				"width" => $arParams["THUMB_SIZE"]["width"],
@@ -120,7 +120,7 @@ if (strpos($this->__page, "show") === 0)
 		$arResult['DELETED_FILES'] = $deletedFiles;
 	}
 }
-elseif(strpos($this->__page, "error") === false)
+elseif(mb_strpos($this->__page, "error") === false)
 {
 	$http_query = \Bitrix\Disk\Uf\Controller::$previewParams + array("cache_image" => "Y");
 	foreach ($arResult['FILES'] as $id => $arElement)
@@ -146,7 +146,7 @@ elseif(strpos($this->__page, "error") === false)
 				$arElement["IMAGE"]["HEIGHT"] = $arDestinationSize["height"];
 				if (array_key_exists("PREVIEW_URL", $arElement))
 				{
-					$arElement["PREVIEW_URL"] .= (strpos($arElement["PREVIEW_URL"], "?") === false ? "?" : "&") . http_build_query($http_query);
+					$arElement["PREVIEW_URL"] .= (mb_strpos($arElement["PREVIEW_URL"], "?") === false ? "?" : "&") . http_build_query($http_query);
 				}
 				$arResult['FILES'][$id] = $arElement;
 			}

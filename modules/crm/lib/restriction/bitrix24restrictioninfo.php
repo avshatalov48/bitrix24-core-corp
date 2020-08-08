@@ -52,6 +52,15 @@ class Bitrix24RestrictionInfo
 	/**
 	* @return string
 	*/
+	public function prepareInfoHelperScript()
+	{
+		return $this->popupInfo !== null
+			? Integration\Bitrix24Manager::prepareLicenseInfoHelperScript($this->popupInfo)
+			: '';
+	}
+	/**
+	* @return string
+	*/
 	public function getHtml()
 	{
 		return $this->htmlInfo !== null

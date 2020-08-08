@@ -302,7 +302,7 @@ while($item = $dbRes->GetNext())
 	if (!empty($buttons))
 	{
 		$arActions[] = array(
-			"TEXT" => GetMessageJS("M_CRM_CONTACT_LIST_MORE"),
+			"TEXT" => GetMessage("M_CRM_CONTACT_LIST_MORE"),
 			'ONCLICK' => "new BXMobileApp.UI.ActionSheet({
 							buttons: [" . $buttons . "]
 						}, 'actionSheet').show();",

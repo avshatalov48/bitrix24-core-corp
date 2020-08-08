@@ -38,9 +38,13 @@ $APPLICATION->SetTitle(Loc::getMessage('TRANS_TITLE'));
 
 require($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_admin_after.php');
 
-
-\CUtil::InitJSCore(array('translate_process', 'loader'));
-Main\UI\Extension::load(['ui.buttons', 'ui.alerts', 'ui.notification']);
+Main\UI\Extension::load([
+	'main.loader',
+	'ui.buttons',
+	'ui.alerts',
+	'ui.notification',
+	'translate.process',
+]);
 
 //endregion
 

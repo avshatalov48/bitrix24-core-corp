@@ -40,7 +40,7 @@
 	{
 		foreach ($arParams['VALUES'][$arParams['TYPE_ID']] as $ID => $arValue)
 		{
-			if ((substr($ID, 0, 1) == 'n') && $arValue['VALUE'] == '')
+			if ((mb_substr($ID, 0, 1) == 'n') && $arValue['VALUE'] == '')
 				continue;
 			$arResult['VALUES'][$ID]['ID'] = $ID;
 			$arResult['VALUES'][$ID]['VALUE'] = $arValue['VALUE'];

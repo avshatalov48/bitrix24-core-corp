@@ -83,25 +83,30 @@ class UserTable extends \Bitrix\Main\UserTable
 		// duplicate for inner join
 		$conditionListInner = $conditionList;
 
-		if (ModuleManager::isModuleInstalled('extranet'))
-		{
-			$conditionList[] = [
-				'PATTERN' => 'UF_DEPARTMENT',
-				'VALUE' => "WHEN %s = 'a:0:{}' THEN 'extranet'"
-			];
-			$conditionList[] = [
-				'PATTERN' => 'UF_DEPARTMENT',
-				'VALUE' => "WHEN %s IS NULL THEN 'extranet'"
-			];
-			$conditionListInner[] = [
-				'PATTERN' => 'UTS_OBJECT_INNER.UF_DEPARTMENT',
-				'VALUE' => "WHEN %s = 'a:0:{}' THEN 'extranet'"
-			];
-			$conditionListInner[] = [
-				'PATTERN' => 'UTS_OBJECT_INNER.UF_DEPARTMENT',
-				'VALUE' => "WHEN %s IS NULL THEN 'extranet'"
-			];
-		}
+		$extranetUserType = (
+			ModuleManager::isModuleInstalled('extranet')
+				? 'extranet'
+				: 'shop'
+		);
+
+		$serializedValue = serialize([]);
+
+		$conditionList[] = [
+			'PATTERN' => 'UF_DEPARTMENT',
+			'VALUE' => "WHEN %s = '".$serializedValue."' THEN '".$extranetUserType."'"
+		];
+		$conditionList[] = [
+			'PATTERN' => 'UF_DEPARTMENT',
+			'VALUE' => "WHEN %s IS NULL THEN '".$extranetUserType."'"
+		];
+		$conditionListInner[] = [
+			'PATTERN' => 'UTS_OBJECT_INNER.UF_DEPARTMENT',
+			'VALUE' => "WHEN %s = '".$serializedValue."' THEN '".$extranetUserType."'"
+		];
+		$conditionListInner[] = [
+			'PATTERN' => 'UTS_OBJECT_INNER.UF_DEPARTMENT',
+			'VALUE' => "WHEN %s IS NULL THEN '".$extranetUserType."'"
+		];
 
 		// add USER_TYPE with left join
 		$condition = "CASE ";

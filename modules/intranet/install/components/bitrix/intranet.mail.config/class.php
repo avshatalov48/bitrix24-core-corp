@@ -26,7 +26,7 @@ class CIntranetMailConfigComponent extends CBitrixComponent
 
 			foreach ($urlTemplates as $page => $path)
 			{
-				$key = 'PATH_TO_MAIL_CFG_'.strtoupper($page);
+				$key = 'PATH_TO_MAIL_CFG_'.mb_strtoupper($page);
 				$this->arResult[$key] = $this->arParams[$key] ?: $this->arParams['SEF_FOLDER'].$path;
 			}
 
@@ -40,10 +40,10 @@ class CIntranetMailConfigComponent extends CBitrixComponent
 
 			foreach ($defaultUrlTemplates as $page => $path)
 			{
-				$this->arResult['PATH_TO_MAIL_CFG_'.strtoupper($page)] = sprintf(
+				$this->arResult['PATH_TO_MAIL_CFG_'.mb_strtoupper($page)] = sprintf(
 					'%s?page=%s',
 					$APPLICATION->getCurPage(),
-					strtolower($page)
+					mb_strtolower($page)
 				);
 			}
 
@@ -55,7 +55,7 @@ class CIntranetMailConfigComponent extends CBitrixComponent
 		{
 			foreach ($this->arResult as $code => &$field)
 			{
-				if (strpos($code, 'PATH_TO_MAIL_') === 0)
+				if (mb_strpos($code, 'PATH_TO_MAIL_') === 0)
 				{
 					$uri = new \Bitrix\Main\Web\Uri($field);
 					$uri->addParams(array('IFRAME' => 'Y'));

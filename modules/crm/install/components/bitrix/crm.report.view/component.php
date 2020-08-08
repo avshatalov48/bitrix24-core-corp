@@ -7,7 +7,7 @@ foreach ($requiredModules as $requiredModule)
 {
 	if (!CModule::IncludeModule($requiredModule))
 	{
-		ShowError(strtoupper($requiredModule).'_MODULE_NOT_INSTALLED');
+		ShowError(mb_strtoupper($requiredModule).'_MODULE_NOT_INSTALLED');
 		return 0;
 	}
 }

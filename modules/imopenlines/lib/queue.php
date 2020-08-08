@@ -223,89 +223,6 @@ class Queue
 	}
 
 	/**
-	 * Returns whether the operator works according to the working time accounting.
-	 *
-	 * @param $userId
-	 * @param bool $ignorePause
-	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
-	 */
-	public static function getActiveStatusByTimeman($userId, $ignorePause = false)
-	{
-		$result = false;
-
-		if ($userId > 0)
-		{
-			if (Config::isTimeManActive())
-			{
-				$tmUser = new \CTimeManUser($userId);
-				$tmSettings = $tmUser->GetSettings(['UF_TIMEMAN']);
-				if (!$tmSettings['UF_TIMEMAN'])
-				{
-					$result = true;
-				}
-				else
-				{
-					$tmUser->GetCurrentInfo(true); // need for reload cache
-					if ($tmUser->State() == 'OPENED')
-					{
-						$result = true;
-					}
-					elseif($ignorePause == true && $tmUser->State() == 'PAUSED')
-					{
-						$result = true;
-					}
-					else
-					{
-						$result = false;
-					}
-				}
-			}
-			else
-			{
-				$result = true;
-			}
-		}
-
-		return $result;
-	}
-
-	/**
-	 * Check operator absent in intranet (not including workime pause and workime end)
-	 *
-	 * @param $operatorId
-	 *
-	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 */
-	public static function isOperatorAbsent($operatorId)
-	{
-		if (Loader::includeModule('intranet'))
-		{
-			$result = UserAbsence::isAbsentOnVacation($operatorId, true);
-		}
-		else
-		{
-			$result = false;
-		}
-
-		return $result;
-	}
-
-	/**
-	 * Returns the time in a second after which the operator is considered offline.
-	 *
-	 * @return int
-	 */
-	public static function getTimeLastActivityOperator()
-	{
-		return ModuleManager::isModuleInstalled('bitrix24')? 1440: 180;
-	}
-
-	/**
 	 * @param $params
 	 * @return \Bitrix\Main\ORM\Query\Result
 	 * @throws \Bitrix\Main\ArgumentException
@@ -355,63 +272,6 @@ class Queue
 		}
 
 		return $query->exec();
-	}
-
-	/**
-	 * This operator online?
-	 *
-	 * @param $id int The user ID of the operator.
-	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	public static function isOperatorOnline($id)
-	{
-		$result = true;
-
-		if(self::isRealOperator($id))
-		{
-			if(Loader::includeModule('im'))
-			{
-				$result = \Bitrix\ImOpenLines\Im::userIsOnline($id);
-			}
-			else
-			{
-				$result = \CUser::IsOnLine($id, self::getTimeLastActivityOperator());
-			}
-		}
-
-		return $result;
-	}
-
-	/**
-	 * This real operator online? That's not a bot, not a user of the connector.
-	 *
-	 * @param $id
-	 *
-	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
-	 */
-	public static function isRealOperator($id)
-	{
-		$result = true;
-
-		if (Loader::includeModule('im'))
-		{
-			$userIm = Im\User::getInstance($id);
-
-			if(
-				$userIm->isConnector() ||
-				$userIm->isBot()
-			)
-			{
-				$result = false;
-			}
-		}
-
-		return $result;
 	}
 
 	/**
@@ -581,79 +441,127 @@ class Queue
 	 */
 	public static function getUserData($lineId, $userId, $nullForUnprocessed = false)
 	{
-		if ($userId <= 0)
+		$result = null;
+
+		if ($userId > 0)
 		{
-			return null;
+			$user = \Bitrix\Im\User::getInstance($userId);
+
+			if($user->isExists())
+			{
+				$currentUserData = [
+					'ID' => (int)$userId,
+					'NAME' => $user->getFullName(false),
+					'FIRST_NAME' => $user->getName(false),
+					'LAST_NAME' => $user->getLastName(false),
+					'WORK_POSITION' => '',
+					'GENDER' => $user->getGender(),
+					'AVATAR' => $user->getAvatar(),
+					'AVATAR_ID' => $user->getAvatarId(),
+					'ONLINE' => $user->isOnline()
+				];
+
+				if ($user->isExtranet())
+				{
+					$result = $nullForUnprocessed? null: $currentUserData;
+				}
+				else
+				{
+					//TODO: Forced replacement of aliases.
+					if (function_exists('customImopenlinesOperatorNames'))
+					{
+						$customData = customImopenlinesOperatorNames($lineId, [
+							'ID' => (int)$currentUserData['ID'],
+							'NAME' => $currentUserData['FIRST_NAME'],
+							'FIRST_NAME' => '',
+							'LAST_NAME' => $currentUserData['LAST_NAME'],
+							'WORK_POSITION' => '',
+							'GENDER' => $currentUserData['GENDER'],
+							'AVATAR' => $currentUserData['AVATAR'],
+							'AVATAR_ID' => $currentUserData['AVATAR_ID'],
+							'EXTERNAL_AUTH_ID' => $user->getExternalAuthId(),
+							'ONLINE' => $currentUserData['ONLINE']
+						]);
+						if (!$customData)
+						{
+							$result = $nullForUnprocessed? null: $currentUserData;
+						}
+						else
+						{
+							$result['ID'] = (int)$customData['ID'];
+							$result['NAME'] = (string)\Bitrix\Im\User::formatFullNameFromDatabase($customData);
+							$result['FIRST_NAME'] = (string)\Bitrix\Im\User::formatNameFromDatabase($customData);
+							$result['LAST_NAME'] = (string)$customData['LAST_NAME'];
+							$result['WORK_POSITION'] = (string)$customData['WORK_POSITION'];
+							$result['AVATAR'] = (string)$customData['AVATAR'];
+							$result['AVATAR_ID'] = (int)$customData['AVATAR_ID'];
+							$result['ONLINE'] = (bool)$customData['ONLINE'];
+						}
+					}
+					else
+					{
+						$result = self::setQueueUserData($lineId, $currentUserData);
+						if (!$result)
+						{
+							$result = $nullForUnprocessed? null: $currentUserData;
+						}
+					}
+				}
+
+				if (!empty($result['AVATAR']))
+				{
+					$result['AVATAR'] = substr($result['AVATAR'], 0, 4) == 'http' ? $result['AVATAR']: \Bitrix\ImOpenLines\Common::getServerAddress() . $result['AVATAR'];
+				}
+			}
 		}
 
-		$user = \Bitrix\Im\User::getInstance($userId);
-		if (!$user->isExists())
+		return $result;
+	}
+
+	/**
+	 * Returns the current ID of the open line for the specified session.
+	 *
+	 * @param $params
+	 * @return int
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function getActualLineId($params)
+	{
+		$result = 0;
+
+		if(!empty($params['LINE_ID']))
 		{
-			return null;
+			$result = $params['LINE_ID'];
 		}
 
-		$currentUserData = [
-			'ID' => $userId,
-			'NAME' => $user->getFullName(false),
-			'FIRST_NAME' => $user->getName(false),
-			'LAST_NAME' => $user->getLastName(false),
-			'WORK_POSITION' => '',
-			'GENDER' => $user->getGender(),
-			'AVATAR' => $user->getAvatar(),
-			'AVATAR_ID' => $user->getAvatarId(),
-			'ONLINE' => $user->isOnline()
-		];
-		if (!empty($result['AVATAR']))
+		if(!empty($params['USER_CODE']))
 		{
-			$currentUserData['AVATAR'] = substr($currentUserData['AVATAR'], 0, 4) == 'http'? $currentUserData['AVATAR']: \Bitrix\ImOpenLines\Common::getServerAddress().$currentUserData['AVATAR'];
-		}
+			//TODO: Replace with the method \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId or \Bitrix\ImOpenLines\Chat::parseLiveChatEntityId
+			list($connectorId, $result, $connectorChatId, $connectorUserId) = explode('|', $params['USER_CODE']);
 
-		if ($user->isExtranet())
-		{
-			return $nullForUnprocessed? null: $currentUserData;
-		}
-
-		if (function_exists('customImopenlinesOperatorNames'))
-		{
-			$customData = customImopenlinesOperatorNames($lineId, [
-				'ID' => $currentUserData['ID'],
-				'NAME' => $currentUserData['FIRST_NAME'],
-				'FIRST_NAME' => '',
-				'LAST_NAME' => $currentUserData['LAST_NAME'],
-				'WORK_POSITION' => '',
-				'GENDER' => $currentUserData['GENDER'],
-				'AVATAR' => $currentUserData['AVATAR'],
-				'AVATAR_ID' => $currentUserData['AVATAR_ID'],
-				'EXTERNAL_AUTH_ID' => $user->getExternalAuthId(),
-				'ONLINE' => $currentUserData['ONLINE']
+			$raw = SessionTable::getList([
+				'select' => ['CONFIG_ID'],
+				'filter' => [
+					'=USER_CODE' => $params['USER_CODE'],
+					'=CLOSED' => 'N'
+				],
+				'order' => [
+					'ID' => 'DESC'
+				],
+				"cache" => ["ttl" => 3600]
 			]);
-			if (!$customData)
+			if ($session = $raw->fetch())
 			{
-				return $nullForUnprocessed? null: $currentUserData;
-			}
-
-			$result['ID'] = $customData['ID'];
-			$result['NAME'] = (string)\Bitrix\Im\User::formatFullNameFromDatabase($customData);
-			$result['FIRST_NAME'] = (string)\Bitrix\Im\User::formatNameFromDatabase($customData);
-			$result['LAST_NAME'] = (string)$customData['LAST_NAME'];
-			$result['WORK_POSITION'] = (string)$customData['WORK_POSITION'];
-			$result['AVATAR'] = (string)$customData['AVATAR'];
-			$result['AVATAR_ID'] = (int)$customData['AVATAR_ID'];
-			$result['ONLINE'] = (bool)$customData['ONLINE'];
-		}
-		else
-		{
-			$result = self::setQueueUserData($lineId, $currentUserData);
-			if (!$result)
-			{
-				return $nullForUnprocessed? null: $currentUserData;
+				if(!empty($session['CONFIG_ID']))
+				{
+					$result = $session['CONFIG_ID'];
+				}
 			}
 		}
 
-		if (!empty($result['AVATAR']))
-		{
-			$result['AVATAR'] = substr($result['AVATAR'], 0, 4) == 'http'? $result['AVATAR']: \Bitrix\ImOpenLines\Common::getServerAddress().$result['AVATAR'];
-		}
 
 		return $result;
 	}
@@ -697,56 +605,299 @@ class Queue
 	}
 
 	/**
+	 * @param string $reasonReturn
+	 * @param $session
+	 * @return bool|int
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public static function sendMessageReturnedSession($reasonReturn = Queue::REASON_DEFAULT, $session)
+	{
+		$message = '';
+		$result = false;
+
+		if($session['OPERATOR_ID'] > 0 && $session['STATUS'] >= Session::STATUS_ANSWER)
+		{
+			switch ($reasonReturn) {
+				case Queue::REASON_OPERATOR_ABSENT:
+					$message = Loc::getMessage('IMOL_QUEUE_OPERATOR_VACATION');
+					break;
+				case Queue::REASON_OPERATOR_DAY_PAUSE:
+				case Queue::REASON_OPERATOR_DAY_END:
+					$message = Loc::getMessage('IMOL_QUEUE_OPERATOR_NONWORKING');
+					break;
+				case Queue::REASON_OPERATOR_DELETED:
+					$message = Loc::getMessage('IMOL_QUEUE_OPERATOR_DISMISSAL');
+					break;
+				case Queue::REASON_REMOVED_FROM_QUEUE:
+					$message = Loc::getMessage('IMOL_QUEUE_OPERATOR_REMOVING');
+					break;
+				case Queue::REASON_OPERATOR_NOT_AVAILABLE:
+					$message = Loc::getMessage('IMOL_QUEUE_OPERATOR_NOT_AVAILABLE');
+					break;
+			}
+
+			if(!empty($message))
+			{
+				$messageFields = array(
+					"TO_CHAT_ID" => $session['CHAT_ID'],
+					"MESSAGE" => $message,
+					"SYSTEM" => "Y",
+					"RECENT_ADD" => 'N'
+				);
+				$result = \Bitrix\ImOpenLines\Im::addMessage($messageFields);
+			}
+		}
+
+		return $result;
+	}
+
+	//Operators queue
+	/**
+	 * This real operator online? That's not a bot, not a user of the connector.
+	 *
+	 * @param $id
+	 *
+	 * @return bool
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public static function isRealOperator(int $id): bool
+	{
+		$result = true;
+
+		if (Loader::includeModule('im'))
+		{
+			$userIm = Im\User::getInstance($id);
+
+			if(
+				$userIm->isConnector() ||
+				$userIm->isBot()
+			)
+			{
+				$result = false;
+			}
+		}
+
+		return $result;
+	}
+
+	/**
 	 * Basic check that the operator is active.
 	 *
 	 * @param $userId
-	 * @param string $isTimeMan
 	 * @param string $isCheckAvailable
+	 * @param bool $ignorePause
 	 * @return bool
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\LoaderException
 	 * @throws \Bitrix\Main\ObjectException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function isOperatorActive($userId, $isTimeMan = 'N', $isCheckAvailable = 'Y')
+	public static function isOperatorActive($userId, $isCheckAvailable = 'Y', bool $ignorePause = false)
 	{
 		$result = true;
 
-		if($isCheckAvailable == 'Y')
+		if (
+			Loader::includeModule('im') &&
+			self::isRealOperator($userId)
+		)
 		{
-			if (!Loader::includeModule('im'))
-			{
-				$result = false;
-			}
-
 			if ($result && !Im\User::getInstance($userId)->isActive())
 			{
 				$result = false;
 			}
 
-			if ($result && Im\User::getInstance($userId)->isAbsent())
+			if(
+				$result === true &&
+				$isCheckAvailable == 'Y'
+			)
 			{
-				$result = false;
-			}
-
-			if($result)
-			{
-				if($isTimeMan == "Y")
+				if ($result && Im\User::getInstance($userId)->isAbsent())
 				{
-					if(!self::getActiveStatusByTimeman($userId))
-					{
-						$result = false;
-					}
+					$result = false;
 				}
-				else
+
+				if($result === true)
 				{
-					$result = self::isOperatorOnline($userId);
+					if(Config::isTimeManActive() == 'Y')
+					{
+						if(!self::getActiveStatusByTimeman($userId, $ignorePause))
+						{
+							$result = false;
+						}
+					}
+					else
+					{
+						$result = self::isOperatorOnline($userId);
+					}
 				}
 			}
 		}
 
 		return $result;
 	}
+
+	/**
+	 * Are there any available operators in the line.
+	 *
+	 * @param $idLine
+	 * @param string $isCheckAvailable
+	 * @param bool $ignorePause
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function isOperatorsActiveLine($idLine, $isCheckAvailable = 'Y', bool $ignorePause = false): bool
+	{
+		$result = false;
+
+		$res = self::getList([
+			'select' => [
+				'ID',
+				'USER_ID'
+			],
+			'filter' => [
+				'=CONFIG_ID' => $idLine
+			]
+		]);
+
+		while($queueUser = $res->fetch())
+		{
+			if(self::isOperatorActive($queueUser['USER_ID'], $isCheckAvailable, $ignorePause))
+			{
+				$result = true;
+
+				break;
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Returns whether the operator works according to the working time accounting.
+	 *
+	 * @param $userId
+	 * @param bool $ignorePause
+	 * @return bool
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public static function getActiveStatusByTimeman(int $userId, bool $ignorePause = false): bool
+	{
+		$result = false;
+
+		if ($userId > 0)
+		{
+			if (Config::isTimeManActive())
+			{
+				$tmUser = new \CTimeManUser($userId);
+				$tmSettings = $tmUser->GetSettings(['UF_TIMEMAN']);
+				if (!$tmSettings['UF_TIMEMAN'])
+				{
+					$result = true;
+				}
+				else
+				{
+					$tmUser->GetCurrentInfo(true); // need for reload cache
+					if ($tmUser->State() == 'OPENED')
+					{
+						$result = true;
+					}
+					elseif(
+						$ignorePause === true &&
+						$tmUser->State() == 'PAUSED')
+					{
+						$result = true;
+					}
+					else
+					{
+						$result = false;
+					}
+				}
+			}
+			else
+			{
+				$result = true;
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Returns the time in a second after which the operator is considered offline.
+	 *
+	 * @return int
+	 */
+	public static function getTimeLastActivityOperator()
+	{
+		return ModuleManager::isModuleInstalled('bitrix24')? 1440: 180;
+	}
+
+	/**
+	 * This operator online?
+	 *
+	 * @param $id int The user ID of the operator.
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function isOperatorOnline($id)
+	{
+		$result = true;
+
+		if(self::isRealOperator($id))
+		{
+			if(Loader::includeModule('im'))
+			{
+				$result = \Bitrix\ImOpenLines\Im::userIsOnline($id);
+			}
+			else
+			{
+				$result = \CUser::IsOnLine($id, self::getTimeLastActivityOperator());
+			}
+		}
+
+		return $result;
+	}
+
+
+	/**
+	 * Returns true if OpenLine has only one operator.
+	 *
+	 * @param int $lineId OpenLine(config) ID.
+	 * @param int $operatorId The operator ID which we want to check.
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function isOperatorSingleInLine(int $lineId, int $operatorId): bool
+	{
+		if ($lineId > 0)
+		{
+			$query = new Query(QueueTable::getEntity());
+			$query->setSelect(['USER_ID']);
+			$query->setFilter(['CONFIG_ID' => $lineId]);
+			$query->countTotal(true);
+			$count = $query->exec()->getCount();
+
+			if ($count === 1)
+			{
+				$queue = $query->exec()->fetch();
+				if ((int)$queue['USER_ID'] === $operatorId)
+				{
+					return true;
+				}
+
+			}
+		}
+		return false;
+	}
+
 
 	/**
 	 * How many chats can accept this statement.
@@ -823,53 +974,4 @@ class Queue
 
 		return $result;
 	}
-
-	/**
-	 * @param string $reasonReturn
-	 * @param $session
-	 * @return bool|int
-	 * @throws \Bitrix\Main\LoaderException
-	 */
-	public static function sendMessageReturnedSession($reasonReturn = Queue::REASON_DEFAULT, $session)
-	{
-		$message = '';
-		$result = false;
-
-		if($session['OPERATOR_ID'] > 0 && $session['STATUS'] >= Session::STATUS_ANSWER)
-		{
-			switch ($reasonReturn) {
-				case Queue::REASON_OPERATOR_ABSENT:
-					$message = Loc::getMessage('IMOL_QUEUE_OPERATOR_VACATION');
-					break;
-				case Queue::REASON_OPERATOR_DAY_PAUSE:
-				case Queue::REASON_OPERATOR_DAY_END:
-					$message = Loc::getMessage('IMOL_QUEUE_OPERATOR_NONWORKING');
-					break;
-				case Queue::REASON_OPERATOR_DELETED:
-					$message = Loc::getMessage('IMOL_QUEUE_OPERATOR_DISMISSAL');
-					break;
-				case Queue::REASON_REMOVED_FROM_QUEUE:
-					$message = Loc::getMessage('IMOL_QUEUE_OPERATOR_REMOVING');
-					break;
-				case Queue::REASON_OPERATOR_NOT_AVAILABLE:
-					$message = Loc::getMessage('IMOL_QUEUE_OPERATOR_NOT_AVAILABLE');
-					break;
-			}
-
-			if(!empty($message))
-			{
-				$messageFields = array(
-					"TO_CHAT_ID" => $session['CHAT_ID'],
-					"MESSAGE" => $message,
-					"SYSTEM" => "Y",
-					"RECENT_ADD" => 'N'
-				);
-				$result = \Bitrix\ImOpenLines\Im::addMessage($messageFields);
-			}
-		}
-
-		return $result;
-	}
-
-	//END STATIC
 }

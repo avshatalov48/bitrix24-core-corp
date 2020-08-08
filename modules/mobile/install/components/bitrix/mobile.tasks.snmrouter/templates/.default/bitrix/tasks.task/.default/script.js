@@ -941,49 +941,18 @@
 				BXMobileApp.UI.Page.LoadingScreen.show();
 			}
 
-			BX.Mobile.Tasks.CheckListInstance.getTreeStructure().appendRequestLayout();
-
-			var formData = BX.ajax.prepareForm(obForm).data,
-				data = formData.data,
-				id = this.task["ID"],
-				url = BX.util.add_url_param(BX.message("TASK_PATH_TO_AJAX"), {act : "update", id : id}),
-				ii, node, tmp;
-
-			if (data["SE_AUDITOR"])
+			if (BX.Mobile.Tasks.CheckListInstance)
 			{
-				tmp = data["SE_AUDITOR"];
-				data["SE_AUDITOR"] = [];
-				while ((ii = tmp.pop()) && ii)
-					data["SE_AUDITOR"].push({ID : ii});
-			}
-			if (data["SE_ACCOMPLICE"])
-			{
-				tmp = data["SE_ACCOMPLICE"];
-				data["SE_ACCOMPLICE"] = [];
-				while ((ii = tmp.pop()) && ii)
-					data["SE_ACCOMPLICE"].push({ID : ii});
-			}
-			if (data['DEADLINE'] === '0')
-			{
-				data['DEADLINE'] = '';
-			}
-			if (obForm.elements['ADDITIONAL[]'])
-			{
-				for (ii = 0; ii < obForm.elements['ADDITIONAL[]'].length; ii++)
-				{
-					node = obForm.elements['ADDITIONAL[]'][ii];
-					data[node.value] = (node.checked ? "Y" : "N");
-				}
+				BX.Mobile.Tasks.CheckListInstance.getTreeStructure().appendRequestLayout();
 			}
 
-			if (this.restricted)
-			{
-				delete data["SE_CHECKLIST"];
-			}
+			var formData = BX.ajax.prepareForm(obForm).data;
+			var data = this.prepareFromData(obForm, formData.data);
+			var taskId = this.task['ID'];
+			var url = BX.util.add_url_param(BX.message("TASK_PATH_TO_AJAX"), {act : "update", id : taskId});
+			var params = {id: taskId, userid: BX.message("USER_ID"), taskid: taskId, data: data, parameters: {RETURN_ENTITY: true}};
 
-			var params = {id: id, userid: BX.message("USER_ID"), taskid: id, data: data, parameters: {RETURN_ENTITY: true}};
-
-			(new BX.Tasks.Util.Query({url: url})).add((id > 0 ? 'task.update' : 'task.add'), params, {}, {
+			(new BX.Tasks.Util.Query({url: url})).add((taskId > 0 ? 'task.update' : 'task.add'), params, {}, {
 				onExecuted: BX.proxy(function(response) {
 					if (response && response.response && response.response.status == 'failed')
 					{
@@ -1033,6 +1002,52 @@
 					}
 				}, this)
 			}).execute();
+		},
+
+		prepareFromData: function(form, data)
+		{
+			var preparedData = data;
+			var emptyEquals = {
+				MARK: 'NULL',
+				DEADLINE: '0',
+			};
+
+			Object.keys(emptyEquals).forEach(function(key) {
+				if (preparedData[key] === emptyEquals[key])
+				{
+					preparedData[key] = '';
+				}
+			});
+
+			['SE_AUDITOR', 'SE_ACCOMPLICE'].forEach(function(key) {
+				if (preparedData[key])
+				{
+					var id;
+					var members = [];
+
+					while ((id = preparedData[key].pop()) && id)
+					{
+						members.push({ID : id});
+					}
+					preparedData[key] = members;
+				}
+			});
+
+			if (form.elements['ADDITIONAL[]'])
+			{
+				for (var i = 0; i < form.elements['ADDITIONAL[]'].length; i++)
+				{
+					var node = form.elements['ADDITIONAL[]'][i];
+					preparedData[node.value] = (node.checked ? 'Y' : 'N');
+				}
+			}
+
+			if (this.restricted)
+			{
+				delete preparedData['SE_CHECKLIST'];
+			}
+
+			return preparedData;
 		},
 
 		getFormElement: function(type)

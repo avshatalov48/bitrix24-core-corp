@@ -25,7 +25,7 @@ if ($arParams['NUM_USERS'] <= 0)
 
 $arParams['DEPARTMENT'] = intval($arParams['DEPARTMENT']);
 
-if (strlen(trim($arParams["NAME_TEMPLATE"])) <= 0)
+if (trim($arParams["NAME_TEMPLATE"]) == '')
 	$arParams["NAME_TEMPLATE"] = CSite::GetNameFormat();
 $arParams['SHOW_LOGIN'] = $arParams['SHOW_LOGIN'] != "N" ? "Y" : "N";
 

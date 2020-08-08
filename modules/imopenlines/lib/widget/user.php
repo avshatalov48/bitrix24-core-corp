@@ -57,7 +57,7 @@ class User
 
 			$userData = \Bitrix\Main\UserTable::getList([
 				'select' => ['ID', 'EXTERNAL_AUTH_ID'],
-				'filter' => ['XML_ID' => 'livechat|'.$userCode]
+				'filter' => ['=XML_ID' => 'livechat|'.$userCode]
 			])->fetch();
 			if ($userData && $userData['EXTERNAL_AUTH_ID'] == self::EXTERNAL_AUTH_ID)
 			{

@@ -46,6 +46,16 @@ class Bitrix24Manager
 		return \CBitrix24BusinessTools::isToolAvailable($userId, $entityType, false);
 	}
 
+	public static function isUserRestricted(int $userId): bool
+	{
+		if (!Loader::includeModule('bitrix24'))
+		{
+			return false;
+		}
+
+		return \Bitrix\Bitrix24\Limits\User::isUserRestricted($userId);
+	}
+
 	/**
 	 * Returns true if tariff for this portal is not free.
 	 *
@@ -90,6 +100,16 @@ class Bitrix24Manager
 		return true;
 	}
 
+	public static function getFeatureVariable($feature)
+	{
+		if (Loader::includeModule('bitrix24'))
+		{
+			return Feature::getVariable($feature);
+		}
+
+		return null;
+	}
+
 	public static function filterJsAction($feature, $jsAction, $skip = false)
 	{
 		if ($skip || self::isFeatureEnabled($feature))
@@ -109,7 +129,7 @@ class Bitrix24Manager
 			$feature = 'disk_external_link';
 		}
 
-		$featureInMessage = strtoupper($feature);
+		$featureInMessage = mb_strtoupper($feature);
 
 		return [
 			'title' => GetMessageJS("DISK_B24_FEATURES_{$featureInMessage}_1_TITLE"),

@@ -1,0 +1,9 @@
+.salescenter-company-contacts-item-preview-image{display:block;overflow:hidden;width:375px;}
+
+.salescenter-company-contacts-prev,
+.salescenter-company-contacts-prev-en,
+.salescenter-company-contacts-prev-ua {
+    background: url('images/images/salescenter-company-contacts-prev.png') no-repeat 0 0; display:block;overflow:hidden;width:375px;height:741px;background-size:100%;}
+
+.salescenter-company-contacts-prev-en {
+    background-image: url('images/images/salescenter-company-contacts-prev-en.png');}.salescenter-company-contacts-prev-ua{height:793px;    background-image: url('images/images/salescenter-company-contacts-prev-ua.png');}

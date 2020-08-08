@@ -35,7 +35,7 @@ $MESS["MENU_SETTINGS_SECTION"] = "Settings";
 $MESS["MENU_SHOP"] = "Online Store";
 $MESS["MENU_SITES"] = "Sites";
 $MESS["MENU_TARIFF"] = "Subscription";
-$MESS["MENU_TASKS"] = "Tasks";
+$MESS["MENU_TASKS"] = "Tasks and Projects";
 $MESS["MENU_TELEPHONY_SECTION"] = "Telephony";
 $MESS["MENU_TIMEMAN_SECTION"] = "Time and Reports";
 ?>

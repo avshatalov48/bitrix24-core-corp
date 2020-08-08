@@ -15,7 +15,7 @@ use \Bitrix\Main\Localization\Loc;
 				<div class="imconnector-field-box-subtitle">
 					<?=Loc::getMessage('IMCONNECTOR_COMPONENT_AVITO_USER_ID')?>
 				</div>
-					<?=htmlspecialcharsbx($arResult['INFO_CONNECTION']['ID'])?>
+					<?=htmlspecialcharsbx($arResult['FORM']['INFO_CONNECTION']['id'])?>
 			</div>
 		</div>
 	</div>

@@ -253,7 +253,7 @@ class InvoiceRequisiteConverter extends EntityRequisiteConverter
 			$key = self::getAlphanum($value);
 			if($key !== '')
 			{
-				return strtoupper($key);
+				return mb_strtoupper($key);
 			}
 		}
 		return '';

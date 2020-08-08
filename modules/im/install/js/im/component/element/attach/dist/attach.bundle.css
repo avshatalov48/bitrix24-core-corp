@@ -107,6 +107,8 @@
 .bx-im-element-attach-type-display-card + .bx-im-element-attach-type-display-card {
 
 }
+.bx-im-element-attach-type-html {
+}
 .bx-im-element-attach-type-file {
 	display: -webkit-box;
 	display: -ms-flexbox;
@@ -151,8 +153,6 @@
 	color: #717171;
 	font-size: 12px;
 }
-.bx-im-element-attach-type-html {
-}
 .bx-im-element-attach-type-image {
     border-radius: 6px;
     overflow: hidden;
@@ -194,6 +194,17 @@
 	min-width: 50px;
 	min-height: 50px;
 }
+.bx-im-element-attach-type-link-image {
+	cursor: pointer;
+}
+.bx-im-element-attach-type-link-name {
+	cursor: pointer;
+	color: #1d54a2;
+}
+.bx-im-element-attach-type-link-name:hover {
+	text-decoration: underline;
+}
+
 .bx-im-element-attach-type-rich {
 	background: #fff;
     border-radius: 10px;
@@ -214,17 +225,6 @@
 }
 .bx-im-element-attach-type-rich-desc {
 	padding: 0 10px 10px;
-}
-
-.bx-im-element-attach-type-link-image {
-	cursor: pointer;
-}
-.bx-im-element-attach-type-link-name {
-	cursor: pointer;
-	color: #1d54a2;
-}
-.bx-im-element-attach-type-link-name:hover {
-	text-decoration: underline;
 }
 
 .bx-im-element-attach-type-user {

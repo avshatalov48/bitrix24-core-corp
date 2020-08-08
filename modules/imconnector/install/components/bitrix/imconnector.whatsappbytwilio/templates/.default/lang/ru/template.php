@@ -11,7 +11,7 @@ $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECT_TITLE"] = "Подключ�
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECT_STEP"] = "Для подключения необходимо <a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">выполнить ряд действий</a>.";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INFO_CONNECT_ID"] = "redirect=detail&code=10102021";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INFO_CONNECT_CONNECT_ID"] = "redirect=detail&code=10102021";
-$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INSTRUCTION_TITLE"] = "<span class=\"imconnector-field-box-text-bold\">Инструкция</span> по подключению бизнесс аккаунта WhatsApp:";
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INSTRUCTION_TITLE"] = "<span class=\"imconnector-field-box-text-bold\">Инструкция</span> по подключению бизнес аккаунта WhatsApp:";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INFO"] = "Информация";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECT_HELP"] = "<div class=\"imconnector-field-button-subtitle\">Я хочу</div>
 				<div class=\"imconnector-field-button-name\"><span class=\"imconnector-field-box-text-bold\">Подключить</span> WhatsApp через Twilio</div>";

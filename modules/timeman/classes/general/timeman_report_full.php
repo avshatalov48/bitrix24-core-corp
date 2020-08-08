@@ -525,9 +525,22 @@ class CUserReportFull
 	public function SetPeriod($arFields)
 	{
 		global $USER;
+
 		$period = $this->GetEntityID($arFields["UF_REPORT_PERIOD"]);
-		$arFields["UF_REPORT_PERIOD"] = $period["ID"];
+
 		$arFields["UF_LAST_REPORT_DATE"] = "";
+
+		$arOldSetting = $this->getSettings();
+		if (
+			$arOldSetting["UF_REPORT_PERIOD"] != $arFields['UF_REPORT_PERIOD'] &&
+			($arOldSetting["UF_REPORT_PERIOD"] == "NONE" || $arFields["UF_REPORT_PERIOD"] == "NONE")
+		)
+		{
+			// set last date
+			$arFields["UF_SETTING_DATE"] = ConvertTimeStampForReport(time(), "FULL");
+		}
+
+		$arFields["UF_REPORT_PERIOD"] = $period["ID"];
 
 		if($USER->Update($this->USER_ID,$arFields))
 		{
@@ -1687,6 +1700,23 @@ class CReportNotifications
 					'PERSONAL_PHOTO' => $manager['PERSONAL_PHOTO'],
 					'SEX'=>$manager["PERSONAL_GENDER"]
 				);
+
+			if (intVal($tmpUser["PERSONAL_PHOTO"]) <= 0)
+			{
+				switch($tmpUser["SEX"])
+				{
+					case "M":
+						$suffix = "male";
+						break;
+					case "F":
+						$suffix = "female";
+						break;
+					default:
+						$suffix = "unknown";
+				}
+				$tmpUser["PERSONAL_PHOTO"] = COption::GetOptionInt("socialnetwork", "default_user_picture_".$suffix, false, SITE_ID);
+			}
+
 			if ($manager['ID'] == $arReport["USER_ID"])
 				$arUser = $tmpUser;
 			if (($manager['ID'] != $arReport["USER_ID"]) || count($arManagers) == 1)

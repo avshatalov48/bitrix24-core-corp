@@ -19,9 +19,10 @@ abstract class Body
 	protected $excludedPlaceholders = [];
 	protected $arrayValuePlaceholders = [];
 
-	const BLOCK_START_PLACEHOLDER = 'BLOCK_START';
-	const BLOCK_END_PLACEHOLDER = 'BLOCK_END';
-	const DO_NOT_INSERT_VALUE_MODIFIER = '__SystemDeletePlaceholder';
+	public const ARRAY_INDEX_MODIFIER = 'index';
+	public const BLOCK_START_PLACEHOLDER = 'BLOCK_START';
+	public const BLOCK_END_PLACEHOLDER = 'BLOCK_END';
+	protected const DO_NOT_INSERT_VALUE_MODIFIER = '__SystemDeletePlaceholder';
 
 	/**
 	 * Body constructor.
@@ -340,7 +341,7 @@ abstract class Body
 	 */
 	protected function printValue($value, $placeholder, $modifier = '', array $params = [])
 	{
-		if(strpos($modifier, static::DO_NOT_INSERT_VALUE_MODIFIER) !== false)
+		if(mb_strpos($modifier, static::DO_NOT_INSERT_VALUE_MODIFIER) !== false)
 		{
 			return '';
 		}
@@ -377,9 +378,9 @@ abstract class Body
 			}
 			else
 			{
-				if(isset($modifierData['index']))
+				if(isset($modifierData[static::ARRAY_INDEX_MODIFIER]))
 				{
-					$index = intval($modifierData['index']);
+					$index = (int) $modifierData[static::ARRAY_INDEX_MODIFIER];
 				}
 				$value = $this->printArrayValueByIndex($arrayProvider, $placeholder, $name, $index, $modifier);
 			}
@@ -467,14 +468,14 @@ abstract class Body
 		$placeholders = $this->getPlaceholders();
 		foreach($placeholders as $placeholder)
 		{
-			if(strpos($placeholder, $providerName.'.') === 0)
+			if(mb_strpos($placeholder, $providerName.'.') === 0)
 			{
 				$linkedPlaceholders[] = $placeholder;
 			}
 			elseif(
 				isset($this->values[$placeholder]) &&
 				is_string($this->values[$placeholder]) &&
-				strpos($this->values[$placeholder], $providerName.'.') === 0
+				mb_strpos($this->values[$placeholder], $providerName.'.') === 0
 			)
 			{
 				$linkedPlaceholders[] = $placeholder;

@@ -10,7 +10,7 @@ define('BX_SECURITY_SHOW_MESSAGE', true);
 define("NOT_CHECK_PERMISSIONS", true);
 
 $siteId = isset($_REQUEST['SITE_ID']) && is_string($_REQUEST['SITE_ID'])? $_REQUEST['SITE_ID'] : '';
-$siteId = substr(preg_replace('/[^a-z0-9_]/i', '', $siteId), 0, 2);
+$siteId = mb_substr(preg_replace('/[^a-z0-9_]/i', '', $siteId), 0, 2);
 if(!empty($siteId) && is_string($siteId))
 {
 	define('SITE_ID', $siteId);
@@ -211,7 +211,7 @@ class DiskFileUploadAjaxController extends \Bitrix\Disk\Internals\Controller
 		$search = 'bizproc';
 		foreach ($this->request->getPostList() as $idParameter => $valueParameter)
 		{
-			$res = strpos($idParameter, $search);
+			$res = mb_strpos($idParameter, $search);
 			if ($res === 0)
 			{
 				$workflowParameters[$idParameter] = $valueParameter;

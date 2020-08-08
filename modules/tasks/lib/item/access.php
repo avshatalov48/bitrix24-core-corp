@@ -131,7 +131,7 @@ class Access
 	{
 		$name = trim((string) $name);
 
-		if(strpos($name, 'can') === 0)
+		if(mb_strpos($name, 'can') === 0)
 		{
 			return new Result(); // unknown action, like "walk on ears" will be allowed
 		}

@@ -60,7 +60,7 @@ $MESS["MENU_CONFIRM_BUTTON"] = "Подтвердить";
 $MESS["MENU_DELAY_BUTTON"] = "Решу позже";
 $MESS["MENU_PRESET_TITLE"] = "Выберите, с чем вы планируете работать в <span class=\"left-menu-popup-header-link\">Битрикс24</span> чаще всего";
 $MESS["MENU_PRESET_DESC"] = "Это упростит ежедневную работу: выбранный инструмент будет открываться первым, в меню останутся только нужные вам разделы. Поменять меню вы сможете в любое время.";
-$MESS["MENU_PRESET_SOCIAL_TITLE1"] = "Офис";
+$MESS["MENU_PRESET_SOCIAL_TITLE1"] = "Онлайн-офис";
 $MESS["MENU_PRESET_SOCIAL_DESC1"] = "Общаться внутри компании";
 $MESS["MENU_PRESET_SOCIAL_DESC11"] = "Общаться и работать вместе";
 $MESS["MENU_PRESET_SOCIAL_DESC2"] = "быстро решать любые вопросы";

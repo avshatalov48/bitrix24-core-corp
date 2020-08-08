@@ -11,22 +11,24 @@ use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\ORM\Query\Filter\ConditionTree;
+use Bitrix\Main\ORM\Query\Query;
 
 class UserPermissions
 {
-	const ENTITY_SETTINGS = 'SETTINGS';
-	const ENTITY_TEMPLATES = 'TEMPLATES';
-	const ENTITY_DOCUMENTS = 'DOCUMENTS';
+	public const ENTITY_SETTINGS = 'SETTINGS';
+	public const ENTITY_TEMPLATES = 'TEMPLATES';
+	public const ENTITY_DOCUMENTS = 'DOCUMENTS';
 
-	const ACTION_VIEW = 'VIEW';
-	const ACTION_MODIFY = 'MODIFY';
-	const ACTION_CREATE = 'CREATE';
+	public const ACTION_VIEW = 'VIEW';
+	public const ACTION_MODIFY = 'MODIFY';
+	public const ACTION_CREATE = 'CREATE';
 
-	const PERMISSION_NONE = '';
-	const PERMISSION_SELF = 'A';
-	const PERMISSION_DEPARTMENT = 'D';
-	const PERMISSION_ANY = 'X';
-	const PERMISSION_ALLOW = 'X';
+	public const PERMISSION_NONE = '';
+	public const PERMISSION_SELF = 'A';
+	public const PERMISSION_DEPARTMENT = 'D';
+	public const PERMISSION_ANY = 'X';
+	public const PERMISSION_ALLOW = 'X';
 
 	protected $isAdmin;
 	protected $userId;
@@ -34,16 +36,16 @@ class UserPermissions
 	protected $availableForModifyingTemplateIds;
 	protected $relatedTemplateIds;
 
-	public function __construct($userId)
+	public function __construct(int $userId)
 	{
-		$this->userId = (int) $userId;
+		$this->userId = $userId;
 		$this->loadUserPermissions();
 	}
 
 	/**
 	 * @return bool
 	 */
-	public function canViewDocuments()
+	public function canViewDocuments(): bool
 	{
 		return (
 			$this->canModifyDocuments() ||
@@ -54,7 +56,7 @@ class UserPermissions
 	/**
 	 * @return bool
 	 */
-	public function canModifyDocuments()
+	public function canModifyDocuments(): bool
 	{
 		return $this->canPerform(static::ENTITY_DOCUMENTS, static::ACTION_MODIFY);
 	}
@@ -63,7 +65,7 @@ class UserPermissions
 	 * @param int|Document $documentId
 	 * @return bool
 	 */
-	public function canModifyDocument($documentId)
+	public function canModifyDocument($documentId): bool
 	{
 		if($this->hasAdminAccess())
 		{
@@ -92,7 +94,7 @@ class UserPermissions
 	/**
 	 * @return bool
 	 */
-	public function canModifyTemplates()
+	public function canModifyTemplates(): bool
 	{
 		return $this->canPerform(static::ENTITY_TEMPLATES, static::ACTION_MODIFY);
 	}
@@ -100,7 +102,7 @@ class UserPermissions
 	/**
 	 * @return bool
 	 */
-	public function canModifySettings()
+	public function canModifySettings(): bool
 	{
 		return $this->canPerform(static::ENTITY_SETTINGS, static::ACTION_MODIFY);
 	}
@@ -109,7 +111,7 @@ class UserPermissions
 	 * @param $templateId
 	 * @return bool
 	 */
-	public function canCreateDocumentOnTemplate($templateId)
+	public function canCreateDocumentOnTemplate(int $templateId): bool
 	{
 		if($this->hasAdminAccess())
 		{
@@ -127,7 +129,7 @@ class UserPermissions
 	 * @param int $templateId
 	 * @return bool
 	 */
-	public function canModifyTemplate($templateId)
+	public function canModifyTemplate(int $templateId): bool
 	{
 		if($this->canModifyTemplates())
 		{
@@ -144,7 +146,7 @@ class UserPermissions
 	/**
 	 * @return array
 	 */
-	public function getFilterForTemplateList()
+	public function getFilterForTemplateList(): array
 	{
 		$filter = [];
 		if($this->permissions[static::ENTITY_TEMPLATES][static::ACTION_MODIFY] === static::PERMISSION_SELF)
@@ -166,7 +168,7 @@ class UserPermissions
 	/**
 	 * @return array
 	 */
-	protected function getAvailableForModifyingTemplateIds()
+	protected function getAvailableForModifyingTemplateIds(): array
 	{
 		if(!$this->canModifyTemplates())
 		{
@@ -188,21 +190,23 @@ class UserPermissions
 		return $this->availableForModifyingTemplateIds;
 	}
 
-	/**
-	 * @return \Bitrix\Main\ORM\Query\Filter\ConditionTree
-	 */
-	public function getFilterForRelatedTemplateList()
+	public function getFilterForRelatedTemplateList(): ConditionTree
 	{
-		return \Bitrix\Main\ORM\Query\Query::filter()
+		return Query::filter()
             ->logic('or')
-            ->whereIn('USER.ACCESS_CODE', \Bitrix\Main\UserAccessTable::query()->addSelect('ACCESS_CODE')->where('USER_ID', $this->userId))
+            ->whereIn(
+            	'USER.ACCESS_CODE',
+				\Bitrix\Main\UserAccessTable::query()
+					->addSelect('ACCESS_CODE')
+					->where('USER_ID', $this->userId)
+			)
             ->where('USER.ACCESS_CODE', TemplateUserTable::ALL_USERS);
 	}
 
 	/**
 	 * @return array
 	 */
-	protected function getRelatedTemplateIds()
+	protected function getRelatedTemplateIds(): array
 	{
 		if(!$this->canModifyDocuments())
 		{
@@ -221,13 +225,13 @@ class UserPermissions
 		return $this->relatedTemplateIds;
 	}
 
-	protected function loadUserPermissions()
+	protected function loadUserPermissions(): void
 	{
 		$this->permissions = [];
 		//administrators should have full access despite everything
 		if($this->hasAdminAccess())
 		{
-			$this->permissions = $this->getAdminPermissions();
+			$this->permissions = static::getAdminPermissions();
 			return;
 		}
 
@@ -256,7 +260,7 @@ class UserPermissions
 	/**
 	 * @return bool
 	 */
-	protected function hasAdminAccess()
+	protected function hasAdminAccess(): bool
 	{
 		if($this->isAdmin === null)
 		{
@@ -286,7 +290,7 @@ class UserPermissions
 	/**
 	 * @return array
 	 */
-	public static function getEntityTitles()
+	public static function getEntityTitles(): array
 	{
 		Loc::loadLanguageFile(__FILE__);
 		return [
@@ -299,7 +303,7 @@ class UserPermissions
 	/**
 	 * @return array
 	 */
-	public static function getActionTitles()
+	public static function getActionTitles(): array
 	{
 		Loc::loadLanguageFile(__FILE__);
 		return [
@@ -312,7 +316,7 @@ class UserPermissions
 	 * @param null $entity
 	 * @return array
 	 */
-	public static function getPermissionTitles($entity = null)
+	public static function getPermissionTitles($entity = null): array
 	{
 		Loc::loadLanguageFile(__FILE__);
 		$titles = [
@@ -333,7 +337,7 @@ class UserPermissions
 	 * @internal
 	 * @return array
 	 */
-	public static function getMap()
+	public static function getMap(): array
 	{
 		return [
 			self::ENTITY_SETTINGS => [
@@ -367,7 +371,7 @@ class UserPermissions
 	 * Returns maximum available permissions
 	 * @return array
 	 */
-	protected static function getAdminPermissions()
+	protected static function getAdminPermissions(): array
 	{
 		$result = array();
 		$permissionMap = static::getMap();
@@ -396,9 +400,9 @@ class UserPermissions
 	 * @return bool
 	 * @throws ArgumentException
 	 */
-	protected function canPerform($entityCode, $actionCode)
+	protected function canPerform($entityCode, $actionCode): bool
 	{
-		$permissionMap = $this->getMap();
+		$permissionMap = static::getMap();
 		if(!isset($permissionMap[$entityCode][$actionCode]))
 		{
 			throw new ArgumentException('Unknown entity or action code');
@@ -413,7 +417,7 @@ class UserPermissions
 	/**
 	 * @return array
 	 */
-	protected function getUserColleagues()
+	protected function getUserColleagues(): array
 	{
 		if(!Loader::includeModule('intranet'))
 		{

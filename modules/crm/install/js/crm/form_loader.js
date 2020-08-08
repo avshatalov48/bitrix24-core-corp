@@ -82,8 +82,8 @@ var Bitrix24FormLoader = {
 		var popup = document.createElement('div');
 
 		popup.innerHTML = '' +
-			'<div style="display: none; position: fixed; width: 100%; min-height: 100%; background-color: rgba(0,0,0,0.5); overflow: hidden;  z-index: 10000; top: 0; right: 0; bottom: 0; left: 0;">' +
-				'<div style="position: absolute; top: 50%; left: 50%; margin: 0 auto; min-width: 300px; min-height: 110px; background: #fff; -webkit-transform: translate(-50%, -50%); -moz-transform: translate(-50%, -50%); transform: translate(-50%, -50%); -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; -webkit-box-shadow: 1px 1px 10px 1px rgba(0,0,0,0.5); -moz-box-shadow: 1px 1px 10px 1px rgba(0,0,0,0.5); box-shadow: 1px 1px 10px 1px rgba(0,0,0,0.5);">' +
+			'<div style="display: none; position: fixed; align-items: center; justify-content: center; width: 100%; min-height: 100%; background-color: rgba(0,0,0,0.5); overflow: hidden;  z-index: 10000; top: 0; right: 0; bottom: 0; left: 0;">' +
+				'<div style="position: relative; min-width: 300px; min-height: 110px; background: #fff; -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; -webkit-box-shadow: 1px 1px 10px 1px rgba(0,0,0,0.5); -moz-box-shadow: 1px 1px 10px 1px rgba(0,0,0,0.5); box-shadow: 1px 1px 10px 1px rgba(0,0,0,0.5);">' +
 					'<div style="position: absolute; top: -10px; right: -10px; cursor: pointer; z-index: 1;">' +
 						'<div data-bx-form-popup-close="" style="width: 20px; height: 20px; -webkit-border-radius: 50%;  -moz-border-radius: 50%; border-radius: 50%; background: rgba(0,0,0, .5);">' +
 							'<svg viewbox="-5 -5 50 50"><path style="stroke: #fff; fill: transparent; stroke-width: 5;" d="M 10,10 L 30,30 M 30,10 L 10,30" /></svg>' +
@@ -194,7 +194,7 @@ var Bitrix24FormLoader = {
 		if(params.popup)
 		{
 			if(this.util.isIOS()) this.util.addClass(document.documentElement, 'bx-ios-fix-frame-focus');
-			params.popup.style.display = 'block';
+			params.popup.style.display = 'flex';
 		}
 	},
 	hidePopup: function(params)

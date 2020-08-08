@@ -1,165 +1,88 @@
 <?php
 
-IncludeModuleLangFile(__FILE__);
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\UserField\Types\StatusType;
 
+Loc::loadMessages(__FILE__);
+
+/**
+ * Class CUserTypeCrmStatus
+ * @deprecated
+ */
 class CUserTypeCrmStatus extends CUserTypeString
 {
-	function GetUserTypeDescription()
+	function getUserTypeDescription()
 	{
-		return array(
-			'USER_TYPE_ID' => 'crm_status',
-			'CLASS_NAME' => 'CUserTypeCrmStatus',
-			'DESCRIPTION' => GetMessage('USER_TYPE_CRM_STATUS_DESCRIPTION'),
-			'BASE_TYPE' => 'string',
-		);
+		return StatusType::getUserTypeDescription();
 	}
 
-	function PrepareSettings($arUserField)
+	function prepareSettings($userField)
 	{
-		CModule::IncludeModule('crm');
-
-		$arEntityTypes = CCrmStatus::GetEntityTypes();
-		$entityType = $arUserField['SETTINGS']['ENTITY_TYPE'];
-		//fool-proof
-		if(is_array($entityType))
-		{
-			$entityType = isset($entityType['ID']) ? $entityType['ID'] : '';
-		}
-		return array(
-			'ENTITY_TYPE' =>  (isset($arEntityTypes[$entityType])? $entityType: array_shift($arEntityTypes)),
-		);
+		return StatusType::prepareSettings($userField);
 	}
 
-	function GetSettingsHTML($arUserField = false, $arHtmlControl, $bVarsFromForm)
+	function getSettingsHtml($userField, $additionalParameters, $varsFromForm)
 	{
-		$result = '';
-
-		if($bVarsFromForm)
-			$value = htmlspecialcharsbx($GLOBALS[$arHtmlControl['NAME']]['ENTITY_TYPE']);
-		elseif(is_array($arUserField))
-			$value = htmlspecialcharsbx($arUserField['SETTINGS']['ENTITY_TYPE']);
-		else
-			$value = '';
-
-		$ar = CCrmStatus::GetEntityTypes();
-		foreach ($ar as $entityType)
-		{
-			$arr['reference'][] = $entityType['NAME'];
-			$arr['reference_id'][] = $entityType['ID'];
-		}
-
-		$result .= '
-		<tr>
-			<td>'.GetMessage('USER_TYPE_CRM_ENTITY_TYPE').':</td>
-			<td>
-				'.SelectBoxFromArray($arHtmlControl["NAME"].'[ENTITY_TYPE]', $arr, $value).'
-			</td>
-		</tr>
-		';
-		return $result;
+		return StatusType::renderSettings($userField, $additionalParameters, $varsFromForm);
 	}
 
-	function GetEditFormHTML($arUserField, $arHtmlControl)
+	function getEditFormHtml($userField, $additionalParameters)
 	{
-		$ar = CCrmStatus::GetStatusList($arUserField['SETTINGS']['ENTITY_TYPE']);
-		$arr = $arUserField['MANDATORY'] == 'N'? Array('reference' => array(''), 'reference_id' => array('')): Array();
-		foreach ($ar as $key => $name)
-		{
-			$arr['reference'][] = $name;
-			$arr['reference_id'][] = $key;
-		}
-		return SelectBoxFromArray($arHtmlControl['NAME'], $arr, $arHtmlControl['VALUE']);
+		return StatusType::renderEditForm($userField, $additionalParameters);
 	}
 
-	function GetFilterHTML($arUserField, $arHtmlControl)
+	function getFilterHtml($userField, $additionalParameters)
 	{
-		$ar = CCrmStatus::GetStatusList($arUserField['SETTINGS']['ENTITY_TYPE']);
-		foreach ($ar as $key => $name)
-		{
-			$arr['reference'][] = $name;
-			$arr['reference_id'][] = $key;
-		}
-		return SelectBoxFromArray($arHtmlControl['NAME'], $arr, $arHtmlControl['VALUE']);
+		return StatusType::renderFilter($userField, $additionalParameters);
 	}
 
-	function GetAdminListViewHTML($arUserField, $arHtmlControl)
+	function getAdminListViewHtml($userField, $additionalParameters)
 	{
-		$ar = CCrmStatus::GetStatusList($arUserField['SETTINGS']['ENTITY_TYPE']);
-		return isset($ar[$arHtmlControl['VALUE']])? $ar[$arHtmlControl['VALUE']]: '&nbsp;';
+		return StatusType::renderAdminListView($userField, $additionalParameters);
 	}
 
-	function GetAdminListEditHTML($arUserField, $arHtmlControl)
+	function getAdminListEditHtml($userField, $additionalParameters)
 	{
-		$ar = CCrmStatus::GetStatusList($arUserField['SETTINGS']['ENTITY_TYPE']);
-		foreach ($ar as $key => $name)
-		{
-			$arr['reference'][] = $name;
-			$arr['reference_id'][] = $key;
-		}
-		return SelectBoxFromArray($arHtmlControl['NAME'], $arr, $arHtmlControl['VALUE']);
+		return StatusType::renderAdminListEdit($userField, $additionalParameters);
 	}
 
-	function CheckFields($arUserField, $value)
+	function checkFields($userField, $value)
 	{
-		$aMsg = array();
-		return $aMsg;
+		return StatusType::checkFields($userField, $value);
 	}
 
-	function GetList($arUserField)
+	function getList($userField)
 	{
-		$rsStatus = false;
-		if(CModule::IncludeModule('crm'))
-		{
-			$arList = Array();
-			$entityType = $arUserField['SETTINGS']['ENTITY_TYPE'];
-			//fool-proof
-			if(is_array($entityType))
-			{
-				$entityType = isset($entityType['ID']) ? $entityType['ID'] : '';
-			}
-			$arStatuses = CCrmStatus::GetStatus($entityType);
-
-			foreach($arStatuses as $arStatus)
-			{
-				$arList[] = array('ID' => $arStatus['STATUS_ID'], 'VALUE' => $arStatus['NAME']);
-			}
-			$rsStatus = new CDBResult();
-			$rsStatus->InitFromArray($arList);
-		}
-		return $rsStatus;
+		return StatusType::getList($userField);
 	}
 
-	function OnSearchIndex($arUserField)
+	function onSearchIndex($userField)
 	{
-		if(is_array($arUserField['VALUE']))
-			return implode("\r\n", $arUserField['VALUE']);
-		else
-			return $arUserField['VALUE'];
+		return StatusType::onSearchIndex($userField);
 	}
 
 	public static function getPublicText($userField)
 	{
-		$settings = isset($userField['SETTINGS']) && is_array($userField['SETTINGS']) ? $userField['SETTINGS'] : array();
-		$entityType = isset($settings['ENTITY_TYPE']) ? $settings['ENTITY_TYPE'] : '';
-		$statusList = $entityType !== '' ? CCrmStatus::GetStatus($entityType) : array();
-		if(empty($statusList))
-		{
-			return '';
-		}
+		return StatusType::renderText($userField);
+	}
 
-		$results = array();
-		$value = static::normalizeFieldValue($userField['VALUE']);
-		if(count($value) > 0 && $value[0] !== null)
-		{
-			foreach($value as $statusID)
-			{
-				if(isset($statusList[$statusID]))
-				{
-					$results[] = isset($statusList[$statusID]['NAME']) ? $statusList[$statusID]['NAME'] : "[{$statusID}]";
-				}
-			}
-		}
-		return implode(', ', $results);
+	public static function getPublicEdit($userField, $additionalParameters = array())
+	{
+		return StatusType::renderEdit($userField, $additionalParameters);
+	}
+
+	public static function getPublicView($userField, $additionalParameters = array())
+	{
+		return StatusType::renderView($userField, $additionalParameters);
+	}
+
+	public static function renderEdit($userField, $additionalParameters = []): string
+	{
+		return StatusType::renderEdit($userField, $additionalParameters);
+	}
+
+	public static function renderView($userField, $additionalParameters = []): string
+	{
+		return StatusType::renderView($userField, $additionalParameters);
 	}
 }
-?>

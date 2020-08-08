@@ -341,6 +341,7 @@ BX(function () {
 			id: <?= $arResult['FILE']['ID'] ?>,
 			name: '<?= CUtil::JSEscape($arResult['FILE']['NAME']) ?>',
 			isDeleted: <?= $arResult['FILE']['IS_DELETED']? 'true' : 'false' ?>,
+			isHistoryBlocked: <?= $arResult['HISTORY_BLOCKED_BY_FEATURE']? 'true' : 'false' ?>,
 			hasUf: <?= $arResult['SHOW_USER_FIELDS']? 'true' : 'false' ?>,
 			hasBp: <?= $arParams['STATUS_BIZPROC']? 'true' : 'false' ?>
 		},

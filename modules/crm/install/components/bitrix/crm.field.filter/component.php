@@ -19,7 +19,7 @@ if(isset($arUserField['USER_TYPE']))
 		if(
 			$arUserField["ENTITY_VALUE_ID"] <= 0
 			&& !is_array($arUserField["SETTINGS"]["DEFAULT_VALUE"])
-			&& strlen($arUserField["SETTINGS"]["DEFAULT_VALUE"]) > 0
+			&& $arUserField["SETTINGS"]["DEFAULT_VALUE"] <> ''
 		)
 			$arResult["VALUE"] = '';//$arParams["~arUserField"]["SETTINGS"]["DEFAULT_VALUE"];
 		else
@@ -81,21 +81,21 @@ if(isset($arUserField['USER_TYPE']))
 			switch ($arUserField["USER_TYPE"]["BASE_TYPE"])
 			{
 				case "double":
-					if (isset($res[0]) && strlen($res[0])>0)
+					if (isset($res[0]) && $res[0] <> '')
 						$res[0] = round(doubleval($res[0]), $arUserField["SETTINGS"]["PRECISION"]);
-					if (isset($res[1]) && strlen($res[1])>0)
+					if (isset($res[1]) && $res[1] <> '')
 						$res[1] = round(doubleval($res[1]), $arUserField["SETTINGS"]["PRECISION"]);
 					$arResult["VALUE"][$key] = $res;
 					break;
 				case "int":
 					if ($arUserField["USER_TYPE"]["USER_TYPE_ID"] == "integer")
 					{
-						$res[0] = strlen($res[0])>0 ? (int) $res[0] : '';
-						$res[1] = strlen($res[1])>0 ? (int) $res[1] : '';
+						$res[0] = $res[0] <> '' ? (int) $res[0] : '';
+						$res[1] = $res[1] <> '' ? (int) $res[1] : '';
 						$arResult["VALUE"][$key] = $res;
 					}
 					else
-						$arResult["VALUE"][$key] = strlen($res)>0 ? (int) $res : '';
+						$arResult["VALUE"][$key] = $res <> '' ? (int) $res : '';
 					break;
 				case "datetime":
 					break;

@@ -9,4 +9,6 @@ $MESS['TASKS_TT_AUTO_CHANGE_ORIGINATOR'] = 'Постановщик задачи 
 $MESS['TASKS_TT_SAVE_AS_TEMPLATE_ERROR_MESSAGE_PREFIX'] = 'Шаблон не был создан';
 
 $MESS['TASKS_REST_BUTTON_TITLE'] = 'Приложения';
+
+$MESS['TASKS_TEMPLATE_CREATE_FORBIDDEN'] = 'Доступ к созданию шаблонов запрещен';
 ?>

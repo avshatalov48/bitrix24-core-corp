@@ -265,7 +265,10 @@ class File extends BaseObject
 
 	public function downloadAction(Disk\File $file)
 	{
-		return Response\BFile::createByFileId($file->getFileId(), $file->getName());
+		$response = Response\BFile::createByFileId($file->getFileId(), $file->getName());
+		$response->setCacheTime(Disk\Configuration::DEFAULT_CACHE_TIME);
+
+		return $response;
 	}
 
 	public function markDeletedAction(Disk\File $file)

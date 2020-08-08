@@ -11,14 +11,22 @@ global $APPLICATION, $USER, $DB;
 
 $arParams['PATH_TO_PRODUCT_EDIT'] = isset($arParams['PATH_TO_PRODUCT_EDIT']) ? $arParams['PATH_TO_PRODUCT_EDIT'] : '';
 $arParams['PATH_TO_PRODUCT_EDIT'] = CrmCheckPath('PATH_TO_PRODUCT_EDIT', $arParams['PATH_TO_PRODUCT_EDIT'], $APPLICATION->GetCurPage().'?product_id=#product_id#&edit');
-$arParams['PATH_TO_PRODUCT_SHOW'] = isset($arParams['PATH_TO_PRODUCT_SHOW']) ? $arParams['PATH_TO_PRODUCT_SHOW'] : '';
-$arParams['PATH_TO_PRODUCT_SHOW'] = CrmCheckPath('PATH_TO_PRODUCT_SHOW', $arParams['PATH_TO_PRODUCT_SHOW'], $APPLICATION->GetCurPage().'?product_id=#product_id#&show');
+
+if (\Bitrix\Main\Loader::includeModule('catalog') && \Bitrix\Catalog\Config\State::isProductCardSliderEnabled())
+{
+	$catalogId = CCrmCatalog::EnsureDefaultExists();
+	$arParams['PATH_TO_PRODUCT_SHOW'] = "/shop/catalog/{$catalogId}/product/#product_id#/";
+}
+else
+{
+	$arParams['PATH_TO_PRODUCT_SHOW'] = isset($arParams['PATH_TO_PRODUCT_SHOW']) ? $arParams['PATH_TO_PRODUCT_SHOW'] : '';
+	$arParams['PATH_TO_PRODUCT_SHOW'] = CrmCheckPath('PATH_TO_PRODUCT_SHOW', $arParams['PATH_TO_PRODUCT_SHOW'], $APPLICATION->GetCurPage().'?product_id=#product_id#&show');
+}
 
 //OWNER_ID for new entities is zero
-$ownerID = isset($arParams['OWNER_ID']) ? (int)$arParams['OWNER_ID'] : 0;
+$ownerID = $this->getOwnerId();
 
-// Check owner type (DEAL by default)
-$ownerType = isset($arParams['OWNER_TYPE']) ? (string)$arParams['OWNER_TYPE'] : 'D';
+$ownerType = $this->getOwnerType();
 $ownerName = CCrmProductRow::ResolveOwnerTypeName($ownerType);
 if($ownerName === '')
 {
@@ -27,13 +35,9 @@ if($ownerName === '')
 }
 // Check permissions (READ by default)
 $permissionType = isset($arParams['PERMISSION_TYPE']) ? (string)$arParams['PERMISSION_TYPE'] : 'READ';
-$permissionEntityType = isset($arParams['PERMISSION_ENTITY_TYPE']) ? (string)$arParams['PERMISSION_ENTITY_TYPE'] : '';
-if($permissionEntityType === '')
-{
-	$permissionEntityType = CCrmPerms::ResolvePermissionEntityType($ownerName, $ownerID);
-}
+$permissionEntityType = $this->getPermissionEntityType($ownerName, $ownerID);
 
-$arResult['PERMISSION_ENTITY_TYPE'] = $arParams['PERMISSION_ENTITY_TYPE'];
+$arResult['PERMISSION_ENTITY_TYPE'] = $permissionEntityType;
 $userPermissions = CCrmPerms::GetCurrentUserPermissions();
 if(!CCrmAuthorizationHelper::CheckReadPermission($permissionEntityType, $ownerID, $userPermissions))
 {
@@ -63,6 +67,8 @@ $arResult['PRODUCT_ROW_TAX_UNIFORM'] = (COption::GetOptionString('crm', 'product
 $arResult['INVOICE_MODE'] = ($ownerType === 'I');
 $arResult['HIDE_TAX_INCLUDED_COLUMN'] = false;
 $arResult['CATALOG_TYPE_ID'] = CCrmCatalog::GetCatalogTypeID();
+
+$arResult['USE_ASYNC_ADD_PRODUCT'] = isset($arParams['USE_ASYNC_ADD_PRODUCT']) ? $arParams['USE_ASYNC_ADD_PRODUCT'] == 'Y' : false;
 
 // copy flag
 $bCopy = ($arParams['COPY_FLAG'] === 'Y') ? true : false;
@@ -162,7 +168,6 @@ if ($arResult['ALLOW_LD_TAX'])
 	}
 	$arResult['TAX_LIST_PERCENT_PRECISION'] = defined("SALE_VALUE_PRECISION") ? SALE_VALUE_PRECISION : 2;
 }
-
 
 // Prepare totals
 $totalSum = 0.0;
@@ -288,7 +293,7 @@ $arResult['TAB_ID'] = isset($arParams['TAB_ID']) ? $arParams['TAB_ID'] : '';
 $arResult['PREFIX'] = isset($arParams['PREFIX']) ? $arParams['PREFIX'] : '';
 if($arResult['PREFIX'] === '')
 {
-	$arResult['PREFIX'] = ($ownerID > 0 ? strtolower($ownerName).'_'.strval($ownerID) : 'new_'.strtolower($ownerName)).'_product_editor';
+	$arResult['PREFIX'] = ($ownerID > 0 ? mb_strtolower($ownerName).'_'.strval($ownerID) : 'new_'.mb_strtolower($ownerName)).'_product_editor';
 }
 
 $arResult['ID'] = isset($arParams['ID']) ? $arParams['ID'] : '';
@@ -299,8 +304,8 @@ if($arResult['ID'] === '')
 
 //$arResult['CONTAINER_CLASS'] = htmlspecialcharsbx(strtolower($ownerName).'-product-rows');
 $arResult['PRODUCT_DATA_FIELD_NAME'] = isset($arParams['PRODUCT_DATA_FIELD_NAME']) ? $arParams['PRODUCT_DATA_FIELD_NAME'] : 'PRODUCT_ROW_DATA';
-$arResult['ENABLE_CUSTOM_PRODUCTS'] = isset($arParams['ENABLE_CUSTOM_PRODUCTS']) ? strtoupper($arParams['ENABLE_CUSTOM_PRODUCTS']) === 'Y' : true;
-$arResult['ENABLE_RAW_CATALOG_PRICING'] = !isset($arParams['ENABLE_RAW_CATALOG_PRICING']) || strtoupper($arParams['ENABLE_RAW_CATALOG_PRICING']) === 'Y';
+$arResult['ENABLE_CUSTOM_PRODUCTS'] = isset($arParams['ENABLE_CUSTOM_PRODUCTS']) ? mb_strtoupper($arParams['ENABLE_CUSTOM_PRODUCTS']) === 'Y' : true;
+$arResult['ENABLE_RAW_CATALOG_PRICING'] = !isset($arParams['ENABLE_RAW_CATALOG_PRICING']) || mb_strtoupper($arParams['ENABLE_RAW_CATALOG_PRICING']) === 'Y';
 
 $arResult['TAX_INFOS'] = $arResult['ALLOW_TAX'] ? CCrmTax::GetVatRateInfos() : array();
 
@@ -322,146 +327,19 @@ if ($ownerID > 0)
 $arResult['SITE_ID'] = SITE_ID;
 $arResult['CAN_ADD_PRODUCT'] = CCrmAuthorizationHelper::CheckConfigurationUpdatePermission($userPermissions);
 
-// measure list items
-$measureListItems = array('' => GetMessage('CRM_MEASURE_NOT_SELECTED'));
-$measures = \Bitrix\Crm\Measure::getMeasures(100);
-if (is_array($measures))
+if (!$arResult['USE_ASYNC_ADD_PRODUCT'])
 {
-	foreach ($measures as $measure)
-		$measureListItems[$measure['ID']] = $measure['SYMBOL'];
-	unset($measure);
-}
-unset($measures);
+	$arResult['PRODUCT_CREATE_DLG_VISIBLE_FIELDS'] = $this->getCreateDialogVisibleFields();
 
-// Product properties
-$catalogID = CCrmCatalog::EnsureDefaultExists();
-$arPropUserTypeList = CCrmProductPropsHelper::GetPropsTypesByOperations(false, 'edit');
-$arProps = CCrmProductPropsHelper::GetProps($catalogID, $arPropUserTypeList);
-
-$htmlPreviewPictureValue = '';
-$htmlDetailPictureValue = '';
-$arFields = array(
-	'PREVIEW_PICTURE' => &$htmlPreviewPictureValue,
-	'DETAIL_PICTURE' => &$htmlDetailPictureValue
-);
-$html = '';
-$obFileControl = $obFile = null;
-foreach ($arFields as $fieldID => &$fieldValue)
-{
-	$obFile = new CCrmProductFile(
-		$arResult['PRODUCT_ID'],
-		$fieldID,
-		''
+	$arResult['PRODUCT_CREATE_DLG_SETTINGS'] = $this->getCreateDialogSettings(
+		$arResult['CURRENCY_ID'],
+		$arResult['PRODUCT_CREATE_DLG_VISIBLE_FIELDS'],
+		$arResult['ALLOW_TAX']
 	);
 
-	$obFileControl = new CCrmProductFileControl($obFile, $fieldID);
-
-	$html = $obFileControl->GetHTML(array(
-		'max_size' => 102400,
-		'max_width' => 150,
-		'max_height' => 150,
-		'url_template' => $arParams['PATH_TO_PRODUCT_FILE'],
-		'a_title' => GetMessage('CRM_PRODUCT_FILE_ENLARGE'),
-		'download_text' => GetMessage('CRM_PRODUCT_FILE_DOWNLOAD'),
-	));
-
-	$fieldValue = $html;
+	$arResult['PRODUCT_PROPS_USER_TYPES'] = $this->getProductPropsTypes();
+	$arResult['PRODUCT_PROPS'] = $this->getProductProps($arResult['PRODUCT_PROPS_USER_TYPES']);
 }
-unset($arFields, $fieldID, $obFile, $obFileControl, $html, $fieldValue);
-
-$visibleFields = array();
-$productFormOptions = CUserOptions::GetOption('main.interface.form', 'CRM_PRODUCT_EDIT', array());
-if (is_array($productFormOptions)
-	&& is_array($productFormOptions['tabs']) && count($productFormOptions['tabs'])
-	&& (!isset($productFormOptions['settings_disabled']) || $productFormOptions['settings_disabled'] !== 'Y'))
-{
-	$tabFound = false;
-	$tab = null;
-	foreach ($productFormOptions['tabs'] as $tab)
-	{
-		if (isset($tab['id']) && $tab['id'] === 'tab_1')
-		{
-			$tabFound = true;
-			break;
-		}
-	}
-	if ($tabFound)
-	{
-		if (is_array($tab) && is_array($tab['fields']))
-		{
-			foreach ($tab['fields'] as $field)
-			{
-				if (isset($field['type']) && isset($field['id']) && $field['type'] !== 'section')
-					$visibleFields[] = $field['id'];
-			}
-		}
-	}
-}
-$arResult['PRODUCT_CREATE_DLG_VISIBLE_FIELDS'] = $visibleFields;
-unset($productFormOptions);
-
-$arResult['PRODUCT_CREATE_DLG_SETTINGS'] = array(
-	'formId' => 'crm_product_create_dialog_form',
-	'url' => CComponentEngine::MakePathFromTemplate(
-			$arParams['PATH_TO_PRODUCT_EDIT'],
-			array('product_id' => 0)
-		),
-	'sessid' => bitrix_sessid(),
-	'messages' => array(
-		'dialogTitle' => GetMessage('CRM_PRODUCT_CREATE'),
-		'waitMessage' => GetMessage('CRM_PRODUCT_CREATE_WAIT'),
-		'ajaxError' => GetMessage('CRM_PRODUCT_CREATE_AJAX_ERR'),
-		'buttonCreateTitle' => GetMessage('CRM_BUTTON_CREATE_TITLE'),
-		'buttonCancelTitle' => GetMessage('CRM_BUTTON_CANCEL_TITLE'),
-		'NAME' => GetMessage('CRM_FIELD_PRODUCT_NAME'),
-		'DESCRIPTION' => GetMessage('CRM_FIELD_DESCRIPTION'),
-		'ACTIVE' => GetMessage('CRM_FIELD_ACTIVE'),
-		'CURRENCY' => GetMessage('CRM_FIELD_CURRENCY'),
-		'PRICE' => GetMessage('CRM_FIELD_PRICE'),
-		'MEASURE' => GetMessage('CRM_FIELD_MEASURE'),
-		'VAT_ID' => GetMessage('CRM_FIELD_VAT_ID'),
-		'VAT_INCLUDED' => GetMessage('CRM_FIELD_VAT_INCLUDED'),
-		'SECTION' => GetMessage('CRM_FIELD_SECTION'),
-		'SORT' => GetMessage('CRM_FIELD_SORT'),
-		'PREVIEW_PICTURE' => GetMessage('CRM_PRODUCT_FIELD_PREVIEW_PICTURE'),
-		'DETAIL_PICTURE' => GetMessage('CRM_PRODUCT_FIELD_DETAIL_PICTURE')
-	),
-	'fields' => array(
-		array('textCode' => 'NAME', 'type' => 'text', 'maxLength' => 255, 'value' => '', 'skip' => 'N',
-			'required' => 'Y'),
-		array('textCode' => 'DESCRIPTION', 'type' => 'textarea', 'maxLength' => 7500, 'value' => '',
-			'skip' => (!CCrmProductHelper::IsFieldVisible('DESCRIPTION', $visibleFields) ? 'Y' : 'N')),
-		array('textCode' => 'ACTIVE', 'type' => 'checkbox', 'value' => 'Y', 'skip' => 'Y'),
-		array('textCode' => 'CURRENCY', 'type' => 'select', 'value' => CCrmCurrency::GetBaseCurrencyID(),
-			'items' => CCrmViewHelper::prepareSelectItemsForJS(CCrmCurrencyHelper::PrepareListItems()),
-			'skip' => (!CCrmProductHelper::IsFieldVisible('CURRENCY', $visibleFields) ? 'Y' : 'N')),
-		array('textCode' => 'PRICE', 'type' => 'text', 'maxLength' => 21, 'value' => '0.00',
-			'skip' => (!CCrmProductHelper::IsFieldVisible('PRICE', $visibleFields) ? 'Y' : 'N')),
-		array('textCode' => 'MEASURE', 'type' => 'select', 'value' => '',
-			'items' => CCrmViewHelper::prepareSelectItemsForJS($measureListItems),
-			'skip' => (!CCrmProductHelper::IsFieldVisible('MEASURE', $visibleFields) ? 'Y' : 'N')),
-		array('textCode' => 'VAT_ID', 'type' => 'select', 'value' => '',
-			'items' => ($arResult['ALLOW_TAX'])
-				? CCrmViewHelper::prepareSelectItemsForJS(CCrmVat::GetVatRatesListItems()) : null,
-			'skip' => ($arResult['ALLOW_TAX']) ? (!CCrmProductHelper::IsFieldVisible('VAT_ID', $visibleFields) ? 'Y' : 'N') : 'Y'),
-		array('textCode' => 'VAT_INCLUDED', 'type' => 'checkbox', 'value' => 'N',
-			'skip' => ($arResult['ALLOW_TAX']) ? (!CCrmProductHelper::IsFieldVisible('VAT_INCLUDED', $visibleFields) ? 'Y' : 'N') : 'Y'),
-		array('textCode' => 'SECTION', 'type' => 'select', 'value' => '0',
-			'items' => CCrmViewHelper::prepareSelectItemsForJS(
-				CCrmProductHelper::PrepareSectionListItems(CCrmCatalog::EnsureDefaultExists())
-			), 'skip' => (!CCrmProductHelper::IsFieldVisible('SECTION', $visibleFields) ? 'Y' : 'N')),
-		array('textCode' => 'SORT', 'type' => 'text', 'maxLength' => 11, 'value' => 100, 'skip' => 'Y'),
-		array('textCode' => 'PREVIEW_PICTURE', 'type' => 'custom', 'value' => $htmlPreviewPictureValue,
-			'skip' => (!CCrmProductHelper::IsFieldVisible('PREVIEW_PICTURE', $visibleFields) ? 'Y' : 'N')),
-		array('textCode' => 'DETAIL_PICTURE', 'type' => 'custom', 'value' => $htmlDetailPictureValue,
-			'skip' => (!CCrmProductHelper::IsFieldVisible('DETAIL_PICTURE', $visibleFields) ? 'Y' : 'N'))
-	),
-	"ownerCurrencyId" => $currencyID
-);
-unset($visibleFields);
-
-$arResult['PRODUCT_PROPS_USER_TYPES'] = $arPropUserTypeList;
-$arResult['PRODUCT_PROPS'] = $arProps;
 
 /** @var CBitrixComponent $this */
 $this->IncludeComponentTemplate();

@@ -7,6 +7,10 @@ use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
 
 class RecordFormHelper
 {
+	private const CODE_BLUE = 'orange';
+	private const CODE_RED = 'red';
+	private const CODE_GREEN = 'blue';
+	private const CODE_GRAY = 'gray';
 	/** @var TimeHelper */
 	private $timeHelper;
 
@@ -117,19 +121,19 @@ class RecordFormHelper
 		$hasOtherViolations = !empty($notices);
 		if (!$hasEditedViolations && $hasOtherViolations)
 		{
-			return 'gray';
+			return static::CODE_GRAY;
 		}
 		elseif ($hasEditedViolations && $record->isApproved() && !$hasOtherViolations)
 		{
-			return 'blue';
+			return static::CODE_GREEN;
 		}
 		elseif ($hasEditedViolations && !$record->isApproved())
 		{
-			return 'red';
+			return static::CODE_RED;
 		}
 		elseif ($hasEditedViolations && $record->isApproved() && $hasOtherViolations)
 		{
-			return 'orange';
+			return static::CODE_BLUE;
 		}
 		return '';
 	}
@@ -138,13 +142,13 @@ class RecordFormHelper
 	{
 		switch ($this->getViolationCode($violations, $notices, $record))
 		{
-			case 'gray':
+			case static::CODE_GRAY:
 				return 'timeman-record-violation-icon-notice';
-			case 'blue':
+			case static::CODE_GREEN:
 				return 'timeman-record-violation-icon-confirmed';
-			case 'red':
+			case static::CODE_RED:
 				return 'timeman-record-violation-icon-warning';
-			case 'orange':
+			case static::CODE_BLUE:
 				return 'timeman-record-violation-icon-alert';
 		}
 		return '';

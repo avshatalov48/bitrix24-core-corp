@@ -955,6 +955,7 @@ input.mobile-grid-field-subtasks-more-input[type=checkbox]:checked ~ .mobile-gri
 }
 
 .task-detail-top-button-up-button {
+	display: none;
 	position: fixed;
 	top: 42px;
 	left: 50%;
@@ -966,6 +967,7 @@ input.mobile-grid-field-subtasks-more-input[type=checkbox]:checked ~ .mobile-gri
 }
 
 .task-detail-top-button-up-button.task-show-button {
+	display: block;
 	top: 100px;
 	opacity: .85;
 }

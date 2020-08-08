@@ -180,5 +180,13 @@ else
 			]
 		]
 	);
+
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.deal.checker',
+		'',
+		['CATEGORY_ID' => $categoryID],
+		null,
+		['HIDE_ICONS' => 'Y']
+	);
 }
 ?>

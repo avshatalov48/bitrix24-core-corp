@@ -7,13 +7,16 @@ use Bitrix\Tasks\UI\Task\Tag;
 Loc::loadMessages(__FILE__);
 
 $helper = $arResult['HELPER'];
+$display = $arParams['DISPLAY'];
+$readOnly = ($arParams['READ_ONLY'] ? 'readonly' : '');
 ?>
 
 <?$helper->displayFatals();?>
 <?if(!$helper->checkHasFatals()):?>
 
-	<div id="<?=$helper->getScopeId()?>" class="tasks task-form-field <?=$arParams['DISPLAY']?> <?=($arParams['READ_ONLY'] ? 'readonly' : '')?>" <?if($arParams['MAX_WIDTH'] > 0):?>style="max-width: <?=$arParams['MAX_WIDTH']?>px"<?endif?>>
-
+	<div id="<?=$helper->getScopeId()?>" class="tasks task-form-field <?=$display?> <?=$readOnly?>"
+		 <?if($arParams['MAX_WIDTH'] > 0):?>style="max-width: <?=$arParams['MAX_WIDTH']?>px"<?php endif?>
+	>
 		<?$helper->displayWarnings();?>
 
 		<span class="js-id-task-sel-items tasks-h-invisible">

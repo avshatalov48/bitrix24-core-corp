@@ -12,7 +12,7 @@ UI\Extension::load("ui.tooltip");
 <div class="task-preview">
 	<div class="task-preview-header">
 		<div class="task-preview-header-icon">
-			<img src="<?=(isset($arResult['TASK']["CREATED_BY_PHOTO"]) && strlen($arResult['TASK']["CREATED_BY_PHOTO"]) > 0 ? $arResult['TASK']["CREATED_BY_PHOTO"] : "/bitrix/images/1.gif")?>" width="<?=$arParams["AVATAR_SIZE"]?>" height="<?=$arParams["AVATAR_SIZE"]?>">
+			<img src="<?=(isset($arResult['TASK']["CREATED_BY_PHOTO"]) && $arResult['TASK']["CREATED_BY_PHOTO"] <> '' ? $arResult['TASK']["CREATED_BY_PHOTO"] : "/bitrix/images/1.gif")?>" width="<?=$arParams["AVATAR_SIZE"]?>" height="<?=$arParams["AVATAR_SIZE"]?>">
 		</div>
 		<span class="task-preview-header-title">
 			<a id="a_<?=htmlspecialcharsbx($arResult['TASK']['CREATED_BY_UNIQID'])?>" href="<?=htmlspecialcharsbx($arResult["TASK"]["CREATED_BY_PROFILE"])?>" target="_blank" bx-tooltip-user-id="<?=htmlspecialcharsbx($arResult["TASK"]["CREATED_BY"])?>">
@@ -23,7 +23,7 @@ UI\Extension::load("ui.tooltip");
 		<?if((int)$arResult["TASK"]["RESPONSIBLE_ID"] > 0):?>
 			<span class="urlpreview__icon-destination"></span>
 			<div class="task-preview-header-icon">
-				<img src="<?=(isset($arResult['TASK']["RESPONSIBLE_PHOTO"]) && strlen($arResult['TASK']["RESPONSIBLE_PHOTO"]) > 0 ? $arResult['TASK']["RESPONSIBLE_PHOTO"] : "/bitrix/images/1.gif")?>" width="<?=$arParams["AVATAR_SIZE"]?>" height="<?=$arParams["AVATAR_SIZE"]?>">
+				<img src="<?=(isset($arResult['TASK']["RESPONSIBLE_PHOTO"]) && $arResult['TASK']["RESPONSIBLE_PHOTO"] <> '' ? $arResult['TASK']["RESPONSIBLE_PHOTO"] : "/bitrix/images/1.gif")?>" width="<?=$arParams["AVATAR_SIZE"]?>" height="<?=$arParams["AVATAR_SIZE"]?>">
 			</div>
 			<span class="task-preview-header-title">
 				<a id="a_<?=htmlspecialcharsbx($arResult['TASK']['RESPONSIBLE_UNIQID'])?>" href="<?=htmlspecialcharsbx($arResult["TASK"]["RESPONSIBLE_PROFILE"])?>" target="_blank" bx-tooltip-user-id="<?=htmlspecialcharsbx($arResult["TASK"]["RESPONSIBLE_ID"])?>">
@@ -46,12 +46,12 @@ UI\Extension::load("ui.tooltip");
 		<?=GetMessage('TASKS_STATUS')?>:
 		<?= GetMessage("TASKS_STATUS_".$arResult["TASK"]["REAL_STATUS"])?><br>
 
-		<?if(strlen($arResult["TASK"]["DEADLINE"]) > 0):?>
+		<?if($arResult["TASK"]["DEADLINE"] <> ''):?>
 			<?=GetMessage("TASKS_DEADLINE")?>:
 			<?=FormatDateFromDB($arResult["TASK"]["DEADLINE"], "SHORT")?><br>
 		<?endif?>
 
-		<?if(strlen($arResult["TASK"]["CLOSED_DATE"]) > 0):?>
+		<?if($arResult["TASK"]["CLOSED_DATE"] <> ''):?>
 			<?=GetMessage("TASKS_CLOSED_DATE")?>:
 			<?=FormatDateFromDB($arResult["TASK"]["CLOSED_DATE"], "SHORT")?><br>
 		<?endif?>

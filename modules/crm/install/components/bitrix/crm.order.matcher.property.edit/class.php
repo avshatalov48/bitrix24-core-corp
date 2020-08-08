@@ -429,7 +429,7 @@ class ConfigOrderPropertyEdit extends \CBitrixComponent
 			{
 				if (
 					isset($commonTypes[$key])
-					&& strpos($commonTypes[$key]['CLASS'], 'Bitrix\Sale\Internals\Input') !== false
+					&& mb_strpos($commonTypes[$key]['CLASS'], 'Bitrix\Sale\Internals\Input') !== false
 				)
 				{
 					$types[$key] = $commonTypes[$key]['NAME'];

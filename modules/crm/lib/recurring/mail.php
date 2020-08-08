@@ -42,7 +42,7 @@ class Mail
 	{
 		$result = new Main\Result();
 
-		if(count($invoiceData) == 0 || empty($invoiceData['UF_MYCOMPANY_ID']) || (int)($invoiceData['ID']) <= 0)
+		if(count($invoiceData) === 0 || empty($invoiceData['UF_MYCOMPANY_ID']) || (int)($invoiceData['ID']) <= 0)
 		{
 			$result->addError(new Main\Error('INVOICE DATA ARE NOT FOUND!'));
 			return $result;
@@ -116,7 +116,7 @@ class Mail
 			array(
 				'=ELEMENT_ID' => $elementId,
 				'=ENTITY_ID' => 'COMPANY',
-				'=TYPE_ID' => "EMAIL"
+				'=TYPE_ID' => 'EMAIL'
 			)
 		);
 		$ownerData = $data->Fetch();
@@ -129,7 +129,7 @@ class Mail
 
 		if (isset($ownerData['ENTITY_ID']))
 		{
-			$ownerTypeName = strtoupper(strval($ownerData['ENTITY_ID']));
+			$ownerTypeName = mb_strtoupper(strval($ownerData['ENTITY_ID']));
 		}
 		else
 		{
@@ -181,7 +181,7 @@ class Mail
 		);
 		\CCrmActivity::PrepareCommunicationInfo($communications);
 
-		$bindings[$data['COMPLEX_ID']."_".$data['ENTITY_ID']] = array(
+		$bindings[$data['COMPLEX_ID']. '_' .$data['ENTITY_ID']] = array(
 			'OWNER_TYPE_ID' => \CCrmOwnerType::ResolveID($data['ENTITY_ID']),
 			'OWNER_ID' => (int)$data['ELEMENT_ID']
 		);
@@ -204,8 +204,8 @@ class Mail
 	protected function fillEmailMessage($invoice)
 	{
 		return array(
-			"SUBJECT" => $this->fillMessageSubject($invoice),
-			"BODY" => $this->fillMessageBody($invoice)
+			'SUBJECT' => $this->fillMessageSubject($invoice),
+			'BODY' => $this->fillMessageBody($invoice)
 		);
 	}
 
@@ -216,10 +216,10 @@ class Mail
 	 */
 	protected function fillMessageBody($invoice)
 	{
-		$body = isset($this->templateData['BODY']) ? strval($this->templateData['BODY']) : '';
+		$body = isset($this->templateData['BODY']) ? (string)($this->templateData['BODY']) : '';
 		if (!empty($body))
 		{
-			if (\CCrmContentType::BBCode == $this->templateData['BODY_TYPE'])
+			if (\CCrmContentType::BBCode === $this->templateData['BODY_TYPE'])
 			{
 				$bbCodeParser = new \CTextParser();
 				$body = $bbCodeParser->convertText($body);
@@ -236,7 +236,9 @@ class Mail
 		\CCrmActivity::AddEmailSignature($body, \CCrmContentType::BBCode);
 
 		if (empty($body))
+		{
 			$body = Loc::getMessage('CRM_RECUR_EMPTY_BODY_MESSAGE');
+		}
 
 		return $body;
 	}
@@ -248,8 +250,8 @@ class Mail
 	 */
 	protected function fillMessageSubject($invoice)
 	{
-		$subject = isset($this->templateData['SUBJECT']) ? strval($this->templateData['SUBJECT']) : '';
-		if (strlen($subject) > 0)
+		$subject = isset($this->templateData['SUBJECT']) ? (string)($this->templateData['SUBJECT']) : '';
+		if ($subject !== '')
 		{
 			$subject = \CCrmTemplateManager::PrepareTemplate(
 				$subject,
@@ -259,17 +261,17 @@ class Mail
 			);
 		}
 
-		if($subject == '')
+		if ($subject === '')
 		{
 			$subject = Loc::getMessage(
 				'CRM_RECUR_DEFAULT_EMAIL_SUBJECT',
 				array(
-					'#ACCOUNT_NUMBER#'=> strlen($invoice['ACCOUNT_NUMBER']) > 0 ? $invoice['ACCOUNT_NUMBER'] : $invoice['ID'],
+					'#ACCOUNT_NUMBER#'=> ($invoice['ACCOUNT_NUMBER'] !== '') ? $invoice['ACCOUNT_NUMBER'] : $invoice['ID'],
 				)
 			);
-			if (strlen($invoice['ORDER_TOPIC']) > 0)
+			if ($invoice['ORDER_TOPIC'] !== '')
 			{
-				$subject .= " - ".$invoice['ORDER_TOPIC'];
+				$subject .= ' - ' .$invoice['ORDER_TOPIC'];
 			}
 		}
 
@@ -324,7 +326,7 @@ class Mail
 		}
 
 		$attachments = array($attachmentId);
-		if (StorageType::getDefaultTypeId() == StorageType::Disk && !empty($this->templateData['ID']) && $this->templateData['ID'] > 0)
+		if (!empty($this->templateData['ID']) && $this->templateData['ID'] > 0 && StorageType::getDefaultTypeId() === StorageType::Disk)
 		{
 			$files = $USER_FIELD_MANAGER->getUserFieldValue('CRM_MAIL_TEMPLATE', 'UF_ATTACHMENT', $this->templateData['ID']);
 			if (!empty($files) && is_array($files))
@@ -378,10 +380,14 @@ class Mail
 		\CCrmActivity::SaveCommunications($id, $fields['COMMUNICATIONS'], $fields);
 
 		$hostname = \COption::getOptionString('main', 'server_name', 'localhost');
-		if (defined('BX24_HOST_NAME') && BX24_HOST_NAME != '')
+		if (defined('BX24_HOST_NAME') && BX24_HOST_NAME !== '')
+		{
 			$hostname = BX24_HOST_NAME;
-		else if (defined('SITE_SERVER_NAME') && SITE_SERVER_NAME != '')
+		}
+		elseif (defined('SITE_SERVER_NAME') && SITE_SERVER_NAME !== '')
+		{
 			$hostname = SITE_SERVER_NAME;
+		}
 
 		$description = $fields['DESCRIPTION'];
 		foreach ($attachments as $item)
@@ -397,8 +403,11 @@ class Mail
 				$description,
 				$count
 			);
+
 			if ($count > 0)
+			{
 				$descriptionUpdated = true;
+			}
 
 			$fileArray = StorageManager::makeFileArray($item, $fields['STORAGE_TYPE_ID']);
 
@@ -425,7 +434,7 @@ class Mail
 		if(!\CCrmActivityEmailSender::TrySendEmail($id, $fields, $sendErrors))
 		{
 			$errorList = array();
-			foreach($sendErrors as &$error)
+			foreach($sendErrors as $error)
 			{
 				$code = $error['CODE'];
 				if($code === \CCrmActivityEmailSender::ERR_CANT_LOAD_SUBSCRIBE)
@@ -465,7 +474,7 @@ class Mail
 					$errors[] = 'Email send error. General error.';
 				}
 
-				$msg = isset($error['MESSAGE']) ? $error['MESSAGE'] : '';
+				$msg = $error['MESSAGE'] ?? '';
 				if($msg !== '')
 				{
 					$errors[] = $msg;
@@ -507,9 +516,16 @@ class Mail
 	public static function getPdfAttachment($invoiceId)
 	{
 		if (!Loader::includeModule('sale'))
+		{
 			return false;
-		$siteId = "";
+		}
+
+		$siteId = '';
 		$invoice = Invoice::load($invoiceId);
+		if (!$invoice)
+		{
+			return false;
+		}
 		$paymentCollection = $invoice->getPaymentCollection();
 		/** @var \Bitrix\Sale\Payment $payment */
 		$payment = $paymentCollection->current();
@@ -532,7 +548,7 @@ class Mail
 
 		$service = PaySystem\Manager::getObjectById($paySystem);
 
-		if ($service->isAffordPdf())
+		if ($service && $service->isAffordPdf())
 		{
 			$file = $service->getPdf($payment);
 			if ($file === null)

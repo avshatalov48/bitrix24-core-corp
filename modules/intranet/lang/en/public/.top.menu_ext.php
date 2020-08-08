@@ -29,7 +29,7 @@ $MESS["TOP_MENU_PHOTO"] = "Photos";
 $MESS["TOP_MENU_SERVICES"] = "Services";
 $MESS["TOP_MENU_SHOP"] = "Online Store";
 $MESS["TOP_MENU_SITES"] = "Sites";
-$MESS["TOP_MENU_TASKS"] = "Tasks";
+$MESS["TOP_MENU_TASKS"] = "Tasks and Projects";
 $MESS["TOP_MENU_TELEPHONY"] = "Telephony";
 $MESS["TOP_MENU_TIMEMAN"] = "Time and Reports";
 ?>

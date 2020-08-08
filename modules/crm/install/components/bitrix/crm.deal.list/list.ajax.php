@@ -254,7 +254,8 @@ elseif ($action === 'SAVE_PROGRESS')
 		);
 
 		//Region automation
-		\Bitrix\Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Deal, $ID);
+		$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Deal, $ID);
+		$starter->setUserIdFromCurrent()->runOnUpdate($arFields, []);
 		//end region
 
 		__CrmDealListEndResponse(array('TYPE' => CCrmOwnerType::DealName, 'ID' => $ID, 'VALUE' => $stageID));

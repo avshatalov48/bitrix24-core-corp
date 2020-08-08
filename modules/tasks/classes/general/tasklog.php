@@ -10,35 +10,38 @@ class CTaskLog
 {
 	// left for compatibility
 	static $arComparedFields = array(
-		"TITLE" => "string",
-		"DESCRIPTION" => "text",
-		"CREATED_BY" => "integer",
-		"RESPONSIBLE_ID" => "integer",
-		"DEADLINE" => "date",
-		"START_DATE_PLAN" => "date",
-		"END_DATE_PLAN" => "date",
-		"ACCOMPLICES" => "array",
-		"AUDITORS" => "array",
-		"FILES" => "array",
-		"TAGS" => "array",
-		"PRIORITY" => "integer",
-		"GROUP_ID" => "integer",
-		"DURATION_PLAN" => "integer",
-		"DURATION_PLAN_SECONDS" => "integer",
-		"DURATION_FACT" => "integer",
-		"TIME_ESTIMATE" => "integer",
-		"TIME_SPENT_IN_LOGS" => "integer",
-		"PARENT_ID" => "integer",
-		"DEPENDS_ON" => "array",
-		"STATUS" => "integer",
-		"MARK" => "string",
-		"ADD_IN_REPORT" => "bool",
+		'TITLE' => 'string',
+		'DESCRIPTION' => 'text',
+		'STATUS' => 'integer',
+		'PRIORITY' => 'integer',
+		'MARK' => 'string',
+		'PARENT_ID' => 'integer',
+		'GROUP_ID' => 'integer',
+		'CREATED_BY' => 'integer',
+		'RESPONSIBLE_ID' => 'integer',
+		'ACCOMPLICES' => 'array',
+		'AUDITORS' => 'array',
+		'DEADLINE' => 'date',
+		'START_DATE_PLAN' => 'date',
+		'END_DATE_PLAN' => 'date',
+		'DURATION_PLAN' => 'integer',
+		'DURATION_PLAN_SECONDS' => 'integer',
+		'DURATION_FACT' => 'integer',
+		'TIME_ESTIMATE' => 'integer',
+		'TIME_SPENT_IN_LOGS' => 'integer',
+		'TAGS' => 'array',
+		'DEPENDS_ON' => 'array',
+		'FILES' => 'array',
+		'UF_TASK_WEBDAV_FILES' => 'array',
 		'CHECKLIST_ITEM_CREATE' => 'string',
 		'CHECKLIST_ITEM_RENAME' => 'string',
 		'CHECKLIST_ITEM_REMOVE' => 'string',
 		'CHECKLIST_ITEM_CHECK' => 'string',
 		'CHECKLIST_ITEM_UNCHECK' => 'string',
-		'UF_TASK_WEBDAV_FILES' => 'array',
+		'ADD_IN_REPORT' => 'bool',
+		'TASK_CONTROL' => 'bool',
+		'ALLOW_TIME_TRACKING' => 'bool',
+		'ALLOW_CHANGE_DEADLINE' => 'bool',
 	);
 
 	public static function getTrackedFields()
@@ -130,7 +133,7 @@ class CTaskLog
 			$key = $res["FIELD"];
 			$cOperationType = $res["OPERATION"];
 
-			$key = strtoupper($key);
+			$key = mb_strtoupper($key);
 
 			switch ($key) {
 				case "CREATED_DATE":
@@ -179,8 +182,8 @@ class CTaskLog
 			$arOrder = array("CREATED_DATE" => "ASC");
 
 		foreach ($arOrder as $by => $order) {
-			$by = strtolower($by);
-			$order = strtolower($order);
+			$by = mb_strtolower($by);
+			$order = mb_strtolower($order);
 			if ($order != "asc")
 				$order = "desc";
 

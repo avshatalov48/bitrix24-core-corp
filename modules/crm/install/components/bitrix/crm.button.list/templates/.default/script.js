@@ -509,24 +509,7 @@ CrmWebFormListItem.prototype =
 				data = data || {'error': true, 'text': ''};
 				this.isActiveControlLocked = false;
 				this.activeController.revert();
-
-				if(data.limited)
-				{
-					if(!B24 || !B24['licenseInfoPopup'])
-					{
-						return;
-					}
-
-					B24.licenseInfoPopup.show(
-						'crm_webform_activation',
-						this.caller.mess.dlgActiveCountLimitedTitle,
-						'<span>' + this.caller.mess.dlgActiveCountLimitedText + '</span>'
-					);
-				}
-				else
-				{
-					this.showErrorPopup(data);
-				}
+				this.showErrorPopup(data);
 			}
 		);
 	},

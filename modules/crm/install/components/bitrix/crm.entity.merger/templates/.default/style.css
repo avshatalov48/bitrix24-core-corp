@@ -175,7 +175,7 @@
 	align-items: flex-start;
 	flex-direction: column;
 	flex-wrap: wrap;
-	flex-basis: 100%;
+	flex-grow: 1;
 	padding-left: 20px;
 	height: 100%;
 	overflow-y: auto;
@@ -184,13 +184,13 @@
 
 .crm-entity-merger-column-head {
 	display: flex;
-	/*width: 100%;*/
+	flex-grow: 1;
 }
 
 .crm-entity-merger-column-container {
 	display: flex;
 	align-items: flex-start;
-	/*width: 100%;*/
+	flex-grow: 1;
 	overflow-x: auto;
 	z-index: 2;
 }
@@ -296,7 +296,7 @@
 	flex-grow: 1;
 	flex-shrink: 1;
 	/*margin-right: 12px;*/
-	max-width: 100%;
+	/*max-width: 100%;*/
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -312,8 +312,23 @@
 	white-space: nowrap;
 }
 
-.crm-entity-merger-column-btn-link {
-	margin-left: 8px;
+.crm-entity-merger-column-btn-link-dark-box {
+	position: relative;
+	flex-grow: 1;
+	font: 14px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	cursor: pointer;
+}
+
+.crm-entity-merger-column-btn-link-dark {
+	display: inline-block;
+	border-bottom: 1px dashed rgba(216,216,216,.4);
+	color: #333;
+	transition: border-bottom .3s;
+}
+
+.crm-entity-merger-column-btn-link-dark:hover {
+	border-bottom: 1px dashed transparent;
+	color: #333;
 }
 
 .crm-entity-merger-column-btn-text {
@@ -321,6 +336,7 @@
 	font: 14px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
 }
 
+.crm-entity-merger-column-btn-link-dark-box .crm-entity-merger-column-btn-date,
 .crm-entity-merger-column-btn-date {
 	font: 14px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;
 }
@@ -330,6 +346,7 @@
 }
 
 .crm-entity-merger-column-btn-link {
+	margin-left: 10px;
 	border-bottom: 1px dashed rgba(39, 107, 179, .4);
 }
 
@@ -519,6 +536,8 @@
 	from { opacity: 0 }
 	to { opacity: 1; }
 }
+
+.crm-entity-widget-content-block-inner {overflow: hidden;}
 
 .crm-entity-widget-content .crm-entity-widget-content-block.crm-entity-merger-column-cell-conflict-option { position: relative; }
 
@@ -739,4 +758,8 @@
 
 .crm-entity-merger-column-cell-conflict-option .crm-entity-widget-client-block {
 	padding-left: 40px;
+}
+
+.crm-entity-merger-column-container .crm-widget-employee-avatar-container {
+    width: 30px;
 }

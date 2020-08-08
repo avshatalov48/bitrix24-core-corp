@@ -21,15 +21,7 @@ CJSCore::Init([
 ShowError($arResult["ERROR_TEXT"]);
 if (!$arResult["ENABLE_EXPORT"])
 {
-	CBitrix24::initLicenseInfoPopupJS();
-	?>
-	<script type="text/javascript">
-		function viOpenTrialPopup(dialogId)
-		{
-			B24.licenseInfoPopup.show(dialogId, "<?=CUtil::JSEscape($arResult["TRIAL_TEXT"]['TITLE'])?>", "<?=CUtil::JSEscape($arResult["TRIAL_TEXT"]['TEXT'])?>");
-		}
-	</script>
-	<?
+	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 }
 
 $isBitrix24Template = (SITE_TEMPLATE_ID == "bitrix24");

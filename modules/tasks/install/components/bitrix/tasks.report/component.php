@@ -22,21 +22,21 @@ CModule::IncludeModule('iblock');
 global $APPLICATION;
 
 $arParams["TASK_VAR"] = trim($arParams["TASK_VAR"]);
-if (strlen($arParams["TASK_VAR"]) <= 0)
+if ($arParams["TASK_VAR"] == '')
 	$arParams["TASK_VAR"] = "task_id";
 
 $arParams["GROUP_VAR"] = trim($arParams["GROUP_VAR"]);
-if (strlen($arParams["GROUP_VAR"]) <= 0)
+if ($arParams["GROUP_VAR"] == '')
 	$arParams["GROUP_VAR"] = "group_id";
 
 $arParams["ACTION_VAR"] = trim($arParams["ACTION_VAR"]);
-if (strlen($arParams["ACTION_VAR"]) <= 0)
+if ($arParams["ACTION_VAR"] == '')
 	$arParams["ACTION_VAR"] = "action";
 
-if (strlen($arParams["PAGE_VAR"]) <= 0)
+if ($arParams["PAGE_VAR"] == '')
 	$arParams["PAGE_VAR"] = "page";
 
-if (strlen($arParams["NAME_TEMPLATE"]) <= 0)
+if ($arParams["NAME_TEMPLATE"] == '')
 	$arParams["NAME_TEMPLATE"] = CSite::GetNameFormat();
 
 $arParams["USER_ID"] = intval($arParams["USER_ID"]) > 0 ? intval($arParams["USER_ID"]) : \Bitrix\Tasks\Util\User::getId();
@@ -47,39 +47,39 @@ $taskType = ($arParams["GROUP_ID"] > 0 ? "group" : "user");
 
 //user paths
 $arParams["PATH_TO_USER_TASKS"] = trim($arParams["PATH_TO_USER_TASKS"]);
-if (strlen($arParams["PATH_TO_USER_TASKS"]) <= 0)
+if ($arParams["PATH_TO_USER_TASKS"] == '')
 {
 	$arParams["PATH_TO_USER_TASKS"] = COption::GetOptionString("tasks", "paths_task_user", null, SITE_ID);
 }
 $arParams["PATH_TO_USER_TASKS_TASK"] = trim($arParams["PATH_TO_USER_TASKS_TASK"]);
-if (strlen($arParams["PATH_TO_USER_TASKS_TASK"]) <= 0)
+if ($arParams["PATH_TO_USER_TASKS_TASK"] == '')
 {
 	$arParams["PATH_TO_USER_TASKS_TASK"] = COption::GetOptionString("tasks", "paths_task_user_action", null, SITE_ID);
 }
 $arParams["PATH_TO_USER_TASKS_REPORT"] = trim($arParams["PATH_TO_USER_TASKS_REPORT"]);
-if (strlen($arParams["PATH_TO_USER_TASKS_REPORT"]) <= 0)
+if ($arParams["PATH_TO_USER_TASKS_REPORT"] == '')
 {
 	$arParams["PATH_TO_USER_TASKS_REPORT"] = htmlspecialcharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=user_tasks_report&".$arParams["USER_VAR"]."=#user_id#");
 }
 $arParams["PATH_TO_USER_TASKS_TEMPLATES"] = trim($arParams["PATH_TO_USER_TASKS_TEMPLATES"]);
-if (strlen($arParams["PATH_TO_USER_TASKS_TEMPLATES"]) <= 0)
+if ($arParams["PATH_TO_USER_TASKS_TEMPLATES"] == '')
 {
 	$arParams["PATH_TO_USER_TASKS_TEMPLATES"] = htmlspecialcharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=user_tasks_templates&".$arParams["USER_VAR"]."=#user_id#");
 }
 
 //group paths
 $arParams["PATH_TO_GROUP_TASKS"] = trim($arParams["PATH_TO_GROUP_TASKS"]);
-if (strlen($arParams["PATH_TO_GROUP_TASKS"]) <= 0)
+if ($arParams["PATH_TO_GROUP_TASKS"] == '')
 {
 	$arParams["PATH_TO_GROUP_TASKS"] = COption::GetOptionString("tasks", "paths_task_group", htmlspecialcharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=group_tasks&".$arParams["GROUP_VAR"]."=#group_id#"), SITE_ID);
 }
 $arParams["PATH_TO_GROUP_TASKS_TASK"] = trim($arParams["PATH_TO_GROUP_TASKS_TASK"]);
-if (strlen($arParams["PATH_TO_GROUP_TASKS_TASK"]) <= 0)
+if ($arParams["PATH_TO_GROUP_TASKS_TASK"] == '')
 {
 	$arParams["PATH_TO_GROUP_TASKS_TASK"] = COption::GetOptionString("tasks", "paths_task_group_action", htmlspecialcharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=group_tasks_task&".$arParams["GROUP_VAR"]."=#group_id#&".$arParams["TASK_VAR"]."=#task_id#&".$arParams["ACTION_VAR"]."=#action#"), SITE_ID);
 }
 $arParams["PATH_TO_GROUP_TASKS_REPORT"] = trim($arParams["PATH_TO_GROUP_TASKS_REPORT"]);
-if (strlen($arParams["PATH_TO_GROUP_TASKS_REPORT"]) <= 0)
+if ($arParams["PATH_TO_GROUP_TASKS_REPORT"] == '')
 {
 	$arParams["PATH_TO_GROUP_TASKS_REPORT"] = htmlspecialcharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=group_tasks_report&".$arParams["GROUP_VAR"]."=#group_id#");
 }
@@ -327,7 +327,7 @@ while ($report = $rsReports->GetNext())
 			'!RIGHT_MARGIN' => $report['RIGHT_MARGIN'],
 			'!ID' => $report["DEPARTMENT_ID"], // little hack because of the iblock module minor bug
 		);
-		$rsParentSections = CIBlockSection::GetList(array('left_margin' => asc), $arParentFilter);
+		$rsParentSections = CIBlockSection::GetList(['left_margin' => 'ASC'], $arParentFilter);
 		$arResult["DEPARTMENTS"][$report["DEPARTMENT_ID"]]["PARENTS"] = array();
 		while($section = $rsParentSections->GetNext())
 		{

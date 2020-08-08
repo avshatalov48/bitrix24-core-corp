@@ -125,7 +125,7 @@ class CCrmTax
 		$count = 0;
 		$strActiveVats = COption::GetOptionString("crm", "crmSaveActiveVats", '');
 
-		if(strlen($strActiveVats) > 0)
+		if($strActiveVats <> '')
 		{
 			$arActiveVats = explode(',', $strActiveVats);
 

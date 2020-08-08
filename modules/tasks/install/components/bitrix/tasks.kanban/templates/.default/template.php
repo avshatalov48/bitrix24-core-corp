@@ -46,7 +46,10 @@ $emptyKanban = $arParams['GROUP_ID'] == 0 &&
 	'task_kanban', 'intranet_notify_dialog'
 ]);
 \Bitrix\Main\UI\Extension::load([
-	'ui.notification'
+	'ui.notification',
+	'ui.dialogs.messagebox',
+	'ui.counter',
+	'ui.label'
 ]);
 
 if (!$emptyKanban) {
@@ -88,12 +91,13 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
             || Kanban\StagesTable::getWorkMode() == Kanban\StagesTable::WORK_MODE_TIMELINE
             || !(Kanban\StagesTable::getWorkMode() == Kanban\StagesTable::WORK_MODE_GROUP
                 && $arParams['GROUP_ID'] > 0) ? 'Y' : 'N',
-            'MARK_SECTION_KANBAN' => Kanban\StagesTable::getWorkMode() == Kanban\StagesTable::WORK_MODE_GROUP ? 'Y' : 'N',
             'USE_AJAX_ROLE_FILTER' => $arParams['PERSONAL'] == 'Y' ? 'Y' : 'N',
 
             'MARK_ACTIVE_ROLE' => $arParams['MARK_ACTIVE_ROLE'],
             'MARK_SECTION_ALL' => $arParams['MARK_SECTION_ALL'],
 //			'MARK_SPECIAL_PRESET' => $arParams['MARK_SPECIAL_PRESET'],
+			'MARK_SECTION_PROJECTS' => $arParams['MARK_SECTION_PROJECTS'],
+			'PROJECT_VIEW' => $arParams['PROJECT_VIEW'],
 
             'PATH_TO_USER_TASKS' => $arParams['~PATH_TO_USER_TASKS'],
             'PATH_TO_USER_TASKS_TASK' => $arParams['~PATH_TO_USER_TASKS_TASK'],
@@ -137,34 +141,44 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
             'SHOW_QUICK_FORM' => 'N',
 
 
-            'POPUP_MENU_ITEMS' =>
+			'POPUP_MENU_ITEMS' =>
 				($arParams['PERSONAL'] == 'Y' && $arResult['ACCESS_SORT_PERMS'])
-                || (
+				|| (
 					$arParams['PERSONAL'] != 'Y' && !$emptyKanban &&
 					!($arParams['SPRINT_SELECTED'] == 'Y' && !$arParams['SPRINT_ID'])
 				)
-                    ? array(
-                    array(
-                        'tabId' => 'popupMenuOptions',
-                        'text' => '<b>' . Loc::getMessage('KANBAN_SORT_TITLE') . '</b>'
-                    ),
-                    array(
-                        'tabId' => 'popupMenuOptions',
-                        'text' => Loc::getMessage('KANBAN_SORT_DESC'),
-                        'className' => 'menu-popup-item-none',
-                        'onclick' => 'BX.delegate(BX.Tasks.KanbanComponent.ClickSort)',
-                        'params' => '{order: "desc"}'
-                    ),
-                    array(
-                        'tabId' => 'popupMenuOptions',
-                        'text' => Loc::getMessage('KANBAN_SORT_ASC'),
-                        'className' => 'menu-popup-item-none',
-                        'onclick' => 'BX.delegate(BX.Tasks.KanbanComponent.ClickSort)',
-                        'params' => '{order: "asc"}'
-                    ),
-                )
-                    : array(//
-                ),
+					? array(
+							array(
+								'tabId' => 'popupMenuOptions',
+								'text' => '<b>' . Loc::getMessage('KANBAN_SORT_TITLE_MY') . '</b>'
+							),
+							array(
+								'tabId' => 'popupMenuOptions',
+								'text' => Loc::getMessage('KANBAN_SORT_ACTUAL').'<span class=\"menu-popup-item-sort-field-label\">'.Loc::getMessage("KANBAN_SORT_ACTUAL_RECOMMENDED_LABEL").'</span>',
+								'className' => ($arResult['NEW_TASKS_ORDER'] == 'actual') ? 'menu-popup-item-accept' : 'menu-popup-item-none',
+								'onclick' => 'BX.delegate(BX.Tasks.KanbanComponent.ClickSort)',
+								'params' => '{order: "actual"}'
+							),
+							array(
+								'tabId' => 'popupMenuOptions',
+								'text' => '<b>' . Loc::getMessage('KANBAN_SORT_TITLE') . '</b>'
+							),
+							array(
+								'tabId' => 'popupMenuOptions',
+								'text' => Loc::getMessage('KANBAN_SORT_DESC'),
+								'className' => ($arResult['NEW_TASKS_ORDER'] == 'desc') ? 'menu-popup-item-accept' : 'menu-popup-item-none',
+								'onclick' => 'BX.delegate(BX.Tasks.KanbanComponent.ClickSort)',
+								'params' => '{order: "desc"}'
+							),
+							array(
+								'tabId' => 'popupMenuOptions',
+								'text' => Loc::getMessage('KANBAN_SORT_ASC'),
+								'className' => ($arResult['NEW_TASKS_ORDER'] == 'asc') ? 'menu-popup-item-accept' : 'menu-popup-item-none',
+								'onclick' => 'BX.delegate(BX.Tasks.KanbanComponent.ClickSort)',
+								'params' => '{order: "asc"}'
+							)
+						)
+					: array(),
             'DEFAULT_ROLEID' => $arParams['DEFAULT_ROLEID']
         ),
         $component,
@@ -195,13 +209,17 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
 					<?= Loc::getMessage('KANBAN_WO_GROUP_1');?>
 				</div>
 				<div class="tasks-kanban-start-icon"></div>
-				<div class="tasks-kanban-start-title-sm">
-					<?= Loc::getMessage('KANBAN_WO_GROUP_2');?>
-                </div>
-				<a href="<?= htmlspecialcharsbx(str_replace('#user_id#', $arResult['CURRENT_USER_ID'], $arParams['PATH_TO_USER_PROFILE']));?>groups/create/" <?
-					?>class="webform-button webform-button-blue tasks-kanban-start-button"><?
-						?><?= Loc::getMessage('KANBAN_WO_GROUP_BUTTON'); ?><?
-				?></a>
+
+				<? if (CSocNetUser::IsCurrentUserModuleAdmin() || $GLOBALS["APPLICATION"]->GetGroupRight("socialnetwork", false, "Y", "Y", array(SITE_ID, false)) >= "K"): ?>
+					<div class="tasks-kanban-start-title-sm">
+						<?= Loc::getMessage('KANBAN_WO_GROUP_2');?>
+					</div>
+					<a href="/company/personal/user/<?=$arParams['USER_ID']?>/groups/create/" <?
+						?>class="webform-button webform-button-blue tasks-kanban-start-button js-id-add-project"><?
+							?><?= Loc::getMessage('KANBAN_WO_GROUP_BUTTON'); ?><?
+					?></a>
+				<? endif; ?>
+
 			</div>
 		</div>
 		<style type="text/css">
@@ -235,6 +253,7 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
 
         Kanban = new BX.Tasks.Kanban.Grid({
             renderTo: BX("task_kanban"),
+			//multiSelect: true,
             itemType: "BX.Tasks.Kanban.Item",
             columnType: "BX.Tasks.Kanban.Column",
             canAddColumn: <?= $demoAccess ? 'true' : (($arResult['ACCESS_CONFIG_PERMS'] && $arParams['TIMELINE_MODE'] == 'N') ? 'true' : 'false')?>,
@@ -256,6 +275,9 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
                 params: ajaxParams,
                 gridId: "<?= \CUtil::JSEscape($gridID)?>",
                 newTaskOrder: "<?= $arResult['NEW_TASKS_ORDER']?>",
+				setClientDate: <?= $arResult['NEED_SET_CLIENT_DATE'] ? 'true' : 'false'?>,
+				clientDate: BX.date.format(BX.date.convertBitrixFormat(BX.message('FORMAT_DATE'))),
+				clientTime: BX.date.format(BX.date.convertBitrixFormat(BX.message('FORMAT_DATETIME'))),
                 rights: {
                     canAddColumn: <?= ($arResult['ACCESS_CONFIG_PERMS'] && $arParams['TIMELINE_MODE'] == 'N') ? 'true' : 'false'?>,
                     canEditColumn: <?= ($arResult['ACCESS_CONFIG_PERMS'] && $arParams['TIMELINE_MODE'] == 'N') ? 'true' : 'false'?>,
@@ -269,15 +291,12 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
             messages: {
                 ITEM_TITLE_PLACEHOLDER: "<?= \CUtil::JSEscape(Loc::getMessage('KANBAN_ITEM_TITLE_PLACEHOLDER'))?>",
                 COLUMN_TITLE_PLACEHOLDER: "<?= \CUtil::JSEscape(Loc::getMessage('KANBAN_COLUMN_TITLE_PLACEHOLDER'))?>"
-            }
+            },
+			ownerId: <?= (int) $arParams["USER_ID"] ?>,
+			groupId: <?= (int) $arParams['GROUP_ID'] ?>
         });
 
         Kanban.draw();
-
-        BX.Tasks.KanbanComponent.SetSort(
-            <?= $arResult['ACCESS_SORT_PERMS'] ? 'true' : 'false'?>,
-            "<?= $arResult['NEW_TASKS_ORDER']?>"
-        );
 
         BX.Tasks.KanbanComponent.onReady();
     })();

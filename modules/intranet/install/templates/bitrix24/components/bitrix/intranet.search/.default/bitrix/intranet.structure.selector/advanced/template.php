@@ -10,7 +10,7 @@ $formName = 'FILTER_'.$arParams['FILTER_NAME'].'_adv';
 <?endif;?>
 	<input class="bx24-top-bar-search" type="text" id="user-fio" name="<?=$arParams['FILTER_NAME']?>_FIO" value="<?=$arResult['FILTER_VALUES'][$arParams['FILTER_NAME'].'_FIO']?>" />
 	<input type="hidden" name="set_filter_<?=$arParams['FILTER_NAME']?>" value="Y" /> 
-<?if (strlen($GLOBALS[$arParams['FILTER_NAME'].'_FIO']) > 0):?>
+<?if ($GLOBALS[$arParams['FILTER_NAME'].'_FIO'] <> ''):?>
 	<span class="employee-search-wrap-cancel" onclick="BX('user-fio').value = ''; var form = BX(<?='FILTER_'.$arParams['FILTER_NAME'].'_adv'?>); BX.submit(form);"></span>
 <?else:?>
 	<span class="bx24-top-bar-search-icon" onclick="var form = BX(<?='FILTER_'.$arParams['FILTER_NAME'].'_adv'?>); BX.submit(form);"></span>

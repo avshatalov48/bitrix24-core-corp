@@ -14,9 +14,9 @@ if (is_array($arParams['CUSTOM_EDITABLE_COLUMNS'])
 	{
 		foreach ($arParams['CUSTOM_EDITABLE_COLUMNS'] as $prefix => $editableColumns)
 		{
-			$idLenght = strlen($kd);
-			$prefixLength = strlen($prefix);
-			if ($idLenght >= $prefixLength && substr($kd, 0, $prefixLength) === $prefix)
+			$idLenght = mb_strlen($kd);
+			$prefixLength = mb_strlen($prefix);
+			if ($idLenght >= $prefixLength && mb_substr($kd, 0, $prefixLength) === $prefix)
 			{
 				foreach (array_keys($arResult['DATA_FOR_EDIT'][$kd]) as $kc)
 				{

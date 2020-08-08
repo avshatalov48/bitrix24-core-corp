@@ -54,6 +54,7 @@ class RecyclebinListComponent extends RecyclebinBaseComponent
 	protected function getData()
 	{
 		$modules = Recyclebin::getAvailableModules();
+		$additionalData = Recyclebin::getAdditionalData();
 
 		if (!$this->arParams['MODULE_ID'])
 		{
@@ -64,8 +65,8 @@ class RecyclebinListComponent extends RecyclebinBaseComponent
 				foreach ($data['LIST'] as $typeId => $typeData)
 				{
 					$this->arResult['ENTITY_TYPES'][$typeId] = $typeData['NAME'];
-
 					$this->arResult['ENTITY_MESSAGES'][$typeId] = $typeData['HANDLER']::getNotifyMessages();
+					$this->arResult['ENTITY_ADDITIONAL_DATA'][$typeId] = $additionalData[$moduleId]['ADDITIONAL_DATA'][$typeId];
 				}
 			}
 		}
@@ -73,11 +74,12 @@ class RecyclebinListComponent extends RecyclebinBaseComponent
 		{
 			if (!$this->arParams['ENTITY_TYPE'] && $modules)
 			{
-				foreach ($modules[$this->arParams['MODULE_ID']]['LIST'] as $typeId => $typeData)
+				$moduleId = $this->arParams['MODULE_ID'];
+				foreach ($modules[$moduleId]['LIST'] as $typeId => $typeData)
 				{
 					$this->arResult['ENTITY_TYPES'][$typeId] = $typeData['NAME'];
-
 					$this->arResult['ENTITY_MESSAGES'][$typeId] = $typeData['HANDLER']::getNotifyMessages();
+					$this->arResult['ENTITY_ADDITIONAL_DATA'][$typeId] = $additionalData[$moduleId]['ADDITIONAL_DATA'][$typeId];
 				}
 			}
 		}
@@ -165,7 +167,12 @@ class RecyclebinListComponent extends RecyclebinBaseComponent
 		$select['USER_TITLE'] = 'USER.TITLE';
 		$select['USER_LOGIN'] = 'USER.LOGIN';
 		$select['USER_PERSONAL_PHOTO'] = 'USER.PERSONAL_PHOTO';
-		$select['USER_UF_USER_CRM_ENTITY'] = 'USER.UF_USER_CRM_ENTITY';
+
+        if (Loader::includeModule('crm'))
+        {
+            $select['USER_UF_USER_CRM_ENTITY'] = 'USER.UF_USER_CRM_ENTITY';
+        }
+
 		$select['USER_EXTERNAL_AUTH_ID'] = 'USER.EXTERNAL_AUTH_ID';
 
 		$getListParameters = array(
@@ -207,7 +214,7 @@ class RecyclebinListComponent extends RecyclebinBaseComponent
 				);
 				$row['USER_AVATAR'] = UI::getAvatar($row['USER_PERSONAL_PHOTO'], 100, 100);
 				$row['USER_IS_EXTERNAL'] = User::isExternalUser($row['USER_ID']);
-				$row['USER_IS_CRM'] = array_key_exists('USER_UF_USER_CRM_ENTITY', $row) &&
+				$row['USER_IS_CRM'] = Loader::includeModule('crm') && array_key_exists('USER_UF_USER_CRM_ENTITY', $row) &&
 									  !empty($row['USER_UF_USER_CRM_ENTITY']);
 			}
 		}

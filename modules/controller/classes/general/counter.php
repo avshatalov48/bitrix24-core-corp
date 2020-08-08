@@ -45,7 +45,7 @@ class CAllControllerCounter
 		if($ID > 0)
 			unset($arFields["ID"]);
 
-		if(($ID===false || array_key_exists("NAME", $arFields)) && strlen($arFields["NAME"])<=0)
+		if(($ID===false || array_key_exists("NAME", $arFields)) && $arFields["NAME"] == '')
 			$arMsg[] = array("id"=>"NAME", "text"=> GetMessage("CTRL_COUNTER_ERR_NAME"));
 
 		if(($ID===false || array_key_exists("COUNTER_TYPE", $arFields)) && !array_key_exists($arFields["COUNTER_TYPE"], CControllerCounter::GetTypeArray()))
@@ -54,7 +54,7 @@ class CAllControllerCounter
 		if(array_key_exists("COUNTER_FORMAT", $arFields) && !array_key_exists($arFields["COUNTER_FORMAT"], CControllerCounter::GetFormatArray()))
 			$arFields["COUNTER_FORMAT"] = false;
 
-		if(($ID===false || array_key_exists("COMMAND", $arFields)) && strlen($arFields["COMMAND"])<=0)
+		if(($ID===false || array_key_exists("COMMAND", $arFields)) && $arFields["COMMAND"] == '')
 			$arMsg[] = array("id"=>"COMMAND", "text"=> GetMessage("CTRL_COUNTER_ERR_COMMAND"));
 
 		if(!empty($arMsg))
@@ -105,7 +105,7 @@ class CAllControllerCounter
 
 	public static function Add($arFields)
 	{
-		global $DB;
+		global $DB, $USER;
 
 		if(!CControllerCounter::CheckFields($arFields))
 			return false;
@@ -117,6 +117,20 @@ class CAllControllerCounter
 
 		if(array_key_exists("CONTROLLER_GROUP_ID", $arFields))
 			CControllerCounter::UpdateGroups($ID, $arFields["CONTROLLER_GROUP_ID"]);
+
+		$rsCounter = $DB->Query("select * from b_controller_counter where ID = ".$ID);
+		$arCounter = $rsCounter->Fetch();
+		if ($arCounter)
+		{
+			$counterHistory = \Bitrix\Controller\CounterHistoryTable::createObject();
+			$counterHistory->setCounterId($ID);
+			$counterHistory->setTimestampX(new \Bitrix\Main\Type\DateTime());
+			$counterHistory->setUserId(is_object($USER)? $USER->GetID(): 0);
+			$counterHistory->setName($arCounter["NAME"]);
+			$counterHistory->setCommandFrom('');
+			$counterHistory->setCommandTo($arCounter["COMMAND"]);
+			$counterHistory->save();
+		}
 
 		return $ID;
 	}
@@ -166,14 +180,62 @@ class CAllControllerCounter
 		return true;
 	}
 
-	public static function Delete($ID)
+	protected static $agentTotalTime = 0;
+	public static function DeleteValuesAgent($COUNTER_ID)
 	{
 		global $DB;
+
+		$COUNTER_ID = intval($COUNTER_ID);
+		$agentDeleteLimit = COption::GetOptionInt('controller', 'delete_agent_limit');
+		$agentTimeLimit = COption::GetOptionInt('controller', 'delete_agent_time');
+
+		if ($COUNTER_ID <= 0 || $agentDeleteLimit <= 0 || $agentTimeLimit <= 0)
+		{
+			return '';
+		}
+
+		while (static::$agentTotalTime < $agentTimeLimit)
+		{
+			$stime = microtime(1);
+			$rs = $DB->Query("
+				DELETE FROM b_controller_counter_value
+				WHERE CONTROLLER_COUNTER_ID = ".$COUNTER_ID."
+				limit ".$agentDeleteLimit."
+			");
+			$etime = microtime(1);
+			static::$agentTotalTime += $etime - $stime;
+			if (!$rs->AffectedRowsCount())
+			{
+				return '';
+			}
+		}
+
+		return 'CControllerCounter::DeleteValuesAgent('.$COUNTER_ID.');';
+	}
+
+	public static function Delete($ID)
+	{
+		global $DB, $USER;
 		$ID = intval($ID);
 
-		$DB->Query("DELETE FROM b_controller_counter_value WHERE CONTROLLER_COUNTER_ID = ".$ID);
+		$rsCounter = $DB->Query("select * from b_controller_counter where ID = ".$ID);
+		$arCounter = $rsCounter->Fetch();
+		if ($arCounter)
+		{
+			$counterHistory = \Bitrix\Controller\CounterHistoryTable::createObject();
+			$counterHistory->setCounterId($ID);
+			$counterHistory->setTimestampX(new \Bitrix\Main\Type\DateTime());
+			$counterHistory->setUserId(is_object($USER)? $USER->GetID(): 0);
+			$counterHistory->setName($arCounter["NAME"]);
+			$counterHistory->setCommandFrom($arCounter["COMMAND"]);
+			$counterHistory->setCommandTo('');
+			$counterHistory->save();
+		}
+
 		$DB->Query("DELETE FROM b_controller_counter_group WHERE CONTROLLER_COUNTER_ID = ".$ID);
 		$DB->Query("DELETE FROM b_controller_counter WHERE ID = ".$ID);
+
+		CAgent::AddAgent("CControllerCounter::DeleteValuesAgent($ID);", "controller", "N", 60);
 
 		return true;
 	}
@@ -188,8 +250,8 @@ class CAllControllerCounter
 		$arQueryOrder = array();
 		foreach($arOrder as $strColumn => $strDirection)
 		{
-			$strColumn = strtoupper($strColumn);
-			$strDirection = strtoupper($strDirection)=="ASC"? "ASC": "DESC";
+			$strColumn = mb_strtoupper($strColumn);
+			$strDirection = mb_strtoupper($strDirection) == "ASC"? "ASC": "DESC";
 			switch($strColumn)
 			{
 				case "ID":
@@ -378,10 +440,34 @@ class CAllControllerCounter
 
 		$obQueryWhere = new CSQLWhere;
 		$arFields = array(
+			"ID" => array(
+				"TABLE_ALIAS" => "h",
+				"FIELD_NAME" => "h.ID",
+				"FIELD_TYPE" => "int",
+				"JOIN" => false,
+			),
 			"COUNTER_ID" => array(
 				"TABLE_ALIAS" => "h",
 				"FIELD_NAME" => "h.COUNTER_ID",
 				"FIELD_TYPE" => "int",
+				"JOIN" => false,
+			),
+			"NAME" => array(
+				"TABLE_ALIAS" => "h",
+				"FIELD_NAME" => "h.NAME",
+				"FIELD_TYPE" => "string",
+				"JOIN" => false,
+			),
+			"COMMAND_FROM" => array(
+				"TABLE_ALIAS" => "h",
+				"FIELD_NAME" => "h.COMMAND_FROM",
+				"FIELD_TYPE" => "string",
+				"JOIN" => false,
+			),
+			"COMMAND_TO" => array(
+				"TABLE_ALIAS" => "h",
+				"FIELD_NAME" => "h.COMMAND_TO",
+				"FIELD_TYPE" => "string",
 				"JOIN" => false,
 			),
 		);

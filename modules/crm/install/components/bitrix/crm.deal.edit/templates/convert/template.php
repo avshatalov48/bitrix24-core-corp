@@ -12,7 +12,7 @@ foreach($arResult['FIELDS']['tab_1'] as $fieldKey => $field):
 		continue;
 	}
 	$field['id'] = 'DEAL_'.$field['id'];		
-	if (strpos($field['id'], 'UF_') !== false):
+	if (mb_strpos($field['id'], 'UF_') !== false):
 		if ($field['required'] == 'Y'):
 			$arrAddRequiredFields[] = $field;
 		else:

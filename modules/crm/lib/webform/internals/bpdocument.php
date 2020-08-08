@@ -74,7 +74,7 @@ class BPDocument
 	protected static function getForms(int $entityTypeId = null): array
 	{
 		$forms = WebForm\Manager::getActiveForms([
-			'select' => ['ID', 'NAME', 'SECURITY_CODE', 'ENTITY_SCHEME'],
+			'select' => ['ID', 'NAME', 'CODE', 'SECURITY_CODE', 'ENTITY_SCHEME'],
 			'order' => ['ID' => 'DESC'],
 			'cache' => ['ttl' => 36000]
 		]);

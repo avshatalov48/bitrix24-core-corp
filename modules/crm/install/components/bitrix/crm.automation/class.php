@@ -78,6 +78,7 @@ class CrmAutomationComponent extends \CBitrixComponent
 			'ENTITY_CATEGORY_ID' => $entityCategoryId,
 			'BIZPROC_EDITOR_URL' => $this->getBpDesignerEditUrl($entityTypeId),
 			'STATUSES_EDIT_URL' => $this->getStatusesEditUrl($entityTypeId, $entityCategoryId),
+			'ROBOTS_LIMIT' => Factory::getRobotsLimit($entityTypeId),
 		);
 
 		$this->includeComponentTemplate();

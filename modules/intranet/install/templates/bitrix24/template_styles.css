@@ -1180,19 +1180,6 @@ td.bx-layout-inner-inner-cont {
 
 /* region BULLSHIT STYLES FOR BULLSHIT TASKS */
 
-/*.crm-btn-dropdown-rest-app-box {*/
-/*display: flex;*/
-/*margin-right: 12px;*/
-/*}*/
-
-.crm-btn-dropdown-rest-app,
-.crm-pagetitle-btn-box .ui-btn-double .ui-btn-main {
-	max-width: 120px;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	overflow: hidden;
-}
-
 .ui-btn + script + .ui-btn,
 .ui-btn + script + .ui-btn-primary,
 .ui-btn + script + .ui-btn-double,
@@ -3878,7 +3865,8 @@ a.td1:hover {
 }
 
 .start-page .pagetitle-container .main-ui-filter-search,
-.start-page .pagetitle-container .webform-rounded-cogwheel {
+.start-page .pagetitle-container .webform-rounded-cogwheel,
+.start-page .pagetitle-container .ui-btn-icon-setting {
 	z-index: 130;
 }
 

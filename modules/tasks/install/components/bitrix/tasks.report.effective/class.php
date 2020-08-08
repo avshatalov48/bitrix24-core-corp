@@ -6,9 +6,11 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\UI\Filter;
 use Bitrix\Tasks\Internals\Effective;
 use Bitrix\Tasks\Util\Error\Collection;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
 
@@ -81,6 +83,84 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 
 		$this->arResult['JS_DATA']['userId'] = $this->userId;
 		$this->arResult['JS_DATA']['efficiencyData'] = static::getEfficiencyData($this->userId);
+
+		if (TaskLimit::isLimitExceeded())
+		{
+			$this->arResult['TASK_LIMIT_EXCEEDED'] = true;
+			$efficiencyData = $this->getDefaultEfficiencyData();
+		}
+		else
+		{
+			$this->arResult['TASK_LIMIT_EXCEEDED'] = false;
+			$efficiencyData = static::getEfficiencyData($this->arParams['USER_ID']);
+		}
+
+		$this->arResult['JS_DATA']['efficiencyData'] = $efficiencyData;
+	}
+
+	/**
+	 * @return array
+	 * @throws ObjectException
+	 */
+	private function getDefaultEfficiencyData(): array
+	{
+		$date = new DateTime();
+		$month = $date->getMonthGmt();
+		$month = ($month < 10? '0'.$month : $month);
+
+		return [
+			'EFFICIENCY' => 75,
+			'COMPLETED' => 20,
+			'VIOLATIONS' => 25,
+			'IN_PROGRESS' => 100,
+			'GRAPH_DATA' => [
+				[
+					'DATE' => '2019-'.$month.'-01',
+					'EFFECTIVE' => 100,
+				],
+				[
+					'DATE' => '2019-'.$month.'-03',
+					'EFFECTIVE' => 25,
+				],
+				[
+					'DATE' => '2019-'.$month.'-06',
+					'EFFECTIVE' => 50,
+				],
+				[
+					'DATE' => '2019-'.$month.'-09',
+					'EFFECTIVE' => 0,
+				],
+				[
+					'DATE' => '2019-'.$month.'-12',
+					'EFFECTIVE' => 33,
+				],
+				[
+					'DATE' => '2019-'.$month.'-15',
+					'EFFECTIVE' => 10,
+				],
+				[
+					'DATE' => '2019-'.$month.'-18',
+					'EFFECTIVE' => 100,
+				],
+				[
+					'DATE' => '2019-'.$month.'-21',
+					'EFFECTIVE' => 30,
+				],
+				[
+					'DATE' => '2019-'.$month.'-24',
+					'EFFECTIVE' => 75,
+				],
+				[
+					'DATE' => '2019-'.$month.'-27',
+					'EFFECTIVE' => 100,
+				],
+				[
+					'DATE' => '2019-'.$month.'-30',
+					'EFFECTIVE' => 25,
+				],
+			],
+			'GRAPH_MIN_PERIOD' => 'DD',
+		];
 	}
 
 	/**

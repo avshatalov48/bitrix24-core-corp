@@ -284,7 +284,7 @@ if($arParams['TYPE'] === 'list')
 			'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
 			'NAVIGATION_CONTEXT_ID' => $entityType
 		);
-		if (isset($_REQUEST['WG']) && strtoupper($_REQUEST['WG']) === 'Y')
+		if (isset($_REQUEST['WG']) && mb_strtoupper($_REQUEST['WG']) === 'Y')
 		{
 			$widgetDataFilter = \Bitrix\Crm\Widget\Data\Contact\DataSource::extractDetailsPageUrlParams($_REQUEST);
 			if (!empty($widgetDataFilter))
@@ -348,7 +348,7 @@ if($arParams['TYPE'] === 'list')
 		{
 			$rsSites = CSite::GetByID(SITE_ID);
 			$arSite = $rsSites->Fetch();
-			if (strlen($arSite['SITE_NAME']) > 0)
+			if ($arSite['SITE_NAME'] <> '')
 				$sPrefix = $arSite['SITE_NAME'];
 			else
 				$sPrefix = COption::GetOptionString('main', 'site_name', GetMessage('CRM_OUTLOOK_PREFIX_CONTACTS'));
@@ -383,7 +383,7 @@ if($arParams['TYPE'] === 'list')
 			$arResult['BUTTONS'][] = array(
 				'TEXT' => GetMessage('CONTACT_DEDUPE'),
 				'TITLE' => GetMessage('CONTACT_DEDUPE_TITLE'),
-				'ONCLICK' => $restriction->preparePopupScript(),
+				'ONCLICK' => $restriction->prepareInfoHelperScript(),
 				'MENU_ICON' => 'grid-lock'
 			);
 		}

@@ -113,7 +113,7 @@ final class Desktop
 	{
 		if(isset($_SERVER['HTTP_USER_AGENT']) && preg_match('%Bitrix24.Disk/([0-9\.]+)%i', $_SERVER['HTTP_USER_AGENT'], $m))
 		{
-			if($strictDisk && strpos($_SERVER['HTTP_USER_AGENT'], 'Chrome') !== false)
+			if($strictDisk && mb_strpos($_SERVER['HTTP_USER_AGENT'], 'Chrome') !== false)
 			{
 				return 0;
 			}

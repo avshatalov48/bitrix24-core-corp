@@ -2,5 +2,6 @@
 return [
 	'reload/listeners',
 	'cache',
-	'task'
+	'task',
+	'utils',
 ];

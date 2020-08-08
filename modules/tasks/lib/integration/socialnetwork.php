@@ -2,16 +2,14 @@
 /**
  * This class is for internal use only, not a part of public API.
  * It can be changed at any time without notification.
- * 
+ *
  * @access private
  */
 
 namespace Bitrix\Tasks\Integration;
 
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\ModuleManager;
-use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\Integration\SocialNetwork\LogDestination;
 
 Loc::loadMessages(__FILE__);
 
@@ -63,170 +61,7 @@ abstract class SocialNetwork extends \Bitrix\Tasks\Integration
 			return array();
 		}
 
-		$destinationParams = array(
-			'useProjects' => (isset($parameters['USE_PROJECTS']) && $parameters['USE_PROJECTS'] == 'Y'? 'Y' : 'N'),
-			'CRM_ENTITY' => 'Y'
-		);
-		if(intval($parameters['AVATAR_HEIGHT']) && intval($parameters['AVATAR_WIDTH']))
-		{
-			$destinationParams['THUMBNAIL_SIZE_WIDTH'] = intval($parameters['AVATAR_WIDTH']);
-			$destinationParams['THUMBNAIL_SIZE_HEIGHT'] = intval($parameters['AVATAR_HEIGHT']);
-		}
-
-		if(!is_object(User::get()))
-		{
-			throw new \Bitrix\Main\SystemException('Global user is not defined');
-		}
-
-		$userId = User::getId();
-
-		$structure = \CSocNetLogDestination::GetStucture(array());
-		$dataAdditional = array();
-		$destination = array(
-			"DEST_SORT" => \CSocNetLogDestination::GetDestinationSort(array(
-				"DEST_CONTEXT" => $context,
-				"ALLOW_EMAIL_INVITATION" => ModuleManager::isModuleInstalled("mail"),
-			), $dataAdditional),
-			"LAST" => array(
-				"USERS" => array(),
-				"SONETGROUPS" => array(),
-				"PROJECTS" => array(),
-				"DEPARTMENT" => array()
-			),
-			"DEPARTMENT" => $structure["department"],
-			"DEPARTMENT_RELATION" => $structure["department_relation"],
-			"DEPARTMENT_RELATION_HEAD" => $structure["department_relation_head"],
-			/*
-			"SELECTED" => array(
-				"USERS" => array(User::getId())
-			)
-			*/
-		);
-
-		\CSocNetLogDestination::fillLastDestination(
-			$destination["DEST_SORT"],
-			$destination["LAST"],
-			array(
-				"EMAILS" => ModuleManager::isModuleInstalled("mail"),
-				"PROJECTS" => (isset($parameters['USE_PROJECTS']) && $parameters['USE_PROJECTS'] == 'Y' ? 'Y' : 'N'),
-				"DATA_ADDITIONAL" => $dataAdditional
-			)
-		);
-
-		if (\Bitrix\Tasks\Integration\Extranet\User::isExtranet())
-		{
-			$destination["EXTRANET_USER"] = "Y";
-			$destination["USERS"] = \CSocNetLogDestination::getExtranetUser($destinationParams);
-		}
-		else
-		{
-			$destUser = array();
-			foreach ($destination["LAST"]["USERS"] as $value)
-			{
-				$destUser[] = str_replace("U", "", $value);
-			}
-
-			$destination["EXTRANET_USER"] = "N";
-			$destination["USERS"] = \CSocNetLogDestination::getUsers(array_merge($destinationParams, array("id" => $destUser)));
-			\CSocNetLogDestination::fillEmails($destination);
-		}
-
-		$cacheTtl = defined("BX_COMP_MANAGED_CACHE") ? 3153600 : 3600*4;
-		$cacheId = "dest_project_".$userId.md5(serialize($parameters)).SITE_ID;
-		$cacheDir = "/tasks/dest/".$userId;
-		$cache = new \CPHPCache;
-		if($cache->initCache($cacheTtl, $cacheId, $cacheDir))
-		{
-			$cacheVars = $cache->getVars();
-			$destination["SONETGROUPS"] = $cacheVars["SONETGROUPS"];
-			$destination["PROJECTS"] = (isset($cacheVars["PROJECTS"]) ? $cacheVars["PROJECTS"] : array());
-			$destination["SONETGROUPS_LIMITED"] = $cacheVars["SONETGROUPS_LIMITED"];
-		}
-		else
-		{
-			$cache->startDataCache();
-
-			$limitReached = false;
-			$destination["SONETGROUPS"] = \CSocNetLogDestination::getSocnetGroup(array_merge($destinationParams, array(
-				"ALL" => "Y",
-				"GROUP_CLOSED" => "N",
-				"features" => array(
-					"tasks", array("create_tasks")
-				)
-			)), $limitReached);
-
-			if (isset($destination['SONETGROUPS']['PROJECTS']))
-			{
-				$destination['PROJECTS'] = $destination['SONETGROUPS']['PROJECTS'];
-			}
-			if (isset($destination['SONETGROUPS']['SONETGROUPS']))
-			{
-				$destination['SONETGROUPS'] = $destination['SONETGROUPS']['SONETGROUPS'];
-			}
-
-			$destination["SONETGROUPS_LIMITED"] = ($limitReached ? 'Y' : 'N');
-
-			if(defined("BX_COMP_MANAGED_CACHE"))
-			{
-				global $CACHE_MANAGER;
-				$CACHE_MANAGER->startTagCache($cacheDir);
-				$CACHE_MANAGER->registerTag("sonet_group");
-				foreach($destination["SONETGROUPS"] as $val)
-				{
-					$CACHE_MANAGER->registerTag("sonet_features_G_".$val["entityId"]);
-					$CACHE_MANAGER->registerTag("sonet_group_".$val["entityId"]);
-				}
-				if (!empty($destination['PROJECTS']))
-				{
-					foreach($destination["PROJECTS"] as $val)
-					{
-						$CACHE_MANAGER->registerTag("sonet_features_G_".$val["entityId"]);
-						$CACHE_MANAGER->registerTag("sonet_group_".$val["entityId"]);
-					}
-				}
-				$CACHE_MANAGER->registerTag("sonet_user2group_U".$userId);
-				$CACHE_MANAGER->endTagCache();
-			}
-			$cache->endDataCache(array(
-				"SONETGROUPS" => $destination["SONETGROUPS"],
-				"PROJECTS" => $destination["PROJECTS"],
-				"SONETGROUPS_LIMITED" => $destination["SONETGROUPS_LIMITED"]
-			));
-		}
-
-		// add virtual department: extranet
-		if (\Bitrix\Tasks\Integration\Extranet::isConfigured())
-		{
-			$destination['DEPARTMENT']['EX'] = array(
-				'id' => 'EX',
-				'entityId' => 'EX',
-				'name' => Loc::getMessage("TASKS_INTEGRATION_EXTRANET_ROOT"),
-				'parent' => 'DR0',
-			);
-			$destination['DEPARTMENT_RELATION']['EX'] = array(
-				'id' => 'EX',
-				'type' => 'category',
-				'items' => array(),
-			);
-		}
-
-		$destination['NETWORK_ENABLED'] = Option::get('tasks', 'network_enabled') == 'Y';
-		$destination['SHOW_VACATIONS'] = ModuleManager::isModuleInstalled('intranet');
-		if ($destination['SHOW_VACATIONS'])
-		{
-			$destination['USERS_VACATION'] = \Bitrix\Socialnetwork\Integration\Intranet\Absence\User::getDayVacationList();
-		}
-
-		$destination['CAN_ADD_MAIL_USERS'] = (
-			ModuleManager::isModuleInstalled('mail')
-		    && ModuleManager::isModuleInstalled('intranet')
-		    && (
-				!\Bitrix\Main\Loader::includeModule('bitrix24')
-			    || \CBitrix24::isEmailConfirmed()
-		    )
-	    );
-
-		return $destination;
+		return (new LogDestination($context, $parameters))->getData();
 	}
 
     /**

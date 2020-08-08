@@ -287,18 +287,19 @@ if(typeof BX.Crm.Order.Shipment.Product.List === "undefined")
 
 		getProductAmount: function(basketId)
 		{
-			return document.getElementsByName('PRODUCT['+basketId+'][AMOUNT]')[0];
+			return document.getElementById('crm-product-amount-' + basketId);
+
 		},
 
 		getProductStoreQuantityValue: function(basketId, storeId)
 		{
 			if(storeId > 0)
 			{
-				return this.getProductStoreQuantity(basketId, storeId).value;
+				return this.getProductStoreQuantity(basketId, storeId).value || 0;
 			}
 			else
 			{
-				return this.getProductAmount(basketId, storeId);
+				return this.getProductAmount(basketId, storeId).value || 0;
 			}
 		},
 
@@ -399,6 +400,11 @@ if(typeof BX.Crm.Order.Shipment.Product.List === "undefined")
 				var eventArgs = event.getData(),
 					barcodeSlider = eventArgs.barcodeSlider;
 
+				if(!this.isStoreBarcodeInfoExists(eventArgs.basketId))
+				{
+					return;
+				}
+
 				var widget = this.createBarcodeWidget(eventArgs.basketId, eventArgs.storeId);
 
 				if(widget)
@@ -428,6 +434,12 @@ if(typeof BX.Crm.Order.Shipment.Product.List === "undefined")
 
 				if(eventArgs.widget)
 				{
+
+					if(!this.isStoreBarcodeInfoExists(eventArgs.widget.basketId))
+					{
+						return;
+					}
+
 					var widget = eventArgs.widget,
 						barcodes = [];
 
@@ -499,9 +511,14 @@ if(typeof BX.Crm.Order.Shipment.Product.List === "undefined")
 			return null;
 		},
 
+		isStoreBarcodeInfoExists: function(basketCode)
+		{
+			return typeof(this._settings.storeBarcodeInfo[basketCode]) !== 'undefined';
+		},
+
 		getStoreBarcode: function(basketCode)
 		{
-			if(typeof(this._settings.storeBarcodeInfo[basketCode]) !== 'undefined')
+			if(this.isStoreBarcodeInfoExists(basketCode))
 			{
 				return this._settings.storeBarcodeInfo[basketCode];
 			}

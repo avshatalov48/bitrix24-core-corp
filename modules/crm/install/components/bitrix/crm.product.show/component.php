@@ -20,6 +20,7 @@ $arParams['PATH_TO_PRODUCT_FILE'] = CrmCheckPath(
 	'PATH_TO_PRODUCT_FILE', $arParams['PATH_TO_PRODUCT_FILE'],
 	$APPLICATION->GetCurPage().'?product_id=#product_id#&field_id=#field_id#&file_id=#file_id#&file'
 );
+$arParams['PATH_TO_PRODUCT_SHOW'] = CrmCheckPath('PATH_TO_PRODUCT_SHOW', $arParams['PATH_TO_PRODUCT_SHOW'], '');
 
 //CUtil::InitJSCore(array('ajax', 'tooltip'));
 
@@ -44,7 +45,7 @@ $productID = isset($arParams['PRODUCT_ID']) ? intval($arParams['PRODUCT_ID']) : 
 if($productID <= 0)
 {
 	$productIDParName = isset($arParams['PRODUCT_ID_PAR_NAME']) ? strval($arParams['PRODUCT_ID_PAR_NAME']) : '';
-	if(strlen($productIDParName) == 0)
+	if($productIDParName == '')
 	{
 		$productIDParName = 'product_id';
 	}
@@ -120,14 +121,14 @@ if ($productID > 0/* && count($arProps) > 0*/)
 			{
 				$methodName = $prevPropMultipleValuesInfo['methodName'];
 				$method = $prevPropMultipleValuesInfo['propertyInfo']['PROPERTY_USER_TYPE'][$methodName];
-				$arPropertyValues[$prevPropID] = call_user_func_array(
-					$method,
-					array(
-						$prevPropMultipleValuesInfo['propertyInfo'],
-						array("VALUE" => $prevPropMultipleValuesInfo['value']),
-						array(),
-					)
-				);
+				$params = [
+					$prevPropMultipleValuesInfo['propertyInfo'],
+					[
+						"VALUE" => $prevPropMultipleValuesInfo['value'],
+					],
+					[],
+				];
+				$arPropertyValues[$prevPropID] = call_user_func_array($method, $params);
 			}
 		}
 		// endregion Prepare multiple values
@@ -180,11 +181,28 @@ if ($productID > 0/* && count($arProps) > 0*/)
 			}
 			else
 			{
-				$arPropertyValues[$propID][] = call_user_func_array($arPropUserTypeList[$arProperty['USER_TYPE']][$methodName], array(
+				$htmlControlName = [];
+				if (CCrmProductPropsHelper::isTypeSupportingUrlTemplate($propertyInfo))
+				{
+					$htmlControlName = [
+						'DETAIL_URL' => CComponentEngine::MakePathFromTemplate(
+							$arParams['PATH_TO_PRODUCT_SHOW'],
+							[
+								'product_id' => $arProperty['VALUE'],
+							]
+						),
+					];
+				}
+
+				$method = $arPropUserTypeList[$arProperty['USER_TYPE']][$methodName];
+				$params = [
 					$propertyInfo,
-					array("VALUE" => $arProperty["VALUE"]),
-					array(),
-				));
+					[
+						"VALUE" => $arProperty["VALUE"]
+					],
+					$htmlControlName,
+				];
+				$arPropertyValues[$propID][] = call_user_func_array($method, $params);
 			}
 			unset($propertyInfo);
 		}
@@ -205,14 +223,14 @@ if ($productID > 0/* && count($arProps) > 0*/)
 		{
 			$methodName = $prevPropMultipleValuesInfo['methodName'];
 			$method = $prevPropMultipleValuesInfo['propertyInfo']['PROPERTY_USER_TYPE'][$methodName];
-			$arPropertyValues[$prevPropID] = call_user_func_array(
-				$method,
-				array(
-					$prevPropMultipleValuesInfo['propertyInfo'],
-					array("VALUE" => $prevPropMultipleValuesInfo['value']),
-					array(),
-				)
-			);
+			$params = [
+				$prevPropMultipleValuesInfo['propertyInfo'],
+				[
+					"VALUE" => $prevPropMultipleValuesInfo['value'],
+				],
+				[],
+			];
+			$arPropertyValues[$prevPropID] = call_user_func_array($method, $params);
 		}
 	}
 	// endregion Prepare multiple values for last property
@@ -256,7 +274,7 @@ $arResult['FIELDS']['tab_1'][] = array(
 		$product['DESCRIPTION'] : $product['~DESCRIPTION'],
 	'params' => array(),
 	'isTactile' => true,
-	'isHidden' => !(isset($product['~DESCRIPTION']) && strlen($product['~DESCRIPTION']) > 0)
+	'isHidden' => !(isset($product['~DESCRIPTION']) && $product['~DESCRIPTION'] <> '')
 
 );
 
@@ -280,7 +298,7 @@ $arResult['FIELDS']['tab_1'][] = array(
 );
 
 $price = CCrmProduct::FormatPrice($product);
-if(strlen($price) > 0)
+if($price <> '')
 {
 	$arResult['FIELDS']['tab_1'][] = array(
 		'id' => 'PRICE',
@@ -386,7 +404,7 @@ foreach ($arFields as $fieldID => $fieldName)
 		'type' => 'custom',
 		'value' => $html,
 		'isTactile' => true,
-		'isHidden' => !(strlen($html) > 0)
+		'isHidden' => !($html <> '')
 	);
 }
 unset($arFields, $fieldID, $fieldName, $obFile, $obFileControl, $html);

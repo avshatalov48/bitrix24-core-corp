@@ -1408,7 +1408,7 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 
 .bx-disk-info-popup-btn-local .bx-disk-info-popup-btn-text {
 	background-position: left -1280px;
-	width: 47px;
+	/*width: 47px;*/
 }
 
 .bx-disk-info-popup-btn-local .bx-disk-info-popup-btn-text:before {

@@ -80,10 +80,17 @@ align-items: center;
     display: inline-block;
     color: #515C69;
     border-bottom: 1px dashed transparent;
+    white-space: nowrap;
     cursor: pointer;
     transition: color .3s, border-bottom .3s;
 }
+.crm-report-chart-grid-value-link-faded {
+    opacity: 0.42;
+}
+.crm-report-chart-grid-value-link-faded:hover,
+.crm-report-chart-grid-value-link:hover .crm-report-chart-grid-value-link-faded,
 .crm-report-chart-grid-value-link:hover {
+    opacity: 1;
     color: #2066B0;
     border-bottom: 1px dashed #2066B0;
 }

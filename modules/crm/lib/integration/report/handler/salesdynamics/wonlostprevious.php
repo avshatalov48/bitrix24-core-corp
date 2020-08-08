@@ -27,20 +27,4 @@ class WonLostPrevious extends WonLostAmount
 			$query->whereBetween("CLOSEDATE", $newFrom, $newTo);
 		}
 	}
-
-	public static function getPreviousPeriod(DateTime $from, DateTime $to)
-	{
-		$difference = $to->getTimestamp() - $from->getTimestamp();
-
-		if($difference < 0)
-		{
-			throw new ArgumentException("Date from should be earlier than date to");
-		}
-
-		$to = clone $from;
-		$fromTimestamp = $from->getTimestamp() - $difference;
-		$from = DateTime::createFromTimestamp($fromTimestamp);
-
-		return [$from, $to];
-	}
 }

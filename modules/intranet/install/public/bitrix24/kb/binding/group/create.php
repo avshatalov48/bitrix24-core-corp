@@ -6,6 +6,7 @@ $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 $groupId = $request->get('groupId');
 $afterCreate = '/kb/group/wiki/#site_show#/view/#landing_edit#/';
 
+
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',
 	'',

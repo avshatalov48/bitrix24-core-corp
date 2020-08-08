@@ -96,7 +96,7 @@ class CallList extends Base
 			$buttons[] = array(
 				'TEXT' => Loc::getMessage('CRM_ACTIVITY_PROVIDER_CALL_LIST_TITLE'),
 				'TITLE' => Loc::getMessage('CRM_ACTIVITY_PROVIDER_CALL_LIST_TITLE'),
-				'ONCLICK' => "B24.licenseInfoPopup.show('call-list-limit-popup', '".\CUtil::JSEscape(\Bitrix\Crm\CallList\CallList::getLicensePopupHeader())."', '".\CUtil::JSEscape(\Bitrix\Crm\CallList\CallList::getLicensePopupContent())."');",
+				'ONCLICK' => \Bitrix\Crm\Restriction\RestrictionManager::getCallListRestriction()->prepareInfoHelperScript(),
 				'ICON' => "btn-new"
 			);
 			return 1;

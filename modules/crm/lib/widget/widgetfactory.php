@@ -22,7 +22,7 @@ abstract class WidgetFactory
 			$options = array();
 		}
 
-		$typeName = isset($settings['typeName']) ? strtoupper($settings['typeName']) : '';
+		$typeName = isset($settings['typeName'])? mb_strtoupper($settings['typeName']) : '';
 		if($typeName === self::FUNNEL)
 		{
 			return new FunnelWidget($settings, $filter);

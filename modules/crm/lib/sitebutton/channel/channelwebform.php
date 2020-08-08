@@ -135,7 +135,7 @@ class ChannelWebForm implements iProvider
 
 		$type = self::getType();
 		$formData = FormTable::getRowById($id);
-		$title = strlen($formData['CAPTION']) > 0 ? $formData['CAPTION'] : Loc::getMessage('CRM_BUTTON_MANAGER_TYPE_NAME_CRMFORM_TITLE');
+		$title = $formData['CAPTION'] <> '' ? $formData['CAPTION'] : Loc::getMessage('CRM_BUTTON_MANAGER_TYPE_NAME_CRMFORM_TITLE');
 		$widget = array(
 			'id' => $type,
 			'title' => $title,
@@ -213,7 +213,7 @@ class ChannelWebForm implements iProvider
 	 */
 	public static function getName()
 	{
-		return Loc::getMessage('CRM_BUTTON_MANAGER_TYPE_NAME_' . strtoupper(self::getType()));
+		return Loc::getMessage('CRM_BUTTON_MANAGER_TYPE_NAME_'.mb_strtoupper(self::getType()));
 	}
 
 	/**

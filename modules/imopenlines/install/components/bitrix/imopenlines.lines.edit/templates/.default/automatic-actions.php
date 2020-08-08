@@ -237,5 +237,19 @@ use \Bitrix\Main\Localization\Loc; ?>
 				<?=Loc::getMessage("IMOL_CONFIG_QUICK_ANSWERS_DESC_NEW")?>
 			</div>
 		</div>
+		<div class="imopenlines-control-checkbox-container">
+			<label class="imopenlines-control-checkbox-label">
+				<input type="checkbox"
+					   id="imol_watch_typing"
+					   name="CONFIG[WATCH_TYPING]"
+					   value="Y"
+					   class="imopenlines-control-checkbox"
+					   <? if ($arResult['CONFIG']['WATCH_TYPING'] == "Y") { ?>checked<? } ?>>
+				<?=Loc::getMessage('IMOL_CONFIG_EDIT_WATCH_TYPING')?>
+			</label>
+			<div class="imopenlines-control-subtitle imopenlines-control-subtitle-answer">
+				<?=Loc::getMessage("IMOL_CONFIG_EDIT_WATCH_TYPING_DESC")?>
+			</div>
+		</div>
 	</div>
 </div>

@@ -60,7 +60,7 @@ class CBPControllerRemoteIBlockActivity
 		$documentId = $rootActivity->GetDocumentId();
 
 		$export_file = $this->Export($documentId);
-		if(strlen($export_file) <= 0)
+		if($export_file == '')
 			return CBPActivityExecutionStatus::Closed;
 
 		$documentService = $this->workflow->GetService("DocumentService");

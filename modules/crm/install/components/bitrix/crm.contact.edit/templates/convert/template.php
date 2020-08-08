@@ -9,7 +9,7 @@ $sFirstAddField = '';
 foreach($arResult['FIELDS']['tab_1'] as $field):
 	$originFieldID = $field['id'];
 	$field['id'] = "CONTACT_{$originFieldID}";
-	if (strpos($field['id'], 'UF_') !== false):
+	if (mb_strpos($field['id'], 'UF_') !== false):
 		if ($field['required'] == 'Y'):
 			$arrAddRequiredFields[] = $field;
 		else:

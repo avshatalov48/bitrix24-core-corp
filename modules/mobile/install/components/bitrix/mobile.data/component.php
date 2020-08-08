@@ -21,7 +21,7 @@ include_once(dirname(__FILE__) . "/functions.php");
 defineApiVersion();
 
 $isSessidValid = true;
-if(array_key_exists("sessid", $_REQUEST) && strlen($_REQUEST["sessid"]) > 0)
+if(array_key_exists("sessid", $_REQUEST) && $_REQUEST["sessid"] <> '')
 {
 	$isSessidValid = check_bitrix_sessid();
 }

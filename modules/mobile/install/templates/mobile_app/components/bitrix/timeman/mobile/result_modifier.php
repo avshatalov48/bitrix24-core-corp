@@ -18,6 +18,8 @@ if (!$arParams["DATE_FORMAT"])
 
 $request = \Bitrix\Main\Context::getCurrent()->getRequest();
 
+$arResult["START_INFO"]["COLLECT_GEO_DATA"] = COption::getOptionString("main", "collect_geo_data", "N");
+
 $statusClass = "";
 $stateTimer = 0;
 $pauseTimer = intval($arResult["START_INFO"]["INFO"]["TIME_LEAKS"]);

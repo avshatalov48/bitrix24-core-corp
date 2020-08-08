@@ -5,9 +5,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use \Bitrix\Intranet\Binding;
-use \Bitrix\Main\Localization\Loc;
-
-Loc::loadMessages(__FILE__);
 
 class IntranetBindingMenuComponent extends \CBitrixComponent
 {
@@ -27,34 +24,68 @@ class IntranetBindingMenuComponent extends \CBitrixComponent
 		{
 			$this->arParams[$var] = (int)$this->arParams[$var];
 		}
-		if (substr($var, 0, 1) !== '~')
+		if (mb_substr($var, 0, 1) !== '~')
 		{
 			$this->checkParam('~' . $var, $default);
 		}
 	}
 
 	/**
-	 * Separates additional items from general array.
-	 * @param array &$items Data array.
-	 * @return array Additional items.
+	 * Returns most frequency (by clicking) menu item.
+	 * @param array $items Items array.
+	 * @param string $menuId Frequency menu item id.
+	 * @return array
 	 */
-	protected function separateAdditional(array &$items)
+	protected function getFrequencyMenuItem(array $items, ?string $menuId): array
 	{
-		$separate = [];
-
-		foreach ($items as $key => &$item)
+		if (!$items)
 		{
-			if ($item['additional'])
+			return [];
+		}
+		if (count($items) > 1)
+		{
+			// try find recursive needed menu id
+			if ($menuId)
 			{
-				$separate[] = $item;
-				unset($items[$key]);
+				foreach ($items as $item)
+				{
+					if (isset($item['items']))
+					{
+						$innerItem = $this->getFrequencyMenuItem($item['items'], $menuId);
+						if ($innerItem)
+						{
+							return $innerItem;
+						}
+					}
+					if (isset($item['id']) && $item['id'] == $menuId)
+					{
+						return $item;
+					}
+				}
+			}
+			// if not, try first available menu item
+			foreach ($items as $item)
+			{
+				if (
+					isset($item['id']) && $item['id'] &&
+					(!isset($item['system']) || !$item['system'])
+				)
+				{
+					return $item;
+				}
 			}
 		}
-		unset($item);
+		// else returns first element only
+		else
+		{
+			$item = $items[0];
+			if (!isset($item['system']) || !$item['system'])
+			{
+				return $item;
+			}
+		}
 
-		$items = array_values($items);
-
-		return $separate;
+		return [];
 	}
 
 	/**
@@ -65,24 +96,31 @@ class IntranetBindingMenuComponent extends \CBitrixComponent
 	{
 		$this->checkParam('SECTION_CODE', '');
 		$this->checkParam('MENU_CODE', '');
+		$this->checkParam('CONTEXT', []);
 
-		$this->arParams['SECTION_CODE'] = strtolower($this->arParams['SECTION_CODE']);
-		$this->arParams['MENU_CODE'] = strtolower($this->arParams['MENU_CODE']);
-		$this->arResult['DEFAULT_BUTTON_NAME'] = Loc::getMessage('INTRANET_CMP_BIND_MENU_BUTTON_NAME');
+		$this->arParams['SECTION_CODE'] = mb_strtolower($this->arParams['SECTION_CODE']);
+		$this->arParams['MENU_CODE'] = mb_strtolower($this->arParams['MENU_CODE']);
 
+		$this->arResult['BINDING_ID'] = $this->arParams['SECTION_CODE'] . ':' . $this->arParams['MENU_CODE'];
+		$this->arResult['SECTIONS'] = Binding\Menu::SECTIONS;
 		$this->arResult['ITEMS'] = Binding\Menu::getMenuItems(
 			$this->arParams['SECTION_CODE'],
-			$this->arParams['MENU_CODE']
+			$this->arParams['MENU_CODE'],
+			$this->arParams['CONTEXT']
+			? ['context' => $this->arParams['CONTEXT']]
+			: []
+		);
+		$this->arResult['FREQUENCY_MENU_ITEM'] = $this->getFrequencyMenuItem(
+			$this->arResult['ITEMS'],
+			Binding\Menu::getFrequencyMenuItemId(
+				$this->arResult['BINDING_ID']
+			)
 		);
 
 		if (!$this->arResult['ITEMS'])
 		{
 			return;
 		}
-
-		$this->arResult['ADDITIONAL'] = $this->separateAdditional(
-			$this->arResult['ITEMS']
-		);
 
 		$this->includeComponentTemplate($this->arParams['SECTION_CODE']);
 	}

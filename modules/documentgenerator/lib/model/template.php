@@ -106,7 +106,7 @@ class TemplateTable extends FileModel
 			),
 			new Main\Entity\IntegerField('NUMERATOR_ID'),
 			new Main\Entity\BooleanField('WITH_STAMPS', [
-				'values' => array('Y', 'N'),
+				'values' => array('N', 'Y'),
 				'default_value' => 'N',
 			]),
 			new Main\Entity\BooleanField('IS_DELETED', [
@@ -132,13 +132,16 @@ class TemplateTable extends FileModel
 		if(is_a($className, Filterable::class, true))
 		{
 			/** @var Filterable $provider */
-			$provider = DataProviderManager::getInstance()->getDataProvider($className, $value, ['isLightMode' => true]);
+			$provider = DataProviderManager::getInstance()->getDataProvider($className, $value, [
+				'isLightMode' => true,
+				'noSubstitution' => true,
+			]);
 			if($provider)
 			{
 				$filterProvider = $provider->getFilterString();
 			}
 		}
-		$filterProvider = str_replace("\\", "\\\\", strtolower($filterProvider));
+		$filterProvider = str_replace("\\", "\\\\", mb_strtolower($filterProvider));
 		$filter = Main\Entity\Query::filter()->whereLike('PROVIDER.PROVIDER', $filterProvider)->where('IS_DELETED', 'N');
 		if($activeOnly)
 		{

@@ -10,3 +10,5 @@ $MESS["CRM_BANK_DETAIL_EXPORT_FIELD_NAME"] = "Название";
 $MESS["CRM_BANK_DETAIL_EXPORT_FIELD_ACTIVE"] = "Активен";
 $MESS["CRM_BANK_DETAIL_EXPORT_FIELD_SORT"] = "Порядок сортировки";
 $MESS["CRM_BANK_DETAIL_EXPORT_FIELD_COMMENTS"] = "Комментарий";
+$MESS["CRM_BANK_DETAIL_FIELD_VALIDATOR_LENGTH_MAX"] = "Для значения поля \"#FIELD_TITLE#\" превышена максимальная длина: #MAX_LENGTH#.";
+$MESS["CRM_BANK_DETAIL_FIELD_VALIDATOR_LENGTH_MIN"] = "Значение поля \"#FIELD_TITLE#\" недостаточно длинное. Минимальная длина: #MIN_LENGTH#.";

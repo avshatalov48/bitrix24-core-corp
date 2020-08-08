@@ -5,7 +5,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'):
 	//$APPLICATION->RestartBuffer();
 	?>
 	<script type="text/javascript">
-		<?if(strlen($arResult['ERROR_MSG']) > 0 ):?>
+		<?if($arResult['ERROR_MSG'] <> '' ):?>
 			alert("<?=$arResult['ERROR_MSG']?>");
 			BX.closeWait();
 		<?else:?>

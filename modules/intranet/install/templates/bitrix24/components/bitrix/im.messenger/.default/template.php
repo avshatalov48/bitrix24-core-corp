@@ -95,7 +95,6 @@ $this->SetViewTarget("im", 100);
 		<div class="help-block-counter-wrap" id="bx-help-notify">
 		</div>
 	</div>
-
 	<div id="bx-im-bar-notify" class="bx-im-informer <?=($arResult['OL_OPERATOR']?"":"bx-im-border-b")?>">
 		<div class="bx-im-informer-icon" title="<?=GetMessage('IM_MESSENGER_OPEN_NOTIFY');?>"></div>
 		<div class="bx-im-informer-num"></div>
@@ -109,10 +108,14 @@ $this->SetViewTarget("im", 100);
 	<div id="bx-im-bar-search" class="bx-im-search bx-im-border-b" title="<?=GetMessage('IM_MESSENGER_OPEN_SEARCH');?>">
 		<div class="bx-im-informer-num"></div>
 	</div>
-	<div class="bx-im-users-wrap">
+	<div class="bx-im-users-wrap <?if ($arResult['PHONE_ENABLED']):?>bx-im-users-wrap-with-phone<?else:?>bx-im-users-wrap-without-phone<?endif;?>">
 		<div class="bx-im-scroll-wrap" id="bx-im-external-recent-list"></div>
 	</div>
+
 	<div class="bx-im-bottom-block" id="bx-im-bottom-block">
+		<div id="bx-im-bar-mobile" class="bx-im-bar-mobile" onclick="BX.UI.InfoHelper.show('mobile_app');">
+			<div class="bx-im-mobile-icon" title="<?=GetMessage('IM_MESSENGER_OPEN_MOBILE');?>"></div>
+		</div>
 		<?if($arResult['PHONE_ENABLED']):?>
 		<div id="bx-im-btn-call" class="bx-im-btn-wrap bx-im-btn-call" title="<?=GetMessage('IM_MESSENGER_OPEN_CALL2');?>">
 			<div class="bx-im-btn"></div>

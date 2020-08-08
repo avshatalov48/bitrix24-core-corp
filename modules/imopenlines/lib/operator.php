@@ -566,6 +566,7 @@ class Operator
 		$crmEntityId = null;
 		if ($chatData['ENTITY_DATA_1'])
 		{
+			//TODO: Replace with the method \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId or \Bitrix\ImOpenLines\Chat::parseLiveChatEntityId
 			$chatFieldData = explode('|', $chatData['ENTITY_DATA_1']);
 			if ($chatFieldData[0] == 'Y')
 			{

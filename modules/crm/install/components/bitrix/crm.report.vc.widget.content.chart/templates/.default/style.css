@@ -502,3 +502,55 @@
 }
 
 /******** END TEMPORARY BLOCK ***********************/
+
+
+
+/******** START RATING BLOCK ***********************/
+.crm-report-chart-grid-rating {
+    display: flex;
+    align-items: center;
+}
+.crm-report-chart-grid-rating-icon {
+    display: inline-block;
+    margin: 0 8px 0 0;
+    width: 10px;
+    height: 10px;
+    border-radius: 100%;
+    opacity: 0.6;
+}
+.crm-report-chart-grid-rating-value {
+    display: inline-block;
+    margin: 0 8px 0 0;
+    padding: 0 8px 0 0;
+    border-right: 1px solid rgba(82,92,105,.17);
+    font: 13px/10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    color: #364150;
+}
+.crm-report-chart-grid-rating-text {
+    font: 10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    text-transform: uppercase;
+}
+.crm-report-chart-grid-rating-bold .crm-report-chart-grid-rating-value,
+.crm-report-chart-grid-rating-bold .crm-report-chart-grid-rating-text {
+    font-weight: bold;
+}
+.crm-report-chart-grid-rating-success .crm-report-chart-grid-rating-text {
+    color: #6F9300;
+}
+.crm-report-chart-grid-rating-success .crm-report-chart-grid-rating-icon {
+    background: #B3E600;
+}
+.crm-report-chart-grid-rating-warning .crm-report-chart-grid-rating-text {
+    color: #E22E29;
+}
+.crm-report-chart-grid-rating-warning .crm-report-chart-grid-rating-icon {
+    background: #FF5752;
+}
+.crm-report-chart-grid-rating-normal .crm-report-chart-grid-rating-text {
+    color: #1DB0DE;
+}
+.crm-report-chart-grid-rating-normal .crm-report-chart-grid-rating-icon {
+    background: #2FC6F6;
+}
+
+/******** END RATING BLOCK ***********************/

@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Integration\Socialnetwork\Livefeed;
 
 use Bitrix\Socialnetwork\LogTable;
+use \Bitrix\Main\Localization\Loc;
 
 final class CrmLead extends CrmEntity
 {

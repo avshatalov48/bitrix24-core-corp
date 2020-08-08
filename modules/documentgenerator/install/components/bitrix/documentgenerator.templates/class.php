@@ -393,7 +393,7 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 		$grid['NAV_OBJECT'] = $pageNavigation;
 		$grid['TOTAL_ROWS_COUNT'] = $templateList->getCount();
 		$grid['AJAX_MODE'] = 'Y';
-		if(!empty($templates))
+		if(!empty($templates) && $gridSort['sort'] === $this->defaultGridSort)
 		{
 			$grid['ALLOW_ROWS_SORT'] = true;
 		}

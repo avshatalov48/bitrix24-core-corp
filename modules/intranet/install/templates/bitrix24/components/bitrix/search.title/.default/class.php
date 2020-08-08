@@ -490,7 +490,7 @@ final class CB24SearchTitle
 
 			if (
 				empty($searchString)
-				|| strpos(ToLower($menuItem['TEXT']), ToLower($searchString)) !== false
+				|| mb_strpos(ToLower($menuItem['TEXT']), ToLower($searchString)) !== false
 			)
 			{
 				$result[] = array(
@@ -537,7 +537,7 @@ final class CB24SearchTitle
 				$categoryCode = $categoryCode[0];
 			}
 
-			if (strpos($categoryCode, 'custom_') === 0)
+			if (mb_strpos($categoryCode, 'custom_') === 0)
 			{
 				$categoryTitle = trim($arParams["CATEGORY_".$i."_TITLE"]);
 				if(empty($categoryTitle))

@@ -13,4 +13,5 @@ $MESS["BLOG_C_REPLY"] = "Ответить";
 $MESS["B_B_PC_COM_ERROR"] = "Ошибка:";
 $MESS["BLOG_C_HIDE"] = "Свернуть комментарии";
 $MESS["INCORRECT_SERVER_RESPONSE"] = "Некорректный ответ сервера.";
+$MESS["MPL_MOBILE_PUBLISHING"] = "Публикуется&hellip;";
 ?>

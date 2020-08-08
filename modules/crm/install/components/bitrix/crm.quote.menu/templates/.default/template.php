@@ -25,6 +25,33 @@ if (!empty($arResult['BUTTONS']))
 		$template = SITE_TEMPLATE_ID === 'bitrix24' ? 'slider' : 'type2';
 	}
 
+	if ($arParams['TYPE'] == 'show' && \Bitrix\Main\Loader::includeModule('intranet'))
+	{
+		$APPLICATION->includeComponent(
+			'bitrix:intranet.binding.menu',
+			'',
+			array(
+				'SECTION_CODE' => 'crm_detail',
+				'MENU_CODE' => 'quote',
+				'CONTEXT' => [
+					'ENTITY_ID' => $arParams['ELEMENT_ID']
+				]
+			)
+		);
+
+		?><script type="text/javascript">
+		BX.ready(function() {
+			var intranetBindingBtn = document.querySelector('.intranet-binding-menu-btn');
+			var quoteToolbar = BX('toolbar_quote_show_1');
+
+			if (quoteToolbar && intranetBindingBtn)
+			{
+				quoteToolbar.insertBefore(intranetBindingBtn, quoteToolbar.firstChild);
+			}
+		});
+	</script><?
+	}
+
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.interface.toolbar',
 		$template,

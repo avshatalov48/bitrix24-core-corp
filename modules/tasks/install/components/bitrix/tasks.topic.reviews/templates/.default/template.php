@@ -5,8 +5,8 @@ $GLOBALS['APPLICATION']->AddHeadScript("/bitrix/js/main/utils.js");
 $GLOBALS['APPLICATION']->AddHeadScript("/bitrix/components/bitrix/forum.interface/templates/popup/script.js");
 $GLOBALS['APPLICATION']->AddHeadScript("/bitrix/components/bitrix/forum.interface/templates/.default/script.js");
 
-$arParams["FILES_COUNT"] = intVal(intVal($arParams["FILES_COUNT"]) > 0 ? $arParams["FILES_COUNT"] : 1);
-$arParams["IMAGE_SIZE"] = (intVal($arParams["IMAGE_SIZE"]) > 0 ? $arParams["IMAGE_SIZE"] : 100);
+$arParams["FILES_COUNT"] = intval(intVal($arParams["FILES_COUNT"]) > 0 ? $arParams["FILES_COUNT"] : 1);
+$arParams["IMAGE_SIZE"] = (intval($arParams["IMAGE_SIZE"]) > 0 ? $arParams["IMAGE_SIZE"] : 100);
 
 if (LANGUAGE_ID == 'ru')
 {
@@ -154,7 +154,7 @@ if (LANGUAGE_ID == 'ru')
 					if (!empty($arResult["REVIEW_FILES"])):
 						foreach ($arResult["REVIEW_FILES"] as $key => $val):
 							$iCount++;
-							$iFileSize = intVal($val["FILE_SIZE"]);
+							$iFileSize = intval($val["FILE_SIZE"]);
 							$size = array(
 								"B" => $iFileSize,
 								"KB" => round($iFileSize/1024, 2),
@@ -181,7 +181,7 @@ if (LANGUAGE_ID == 'ru')
 
 				<?php
 				if ($iCount < $arParams["FILES_COUNT"]):
-					$iFileSize = intVal(COption::GetOptionString("forum", "file_max_size", 50000));
+					$iFileSize = intval(COption::GetOptionString("forum", "file_max_size", 50000));
 					$size = array(
 						"B" => $iFileSize,
 						"KB" => round($iFileSize/1024, 2),
@@ -242,7 +242,7 @@ if (LANGUAGE_ID == 'ru')
 				<a name="message<?php echo $res["ID"]?>"></a>
 				<div class="task-comment-info">
 					<div class="task-comments-avatar"<?php if ($res["AUTHOR_PHOTO"]):?> style="background:url('<?php echo $res["AUTHOR_PHOTO"]?>') no-repeat center center;"<?php endif?>></div>
-					<?php if (intval($res["AUTHOR_ID"]) > 0 && !empty($res["AUTHOR_URL"])):?><a class="task-comments-author" href="<?php 
+					<?php if (intval($res["AUTHOR_ID"]) > 0 && !empty($res["AUTHOR_URL"])):?><a class="task-comments-author" href="<?php
 							echo $res["AUTHOR_URL"];
 							?>"><?php 
 							echo tasksFormatName(
@@ -271,7 +271,7 @@ if (LANGUAGE_ID == 'ru')
 									"ENTITY_TYPE_ID" => "FORUM_POST",
 									"ENTITY_ID" => $res["ID"],
 									"OWNER_ID" => $res["AUTHOR_ID"],
-									"PATH_TO_USER_PROFILE" => strlen($arParams["PATH_TO_USER"]) > 0? $arParams["PATH_TO_USER"]: $arParams["~URL_TEMPLATES_PROFILE_VIEW"]
+									"PATH_TO_USER_PROFILE" => $arParams["PATH_TO_USER"] <> ''? $arParams["PATH_TO_USER"]: $arParams["~URL_TEMPLATES_PROFILE_VIEW"]
 								);
 							if (!isset($res['RATING']))
 								$res['RATING'] = array(
@@ -361,7 +361,7 @@ if (LANGUAGE_ID == 'ru')
 									"ENTITY_TYPE_ID" => "FORUM_POST",
 									"ENTITY_ID" => $res["ID"],
 									"OWNER_ID" => $res["AUTHOR_ID"],
-									"PATH_TO_USER_PROFILE" => strlen($arParams["PATH_TO_USER"]) > 0? $arParams["PATH_TO_USER"]: $arParams["~URL_TEMPLATES_PROFILE_VIEW"]
+									"PATH_TO_USER_PROFILE" => $arParams["PATH_TO_USER"] <> ''? $arParams["PATH_TO_USER"]: $arParams["~URL_TEMPLATES_PROFILE_VIEW"]
 								);
 							if (!isset($res['RATING']))
 								$res['RATING'] = array(
@@ -382,7 +382,7 @@ if (LANGUAGE_ID == 'ru')
 			</div>
 			<div id="form-comment-<?php echo $res["ID"]?>"></div>
 		<?php endforeach?>
-		<?php if (strlen($arResult["NAV_STRING"]) > 0 && $arResult['NAV_PAGE_COUNT'] > 1):?>
+		<?php if ($arResult["NAV_STRING"] <> '' && $arResult['NAV_PAGE_COUNT'] > 1):?>
 			<br /><?php echo $arResult["NAV_STRING"]?>
 		<?php endif?>
 		<div id="form-comment-00"><div class="task-add-comment" id="task-comments-add-new-00"><a href="javascript: void(0);" onclick="ShowCommentForm('00');return false;"><?php echo GetMessage("F_ADD_COMMENT")?></a></div></div>

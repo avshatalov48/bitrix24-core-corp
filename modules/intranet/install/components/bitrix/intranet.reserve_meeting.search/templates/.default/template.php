@@ -1,6 +1,6 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 <?
-if (strlen($arResult["FatalError"]) > 0)
+if ($arResult["FatalError"] <> '')
 {
 	?>
 	<span class='errortext'><?=$arResult["FatalError"]?></span><br /><br />
@@ -8,7 +8,7 @@ if (strlen($arResult["FatalError"]) > 0)
 }
 else
 {
-	if (strlen($arResult["ErrorMessage"]) > 0)
+	if ($arResult["ErrorMessage"] <> '')
 	{
 		?>
 		<span class='errortext'><?=$arResult["ErrorMessage"]?></span><br /><br />
@@ -69,7 +69,7 @@ else
 							'SHOW_INPUT' => 'Y',
 							'FORM_NAME' => "rms_filter_form",
 							'INPUT_NAME' => "flt_date_from",
-							'INPUT_VALUE' => (is_scalar($_REQUEST['flt_date_from']) && StrLen($_REQUEST["flt_date_from"]) > 0 ? $_REQUEST["flt_date_from"] : Date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATE))),
+							'INPUT_VALUE' => (is_scalar($_REQUEST['flt_date_from']) && $_REQUEST["flt_date_from"] <> '' ? $_REQUEST["flt_date_from"] : Date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATE))),
 							'SHOW_TIME' => 'N',
 							'INPUT_ADDITIONAL_ATTR' => $strAdd,
 						),
@@ -86,7 +86,7 @@ else
 							'SHOW_INPUT' => 'Y',
 							'FORM_NAME' => "rms_filter_form",
 							'INPUT_NAME' => "flt_date_to",
-							'INPUT_VALUE' => (is_scalar($_REQUEST['flt_date_to']) && StrLen($_REQUEST["flt_date_to"]) > 0 ? $_REQUEST["flt_date_to"] : Date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATE))),
+							'INPUT_VALUE' => (is_scalar($_REQUEST['flt_date_to']) && $_REQUEST["flt_date_to"] <> '' ? $_REQUEST["flt_date_to"] : Date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATE))),
 							'SHOW_TIME' => 'N',
 							'INPUT_ADDITIONAL_ATTR' => $strAdd,
 						),
@@ -102,10 +102,10 @@ else
 					<?= GetMessage("INTASK_C31T_FROM") ?>
 					<select name="flt_time_from">
 						<?
-						$s = (is_scalar($_REQUEST['flt_time_from']) && StrLen($_REQUEST["flt_time_from"]) > 0 ? $_REQUEST["flt_time_from"] : "08:00");
+						$s = (is_scalar($_REQUEST['flt_time_from']) && $_REQUEST["flt_time_from"] <> '' ? $_REQUEST["flt_time_from"] : "08:00");
 						for ($i = 0; $i < 48; $i++)
 						{
-							$t = IntVal($i / 2);
+							$t = intval($i / 2);
 							if ($t < 10)
 								$t = "0".$t;
 							$t .= ":";
@@ -120,10 +120,10 @@ else
 					<?= GetMessage("INTASK_C31T_TO") ?>
 					<select name="flt_time_to">
 						<?
-						$s = (is_scalar($_REQUEST['flt_time_to']) && StrLen($_REQUEST["flt_time_to"]) > 0 ? $_REQUEST["flt_time_to"] : "19:00");
+						$s = (is_scalar($_REQUEST['flt_time_to']) && $_REQUEST["flt_time_to"] <> '' ? $_REQUEST["flt_time_to"] : "19:00");
 						for ($i = 0; $i < 48; $i++)
 						{
-							$t = IntVal($i / 2);
+							$t = intval($i / 2);
 							if ($t < 10)
 								$t = "0".$t;
 							$t .= ":";

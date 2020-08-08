@@ -1,0 +1,160 @@
+.rpa-toolbar {
+	display: flex;
+	box-sizing: border-box;
+	padding-right: 12px;
+	border-top: 1px solid #dce2e6;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.rpa-toolbar-left {
+	display: flex;
+	align-items: center;
+	padding: 11px 0 8px;
+}
+
+.rpa-toolbar-switcher {
+	display: flex;
+	color: #545c6a;
+	font: 13px 'OpenSans-Regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	align-items: center;
+}
+
+.rpa-toolbar-counter {
+	position: relative;
+	overflow: hidden;
+	padding: 0 0 1px 5px;
+	box-sizing: border-box;
+	color: #535c69;
+	font: 13px 'OpenSans-Regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.rpa-toolbar-counter-title {
+	display: flex;
+	padding: 0 10px 0 10px;
+	align-items: center;
+}
+
+.rpa-toolbar-switcher-list {
+	display: flex;
+}
+
+.rpa-toolbar-switcher-item, .rpa-toolbar-switcher-item:link, .rpa-toolbar-switcher-item:visited {
+	margin: 0 18px 0 0;
+	color: #545c6a;
+	text-decoration: none;
+	white-space: nowrap;
+	font: 14px/30px 'OpenSans-Regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	cursor: pointer;
+	transition: color .3s;
+}
+
+.rpa-toolbar-switcher-item-active {
+	border-bottom: 2px solid #b1b8bf;
+}
+
+.bitrix24-light-theme .rpa-toolbar-switcher-item-active {
+	border-bottom: 2px solid rgba(255,255,255,.4);
+}
+
+.rpa-toolbar-counter-title-name {
+	margin: 0 5px 0 0;
+}
+
+.rpa-toolbar-counter-container {
+	position: relative;
+	display: inline-block;
+	overflow: hidden;
+	margin: 0 10px 0 0;
+	height: 20px;
+	text-decoration: none;
+}
+
+.rpa-toolbar-counter-container:last-child {
+	margin-right: 0;
+}
+
+.rpa-toolbar-counter-inner {
+	position: relative;
+	display: flex;
+	align-items: center;
+	transition: .3s;
+}
+
+.rpa-toolbar-counter-number {
+	display: inline-block;
+	padding: 0 7px;
+	margin-right: 5px;
+	height: 16px;
+	background-color: #f54819;
+	border-radius: 30px;
+	vertical-align: middle;
+	font: bold 11px/16px 'OpenSans-Regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #fff;
+	transition: .2s;
+}
+
+.rpa-toolbar-counter-text {
+	position: relative;
+	display: inline-block;
+	overflow: hidden;
+	max-width: calc(100% - 7px);
+	outline: none;
+	border-top: 1px solid transparent;
+	border-bottom: 1px solid transparent;
+	color: #535c69;
+	vertical-align: middle;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	transition: border-bottom .3s;
+}
+
+.rpa-toolbar-counter-container:hover .rpa-toolbar-counter-text {
+	border-bottom: 1px solid rgba(83,92,105,.25);
+}
+
+.rpa-toolbar-counter:before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 50%;
+	margin-top: -9px;
+	width: 1px;
+	height: 18px;
+	background: #dce2e6;
+}
+
+.rpa-toolbar-btn, .bx-ie .ui-btn.rpa-toolbar-btn {
+	height: 27px;
+	padding: 0 14px 0 35px;
+	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2215%22%20height%3D%2213%22%20viewBox%3D%220%200%2015%2013%22%3E%3Cpath%20fill%3D%22%23535c69%22%20d%3D%22M12.1137872%2C3.60115802%20L12.9213711%2C0.88887765%20C12.9917364%2C0.653060708%2012.9323829%2C0.397184882%2012.7656685%2C0.217636118%20C12.5989541%2C0.0380873543%2012.3502067%2C-0.0378566184%2012.113127%2C0.0184115594%20C11.8760474%2C0.0746797372%2011.6866535%2C0.254611591%2011.6162882%2C0.490428532%20L10.9245602%2C2.81873631%20C8.77403662%2C1.683364%206.20997866%2C1.68606835%204.06180048%2C2.82597457%20L3.36666494%2C0.490428532%20C3.25788966%2C0.125887126%202.87755711%2C-0.0804361999%202.51716841%2C0.0295924856%20C2.15677972%2C0.139621171%201.95280675%2C0.524336243%202.06158203%2C0.88887765%20L2.8725735%2C3.61184307%20C1.05136157%2C5.08431072%20-0.00628362527%2C7.31674489%202.80901028e-05%2C9.6750943%20C2.80901028e-05%2C13.9311927%203.35644236%2C12.8868148%207.4999954%2C12.8868148%20C11.6435484%2C12.8868148%2014.9999627%2C13.9311927%2014.9999627%2C9.6750943%20C15.0072578%2C7.31042438%2013.9438643%2C5.07252025%2012.1137872%2C3.60115802%20Z%20M7.49318035%2C9.09672266%20C4.53544676%2C9.09672266%202.13654763%2C9.40693391%202.13654763%2C8.13885926%20C2.13654763%2C6.8707846%204.53544676%2C5.84122793%207.49318035%2C5.84122793%20C10.4509139%2C5.84122793%2012.8532206%2C6.86975056%2012.8532206%2C8.13885926%20C12.8532206%2C9.40796795%2010.4543215%2C9.09672266%207.49318035%2C9.09672266%20Z%20M5.04316831%2C6.79116371%20C4.62088547%2C6.86918401%204.33167594%2C7.26631071%204.38320708%2C7.69738635%20C4.43473822%2C8.12846199%204.80918992%2C8.44441522%205.23768653%2C8.41837532%20C5.66618314%2C8.39233541%206.00054518%2C8.03330729%206.00068344%2C7.59909168%20C5.95284474%2C7.11065813%205.52678755%2C6.75116144%205.04316831%2C6.79116371%20Z%20M9.28209458%2C7.69949772%20C9.33459027%2C8.13049967%209.70956893%2C8.44577556%2010.1380777%2C8.41919424%20C10.5665864%2C8.39261291%2010.90067%2C8.03335237%2010.9007075%2C7.59909168%20C10.8528825%2C7.10920225%2010.4246755%2C6.74917285%209.93978486%2C6.79116371%20C9.51771184%2C6.87058387%209.22959888%2C7.26849578%209.28209458%2C7.69949772%20Z%22%20opacity%3D%22.9%22/%3E%3C/svg%3E) no-repeat top 6px left 12px;
+	font: 13px/25px "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.rpa-toolbar-btn.ui-btn-light-border.ui-btn:not(.ui-btn-disabled):hover {
+	border-color: #55d0e0;
+	background-color: #55d0e0;
+	background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2215%22%20height%3D%2213%22%20viewBox%3D%220%200%2015%2013%22%3E%3Cpath%20fill%3D%22%23fff%22%20d%3D%22M12.1137872%2C3.60115802%20L12.9213711%2C0.88887765%20C12.9917364%2C0.653060708%2012.9323829%2C0.397184882%2012.7656685%2C0.217636118%20C12.5989541%2C0.0380873543%2012.3502067%2C-0.0378566184%2012.113127%2C0.0184115594%20C11.8760474%2C0.0746797372%2011.6866535%2C0.254611591%2011.6162882%2C0.490428532%20L10.9245602%2C2.81873631%20C8.77403662%2C1.683364%206.20997866%2C1.68606835%204.06180048%2C2.82597457%20L3.36666494%2C0.490428532%20C3.25788966%2C0.125887126%202.87755711%2C-0.0804361999%202.51716841%2C0.0295924856%20C2.15677972%2C0.139621171%201.95280675%2C0.524336243%202.06158203%2C0.88887765%20L2.8725735%2C3.61184307%20C1.05136157%2C5.08431072%20-0.00628362527%2C7.31674489%202.80901028e-05%2C9.6750943%20C2.80901028e-05%2C13.9311927%203.35644236%2C12.8868148%207.4999954%2C12.8868148%20C11.6435484%2C12.8868148%2014.9999627%2C13.9311927%2014.9999627%2C9.6750943%20C15.0072578%2C7.31042438%2013.9438643%2C5.07252025%2012.1137872%2C3.60115802%20Z%20M7.49318035%2C9.09672266%20C4.53544676%2C9.09672266%202.13654763%2C9.40693391%202.13654763%2C8.13885926%20C2.13654763%2C6.8707846%204.53544676%2C5.84122793%207.49318035%2C5.84122793%20C10.4509139%2C5.84122793%2012.8532206%2C6.86975056%2012.8532206%2C8.13885926%20C12.8532206%2C9.40796795%2010.4543215%2C9.09672266%207.49318035%2C9.09672266%20Z%20M5.04316831%2C6.79116371%20C4.62088547%2C6.86918401%204.33167594%2C7.26631071%204.38320708%2C7.69738635%20C4.43473822%2C8.12846199%204.80918992%2C8.44441522%205.23768653%2C8.41837532%20C5.66618314%2C8.39233541%206.00054518%2C8.03330729%206.00068344%2C7.59909168%20C5.95284474%2C7.11065813%205.52678755%2C6.75116144%205.04316831%2C6.79116371%20Z%20M9.28209458%2C7.69949772%20C9.33459027%2C8.13049967%209.70956893%2C8.44577556%2010.1380777%2C8.41919424%20C10.5665864%2C8.39261291%2010.90067%2C8.03335237%2010.9007075%2C7.59909168%20C10.8528825%2C7.10920225%2010.4246755%2C6.74917285%209.93978486%2C6.79116371%20C9.51771184%2C6.87058387%209.22959888%2C7.26849578%209.28209458%2C7.69949772%20Z%22%20opacity%3D%22.9%22/%3E%3C/svg%3E);
+	color: #fff;
+}
+
+.bitrix24-light-theme .rpa-toolbar-counter:before {
+	background: rgba(255, 255, 255, .4);
+}
+
+.bitrix24-light-theme .rpa-toolbar-counter-text,
+.bitrix24-light-theme .rpa-toolbar-counter-number,
+.bitrix24-light-theme .rpa-toolbar-counter-title-name,
+.bitrix24-light-theme .rpa-toolbar-switcher-item,
+.bitrix24-light-theme .rpa-toolbar-switcher-item:link,
+.bitrix24-light-theme .rpa-toolbar-switcher-item:visited {
+	color: #fff;
+}
+
+.bitrix24-light-theme .rpa-toolbar-counter-container:hover .rpa-toolbar-counter-text {
+	border-bottom: 1px solid rgba(255,255,255,.25);
+}
+
+.bitrix24-light-theme .rpa-toolbar-btn, .bx-ie .bitrix24-light-theme .ui-btn.rpa-toolbar-btn {
+	background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2219%22%20height%3D%2215%22%3E%3Cpath%20fill%3D%22%23fff%22%20fill-rule%3D%22evenodd%22%20d%3D%22M14.833%204.15l.934-3.136a.804.804%200%2000-.18-.776.782.782%200%2000-1.329.315l-.8%202.692a8.469%208.469%200%2000-7.932.008l-.804-2.7A.786.786%200%20003.74.021a.799.799%200%2000-.526.993L4.15%204.16a8.98%208.98%200%2000-3.32%207.01c0%204.919%203.88%203.712%208.669%203.712%204.79%200%208.67%201.207%208.67-3.713a8.972%208.972%200%2000-3.337-7.02zm-5.34%206.352c-3.42%200-6.193.358-6.193-1.108C3.3%207.93%206.073%206.74%209.492%206.74s6.196%201.188%206.196%202.655c0%201.467-2.773%201.108-6.196%201.108zM6.66%207.837a.948.948%200%2000-.763%201.047c.06.498.493.864.988.834a.944.944%200%2000.882-.948%201.031%201.031%200%2000-1.107-.933zm4.9%201.05c.06.498.494.862.99.831a.945.945%200%2000.881-.948%201.031%201.031%200%2000-1.11-.933.948.948%200%2000-.761%201.05z%22/%3E%3C/svg%3E);
+}

@@ -9,6 +9,7 @@ use Bitrix\Disk\File;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Internals\Error\IErrorable;
+use Bitrix\Disk\Internals\AttachedViewTypeTable;
 use Bitrix\Disk\BaseObject;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
@@ -51,7 +52,7 @@ final class UserFieldManager implements IErrorable
 	public function getConnectorDataByEntityType($entityType)
 	{
 		$defaultConnectors = $this->getDefaultConnectors();
-		$entityType = strtolower($entityType);
+		$entityType = mb_strtolower($entityType);
 
 		if(isset($defaultConnectors[$entityType]))
 		{
@@ -175,7 +176,7 @@ final class UserFieldManager implements IErrorable
 
 				if(is_string($connector['CLASS']) && class_exists($connector['CLASS']))
 				{
-					$this->additionalConnectorList[strtolower($connector['ENTITY_TYPE'])] = array(
+					$this->additionalConnectorList[mb_strtolower($connector['ENTITY_TYPE'])] = array(
 						$connector['CLASS'],
 						$connector['MODULE_ID']
 					);
@@ -249,6 +250,7 @@ final class UserFieldManager implements IErrorable
 				'PARAMS' => $params,
 				'RESULT' => $result,
 				'DISABLE_LOCAL_EDIT' => (isset($params['DISABLE_LOCAL_EDIT'])? $params['DISABLE_LOCAL_EDIT'] : false),
+				'USE_TOGGLE_VIEW' => (isset($params['USE_TOGGLE_VIEW']) ? $params['USE_TOGGLE_VIEW'] : 'N'),
 			],
 			$component,
 			['HIDE_ICONS' => 'Y']
@@ -282,21 +284,81 @@ final class UserFieldManager implements IErrorable
 
 	/**
 	 * @param array $params
+	 */
+	public static function setTemplateType(array $params = [])
+	{
+		if (
+			!empty($params['ENTITY_ID'])
+			&& !empty($params['ENTITY_VALUE_ID'])
+			&& isset($params['VALUE'])
+		)
+		{
+			AttachedViewTypeTable::set([
+				'ENTITY_TYPE' => $params['ENTITY_ID'],
+				'ENTITY_ID' => $params['ENTITY_VALUE_ID'],
+				'VALUE' => $params['VALUE'],
+			]);
+		}
+	}
+
+	/**
+	 * @param array $params
+	 * @return string
+	 */
+	private static function getTemplateType($params)
+	{
+		$result = '';
+
+		if (isset($params['GRID']) && $params['GRID'] == 'Y')
+		{
+			$result = 'grid';
+		}
+
+		if (
+			isset($params['GRID'])
+			&& !empty($params['ARUSERFIELD'])
+			&& !empty($params['ARUSERFIELD']['ENTITY_ID'])
+			&& !empty($params['ARUSERFIELD']['ENTITY_VALUE_ID'])
+		)
+		{
+			$res = AttachedViewTypeTable::getList([
+				'filter' => [
+					'ENTITY_TYPE' => $params['ARUSERFIELD']['ENTITY_ID'],
+					'ENTITY_ID' => $params['ARUSERFIELD']['ENTITY_VALUE_ID']
+				],
+				'select' => [ 'VALUE' ]
+			]);
+			if ($paramFields = $res->fetch())
+			{
+				$result = $paramFields['VALUE'];
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param array $params
 	 * @param array $possibleTemplates
 	 * @return string
 	 */
 	private function getShowTemplate($params, $possibleTemplates)
 	{
 		$upperParams = array_change_key_case($params, CASE_UPPER);
+		$templateType = self::getTemplateType($upperParams);
 
 		if ($upperParams['MOBILE'] == 'Y')
 		{
-			$template = 'mobile';
+			$template = 'mobile'.($templateType == 'grid' ? '_grid' : '');
 		}
 		else
 		{
 			$template = $upperParams['TEMPLATE'];
-			$template = (in_array($template, $possibleTemplates)? $template : '.default');
+			$template = (
+				in_array($template, $possibleTemplates)
+					? $template
+					: ($templateType == 'grid' ? 'grid' : '')
+			);
 		}
 
 		return $template;

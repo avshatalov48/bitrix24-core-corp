@@ -31,7 +31,7 @@ class InvoiceSettings
 	}
 	/**
 	 * Get current instance
-	 * @return LeadSettings
+	 * @return InvoiceSettings
 	 */
 	public static function getCurrent()
 	{

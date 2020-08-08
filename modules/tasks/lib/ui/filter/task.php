@@ -1154,8 +1154,8 @@ class Task
 		{
 			foreach($stateParam as $state)
 			{
-				$symbol = substr($state, 0, 2);
-				$value = \CTaskListState::decodeState(substr($state, 2));
+				$symbol = mb_substr($state, 0, 2);
+				$value = \CTaskListState::decodeState(mb_substr($state, 2));
 
 				switch ($symbol)
 				{

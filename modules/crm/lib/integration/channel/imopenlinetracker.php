@@ -290,7 +290,7 @@ class IMOpenLineTracker extends ChannelTracker
 			{
 				$sort = 7;
 			}
-			elseif(strpos($k, 'botframework.') === 0)
+			elseif(mb_strpos($k, 'botframework.') === 0)
 			{
 				$sort = $botSort;
 				$botSort++;

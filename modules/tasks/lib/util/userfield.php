@@ -178,7 +178,7 @@ abstract class UserField // todo: extends Dictionary, to iterate over user field
 	 */
 	public static function isUFKey($key)
 	{
-		return substr(trim((string) $key), 0, 3) == 'UF_';
+		return mb_substr(trim((string)$key), 0, 3) == 'UF_';
 	}
 
 	/**
@@ -538,7 +538,7 @@ abstract class UserField // todo: extends Dictionary, to iterate over user field
 			}
 		}
 
-		if($entityCode && strpos($entityCode, 'TASKS_') == 0)
+		if($entityCode && mb_strpos($entityCode, 'TASKS_') == 0)
 		{
 			$className = static::getControllerClassByEntityCode($entityCode);
 			if($className)

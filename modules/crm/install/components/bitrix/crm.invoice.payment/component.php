@@ -68,7 +68,7 @@ $paymentData = is_array($arOrder) ?
 	CCrmInvoice::PrepareSalePaymentData($arOrder, array('PUBLIC_LINK_MODE' => $isPublicLinkMode ? 'Y' : 'N')) : null;
 if ($arOrder)
 {
-	if (strlen($arOrder["SUM_PAID"]) > 0)
+	if ($arOrder["SUM_PAID"] <> '')
 		$arOrder["PRICE"] -= $arOrder["SUM_PAID"];
 
 	$dbPaySysAction = CSalePaySystemAction::GetList(
@@ -84,7 +84,7 @@ if ($arOrder)
 
 	if ($arPaySysAction = $dbPaySysAction->Fetch())
 	{
-		if (strlen($arPaySysAction["ACTION_FILE"]) > 0)
+		if ($arPaySysAction["ACTION_FILE"] <> '')
 		{
 			CSalePaySystemAction::InitParamArrays(
 				$arOrder,

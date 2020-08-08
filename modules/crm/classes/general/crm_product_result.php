@@ -117,10 +117,10 @@ class CCrmProductResult extends CDBResult
 						if (isset($res['XML_ID']) && !empty($res['XML_ID']) && $res['XML_ID'] !== '#' &&
 							isset($res['IBLOCK_ID']) && $res['IBLOCK_ID'] != CCrmProduct::getDefaultCatalogId())
 						{
-							$delimiterPos = strpos($res['XML_ID'], '#');
+							$delimiterPos = mb_strpos($res['XML_ID'], '#');
 							if ($delimiterPos !== false)
 							{
-								$res['ORIGINATOR_ID'] = substr($res['XML_ID'], 0, $delimiterPos);
+								$res['ORIGINATOR_ID'] = mb_substr($res['XML_ID'], 0, $delimiterPos);
 							}
 							else $res['ORIGINATOR_ID'] = $res['XML_ID'];
 						}
@@ -131,10 +131,10 @@ class CCrmProductResult extends CDBResult
 						if (isset($res['XML_ID']) && !empty($res['XML_ID']) && $res['XML_ID'] !== '#' &&
 							isset($res['IBLOCK_ID']) && $res['IBLOCK_ID'] != CCrmProduct::getDefaultCatalogId())
 						{
-							$delimiterPos = strpos($res['XML_ID'], '#');
+							$delimiterPos = mb_strpos($res['XML_ID'], '#');
 							if ($delimiterPos !== false)
 							{
-								$res['ORIGIN_ID'] = substr($res['XML_ID'], $delimiterPos + 1);
+								$res['ORIGIN_ID'] = mb_substr($res['XML_ID'], $delimiterPos + 1);
 								if ($res['ORIGIN_ID'] === false) $res['ORIGIN_ID'] = '';
 							}
 							else $res['ORIGIN_ID'] = '';

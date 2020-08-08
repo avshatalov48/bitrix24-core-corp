@@ -12,6 +12,7 @@ $MESS["IMOL_SESSION_CRM_FOUND"] = "User was added to the CRM entity: \"#ENTITY_N
 $MESS["IMOL_SESSION_DEAL"] = "Deal";
 $MESS["IMOL_SESSION_ERROR_NO_CHAT"] = "Cannot load conversation";
 $MESS["IMOL_SESSION_ERROR_NO_IMOL_CONFIGURATION"] = "Cannot load Open Channel configuration";
+$MESS["IMOL_SESSION_ERROR_NO_LAST_SESSION"] = "Error getting the last session";
 $MESS["IMOL_SESSION_ERROR_NO_USER_CODE"] = "The required field USER_CODE is missing";
 $MESS["IMOL_SESSION_LEAD_ADD"] = "New lead created in CRM: \"#LEAD_NAME#\"";
 $MESS["IMOL_SESSION_LINE_IS_CLOSED"] = "Open Channel is inactive, no messages will be sent to the client.";

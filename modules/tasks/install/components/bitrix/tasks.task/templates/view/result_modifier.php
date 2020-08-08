@@ -198,7 +198,7 @@ $arResult["TEMPLATE_DATA"]["NEW_TASK_PATH"] = CComponentEngine::makePathFromTemp
 
 $arResult["TEMPLATE_DATA"]["NEW_SUBTASK_PATH"] =
 	$arResult["TEMPLATE_DATA"]["NEW_TASK_PATH"].
-	(strpos($arResult["TEMPLATE_DATA"]["NEW_TASK_PATH"], "?") === false ? "?" : "&").
+	(mb_strpos($arResult["TEMPLATE_DATA"]["NEW_TASK_PATH"], "?") === false ? "?" : "&").
 	"PARENT_ID=".$taskData["ID"];
 
 $arResult["TEMPLATE_DATA"]["NEW_TASK_BY_TEMPLATE_PATH"] =

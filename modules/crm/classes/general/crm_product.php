@@ -1,10 +1,8 @@
 <?php
-if (!CModule::IncludeModule('iblock') || !CModule::IncludeModule('catalog'))
-{
-	return false;
-}
-
-IncludeModuleLangFile(__FILE__);
+use Bitrix\Main,
+	Bitrix\Main\Loader,
+	Bitrix\Main\Localization\Loc,
+	Bitrix\Catalog;
 
 /*
  * CRM Product.
@@ -25,66 +23,88 @@ class CCrmProduct
 
 	public static function getDefaultCatalogId()
 	{
-		if (is_null(CCrmProduct::$defaultCatalogId))
+		if (self::$defaultCatalogId === null)
 			self::$defaultCatalogId = CCrmCatalog::EnsureDefaultExists();
 		return self::$defaultCatalogId;
 	}
 
-	public static function getSelectedPriceTypeId()
+	/**
+	 * @return int
+	 */
+	public static function getSelectedPriceTypeId(): int
 	{
-		if (is_null(self::$selectedPriceTypeId))
+		if (self::$selectedPriceTypeId === null)
 		{
-			$priceTypeId = intval(COption::GetOptionInt('crm', 'selected_catalog_group_id', 0));
+			$priceTypeId = (int)Main\Config\Option::get('crm', 'selected_catalog_group_id');
 			if ($priceTypeId < 1)
 			{
-				$arBaseCatalogGroup = CCatalogGroup::GetBaseGroup();
-				$priceTypeId = intval($arBaseCatalogGroup['ID']);
+				if (Loader::includeModule('catalog'))
+				{
+					$arBaseCatalogGroup = CCatalogGroup::GetBaseGroup();
+					if (!empty($arBaseCatalogGroup))
+					{
+						$priceTypeId = (int)$arBaseCatalogGroup['ID'];
+					}
+					unset($arBaseCatalogGroup);
+				}
 			}
 			self::$selectedPriceTypeId = $priceTypeId;
 		}
 		return self::$selectedPriceTypeId;
 	}
 
+	/**
+	 * @param int $productID
+	 * @param int|false $priceTypeId
+	 * @return array|false
+	 */
 	public static function getPrice($productID, $priceTypeId = false)
 	{
-		$productID = intval($productID);
-		if (0 >= $productID)
+		if (!Loader::includeModule('catalog'))
+		{
+			return false;
+		}
+
+		$productID = (int)$productID;
+		if ($productID <= 0)
 			return false;
 
-		if ($priceTypeId === false)
-			$priceTypeId = self::getSelectedPriceTypeId();
-		if (intval($priceTypeId) < 1)
+		$priceTypeId = ($priceTypeId === false ? self::getSelectedPriceTypeId() : (int)$priceTypeId);
+		if ($priceTypeId < 1)
 			return false;
 
-		$arFilter = array(
-			'PRODUCT_ID' => $productID,
-			'CATALOG_GROUP_ID' => $priceTypeId
-		);
+		//TODO: possible replace with Catalog\PriceTable::getlist - if use no for update
+		$iterator = Catalog\Model\Price::getList(array(
+			'select' => array(
+				'ID', 'PRODUCT_ID', 'CATALOG_GROUP_ID',
+				'PRICE', 'CURRENCY', 'QUANTITY_FROM', 'QUANTITY_TO', 'EXTRA_ID',
+				'TIMESTAMP_X', 'TMP_ID'
+			),
+			'filter' => array(
+				'=PRODUCT_ID' => $productID,
+				'=CATALOG_GROUP_ID' => $priceTypeId
+			),
+			'order' => array('QUANTITY_FROM' => 'ASC', 'QUANTITY_TO' => 'ASC'),
+			'limit' => 1
+		));
+		$row = $iterator->fetch();
+		unset($iterator);
 
-		$arSelect = array('ID', 'PRODUCT_ID', 'EXTRA_ID', 'CATALOG_GROUP_ID', 'PRICE', 'CURRENCY', 'TIMESTAMP_X',
-			'QUANTITY_FROM', 'QUANTITY_TO', 'TMP_ID'
-		);
-
-		$db_res = CPrice::GetListEx(
-			array('QUANTITY_FROM' => 'ASC', 'QUANTITY_TO' => 'ASC'),
-			$arFilter,
-			false,
-			array('nTopCount' => 1),
-			$arSelect
-		);
-		if ($res = $db_res->Fetch())
-			return $res;
-
-		return false;
+		return (!empty($row) ? $row : false);
 	}
 
 	public static function setPrice($productID, $priceValue = 0.0, $currency = false, $priceTypeId = false)
 	{
+		if (!Loader::includeModule('catalog'))
+		{
+			return false;
+		}
+
 		$productID = intval($productID);
 
 		if ($currency === false)
 			$currency = CCrmCurrency::GetBaseCurrencyID();
-		if (strlen($currency) < 3)
+		if (mb_strlen($currency) < 3)
 			return false;
 
 		if ($priceTypeId === false)
@@ -92,8 +112,6 @@ class CCrmProduct
 		if (intval($priceTypeId) < 1)
 			return false;
 
-		$ID = false;
-		$arFields = false;
 		$priceValue = doubleval($priceValue);
 		if (!is_finite($priceValue))
 			$priceValue = 0.0;
@@ -127,14 +145,12 @@ class CCrmProduct
 	// CRUD -->
 	public static function Add($arFields)
 	{
-		if (!CModule::IncludeModule('catalog'))
+		if (!Loader::includeModule('catalog'))
 		{
 			return false;
 		}
 
-		global $DB;
-
-		$element =  new CIBlockElement();
+		$element = new CIBlockElement();
 		$ID = isset($arFields['ID']) ? $arFields['ID'] : null;
 		if ($ID === null)
 		{
@@ -305,22 +321,17 @@ class CCrmProduct
 			return false;
 		}
 
-//		$arInsert = $DB->PrepareInsert(CCrmProduct::TABLE_NAME, $arFields);
-//		$sQuery =
-//			'INSERT INTO '.CCrmProduct::TABLE_NAME.'('.$arInsert[0].') VALUES('.$arInsert[1].')';
-//		$DB->Query($sQuery, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
-
 		return $ID;
 	}
 
 	public static function Update($ID, $arFields)
 	{
-		if (!CModule::IncludeModule('catalog'))
+		global $USER;
+
+		if (!Loader::includeModule('catalog'))
 		{
 			return false;
 		}
-
-		global $DB;
 
 		if (!self::CheckFields('UPDATE', $arFields, $ID))
 		{
@@ -354,10 +365,10 @@ class CCrmProduct
 			$obResult = $element->GetById($ID);
 			if($arElement = $obResult->Fetch())
 			{
-				// files
-				$arElement['PREVIEW_PICTURE'] = CFile::MakeFileArray($arElement['PREVIEW_PICTURE']);
-				$arElement['DETAIL_PICTURE'] = CFile::MakeFileArray($arElement['DETAIL_PICTURE']);
-
+				unset($arElement['DATE_CREATE']);
+				unset($arElement['CREATED_BY']);
+				unset($arElement['MODIFIED_BY']);
+				unset($arElement['TIMESTAMP_X']);
 				if(isset($arFields['NAME']))
 				{
 					$arElement['NAME'] = $arFields['NAME'];
@@ -414,6 +425,10 @@ class CCrmProduct
 				{
 					$arElement['DETAIL_PICTURE'] = $arFields['DETAIL_PICTURE'];
 				}
+				else
+				{
+					unset($arElement["DETAIL_PICTURE"]);
+				}
 
 				if(isset($arFields['DESCRIPTION']))
 				{
@@ -428,6 +443,10 @@ class CCrmProduct
 				if(isset($arFields['PREVIEW_PICTURE']))
 				{
 					$arElement['PREVIEW_PICTURE'] = $arFields['PREVIEW_PICTURE'];
+				}
+				else
+				{
+					unset($arElement["PREVIEW_PICTURE"]);
 				}
 
 				if(isset($arFields['PREVIEW_TEXT']))
@@ -449,18 +468,18 @@ class CCrmProduct
 				{
 					if (isset($arFields['ORIGINATOR_ID']) || isset($arFields['ORIGIN_ID']))
 					{
-						if (strlen($arFields['ORIGINATOR_ID']) > 0 && strlen($arFields['ORIGIN_ID']) > 0)
+						if ($arFields['ORIGINATOR_ID'] <> '' && $arFields['ORIGIN_ID'] <> '')
 						{
 							$arElement['XML_ID'] = $arFields['ORIGINATOR_ID'].'#'.$arFields['ORIGIN_ID'];
 						}
 						else
 						{
-							$delimiterPos = strpos($arElement['XML_ID'], '#');
-							if (strlen($arFields['ORIGINATOR_ID']) > 0)
+							$delimiterPos = mb_strpos($arElement['XML_ID'], '#');
+							if ($arFields['ORIGINATOR_ID'] <> '')
 							{
 								if ($delimiterPos !== false)
 								{
-									$arElement['XML_ID'] = $arFields['ORIGINATOR_ID'].substr($arElement['XML_ID'], $delimiterPos);
+									$arElement['XML_ID'] = $arFields['ORIGINATOR_ID'].mb_substr($arElement['XML_ID'], $delimiterPos);
 								}
 								else $arElement['XML_ID'] = $arFields['ORIGINATOR_ID'];
 							}
@@ -468,7 +487,7 @@ class CCrmProduct
 							{
 								if ($delimiterPos !== false)
 								{
-									$arElement['XML_ID'] = substr($arElement['XML_ID'], 0, $delimiterPos).$arFields['ORIGIN_ID'];
+									$arElement['XML_ID'] = mb_substr($arElement['XML_ID'], 0, $delimiterPos).$arFields['ORIGIN_ID'];
 								}
 								else $arElement['XML_ID'] = '#'.$arFields['ORIGINATOR_ID'];
 							}
@@ -496,8 +515,15 @@ class CCrmProduct
 				{
 					$arElement['MODIFIED_BY'] = $arFields['MODIFIED_BY'];
 				}
+				else
+				{
+					if (isset($USER) && $USER instanceof \CUser)
+					{
+						$arElement['MODIFIED_BY'] = $USER->GetID();
+					}
+				}
 
-				if(isset($arFields['PROPERTY_VALUES']))
+				if(isset($arFields['PROPERTY_VALUES']) && is_array($arFields['PROPERTY_VALUES']))
 				{
 					$arElement['PROPERTY_VALUES'] = $arFields['PROPERTY_VALUES'];
 				}
@@ -542,7 +568,6 @@ class CCrmProduct
 		{
 			if (isset($arFields['PRICE']) || isset($arFields['CURRENCY_ID']))
 			{
-				$CPrice = new CPrice();
 				$price = $currency = false;
 				if (!isset($arFields['PRICE']))
 				{
@@ -603,6 +628,11 @@ class CCrmProduct
 	{
 		global $APPLICATION;
 
+		if (!Loader::includeModule('iblock'))
+		{
+			return false;
+		}
+
 		$ID = (int)$ID;
 
 		$arProduct = self::GetByID($ID);
@@ -644,6 +674,11 @@ class CCrmProduct
 	// Contract -->
 	public static function GetList($arOrder = array(), $arFilter = array(), $arSelectFields = array(), $arNavStartParams = false, $arGroupBy = false)
 	{
+		if (!Loader::includeModule('iblock'))
+		{
+			return false;
+		}
+
 		$arProductFields = self::GetFields();
 
 		// Rewrite order
@@ -651,14 +686,14 @@ class CCrmProduct
 		$arOrderRewrited = array();
 		foreach ($arOrder as $k => $v)
 		{
-			$uk = strtoupper($k);
+			$uk = mb_strtoupper($k);
 			if ((isset($arProductFields[$uk]) && $arProductFields[$uk] !== false)
 				|| preg_match('/^PROPERTY_\d+$/', $uk))
 				$arOrderRewrited[$uk] = $v;
 		}
-		if (strlen($arOrder['ORIGINATOR_ID'].$arOrder['ORIGIN_ID']) > 0)
+		if ($arOrder['ORIGINATOR_ID'].$arOrder['ORIGIN_ID'] <> '')
 		{
-			if (strlen($arOrder['ORIGINATOR_ID']) > 0) $arOrderRewrited['XML_ID'] = $arOrder['ORIGINATOR_ID'];
+			if ($arOrder['ORIGINATOR_ID'] <> '') $arOrderRewrited['XML_ID'] = $arOrder['ORIGINATOR_ID'];
 			else $arOrderRewrited['XML_ID'] = $arOrder['ORIGIN_ID'];
 		}
 		// </editor-fold>
@@ -706,15 +741,15 @@ class CCrmProduct
 				}
 			}
 		}
-		if (strlen($arFilter['ORIGINATOR_ID'].$arFilter['ORIGIN_ID']) > 0)
+		if ($arFilter['ORIGINATOR_ID'].$arFilter['ORIGIN_ID'] <> '')
 		{
-			if (strlen($arFilter['ORIGINATOR_ID']) > 0 && strlen($arFilter['ORIGIN_ID']) > 0)
+			if ($arFilter['ORIGINATOR_ID'] <> '' && $arFilter['ORIGIN_ID'] <> '')
 			{
 				$arFilterRewrited['XML_ID'] = $arFilter['ORIGINATOR_ID'].'#'.$arFilter['ORIGIN_ID'];
 			}
 			else
 			{
-				if (strlen($arFilter['ORIGINATOR_ID']) > 0)
+				if ($arFilter['ORIGINATOR_ID'] <> '')
 				{
 					$arFilterRewrited['%XML_ID'] = $arFilter['ORIGINATOR_ID'].'#';
 				}
@@ -830,84 +865,117 @@ class CCrmProduct
 		return $dbRes;
 	}
 
+	/**
+	 * @param array $arProductID
+	 * @param bool $priceTypeId
+	 * @return Main\ORM\Query\Result|false
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	public static function GetPrices($arProductID = array(), $priceTypeId = false)
 	{
-		$dbRes = false;
-
-		if (is_array($arProductID) && !empty($arProductID))
-		{
-			if ($priceTypeId === false)
-				$priceTypeId = self::getSelectedPriceTypeId();
-			if (intval($priceTypeId) > 0)
-			{
-				$dbRes = CPrice::GetListEx(
-					array('QUANTITY_FROM' => 'ASC', 'QUANTITY_TO' => 'ASC'),
-					array('@PRODUCT_ID' => $arProductID, 'CATALOG_GROUP_ID' => $priceTypeId),
-					false,
-					false,
-					array('ID', 'PRODUCT_ID', 'PRICE', 'CURRENCY')
-				);
-			}
-		}
-
-		return $dbRes;
-	}
-
-	public static function GetCatalogProductFields($arProductID = array())
-	{
-		if (!CModule::IncludeModule('catalog'))
+		if (!Loader::includeModule('catalog'))
 		{
 			return false;
 		}
 
-		$dbRes = false;
-		if (is_array($arProductID) && !empty($arProductID))
+		if (empty($arProductID) || !is_array($arProductID))
 		{
-			$dbRes = CCatalogProduct::GetList(
-				array(),
-				array('@ID' => $arProductID),
-				false,
-				false,
-				array('ID', 'VAT_ID', 'VAT_INCLUDED', 'MEASURE')
-			);
+			return false;
 		}
-		return $dbRes;
+
+		Main\Type\Collection::normalizeArrayValuesByInt($arProductID, true);
+		if (empty($arProductID))
+		{
+			return false;
+		}
+
+		if ($priceTypeId === false)
+			$priceTypeId = self::getSelectedPriceTypeId();
+
+		return Catalog\PriceTable::getList(array(
+			'select' => array('ID', 'PRODUCT_ID', 'PRICE', 'CURRENCY', 'QUANTITY_FROM', 'QUANTITY_TO'),
+			'filter' => array('@PRODUCT_ID' => $arProductID, '=CATALOG_GROUP_ID' => $priceTypeId),
+			'order' => array('QUANTITY_FROM' => 'ASC', 'QUANTITY_TO' => 'ASC')
+		));
 	}
 
+	/**
+	 * @param array $arProductID
+	 * @return Main\ORM\Query\Result|false
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function GetCatalogProductFields($arProductID = array())
+	{
+		if (!Loader::includeModule('catalog'))
+		{
+			return false;
+		}
+
+		if (empty($arProductID) || !is_array($arProductID))
+		{
+			return false;
+		}
+		Main\Type\Collection::normalizeArrayValuesByInt($arProductID, true);
+		if (empty($arProductID))
+		{
+			return false;
+		}
+
+		return Catalog\ProductTable::getList(array(
+			'select' => array('ID', 'VAT_ID', 'VAT_INCLUDED', 'MEASURE'),
+			'filter' => array('@ID' => $arProductID)
+		));
+	}
+
+	/**
+	 * @param array $arProductID
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	public static function PrepareCatalogProductFields(array $arProductID)
 	{
-		if (!CModule::IncludeModule('catalog'))
+		if (!Loader::includeModule('catalog'))
 		{
 			return array();
 		}
 
-		if (!(is_array($arProductID) && !empty($arProductID)))
+		if (empty($arProductID) || !is_array($arProductID))
+		{
+			return array();
+		}
+		Main\Type\Collection::normalizeArrayValuesByInt($arProductID, true);
+		if (empty($arProductID))
 		{
 			return array();
 		}
 
 		$result = array();
-		$dbResult = CCatalogProduct::GetList(
-			array(),
-			array('@ID' => $arProductID),
-			false,
-			false,
-			array('ID', 'VAT_ID', 'VAT_INCLUDED', 'MEASURE')
-		);
-
-		if(is_object($dbResult))
+		// use for show - direct query without product cache (Catalog\Model\Product)
+		$iterator = Catalog\ProductTable::getList(array(
+			'select' => array('ID', 'VAT_ID', 'VAT_INCLUDED', 'MEASURE'),
+			'filter' => array('@ID' => $arProductID)
+		));
+		while ($fields = $iterator->fetch())
 		{
-			while($fields = $dbResult->Fetch())
-			{
-				$productID = intval($fields['ID']);
-				$result[$productID] = array(
-					'PRODUCT_ID' => $productID,
-					'TAX_ID' => isset($fields['VAT_ID']) ? intval($fields['VAT_ID']) : 0,
-					'TAX_INCLUDED' => isset($fields['VAT_INCLUDED']) && strtoupper($fields['VAT_INCLUDED']) === 'Y',
-					'MEASURE' => isset($fields['MEASURE']) ? intval($fields['MEASURE']) : 0
-				);
-			}
+			$productID = (int)$fields['ID'];
+			$result[$productID] = array(
+				'PRODUCT_ID' => $productID,
+				'TAX_ID' => isset($fields['VAT_ID']) ? (int)$fields['VAT_ID'] : 0,
+				'TAX_INCLUDED' => isset($fields['VAT_INCLUDED']) && mb_strtoupper($fields['VAT_INCLUDED']) === 'Y',
+				'MEASURE' => isset($fields['MEASURE']) ? (int)$fields['MEASURE'] : 0
+			);
 		}
+		unset($fields, $iterator);
+
 		return $result;
 	}
 
@@ -1008,7 +1076,8 @@ class CCrmProduct
 						$dbStep = call_user_func(array($fieldset['class'], $fieldset['method']), $arStepProductId);
 						if ($dbStep)
 						{
-							while ($arRow = $dbStep->Fetch())
+							/** @var Main\ORM\Query\Result $dbStep */
+							while ($arRow = $dbStep->fetch())
 							{
 								foreach ($fieldset['fieldset'] as $fieldName)
 								{
@@ -1200,7 +1269,7 @@ class CCrmProduct
 
 	public static function GetFieldCaption($fieldName)
 	{
-		$result = GetMessage("CRM_PRODUCT_FIELD_{$fieldName}");
+		$result = Loc::getMessage("CRM_PRODUCT_FIELD_{$fieldName}");
 		return is_string($result) ? $result : '';
 	}
 
@@ -1285,7 +1354,7 @@ class CCrmProduct
 				return false;
 			}
 
-			$blocks = CIBlock::GetList(array(), array('ID' => $blockID), false, false, array('ID'));
+			$blocks = CIBlock::GetList(array(), array('ID' => $blockID), false);
 			if (!($blocks = $blocks->Fetch()))
 			{
 				self::RegisterError("Could not find IBlock(ID = $blockID).");
@@ -1331,7 +1400,7 @@ class CCrmProduct
 		$rowsCount = CCrmProductRow::GetList(array(), array('PRODUCT_ID' => $ID), array(), false, array());
 		if($rowsCount > 0 || CCrmInvoice::HasProductRows($ID))
 		{
-			self::RegisterError(GetMessage(
+			self::RegisterError(Loc::getMessage(
 					'CRM_COULD_NOT_DELETE_PRODUCT_ROWS_EXIST',
 					array('#NAME#' => static::GetProductName($ID)))
 			);
@@ -1420,6 +1489,7 @@ class CCrmProduct
 
 	/**
 	 * @deprecated
+	 * @noinspection PhpUnusedParameterInspection
 	 *
 	 * @param int $ID
 	 * @return true

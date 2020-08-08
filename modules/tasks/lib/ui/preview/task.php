@@ -114,9 +114,9 @@ class Task
 		if($task['DESCRIPTION'] != '')
 		{
 			$description = \CTextParser::clearAllTags($task['DESCRIPTION']);
-			if(strlen($description) > 100)
+			if(mb_strlen($description) > 100)
 			{
-				$description = substr($description, 0, 100).'...';
+				$description = mb_substr($description, 0, 100).'...';
 			}
 
 			$grid[] = Array(

@@ -444,4 +444,16 @@ class TimeHelper
 
 		return \formatDate($format, $timestamp);
 	}
+
+	/**
+	 * @param \DateTime $from
+	 * @param \DateTime|int $toOrDaysCount
+	 * @return \DatePeriod
+	 * @throws \Exception
+	 */
+	public function buildDatesIterator(\DateTime $from, $toOrDaysCount)
+	{
+		$toOrDaysCount = ($toOrDaysCount === 0 ? $from : $toOrDaysCount);
+		return new \DatePeriod($from, new \DateInterval('P1D'), $toOrDaysCount);
+	}
 }

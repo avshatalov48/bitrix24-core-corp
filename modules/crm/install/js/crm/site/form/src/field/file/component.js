@@ -27,8 +27,8 @@ const FieldFileItem = {
 					<input type="file" style="display: none;"
 						ref="inputFiles"
 						@change="setFiles"
-						@blur="$emit('input-blur', this)"
-						@focus="$emit('input-focus', this)"
+						@blur="$emit('input-blur')"
+						@focus="$emit('input-focus')"
 					>
 				</label>
 			</div>
@@ -107,6 +107,8 @@ const FieldFile = {
 					v-bind:field="field"
 					v-bind:itemIndex="itemIndex"
 					v-bind:item="item"
+					@input-blur="$emit('input-blur')"
+					@input-focus="$emit('input-focus')"
 				></field-file-item>
 				<field-item-alert v-bind:field="field"></field-item-alert>
 			</div>

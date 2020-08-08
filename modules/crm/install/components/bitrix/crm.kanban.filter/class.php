@@ -21,7 +21,7 @@ class CrmKanbanFilterComponent extends \CBitrixComponent
 			'invoice' => \CCrmOwnerType::InvoiceName,
 			'order' => \CCrmOwnerType::OrderName,
 		);
-		$this->type = strtoupper(isset($this->arParams['ENTITY_TYPE']) ? $this->arParams['ENTITY_TYPE'] : '');
+		$this->type = mb_strtoupper(isset($this->arParams['ENTITY_TYPE'])? $this->arParams['ENTITY_TYPE'] : '');
 		if (!$this->type || !in_array($this->type, $this->types))
 		{
 			return false;

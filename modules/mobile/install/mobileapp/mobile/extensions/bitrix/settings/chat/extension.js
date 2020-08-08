@@ -36,9 +36,9 @@
 		getForm()
 		{
 			this.values = Application.storage.getObject('settings.chat', {
-				vueChat: true,
 				quoteEnable: true,
 				quoteFromRight: Application.getApiVersion() < 31,
+				historyShow: true,
 				autoplayVideo: ChatPerformance.isAutoPlayVideoSupported(),
 				backgroundType: SettingsChat.BackgroundType.lightGray
 			});
@@ -62,14 +62,14 @@
 			}
 
 			return Form.create(this.providerId, this.providerTitle).addSections([
-				FormSection.create("vue", "", BX.message('SE_CHAT_DESC')).addItems([
-					FormItem.create("vueChat", FormItemType.SWITCH, BX.message("SE_CHAT_ENABLE_TITLE")).setValue(this.values.vueChat),
+				FormSection.create("history", BX.message("SE_CHAT_HISTORY_TITLE")).addItems([
+					FormItem.create("historyShow", FormItemType.SWITCH, BX.message("SE_CHAT_HISTORY_SHOW_TITLE")).setValue(this.values.historyShow),
 				]),
 				gestureQuoteOption,
 				FormSection.create("autoplay", BX.message("SE_CHAT_AUTOPLAY_TITLE")).addItems([
 					FormItem.create("autoplayVideo", FormItemType.SWITCH, BX.message("SE_CHAT_AUTOPLAY_VIDEO_TITLE")).setValue(this.values.autoplayVideo),
 				]),
-				FormSection.create("background", BX.message("SE_CHAT_BACKGROUND_TITLE")).addItems([
+				FormSection.create("background", BX.message("SE_CHAT_BACKGROUND_TITLE"), BX.message('SE_CHAT_DESC')).addItems([
 					FormItem.create("backgroundType", FormItemType.SELECTOR, BX.message("SE_CHAT_BACKGROUND_COLOR_TITLE")).setSelectorItems(backgroundItems).setValue(this.values.backgroundType),
 				]),
 			]);

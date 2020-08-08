@@ -13,7 +13,7 @@ class CrmProducts extends \Bitrix\Main\UI\Selector\EntityBase
 		return (
 			is_array($options)
 			&& isset($options['prefixType'])
-			&& strtolower($options['prefixType']) == 'short'
+			&& mb_strtolower($options['prefixType']) == 'short'
 				? self::PREFIX_SHORT
 				: self::PREFIX_FULL
 		);
@@ -220,7 +220,7 @@ class CrmProducts extends \Bitrix\Main\UI\Selector\EntityBase
 		$prefix = self::getPrefix($entityOptions);
 
 		if (
-			strlen($search) > 0
+			$search <> ''
 			&& (
 				empty($entityOptions['enableSearch'])
 				|| $entityOptions['enableSearch'] != 'N'

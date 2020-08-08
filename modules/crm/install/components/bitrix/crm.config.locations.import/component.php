@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') // process data from popup dialog
 		$load_zip = isset($_POST['load_zip']) && $_POST['load_zip'] == 'Y' ? 'Y' : 'N';
 		$errorMsg = '';
 
-		if (strlen($locations_csv) <= 0 && $load_zip != 'Y')
+		if ($locations_csv == '' && $load_zip != 'Y')
 			$errorMsg .= GetMessage('CRM_LOC_IMP_GFILE_ERROR');
 
 		if($locations_csv == "locations.csv")
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') // process data from popup dialog
 		if ($step_length <= 0)
 			$errorMsg .= GetMessage('CRM_LOC_IMP_STEP_LENGTH_ERROR');
 
-		if(strlen($errorMsg) > 0)
+		if($errorMsg <> '')
 			$arResult['ERROR_MSG'] = $errorMsg;
 
 	}

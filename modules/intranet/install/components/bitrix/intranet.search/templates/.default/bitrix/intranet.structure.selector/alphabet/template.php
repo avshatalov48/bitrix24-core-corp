@@ -17,7 +17,7 @@ if ($arResult['FILTER_VALUES'][$arParams['FILTER_NAME'].'_LAST_NAME_RANGE'])
 	}
 }
 
-$arParams['LIST_URL'] .= strrpos($arParams['LIST_URL'], '?') === false ? '?' : '&';
+$arParams['LIST_URL'] .= mb_strrpos($arParams['LIST_URL'], '?') === false ? '?' : '&';
 $arExtraVars      = array('current_view'   => $arParams['CURRENT_VIEW'],
                           'current_filter' => $arParams['CURRENT_FILTER']);
 $arExtraVarsExcel = array('current_view'   => 'table',
@@ -74,10 +74,10 @@ $clearFilterLink = $arParams['LIST_URL'] . http_build_query(array(
 		<span onclick="BX('excelUserExport').href='<?= $filterLinkLetterRange . GetFilterParams($arResult['FILTER_PARAMS'], true, $arExtraVarsExcel); ?>'"><a href="<?= $filterLinkLetterRange . GetFilterParams($arResult['FILTER_PARAMS'], true, $arExtraVars); ?>"><?= ($isRange)? '<u>' : '' ?>   <?= $arMess['ISS_TPL_APLH_ALL']?><?= ($isRange)? '</u>' : '' ?> </a></span>&nbsp;|
 		<?
 		$alph       = $arMess['ISS_TPL_ALPH'];
-		$lengthAlph = strlen($alph);
+		$lengthAlph = mb_strlen($alph);
 		for ($i = 0; $i < $lengthAlph; $i++)
 		{
-			$symbol   = substr($alph, $i, 1);
+			$symbol = mb_substr($alph, $i, 1);
 			$bCurrent = $arResult['FILTER_VALUES'][$arParams['FILTER_NAME'].'_LAST_NAME'] == $symbol.'%';
 			if ($bCurrent && !$currentLang)
 			{

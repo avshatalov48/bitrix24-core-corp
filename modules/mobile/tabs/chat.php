@@ -1,8 +1,11 @@
 <?php
 namespace Bitrix\Mobile\AppTabs;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
 use Bitrix\Mobile\Tab\Tabable;
 use Bitrix\Mobile\WebComponentManager;
+use Bitrix\Intranet\Invitation;
 
 
 class Chat implements Tabable
@@ -21,6 +24,39 @@ class Chat implements Tabable
 			&& \Bitrix\Main\Loader::includeModule('im')
 			&& \Bitrix\Im\Integration\Imopenlines\User::isOperator()
 		);
+
+		$isIntranetInvitationAdmin = (
+			Loader::includeModule('intranet')
+			&& Invitation::canListDelete()
+		);
+
+		$canInvite = (
+			Loader::includeModule('intranet')
+			&& Invitation::canCurrentUserInvite()
+		);
+
+		$registerUrl = (
+			$canInvite
+				? Invitation::getRegisterUrl()
+				: ''
+		);
+
+		$registerAdminConfirm = (
+			$canInvite
+				? Invitation::getRegisterAdminConfirm()
+				: 'N'
+		);
+
+		$disableRegisterAdminConfirm = !Invitation::canListDelete();
+
+		$registerSharingMessage = (
+			$canInvite
+				? Invitation::getRegisterSharingMessage()
+				: ''
+		);
+
+		$rootStructureSectionId = Invitation::getRootStructureSectionId();
+
 		if ($this->isAvailable())
 		{
 			return [
@@ -35,14 +71,20 @@ class Chat implements Tabable
 					"params" => [
 						"COMPONENT_CODE" => "im.recent",
 						"USER_ID" => $this->context->userId,
-						"OPENLINES_USER_IS_OPERATOR" => $isOpenlinesOperator,
 						"SITE_ID" => $this->context->siteId,
-						"LANGUAGE_ID" => LANGUAGE_ID,
 						"SITE_DIR" => $this->context->siteDir,
+						"LANGUAGE_ID" => LANGUAGE_ID,
 						"LIMIT_ONLINE" => \CUser::GetSecondsForLimitOnline(),
 						"IM_GENERAL_CHAT_ID" => \CIMChat::GetGeneralChatId(),
-						"SEARCH_MIN_SIZE" => \CSQLWhere::GetMinTokenSize(),
-
+						"SEARCH_MIN_SIZE" => \Bitrix\Main\ORM\Query\Filter\Helper::getMinTokenSize()?: 3,
+						"OPENLINES_USER_IS_OPERATOR" => $isOpenlinesOperator,
+						"INTRANET_INVITATION_CAN_INVITE" => $canInvite,
+						"INTRANET_INVITATION_ROOT_STRUCTURE_SECTION_ID" => $rootStructureSectionId,
+						"INTRANET_INVITATION_REGISTER_URL" => $registerUrl,
+						"INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM" => $registerAdminConfirm,
+						"INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM_DISABLE" => $disableRegisterAdminConfirm,
+						"INTRANET_INVITATION_REGISTER_SHARING_MESSAGE" => $registerSharingMessage,
+						"INTRANET_INVITATION_IS_ADMIN" => $isIntranetInvitationAdmin,
 						"WIDGET_CHAT_CREATE_VERSION" => \Bitrix\MobileApp\Janative\Manager::getComponentVersion('im.chat.create'),
 						"WIDGET_CHAT_USERS_VERSION" => \Bitrix\MobileApp\Janative\Manager::getComponentVersion('im.chat.user.list'),
 						"WIDGET_CHAT_RECIPIENTS_VERSION" => \Bitrix\MobileApp\Janative\Manager::getComponentVersion('im.chat.user.selector'),
@@ -57,7 +99,7 @@ class Chat implements Tabable
 							"IMOL_CHAT_ANSWER_F" => \Bitrix\Im\Integration\Imopenlines\Localize::get(\Bitrix\Im\Integration\Imopenlines\Localize::FILE_LIB_CHAT, "IMOL_CHAT_ANSWER_F")
 						]
 					],
-					"settings" => ["useSearch" => true, "preload" => false],
+					"settings" => ["useSearch" => true, "preload" => false, "useLargeTitleMode" => true],
 				],
 			];
 		}
@@ -104,5 +146,14 @@ class Chat implements Tabable
 	}
 
 
+	public function getShortTitle()
+	{
+		return Loc::getMessage("TAB_NAME_IM_RECENT_SHORT");
+	}
+
+	public function getId()
+	{
+		return "chats";
+	}
 }
 

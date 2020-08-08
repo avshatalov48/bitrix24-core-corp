@@ -4,6 +4,7 @@ namespace Bitrix\Tasks\Integration\Socialnetwork;
 
 use Bitrix\Main\Loader;
 use Bitrix\Socialnetwork\Livefeed\TasksTask;
+use Bitrix\Tasks\Internals\Task\ViewedTable;
 
 /**
  * Class for content view event handlers
@@ -60,4 +61,33 @@ final class ContentViewHandler
 
 		return true;
 	}
+
+	/**
+	 * Handles content view event, processing tasks from viewed comments
+	 *
+	 * @param \Bitrix\Main\Event $event Event.
+	 * @return boolean
+	 */
+	public static function onContentFinalizeView(\Bitrix\Main\Event $event): bool
+	{
+		$userId = intval($event->getParameter('userId'));
+		$taskIdList = $event->getParameter('commentsTaskIdList');
+
+		if (
+			$userId <= 0
+			|| !is_array($taskIdList)
+			|| empty($taskIdList)
+		)
+		{
+			return false;
+		}
+
+		foreach ($taskIdList as $taskId)
+		{
+			ViewedTable::set($taskId, $userId);
+		}
+
+		return true;
+	}
+
 }

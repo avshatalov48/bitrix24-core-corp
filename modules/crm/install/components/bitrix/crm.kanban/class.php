@@ -83,7 +83,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 	);
 	protected $selectPresets = array(
 		'lead' => array('ID', 'STATUS_ID', 'TITLE', 'DATE_CREATE', 'OPPORTUNITY', 'OPPORTUNITY_ACCOUNT', 'CURRENCY_ID', 'ACCOUNT_CURRENCY_ID', 'CONTACT_ID', 'COMPANY_ID', 'MODIFY_BY_ID', 'IS_RETURN_CUSTOMER', 'ASSIGNED_BY'),
-		'deal' => array('ID', 'STAGE_ID', 'TITLE', 'DATE_CREATE', 'BEGINDATE', 'OPPORTUNITY', 'OPPORTUNITY_ACCOUNT', 'EXCH_RATE', 'CURRENCY_ID', 'ACCOUNT_CURRENCY_ID', 'IS_REPEATED_APPROACH', 'IS_RETURN_CUSTOMER', 'CONTACT_ID', 'COMPANY_ID', 'MODIFY_BY_ID', 'ASSIGNED_BY'),
+		'deal' => array('ID', 'STAGE_ID', 'TITLE', 'DATE_CREATE', 'BEGINDATE', 'OPPORTUNITY', 'OPPORTUNITY_ACCOUNT', 'EXCH_RATE', 'CURRENCY_ID', 'ACCOUNT_CURRENCY_ID', 'IS_REPEATED_APPROACH', 'IS_RETURN_CUSTOMER', 'CONTACT_ID', 'COMPANY_ID', 'MODIFY_BY_ID', 'ASSIGNED_BY', 'ORDER_STAGE'),
 		'quote' => array('ID', 'STATUS_ID', 'TITLE', 'DATE_CREATE', 'BEGINDATE', 'OPPORTUNITY', 'OPPORTUNITY_ACCOUNT', 'CURRENCY_ID', 'ACCOUNT_CURRENCY_ID', 'CONTACT_ID', 'COMPANY_ID', 'MODIFY_BY_ID', 'ASSIGNED_BY'),
 		'invoice' => array('ID', 'STATUS_ID', 'DATE_INSERT', 'DATE_INSERT_FORMAT', 'PAY_VOUCHER_DATE', 'DATE_BILL', 'ORDER_TOPIC', 'PRICE', 'CURRENCY', 'UF_CONTACT_ID', 'UF_COMPANY_ID', 'RESPONSIBLE_ID'),
 		'order' => array('ID', 'ACCOUNT_NUMBER', 'STATUS_ID', 'DATE_INSERT', 'PAY_VOUCHER_DATE', 'DATE_PAYED', 'ORDER_TOPIC', 'PRICE', 'CURRENCY', 'RESPONSIBLE_ID')
@@ -144,7 +144,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 			'PHONE_PAGER' => Loc::getMessage('CRM_KANBAN_PHONE_TYPE_PAGER'),
 			'PHONE_OTHER' => Loc::getMessage('CRM_KANBAN_PHONE_TYPE_OTHER'),
 		);
-		$this->type = strtoupper(isset($this->arParams['ENTITY_TYPE']) ? $this->arParams['ENTITY_TYPE'] : '');
+		$this->type = mb_strtoupper(isset($this->arParams['ENTITY_TYPE'])? $this->arParams['ENTITY_TYPE'] : '');
 		if (!$this->type || !in_array($this->type, $this->types))
 		{
 			return false;
@@ -158,7 +158,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 			$this->categoryId = (int)$this->arParams['EXTRA']['CATEGORY_ID'];
 		}
 		$this->arParams['ENTITY_TYPE_CHR'] = array_flip($this->types);
-		$this->arParams['ENTITY_TYPE_CHR'] = strtoupper($this->arParams['ENTITY_TYPE_CHR'][$this->type]);
+		$this->arParams['ENTITY_TYPE_CHR'] = mb_strtoupper($this->arParams['ENTITY_TYPE_CHR'][$this->type]);
 		$this->arParams['ENTITY_TYPE_INT'] = \CCrmOwnerType::resolveID($this->type);
 		$this->arParams['ENTITY_PATH'] = $this->getEntityPath($this->type);
 		$this->arParams['EDITOR_CONFIG_ID'] = $this->getEditorConfigId();
@@ -182,7 +182,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 				false
 			);
 			$this->arParams['REST_DEMO_URL'] = Marketplace\Url::getConfigurationPlacementUrl(
-				'crm_' . strtolower($this->type),
+				'crm_'.mb_strtolower($this->type),
 				'crm_kanban'
 			);
 		}
@@ -200,8 +200,8 @@ class CrmKanbanComponent extends \CBitrixComponent
 		{
 			$this->additionalSelect = \CUserOptions::getOption(
 				'crm',
-				'kanban_select_more_v4_' .
-				strtolower($this->type) . '_' . intval($this->categoryId) .
+				'kanban_select_more_v4_'.
+				mb_strtolower($this->type) . '_' . intval($this->categoryId) .
 				($this->isEditorConfigCommon() ? '_common' : ''),
 				null
 			);
@@ -213,6 +213,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 						'TITLE' => '',
 						'OPPORTUNITY' => '',
 						'DATE_CREATE' => '',
+						'ORDER_STAGE' => '',
 						'CLIENT' => '',
 						'PROBLEM_NOTIFICATION' => '',
 					];
@@ -230,7 +231,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 			}
 			$this->additionalEdit = (array)\CUserOptions::getOption(
 				'crm',
-				'kanban_edit_more_v4_' . strtolower($this->type) . '_' . intval($this->categoryId),
+				'kanban_edit_more_v4_'.mb_strtolower($this->type) . '_' . intval($this->categoryId),
 				array()
 			);
 		}
@@ -405,11 +406,44 @@ class CrmKanbanComponent extends \CBitrixComponent
 	}
 
 	/**
-	 * Resolve full entity type from symbol.
-	 * @param $entityType
+	 * Switch entity type to letter and returns it.
+	 * @param string $entityType Letter entity type.
+	 * @return string|null
+	 */
+	protected function makeEntityLetter(string $entityType): ?string
+	{
+		$entityType = mb_strtolower($entityType);
+
+		if ($entityType == 'deal')
+		{
+			return 'D';
+		}
+		else if ($entityType == 'lead')
+		{
+			return 'L';
+		}
+		else if ($entityType == 'contact')
+		{
+			return 'C';
+		}
+		else if ($entityType == 'company')
+		{
+			return 'CO';
+		}
+		else if ($entityType == 'order')
+		{
+			return 'O';
+		}
+
+		return null;
+	}
+
+	/**
+	 * Resolves full entity type from symbol.
+	 * @param string $entityType Entity type.
 	 * @return string
 	 */
-	protected function resolveEntityLetter($entityType)
+	protected function resolveEntityLetter(string $entityType): ?string
 	{
 		if ($entityType == 'D')
 		{
@@ -549,7 +583,6 @@ class CrmKanbanComponent extends \CBitrixComponent
 
 		foreach ($db as $row)
 		{
-			$row['NAME'] = htmlspecialcharsbx($row['NAME']);
 			$row['STATUS_ID'] = htmlspecialcharsbx($row['STATUS_ID']);
 			if (in_array($row['ENTITY_ID'], array('DEAL_TYPE', 'SOURCE')))
 			{
@@ -646,6 +679,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 */
 	protected function getSelect()
 	{
+		global $USER_FIELD_MANAGER;
 		static $select = null;
 
 		if ($select === null)
@@ -656,13 +690,25 @@ class CrmKanbanComponent extends \CBitrixComponent
 			if (!empty($this->additionalSelect))
 			{
 				$additionalFields = array_keys($this->additionalSelect);
+
 				if ($this->type == $this->types['order'])
 				{
 					$ufSelect = preg_grep( "/^UF_/", $additionalFields);
 					$additionalFields = array_intersect($additionalFields,  Order\Order::getAllFields());
 					if (!empty($ufSelect))
 					{
-						$additionalFields = array_merge($additionalFields, $ufSelect);
+						$crmUserType = new CCrmUserType($USER_FIELD_MANAGER, Order\Order::getUfId());
+						$userOrderFields = $crmUserType->GetFields();
+						if (is_array($userOrderFields))
+						{
+							foreach ($ufSelect as $userFieldName)
+							{
+								if (isset($userOrderFields[$userFieldName]))
+								{
+									$additionalFields[] = $userFieldName;
+								}
+							}
+						}
 					}
 
 					if (isset($this->additionalSelect['SOURCE_ID']))
@@ -728,13 +774,13 @@ class CrmKanbanComponent extends \CBitrixComponent
 				foreach ($search as $key => $item)
 				{
 					unset($search[$key]);
-					if (in_array(substr($key, 0, 2), array('>=', '<=', '<>')))
+					if (in_array(mb_substr($key, 0, 2), array('>=', '<=', '<>')))
 					{
-						$key = substr($key, 2);
+						$key = mb_substr($key, 2);
 					}
-					if (in_array(substr($key, 0, 1), array('=', '<', '>', '@', '!')))
+					if (in_array(mb_substr($key, 0, 1), array('=', '<', '>', '@', '!')))
 					{
-						$key = substr($key, 1);
+						$key = mb_substr($key, 1);
 					}
 					$search[$key] = $item;
 				}
@@ -1070,13 +1116,14 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 *
 	 * @return array
 	 */
-	protected function getOrderFilter(array &$runtime)
+	protected function getOrderFilter(array &$runtime) : array
 	{
 		$grid = \Bitrix\Crm\Kanban\Helper::getGrid($this->type);
 		$gridFilter = \Bitrix\Crm\Kanban\Helper::getFilter($this->type);
 		$gridFilterFields = (array)$grid->GetFilter($gridFilter);
 		\Bitrix\Crm\UI\Filter\EntityHandler::internalize($gridFilter, $gridFilterFields);
 
+		$filterFields = [];
 		$componentName = 'bitrix:crm.order.list';
 		$className = \CBitrixComponent::includeComponentClass(
 			$componentName
@@ -1084,7 +1131,10 @@ class CrmKanbanComponent extends \CBitrixComponent
 		/** @var CCrmOrderListComponent $crmCmp */
 		$crmCmp = new $className;
 		$crmCmp->initComponent($componentName);
-		$filterFields = $crmCmp->createGlFilter($gridFilterFields, $runtime);
+		if ($crmCmp->init())
+		{
+			$filterFields = $crmCmp->createGlFilter($gridFilterFields, $runtime);
+		}
 
 		if (!empty($filterFields['DELIVERY_SERVICE']))
 		{
@@ -1155,11 +1205,11 @@ class CrmKanbanComponent extends \CBitrixComponent
 	protected function getEntityPath($type)
 	{
 		$params = $this->arParams;
-		$pathKey = 'PATH_TO_'.strtoupper($type).'_DETAILS';
+		$pathKey = 'PATH_TO_'.mb_strtoupper($type).'_DETAILS';
 		$url = !array_key_exists($pathKey, $params) ? \CrmCheckPath($pathKey, '', '') : $params[$pathKey];
 		if(!($url !== '' && CCrmOwnerType::IsSliderEnabled(CCrmOwnerType::ResolveID($type))))
 		{
-			$pathKey = 'PATH_TO_'.strtoupper($type).'_SHOW';
+			$pathKey = 'PATH_TO_'.mb_strtoupper($type).'_SHOW';
 			$url = !array_key_exists($pathKey, $params) ? \CrmCheckPath($pathKey, '', '') : $params[$pathKey];
 		}
 
@@ -1188,7 +1238,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 															'ELEMENT_ID' => array_keys($items)));
 			while ($row = $res->fetch())
 			{
-				$row['TYPE_ID'] = strtolower($row['TYPE_ID']);
+				$row['TYPE_ID'] = mb_strtolower($row['TYPE_ID']);
 				if (!in_array($row['TYPE_ID'], $this->allowedFMtypes))
 				{
 					continue;
@@ -1225,7 +1275,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 
 		$path = $this->getEntityPath($contragent);
 
-		$contragent = strtolower(trim($contragent));
+		$contragent = mb_strtolower(trim($contragent));
 		$provider = '\CCrm'.$contragent;
 		if (
 			is_callable(array($provider, 'getListEx')) &&
@@ -1436,7 +1486,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 					'real_sort' => $status['SORT'],
 					'id' => $status['STATUS_ID'],
 					'name' => $status['NAME'],
-					'color' => strpos($status['COLOR'], '#')===0 ? substr($status['COLOR'], 1) : $status['COLOR'],
+					'color' => mb_strpos($status['COLOR'], '#') === 0? mb_substr($status['COLOR'], 1) : $status['COLOR'],
 					'type' => $status['PROGRESS_TYPE'],
 					'sort' => $sort,
 					'count' => 0,
@@ -1589,7 +1639,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 					{
 						$options = [];
 						$select = [$statusCode];
-						if (substr($fieldSum, 0, 3) == 'UF_')
+						if (mb_substr($fieldSum, 0, 3) == 'UF_')
 						{
 							$options['FIELD_OPTIONS'] = [
 								'UF_FIELDS' => [
@@ -1943,7 +1993,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 			$traceEntities[$row['TRACE_ID']] = [
 				'NAME' => isset($channelNames[$row['CODE']])
 						? $channelNames[$row['CODE']]
-						: $row['CODE'],
+						: Channel\Base::getNameByCode($row['CODE']),
 				'DESC' => '',
 				'ICON' => '',
 				'ICON_COLOR' => '',
@@ -2045,7 +2095,9 @@ class CrmKanbanComponent extends \CBitrixComponent
 			}
 			//user sorting
 			if (
-				isset($filter[$statusKey]) && isset($columns[$filter[$statusKey]]['count']) &&
+				isset($filter[$statusKey]) &&
+				is_string($filter[$statusKey]) &&
+				isset($columns[$filter[$statusKey]]['count']) &&
 				$columns[$filter[$statusKey]]['count'] <= $this->maxSortSize
 			)
 			{
@@ -2079,7 +2131,23 @@ class CrmKanbanComponent extends \CBitrixComponent
 				$sorting = false;
 				if ($this->type !== $types['order'])
 				{
-					$res = $provider::$method(array('ID' => 'DESC'), $filter, false, $navParams, $select);
+					$res = $provider::$method(
+						['ID' => 'DESC'],
+						$filter,
+						false,
+						false,
+						$select,
+						$pagen
+							? [
+							'QUERY_OPTIONS' => [
+								'LIMIT' => $this->blockSize,
+								'OFFSET' => $this->blockSize * ($this->blockPage - 1)
+							]
+						]
+							: [
+
+						]
+					);
 				}
 				else
 				{
@@ -2169,22 +2237,24 @@ class CrmKanbanComponent extends \CBitrixComponent
 				{
 					$row['CURRENCY_ID'] = $row['ACCOUNT_CURRENCY_ID'];
 				}
+
 				//contragent
 				if ($row['CONTACT_ID'] > 0)
 				{
 					$row['CONTACT_TYPE'] = 'CRM_CONTACT';
 					$this->contact[$row['ID']] = $row['CONTACT_ID'];
 				}
-				elseif ($row['COMPANY_ID'] > 0)
+
+				//company
+				if ($row['COMPANY_ID'] > 0)
 				{
-					$row['CONTACT_TYPE'] = 'CRM_COMPANY';
-					$row['CONTACT_ID'] = $row['COMPANY_ID'];
+					$row['CONTACT_TYPE'] = ($row['CONTACT_TYPE'] ?? 'CRM_COMPANY');
+					$row['CONTACT_ID'] = ($row['CONTACT_ID'] ?? $row['COMPANY_ID']);
 					$this->company[$row['ID']] = $row['COMPANY_ID'];
 				}
-				else
-				{
-					$row['CONTACT_TYPE'] = '';
-				}
+
+				$row['CONTACT_TYPE'] = ($row['CONTACT_TYPE'] ?? '');
+
 				//price converted
 				if ($row['CURRENCY_ID']=='' || $row['CURRENCY_ID'] == $currency)
 				{
@@ -2299,6 +2369,25 @@ class CrmKanbanComponent extends \CBitrixComponent
 								}
 								$row[$code] = $fieldValue;
 							}
+							else if ($code == 'ORDER_STAGE')
+							{
+								$orderStages = Order\OrderStage::getList();
+								if (isset($orderStages[$row[$code]]))
+								{
+									$row[$code] = [
+										'title' => $orderStages[$row[$code]],
+										'code' => $row[$code]
+									];
+								}
+								else
+								{
+									$row[$code] = [
+										'title' => $row[$code],
+										'code' => $row[$code]
+									];
+									continue;
+								}
+							}
 							else if (
 								$addFields[$code]['type'] == 'money'
 							)
@@ -2309,7 +2398,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 								$row[$code] = [];
 								foreach ($moneyRow as $moneyItem)
 								{
-									list($money, $moneyCurr) = explode('|', $moneyItem);
+									[$money, $moneyCurr] = explode('|', $moneyItem);
 									$row[$code][] = \CCrmCurrency::MoneyToString(
 										$money,
 										$moneyCurr
@@ -2340,7 +2429,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 							}
 							else if (
 								$addFields[$code]['type'] == 'date' ||
-								strpos($code, 'DATE') !== false
+								mb_strpos($code, 'DATE') !== false
 							)
 							{
 								$row[$code] = (array) $row[$code];
@@ -2385,16 +2474,36 @@ class CrmKanbanComponent extends \CBitrixComponent
 							else if ($addFields[$code]['type'] == 'crm')
 							{
 								$row[$code] = (array) $row[$code];
+								$settings = isset($addFields[$code]['settings'])
+											? (array) $addFields[$code]['settings']
+											: [];
+								$settingsFlip = array_flip($settings);
+								$newRow = [];
 								foreach ($row[$code] as $crmEntity)
 								{
-									list($crmEntityType, $crmEntity) = explode('_', $crmEntity);
+									if (!mb_strpos($crmEntity, '_'))
+									{
+										if (isset($settingsFlip['Y']))
+										{
+											$crmEntity = $this->makeEntityLetter($settingsFlip['Y']) . '_' . $crmEntity;
+										}
+									}
+									$newRow[] = $crmEntity;
+									if(mb_strpos($crmEntity, '_'))
+									{
+										[$crmEntityType, $crmEntity] = explode('_', $crmEntity);
+									}
+									else
+									{
+										continue;
+									}
 									if (!isset($crmEntities[$crmEntityType]))
 									{
 										$crmEntities[$crmEntityType] = [];
 									}
 									$crmEntities[$crmEntityType][] = $crmEntity;
 								}
-								unset($crmEntity, $crmEntityType);
+								$row[$code] = $newRow;
 							}
 							elseif ($addFields[$code]['type'] == 'iblock_section')
 							{
@@ -2417,9 +2526,9 @@ class CrmKanbanComponent extends \CBitrixComponent
 								$row[$code] = (array) $row[$code];
 								foreach ($row[$code] as &$location)
 								{
-									if (strpos($location, '|') !== false)
+									if (mb_strpos($location, '|') !== false)
 									{
-										list($location, ) = explode('|', $location);
+										[$location, ] = explode('|', $location);
 									}
 								}
 								unset($location);
@@ -2461,7 +2570,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 					// fm fields check later
 					foreach ($this->allowedFMtypes as $fm)
 					{
-						$fmUp = strtoupper($fm);
+						$fmUp = mb_strtoupper($fm);
 						$requiredFm[$fmUp] = true;
 						$row[$fmUp] = '';
 					}
@@ -2530,6 +2639,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 								)
 							),
 					'contactId' => (int)$row['CONTACT_ID'],
+					'companyId' => (!empty($row['COMPANY_ID']) ? (int)$row['COMPANY_ID'] : null),
 					'contactType' => $row['CONTACT_TYPE'],
 					'modifyById' => isset($row['MODIFY_BY_ID']) ? $row['MODIFY_BY_ID'] : 0,
 					'modifyByAvatar' => '',
@@ -2877,7 +2987,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 							{
 								foreach ($field['value'] as &$entity)
 								{
-									list($entityType, $entityId) = explode('_', $entity);
+									[$entityType, $entityId] = explode('_', $entity);
 									if (isset($crmEntities[$entityType][$entityId]))
 									{
 										$entity = $crmEntities[$entityType][$entityId];
@@ -3074,7 +3184,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 			//base fields
 			foreach ($this->additionalSelect as $key => $title)
 			{
-				if (strpos($key, 'UF_') === 0)
+				if (mb_strpos($key, 'UF_') === 0)
 				{
 					$ufExist = true;
 				}
@@ -3342,6 +3452,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		$date = new \Bitrix\Main\Type\DateTime;
 		$userQuery->setFilter(array(
 			'=ACTIVE' => 'Y',
+			'!ID' => $this->uid,
 			array(
 				'LOGIC' => 'OR',
 				'<=UG.DATE_ACTIVE_FROM' => $date,
@@ -3396,7 +3507,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 			$availableFields = array_keys($this->additionalSelect);
 
 			// include external component class for call public method
-			$componentName = 'bitrix:crm.' . strtolower($this->type) . '.details';
+			$componentName = 'bitrix:crm.'.mb_strtolower($this->type) . '.details';
 			$className = \CBitrixComponent::includeComponentClass(
 				$componentName
 			);
@@ -3474,8 +3585,8 @@ class CrmKanbanComponent extends \CBitrixComponent
 
 		if ($configId === null)
 		{
-			$configId = 'quick_editor_v6_' .
-						strtolower($this->type) . '_' .
+			$configId = 'quick_editor_v6_'.
+				mb_strtolower($this->type) . '_' .
 						(int) $this->categoryId;
 		}
 
@@ -3498,6 +3609,38 @@ class CrmKanbanComponent extends \CBitrixComponent
 			return true;
 		}
 		return ($scope == EntityEditorConfigScope::COMMON);
+	}
+
+	/**
+	 * Runs automation processes on change entity.
+	 * @param int $id Entity id.
+	 * @param array|null $fields Updated fields.
+	 * @return void
+	 */
+	protected function runAutomationOnUpdate(int $id, array $fields = null): void
+	{
+		if (
+			$this->type == $this->types['lead'] ||
+			$this->type == $this->types['deal']
+		)
+		{
+			$errors = null;
+			\CCrmBizProcHelper::autoStartWorkflows(
+				\CCrmOwnerType::resolveID($this->type),
+				$id,
+				\CCrmBizProcEventType::Edit,
+				$errors
+			);
+
+			if ($fields)
+			{
+				$starter = new \Bitrix\Crm\Automation\Starter(
+					($this->type == $this->types['lead']) ? \CCrmOwnerType::Lead : \CCrmOwnerType::Deal,
+					$id
+				);
+				$starter->setUserIdFromCurrent()->runOnUpdate($fields, []);
+			}
+		}
 	}
 
 	/**
@@ -3622,58 +3765,73 @@ class CrmKanbanComponent extends \CBitrixComponent
 				{
 					foreach ($this->arResult['ITEMS']['items'] as &$item)
 					{
-						if ($item['contactId'] > 0 && $item['contactType'] == 'CRM_CONTACT' && isset($contacts[$item['contactId']]))
+						$contragent = [];
+						$contragents = [];
+
+						if (
+							!empty($item['contactId'])
+							&& isset($contacts[$item['contactId']])
+						)
 						{
-							$contragentTypeId = CCrmOwnerType::Contact;
-							$contragent = $contacts[$item['contactId']];
-						}
-						elseif ($item['contactId'] > 0 && $item['contactType'] == 'CRM_COMPANY' && isset($companies[$item['contactId']]))
-						{
-							$contragentTypeId = CCrmOwnerType::Company;
-							$contragent = $companies[$item['contactId']];
-						}
-						else
-						{
-							$contragent = array();
-						}
-						if (!empty($contragent))
-						{
-							$item['contactName'] = $contragent['TITLE'];
-							$item['contactLink'] = $contragent['URL'];
+							$contact = $contacts[$item['contactId']];
+							$contragents['contact'] = $contact;
+							$item['contactName'] = $contact['TITLE'];
+							$item['contactLink'] = $contact['URL'];
 							$item['contactTooltip'] = \CCrmViewHelper::PrepareEntityBaloonHtml([
-								'ENTITY_TYPE_ID' => $contragentTypeId,
+								'ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
 								'ENTITY_ID' => $item['contactId'],
-								'TITLE' => $contragent['~TITLE'],
+								'TITLE' => $contact['~TITLE'],
 								'PREFIX' => $this->type . '_' . $item['id'],
 							]);
 						}
-						//phone, email, chat
-						if (isset($contragent['FM_VALUES']) && !empty($contragent['FM_VALUES']))
+
+						if (
+							!empty($item['companyId'])
+							&& isset($companies[$item['companyId']])
+						)
 						{
-							foreach ($contragent['FM_VALUES'] as $code => $values)
+							$company = $companies[$item['companyId']];
+							$contragents['company'] = $company;
+							$item['companyName'] = $company['TITLE'];
+							$item['companyLink'] = $company['URL'];
+							$item['companyTooltip'] = \CCrmViewHelper::PrepareEntityBaloonHtml([
+								'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
+								'ENTITY_ID' => $item['companyId'],
+								'TITLE' => $company['~TITLE'],
+								'PREFIX' => $this->type . '_' . $item['id'],
+							]);
+						}
+
+						//phone, email, chat
+						foreach ($contragents as $contragentType => $contragent)
+						{
+							if (isset($contragent['FM_VALUES']) && !empty($contragent['FM_VALUES']))
 							{
-								if ($code == 'im') // we need only chat for im
+								foreach ($contragent['FM_VALUES'] as $code => $values)
 								{
-									if ($isOLinstalled)
+									if ($code == 'im') // we need only chat for im
 									{
-										foreach ($values as $val)
+										if ($isOLinstalled)
 										{
-											$val = isset($val['VALUE'])
+											foreach ($values as $val)
+											{
+												$val = isset($val['VALUE'])
 													? $val['VALUE']
 													: $val['value'];
-											if ((strpos($val, 'imol|') === 0))
-											{
-												$item[$code] = $val;
-												break;
+												if ((mb_strpos($val, 'imol|') === 0))
+												{
+													$item[$code][$contragentType] = $val;
+													break;
+												}
 											}
 										}
 									}
+									else
+									{
+										$item[$code][$contragentType] = $values;
+									}
+									$item['required_fm'][mb_strtoupper($code)] = false;
 								}
-								else
-								{
-									$item[$code] = $values;
-								}
-								$item['required_fm'][strtoupper($code)] = false;
 							}
 						}
 						//same from leads
@@ -3690,9 +3848,9 @@ class CrmKanbanComponent extends \CBitrixComponent
 											$val = isset($val['VALUE'])
 													? $val['VALUE']
 													: $val['value'];
-											if (strpos($val, 'imol|') === 0)
+											if (mb_strpos($val, 'imol|') === 0)
 											{
-												$item[$code] = $val;
+												$item[$code][] = $val;
 												break;
 											}
 										}
@@ -3702,7 +3860,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 								{
 									$item[$code] = $values;
 								}
-								$item['required_fm'][strtoupper($code)] = false;
+								$item['required_fm'][mb_strtoupper($code)] = false;
 							}
 							unset($item['FM_VALUES'], $item['FM']);
 						}
@@ -4167,7 +4325,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 
 		return true;
 	}
-	
+
 	/**
 	 * Save changes into status stage for 'actionModifyStage' method
 	 *
@@ -4428,8 +4586,8 @@ class CrmKanbanComponent extends \CBitrixComponent
 	{
 		if ($this->canEditSettings())
 		{
-			$name = 'kanban_select_more_v4_' .
-					strtolower($this->type) .
+			$name = 'kanban_select_more_v4_'.
+				mb_strtolower($this->type) .
 					'_' . intval($this->categoryId);
 			\CUserOptions::deleteOptionsByName('crm', $name);
 		}
@@ -4441,13 +4599,14 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 */
 	protected function resetCardFields()
 	{
-		$name = 'kanban_select_more_v4_' .
-				strtolower($this->type) .
+		$name = 'kanban_select_more_v4_'.
+			mb_strtolower($this->type) .
 				'_' . intval($this->categoryId);
 		$fields = [
 			'TITLE' => '',
 			'OPPORTUNITY' => '',
 			'DATE_CREATE' => '',
+			'ORDER_STAGE' => '',
 			'CLIENT' => ''
 		];
 		$this->additionalSelect = $fields;
@@ -4474,8 +4633,8 @@ class CrmKanbanComponent extends \CBitrixComponent
 	{
 		$name = (
 					($this->request('type') == 'view')
-					? 'kanban_select_more_v4_' . strtolower($this->type)
-					: 'kanban_edit_more_v4_' . strtolower($this->type)
+					? 'kanban_select_more_v4_'.mb_strtolower($this->type)
+					: 'kanban_edit_more_v4_'.mb_strtolower($this->type)
 				) . '_' . intval($this->categoryId);
 		$fields = $this->convertUtf($this->request('fields'), true);
 		$fieldsKeys = $fields ? array_keys($fields) : [];
@@ -4716,6 +4875,18 @@ class CrmKanbanComponent extends \CBitrixComponent
 					return $result;
 				}
 			}
+			//if deal, check status
+			if ($type == $this->types['deal'] && $row[$statusKey] != $status)
+			{
+				$stageCategoryID = DealCategory::resolveFromStageID($status);
+				$dealCategoryID = (int)$row['CATEGORY_ID'];
+				if($dealCategoryID !== $stageCategoryID)
+				{
+					$result->addError(new Error(Loc::getMessage('CRM_KANBAN_ERROR_DEAL_STAGE_MISMATCH')));
+					return $result;
+				}
+			}
+
 			//update
 			if ($row[$statusKey] != $status)
 			{
@@ -4737,10 +4908,11 @@ class CrmKanbanComponent extends \CBitrixComponent
 						($type == $this->types['lead']) ? \CCrmOwnerType::Lead : \CCrmOwnerType::Deal,
 						$id, \CCrmBizProcEventType::Edit, $errors
 					);
-					\Bitrix\Crm\Automation\Factory::runOnStatusChanged(
+					$starter = new \Bitrix\Crm\Automation\Starter(
 						($type == $this->types['lead']) ? \CCrmOwnerType::Lead : \CCrmOwnerType::Deal,
 						$id
 					);
+					$starter->setUserIdFromCurrent()->runOnUpdate($fields, []);
 				}
 				elseif (!empty($entity->LAST_ERROR))
 				{
@@ -4988,6 +5160,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 					$key => $assignedId
 				);
 				$entity->update($id, $fields);
+				$this->runAutomationOnUpdate($id, $fields);
 			}
 		}
 
@@ -5022,6 +5195,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 					'OPENED' => $flag
 				);
 				$entity->update($id, $fields);
+				$this->runAutomationOnUpdate($id, $fields);
 			}
 		}
 
@@ -5092,10 +5266,17 @@ class CrmKanbanComponent extends \CBitrixComponent
 							\CCrmBizProcEventType::Edit,
 							$errors
 						);
-						\Bitrix\Crm\Automation\Factory::runOnStatusChanged(
-							\CCrmOwnerType::Deal,
-							$id
+						$dbResult = \CCrmDeal::GetListEx(
+							array(),
+							array('=ID' => $id, 'CHECK_PERMISSIONS' => 'N'),
+							false,
+							false,
+							['STAGE_ID', 'CATEGORY_ID']
 						);
+						$newFields = $dbResult->Fetch();
+
+						$starter = new Bitrix\Crm\Automation\Starter(CCrmOwnerType::Deal, $id);
+						$starter->setUserIdFromCurrent()->runOnUpdate($newFields, []);
 					}
 				}
 			}

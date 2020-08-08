@@ -90,6 +90,7 @@ $APPLICATION->IncludeComponent(
 
 if (CModule::IncludeModule("intranet"))
 {
+	$APPLICATION->IncludeComponent("bitrix:intranet.ustat.online", "", [], false);
 	$APPLICATION->IncludeComponent("bitrix:intranet.ustat.status", "", array(),	false);
 }
 
@@ -109,20 +110,16 @@ $APPLICATION->IncludeComponent(
 	false
 );
 
-
 $APPLICATION->IncludeComponent(
-	"bitrix:tasks.filter.v2",
-	"widget",
-	array(
-		"VIEW_TYPE" => 0,
-		"COMMON_FILTER" => array("ONLY_ROOT_TASKS" => "Y"),
+	"bitrix:tasks.widget.rolesfilter",
+	"",
+	[
 		"USER_ID" => $USER->GetID(),
-		"ROLE_FILTER_SUFFIX" => "",
 		"PATH_TO_TASKS" => "/company/personal/user/".$USER->GetID()."/tasks/",
-		"CHECK_TASK_IN" => "R"
-	),
+		"PATH_TO_TASKS_CREATE" => "/company/personal/user/".$USER->GetID()."/tasks/task/edit/0/",
+	],
 	null,
-	array("HIDE_ICONS" => "N")
+	["HIDE_ICONS" => "N"]
 );
 
 if ($GLOBALS["USER"]->IsAuthorized())
@@ -215,7 +212,8 @@ $APPLICATION->IncludeComponent(
 		"NAME_TEMPLATE" => "",
 		"SHOW_LOGIN" => "Y",
 		"CACHE_TYPE" => "A",
-		"CACHE_TIME" => "3600",
+		"CACHE_TIME" => "86450",
+		"CACHE_DATE" => date('dmy'),
 		"DATE_FORMAT" => CIntranetUtils::getCurrentDateTimeFormat(array(
 			'woTime' => true
 		)),

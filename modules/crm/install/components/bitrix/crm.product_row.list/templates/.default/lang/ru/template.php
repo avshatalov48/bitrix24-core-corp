@@ -45,4 +45,5 @@ $MESS["CRM_PRODUCT_TAX_INCLUDING"] = "В том числе";
 $MESS["CRM_PRODUCT_ROW_OPEN_PRODUCT_CARD"] = "Открыть карточку товара";
 $MESS["CRM_PRODUCT_ROW_CREATE_PRODUCT"] = "Добавить в каталог";
 $MESS["CRM_PRODUCT_SEARCH_DLG_TITLE"] = "Выбор товаров";
+$MESS["CRM_PRODUCT_BEFORE_SEARCH_TITLE"] = "Введите наименование товара / услуги";
 ?>

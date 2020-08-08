@@ -426,7 +426,15 @@ Vue.component('bx-messenger-message',
 
 		userAvatar()
 		{
-			return this.userData.avatar? `url('${this.userData.avatar}')`: ''
+			if (this.message.params.AVATAR)
+			{
+				return `url('${this.message.params.AVATAR}')`;
+			}
+			if (this.userData.avatar)
+			{
+				return `url('${this.userData.avatar}')`;
+			}
+			return '';
 		},
 
 		filesData()

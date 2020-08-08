@@ -37,7 +37,7 @@ class LeadActivityStatistics extends LeadDataSource
 
 		$semanticID = $filter->getExtraParam('semanticID', PhaseSemantics::UNDEFINED);
 
-		$group = isset($params['group']) ? strtoupper($params['group']) : '';
+		$group = isset($params['group'])? mb_strtoupper($params['group']) : '';
 		if($group !== '' && $group !== self::GROUP_BY_USER && $group !== self::GROUP_BY_DATE)
 		{
 			$group = '';
@@ -56,7 +56,7 @@ class LeadActivityStatistics extends LeadDataSource
 			}
 			if(isset($selectItem['aggregate']))
 			{
-				$aggregate = strtoupper($selectItem['aggregate']);
+				$aggregate = mb_strtoupper($selectItem['aggregate']);
 			}
 		}
 

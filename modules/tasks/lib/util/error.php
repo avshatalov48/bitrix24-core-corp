@@ -3,8 +3,10 @@ namespace Bitrix\Tasks\Util;
 
 final class Error extends \Bitrix\Main\Error
 {
-	const TYPE_FATAL = 		'FATAL';
-	const TYPE_WARNING = 	'WARNING';
+	public const
+		TYPE_FATAL 		= 'FATAL',
+		TYPE_WARNING 	= 'WARNING',
+		TYPE_ERROR 		= 'ERROR';
 
 	protected $type = 'FATAL';
 	protected $data = null;

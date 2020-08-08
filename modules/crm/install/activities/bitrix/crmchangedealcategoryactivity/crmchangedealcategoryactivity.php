@@ -34,7 +34,7 @@ class CBPCrmChangeDealCategoryActivity
 				array('=ID' => $sourceDealId, 'CHECK_PERMISSIONS' => 'N'),
 				false,
 				false,
-				array('ID', 'ASSIGNED_BY_ID')
+				array('ID', 'ASSIGNED_BY_ID', 'STAGE_ID', 'CATEGORY_ID')
 			);
 			$sourceFields = $dbResult->Fetch();
 		}
@@ -59,6 +59,9 @@ class CBPCrmChangeDealCategoryActivity
 			//stop all Workflows
 			$documentId = $this->GetDocumentId();
 			$instanceIds = WorkflowInstanceTable::getIdsByDocument($documentId);
+			$instanceIds[] = $this->GetWorkflowInstanceId();
+			$instanceIds = array_unique($instanceIds);
+
 			foreach ($instanceIds as $instanceId)
 			{
 				\CBPDocument::TerminateWorkflow(
@@ -69,8 +72,25 @@ class CBPCrmChangeDealCategoryActivity
 				);
 			}
 
+			//Fake document update for clearing document cache
+			/** @var CBPDocumentService $ds */
+			$ds = $this->workflow->GetService('DocumentService');
+			$ds->UpdateDocument($documentId, []);
+
+			$dbResult = \CCrmDeal::GetListEx(
+				array(),
+				array('=ID' => $sourceDealId, 'CHECK_PERMISSIONS' => 'N'),
+				false,
+				false,
+				array('ID', 'ASSIGNED_BY_ID', 'STAGE_ID', 'CATEGORY_ID')
+			);
+			$newFields = $dbResult->Fetch();
+
+
 			//Region automation
-			\Bitrix\Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Deal, $sourceDealId);
+			$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Deal, $sourceDealId);
+			$starter->setContextToBizproc();
+			$starter->runOnUpdate($newFields, $sourceFields);
 			//End region
 
 			//Stop running queue

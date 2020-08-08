@@ -52,7 +52,7 @@ if (
 				if ($status === "0" && $e = $APPLICATION->GetException())
 				{
 					$strError = GetMessage("CTRLR_TASK_ERR_LOCK")."<br>".$e->GetString();
-					if (strpos($strError, "PLS-00201") !== false && strpos($strError, "'DBMS_LOCK'") !== false)
+					if (mb_strpos($strError, "PLS-00201") !== false && mb_strpos($strError, "'DBMS_LOCK'") !== false)
 						$strError .= "<br>".GetMessage("CTRLR_TASK_ERR_LOCK_ADVICE");
 					$APPLICATION->ResetException();
 					break;
@@ -72,7 +72,7 @@ if (
 			}
 		}
 
-		if (strlen($strError))
+		if($strError <> '')
 		{
 			$message = new CAdminMessage($strError);
 			echo $message->Show();
@@ -183,7 +183,7 @@ if (
 
 	foreach ($arID as $ID)
 	{
-		if (strlen($ID) <= 0)
+		if ($ID == '')
 			continue;
 		$ID = intval($ID);
 

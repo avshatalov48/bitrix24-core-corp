@@ -53,7 +53,7 @@ if (!empty($userPropertiesList))
 {
 	foreach ($userPropertiesList as $key => $val)
 	{
-		$userFieldsNameList[$val["FIELD_NAME"]] = '* '.(strlen($val["EDIT_FORM_LABEL"]) > 0 ? $val["EDIT_FORM_LABEL"] : $val["FIELD_NAME"]);
+		$userFieldsNameList[$val["FIELD_NAME"]] = '* '.($val["EDIT_FORM_LABEL"] <> '' ? $val["EDIT_FORM_LABEL"] : $val["FIELD_NAME"]);
 	}
 }
 

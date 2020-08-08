@@ -36,7 +36,7 @@ $CCrmActivity = new CCrmActivityTask();
 
 $arParams['GRID_ID_SUFFIX'] = '';
 $arResult['GADGET'] = 'N';
-if (isset($arParams['GADGET_ID']) && strlen($arParams['GADGET_ID']) > 0)
+if (isset($arParams['GADGET_ID']) && $arParams['GADGET_ID'] <> '')
 	$arResult['GADGET'] = 'Y';
 
 $arFilter = $arSort = array();
@@ -308,7 +308,7 @@ while($arCal = $obRes->GetNext())
 
 		if (!is_array($arCal['~OWNER_ID']) && intval($arCal['~OWNER_ID']) > 0)
 		{
-			$rsUser = CUser::GetByID(intVal($arCal['~OWNER_ID']));
+			$rsUser = CUser::GetByID(intval($arCal['~OWNER_ID']));
 			$arUser = $rsUser->Fetch();
 			$arCal['OWNER_ID'] = CUser::FormatName($arParams["NAME_TEMPLATE"], $arUser, true);
 		}

@@ -142,12 +142,11 @@
 	line-height: 17px;
 	color: #2660c0;
 	margin: 0 0 3px 0;
-	text-decoration: none;
 	position: relative;
 	z-index: 9;
 }
 
-.crm-kanban-item-contact:hover {
+.crm-kanban-item-contact a:hover {
 	text-decoration: underline;
 }
 
@@ -1347,4 +1346,31 @@ a.crm-kanban-sidepanel:hover {
 
 .crm-kanban-item-contact-center-close:hover {
 	opacity: 1;
+}
+
+.crm-kanban-item-status {
+	display: inline-block;
+	margin-bottom: 10px;
+	padding: 1px 11px 0;
+	border-radius: 10px;
+	text-transform: uppercase;
+	transition: 250ms all ease;
+	white-space: nowrap;
+	margin-top: 2px;
+	font: 700 10px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-kanban-item-status-seen {
+	background: #e2f7fe;
+	color: #1097c2;
+}
+
+.crm-kanban-item-status-send {
+	background: #e6e7e9;
+	color: #757c86;
+}
+
+.crm-kanban-item-status-paid {
+	background: #e5f1bf;
+	color: #668d13;
 }

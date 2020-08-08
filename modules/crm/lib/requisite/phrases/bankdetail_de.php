@@ -1,0 +1,15 @@
+<?php
+$phrasesConfig = [
+	'encoding' => 'ISO-8859-1',
+	'lang' => 'de',
+	'phrases' => [
+		'CRM_BANK_DETAIL_ENTITY_RQ_BANK_NAME_DE_FIELD' => 'Name der Bank',
+		'CRM_BANK_DETAIL_ENTITY_RQ_ACC_NUM_DE_FIELD' => 'Kontonummer',
+		'CRM_BANK_DETAIL_ENTITY_RQ_BANK_ADDR_DE_FIELD' => 'Anschrift der Bank',
+		'CRM_BANK_DETAIL_ENTITY_RQ_SWIFT_DE_FIELD' => 'SWIFT',
+		'CRM_BANK_DETAIL_ENTITY_RQ_BIC_DE_FIELD' => 'BIC',
+		'CRM_BANK_DETAIL_ENTITY_RQ_IBAN_DE_FIELD' => 'IBAN',
+		'CRM_BANK_DETAIL_ENTITY_RQ_BANK_ROUTE_NUM_DE_FIELD' => 'Bankleitzahl',
+		'CRM_BANK_DETAIL_ENTITY_RQ_ACC_NAME_DE_FIELD' => 'Kontoinhaber'
+	]
+];

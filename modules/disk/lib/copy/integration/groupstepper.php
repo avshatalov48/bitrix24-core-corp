@@ -5,6 +5,7 @@ use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Folder;
 use Bitrix\Disk\SystemUser;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Update\Stepper;
 
@@ -46,6 +47,7 @@ class GroupStepper extends Stepper
 
 			$groupId = ($queueOption["groupId"] ?: 0);
 			$copiedGroupId = ($queueOption["copiedGroupId"] ?: 0);
+			$errorOffset = ($queueOption["errorOffset"] ?: 0);
 
 			$storage = Driver::getInstance()->getStorageByGroupId($groupId);
 			$targetStorage = Driver::getInstance()->getStorageByGroupId($copiedGroupId);
@@ -59,10 +61,11 @@ class GroupStepper extends Stepper
 			$targetRootFolder = $targetStorage->getRootObject();
 
 			$limit = 5;
-			$offset = $this->getOffset($targetRootFolder);
+			$offset = $this->getOffset($targetRootFolder) + $errorOffset;
 
 			$executiveUserId = ($queueOption["executiveUserId"] ?: SystemUser::SYSTEM_USER_ID);
 			$mapFolderIds = ($queueOption["mapFolderIds"] ?: []);
+			$mapIdsCopiedFiles = ($queueOption["mapIdsCopiedFiles"] ?: []);
 
 			$fileIds = $this->getFileIds($rootFolder);
 			$count = count($fileIds);
@@ -70,7 +73,7 @@ class GroupStepper extends Stepper
 
 			if (!$fileIds || !$mapFolderIds)
 			{
-				$this->deleteCurrentQueue($queue);
+				$this->onAfterCopy($queueOption);
 				$this->deleteQueueOption();
 				return !$this->isQueueEmpty();
 			}
@@ -85,13 +88,21 @@ class GroupStepper extends Stepper
 					$targetFolderId = ($mapFolderIds[$folderId] ?: 0);
 					$targetFolder = Folder::loadById($targetFolderId);
 					$copiedFile = $file->copyTo($targetFolder, $executiveUserId);
+					if (!$copiedFile || $file->getErrors())
+					{
+						$queueOption["errorOffset"] += 1;
+					}
 					$copiedFileIds[] = ($copiedFile && $copiedFile->getId() ? $fileId : 0);
 				}
 				catch (\Throwable $exception)
 				{
-					continue;
+					$this->deleteQueueOption();
+					return false;
 				}
 			}
+
+			$queueOption["mapIdsCopiedFiles"] = $mapIdsCopiedFiles + $copiedFileIds;
+			$this->saveQueueOption($queueOption);
 
 			$option["count"] = $count;
 			$option["steps"] = $offset;
@@ -103,6 +114,30 @@ class GroupStepper extends Stepper
 			$this->writeToLog($exception);
 			$this->deleteQueueOption();
 			return false;
+		}
+	}
+
+	private function onAfterCopy(array $queueOption)
+	{
+		$this->saveErrorOption($queueOption);
+	}
+
+	private function saveErrorOption(array $queueOption)
+	{
+		$mapIdsCopiedFiles = $queueOption["mapIdsCopiedFiles"] ?: [];
+
+		$mapIdsWithErrors = [];
+		foreach ($mapIdsCopiedFiles as $fileId => $copiedFileId)
+		{
+			if (!$copiedFileId)
+			{
+				$mapIdsWithErrors[] = $fileId;
+			}
+		}
+
+		if ($mapIdsWithErrors)
+		{
+			Option::set(self::$moduleId, $this->errorName, serialize($mapIdsWithErrors));
 		}
 	}
 
@@ -146,5 +181,69 @@ class GroupStepper extends Stepper
 	{
 		$fileIds = $this->getFileIds($targetRootFolder);
 		return count($fileIds);
+	}
+
+	protected function getQueue(): array
+	{
+		return $this->getOptionData($this->queueName);
+	}
+
+	protected function setQueue(array $queue): void
+	{
+		$queueId = (string) current($queue);
+		$this->checkerName = (mb_strpos($this->checkerName, $queueId) === false ?
+			$this->checkerName.$queueId : $this->checkerName);
+		$this->baseName = (mb_strpos($this->baseName, $queueId) === false ?
+			$this->baseName.$queueId : $this->baseName);
+		$this->errorName = (mb_strpos($this->errorName, $queueId) === false ?
+			$this->errorName.$queueId : $this->errorName);
+	}
+
+	protected function getQueueOption()
+	{
+		return $this->getOptionData($this->baseName);
+	}
+
+	protected function saveQueueOption(array $data)
+	{
+		Option::set(static::$moduleId, $this->baseName, serialize($data));
+	}
+
+	protected function deleteQueueOption()
+	{
+		$queue = $this->getQueue();
+		$this->setQueue($queue);
+		$this->deleteCurrentQueue($queue);
+		Option::delete(static::$moduleId, ["name" => $this->checkerName]);
+		Option::delete(static::$moduleId, ["name" => $this->baseName]);
+	}
+
+	protected function deleteCurrentQueue(array $queue): void
+	{
+		$queueId = current($queue);
+		$currentPos = array_search($queueId, $queue);
+		if ($currentPos !== false)
+		{
+			unset($queue[$currentPos]);
+			Option::set(static::$moduleId, $this->queueName, serialize($queue));
+		}
+	}
+
+	protected function isQueueEmpty()
+	{
+		$queue = $this->getOptionData($this->queueName);
+		return empty($queue);
+	}
+
+	protected function getOptionData($optionName)
+	{
+		$option = Option::get(static::$moduleId, $optionName);
+		$option = ($option !== "" ? unserialize($option) : []);
+		return (is_array($option) ? $option : []);
+	}
+
+	protected function deleteOption($optionName)
+	{
+		Option::delete(static::$moduleId, ["name" => $optionName]);
 	}
 }

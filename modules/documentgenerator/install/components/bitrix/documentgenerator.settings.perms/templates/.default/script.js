@@ -309,7 +309,7 @@
 
 	BX.DocumentGenerator.Perms.showPermissionsFeaturePopup = function()
 	{
-		B24.licenseInfoPopup.show('documentgenerator-permissions-feature', BX.message('DOCGEN_SETTINGS_PERMS_FEATURE_TITLE'), BX.message('DOCGEN_SETTINGS_PERMS_FEATURE_TEXT'));
+		top.BX.UI.InfoHelper.show('limit_crm_document_access_permissions');
 	};
 
 	BX.DocumentGenerator.Perms.getRoles = function()

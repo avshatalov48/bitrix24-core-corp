@@ -6,9 +6,9 @@ global $USER;
 
 CJSCore::Init(array("fx", "date", 'disk_desktop', 'disk_information_popups'));
 
-$diskSpace = isset($arResult["diskSpace"]) && strlen($arResult["diskSpace"]) > 0 ? doubleval($arResult["diskSpace"]) : 0;
+$diskSpace = isset($arResult["diskSpace"]) && $arResult["diskSpace"] <> '' ? doubleval($arResult["diskSpace"]) : 0;
 $diskSpace = $diskSpace < 0 ? 0 : $diskSpace;
-$freeSpace = isset($arResult["quota"]) && strlen($arResult["quota"]) > 0 ? doubleval($arResult["quota"]) : 0;
+$freeSpace = isset($arResult["quota"]) && $arResult["quota"] <> '' ? doubleval($arResult["quota"]) : 0;
 $freeSpace = $freeSpace < 0 ? 0 : $freeSpace;
 $personalLibIndex = $arResult['personalLibIndex'];
 
@@ -17,7 +17,7 @@ $isInstalledPull = $arResult["isInstalledPull"];
 $currenUserId = $USER->getId();
 $isMac = false;
 $request = Bitrix\Main\Context::getCurrent()->getRequest();
-if (stripos($request->getUserAgent(), "Macintosh") !== false)
+if (mb_stripos($request->getUserAgent(), "Macintosh") !== false)
 {
 	$isMac = true;
 }

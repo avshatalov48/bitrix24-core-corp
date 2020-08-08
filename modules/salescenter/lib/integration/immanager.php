@@ -115,7 +115,7 @@ class ImManager extends Base
 		$description = Loc::getMessage('SALESCENTER_APP_DESCRIPTION', null, $lang);
 
 		$result = false;
-		if(strlen($title) > 0)
+		if($title <> '')
 		{
 			$result = [
 				'TITLE' => $title,

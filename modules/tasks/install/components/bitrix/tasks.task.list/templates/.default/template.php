@@ -3,19 +3,21 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 
-global $APPLICATION;
 Loc::loadMessages(__FILE__);
 
+CJSCore::Init("sidepanel");
+CJSCore::Init("CJSTask");
+CJSCore::Init("tasks_integration_socialnetwork");
 
-$isIFrame = $_REQUEST['IFRAME'] == 'Y';
+global $APPLICATION;
 
-    CJSCore::Init("sidepanel");
-    CJSCore::Init("CJSTask");
-    CJSCore::Init("tasks_integration_socialnetwork");
+$APPLICATION->SetAdditionalCSS("/bitrix/js/tasks/css/tasks.css");
 
-    $GLOBALS['APPLICATION']->SetAdditionalCSS("/bitrix/js/tasks/css/tasks.css");
-    ?>
+Extension::load(['ui.counter', 'ui.label', 'tasks.list.item']);
+?>
 
 <?php
 if (\Bitrix\Tasks\Util\DisposableAction::needConvertTemplateFiles())
@@ -47,12 +49,14 @@ $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."p
 		'GET_LIST_PARAMS'  => $arResult['GET_LIST_PARAMS'],
 		'COMPANY_WORKTIME' => $arResult['COMPANY_WORKTIME'],
 		'NAME_TEMPLATE'    => $arParams['NAME_TEMPLATE'],
+		'PROJECT_VIEW'     => $arParams['PROJECT_VIEW'],
 
 		'USER_ID'  => $arParams['USER_ID'],
 		'GROUP_ID' => $arParams['GROUP_ID'],
 
-		'MARK_ACTIVE_ROLE'    => $arParams['MARK_ACTIVE_ROLE'],
-		'MARK_SECTION_ALL'    => $arParams['MARK_SECTION_ALL'],
+		'MARK_ACTIVE_ROLE' => $arParams['MARK_ACTIVE_ROLE'],
+		'MARK_SECTION_ALL' => $arParams['MARK_SECTION_ALL'],
+		'MARK_SECTION_PROJECTS' => $arParams['MARK_SECTION_PROJECTS'],
 		'MARK_SPECIAL_PRESET' => $arParams['MARK_SPECIAL_PRESET'],
 
 		'PATH_TO_USER_TASKS'                   => $arParams['PATH_TO_USER_TASKS'],
@@ -113,9 +117,9 @@ $APPLICATION->IncludeComponent(
 	'',
 	array(
 		'GRID_ID'   => $arParams['GRID_ID'],
-		'HEADERS'   => isset($arParams['HEADERS']) ? $arParams['HEADERS'] : array(),
-		'SORT'      => isset($arParams['SORT']) ? $arParams['SORT'] : array(),
-		'SORT_VARS' => isset($arParams['SORT_VARS']) ? $arParams['SORT_VARS'] : array(),
+		'HEADERS'   => ($arResult['HEADERS'] ?? []),
+		'SORT'      => ($arParams['SORT'] ?? []),
+		'SORT_VARS' => ($arParams['SORT_VARS'] ?? []),
 		'ROWS'      => $arResult['ROWS'],
 
 		'AJAX_MODE'           => 'Y',
@@ -182,6 +186,18 @@ $APPLICATION->IncludeComponent(
 				TASKS_TASK_CONFIRM_START_TIMER: '<?=GetMessageJS('TASKS_TASK_CONFIRM_START_TIMER')?>',
 				TASKS_CLOSE_PAGE_CONFIRM: '<?=GetMessageJS('TASKS_CLOSE_PAGE_CONFIRM')?>'
 			});
+
+			BX.Tasks.GridInstance = new BX.Tasks.Grid(<?=Json::encode([
+				'gridId' => $arParams['GRID_ID'],
+				'userId' => $arResult['USER_ID'],
+				'ownerId' => $arResult['OWNER_ID'],
+				'groupId' => (int)$arParams['GROUP_ID'],
+				'sorting' => $arResult['SORTING'],
+				'groupByGroups' => ($arResult['GROUP_BY_PROJECT'] ? 'true' : 'false'),
+				'groupBySubTasks' => ($arResult['GROUP_BY_SUBTASK'] ? 'true' : 'false'),
+				'taskList' => $arResult['LIST'],
+				'arParams' => $arParams,
+			])?>);
 
 			new BX.Tasks.Grid.Sorting({
 				gridId: '<?=$arParams['GRID_ID']?>',

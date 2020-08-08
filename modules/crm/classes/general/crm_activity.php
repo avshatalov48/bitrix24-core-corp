@@ -1463,7 +1463,7 @@ class CAllCrmActivity
 
 			if(isset($fields['COMPLETED']))
 			{
-				$completed = strtoupper(strval($fields['COMPLETED']));
+				$completed = mb_strtoupper(strval($fields['COMPLETED']));
 				if(!($completed == 'Y' || $completed == 'N'))
 				{
 					$completed = intval($fields['COMPLETED']) > 0 ? 'Y' : 'N';
@@ -1568,7 +1568,7 @@ class CAllCrmActivity
 
 			if(isset($fields['COMPLETED']))
 			{
-				$completed = strtoupper(strval($fields['COMPLETED']));
+				$completed = mb_strtoupper(strval($fields['COMPLETED']));
 				if(!($completed == 'Y' || $completed == 'N'))
 				{
 					$completed = (int)$fields['COMPLETED'] > 0 ? 'Y' : 'N';
@@ -3198,9 +3198,9 @@ class CAllCrmActivity
 
 	public static function PrepareCommunications($entityType, $entityID, $communicationType)
 	{
-		$entityType =  strtoupper(strval($entityType));
+		$entityType = mb_strtoupper(strval($entityType));
 		$entityID = intval($entityID);
-		$communicationType = strtoupper($communicationType);
+		$communicationType = mb_strtoupper($communicationType);
 		if($communicationType === '')
 		{
 			$communicationType = 'PHONE';
@@ -3451,7 +3451,7 @@ class CAllCrmActivity
 			return false;
 		}
 
-		$optionName = $communicationType !== '' ? 'lru_'.strtolower($communicationType) : 'lru_person';
+		$optionName = $communicationType !== '' ? 'lru_'.mb_strtolower($communicationType) : 'lru_person';
 
 		$ary = CUserOptions::GetOption('crm_activity', $optionName, array(), $userID);
 		$qty = count($ary);
@@ -3503,7 +3503,7 @@ class CAllCrmActivity
 			$userID = CCrmSecurityHelper::GetCurrentUserID();
 		}
 
-		$optionName = $communicationType !== '' ? 'lru_'.strtolower($communicationType) : 'lru_person';
+		$optionName = $communicationType !== '' ? 'lru_'.mb_strtolower($communicationType) : 'lru_person';
 		return CUserOptions::GetOption('crm_activity', $optionName, array(), $userID);
 	}
 	public static function PrepareStorageElementIDs(&$arFields)
@@ -3589,7 +3589,7 @@ class CAllCrmActivity
 
 		if(is_string($completed))
 		{
-			$completed = strtoupper($completed)  === 'Y' ? 'Y' : 'N';
+			$completed = mb_strtoupper($completed) === 'Y' ? 'Y' : 'N';
 		}
 		else
 		{
@@ -3800,7 +3800,7 @@ class CAllCrmActivity
 
 			$ownerTypeName = '';
 			$ownerID = 0;
-			if(preg_match('/^([A-Z]+)_([0-9]+)$/', strtoupper(trim($value)), $match) === 1)
+			if(preg_match('/^([A-Z]+)_([0-9]+)$/', mb_strtoupper(trim($value)), $match) === 1)
 			{
 				$ownerTypeName = CCrmOwnerTypeAbbr::ResolveName($match[1]);
 				$ownerID = intval($match[2]);
@@ -4455,7 +4455,7 @@ class CAllCrmActivity
 	}
 	private static function PrepareUpdateEvent($fieldName, $arNewRow, $arOldRow, &$arEvents)
 	{
-		$fieldName = strtoupper(strval($fieldName));
+		$fieldName = mb_strtoupper(strval($fieldName));
 
 		if($fieldName === '')
 		{
@@ -4735,7 +4735,7 @@ class CAllCrmActivity
 			}
 		}
 
-		$eventType = strtoupper(strval($eventType));
+		$eventType = mb_strtoupper(strval($eventType));
 		if($eventType === '')
 		{
 			$eventType = 'ADD';
@@ -4793,7 +4793,7 @@ class CAllCrmActivity
 			}
 		}
 
-		$eventType = strtoupper(strval($eventType));
+		$eventType = mb_strtoupper(strval($eventType));
 		if($eventType === '')
 		{
 			$eventType = 'ADD';
@@ -4870,7 +4870,7 @@ class CAllCrmActivity
 	{
 		$ownerTypeName = is_numeric($ownerType)
 			? CCrmOwnerType::ResolveName((int)$ownerType)
-			: strtoupper(strval($ownerType));
+			: mb_strtoupper(strval($ownerType));
 
 		if(!is_int($ownerID))
 		{
@@ -4913,7 +4913,7 @@ class CAllCrmActivity
 	{
 		$ownerTypeName = is_numeric($ownerType)
 			? CCrmOwnerType::ResolveName((int)$ownerType)
-			: strtoupper(strval($ownerType));
+			: mb_strtoupper(strval($ownerType));
 
 		if(!is_int($ownerID))
 		{
@@ -4976,7 +4976,7 @@ class CAllCrmActivity
 	{
 		$ownerTypeName = is_numeric($ownerType)
 			? CCrmOwnerType::ResolveName((int)$ownerType)
-			: strtoupper(strval($ownerType));
+			: mb_strtoupper(strval($ownerType));
 
 		if(!is_int($ownerID))
 		{
@@ -5019,7 +5019,7 @@ class CAllCrmActivity
 	{
 		$ownerTypeName = is_numeric($ownerType)
 			? CCrmOwnerType::ResolveName((int)$ownerType)
-			: strtoupper(strval($ownerType));
+			: mb_strtoupper(strval($ownerType));
 
 		if(!is_int($ownerID))
 		{
@@ -5142,7 +5142,7 @@ class CAllCrmActivity
 	public static function GetCommunicationsByOwner($entityType, $entityID, $communicationType)
 	{
 		global $DB;
-		$entityType =  strtoupper(strval($entityType));
+		$entityType = mb_strtoupper(strval($entityType));
 		$entityTypeID =  CCrmOwnerType::ResolveID($entityType);
 		$entityID = intval($entityID);
 		$communicationType = strval($communicationType);
@@ -5685,7 +5685,7 @@ class CAllCrmActivity
 	{
 		$urn = strval($urn);
 		$str = strval($str);
-		$type = strtolower(strval($type));
+		$type = mb_strtolower(strval($type));
 		if($type === '')
 		{
 			$type = 'html';
@@ -5696,17 +5696,17 @@ class CAllCrmActivity
 			return $str;
 		}
 
-		$slug = '[msg:'.strtolower($urn).']';
+		$slug = '[msg:'.mb_strtolower($urn).']';
 		if($type === 'html')
 		{
 			//URN already encoded
 			$str = rtrim(preg_replace(self::$URN_BODY_HTML_ENTITY_REGEX.BX_UTF_PCRE_MODIFIER, '', $str));
 			if($str !== '')
 			{
-				$index = stripos($str, '</body>');
+				$index = mb_stripos($str, '</body>');
 				if($index === false)
 				{
-					$index = stripos($str, '</html>');
+					$index = mb_stripos($str, '</html>');
 				}
 
 				if($index === false)
@@ -5716,7 +5716,7 @@ class CAllCrmActivity
 				}
 				else
 				{
-					$str = substr($str, 0, $index).'<br/>'.$slug.substr($str, $index);
+					$str = mb_substr($str, 0, $index).'<br/>'.$slug.mb_substr($str, $index);
 				}
 			}
 
@@ -6007,9 +6007,10 @@ class CAllCrmActivity
 			);
 		}
 
+		// Clear notification for completed activity
 		if ($completed)
 		{
-			$arCalEventFields['REMIND'] = array('type' => 'min', 'count' => 0);
+			$arCalEventFields['REMIND'] = [];
 		}
 
 		self::$IGNORE_CALENDAR_EVENTS = true;
@@ -6602,7 +6603,7 @@ class CAllCrmActivity
 				{
 					$url = "/crm/stream/?log_id=#log_id#";
 					$url = str_replace(array("#log_id#"), array($eventID), $url);
-					$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0) ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
+					$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
 
 					$arMessageFields = array(
 						"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
@@ -6716,7 +6717,7 @@ class CAllCrmActivity
 				{
 					$url = "/crm/stream/?log_id=#log_id#";
 					$url = str_replace(array("#log_id#"), array($slID), $url);
-					$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0) ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
+					$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
 
 					$arMessageFields = array(
 						"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
@@ -6926,7 +6927,7 @@ class CAllCrmActivity
 		$fields['ACTIVITY_SORT'] = array('FIELD' => 'MAX(UA.SORT)', 'TYPE' => 'string', 'FROM'=> $join);
 		$lb->SetFields($fields);
 
-		$sortOrder = strtoupper($sortOrder);
+		$sortOrder = mb_strtoupper($sortOrder);
 		if($sortOrder !== 'DESC' && $sortOrder !== 'ASC')
 		{
 			$sortOrder = 'ASC';
@@ -7054,9 +7055,9 @@ class CAllCrmActivity
 		}
 		unset($fields['DESCRIPTION']);
 
-		if($limit > 0 && strlen($fields['DESCRIPTION_RAW']) > $limit)
+		if($limit > 0 && mb_strlen($fields['DESCRIPTION_RAW']) > $limit)
 		{
-			$fields['DESCRIPTION_RAW'] = substr($fields['DESCRIPTION_RAW'], 0, $limit);
+			$fields['DESCRIPTION_RAW'] = mb_substr($fields['DESCRIPTION_RAW'], 0, $limit);
 		}
 	}
 
@@ -7273,7 +7274,7 @@ class CCrmActivityPriority
 
 	public static function FromCalendarEventImportance($importance)
 	{
-		$importance = strtolower(trim(strval($importance)));
+		$importance = mb_strtolower(trim(strval($importance)));
 		if($importance === '')
 		{
 			return CCrmActivityPriority::Medium;
@@ -7347,7 +7348,7 @@ class CCrmActivityNotifyType
 
 	public static function FromCalendarEventRemind($type)
 	{
-		$type = strtolower(strval($type));
+		$type = mb_strtolower(strval($type));
 
 		if($type === 'min')
 		{
@@ -7538,9 +7539,9 @@ class CCrmActivityEmailSender
 				{
 					$mailbox['EMAIL_FROM'] = null;
 					if (check_email($mailbox['NAME'], true))
-						$mailbox['EMAIL_FROM'] = strtolower($mailbox['NAME']);
+						$mailbox['EMAIL_FROM'] = mb_strtolower($mailbox['NAME']);
 					elseif(check_email($mailbox['LOGIN'], true))
-						$mailbox['EMAIL_FROM'] = strtolower($mailbox['LOGIN']);
+						$mailbox['EMAIL_FROM'] = mb_strtolower($mailbox['LOGIN']);
 
 					if ($mailbox['USER_ID'] > 0)
 						$userImap = $mailbox;
@@ -7600,7 +7601,7 @@ class CCrmActivityEmailSender
 				// copied from check_email
 				if (preg_match('/.*?[<\[\(](.+?)[>\]\)].*/i', $fromAddress, $matches))
 					$fromAddress = $matches[1];
-				$fromList[] = strtolower(trim($fromAddress));
+				$fromList[] = mb_strtolower(trim($fromAddress));
 			}
 
 			if (!empty($userImap['EMAIL_FROM']) && in_array($userImap['EMAIL_FROM'], $fromList))
@@ -7639,7 +7640,7 @@ class CCrmActivityEmailSender
 		$commData = isset($arFields['COMMUNICATIONS']) ? $arFields['COMMUNICATIONS'] : array();
 		foreach($commData as &$commDatum)
 		{
-			$commType = isset($commDatum['TYPE']) ? strtoupper(strval($commDatum['TYPE'])) : '';
+			$commType = isset($commDatum['TYPE'])? mb_strtoupper(strval($commDatum['TYPE'])) : '';
 			$commValue = isset($commDatum['VALUE']) ? strval($commDatum['VALUE']) : '';
 
 			if($commType !== 'EMAIL' || $commValue === '')
@@ -7656,7 +7657,7 @@ class CCrmActivityEmailSender
 				continue;
 			}
 
-			$to[] = strtolower(trim($commValue));
+			$to[] = mb_strtolower(trim($commValue));
 		}
 		unset($commDatum);
 

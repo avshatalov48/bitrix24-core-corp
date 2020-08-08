@@ -36,7 +36,7 @@ if($arResult['ENABLE_CONTROL_PANEL'])
 }
 
 $listID = $arResult['LIST_ID'];
-$prefix = strtolower($listID);
+$prefix = mb_strtolower($listID);
 $messageContainerID = "{$prefix}_messages";
 $limiSummaryContainerID = "{$prefix}_limits";
 ?>

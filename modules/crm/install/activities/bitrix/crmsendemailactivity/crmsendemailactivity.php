@@ -2,6 +2,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main;
+use Bitrix\Main\Config;
 use Bitrix\Main\Mail;
 use Bitrix\Crm;
 
@@ -121,7 +122,7 @@ class CBPCrmSendEmailActivity extends CBPActivity
 				$messageHtml = $message;
 			}
 
-			if (strpos($messageHtml, '</html>') === false)
+			if (mb_strpos($messageHtml, '</html>') === false)
 			{
 				$messageHtml = '<html><body>'.$messageHtml.'</body></html>';
 			}
@@ -230,7 +231,7 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			//'DESCRIPTION' => $arFields['DESCRIPTION'],
 			'URN'         => $urn,
 			'SETTINGS'    => array(
-				'IS_BATCH_EMAIL'  => false,
+				'IS_BATCH_EMAIL'  => Config\Option::get('main', 'track_outgoing_emails_read', 'Y') == 'Y' ? false : null,
 				'MESSAGE_HEADERS' => array(
 					'Message-Id' => $messageId,
 					'Reply-To'   => $reply ?: $from,
@@ -605,7 +606,7 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		if (preg_match('/(.*)<(.+?)>\s*$/is', $from, $matches))
 		{
 			$fromName  = trim($matches[1], "\"\x20\t\n\r\0\x0b");
-			$fromEmail = strtolower(trim($matches[2]));
+			$fromEmail = mb_strtolower(trim($matches[2]));
 
 			if ($fromName != '')
 			{
@@ -855,9 +856,9 @@ class CBPCrmSendEmailActivity extends CBPActivity
 
 	public static function decodeMessageText($text)
 	{
-		if (strpos($text, 'base64,') === 0)
+		if (mb_strpos($text, 'base64,') === 0)
 		{
-			$text = substr($text, 7);
+			$text = mb_substr($text, 7);
 			return base64_decode($text);
 		}
 		//compatible encode type

@@ -19,7 +19,7 @@ class CCRMLeadRest
 	{
 		global $USER;
 
-		if (strlen($arData['AUTH']) > 0)
+		if ($arData['AUTH'] <> '')
 		{
 			$_REQUEST['bx_hit_hash'] = $arData['AUTH'];
 			return $USER->LoginHitByHash();
@@ -46,7 +46,7 @@ class CCRMLeadRest
 		global $DB, $USER_FIELD_MANAGER;
 
 		$arData['CURRENCY_ID'] = trim($arData['CURRENCY_ID']);
-		if (strlen($arData['CURRENCY_ID']) <= 0)
+		if ($arData['CURRENCY_ID'] == '')
 			$arData['CURRENCY_ID'] = CCrmCurrency::GetBaseCurrencyID();
 
 		$arFields = array(
@@ -78,9 +78,9 @@ class CCRMLeadRest
 		$arData['SOURCE_ID'] = trim($arData['SOURCE_ID']);
 		$arData['STATUS_ID'] = trim($arData['STATUS_ID']);
 
-		if (strlen($arData['STATUS_ID']) > 0)
+		if ($arData['STATUS_ID'] <> '')
 			$arFields['STATUS_ID'] = $arData['STATUS_ID'];
-		if (strlen($arData['SOURCE_ID']) > 0)
+		if ($arData['SOURCE_ID'] <> '')
 			$arFields['SOURCE_ID'] = $arData['SOURCE_ID'];
 
 		if(isset($arFields['SOURCE_ID']))
@@ -140,7 +140,8 @@ class CCRMLeadRest
 				);
 
 				//Region automation
-				\Bitrix\Crm\Automation\Factory::runOnAdd(\CCrmOwnerType::Lead, $ID);
+				$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $ID);
+				$starter->setContextToRest()->runOnAdd();
 				//End region
 			}
 			catch(Exception $e)

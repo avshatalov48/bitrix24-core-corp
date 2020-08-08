@@ -1,0 +1,17 @@
+<?php
+$phrasesConfig = [
+	'encoding' => 'ISO-8859-1',
+	'lang' => 'en',
+	'phrases' => [
+		'CRM_REQUISITE_ENTITY_RQ_NAME_US_FIELD' => 'Full name',
+		'CRM_REQUISITE_ENTITY_RQ_FIRST_NAME_US_FIELD' => 'First Name',
+		'CRM_REQUISITE_ENTITY_RQ_LAST_NAME_US_FIELD' => 'Last Name',
+		'CRM_REQUISITE_ENTITY_RQ_COMPANY_NAME_US_FIELD' => 'Company Name',
+		'CRM_REQUISITE_ENTITY_RQ_ADDR_US_FIELD' => 'Address',
+		'CRM_REQUISITE_ENTITY_RQ_CONTACT_US_FIELD' => 'Contact Person',
+		'CRM_REQUISITE_ENTITY_RQ_EMAIL_US_FIELD' => 'Email Address',
+		'CRM_REQUISITE_ENTITY_RQ_PHONE_US_FIELD' => 'Phone Number',
+		'CRM_REQUISITE_ENTITY_RQ_FAX_US_FIELD' => 'Fax Number',
+		'CRM_REQUISITE_ENTITY_RQ_VAT_ID_US_FIELD' => 'VAT ID'
+	]
+];

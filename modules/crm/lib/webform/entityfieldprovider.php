@@ -205,7 +205,7 @@ class EntityFieldProvider
 								continue;
 							}
 
-							if(isset($item['VALUE']) && strlen(trim($item['VALUE'])) > 0)
+							if(isset($item['VALUE']) && trim($item['VALUE']) <> '')
 							{
 								$availableItem['VALUE'] = (string) $item['VALUE'];
 							}
@@ -336,7 +336,7 @@ class EntityFieldProvider
 		}
 
 		// Skip wrong named fields
-		if(strpos($fieldID, '.') !== false || strpos($fieldID, '[') !== false || strpos($fieldID, ']') !== false)
+		if(mb_strpos($fieldID, '.') !== false || mb_strpos($fieldID, '[') !== false || mb_strpos($fieldID, ']') !== false)
 		{
 			return false;
 		}

@@ -74,13 +74,15 @@ $arResult['TOOLBAR_ID'] = $toolbarID;
 
 $arResult['BUTTONS'] = array();
 
+$currentCategoryID = isset($arResult['CATEGORY_ID']) ? $arResult['CATEGORY_ID'] : -1;
 if ($arParams['TYPE'] == 'list')
 {
-	$bRead   = CCrmDeal::CheckReadPermission(0, $CrmPerms);
-	$bExport = CCrmDeal::CheckExportPermission($CrmPerms);
-	$bImport = CCrmDeal::CheckImportPermission($CrmPerms) && $arParams['IS_RECURRING'] !== 'Y';
-	$bAdd    = CCrmDeal::CheckCreatePermission($CrmPerms);
-	$bWrite  = CCrmDeal::CheckUpdatePermission(0, $CrmPerms);
+	$bRead   = CCrmDeal::CheckReadPermission(0, $CrmPerms, $currentCategoryID);
+	$bExport = CCrmDeal::CheckExportPermission($CrmPerms, $currentCategoryID);
+	$bImport = CCrmDeal::CheckImportPermission($CrmPerms, $currentCategoryID) && $arParams['IS_RECURRING'] !== 'Y';
+	$bAdd    = CCrmDeal::CheckCreatePermission($CrmPerms, $currentCategoryID);
+	$bWrite  = CCrmDeal::CheckUpdatePermission(0, $CrmPerms, $currentCategoryID);
+
 	$bDelete = false;
 	$bConfig = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
 }
@@ -89,10 +91,10 @@ else
 	$bExport = false;
 	$bImport = false;
 
-	$bRead   = CCrmDeal::CheckReadPermission($arParams['ELEMENT_ID'], $CrmPerms, $arResult['CATEGORY_ID']);
-	$bAdd    = CCrmDeal::CheckCreatePermission($CrmPerms, $arResult['CATEGORY_ID']);
-	$bWrite  = CCrmDeal::CheckUpdatePermission($arParams['ELEMENT_ID'], $CrmPerms, $arResult['CATEGORY_ID']);
-	$bDelete = CCrmDeal::CheckDeletePermission($arParams['ELEMENT_ID'], $CrmPerms, $arResult['CATEGORY_ID']);
+	$bRead   = CCrmDeal::CheckReadPermission($arParams['ELEMENT_ID'], $CrmPerms, $currentCategoryID);
+	$bAdd    = CCrmDeal::CheckCreatePermission($CrmPerms, $currentCategoryID);
+	$bWrite  = CCrmDeal::CheckUpdatePermission($arParams['ELEMENT_ID'], $CrmPerms, $currentCategoryID);
+	$bDelete = CCrmDeal::CheckDeletePermission($arParams['ELEMENT_ID'], $CrmPerms, $currentCategoryID);
 
 }
 $bExclude = \Bitrix\Crm\Exclusion\Access::current()->canWrite();
@@ -208,7 +210,7 @@ if($arParams['TYPE'] === 'details')
 		}
 		else
 		{
-			$scriptRecurring = $dealRecurringRestriction->preparePopupScript();
+			$scriptRecurring = $dealRecurringRestriction->prepareInfoHelperScript();
 			$icon = 'grid-lock';
 		}
 		$arResult['BUTTONS'][] = array(
@@ -502,7 +504,7 @@ if($arParams['TYPE'] === 'list')
 			'GRID_ID_SUFFIX' => $arResult['CATEGORY_ID'] >= 0 ? "C_".$arResult['CATEGORY_ID'] : '',
 			'CATEGORY_ID' => $arResult['CATEGORY_ID'],
 		);
-		if (isset($_REQUEST['WG']) && strtoupper($_REQUEST['WG']) === 'Y')
+		if (isset($_REQUEST['WG']) && mb_strtoupper($_REQUEST['WG']) === 'Y')
 		{
 			$widgetDataFilter = \Bitrix\Crm\Widget\Data\DealDataSource::extractDetailsPageUrlParams($_REQUEST);
 			if (!empty($widgetDataFilter))
@@ -617,10 +619,10 @@ if($arParams['TYPE'] === 'list')
 		$arResult['BUTTONS'] = array_merge($arResult['BUTTONS'], $arParams['ADDITIONAL_SETTINGS_MENU_ITEMS']);
 	}
 
-	if(count($arResult['BUTTONS']) > 1)
+	if(count($arResult['BUTTONS']) > 0)
 	{
-		//Force start new bar after first button
-		array_splice($arResult['BUTTONS'], 1, 0, array(array('NEWBAR' => true)));
+		//Force start new bar after add deal button or from first button
+		array_splice($arResult['BUTTONS'], $bAdd ? 1 : 0, 0, array(array('NEWBAR' => true)));
 	}
 
 	$this->IncludeComponentTemplate();

@@ -9,6 +9,7 @@
 namespace Bitrix\Tasks\Item\Task;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Access\Permission\TasksTemplatePermissionTable;
 use Bitrix\Tasks\Internals\Task\TemplateTable;
 use Bitrix\Tasks\Item\Field\Collection;
 use Bitrix\Tasks\Item\Result;
@@ -16,7 +17,6 @@ use Bitrix\Tasks\Item\Task\Template\Field;
 use Bitrix\Tasks\Item\Field\Scalar;
 use Bitrix\Tasks\Util\Replicator;
 use Bitrix\Tasks\Item\SystemLog;
-use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Item\Access;
 
 use Bitrix\Tasks\Item\Converter\Task\Template\ToTemplate as TemplateToTemplate;
@@ -26,6 +26,8 @@ Loc::loadMessages(__FILE__);
 
 final class Template extends \Bitrix\Tasks\Item
 {
+	private $permissions;
+
 	public static function getDataSourceClass()
 	{
 		return TemplateTable::getClass();
@@ -155,6 +157,18 @@ final class Template extends \Bitrix\Tasks\Item
 	{
 		return static::generateMap();
 	}
+
+	/**
+	 * @param null $result
+	 * @return bool
+	 *
+	 * @deprecated
+	 */
+	public function canRead($result = null)
+	{
+		return parent::canRead();
+	}
+
 	public function prepareData($result)
 	{
 		if(parent::prepareData($result))
@@ -209,6 +223,27 @@ final class Template extends \Bitrix\Tasks\Item
 		return $result->isSuccess();
 	}
 
+	public function getAccessPermissions(): array
+	{
+		if ($this->permissions === null)
+		{
+			$this->permissions = [];
+
+			$permissions = TasksTemplatePermissionTable::getList([
+				'filter' => [
+					'=TEMPLATE_ID' => $this->getId()
+				]
+			])
+			->fetchCollection();
+
+			foreach ($permissions as $permission)
+			{
+				$this->permissions[] = $permission;
+			}
+		}
+		return $this->permissions;
+	}
+
 	protected function modifyTabletDataBeforeSave($data)
 	{
 		// move 0 to null in PARENT_ID to avoid constraint and query problems
@@ -257,6 +292,13 @@ final class Template extends \Bitrix\Tasks\Item
 					'TPARAM_REPLICATION_COUNT' => $this->getActualFieldValue('TPARAM_REPLICATION_COUNT'),
 				));
 			}
+		}
+
+		if ($state->isModeCreate())
+		{
+			\Bitrix\Tasks\Item\Access\Task\Template::grantAccessLevel($this->getId(), 'U'.$this->getUserId(), 'full', array(
+				'CHECK_RIGHTS' => false,
+			));
 		}
 	}
 

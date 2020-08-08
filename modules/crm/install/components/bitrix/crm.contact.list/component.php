@@ -50,7 +50,7 @@ $isInExportMode = false;
 $isStExport = false;    // Step-by-step export mode
 if (!empty($sExportType))
 {
-	$sExportType = strtolower(trim($sExportType));
+	$sExportType = mb_strtolower(trim($sExportType));
 	switch ($sExportType)
 	{
 		case 'csv':
@@ -97,8 +97,9 @@ if ($isErrorOccured)
 }
 
 use Bitrix\Main;
-use Bitrix\Main\Grid\Editor;
 use Bitrix\Crm;
+use Bitrix\Crm\Agent\Requisite\ContactAddressConvertAgent;
+use Bitrix\Crm\Agent\Requisite\ContactUfAddressConvertAgent;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\Format\AddressSeparator;
@@ -120,6 +121,7 @@ $arParams['PATH_TO_CONTACT_LIST'] = CrmCheckPath('PATH_TO_CONTACT_LIST', $arPara
 $arParams['PATH_TO_CONTACT_DETAILS'] = CrmCheckPath('PATH_TO_CONTACT_DETAILS', $arParams['PATH_TO_CONTACT_DETAILS'], $APPLICATION->GetCurPage().'?contact_id=#contact_id#&details');
 $arParams['PATH_TO_CONTACT_SHOW'] = CrmCheckPath('PATH_TO_CONTACT_SHOW', $arParams['PATH_TO_CONTACT_SHOW'], $APPLICATION->GetCurPage().'?contact_id=#contact_id#&show');
 $arParams['PATH_TO_CONTACT_EDIT'] = CrmCheckPath('PATH_TO_CONTACT_EDIT', $arParams['PATH_TO_CONTACT_EDIT'], $APPLICATION->GetCurPage().'?contact_id=#contact_id#&edit');
+$arParams['PATH_TO_CONTACT_MERGE'] = CrmCheckPath('PATH_TO_CONTACT_MERGE', $arParams['PATH_TO_CONTACT_MERGE'], '/contact/merge/');
 $arParams['PATH_TO_COMPANY_SHOW'] = CrmCheckPath('PATH_TO_COMPANY_SHOW', $arParams['PATH_TO_COMPANY_SHOW'], $APPLICATION->GetCurPage().'?company_id=#company_id#&show');
 $arParams['PATH_TO_DEAL_DETAILS'] = CrmCheckPath('PATH_TO_DEAL_DETAILS', $arParams['PATH_TO_DEAL_DETAILS'], $APPLICATION->GetCurPage().'?deal_id=#deal_id#&details');
 $arParams['PATH_TO_DEAL_EDIT'] = CrmCheckPath('PATH_TO_DEAL_EDIT', $arParams['PATH_TO_DEAL_EDIT'], $APPLICATION->GetCurPage().'?deal_id=#deal_id#&edit');
@@ -158,7 +160,7 @@ else
 CUtil::InitJSCore(array('ajax', 'tooltip'));
 
 $arResult['GADGET'] = 'N';
-if (isset($arParams['GADGET_ID']) && strlen($arParams['GADGET_ID']) > 0)
+if (isset($arParams['GADGET_ID']) && $arParams['GADGET_ID'] <> '')
 {
 	$arResult['GADGET'] = 'Y';
 	$arResult['GADGET_ID'] = $arParams['GADGET_ID'];
@@ -176,7 +178,7 @@ if (!empty($arParams['INTERNAL_FILTER']) && is_array($arParams['INTERNAL_FILTER'
 {
 	if(empty($arParams['GRID_ID_SUFFIX']))
 	{
-		$arParams['GRID_ID_SUFFIX'] = $this->GetParent() !== null ? strtoupper($this->GetParent()->GetName()) : '';
+		$arParams['GRID_ID_SUFFIX'] = $this->GetParent() !== null? mb_strtoupper($this->GetParent()->GetName()) : '';
 	}
 
 	$arFilter = $arParams['INTERNAL_FILTER'];
@@ -194,7 +196,7 @@ if (isset($arParams['WIDGET_DATA_FILTER']) && isset($arParams['WIDGET_DATA_FILTE
 	$enableWidgetFilter = true;
 	$widgetFilter = $arParams['WIDGET_DATA_FILTER'];
 }
-elseif (!$bInternal && isset($_REQUEST['WG']) && strtoupper($_REQUEST['WG']) === 'Y')
+elseif (!$bInternal && isset($_REQUEST['WG']) && mb_strtoupper($_REQUEST['WG']) === 'Y')
 {
 	$enableWidgetFilter = true;
 	$widgetFilter = $_REQUEST;
@@ -270,7 +272,26 @@ if(!$bInternal && isset($_REQUEST['counter']))
 	}
 }
 
-$arResult['IS_EXTERNAL_FILTER'] = ($enableWidgetFilter || $enableCounterFilter);
+$request = Main\Application::getInstance()->getContext()->getRequest();
+$fromAnalytics = $request->getQuery('from_analytics') === 'Y';
+$enableReportFilter = false;
+if($fromAnalytics)
+{
+	$reportId = Bitrix\Main\Context::getCurrent()->getRequest()['report_id'];
+	if($reportId != '')
+	{
+		$reportHandler = Crm\Integration\Report\ReportHandlerFactory::createWithReportId($reportId);
+		$reportFilter = $reportHandler ? $reportHandler->prepareEntityListFilter(Bitrix\Main\Context::getCurrent()->getRequest()) : null;
+
+		if(is_array($reportFilter) && !empty($reportFilter))
+		{
+			$arFilter = $reportFilter;
+			$enableReportFilter = true;
+		}
+	}
+}
+
+$arResult['IS_EXTERNAL_FILTER'] = ($enableWidgetFilter || $enableCounterFilter || $enableReportFilter);
 
 $CCrmUserType = new CCrmUserType($USER_FIELD_MANAGER, CCrmContact::$sUFEntityID);
 $CCrmFieldMulti = new CCrmFieldMulti();
@@ -479,7 +500,7 @@ $CCrmUserType->ListAddHeaders($arResult['HEADERS']);
 $arBPData = array();
 if ($isBizProcInstalled)
 {
-	$arBPData = CBPDocument::GetWorkflowTemplatesForDocumentType(array('crm', 'CCrmDocumentContact', 'CONTACT'));
+	$arBPData = CBPDocument::GetWorkflowTemplatesForDocumentType(['crm', 'CCrmDocumentContact', 'CONTACT'], false);
 	$arDocumentStates = CBPDocument::GetDocumentStates(
 		array('crm', 'CCrmDocumentContact', 'CONTACT'),
 		null
@@ -632,12 +653,12 @@ if(check_bitrix_sessid())
 		{
 			if(isset($_POST['ACTION_EXPORT']))
 			{
-				$actionData['EXPORT'] = strtoupper($_POST['ACTION_EXPORT']) === 'Y' ? 'Y' : 'N';
+				$actionData['EXPORT'] = mb_strtoupper($_POST['ACTION_EXPORT']) === 'Y' ? 'Y' : 'N';
 				unset($_POST['ACTION_EXPORT'], $_REQUEST['ACTION_EXPORT']);
 			}
 			else
 			{
-				$actionData['EXPORT'] = strtoupper($controls['ACTION_EXPORT']) === 'Y' ? 'Y' : 'N';
+				$actionData['EXPORT'] = mb_strtoupper($controls['ACTION_EXPORT']) === 'Y' ? 'Y' : 'N';
 			}
 		}
 
@@ -645,12 +666,12 @@ if(check_bitrix_sessid())
 		{
 			if(isset($_POST['ACTION_OPENED']))
 			{
-				$actionData['OPENED'] = strtoupper($_POST['ACTION_OPENED']) === 'Y' ? 'Y' : 'N';
+				$actionData['OPENED'] = mb_strtoupper($_POST['ACTION_OPENED']) === 'Y' ? 'Y' : 'N';
 				unset($_POST['ACTION_OPENED'], $_REQUEST['ACTION_OPENED']);
 			}
 			else
 			{
-				$actionData['OPENED'] = strtoupper($controls['ACTION_OPENED']) === 'Y' ? 'Y' : 'N';
+				$actionData['OPENED'] = mb_strtoupper($controls['ACTION_OPENED']) === 'Y' ? 'Y' : 'N';
 			}
 		}
 
@@ -916,7 +937,7 @@ foreach ($arFilter as $k => $v)
 		}
 		unset($arFilter['COMMUNICATION_TYPE']);
 	}
-	elseif ($k != 'ID' && $k != 'LOGIC' && $k != '__INNER_FILTER' && $k != '__JOINS' && $k != '__CONDITIONS' && strpos($k, 'UF_') !== 0 && preg_match('/^[^\=\%\?\>\<]{1}/', $k) === 1)
+	elseif ($k != 'ID' && $k != 'LOGIC' && $k != '__INNER_FILTER' && $k != '__JOINS' && $k != '__CONDITIONS' && mb_strpos($k, 'UF_') !== 0 && preg_match('/^[^\=\%\?\>\<]{1}/', $k) === 1)
 	{
 		$arFilter['%'.$k] = $v;
 		unset($arFilter[$k]);
@@ -1238,7 +1259,7 @@ if($actionData['ACTIVE'])
 		{
 			if(isset($actionData['OPENED']) && $actionData['OPENED'] != '')
 			{
-				$isOpened = strtoupper($actionData['OPENED']) === 'Y' ? 'Y' : 'N';
+				$isOpened = mb_strtoupper($actionData['OPENED']) === 'Y' ? 'Y' : 'N';
 				$arIDs = array();
 				if ($actionData['ALL_ROWS'])
 				{
@@ -1783,7 +1804,7 @@ if(isset($arSort['nearest_activity']))
 
 			if (!isset($arSort['ID']))
 			{
-				$order = strtoupper($arSort['nearest_activity']);
+				$order = mb_strtoupper($arSort['nearest_activity']);
 				if ($order === 'ASC' || $order === 'DESC')
 				{
 					$arSort['ID'] = $arSort['nearest_activity'];
@@ -1817,7 +1838,7 @@ else
 	{
 		if(strncmp($k, 'address', 7) === 0)
 		{
-			$addressSort[strtoupper($k)] = $v;
+			$addressSort[mb_strtoupper($k)] = $v;
 		}
 	}
 
@@ -1975,6 +1996,27 @@ $addressFormatOptions = $sExportType === 'csv'
 	: array('SEPARATOR' => AddressSeparator::HtmlLineBreak, 'NL2BR' => true);
 
 $now = time() + CTimeZone::GetOffset();
+
+$allDocumentStates = [];
+if ($arResult['ENABLE_BIZPROC'] && !empty($arResult['CONTACT']))
+{
+	$entityIds = array_map(function ($item)
+		{
+			return "CONTACT_{$item['ID']}";
+		},
+		$arResult['CONTACT']);
+
+	$documentStates = CBPDocument::GetDocumentStates(
+		array('crm', 'CCrmDocumentContact', 'CONTACT'),
+		array('crm', 'CCrmDocumentContact', $entityIds)
+	);
+	foreach ($documentStates as $stateId => $documentState)
+	{
+		$allDocumentStates[$documentState['DOCUMENT_ID'][2]][$stateId] = $documentState;
+	}
+}
+
+
 foreach($arResult['CONTACT'] as &$arContact)
 {
 	$entityID = $arContact['ID'];
@@ -2183,10 +2225,8 @@ foreach($arResult['CONTACT'] as &$arContact)
 		$arContact['BIZPROC_STATUS'] = '';
 		$arContact['BIZPROC_STATUS_HINT'] = '';
 
-		$arDocumentStates = CBPDocument::GetDocumentStates(
-			array('crm', 'CCrmDocumentContact', 'CONTACT'),
-			array('crm', 'CCrmDocumentContact', "CONTACT_{$entityID}")
-		);
+		$arDocumentStates = is_array($allDocumentStates["CONTACT_{$entityID}"]) ?
+			$allDocumentStates["CONTACT_{$entityID}"] : [];
 
 		$arContact['PATH_TO_BIZPROC_LIST'] =  CHTTP::urlAddParams(
 			CComponentEngine::MakePathFromTemplate(
@@ -2465,7 +2505,9 @@ if (!$isInExportMode)
 		$arResult['NEED_FOR_REBUILD_CONTACT_ATTRS'] =
 		$arResult['NEED_FOR_TRANSFER_REQUISITES'] =
 		$arResult['NEED_FOR_BUILD_TIMELINE'] =
-		$arResult['NEED_FOR_BUILD_DUPLICATE_INDEX'] = false;
+		$arResult['NEED_FOR_BUILD_DUPLICATE_INDEX'] =
+		$arResult['NEED_TO_CONVERT_ADDRESSES'] =
+		$arResult['NEED_TO_CONVERT_UF_ADDRESSES'] = false;
 
 	if(!$bInternal)
 	{
@@ -2505,6 +2547,43 @@ if (!$isInExportMode)
 				$arResult['NEED_FOR_TRANSFER_REQUISITES'] = true;
 			}
 		}
+
+		//region Address conversion
+		/** @var ContactAddressConvertAgent $agent */
+		$agent = ContactAddressConvertAgent::getInstance();
+		$isAgentEnabled = $agent->isEnabled();
+		if ($isAgentEnabled)
+		{
+			if (!$agent->isActive())
+			{
+				$agent->enable(false);
+				$isAgentEnabled = false;
+			}
+		}
+		$arResult['NEED_TO_CONVERT_ADDRESSES'] = $isAgentEnabled;
+		unset ($agent, $isAgentEnabled);
+		//endregion Address conversion
+
+		//region Transfer addresses from user fields
+		/** @var ContactUfAddressConvertAgent $agent */
+		$agent = ContactUfAddressConvertAgent::getInstance();
+		$isAgentEnabled = $agent->isEnabled();
+		if ($isAgentEnabled)
+		{
+			if (!$agent->isActive())
+			{
+				if (CCrmOwnerType::IsDefined($agent->getSourceEntityTypeId()))
+				{
+					// Disable if was running but is not active
+					// Source entity type is known only after start the agent
+					$agent->enable(false);
+				}
+				$isAgentEnabled = false;
+			}
+		}
+		$arResult['NEED_TO_CONVERT_UF_ADDRESSES'] = $isAgentEnabled;
+		unset ($agent, $isAgentEnabled);
+		//endregion Transfer addresses from user fields
 	}
 
 	$this->IncludeComponentTemplate();

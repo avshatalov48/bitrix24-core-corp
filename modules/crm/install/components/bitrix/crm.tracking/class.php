@@ -94,7 +94,7 @@ class CrmTrackingComponent extends CBitrixComponent
 			CComponentEngine::initComponentVariables($componentPage, $arComponentVariables, $arVariableAliases, $arVariables);
 			foreach ($arUrlTemplates as $url => $value)
 			{
-				$key = 'PATH_TO_'.strtoupper($url);
+				$key = 'PATH_TO_'.mb_strtoupper($url);
 				$this->arResult[$key] = isset($this->arParams[$key][0]) ? $this->arParams[$key] : $this->arParams['SEF_FOLDER'] . $value;
 			}
 
@@ -121,8 +121,8 @@ class CrmTrackingComponent extends CBitrixComponent
 			global $APPLICATION;
 			foreach ($arDefaultUrlTemplates404 as $url => $value)
 			{
-				$key = 'PATH_TO_'.strtoupper($url);
-				$value = substr($value, 0, -1);
+				$key = 'PATH_TO_'.mb_strtoupper($url);
+				$value = mb_substr($value, 0, -1);
 				$value = str_replace('/', '&ID=', $value);
 				$lang = isset($_REQUEST['lang']) ? $_REQUEST['lang'] : null;
 				$this->arResult[$key] = $APPLICATION->GetCurPage() . "?$value" . ($lang ? "&lang=$lang" : '');

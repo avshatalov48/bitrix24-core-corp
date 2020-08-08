@@ -90,3 +90,8 @@
 .task-section-status-step-item-text-selected {
 	color: #fff;
 }
+
+.task-detail-sidebar-item-value .tariff-lock {
+	margin-bottom: -1px;
+	border: none;
+}

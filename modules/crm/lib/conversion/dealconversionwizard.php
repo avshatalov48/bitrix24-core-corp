@@ -142,7 +142,7 @@ class DealConversionWizard extends EntityConversionWizard
 				$fields[$k] = $v;
 				continue;
 			}
-			elseif(strpos($k, 'UF_CRM') === 0)
+			elseif(mb_strpos($k, 'UF_CRM') === 0)
 			{
 				$userField = isset($userFields[$k]) ? $userFields[$k] : null;
 				if(is_array($userField))

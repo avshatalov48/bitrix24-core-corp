@@ -83,7 +83,7 @@ $arResult['SHOW_SECTION_MANAGE'] = $arParams['SHOW_SECTION_MANAGE'];
 
 $arResult['F_SEARCH'] = null;
 
-if (strlen($fTitle = tasksGetFilter("F_TITLE")) > 0)
+if ($fTitle = tasksGetFilter("F_TITLE") <> '')
 	$arResult['F_SEARCH'] = $fTitle;
 elseif (intval($fID = tasksGetFilter("F_META::ID_OR_NAME")) > 0)
 	$arResult['F_SEARCH'] = $fID;

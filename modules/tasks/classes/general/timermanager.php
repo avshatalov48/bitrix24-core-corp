@@ -6,6 +6,8 @@
  * @copyright 2001-2013 Bitrix
  */
 
+use Bitrix\Tasks\Access\ActionDictionary;
+
 /**
  * @access public
  */
@@ -187,7 +189,7 @@ final class CTaskTimerManager
 		$oTaskItem = CTaskItem::getInstance($taskId, $this->userId);
 		$arTask = $oTaskItem->getData(false);
 
-		if ( ! $oTaskItem->isActionAllowed(CTaskItem::ACTION_START_TIME_TRACKING) )
+		if ( ! $oTaskItem->checkAccess(ActionDictionary::ACTION_TASK_TIME_TRACKING) )
 			return (false);
 
 		// Run timer for given task
@@ -219,14 +221,14 @@ final class CTaskTimerManager
 			if ($arTask['REAL_STATUS'] != CTasks::STATE_IN_PROGRESS)
 			{
 				if (
-					( ! $oTaskItem->isActionAllowed(CTaskItem::ACTION_START) )
-					&& $oTaskItem->isActionAllowed(CTaskItem::ACTION_RENEW)
+					( ! $oTaskItem->checkAccess(ActionDictionary::ACTION_TASK_START) )
+					&& $oTaskItem->checkAccess(ActionDictionary::ACTION_TASK_RENEW)
 				)
 				{
 					$oTaskItem->renew();
 				}
 
-				if ($oTaskItem->isActionAllowed(CTaskItem::ACTION_START))
+				if ($oTaskItem->checkAccess(ActionDictionary::ACTION_TASK_START))
 					$oTaskItem->startExecution();
 			}
 
@@ -238,6 +240,13 @@ final class CTaskTimerManager
 	public function stop($taskId = 0)
 	{
 		global $CACHE_MANAGER;
+
+		if ($taskId)
+		{
+			$oTaskItem = CTaskItem::getInstance($taskId, $this->userId);
+			if ( ! $oTaskItem->checkAccess(ActionDictionary::ACTION_TASK_TIME_TRACKING) )
+				return (false);
+		}
 
 		$arTimer = CTaskTimerCore::stop($this->userId, $taskId);
 		$dateFormat = \Bitrix\Main\Type\Date::convertFormatToPhp(\CSite::GetDateFormat());
@@ -300,7 +309,7 @@ final class CTaskTimerManager
 	{
 		CTaskAssert::assertLaxIntegers($userId);
 		CTaskAssert::assert($userId > 0);
-		
+
 		$this->userId = (int) $userId;
 	}
 

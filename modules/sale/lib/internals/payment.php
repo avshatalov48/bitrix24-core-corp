@@ -419,7 +419,7 @@ class PaymentTable extends Main\Entity\DataManager
 	}
 
 	/**
-	 * Returns validators for PS_STATUS_CODE field.
+	 * Returns validators for PS_RECURRING_TOKEN field.
 	 *
 	 * @return array
 	 */

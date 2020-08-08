@@ -712,7 +712,7 @@ class OneDriveHandler extends DocumentHandler implements FileCreatable
 	{
 		$status = (int)$http->getStatus();
 
-		if($status === 403 && strpos($http->getHeaders()->get('content-type'), 'application/json') !== false)
+		if($status === 403 && mb_strpos($http->getHeaders()->get('content-type'), 'application/json') !== false)
 		{
 			$result = Json::decode($http->getResult());
 			if(!empty($result['error']['code']) && $result['error']['code'] === 'accessDenied')

@@ -11,7 +11,7 @@ if ($exch1cEnabled)
 	if ($license_name = COption::GetOptionString("main", "~controller_group_name"))
 	{
 		preg_match("/(project|tf)$/is", $license_name, $matches);
-		if (strlen($matches[0]) > 0)
+		if ($matches[0] <> '')
 			$exch1cEnabled = false;
 	}
 }
@@ -99,7 +99,7 @@ if ($arParams['SEF_MODE'] === 'Y')
 
 	foreach ($arUrlTemplates as $url => $value)
 	{
-		$key = 'PATH_TO_EXCH1C_'.strtoupper($url);
+		$key = 'PATH_TO_EXCH1C_'.mb_strtoupper($url);
 		$arResult[$key] = isset($arParams[$key][0]) ? $arParams[$key] : $arParams['SEF_FOLDER'].$value;
 	}
 }

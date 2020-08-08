@@ -371,7 +371,7 @@ class DuplicateList
 		$dbResult = $query->exec();
 
 		$fields = $dbResult->fetch();
-		return is_array($fields) && isset($fields['IS_JUNK']) && strtoupper($fields['IS_JUNK']) === 'Y';
+		return is_array($fields) && isset($fields['IS_JUNK']) && mb_strtoupper($fields['IS_JUNK']) === 'Y';
 	}
 	private function createDuplicate(array &$fields)
 	{
@@ -388,7 +388,7 @@ class DuplicateList
 		$result = new Duplicate(DuplicateManager::createCriterion($typeID, $matches), array());
 		$result->setRootEntityID($rootEntityID);
 
-		$isJunk = isset($fields['IS_JUNK']) && strtoupper($fields['IS_JUNK']) === 'Y';
+		$isJunk = isset($fields['IS_JUNK']) && mb_strtoupper($fields['IS_JUNK']) === 'Y';
 		if($isJunk)
 		{
 			$result->markAsJunk(true);

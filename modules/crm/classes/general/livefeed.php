@@ -1854,7 +1854,7 @@ class CCrmLiveFeed
 	static public function OnBuildSocNetLogOrder(&$arOrder, $arParams)
 	{
 		if (
-			isset($arParams["CRM_ENTITY_TYPE"]) && strlen($arParams["CRM_ENTITY_TYPE"]) > 0
+			isset($arParams["CRM_ENTITY_TYPE"]) && $arParams["CRM_ENTITY_TYPE"] <> ''
 			&& isset($arParams["CRM_ENTITY_ID"]) && intval($arParams["CRM_ENTITY_ID"]) > 0
 		)
 		{
@@ -2139,12 +2139,12 @@ class CCrmLiveFeed
 			&& array_key_exists("EVENT_ID", $arLogFields)
 			&&
 			(
-				strpos($arLogFields["EVENT_ID"], CCrmLiveFeedEvent::LeadPrefix, 0) === 0
-				|| strpos($arLogFields["EVENT_ID"], CCrmLiveFeedEvent::ContactPrefix, 0) === 0
-				|| strpos($arLogFields["EVENT_ID"], CCrmLiveFeedEvent::CompanyPrefix, 0) === 0
-				|| strpos($arLogFields["EVENT_ID"], CCrmLiveFeedEvent::DealPrefix, 0) === 0
-				|| strpos($arLogFields["EVENT_ID"], CCrmLiveFeedEvent::ActivityPrefix, 0) === 0
-				|| strpos($arLogFields["EVENT_ID"], CCrmLiveFeedEvent::InvoicePrefix, 0) === 0
+				mb_strpos($arLogFields["EVENT_ID"], CCrmLiveFeedEvent::LeadPrefix, 0) === 0
+				|| mb_strpos($arLogFields["EVENT_ID"], CCrmLiveFeedEvent::ContactPrefix, 0) === 0
+				|| mb_strpos($arLogFields["EVENT_ID"], CCrmLiveFeedEvent::CompanyPrefix, 0) === 0
+				|| mb_strpos($arLogFields["EVENT_ID"], CCrmLiveFeedEvent::DealPrefix, 0) === 0
+				|| mb_strpos($arLogFields["EVENT_ID"], CCrmLiveFeedEvent::ActivityPrefix, 0) === 0
+				|| mb_strpos($arLogFields["EVENT_ID"], CCrmLiveFeedEvent::InvoicePrefix, 0) === 0
 			)
 		)
 		{
@@ -2165,12 +2165,12 @@ class CCrmLiveFeed
 			&& array_key_exists("USER_ID", $arLogFields)
 			&& CCrmSecurityHelper::GetCurrentUserID()
 			&& (
-				strpos($arLogFields["EVENT_ID"], CCrmLiveFeedEvent::LeadPrefix, 0) === 0
-				|| strpos($arLogFields["EVENT_ID"], CCrmLiveFeedEvent::ContactPrefix, 0) === 0
-				|| strpos($arLogFields["EVENT_ID"], CCrmLiveFeedEvent::CompanyPrefix, 0) === 0
-				|| strpos($arLogFields["EVENT_ID"], CCrmLiveFeedEvent::DealPrefix, 0) === 0
-				|| strpos($arLogFields["EVENT_ID"], CCrmLiveFeedEvent::ActivityPrefix, 0) === 0
-				|| strpos($arLogFields["EVENT_ID"], CCrmLiveFeedEvent::InvoicePrefix, 0) === 0
+				mb_strpos($arLogFields["EVENT_ID"], CCrmLiveFeedEvent::LeadPrefix, 0) === 0
+				|| mb_strpos($arLogFields["EVENT_ID"], CCrmLiveFeedEvent::ContactPrefix, 0) === 0
+				|| mb_strpos($arLogFields["EVENT_ID"], CCrmLiveFeedEvent::CompanyPrefix, 0) === 0
+				|| mb_strpos($arLogFields["EVENT_ID"], CCrmLiveFeedEvent::DealPrefix, 0) === 0
+				|| mb_strpos($arLogFields["EVENT_ID"], CCrmLiveFeedEvent::ActivityPrefix, 0) === 0
+				|| mb_strpos($arLogFields["EVENT_ID"], CCrmLiveFeedEvent::InvoicePrefix, 0) === 0
 			)
 		)
 		{
@@ -2190,18 +2190,18 @@ class CCrmLiveFeed
 			}
 
 			$title = self::GetNotifyEntryTitle($arLogFields, "COMMENT");
-			if (strlen($title) > 0)
+			if ($title <> '')
 			{
 				if (
 					!isset($arParams["PATH_TO_LOG_ENTRY"])
-					|| strlen($arParams["PATH_TO_LOG_ENTRY"]) <= 0
+					|| $arParams["PATH_TO_LOG_ENTRY"] == ''
 				)
 				{
 					$arParams["PATH_TO_LOG_ENTRY"] = '/crm/stream/?log_id=#log_id#';
 				}
 
 				$url = str_replace(array("#log_id#"), array($arLogFields["ID"]), $arParams["PATH_TO_LOG_ENTRY"]);
-				$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0) ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
+				$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
 
 				$arMessageFields = array(
 					"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
@@ -2369,18 +2369,18 @@ class CCrmLiveFeed
 				)
 				{
 					$title = self::GetNotifyEntryTitle($arLog, "LIKE");
-					if (strlen($title) > 0)
+					if ($title <> '')
 					{
 						if (
 							!isset($arRatingFields["PATH_TO_LOG_ENTRY"])
-							|| strlen($arRatingFields["PATH_TO_LOG_ENTRY"]) <= 0
+							|| $arRatingFields["PATH_TO_LOG_ENTRY"] == ''
 						)
 						{
 							$arRatingFields["PATH_TO_LOG_ENTRY"] = '/crm/stream/?log_id=#log_id#';
 						}
 
 						$url = str_replace(array("#log_id#"), array($arLog["ID"]), $arRatingFields["PATH_TO_LOG_ENTRY"]);
-						$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0) ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
+						$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
 
 						$arMessageFields = array(
 							"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
@@ -3223,7 +3223,23 @@ class CCrmLiveFeed
 			}
 		}
 
-		$arUserID = isset($data['USERS']) ? $data['USERS'] : array();
+		$arUserID = isset($data['USERS']) ? $data['USERS'] : [];
+		$authorID = CCrmSecurityHelper::GetCurrentUserID();
+
+		$adminList = [];
+		$res = Main\UserAccessTable::getList([
+			'filter' => [
+				'=ACCESS_CODE' => 'G1',
+				'!=USER_ID' => $authorID
+			],
+			'select' => [ 'USER_ID' ]
+		]);
+		while ($recordFields = $res->fetch())
+		{
+			$adminList[] = $recordFields['USER_ID'];
+		}
+		$arUserID = array_unique(array_merge($arUserID, $adminList));
+
 		if(count($arUserID) > 50)
 		{
 			$arUserIDChunks = array_chunk($arUserID, 50);
@@ -3234,16 +3250,18 @@ class CCrmLiveFeed
 		}
 
 		$logID = isset($arLogFields["LOG_ID"]) ? (int)$arLogFields["LOG_ID"] : 0;
-		$authorID = CCrmSecurityHelper::GetCurrentUserID();
 
 		$chunksCount = count($arUserIDChunks);
 		foreach($arUserIDChunks as $i => $arUserIDChunk)
 		{
+			if (empty($arUserIDChunk))
+			{
+				continue;
+			}
 			$sql = "SELECT U.ID as ID, 1 as CNT, '**' as SITE_ID ,'CRM_**' as CODE, 0 as SENT
 				FROM b_user U
 				WHERE
-					(U.ID IN (SELECT USER_ID FROM b_user_access WHERE ACCESS_CODE = 'G1' AND USER_ID <> ".$authorID.")
-					".(!empty($arUserIDChunk) ? " OR U.ID IN (".implode(",", $arUserIDChunk).") " : "").")".
+					U.ID IN (".implode(",", $arUserIDChunk).") ".
 				(
 					($conditionSql !== "" || $logID > 0)
 					? "
@@ -3493,6 +3511,7 @@ class CCrmLiveFeed
 			$sSql = "SELECT RL.RELATION, RP.ATTR, RP.ENTITY
 				FROM b_crm_role_relation RL
 				INNER JOIN b_crm_role_perms RP ON RL.ROLE_ID = RP.ROLE_ID AND RP.ENTITY IN (".implode(',', array_map(function($val) { return "'".$val."'"; }, $entityNameList)).") AND RP.PERM_TYPE = 'READ'
+				GROUP BY RL.RELATION, RP.ATTR, RP.ENTITY
 			";
 
 			$res = $DB->Query($sSql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
@@ -3523,6 +3542,8 @@ class CCrmLiveFeed
 				}
 
 				$entityPermissions = (isset($permsList[$entityName]) ? $permsList[$entityName] : []);
+				$selfRelationsList = $userRelationsList = $departmentRelationsList = $subDepartmentRelationsList = [];
+
 				foreach($entityPermissions as $entityPermission)
 				{
 					$perm = $entityPermission['ATTR'];
@@ -3533,49 +3554,84 @@ class CCrmLiveFeed
 						case BX_CRM_PERM_SELF:
 							if (!empty($responsibleList))
 							{
-								$strSQL = "SELECT UA.USER_ID
-								FROM b_user_access UA
-								WHERE
-									UA.USER_ID IN (".implode(',', $responsibleList).") 
-									AND UA.ACCESS_CODE = '".$DB->ForSQL($relation)."'";
-								$rsUser = $DB->Query($strSQL, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
-								while ($arUser = $rsUser->Fetch())
-								{
-									if ($arUser["USER_ID"] != $author_id)
-									{
-										$arUserID[] = $arUser["USER_ID"];
-									}
-								}
+								$selfRelationsList[] = $relation;
 							}
 							break;
 						case BX_CRM_PERM_ALL:
 						case BX_CRM_PERM_CONFIG:
 						case BX_CRM_PERM_OPEN:
-
 							if (
 								$perm != BX_CRM_PERM_OPEN
 								|| $bHasOpenEntity
 							)
 							{
-								$strSQL = "SELECT UA.USER_ID
-								FROM b_user_access UA
-								WHERE
-									UA.ACCESS_CODE = '".$DB->ForSQL($relation)."'";
-								$rsUser = $DB->Query($strSQL, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
-								while ($arUser = $rsUser->Fetch())
-								{
-									if ($arUser["USER_ID"] != $author_id)
-									{
-										$arUserID[] = $arUser["USER_ID"];
-									}
-								}
+								$userRelationsList[] = $relation;
 							}
 							break;
 						case BX_CRM_PERM_DEPARTMENT:
-
 							if (!empty($responsibleList))
 							{
-								$strSQL = "SELECT UA.USER_ID
+								$departmentRelationsList[] = $relation;
+							}
+							break;
+						case BX_CRM_PERM_SUBDEPARTMENT:
+							if (!empty($responsibleList))
+							{
+								$subDepartmentRelationsList[] = $relation;
+							}
+							break;
+					}
+				}
+
+				$chunkSize = 500;
+
+				if (!empty($selfRelationsList))
+				{
+					$chunks = array_chunk($selfRelationsList, $chunkSize);
+					foreach($chunks as $selfRelationsListChunk)
+					{
+						$strSQL = "SELECT UA.USER_ID
+							FROM b_user_access UA
+							WHERE
+								UA.USER_ID IN (".implode(', ', $responsibleList).")
+								AND UA.ACCESS_CODE IN ('".implode("', '", $selfRelationsListChunk)."')";
+						$rsUser = $DB->Query($strSQL, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+						while ($arUser = $rsUser->Fetch())
+						{
+							if ($arUser["USER_ID"] != $author_id)
+							{
+								$arUserID[] = $arUser["USER_ID"];
+							}
+						}
+					}
+				}
+
+				if (!empty($userRelationsList))
+				{
+					$chunks = array_chunk($userRelationsList, $chunkSize);
+					foreach($chunks as $userRelationsListChunk)
+					{
+						$strSQL = "SELECT UA.USER_ID
+							FROM b_user_access UA
+							WHERE
+								UA.ACCESS_CODE IN ('".implode("', '", $userRelationsListChunk)."')";
+						$rsUser = $DB->Query($strSQL, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+						while ($arUser = $rsUser->Fetch())
+						{
+							if ($arUser["USER_ID"] != $author_id)
+							{
+								$arUserID[] = $arUser["USER_ID"];
+							}
+						}
+					}
+				}
+
+				if (!empty($departmentRelationsList))
+				{
+					$chunks = array_chunk($departmentRelationsList, $chunkSize);
+					foreach($chunks as $departmentRelationsListChunk)
+					{
+						$strSQL = "SELECT UA.USER_ID
 								FROM b_user_access UA
 								INNER JOIN b_user_access UA1 ON
 									UA1.USER_ID IN (".implode(',', $responsibleList).")
@@ -3584,23 +3640,24 @@ class CCrmLiveFeed
 									AND UA1.ACCESS_CODE = UA.ACCESS_CODE
 								INNER JOIN b_user_access UA2 ON
 									UA2.USER_ID = UA.USER_ID
-									AND UA2.ACCESS_CODE = '".$DB->ForSQL($relation)."'";
-
-								$rsUser = $DB->Query($strSQL, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
-								while ($arUser = $rsUser->Fetch())
-								{
-									if ($arUser["USER_ID"] != $author_id)
-									{
-										$arUserID[] = $arUser["USER_ID"];
-									}
-								}
-							}
-							break;
-						case BX_CRM_PERM_SUBDEPARTMENT:
-
-							if (!empty($responsibleList))
+									AND UA2.ACCESS_CODE IN ('".implode("', '", $departmentRelationsListChunk)."')";
+						$rsUser = $DB->Query($strSQL, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+						while ($arUser = $rsUser->Fetch())
+						{
+							if ($arUser["USER_ID"] != $author_id)
 							{
-								$strSQL = "SELECT UA.USER_ID
+								$arUserID[] = $arUser["USER_ID"];
+							}
+						}
+					}
+				}
+
+				if (!empty($subDepartmentRelationsList))
+				{
+					$chunks = array_chunk($subDepartmentRelationsList, $chunkSize);
+					foreach($chunks as $subDepartmentRelationsListChunk)
+					{
+						$strSQL = "SELECT UA.USER_ID
 								FROM b_user_access UA
 								INNER JOIN b_user_access UA1 ON
 									UA1.USER_ID IN (".implode(',', $responsibleList).")
@@ -3608,21 +3665,19 @@ class CCrmLiveFeed
 									AND UA1.ACCESS_CODE = UA.ACCESS_CODE
 								INNER JOIN b_user_access UA2 ON
 									UA2.USER_ID = UA.USER_ID
-									AND UA2.ACCESS_CODE = '".$DB->ForSQL($relation)."'";
-
-								$rsUser = $DB->Query($strSQL, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
-								while ($arUser = $rsUser->Fetch())
-								{
-									if ($arUser["USER_ID"] != $author_id)
-									{
-										$arUserID[] = $arUser["USER_ID"];
-									}
-								}
+									AND UA2.ACCESS_CODE IN ('".implode("', '", $subDepartmentRelationsListChunk)."')";
+						$rsUser = $DB->Query($strSQL, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+						while ($arUser = $rsUser->Fetch())
+						{
+							if ($arUser["USER_ID"] != $author_id)
+							{
+								$arUserID[] = $arUser["USER_ID"];
 							}
-							break;
+						}
 					}
 				}
 			}
+
 			$arUserID = array_unique($arUserID);
 		}
 
@@ -3784,16 +3839,16 @@ class CCrmLiveFeed
 
 			if ($entityName)
 			{
-				$notifyMessage = GetMessage("CRM_LF_COMMENT_MENTION".(strlen($genderSuffix) > 0 ? "_".$genderSuffix : ""), Array("#title#" => "<a href=\"#url#\" class=\"bx-notifier-item-action\">".$entityName."</a>"));
-				$notifyMessageOut = GetMessage("CRM_LF_COMMENT_MENTION".(strlen($genderSuffix) > 0 ? "_".$genderSuffix : ""), Array("#title#" => $entityName))." ("."#server_name##url#)";
+				$notifyMessage = GetMessage("CRM_LF_COMMENT_MENTION".($genderSuffix <> '' ? "_".$genderSuffix : ""), Array("#title#" => "<a href=\"#url#\" class=\"bx-notifier-item-action\">".$entityName."</a>"));
+				$notifyMessageOut = GetMessage("CRM_LF_COMMENT_MENTION".($genderSuffix <> '' ? "_".$genderSuffix : ""), Array("#title#" => $entityName))." ("."#server_name##url#)";
 
 				$strPathToLogCrmEntry = str_replace("#log_id#", $arLog["ID"], "/crm/stream/?log_id=#log_id#");
-				$strPathToLogCrmEntryComment = $strPathToLogCrmEntry.(strpos($strPathToLogCrmEntry, "?") !== false ? "&" : "?")."commentID=".$arCommentFields["ID"]."#com".$arCommentFields["ID"];
+				$strPathToLogCrmEntryComment = $strPathToLogCrmEntry.(mb_strpos($strPathToLogCrmEntry, "?") !== false ? "&" : "?")."commentID=".$arCommentFields["ID"]."#com".$arCommentFields["ID"];
 
 				if (in_array($arLog["EVENT_ID"], array("crm_company_message", "crm_contact_message", "crm_deal_message", "crm_lead_message")))
 				{
 					$strPathToLogEntry = str_replace("#log_id#", $arLog["ID"], COption::GetOptionString("socialnetwork", "log_entry_page", "/company/personal/log/#log_id#/", SITE_ID));
-					$strPathToLogEntryComment = $strPathToLogEntry.(strpos($strPathToLogEntry, "?") !== false ? "&" : "?")."commentID=".$arCommentFields["ID"]."#com".$arCommentFields["ID"];
+					$strPathToLogEntryComment = $strPathToLogEntry.(mb_strpos($strPathToLogEntry, "?") !== false ? "&" : "?")."commentID=".$arCommentFields["ID"]."#com".$arCommentFields["ID"];
 				}
 
 				$arReturn = array(
@@ -3871,12 +3926,8 @@ class CCrmLiveFeed
 			$occurAsUserId = ($messageAuthorId ? $messageAuthorId : 1);
 		}
 
-		$rsTask = CTasks::GetList(
-			false,
-			array('ID' => $taskId),
-			array('UF_CRM_TASK')
-		);
-		$arTask = $rsTask->GetNext();
+		$oTask = new \CTaskItem($taskId, Bitrix\Tasks\Util\User::getAdminId());
+		$arTask = $oTask->getData();
 
 		if (
 			!isset($arTask)
@@ -3885,13 +3936,13 @@ class CCrmLiveFeed
 				is_array($arTask['UF_CRM_TASK'])
 				&& (
 					!isset($arTask['UF_CRM_TASK'][0])
-					|| strlen($arTask['UF_CRM_TASK'][0]) <= 0
+					|| $arTask['UF_CRM_TASK'][0] == ''
 				)
 			)
 			|| (
 				!is_array($arTask['UF_CRM_TASK'])
 				&& (
-					strlen($arTask['UF_CRM_TASK']) <= 0
+					$arTask['UF_CRM_TASK'] == ''
 				)
 			)
 		)
@@ -3982,6 +4033,11 @@ class CCrmLiveFeed
 				$arFieldsForSocnet["UF_SONET_COM_DOC"] = $ufDocID;
 			}
 
+			if (!empty($arData['AUX_DATA']))
+			{
+				$arFieldsForSocnet['SHARE_DEST'] = $arData['AUX_DATA'];
+			}
+
 			$comment_id = CSocNetLogComments::Add($arFieldsForSocnet, false, false);
 
 			CCrmLiveFeed::CounterIncrement($arLog);
@@ -4068,6 +4124,12 @@ class CCrmLiveFeed
 								"type" => "TK",
 								"id" => $arTaskFields['ID'],
 								"xml_id" => "TASK_".$arTaskFields['ID']
+							),
+							(
+								is_object($USER)
+								&& $USER instanceof \CUser
+									? $USER->getId()
+									: (isset($arFields['CURRENT_USER_ID']) ? $arFields['CURRENT_USER_ID'] : 0)
 							)
 						);
 
@@ -5089,7 +5151,7 @@ class CCrmLiveFeedComponent
 						$strUser .= '<span class="feed-com-avatar crm-feed-company-avatar">';
 						if(is_array($arFileTmp) && isset($arFileTmp['src']))
 						{
-							if (strlen($this->params["PATH_TO_USER"]) > 0)
+							if ($this->params["PATH_TO_USER"] <> '')
 							{
 								$strUser .= '<a target="_blank" href="'.str_replace(array("#user_id#", "#USER_ID#"), intval($arField["VALUE"]), $this->params["PATH_TO_USER"]).'"><img src="'.$arFileTmp['src'].'" alt=""/></a>';
 							}
@@ -5100,7 +5162,7 @@ class CCrmLiveFeedComponent
 						}
 						$strUser .= '</span><span class="crm-feed-client-right">';
 
-						if (strlen($this->params["PATH_TO_USER"]) > 0)
+						if ($this->params["PATH_TO_USER"] <> '')
 						{
 							$strUser .= '<a class="crm-feed-user-name" target="_blank" href="'.str_replace(array("#user_id#", "#USER_ID#"), intval($arField["VALUE"]), $this->params["PATH_TO_USER"]).'">'.CUser::FormatName(CSite::GetNameFormat(), $arUser, true, false).'</a>';
 						}
@@ -5109,7 +5171,7 @@ class CCrmLiveFeedComponent
 							$strUser .= '<span class="crm-feed-user-name">'.CUser::FormatName(CSite::GetNameFormat(), $arUser, true, false).'</span>';
 						}
 
-						if (strlen($arUser["WORK_POSITION"]) > 0)
+						if ($arUser["WORK_POSITION"] <> '')
 						{
 							$strUser .= '<span class="crm-detail-info-resp-descr">'.$arUser["WORK_POSITION"].'</span>';
 						}
@@ -5220,8 +5282,8 @@ class CCrmLiveFeedComponent
 					is_array($arField["VALUE"])
 					&& (
 						(array_key_exists("CONTACT_ID", $arField["VALUE"]) && intval($arField["VALUE"]["CONTACT_ID"]) > 0)
-						|| (array_key_exists("CONTACT_NAME", $arField["VALUE"]) && strlen($arField["VALUE"]["CONTACT_NAME"]) > 0)
-						|| (array_key_exists("CONTACT_LAST_NAME", $arField["VALUE"]) && strlen($arField["VALUE"]["CONTACT_LAST_NAME"]) > 0)
+						|| (array_key_exists("CONTACT_NAME", $arField["VALUE"]) && $arField["VALUE"]["CONTACT_NAME"] <> '')
+						|| (array_key_exists("CONTACT_LAST_NAME", $arField["VALUE"]) && $arField["VALUE"]["CONTACT_LAST_NAME"] <> '')
 						|| (array_key_exists("COMPANY_ID", $arField["VALUE"]) && intval($arField["VALUE"]["COMPANY_ID"]) > 0)
 					)
 				)
@@ -5239,11 +5301,11 @@ class CCrmLiveFeedComponent
 						)
 						|| (
 							array_key_exists("CONTACT_NAME", $arField["VALUE"]) 
-							&& strlen($arField["VALUE"]["CONTACT_NAME"]) > 0
+							&& $arField["VALUE"]["CONTACT_NAME"] <> ''
 						)
 						|| (
 							array_key_exists("CONTACT_LAST_NAME", $arField["VALUE"]) 
-							&& strlen($arField["VALUE"]["CONTACT_LAST_NAME"]) > 0
+							&& $arField["VALUE"]["CONTACT_LAST_NAME"] <> ''
 						)
 					)
 					{
@@ -5333,7 +5395,7 @@ class CCrmLiveFeedComponent
 									'SECOND_NAME' => isset($arField['VALUE']['CONTACT_SECOND_NAME']) ? $arField['VALUE']['CONTACT_SECOND_NAME'] : ''
 								)
 							);
-							$strResult .= (strlen($url) > 0 ? '<a href="'.$url.'" class="crm-feed-client-name">'.$clientName.'</a>' : $clientName);
+							$strResult .= ($url <> '' ? '<a href="'.$url.'" class="crm-feed-client-name">'.$clientName.'</a>' : $clientName);
 						}
 
 						$strResult .= '<span class="crm-feed-client-company">';
@@ -5342,7 +5404,7 @@ class CCrmLiveFeedComponent
 								'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
 								'ENTITY_ID' => (
 									array_key_exists("COMPANY_ID", $arField["VALUE"]) 
-									&& intval($arField["VALUE"]["COMPANY_ID"]) > 0 
+									&& intval($arField["VALUE"]["COMPANY_ID"]) > 0
 										? $arField["VALUE"]["COMPANY_ID"] 
 										: intval($contactCompanyID)
 								),
@@ -5377,7 +5439,7 @@ class CCrmLiveFeedComponent
 			case "COMBI_COMPANY":
 				if (
 					is_array($arField["VALUE"])
-					&& (array_key_exists("TITLE", $arField["VALUE"]) && strlen($arField["VALUE"]["TITLE"]) > 0)
+					&& (array_key_exists("TITLE", $arField["VALUE"]) && $arField["VALUE"]["TITLE"] <> '')
 				)
 				{
 					$strResult .= "#row_begin#";
@@ -5420,9 +5482,9 @@ class CCrmLiveFeedComponent
 				if (
 					is_array($arField["VALUE"])
 					&& (
-						(array_key_exists("CONTACT_NAME", $arField["VALUE"]) && strlen($arField["VALUE"]["CONTACT_NAME"]) > 0)
-						|| (array_key_exists("CONTACT_LAST_NAME", $arField["VALUE"]) && strlen($arField["VALUE"]["CONTACT_LAST_NAME"]) > 0)
-						|| (array_key_exists("COMPANY_TITLE", $arField["VALUE"]) && strlen($arField["VALUE"]["COMPANY_TITLE"]) > 0)
+						(array_key_exists("CONTACT_NAME", $arField["VALUE"]) && $arField["VALUE"]["CONTACT_NAME"] <> '')
+						|| (array_key_exists("CONTACT_LAST_NAME", $arField["VALUE"]) && $arField["VALUE"]["CONTACT_LAST_NAME"] <> '')
+						|| (array_key_exists("COMPANY_TITLE", $arField["VALUE"]) && $arField["VALUE"]["COMPANY_TITLE"] <> '')
 					)
 				)
 				{
@@ -5435,11 +5497,11 @@ class CCrmLiveFeedComponent
 					if (
 						(
 							array_key_exists("CONTACT_NAME", $arField["VALUE"]) 
-							&& strlen($arField["VALUE"]["CONTACT_NAME"]) > 0
+							&& $arField["VALUE"]["CONTACT_NAME"] <> ''
 						)
 						|| (
 							array_key_exists("CONTACT_LAST_NAME", $arField["VALUE"]) 
-							&& strlen($arField["VALUE"]["CONTACT_LAST_NAME"]) > 0
+							&& $arField["VALUE"]["CONTACT_LAST_NAME"] <> ''
 						)
 					)
 					{
@@ -5456,7 +5518,7 @@ class CCrmLiveFeedComponent
 									"SECOND_NAME" => $arField["VALUE"]["CONTACT_SECOND_NAME"],
 								)
 							);
-							$strResult .= '<span class="crm-feed-client-company">'.(strlen($arField["VALUE"]["COMPANY_TITLE"]) > 0 ? $arField["VALUE"]["COMPANY_TITLE"] : "").'</span>';
+							$strResult .= '<span class="crm-feed-client-company">'.($arField["VALUE"]["COMPANY_TITLE"] <> '' ? $arField["VALUE"]["COMPANY_TITLE"] : "").'</span>';
 						$strResult .= '</span>';
 						$strResult .= '</div>';
 					}
@@ -5743,7 +5805,7 @@ class CCrmLiveFeedComponent
 						|| (!empty($arField["VALUE"]["OTHER"]) && count($arField["VALUE"]["OTHER"]) > 1)
 					)
 					{
-						$anchorID = strtolower($arField["FORMAT"]);
+						$anchorID = mb_strtolower($arField["FORMAT"]);
 						$strResult .= '<span style="margin-left: 10px;" class="crm-client-contacts-block-text-list-icon" id="'.htmlspecialcharsbx($anchorID).'"'.' onclick="'.CCrmViewHelper::PrepareMultiFieldValuesPopup($anchorID, $anchorID, $arField["FORMAT"], $arField["VALUE"], $infos[$arField["FORMAT"]]).'"></span>';
 					}
 					$strResult .= '</span>';
@@ -5764,7 +5826,7 @@ class CCrmLiveFeedComponent
 				if ($arField["VALUE"] != CCrmLiveFeed::UntitledMessageStub)
 				{
 					$text_formatted = $this->ParseText(htmlspecialcharsback($arField["VALUE"]), $arUF, $this->params);
-					if (strlen($text_formatted) > 0)
+					if ($text_formatted <> '')
 					{
 						$strResult .= "#row_begin#";
 						$strResult .= "#cell_begin_colspan2#";
@@ -5785,7 +5847,7 @@ class CCrmLiveFeedComponent
 			case "COMBI_TITLE":
 				if (
 					is_array($arField["VALUE"])
-					&& array_key_exists("TITLE", $arField["VALUE"]) && strlen($arField["VALUE"]["TITLE"]) > 0
+					&& array_key_exists("TITLE", $arField["VALUE"]) && $arField["VALUE"]["TITLE"] <> ''
 				)
 				{
 					$strResult .= "#row_begin#";
@@ -5795,11 +5857,11 @@ class CCrmLiveFeedComponent
 					$strResult .= "#cell_begin_right#";
 					$strResult .= '<span class="crm-feed-info-text-padding">';
 
-					if (array_key_exists("URL", $arField["VALUE"]) && strlen($arField["VALUE"]["URL"]) > 0)
+					if (array_key_exists("URL", $arField["VALUE"]) && $arField["VALUE"]["URL"] <> '')
 					{
 						$strResult .= '<a href="'.$arField["VALUE"]["URL"].'">'.$arField["VALUE"]["TITLE"].'</a>';
 					}
-					elseif (array_key_exists("ONCLICK", $arField["VALUE"]) && strlen($arField["VALUE"]["ONCLICK"]) > 0)
+					elseif (array_key_exists("ONCLICK", $arField["VALUE"]) && $arField["VALUE"]["ONCLICK"] <> '')
 					{
 						$strResult .= '<a href="javascript:void(0)" onclick="'.$arField["VALUE"]["ONCLICK"].'">'.$arField["VALUE"]["TITLE"].'</a>';
 					}
@@ -5817,8 +5879,8 @@ class CCrmLiveFeedComponent
 			case "COMBI_TITLE_ID":
 				if (
 					is_array($arField["VALUE"])
-					&& array_key_exists("TITLE", $arField["VALUE"]) && strlen($arField["VALUE"]["TITLE"]) > 0
-					&& array_key_exists("ID", $arField["VALUE"]) && strlen($arField["VALUE"]["ID"]) > 0
+					&& array_key_exists("TITLE", $arField["VALUE"]) && $arField["VALUE"]["TITLE"] <> ''
+					&& array_key_exists("ID", $arField["VALUE"]) && $arField["VALUE"]["ID"] <> ''
 				)
 				{
 					$strResult .= "#row_begin#";
@@ -5828,7 +5890,7 @@ class CCrmLiveFeedComponent
 					$strResult .= "#cell_begin_right#";
 					$strResult .= '<span class="crm-feed-info-text-padding">';
 
-					if (array_key_exists("URL", $arField["VALUE"]) && strlen($arField["VALUE"]["URL"]) > 0)
+					if (array_key_exists("URL", $arField["VALUE"]) && $arField["VALUE"]["URL"] <> '')
 					{
 						$strResult .= '<a href="'.$arField["VALUE"]["URL"].'">'.GetMessage("C_CRM_LF_COMBI_TITLE_ID_VALUE", array("#ID#" => $arField["VALUE"]["ID"], "#TITLE#" => $arField["VALUE"]["TITLE"])).'</a>';
 					}
@@ -5844,7 +5906,7 @@ class CCrmLiveFeedComponent
 
 				break;
 			case "TEXT_ADD":
-				if (strlen($arField["VALUE"]) > 0)
+				if ($arField["VALUE"] <> '')
 				{
 					$strResult .= "#row_begin#";
 					$strResult .= "#cell_begin_left#";
@@ -5860,7 +5922,7 @@ class CCrmLiveFeedComponent
 				break;
 			case "TEXT":
 			default:
-				if (strlen($arField["VALUE"]) > 0)
+				if ($arField["VALUE"] <> '')
 				{
 					$strResult .= "#row_begin#";
 					$strResult .= "#cell_begin_left#";
@@ -5930,93 +5992,93 @@ class CCrmLiveFeedComponent
 	{
 		if (!is_array($value_code))
 		{
-			if (strpos($value_code, "COMBI_") === 0)
+			if (mb_strpos($value_code, "COMBI_") === 0)
 			{
-				$arFieldName = explode("/", substr($value_code, 6));
+				$arFieldName = explode("/", mb_substr($value_code, 6));
 				if (is_array($arFieldName))
 				{
 					$arReturn = array();
 
 					foreach($arFieldName as $fieldName)
 					{
-						if (strpos($fieldName, "EVENT_PARAMS_") === 0)
+						if (mb_strpos($fieldName, "EVENT_PARAMS_") === 0)
 						{
-							$key = substr($fieldName, 13);
+							$key = mb_substr($fieldName, 13);
 						}
-						elseif (strpos($fieldName, "ACTIVITY_") === 0)
+						elseif (mb_strpos($fieldName, "ACTIVITY_") === 0)
 						{
-							$key = substr($fieldName, 9);
+							$key = mb_substr($fieldName, 9);
 						}
-						elseif (strpos($fieldName, "INVOICE_") === 0)
+						elseif (mb_strpos($fieldName, "INVOICE_") === 0)
 						{
-							$key = substr($fieldName, 8);
+							$key = mb_substr($fieldName, 8);
 						}
 						else
 						{
 							$key = $fieldName;
 						}
 
-						if (strpos($key, "CONTACT_ID") !== false)
+						if (mb_strpos($key, "CONTACT_ID") !== false)
 						{
 							$key = "CONTACT_ID";
 						}
-						elseif (strpos($key, "LAST_NAME") !== false)
+						elseif (mb_strpos($key, "LAST_NAME") !== false)
 						{
 							$key = "CONTACT_LAST_NAME";
 						}
-						elseif (strpos($key, "SECOND_NAME") !== false)
+						elseif (mb_strpos($key, "SECOND_NAME") !== false)
 						{
 							$key = "CONTACT_SECOND_NAME";
 						}
-						elseif (strpos($key, "NAME") !== false)
+						elseif (mb_strpos($key, "NAME") !== false)
 						{
 							$key = "CONTACT_NAME";
 						}
-						elseif (strpos($key, "COMPANY_TITLE") !== false)
+						elseif (mb_strpos($key, "COMPANY_TITLE") !== false)
 						{
 							$key = "COMPANY_TITLE";
 						}
-						elseif (strpos($key, "COMPANY_ID") !== false)
+						elseif (mb_strpos($key, "COMPANY_ID") !== false)
 						{
 							$key = "COMPANY_ID";
 						}
 						elseif (
-							strpos($key, "TITLE") !== false
-							|| strpos($key, "ORDER_TOPIC") !== false
-							|| strpos($key, "SUBJECT") !== false
+							mb_strpos($key, "TITLE") !== false
+							|| mb_strpos($key, "ORDER_TOPIC") !== false
+							|| mb_strpos($key, "SUBJECT") !== false
 						)
 						{
 							$key = "TITLE";
 						}
-						elseif (strpos($key, "ENTITY_ID") !== false)
+						elseif (mb_strpos($key, "ENTITY_ID") !== false)
 						{
 							$key = "ENTITY_ID";
 						}
-						elseif (strpos($key, "PHOTO_ID") !== false)
+						elseif (mb_strpos($key, "PHOTO_ID") !== false)
 						{
 							$key = "PHOTO_ID";
 						}
-						elseif (strpos($key, "LOGO_ID") !== false)
+						elseif (mb_strpos($key, "LOGO_ID") !== false)
 						{
 							$key = "LOGO_ID";
 						}
-						elseif (strpos($key, "START_STATUS_ID") !== false)
+						elseif (mb_strpos($key, "START_STATUS_ID") !== false)
 						{
 							$key = "STAGE_ID";
 						}
-						elseif (strpos($key, "FINAL_STATUS_ID") !== false)
+						elseif (mb_strpos($key, "FINAL_STATUS_ID") !== false)
 						{
 							$key = "STAGE_ID";
 						}
-						elseif (strpos($key, "STAGE_ID") !== false)
+						elseif (mb_strpos($key, "STAGE_ID") !== false)
 						{
 							$key = "STAGE_ID";
 						}
-						elseif (strpos($key, "CATEGORY_ID") !== false)
+						elseif (mb_strpos($key, "CATEGORY_ID") !== false)
 						{
 							$key = "CATEGORY_ID";
 						}
-						elseif (strpos($key, "ID") !== false)
+						elseif (mb_strpos($key, "ID") !== false)
 						{
 							$key = "ID";
 						}
@@ -6031,29 +6093,29 @@ class CCrmLiveFeedComponent
 					return $arReturn;
 				}
 			}
-			elseif (strpos($value_code, "EVENT_PARAMS_") === 0)
+			elseif (mb_strpos($value_code, "EVENT_PARAMS_") === 0)
 			{
-				if (is_array($this->eventParams[substr($value_code, 13)]))
+				if (is_array($this->eventParams[mb_substr($value_code, 13)]))
 				{
-					array_walk($this->eventParams[substr($value_code, 13)], array($this, '__htmlspecialcharsbx'));
-					return $this->eventParams[substr($value_code, 13)];
+					array_walk($this->eventParams[mb_substr($value_code, 13)], array($this, '__htmlspecialcharsbx'));
+					return $this->eventParams[mb_substr($value_code, 13)];
 				}
-				elseif(array_key_exists(substr($value_code, 13), $this->eventParams))
+				elseif(array_key_exists(mb_substr($value_code, 13), $this->eventParams))
 				{
-					return htmlspecialcharsbx($this->eventParams[substr($value_code, 13)]);
+					return htmlspecialcharsbx($this->eventParams[mb_substr($value_code, 13)]);
 				}
 				else
 				{
 					return '';
 				}
 			}
-			elseif (strpos($value_code, "ACTIVITY_ONCLICK") === 0)
+			elseif (mb_strpos($value_code, "ACTIVITY_ONCLICK") === 0)
 			{
 				return "BX.CrmActivityEditor.viewActivity('livefeed', ".$this->activity["ID"].", { 'enableInstantEdit':true, 'enableEditButton':true });";
 			}
-			elseif (strpos($value_code, "ACTIVITY_") === 0)
+			elseif (mb_strpos($value_code, "ACTIVITY_") === 0)
 			{
-				$realKey = substr($value_code, 9);
+				$realKey = mb_substr($value_code, 9);
 
 				if (is_array($this->activity[$realKey]))
 				{
@@ -6075,21 +6137,21 @@ class CCrmLiveFeedComponent
 					}
 				}
 			}
-			elseif (strpos($value_code, "INVOICE_") === 0)
+			elseif (mb_strpos($value_code, "INVOICE_") === 0)
 			{
-				if (is_array($this->activity[substr($value_code, 9)]))
+				if (is_array($this->activity[mb_substr($value_code, 9)]))
 				{
-					array_walk($this->invoice[substr($value_code, 8)], array($this, '__htmlspecialcharsbx'));
-					return $this->invoice[substr($value_code, 8)];
+					array_walk($this->invoice[mb_substr($value_code, 8)], array($this, '__htmlspecialcharsbx'));
+					return $this->invoice[mb_substr($value_code, 8)];
 				}
 				else
 				{
-					return htmlspecialcharsbx($this->invoice[substr($value_code, 8)]);
+					return htmlspecialcharsbx($this->invoice[mb_substr($value_code, 8)]);
 				}
 			}
 			else
 			{
-				if (is_array($this->activity[substr($value_code, 9)]))
+				if (is_array($this->activity[mb_substr($value_code, 9)]))
 				{
 					array_walk($this->fields[$value_code], array($this, '__htmlspecialcharsbx'));
 					return $this->fields[$value_code];
@@ -6205,7 +6267,7 @@ class CCrmLiveFeedComponent
 		$arEntityData = array();
 		$errors = array();
 
-		$enableTitle = isset($arPOST['ENABLE_POST_TITLE']) && strtoupper($arPOST['ENABLE_POST_TITLE']) === 'Y';
+		$enableTitle = isset($arPOST['ENABLE_POST_TITLE']) && mb_strtoupper($arPOST['ENABLE_POST_TITLE']) === 'Y';
 		$title = $enableTitle && isset($arPOST['POST_TITLE']) ? $arPOST['POST_TITLE'] : '';
 		$message = isset($arPOST['MESSAGE']) ? htmlspecialcharsback($arPOST['MESSAGE']) : '';
 
@@ -6351,11 +6413,11 @@ class CCrmLiveFeedComponent
 		{
 			foreach($arPOST['SPERM'] as $v => $k)
 			{
-				if(strlen($v) > 0 && is_array($k) && !empty($k))
+				if($v <> '' && is_array($k) && !empty($k))
 				{
 					foreach($k as $vv)
 					{
-						if(strlen($vv) > 0)
+						if($vv <> '')
 						{
 							$arSocnetRights[] = $vv;
 						}
@@ -6552,9 +6614,9 @@ class CCrmLiveFeedComponent
 					{
 						foreach($arSocnetRights as $v)
 						{
-							if(substr($v, 0, 1) == "U")
+							if(mb_substr($v, 0, 1) == "U")
 							{
-								$u = IntVal(substr($v, 1));
+								$u = intval(mb_substr($v, 1));
 								if (
 									$u > 0
 									&& !in_array($u, $arUsers)
@@ -6591,9 +6653,9 @@ class CCrmLiveFeedComponent
 					&& CModule::IncludeModule("im")
 				)
 				{
-					$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0) ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
+					$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
 
-					$strIMMessageTitle = str_replace(Array("\r\n", "\n"), " ", (strlen($title) > 0 ? $title : $message));
+					$strIMMessageTitle = str_replace(Array("\r\n", "\n"), " ", ($title <> '' ? $title : $message));
 
 					if (CModule::IncludeModule("blog"))
 					{
@@ -6682,7 +6744,7 @@ class CCrmLiveFeedComponent
 
 						foreach($arMention as $val)
 						{
-							$val = IntVal($val);
+							$val = intval($val);
 							if (
 								$val > 0
 								&& ($val != $arResult['USER_ID'])

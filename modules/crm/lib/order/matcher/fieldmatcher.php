@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Order\Matcher;
 
 use Bitrix\Crm\EntityBankDetail;
 use Bitrix\Crm\EntityRequisite;
+use Bitrix\Crm\Format\PersonNameFormatter;
 use Bitrix\Crm\Order\Matcher\Internals\OrderPropsMatchTable;
 use Bitrix\Crm\RequisiteAddress;
 use Bitrix\Main\ArgumentNullException;
@@ -100,7 +101,20 @@ class FieldMatcher
 		{
 			if (isset($fields[$match['CRM_FIELD_CODE']]))
 			{
-				$values[$match['SALE_PROP_ID']] = $fields[$match['CRM_FIELD_CODE']];
+				if (
+					(int)$entityTypeId === \CCrmOwnerType::Contact
+					&& $match['CRM_FIELD_CODE'] === 'FULL_NAME'
+				)
+				{
+					$values[$match['SALE_PROP_ID']] = $entityClassName::PrepareFormattedName(
+						$fields,
+						PersonNameFormatter::LastFirstSecondFormat
+					);
+				}
+				else
+				{
+					$values[$match['SALE_PROP_ID']] = $fields[$match['CRM_FIELD_CODE']];
+				}
 			}
 		}
 

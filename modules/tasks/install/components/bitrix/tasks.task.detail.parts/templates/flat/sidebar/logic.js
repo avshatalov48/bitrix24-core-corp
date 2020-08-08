@@ -26,6 +26,7 @@ BX.namespace("Tasks.Component");
 		this.stageId = parseInt(this.parameters.stageId);
 		this.stages = this.parameters.stages || {};
 		this.query = new BX.Tasks.Util.Query();
+		this.taskLimitExceeded = this.parameters.taskLimitExceeded;
 
 		this.initDeadline();
 		this.initReminder();
@@ -301,11 +302,15 @@ BX.Tasks.Component.TaskViewSidebar.prototype.calculateTextColor = function(baseC
 
 BX.Tasks.Component.TaskViewSidebar.prototype.onToggleImAuditor = function()
 {
-	if(this.isAmAuditor) // i am auditor now, it will be leaving
+	if (this.isAmAuditor) // i am auditor now, it will be leaving
 	{
 		BX.Tasks.confirm(BX.message('TASKS_TTDP_TEMPLATE_USER_VIEW_LEAVE_AUDITOR_CONFIRM')).then(function(){
 			this.syncAuditor();
 		}.bind(this));
+	}
+	else if (this.taskLimitExceeded)
+	{
+		BX.UI.InfoHelper.show('limit_tasks_observers_participants');
 	}
 	else
 	{
@@ -485,7 +490,7 @@ BX.Tasks.Component.TaskViewSidebar.prototype.syncAuditor = function()
 
 	BX.Tasks.Component.TaskViewSidebar.prototype.initMark = function()
 	{
-		if (!this.can["EDIT"])
+		if (!this.can["RATE"])
 		{
 			return;
 		}
@@ -500,6 +505,12 @@ BX.Tasks.Component.TaskViewSidebar.prototype.syncAuditor = function()
 
 	BX.Tasks.Component.TaskViewSidebar.prototype.onMarkClick = function()
 	{
+		if (this.taskLimitExceeded)
+		{
+			BX.UI.InfoHelper.show('limit_tasks_rate');
+			return;
+		}
+
 		BX.TaskGradePopup.show(
 			this.taskId,
 			this.layout.mark,

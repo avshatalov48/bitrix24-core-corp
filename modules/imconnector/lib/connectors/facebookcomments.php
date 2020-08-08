@@ -1,23 +1,17 @@
 <?php
 namespace Bitrix\ImConnector\Connectors;
 
-use \Bitrix\Main\UserTable,
-	\Bitrix\Main\Loader,
-	\Bitrix\Main\Localization\Loc,
-	\Bitrix\ImConnector\Chat,
-	\Bitrix\ImConnector\Status,
-	\Bitrix\ImConnector\Output,
-	\Bitrix\ImConnector\Library,
-	\Bitrix\ImConnector\Connector,
-	\Bitrix\ImOpenLines\Model\SessionTable;
+use \Bitrix\Main\Localization\Loc;
+use	\Bitrix\ImConnector\Chat,
+	\Bitrix\ImConnector\Library;
 
 Loc::loadMessages(__FILE__);
 
 /**
- * Class Instagram
+ * Class FacebookComments
  * @package Bitrix\ImConnector\Connectors
  */
-class FacebookComments
+class FacebookComments extends Base
 {
 	/**
 	 * @param $value

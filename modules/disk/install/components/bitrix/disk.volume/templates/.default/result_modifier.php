@@ -237,7 +237,7 @@ if (!isset($folderTitleFormat) || !is_callable($folderTitleFormat))
 						'<span class="bx-disk-volume-im-avatar-default '.$specific['chat']['style'].'" '.(!empty($specific['chat']['avatar']) ? 'style="background-image: url('.$specific['chat']['avatar'].')"' : '').'></span>'.
 					'</span>'.
 					'<span class="tasks-grid-username-inner">'.
-						Loc::getMessage('DISK_VOLUME_IM_'. strtoupper($specific['chat']['type'])).': '.
+						Loc::getMessage('DISK_VOLUME_IM_'.mb_strtoupper($specific['chat']['type'])).': '.
 						$row['TITLE'].
 					'</span>'.
 					'</a>'.
@@ -488,7 +488,13 @@ if (!isset($fileUsingCountTitle) || !is_callable($fileUsingCountTitle))
 									});
 									domItems.push(item);
 								}
-								var popup = new BX.PopupWindow("popupMenuFileUsing{$rowId}", BX("bx-disk-volume-file-using-{$rowId}"),
+								var popupId = "popupMenuFileUsing{$rowId}";
+								var popup = BX.Main.PopupManager.getPopupById(popupId);
+								if (popup !== null && popup instanceof BX.Main.Popup)
+								{
+									popup.destroy();
+								}
+								popup = new BX.Main.Popup(popupId, BX("bx-disk-volume-file-using-{$rowId}"),
 									{
 										lightShadow : true,
 										offsetTop: 0,

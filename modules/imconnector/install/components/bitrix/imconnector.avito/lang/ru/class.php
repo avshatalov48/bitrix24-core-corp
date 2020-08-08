@@ -9,3 +9,4 @@ $MESS["IMCONNECTOR_COMPONENT_AVITO_OK_CONNECT"] = "Тестовое соедин
 $MESS["IMCONNECTOR_COMPONENT_AVITO_NO_CONNECT"] = "Тестовое соединение с указанными данными не удалось совершить";
 $MESS["IMCONNECTOR_COMPONENT_AVITO_OK_REGISTER"] = "Регистрация прошла успешно";
 $MESS["IMCONNECTOR_COMPONENT_AVITO_NO_REGISTER"] = "Во время регистрации произошла ошибка";
+$MESS["IMCONNECTOR_COMPONENT_AVITO_ERROR_REQUEST_INFORMATION_FROM_SERVER"] = "Произошла ошибка на сервере";

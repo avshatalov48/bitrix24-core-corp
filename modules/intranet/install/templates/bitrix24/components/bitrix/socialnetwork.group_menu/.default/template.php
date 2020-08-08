@@ -56,14 +56,14 @@ if (!empty($arResult["bShowRequestSentMessage"]))
 			SGMPathToRequestUser: '<?=CUtil::JSUrlEscape(
 				!empty($arResult["Urls"]["Invite"])
 					? $arResult["Urls"]["Invite"]
-					: $arResult["Urls"]["Edit"].(strpos($arResult["Urls"]["Edit"], "?") !== false ? "&" : '?')."tab=invite"
+					: $arResult["Urls"]["Edit"].(mb_strpos($arResult["Urls"]["Edit"], "?") !== false ? "&" : '?')."tab=invite"
 			)?>',
 			SGMPathToUserRequestGroup: '<?=CUtil::JSUrlEscape($arResult["Urls"]["UserRequestGroup"])?>',
 			SGMPathToUserLeaveGroup: '<?=CUtil::JSUrlEscape($arResult["Urls"]["UserLeaveGroup"])?>',
 			SGMPathToRequests: '<?=CUtil::JSUrlEscape($arResult["Urls"]["GroupRequests"])?>',
 			SGMPathToRequestsOut: '<?=CUtil::JSUrlEscape($arResult["Urls"]["GroupRequestsOut"])?>',
 			SGMPathToMembers: '<?=CUtil::JSUrlEscape($arResult["Urls"]["GroupUsers"])?>',
-			SGMPathToEdit: '<?=CUtil::JSUrlEscape($arResult["Urls"]["Edit"].(strpos($arResult["Urls"]["Edit"], "?") !== false ? "&" : '?')."tab=edit")?>',
+			SGMPathToEdit: '<?=CUtil::JSUrlEscape($arResult["Urls"]["Edit"].(mb_strpos($arResult["Urls"]["Edit"], "?") !== false ? "&" : '?')."tab=edit")?>',
 			SGMPathToDelete: '<?=CUtil::JSUrlEscape($arResult["Urls"]["Delete"])?>',
 			SGMPathToFeatures: '<?=CUtil::JSUrlEscape($arResult["Urls"]["Features"])?>',
 			SGMPathToCopy: '<?=CUtil::JSUrlEscape($arResult["Urls"]["Copy"])?>'
@@ -84,6 +84,7 @@ if (!empty($arResult["bShowRequestSentMessage"]))
 			userIsAutoMember: <?=(isset($arResult["CurrentUserPerms"]["UserIsAutoMember"]) && $arResult["CurrentUserPerms"]["UserIsAutoMember"] ? 'true' : 'false')?>,
 			editFeaturesAllowed: <?=(\Bitrix\Socialnetwork\Item\Workgroup::getEditFeaturesAvailability() ? 'true' : 'false')?>,
 			urls: {
+				group: '<?=CUtil::JSEscape(!empty($arResult["Urls"]["General"]) ? $arResult["Urls"]["General"] : $arResult["Urls"]["View"])?>',
 				groupsList: '<?=CUtil::JSEscape($arResult["Urls"]["GroupsList"])?>'
 			}
 		});
@@ -96,7 +97,7 @@ if (!empty($arResult["bShowRequestSentMessage"]))
 			<a
 					href="<?=$arResult["Urls"]["View"]?>"
 					class="profile-menu-avatar group-default-avatar"
-			<?if (strlen($arResult["Group"]["IMAGE_FILE"]["src"]) > 0):?>
+			<?if ($arResult["Group"]["IMAGE_FILE"]["src"] <> ''):?>
 				style="background:url('<?=$arResult["Group"]["IMAGE_FILE"]["src"]?>') no-repeat center center; background-size: cover"
 			<?endif;?>
 			></a>
@@ -104,10 +105,10 @@ if (!empty($arResult["bShowRequestSentMessage"]))
 				<a href="<?=$arResult["Urls"]["View"]?>" class="profile-menu-name"><?=$arResult["Group"]["NAME"]?></a>
 				<div class="profile-menu-type">
 					<span class="profile-menu-type-name">
-						<span class="profile-menu-type-name-item"><?=(is_array($arResult['Group']['Type']) && !empty($arResult['Group']['Type']) && !empty($arResult['Group']['Type']['NAME']) ? (LANGUAGE_ID == 'de' ? $arResult['Group']['Type']['NAME'] : strtolower($arResult['Group']['Type']['NAME'])) : '')?></span><?
+						<span class="profile-menu-type-name-item"><?=(is_array($arResult['Group']['Type']) && !empty($arResult['Group']['Type']) && !empty($arResult['Group']['Type']['NAME']) ? (LANGUAGE_ID == 'de'? $arResult['Group']['Type']['NAME'] : mb_strtolower($arResult['Group']['Type']['NAME'])) : '')?></span><?
 						if ($arResult["CurrentUserPerms"]["UserCanModifyGroup"])
 						{
-							?><a href="<?=htmlspecialcharsbx($arResult["Urls"]["Edit"].(strpos($arResult["Urls"]["Edit"], "?") !== false ? "&" : '?')."tab=edit")?>" class="profile-menu-type-icon"></a><?
+							?><a href="<?=htmlspecialcharsbx($arResult["Urls"]["Edit"].(mb_strpos($arResult["Urls"]["Edit"], "?") !== false ? "&" : '?')."tab=edit")?>" class="profile-menu-type-icon"></a><?
 						}
 					?></span>
 				</div><?
@@ -153,7 +154,13 @@ if (!empty($arResult["bShowRequestSentMessage"]))
 				{
 					?><span id="bx-group-menu-join-cont" style="padding-left: 10px;"><?
 
-						if ($arResult['Group']['OPENED'] == 'Y')
+						if (
+							$arResult['Group']['OPENED'] == 'Y'
+							|| (
+								$arResult["CurrentUserPerms"]["UserRole"] == UserToGroupTable::ROLE_REQUEST
+								&& $arResult["CurrentUserPerms"]["InitiatedByType"] == UserToGroupTable::INITIATED_BY_GROUP
+							)
+						)
 						{
 							?><button class="ui-btn ui-btn-sm ui-btn-primary" id="bx-group-menu-join" bx-request-url="<?=$arResult["Urls"]["UserRequestGroup"]?>"><?=Loc::getMessage('SONET_SGM_T_BUTTON_JOIN')?></button><?
 						}

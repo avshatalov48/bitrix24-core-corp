@@ -11,7 +11,7 @@
 		BX.Timeman.Component.BaseComponent.apply(this, arguments);
 		this.isSlider = options.isSlider;
 		this.selfContainerSelector = options.containerSelector;
-		this.breakTimeLink = this.selectOneByRole('timeman-shift-link-break-time');
+		this.breakTimeLink = this.selectOneByRole('timeman-shift-break-time');
 		this.workTimeStartLink = this.selectOneByRole('timeman-shift-link-start-time');
 		this.workTimeEndLink = this.selectOneByRole('timeman-shift-link-end-time');
 		this.saveButton = this.selectOneByRole('timeman-shift-btn-save');
@@ -76,6 +76,12 @@
 			this.workTimeEndInput.value = BX.Timeman.Component.Schedule.ShiftEdit.timeEndClockHiddenInput.value;
 			this.updateDurationWithoutBreak();
 		},
+		setBreakSeconds: function(seconds)
+		{
+			this.breakTimeLink.value = this.beautifyTime(seconds);
+			this.breakTimeToggle.textContent = this.beautifyTime(seconds);
+			this.initDurationWithoutBreak();
+		},
 		updateDurationWithoutBreak: function ()
 		{
 			this.setDeltaTimeTo(this.durationWithoutBreak, BX.Timeman.Component.Schedule.ShiftEdit.clockStartEndDeltaTime, this.breakTimeLink);
@@ -122,7 +128,7 @@
 				{
 					q[0] = parseInt(q[0], 10) + 12;
 				}
-				if (mt === 'am' && q[0] === 12)
+				if (mt === 'am' && parseInt(q[0]) === 12)
 				{
 					q[0] = 0;
 				}

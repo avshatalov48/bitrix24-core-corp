@@ -1,5 +1,4 @@
-<? use Bitrix\Main\Localization\Loc;
-
+<?
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
 /** @var array $arParams */
@@ -15,12 +14,15 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var \Bitrix\Disk\Internals\BaseComponent $component */
 
 use Bitrix\Main\UI;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Disk\Ui\LazyLoad;
 
 UI\Extension::load([
 	'ui.tooltip',
 	'ui.viewer',
 	'disk.document',
 	'disk.viewer.actions',
+	'loader'
 ]);
 
 if (empty($arResult['IMAGES']) && empty($arResult['FILES']) && empty($arResult['DELETED_FILES']))
@@ -29,68 +31,125 @@ if (empty($arResult['IMAGES']) && empty($arResult['FILES']) && empty($arResult['
 
 $this->IncludeLangFile("show.php");
 include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
-?><div id="disk-attach-block-<?=$arResult['UID']?>" class="feed-com-files diskuf-files-entity"><?
+?><div id="disk-attach-block-<?=$arResult['UID']?>" class="feed-com-files diskuf-files-entity diskuf-files-toggle-container"><?
 	if (!empty($arResult['IMAGES']))
 	{
 		$jsIds = "";
 
 		?><div class="feed-com-files">
-			<div class="feed-com-files-title"><?=GetMessage("WDUF_PHOTO")?></div>
 			<div class="feed-com-files-cont"><?
+
+				$counter = 0;
+
 				foreach($arResult['IMAGES'] as $id => $file)
 				{
-					?><span class="feed-com-files-photo feed-com-files-photo-load" id="disk-attach-<?=$file['ID']?>"<?
-						?> style="width:<?=$file["THUMB"]["width"]?>px;height:<?=$file["THUMB"]["height"]?>px;"><?
+					$counter++;
 
-						$id = "disk-attach-image-".$file['ID'];
-						if (
-							isset($arParams["LAZYLOAD"]) 
-							&& $arParams["LAZYLOAD"] == "Y"
-						)
+					$id = "disk-attach-image-".$file['ID'];
+
+					if ($counter <= $arResult['IMAGES_LIMIT'])
+					{
+						$itemClassList = [
+							'feed-com-files-photo'
+						];
+
+						if ($counter == $arResult['IMAGES_LIMIT'])
 						{
-							$jsIds .= $jsIds !== "" ? ', "'.$id.'"' : '"'.$id.'"';
+							$itemClassList[] = 'disk-uf-file-photo-last';
 						}
 
-						?><img id="<?=$id?>" onload="this.parentNode.className='feed-com-files-photo';" <?
-						if (
-							isset($arParams["LAZYLOAD"]) 
-							&& $arParams["LAZYLOAD"] == "Y"
-						)
-						{
-							?> src="<?=\Bitrix\Disk\Ui\LazyLoad::getBase64Stub()?>" <?
-							?> data-thumb-src="<?=$file["THUMB"]["src"] ?>"<?
-						}
-						else
-						{
-							?> src="<?=$file["THUMB"]["src"] ?>" <?
-						}
-						?> width="<?=$file["THUMB"]["width"]?>"<?
-						?> height="<?=$file["THUMB"]["height"]?>"<?
-						?> border="0"<?
-						?> alt="<?=htmlspecialcharsbx($file["NAME"])?>"<?
-						?> <?=$file['ATTRIBUTES_FOR_VIEWER']?> <?
-						?> bx-attach-file-id="<?=$file['FILE_ID']?>"<?
-						if ($file['XML_ID']): ?> bx-attach-xml-id="<?=$file['XML_ID']?>"<?endif;
-						if (!empty($file["ORIGINAL"]))
-						{
-							?> data-bx-full="<?=$file["ORIGINAL"]["src"]?>"<?
-							?> data-bx-full-width="<?=$file["ORIGINAL"]["width"]?>" <?
-							?> data-bx-full-height="<?=$file["ORIGINAL"]["height"]?>"<?
-							?> data-bx-full-size="<?=$file["SIZE"]?>"<?
-						}
+						?><span class="<?=implode(' ', $itemClassList)?>" id="disk-attach-<?=$file['ID']?>"<? ?>><?
+
+							if (
+								isset($arParams["LAZYLOAD"])
+								&& $arParams["LAZYLOAD"] == "Y"
+							)
+							{
+								$jsIds .= $jsIds !== "" ? ', "'.$id.'"' : '"'.$id.'"';
+							}
+
+							?><img <?
+								?> id="<?=$id?>"<?
+								if (
+									isset($arParams["LAZYLOAD"])
+									&& $arParams["LAZYLOAD"] == "Y"
+								)
+								{
+									?> src="<?=LazyLoad::getBase64Stub()?>" <?
+									?> data-thumb-src="<?=$file["THUMB"]["src"] ?>"<?
+								}
+								else
+								{
+									?> src="<?=$file["THUMB"]["src"] ?>" <?
+								}
+								?> width="<?=$file["THUMB"]["width"]?>"<?
+								?> height="<?=$file["THUMB"]["height"]?>"<?
+								?> border="0"<?
+								?> alt="<?=htmlspecialcharsbx($file["NAME"])?>"<?
+								?> <?=$file['ATTRIBUTES_FOR_VIEWER']?> <?
+								?> bx-attach-file-id="<?=$file['FILE_ID']?>"<?
+								if ($file['XML_ID']): ?> bx-attach-xml-id="<?=$file['XML_ID']?>"<?endif;
+								if (!empty($file["ORIGINAL"]))
+								{
+									?> data-bx-full="<?=$file["ORIGINAL"]["src"]?>"<?
+									?> data-bx-full-width="<?=$file["ORIGINAL"]["width"]?>" <?
+									?> data-bx-full-height="<?=$file["ORIGINAL"]["height"]?>"<?
+									?> data-bx-full-size="<?=$file["SIZE"]?>"<?
+								}
+							?> /><?
+
+							if($file['IS_LOCKED'])
+							{
+								?><div class='disk-locked-document-block-icon-small-image'></div><?
+							}
+
+							if (
+								$counter == $arResult['IMAGES_LIMIT']
+								&& $arResult['IMAGES_COUNT'] > $arResult['IMAGES_LIMIT']
+							)
+							{
+								?><span class="disk-uf-file-value">+<?=($arResult['IMAGES_COUNT'] - $arResult['IMAGES_LIMIT'])?></span><?
+							}
+
+						?></span><?
+					}
+					else
+					{
+						?><img<?
+							?> style="display: none;"<?
+							?> id="<?=$id?>"<?
+							?> src="<?=LazyLoad::getBase64Stub()?>" <?
+							?> width="<?=$file["THUMB"]["width"]?>"<?
+							?> height="<?=$file["THUMB"]["height"]?>"<?
+							?> border="0"<?
+							?> alt="<?=htmlspecialcharsbx($file["NAME"])?>"<?
+							?> <?=$file['ATTRIBUTES_FOR_VIEWER']?> <?
+							?> bx-attach-file-id="<?=$file['FILE_ID']?>"<?
+							if ($file['XML_ID']): ?> bx-attach-xml-id="<?=$file['XML_ID']?>"<?endif;
+							if (!empty($file["ORIGINAL"]))
+							{
+								?> data-bx-full="<?=$file["ORIGINAL"]["src"]?>"<?
+								?> data-bx-full-width="<?=$file["ORIGINAL"]["width"]?>" <?
+								?> data-bx-full-height="<?=$file["ORIGINAL"]["height"]?>"<?
+								?> data-bx-full-size="<?=$file["SIZE"]?>"<?
+							}
 						?> /><?
-					?>
-					<? if($file['IS_LOCKED']) { ?>
-						<div class='disk-locked-document-block-icon-small-image'></div>
-					<? } ?>
-					</span><?
+					}
 				}
 			?></div>
-		</div><?
+		</div>
+		<?
 
-		if (strlen($jsIds) > 0)
+		if ($jsIds <> '')
 		{
 			?><script>BX.LazyLoad.registerImages([<?=$jsIds?>], null, {dataSrcName: "thumbSrc"});</script><?
+		}
+
+		if ($arParams['USE_TOGGLE_VIEW'] == 'Y')
+		{
+			?>
+			<a href="javascript:void(0);" class="disk-uf-file-switch-control" data-bx-view-type="grid"><?=Loc::getMessage('DISK_UF_FILE_SHOW_GRID')?></a>
+			<?
 		}
 	}
 
@@ -98,7 +157,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 	{
 		?>
 		<div class="feed-com-files">
-			<div class="feed-com-files-title"><?=GetMessage('WDUF_FILES')?></div>
+			<div class="feed-com-files-title"><?=Loc::getMessage('WDUF_FILES')?></div>
 			<div class="feed-com-files-cont"><?
 
 		$className = 'feed-com-file-wrap'.(count($arResult['FILES']) >= 5 ? ' feed-com-file-wrap-fullwidth' : '');
@@ -174,9 +233,9 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 					if($file['EDITABLE'] && $file['CAN_UPDATE'] && (!$file['IS_LOCKED'] || $file['IS_LOCKED_BY_SELF']) && !$arParams['DISABLE_LOCAL_EDIT']) {
 						?><a class="feed-con-file-changes-link" href="#" onclick="top.BX.UI.Viewer.Instance.runActionByNode(BX('disk-attach-<?=$file['ID']?>'), 'edit', {
 							modalWindow: BX.Disk.openBlankDocumentPopup()
-						}); return false;"><?= GetMessage('WDUF_FILE_EDIT') ?></a><?
+						}); return false;"><?=Loc::getMessage('WDUF_FILE_EDIT') ?></a><?
 					}
-					?><span class="feed-con-file-changes-link feed-con-file-changes-link-more" onclick="return DiskActionFileMenu('<?= $file['ID'] ?>', this, BX.Disk.Files['<?= $file['ID'] ?>']); return false;"><?= GetMessage('WDUF_MORE_ACTIONS') ?></span>
+					?><span class="feed-con-file-changes-link feed-con-file-changes-link-more" onclick="return DiskActionFileMenu('<?= $file['ID'] ?>', this, BX.Disk.Files['<?= $file['ID'] ?>']); return false;"><?=Loc::getMessage('WDUF_MORE_ACTIONS') ?></span>
 				</span>
 			</div><?      
 		} 
@@ -193,9 +252,9 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 					?>><?=htmlspecialcharsbx($file['NAME'])?><?
 					?></span><?
 					?><span class="feed-com-file-size"><?=$file['SIZE']?></span>
-					<span class="feed-con-file-text-notice" href="#"><?= GetMessage('DISK_UF_FILE_IS_DELETED') ?></span><?
+					<span class="feed-con-file-text-notice" href="#"><?=Loc::getMessage('DISK_UF_FILE_IS_DELETED') ?></span><?
 					if($file['CAN_RESTORE'] && $file['TRASHCAN_URL']) {
-						?><a class="feed-con-file-changes-link" href="<?= $file['TRASHCAN_URL'] ?>"><?= GetMessage('DISK_UF_FILE_RESTORE') ?></a><?
+						?><a class="feed-con-file-changes-link" href="<?= $file['TRASHCAN_URL'] ?>"><?=Loc::getMessage('DISK_UF_FILE_RESTORE') ?></a><?
 					} ?>
 				</span>
 			</div><?
@@ -213,19 +272,33 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 	{
 		?>
 		<div class="disk-uf-file-download-archive">
-			<a href="<?=$arResult['DOWNLOAD_ARCHIVE_URL']?>" class="disk-uf-file-download-archive-text"><?=GetMessage('WDUF_FILE_DOWNLOAD_ARCHIVE')?></a>
+			<a href="<?=$arResult['DOWNLOAD_ARCHIVE_URL']?>" class="disk-uf-file-download-archive-text"><?=Loc::getMessage('WDUF_FILE_DOWNLOAD_ARCHIVE')?></a>
 			<span class="disk-uf-file-download-archive-size">(<?=CFile::FormatSize($arResult['COMMON_SIZE'])?>)</span>
 		</div>
 		<?
 	}
 ?>
 </div>
-<? if($arParams['DISABLE_LOCAL_EDIT']){ ?>
+
 <script type="text/javascript">
-	BX.Disk.Document.Local.Instance.disable();
-	if(!BX.message('disk_document_service'))
-	{
-		BX.message({disk_document_service: 'g'});
-	}
+	BX.ready(function() {
+		new BX.Disk.UFShowController({
+			nodeId: 'disk-attach-block-<?=$arResult['UID']?>',
+			signedParameters: '<?=\Bitrix\Main\Component\ParameterSigner::signParameters($this->getComponent()->getName(), $arResult['SIGNED_PARAMS'])?>'
+		});
+		<?
+
+		if($arParams['DISABLE_LOCAL_EDIT'])
+		{
+			?>
+			BX.Disk.Document.Local.Instance.disable();
+			if(!BX.message('disk_document_service'))
+			{
+				BX.message({disk_document_service: 'g'});
+			}
+			<?
+		}
+		?>
+	});
 </script>
-<? } ?>
+

@@ -9,10 +9,12 @@ $MESS["UF_INTERESTS"] = "Interests";
 $MESS["UF_LINKEDIN"] = "LinkedIn";
 $MESS["UF_PHONE_INNER"] = "Extension number";
 $MESS["UF_SKILLS"] = "Skills";
-$MESS["UF_SKYPE"] = "Skype";
+$MESS["UF_SKYPE"] = "Skype name";
+$MESS["UF_SKYPE_LINK"] = "Skype chat link";
 $MESS["UF_STATE_HISTORY"] = "State history";
 $MESS["UF_STATE_LAST"] = "Last state";
 $MESS["UF_TWITTER"] = "Twitter";
 $MESS["UF_WEB_SITES"] = "Other websites";
 $MESS["UF_XING"] = "Xing";
+$MESS["UF_ZOOM"] = "Zoom";
 ?>

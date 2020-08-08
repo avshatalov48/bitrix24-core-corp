@@ -1,15 +1,15 @@
 <?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 
-if (!isset($_REQUEST["ldap_user_id"]) || strlen($_REQUEST["ldap_user_id"]) != 32)
+if (!isset($_REQUEST["ldap_user_id"]) || mb_strlen($_REQUEST["ldap_user_id"]) != 32)
 	LocalRedirect("/");
 
 IncludeModuleLangFile(__FILE__);
 
-$bCgi = (stristr(php_sapi_name(), "cgi") !== false);
+$bCgi = (mb_stristr(php_sapi_name(), "cgi") !== false);
 
 if ($USER->IsAuthorized())
 {
-	if (isset($_REQUEST["back_url"]) && strlen($_REQUEST["back_url"]) > 0)
+	if (isset($_REQUEST["back_url"]) && $_REQUEST["back_url"] <> '')
 		LocalRedirect($_REQUEST["back_url"]);
 	else
 		LocalRedirect("/");

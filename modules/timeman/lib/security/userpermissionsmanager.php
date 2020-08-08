@@ -54,8 +54,12 @@ class UserPermissionsManager
 	 * @param \CUser $user
 	 * @return mixed
 	 */
-	public static function getInstanceByUser($user)
+	public static function getInstanceByUser($user): UserPermissionsManager
 	{
+		if (!$user || !is_object($user) || !($user instanceof \CUser))
+		{
+			return new static(new AccessDeniedOperationChecker(), null);
+		}
 		if (static::$managers[$user->getId()] === null)
 		{
 			static::$managers[$user->getId()] = new static(new UserOperationChecker($user), $user->getId());
@@ -189,19 +193,19 @@ class UserPermissionsManager
 		{
 			return true;
 		}
-		if (preg_match('#U[0-9]+#', $entityCode) === 1)
+		if (EntityCodesHelper::isUser($entityCode))
 		{
-			$userId = (int)substr($entityCode, 1);
+			$userId = EntityCodesHelper::getUserId($entityCode);
 			return $this->currentUserId !== $userId && $this->canUpdateWorktime($userId);
 		}
-		elseif (preg_match('#DR[0-9]+#', $entityCode) === 1)
+		elseif (EntityCodesHelper::isDepartment($entityCode))
 		{
 			if (!\Bitrix\Main\Loader::includeModule('intranet'))
 			{
 				return false;
 			}
-			$departmentId = (int)substr($entityCode, 2);
-			$subordinateDepartments = array_map('intval', CIntranetUtils::GetSubordinateDepartments($this->currentUserId, true));
+			$departmentId = EntityCodesHelper::getDepartmentId($entityCode);
+			$subordinateDepartments = array_map('intval', CIntranetUtils::getSubordinateDepartments($this->currentUserId, true));
 			return in_array($departmentId, $subordinateDepartments, true) || $this->canUpdateWorktimeAll();
 		}
 		return false;
@@ -278,7 +282,7 @@ class UserPermissionsManager
 
 	private function getAccessUserIds()
 	{
-		return CTimeMan::GetAccess();
+		return CTimeMan::getAccess();
 	}
 
 	private function getUserIdsAccessibleToWrite()

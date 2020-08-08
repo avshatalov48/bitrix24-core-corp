@@ -104,8 +104,10 @@ class Input
 	 * Processing of the connectors accepted data from the server.
 	 *
 	 * @return Result
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
-	public function reception()
+	public function reception(): Result
 	{
 		if($this->result->isSuccess())
 		{

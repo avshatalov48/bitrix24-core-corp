@@ -370,7 +370,7 @@ class CCrmDedupeGridComponent extends CBitrixComponent
 					$this->arResult['HEADERS'][] =[
 						'id' => $name,
 						'name' => isset($typeDescriptions[$typeID][$scope]) ? $typeDescriptions[$typeID][$scope] : $name,
-						'sort' => strtolower($name),
+						'sort' => mb_strtolower($name),
 						'extras' => [
 							'sortTypeId' => $typeID,
 							'typeId' => $typeID,

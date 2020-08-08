@@ -2,6 +2,7 @@
 
 namespace Bitrix\DocumentGenerator;
 
+use Bitrix\DocumentGenerator\Body\Docx;
 use Bitrix\DocumentGenerator\Model\FieldTable;
 use Bitrix\DocumentGenerator\Model\FileTable;
 use Bitrix\DocumentGenerator\Model\TemplateProviderTable;
@@ -31,10 +32,10 @@ use Bitrix\Main\Web\Uri;
  * @property-read string CREATE_TIME
  * @property-read string UPDATE_TIME
  */
-final class Template
+class Template
 {
-	const MAIN_PROVIDER_PLACEHOLDER = 'SOURCE';
-	const DOCUMENT_PROVIDER_PLACEHOLDER = 'DOCUMENT';
+	public const MAIN_PROVIDER_PLACEHOLDER = 'SOURCE';
+	public const DOCUMENT_PROVIDER_PLACEHOLDER = 'DOCUMENT';
 
 	protected $data = [];
 	protected $body;
@@ -60,27 +61,29 @@ final class Template
 	 * @param array $data
 	 * @return Template
 	 */
-	public static function loadFromArray(array $data)
+	public static function loadFromArray(array $data): Template
 	{
-		return new static($data);
+		$templateClassName = Driver::getInstance()->getTemplateClassName();
+
+		return new $templateClassName($data);
 	}
 
 	/**
 	 * @param int $id
 	 * @return bool|Template
 	 */
-	public static function loadById($id)
+	public static function loadById($id): ?Template
 	{
 		if($id > 0)
 		{
 			$templateData = TemplateTable::getById($id)->fetch();
 			if($templateData)
 			{
-				return new static($templateData);
+				return static::loadFromArray($templateData);
 			}
 		}
 
-		return false;
+		return null;
 	}
 
 	public function __get($name)
@@ -94,18 +97,27 @@ final class Template
 	}
 
 	/**
-	 * @return Body|false
+	 * @return Body
 	 */
-	public function getBody()
+	public function getBodyClassName(): string
 	{
-		if($this->body === null)
+		if(!$this->BODY_TYPE || !is_a($this->BODY_TYPE, Body::class, true))
 		{
-			$this->body = false;
+			return Docx::class;
+		}
 
-			if($this->FILE_ID && $this->BODY_TYPE)
-			{
-				$this->body = new $this->BODY_TYPE(FileTable::getContent($this->FILE_ID));
-			}
+		return $this->BODY_TYPE;
+	}
+
+	/**
+	 * @return Body|null
+	 */
+	public function getBody(): ?Body
+	{
+		if($this->body === null && $this->FILE_ID)
+		{
+			$bodyClassName = $this->getBodyClassName();
+			$this->body = new $bodyClassName(FileTable::getContent($this->FILE_ID));
 		}
 
 		return $this->body;
@@ -122,7 +134,7 @@ final class Template
 	/**
 	 * @return array
 	 */
-	public function getFields()
+	public function getFields(): array
 	{
 		if($this->fields === null)
 		{
@@ -181,7 +193,7 @@ final class Template
 	 * @param string $placeholder
 	 * @return array
 	 */
-	protected static function getLevelsFromPlaceholder($placeholder)
+	protected static function getLevelsFromPlaceholder(string $placeholder): array
 	{
 		$names = [];
 		$count = 10;
@@ -210,7 +222,7 @@ final class Template
 	 * @param array $fields
 	 * @return array
 	 */
-	protected function getPriorityField(array $fields)
+	protected function getPriorityField(array $fields): array
 	{
 		$resultField = [];
 		$templateField = $providerField = $defaultField = null;
@@ -261,7 +273,7 @@ final class Template
 	 * @param string $prefix
 	 * @return string
 	 */
-	public function getFileName($prefix = '')
+	public function getFileName(string $prefix = ''): string
 	{
 		$name = '';
 		if(!empty($prefix))
@@ -286,7 +298,7 @@ final class Template
 	 * @param bool $combineExtended
 	 * @return array
 	 */
-	public function getDataProviders($combineExtended = false)
+	public function getDataProviders($combineExtended = false): array
 	{
 		if($this->providers === null)
 		{
@@ -311,7 +323,7 @@ final class Template
 	/**
 	 * @return array
 	 */
-	public function getUsers()
+	public function getUsers(): array
 	{
 		if($this->users === null)
 		{
@@ -334,9 +346,9 @@ final class Template
 	 * @param string $sourceType
 	 * @return Template
 	 */
-	public function setSourceType($sourceType)
+	public function setSourceType($sourceType): Template
 	{
-		$sourceType = strtolower($sourceType);
+		$sourceType = mb_strtolower($sourceType);
 		if(DataProviderManager::checkProviderName($sourceType, $this->MODULE_ID))
 		{
 			$this->sourceType = $sourceType;
@@ -357,7 +369,7 @@ final class Template
 	 * @param bool $absolute
 	 * @return Uri
 	 */
-	public function getDownloadUrl($absolute = false)
+	public function getDownloadUrl(bool $absolute = false): Uri
 	{
 		$link = UrlManager::getInstance()->create('documentgenerator.api.template.download', ['id' => $this->ID, 'ts' => $this->getModificationTime()]);
 		if($absolute)
@@ -371,7 +383,7 @@ final class Template
 	/**
 	 * @return bool
 	 */
-	public function isDeleted()
+	public function isDeleted(): bool
 	{
 		return $this->IS_DELETED === 'Y';
 	}

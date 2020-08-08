@@ -5,6 +5,7 @@ define('PUBLIC_MODE', 1);
 
 use Bitrix\Main;
 use Bitrix\Crm\Order;
+use Bitrix\Crm\Tracking;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Settings\LayoutSettings;
 use \Bitrix\Main\Grid;
@@ -59,7 +60,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		$this->exportParams['STEXPORT_TOTAL_ITEMS'] = max((int)$params['STEXPORT_TOTAL_ITEMS'], 0);
 	}
 
-	protected function init()
+	public function init() : bool
 	{
 		if(!CModule::IncludeModule('crm'))
 		{
@@ -109,7 +110,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 		if (!empty($exportType))
 		{
-			$exportType = strtolower(trim($exportType));
+			$exportType = mb_strtolower(trim($exportType));
 			switch ($exportType)
 			{
 				case 'csv':
@@ -375,7 +376,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 				}
 				elseif($actionData['NAME'] == 'set_status')
 				{
-					if(strlen($actionData['STATUS_ID']) > 0)
+					if($actionData['STATUS_ID'] <> '')
 					{
 						if((isset($actionData['ID']) && is_array($actionData['ID'])) || $actionData['ALL_ROWS'])
 						{
@@ -550,6 +551,8 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			)
 		);
 
+		Tracking\UI\Grid::appendColumns($result);
+
 		return $result;
 	}
 
@@ -566,14 +569,24 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		}
 		else
 		{
-			$filterOptions = new \Bitrix\Main\UI\Filter\Options($this->arResult['GRID_ID'], $this->arResult['FILTER_PRESETS']);
-			$filter += $filterOptions->getFilter($this->arResult['FILTER']);
+			$request = Bitrix\Main\Application::getInstance()->getContext()->getRequest();
+			if($request->getQuery('from_analytics') === 'Y')
+			{
+				$boardId = $request->getQuery('board_id');
+				$this->arResult['GRID_ID'] = 'report_' . $boardId . '_filter';
+				$this->arResult['FILTER_PRESETS'] = [];
+				$this->arResult['IS_EXTERNAL_FILTER'] = true;
+			}
 
 			$entityFilter = \Bitrix\Crm\Filter\Factory::createEntityFilter(
 				new \Bitrix\Crm\Filter\OrderSettings(
 					array('ID' => $this->arResult['GRID_ID'])
 				)
 			);
+			$filterFields = $entityFilter->getFieldArrays();
+
+			$filterOptions = new \Bitrix\Main\UI\Filter\Options($this->arResult['GRID_ID'], $this->arResult['FILTER_PRESETS']);
+			$filter += $filterOptions->getFilter($filterFields);
 
 			$effectiveFilterFieldIDs = $filterOptions->getUsedFields();
 
@@ -586,6 +599,8 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			{
 				$effectiveFilterFieldIDs[] = 'ACTIVITY_COUNTER';
 			}
+
+			Tracking\UI\Filter::appendEffectiveFields($effectiveFilterFieldIDs);
 
 			foreach($effectiveFilterFieldIDs as $filterFieldID)
 			{
@@ -603,7 +618,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 	public function createGlFilter(array $filter, array &$runtime)
 	{
-		global $USER;
+		global $USER, $USER_FIELD_MANAGER;
 
 		$result = array();
 		$orderFields = array_flip(\Bitrix\Crm\Order\Order::getAllFields());
@@ -634,6 +649,8 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			);
 		}
 
+		$userType = new CCrmUserType($USER_FIELD_MANAGER, Order\Order::getUfId());
+		$orderUserFields = $userType->GetFields();
 		$propertyItterator = 0;
 		foreach($filter as $k => $v)
 		{
@@ -731,7 +748,11 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 				$propertyItterator++;
 			}
-			elseif (isset($orderFields[$name]) || preg_match("/^UF_/", $name))
+			elseif (isset($orderUserFields[$name]) && mb_strpos($name, 'UF_') === 0)
+			{
+				$result[$k] = $v;
+			}
+			elseif (isset($orderFields[$name]))
 			{
 				$result[$k] = $v;
 			}
@@ -750,6 +771,9 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		$contactCompanyFilter = $this->prepareContactCompanyFilter($companyId, $contactIds);
 		if (!empty($contactCompanyFilter))
 		{
+			//caution! can be problem with filtering by companies from holding from sale module.
+			unset($result['COMPANY_ID']);
+
 			$result = array_merge($result, $contactCompanyFilter);
 			$runtime[] =
 				new Main\Entity\ReferenceField('CLIENT',
@@ -772,7 +796,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 				array('RAW_QUERY' => true, 'PERMS'=> \CCrmPerms::GetCurrentUserPermissions())
 			);
 
-			if(strlen($permissionSql) > 0)
+			if($permissionSql <> '')
 			{
 				if (isset($result['@ID']))
 				{
@@ -786,6 +810,8 @@ class CCrmOrderListComponent extends \CBitrixComponent
 				}
 			}
 		}
+
+		Tracking\UI\Filter::buildOrmFilter($result, $filter, \CCrmOwnerType::Order, $runtime);
 
 		return $result;
 	}
@@ -983,12 +1009,12 @@ class CCrmOrderListComponent extends \CBitrixComponent
 				{
 					if(isset($_POST['ACTION_OPENED']))
 					{
-						$actionData['OPENED'] = strtoupper($_POST['ACTION_OPENED']) === 'Y' ? 'Y' : 'N';
+						$actionData['OPENED'] = mb_strtoupper($_POST['ACTION_OPENED']) === 'Y' ? 'Y' : 'N';
 						unset($_POST['ACTION_OPENED'], $_REQUEST['ACTION_OPENED']);
 					}
 					else
 					{
-						$actionData['OPENED'] = strtoupper($controls['ACTION_OPENED']) === 'Y' ? 'Y' : 'N';
+						$actionData['OPENED'] = mb_strtoupper($controls['ACTION_OPENED']) === 'Y' ? 'Y' : 'N';
 					}
 				}
 
@@ -1021,7 +1047,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 	 */
 	protected function getTradingPlatformName($code, $class)
 	{
-		if(strlen($code) <= 0 || !class_exists($class))
+		if($code == '' || !class_exists($class))
 		{
 			return '';
 		}
@@ -1155,7 +1181,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		{
 			if(empty($this->arParams['GRID_ID_SUFFIX']))
 			{
-				$this->arParams['GRID_ID_SUFFIX'] = $this->GetParent() !== null ? strtoupper($this->GetParent()->GetName()) : '';
+				$this->arParams['GRID_ID_SUFFIX'] = $this->GetParent() !== null? mb_strtoupper($this->GetParent()->GetName()) : '';
 			}
 		}
 
@@ -1261,7 +1287,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 			foreach($visibleColumns as $key => &$fieldName)
 			{
-				if(substr($fieldName, 0, 8) === 'BIZPROC_')
+				if(mb_substr($fieldName, 0, 8) === 'BIZPROC_')
 				{
 					$hasBizprocFields = true;
 					break;
@@ -1615,7 +1641,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		foreach($this->arResult['ORDER'] as &$arOrder)
 		{
 			$entityID = $arOrder['ID'];
-			$arOrder['DATE_INSERT'] = !empty($arOrder['DATE_INSERT']) ? CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp(MakeTimeStamp($arOrder['DATE_INSERT']), 'SHORT', SITE_ID)) : '';
+			$arOrder['DATE_INSERT'] = !empty($arOrder['DATE_INSERT']) ? CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp(MakeTimeStamp($arOrder['DATE_INSERT']), 'FULL', SITE_ID)) : '';
 			$currencyID =  isset($arOrder['CURRENCY']) ? $arOrder['CURRENCY'] : CCrmCurrency::GetBaseCurrencyID();
 			$arOrder['CURRENCY'] = htmlspecialcharsbx($currencyList[$currencyID]);
 			$arOrder['PATH_TO_ORDER_DETAILS'] = CComponentEngine::MakePathFromTemplate(
@@ -2392,7 +2418,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 	protected function getShipmentStatus(string $statusId, string $lang)
 	{
-		if(strlen($statusId) <= 0)
+		if($statusId == '')
 		{
 			return '';
 		}
@@ -2409,7 +2435,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 	protected function loadShipmentStatusData(string $lang)
 	{
-		if(strlen($lang) <= 0)
+		if($lang == '')
 		{
 			return [];
 		}
@@ -2476,7 +2502,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 						'WF' => 'Y'
 					));
 
-				if(strlen($item['EDIT_PAGE_URL']) > 0)
+				if($item['EDIT_PAGE_URL'] <> '')
 				{
 					$item['EDIT_PAGE_URL'] = str_replace(
 						[".php","/bitrix/admin/"],
@@ -2570,9 +2596,9 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		{
 			$serverName = $row['SERVER_NAME'];
 
-			if(strlen($serverName) <= 0)
+			if($serverName == '')
 			{
-				if(defined('SITE_SERVER_NAME') && strlen(SITE_SERVER_NAME) > 0)
+				if(defined('SITE_SERVER_NAME') && SITE_SERVER_NAME <> '')
 					$serverName = SITE_SERVER_NAME;
 				else
 					$serverName = \Bitrix\Main\Config\Option::get('main', 'server_name', '');

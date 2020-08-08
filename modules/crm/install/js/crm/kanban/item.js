@@ -21,6 +21,8 @@ BX.CRM.Kanban.Item = function(options)
 	this.popupTooltip = null;
 	this.plannerCurrent = null;
 	this.fieldsWrapper = null;
+	this.clientName = null;
+	this.clientNameItems = [];
 };
 
 BX.CRM.Kanban.Item.prototype = {
@@ -191,19 +193,35 @@ BX.CRM.Kanban.Item.prototype = {
 		// date
 		this.date.textContent = data.date;
 		// contact / company name
+		this.clientNameItems = [];
 		if (
 			data.contactId &&
 			data.contactName &&
 			BX.util.in_array("CLIENT", gridData.customFields)
 		)
 		{
-			this.contactName.innerHTML = data.contactTooltip;
-			this.switchVisible(this.contactName, true);
+			this.clientNameItems.push(data.contactTooltip);
+		}
+
+		if (
+			data.companyId &&
+			data.companyName &&
+			BX.util.in_array("CLIENT", gridData.customFields)
+		)
+		{
+			this.clientNameItems.push(data.companyTooltip);
+		}
+
+		if (this.clientNameItems.length)
+		{
+			this.clientName.innerHTML = this.clientNameItems.join('<br>');
+			this.switchVisible(this.clientName, true);
 		}
 		else
 		{
-			this.switchVisible(this.contactName, false);
+			this.switchVisible(this.clientName, false);
 		}
+
 		// planner
 		if (this.planner)
 		{
@@ -265,7 +283,7 @@ BX.CRM.Kanban.Item.prototype = {
 			{
 				this.switchVisible(this.link, true);
 				this.switchVisible(this.date, true);
-				this.switchVisible(this.contactName, true);
+				this.switchVisible(this.clientName, true);
 				if (this.total)
 				{
 					this.switchVisible(this.total, true);
@@ -298,7 +316,7 @@ BX.CRM.Kanban.Item.prototype = {
 				}
 				if (code === "CLIENT")
 				{
-					this.switchVisible(this.contactName, true);
+					this.switchVisible(this.clientName, true);
 					continue;
 				}
 				if (code === "OPPORTUNITY" || code === "PRICE")
@@ -317,6 +335,53 @@ BX.CRM.Kanban.Item.prototype = {
 					userPic = " style=\"background-image: url(" + this.data.fields[i].value.picture + ")\"";
 				}
 
+				var params = {
+					props: {
+					className: "crm-kanban-item-fields-item-value"
+					}
+				};
+
+				if (
+					this.data.fields[i].html === true
+					|| this.data.fields[i].type === "money"
+					|| code === 'ORDER_STAGE'
+				)
+				{
+					if (code === "ASSIGNED_BY_ID" || code === "RESPONSIBLE_ID")
+					{
+						params['html'] = "<div class=\"crm-kanban-item-fields-item-value-user\">" +
+							"<a class=\"crm-kanban-item-fields-item-value-userpic\" href=\"" + this.data.fields[i].value.link + "\"" + userPic + "></a>" +
+							"<a class=\"crm-kanban-item-fields-item-value-name\" href=\"" + this.data.fields[i].value.link + "\">" + this.data.fields[i].value.title + "</a>" +
+							"</div>";
+					}
+					else if (code === 'ORDER_STAGE')
+					{
+						var cssPostfix = '';
+						if (this.data.fields[i].value.code === 'PAID')
+						{
+							cssPostfix = 'paid';
+						}
+						else if (this.data.fields[i].value.code === 'SENT_NO_VIEWED')
+						{
+							cssPostfix = 'send';
+						}
+						else if (this.data.fields[i].value.code === 'VIEWED_NO_PAID')
+						{
+							cssPostfix = 'seen';
+						}
+
+						params['html'] = '<div class="crm-kanban-item-status crm-kanban-item-status-'+cssPostfix+'">'+this.data.fields[i].value.title+'</div>'
+					}
+					else
+					{
+						params['html'] = this.data.fields[i].value;
+					}
+				}
+				else
+				{
+					params['text'] = this.data.fields[i].value;
+				}
+
 				this.fieldsWrapper.appendChild(BX.create("div", {
 					props: {
 						className: "crm-kanban-item-fields-item"
@@ -328,24 +393,7 @@ BX.CRM.Kanban.Item.prototype = {
 							},
 							html: this.data.fields[i].title
 						}),
-						(this.data.fields[i].html === true || this.data.fields[i].type === "money")
-							? BX.create("div", {
-								props: {
-									className: "crm-kanban-item-fields-item-value"
-								},
-								html: (code === "ASSIGNED_BY_ID" || code === "RESPONSIBLE_ID")
-									? 	"<div class=\"crm-kanban-item-fields-item-value-user\">" +
-									"<a class=\"crm-kanban-item-fields-item-value-userpic\" href=\"" + this.data.fields[i].value.link + "\"" + userPic + "></a>" +
-									"<a class=\"crm-kanban-item-fields-item-value-name\" href=\"" + this.data.fields[i].value.link + "\">" + this.data.fields[i].value.title + "</a>" +
-									"</div>"
-									: this.data.fields[i].value
-							})
-							: BX.create("div", {
-								props: {
-									className: "crm-kanban-item-fields-item-value"
-								},
-								text: this.data.fields[i].value
-							})
+						BX.create("div", params)
 					]
 				}))
 			}
@@ -648,7 +696,7 @@ BX.CRM.Kanban.Item.prototype = {
 
 		return BX.create("div", {
 			props: {
-				className: 'crm-kanban-item-industry'
+				className: "crm-kanban-item-industry"
 			},
 			children: [
 				BX.create("div", {
@@ -665,7 +713,7 @@ BX.CRM.Kanban.Item.prototype = {
 						importListNode
 					]
 				}),
-				BX.create("a", {
+				BX.create("span", {
 					props: {
 						className: "ui-btn ui-btn-sm ui-btn-primary ui-btn-round crm-kanban-sidepanel"
 					},
@@ -820,12 +868,12 @@ BX.CRM.Kanban.Item.prototype = {
 		this.container.appendChild(this.total);
 
 		// contact / company name
-		this.contactName = BX.create("span", {
+		this.clientName = BX.create("span", {
 			props: {
 				className: "crm-kanban-item-contact"
 			}
 		});
-		this.container.appendChild(this.contactName);
+		this.container.appendChild(this.clientName);
 		// date
 		this.date = BX.create("div", {
 			props: {
@@ -861,7 +909,7 @@ BX.CRM.Kanban.Item.prototype = {
 		{
 			this.container.appendChild(this.getItemFields());
 		}
-		
+
 		// plan
 		if (gridData.showActivity)
 		{
@@ -1061,58 +1109,15 @@ BX.CRM.Kanban.Item.prototype = {
 	{
 		var type = BX.data(BX.proxy_context, "type");
 		var data = this.getData();
-		var fields = data[type];
+		var contactCategories = data[type];
 
-		if (typeof fields === "undefined")
+		if (Object.keys(contactCategories).length > 1)
 		{
-			return;
-		}
-
-		if (Array.isArray(fields) && fields.length > 1)
-		{
-			var menuItems = [];
-			for (var i = 0, c = fields.length; i < c; i++)
-			{
-				menuItems.push({
-					value: fields[i]["value"],
-					type: type,
-					text: fields[i]["value"] + " (" + fields[i]["title"] + ")",
-					onclick: BX.proxy(this.clickContactItem, this)
-				});
-			}
-			BX.PopupMenu.show(
-				"kanban_contact_menu_" + type + this.getId(),
-				BX.proxy_context,
-				menuItems,
-				{
-					autoHide: true,
-					zIndex: 1200,
-					offsetLeft: 20,
-					angle: true,
-					closeByEsc : true,
-					events: {
-						onPopupClose: function()
-						{
-							BX.removeClass(this.container, "crm-kanban-item-hover");
-							BX.unbind(window, "scroll", BX.proxy(this.adjustPopup, this));
-						}.bind(this)
-					}
-				}
-			);
-			BX.bind(window, "scroll", BX.proxy(this.adjustPopup, this));
+			this.showManyContacts(contactCategories, type);
 		}
 		else
 		{
-			if (!Array.isArray(fields))
-			{
-				fields = [fields];
-			}
-			this.clickContactItem(0, {
-				value: (typeof fields[0]["value"] !== "undefined")
-						? fields[0]["value"]
-						: fields[0],
-				type: type
-			});
+			this.showSingleContact(contactCategories, type);
 		}
 	},
 
@@ -1167,6 +1172,79 @@ BX.CRM.Kanban.Item.prototype = {
 		}
 	},
 
+	showManyContacts: function(contactCategories, type)
+	{
+		var menuItems = [];
+		var fields = [];
+
+		for (var category in contactCategories)
+		{
+			menuItems.push({
+				delimiter: true,
+				text: this.getMessage(category)
+			});
+
+			fields = contactCategories[category];
+			for (var i = 0, c = fields.length; i < c; i++)
+			{
+				menuItems.push({
+					value: fields[i]["value"],
+					type: type,
+					text: fields[i]["value"] + " (" + fields[i]["title"] + ")",
+					onclick: BX.proxy(this.clickContactItem, this)
+				});
+			}
+		}
+
+		BX.PopupMenu.show(
+			"kanban_contact_menu_" + type + this.getId(),
+			BX.proxy_context,
+			menuItems,
+			{
+				autoHide: true,
+				zIndex: 1200,
+				offsetLeft: 20,
+				angle: true,
+				closeByEsc : true,
+				events: {
+					onPopupClose: function()
+					{
+						BX.removeClass(this.container, "crm-kanban-item-hover");
+						BX.unbind(window, "scroll", BX.proxy(this.adjustPopup, this));
+					}.bind(this)
+				}
+			}
+		);
+		BX.bind(window, "scroll", BX.proxy(this.adjustPopup, this));
+	},
+
+	showSingleContact: function(contactCategories, type)
+	{
+		var fields = this.getSingleContactCategory(contactCategories);
+
+		if (!Array.isArray(fields))
+		{
+			fields = [fields];
+		}
+
+		this.clickContactItem(0, {
+			value: (typeof fields[0]["value"] !== "undefined")
+				? fields[0]["value"]
+				: fields[0],
+			type: type
+		});
+	},
+
+	getSingleContactCategory: function(contactCategories)
+	{
+		return contactCategories[Object.keys(contactCategories)[0]];
+	},
+
+	getMessage: function(title)
+	{
+		return (BX.CRM.Kanban.Item.messages[title] || '');
+	},
+
 	/**
 	 * Click one the item of plan menu
 	 * @param {Integer} i
@@ -1205,7 +1283,7 @@ BX.CRM.Kanban.Item.prototype = {
 			visitParams.OWNER_ID = this.getId();
 			BX.CrmActivityVisit.create(visitParams).showEdit();
 		}
-		
+
 		var menu = BX.PopupMenu.getCurrentMenu();
 		if (menu)
 		{

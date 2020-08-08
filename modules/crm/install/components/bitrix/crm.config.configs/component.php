@@ -35,8 +35,8 @@ if (empty($sMailFrom))
 if (empty($sMailFrom) && !IsModuleInstalled('bitrix24'))
 {
 	$sHost = $_SERVER['HTTP_HOST'];
-	if (strpos($sHost, ':') !== false)
-		$sHost = substr($sHost, 0, strpos($sHost, ':'));
+	if (mb_strpos($sHost, ':') !== false)
+		$sHost = mb_substr($sHost, 0, mb_strpos($sHost, ':'));
 
 	$sMailFrom = 'crm@'.$sHost;
 }
@@ -55,18 +55,18 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 
 		/*Account number template settings*/
 		$APPLICATION->ResetException();
-		include_once($GLOBALS["DOCUMENT_ROOT"]."/bitrix/components/bitrix/crm.config.invoice.number/post_proc.php");
+		include_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/components/bitrix/crm.config.invoice.number/post_proc.php");
 		if ($ex = $APPLICATION->GetException())
 			$sError = $ex->GetString();
 
 		$APPLICATION->ResetException();
-		include_once($GLOBALS["DOCUMENT_ROOT"]."/bitrix/components/bitrix/crm.config.number/post_proc.php");
+		include_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/components/bitrix/crm.config.number/post_proc.php");
 		if ($ex = $APPLICATION->GetException())
 			$sError = $ex->GetString();
 
 		$APPLICATION->ResetException();
 
-		if (strlen($sError) > 0)
+		if ($sError <> '')
 			ShowError($sError.'<br>');
 		else
 		{
@@ -74,7 +74,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			{
 				Settings\ActivitySettings::setValue(
 					Settings\ActivitySettings::KEEP_COMPLETED_CALLS,
-					strtoupper($_POST['CALENDAR_DISPLAY_COMPLETED_CALLS']) === 'Y'
+					mb_strtoupper($_POST['CALENDAR_DISPLAY_COMPLETED_CALLS']) === 'Y'
 				);
 			}
 
@@ -82,7 +82,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			{
 				Settings\ActivitySettings::setValue(
 					Settings\ActivitySettings::KEEP_COMPLETED_MEETINGS,
-					strtoupper($_POST['CALENDAR_DISPLAY_COMPLETED_MEETINGS']) === 'Y'
+					mb_strtoupper($_POST['CALENDAR_DISPLAY_COMPLETED_MEETINGS']) === 'Y'
 				);
 			}
 			
@@ -90,7 +90,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			{
 				Settings\ActivitySettings::setValue(
 					Settings\ActivitySettings::KEEP_REASSIGNED_CALLS,
-					strtoupper($_POST['CALENDAR_KEEP_REASSIGNED_CALLS']) === 'Y'
+					mb_strtoupper($_POST['CALENDAR_KEEP_REASSIGNED_CALLS']) === 'Y'
 				);
 			}
 
@@ -98,7 +98,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			{
 				Settings\ActivitySettings::setValue(
 					Settings\ActivitySettings::KEEP_REASSIGNED_MEETINGS,
-					strtoupper($_POST['CALENDAR_KEEP_REASSIGNED_MEETINGS']) === 'Y'
+					mb_strtoupper($_POST['CALENDAR_KEEP_REASSIGNED_MEETINGS']) === 'Y'
 				);
 			}
 
@@ -106,7 +106,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			{
 				Settings\ActivitySettings::setValue(
 					Settings\ActivitySettings::KEEP_UNBOUND_TASKS,
-					strtoupper($_POST['KEEP_UNBOUND_TASKS']) === 'Y'
+					mb_strtoupper($_POST['KEEP_UNBOUND_TASKS']) === 'Y'
 				);
 			}
 
@@ -114,13 +114,13 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			{
 				Settings\ActivitySettings::setValue(
 					Settings\ActivitySettings::MARK_FORWARDED_EMAIL_AS_OUTGOING,
-					strtoupper($_POST['MARK_FORWARDED_EMAIL_AS_OUTGOING']) === 'Y'
+					mb_strtoupper($_POST['MARK_FORWARDED_EMAIL_AS_OUTGOING']) === 'Y'
 				);
 			}
 
 			CCrmUserCounterSettings::SetValue(
 				CCrmUserCounterSettings::ReckonActivitylessItems,
-				isset($_POST['RECKON_ACTIVITYLESS_ITEMS_IN_COUNTERS']) && strtoupper($_POST['RECKON_ACTIVITYLESS_ITEMS_IN_COUNTERS']) !== 'N'
+				isset($_POST['RECKON_ACTIVITYLESS_ITEMS_IN_COUNTERS']) && mb_strtoupper($_POST['RECKON_ACTIVITYLESS_ITEMS_IN_COUNTERS']) !== 'N'
 			);
 
 			CCrmEMailCodeAllocation::SetCurrent(
@@ -139,7 +139,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 				&& Bitrix\Crm\Integration\Bitrix24Email::allowDisableSignature())
 			{
 				Bitrix\Crm\Integration\Bitrix24Email::enableSignature(
-					isset($_POST['ENABLE_B24_EMAIL_SIGNATURE']) && strtoupper($_POST['ENABLE_B24_EMAIL_SIGNATURE']) !== 'N'
+					isset($_POST['ENABLE_B24_EMAIL_SIGNATURE']) && mb_strtoupper($_POST['ENABLE_B24_EMAIL_SIGNATURE']) !== 'N'
 				);
 			}
 
@@ -159,7 +159,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 				$newCalltoSettings['URL_TEMPLATE'] = isset($_POST['CALLTO_URL_TEMPLATE']) ? $_POST['CALLTO_URL_TEMPLATE'] : '';
 				$newCalltoSettings['CLICK_HANDLER'] = isset($_POST['CALLTO_CLICK_HANDLER']) ? $_POST['CALLTO_CLICK_HANDLER'] : '';
 			}
-			$newCalltoSettings['NORMALIZE_NUMBER'] = isset($_POST['CALLTO_NORMALIZE_NUMBER']) && strtoupper($_POST['CALLTO_NORMALIZE_NUMBER']) === 'N' ? 'N' : 'Y';
+			$newCalltoSettings['NORMALIZE_NUMBER'] = isset($_POST['CALLTO_NORMALIZE_NUMBER']) && mb_strtoupper($_POST['CALLTO_NORMALIZE_NUMBER']) === 'N' ? 'N' : 'Y';
 
 			if (
 				$oldCalltoSettings['URL_TEMPLATE'] != $newCalltoSettings['URL_TEMPLATE']
@@ -179,7 +179,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			if(isset($_POST['ENABLE_SIMPLE_TIME_FORMAT']))
 			{
 				\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->enableSimpleTimeFormat(
-					strtoupper($_POST['ENABLE_SIMPLE_TIME_FORMAT']) === 'Y'
+					mb_strtoupper($_POST['ENABLE_SIMPLE_TIME_FORMAT']) === 'Y'
 				);
 			}
 
@@ -193,70 +193,70 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 
 			$dupControl->enabledFor(
 				CCrmOwnerType::Lead,
-				isset($_POST['ENABLE_LEAD_DUP_CONTROL']) && strtoupper($_POST['ENABLE_LEAD_DUP_CONTROL']) === 'Y'
+				isset($_POST['ENABLE_LEAD_DUP_CONTROL']) && mb_strtoupper($_POST['ENABLE_LEAD_DUP_CONTROL']) === 'Y'
 			);
 			$dupControl->enabledFor(
 				CCrmOwnerType::Contact,
-				isset($_POST['ENABLE_CONTACT_DUP_CONTROL']) && strtoupper($_POST['ENABLE_CONTACT_DUP_CONTROL']) === 'Y'
+				isset($_POST['ENABLE_CONTACT_DUP_CONTROL']) && mb_strtoupper($_POST['ENABLE_CONTACT_DUP_CONTROL']) === 'Y'
 			);
 			$dupControl->enabledFor(
 				CCrmOwnerType::Company,
-				isset($_POST['ENABLE_COMPANY_DUP_CONTROL']) && strtoupper($_POST['ENABLE_COMPANY_DUP_CONTROL']) === 'Y'
+				isset($_POST['ENABLE_COMPANY_DUP_CONTROL']) && mb_strtoupper($_POST['ENABLE_COMPANY_DUP_CONTROL']) === 'Y'
 			);
 			$dupControl->save();
 
 			CCrmStatus::EnableDepricatedTypes(
-				isset($_POST['ENABLE_DEPRECATED_STATUSES']) && strtoupper($_POST['ENABLE_DEPRECATED_STATUSES']) === 'Y'
+				isset($_POST['ENABLE_DEPRECATED_STATUSES']) && mb_strtoupper($_POST['ENABLE_DEPRECATED_STATUSES']) === 'Y'
 			);
 
 			\Bitrix\Crm\Settings\LeadSettings::getCurrent()->enableRecycleBin(
-				isset($_POST['ENABLE_LEAD_RECYCLE_BIN']) && strtoupper($_POST['ENABLE_LEAD_RECYCLE_BIN']) === 'Y'
+				isset($_POST['ENABLE_LEAD_RECYCLE_BIN']) && mb_strtoupper($_POST['ENABLE_LEAD_RECYCLE_BIN']) === 'Y'
 			);
 
 			\Bitrix\Crm\Settings\ContactSettings::getCurrent()->enableRecycleBin(
-				isset($_POST['ENABLE_CONTACT_RECYCLE_BIN']) && strtoupper($_POST['ENABLE_CONTACT_RECYCLE_BIN']) === 'Y'
+				isset($_POST['ENABLE_CONTACT_RECYCLE_BIN']) && mb_strtoupper($_POST['ENABLE_CONTACT_RECYCLE_BIN']) === 'Y'
 			);
 
 			\Bitrix\Crm\Settings\CompanySettings::getCurrent()->enableRecycleBin(
-				isset($_POST['ENABLE_COMPANY_RECYCLE_BIN']) && strtoupper($_POST['ENABLE_COMPANY_RECYCLE_BIN']) === 'Y'
+				isset($_POST['ENABLE_COMPANY_RECYCLE_BIN']) && mb_strtoupper($_POST['ENABLE_COMPANY_RECYCLE_BIN']) === 'Y'
 			);
 
 			\Bitrix\Crm\Settings\DealSettings::getCurrent()->enableRecycleBin(
-				isset($_POST['ENABLE_DEAL_RECYCLE_BIN']) && strtoupper($_POST['ENABLE_DEAL_RECYCLE_BIN']) === 'Y'
+				isset($_POST['ENABLE_DEAL_RECYCLE_BIN']) && mb_strtoupper($_POST['ENABLE_DEAL_RECYCLE_BIN']) === 'Y'
 			);
 
 			if(isset($_POST['LEAD_OPENED']))
 			{
 				\Bitrix\Crm\Settings\LeadSettings::getCurrent()->setOpenedFlag(
-					strtoupper($_POST['LEAD_OPENED']) === 'Y'
+					mb_strtoupper($_POST['LEAD_OPENED']) === 'Y'
 				);
 			}
 
 			if(isset($_POST['EXPORT_LEAD_PRODUCT_ROWS']))
 			{
 				\Bitrix\Crm\Settings\LeadSettings::getCurrent()->enableProductRowExport(
-					strtoupper($_POST['EXPORT_LEAD_PRODUCT_ROWS']) === 'Y'
+					mb_strtoupper($_POST['EXPORT_LEAD_PRODUCT_ROWS']) === 'Y'
 				);
 			}
 
 			if(isset($_POST['AUTO_GEN_RC']))
 			{
 				\Bitrix\Crm\Settings\LeadSettings::getCurrent()->enableAutoGenRc(
-					strtoupper($_POST['AUTO_GEN_RC']) === 'Y'
+					mb_strtoupper($_POST['AUTO_GEN_RC']) === 'Y'
 				);
 			}
 
 			if(isset($_POST['AUTO_USING_FINISHED_LEAD']))
 			{
 				\Bitrix\Crm\Settings\LeadSettings::getCurrent()->enableAutoUsingFinishedLead(
-					strtoupper($_POST['AUTO_USING_FINISHED_LEAD']) === 'Y'
+					mb_strtoupper($_POST['AUTO_USING_FINISHED_LEAD']) === 'Y'
 				);
 			}
 
 			if(isset($_POST['CONTACT_OPENED']))
 			{
 				\Bitrix\Crm\Settings\ContactSettings::getCurrent()->setOpenedFlag(
-					strtoupper($_POST['CONTACT_OPENED']) === 'Y'
+					mb_strtoupper($_POST['CONTACT_OPENED']) === 'Y'
 				);
 			}
 
@@ -268,35 +268,28 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			if(isset($_POST['COMPANY_OPENED']))
 			{
 				\Bitrix\Crm\Settings\CompanySettings::getCurrent()->setOpenedFlag(
-					strtoupper($_POST['COMPANY_OPENED']) === 'Y'
+					mb_strtoupper($_POST['COMPANY_OPENED']) === 'Y'
 				);
 			}
 
 			if(isset($_POST['DEAL_OPENED']))
 			{
 				\Bitrix\Crm\Settings\DealSettings::getCurrent()->setOpenedFlag(
-					strtoupper($_POST['DEAL_OPENED']) === 'Y'
+					mb_strtoupper($_POST['DEAL_OPENED']) === 'Y'
 				);
 			}
 
 			if(isset($_POST['REFRESH_DEAL_CLOSEDATE']))
 			{
 				\Bitrix\Crm\Settings\DealSettings::getCurrent()->enableCloseDateSync(
-					strtoupper($_POST['REFRESH_DEAL_CLOSEDATE']) === 'Y'
+					mb_strtoupper($_POST['REFRESH_DEAL_CLOSEDATE']) === 'Y'
 				);
 			}
 
 			if(isset($_POST['EXPORT_DEAL_PRODUCT_ROWS']))
 			{
 				\Bitrix\Crm\Settings\DealSettings::getCurrent()->enableProductRowExport(
-					strtoupper($_POST['EXPORT_DEAL_PRODUCT_ROWS']) === 'Y'
-				);
-			}
-
-			if(isset($_POST['CREATE_DEAL_ON_ORDER']))
-			{
-				\Bitrix\Crm\Settings\DealSettings::getCurrent()->enableCreateDealOnOrder(
-					strtoupper($_POST['CREATE_DEAL_ON_ORDER']) === 'Y'
+					mb_strtoupper($_POST['EXPORT_DEAL_PRODUCT_ROWS']) === 'Y'
 				);
 			}
 
@@ -323,7 +316,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			if($_POST['ENABLE_ENABLED_PUBLIC_B24_SIGN'])
 			{
 				\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->setEnableSignFlag(
-					strtoupper($_POST['ENABLE_ENABLED_PUBLIC_B24_SIGN']) === 'Y'
+					mb_strtoupper($_POST['ENABLE_ENABLED_PUBLIC_B24_SIGN']) === 'Y'
 				);
 			}
 
@@ -345,28 +338,28 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			if(isset($_POST['QUOTE_OPENED']))
 			{
 				\Bitrix\Crm\Settings\QuoteSettings::getCurrent()->setOpenedFlag(
-					strtoupper($_POST['QUOTE_OPENED']) === 'Y'
+					mb_strtoupper($_POST['QUOTE_OPENED']) === 'Y'
 				);
 			}
 
 			if(isset($_POST['CONVERSION_ENABLE_AUTOCREATION']))
 			{
 				\Bitrix\Crm\Settings\ConversionSettings::getCurrent()->enableAutocreation(
-					strtoupper($_POST['CONVERSION_ENABLE_AUTOCREATION']) === 'Y'
+					mb_strtoupper($_POST['CONVERSION_ENABLE_AUTOCREATION']) === 'Y'
 				);
 			}
 
 			if(isset($_POST['ENABLE_EXPORT_EVENT']))
 			{
 				\Bitrix\Crm\Settings\HistorySettings::getCurrent()->enableExportEvent(
-					strtoupper($_POST['ENABLE_EXPORT_EVENT']) === 'Y'
+					mb_strtoupper($_POST['ENABLE_EXPORT_EVENT']) === 'Y'
 				);
 			}
 
 			if(isset($_POST['ENABLE_VIEW_EVENT']))
 			{
 				\Bitrix\Crm\Settings\HistorySettings::getCurrent()->enableViewEvent(
-					strtoupper($_POST['ENABLE_VIEW_EVENT']) === 'Y'
+					mb_strtoupper($_POST['ENABLE_VIEW_EVENT']) === 'Y'
 				);
 			}
 
@@ -380,70 +373,70 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			if(isset($_POST['ENABLE_LEAD_DELETION_EVENT']))
 			{
 				\Bitrix\Crm\Settings\HistorySettings::getCurrent()->enableLeadDeletionEvent(
-					strtoupper($_POST['ENABLE_LEAD_DELETION_EVENT']) === 'Y'
+					mb_strtoupper($_POST['ENABLE_LEAD_DELETION_EVENT']) === 'Y'
 				);
 			}
 
 			if(isset($_POST['ENABLE_DEAL_DELETION_EVENT']))
 			{
 				\Bitrix\Crm\Settings\HistorySettings::getCurrent()->enableDealDeletionEvent(
-					strtoupper($_POST['ENABLE_DEAL_DELETION_EVENT']) === 'Y'
+					mb_strtoupper($_POST['ENABLE_DEAL_DELETION_EVENT']) === 'Y'
 				);
 			}
 
 			if(isset($_POST['ENABLE_QUOTE_DELETION_EVENT']))
 			{
 				\Bitrix\Crm\Settings\HistorySettings::getCurrent()->enableQuoteDeletionEvent(
-					strtoupper($_POST['ENABLE_QUOTE_DELETION_EVENT']) === 'Y'
+					mb_strtoupper($_POST['ENABLE_QUOTE_DELETION_EVENT']) === 'Y'
 				);
 			}
 
 			if(isset($_POST['ENABLE_DEAL_DELETION_EVENT']))
 			{
 				\Bitrix\Crm\Settings\HistorySettings::getCurrent()->enableDealDeletionEvent(
-					strtoupper($_POST['ENABLE_DEAL_DELETION_EVENT']) === 'Y'
+					mb_strtoupper($_POST['ENABLE_DEAL_DELETION_EVENT']) === 'Y'
 				);
 			}
 
 			if(isset($_POST['ENABLE_CONTACT_DELETION_EVENT']))
 			{
 				\Bitrix\Crm\Settings\HistorySettings::getCurrent()->enableContactDeletionEvent(
-					strtoupper($_POST['ENABLE_CONTACT_DELETION_EVENT']) === 'Y'
+					mb_strtoupper($_POST['ENABLE_CONTACT_DELETION_EVENT']) === 'Y'
 				);
 			}
 
 			if(isset($_POST['ENABLE_COMPANY_DELETION_EVENT']))
 			{
 				\Bitrix\Crm\Settings\HistorySettings::getCurrent()->enableCompanyDeletionEvent(
-					strtoupper($_POST['ENABLE_COMPANY_DELETION_EVENT']) === 'Y'
+					mb_strtoupper($_POST['ENABLE_COMPANY_DELETION_EVENT']) === 'Y'
 				);
 			}
 
 			if(isset($_POST['ENABLE_LIVEFEED_MERGE']))
 			{
 				\Bitrix\Crm\Settings\LiveFeedSettings::getCurrent()->enableLiveFeedMerge(
-					strtoupper($_POST['ENABLE_LIVEFEED_MERGE']) === 'Y'
+					mb_strtoupper($_POST['ENABLE_LIVEFEED_MERGE']) === 'Y'
 				);
 			}
 
 			if(isset($_POST['ENABLE_REST_REQ_USER_FIELD_CHECK']))
 			{
 				\Bitrix\Crm\Settings\RestSettings::getCurrent()->enableRequiredUserFieldCheck(
-					strtoupper($_POST['ENABLE_REST_REQ_USER_FIELD_CHECK']) === 'Y'
+					mb_strtoupper($_POST['ENABLE_REST_REQ_USER_FIELD_CHECK']) === 'Y'
 				);
 			}
 
 			if(isset($_POST['ENABLE_SLIDER']))
 			{
 				\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->enableSlider(
-					strtoupper($_POST['ENABLE_SLIDER']) === 'Y'
+					mb_strtoupper($_POST['ENABLE_SLIDER']) === 'Y'
 				);
 			}
 
 			if(isset($_POST['ENABLE_USER_NAME_SORTING']))
 			{
 				\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->enableUserNameSorting(
-					strtoupper($_POST['ENABLE_USER_NAME_SORTING']) === 'Y'
+					mb_strtoupper($_POST['ENABLE_USER_NAME_SORTING']) === 'Y'
 				);
 			}
 
@@ -454,7 +447,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 				$fieldName = "COMPLETE_ACTIVITY_ON_LEAD_CONVERT_{$providerID}";
 				if(isset($_POST[$fieldName]))
 				{
-					$activityCompetionConfig[$providerID] = strtoupper($_POST[$fieldName]) === 'Y';
+					$activityCompetionConfig[$providerID] = mb_strtoupper($_POST[$fieldName]) === 'Y';
 				}
 			}
 			\Bitrix\Crm\Settings\LeadSettings::getCurrent()->setActivityCompletionConfig($activityCompetionConfig);
@@ -632,14 +625,6 @@ $arResult['FIELDS']['tab_main'][] = array(
 	'name' => GetMessage('CRM_FIELD_EXPORT_PRODUCT_ROWS'),
 	'type' => 'checkbox',
 	'value' => \Bitrix\Crm\Settings\DealSettings::getCurrent()->isProductRowExportEnabled(),
-	'required' => false
-);
-
-$arResult['FIELDS']['tab_main'][] = array(
-	'id' => 'CREATE_DEAL_ON_ORDER',
-	'name' => GetMessage('CRM_FIELD_CREATE_DEAL_ON_ORDER'),
-	'type' => 'checkbox',
-	'value' => \Bitrix\Crm\Settings\DealSettings::getCurrent()->isCreateDealOnOrderEnabled(),
 	'required' => false
 );
 
@@ -1016,32 +1001,47 @@ $curAddrFormatID = \Bitrix\Crm\Format\EntityAddressFormatter::getFormatID();
 $addrFormatDescrs = \Bitrix\Crm\Format\EntityAddressFormatter::getAllDescriptions();
 $arResult['ADDR_FORMAT_INFOS'] = \Bitrix\Crm\Format\EntityAddressFormatter::getAllExamples();
 $arResult['ADDR_FORMAT_CONTROL_PREFIX'] = 'addr_format_';
-
-$addrFormatControls = array();
-foreach($addrFormatDescrs as $addrFormatID => $addrFormatDescr)
-{
-	$isChecked = $addrFormatID === $curAddrFormatID;
-	$addrFormatControlID = $arResult['ADDR_FORMAT_CONTROL_PREFIX'].$addrFormatID;
-	$addrFormatControls[] = '<input type="radio" class="crm-dup-control-type-radio" id="'.$addrFormatControlID.'" name="ENTITY_ADDRESS_FORMAT_ID" value="'.$addrFormatID.'"'.($isChecked ? ' checked="checked"' : '').'/><label class="crm-dup-control-type-label" for="'.$addrFormatControlID.'">'.htmlspecialcharsbx($addrFormatDescr).'</label>';
-}
-$arResult['FIELDS']['tab_format'][] = array(
-	'id' => 'ENTITY_ADDRESS_FORMAT',
-	'type' => 'custom',
-	'value' =>
-		'<div class="crm-dup-control-type-radio-title">'.GetMessage('CRM_FIELD_ENTITY_ADDRESS_FORMAT').':</div>'.
-		'<div class="crm-dup-control-type-radio-wrap">'.
-		implode('', $addrFormatControls).
-		'</div>',
-	'colspan' => true
-);
-
 $arResult['ADDR_FORMAT_DESCR_ID'] = 'addr_format_descr';
-$arResult['FIELDS']['tab_format'][] = array(
-	'id' => 'ENTITY_ADDRESS_FORMAT_DESCR',
-	'type' => 'custom',
-	'value' => '<div class="crm-dup-control-type-info" id="'.$arResult['ADDR_FORMAT_DESCR_ID'].'">'.$arResult['ADDR_FORMAT_INFOS'][$curAddrFormatID].'</div>',
-	'colspan' => true
-);
+
+if(\Bitrix\Main\Loader::includeModule('location'))
+{
+	$arResult['FIELDS']['tab_format'][] = array(
+		'id' => 'ENTITY_ADDRESS_FORMAT',
+		'name' => GetMessage('CRM_FIELD_ENTITY_ADDRESS_FORMAT'),
+		'type' => 'custom',
+		'value' =>
+			'<div class="crm-dup-control-type-radio-wrap">'.htmlspecialcharsbx($addrFormatDescrs[$curAddrFormatID]).'</div>'.
+			'<div class="crm-dup-control-type-info" id="' . $arResult['ADDR_FORMAT_DESCR_ID'] . '">' . $arResult['ADDR_FORMAT_INFOS'][$curAddrFormatID] . '</div>'.
+			'<div class="crm-dup-control-type-info">' . GetMessage('CRM_FIELD_ENTITY_ADDRESS_FORMAT_LINK') . '</div>'
+	);
+}
+else
+{
+	$addrFormatControls = array();
+	foreach ($addrFormatDescrs as $addrFormatID => $addrFormatDescr)
+	{
+		$isChecked = $addrFormatID === $curAddrFormatID;
+		$addrFormatControlID = $arResult['ADDR_FORMAT_CONTROL_PREFIX'] . $addrFormatID;
+		$addrFormatControls[] = '<input type="radio" class="crm-dup-control-type-radio" id="' . $addrFormatControlID . '" name="ENTITY_ADDRESS_FORMAT_ID" value="' . $addrFormatID . '"' . ($isChecked ? ' checked="checked"' : '') . '/><label class="crm-dup-control-type-label" for="' . $addrFormatControlID . '">' . htmlspecialcharsbx($addrFormatDescr) . '</label>';
+	}
+	$arResult['FIELDS']['tab_format'][] = array(
+		'id' => 'ENTITY_ADDRESS_FORMAT',
+		'type' => 'custom',
+		'value' =>
+			'<div class="crm-dup-control-type-radio-title">' . GetMessage('CRM_FIELD_ENTITY_ADDRESS_FORMAT') . ':</div>' .
+			'<div class="crm-dup-control-type-radio-wrap">' .
+			implode('', $addrFormatControls) .
+			'</div>',
+		'colspan' => true
+	);
+
+	$arResult['FIELDS']['tab_format'][] = array(
+		'id' => 'ENTITY_ADDRESS_FORMAT_DESCR',
+		'type' => 'custom',
+		'value' => '<div class="crm-dup-control-type-info" id="' . $arResult['ADDR_FORMAT_DESCR_ID'] . '">' . $arResult['ADDR_FORMAT_INFOS'][$curAddrFormatID] . '</div>',
+		'colspan' => true
+	);
+}
 
 $arResult['FIELDS']['tab_dup_control'][] = array(
 	'id' => 'ENABLE_LEAD_DUP_CONTROL',

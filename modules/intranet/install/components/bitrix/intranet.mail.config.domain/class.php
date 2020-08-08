@@ -104,7 +104,7 @@ class CIntranetMailConfigDomainComponent extends CBitrixComponent
 			$serviceId = $domainService['id'];
 			$settings  = array(
 				'type'   => $domainService['type'],
-				'domain' => strtolower($domainService['server']),
+				'domain' => mb_strtolower($domainService['server']),
 				'flags'  => $domainService['flags'],
 				'token'  => $domainService['token'],
 				'public' => $domainService['encryption'] == 'N' ? 'Y' : 'N'
@@ -142,7 +142,7 @@ class CIntranetMailConfigDomainComponent extends CBitrixComponent
 					if (!$serviceId)
 					{
 						$settings['type']   = $_REQUEST['type'] == 'connect' ? 'domain' : 'crdomain';
-						$settings['domain'] = strtolower($_REQUEST['domain']);
+						$settings['domain'] = mb_strtolower($_REQUEST['domain']);
 					}
 					if ($settings['type'] == 'domain')
 						$settings['token'] = $_REQUEST['token'];

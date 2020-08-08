@@ -28,6 +28,9 @@ BX.namespace('Tasks.Component');
 		this.openTime = this.parameters.componentData.OPEN_TIME;
 		this.analyticsData = {};
 
+		this.timeout = 0;
+		this.timeoutSec = 2000;
+
 		this.paramsToLazyLoadTabs = parameters.paramsToLazyLoadTabs || {};
 		this.listTabIdUploadedContent = {};
 
@@ -42,63 +45,12 @@ BX.namespace('Tasks.Component');
 
 		this.query = new BX.Tasks.Util.Query({url: "/bitrix/components/bitrix/tasks.task/ajax.php"});
 
-		var self = this;
 		this.checkListChanged = false;
 		this.showCloseConfirmation = false;
 
-		BX.addCustomEvent(window, "tasksTaskEvent", this.onTaskEvent.bind(this));
-		BX.addCustomEvent('SidePanel.Slider:onClose', function(event) {
-			if (self.checkListChanged && typeof BX.Tasks.CheckListInstance !== 'undefined')
-			{
-				var checkListSlider = BX.Tasks.CheckListInstance.optionManager.slider;
-				if (!checkListSlider || checkListSlider !== event.getSlider())
-				{
-					return;
-				}
-
-				if (!self.showCloseConfirmation)
-				{
-					self.showCloseConfirmation = true;
-					return;
-				}
-
-				event.denyAction();
-
-				var popup = new BX.PopupWindow({
-					titleBar: BX.message('TASKS_CLOSE_SLIDER_CONFIRMATION_POPUP_HEADER'),
-					content: BX.message('TASKS_CLOSE_SLIDER_CONFIRMATION_POPUP_CONTENT'),
-					closeIcon: false,
-					buttons: [
-						new BX.PopupWindowButton({
-							text: BX.message('TASKS_CLOSE_SLIDER_CONFIRMATION_POPUP_BUTTON_CLOSE'),
-							className: 'popup-window-button-accept',
-							events: {
-								click: function() {
-									self.showCloseConfirmation = false;
-									popup.close();
-									checkListSlider.close();
-								}
-							}
-						}),
-						new BX.PopupWindowButton({
-							className: 'popup-window-button popup-window-button-link',
-							text: BX.message('TASKS_CLOSE_SLIDER_CONFIRMATION_POPUP_BUTTON_CANCEL'),
-							events: {
-								click: function() {
-									popup.close();
-								}
-							}
-						})
-					],
-					events: {
-						onPopupClose: function() {
-							this.destroy();
-						}
-					}
-				});
-				popup.show();
-			}
-		});
+		BX.addCustomEvent(window, 'tasksTaskEvent', this.onTaskEvent.bind(this));
+		BX.addCustomEvent('SidePanel.Slider:onClose', this.onSliderClose.bind(this));
+		BX.addCustomEvent(window, 'OnUCCommentWasRead', this.onCommentRead.bind(this));
 
 		BX.Event.EventEmitter.subscribe('BX.Tasks.CheckListItem:CheckListChanged', function(eventData) {
 			var action = eventData.data.action;
@@ -132,6 +84,77 @@ BX.namespace('Tasks.Component');
 		{
 			BX.bind(BX("task-detail-content"), "mouseup", function(e) { window.mplCheckForQuote(e, e.currentTarget, 'TASK_' + this.taskId, 'task-detail-author-info') }.bind(this));
 		}
+	};
+
+	BX.Tasks.Component.TaskView.prototype.onSliderClose = function(event)
+	{
+		if (!this.checkListChanged || typeof BX.Tasks.CheckListInstance === 'undefined')
+		{
+			return;
+		}
+
+		var checkListSlider = BX.Tasks.CheckListInstance.optionManager.slider;
+		if (!checkListSlider || checkListSlider !== event.getSlider())
+		{
+			return;
+		}
+
+		if (!this.showCloseConfirmation)
+		{
+			this.showCloseConfirmation = true;
+			return;
+		}
+
+		event.denyAction();
+		this.showChecklistCloseSliderPopup(checkListSlider);
+	};
+
+	BX.Tasks.Component.TaskView.prototype.showChecklistCloseSliderPopup = function(checkListSlider)
+	{
+		if (!this.checklistCloseSliderPopup)
+		{
+			this.checklistCloseSliderPopup = new BX.PopupWindow({
+				titleBar: BX.message('TASKS_CLOSE_SLIDER_CONFIRMATION_POPUP_HEADER'),
+				content: BX.message('TASKS_CLOSE_SLIDER_CONFIRMATION_POPUP_CONTENT'),
+				closeIcon: false,
+				buttons: [
+					new BX.PopupWindowButton({
+						text: BX.message('TASKS_CLOSE_SLIDER_CONFIRMATION_POPUP_BUTTON_CLOSE'),
+						className: 'popup-window-button-accept',
+						events: {
+							click: function() {
+								this.showCloseConfirmation = false;
+								this.checklistCloseSliderPopup.close();
+								checkListSlider.close();
+							}.bind(this)
+						}
+					}),
+					new BX.PopupWindowButton({
+						className: 'popup-window-button popup-window-button-link',
+						text: BX.message('TASKS_CLOSE_SLIDER_CONFIRMATION_POPUP_BUTTON_CANCEL'),
+						events: {
+							click: function() {
+								this.checklistCloseSliderPopup.close();
+							}.bind(this)
+						}
+					})
+				]
+			});
+		}
+		this.checklistCloseSliderPopup.show();
+	};
+
+	BX.Tasks.Component.TaskView.prototype.onCommentRead = function(xmlId, id) {
+		if (xmlId === ('TASK_' + this.taskId) && this.timeout <= 0)
+		{
+			this.timeout = setTimeout(this.readComments.bind(this), this.timeoutSec);
+		}
+	};
+
+	BX.Tasks.Component.TaskView.prototype.readComments = function()
+	{
+		this.timeout = 0;
+		BX.ajax.runAction('tasks.task.view.update', {data: {taskId: this.taskId}});
 	};
 
 	// todo: remove when forum stops calling the same page for comment.add()
@@ -455,9 +478,13 @@ BX.namespace('Tasks.Component');
 		var priority = BX.data(node, 'priority');
 		var newPriority = priority == 2 ? 1 : 2;
 
-		this.query.run('task.update', {id: this.parameters.taskId, data: {
-			PRIORITY: newPriority
-		}}).then(function(result){
+		this.query.run('task.update', {
+			id: this.parameters.taskId,
+			taskId: this.parameters.taskId,
+			data: {
+				PRIORITY: newPriority
+			}
+		}).then(function(result){
 			if(result.isSuccess())
 			{
 				BX.data(node, 'priority', newPriority);
@@ -609,7 +636,7 @@ BX.namespace('Tasks.Component');
 		else
 		{
 			var method = "TasksTaskComponent.get"+tabId.charAt(0).toUpperCase()+tabId.substr(1),
-				args = {params: this.paramsToLazyLoadTabs[tabId]};
+				args = {params: this.paramsToLazyLoadTabs[tabId], taskId: this.parameters.taskId};
 			this.query.run(method, args).then(function(result) {
 				var data = result.getData();
 				if (data.html && BX.type.isNotEmptyString(data.html))
@@ -663,6 +690,7 @@ BX.namespace('Tasks.Component');
 	BX.Tasks.Component.TaskView.prototype.setFileCount = function()
 	{
 		var args = {
+			taskId: this.taskId,
 			params: {
 				"FORUM_ID": this.paramsToLazyLoadTabs["files"]["FORUM_ID"],
 				"FORUM_TOPIC_ID": this.paramsToLazyLoadTabs["files"]["FORUM_TOPIC_ID"]

@@ -74,7 +74,7 @@
 			}
 			if (options.isScheduleShifted)
 			{
-				this.breakTimeLink.value = this.beautifyTime(0);
+				this.setBreakSeconds(0);
 			}
 		}
 		this.initDurationWithoutBreak();
@@ -122,14 +122,14 @@
 				this.showWorkdaysBySelectedValue(this.workdaysToggle.textContent);
 				if (this.convertFormattedTimeToSecs(this.breakTimeLink.value) === 0)
 				{
-					this.breakTimeLink.value = this.beautifyTime(3600);
+					this.setBreakSeconds(3600);
 				}
 			}
 			if (selectedValue === this.shiftedScheduleTypeName)
 			{
 				if (this.convertFormattedTimeToSecs(this.breakTimeLink.value) === 3600)
 				{
-					this.breakTimeLink.value = this.beautifyTime(0);
+					this.setBreakSeconds(0);
 				}
 				this.showElement(this.nameBlock);
 				this.endNameEdit();

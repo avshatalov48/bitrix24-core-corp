@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 return [
 	'js' => [
 		'lib/assign.js',
+		'lib/objectkeys.js',
 		'lib/fetch.js',
 		'lib/formdata/formdata.js',
 	],

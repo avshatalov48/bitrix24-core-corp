@@ -24,7 +24,7 @@ if(isset($arResult['LEGEND']))
 //endregion
 
 $guid = $arResult['GUID'];
-$prefix = strtolower($guid);
+$prefix = mb_strtolower($guid);
 $activityEditorID = "{$prefix}_editor";
 
 $APPLICATION->IncludeComponent(

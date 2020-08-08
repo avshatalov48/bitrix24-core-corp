@@ -10,8 +10,8 @@ $defaultItems = $document[1] == 'CCrmDocumentLead' ? array(\CCrmOwnerType::DealN
 
 $selectedItems = (array)$dialog->getCurrentValue($items['FieldName'], $defaultItems);
 
-$dealCategoryId = $map['DealCategoryId'];
-$selectedDealCategory = $dialog->getCurrentValue($dealCategoryId['FieldName'], 0);
+$dealCategoryId = $map['DealCategoryId'] ?? null;
+$selectedDealCategory = $dealCategoryId ? $dialog->getCurrentValue($dealCategoryId['FieldName'], 0) : 0;
 
 $disableActivityCompletion = isset($map['DisableActivityCompletion']) ? $map['DisableActivityCompletion'] : null;
 $disableActivityCompletionValue = $disableActivityCompletion ? $dialog->getCurrentValue($disableActivityCompletion['FieldName']) : 'N';
@@ -24,7 +24,7 @@ $disableActivityCompletionValue = $disableActivityCompletion ? $dialog->getCurre
 			<label class="crm-automation-popup-chk-label">
 				<input type="checkbox"
 					name="<?=htmlspecialcharsbx($items['FieldName'])?>[]"
-					data-role="crm-cvtd-item-<?=htmlspecialcharsbx(strtolower($value))?>"
+					data-role="crm-cvtd-item-<?=htmlspecialcharsbx(mb_strtolower($value))?>"
 					value="<?=htmlspecialcharsbx($value)?>"
 					class="crm-automation-popup-chk"<?=(in_array($value, $selectedItems)) ? 'checked' : ''?>
 				>
@@ -34,6 +34,7 @@ $disableActivityCompletionValue = $disableActivityCompletion ? $dialog->getCurre
 		<?endforeach;?>
 	</div>
 </div>
+<?php if ($dealCategoryId):?>
 <div class="crm-automation-popup-settings" data-role="crm-cvtd-deal-category">
 	<span class="crm-automation-popup-settings-title"><?=htmlspecialcharsbx($dealCategoryId['Name'])?>: </span>
 	<select class="crm-automation-popup-settings-dropdown" name="<?=htmlspecialcharsbx($dealCategoryId['FieldName'])?>">
@@ -44,6 +45,7 @@ $disableActivityCompletionValue = $disableActivityCompletion ? $dialog->getCurre
 		<?endforeach;?>
 	</select>
 </div>
+<?php endif?>
 <?if ($disableActivityCompletion):?>
 <div class="crm-automation-popup-settings">
 	<div class="crm-automation-popup-checkbox">

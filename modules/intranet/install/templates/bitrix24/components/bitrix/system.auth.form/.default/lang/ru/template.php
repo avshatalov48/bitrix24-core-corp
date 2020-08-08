@@ -20,4 +20,3 @@ $MESS["AUTH_POPUP_FIRSTNAME"] = "Ваше имя";
 $MESS["AUTH_POPUP_LASTNAME"] = "Ваша фамилия";
 $MESS["AUTH_POPUP_PHOTO"] = "Добавить фотографию";
 $MESS["B24_UPGRADE_LICENSE"] = "Расширить тариф";
-?>

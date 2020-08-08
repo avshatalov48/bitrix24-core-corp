@@ -26,7 +26,8 @@ $arActivityDescription = array(
 	),
 	'FILTER' => [
 		'EXCLUDE' => [
-			['tasks']
+			['tasks'],
+			['rpa'],
 		]
 	],
 	'ROBOT_SETTINGS' => array(

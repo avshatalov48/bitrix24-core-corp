@@ -6,7 +6,7 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 
 $PathInstall = str_replace("\\", "/", __FILE__);
-$PathInstall = substr($PathInstall, 0, strlen($PathInstall)-strlen("/index.php"));
+$PathInstall = mb_substr($PathInstall, 0, mb_strlen($PathInstall) - mb_strlen("/index.php"));
 
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 
@@ -26,9 +26,7 @@ Class disk extends CModule
 	{
 		$arModuleVersion = array();
 
-		$path = str_replace("\\", "/", __FILE__);
-		$path = substr($path, 0, strlen($path) - strlen("/index.php"));
-		include($path."/version.php");
+		include(__DIR__.'/version.php');
 
 		$this->MODULE_VERSION = $arModuleVersion["VERSION"];
 		$this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
@@ -110,6 +108,12 @@ Class disk extends CModule
 		CAgent::addAgent('Bitrix\\Disk\\Internals\\Rights\\Healer::restartSetupSession();', 'disk', 'N', 3600);
 		CAgent::addAgent('Bitrix\\Disk\\Internals\\Rights\\Healer::markBadSetupSession();', 'disk', 'N');
 		CAgent::addAgent('Bitrix\\Disk\\Search\\Reindex\\ExtendedIndex::processWithStatusExtended();', 'disk', 'N', 1800);
+		/** @see \Bitrix\Disk\Internals\Cleaner::deleteVersionsByTtlAgent */
+		CAgent::addAgent('Bitrix\\Disk\\Internals\\Cleaner::deleteVersionsByTtlAgent(3);', 'disk', 'N', 7200);
+		/** @see \Bitrix\Disk\Internals\Cleaner::deleteTrashCanFilesByTtlAgent */
+		CAgent::addAgent('Bitrix\\Disk\\Internals\\Cleaner::deleteTrashCanFilesByTtlAgent(3);', 'disk', 'N', 8000);
+		/** @see \Bitrix\Disk\Internals\Cleaner::deleteTrashCanEmptyFolderByTtlAgent */
+		CAgent::addAgent('Bitrix\\Disk\\Internals\\Cleaner::deleteTrashCanEmptyFolderByTtlAgent(3);', 'disk', 'N', 8000);
 
 		if(!$isWebdavInstalled)
 		{
@@ -420,7 +424,7 @@ Class disk extends CModule
 
 		$this->errors = array();
 
-		$step = IntVal($step);
+		$step = intval($step);
 		if($step<2)
 		{
 			if (isModuleInstalled('webdav') && Option::get('disk', 'process_converted', false) === 'Y')

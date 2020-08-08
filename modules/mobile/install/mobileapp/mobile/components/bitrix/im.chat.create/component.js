@@ -110,6 +110,7 @@ ChatCreate.event.init = function ()
 		onRecipientButtonSelected : this.onRecipientButtonSelected,
 		// third screen
 		onResult : this.onChatCreate,
+		onInviteEmployees : this.onInviteEmployees
 	};
 
 	ChatCreateInterface.setListener(this.router.bind(this));
@@ -257,7 +258,7 @@ ChatCreate.event.onChatCreate = function(event)
 				console.info("ChatCreate.event.onChatCreate: chat id:\n", result.data());
 				this.base.openDialog('chat'+result.data(), {
 					name: event.title,
-					description: event.type == 'public'? BX.message('IM_CHAT_TYPE_OPEN'): BX.message('IM_CHAT_TYPE_CHAT'),
+					description: event.type == 'public'? BX.message('IM_CHAT_TYPE_OPEN_NEW'): BX.message('IM_CHAT_TYPE_CHAT_NEW'),
 					avatar: ''
 				});
 			}
@@ -285,6 +286,29 @@ ChatCreate.event.onChatCreate = function(event)
 	return true;
 };
 
+ChatCreate.event.onInviteEmployees = function(event)
+{
+	console.log('ChatCreate.event.onInviteEmployees', event);
+
+	if (
+		Application.getApiVersion() < 34
+		|| !BX.componentParameters.get('INTRANET_INVITATION_CAN_INVITE', false)
+	)
+	{
+		return false;
+	}
+
+	IntranetInvite.openRegisterSlider({
+		originator: 'im.chat.create',
+		registerUrl: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_URL', ''),
+		rootStructureSectionId: BX.componentParameters.get('INTRANET_INVITATION_ROOT_STRUCTURE_SECTION_ID', 0),
+		adminConfirm: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM', false),
+		disableAdminConfirm: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM_DISABLE', false),
+		sharingMessage: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_SHARING_MESSAGE', '')
+	});
+
+	return true;
+};
 
 /* Search API */
 ChatCreate.search = {

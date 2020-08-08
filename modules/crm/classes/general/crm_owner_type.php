@@ -111,7 +111,7 @@ class CCrmOwnerType
 
 	public static function ResolveID($name)
 	{
-		$name = strtoupper(trim(strval($name)));
+		$name = mb_strtoupper(trim(strval($name)));
 		if($name == '')
 		{
 			return self::Undefined;
@@ -446,7 +446,7 @@ class CCrmOwnerType
 				self::System => GetMessage('CRM_OWNER_TYPE_SYSTEM'),
 				self::Order => GetMessage('CRM_OWNER_TYPE_ORDER'),
 				self::OrderShipment => GetMessage('CRM_OWNER_TYPE_ORDER_SHIPMENT'),
-				self::OrderPayment => GetMessage('CRM_OWNER_TYPE_ORDER_SHIPMENT')
+				self::OrderPayment => GetMessage('CRM_OWNER_TYPE_ORDER_PAYMENT')
 			);
 		}
 
@@ -468,6 +468,7 @@ class CCrmOwnerType
 				self::Requisite => GetMessage('CRM_OWNER_TYPE_REQUISITE_CATEGORY'),
 				self::DealCategory => GetMessage('CRM_OWNER_TYPE_DEAL_CATEGORY_CATEGORY'),
 				self::CustomActivityType => GetMessage('CRM_OWNER_TYPE_CUSTOM_ACTIVITY_TYPE_CATEGORY'),
+				self::Order => GetMessage('CRM_OWNER_TYPE_ORDER_CATEGORY'),
 			);
 		}
 
@@ -841,7 +842,7 @@ class CCrmOwnerType
 		{
 			if($ID > 0 && isset($options['INIT_MODE']) && $options['INIT_MODE'] !== '')
 			{
-				$url = \CCrmUrlUtil::AddUrlParams($url, array('init_mode' => strtolower($options['INIT_MODE'])));
+				$url = \CCrmUrlUtil::AddUrlParams($url, array('init_mode' => mb_strtolower($options['INIT_MODE'])));
 			}
 
 			if(isset($options['ENABLE_SLIDER']) && $options['ENABLE_SLIDER'] === true)
@@ -984,24 +985,27 @@ class CCrmOwnerType
 
 	public static function IsSliderEnabled($typeID)
 	{
+		$typeID = (int)$typeID;
+
+		if (
+			$typeID === CCrmOwnerType::Order
+			|| $typeID === CCrmOwnerType::OrderShipment
+			|| $typeID === CCrmOwnerType::OrderPayment
+		)
+		{
+			return true;
+		}
+
 		if(!\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled())
 		{
 			return false;
-		}
-
-		if(!is_int($typeID))
-		{
-			$typeID = (int)$typeID;
 		}
 
 		return $typeID === CCrmOwnerType::Lead
 			|| $typeID === CCrmOwnerType::Deal
 			//|| $typeID === CCrmOwnerType::Quote
 			|| $typeID === CCrmOwnerType::Contact
-			|| $typeID === CCrmOwnerType::Company
-			|| $typeID === CCrmOwnerType::Order
-			|| $typeID === CCrmOwnerType::OrderShipment
-			|| $typeID === CCrmOwnerType::OrderPayment;
+			|| $typeID === CCrmOwnerType::Company;
 	}
 
 	public static function GetEntityShowPath($typeID, $ID, $bCheckPermissions = false, array $options = null)
@@ -1572,7 +1576,7 @@ class CCrmOwnerType
 					array('@ID' => $IDs, 'CHECK_PERMISSIONS' => $checkPermissions ? 'Y' : 'N'),
 					false,
 					false,
-					array('TITLE', 'ASSIGNED_BY_ID')
+					array('TITLE', 'ASSIGNED_BY_ID', 'DATE_CREATE', 'CURRENCY_ID', 'OPPORTUNITY')
 				);
 				break;
 			}
@@ -1617,7 +1621,10 @@ class CCrmOwnerType
 				$orderDB = \Bitrix\Crm\Order\Payment::getList(
 					array(
 						'filter' => array('=ID' => $IDs),
-						'select' => array('ID', 'ACCOUNT_NUMBER', 'ORDER_ID', 'DATE_BILL', 'RESPONSIBLE_ID')
+						'select' => [
+							'ID', 'ACCOUNT_NUMBER', 'ORDER_ID', 'PAY_SYSTEM_NAME',
+							'DATE_BILL', 'RESPONSIBLE_ID', 'SUM', 'CURRENCY', 'PAY_SYSTEM_ID'
+						]
 					)
 				);
 				$dbRes = new \CDBResult($orderDB);
@@ -1628,7 +1635,10 @@ class CCrmOwnerType
 				$orderDB = \Bitrix\Crm\Order\Shipment::getList(
 					array(
 						'filter' => array('=ID' => $IDs),
-						'select' => array('ID', 'ACCOUNT_NUMBER', 'ORDER_ID', 'DATE_INSERT', 'RESPONSIBLE_ID')
+						'select' => [
+							'ID', 'ACCOUNT_NUMBER', 'ORDER_ID', 'DATE_INSERT',
+							'PRICE_DELIVERY', 'CURRENCY', 'RESPONSIBLE_ID', 'DELIVERY_NAME'
+						]
 					)
 				);
 				$dbRes = new \CDBResult($orderDB);
@@ -1953,17 +1963,28 @@ class CCrmOwnerType
 			}
 			case self::Deal:
 			{
-				$result = array(
+				$date = new Bitrix\Main\Type\Date($arRes['DATE_CREATE']);
+
+				$result = [
 					'TITLE' => isset($arRes['TITLE']) ? $arRes['TITLE'] : '',
-					'LEGEND' => '',
+					'LEGEND' => GetMessage('CRM_OWNER_TYPE_DEAL_LEGEND', [
+						"#DATE_CREATE#" =>  FormatDate(
+							Bitrix\Main\Context::getCurrent()->getCulture()->getLongDateFormat(),
+							$date->getTimestamp()
+						),
+						"#SUM_WITH_CURRENCY#" => \CCrmCurrency::MoneyToString(
+							$arRes['OPPORTUNITY'],
+							$arRes['CURRENCY_ID']
+						),
+					]),
 					'RESPONSIBLE_ID' => isset($arRes['ASSIGNED_BY_ID']) ? intval($arRes['ASSIGNED_BY_ID']) : 0,
 					'IMAGE_FILE_ID' => 0,
 					'SHOW_URL' =>
 						CComponentEngine::MakePathFromTemplate(
 							COption::GetOptionString('crm', $enableSlider ? 'path_to_deal_details' : 'path_to_deal_show'),
-							array('deal_id' => $ID)
+							['deal_id' => $ID]
 						)
-				);
+				];
 				if($enableEditUrl)
 				{
 					$result['EDIT_URL'] =
@@ -2049,7 +2070,9 @@ class CCrmOwnerType
 						CComponentEngine::MakePathFromTemplate(
 							COption::GetOptionString('crm', 'path_to_order_details'),
 							array('order_id' => $ID)
-						)
+						),
+					'DATE' => $dateInsert,
+					'SUM_WITH_CURRENCY' => \CCrmCurrency::MoneyToString($arRes['PRICE'], $arRes['CURRENCY']),
 				);
 				if($enableEditUrl)
 				{
@@ -2063,16 +2086,42 @@ class CCrmOwnerType
 			}
 			case self::OrderPayment:
 			{
+				$handler = Bitrix\Sale\PaySystem\Manager::getById($arRes['PAY_SYSTEM_ID']);
+				$logotip = null;
+				if ($handler['LOGOTIP']
+					&& $arFile = \CFile::GetFileArray($handler['LOGOTIP'])
+				)
+				{
+					$logotip = $arFile['SRC'];
+				}
+
+				$dateInsert = '';
+				$culture = Bitrix\Main\Context::getCurrent()->getCulture();
+				if ($arRes['DATE_BILL'] instanceof \Bitrix\Main\Type\Date && $culture)
+				{
+					$dateInsert = FormatDate($culture->getLongDateFormat(), $arRes['DATE_BILL']->getTimestamp());
+				}
 				$result = array(
-					'TITLE' => isset($arRes['ACCOUNT_NUMBER']) ? $arRes['ACCOUNT_NUMBER'] : '',
-					'LEGEND' => '',
+					'TITLE' => isset($arRes['ACCOUNT_NUMBER']) ?  $arRes['ACCOUNT_NUMBER'] : '',
+					'LEGEND' => GetMessage('CRM_OWNER_TYPE_ORDER_PAYMENT_LEGEND', [
+						"#SUM_WITH_CURRENCY#" => \CCrmCurrency::MoneyToString($arRes['SUM'], $arRes['CURRENCY']),
+						"#DATE_BILL#" => $dateInsert
+					]),
+					'SUBLEGEND' => GetMessage('CRM_OWNER_TYPE_ORDER_PAYMENT_SUBLEGEND', [
+						"#PAY_SYSTEM_NAME#" => $arRes['PAY_SYSTEM_NAME']
+					]),
 					'RESPONSIBLE_ID' => isset($arRes['RESPONSIBLE_ID']) ? intval($arRes['RESPONSIBLE_ID']) : 0,
 					'IMAGE_FILE_ID' => 0,
 					'SHOW_URL' =>
 						CComponentEngine::MakePathFromTemplate(
 							COption::GetOptionString('crm', 'path_to_order_payment_details'),
 							array('payment_id' => $ID)
-						)
+						),
+					'LOGOTIP' => $logotip,
+					'DATE' => $dateInsert,
+					'PAY_SYSTEM_NAME' => $arRes['PAY_SYSTEM_NAME'],
+					'SUM' => \CCrmCurrency::MoneyToString($arRes['SUM'], $arRes['CURRENCY'], '#'),
+					'CURRENCY' => \CCrmCurrency::GetCurrencyText($arRes['CURRENCY']),
 				);
 				if($enableEditUrl)
 				{
@@ -2086,9 +2135,19 @@ class CCrmOwnerType
 			}
 			case self::OrderShipment:
 			{
+				$deliveryPriceInfo = '';
+				if ($arRes['PRICE_DELIVERY'] > 0)
+				{
+					$deliveryPriceInfo = GetMessage('CRM_OWNER_TYPE_ORDER_SHIPMENT_PRICE_DELIVERY_INFO', [
+						"#PRICE_DELIVERY_WITH_CURRENCY#" => \CCrmCurrency::MoneyToString($arRes['PRICE_DELIVERY'], $arRes['CURRENCY']),
+					]);
+				}
 				$result = array(
 					'TITLE' => isset($arRes['ACCOUNT_NUMBER']) ? $arRes['ACCOUNT_NUMBER'] : '',
-					'LEGEND' => '',
+					'LEGEND' => GetMessage('CRM_OWNER_TYPE_ORDER_SHIPMENT_LEGEND', [
+						"#DELIVERY_NAME#" => $arRes['DELIVERY_NAME'],
+						"#PRICE_DELIVERY_INFO#" => $deliveryPriceInfo,
+					]),
 					'RESPONSIBLE_ID' => isset($arRes['RESPONSIBLE_ID']) ? intval($arRes['RESPONSIBLE_ID']) : 0,
 					'IMAGE_FILE_ID' => 0,
 					'SHOW_URL' =>
@@ -2834,7 +2893,7 @@ class CCrmOwnerTypeAbbr
 			$abbr = (string)$abbr;
 		}
 
-		$abbr = strtoupper(trim($abbr));
+		$abbr = mb_strtoupper(trim($abbr));
 		if($abbr === '')
 		{
 			return '';

@@ -27,7 +27,7 @@ if(!function_exists('__CrmShowEndJsonResonse'))
 	}
 }
 
-if($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"]) > 0 && check_bitrix_sessid())
+if($_SERVER["REQUEST_METHOD"]=="POST" && $_POST["action"] <> '' && check_bitrix_sessid())
 {
 	$CrmPerms = CCrmPerms::GetCurrentUserPermissions();
 	if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
@@ -69,7 +69,7 @@ if($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"]) > 0 && check_b
 		__CrmShowEndJsonResonse(array('success' => "Y"));
 	}
 
-	if (strlen($_POST["crmType"]) > 0 && \Bitrix\Main\Loader::includeModule("crm"))
+	if ($_POST["crmType"] <> '' && \Bitrix\Main\Loader::includeModule("crm"))
 	{
 		if ($_POST["crmType"] == "simple")
 		{

@@ -57,7 +57,7 @@ class CBPCrmTimelineCommentAdd
 	{
 		$errors = [];
 
-		if (!array_key_exists('CommentText', $arTestProperties) || strlen($arTestProperties['CommentText']) <= 0)
+		if (!array_key_exists('CommentText', $arTestProperties) || $arTestProperties['CommentText'] == '')
 		{
 			$errors[] = array('code' => 'NotExist', 'CommentText' => 'MessageText', 'message' => GetMessage('BPCTLCA_EMPTY_COMMENT_TEXT'));
 		}

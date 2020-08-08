@@ -3,18 +3,16 @@
 namespace Bitrix\Disk\Uf;
 
 use Bitrix\Disk\AttachedObject;
+use Bitrix\Disk\BaseObject;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Search\ContentManager;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\SystemUser;
+use Bitrix\Disk\User;
 use Bitrix\Main\Application;
-use Bitrix\Main\DB\MssqlConnection;
-use Bitrix\Main\DB\MysqlCommonConnection;
-use Bitrix\Main\DB\OracleConnection;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\NotSupportedException;
 
 Loc::loadMessages(__FILE__);
 
@@ -26,57 +24,44 @@ final class FileUserType
 	const TYPE_NEW_OBJECT = 2;
 	const TYPE_ALREADY_ATTACHED = 3;
 	const NEW_FILE_PREFIX = 'n';
+
 	/** @var File[]  */
-	protected static $loadedFiles = array();
+	protected static $loadedFiles = [];
 	/** @var array */
-	private static $valuesAllowEditByEntityType = array();
+	private static $valuesAllowEditByEntityType = [];
 
 	public static function getUserTypeDescription()
 	{
-		return array(
+		return [
 			"USER_TYPE_ID" => static::USER_TYPE_ID,
 			"CLASS_NAME" => __CLASS__,
 			"DESCRIPTION" => Loc::getMessage('DISK_FILE_USER_TYPE_NAME'),
 			"BASE_TYPE" => "int",
-			"TAG" => array(
+			"TAG" => [
 				"DISK FILE ID",
 				"DOCUMENT ID"
-			)
-		);
+			]
+		];
 	}
 
 	public static function getDBColumnType($userField)
 	{
-		$connection = Application::getConnection();
-		if($connection instanceof MysqlCommonConnection)
-		{
-			return 'int(11)';
-		}
-		if($connection instanceof OracleConnection)
-		{
-			return 'number(18)';
-		}
-		if($connection instanceof MssqlConnection)
-		{
-			return 'int';
-		}
-
-		throw new NotSupportedException("The '{$connection->getType()}' is not supported in current context");
+		return 'int(11)';
 	}
 
 	public static function prepareSettings($userField)
 	{
-		$iblockID = intval($userField["SETTINGS"]["IBLOCK_ID"]);
-		$sectionID = intval($userField["SETTINGS"]["SECTION_ID"]);
+		$iblockID = (int)$userField["SETTINGS"]["IBLOCK_ID"];
+		$sectionID = (int)$userField["SETTINGS"]["SECTION_ID"];
 
-		return array(
+		return [
 			"IBLOCK_ID" => $iblockID,
 			"SECTION_ID" => $sectionID,
 			"UF_TO_SAVE_ALLOW_EDIT" => $userField["SETTINGS"]["UF_TO_SAVE_ALLOW_EDIT"],
-		);
+		];
 	}
 
-	public static function getSettingsHTML($userField = false, $htmlControl, $varsFromForm)
+	public static function getSettingsHTML($userField, $htmlControl, $varsFromForm)
 	{
 		return "&nbsp;";
 	}
@@ -85,31 +70,34 @@ final class FileUserType
 	{
 		$html = '';
 		$values = $userField['VALUE'];
-		if(!is_array($values))
+		if (!is_array($values))
 		{
-			$values = array($userField['VALUE']);
+			$values = [$userField['VALUE']];
 		}
+
 		$urlManager = Driver::getInstance()->getUrlManager();
-		foreach($values as $value)
+		foreach ($values as $value)
 		{
-			if(!$value)
+			if (!$value)
 			{
 				continue;
 			}
-			list($type, $realValue) = self::detectType($value);
-			if($type == self::TYPE_ALREADY_ATTACHED)
+
+			[$type, $realValue] = self::detectType($value);
+			if ($type === self::TYPE_ALREADY_ATTACHED)
 			{
-				$attachedObject = AttachedObject::loadById($realValue, array('OBJECT'));
-				if (!$attachedObject)
+				$attachedObject = AttachedObject::loadById($realValue, ['OBJECT']);
+				$file = $attachedObject->getObject();
+				if (!$attachedObject || !$file)
 				{
 					continue;
 				}
 
-				$name = htmlspecialcharsbx($attachedObject->getObject()->getName());
-				$size = \CFile::formatSize($attachedObject->getObject()->getSize());
+				$name = htmlspecialcharsbx($file->getName());
+				$size = \CFile::formatSize($file->getSize());
 
 				$html .= '<br/><a href="' .
-					$urlManager->getUrlUfController('download', array('attachedId' => $realValue))
+					$urlManager->getUrlUfController('download', ['attachedId' => $realValue])
 				. '">' . $name . ' (' . $size .  ')</a>';
 			}
 		}
@@ -140,22 +128,22 @@ final class FileUserType
 	public static function onSearchIndex($userField)
 	{
 		$values = $userField['VALUE'];
-		if(!is_array($values))
+		if (!is_array($values))
 		{
-			$values = array($userField['VALUE']);
+			$values = [$userField['VALUE']];
 		}
 
-		$searchData = array();
-		$fileIdsForLoad = array();
-		$attachedIdsForLoad = array();
+		$searchData = [];
+		$fileIdsForLoad = [];
+		$attachedIdsForLoad = [];
 		$contentManager = new ContentManager();
 
-		foreach($values as $value)
+		foreach ($values as $value)
 		{
-			list($type, $realValue) = self::detectType($value);
-			if($type == self::TYPE_NEW_OBJECT)
+			[$type, $realValue] = self::detectType($value);
+			if ($type === self::TYPE_NEW_OBJECT)
 			{
-				if(self::isLoadedFile($realValue))
+				if (self::isLoadedFile($realValue))
 				{
 					$searchData[] =
 						$contentManager->getFileContentFromIndex(self::getFileById($realValue))?:
@@ -172,17 +160,16 @@ final class FileUserType
 				$attachedIdsForLoad[] = $realValue;
 			}
 		}
-		unset($value);
 
-		if($attachedIdsForLoad)
+		if ($attachedIdsForLoad)
 		{
-			$attachedObjects = AttachedObject::getModelList(array(
-				'with' => array('OBJECT'),
-				'filter' => array(
+			$attachedObjects = AttachedObject::getModelList([
+				'with' => ['OBJECT'],
+				'filter' => [
 					'ID' => $attachedIdsForLoad
-				),
-			));
-			foreach($attachedObjects as $attachedObject)
+				],
+			]);
+			foreach ($attachedObjects as $attachedObject)
 			{
 				$searchData[] =
 					$contentManager->getFileContentFromIndex($attachedObject->getObject())?:
@@ -191,14 +178,14 @@ final class FileUserType
 			}
 		}
 
-		if($fileIdsForLoad)
+		if ($fileIdsForLoad)
 		{
-			$files = File::getModelList(array(
-				'filter' => array(
+			$files = File::getModelList([
+				'filter' => [
 					'ID' => $fileIdsForLoad
-				),
-			));
-			foreach($files as $file)
+				],
+			]);
+			foreach ($files as $file)
 			{
 				$searchData[] =
 					$contentManager->getFileContentFromIndex($file)?:
@@ -212,40 +199,39 @@ final class FileUserType
 
 	public static function onBeforeSaveAll($userField, $values, $userId = false)
 	{
-		if(!is_array($values))
+		if (!is_array($values))
 		{
-			$values = array();
+			$values = [];
 		}
 
-		if($values)
+		if ($values)
 		{
-			static $alreadyRunDetach = array();
-			if(!isset($alreadyRunDetach[$userField['FIELD_NAME'] . '|' . $userField['ENTITY_VALUE_ID']]))
+			static $alreadyRunDetach = [];
+			if (!isset($alreadyRunDetach[$userField['FIELD_NAME'] . '|' . $userField['ENTITY_VALUE_ID']]))
 			{
 				$alreadyRunDetach[$userField['FIELD_NAME'] . '|' . $userField['ENTITY_VALUE_ID']] = true;
-
-				if($userField['VALUE'])
+				if ($userField['VALUE'])
 				{
 					$alreadyExistsValues = $userField['VALUE'];
-					if(!is_array($alreadyExistsValues))
+					if (!is_array($alreadyExistsValues))
 					{
-						$alreadyExistsValues = array($userField['VALUE']);
+						$alreadyExistsValues = [$userField['VALUE']];
 					}
+
 					$needToDetach = array_diff($alreadyExistsValues, $values);
-					AttachedObject::detachByFilter(array('ID' => $needToDetach));
+					AttachedObject::detachByFilter(['ID' => $needToDetach]);
 				}
 			}
 		}
 
-		$valuesToInsert = array();
+		$valuesToInsert = [];
 		foreach($values as $value)
 		{
-			if(!empty($value))
+			if (!empty($value))
 			{
 				$valuesToInsert[] = (int)self::onBeforeSave($userField, $value, $userId);
 			}
 		}
-		unset($value);
 
 		return $valuesToInsert;
 	}
@@ -254,30 +240,31 @@ final class FileUserType
 	{
 		$userFieldManager = Driver::getInstance()->getUserFieldManager();
 
-		list($connectorClass, $moduleId) = $userFieldManager->getConnectorDataByEntityType($userField['ENTITY_ID']);
-		list($type, $realValue) = self::detectType($value);
+		[$connectorClass, $moduleId] = $userFieldManager->getConnectorDataByEntityType($userField['ENTITY_ID']);
+		[$type, $realValue] = self::detectType($value);
 
-		if(empty($value))
+		if (empty($value))
 		{
 			$alreadyExistsValues = $userField['VALUE'];
-			if(!is_array($alreadyExistsValues))
+			if (!is_array($alreadyExistsValues))
 			{
 				$alreadyExistsValues = array($userField['VALUE']);
 			}
 			AttachedObject::detachByFilter(array('ID' => $alreadyExistsValues));
+
 			return $value;
 		}
 
-		if($type == self::TYPE_NEW_OBJECT)
+		if ($type === self::TYPE_NEW_OBJECT)
 		{
 			$errorCollection = new ErrorCollection();
 			$fileModel = self::getFileById($realValue);
-			if(!$fileModel)
+			if (!$fileModel || !$fileModel->getStorage())
 			{
 				return '';
 			}
 
-			if($userId === false)
+			if ($userId === false)
 			{
 				$securityContext = $fileModel->getStorage()->getCurrentUserSecurityContext();
 			}
@@ -287,28 +274,27 @@ final class FileUserType
 			}
 
 			$canUpdate = $fileModel->canUpdate($securityContext);
-			$attachedModel = AttachedObject::add(array(
+			$attachedModel = AttachedObject::add([
 				'MODULE_ID' => $moduleId,
 				'OBJECT_ID' => $fileModel->getId(),
 				'ENTITY_ID' => $userField['VALUE_ID'],
 				'ENTITY_TYPE' => $connectorClass,
 				'IS_EDITABLE' => (int)$canUpdate,
-				//$_POST - hack. We know.
 				'ALLOW_EDIT' => (int) ($canUpdate && (int)self::getValueForAllowEdit($userField)),
 				'CREATED_BY' => $userId === false? self::getActivityUserId() : $userId,
-			), $errorCollection);
-			if(!$attachedModel || $errorCollection->hasErrors())
+			], $errorCollection);
+
+			if (!$attachedModel || $errorCollection->hasErrors())
 			{
-				$errorCollection->add(array(new Error(Loc::getMessage('DISK_FILE_USER_TYPE_ERROR_COULD_NOT_FIND_ATTACHED_OBJECT'), self::ERROR_COULD_NOT_FIND_ATTACHED_OBJECT)));
+				$errorCollection[] = new Error(Loc::getMessage('DISK_FILE_USER_TYPE_ERROR_COULD_NOT_FIND_ATTACHED_OBJECT'), self::ERROR_COULD_NOT_FIND_ATTACHED_OBJECT);
+
 				return '';
 			}
 
 			return $attachedModel->getId();
 		}
-		else
-		{
-			return $realValue;
-		}
+
+		return $realValue;
 	}
 
 	/**
@@ -330,12 +316,9 @@ final class FileUserType
 		}
 
 		$userId = (($userId === false) ? self::getActivityUserId() : $userId);
-
 		$userFieldManager = Driver::getInstance()->getUserFieldManager();
 
-		$newAttachedIds = $userFieldManager->cloneUfValuesFromAttachedObject($attachedIds, $userId);
-
-		return $newAttachedIds;
+		return $userFieldManager->cloneUfValuesFromAttachedObject($attachedIds, $userId);
 	}
 
 	/**
@@ -358,20 +341,20 @@ final class FileUserType
 
 	public static function onDelete($userField, $value)
 	{
-		list($type, $realValue) = self::detectType($value);
-		if($type != self::TYPE_ALREADY_ATTACHED)
+		[$type, $realValue] = self::detectType($value);
+		if ($type !== self::TYPE_ALREADY_ATTACHED)
 		{
 			return;
 		}
 
 		$attachedModel = AttachedObject::loadById($realValue, array('OBJECT'));
-		if(!$attachedModel)
+		if (!$attachedModel)
 		{
 			return;
 		}
 
 		$userFieldManager = Driver::getInstance()->getUserFieldManager();
-		if(!$userFieldManager->belongsToEntity($attachedModel, $userField['ENTITY_ID'], $userField['ENTITY_VALUE_ID']))
+		if (!$userFieldManager->belongsToEntity($attachedModel, $userField['ENTITY_ID'], $userField['ENTITY_VALUE_ID']))
 		{
 			return;
 		}
@@ -383,9 +366,9 @@ final class FileUserType
 	{
 		$userFieldManager = Driver::getInstance()->getUserFieldManager();
 		$res = (is_array($matches) && is_string($matches[0]) ? $matches[0] : '');
-		list($type, $realValue) = self::detectType($id);
+		[$type, $realValue] = self::detectType($id);
 
-		if($type == self::TYPE_NEW_OBJECT || (is_array($matches) && $matches[1] == "DOCUMENT ID"))
+		if ($type == self::TYPE_NEW_OBJECT || (is_array($matches) && $matches[1] == "DOCUMENT ID"))
 		{
 			$userFieldManager->loadBatchAttachedObject($userField["VALUE"]);
 
@@ -393,22 +376,22 @@ final class FileUserType
 			$id = false;
 			foreach ($userField["VALUE"] as $attachedObjectId)
 			{
-				if(!$userFieldManager->isLoadedAttachedObject($attachedObjectId))
+				if (!$userFieldManager->isLoadedAttachedObject($attachedObjectId))
 				{
 					continue;
 				}
 
 				$fileObject = $userFieldManager->getAttachedObjectById($attachedObjectId)->getFile();
-				if(!$fileObject)
+				if (!$fileObject)
 				{
 					continue;
 				}
-				if($type == self::TYPE_NEW_OBJECT && $fileObject->getId() == $realValue)
+				if ($type === self::TYPE_NEW_OBJECT && $fileObject->getId() == $realValue)
 				{
 					$id = $attachedObjectId;
 					break;
 				}
-				elseif($matches[1] == "DOCUMENT ID" && $fileObject->getXmlId() == $originalId)
+				elseif ($matches[1] === "DOCUMENT ID" && $fileObject->getXmlId() == $originalId)
 				{
 					$id = $attachedObjectId;
 					break;
@@ -426,12 +409,12 @@ final class FileUserType
 			if ($params != '' && is_string($params) && preg_match_all("/(width|height)=(\d+)/is", $params, $matches))
 				$size = array_combine($matches[1], $matches[2]);
 			ob_start();
-			
+
 			$newParams = $settings + array(
-				"arUserField" => $userField, 
-				"INLINE" => "Y", 
+				"arUserField" => $userField,
+				"INLINE" => "Y",
 				"LAZYLOAD" => (isset($settings["LAZYLOAD"]) && $settings["LAZYLOAD"] == "Y" ? "Y" : "N"),
-				"MAX_SIZE" => $maxSize, 
+				"MAX_SIZE" => $maxSize,
 				"SIZE" => array($id => $size),
 				"TEMPLATE" => $settings["TEMPLATE"]
 			);
@@ -455,11 +438,12 @@ final class FileUserType
 	 */
 	public static function detectType($value)
 	{
-		if(is_string($value) && substr($value, 0, 1) == self::NEW_FILE_PREFIX)
+		if (is_string($value) && mb_substr($value, 0, 1) == self::NEW_FILE_PREFIX)
 		{
-			return array(self::TYPE_NEW_OBJECT, substr($value, 1));
+			return [self::TYPE_NEW_OBJECT, mb_substr($value, 1)];
 		}
-		return array(self::TYPE_ALREADY_ATTACHED, (int)$value);
+
+		return [self::TYPE_ALREADY_ATTACHED, (int)$value];
 	}
 
 	/**
@@ -471,23 +455,23 @@ final class FileUserType
 	public static function checkFields($userField, $value, $userId = false)
 	{
 		$userFieldManager = Driver::getInstance()->getUserFieldManager();
-		$errors = array();
+		$errors = [];
 
-		list($type, $realValue) = self::detectType($value);
+		[$type, $realValue] = self::detectType($value);
 
-		if($type == self::TYPE_ALREADY_ATTACHED)
+		if ($type === self::TYPE_ALREADY_ATTACHED)
 		{
 			$attachedModel = $userFieldManager->getAttachedObjectById($realValue);
-			if(!$attachedModel)
+			if (!$attachedModel)
 			{
-				$errors[] = array(
+				$errors[] = [
 					"id" => $userField["FIELD_NAME"],
 					"text" => Loc::getMessage('DISK_FILE_USER_TYPE_ERROR_COULD_NOT_FIND_FILE'),
-				);
+				];
 
 				return $errors;
 			}
-			list($connectorClass, $moduleId) = $userFieldManager->getConnectorDataByEntityType($userField['ENTITY_ID']);
+			[$connectorClass, $moduleId] = $userFieldManager->getConnectorDataByEntityType($userField['ENTITY_ID']);
 
 			if(
 				!$userFieldManager->belongsToEntity($attachedModel, $userField['ENTITY_ID'], $userField['ENTITY_VALUE_ID']) &&
@@ -497,38 +481,38 @@ final class FileUserType
 				)
 			)
 			{
-				$errors[] = array(
+				$errors[] = [
 					"id" => $userField["FIELD_NAME"],
 					"text" => Loc::getMessage('DISK_FILE_USER_TYPE_ERROR_COULD_NOT_FIND_FILE'),
-				);
+				];
 
 				return $errors;
 			}
 		}
 		else
 		{
-			if($realValue <= 0)
+			if ($realValue <= 0)
 			{
-				$errors[] = array(
+				$errors[] = [
 					"id" => $userField["FIELD_NAME"],
 					"text" => Loc::getMessage('DISK_FILE_USER_TYPE_ERROR_INVALID_VALUE'),
-				);
+				];
 
 				return $errors;
 			}
 
 			$fileModel = self::getFileById($realValue);
-			if(!$fileModel)
+			if (!$fileModel || !$fileModel->getStorage())
 			{
-				$errors[] = array(
+				$errors[] = [
 					"id" => $userField["FIELD_NAME"],
 					"text" => Loc::getMessage('DISK_FILE_USER_TYPE_ERROR_COULD_NOT_FIND_FILE'),
-				);
+				];
 
 				return $errors;
 			}
 
-			if($userId === false)
+			if ($userId === false)
 			{
 				$securityContext = $fileModel->getStorage()->getCurrentUserSecurityContext();
 			}
@@ -536,12 +520,13 @@ final class FileUserType
 			{
 				$securityContext = $fileModel->getStorage()->getSecurityContext($userId);
 			}
-			if(!$fileModel->canRead($securityContext))
+
+			if (!$fileModel->canRead($securityContext))
 			{
-				$errors[] = array(
+				$errors[] = [
 					"id" => $userField["FIELD_NAME"],
 					"text" => Loc::getMessage('DISK_FILE_USER_TYPE_ERROR_BAD_RIGHTS'),
-				);
+				];
 
 				return $errors;
 			}
@@ -556,10 +541,11 @@ final class FileUserType
 	 */
 	protected static function getFileById($id)
 	{
-		if(!isset(self::$loadedFiles[$id]))
+		if (!isset(self::$loadedFiles[$id]))
 		{
-			self::$loadedFiles[$id] = File::loadById($id, array('STORAGE'));
+			self::$loadedFiles[$id] = File::loadById($id, ['STORAGE']);
 		}
+
 		return self::$loadedFiles[$id];
 	}
 
@@ -571,10 +557,10 @@ final class FileUserType
 	private static function getActivityUserId()
 	{
 		global $USER;
-		if($USER && $USER instanceof \CUser)
+		if ($USER && $USER instanceof \CUser)
 		{
-			$userId = $USER->getId();
-			if(is_numeric($userId) && ((int)$userId > 0))
+			$userId = User::resolveUserId($USER);
+			if ($userId !== null)
 			{
 				return $userId;
 			}
@@ -600,7 +586,7 @@ final class FileUserType
 
 	private static function getValueForAllowEdit(array $userField)
 	{
-		if(isset(self::$valuesAllowEditByEntityType[$userField['ENTITY_ID']]))
+		if (isset(self::$valuesAllowEditByEntityType[$userField['ENTITY_ID']]))
 		{
 			return self::$valuesAllowEditByEntityType[$userField['ENTITY_ID']];
 		}
@@ -614,11 +600,11 @@ final class FileUserType
 
 	public static function getItemsInfo($itemsList)
 	{
-		$objects = array();
-		$itemsIds = array(
-			'objects'  => array(),
-			'attached' => array(),
-		);
+		$objects = [];
+		$itemsIds = [
+			'objects'  => [],
+			'attached' => [],
+		];
 
 		foreach ($itemsList as $k => $item)
 		{
@@ -775,6 +761,7 @@ final class FileUserType
 		{
 			$currentRelations[$attachedObject->getObjectId()] = $attachedObject->getId();
 		}
+
 		return $currentRelations;
 	}
 
@@ -785,13 +772,15 @@ final class FileUserType
 		$userFieldManager = Driver::getInstance()->getUserFieldManager();
 		foreach ($filesIdToUpdate as $attachedId => $newFileId)
 		{
-			list($type, $newFileId) = FileUserType::detectType($newFileId);
+			[$type, $newFileId] = FileUserType::detectType($newFileId);
 			if (array_key_exists($newFileId, $currentRelations))
 			{
 				$relationsToReplace[$attachedId] = $currentRelations[$newFileId];
 				$attachedObject = $userFieldManager->getAttachedObjectById($attachedId);
-				$relationsToReplace[FileUserType::NEW_FILE_PREFIX.$attachedObject->getObjectId()] =
-					$currentRelations[$newFileId];
+				if ($attachedObject)
+				{
+					$relationsToReplace[FileUserType::NEW_FILE_PREFIX.$attachedObject->getObjectId()] = $currentRelations[$newFileId];
+				}
 			}
 		}
 

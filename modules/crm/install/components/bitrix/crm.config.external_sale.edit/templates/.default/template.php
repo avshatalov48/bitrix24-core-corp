@@ -1,12 +1,12 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 <?
-if (strlen($arResult["FatalErrorMessage"]) > 0)
+if ($arResult["FatalErrorMessage"] <> '')
 {
 	ShowError($arResult["FatalErrorMessage"]);
 }
 else
 {
-	if (strlen($arResult["ErrorMessage"]) > 0)
+	if ($arResult["ErrorMessage"] <> '')
 		ShowError($arResult["ErrorMessage"]);
 
 	$arButtons = array(
@@ -50,7 +50,7 @@ else
 	$lastStatusValue = "";
 	if (intval($arResult["BP"]["MODIFICATION_LABEL"]) == 0)
 		$lastStatusValue .= "<font class='errortext'>".GetMessage("BPWC_WLC_NEED_FIRST_SYNC1")."</font><br /><a href='".$arResult["PATH_TO_SYNC"]."'>".GetMessage("BPWC_WLC_NEED_FIRST_SYNC1_DO")."</a><br />";
-	if ($arResult["BP"]["LAST_STATUS"] != "" && strtolower(substr($arResult["BP"]["LAST_STATUS"], 0, strlen("success"))) != "success")
+	if ($arResult["BP"]["LAST_STATUS"] != "" && mb_strtolower(mb_substr($arResult["BP"]["LAST_STATUS"], 0, mb_strlen("success"))) != "success")
 		$lastStatusValue .= GetMessage("BPWC_WLC_NEED_FIRST_SYNC3").$arResult["BP"]["LAST_STATUS"];
 	if ($lastStatusValue == "")
 		$lastStatusValue .= GetMessage("BPWC_WLC_NEED_FIRST_SYNC2");

@@ -135,7 +135,7 @@ foreach ($arResult['PROPERTY_VALUES'] as $productID => $arProperties)
 		else if ($isInExportMode && $exportType === 'csv' && $arProp['PROPERTY_TYPE'] === 'S'
 			&& isset($arProp['USER_TYPE']) && $arProp['USER_TYPE'] === 'ECrm')
 		{
-			$isStringValue = (is_string($propValue) && strlen($propValue) > 0);
+			$isStringValue = (is_string($propValue) && $propValue <> '');
 			if ($isStringValue || is_array($propValue))
 			{
 				if ($isStringValue)

@@ -9,7 +9,7 @@ global $APPLICATION;
 $componentParameters = array(
 	'ID' => $arResult['AGREEMENT_ID'],
 	'NAME_TEMPLATE' => $arResult['NAME_TEMPLATE'],
-	'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_CONSENTS'],
+	'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_USER_PROFILE'],
 	'PATH_TO_LIST' => $arResult['PATH_TO_LIST'],
 	'PATH_TO_ADD' => $arResult['PATH_TO_ADD'],
 	'PATH_TO_EDIT' => $arResult['PATH_TO_EDIT'],
@@ -19,13 +19,15 @@ $componentParameters = array(
 if ($_REQUEST['IFRAME'] == 'Y')
 {
 	$APPLICATION->IncludeComponent(
-		"bitrix:intranet.pageslider.wrapper",
+		"bitrix:ui.sidepanel.wrapper",
 		"",
-		array(
+		[
 			'POPUP_COMPONENT_NAME' => "bitrix:main.userconsent.edit",
 			"POPUP_COMPONENT_TEMPLATE_NAME" => "",
 			"POPUP_COMPONENT_PARAMS" => $componentParameters,
-		)
+			'RELOAD_GRID_AFTER_SAVE' => true,
+			'CLOSE_AFTER_SAVE' => true,
+		]
 	);
 }
 else

@@ -23,6 +23,7 @@ class AppPlacement
 	const CONTACT_DETAIL_TOOLBAR = 'CRM_CONTACT_DETAIL_TOOLBAR';
 	const COMPANY_DETAIL_TOOLBAR = 'CRM_COMPANY_DETAIL_TOOLBAR';
 	const REQUISITE_EDIT_FORM = 'CRM_REQUISITE_EDIT_FORM';
+	const ONEC_PAGE = '1C_PAGE';
 
 	public static function getAll()
 	{
@@ -47,7 +48,8 @@ class AppPlacement
 			self::DEAL_DETAIL_TOOLBAR,
 			self::CONTACT_DETAIL_TOOLBAR,
 			self::COMPANY_DETAIL_TOOLBAR,
-			self::REQUISITE_EDIT_FORM
+			self::REQUISITE_EDIT_FORM,
+			self::ONEC_PAGE
 		];
 	}
 }

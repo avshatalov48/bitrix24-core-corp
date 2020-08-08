@@ -42,18 +42,19 @@ class StartWorktimeManager extends WorktimeManager
 				$this->worktimeRecordForm->getFirstEventForm()->eventName,
 				$record->getUserId(),
 				$record->getId(),
-				$this->worktimeRecordForm->recordedStartTimestamp,
-				$this->worktimeRecordForm->getFirstEventForm()->reason
+				$record->getRecordedStartTimestamp(),
+				$this->worktimeRecordForm->getFirstEventForm()->reason,
+				$this->worktimeRecordForm->device
 			),
 		];
 	}
 
-	public function buildRecordViolations($record, $schedule, $violationRulesList = [])
+	public function buildRecordViolations($record, $schedule)
 	{
 		return $this->buildWorktimeViolations($record, $schedule, [
 			WorktimeViolation::TYPE_LATE_START,
 			WorktimeViolation::TYPE_EARLY_START,
 			WorktimeViolation::TYPE_SHIFT_LATE_START,
-		], $violationRulesList);
+		]);
 	}
 }

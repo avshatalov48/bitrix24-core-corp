@@ -66,7 +66,7 @@ class TemplateProviderTable extends Main\Entity\DataManager
 
 		if(isset($data['PROVIDER']))
 		{
-			$provider = strtolower($data['PROVIDER']);
+			$provider = mb_strtolower($data['PROVIDER']);
 			$result->modifyFields(['PROVIDER' => $provider]);
 		}
 

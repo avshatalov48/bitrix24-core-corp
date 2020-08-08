@@ -34,7 +34,7 @@ class InvoiceStatusHistory extends InvoiceDataSource
 			throw new Main\ObjectNotFoundException("The 'filter' is not found in params.");
 		}
 
-		$group = isset($params['group']) ? strtoupper($params['group']) : '';
+		$group = isset($params['group'])? mb_strtoupper($params['group']) : '';
 		if($group !== self::GROUP_BY_USER && $group !== self::GROUP_BY_STATUS)
 		{
 			$group = self::GROUP_BY_STATUS;

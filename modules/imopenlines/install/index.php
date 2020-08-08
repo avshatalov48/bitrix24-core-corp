@@ -173,8 +173,11 @@ Class imopenlines extends CModule
 		$eventManager->registerEventHandler('imconnector', 'OnReceivedStatusDelivery', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onReceivedStatusDelivery');
 		$eventManager->registerEventHandler('imconnector', 'OnReceivedStatusReading', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onReceivedStatusReading');
 		$eventManager->registerEventHandler('imconnector', 'OnReceivedStatusWrites', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onReceivedStatusWrites');
+		$eventManager->registerEventHandler('imconnector', 'OnReceivedStatusBlock', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'OnReceivedStatusBlock');
 		$eventManager->registerEventHandler('main', 'OnAfterSetOption_~controller_group_name', 'imopenlines', '\Bitrix\ImOpenLines\Limit', 'onBitrix24LicenseChange');
 		$eventManager->registerEventHandler('rest', 'OnRestServiceBuildDescription', 'imopenlines', '\Bitrix\ImOpenLines\Rest', 'onRestServiceBuildDescription');
+		$eventManager->registerEventHandler('imopenlines', 'OnSessionStart', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onSessionStart');
+		$eventManager->registerEventHandler('imopenlines', 'OnSessionFinish', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onSessionFinish');
 
 		// imopenlines livechat auth
 		/** @see \Bitrix\Main\Engine\Controller::getFullEventName */
@@ -398,6 +401,7 @@ Class imopenlines extends CModule
 		$eventManager->unRegisterEventHandler('imconnector', 'OnReceivedStatusDelivery', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onReceivedStatusDelivery');
 		$eventManager->unRegisterEventHandler('imconnector', 'OnReceivedStatusReading', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onReceivedStatusReading');
 		$eventManager->unRegisterEventHandler('imconnector', 'OnReceivedStatusWrites', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onReceivedStatusWrites');
+		$eventManager->unRegisterEventHandler('imconnector', 'OnReceivedStatusBlock', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'OnReceivedStatusBlock');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterSetOption_~controller_group_name', 'imopenlines', '\Bitrix\ImOpenLines\Limit', 'onBitrix24LicenseChange');
 		$eventManager->unRegisterEventHandler('rest', 'OnRestServiceBuildDescription', 'imopenlines', '\Bitrix\ImOpenLines\Rest', 'onRestServiceBuildDescription');
 		$eventManager->unRegisterEventHandler('main', 'Bitrix\Disk\Controller\File::'.\Bitrix\Main\Engine\Controller::EVENT_ON_BEFORE_ACTION, 'imopenlines', '\Bitrix\ImOpenLines\Widget\Auth', 'onDiskCheckAuth');
@@ -419,6 +423,8 @@ Class imopenlines extends CModule
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnChatSkip', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish');
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnChatMarkSpam', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish');
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnChatFinish', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish');
+		$eventManager->unRegisterEventHandler('imopenlines', 'OnSessionStart', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onSessionStart');
+		$eventManager->unRegisterEventHandler('imopenlines', 'OnSessionFinish', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onSessionFinish');
 
 		$this->UnInstallChatApps();
 

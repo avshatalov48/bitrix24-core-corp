@@ -25,5 +25,4 @@ $MESS["CRM_LEAD_DETAIL_ATTR_GR_TYPE_PIPELINE"] = "В работе + сконве
 $MESS["CRM_LEAD_DETAIL_ATTR_GR_TYPE_JUNK"] = "Некачественные";
 $MESS["CRM_LEAD_DETAIL_ATTR_REQUIRED_SHORT"] = "Обязательное";
 $MESS["CRM_LEAD_DETAIL_ATTR_REQUIRED_FULL"] = "Обязательное со статуса";
-$MESS["CRM_LEAD_DETAIL_ATTR_REQUIRED_FULL"] = "Обязательное со статуса";
 ?>

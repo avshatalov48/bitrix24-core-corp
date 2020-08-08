@@ -192,7 +192,7 @@ class CIntranetNotify
 
 	public static function GetByID($ID)
 	{
-		$ID = IntVal($ID);
+		$ID = intval($ID);
 		$dbUser = CUser::GetByID($ID);
 		if ($arUser = $dbUser->GetNext())
 		{
@@ -294,7 +294,7 @@ class CIntranetNotify
 						else
 						{
 							$url = $arParams['PATH_TO_CONPANY_DEPARTMENT'];
-							if (strlen($url) <= 0)
+							if ($url == '')
 							{
 								$url = $arParams['PATH_TO_COMPANY_DEPARTMENT'];
 							}
@@ -304,14 +304,14 @@ class CIntranetNotify
 						if ($arSection = $dbRes->fetch())
 						{
 							$arResult['CREATED_BY']['FORMATTED'] = (
-								strlen($url) > 0
+								$url <> ''
 									? '<a href="'.str_replace('#ID#', $arSection['ID'], $url).'">'.htmlspecialcharsEx($arSection['NAME']).'</a>'
 									: htmlspecialcharsEx($arSection['NAME'])
 							);
 						}
 					}
 
-					if (strlen($arResult['CREATED_BY']['FORMATTED']) <= 0)
+					if ($arResult['CREATED_BY']['FORMATTED'] == '')
 					{
 						$arResult['CREATED_BY']['FORMATTED'] = htmlspecialcharsEx(self::GetSiteName());
 					}
@@ -519,14 +519,14 @@ class CIntranetNotify
 			}
 
 			$strPathToLogEntry = str_replace("#log_id#", $arLog["ID"], COption::GetOptionString("socialnetwork", "log_entry_page", "/company/personal/log/#log_id#/", SITE_ID));
-			$strPathToLogEntryComment = $strPathToLogEntry.(strpos($strPathToLogEntry, "?") !== false ? "&" : "?")."commentID=".$arCommentFields["ID"];
+			$strPathToLogEntryComment = $strPathToLogEntry.(mb_strpos($strPathToLogEntry, "?") !== false ? "&" : "?")."commentID=".$arCommentFields["ID"];
 
 			$arReturn = array(
 				"URL" => $strPathToLogEntryComment,
 				"NOTIFY_MODULE" => "intranet",
 				"NOTIFY_TAG" => "INTRANET_NEW_USER|COMMENT_MENTION|".$arCommentFields["ID"],
-				"NOTIFY_MESSAGE" => GetMessage("I_NEW_USER_MENTION".(strlen($genderSuffix) > 0 ? "_".$genderSuffix : ""), Array("#title#" => "<a href=\"#url#\" class=\"bx-notifier-item-action\">".$nameFormatted."</a>")),
-				"NOTIFY_MESSAGE_OUT" => GetMessage("I_NEW_USER_MENTION".(strlen($genderSuffix) > 0 ? "_".$genderSuffix : ""), Array("#title#" => $nameFormatted))." ("."#server_name##url#)"
+				"NOTIFY_MESSAGE" => GetMessage("I_NEW_USER_MENTION".($genderSuffix <> '' ? "_".$genderSuffix : ""), Array("#title#" => "<a href=\"#url#\" class=\"bx-notifier-item-action\">".$nameFormatted."</a>")),
+				"NOTIFY_MESSAGE_OUT" => GetMessage("I_NEW_USER_MENTION".($genderSuffix <> '' ? "_".$genderSuffix : ""), Array("#title#" => $nameFormatted))." ("."#server_name##url#)"
 			);
 
 			return $arReturn;

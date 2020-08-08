@@ -68,7 +68,7 @@ class CrmExclusionComponent extends CBitrixComponent
 			CComponentEngine::initComponentVariables($componentPage, $arComponentVariables, $arVariableAliases, $arVariables);
 			foreach ($arUrlTemplates as $url => $value)
 			{
-				$key = 'PATH_TO_'.strtoupper($url);
+				$key = 'PATH_TO_'.mb_strtoupper($url);
 				$this->arResult[$key] = isset($this->arParams[$key][0]) ? $this->arParams[$key] : $this->arParams['SEF_FOLDER'] . $value;
 			}
 

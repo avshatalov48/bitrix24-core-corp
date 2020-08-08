@@ -63,7 +63,7 @@ class DealReport extends WidgetPanel
 		$contextData = [];
 
 		$currentCategory = DealBoard::getCurrentCategory();
-		if($currentCategory > 0)
+		if($currentCategory >= 0)
 		{
 			$contextData['dealCategoryID'] = $currentCategory;
 		}

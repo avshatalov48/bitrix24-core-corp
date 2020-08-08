@@ -158,4 +158,25 @@ class RecyclingManager
 			'crm'
 		);
 	}
+	/**
+	 * RecycleBin module OnAdditionalDataRequest event handler.
+	 * @return Main\EventResult
+	 * @throws Main\LoaderException
+	 */
+	public static function onAdditionalDataRequest()
+	{
+		$data = array_merge(
+			Crm\Integration\Recyclebin\Lead::getAdditionalData(),
+			Crm\Integration\Recyclebin\Contact::getAdditionalData(),
+			Crm\Integration\Recyclebin\Company::getAdditionalData(),
+			Crm\Integration\Recyclebin\Deal::getAdditionalData(),
+			Crm\Integration\Recyclebin\Activity::getAdditionalData()
+		);
+
+		return new Main\EventResult(
+			Main\EventResult::SUCCESS,
+			['NAME' => 'CRM', 'ADDITIONAL_DATA' => $data],
+			'crm'
+		);
+	}
 }

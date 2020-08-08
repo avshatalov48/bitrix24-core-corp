@@ -96,7 +96,7 @@ class CCrmDedupeWizardComponentAjaxController extends Main\Engine\Controller
 			}
 			$progressData['TOTAL_ITEMS'] = $totalItemQty;
 
-			CUserOptions::DeleteOption('crm', strtolower($entityTypeName).'_dedupe_queue', false, $this->currentUserID);
+			CUserOptions::DeleteOption('crm', mb_strtolower($entityTypeName).'_dedupe_queue', false, $this->currentUserID);
 		}
 		else
 		{
@@ -193,7 +193,7 @@ class CCrmDedupeWizardComponentAjaxController extends Main\Engine\Controller
 			'TOTAL_ENTITIES' => $totalEntities
 		);
 	}
-	public function mergeAction($entityTypeName, array $types, $scope)
+	public function mergeAction($entityTypeName, array $types, $scope, $mode = '')
 	{
 		$entityTypeID = \CCrmOwnerType::ResolveID($entityTypeName);
 		if(!\CCrmOwnerType::IsDefined($entityTypeID))
@@ -215,6 +215,21 @@ class CCrmDedupeWizardComponentAjaxController extends Main\Engine\Controller
 		if(empty($typeIDs))
 		{
 			$this->addError(new Main\Error('Index types are not defined or invalid.'));
+			return false;
+		}
+
+		$mode = (string)$mode;
+		if ($mode == '')
+		{
+			$mode = 'auto';
+		}
+		$mergeModes = [
+			'auto' => Crm\Merger\ConflictResolutionMode::ASK_USER,
+			'manual' => Crm\Merger\ConflictResolutionMode::MANUAL
+		];
+		if (!isset($mergeModes[$mode]))
+		{
+			$this->addError(new Main\Error('Wrong merge mode.'));
 			return false;
 		}
 
@@ -258,6 +273,7 @@ class CCrmDedupeWizardComponentAjaxController extends Main\Engine\Controller
 		$rootEntityID = $item->getRootEntityID();
 		$criterion = $item->getCriterion();
 		$entityIDs = $criterion->getEntityIDs($entityTypeID, $rootEntityID, $this->currentUserID, $enablePermissionCheck, ['limit' => 50]);
+		$entityIDs = array_unique($entityIDs);
 		if(empty($entityIDs))
 		{
 			//Skip Junk item
@@ -273,7 +289,7 @@ class CCrmDedupeWizardComponentAjaxController extends Main\Engine\Controller
 		}
 
 		$merger = Crm\Merger\EntityMerger::create($entityTypeID, $this->currentUserID, $enablePermissionCheck);
-		$merger->setConflictResolutionMode(Crm\Merger\ConflictResolutionMode::ASK_USER);
+		$merger->setConflictResolutionMode($mergeModes[$mode]);
 		$result = ['STATUS' => 'SUCCESS'];
 		try
 		{

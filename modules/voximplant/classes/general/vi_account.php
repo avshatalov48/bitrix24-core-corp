@@ -25,11 +25,6 @@ class CVoxImplantAccount
 
 	public function UpdateAccountInfo($accountInfo = null)
 	{
-		if(\Bitrix\Voximplant\Limits::isRestOnly())
-		{
-			return false;
-		}
-
 		if(is_null($accountInfo))
 		{
 			$ViHttp = new CVoxImplantHttp();
@@ -102,7 +97,7 @@ class CVoxImplantAccount
 
 	public function SetAccountBalance($balance)
 	{
-		if ($this->account_balance == $balance)
+		if ($this->GetAccountBalance() == $balance)
 		{
 			return true;
 		}
@@ -117,28 +112,26 @@ class CVoxImplantAccount
 
 	public function GetAccountBalance($liveBalance = false)
 	{
-		if ($liveBalance)
-			$this->UpdateAccountInfo();
+		$updateResult = $liveBalance ? $this->UpdateAccountInfo() : false;
 
-		if (floatval($this->account_balance)<=0)
+		if($liveBalance && !$updateResult)
 		{
-			$this->account_balance = COption::GetOptionString("voximplant", self::ACCOUNT_BALANCE, 0);
-			if (floatval($this->account_balance)<=0)
-			{
-				if (!$liveBalance && !$this->UpdateAccountInfo())
-				{
-					return false;
-				}
-			}
+			return false;
 		}
-		return floatval($this->account_balance);
+
+		if ($this->account_balance <= 0)
+		{
+			$this->account_balance = (float)COption::GetOptionString("voximplant", self::ACCOUNT_BALANCE, 0);
+		}
+
+		return (float)$this->account_balance;
 	}
 
 	public function GetBalanceFormatted()
 	{
 		$balance = $this->GetAccountBalance();
 		$currency = $this->GetAccountCurrency();
-		if($currency == 'RUR')
+		if($currency === 'RUR')
 		{
 			$currency = 'RUB';
 		}
@@ -162,7 +155,7 @@ class CVoxImplantAccount
 		if($accountLang == '')
 			return false;
 
-		if($accountLang == 'ru')
+		if($accountLang === 'ru')
 		{
 			return 300;
 		}

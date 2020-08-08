@@ -45,8 +45,8 @@ $APPLICATION->IncludeComponent(
 			"COMPANY_WORKTIME",
 			"USER_FIELDS",
 			"TEMPLATE"
-		)
-
+		),
+		"ACTION" => "edit"
 	),
 	$this->__component,
 	array("HIDE_ICONS" => "Y")

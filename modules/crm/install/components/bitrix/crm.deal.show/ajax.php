@@ -496,7 +496,7 @@ if($mode === 'SAVE_SELECTED_BINDING')
 		)
 	);
 }
-$type = isset($_POST['OWNER_TYPE']) ? strtoupper($_POST['OWNER_TYPE']) : '';
+$type = isset($_POST['OWNER_TYPE'])? mb_strtoupper($_POST['OWNER_TYPE']) : '';
 if($type !== 'D')
 {
 	__CrmDealShowEndJsonResonse(array('ERROR'=>'OWNER_TYPE IS NOT SUPPORTED!'));
@@ -572,11 +572,11 @@ if($mode === 'UPDATE')
 		//Erase CONTACT_ID field to speed-up update process
 		unset($arFields['CONTACT_ID']);
 
-		$prevStage = $arFields['STAGE_ID'];
+		$prevFields = $arFields;
 		CCrmInstantEditorHelper::PrepareUpdate(CCrmOwnerType::Deal, $arFields, $fieldNames, $fieldValues);
 		$disableUserFieldCheck = !$hasUserFields
 			&& isset($_POST['DISABLE_USER_FIELD_CHECK'])
-			&& strtoupper($_POST['DISABLE_USER_FIELD_CHECK']) === 'Y';
+			&& mb_strtoupper($_POST['DISABLE_USER_FIELD_CHECK']) === 'Y';
 
 		$CCrmDeal = new CCrmDeal();
 		if($CCrmDeal->Update($ID, $arFields, true, true, array('REGISTER_SONET_EVENT' => true, 'DISABLE_USER_FIELD_CHECK' => $disableUserFieldCheck)))
@@ -590,8 +590,8 @@ if($mode === 'UPDATE')
 			);
 
 			//Region automation
-			if ($prevStage != $arFields['STAGE_ID'])
-				\Bitrix\Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Deal, $ID);
+			$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Deal, $ID);
+			$starter->setUserIdFromCurrent()->runOnUpdate($arFields, $prevFields);
 			//end region
 		}
 

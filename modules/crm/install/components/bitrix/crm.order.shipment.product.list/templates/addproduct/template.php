@@ -33,7 +33,7 @@ foreach($arResult['PRODUCTS'] as $product)
 		'NAME' => '
 			<div class="crm-order-product-container">
 				<div class="crm-order-product-info-name">
-					<a href="#" onclick="BX.SidePanel.Instance.open(\'/shop/settings/'.$product['EDIT_PAGE_URL'].'\');" class="crm-order-product-info-name-text">'.htmlspecialcharsbx($product['NAME']).'</a>
+					<a href="' . $product['EDIT_PAGE_URL'] . '" class="crm-order-product-info-name-text">'.htmlspecialcharsbx($product['NAME']).'</a>
 					<input type="hidden" name="'.$namePrefix.'[BASKET_ID]" value="'.(float)$product['BASKET_ID'].'">
 				</div>			
 			</div>',

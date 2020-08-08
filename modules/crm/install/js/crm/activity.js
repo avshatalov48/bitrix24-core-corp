@@ -593,6 +593,22 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 						top.window['taskIFramePopup'].view(taskId, top.window['tasksIFrameList']);
 					}
 				}
+				else
+				{
+					var taskOpenPath = BX.message(mode === BX.CrmDialogMode.edit ? "CRM_TASK_EDIT_PATH" : "CRM_TASK_VIEW_PATH");
+					taskOpenPath = taskOpenPath.replace("#user_id#", BX.message("USER_ID"));
+					taskOpenPath = taskOpenPath.replace("#task_id#", taskId);
+					taskOpenPath = BX.util.add_url_param(taskOpenPath, { "IFRAME": "Y", "IFRAME_TYPE": "SIDE_SLIDER" });
+
+					if(BX.SidePanel)
+					{
+						BX.SidePanel.Instance.open(taskOpenPath);
+					}
+					else
+					{
+						window.top.location.href = taskOpenPath;
+					}
+				}
 			}
 			else if(typeID === BX.CrmActivityType.provider && BX.CrmActivityProvider)
 			{
@@ -865,9 +881,18 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 			}
 
 			var item = this.getItemById(id);
+
 			if(item)
 			{
-				this.openActivityDialog(BX.CrmDialogMode.view, id, options, null);
+				if (item['_settings'] && item['_settings']['customViewLink'])
+				{
+					BX.Crm.Page.open(item['_settings']['customViewLink']);
+				}
+				else
+				{
+					this.openActivityDialog(BX.CrmDialogMode.view, id, options, null);
+				}
+
 				return;
 			}
 
@@ -895,8 +920,15 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 					{
 						if(typeof(data['ACTIVITY']) !== 'undefined')
 						{
-							this._handleActivityChange(data['ACTIVITY']);
-							this.openActivityDialog(BX.CrmDialogMode.view, id, options, null);
+							if (data['ACTIVITY']['customViewLink'])
+							{
+								BX.Crm.Page.open(data['ACTIVITY']['customViewLink']);
+							}
+							else
+							{
+								this._handleActivityChange(data['ACTIVITY']);
+								this.openActivityDialog(BX.CrmDialogMode.view, id, options, null);
+							}
 						}
 					},
 					this

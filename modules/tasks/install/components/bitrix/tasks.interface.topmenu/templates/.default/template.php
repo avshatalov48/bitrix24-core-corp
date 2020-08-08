@@ -21,7 +21,10 @@ if($_REQUEST['IFRAME'] && $_REQUEST['IFRAME']==='Y') {
 
 $menuId = intval($arParams["GROUP_ID"]) ? "tasks_panel_menu_group" : "tasks_panel_menu";
 
-if((int)$arParams["GROUP_ID"] == 0 && $arParams['USER_ID'] == $arParams['LOGGED_USER_ID'])
+if(
+	((int)$arParams["GROUP_ID"] == 0 || $arParams['PROJECT_VIEW'] == 'Y')
+	&& $arParams['USER_ID'] == $arParams['LOGGED_USER_ID']
+)
 {
 	?>
 

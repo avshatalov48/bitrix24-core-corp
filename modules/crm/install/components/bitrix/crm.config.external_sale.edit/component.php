@@ -10,21 +10,21 @@ if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 	return;
 }
 
-if (strlen($arParams["PAGE_VAR"]) <= 0)
+if ($arParams["PAGE_VAR"] == '')
 	$arParams["PAGE_VAR"] = "page";
-if (strlen($arParams["ID_VAR"]) <= 0)
+if ($arParams["ID_VAR"] == '')
 	$arParams["ID_VAR"] = "id";
 
 $arParams["PATH_TO_INDEX"] = trim($arParams["PATH_TO_INDEX"]);
-if (strlen($arParams["PATH_TO_INDEX"]) <= 0)
+if ($arParams["PATH_TO_INDEX"] == '')
 	$arParams["PATH_TO_INDEX"] = $APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=index";
 
 $arParams["PATH_TO_EDIT"] = trim($arParams["PATH_TO_EDIT"]);
-if (strlen($arParams["PATH_TO_EDIT"]) <= 0)
+if ($arParams["PATH_TO_EDIT"] == '')
 	$arParams["PATH_TO_EDIT"] = $APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=edit&".$arParams["ID_VAR"]."=#id#";
 
 $arParams["PATH_TO_SYNC"] = trim($arParams["PATH_TO_SYNC"]);
-if (strlen($arParams["PATH_TO_SYNC"]) <= 0)
+if ($arParams["PATH_TO_SYNC"] == '')
 	$arParams["PATH_TO_SYNC"] = $APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=sync&".$arParams["ID_VAR"]."=#id#";
 
 $arResult["FatalErrorMessage"] = "";
@@ -39,7 +39,7 @@ if ($arParams["ID"] > 0)
 
 $arResult["DAS_IST_SHOP_LIMIT"] = false;
 
-if (strlen($arResult["FatalErrorMessage"]) <= 0)
+if ($arResult["FatalErrorMessage"] == '')
 {
 	if ($arParams["ID"] > 0)
 	{
@@ -74,7 +74,7 @@ if (strlen($arResult["FatalErrorMessage"]) <= 0)
 	}
 }
 
-if (strlen($arResult["FatalErrorMessage"]) <= 0)
+if ($arResult["FatalErrorMessage"] == '')
 {
 	if ($_SERVER["REQUEST_METHOD"] == "POST" && (isset($_POST['save']) || isset($_POST['apply'])) && check_bitrix_sessid())
 	{
@@ -111,17 +111,17 @@ if (strlen($arResult["FatalErrorMessage"]) <= 0)
 			//"MODIFICATION_LABEL" => intval($_POST["MODIFICATION_LABEL"]),
 			"DATA_SYNC_PERIOD" => intval($_POST["DATA_SYNC_PERIOD"]),
 		);
-		if (strlen($_POST["PASSWORD"]) > 0)
+		if ($_POST["PASSWORD"] <> '')
 		{
 			$arResult["BP"]["~PASSWORD"] = $_POST["PASSWORD"];
 			$arResult["BP"]["PASSWORD"] = htmlspecialcharsbx($_POST["PASSWORD"]);
 		}
 
-		if (strlen($_POST["LOGIN"]) <= 0)
+		if ($_POST["LOGIN"] == '')
 			$errorMessage .= GetMessage("BPWC_WNC_EMPTY_LOGIN")."<br>";
-		if (strlen($_POST["SERVER"]) <= 0)
+		if ($_POST["SERVER"] == '')
 			$errorMessage .= GetMessage("BPWC_WNC_EMPTY_URL")."<br>";
-		if (strlen($_POST["PASSWORD"]) <= 0 && $arParams["ID"] <= 0)
+		if ($_POST["PASSWORD"] == '' && $arParams["ID"] <= 0)
 			$errorMessage .= GetMessage("BPWC_WNC_EMPTY_PASSWORD")."<br>";
 
 		$arLimitationSettings = CCrmExternalSale::GetLimitationSettings();
@@ -134,7 +134,7 @@ if (strlen($arResult["FatalErrorMessage"]) <= 0)
 				$errorMessage .= GetMessage("BPWC_WNC_MAX_SHOPS")."<br>";
 		}
 
-		if (strlen($errorMessage) <= 0)
+		if ($errorMessage == '')
 		{
 			$arFields = array(
 				"NAME" => $arResult["BP"]["~NAME"],
@@ -154,11 +154,11 @@ if (strlen($arResult["FatalErrorMessage"]) <= 0)
 				"COOKIE" => false,
 			);
 
-			if (strlen($_POST["SERVER"]) > 0)
+			if ($_POST["SERVER"] <> '')
 			{
 				$arCrmUrl = parse_url($_POST["SERVER"]);
 				$crmUrlHost = $arCrmUrl["host"] ? $arCrmUrl["host"] : $arCrmUrl["path"];
-				$crmUrlScheme = $arCrmUrl["scheme"] ? strtolower($arCrmUrl["scheme"]) : strtolower($_POST["SCHEME"]);
+				$crmUrlScheme = $arCrmUrl["scheme"]? mb_strtolower($arCrmUrl["scheme"]) : mb_strtolower($_POST["SCHEME"]);
 				if (!in_array($crmUrlScheme, array('http', 'https')))
 					$crmUrlScheme = 'http';
 				$crmUrlPort = $arCrmUrl["port"] ? intval($arCrmUrl["port"]) : intval($_POST["PORT"]);
@@ -172,7 +172,7 @@ if (strlen($arResult["FatalErrorMessage"]) <= 0)
 			if ($arParams["ID"] > 0)
 			{
 				//$arFields["MODIFICATION_LABEL"] = $_POST["MODIFICATION_LABEL"];
-				if (strlen($_POST["PASSWORD"]) > 0)
+				if ($_POST["PASSWORD"] <> '')
 					$arFields["PASSWORD"] = $_POST["PASSWORD"];
 				$res = CCrmExternalSale::Update($arParams["ID"], $arFields);
 			}
@@ -191,7 +191,7 @@ if (strlen($arResult["FatalErrorMessage"]) <= 0)
 			}
 		}
 
-		if (strlen($errorMessage) <= 0)
+		if ($errorMessage == '')
 		{
 			$dbAgents = CAgent::GetList(array(), array("NAME" => "CCrmExternalSaleImport::DataSync(".intval($res).");", "MODULE_ID" => "crm"));
 			if ($arAgent = $dbAgents->Fetch())

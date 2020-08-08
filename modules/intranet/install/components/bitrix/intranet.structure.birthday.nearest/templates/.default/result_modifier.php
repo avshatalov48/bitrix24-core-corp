@@ -32,7 +32,7 @@ else
 	{
 		foreach ($arRes as $key => $val)
 		{
-			$arResult['USER_PROP'][$val["FIELD_NAME"]] = (strLen($val["EDIT_FORM_LABEL"]) > 0 ? $val["EDIT_FORM_LABEL"] : $val["FIELD_NAME"]);
+			$arResult['USER_PROP'][$val["FIELD_NAME"]] = ($val["EDIT_FORM_LABEL"] <> '' ? $val["EDIT_FORM_LABEL"] : $val["FIELD_NAME"]);
 		}
 	}
 }
@@ -107,7 +107,7 @@ if ($arParams['bCache'])
 	));
 }
 
-if ($arResult['bUsersCached'] && strlen($strUserIDs) > 0)
+if ($arResult['bUsersCached'] && $strUserIDs <> '')
 {
 	$dbRes = CUser::GetList($by='id', $order='asc', array('ID' => $strUserIDs, 'LAST_ACTIVITY' => 120));
 	while ($arRes = $dbRes->Fetch())

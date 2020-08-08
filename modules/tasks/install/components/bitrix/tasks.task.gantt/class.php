@@ -118,4 +118,12 @@ class TasksTaskGanttComponent extends TasksTaskListComponent
 			return array('*');
 		}
 	}
+
+	protected function checkParameters()
+	{
+		parent::checkParameters();
+
+		$arParams =& $this->arParams;
+		static::tryParseStringParameter($arParams['PROJECT_VIEW'], 'N');
+	}
 }

@@ -18,11 +18,11 @@ $arParams['PATH_TO_ACTIVITY_LIST'] = CrmCheckPath('PATH_TO_ACTIVITY_LIST', $arPa
 $arParams['PATH_TO_ACTIVITY_WIDGET'] = CrmCheckPath('PATH_TO_ACTIVITY_WIDGET', $arParams['PATH_TO_ACTIVITY_WIDGET'], $APPLICATION->GetCurPage().'?widget');
 $bindings = (isset($arParams['BINDINGS']) && is_array($arParams['BINDINGS'])) ? $arParams['BINDINGS'] : array();
 // Check show mode
-$showMode = isset($arParams['SHOW_MODE']) ? strtoupper(strval($arParams['SHOW_MODE'])) : 'ALL';
+$showMode = isset($arParams['SHOW_MODE'])? mb_strtoupper(strval($arParams['SHOW_MODE'])) : 'ALL';
 $arResult['SHOW_MODE'] = $showMode;
 $arResult['PATH_TO_USER_PROFILE'] = $arParams['PATH_TO_USER_PROFILE'] = CrmCheckPath('PATH_TO_USER_PROFILE', isset($arParams['PATH_TO_USER_PROFILE']) ? $arParams['PATH_TO_USER_PROFILE'] : '', '/company/personal/user/#user_id#/');
 // Check permissions (READ by default)
-$permissionType = isset($arParams['PERMISSION_TYPE']) ? strtoupper((string)$arParams['PERMISSION_TYPE']) : 'READ';
+$permissionType = isset($arParams['PERMISSION_TYPE'])? mb_strtoupper((string)$arParams['PERMISSION_TYPE']) : 'READ';
 if($permissionType !== 'READ' && $permissionType !== 'WRITE')
 {
 	$permissionType = 'READ';
@@ -41,7 +41,7 @@ $currentUserPermissions = CCrmPerms::GetCurrentUserPermissions();
 $currentUserID = $arResult['CURRENT_USER_ID'] = CCrmSecurityHelper::GetCurrentUserID();
 $currentUserName = $arResult['CURRENT_USER_NAME'] = CCrmViewHelper::GetFormattedUserName($currentUserID, $arParams['NAME_TEMPLATE']);
 
-$filterFieldPrefix = $arResult['FILTER_FIELD_PREFIX'] = $arResult['TAB_ID'] !== '' ? strtoupper($arResult['TAB_ID']).'_' : '';
+$filterFieldPrefix = $arResult['FILTER_FIELD_PREFIX'] = $arResult['TAB_ID'] !== '' ? mb_strtoupper($arResult['TAB_ID']).'_' : '';
 $tabParamName = $arResult['FORM_ID'] !== '' ? $arResult['FORM_ID'].'_active_tab' : 'active_tab';
 $activeTabID = isset($_REQUEST[$tabParamName]) ? $_REQUEST[$tabParamName] : '';
 
@@ -80,7 +80,7 @@ for($i = count($bindings); $i >= 0; $i--)
 	{
 		$arResult['OWNER_UID'] .= '_';
 	}
-	$arResult['OWNER_UID'] .=  strtolower(CCrmOwnerType::ResolveName($ownerTypeID)).($ownerID > 0 ? '_'.$ownerID : '');
+	$arResult['OWNER_UID'] .= mb_strtolower(CCrmOwnerType::ResolveName($ownerTypeID)).($ownerID > 0? '_'.$ownerID : '');
 }
 
 if(!empty($arBindingFilter))
@@ -88,10 +88,10 @@ if(!empty($arBindingFilter))
 	$arFilter['BINDINGS'] = $arBindingFilter;
 }
 
-$arResult['UID'] = $arResult['GRID_ID'] = 'CRM_ACTIVITY_LIST_'.($arResult['PREFIX'] !== '' ? $arResult['PREFIX'] : strtoupper($arResult['OWNER_UID']));
+$arResult['UID'] = $arResult['GRID_ID'] = 'CRM_ACTIVITY_LIST_'.($arResult['PREFIX'] !== ''? $arResult['PREFIX'] : mb_strtoupper($arResult['OWNER_UID']));
 $arResult['IS_INTERNAL'] = $arResult['OWNER_UID'] !== '';
 
-$enableWidgetFilter = !$arResult['IS_INTERNAL'] && isset($_REQUEST['WG']) && strtoupper($_REQUEST['WG']) === 'Y';
+$enableWidgetFilter = !$arResult['IS_INTERNAL'] && isset($_REQUEST['WG']) && mb_strtoupper($_REQUEST['WG']) === 'Y';
 if($enableWidgetFilter)
 {
 	$dataSourceFilter = null;
@@ -111,6 +111,11 @@ if($enableWidgetFilter)
 		try
 		{
 			$dataSourceFilter = $dataSource ? $dataSource->prepareEntityListFilter($_REQUEST) : null;
+			// request from analytic reports, disable control panel
+			if(isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y')
+			{
+				$arResult['ENABLE_CONTROL_PANEL'] = false;
+			}
 		}
 		catch(Bitrix\Main\ArgumentException $e)
 		{
@@ -249,7 +254,7 @@ if($arResult['TAB_ID'] === ''
 {
 	if(CCrmPerms::IsAdmin())
 	{
-		$conv = strtoupper($_GET['conv']);
+		$conv = mb_strtoupper($_GET['conv']);
 		if($conv === 'EXEC_CAL')
 		{
 			CCrmActivityConverter::ConvertCalEvents(false, true);
@@ -526,7 +531,7 @@ $arResult['GRID_CONTEXT'] = CCrmGridContext::Parse($arGridFilter);
 
 if(!$arResult['GRID_CONTEXT']['FILTER_INFO']['IS_APPLIED'])
 {
-	$clearFilterKey = 'activity_list_clear_filter'.strtolower($arResult['UID']);
+	$clearFilterKey = 'activity_list_clear_filter'.mb_strtolower($arResult['UID']);
 	if(isset($_REQUEST['clear_filter'])
 		&& $_REQUEST['clear_filter'] !== '')
 	{
@@ -560,16 +565,16 @@ if(!empty($arGridFilter))
 	}
 	else
 	{
-		$prefixLength = strlen($filterFieldPrefix);
+		$prefixLength = mb_strlen($filterFieldPrefix);
 		foreach($arGridFilter as $key=>&$value)
 		{
-			if(strpos($key, $filterFieldPrefix) === false)
+			if(mb_strpos($key, $filterFieldPrefix) === false)
 			{
 				$arFilter[$key] = $value;
 			}
 			else
 			{
-				$arFilter[substr($key, $prefixLength)] = $value;
+				$arFilter[mb_substr($key, $prefixLength)] = $value;
 			}
 		}
 		unset($value);
@@ -631,7 +636,7 @@ foreach ($arFilter as $k => $v)
 			$fieldID = 'START_TIME';
 		}
 
-		if(strlen($v) > 0 && in_array($fieldID, $arDatetimeFields, true))
+		if($v <> '' && in_array($fieldID, $arDatetimeFields, true))
 		{
 			$arFilter['>='.$fieldID] = $v;
 		}
@@ -649,7 +654,7 @@ foreach ($arFilter as $k => $v)
 			$fieldID = 'START_TIME';
 		}
 
-		if(strlen($v) > 0 && in_array($fieldID, $arDatetimeFields, true))
+		if($v <> '' && in_array($fieldID, $arDatetimeFields, true))
 		{
 			if (!preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
 			{
@@ -1288,7 +1293,7 @@ $arResult['NAVIGATION_CONTEXT_ID'] = isset($arParams['NAVIGATION_CONTEXT_ID']) ?
 $arResult['PRESERVE_HISTORY'] = isset($arParams['PRESERVE_HISTORY']) ? $arParams['PRESERVE_HISTORY'] : false;
 if(is_string($arResult['USE_QUICK_FILTER']))
 {
-	$arResult['USE_QUICK_FILTER'] = strtoupper($arResult['USE_QUICK_FILTER']) === 'Y';
+	$arResult['USE_QUICK_FILTER'] = mb_strtoupper($arResult['USE_QUICK_FILTER']) === 'Y';
 }
 $arResult['ENABLE_TOOLBAR'] = isset($arParams['ENABLE_TOOLBAR']) ? $arParams['ENABLE_TOOLBAR'] : true;
 $arResult['ENABLE_WEBDAV'] = IsModuleInstalled('webdav');
@@ -1324,7 +1329,7 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && !Bitrix\Main\Grid\Context::isInternal
 		{
 			$arResult['OPEN_EDIT_ITEM_ID'] = $itemID;
 		}
-		$disableStorageEdit = isset($_GET['disable_storage_edit']) && strtoupper($_GET['disable_storage_edit']) === 'Y';
+		$disableStorageEdit = isset($_GET['disable_storage_edit']) && mb_strtoupper($_GET['disable_storage_edit']) === 'Y';
 		if($disableStorageEdit)
 		{
 			$arResult['DISABLE_STORAGE_EDIT'] = true;

@@ -152,7 +152,7 @@ if($arResult['CAN_CREATE_CATEGORY'])
 	else
 	{
 		$arResult['CATEGORY_CREATE_URL'] = '';
-		$arResult['CREATE_CATEGORY_LOCK_SCRIPT'] = $restriction->preparePopupScript();
+		$arResult['CREATE_CATEGORY_LOCK_SCRIPT'] = $restriction->prepareInfoHelperScript();
 	}
 }
 

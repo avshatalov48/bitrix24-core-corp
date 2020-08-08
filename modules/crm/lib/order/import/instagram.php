@@ -483,7 +483,7 @@ class Instagram
 
 		$urlComponents = parse_url($url);
 
-		if ($urlComponents && strlen($urlComponents['path']) > 0)
+		if ($urlComponents && $urlComponents['path'] <> '')
 		{
 			$tempPath = \CFile::GetTempName('', bx_basename($urlComponents['path']));
 		}
@@ -499,7 +499,7 @@ class Instagram
 
 		if (is_array($localFile))
 		{
-			if (strlen($fileName) > 0)
+			if ($fileName <> '')
 			{
 				$localFile['name'] = $fileName;
 			}

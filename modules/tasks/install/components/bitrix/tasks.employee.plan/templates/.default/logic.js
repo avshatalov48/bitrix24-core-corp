@@ -281,15 +281,17 @@ BX.namespace('Tasks.Component');
 
 				var users = [];
 				var userIx = {};
+				var userPx = {};
 				var tasks = [];
 				var k;
 
+				var user;
 				for (k = 0; k < gridData.USERS.length; k++)
 				{
-					var user = gridData.USERS[k];
+					user = gridData.USERS[k];
 
 					users.push({
-						id: 'U' + user.ID,
+						id: (user.DEPARTMENT_ID ? 'D' + user.DEPARTMENT_ID : '') + 'U' + user.ID,
 						name: BX.formatName({
 								NAME: user['NAME'],
 								LAST_NAME: user['LAST_NAME'],
@@ -299,36 +301,39 @@ BX.namespace('Tasks.Component');
 							this.option('userNameTemplate'),
 							'Y'
 						),
-						parentId: (user.DEPARTMENT_ID? 'D' + user.DEPARTMENT_ID : false),
-						parentDepartment: (user.DEPARTMENT_ID? user.DEPARTMENT_ID : null),
+						parentId: (user.DEPARTMENT_ID ? 'D' + user.DEPARTMENT_ID : false),
+						parentDepartment: (user.DEPARTMENT_ID ? user.DEPARTMENT_ID : null),
 						link: this.option('userProfileUrl').replace('#user_id#', user.ID)
 					});
 					userIx[user.ID] = [];
+					userPx[user.ID] = (userPx[user.ID] || []).concat(user.DEPARTMENT_ID ? [user.DEPARTMENT_ID] : []);
 				}
 
+				var task;
 				for (k = 0; k < gridData.TASKS.length; k++)
 				{
-					var task = gridData.TASKS[k];
-					var resourceId = '0';
+					task = gridData.TASKS[k];
 
-					if (task.RESPONSIBLE_ID in userIx)
+					if (task.RESPONSIBLE_ID in userIx && !userIx[task.RESPONSIBLE_ID].includes(task.ID))
 					{
-						resourceId = task.RESPONSIBLE_ID;
-						if (!userIx[task.RESPONSIBLE_ID].includes(task.ID))
+						for (var i = 0, list = userPx[task.RESPONSIBLE_ID]; i < list.length; i++)
 						{
-							tasks.push(this.createTaskItem(task, resourceId));
-							userIx[task.RESPONSIBLE_ID].push(task.ID);
+							tasks.push(this.createTaskItem(task, 'D' + list[i] + 'U' + task.RESPONSIBLE_ID));
 						}
+
+						tasks.push(this.createTaskItem(task, 'U' + task.RESPONSIBLE_ID));
+						userIx[task.RESPONSIBLE_ID].push(task.ID);
 					}
 
-					if (task.ACCOMPLICE_ID in userIx)
+					if (task.ACCOMPLICE_ID in userIx && !userIx[task.ACCOMPLICE_ID].includes(task.ID))
 					{
-						resourceId = task.ACCOMPLICE_ID;
-						if (!userIx[task.ACCOMPLICE_ID].includes(task.ID))
+						for (var i = 0, list = userPx[task.ACCOMPLICE_ID]; i < list.length; i++)
 						{
-							tasks.push(this.createTaskItem(task, resourceId));
-							userIx[task.ACCOMPLICE_ID].push(task.ID);
+							tasks.push(this.createTaskItem(task, 'D' + list[i] + 'U' + task.ACCOMPLICE_ID));
 						}
+
+						tasks.push(this.createTaskItem(task, 'U' + task.ACCOMPLICE_ID));
+						userIx[task.ACCOMPLICE_ID].push(task.ID);
 					}
 				}
 
@@ -338,8 +343,8 @@ BX.namespace('Tasks.Component');
 			createTaskItem: function(task, resourceId)
 			{
 				var item = {
-					id: 'U' + resourceId + 'T' + task.ID,
-					resourceId: 'U' + resourceId,
+					id: resourceId + 'T' + task.ID,
+					resourceId: resourceId,
 					entityId: task.ID,
 					name: task.TITLE,
 					startDate: BX.parseDate(task.START_DATE_PLAN),

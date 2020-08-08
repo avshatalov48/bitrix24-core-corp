@@ -190,12 +190,12 @@ final class CrmEntityComment extends \Bitrix\Socialnetwork\Livefeed\Provider
 
 		$message = (
 			isset($params['MESSAGE'])
-			&& strlen($params['MESSAGE']) > 0
+			&& $params['MESSAGE'] <> ''
 				? $params['MESSAGE']
 				: ''
 		);
 
-		if (strlen($message) <= 0)
+		if ($message == '')
 		{
 			return false;
 		}

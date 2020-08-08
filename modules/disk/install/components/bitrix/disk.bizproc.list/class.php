@@ -125,22 +125,22 @@ class CDiskBizprocListComponent extends BaseComponent implements SidePanelWrappa
 			{
 				$fields = array('AUTO_EXECUTE' => $res['AUTO_EXECUTE']);
 				$temporary = false;
-				if (strpos($requestAction, 'create') !== false)
+				if (mb_strpos($requestAction, 'create') !== false)
 				{
 					$temporary = CBPDocumentEventType::Create;
 				}
-				elseif (strpos($requestAction, 'edit') !== false)
+				elseif (mb_strpos($requestAction, 'edit') !== false)
 				{
 					$temporary = CBPDocumentEventType::Edit;
 				}
-				elseif (strpos($requestAction, 'delete') !== false)
+				elseif (mb_strpos($requestAction, 'delete') !== false)
 				{
 					$temporary = CBPDocumentEventType::Delete;
 				}
 
 				if ($temporary != false)
 				{
-					if (strpos($requestAction, 'present') !== false)
+					if (mb_strpos($requestAction, 'present') !== false)
 					{
 						$fields['AUTO_EXECUTE'] = ((($fields['AUTO_EXECUTE'] & $temporary) != 0) ? $fields['AUTO_EXECUTE'] ^ $temporary : $fields['AUTO_EXECUTE']);
 					}

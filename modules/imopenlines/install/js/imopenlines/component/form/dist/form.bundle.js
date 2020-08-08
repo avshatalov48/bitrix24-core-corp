@@ -9,7 +9,7 @@
 	 * @subpackage im
 	 * @copyright 2001-2019 Bitrix
 	 */
-	BX.Vue.cloneComponent('bx-test-form', 'bx-messenger-message', {
+	BX.Vue.cloneComponent('bx-test-form', 'bx-im-view-message', {
 	  data: function data() {
 	    return {
 	      formValue: ''

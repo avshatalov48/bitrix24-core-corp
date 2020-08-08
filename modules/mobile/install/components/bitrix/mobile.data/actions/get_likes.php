@@ -70,7 +70,7 @@ if ($bFound)
 
 		if (
 			array_key_exists("WORK_POSITION", $arVoter)
-			&& strlen($arVoter["WORK_POSITION"]) > 0
+			&& $arVoter["WORK_POSITION"] <> ''
 		)
 			$arTags[] = $arVoter["WORK_POSITION"];
 
@@ -96,8 +96,8 @@ if ($bFound)
 			"IMAGE" => $img_src,
 			"URL" => (
 				(
-					strpos($detailurl, "#user_id#") !== false
-					|| strpos($detailurl, "#USER_ID#") !== false
+					mb_strpos($detailurl, "#user_id#") !== false
+					|| mb_strpos($detailurl, "#USER_ID#") !== false
 				)
 					? str_replace(array("#user_id#", "#USER_ID#"), $arVoter["ID"], $detailurl)
 					: $detailurl.$arVoter["ID"]

@@ -21,6 +21,8 @@ class CRestUtil
 
 	const BITRIX_1C_APP_CODE = 'bitrix.1c';
 
+	const PLACEMENT_APP_URI = 'REST_APP_URI';
+
 	public static function sendHeaders()
 	{
 		Header('Access-Control-Allow-Origin: *');

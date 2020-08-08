@@ -83,7 +83,7 @@ BX.ready(function() {
 					BX.onCustomEvent("onTaskTagSelectAlt", [changedTags]);
 				<?endif?>
 
-				<?php if (strlen($arParams["ON_SELECT"])):?><?php echo $arParams["ON_SELECT"]?>(tags)<?php endif?>
+				<?php if ($arParams["ON_SELECT"] <> ''):?><?php echo $arParams["ON_SELECT"]?>(tags)<?php endif?>
 			}<?if($arParams["SILENT"] != "Y"):?>,
 			"onUpdateTagLine" : function(tagsWindow) {
 
@@ -107,7 +107,7 @@ BX.ready(function() {
 				{
 					BX("task-tags-link").innerHTML = BX.message("TAGS_BUTTON_ADD");
 				}
-				<?php if (strlen($arParams["ON_UPDATE"])):?><?php echo $arParams["ON_UPDATE"]?>(tags)<?php endif?>
+				<?php if ($arParams["ON_UPDATE"] <> ''):?><?php echo $arParams["ON_UPDATE"]?>(tags)<?php endif?>
 			}<?php elseif($arParams["ON_UPDATE"]):?>,
 			"onUpdateTagLine" : <?php echo $arParams["ON_UPDATE"]?>
 			<?php endif?>
@@ -147,7 +147,7 @@ BX.ready(function() {
 		$items=[];
 		foreach($arResult["VALUE"] as $tag)
 		{
-			$items[]='<a data-slider-ignore-autobinding="true" target="_top" href="/company/personal/user/'.$USER->GetID().'/tasks/?apply_filter=Y&TAG='.$tag.'">'.$tag.'</a>';
+			$items[]='<a data-slider-ignore-autobinding="true" target="_top" href="'.$arResult['PATH_TO_TASKS'].'?apply_filter=Y&TAG='.$tag.'">'.$tag.'</a>';
 		}
 
 		echo implode(', ', $items);unset($items);

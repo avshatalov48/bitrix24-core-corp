@@ -153,7 +153,7 @@ if (CModule::IncludeModule('im'))
 				)
 				|| (
 					!is_array($arUserField["VALUE"])
-					&& StrLen($arUserField["VALUE"]) > 0
+					&& $arUserField["VALUE"] <> ''
 				)
 			)
 			{
@@ -183,7 +183,7 @@ if (CModule::IncludeModule('im'))
 				)
 				|| (
 					!is_array($arUserField["VALUE"])
-					&& StrLen($arUserField["VALUE"]) > 0
+					&& $arUserField["VALUE"] <> ''
 				)
 			)
 			{
@@ -195,7 +195,7 @@ if (CModule::IncludeModule('im'))
 					case "UF_FACEBOOK":
 					case "UF_LINKEDIN":
 					case "UF_XING":
-						$href = ((strpos($arUserField["VALUE"], "http") === false) ? "http://" : "") . htmlspecialcharsbx($arUserField["VALUE"]);
+						$href = ((mb_strpos($arUserField["VALUE"], "http") === false) ? "http://" : "") . htmlspecialcharsbx($arUserField["VALUE"]);
 						$isLink = preg_match('#^https?://\w#D', $href) > 0;
 						if ($isLink)
 						{
@@ -245,7 +245,7 @@ if (CModule::IncludeModule('im'))
 				)
 				|| (
 					!is_array($arUserField["VALUE"])
-					&& StrLen($arUserField["VALUE"]) > 0
+					&& $arUserField["VALUE"] <> ''
 				)
 			)
 			{
@@ -265,7 +265,7 @@ if (CModule::IncludeModule('im'))
 				)
 				|| (
 					!is_array($arUserField["VALUE"])
-					&& StrLen($arUserField["VALUE"]) > 0
+					&& $arUserField["VALUE"] <> ''
 				)
 			)
 			{
@@ -353,7 +353,7 @@ if (is_array($arResult["UserFieldsPersonal"]["DATA"]))
 			)
 			|| (
 				!is_array($arUserField["VALUE"])
-				&& StrLen($arUserField["VALUE"]) > 0)
+				&& $arUserField["VALUE"] <> '')
 			)
 		{
 			$additional .= '<span class="emp-info-cell">'.$arUserField["NAME"].':</span><span class="emp-info-cell">'.$arUserField["VALUE"].'</span>';
@@ -372,7 +372,7 @@ if (is_array($arResult["UserPropertiesPersonal"]["DATA"]))
 			)
 			|| (
 				!is_array($arUserField["VALUE"])
-				&& StrLen($arUserField["VALUE"]) > 0
+				&& $arUserField["VALUE"] <> ''
 			)
 		)
 		{
@@ -394,7 +394,7 @@ if (is_array($arResult["UserPropertiesPersonal"]["DATA"]))
 	}
 }
 
-if (strlen($additional) > 0)
+if ($additional <> '')
 {
 	?><div class="emp-info-block">
 		<div class="emp-info-title"><?= GetMessage("SONET_ADDITIONAL_TITLE") ?></div>

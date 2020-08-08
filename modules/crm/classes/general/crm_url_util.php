@@ -4,20 +4,20 @@ class CCrmUrlUtil
 	public static function GetUrlScheme($url)
 	{
 		$url = trim(strval($url));
-		$colonOffset = strpos($url, ':');
+		$colonOffset = mb_strpos($url, ':');
 		if($colonOffset === false)
 		{
 			$colonOffset = -1;
 		}
 
-		$slashOffset = strpos($url, '/');
+		$slashOffset = mb_strpos($url, '/');
 		if($slashOffset === false)
 		{
 			$slashOffset = -1;
 		}
 
 		return $colonOffset > 0 && ($slashOffset < 0 || $colonOffset < $slashOffset)
-			? strtolower(substr($url, 0, $colonOffset)) : '';
+			? mb_strtolower(mb_substr($url, 0, $colonOffset)) : '';
 	}
 	public static function HasScheme($url)
 	{
@@ -67,7 +67,7 @@ class CCrmUrlUtil
 
 		if(preg_match('/^\//', $url))
 		{
-			$url = substr($url, 1);
+			$url = mb_substr($url, 1);
 		}
 
 		return $scheme.'://'.$host.(($port !== 80 && $port !== 443) ? ':'.$port : '').'/'.$url;
@@ -121,7 +121,7 @@ class CCrmUrlUtil
 			self::AppendUrlParam($k, $v, $query);
 		}
 
-		return $url.(strpos($url, '?') === false ? '?' : '&').implode('&', $query);
+		return $url.(mb_strpos($url, '?') === false ? '?' : '&').implode('&', $query);
 	}
 	public static function PrepareCallToUrl($value)
 	{
@@ -341,7 +341,7 @@ class CCrmUrlTemplate
 
 	private static function IsChildNodesSupported($nodeName)
 	{
-		$nodeName = strtoupper(strval($nodeName));
+		$nodeName = mb_strtoupper(strval($nodeName));
 		return in_array($nodeName, self::$CONTAINER_TAGS, true);
 	}
 
@@ -443,19 +443,19 @@ class CCrmUrlTemplate
 			}
 
 			$tag = $m[0];
-			$tagLength = strlen($tag);
-			$tagName = trim(substr($tag, 1, $tagLength - 2));
-			$slashPos = strpos($tagName, '/');
+			$tagLength = mb_strlen($tag);
+			$tagName = trim(mb_substr($tag, 1, $tagLength - 2));
+			$slashPos = mb_strpos($tagName, '/');
 			$isEnd = $slashPos === 0;
-			$isSelfClosing = $slashPos === strlen($tagName) - 1;
+			$isSelfClosing = $slashPos === mb_strlen($tagName) - 1;
 
 			if($isEnd)
 			{
-				$tagName = trim(substr($tagName, 1));
+				$tagName = trim(mb_substr($tagName, 1));
 			}
 			elseif($isSelfClosing)
 			{
-				$tagName = trim(substr($tagName, 0, strlen($tagName) - 1));
+				$tagName = trim(mb_substr($tagName, 0, mb_strlen($tagName) - 1));
 			}
 
 			if(!$isSelfClosing && !self::IsChildNodesSupported($tagName))
@@ -465,7 +465,7 @@ class CCrmUrlTemplate
 
 			$node = array(
 				'nodeType' => 1, //object
-				'name' => strtoupper($tagName),
+				'name' => mb_strtoupper($tagName),
 				'offset' => intval($m[1]),
 				'length' => $tagLength,
 				'isEnd' => $isEnd,
@@ -481,7 +481,7 @@ class CCrmUrlTemplate
 			{
 				$textNode = array(
 					'nodeType' => 2, //text
-					'content' => substr($this->template, $offset, $node['offset'] - $offset)
+					'content' => mb_substr($this->template, $offset, $node['offset'] - $offset)
 				);
 
 				if($curNode)
@@ -538,11 +538,11 @@ class CCrmUrlTemplate
 		if($lastNode)
 		{
 			$endPos = $lastNode['offset'] + $lastNode['length'];
-			if($endPos < (strlen($this->template) - 1))
+			if($endPos < (mb_strlen($this->template) - 1))
 			{
 				$this->nodes[] = array(
 					'nodeType' => 2, //text
-					'content' => substr($this->template, $endPos)
+					'content' => mb_substr($this->template, $endPos)
 				);
 			}
 		}

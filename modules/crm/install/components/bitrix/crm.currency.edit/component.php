@@ -32,7 +32,7 @@ $currencyID = isset($arParams['CURRENCY_ID']) ? strval($arParams['CURRENCY_ID'])
 if($currencyID === '')
 {
 	$currencyIDParName = isset($arParams['CURRENCY_ID_PAR_NAME']) ? strval($arParams['CURRENCY_ID_PAR_NAME']) : '';
-	if(strlen($currencyIDParName) == 0)
+	if($currencyIDParName == '')
 	{
 		$currencyIDParName = 'currency_id';
 	}
@@ -115,7 +115,7 @@ if(check_bitrix_sessid())
 			$currencyID = trim($_POST['ID']);
 		}
 
-		$currencyID = strtoupper($currencyID);
+		$currencyID = mb_strtoupper($currencyID);
 
 		if($currencyID !== $baseCurrencyID)
 		{
@@ -183,7 +183,7 @@ if(check_bitrix_sessid())
 
 		foreach($langs as $k => $v)
 		{
-			$lid = strtoupper($k);
+			$lid = mb_strtoupper($k);
 
 			$locFields = array();
 
@@ -223,7 +223,7 @@ if(check_bitrix_sessid())
 				continue;
 			}
 
-			if(!(isset($locFields['FULL_NAME']) && strlen($locFields['FULL_NAME']) !== 0))
+			if(!(isset($locFields['FULL_NAME']) && $locFields['FULL_NAME'] <> ''))
 			{
 				$locFields['FULL_NAME'] = $currencyID;
 			}
@@ -372,9 +372,9 @@ else
 $arResult['CURRENCY_LOCALIZATIONS'] = $currencyLocs;
 foreach($langs as $k => $v)
 {
-	$lid = strtoupper($k);
+	$lid = mb_strtoupper($k);
 	$arResult['FIELDS']['tab_1'][] = array(
-		'id' => 'localization_info_'.strtolower($lid),
+		'id' => 'localization_info_'.mb_strtolower($lid),
 		'name' => $v['NAME'],
 		'type' => 'section'
 	);

@@ -51,7 +51,7 @@
 			}
 
 			var classList = "crm-report-sales-dynamics-modal-percent-value";
-			var percent = Math.floor(ratio * 100);
+			var percent = Math.round(ratio * 100);
 			if (percent > 0)
 			{
 				classList += " green";

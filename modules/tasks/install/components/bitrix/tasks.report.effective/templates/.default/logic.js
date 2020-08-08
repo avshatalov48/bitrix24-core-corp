@@ -163,31 +163,8 @@ if (typeof(BX.FilterEntitySelector) === "undefined")
 
 			bindEvents: function()
 			{
-				BX.addCustomEvent('BX.Main.Filter:apply', function(id, data, ctx, promise, params)
-				{
-					params.autoResolve = false;
-
-					var instance = BX.Tasks.Component.TasksReportEffective.getInstance();
-
-					var requestData = ctx.getFilterFieldsValues();
-					requestData.userId = instance.option('userId');
-
-					instance.callRemote('this.getEfficiencyData', requestData).then(function(result)
-					{
-						var data = result.getData();
-
-						instance.render({
-							efficiency: data.EFFICIENCY,
-							completed: data.COMPLETED,
-							violations: data.VIOLATIONS,
-							inProgress: data.IN_PROGRESS,
-							graphData: data.GRAPH_DATA,
-							minPeriod: data.GRAPH_MIN_PERIOD
-						});
-
-						promise.fulfill();
-					});
-				});
+				BX.addCustomEvent('BX.Main.Filter:apply', this.onFilterApply.bind(this));
+				BX.addCustomEvent('SidePanel.Slider:onClose', this.onSliderClose.bind(this));
 
 				BX.SidePanel.Instance.bindAnchors({
 					rules: [
@@ -213,6 +190,46 @@ if (typeof(BX.FilterEntitySelector) === "undefined")
 						}
 					]
 				});
+			},
+
+			onFilterApply: function(id, data, ctx, promise, params)
+			{
+				if (this.option('taskLimitExceeded'))
+				{
+					BX.UI.InfoHelper.show('limit_tasks_efficiency');
+					return;
+				}
+
+				params.autoResolve = false;
+
+				var instance = BX.Tasks.Component.TasksReportEffective.getInstance();
+
+				var requestData = ctx.getFilterFieldsValues();
+				requestData.userId = instance.option('userId');
+
+				instance.callRemote('this.getEfficiencyData', requestData).then(function(result)
+				{
+					var data = result.getData();
+
+					instance.render({
+						efficiency: data.EFFICIENCY,
+						completed: data.COMPLETED,
+						violations: data.VIOLATIONS,
+						inProgress: data.IN_PROGRESS,
+						graphData: data.GRAPH_DATA,
+						minPeriod: data.GRAPH_MIN_PERIOD
+					});
+
+					promise.fulfill();
+				});
+			},
+
+			onSliderClose: function(event)
+			{
+				if (event.getSlider().getUrl() === 'ui:info_helper')
+				{
+					window.location.href = this.option('pathToTasks');
+				}
 			},
 
 			render: function(params)

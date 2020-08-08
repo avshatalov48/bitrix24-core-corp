@@ -66,7 +66,7 @@ class DuplicateControl
 			}
 			elseif(is_string($enable))
 			{
-				$enable = strtoupper($enable) === 'Y';
+				$enable = mb_strtoupper($enable) === 'Y';
 			}
 			else
 			{

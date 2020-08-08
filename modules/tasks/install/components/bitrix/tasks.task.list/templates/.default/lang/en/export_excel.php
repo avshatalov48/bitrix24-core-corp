@@ -32,6 +32,7 @@ $MESS["TASKS_EXCEL_GROUP_ID"] = "Group";
 $MESS["TASKS_EXCEL_GROUP_NAME"] = "Project";
 $MESS["TASKS_EXCEL_TAG"] = "Tags";
 $MESS["TASKS_EXCEL_CHANGED_DATE"] = "Modified on";
+$MESS["TASKS_EXCEL_ACTIVITY_DATE"] = "Active";
 $MESS["TASKS_EXCEL_ALLOW_TIME_TRACKING"] = "Track time spent";
 $MESS["TASKS_EXCEL_ALLOW_CHANGE_DEADLINE"] = "Responsible person can change deadline";
 $MESS["TASKS_EXCEL_UF_CRM_TASK"] = "CRM";

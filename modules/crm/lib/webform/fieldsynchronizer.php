@@ -86,7 +86,7 @@ class FieldSynchronizer
 			foreach($entityTypeNames as $entityTypeName)
 			{
 				$prefix = $entityTypeName . '_';
-				if(substr($srcFieldCodeTmp, 0, strlen($prefix)) != $prefix)
+				if(mb_substr($srcFieldCodeTmp, 0, mb_strlen($prefix)) != $prefix)
 				{
 					continue;
 				}
@@ -94,7 +94,7 @@ class FieldSynchronizer
 				$srcEntity = Entity::getMap($entityTypeName);
 				$srcEntityFields = EntityFieldProvider::getFieldsInternal($entityTypeName, $srcEntity);
 
-				$fieldName = substr($srcFieldCodeTmp, strlen($prefix));
+				$fieldName = mb_substr($srcFieldCodeTmp, mb_strlen($prefix));
 				$srcFieldMap[$entityTypeName][$fieldName] = array(
 					'FIELD_NAME' => $fieldName,
 					'OLD_FIELD_CODE' => $srcFieldCodeTmp,
@@ -282,9 +282,9 @@ class FieldSynchronizer
 		{
 			$prefix = 'CRM_WEBFORM_' . $dstEntityTypeName . '_';
 
-			if(substr($dstField['XML_ID'], 0, strlen($prefix)) == $prefix)
+			if(mb_substr($dstField['XML_ID'], 0, mb_strlen($prefix)) == $prefix)
 			{
-				return substr($dstField['XML_ID'], strlen($prefix));
+				return mb_substr($dstField['XML_ID'], mb_strlen($prefix));
 			}
 		}
 
@@ -381,7 +381,7 @@ class FieldSynchronizer
 
 		do
 		{
-			$dstFieldName = 'UF_CRM_'.strtoupper(uniqid());
+			$dstFieldName = 'UF_CRM_'.mb_strtoupper(uniqid());
 			$resultDb = $userTypeEntity->GetList(
 				array(),
 				array('ENTITY_ID' => $entityId, 'FIELD_NAME' => $dstFieldName)
@@ -554,7 +554,7 @@ class FieldSynchronizer
 
 		foreach($srcFieldNames as $fieldName)
 		{
-			if(substr($fieldName, 0, 3) == 'UF_')
+			if(mb_substr($fieldName, 0, 3) == 'UF_')
 			{
 				$userFieldNames[] = $fieldName;
 			}

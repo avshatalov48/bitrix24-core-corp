@@ -29,11 +29,15 @@ class CCrmAdminPageInclude extends \CBitrixComponent
 		$params["SEF_FOLDER"] = (!empty($params["SEF_FOLDER"]) ? $params["SEF_FOLDER"] : "/bitrix/admin/");
 		$params["PAGE_ID"] = (!empty($params["PAGE_ID"]) ? $params["PAGE_ID"] : "");
 		$params["PAGE_PATH"] = (!empty($params["PAGE_PATH"]) ? $params["PAGE_PATH"] : "");
-		if (strpos($params["PAGE_PATH"], $params["SEF_FOLDER"]) === false)
+		if (mb_strpos($params["PAGE_PATH"], $params["SEF_FOLDER"]) === false)
 		{
 			$params["PAGE_PATH"] = $params["SEF_FOLDER"].$params["PAGE_PATH"];
 		}
 		$params["PAGE_PARAMS"] = (!empty($params["PAGE_PARAMS"]) ? $params["PAGE_PARAMS"] : "");
+		$params["PAGE_CONSTANS"] = (!empty($params["PAGE_CONSTANS"]) && is_array($params["PAGE_CONSTANS"])
+			? $params["PAGE_CONSTANS"]
+			: []
+		);
 		$params["INTERNAL_PAGE"] = (!empty($params["INTERNAL_PAGE"]) ? $params["INTERNAL_PAGE"] : "N");
 
 		$params["IS_SIDE_PANEL"] = ($_REQUEST["IFRAME"] == "Y") && ($_REQUEST["IFRAME_TYPE"] == "SIDE_SLIDER");
@@ -87,13 +91,25 @@ class CCrmAdminPageInclude extends \CBitrixComponent
 	{
 		$addressMap = $this->getAddressMap();
 
-		if (array_key_exists($this->arParams["PAGE_ID"], $addressMap))
+		$constantList = $this->arParams['PAGE_CONSTANTS'];
+		if (isset($addressMap[$this->arParams["PAGE_ID"]]))
 		{
 			$pageMap = $addressMap[$this->arParams["PAGE_ID"]];
 			$this->arParams["PAGE_PATH"] = $pageMap["url"];
-			if (is_array($pageMap["constants"]))
+			if (!empty($pageMap["constants"]) && is_array($pageMap["constants"]))
 			{
-				foreach ($pageMap["constants"] as $constant => $constantValue)
+				$constantList = array_merge($pageMap["constants"], $constantList);
+			}
+		}
+		if (!empty($constantList))
+		{
+			foreach ($constantList as $constant => $constantValue)
+			{
+				if (is_numeric($constant))
+				{
+					continue;
+				}
+				if (!defined($constant))
 				{
 					define($constant, $constantValue);
 				}

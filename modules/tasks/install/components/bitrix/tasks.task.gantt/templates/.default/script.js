@@ -280,75 +280,55 @@ BX.addCustomEvent('BX.Main.Filter:apply', function(id, data, ctx, promise, param
 	}
 });
 
-BX.addCustomEvent('Tasks.TopMenu:onItem', function(roleId, url){
-
+BX.addCustomEvent('Tasks.TopMenu:onItem', function(roleId, url) {
 	var filterManager = BX.Main.filterManager.getById(ganttFilterId);
-	if(!filterManager)
+	if (!filterManager)
 	{
 		alert('BX.Main.filterManager not initialised');
 		return;
 	}
 
 	var fields = {
-		preset_id: BX.Tasks.GanttActions.defaultPresetId
+		preset_id: BX.Tasks.GanttActions.defaultPresetId,
+		additional: {ROLEID: (roleId === 'view_all' ? 0 : roleId)}
 	};
-
-	if(roleId != 'view_all')
-	{
-		fields.additional = { ROLEID: roleId };
-	}
-	else
-	{
-		fields.additional = { ROLEID: 0 };
-	}
-
 	var filterApi = filterManager.getApi();
 	filterApi.setFilter(fields);
 
 	window.history.pushState(null, null, url);
-	// window.location.href = url;
 });
 
-BX.addCustomEvent('Tasks.Toolbar:onItem', function(counterId, url){
+BX.addCustomEvent('Tasks.Toolbar:onItem', function(counterId) {
 	var filterManager = BX.Main.filterManager.getById(ganttFilterId);
-	if(!filterManager)
+	if (!filterManager)
 	{
 		alert('BX.Main.filterManager not initialised');
 		return;
 	}
 	var filterApi = filterManager.getApi();
+	var filterFields = filterManager.getFilterFieldsValues();
 
-
-	if(Number(counterId) === 8388608) //\CTaskListState::VIEW_TASK_CATEGORY_WAIT_CTRL
+	if (Number(counterId) === 12582912 || Number(counterId) === 6291456)
 	{
-		// debugger
-		var fields = {STATUS:{0:'4'}};
-		var f = filterManager.getFilterFieldsValues();
-		if (f.hasOwnProperty('ROLEID') && f.ROLEID != '')
-		{
-			fields.ROLEID = f.ROLEID;
-		}
-		else
-		{
-			fields.ROLEID = 'view_role_originator';
-		}
-
-		//\CTasks::STATE_SUPPOSEDLY_COMPLETED
+		var fields = {
+			ROLEID: (filterFields.hasOwnProperty('ROLEID') ? filterFields.ROLEID : 0),
+			PROBLEM: counterId
+		};
 		filterApi.setFields(fields);
 		filterApi.apply();
 	}
 	else
 	{
-		// debugger
-		var fields = {additional:{}};
-		var f = filterManager.getFilterFieldsValues();
-		if(f.hasOwnProperty('ROLEID'))
+		fields = {
+			preset_id: BX.Tasks.GanttActions.defaultPresetId,
+			additional: {
+				PROBLEM: counterId,
+			}
+		};
+		if (filterFields.hasOwnProperty('ROLEID'))
 		{
-			fields.additional.ROLEID = f.ROLEID;
+			fields.additional.ROLEID = filterFields.ROLEID;
 		}
-		fields.preset_id= BX.Tasks.GanttActions.defaultPresetId;
-		fields.additional.PROBLEM= counterId;
-
 		filterApi.setFilter(fields);
 	}
 });

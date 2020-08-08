@@ -3,6 +3,7 @@ import {Item as BaseItem} from '../base/item';
 
 type Value = {
 	id:  String;
+	price:  Number;
 	quantity:  Number;
 };
 type StringUrl = String;
@@ -21,6 +22,7 @@ type Options = {
 	price: Number,
 	discount: ?Number,
 	quantity: ?Quantity,
+	changeablePrice: ?boolean,
 };
 
 
@@ -28,9 +30,9 @@ class Item extends BaseItem
 {
 	value: Value;
 	pics: Array<StringUrl> = [];
-	price: Number = 0;
 	discount: ?Number = 0;
 	quantity: Quantity;
+	changeablePrice: ?boolean = false;
 
 	constructor(options: Options)
 	{
@@ -41,7 +43,13 @@ class Item extends BaseItem
 			this.pics = options.pics;
 		}
 
-		this.price = Util.Conv.number(options.price);
+		let price = Util.Conv.number(options.price);
+		this.changeablePrice = !!options.changeablePrice;
+		if (this.changeablePrice)
+		{
+			price = null;
+		}
+
 		this.discount = Util.Conv.number(options.discount);
 
 		let quantity = Util.Type.object(options.quantity) ? options.quantity : {};
@@ -65,7 +73,22 @@ class Item extends BaseItem
 		this.value = {
 			id: value.id || '',
 			quantity: value.quantity || this.quantity.min || this.quantity.step,
+			price: price,
 		};
+		if (this.changeablePrice)
+		{
+			this.value.changeablePrice = true;
+		}
+	}
+
+	get price()
+	{
+		return this.value.price;
+	}
+
+	set price(val)
+	{
+		this.value.price = val;
 	}
 
 	getNextIncQuantity(): Number

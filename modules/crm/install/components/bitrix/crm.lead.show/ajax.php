@@ -264,7 +264,7 @@ if($mode === 'GET_ENTITY_SIP_INFO')
 		__CrmLeadShowEndJsonResonse(array('ERROR'=>'ENITY TYPE IS NOT DEFINED!'));
 	}
 
-	$entityTypeName = isset($m[1]) ? strtoupper($m[1]) : '';
+	$entityTypeName = isset($m[1])? mb_strtoupper($m[1]) : '';
 	if($entityTypeName !== CCrmOwnerType::LeadName)
 	{
 		__CrmLeadShowEndJsonResonse(array('ERROR'=>'ENITY TYPE IS NOT DEFINED IS NOT SUPPORTED IN CURRENT CONTEXT!'));
@@ -463,7 +463,7 @@ if($mode === 'CONVERT')
 
 	if(isset($_POST['ENABLE_REDIRECT_TO_SHOW']))
 	{
-		$wizard->setRedirectToShowEnabled(strtoupper($_POST['ENABLE_REDIRECT_TO_SHOW']) === 'Y');
+		$wizard->setRedirectToShowEnabled(mb_strtoupper($_POST['ENABLE_REDIRECT_TO_SHOW']) === 'Y');
 	}
 	//region Preparation of context data
 	$contextData = null;
@@ -518,7 +518,7 @@ if($mode === 'CONVERT')
 		}
 	}
 }
-$type = isset($_POST['OWNER_TYPE']) ? strtoupper($_POST['OWNER_TYPE']) : '';
+$type = isset($_POST['OWNER_TYPE'])? mb_strtoupper($_POST['OWNER_TYPE']) : '';
 if($type !== 'L')
 {
 	__CrmLeadShowEndJsonResonse(array('ERROR'=>'OWNER_TYPE IS NOT SUPPORTED!'));
@@ -592,11 +592,11 @@ if($mode === 'UPDATE')
 	$arFields = is_object($dbResult) ? $dbResult->Fetch() : null;
 	if(is_array($arFields))
 	{
-		$prevStatus = $arFields['STATUS_ID'];
+		$prevFields = $arFields;
 		CCrmInstantEditorHelper::PrepareUpdate(CCrmOwnerType::Lead, $arFields, $fieldNames, $fieldValues);
 		$disableUserFieldCheck = !$hasUserFields
 			&& isset($_POST['DISABLE_USER_FIELD_CHECK'])
-			&& strtoupper($_POST['DISABLE_USER_FIELD_CHECK']) === 'Y';
+			&& mb_strtoupper($_POST['DISABLE_USER_FIELD_CHECK']) === 'Y';
 		if($CCrmLead->Update($ID, $arFields, true, true, array('REGISTER_SONET_EVENT' => true, 'DISABLE_USER_FIELD_CHECK' => $disableUserFieldCheck)))
 		{
 			$arErrors = array();
@@ -608,8 +608,9 @@ if($mode === 'UPDATE')
 			);
 
 			//Region automation
-			if ($prevStatus != $arFields['STATUS_ID'])
-				\Bitrix\Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Lead, $ID);
+			$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $ID);
+			$starter->setUserIdFromCurrent();
+			$starter->runOnUpdate($arFields, $prevFields);
 			//end region
 
 			$result = array();
@@ -617,7 +618,7 @@ if($mode === 'UPDATE')
 			for($i = 0; $i < $count; $i++)
 			{
 				$fieldName = $fieldNames[$i];
-				if(strpos($fieldName, 'FM.') === 0)
+				if(mb_strpos($fieldName, 'FM.') === 0)
 				{
 					//Filed name like 'FM.PHONE.WORK.1279'
 					$fieldParams = explode('.', $fieldName);

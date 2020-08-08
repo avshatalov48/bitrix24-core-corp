@@ -54,7 +54,7 @@ Loc::loadMessages(__FILE__);
 			$geoHeadingShown = true;
 		}
 
-		if(!$nameHeadingShown && strpos($field['id'], 'NAME') !== false)
+		if(!$nameHeadingShown && mb_strpos($field['id'], 'NAME') !== false)
 		{
 			$arTabs['tab_params']['fields'][] = array(
 				'id' => 'name_heading',
@@ -203,8 +203,10 @@ Loc::loadMessages(__FILE__);
 		<input type="hidden" name="loc_id" value="'.intval($arResult['LOCATION_ID']).'"/>
 	';
 
-	if(strlen($arResult['SPECIFIED_BACK_URL']))
+	if($arResult['SPECIFIED_BACK_URL'] <> '')
+	{
 		$formCustomHtml .= '<input type="hidden" name="return_url" value="'.htmlspecialcharsbx($arResult['SPECIFIED_BACK_URL']).'"/>';
+	}
 
 	$APPLICATION->IncludeComponent(
 		'bitrix:main.interface.form',

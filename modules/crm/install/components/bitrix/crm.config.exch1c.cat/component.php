@@ -193,7 +193,7 @@ foreach($arAllOptions as $Option)
 	{
 		$ib = new CIBlock();
 		$arIb = $ib->GetByID($iblockId)->Fetch();
-		$val = (is_array($arIb) && strlen($arIb['XML_ID']) > 0) ? $arIb['XML_ID'] : '';
+		$val = (is_array($arIb) && $arIb['XML_ID'] <> '') ? $arIb['XML_ID'] : '';
 		unset($ib);
 	}
 	else

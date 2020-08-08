@@ -38,7 +38,7 @@ if(is_array($_REQUEST["MAP"]))
 {
 	foreach($_REQUEST["MAP"] as $v)
 	{
-		if(strlen($v["USER"])>0 && is_array($arSyncFields[$v["USER"]]) && strlen($v["LDAP"])>0)
+		if($v["USER"] <> '' && is_array($arSyncFields[$v["USER"]]) && $v["LDAP"] <> '')
 		{
 			$arUserFieldMap[$v["USER"]] = $v["LDAP"];
 		}
@@ -60,7 +60,7 @@ if($_SERVER['REQUEST_METHOD'] == "POST")
 }
 
 
-if($_SERVER['REQUEST_METHOD'] == "POST" && (strlen($save)>0 || strlen($apply)>0) && $MOD_RIGHT=="W" && check_bitrix_sessid())
+if($_SERVER['REQUEST_METHOD'] == "POST" && ($save <> '' || $apply <> '') && $MOD_RIGHT=="W" && check_bitrix_sessid())
 {
 	$bPostback = true;
 	$arGroups = false;
@@ -74,7 +74,7 @@ if($_SERVER['REQUEST_METHOD'] == "POST" && (strlen($save)>0 || strlen($apply)>0)
 		}
 		foreach($_REQUEST['LDAP_GROUP'] as $t_id=>$arGroup)
 		{
-			if(strlen($arGroup['LDAP_GROUP_ID'])>0 && $arGroup['GROUP_ID']>0 && $arGroup['DEL_GROUP']!='Y')
+			if($arGroup['LDAP_GROUP_ID'] <> '' && $arGroup['GROUP_ID']>0 && $arGroup['DEL_GROUP']!='Y')
 			{
 				if ($arGroup['GROUP_ID'] == 2)
 					continue;
@@ -149,9 +149,9 @@ if($_SERVER['REQUEST_METHOD'] == "POST" && (strlen($save)>0 || strlen($apply)>0)
 
 	if($res)
 	{
-		if(strlen($save)>0)
+		if($save <> '')
 		{
-			if(substr($_REQUEST['back_url'], 0, 1)=='/')
+			if(mb_substr($_REQUEST['back_url'], 0, 1) == '/')
 				LocalRedirect($_REQUEST['back_url'].'&ldapServer='.$ID);
 			else
 				LocalRedirect("ldap_server_admin.php?lang=".LANG);
@@ -166,7 +166,7 @@ if($_SERVER['REQUEST_METHOD'] == "POST" && (strlen($save)>0 || strlen($apply)>0)
 	}
 }
 
-if(strlen($_REQUEST['check_server'])>0 || strlen($_REQUEST['refresh_groups'])>0)
+if($_REQUEST['check_server'] <> '' || $_REQUEST['refresh_groups'] <> '')
 	$bPostback = true;
 
 $ldp = false;
@@ -244,7 +244,7 @@ if(is_array($_REQUEST['LDAP_GROUP']))
 {
 	foreach($_REQUEST['LDAP_GROUP'] as $t_id=>$arGroup)
 	{
-		if(strlen($arGroup['LDAP_GROUP_ID'])>0 || $arGroup['GROUP_ID']>0)
+		if($arGroup['LDAP_GROUP_ID'] <> '' || $arGroup['GROUP_ID']>0)
 			$arGroups[$t_id] = $arGroup;
 	}
 }
@@ -296,7 +296,7 @@ if($ID>0)
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-if(strlen($SERVER)>0)
+if($SERVER <> '')
 {
 	$ldp = false;
 
@@ -358,7 +358,7 @@ if($bPostback)
 			)
 		);
 	}
-	elseif(strlen($_REQUEST['refresh_groups'])<=0)
+	elseif($_REQUEST['refresh_groups'] == '')
 	{
 		$message = new CAdminMessage(Array("MESSAGE" => GetMessage("LDAP_EDIT_OK_CON"), "TYPE"=>"OK"));
 	}
@@ -404,7 +404,7 @@ else
 		<td><?echo $str_ID?></td>
 	</tr>
 	<?endif?>
-	<?if(strlen($str_TIMESTAMP_X) > 0):?>
+	<?if($str_TIMESTAMP_X <> ''):?>
 	<tr>
 		<td><?echo GetMessage("LDAP_EDIT_TSTAMP")?></td>
 		<td><?echo $str_TIMESTAMP_X?></td>
@@ -933,7 +933,7 @@ else
 						</select>
 					</td>
 					<td align="center">
-						<?if(strlen($arGroup['LDAP_GROUP_ID'])>0 || $arGroup['GROUP_ID']>0):?>
+						<?if($arGroup['LDAP_GROUP_ID'] <> '' || $arGroup['GROUP_ID']>0):?>
 							<input type="checkbox" name="LDAP_GROUP[<?=htmlspecialcharsbx($t_id)?>][DEL_GROUP]" value="Y" <?if($arGroup['DEL_GROUP']=='Y')echo ' checked'?>>
 						<?endif;?>
 					</td>
@@ -987,7 +987,7 @@ if($str_SYNC=="Y")
 else
 	$dis = ' disabled';
 ?>
-<?if(strlen($str_SYNC_LAST)>0):?>
+<?if($str_SYNC_LAST <> ''):?>
 	<tr>
 		<td><?echo GetMessage("LDAP_EDIT_LAST_SYNC")?></td>
 		<td><?=$str_SYNC_LAST?></td>

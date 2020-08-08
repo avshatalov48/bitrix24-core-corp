@@ -9,6 +9,7 @@ namespace Bitrix\Crm\Tracking\UI;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\DB;
 use Bitrix\Crm;
 
 Loc::loadMessages(__FILE__);
@@ -178,15 +179,18 @@ class Filter
 			)
 			:
 			'';
-		$isNullSource = count(
-				array_filter(
-					$filter[self::SourceId],
-					function ($value)
-					{
-						return $value === 'organic';
-					}
-				)
-			) > 0;
+		$isNullSource = isset($filter[self::SourceId])
+			?
+				count(
+					array_filter(
+						$filter[self::SourceId],
+						function ($value)
+						{
+							return $value === 'organic';
+						}
+					)
+				) > 0
+			: false;
 
 		$channels = isset($filter[self::ChannelCode]) ?
 			implode(
@@ -238,5 +242,125 @@ class Filter
 					""
 			)
 			. ")";
+	}
+
+	public static function buildOrmFilter(&$result, array $filter, $entityTypeId, &$runtime)
+	{
+		//$sqlData = "SELECT 3 where $entityTypeId = 14";
+		$sqlData = self::getFilterableSql($filter, $entityTypeId);
+		$item = [];
+
+		if (!empty($sqlData['all']))
+		{
+			$item['@ID'] = new DB\SqlExpression($sqlData['all']);
+		}
+		if (!empty($sqlData['isNull']))
+		{
+			$item['!@ID'] = new DB\SqlExpression($sqlData['isNull']);
+		}
+
+		if (count($item) > 1)
+		{
+			$item['LOGIC'] = 'OR';
+		}
+
+		if (!empty($item))
+		{
+			$result[] = $item;
+		}
+	}
+
+	private static function getFilterableSql(array $filter, $entityTypeId)
+	{
+		$result = [
+			'all' => '',
+			'isNull' => ''
+		];
+
+		$entityTypeId = (int) $entityTypeId;
+		if (!$entityTypeId)
+		{
+			return $result;
+		}
+
+		if (!isset($filter[self::SourceId]) && !isset($filter[self::ChannelCode]))
+		{
+			return $result;
+		}
+
+		$sources = isset($filter[self::SourceId]) ?
+			implode(
+				', ',
+				array_map(
+					function ($value)
+					{
+						return (int) $value;
+					},
+					$filter[self::SourceId]
+				)
+			)
+			:
+			'';
+		$isNullSource = isset($filter[self::SourceId])
+			?
+				count(
+					array_filter(
+						$filter[self::SourceId],
+						function ($value)
+						{
+							return $value === 'organic';
+						}
+					)
+				) > 0
+			: false;
+
+		$channels = isset($filter[self::ChannelCode]) ?
+			implode(
+				', ',
+				array_map(
+					function ($value)
+					{
+						return "'" . Application::getConnection()->getSqlHelper()->forSql($value) . "'";
+					},
+					$filter[self::ChannelCode]
+				)
+			)
+			:
+			'';
+
+		$sqlSource = [];
+		if (isset($filter[self::SourceId]))
+		{
+			if ($sources)
+			{
+				$sqlSource[] = " CTT.SOURCE_ID in ({$sources}) ";
+			}
+			if ($isNullSource)
+			{
+				$sqlSource[] = " (CTT.SOURCE_ID is NULL or CTT.SOURCE_ID = 0) ";
+			}
+		}
+
+		$result['all'] = "SELECT CTTE.ENTITY_ID FROM "
+			. Crm\Tracking\Internals\TraceEntityTable::getTableName() . ' CTTE '
+			. ' JOIN ' . Crm\Tracking\Internals\TraceTable::getTableName() . ' CTT ON CTTE.TRACE_ID=CTT.ID '
+			. (
+				isset($filter[self::ChannelCode])
+					? ' JOIN ' . Crm\Tracking\Internals\TraceChannelTable::getTableName() . ' CTTC ON CTTC.TRACE_ID=CTT.ID '
+					: ''
+			)
+			. " WHERE CTTE.ENTITY_TYPE_ID = $entityTypeId "
+			. (!empty($sqlSource) ? " AND (" . implode(' OR ', $sqlSource) . ") " : '')
+			. (isset($filter[self::ChannelCode]) ? " AND CTTC.CODE in ({$channels}) " : '')
+		;
+
+		$result['isNull'] = $isNullSource
+			?
+				"SELECT CTTE.ENTITY_ID FROM "
+				. Crm\Tracking\Internals\TraceEntityTable::getTableName() . " CTTE "
+				. " WHERE CTTE.ENTITY_TYPE_ID = $entityTypeId "
+			: "";
+
+		return $result;
 	}
 }

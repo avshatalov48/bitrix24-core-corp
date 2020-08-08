@@ -60,6 +60,12 @@ class TasksWidgetButtonsComponent extends TasksBaseComponent
 		$this->arResult['BUTTONS'] = $buttons;
 		$this->arResult['GROUPS'] = $groups;
 
+		$taskLimitExceeded = $this->arParams['TASK_LIMIT_EXCEEDED'];
+		if ($taskLimitExceeded)
+		{
+			$this->arResult['TASK_LIMIT_EXCEEDED'] = true;
+		}
+
 		return $this->errors->checkNoFatals();
 	}
 }

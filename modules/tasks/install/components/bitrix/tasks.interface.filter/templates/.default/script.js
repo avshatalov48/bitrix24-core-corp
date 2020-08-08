@@ -124,7 +124,8 @@ if (typeof(BX.TasksGroupsSelectorInit) === "undefined")
 			messages = settings.messages,
 			groups = settings.groups,
 			currentGroup = settings.currentGroup,
-			groupLimit = settings.groupLimit;
+			groupLimit = settings.groupLimit,
+			offsetLeft = settings.offsetLeft;
 
 		// change add-button href
 		var setTaskAddHref = function(groupId)
@@ -134,7 +135,7 @@ if (typeof(BX.TasksGroupsSelectorInit) === "undefined")
 
 		currentGroup.id = parseInt(currentGroup.id);
 		currentGroup.text = BX.util.htmlspecialchars(currentGroup.text);
-		
+
 		setTaskAddHref(currentGroup.id);
 
 		BX.bind(BX(selectorId), "click", function ()
@@ -148,6 +149,7 @@ if (typeof(BX.TasksGroupsSelectorInit) === "undefined")
 					//BX.addClass(item.layout.item, "menu-popup-item-accept");
 
 					BX.onCustomEvent(window, 'BX.Kanban.ChangeGroup', [item.id, currentGroup.id]);
+					BX.onCustomEvent(window, 'BX.Tasks.ChangeGroup', [item.id, currentGroup.id]);
 
 					if (item.id !== currentGroup.id)
 					{
@@ -180,7 +182,10 @@ if (typeof(BX.TasksGroupsSelectorInit) === "undefined")
 						text: item.text
 					};
 					setTaskAddHref(item.id);
-					BX(selectorId + "_text").innerHTML = item.text;
+					if (BX(selectorId + "_text"))
+					{
+						BX(selectorId + "_text").innerHTML = item.text;
+					}
 					BX.onCustomEvent(this, "onTasksGroupSelectorChange", [currentGroup]);
 				};
 
@@ -240,13 +245,18 @@ if (typeof(BX.TasksGroupsSelectorInit) === "undefined")
 					});
 				}
 				// create menu
+				if (!offsetLeft)
+				{
+					offsetLeft = 0;
+				}
 				menu = BX.PopupMenu.create(
 					selectorId,
 					BX(selectorId),
 					menuItems,
 					{
 						autoHide: true,
-						closeByEsc: true
+						closeByEsc: true,
+						offsetLeft: offsetLeft
 					}
 				);
 			}
@@ -377,4 +387,20 @@ if (typeof BX.Tasks.SprintSelector === "undefined")
 			}
 		);
 	};
+}
+
+if (typeof BX.Tasks.ProjectSelector === "undefined")
+{
+	BX.Tasks.ProjectSelector =
+	{
+		reloadProject: function(groupId)
+		{
+			var url = document.location.href;
+			url = BX.util.add_url_param(url, {
+				group_id: groupId
+			});
+
+			document.location.href = url;
+		}
+	}
 }

@@ -11,6 +11,7 @@ use Bitrix\Disk\Uf\StubConnector;
 use Bitrix\Main\Loader;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\UI\Viewer\Transformation\TransformerManager;
 
 final class AttachedObject extends Internals\Model
 {
@@ -196,6 +197,18 @@ final class AttachedObject extends Internals\Model
 		{
 			$driver = Driver::getInstance();
 			$driver->getRecentlyUsedManager()->push($model->getCreatedBy(), $model->getObjectId());
+
+			/** @var AttachedObject $model */
+			/** @var File $file */
+			$file = $model->getObject();
+			if($file && TypeFile::isVideo($file))
+			{
+				$transformerManager = new TransformerManager();
+				if($transformerManager->isAvailable())
+				{
+					$transformerManager->transform($file->getFileId());
+				}
+			}
 		}
 
 		return $model;

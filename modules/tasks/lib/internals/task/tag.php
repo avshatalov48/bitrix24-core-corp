@@ -55,11 +55,11 @@ class TagTable extends Main\Entity\DataManager
 
 			// references
 			'TASK' => array(
-				'data_type' => 'Task',
+				'data_type' => 'Bitrix\Tasks\Internals\TaskTable',
 				'reference' => array('=this.TASK_ID' => 'ref.ID')
 			),
 			'USER' => array(
-				'data_type' => 'Bitrix\Main\User',
+				'data_type' => 'Bitrix\Main\UserTable',
 				'reference' => array('=this.USER_ID' => 'ref.ID')
 			),
 		);

@@ -28,9 +28,9 @@ $arResult['CRM_CUSTOM_PAGE_TITLE'] = GetMessage(
 
 $isMyCompanyMode = (isset($arResult['MYCOMPANY_MODE']) && $arResult['MYCOMPANY_MODE'] === 'Y');
 $enableInstantEdit = $arResult['ENABLE_INSTANT_EDIT'];
-$instantEditorID = strtolower($arResult['FORM_ID']).'_editor';
-$bizprocDispatcherID = strtolower($arResult['FORM_ID']).'_bp_disp';
-$treeDispatcherID = strtolower($arResult['FORM_ID']).'_tree_disp';
+$instantEditorID = mb_strtolower($arResult['FORM_ID']).'_editor';
+$bizprocDispatcherID = mb_strtolower($arResult['FORM_ID']).'_bp_disp';
+$treeDispatcherID = mb_strtolower($arResult['FORM_ID']).'_tree_disp';
 
 $arTabs = array();
 $arTabsExt = array();
@@ -174,7 +174,7 @@ $APPLICATION->IncludeComponent(
 	'bitrix:crm.entity.quickpanelview',
 	'',
 	array(
-		'GUID' => strtolower($arResult['FORM_ID']).'_qpv',
+		'GUID' => mb_strtolower($arResult['FORM_ID']).'_qpv',
 		'FORM_ID' => $arResult['TACTILE_FORM_ID'],
 		'ENTITY_TYPE_NAME' => CCrmOwnerType::CompanyName,
 		'ENTITY_ID' => $arResult['ELEMENT_ID'],
@@ -323,7 +323,7 @@ if($arResult['ENABLE_INSTANT_EDIT']):?>
 		);
 
 		BX.CrmFormTabLazyLoader.create(
-			"<?=CUtil::JSEscape(strtolower($arResult['FORM_ID'])).'_livefeed'?>",
+			"<?=CUtil::JSEscape(mb_strtolower($arResult['FORM_ID'])).'_livefeed'?>",
 			{
 				containerID: liveFeedContainerId,
 				serviceUrl: "/bitrix/components/bitrix/crm.entity.livefeed/lazyload.ajax.php?&site=<?=SITE_ID?>&<?=bitrix_sessid_get()?>",

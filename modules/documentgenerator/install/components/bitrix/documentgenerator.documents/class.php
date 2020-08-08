@@ -75,7 +75,14 @@ class DocumentGeneratorDocumentsComponent extends CBitrixComponent
 			$this->showError(Loc::getMessage('DOCGEN_DOCUMENTS_VALUE_DOCGEN_ERROR'));
 			return;
 		}
-		$this->provider = DataProviderManager::getInstance()->getDataProvider($this->arParams['provider'], $this->arParams['value']);
+		$this->provider = DataProviderManager::getInstance()->getDataProvider(
+			$this->arParams['provider'],
+			$this->arParams['value'],
+			[
+				'isLightMode' => true,
+				'noSubstitution' => true,
+			]
+		);
 		if(!$this->provider)
 		{
 			$this->showError(Loc::getMessage('DOCGEN_DOCUMENTS_INIT_PROVIDER_ERROR'));
@@ -354,7 +361,7 @@ class DocumentGeneratorDocumentsComponent extends CBitrixComponent
 	 */
 	protected function getListFilter()
 	{
-		$providerClassName = str_replace("\\", "\\\\", strtolower(get_class($this->provider)));
+		$providerClassName = str_replace("\\", "\\\\", mb_strtolower(get_class($this->provider)));
 		$filter = [
 			'PROVIDER' => $providerClassName,
 			'VALUE' => $this->provider->getSource(),

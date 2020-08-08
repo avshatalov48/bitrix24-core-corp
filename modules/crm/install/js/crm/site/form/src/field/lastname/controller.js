@@ -13,6 +13,17 @@ class Controller extends StringField.Controller
 	{
 		return 'last-name';
 	}
+
+
+	getInputName(): string
+	{
+		return 'lastname';
+	}
+
+	getInputAutocomplete(): string
+	{
+		return 'family-name';
+	}
 }
 
 export {Controller, Options}

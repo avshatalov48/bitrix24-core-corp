@@ -174,7 +174,7 @@ class CCrmConfigEmailtrackerAjax
 			if (!$service['SERVER'])
 			{
 				$regExp = '/^(?:(?:http|https|ssl|tls|imap):\/\/)?((?:[a-z0-9](?:-*[a-z0-9])*\.?)+)$/i';
-				if (preg_match($regExp, trim($mbData['SERVER']), $matches) && strlen($matches[1]) > 0)
+				if (preg_match($regExp, trim($mbData['SERVER']), $matches) && $matches[1] <> '')
 					$mbData['SERVER'] = $matches[1];
 				else
 					$error = getMessage('INTR_MAIL_FORM_ERROR');
@@ -212,8 +212,8 @@ class CCrmConfigEmailtrackerAjax
 							}
 							else
 							{
-								$mbData['NAME']     = strtolower(trim($response['email']));
-								$mbData['LOGIN']    = strtolower(trim($response['email']));
+								$mbData['NAME'] = mb_strtolower(trim($response['email']));
+								$mbData['LOGIN'] = mb_strtolower(trim($response['email']));
 								$mbData['PASSWORD'] = "\x00oauth\x00google\x00".$USER->getId();
 
 								$oauthFulfilled = true;
@@ -254,8 +254,8 @@ class CCrmConfigEmailtrackerAjax
 							{
 								if (!empty($response['emails']['account']))
 								{
-									$mbData['NAME']     = strtolower(trim($response['emails']['account']));
-									$mbData['LOGIN']    = strtolower(trim($response['emails']['account']));
+									$mbData['NAME'] = mb_strtolower(trim($response['emails']['account']));
+									$mbData['LOGIN'] = mb_strtolower(trim($response['emails']['account']));
 									$mbData['PASSWORD'] = "\x00oauth\x00liveid\x00".$USER->getId();
 
 									$oauthFulfilled = true;
@@ -371,7 +371,7 @@ class CCrmConfigEmailtrackerAjax
 						$email = rtrim($email);
 
 						$blacklist[$i] = null;
-						if (strpos($email, '@') === false)
+						if (mb_strpos($email, '@') === false)
 						{
 							if (check_email(sprintf('email@%s', $email)))
 								$blacklist[$i] = $email;
@@ -526,7 +526,7 @@ class CCrmConfigEmailtrackerAjax
 			if (empty($service['SERVER']) && is_set($_REQUEST, 'server'))
 			{
 				$regExp = '/^(?:(?:http|https|ssl|tls|imap):\/\/)?((?:[a-z0-9](?:-*[a-z0-9])*\.?)+)$/i';
-				if (preg_match($regExp, trim($_REQUEST['server']), $matches) && strlen($matches[1]) > 0)
+				if (preg_match($regExp, trim($_REQUEST['server']), $matches) && $matches[1] <> '')
 					$mbData['SERVER'] = $matches[1];
 				else
 					$error = getMessage('INTR_MAIL_FORM_ERROR');
@@ -626,7 +626,7 @@ class CCrmConfigEmailtrackerAjax
 						$email = rtrim($email);
 
 						$blacklist[$i] = null;
-						if (strpos($email, '@') === false)
+						if (mb_strpos($email, '@') === false)
 						{
 							if (check_email(sprintf('email@%s', $email)))
 								$blacklist[$i] = $email;

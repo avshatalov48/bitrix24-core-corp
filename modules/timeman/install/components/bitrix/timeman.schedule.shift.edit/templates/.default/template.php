@@ -80,7 +80,7 @@ $shiftFormName = htmlspecialcharsbx($shiftForm->getFormName());
 						htmlspecialcharsbx($shiftForm->getFormattedBreakDuration()); ?></span>
 					<input name="<?= $shiftFormName; ?>[breakDurationFormatted]"
 							type="hidden"
-							data-role="timeman-shift-link-break-time"
+							data-role="timeman-shift-break-time"
 							value="<?= htmlspecialcharsbx($shiftForm->getFormattedBreakDuration()); ?>">
 					<div class="timeman-schedule-form-worktime-duration">
 						<?= htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SHIFT_EDIT_BREAK_DURATION_TOTAL_TITLE')); ?>

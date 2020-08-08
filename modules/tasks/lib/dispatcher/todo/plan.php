@@ -108,7 +108,7 @@ final class Plan extends Collection
 		foreach($this->values as $op)
 		{
 			$action = $op->getAction();
-			if(strpos('this.', $action) == 0)
+			if(mb_strpos('this.', $action) == 0)
 			{
 				$op->setAction(preg_replace('#^\s*this\.#', $part.'.', $action));
 			}

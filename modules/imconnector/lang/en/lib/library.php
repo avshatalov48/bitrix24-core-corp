@@ -25,5 +25,6 @@ $MESS["IMCONNECTOR_REST_GENERAL_CONNECTOR_REGISTRATION_ERROR"] = "Generic error 
 $MESS["IMCONNECTOR_REST_ICON_REQUIRED"] = "Connector icon is not specified";
 $MESS["IMCONNECTOR_REST_NAME_REQUIRED"] = "Connector name is not specified";
 $MESS["IMCONNECTOR_REST_NO_APPLICATION_ID"] = "Cannot get the app ID";
+$MESS["IMCONNECTOR_REST_NO_PLACEMENT_HANDLER"] = "Cannot get the embedding handler URL";
 $MESS["IMCONNECTOR_UPDATE_NOT_EXISTING_CONNECTOR"] = "Attempt to update an inactive connector";
 ?>

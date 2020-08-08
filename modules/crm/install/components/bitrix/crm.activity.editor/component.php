@@ -54,12 +54,12 @@ if ($arResult['ENABLE_EMAIL_ADD'])
 			{
 				if ($mailbox['USER_ID'] > 0)
 				{
-					if (strpos($mailbox['LOGIN'], '@') > 0 && empty($arResult['USER_CRM_EMAIL']))
+					if (mb_strpos($mailbox['LOGIN'], '@') > 0 && empty($arResult['USER_CRM_EMAIL']))
 						$arResult['USER_CRM_EMAIL'] = $mailbox['LOGIN'];
 				}
 				else
 				{
-					if (strpos($mailbox['NAME'], '@') > 0 && empty($arResult['SHARED_CRM_EMAIL']))
+					if (mb_strpos($mailbox['NAME'], '@') > 0 && empty($arResult['SHARED_CRM_EMAIL']))
 						$arResult['SHARED_CRM_EMAIL'] = $mailbox['NAME'];
 				}
 			}

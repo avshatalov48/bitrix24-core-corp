@@ -20,12 +20,20 @@ export class OrderCreationModel extends VuexBuilderModel
 			showPaySystemSettingBanner: false,
 			selectedProducts: [],
 			basket: [],
+			propertyValues: [],
+			deliveryExtraServicesValues: [],
+			expectedDelivery: null,
+			deliveryResponsibleId: null,
+			personTypeId: null,
+			deliveryId: null,
+			delivery: null,
 			errors: [],
 			total: {
 				sum: null,
 				discount: null,
-				result: null
-			}
+				result: null,
+				resultNumeric: null,
+			},
 		}
 	}
 
@@ -36,21 +44,22 @@ export class OrderCreationModel extends VuexBuilderModel
 			code: null,
 			name: '',
 			sort: 0,
+			price: 0,
 			basePrice: 0,
-			catalogPrice: 0,
 			quantity: 0,
 			showDiscount: '',
 			discount: 0,
 			discountInfos: [],
 			discountType: 'percent',
 			module: null,
-			formattedPrice: 0,
-			formattedCatalogPrice: null,
 			measureCode: 0,
 			measureName: '',
+			taxRate: 0,
+			taxIncluded: 'N',
 			isCustomPrice: 'N',
 			isCreatedProduct: 'N',
 			encodedFields: null,
+			image: [],
 			errors: [],
 		};
 	}
@@ -60,7 +69,6 @@ export class OrderCreationModel extends VuexBuilderModel
 		return {
 			refreshBasket({ commit, dispatch, state }, payload)
 			{
-				payload.timeout = payload.timeout || 300;
 				if (this.updateTimer)
 				{
 					clearTimeout(this.updateTimer);
@@ -69,16 +77,28 @@ export class OrderCreationModel extends VuexBuilderModel
 				this.updateTimer = setTimeout(() => {
 					const currentProcessingId = Math.random() * 100000;
 					commit('setProcessingId', currentProcessingId);
+
 					BX.ajax.runAction(
 						"salescenter.api.order.refreshBasket",
-						{ data: { basketItems: state.basket } }
+						{
+							data: {basketItems: state.basket}
+						}
 					)
 					.then((result) => {
 						if (currentProcessingId === state.processingId)
 						{
 							const data = BX.prop.getObject(result,"data", {});
 							dispatch('processRefreshRequest', {
-								total: BX.prop.getObject(data,"total",{}),
+								total: BX.prop.getObject(
+									data,
+									"total",
+									{
+										sum: 0,
+										discount: 0,
+										result: 0,
+										resultNumeric: 0,
+									}
+								),
 								basket: BX.prop.get(data,"items",[])
 							});
 							if (payload.onsuccess)
@@ -101,7 +121,7 @@ export class OrderCreationModel extends VuexBuilderModel
 							}
 						}
 					});
-				}, payload.timeout);
+				}, 0);
 			},
 			processRefreshRequest({ commit, dispatch }, payload)
 			{
@@ -116,7 +136,7 @@ export class OrderCreationModel extends VuexBuilderModel
 
 					commit('setSelectedProducts');
 				}
-				
+
 				if (BX.type.isObject(payload.total))
 				{
 					commit('setTotal', payload.total);
@@ -125,7 +145,6 @@ export class OrderCreationModel extends VuexBuilderModel
 				if (BX.type.isArray(payload.errors))
 				{
 					commit('setErrors', payload.errors);
-					dispatch('recalculate');
 				}
 				else
 				{
@@ -134,58 +153,32 @@ export class OrderCreationModel extends VuexBuilderModel
 
 				commit('setProcessingId', null);
 			},
-			recalculate({ commit, state })
-			{
-				commit('setProcessingId', null);
-				let productCost = 0;
-				let totalDiscount = 0;
-				let resultSum = 0;
-				state.basket.forEach((item, i) => {
-					if (item.name === '')
-					{
-						return;
-					}
-					let currentPrice = item.basePrice;
-					if (item.discount > 0)
-					{
-						let discountValue = item.discount;
-						if (item.discountType === 'percent')
-						{
-							discountValue = (item.basePrice * item.discount) / 100
-						}
-
-						currentPrice -= discountValue;
-						totalDiscount += (discountValue * item.quantity);
-					}
-
-					currentPrice = (currentPrice > 0) ? currentPrice : 0;
-					resultSum += (currentPrice * item.quantity);
-					productCost += (item.catalogPrice * item.quantity);
-
-					commit('updateBasketItem', {
-						index: i,
-						fields: {
-							formattedPrice: BX.Currency.currencyFormat(currentPrice, state.currency, true),
-							formattedCatalogPrice: BX.Currency.currencyFormat(item.catalogPrice, state.currency, true),
-						},
-					});
-				});
-				totalDiscount = Math.min(totalDiscount, productCost);
-				commit('setTotal', {
-					sum: BX.Currency.currencyFormat(productCost, state.currency, true),
-					discount: BX.Currency.currencyFormat(totalDiscount, state.currency, true),
-					result: BX.Currency.currencyFormat(resultSum, state.currency, true)
-				});
-			},
 			resetBasket ({ commit })
 			{
 				commit('clearBasket');
 				commit('setTotal', {
 					sum: null,
 					discount: null,
-					result: null
+					result: null,
+					resultNumeric: null,
 				});
 				commit('addBasketItem');
+			},
+			deleteBasketItem({ commit, state, dispatch }, payload)
+			{
+				commit('deleteBasketItem', payload);
+
+				if (state.basket.length > 0)
+				{
+					state.basket.forEach((item, i) => {
+						commit('updateBasketItem', {
+							index: i,
+							fields: {sort: i}
+						});
+					});
+				}
+
+				dispatch('refreshBasket');
 			},
 			removeItem({ commit, state, dispatch }, payload)
 			{
@@ -204,19 +197,46 @@ export class OrderCreationModel extends VuexBuilderModel
 					});
 				}
 
-				dispatch('recalculate');
+				dispatch('refreshBasket');
 			},
 			changeBasketItem: ({ commit, dispatch }, payload) =>
 			{
 				commit('updateBasketItem', payload);
 				commit('setSelectedProducts');
-				dispatch('recalculate');
 			},
 			setCurrency: ({ commit }, payload) =>
 			{
 				const currency = payload || '';
 				commit('setCurrency', currency);
-			}
+			},
+			setDeliveryId: ({ commit }, payload) =>
+			{
+				commit('setDeliveryId', payload);
+			},
+			setDelivery: ({ commit }, payload) =>
+			{
+				commit('setDelivery', payload);
+			},
+			setPropertyValues: ({ commit }, payload) =>
+			{
+				commit('setPropertyValues', payload);
+			},
+			setDeliveryExtraServicesValues: ({ commit }, payload) =>
+			{
+				commit('setDeliveryExtraServicesValues', payload);
+			},
+			setExpectedDelivery: ({ commit }, payload) =>
+			{
+				commit('setExpectedDelivery', payload);
+			},
+			setDeliveryResponsibleId: ({ commit }, payload) =>
+			{
+				commit('setDeliveryResponsibleId', payload);
+			},
+			setPersonTypeId: ({ commit }, payload) =>
+			{
+				commit('setPersonTypeId', payload);
+			},
 		}
 	}
 
@@ -233,6 +253,38 @@ export class OrderCreationModel extends VuexBuilderModel
 					(basketItem.module === 'catalog' && parseInt(basketItem.productId) > 0)
 					|| (basketItem.module !== 'catalog' && BX.type.isNotEmptyString(basketItem.name) && parseFloat(basketItem.quantity) > 0)
 				)).length > 0;
+			},
+			getTotal: state =>
+			{
+				return state.total;
+			},
+			getDelivery: state =>
+			{
+				return state.delivery;
+			},
+			getDeliveryId: state =>
+			{
+				return state.deliveryId;
+			},
+			getPropertyValues: state =>
+			{
+				return state.propertyValues;
+			},
+			getDeliveryExtraServicesValues: state =>
+			{
+				return state.deliveryExtraServicesValues;
+			},
+			getExpectedDelivery: state =>
+			{
+				return state.expectedDelivery;
+			},
+			getDeliveryResponsibleId: state =>
+			{
+				return state.deliveryResponsibleId;
+			},
+			getPersonTypeId: state =>
+			{
+				return state.personTypeId;
 			},
 		}
 	}
@@ -283,6 +335,30 @@ export class OrderCreationModel extends VuexBuilderModel
 			{
 				state.errors = payload;
 			},
+			setDeliveryId: (state, deliveryId) =>
+			{
+				state.deliveryId = deliveryId;
+			},
+			setDelivery: (state, delivery) =>
+			{
+				state.delivery = delivery;
+			},
+			setPropertyValues: (state, propertyValues) =>
+			{
+				state.propertyValues = propertyValues;
+			},
+			setDeliveryExtraServicesValues: (state, deliveryExtraServicesValues) =>
+			{
+				state.deliveryExtraServicesValues = deliveryExtraServicesValues;
+			},
+			setExpectedDelivery: (state, expectedDelivery) =>
+			{
+				state.expectedDelivery = expectedDelivery;
+			},
+			setDeliveryResponsibleId: (state, deliveryResponsibleId) =>
+			{
+				state.deliveryResponsibleId = deliveryResponsibleId;
+			},
 			clearErrors: (state) =>
 			{
 				state.errors = [];
@@ -294,6 +370,10 @@ export class OrderCreationModel extends VuexBuilderModel
 			setCurrency: (state, payload) =>
 			{
 				state.currency = payload;
+			},
+			setPersonTypeId: (state, payload) =>
+			{
+				state.personTypeId = payload;
 			},
 			showBanner: (state) =>
 			{

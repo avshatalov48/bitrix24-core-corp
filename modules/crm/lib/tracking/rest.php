@@ -27,6 +27,45 @@ class Rest
 	public static function register(array &$bindings)
 	{
 		$bindings['crm.tracking.trace.add'] = [__CLASS__, 'addTrace'];
+		$bindings['crm.tracking.trace.delete'] = [__CLASS__, 'deleteTrace'];
+	}
+
+	/**
+	 * Delete trace.
+	 *
+	 * @param array $query Query parameters.
+	 * @param int $nav Navigation.
+	 * @param \CRestServer $server Rest server.
+	 * @return void
+	 * @throws RestException
+	 */
+	public static function deleteTrace($query, $nav = 0, \CRestServer $server)
+	{
+		$id = empty($query['id']) ? null : (int) $query['id'];
+		if (!$id)
+		{
+			self::printErrors(["Parameter `id` required."]);
+		}
+
+		$rows = Internals\TraceEntityTable::getList([
+			'filter' => ['=TRACE_ID' => $id]
+		])->fetchAll();
+		$hasRights = true;
+		foreach ($rows as $row)
+		{
+			if (!\CCrmAuthorizationHelper::CheckUpdatePermission($row['ENTITY_TYPE_ID'], $row['ENTITY_ID']))
+			{
+				$hasRights = false;
+				continue;
+			}
+
+			Internals\TraceEntityTable::delete($row['ID']);
+		}
+
+		if ($hasRights)
+		{
+			Internals\TraceTable::delete($id);
+		}
 	}
 
 	/**

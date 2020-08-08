@@ -1,4 +1,6 @@
 <?
+$MESS["IMCONNECTOR_COMPONENT_AVITO_AUTHORIZATION"] = "Authorization";
+$MESS["IMCONNECTOR_COMPONENT_AVITO_AUTHORIZE"] = "Log In";
 $MESS["IMCONNECTOR_COMPONENT_AVITO_CHANGE_ANY_TIME"] = "Change or disable at any time";
 $MESS["IMCONNECTOR_COMPONENT_AVITO_CLIENT_ID"] = "Enter Client ID:";
 $MESS["IMCONNECTOR_COMPONENT_AVITO_CLIENT_SECRET"] = "Enter Client Secret:";
@@ -12,5 +14,7 @@ $MESS["IMCONNECTOR_COMPONENT_AVITO_FINAL_FORM_DESCRIPTION"] = "Avito has been su
 $MESS["IMCONNECTOR_COMPONENT_AVITO_INFO"] = "Information";
 $MESS["IMCONNECTOR_COMPONENT_AVITO_INFO_CONNECT_ID"] = "redirect=detail&code=10179780";
 $MESS["IMCONNECTOR_COMPONENT_AVITO_INSTRUCTION_TITLE"] = "<span class=\"imconnector-field-box-text-bold\">Manual</span> on getting the account data:";
+$MESS["IMCONNECTOR_COMPONENT_AVITO_LOG_IN"] = "Please log in using Bitrix24 account with an active Avito subscription.";
+$MESS["IMCONNECTOR_COMPONENT_AVITO_LOG_IN_OAUTH"] = "Log in using Avito account.";
 $MESS["IMCONNECTOR_COMPONENT_AVITO_USER_ID"] = "User ID";
 ?>

@@ -1,10 +1,16 @@
 <?
+$MESS["CRM_MENU_RIGHTS_CATEGORY_ALL_FOR_ALL"] = "Grant access to all users";
+$MESS["CRM_MENU_RIGHTS_CATEGORY_COPY_FROM_TUNNELS"] = "Copy access permissions from funnel";
+$MESS["CRM_MENU_RIGHTS_CATEGORY_CUSTOM"] = "Custom access settings";
+$MESS["CRM_MENU_RIGHTS_CATEGORY_NONE_FOR_ALL"] = "Close access to all users";
+$MESS["CRM_MENU_RIGHTS_CATEGORY_OWN_FOR_ALL"] = "Grant access to my deal only";
 $MESS["CRM_ST_ADD_FUNNEL_BUTTON"] = "Add funnel";
 $MESS["CRM_ST_ADD_NEW_CATEGORY_BUTTON_LABEL"] = "Add sales funnel";
 $MESS["CRM_ST_CATEGORY_DRAG_BUTTON"] = "Drag to sort funnels";
 $MESS["CRM_ST_CONFIRM_STAGE_REMOVE_TEXT"] = "Are you sure you want to delete the stage?";
 $MESS["CRM_ST_DOT_TITLE"] = "Drag to create a tunnel";
 $MESS["CRM_ST_EDIT_CATEGORY_TITLE"] = "Edit name";
+$MESS["CRM_ST_EDIT_RIGHTS_CATEGORY"] = "Edit settings";
 $MESS["CRM_ST_ERROR_POPUP_CLOSE_BUTTON_LABEL"] = "Close";
 $MESS["CRM_ST_ERROR_POPUP_TITLE"] = "Error";
 $MESS["CRM_ST_GENERATOR_HELP_BUTTON"] = "Read about Sales Boost";
@@ -29,13 +35,4 @@ $MESS["CRM_ST_TITLE_EDITOR_PLACEHOLDER"] = "New funnel";
 $MESS["CRM_ST_TUNNEL_BUTTON_LABEL"] = "Tunnel";
 $MESS["CRM_ST_TUNNEL_BUTTON_TITLE"] = "Edit or delete tunnel";
 $MESS["CRM_ST_TUNNEL_EDIT_ACCESS_DENIED"] = "Insufficient permission to create a tunnel.";
-$MESS["CRM_ST_ROBOTS_POPUP_TITLE"] = "Automation rules";
-$MESS["CRM_ST_ROBOTS_POPUP_TEXT"] = "
-	Bitrix24 CRM Automated Sales<br><br>
-	Create scenarios for CRM to push your deals forward: assign tasks, plan meetings, launch targeted ad campaigns and issue invoices. Automation rules will guide your manager to next steps at each deal stage to finish the job.<br><br>
-	Triggers automatically react to the client actions (when site is visited, form is filled out, social network comment is posted or a call is made) and launch an automation rule helping graduate lead into a deal.<br><br>
-	Automation rules and triggers are doing all the routine operations without any training for your managers: configure once and keep working!<br><br>
-	Add automation rules and boost your sales!<br><br>
-	This tool is available on commercial Bitrix24 subscriptions only.
-";
 ?>

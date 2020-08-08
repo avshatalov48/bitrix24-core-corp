@@ -224,7 +224,7 @@ if(!function_exists('__CrmActivityListRenderGadgetItem'))
 	}
 }
 
-$lcPrefix = strtolower($arResult['PREFIX']);
+$lcPrefix = mb_strtolower($arResult['PREFIX']);
 $editorID = $lcPrefix !== '' ? "{$lcPrefix}_crm_gadget_activity_editor" : 'crm_gadget_activity_editor';
 $displayClient = $arResult['DISPLAY_CLIENT']
 	&& (empty($arResult['SELECTED_FIELDS']) || in_array('CLIENT', $arResult['SELECTED_FIELDS'], true));

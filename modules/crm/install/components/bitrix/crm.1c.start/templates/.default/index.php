@@ -43,11 +43,53 @@ if (is_array($arResult['SYNCHRO_ITEMS']) && !empty($arResult["ITEMS"]))
 		</div>
 	</div>
 <?
+}?>
+<?
+if (is_array($arResult['PLACEMENT_ITEMS']) && !empty($arResult["PLACEMENT_ITEMS"]))
+{
+	?>
+	<div class="crm-onec-block-title"><?=Loc::getMessage('CRM_1C_START_OTHER_TITLE')?></div>
+	<div class="onec-block onec-placement-block">
+		<div class="onec-wrap" id="<?=htmlspecialcharsbx($arResult['PLACEMENT_ITEMS_ID'])?>">
+			<div class="ui-tile-list-block">
+				<div class="ui-tile-list-wrap">
+					<div class="ui-tile-list-list">
+						<? foreach ($arResult['PLACEMENT_ITEMS'] as $placement) :?>
+							<div class="ui-tile-list-item">
+								<?php
+								$APPLICATION->includeComponent(
+									'bitrix:app.layout',
+									'',
+									array(
+										'ID' => $placement['APP_ID'],
+										'PLACEMENT' => $placement['CODE'],
+										'PLACEMENT_ID' => $placement['ID'],
+										'SHOW_LOADER' => 'N',
+										'SET_TITLE' => 'N',
+										'PARAM' => [
+											'FRAME_WIDTH' => '202px',
+											'FRAME_HEIGHT' => '112px',
+										],
+										'PLACEMENT_OPTIONS' => $placement['OPTIONS'],
+									),
+									$component,
+									array('HIDE_ICONS' => 'Y')
+								);
+								?>
+							</div>
+						<? endforeach;?>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+<?
 }
 
 $jsParams = array(
 	"tileManagerId" => $arResult['TILE_ID'],
-	"synchroTileManagerId" => $arResult['SYNCHRO_TILE_ID']
+	"synchroTileManagerId" => $arResult['SYNCHRO_TILE_ID'],
+	"otherTileManagerId" => $arResult['OTHER_TILE_ID']
 );
 ?>
 <script>

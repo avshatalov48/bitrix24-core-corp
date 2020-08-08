@@ -1,5 +1,7 @@
 import "./style.css"
 import {FieldList, FieldListItem} from "../list/component";
+import * as Mixins from "../base/components/mixins";
+
 
 const FieldProductSubItem = {
 	props: ['field', 'item',],
@@ -66,7 +68,138 @@ const FieldProductItem = {
 		'field-list-sub-item': FieldProductSubItem,
 	},
 };
-const FieldProduct = {
+
+const FieldProductPriceOnly = {
+	mixins: [Mixins.MixinField],
+	template: `
+		<div class="b24-form-control-container">
+			<span class="b24-form-control-label">
+				{{ field.label }} 
+				<span v-show="field.required" class="b24-form-control-required">*</span>
+			</span>
+			
+			<label class="b24-form-control"
+				v-for="(item, itemIndex) in field.items"
+				:key="itemIndex"
+				:class="{'b24-form-control-checked': item.selected, 'b24-form-control-product-custom-price': item.changeablePrice}"
+				@click="onItemClick"
+			>
+				<input 
+					:type="field.multiple ? 'checkbox' : 'radio'"
+					:value="item.value"
+					v-model="selected"
+					@blur="$emit('input-blur')"
+					@focus="$emit('input-focus')"
+					v-show="!field.hasChangeablePrice()"
+				>
+				<span class="b24-form-control-desc"
+					v-show="!item.changeablePrice"
+					v-html="field.formatMoney(item.price)"
+				></span> 
+
+				<span class="b24-form-control-desc"
+					v-if="item.changeablePrice && getCurrencyLeft()"
+					:style="getCurrencyStyles(item)" 
+					v-html="getCurrencyLeft()"
+				></span>
+				<input type="number" step="1" class="b24-form-control-input-text"
+					v-if="item.changeablePrice"
+					:placeholder="isFocused(item) ? '' : field.messages.get('fieldProductAnotherSum')"
+					v-model="item.price"
+					@input="onInput"
+					@focus="onFocus(item)"
+					@blur="onBlur"
+					@keydown="onKeyDown"
+				>
+				<span class="b24-form-control-desc"
+					v-if="item.changeablePrice && getCurrencyRight()"
+					:style="getCurrencyStyles(item)"
+					v-html="getCurrencyRight()"
+				></span>
+				
+				<field-item-alert
+					v-if="item.changeablePrice"
+					:field="field"
+					:item="item"
+				></field-item-alert>
+			</label>
+		</div>
+	`,
+	data()
+	{
+		return {
+			focusedItem: null,
+		};
+	},
+	computed: {
+		itemSubComponent ()
+		{
+			return null;
+		},
+	},
+	methods: {
+		onItemClick(e)
+		{
+			const node = e.target.querySelector('.b24-form-control-input-text');
+			if (node)
+			{
+				node.focus();
+			}
+		},
+		getCurrencyLeft()
+		{
+			return this.field.getCurrencyFormatArray()[0] || ''
+		},
+		getCurrencyRight()
+		{
+			return this.field.getCurrencyFormatArray()[1] || ''
+		},
+		getCurrencyStyles(item)
+		{
+			return {
+				visibility: item.price || this.isFocused(item) ? null : 'hidden'
+			};
+		},
+		isFocused(item)
+		{
+			return this.focusedItem === item;
+		},
+		onFocus(item)
+		{
+			this.selected = item.value;
+			this.focusedItem = item;
+		},
+		onBlur()
+		{
+			this.focusedItem = null;
+		},
+		onInput()
+		{
+			let value = this.field.normalize(this.value);
+			value = this.field.format(value);
+			if (this.value !== value)
+			{
+				this.value = value;
+			}
+		},
+		onKeyDown(e)
+		{
+			let val = e.key;
+			if (!/[^\d]/.test(val || ''))
+			{
+				return;
+			}
+			if (val === 'Esc' || val === 'Delete' || val === 'Backspace')
+			{
+				return;
+			}
+
+			e.preventDefault();
+		},
+	}
+};
+
+const FieldProductStandard = {
 	mixins: [FieldList],
 	components: {
 		'field-list-item': FieldProductItem,
@@ -77,6 +210,18 @@ const FieldProduct = {
 			return 'field-list-sub-item';
 		}
 	},
+};
+
+const FieldProduct = {
+	mixins: [Mixins.MixinField],
+	components: {FieldProductStandard, FieldProductPriceOnly},
+	methods: {
+		getProductComponent ()
+		{
+			return this.field.hasChangeablePrice() ? 'FieldProductPriceOnly' : 'FieldProductStandard';
+		}
+	},
+	template: `<component :is="getProductComponent()" :field="field"></component>`,
 };
 
 export {

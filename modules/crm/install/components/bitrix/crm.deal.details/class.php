@@ -1,11 +1,11 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-use Bitrix\Main;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Recurring;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
 
 if(!Main\Loader::includeModule('crm'))
 {
@@ -17,6 +17,8 @@ Loc::loadMessages(__FILE__);
 
 class CCrmDealDetailsComponent extends CBitrixComponent
 {
+	use Crm\Entity\Traits\VisibilityConfig;
+
 	/** @var string */
 	protected $guid = '';
 	/** @var int */
@@ -137,6 +139,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 					array('name' => 'OPPORTUNITY_WITH_CURRENCY'),
 					array('name' => 'STAGE_ID'),
 					array('name' => 'CLOSEDATE'),
+					array('name' => 'COMPANY'),
 					array('name' => 'CLIENT'),
 				)
 			),
@@ -225,11 +228,21 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 			$this->arParams['PATH_TO_PRODUCT_EDIT'],
 			$APPLICATION->GetCurPage().'?product_id=#product_id#&edit'
 		);
-		$this->arResult['PATH_TO_PRODUCT_SHOW'] = CrmCheckPath(
-			'PATH_TO_PRODUCT_SHOW',
-			$this->arParams['PATH_TO_PRODUCT_SHOW'],
-			$APPLICATION->GetCurPage().'?product_id=#product_id#&show'
-		);
+
+		// ToDo fix it with existing PATH_TO_PRODUCT_SHOW everywhere
+		if (Main\Loader::includeModule('catalog') && \Bitrix\Catalog\Config\State::isProductCardSliderEnabled())
+		{
+			$catalogId = CCrmCatalog::EnsureDefaultExists();
+			$this->arResult['PATH_TO_PRODUCT_SHOW'] = "/shop/catalog/{$catalogId}/product/#product_id#/";
+		}
+		else
+		{
+			$this->arResult['PATH_TO_PRODUCT_SHOW'] = CrmCheckPath(
+				'PATH_TO_PRODUCT_SHOW',
+				$this->arParams['PATH_TO_PRODUCT_SHOW'],
+				$APPLICATION->GetCurPage().'?product_id=#product_id#&show'
+			);
+		}
 
 		$ufEntityID = \CCrmDeal::GetUserFieldEntityID();
 		$enableUfCreation = \CCrmAuthorizationHelper::CheckConfigurationUpdatePermission();
@@ -270,7 +283,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 		}
 
 		$this->enableSearchHistory = !isset($this->arParams['~ENABLE_SEARCH_HISTORY'])
-			|| strtoupper($this->arParams['~ENABLE_SEARCH_HISTORY']) === 'Y';
+			|| mb_strtoupper($this->arParams['~ENABLE_SEARCH_HISTORY']) === 'Y';
 
 		$this->arResult['INITIAL_DATA'] = isset($this->arParams['~INITIAL_DATA']) && is_array($this->arParams['~INITIAL_DATA'])
 			? $this->arParams['~INITIAL_DATA'] : array();
@@ -625,7 +638,8 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 				'PATH_TO_PRODUCT_SHOW' => $this->arResult['PATH_TO_PRODUCT_SHOW'],
 				'INIT_LAYOUT' => 'N',
 				'INIT_EDITABLE' => $this->arResult['READ_ONLY'] ? 'N' : 'Y',
-				'ENABLE_MODE_CHANGE' => 'N'
+				'ENABLE_MODE_CHANGE' => 'N',
+				'USE_ASYNC_ADD_PRODUCT' => 'Y'
 			),
 			false,
 			array('HIDE_ICONS' => 'Y', 'ACTIVE_COMPONENT'=>'Y')
@@ -1046,7 +1060,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 				Recurring\Manager::DEAL
 			);
 			$recurringData = $dbResult->fetch();
-			if (strlen($recurringData['NEXT_EXECUTION']) > 0 && $recurringData['ACTIVE'] === 'Y' && $this->isEnableRecurring)
+			if ($recurringData['NEXT_EXECUTION'] <> '' && $recurringData['ACTIVE'] === 'Y' && $this->isEnableRecurring)
 			{
 				$recurringViewText =  Loc::getMessage(
 					'CRM_DEAL_FIELD_RECURRING_DATE_NEXT_EXECUTION',
@@ -1089,9 +1103,9 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 					$recurringLine .= Loc::getMessage('CRM_DEAL_FIELD_NUM_SIGN', array("#DEAL_ID#" => $item['DEAL_ID'])).", ";
 				}
 
-				if (strlen($recurringLine) > 0)
+				if ($recurringLine <> '')
 				{
-					$recurringLine = substr($recurringLine, 0, -2);
+					$recurringLine = mb_substr($recurringLine, 0, -2);
 					$recurringViewText =  Loc::getMessage(
 						'CRM_DEAL_FIELD_RECURRING_CREATED_MANY_FROM_CURRENT',
 						array(
@@ -1151,14 +1165,16 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 				'title' => Loc::getMessage('CRM_DEAL_FIELD_DATE_CREATE'),
 				'type' => 'datetime',
 				'editable' => false,
-				'enableAttributes' => false
+				'enableAttributes' => false,
+				'mergeable' => false
 			),
 			array(
 				'name' => 'DATE_MODIFY',
 				'title' => Loc::getMessage('CRM_DEAL_FIELD_DATE_MODIFY'),
 				'type' => 'datetime',
 				'editable' => false,
-				'enableAttributes' => false
+				'enableAttributes' => false,
+				'mergeable' => false
 			),
 			array(
 				'name' => 'TITLE',
@@ -1215,7 +1231,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 			array(
 				'name' => 'OPPORTUNITY_WITH_CURRENCY',
 				'title' => Loc::getMessage('CRM_DEAL_FIELD_OPPORTUNITY_WITH_CURRENCY'),
-				'type' => 'money',
+				'type' => (IsModuleInstalled('salescenter')) ? 'moneyPay' : 'money',
 				'editable' => true,
 				'mergeable' => false,
 				'data' => array(
@@ -1302,7 +1318,18 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 								'url' => '/bitrix/components/bitrix/crm.deal.edit/ajax.php?'.bitrix_sessid_get()
 							)
 						)
-					)
+					),
+					'clientEditorFieldsParams' => [
+						CCrmOwnerType::ContactName => [
+							'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact, 'requisite'),
+							'ADDRESS' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact,'requisite_address'),
+						],
+						CCrmOwnerType::CompanyName => [
+							'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company, 'requisite'),
+							'ADDRESS' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company,'requisite_address'),
+						]
+					],
+					'useExternalRequisiteBinding' => true
 				)
 			),
 			array(
@@ -1364,7 +1391,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 						'SINGLE_EXECUTION' => Recurring\Manager::SINGLE_EXECUTION,
 						'NON_ACTIVE' => Recurring\Calculator::SALE_TYPE_NON_ACTIVE_DATE,
 					],
-					"restrictScript" => (!$this->isEnableRecurring && !empty($dealRecurringRestriction)) ? $dealRecurringRestriction->preparePopupScript() : ""
+					"restrictScript" => (!$this->isEnableRecurring && !empty($dealRecurringRestriction)) ? $dealRecurringRestriction->prepareInfoHelperScript() : ""
 				)
 			),
 		);
@@ -1453,6 +1480,9 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 		$this->userFieldInfos = array();
 		$userFields = $this->prepareEntityUserFields();
 		$enumerationFields = array();
+
+		$visibilityConfig = $this->prepareEntityFieldvisibilityConfigs(CCrmOwnerType::Deal);
+
 		foreach($userFields as $userField)
 		{
 			$fieldName = $userField['FIELD_NAME'];
@@ -1484,11 +1514,18 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 				);
 			}
 
+			$data = ['fieldInfo' => $fieldInfo];
+
+			if(isset($visibilityConfig[$fieldName]))
+			{
+				$data['visibilityConfigs'] = $visibilityConfig[$fieldName];
+			}
+
 			$this->userFieldInfos[$fieldName] = array(
 				'name' => $fieldName,
 				'title' => isset($userField['EDIT_FORM_LABEL']) ? $userField['EDIT_FORM_LABEL'] : $fieldName,
 				'type' => 'userField',
-				'data' => array('fieldInfo' => $fieldInfo)
+				'data' => $data
 			);
 
 			if(isset($userField['MANDATORY']) && $userField['MANDATORY'] === 'Y')
@@ -1584,6 +1621,8 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 				$this->entityData['ASSIGNED_BY_ID'] = $this->userID;
 			}
 			//endregion
+
+			$this->entityData['IS_MANUAL_OPPORTUNITY'] = 'N';
 
 			//region Default Stage ID
 			$stageList = $this->prepareStageList();
@@ -1969,6 +2008,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 					'IS_HIDDEN' => !$isEntityReadPermitted,
 					'USER_PERMISSIONS' => $this->userPermissions,
 					'REQUIRE_REQUISITE_DATA' => true,
+					'REQUIRE_EDIT_REQUISITE_DATA' => true,
 					'REQUIRE_MULTIFIELDS' => true,
 					'NORMALIZE_MULTIFIELDS' => true,
 					'NAME_TEMPLATE' => \Bitrix\Crm\Format\PersonNameFormatter::getFormat(),
@@ -1997,6 +2037,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 
 		$contactIDs = \Bitrix\Crm\Binding\EntityBinding::prepareEntityIDs(\CCrmOwnerType::Contact, $contactBindings);
 		$clientInfo['CONTACT_DATA'] = array();
+		$iteration= 0;
 		foreach($contactIDs as $contactID)
 		{
 			$this->prepareMultifieldData(CCrmOwnerType::Contact, $contactID, 'PHONE', $multiFieldData);
@@ -2012,12 +2053,14 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 					'IS_HIDDEN' => !$isEntityReadPermitted,
 					'USER_PERMISSIONS' => $this->userPermissions,
 					'REQUIRE_REQUISITE_DATA' => true,
+					'REQUIRE_EDIT_REQUISITE_DATA' => ($iteration === 0), // load full requisite data for first item only (due to performance optimisation)
 					'REQUIRE_MULTIFIELDS' => true,
 					'NORMALIZE_MULTIFIELDS' => true,
 					'REQUIRE_BINDINGS' => true,
 					'NAME_TEMPLATE' => \Bitrix\Crm\Format\PersonNameFormatter::getFormat(),
 				)
 			);
+			$iteration++;
 		}
 		$this->entityData['CLIENT_INFO'] = $clientInfo;
 

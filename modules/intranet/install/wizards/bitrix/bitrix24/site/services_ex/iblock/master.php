@@ -6,15 +6,13 @@ if(!CModule::IncludeModule("iblock"))
 	return;
 
 $iblockID = WizardServices::ImportIBlockFromXML(
-	$WIZARD_SERVICE_RELATIVE_PATH."/xml/_".LANGUAGE_ID."/master.xml",
+	WIZARD_SERVICE_RELATIVE_PATH."/xml/_".LANGUAGE_ID."/master.xml",
 	$iblockCode = "master_extranet",
 	$iblockType = "services",
 	WIZARD_SITE_ID,
 	$permissions = Array(
 		"1" => "X",
 		"2" => "R",
-		WIZARD_EXTRANET_ADMIN_GROUP => "X",
-		WIZARD_EXTRANET_SUPPORT_GROUP => "X",
 	)
 );
 

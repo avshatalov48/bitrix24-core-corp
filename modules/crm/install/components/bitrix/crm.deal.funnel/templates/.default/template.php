@@ -132,12 +132,12 @@ foreach ($arResult['FUNNEL'] as $aData){
 	}
 }
 
-$containerID = strtolower($arResult['GRID_ID']).'_container';
+$containerID = mb_strtolower($arResult['GRID_ID']).'_container';
 
 
-$configFormID = strtolower($arResult['GRID_ID']).'_config';
-$typeInputID = strtolower($arResult['GRID_ID']).'_type_id';
-$categoryInputID = strtolower($arResult['GRID_ID']).'_category_id';
+$configFormID = mb_strtolower($arResult['GRID_ID']).'_config';
+$typeInputID = mb_strtolower($arResult['GRID_ID']).'_type_id';
+$categoryInputID = mb_strtolower($arResult['GRID_ID']).'_category_id';
 
 ?><div id="<?=htmlspecialcharsbx($containerID)?>" class="crm-deal-funnel-wrapper">
 <form method="POST"  action="<?=POST_FORM_ACTION_URI?>" name="<?=htmlspecialcharsbx($configFormID)?>" id="<?=htmlspecialcharsbx($configFormID)?>">
@@ -147,7 +147,7 @@ $categoryInputID = strtolower($arResult['GRID_ID']).'_category_id';
 </form>
 
 <div class="crm-deal-funnel-wrapper crm-deal-funnel-wrapper-won"><?
-$toolbarID = strtolower($arResult['GRID_ID']).'_toolbar';
+$toolbarID = mb_strtolower($arResult['GRID_ID']).'_toolbar';
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.interface.toolbar',
 	'',
@@ -323,7 +323,7 @@ $APPLICATION->IncludeComponent(
 		{
 			var categoryList = BX.CrmDealCategory.getListItems(<?=CUtil::PhpToJSObject($arResult['CATEGORY_INFO'])?>);
 			var categorySelector = BX.CrmSelector.create(
-				'<?= CUtil::JSEscape(strtolower($arResult['GRID_ID']).'_category_selector') ?>',
+				'<?= CUtil::JSEscape(mb_strtolower($arResult['GRID_ID']).'_category_selector') ?>',
 				{
 					'container': BX('<?=CUtil::JSEscape($toolbarID)?>'),
 					'title': '<?=GetMessageJS('CRM_DEAL_CATEGORY_SELECTOR_TITLE') ?>',
@@ -358,7 +358,7 @@ $APPLICATION->IncludeComponent(
 		function()
 		{
 			var typeSelector = BX.CrmSelector.create(
-					'<?= CUtil::JSEscape(strtolower($arResult['GRID_ID']).'_type_selector') ?>',
+					'<?= CUtil::JSEscape(mb_strtolower($arResult['GRID_ID']).'_type_selector') ?>',
 					{
 						'container': BX('<?=CUtil::JSEscape($toolbarID)?>'),
 						'title': '<?=GetMessageJS('CRM_DEAL_FUNNEL_TYPE_SELECTOR_TITLE') ?>',

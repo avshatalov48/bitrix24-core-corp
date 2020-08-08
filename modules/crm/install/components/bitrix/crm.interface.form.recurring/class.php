@@ -14,7 +14,7 @@ Loc::loadMessages(__FILE__);
 class CrmInterfaceFormRecurring extends CBitrixComponent
 {
 	private $data = array();
-	private $type = array();
+	private $type = '';
 
 	public function onPrepareComponentParams($params)
 	{
@@ -26,7 +26,7 @@ class CrmInterfaceFormRecurring extends CBitrixComponent
 		}
 
 		$this->type = $params['ENTITY_TYPE'];
-		$params['ENTITY_TYPE'] = strtoupper($params['ENTITY_TYPE']);
+		$params['ENTITY_TYPE'] = mb_strtoupper($params['ENTITY_TYPE']);
 
 		return $params;
 	}
@@ -35,7 +35,7 @@ class CrmInterfaceFormRecurring extends CBitrixComponent
 	{
 		$this->fillResultEmailInfo();
 
-		if ($this->getTemplateName() == 'edit')
+		if ($this->getTemplateName() === 'edit')
 		{
 			$weekMap = array(0, 1, 2, 3, 4, 5, 6);
 
@@ -43,9 +43,17 @@ class CrmInterfaceFormRecurring extends CBitrixComponent
 		}
 
 		$this->arResult['HINT'] = $this->getHint();
-		if (strlen($this->data['PERIOD']))
+		if (!empty($this->data['PERIOD']))
 		{
-			$nextDate = Invoice::getNextDate($this->data);
+			if ($this->data['START_DATE'] instanceof \Bitrix\Main\Type\Date)
+			{
+				$startDate = $this->data['START_DATE'];
+			}
+			else
+			{
+				$startDate = new \Bitrix\Main\Type\Date($this->data['START_DATE']);
+			}
+			$nextDate = Invoice::getNextDate($this->data, $startDate);
 			$this->arResult['NEXT_EXECUTION_HINT'] = Loc::getMessage('NEXT_EXECUTION_' . $this->arParams['ENTITY_TYPE'] . '_HINT', array('#DATE_EXECUTION#' => $nextDate));
 		}
 		else
@@ -57,7 +65,7 @@ class CrmInterfaceFormRecurring extends CBitrixComponent
 
 		if ($this->type === Manager::DEAL)
 		{
-			$this->arResult["DEAL_CATEGORISES"] = static::getDealCategorises();
+			$this->arResult["DEAL_CATEGORISES"] = $this->getDealCategorises();
 			$this->arResult["ENTITY_TYPE_ID"] = \CCrmOwnerType::Deal;
 		}
 		else
@@ -76,7 +84,7 @@ class CrmInterfaceFormRecurring extends CBitrixComponent
 				$restriction = RestrictionManager::getInvoiceRecurringRestriction();
 			}
 			$this->arResult['RESTRICTED_LICENCE'] = !$restriction->hasPermission() ? "Y" : "N";
-			$this->arResult["TRIAL_TEXT"]['LOCK_SCRIPT'] = $restriction->preparePopupScript();
+			$this->arResult["TRIAL_TEXT"]['LOCK_SCRIPT'] = $restriction->prepareInfoHelperScript();
 		}
 
 		$this->includeComponentTemplate();
@@ -100,7 +108,7 @@ class CrmInterfaceFormRecurring extends CBitrixComponent
 					)
 				);
 				$myCompanyMail = $myCompanyData->Fetch();
-				$this->arResult['ALLOW_SEND_BILL'] = strlen($myCompanyMail['VALUE']) > 0 ? "Y" : 'N';
+				$this->arResult['ALLOW_SEND_BILL'] = $myCompanyMail['VALUE'] <> '' ? "Y" : 'N';
 			}
 
 			$this->arResult['EMAIL_LIST'] = $this->loadPayerMailList();
@@ -119,7 +127,7 @@ class CrmInterfaceFormRecurring extends CBitrixComponent
 
 		$messagePeriod = $this->getPeriodHint($data);
 
-		if (strlen($data['START_DATE']))
+		if($data['START_DATE'] <> '')
 		{
 			$start = Loc::getMessage('CRM_RECURRING_HINT_START_DATE', array('#DATETIME#' => htmlspecialcharsbx($data['START_DATE'])));
 		}
@@ -131,7 +139,7 @@ class CrmInterfaceFormRecurring extends CBitrixComponent
 		$constraint = $this->getConstraintHint($data);
 
 		return Loc::getMessage(
-			"CRM_RECURRING_" . strtoupper($this->type) . "_HINT_BASE",
+			"CRM_RECURRING_".mb_strtoupper($this->type) . "_HINT_BASE",
 			array(
 				'#ELEMENT#' => $messagePeriod,
 				'#START#' => $start,
@@ -435,7 +443,7 @@ class CrmInterfaceFormRecurring extends CBitrixComponent
 				Loc::getMessage("CRM_RECURRING_HINT_".(int)$data['DEAL_TYPE_BEFORE']."_PLURAL_2")
 			);
 
-			if (strlen($data['DEAL_DATEPICKER_BEFORE']) > 0)
+			if ($data['DEAL_DATEPICKER_BEFORE'] <> '')
 			{
 				$dateMessage = Loc::getMessage('CRM_RECURRING_HINT_BEFORE_DATE', array('#DATE#' => htmlspecialcharsbx($data['DEAL_DATEPICKER_BEFORE'])));
 			}
@@ -493,7 +501,7 @@ class CrmInterfaceFormRecurring extends CBitrixComponent
 			);
 			return $constraint;
 		}
-		elseif (strlen($data['END_DATE']) > 0 && ($data['REPEAT_TILL'] === 'date' || $data['REPEAT_TILL'] === Base::LIMITED_BY_DATE))
+		elseif ($data['END_DATE'] <> '' && ($data['REPEAT_TILL'] === 'date' || $data['REPEAT_TILL'] === Base::LIMITED_BY_DATE))
 		{
 			$constraint = Loc::getMessage('CRM_RECURRING_HINT_END', array('#DATETIME#' => $data['END_DATE']));
 			return $constraint;

@@ -34,9 +34,6 @@ foreach ($arGroups as $arGroup)
 	else
 		$groupID = $group->Add($arGroup);
 
-	if ($arGroup["STRING_ID"] == "EXTRANET_ADMIN")
-		$ExtranetAdminGroupID = $groupID;
-		
 	if ($groupID <= 0)
 		continue;
 
@@ -45,16 +42,7 @@ foreach ($arGroups as $arGroup)
 		COption::SetOptionString("extranet", "extranet_group", $groupID);
 		define("WIZARD_EXTRANET_GROUP", $groupID);
 	}
-			
-	if ($arGroup["STRING_ID"] == "EXTRANET_ADMIN")
-		define("WIZARD_EXTRANET_ADMIN_GROUP", $groupID);
 
-	if ($arGroup["STRING_ID"] == "EXTRANET_SUPPORT")
-		define("WIZARD_EXTRANET_SUPPORT_GROUP", $groupID);
-
-	if ($arGroup["STRING_ID"] == "EXTRANET_CREATE_WG")
-		define("WIZARD_EXTRANET_CREATE_WG_GROUP", $groupID);
-			
 	//Set tasks binding to module
 	$arTasksID = Array();
 	foreach ($arGroup["TASKS_MODULE"] as $taskName)
@@ -65,7 +53,7 @@ foreach ($arGroups as $arGroup)
 	}
 
 	if (!empty($arTasksID))
-		CGroup::SetTasks($groupID, $arTasksID, true);
+		CGroup::SetTasks($groupID, $arTasksID);
 
 	if(!WIZARD_IS_INSTALLED)
 	{
@@ -84,82 +72,6 @@ foreach ($arGroups as $arGroup)
 		}
 	}
 }
-
-$APPLICATION->SetGroupRight("fileman", WIZARD_EXTRANET_ADMIN_GROUP, "F");
-$task_id = CTask::GetIdByLetter("F", "fileman");
-if (intval($task_id) > 0)
-	CGroup::SetTasksForModule("fileman", array(WIZARD_EXTRANET_ADMIN_GROUP => array("ID" => $task_id)));
-
-
-/*if(CModule::IncludeModule('fileman'))
-{
-
-	$menuItem = array(
-					GetMessage("EXTRANET_MENUITEM_NAME"),
-					WIZARD_SITE_DIR,
-					array(),
-					array(),
-					"CSite::InGroup(array(1,".WIZARD_EXTRANET_ADMIN_GROUP.",".WIZARD_EXTRANET_GROUP."))",
-				);
-
-
-	$arSiteIntranet = false;
-	$arSiteTemplateIntranet = false;
-	
-	$rsSites = CSite::GetList($by="sort", $order="desc", array());
-	while ($arSite = $rsSites->Fetch())
-	{
-		if ($arSite["ID"] != WIZARD_SITE_ID)
-		{
-			$arSiteIntranet = $arSite;
-			break;
-		}
-	}
-
-	if ($arSiteIntranet)
-	{
-		$rsSiteTemplates = CSite::GetTemplateList($arSiteIntranet["ID"]);
-		while ($arSiteTemplate = $rsSiteTemplates->Fetch())
-		{
-			if (strlen($arSiteTemplate["CONDITION"]) <= 0)
-			{
-				$arSiteTemplateIntranet = $arSiteTemplate;
-				break;
-			}
-		}
-	}
-
-	if ($arSiteTemplateIntranet && $arSiteTemplateIntranet["TEMPLATE"] == "light")
-		$menuType = "top_links";
-	else
-		$menuType = "top";
-
-	$arResult = CFileMan::GetMenuArray($_SERVER["DOCUMENT_ROOT"]."/.".$menuType.".menu.php");
-	$arMenuItems = $arResult["aMenuLinks"];
-	$menuTemplate = $arResult["sMenuTemplate"];
-
-	$bFound = false;
-	foreach($arMenuItems as $item)
-		if($item[1] == $menuItem[1])
-			$bFound = true;
-
-	if(!$bFound)
-	{
-		$arMenuItems[] = $menuItem;
-
-		$rsSites = CSite::GetList($by="sort", $order="desc", Array("ACTIVE" => "Y"));
-		while ($arSite = $rsSites->Fetch())
-		{
-			if ($arSite["ID"] != WIZARD_SITE_ID)
-			{
-				$intranetSiteID = $arSite["ID"];
-				CFileMan::SaveMenu(Array($intranetSiteID, "/.".$menuType.".menu.php"), $arMenuItems, $menuTemplate);
-				break;
-			}
-		}
-	
-	}
-}    */
 
 $rsUser = CUser::GetList(($by="ID"), ($order="desc"), array("GROUPS_ID"=>array(1)));
 while($arAdminUser = $rsUser->Fetch())

@@ -75,7 +75,7 @@ $isInExportMode = false;
 $isStExport = false;    // Step-by-step export mode
 if (!empty($sExportType))
 {
-	$sExportType = strtolower(trim($sExportType));
+	$sExportType = mb_strtolower(trim($sExportType));
 	switch ($sExportType)
 	{
 		case 'csv':
@@ -260,7 +260,7 @@ if($arResult['CAN_CONVERT'])
 CUtil::InitJSCore(array('ajax', 'tooltip'));
 
 $arResult['GADGET'] = 'N';
-if (isset($arParams['GADGET_ID']) && strlen($arParams['GADGET_ID']) > 0)
+if (isset($arParams['GADGET_ID']) && $arParams['GADGET_ID'] <> '')
 {
 	$arResult['GADGET'] = 'Y';
 	$arResult['GADGET_ID'] = $arParams['GADGET_ID'];
@@ -284,7 +284,7 @@ if (!empty($arParams['INTERNAL_FILTER']) && is_array($arParams['INTERNAL_FILTER'
 {
 	if(empty($arParams['GRID_ID_SUFFIX']))
 	{
-		$arParams['GRID_ID_SUFFIX'] = $this->GetParent() !== null ? strtoupper($this->GetParent()->GetName()) : '';
+		$arParams['GRID_ID_SUFFIX'] = $this->GetParent() !== null? mb_strtoupper($this->GetParent()->GetName()) : '';
 	}
 
 	$arFilter = $arParams['INTERNAL_FILTER'];
@@ -302,7 +302,7 @@ if (isset($arParams['WIDGET_DATA_FILTER']) && isset($arParams['WIDGET_DATA_FILTE
 	$enableWidgetFilter = true;
 	$widgetFilter = $arParams['WIDGET_DATA_FILTER'];
 }
-elseif (!$bInternal && isset($_REQUEST['WG']) && strtoupper($_REQUEST['WG']) === 'Y')
+elseif (!$bInternal && isset($_REQUEST['WG']) && mb_strtoupper($_REQUEST['WG']) === 'Y')
 {
 	$enableWidgetFilter = true;
 	$widgetFilter = $_REQUEST;
@@ -685,6 +685,7 @@ if ($arParams['IS_RECURRING'] === 'Y')
 
 			array('id' => 'PROBABILITY', 'name' => GetMessage('CRM_COLUMN_PROBABILITY'), 'sort' => 'probability', 'first_order' => 'desc', 'editable' => true, 'align' => 'right'),
 			array('id' => 'SUM', 'name' => GetMessage('CRM_COLUMN_SUM'), 'sort' => 'opportunity_account', 'first_order' => 'desc', 'default' => true, 'editable' => false, 'align' => 'right'),
+			array('id' => 'ORDER_STAGE', 'name' => GetMessage('CRM_COLUMN_ORDER_STAGE'), 'sort' => 'order_stage', 'editable' => false),
 			array('id' => 'ASSIGNED_BY', 'name' => GetMessage('CRM_COLUMN_ASSIGNED_BY'), 'sort' => 'assigned_by', 'default' => true, 'editable' => false, 'class' => 'username'),
 			array('id' => 'ORIGINATOR_ID', 'name' => GetMessage('CRM_COLUMN_BINDING'), 'sort' => false, 'editable' => array('items' => $arResult['EXTERNAL_SALES']), 'type' => 'list'),
 
@@ -713,6 +714,7 @@ else
 			array('id' => 'DEAL_CLIENT', 'name' => GetMessage('CRM_COLUMN_CLIENT'), 'sort' => 'deal_client', 'default' => true, 'editable' => false),
 			array('id' => 'PROBABILITY', 'name' => GetMessage('CRM_COLUMN_PROBABILITY'), 'sort' => 'probability', 'first_order' => 'desc', 'editable' => true, 'align' => 'right'),
 			array('id' => 'SUM', 'name' => GetMessage('CRM_COLUMN_SUM'), 'sort' => 'opportunity_account', 'first_order' => 'desc', 'default' => true, 'editable' => false, 'align' => 'right'),
+			array('id' => 'ORDER_STAGE', 'name' => GetMessage('CRM_COLUMN_ORDER_STAGE'), 'sort' => 'order_stage', 'editable' => false, 'default' => true),
 			array('id' => 'ASSIGNED_BY', 'name' => GetMessage('CRM_COLUMN_ASSIGNED_BY'), 'sort' => 'assigned_by', 'default' => true, 'editable' => false, 'class' => 'username'),
 			array('id' => 'ORIGINATOR_ID', 'name' => GetMessage('CRM_COLUMN_BINDING'), 'sort' => false, 'editable' => array('items' => $arResult['EXTERNAL_SALES']), 'type' => 'list'),
 
@@ -764,7 +766,7 @@ $CCrmUserType->ListAddHeaders($arResult['HEADERS']);
 $arBPData = array();
 if ($isBizProcInstalled)
 {
-	$arBPData = CBPDocument::GetWorkflowTemplatesForDocumentType(array('crm', 'CCrmDocumentDeal', 'DEAL'));
+	$arBPData = CBPDocument::GetWorkflowTemplatesForDocumentType(['crm', 'CCrmDocumentDeal', 'DEAL'], false);
 	$arDocumentStates = CBPDocument::GetDocumentStates(
 		array('crm', 'CCrmDocumentDeal', 'DEAL'),
 		null
@@ -917,12 +919,12 @@ if(check_bitrix_sessid())
 		{
 			if(isset($_POST['ACTION_OPENED']))
 			{
-				$actionData['OPENED'] = strtoupper($_POST['ACTION_OPENED']) === 'Y' ? 'Y' : 'N';
+				$actionData['OPENED'] = mb_strtoupper($_POST['ACTION_OPENED']) === 'Y' ? 'Y' : 'N';
 				unset($_POST['ACTION_OPENED'], $_REQUEST['ACTION_OPENED']);
 			}
 			else
 			{
-				$actionData['OPENED'] = strtoupper($controls['ACTION_OPENED']) === 'Y' ? 'Y' : 'N';
+				$actionData['OPENED'] = mb_strtoupper($controls['ACTION_OPENED']) === 'Y' ? 'Y' : 'N';
 			}
 		}
 
@@ -1041,7 +1043,8 @@ if(isset($arFilter['ACTIVITY_COUNTER']))
 				array(
 					'MASTER_ALIAS' => CCrmDeal::TABLE_ALIAS,
 					'MASTER_IDENTITY' => 'ID',
-					'USER_IDS' => $counterUserIDs
+					'USER_IDS' => $counterUserIDs,
+					'STAGE_SEMANTIC_ID' => ($arFilter['STAGE_SEMANTIC_ID'] ?? false)
 				)
 			);
 			unset($arFilter['ASSIGNED_BY_ID']);
@@ -1071,7 +1074,7 @@ $arImmutableFilters = array(
 	'WEBFORM_ID', 'TRACKING_SOURCE_ID', 'TRACKING_CHANNEL_CODE',
 	'SEARCH_CONTENT',
 	'PRODUCT_ID', 'TYPE_ID', 'SOURCE_ID', 'STAGE_ID', 'COMPANY_ID', 'CONTACT_ID',
-	'FILTER_ID', 'FILTER_APPLIED', 'PRESET_ID'
+	'FILTER_ID', 'FILTER_APPLIED', 'PRESET_ID', 'ORDER_STAGE'
 );
 
 foreach ($arFilter as $k => $v)
@@ -1120,7 +1123,7 @@ foreach ($arFilter as $k => $v)
 		}
 		unset($arFilter[$k]);
 	}
-	elseif ($k != 'ID' && $k != 'LOGIC' && $k != '__INNER_FILTER' && $k != '__JOINS' && $k != '__CONDITIONS' && strpos($k, 'UF_') !== 0 && preg_match('/^[^\=\%\?\>\<]{1}/', $k) === 1)
+	elseif ($k != 'ID' && $k != 'LOGIC' && $k != '__INNER_FILTER' && $k != '__JOINS' && $k != '__CONDITIONS' && mb_strpos($k, 'UF_') !== 0 && preg_match('/^[^\=\%\?\>\<]{1}/', $k) === 1)
 	{
 		$arFilter['%'.$k] = $v;
 		unset($arFilter[$k]);
@@ -1259,6 +1262,8 @@ if($actionData['ACTIVE'])
 								CCrmBizProcEventType::Edit,
 								$arErrors
 							);
+							$starter = new Bitrix\Crm\Automation\Starter(CCrmOwnerType::Deal, $ID);
+							$starter->setUserIdFromCurrent()->runOnUpdate($arUpdateData, []);
 						}
 						else
 						{
@@ -1376,7 +1381,8 @@ if($actionData['ACTIVE'])
 						);
 
 						//Region automation
-						\Bitrix\Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Deal, $ID);
+						$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Deal, $ID);
+						$starter->setUserIdFromCurrent()->runOnUpdate($arUpdateData, []);
 						//end region
 					}
 					else
@@ -1438,6 +1444,8 @@ if($actionData['ACTIVE'])
 							CCrmBizProcEventType::Edit,
 							$arErrors
 						);
+						$starter = new Bitrix\Crm\Automation\Starter(CCrmOwnerType::Deal, $ID);
+						$starter->setUserIdFromCurrent()->runOnUpdate($arUpdateData, []);
 					}
 					else
 					{
@@ -1450,7 +1458,7 @@ if($actionData['ACTIVE'])
 		{
 			if(isset($actionData['OPENED']) && $actionData['OPENED'] != '')
 			{
-				$isOpened = strtoupper($actionData['OPENED']) === 'Y' ? 'Y' : 'N';
+				$isOpened = mb_strtoupper($actionData['OPENED']) === 'Y' ? 'Y' : 'N';
 				$arIDs = array();
 				if ($actionData['ALL_ROWS'])
 				{
@@ -1520,6 +1528,8 @@ if($actionData['ACTIVE'])
 							CCrmBizProcEventType::Edit,
 							$arErrors
 						);
+						$starter = new Bitrix\Crm\Automation\Starter(CCrmOwnerType::Deal, $ID);
+						$starter->setUserIdFromCurrent()->runOnUpdate($arUpdateData, []);
 					}
 					else
 					{
@@ -1627,7 +1637,18 @@ if($actionData['ACTIVE'])
 							$hasErrors = true;
 							continue;
 						}
-						Bitrix\Crm\Automation\Factory::runOnStatusChanged(CCrmOwnerType::Deal, $ID);
+
+						$dbResult = \CCrmDeal::GetListEx(
+							array(),
+							array('=ID' => $ID, 'CHECK_PERMISSIONS' => 'N'),
+							false,
+							false,
+							['STAGE_ID', 'CATEGORY_ID']
+						);
+						$newFields = $dbResult->Fetch();
+
+						$starter = new Bitrix\Crm\Automation\Starter(CCrmOwnerType::Deal, $ID);
+						$starter->setUserIdFromCurrent()->runOnUpdate($newFields, []);
 						$DB->Commit();
 					}
 					catch(Exception $e)
@@ -1727,7 +1748,7 @@ if ($CCrmUserType->NormalizeFields($arSelect))
 
 $arResult['IS_BIZPROC_AVAILABLE'] = $isBizProcInstalled;
 $arResult['ENABLE_BIZPROC'] = $isBizProcInstalled
-	&& (!isset($arParams['ENABLE_BIZPROC']) || strtoupper($arParams['ENABLE_BIZPROC']) === 'Y');
+	&& (!isset($arParams['ENABLE_BIZPROC']) || mb_strtoupper($arParams['ENABLE_BIZPROC']) === 'Y');
 
 $arResult['ENABLE_TASK'] = IsModuleInstalled('tasks');
 
@@ -1824,6 +1845,8 @@ if(in_array('ACTIVITY_ID', $arSelect, true))
 {
 	$arSelect[] = 'ACTIVITY_TIME';
 	$arSelect[] = 'ACTIVITY_SUBJECT';
+	$arSelect[] = 'ACTIVITY_TYPE_ID';
+	$arSelect[] = 'ACTIVITY_PROVIDER_ID';
 	$arSelect[] = 'C_ACTIVITY_ID';
 	$arSelect[] = 'C_ACTIVITY_TIME';
 	$arSelect[] = 'C_ACTIVITY_SUBJECT';
@@ -1832,6 +1855,8 @@ if(in_array('ACTIVITY_ID', $arSelect, true))
 	$arSelect[] = 'C_ACTIVITY_RESP_NAME';
 	$arSelect[] = 'C_ACTIVITY_RESP_LAST_NAME';
 	$arSelect[] = 'C_ACTIVITY_RESP_SECOND_NAME';
+	$arSelect[] = 'C_ACTIVITY_TYPE_ID';
+	$arSelect[] = 'C_ACTIVITY_PROVIDER_ID';
 }
 
 if(in_array('SUM', $arSelect, true))

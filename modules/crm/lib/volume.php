@@ -234,7 +234,7 @@ class VolumeTable extends ORM\Data\DataManager
 	{
 		$whereSql = Entity\Query::buildFilterSql(static::getEntity(), $filter);
 
-		if (strlen($whereSql) > 0)
+		if ($whereSql <> '')
 		{
 			$tableName = static::getTableName();
 			$connection = Main\Application::getConnection();

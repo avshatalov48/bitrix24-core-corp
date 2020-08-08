@@ -259,7 +259,7 @@ if (!Function_Exists("__IRM_InitReservation"))
 		$keys = Array_Keys($arResult["ALLOWED_ITEM_PROPERTIES"]);
 		foreach ($keys as $key)
 		{
-			if (IntVal($arResult["ALLOWED_ITEM_PROPERTIES"][$key]["ID"]) <= 0)
+			if (intval($arResult["ALLOWED_ITEM_PROPERTIES"][$key]["ID"]) <= 0)
 			{
 				$ibp = new CIBlockProperty;
 				$arResult["ALLOWED_ITEM_PROPERTIES"][$key]["ID"] = $ibp->Add($arResult["ALLOWED_ITEM_PROPERTIES"][$key]);
@@ -271,14 +271,14 @@ if (!Function_Exists("__IRM_InitReservation"))
 
 	function __IRM_SearchPeriodic($fromDate, $toDate, $iblockId, $meeting, $id = 0)
 	{
-		$iblockId = IntVal($iblockId);
+		$iblockId = intval($iblockId);
 		if ($iblockId <= 0)
 			return array();
 
 		if (!Is_Array($meeting))
 		{
-			if (IntVal($meeting) > 0)
-				$meeting = array(IntVal($meeting));
+			if (intval($meeting) > 0)
+				$meeting = array(intval($meeting));
 			else
 				$meeting = array();
 		}
@@ -288,7 +288,7 @@ if (!Function_Exists("__IRM_InitReservation"))
 			$meeting = array();
 			foreach ($meetingTmp as $m)
 			{
-				$m = IntVal($m);
+				$m = intval($m);
 				if ($m > 0)
 					$meeting[] = $m;
 			}
@@ -308,7 +308,7 @@ if (!Function_Exists("__IRM_InitReservation"))
 		$fromDateOnly = MkTime(0, 0, 0, $m1, $d1, $y1);
 		$toDateOnly = MkTime(0, 0, 0, Date("n", $toDate), Date("j", $toDate), Date("Y", $toDate));
 
-		$n = IntVal(Round(($toDateOnly - $fromDateOnly) / 86400));
+		$n = intval(Round(($toDateOnly - $fromDateOnly) / 86400));
 
 		$arWeeklyPeriods[0] = array(
 			"year" => $y1,
@@ -411,7 +411,7 @@ if (!Function_Exists("__IRM_InitReservation"))
 			$arYearlyPeriods[$jY]["dayTo"] = Date("j", $t1);
 		}
 
-		$id = IntVal($id);
+		$id = intval($id);
 
 		$arFilter = array(
 			"ACTIVE" => "Y",
@@ -446,13 +446,13 @@ if (!Function_Exists("__IRM_InitReservation"))
 
 			if ($arElement["PROPERTY_PERIOD_TYPE_VALUE"] == "DAILY")
 			{
-				$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = IntVal($arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
+				$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = intval($arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
 				if ($arElement["PROPERTY_PERIOD_COUNT_VALUE"] <= 0)
 					$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = 1;
 
 				if ($fromDate > $dateActiveFrom || $toDate <= $dateActiveFrom)
 				{
-					$dayShift = (IntVal(Round(($fromDate - $dateActiveFromDateOnly) / 86400)) % $arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
+					$dayShift = (intval(Round(($fromDate - $dateActiveFromDateOnly) / 86400)) % $arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
 					if ($dayShift > 0)
 						$dayShift = $arElement["PROPERTY_PERIOD_COUNT_VALUE"] - $dayShift;
 
@@ -478,17 +478,17 @@ if (!Function_Exists("__IRM_InitReservation"))
 			}
 			elseif ($arElement["PROPERTY_PERIOD_TYPE_VALUE"] == "WEEKLY")
 			{
-				$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = IntVal($arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
+				$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = intval($arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
 				if ($arElement["PROPERTY_PERIOD_COUNT_VALUE"] <= 0)
 					$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = 1;
 
 				$arPeriodAdditional = array();
-				if (StrLen($arElement["PROPERTY_PERIOD_ADDITIONAL_VALUE"]) > 0)
+				if ($arElement["PROPERTY_PERIOD_ADDITIONAL_VALUE"] <> '')
 				{
 					$arPeriodAdditionalTmp = Explode(",", $arElement["PROPERTY_PERIOD_ADDITIONAL_VALUE"]);
 					foreach ($arPeriodAdditionalTmp as $v)
 					{
-						$v = IntVal($v);
+						$v = intval($v);
 						if ($v >= 0)
 							$arPeriodAdditional[] = $v;
 					}
@@ -505,7 +505,7 @@ if (!Function_Exists("__IRM_InitReservation"))
 				{
 					if ($arElement["PROPERTY_PERIOD_COUNT_VALUE"] > 1)
 					{
-						$weekShift = IntVal(Round(($arPeriod["weekTimeStart"] - $wscr) / 604800));
+						$weekShift = intval(Round(($arPeriod["weekTimeStart"] - $wscr) / 604800));
 						if ($weekShift % $arElement["PROPERTY_PERIOD_COUNT_VALUE"] != 0)
 							continue;
 					}
@@ -531,7 +531,7 @@ if (!Function_Exists("__IRM_InitReservation"))
 			}
 			elseif ($arElement["PROPERTY_PERIOD_TYPE_VALUE"] == "MONTHLY")
 			{
-				$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = IntVal($arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
+				$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = intval($arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
 				if ($arElement["PROPERTY_PERIOD_COUNT_VALUE"] <= 0)
 					$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = 1;
 
@@ -575,7 +575,7 @@ if (!Function_Exists("__IRM_InitReservation"))
 			}
 			elseif ($arElement["PROPERTY_PERIOD_TYPE_VALUE"] == "YEARLY")
 			{
-				$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = IntVal($arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
+				$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = intval($arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
 				if ($arElement["PROPERTY_PERIOD_COUNT_VALUE"] <= 0)
 					$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = 1;
 

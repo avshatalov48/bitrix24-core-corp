@@ -9,6 +9,7 @@ use Bitrix\Disk\Driver;
 use Bitrix\Disk\Sharing;
 use Bitrix\Disk\SpecificFolder;
 use Bitrix\Disk\Storage;
+use Bitrix\Disk\TypeFile;
 use Bitrix\Disk\Ui;
 use Bitrix\Disk\User;
 use Bitrix\Main\Application;
@@ -25,8 +26,11 @@ use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\IO\Path;
+use Bitrix\Main\IO;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Type\DateTime;
 use \Bitrix\Disk\Internals;
+use Bitrix\Pull\Event;
 
 class DiskStorage extends AbstractStorage
 {
@@ -47,6 +51,8 @@ class DiskStorage extends AbstractStorage
 	protected $sharedData = array();
 	/** @var bool */
 	private $isLoadedSharedStatuses = false;
+	/** @var callable[]  */
+	private $shutdownTasks = [];
 
 	public function __construct($user = null)
 	{
@@ -56,6 +62,36 @@ class DiskStorage extends AbstractStorage
 		global $USER;
 		$this->userId = User::resolveUserId($user?: $USER);
 		$this->connection = Application::getConnection();
+
+		if (!\CMain::ForkActions([$this, 'finalize']))
+		{
+			register_shutdown_function(function(){
+				$this->finalize();
+			});
+		}
+	}
+
+	public function finalize()
+	{
+		foreach ($this->shutdownTasks as $task)
+		{
+			if (is_callable($task))
+			{
+				$task();
+			}
+		}
+	}
+
+	/**
+	 * @param \callable $callable
+	 *
+	 * @return DiskStorage
+	 */
+	public function addShutdownTask($callable)
+	{
+		$this->shutdownTasks[] = $callable;
+
+		return $this;
 	}
 
 	public function getErrors()
@@ -668,6 +704,10 @@ class DiskStorage extends AbstractStorage
 	 */
 	public function addFile($name, $targetDirectoryId, TmpFile $tmpFile, array $data = array())
 	{
+		$this->addShutdownTask(function() use($tmpFile){
+			$tmpFile->delete();
+		});
+
 		if(!$targetDirectoryId)
 		{
 			$folder = $this->storage->getRootObject();
@@ -680,13 +720,11 @@ class DiskStorage extends AbstractStorage
 		if(!$folder)
 		{
 			$this->errorCollection->add(array(new Error("Could not " . __METHOD__ . " by id {$targetDirectoryId}", 11152)));
-			$tmpFile->delete();
 			return array();
 		}
 
 		if(!$folder->canAdd($this->storage->getSecurityContext($this->userId)))
 		{
-			$tmpFile->delete();
 			throw new AccessDeniedException;
 		}
 
@@ -705,7 +743,6 @@ class DiskStorage extends AbstractStorage
 			if(!$fileId)
 			{
 				$this->errorCollection->add(array(new Error("Could not " . __METHOD__ . ", save cloud file", 111588)));
-				$tmpFile->delete();
 
 				return array();
 			}
@@ -714,7 +751,6 @@ class DiskStorage extends AbstractStorage
 			if(!$fileArray)
 			{
 				$this->errorCollection->add(array(new Error("Could not " . __METHOD__ . ", getFileArray", 191588)));
-				$tmpFile->delete();
 
 				return array();
 			}
@@ -741,7 +777,6 @@ class DiskStorage extends AbstractStorage
 			if(!$fileArray)
 			{
 				$this->errorCollection->addOne(new Error("Could not " . __METHOD__ . " MakeFileArray", 110155));
-				$tmpFile->delete();
 
 				return array();
 			}
@@ -752,6 +787,8 @@ class DiskStorage extends AbstractStorage
 			{
 				$fileData['UPDATE_TIME'] = DateTime::createFromTimestamp($this->convertFromExternalVersion($data['originalTimestamp']));
 			}
+
+			$fileArray['no_rotate'] = true;
 			$fileModel = $folder->uploadFile($fileArray, $fileData);
 			//it's crutch. There is process of name correction in uploadFile but we don't want to do it.
 			//And we don't want to add new parameters to manage it. In this case we restore name by renaming.
@@ -763,8 +800,12 @@ class DiskStorage extends AbstractStorage
 
 		if($fileModel)
 		{
+			if (TypeFile::isImage($fileModel))
+			{
+				$this->processImageRotate($tmpFile, $fileModel);
+			}
+
 			$fileModel->changeEtag($tmpFile->getToken());
-			$tmpFile->delete();
 			$this->loadTree();
 
 			$response = $this->formatFileToResponse($fileModel);
@@ -774,9 +815,66 @@ class DiskStorage extends AbstractStorage
 		}
 		$this->errorCollection->add(array(new Error("Could not " . __METHOD__ . ", uploadFile to {$targetDirectoryId}", 11153)));
 		$this->errorCollection->add($folder->getErrors());
-		$tmpFile->delete();
 
 		return array();
+	}
+
+	protected function processImageRotate(TmpFile $tmpFile, File $fileModel)
+	{
+		if (!$this->hasImageOrientation($tmpFile, $fileModel))
+		{
+			return;
+		}
+
+		$ds = DIRECTORY_SEPARATOR;
+		$targetDir = \CTempFile::getDirectoryName(2, 'disk_rotation' . $ds . md5(uniqid('dr', true)));
+		checkDirPath($targetDir);
+		$tmpFilePath = IO\Path::normalize($targetDir) . $ds . uniqid('rotation', true);
+
+		checkDirPath($tmpFilePath);
+		if (copy($tmpFile->getAbsolutePath(), $tmpFilePath))
+		{
+			$this->addShutdownTask(function() use($fileModel, $tmpFilePath) {
+				$fileData = \CFile::makeFileArray($tmpFilePath);
+				if ($fileData && $fileModel->uploadVersion($fileData, $fileModel->getCreatedBy()))
+				{
+					$result = Internals\FileTable::changeSyncDateTime($fileModel->getId(), (new DateTime())->add('1 seconds'));
+					if ($result->isSuccess() && Loader::includeModule('pull'))
+					{
+						Event::send();
+					}
+				}
+
+			});
+		}
+	}
+
+	protected function hasImageOrientation(TmpFile $tmpFile, File $fileModel): bool
+	{
+		if (!TypeFile::isImage($fileModel))
+		{
+			return false;
+		}
+
+		if (!$tmpFile->isCloud())
+		{
+			$imgSize = \CFile::GetImageSize($tmpFile->getAbsolutePath(), false, false);
+			if (!$imgSize)
+			{
+				return false;
+			}
+
+			if ($imgSize[2] !== \IMAGETYPE_JPEG)
+			{
+				return false;
+			}
+
+			$exifData = \CFile::ExtractImageExif($tmpFile->getAbsolutePath());
+
+			return isset($exifData['Orientation']);
+		}
+
+		return false;
 	}
 
 	/**
@@ -789,18 +887,20 @@ class DiskStorage extends AbstractStorage
 	 */
 	public function updateFile($name, $targetElementId, TmpFile $tmpFile, array $data = array())
 	{
+		$this->addShutdownTask(function() use($tmpFile){
+			$tmpFile->delete();
+		});
+
 		/** @var File $file */
 		$file = File::loadById($targetElementId);
 		if(!$file)
 		{
 			$this->errorCollection->add(array(new Error("Could not " . __METHOD__ . " by id {$targetElementId}", 11154)));
-			$tmpFile->delete();
 			return false;
 		}
 
 		if(!$file->canUpdate($this->storage->getSecurityContext($this->userId)))
 		{
-			$tmpFile->delete();
 			throw new AccessDeniedException;
 		}
 
@@ -821,7 +921,6 @@ class DiskStorage extends AbstractStorage
 			if(!$fileArray)
 			{
 				$this->errorCollection->add(array(new Error("Could not " . __METHOD__ . " getFileArray", 1115541)));
-				$tmpFile->delete();
 				return false;
 			}
 			if(!empty($data['originalTimestamp']))
@@ -831,7 +930,6 @@ class DiskStorage extends AbstractStorage
 			if($file->addVersion($fileArray, $this->getUser()->getId()))
 			{
 				$file->changeEtag($tmpFile->getToken());
-				$tmpFile->delete();
 				$this->loadTree();
 
 				$response = $this->formatFileToResponse($file);
@@ -863,7 +961,6 @@ class DiskStorage extends AbstractStorage
 			if(!$fileArray)
 			{
 				$this->errorCollection->add(array(new Error("Could not " . __METHOD__ . " MakeFileArray", 11155)));
-				$tmpFile->delete();
 				return false;
 			}
 			if(!empty($data['originalTimestamp']))
@@ -873,7 +970,6 @@ class DiskStorage extends AbstractStorage
 			if($file->uploadVersion($fileArray, $this->getUser()->getId()))
 			{
 				$file->changeEtag($tmpFile->getToken());
-				$tmpFile->delete();
 				$this->loadTree();
 
 				$response = $this->formatFileToResponse($file);
@@ -899,7 +995,6 @@ class DiskStorage extends AbstractStorage
 
 		$this->errorCollection->add(array(new Error("Could not " . __METHOD__ . ", uploadVersion", 11156)));
 		$this->errorCollection->add($file->getErrors());
-		$tmpFile->delete();
 
 		return false;
 	}
@@ -1343,7 +1438,7 @@ class DiskStorage extends AbstractStorage
 
 	protected function formatFolderToResponse(Folder $folder)
 	{
-		if(empty($folder) || strlen($folder->getName()) === 0)
+		if(empty($folder) || $folder->getName() == '')
 		{
 			return array();
 		}
@@ -1390,7 +1485,7 @@ class DiskStorage extends AbstractStorage
 
 	protected function formatFileToResponse(File $file)
 	{
-		if(empty($file) || strlen($file->getName()) === 0)
+		if(empty($file) || $file->getName() == '')
 		{
 			return array();
 		}
@@ -1457,9 +1552,9 @@ class DiskStorage extends AbstractStorage
 
 	public function convertFromExternalVersion($version)
 	{
-		if(substr($version, -3, 3) === '000')
+		if(mb_substr($version, -3, 3) === '000')
 		{
-			return substr($version, 0, -3);
+			return mb_substr($version, 0, -3);
 		}
 		return $version;
 	}

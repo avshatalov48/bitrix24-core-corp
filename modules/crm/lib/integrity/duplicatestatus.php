@@ -47,7 +47,7 @@ class DuplicateStatus
 			return self::UNDEFINED;
 		}
 
-		$name = strtoupper($name);
+		$name = mb_strtoupper($name);
 		if($name === self::PENDING_NAME)
 		{
 			return self::PENDING;

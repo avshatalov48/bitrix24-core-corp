@@ -84,9 +84,20 @@ foreach ($arResult['FILES'] as $id => $file)
 	}
 	else
 	{
-		?><a target="_blank" href="<?=htmlspecialcharsbx($file["PATH"])?>" <?
+		$onClick = (
+			SITE_TEMPLATE_ID == 'landing24'
+				? ""
+				: "WDInlineElementClickDispatcher(this, 'disk-attach-".$file['ID']."'); return false;"
+		);
+		$href = (
+			SITE_TEMPLATE_ID == 'landing24'
+				? htmlspecialcharsbx($file["DOWNLOAD_URL"])
+				: htmlspecialcharsbx($file["PATH"])
+		);
+
+		?><a target="_blank" href="<?=$href?>" <?
 			?>title="<?=htmlspecialcharsbx($file["NAVCHAIN"])?>" <?
-			?>onclick="WDInlineElementClickDispatcher(this, 'disk-attach-<?=$file['ID']?>'); return false;" <?
+			?>onclick="<?=$onClick?>" <?
 			?> alt="<?=htmlspecialcharsbx($file["NAME"])?>" <?
 			?> class="feed-com-file-inline feed-com-file-wrap diskuf-files-entity"<?
 			?> bx-attach-file-id="<?=$file['FILE_ID']?>"<?
@@ -99,7 +110,7 @@ foreach ($arResult['FILES'] as $id => $file)
 	}
 }
 
-if (strlen($jsIds) > 0)
+if ($jsIds <> '')
 {
 	?><script>BX.LazyLoad.registerImages([<?=$jsIds?>], typeof oLF != 'undefined' ? oLF.LazyLoadCheckVisibility : false, {dataSrcName: "thumbSrc"});</script><?
 }

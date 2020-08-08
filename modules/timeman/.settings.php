@@ -2,12 +2,12 @@
 return [
 	'controllers' => [
 		'value' => [
-			'defaultNamespace' => '\\Bitrix\\Timeman\\Rest\\Controller',
+			'defaultNamespace' => '\\Bitrix\\Timeman\\Controller',
 			'restIntegration' => [
 				'enabled' => true,
 			],
 			'namespaces' => [
-				'\\Bitrix\\Timeman\\Rest\\Controller' => 'api',
+				'\\Bitrix\\Timeman\\Controller' => 'api',
 			],
 		],
 		'readonly' => true,

@@ -46,7 +46,7 @@ class CrmActivityTodoComponent extends \CBitrixComponent
 	{
 		$params = $this->arParams;
 
-		$pathKey = 'PATH_TO_'.strtoupper($type).'_SHOW';
+		$pathKey = 'PATH_TO_'.mb_strtoupper($type).'_SHOW';
 		$url = !array_key_exists($pathKey, $params) ? \CrmCheckPath($pathKey, '', '') : $params[$pathKey];
 
 		return $url;
@@ -96,7 +96,7 @@ class CrmActivityTodoComponent extends \CBitrixComponent
 		}
 		if ($activity['PROVIDER_ID'] != '')
 		{
-			return strtolower($activity['PROVIDER_ID']);
+			return mb_strtolower($activity['PROVIDER_ID']);
 		}
 		return 'no';
 	}

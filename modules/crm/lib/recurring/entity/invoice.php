@@ -6,6 +6,7 @@ use Bitrix\Main,
 	Bitrix\Main\Result,
 	Bitrix\Crm\Requisite\EntityLink,
 	Bitrix\Crm\InvoiceRecurTable,
+	Bitrix\Crm\InvoiceTable,
 	Bitrix\Crm\Restriction\RestrictionManager,
 	Bitrix\Crm\Recurring\Mail;
 
@@ -119,7 +120,8 @@ class Invoice extends Base
 
 		$getParams = [
 			'filter' => $filter,
-			'select' => ['ID', 'INVOICE_ID']
+			'select' => ['ID', 'INVOICE_ID'],
+			'runtime' => $this->getRuntimeTemplateField()
 		];
 		if ((int)$limit > 0)
 		{
@@ -230,6 +232,11 @@ class Invoice extends Base
 					else
 					{
 						$result->addErrors($r->getErrors());
+						if ($recalculate)
+						{
+							$recurringItem->deactivate();
+							$recurringItem->save();
+						}
 					}
 				}
 			}
@@ -401,5 +408,17 @@ class Invoice extends Base
 		}
 
 		return $entity->delete();
+	}
+
+	public function getRuntimeTemplateField() : array
+	{
+		return [
+			new Main\Entity\ReferenceField(
+				'INVOICE_ENTITY',
+				InvoiceTable::class,
+				['=this.INVOICE_ID' => 'ref.ID'],
+				['join_type' => 'INNER']
+			)
+		];
 	}
 }

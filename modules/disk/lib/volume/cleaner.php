@@ -214,7 +214,7 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 				}
 				catch (Main\DB\SqlQueryException $exception)
 				{
-					if (stripos($exception->getMessage(), 'deadlock found when trying to get lock; try restarting transaction') !== false)
+					if (mb_stripos($exception->getMessage(), 'deadlock found when trying to get lock; try restarting transaction') !== false)
 					{
 						// retrying in a few microseconds
 						usleep(100);

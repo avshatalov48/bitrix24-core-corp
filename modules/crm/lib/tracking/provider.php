@@ -83,7 +83,7 @@ class Provider
 			[
 				'CODE' => Channel\Base::Order,
 				'ICON_CLASS' => 'ui-icon ui-icon-service-estore',
-				'CONFIGURED' => Channel\Order::isConfigured(),
+				'CONFIGURED' => Channel\Order::isConfiguredRemote(),
 				'CONFIGURABLE' => true,
 			],
 		];
@@ -295,6 +295,11 @@ class Provider
 		if (!Manager::isAdAccessible())
 		{
 			return false;
+		}
+
+		if (Internals\SourceExpensesTable::getRow(['cache' => ['ttl' => 600]]))
+		{
+			return true;
 		}
 
 		foreach (self::getActualAdSources() as $source)
@@ -527,7 +532,7 @@ class Provider
 				continue;
 			}
 
-			$host = strtolower(trim($site['DOMAIN_NAME']));
+			$host = mb_strtolower(trim($site['DOMAIN_NAME']));
 			$result[$host] = $site['ID'];
 		}
 

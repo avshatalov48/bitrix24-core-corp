@@ -158,6 +158,18 @@
 	margin: 0 0 0 6px;
 }
 
+.task-report-locked {
+	padding: 7px;
+	-webkit-filter: blur(5px);
+	-moz-filter: blur(5px);
+	filter: blur(5px);
+	pointer-events: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
 .task-report-container {
 	-webkit-box-flex: 1;
 	-ms-flex: 1;

@@ -78,17 +78,17 @@ foreach ($arGadgetParams["EVENT_ID"] as $event_id_tmp)
 $sTitle_2 = implode("/", $arTitle_2);
 
 if (
-	strlen($arGadgetParams["ENTITY_TYPE"]) > 0 
-	|| (!is_array($arGadgetParams["EVENT_ID"]) && strlen($arGadgetParams["EVENT_ID"]) > 0 && $arGadgetParams["EVENT_ID"] != "all")
+	$arGadgetParams["ENTITY_TYPE"] <> '' 
+	|| (!is_array($arGadgetParams["EVENT_ID"]) && $arGadgetParams["EVENT_ID"] <> '' && $arGadgetParams["EVENT_ID"] != "all")
 	|| (is_array($arGadgetParams["EVENT_ID"]) && count($arGadgetParams["EVENT_ID"]) > 0 && !in_array("all", $arGadgetParams["EVENT_ID"]))
 )
 {
 	if (
-		(!is_array($arGadgetParams["EVENT_ID"]) && (strlen($arGadgetParams["EVENT_ID"]) == 0 || $arGadgetParams["EVENT_ID"] == "all"))
+		(!is_array($arGadgetParams["EVENT_ID"]) && ($arGadgetParams["EVENT_ID"] == '' || $arGadgetParams["EVENT_ID"] == "all"))
 		|| (is_array($arGadgetParams["EVENT_ID"]) && (count($arGadgetParams["EVENT_ID"]) == 0 || in_array("all", $arGadgetParams["EVENT_ID"])))
 	)
 		$arGadget["TITLE"] .= " [".$sTitle_1."]";
-	elseif (strlen($arGadgetParams["ENTITY_TYPE"]) == 0)
+	elseif ($arGadgetParams["ENTITY_TYPE"] == '')
 		$arGadget["TITLE"] .= " [".$sTitle_2."]";
 	else
 		$arGadget["TITLE"] .= " [".$sTitle_1." - ".$sTitle_2."]";
@@ -149,7 +149,7 @@ $APPLICATION->IncludeComponent(
 );
 ?></span><?
 
-if(strlen($arGadgetParams["LIST_URL"])>0):
+if($arGadgetParams["LIST_URL"] <> ''):
 	?><br />
 	<div align="right"><a href="<?=htmlspecialcharsbx($arGadgetParams["LIST_URL"])?>"><?echo GetMessage("GD_LOG_MORE")?></a> <a href="<?=htmlspecialcharsbx($arGadgetParams["LIST_URL"])?>"><img width="7" height="7" border="0" src="/images/icons/arrows.gif" /></a>
 	<br />

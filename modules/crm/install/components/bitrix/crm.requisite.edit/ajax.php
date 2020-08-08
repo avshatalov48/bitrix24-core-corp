@@ -63,15 +63,29 @@ if($action === 'FIND_LOCALITIES')
 }
 elseif($action === 'RESOLVE_EXTERNAL_CLIENT')
 {
-	$propertyTypeID = isset($_POST['PROPERTY_TYPE_ID']) ? strtoupper($_POST['PROPERTY_TYPE_ID']) : '';
+	$propertyTypeID = isset($_POST['PROPERTY_TYPE_ID'])? mb_strtoupper($_POST['PROPERTY_TYPE_ID']) : '';
 	$propertyValue = isset($_POST['PROPERTY_VALUE']) ? $_POST['PROPERTY_VALUE'] : '';
-	$countryID = isset($_POST['COUNTRY_ID']) ? $_POST['COUNTRY_ID'] : '';
+	$countryID = isset($_POST['COUNTRY_ID']) ? (int)$_POST['COUNTRY_ID'] : 0;
 
-	$result = \Bitrix\Crm\Integration\ClientResolver::resolve(
-		$propertyTypeID,
-		$propertyValue,
-		$countryID
-	);
+	$result = [];
+	$skipResolve = false;
+	if (($countryID === 1 && $propertyTypeID === Bitrix\Crm\Integration\ClientResolver::PROP_ITIN
+			&& !Bitrix\Crm\Restriction\RestrictionManager::isDetailsSearchByInnPermitted())
+		|| ($countryID === 14 && $propertyTypeID === Bitrix\Crm\Integration\ClientResolver::PROP_SRO
+			&& !Bitrix\Crm\Restriction\RestrictionManager::isDetailsSearchByEdrpouPermitted()))
+	{
+		$skipResolve = true;
+	}
+
+	if (!$skipResolve)
+	{
+		$result = \Bitrix\Crm\Integration\ClientResolver::resolve(
+			$propertyTypeID,
+			$propertyValue,
+			$countryID
+		);
+	}
+
 	__CrmRequisiteEditEndResponse(array('DATA' => array('ITEMS' => $result)));
 }
 elseif($action === 'GET_ENTITY_ADDRESS')

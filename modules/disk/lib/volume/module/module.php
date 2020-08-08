@@ -676,7 +676,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 
 			/** @var \Bitrix\Main\ORM\Data\DataManager $entityClass */
 			$ufName = $entityClass::getUfId();
-			if (strlen($ufName) > 0 && count($userTypeField) > 0)
+			if ($ufName <> '' && count($userTypeField) > 0)
 			{
 				$filter = array(
 					'=ENTITY_ID'    => $ufName,
@@ -743,7 +743,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 		if ($userField['MULTIPLE'] == 'Y')
 		{
 			$ufId = $userField['ID'];
-			$utmEntityTableName = 'b_utm_'.strtolower($ufName);
+			$utmEntityTableName = 'b_utm_'.mb_strtolower($ufName);
 
 			if ($connection->isTableExists($utmEntityTableName))
 			{
@@ -856,7 +856,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 		else
 		{
 			$ufEntityTableFieldName = $userField['FIELD_NAME'];
-			$utsEntityTableName = 'b_uts_'.strtolower($ufName);
+			$utsEntityTableName = 'b_uts_'.mb_strtolower($ufName);
 
 			if ($connection->isTableExists($utsEntityTableName))
 			{

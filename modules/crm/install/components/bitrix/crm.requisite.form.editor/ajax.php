@@ -10,7 +10,7 @@ define('NO_AGENT_STATISTIC','Y');
 define('NO_AGENT_CHECK', true);
 define('DisableEventsCheck', true);
 
-$siteID = isset($_REQUEST['site']) ? substr(preg_replace('/[^a-z0-9_]/i', '', $_REQUEST['site']), 0, 2) : '';
+$siteID = isset($_REQUEST['site'])? mb_substr(preg_replace('/[^a-z0-9_]/i', '', $_REQUEST['site']), 0, 2) : '';
 if($siteID !== '')
 {
 	define('SITE_ID', $siteID);
@@ -137,7 +137,7 @@ class CrmRequisiteFormEditorController
 				$this->sendJsonAccessDeniedResponse();
 			}
 
-			$action = (isset($_REQUEST['action']) && is_string($_REQUEST['action'])) ? strtolower($_REQUEST['action']) : '';
+			$action = (isset($_REQUEST['action']) && is_string($_REQUEST['action']))? mb_strtolower($_REQUEST['action']) : '';
 			if (empty($action))
 			{
 				$this->errors[] = array(

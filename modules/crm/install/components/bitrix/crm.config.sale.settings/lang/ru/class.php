@@ -27,6 +27,7 @@ $MESS["CRM_CF_LOCATION_TITLE"] = "Адрес магазина";
 $MESS["CRM_CF_SUBSCRIBE_TITLE"] = "Подписка на товары";
 $MESS["CRM_CF_ORDER_NUMERATOR_TEMPLATE"] = "Нумерация заказов";
 $MESS["CRM_CF_PRODUCT_CARD"] = "Карточка товара";
+$MESS["CRM_CF_PRODUCT_CARD_SLIDER_ENABLED"] = "Включить новую карточку товара";
 $MESS["CRM_CF_PRODUCT_CARD_DEFAULT_VALUES"] = "Значения параметров товаров по умолчанию";
 $MESS["CRM_CF_STORE"] = "Складской учет";
 

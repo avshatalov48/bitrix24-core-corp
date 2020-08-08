@@ -9,8 +9,15 @@ BX.addCustomEvent("onRegisterProvider", (addProviderHandler) =>
 		push_low_activity: {
 			type: FormItemType.SWITCH,
 			name: BX.message("SE_SYS_LOW_PUSH_ACTIVITY"),
+			section: "energy"
+		},
+		allow_invite_users: {
+			type: FormItemType.SWITCH,
+			name: BX.message("SE_SYS_ALLOW_INVITE_USERS"),
+			section: "invite"
 		}
 	};
+
 	let forms = {};
 	let cache = {};
 
@@ -20,29 +27,36 @@ BX.addCustomEvent("onRegisterProvider", (addProviderHandler) =>
 		{
 			super(id, title, subtitle);
 			this.params = {};
-			this.request = new DelayedRestRequest("mobile.settings.energy.set");
+			this.request = new DelayedRestRequest("mobile.settings.other.set");
 		}
 
 		onButtonTap(data)
 		{
 			cache = Application.storage.getObject(`settings.others.${env.userId}`, {});
+
+			let sections = [
+				new FormSection("energy", BX.message("SE_SYS_ENERGY_BACKGROUND"), BX.message("SE_SYS_LOW_PUSH_ACTIVITY_DESC")).addItems([
+					new FormItem("push_low_activity", FormItemType.SWITCH, BX.message("SE_SYS_LOW_PUSH_ACTIVITY")).setDefaultValue(cache["push_low_activity"] ? !!cache["push_low_activity"] : false)
+				]),
+			];
+
+			if (BX.componentParameters.get('IS_ADMIN', false))
+			{
+				sections.push(new FormSection("invite", BX.message("SE_SYS_INVITE"), BX.message("SE_SYS_ALLOW_INVITE_USERS_DESC")).addItems([
+					new FormItem("allow_invite_users", FormItemType.SWITCH, BX.message("SE_SYS_ALLOW_INVITE_USERS")).setDefaultValue(cache["allow_invite_users"] ? !!cache["allow_invite_users"] : false)
+				]));
+			}
+
 			forms["other"] = new Form("other", BX.message("SE_SYS_TITLE"))
-				.addSection(
-					new FormSection("main", BX.message("SE_SYS_ENERGY_BACKGROUND"),
-						BX.message("SE_SYS_LOW_PUSH_ACTIVITY_DESC"))
-						.addItems([
-							new FormItem("push_low_activity", FormItemType.SWITCH,
-								BX.message("SE_SYS_LOW_PUSH_ACTIVITY"))
-								.setDefaultValue(cache["push_low_activity"] ? !!cache["push_low_activity"] : false)
-						])
-				).compile();
+				.addSections(sections).compile();
 
 			if (data.id == this.id && forms[data.id])
 			{
 				this.openForm(forms[data.id], this.id, form =>
 				{
-					BX.rest.callMethod("mobile.settings.energy.get").then((result) =>
+					BX.rest.callMethod("mobile.settings.other.get").then((result) =>
 					{
+
 						console.error(result.answer.result);
 						let params = result.answer.result;
 						if (params)
@@ -54,9 +68,9 @@ BX.addCustomEvent("onRegisterProvider", (addProviderHandler) =>
 								if (paramsType[key])
 								{
 									list.push(new FormItem(key, paramsType[key].type, paramsType[key].name)
+										.setSectionCode(paramsType[key].section)
 										.setDefaultValue(!!params[key]));
 								}
-
 							}
 
 							form.setItems(list, null, true);

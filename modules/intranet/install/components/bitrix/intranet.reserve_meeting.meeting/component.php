@@ -5,43 +5,43 @@ if (!CModule::IncludeModule("intranet"))
 if (!CModule::IncludeModule("iblock"))
 	return ShowError(GetMessage("EC_IBLOCK_MODULE_NOT_INSTALLED"));
 
-$iblockId = IntVal($arParams["IBLOCK_ID"]);
+$iblockId = intval($arParams["IBLOCK_ID"]);
 
 $arParams["PAGE_VAR"] = Trim($arParams["PAGE_VAR"]);
-if (StrLen($arParams["PAGE_VAR"]) <= 0)
+if ($arParams["PAGE_VAR"] == '')
 	$arParams["PAGE_VAR"] = "page";
 
 $arParams["MEETING_VAR"] = Trim($arParams["MEETING_VAR"]);
-if (StrLen($arParams["MEETING_VAR"]) <= 0)
+if ($arParams["MEETING_VAR"] == '')
 	$arParams["MEETING_VAR"] = "meeting_id";
 
 $arParams["ITEM_VAR"] = Trim($arParams["ITEM_VAR"]);
-if (StrLen($arParams["ITEM_VAR"]) <= 0)
+if ($arParams["ITEM_VAR"] == '')
 	$arParams["ITEM_VAR"] = "item_id";
 
-$meetingId = IntVal($arParams["MEETING_ID"]);
+$meetingId = intval($arParams["MEETING_ID"]);
 if ($meetingId <= 0)
-	$meetingId = IntVal($_REQUEST[$arParams["MEETING_VAR"]]);
+	$meetingId = intval($_REQUEST[$arParams["MEETING_VAR"]]);
 
 $arParams["PATH_TO_MEETING"] = Trim($arParams["PATH_TO_MEETING"]);
-if (StrLen($arParams["PATH_TO_MEETING"]) <= 0)
+if ($arParams["PATH_TO_MEETING"] == '')
 	$arParams["PATH_TO_MEETING"] = HtmlSpecialCharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=meeting&".$arParams["MEETING_VAR"]."=#meeting_id#");
 
 $arParams["PATH_TO_VIEW_ITEM"] = Trim($arParams["PATH_TO_VIEW_ITEM"]);
-if (StrLen($arParams["PATH_TO_VIEW_ITEM"]) <= 0)
+if ($arParams["PATH_TO_VIEW_ITEM"] == '')
 	$arParams["PATH_TO_VIEW_ITEM"] = HtmlSpecialCharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=view_item&".$arParams["MEETING_VAR"]."=#meeting_id#&".$arParams["ITEM_VAR"]."=#item_id#");
 
 $arParams["PATH_TO_MEETING_LIST"] = Trim($arParams["PATH_TO_MEETING_LIST"]);
-if (StrLen($arParams["PATH_TO_MEETING_LIST"]) <= 0)
+if ($arParams["PATH_TO_MEETING_LIST"] == '')
 	$arParams["PATH_TO_MEETING_LIST"] = HtmlSpecialCharsbx($APPLICATION->GetCurPage());
 
 $arParams["PATH_TO_RESERVE_MEETING"] = Trim($arParams["PATH_TO_RESERVE_MEETING"]);
-if (StrLen($arParams["PATH_TO_RESERVE_MEETING"]) <= 0)
+if ($arParams["PATH_TO_RESERVE_MEETING"] == '')
 	$arParams["PATH_TO_RESERVE_MEETING"] = HtmlSpecialCharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=reserve_meeting&".$arParams["MEETING_VAR"]."=#meeting_id#&".$arParams["ITEM_VAR"]."=#item_id#");
 
 if (!Is_Array($arParams["USERGROUPS_CLEAR"]))
 {
-	if (IntVal($arParams["USERGROUPS_CLEAR"]) > 0)
+	if (intval($arParams["USERGROUPS_CLEAR"]) > 0)
 		$arParams["USERGROUPS_CLEAR"] = array($arParams["USERGROUPS_CLEAR"]);
 	else
 		$arParams["USERGROUPS_CLEAR"] = array();
@@ -49,8 +49,8 @@ if (!Is_Array($arParams["USERGROUPS_CLEAR"]))
 
 if (!Is_Array($arParams["WEEK_HOLIDAYS"]))
 {
-	if (StrLen($arParams["WEEK_HOLIDAYS"]) > 0 && $arParams["WEEK_HOLIDAYS"] >= 0 && $arParams["WEEK_HOLIDAYS"] < 7)
-		$arParams["WEEK_HOLIDAYS"] = array(IntVal($arParams["WEEK_HOLIDAYS"]));
+	if ($arParams["WEEK_HOLIDAYS"] <> '' && $arParams["WEEK_HOLIDAYS"] >= 0 && $arParams["WEEK_HOLIDAYS"] < 7)
+		$arParams["WEEK_HOLIDAYS"] = array(intval($arParams["WEEK_HOLIDAYS"]));
 	else
 		$arParams["WEEK_HOLIDAYS"] = array(5, 6);
 }
@@ -69,28 +69,28 @@ $arParams["NAME_TEMPLATE_WO_NOBR"] = str_replace(
 
 
 $weekStart = Trim($_REQUEST["week_start"]);
-if (StrLen($weekStart) > 0 && StrLen($weekStart) != 8)
+if ($weekStart <> '' && mb_strlen($weekStart) != 8)
 {
 	$weekStartTmp = MakeTimeStamp($weekStart, FORMAT_DATETIME);
 	$weekStart = Date("Y", $weekStartTmp).Date("m", $weekStartTmp).Date("d", $weekStartTmp);
 }
-if (StrLen($weekStart) != 8)
+if (mb_strlen($weekStart) != 8)
 	$weekStart = Date("Ymd");
 
 
-$weekYear = IntVal(SubStr($weekStart, 0, 4));
-$weekMonth = IntVal(SubStr($weekStart, 4, 2));
-$weekDay = IntVal(SubStr($weekStart, 6, 2));
+$weekYear = intval(mb_substr($weekStart, 0, 4));
+$weekMonth = intval(mb_substr($weekStart, 4, 2));
+$weekDay = intval(mb_substr($weekStart, 6, 2));
 
 $weekTime = MkTime(0, 0, 0, $weekMonth, $weekDay, $weekYear);
 if ($weekTime === false || $weekTime == -1)
 	$weekTime = Time();
 
-$weekYear = IntVal(Date("Y", $weekTime));
-$weekMonth = IntVal(Date("m", $weekTime));
-$weekDay = IntVal(Date("d", $weekTime));
+$weekYear = intval(Date("Y", $weekTime));
+$weekMonth = intval(Date("m", $weekTime));
+$weekDay = intval(Date("d", $weekTime));
 
-$weekDoW = IntVal(Date("w", $weekTime));
+$weekDoW = intval(Date("w", $weekTime));
 if ($weekDoW == 0)
 	$weekDoW = 7;
 
@@ -105,7 +105,7 @@ $arResult["FatalError"] = "";
 if (!CIBlockRights::UserHasRightTo($iblockId, $iblockId, 'element_read'))
 	$arResult["FatalError"] .= GetMessage("INTS_NO_IBLOCK_PERMS").".";
 
-if (StrLen($arResult["FatalError"]) <= 0)
+if ($arResult["FatalError"] == '')
 {
 	$arResult["ALLOWED_FIELDS"] = array(
 		"ID" => array(
@@ -174,7 +174,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 	}
 }
 
-if (StrLen($arResult["FatalError"]) <= 0)
+if ($arResult["FatalError"] == '')
 {
 	if ($arParams["SET_TITLE"] == "Y")
 		$APPLICATION->SetTitle(GetMessage("INTASK_C36_PAGE_TITLE"));
@@ -198,9 +198,9 @@ if (StrLen($arResult["FatalError"]) <= 0)
 		$arResult["FatalError"] = GetMessage("INAF_MEETING_NOT_FOUND");
 }
 
-if (StrLen($arResult["FatalError"]) <= 0)
+if ($arResult["FatalError"] == '')
 {
-	$clearId = IntVal($_REQUEST["clear_id"]);
+	$clearId = intval($_REQUEST["clear_id"]);
 	if ($clearId > 0 && check_bitrix_sessid())
 	{
 		$dbElements = CIBlockElement::GetList(
@@ -242,13 +242,13 @@ if (!Function_Exists("__RM_PrepateDate"))
 		}
 		else
 		{
-			$timeDoW = IntVal(Date("w", $time));
+			$timeDoW = intval(Date("w", $time));
 			if ($timeDoW == 0)
 				$timeDoW = 7;
 		}
 
-		$timeHour = IntVal(Date("H", $time));
-		$timeMinute = IntVal(Date("i", $time));
+		$timeHour = intval(Date("H", $time));
+		$timeMinute = intval(Date("i", $time));
 
 		if ($timeMinute < 15)
 		{
@@ -272,13 +272,13 @@ if (!Function_Exists("__RM_PrepateDate"))
 		}
 		else
 		{
-			$timeDoW = IntVal(Date("w", $time));
+			$timeDoW = intval(Date("w", $time));
 			if ($timeDoW == 0)
 				$timeDoW = 7;
 		}
 
-		$timeHour = IntVal(Date("H", $time));
-		$timeMinute = IntVal(Date("i", $time));
+		$timeHour = intval(Date("H", $time));
+		$timeMinute = intval(Date("i", $time));
 
 		return array("Time" => $time, "DayOfWeek" => $timeDoW, "Hour" => $timeHour, "Minute" => $timeMinute);
 	}
@@ -286,7 +286,7 @@ if (!Function_Exists("__RM_PrepateDate"))
 	function __RM_MkT($i)
 	{
 		$aMpM = IsAmPmMode();
-		$h1 = IntVal($i / 2);
+		$h1 = intval($i / 2);
 		if ($aMpM)
 		{
 			if ($h1 >= 12)
@@ -313,7 +313,7 @@ if (!Function_Exists("__RM_PrepateDate"))
 		
 		$i1 = ($i % 2 != 0 ? "30" : "00");
 
-		$h2 = IntVal(($i + 1) / 2);
+		$h2 = intval(($i + 1) / 2);
 		if ($aMpM)
 		{
 			if ($h2 >= 12)
@@ -343,12 +343,12 @@ if (!Function_Exists("__RM_PrepateDate"))
 	}
 }
 
-if (StrLen($arResult["FatalError"]) <= 0)
+if ($arResult["FatalError"] == '')
 {
 	$arResult["MEETING"] = $arMeeting;
 
 	$arResult["CellClickUri"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_RESERVE_MEETING"], array("meeting_id" => $arMeeting["ID"], "item_id" => 0));
-	$arResult["CellClickUri"] .= HtmlSpecialCharsbx(StrPos($arResult["CellClickUri"], "?") === false ? "?" : "&");
+	$arResult["CellClickUri"] .= HtmlSpecialCharsbx(mb_strpos($arResult["CellClickUri"], "?") === false ? "?" : "&");
 
 	if ($arParams["SET_TITLE"] == "Y")
 		$APPLICATION->SetTitle(GetMessage("INTASK_C36_PAGE_TITLE").": ".$arMeeting["NAME"]);
@@ -363,7 +363,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 	$arResult["WEEK_START_ARRAY"] = array("m" => $weekMonth, "d" => $weekDay, "Y" => $weekYear);
 
 	$arResult["MEETING_URI"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_MEETING"], array("meeting_id" => $arMeeting["ID"]));
-	$fl = (StrPos($arResult["MEETING_URI"], "?") === false);
+	$fl = (mb_strpos($arResult["MEETING_URI"], "?") === false);
 	$pwt = MkTime(0, 0, 0, $weekMonth, $weekDay - 7, $weekYear);
 	$arResult["PRIOR_WEEK_URI"] = $arResult["MEETING_URI"].($fl ? "?" : "&")."week_start=".Date("Y", $pwt).Date("m", $pwt).Date("d", $pwt);
 	$arResult["NEXT_WEEK_URI"] = $arResult["MEETING_URI"].($fl ? "?" : "&")."week_start=".Date("Y", $weekTimeEnd).Date("m", $weekTimeEnd).Date("d", $weekTimeEnd);
@@ -408,17 +408,17 @@ if (StrLen($arResult["FatalError"]) <= 0)
 				|| $arElement["CREATED_BY"] == $GLOBALS["USER"]->GetID()))
 		{
 			$arElement["CLEAR_URI"] = $APPLICATION->GetCurPageParam("", array("clear_id"));
-			$arElement["CLEAR_URI"] .= (StrPos($arElement["CLEAR_URI"], "?") === false ? "?" : "&")."clear_id=".$arElement["ID"]."&".bitrix_sessid_get();
+			$arElement["CLEAR_URI"] .= (mb_strpos($arElement["CLEAR_URI"], "?") === false ? "?" : "&")."clear_id=".$arElement["ID"]."&".bitrix_sessid_get();
 		}
 
 		$arElement["VIEW_ITEM_URI"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_VIEW_ITEM"], array("meeting_id" => $arMeeting["ID"], "item_id" => $arElement["ID"]));
-		$arElement["VIEW_ITEM_URI"] .= (StrPos($arElement["VIEW_ITEM_URI"], "?") === false ? "?" : "&")."week_start=".UrlEncode($arResult["WEEK_START"]);
+		$arElement["VIEW_ITEM_URI"] .= (mb_strpos($arElement["VIEW_ITEM_URI"], "?") === false ? "?" : "&")."week_start=".UrlEncode($arResult["WEEK_START"]);
 
 		if ($GLOBALS["USER"]->IsAuthorized()
 			&& ($GLOBALS["USER"]->IsAdmin() || $arElement["CREATED_BY"] == $GLOBALS["USER"]->GetID()))
 		{
 			$arElement["EDIT_ITEM_URI"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_RESERVE_MEETING"], array("meeting_id" => $arMeeting["ID"], "item_id" => $arElement["ID"]));
-			$arElement["EDIT_ITEM_URI"] .= (StrPos($arElement["EDIT_ITEM_URI"], "?") === false ? "?" : "&")."week_start=".UrlEncode($arResult["WEEK_START"]);
+			$arElement["EDIT_ITEM_URI"] .= (mb_strpos($arElement["EDIT_ITEM_URI"], "?") === false ? "?" : "&")."week_start=".UrlEncode($arResult["WEEK_START"]);
 		}
 
 		$arResult["ITEMS"][$arElement["ID"]] = $arElement;
@@ -600,7 +600,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 
 		if ($arElement["PROPERTY_PERIOD_TYPE_VALUE"] == "DAILY")
 		{
-			$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = IntVal($arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
+			$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = intval($arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
 			if ($arElement["PROPERTY_PERIOD_COUNT_VALUE"] <= 0)
 				$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = 1;
 
@@ -641,17 +641,17 @@ if (StrLen($arResult["FatalError"]) <= 0)
 		}
 		elseif ($arElement["PROPERTY_PERIOD_TYPE_VALUE"] == "WEEKLY")
 		{
-			$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = IntVal($arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
+			$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = intval($arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
 			if ($arElement["PROPERTY_PERIOD_COUNT_VALUE"] <= 0)
 				$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = 1;
 
 			$arPeriodAdditional = array();
-			if (StrLen($arElement["PROPERTY_PERIOD_ADDITIONAL_VALUE"]) > 0)
+			if ($arElement["PROPERTY_PERIOD_ADDITIONAL_VALUE"] <> '')
 			{
 				$arPeriodAdditionalTmp = Explode(",", $arElement["PROPERTY_PERIOD_ADDITIONAL_VALUE"]);
 				foreach ($arPeriodAdditionalTmp as $v)
 				{
-					$v = IntVal($v);
+					$v = intval($v);
 					if ($v >= 0)
 						$arPeriodAdditional[] = $v;
 				}
@@ -666,7 +666,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 			{
 				if ($weekTimeStart > $fromTime || $weekTimeEnd <= $fromTime)
 				{
-					$wdw = IntVal(Date("w", $fromTime));
+					$wdw = intval(Date("w", $fromTime));
 					if ($wdw == 0)
 						$wdw = 7;
 
@@ -699,7 +699,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 		}
 		elseif ($arElement["PROPERTY_PERIOD_TYPE_VALUE"] == "MONTHLY")
 		{
-			$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = IntVal($arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
+			$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = intval($arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
 			if ($arElement["PROPERTY_PERIOD_COUNT_VALUE"] <= 0)
 				$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = 1;
 
@@ -745,7 +745,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 		}
 		elseif ($arElement["PROPERTY_PERIOD_TYPE_VALUE"] == "YEARLY")
 		{
-			$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = IntVal($arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
+			$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = intval($arElement["PROPERTY_PERIOD_COUNT_VALUE"]);
 			if ($arElement["PROPERTY_PERIOD_COUNT_VALUE"] <= 0)
 				$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = 1;
 
@@ -795,17 +795,17 @@ if (StrLen($arResult["FatalError"]) <= 0)
 				|| $arElement["CREATED_BY"] == $GLOBALS["USER"]->GetID()))
 		{
 			$arElement["CLEAR_URI"] = $APPLICATION->GetCurPageParam("", array("clear_id"));
-			$arElement["CLEAR_URI"] .= (StrPos($arElement["CLEAR_URI"], "?") === false ? "?" : "&")."clear_id=".$arElement["ID"]."&".bitrix_sessid_get();
+			$arElement["CLEAR_URI"] .= (mb_strpos($arElement["CLEAR_URI"], "?") === false ? "?" : "&")."clear_id=".$arElement["ID"]."&".bitrix_sessid_get();
 		}
 
 		$arElement["VIEW_ITEM_URI"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_VIEW_ITEM"], array("meeting_id" => $arMeeting["ID"], "item_id" => $arElement["ID"]));
-		$arElement["VIEW_ITEM_URI"] .= (StrPos($arElement["VIEW_ITEM_URI"], "?") === false ? "?" : "&")."week_start=".UrlEncode($arResult["WEEK_START"]);
+		$arElement["VIEW_ITEM_URI"] .= (mb_strpos($arElement["VIEW_ITEM_URI"], "?") === false ? "?" : "&")."week_start=".UrlEncode($arResult["WEEK_START"]);
 
 		if ($GLOBALS["USER"]->IsAuthorized()
 			&& ($GLOBALS["USER"]->IsAdmin() || $arElement["CREATED_BY"] == $GLOBALS["USER"]->GetID()))
 		{
 			$arElement["EDIT_ITEM_URI"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_RESERVE_MEETING"], array("meeting_id" => $arMeeting["ID"], "item_id" => $arElement["ID"]));
-			$arElement["EDIT_ITEM_URI"] .= (StrPos($arElement["EDIT_ITEM_URI"], "?") === false ? "?" : "&")."week_start=".UrlEncode($arResult["WEEK_START"]);
+			$arElement["EDIT_ITEM_URI"] .= (mb_strpos($arElement["EDIT_ITEM_URI"], "?") === false ? "?" : "&")."week_start=".UrlEncode($arResult["WEEK_START"]);
 		}
 
 		for ($counter = 0; $counter < Count($arDates); $counter++)

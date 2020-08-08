@@ -12,7 +12,7 @@ define("US_BASE_MODULE", "controller");
 $US_LICENSE_KEY = "";
 if (file_exists($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/controller/license_key.php"))
 	include($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/controller/license_key.php");
-if ($US_LICENSE_KEY == "" || strtoupper($US_LICENSE_KEY) == "DEMO")
+if ($US_LICENSE_KEY == "" || mb_strtoupper($US_LICENSE_KEY) == "DEMO")
 	define("US_LICENSE_KEY", "DEMO");
 else
 	define("US_LICENSE_KEY", $US_LICENSE_KEY);
@@ -63,60 +63,60 @@ if ($queryType == "licence")
 elseif ($queryType == "activate")
 {
 	$name = $APPLICATION->UnJSEscape($_REQUEST["NAME"]);
-	if (strlen($name) <= 0)
+	if ($name == '')
 		$errorMessage .= GetMessage("SUPA_AERR_NAME").". ";
 
 	$email = $APPLICATION->UnJSEscape($_REQUEST["EMAIL"]);
-	if (strlen($email) <= 0)
+	if ($email == '')
 		$errorMessage .= GetMessage("SUPA_AERR_EMAIL").". ";
 	elseif (!CUpdateSystem::CheckEMail($email))
 		$errorMessage .= GetMessage("SUPA_AERR_EMAIL1").". ";
 
 	$siteUrl = $APPLICATION->UnJSEscape($_REQUEST["SITE_URL"]);
-	if (strlen($siteUrl) <= 0)
+	if ($siteUrl == '')
 		$errorMessage .= GetMessage("SUPA_AERR_URI").". ";
 
 	$phone = $APPLICATION->UnJSEscape($_REQUEST["PHONE"]);
-	if (strlen($phone) <= 0)
+	if ($phone == '')
 		$errorMessage .= GetMessage("SUPA_AERR_PHONE").". ";
 
 	$contactEMail = $APPLICATION->UnJSEscape($_REQUEST["CONTACT_EMAIL"]);
-	if (strlen($contactEMail) <= 0)
+	if ($contactEMail == '')
 		$errorMessage .= GetMessage("SUPA_AERR_CONTACT_EMAIL").". ";
 	elseif (!CUpdateSystem::CheckEMail($contactEMail))
 		$errorMessage .= GetMessage("SUPA_AERR_CONTACT_EMAIL1").". ";
 
 	$contactPerson = $APPLICATION->UnJSEscape($_REQUEST["CONTACT_PERSON"]);
-	if (strlen($contactPerson) <= 0)
+	if ($contactPerson == '')
 		$errorMessage .= GetMessage("SUPA_AERR_CONTACT_PERSON").". ";
 
 	$contactPhone = $APPLICATION->UnJSEscape($_REQUEST["CONTACT_PHONE"]);
-	if (strlen($contactPhone) <= 0)
+	if ($contactPhone == '')
 		$errorMessage .= GetMessage("SUPA_AERR_CONTACT_PHONE").". ";
 
 	$generateUser = $APPLICATION->UnJSEscape($_REQUEST["GENERATE_USER"]);
 	if ($generateUser == "Y")
 	{
 		$userName = $APPLICATION->UnJSEscape($_REQUEST["USER_NAME"]);
-		if (strlen($userName) <= 0)
+		if ($userName == '')
 			$errorMessage .= GetMessage("SUPA_AERR_FNAME").". ";
 		$userLastName = $APPLICATION->UnJSEscape($_REQUEST["USER_LAST_NAME"]);
-		if (strlen($userLastName) <= 0)
+		if ($userLastName == '')
 			$errorMessage .= GetMessage("SUPA_AERR_LNAME").". ";
 		$userLogin = $APPLICATION->UnJSEscape($_REQUEST["USER_LOGIN"]);
-		if (strlen($userLogin) <= 0)
+		if ($userLogin == '')
 			$errorMessage .= GetMessage("SUPA_AERR_LOGIN").". ";
-		elseif (strlen($userLogin) < 3)
+		elseif (mb_strlen($userLogin) < 3)
 			$errorMessage .= GetMessage("SUPA_AERR_LOGIN1").". ";
 		$userPassword = $APPLICATION->UnJSEscape($_REQUEST["USER_PASSWORD"]);
 		$userPasswordConfirm = $APPLICATION->UnJSEscape($_REQUEST["USER_PASSWORD_CONFIRM"]);
-		if (strlen($userPassword) <= 0)
+		if ($userPassword == '')
 			$errorMessage .= GetMessage("SUPA_AERR_PASSW").". ";
 		if ($userPassword != $userPasswordConfirm)
 			$errorMessage .= GetMessage("SUPA_AERR_PASSW_CONF").". ";
 	}
 
-	if (strlen($errorMessage) <= 0)
+	if ($errorMessage == '')
 	{
 		$contactInfo = $APPLICATION->UnJSEscape($_REQUEST["CONTACT_INFO"]);
 
@@ -138,7 +138,7 @@ elseif ($queryType == "activate")
 		CUpdateClient::ActivateLicenseKey($arFields, $errorMessage, LANG, $stableVersionsOnly);
 	}
 
-	if (StrLen($errorMessage) <= 0)
+	if ($errorMessage == '')
 	{
 		CUpdateClient::AddMessage2Log("Licence activated", "UPD_SUCCESS");
 		echo "Y";
@@ -153,18 +153,18 @@ elseif ($queryType == "key")
 {
 	$newLicenseKey = $APPLICATION->UnJSEscape($_REQUEST["NEW_LICENSE_KEY"]);
 
-	if (strlen($newLicenseKey) <= 0)
+	if ($newLicenseKey == '')
 		$errorMessage .= "[PULK01] ".GetMessage("SUP_ENTER_KEY").". ";
-	elseif (strtolower($newLicenseKey) == "demo")
+	elseif (mb_strtolower($newLicenseKey) == "demo")
 		$errorMessage .= "[PULK02] ".GetMessage("SUP_ENTER_CORRECT_KEY").". ";
 
-	if (strlen($errorMessage) <= 0)
+	if ($errorMessage == '')
 	{
 		if (!($fp = fopen($_SERVER["DOCUMENT_ROOT"]."/bitrix/license_key.php", "w")))
 			$errorMessage .= "[PULK03] ".GetMessage("SUP_CANT_OPEN_FILE").". ";
 	}
 
-	if (strlen($errorMessage) <= 0)
+	if ($errorMessage == '')
 	{
 		fputs($fp, "<"."? \$"."LICENSE_KEY = \"".addslashes($NEW_LICENSE_KEY)."\"; ?".">");
 		fclose($fp);
@@ -205,7 +205,7 @@ elseif ($queryType == "sources")
 		CUpdateClient::AddMessage2Log(GetMessage("SUPA_ASE_NO_LIST"), "CL00");
 	}
 
-	if (StrLen($errorMessage) <= 0)
+	if ($errorMessage == '')
 	{
 		if (!CUpdateClient::GetPHPSources($errorMessage, LANG, $stableVersionsOnly, $arRequestedModules))
 		{
@@ -214,7 +214,7 @@ elseif ($queryType == "sources")
 		}
 	}
 
-	if (StrLen($errorMessage) <= 0)
+	if ($errorMessage == '')
 	{
 		$temporaryUpdatesDir = "";
 		if (!CUpdateClient::UnGzipArchive($temporaryUpdatesDir, $errorMessage, true))
@@ -224,7 +224,7 @@ elseif ($queryType == "sources")
 		}
 	}
 
-	if (strlen($errorMessage) <= 0)
+	if ($errorMessage == '')
 	{
 		if (!CUpdateClient::CheckUpdatability($temporaryUpdatesDir, $errorMessage))
 		{
@@ -234,12 +234,12 @@ elseif ($queryType == "sources")
 	}
 
 	$arStepUpdateInfo = array();
-	if (strlen($errorMessage) <= 0)
+	if ($errorMessage == '')
 	{
 		$arStepUpdateInfo = CUpdateClient::GetStepUpdateInfo($temporaryUpdatesDir, $errorMessage);
 	}
 
-	if (StrLen($errorMessage) <= 0)
+	if ($errorMessage == '')
 	{
 		if (isset($arStepUpdateInfo["DATA"]["#"]["ERROR"]))
 		{
@@ -249,7 +249,7 @@ elseif ($queryType == "sources")
 	}
 
 	$arItemsUpdated = array();
-	if (StrLen($errorMessage) <= 0)
+	if ($errorMessage == '')
 	{
 		if (isset($arStepUpdateInfo["DATA"]["#"]["ITEM"]))
 		{
@@ -258,7 +258,7 @@ elseif ($queryType == "sources")
 		}
 	}
 
-	if (StrLen($errorMessage) <= 0)
+	if ($errorMessage == '')
 	{
 		if (isset($arStepUpdateInfo["DATA"]["#"]["NOUPDATES"]))
 		{
@@ -268,7 +268,7 @@ elseif ($queryType == "sources")
 		}
 		else
 		{
-			if (strlen($errorMessage) <= 0)
+			if ($errorMessage == '')
 			{
 				if (!CUpdateClient::UpdateStepModules($temporaryUpdatesDir, $errorMessage))
 				{
@@ -277,7 +277,7 @@ elseif ($queryType == "sources")
 				}
 			}
 
-			if (StrLen($errorMessage) > 0)
+			if ($errorMessage <> '')
 			{
 				CUpdateClient::AddMessage2Log("Error: ".$errorMessage, "UPD_ERROR");
 				echo "ERR".$errorMessage;
@@ -289,8 +289,8 @@ elseif ($queryType == "sources")
 				$bFirst = True;
 				foreach ($arItemsUpdated as $key => $value)
 				{
-					CUpdateClient::AddMessage2Log("Sources loaded: ".$key.((StrLen($value) > 0) ? "(".$value.")" : ""), "UPD_SUCCESS");
-					echo ($bFirst ? "" : ", ").$key.((StrLen($value) > 0) ? "(".$value.")" : "");
+					CUpdateClient::AddMessage2Log("Sources loaded: ".$key.(($value <> '') ? "(".$value.")" : ""), "UPD_SUCCESS");
+					echo ($bFirst ? "" : ", ").$key.(($value <> '') ? "(".$value.")" : "");
 					$bFirst = False;
 				}
 			}
@@ -304,13 +304,13 @@ elseif ($queryType == "sources")
 }
 elseif ($queryType == "updateupdate")
 {
-	if (StrLen($errorMessage) <= 0)
+	if ($errorMessage == '')
 	{
 		if (!CUpdateClient::UpdateUpdate($errorMessage, LANG, $stableVersionsOnly))
 			$errorMessage .= GetMessage("SUPA_AUE_UPD").". ";
 	}
 
-	if (StrLen($errorMessage) <= 0)
+	if ($errorMessage == '')
 	{
 		CUpdateClient::AddMessage2Log("Update system updated", "UPD_SUCCESS");
 		echo "Y";
@@ -324,16 +324,16 @@ elseif ($queryType == "updateupdate")
 elseif ($queryType == "coupon")
 {
 	$coupon = $APPLICATION->UnJSEscape($_REQUEST["COUPON"]);
-	if (StrLen($coupon) <= 0)
+	if ($coupon == '')
 		$errorMessage .= GetMessage("SUPA_ACE_CPN").". ";
 
-	if (StrLen($errorMessage) <= 0)
+	if ($errorMessage == '')
 	{
 		if (!CUpdateClient::ActivateCoupon($coupon, $errorMessage, LANG, $stableVersionsOnly))
 			$errorMessage .= GetMessage("SUPA_ACE_ACT").". ";
 	}
 
-	if (StrLen($errorMessage) <= 0)
+	if ($errorMessage == '')
 	{
 		CUpdateClient::AddMessage2Log("Coupon activated", "UPD_SUCCESS");
 		echo "Y";
@@ -350,10 +350,10 @@ elseif ($queryType == "stability")
 	if (!in_array($stability, array("Y", "N")))
 		$errorMessage .= GetMessage("SUPA_ASTE_FLAG").". ";
 
-	if (StrLen($errorMessage) <= 0)
+	if ($errorMessage == '')
 		COption::SetOptionString(US_BASE_MODULE, "stable_versions_only", (($stability == "Y") ? "N" : "Y"));
 
-	if (StrLen($errorMessage) <= 0)
+	if ($errorMessage == '')
 		echo "Y";
 	else
 		echo $errorMessage;
@@ -361,16 +361,16 @@ elseif ($queryType == "stability")
 elseif ($queryType == "mail")
 {
 	$email = $APPLICATION->UnJSEscape($_REQUEST["EMAIL"]);
-	if (StrLen($email) <= 0)
+	if ($email == '')
 		$errorMessage .= GetMessage("SUPA_AME_EMAIL").". ";
 
-	if (StrLen($errorMessage) <= 0)
+	if ($errorMessage == '')
 	{
 		if (!CUpdateClient::SubscribeMail($email, $errorMessage, LANG, $stableVersionsOnly))
 			$errorMessage .= GetMessage("SUPA_AME_SUBSCR").". ";
 	}
 
-	if (StrLen($errorMessage) <= 0)
+	if ($errorMessage == '')
 		echo "Y";
 	else
 		echo $errorMessage;

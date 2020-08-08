@@ -14,7 +14,7 @@ if(CModule::IncludeModule('crm'))
 
 	$errorOccured = false;
 
-	$exportType = isset($_REQUEST['type']) ? strtolower($_REQUEST['type']) : '';
+	$exportType = isset($_REQUEST['type'])? mb_strtolower($_REQUEST['type']) : '';
 	if($exportType === 'csv' || $exportType === 'excel')
 	{
 		if ($exportType === 'csv')
@@ -79,7 +79,7 @@ if(CModule::IncludeModule('crm'))
 		$bom = '';
 		if (defined('BX_UTF') && BX_UTF)
 			$bom = chr(239).chr(187).chr(191);
-		$fileSize = strlen($errMsg) + strlen($bom);
+		$fileSize = mb_strlen($errMsg) + mb_strlen($bom);
 
 		while (ob_get_level() > 0)
 		{

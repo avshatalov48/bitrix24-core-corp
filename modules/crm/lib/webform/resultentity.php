@@ -25,6 +25,8 @@ use Bitrix\Crm\Integration\Channel\WebFormTracker;
 use Bitrix\Main\UserConsent\Consent;
 use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\Tracking;
+use Bitrix\SalesCenter;
+use Bitrix\Salescenter\Builder\OrderBuilder;
 
 Loc::loadMessages(__FILE__);
 
@@ -65,6 +67,7 @@ class ResultEntity
 	protected $leadId = null;
 	protected $quoteId = null;
 	protected $invoiceId = null;
+	protected $orderId = null;
 
 	protected $resultEntityPack = array();
 
@@ -221,6 +224,15 @@ class ResultEntity
 	public function getInvoiceId()
 	{
 		return $this->invoiceId;
+	}
+
+	/*
+	 * Return ID of order
+	 * @return int|null
+	 */
+	public function getOrderId()
+	{
+		return $this->orderId;
 	}
 
 	/*
@@ -549,7 +561,7 @@ class ResultEntity
 						'ENTITY_NAME' => \CCrmOwnerType::resolveName($complex->getTypeId()),
 						'ITEM_ID' => $complex->getId(),
 						'IS_DUPLICATE' => false,
-						'IS_AUTOMAION_RUN' => false,
+						'IS_AUTOMATION_RUN' => false,
 					];
 				}
 			}
@@ -560,14 +572,11 @@ class ResultEntity
 				!$isEntityAdded
 				&& $this->duplicateMode === self::DUPLICATE_CONTROL_MODE_REPLACE
 				&& $entityName === \CCrmOwnerType::LeadName
-				&& isset($entityFields['STATUS_ID'])
 			)
 			{
 				$previousFields = $entityClassName::GetByID($id, false);
-				if ($previousFields['STATUS_ID'] === $entityFields['STATUS_ID'])
-				{
-					Automation\Factory::runOnStatusChanged(\CCrmOwnerType::ResolveID($entityName), $id);
-				}
+				$starter = new Automation\Starter(\CCrmOwnerType::ResolveID($entityName), $id);
+				$starter->runOnUpdate($entityFields, $previousFields);
 			}
 		}
 
@@ -735,8 +744,114 @@ class ResultEntity
 		return $this->getInvoiceSettingsPayer() == self::INVOICE_PAYER_CONTACT;
 	}
 
+	protected function addOrder()
+	{
+		if ($this->dealId)
+		{
+			$ownerTypeId = \CCrmOwnerType::Deal;
+			$ownerId = $this->dealId;
+		}
+		elseif ($this->leadId)
+		{
+			$ownerTypeId = \CCrmOwnerType::Lead;
+			$ownerId = $this->leadId;
+		}
+		elseif ($this->contactId)
+		{
+			$ownerTypeId = \CCrmOwnerType::Contact;
+			$ownerId = $this->contactId;
+		}
+		elseif ($this->companyId)
+		{
+			$ownerTypeId = \CCrmOwnerType::Company;
+			$ownerId = $this->companyId;
+		}
+		else
+		{
+			return;
+		}
+
+		$orderFacade = (new SalesCenter\OrderFacade())
+			->setResponsibleId($this->assignedById)
+			->setClientByCrmOwner($ownerTypeId, $ownerId)
+		;
+
+		foreach ($this->getProductRows() as $row)
+		{
+			$product = $this->getBasketItemById($row['PRODUCT_ID'], [
+				'name' => $row['PRODUCT_NAME'],
+				'price' => $row['PRICE'],
+				'quantity' => $row['QUANTITY'] ?? 1,
+			]);
+
+			$orderFacade->addProduct($product);
+		}
+
+		$order = $orderFacade->saveOrder();
+		if ($orderFacade->hasErrors())
+		{
+			return;
+		}
+
+		$this->orderId = $order->getId();
+		$this->resultEntityPack[] = [
+			'RESULT_ID' => $this->resultId,
+			'ENTITY_NAME' => \CCrmOwnerType::OrderName,
+			'ITEM_ID' => $this->orderId,
+			'IS_DUPLICATE' => false,
+			'IS_AUTOMATION_RUN' => false,
+		];
+	}
+	public function getBasketItemById($productId, array $options = [])
+	{
+		$measure = null;
+		$product = null;
+		if ($productId)
+		{
+			$product = \CCrmProduct::getByID($productId);
+			if (!$product)
+			{
+				$productId = 0;
+			}
+			$measure = \Bitrix\Crm\Measure::getProductMeasures($productId);
+			if ($measure)
+			{
+				$measure = $measure[$productId][0];
+			}
+		}
+
+		if (!$productId)
+		{
+			$measure = \Bitrix\Crm\Measure::getDefaultMeasure();
+		}
+
+		if (!$measure)
+		{
+			$measure = \Bitrix\Crm\Measure::getDefaultMeasure();
+		}
+
+		return [
+			'productId' => $productId,
+			'sort' => $product['SORT'] ?? 100,
+			'module' => $productId ? 'catalog' : '',
+			'quantity' => $options['quantity'] ?? 1,
+			'isCustomPrice' => 'Y',
+			'name' => $options['name'] ?? $product['NAME'],
+			'basePrice' => $options['price'] ?? $product['PRICE'],
+			'price' => $options['price'] ?? $product['PRICE'],
+			'measureName' => $measure['SYMBOL'],
+			'measureCode' => $measure['CODE']
+		];
+	}
+
 	protected function addInvoice($params = array())
 	{
+		if (Manager::isOrdersAvailable())
+		{
+			$this->addOrder();
+			return;
+		}
+
 		if(!isset($params['FIELDS']))
 		{
 			$params['FIELDS'] = array();
@@ -817,19 +932,37 @@ class ResultEntity
 
 	protected function addConsent()
 	{
-		if ($this->formData['USE_LICENCE'] != 'Y' || !$this->formData['AGREEMENT_ID'])
+		if ($this->formData['USE_LICENCE'] != 'Y')
 		{
 			return;
 		}
 
-		Consent::addByContext(
-			$this->formData['AGREEMENT_ID'],
-			CrmIntegrationUserConsent::PROVIDER_CODE,
-			$this->activityId,
-			[
-				'URL' => $this->trace->getUrl()
-			]
-		);
+		$agreements = [];
+		if ($this->formData['AGREEMENT_ID'])
+		{
+			$agreements[] = $this->formData['AGREEMENT_ID'];
+		}
+
+		$rows = Internals\AgreementTable::getList([
+			'select' => ['AGREEMENT_ID'],
+			'filter' => ['=FORM_ID' => $this->formData['ID']]
+		]);
+		foreach ($rows as $row)
+		{
+			$agreements[] = $row['AGREEMENT_ID'];
+		}
+
+		foreach ($agreements as $agreementId)
+		{
+			Consent::addByContext(
+				$agreementId,
+				CrmIntegrationUserConsent::PROVIDER_CODE,
+				$this->activityId,
+				[
+					'URL' => $this->trace->getUrl()
+				]
+			);
+		}
 	}
 
 	protected function performTrace()
@@ -846,9 +979,21 @@ class ResultEntity
 		}
 		else
 		{
-			$string = isset($this->commonData['TRACE']) ? $this->commonData['TRACE'] : null;
-			$trace = Tracking\Trace::create($string);
-			if (!$trace->getUrl() && !empty($this->placeholders['from_url']))
+			$trace = isset($this->commonData['TRACE']) ? $this->commonData['TRACE'] : null;
+			if (!($trace instanceof Tracking\Trace))
+			{
+				$trace = Tracking\Trace::create($trace);
+			}
+			if ($trace->getUrl())
+			{
+				$this->placeholders['from_url'] = $trace->getUrl();
+				$uri = new Main\Web\Uri($trace->getUrl());
+				$this->placeholders['from_domain'] = $uri->getHost();
+				$uriParameters = [];
+				parse_str($uri->getQuery(), $uriParameters);
+				$this->placeholders += $uriParameters;
+			}
+			elseif(!empty($this->placeholders['from_url']))
 			{
 				$trace->setUrl($this->placeholders['from_url']);
 			}
@@ -1048,7 +1193,7 @@ class ResultEntity
 				$url = "/crm/activity/?open_view=#log_id#";
 				$url = str_replace(array("#log_id#"), array($id), $url);
 				$serverName = (Context::getCurrent()->getRequest()->isHttps() ? "https" : "http") . "://";
-				if(defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0)
+				if(defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '')
 				{
 					$serverName .= SITE_SERVER_NAME;
 				}
@@ -1119,7 +1264,8 @@ class ResultEntity
 
 			if($isEntityAdded && empty($entity['IS_AUTOMATION_RUN']))
 			{
-				Automation\Factory::runOnAdd(\CCrmOwnerType::ResolveID($entityTypeName), $entityId);
+				$starter = new Automation\Starter(\CCrmOwnerType::ResolveID($entityTypeName), $entityId);
+				$starter->runOnAdd();
 			}
 
 			$bindings[] = array(

@@ -9,7 +9,7 @@
 
 // TODO change BX.RestClient, BX.promise to import
 
-import {Utils} from "im.utils";
+import {Utils} from "im.lib.utils";
 import {RestAuth, RestMethod} from "../const";
 import {RestClient} from "rest.client";
 
@@ -80,6 +80,7 @@ export class WidgetRestClient
 
 		const promise = new BX.Promise();
 
+		// TODO: Callbacks methods will not work!
 		this.restClient.callMethod(method, params, null, sendCallback, logTag).then(result => {
 
 			this.queryAuthRestore = false;

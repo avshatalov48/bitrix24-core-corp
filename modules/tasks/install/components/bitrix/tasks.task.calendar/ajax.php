@@ -15,7 +15,7 @@ class TasksTaskCalendarAjaxController extends \Bitrix\Main\Engine\Controller
 		$taskId = intval($taskId);
 		$result = false;
 		$task = \CTaskItem::getInstance($taskId, $this->getCurrentUser()->getId());
-		if ($task->isActionAllowed(\CTaskItem::ACTION_CHANGE_DEADLINE))
+		if ($task->checkAccess(\Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_DEADLINE))
 		{
 			$result = $task->update(['DEADLINE' => $deadline]);
 		}

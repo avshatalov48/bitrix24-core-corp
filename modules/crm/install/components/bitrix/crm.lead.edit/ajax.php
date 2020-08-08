@@ -53,7 +53,7 @@ $action = isset($_POST['ACTION']) ? $_POST['ACTION'] : '';
 if($action === 'ENABLE_SONET_SUBSCRIPTION')
 {
 	$userID = CCrmSecurityHelper::GetCurrentUserID();
-	$entityTypeName = isset($_POST['ENTITY_TYPE']) ? strtoupper($_POST['ENTITY_TYPE']) : '';
+	$entityTypeName = isset($_POST['ENTITY_TYPE'])? mb_strtoupper($_POST['ENTITY_TYPE']) : '';
 	$entityID = isset($_POST['ENTITY_ID']) ? intval($_POST['ENTITY_ID']) : 0;
 	if($userID > 0 && $entityTypeName === CCrmOwnerType::LeadName && $entityID > 0 && CCrmLead::CheckReadPermission($entityID))
 	{
@@ -65,7 +65,7 @@ if($action === 'ENABLE_SONET_SUBSCRIPTION')
 			$userID
 		);
 
-		$enable = isset($_POST['ENABLE']) && strtoupper($_POST['ENABLE']) === 'Y' ;
+		$enable = isset($_POST['ENABLE']) && mb_strtoupper($_POST['ENABLE']) === 'Y' ;
 
 		if($isEnabled !== $enable)
 		{

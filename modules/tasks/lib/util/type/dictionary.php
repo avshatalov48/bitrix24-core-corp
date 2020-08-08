@@ -74,7 +74,7 @@ abstract class Dictionary implements \IteratorAggregate, \ArrayAccess, \Countabl
 	 * Returns instance field. If none was loaded before, upload it.
 	 *
 	 * @param string $offset
-	 * @return string | null
+	 * @return mixed
 	 */
 	public function offsetGet($offset)
 	{

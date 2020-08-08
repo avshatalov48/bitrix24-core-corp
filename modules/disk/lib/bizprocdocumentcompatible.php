@@ -156,7 +156,7 @@ class BizProcDocumentCompatible extends BizProcDocument
 			$fieldTitle = trim($userField['EDIT_FORM_LABEL']) !== '' ? $userField['EDIT_FORM_LABEL'] : $userField['FIELD_NAME'];
 
 			//this means uf converted from iblock property (webdav)
-			if(strpos($userField['XML_ID'], 'PROPERTY_') === 0)
+			if(mb_strpos($userField['XML_ID'], 'PROPERTY_') === 0)
 			{
 				$fields[$userField['XML_ID']] = array(
 					'Name' => $fieldTitle,

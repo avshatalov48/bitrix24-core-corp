@@ -85,7 +85,7 @@ if($arResult['CURRENT_USER_ID'] > 0)
 }
 
 $arResult['GADGET'] = 'N';
-if (isset($arParams['GADGET_ID']) && strlen($arParams['GADGET_ID']) > 0)
+if (isset($arParams['GADGET_ID']) && $arParams['GADGET_ID'] <> '')
 	$arResult['GADGET'] = 'Y';
 
 //Change of funnel type -->
@@ -93,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() && $arResult['
 {
 	if(isset($_POST['FUNNEL_TYPE']) && $arParams['ALLOW_FUNNEL_TYPE_CHANGE'] === 'Y')
 	{
-		$funnelType = strtoupper($_POST['FUNNEL_TYPE']);
+		$funnelType = mb_strtoupper($_POST['FUNNEL_TYPE']);
 		if($funnelType !== $userFunnelType && ($funnelType === 'CLASSICAL' || $funnelType === 'CUMULATIVE'))
 		{
 			CUserOptions::SetOption('crm.deal.funnel', 'funnel_type', $funnelType, false, $arResult['CURRENT_USER_ID']);
@@ -258,7 +258,7 @@ if (isset($arFilter['FIND_list']) && !empty($arFilter['FIND']))
 		$arFilter['LOGIC'] = 'OR';
 	}
 	else
-		$arFilter[strtoupper($arFilter['FIND_list'])] = $arFilter['FIND'];
+		$arFilter[mb_strtoupper($arFilter['FIND_list'])] = $arFilter['FIND'];
 	unset($arFilter['FIND_list'], $arFilter['FIND']);
 }
 
@@ -308,7 +308,7 @@ foreach ($arFilter as $k => $v)
 		}
 		unset($arFilter[$k]);
 	}
-	else if (strpos($k, 'UF_') !== 0 && $k != 'LOGIC')
+	else if (mb_strpos($k, 'UF_') !== 0 && $k != 'LOGIC')
 	{
 		$arFilter['%'.$k] = $v;
 		unset($arFilter[$k]);

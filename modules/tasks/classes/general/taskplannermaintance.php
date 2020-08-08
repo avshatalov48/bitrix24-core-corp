@@ -247,7 +247,7 @@ class CTaskPlannerMaintance
 		if (!is_array($arTasks))
 			$arTasks = array();
 
-		if (strlen($arActions['name']) > 0)
+		if ($arActions['name'] <> '')
 		{
 			$ID = false;
 			try
@@ -325,7 +325,7 @@ class CTaskPlannerMaintance
 	{
 		$res = null;
 
-		if  (!is_array($arIDs) && strlen($arIDs) > 0)
+		if  (!is_array($arIDs) && $arIDs <> '')
 		{
 			$arIDs = unserialize($arIDs);
 		}

@@ -140,9 +140,8 @@ class DealScoring extends Base
 
 	public function getTrainingSet($fromId, $limit)
 	{
-		$deals = [];
 		$categoryId = static::getModelCategory($this->name);
-		$cursor = DealTable::getList([
+		$rows = DealTable::getList([
 			"select" => ["ID"],
 			"filter" => [
 				"=STAGE_SEMANTIC_ID" => ["S", "F"],
@@ -159,21 +158,9 @@ class DealScoring extends Base
 			],
 			"limit" => $limit,
 			"order" => ["ID" => "asc"]
-		]);
+		])->fetchAll();
 
-		while ($row = $cursor->fetch())
-		{
-			$deals[] = $row["ID"];
-		}
-
-		$result = [];
-
-		foreach ($deals as $dealId)
-		{
-			$result[] = $this->buildFeaturesVector($dealId);
-		}
-
-		return $result;
+		return array_column($rows, "ID");
 	}
 
 	public function getPredictionSet($fromId, $limit)
@@ -375,9 +362,9 @@ class DealScoring extends Base
 		{
 			return 0;
 		}
-		else if(strpos($modelName, "CRM_DEAL_CATEGORY_") !== false)
+		else if(mb_strpos($modelName, "CRM_DEAL_CATEGORY_") !== false)
 		{
-			return (int)substr($modelName, 18);
+			return (int)mb_substr($modelName, 18);
 		}
 		else {
 			throw new ArgumentException("Unknown model name $modelName");

@@ -18,7 +18,7 @@ if (!function_exists('__format_user4search'))
 		if ($rUser && $arUser =$rUser->Fetch())
 		{
 			$userName = CUser::FormatName($nameTemplate.' [#ID#]', $arUser);
-			if (!(strlen($arUser['NAME'])>0 || strlen($arUser['LAST_NAME'])>0))
+			if (!($arUser['NAME'] <> '' || $arUser['LAST_NAME'] <> ''))
 			{
 				$userName .= ' ['.$arUser['ID'].']';
 			}
@@ -40,9 +40,9 @@ function CrmClearMenuCache()
 
 function CrmCheckPath($path_name, $param_path, $def_path)
 {
-	if (strlen($param_path) <= 0 && strlen(COption::GetOptionString('crm', strtolower($path_name))) > 0)
-		$path_value = htmlspecialcharsbx(COption::GetOptionString('crm', strtolower($path_name)));
-	else if (strlen($param_path) <= 0)
+	if ($param_path == '' && COption::GetOptionString('crm', mb_strtolower($path_name)) <> '')
+		$path_value = htmlspecialcharsbx(COption::GetOptionString('crm', mb_strtolower($path_name)));
+	else if ($param_path == '')
 		$path_value = htmlspecialcharsbx($def_path);
 	else
 		$path_value = $param_path;

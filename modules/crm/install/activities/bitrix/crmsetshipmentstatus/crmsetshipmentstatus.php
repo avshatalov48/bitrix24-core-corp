@@ -99,7 +99,8 @@ class CBPCrmSetShipmentStatus
 				'FieldName' => 'target_status',
 				'Type' => 'select',
 				'Required' => true,
-				'Options' => \Bitrix\Crm\Order\DeliveryStatus::getAllStatusesNames()
+				'Options' => \Bitrix\Crm\Order\DeliveryStatus::getAllStatusesNames(),
+				'Default' => 'DF'
 			]
 		]);
 
@@ -112,8 +113,8 @@ class CBPCrmSetShipmentStatus
 			'TargetStatus' => $arCurrentValues['target_status'],
 		);
 
-		$errors = self::ValidateProperties($properties, new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));
-		if (count($errors) > 0)
+		$arErrors = self::ValidateProperties($properties, new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));
+		if (count($arErrors) > 0)
 		{
 			return false;
 		}

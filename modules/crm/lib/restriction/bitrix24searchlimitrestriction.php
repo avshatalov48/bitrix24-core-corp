@@ -54,7 +54,7 @@ class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 		}
 		elseif($entityTypeID === \CCrmOwnerType::Order)
 		{
-			$count = \Bitrix\Crm\Order\Order::countTotal();
+			$count = \Bitrix\Crm\Order\Manager::countTotal();
 		}
 		else
 		{

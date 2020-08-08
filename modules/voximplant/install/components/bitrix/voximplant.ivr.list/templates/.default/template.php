@@ -1,7 +1,6 @@
 <?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
-\Bitrix\Voximplant\Ui\Helper::initLicensePopups();
 CJSCore::Init(["voximplant.common", "sidepanel"]);
 
 $isBitrix24Template = (SITE_TEMPLATE_ID == "bitrix24");
@@ -24,6 +23,8 @@ if($isBitrix24Template)
 {
 	$this->EndViewTarget();
 }
+
+$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 
 $APPLICATION->IncludeComponent(
 	"bitrix:main.ui.grid",

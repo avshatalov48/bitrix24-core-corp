@@ -218,7 +218,7 @@ if($mode === 'GET_FORMATTED_SUM')
 		)
 	);
 }
-$type = isset($_POST['OWNER_TYPE']) ? strtoupper($_POST['OWNER_TYPE']) : '';
+$type = isset($_POST['OWNER_TYPE'])? mb_strtoupper($_POST['OWNER_TYPE']) : '';
 if($type !== 'I')
 {
 	__CrmInvoiceShowEndJsonResonse(array('ERROR'=>'OWNER_TYPE IS NOT SUPPORTED!'));

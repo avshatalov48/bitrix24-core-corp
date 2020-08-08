@@ -223,7 +223,7 @@ class CCrmFieldMulti
 	{
 		$err_mess = (self::err_mess()).'<br>Function: DeleteByElement<br>Line: ';
 
-		$elementId = IntVal($elementId);
+		$elementId = intval($elementId);
 
 		if ($entityId == '' || $elementId == 0)
 			return false;
@@ -358,7 +358,7 @@ class CCrmFieldMulti
 			{
 				$currentValue = isset($arValue['VALUE']) ? trim($arValue['VALUE']) : '';
 				$currentValueType = isset($arValue['VALUE_TYPE']) ? trim($arValue['VALUE_TYPE']) : '';
-				if(substr($id, 0, 1) === 'n' && $currentValue !== '')
+				if(mb_substr($id, 0, 1) === 'n' && $currentValue !== '')
 				{
 					$addItems[] = array(
 						'ENTITY_ID' => $entityId,
@@ -424,20 +424,34 @@ class CCrmFieldMulti
 		$sOrder = '';
 		foreach ($arSort as $key=>$val)
 		{
-			$ord = (strtoupper($val) <> 'ASC' ? 'DESC' : 'ASC');
-			switch (strtoupper($key))
+			$ord = (mb_strtoupper($val) <> 'ASC' ? 'DESC' : 'ASC');
+			switch(mb_strtoupper($key))
 			{
-				case 'ID':		$sOrder .= ', CFM.ID '.$ord; break;
-				case 'ENTITY_ID':	$sOrder .= ', CFM.ENTITY_ID '.$ord; break;
-				case 'ELEMENT_ID':	$sOrder .= ', CFM.ELEMENT_ID '.$ord; break;
-				case 'TYPE_ID':	$sOrder .= ', CFM.TYPE_ID '.$ord; break;
-				case 'VALUE_TYPE':	$sOrder .= ', CFM.VALUE_TYPE '.$ord; break;
-				case 'COMPLEX_ID':	$sOrder .= ', CFM.COMPLEX_ID '.$ord; break;
-				case 'VALUE':	$sOrder .= ', CFM.VALUE '.$ord; break;
+				case 'ID':
+					$sOrder .= ', CFM.ID '.$ord;
+					break;
+				case 'ENTITY_ID':
+					$sOrder .= ', CFM.ENTITY_ID '.$ord;
+					break;
+				case 'ELEMENT_ID':
+					$sOrder .= ', CFM.ELEMENT_ID '.$ord;
+					break;
+				case 'TYPE_ID':
+					$sOrder .= ', CFM.TYPE_ID '.$ord;
+					break;
+				case 'VALUE_TYPE':
+					$sOrder .= ', CFM.VALUE_TYPE '.$ord;
+					break;
+				case 'COMPLEX_ID':
+					$sOrder .= ', CFM.COMPLEX_ID '.$ord;
+					break;
+				case 'VALUE':
+					$sOrder .= ', CFM.VALUE '.$ord;
+					break;
 			}
 		}
 
-		if (strlen($sOrder)<=0)
+		if ($sOrder == '')
 			$sOrder = 'CFM.ID DESC';
 
 		$strSqlOrder = ' ORDER BY '.TrimEx($sOrder,",");
@@ -551,10 +565,10 @@ class CCrmFieldMulti
 		{
 			$val = $arFilter[$filter_keys[$i]];
 
-			if (!is_array($val) && strlen($val)<=0 || $val=="NOT_REF")
+			if (!is_array($val) && $val == '' || $val=="NOT_REF")
 				continue;
 
-			$key = strtoupper($filter_keys[$i]);
+			$key = mb_strtoupper($filter_keys[$i]);
 			$operationInfo = CSqlUtil::GetFilterOperation($key);
 			$operation = $operationInfo['OPERATION'];
 			// Process only like operation
@@ -603,7 +617,7 @@ class CCrmFieldMulti
 
 							$valueTypeFilter .= "'{$v}'";
 						}
-						
+
 						if ($valueTypeFilter !== '')
 						{
 							$arSqlSearch[] = "CFM.VALUE_TYPE IN ({$valueTypeFilter})";
@@ -675,7 +689,11 @@ class CCrmFieldMulti
 				}
 
 				$arData = explode(';', $arFields[$key]);
-				if (($entityId == 'EMAIL' || $entityId == 'PHONE') && count($arData) == 1)
+				if (
+					in_array($entityId, ['EMAIL', 'PHONE','WEB'])
+					&&
+					count($arData) == 1
+				)
 				{
 					$arData = explode(',', $arFields[$key]);
 					if ($entityId == 'EMAIL' && count($arData) == 1)
@@ -924,22 +942,22 @@ class CCrmFieldMulti
 
 		$valuer = $value;
 		$valueUrl = $value;
-		if (strpos($complexName, 'PHONE_') === 0)
+		if (mb_strpos($complexName, 'PHONE_') === 0)
 		{
 			$valuer = preg_replace('/[^+0-9]/', '', $valuer);
 		}
-		if (strpos($complexName, 'EMAIL_') === 0)
+		if (mb_strpos($complexName, 'EMAIL_') === 0)
 		{
-			$crmEmail = strtolower(trim(COption::GetOptionString('crm', 'mail', '')));
+			$crmEmail = mb_strtolower(trim(COption::GetOptionString('crm', 'mail', '')));
 			if($crmEmail !== '')
 			{
 				$valueUrl .= '?cc='.urlencode($crmEmail);
 			}
 		}
 
-		else if ($pos = strpos($value, '://'))
+		else if ($pos = mb_strpos($value, '://'))
 		{
-			$value_tmp = substr($value, $pos + 3);
+			$value_tmp = mb_substr($value, $pos + 3);
 			return str_replace(array('#VALUE#', '#VALUE_HTML#', '#VALUE_URL#'), array($value_tmp, htmlspecialcharsbx($value_tmp), htmlspecialcharsbx($valueUrl)), '<a href="#VALUE_URL#" target="_blank">#VALUE_HTML#</a>');
 		}
 
@@ -962,7 +980,7 @@ class CCrmFieldMulti
 			$fieldName = self::GetEntityNameByComplex($arFields['TYPE_ID'].'_'.$arFields['VALUE_TYPE']);
 			if (is_set($arFields, 'VALUE') && trim($arFields['VALUE']) == '')
 				$aMsg[] = array('id'=>'VALUE', 'text'=>GetMessage('CRM_MF_ERR_VALUE', array('#FIELD_NAME#' => $fieldName)));
-			if (is_set($arFields, 'VALUE') && strlen($arFields['VALUE']) > 250)
+			if (is_set($arFields, 'VALUE') && mb_strlen($arFields['VALUE']) > 250)
 				$aMsg[] = array('id'=>'VALUE', 'text'=>GetMessage('CRM_MF_ERR_VALUE_STRLEN', array('#FIELD_NAME#' => $fieldName)));
 			if (is_set($arFields, 'TYPE_ID') && trim($arFields['TYPE_ID']) == '')
 				$aMsg[] = array('id'=>'TYPE_ID', 'text'=>GetMessage('CRM_MF_ERR_TYPE_ID', array('#FIELD_NAME#' => $fieldName)));
@@ -991,13 +1009,13 @@ class CCrmFieldMulti
 			foreach($ar as $fieldId => $arValue)
 			{
 				$fieldName = self::GetEntityNameByComplex($fieldType.'_'.$arValue['VALUE_TYPE']);
-				if (strlen($arValue['VALUE']) > 250)
+				if (mb_strlen($arValue['VALUE']) > 250)
 					$this->LAST_ERROR .= GetMessage('CRM_MF_ERR_VALUE_STRLEN', array('#FIELD_NAME#' => $fieldName))."<br />";
-				if ($fieldType == 'EMAIL' && strlen($arValue['VALUE']) > 0 && !check_email($arValue['VALUE']))
+				if ($fieldType == 'EMAIL' && $arValue['VALUE'] <> '' && !check_email($arValue['VALUE']))
 					$this->LAST_ERROR .= GetMessage('CRM_MF_ERR_EMAIL_VALUE', array('#FIELD_NAME#' => $fieldName))."<br />";
 			}
 
-		if (strlen($this->LAST_ERROR) > 0)
+		if ($this->LAST_ERROR <> '')
 			return false;
 
 		return true;
@@ -1017,10 +1035,14 @@ class CCrmFieldMulti
 		foreach($arFieldsModif as $typeId => $arTypes)
 			foreach($arTypes as $valueId => $arValues)
 			{
-				if ($valueId != 'n0' && substr($valueId, 0, 1) == 'n')
+				if(mb_substr($valueId, 0, 1) == 'n')
+				{
 					$arField['modified']['add'.($addCnt++)] = array_merge($arValues, Array('COMPLEX'=>$typeId.'_'.$arValues['VALUE_TYPE']));
-				elseif ($valueId != 'n0')
+				}
+				else
+				{
 					$arField['modified'][$valueId] = array_merge($arValues, Array('COMPLEX'=>$typeId.'_'.$arValues['VALUE_TYPE']));
+				}
 			}
 
 		if(isset($arField['modified']))
@@ -1086,7 +1108,7 @@ class CCrmFieldMulti
 			$qty = 0;
 			foreach ($ar as $id=>$value)
 			{
-				if(substr($id,0,1)=='n')
+				if(mb_substr($id, 0, 1) == 'n')
 				{
 					if(key_exists($multiTypeId, $fieldsOrig))
 					{
@@ -1122,7 +1144,7 @@ class CCrmFieldMulti
 		foreach($fieldsMulti[$typeId] as $id => $row)
 		{
 			$value = isset($row['VALUE']) ? trim((string)$row['VALUE']) : '';
-			if(strpos($value, 'imol|') === 0)
+			if(mb_strpos($value, 'imol|') === 0)
 			{
 				return true;
 			}
@@ -1145,7 +1167,7 @@ class CCrmFieldMulti
 		$result = array();
 		while($arField = $rsFields->Fetch())
 		{
-			if($bIgnoreEmpty && (!isset($arField['VALUE']) || strlen($arField['VALUE']) === 0))
+			if($bIgnoreEmpty && (!isset($arField['VALUE']) || $arField['VALUE'] == ''))
 			{
 				continue;
 			}
@@ -1248,7 +1270,7 @@ class CCrmFieldMulti
 
 		$limit = isset($options['LIMIT']) ? (int)$options['LIMIT'] : 0;
 		$enableComplexName = isset($options['ENABLE_COMPLEX_NAME']) && $options['ENABLE_COMPLEX_NAME'] === true;
-		
+
 		$typeSql = $DB->ForSql($typeID);
 		$entitySql = $DB->ForSql($entityID);
 		$elementSql = implode(',', $elementIDs);

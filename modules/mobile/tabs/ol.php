@@ -55,7 +55,7 @@ class OpenLines implements Tabable
 							"IMOL_CHAT_ANSWER_F" => \Bitrix\Im\Integration\Imopenlines\Localize::get(\Bitrix\Im\Integration\Imopenlines\Localize::FILE_LIB_CHAT, "IMOL_CHAT_ANSWER_F")
 						]
 					],
-					"settings" => ["useSearch" => false, "preload" => true],
+					"settings" => ["useSearch" => false, "preload" => false, "useLargeTitleMode" => true],
 				]
 			];
 		}
@@ -106,5 +106,15 @@ class OpenLines implements Tabable
 	public function setContext($context)
 	{
 		$this->context = $context;
+	}
+
+	public function getShortTitle()
+	{
+		return Loc::getMessage("TAB_NAME_IM_OPENLINES_SHORT");
+	}
+
+	public function getId()
+	{
+		return "ol";
 	}
 }

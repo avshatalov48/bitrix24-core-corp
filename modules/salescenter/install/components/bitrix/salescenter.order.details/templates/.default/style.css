@@ -1,348 +1,367 @@
-/*region mainpage*/
-.mainpage {
-	display: -webkit-box;
-	display: -ms-flexbox;
-	display: flex;
-	-webkit-box-orient: vertical;
-	-webkit-box-direction: normal;
-	-ms-flex-direction: column;
-	flex-direction: column;
-	-webkit-box-sizing: border-box;
-	box-sizing: border-box;
-	padding: 19px;
-	min-height: 100vh;
-	-webkit-box-align: center;
-	-ms-flex-align: center;
-	align-items: center;
-	-webkit-box-pack: start;
-	-ms-flex-pack: start;
-	justify-content: flex-start;
-}
-
-.mainpage .header {
-	padding: 50px 0;
-	text-align: center;
-}
-
-.orderpage { margin: 0 19px }
-
-.header {
-	border-bottom: 1px solid rgba(82, 92, 105, 0.1);
-	-webkit-box-align: center;
-	-ms-flex-align: center;
-	align-items: center;
-	-webkit-box-pack: justify;
-	-ms-flex-pack: justify;
-	justify-content: space-between;
-}
-
-.bx-dark .header { border-color: #393942; }
-
-.header-tagline {
-	padding: 82px 0 112px;
-	color: #2c2c36;
-	font: 24px "Helvetica Neue", Helvetica, Arial, sans-serif;
-	opacity: .7;
-}
-
-.header-contact-info {
-	color: #2c2c36;
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
-	opacity: .5;
-}
-
-.bx-dark .header-contact-info { color: #ccccd3; }
-
-/*endregion*/
-
-.page-title {
-	margin-bottom: 13px;
-	color: #2c2c36;
-	font: 500 27px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
-}
-
-.bx-dark .page-title { color: #fff; }
-
-.page-description {
+.page-description
+{
 	color: #868693;
 	font: 16px/18px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
-}
-
-/*region common*/
-.page-section {
-	padding: 16px 15px 12px;
-	border-radius: 6px;
-	background-color: #fff;
-	box-shadow: rgba(30, 30, 34, 0.05) 0 1px 5px 0;
-}
-
-.bx-dark .page-section { background-color: #393945; }
-
-.page-section-title {
-	margin-bottom: 6px;
-	color: rgba(172, 172, 180, 0.78);
-	font: 16px/18px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
-}
-
-.bx-dark .page-section-title { color: #ccccd3; }
-
-.page-section-inner p {
-	color: #2c2c36;
-	font: 17px/22px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	/*tmp hack*/
+	font-family: "Roboto", Arial, sans-serif;
 }
 
 .bx-dark,
-.bx-dark p{ color: #ccccd3; }
-
-.bx-dark .page-section-inner p { color: #fff; }
-
-.bx-dark hr {
-	border-color: rgba(255,255,255,.1);
+.bx-dark p
+{
+	color: #ccccd3;
 }
 
-
-/*endregion*/
-
-/*region menu*/
-.menu {
-	box-sizing: border-box;
-	padding: 0 15px;
-	width: 100%;
-	border-radius: 6px;
-	background: rgba(255, 255, 255, .78);
-	box-shadow: rgba(0, 0, 0, .09) 0 6px 12px;
+.bx-dark hr
+{
+	border-color: rgba(255, 255, 255, .1);
 }
 
-.menu-item {
-	display: -webkit-box;
-	display: -ms-flexbox;
-	display: flex;
-	padding: 0 5px 0 11px;
-	min-height: 75px;
-	border-bottom: 1px solid rgba(82, 92, 105, 0.1);
-	text-decoration: none;
-	-webkit-box-align: center;
-	-ms-flex-align: center;
-	align-items: center;
-	-webkit-box-pack: justify;
-	-ms-flex-pack: justify;
-	justify-content: space-between;
+.order-list-header
+{
+	padding: 18px 15px;
+}
+.order-list-header-title
+{
+	font: 24px "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	/*tmp hack*/
+	font-family: "Roboto", Arial, sans-serif;
+	font-weight: bold;
+	color: #333;
+}
+.bx-dark .order-list-header-title
+{
+	color: #fff;
 }
 
-.menu-item-text {
-	color: #2c2c36;
-	text-decoration: none;
-	font-size: 20px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+.order-list-header-order
+{
+	font: 19px/23px "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	/*tmp hack*/
+	font-family: "Roboto", Arial, sans-serif;
+	font-weight: normal;
+	color: #9e9eae;
+}
+.bx-dark .order-list-header-order
+{
+	color: #acacb4;
 }
 
-.menu-item-arrow {
-	width: 24px;
-	height: 24px;
-	background: url(images/menu-arrow.svg) no-repeat center;
-	opacity: .18;
-}
-
-/*endregion*/
-
-/*region order*/
-/*region cart*/
-.order-list-container {
+.order-list-container
+{
 	position: relative;
 	z-index: 20;
-	padding: 16px 15px 5px;
 	width: auto;
-	border-radius: 6px;
-	background-color: #d6f2ff;
-	box-shadow: rgba(30, 30, 34, 0.04) 0 2px 6px 0;
+	background-color: #fff;
 }
 
-.bx-dark .order-list-container {
-	background-color: #393945;
-	box-shadow: rgba(30, 30, 34, 0.1) 0 8px 10px 0;
+.bx-dark .order-list-container
+{
+	background-color: #242426;
 }
 
-.order-list-title {
-	margin-bottom: 17px;
-	color: #81818b;
-	font: 16px/18px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+.order-list-title
+{
+	text-align: center;
+	padding: 21px;
+	color: #333;
+	font: 16px/19px "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	/*tmp hack*/
+	font-family: "Roboto", Arial, sans-serif;
 }
 
-.bx-dark .order-list-title { color: #ccccd3; }
-
-.order-list { }
-
-.order-list-item {
-	margin-bottom: 1.5rem;
-	padding-bottom: 1rem;
-	border-bottom: 1px solid rgba(82, 92, 105, 0.1)
+.bx-dark .order-list-title
+{
+	color: #fff;
 }
 
-.order-list .order-list-item:last-child {
-	margin-bottom: 0;
-	border-bottom: none;
+.order-list-item
+{
+	padding: 20px 15px;
+	border-bottom: 1px solid #eeeff0;
 }
 
-.order-item-image-container { }
+.order-list-item:last-child
+{
+	border-color: #dcdee1;
+}
 
-.order-item-image {
-	min-width: 60px;
-	max-width: 60px;
+.bx-dark .order-list-item
+{
+	border-color: #3a3a3c;
+}
+
+.bx-dark .order-list-item:last-child
+{
+	border-color: #666667;
+}
+
+.order-item-image
+{
 	width: 60px;
-	height: auto;
+	height: 80px;
+	object-fit: cover;
 }
-
-.order-item-info { padding-top: 4px; }
 
 .order-item-type,
-.order-item-quantity {
+.order-item-quantity
+{
 	color: #acacb4;
 	font: 12px/14px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	/*tmp hack*/
+	font-family: "Roboto", Arial, sans-serif;
 }
 
 .bx-dark .order-item-type,
-.bx-dark .order-item-quantity { color: #acacb4; }
-
-.order-item-title {
-	color: #2c2c36;
-	font: 18px/24px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+.bx-dark .order-item-quantity
+{
+	color: #acacb4;
 }
 
-.bx-dark .order-item-title { color: #fff; }
-
-.order-item-quantity { text-align: right; }
-
-.order-item-price {
-	padding-top: 2px;
+.order-item-title
+{
 	color: #2c2c36;
+	font: 16px/24px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	/*tmp hack*/
+	font-family: "Roboto", Arial, sans-serif;
+}
+
+.bx-dark .order-item-title
+{
+	color: #fff;
+}
+
+.order-item-quantity
+{
+	margin-top: 8px;
 	text-align: right;
-	white-space: nowrap;
-	font: 17px/24px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
-.order-total-container .rub,
-.order-item-price .rub { font-family: 'rubleBitrix'; }
-
-.order-item-price-old,
-.order-total-price-old {
-	display: inline-block;
-	margin-right: 5px;
-	color: #299cf2;
-	text-decoration: line-through;
-	white-space: nowrap;
-	font: 12px/24px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
-}
-
-.bx-dark .order-item-price { color: #fff; }
-
-.bx-dark .order-item-price-old,
-.bx-dark .order-total-price-old { color: rgba(243, 196, 68, 0.47); }
-
-/*endregion*/
-
-/*region total*/
-.order-total-container {
+.order-total-container
+{
 	position: relative;
-	z-index: 10;
-	margin: 0 5px 22px;
-	padding: 9px 18px 16px;
-	max-width: calc(100% - 10px);
-	width: calc(100% - 10px);
-	border-radius: 0 0 6px 6px;
-	background: #fff;
-	box-shadow: rgba(30, 30, 34, 0.05) 0 1px 5px 0;
 }
 
-.bx-dark .order-total-container {
-	background: rgba(83, 83, 94, 0.73);
-	box-shadow: none;
+.order-total-price-row,
+.order-total-price-old-row,
+.order-total-tax-row
+{
+	background-color: #fff;
 }
 
-.order-total {
+.bx-dark .order-total-price-row,
+.bx-dark .order-total-price-old-row,
+.bx-dark .order-total-tax-row
+{
+	background-color: #242426;
+}
+
+.order-total table
+{
 	width: 100%;
 	border: none;
 	border-collapse: collapse;
 }
 
-.order-total td {
-	padding: 2px 0;
-	border: none;
+.order-total-item
+{
+	width: 100%;
+	padding: 0 0 15px 15px;
 	vertical-align: middle;
-}
-
-.order-total tr:last-child td {
-	padding-bottom: 18px;
-	border-bottom: 1px solid rgba(82, 92, 105, 0.1);
-}
-
-.bx-dark .order-total tr:last-child td { border-color: #51515b; }
-
-.order-total-item {
+	text-align: right;
 	color: #9e9eae;
-	text-align: left;
 	font: 14px/18px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	/*tmp hack*/
+	font-family: "Roboto", Arial, sans-serif;
 }
 
-.bx-dark .order-total-item { color: #acacb4; }
+.bx-dark .order-total-item
+{
+	color: #acacb4;
+}
 
-.order-total-value {
+.order-total-item.order-total-item-total-price
+{
+	vertical-align: top;
+}
+
+.order-total-value
+{
+	padding: 0 15px 18px;
 	color: #93939b;
 	text-align: right;
 	font: 500 14px/18px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	/*tmp hack*/
+	font-family: "Roboto", Arial, sans-serif;
 }
 
-.bx-dark .order-total-value { color: #fff }
+.bx-dark .order-total-value
+{
+	color: #fff
+}
 
-.order-total-price {
+.order-total-price-row td
+{
+	padding-top: 18px;
+}
+.order-total-delivery-row td
+{
+	padding-top: 18px;
+}
+
+.order-total-delivery-row .order-total-price
+{
+	padding: 6px 0;
+}
+
+.order-total-delivery-row .order-total-item
+{
+	font-size: 16px;
+	text-align: left;
+}
+
+.order-total-delivery-row td
+{
+	border-bottom: 1px solid #e6e7eb;
+}
+
+.bx-dark .order-total-delivery-row td
+{
+	border-color: #333;
+}
+
+.order-item-price, .order-total-price
+{
 	color: #2c2c36;
+	text-align: right;
 	white-space: nowrap;
-	font: 500 13px/16px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 600 16px/19px "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	/*tmp hack*/
+	font-family: "Roboto", Arial, sans-serif;
 }
 
-.bx-dark .order-total-price { color: #fff; }
-
-.order-total-sale-price {
-	display: inline-block;
-	padding: 6px 7px 5px;
-	border-radius: 4px;
-	background-color: #ffd741;
-	color: #2c2c36;
-	vertical-align: middle;
-	white-space: nowrap;
-	font: 500 13px/16px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+.order-item-price
+{
+	font-weight: normal;
 }
 
-.bx-dark .order-total-sale-price {
-	background-color: rgba(41, 117, 242, 0.9);
-	background-color: var(--primary);
+.order-total-container .rub,
+.order-item-price .rub
+{
+	font-family: 'rubleBitrix';
+}
+
+.order-item-price-old,
+.order-total-price-old
+{
+	opacity: .7;
+	color: #4E8B9E;
+	text-decoration: line-through;
+	white-space: nowrap;
+	font: 16px/19px "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	/*tmp hack*/
+	font-family: "Roboto", Arial, sans-serif;
+	text-align: right;
+	margin-top: 8px;
+}
+
+.bx-dark .order-item-price,
+.bx-dark .order-total-price
+{
 	color: #fff;
 }
 
+.bx-dark .order-item-price-old,
+.bx-dark .order-total-price-old
+{
+	color: #8CC8DB;
+	opacity: .5;
+}
+
+.order-total-sale-price,
+.order-total-delivery-price
+{
+	display: inline-block;
+	padding: 6px 8px;
+	border-radius: 4px;
+	background-color: #ffcd4d;
+	color: #333333;
+	vertical-align: middle;
+	white-space: nowrap;
+	font: 600 16px/19px "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	/*tmp hack*/
+	font-family: "Roboto", Arial, sans-serif;
+}
+
+.bx-dark .order-total-sale-price,
+.bx-dark .order-total-delivery-price
+{
+	background-color: #1457a3;
+	color: #fff;
+}
+
+.order-total-delivery-price
+{
+	font: 500 15px/18px "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	/*tmp hack*/
+	font-family: "Roboto", Arial, sans-serif;
+	background-color: #d0e8c7;
+}
+
+.bx-dark .order-total-delivery-price
+{
+	background-color: #086022;
+}
+
 /**/
-.order-total-result { padding-top: 9px; }
-
-.order-total-result-name {
-	color: #2c2c36;
-	font: 500 14px/18px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+.order-total-result
+{
+	padding: 15px;
 }
 
-.bx-dark .order-total-result-name { color: #fff; }
-
-.order-total-result-value {
-	color: #2c2c36;
-	font: 500 26px/32px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+.order-total-result-name
+{
+	color: #333;
+	font: 500 20px/24px "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	/*tmp hack*/
+	font-family: "Roboto", Arial, sans-serif;
 }
 
-.bx-dark .order-total-result-value { color: #fff; }
+.bx-dark .order-total-result-name
+{
+	color: #fff;
+}
+
+.order-total-result-value
+{
+	color: #333;
+	font: 500 24px/29px "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	/*tmp hack*/
+	font-family: "Roboto", Arial, sans-serif;
+}
+
+.bx-dark .order-total-result-value
+{
+	color: #fff;
+}
 
 /*endregion*/
 
 /*region contacts*/
-.contacts-phone { font: 500 16px/24px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif; }
+.contacts-phone
+{
+	font: 500 16px/24px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	/*tmp hack*/
+	font-family: "Roboto", Arial, sans-serif;
+}
 
-.bx-dark .contacts-phone { color: #fff; }
+.bx-dark .contacts-phone
+{
+	color: #fff;
+}
 
-.contacts-maps-button {
+.contacts-maps-button
+{
 	padding: 15px 10px;
 	text-align: center;
 }
@@ -350,16 +369,20 @@
 /*endregion*/
 
 /*region Appointments*/
-.appointments-form-container { }
+.appointments-form-container
+{
+}
 
-.appointments-form-days {
+.appointments-form-days
+{
 	overflow-x: auto;
 	min-height: 60px;
 	width: 100%;
 	-webkit-overflow-scrolling: touch;
 }
 
-.appointments-form-day-block {
+.appointments-form-day-block
+{
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
@@ -382,22 +405,20 @@
 	justify-content: center;
 }
 
-.appointments-form-day-date {
+.appointments-form-day-date
+{
 	color: #6e6e79;
 	letter-spacing: 0.05em;
 	font: 500 16px/18px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	/*tmp hack*/
+	font-family: "Roboto", Arial, sans-serif;
 }
 
-.appointments-form-day-of-week {
+.appointments-form-day-of-week
+{
 	color: #acacb4;
 	letter-spacing: 0.05em;
 	font: 500 11px/15px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	/*tmp hack*/
+	font-family: "Roboto", Arial, sans-serif;
 }
-
-.appointments-form-days-controls { }
-
-.appointments-form-days-control-prev { }
-
-.appointments-form-days-control-next { }
-
-/*endregion*/

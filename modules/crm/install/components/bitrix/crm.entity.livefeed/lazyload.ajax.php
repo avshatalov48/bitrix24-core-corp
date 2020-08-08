@@ -5,7 +5,7 @@ define('NO_AGENT_CHECK', true);
 define('PUBLIC_AJAX_MODE', true);
 define('DisableEventsCheck', true);
 
-$siteID = isset($_REQUEST['site']) ? substr(preg_replace('/[^a-z0-9_]/i', '', $_REQUEST['site']), 0, 2) : '';
+$siteID = isset($_REQUEST['site'])? mb_substr(preg_replace('/[^a-z0-9_]/i', '', $_REQUEST['site']), 0, 2) : '';
 if($siteID !== '')
 {
 	define('SITE_ID', $siteID);
@@ -23,7 +23,7 @@ if (!CModule::IncludeModule('crm') || !CCrmSecurityHelper::IsAuthorized() || !ch
 }
 
 $params = isset($_REQUEST['PARAMS']) ? $_REQUEST['PARAMS'] : array();
-$entityTypeName = isset($params['ENTITY_TYPE_NAME']) ? strtoupper($params['ENTITY_TYPE_NAME']) : '';
+$entityTypeName = isset($params['ENTITY_TYPE_NAME'])? mb_strtoupper($params['ENTITY_TYPE_NAME']) : '';
 if($entityTypeName === '')
 {
 	die();
@@ -41,7 +41,7 @@ if($entityID <= 0)
 	die();
 }
 
-$permissionEntityType = isset($params['PERMISSION_ENTITY_TYPE']) ? strtoupper($params['PERMISSION_ENTITY_TYPE']) : '';
+$permissionEntityType = isset($params['PERMISSION_ENTITY_TYPE'])? mb_strtoupper($params['PERMISSION_ENTITY_TYPE']) : '';
 if($permissionEntityType === '')
 {
 	$permissionEntityType = $entityTypeName;

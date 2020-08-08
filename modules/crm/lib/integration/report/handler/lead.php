@@ -10,6 +10,7 @@ use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Main\Application;
+use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Localization\Loc;
@@ -109,7 +110,7 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 
 		foreach ($filterParameters as $key => $value)
 		{
-			if (in_array($key, ['TIME_PERIOD', 'FIND']) || (strpos($key, 'UF_') === 0))
+			if (in_array($key, ['TIME_PERIOD', 'FIND']) || (mb_strpos($key, 'UF_') === 0))
 			{
 				continue;
 			}
@@ -309,7 +310,7 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 					{
 						$results[] = [
 							$groupingFieldName => $groupingKey,
-							'VALUE' => ($successLeadCount[$groupingKey] / $count) * 100
+							'VALUE' => $count > 0 ? ($successLeadCount[$groupingKey] / $count) * 100 : 0
 						];
 					}
 					else
@@ -368,7 +369,7 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 					{
 						$results[] = [
 							$groupingFieldName => $groupingKey,
-							'VALUE' => ($loseLeadCount[$groupingKey] / $count) * 100
+							'VALUE' => $count > 0 ? ($loseLeadCount[$groupingKey] / $count) * 100 : 0
 						];
 					}
 					else
@@ -772,7 +773,6 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 
 	private function addPermissionsCheck(Query $query, $userId = 0)
 	{
-		static $permissionEntity;
 		if($userId <= 0)
 		{
 			$userId = EntityAuthorization::getCurrentUserID();
@@ -792,27 +792,8 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 
 		if ($permissionSql)
 		{
-			if (!$permissionEntity)
-			{
-				$permissionEntity = \Bitrix\Main\Entity\Base::compileEntity(
-					'user_perms',
-					array('ENTITY_ID' => array('data_type' => 'integer')),
-					array('table_name' => "({$permissionSql})")
-				);
-			}
-
-
-			$query->registerRuntimeField('',
-				new ReferenceField('PERMS',
-					$permissionEntity,
-					array('=this.ID' => 'ref.ENTITY_ID'),
-					array('join_type' => 'INNER')
-				)
-			);
-
-
+			$query->whereIn('ID', new SqlExpression($permissionSql));
 		}
-
 	}
 
 	private function buildPermissionSql(array $params)

@@ -210,7 +210,7 @@ else
 				{
 					if (
 						is_array($arUserField["VALUE"]) && count($arUserField["VALUE"]) > 0
-						|| !is_array($arUserField["VALUE"]) && StrLen($arUserField["VALUE"]) > 0
+						|| !is_array($arUserField["VALUE"]) && $arUserField["VALUE"] <> ''
 					)
 					{
 						?><tr>
@@ -253,7 +253,7 @@ else
 				{
 					if (
 						is_array($arUserField["VALUE"]) && count($arUserField["VALUE"]) > 0
-						|| !is_array($arUserField["VALUE"]) && StrLen($arUserField["VALUE"]) > 0
+						|| !is_array($arUserField["VALUE"]) && $arUserField["VALUE"] <> ''
 					)
 					{
 						?><tr>
@@ -441,7 +441,7 @@ else
 					}
 					if (
 						is_array($arUserField["VALUE"]) && count($arUserField["VALUE"]) > 0
-						|| !is_array($arUserField["VALUE"]) && StrLen($arUserField["VALUE"]) > 0
+						|| !is_array($arUserField["VALUE"]) && $arUserField["VALUE"] <> ''
 					)
 					{
 						?><tr>
@@ -459,7 +459,7 @@ else
 					if (
 						(
 							is_array($arUserField["VALUE"]) && count($arUserField["VALUE"]) > 0
-							|| !is_array($arUserField["VALUE"]) && StrLen($arUserField["VALUE"]) > 0
+							|| !is_array($arUserField["VALUE"]) && $arUserField["VALUE"] <> ''
 						)
 						&& (
 							$field != "UF_DEPARTMENT"
@@ -498,7 +498,7 @@ else
 							if (!$bFirst) echo ', '; else $bFirst = false;
 							$name = CUser::FormatName($arParams['NAME_TEMPLATE'], $sub_user, true, false);
 							?><a class="user-profile-link" href="<?=CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_USER'], array("user_id" => $sub_user["ID"]))?>"><?=$name?></a><?
-							if (strlen($sub_user["WORK_POSITION"]) > 0) echo " (".$sub_user["WORK_POSITION"].")";?><?
+							if ($sub_user["WORK_POSITION"] <> '') echo " (".$sub_user["WORK_POSITION"].")";?><?
 						}
 					?></td>
 				</tr><?
@@ -515,7 +515,7 @@ else
 							if (!$bFirst) echo ', '; else $bFirst = false;
 							$name = CUser::FormatName($arParams['NAME_TEMPLATE'], $sub_user, true, false);
 							?><a class="user-profile-link" href="<?=CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_USER'], array("user_id" => $sub_user["ID"]))?>"><?=$name?></a><?
-							if (strlen($sub_user["WORK_POSITION"]) > 0) echo " (".$sub_user["WORK_POSITION"].")";?><?
+							if ($sub_user["WORK_POSITION"] <> '') echo " (".$sub_user["WORK_POSITION"].")";?><?
 						}
 					?></td>
 				</tr><?
@@ -563,7 +563,7 @@ else
 			{
 				foreach ($arResult["UserFieldsPersonal"]["DATA"] as $field => $arUserField)
 				{
-					if (is_array($arUserField["VALUE"]) && count($arUserField["VALUE"]) > 0 || !is_array($arUserField["VALUE"]) && StrLen($arUserField["VALUE"]) > 0)
+					if (is_array($arUserField["VALUE"]) && count($arUserField["VALUE"]) > 0 || !is_array($arUserField["VALUE"]) && $arUserField["VALUE"] <> '')
 					{
 						$additional .= '<tr>
 							<td class="user-profile-nowrap">'.$arUserField["NAME"].':</td>
@@ -576,7 +576,7 @@ else
 			{
 				foreach ($arResult["UserPropertiesPersonal"]["DATA"] as $field => $arUserField)
 				{
-					if (is_array($arUserField["VALUE"]) && count($arUserField["VALUE"]) > 0 || !is_array($arUserField["VALUE"]) && StrLen($arUserField["VALUE"]) > 0)
+					if (is_array($arUserField["VALUE"]) && count($arUserField["VALUE"]) > 0 || !is_array($arUserField["VALUE"]) && $arUserField["VALUE"] <> '')
 					{
 						$additional .= '<tr><td class="user-profile-nowrap">'.$arUserField["EDIT_FORM_LABEL"].':</td><td>';
 
@@ -610,7 +610,7 @@ else
 				$additional .= '</td></tr>';
 			}
 
-			if (strlen($additional) > 0)
+			if ($additional <> '')
 			{
 				?><tr>
 					<td class="user-profile-block-title" colspan="2"><?=GetMessage("SONET_ADDITIONAL_TITLE")?></td>

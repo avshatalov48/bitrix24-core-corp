@@ -21,6 +21,8 @@ class User extends \IRestService
 
 	public static function get($params, $n, \CRestServer $server)
 	{
+		global $USER;
+
 		$users = null;
 		$error = null;
 		$filter = [];
@@ -68,10 +70,18 @@ class User extends \IRestService
 
 
 			$depsData = self::userDepartmentData($user["ID"], $user["UF_DEPARTMENT"], $resize);
-
 			if ($user["PERSONAL_BIRTHDAY"])
 			{
-				$date = $user["PERSONAL_BIRTHDAY"]->format(Date::getFormat());
+				$format = "j F Y";
+				if (
+					$USER->getId() != $user["ID"]
+					&& Option::get("intranet", "show_year_for_female", "N") === "N"
+					&& $user["PERSONAL_GENDER"] == "F")
+				{
+					$format = "j F";
+				}
+
+				$date = FormatDate($format, $user["PERSONAL_BIRTHDAY"]->getTimestamp());
 				$users[$index]["PERSONAL_BIRTHDAY"] = $date;
 			}
 

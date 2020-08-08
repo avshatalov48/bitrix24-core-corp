@@ -41,7 +41,7 @@ class ResourceManager
 
 		if (!$isRestored)
 		{
-			if (strpos($url, ':') === false && $server->getServerPort())
+			if (mb_strpos($url, ':') === false && $server->getServerPort())
 			{
 				if (!in_array($server->getServerPort(), array('80', '443')))
 				{
@@ -55,9 +55,9 @@ class ResourceManager
 
 		$uri = new Uri($url);
 		$url = $uri->getLocator();
-		if (substr($url, -1) == '/')
+		if (mb_substr($url, -1) == '/')
 		{
-			$url = substr($url, 0, -1);
+			$url = mb_substr($url, 0, -1);
 		}
 
 		if ($canSave)

@@ -53,6 +53,7 @@ $arDefaultUrlTemplates404 = array(
 	'dedupelist' => 'dedupelist/',
 	'dedupewizard' => 'dedupewizard/',
 	'widget' => 'widget/',
+	'analytics/list' => 'analytics/list/',
 	'portrait' => 'portrait/#company_id#/',
 	'details' => 'details/#company_id#/',
 	'merge' => 'merge/',
@@ -80,10 +81,10 @@ if ($arParams['SEF_MODE'] == 'Y')
 
 	foreach ($arUrlTemplates as $url => $value)
 	{
-		if (strlen($arParams['PATH_TO_COMPANY_'.strToUpper($url)]) <= 0)
-			$arResult['PATH_TO_COMPANY_'.strToUpper($url)] = $arParams['SEF_FOLDER'].$value;
+		if ($arParams['PATH_TO_COMPANY_'.mb_strtoupper($url)] == '')
+			$arResult['PATH_TO_COMPANY_'.mb_strtoupper($url)] = $arParams['SEF_FOLDER'].$value;
 		else
-			$arResult['PATH_TO_COMPANY_'.strToUpper($url)] = $arParams['PATH_TO_'.strToUpper($url)];
+			$arResult['PATH_TO_COMPANY_'.mb_strtoupper($url)] = $arParams['PATH_TO_'.mb_strtoupper($url)];
 	}
 }
 else
@@ -154,7 +155,7 @@ $arResult = array_merge(
 
 if(isset($_GET['redirect_to']))
 {
-	$viewName = strtoupper(trim($_GET['redirect_to']));
+	$viewName = mb_strtoupper(trim($_GET['redirect_to']));
 	if($viewName === '')
 	{
 		$viewName = Crm\Settings\EntityViewSettings::resolveName(
@@ -181,7 +182,16 @@ if($componentPage === 'index')
 
 if(isset($_GET['id']))
 {
-	$arResult['VARIABLES']['contact_ids'] = is_array($_GET['id']) ? $_GET['id'] : array($_GET['id']);
+	$entityIDs = null;
+	if(is_array($_GET['id']))
+	{
+		$entityIDs = $_GET['id'];
+	}
+	else
+	{
+		$entityIDs = explode(',', $_GET['id']);
+	}
+	$arResult['VARIABLES']['company_ids'] = array_map('intval', $entityIDs);
 }
 
 if(\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled()

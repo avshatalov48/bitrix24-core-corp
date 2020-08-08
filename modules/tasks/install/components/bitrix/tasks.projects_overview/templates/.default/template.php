@@ -31,7 +31,7 @@ $APPLICATION->IncludeComponent(
 		'USER_ID' => $arParams['USER_ID'],
 		'SECTION_URL_PREFIX' => '',
 
-		'MARK_SECTION_PROJECTS' => 'Y',
+		'MARK_SECTION_PROJECTS_LIST' => 'Y',
 		'USE_AJAX_ROLE_FILTER' => 'N',
 
 		'PATH_TO_GROUP_TASKS' => $arParams['PATH_TO_GROUP_TASKS'],
@@ -81,11 +81,13 @@ if ($isBitrix24Template)
 	?>
 </div>
 
+<? if (CSocNetUser::IsCurrentUserModuleAdmin() || $GLOBALS["APPLICATION"]->GetGroupRight("socialnetwork", false, "Y", "Y", array(SITE_ID, false)) >= "K"): ?>
 <div class="pagetitle-container pagetitle-align-right-container tasks-project-filter-btn-add">
 	<a class="ui-btn ui-btn-primary ui-btn-icon-add" href="<?=$arParams['PATH_TO_GROUP_ADD']?>">
 		<?=GetMessage('TASKS_PROJECT_OVERVIEW_ADD_PROJECT')?>
 	</a>
 </div>
+<? endif; ?>
 
 <?php
 if ($isBitrix24Template)

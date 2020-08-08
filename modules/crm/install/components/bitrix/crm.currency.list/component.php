@@ -41,7 +41,7 @@ $arResult['HEADERS'] = array(
 //Show error message if required
 if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['error']))
 {
-	$errorID = strtolower($_GET['error']);
+	$errorID = mb_strtolower($_GET['error']);
 	if(preg_match('/^crm_err_/', $errorID) === 1)
 	{
 		if(!isset($_SESSION[$errorID]))

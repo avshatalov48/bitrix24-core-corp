@@ -362,13 +362,13 @@ if (intval($arParams["FIELDS"]["ENTITY_ID"]) > 0)
 						false,
 						array('OWNER_TYPE_ID' => CCrmOwnerType::Activity, 'OWNER_ID' => $arActivity['ID'])
 					);
-					if(is_array($info) && in_array(GetFileExtension(strtolower($info["NAME"])), $arMediaExtensions))
+					if(is_array($info) && in_array(GetFileExtension(mb_strtolower($info["NAME"])), $arMediaExtensions))
 					{
 						$recordUrl = CCrmUrlUtil::ToAbsoluteUrl($info["VIEW_URL"]);
 						if($arActivity["STORAGE_TYPE_ID"] == CCrmActivityStorageType::WebDav)
 						{
 							//Hacks for flv player
-							if(substr($recordUrl, -1) !== "/")
+							if(mb_substr($recordUrl, -1) !== "/")
 							{
 								$recordUrl .= "/";
 							}

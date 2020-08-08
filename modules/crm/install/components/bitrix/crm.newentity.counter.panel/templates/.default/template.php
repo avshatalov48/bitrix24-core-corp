@@ -12,7 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
  */
 
 $guid = $arResult['GUID'];
-$prefix = strtolower($guid);
+$prefix = mb_strtolower($guid);
 $caption = $arResult['ENTITY_CAPTION'];
 $wrapperID = "{$prefix}_wrapper";
 $containerID = "{$prefix}_container";

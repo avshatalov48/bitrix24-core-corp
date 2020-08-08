@@ -21,7 +21,7 @@ if(!isset($arParams["CACHE_TIME"]))
 if ($arParams['CACHE_TYPE'] == 'A')
 	$arParams['CACHE_TYPE'] = COption::GetOptionString("main", "component_cache_on", "Y");
 
-if (strlen($arParams["NAME_TEMPLATE"]) <= 0)
+if ($arParams["NAME_TEMPLATE"] == '')
 	$arParams["NAME_TEMPLATE"] = CSite::GetNameFormat();
 
 $arParams['SHOW_LOGIN'] = $arParams['SHOW_LOGIN'] != "N" ? "Y" : "N";

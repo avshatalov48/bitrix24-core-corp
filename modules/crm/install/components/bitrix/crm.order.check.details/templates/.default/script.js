@@ -123,7 +123,15 @@ if(typeof(BX.CrmOrderCheckDetails) === "undefined")
 				menu,
 				{
 					angle: false, width: selectContainer.offsetWidth + 'px',
-					events: { onPopupClose: BX.delegate( this.onMenuClose(selectContainer, selectorId), this) }
+					events: {
+						onPopupClose: BX.delegate(
+							function ()
+							{
+								this.onMenuClose(selectContainer, selectorId)
+							},
+							this
+						)
+					}
 				}
 			);
 		}, this));
@@ -165,7 +173,15 @@ if(typeof(BX.CrmOrderCheckDetails) === "undefined")
 				menu,
 				{
 					angle: false, width: selectContainer.offsetWidth + 'px',
-					events: { onPopupClose: BX.delegate(this.onMenuClose(selectContainer, selectorId), this) }
+					events: {
+						onPopupClose: BX.delegate(
+							function ()
+							{
+								this.onMenuClose(selectContainer, selectorId)
+							},
+							this
+						)
+					}
 				}
 			);
 		}, this));
@@ -277,7 +293,15 @@ if(typeof(BX.CrmOrderCheckDetails) === "undefined")
 									menu,
 									{
 										angle: false, width: selectContainer.offsetWidth + 'px',
-										events: { onPopupClose: BX.delegate( this.onMenuClose(selectContainer, selectorId), this) }
+										events: {
+											onPopupClose: BX.delegate(
+												function ()
+												{
+													this.onMenuClose(selectContainer, selectorId)
+												},
+												this
+											)
+										}
 									}
 								);
 							}, this)

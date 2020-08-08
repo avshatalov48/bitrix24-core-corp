@@ -9,6 +9,7 @@ use Bitrix\Main\ORM\Query\Query;
 use Bitrix\SalesCenter\Fields\Manager;
 use Bitrix\SalesCenter\Integration\Bitrix24Manager;
 use Bitrix\SalesCenter\Integration\CrmManager;
+use Bitrix\SalesCenter\Integration\ImManager;
 use Bitrix\SalesCenter\Integration\IntranetManager;
 use Bitrix\SalesCenter\Integration\LandingManager;
 use Bitrix\SalesCenter\Integration\SaleManager;
@@ -26,10 +27,7 @@ final class Driver
 		$this->fieldsManager = new Manager();
 	}
 
-	/**
-	 * @return Driver
-	 */
-	public static function getInstance()
+	public static function getInstance(): Driver
 	{
 		if(static::$instance === null)
 		{
@@ -39,34 +37,30 @@ final class Driver
 		return static::$instance;
 	}
 
-	/**
-	 * @return int
-	 */
-	public function getUserId()
+	public function getUserId(): int
 	{
 		global $USER;
 		if(is_object($USER))
 		{
-			return CurrentUser::get()->getId();
+			return (int) CurrentUser::get()->getId();
 		}
 
 		return 0;
 	}
 
-	/**
-	 * @return array
-	 */
-	public function getManagerParams()
+	public function getManagerParams(): array
 	{
 		$params = [];
 
 		if(LandingManager::getInstance()->isEnabled())
 		{
+			LandingManager::getInstance()->tryInstallDefaultSiteOnce();
 			$params['siteTemplateCode'] = LandingManager::SITE_TEMPLATE_CODE;
 			$params['connectedSiteId'] = LandingManager::getInstance()->getConnectedSiteId();
 			$params['isSitePublished'] = LandingManager::getInstance()->isSitePublished();
 			$params['isSiteExists'] = LandingManager::getInstance()->isSiteExists();
 			$params['isOrderPublicUrlAvailable'] = LandingManager::getInstance()->isOrderPublicUrlAvailable();
+			$params['orderPublicUrl'] = LandingManager::getInstance()->getOrderPublicUrlInfo()['url'];
 		}
 
 		$params['isSalesInChatActive'] = $this->isSalesInChatActive();
@@ -75,9 +69,6 @@ final class Driver
 		return $params;
 	}
 
-	/**
-	 * @param \CBitrixComponentTemplate $template
-	 */
 	public function addTopPanel(\CBitrixComponentTemplate $template)
 	{
 		$template->setViewTarget('above_pagetitle');
@@ -94,10 +85,7 @@ final class Driver
 		$template->endViewTarget();
 	}
 
-	/**
-	 * @return array
-	 */
-	public function getTopPanelItems()
+	public function getTopPanelItems(): array
 	{
 		$items = [
 			[
@@ -278,10 +266,7 @@ final class Driver
 		return $items;
 	}
 
-	/**
-	 * @return array
-	 */
-	public function getFilterForCustomUrlPages()
+	public function getFilterForCustomUrlPages(): array
 	{
 		return [
 			'=HIDDEN' => 'N',
@@ -315,10 +300,7 @@ final class Driver
 		return ['=ID' => 0];
 	}
 
-	/**
-	 * @return bool
-	 */
-	public function isSalesInChatActive()
+	public function isSalesInChatActive(): bool
 	{
 		if(LandingManager::getInstance()->isEnabled())
 		{
@@ -339,10 +321,7 @@ final class Driver
 		return (PageTable::getCount($filter) > 0);
 	}
 
-	/**
-	 * @return array
-	 */
-	public static function onGetDependentModule()
+	public static function onGetDependentModule(): array
 	{
 		return [
 			'MODULE_ID' => static::MODULE_ID,
@@ -350,10 +329,7 @@ final class Driver
 		];
 	}
 
-	/**
-	 * @return bool
-	 */
-	public function isExtendedTaxesSettingsEnabled()
+	public function isExtendedTaxesSettingsEnabled(): bool
 	{
 		if(Bitrix24Manager::getInstance()->isEnabled())
 		{
@@ -363,20 +339,15 @@ final class Driver
 		return true;
 	}
 
-	/**
-	 * @return bool
-	 */
-	public function isCashboxEnabled()
+	public function isCashboxEnabled(): bool
 	{
-		if (
-			Bitrix24Manager::getInstance()->isEnabled()
-			|| IntranetManager::getInstance()->isEnabled()
-		)
+		if (Bitrix24Manager::getInstance()->isEnabled())
 		{
-			return
-				Bitrix24Manager::getInstance()->isCurrentZone('ru')
-				|| IntranetManager::getInstance()->isCurrentZone('ru')
-			;
+			return Bitrix24Manager::getInstance()->isCurrentZone('ru');
+		}
+		elseif (IntranetManager::getInstance()->isEnabled())
+		{
+			return IntranetManager::getInstance()->isCurrentZone('ru');
 		}
 
 		return true;
@@ -392,10 +363,7 @@ final class Driver
 
 	}
 
-	/**
-	 * @return bool
-	 */
-	public function isEnabled()
+	public function isEnabled(): bool
 	{
 		if(Bitrix24Manager::getInstance()->isEnabled())
 		{
@@ -408,5 +376,31 @@ final class Driver
 	public function getFieldsManager(): Fields\Manager
 	{
 		return $this->fieldsManager;
+	}
+
+	public static function installImApplicationAgent(): string
+	{
+		if(!static::getInstance()->isEnabled())
+		{
+			return '';
+		}
+
+		if(!ImManager::getInstance()->isEnabled())
+		{
+			return '';
+		}
+
+		global $DB;
+		if(!$DB->TableExists(\Bitrix\Im\Model\AppTable::getTableName()))
+		{
+			return '';
+		}
+
+		if(!ImManager::getInstance()->isApplicationInstalled())
+		{
+			return '\\Bitrix\\SalesCenter\\Driver::installImApplicationAgent();';
+		}
+
+		return '';
 	}
 }

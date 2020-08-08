@@ -5,19 +5,25 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Json;
 
 Loc::loadMessages(__FILE__);
 
 $helper = $arResult['HELPER'];
-$arParams =& $helper->getComponent(
-)->arParams; // make $arParams the same variable as $this->__component->arParams, as it really should be
+$arParams =& $helper->getComponent()->arParams; // make $arParams the same variable as $this->__component->arParams, as it really should be
+
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty(
 	'BodyClass',
 	($bodyClass ? $bodyClass.' ' : '').' no-background no-all-paddings pagetitle-toolbar-field-view '
 );
-$isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
+$isBitrix24Template = (SITE_TEMPLATE_ID === "bitrix24");
+$taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
 
+if ($taskLimitExceeded)
+{
+	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
+}
 
 if (isset($arResult["ERROR"]) && !empty($arResult["ERROR"]))
 {
@@ -161,7 +167,7 @@ $this->EndViewTarget();
 <? $helper->displayFatals(); ?>
 <? if (!$helper->checkHasFatals()): ?>
 
-	<div id="<?=$helper->getScopeId()?>" class="tasks">
+	<div id="<?=$helper->getScopeId()?>" class="tasks<?=($taskLimitExceeded ? ' tasks-locked' : '')?>">
 
 		<? $helper->displayWarnings(); ?>
 
@@ -225,5 +231,15 @@ $this->EndViewTarget();
 	</div>
 
 	<? $helper->initializeExtension(); ?>
+
+<script type="text/javascript">
+	BX.ready(function() {
+		var taskLimitExceeded = <?=Json::encode($taskLimitExceeded)?>;
+		if (taskLimitExceeded)
+		{
+			BX.UI.InfoHelper.show('limit_tasks_supervisor_view');
+		}
+	});
+</script>
 
 <? endif ?>

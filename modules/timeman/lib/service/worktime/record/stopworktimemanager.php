@@ -22,8 +22,7 @@ class StopWorktimeManager extends WorktimeManager
 		{
 			return $result;
 		}
-		if ($this->getRecord()->isExpired($this->getSchedule(), $this->getShift())
-			&& !Schedule::isScheduleFlexible($this->getSchedule()))
+		if ($this->isExpired() && !Schedule::isScheduleFlextime($this->getSchedule()))
 		{
 			if ($this->isEmptyEventReason())
 			{
@@ -62,19 +61,20 @@ class StopWorktimeManager extends WorktimeManager
 				$this->worktimeRecordForm->getFirstEventForm()->eventName,
 				$record->getUserId(),
 				$record->getId(),
-				$this->worktimeRecordForm->recordedStopTimestamp,
-				$this->worktimeRecordForm->getFirstEventForm()->reason
+				$record->getRecordedStopTimestamp(),
+				$this->worktimeRecordForm->getFirstEventForm()->reason,
+				$this->worktimeRecordForm->device
 			),
 		];
 	}
 
-	public function buildRecordViolations($record, $schedule, $violationRulesList = [])
+	public function buildRecordViolations($record, $schedule)
 	{
 		return $this->buildWorktimeViolations($record, $schedule, [
 			WorktimeViolation::TYPE_EARLY_ENDING,
 			WorktimeViolation::TYPE_LATE_ENDING,
 			WorktimeViolation::TYPE_MIN_DAY_DURATION,
-		], $violationRulesList);
+		]);
 	}
 
 	protected function getRecordedStopTimestamp($record)

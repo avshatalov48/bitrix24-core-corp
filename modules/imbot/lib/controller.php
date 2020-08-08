@@ -7,7 +7,7 @@ class Controller
 	{
 		$result = null;
 
-		$botName = trim(preg_replace("/[^a-z]/","", strtolower($botName)));
+		$botName = trim(preg_replace("/[^a-z]/", "", mb_strtolower($botName)));
 		if (!$botName)
 			return $result;
 
@@ -44,7 +44,7 @@ class Controller
 	{
 		$result = null;
 
-		$serviceName = trim(preg_replace("/[^a-z]/","", strtolower($serviceName)));
+		$serviceName = trim(preg_replace("/[^a-z]/", "", mb_strtolower($serviceName)));
 		if (!$serviceName)
 			return $result;
 

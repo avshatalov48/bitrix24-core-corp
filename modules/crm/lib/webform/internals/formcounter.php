@@ -181,17 +181,17 @@ class FormCounterTable extends Entity\DataManager
 	{
 		$fieldsMap = static::getMap();
 		$prefix = static::getEntityFieldPrefix();
-		$prefixLen = strlen($prefix);
+		$prefixLen = mb_strlen($prefix);
 
 		$result = array();
 		foreach($fieldsMap as $fieldName => $field)
 		{
-			if(substr($fieldName, 0, $prefixLen) != $prefix)
+			if(mb_substr($fieldName, 0, $prefixLen) != $prefix)
 			{
 				continue;
 			}
 
-			$result[$fieldName] = substr($fieldName, $prefixLen);
+			$result[$fieldName] = mb_substr($fieldName, $prefixLen);
 		}
 
 		return $result;

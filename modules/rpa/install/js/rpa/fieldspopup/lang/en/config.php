@@ -1,0 +1,4 @@
+<?
+$MESS["RPA_POPUP_CANCEL_BUTTON"] = "Cancel";
+$MESS["RPA_POPUP_SAVE_BUTTON"] = "Save";
+?>

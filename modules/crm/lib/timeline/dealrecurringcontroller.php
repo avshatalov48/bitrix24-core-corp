@@ -200,10 +200,14 @@ class DealRecurringController extends DealController
 		$previousFields = isset($params['PREVIOUS_FIELDS']) && is_array($params['PREVIOUS_FIELDS'])
 			? $params['PREVIOUS_FIELDS'] : array();
 
-		if (strlen($params['FIELD_NAME']))
+		if($params['FIELD_NAME'] <> '')
+		{
 			$fieldName = $params['FIELD_NAME'];
+		}
 		else
+		{
 			return;
+		}
 
 		$previousValue = isset($previousFields['VALUE']) ? $previousFields['VALUE'] : '';
 		$currentValue = isset($currentFields['VALUE']) ? $currentFields['VALUE'] : $previousValue;

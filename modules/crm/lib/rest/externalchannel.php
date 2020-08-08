@@ -569,7 +569,7 @@ class CCrmExternalChannelImportAgent extends \CCrmExternalChannelRestProxy
 				else
 					$result->addError(new Error("Field COMPANY_ORIGIN_ID is empty", 34006));
 			}
-			if(is_set($externalFields, 'EXTERNAL_URL') && strlen($externalFields['EXTERNAL_URL'])>0)
+			if(is_set($externalFields, 'EXTERNAL_URL') && $externalFields['EXTERNAL_URL'] <> '')
 			{
 				$r = $this->prepareUserField(self::getNameUserFieldExternalUrl());
 				$resUF = $r->getData();

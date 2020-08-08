@@ -1236,7 +1236,7 @@ BX.Crm.Instagram.TileGrid.Item.prototype =
 
 			if (this.image)
 			{
-				this.imageItemHandler = BX.throttle(this.appendImageItem, 20).bind(this);
+				this.imageItemHandler = BX.throttle(this.appendImageItem, 20, this);
 				BX.bind(window, 'resize', this.imageItemHandler);
 				BX.bind(window, 'scroll', this.imageItemHandler);
 			}

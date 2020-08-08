@@ -4,7 +4,7 @@
  * @package bitrix
  * @subpackage tasks
  * @copyright 2001-2016 Bitrix
- * 
+ *
  * @access private
  *
  * Each method you put here you`ll be able to call as ENTITY_NAME.METHOD_NAME via AJAX and\or REST, so be careful.
@@ -12,7 +12,8 @@
 
 namespace Bitrix\Tasks\Dispatcher\PublicAction\Integration;
 
-use \Bitrix\Main\ArgumentException;
+
+use Bitrix\Main\Application;
 
 final class SocialNetwork extends \Bitrix\Tasks\Dispatcher\PublicAction
 {
@@ -30,11 +31,13 @@ final class SocialNetwork extends \Bitrix\Tasks\Dispatcher\PublicAction
 			return array();
 		}
 
-		return \Bitrix\Tasks\Integration\SocialNetwork::getLogDestination($context, array(
+		$params = [
 			'AVATAR_WIDTH' => static::ALLOWED_AVATAR_SIZE,
 			'AVATAR_HEIGHT' => static::ALLOWED_AVATAR_SIZE,
 			'USE_PROJECTS' => 'Y'
-        ));
+		];
+
+		return \Bitrix\Tasks\Integration\SocialNetwork::getLogDestination($context, $params);
 	}
 
 	public function setDestinationLast($items = array(), $context = 'TASKS')

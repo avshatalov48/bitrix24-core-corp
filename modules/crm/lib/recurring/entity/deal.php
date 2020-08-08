@@ -5,6 +5,7 @@ use Bitrix\Main,
 	Bitrix\Main\Result,
 	Bitrix\Main\Type\Date,
 	Bitrix\Crm\DealRecurTable,
+	Bitrix\Crm\DealTable,
 	Bitrix\Crm\Binding\DealContactTable,
 	Bitrix\Crm\Observer\Entity\ObserverTable,
 	Bitrix\Crm\Restriction\RestrictionManager;
@@ -90,6 +91,7 @@ class Deal extends Base
 		$getParams = [
 			'filter' => $filter,
 			'select' => ['ID', 'DEAL_ID'],
+			'runtime' => $this->getRuntimeTemplateField(),
 		];
 		if ((int)$limit > 0)
 		{
@@ -144,6 +146,11 @@ class Deal extends Base
 					else
 					{
 						$result->addErrors($r->getErrors());
+						if ($recalculate)
+						{
+							$recurringItem->deactivate();
+							$recurringItem->save();
+						}
 					}
 					unset($recurringItem);
 				}
@@ -327,5 +334,17 @@ class Deal extends Base
 		}
 
 		return $entity->delete();
+	}
+
+	public function getRuntimeTemplateField() : array
+	{
+		return [
+			new Main\Entity\ReferenceField(
+				'DEAL_ENTITY',
+				DealTable::class,
+				['=this.DEAL_ID' => 'ref.ID'],
+				['join_type' => 'INNER']
+			)
+		];
 	}
 }

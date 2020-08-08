@@ -15,19 +15,22 @@ final class Tag
 {
 	public static function formatTagString($tags)
 	{
-		if(Type::isIterable($tags) && count($tags))
+		if (Type::isIterable($tags) && count($tags))
 		{
-			$formatted = array();
+			$formatted = [];
 
 			foreach ($tags as $tag)
 			{
-				if(Type::isIterable($tag) && $tag['NAME'])
+				if (Type::isIterable($tag))
 				{
-					$formatted[] = (string) $tag['NAME'];
+					if ($tag['NAME'] !== '')
+					{
+						$formatted[] = (string)$tag['NAME'];
+					}
 				}
-				elseif($tag !== '')
+				else if ($tag !== '')
 				{
-					$formatted[] = (string) $tag;
+					$formatted[] = (string)$tag;
 				}
 			}
 

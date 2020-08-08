@@ -162,6 +162,41 @@ if ($isBitrix24Cloud)
 }
 $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 ?>
+
+<?
+if (
+	preg_match("/(MSIE|Trident)/i", $_SERVER["HTTP_USER_AGENT"]) &&
+	CUserOptions::getOption("intranet", "ie11_warning", "N") === "N"
+):
+?>
+<script type="text/javascript">
+	BX.ready(function() {
+			setTimeout(function() {
+				BX.UI.Notification.Center.notify({
+					width: 750,
+					content: "<?=GetMessage("BITRIX24_IE_SUPPORT")?>",
+					position: "top-center",
+					autoHide: false,
+					actions: [{
+						title: "<?=GetMessage("BX24_CLOSE_BUTTON")?>",
+						events: {
+							click: function(event, balloon) {
+								balloon.close();
+							}
+						}
+					}],
+					events: {
+						onClose: function() {
+							BX.userOptions.save("intranet", "ie11_warning", null, "Y");
+							BX.userOptions.send(null);
+						}
+					}
+				});
+			}, 5000);
+	});
+</script>
+<? endif ?>
+
 <script>
 	BX.message({
 		"BITRIX24_CS_ONLINE" : "<?=GetMessageJS("BITRIX24_CS_ONLINE")?>",

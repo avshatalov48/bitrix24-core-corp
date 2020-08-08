@@ -5,28 +5,28 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 if(!CModule::IncludeModule("iblock"))
 	return;
 
-$iblockXMLFile = $WIZARD_SERVICE_RELATIVE_PATH."/xml/".LANGUAGE_ID."/departments.xml";
+$iblockXMLFile = WIZARD_SERVICE_RELATIVE_PATH."/xml/".LANGUAGE_ID."/departments.xml";
 if (!file_exists($_SERVER["DOCUMENT_ROOT"].$iblockXMLFile))
 {
-	$iblockXMLFile = $WIZARD_SERVICE_RELATIVE_PATH."/xml/".\Bitrix\Main\Localization\Loc::getDefaultLang(LANGUAGE_ID)."/departments.xml";
+	$iblockXMLFile = WIZARD_SERVICE_RELATIVE_PATH."/xml/".\Bitrix\Main\Localization\Loc::getDefaultLang(LANGUAGE_ID)."/departments.xml";
 }
-$iblockCode = "departments"; 
+$iblockCode = "departments";
 $iblockType = "structure";
 
 $rsIBlock = CIBlock::GetList(array(), array("CODE" => $iblockCode, "TYPE" => $iblockType));
-$iblockID = false; 
+$iblockID = false;
 if ($arIBlock = $rsIBlock->Fetch())
 {
-	$iblockID = $arIBlock["ID"]; 
+	$iblockID = $arIBlock["ID"];
 }
 
 if($iblockID == false)
 {
 	$iblockID = WizardServices::ImportIBlockFromXML(
-		$iblockXMLFile, 
-		"departments", 
-		$iblockType, 
-		WIZARD_SITE_ID, 
+		$iblockXMLFile,
+		"departments",
+		$iblockType,
+		WIZARD_SITE_ID,
 		$permissions = Array(
 			"1" => "X",
 			"2" => "R",
@@ -34,19 +34,19 @@ if($iblockID == false)
 			WIZARD_PERSONNEL_DEPARTMENT_GROUP => "W",
 		)
 	);
-	
+
 	if ($iblockID < 1)
 		return;
-	
+
 	//IBlock fields
 	$iblock = new CIBlock;
 	$arFields = Array(
-		"CODE" => $iblockCode, 
+		"CODE" => $iblockCode,
 		"XML_ID" => $iblockCode,
 	);
-	
+
 	$iblock->Update($iblockID, $arFields);
-	
+
 	//Departments add
 	$bs = new CIBlockSection;
 	$arFields = array(
@@ -55,10 +55,10 @@ if($iblockID == false)
 		//"UF_HEAD" => "1"
 	);
 	$ID = $bs->Add($arFields);
-	
+
 	if ($ID > 0)
 	{
-		$arDepartmentSections = array(		
+		$arDepartmentSections = array(
 			array(
 				"NAME" => GetMessage("iblock_dep_name2"),
 				"IBLOCK_ID" => $iblockID,
@@ -74,9 +74,9 @@ if($iblockID == false)
 				"IBLOCK_ID" => $iblockID,
 				"IBLOCK_SECTION_ID" => $ID
 			),
-		
+
 		);
-		
+
 		foreach($arDepartmentSections as $department)
 			$ID = $bs->Add($department);
 	}

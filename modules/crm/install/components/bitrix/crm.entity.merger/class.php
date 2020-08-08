@@ -194,7 +194,7 @@ class CCrmEntityMergerComponent extends CBitrixComponent
 			? CSite::GetNameFormat(false)
 			: str_replace(array("#NOBR#","#/NOBR#"), array("",""), $this->arParams['NAME_TEMPLATE']);
 
-		$this->arResult['ENTITY_EDITOR_CONFIGURATION_ID'] = 'merger_'.strtolower($this->entityTypeName);
+		$this->arResult['ENTITY_EDITOR_CONFIGURATION_ID'] = 'merger_'.mb_strtolower($this->entityTypeName);
 
 		$this->arResult['EXTERNAL_CONTEXT_ID'] = $this->request->get('externalContextId');
 		if(!is_string($this->arResult['EXTERNAL_CONTEXT_ID']))

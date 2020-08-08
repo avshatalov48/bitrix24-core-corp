@@ -76,6 +76,8 @@ class Helper
 	 */
 	public static function registerExternalCall(array $fields)
 	{
+		$fields['USER_ID'] = (int)$fields['USER_ID'];
+
 		$result = new Result();
 		$callId = 'externalCall.'.md5(uniqid($fields['REST_APP_ID'].$fields['USER_ID'].$fields['PHONE_NUMBER'], true)).'.'.time();
 
@@ -83,6 +85,16 @@ class Helper
 		if(!$phoneNumber)
 		{
 			$result->addError(new Error('Unsupported phone number format'));
+			return $result;
+		}
+
+		$userCheck = \Bitrix\Main\UserTable::getRow([
+			'select' => ['ID'],
+			'filter' => ['=ID' => $fields['USER_ID'], '=ACTIVE' => 'Y', '=IS_REAL_USER' => 'Y']
+		]);
+		if(!$userCheck)
+		{
+			$result->addError(new Error('User is not found or is not active'));
 			return $result;
 		}
 
@@ -377,6 +389,19 @@ class Helper
 		{
 			$result->addError(new Error('Call is not found (call should be registered prior to finishing'));
 			return $result;
+		}
+
+		if(isset($fields['USER_ID']))
+		{
+			$userCheck = \Bitrix\Main\UserTable::getRow([
+				'select' => ['ID'],
+				'filter' => ['=ID' => $fields['USER_ID'], '=ACTIVE' => 'Y', '=IS_REAL_USER' => 'Y']
+			]);
+			if(!$userCheck)
+			{
+				$result->addError(new Error('User is not found or is not active'));
+				return $result;
+			}
 		}
 
 		self::hideExternalCall(array(

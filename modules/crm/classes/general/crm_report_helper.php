@@ -4,6 +4,7 @@ if (!CModule::IncludeModule('report'))
 
 use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Crm\UtmTable;
 
 class CCrmReportManager
 {
@@ -63,27 +64,27 @@ class CCrmReportManager
 		self::$OWNER_INFOS[] = self::createOwnerInfo(
 			CCrmReportHelper::getOwnerId(),
 			'CCrmReportHelper',
-			GetMessage('CRM_REPORT_OWNER_TITLE_'.strtoupper(CCrmReportHelper::getOwnerId()))
+			GetMessage('CRM_REPORT_OWNER_TITLE_'.mb_strtoupper(CCrmReportHelper::getOwnerId()))
 		);
 		self::$OWNER_INFOS[] = self::createOwnerInfo(
 			CCrmProductReportHelper::getOwnerId(),
 			'CCrmProductReportHelper',
-			GetMessage('CRM_REPORT_OWNER_TITLE_'.strtoupper(CCrmProductReportHelper::getOwnerId()))
+			GetMessage('CRM_REPORT_OWNER_TITLE_'.mb_strtoupper(CCrmProductReportHelper::getOwnerId()))
 		);
 		self::$OWNER_INFOS[] = self::createOwnerInfo(
 			CCrmLeadReportHelper::getOwnerId(),
 			'CCrmLeadReportHelper',
-			GetMessage('CRM_REPORT_OWNER_TITLE_'.strtoupper(CCrmLeadReportHelper::getOwnerId()))
+			GetMessage('CRM_REPORT_OWNER_TITLE_'.mb_strtoupper(CCrmLeadReportHelper::getOwnerId()))
 		);
 		self::$OWNER_INFOS[] = self::createOwnerInfo(
 			CCrmInvoiceReportHelper::getOwnerId(),
 			'CCrmInvoiceReportHelper',
-			GetMessage('CRM_REPORT_OWNER_TITLE_'.strtoupper(CCrmInvoiceReportHelper::getOwnerId()))
+			GetMessage('CRM_REPORT_OWNER_TITLE_'.mb_strtoupper(CCrmInvoiceReportHelper::getOwnerId()))
 		);
 		self::$OWNER_INFOS[] = self::createOwnerInfo(
 			CCrmActivityReportHelper::getOwnerId(),
 			'CCrmActivityReportHelper',
-			GetMessage('CRM_REPORT_OWNER_TITLE_'.strtoupper(CCrmActivityReportHelper::getOwnerId()))
+			GetMessage('CRM_REPORT_OWNER_TITLE_'.mb_strtoupper(CCrmActivityReportHelper::getOwnerId()))
 		);
 		return self::$OWNER_INFOS;
 	}
@@ -121,6 +122,8 @@ class CCrmReportManager
 
 abstract class CCrmReportHelperBase extends CReportHelper
 {
+	const UTM_FIELD_POSTFIX = '_VAL';
+
 	protected static $CURRENT_RESULT_ROWS = null;
 	protected static $CURRENT_RESULT_ROW = null;
 	protected static $PAY_SYSTEMS = array();
@@ -159,7 +162,7 @@ abstract class CCrmReportHelperBase extends CReportHelper
 			{
 				foreach ($arUserFields as $field)
 				{
-					if (isset($field['FIELD_NAME']) && substr($field['FIELD_NAME'], 0, 3) === 'UF_'
+					if (isset($field['FIELD_NAME']) && mb_substr($field['FIELD_NAME'], 0, 3) === 'UF_'
 						/*&& (!isset($field['MULTIPLE']) || $field['MULTIPLE'] !== 'Y')*/
 						&& isset($field['USER_TYPE_ID']) && in_array($field['USER_TYPE_ID'], $allowedUserTypes, true))
 					{
@@ -185,6 +188,11 @@ abstract class CCrmReportHelperBase extends CReportHelper
 		}
 	}
 
+	protected static function getUTMFieldMap()
+	{
+		return UtmTable::getCodeNames();
+	}
+
 	protected static function prepareUFEnumerations($usedUFMap = null)
 	{
 		$ufInfo = static::getUFInfo();
@@ -201,7 +209,7 @@ abstract class CCrmReportHelperBase extends CReportHelper
 				foreach ($fieldList as $field)
 				{
 					if (is_array($field) && isset($field['USER_TYPE_ID']) && $field['USER_TYPE_ID'] === 'enumeration'
-						&& isset($field['ENTITY_ID']) && strlen(strval($field['ENTITY_ID'])) > 0
+						&& isset($field['ENTITY_ID']) && strval($field['ENTITY_ID']) <> ''
 						&& !isset(self::$ufEnumerations[$field['ENTITY_ID']][$field['FIELD_NAME']])
 						&& ($usedUFMap === null || isset($usedUFMap[$field['ENTITY_ID']][$field['FIELD_NAME']]))
 						&& is_array($field['USER_TYPE']) && isset($field['USER_TYPE']['CLASS_NAME'])
@@ -235,7 +243,7 @@ abstract class CCrmReportHelperBase extends CReportHelper
 		}
 
 		if ($isUF && $isMultiple
-			&& substr($fieldDefinition, -strlen(self::UF_TEXT_TRIM_POSTFIX)) === self::UF_TEXT_TRIM_POSTFIX)
+			&& mb_substr($fieldDefinition, -mb_strlen(self::UF_TEXT_TRIM_POSTFIX)) === self::UF_TEXT_TRIM_POSTFIX)
 		{
 			return '';
 		}
@@ -474,6 +482,90 @@ abstract class CCrmReportHelperBase extends CReportHelper
 				}
 			}
 		}
+	}
+
+	public static function appendUTMFields(\Bitrix\Main\Entity\Base $entity)
+	{
+		// Lead, Deal, Invoice->Deal, Product->Deal
+
+		$connection = Main\Application::getConnection();
+		$sqlHelper = $connection->getSqlHelper();
+		$entityTypeId = CCrmOwnerType::ResolveID(mb_strtoupper($entity->getName()));
+		$utmRefMap = static::getUTMFieldMap();
+		$isNeedAppendFields = ($entityTypeId === CCrmOwnerType::Lead || $entityTypeId === CCrmOwnerType::Deal)
+			&& is_array($utmRefMap) && !empty($utmRefMap);
+		$utmFields = [];
+
+		foreach($entity->getFields() as $field)
+		{
+			if (in_array($field->getName(), array('INVOICE_UTS', 'DEAL_BY', 'DEAL_OWNER'), true)
+				&& $field instanceof Bitrix\Main\Entity\ReferenceField)
+			{
+				self::appendUTMFields($field->getRefEntity());
+			}
+			else
+			{
+				$fieldName = $field->getName();
+				if ($isNeedAppendFields && $field instanceof Bitrix\Main\Entity\ReferenceField
+					&& isset($utmRefMap[$fieldName]))
+				{
+					$utmFields[] = [
+						'def' => [
+							'data_type' => 'string',
+							'expression' => [
+								"(SELECT UTM.VALUE ".
+								"FROM b_crm_utm UTM ".
+								"WHERE UTM.ENTITY_TYPE_ID = $entityTypeId ".
+								"AND UTM.ENTITY_ID = %s ".
+								"AND UTM.CODE = '".$sqlHelper->forSql($fieldName, 45)."')",
+								'ID'
+							]
+						],
+						'name' => $fieldName.self::UTM_FIELD_POSTFIX
+					];
+				}
+				else if ($fieldName === 'IS_RETURN_CUSTOMER')
+				{
+					$utmFields[] = [
+						'def' => [
+							'data_type' => 'boolean',
+							'expression' => ['%s', 'IS_RETURN_CUSTOMER'],
+							'values' => array('N', 'Y')
+						],
+						'name' => 'IS_RETURN_CUSTOMER_BL'
+					];
+				}
+			}
+		}
+
+		foreach ($utmFields as $fieldInfo)
+		{
+			if (!$entity->hasField($fieldInfo['name']))
+			{
+				$entity->addField($fieldInfo['def'], $fieldInfo['name']);
+			}
+		}
+	}
+
+	public static function getAlternatePhrasesOfColumns()
+	{
+		$result = parent::getAlternatePhrasesOfColumns();
+
+		if (!is_array($result))
+		{
+			$result = [];
+		}
+
+		foreach (static::getUTMFieldMap() as $fieldId => $fieldTitle)
+		{
+			foreach (['LEAD', 'DEAL'] as $entityName)
+			{
+				$phraseKey = 'CRM_'.$entityName.'_ENTITY_'.$fieldId.self::UTM_FIELD_POSTFIX.'_FIELD';
+				$result[$phraseKey] = $fieldTitle;
+			}
+		}
+
+		return $result;
 	}
 
 	public static function getFDMsMultipleTrimmed()
@@ -903,6 +995,13 @@ abstract class CCrmReportHelperBase extends CReportHelper
 		$name = array_key_exists($code, $statuses) ? $statuses[$code]['NAME'] : $code;
 		return $htmlEncode ? htmlspecialcharsbx($name) : $name;
 	}
+	protected static function getWebFormName($id, $htmlEncode = false)
+	{
+		$webFormNames = Crm\WebForm\Manager::getListNames();
+		$name = isset($webFormNames[$id]) ? $webFormNames[$id] : '';
+
+		return $htmlEncode ? htmlspecialcharsbx($name) : $name;
+	}
 	protected static function getDealStageName($code, $htmlEncode = false)
 	{
 		$name = Bitrix\Crm\Category\DealCategory::getStageName($code);
@@ -952,7 +1051,7 @@ abstract class CCrmReportHelperBase extends CReportHelper
 
 			if (isset($paySystems[$code]))
 			{
-				$name = (strlen($paySystems[$code]) > 0) ? $paySystems[$code] : $code;
+				$name = ($paySystems[$code] <> '') ? $paySystems[$code] : $code;
 				break;
 			}
 		}
@@ -984,7 +1083,7 @@ abstract class CCrmReportHelperBase extends CReportHelper
 	{
 		self::ensurePersonTypesLoaded();
 		$arPersonType = self::$PERSON_TYPES;
-		$name = (isset($arPersonType[$code]) && strlen($arPersonType[$code]) > 0) ? $arPersonType[$code] : $code;
+		$name = (isset($arPersonType[$code]) && $arPersonType[$code] <> '') ? $arPersonType[$code] : $code;
 		if ($name === 'CONTACT' || $name === 'COMPANY')
 			$name = GetMessage('CRM_PERSON_TYPE_'.$name);
 		return $htmlEncode ? htmlspecialcharsbx($name) : $name;
@@ -1151,121 +1250,132 @@ class CCrmReportHelper extends CCrmReportHelperBase
 				'LAST_NAME',
 				'WORK_POSITION'
 			),
-			'LEAD_BY' => array(
-				'ID',
-				'TITLE',
-				'STATUS_BY.STATUS_ID',
-				'STATUS_DESCRIPTION',
-				'OPPORTUNITY',
-				'CURRENCY_ID',
-				'COMMENTS',
-				'NAME',
-				'LAST_NAME',
-				'SECOND_NAME',
+			'WEBFORM_ID',
+			'IS_RETURN_CUSTOMER_BL'
+		);
+		foreach (array_keys(static::getUTMFieldMap()) as $fieldId)
+		{
+			$columnList[] = $fieldId.self::UTM_FIELD_POSTFIX;
+		}
+		$columnList = array_merge(
+			$columnList,
+			[
+				'LEAD_BY' => array(
+					'ID',
+					'TITLE',
+					'STATUS_BY.STATUS_ID',
+					'STATUS_DESCRIPTION',
+					'OPPORTUNITY',
+					'CURRENCY_ID',
+					'COMMENTS',
+					'NAME',
+					'LAST_NAME',
+					'SECOND_NAME',
 				'BIRTHDATE',
-				'COMPANY_TITLE',
-				'POST',
-				'ADDRESS',
-				'SOURCE_BY.STATUS_ID',
-				'SOURCE_DESCRIPTION',
-				'DATE_CREATE',
-				'DATE_MODIFY',
-				'ASSIGNED_BY' => array(
-					'ID',
-					'SHORT_NAME',
-					'NAME',
-					'LAST_NAME',
-					'WORK_POSITION'
+					'COMPANY_TITLE',
+					'POST',
+					'ADDRESS',
+					'SOURCE_BY.STATUS_ID',
+					'SOURCE_DESCRIPTION',
+					'DATE_CREATE',
+					'DATE_MODIFY',
+					'ASSIGNED_BY' => array(
+						'ID',
+						'SHORT_NAME',
+						'NAME',
+						'LAST_NAME',
+						'WORK_POSITION'
+					),
+					'CREATED_BY' => array(
+						'ID',
+						'SHORT_NAME',
+						'NAME',
+						'LAST_NAME',
+						'WORK_POSITION'
+					),
+					'MODIFY_BY' => array(
+						'ID',
+						'SHORT_NAME',
+						'NAME',
+						'LAST_NAME',
+						'WORK_POSITION'
+					)
 				),
-				'CREATED_BY' => array(
+				'CONTACT_BY' => array(
 					'ID',
-					'SHORT_NAME',
 					'NAME',
 					'LAST_NAME',
-					'WORK_POSITION'
-				),
-				'MODIFY_BY' => array(
-					'ID',
-					'SHORT_NAME',
-					'NAME',
-					'LAST_NAME',
-					'WORK_POSITION'
-				)
-			),
-			'CONTACT_BY' => array(
-				'ID',
-				'NAME',
-				'LAST_NAME',
-				'SECOND_NAME',
+					'SECOND_NAME',
 				'BIRTHDATE',
-				'POST',
-				'ADDRESS',
-				'TYPE_BY.STATUS_ID',
-				'COMMENTS',
-				'SOURCE_BY.STATUS_ID',
-				'SOURCE_DESCRIPTION',
-				'DATE_CREATE',
-				'DATE_MODIFY',
-				'ASSIGNED_BY' => array(
-					'ID',
-					'SHORT_NAME',
-					'NAME',
-					'LAST_NAME',
-					'WORK_POSITION'
+					'POST',
+					'ADDRESS',
+					'TYPE_BY.STATUS_ID',
+					'COMMENTS',
+					'SOURCE_BY.STATUS_ID',
+					'SOURCE_DESCRIPTION',
+					'DATE_CREATE',
+					'DATE_MODIFY',
+					'ASSIGNED_BY' => array(
+						'ID',
+						'SHORT_NAME',
+						'NAME',
+						'LAST_NAME',
+						'WORK_POSITION'
+					),
+					'CREATED_BY' => array(
+						'ID',
+						'SHORT_NAME',
+						'NAME',
+						'LAST_NAME',
+						'WORK_POSITION'
+					),
+					'MODIFY_BY' => array(
+						'ID',
+						'SHORT_NAME',
+						'NAME',
+						'LAST_NAME',
+						'WORK_POSITION'
+					)
 				),
-				'CREATED_BY' => array(
+				'COMPANY_BY' => array(
 					'ID',
-					'SHORT_NAME',
-					'NAME',
-					'LAST_NAME',
-					'WORK_POSITION'
+					'TITLE',
+					'COMPANY_TYPE_BY.STATUS_ID',
+					'INDUSTRY_BY.STATUS_ID',
+					'EMPLOYEES_BY.STATUS_ID',
+					'REVENUE',
+					'CURRENCY_ID',
+					'COMMENTS',
+					'ADDRESS',
+					'ADDRESS_LEGAL',
+					'BANKING_DETAILS',
+					'DATE_CREATE',
+					'DATE_MODIFY',
+					'CREATED_BY' => array(
+						'ID',
+						'SHORT_NAME',
+						'NAME',
+						'LAST_NAME',
+						'WORK_POSITION'
+					),
+					'MODIFY_BY' => array(
+						'ID',
+						'SHORT_NAME',
+						'NAME',
+						'LAST_NAME',
+						'WORK_POSITION'
+					)
 				),
-				'MODIFY_BY' => array(
-					'ID',
-					'SHORT_NAME',
-					'NAME',
-					'LAST_NAME',
-					'WORK_POSITION'
-				)
-			),
-			'COMPANY_BY' => array(
-				'ID',
-				'TITLE',
-				'COMPANY_TYPE_BY.STATUS_ID',
-				'INDUSTRY_BY.STATUS_ID',
-				'EMPLOYEES_BY.STATUS_ID',
-				'REVENUE',
-				'CURRENCY_ID',
-				'COMMENTS',
-				'ADDRESS',
-				'ADDRESS_LEGAL',
-				'BANKING_DETAILS',
-				'DATE_CREATE',
-				'DATE_MODIFY',
-				'CREATED_BY' => array(
-					'ID',
-					'SHORT_NAME',
-					'NAME',
-					'LAST_NAME',
-					'WORK_POSITION'
+				'HAS_PRODUCTS',
+				'PRODUCT_ROW' => array(
+					'ProductRow:DEAL_OWNER.IBLOCK_ELEMENT.ID',
+					'ProductRow:DEAL_OWNER.CP_PRODUCT_NAME',
+					'ProductRow:DEAL_OWNER.PRICE_ACCOUNT',
+					'ProductRow:DEAL_OWNER.QUANTITY',
+					'ProductRow:DEAL_OWNER.SUM_ACCOUNT'
 				),
-				'MODIFY_BY' => array(
-					'ID',
-					'SHORT_NAME',
-					'NAME',
-					'LAST_NAME',
-					'WORK_POSITION'
-				)
-			),
-			'HAS_PRODUCTS',
-			'PRODUCT_ROW' => array(
-				'ProductRow:DEAL_OWNER.IBLOCK_ELEMENT.ID',
-				'ProductRow:DEAL_OWNER.CP_PRODUCT_NAME',
-				'ProductRow:DEAL_OWNER.PRICE_ACCOUNT',
-				'ProductRow:DEAL_OWNER.QUANTITY',
-				'ProductRow:DEAL_OWNER.SUM_ACCOUNT'
-			),
-			'ORIGINATOR_BY.ID'
+				'ORIGINATOR_BY.ID'
+			]
 		);
 
 		// Append user fields
@@ -1280,8 +1390,8 @@ class CCrmReportHelper extends CCrmReportHelperBase
 				{
 					if (($uf['USER_TYPE_ID'] !== 'datetime' && $uf['USER_TYPE_ID'] !== 'boolean')
 						|| $uf['MULTIPLE'] === 'Y'
-						|| substr($ufKey, -strlen(self::UF_DATETIME_SHORT_POSTFIX)) === self::UF_DATETIME_SHORT_POSTFIX
-						|| substr($ufKey, -strlen($blPostfix)) === $blPostfix)
+						|| mb_substr($ufKey, -mb_strlen(self::UF_DATETIME_SHORT_POSTFIX)) === self::UF_DATETIME_SHORT_POSTFIX
+						|| mb_substr($ufKey, -mb_strlen($blPostfix)) === $blPostfix)
 					{
 						$columnList[] = $ufKey;
 					}
@@ -1294,8 +1404,8 @@ class CCrmReportHelper extends CCrmReportHelperBase
 				{
 					if (($uf['USER_TYPE_ID'] !== 'datetime' && $uf['USER_TYPE_ID'] !== 'boolean')
 						|| $uf['MULTIPLE'] === 'Y'
-						|| substr($ufKey, -strlen(self::UF_DATETIME_SHORT_POSTFIX)) === self::UF_DATETIME_SHORT_POSTFIX
-						|| substr($ufKey, -strlen($blPostfix)) === $blPostfix)
+						|| mb_substr($ufKey, -mb_strlen(self::UF_DATETIME_SHORT_POSTFIX)) === self::UF_DATETIME_SHORT_POSTFIX
+						|| mb_substr($ufKey, -mb_strlen($blPostfix)) === $blPostfix)
 					{
 						$columnList['LEAD_BY'][] = $ufKey;
 					}
@@ -1308,8 +1418,8 @@ class CCrmReportHelper extends CCrmReportHelperBase
 				{
 					if (($uf['USER_TYPE_ID'] !== 'datetime' && $uf['USER_TYPE_ID'] !== 'boolean')
 						|| $uf['MULTIPLE'] === 'Y'
-						|| substr($ufKey, -strlen(self::UF_DATETIME_SHORT_POSTFIX)) === self::UF_DATETIME_SHORT_POSTFIX
-						|| substr($ufKey, -strlen($blPostfix)) === $blPostfix)
+						|| mb_substr($ufKey, -mb_strlen(self::UF_DATETIME_SHORT_POSTFIX)) === self::UF_DATETIME_SHORT_POSTFIX
+						|| mb_substr($ufKey, -mb_strlen($blPostfix)) === $blPostfix)
 					{
 						$columnList['CONTACT_BY'][] = $ufKey;
 					}
@@ -1322,8 +1432,8 @@ class CCrmReportHelper extends CCrmReportHelperBase
 				{
 					if (($uf['USER_TYPE_ID'] !== 'datetime' && $uf['USER_TYPE_ID'] !== 'boolean')
 						|| $uf['MULTIPLE'] === 'Y'
-						|| substr($ufKey, -strlen(self::UF_DATETIME_SHORT_POSTFIX)) === self::UF_DATETIME_SHORT_POSTFIX
-						|| substr($ufKey, -strlen($blPostfix)) === $blPostfix)
+						|| mb_substr($ufKey, -mb_strlen(self::UF_DATETIME_SHORT_POSTFIX)) === self::UF_DATETIME_SHORT_POSTFIX
+						|| mb_substr($ufKey, -mb_strlen($blPostfix)) === $blPostfix)
 					{
 						$columnList['COMPANY_BY'][] = $ufKey;
 					}
@@ -1361,6 +1471,7 @@ class CCrmReportHelper extends CCrmReportHelperBase
 		self::appendDateTimeUserFieldsAsShort($entity);
 		self::appendMoneyUserFieldsAsSeparated($entity);
 		self::appendTextUserFieldsAsTrimmed($entity);
+		self::appendUTMFields($entity);
 	}
 
 	public static function getCustomSelectFields($select, $fList)
@@ -1414,6 +1525,7 @@ class CCrmReportHelper extends CCrmReportHelperBase
 			'RECEIVED_AMOUNT' => 'float',
 			'LOST_AMOUNT' => 'float',
 			'CATEGORY_ID' => 'string',
+			'WEBFORM_ID' => 'string',
 			'ProductRow:DEAL_OWNER.SUM_ACCOUNT' => 'float',
 			'ProductRow:DEAL_OWNER.PRICE_ACCOUNT' => 'float',
 			'COMPANY_BY.REVENUE' => 'float'
@@ -1430,15 +1542,22 @@ class CCrmReportHelper extends CCrmReportHelperBase
 	}
 	public static function getCalcVariations()
 	{
+		$calcVariations = [
+			'IS_WORK' => array('SUM'),
+			'IS_LOSE' => array('SUM'),
+			'IS_WON' => array('SUM'),
+			'ProductRow:DEAL_OWNER.IBLOCK_ELEMENT.ID' => array('COUNT_DISTINCT', 'GROUP_CONCAT'),
+			'ProductRow:DEAL_OWNER.CP_PRODUCT_NAME' => array('COUNT_DISTINCT', 'GROUP_CONCAT')
+		];
+
+		foreach (array_keys(static::getUTMFieldMap()) as $fieldId)
+		{
+			$calcVariations[$fieldId.self::UTM_FIELD_POSTFIX] = ['COUNT_DISTINCT'];
+		}
+
 		return array_merge(
 			parent::getCalcVariations(),
-			array(
-				'IS_WORK' => array('SUM'),
-				'IS_LOSE' => array('SUM'),
-				'IS_WON' => array('SUM'),
-				'ProductRow:DEAL_OWNER.IBLOCK_ELEMENT.ID' => array('COUNT_DISTINCT', 'GROUP_CONCAT'),
-				'ProductRow:DEAL_OWNER.CP_PRODUCT_NAME' => array('COUNT_DISTINCT', 'GROUP_CONCAT')
-			)
+			$calcVariations
 		);
 	}
 	public static function getCompareVariations()
@@ -1463,6 +1582,10 @@ class CCrmReportHelper extends CCrmReportHelperBase
 					'NOT_EQUAL'
 				),
 				'EVENT_ID' => array(
+					'EQUAL',
+					'NOT_EQUAL'
+				),
+				'WEBFORM_ID' => array(
 					'EQUAL',
 					'NOT_EQUAL'
 				),
@@ -1516,7 +1639,7 @@ class CCrmReportHelper extends CCrmReportHelperBase
 		{
 			foreach($select as $k => $v)
 			{
-				if(strpos($k, 'CRM_DEAL_COMPANY_BY_') === 0)
+				if(mb_strpos($k, 'CRM_DEAL_COMPANY_BY_') === 0)
 				{
 					$select['CRM_DEAL_COMPANY_BY_ID'] = 'COMPANY_BY.ID';
 					break;
@@ -1537,7 +1660,7 @@ class CCrmReportHelper extends CCrmReportHelperBase
 		{
 			foreach($select as $k => $v)
 			{
-				if(strpos($k, 'CRM_DEAL_CONTACT_BY_') === 0)
+				if(mb_strpos($k, 'CRM_DEAL_CONTACT_BY_') === 0)
 				{
 					$select['CRM_DEAL_CONTACT_BY_ID'] = 'CONTACT_BY.ID';
 					break;
@@ -1549,7 +1672,7 @@ class CCrmReportHelper extends CCrmReportHelperBase
 		{
 			foreach($select as $k => $v)
 			{
-				if(strpos($k, 'CRM_DEAL_CRM_PRODUCT_ROW_DEAL_OWNER_IBLOCK_ELEMENT_') === 0)
+				if(mb_strpos($k, 'CRM_DEAL_CRM_PRODUCT_ROW_DEAL_OWNER_IBLOCK_ELEMENT_') === 0)
 				{
 					$select['CRM_DEAL_CRM_PRODUCT_ROW_DEAL_OWNER_IBLOCK_ELEMENT_ID'] = 'ProductRow:DEAL_OWNER.IBLOCK_ELEMENT.ID';
 					$select['CRM_DEAL_CRM_PRODUCT_ROW_DEAL_OWNER_IBLOCK_ELEMENT_IBLOCK_ID'] = 'ProductRow:DEAL_OWNER.IBLOCK_ELEMENT.IBLOCK_ID';
@@ -1648,7 +1771,7 @@ class CCrmReportHelper extends CCrmReportHelperBase
 		}
 		elseif(!$aggr && $fieldName === 'TITLE')
 		{
-			if($isHtml && strlen($v) > 0 && self::$CURRENT_RESULT_ROW && isset(self::$CURRENT_RESULT_ROW['ID']))
+			if($isHtml && $v <> '' && self::$CURRENT_RESULT_ROW && isset(self::$CURRENT_RESULT_ROW['ID']))
 			{
 				$v = self::prepareDealTitleHtml(self::$CURRENT_RESULT_ROW['ID'], $v);
 			}
@@ -1693,6 +1816,13 @@ class CCrmReportHelper extends CCrmReportHelperBase
 		{
 			$v = self::getDealOriginatorName($v, $isHtml);
 		}
+		elseif(!$aggr && $fieldName === 'LEAD_BY.TITLE')
+		{
+			if($isHtml && self::$CURRENT_RESULT_ROW && isset(self::$CURRENT_RESULT_ROW['CRM_DEAL_LEAD_BY_ID']))
+			{
+				$v = self::prepareLeadTitleHtml(self::$CURRENT_RESULT_ROW['CRM_DEAL_LEAD_BY_ID'], $v);
+			}
+		}
 		elseif(!$aggr && $fieldName === 'LEAD_BY.STATUS_BY.STATUS_ID')
 		{
 			if($v !== '')
@@ -1708,13 +1838,13 @@ class CCrmReportHelper extends CCrmReportHelperBase
 				$v = self::getStatusName($v, 'SOURCE', $isHtml);
 			}
 		}
-		elseif(strpos($fieldName, 'COMPANY_BY.') === 0)
+		elseif(mb_strpos($fieldName, 'COMPANY_BY.') === 0)
 		{
 			if(!$aggr && ($v === '' || trim($v) === '.'))
 			{
-				if(strpos($fieldName, 'COMPANY_BY.COMPANY_TYPE_BY') !== 0
-					&& strpos($fieldName, 'COMPANY_BY.INDUSTRY_BY') !== 0
-					&& strpos($fieldName, 'COMPANY_BY.EMPLOYEES_BY') !== 0)
+				if(mb_strpos($fieldName, 'COMPANY_BY.COMPANY_TYPE_BY') !== 0
+					&& mb_strpos($fieldName, 'COMPANY_BY.INDUSTRY_BY') !== 0
+					&& mb_strpos($fieldName, 'COMPANY_BY.EMPLOYEES_BY') !== 0)
 				{
 					$v = GetMessage('CRM_DEAL_COMPANY_NOT_ASSIGNED');
 				}
@@ -1752,11 +1882,11 @@ class CCrmReportHelper extends CCrmReportHelperBase
 				parent::formatResultValue($k, $v, $row, $cInfo, $total, $customChartValue);
 			}
 		}
-		elseif(strpos($fieldName, 'CONTACT_BY.') === 0)
+		elseif(mb_strpos($fieldName, 'CONTACT_BY.') === 0)
 		{
 			if(!$aggr && ($v === '' || trim($v) === '.'))
 			{
-				if(strpos($fieldName, 'CONTACT_BY.TYPE_BY') !== 0)
+				if(mb_strpos($fieldName, 'CONTACT_BY.TYPE_BY') !== 0)
 				{
 					$v = GetMessage('CRM_DEAL_CONTACT_NOT_ASSIGNED');
 				}
@@ -1783,12 +1913,12 @@ class CCrmReportHelper extends CCrmReportHelperBase
 				parent::formatResultValue($k, $v, $row, $cInfo, $total, $customChartValue);
 			}
 		}
-		elseif(!$aggr && strpos($fieldName, 'ASSIGNED_BY.') === 0)
+		elseif(!$aggr && mb_strpos($fieldName, 'ASSIGNED_BY.') === 0)
 		{
 			// unset HREF for empty value
 			if (empty($v) || trim($v) === '.' || $v === '&nbsp;')
 				unset($row['__HREF_'.$k]);
-			if(strlen($v) === 0 || trim($v) === '.')
+			if($v == '' || trim($v) === '.')
 			{
 				$v = GetMessage('CRM_DEAL_RESPONSIBLE_NOT_ASSIGNED');
 			}
@@ -1797,7 +1927,7 @@ class CCrmReportHelper extends CCrmReportHelperBase
 				$v = htmlspecialcharsbx($v);
 			}
 		}
-		elseif(!$aggr && strpos($fieldName, 'ProductRow:DEAL_OWNER.IBLOCK_ELEMENT.') === 0)
+		elseif(!$aggr && mb_strpos($fieldName, 'ProductRow:DEAL_OWNER.IBLOCK_ELEMENT.') === 0)
 		{
 			static $defaultCatalogID;
 			if(!isset($defaultCatalogID))
@@ -1828,6 +1958,13 @@ class CCrmReportHelper extends CCrmReportHelperBase
 				{
 					$v = htmlspecialcharsbx($v);
 				}
+			}
+		}
+		elseif(!$aggr && $fieldName === 'WEBFORM_ID')
+		{
+			if($v !== '')
+			{
+				$v = self::getWebFormName($v, $isHtml);
 			}
 		}
 		elseif($fieldName !== 'COMMENTS' && $fieldName !== 'LEAD_BY.COMMENTS') // Leave 'COMMENTS' as is for HTML display.
@@ -1886,6 +2023,11 @@ class CCrmReportHelper extends CCrmReportHelperBase
 		{
 			// Suppress CATEGORY_ID aggregation
 			unset($total['TOTAL_CATEGORY_ID']);
+		}
+		if(isset($total['TOTAL_WEBFORM_ID']))
+		{
+			// Suppress WEBFORM_ID aggregation
+			unset($total['TOTAL_WEBFORM_ID']);
 		}
 	}
 
@@ -2113,7 +2255,9 @@ class CCrmInvoiceReportHelper extends CCrmReportHelperBase
 			),
 			'INVOICE_UTS.DEAL_BY' => array(
 				'ID',
-				'TITLE'
+				'TITLE',
+				'WEBFORM_ID',
+				'IS_RETURN_CUSTOMER_BL'
 			),
 			'INVOICE_UTS.CONTACT_BY' => array(
 				'ID',
@@ -2139,6 +2283,11 @@ class CCrmInvoiceReportHelper extends CCrmReportHelperBase
 			)
 		);
 
+		foreach (array_keys(static::getUTMFieldMap()) as $fieldId)
+		{
+			$columnList['INVOICE_UTS.DEAL_BY'][] = $fieldId.self::UTM_FIELD_POSTFIX;
+		}
+
 		// Append user fields
 		$blPostfix = defined('self::UF_BOOLEAN_POSTFIX') ? self::UF_BOOLEAN_POSTFIX : '_BLINL';
 		self::prepareUFInfo();
@@ -2151,8 +2300,8 @@ class CCrmInvoiceReportHelper extends CCrmReportHelperBase
 				{
 					if (($uf['USER_TYPE_ID'] !== 'datetime' && $uf['USER_TYPE_ID'] !== 'boolean')
 						|| $uf['MULTIPLE'] === 'Y'
-						|| substr($ufKey, -strlen(self::UF_DATETIME_SHORT_POSTFIX)) === self::UF_DATETIME_SHORT_POSTFIX
-						|| substr($ufKey, -strlen($blPostfix)) === $blPostfix)
+						|| mb_substr($ufKey, -mb_strlen(self::UF_DATETIME_SHORT_POSTFIX)) === self::UF_DATETIME_SHORT_POSTFIX
+						|| mb_substr($ufKey, -mb_strlen($blPostfix)) === $blPostfix)
 					{
 						$columnList[] = $ufKey;
 					}
@@ -2224,6 +2373,7 @@ class CCrmInvoiceReportHelper extends CCrmReportHelperBase
 		self::appendDateTimeUserFieldsAsShort($entity);
 		self::appendMoneyUserFieldsAsSeparated($entity);
 		self::appendTextUserFieldsAsTrimmed($entity);
+		self::appendUTMFields($entity);
 	}
 
 	public static function getCustomSelectFields($select, $fList)
@@ -2275,7 +2425,8 @@ class CCrmInvoiceReportHelper extends CCrmReportHelperBase
 			'STATUS_ID' => 'string',
 			'PAY_SYSTEM_ID' => 'string',
 			'PERSON_TYPE_ID' => 'string',
-			'CURRENCY' => 'string'
+			'CURRENCY' => 'string',
+			'INVOICE_UTS.DEAL_BY.WEBFORM_ID' => 'string'
 		);
 	}
 	public static function getDefaultColumns()
@@ -2290,50 +2441,61 @@ class CCrmInvoiceReportHelper extends CCrmReportHelperBase
 	}
 	public static function getCalcVariations()
 	{
+		$calcVariations = [
+			'IS_WORK' => array('SUM'),
+			'IS_CANCELED' => array('SUM'),
+			'IS_PAYED' => array('SUM'),
+			'InvoiceSpec:INVOICE.ID' => array('COUNT_DISTINCT', 'GROUP_CONCAT'),
+			'InvoiceSpec:INVOICE.PRODUCT_ID' => array('COUNT_DISTINCT', 'GROUP_CONCAT'),
+			'InvoiceSpec:INVOICE.NAME' => array('GROUP_CONCAT'),
+			'InvoiceSpec:INVOICE.IBLOCK_ELEMENT.NAME' => array('GROUP_CONCAT')
+		];
+
+		foreach (array_keys(static::getUTMFieldMap()) as $fieldId)
+		{
+			$calcVariations['INVOICE_UTS.DEAL_BY.'.$fieldId.self::UTM_FIELD_POSTFIX] = ['COUNT_DISTINCT'];
+		}
+
 		return array_merge(
 			parent::getCalcVariations(),
-			array(
-				'IS_WORK' => array('SUM'),
-				'IS_CANCELED' => array('SUM'),
-				'IS_PAYED' => array('SUM'),
-				'InvoiceSpec:INVOICE.ID' => array('COUNT_DISTINCT', 'GROUP_CONCAT'),
-				'InvoiceSpec:INVOICE.PRODUCT_ID' => array('COUNT_DISTINCT', 'GROUP_CONCAT'),
-				'InvoiceSpec:INVOICE.NAME' => array('GROUP_CONCAT'),
-				'InvoiceSpec:INVOICE.IBLOCK_ELEMENT.NAME' => array('GROUP_CONCAT')
-			)
+			$calcVariations
 		);
 	}
 	public static function getCompareVariations()
 	{
 		return array_merge(
 			parent::getCompareVariations(),
-			array(
-				'STATUS_ID' => array(
+			[
+				'STATUS_ID' => [
 					'EQUAL',
 					'NOT_EQUAL'
-				),
-				'PAY_SYSTEM_ID' => array(
+				],
+				'PAY_SYSTEM_ID' => [
 					'EQUAL',
 					'NOT_EQUAL'
-				),
-				'PERSON_TYPE_ID' => array(
+				],
+				'PERSON_TYPE_ID' => [
 					'EQUAL',
 					'NOT_EQUAL'
-				),
-				'CURRENCY' => array(
+				],
+				'CURRENCY' => [
 					'EQUAL',
 					'NOT_EQUAL'
-				),
-				'INVOICE_UTS.DEAL_BY' => array(
+				],
+				'INVOICE_UTS.DEAL_BY' => [
 					'EQUAL'
-				),
-				'INVOICE_UTS.CONTACT_BY' => array(
+				],
+				'INVOICE_UTS.DEAL_BY.WEBFORM_ID' => [
+					'EQUAL',
+					'NOT_EQUAL'
+				],
+				'INVOICE_UTS.CONTACT_BY' => [
 					'EQUAL'
-				),
-				'INVOICE_UTS.COMPANY_BY' => array(
+				],
+				'INVOICE_UTS.COMPANY_BY' => [
 					'EQUAL'
-				)
-			)
+				]
+			]
 		);
 	}
 	public static function beforeViewDataQuery(&$select, &$filter, &$group, &$order, &$limit, &$options, &$runtime = null)
@@ -2344,7 +2506,7 @@ class CCrmInvoiceReportHelper extends CCrmReportHelperBase
 		{
 			foreach($select as $k => $v)
 			{
-				if(strpos($k, 'CRM_INVOICE_INVOICE_UTS_COMPANY_BY_') === 0)
+				if(mb_strpos($k, 'CRM_INVOICE_INVOICE_UTS_COMPANY_BY_') === 0)
 				{
 					$select['CRM_INVOICE_INVOICE_UTS_COMPANY_BY_ID'] = 'INVOICE_UTS.COMPANY_BY.ID';
 					break;
@@ -2355,7 +2517,7 @@ class CCrmInvoiceReportHelper extends CCrmReportHelperBase
 		{
 			foreach($select as $k => $v)
 			{
-				if(strpos($k, 'CRM_INVOICE_INVOICE_UTS_CONTACT_BY_') === 0)
+				if(mb_strpos($k, 'CRM_INVOICE_INVOICE_UTS_CONTACT_BY_') === 0)
 				{
 					$select['CRM_INVOICE_INVOICE_UTS_CONTACT_BY_ID'] = 'INVOICE_UTS.CONTACT_BY.ID';
 					break;
@@ -2376,7 +2538,7 @@ class CCrmInvoiceReportHelper extends CCrmReportHelperBase
 		{
 			foreach($select as $k => $v)
 			{
-				if(strpos($k, 'CRM_INVOICE_INVOICE_UTS_CONTACT_BY_') === 0)
+				if(mb_strpos($k, 'CRM_INVOICE_INVOICE_UTS_CONTACT_BY_') === 0)
 				{
 					$select['CRM_INVOICE_INVOICE_UTS_CONTACT_BY_ID'] = 'INVOICE_UTS.CONTACT_BY.ID';
 					break;
@@ -2388,7 +2550,7 @@ class CCrmInvoiceReportHelper extends CCrmReportHelperBase
 		{
 			foreach($select as $k => $v)
 			{
-				if(strpos($k, 'CRM_INVOICE_INVOICE_UTS_COMPANY_BY_') === 0)
+				if(mb_strpos($k, 'CRM_INVOICE_INVOICE_UTS_COMPANY_BY_') === 0)
 				{
 					$select['CRM_INVOICE_INVOICE_UTS_COMPANY_BY_ID'] = 'INVOICE_UTS.COMPANY_BY.ID';
 					break;
@@ -2467,7 +2629,7 @@ class CCrmInvoiceReportHelper extends CCrmReportHelperBase
 		}
 		elseif(!$aggr && $fieldName === 'ORDER_TOPIC')
 		{
-			if($isHtml && strlen($v) > 0 && self::$CURRENT_RESULT_ROW && isset(self::$CURRENT_RESULT_ROW['ID']))
+			if($isHtml && $v <> '' && self::$CURRENT_RESULT_ROW && isset(self::$CURRENT_RESULT_ROW['ID']))
 			{
 				$v = self::prepareInvoiceTitleHtml(self::$CURRENT_RESULT_ROW['ID'], $v);
 			}
@@ -2501,12 +2663,19 @@ class CCrmInvoiceReportHelper extends CCrmReportHelperBase
 				$v = self::getCurrencyName($v, $isHtml);
 			}
 		}
-		elseif(!$aggr && strpos($fieldName, 'ASSIGNED_BY.') === 0)
+		elseif(!$aggr && $fieldName === 'INVOICE_UTS.DEAL_BY.WEBFORM_ID')
+		{
+			if($v !== '')
+			{
+				$v = self::getWebFormName($v, $isHtml);
+			}
+		}
+		elseif(!$aggr && mb_strpos($fieldName, 'ASSIGNED_BY.') === 0)
 		{
 			// unset HREF for empty value
 			if (empty($v) || trim($v) === '.' || $v === '&nbsp;')
 				unset($row['__HREF_'.$k]);
-			if((strlen($v) === 0 || trim($v) === '.') && strpos($fieldName, '.WORK_POSITION') !== strlen($fieldName) - 14)
+			if(($v == '' || trim($v) === '.') && mb_strpos($fieldName, '.WORK_POSITION') !== mb_strlen($fieldName) - 14)
 			{
 				$v = GetMessage('CRM_INVOICE_RESPONSIBLE_NOT_ASSIGNED');
 			}
@@ -2515,7 +2684,7 @@ class CCrmInvoiceReportHelper extends CCrmReportHelperBase
 				$v = htmlspecialcharsbx($v);
 			}
 		}
-		elseif(!$aggr && strpos($fieldName, 'ProductRow:LEAD_OWNER.IBLOCK_ELEMENT.') === 0)
+		elseif(!$aggr && mb_strpos($fieldName, 'ProductRow:LEAD_OWNER.IBLOCK_ELEMENT.') === 0)
 		{
 			static $defaultCatalogID;
 			if(!isset($defaultCatalogID))
@@ -2578,6 +2747,11 @@ class CCrmInvoiceReportHelper extends CCrmReportHelperBase
 		if (isset($total['TOTAL_CRM_INVOICE_CRM_INVOICE_SPEC_INVOICE_VAT_RATE_PRC']))
 		{
 			unset($total['TOTAL_CRM_INVOICE_CRM_INVOICE_SPEC_INVOICE_VAT_RATE_PRC']);
+		}
+		if(isset($total['TOTAL_CRM_INVOICE_INVOICE_UTS_DEAL_BY_WEBFORM_ID']))
+		{
+			// Suppress WEBFORM_ID aggregation
+			unset($total['TOTAL_CRM_INVOICE_INVOICE_UTS_DEAL_BY_WEBFORM_ID']);
 		}
 	}
 
@@ -2784,34 +2958,45 @@ class CCrmLeadReportHelper extends CCrmReportHelperBase
 			'DATE_CREATE_SHORT',
 			'DATE_MODIFY_SHORT',
 			'DATE_CLOSED_SHORT',
-			'ASSIGNED_BY' => array(
-				'ID',
-				'SHORT_NAME',
-				'NAME',
-				'LAST_NAME',
-				'WORK_POSITION'
-			),
-			'CREATED_BY' => array(
-				'ID',
-				'SHORT_NAME',
-				'NAME',
-				'LAST_NAME',
-				'WORK_POSITION'
-			),
-			'MODIFY_BY' => array(
-				'ID',
-				'SHORT_NAME',
-				'NAME',
-				'LAST_NAME',
-				'WORK_POSITION'
-			),
-			'PRODUCT_ROW' => array(
-				'ProductRow:LEAD_OWNER.IBLOCK_ELEMENT.ID',
-				'ProductRow:LEAD_OWNER.CP_PRODUCT_NAME',
-				'ProductRow:LEAD_OWNER.PRICE_ACCOUNT',
-				'ProductRow:LEAD_OWNER.QUANTITY',
-				'ProductRow:LEAD_OWNER.SUM_ACCOUNT'
-			)
+			'WEBFORM_ID',
+			'IS_RETURN_CUSTOMER_BL'
+		);
+		foreach (array_keys(static::getUTMFieldMap()) as $fieldId)
+		{
+			$columnList[] = $fieldId.self::UTM_FIELD_POSTFIX;
+		}
+		$columnList = array_merge(
+			$columnList,
+			[
+				'ASSIGNED_BY' => array(
+					'ID',
+					'SHORT_NAME',
+					'NAME',
+					'LAST_NAME',
+					'WORK_POSITION'
+				),
+				'CREATED_BY' => array(
+					'ID',
+					'SHORT_NAME',
+					'NAME',
+					'LAST_NAME',
+					'WORK_POSITION'
+				),
+				'MODIFY_BY' => array(
+					'ID',
+					'SHORT_NAME',
+					'NAME',
+					'LAST_NAME',
+					'WORK_POSITION'
+				),
+				'PRODUCT_ROW' => array(
+					'ProductRow:LEAD_OWNER.IBLOCK_ELEMENT.ID',
+					'ProductRow:LEAD_OWNER.CP_PRODUCT_NAME',
+					'ProductRow:LEAD_OWNER.PRICE_ACCOUNT',
+					'ProductRow:LEAD_OWNER.QUANTITY',
+					'ProductRow:LEAD_OWNER.SUM_ACCOUNT'
+				)
+			]
 		);
 
 		// Append user fields
@@ -2826,8 +3011,8 @@ class CCrmLeadReportHelper extends CCrmReportHelperBase
 				{
 					if (($uf['USER_TYPE_ID'] !== 'datetime' && $uf['USER_TYPE_ID'] !== 'boolean')
 						|| $uf['MULTIPLE'] === 'Y'
-						|| substr($ufKey, -strlen(self::UF_DATETIME_SHORT_POSTFIX)) === self::UF_DATETIME_SHORT_POSTFIX
-						|| substr($ufKey, -strlen($blPostfix)) === $blPostfix)
+						|| mb_substr($ufKey, -mb_strlen(self::UF_DATETIME_SHORT_POSTFIX)) === self::UF_DATETIME_SHORT_POSTFIX
+						|| mb_substr($ufKey, -mb_strlen($blPostfix)) === $blPostfix)
 					{
 						$columnList[] = $ufKey;
 					}
@@ -2883,6 +3068,7 @@ class CCrmLeadReportHelper extends CCrmReportHelperBase
 		self::appendDateTimeUserFieldsAsShort($entity);
 		self::appendMoneyUserFieldsAsSeparated($entity);
 		self::appendTextUserFieldsAsTrimmed($entity);
+		self::appendUTMFields($entity);
 	}
 
 	public static function getCustomSelectFields($select, $fList)
@@ -2935,6 +3121,8 @@ class CCrmLeadReportHelper extends CCrmReportHelperBase
 			'CURRENCY_ID' => 'string',
 			'SOURCE_ID' => 'string',
 			'OPPORTUNITY' => 'float',
+			'WEBFORM_ID' => 'string',
+			'IS_RETURN_CUSTOMER' => 'boolean',
 			'ProductRow:LEAD_OWNER.SUM_ACCOUNT' => 'float',
 			'ProductRow:LEAD_OWNER.PRICE_ACCOUNT' => 'float'
 		);
@@ -2950,15 +3138,22 @@ class CCrmLeadReportHelper extends CCrmReportHelperBase
 	}
 	public static function getCalcVariations()
 	{
+		$calcVariations = [
+			'IS_WORK' => array('SUM'),
+			'IS_REJECT' => array('SUM'),
+			'IS_CONVERT' => array('SUM'),
+			'ProductRow:LEAD_OWNER.IBLOCK_ELEMENT.ID' => array('COUNT_DISTINCT', 'GROUP_CONCAT'),
+			'ProductRow:LEAD_OWNER.CP_PRODUCT_NAME' => array('COUNT_DISTINCT', 'GROUP_CONCAT')
+		];
+
+		foreach (array_keys(static::getUTMFieldMap()) as $fieldId)
+		{
+			$calcVariations[$fieldId.self::UTM_FIELD_POSTFIX] = ['COUNT_DISTINCT'];
+		}
+
 		return array_merge(
 			parent::getCalcVariations(),
-			array(
-				'IS_WORK' => array('SUM'),
-				'IS_REJECT' => array('SUM'),
-				'IS_CONVERT' => array('SUM'),
-				'ProductRow:LEAD_OWNER.IBLOCK_ELEMENT.ID' => array('COUNT_DISTINCT', 'GROUP_CONCAT'),
-				'ProductRow:LEAD_OWNER.CP_PRODUCT_NAME' => array('COUNT_DISTINCT', 'GROUP_CONCAT')
-			)
+			$calcVariations
 		);
 	}
 	public static function getCompareVariations()
@@ -2999,6 +3194,10 @@ class CCrmLeadReportHelper extends CCrmReportHelperBase
 					'EQUAL',
 					'NOT_EQUAL'
 				),
+				'WEBFORM_ID' => array(
+					'EQUAL',
+					'NOT_EQUAL'
+				),
 				'CONTACT_BY.TYPE_BY.STATUS_ID' => array(
 					'EQUAL',
 					'NOT_EQUAL'
@@ -3030,7 +3229,7 @@ class CCrmLeadReportHelper extends CCrmReportHelperBase
 		{
 			foreach($select as $k => $v)
 			{
-				if(strpos($k, 'CRM_LEAD_COMPANY_BY_') === 0)
+				if(mb_strpos($k, 'CRM_LEAD_COMPANY_BY_') === 0)
 				{
 					$select['CRM_LEAD_COMPANY_BY_ID'] = 'COMPANY_BY.ID';
 					break;
@@ -3051,7 +3250,7 @@ class CCrmLeadReportHelper extends CCrmReportHelperBase
 		{
 			foreach($select as $k => $v)
 			{
-				if(strpos($k, 'CRM_LEAD_CONTACT_BY_') === 0)
+				if(mb_strpos($k, 'CRM_LEAD_CONTACT_BY_') === 0)
 				{
 					$select['CRM_LEAD_CONTACT_BY_ID'] = 'CONTACT_BY.ID';
 					break;
@@ -3063,7 +3262,7 @@ class CCrmLeadReportHelper extends CCrmReportHelperBase
 		{
 			foreach($select as $k => $v)
 			{
-				if(strpos($k, 'CRM_LEAD_CRM_PRODUCT_ROW_LEAD_OWNER_IBLOCK_ELEMENT_') === 0)
+				if(mb_strpos($k, 'CRM_LEAD_CRM_PRODUCT_ROW_LEAD_OWNER_IBLOCK_ELEMENT_') === 0)
 				{
 					$select['CRM_LEAD_CRM_PRODUCT_ROW_LEAD_OWNER_IBLOCK_ELEMENT_ID'] = 'ProductRow:LEAD_OWNER.IBLOCK_ELEMENT.ID';
 					$select['CRM_LEAD_CRM_PRODUCT_ROW_LEAD_OWNER_IBLOCK_ELEMENT_IBLOCK_ID'] = 'ProductRow:LEAD_OWNER.IBLOCK_ELEMENT.IBLOCK_ID';
@@ -3125,7 +3324,7 @@ class CCrmLeadReportHelper extends CCrmReportHelperBase
 		}
 		elseif(!$aggr && $fieldName === 'TITLE')
 		{
-			if(strlen($v) > 0)
+			if($v <> '')
 			{
 				if ($isHtml && self::$CURRENT_RESULT_ROW && isset(self::$CURRENT_RESULT_ROW['ID']))
 				{
@@ -3151,12 +3350,12 @@ class CCrmLeadReportHelper extends CCrmReportHelperBase
 				$v = self::getCurrencyName($v, $isHtml);
 			}
 		}
-		elseif(!$aggr && strpos($fieldName, 'ASSIGNED_BY.') === 0)
+		elseif(!$aggr && mb_strpos($fieldName, 'ASSIGNED_BY.') === 0)
 		{
 			// unset HREF for empty value
 			if (empty($v) || trim($v) === '.' || $v === '&nbsp;')
 				unset($row['__HREF_'.$k]);
-			if(strlen($v) === 0 || trim($v) === '.')
+			if($v == '' || trim($v) === '.')
 			{
 				$v = GetMessage('CRM_LEAD_RESPONSIBLE_NOT_ASSIGNED');
 			}
@@ -3166,7 +3365,7 @@ class CCrmLeadReportHelper extends CCrmReportHelperBase
 			}
 		}
 
-		elseif(!$aggr && strpos($fieldName, 'ProductRow:LEAD_OWNER.IBLOCK_ELEMENT.') === 0)
+		elseif(!$aggr && mb_strpos($fieldName, 'ProductRow:LEAD_OWNER.IBLOCK_ELEMENT.') === 0)
 		{
 			static $defaultCatalogID;
 			if(!isset($defaultCatalogID))
@@ -3206,9 +3405,27 @@ class CCrmLeadReportHelper extends CCrmReportHelperBase
 				$v = self::getLeadSourceName($v, $isHtml);
 			}
 		}
+		elseif(!$aggr && $fieldName === 'WEBFORM_ID')
+		{
+			if($v !== '')
+			{
+				$v = self::getWebFormName($v, $isHtml);
+			}
+		}
 		elseif($fieldName !== 'COMMENTS') // Leave 'COMMENTS' as is for HTML display.
 		{
 			parent::formatResultValue($k, $v, $row, $cInfo, $total, $customChartValue);
+		}
+	}
+
+	public static function formatResultsTotal(&$total, &$columnInfo, &$customChartTotal = null)
+	{
+		parent::formatResultsTotal($total, $columnInfo, $customChartTotal);
+
+		if(isset($total['TOTAL_WEBFORM_ID']))
+		{
+			// Suppress WEBFORM_ID aggregation
+			unset($total['TOTAL_WEBFORM_ID']);
 		}
 	}
 
@@ -3475,7 +3692,7 @@ class CCrmActivityReportHelper extends CCrmReportHelperBase
 		{
 			foreach($select as $k => $v)
 			{
-				if(strpos($k, 'CRM_ACTIVITY_COMPANY_BY_') === 0)
+				if(mb_strpos($k, 'CRM_ACTIVITY_COMPANY_BY_') === 0)
 				{
 					$select['CRM_ACTIVITY_COMPANY_BY_ID'] = 'COMPANY_BY.ID';
 					break;
@@ -3538,14 +3755,14 @@ class CCrmActivityReportHelper extends CCrmReportHelperBase
 				$v = self::getActivityPriorityName($v, $isHtml);
 			}
 		}
-		elseif(!$aggr && strpos($fieldName, 'ASSIGNED_BY.') === 0
-				|| strpos($fieldName, 'AUTHOR_BY.') === 0
-				|| strpos($fieldName, 'EDITOR_BY.') === 0)
+		elseif(!$aggr && mb_strpos($fieldName, 'ASSIGNED_BY.') === 0
+				|| mb_strpos($fieldName, 'AUTHOR_BY.') === 0
+				|| mb_strpos($fieldName, 'EDITOR_BY.') === 0)
 		{
 			// unset HREF for empty value
 			if (empty($v) || trim($v) === '.' || $v === '&nbsp;')
 				unset($row['__HREF_'.$k]);
-			if((strlen($v) === 0 || trim($v) === '.') && strpos($fieldName, '.WORK_POSITION') !== strlen($fieldName) - 14)
+			if(($v == '' || trim($v) === '.') && mb_strpos($fieldName, '.WORK_POSITION') !== mb_strlen($fieldName) - 14)
 			{
 				$v = GetMessage('CRM_ACTIVITY_RESPONSIBLE_NOT_ASSIGNED');
 			}
@@ -3700,16 +3917,30 @@ class CCrmProductReportHelper extends CCrmReportHelperBase
 			array('name' => 'CP_PRODUCT_NAME')
 		);
 	}
+	public static function getCalcVariations()
+	{
+		$calcVariations = [];
+
+		foreach (array_keys(static::getUTMFieldMap()) as $fieldId)
+		{
+			$calcVariations['DEAL_OWNER.'.$fieldId.self::UTM_FIELD_POSTFIX] = ['COUNT_DISTINCT'];
+		}
+
+		return array_merge(
+			parent::getCalcVariations(),
+			$calcVariations
+		);
+	}
 	public static function getColumnList()
 	{
 		IncludeModuleLangFile(__FILE__);
 
-		return array(
+		$columnList = [
 			'CP_PRODUCT_NAME',
 			'PRICE_ACCOUNT',
 			'QUANTITY',
 			'SUM_ACCOUNT',
-			'DEAL_OWNER' => array(
+			'DEAL_OWNER' => [
 				'ID',
 				'TITLE',
 				'COMMENTS',
@@ -3743,6 +3974,17 @@ class CCrmProductReportHelper extends CCrmReportHelperBase
 					'LAST_NAME',
 					'WORK_POSITION'
 				),
+				'WEBFORM_ID',
+				'IS_RETURN_CUSTOMER_BL'
+			]
+		];
+		foreach (array_keys(static::getUTMFieldMap()) as $fieldId)
+		{
+			$columnList['DEAL_OWNER'][] = $fieldId.self::UTM_FIELD_POSTFIX;
+		}
+		$columnList['DEAL_OWNER'] = array_merge(
+			$columnList['DEAL_OWNER'],
+			[
 				'CONTACT_BY' => array(
 					'ID',
 					'NAME',
@@ -3809,8 +4051,20 @@ class CCrmProductReportHelper extends CCrmReportHelperBase
 					)
 				),
 				'ORIGINATOR_BY.ID'
-			)
+			]
 		);
+
+		return $columnList;
+	}
+	public static function getCustomColumnTypes()
+	{
+		return array(
+			'DEAL_OWNER.WEBFORM_ID' => 'string'
+		);
+	}
+	public static function setRuntimeFields(\Bitrix\Main\Entity\Base $entity, $sqlTimeInterval)
+	{
+		self::appendUTMFields($entity);
 	}
 	public static function getPeriodFilter($date_from, $date_to)
 	{
@@ -3844,60 +4098,64 @@ class CCrmProductReportHelper extends CCrmReportHelperBase
 	{
 		return array_merge(
 			parent::getCompareVariations(),
-			array(
-				'DEAL_OWNER' => array(
+			[
+				'DEAL_OWNER' => [
 					'EQUAL'
-				),
-				'DEAL_OWNER.STAGE_ID' => array(
+				],
+				'DEAL_OWNER.STAGE_ID' => [
 					'EQUAL',
 					'NOT_EQUAL'
-				),
-				'DEAL_OWNER.TYPE_ID' => array(
+				],
+				'DEAL_OWNER.TYPE_ID' => [
 					'EQUAL',
 					'NOT_EQUAL'
-				),
-				'DEAL_OWNER.CURRENCY_ID' => array(
+				],
+				'DEAL_OWNER.CURRENCY_ID' => [
 					'EQUAL',
 					'NOT_EQUAL'
-				),
-				'DEAL_OWNER.EVENT_ID' => array(
+				],
+				'DEAL_OWNER.EVENT_ID' => [
 					'EQUAL',
 					'NOT_EQUAL'
-				),
-				'DEAL_OWNER.LEAD_BY' => array(
+				],
+				'DEAL_OWNER.WEBFORM_ID' =>[
+					'EQUAL',
+					'NOT_EQUAL'
+				], 
+				'DEAL_OWNER.LEAD_BY' => [
 					'EQUAL'
-				),
-				'DEAL_OWNER.CONTACT_BY' => array(
+				],
+				'DEAL_OWNER.CONTACT_BY' => [
 					'EQUAL'
-				),
-				'DEAL_OWNER.COMPANY_BY' => array(
+				],
+				'DEAL_OWNER.COMPANY_BY' => [
 					'EQUAL'
-				),
-				'DEAL_OWNER.LEAD_BY.STATUS_BY.STATUS_ID' => array(
+				],
+				'DEAL_OWNER.LEAD_BY.STATUS_BY.STATUS_ID' => [
 					'EQUAL',
 					'NOT_EQUAL'
-				),
-				'DEAL_OWNER.CONTACT_BY.TYPE_BY.STATUS_ID' => array(
+				],
+				'DEAL_OWNER.CONTACT_BY.TYPE_BY.STATUS_ID' => [
 					'EQUAL',
 					'NOT_EQUAL'
-				),
-				'DEAL_OWNER.CONTACT_BY.SOURCE_BY.STATUS_ID' => array(
+				],
+				'DEAL_OWNER.CONTACT_BY.SOURCE_BY.STATUS_ID' => [
 					'EQUAL',
 					'NOT_EQUAL'
-				),
-				'DEAL_OWNER.COMPANY_BY.COMPANY_TYPE_BY.STATUS_ID' => array(
+				],
+				'DEAL_OWNER.COMPANY_BY.COMPANY_TYPE_BY.STATUS_ID' => [
 					'EQUAL',
 					'NOT_EQUAL'
-				),
-				'DEAL_OWNER.COMPANY_BY.INDUSTRY_BY.STATUS_ID' => array(
+				],
+				'DEAL_OWNER.COMPANY_BY.INDUSTRY_BY.STATUS_ID' => [
 					'EQUAL',
 					'NOT_EQUAL'
-				),
-				'DEAL_OWNER.COMPANY_BY.EMPLOYEES_BY.STATUS_ID' => array(
+				],
+				'DEAL_OWNER.COMPANY_BY.EMPLOYEES_BY.STATUS_ID' => [
 					'EQUAL',
 					'NOT_EQUAL'
-				)
-			)
+				]
+			]
 		);
 	}
 	public static function beforeViewDataQuery(&$select, &$filter, &$group, &$order, &$limit, &$options, &$runtime = null)
@@ -3965,7 +4223,7 @@ class CCrmProductReportHelper extends CCrmReportHelperBase
 		}
 		elseif(!$aggr && $fieldName === 'DEAL_OWNER.TITLE')
 		{
-			if($isHtml && strlen($v) > 0 && self::$CURRENT_RESULT_ROW && isset(self::$CURRENT_RESULT_ROW['CRM_PRODUCT_ROW_DEAL_OWNER_ID']))
+			if($isHtml && $v <> '' && self::$CURRENT_RESULT_ROW && isset(self::$CURRENT_RESULT_ROW['CRM_PRODUCT_ROW_DEAL_OWNER_ID']))
 			{
 				$v = self::prepareDealTitleHtml(self::$CURRENT_RESULT_ROW['CRM_PRODUCT_ROW_DEAL_OWNER_ID'], $v);
 			}
@@ -3998,6 +4256,13 @@ class CCrmProductReportHelper extends CCrmReportHelperBase
 				$v = self::getEventTypeName($v, $isHtml);
 			}
 		}
+		elseif(!$aggr && $fieldName === 'DEAL_OWNER.WEBFORM_ID')
+		{
+			if($v !== '')
+			{
+				$v = self::getWebFormName($v, $isHtml);
+			}
+		}
 		elseif(!$aggr && $fieldName === 'DEAL_OWNER.ORIGINATOR_BY.ID')
 		{
 			$v = self::getDealOriginatorName($v, $isHtml);
@@ -4009,13 +4274,13 @@ class CCrmProductReportHelper extends CCrmReportHelperBase
 				$v = self::getStatusName($v, 'SOURCE', $isHtml);
 			}
 		}
-		elseif(strpos($fieldName, 'DEAL_OWNER.COMPANY_BY.') === 0)
+		elseif(mb_strpos($fieldName, 'DEAL_OWNER.COMPANY_BY.') === 0)
 		{
-			if(!$aggr && (strlen($v) === 0 || trim($v) === '.'))
+			if(!$aggr && ($v == '' || trim($v) === '.'))
 			{
-				if(strpos($fieldName, 'DEAL_OWNER.COMPANY_BY.COMPANY_TYPE_BY') !== 0
-					&& strpos($fieldName, 'DEAL_OWNER.COMPANY_BY.INDUSTRY_BY') !== 0
-					&& strpos($fieldName, 'DEAL_OWNER.COMPANY_BY.EMPLOYEES_BY') !== 0)
+				if(mb_strpos($fieldName, 'DEAL_OWNER.COMPANY_BY.COMPANY_TYPE_BY') !== 0
+					&& mb_strpos($fieldName, 'DEAL_OWNER.COMPANY_BY.INDUSTRY_BY') !== 0
+					&& mb_strpos($fieldName, 'DEAL_OWNER.COMPANY_BY.EMPLOYEES_BY') !== 0)
 				{
 					$v = GetMessage('CRM_DEAL_COMPANY_NOT_ASSIGNED');
 				}
@@ -4049,11 +4314,11 @@ class CCrmProductReportHelper extends CCrmReportHelperBase
 				}
 			}
 		}
-		elseif(strpos($fieldName, 'DEAL_OWNER.CONTACT_BY.') === 0)
+		elseif(mb_strpos($fieldName, 'DEAL_OWNER.CONTACT_BY.') === 0)
 		{
 			if(!$aggr && ($v === '' || trim($v) === '.'))
 			{
-				if(strpos($fieldName, 'DEAL_OWNER.CONTACT_BY.TYPE_BY') !== 0)
+				if(mb_strpos($fieldName, 'DEAL_OWNER.CONTACT_BY.TYPE_BY') !== 0)
 				{
 					$v = GetMessage('CRM_DEAL_CONTACT_NOT_ASSIGNED');
 				}
@@ -4080,12 +4345,12 @@ class CCrmProductReportHelper extends CCrmReportHelperBase
 				}
 			}
 		}
-		elseif(!$aggr && strpos($fieldName, 'DEAL_OWNER.ASSIGNED_BY.') === 0)
+		elseif(!$aggr && mb_strpos($fieldName, 'DEAL_OWNER.ASSIGNED_BY.') === 0)
 		{
 			// unset HREF for empty value
 			if (empty($v) || trim($v) === '.' || $v === '&nbsp;')
 				unset($row['__HREF_'.$k]);
-			if(strlen($v) === 0 || trim($v) === '.')
+			if($v == '' || trim($v) === '.')
 			{
 				$v = GetMessage('CRM_DEAL_RESPONSIBLE_NOT_ASSIGNED');
 			}
@@ -4094,7 +4359,7 @@ class CCrmProductReportHelper extends CCrmReportHelperBase
 				$v = htmlspecialcharsbx($v);
 			}
 		}
-		elseif(!$aggr && strpos($fieldName, 'CP_PRODUCT_NAME') === 0)
+		elseif(!$aggr && mb_strpos($fieldName, 'CP_PRODUCT_NAME') === 0)
 		{
 			static $defaultCatalogID;
 			if(!isset($defaultCatalogID))
@@ -4139,6 +4404,11 @@ class CCrmProductReportHelper extends CCrmReportHelperBase
 		{
 			// Suppress PROBABILITY (%) aggregation
 			unset($total['TOTAL_CRM_PRODUCT_ROW_DEAL_OWNER_PROBABILITY']);
+		}
+		if(isset($total['TOTAL_CRM_PRODUCT_ROW_DEAL_OWNER_WEBFORM_ID']))
+		{
+			// Suppress WEBFORM_ID aggregation
+			unset($total['TOTAL_CRM_PRODUCT_ROW_DEAL_OWNER_WEBFORM_ID']);
 		}
 	}
 	public static function getDefaultReports()

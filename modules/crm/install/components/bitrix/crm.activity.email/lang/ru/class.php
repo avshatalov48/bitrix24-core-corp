@@ -62,3 +62,7 @@ $MESS["CRM_ACT_EMAIL_CREATE_HTML_BTN"] = "HTML-режим";
 $MESS["CRM_ACT_EMAIL_DELETE_CONFIRM"] = "Вы действительно хотите удалить это письмо?";
 $MESS["CRM_ACT_EMAIL_SKIP_CONFIRM"] = "Вы действительно хотите удалить это письмо и добавить отправителя в список исключений?";
 $MESS["CRM_ACT_EMAIL_SPAM_CONFIRM"] = "Вы действительно хотите удалить это письмо и добавить отправителя в черный список?";
+
+$MESS["CRM_ACT_EMAIL_DISK_ACTION_SAVE_TO_OWN_FILES"] = "Сохранить на Битрикс24.Диск";
+$MESS["CRM_ACT_EMAIL_DISK_FILE_DOWNLOAD_ARCHIVE"] = "Скачать все файлы одним архивом";
+

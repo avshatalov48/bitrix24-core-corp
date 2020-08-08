@@ -92,4 +92,7 @@ $MESS["CRM_DEAL_FIELD_OBSERVER"] = "Наблюдатели";
 $MESS["CRM_DEAL_FIELD_OBSERVER_IDS"] = "Наблюдатели";
 $MESS["CRM_DEAL_FIELD_UTM"] = "UTM-метки";
 $MESS["CRM_FIELD_COMPARE_SOURCE_ID"] = "Изменено поле \"Источник\"";
+$MESS["CRM_FIELD_COMPARE_IS_MANUAL_OPPORTUNITY"] = "Изменен режим расчета поля \"Сумма\"";
+$MESS["CRM_FIELD_COMPARE_IS_MANUAL_OPPORTUNITY_Y"] = "Вручную";
+$MESS["CRM_FIELD_COMPARE_IS_MANUAL_OPPORTUNITY_N"] = "На основе стоимости товаров";
 ?>

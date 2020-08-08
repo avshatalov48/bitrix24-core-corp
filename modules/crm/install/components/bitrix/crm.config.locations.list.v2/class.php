@@ -470,7 +470,7 @@ class CBitrixCrmConfigLocationList2Component extends CBitrixComponent
 	public static function tryParseString(&$fld, $default = false)
 	{
 		$fld = trim((string)$fld);
-		if(!strlen($fld) && $default !== false)
+		if(!mb_strlen($fld) && $default !== false)
 			$fld = $default;
 
 		$fld = htmlspecialcharsbx($fld);
@@ -487,7 +487,7 @@ class CBitrixCrmConfigLocationList2Component extends CBitrixComponent
 	public static function tryParseStringStrict(&$fld, $default = false)
 	{
 		$fld = trim((string)$fld);
-		if(!strlen($fld) && $default !== false)
+		if(!mb_strlen($fld) && $default !== false)
 			$fld = $default;
 
 		$fld = preg_replace('#[^a-z0-9_-]#i', '', $fld);

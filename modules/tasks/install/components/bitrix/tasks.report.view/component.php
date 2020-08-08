@@ -15,7 +15,7 @@ foreach ($requiredModules as $requiredModule)
 
 // user path
 $arParams["PATH_TO_USER"] = trim($arParams["PATH_TO_USER"]);
-if (strlen($arParams["PATH_TO_USER"]) <= 0)
+if ($arParams["PATH_TO_USER"] == '')
 {
 	$arParams["PATH_TO_USER"] = COption::GetOptionString("tasks", "paths_task_user", null, SITE_ID);
 	$arParams["PATH_TO_USER"] = preg_replace('/tasks\/$/', '', $arParams["PATH_TO_USER"]);
@@ -27,7 +27,7 @@ if (isset($arParams['USER_ID']) && ($arParams['USER_ID'] >= 1))
 else
 	$arResult['USER_ID'] = $USER->getId();
 
-if (strlen($arParams["NAME_TEMPLATE"]) <= 0)
+if ($arParams["NAME_TEMPLATE"] == '')
 	$arParams["NAME_TEMPLATE"] = CSite::GetNameFormat();
 
 $arResult['IS_HEAD_OF_DEPT'] = false;

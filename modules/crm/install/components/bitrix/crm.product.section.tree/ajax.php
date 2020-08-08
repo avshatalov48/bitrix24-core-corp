@@ -121,7 +121,7 @@ class CrmProductSectionTreeController
 			$this->sendJsonAccessDeniedResponse();
 		}
 
-		$action = (isset($_REQUEST['action']) && is_string($_REQUEST['action'])) ? strtolower($_REQUEST['action']) : '';
+		$action = (isset($_REQUEST['action']) && is_string($_REQUEST['action']))? mb_strtolower($_REQUEST['action']) : '';
 		if (empty($action))
 		{
 			$this->errors[] = array(

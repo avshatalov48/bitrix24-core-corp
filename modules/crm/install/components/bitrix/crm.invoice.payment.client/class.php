@@ -290,7 +290,7 @@ class CrmInvoicePaymentClientComponent extends CBitrixComponent
 			return;
 		}
 
-		if (strlen($this->arParams['ACCOUNT_NUMBER']) <= 0)
+		if ($this->arParams['ACCOUNT_NUMBER'] == '')
 		{
 			$this->errorCollection->setError(new Main\Error(Loc::getMessage('CIPC_WRONG_ACCOUNT_NUMBER')));
 			return;

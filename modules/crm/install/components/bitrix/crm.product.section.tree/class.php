@@ -70,7 +70,7 @@ class CCrmProductSectionTreeComponent extends \CBitrixComponent
 		$curParam = $this->getApp()->GetCurParam();
 		$curParam = preg_replace('/(?<!\w)list_section_id=\d*(?=([^\d]|$))/', 'list_section_id=#section_id#', $curParam);
 		$curParam = preg_replace('/(^|&)tree=\w*(?=(&|$))/', '', $curParam);
-		$this->arParams['PAGE_URI_TEMPLATE'] = $this->arParams['PATH_TO_PRODUCT_LIST'].(strlen($curParam) > 0 ? '?'.$curParam.'&tree=Y' : '?tree=Y');
+		$this->arParams['PAGE_URI_TEMPLATE'] = $this->arParams['PATH_TO_PRODUCT_LIST'].($curParam <> '' ? '?'.$curParam.'&tree=Y' : '?tree=Y');
 		unset($curParam);
 
 		// Catalog ID

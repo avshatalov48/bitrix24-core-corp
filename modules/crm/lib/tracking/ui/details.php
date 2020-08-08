@@ -33,6 +33,7 @@ class Details
 			'title' => Loc::getMessage('CRM_TRACKING_UI_DETAILS_FIELD_NAME'),
 			//'type' => 'tracking-source',
 			'type' => 'custom',
+			'mergeable' => false,
 			'data' => [
 				'view' => self::SourceId . '_VIEW_HTML',
 				'edit' => self::SourceId . '_EDIT_HTML',

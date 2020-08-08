@@ -186,13 +186,14 @@ class DealExist extends DealEntity
 			if ($recalculate)
 			{
 				$this->setFieldNoDemand("NEXT_EXECUTION", $this->calculateNextExecutionDate());
-				$activityValue = 'Y';
 				if (!$this->isActive())
 				{
-					$activityValue = 'N';
-					$this->setFieldNoDemand("NEXT_EXECUTION", null);
+					$this->deactivate();
 				}
-				$this->setFieldNoDemand("ACTIVE", $activityValue);
+				else
+				{
+					$this->setFieldNoDemand("ACTIVE", 'Y');
+				}
 			}
 
 			$this->save();
@@ -217,13 +218,13 @@ class DealExist extends DealEntity
 		$fields['STAGE_ID'] = \CCrmDeal::GetStartStageID($fields['CATEGORY_ID']);
 
 		$beginDate = $this->calculateBeginDate();
-		if (strlen($beginDate) > 0)
+		if ($beginDate <> '')
 		{
 			$fields['BEGINDATE'] = $beginDate;
 		}
 
 		$closeDate = $this->calculateCloseDate();
-		if (strlen($closeDate) > 0)
+		if ($closeDate <> '')
 		{
 			$fields['CLOSEDATE'] = $closeDate;
 		}
@@ -280,7 +281,7 @@ class DealExist extends DealEntity
 		$userFields = $this->getUserFieldInstance()->GetEntityFields($dealId);
 		foreach($userFields as $key => $field)
 		{
-			if ($field["USER_TYPE"]["BASE_TYPE"] == "file" && !empty($field['VALUE']))
+			if ($field['USER_TYPE']['BASE_TYPE'] === 'file' && !empty($field['VALUE']))
 			{
 				if (is_array($field['VALUE']))
 				{
@@ -324,25 +325,34 @@ class DealExist extends DealEntity
 	{
 		$result = new Main\ORM\Data\AddResult();
 		$dealController = $this->getControllerInstance();
-		$newDealId = $dealController->Add($fields, false, [
-			'DISABLE_TIMELINE_CREATION' => 'Y',
-			'DISABLE_USER_FIELD_CHECK' => true
-		]);
-		if ($newDealId)
-		{
-			$result->setId($newDealId);
-			if (!empty($this->templateFields['PRODUCT_ROWS']))
-			{
-				$dealController::SaveProductRows($newDealId, $this->templateFields['PRODUCT_ROWS'], true, true, false);
-			}
 
-			$productRowSettings = \CCrmProductRow::LoadSettings('D', $this->templateId);
-			if (!empty($productRowSettings))
-				\CCrmProductRow::SaveSettings('D', $newDealId, $productRowSettings);
-		}
-		else
+		try
 		{
-			$result->addError(new Main\Error($dealController->LAST_ERROR));
+			$newDealId = $dealController->Add($fields, false, [
+				'DISABLE_TIMELINE_CREATION' => 'Y',
+				'DISABLE_USER_FIELD_CHECK' => true
+			]);
+
+			if ($newDealId)
+			{
+				$result->setId($newDealId);
+				if (!empty($this->templateFields['PRODUCT_ROWS']))
+				{
+					$dealController::SaveProductRows($newDealId, $this->templateFields['PRODUCT_ROWS'], true, true, false);
+				}
+
+				$productRowSettings = \CCrmProductRow::LoadSettings('D', $this->templateId);
+				if (!empty($productRowSettings))
+					\CCrmProductRow::SaveSettings('D', $newDealId, $productRowSettings);
+			}
+			else
+			{
+				$result->addError(new Main\Error($dealController->LAST_ERROR));
+			}
+		}
+		catch (Main\SystemException $exception)
+		{
+			$result->addError(new Main\Error($exception->getMessage(), $exception->getCode()));
 		}
 
 		return $result;
@@ -357,7 +367,8 @@ class DealExist extends DealEntity
 			$arErrors
 		);
 
-		Automation\Factory::runOnAdd(\CCrmOwnerType::Deal, $newId);
+		$starter = new Automation\Starter(\CCrmOwnerType::Deal, $newId);
+		$starter->runOnAdd();
 
 		$event = new Main\Event("crm", static::ON_DEAL_RECURRING_EXPOSE_EVENT, [
 			'ID' => $this->id,
@@ -454,5 +465,11 @@ class DealExist extends DealEntity
 			$event->send();
 		}
 		return $result;
+	}
+
+	public function deactivate(): void
+	{
+		$this->setFieldNoDemand('ACTIVE', 'N');
+		$this->setFieldNoDemand('NEXT_EXECUTION', null);
 	}
 }

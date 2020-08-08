@@ -18,6 +18,8 @@ class TasksWidgetFrameComponent extends TasksBaseComponent
 			$this->errors->add('ILLEGAL_PARAMETER.FRAME_ID', 'Frame id not set');
 		}
 
+		$this->arResult['TASK_LIMIT_EXCEEDED'] = static::tryParseBooleanParameter($this->arParams['TASK_LIMIT_EXCEEDED']);
+
 		return $this->errors->checkNoFatals();
 	}
 }

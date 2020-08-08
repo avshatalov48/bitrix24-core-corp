@@ -9,8 +9,6 @@ use Bitrix\Tasks\Integration\Disk\Connector\Task as TaskConnector;
 use Bitrix\Tasks\Internals\Task\Template\CheckListTable;
 use Bitrix\Tasks\Item\Task\Template as TemplateItem;
 
-Loc::getMessage(__FILE__);
-
 /**
  * Class Template
  *

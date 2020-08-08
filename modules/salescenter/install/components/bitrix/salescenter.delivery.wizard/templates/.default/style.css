@@ -1,0 +1,106 @@
+.salescenter-delivery-installation-wrap {}
+
+.salescenter-delivery-install-section {
+	background: #fff;
+	padding: 17px 25px;
+}
+.salescenter-delivery-install-section-no-bottom-margin {
+	background: #fff;
+	padding: 17px 25px;
+}
+
+.salescenter-delivery-install-content-block h2 {
+	font: 300 22px/28px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #333;
+	margin-top: 0;
+	margin-bottom: 9px;
+}
+
+.salescenter-delivery-install-content-block p {
+	font: 14px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #525c69;
+	margin-bottom: 15px;
+	margin-top: 0;
+}
+
+.salescenter-delivery-install-section {
+	display: flex;
+	align-items: flex-start;
+	margin-bottom: 15px;
+}
+.salescenter-delivery-install-section-no-bottom-margin {
+	display: flex;
+	align-items: flex-start;
+}
+
+.salescenter-delivery-install-logo-block {
+	padding-right: 19px;
+	padding-top: 13px;
+}
+
+.salescenter-delivery-install-logo,
+.salescenter-delivery-install-logo-rest-delivery {
+	width: 94px;
+	height: 94px;
+	border-radius: 50%;
+	border: 1px solid rgba(82, 92, 105, 0.13);
+	background: url(images/yandex-taxi.svg) no-repeat center;
+	background-size: 84px auto;
+}
+
+.salescenter-delivery-install-logo-rest-delivery {
+	background: url(images/rest-delivery.svg) no-repeat center;
+	background-size: 180px auto;
+}
+
+.salescenter-delivery-install-content-block {
+	flex: 1;
+}
+
+.salescenter-delivery-install-btn-container {
+	padding-top: 19px;
+	margin-bottom: 21px;
+}
+
+h2.sales-center-delivery-install-title {
+	font: 18px/20px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #333;
+	letter-spacing: 0;
+	border-bottom: 1px solid #EDEEF0;
+	padding-bottom: 21px;
+	margin-bottom: 17px;
+}
+
+.salescenter-delivery-installation-wrap .ui-ctl-label-text {display: block;}
+
+.salescenter-main-header-feedback-container {
+	margin-left: auto;
+}
+
+.salescenter-delivery-install-input > input {
+	z-index: 1;
+	display: block;
+	overflow: hidden;
+	box-sizing: border-box;
+	margin: 0;
+	width: 100%;
+	height: 100%;
+	outline: none;
+	border: 0;
+	background-color: #fff;
+	color: #535c69;
+	vertical-align: middle;
+	text-align: left;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font: 400 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	transition: border .3s ease, background-color .3s ease, color .3s ease, padding .3s ease;
+	-webkit-box-flex: 1;
+	-ms-flex: 1;
+	flex: 1;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	-ms-appearance: none;
+	-o-appearance: none;
+	appearance: none;
+}

@@ -12,8 +12,7 @@ CJSCore::Init(array('voximplant.common', 'socnetlogdest', 'phone_number', 'sidep
 \Bitrix\Main\UI\Extension::load("ui.buttons");
 \Bitrix\Main\UI\Extension::load("ui.hint");
 
-\Bitrix\Voximplant\Ui\Helper::initLicensePopups();
-
+$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 ?>
 <div id="vox-ivr-editor"></div>
 

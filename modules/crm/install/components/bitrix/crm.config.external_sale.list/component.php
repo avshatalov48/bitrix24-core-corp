@@ -10,21 +10,21 @@ if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 	return;
 }
 
-if (strlen($arParams["PAGE_VAR"]) <= 0)
+if ($arParams["PAGE_VAR"] == '')
 	$arParams["PAGE_VAR"] = "page";
-if (strlen($arParams["BP_VAR"]) <= 0)
+if ($arParams["BP_VAR"] == '')
 	$arParams["ID_VAR"] = "id";
 
 $arParams["PATH_TO_INDEX"] = trim($arParams["PATH_TO_INDEX"]);
-if (strlen($arParams["PATH_TO_INDEX"]) <= 0)
+if ($arParams["PATH_TO_INDEX"] == '')
 	$arParams["PATH_TO_INDEX"] = $APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=index";
 
 $arParams["PATH_TO_EDIT"] = trim($arParams["PATH_TO_EDIT"]);
-if (strlen($arParams["PATH_TO_EDIT"]) <= 0)
+if ($arParams["PATH_TO_EDIT"] == '')
 	$arParams["PATH_TO_EDIT"] = $APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=edit&".$arParams["ID_VAR"]."=#id#";
 
 $arParams["PATH_TO_SYNC"] = trim($arParams["PATH_TO_SYNC"]);
-if (strlen($arParams["PATH_TO_SYNC"]) <= 0)
+if ($arParams["PATH_TO_SYNC"] == '')
 	$arParams["PATH_TO_SYNC"] = $APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=sync&".$arParams["ID_VAR"]."=#id#";
 
 $arResult["FatalErrorMessage"] = "";
@@ -33,15 +33,15 @@ $arResult["ErrorMessage"] = "";
 $arResult["PATH_TO_INDEX"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_INDEX"], array());
 $arResult["PATH_TO_EDIT"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_EDIT"], array("id" => 0));
 
-if (strlen($arResult["FatalErrorMessage"]) <= 0)
+if ($arResult["FatalErrorMessage"] == '')
 {
-	if ($_SERVER["REQUEST_METHOD"] == "GET" && strlen($_REQUEST["delete_id"]) > 0 && check_bitrix_sessid())
+	if ($_SERVER["REQUEST_METHOD"] == "GET" && $_REQUEST["delete_id"] <> '' && check_bitrix_sessid())
 	{
 		CCrmExternalSale::Delete($_REQUEST["delete_id"]);
 		CAgent::RemoveAgent("CCrmExternalSaleImport::DataSync(".intval($_REQUEST["delete_id"]).");", "crm");
 		LocalRedirect($APPLICATION->GetCurPageParam("", array("sessid", "delete_id", "check_id", "sync_id")));
 	}
-	elseif ($_SERVER["REQUEST_METHOD"] == "GET" && strlen($_REQUEST["check_id"]) > 0)
+	elseif ($_SERVER["REQUEST_METHOD"] == "GET" && $_REQUEST["check_id"] <> '')
 	{
 		$errorMessage = "";
 
@@ -71,19 +71,19 @@ if (strlen($arResult["FatalErrorMessage"]) <= 0)
 			{
 				$errorMessage .= sprintf(GetMessage("CRM_EXT_SALE_C1STATUS")."<br>", $response["STATUS"]["CODE"], $response["STATUS"]["PHRASE"]);
 			}
-			elseif (strpos($response["BODY"], "form_auth") !== false)
+			elseif (mb_strpos($response["BODY"], "form_auth") !== false)
 			{
 				$errorMessage .= GetMessage("CRM_EXT_SALE_C1NO_AUTH")."<br>";
 			}
 		}
 
 		$arResult["ErrorMessage"] .= $errorMessage;
-		if (strlen($errorMessage) <= 0)
+		if ($errorMessage == '')
 			$arResult["SuccessMessage"] = GetMessage("CRM_EXT_SALE_C1SUCCESS")."<br>";
 	}
 }
 
-if (strlen($arResult["FatalErrorMessage"]) <= 0)
+if ($arResult["FatalErrorMessage"] == '')
 {
 	$arResult["GRID_ID"] = "crm_config_external_sale";
 
@@ -138,7 +138,7 @@ if (strlen($arResult["FatalErrorMessage"]) <= 0)
 		);
 		if (intval($arRecord["MODIFICATION_LABEL"]) == 0)
 			$aCols["MESSAGE"] .= '<font class="errortext">'.GetMessage("BPWC_WLC_NEED_FIRST_SYNC1").'</font><br /><a href="'.$path2Sync.'" target="_self">'.GetMessage("BPWC_WLC_NEED_FIRST_SYNC1_DO").'</a><br />';
-		if ($arRecord["LAST_STATUS"] != "" && strtolower(substr($arRecord["LAST_STATUS"], 0, strlen("success"))) != "success")
+		if ($arRecord["LAST_STATUS"] != "" && mb_strtolower(mb_substr($arRecord["LAST_STATUS"], 0, mb_strlen("success"))) != "success")
 			$aCols["MESSAGE"] .= GetMessage("BPWC_WLC_NEED_FIRST_SYNC3").$arRecord["LAST_STATUS"];
 		if ($aCols["MESSAGE"] == "")
 			$aCols["MESSAGE"] .= GetMessage("BPWC_WLC_NEED_FIRST_SYNC2");

@@ -11,7 +11,7 @@ import 'ui.icons';
 import 'ui.forms';
 
 import {Vue} from "ui.vue";
-import {Utils} from "im.utils";
+import {Utils} from "im.lib.utils";
 import {FormType} from "../const";
 
 Vue.cloneComponent('bx-livechat-form-offline', 'bx-livechat-form-welcome',
@@ -33,7 +33,7 @@ Vue.cloneComponent('bx-livechat-form-offline', 'bx-livechat-form-welcome',
 
 			if (name || email || phone)
 			{
-				this.$root.$bitrixWidget.sendForm(FormType.offline, {name, email, phone});
+				this.$root.$bitrixApplication.sendForm(FormType.offline, {name, email, phone});
 			}
 
 			this.hideForm();

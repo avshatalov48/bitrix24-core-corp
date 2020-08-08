@@ -1,4 +1,4 @@
-(function(window){
+;(function(window){
 	window.updateImconnectorSettings = function(settingsReload)
 	{
 		var node = BX.showWait('imconnector_settings');

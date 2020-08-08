@@ -180,7 +180,7 @@
 		}
 		else
 		{
-			BX.Voximplant.showLicensePopup('groups');
+			BX.UI.InfoHelper.show('limit_contact_center_telephony_groups');
 		}
 	};
 

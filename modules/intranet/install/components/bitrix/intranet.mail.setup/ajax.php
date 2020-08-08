@@ -358,10 +358,10 @@ class CIntranetMailSetupAjax
 				if (!$services[$serviceId]['link'])
 				{
 					$regExp = '/^(https?:\/\/)?((?:[a-z0-9](?:-*[a-z0-9])*\.?)+)(:[0-9]+)?(\/.*)?$/i';
-					if (preg_match($regExp, trim($mbData['LINK']), $matches) && strlen($matches[2]) > 0)
+					if (preg_match($regExp, trim($mbData['LINK']), $matches) && $matches[2] <> '')
 					{
 						$mbData['LINK'] = $matches[0];
-						if (strlen($matches[1]) == 0)
+						if ($matches[1] == '')
 							$mbData['LINK'] = 'http://' . $mbData['LINK'];
 					}
 					else
@@ -373,7 +373,7 @@ class CIntranetMailSetupAjax
 				if (!$services[$serviceId]['server'])
 				{
 					$regExp = '/^(?:(?:http|https|ssl|tls|imap):\/\/)?((?:[a-z0-9](?:-*[a-z0-9])*\.?)+)$/i';
-					if (preg_match($regExp, trim($mbData['SERVER']), $matches) && strlen($matches[1]) > 0)
+					if (preg_match($regExp, trim($mbData['SERVER']), $matches) && $matches[1] <> '')
 						$mbData['SERVER'] = $matches[1];
 					else
 						$error = getMessage('INTR_MAIL_FORM_ERROR');
@@ -411,8 +411,8 @@ class CIntranetMailSetupAjax
 								}
 								else
 								{
-									$mbData['NAME']     = strtolower(trim($response['email']));
-									$mbData['LOGIN']    = strtolower(trim($response['email']));
+									$mbData['NAME'] = mb_strtolower(trim($response['email']));
+									$mbData['LOGIN'] = mb_strtolower(trim($response['email']));
 									$mbData['PASSWORD'] = "\x00oauth\x00google\x00".$USER->getId();
 
 									$oauthFulfilled = true;
@@ -453,8 +453,8 @@ class CIntranetMailSetupAjax
 								{
 									if (!empty($response['emails']['account']))
 									{
-										$mbData['NAME']     = strtolower(trim($response['emails']['account']));
-										$mbData['LOGIN']    = strtolower(trim($response['emails']['account']));
+										$mbData['NAME'] = mb_strtolower(trim($response['emails']['account']));
+										$mbData['LOGIN'] = mb_strtolower(trim($response['emails']['account']));
 										$mbData['PASSWORD'] = "\x00oauth\x00liveid\x00".$USER->getId();
 
 										$oauthFulfilled = true;
@@ -1170,7 +1170,7 @@ class CIntranetMailSetupAjax
 					$email = rtrim($email);
 
 					$blacklist[$i] = null;
-					if (strpos($email, '@') === false)
+					if (mb_strpos($email, '@') === false)
 					{
 						if (check_email(sprintf('email@%s', $email)))
 							$blacklist[$i] = $email;
@@ -1625,7 +1625,7 @@ class CIntranetMailSetupAjax
 					if (empty($_REQUEST['eula']) || $_REQUEST['eula'] != 'Y')
 						$error = GetMessage('INTR_MAIL_FORM_ERROR');
 				}
-				else if (strtolower(reset($crDomains['result'])) != strtolower($domain))
+				else if (mb_strtolower(reset($crDomains['result'])) != mb_strtolower($domain))
 				{
 					$error = CMail::getErrorMessage(CMail::ERR_API_OP_DENIED);
 				}
@@ -2319,7 +2319,7 @@ class CIntranetMailSetupAjax
 					$email = rtrim($email);
 
 					$blacklist[$i] = null;
-					if (strpos($email, '@') === false)
+					if (mb_strpos($email, '@') === false)
 					{
 						if (check_email(sprintf('email@%s', $email)))
 							$blacklist[$i] = $email;

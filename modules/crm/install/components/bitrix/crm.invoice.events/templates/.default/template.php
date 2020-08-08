@@ -58,7 +58,7 @@ for ($i=0, $ic=sizeof($arResult['FILTER']); $i < $ic; $i++)
 		$filterFieldPrefix = $arResult['FILTER_FIELD_PREFIX'];
 		if($filterFieldPrefix !== '')
 		{
-			$dbFilterID = substr($dbFilterID, strlen($filterFieldPrefix));
+			$dbFilterID = mb_substr($dbFilterID, mb_strlen($filterFieldPrefix));
 		}
 
 		$userID = isset($arResult['DB_FILTER'][$dbFilterID])

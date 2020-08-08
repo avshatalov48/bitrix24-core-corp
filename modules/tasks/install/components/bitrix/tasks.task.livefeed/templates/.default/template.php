@@ -18,7 +18,7 @@ ob_start();
 					<span class="feed-task-info-text-title"><?=$arParams['MESSAGE_24_2']?></span>
 				</div><?
 			}
-			elseif (strlen($arParams["MESSAGE_24_2"]) > 0 && strlen($arParams["CHANGES_24"]) > 0)
+			elseif ($arParams["MESSAGE_24_2"] <> '' && $arParams["CHANGES_24"] <> '')
 			{
 				?><div class="feed-task-info-text-item">
 					<span class="feed-task-info-text-title"><?=$arParams["MESSAGE_24_2"]?>:</span><span class="feed-task-info-text-cont"><?=$arParams["CHANGES_24"]?></span>

@@ -33,6 +33,8 @@ class OrderCheckEntry extends TimelineEntry
 			throw new Main\ArgumentException('Author ID must be greater than zero.', 'authorID');
 		}
 
+		$categoryId = isset($params['TYPE_CATEGORY_ID']) ? (int)$params['TYPE_CATEGORY_ID'] : 0;
+
 		$created = isset($params['CREATED']) && ($params['CREATED'] instanceof DateTime)
 			? $params['CREATED'] : new DateTime();
 
@@ -41,6 +43,7 @@ class OrderCheckEntry extends TimelineEntry
 		$result = TimelineTable::add(
 			array(
 				'TYPE_ID' => TimelineType::ORDER_CHECK,
+				'TYPE_CATEGORY_ID' => $categoryId,
 				'CREATED' => $created,
 				'AUTHOR_ID' => $authorID,
 				'SETTINGS' => $settings,

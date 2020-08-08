@@ -76,7 +76,7 @@ class User
 		$mobileDevice = \Bitrix\Main\Context::getCurrent()->getRequest()->getCookieRaw('MOBILE_DEVICE');
 		if ($mobileDevice)
 		{
-			$mobileDevice = strtolower($mobileDevice);
+			$mobileDevice = mb_strtolower($mobileDevice);
 
 			if ($mobileDevice === 'iphone' || $mobileDevice === 'ipad')
 			{

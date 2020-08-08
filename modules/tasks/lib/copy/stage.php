@@ -40,7 +40,7 @@ class Stage implements Copyable
 			$copiedTaskId = $container->getCopiedEntityId();
 
 			$stageIds = $this->implementer->getStageIds($taskId);
-			$result[$this->implementerName][$taskId] = $this->implementer->addStages($copiedTaskId, $stageIds);
+			$result[$this->implementerName] += $this->implementer->addStages($copiedTaskId, $stageIds);
 
 			$this->implementer->updateTaskStageId($container, $taskId, $copiedTaskId);
 		}

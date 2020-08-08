@@ -1,6 +1,8 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Crm\Attribute\FieldAttributeManager;
+use Bitrix\Location\Entity\Address\AddressLinkCollection;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
@@ -20,6 +22,8 @@ Loc::loadMessages(__FILE__);
 
 class CCrmLeadDetailsComponent extends CBitrixComponent
 {
+	use Crm\Entity\Traits\VisibilityConfig;
+
 	/** @var int */
 	private $customerType = CustomerType::GENERAL;
 	/** @var string|null */
@@ -69,6 +73,8 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 	//Enable or disable editor config change depends on entity state general or return customer lead)
 	/** @var bool */
 	private $enableConfigVariability = true;
+	/** @var bool */
+	private $isLocationModuleIncluded = false;
 
 	public function __construct($component = null)
 	{
@@ -91,6 +97,8 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 	{
 		/** @global \CMain $APPLICATION */
 		global $APPLICATION;
+
+		$this->isLocationModuleIncluded = Main\Loader::includeModule('location');
 
 		//region Params
 		$this->arResult['ENTITY_ID'] = isset($this->arParams['~ENTITY_ID']) ? (int)$this->arParams['~ENTITY_ID'] : 0;
@@ -120,11 +128,20 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 			$this->arParams['PATH_TO_PRODUCT_EDIT'],
 			$APPLICATION->GetCurPage().'?product_id=#product_id#&edit'
 		);
-		$this->arResult['PATH_TO_PRODUCT_SHOW'] = CrmCheckPath(
-			'PATH_TO_PRODUCT_SHOW',
-			$this->arParams['PATH_TO_PRODUCT_SHOW'],
-			$APPLICATION->GetCurPage().'?product_id=#product_id#&show'
-		);
+
+		if (Main\Loader::includeModule('catalog') && \Bitrix\Catalog\Config\State::isProductCardSliderEnabled())
+		{
+			$catalogId = CCrmCatalog::EnsureDefaultExists();
+			$this->arResult['PATH_TO_PRODUCT_SHOW'] = "/shop/catalog/{$catalogId}/product/#product_id#/";
+		}
+		else
+		{
+			$this->arResult['PATH_TO_PRODUCT_SHOW'] = CrmCheckPath(
+				'PATH_TO_PRODUCT_SHOW',
+				$this->arParams['PATH_TO_PRODUCT_SHOW'],
+				$APPLICATION->GetCurPage().'?product_id=#product_id#&show'
+			);
+		}
 
 		$ufEntityID = \CCrmLead::GetUserFieldEntityID();
 		$enableUfCreation = \CCrmAuthorizationHelper::CheckConfigurationUpdatePermission();
@@ -164,7 +181,7 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 		}
 
 		$this->enableSearchHistory = !isset($this->arParams['~ENABLE_SEARCH_HISTORY'])
-			|| strtoupper($this->arParams['~ENABLE_SEARCH_HISTORY']) === 'Y';
+			|| mb_strtoupper($this->arParams['~ENABLE_SEARCH_HISTORY']) === 'Y';
 
 		$this->arResult['INITIAL_DATA'] = isset($this->arParams['~INITIAL_DATA']) && is_array($this->arParams['~INITIAL_DATA'])
 			? $this->arParams['~INITIAL_DATA'] : array();
@@ -391,7 +408,8 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 				'PATH_TO_PRODUCT_SHOW' => $this->arResult['PATH_TO_PRODUCT_SHOW'],
 				'INIT_LAYOUT' => 'N',
 				'INIT_EDITABLE' => $this->arResult['READ_ONLY'] ? 'N' : 'Y',
-				'ENABLE_MODE_CHANGE' => 'N'
+				'ENABLE_MODE_CHANGE' => 'N',
+				'USE_ASYNC_ADD_PRODUCT' => 'Y'
 			),
 			false,
 			array('HIDE_ICONS' => 'Y', 'ACTIVE_COMPONENT'=>'Y')
@@ -667,6 +685,8 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 	}
 	public function initializeParams(array $params)
 	{
+		$this->isLocationModuleIncluded = Main\Loader::includeModule('location');
+
 		foreach($params as $k => $v)
 		{
 			if($k === 'INITIAL_DATA' && is_array($v))
@@ -701,7 +721,7 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 		}
 
 		return ($this->guidPrefix = $this->customerType !== CustomerType::GENERAL
-			? strtolower(CustomerType::resolveName($this->customerType))
+			? mb_strtolower(CustomerType::resolveName($this->customerType))
 			: ''
 		);
 	}
@@ -787,14 +807,16 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 				'title' => Loc::getMessage('CRM_LEAD_FIELD_DATE_CREATE'),
 				'type' => 'datetime',
 				'editable' => false,
-				'enableAttributes' => false
+				'enableAttributes' => false,
+				'mergeable' => false,
 			),
 			array(
 				'name' => 'DATE_MODIFY',
 				'title' => Loc::getMessage('CRM_LEAD_FIELD_DATE_MODIFY'),
 				'type' => 'datetime',
 				'editable' => false,
-				'enableAttributes' => false
+				'enableAttributes' => false,
+				'mergeable' => false,
 			),
 			array(
 				'name' => 'TITLE',
@@ -967,26 +989,44 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 						'editable' => true,
 						'data' => array('duplicateControl' => array('groupId' => 'companyTitle', 'field' => array('id' => 'COMPANY_TITLE')))
 					),
-					array(
-						'name' => 'ADDRESS',
-						'title' => Loc::getMessage('CRM_LEAD_FIELD_ADDRESS'),
-						'type' => 'address',
-						'editable' => true,
-						'data' => array(
-							'fields' => array(
-								'ADDRESS' => array('NAME' => 'ADDRESS', 'IS_MULTILINE' => true),
-								'ADDRESS_2' => array('NAME' => 'ADDRESS_2'),
-								'CITY' => array('NAME' => 'ADDRESS_CITY'),
-								'REGION' => array('NAME' => 'ADDRESS_REGION'),
-								'PROVINCE' => array('NAME' => 'ADDRESS_PROVINCE'),
-								'POSTAL_CODE' => array('NAME' => 'ADDRESS_POSTAL_CODE'),
-								'COUNTRY' => array('NAME' => 'ADDRESS_COUNTRY')
-							),
-							'labels' => \Bitrix\Crm\EntityAddress::getLabels(),
-							'view' => 'ADDRESS_HTML'
-						)
-					)
+
 				)
+			);
+			if ($this->isLocationModuleIncluded)
+			{
+				$addressField = array(
+					'name' => 'ADDRESS',
+					'title' => Loc::getMessage('CRM_LEAD_FIELD_ADDRESS'),
+					'type' => 'address',
+					'editable' => true,
+					'data' => CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Lead,'address')
+				);
+			}
+			else
+			{
+				$addressField = array(
+					'name' => 'ADDRESS',
+					'title' => Loc::getMessage('CRM_LEAD_FIELD_ADDRESS'),
+					'type' => 'address_form',
+					'editable' => true,
+					'data' => array(
+						'fields' => array(
+							'ADDRESS' => array('NAME' => 'ADDRESS', 'IS_MULTILINE' => true),
+							'ADDRESS_2' => array('NAME' => 'ADDRESS_2'),
+							'CITY' => array('NAME' => 'ADDRESS_CITY'),
+							'REGION' => array('NAME' => 'ADDRESS_REGION'),
+							'PROVINCE' => array('NAME' => 'ADDRESS_PROVINCE'),
+							'POSTAL_CODE' => array('NAME' => 'ADDRESS_POSTAL_CODE'),
+							'COUNTRY' => array('NAME' => 'ADDRESS_COUNTRY')
+						),
+						'labels' => \Bitrix\Crm\EntityAddress::getLabels(),
+						'view' => 'ADDRESS_HTML'
+					)
+				);
+			}
+			$this->arResult['ENTITY_FIELDS'] = array_merge(
+				$this->arResult['ENTITY_FIELDS'],
+				[$addressField]
 			);
 
 			foreach($this->multiFieldInfos as $typeName => $typeInfo)
@@ -1024,6 +1064,23 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 		}
 
 		//region Client
+
+		$clientEditorFieldsParams = [
+			CCrmOwnerType::ContactName => [
+				'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact, 'requisite'),
+			],
+			CCrmOwnerType::CompanyName => [
+				'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company, 'requisite'),
+			]
+		];
+		if ($this->isLocationModuleIncluded)
+		{
+			$clientEditorFieldsParams[CCrmOwnerType::ContactName]['ADDRESS'] =
+				\CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact,'requisite_address');
+
+			$clientEditorFieldsParams[CCrmOwnerType::CompanyName]['ADDRESS'] =
+				\CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company,'requisite_address');
+		}
 		$this->arResult['ENTITY_FIELDS'][] = array(
 			'name' => 'CLIENT',
 			'title' => Loc::getMessage('CRM_LEAD_FIELD_CLIENT'),
@@ -1066,7 +1123,8 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 							'url' => '/bitrix/components/bitrix/crm.lead.edit/ajax.php?'.bitrix_sessid_get()
 						)
 					)
-				)
+				),
+				'clientEditorFieldsParams' => $clientEditorFieldsParams
 			)
 		);
 		//endregion
@@ -1152,6 +1210,7 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 					array('name' => 'TITLE'),
 					array('name' => 'STATUS_ID'),
 					array('name' => 'OPPORTUNITY_WITH_CURRENCY'),
+					array('name' => 'COMPANY'),
 					array('name' => 'CLIENT'),
 					array('name' => 'HONORIFIC'),
 					array('name' => 'LAST_NAME'),
@@ -1219,6 +1278,7 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 		}
 
 		$attrConfigs = $this->prepareEntityFieldAttributeConfigs();
+		$visibilityConfig = $this->prepareEntityFieldvisibilityConfigs(CCrmOwnerType::Lead);
 
 		$this->userFieldInfos = array();
 		$userFields = $this->prepareEntityUserFields();
@@ -1261,6 +1321,11 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 				$data['attrConfigs'] = $attrConfigs[$fieldName];
 			}
 			//endregion
+
+			if(isset($visibilityConfig[$fieldName]))
+			{
+				$data['visibilityConfigs'] = $visibilityConfig[$fieldName];
+			}
 
 			$this->userFieldInfos[$fieldName] = array(
 				'name' => $fieldName,
@@ -1404,6 +1469,8 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 					false,
 					false
 				);
+
+			$this->entityData['ADDRESS'] = $this->initAddressField($this->entityData);
 
 			if(!isset($this->entityData['OPPORTUNITY']))
 			{
@@ -1652,6 +1719,7 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 					'IS_HIDDEN' => !$isEntityReadPermitted,
 					'USER_PERMISSIONS' => $this->userPermissions,
 					'REQUIRE_REQUISITE_DATA' => true,
+					'REQUIRE_EDIT_REQUISITE_DATA' => true,
 					'REQUIRE_MULTIFIELDS' => true,
 					'NORMALIZE_MULTIFIELDS' => true,
 					'NAME_TEMPLATE' => \Bitrix\Crm\Format\PersonNameFormatter::getFormat()
@@ -1679,6 +1747,7 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 
 		$contactIDs = \Bitrix\Crm\Binding\EntityBinding::prepareEntityIDs(\CCrmOwnerType::Contact, $contactBindings);
 		$clientInfo['CONTACT_DATA'] = array();
+		$iteration= 0;
 		foreach($contactIDs as $contactID)
 		{
 			$isEntityReadPermitted = CCrmContact::CheckReadPermission($contactID, $this->userPermissions);
@@ -1690,12 +1759,14 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 					'IS_HIDDEN' => !$isEntityReadPermitted,
 					'USER_PERMISSIONS' => $this->userPermissions,
 					'REQUIRE_REQUISITE_DATA' => true,
+					'REQUIRE_EDIT_REQUISITE_DATA' => ($iteration === 0), // load full requisite data for first item only (due to performance optimisation)
 					'REQUIRE_MULTIFIELDS' => true,
 					'NORMALIZE_MULTIFIELDS' => true,
 					'REQUIRE_BINDINGS' => true,
 					'NAME_TEMPLATE' => \Bitrix\Crm\Format\PersonNameFormatter::getFormat()
 				)
 			);
+			$iteration++;
 		}
 		$this->entityData['CLIENT_INFO'] = $clientInfo;
 
@@ -1756,11 +1827,6 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 			}
 		}
 		//endregion
-
-		$this->entityData['ADDRESS_HTML'] = Format\LeadAddressFormatter::format(
-			$this->entityData,
-			array('SEPARATOR' => Format\AddressSeparator::HtmlLineBreak, 'NL2BR' => true, 'HTML_ENCODE' => true)
-		);
 
 		//region Product row
 		$productRowCount = 0;
@@ -1997,5 +2063,49 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 
 		$params[$name] = $value;
 		return true;
+	}
+	protected function initAddressField($fields)
+	{
+		if(!$this->isLocationModuleIncluded)
+		{
+			return "";
+		}
+		$addressFields = [];
+		foreach ($fields as $fieldCode=>$fieldValue)
+		{
+			if (mb_strpos($fieldCode, 'ADDRESS') === 0)
+			{
+				unset($fields[$fieldCode]);
+				$addressValue = (string)$fieldValue;
+
+				if ($addressValue !== '')
+				{
+					if ($fieldCode !== 'ADDRESS' && $fieldCode !== 'ADDRESS_2')
+					{
+						$fieldCode = str_replace('ADDRESS_', '', $fieldCode);
+					}
+					if ($fieldCode === 'ADDRESS')
+					{
+						$fieldCode = 'ADDRESS_1';
+					}
+					$addressFields[$fieldCode] = $addressValue;
+				}
+			}
+		}
+		if (!empty($addressFields))
+		{
+			$address = \Bitrix\Crm\EntityAddress::makeLocationAddressByFields($addressFields);
+			if ($address)
+			{
+				if ($this->isCopyMode)
+				{
+					$address->setId(0);
+					$address->setLinks(new AddressLinkCollection());
+
+				}
+				return $address->toJson();
+			}
+		}
+		return "";
 	}
 }

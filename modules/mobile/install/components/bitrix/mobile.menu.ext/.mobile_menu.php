@@ -201,7 +201,7 @@ if (CModule::IncludeModule("rest"))
 		}
 
 		$lang = in_array(LANGUAGE_ID, array("ru", "en", "de")) ? LANGUAGE_ID : LangSubst(LANGUAGE_ID);
-		if (strlen($arApp["MENU_NAME"]) > 0 || strlen($arApp['MENU_NAME_DEFAULT']) > 0 || strlen($arApp['MENU_NAME_LICENSE']) > 0)
+		if ($arApp["MENU_NAME"] <> '' || $arApp['MENU_NAME_DEFAULT'] <> '' || $arApp['MENU_NAME_LICENSE'] <> '')
 		{
 			$appRightAvailable = false;
 			if (\CRestUtil::isAdmin())
@@ -229,11 +229,11 @@ if (CModule::IncludeModule("rest"))
 			{
 				$appName = $arApp["MENU_NAME"];
 
-				if (strlen($appName) <= 0)
+				if ($appName == '')
 				{
 					$appName = $arApp['MENU_NAME_DEFAULT'];
 				}
-				if (strlen($appName) <= 0)
+				if ($appName == '')
 				{
 					$appName = $arApp['MENU_NAME_LICENSE'];
 				}

@@ -53,6 +53,7 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 			'VOTE_MESSAGE',
 			'VOTE_BEFORE_FINISH',
 			'VOTE_CLOSING_DELAY',
+			'WATCH_TYPING',
 			'WELCOME_MESSAGE',
 			'WELCOME_BOT_ENABLE',
 			'AGREEMENT_MESSAGE',

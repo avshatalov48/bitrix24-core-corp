@@ -32,95 +32,116 @@ BX.namespace('Tasks.Component');
 		methods: {
 			construct: function()
 			{
-				var self = this;
 				this.callConstruct(BX.Tasks.Component);
 				BX.Tasks.Component.TasksToolbar.addInstance(this);
 
-				if(!this.option('counters'))
+				if (!this.option('counters'))
 				{
-					self.getToolbarData('', function()
-					{
-						self.render();
-					});
+					this.rerender('');
 				}
 				else
 				{
-					self.render();
+					this.render();
 				}
 			},
 
 			bindEvents: function()
 			{
-				var self = this;
+				var eventHandlers = {
+					user_counter: this.onUserCounter
+				};
 
-				BX.addCustomEvent("tasksTaskEvent", function() {
-					var filterId = null;
-					var gridId = null;
-
-					if(BX.Tasks.KanbanComponent && BX.Tasks.KanbanComponent.filterId !== undefined)
-						filterId = BX.Tasks.KanbanComponent && BX.Tasks.KanbanComponent.filterId;
-
-					if(BX.Tasks.GridActions && BX.Tasks.GridActions.gridId!== undefined)
-						gridId = BX.Tasks.GridActions.gridId;
-
-					filterId = filterId || gridId;
-
-					if (!filterId)
+				BX.addCustomEvent('onPullEvent-tasks', function(command, params) {
+					if (eventHandlers[command])
 					{
-						return false;
+						eventHandlers[command].apply(this, [params]);
 					}
+				}.bind(this));
 
-					var filterObject = BX.Main.filterManager.getById(filterId);
-					var fields = filterObject.getFilterFieldsValues();
-					var roleid = fields.ROLEID || 'view_all';//debugger
+				BX.addCustomEvent('Tasks.Toolbar.Reload', function(roleId) {
+					if (this.option('groupId'))
+					{
+						this.rerender(roleId);
+					}
+				}.bind(this));
 
-					BX.onCustomEvent("Tasks.Toolbar.Reload", [roleid]); //FIRE
-				});
+				BX.addCustomEvent('Tasks.TopMenu:onItem', function(roleId) {
+					this.rerender(roleId);
+				}.bind(this));
 
-				BX.addCustomEvent("Tasks.Toolbar.Reload", function(roleid) {
-
-					self.getToolbarData(roleid, function() {
-						self.render();
-					})
-				});
-
-				BX.addCustomEvent("Tasks.TopMenu:onItem", function(counterId)
-				{
-
-					self.getToolbarData(counterId, function(){
-						self.render();
-					})
-				});
-
-				BX.addCustomEvent('BX.Kanban.ChangeGroup', function(groupId, oldGroupId)
-				{
-					self.option('groupId', groupId);
-					self.getToolbarData('', function(){
-						self.render();
-					})
-				});
+				BX.addCustomEvent('BX.Kanban.ChangeGroup', function(groupId, oldGroupId) {
+					this.option('groupId', groupId);
+					this.rerender('');
+				}.bind(this));
 			},
 
-			getToolbarData: function(counterId, cb)
+			onUserCounter: function(data)
 			{
-				counterId = counterId || '';
+				if (
+					!this.option('showCounters')
+					|| this.option('groupId')
+					|| Number(this.option('userId')) !== Number(data.userId)
+				)
+				{
+					return;
+				}
+
+				var filterId = this.option('filterId') || null;
+				if (filterId)
+				{
+					var roleId = 'view_all';
+					var filterObject = BX.Main.filterManager.getById(filterId);
+					if (filterObject)
+					{
+						var fields = filterObject.getFilterFieldsValues();
+						roleId = fields.ROLEID || roleId;
+					}
+
+					this.option('counters', this.prepareCounters(data[roleId]));
+					this.render();
+				}
+			},
+
+			prepareCounters: function(counters)
+			{
+				var codes = {
+					total: '',
+					expired: 6291456,
+					new_comments: 12582912
+				};
+				var result = {};
+
+				Object.keys(counters).forEach(function(key) {
+					result[key] = {
+						code: codes[key],
+						counter: counters[key]
+					};
+				});
+
+				return result;
+			},
+
+			rerender: function(roleId)
+			{
+				this.getToolbarData(roleId, this.render.bind(this));
+			},
+
+			getToolbarData: function(roleId, cb)
+			{
+				roleId = roleId || '';
 				cb = cb || {};
 
-				var userId = this.option('userId');
+				var ownerId = this.option('ownerId');
 				var groupId = this.option('groupId') || 0;
-				var self = this;
 
-				this.callRemote('ui.counters.get',
-					{
-						userId: userId,
-						type: counterId,
-						groupId: groupId
-					}
-				).then(function(result)
-				{
-					self.option('counters', result.getData());
-					cb.call(self);
-				});
+				this.callRemote('ui.counters.get', {
+					userId: ownerId,
+					type: roleId,
+					groupId: groupId
+				}).then(function(result) {
+					this.option('counters', result.getData());
+					cb.call(this);
+				}.bind(this));
 			},
 
 			render: function()
@@ -129,6 +150,7 @@ BX.namespace('Tasks.Component');
 				var counters = this.option('counters');
 				var messages = this.option('messages');
 				var classes = this.option('classes');
+				var buttons = this.option('buttons');
 
 				var html = [];
 
@@ -140,40 +162,50 @@ BX.namespace('Tasks.Component');
 							.replace('#TEXT#', messages.total)
 					);
 
-					for (var key in counters) {
-						if(counters[key].counter > 0 && key != 'total')
+					Object.keys(counters).forEach(function(key) {
+						var counter = counters[key];
+						if (counter.counter > 0 && key !== 'total')
 						{
 							html.push(
 								templates.counter
-									.replace('#COUNTER#', counters[key].counter)
-									.replace('#COUNTER#', counters[key].counter)
+									.replace('#COUNTER#', counter.counter)
+									.replace('#COUNTER#', counter.counter)
 									.replace('#COUNTER_ID#', key)
-									.replace('#COUNTER_CODE#', counters[key].code)
-									.replace('#TEXT#', messages[key + '_' + this.getPluralForm(counters[key].counter)])
+									.replace('#COUNTER_CODE#', counter.code)
+									.replace('#TEXT#', messages[key + '_' + this.getPluralForm(counter.counter)])
 									.replace('#CLASS#', classes[key])
+									.replace('#BUTTON#', (buttons[key] || ''))
 							);
 						}
-					}
+					}.bind(this));
 				}
 				else
 				{
 					html.push(templates.empty.replace('#TEXT#', messages.empty));
 				}
+
 				this.scope().innerHTML = html.join('');
 
 				var elements = this.scope().getElementsByClassName("tasks-counter-container");
-				if (elements.length)
-				{
-					for (var key = 0; key < elements.length; key++)
+				Object.values(elements).forEach(function(element) {
+					BX.bind(element, 'click', function(event) {
+						BX.PreventDefault(event);
+						BX.onCustomEvent("Tasks.Toolbar:onItem", [this.dataset.counterCode, window.location.href]);
+					});
+					if (
+						element.nextSibling
+						&& BX.hasClass(element.nextSibling, "tasks-counter-counter-button")
+						&& element.nextSibling.dataset.counterId === 'new_comments'
+					)
 					{
-						BX.bind(elements[key], 'click', function(event){ //TODO
-							BX.PreventDefault(event);
-							var counterId = this.dataset.counterCode;
-							var url = window.location.href;
-							BX.onCustomEvent("Tasks.Toolbar:onItem", [counterId, url]); //FIRE
-						});
+						BX.bind(element.nextSibling, 'click', function() {
+							BX.ajax.runAction('tasks.task.comment.readAll', {data: {
+								groupId: this.option('groupId') || 0,
+								userId: this.option('ownerId')
+							}});
+						}.bind(this));
 					}
-				}
+				}.bind(this));
 			},
 
 			getPluralForm: function(n)

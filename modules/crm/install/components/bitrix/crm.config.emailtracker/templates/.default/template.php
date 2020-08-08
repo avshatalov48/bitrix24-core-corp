@@ -530,7 +530,7 @@ foreach ($arParams['LEAD_RESP_SELECTED'] as $item)
 						<? foreach ($arParams['SERVICES'] as $id => $settings): ?>
 							<? if ($settings['type'] != 'imap') continue; ?>
 							<a onclick="toggleImapForm(this, <?=$id ?>); return false; " href="#imap-<?=$id ?>" id="imap-<?=$id ?>-link" name="imap-link"
-								class="mail-set-serv"<? if (strlen($settings['name']) > 15): ?> style="font-size: 18px; "<? endif ?>><?
+								class="mail-set-serv"<? if (mb_strlen($settings['name']) > 15): ?> style="font-size: 18px; "<? endif ?>><?
 								if ($settings['icon']): ?><img src="<?=$settings['icon'] ?>" alt="<?=htmlspecialcharsbx($settings['name']) ?>"><?
 								else: ?>&nbsp;<?=htmlspecialcharsbx($settings['name']) ?>&nbsp;<? endif ?></a>
 						<? endforeach ?>

@@ -30,9 +30,18 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/analytics.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.css');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/batch_deletion.js');
+Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/batch_merge.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/dialog.js');
 
 ?><div id="batchDeletionWrapper"></div><?
+?><div id="batchActionWrapper"></div><?
+
+if($arResult['NEED_TO_CONVERT_ADDRESSES']):
+	?><div id="convertCompanyAddressesWrapper"></div><?
+endif;
+if($arResult['NEED_TO_CONVERT_UF_ADDRESSES']):
+	?><div id="convertCompanyUfAddressesWrapper"></div><?
+endif;
 
 if($arResult['NEED_FOR_REBUILD_DUP_INDEX']):
 	?><div id="rebuildCompanyDupIndexMsg" class="crm-view-message">
@@ -665,10 +674,37 @@ if(!$isInternal
 		//endregion
 
 		//$actionList[] = $snippet->getRemoveAction();
+
+		$actionList[] = array(
+			'NAME' => GetMessage('CRM_COMPANY_ACTION_MERGE'),
+			'VALUE' => 'merge',
+			'ONCHANGE' => array(
+				array(
+					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CREATE,
+					'DATA' => array(
+						array_merge(
+							$applyButton,
+							['SETTINGS' => [
+								'minSelectedRows' => 2,
+								'buttonId' => 'apply_button'
+							]]
+						)
+					)
+				),
+				array(
+					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
+					'DATA' => array(array('JS' => "BX.CrmUIGridExtension.applyAction('{$gridManagerID}', 'merge')"))
+				)
+			)
+		);
+
 		$actionList[] = array(
 			'NAME' => GetMessage('CRM_COMPANY_ACTION_DELETE'),
 			'VALUE' => 'delete',
 			'ONCHANGE' => array(
+				array(
+					'ACTION' => Bitrix\Main\Grid\Panel\Actions::RESET_CONTROLS,
+				),
 				array(
 					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
 					'DATA' => array(array('JS' => "BX.CrmUIGridExtension.applyAction('{$gridManagerID}', 'delete')"))
@@ -778,6 +814,7 @@ $APPLICATION->IncludeComponent(
 		'AJAX_ID' => $arResult['AJAX_ID'],
 		'AJAX_OPTION_JUMP' => $arResult['AJAX_OPTION_JUMP'],
 		'AJAX_OPTION_HISTORY' => $arResult['AJAX_OPTION_HISTORY'],
+		'HIDE_FILTER' => isset($arParams['HIDE_FILTER']) ? $arParams['HIDE_FILTER'] : null,
 		'FILTER' => $arResult['FILTER'],
 		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
 		'FILTER_PARAMS' => array(
@@ -808,7 +845,7 @@ $APPLICATION->IncludeComponent(
 				'BINDING' => array(
 					'category' => 'crm.navigation',
 					'name' => 'index',
-					'key' => strtolower($arResult['NAVIGATION_CONTEXT_ID'])
+					'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
 				)
 			),
 		'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'],
@@ -903,6 +940,25 @@ $APPLICATION->IncludeComponent(
 							summaryCaption: "<?=GetMessageJS('CRM_COMPANY_BATCH_DELETION_COMPLETED')?>",
 							summarySucceeded: "<?=GetMessageJS('CRM_COMPANY_BATCH_DELETION_COUNT_SUCCEEDED')?>",
 							summaryFailed: "<?=GetMessageJS('CRM_COMPANY_BATCH_DELETION_COUNT_FAILED')?>"
+						}
+				}
+			);
+
+			BX.Crm.BatchMergeManager.create(
+				gridId,
+				{
+					gridId: gridId,
+					entityTypeId: <?=CCrmOwnerType::Company?>,
+					container: "batchActionWrapper",
+					stateTemplate: "<?=GetMessageJS('CRM_COMPANY_STEPWISE_STATE_TEMPLATE')?>",
+					mergerUrl: "<?=htmlspecialcharsbx($arParams['PATH_TO_COMPANY_MERGE'])?>",
+					messages:
+						{
+							title: "<?=GetMessageJS('CRM_COMPANY_LIST_MERGE_PROC_DLG_TITLE')?>",
+							confirmation: "<?=GetMessageJS('CRM_COMPANY_LIST_MERGE_PROC_DLG_SUMMARY')?>",
+							summaryCaption: "<?=GetMessageJS('CRM_COMPANY_BATCH_MERGE_COMPLETED')?>",
+							summarySucceeded: "<?=GetMessageJS('CRM_COMPANY_BATCH_MERGE_COUNT_SUCCEEDED')?>",
+							summaryFailed: "<?=GetMessageJS('CRM_COMPANY_BATCH_MERGE_COUNT_FAILED')?>"
 						}
 				}
 			);
@@ -1141,4 +1197,57 @@ $APPLICATION->IncludeComponent(
 		}
 	);
 </script>
-<?endif;?>
+<?endif;?><?
+if($arResult['NEED_TO_CONVERT_ADDRESSES'])
+{?>
+<script type="text/javascript">
+	BX.ready(function () {
+		if (BX.AutorunProcessPanel.isExists("convertCompanyAddresses"))
+		{
+			return;
+		}
+		BX.AutorunProcessManager.messages =
+			{
+				title: "<?=GetMessageJS('CRM_COMPANY_CONVERT_ADDRESSES_DLG_TITLE')?>",
+				stateTemplate: "<?=GetMessageJS('CRM_COMPANY_CONVERT_ADDRESSES_STATE')?>"
+			};
+		var manager = BX.AutorunProcessManager.create(
+			"convertCompanyAddresses",
+			{
+				serviceUrl: "<?='/bitrix/components/bitrix/crm.company.list/list.ajax.php?'.bitrix_sessid_get()?>",
+				actionName: "CONVERT_ADDRESSES",
+				container: "convertCompanyAddressesWrapper",
+				enableLayout: true
+			}
+		);
+		manager.runAfter(100);
+	});
+</script><?
+}
+
+if($arResult['NEED_TO_CONVERT_UF_ADDRESSES'])
+{?>
+<script type="text/javascript">
+	BX.ready(function () {
+		if (BX.AutorunProcessPanel.isExists("convertCompanyUfAddresses"))
+		{
+			return;
+		}
+		BX.AutorunProcessManager.messages =
+			{
+				title: "<?=GetMessageJS('CRM_COMPANY_CONVERT_UF_ADDRESSES_DLG_TITLE')?>",
+				stateTemplate: "<?=GetMessageJS('CRM_COMPANY_CONVERT_UF_ADDRESSES_STATE')?>"
+			};
+		var manager = BX.AutorunProcessManager.create(
+			"convertCompanyUfAddresses",
+			{
+				serviceUrl: "<?='/bitrix/components/bitrix/crm.company.list/list.ajax.php?'.bitrix_sessid_get()?>",
+				actionName: "CONVERT_UF_ADDRESSES",
+				container: "convertCompanyUfAddressesWrapper",
+				enableLayout: true
+			}
+		);
+		manager.runAfter(100);
+	});
+</script><?
+}

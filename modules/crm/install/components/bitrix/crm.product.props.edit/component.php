@@ -184,7 +184,7 @@ if(check_bitrix_sessid())
 			}
 			else
 			{
-				$highBlockName = strtoupper(substr($highBlockName, 0, 1)).substr($highBlockName, 1);
+				$highBlockName = mb_strtoupper(mb_substr($highBlockName, 0, 1)).mb_substr($highBlockName, 1);
 				if(!preg_match('/^[A-Z][A-Za-z0-9]*$/', $highBlockName))
 				{
 					$errMsgDirValues .= GetMessage("CRM_PRODUCT_PE_HBLOCK_NAME_IS_INVALID").'<br>';
@@ -193,7 +193,7 @@ if(check_bitrix_sessid())
 				{
 					$data = array(
 						'NAME' => $highBlockName,
-						'TABLE_NAME' => 'b_'.strtolower($_POST["HLB_NEW_TITLE"])
+						'TABLE_NAME' => 'b_'.mb_strtolower($_POST["HLB_NEW_TITLE"])
 					);
 
 					$result = Bitrix\Highloadblock\HighloadBlockTable::add($data);
@@ -457,7 +457,7 @@ if(check_bitrix_sessid())
 
 		if (isset($_POST["PROPERTY_PROPERTY_TYPE"]))
 		{
-			if (strpos($_POST["PROPERTY_PROPERTY_TYPE"], ":"))
+			if(mb_strpos($_POST["PROPERTY_PROPERTY_TYPE"], ":"))
 			{
 				list($arFields["PROPERTY_TYPE"], $arFields["USER_TYPE"]) = explode(':', $_POST["PROPERTY_PROPERTY_TYPE"], 2);
 			}
@@ -549,7 +549,7 @@ if($bVarsFromForm)
 
 	if (isset($_POST["PROPERTY_PROPERTY_TYPE"]))
 	{
-		if (strpos($_POST["PROPERTY_PROPERTY_TYPE"], ":"))
+		if(mb_strpos($_POST["PROPERTY_PROPERTY_TYPE"], ":"))
 		{
 			list($arProperty["PROPERTY_TYPE"], $arProperty["USER_TYPE"]) = explode(':', $_POST["PROPERTY_PROPERTY_TYPE"], 2);
 		}
@@ -1141,7 +1141,7 @@ else if ("G" == $arProperty['PROPERTY_TYPE'] || "E" == $arProperty['PROPERTY_TYP
 	$catalogTitle = '';
 	unset($res);
 	$catalogTitle = is_array($row) ? $row['NAME'] : '';
-	$catalogTitle .= (strlen($catalogTitle) > 0 ? ' ' : '').'['.$iblockID.']';
+	$catalogTitle .= ($catalogTitle <> '' ? ' ' : '').'['.$iblockID.']';
 	$customFieldHTML = '<input type="hidden" name="PROPERTY_LINK_IBLOCK_TYPE_ID" value="'.$iblockTypeID.'">'.
 		'<input type="hidden" name="PROPERTY_LINK_IBLOCK_ID" value="'.$iblockID.'">'.htmlspecialcharsbx($catalogTitle);
 	$arResult['FIELDS']['tab_params'][] = array(

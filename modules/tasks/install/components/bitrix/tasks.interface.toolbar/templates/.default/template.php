@@ -7,6 +7,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Update\Stepper;
+use Bitrix\Tasks\Access;
 use Bitrix\Tasks\Integration\Bizproc\Automation\Factory;
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
@@ -15,11 +16,13 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass? $bodyClass.' ' : '').'pa
 Extension::load([
 	"ui.buttons",
 	"ui.fonts.opensans",
+	"ui.hint"
 ]);
 
-$isMyTasks = (is_object($GLOBALS['USER']) && (int)$GLOBALS['USER']->getId() === (int)$arParams['USER_ID']);
+$isMyTasks = $arResult['USER_ID'] === $arResult['OWNER_ID'];
 $showViewMode = $arParams['SHOW_VIEW_MODE'] == 'Y';
 $isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
+$taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
 
 if ($isBitrix24Template)
 {
@@ -27,7 +30,7 @@ if ($isBitrix24Template)
 }
 ?>
 
-<?php if ($showViewMode):?>
+<?php if ($showViewMode && !($arParams['PROJECT_VIEW'] === 'Y' && !$arParams['GROUP_ID'])):?>
 <div class="tasks-view-switcher">
     <div class="tasks-view-switcher-list">
         <?php
@@ -36,7 +39,7 @@ if ($isBitrix24Template)
 			$showSprint = Option::get('tasks', $optionName, 'N') === 'Y';
 			$template = ($arParams['GROUP_ID'] > 0 ? 'PATH_TO_GROUP_TASKS' : 'PATH_TO_USER_TASKS');
 			$link = CComponentEngine::makePathFromTemplate($template, [
-				'user_id' => $arParams['USER_ID'],
+				'user_id' => $arParams['OWNER_ID'],
 				'group_id' => $arParams['GROUP_ID'],
 			]);
 
@@ -60,56 +63,70 @@ if ($isBitrix24Template)
 				}
 
 				?><a class="tasks-view-switcher-list-item <?=($active ? 'tasks-view-switcher-list-item-active' : '')?>"
-					 href="<?=$url?>" id="tasks_<?=strtolower($viewKey)?>">
+					 href="<?=$url?>" id="tasks_<?= mb_strtolower($viewKey)?>">
 					<?=$view['SHORT_TITLE']?>
 				</a><?php
 			}
-		?></div>
-	</div>
+	?></div>
+</div>
 <?php endif?>
 
-<? if (!$isBitrix24Template):?>
+<?php if (!$isBitrix24Template):?>
 	<div class="tasks-interface-toolbar-container">
 <?php endif ?>
 
-	<div class="tasks-counter" id="counter_panel_container">
+	<div class="tasks-counters" id="counter_panel_container">
 		<div class="tasks-counter-title" id="<?=$arResult['HELPER']->getScopeId()?>"></div>
 	</div>
-		<?php
-		if ($arParams['GROUP_ID'] <= 0 && \Bitrix\Main\Loader::includeModule('intranet'))
-		{
-			$APPLICATION->includeComponent(
-				'bitrix:intranet.binding.menu',
-				'',
-				array(
-					'SECTION_CODE' => 'tasks_switcher',
-					'MENU_CODE' => 'user'
-				)
-			);
-		}
+	<?php
+	if (
+		$isMyTasks
+		&& $arResult['SHOW_COUNTERS']
+		&& Factory::canUseAutomation()
+		&& Access\TaskAccessController::can($arParams['USER_ID'], Access\ActionDictionary::ACTION_TASK_ROBOT_EDIT)
+	)
+	{
+		$groupId = (int)$arParams['GROUP_ID'];
+		$projectId = ($showViewMode ? $groupId : 'this.getAttribute(\'data-project-id\')');
+
+		$showLimitSlider = $taskLimitExceeded && !Factory::canUseAutomation();
+		$openLimitSliderAction = "BX.UI.InfoHelper.show('limit_tasks_robots')";
+		$openRobotSliderAction = "BX.SidePanel.Instance.open('/bitrix/components/bitrix/tasks.automation/slider.php?site_id='+BX.message('SITE_ID')+'&amp;project_id='+{$projectId});";
+
+		$lockClass = ($showLimitSlider ? 'ui-btn-icon-lock' : '');
+		$onClick = ($showLimitSlider ? $openLimitSliderAction : $openRobotSliderAction);
 		?>
-	<?php if ($isMyTasks && $arResult['COUNTERS_SHOW'] && Factory::canUseAutomation()):?>
-		<?php if ($showViewMode):?>
-			<div class="tasks-counter-btn-container">
-				<button class="ui-btn ui-btn-light-border ui-btn-no-caps ui-btn-themes ui-btn-round tasks-counter-btn"
-						onclick="BX.SidePanel.Instance.open('/bitrix/components/bitrix/tasks.automation/slider.php?site_id='+BX.message('SITE_ID')+'&amp;project_id=<?=(int)$arParams['GROUP_ID']?>')"
-				><?=GetMessage('TASKS_SWITCHER_ITEM_ROBOTS')?></button>
-			</div>
-		<?php else:?>
-			<div class="tasks-counter-btn-container">
-				<button class="ui-btn ui-btn-light-border ui-btn-no-caps ui-btn-themes ui-btn-round tasks-counter-btn"
-						data-project-id="<?=(int)$arParams['GROUP_ID']?>"
-						onclick="BX.SidePanel.Instance.open('/bitrix/components/bitrix/tasks.automation/slider.php?site_id='+BX.message('SITE_ID')+'&amp;project_id='+this.getAttribute('data-project-id'))"
-				><?=GetMessage('TASKS_SWITCHER_ITEM_ROBOTS')?></button>
-			</div>
-		<?php endif?>
-	<?php endif?>
+		<div class="tasks-counter-btn-container">
+			<button class="ui-btn ui-btn-light-border ui-btn-no-caps ui-btn-themes ui-btn-round tasks-counter-btn <?=$lockClass?>"
+					<?=($showViewMode ? '' : "data-project-id='{$groupId}'")?> onclick="<?=$onClick?>">
+				<?=GetMessage('TASKS_SWITCHER_ITEM_ROBOTS')?>
+			</button>
+		</div><?php
+	}
 
-<? if (!$isBitrix24Template):?>
+	if (\Bitrix\Main\Loader::includeModule('intranet'))
+	{
+		$context = $arParams['GROUP_ID']
+			? ['GROUP_ID' => $arParams['GROUP_ID']]
+			: ['USER_ID' => $arParams['OWNER_ID']];
+		$menuCode = $arParams['GROUP_ID'] ? 'group' : 'user';
+		$APPLICATION->includeComponent(
+			'bitrix:intranet.binding.menu',
+			'',
+			array(
+				'SECTION_CODE' => 'tasks_switcher',
+				'MENU_CODE' => $menuCode,
+				'CONTEXT' => $context
+			)
+		);
+	}
+
+if (!$isBitrix24Template):?>
 	</div>
-<? endif ?>
+<?php endif?>
 
-<?if ($isBitrix24Template)
+<?php
+if ($isBitrix24Template)
 {
     $this->EndViewTarget();
 }
@@ -133,19 +150,17 @@ if ($isBitrix24Template)
 			'tasks' => [
 				'Bitrix\Tasks\Update\LivefeedIndexTask',
 				'Bitrix\Tasks\Update\TasksFilterConverter',
-				'Bitrix\Tasks\Update\TasksFulltextIndexer',
 			]
 		]);
 	?>
 </div>
 
-<?
-if ($arResult['COUNTERS_SHOW'])
+<?php
+if ($arResult['SHOW_COUNTERS'])
 {
 	$arResult['HELPER']->initializeExtension();
 }
-
-if ($arResult['SPOTLIGHT_TIMELINE'])
+if ($arResult['SPOTLIGHT_SIMPLE_COUNTERS'])
 {
 	\CJSCore::init('spotlight');
 }
@@ -164,16 +179,33 @@ if ($arResult['SPOTLIGHT_TIMELINE'])
 				robotsBtn.setAttribute('data-project-id', newId);
 			});
 		}
-		<?if ($arResult['SPOTLIGHT_TIMELINE']):?>
-		var spotlight = new BX.SpotLight({
-			id: 'tasks_timeline',
-			targetElement: BX('tasks_view_mode_timeline'),
-			content: '<?= \CUtil::jsEscape(GetMessage('TASKS_TEMPLATE_SPOTLIGHT_TIMELINE'))?>',
-			targetVertex: 'middle-center',
-			autoSave: true,
-			lightMode: true
-		});
-		spotlight.show();
-		<?endif;?>
+
+		<?if ($arResult['SPOTLIGHT_SIMPLE_COUNTERS']):?>
+			var targetElement = BX('tasksSimpleCounters');
+			if (targetElement)
+			{
+				var spotlight = new BX.SpotLight({
+					id: 'tasks_simple_counters',
+					targetElement: targetElement,
+					content: '<?= \CUtil::jsEscape(GetMessage('TASKS_TEMPLATE_SPOTLIGHT_SIMPLE_COUNTERS'))?>',
+					targetVertex: 'middle-left',
+					left: 24,
+					autoSave: true,
+					lightMode: true
+				});
+				spotlight.show();
+				spotlight.getPopup().getButtons()[0].setName('<?=GetMessage('TASKS_TEMPLATE_SPOTLIGHT_SIMPLE_COUNTERS_BUTTON')?>');
+				BX.addCustomEvent(spotlight, 'spotLightOk', function() {
+					if (top.BX.Helper)
+					{
+						top.BX.Helper.show(`redirect=detail&code=11330068`);
+					}
+				});
+			}
+		<?php endif;?>
+
+		<?php if ($arResult['SHOW_COUNTERS']):?>
+			BX.UI.Hint.init(BX('tasksCommentsReadAll'));
+		<?php endif;?>
 	});
 </script>

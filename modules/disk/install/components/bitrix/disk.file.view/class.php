@@ -207,6 +207,7 @@ class CDiskFileViewComponent extends DiskComponent implements Controllerable, Si
 			'USE_IN_ENTITIES' => false,
 			'ENTITIES' => array(),
 			'SHOW_USER_FIELDS' => false,
+			'HISTORY_BLOCKED_BY_FEATURE' => Bitrix24Manager::isFeatureEnabled('disk_file_history'),
 			'USER_FIELDS' => array(),
 			'EXTERNAL_LINK' => $externalLinkData,
 			'FILE' => array(
@@ -421,7 +422,7 @@ class CDiskFileViewComponent extends DiskComponent implements Controllerable, Si
 
 		$urlStartBizproc = \CComponentEngine::makePathFromTemplate($this->arParams['PATH_TO_DISK_START_BIZPROC'],array("ELEMENT_ID" => $this->file->getId()));
 		$urlStartBizproc .= "?back_url=".urlencode($this->application->getCurPage());
-		$urlStartBizproc .= (strpos($urlStartBizproc, "?") === false ? "?" : "&").'workflow_template_id=0&'.bitrix_sessid_get();
+		$urlStartBizproc .= (mb_strpos($urlStartBizproc, "?") === false ? "?" : "&").'workflow_template_id=0&'.bitrix_sessid_get();
 
 		$this->arResult = array(
 			'STORAGE' => $this->storage,
@@ -582,7 +583,7 @@ class CDiskFileViewComponent extends DiskComponent implements Controllerable, Si
 					$bpId = trim($this->request->getPost("bizproc_id_".$i));
 					$bpTemplateId = intval($this->request->getPost("bizproc_template_id_".$i));
 					$bpEvent = trim($this->request->getPost("bizproc_event_".$i));
-					if (strlen($bpId) > 0)
+					if ($bpId <> '')
 					{
 						if (!array_key_exists($bpId, $allBizProcArray))
 							continue;
@@ -593,7 +594,7 @@ class CDiskFileViewComponent extends DiskComponent implements Controllerable, Si
 							continue;
 						$bpId = $bizProcWorkflowId[$bpTemplateId];
 					}
-					if (strlen($bpEvent) > 0)
+					if ($bpEvent <> '')
 					{
 						$errors = array();
 						CBPDocument::sendExternalEvent(
@@ -631,7 +632,7 @@ class CDiskFileViewComponent extends DiskComponent implements Controllerable, Si
 			$count = 1;
 			foreach($allBizProcArray as $idBizProc => $bizProcArray)
 			{
-				if(intVal($bizProcArray["WORKFLOW_STATUS"]) < 0 || $idBizProc <= 0)
+				if(intval($bizProcArray["WORKFLOW_STATUS"]) < 0 || $idBizProc <= 0)
 				{
 					continue;
 				}
@@ -649,7 +650,7 @@ class CDiskFileViewComponent extends DiskComponent implements Controllerable, Si
 
 				$groups = CBPDocument::getAllowableUserGroups($documentData['DISK']['DOCUMENT_TYPE']);
 				foreach ($groups as $key => $val)
-					$groups[strtolower($key)] = $val;
+					$groups[mb_strtolower($key)] = $val;
 
 				$users = array();
 				$dmpWorkflow = CBPTrackingService::getList(
@@ -689,7 +690,7 @@ class CDiskFileViewComponent extends DiskComponent implements Controllerable, Si
 							$messageTemplate = Loc::getMessage("DISK_FILE_VIEW_BPABL_TYPE_6");
 					}
 
-					$name = (strlen($track["ACTION_TITLE"]) > 0 ? $track["ACTION_TITLE"] : $track["ACTION_NAME"]);
+					$name = ($track["ACTION_TITLE"] <> '' ? $track["ACTION_TITLE"] : $track["ACTION_NAME"]);
 					switch ($track["EXECUTION_STATUS"])
 					{
 						case CBPActivityExecutionStatus::Initialized:
@@ -731,7 +732,7 @@ class CDiskFileViewComponent extends DiskComponent implements Controllerable, Si
 							$result = Loc::getMessage("DISK_FILE_VIEW_BPABL_RES_6");
 					}
 
-					$note = ((strlen($track["ACTION_NOTE"]) > 0) ? ": ".$track["ACTION_NOTE"] : "");
+					$note = (($track["ACTION_NOTE"] <> '') ? ": ".$track["ACTION_NOTE"] : "");
 					$pattern = array("#ACTIVITY#", "#STATUS#", "#RESULT#", "#NOTE#");
 					$replaceArray = array($name, $status, $result, $note);
 					if (!empty($track["ACTION_NAME"]) && !empty($track["ACTION_TITLE"]))
@@ -753,13 +754,13 @@ class CDiskFileViewComponent extends DiskComponent implements Controllerable, Si
 							if (in_array("/\{\=user\:".$user."\}/is", $pattern))
 								continue;
 							$replace = "";
-							if (array_key_exists(strtolower($user), $groups))
-								$replace = $groups[strtolower($user)];
-							elseif (array_key_exists(strtoupper($user), $groups))
-								$replace = $groups[strtoupper($user)];
+							if (array_key_exists(mb_strtolower($user), $groups))
+								$replace = $groups[mb_strtolower($user)];
+							elseif (array_key_exists(mb_strtoupper($user), $groups))
+								$replace = $groups[mb_strtoupper($user)];
 							else
 							{
-								$id = intVal(str_replace("user_", "", $user));
+								$id = intval(str_replace("user_", "", $user));
 								if (!array_key_exists($id, $users)):
 									$dbRes = \CUser::getByID($id);
 									$users[$id] = false;

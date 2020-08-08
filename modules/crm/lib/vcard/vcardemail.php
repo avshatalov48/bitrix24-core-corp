@@ -60,7 +60,7 @@ class VCardEmail
 	*/
 	public static function createFromAttribute(VCardElementAttribute $attr)
 	{
-		$types = array_map('strtoupper', $attr->getParamValues('TYPE'));
+		$types = array_map('mb_strtoupper', $attr->getParamValues('TYPE'));
 		$typeMap = array_flip($types);
 
 		if(isset($typeMap['x400']))

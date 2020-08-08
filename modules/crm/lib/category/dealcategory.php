@@ -10,9 +10,13 @@ use Bitrix\Crm\Color\DealStageColorScheme;
 use Bitrix\Crm\Entry\AddException;
 use Bitrix\Crm\Entry\UpdateException;
 use Bitrix\Crm\Entry\DeleteException;
+use Bitrix\Crm\RolePermission;
 
 class DealCategory
 {
+	public const
+		MARKETPLACE_CRM_ORIGINATOR = 'marketplace_crm_originator';
+
 	/** @var bool */
 	private static $langIncluded = false;
 	private static $stageList = array();
@@ -481,6 +485,16 @@ class DealCategory
 		$limit = RestrictionManager::getDealCategoryLimit();
 		$data['IS_LOCKED'] = ($limit > 0 && $limit <= self::getCount()) ? 'Y' : 'N';
 
+		if (isset($fields['ORIGIN_ID']))
+		{
+			$data['ORIGIN_ID'] = $fields['ORIGIN_ID'];
+		}
+
+		if (isset($fields['ORIGINATOR_ID']))
+		{
+			$data['ORIGINATOR_ID'] = $fields['ORIGINATOR_ID'];
+		}
+
 		/** @var Main\Entity\AddResult $result */
 		$result = null;
 		try
@@ -789,7 +803,7 @@ class DealCategory
 	public static function hasStageNamespaceID($stageID, $ID)
 	{
 		$nid = self::prepareStageNamespaceID($ID);
-		return $nid !== '' && strpos($stageID, "{$nid}:") === 0;
+		return $nid !== '' && mb_strpos($stageID, "{$nid}:") === 0;
 	}
 
 	/**
@@ -838,7 +852,7 @@ class DealCategory
 		$connection = Main\Application::getConnection();
 		$entityID = $connection->getSqlHelper()->forSql($entityID);
 		//Offset for namespace (for example "C15:")
-		$offset = strlen($ID) + 3;
+		$offset = mb_strlen($ID) + 3;
 		if($connection instanceof Main\DB\MysqlCommonConnection)
 		{
 			$sql = "SELECT SUBSTRING(STATUS_ID, {$offset}) AS MAX_STATUS_ID FROM b_crm_status WHERE ENTITY_ID = '{$entityID}' AND CAST(SUBSTRING(STATUS_ID, {$offset}) AS UNSIGNED) > 0 ORDER BY CAST(SUBSTRING(STATUS_ID, {$offset}) AS UNSIGNED) DESC LIMIT 1";
@@ -1175,6 +1189,45 @@ class DealCategory
 		}
 
 		return $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+	}
+
+	public static function getPermissionById(int $id)
+	{
+		$permissionEntity = DealCategory::convertToPermissionEntityType($id);
+		return RolePermission::getByEntityId($permissionEntity);
+	}
+
+	/**
+	 * Sets permission for all roles
+	 * @param int $id
+	 * @param string $permission
+	 * @return Main\Result
+	 */
+	public static function setPermissionById(int $id, string $permission)
+	{
+		$permissionEntity = DealCategory::convertToPermissionEntityType($id);
+		$permission = in_array($permission, [BX_CRM_PERM_ALL, BX_CRM_PERM_SELF]) ? $permission : BX_CRM_PERM_NONE;
+		$permissionSet = \CCrmRole::GetDefaultPermissionSet();
+		foreach ($permissionSet as &$res)
+		{
+			$res["-"] = $permission;
+		}
+		unset($res);
+		return RolePermission::setByEntityIdForAllNotAdminRoles($permissionEntity, $permissionSet);
+	}
+
+	/**
+	 * Copies category permissions from one to another
+	 * @param int $id
+	 * @param int $donorId
+	 * @return Main\Result
+	 */
+	public static function copyPermissionById(int $id, int $donorId)
+	{
+		$permissionEntity = DealCategory::convertToPermissionEntityType($id);
+		$donorPermissionEntity = DealCategory::convertToPermissionEntityType($donorId);
+		$permissionSet = RolePermission::getByEntityId($donorPermissionEntity);
+		return RolePermission::setByEntityIdForAllNotAdminRoles($permissionEntity, $permissionSet);
 	}
 
 	/**

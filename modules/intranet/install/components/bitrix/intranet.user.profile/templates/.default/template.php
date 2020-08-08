@@ -30,7 +30,10 @@ $APPLICATION->includeComponent(
 	'',
 	array(
 		'SECTION_CODE' => 'user_detail',
-		'MENU_CODE' => 'top_menu'
+		'MENU_CODE' => 'top_menu',
+		'CONTEXT' => [
+			'USER_ID' => $arResult['User']['ID']
+		]
 	)
 );
 $this->EndViewTarget();
@@ -126,12 +129,12 @@ if (
 			<div
 				class="intranet-user-profile-userpic
 				<?if ($arResult["IsOwnProfile"] || $arResult["Permissions"]['edit']):?>
-				 intranet-user-profile-userpic-edit
+					intranet-user-profile-userpic-edit
 				<?endif?>"
 				id="intranet-user-profile-photo"
-				 <?if (isset($arResult["User"]["PHOTO"]) && !empty($arResult["User"]["PHOTO"])):?>
-					 style="background-image: url('<?=$arResult["User"]["PHOTO"]?>'); background-size: cover"
-				 <?endif?>
+				<?if (isset($arResult["User"]["PHOTO"]) && !empty($arResult["User"]["PHOTO"])):?>
+					style="background-image: url('<?=\CHTTP::urnEncode($arResult["User"]["PHOTO"])?>'); background-size: cover"
+				<?endif?>
 			>
 				<?if ($arResult["IsOwnProfile"] || $arResult["Permissions"]['edit']):?>
 				<div class="intranet-user-profile-userpic-load">
@@ -249,39 +252,39 @@ if (
 					*/?>
 					<div class="intranet-user-profile-apps-title"><?=Loc::getMessage("INTRANET_USER_PROFILE_MOBILE_APP")?></div>
 					<a href="<?=Loc::getMessage("INTRANET_USER_PROFILE_MOBILE_GOOGLE_PLAY_URL")?>" target="_blank"
-					   class="intranet-user-profile-apps-icon  intranet-user-profile-apps-icon-android
-					   <?if ($arResult["User"]["APP_ANDROID_INSTALLED"]):?>
+						class="intranet-user-profile-apps-icon  intranet-user-profile-apps-icon-android
+						<?if ($arResult["User"]["APP_ANDROID_INSTALLED"]):?>
 							intranet-user-profile-apps-icon-active
-					   <?else:?>
+						<?else:?>
 							intranet-user-profile-apps-icon-download
-					   <?endif?>"
+						<?endif?>"
 					></a>
 					<a href="<?=Loc::getMessage("INTRANET_USER_PROFILE_MOBILE_APPSTORE_URL")?>" target="_blank"
-					   class="intranet-user-profile-apps-icon intranet-user-profile-apps-icon-appstore
-					   <?if ($arResult["User"]["APP_IOS_INSTALLED"]):?>
+						class="intranet-user-profile-apps-icon intranet-user-profile-apps-icon-appstore
+						<?if ($arResult["User"]["APP_IOS_INSTALLED"]):?>
 							intranet-user-profile-apps-icon-active
-					    <?else:?>
+						<?else:?>
 							intranet-user-profile-apps-icon-download
-					   <?endif?>"
+						<?endif?>"
 					></a>
 				</div>
 				<div class="intranet-user-profile-apps-item">
 					<div class="intranet-user-profile-apps-title"><?=Loc::getMessage("INTRANET_USER_PROFILE_DESKTOP_APP")?></div>
 					<a href="http://dl.bitrix24.com/b24/bitrix24_desktop.exe" target="_blank"
-					   class="intranet-user-profile-apps-icon intranet-user-profile-apps-icon-windows
-					   <?if ($arResult["User"]["APP_WINDOWS_INSTALLED"]):?>
+						class="intranet-user-profile-apps-icon intranet-user-profile-apps-icon-windows
+						<?if ($arResult["User"]["APP_WINDOWS_INSTALLED"]):?>
 							intranet-user-profile-apps-icon-active
-					   <?else:?>
+						<?else:?>
 							intranet-user-profile-apps-icon-download
-					   <?endif?>"
+						<?endif?>"
 					></a>
 					<a href="http://dl.bitrix24.com/b24/bitrix24_desktop.dmg" target="_blank"
-					   class="intranet-user-profile-apps-icon intranet-user-profile-apps-icon-iphone
-					   <?if ($arResult["User"]["APP_MAC_INSTALLED"]):?>
+						class="intranet-user-profile-apps-icon intranet-user-profile-apps-icon-iphone
+						<?if ($arResult["User"]["APP_MAC_INSTALLED"]):?>
 							intranet-user-profile-apps-icon-active
-					   <?else:?>
+						<?else:?>
 							intranet-user-profile-apps-icon-download
-					   <?endif?>"
+						<?endif?>"
 					></a>
 				</div>
 			</div>
@@ -391,7 +394,7 @@ if (
 				"ENTITY_DATA" => $arResult["FormData"],
 				"ENABLE_SECTION_EDIT" => false,
 				"ENABLE_SECTION_CREATION" => false,
-				"ENABLE_SECTION_DRAG_DROP" => true,
+				"ENABLE_SECTION_DRAG_DROP" => false,
 				"FORCE_DEFAULT_SECTION_NAME" => true,
 				"ENABLE_PERSONAL_CONFIGURATION_UPDATE" => $arResult["EnablePersonalConfigurationUpdate"],
 				"ENABLE_COMMON_CONFIGURATION_UPDATE" => $arResult["EnableCommonConfigurationUpdate"],
@@ -436,12 +439,12 @@ if (
 								$i++;
 							?>
 								<a class="intranet-user-profile-grid-item" href="<?=$subUser["LINK"]?>"
-								   <?if ($i > 4):?>style="display: none" data-role="user-profile-item"<?endif?>
+									<?if ($i > 4):?>style="display: none" data-role="user-profile-item"<?endif?>
 								>
 									<div
 										class="intranet-user-profile-user-avatar"
 										<?if (isset($subUser["PHOTO"]) && !empty($subUser["PHOTO"])): ?>
-											style="background-image: url('<?=$subUser["PHOTO"]?>'); background-size: cover"
+											style="background-image: url('<?=\CHTTP::urnEncode($subUser["PHOTO"])?>'); background-size: cover"
 										<?endif?>
 									></div>
 									<div class="intranet-user-profile-user-container">
@@ -477,10 +480,10 @@ if (
 							?>
 								<a class="intranet-user-profile-grid-item" href="<?=$manager["LINK"]?>">
 									<div href="<?=$manager["LINK"]?>"
-									   class="intranet-user-profile-user-avatar"
-									   <?if (isset($manager["PHOTO"]) && !empty($manager["PHOTO"])):?>
-										   style="background-image: url('<?=$manager["PHOTO"]?>'); background-size: cover"
-									   <?endif?>
+										class="intranet-user-profile-user-avatar"
+										<?if (isset($manager["PHOTO"]) && !empty($manager["PHOTO"])):?>
+											style="background-image: url('<?=\CHTTP::urnEncode($manager["PHOTO"])?>'); background-size: cover"
+										<?endif?>
 									>
 									</div>
 									<div class="intranet-user-profile-user-container">
@@ -717,8 +720,7 @@ if ($arResult["adminRightsRestricted"])
 					"#LINK_END#" => "</a>"
 				))
 			)?>",
-			"INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT"))?>",
-			"INTRANET_USER_FIILDS_SETTINGS" : "<?=CUtil::JSEscape(Loc::getMessage("INTRANET_USER_FIILDS_SETTINGS"))?>"
+			"INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT"))?>"
 		});
 
 		new BX.Intranet.UserProfile.Manager({
@@ -740,6 +742,8 @@ if ($arResult["adminRightsRestricted"])
 			isCloud: "<?=$arResult["isCloud"] ? "Y" : "N"?>",
 			isRusCloud: "<?=$arResult["isRusCloud"] ? "Y" : "N"?>",
 			adminRightsRestricted: "<?=$arResult["adminRightsRestricted"] ? "Y" : "N"?>",
+			delegateAdminRightsRestricted: "<?=$arResult["delegateAdminRightsRestricted"] ? "Y" : "N"?>",
+			isFireUserEnabled: "<?=$arResult["isFireUserEnabled"] ? "Y" : "N"?>",
 			profilePostData: {
 				formId: '<?=(!empty($arResult["ProfileBlogPost"]["formParams"]) ? \CUtil::JSEscape($arResult["ProfileBlogPost"]["formParams"]["FORM_ID"]) : '')?>',
 				lheId: '<?=(!empty($arResult["ProfileBlogPost"]["formParams"]) ? \CUtil::JSEscape($arResult["ProfileBlogPost"]["formParams"]["LHE"]["id"]) : '')?>'

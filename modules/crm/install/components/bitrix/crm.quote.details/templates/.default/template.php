@@ -13,7 +13,7 @@ use Bitrix\Crm\Category\DealCategory;
 /** @var CCrmQuoteDetailsComponent $component */
 
 $guid = $arResult['GUID'];
-$prefix = strtolower($guid);
+$prefix = mb_strtolower($guid);
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.quote.menu',

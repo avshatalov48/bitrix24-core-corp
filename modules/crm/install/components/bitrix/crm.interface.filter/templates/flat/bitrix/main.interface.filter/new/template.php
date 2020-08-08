@@ -34,7 +34,7 @@ $infos = array();
 $visibilityMap = isset($arResult['FILTER_ROWS']) ? $arResult['FILTER_ROWS'] : array();
 
 $gridID = $arParams['GRID_ID'];
-$gridIDLc = strtolower($gridID);
+$gridIDLc = mb_strtolower($gridID);
 $filterID = "{$gridID}_FILTER";
 $formName = "filter_{$gridID}";
 $containerID = "flt_wrapper_{$gridIDLc}";
@@ -82,7 +82,7 @@ foreach($visibilityMap as $fieldVisibility)
 	}
 }
 
-$options = CUserOptions::GetOption('crm.interface.grid.filter', strtolower($filterID));
+$options = CUserOptions::GetOption('crm.interface.grid.filter', mb_strtolower($filterID));
 if(!$options)
 {
 	$options = array(
@@ -167,7 +167,7 @@ if(!function_exists('__CrmInterfaceFilterRenderField'))
 
 					if($enableWrapper)
 					{
-						$wrapperClass = strpos($fieldID, 'UF_') === 0 ? 'bx-user-field-wrap' : 'bx-input-wrap';
+						$wrapperClass = mb_strpos($fieldID, 'UF_') === 0 ? 'bx-user-field-wrap' : 'bx-input-wrap';
 						echo '<div class="', $wrapperClass, '">';
 					}
 
@@ -473,7 +473,7 @@ $isHidden = isset($arParams['HIDE_FILTER']) ? $arParams['HIDE_FILTER'] : false;
 			<div class="bx-filter-wrap<?=$isFilterApplied ? ' bx-current-filter' : ''?><?=$isFilterFolded ? ' bx-filter-folded' : ''?>"><?
 				if(!empty($navigationBarItems))
 				{
-					$navContainerID = strtolower("{$gridID}_filter_nav");
+					$navContainerID = mb_strtolower("{$gridID}_filter_nav");
 					$navigationBarConfig['containerId'] = $navContainerID;
 					$barItemQty = 0;
 					?><div class="crm-filter-view">
@@ -482,7 +482,7 @@ $isHidden = isset($arParams['HIDE_FILTER']) ? $arParams['HIDE_FILTER'] : false;
 						{
 							$barItemQty++;
 							$barItemID = isset($barItem['id']) ? $barItem['id'] : $barItemQty;
-							$barItemElementID = strtolower("{$gridID}_{$barItemID}");
+							$barItemElementID = mb_strtolower("{$gridID}_{$barItemID}");
 							$barItemName = isset($barItem['name']) ? $barItem['name'] : $barItemID;
 							$barItemUrl = isset($barItem['url']) ? $barItem['url'] : '';
 							$barItemIcon = isset($barItem['icon']) ? $barItem['icon'] : '';

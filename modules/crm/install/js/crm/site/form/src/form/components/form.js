@@ -4,6 +4,7 @@ import {AgreementBlock} from "./agreement";
 import {StateBlock} from "./state";
 import {PagerBlock} from "./pager";
 import {BasketBlock} from "./basket";
+import ReCaptcha from "./recaptcha";
 
 const Form = {
 	props: {
@@ -15,6 +16,7 @@ const Form = {
 		'state-block': StateBlock,
 		'pager-block': PagerBlock,
 		'basket-block': BasketBlock,
+		'recaptcha-block': ReCaptcha,
 	},
 	template: `
 		<div class="b24-form-wrapper"
@@ -98,6 +100,9 @@ const Form = {
 			</div>
 			
 			<state-block v-bind:key="form.id" v-bind:form="form"></state-block>
+			
+			<recaptcha-block :form="form"></recaptcha-block>
+			
 			<div class="b24-form-sign" v-if="form.useSign">
 				<select v-show="false" v-model="form.messages.language">
 					<option v-for="language in form.languages" 
@@ -156,6 +161,11 @@ const Form = {
 			if (this.form.view.type === 'inline' && this.form.design.shadow)
 			{
 				list.push('b24-form-shadow');
+			}
+
+			if (this.form.design.compact)
+			{
+				list.push('b24-form-compact');
 			}
 
 			let border = this.form.design.border;

@@ -25,6 +25,7 @@ BX.namespace('Tasks.Component');
 				}
 				this.vars.parentType = ((!parseInt(this.option('template').BASE_TEMPLATE_ID) && parseInt(this.option('template').PARENT_ID))? 'task' : 'template');
 				this.vars.currentLock = false;
+				this.vars.taskLimitExceeded = this.option('taskLimitExceeded');
 
 				this.analyticsData = {};
 
@@ -335,27 +336,25 @@ BX.namespace('Tasks.Component');
 						flagNode.value = node.checked ? yesValue : noValue;
 					}
 
+					if (flagName === 'REPLICATE' && node.checked && this.vars.taskLimitExceeded)
+					{
+						node.checked = false;
+						BX.UI.InfoHelper.show('limit_tasks_recurring_tasks');
+					}
+
 					this.processToggleFlag(flagName, flagNode.value == yesValue);
 				}
 			},
 
 			processToggleFlag: function(name, value)
 			{
-				if(name == 'REPLICATE')
+				if (name == 'REPLICATE')
 				{
-					var panel = this.control('replication-panel');
-
-					if (value) // checkbox was just checked
+					if (!this.vars.taskLimitExceeded || (this.vars.taskLimitExceeded && !value))
 					{
-						// make invisible
-						BX.Tasks.Util.fadeSlideToggleByClass(panel);
+						BX.Tasks.Util.fadeSlideToggleByClass(this.control('replication-panel'));
+						this.solveFieldOpLock('REPLICATE', value);
 					}
-					else // checkbox was just UNchecked
-					{
-						BX.Tasks.Util.fadeSlideToggleByClass(panel);
-					}
-
-					this.solveFieldOpLock('REPLICATE', value);
 				}
 				else if(name == 'ALLOW_TIME_TRACKING')
 				{

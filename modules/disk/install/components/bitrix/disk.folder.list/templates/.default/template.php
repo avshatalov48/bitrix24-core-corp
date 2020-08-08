@@ -166,7 +166,7 @@ foreach($arResult['GRID']['COLUMN_FOR_SORTING'] as $name => $column)
 
 $byColumn = key($arResult['GRID']['SORT']);
 $direction = $arResult['GRID']['SORT'][$byColumn];
-$inverseDirection = strtolower($direction) == 'desc'? 'asc' : 'desc';
+$inverseDirection = mb_strtolower($direction) == 'desc'? 'asc' : 'desc';
 $sortLabel = $arResult['GRID']['COLUMN_FOR_SORTING'][$byColumn]['LABEL'];
 $isMixSorting = $arResult['GRID']['SORT_MODE'] === FolderListOptions::SORT_MODE_MIX;
 
@@ -196,9 +196,9 @@ if (empty($arResult['IS_TRASH_MODE']))
 {
 	$trashBtn = new Button([
 		"color" => Color::LIGHT_BORDER,
-		"icon" => Icon::REMOVE,
-        "tag" => Tag::LINK,
-        "className" => 'js-disk-trashcan-button ui-toolbar-btn-icon-hidden',
+		"tag" => Tag::LINK,
+		"className" => 'js-disk-trashcan-button',
+		"dataset" => ['toolbar-collapsed-icon' => Icon::REMOVE],
 		"link" => $arResult['PATH_TO_USER_TRASHCAN_LIST'],
 		"text" => Loc::getMessage('DISK_FOLDER_LIST_GO_TO_TRASH'),
     ]);
@@ -257,6 +257,11 @@ else
 	);
 	?>
 	<div class="disk-folder-list-config">
+    <? if (!empty($arResult['ENABLED_TRASHCAN_TTL'])): ?>
+		<div class="disk-folder-list-trashcan-info">
+			<span class="disk-folder-list-trashcan-info-text"><?= Loc::getMessage('DISK_FOLDER_LIST_TRASHCAN_TTL_NOTICE', ['#TTL_DAY#' => $arResult['TRASHCAN_TTL']]) ?></span>
+		</div>
+    <? endif; ?>
 		<div class="disk-folder-list-sorting">
 			<span class="disk-folder-list-sorting-text" data-role="disk-folder-list-sorting"><?= $sortLabel ?></span>
 		</div>

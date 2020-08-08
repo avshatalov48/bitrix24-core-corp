@@ -80,19 +80,19 @@ final class Destination
 		$destination['SELECTED'] = array();
 		foreach ($selected as $ind => $code)
 		{
-			if (substr($code, 0 , 2) == 'DR')
+			if (mb_substr($code, 0, 2) == 'DR')
 			{
 				$destination['SELECTED'][$code] = "department";
 			}
-			elseif (substr($code, 0 , 2) == 'UA')
+			elseif (mb_substr($code, 0, 2) == 'UA')
 			{
 				$destination['SELECTED'][$code] = "groups";
 			}
-			elseif (substr($code, 0 , 2) == 'SG')
+			elseif (mb_substr($code, 0, 2) == 'SG')
 			{
 				$destination['SELECTED'][$code] = "sonetgroups";
 			}
-			elseif (substr($code, 0 , 1) == 'U')
+			elseif (mb_substr($code, 0, 1) == 'U')
 			{
 				$destination['SELECTED'][$code] = "users";
 				$destUser[] = str_replace('U', '', $code);
@@ -196,24 +196,24 @@ final class Destination
 		$destination['SELECTED'] = array();
 		foreach ($selected as $ind => $code)
 		{
-			if (substr($code, 0 , 2) == 'DR')
+			if (mb_substr($code, 0, 2) == 'DR')
 			{
 				$destination['SELECTED'][$code] = "department";
 			}
-			elseif (substr($code, 0 , 2) == 'UA')
+			elseif (mb_substr($code, 0, 2) == 'UA')
 			{
 				$destination['SELECTED'][$code] = "groups";
 			}
-			elseif (substr($code, 0 , 2) == 'AU')
+			elseif (mb_substr($code, 0, 2) == 'AU')
 			{
 				$destination['SELECTED'][$code] = "groups";
 				$destination['SELECTED']['UA'] = "groups";
 			}
-			elseif (substr($code, 0 , 2) == 'SG')
+			elseif (mb_substr($code, 0, 2) == 'SG')
 			{
 				$destination['SELECTED'][$code] = "sonetgroups";
 			}
-			elseif (substr($code, 0 , 1) == 'U')
+			elseif (mb_substr($code, 0, 1) == 'U')
 			{
 				$destination['SELECTED'][$code] = "users";
 				$destUser[] = str_replace('U', '', $code);

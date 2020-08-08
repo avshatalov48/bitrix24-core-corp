@@ -11,6 +11,7 @@ namespace Bitrix\Crm\WebForm\Embed;
 use Bitrix\Main;
 use Bitrix\Rest\RestException;
 use Bitrix\Crm\WebForm;
+use Bitrix\Crm\UI\Webpack;
 
 /**
  * Class Rest
@@ -44,7 +45,11 @@ class Rest
 		$values = (isset($query['values']) && $query['values'])
 			? $query['values']
 			: null;
+		$properties = (isset($query['properties']) && $query['properties'])
+			? $query['properties']
+			: null;
 		$trace = empty($query['trace']) ? null : $query['trace'];
+		$recaptchaResponse = empty($query['recaptcha']) ? null : $query['recaptcha'];
 		$signString = empty($query['security_sign']) ? null : $query['security_sign'];
 		//$entities = empty($query['entities']) ? null : $query['entities'];
 
@@ -64,15 +69,36 @@ class Rest
 		}
 
 		$form = new WebForm\Form($formId);
+		if (!$form->checkSecurityCode($securityCode))
+		{
+			self::printErrors(["Parameter `security_sign` is invalid."]);
+		}
+
 		if (!$form->isActive())
 		{
 			self::printErrors(["Form with id=`$formId` is disabled."]);
 		}
 
-		if (!$form->checkSecurityCode($securityCode))
+		if ($form->isUsedCaptcha())
 		{
-			self::printErrors(["Parameter `security_sign` is invalid."]);
+			$recaptchaSecret = WebForm\ReCaptcha::getSecret(2) ?: WebForm\ReCaptcha::getDefaultSecret(2);
+			$recaptchaKey = WebForm\ReCaptcha::getKey(2) ?: WebForm\ReCaptcha::getDefaultKey(2);
+			if ($recaptchaSecret && $recaptchaKey)
+			{
+				if (!$recaptchaResponse)
+				{
+					self::printErrors(["Parameter `recaptcha` is invalid."]);
+				}
+
+				$recaptcha = new WebForm\ReCaptcha($recaptchaSecret);
+				if (!$recaptcha->verify($recaptchaResponse))
+				{
+					self::printErrors([$recaptcha->getError()]);
+				}
+			}
 		}
+
+		$fill = $form->fill();
 
 		///////////////////
 		$values = $values ? Main\Web\Json::decode(
@@ -83,85 +109,35 @@ class Rest
 			)
 		) : [];
 
+		$properties = $properties ? Main\Web\Json::decode(
+			Main\Text\Encoding::convertEncoding(
+				$properties,
+				SITE_CHARSET,
+				'UTF-8'
+			)
+		) : [];
+
+		$fill
+			->setTrace($trace)
+			->setValues($values)
+			->setProperties($properties);
+
 		$signString = $signString ? Main\Text\Encoding::convertEncoding(
 			$signString,
 			SITE_CHARSET,
 			'UTF-8'
 		): null;
 
-		$entities = [];
-		$sign = new Sign();
-		if ($sign->unpack($signString))
+		if ($signString)
 		{
-			$entities = $sign->getEntities()->toSimpleArray(['typeId', 'id']);
+			$sign = new Sign();
+			if ($sign->unpack($signString))
+			{
+				$fill->setEntities($sign->getEntities());
+			}
 		}
 
-
-		$fields = $form->getFieldsMap();
-		foreach($fields as $fieldKey => $field)
-		{
-			$fieldName = $field['name'];
-			$fieldValues = isset($values[$fieldName]) ? $values[$fieldName] : [];
-			if(!is_array($fieldValues))
-			{
-				$fieldValues = [$fieldValues];
-			}
-
-			if($field['type'] == 'file')
-			{
-				$files = [];
-				foreach ($fieldValues as $fileData)
-				{
-					if (empty($fileData))
-					{
-						continue;
-					}
-
-					$filePos = strpos($fileData['content'], 'base64');
-					$fileData['content'] = substr($fileData['content'], $filePos + 6);
-					$files[] = \CRestUtil::saveFile($fileData['content'], $fileData['name']);
-				}
-				$fieldValues = $files;
-			}
-			elseif($field['type'] == 'phone')
-			{
-				$fieldValues = array_map(
-					function ($value)
-					{
-						return preg_replace("/[^0-9+]/", '', $value);
-					},
-					$fieldValues
-				);
-			}
-			else if ($field['entity_field_name'] == 'COMMENTS')
-			{
-				$fieldValues = array_map(
-					function ($value)
-					{
-						return htmlspecialcharsbx($value);
-					},
-					$fieldValues
-				);
-			}
-
-			$field['values'] = $fieldValues;
-			$fields[$fieldKey] = $field;
-		}
-
-		$result = $form->addResult(
-			$fields,
-			[
-				'ENTITIES' => $entities,
-				'COMMON_FIELDS' => [],
-				'PLACEHOLDERS' => [],
-				'STOP_CALLBACK' => false,
-				'COMMON_DATA' => [
-					'VISITED_PAGES' => [],
-					'TRACE' => $trace
-				],
-			]
-		);
-
+		$result = $fill->save();
 		if (!$result->getId())
 		{
 			self::printErrors($result->getErrors());
@@ -175,6 +151,60 @@ class Rest
 				'url' => $result->getUrl(),
 				'delay' => $form->getRedirectDelay(),
 			]
+		];
+	}
+
+	/**
+	 * Get form.
+	 *
+	 * @param array $query Query parameters.
+	 * @return array
+	 * @throws RestException
+	 */
+	public static function getForm($query)
+	{
+		$formId = empty($query['id']) ? null : (int) $query['id'];
+		$securityCode = empty($query['sec']) ? null : $query['sec'];
+
+		if (!WebForm\Manager::isEmbeddingAvailable())
+		{
+			self::printErrors(["Form embedding feature disabled."]);
+		}
+
+		if (!$formId)
+		{
+			self::printErrors(["Parameter `id` required."]);
+		}
+		if (!$securityCode)
+		{
+			self::printErrors(["Parameter `sec` required."]);
+		}
+
+		$form = new WebForm\Form($formId);
+		if (!$form->checkSecurityCode($securityCode))
+		{
+			self::printErrors(["Parameter `security_sign` is invalid."]);
+		}
+
+		if (!$form->isActive())
+		{
+			self::printErrors(["Form with id=`$formId` is disabled."]);
+		}
+
+		$appPack = Webpack\Form\App::instance();
+		$scripts = WebForm\Script::getListContext($form->get(), []);
+
+		return [
+			'config' => (new Config($form))->toArray(),
+			'loader' => [
+				'form' => [
+					'inline' => $scripts['INLINE']['text'],
+				],
+				'app' => [
+					'link' => $appPack->getEmbeddedFileUrl(),
+					'script' => $appPack->getEmbeddedBody(),
+				],
+			],
 		];
 	}
 

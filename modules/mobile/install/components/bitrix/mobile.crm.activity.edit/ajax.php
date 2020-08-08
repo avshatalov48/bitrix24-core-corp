@@ -97,7 +97,7 @@ if($action === 'SAVE_ENTITY')
 		__CrmMobileActivityEditEndResponse(array('ERROR' => GetMessage('CRM_ACTIVITY_SELECT_COMMUNICATION')));
 	}
 
-	$ownerTypeName = isset($data['OWNER_TYPE']) ? strtoupper(strval($data['OWNER_TYPE'])) : '';
+	$ownerTypeName = isset($data['OWNER_TYPE'])? mb_strtoupper(strval($data['OWNER_TYPE'])) : '';
 	$ownerID = isset($data['OWNER_ID']) ? intval($data['OWNER_ID']) : 0;
 
 	if($ownerTypeName === '' || $ownerID <= 0)
@@ -152,9 +152,9 @@ if($action === 'SAVE_ENTITY')
 			: CCrmActivityDirection::Undefined;
 
 		$commID = isset($commData['ID']) ? intval($commData['ID']) : 0;
-		$commEntityType = isset($commData['ENTITY_TYPE']) ? strtoupper(strval($commData['ENTITY_TYPE'])) : '';
+		$commEntityType = isset($commData['ENTITY_TYPE'])? mb_strtoupper(strval($commData['ENTITY_TYPE'])) : '';
 		$commEntityID = isset($commData['ENTITY_ID']) ? intval($commData['ENTITY_ID']) : 0;
-		$commType = isset($commData['TYPE']) ? strtoupper(strval($commData['TYPE'])) : '';
+		$commType = isset($commData['TYPE'])? mb_strtoupper(strval($commData['TYPE'])) : '';
 		$commValue = isset($commData['VALUE']) ? strval($commData['VALUE']) : '';
 
 		$subject = isset($data['SUBJECT']) ? strval($data['SUBJECT']) : '';
@@ -357,10 +357,10 @@ if($action === 'SAVE_ENTITY')
 		foreach($commData as &$comm)
 		{
 			$commID = isset($comm['ID']) ? intval($comm['ID']) : 0;
-			$commEntityType = isset($comm['ENTITY_TYPE']) ? strtoupper(strval($comm['ENTITY_TYPE'])) : '';
+			$commEntityType = isset($comm['ENTITY_TYPE'])? mb_strtoupper(strval($comm['ENTITY_TYPE'])) : '';
 			$commEntityID = isset($comm['ENTITY_ID']) ? intval($comm['ENTITY_ID']) : 0;
 
-			$commType = isset($comm['TYPE']) ? strtoupper(strval($comm['TYPE'])) : '';
+			$commType = isset($comm['TYPE'])? mb_strtoupper(strval($comm['TYPE'])) : '';
 			if($commType === '')
 			{
 				$commType = 'EMAIL';
@@ -373,7 +373,7 @@ if($action === 'SAVE_ENTITY')
 				{
 					__CrmMobileActivityEditEndResponse(array('ERROR' => GetMessage('CRM_ACTIVITY_EDIT_INVALID_EMAIL', array('#VALUE#' => $commValue))));
 				}
-				$to[] = strtolower(trim($commValue));
+				$to[] = mb_strtolower(trim($commValue));
 			}
 
 			$comms[] = array(
@@ -559,7 +559,7 @@ if($action === 'SAVE_ENTITY')
 				{
 					$updateFields = array('ASSOCIATED_ENTITY_ID'=> $postingID);
 
-					$fromEmail = strtolower(trim(CCrmMailHelper::ExtractEmail($from)));
+					$fromEmail = mb_strtolower(trim(CCrmMailHelper::ExtractEmail($from)));
 					if($crmEmail !== '' && $fromEmail !== $crmEmail)
 					{
 						$updateFields['SETTINGS'] = array('MESSAGE_HEADERS' => array('Reply-To' => "<{$fromEmail}>, <$crmEmail>"));

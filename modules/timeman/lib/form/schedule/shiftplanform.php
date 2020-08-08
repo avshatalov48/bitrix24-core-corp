@@ -2,6 +2,7 @@
 namespace Bitrix\Timeman\Form\Schedule;
 
 use Bitrix\Main\Type\Date;
+use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlan;
 use Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlanTable;
 use Bitrix\Timeman\Util\Form\BaseForm;
@@ -46,5 +47,13 @@ class ShiftPlanForm extends BaseForm
 	public function getDateAssigned()
 	{
 		return new Date($this->dateAssignedFormatted, ShiftPlanTable::DATE_FORMAT);
+	}
+
+	public function getDateAssignedUtc()
+	{
+		$date = TimeHelper::getInstance()
+			->createDateTimeFromFormat(ShiftPlanTable::DATE_FORMAT, $this->dateAssignedFormatted, 0);
+		$date->setTime(0, 0, 0);
+		return $date;
 	}
 }

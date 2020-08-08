@@ -3,17 +3,6 @@
 */
 
 (()=>{
-
-	BX.rest.callBatch({
-		data: ['mobile.intranet.stresslevel.sharedata.get'],
-		blogpost: ['log.blogpost.add', {
-			POST_MESSAGE:'$result[data][message]',
-			POST_TITLE:'$result[data][title]',
-			DEST:'$result[data][recipients]',
-			FILES:'$result[data][files]'
-		}
-		],
-	});
 	class Profile
 	{
 		constructor(userId = 0, form, items = [], sections = [])
@@ -580,19 +569,7 @@
 							}
 							else if(item.id == "tasks")
 							{
-								let data = {
-									params: {
-										"COMPONENT_CODE" :"tasks.list",
-										"USER_ID" :this.userId,
-										"SITE_ID" :env.siteId,
-										"LANGUAGE_ID" :env.languageId,
-										"SITE_DIR" :env.siteDir,
-										"PATH_TO_TASK_ADD":env.siteDir+"mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#"
-									},
-									path: availableComponents["tasks.list"]["publicUrl"]
-								};
-
-								TaskView.open(data);
+								BX.postComponentEvent('taskbackground::task::action', [{ownerId: this.userId}], 'background');
 							}
 							else if(item.id == "messages")
 							{

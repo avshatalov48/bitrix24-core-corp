@@ -355,7 +355,7 @@ final class Task extends \Bitrix\Tasks\Integration\Socialnetwork
 				"SHORT_MESSAGE"    => $strShortMessage,
 				"IS_MESSAGE_SHORT" => true,
 				"STYLE"            => 'tasks-info',
-				"COMMENT_URL"      => $arFields['~URL'].(strpos($arFields['~URL'], '?') > 0 ? '&' : '?').'MID=#ID##com#ID#'
+				"COMMENT_URL"      => $arFields['~URL'].(mb_strpos($arFields['~URL'], '?') > 0 ? '&' : '?').'MID=#ID##com#ID#'
 			);
 		}
 
@@ -371,7 +371,7 @@ final class Task extends \Bitrix\Tasks\Integration\Socialnetwork
 			);
 		}
 
-		if(strlen($task_datetime) > 0)
+		if($task_datetime <> '')
 		{
 			$arResult["EVENT_FORMATTED"]["LOG_DATE_FORMAT"] = $task_datetime;
 		}

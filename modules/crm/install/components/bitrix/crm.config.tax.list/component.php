@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_PO
 				$arFields['NAME'] = trim($arField['NAME']);
 
 			if(isset($arField['CODE']))
-				$arFields['CODE'] = (strlen($arField['CODE'])<=0) ? False : $arField['CODE'];
+				$arFields['CODE'] = ($arField['CODE'] == '') ? False : $arField['CODE'];
 
 			if (count($arFields) > 0)
 			{

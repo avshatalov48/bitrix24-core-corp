@@ -1,4 +1,6 @@
+import {B24Options} from './type';
 import * as Form from './form/registry';
+import * as Compatibility from './compatibility';
 
 /** @requires module:webpacker */
 /** @var {Object} module Current module.*/
@@ -7,11 +9,6 @@ class Application
 {
 	#forms: Array<Form.Controller> = [];
 	#userProviderPromise: Promise;
-
-	constructor()
-	{
-
-	}
 
 	list() : Array<Form.Controller>
 	{
@@ -34,10 +31,10 @@ class Application
 
 	remove(id: String): void
 	{
-
+		this.#forms = this.#forms.filter(form => form.getId() !== id);
 	}
 
-	post(uri, body, headers): Promise
+	post(uri: string, body: FormData, headers: Object): Promise
 	{
 		return window.fetch(
 			uri,
@@ -56,7 +53,7 @@ class Application
 		)
 	}
 
-	createForm24(b24options, options): Form.Controller
+	createForm24(b24options: B24Options, options: Form.Options): Form.Controller
 	{
 		options.provider = options.provider || {};
 		if (!options.provider.user)
@@ -89,11 +86,20 @@ class Application
 			module.messages,
 			options.messages || {}
 		);
+		options.identification = {
+			type: 'b24',
+			id: b24options.id,
+			sec: b24options.sec,
+			address: b24options.address,
+		};
 
-		return this.create(options);
+		const instance = this.create(options);
+		instance.subscribe(Form.EventTypes.destroy, () => this.remove(instance.getId()));
+
+		return instance;
 	}
 
-	createWidgetForm24(b24options, options): Form.Controller
+	createWidgetForm24(b24options: B24Options, options: Form.Options): Form.Controller
 	{
 		let pos = parseInt(BX.SiteButton.config.location) || 4;
 		let positions = {
@@ -117,16 +123,14 @@ class Application
 			vertical: positions[pos][1]
 		};
 
-		options.handlers = {
-			hide: () => {
-				BX.SiteButton.onWidgetClose();
-			}
-		};
+		Compatibility.performEventOfWidgetFormInit(b24options, options);
+		const instance = this.createForm24(b24options, options);
+		instance.subscribe(Form.EventTypes.hide, () => BX.SiteButton.onWidgetClose());
 
-		return b24form.App.createForm24(b24options, options);
+		return instance;
 	}
 
-	getUserProvider24(b24options): Promise|Object
+	getUserProvider24(b24options: B24Options): Promise|Object
 	{
 		let signTtl = 3600 * 24;
 		let sign = webPacker.url.parameter.get('b24form_user');
@@ -194,9 +198,9 @@ class Application
 		return this.#userProviderPromise;
 	}
 
-	getSubmitProvider24(b24options): Promise
+	getSubmitProvider24(b24options: B24Options): Promise
 	{
-		return (form, formData) => {
+		return (form: Form.Controller, formData: FormData) => {
 
 			let trace = (b24options.usedBySiteButton && BX.SiteButton)
 				? BX.SiteButton.getTrace()
@@ -228,7 +232,7 @@ class Application
 		};
 	}
 
-	initFormScript24(b24options: Object): Form.Controller|null
+	initFormScript24(b24options: B24Options): Form.Controller|null
 	{
 		let options = b24options.data;
 		// noinspection JSUnresolvedVariable
@@ -245,13 +249,14 @@ class Application
 			{
 				return;
 			}
-			node.setAttribute('data-b24-loaded', true);
 
 			let attributes = node.getAttribute('data-b24-form').split('/');
 			if (attributes[1] !== b24options.id || attributes[2] !== b24options.sec)
 			{
 				return;
 			}
+
+			node.setAttribute('data-b24-loaded', true);
 
 			switch (attributes[0])
 			{

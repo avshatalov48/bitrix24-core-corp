@@ -43,7 +43,7 @@ $arResult['ORIGIN_LIST'] = array(
 	'livemail' => GetMessage('CRM_FIELD_IMPORT_FILE_ORIGIN_LIVE_MAIL')
 );
 
-$fixedOrigin = isset($_REQUEST['origin']) ? strtolower($_REQUEST['origin']) : '';
+$fixedOrigin = isset($_REQUEST['origin'])? mb_strtolower($_REQUEST['origin']) : '';
 if($fixedOrigin !== '' && !isset($arResult['ORIGIN_LIST'][$fixedOrigin]))
 {
 	$fixedOrigin = '';
@@ -81,7 +81,7 @@ if(!function_exists('__CrmImportPrepareFieldBindingTab'))
 		{
 			//echo '"'.$arField['name'].'";';
 			$arFields[$arField['id']] = $arField['name'];
-			$arFieldsUpper[$arField['id']] = strtoupper($arField['name']);
+			$arFieldsUpper[$arField['id']] = mb_strtoupper($arField['name']);
 			if ($arField['mandatory'] == 'Y')
 				$arRequireFields[$arField['id']] = $arField['name'];
 			if ($importRequisite && isset($arField['group'])
@@ -105,7 +105,7 @@ if(!function_exists('__CrmImportPrepareFieldBindingTab'))
 					case 'BD_ID':
 						$skipAddr = true;
 						$fieldTitle = trim($arField['name']);
-						if (strlen($fieldTitle) > 0)
+						if ($fieldTitle <> '')
 							$rqReqFieldTitles[$arField['id']] = $fieldTitle;
 						break;
 				}
@@ -113,7 +113,7 @@ if(!function_exists('__CrmImportPrepareFieldBindingTab'))
 				if (!$skipAddr && preg_match('/^RQ_RQ_ADDR_TYPE\|\d+$/', $arField['id']))
 				{
 					$fieldTitle = trim($arField['name']);
-					if (strlen($fieldTitle) <= 0)
+					if ($fieldTitle == '')
 						$fieldTitle = $arField['id'];
 					if (!is_array($rqReqFieldTitles['RQ_RQ_ADDR_TYPE']))
 						$rqReqFieldTitles['RQ_RQ_ADDR_TYPE'] = array();
@@ -175,7 +175,7 @@ if(!function_exists('__CrmImportPrepareFieldBindingTab'))
 			$customFileImport = __CrmImportCreateCustom($origin, $headerLangID);
 			$headerLangID = $customFileImport->getHeaderLanguage();
 			$customFileImport->checkHeaders($resultMessages);
-			$messageID = 'CRM_'.strtoupper($origin).(($headerLangID !== '' && $headerLangID !== 'en') ? '_'.strtoupper($headerLangID) : '').'_BINDING';
+			$messageID = 'CRM_'.mb_strtoupper($origin).(($headerLangID !== '' && $headerLangID !== 'en') ? '_'.mb_strtoupper($headerLangID) : '').'_BINDING';
 
 			ob_start();
 			?><div class="crm_notice_message"><?=GetMessage($messageID)?></div><?
@@ -326,7 +326,7 @@ if(!function_exists('__CrmImportPrepareFieldBindingTab'))
 					'name' => $value,
 					'items' => $arFields,
 					'type' => 'list',
-					'value' => isset($arFields[strtoupper($value)])? strtoupper($value): array_search(strtoupper($value), $arFieldsUpper),
+					'value' => isset($arFields[mb_strtoupper($value)])? mb_strtoupper($value) : array_search(mb_strtoupper($value), $arFieldsUpper),
 				);
 			}
 		}
@@ -588,7 +588,8 @@ if(!function_exists('__CrmImportContactAddressesToRequisite'))
 			'REGION',
 			'PROVINCE',
 			'COUNTRY',
-			'COUNTRY_CODE'
+			'COUNTRY_CODE',
+			'LOC_ADDR_ID'
 		);
 		$addresses = array();
 		$addrPrefs = array(
@@ -1016,7 +1017,7 @@ elseif (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 		{
 			$index = (int)$matches[1];
 			if (isset($_SESSION['CRM_IMPORT_FILE_FIELD_'.$index]) && !empty($_SESSION['CRM_IMPORT_FILE_FIELD_'.$index]))
-				$importHeaderIndex[strtoupper($_SESSION['CRM_IMPORT_FILE_FIELD_'.$index])] = $index;
+				$importHeaderIndex[mb_strtoupper($_SESSION['CRM_IMPORT_FILE_FIELD_'.$index])] = $index;
 		}
 	}
 
@@ -1172,9 +1173,9 @@ elseif (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 			{
 				if (isset($_SESSION['CRM_IMPORT_FILE_FIELD_'.$key]) && !empty($_SESSION['CRM_IMPORT_FILE_FIELD_'.$key]))
 				{
-					$currentKey = strtoupper($_SESSION['CRM_IMPORT_FILE_FIELD_'.$key]);
+					$currentKey = mb_strtoupper($_SESSION['CRM_IMPORT_FILE_FIELD_'.$key]);
 
-					if ($currentKey == 'ID' || strpos($currentKey, '~') === 0)
+					if ($currentKey == 'ID' || mb_strpos($currentKey, '~') === 0)
 					{
 						continue;
 					}
@@ -1198,7 +1199,7 @@ elseif (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 						if(CCrmUrlUtil::HasScheme($data) && CCrmUrlUtil::IsSecureUrl($data))
 						{
 							$data = CFile::MakeFileArray($data);
-							if (is_array($data) && strlen(CFile::CheckImageFile($data)) === 0)
+							if (is_array($data) && CFile::CheckImageFile($data) == '')
 							{
 								$arContact[$currentKey] = array_merge($data, array('MODULE_ID' => 'crm'));
 							}
@@ -1231,24 +1232,27 @@ elseif (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 					}
 					elseif ($currentKey  == 'FULL_NAME')
 					{
-						if($data !== '')
+						if ($data !== '')
 						{
 							$data = explode(' ', $data);
-							if (count($data) > 1 && (!isset($arContact['LAST_NAME']) || $arContact['LAST_NAME'] === ''))
-							{
-								$lastName = trim($data[1]);
-								if ($lastName !== '')
-								{
-									$arContact['LAST_NAME'] = $lastName;
-								}
-							}
-
 							if (!isset($arContact['NAME']) || $arContact['NAME'] === '')
 							{
 								$name = trim($data[0]);
 								if($name !== '')
 								{
 									$arContact['NAME'] = $name;
+								}
+							}
+
+							if (count($data) > 1 && (!isset($arContact['LAST_NAME']) || $arContact['LAST_NAME'] === ''))
+							{
+								$lastName = implode(
+									' ',
+									array_slice(array_map('trim', $data), 1)
+								);
+								if ($lastName !== '')
+								{
+									$arContact['LAST_NAME'] = $lastName;
 								}
 							}
 						}
@@ -2044,15 +2048,15 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 					if($customFileImport !== null || isset($_POST['IMPORT_FILE_ENCODING']))
 					{
 						$fileEncoding = $customFileImport !== null
-							? strtolower($customFileImport->getDefaultEncoding())
-							: strtolower($_POST['IMPORT_FILE_ENCODING']);
+							? mb_strtolower($customFileImport->getDefaultEncoding())
+							: mb_strtolower($_POST['IMPORT_FILE_ENCODING']);
 
 						if ($fileEncoding == '_' && isset($_POST['hidden_file_import_encoding']))
 						{
 							$fileEncoding = $_POST['hidden_file_import_encoding'];
 						}
 
-						if($fileEncoding !== '' && $fileEncoding !== '_' && $fileEncoding !== strtolower(SITE_CHARSET))
+						if($fileEncoding !== '' && $fileEncoding !== '_' && $fileEncoding !== mb_strtolower(SITE_CHARSET))
 						{
 							$convertCharsetErrorMsg = '';
 							$fileHandle = fopen($_SESSION['CRM_IMPORT_FILE'], 'rb');
@@ -2064,18 +2068,18 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 							//HACK: Remove UTF-8/UTF-16 BOM
 							if($fileEncoding === 'utf-8')
 							{
-								$bom = substr($fileContents, 0, 3);
+								$bom = mb_substr($fileContents, 0, 3);
 								if($bom === "\xEF\xBB\xBF")
 								{
-									$fileContents = substr($fileContents, 3);
+									$fileContents = mb_substr($fileContents, 3);
 								}
 							}
 							elseif($fileEncoding === 'utf-16')
 							{
-								$bom = substr($fileContents, 0, 2);
+								$bom = mb_substr($fileContents, 0, 2);
 								if($bom === "\xFF\xFE" || $bom === "\xFE\xFF")
 								{
-									$fileContents = substr($fileContents, 2);
+									$fileContents = mb_substr($fileContents, 2);
 								}
 							}
 
@@ -2105,8 +2109,8 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 					}
 
 					$_SESSION['CRM_IMPORT_DEFAULT_SOURCE_DESCRIPTION'] = isset($_POST['IMPORT_DEFAULT_SOURCE_DESCRIPTION']) ? strip_tags($_POST['IMPORT_DEFAULT_SOURCE_DESCRIPTION']) : '';
-					$_SESSION['CRM_IMPORT_DEFAULT_OPENED'] = isset($_POST['IMPORT_DEFAULT_OPENED']) && strtoupper($_POST['IMPORT_DEFAULT_OPENED']) === 'Y' ? 'Y' : 'N';
-					$_SESSION['CRM_IMPORT_DEFAULT_EXPORT'] = isset($_POST['IMPORT_DEFAULT_EXPORT']) && strtoupper($_POST['IMPORT_DEFAULT_EXPORT']) === 'Y' ? 'Y' : 'N';
+					$_SESSION['CRM_IMPORT_DEFAULT_OPENED'] = isset($_POST['IMPORT_DEFAULT_OPENED']) && mb_strtoupper($_POST['IMPORT_DEFAULT_OPENED']) === 'Y' ? 'Y' : 'N';
+					$_SESSION['CRM_IMPORT_DEFAULT_EXPORT'] = isset($_POST['IMPORT_DEFAULT_EXPORT']) && mb_strtoupper($_POST['IMPORT_DEFAULT_EXPORT']) === 'Y' ? 'Y' : 'N';
 
 					$_SESSION['CRM_IMPORT_DEFAULT_RESPONSIBLE_ID'] = isset($_POST['IMPORT_DEFAULT_RESPONSIBLE_ID']) ? $_POST['IMPORT_DEFAULT_RESPONSIBLE_ID'] : '';
 					$_SESSION['CRM_IMPORT_IMPORT_NAME_FORMAT'] = isset($_POST['IMPORT_NAME_FORMAT'])
@@ -2166,7 +2170,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 
 				foreach ($_POST as $key => $value)
 				{
-					if($value === null || $value === '' || strpos($key, 'IMPORT_FILE_FIELD_') === false)
+					if($value === null || $value === '' || mb_strpos($key, 'IMPORT_FILE_FIELD_') === false)
 					{
 						continue;
 					}
@@ -2300,7 +2304,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 		{
 			@unlink($_SESSION['CRM_IMPORT_FILE']);
 			foreach ($_SESSION as $key => $value)
-				if(strpos($key, 'CRM_IMPORT_FILE') !== false)
+				if(mb_strpos($key, 'CRM_IMPORT_FILE') !== false)
 					unset($_SESSION[$key]);
 
 			LocalRedirect(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_LIST'], array()));
@@ -2326,7 +2330,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 		{
 			@unlink($_SESSION['CRM_IMPORT_FILE']);
 			foreach ($_SESSION as $key => $value)
-				if(strpos($key, 'CRM_IMPORT_FILE') !== false)
+				if(mb_strpos($key, 'CRM_IMPORT_FILE') !== false)
 					unset($_SESSION[$key]);
 
 			$arResult['STEP'] = 1;
@@ -2336,7 +2340,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 	{
 		@unlink($_SESSION['CRM_IMPORT_FILE']);
 		foreach ($_SESSION as $key => $value)
-			if(strpos($key, 'CRM_IMPORT_FILE') !== false)
+			if(mb_strpos($key, 'CRM_IMPORT_FILE') !== false)
 				unset($_SESSION[$key]);
 
 		LocalRedirect(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_LIST'], array()));
@@ -2394,7 +2398,7 @@ if(!$enableFixedOrigin)
 		'iso-8859-15' => 'ISO-8859-15',
 		'koi8-r' => 'KOI8-R'
 	);
-	$siteEncoding = strtolower(SITE_CHARSET);
+	$siteEncoding = mb_strtolower(SITE_CHARSET);
 	$arResult['ENCODING_SELECTOR_ID'] = 'import_file_encoding';
 	$arResult['HIDDEN_FILE_IMPORT_ENCODING'] = 'hidden_file_import_encoding';
 

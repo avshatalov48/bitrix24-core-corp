@@ -17,7 +17,7 @@ class CDiskBreadcrumbsComponent extends \Bitrix\Disk\Internals\BaseComponent
 		}
 		else
 		{
-			$this->arParams['BREADCRUMBS_ID'] = 'breadcrumbs_' . (strtolower(randString(5)));
+			$this->arParams['BREADCRUMBS_ID'] = 'breadcrumbs_' .(mb_strtolower(randString(5)));
 		}
 
 		if(!isset($this->arParams['SHOW_ONLY_DELETED']))

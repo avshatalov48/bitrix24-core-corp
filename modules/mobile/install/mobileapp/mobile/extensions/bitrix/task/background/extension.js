@@ -17,7 +17,7 @@
 			console.info('TaskBackgroundAction.executeAction', data);
 
 			const currentTaskId = taskId || data.taskId;
-			const {groupId} = data;
+			const {groupId, ownerId} = data;
 
 			if (currentTaskId)
 			{
@@ -31,9 +31,16 @@
 				}
 			}
 
-			if (groupId && Application.getApiVersion() >= 31)
+			if (Application.getApiVersion() >= 31)
 			{
-				TaskBackgroundAction.openTaskListComponentByGroupId(groupId, {});
+				if (groupId)
+				{
+					TaskBackgroundAction.openTaskListComponentByGroupId(groupId, {});
+				}
+				else if (ownerId)
+				{
+					TaskBackgroundAction.openTaskListComponentByOwnerId(ownerId, {});
+				}
 			}
 		}
 
@@ -58,6 +65,27 @@
 				PATH_TO_TASK_ADD: `${siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#`,
 			};
 			componentData.path = availableComponents['tasks.list']['publicUrl'];
+			componentData.canOpenInDefault = true;
+
+			TaskView.open(componentData);
+		}
+
+		static openTaskListComponentByOwnerId(ownerId, data)
+		{
+			console.log('openTaskListComponentByOwnerId');
+
+			const {siteDir, siteId, languageId} = env;
+			const componentData = data || {};
+
+			componentData.params = {
+				COMPONENT_CODE: 'tasks.list',
+				USER_ID: ownerId,
+				SITE_ID: siteId,
+				LANGUAGE_ID: languageId,
+				SITE_DIR: siteDir,
+				PATH_TO_TASK_ADD: `${siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#`,
+			};
+			componentData.path = availableComponents['tasks.list'].publicUrl;
 			componentData.canOpenInDefault = true;
 
 			TaskView.open(componentData);

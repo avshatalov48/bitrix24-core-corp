@@ -70,9 +70,10 @@ else
 
 			$sc = new \CSiteCheckerTest;
 			$httpClient = new \Bitrix\Main\Web\HttpClient(array(
-						"socketTimeout" => 5,
-						"streamTimeout" => 5
-					));
+				"socketTimeout" => 5,
+				"streamTimeout" => 5,
+				"disableSslVerification" => true,
+			));
 			$httpClient->setHeader('User-Agent', 'Bitrix Support Bot');
 			$checker = 'http://checker.internal.bitrix24.com';
 			$url = $checker.'/check/?license_hash='.LICENSE_HASH.'&host='.urlencode($host).'&port='.$port.'&https='.($ssl ? 'Y' : 'N');

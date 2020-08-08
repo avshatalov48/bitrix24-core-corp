@@ -88,6 +88,7 @@ class Im
 
 			while($rowChat = $rawChat->fetch())
 			{
+				//TODO: Replace with the method \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId or \Bitrix\ImOpenLines\Chat::parseLiveChatEntityId
 				$chatFieldData = explode('|', $rowChat['ENTITY_DATA_1']);
 				$blockTimestamp = (int)$chatFieldData[8];
 				if ($blockTimestamp !== 0 && $blockTimestamp < (new DateTime())->getTimestamp())

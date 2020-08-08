@@ -33,7 +33,7 @@ class TypeProxy implements \ICrmRestProxy
 
 	public function processMethodRequest($name, $nameDetails, $params, $nav, $server)
 	{
-		$action = strtolower($nameDetails[0]);
+		$action = mb_strtolower($nameDetails[0]);
 
 		if ($action === 'add')
 		{

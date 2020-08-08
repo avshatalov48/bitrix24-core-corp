@@ -38,6 +38,11 @@ class OrderEntry extends TimelineEntry
 			? $params['CREATED'] : new DateTime();
 
 		$settings = isset($params['SETTINGS']) && is_array($params['SETTINGS']) ? $params['SETTINGS'] : array();
+		$entityTypeID = isset($params['ENTITY_TYPE_ID']) ? (int)$params['ENTITY_TYPE_ID'] : \CCrmOwnerType::Order;
+		if ($entityTypeID <= 0)
+		{
+			throw new Main\ArgumentException('Category Id must be greater than zero.', 'entityTypeID');
+		}
 
 		$result = TimelineTable::add(
 			array(
@@ -46,7 +51,7 @@ class OrderEntry extends TimelineEntry
 				'CREATED' => $created,
 				'AUTHOR_ID' => $authorID,
 				'SETTINGS' => $settings,
-				'ASSOCIATED_ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
+				'ASSOCIATED_ENTITY_TYPE_ID' => $entityTypeID,
 				'ASSOCIATED_ENTITY_CLASS_NAME' => $entityClassName,
 				'ASSOCIATED_ENTITY_ID' => $entityID
 			)

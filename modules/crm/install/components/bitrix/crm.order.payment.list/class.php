@@ -361,7 +361,7 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 		{
 			if(empty($this->arParams['GRID_ID_SUFFIX']))
 			{
-				$this->arParams['GRID_ID_SUFFIX'] = $this->GetParent() !== null ? strtoupper($this->GetParent()->GetName()) : '';
+				$this->arParams['GRID_ID_SUFFIX'] = $this->GetParent() !== null? mb_strtoupper($this->GetParent()->GetName()) : '';
 			}
 		}
 

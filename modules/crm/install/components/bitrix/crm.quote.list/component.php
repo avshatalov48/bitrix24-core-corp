@@ -36,7 +36,7 @@ $isInExportMode = false;
 $isStExport = false;    // Step-by-step export mode
 if (!empty($sExportType))
 {
-	$sExportType = strtolower(trim($sExportType));
+	$sExportType = mb_strtolower(trim($sExportType));
 	switch ($sExportType)
 	{
 		case 'csv':
@@ -157,7 +157,7 @@ else
 CUtil::InitJSCore(array('ajax', 'tooltip'));
 
 $arResult['GADGET'] = 'N';
-if (isset($arParams['GADGET_ID']) && strlen($arParams['GADGET_ID']) > 0)
+if (isset($arParams['GADGET_ID']) && $arParams['GADGET_ID'] <> '')
 {
 	$arResult['GADGET'] = 'Y';
 	$arResult['GADGET_ID'] = $arParams['GADGET_ID'];
@@ -175,7 +175,7 @@ if (!empty($arParams['INTERNAL_FILTER']) && is_array($arParams['INTERNAL_FILTER'
 {
 	if(empty($arParams['GRID_ID_SUFFIX']))
 	{
-		$arParams['GRID_ID_SUFFIX'] = $this->GetParent() !== null ? strtoupper($this->GetParent()->GetName()) : '';
+		$arParams['GRID_ID_SUFFIX'] = $this->GetParent() !== null? mb_strtoupper($this->GetParent()->GetName()) : '';
 	}
 
 	$arFilter = $arParams['INTERNAL_FILTER'];
@@ -448,12 +448,12 @@ if(check_bitrix_sessid())
 		{
 			if(isset($_POST['ACTION_OPENED']))
 			{
-				$actionData['OPENED'] = strtoupper($_POST['ACTION_OPENED']) === 'Y' ? 'Y' : 'N';
+				$actionData['OPENED'] = mb_strtoupper($_POST['ACTION_OPENED']) === 'Y' ? 'Y' : 'N';
 				unset($_POST['ACTION_OPENED'], $_REQUEST['ACTION_OPENED']);
 			}
 			else
 			{
-				$actionData['OPENED'] = strtoupper($controls['ACTION_OPENED']) === 'Y' ? 'Y' : 'N';
+				$actionData['OPENED'] = mb_strtoupper($controls['ACTION_OPENED']) === 'Y' ? 'Y' : 'N';
 			}
 		}
 
@@ -636,7 +636,7 @@ foreach ($arFilter as $k => $v)
 		}
 		unset($arFilter[$k]);
 	}
-	elseif (strpos($k, 'UF_') !== 0 && $k != 'LOGIC')
+	elseif (mb_strpos($k, 'UF_') !== 0 && $k != 'LOGIC')
 	{
 		$arFilter['%'.$k] = $v;
 		unset($arFilter[$k]);
@@ -860,7 +860,7 @@ if($actionData['ACTIVE'])
 				{
 					if(isset($actionData['OPENED']) && $actionData['OPENED'] != '')
 					{
-						$isOpened = strtoupper($actionData['OPENED']) === 'Y' ? 'Y' : 'N';
+						$isOpened = mb_strtoupper($actionData['OPENED']) === 'Y' ? 'Y' : 'N';
 						$arIDs = array();
 						if ($actionData['ALL_ROWS'])
 						{

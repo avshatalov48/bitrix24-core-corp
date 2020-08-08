@@ -82,7 +82,7 @@
 	position: absolute;
 	width: 30px;
 	height: 31px;
-	background: url(../images/delete.svg) no-repeat center;
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='8' height='8' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'%3E%3Cuse xlink:href='%23path0_fill' fill='%23525C69' opacity='.2'/%3E%3Cdefs%3E%3Cpath id='path0_fill' d='M6.316.316L4 2.632 1.684.316c-.42-.421-.947-.421-1.368 0-.421.42-.421.947 0 1.368L2.632 4 .316 6.316c-.421.42-.421.947 0 1.368.42.421.947.421 1.368 0L4 5.368l2.316 2.316c.42.421.947.421 1.368 0 .421-.42.421-.947 0-1.368L5.368 4l2.316-2.316c.421-.42.421-.947 0-1.368C7.264 0 6.632 0 6.316.316z'/%3E%3C/defs%3E%3C/svg%3E") no-repeat center;
 	cursor: pointer;
 	right: 0;
 	top: 0;

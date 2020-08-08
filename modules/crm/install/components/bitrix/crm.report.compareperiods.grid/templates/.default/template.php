@@ -21,7 +21,7 @@ function getChangeLayout(array $changeRecord)
 		'<div class="crm-report-salesdynamics-grid-rating">
 			<div class="crm-report-salesdynamics-grid-rating-icon" style="background: ' . $changeRecord['color'] . '"></div>
 			<div class="crm-report-salesdynamics-grid-rating-value">' . $changeRecord['value'] . '%</div>
-			<div class="crm-report-salesdynamics-grid-rating-text" style="color: #E22E29">' . $changeRecord['label'] . '</div>
+			<div class="crm-report-salesdynamics-grid-rating-text" style="color: ' . $changeRecord['color'] . '">' . $changeRecord['label'] . '</div>
 		</div>';
 }
 

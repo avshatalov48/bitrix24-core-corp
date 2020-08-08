@@ -13,14 +13,14 @@ if (isset($_REQUEST['app_calendar_action']) && check_bitrix_sessid())
 	{
 		CCalendarEvent::SetMeetingStatus(array(
 			'userId' => $userId,
-			'eventId' => intVal($_REQUEST['event_id']),
+			'eventId' => intval($_REQUEST['event_id']),
 			'status' => $_REQUEST['status'] == 'Y' ? 'Y' : 'N'
 		));
 	}
 	die();
 }
 
-$eventId = intVal($arParams['EVENT_ID']);
+$eventId = intval($arParams['EVENT_ID']);
 if (isset($_REQUEST['date_from']))
 {
 	$fromTs = CCalendar::Timestamp($_REQUEST['date_from']);

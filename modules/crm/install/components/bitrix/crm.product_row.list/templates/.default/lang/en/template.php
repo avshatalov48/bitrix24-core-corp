@@ -45,4 +45,5 @@ $MESS["CRM_PRODUCT_TAX_INCLUDING"] = "included";
 $MESS["CRM_PRODUCT_ROW_OPEN_PRODUCT_CARD"] = "Open product properties";
 $MESS["CRM_PRODUCT_ROW_CREATE_PRODUCT"] = "Add to catalog";
 $MESS["CRM_PRODUCT_SEARCH_DLG_TITLE"] = "Products";
+$MESS["CRM_PRODUCT_BEFORE_SEARCH_TITLE"] = "Enter product or service name";
 ?>

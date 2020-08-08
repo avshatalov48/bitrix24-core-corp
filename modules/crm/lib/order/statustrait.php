@@ -244,7 +244,7 @@ trait StatusTrait
 	private static function ord($string)
 	{
 		$ord = "";
-		$len = strlen($string);
+		$len = mb_strlen($string);
 		if ($len <= 0)
 		{
 			return 0;

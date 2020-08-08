@@ -40,7 +40,7 @@ if(!function_exists("__ConvPathParam"))
 {
 	function __ConvPathParam($path)
 	{
-		if(substr($path, 0, 1)=='/' || substr($path, 1, 2)==":\\")
+		if(mb_substr($path, 0, 1) == '/' || mb_substr($path, 1, 2) == ":\\")
 		{
 			$path_vhosts = $path;
 		}
@@ -58,10 +58,10 @@ $URL_SUBDOMAIN = $arParams['URL_SUBDOMAIN'];
 $arResult = array();
 $arError = array();
 
-if(strlen($_REQUEST['domain_name'])>0)
+if($_REQUEST['domain_name'] <> '')
 {
 	set_time_limit(180);
-	$site_id = strtolower(substr(preg_replace("/[^a-z0-9]/", "", $_REQUEST['domain_name']), 0, 10));
+	$site_id = mb_strtolower(mb_substr(preg_replace("/[^a-z0-9]/", "", $_REQUEST['domain_name']), 0, 10));
 	$site_url = "http://".$site_id.".".$URL_SUBDOMAIN."/";
 
 	if(preg_match('#[^a-z1-9\.-]#i' . BX_UTF_PCRE_MODIFIER, $_REQUEST['domain_name']))
@@ -79,7 +79,7 @@ if(strlen($_REQUEST['domain_name'])>0)
 	if(!count($arError))
 	{
 		//check for URL with trailing / and without it
-		$db_members = CControllerMember::GetList(Array(), Array("=URL" => array($site_url, substr($site_url, 0, -1))));
+		$db_members = CControllerMember::GetList(Array(), Array("=URL" => array($site_url, mb_substr($site_url, 0, -1))));
 		if($ar_member = $db_members->Fetch())
 		{
 			$arError[] = GetMessage('CSA_ERROR_NAME_EXISTS');
@@ -101,10 +101,10 @@ if(strlen($_REQUEST['domain_name'])>0)
 	}
 	if(!count($arError))
 	{
-		if($p = strpos($DB->DBHost, ":"))
+		if($p = mb_strpos($DB->DBHost, ":"))
 		{
-			$mysql_port = "-P".substr($DB->DBHost, $p+1);
-			$mysql_host = substr($DB->DBHost, 0, $p);
+			$mysql_port = "-P".mb_substr($DB->DBHost, $p + 1);
+			$mysql_host = mb_substr($DB->DBHost, 0, $p);
 		}
 		else
 		{
@@ -143,7 +143,7 @@ if(strlen($_REQUEST['domain_name'])>0)
 			"URL" => $site_url,
 			"SHARED_KERNEL" => "Y",
 			"DISCONNECTED" => "I",
-			"NAME" => substr(substr($site_url, 0, -1), strlen("http://")), // w/o http://
+			"NAME" => mb_substr(mb_substr($site_url, 0, -1), mb_strlen("http://")), // w/o http://
 			"ACTIVE" => "Y",
 		);
 		if(!CControllerMember::Add($ar_member))
@@ -155,7 +155,7 @@ if(strlen($_REQUEST['domain_name'])>0)
 		$ar_member = array(
 			'MEMBER_ID' => "m".\Bitrix\Main\Security\Random::getString(31),
 			'SECRET_ID' => "m".\Bitrix\Main\Security\Random::getString(31),
-			'NAME' => substr($site_url, strlen("http://")), // w/o http://
+			'NAME' => mb_substr($site_url, mb_strlen("http://")), // w/o http://
 			'URL' => $site_url,
 			'CONTROLLER_GROUP_ID' => COption::GetOptionInt("controller", "default_group", 1),
 			'ACTIVE' => "Y",
@@ -285,7 +285,7 @@ if(strlen($_REQUEST['domain_name'])>0)
 					{
 						$adm_password = trim($arParams["ADMIN_PASSWORD"]);
 					}
-					if(strlen($adm_login) && strlen($adm_email) && strlen($adm_password))
+					if(mb_strlen($adm_login) && mb_strlen($adm_email) && mb_strlen($adm_password))
 					{
 						$result = @mysql_query("
 							UPDATE b_user
@@ -386,7 +386,7 @@ define("BX_DIR_PERMISSIONS", '.preg_replace("/[^0-9]/", "", $arParams["DIR_PERMI
 		{
 			$result = 0;
 		}
-		if($result !== strlen($str))
+		if($result !== mb_strlen($str))
 		{
 			$arError[] = GetMessage('CSA_ERROR_FILE_WRITE', array('#FILE#' => $filename));
 		}
@@ -406,7 +406,7 @@ define("BX_DIR_PERMISSIONS", '.preg_replace("/[^0-9]/", "", $arParams["DIR_PERMI
 			if($template)
 			{
 				$folderPath = $template->GetFolder();
-				if(strlen($folderPath) > 0)
+				if($folderPath <> '')
 				{
 					$filename = $_SERVER["DOCUMENT_ROOT"].$folderPath."/apache.conf.php";
 					if(file_exists($filename))
@@ -416,7 +416,7 @@ define("BX_DIR_PERMISSIONS", '.preg_replace("/[^0-9]/", "", $arParams["DIR_PERMI
 						{
 							$apache_template = fread($f, filesize($filename));
 							fclose($f);
-							if(strlen($apache_template) != filesize($filename))
+							if(mb_strlen($apache_template) != filesize($filename))
 								$apache_template = false;
 						}
 					}
@@ -448,7 +448,7 @@ define("BX_DIR_PERMISSIONS", '.preg_replace("/[^0-9]/", "", $arParams["DIR_PERMI
 		{
 			$result = 0;
 		}
-		if($result !== strlen($str))
+		if($result !== mb_strlen($str))
 		{
 			$arError[] = GetMessage('CSA_ERROR_WRITE_APACHE_CONFIG');
 		}
@@ -463,7 +463,7 @@ define("BX_DIR_PERMISSIONS", '.preg_replace("/[^0-9]/", "", $arParams["DIR_PERMI
 			if($template)
 			{
 				$folderPath = $template->GetFolder();
-				if(strlen($folderPath) > 0)
+				if($folderPath <> '')
 				{
 					$filename = $_SERVER["DOCUMENT_ROOT"].$folderPath."/nginx.conf.php";
 					if(file_exists($filename))
@@ -473,7 +473,7 @@ define("BX_DIR_PERMISSIONS", '.preg_replace("/[^0-9]/", "", $arParams["DIR_PERMI
 						{
 							$nginx_template = fread($f, filesize($filename));
 							fclose($f);
-							if(strlen($nginx_template) != filesize($filename))
+							if(mb_strlen($nginx_template) != filesize($filename))
 								$nginx_template = false;
 						}
 					}
@@ -508,7 +508,7 @@ define("BX_DIR_PERMISSIONS", '.preg_replace("/[^0-9]/", "", $arParams["DIR_PERMI
 		{
 			$result = 0;
 		}
-		if($result !== strlen($str))
+		if($result !== mb_strlen($str))
 		{
 			$arError[] = GetMessage('CSA_ERROR_WRITE_NGINX_CONFIG');
 		}

@@ -2,16 +2,17 @@
 <?
 global $USER;
 CJSCore::Init(array('finder'));
+\Bitrix\Main\UI\Extension::load('intranet.search_title');
 
 $this->setFrameMode(true);
 
 $inputId = trim($arParams["~INPUT_ID"]);
-if(strlen($inputId) <= 0)
+if($inputId == '')
 	$inputId = "title-search-input";
 $inputId = CUtil::JSEscape($inputId);
 
 $containerId = trim($arParams["~CONTAINER_ID"]);
-if(strlen($containerId) <= 0)
+if($containerId == '')
 {
 	$containerId = "title-search";
 }
@@ -52,7 +53,7 @@ $className =
 		"SEARCH_DISK" : "<?=GetMessageJS("CT_BST_GLOBAL_SEARCH_DISK")?>"
 	});
 
-	new BX.B24SearchTitle ({
+	new BX.Intranet.SearchTitle ({
 		'AJAX_PAGE' : '<?=CUtil::JSEscape(POST_FORM_ACTION_URI)?>',
 		'CONTAINER_ID': '<?=$containerId?>',
 		'INPUT_ID': '<?=$inputId?>',
@@ -64,7 +65,7 @@ $className =
 		'WAITER_TEXT':  '<?=GetMessageJS('CT_BST_WAITER_TEXT')?>',
 		'CURRENT_TS':  <?=time()?>,
 		'GLOBAL_SEARCH_CATEGORIES': <?=CUtil::PhpToJSObject($arResult["GLOBAL_SEARCH_CATEGORIES"])?>,
-		'MORE_USERS_URL': '<?=SITE_DIR."company/?set_filter_company_search=Y&company_search_FIO="?>',
+		'MORE_USERS_URL': '<?=SITE_DIR."company/?apply_filter=Y&with_preset=Y&FIND="?>',
 		'IS_CRM_INSTALLED': '<?=IsModuleInstalled("crm") ? "Y" : "N"?>'
 		//'SEARCH_PAGE': '<?=CUtil::JSEscape(str_replace("#SITE_DIR#", SITE_DIR, $arParams["PAGE"]))?>'
 	});

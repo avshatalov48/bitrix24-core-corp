@@ -59,18 +59,53 @@ class Helper
 	 * Get field string types.
 	 *
 	 * @param string|null $formName Form name.
+	 * @param string|bool|null $formId Form ID.
 	 * @return array
 	 */
-	public static function getExternalAnalyticsData($formName = '%name%')
+	public static function getExternalAnalyticsData($formName = null, $formId = null)
 	{
+		if (!$formName)
+		{
+			$formName = '%name%';
+		}
+		if ($formId === true)
+		{
+			$formId = '%form_id%';
+		}
+
 		return array(
-			'category' => Loc::getMessage('CRM_WEBFORM_HELPER_EXTERNAL_ANALYTICS_CATEGORY') . ' "' . $formName . '"',
-			'template' => array('name' => '%name%', 'code' => 'B24_%code%.html'),
-			'eventTemplate' => array('name' => '%name%', 'code' => 'B24_FORM_%form_id%_%code%'),
-			'field' => array('name' => Loc::getMessage('CRM_WEBFORM_HELPER_EXTERNAL_ANALYTICS_FIELD') . ' "%name%"', 'code' => '%code%'),
-			'view' => array('name' => Loc::getMessage('CRM_WEBFORM_HELPER_EXTERNAL_ANALYTICS_VIEW'), 'code' => 'VIEW'),
-			'start' => array('name' => Loc::getMessage('CRM_WEBFORM_HELPER_EXTERNAL_ANALYTICS_START'), 'code' => 'START'),
-			'end' => array('name' => Loc::getMessage('CRM_WEBFORM_HELPER_EXTERNAL_ANALYTICS_END'), 'code' => 'END'),
+			'category' => Loc::getMessage('CRM_WEBFORM_HELPER_EXTERNAL_ANALYTICS_CATEGORY')
+				. ' "' . $formName . '"'
+				. ($formId ? ", #$formId" : ''),
+			'template' => array(
+				'name' => '%name%',
+				'code' => 'B24_' . ($formId ? $formId . "_" : '') . '%code%.html'
+			),
+			'eventTemplate' => array(
+				'name' => '%name%',
+				'code' => 'B24_FORM_%form_id%_%code%'
+			),
+			'field' => array(
+				'name' => Loc::getMessage('CRM_WEBFORM_HELPER_EXTERNAL_ANALYTICS_FIELD')
+					. ' "%name%"'
+					. ($formId ? ", #$formId" : ''),
+				'code' => '%code%'
+			),
+			'view' => array(
+				'name' => Loc::getMessage('CRM_WEBFORM_HELPER_EXTERNAL_ANALYTICS_VIEW')
+					. ($formId ? " #$formId" : ''),
+				'code' => 'VIEW'
+			),
+			'start' => array(
+				'name' => Loc::getMessage('CRM_WEBFORM_HELPER_EXTERNAL_ANALYTICS_START')
+					. ($formId ? " #$formId" : ''),
+				'code' => 'START'
+			),
+			'end' => array(
+				'name' => Loc::getMessage('CRM_WEBFORM_HELPER_EXTERNAL_ANALYTICS_END')
+					. ($formId ? " #$formId" : ''),
+				'code' => 'END'
+			),
 		);
 	}
 }

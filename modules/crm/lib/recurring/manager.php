@@ -216,7 +216,7 @@ class Manager
 		{
 			if (empty($listActive[$name]))
 			{
-				\CAgent::AddAgent($name, "crm", "N", 60, "", "Y");
+				\CAgent::AddAgent($name, "crm", "N", 180, "", "Y");
 			}
 		}
 
@@ -261,6 +261,7 @@ class Manager
 		$limit = Main\Config\Option::get('crm', 'day_limit_exposing_invoices', 10);
 
 		$params = array(
+			'select' => ['ID'],
 			'filter' => array(
 				'<=NEXT_EXECUTION' => $today,
 				array(
@@ -269,11 +270,12 @@ class Manager
 					array("<LAST_EXECUTION" => $today)
 				),
 				'=ACTIVE' => "Y"
-			)
+			),
+			'runtime' => $entity->getRuntimeTemplateField()
 		);
 
-		$todayInvoices = $entity->getList($params);
-		$todayCount = count($todayInvoices->fetchAll());
+		$todayEntities = $entity->getList($params);
+		$todayCount = count($todayEntities->fetchAll());
 
 		if ($todayCount > 0)
 		{

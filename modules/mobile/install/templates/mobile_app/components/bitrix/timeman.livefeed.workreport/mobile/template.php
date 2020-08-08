@@ -12,7 +12,7 @@ $managerAvatarId = "workreport-manager-".randString(5);
 	<div class="lenta-info-block-r">
 		<div class="lenta-info-block-data">
 			<div class="lenta-info-avatar avatar" id="<?=$userAvatarId?>"<?
-				if(strlen($arParams["USER"]["PHOTO"]) > 0)
+				if($arParams["USER"]["PHOTO"] <> '')
 				{
 					?> style="background-image:url('<?=$arParams["USER"]["PHOTO"]?>')"<?
 				}
@@ -24,7 +24,7 @@ $managerAvatarId = "workreport-manager-".randString(5);
 		</div>
 		<div class="lenta-info-block-data">
 			<div class="lenta-info-avatar avatar" id="<?=$managerAvatarId?>"<?
-				if(strlen($arParams["MANAGER"]["PHOTO"]) > 0)
+				if($arParams["MANAGER"]["PHOTO"] <> '')
 				{
 					?> style="background-image:url('<?=$arParams["MANAGER"]["PHOTO"]?>')"<?
 				}

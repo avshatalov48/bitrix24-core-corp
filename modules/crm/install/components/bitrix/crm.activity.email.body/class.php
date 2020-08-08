@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\Config;
 use Bitrix\Main\Localization\Loc;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
@@ -29,6 +30,11 @@ class CrmActivityEmailBodyComponent extends CBitrixComponent
 		}
 
 		\CrmActivityEmailComponent::prepareActivityRcpt($activity);
+
+		$trackingAvailable = Config\Option::get('main', 'track_outgoing_emails_read', 'Y') == 'Y';
+
+		$activity['__trackable'] = isset($activity['SETTINGS']['IS_BATCH_EMAIL']) && !$activity['SETTINGS']['IS_BATCH_EMAIL'];
+		$activity['__trackable'] *= $trackingAvailable || $activity['SETTINGS']['READ_CONFIRMED'] > 0;
 
 		$this->arParams['ACTIVITY']  = $activity;
 		$this->arParams['MAILBOXES'] = \CrmActivityEmailComponent::prepareMailboxes();

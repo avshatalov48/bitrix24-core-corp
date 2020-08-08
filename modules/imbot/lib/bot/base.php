@@ -104,7 +104,7 @@ abstract class Base
 
 	public static function uploadIcon($iconName)
 	{
-		if (strlen($iconName) <= 0)
+		if ($iconName == '')
 			return false;
 		
 		$iconId = false;

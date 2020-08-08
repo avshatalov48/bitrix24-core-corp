@@ -18,6 +18,7 @@ $MESS["TASKS_LIST_CTRL_MODE_TIMELINE2_SHORT"] = "Сроки";
 $MESS["TASKS_LIST_CTRL_SUBMODE_WITH_GROUPS"] = "С группами";
 $MESS["TASKS_LIST_CTRL_SUBMODE_WITH_SUBTASKS"] = "С подзадачами";
 $MESS["TASKS_LIST_CTRL_SUBMODE_WITH_GROUPS_V2"] = "Группировать по группам";
+$MESS["TASKS_LIST_CTRL_SUBMODE_WITH_GROUPS_V3"] = "Группировать по проектам";
 $MESS["TASKS_LIST_CTRL_SUBMODE_WITH_SUBTASKS_V2"] = "Группировать подзадачи";
 $MESS["TASKS_LIST_CTRL_ROLE_RESPONSIBLE_ALT"] = "Ответственный";
 $MESS["TASKS_LIST_CTRL_ROLE_AUDITOR_ALT"] = "Наблюдатель";
@@ -33,5 +34,6 @@ $MESS["TASKS_LIST_CTRL_CATEGORY_EXPIRED_CANDIDATES"] = "почти просро�
 $MESS["TASKS_LIST_CTRL_CATEGORY_ATTENTION"] = "требующие внимания";
 $MESS["TASKS_LIST_CTRL_CATEGORY_WAIT_CTRL"] = "ждущие контроля";
 $MESS["TASKS_LIST_CTRL_CATEGORY_WO_DEADLINE"] = "без крайнего срока";
+$MESS["TASKS_LIST_CTRL_CATEGORY_NEW_COMMENTS"] = "комментарии";
 $MESS["TASKS_LIST_CTRL_MODE_CALENDAR"] = "Календарь";
 ?>

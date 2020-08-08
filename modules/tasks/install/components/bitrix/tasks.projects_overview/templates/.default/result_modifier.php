@@ -4,6 +4,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+\Bitrix\Main\UI\Extension::load("ui.icons");
+
 // create template controller with js-dependency injections
 $arResult['HELPER'] = $helper = require(dirname(__FILE__).'/helper.php');
 $arParams =& $helper->getComponent(
@@ -126,7 +128,8 @@ if (!function_exists('prepareProjectRowTitle'))
 
 		$out .= '<span class="tasks-project-overview-members">';
 
-		$out .= GetMessage('TASKS_PROJECTS_OVERVIEW_HEADS_'.(int)count($row['MEMBERS']['HEADS'])>1);
+		$out .= '<span class="tasks-project-overview-members-text">'. GetMessage('TASKS_PROJECTS_OVERVIEW_HEADS_'.(int)(count($row['MEMBERS']['HEADS']) > 1)).'</span>';
+		// $out .= GetMessage('TASKS_PROJECTS_OVERVIEW_HEADS_'.(int)(count($row['MEMBERS']['HEADS']) > 1));
 
 		if($row['MEMBERS']['HEADS'])
 		{
@@ -134,10 +137,10 @@ if (!function_exists('prepareProjectRowTitle'))
 			{
 				$photoSrc = getUserPictureSrc($member['PHOTO_ID'], $member['USER_GENDER'], 25, 25);
 				$out .= '<a  href="'.
-						$member['HREF'].'" class="tasks-project-overview-member-avatar">';
+						$member['HREF'].'" class="ui-icon ui-icon-common-user tasks-project-overview-member-avatar">';
 				if ($photoSrc)
 				{
-					$out .= '<img src="'.$photoSrc.'" />';
+					$out .= '<i style="background-image: url('.$photoSrc.')" ></i>';
 				}
 				$out .= '</a>';
 			}

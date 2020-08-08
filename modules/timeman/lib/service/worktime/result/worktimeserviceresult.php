@@ -8,14 +8,16 @@ use Bitrix\Timeman\Model\Schedule\Shift\Shift;
 use Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEvent;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
 use Bitrix\Timeman\Service\BaseServiceResult;
+use Bitrix\Timeman\Service\Worktime\Action\WorktimeAction;
 
 
 class WorktimeServiceResult extends BaseServiceResult
 {
 	const ERROR_FOR_USER = 'ERROR_FOR_USER';
-	const ERROR_NOTHING_TO_START = 'ERROR_NOTHING_TO_START';
 	const ERROR_REASON_NEEDED = 'ERROR_REPORT_NEEDED';
 	const ERROR_EXPIRED_REASON_NEEDED = 'ERROR_EXPIRED_REASON_NEEDED';
+	const ERROR_EMPTY_ACTIONS = 'ERROR_EMPTY_ACTIONS';
+	const ERROR_MULTI_ACTIONS = 'ERROR_MULTI_ACTIONS';
 
 	/** @var WorktimeEvent[] */
 	private $worktimeEvents;
@@ -25,7 +27,8 @@ class WorktimeServiceResult extends BaseServiceResult
 	private $schedule;
 	/** @var Shift */
 	private $shift;
-
+	/** @var WorktimeAction */
+	private $worktimeAction;
 
 	/**
 	 * @return WorktimeRecord
@@ -88,18 +91,15 @@ class WorktimeServiceResult extends BaseServiceResult
 		return $this;
 	}
 
-	public function addProhibitedActionError($code = 0)
+	public function addProhibitedActionError($code = 0, $reasonCode = null)
 	{
-		$this->addError(new Error(Loc::getMessage('TM_BASE_SERVICE_RESULT_ERROR_PROHIBITED_ACTION'), $code));
+		$data = null;
+		if ($reasonCode !== null)
+		{
+			$data = ['reasonCode' => $reasonCode];
+		}
+		$this->addError(new Error(Loc::getMessage('TM_BASE_SERVICE_RESULT_ERROR_PROHIBITED_ACTION'), $code, $data));
 		return $this;
-	}
-
-	/**
-	 * @return Error|null
-	 */
-	public function getFirstError()
-	{
-		return !empty(reset($this->getErrors())) ? reset($this->getErrors()) : null;
 	}
 
 	/**
@@ -144,5 +144,23 @@ class WorktimeServiceResult extends BaseServiceResult
 	public function getShift()
 	{
 		return $this->shift;
+	}
+
+	/**
+	 * @return WorktimeAction
+	 */
+	public function getWorktimeAction(): WorktimeAction
+	{
+		return $this->worktimeAction;
+	}
+
+	/**
+	 * @param WorktimeAction $worktimeAction
+	 * @return WorktimeServiceResult
+	 */
+	public function setWorktimeAction(WorktimeAction $worktimeAction): WorktimeServiceResult
+	{
+		$this->worktimeAction = $worktimeAction;
+		return $this;
 	}
 }

@@ -1,9 +1,12 @@
 <?php
 
+use Bitrix\Disk\Configuration;
+use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\Internals\DiskComponent;
 use Bitrix\Disk\Internals\Engine\Contract\SidePanelWrappable;
 use Bitrix\Disk\Ui\FileAttributes;
 use Bitrix\Disk\Version;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 
@@ -27,6 +30,11 @@ class CDiskFileHistoryComponent extends DiskComponent implements SidePanelWrappa
 	protected function processBeforeAction($actionName)
 	{
 		parent::processBeforeAction($actionName);
+
+		if (!Bitrix24Manager::isFeatureEnabled('disk_file_history'))
+		{
+			return false;
+		}
 
 		$securityContext = $this->storage->getCurrentUserSecurityContext();
 		if (!$this->file->canRead($securityContext))
@@ -68,6 +76,19 @@ class CDiskFileHistoryComponent extends DiskComponent implements SidePanelWrappa
 		$this->includeComponentTemplate();
 	}
 
+	private function buildVersionFilter(): array
+	{
+		$dayLimit = Configuration::getFileVersionTtl();
+		if ($dayLimit === -1 || $this->file->hasAttachedObjects())
+		{
+			return [];
+		}
+
+		return [
+			'>CREATE_TIME' => DateTime::createFromTimestamp(time() - $dayLimit * 86400),
+		];
+	}
+
 	private function getVersionGridData($gridId)
 	{
 		$grid = [
@@ -87,6 +108,7 @@ class CDiskFileHistoryComponent extends DiskComponent implements SidePanelWrappa
 
 		$this->arResult['ITEMS'] = $this->file->getVersions(
 			[
+				'filter' => $this->buildVersionFilter(),
 				'with' => ['CREATE_USER'],
 				'order' => $gridSort['sort'],
 			]

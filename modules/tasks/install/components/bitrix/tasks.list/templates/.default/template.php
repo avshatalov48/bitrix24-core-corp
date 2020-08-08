@@ -377,7 +377,7 @@ if (
 										echo ' task-project-folding-closed';
 										?>" onclick="ToggleProjectTasks(<?php echo $arResult["GROUPS"][$task["GROUP_ID"]]["ID"]?>, event);"></span><a class="task-project-name-link" href="<?php echo CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP_TASKS"], array("group_id" => $arResult["GROUPS"][$task["GROUP_ID"]]["ID"]))?>" onclick="ToggleProjectTasks(<?php echo $arResult["GROUPS"][$task["GROUP_ID"]]["ID"]?>, event);"><?php echo $arResult["GROUPS"][$task["GROUP_ID"]]["NAME"]?></a></div>
 									<?php if (is_object($USER) && $USER->IsAuthorized() && $arParams["HIDE_VIEWS"] != "Y"):?>
-										<div class="task-project-actions"><a class="task-project-action-link" href="<?php $path = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_TASKS_TASK"], array("task_id" => 0, "action" => "edit")); echo $path.(strstr($path, "?") ? "&" : "?")."GROUP_ID=".$arResult["GROUPS"][$task["GROUP_ID"]]["ID"].($arResult["IS_IFRAME"] ? "&IFRAME=Y" : "");?>"><i class="task-project-action-icon"></i><span class="task-project-action-text"><?php echo GetMessage("TASKS_ADD_TASK")?></span></a></div>
+										<div class="task-project-actions"><a class="task-project-action-link" href="<?php $path = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_TASKS_TASK"], array("task_id" => 0, "action" => "edit")); echo $path.(mb_strstr($path, "?")? "&" : "?")."GROUP_ID=".$arResult["GROUPS"][$task["GROUP_ID"]]["ID"].($arResult["IS_IFRAME"] ? "&IFRAME=Y" : "");?>"><i class="task-project-action-icon"></i><span class="task-project-action-text"><?php echo GetMessage("TASKS_ADD_TASK")?></span></a></div>
 									<?php endif?>
 								</div>
 							</td>
@@ -727,8 +727,8 @@ if (
 })();
 </script>
 
-<? if (strlen($arResult["NAV_STRING"])):?>
-	<br /><?=$arResult["NAV_STRING"]?>
+<? if($arResult["NAV_STRING"] <> ''): ?>
+	<br/><?= $arResult["NAV_STRING"] ?>
 <? endif?>
 
 <?php if (!isset($arParams["HIDE_VIEWS"]) || $arParams["HIDE_VIEWS"] != "Y"):?>
@@ -821,8 +821,10 @@ if (
 	);
 
 	$filterName = '';
-	if (strlen($arResult['SELECTED_PRESET_NAME']))
-		$filterName .= ': ' . htmlspecialcharsbx($arResult['SELECTED_PRESET_NAME']);
+	if($arResult['SELECTED_PRESET_NAME'] <> '')
+	{
+		$filterName .= ': '.htmlspecialcharsbx($arResult['SELECTED_PRESET_NAME']);
+	}
 
 	$arComponentParams['SELECTED_PRESET_NAME'] = $arResult['SELECTED_PRESET_NAME'];
 

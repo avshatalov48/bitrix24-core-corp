@@ -113,7 +113,7 @@ class Signaling
 		);
 		if ($call->isInternalCall())
 		{
-			$push['message'] = Loc::getMessage('INCOMING_CALL', Array('#NAME#' => $portalCallData['users'][$call->getPortalUserId()]['name']));
+			$push['message'] = Loc::getMessage('INCOMING_CALL', Array('#NAME#' => $portalCallData['users'][$call->getUserId()]['name']));
 		}
 		else
 		{

@@ -5,7 +5,7 @@ foreach($arResult['VERSIONS'] as $id => $version)
 	if (isset($version["DOWNLOAD_URL"]))
 	{
 		$version["DOWNLOAD_URL"] = str_replace("/bitrix/tools/disk/uf.php", SITE_DIR."mobile/ajax.php", $version["DOWNLOAD_URL"]);	
-		$version["DOWNLOAD_URL"] = $version["DOWNLOAD_URL"].(strpos($version["DOWNLOAD_URL"], "?") === false ? "?" : "&")."mobile_action=disk_uf_view&filename={$version['NAME']}";
+		$version["DOWNLOAD_URL"] = $version["DOWNLOAD_URL"].(mb_strpos($version["DOWNLOAD_URL"], "?") === false ? "?" : "&")."mobile_action=disk_uf_view&filename={$version['NAME']}";
 		
 		$arResult["VERSIONS"][$id] = $version;		
 	}

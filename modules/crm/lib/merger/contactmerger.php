@@ -228,6 +228,11 @@ class ContactMerger extends EntityMerger
 		Timeline\CreationEntry::rebind(\CCrmOwnerType::Contact, $seedID, $targID);
 		Timeline\MarkEntry::rebind(\CCrmOwnerType::Contact, $seedID, $targID);
 		Timeline\CommentEntry::rebind(\CCrmOwnerType::Contact, $seedID, $targID);
+
+		Crm\Tracking\Entity::rebindTrace(
+			\CCrmOwnerType::Contact, $seedID,
+			\CCrmOwnerType::Contact, $targID
+		);
 	}
 	protected function resolveMergeCollisions($seedID, $targID, array &$results)
 	{

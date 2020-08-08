@@ -59,7 +59,7 @@ if (!$currentUser || !$currentUser->IsAuthorized() || !check_bitrix_sessid() || 
 CUtil::JSPostUnescape();
 $GLOBALS['APPLICATION']->RestartBuffer();
 Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
-if(strlen($action) == 0)
+if($action == '')
 {
 	__CrmTimelineEndResponse(array('ERROR' => 'Invalid data.'));
 }
@@ -124,7 +124,7 @@ elseif($action == 'SAVE_WAIT')
 		__CrmTimelineEndResponse(array('ERROR'=>'IS NOT EXISTS!'));
 	}
 
-	$ownerTypeName = isset($data['ownerType']) ? strtoupper(strval($data['ownerType'])) : '';
+	$ownerTypeName = isset($data['ownerType'])? mb_strtoupper(strval($data['ownerType'])) : '';
 	if($ownerTypeName === '')
 	{
 		__CrmTimelineEndResponse(array('ERROR'=>'OWNER TYPE IS NOT DEFINED!'));
@@ -322,7 +322,7 @@ elseif($action == 'COMPLETE_WAIT')
 		__CrmTimelineEndResponse(array('ERROR' => GetMessage('CRM_PERMISSION_DENIED')));
 	}
 
-	$completed = isset($data['COMPLETED']) && strtoupper($data['COMPLETED']) === 'Y';
+	$completed = isset($data['COMPLETED']) && mb_strtoupper($data['COMPLETED']) === 'Y';
 	$result = \Bitrix\Crm\Pseudoactivity\WaitEntry::complete($ID, $completed);
 	if($result->isSuccess())
 	{
@@ -425,6 +425,7 @@ elseif($action == 'GET_HISTORY_ITEMS')
 }
 elseif($action == 'SAVE_SMS_MESSAGE')
 {
+	$source = $_REQUEST['source'] ?? null;
 	$siteID = !empty($_REQUEST['site']) ? $_REQUEST['site'] : SITE_ID;
 
 	$ownerTypeID = isset($_REQUEST['OWNER_TYPE_ID']) ? (int)$_REQUEST['OWNER_TYPE_ID'] : 0;
@@ -472,6 +473,35 @@ elseif($action == 'SAVE_SMS_MESSAGE')
 		);
 	}
 
+	$order = null;
+	if (
+		$source === 'order'
+		&&
+		preg_match('/(?:https?):\/\//', $messageBody)
+	)
+	{
+		$item = \Bitrix\Crm\Order\DealBinding::getList([
+			'select' => ['ORDER_ID'],
+			'filter' => ['=DEAL_ID' => $ownerID],
+			'order' => ['ORDER_ID' => 'DESC'],
+			'limit' => 1
+		])->fetchRaw();
+
+		if ($item)
+		{
+			/** @var \Bitrix\Crm\Order\Order $order */
+			$order = \Bitrix\Crm\Order\Order::load($item['ORDER_ID']);
+			if ($order)
+			{
+				$bindings[] = [
+					'OWNER_TYPE_ID' => \CCrmOwnerType::Order,
+					'OWNER_ID' => $order->getId(),
+
+				];
+			}
+		}
+	}
+
 	$result = \Bitrix\Crm\Integration\SmsManager::sendMessage(array(
 		'SENDER_ID' => $senderId,
 		'AUTHOR_ID' => $responsibleID,
@@ -483,6 +513,34 @@ elseif($action == 'SAVE_SMS_MESSAGE')
 			'bindings' => $bindings
 		)
 	));
+
+	if ($order !== null)
+	{
+		$params = [
+			'ORDER_FIELDS' => $order->getFieldValues(),
+			'SETTINGS' => [
+				'CHANGED_ENTITY' => \CCrmOwnerType::OrderName,
+				'FIELDS' => [
+					'ORDER_ID' => $order->getId(),
+					'DEAL_ID' => $ownerID,
+					'SENT' => 'Y',
+					'DESTINATION' => 'SMS',
+				]
+			],
+			'BINDINGS' => [
+				[
+					'ENTITY_TYPE_ID' => $ownerTypeID,
+					'ENTITY_ID' => $ownerID
+				],
+				[
+					'ENTITY_TYPE_ID' => CCrmOwnerType::Order,
+					'ENTITY_ID' => $order->getId()
+				]
+			]
+		];
+
+		\Bitrix\Crm\Timeline\OrderController::getInstance()->onSend($order->getId(), $params);
+	}
 
 	if ($result->isSuccess())
 	{

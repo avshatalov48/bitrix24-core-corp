@@ -194,7 +194,7 @@ else
 							continue;
 						}
 
-						$entityTypeName = strtoupper($commInfo[0]);
+						$entityTypeName = mb_strtoupper($commInfo[0]);
 						$entityTypeID = CCrmOwnerType::ResolveID($entityTypeName);
 						$entityID = intval($commInfo[1]);
 
@@ -295,7 +295,7 @@ else
 							continue;
 						}
 
-						$entityTypeName = strtoupper($commInfo[0]);
+						$entityTypeName = mb_strtoupper($commInfo[0]);
 						$entityTypeID = CCrmOwnerType::ResolveID($entityTypeName);
 						$entityID = intval($commInfo[1]);
 
@@ -501,9 +501,9 @@ $arResult['COMMUNICATION_SELECTOR_URL'] = CComponentEngine::makePathFromTemplate
 	$arParams['COMMUNICATION_SELECTOR_URL_TEMPLATE'],
 	array(
 		'context_id' => $contextID,
-		'type' => strtolower($communicationType),
+		'type' => mb_strtolower($communicationType),
 		'owner_id' => $ownerID,
-		'owner_type' => strtolower(CCrmOwnerType::ResolveName($ownerTypeID))
+		'owner_type' => mb_strtolower(CCrmOwnerType::ResolveName($ownerTypeID))
 	)
 );
 

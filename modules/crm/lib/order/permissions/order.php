@@ -136,7 +136,7 @@ class Order
 		else
 		{
 			$params['CONVERSION_PERMITTED'] = false;
-			$params['CONVERSION_LOCK_SCRIPT'] = $restriction->preparePopupScript();
+			$params['CONVERSION_LOCK_SCRIPT'] = $restriction->prepareInfoHelperScript();
 		}
 	}
 

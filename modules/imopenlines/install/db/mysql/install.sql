@@ -140,6 +140,7 @@ CREATE TABLE b_imopenlines_config
 	NO_ANSWER_TIME int(11) DEFAULT 60,
 	QUEUE_TYPE varchar(50) DEFAULT 'evenly',
 	CHECK_AVAILABLE char(1) not null default 'N',
+	WATCH_TYPING char(1) not null default 'N',
 	WELCOME_MESSAGE char(1) not null default 'Y',
 	WELCOME_MESSAGE_TEXT text null,
 	WELCOME_BOT_ENABLE char(1) null default 'N',

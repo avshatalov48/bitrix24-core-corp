@@ -100,7 +100,7 @@ if ($arParams["SEF_MODE"] == "Y")
 	CComponentEngine::InitComponentVariables($componentPage, $arComponentVariables, $arVariableAliases, $arVariables);
 
 	foreach ($arUrlTemplates as $url => $value)
-		$arResult["PATH_TO_".strtoupper($url)] = $arParams["SEF_FOLDER"].$value;
+		$arResult["PATH_TO_".mb_strtoupper($url)] = $arParams["SEF_FOLDER"].$value;
 }
 else
 {
@@ -116,7 +116,7 @@ else
 		$componentPage = "index";
 
 	foreach ($arDefaultUrlTemplatesN404 as $url => $value)
-		$arResult["PATH_TO_".strtoupper($url)] = $GLOBALS["APPLICATION"]->GetCurPageParam($value, $arComponentVariables);
+		$arResult["PATH_TO_".mb_strtoupper($url)] = $GLOBALS["APPLICATION"]->GetCurPageParam($value, $arComponentVariables);
 }
 
 if ($_REQUEST["auth"] == "Y")

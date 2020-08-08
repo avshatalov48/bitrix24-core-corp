@@ -2,6 +2,11 @@
 
 use Bitrix\Main;
 use Bitrix\Main\Localization;
+use Bitrix\Crm\Order;
+use Bitrix\Sale\Delivery;
+use Bitrix\Crm\CompanyTable;
+use Bitrix\Main\Loader;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 Main\Loader::includeModule('sale');
@@ -37,6 +42,31 @@ class SalesCenterOrderDetails extends CBitrixPersonalOrderDetailComponent
 		// resample type for images
 		if(!in_array($params['RESAMPLE_TYPE'], array(BX_RESIZE_IMAGE_EXACT, BX_RESIZE_IMAGE_PROPORTIONAL, BX_RESIZE_IMAGE_PROPORTIONAL_ALT)))
 			$params['RESAMPLE_TYPE'] = BX_RESIZE_IMAGE_PROPORTIONAL;
+
+		if(!$params['HEADER_TITLE'])
+		{
+			if (Loader::includeModule('crm'))
+			{
+				$res = CompanyTable::getList(
+					[
+						'select' => [
+							'ID', 'TITLE'
+						],
+						'filter' => [
+							'=IS_MY_COMPANY' => 'Y'
+						],
+						'order' => [
+							'DATE_MODIFY' => 'desc'
+						]
+					]
+				);
+				if ($row = $res->fetch())
+				{
+					$title = $row['TITLE'];
+				}
+			}
+			$params['HEADER_TITLE'] = $title ?? 'Company 24';
+		}
 
 		return $params;
 	}
@@ -101,5 +131,131 @@ class SalesCenterOrderDetails extends CBitrixPersonalOrderDetailComponent
 			$this->useCatalog,
 			false
 		);
+	}
+
+	protected function obtainData()
+	{
+		parent::obtainData();
+
+		if (Main\Loader::includeModule('crm'))
+		{
+			if ($this->needAddTimelineEntityOnOpen())
+			{
+				$this->addTimelineEntityOnView();
+
+				/** @var Order\DealBinding $dealBinding */
+				$dealBinding = $this->order->getDealBinding();
+				if ($dealBinding)
+				{
+					$this->changeOrderStageDealOnViewedNoPaid(
+						$dealBinding->getDealId()
+					);
+				}
+			}
+		}
+	}
+
+	protected function obtainDataOrder()
+	{
+		parent::obtainDataOrder();
+
+		$this->dbResult['SHIPMENT'] = array_values(
+			array_filter(
+				$this->dbResult['SHIPMENT'],
+				function ($item)
+				{
+					return (int)$item['DELIVERY_ID'] !== (int)Delivery\Services\EmptyDeliveryService::getEmptyDeliveryServiceId();
+				}
+			)
+		);
+	}
+
+	protected function obtainBasket(&$cached)
+	{
+		parent::obtainBasket($cached);
+
+		foreach ($cached['BASKET'] as &$basketItem)
+		{
+			$basketItem['FORMATED_PRICE'] = SaleFormatCurrency($basketItem["PRICE"], $basketItem["CURRENCY"]);
+			$basketItem['FORMATED_BASE_PRICE'] = SaleFormatCurrency($basketItem["BASE_PRICE"], $basketItem["CURRENCY"]);
+		}
+
+	}
+
+	private function changeOrderStageDealOnViewedNoPaid($dealId)
+	{
+		$fields = ['ORDER_STAGE' => Order\OrderStage::VIEWED_NO_PAID];
+
+		$deal = new \CCrmDeal(false);
+		$deal->Update($dealId, $fields);
+	}
+
+	/**
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	protected function needAddTimelineEntityOnOpen()
+	{
+		$dbRes = \Bitrix\Crm\Timeline\Entity\TimelineTable::getList([
+			'filter' => [
+				'TYPE_ID' => \Bitrix\Crm\Timeline\TimelineType::ORDER,
+				'ASSOCIATED_ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
+				'ASSOCIATED_ENTITY_ID' => $this->order->getId()
+			]
+		]);
+
+		while ($item = $dbRes->fetch())
+		{
+			if (isset($item['SETTINGS']['FIELDS']['VIEWED']))
+			{
+				return false;
+			}
+		}
+
+		global $USER;
+
+		return
+			is_object($USER)
+			&& (int)$USER->GetID() !== (int)$this->order->getField('RESPONSIBLE_ID')
+		;
+	}
+
+	/**
+	 * @throws Main\ArgumentException
+	 */
+	protected function addTimelineEntityOnView()
+	{
+		$order = $this->order;
+
+		$bindings = [
+			[
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
+				'ENTITY_ID' => $order->getId()
+			]
+		];
+
+		if ($order->getDealBinding())
+		{
+			$bindings[] = [
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+				'ENTITY_ID' => $order->getDealBinding()->getDealId()
+			];
+		}
+
+		$params = [
+			'ORDER_FIELDS' => $order->getFieldValues(),
+			'SETTINGS' => [
+				'CHANGED_ENTITY' => \CCrmOwnerType::OrderName,
+				'FIELDS' => [
+					'ORDER_ID' => $order->getId(),
+					'VIEWED' => 'Y',
+				]
+			],
+			'BINDINGS' => $bindings
+		];
+
+		\Bitrix\Crm\Timeline\OrderController::getInstance()->onView($order->getId(), $params);
 	}
 }

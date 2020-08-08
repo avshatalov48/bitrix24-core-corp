@@ -89,13 +89,13 @@ if ($ELEMENT_ID > 0)
 	$rsElement = CIBlockElement::GetList(
 		array(),
 		array(
-			"CATALOG_ID" => $arIBlock["ID"],
+			"IBLOCK_ID" => $arIBlock["ID"],
 			"=ID" => $ELEMENT_ID,
 			"CHECK_PERMISSIONS" => "N",
 		),
 		false,
 		false,
-		array("ID", $arParams["FIELD_ID"])
+		array("ID", "IBLOCK_ID", $arParams["FIELD_ID"])
 	);
 	while ($ar = $rsElement->GetNext())
 	{

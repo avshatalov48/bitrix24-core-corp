@@ -141,7 +141,7 @@ class DepartmentRepository
 		return null;
 	}
 
-	public function buildUserDepartmentsPriorityTree($userId)
+	public function buildUserDepartmentsPriorityTrees($userId)
 	{
 		$result = [];
 		$userDepartmentsIds = $this->getDirectParentIdsByUserId($userId); // might be more than one
@@ -160,6 +160,10 @@ class DepartmentRepository
 		return $result;
 	}
 
+	/** always one chain, department can not have multiple parents
+	 * @param $depId
+	 * @return array
+	 */
 	public function buildDepartmentsPriorityTree($depId)
 	{
 		$allParentDepartmentIds = $this->getAllParentDepartmentsIds($depId);

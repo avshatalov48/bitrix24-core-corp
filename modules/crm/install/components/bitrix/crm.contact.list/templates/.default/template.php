@@ -30,11 +30,20 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/analytics.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.css');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/batch_deletion.js');
+Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/batch_merge.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/dialog.js');
 
 Bitrix\Main\UI\Extension::load("ui.progressbar");
 
 ?><div id="batchDeletionWrapper"></div><?
+?><div id="batchActionWrapper"></div><?
+
+if($arResult['NEED_TO_CONVERT_ADDRESSES']):
+	?><div id="convertContactAddressesWrapper"></div><?
+endif;
+if($arResult['NEED_TO_CONVERT_UF_ADDRESSES']):
+	?><div id="convertContactUfAddressesWrapper"></div><?
+endif;
 
 if($arResult['NEED_FOR_REBUILD_DUP_INDEX']):
 	?><div id="rebuildContactDupIndexMsg" class="crm-view-message">
@@ -107,7 +116,7 @@ $gridManagerCfg = array(
 	'filterFields' => array()
 );
 $prefix = $arResult['GRID_ID'];
-$prefixLC = strtolower($arResult['GRID_ID']);
+$prefixLC = mb_strtolower($arResult['GRID_ID']);
 
 $arResult['GRID_DATA'] = array();
 $arColumns = array();
@@ -502,7 +511,7 @@ if($arResult['ENABLE_TOOLBAR'])
 		'bitrix:crm.interface.toolbar',
 		'',
 		array(
-			'TOOLBAR_ID' => strtolower($arResult['GRID_ID']).'_toolbar',
+			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']).'_toolbar',
 			'BUTTONS' => array(
 				array(
 					'TEXT' => GetMessage('CRM_CONTACT_LIST_ADD_SHORT'),
@@ -665,9 +674,35 @@ if(!$isInternal
 
 		//$actionList[] = $snippet->getRemoveAction();
 		$actionList[] = array(
+			'NAME' => GetMessage('CRM_CONTACT_ACTION_MERGE'),
+			'VALUE' => 'merge',
+			'ONCHANGE' => array(
+				array(
+					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CREATE,
+					'DATA' => array(
+						array_merge(
+							$applyButton,
+							['SETTINGS' => [
+								'minSelectedRows' => 2,
+								'buttonId' => 'apply_button'
+							]]
+                        )
+					)
+				),
+				array(
+					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
+					'DATA' => array(array('JS' => "BX.CrmUIGridExtension.applyAction('{$gridManagerID}', 'merge')"))
+				)
+			)
+		);
+
+		$actionList[] = array(
 			'NAME' => GetMessage('CRM_CONTACT_ACTION_DELETE'),
 			'VALUE' => 'delete',
 			'ONCHANGE' => array(
+				array(
+					'ACTION' => Bitrix\Main\Grid\Panel\Actions::RESET_CONTROLS,
+				),
 				array(
 					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
 					'DATA' => array(array('JS' => "BX.CrmUIGridExtension.applyAction('{$gridManagerID}', 'delete')"))
@@ -801,6 +836,7 @@ $APPLICATION->IncludeComponent(
 		'AJAX_ID' => $arResult['AJAX_ID'],
 		'AJAX_OPTION_JUMP' => $arResult['AJAX_OPTION_JUMP'],
 		'AJAX_OPTION_HISTORY' => $arResult['AJAX_OPTION_HISTORY'],
+		'HIDE_FILTER' => isset($arParams['HIDE_FILTER']) ? $arParams['HIDE_FILTER'] : null,
 		'FILTER' => $arResult['FILTER'],
 		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
 		'FILTER_PARAMS' => array(
@@ -837,7 +873,7 @@ $APPLICATION->IncludeComponent(
 			'BINDING' => array(
 				'category' => 'crm.navigation',
 				'name' => 'index',
-				'key' => strtolower($arResult['NAVIGATION_CONTEXT_ID'])
+				'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
 			)
 		),
 		'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'],
@@ -937,6 +973,25 @@ BX.ready(
 						summaryCaption: "<?=GetMessageJS('CRM_CONTACT_BATCH_DELETION_COMPLETED')?>",
 						summarySucceeded: "<?=GetMessageJS('CRM_CONTACT_BATCH_DELETION_COUNT_SUCCEEDED')?>",
 						summaryFailed: "<?=GetMessageJS('CRM_CONTACT_BATCH_DELETION_COUNT_FAILED')?>"
+					}
+			}
+		);
+
+		BX.Crm.BatchMergeManager.create(
+			gridId,
+			{
+				gridId: gridId,
+				entityTypeId: <?=CCrmOwnerType::Contact?>,
+				container: "batchActionWrapper",
+				stateTemplate: "<?=GetMessageJS('CRM_CONTACT_STEPWISE_STATE_TEMPLATE')?>",
+				mergerUrl: "<?=htmlspecialcharsbx($arParams['PATH_TO_CONTACT_MERGE'])?>",
+				messages:
+					{
+						title: "<?=GetMessageJS('CRM_CONTACT_LIST_MERGE_PROC_DLG_TITLE')?>",
+						confirmation: "<?=GetMessageJS('CRM_CONTACT_LIST_MERGE_PROC_DLG_SUMMARY')?>",
+						summaryCaption: "<?=GetMessageJS('CRM_CONTACT_BATCH_MERGE_COMPLETED')?>",
+						summarySucceeded: "<?=GetMessageJS('CRM_CONTACT_BATCH_MERGE_COUNT_SUCCEEDED')?>",
+						summaryFailed: "<?=GetMessageJS('CRM_CONTACT_BATCH_MERGE_COUNT_FAILED')?>"
 					}
 			}
 		);
@@ -1174,4 +1229,57 @@ BX.ready(
 	}
 );
 </script>
-<?endif;?>
+<?endif;?><?
+if($arResult['NEED_TO_CONVERT_ADDRESSES'])
+{?>
+<script type="text/javascript">
+	BX.ready(function () {
+		if (BX.AutorunProcessPanel.isExists("convertContactAddresses"))
+		{
+			return;
+		}
+		BX.AutorunProcessManager.messages =
+			{
+				title: "<?=GetMessageJS('CRM_CONTACT_CONVERT_ADDRESSES_DLG_TITLE')?>",
+				stateTemplate: "<?=GetMessageJS('CRM_CONTACT_CONVERT_ADDRESSES_STATE')?>"
+			};
+		var manager = BX.AutorunProcessManager.create(
+			"convertContactAddresses",
+			{
+				serviceUrl: "<?='/bitrix/components/bitrix/crm.contact.list/list.ajax.php?'.bitrix_sessid_get()?>",
+				actionName: "CONVERT_ADDRESSES",
+				container: "convertContactAddressesWrapper",
+				enableLayout: true
+			}
+		);
+		manager.runAfter(100);
+	});
+</script><?
+}
+
+if($arResult['NEED_TO_CONVERT_UF_ADDRESSES'])
+{?>
+<script type="text/javascript">
+	BX.ready(function () {
+		if (BX.AutorunProcessPanel.isExists("convertContactUfAddresses"))
+		{
+			return;
+		}
+		BX.AutorunProcessManager.messages =
+			{
+				title: "<?=GetMessageJS('CRM_CONTACT_CONVERT_UF_ADDRESSES_DLG_TITLE')?>",
+				stateTemplate: "<?=GetMessageJS('CRM_CONTACT_CONVERT_UF_ADDRESSES_STATE')?>"
+			};
+		var manager = BX.AutorunProcessManager.create(
+			"convertContactUfAddresses",
+			{
+				serviceUrl: "<?='/bitrix/components/bitrix/crm.contact.list/list.ajax.php?'.bitrix_sessid_get()?>",
+				actionName: "CONVERT_UF_ADDRESSES",
+				container: "convertContactUfAddressesWrapper",
+				enableLayout: true
+			}
+		);
+		manager.runAfter(100);
+	});
+</script><?
+}

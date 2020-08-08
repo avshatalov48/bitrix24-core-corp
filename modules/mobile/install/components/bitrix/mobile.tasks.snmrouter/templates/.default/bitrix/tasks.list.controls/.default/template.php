@@ -31,11 +31,11 @@ if (is_array($arResult['ITEMS']))
 			$class = "";
 			if (is_string($item["CODE"]))
 			{
-				$class = strtolower($item["CODE"]);
+				$class = mb_strtolower($item["CODE"]);
 			}
 			else if (is_array($arResult['VIEW_STATE']['SPECIAL_PRESETS']) && array_key_exists($item["CODE"], $arResult['VIEW_STATE']['SPECIAL_PRESETS']))
 			{
-				$class = strtolower($arResult['VIEW_STATE']['SPECIAL_PRESETS'][$item["CODE"]]["CODE"]);
+				$class = mb_strtolower($arResult['VIEW_STATE']['SPECIAL_PRESETS'][$item["CODE"]]["CODE"]);
 			}
 			?>
 			<div class="mobile-grid-field" data-bx-id="taskgroups-group" data-group-id="<?=htmlspecialcharsbx($item["CODE"])?>">

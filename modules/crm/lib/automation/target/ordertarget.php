@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Automation\Target;
 
+use Bitrix\Bizproc\Automation\Engine\ConditionGroup;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Order;
 use Bitrix\Main\Localization\Loc;
@@ -111,4 +112,53 @@ class OrderTarget extends BaseTarget
 
 		return $statuses;
 	}
+
+	public function prepareTriggersToSave(array &$triggers)
+	{
+		parent::prepareTriggersToSave($triggers);
+
+		foreach ($triggers as $i => $trigger)
+		{
+			if (isset($trigger['DELETED']) && $trigger['DELETED'] === 'Y')
+			{
+				continue;
+			}
+
+			$triggers[$i]['APPLY_RULES'] = $this->prepareApplyRules($trigger['APPLY_RULES']);
+		}
+	}
+
+	public function prepareTriggersToShow(array &$triggers)
+	{
+		parent::prepareTriggersToShow($triggers);
+		foreach ($triggers as $i => $trigger)
+		{
+			$triggers[$i]['APPLY_RULES'] = $this->prepareApplyRules($trigger['APPLY_RULES'], true);
+		}
+	}
+
+	private function prepareApplyRules($rules, $external = false): ?array
+	{
+		if (!is_array($rules))
+		{
+			return null;
+		}
+
+		if (isset($rules['shipmentCondition']))
+		{
+			$condition = new ConditionGroup($rules['shipmentCondition']);
+			if ($external)
+			{
+				$condition->externalizeValues($this->getDocumentType());
+			}
+			else
+			{
+				$condition->internalizeValues($this->getDocumentType());
+			}
+			$rules['shipmentCondition'] = $condition->toArray();
+		}
+
+		return $rules;
+	}
+
 }

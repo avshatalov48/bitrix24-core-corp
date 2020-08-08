@@ -38,7 +38,7 @@ $renderLog = function($log) use ($arResult)
 				<span class="crm-activity-email-item-date-full">
 					<? if (\CCrmActivityDirection::Outgoing == $item['DIRECTION']): ?>
 						<?=getMessage('CRM_ACT_EMAIL_VIEW_SENT', array('#DATETIME#' => $startDatetimeFormatted)) ?><!--
-						--><? if (isset($item['SETTINGS']['IS_BATCH_EMAIL']) && !$item['SETTINGS']['IS_BATCH_EMAIL']): ?>,
+						--><? if ($item['__trackable']): ?>,
 							<? if (!empty($readDatetimeFormatted)): ?>
 								<?=getMessage('CRM_ACT_EMAIL_VIEW_READ_CONFIRMED', array('#DATETIME#' => $readDatetimeFormatted)) ?>
 							<? else: ?>
@@ -69,6 +69,7 @@ BX.ready(function ()
 {
 	BXCrmActivityEmailController.init({
 		activityId: <?=intval($activity['ID']) ?>,
+		mailMessageId: <?=intval($activity['UF_MAIL_MESSAGE']) ?>,
 		ajaxUrl: '<?=$this->__component->getPath() ?>/ajax.php?site_id=<?=\CUtil::jsEscape(SITE_ID) ?>',
 		pageSize: <?=intval($arParams['PAGE_SIZE']) ?>
 	});
@@ -115,9 +116,16 @@ BX.ready(function ()
 
 <script type="text/javascript">
 
+<? $emailMaxSize = (int) \Bitrix\Main\Config\Option::get('main', 'max_file_size', 0); ?>
+
 BX.message({
 	CRM_ACT_EMAIL_REPLY_EMPTY_RCPT: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_REPLY_EMPTY_RCPT')) ?>',
 	CRM_ACT_EMAIL_REPLY_UPLOADING: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_REPLY_UPLOADING')) ?>',
+	CRM_ACT_EMAIL_MAX_SIZE: <?=$emailMaxSize ?>,
+	CRM_ACT_EMAIL_MAX_SIZE_EXCEED: '<?=\CUtil::jsEscape(getMessage(
+		'CRM_ACTIVITY_EMAIL_MAX_SIZE_EXCEED',
+		['#SIZE#' => \CFile::formatSize($emailMaxSize)]
+	)) ?>',
 	CRM_ACT_EMAIL_CREATE_NOTEMPLATE: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_CREATE_NOTEMPLATE')) ?>',
 	CRM_ACT_EMAIL_VIEW_READ_CONFIRMED_SHORT: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_VIEW_READ_CONFIRMED_SHORT')) ?>',
 	CRM_ACT_EMAIL_DELETE_CONFIRM: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_DELETE_CONFIRM')) ?>',

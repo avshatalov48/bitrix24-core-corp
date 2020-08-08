@@ -89,12 +89,13 @@ foreach ($activity['PARENT_ID'] > 0 ? array('REPLY_ALL', 'REPLY_CC') : array('CO
 		if (\CCrmOwnerType::isDefined($item['ENTITY_TYPE_ID']))
 		{
 			$item['ENTITY_TYPE'] = \CCrmOwnerType::resolveName($item['ENTITY_TYPE_ID']);
-			$id = 'CRM'.$item['ENTITY_TYPE'].$item['ENTITY_ID'].':'.hash('crc32b', $item['TYPE'].':'.$item['VALUE']);
-			$type = $socNetLogDestTypes[$item['ENTITY_TYPE']];
+			$id = 'CRM'.$item['ENTITY_TYPE'].$item['ENTITY_ID'];
+			$id = \Bitrix\Crm\Integration\Main\UISelector\CrmEntity::getMultiKey($id, $item['VALUE']);
+			$type = $socNetLogDestTypes[$item['ENTITY_TYPE']].'_MULTI';
 		}
 		else
 		{
-			$id   = 'U'.md5($item['VALUE']);
+			$id = 'U'.$item['ENTITY_ID'];
 			$type = 'users';
 		}
 
@@ -196,10 +197,13 @@ if (!empty($arParams['TEMPLATES']))
 		$attachedFiles = array_intersect($attachedFiles, $inlineFiles);
 
 	$selectorParams = array(
-		'pathToAjax'               => '/bitrix/components/bitrix/crm.activity.editor/ajax.php?soc_net_log_dest=search_email_comms',
+//		'pathToAjax'               => '/bitrix/components/bitrix/crm.activity.editor/ajax.php?soc_net_log_dest=search_email_comms',
+		'CrmTypes'                 => array('CRMCONTACT', 'CRMCOMPANY', 'CRMLEAD'),
 		'extranetUser'             => false,
 		'isCrmFeed'                => true,
 		'useClientDatabase'        => false,
+		'enableUsers'              => false,
+		'enableEmailUsers'         => true,
 		'allowAddUser'             => true,
 		'allowAddCrmContact'       => false,
 		'allowSearchEmailUsers'    => false,
@@ -244,7 +248,7 @@ if (!empty($arParams['TEMPLATES']))
 			'name'  => 'DATA[docs]',
 			'title' => getMessage('CRM_ACT_EMAIL_DEAL'),
 			'placeholder' => getMessage('CRM_ACT_EMAIL_REPLY_SET_DOCS'),
-			'type'        => 'rcpt',
+			'type'        => 'entity',
 			//'value'       => $docsSelected,
 			'email'       => false,
 			'multiple'    => false,
@@ -274,6 +278,7 @@ if (!empty($arParams['TEMPLATES']))
 	$APPLICATION->includeComponent(
 		'bitrix:main.mail.form', '',
 		array(
+			'VERSION' => 2,
 			'FORM_ID' => $formId,
 			'LAYOUT_ONLY' => true,
 			'SUBMIT_AJAX' => true,
@@ -370,9 +375,16 @@ if (!empty($arParams['TEMPLATES']))
 
 <script type="text/javascript">
 
+<? $emailMaxSize = (int) \Bitrix\Main\Config\Option::get('main', 'max_file_size', 0); ?>
+
 BX.message({
 	CRM_ACT_EMAIL_REPLY_EMPTY_RCPT: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_REPLY_EMPTY_RCPT')) ?>',
 	CRM_ACT_EMAIL_REPLY_UPLOADING: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_REPLY_UPLOADING')) ?>',
+	CRM_ACT_EMAIL_MAX_SIZE: <?=$emailMaxSize ?>,
+	CRM_ACT_EMAIL_MAX_SIZE_EXCEED: '<?=\CUtil::jsEscape(getMessage(
+		'CRM_ACTIVITY_EMAIL_MAX_SIZE_EXCEED',
+		['#SIZE#' => \CFile::formatSize($emailMaxSize)]
+	)) ?>',
 	CRM_ACT_EMAIL_CREATE_NOTEMPLATE: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_CREATE_NOTEMPLATE')) ?>'
 });
 

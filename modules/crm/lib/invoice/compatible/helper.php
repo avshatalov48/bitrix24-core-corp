@@ -175,9 +175,9 @@ class Helper
 		$fields1 = array();
 		foreach ($fields as $key => $value)
 		{
-			if (substr($key, 0, 1)=="=")
+			if (mb_substr($key, 0, 1) == "=")
 			{
-				$fields1[substr($key, 1)] = $value;
+				$fields1[mb_substr($key, 1)] = $value;
 				unset($fields[$key]);
 			}
 		}
@@ -255,10 +255,10 @@ class Helper
 		/** @global \CUserTypeManager $USER_FIELD_MANAGER */
 		global $DB, $APPLICATION, $USER_FIELD_MANAGER;
 
-		if (is_set($fields, "SITE_ID") && strlen($fields["SITE_ID"]) > 0)
+		if (is_set($fields, "SITE_ID") && $fields["SITE_ID"] <> '')
 			$fields["LID"] = $fields["SITE_ID"];
 
-		if ((is_set($fields, "LID") || $action=="ADD") && strlen($fields["LID"])<=0)
+		if ((is_set($fields, "LID") || $action=="ADD") && $fields["LID"] == '')
 		{
 			$APPLICATION->ThrowException(Loc::getMessage("CRM_INVOICE_COMPAT_HELPER_EMPTY_SITE"));
 			return false;
@@ -278,7 +278,7 @@ class Helper
 			$fields["PAYED"] = "N";
 		if (is_set($fields, "CANCELED") && $fields["CANCELED"] != "Y")
 			$fields["CANCELED"] = "N";
-		if (is_set($fields, "STATUS_ID") && strlen($fields["STATUS_ID"]) <= 0)
+		if (is_set($fields, "STATUS_ID") && $fields["STATUS_ID"] == '')
 			$fields["STATUS_ID"] = "N";
 		if (is_set($fields, "ALLOW_DELIVERY") && $fields["ALLOW_DELIVERY"] != "Y")
 			$fields["ALLOW_DELIVERY"] = "N";
@@ -317,7 +317,7 @@ class Helper
 			$fields["~VERSION"] = "VERSION+0+1";
 		}
 
-		if ((is_set($fields, "CURRENCY") || $action=="ADD") && strlen($fields["CURRENCY"])<=0)
+		if ((is_set($fields, "CURRENCY") || $action=="ADD") && $fields["CURRENCY"] == '')
 		{
 			$APPLICATION->ThrowException(Loc::getMessage("CRM_INVOICE_COMPAT_HELPER_EMPTY_CURRENCY"));
 			return false;
@@ -386,10 +386,10 @@ class Helper
 			}
 		}
 
-		if (is_set($fields, "PAY_SYSTEM_ID") && IntVal($fields["PAY_SYSTEM_ID"]) > 0)
+		if (is_set($fields, "PAY_SYSTEM_ID") && intval($fields["PAY_SYSTEM_ID"]) > 0)
 		{
 			$paysystem = new \CSalePaySystem();
-			if (!($arPaySystem = $paysystem->GetByID(IntVal($fields["PAY_SYSTEM_ID"]))))
+			if (!($arPaySystem = $paysystem->GetByID(intval($fields["PAY_SYSTEM_ID"]))))
 			{
 				$APPLICATION->ThrowException(
 					Loc::getMessage(
@@ -402,7 +402,7 @@ class Helper
 			unset($paysystem);
 		}
 
-		if (is_set($fields, "DELIVERY_ID") && IntVal($fields["DELIVERY_ID"]) > 0)
+		if (is_set($fields, "DELIVERY_ID") && intval($fields["DELIVERY_ID"]) > 0)
 		{
 			if (!($delivery = Sale\Delivery\Services\Table::getById($fields["DELIVERY_ID"])))
 			{
@@ -435,7 +435,7 @@ class Helper
 
 		if (is_set($fields, "ACCOUNT_NUMBER") && $action=="UPDATE")
 		{
-			if (strlen($fields["ACCOUNT_NUMBER"]) <= 0)
+			if ($fields["ACCOUNT_NUMBER"] == '')
 			{
 				$APPLICATION->ThrowException(Loc::getMessage("CRM_INVOICE_COMPAT_HELPER_EMPTY_ACCOUNT_NUMBER"));
 				return false;
@@ -502,7 +502,7 @@ class Helper
 		$arFields = array(
 			'PAYED' => $paid,
 			'=DATE_PAYED' => Main\Application::getConnection()->getSqlHelper()->getCurrentDateTimeFunction(),
-			'EMP_PAYED_ID' => (intval($USER->GetID()) > 0 ? IntVal($USER->GetID()) : false),
+			'EMP_PAYED_ID' => (intval($USER->GetID()) > 0 ? intval($USER->GetID()) : false),
 			'SUM_PAID' => 0
 		);
 
@@ -635,7 +635,7 @@ class Helper
 			"USER_ID" => $fields["USER_ID"],
 			"PAY_SYSTEM_ID" => $fields["PAY_SYSTEM_ID"],
 			"PRICE_DELIVERY" => $fields["DELIVERY_PRICE"],
-			"DELIVERY_ID" => (strlen($fields["DELIVERY_ID"]) > 0 ? $fields["DELIVERY_ID"] : false),
+			"DELIVERY_ID" => ($fields["DELIVERY_ID"] <> '' ? $fields["DELIVERY_ID"] : false),
 			"DISCOUNT_VALUE" => $fields["DISCOUNT_PRICE"],
 			"TAX_VALUE" => $fields["TAX_VALUE"],
 			"TRACKING_NUMBER" => $fields["TRACKING_NUMBER"]
@@ -674,7 +674,7 @@ class Helper
 		if (isset($orderFields['ACCOUNT_NUMBER']))
 		{
 			$accountNumber = $orderFields['ACCOUNT_NUMBER'];
-			if (is_string($accountNumber) && strlen($accountNumber) > 0 || is_numeric($accountNumber))
+			if (is_string($accountNumber) && $accountNumber <> '' || is_numeric($accountNumber))
 			{
 				$res = static::getList(
 					['ID' => 'ASC'],

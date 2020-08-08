@@ -108,7 +108,7 @@ function crm_activity_calendar_delete_grid(title, message, btnTitle, path)
 		{
 			$arColumns['ENTITY_TYPE'] = !empty($arCal['ENTITY_TYPE'])? GetMessage('CRM_ENTITY_TYPE_'.$arCal['ENTITY_TYPE']): '';
 			$arColumns['ENTITY_TITLE'] = !empty($arCal['ENTITY_TITLE'])?
-				'<a href="'.$arCal['ENTITY_LINK'].'" bx-tooltip-user-id="'.$arCal['ENTITY_ID'].'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.'.strtolower($arCal['ENTITY_TYPE']).'.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon'.($arCal['ENTITY_TYPE'] == 'LEAD' || $arCal['ENTITY_TYPE'] == 'DEAL' || $arCal['ENTITY_TYPE'] == 'QUOTE' ? '_no_photo': '_'.strtolower($arCal['ENTITY_TYPE'])).'">'.$arCal['ENTITY_TITLE'].'</a>'
+				'<a href="'.$arCal['ENTITY_LINK'].'" bx-tooltip-user-id="'.$arCal['ENTITY_ID'].'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.'.mb_strtolower($arCal['ENTITY_TYPE']).'.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon'.($arCal['ENTITY_TYPE'] == 'LEAD' || $arCal['ENTITY_TYPE'] == 'DEAL' || $arCal['ENTITY_TYPE'] == 'QUOTE' ? '_no_photo': '_'.mb_strtolower($arCal['ENTITY_TYPE'])).'">'.$arCal['ENTITY_TITLE'].'</a>'
 				: '';
 		}
 		else

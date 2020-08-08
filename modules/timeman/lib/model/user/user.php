@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Timeman\Model\User;
 
+use Bitrix\Timeman\Helper\EntityCodesHelper;
 use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Helper\UserHelper;
 
@@ -51,5 +52,10 @@ class User extends \Bitrix\Timeman\Model\User\EO_User
 			return TimeHelper::getInstance()->getUserUtcOffset($this->getId());
 		}
 		return $this->utcOffset;
+	}
+
+	public function obtainEntityCode()
+	{
+		return EntityCodesHelper::buildUserCode($this->getId());
 	}
 }

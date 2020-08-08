@@ -12,7 +12,7 @@ import 'ui.forms';
 
 import {Vue} from "ui.vue";
 import {Vuex} from "ui.vue.vuex";
-import {Utils} from "im.utils";
+import {Utils} from "im.lib.utils";
 import {FormType} from "../const";
 
 Vue.component('bx-livechat-form-history',
@@ -59,7 +59,7 @@ Vue.component('bx-livechat-form-history',
 			let email = this.checkEmailField()? this.fieldEmail: '';
 			if (email)
 			{
-				this.$root.$bitrixWidget.sendForm(FormType.history, {email});
+				this.$root.$bitrixApplication.sendForm(FormType.history, {email});
 			}
 
 			this.hideForm();

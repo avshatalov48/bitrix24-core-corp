@@ -15,6 +15,11 @@ class Basket
 
 	has()
 	{
+		if (this.#fields.some(field => field.hasChangeablePrice()))
+		{
+			return false;
+		}
+
 		return this.#fields.length > 0;
 	}
 
@@ -27,7 +32,7 @@ class Basket
 
 	formatMoney(val)
 	{
-		return Util.Conv.formatMoney(val, this.#currency.format);
+		return Util.Conv.formatMoney(val.toFixed(2), this.#currency.format);
 	}
 
 	sum(): Number

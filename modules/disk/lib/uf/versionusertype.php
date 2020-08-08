@@ -222,7 +222,7 @@ final class VersionUserType
 	{
 		if(is_string($value) && $value[0] == 'n')
 		{
-			return array(self::TYPE_NEW_OBJECT, substr($value, 1));
+			return array(self::TYPE_NEW_OBJECT, mb_substr($value, 1));
 		}
 		return array(self::TYPE_ALREADY_ATTACHED, (int)$value);
 	}

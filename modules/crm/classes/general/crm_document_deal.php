@@ -43,7 +43,7 @@ class CCrmDocumentDeal extends CCrmDocument
 
 		foreach ($referenceFields as $id => $field)
 		{
-			if (strpos($id, '.') !== false)
+			if (mb_strpos($id, '.') !== false)
 			{
 				continue;
 			}
@@ -93,7 +93,7 @@ class CCrmDocumentDeal extends CCrmDocument
 	public static function getEntityFields($entityType)
 	{
 		\Bitrix\Main\Localization\Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/components/bitrix/crm.'.
-			strtolower($entityType).'.edit/component.php');
+			mb_strtolower($entityType).'.edit/component.php');
 
 		$printableFieldNameSuffix = ' ('.GetMessage('CRM_FIELD_BP_TEXT').')';
 
@@ -131,7 +131,7 @@ class CCrmDocumentDeal extends CCrmDocument
 				'Name' => GetMessage('CRM_FIELD_OPPORTUNITY_ACCOUNT'),
 				'Type' => 'string',
 				'Filterable' => true,
-				'Editable' => true,
+				'Editable' => false,
 				'Required' => false,
 			),
 			'ACCOUNT_CURRENCY_ID' => array(
@@ -424,9 +424,9 @@ class CCrmDocumentDeal extends CCrmDocument
 				$ar = array();
 				foreach ($arFields[$key] as $v1)
 				{
-					if (substr($v1, 0, strlen("user_")) == "user_")
+					if (mb_substr($v1, 0, mb_strlen("user_")) == "user_")
 					{
-						$ar[] = substr($v1, strlen("user_"));
+						$ar[] = mb_substr($v1, mb_strlen("user_"));
 					}
 					else
 					{
@@ -438,7 +438,7 @@ class CCrmDocumentDeal extends CCrmDocument
 
 				$arFields[$key] = $ar;
 			}
-			elseif ($arDocumentFields[$key]["Type"] == "select" && substr($key, 0, 3) == "UF_")
+			elseif ($arDocumentFields[$key]["Type"] == "select" && mb_substr($key, 0, 3) == "UF_")
 			{
 				self::InternalizeEnumerationField('CRM_DEAL', $arFields, $key);
 			}
@@ -567,7 +567,8 @@ class CCrmDocumentDeal extends CCrmDocument
 		}
 
 		//Region automation
-		Crm\Automation\Factory::runOnAdd(\CCrmOwnerType::Deal, $id);
+		$starter = new Crm\Automation\Starter(\CCrmOwnerType::Deal, $id);
+		$starter->setContextToBizproc()->runOnAdd();
 		//End region
 
 		if ($id && $id > 0 && $useTransaction)
@@ -581,6 +582,11 @@ class CCrmDocumentDeal extends CCrmDocument
 	public static function UpdateDocument($documentId, $arFields, $modifiedById = null)
 	{
 		global $DB;
+
+		if(empty($arFields))
+		{
+			return;
+		}
 
 		$arDocumentID = self::GetDocumentInfo($documentId);
 		if (empty($arDocumentID))
@@ -617,9 +623,9 @@ class CCrmDocumentDeal extends CCrmDocument
 				$ar = array();
 				foreach ($arFields[$key] as $v1)
 				{
-					if (substr($v1, 0, strlen("user_")) == "user_")
+					if (mb_substr($v1, 0, mb_strlen("user_")) == "user_")
 					{
-						$ar[] = substr($v1, strlen("user_"));
+						$ar[] = mb_substr($v1, mb_strlen("user_"));
 					}
 					else
 					{
@@ -631,7 +637,7 @@ class CCrmDocumentDeal extends CCrmDocument
 
 				$arFields[$key] = $ar;
 			}
-			elseif ($arDocumentFields[$key]["Type"] == "select" && substr($key, 0, 3) == "UF_")
+			elseif ($arDocumentFields[$key]["Type"] == "select" && mb_substr($key, 0, 3) == "UF_")
 			{
 				self::InternalizeEnumerationField('CRM_DEAL', $arFields, $key);
 			}
@@ -685,7 +691,6 @@ class CCrmDocumentDeal extends CCrmDocument
 		}
 
 		//region Category & Stage
-		$stageChanged = false;
 		$categoryID = isset($arPresentFields['CATEGORY_ID']) ? (int)$arPresentFields['CATEGORY_ID'] : 0;
 		if(isset($arFields['CATEGORY_ID']) && $arFields['CATEGORY_ID'] != $categoryID)
 		{
@@ -715,8 +720,6 @@ class CCrmDocumentDeal extends CCrmDocument
 						)
 					);
 				}
-				elseif ($arPresentFields['STAGE_ID'] !== $stageID)
-					$stageChanged = true;
 			}
 		}
 		//endregion
@@ -776,10 +779,8 @@ class CCrmDocumentDeal extends CCrmDocument
 			}
 		}
 		//Region automation
-		if ($stageChanged)
-		{
-			Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Deal, $arDocumentID['ID']);
-		}
+		$starter = new Crm\Automation\Starter(\CCrmOwnerType::Deal, $arDocumentID['ID']);
+		$starter->setContextToBizproc()->runOnUpdate($arFields, $arPresentFields);
 		//End region
 
 		if ($res && $useTransaction)

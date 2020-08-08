@@ -199,22 +199,18 @@ BX.Crm.Widget.Custom.SaleTarget = (function(BX)
 			{
 				return this.number(value, opt) + ' <span>'+this.dealPlural(value)+'</span>';
 			}
-
 			value = this.number(value, opt);
-			var result = '', valueAppended = false;
-			var pieces = opt['FORMAT_STRING'].split('#');
-			for (var i = 0; i < pieces.length; ++i)
+			var result = '';
+
+			if (opt['FORMAT_STRING'].indexOf('#') === 0)
 			{
-				if (pieces[i].length > 0)
-				{
-					result += '<span>' + pieces[i] + '</span>';
-				}
-				else if (!valueAppended)
-				{
-					result += value;
-					valueAppended = true;
-				}
+				result = value + '<span>' + opt['FORMAT_STRING'].slice(1) + '</span>';
 			}
+			else
+			{
+				result = '<span>' + opt['FORMAT_STRING'].slice(0, -1) + '</span>' + value;
+			}
+
 			return result;
 		},
 		copyPeriod: function(periodType)

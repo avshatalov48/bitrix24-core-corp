@@ -254,7 +254,7 @@ class Page extends Base
 		$currentHost = $currentHostUri->getHost();
 		foreach($xFrameOptions as $frameOption)
 		{
-			$frameOption = trim(strtolower($frameOption));
+			$frameOption = trim(mb_strtolower($frameOption));
 			if($frameOption == 'deny')
 			{
 				return true;
@@ -269,7 +269,7 @@ class Page extends Base
 				$allowedHostUri = new Uri($url);
 				$allowedHost = $allowedHostUri->getHost();
 			}
-			elseif(strpos($frameOption, 'allow-from') === 0)
+			elseif(mb_strpos($frameOption, 'allow-from') === 0)
 			{
 				list(, $allowedHost) = explode(' ', $frameOption);
 				if($allowedHost)

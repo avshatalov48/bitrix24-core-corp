@@ -110,7 +110,7 @@ class EntityPSRequisiteRelation
 			if ($connection instanceof Main\DB\MssqlConnection
 				|| $connection instanceof Main\DB\OracleConnection)
 			{
-				$tableName = strtoupper($tableName);
+				$tableName = mb_strtoupper($tableName);
 			}
 			$connection->queryExecute(
 				"DELETE FROM {$tableName} WHERE REQUISITE_ID = {$requisiteId}"
@@ -135,7 +135,7 @@ class EntityPSRequisiteRelation
 			if ($connection instanceof Main\DB\MssqlConnection
 				|| $connection instanceof Main\DB\OracleConnection)
 			{
-				$tableName = strtoupper($tableName);
+				$tableName = mb_strtoupper($tableName);
 			}
 			$connection->queryExecute(
 				"DELETE FROM {$tableName}"

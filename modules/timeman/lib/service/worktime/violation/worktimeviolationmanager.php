@@ -90,7 +90,7 @@ class WorktimeViolationManager
 			}
 			return $this->shiftedViolationBuilder;
 		}
-		elseif (Schedule::isScheduleFlexible($violationParams->getSchedule()))
+		elseif (Schedule::isScheduleFlextime($violationParams->getSchedule()))
 		{
 			if (!$this->flextimeViolationBuilder)
 			{

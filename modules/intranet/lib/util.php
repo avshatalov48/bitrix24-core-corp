@@ -8,11 +8,15 @@
 
 namespace Bitrix\Intranet;
 
+use Bitrix\Bitrix24\Integrator;
+use Bitrix\Bitrix24\Feature;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Config\Option;
-use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 Loc::loadMessages(__FILE__);
 
@@ -239,7 +243,7 @@ class Util
 	{
 		if (!$force && Loader::includeModule('bitrix24'))
 		{
-			if (!\Bitrix\Bitrix24\Feature::isFeatureEnabled("set_logo"))
+			if (!Feature::isFeatureEnabled("set_logo"))
 			{
 				return array(
 					'logo' => 0,
@@ -269,7 +273,7 @@ class Util
 
 		if (Loader::includeModule('bitrix24'))
 		{
-			if (!\Bitrix\Bitrix24\Feature::isFeatureEnabled("remove_logo24"))
+			if (!Feature::isFeatureEnabled("remove_logo24"))
 			{
 				return $logo;
 			}
@@ -285,13 +289,18 @@ class Util
 
 	public static function isIntranetUser(int $userId = null): bool
 	{
-		if (is_null($userId))
+		global $USER;
+		if (is_null($userId) || $userId == $USER->GetID())
 		{
-			global $USER;
 			$userId = $USER->GetID();
 			if ($userId <= 0)
 			{
 				return false;
+			}
+
+			if ($USER->IsAdmin())
+			{
+				return true;
 			}
 
 			$accessManager = new \CAccess;
@@ -319,6 +328,7 @@ class Util
 				return true;
 			}
 		}
+
 
 		return false;
 	}
@@ -360,5 +370,277 @@ class Util
 		return in_array($extranetGroupId, $userGroups, true);
 	}
 
+	public static function getUserFieldListConfigUrl(string $moduleId, string $entityId = ''): Uri
+	{
+		if(empty($moduleId))
+		{
+			throw new ArgumentNullException('moduleId');
+		}
+		$url = 'configs/userfield_list.php';
+		if(ModuleManager::isModuleInstalled('bitrix24'))
+		{
+			$url = 'settings/' . $url;
+		}
+
+		$url = new Uri(SITE_DIR . $url);
+		$url->addParams([
+			'moduleId' => $moduleId,
+		]);
+		if($entityId)
+		{
+			$url->addParams([
+				'entityId' => $entityId,
+			]);
+		}
+
+		return $url;
+	}
+
+	public static function getUserFieldDetailConfigUrl(string $moduleId, string $entityId, int $fieldId = 0): Uri
+	{
+		if(empty($moduleId))
+		{
+			throw new ArgumentNullException('moduleId');
+		}
+		if(empty($entityId))
+		{
+			throw new ArgumentNullException('entityId');
+		}
+		$url = 'configs/userfield.php';
+		if(ModuleManager::isModuleInstalled('bitrix24'))
+		{
+			$url = 'settings/' . $url;
+		}
+
+		$url = new Uri(SITE_DIR . $url);
+		$url->addParams([
+			'moduleId' => $moduleId,
+			'entityId' => $entityId,
+		]);
+		if($fieldId)
+		{
+			$url->addParams([
+				'fieldId' => $fieldId,
+			]);
+		}
+
+		return $url;
+	}
+
+	public static function checkIntegratorActionRestriction(array $params = [])
+	{
+		global $USER;
+		static $currentIntegrator = null;
+
+		$result = false;
+		$userId = (!empty($params['userId']) ? intval($params['userId']) : 0);
+
+		if ($userId <= 0)
+		{
+			return $result;
+		}
+
+		if ($currentIntegrator === null)
+		{
+			$currentIntegrator = (
+				Loader::includeModule('bitrix24')
+				&& Integrator::isIntegrator($USER->getId())
+			);
+		}
+
+		return !(
+			$currentIntegrator
+			&& Loader::includeModule('bitrix24')
+			&& \CBitrix24::isPortalAdmin($userId)
+			&& !Integrator::isIntegrator($userId)
+		);
+	}
+
+	public static function setAdminRights($params)
+	{
+		$userId = (!empty($params['userId']) ? intval($params['userId']) : 0);
+		$currentUserId = (!empty($params['currentUserId']) ? intval($params['currentUserId']) : 0);
+		$isCurrentUserAdmin = !!$params['isCurrentUserAdmin'];
+
+		if (
+			$userId <= 0
+			|| $currentUserId <= 0
+		)
+		{
+			return false;
+		}
+
+		if (
+			!(
+				Loader::includeModule("bitrix24") && \CBitrix24::isPortalAdmin($currentUserId)
+				|| $isCurrentUserAdmin
+			)
+		)
+		{
+			return false;
+		}
+
+		$userData = \Bitrix\Main\UserTable::getList([
+			'select' => [ 'ID', 'UF_DEPARTMENT', 'ACTIVE' ],
+			'filter' => [
+				'=ID' => $userId
+			],
+		])->fetch();
+
+		if (
+			!is_array($userData['UF_DEPARTMENT']) // is extranet
+			|| empty($userData['UF_DEPARTMENT'][0])
+			|| $userData['ACTIVE'] !== "Y"
+		)
+		{
+			return false;
+		}
+
+		$removeRightsFromCurrentAdmin = false;
+
+		//groups for bitrix24 cloud
+		if (
+			Loader::includeModule('bitrix24') &&
+			!\CBitrix24::isMoreAdminAvailable()
+		)
+		{
+			$removeRightsFromCurrentAdmin = true;
+
+			if (!Feature::isFeatureEnabled('delegation_admin_rights'))
+			{
+				return false;
+			}
+		}
+
+		self::getGroupsId($employeesGroupId, $portalAdminGroupId);
+
+		$currentUserGroups = \CUser::getUserGroup($userId);
+		foreach ($currentUserGroups as $groupKey => $group)
+		{
+			if ($group == $employeesGroupId)
+			{
+				unset($currentUserGroups[$groupKey]);
+			}
+		}
+		$currentUserGroups[] = "1";
+		$currentUserGroups[] = $portalAdminGroupId;
+		$user = new \CUser();
+		$user->update($userId, ['GROUP_ID' => $currentUserGroups]);
+
+		$event = new Event(
+			'intranet',
+			'onUserAdminRigths',
+			[
+				'originatorId' => $currentUserId,
+				'userId' => $userId,
+				'type' => "setAdminRigths"
+			]
+		);
+		$event->send();
+
+		//remove rights from current admin because of limit
+		if ($removeRightsFromCurrentAdmin)
+		{
+			$currentAdminGroups = \CUser::getUserGroup($currentUserId);
+			foreach ($currentAdminGroups as $groupKey => $group)
+			{
+				if ($group == 1 || $group == $portalAdminGroupId)
+				{
+					unset($currentAdminGroups[$groupKey]);
+				}
+			}
+			$currentAdminGroups[] = $employeesGroupId;
+
+			$user->Update($currentUserId, ['GROUP_ID' => $currentAdminGroups]);
+		}
+
+		return true;
+	}
+
+	public static function removeAdminRights($params)
+	{
+		$userId = (!empty($params['userId']) ? intval($params['userId']) : 0);
+		$currentUserId = (!empty($params['currentUserId']) ? intval($params['currentUserId']) : 0);
+		$isCurrentUserAdmin = !!$params['isCurrentUserAdmin'];
+
+		if (
+			!(
+				Loader::includeModule("bitrix24") && \CBitrix24::IsPortalAdmin($currentUserId)
+				|| $isCurrentUserAdmin
+			)
+		)
+		{
+			return false;
+		}
+
+		$userData = \Bitrix\Main\UserTable::getList(array(
+			'select' => [ 'ID', 'UF_DEPARTMENT', 'ACTIVE' ],
+			'filter' => [
+				'=ID' => $userId
+			],
+		))->fetch();
+
+		if (
+			!is_array($userData['UF_DEPARTMENT']) // is extranet
+			|| empty($userData['UF_DEPARTMENT'][0])
+		)
+		{
+			return false;
+		}
+
+		self::getGroupsId($employeesGroupId, $portalAdminGroupId);
+
+		$currentUserGroups = \CUser::getUserGroup($userId);
+		foreach ($currentUserGroups as $groupKey => $group)
+		{
+			if ($group == 1 || $group == $portalAdminGroupId)
+			{
+				unset($currentUserGroups[$groupKey]);
+			}
+		}
+		$currentUserGroups[] = $employeesGroupId;
+		$user = new \CUser();
+		$user->Update($userId, ['GROUP_ID' => $currentUserGroups]);
+
+		$event = new Event(
+			'intranet',
+			'onUserAdminRigths',
+			[
+				'originatorId' => $currentUserId,
+				'userId' => $userId,
+				'type' => "removeAdminRigths"
+			]
+		);
+		$event->send();
+
+		return true;
+	}
+
+	public static function getGroupsId(&$employeesGroupId, &$portalAdminGroupId)
+	{
+		$employeesGroupId = "";
+		$portalAdminGroupId = "";
+
+		if (ModuleManager::isModuleInstalled("bitrix24"))
+		{
+			$employeesGroupId = "11";
+			$portalAdminGroupId = "12";
+		}
+		else
+		{
+			$res = \CGroup::GetList($by, $order, ["STRING_ID" => implode("|", ["EMPLOYEES_".SITE_ID, "PORTAL_ADMINISTRATION_".SITE_ID])]);
+			while ($group = $res->fetch())
+			{
+				if ($group["STRING_ID"] === "EMPLOYEES_".SITE_ID)
+				{
+					$employeesGroupId = $group["ID"];
+				}
+				elseif ($group["STRING_ID"] === "PORTAL_ADMINISTRATION_".SITE_ID)
+				{
+					$portalAdminGroupId = $group["ID"];
+				}
+			}
+		}
+	}
 }
 

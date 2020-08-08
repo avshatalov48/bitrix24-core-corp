@@ -5,6 +5,7 @@ use Bitrix\Main\Localization\Loc,
 	Bitrix\Main\UI\Extension;
 
 $messages = Loc::loadLanguageFile(__FILE__);
+$messages = array_merge($messages, Loc::loadLanguageFile(__DIR__.'/../../../salescenter.cashbox.panel/templates/.default/template.php'));
 
 Extension::load([
 	'ui.buttons',
@@ -14,6 +15,7 @@ Extension::load([
 	'ui.alerts',
 	'salescenter.componentanimation',
 	'salescenter.form',
+	'salescenter.manager',
 	'sidepanel',
 	'loader',
 	'ui.switcher',
@@ -79,6 +81,9 @@ Extension::load([
 									</div>
 									<hr class="ui-hr" style="margin-bottom: 15px;">
 									<div class="ui-text-2" style="margin-bottom: 20px;"><?=Loc::getMessage($arResult['handlerDescription']['description'])?></div>
+									<div class="salescenter-button-container">
+										<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigCashBox(event);"><?=Loc::getMessage('SC_CASHBOX_LINK_CONNECT')?></a>
+									</div>
 								</div>
 							</div>
 						</div>

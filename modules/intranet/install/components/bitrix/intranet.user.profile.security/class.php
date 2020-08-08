@@ -33,6 +33,29 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 		)
 			? true : false;
 
+		if (Loader::includeModule('socialservices'))
+		{
+			$authManager = new \CSocServAuthManager();
+			$activeSocServ = $authManager->GetActiveAuthServices(array());
+			if (Loader::includeModule('bitrix24'))
+			{
+				$isNeedSocServTab = false;
+				if (isset($activeSocServ['zoom']) &&
+					\Bitrix\Main\Config\Option::get('socialservices', 'zoom_cloud_enabled', 'N') === 'Y'
+				)
+				{
+					if (\CBitrix24::IsLicensePaid() || \CBitrix24::IsNfrLicense() || \CBitrix24::IsDemoLicense())
+					{
+						$isNeedSocServTab = true;
+					}
+				}
+			}
+			else
+			{
+				$isNeedSocServTab = true;
+			}
+		}
+
 		if ($isAdminRights || $isOwnProfile)
 		{
 			$menuItems["auth"] = array(
@@ -85,7 +108,7 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 				"ACTIVE" => isset($_GET["page"]) && $_GET["page"] === "socnet_email" ? true : false
 			);
 
-			if (!ModuleManager::isModuleInstalled("bitrix24") && ModuleManager::isModuleInstalled("socialservices"))
+			if ($isNeedSocServTab && ModuleManager::isModuleInstalled("socialservices"))
 			{
 				$socservPageUrl = CComponentEngine::MakePathFromTemplate($this->arParams["PATH_TO_USER_SOCIAL_SERVICES"], array("user_id" => $this->arParams["USER_ID"]));
 				$menuItems["socserv"] = array(

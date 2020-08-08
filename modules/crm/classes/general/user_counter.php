@@ -489,7 +489,7 @@ class CCrmUserCounterSettings
 
 	private static function GetBooleanValue($settingName, $default = false)
 	{
-		return strtoupper(COption::GetOptionString('crm', $settingName, $default ? 'Y' : 'N')) !== 'N';
+		return mb_strtoupper(COption::GetOptionString('crm', $settingName, $default? 'Y' : 'N')) !== 'N';
 	}
 
 	private static function SetBooleanValue($settingName, $value)

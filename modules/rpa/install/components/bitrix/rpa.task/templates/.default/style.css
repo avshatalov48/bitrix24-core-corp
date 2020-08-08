@@ -1,0 +1,123 @@
+.rpa-task-block {
+	padding: 13px 0 29px;
+}
+
+.rpa-task-block .rpa-automation-section {
+	max-width: 364px;
+}
+
+.rpa-task-block .ui-ctl-ext-after.ui-ctl-icon-calendar {
+	opacity: .5;
+}
+
+.rpa-task-title {
+	display: flex;
+	align-items: center;
+	font-size: 13px;
+	line-height: 15px;
+	padding-left: 16px;
+	position: relative;
+}
+
+.rpa-task-title:before {
+	position: absolute;
+	content: '';
+	width: 1px;
+	height: 22px;
+	left: 0;
+	top: 50%;
+	transform: translateY(-50%);
+	background: #ced3d8;
+}
+
+.rpa-task-title-img {
+	overflow: hidden;
+	border-radius: 50%;
+	width: 28px;
+	height: 28px;
+	display: block;
+	background: #525b69 url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2247.188%22%20height%3D%2254.063%22%3E%3Cpath%20data-name%3D%22Shape%202%20copy%204%22%20d%3D%22M47.18%2054.062c0-3.217-3.61-16.826-3.61-16.826%200-1.99-2.6-4.26-7.72-5.585a17.394%2017.394%200%2001-4.887-2.223c-.33-.188-.28-1.925-.28-1.925l-1.648-.25c0-.142-.14-2.225-.14-2.225%201.972-.663%201.77-4.574%201.77-4.574%201.252.695%202.068-2.4%202.068-2.4%201.482-4.3-.738-4.04-.738-4.04a27.05%2027.05%200%20000-7.918c-.987-8.708-15.847-6.344-14.085-3.5-4.343-.8-3.352%209.082-3.352%209.082l.942%202.56c-1.85%201.2-.564%202.65-.5%204.32.09%202.466%201.6%201.955%201.6%201.955.093%204.07%202.1%204.6%202.1%204.6.377%202.556.142%202.12.142%202.12l-1.786.217a7.1%207.1%200%2001-.14%201.732c-2.1.936-2.553%201.485-4.64%202.4-4.032%201.767-8.414%204.065-9.193%207.16S-.012%2054.06-.012%2054.06h47.19z%22%20fill%3D%22%23fff%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E) no-repeat center;
+	background-size: 55%;
+	box-sizing: border-box;
+	margin-right: 11px;
+}
+
+.rpa-task-title-user {
+	font-family: 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.rpa-task-title-stage {
+	color: #889099;
+	font-family: 'Helvetica Neue', Arial, Helvetica, sans-serif;
+}
+
+.rpa-task-block .ui-entity-editor-section {
+	background-color: #fff;
+}
+
+.rpa-task-block .ui-entity-editor-header-title-text {
+	font: 11px/17px 'OpenSans-SemiBold', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+	color: #525c69;
+	text-transform: uppercase;
+	height: auto;
+}
+
+.rpa-task-block .ui-entity-editor-section-header {
+	padding: 0 18px 13px 0;
+}
+
+.rpa-task-block .ui-entity-editor-section, .rpa-task-block .ui-entity-editor-section-edit {
+	box-shadow: none;
+	padding: 0 18px;
+}
+
+.rpa-task-block .ui-entity-editor-section-content {
+	width: 370px;
+}
+
+.rpa-task-block .field-item.date, .rpa-task-block .field-item.datetime,
+.rpa-task-block .webform-field-upload,
+.rpa-task-block .field-item.double input, .rpa-task-block .field-item.integer input,
+.rpa-task-block .fields.enumeration .main-ui-control.main-ui-select,
+.rpa-task-block .file-input {
+	width: 100%;
+}
+
+.rpa-task-block .fields.money .money-editor-currency-selector-wrap .main-ui-control {
+	padding-right: 19px !important;
+}
+
+.rpa-task-block .fields.money .money-editor-currency-selector-wrap .main-ui-control .main-ui-select-name {
+	display: block;
+}
+
+.rpa-task-block .ui-entity-editor-section-edit .ui-entity-editor-content-block {
+	margin-bottom: 0;
+}
+
+.rpa-task-block .ui-entity-editor-section-edit .ui-entity-editor-content-block + .ui-entity-editor-content-block {
+	margin-top: 18px;
+}
+
+.rpa-task-block .ui-entity-editor-block-title-text {
+	font-size: 13px;
+	margin-bottom: 2px;
+}
+
+.rpa-task-block .fields.boolean.field-item label {
+	line-height: 22px;
+}
+
+.rpa-task-block .crm-widget-employee-change {
+	display: none;
+}
+
+.rpa-task-block .employee.field-item .uf-employee-wrap {
+	padding: 0;
+	border: none;
+	background: transparent;
+}
+
+.rpa-task-block .employee.field-item .uf-employee-data {
+	left: 40px;
+}

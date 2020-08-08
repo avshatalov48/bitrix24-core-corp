@@ -218,7 +218,7 @@ class Document extends Base
 	 * @param \CRestServer|null $restServer
 	 * @return array|null
 	 */
-	public function addAction(\Bitrix\DocumentGenerator\Template $template, $providerClassName = null, $value = null, array $values = [], $stampsEnabled = 0, array $fields = [], \CRestServer $restServer = null)
+	public function addAction(\Bitrix\DocumentGenerator\Template $template, $providerClassName = null, $value = null, array $values = [], $stampsEnabled = null, array $fields = [], \CRestServer $restServer = null)
 	{
 		if($restServer)
 		{
@@ -259,7 +259,12 @@ class Document extends Base
 		{
 			CreationMethod::markDocumentAsCreatedByPublic($document);
 		}
-		$result = $document->enableStamps($stampsEnabled == 1)->setValues($values)->setFields($fields)->getFile(true, $this->getScope() === static::SCOPE_REST);
+		$stampsEnabled = (int) $stampsEnabled;
+		if($stampsEnabled === null)
+		{
+			$stampsEnabled = ($template->WITH_STAMPS === 'Y' ? 1 : 0);
+		}
+		$result = $document->enableStamps($stampsEnabled === 1)->setValues($values)->setFields($fields)->getFile(true, $this->getScope() === static::SCOPE_REST);
 		if(!$result->isSuccess())
 		{
 			$this->errorCollection = $result->getErrorCollection();
@@ -279,6 +284,7 @@ class Document extends Base
 	 */
 	public function updateAction(\Bitrix\DocumentGenerator\Document $document, array $values = [], $stampsEnabled = 1, array $fields = [], \CRestServer $restServer = null)
 	{
+		unset($values[\Bitrix\DocumentGenerator\Document::STAMPS_ENABLED_PLACEHOLDER]);
 		$result = $document->enableStamps($stampsEnabled == 1)->setFields($fields)->update($values, true, $this->getScope() === static::SCOPE_REST);
 		if(!$result->isSuccess())
 		{
@@ -384,7 +390,7 @@ class Document extends Base
 		$documentList = DocumentTable::getList([
 			'select' => $select,
 			'filter' => $filter,
-			'order' => $order,
+			'order' => $order ?? [],
 			'offset' => $pageNavigation->getOffset(),
 			'limit' => $pageNavigation->getLimit(),
 		]);
@@ -603,6 +609,25 @@ class Document extends Base
 			if(Driver::getInstance()->getUserPermissions()->canModifyDocuments())
 			{
 				$result['templates'] = Converter::toJson()->process(TemplateTable::getListByClassName($provider, Driver::getInstance()->getUserId(), $value));
+			}
+
+			if (is_string($provider) && \Bitrix\Main\Loader::includeModule('intranet'))
+			{
+				$providerChunks = explode('\\', $provider);
+				$result['intranetExtensions'] = \Bitrix\Intranet\Binding\Menu::getMenuItems(
+					'crm_documents',
+					mb_strtolower(array_pop($providerChunks)),
+					[
+						'context' => [
+							'ENTITY_ID' => $value
+						],
+						'inline' => true
+					]
+				);
+				if (!$result['intranetExtensions'])
+				{
+					unset($result['intranetExtensions']);
+				}
 			}
 		}
 		else

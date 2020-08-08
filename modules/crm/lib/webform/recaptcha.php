@@ -135,7 +135,7 @@ class ReCaptcha
 					break;
 
 				default:
-					$this->error = Loc::getMessage('CRM_WEBFORM_RECAPTCHA_ERROR_UNKNOWN');
+					$this->error = 'reCAPTCHA: ' . Loc::getMessage('CRM_WEBFORM_RECAPTCHA_ERROR_UNKNOWN');
 					break;
 			}
 
@@ -145,7 +145,7 @@ class ReCaptcha
 	}
 
 	/**
-	 * Return error code
+	 * Return error code.
 	 *
 	 * @return string
 	 */
@@ -155,9 +155,9 @@ class ReCaptcha
 	}
 
 	/**
-	 * Get default key
+	 * Get default key.
 	 *
-	 * @var string $lang Language id
+	 * @var string $lang Language id.
 	 * @return string
 	 */
 	public static function getJavascriptResource($lang = LANGUAGE_ID)
@@ -207,55 +207,60 @@ class ReCaptcha
 	}
 
 	/**
-	 * Get default key
+	 * Get default key.
 	 *
+	 * @param string $version Version.
 	 * @return string
 	 */
-	public static function getDefaultKey()
+	public static function getDefaultKey($version = '')
 	{
-		return Option::get(self::MODULE_ID, self::OPTION_NAME . '_def_key');
+		return Option::get(self::MODULE_ID, self::OPTION_NAME . $version . '_def_key');
 	}
 
 	/**
-	 * Get default secret
+	 * Get default secret.
 	 *
+	 * @param string $version Version.
 	 * @return string
 	 */
-	public static function getDefaultSecret()
+	public static function getDefaultSecret($version = '')
 	{
-		return Option::get(self::MODULE_ID, self::OPTION_NAME . '_def_secret');
+		return Option::get(self::MODULE_ID, self::OPTION_NAME . $version . '_def_secret');
 	}
 
 	/**
-	 * Get key
+	 * Get key.
 	 *
+	 * @param string $version Version.
 	 * @return string
 	 */
-	public static function getKey()
+	public static function getKey($version = '')
 	{
-		return Option::get(self::MODULE_ID, self::OPTION_NAME . '_key');
+		return Option::get(self::MODULE_ID, self::OPTION_NAME . $version . '_key');
 	}
 
 	/**
-	 * Get secret
+	 * Get secret.
 	 *
+	 * @param string $version Version.
 	 * @return string
 	 */
-	public static function getSecret()
+	public static function getSecret($version = '')
 	{
-		return Option::get(self::MODULE_ID, self::OPTION_NAME . '_secret');
+		return Option::get(self::MODULE_ID, self::OPTION_NAME . $version . '_secret');
 	}
 
 	/**
-	 * Set key & secret
+	 * Set key & secret.
 	 *
-	 * @param string $key Key
-	 * @param string $secret Secret
+	 * @param string $key Key.
+	 * @param string $secret Secret.
+	 * @param string $version Version.
 	 * @return void
 	 */
-	public static function setKey($key, $secret)
+	public static function setKey($key, $secret, $version = '')
 	{
-		Option::set(self::MODULE_ID, self::OPTION_NAME . '_key', $key);
-		Option::set(self::MODULE_ID, self::OPTION_NAME . '_secret', $secret);
+		Option::set(self::MODULE_ID, self::OPTION_NAME . $version . '_key', $key);
+		Option::set(self::MODULE_ID, self::OPTION_NAME . $version . '_secret', $secret);
 	}
 }

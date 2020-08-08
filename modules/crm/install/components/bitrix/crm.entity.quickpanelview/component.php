@@ -73,8 +73,8 @@ $nameTemplate = $arResult['NAME_TEMPLATE'] = $arParams['NAME_TEMPLATE'] = empty(
 $enableInstantEdit = $arResult['ENABLE_INSTANT_EDIT'] = isset($arParams['ENABLE_INSTANT_EDIT']) ? $arParams['ENABLE_INSTANT_EDIT'] : false;
 $arResult['INSTANT_EDITOR_ID'] = isset($arParams['INSTANT_EDITOR_ID']) ? $arParams['INSTANT_EDITOR_ID'] : '';
 $arResult['SERVICE_URL'] = isset($arParams['SERVICE_URL']) ? $arParams['SERVICE_URL'] : '';
-$arResult['FORM_ID'] = $arParams['FORM_ID'] = isset($arParams['FORM_ID']) ? $arParams['FORM_ID'] : strtolower($entityTypeName).'_'.$entityID;
-$arResult['GUID'] = isset($arParams['GUID']) ? $arParams['GUID'] : strtolower($arResult['FORM_ID']).'_qpv';
+$arResult['FORM_ID'] = $arParams['FORM_ID'] = isset($arParams['FORM_ID']) ? $arParams['FORM_ID'] : mb_strtolower($entityTypeName).'_'.$entityID;
+$arResult['GUID'] = isset($arParams['GUID']) ? $arParams['GUID'] : mb_strtolower($arResult['FORM_ID']).'_qpv';
 
 //CONFIG -->
 $config = CUserOptions::GetOption(
@@ -159,7 +159,7 @@ if(!function_exists('__CrmQuickPanelViewPrepareResponsible'))
 			'enableCaption' => false,
 			'editable' => $enableEdit,
 			'data' => array(
-				'fieldID' => $useTildeKey ? substr($map['ID'], 1) : $map['ID'],
+				'fieldID' => $useTildeKey? mb_substr($map['ID'], 1) : $map['ID'],
 				'userID' => $userID,
 				'name' => $formattedName,
 				'photoID' => $photoID,
@@ -739,7 +739,7 @@ if($entityTypeID === CCrmOwnerType::Contact)
 		}
 		elseif($k === 'OPENED' || $k === 'EXPORT')
 		{
-			$v = ($v !== null && $v !== '') ? strtoupper($v) : 'N';
+			$v = ($v !== null && $v !== '')? mb_strtoupper($v) : 'N';
 			$entityData[$k] = array(
 				'type' => 'boolean',
 				'editable'=> $enableInstantEdit,
@@ -882,7 +882,7 @@ elseif($entityTypeID === CCrmOwnerType::Company)
 		}
 		elseif($k === 'OPENED' || $k === 'EXPORT')
 		{
-			$v = ($v !== null && $v !== '') ? strtoupper($v) : 'N';
+			$v = ($v !== null && $v !== '')? mb_strtoupper($v) : 'N';
 			$entityData[$k] = array(
 				'type' => 'boolean',
 				'editable'=> $enableInstantEdit,
@@ -1118,7 +1118,7 @@ elseif($entityTypeID === CCrmOwnerType::Deal)
 		}
 		elseif($k === 'OPENED' || $k === 'CLOSED')
 		{
-			$v = ($v !== null && $v !== '') ? strtoupper($v) : 'N';
+			$v = ($v !== null && $v !== '')? mb_strtoupper($v) : 'N';
 			$entityData[$k] = array(
 				'type' => 'boolean',
 				'editable'=> $enableInstantEdit,
@@ -1388,7 +1388,7 @@ elseif($entityTypeID === CCrmOwnerType::Lead)
 		}
 		elseif($k === 'OPENED')
 		{
-			$v = ($v !== null && $v !== '') ? strtoupper($v) : 'N';
+			$v = ($v !== null && $v !== '')? mb_strtoupper($v) : 'N';
 			$entityData[$k] = array(
 				'type' => 'boolean',
 				'editable'=> $enableInstantEdit,
@@ -1581,7 +1581,7 @@ elseif($entityTypeID === CCrmOwnerType::Quote)
 			}
 			elseif($k === 'OPENED' || $k === 'CLOSED')
 			{
-				$v = ($v !== null && $v !== '') ? strtoupper($v) : 'N';
+				$v = ($v !== null && $v !== '')? mb_strtoupper($v) : 'N';
 				$entityData[$k] = array(
 					'type' => 'boolean',
 					'editable'=> $enableInstantEdit,
@@ -1809,8 +1809,8 @@ elseif($entityTypeID === CCrmOwnerType::Invoice)
 	__CrmQuickPanelViewPrepareContactInfo($entityFields, $entityContext, 'UF_CONTACT', false);
 	__CrmQuickPanelViewPrepareCompanyInfo($entityFields, $entityContext, 'UF_COMPANY', false);
 
-	$isSuccessfullStatus = isset($entityFields['STATUS_SUCCESS']) ? strtoupper($entityFields['STATUS_SUCCESS']) === 'Y' : false;
-	$isFailedStatus = isset($entityFields['STATUS_FAILED']) ? strtoupper($entityFields['STATUS_FAILED']) === 'Y' : false;
+	$isSuccessfullStatus = isset($entityFields['STATUS_SUCCESS']) ? mb_strtoupper($entityFields['STATUS_SUCCESS']) === 'Y' : false;
+	$isFailedStatus = isset($entityFields['STATUS_FAILED']) ? mb_strtoupper($entityFields['STATUS_FAILED']) === 'Y' : false;
 
 	foreach($entityFields as $k => $v)
 	{
@@ -1863,7 +1863,7 @@ elseif($entityTypeID === CCrmOwnerType::Invoice)
 		}
 		elseif($k === 'RECURRING_ACTIVE')
 		{
-			$v = ($v !== null && $v !== '') ? strtoupper($v) : 'N';
+			$v = ($v !== null && $v !== '')? mb_strtoupper($v) : 'N';
 			$entityData[$k] = array(
 				'type' => 'boolean',
 				'editable'=> false,

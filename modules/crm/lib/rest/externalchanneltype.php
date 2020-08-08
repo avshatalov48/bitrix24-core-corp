@@ -37,7 +37,7 @@ class CCrmExternalChannelType
 
     public static function resolveID($name)
     {
-        $name = strtoupper(trim(strval($name)));
+		$name = mb_strtoupper(trim(strval($name)));
         if($name == '')
         {
             return self::Undefined;

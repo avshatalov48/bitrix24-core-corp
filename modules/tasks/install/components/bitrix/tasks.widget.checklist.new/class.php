@@ -66,7 +66,7 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 			'/company/personal/user/#user_id#/'
 		);
 
-		$mode = strtolower(static::tryParseStringParameter($this->arParams['MODE'], 'view'));
+		$mode = mb_strtolower(static::tryParseStringParameter($this->arParams['MODE'], 'view'));
 		$userId = static::tryParseIntegerParameter($this->arParams['USER_ID']);
 		$entityId = static::tryParseIntegerParameter($this->arParams['ENTITY_ID']);
 		$entityType = static::tryParseStringParameter($this->arParams['ENTITY_TYPE']);
@@ -78,7 +78,7 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 		$this->arResult['USER_ID'] = $userId;
 		$this->arResult['ENTITY_ID'] = $entityId;
 		$this->arResult['ENTITY_TYPE'] = $entityType;
-		$this->arResult['MODE'] = (in_array(strtolower($mode), ['view', 'edit'], true) ? $mode : 'view');
+		$this->arResult['MODE'] = (in_array(mb_strtolower($mode), ['view', 'edit'], true) ? $mode : 'view');
 
 		$this->arResult['AJAX_ACTIONS'] = static::$map[$entityType]['ACTIONS'];
 		$this->arResult['USER_OPTIONS'] = $this->getUserOptions($entityType, $userId);
@@ -98,7 +98,7 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 		$commonActions = [
 			'CAN_ADD' => true,
 			'CAN_REORDER' => true,
-			'CAN_ADD_ACCOMPLICE' => true,
+			'CAN_ADD_ACCOMPLICE' => $this->arResult['CAN_ADD_ACCOMPLICE'],
 		];
 
 		if (!$checkListItems)
@@ -320,11 +320,11 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 			$defaultValue = $value['DEFAULT_VALUE'];
 			$typeCallback = $value['TYPE_CALLBACK'];
 
-			$optionName = static::$map[$entityType]['OPTIONS']['PREFIX'].strtolower($key);
+			$optionName = static::$map[$entityType]['OPTIONS']['PREFIX'].mb_strtolower($key);
 			$userOptions[$key] = (
 				is_callable($typeCallback)
-				? $typeCallback(User::getOption($optionName, $userId, $defaultValue))
-				: User::getOption($optionName, $userId, $defaultValue)
+					? $typeCallback(User::getOption($optionName, $userId, $defaultValue))
+					: User::getOption($optionName, $userId, $defaultValue)
 			);
 		}
 
@@ -354,7 +354,7 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 			static::createOptionsMap();
 		}
 
-		$typeCallback = static::$optionsMap[strtoupper($option)]['TYPE_CALLBACK'];
+		$typeCallback = static::$optionsMap[mb_strtoupper($option)]['TYPE_CALLBACK'];
 
 		$optionName = static::$map[$entityType]['OPTIONS']['PREFIX'].$option;
 		$optionValue = (is_callable($typeCallback) ? $typeCallback($value) : $value);

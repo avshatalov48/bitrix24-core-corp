@@ -472,7 +472,13 @@ class LeadTable extends Main\ORM\Data\DataManager
 				LeadStatusHistoryWithSupposedTable::class,
 				Main\ORM\Query\Join::on('this.ID', 'ref.OWNER_ID'),
 				array('join_type' => 'INNER')
-			)
+			),
+			new ReferenceField(
+				'BINDING_CONTACT',
+				Binding\LeadContactTable::class,
+				Main\ORM\Query\Join::on('this.ID', 'ref.LEAD_ID')
+			),
+			new Main\Entity\IntegerField('WEBFORM_ID')
 		);
 
 		$codeList = UtmTable::getCodeList();

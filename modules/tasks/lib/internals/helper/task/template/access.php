@@ -3,12 +3,9 @@ namespace Bitrix\Tasks\Internals\Helper\Task\Template;
 
 
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\DB\SqlExpression;
-use Bitrix\Main\Entity\Query;
-use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\SystemException;
-use Bitrix\Main\TaskOperationTable;
-use Bitrix\Tasks\Internals\Task\Template\AccessTable;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\TemplateAccessController;
 
 final class Access
 {
@@ -23,6 +20,8 @@ final class Access
 	 * @return array
 	 * @throws ArgumentException
 	 * @throws SystemException
+	 *
+	 * @deprecated since tasks 20.6.0
 	 */
 	public static function getAvailableOperations($ids, array $parameters = [])
 	{
@@ -34,30 +33,33 @@ final class Access
 
 		$result = [];
 
-		if (!is_array($ids) || empty($ids))
+		if (
+			!is_array($ids)
+			|| empty($ids)
+			|| !$userId
+		)
 		{
 			return $result;
 		}
 
-		$query = new Query(AccessTable::getEntity());
-		$query->setSelect(['ENTITY_ID', 'OP_ID' => 'T2OP.OPERATION_ID']);
-		$query->registerRuntimeField('', new ReferenceField(
-			'T2OP',
-			TaskOperationTable::getEntity(),
-			['=this.TASK_ID' => 'ref.TASK_ID'],
-			['join_type' => 'inner']
-		));
-		$query->whereIn('ENTITY_ID', $ids);
-		$query->whereIn('GROUP_CODE', new SqlExpression(
-			"SELECT REPLACE(UA.?#, SUBSTRING(UA.?#, LOCATE('_', UA.?#)), '') FROM ?# UA WHERE UA.?# = " . $userId,
-			'ACCESS_CODE', 'ACCESS_CODE', 'ACCESS_CODE', 'b_user_access', 'USER_ID'
-		));
-
-		$res = $query->exec();
-
-		while ($item = $res->fetch())
+		$ops = \Bitrix\Tasks\Util\User::getAccessOperationsForEntity('task_template');
+		foreach ($ops as $id => $row)
 		{
-			$result[$item['ENTITY_ID']][] = $item['OP_ID'];
+			$ops[$row['NAME']] = $id;
+		}
+
+		foreach ($ids as $id)
+		{
+			if (TemplateAccessController::can($userId, ActionDictionary::ACTION_TEMPLATE_EDIT, $id))
+			{
+				$result[$id][] = $ops['read'];
+				$result[$id][] = $ops['update'];
+				$result[$id][] = $ops['delete'];
+			}
+			elseif (TemplateAccessController::can($userId, ActionDictionary::ACTION_TEMPLATE_READ, $id))
+			{
+				$result[$id][] = $ops['read'];
+			}
 		}
 
 		return $result;

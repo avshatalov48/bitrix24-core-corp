@@ -60,7 +60,7 @@ if (CModule::IncludeModule('tasks') && CModule::IncludeModule('mobileapp'))
 	];
 
 	$routePage = ($this->request->getQuery('routePage') ?: 'roles');
-	$routePage = ($routePage == '__ROUTE_PAGE__' ? 'view' : strtolower($routePage));
+	$routePage = ($routePage == '__ROUTE_PAGE__'? 'view' : mb_strtolower($routePage));
 
 	if (!in_array($routePage, $whiteList, true))
 	{

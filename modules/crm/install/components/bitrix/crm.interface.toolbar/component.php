@@ -6,7 +6,7 @@ if(!is_array($arParams['BUTTONS']))
 
 $arParams['TOOLBAR_ID'] = isset($arParams['TOOLBAR_ID']) && $arParams['TOOLBAR_ID'] !== ''
 	? preg_replace('/[^a-z0-9_]/i', '', $arParams['TOOLBAR_ID'])
-	: 'toolbar_'.(strtolower(randString(5)));
+	: 'toolbar_'.(mb_strtolower(randString(5)));
 
 $this->IncludeComponentTemplate();
 

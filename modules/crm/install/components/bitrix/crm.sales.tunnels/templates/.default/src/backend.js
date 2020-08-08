@@ -3,12 +3,14 @@ import type RequestResponse from './type/request-response';
 import type CreateCategoryOptions from './type/create-category-options';
 import type GetCategoryOptions from './type/get-category-options';
 import type UpdateCategoryOptions from './type/update-category-options';
+import type UpdateCategoryAccessOptions from "./type/update-category-access-options";
 import type RemoveCategoryOptions from './type/remove-category-options';
 import type CreateRobotOptions from './type/create-robot-options';
 import type RemoveRobotOptions from './type/remove-robot-options';
 import type RemoveStageOptions from './type/remove-stage-options';
 import type UpdateStageOptions from './type/update-stage-options';
 import type AddStageOptions from './type/add-stage-options';
+import type CopyCategoryAccessOptions from "./type/copy-category-access-options";
 
 export default class Backend
 {
@@ -74,6 +76,30 @@ export default class Backend
 			analyticsLabel: {
 				component: Backend.component,
 				action: 'remove.category',
+			},
+			data,
+		});
+	}
+
+	static accessCategory(data: UpdateCategoryAccessOptions): Promise<RequestResponse>
+	{
+		return Backend.request({
+			action: 'accessCategory',
+			analyticsLabel: {
+				component: Backend.component,
+				action: 'access.category',
+			},
+			data,
+		});
+	}
+
+	static copyAccessCategory(data: CopyCategoryAccessOptions): Promise<RequestResponse>
+	{
+		return Backend.request({
+			action: 'copyAccessCategory',
+			analyticsLabel: {
+				component: Backend.component,
+				action: 'access.category',
 			},
 			data,
 		});

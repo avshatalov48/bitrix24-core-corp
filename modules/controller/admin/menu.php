@@ -116,10 +116,21 @@ if ($USER->CanDoOperation("controller_counters_view"))
 		"module_id" => "controller",
 		"more_url" => array(
 			"controller_counter_edit.php?lang=".LANG,
-			"controller_counter_history.php?lang=".LANG,
 		),
 		"items_id" => "menu_controller_counter",
 		"title" => GetMessage("CTRLR_MENU_COUNTERS_TITLE"),
+		"items" => array(
+			array(
+				"text" => GetMessage("CTRLR_MENU_COUNTERS_HISTORY"),
+				"url" => "controller_counter_history.php?lang=".LANG,
+				"module_id" => "controller",
+				"more_url" => array(
+					"controller_counter_history.php",
+				),
+				"items_id" => "menu_controller_counter_history",
+				"title" => GetMessage("CTRLR_MENU_COUNTERS_HISTORY_TITLE"),
+			)
+		),
 	);
 }
 

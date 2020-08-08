@@ -208,7 +208,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          darkBackground: ChatDialogBackground && ChatDialogBackground[data.OPTIONS.backgroundType] && ChatDialogBackground[data.OPTIONS.backgroundType].dark
 	        }
 	      };
-	      return new ui_vue_vuex.VuexBuilder().addModel(im_model.ApplicationModel.create().useDatabase(false).setVariables(applicationVariables)).addModel(im_model.MessagesModel.create()).addModel(im_model.DialoguesModel.create().setVariables({
+	      return new ui_vue_vuex.VuexBuilder().addModel(im_model.ApplicationModel.create().useDatabase(false).setVariables(applicationVariables)).addModel(im_model.MessagesModel.create().setVariables({
+	        host: this.host
+	      })).addModel(im_model.DialoguesModel.create().setVariables({
 	        host: this.host
 	      })).addModel(im_model.FilesModel.create().setVariables({
 	        host: this.host,
@@ -2662,7 +2664,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var files = this.$store.getters['files/getList'](this.dialog.chatId);
 	      return {
 	        id: this.dialog.quoteId,
-	        title: user ? user.name : '',
+	        title: message.params.NAME ? message.params.NAME : user ? user.name : '',
 	        color: user ? user.color : '',
 	        description: im_utils.Utils.text.purify(message.text, message.params, files, this.localize)
 	      };

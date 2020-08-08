@@ -25,11 +25,11 @@ $this->SetViewTarget("sidebar", 500);
 <div class="b24-app-block b24-app-mobile">
 	<div class="b24-app-block-header"><?=GetMessage("B24_BANNER_MOBILE_TITLE")?></div>
 	<div class="b24-app-block-content">
-		<a href="<?=GetMessage("B24_BANNER_MOBILE_APPSTORE_URL")?>" target="_blank" style="width: 45%;" class="b24-app-block-content-apps">
+		<a href="javascript:void(0)" onclick="BX.UI.InfoHelper.show('mobile_app');" style="width: 45%;" class="b24-app-block-content-apps">
 			<span class="b24-app-icon b24-app-icon-ios"></span>
 			<span>App Store</span>
 		</a>
-		<a href="<?=GetMessage("B24_BANNER_MOBILE_GOOGLE_PLAY_URL")?>" target="_blank" style="width: 55%;" class="b24-app-block-content-apps b24-app-block-separate">
+		<a href="javascript:void(0)" onclick="BX.UI.InfoHelper.show('mobile_app');" style="width: 55%;" class="b24-app-block-content-apps b24-app-block-separate">
 			<span class="b24-app-icon b24-app-icon-android"></span>
 			<span>Google Play</span>
 		</a>

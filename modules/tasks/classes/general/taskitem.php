@@ -10,6 +10,11 @@
 
 use Bitrix\Main\Localization\Loc;
 
+use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
+use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
+use Bitrix\Tasks\CheckList\Internals\CheckList;
+use Bitrix\Tasks\Comments;
+use Bitrix\Tasks\Comments\Task\CommentPoster;
 use \Bitrix\Tasks\Internals\Task\FavoriteTable;
 use \Bitrix\Tasks\Task\DependenceTable;
 use \Bitrix\Tasks\Integration;
@@ -22,6 +27,7 @@ use \Bitrix\Tasks\ActionFailedException;
 use \Bitrix\Tasks\ActionNotAllowedException;
 use \Bitrix\Tasks\ActionRestrictedException;
 use \Bitrix\Tasks\Integration\Bizproc;
+use \Bitrix\Tasks\Access\ActionDictionary;
 
 Loc::loadMessages(__FILE__);
 
@@ -46,10 +52,17 @@ interface CTaskItemInterface
 	public function disapprove();
 	public function getId();		// returns tasks id
 	public function getExecutiveUserId();	// returns user id used for rights check
+
+	/**
+	 * @param $actionId
+	 * @return mixed
+	 * @deprecated
+	 */
 	public function isActionAllowed($actionId);
 	public function stopWatch();		// exclude itself from auditors
 	public function startWatch();		// include itself to auditors
 	public function isUserRole($roleId);
+	public function checkAccess($actionId); // see the full list of actions in ActionDictionary
 
 	/**
 	 * Remove file attached to task
@@ -78,22 +91,22 @@ interface CTaskItemInterface
 final class CTaskItem implements CTaskItemInterface, ArrayAccess
 {
 	// Actions
-	const ACTION_ACCEPT     = 0x01;
-	const ACTION_DECLINE    = 0x02;
-	const ACTION_COMPLETE   = 0x03;
-	const ACTION_APPROVE    = 0x04;		// closes task
-	const ACTION_DISAPPROVE = 0x05;		// perform ACTION_RENEW
-	const ACTION_START      = 0x06;
-	const ACTION_DELEGATE   = 0x07;
-	const ACTION_REMOVE     = 0x08;
-	const ACTION_EDIT       = 0x09;
-	const ACTION_DEFER      = 0x0A;
-	const ACTION_RENEW      = 0x0B;		// switch tasks to new or accepted state (depends on subordination)
-	const ACTION_CREATE     = 0x0C;
-	const ACTION_CHANGE_DEADLINE     = 0x0D; // also means now "change DEADLINE + START_DATE_PLAN + END_DATE_PLAN"
-	const ACTION_CHANGE_DIRECTOR     = 0x10; // i.e. delegate
-	const ACTION_PAUSE               = 0x11;
-	const ACTION_START_TIME_TRACKING = 0x12;
+	const ACTION_ACCEPT     			= 0x01;
+	const ACTION_DECLINE    			= 0x02;
+	const ACTION_COMPLETE   			= 0x03;
+	const ACTION_APPROVE    			= 0x04;	// closes task
+	const ACTION_DISAPPROVE 			= 0x05;	// perform ACTION_RENEW
+	const ACTION_START      			= 0x06;
+	const ACTION_DELEGATE   			= 0x07;
+	const ACTION_REMOVE     			= 0x08;
+	const ACTION_EDIT       			= 0x09;
+	const ACTION_DEFER      			= 0x0A;
+	const ACTION_RENEW      			= 0x0B;	// switch tasks to new or accepted state (depends on subordination)
+	const ACTION_CREATE     			= 0x0C;
+	const ACTION_CHANGE_DEADLINE     	= 0x0D; // also means now "change DEADLINE + START_DATE_PLAN + END_DATE_PLAN"
+	const ACTION_CHANGE_DIRECTOR     	= 0x10; // i.e. delegate
+	const ACTION_PAUSE               	= 0x11;
+	const ACTION_START_TIME_TRACKING 	= 0x12;
 
 	// checklist supreme rules
 	const ACTION_CHECKLIST_ADD_ITEMS = 0x0E;
@@ -108,6 +121,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	const ACTION_TOGGLE_FAVORITE     = 0x15;
 
 	const ACTION_READ                = 0x17;
+	const ACTION_RATE			 	 = 0x666;
 
 	// Roles implemented for managers of users too.
 	// So, if some user is responsible in the task, than his manager has responsible role too.
@@ -141,6 +155,9 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	private $arTaskFileAttachments = null;
 
 	private $lastOperationResultData = array();
+
+	private static $accessController;
+	private static $allowedActions;
 
 	/**
 	 * Pin the task in the Kanban stage for users.
@@ -266,7 +283,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			&& ($arNewTaskData['DESCRIPTION_IN_BBCODE'] === 'N')	// HTML mode requested
 			&& isset($arNewTaskData['DESCRIPTION'])
 			&& ($arNewTaskData['DESCRIPTION'] !== '')		// allow HTML mode if there is description
-			&& (strpos($arNewTaskData['DESCRIPTION'], '<') !== false)	// with HTML tags
+			&& (mb_strpos($arNewTaskData['DESCRIPTION'], '<') !== false)	// with HTML tags
 		)
 		{
 			$arNewTaskData['DESCRIPTION_IN_BBCODE'] = 'N';			// Set HTML mode
@@ -283,17 +300,6 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			&& ( ! CTasksTools::IsPortalB24Admin($executiveUserId) )
 		)
 		{
-			if (
-				($arNewTaskData['RESPONSIBLE_ID'] != $executiveUserId)
-				&& ($arNewTaskData['CREATED_BY'] != $executiveUserId)
-			)
-			{
-				throw new TasksException(
-					serialize(array(array('text' => GetMessage('TASKS_TASK_CREATE_ACCESS_DENIED'), 'id' => 'ERROR_TASK_CREATE_ACCESS_DENIED'))),
-					TasksException::TE_ACCESS_DENIED
-				);
-			}
-
 			if (isset($arNewTaskData['GROUP_ID']) && ($arNewTaskData['GROUP_ID'] > 0) && \Bitrix\Tasks\Integration\Socialnetwork::includeModule())
 			{
 				/** @noinspection PhpDynamicAsStaticMethodCallInspection */
@@ -310,6 +316,14 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 					);
 				}
 			}
+		}
+
+		if (!\Bitrix\Tasks\Access\TaskAccessController::can($executiveUserId, ActionDictionary::ACTION_TASK_SAVE, null, \Bitrix\Tasks\Access\Model\TaskModel::createFromArray($arNewTaskData)))
+		{
+			throw new TasksException(
+				serialize(array(array('text' => GetMessage('TASKS_TASK_CREATE_ACCESS_DENIED'), 'id' => 'ERROR_TASK_CREATE_ACCESS_DENIED'))),
+				TasksException::TE_ACCESS_DENIED
+			);
 		}
 
 		if ( ! array_key_exists('GUID', $arNewTaskData) )
@@ -394,22 +408,22 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		{
 			$data = array_merge($data, $overrideTaskData);
 
-			// drop unwanted
-			unset($data['ID']);
-			unset($data['GUID']);
-			unset($data['STATUS']);
-
-			// detach forum, if any
-			unset($data['FORUM_TOPIC_ID']);
-			unset($data['COMMENTS_COUNT']);
-
-			// clean dates
-			unset($data['CREATED_DATE']);
-			unset($data['CHANGED_DATE']);
-			unset($data['VIEWED_DATE']);
-			unset($data['STATUS_CHANGED_DATE']);
-
-			unset($data['CHANGED_BY']);
+			unset(
+				// drop unwanted
+				$data['ID'],
+				$data['GUID'],
+				$data['STATUS'],
+				$data['CHANGED_BY'],
+				// detach forum, if any
+				$data['FORUM_TOPIC_ID'],
+				$data['COMMENTS_COUNT'],
+				// clean dates
+				$data['CREATED_DATE'],
+				$data['CHANGED_DATE'],
+				$data['VIEWED_DATE'],
+				$data['STATUS_CHANGED_DATE'],
+				$data['ACTIVITY_DATE']
+			);
 
 			$files = array();
 			if(is_array($data['UF_TASK_WEBDAV_FILES']) && !empty($data['UF_TASK_WEBDAV_FILES']))
@@ -508,7 +522,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 					{
 						if((string) $fileId)
 						{
-							if(strpos($fileId, 'n') === 0)
+							if(mb_strpos($fileId, 'n') === 0)
 								$new[] = $fileId;
 							else
 								$old[] = $fileId;
@@ -693,19 +707,16 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 		$arTemplate = array_merge($arTemplate, $overrideTaskData);
 
-		if(!isset($arTemplate['CHECK_LIST']))
-		{
-			// get template checklist
-			$arTemplate['CHECK_LIST'] = array();
-			$res = \Bitrix\Tasks\Internals\Task\Template\CheckListTable::getList(array(
-				'filter' => array('TEMPLATE_ID' => $templateId),
-				'select' => array('IS_COMPLETE', 'SORT_INDEX', 'TITLE')
-			));
-			while($item = $res->fetch())
+		$checkListItems = TemplateCheckListFacade::getByEntityId($templateId);
+		$arTemplate['CHECK_LIST'] = array_map(
+			static function($item)
 			{
-				$arTemplate['CHECK_LIST'][] = $item;
-			}
-		}
+				$item['COPIED_ID'] = $item['ID'];
+				unset($item['ID']);
+				return $item;
+			},
+			$checkListItems
+		);
 
 		//////////////////////////////////////////////
 		//////////////////////////////////////////////
@@ -718,14 +729,15 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		$arFields = $arTemplate;
 
 		$arFields['CREATED_DATE'] = \Bitrix\Tasks\UI::formatDateTime($userTime);
-		$arFields['ACCOMPLICES']  = unserialize($arFields['ACCOMPLICES']);
-		$arFields['AUDITORS']     = unserialize($arFields['AUDITORS']);
-		$arFields['TAGS']         = unserialize($arFields['TAGS']);
-		$arFields['FILES']        = unserialize($arFields['FILES']);
-		$arFields['DEPENDS_ON']   = unserialize($arFields['DEPENDS_ON']);
-		$arFields['REPLICATE']    = 'N';
-		$arFields['CHANGED_BY']   = $arFields['CREATED_BY'];
+		$arFields['ACCOMPLICES'] = unserialize($arFields['ACCOMPLICES']);
+		$arFields['AUDITORS'] = unserialize($arFields['AUDITORS']);
+		$arFields['TAGS'] = unserialize($arFields['TAGS']);
+		$arFields['FILES'] = unserialize($arFields['FILES']);
+		$arFields['DEPENDS_ON'] = unserialize($arFields['DEPENDS_ON']);
+		$arFields['REPLICATE'] = 'N';
+		$arFields['CHANGED_BY'] = $arFields['CREATED_BY'];
 		$arFields['CHANGED_DATE'] = $arFields['CREATED_DATE'];
+		$arFields['ACTIVITY_DATE'] = $arFields['CREATED_DATE'];
 
 		if ( ! $arFields['ACCOMPLICES'] )
 		{
@@ -842,27 +854,39 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 				{
 				}
 
-				if(intval($taskId))
+				if ($taskId)
 				{
+					$commentPoster = CommentPoster::getInstance($taskId, $executiveUserId);
+					$commentPoster->enableDeferredPostMode();
+					$commentPoster->clearComments();
+
 					// increase replication count of our template
-					if($i == 0 && !!$parameters['SPAWNED_BY_AGENT'])
+					if ($i === 0 && (bool)$parameters['SPAWNED_BY_AGENT'])
 					{
-						$templateInst = new CTaskTemplates();
-						$templateInst->update($templateId, array('TPARAM_REPLICATION_COUNT' => intval($arTemplate['TPARAM_REPLICATION_COUNT']) + 1));
+						$templateInstance = new CTaskTemplates();
+						$templateInstance->update($templateId, [
+							'TPARAM_REPLICATION_COUNT' => (int)$arTemplate['TPARAM_REPLICATION_COUNT'] + 1,
+						]);
+					}
+
+					// the first task should be mom in case of multitasking
+					if ($i === 0 && $multitaskMode)
+					{
+						$multitaskTaskId = $taskId;
+					}
+
+					$checkListRoots = TaskCheckListFacade::getObjectStructuredRoots(
+						$arTemplate['CHECK_LIST'],
+						$taskId,
+						$executiveUserId
+					);
+					foreach ($checkListRoots as $root)
+					{
+						/** @var CheckList $root */
+						$root->save();
 					}
 
 					$taskInstance = static::getInstance($taskId, $executiveUserId);
-
-					// the first task should be mom in case of multitasking
-					if($multitaskMode && $i == 0)
-						$multitaskTaskId = $taskId;
-
-					// check list items for root task
-					foreach($arTemplate['CHECK_LIST'] as $item)
-					{
-						CTaskCheckListItem::add($taskInstance, $item);
-					}
-
 					$created[$taskId] = $taskInstance;
 
 					if(!empty($subTasksToCreate))
@@ -1114,33 +1138,9 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		return ($this->getData($returnEscapedData));
 	}
 
-	public function checkCanRead(array $parameters = array())
+	public function checkCanRead(array $parameters = [])
 	{
-		$byDataFetch = $parameters['CHECK_BY_DATA_FETCH'];
-
-		if($byDataFetch != 'N' && $byDataFetch !== false)
-		{
-			try
-			{
-				$test = $this->getData(false);
-			}
-			catch(Exception $e)
-			{
-				return false;
-			}
-
-			return !empty($test);
-		}
-
-		/** @noinspection PhpDeprecationInspection */
-		$arTask = CTasks::GetList(array(), array(
-			'ID' => (int) $this->taskId,
-			'CHECK_PERMISSIONS' => 'Y'
-		), array("ID"), array(
-			'USER_ID' => $this->executiveUserId
-		))->fetch();
-
-		return (is_array($arTask) && isset($arTask['ID']));
+		return $this->checkAccess(ActionDictionary::ACTION_TASK_READ);
 	}
 
 	protected function checkCanReadThrowException()
@@ -1172,8 +1172,10 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			/** @noinspection PhpDeprecationInspection */
 			$arTask = CTasks::getById($this->taskId, $bCheckPermissions, $arParams);
 
-			if ( ! (is_array($arTask) && isset($arTask['ID'])) )
+			if ( !isset($arTask['ID']) || !is_array($arTask) )
+			{
 				$this->throwExceptionNotAccessible();
+			}
 
 			$this->arTaskData = $arTask;
 		}
@@ -1350,199 +1352,66 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		return $actions;
 	}
 
-	private static function getAllowedActionsArrayInternal($executiveUserId, array $arTaskData, $bmUserRoles)
+	private static function getAllowedActionsArrayInternal($executiveUserId, array $arTaskData, $bmUserRoles = null)
 	{
-		$arBaseAllowedActions = self::getBaseAllowedActions();
-		$arActualBaseAllowedActions = $arBaseAllowedActions[$arTaskData['REAL_STATUS']];
-
-		// actions allowed on read-access
-		$arAllowedActions = array(self::ACTION_TOGGLE_FAVORITE);
-		if($arTaskData['FAVORITE'] == 'Y')
+		$taskId = (int) $arTaskData['ID'];
+		if (!self::$allowedActions[$taskId] || !array_key_exists($executiveUserId, self::$allowedActions[$taskId]))
 		{
-			$arAllowedActions[] = self::ACTION_DELETE_FAVORITE;
-		}
-		else
-		{
-			$arAllowedActions[] = self::ACTION_ADD_FAVORITE;
-		}
-
-		$mergesCount = 0;
-		if(is_array($arActualBaseAllowedActions))
-		{
-			foreach ($arActualBaseAllowedActions as $userRole => $arActions)
+			$actionMap = ActionDictionary::getLegacyActionMap();
+			$request = [];
+			foreach ($actionMap as $legacyId => $action)
 			{
-				if ($userRole & $bmUserRoles)
+				$request[$action] = [];
+			}
+
+			$taskModel = \Bitrix\Tasks\Access\Model\TaskModel::createFromId($taskId);
+			try
+			{
+				$rights = self::getAccessController((int) $executiveUserId)->batchCheck($request, $taskModel);
+			}
+			catch (\Bitrix\Main\Access\Exception\AccessException $e)
+			{
+				return [];
+			}
+
+			self::$allowedActions[$taskId][$executiveUserId] = [];
+			foreach ($actionMap as $legacyId => $action)
+			{
+				if (array_key_exists($action, $rights) && $rights[$action])
 				{
-					$arAllowedActions = array_merge($arAllowedActions, $arActions);
-					++$mergesCount;
+					self::$allowedActions[$taskId][$executiveUserId][] = $legacyId;
 				}
 			}
 		}
 
-		if ($mergesCount > 1)
-		{
-			$arAllowedActions = array_unique($arAllowedActions);
-		}
-
-		$isAdmin = User::isSuper($executiveUserId);
-
-		if (self::$bSocialNetworkModuleIncluded === null)
-		{
-			self::$bSocialNetworkModuleIncluded = CModule::IncludeModule('socialnetwork');
-		}
-
-		// Admin always can edit and remove, also implement rights from task group
-		if ( ! in_array(self::ACTION_REMOVE, $arAllowedActions, true) )
-		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
-			if (
-				$isAdmin
-				|| (
-					($arTaskData['GROUP_ID'] > 0)
-					&& self::$bSocialNetworkModuleIncluded
-					&& CSocNetFeaturesPerms::CanPerformOperation(
-					$executiveUserId, SONET_ENTITY_GROUP,
-						$arTaskData['GROUP_ID'], 'tasks', 'delete_tasks'
-					)
-				)
-			)
-			{
-				$arAllowedActions[] = self::ACTION_REMOVE;
-			}
-		}
-
-		if ( ! in_array(self::ACTION_EDIT, $arAllowedActions, true) )
-		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
-			if (
-				$isAdmin
-				|| (
-					($arTaskData['GROUP_ID'] > 0)
-					&& self::$bSocialNetworkModuleIncluded
-					&& CSocNetFeaturesPerms::CanPerformOperation(
-						$executiveUserId, SONET_ENTITY_GROUP,
-						$arTaskData['GROUP_ID'], 'tasks', 'edit_tasks'
-					)
-				)
-			)
-			{
-				$arAllowedActions[] = self::ACTION_EDIT;
-			}
-		}
-
-		// Precache result of slow 'in_array' function
-		$bCanEdit = in_array(self::ACTION_EDIT, $arAllowedActions, true);
-
-		// User can change deadline, if ...
-		if (
-			$isAdmin
-			// he can edit task
-			|| $bCanEdit
-			|| (
-				// or this options is set to Y and ...
-				($arTaskData['ALLOW_CHANGE_DEADLINE'] === 'Y')
-				// current user is responsible or current user is manager of responsible
-				&& (self::ROLE_RESPONSIBLE & $bmUserRoles)
-			)
-		)
-		{
-			$arAllowedActions[] = self::ACTION_CHANGE_DEADLINE;
-		}
-
-		// If user can edit task, he can also add elapsed time and checklist items
-		if ($isAdmin || $bCanEdit)
-		{
-			$arAllowedActions[] = self::ACTION_ELAPSED_TIME_ADD;
-			$arAllowedActions[] = self::ACTION_CHECKLIST_ADD_ITEMS;
-			$arAllowedActions[] = self::ACTION_CHECKLIST_REORDER_ITEMS;
-		}
-
-		// originator can be changed by admin, director or task originator himself
-		if (
-			$isAdmin
-			|| $bCanEdit
-			|| (self::ROLE_DIRECTOR & $bmUserRoles)
-		)
-		{
-			$arAllowedActions[] = self::ACTION_CHANGE_DIRECTOR;
-		}
-
-		$status = (int)$arTaskData['REAL_STATUS'];
-
-		if ($isAdmin && $status !== CTasks::STATE_COMPLETED)
-		{
-			if ($status == CTasks::STATE_SUPPOSEDLY_COMPLETED)
-			{
-				$arAllowedActions[] = self::ACTION_APPROVE;
-				$arAllowedActions[] = self::ACTION_DISAPPROVE;
-			}
-			else
-			{
-				$arAllowedActions[] = self::ACTION_COMPLETE;
-			}
-		}
-
-		if (
-			$isAdmin &&
-			in_array($status, [CTasks::STATE_SUPPOSEDLY_COMPLETED, CTasks::STATE_COMPLETED, CTasks::STATE_DEFERRED]) &&
-			!in_array(self::ACTION_RENEW, $arAllowedActions, true)
-		)
-		{
-			$arAllowedActions[] = self::ACTION_RENEW;
-		}
-
-		if (
-			$isAdmin &&
-			in_array($status, [CTasks::STATE_PENDING, CTasks::STATE_IN_PROGRESS]) &&
-			!in_array(self::ACTION_DEFER, $arAllowedActions, true)
-		)
-		{
-			$arAllowedActions[] = self::ACTION_DEFER;
-		}
-
-		if ($arTaskData['ALLOW_TIME_TRACKING'] === 'Y')
-		{
-			// User can do time tracking, if he is participant in the task
-			if (
-				(
-					($executiveUserId == $arTaskData['RESPONSIBLE_ID'])
-					|| ( ! empty($arTaskData['ACCOMPLICES']) && in_array($executiveUserId, $arTaskData['ACCOMPLICES']) )
-				)
-				&& // and status is not "completed"
-				($arTaskData['REAL_STATUS'] != CTasks::STATE_COMPLETED && $arTaskData['REAL_STATUS'] != CTasks::STATE_SUPPOSEDLY_COMPLETED)
-			)
-			{
-				$arAllowedActions[] = self::ACTION_START_TIME_TRACKING;
-			}
-		}
-
-		return array_values(array_unique($arAllowedActions));
+		return self::$allowedActions[$taskId][$executiveUserId];
 	}
 
 	public static function getAllowedActionsMap()
 	{
 		static $arStringsMap = array(
-			self::ACTION_ACCEPT     => 'ACTION_ACCEPT',
-			self::ACTION_DECLINE    => 'ACTION_DECLINE',
-			self::ACTION_COMPLETE   => 'ACTION_COMPLETE',
-			self::ACTION_APPROVE    => 'ACTION_APPROVE',
-			self::ACTION_DISAPPROVE => 'ACTION_DISAPPROVE',
-			self::ACTION_START      => 'ACTION_START',
-			self::ACTION_PAUSE      => 'ACTION_PAUSE',
-			self::ACTION_DELEGATE   => 'ACTION_DELEGATE',
-			self::ACTION_REMOVE     => 'ACTION_REMOVE',
-			self::ACTION_EDIT       => 'ACTION_EDIT',
-			self::ACTION_DEFER      => 'ACTION_DEFER',
-			self::ACTION_RENEW      => 'ACTION_RENEW',
-			self::ACTION_CREATE     => 'ACTION_CREATE',
-			self::ACTION_CHANGE_DEADLINE        => 'ACTION_CHANGE_DEADLINE',
-			self::ACTION_CHECKLIST_ADD_ITEMS    => 'ACTION_CHECKLIST_ADD_ITEMS',
+			self::ACTION_ACCEPT     				=> 'ACTION_ACCEPT',
+			self::ACTION_DECLINE    				=> 'ACTION_DECLINE',
+			self::ACTION_COMPLETE   				=> 'ACTION_COMPLETE',
+			self::ACTION_APPROVE    				=> 'ACTION_APPROVE',
+			self::ACTION_DISAPPROVE 				=> 'ACTION_DISAPPROVE',
+			self::ACTION_START      				=> 'ACTION_START',
+			self::ACTION_PAUSE      				=> 'ACTION_PAUSE',
+			self::ACTION_DELEGATE   				=> 'ACTION_DELEGATE',
+			self::ACTION_REMOVE     				=> 'ACTION_REMOVE',
+			self::ACTION_EDIT       				=> 'ACTION_EDIT',
+			self::ACTION_DEFER      				=> 'ACTION_DEFER',
+			self::ACTION_RENEW      				=> 'ACTION_RENEW',
+			self::ACTION_CREATE     				=> 'ACTION_CREATE',
+			self::ACTION_CHANGE_DEADLINE        	=> 'ACTION_CHANGE_DEADLINE',
+			self::ACTION_CHECKLIST_ADD_ITEMS    	=> 'ACTION_CHECKLIST_ADD_ITEMS',
 			self::ACTION_CHECKLIST_REORDER_ITEMS    => 'ACTION_CHECKLIST_REORDER_ITEMS',
-			self::ACTION_CHANGE_DIRECTOR        => 'ACTION_CHANGE_DIRECTOR',
-			self::ACTION_ELAPSED_TIME_ADD       => 'ACTION_ELAPSED_TIME_ADD',
-			self::ACTION_START_TIME_TRACKING    => 'ACTION_START_TIME_TRACKING',
-			self::ACTION_ADD_FAVORITE           => 'ACTION_ADD_FAVORITE',
-			self::ACTION_DELETE_FAVORITE        => 'ACTION_DELETE_FAVORITE',
+			self::ACTION_CHANGE_DIRECTOR        	=> 'ACTION_CHANGE_DIRECTOR',
+			self::ACTION_ELAPSED_TIME_ADD       	=> 'ACTION_ELAPSED_TIME_ADD',
+			self::ACTION_START_TIME_TRACKING    	=> 'ACTION_START_TIME_TRACKING',
+			self::ACTION_ADD_FAVORITE           	=> 'ACTION_ADD_FAVORITE',
+			self::ACTION_DELETE_FAVORITE        	=> 'ACTION_DELETE_FAVORITE',
+			self::ACTION_RATE						=> 'ACTION_RATE'
 		);
 
 		return $arStringsMap;
@@ -1588,34 +1457,45 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		return ($arResult);
 	}
 
-
-	public function isActionAllowed($actionId)
+	private static function getAccessController(int $executiveUserId): \Bitrix\Main\Access\AccessibleController
 	{
-		$bActionAllowed = false;
+		if (!self::$accessController || !array_key_exists($executiveUserId, self::$accessController))
+		{
+			self::$accessController[$executiveUserId] = new \Bitrix\Tasks\Access\TaskAccessController((int) $executiveUserId);
+		}
+		return self::$accessController[$executiveUserId];
+	}
+
+	public function checkAccess($action, $params = null): bool
+	{
+		$taskModel = \Bitrix\Tasks\Access\Model\TaskModel::createFromId((int) $this->getId());
 
 		try
 		{
-			if (in_array(intval($actionId), $this->getAllowedActions(), true))
-			{
-				$bActionAllowed = true;
-			}
+			$res = self::getAccessController((int) $this->executiveUserId)->check($action, $taskModel, $params);
 		}
-		catch(\TasksException $e)
+		catch (\Bitrix\Main\Access\Exception\AccessException $e)
 		{
-			$bActionAllowed = false;
+			$res = false;
 		}
 
-		return ($bActionAllowed);
+		return $res;
 	}
 
-	public function isActionAllowedForUser($actionId, $userId = 0)
+	/**
+	 * @param $actionId
+	 * @return bool|mixed
+	 * @deprecated since 20.6.0
+	 */
+	public function isActionAllowed($actionId)
 	{
-		$bActionAllowed = false;
+		$action = ActionDictionary::getActionByLegacyId($actionId);
+		if (!$action)
+		{
+			return false;
+		}
 
-		if (in_array(intval($actionId), $this->getAllowedActions(), true))
-			$bActionAllowed = true;
-
-		return ($bActionAllowed);
+		return $this->checkAccess($action);
 	}
 
 	/**
@@ -1931,7 +1811,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		CTaskAssert::assertLaxIntegers($fileId);
 		CTaskAssert::assert($fileId > 0);
 
-		if ( ! $this->isActionAllowed(self::ACTION_EDIT) )
+		if ( ! $this->checkAccess(ActionDictionary::ACTION_TASK_EDIT) )
 		{
 			CTaskAssert::log(
 				'access denied while trying to remove file: fileId=' . $fileId
@@ -2064,6 +1944,14 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 			if(is_array($arTasksIDs) && !empty($arTasksIDs))
 			{
+				if (in_array('NEW_COMMENTS_COUNT', $arSelect, true))
+				{
+					$newComments = Comments\Task::getNewCommentsCountForTasks($arTasksIDs, $userId);
+					foreach ($newComments as $taskId => $commentsCount)
+					{
+						$arItemsData[$taskId]['NEW_COMMENTS_COUNT'] = $commentsCount;
+					}
+				}
 
 				if(in_array('AUDITORS', $arSelect) || in_array('ACCOMPLICES', $arSelect) || in_array('*', $arSelect))
 				{
@@ -2184,227 +2072,222 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		}
 	}
 
-	private function proceedAction($actionId, $arActionArguments = null)
+	private function proceedActionEdit($arActionArguments, $arTaskData)
 	{
-		$actionId = (int) $actionId;
+		$this->lastOperationResultData['UPDATE'] = array();
 
-		if ($actionId == self::ACTION_ADD_FAVORITE || $actionId == self::ACTION_DELETE_FAVORITE || $actionId == self::ACTION_TOGGLE_FAVORITE)
+		$arFields = $arActionArguments['FIELDS'];
+		$arParams = $arActionArguments['PARAMETERS'];
+		if(!is_array($arParams))
 		{
-			if(!is_array($arActionArguments))
-				$arActionArguments = array();
-
-			$addChildren = true;
-			if(array_key_exists('AFFECT_CHILDREN', $arActionArguments))
-			{
-				$addChildren = $arActionArguments['AFFECT_CHILDREN'] == 'Y' || $arActionArguments['AFFECT_CHILDREN'] === true;
-			}
-			$tellSocnet = true;
-			if(array_key_exists('TELL_SOCNET', $arActionArguments))
-			{
-				$tellSocnet = $arActionArguments['TELL_SOCNET'] == 'Y' || $arActionArguments['TELL_SOCNET'] === true;
-			}
-
-			switch($actionId)
-			{
-				case self::ACTION_ADD_FAVORITE:
-					$f = 'add';
-					break;
-				case self::ACTION_DELETE_FAVORITE:
-					$f = 'delete';
-					break;
-				default:
-					$f = 'toggle';
-					break;
-			}
-
-			// ensure we have access to the task
-			$this->checkCanReadThrowException();
-
-			// drop cache
-			$this->markCacheAsDirty();
-
-			// here could be trouble: socnet doesn`t know anything aboult child tasks
-			// in case of a ticket came, get all child tasks IDs here, pass ID list to \Bitrix\Tasks\Integration\Socialnetwork\Task::toggleFavorites()
-			// and also pass ID list as a cache to FavoriteTable::$f to avoid calling same query twice
-
-			$res = FavoriteTable::$f(array(
-				'TASK_ID' => $this->getId(),
-				'USER_ID' => $this->executiveUserId
-			), array(
-				'AFFECT_CHILDREN' => $addChildren
-			));
-
-			if(!$res->isSuccess())
-			{
-				static::throwExceptionVerbose($res->getErrors());
-			}
-
-			if($actionId == self::ACTION_TOGGLE_FAVORITE)
-			{
-				$result = ($res instanceof \Bitrix\Main\Entity\AddResult);
-				$add = $result;
-			}
-			else
-			{
-				$result = true;
-				$add = $actionId == self::ACTION_ADD_FAVORITE;
-			}
-
-			foreach(GetModuleEvents('tasks', 'OnTaskToggleFavorite', true) as $arEvent)
-			{
-				ExecuteModuleEventEx($arEvent, array($this->getId(), $this->executiveUserId, $add));
-			}
-
-			if($tellSocnet)
-			{
-				\Bitrix\Tasks\Integration\Socialnetwork\Task::toggleFavorites(array(
-					'TASK_ID' => $this->getId(),
-					'USER_ID' => $this->executiveUserId,
-					'OPERATION' => $add ? 'ADD' : 'DELETE'
-				));
-			}
-
-			return $result;
+			$arParams = array();
 		}
 
-		$arTaskData = $this->getData($bSpecialChars = false);
-		$arNewFields = null;
+		$actionChangeDeadlineFields = ['ID', 'DEADLINE', 'START_DATE_PLAN', 'END_DATE_PLAN', 'DURATION'];
+		$arGivenFieldsNames = array_keys($arFields);
 
-		if ($actionId == self::ACTION_REMOVE)
+		$newTask = \Bitrix\Tasks\Access\Model\TaskModel::createFromArray($arFields, $arTaskData);
+
+		if ($arGivenFieldsNames === array_intersect($arGivenFieldsNames, $actionChangeDeadlineFields))
 		{
-			if (!$this->isActionAllowed(self::ACTION_REMOVE))
-			{
-				throw new TasksException(
-					Loc::getMessage('TASKS_ACCESS_DENIED_TO_TASK_DELETE'),
-					TasksException::TE_ACTION_NOT_ALLOWED | TasksException::TE_ACCESS_DENIED
-				);
-			}
-
-			$this->markCacheAsDirty();
-
-			$arParams = $arActionArguments['PARAMETERS'];
-
-			/** @noinspection PhpDeprecationInspection */
-			if (CTasks::Delete($this->taskId, $arParams) !== true)
-			{
-				throw new TasksException(
-					'Cannot delete task '.$this->taskId,
-					TasksException::TE_ACTION_FAILED_TO_BE_PROCESSED
-				);
-			}
-
-			return;
-		}
-		elseif ($actionId == self::ACTION_EDIT)
-		{
-			$this->lastOperationResultData['UPDATE'] = array();
-
-			$arFields = $arActionArguments['FIELDS'];
-			$arParams = $arActionArguments['PARAMETERS'];
-			if(!is_array($arParams))
-			{
-				$arParams = array();
-			}
-
-			if (isset($arFields['ID']))
-				unset($arFields['ID']);
-
-			$arParams = array_merge($arParams, array(
-				'USER_ID'               => $this->executiveUserId,
-				'CHECK_RIGHTS_ON_FILES' => true
-			));
-
-			$actionChangeDeadlineFields = array('DEADLINE', 'START_DATE_PLAN', 'END_DATE_PLAN', 'DURATION');
-			$arGivenFieldsNames = array_keys($arFields);
-
-			if (
-				array_key_exists('CREATED_BY', $arFields) &&
-				(
-					!$this->isActionAllowed(self::ACTION_CHANGE_DIRECTOR) ||
-					(
-						count($arFields) == 1 &&
-						!User::isSuper($this->executiveUserId) &&
-						(int)$arTaskData['RESPONSIBLE_ID'] !== $this->executiveUserId
-					)
-				)
-			)
-			{
-				throw new TasksException(
-					GetMessage('TASKS_ACCESS_DENIED_TO_CREATOR_UPDATE'),
-					TasksException::TE_ACTION_NOT_ALLOWED
-				);
-			}
-
-			if (
-				// is there fields to be checked for ACTION_CHANGE_DEADLINE?
-				array_intersect($actionChangeDeadlineFields, $arGivenFieldsNames)
-				&& ( ! $this->isActionAllowed(self::ACTION_CHANGE_DEADLINE) )
-			)
+			if (!$this->checkAccess(ActionDictionary::ACTION_TASK_DEADLINE))
 			{
 				throw new TasksException(
 					GetMessage('TASKS_ACCESS_DENIED_TO_DEADLINE_UPDATE'),
 					TasksException::TE_ACTION_NOT_ALLOWED
 				);
 			}
-
-			//region DeadlineChangeVariable
-			$deadlineMaxData = $arTaskData['ALLOW_CHANGE_DEADLINE_MAXTIME'];
-			$deadlineMaxCount = $arTaskData['ALLOW_CHANGE_DEADLINE_COUNT'];
-
-			//endregion
-
-			// Get list of fields, except just checked above
-			$arGeneralFields = array_diff(
-				$arGivenFieldsNames,
-				array_merge($actionChangeDeadlineFields, array('CREATED_BY'))
+		}
+		elseif (!$this->checkAccess(ActionDictionary::ACTION_TASK_SAVE, $newTask))
+		{
+			throw new TasksException(
+				GetMessage('TASKS_ACCESS_DENIED_TO_TASK_UPDATE'),
+				TasksException::TE_ACTION_NOT_ALLOWED
 			);
+		}
 
-			// Is there is something more for update?
-			if (!empty($arGeneralFields) && !(count($arGivenFieldsNames) == 1 && $arGivenFieldsNames[0] == 'STATUS'))
-			{
-				if (!$this->isActionAllowed(self::ACTION_EDIT))
-				{
-					throw new TasksException(
-						GetMessage('TASKS_ACCESS_DENIED_TO_TASK_UPDATE'),
-						TasksException::TE_ACTION_NOT_ALLOWED
-					);
-				}
-			}
+		if (isset($arFields['ID']))
+			unset($arFields['ID']);
 
-			$this->checkProjectDates($arTaskData, $arFields); //
+		$arParams = array_merge($arParams, array(
+			'USER_ID'               => $this->executiveUserId,
+			'CHECK_RIGHTS_ON_FILES' => true
+		));
 
+		$this->checkProjectDates($arTaskData, $arFields); //
+
+		$this->markCacheAsDirty();
+		$o = new CTasks();
+		/** @noinspection PhpDeprecationInspection */
+		if ($o->update($this->taskId, $arFields, $arParams) !== true)
+		{
 			$this->markCacheAsDirty();
-			$o = new CTasks();
-			/** @noinspection PhpDeprecationInspection */
-			if ($o->update($this->taskId, $arFields, $arParams) !== true)
-			{
-				$this->markCacheAsDirty();
-				static::throwExceptionVerbose($o->GetErrors());
-			}
-			$this->markCacheAsDirty();
-			$this->lastOperationResultData['UPDATE'] = $o->getLastOperationResultData();
+			static::throwExceptionVerbose($o->GetErrors());
+		}
+		$this->markCacheAsDirty();
+		$this->lastOperationResultData['UPDATE'] = $o->getLastOperationResultData();
 
-			$prevData = $o->getPreviousData();
-			if($arActionArguments['SUBTASKS_CHANGE_GROUP'] !== false &&
-				array_key_exists('GROUP_ID', $arFields) &&
-				intval($prevData['GROUP_ID']) != intval($arFields['GROUP_ID'])
-			)
-			{
-				$this->moveSubTasksToGroup($arFields['GROUP_ID']);
-			}
+		$prevData = $o->getPreviousData();
+		if($arActionArguments['SUBTASKS_CHANGE_GROUP'] !== false &&
+			array_key_exists('GROUP_ID', $arFields) &&
+			intval($prevData['GROUP_ID']) != intval($arFields['GROUP_ID'])
+		)
+		{
+			$this->moveSubTasksToGroup($arFields['GROUP_ID']);
+		}
 
-			return;
+		return;
+	}
+
+	private function proceedActionFavorite($arActionArguments)
+	{
+		if(!is_array($arActionArguments))
+			$arActionArguments = array();
+
+		$addChildren = true;
+		if(array_key_exists('AFFECT_CHILDREN', $arActionArguments))
+		{
+			$addChildren = $arActionArguments['AFFECT_CHILDREN'] == 'Y' || $arActionArguments['AFFECT_CHILDREN'] === true;
+		}
+		$tellSocnet = true;
+		if(array_key_exists('TELL_SOCNET', $arActionArguments))
+		{
+			$tellSocnet = $arActionArguments['TELL_SOCNET'] == 'Y' || $arActionArguments['TELL_SOCNET'] === true;
+		}
+
+		$f = 'toggle';
+
+		// ensure we have access to the task
+		$this->checkCanReadThrowException();
+
+		// drop cache
+		$this->markCacheAsDirty();
+
+		// here could be trouble: socnet doesn`t know anything aboult child tasks
+		// in case of a ticket came, get all child tasks IDs here, pass ID list to \Bitrix\Tasks\Integration\Socialnetwork\Task::toggleFavorites()
+		// and also pass ID list as a cache to FavoriteTable::$f to avoid calling same query twice
+
+		$res = FavoriteTable::$f(array(
+			'TASK_ID' => $this->getId(),
+			'USER_ID' => $this->executiveUserId
+		), array(
+			'AFFECT_CHILDREN' => $addChildren
+		));
+
+		if(!$res->isSuccess())
+		{
+			static::throwExceptionVerbose($res->getErrors());
+		}
+
+		$result = ($res instanceof \Bitrix\Main\Entity\AddResult);
+		$add = $result;
+
+		foreach(GetModuleEvents('tasks', 'OnTaskToggleFavorite', true) as $arEvent)
+		{
+			ExecuteModuleEventEx($arEvent, array($this->getId(), $this->executiveUserId, $add));
+		}
+
+		if($tellSocnet)
+		{
+			\Bitrix\Tasks\Integration\Socialnetwork\Task::toggleFavorites(array(
+				'TASK_ID' => $this->getId(),
+				'USER_ID' => $this->executiveUserId,
+				'OPERATION' => $add ? 'ADD' : 'DELETE'
+			));
+		}
+
+		return $result;
+	}
+
+	private function proceedActionRemove($arActionArguments)
+	{
+		if (!$this->checkAccess(ActionDictionary::ACTION_TASK_REMOVE))
+		{
+			throw new TasksException(
+				Loc::getMessage('TASKS_ACCESS_DENIED_TO_TASK_DELETE'),
+				TasksException::TE_ACTION_NOT_ALLOWED | TasksException::TE_ACCESS_DENIED
+			);
+		}
+
+		$this->markCacheAsDirty();
+
+		$arParams = $arActionArguments['PARAMETERS'];
+
+		/** @noinspection PhpDeprecationInspection */
+		if (CTasks::Delete($this->taskId, $arParams) !== true)
+		{
+			throw new TasksException(
+				'Cannot delete task '.$this->taskId,
+				TasksException::TE_ACTION_FAILED_TO_BE_PROCESSED
+			);
+		}
+
+		return;
+	}
+
+	private function proceedAction($actionId, $arActionArguments = null)
+	{
+		$accessParams = null;
+
+		$actionId = ActionDictionary::getActionByLegacyId((int) $actionId);
+
+		if (
+			isset($arActionArguments['FIELDS']['RESPONSIBLE_ID'])
+			&& count($arActionArguments['FIELDS']) === 1
+		)
+		{
+			$actionId = ActionDictionary::ACTION_TASK_CHANGE_RESPONSIBLE;
+			$arActionArguments['RESPONSIBLE_ID'] = $arActionArguments['FIELDS']['RESPONSIBLE_ID'];
+		}
+
+		if (
+			isset($arActionArguments['FIELDS']['MARK'])
+			&& count($arActionArguments['FIELDS']) === 1
+		)
+		{
+			$actionId = ActionDictionary::ACTION_TASK_RATE;
+		}
+
+		if (
+			isset($arActionArguments['FIELDS']['ACCOMPLICES'])
+			&& count($arActionArguments['FIELDS']) === 1
+		)
+		{
+			$actionId = ActionDictionary::ACTION_TASK_CHANGE_ACCOMPLICES;
+		}
+
+		if (
+			in_array($actionId, [
+				ActionDictionary::ACTION_TASK_FAVORITE,
+				ActionDictionary::ACTION_TASK_FAVORITE_ADD,
+				ActionDictionary::ACTION_TASK_FAVORITE_DELETE
+			])
+		)
+		{
+			return $this->proceedActionFavorite($arActionArguments);
+		}
+
+		$arTaskData = $this->getData($bSpecialChars = false);
+		$arNewFields = null;
+
+		if ($actionId === ActionDictionary::ACTION_TASK_REMOVE)
+		{
+			return $this->proceedActionRemove($arActionArguments);
+		}
+		elseif ($actionId === ActionDictionary::ACTION_TASK_EDIT)
+		{
+			return $this->proceedActionEdit($arActionArguments, $arTaskData);
 		}
 
 		$skipActionCheck = false;
 
 		switch ($actionId)
 		{
-			case self::ACTION_ACCEPT:
+			case ActionDictionary::ACTION_TASK_ACCEPT:
 				$arNewFields['STATUS'] = CTasks::STATE_PENDING;
 			break;
 
-			case self::ACTION_DECLINE:
+			case ActionDictionary::ACTION_TASK_DECLINE:
 				$arNewFields['STATUS'] = CTasks::STATE_DECLINED;
 
 				if (isset($arActionArguments['DECLINE_REASON']))
@@ -2413,7 +2296,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 					$arNewFields['DECLINE_REASON'] = '';
 			break;
 
-			case self::ACTION_COMPLETE:
+			case ActionDictionary::ACTION_TASK_COMPLETE:
 				$isAdmin = User::isSuper($this->executiveUserId);
 				$isCreator = $arTaskData['CREATED_BY'] == $this->executiveUserId;
 				$isOnePersonTask = $arTaskData['CREATED_BY'] == $arTaskData['RESPONSIBLE_ID'];
@@ -2433,27 +2316,28 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 				if (($isAdmin || $isCreator || $isCreatorDirector) &&
 					$arTaskData['TASK_CONTROL'] == 'Y' &&
-					$this->isActionAllowed(self::ACTION_APPROVE) &&
-					!$this->isActionAllowed($actionId))
+					$this->checkAccess(ActionDictionary::ACTION_TASK_APPROVE) &&
+					!$this->checkAccess($actionId))
 				{
 					$skipActionCheck = true;
 				}
 
 				break;
 
-			case self::ACTION_APPROVE:
+			case ActionDictionary::ACTION_TASK_APPROVE:
 				$arNewFields['STATUS'] = CTasks::STATE_COMPLETED;
 			break;
 
-			case self::ACTION_START:
+			case ActionDictionary::ACTION_TASK_START:
 				$arNewFields['STATUS'] = CTasks::STATE_IN_PROGRESS;
 			break;
 
-			case self::ACTION_PAUSE:
+			case ActionDictionary::ACTION_TASK_PAUSE:
 				$arNewFields['STATUS'] = CTasks::STATE_PENDING;
 			break;
 
-			case self::ACTION_DELEGATE:
+			case ActionDictionary::ACTION_TASK_DELEGATE:
+			case ActionDictionary::ACTION_TASK_CHANGE_RESPONSIBLE:
 				$newResponsibleId = $arActionArguments['RESPONSIBLE_ID'];
 				$oldResponsibleId = $arTaskData['RESPONSIBLE_ID'];
 
@@ -2480,14 +2364,36 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 				{
 					$arNewFields['AUDITORS'] = [$oldResponsibleId];
 				}
+
+				$accessParams = \Bitrix\Tasks\Access\Model\TaskModel::createFromArray($arNewFields, $arTaskData);
+
 			break;
 
-			case self::ACTION_DEFER:
+			case ActionDictionary::ACTION_TASK_CHANGE_ACCOMPLICES:
+				if (!$arNewFields || !array_key_exists('ACCOMPLICES', $arNewFields))
+				{
+					$arNewFields['ACCOMPLICES'] = [];
+				}
+
+				foreach ($arActionArguments['FIELDS']['ACCOMPLICES'] as $acc)
+				{
+					$arNewFields['ACCOMPLICES'][] = $acc;
+				}
+
+				$accessParams = \Bitrix\Tasks\Access\Model\TaskModel::createFromArray($arNewFields, $arTaskData);
+
+			break;
+
+			case ActionDictionary::ACTION_TASK_RATE:
+				$arNewFields['MARK'] = $arActionArguments['FIELDS']['MARK'];
+			break;
+
+			case ActionDictionary::ACTION_TASK_DEFER:
 				$arNewFields['STATUS'] = CTasks::STATE_DEFERRED;
 			break;
 
-			case self::ACTION_DISAPPROVE:
-			case self::ACTION_RENEW:
+			case ActionDictionary::ACTION_TASK_DISAPPROVE:
+			case ActionDictionary::ACTION_TASK_RENEW:
 				$arNewFields['STATUS'] = CTasks::STATE_PENDING;
 			break;
 
@@ -2525,7 +2431,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 		if ($bNeedUpdate)
 		{
-			if (!$this->isActionAllowed($actionId) && !$skipActionCheck)
+			if (!$this->checkAccess($actionId, $accessParams) && !$skipActionCheck)
 			{
 				throw new TasksException(Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'), TasksException::TE_ACTION_NOT_ALLOWED | TasksException::TE_ACCESS_DENIED);
 			}
@@ -2792,189 +2698,6 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		);
 	}
 
-	// get state graph for each user role
-	private static function getBaseAllowedActions()
-	{
-		static $arBaseActionsMap = null;
-
-		// Init just once per hit
-		if ($arBaseActionsMap === null)
-		{
-			$arBaseActionsMap = array(
-				CTasks::STATE_NEW => array(
-					self::ROLE_DIRECTOR => array(
-						self::ACTION_EDIT,
-						self::ACTION_REMOVE,
-						self::ACTION_COMPLETE
-					),
-					self::ROLE_RESPONSIBLE => array(
-						self::ACTION_ACCEPT,
-						self::ACTION_START,
-						self::ACTION_DELEGATE
-					),
-					self::ROLE_ACCOMPLICE => array(
-					),
-					self::ROLE_AUDITOR => array(
-					)
-				),
-				CTasks::STATE_PENDING => array(
-					self::ROLE_DIRECTOR => array(
-						self::ACTION_EDIT,
-						self::ACTION_REMOVE,
-						self::ACTION_COMPLETE
-					),
-					self::ROLE_RESPONSIBLE => array(
-						self::ACTION_START,
-						self::ACTION_DELEGATE,
-						self::ACTION_DEFER,
-						self::ACTION_COMPLETE
-					),
-					self::ROLE_ACCOMPLICE => array(
-						self::ACTION_START,
-						self::ACTION_DEFER,
-						self::ACTION_COMPLETE
-					),
-					self::ROLE_AUDITOR => array(
-					)
-				),
-				CTasks::STATE_IN_PROGRESS => array(
-					self::ROLE_DIRECTOR => array(
-						self::ACTION_EDIT,
-						self::ACTION_REMOVE,
-						self::ACTION_COMPLETE
-					),
-					self::ROLE_RESPONSIBLE => array(
-						self::ACTION_PAUSE,
-						self::ACTION_DELEGATE,
-						self::ACTION_DEFER,
-						self::ACTION_COMPLETE
-					),
-					self::ROLE_ACCOMPLICE => array(
-						self::ACTION_PAUSE,
-						self::ACTION_DEFER,
-						self::ACTION_COMPLETE
-					),
-					self::ROLE_AUDITOR => array(
-					)
-				),
-				CTasks::STATE_SUPPOSEDLY_COMPLETED => array(
-					self::ROLE_DIRECTOR => array(
-						self::ACTION_EDIT,
-						self::ACTION_REMOVE,
-						self::ACTION_APPROVE,
-						self::ACTION_DISAPPROVE
-					),
-					self::ROLE_RESPONSIBLE => array(
-						self::ACTION_RENEW,
-					),
-					self::ROLE_ACCOMPLICE => array(
-						self::ACTION_RENEW,
-					),
-					self::ROLE_AUDITOR => array(
-					)
-				),
-				CTasks::STATE_COMPLETED => array(
-					self::ROLE_DIRECTOR => array(
-						self::ACTION_EDIT,
-						self::ACTION_REMOVE,
-						self::ACTION_RENEW
-					),
-					self::ROLE_RESPONSIBLE => array(
-						self::ACTION_RENEW,
-						self::ACTION_DELEGATE,
-					),
-					self::ROLE_ACCOMPLICE => array(
-						self::ACTION_RENEW,
-					),
-					self::ROLE_AUDITOR => array(
-					)
-				),
-				CTasks::STATE_DEFERRED => array(
-					self::ROLE_DIRECTOR => array(
-						self::ACTION_EDIT,
-						self::ACTION_REMOVE,
-						self::ACTION_COMPLETE
-					),
-					self::ROLE_RESPONSIBLE => array(
-						self::ACTION_START,
-						self::ACTION_RENEW,
-						self::ACTION_DELEGATE,
-						self::ACTION_COMPLETE,
-					),
-					self::ROLE_ACCOMPLICE => array(
-						self::ACTION_START,
-						self::ACTION_RENEW,
-						self::ACTION_COMPLETE
-					),
-					self::ROLE_AUDITOR => array(
-					)
-				),
-				CTasks::STATE_DECLINED => array(
-					self::ROLE_DIRECTOR => array(
-						self::ACTION_EDIT,
-						self::ACTION_REMOVE,
-						self::ACTION_COMPLETE,
-						self::ACTION_RENEW
-					),
-					self::ROLE_RESPONSIBLE => array(
-						self::ACTION_DELEGATE
-					),
-					self::ROLE_ACCOMPLICE => array(
-					),
-					self::ROLE_AUDITOR => array(
-					)
-				)
-			);
-
-			$arAnyStatusActionsMap = array(
-				self::ROLE_DIRECTOR => array(
-					self::ACTION_CHECKLIST_ADD_ITEMS,
-					self::ACTION_CHECKLIST_REORDER_ITEMS,
-					self::ACTION_ELAPSED_TIME_ADD,
-					self::ACTION_CHANGE_DIRECTOR,
-					self::ACTION_CHANGE_DEADLINE
-				),
-				self::ROLE_RESPONSIBLE => array(
-					self::ACTION_CHECKLIST_ADD_ITEMS,
-					self::ACTION_CHECKLIST_REORDER_ITEMS,
-					self::ACTION_ELAPSED_TIME_ADD
-				),
-				self::ROLE_ACCOMPLICE => array(
-					self::ACTION_CHECKLIST_ADD_ITEMS,
-					self::ACTION_CHECKLIST_REORDER_ITEMS,
-					self::ACTION_ELAPSED_TIME_ADD
-				),
-				self::ROLE_AUDITOR => array(
-				)
-			);
-
-			foreach (array_keys($arBaseActionsMap) as $status)
-			{
-				$arBaseActionsMap[$status][self::ROLE_DIRECTOR] = array_merge(
-					$arBaseActionsMap[$status][self::ROLE_DIRECTOR],
-					$arAnyStatusActionsMap[self::ROLE_DIRECTOR]
-				);
-				$arBaseActionsMap[$status][self::ROLE_RESPONSIBLE] = array_merge(
-					$arBaseActionsMap[$status][self::ROLE_RESPONSIBLE],
-					$arAnyStatusActionsMap[self::ROLE_RESPONSIBLE]
-				);
-				$arBaseActionsMap[$status][self::ROLE_ACCOMPLICE] = array_merge(
-					$arBaseActionsMap[$status][self::ROLE_ACCOMPLICE],
-					$arAnyStatusActionsMap[self::ROLE_ACCOMPLICE]
-				);
-				$arBaseActionsMap[$status][self::ROLE_AUDITOR] = array_merge(
-					$arBaseActionsMap[$status][self::ROLE_AUDITOR],
-					$arAnyStatusActionsMap[self::ROLE_AUDITOR]
-				);
-			}
-
-			foreach(GetModuleEvents('tasks', 'OnBaseAllowedActionsMapInit', true) as $arEvent)
-				ExecuteModuleEventEx($arEvent, array(&$arBaseActionsMap));
-		}
-
-		return ($arBaseActionsMap);
-	}
-
 	// task dependence mechanism
 
 	/**
@@ -3029,10 +2752,10 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			throw new ActionRestrictedException(Loc::getMessage('TASK_CANT_ADD_LINK'), $exceptionInfo);
 		}
 
-		if($this->isActionAllowed(self::ACTION_CHANGE_DEADLINE))
+		if($this->checkAccess(ActionDictionary::ACTION_TASK_DEADLINE))
 		{
 			$parentTask = CTaskItem::getInstanceFromPool($parentId, $this->executiveUserId);
-			if($parentTask->isActionAllowed(self::ACTION_CHANGE_DEADLINE))
+			if($parentTask->checkAccess(ActionDictionary::ACTION_TASK_DEADLINE))
 			{
 				// DependenceTable does not care about PARENT_ID relations and other restrictions except
 				// those which may compromise dependence mechanism logic
@@ -3134,10 +2857,10 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			)
 		);
 
-		if($this->isActionAllowed(self::ACTION_CHANGE_DEADLINE))
+		if($this->checkAccess(ActionDictionary::ACTION_TASK_DEADLINE))
 		{
 			$parentTask = CTaskItem::getInstanceFromPool($parentId, $this->executiveUserId);
-			if($parentTask->isActionAllowed(self::ACTION_CHANGE_DEADLINE))
+			if($parentTask->checkAccess(ActionDictionary::ACTION_TASK_DEADLINE))
 			{
 				$result = DependenceTable::update(array(
 					'TASK_ID' => $this->getId(),
@@ -3169,10 +2892,10 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			)
 		);
 
-		if($this->isActionAllowed(self::ACTION_CHANGE_DEADLINE))
+		if($this->checkAccess(ActionDictionary::ACTION_TASK_DEADLINE))
 		{
 			$parentTask = CTaskItem::getInstanceFromPool($parentId, $this->executiveUserId);
-			if($parentTask->isActionAllowed(self::ACTION_CHANGE_DEADLINE))
+			if($parentTask->checkAccess(ActionDictionary::ACTION_TASK_DEADLINE))
 			{
 				$result = DependenceTable::deleteLink($this->getId(), $parentId);
 				if(!$result->isSuccess())
@@ -3461,7 +3184,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	 */
 	public function addFile(array $fileParameters)
 	{
-		if ( ! $this->isActionAllowed(self::ACTION_EDIT) )
+		if ( ! $this->checkAccess(ActionDictionary::ACTION_TASK_EDIT) )
 		{
 			throw new TasksException('Access denied', TasksException::TE_ACTION_NOT_ALLOWED);
 		}

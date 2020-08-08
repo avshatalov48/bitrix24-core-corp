@@ -7,6 +7,7 @@ use Bitrix\Timeman\Form\Schedule\WorktimeRestrictionsForm;
 use Bitrix\Timeman\Helper\ConfigurationHelper;
 use Bitrix\Timeman\Helper\EntityCodesHelper;
 use Bitrix\Timeman\Helper\TimeHelper;
+use Bitrix\Timeman\Helper\UserHelper;
 use Bitrix\Timeman\Model\Schedule\Assignment\Department\EO_ScheduleDepartment_Collection;
 use Bitrix\Timeman\Model\Schedule\Assignment\Department\ScheduleDepartment;
 use Bitrix\Timeman\Model\Schedule\Assignment\User\EO_ScheduleUser_Collection;
@@ -17,10 +18,6 @@ use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
 
 class Schedule extends EO_Schedule
 {
-	const FIXED_MAX_START_OFFSET = 6 * 3600;
-
-	private $activeUsers = [];
-	private $excludedUsers = [];
 	private $usersCount = 0;
 
 	public static function create(ScheduleForm $scheduleForm, $calendarId)
@@ -182,9 +179,9 @@ class Schedule extends EO_Schedule
 		return $schedule && static::isScheduleTypeShifted($schedule['SCHEDULE_TYPE']);
 	}
 
-	public function isFlexible()
+	public function isFlextime()
 	{
-		return static::isScheduleFlexible($this);
+		return static::isScheduleFlextime($this);
 	}
 
 	public function isFixed()
@@ -192,7 +189,7 @@ class Schedule extends EO_Schedule
 		return static::isScheduleFixed($this);
 	}
 
-	public static function isScheduleFlexible($schedule)
+	public static function isScheduleFlextime($schedule)
 	{
 		return $schedule && $schedule['SCHEDULE_TYPE'] === ScheduleTable::SCHEDULE_TYPE_FLEXTIME;
 	}
@@ -232,6 +229,17 @@ class Schedule extends EO_Schedule
 	public function markDeleted()
 	{
 		$this->setDeleted(ScheduleTable::DELETED_YES);
+		$helper = TimeHelper::getInstance();
+		$date = $helper->createDateTimeFromFormat('U', $helper->getUtcNowTimestamp(), $helper->getServerUtcOffset());
+		if (UserHelper::getCurrentUserId() > 0)
+		{
+			$date = $helper->getUserDateTimeNow(UserHelper::getCurrentUserId());
+		}
+		if ($date)
+		{
+			$this->setDeletedAt($date->format('Y-m-d H:i:s T'));
+		}
+		$this->setDeletedBy(UserHelper::getCurrentUserId());
 	}
 
 	public function isAllowedToReopenRecord()
@@ -262,41 +270,6 @@ class Schedule extends EO_Schedule
 			}
 		}
 		return $value;
-	}
-
-	public function defineActiveUsers($users)
-	{
-		$this->activeUsers = [];
-		foreach ($users as $user)
-		{
-			$this->activeUsers[$user['ID']] = $user;
-		}
-	}
-
-	public function obtainActiveUsers()
-	{
-		return $this->activeUsers;
-	}
-
-	public function obtainActiveUserIds()
-	{
-		return array_map(function ($user) {
-			return $user['ID'];
-		}, $this->activeUsers);
-	}
-
-	public function containsActiveUser($userId)
-	{
-		return isset($this->activeUsers[$userId]);
-	}
-
-	public function defineExcludedUsers($users)
-	{
-		$this->excludedUsers = [];
-		foreach ($users as $user)
-		{
-			$this->excludedUsers[$user['ID']] = $user;
-		}
 	}
 
 	public function obtainFromAssignments($userId)
@@ -411,7 +384,7 @@ class Schedule extends EO_Schedule
 
 	private function setFlexibleScheduleSettings()
 	{
-		if (!$this->isFlexible())
+		if (!$this->isFlextime())
 		{
 			return;
 		}
@@ -423,6 +396,10 @@ class Schedule extends EO_Schedule
 	 */
 	public function obtainActiveShifts()
 	{
+		if ($this->isFlextime())
+		{
+			return [];
+		}
 		$result = [];
 		$shifts = $this->obtainShifts();
 		foreach ($shifts as $shift)
@@ -433,105 +410,6 @@ class Schedule extends EO_Schedule
 			}
 		}
 		return $result;
-	}
-
-	/**
-	 * @param \DateTime $userDateTime
-	 * @return Shift[]
-	 */
-	public function getAllShiftsByTime($userDateTime)
-	{
-		$userSeconds = TimeHelper::getInstance()->getSecondsFromDateTime($userDateTime);
-		$matchedShifts = [];
-		foreach ($this->obtainActiveShifts() as $shift)
-		{
-			if ($shift->isForTime($userSeconds, $this->getAllowedMaxShiftStartOffset()))
-			{
-				$matchedShifts[$shift->getId()] = $shift;
-			}
-		}
-		return $matchedShifts;
-	}
-
-	/**
-	 * @param \DateTime $userDateTime
-	 * @param WorktimeRecord $record
-	 * @param null $recordSchedule
-	 * @param null $recordShift
-	 * @return Shift|null
-	 */
-	public function getShiftByTime($userDateTime)
-	{
-		$userSeconds = TimeHelper::getInstance()->getSecondsFromDateTime($userDateTime);
-		$matchedShifts = $this->getAllShiftsByTime($userDateTime);
-
-		if (count($matchedShifts) <= 1)
-		{
-			return empty($matchedShifts) ? null : reset($matchedShifts);
-		}
-		else
-		{
-			foreach ($matchedShifts as $shift)
-			{
-				$key = abs(TimeHelper::getInstance()->normalizeSeconds($shift->getWorkTimeEnd()) - $userSeconds);
-				$sorted[$key] = $shift->getId();
-			}
-			ksort($sorted);
-
-			return $matchedShifts[reset($sorted)];
-		}
-	}
-
-	/**
-	 * @param Shift $prevShift
-	 * @param \DateTime $userNowDateTime
-	 * @return Shift|mixed|null
-	 */
-	public function getNextShift($prevShift, $userNowDateTime = null)
-	{
-		$shifts = [];
-		foreach ($this->obtainActiveShifts() as $shift)
-		{
-			$shifts[$shift->getId()] = $shift;
-		}
-		if (count($shifts) <= 1)
-		{
-			return empty($shifts) ? null : reset($shifts);
-		}
-		$shiftsByStart = [];
-		foreach ($shifts as $shift)
-		{
-			$key = $shift->getWorkTimeStart();
-			while (!empty($shiftsByStart[$key]))
-			{
-				$key = $key + 1;
-			}
-			$shiftsByStart[$key] = $shift;
-		}
-		ksort($shiftsByStart);
-		if (!$prevShift)
-		{
-			$nowSeconds = TimeHelper::getInstance()->getSecondsFromDateTime($userNowDateTime);
-			foreach ($shiftsByStart as $shift)
-			{
-				if ($shift->getWorkTimeStart() > $nowSeconds)
-				{
-					return $shift;
-				}
-			}
-			return reset($shiftsByStart);
-		}
-		$shiftCount = count($shiftsByStart);
-		for ($i = 0; $i < $shiftCount - 1; $i++)
-		{
-			$key = array_keys($shiftsByStart)[$i];
-			if ($prevShift->getId() === $shiftsByStart[$key]->getId())
-			{
-				$key = array_keys($shiftsByStart)[$i + 1];
-				return $shiftsByStart[$key];
-			}
-		}
-		return reset($shifts);
 	}
 
 	public function collectRawValues()
@@ -637,57 +515,5 @@ class Schedule extends EO_Schedule
 			$depart = ScheduleDepartment::create($this->getId(), EntityCodesHelper::getDepartmentId($code), $excluded);
 			$this->addToDepartmentAssignments($depart);
 		}
-	}
-
-	/**
-	 * @param \DateTime $userDateTime
-	 * @return Shift|null
-	 */
-	public function getRelevantShiftByStart($userDateTime)
-	{
-		$previousWeekDay = TimeHelper::getInstance()->getPreviousDayOfWeek($userDateTime);
-		$todayWeekDay = TimeHelper::getInstance()->getDayOfWeek($userDateTime);
-		$nextWeekDay = TimeHelper::getInstance()->getNextDayOfWeek($userDateTime);
-
-		$possibleStartsEnds = [];
-		if ($todayShift = $this->getShiftByWeekDay($todayWeekDay))
-		{
-			$possibleStartsEnds = $todayShift->buildStartsEndsAroundDate($userDateTime);
-		}
-		if ($prevShift = $this->getShiftByWeekDay($previousWeekDay))
-		{
-			$possibleStartsEnds[$previousWeekDay] = $prevShift->buildStartsEndsAroundDate($userDateTime)[$previousWeekDay];
-		}
-		if ($nextShift = $this->getShiftByWeekDay($nextWeekDay))
-		{
-			$possibleStartsEnds[$nextWeekDay] = $nextShift->buildStartsEndsAroundDate($userDateTime)[$nextWeekDay];
-		}
-
-		$allPossibleDates = [];
-		foreach ($possibleStartsEnds as $weekDay => $dates)
-		{
-			/** @var \DateTime $startDate */
-			$startDate = $dates[0];
-			/** @var \DateTime $endDate */
-			$endDate = $dates[1];
-			if ($userDateTime->getTimestamp() >= $startDate->getTimestamp()
-				&& $userDateTime->getTimestamp() <= $endDate->getTimestamp())
-			{
-				// start between shift start and end
-				return $this->getShiftByWeekDay($weekDay);
-			}
-			else
-			{
-				$allPossibleDates[abs($userDateTime->getTimestamp() - $startDate->getTimestamp())] = $this->getShiftByWeekDay($weekDay);
-			}
-		}
-
-		ksort($allPossibleDates);
-		if (reset(array_keys($allPossibleDates)) < static::FIXED_MAX_START_OFFSET)
-		{
-			return reset($allPossibleDates);
-		}
-
-		return null;
 	}
 }

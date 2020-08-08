@@ -48,6 +48,7 @@ $APPLICATION->IncludeComponent(
 			"USER_FIELDS",
 			"TEMPLATE"
 		),
+		"ACTION" => "view"
 	),
 	$this->__component,
 	array("HIDE_ICONS" => "Y")

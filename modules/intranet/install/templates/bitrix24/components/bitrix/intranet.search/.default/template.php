@@ -65,15 +65,15 @@ if ((CModule::IncludeModule('bitrix24') &&
 				<span class="filter-but-wrap <?if ($show_user == 'fired') echo " filter-but-act";?>"><span class="filter-but-left"></span><a href="<?echo $APPLICATION->GetCurPageParam('show_user=fired', array('show_user'));?>"><span class="filter-but-text-block"><?=GetMessage('INTR_COMP_IS_TPL_TOOLBAR_USER_FIRED')?></span></a><span class="filter-but-right"></span></span>
 				<?endif?>
 				<?if ($USER->CanDoOperation('edit_all_users')):?>
-					<?if (CModule::IncludeModule("extranet") && strlen(COption::GetOptionString("extranet", "extranet_site")) > 0):?>
+					<?if (CModule::IncludeModule("extranet") && COption::GetOptionString("extranet", "extranet_site") <> ''):?>
 					<span class="filter-but-wrap <?if ($show_user == 'extranet') echo " filter-but-act";?>"><span class="filter-but-left"></span><a href="<?echo $APPLICATION->GetCurPageParam('show_user=extranet', array('show_user'));?>"><span class="filter-but-text-block"><?=GetMessage('INTR_COMP_IS_TPL_TOOLBAR_USER_EXTRANET')?></span></a><span class="filter-but-right"></span></span>
 					<?endif?>
 					<span class="filter-but-wrap <?if ($show_user == 'inactive') echo " filter-but-act";?>"><span class="filter-but-left"></span><a href="<?echo $APPLICATION->GetCurPageParam('show_user=inactive', array('show_user'));?>"><span class="filter-but-text-block"><?=GetMessage('INTR_COMP_IS_TPL_TOOLBAR_USER_INACTIVE')?></span></a><span class="filter-but-right"></span></span>
 					<span class="filter-but-wrap <?if ($show_user == 'all') echo " filter-but-act";?>"><span class="filter-but-left"></span><a href="<?echo $APPLICATION->GetCurPageParam('show_user=all', array('show_user'));?>"><span class="filter-but-text-block"><?=GetMessage('INTR_COMP_IS_TPL_TOOLBAR_USER_ALL')?></span></a><span class="filter-but-right"></span></span>
 				<?endif;?>
 			<?endif;?>
-	</span><span id="filter-but-ABC" class="filter-but-wrap filter-but-ABC<?if (strlen($abFilter) > 0):?> filter-but-act<?endif?>"><span class="filter-but-left"></span><span class="filter-but-text-block"><?if ($abFilter == ""):?><span class="filter-but-Ab"><span
-	class="filter-but-blue"><?=GetMessage("INTR_COMP_IS_TPL_FILTER_ALPH_LETTER1")?></span><?=GetMessage("INTR_COMP_IS_TPL_FILTER_ALPH_LETTER2")?></span><?endif?><span class="filter-but-text"><?=GetMessage('INTR_COMP_IS_TPL_FILTER_ALPH')?><?=(strlen($abFilter) > 0 ? ": ".htmlspecialcharsbx(substr($abFilter, 0, 1)) : "")?></span></span><span class="filter-but-right"></span></span>
+	</span><span id="filter-but-ABC" class="filter-but-wrap filter-but-ABC<?if ($abFilter <> ''):?> filter-but-act<?endif?>"><span class="filter-but-left"></span><span class="filter-but-text-block"><?if ($abFilter == ""):?><span class="filter-but-Ab"><span
+	class="filter-but-blue"><?=GetMessage("INTR_COMP_IS_TPL_FILTER_ALPH_LETTER1")?></span><?=GetMessage("INTR_COMP_IS_TPL_FILTER_ALPH_LETTER2")?></span><?endif?><span class="filter-but-text"><?=GetMessage('INTR_COMP_IS_TPL_FILTER_ALPH')?><?=($abFilter <> '' ? ": ".htmlspecialcharsbx(mb_substr($abFilter, 0, 1)) : "")?></span></span><span class="filter-but-right"></span></span>
 	<span id="filter-but-more" class="filter-but-wrap filter-but-more"><span class="filter-but-left"></span><span class="filter-but-text-block"><span class="filter-but-icon"></span><?=GetMessage('INTR_COMP_IS_TPL_TOOLBAR_USER_MORE')?></span><span class="filter-but-right"></span></span>
 	<div class="employee-filter-left"></div>
 	<div class="employee-filter-right"></div>

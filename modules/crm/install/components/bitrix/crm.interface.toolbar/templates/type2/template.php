@@ -12,7 +12,7 @@ $enableMoreButton = false;
 $labelText = '';
 $documentButton = null;
 foreach($arParams['BUTTONS'] as $k => $item):
-	if ($item['LABEL'] === true)
+	if (isset($item['LABEL']) && $item['LABEL'] === true)
 	{
 		$labelText = isset($item['TEXT']) ? $item['TEXT'] : '';
 		continue;
@@ -102,7 +102,7 @@ foreach($arParams['BUTTONS'] as $k => $item):
 				$lastClass.'"';
 			$idAttribute = ' id="'.htmlspecialcharsbx($menuId).'"';
 			$titleAttribute = '';
-			if (is_string($title) && strlen($title) > 0)
+			if (is_string($title) && $title <> '')
 			{
 				$titleAttribute = ' title="'.htmlspecialcharsbx($title).'"';
 			}
@@ -140,7 +140,7 @@ foreach($arParams['BUTTONS'] as $k => $item):
 				'crm-btn-dropdown-document"';
 			$idAttribute = ' id="'.htmlspecialcharsbx($documentButtonId).'"';
 			$titleAttribute = '';
-			if (is_string($title) && strlen($title) > 0)
+			if (is_string($title) && $title <> '')
 			{
 				$titleAttribute = ' title="'.htmlspecialcharsbx($title).'"';
 			}
@@ -177,7 +177,7 @@ foreach($arParams['BUTTONS'] as $k => $item):
 		$isPermitted = isset($params['IS_PERMITTED']) ? (bool)$params['IS_PERMITTED'] : false;
 		$lockScript = isset($params['LOCK_SCRIPT']) ? $params['LOCK_SCRIPT'] : '';
 
-		$hintKey = 'enable_'.strtolower($name).'_hint';
+		$hintKey = 'enable_'.mb_strtolower($name).'_hint';
 		$hint = isset($params['HINT']) ? $params['HINT'] : array();
 
 		$enableHint = !empty($hint);

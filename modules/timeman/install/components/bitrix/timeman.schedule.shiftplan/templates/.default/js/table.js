@@ -8,7 +8,7 @@
 		this.scheduleId = options.scheduleId;
 		this.gridId = options.gridId;
 		this.useEmployeesTimezoneName = 'useEmployeesTimezone';
-
+		this.errorCodeOverlappingPlans = options.errorCodeOverlappingPlans;
 		this.addEventHandlers();
 	};
 	BX.Timeman.Component.Schedule.ShiftPlan.Table.prototype = {
@@ -216,7 +216,7 @@
 			}
 			return formData;
 		},
-		onAddShiftPlanClick: function (event)
+		onAddShiftPlanClick: function (event, force)
 		{
 			var formWrapper = event;
 			if (event.stopPropagation)
@@ -230,8 +230,11 @@
 				return;
 			}
 			formWrapper.isDisabled = true;
-			formWrapper.style.opacity = 0;
 			var formData = this.createFormDataForShiftPlan(formWrapper);
+			if (force === true)
+			{
+				formData.append('createShiftPlanForced', 'Y');
+			}
 			BX.ajax.runAction(
 				'timeman.shiftplan.add',
 				{
@@ -240,14 +243,33 @@
 			).then(
 				function (response)
 				{
-					formWrapper.style.opacity = 1;
 					formWrapper.isDisabled = false;
 					this.onSuccessShiftPlanAdded(response.data.shiftPlan);
 				}.bind(this),
 				function (response)
 				{
+					if (response.errors && response.errors.length > 0
+						&& response.errors[0].code === this.errorCodeOverlappingPlans)
+					{
+						BX.UI.Dialogs.MessageBox.show({
+							message: BX.util.htmlspecialchars(response.errors[0].message),
+							modal: true,
+							buttons: BX.UI.Dialogs.MessageBoxButtons.YES_NO,
+							popupOptions: {
+								autoHide: true
+							},
+							onYes: function (formWrapper, messageBox)
+							{
+								messageBox.close();
+								this.onAddShiftPlanClick(formWrapper, true);
+							}.bind(this, formWrapper),
+							onNo: function (messageBox)
+							{
+								messageBox.close();
+							}
+						});
+					}
 					formWrapper.isDisabled = false;
-					formWrapper.style.opacity = 1;
 				}.bind(this));
 		},
 		onSuccessShiftPlanDeleted: function (shiftPlan)

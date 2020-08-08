@@ -3,7 +3,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 /** @var \Bitrix\Bizproc\Activity\PropertiesDialog $dialog */
 
 $map = $dialog->getMap();
+$requisitesMap = $map['MyCompanyId']['FullMap'];
 $template = $map['TemplateId'];
+$selectFieldNames = ['MyCompanyId', 'MyCompanyRequisiteId', 'MyCompanyBankDetailId'];
 $selected = $dialog->getCurrentValue($template['FieldName']);
 
 \Bitrix\Main\Page\Asset::getInstance()->addJs(getLocalPath('activities/bitrix/crmgenerateentitydocumentactivity/script.js'));
@@ -35,6 +37,34 @@ $selected = $dialog->getCurrentValue($template['FieldName']);
 		<?=htmlspecialcharsbx($map['UseSubscription']['Name'])?>
 	</label>
 </div>
+<div class="crm-automation-popup-settings">
+    <label class="crm-automation-popup-chk-label">
+        <input type="checkbox" name="<?=$map['WithStamps']['FieldName'];?>" value="Y" class="crm-automation-popup-chk"<?echo ($dialog->getCurrentValue($map['WithStamps']['FieldName']) != 'Y' ? '' : ' checked');?>>
+		<?=htmlspecialcharsbx($map['WithStamps']['Name'])?>
+    </label>
+</div>
+<div class="crm-automation-popup-settings">
+    <label class="crm-automation-popup-chk-label">
+        <input type="checkbox" name="<?=$map['EnablePublicUrl']['FieldName'];?>" value="Y" class="crm-automation-popup-chk"<?echo ($dialog->getCurrentValue($map['EnablePublicUrl']['FieldName']) != 'Y' ? '' : ' checked');?>>
+		<?=htmlspecialcharsbx($map['EnablePublicUrl']['Name'])?>
+    </label>
+</div>
+<?php
+foreach($selectFieldNames as $fieldName): ?>
+    <div class="crm-automation-popup-settings">
+        <span class="crm-automation-popup-settings-title"><?=htmlspecialcharsbx($map[$fieldName]['Name'])?>: </span>
+        <select class="crm-automation-popup-settings-dropdown" name="<?=htmlspecialcharsbx($map[$fieldName]['FieldName'])?>" id="id_<?=htmlspecialcharsbx($map[$fieldName]['FieldName'])?>">
+            <option value=""></option>
+            <?foreach ($map[$fieldName]['Options'] as $value => $optionLabel):?>
+                <option value="<?=htmlspecialcharsbx($value)?>"
+                        <?=($value == $dialog->getCurrentValue($map[$fieldName]['FieldName'])) ? ' selected' : ''?>
+                ><?=htmlspecialcharsbx($optionLabel)?></option>
+            <?endforeach;?>
+        </select>
+    </div>
+    <?php
+endforeach;
+?>
 <div class="crm-automation-popup-settings" id="add_new_field_tr">
 	<h3><?=GetMessage('BPGEDA_PROP_DIALOG_TEMPLATE_FIELDS');?></h3>
 	<span class="crm-automation-popup-settings-title"><?=GetMessage('BPGEDA_PROP_DIALOG_ADD_FIELD');?>: </span>
@@ -78,6 +108,10 @@ $selected = $dialog->getCurrentValue($template['FieldName']);
 				documentType: <?=Cutil::PhpToJSObject($dialog->getDocumentType())?>,
 				entityType: '<?=$dialog->getDocumentType()[2];?>',
 				entityTypeId: '<?=intval(\CCrmOwnerType::ResolveID($dialog->getDocumentType()[2]));?>',
+                requisitesMap: <?=CUtil::PhpToJSObject($requisitesMap);?>,
+                selectMyCompanyNodeId: 'id_my_company_id',
+                selectMyCompanyRequisiteNodeId: 'id_my_company_requisite_id',
+                selectMyCompanyBankDetailNodeId: 'id_my_company_bank_detail_id',
 				selectTemplateNodeId: 'id_template_id',
 				selectFieldNodeId: 'add_new_field_select',
 				textFieldNodeId: 'add_new_field_text',

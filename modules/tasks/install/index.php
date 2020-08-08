@@ -17,9 +17,7 @@ Class tasks extends CModule
 	{
 		$arModuleVersion = array();
 
-		$path = str_replace("\\", "/", __FILE__);
-		$path = substr($path, 0, strlen($path) - strlen("/index.php"));
-		include($path."/version.php");
+		include(__DIR__.'/version.php');
 
 		if (is_array($arModuleVersion) && array_key_exists("VERSION", $arModuleVersion))
 		{
@@ -39,16 +37,14 @@ Class tasks extends CModule
 
 	function InstallDB($arParams = array())
 	{
-		global $DB, $DBType, $APPLICATION;
+		global $DB, $APPLICATION;
 		$this->errors = false;
 
 		// Database tables creation
 		if(!$DB->Query("SELECT 'x' FROM b_tasks WHERE 1=0", true))
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/db/".strtolower($DB->type)."/install.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/db/".mb_strtolower($DB->type)."/install.sql");
 		}
-
-
 
 		$errors = self::InstallUserFields();
 		if ( ! empty($errors) )
@@ -89,49 +85,21 @@ Class tasks extends CModule
 		RegisterModuleDependences('rest', 'onFindMethodDescription', 'tasks',
 			'\\Bitrix\\Tasks\\Dispatcher', 'restRegister');
 
-		RegisterModuleDependences('forum', 'OnCommentTopicAdd', 'tasks',
-			'\\Bitrix\\Tasks\\Integration\\Forum\\Task\\Topic', 'onBeforeAdd');
-		RegisterModuleDependences('forum', 'OnAfterCommentTopicAdd', 'tasks',
-			'\\Bitrix\\Tasks\\Integration\\Forum\\Task\\Topic', 'onAfterAdd');
+		RegisterModuleDependences('forum', 'OnCommentTopicAdd', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Topic', 'onBeforeAdd');
+		RegisterModuleDependences('forum', 'OnAfterCommentTopicAdd', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Topic', 'onAfterAdd');
+		RegisterModuleDependences('forum', 'OnBeforeCommentDelete', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onBeforeDelete');
+		RegisterModuleDependences('forum', 'OnAfterCommentAdd', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onAfterAdd');
+		RegisterModuleDependences('forum', 'OnAfterCommentUpdate', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onAfterUpdate');
 
-		RegisterModuleDependences('forum', 'OnAfterCommentAdd', 'tasks',
-			'\\Bitrix\\Tasks\\Integration\\Forum\\Task\\Comment', 'onAfterAdd');
-		RegisterModuleDependences('forum', 'OnAfterCommentUpdate', 'tasks',
-			'\\Bitrix\\Tasks\\Integration\\Forum\\Task\\Comment', 'onAfterUpdate');
+		RegisterModuleDependences('forum', 'OnModuleUnInstall', 'tasks', 'CTasksRarelyTools', 'onForumUninstall');
+		RegisterModuleDependences('webdav', 'OnModuleUnInstall', 'tasks', 'CTasksRarelyTools', 'onWebdavUninstall');
+		RegisterModuleDependences('intranet', 'OnModuleUnInstall', 'tasks', 'CTasksRarelyTools', 'onIntranetUninstall');
 
-		RegisterModuleDependences('forum', 'OnModuleUnInstall', 'tasks',
-			'CTasksRarelyTools', 'onForumUninstall');
-		RegisterModuleDependences('webdav', 'OnModuleUnInstall', 'tasks',
-			'CTasksRarelyTools', 'onWebdavUninstall');
-		RegisterModuleDependences('intranet', 'OnModuleUnInstall', 'tasks',
-			'CTasksRarelyTools', 'onIntranetUninstall');
+		RegisterModuleDependences('timeman', 'OnAfterTMDayStart', 'tasks', 'CTaskPlannerMaintance', 'OnAfterTMDayStart');
+		RegisterModuleDependences('timeman', 'OnAfterTMEntryUpdate', 'tasks', 'CTaskTimerManager', 'onAfterTMEntryUpdate');
 
-		RegisterModuleDependences('timeman', 'OnAfterTMDayStart', 'tasks',
-			'CTaskPlannerMaintance', 'OnAfterTMDayStart');
-
-		RegisterModuleDependences(
-			'timeman',
-			'OnAfterTMEntryUpdate',
-			'tasks',
-			'CTaskTimerManager',
-			'onAfterTMEntryUpdate'
-		);
-
-		RegisterModuleDependences(
-			'tasks',
-			'OnBeforeTaskUpdate',
-			'tasks',
-			'CTaskTimerManager',
-			'onBeforeTaskUpdate'
-		);
-
-		RegisterModuleDependences(
-			'tasks',
-			'OnBeforeTaskDelete',
-			'tasks',
-			'CTaskTimerManager',
-			'onBeforeTaskDelete'
-		);
+		RegisterModuleDependences('tasks', 'OnBeforeTaskUpdate', 'tasks', 'CTaskTimerManager', 'onBeforeTaskUpdate');
+		RegisterModuleDependences('tasks', 'OnBeforeTaskDelete', 'tasks', 'CTaskTimerManager', 'onBeforeTaskDelete');
 
 		RegisterModuleDependences('socialnetwork', 'OnBeforeSocNetGroupDelete', 'tasks', 'CTasks', 'onBeforeSocNetGroupDelete');
 		RegisterModuleDependences('socialnetwork', 'OnSonetLogFavorites', 'tasks', '\\Bitrix\\Tasks\\Integration\\Socialnetwork\\Task', 'OnSonetLogFavorites');
@@ -158,13 +126,8 @@ Class tasks extends CModule
 		$eventManager->registerEventHandler('pull', 'onGetMobileCounterTypes', 'tasks', '\Bitrix\Tasks\Integration\Pull\Counter', 'onGetMobileCounterTypes');
 
 		//Recyclebin
-		$eventManager->registerEventHandler(
-			'recyclebin',
-			'OnModuleSurvey',
-			'tasks',
-			'\Bitrix\Tasks\Integration\Recyclebin\Manager',
-			'OnModuleSurvey'
-		);
+		$eventManager->registerEventHandler('recyclebin', 'OnModuleSurvey', 'tasks', '\Bitrix\Tasks\Integration\Recyclebin\Manager', 'OnModuleSurvey');
+		$eventManager->registerEventHandler('recyclebin', 'onAdditionalDataRequest', 'tasks', '\Bitrix\Tasks\Integration\Recyclebin\Manager', 'OnAdditionalDataRequest');
 
 		// user field update
 		RegisterModuleDependences("main", "OnAfterUserTypeAdd", "tasks", "\\Bitrix\\Tasks\\Util\\UserField", "onAfterUserTypeAdd");
@@ -174,47 +137,104 @@ Class tasks extends CModule
 		// disk entity controllers
 		RegisterModuleDependences('disk', 'onBuildAdditionalConnectorList', 'tasks', '\Bitrix\Tasks\Integration\Disk', 'onBuildConnectorList');
 
-		$eventManager->registerEventHandler('socialnetwork', 'onLogIndexGetContent', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\Log', 'onIndexGetContent');
-
 		// kanban
-		$eventManager->registerEventHandler('socialnetwork', 'onSocNetGroupDelete', 'tasks', '\Bitrix\Tasks\Kanban\StagesTable', 'onSocNetGroupDelete');
-		$eventManager->registerEventHandler('socialnetwork', 'onSocNetGroupDelete', 'tasks', '\Bitrix\Tasks\ProjectsTable', 'onSocNetGroupDelete');
 		$eventManager->registerEventHandler('main', 'OnUserDelete', 'tasks', '\Bitrix\Tasks\Kanban\StagesTable', 'onUserDelete');
+		$eventManager->registerEventHandler('socialnetwork', 'onSocNetGroupDelete', 'tasks', '\Bitrix\Tasks\Kanban\StagesTable', 'onSocNetGroupDelete');
 
+		$eventManager->registerEventHandler('socialnetwork', 'onSocNetGroupDelete', 'tasks', '\Bitrix\Tasks\ProjectsTable', 'onSocNetGroupDelete');
 		$eventManager->registerEventHandler('socialnetwork', 'onContentViewed', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\ContentViewHandler', 'onContentViewed');
-
-		CAgent::AddAgent('\Bitrix\Tasks\Util\AgentManager::sendReminder();','tasks', 'N', 60);
-		CAgent::AddAgent('\Bitrix\Tasks\Util\AgentManager::notificationThrottleRelease();','tasks', 'N', 300);
-
-		// If sanitize_level not set, set up it
-		if (COption::GetOptionString('tasks', 'sanitize_level', 'not installed yet ))') === 'not installed yet ))')
-			COption::SetOptionString('tasks', 'sanitize_level', CBXSanitizer::SECURE_LEVEL_LOW);
-
-		// turn on comment editing by default
-		COption::SetOptionString('tasks', 'task_comment_allow_edit', 'Y', '', '');
-		COption::SetOptionString('tasks', 'task_comment_allow_remove', 'Y', '', '');
+		$eventManager->registerEventHandler('socialnetwork', 'onContentFinalizeView', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\ContentViewHandler', 'onContentFinalizeView');
+		$eventManager->registerEventHandler('socialnetwork', 'onLogIndexGetContent', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\Log', 'onIndexGetContent');
+		$eventManager->registerEventHandler('socialnetwork', 'onAfterLogFollowSet', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\Log', 'onAfterLogFollowSet');
+		$eventManager->registerEventHandler('socialnetwork', 'OnAfterSocNetLogCommentAdd', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\Log', 'onAfterSocNetLogCommentAdd');
 
 		$this->InstallTasks();
 
 		CModule::includeModule('tasks');
-		if ($DB->type === "MYSQL")
+		if ($DB->Query("CREATE FULLTEXT INDEX IXF_TASKS_SEARCH_INDEX_SEARCH_INDEX ON b_tasks_search_index (SEARCH_INDEX)", true))
 		{
-			$DB->Query("CREATE FULLTEXT INDEX IXF_TASKS_SEARCH_INDEX ON b_tasks (SEARCH_INDEX)", true);
-			\Bitrix\Tasks\Internals\TaskTable::getEntity()->enableFullTextIndex("SEARCH_INDEX");
-
-			if ($DB->Query("CREATE FULLTEXT INDEX IXF_TASKS_SEARCH_INDEX_SEARCH_INDEX ON b_tasks_search_index (SEARCH_INDEX)", true))
-			{
-				\Bitrix\Tasks\Internals\Task\SearchIndexTable::getEntity()->enableFullTextIndex("SEARCH_INDEX");
-			}
+			\Bitrix\Tasks\Internals\Task\SearchIndexTable::getEntity()->enableFullTextIndex("SEARCH_INDEX");
 		}
+
+		(new \Bitrix\Tasks\Access\Install\AccessInstaller($DB))->install();
+		(new \Bitrix\Tasks\Access\Install\Migration($DB))->migrateTemplateRights();
+
+		static::addAgents();
+		static::runSteppers();
+		static::setOptions();
 
 		return true;
 	}
 
+	public static function addAgents(): void
+	{
+		CAgent::AddAgent('\Bitrix\Tasks\Util\AgentManager::sendReminder();','tasks', 'N', 60);
+		CAgent::AddAgent('\Bitrix\Tasks\Util\AgentManager::notificationThrottleRelease();','tasks', 'N', 300);
+
+		CTimeZone::Disable();
+		CAgent::AddAgent('\Bitrix\Tasks\Internals\Effective::agent();', 'tasks', 'N', 86400, '', 'Y', Bitrix\Main\Type\DateTime::createFromTimestamp(strtotime('23:50:00')));
+		CTimeZone::Enable();
+	}
+
+	public static function runSteppers(): void
+	{
+		$map = [
+			[
+				'class' => \Bitrix\Tasks\Update\EfficiencyRecount::class,
+				'delay' => 300,
+			],
+			[
+				'class' => \Bitrix\Tasks\Update\CounterRecount::class,
+				'delay' => 300,
+			],
+			[
+				'class' => \Bitrix\Tasks\Update\ExpiredAgentCreator::class,
+				'delay' => 300,
+			],
+		];
+		foreach ($map as $stepper)
+		{
+			/** @var Bitrix\Main\Update\Stepper $class */
+			$class = $stepper['class'];
+			$delay = $stepper['delay'];
+
+			$class::bind($delay);
+		}
+	}
+
+	public static function setOptions(): void
+	{
+		$map = [
+			[
+				'name' => 'task_comment_allow_edit',
+				'value' => 'Y',
+			],
+			[
+				'name' => 'task_comment_allow_remove',
+				'value' => 'Y',
+			],
+			[
+				'condition' => COption::GetOptionString('tasks', 'sanitize_level', 'not installed yet ))') === 'not installed yet ))',
+				'name' => 'sanitize_level',
+				'value' => CBXSanitizer::SECURE_LEVEL_LOW,
+			],
+			[
+				'name' => 'tasksDisableDefaultListGroups',
+				'value' => (new \Bitrix\Main\Type\DateTime())->format('Y-m-d H:i:s'),
+			],
+		];
+		foreach ($map as $option)
+		{
+			if (!isset($option['condition']) || $option['condition'])
+			{
+				\Bitrix\Main\Config\Option::set('tasks', $option['name'], $option['value']);
+			}
+		}
+	}
 
 	function UnInstallDB($arParams = array())
 	{
-		global $DB, $DBType, $APPLICATION;
+		global $DB, $APPLICATION;
 
 		$this->errors = false;
 
@@ -224,7 +244,7 @@ Class tasks extends CModule
 			static::deleteFileField('TASKS_TASK_TEMPLATE');
 			static::deleteMailField();
 
-			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/db/".strtolower($DB->type)."/uninstall.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/db/".mb_strtolower($DB->type)."/uninstall.sql");
 		}
 
 		//delete agents
@@ -257,49 +277,21 @@ Class tasks extends CModule
 		UnRegisterModuleDependences('rest', 'onFindMethodDescription', 'tasks',
 			'\\Bitrix\\Tasks\\Dispatcher', 'restRegister');
 
-		UnRegisterModuleDependences('forum', 'OnCommentTopicAdd', 'tasks',
-			'\\Bitrix\\Tasks\\Integration\\Forum\\Task\\Topic', 'onBeforeAdd');
-		UnRegisterModuleDependences('forum', 'OnAfterCommentTopicAdd', 'tasks',
-			'\\Bitrix\\Tasks\\Integration\\Forum\\Task\\Topic', 'onAfterAdd');
+		UnRegisterModuleDependences('forum', 'OnCommentTopicAdd', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Topic', 'onBeforeAdd');
+		UnRegisterModuleDependences('forum', 'OnAfterCommentTopicAdd', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Topic', 'onAfterAdd');
+		UnRegisterModuleDependences('forum', 'OnBeforeCommentDelete', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onBeforeDelete');
+		UnRegisterModuleDependences('forum', 'OnAfterCommentAdd', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onAfterAdd');
+		UnRegisterModuleDependences('forum', 'OnAfterCommentUpdate', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onAfterUpdate');
 
-		UnRegisterModuleDependences('forum', 'OnAfterCommentAdd', 'tasks',
-			'\\Bitrix\\Tasks\\Integration\\Forum\\Task\\Comment', 'onAfterAdd');
-		UnRegisterModuleDependences('forum', 'OnAfterCommentUpdate', 'tasks',
-			'\\Bitrix\\Tasks\\Integration\\Forum\\Task\\Comment', 'onAfterUpdate');
+		UnRegisterModuleDependences('forum', 'OnModuleUnInstall', 'tasks', 'CTasksRarelyTools', 'onForumUninstall');
+		UnRegisterModuleDependences('webdav', 'OnModuleUnInstall', 'tasks', 'CTasksRarelyTools', 'onWebdavUninstall');
+		UnRegisterModuleDependences('intranet', 'OnModuleUnInstall', 'tasks', 'CTasksRarelyTools', 'onIntranetUninstall');
 
-		UnRegisterModuleDependences('forum', 'OnModuleUnInstall', 'tasks',
-			'CTasksRarelyTools', 'onForumUninstall');
-		UnRegisterModuleDependences('webdav', 'OnModuleUnInstall', 'tasks',
-			'CTasksRarelyTools', 'onWebdavUninstall');
-		UnRegisterModuleDependences('intranet', 'OnModuleUnInstall', 'tasks',
-			'CTasksRarelyTools', 'onIntranetUninstall');
+		UnRegisterModuleDependences('timeman', 'OnAfterTMDayStart', 'tasks', 'CTaskPlannerMaintance', 'OnAfterTMDayStart');
+		UnRegisterModuleDependences('timeman', 'OnAfterTMEntryUpdate', 'tasks', 'CTaskTimerManager', 'onAfterTMEntryUpdate');
 
-		UnRegisterModuleDependences('timeman', 'OnAfterTMDayStart', 'tasks',
-			'CTaskPlannerMaintance', 'OnAfterTMDayStart');
-
-		UnRegisterModuleDependences(
-			'timeman',
-			'OnAfterTMEntryUpdate',
-			'tasks',
-			'CTaskTimerManager',
-			'onAfterTMEntryUpdate'
-		);
-
-		UnRegisterModuleDependences(
-			'tasks',
-			'OnBeforeTaskUpdate',
-			'tasks',
-			'CTaskTimerManager',
-			'onBeforeTaskUpdate'
-		);
-
-		UnRegisterModuleDependences(
-			'tasks',
-			'OnBeforeTaskDelete',
-			'tasks',
-			'CTaskTimerManager',
-			'onBeforeTaskDelete'
-		);
+		UnRegisterModuleDependences('tasks', 'OnBeforeTaskUpdate', 'tasks', 'CTaskTimerManager', 'onBeforeTaskUpdate');
+		UnRegisterModuleDependences('tasks', 'OnBeforeTaskDelete', 'tasks', 'CTaskTimerManager', 'onBeforeTaskDelete');
 
 		UnRegisterModuleDependences('socialnetwork', 'OnBeforeSocNetGroupDelete', 'tasks', 'CTasks', 'onBeforeSocNetGroupDelete');
 		UnRegisterModuleDependences('socialnetwork', 'OnSonetLogFavorites', 'tasks', '\\Bitrix\\Tasks\\Integration\\Socialnetwork\\Task', 'OnSonetLogFavorites');
@@ -329,6 +321,8 @@ Class tasks extends CModule
 		UnRegisterModuleDependences('disk', 'onBuildAdditionalConnectorList', 'tasks', '\Bitrix\Tasks\Integration\Disk', 'onBuildConnectorList');
 
 		$eventManager->unRegisterEventHandler('socialnetwork', 'onLogIndexGetContent', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\Log', 'onIndexGetContent');
+		$eventManager->unRegisterEventHandler('socialnetwork', 'onAfterLogFollowSet', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\Log', 'onAfterLogFollowSet');
+		$eventManager->unRegisterEventHandler('socialnetwork', 'OnAfterSocNetLogCommentAdd', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\Log', 'onAfterSocNetLogCommentAdd');
 
 		// kanban
 		$eventManager->unRegisterEventHandler('socialnetwork', 'onSocNetGroupDelete', 'tasks', '\Bitrix\Tasks\Kanban\StagesTable', 'onSocNetGroupDelete');
@@ -336,18 +330,14 @@ Class tasks extends CModule
 		$eventManager->unRegisterEventHandler('main', 'OnUserDelete', 'tasks', '\Bitrix\Tasks\Kanban\StagesTable', 'onUserDelete');
 
 		$eventManager->unRegisterEventHandler('socialnetwork', 'onContentViewed', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\ContentViewHandler', 'onContentViewed');
+		$eventManager->unRegisterEventHandler('socialnetwork', 'onContentFinalizeView', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\ContentViewHandler', 'onContentFinalizeView');
 
 		$eventManager->unRegisterEventHandler('pull', 'onGetMobileCounter', 'tasks', '\Bitrix\tasks\Integration\Pull\Counter', 'onGetMobileCounter');
 		$eventManager->unRegisterEventHandler('pull', 'onGetMobileCounterTypes', 'tasks', '\Bitrix\tasks\Integration\Pull\Counter', 'onGetMobileCounterTypes');
 
 		//Recyclebin
-		$eventManager->unRegisterEventHandler(
-			'recyclebin',
-			'OnModuleSurvey',
-			'tasks',
-			'\Bitrix\Tasks\Integration\Recyclebin\Manager',
-			'OnModuleSurvey'
-		);
+		$eventManager->unRegisterEventHandler('recyclebin', 'OnModuleSurvey', 'tasks', '\Bitrix\Tasks\Integration\Recyclebin\Manager', 'OnModuleSurvey');
+		$eventManager->unRegisterEventHandler('recyclebin', 'onAdditionalDataRequest', 'tasks', '\Bitrix\Tasks\Integration\Recyclebin\Manager', 'onAdditionalDataRequest');
 
 		// remove tasks from socnetlog table
 		if (
@@ -689,7 +679,7 @@ Class tasks extends CModule
 	function DoUninstall()
 	{
 		global $DB, $DOCUMENT_ROOT, $APPLICATION, $step;
-		$step = IntVal($step);
+		$step = intval($step);
 		if($step < 2)
 		{
 			$APPLICATION->IncludeAdminFile(GetMessage("TASKS_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/unstep1.php");

@@ -253,7 +253,7 @@ function renderInput($input, $name, $property)
 }
 
 CUtil::InitJSCore();
-$this->addExternalCss('/bitrix/components/bitrix/crm.entity.editor/templates/.default/style.css');
+$this->addExternalCss('/bitrix/js/crm/entity-editor/css/style.css');
 
 if (\Bitrix\Main\Loader::includeModule('bitrix24'))
 {

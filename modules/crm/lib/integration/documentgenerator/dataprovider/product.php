@@ -14,6 +14,7 @@ use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Sale\PriceMaths;
 
 class Product extends HashDataProvider
 {
@@ -46,13 +47,16 @@ class Product extends HashDataProvider
 			}
 			$data['PRICE_NETTO'] = $data['PRICE_EXCLUSIVE'] + $data['DISCOUNT_SUM'];
 
-			if($data['DISCOUNT_SUM'] <= 0)
+			if(!isset($data['PRICE_BRUTTO']))
 			{
-				$data['PRICE_BRUTTO'] = $data['PRICE'];
-			}
-			else
-			{
-				$data['PRICE_BRUTTO'] = \CCrmProductRow::CalculateInclusivePrice($data['PRICE_NETTO'], $taxRate);
+				if($data['DISCOUNT_SUM'] <= 0)
+				{
+					$data['PRICE_BRUTTO'] = $data['PRICE'];
+				}
+				else
+				{
+					$data['PRICE_BRUTTO'] = \CCrmProductRow::CalculateInclusivePrice($data['PRICE_NETTO'], $taxRate);
+				}
 			}
 
 			if($data['TAX_INCLUDED'] === 'Y')
@@ -163,7 +167,7 @@ class Product extends HashDataProvider
 				],
 				'PRICE_SUM' => [
 					'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_PRODUCT_PRICE_SUM_TITLE'),
-					'VALUE' => [$this, 'getPriceSum'],
+					'VALUE' => [$this, 'getSum'],
 					'TYPE' => Money::class,
 					'FORMAT' => ['CURRENCY_ID' => $currencyId, 'NO_SIGN' => true, 'WITH_ZEROS' => false],
 				],
@@ -242,14 +246,6 @@ class Product extends HashDataProvider
 	/**
 	 * @return float
 	 */
-	public function getPriceSum()
-	{
-		return $this->getRawValue('PRICE') * $this->data['QUANTITY'];
-	}
-
-	/**
-	 * @return float
-	 */
 	public function getTaxValue()
 	{
 		$value = 0;
@@ -272,11 +268,11 @@ class Product extends HashDataProvider
 		{
 			if($this->data['TAX_INCLUDED'] == 'Y')
 			{
-				$value = $this->getRawValue('PRICE_RAW_SUM') - $this->getRawValue('PRICE_RAW_SUM') / (1 + $this->data['TAX_RATE']/100);
+				$value = $this->round($this->getRawValue('PRICE_RAW_SUM') - $this->getRawValue('PRICE_RAW_SUM') / (1 + $this->data['TAX_RATE']/100));
 			}
 			else
 			{
-				$value = $this->getRawValue('PRICE_SUM') - $this->getRawValue('PRICE_EXCLUSIVE_SUM');
+				$value = $this->round($this->getRawValue('PRICE_SUM') - $this->getRawValue('PRICE_EXCLUSIVE_SUM'));
 			}
 		}
 
@@ -621,7 +617,7 @@ class Product extends HashDataProvider
 	{
 		if($this->data['TAX_INCLUDED'] == 'Y')
 		{
-			return $this->data['PRICE_RAW'] / (1 + $this->data['TAX_RATE']/100);
+			return $this->round($this->data['PRICE_RAW'] / (1 + $this->data['TAX_RATE']/100));
 		}
 		else
 		{
@@ -703,5 +699,15 @@ class Product extends HashDataProvider
 		}
 
 		return null;
+	}
+
+	protected function round(float $value): float
+	{
+		if(Loader::includeModule('sale'))
+		{
+			return PriceMaths::roundPrecision($value);
+		}
+
+		return round($value, 2);
 	}
 }

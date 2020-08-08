@@ -19,7 +19,7 @@ CJSCore::Init([
 ]);
 
 $patternToEditTemplate = $arParams['EDIT_URL'];
-$patternToEditTemplate = substr($patternToEditTemplate, 0, strpos($patternToEditTemplate, '#'));
+$patternToEditTemplate = mb_substr($patternToEditTemplate, 0, mb_strpos($patternToEditTemplate, '#'));
 ?>
 <? $this->setViewTarget("inside_pagetitle", 10); ?>
 	<div class="pagetitle-container pagetitle-flexible-space" style="overflow: hidden;">

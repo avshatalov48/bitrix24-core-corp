@@ -9,7 +9,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
  * @var SalesCenterPaySystemComponent $component
  * @var string $templateFolder
  */
-use Bitrix\Main\Localization\Loc,
+use Bitrix\Main,
+	Bitrix\Main\Localization\Loc,
 	Bitrix\Main\UI\Extension;
 
 Loc::loadMessages(__FILE__);
@@ -44,13 +45,30 @@ Extension::load([
 				<div class="salescenter-main-header">
 					<div class="salescenter-main-header-left-block">
 						<div class="salescenter-logo-container">
-							<div class="salescenter-<?=$arResult['PAYSYSTEM_HANDLER_STYLE'];?>-icon ui-icon"><i></i></div>
+							<?php
+							$imageName = $imagePsModeName = $arResult['PAYSYSTEM_HANDLER'];
+							if ($arResult['PAYSYSTEM_PS_MODE'])
+							{
+								$imagePsModeName = $imageName.'_'.$arResult['PAYSYSTEM_PS_MODE'];
+							}
+
+							if (Main\IO\File::isFileExists(Main\Application::getDocumentRoot().$this->GetFolder().'/images/'.$imagePsModeName.'.svg')): ?>
+								<div class="salescenter-<?=$arResult['PAYSYSTEM_HANDLER_STYLE'];?>-icon ui-icon"><i></i></div>
+							<?php elseif (Main\IO\File::isFileExists(Main\Application::getDocumentRoot().$this->GetFolder().'/images/'.$imageName.'.svg')): ?>
+								<div class="salescenter-<?=$arResult['PAYSYSTEM_HANDLER'];?>-icon ui-icon"><i></i></div>
+							<?php else: ?>
+								<div class="salescenter-default-icon ui-icon"><i></i></div>
+							<?php endif; ?>
 						</div>
 					</div>
 					<div class="salescenter-main-header-right-block">
 						<div class="salescenter-main-header-title-container">
 							<?php
 							$title = Loc::getMessage('SALESCENTER_SP_PAYSYSTEM_'.$arResult['PAYSYSTEM_HANDLER_FULL'].'_TITLE');
+							if (!$title)
+							{
+								$title = Loc::getMessage('SALESCENTER_SP_PAYSYSTEM_'.mb_strtoupper($arResult['PAYSYSTEM_HANDLER']).'_TITLE');
+							}
 							if (!$title)
 							{
 								$title = $arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['FULL_NAME'];
@@ -60,14 +78,16 @@ Extension::load([
 							<div class="salescenter-main-header-feedback-container">
 								<?Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->renderFeedbackButton();?>
 							</div>
-							<div data-bx-salescenter-block="form" class="salescenter-main-header-switcher-container">
+							<?php if($arResult['PAYSYSTEM_ID'] > 0):?>
+								<div class="salescenter-main-header-switcher-container">
 								<span data-switcher="<?=htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode([
 									'id' => 'salescenter-paysystem-active',
 									'checked' => ($arResult['PAYSYSTEM']['ACTIVE'] === 'Y'),
 									'inputName' => "ACTIVE",
 									'color' => "green"
 								]))?>" class="ui-switcher"></span>
-							</div>
+								</div>
+							<?php endif;?>
 						</div>
 						<hr class="ui-hr" style="margin-bottom: 15px;">
 						<?php
@@ -79,7 +99,17 @@ Extension::load([
 						?>
 						<div class="ui-text-2" style="margin-bottom: 15px;"><?=htmlspecialcharsbx($description);?></div>
 						<div class="salescenter-button-container">
-							<a class="salescenter-paysystem-link" onclick="BX.Salescenter.Manager.openHowToConfigPaySystem(event);"><?=Loc::getMessage('SALESCENTER_SP_LINK_CONNECT')?></a>
+							<?php if (mb_strtolower($arResult['PAYSYSTEM_HANDLER_CLASS_NAME']) === mb_strtolower(\Sale\Handlers\PaySystem\SkbHandler::class)):?>
+								<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigSkbPaySystem(event);"><?=Loc::getMessage('SALESCENTER_SP_LINK_SBP_CONNECT')?></a>
+							<?php elseif (mb_strtolower($arResult['PAYSYSTEM_HANDLER_CLASS_NAME']) === mb_strtolower(\Sale\Handlers\PaySystem\BePaidHandler::class)):?>
+								<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigBePaidPaySystem(event);"><?=Loc::getMessage('SALESCENTER_SP_LINK_CONNECT')?></a>
+							<?php elseif (mb_strtolower($arResult['PAYSYSTEM_HANDLER_CLASS_NAME']) === mb_strtolower(\Sale\Handlers\PaySystem\LiqPayHandler::class)):?>
+								<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigLiqPayPaySystem(event);"><?=Loc::getMessage('SALESCENTER_SP_LINK_CONNECT')?></a>
+							<?php elseif (mb_strtolower($arResult['PAYSYSTEM_HANDLER_CLASS_NAME']) === mb_strtolower(\Sale\Handlers\PaySystem\UaPayHandler::class)):?>
+								<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigUaPayPaySystem(event);"><?=Loc::getMessage('SALESCENTER_SP_LINK_CONNECT')?></a>
+							<?php else:?>
+								<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigPaySystem(event);"><?=Loc::getMessage('SALESCENTER_SP_LINK_CONNECT')?></a>
+							<?php endif;?>
 						</div>
 						<div data-bx-salescenter-block="profile" style="display: none;">
 							<div class="salescenter-auth-popup-settings">
@@ -113,140 +143,140 @@ Extension::load([
 		</div>
 
 		<div data-bx-salescenter-block="form" style="display: none;" class="salescenter-main-settings ui-bg-color-white">
-				<div class="ui-alert ui-alert-danger" style="display: none;">
-					<span class="ui-alert-message" id="salescenter-paysystem-error"></span>
-				</div>
-				<?php
-				$name = '';
-				if (isset($arResult['PAYSYSTEM']['NAME']))
+			<div class="ui-alert ui-alert-danger" style="display: none;">
+				<span class="ui-alert-message" id="salescenter-paysystem-error"></span>
+			</div>
+			<?php
+			$name = '';
+			if (isset($arResult['PAYSYSTEM']['NAME']))
+			{
+				$name = $arResult['PAYSYSTEM']['NAME'];
+			}
+			else
+			{
+				if ($arResult['PAYSYSTEM_PS_MODE'])
 				{
-					$name = $arResult['PAYSYSTEM']['NAME'];
+					$name = $arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['MODE_NAME'];
 				}
 				else
 				{
-					if ($arResult['PAYSYSTEM_PS_MODE'])
-					{
-						$name = $arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['MODE_NAME'];
-					}
-					else
-					{
-						$name = $arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['NAME'];
-					}
+					$name = $arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['NAME'];
 				}
+			}
 
-				$description = '';
-				if (isset($arResult['PAYSYSTEM']['DESCRIPTION']))
-				{
-					$description = $arResult['PAYSYSTEM']['DESCRIPTION'];
-				}
-				?>
-				<div class="salescenter-editor-section-edit">
-					<div class="salescenter-editor-section-header">
-						<span class="salescenter-editor-header-title-text"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_TITLE')?></span>
+			$description = '';
+			if (isset($arResult['PAYSYSTEM']['DESCRIPTION']))
+			{
+				$description = $arResult['PAYSYSTEM']['DESCRIPTION'];
+			}
+			?>
+			<div class="salescenter-editor-section-edit">
+				<div class="salescenter-editor-section-header">
+					<span class="salescenter-editor-header-title-text"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_TITLE')?></span>
+				</div>
+				<div class="salescenter-editor-section-content">
+					<div class="salescenter-editor-content-block">
+						<div class="ui-ctl-label-text">
+							<label for="NAME"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_NAME')?></label>
+						</div>
+						<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
+							<input type="text" name="NAME" id="NAME" class="ui-ctl-element" value="<?=htmlspecialcharsbx($name)?>">
+						</div>
+						<div style="margin-top: 5px;" class="ui-ctl-label-text">
+							<span class="salescenter-editor-content-logo-hint"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_NAME_HINT')?></span>
+						</div>
 					</div>
-					<div class="salescenter-editor-section-content">
-						<div class="salescenter-editor-content-block">
-							<div class="ui-ctl-label-text">
-								<label for="NAME"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_NAME')?></label>
-							</div>
-							<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
-								<input type="text" name="NAME" id="NAME" class="ui-ctl-element" value="<?=htmlspecialcharsbx($name)?>">
-							</div>
-							<div style="margin-top: 5px;" class="ui-ctl-label-text">
-								<span class="salescenter-editor-content-logo-hint"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_NAME_HINT')?></span>
-							</div>
+					<div class="salescenter-editor-content-block">
+						<div class="ui-ctl-label-text">
+							<label for="DESCRIPTION"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_DESCRIPTION')?></label>
 						</div>
-						<div class="salescenter-editor-content-block">
-							<div class="ui-ctl-label-text">
-								<label for="DESCRIPTION"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_DESCRIPTION')?></label>
-							</div>
-							<div class="ui-ctl ui-ctl-textarea ui-ctl-no-resize ui-ctl-w100">
-								<textarea name="DESCRIPTION" id="DESCRIPTION" class="ui-ctl-element"><?=htmlspecialcharsbx($description)?></textarea>
-							</div>
+						<div class="ui-ctl ui-ctl-textarea ui-ctl-no-resize ui-ctl-w100">
+							<textarea name="DESCRIPTION" id="DESCRIPTION" class="ui-ctl-element"><?=htmlspecialcharsbx($description)?></textarea>
 						</div>
-						<div class="salescenter-editor-content-block">
-							<div class="ui-ctl-label-text">
-								<label for="LOGOTIP"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_LOGOTIP')?></label>
-							</div>
-							<div class="salescneter-editor-img-wrapper">
+					</div>
+					<div class="salescenter-editor-content-block">
+						<div class="ui-ctl-label-text">
+							<label for="LOGOTIP"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_LOGOTIP')?></label>
+						</div>
+						<div class="salescneter-editor-img-wrapper">
 							<?php
-								if ($arResult['PAYSYSTEM']["LOGOTIP"])
-								{
-									$logo = \CFile::ResizeImageGet(
-										$arResult['PAYSYSTEM']["LOGOTIP"],
-										[
-											"width" => 100,
-											"height" => 100
-										],
-										BX_RESIZE_IMAGE_PROPORTIONAL,
-										false
-									);
-									?>
-									<div class="salescneter-editor-img-container">
-										<img
+							if ($arResult['PAYSYSTEM']["LOGOTIP"])
+							{
+								$logo = \CFile::ResizeImageGet(
+									$arResult['PAYSYSTEM']["LOGOTIP"],
+									[
+										"width" => 100,
+										"height" => 100
+									],
+									BX_RESIZE_IMAGE_PROPORTIONAL,
+									false
+								);
+								?>
+								<div class="salescneter-editor-img-container">
+									<img
 											src="<?=$logo['src']?>"
 											alt="<?=$arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['NAME']?>"
 											class="salescneter-editor-content-img"
 											id="salescenter-img-preload"
-										>
+									>
+								</div>
+								<?php
+							}
+							else
+							{
+								if ($arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['LOGO'])
+								{
+									?>
+									<div class="salescneter-editor-img-container">
+										<img
+												src="<?=$arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['LOGO']?>"
+												alt="<?=$arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['NAME']?>"
+												class="salescneter-editor-content-img"
+												id="salescenter-img-preload">
 									</div>
 									<?php
 								}
 								else
 								{
-									if ($arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['LOGO'])
-									{
-										?>
-										<div class="salescneter-editor-img-container">
-											<img
-												src="<?=$arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['LOGO']?>"
-												alt="<?=$arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['NAME']?>"
-												class="salescneter-editor-content-img"
-												id="salescenter-img-preload">
-										</div>
-										<?php
-									}
-									else
-									{
-										?>
-										<div class="salescneter-editor-img-container">
-											<img src="" alt="" class="salescneter-editor-content-img" id="salescenter-img-preload">
-										</div>
-										<?php
-									}
+									?>
+									<div class="salescneter-editor-img-container">
+										<img src="" alt="" class="salescneter-editor-content-img" id="salescenter-img-preload">
+									</div>
+									<?php
 								}
-								?>
-								<div class="salescneter-editor-img-load">
-									<label class="ui-ctl ui-ctl-file-btn">
-										<input type="file" name="LOGOTIP" id="LOGOTIP" class="ui-ctl-element">
-										<div class="ui-ctl-label-text"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_LOGOTIP_LOAD_BUTTON')?></div>
-									</label>
-								</div>
-							</div>
-							<div style="margin-top: 15px;" class="ui-ctl-label-text">
-								<span class="salescenter-editor-content-logo-hint"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_LOGOTIP_HINT')?></span>
+							}
+							?>
+							<div class="salescneter-editor-img-load">
+								<label class="ui-ctl ui-ctl-file-btn">
+									<input type="file" name="LOGOTIP" id="LOGOTIP" class="ui-ctl-element">
+									<div class="ui-ctl-label-text"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_LOGOTIP_LOAD_BUTTON')?></div>
+								</label>
 							</div>
 						</div>
-						<div class="salescenter-editor-content-block">
-							<div class="ui-ctl-label-text">
-								<label for="IS_CASH"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_IS_CASH')?></label>
-							</div>
-							<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
-								<div class="ui-ctl-after ui-ctl-icon-angle"></div>
-								<?php
-								$isCash = $arResult['PAYSYSTEM']['IS_CASH'];
-								?>
-								<select name="IS_CASH" id="IS_CASH" class="ui-ctl-element">
-									<option value="N" <?=($isCash == 'N') ? ' selected' : '';?>><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_IS_CASH_NO_CASH')?></option>
-									<option value="Y" <?=($isCash == 'Y') ? ' selected' : '';?>><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_IS_CASH_CASH')?></option>
-									<option value="A" <?=($isCash == 'A') ? ' selected' : '';?>><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_IS_CASH_ACQUIRING')?></option>
-								</select>
-							</div>
+						<div style="margin-top: 15px;" class="ui-ctl-label-text">
+							<span class="salescenter-editor-content-logo-hint"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_LOGOTIP_HINT')?></span>
 						</div>
 					</div>
-					<?php
-					if($arResult['isCashboxEnabled'])
-					{
+					<div class="salescenter-editor-content-block">
+						<div class="ui-ctl-label-text">
+							<label for="IS_CASH"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_IS_CASH')?></label>
+						</div>
+						<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
+							<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+							<?php
+							$isCash = $arResult['PAYSYSTEM']['IS_CASH'];
+							?>
+							<select name="IS_CASH" id="IS_CASH" class="ui-ctl-element">
+								<option value="N" <?=($isCash == 'N') ? ' selected' : '';?>><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_IS_CASH_NO_CASH')?></option>
+								<option value="Y" <?=($isCash == 'Y') ? ' selected' : '';?>><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_IS_CASH_CASH')?></option>
+								<option value="A" <?=($isCash == 'A') ? ' selected' : '';?>><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_IS_CASH_ACQUIRING')?></option>
+							</select>
+						</div>
+					</div>
+				</div>
+				<?php
+				if($arResult['isCashboxEnabled'])
+				{
 					?>
 					<div class="salescenter-editor-section-header">
 						<span class="salescenter-editor-header-title-text"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_CASHBOX_TITLE')?></span>
@@ -263,8 +293,8 @@ Extension::load([
 							?>
 							<div class="ui-alert ui-alert-close-animate ui-alert-warning" id="salescenter-cashbox-warning">
 								<span class="ui-alert-message"><?=Loc::getMessage('SALESCENTER_SP_CAHSBOX_HINT', [
-									'#CASHBOX_SETTINGS_LINK#' => 'https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=42&CHAPTER_ID=09179&LESSON_PATH=3912.4580.9179'
-								])?></span>
+										'#CASHBOX_SETTINGS_LINK#' => 'https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=42&CHAPTER_ID=09179&LESSON_PATH=3912.4580.9179'
+									])?></span>
 								<span class="ui-alert-close-btn" onclick="BX.hide(BX('salescenter-cashbox-warning'));"></span>
 							</div>
 							<?php
@@ -272,33 +302,33 @@ Extension::load([
 						?>
 					</div>
 					<?php
-					}
-					?>
-				</div>
-				<div hidden><?=$arResult["BUS_VAL"];?></div>
-				<?php
-				$buttons = [
-					'save',
-					'cancel' => $arParams['SALESCENTER_DIR']
-				];
-				if($arResult['PAYSYSTEM_ID'] > 0)
-				{
-					$buttons[] = [
-						'TYPE' => 'remove',
-						'ONCLICK' => 'BX.SalecenterPaySystem.remove(event);',
-					];
 				}
-				$APPLICATION->IncludeComponent(
-					'bitrix:ui.button.panel',
-					"",
-					[
-						'BUTTONS' => $buttons,
-						'ALIGN' => "center"
-					],
-					false
-				);
 				?>
+			</div>
+			<div hidden><?=$arResult["BUS_VAL"];?></div>
 		</div>
+		<?php
+		$buttons = [
+			'save',
+			'cancel' => $arParams['SALESCENTER_DIR']
+		];
+		if($arResult['PAYSYSTEM_ID'] > 0)
+		{
+			$buttons[] = [
+				'TYPE' => 'remove',
+				'ONCLICK' => 'BX.SalecenterPaySystem.remove(event);',
+			];
+		}
+		$APPLICATION->IncludeComponent(
+			'bitrix:ui.button.panel',
+			"",
+			[
+				'BUTTONS' => $buttons,
+				'ALIGN' => "center"
+			],
+			false
+		);
+		?>
 	</form>
 </div>
 

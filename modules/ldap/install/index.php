@@ -1,8 +1,7 @@
-<?
-global $MESS;
-$strPath2Lang = str_replace("\\", "/", __FILE__);
-$strPath2Lang = substr($strPath2Lang, 0, strlen($strPath2Lang)-strlen("/install/index.php"));
-include(GetLangFileName($strPath2Lang."/lang/", "/install/index.php"));
+<?php
+
+use Bitrix\Main\Localization\Loc;
+Loc::loadMessages(__FILE__);
 
 Class ldap extends CModule
 {
@@ -15,13 +14,11 @@ Class ldap extends CModule
 	
 	var $errors = array();
 
-	function ldap()
+	function __construct()
 	{
 		$arModuleVersion = array();
 
-		$path = str_replace("\\", "/", __FILE__);
-		$path = substr($path, 0, strlen($path) - strlen("/index.php"));
-		include($path."/version.php");
+		include(__DIR__.'/version.php');
 
 		if (is_array($arModuleVersion) && array_key_exists("VERSION", $arModuleVersion))
 		{
@@ -34,15 +31,15 @@ Class ldap extends CModule
 			$this->MODULE_VERSION_DATE = LDAP_VERSION_DATE;
 		}
 
-		$this->MODULE_NAME = GetMessage("LDAP_MODULE_NAME");
-		$this->MODULE_DESCRIPTION = GetMessage("LDAP_MODULE_DESC");
+		$this->MODULE_NAME = Loc::getMessage("LDAP_MODULE_NAME");
+		$this->MODULE_DESCRIPTION = Loc::getMessage("LDAP_MODULE_DESC");
 	}
 	
 	function CheckLDAP()
 	{
 		if(!function_exists("ldap_connect"))
 		{
-			$this->errors[] = GetMessage("LDAP_MOD_INST_ERROR_PHP");
+			$this->errors[] = Loc::getMessage("LDAP_MOD_INST_ERROR_PHP");
 			return false;
 		}
 		return true;
@@ -129,8 +126,8 @@ Class ldap extends CModule
 			$et->Add(array(
 				"LID" => $lid,
 				"EVENT_NAME" => "LDAP_USER_CONFIRM",
-				"NAME" => GetMessage("LDAP_USER_CONFIRM_TYPE_NAME"),
-				"DESCRIPTION" => GetMessage("LDAP_USER_CONFIRM_TYPE_DESC"),
+				"NAME" => Loc::getMessage("LDAP_USER_CONFIRM_TYPE_NAME"),
+				"DESCRIPTION" => Loc::getMessage("LDAP_USER_CONFIRM_TYPE_DESC"),
 			));
 
 			$arSites = array();
@@ -148,8 +145,8 @@ Class ldap extends CModule
 					"EMAIL_FROM" => "#DEFAULT_EMAIL_FROM#",
 					"EMAIL_TO" => "#EMAIL#",
 					"BCC" => "#BCC#",
-					"SUBJECT" => GetMessage("LDAP_USER_CONFIRM_EVENT_NAME"),
-					"MESSAGE" => GetMessage("LDAP_USER_CONFIRM_EVENT_DESC", array("#LANGUAGE_ID#" => $lid)),
+					"SUBJECT" => Loc::getMessage("LDAP_USER_CONFIRM_EVENT_NAME"),
+					"MESSAGE" => Loc::getMessage("LDAP_USER_CONFIRM_EVENT_DESC", array("#LANGUAGE_ID#" => $lid)),
 					"BODY_TYPE" => "text",
 				));
 			}
@@ -213,15 +210,15 @@ Class ldap extends CModule
 			$this->InstallFiles();
 			$this->InstallEvents();
 		}
-		$APPLICATION->IncludeAdminFile(GetMessage("LDAP_INSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/ldap/install/step1.php");
+		$APPLICATION->IncludeAdminFile(Loc::getMessage("LDAP_INSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/ldap/install/step1.php");
 	}
 
 	function DoUninstall()
 	{
 		global $DB, $DOCUMENT_ROOT, $APPLICATION, $step, $DBType;
-		$step = IntVal($step);
+		$step = intval($step);
 		if($step<2)
-			$APPLICATION->IncludeAdminFile(GetMessage("LDAP_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/ldap/install/unstep1.php");
+			$APPLICATION->IncludeAdminFile(Loc::getMessage("LDAP_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/ldap/install/unstep1.php");
 		elseif($step==2)
 		{
 			$APPLICATION->ResetException();
@@ -230,7 +227,7 @@ Class ldap extends CModule
 				$this->UnInstallFiles();
 				$this->UnInstallEvents();
 			}
-			$APPLICATION->IncludeAdminFile(GetMessage("LDAP_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/ldap/install/unstep2.php");
+			$APPLICATION->IncludeAdminFile(Loc::getMessage("LDAP_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/ldap/install/unstep2.php");
 		}
 	}
 }

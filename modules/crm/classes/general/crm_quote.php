@@ -46,7 +46,8 @@ class CAllCrmQuote
 		}
 
 		$this->LAST_ERROR = '';
-		$iUserId = CCrmSecurityHelper::GetCurrentUserID();
+		$iUserId = isset($options['CURRENT_USER'])
+			? (int)$options['CURRENT_USER'] : CCrmSecurityHelper::GetCurrentUserID();
 
 		if (isset($arFields['ID']))
 			unset($arFields['ID']);
@@ -340,7 +341,7 @@ class CAllCrmQuote
 
 		/*if (($ID == false || isset($arFields['TITLE'])) && empty($arFields['TITLE']))
 			$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_IS_MISSING', array('%FIELD_NAME%' => GetMessage('CRM_QUOTE_FIELD_TITLE')))."<br />\n";*/
-		if (isset($arFields['TITLE']) && strlen($arFields['TITLE']) > 255)
+		if (isset($arFields['TITLE']) && mb_strlen($arFields['TITLE']) > 255)
 		{
 			$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_QUOTE_FIELD_TITLE')))."<br />\n";
 		}
@@ -351,7 +352,7 @@ class CAllCrmQuote
 			{
 				$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_IS_MISSING', array('%FIELD_NAME%' => GetMessage('CRM_QUOTE_FIELD_QUOTE_NUMBER')))."<br />\n";
 			}
-			else*/ if (strlen($arFields['QUOTE_NUMBER']) > 100)
+			else*/ if (mb_strlen($arFields['QUOTE_NUMBER']) > 100)
 			{
 				$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_QUOTE_FIELD_QUOTE_NUMBER')))."<br />\n";
 			}
@@ -379,7 +380,7 @@ class CAllCrmQuote
 		{
 			$arFields['OPPORTUNITY'] = str_replace(array(',', ' '), array('.', ''), $arFields['OPPORTUNITY']);
 			//HACK: MSSQL returns '.00' for zero value
-			if(strpos($arFields['OPPORTUNITY'], '.') === 0)
+			if(mb_strpos($arFields['OPPORTUNITY'], '.') === 0)
 			{
 				$arFields['OPPORTUNITY'] = '0'.$arFields['OPPORTUNITY'];
 			}
@@ -400,7 +401,7 @@ class CAllCrmQuote
 
 		foreach (self::$clientFields as $fieldName)
 		{
-			if (isset($arFields[$fieldName]) && strlen($arFields[$fieldName]) > 255)
+			if (isset($arFields[$fieldName]) && mb_strlen($arFields[$fieldName]) > 255)
 				$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_QUOTE_FIELD_'.$fieldName.($fieldName === 'MYCOMPANY_ID' ? '1' : ''))))."<br />\n";
 		}
 		unset($fieldName);
@@ -442,7 +443,7 @@ class CAllCrmQuote
 			}
 		}
 
-		if (strlen($this->LAST_ERROR) > 0)
+		if ($this->LAST_ERROR <> '')
 			return false;
 
 		return true;
@@ -802,7 +803,7 @@ class CAllCrmQuote
 			unset($arFields['ID']);
 			$sUpdate = $DB->PrepareUpdate('b_crm_quote', $arFields);
 
-			if (strlen($sUpdate) > 0)
+			if ($sUpdate <> '')
 			{
 				$clobFieldNames = array('COMMENTS', 'CONTENT', 'STORAGE_ELEMENT_IDS');
 				$arBinds = array();
@@ -1045,15 +1046,15 @@ class CAllCrmQuote
 				$maxLastID = 0;
 				$strSql = '';
 
-				switch(strtolower($DB->type))
+				switch($DB->type)
 				{
-					case "mysql":
+					case "MYSQL":
 						$strSql = "SELECT ID, QUOTE_NUMBER FROM b_crm_quote WHERE QUOTE_NUMBER IS NOT NULL ORDER BY ID DESC LIMIT 1";
 						break;
-					case "oracle":
+					case "ORACLE":
 						$strSql = "SELECT ID, QUOTE_NUMBER FROM b_crm_quote WHERE QUOTE_NUMBER IS NOT NULL AND ROWNUM <= 1 ORDER BY ID DESC";
 						break;
-					case "mssql":
+					case "MSSQL":
 						$strSql = "SELECT TOP 1 ID, QUOTE_NUMBER FROM b_crm_quote WHERE QUOTE_NUMBER IS NOT NULL ORDER BY ID DESC";
 						break;
 				}
@@ -1061,7 +1062,7 @@ class CAllCrmQuote
 				$dbres = $DB->Query($strSql, true);
 				if ($arRes = $dbres->GetNext())
 				{
-					if (strlen($arRes["QUOTE_NUMBER"]) === strlen(intval($arRes["QUOTE_NUMBER"])))
+					if (mb_strlen($arRes["QUOTE_NUMBER"]) === mb_strlen(intval($arRes["QUOTE_NUMBER"])))
 						$maxLastID = intval($arRes["QUOTE_NUMBER"]);
 				}
 
@@ -1089,15 +1090,15 @@ class CAllCrmQuote
 					$userID = intval($arRes["ASSIGNED_BY_ID"]);
 					$strSql = '';
 
-					switch (strtolower($DB->type))
+					switch($DB->type)
 					{
-						case "mysql":
+						case "MYSQL":
 							$strSql = "SELECT MAX(CAST(SUBSTRING(QUOTE_NUMBER, LENGTH('".$userID."_') + 1) as UNSIGNED)) as NUM_ID FROM b_crm_quote WHERE QUOTE_NUMBER LIKE '".$userID."\_%'";
 							break;
-						case "oracle":
+						case "ORACLE":
 							$strSql = "SELECT MAX(CAST(SUBSTR(QUOTE_NUMBER, LENGTH('".$userID."_') + 1) as NUMBER)) as NUM_ID FROM b_crm_quote WHERE QUOTE_NUMBER LIKE '".$userID."_%'";
 							break;
-						case "mssql":
+						case "MSSQL":
 							$strSql = "SELECT MAX(CAST(SUBSTRING(QUOTE_NUMBER, LEN('".$userID."_') + 1, LEN(QUOTE_NUMBER)) as INT)) as NUM_ID FROM b_crm_quote WHERE QUOTE_NUMBER LIKE '".$userID."_%'";
 							break;
 					}
@@ -1135,15 +1136,15 @@ class CAllCrmQuote
 				}
 
 				$strSql = '';
-				switch (strtolower($DB->type))
+				switch($DB->type)
 				{
-					case "mysql":
+					case "MYSQL":
 						$strSql = "SELECT MAX(CAST(SUBSTRING(QUOTE_NUMBER, LENGTH('".$date." / ') + 1) as UNSIGNED)) as NUM_ID FROM b_crm_quote WHERE QUOTE_NUMBER LIKE '".$date." / %'";
 						break;
-					case "oracle":
+					case "ORACLE":
 						$strSql = "SELECT MAX(CAST(SUBSTR(QUOTE_NUMBER, LENGTH('".$date." / ') + 1) as NUMBER)) as NUM_ID FROM b_crm_quote WHERE QUOTE_NUMBER LIKE '".$date." / %'";
 						break;
-					case "mssql":
+					case "MSSQL":
 						$strSql = "SELECT MAX(CAST(SUBSTRING(QUOTE_NUMBER, LEN('".$date." / ') + 1, LEN(QUOTE_NUMBER)) as INT)) as NUM_ID FROM b_crm_quote WHERE QUOTE_NUMBER LIKE '".$date." / %'";
 						break;
 				}
@@ -1254,7 +1255,7 @@ class CAllCrmQuote
 					$resLastId = $DB->Query($sql, true);
 					if ($row = $resLastId->fetch())
 					{
-						if (strlen(strval($row['LAST_NUMBER'])) > 0)
+						if (strval($row['LAST_NUMBER']) <> '')
 						{
 							$maxLastId = $row['LAST_NUMBER'];
 							$maxLastIdIsSet = true;
@@ -1761,7 +1762,7 @@ class CAllCrmQuote
 
 		// Processing of the files
 		if (array_key_exists('STORAGE_TYPE_ID', $arFieldsModif)
-			&& array_key_exists('STORAGE_ELEMENT_IDS', $arFieldsModif) && strlen($arFieldsModif['STORAGE_ELEMENT_IDS']) > 0)
+			&& array_key_exists('STORAGE_ELEMENT_IDS', $arFieldsModif) && $arFieldsModif['STORAGE_ELEMENT_IDS'] <> '')
 		{
 			$newStorageTypeID = isset($arFieldsModif['STORAGE_TYPE_ID']) ? intval($arFieldsModif['STORAGE_TYPE_ID']) : CCrmQuoteStorageType::Undefined;
 			$oldStorageTypeID = isset($arFieldsOrig['STORAGE_TYPE_ID']) ? intval($arFieldsOrig['STORAGE_TYPE_ID']) : CCrmQuoteStorageType::Undefined;
@@ -2229,46 +2230,46 @@ class CAllCrmQuote
 
 	public static function GetTopIDs($top, $sortType = 'ASC', $userPermissions = null)
 	{
-		if($top <= 0)
+		$top = (int) $top;
+		if ($top <= 0)
 		{
-			return array();
+			return [];
 		}
 
-		$sortType = strtoupper($sortType) !== 'DESC' ? 'ASC' : 'DESC';
+		$sortType = mb_strtoupper($sortType) !== 'DESC' ? 'ASC' : 'DESC';
 
 		$permissionSql = '';
-		if(!CCrmPerms::IsAdmin())
+		if (!CCrmPerms::IsAdmin())
 		{
-			if(!$userPermissions)
+			if (!$userPermissions)
 			{
 				$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 			}
 
-			$permissionSql = self::BuildPermSql(
-				'L',
-				'READ',
-				array(
-					'PERMS' => $userPermissions,
-					'RAW_QUERY' => array('TOP' => $top, 'SORT_TYPE' => $sortType)
-				)
-			);
+			$permissionSql = self::BuildPermSql('L', 'READ', ['PERMS' => $userPermissions]);
 		}
 
-		if($permissionSql === false)
+		if ($permissionSql === false)
 		{
-			return array();
+			return [];
 		}
 
-		$connection = \Bitrix\Main\Application::getConnection();
-		$sql = $permissionSql === ''
-			? $connection->getSqlHelper()->getTopSql("SELECT ID FROM b_crm_quote ORDER BY ID {$sortType}", $top)
-			: "SELECT L.ID FROM b_crm_quote L INNER JOIN ($permissionSql) LP ON L.ID = LP.ENTITY_ID";
-		$dbResult = $connection->query($sql);
+		$query = new Bitrix\Main\Entity\Query(Crm\QuoteTable::getEntity());
+		$query->addSelect('ID');
+		$query->addOrder('ID', $sortType);
+		$query->setLimit($top);
 
-		$results = array();
-		while($field = $dbResult->fetch())
+		if ($permissionSql !== '')
 		{
-			$results[] = (int)$field['ID'];
+			$permissionSql = mb_substr($permissionSql, 7);
+			$query->where('ID', 'in', new Bitrix\Main\DB\SqlExpression($permissionSql));
+		}
+
+		$rs = $query->exec();
+		$results = [];
+		while ($field = $rs->fetch())
+		{
+			$results[] = (int) $field['ID'];
 		}
 		return $results;
 	}
@@ -2572,7 +2573,7 @@ class CAllCrmQuote
 		else
 		{
 			$params['CONVERSION_PERMITTED'] = false;
-			$params['CONVERSION_LOCK_SCRIPT'] = $restriction->preparePopupScript();
+			$params['CONVERSION_LOCK_SCRIPT'] = $restriction->prepareInfoHelperScript();
 		}
 	}
 
@@ -2650,7 +2651,7 @@ class CAllCrmQuote
 		}
 		else
 		{
-			$type = strtolower($type);
+			$type = mb_strtolower($type);
 		}
 
 		CPullWatch::AddToStack(
@@ -2983,7 +2984,7 @@ class CAllCrmQuote
 		foreach (self::$clientFields as $k)
 		{
 			$index = $bDualFields === true ? '~'.$k : $k;
-			if (isset($arQuote[$index]) && strlen(trim($arQuote[$index])) > 0)
+			if (isset($arQuote[$index]) && trim($arQuote[$index]) <> '')
 				$strClientInfo .= (($i++ > 0) ? ', ' : '').$arQuote[$index];
 		}
 
@@ -3085,9 +3086,9 @@ class CAllCrmQuote
 				$sBody .= GetMessage('CRM_QUOTE_SEARCH_FIELD_ASSIGNED_BY_INFO').": $responsibleInfo\n";
 		}
 
-		$sDetailURL = CComponentEngine::MakePathFromTemplate(COption::GetOptionString('crm', 'path_to_'.strtolower($sEntityType).'_show'),
+		$sDetailURL = CComponentEngine::MakePathFromTemplate(COption::GetOptionString('crm', 'path_to_'.mb_strtolower($sEntityType).'_show'),
 			array(
-				strtolower($sEntityType).'_id' => $arQuote['ID']
+				mb_strtolower($sEntityType).'_id' => $arQuote['ID']
 			)
 		);
 
@@ -3158,7 +3159,7 @@ class CAllCrmQuote
 			'SITE_ID' => $arSitePath,
 			'PERMISSIONS' => $arAttr,
 			'BODY' => $sBody,
-			'TAGS' => 'crm,'.strtolower($sEntityType).','.GetMessage('CRM_'.$sEntityType)
+			'TAGS' => 'crm,'.mb_strtolower($sEntityType).','.GetMessage('CRM_'.$sEntityType)
 		);
 
 		if ($bReindex)
@@ -3259,7 +3260,7 @@ class CAllCrmQuote
 	{
 		$storageTypeID = intval($storageTypeID);
 		$elementID = intval($elementID);
-		$action = strtoupper(strval($action));
+		$action = mb_strtoupper(strval($action));
 
 		$name = isset($arRow['SUBJECT']) ? strval($arRow['SUBJECT']) : '';
 		if($name === '')
@@ -4265,7 +4266,7 @@ class CAllCrmQuote
 			}
 			elseif (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
 			{
-				if(strlen($v) > 0)
+				if($v <> '')
 				{
 					$arFilter['>='.$arMatch[1]] = $v;
 				}
@@ -4273,7 +4274,7 @@ class CAllCrmQuote
 			}
 			elseif (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
 			{
-				if(strlen($v) > 0)
+				if($v <> '')
 				{
 					if (($arMatch[1] == 'DATE_CREATE' || $arMatch[1] == 'DATE_MODIFY') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
 					{
@@ -4293,7 +4294,7 @@ class CAllCrmQuote
 				}
 				unset($arFilter[$k]);
 			}
-			elseif (strpos($k, 'UF_') !== 0 && $k != 'LOGIC' && preg_match('/^[^\=\%\?\>\<]{1}/', $k) === 1)
+			elseif (mb_strpos($k, 'UF_') !== 0 && $k != 'LOGIC' && preg_match('/^[^\=\%\?\>\<]{1}/', $k) === 1)
 			{
 				$arFilter['%'.$k] = $v;
 				unset($arFilter[$k]);
@@ -4383,8 +4384,8 @@ class CAllCrmQuote
 
 		$actionFilePath = $_SERVER['DOCUMENT_ROOT'].$actionFilePath;
 		$actionFilePath = str_replace('\\', '/', $actionFilePath);
-		while (substr($actionFilePath, strlen($actionFilePath) - 1, 1) == '/')
-			$actionFilePath = substr($actionFilePath, 0, strlen($actionFilePath) - 1);
+		while (mb_substr($actionFilePath, mb_strlen($actionFilePath) - 1, 1) == '/')
+			$actionFilePath = mb_substr($actionFilePath, 0, mb_strlen($actionFilePath) - 1);
 
 		if (!file_exists($actionFilePath))
 		{

@@ -606,7 +606,7 @@ BX.ready(function(){
 
 							<? foreach (array('today', 'week', 'month', 'year') as $period): ?>
 								<span class="pulse-header-tab <?=$arParams['PERIOD']===$period?'pulse-header-tab-active':''?>"
-									data-period-id="<?=$period?>"><?=GetMessage('INTRANET_USTAT_PERIOD_BUTTON_'.strtoupper($period))?></span>
+									data-period-id="<?=$period?>"><?=GetMessage('INTRANET_USTAT_PERIOD_BUTTON_'.mb_strtoupper($period))?></span>
 							<? endforeach ?>
 						</span>
 				</div>

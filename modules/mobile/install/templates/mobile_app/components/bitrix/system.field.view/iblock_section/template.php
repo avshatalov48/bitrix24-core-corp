@@ -17,7 +17,7 @@ if (array_key_exists("CHAIN", $arResult) && count($arResult["CHAIN"]) > 0)
 		{
 			if ($arParams['arUserField']['SETTINGS']['SECTION_URL'])
 				$res = $arSection["NAME"];
-			elseif (StrLen($arParams['arUserField']['PROPERTY_VALUE_LINK']) > 0)
+			elseif ($arParams['arUserField']['PROPERTY_VALUE_LINK'] <> '')
 				$res = $arSection["NAME"];
 			else
 				$res = $arSection["NAME"];
@@ -38,7 +38,7 @@ else
 
 		if ($arParams['arUserField']['SETTINGS']['SECTION_URL'])
 			$res = $res;
-		elseif (StrLen($arParams['arUserField']['PROPERTY_VALUE_LINK']) > 0)
+		elseif ($arParams['arUserField']['PROPERTY_VALUE_LINK'] <> '')
 			$res = $res;
 	
 		if (!$bFirst):

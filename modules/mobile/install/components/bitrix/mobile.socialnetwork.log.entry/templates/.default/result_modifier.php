@@ -6,18 +6,32 @@
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
 
+use Bitrix\Main\Loader;
+
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/components/bitrix/mobile.socialnetwork.log.entry/include.php");
 
-if (!$arParams["IS_LIST"])
+$arEvent = $arResult['Event'];
+
+if (
+	!empty($arEvent['EVENT_FORMATTED'])
+	&& !empty($arEvent['EVENT_FORMATTED']['UF'])
+	&& is_array($arEvent['EVENT_FORMATTED']['UF'])
+	&& isset($arEvent['EVENT_FORMATTED']['UF']['UF_SONET_LOG_DOC'])
+	&& (!empty($arEvent['EVENT_FORMATTED']['UF']['UF_SONET_LOG_DOC']['VALUE']))
+
+)
 {
+	$arResult['UF_FILE'] = $arEvent['EVENT_FORMATTED']['UF']['UF_SONET_LOG_DOC'];
+	unset($arResult['Event']['EVENT_FORMATTED']['UF']['UF_SONET_LOG_DOC']);
+}
+
+
 	$arResult["RECORDS"] = array();
 	$arResult["LAST_COMMENT_TS"] = 0;
 
-	$arEvent = $arResult["Event"];
-
 	if (is_array($arEvent["COMMENTS"]))
 	{
-		$commentData = $commentInlineDiskData = $inlineDiskObjectIdList = $inlineDiskAttachedObjectIdList = array();
+		$commentData = $commentInlineDiskData = $inlineDiskObjectIdList = $inlineDiskAttachedObjectIdList = [];
 
 		foreach($arEvent["COMMENTS"] as $comment)
 		{
@@ -35,7 +49,7 @@ if (!$arParams["IS_LIST"])
 				$inlineDiskAttachedObjectIdList = array_merge($inlineDiskAttachedObjectIdList, $ufData['ATTACHED_OBJECT_ID']);
 			}
 
-			$commentData[] = $comment;
+			$commentData[$comment['EVENT']['ID']] = $comment;
 		}
 
 		$inlineDiskAttachedObjectIdImageList = $entityAttachedObjectIdList = array();
@@ -58,12 +72,12 @@ if (!$arParams["IS_LIST"])
 			$arResult["RECORDS"][$commentId] = array(
 				"ID" => $commentId,
 				"NEW" => (
-				($arResult["COUNTER_TYPE"] == "**")
-				&& $comment["EVENT"]["USER_ID"] != $USER->GetID()
-				&& intval($arResult["LAST_LOG_TS"]) > 0
-				&& (MakeTimeStamp($comment["EVENT"]["LOG_DATE"]) - intval($arResult["TZ_OFFSET"])) > $arResult["LAST_LOG_TS"]
-					? "Y"
-					: "N"
+					($arResult["COUNTER_TYPE"] == "**")
+					&& $comment["EVENT"]["USER_ID"] != $USER->GetID()
+					&& intval($arResult["LAST_LOG_TS"]) > 0
+					&& (MakeTimeStamp($comment["EVENT"]["LOG_DATE"]) - intval($arResult["TZ_OFFSET"])) > $arResult["LAST_LOG_TS"]
+						? "Y"
+						: "N"
 				),
 				"APPROVED" => "Y",
 				"POST_TIMESTAMP" => $comment["LOG_DATE_TS"],
@@ -79,20 +93,42 @@ if (!$arParams["IS_LIST"])
 				"UF" => $comment["UF"],
 				"~POST_MESSAGE_TEXT" => $comment["EVENT"]["MESSAGE"],
 				"POST_MESSAGE_TEXT" => CSocNetTextParser::closetags(htmlspecialcharsback((array_key_exists("EVENT_FORMATTED", $comment) && array_key_exists("MESSAGE", $comment["EVENT_FORMATTED"]) ? $comment["EVENT_FORMATTED"]["MESSAGE"] : $comment["EVENT"]["MESSAGE"]))),
-				"RATING_VOTE_ID" => false
+				"RATING_VOTE_ID" => false,
+				"AUX" => (isset($comment["AUX"]) ? $comment["AUX"] : ''),
+				"ORIGINAL_COMMENT_ID" => $comment["EVENT"]["ID"],
+				"CAN_DELETE" => (isset($comment["CAN_DELETE"]) ? $comment["CAN_DELETE"] : true)
 			);
+		}
+
+		if ($arParams["IS_LIST"])
+		{
+			$arResult["RECORDS"] = array_filter($arResult["RECORDS"], function ($value) { return (
+				isset($value['NEW'])
+				&& $value['NEW'] == 'Y'
+			); });
+
+			if (!empty($arResult["RECORDS"]))
+			{
+				$arResult["RECORDS"] = array_slice($arResult["RECORDS"], 0, 3, true);
+			}
+//			$arParams["PAGE_SIZE"] = count($arResult["RECORDS"]);
+		}
+
+		foreach($arResult["RECORDS"] as $commentId => $record)
+		{
+			$originalComment = $commentData[$record['ORIGINAL_COMMENT_ID']];
 
 			if (
-				strlen($comment["EVENT"]["RATING_TYPE_ID"]) > 0
-				&& $comment["EVENT"]["RATING_ENTITY_ID"] > 0
+				$originalComment["EVENT"]["RATING_TYPE_ID"] <> ''
+				&& $originalComment["EVENT"]["RATING_ENTITY_ID"] > 0
 				&& $arParams["SHOW_RATING"] == "Y"
 			)
 			{
-				$voteId = $comment["EVENT"]["RATING_TYPE_ID"].'_'.$comment["EVENT"]["RATING_ENTITY_ID"].'-'.(time()+rand(0, 1000));
+				$voteId = $originalComment["EVENT"]["RATING_TYPE_ID"].'_'.$originalComment["EVENT"]["RATING_ENTITY_ID"].'-'.(time()+rand(0, 1000));
 
 				$arResult["RECORDS"][$commentId]["RATING_VOTE_ID"] = $voteId;
-				$arResult["RECORDS"][$commentId]["RATING_USER_HAS_VOTED"] = $arResult["RATING_COMMENTS"][$comment["EVENT"]["RATING_ENTITY_ID"]]["USER_HAS_VOTED"];
-				$arResult["RECORDS"][$commentId]["RATING_USER_REACTION"] = $arResult["RATING_COMMENTS"][$comment["EVENT"]["RATING_ENTITY_ID"]]["USER_REACTION"];
+				$arResult["RECORDS"][$commentId]["RATING_USER_HAS_VOTED"] = $arResult["RATING_COMMENTS"][$originalComment["EVENT"]["RATING_ENTITY_ID"]]["USER_HAS_VOTED"];
+				$arResult["RECORDS"][$commentId]["RATING_USER_REACTION"] = $arResult["RATING_COMMENTS"][$originalComment["EVENT"]["RATING_ENTITY_ID"]]["USER_REACTION"];
 			}
 
 			// find all inline images and remove them from UF
@@ -130,7 +166,7 @@ if (!$arParams["IS_LIST"])
 			}
 		}
 	}
-}
+
 
 if (!empty($arParams['TOP_RATING_DATA']))
 {
@@ -150,3 +186,41 @@ elseif (!empty($arResult["Event"]["EVENT"]["ID"]))
 		$arResult['TOP_RATING_DATA'] = $ratingData[$arResult["Event"]["EVENT"]["ID"]];
 	}
 }
+
+$emptyPageParams = [];
+if (
+	$arParams["IS_LIST"]
+	&& $arResult["Event"]
+	&& is_array($arResult["Event"])
+	&& !empty($arResult["Event"])
+)
+{
+	$emptyPageParams = array(
+		"path" => $arParams["PATH_TO_LOG_ENTRY_EMPTY"],
+		"log_id" => intval($arResult["Event"]["EVENT"]["ID"]),
+		"entry_type" => "non-blog",
+		"use_follow" => ($arParams["USE_FOLLOW"] == 'N' ? 'N' : 'Y'),
+		"use_tasks" => ($arResult["bTasksAvailable"] && $arResult["canGetPostContent"] ? 'Y' : 'N'),
+		"post_content_type_id" => (!empty($arResult["POST_CONTENT_TYPE_ID"]) ? $arResult["POST_CONTENT_TYPE_ID"] : ''),
+		"post_content_id" => (!empty($arResult["POST_CONTENT_ID"]) ? $arResult["POST_CONTENT_ID"] : 0),
+		"site_id" => SITE_ID,
+		"language_id" => LANGUAGE_ID,
+		"datetime_format" => $arParams["DATE_TIME_FORMAT"],
+		"entity_xml_id" => $arResult["Event"]["COMMENTS_PARAMS"]["ENTITY_XML_ID"],
+		"focus_form" => true,
+		"focus_comments" => false,
+		"show_full" => in_array($arResult["Event"]["EVENT"]["EVENT_ID"], array("timeman_entry", "report", "calendar"))
+	);
+}
+
+$arResult["replyAction"] = (
+	!empty($emptyPageParams)
+		? "__MSLOpenLogEntryNew(".\CUtil::phpToJSObject($emptyPageParams).", null); event.stopPropagation(); return (event ? event.preventDefault() : false);"
+		: ""
+);
+
+$arResult['MOBILE_API_VERSION'] = (
+	Loader::includeModule('mobileapp')
+	? \CMobile::getApiVersion()
+	: intval($APPLICATION->getPageProperty('api_version'))
+);

@@ -57,7 +57,7 @@ $arFilter = array(
 	"CONTROLLER_MEMBER_ID" => $adminFilter['find_controller_member_id'],
 	"STATUS" => $adminFilter['find_status'],
 	"TASK_ID" => $adminFilter['find_task_id'],
-	"%NAME" => (strlen($adminFilter['find_name2']) > 0? $adminFilter['find_name2']: $adminFilter['find_name']),
+	"%NAME" => ($adminFilter['find_name2'] <> ''? $adminFilter['find_name2']: $adminFilter['find_name']),
 	"%DESCRIPTION" => $adminFilter['find_description'],
 	"%TASK_NAME" => $adminFilter['find_task_name'],
 	"%CONTROLLER_MEMBER_NAME" => $adminFilter['find_controller_member_name'],
@@ -76,7 +76,7 @@ if ($USER->CanDoOperation("controller_log_delete") && $arID = $lAdmin->GroupActi
 
 	foreach ($arID as $ID)
 	{
-		if (strlen($ID) <= 0)
+		if ($ID == '')
 			continue;
 		$ID = intval($ID);
 

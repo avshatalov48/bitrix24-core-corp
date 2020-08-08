@@ -105,8 +105,8 @@ $bVarsFromForm = false;
 if (
 	$_SERVER['REQUEST_METHOD'] == "POST"
 	&& (
-		strlen($_REQUEST['save']) > 0
-		|| strlen($_REQUEST['apply']) > 0
+		$_REQUEST['save'] <> ''
+		|| $_REQUEST['apply'] <> ''
 	)
 	&& check_bitrix_sessid()
 	&& $USER->CanDoOperation("controller_group_manage")
@@ -158,7 +158,7 @@ if (
 	$arSettings["default"]["security"]["groups"] = array();
 	foreach ($_REQUEST['SECURITY'] as $i => $arSec)
 	{
-		if (strlen($arSec["GROUP"]) > 0)
+		if ($arSec["GROUP"] <> '')
 		{
 			$arSettings["default"]["security"]["groups"][$arSec["GROUP"]] = $arSec["RIGHTS"];
 			if (isset($_REQUEST['SUB_SECURITY'][$i]) && in_array($arSec["RIGHTS"]['main'], $arMainSubordinateTask))
@@ -230,7 +230,7 @@ if (
 	{
 		CControllerCounter::SetGroupCounters($ID, $_POST["CONTROLLER_COUNTER_ID"]);
 
-		if (strlen($save) > 0)
+		if ($save <> '')
 			LocalRedirect("controller_group_admin.php?lang=".LANG);
 		else
 			LocalRedirect($APPLICATION->GetCurPage()."?lang=".LANG."&ID=".$ID."&".$tabControl->ActiveTabParam());
@@ -397,7 +397,7 @@ echo $USER_FIELD_MANAGER->ShowScript();
 					$arGroupOptions[$ns]["security"]["groups"] = array();
 					foreach ($_REQUEST['SECURITY'] as $i => $arSec)
 					{
-						if (strlen($arSec["GROUP"]) > 0)
+						if ($arSec["GROUP"] <> '')
 						{
 							$arGroupOptions[$ns]["security"]["groups"][$arSec["GROUP"]] = $arSec["RIGHTS"];
 							if (isset($_REQUEST['SUB_SECURITY'][$i]))
@@ -467,7 +467,7 @@ echo $USER_FIELD_MANAGER->ShowScript();
 		$arOptions = $info["options"];
 		foreach ($arOptions as $id => $arOptionParams):
 
-			if (substr($id, 0, 2) == "__"):
+			if (mb_substr($id, 0, 2) == "__"):
 				?>
 				<tr>
 					<td colspan="2" align="center"><?=htmlspecialcharsEx($arOptionParams)?>:</td>
@@ -884,7 +884,7 @@ echo $USER_FIELD_MANAGER->ShowScript();
 		$arOptions = $obOption->GetOptionArray();
 		foreach ($arOptions as $id => $arOptionParams):
 
-			if (substr($id, 0, 2) == "__"):
+			if (mb_substr($id, 0, 2) == "__"):
 				?>
 				<tr>
 					<td colspan="2" align="center"><?=htmlspecialcharsEx($arOptionParams)?>:</td>

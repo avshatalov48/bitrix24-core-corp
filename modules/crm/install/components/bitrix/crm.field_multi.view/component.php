@@ -1,7 +1,7 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 	$arResult['ENTITY_ID'] 	= $arParams['ENTITY_ID'];
-	$arResult['ELEMENT_ID'] = IntVal($arParams['ELEMENT_ID']);
+	$arResult['ELEMENT_ID'] = intval($arParams['ELEMENT_ID']);
 	$arResult['TYPE_ID'] 	= $arParams['TYPE_ID'];
 	$arResult['READ_ONLY'] = isset($arParams['READ_ONLY']) ? $arParams['READ_ONLY'] : false;
 
@@ -12,7 +12,7 @@
 	{
 		foreach ($arParams['VALUES'][$arParams['TYPE_ID']] as $ID => $arValue)
 		{
-			if ((substr($ID, 0, 1) == 'n') && $arValue['VALUE'] == '')
+			if ((mb_substr($ID, 0, 1) == 'n') && $arValue['VALUE'] == '')
 				continue;
 			$arResult['VALUES'][$ID]['ID'] = $ID;
 			$arResult['VALUES'][$ID]['VALUE'] = $arValue['VALUE'];

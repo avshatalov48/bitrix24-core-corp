@@ -6,7 +6,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-$arResult["PAGE"] = isset($arParams["PAGE"]) && strlen($arParams["PAGE"]) ? $arParams["PAGE"] : "WINDOWS";
+$arResult["PAGE"] = isset($arParams["PAGE"]) && mb_strlen($arParams["PAGE"]) ? $arParams["PAGE"] : "WINDOWS";
 
 if ($arResult["PAGE"] === "MACOS")
 {

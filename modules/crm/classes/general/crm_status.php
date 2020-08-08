@@ -130,7 +130,7 @@ class CCrmStatus
 	}
 	public static function IsDepricatedTypesEnabled()
 	{
-		return strtoupper(COption::GetOptionString('crm', 'enable_depricated_statuses', 'N')) !== 'N';
+		return mb_strtoupper(COption::GetOptionString('crm', 'enable_depricated_statuses', 'N')) !== 'N';
 	}
 	public static function EnableDepricatedTypes($enable)
 	{
@@ -190,7 +190,7 @@ class CCrmStatus
 			'STATUS_ID'	=> $statusID,
 			'NAME'		=> $arFields['NAME'],
 			'NAME_INIT'	=> $arFields['SYSTEM'] == 'Y' ? $arFields['NAME'] : '',
-			'SORT'		=> IntVal($arFields['SORT']),
+			'SORT'		=> intval($arFields['SORT']),
 			'SYSTEM'	=> $arFields['SYSTEM'] == 'Y'? 'Y': 'N',
 		);
 
@@ -206,7 +206,7 @@ class CCrmStatus
 		if (!$this->CheckFields($arFields))
 			return false;
 
-		$ID = IntVal($ID);
+		$ID = intval($ID);
 
 		if (!is_set($arFields['SORT']) ||
 			(is_set($arFields['SORT']) && !intval($arFields['SORT']) > 0))
@@ -257,11 +257,13 @@ class CCrmStatus
 	public function Delete($ID)
 	{
 		$this->LAST_ERROR = '';
-		$ID = IntVal($ID);
+		$ID = intval($ID);
 
-		$fields = $this->GetStatusById($ID);
+		$dbResult = CCrmStatus::GetList(array(), array('ID' => $ID));
+		$fields = $dbResult ? $dbResult->Fetch() : null;
 		if(!is_array($fields))
 		{
+			$this->LAST_ERROR = GetMessage('CRM_STATUS_ERR_NOT_FOUND');
 			return false;
 		}
 
@@ -287,27 +289,27 @@ class CCrmStatus
 			for ($i=0, $ic=count($filter_keys); $i<$ic; $i++)
 			{
 				$val = $arFilter[$filter_keys[$i]];
-				if (strlen($val)<=0 || $val=='NOT_REF') continue;
-				switch(strtoupper($filter_keys[$i]))
+				if ($val == '' || $val=='NOT_REF') continue;
+				switch(mb_strtoupper($filter_keys[$i]))
 				{
 					case 'ID':
 						$arSqlSearch[] = "CS.ID = '".$DB->ForSql($val)."'";
-					break;
+						break;
 					case 'ENTITY_ID':
 						$arSqlSearch[] = "CS.ENTITY_ID = '".$DB->ForSql($val)."'";
-					break;
+						break;
 					case 'STATUS_ID':
 						$arSqlSearch[] = "CS.STATUS_ID = '".$DB->ForSql($val)."'";
-					break;
+						break;
 					case 'NAME':
 						$arSqlSearch[] = GetFilterQuery('CS.NAME', $val);
-					break;
+						break;
 					case 'SORT':
 						$arSqlSearch[] = "CS.SORT = '".$DB->ForSql($val)."'";
-					break;
+						break;
 					case 'SYSTEM':
-						$arSqlSearch[] = "CS.".$sqlHelper->quote('SYSTEM')."='".(($val=='Y') ? 'Y' : 'N')."'";
-					break;
+						$arSqlSearch[] = "CS.".$sqlHelper->quote('SYSTEM')."='".(($val == 'Y')? 'Y' : 'N')."'";
+						break;
 				}
 			}
 		}
@@ -315,19 +317,31 @@ class CCrmStatus
 		$sOrder = '';
 		foreach($arSort as $key=>$val)
 		{
-			$ord = (strtoupper($val) <> 'ASC'? 'DESC':'ASC');
-			switch (strtoupper($key))
+			$ord = (mb_strtoupper($val) <> 'ASC'? 'DESC':'ASC');
+			switch(mb_strtoupper($key))
 			{
-				case 'ID':		$sOrder .= ', CS.ID '.$ord; break;
-				case 'ENTITY_ID':	$sOrder .= ', CS.ENTITY_ID '.$ord; break;
-				case 'STATUS_ID':	$sOrder .= ', CS.STATUS_ID '.$ord; break;
-				case 'NAME':	$sOrder .= ', CS.NAME '.$ord; break;
-				case 'SORT':	$sOrder .= ', CS.SORT '.$ord; break;
-				case 'SYSTEM':	$sOrder .= ", CS.".$sqlHelper->quote('SYSTEM')." ".$ord; break;
+				case 'ID':
+					$sOrder .= ', CS.ID '.$ord;
+					break;
+				case 'ENTITY_ID':
+					$sOrder .= ', CS.ENTITY_ID '.$ord;
+					break;
+				case 'STATUS_ID':
+					$sOrder .= ', CS.STATUS_ID '.$ord;
+					break;
+				case 'NAME':
+					$sOrder .= ', CS.NAME '.$ord;
+					break;
+				case 'SORT':
+					$sOrder .= ', CS.SORT '.$ord;
+					break;
+				case 'SYSTEM':
+					$sOrder .= ", CS.".$sqlHelper->quote('SYSTEM')." ".$ord;
+					break;
 			}
 		}
 
-		if (strlen($sOrder)<=0)
+		if ($sOrder == '')
 			$sOrder = 'CS.ID DESC';
 
 		$strSqlOrder = ' ORDER BY '.TrimEx($sOrder,',');
@@ -370,7 +384,7 @@ class CCrmStatus
 			{
 				return CCrmQuote::existsEntityWithStatus($statusId);
 			}
-			elseif (strpos($this->entityId, 'DEAL_STAGE') === 0)
+			elseif (mb_strpos($this->entityId, 'DEAL_STAGE') === 0)
 			{
 				return CCrmDeal::existsEntityWithStatus($statusId);
 			}
@@ -385,7 +399,7 @@ class CCrmStatus
 	public function GetNextStatusId()
 	{
 		global $DB, $DBType;
-		$dbTypeUC = strtoupper($DBType);
+		$dbTypeUC = mb_strtoupper($DBType);
 
 		if($dbTypeUC === 'MYSQL')
 		{
@@ -527,17 +541,35 @@ class CCrmStatus
 			$aMsg[] = array('id'=>'NAME', 'text'=>GetMessage('CRM_STATUS_ERR_NAME'));
 		if(is_set($arFields, 'SYSTEM') && !($arFields['SYSTEM'] == 'Y' || $arFields['SYSTEM'] == 'N'))
 			$aMsg[] = array('id'=>'SYSTEM', 'text'=>GetMessage('CRM_STATUS_ERR_SYSTEM'));
-		if(is_set($arFields, 'STATUS_ID') && trim($arFields['STATUS_ID'])=='')
-			$aMsg[] = array('id'=>'STATUS_ID', 'text'=>GetMessage('CRM_STATUS_ERR_STATUS_ID'));
+		if(is_set($arFields, 'STATUS_ID'))
+		{
+			$statusId = $arFields['STATUS_ID'];
+			if(trim($statusId)=='')
+			{
+				$aMsg[] = array('id'=>'STATUS_ID', 'text'=>GetMessage('CRM_STATUS_ERR_STATUS_ID'));
+			}
+			else if(mb_strlen($statusId) > 50)
+			{
+				$aMsg[] = array(
+					'id'=>'STATUS_ID',
+					'text'=>GetMessage(
+						'CRM_STATUS_ERR_STATUS_ID_MAX_LENGTH_EXCEEDED',
+						array('#MAX_LENGTH#' => "50")
+					)
+				);
+			}
+		}
 		if (is_set($arFields, 'STATUS_ID') && $bCheckStatusId && $this->CheckStatusId($arFields['STATUS_ID']))
 			$aMsg[] = array('id'=>'STATUS_ID', 'text'=>GetMessage('CRM_STATUS_ERR_DUPLICATE_STATUS_ID'));
 
 		if(!empty($aMsg))
 		{
+			$messages = [];
 			foreach($aMsg as $msg)
 			{
-				$this->LAST_ERROR .= $msg."<br />\n";
+				$messages[] = $msg['text'];
 			}
+			$this->LAST_ERROR = implode("<br/>", $messages);
 
 			$e = new CAdminException($aMsg);
 			$GLOBALS['APPLICATION']->ThrowException($e);
@@ -558,7 +590,7 @@ class CCrmStatus
 		}
 
 		$items = array();
-		$entityId = strtoupper($entityId);
+		$entityId = mb_strtoupper($entityId);
 		if($entityId === 'STATUS')
 		{
 			$items = self::GetDefaultLeadStatuses();
@@ -995,7 +1027,7 @@ class CCrmStatus
 		{
 			return;
 		}
-		$entityId = strtoupper($entityId);
+		$entityId = mb_strtoupper($entityId);
 		$settings = self::GetSettings();
 
 		if(!isset($settings[$entityId]))
@@ -1011,11 +1043,11 @@ class CCrmStatus
 		{
 			return false;
 		}
-		$entityId = strtoupper($entityId);
+		$entityId = mb_strtoupper($entityId);
 		$settings = self::GetSettings();
 		return !isset($settings[$entityId])
 			|| !isset($settings[$entityId]['enabled'])
-			|| strtoupper($settings[$entityId]['enabled']) === 'Y';
+			|| mb_strtoupper($settings[$entityId]['enabled']) === 'Y';
 	}
 	private static function GetSettings()
 	{

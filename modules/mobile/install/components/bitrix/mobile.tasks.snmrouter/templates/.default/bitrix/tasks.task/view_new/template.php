@@ -447,7 +447,7 @@ $component->arResult["HTML"] = array(
 <div class="task-comments-block" id="task-block"><?=$task_html?>
 <?
 $voteId = "TASK".'_'.$task["ID"].'-'.(time()+rand(0, 1000));
-$emotion = (!empty($arResult["RATING"][$arResult["Post"]["ID"]]["USER_REACTION"]) ? strtoupper($arResult["RATING"][$arResult["Post"]["ID"]]["USER_REACTION"]) : 'LIKE');
+$emotion = (!empty($arResult["RATING"][$arResult["Post"]["ID"]]["USER_REACTION"])? mb_strtoupper($arResult["RATING"][$arResult["Post"]["ID"]]["USER_REACTION"]) : 'LIKE');
 
 ?><div id="post_inform_wrap_two" class=""><?
 		/*?><span class="post-item-informers bx-ilike-block" id="rating_block_<?=$task["ID"]?>" data-counter="<?=intval($arResult["TEMPLATE_DATA"]["RATING"]["TOTAL_VOTES"])?>"><?

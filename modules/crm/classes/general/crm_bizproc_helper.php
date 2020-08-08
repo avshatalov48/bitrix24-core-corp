@@ -30,6 +30,10 @@ class CCrmBizProcHelper
 		{
 			$docName = \Bitrix\Crm\Integration\BizProc\Document\Invoice::class;
 		}
+		elseif($ownerTypeID === CCrmOwnerType::OrderShipment)
+		{
+			$docName = \Bitrix\Crm\Integration\BizProc\Document\Shipment::class;
+		}
 
 		return $docName;
 	}

@@ -405,7 +405,7 @@ class Template extends Base
 					}
 				}
 			}
-			if(isset($filter['NAME']) && strpos($template['NAME'], $filter['NAME']) === false)
+			if(isset($filter['NAME']) && mb_strpos($template['NAME'], $filter['NAME']) === false)
 			{
 				unset($templates[$key]);
 				continue;
@@ -430,7 +430,7 @@ class Template extends Base
 			$codes[] = $template['CODE'];
 			foreach($template['PROVIDERS'] as $key => $provider)
 			{
-				$provider = strtolower($provider);
+				$provider = mb_strtolower($provider);
 				if(isset($extendedProviders[$provider]))
 				{
 					unset($template['PROVIDERS'][$key]);
@@ -442,7 +442,7 @@ class Template extends Base
 				}
 				else
 				{
-					$template['PROVIDER_NAMES'][] = $providers[strtolower($provider)]['NAME'];
+					$template['PROVIDER_NAMES'][] = $providers[mb_strtolower($provider)]['NAME'];
 				}
 			}
 			$buffer[$template['CODE']] = $template;
@@ -701,7 +701,7 @@ class Template extends Base
 		$templates = TemplateTable::getList([
 			'select' => $select,
 			'filter' => $filter,
-			'order' => $order,
+			'order' => $order ?? [],
 			'offset' => $pageNavigation->getOffset(),
 			'limit' => $pageNavigation->getLimit(),
 		])->fetchAll();

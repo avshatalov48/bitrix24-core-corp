@@ -75,7 +75,7 @@ if(
 			//Sanitaizing
 			foreach($arPostField as $k => $v)
 			{
-				if(strpos($k, '~') === 0)
+				if(mb_strpos($k, '~') === 0)
 				{
 					continue;
 				}

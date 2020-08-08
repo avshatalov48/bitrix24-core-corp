@@ -95,7 +95,7 @@ class DataProvider extends Base
 		{
 			if(isset($result[$field['PLACEHOLDER']]))
 			{
-				if($field['PROVIDER'] == strtolower($provider))
+				if($field['PROVIDER'] == mb_strtolower($provider))
 				{
 					$result[$field['PLACEHOLDER']] = $field;
 				}
@@ -115,7 +115,7 @@ class DataProvider extends Base
 			}
 			if($selectedPlaceholder)
 			{
-				if(strlen($result[$selectedPlaceholder]['VALUE']) < strlen($field['VALUE']))
+				if(mb_strlen($result[$selectedPlaceholder]['VALUE']) < mb_strlen($field['VALUE']))
 				{
 					$selectedPlaceholder = $placeholder;
 				}

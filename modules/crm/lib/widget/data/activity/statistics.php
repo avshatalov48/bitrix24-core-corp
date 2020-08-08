@@ -42,9 +42,9 @@ class Statistics extends DataSource
 		}
 
 		$enableGroupKey = isset($params['group']) &&
-			is_string($params['group']) &&
-			isset($params['enableGroupKey']) &&
-			$params['enableGroupKey'] === true ? strtoupper($params['group']) : false;
+		is_string($params['group']) &&
+		isset($params['enableGroupKey']) &&
+		$params['enableGroupKey'] === true? mb_strtoupper($params['group']) : false;
 
 		$group = array();
 		if (isset($params['group']) && (is_string($params['group']) || is_array($params['group'])))
@@ -55,7 +55,7 @@ class Statistics extends DataSource
 			}
 			foreach ($params['group'] as $g)
 			{
-				$g = strtoupper($g);
+				$g = mb_strtoupper($g);
 				if ($g === self::GROUP_BY_USER || $g === self::GROUP_BY_DATE || $g === self::GROUP_BY_PROVIDER_ID)
 				{
 					$group[] = $g;
@@ -344,7 +344,7 @@ class Statistics extends DataSource
 	 */
 	public function initializeDemoData(array $data, array $params)
 	{
-		$group = isset($params['group']) ? strtoupper($params['group']) : '';
+		$group = isset($params['group'])? mb_strtoupper($params['group']) : '';
 		if($group === self::GROUP_BY_PROVIDER_ID)
 		{
 			$providers = \CCrmActivity::GetProviders();

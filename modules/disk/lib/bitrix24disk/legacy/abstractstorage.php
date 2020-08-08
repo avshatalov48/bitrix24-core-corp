@@ -165,8 +165,8 @@ abstract class AbstractStorage
 	 */
 	public function compareVersion($a , $b)
 	{
-		$a = str_pad($a, strlen($b), '0', STR_PAD_LEFT);
-		$b = str_pad($b, strlen($a), '0', STR_PAD_LEFT);
+		$a = str_pad($a, mb_strlen($b), '0', STR_PAD_LEFT);
+		$b = str_pad($b, mb_strlen($a), '0', STR_PAD_LEFT);
 
 		return strcmp($a, $b);
 	}

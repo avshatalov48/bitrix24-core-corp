@@ -46,22 +46,25 @@
 	border-radius: 50%;
 }
 
-.tasks-project-overview-title{
+.tasks-project-overview-title {
 	flex: 2;
 	margin-bottom: 10px;
 }
 
-.tasks-project-overview-title-link{
+.tasks-project-overview-title-link {
 	display:block;
 	margin-bottom: 10px;
 }
 
-.tasks-project-overview-members{
+.tasks-project-overview-members {
 	display: block;
 }
 
-.structure-dept-emp-popup
- {
+.tasks-project-overview-members-text {
+	margin-right: 5px;
+}
+
+.structure-dept-emp-popup {
 	 position: relative;
 	 max-height: 250px;
 	 width: 230px;

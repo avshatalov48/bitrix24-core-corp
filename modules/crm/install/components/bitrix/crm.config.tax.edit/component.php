@@ -40,7 +40,7 @@ if($taxID <= 0)
 {
 	$taxIDParName = isset($arParams['TAX_ID_PAR_NAME']) ? strval($arParams['TAX_ID_PAR_NAME']) : '';
 
-	if(strlen($taxIDParName) == 0)
+	if($taxIDParName == '')
 		$taxIDParName = 'tax_id';
 
 	$taxID = isset($_REQUEST[$taxIDParName]) ? intval($_REQUEST[$taxIDParName]) : 0;
@@ -169,7 +169,7 @@ $arResult['FIELDS']['tab_props'][] = array(
 	'type' => 'section'
 );
 */
-if(strlen($arParams['TAX_ID']) > 0)
+if($arParams['TAX_ID'] <> '')
 {
 	$arResult['FIELDS']['tab_props'][] = array(
 		'id' => 'ID',
@@ -233,7 +233,7 @@ else
 $toolbarButtons[] = array(
 	'TEXT' => GetMessage('CRM_TAX_RATE_ADD'),
 	'TITLE' => GetMessage('CRM_TAX_RATE_ADD_TITLE'),
-	'ONCLICK' => "javascript:(new BX.CDialog({'content_url':'/bitrix/components/bitrix/crm.config.tax.rate.edit/box.php?FORM_ID=".strtoupper($arResult['FORM_ID'])."&TAX_ID=".$arResult['TAX_ID']."', 'width':'".$width."', 'height':'".$height."', 'resizable':".$resizable." })).Show()",
+	'ONCLICK' => "javascript:(new BX.CDialog({'content_url':'/bitrix/components/bitrix/crm.config.tax.rate.edit/box.php?FORM_ID=".mb_strtoupper($arResult['FORM_ID'])."&TAX_ID=".$arResult['TAX_ID']."', 'width':'".$width."', 'height':'".$height."', 'resizable':".$resizable." })).Show()",
 	'ICON' => 'btn-new'
 );
 

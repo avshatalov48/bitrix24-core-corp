@@ -16,7 +16,7 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js')
 
 $prefix = $arResult['GRID_ID'];
 $gridManagerID = $arResult['GRID_ID'].'_MANAGER';
-$prefixLC = strtolower($arResult['GRID_ID']);
+$prefixLC = mb_strtolower($arResult['GRID_ID']);
 
 $jsData = [
 	'AJAX_URL' => '/bitrix/components/bitrix/crm.order.check.list/list.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
@@ -37,7 +37,7 @@ if ($arResult['ENABLE_TOOLBAR'])
 		'bitrix:crm.interface.toolbar',
 		'',
 		array(
-			'TOOLBAR_ID' => strtolower($arResult['GRID_ID']).'_toolbar',
+			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']).'_toolbar',
 			'BUTTONS' => array($addButton)
 		),
 		$component,

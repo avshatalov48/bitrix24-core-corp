@@ -200,7 +200,7 @@ CJSCore::Init(array('clipboard'));
 					<div class="intranet-button-list-position-element">
 						<span class="intranet-button-list-position-inner-wrap">
 							<span class="intranet-button-list-position-text"><?=Loc::getMessage('CRM_BUTTON_LIST_LOCATION')?>:</span>
-							<span class="intranet-button-list-position-text"><?=htmlspecialcharsbx(strtolower($item['LOCATION_DISPLAY']))?></span>
+							<span class="intranet-button-list-position-text"><?=htmlspecialcharsbx(mb_strtolower($item['LOCATION_DISPLAY']))?></span>
 						</span>
 					</div>
 				</div><!--intranet-button-list-url-container-->
@@ -291,8 +291,6 @@ CJSCore::Init(array('clipboard'));
 					'dlgBtnApply' => Loc::getMessage('CRM_BUTTON_LIST_APPLY'),
 					'dlgBtnCancel' => Loc::getMessage('CRM_BUTTON_LIST_CANCEL'),
 					'dlgBtnCopyToClipboard' => Loc::getMessage('CRM_BUTTON_LIST_COPY_TO_CLIPBOARD'),
-					'dlgActiveCountLimitedTitle' => Loc::getMessage('CRM_BUTTON_LIST_POPUP_LIMITED_TITLE'),
-					'dlgActiveCountLimitedText' => Loc::getMessage('CRM_BUTTON_LIST_POPUP_LIMITED_TEXT'),
 					'dlgGetScriptTitle' => Loc::getMessage('CRM_BUTTON_LIST_ITEM_BTN_GET_SCRIPT')
 				)
 			))?>

@@ -308,6 +308,15 @@ class Config
 			$fields["CHECK_AVAILABLE"] = 'N';
 		}
 
+		if (isset($params['WATCH_TYPING']))
+		{
+			$fields['WATCH_TYPING'] = $params['WATCH_TYPING'] == 'Y'? 'Y': 'N';
+		}
+		else if ($mode == self::MODE_ADD)
+		{
+			$fields["WATCH_TYPING"] = 'Y';
+		}
+
 		if (isset($params['WELCOME_MESSAGE']))
 		{
 			$fields['WELCOME_MESSAGE'] = $params['WELCOME_MESSAGE'] == 'N'? 'N': 'Y';
@@ -448,6 +457,7 @@ class Config
 
 		if (isset($params["WORKTIME_HOLIDAYS"]))
 		{
+			$params["WORKTIME_HOLIDAYS"] = str_replace(' ', '', $params["WORKTIME_HOLIDAYS"]);
 			$params["WORKTIME_HOLIDAYS"] = implode(',', $params["WORKTIME_HOLIDAYS"]);
 			preg_match("/^(\d{1,2}\.\d{1,2},?)+$/i", $params["WORKTIME_HOLIDAYS"], $matches);
 			$fields['WORKTIME_HOLIDAYS'] = isset($matches[0])? $params["WORKTIME_HOLIDAYS"]: "";
@@ -815,7 +825,8 @@ class Config
 		self::sendUpdateForQueueList(Array(
 			'ID' => $id,
 			'NAME' => $data['LINE_NAME'],
-			'SESSION_PRIORITY' => $data['SESSION_PRIORITY']
+			'SESSION_PRIORITY' => $data['SESSION_PRIORITY'],
+			'QUEUE_TYPE' => $data['QUEUE_TYPE'],
 		));
 
 		if($fields['QUICK_ANSWERS_IBLOCK_ID'] > 0)
@@ -997,8 +1008,9 @@ class Config
 				$aliases = \Bitrix\Im\Model\AliasTable::getList(
 					Array(
 						'filter' => Array(
-							'=ALIAS' => \Bitrix\Im\Alias::ENTITY_TYPE_OPEN_LINE,
-							'=ENTITY_ID' => $id)
+							'=ALIAS' => \Bitrix\Im\Alias::ENTITY_TYPE_LIVECHAT,
+							'=ENTITY_ID' => $id
+						)
 					)
 				);
 				while ($alias = $aliases->fetch())
@@ -1587,7 +1599,7 @@ class Config
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	public static function isConfigActive($configId)
+	public static function isConfigActive($configId): bool
 	{
 		$config = ConfigTable::getList(
 			[
@@ -1602,12 +1614,12 @@ class Config
 	}
 
 	/**
-	 *
+	 * Check whether the time tracking functionality is available for this portal.
 	 *
 	 * @return bool
 	 * @throws Main\LoaderException
 	 */
-	public static function isTimeManActive()
+	public static function isTimeManActive(): bool
 	{
 		$result = false;
 

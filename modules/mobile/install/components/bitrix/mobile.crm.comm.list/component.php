@@ -11,7 +11,7 @@ if (!CModule::IncludeModule('crm'))
 $currentUserID = $arResult['USER_ID'] = intval(CCrmSecurityHelper::GetCurrentUserID());
 $arParams['ENTITY_TYPE_ID'] = isset($arParams['ENTITY_TYPE_ID']) ? intval($arParams['ENTITY_TYPE_ID']) : 0;
 $arParams['ENTITY_ID'] = isset($arParams['ENTITY_ID']) ? intval($arParams['ENTITY_ID']) : 0;
-$arParams['TYPE_ID'] = isset($arParams['TYPE_ID']) ? strtoupper($arParams['TYPE_ID']) : '';
+$arParams['TYPE_ID'] = isset($arParams['TYPE_ID'])? mb_strtoupper($arParams['TYPE_ID']) : '';
 
 $arParams['CONTACT_SHOW_URL_TEMPLATE'] = isset($arParams['CONTACT_SHOW_URL_TEMPLATE']) ? $arParams['CONTACT_SHOW_URL_TEMPLATE'] : '';
 $arParams['COMPANY_SHOW_URL_TEMPLATE'] = isset($arParams['COMPANY_SHOW_URL_TEMPLATE']) ? $arParams['COMPANY_SHOW_URL_TEMPLATE'] : '';
@@ -36,7 +36,7 @@ if($arParams['ENTITY_ID'] === 0 && isset($_REQUEST['entity_id']))
 
 if($arParams['TYPE_ID'] === '' && isset($_REQUEST['type_id']))
 {
-	$arParams['TYPE_ID'] = strtoupper($_REQUEST['type_id']);
+	$arParams['TYPE_ID'] = mb_strtoupper($_REQUEST['type_id']);
 }
 if($arParams['TYPE_ID'] === '')
 {
@@ -86,7 +86,7 @@ if($entityTypeID === CCrmOwnerType::Lead)
 	$entity = $dbEntity ? $dbEntity->Fetch() : null;
 	if($entity)
 	{
-		$arResult['ENTITY_IMAGE_URL'] = SITE_DIR.'bitrix/templates/mobile_app/images/crm/no_lead_big.png?ver=1';
+		$arResult['ENTITY_IMAGE_URL'] = SITE_DIR.'bitrix/templates/mobile_app/images/crm/no_lead_small.png?ver=1';
 		$arResult['ENTITY_TITLE'] = CUser::FormatName(
 			$arParams['NAME_TEMPLATE'],
 			array(
@@ -126,7 +126,7 @@ elseif($entityTypeID === CCrmOwnerType::Contact)
 		}
 		else
 		{
-			$arResult['ENTITY_IMAGE_URL'] = SITE_DIR.'bitrix/templates/mobile_app/images/crm/no_contact_big.png?ver=1';
+			$arResult['ENTITY_IMAGE_URL'] = SITE_DIR.'bitrix/templates/mobile_app/images/crm/no_contact_small.png?ver=1';
 		}
 
 		$arResult['ENTITY_TITLE'] = CUser::FormatName(
@@ -168,7 +168,7 @@ elseif($entityTypeID === CCrmOwnerType::Company)
 		}
 		else
 		{
-			$arResult['ENTITY_IMAGE_URL'] = SITE_DIR.'bitrix/templates/mobile_app/images/crm/no_company_big.png?ver=1';
+			$arResult['ENTITY_IMAGE_URL'] = SITE_DIR.'bitrix/templates/mobile_app/images/crm/no_company_small.png?ver=1';
 		}
 
 		$arResult['ENTITY_TITLE'] = isset($entity['TITLE']) ? $entity['TITLE'] : '';

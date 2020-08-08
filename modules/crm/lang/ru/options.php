@@ -51,6 +51,7 @@ $MESS["CRM_OPTIONS_PATH_TO_ACTIVITY_LIST"] = "Шаблон пути к спис�
 $MESS["CRM_OPTIONS_PATH_TO_ACTIVITY_SHOW"] = "Шаблон пути к просмотру дела";
 $MESS["CRM_OPTIONS_PATH_TO_ACTIVITY_EDIT"] = "Шаблон пути к редактированию дела";
 $MESS["CRM_OPTIONS_PATH_TO_PERM_LIST"] = "Шаблон пути к списку прав доступа";
+$MESS["CRM_OPTIONS_PATH_TO_CONFIG_CHECKER"] = "Шаблон пути к мастеру проверки конфигурации";
 $MESS["CRM_OPTIONS_PATH_TO_DEAL_CATEGORY_LIST"] = "Шаблон пути к списку направлений сделок";
 $MESS["CRM_OPTIONS_PATH_TO_DEAL_CATEGORY_EDIT"] = "Шаблон пути к редактированию направления сделки";
 $MESS["CRM_OPTIONS_PATH_TO_WEBFORM_LIST"] = "Шаблон пути к списку CRM-форм";

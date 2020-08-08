@@ -6,7 +6,7 @@ define("NOT_CHECK_PERMISSIONS", true);
 define("BX_PUBLIC_TOOLS", true);
 
 $site_id = isset($_REQUEST["site"]) && is_string($_REQUEST["site"]) ? trim($_REQUEST["site"]) : "";
-$site_id = substr(preg_replace("/[^a-z0-9_]/i", "", $site_id), 0, 2);
+$site_id = mb_substr(preg_replace("/[^a-z0-9_]/i", "", $site_id), 0, 2);
 
 define("SITE_ID", $site_id);
 
@@ -15,7 +15,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/bx_root.php");
 $action = isset($_REQUEST["action"]) && is_string($_REQUEST["action"]) ? trim($_REQUEST["action"]) : "";
 
 $lng = isset($_REQUEST["lang"]) && is_string($_REQUEST["lang"]) ? trim($_REQUEST["lang"]) : "";
-$lng = substr(preg_replace("/[^a-z0-9_]/i", "", $lng), 0, 2);
+$lng = mb_substr(preg_replace("/[^a-z0-9_]/i", "", $lng), 0, 2);
 
 $ls = isset($_REQUEST["ls"]) && is_string($_REQUEST["ls"]) ? trim($_REQUEST["ls"]) : "";
 $ls_arr = isset($_REQUEST["ls_arr"])? $_REQUEST["ls_arr"]: "";
@@ -146,7 +146,7 @@ if(CModule::IncludeModule("socialnetwork"))
 				elseif (
 					$feature 
 					&& array_key_exists("OPERATION_ADD", $arCommentEvent) 
-					&& strlen($arCommentEvent["OPERATION_ADD"]) > 0
+					&& $arCommentEvent["OPERATION_ADD"] <> ''
 				)
 					$bCanAddComments = CSocNetFeaturesPerms::CanPerformOperation(
 						$GLOBALS["USER"]->GetID(), 
@@ -176,7 +176,7 @@ if(CModule::IncludeModule("socialnetwork"))
 					CUtil::decodeURIComponent($comment_text);
 					$comment_text = Trim($comment_text);
 
-					if (strlen($comment_text) > 0)
+					if ($comment_text <> '')
 					{
 						$arAllow = array(
 							"HTML" => "N",
@@ -215,7 +215,7 @@ if(CModule::IncludeModule("socialnetwork"))
 						$comment = CSocNetLogComments::Add($arFields, true);
 						if (!is_array($comment) && intval($comment) > 0)
 							$arResult["commentID"] = $comment;
-						elseif (is_array($comment) &&  array_key_exists("MESSAGE", $comment) && strlen($comment["MESSAGE"]) > 0)
+						elseif (is_array($comment) &&  array_key_exists("MESSAGE", $comment) && $comment["MESSAGE"] <> '')
 						{
 							$arResult["strMessage"] = $comment["MESSAGE"];
 							$arResult["commentText"] = $comment_text;
@@ -241,7 +241,7 @@ if(CModule::IncludeModule("socialnetwork"))
 				$GLOBALS['DB']->DateFormatToPHP(FORMAT_DATE),
 				MakeTimeStamp($arComment["LOG_DATE"])
 			);
-			$timeFormated = FormatDateFromDB($arComment["LOG_DATE"], (stripos($arParams["DATE_TIME_FORMAT"], 'a') || ($arParams["DATE_TIME_FORMAT"] == 'FULL' && IsAmPmMode()) !== false ? 'H:MI T' : 'HH:MI'));
+			$timeFormated = FormatDateFromDB($arComment["LOG_DATE"], (mb_stripos($arParams["DATE_TIME_FORMAT"], 'a') || ($arParams["DATE_TIME_FORMAT"] == 'FULL' && IsAmPmMode()) !== false ? 'H:MI T' : 'HH:MI'));
 			$dateTimeFormated = FormatDate(
 				(!empty($arParams['DATE_TIME_FORMAT']) ? ($arParams['DATE_TIME_FORMAT'] == 'FULL' ? $GLOBALS['DB']->DateFormatToPHP(str_replace(':SS', '', FORMAT_DATETIME)) : $arParams['DATE_TIME_FORMAT']) : $GLOBALS['DB']->DateFormatToPHP(FORMAT_DATETIME)),
 				MakeTimeStamp($arComment["LOG_DATE"])

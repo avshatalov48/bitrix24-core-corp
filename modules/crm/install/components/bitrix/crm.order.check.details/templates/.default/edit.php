@@ -13,7 +13,7 @@ Loc::loadMessages(__FILE__);
 \Bitrix\Main\UI\Extension::load("ui.buttons");
 \Bitrix\Main\UI\Extension::load("ui.buttons.icons");
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/slider.css');
-\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/crm.entity.editor/templates/.default/style.css');
+\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/entity-editor/css/style.css');
 
 ?>
 

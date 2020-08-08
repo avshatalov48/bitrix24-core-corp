@@ -376,7 +376,7 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 		{
 			if(empty($this->arParams['GRID_ID_SUFFIX']))
 			{
-				$this->arParams['GRID_ID_SUFFIX'] = $this->GetParent() !== null ? strtoupper($this->GetParent()->GetName()) : '';
+				$this->arParams['GRID_ID_SUFFIX'] = $this->GetParent() !== null? mb_strtoupper($this->GetParent()->GetName()) : '';
 			}
 		}
 
@@ -459,12 +459,12 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 
 		foreach($visibleColumns as $item)
 		{
-			if(substr($item, -9) == '_CURRENCY')
+			if(mb_substr($item, -9) == '_CURRENCY')
 			{
 				if(!in_array('CURRENCY', $arSelect))
 					$arSelect[] = 'CURRENCY';
 
-				$arSelect[] = substr($item, 0, -9);
+				$arSelect[] = mb_substr($item, 0, -9);
 			}
 		}
 

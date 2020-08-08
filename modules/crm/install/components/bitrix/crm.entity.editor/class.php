@@ -4,8 +4,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Spotlight;
+use Bitrix\Crm\Agent\Requisite\CompanyAddressConvertAgent;
+use Bitrix\Crm\Agent\Requisite\ContactAddressConvertAgent;
+use Bitrix\Crm\Agent\Requisite\CompanyUfAddressConvertAgent;
+use Bitrix\Crm\Agent\Requisite\ContactUfAddressConvertAgent;
 use Bitrix\Crm\Entity\EntityEditorConfigScope;
 use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Crm\Security\EntityAuthorization;
 
 Loc::loadMessages(__FILE__);
 
@@ -41,6 +46,11 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 		if(!Bitrix\Main\Loader::includeModule('crm'))
 		{
 			$this->errors[] = GetMessage('CRM_MODULE_NOT_INSTALLED');
+			return;
+		}
+		if(!Bitrix\Main\Loader::includeModule('ui'))
+		{
+			$this->errors[] = GetMessage('UI_MODULE_NOT_INSTALLED');
 			return;
 		}
 
@@ -116,7 +126,7 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 			$scopePrefix = isset($this->arParams['~SCOPE_PREFIX']) ? $this->arParams['~SCOPE_PREFIX'] : '';
 			if($scopePrefix === '')
 			{
-				$scopePrefix = strtolower($this->configID);
+				$scopePrefix = mb_strtolower($this->configID);
 			}
 
 			$configScope = CUserOptions::GetOption(
@@ -198,7 +208,8 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 		$requiredFields = array();
 		$hasEmptyRequiredFields = false;
 		$htmlFieldNames = array();
-		foreach($this->arResult['ENTITY_FIELDS'] as $field)
+		$isUfAddressConverterEnabled = $this->isUfAddressConvertionEnabled();
+		foreach($this->arResult['ENTITY_FIELDS'] as $index => $field)
 		{
 			$name = isset($field['name']) ? $field['name'] : '';
 			if($name === '')
@@ -210,6 +221,23 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 			if($typeName === 'html')
 			{
 				$htmlFieldNames[] = $name;
+			}
+
+			if ($isUfAddressConverterEnabled
+				&& $typeName === 'userField'
+				&& is_array($field['data'])
+				&& is_array($field['data']['fieldInfo'])
+				&& isset($field['data']['fieldInfo']['USER_TYPE_ID'])
+				&& $field['data']['fieldInfo']['USER_TYPE_ID'] === 'address'
+				&& (!isset($field['data']['fieldInfo']['MULTIPLE'])
+					|| $field['data']['fieldInfo']['MULTIPLE'] === 'N'))
+			{
+				if (!is_array($field['data']['options']))
+				{
+					$this->arResult['ENTITY_FIELDS'][$index]['data']['options'] = [];
+				}
+				$this->arResult['ENTITY_FIELDS'][$index]['data']['options']['canActivateUfAddressConverter'] =
+					$field['data']['options']['canActivateUfAddressConverter'] = 'Y';
 			}
 
 			$availableFields[$name] = $field;
@@ -512,6 +540,12 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 		$this->arResult['DUPLICATE_CONTROL'] = isset($this->arParams['~DUPLICATE_CONTROL']) && is_array($this->arParams['~DUPLICATE_CONTROL'])
 			? $this->arParams['~DUPLICATE_CONTROL'] : array();
 
+		$this->arResult['PATH_TO_ENTITY_DETAILS'] = \CCrmOwnerType::GetDetailsUrl(
+			$this->entityTypeID,
+			$this->entityID,
+			true,
+			array()
+		);
 		$this->arResult['PATH_TO_CONTACT_CREATE'] = CComponentEngine::makePathFromTemplate(
 			\CrmCheckPath(
 				'PATH_TO_CONTACT_DETAILS',
@@ -555,7 +589,7 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 			$APPLICATION->GetCurPage().'?company_id=#company_id#&requisiteselect'
 		);
 
-		$this->arResult['PATH_TO_REQUISITE_EDIT'] = '/bitrix/components/bitrix/crm.requisite.edit/slider.ajax.php?requisite_id=#requisite_id#&'.bitrix_sessid_get();
+		$this->arResult['PATH_TO_REQUISITE_EDIT'] = '/bitrix/components/bitrix/crm.requisite.details/slider.ajax.php?requisite_id=#requisite_id#&'.bitrix_sessid_get();
 
 		//region Permissions
 		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
@@ -584,7 +618,7 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 				$this->arResult['ATTRIBUTE_CONFIG']['IS_PERMITTED'] = $restriction->hasPermission();
 				if(!$this->arResult['ATTRIBUTE_CONFIG']['IS_PERMITTED'])
 				{
-					$this->arResult['ATTRIBUTE_CONFIG']['LOCK_SCRIPT'] = $restriction->preparePopupScript();
+					$this->arResult['ATTRIBUTE_CONFIG']['LOCK_SCRIPT'] = $restriction->prepareInfoHelperScript();
 				}
 			}
 		}
@@ -638,7 +672,7 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 		$optionPrefix = isset($this->arParams['~OPTION_PREFIX']) ? $this->arParams['~OPTION_PREFIX'] : '';
 		if($optionPrefix === '')
 		{
-			$optionPrefix = strtolower($this->configID);
+			$optionPrefix = mb_strtolower($this->configID);
 		}
 		if($configScope === EntityEditorConfigScope::COMMON)
 		{
@@ -692,5 +726,50 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 		}
 
 		return $typeList;
+	}
+
+	protected function isUfAddressConvertionEnabled()
+	{
+		$result = false;
+
+		if (($this->entityTypeID === CCrmOwnerType::Lead
+				|| $this->entityTypeID === CCrmOwnerType::Deal
+				|| $this->entityTypeID === CCrmOwnerType::Contact
+				|| $this->entityTypeID === CCrmOwnerType::Company)
+			&& EntityAuthorization::isAuthorized()
+			&& CCrmAuthorizationHelper::CheckConfigurationUpdatePermission())
+		{
+			$companyAgent = CompanyAddressConvertAgent::getInstance();
+			$companyUfAgent = CompanyUfAddressConvertAgent::getInstance();
+			$companyUfAgentAllowed = (
+				!$companyAgent->isEnabled() &&
+				$companyUfAgent->isEnabled() &&
+				!$companyUfAgent->isActive() &&
+				in_array($this->entityTypeID, $companyUfAgent->getAllowedEntityTypes(), true)
+			);
+			$contactAgent = ContactAddressConvertAgent::getInstance();
+			$contactUfAgent = ContactUfAddressConvertAgent::getInstance();
+			$contactUfAgentAllowed = (
+				!$contactAgent->isEnabled() &&
+				$contactUfAgent->isEnabled() &&
+				!$contactUfAgent->isActive() &&
+				in_array($this->entityTypeID, $contactUfAgent->getAllowedEntityTypes(), true)
+			);
+			switch ($this->entityTypeID)
+			{
+				case CCrmOwnerType::Lead:
+				case CCrmOwnerType::Deal:
+					$result = ($companyUfAgentAllowed && $contactUfAgentAllowed);
+					break;
+				case CCrmOwnerType::Company:
+					$result = $companyUfAgentAllowed;
+					break;
+				case CCrmOwnerType::Contact:
+					$result = $contactUfAgentAllowed;
+					break;
+			}
+		}
+
+		return $result;
 	}
 }

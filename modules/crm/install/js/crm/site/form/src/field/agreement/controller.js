@@ -4,6 +4,7 @@ import * as Component from './component';
 type OptionsContent = {
 	title: string;
 	text: ?string;
+	url: ?string;
 	html: ?string;
 };
 
@@ -43,7 +44,7 @@ class Controller extends BaseField.Controller
 
 	isLink()
 	{
-		return typeof this.options.content === 'string';
+		return !!this.options.content.url;
 	}
 
 	applyConsent()

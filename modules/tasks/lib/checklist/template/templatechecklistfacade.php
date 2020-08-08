@@ -4,6 +4,7 @@ namespace Bitrix\Tasks\CheckList\Template;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\SystemException;
+use Bitrix\Tasks\Access\TemplateAccessController;
 use Bitrix\Tasks\AnalyticLogger;
 use Bitrix\Tasks\CheckList\CheckListFacade;
 use Bitrix\Tasks\CheckList\Internals\CheckList;
@@ -213,5 +214,10 @@ class TemplateCheckListFacade extends CheckListFacade
 				AnalyticLogger::logToFile($action, $tag, $label);
 			}
 		}
+	}
+
+	protected static function getAccessControllerClass(): string
+	{
+		return TemplateAccessController::class;
 	}
 }

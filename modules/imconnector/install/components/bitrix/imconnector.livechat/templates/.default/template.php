@@ -475,6 +475,21 @@ else
 								</div>
 							</div>
 						</div>
+						<div class="imconnector-livechat-public-link-settings-inner-settings-container">
+							<span class="imconnector-livechat-public-link-settings-inner-param imconnector-livechat-public-link-settings-inner-param-text-input">
+								<?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_TITLE')?>:
+							</span>
+							<div class="imconnector-livechat-public-link-settings-inner-content">
+								<div class="imconnector-public-link-settings-inner-option">
+									<label for="phone_code" class="imconnector-livechat-public-link-settings-inner-option-container">
+										<input type="text"
+											   class="imconnector-livechat-public-link-settings-inner-add-input"
+											   name="TEXT_PHRASES[BX_LIVECHAT_TITLE]"
+											   value="<?=htmlspecialcharsbx($arResult['INFO_CONNECTION']['TEXT_PHRASES']['BX_LIVECHAT_TITLE'])?>">
+									</label>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
 				<div class="imconnector-border imconnctor-outer-border" style="display: none"></div><!--imconnector-border-->

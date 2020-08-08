@@ -45,7 +45,7 @@ CCalendarType::Edit(array(
 ));
 
 $organizationType = \Bitrix\Main\Config\Option::get("intranet", "organization_type");
-$typeName = GetMessage('EC_COMPANY_CALENDAR_'.strtoupper($organizationType));
+$typeName = GetMessage('EC_COMPANY_CALENDAR_'.mb_strtoupper($organizationType));
 if ($typeName == '')
 	$typeName = GetMessage('EC_COMPANY_CALENDAR_');
 

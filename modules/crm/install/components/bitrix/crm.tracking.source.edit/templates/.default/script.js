@@ -86,15 +86,18 @@
 			value = (new URL(value)).searchParams.get("utm_source") || '';
 		}
 
-		value.split(',').forEach(function (value) {
-			value = value.trim();
-			if (!value)
-			{
-				return;
-			}
+		value.replace(/[\s]/g, ',')
+			.replace(/[^\w,]/g, '')
+			.split(',')
+			.forEach(function (value) {
+				value = value.trim();
+				if (!value)
+				{
+					return;
+				}
 
-			this.selectorUtmSource.addTile(value, {}, value);
-		}, this);
+				this.selectorUtmSource.addTile(value, {}, value);
+			}, this);
 	};
 
 	namespace.Editor = new Editor();

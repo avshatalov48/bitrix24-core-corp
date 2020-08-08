@@ -67,7 +67,7 @@ class Util
 		}
 
 		$hash = 0;
-		for ($i = 0; $i < strlen($str); $i++)
+		for ($i = 0; $i < mb_strlen($str); $i++)
 		{
 			$c = ord($str[$i]);
 			$hash = (($hash << 5) - $hash) + $c;
@@ -248,7 +248,7 @@ class Util
 			$result = false;
 			return true;
 		}
-		$length	= strlen($value);
+		$length = mb_strlen($value);
 		$end	= '';
 		switch ($value[0])
 		{

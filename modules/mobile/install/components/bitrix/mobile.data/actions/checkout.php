@@ -40,6 +40,16 @@ if(array_key_exists("logincheck", $_REQUEST) && $_REQUEST["login"])
 {
 	$res = CUser::getByLogin($_REQUEST["login"]);
 	$data["exists"] = $res->fetch() ? true : false;
+	if (!$data["exists"])
+	{
+		// AD\LDAP
+		$ldapComponents = explode("\\", $_REQUEST["login"]);
+		if (count($ldapComponents) == 2)
+		{
+			$res = CUser::getByLogin($ldapComponents[1]);
+			$data["exists"] = $res->fetch() ? true : false;
+		}
+	}
 
 	return Main\Text\Encoding::convertEncoding($data, LANG_CHARSET, 'UTF-8');
 }
@@ -136,7 +146,7 @@ else
 			false
 		);
 
-		if ($avatar && strlen($avatar["src"]) > 0)
+		if ($avatar && $avatar["src"] <> '')
 		{
 			$avatarSource = $avatar["src"];
 		}
@@ -207,6 +217,7 @@ else
 	$data = [
 		"status" => "success",
 		"id" => $USER->GetID(),
+		"login" => $USER->GetLogin(),
 		"name" => \CUser::FormatName(CSite::GetNameFormat(false), [
 			"NAME" => $USER->GetFirstName(),
 			"LAST_NAME" => $USER->GetLastName(),
@@ -233,7 +244,11 @@ else
 					"voximplantLogin" => $voximplantLogin,
 					"canPerformCalls" => $voximplantInstalled && \Bitrix\Voximplant\Security\Helper::canCurrentUserPerformCalls(),
 					"lines" => $voximplantLines,
-					"defaultLineId" => $voximplantDefaultLineId
+					"defaultLineId" => $voximplantDefaultLineId,
+					"useCustomTurnServer" => Main\Config\Option::get("im", "turn_server_self") === "Y",
+					"turnServer" => Main\Config\Option::get("im", "turn_server", ""),
+					"turnServerLogin" => Main\Config\Option::get("im", "turn_server_login", ""),
+					"turnServerPassword" => Main\Config\Option::get("im", "turn_server_password", ""),
 				]
 			],
 			[
@@ -267,13 +282,21 @@ else
 		]
 	];
 
+
+	if(\Bitrix\Main\Loader::includeModule('bitrix24'))
+	{
+		$data["restricted"] = \Bitrix\Bitrix24\Limits\User::isUserRestricted($USER->getId());
+	}
+
 	$needAppPass = \Bitrix\Main\Context::getCurrent()->getServer()->get("HTTP_BX_APP_PASS");
 	$appUUID = \Bitrix\Main\Context::getCurrent()->getServer()->get("HTTP_BX_APP_UUID");
 	$deviceName = \Bitrix\Main\Context::getCurrent()->getServer()->get("HTTP_BX_DEVICE_NAME");
-
-	if ($needAppPass == 'mobile' && $USER->GetParam("APPLICATION_ID") === null)
+	$userId = $USER->GetID();
+	$hitHash = trim($_REQUEST["bx_hit_hash"]);
+	$forceGenerate = \Bitrix\Mobile\Auth::removeOneTimeAuthHash($hitHash);
+	if (($needAppPass == 'mobile' && $USER->GetParam("APPLICATION_ID") === null) || $forceGenerate)
 	{
-		if (strlen($appUUID) > 0)
+		if ($appUUID <> '')
 		{
 			$result = ApplicationPasswordTable::getList(Array(
 				'select' => Array('ID'),
@@ -296,7 +319,7 @@ else
 			'PASSWORD' => $password,
 			'CODE' => $appUUID,
 			'DATE_CREATE' => new Main\Type\DateTime(),
-			'COMMENT' => GetMessage("MD_GENERATE_BY_MOBILE") . (strlen($deviceName) > 0 ? " (" . $deviceName . ")" : ""),
+			'COMMENT' => GetMessage("MD_GENERATE_BY_MOBILE") . ($deviceName <> '' ? " (" . $deviceName . ")" : ""),
 			'SYSCOMMENT' => GetMessage("MD_MOBILE_APPLICATION")
 		));
 
@@ -304,6 +327,7 @@ else
 		{
 			$data["appPassword"] = $password;
 		}
+
 	}
 }
 

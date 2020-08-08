@@ -14,7 +14,7 @@ class CallbackValidator extends BaseFormFilter
 		return $this;
 	}
 
-	public function configureCallback($preFilter)
+	public function configureCallback(callable $preFilter)
 	{
 		$this->validatingCallback = $preFilter;
 		return $this;

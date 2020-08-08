@@ -6,3 +6,4 @@ $MESS['CRM_TRACKING_ENTITY_DETAILS_DEVICE_MOBILE'] = "Мобильный тел�
 $MESS['CRM_TRACKING_ENTITY_DETAILS_DEVICE_DESKTOP'] = "Настольный компьютер";
 $MESS['CRM_TRACKING_ENTITY_DETAILS_SHOW'] = "показать";
 $MESS['CRM_TRACKING_ENTITY_DETAILS_HIDE'] = "скрыть";
+$MESS['CRM_TRACKING_ENTITY_DETAILS_REF_DOMAIN'] = "Переход с сайта";

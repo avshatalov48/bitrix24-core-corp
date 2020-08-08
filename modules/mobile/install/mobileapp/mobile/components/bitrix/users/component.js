@@ -40,7 +40,17 @@
 	{
 		let action = () =>
 		{
-			if (Application.getApiVersion() >= 29)
+			if (Application.getApiVersion() >= 34)
+			{
+				IntranetInvite.openRegisterSlider({
+					originator: 'users',
+					registerUrl: BX.componentParameters.get('registerUrl', ''),
+					adminConfirm: BX.componentParameters.get('registerAdminConfirm', false),
+					disableAdminConfirm: BX.componentParameters.get('disableRegisterAdminConfirm', false),
+					sharingMessage: BX.componentParameters.get('sharingMessage', '')
+				});
+			}
+			else if (Application.getApiVersion() >= 29)
 			{
 				dialogs.showContactList().then(
 					users =>
@@ -106,15 +116,17 @@
 			callback: action,
 			icon: "plus",//for floating button
 			animation: "hide_on_scroll", //for floating button
-			color: "#515f69"//for floating button
-
+			color: "#47AADE"
 		};
 
 		BX.onViewLoaded(()=>{
 			if (Application.getPlatform() === "ios")
 			{
 				//button in navigation bar for iOS
-				list.setRightButtons([addUserButton]);
+				if(Application.getApiVersion()>=33)
+					list.setFloatingButton(addUserButton);
+				else
+					list.setRightButtons([addUserButton]);
 			}
 			else
 			{

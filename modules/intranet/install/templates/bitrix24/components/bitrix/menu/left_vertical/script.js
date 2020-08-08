@@ -20,6 +20,8 @@ BX.Bitrix24.LeftMenu = {
 		this.currentPagePath = null;
 		this.menuSelectedNode = null;
 		this.showPresetPopup = params.showPresetPopup === "Y";
+		this.showImportConfiguration = params.showImportConfiguration === "Y";
+		this.urlImportConfiguration = params.urlImportConfiguration || '';
 		this.isCustomPresetAvailable = params.isCustomPresetAvailable === "Y";
 		this.customPresetExists = params.customPresetExists === "Y";
 		this.isCurrentPageStandard = false;
@@ -105,6 +107,11 @@ BX.Bitrix24.LeftMenu = {
 		this.menuHeaderLogo = this.menuHeader.querySelector(".logo");
 		this.menuHeaderBurger = this.menuHeader.querySelector(".menu-switcher");
 		this.menuHeaderTitle = this.menuHeader.querySelector(".menu-items-header-title");
+
+		this.livefeedCounter = {
+			decrementStack: 0,
+			value: 0
+		};
 
 		if (this.headerSettings)
 		{
@@ -260,6 +267,13 @@ BX.Bitrix24.LeftMenu = {
 		if (this.showPresetPopup)
 		{
 			this.showPresetPopupFunction("global");
+		}
+		else
+		{
+			if(this.showImportConfiguration)
+			{
+				this.showImportConfigurationSlider();
+			}
 		}
 
 		this.menuSelectedNode = BX.findChild(this.menuContainer, {className: "menu-item-active"}, true, false);
@@ -1280,33 +1294,46 @@ BX.Bitrix24.LeftMenu = {
 	{
 		send = send !== false;
 
+		var valueToShow = 0;
+
 		for (var id in counters)
 		{
-			this.allCounters[id] = counters[id];
-
-			if (id === "**")
+			if (!counters.hasOwnProperty(id))
 			{
-				oCounter = {
-					iCommentsMenuRead: 0
-				};
-
-				BX.onCustomEvent(window, 'onMenuUpdateCounter', [oCounter]);
-				counters[id] -= oCounter.iCommentsMenuRead;
+				continue;
 			}
+
+			this.allCounters[id] = counters[id];
 
 			var counter = BX(id === "**" ? "menu-counter-live-feed" : "menu-counter-" + id.toLowerCase(), true);
 			if (counter)
 			{
-				if (counters[id] > 0)
+				if (id === "**")
 				{
-					counter.innerHTML = counters[id] > 99 ? "99+" : counters[id];
+					this.livefeedCounter.value = counters[id];
+
+					if (counters[id] <= 0)
+					{
+						this.livefeedCounter.decrementStack = 0;
+					}
+
+					valueToShow = this.livefeedCounter.value - this.livefeedCounter.decrementStack;
+				}
+				else
+				{
+					valueToShow = counters[id];
+				}
+
+				if (valueToShow > 0)
+				{
+					counter.innerHTML = valueToShow > 99 ? "99+" : valueToShow;
 					BX.addClass(counter.parentNode.parentNode.parentNode, "menu-item-with-index");
 				}
 				else
 				{
 					BX.removeClass(counter.parentNode.parentNode.parentNode, "menu-item-with-index");
 
-					if (counters[id] < 0)
+					if (valueToShow < 0)
 					{
 						var warning = BX('menu-counter-warning-'+id.toLowerCase());
 						if (warning)
@@ -1344,6 +1371,29 @@ BX.Bitrix24.LeftMenu = {
 			}
 
 			BX("menu-hidden-counter").innerHTML = sumHiddenCounters > 99 ? "99+" : sumHiddenCounters;
+		}
+	},
+
+	decrementCounter: function(node, iDecrement)
+	{
+		if (!node)
+			return;
+
+		iDecrement = parseInt(iDecrement);
+
+		if (node.id == 'menu-counter-live-feed')
+		{
+			this.livefeedCounter.decrementStack += iDecrement;
+			var counterValue = this.livefeedCounter.value - this.livefeedCounter.decrementStack;
+
+			if (counterValue > 0)
+			{
+				node.innerHTML = counterValue;
+			}
+			else
+			{
+				BX.removeClass(node.parentNode.parentNode.parentNode, "menu-item-with-index");
+			}
 		}
 	},
 
@@ -2318,6 +2368,10 @@ BX.Bitrix24.LeftMenu = {
 		if (dest == dragElement)
 		{
 			this.itemDomBlank.parentNode.insertBefore(this.itemMoveBlank, this.itemDomBlank);
+		}
+		else if(dragElement.getAttribute("data-type") == "self" && dest.id === "left-menu-empty-item")
+		{
+			return; // self-item cannot be moved on the first place
 		}
 		else
 		{
@@ -3784,6 +3838,14 @@ BX.Bitrix24.LeftMenu = {
 		}
 	},
 
+	showImportConfigurationSlider: function()
+	{
+		if(this.urlImportConfiguration !== '')
+		{
+			BX.SidePanel.Instance.open(this.urlImportConfiguration);
+		}
+	},
+
 	showPresetPopupFunction: function (mode)
 	{
 		BX.ready(function ()
@@ -3874,6 +3936,10 @@ BX.Bitrix24.LeftMenu = {
 									},
 								});
 								BX.proxy_context.popupWindow.close();
+								if(this.showImportConfiguration)
+								{
+									this.showImportConfigurationSlider();
+								}
 							}, this)
 						}
 					})

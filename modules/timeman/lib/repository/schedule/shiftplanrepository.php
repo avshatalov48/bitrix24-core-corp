@@ -2,9 +2,12 @@
 namespace Bitrix\Timeman\Repository\Schedule;
 
 use Bitrix\Main\ORM\Fields\ExpressionField;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Type\Date;
+use Bitrix\Timeman\Model\Schedule\ScheduleTable;
+use Bitrix\Timeman\Model\Schedule\Shift\ShiftTable;
 use Bitrix\Timeman\Model\Schedule\ShiftPlan\EO_ShiftPlan_Query;
 use Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlan;
 use Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlanCollection;
@@ -179,5 +182,25 @@ class ShiftPlanRepository
 			return [];
 		}
 		return array_map('intval', array_column($result, 'D_USER_ID'));
+	}
+
+	public function findAllByUserDates($userId, Date $dateFrom, Date $dateTo, $shiftIdExcept = null): ShiftPlanCollection
+	{
+		$collectionQuery = $this->getActivePlansQuery()
+			->addSelect('*')
+			->addSelect('SHIFT')
+			->addSelect('SCHEDULE.ID')
+			->addSelect('SCHEDULE.NAME')
+			->addSelect('SCHEDULE.SCHEDULE_TYPE')
+			->registerRuntimeField(new Reference('SHIFT', ShiftTable::class, ['this.SHIFT_ID' => 'ref.ID']))
+			->registerRuntimeField(new Reference('SCHEDULE', ScheduleTable::class, ['this.SHIFT.SCHEDULE_ID' => 'ref.ID']))
+			->where('USER_ID', $userId)
+			->whereBetween('DATE_ASSIGNED', $dateFrom, $dateTo);
+		if ($shiftIdExcept !== null)
+		{
+			$collectionQuery->where('SHIFT_ID', '!=', $shiftIdExcept);
+		}
+		/*-*/// active shifts and schedules?
+		return $collectionQuery->exec()->fetchCollection();
 	}
 }

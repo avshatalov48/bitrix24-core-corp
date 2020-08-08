@@ -41,8 +41,8 @@ foreach($arParams["ROWS"] as $index=>$aRow):
 	{
 		$shareInfoAction = !empty($aRow['tileActions']['SHARE_INFO'])? $aRow['tileActions']['SHARE_INFO'] : array();
 	}
-	$nameObject = substr($aRow['data']['NAME'], 0, 37);
-	if(strlen($nameObject) === 37)
+	$nameObject = mb_substr($aRow['data']['NAME'], 0, 37);
+	if(mb_strlen($nameObject) === 37)
 	{
 		$nameObject .= '...';
 	}

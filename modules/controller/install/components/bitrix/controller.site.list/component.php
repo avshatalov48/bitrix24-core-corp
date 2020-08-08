@@ -29,7 +29,7 @@ if(!$bUSER_HAVE_ACCESS)
 if(isset($arParams["TITLE"]))
 {
 	$arParams["TITLE"] = trim($arParams["TITLE"]);
-	if(strlen($arParams["TITLE"]) <= 0)
+	if($arParams["TITLE"] == '')
 		$arParams["TITLE"] = GetMessage("CC_BCSL_TITLE_DEFAULT");
 }
 else

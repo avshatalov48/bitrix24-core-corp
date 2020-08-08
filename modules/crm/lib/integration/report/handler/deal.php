@@ -130,7 +130,7 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 
 		foreach ($filterParameters as $key => $value)
 		{
-			if (in_array($key, ['TIME_PERIOD', 'FIND', 'PREVIOUS_PERIOD']) || (strpos($key, 'UF_') === 0))
+			if (in_array($key, ['TIME_PERIOD', 'FIND', 'PREVIOUS_PERIOD']) || (mb_strpos($key, 'UF_') === 0))
 			{
 				continue;
 			}
@@ -451,7 +451,7 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 					{
 						$results[] = [
 							$groupingFieldName => $groupingKey,
-							'VALUE' => ($successDealCount[$groupingKey] / $count) * 100
+							'VALUE' => $count > 0 ? ($successDealCount[$groupingKey] / $count) * 100 : 0
 						];
 					}
 					else
@@ -814,12 +814,12 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 				case 'date':
 					if ($value['from'] !== "")
 					{
-						$query->where($key, '>=', $this->getConvertedToServerTime($value['from']));
+						$query->where($key, '>=', new DateTime($value['from']));
 					}
 
 					if ($value['to'] !== "")
 					{
-						$query->where($key, '<=', $this->getConvertedToServerTime($value['to']));
+						$query->where($key, '<=', new DateTime($value['to']));
 					}
 					break;
 				case 'diapason':
@@ -854,15 +854,9 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 				$subQuery->addSelect('OWNER_ID');
 				if (!empty($filterParameters['TIME_PERIOD']))
 				{
-					$subQuery->where(
-						'LAST_UPDATE_DATE',
-						'<=',
-						$this->getConvertedToServerTime($filterParameters['TIME_PERIOD']['to'])
-					)->where(
-						'CLOSE_DATE',
-						'>=',
-						$this->getConvertedToServerTime($filterParameters['TIME_PERIOD']['from'])
-					);
+					$subQuery
+						->where('LAST_UPDATE_DATE', '<=', new DateTime($filterParameters['TIME_PERIOD']['to']))
+						->where('CLOSE_DATE', '>=', new DateTime($filterParameters['TIME_PERIOD']['from']));
 				}
 
 				$subQuery->registerRuntimeField(
@@ -901,7 +895,6 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 				$diffDaysCount = $this->getDayCountFromSecs($timePeriodDiffSecs);
 				$toDateValue->add("-{$diffDaysCount} days");
 				$fromDateValue->add("-{$diffDaysCount} days");
-
 			}
 
 			$query->where('FULL_HISTORY.LAST_UPDATE_DATE', '<=', $toDateValue)->where(
@@ -995,8 +988,8 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 		$filterParameters = $this->getFilterParameters();
 		if ($filterParameters['TIME_PERIOD'])
 		{
-			$toDateValue = $this->getConvertedToServerTime($filterParameters['TIME_PERIOD']['to']);
-			$fromDateValue = $this->getConvertedToServerTime($filterParameters['TIME_PERIOD']['from']);
+			$toDateValue = new DateTime($filterParameters['TIME_PERIOD']['to']);
+			$fromDateValue = new DateTime($filterParameters['TIME_PERIOD']['from']);
 
 			$timePeriodDiff = $toDateValue->getTimestamp() - $fromDateValue->getTimestamp();
 		}
@@ -1022,30 +1015,15 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 		}
 		$userPermissions = EntityAuthorization::getUserPermissions($userId);
 
-		$permissionSql = $this->buildPermissionSql(
-			[
-				'alias' => 'L',
-				'permissionType' => 'READ',
-				'options' => [
-					'PERMS' => $userPermissions,
-					'RAW_QUERY' => true
-				]
-			]
-		);
+		$permissionSql = \CCrmDeal::BuildPermSql('D','READ', [
+			'PERMS' => $userPermissions,
+			'RAW_QUERY' => true
+		]);
 
 		if ($permissionSql)
 		{
 			$query->whereIn('ID', new SqlExpression($permissionSql));
 		}
-	}
-
-	private function buildPermissionSql(array $params)
-	{
-		return \CCrmDeal::BuildPermSql(
-			isset($params['alias']) ? $params['alias'] : 'D',
-			isset($params['permissionType']) ? $params['permissionType'] : 'READ',
-			isset($params['options']) && is_array($params['options']) ? $params['options'] : []
-		);
 	}
 
 	private function getDealFieldsToOrmMap()
@@ -1719,7 +1697,7 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 							$filterParameters = $this->getFilterParameters();
 							if (!empty($filterParameters['TIME_PERIOD']))
 							{
-								$fromDateValue = $this->getConvertedToServerTime(
+								$fromDateValue = new DateTime(
 									$filterParameters['TIME_PERIOD']['from']
 								);
 								$date = new DateTime($groupingKey, 'Y-n-d');
@@ -1861,7 +1839,7 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 					if (!empty($filterParameters['TIME_PERIOD']))
 					{
 						$newItems = [];
-						$fromDateValue = $this->getConvertedToServerTime($filterParameters['TIME_PERIOD']['from']);
+						$fromDateValue = new DateTime($filterParameters['TIME_PERIOD']['from']);
 						for ($i = 0; $i < 3; $i++)
 						{
 							$currentDate = clone $fromDateValue;
@@ -1935,7 +1913,7 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 					if (!empty($filterParameters['TIME_PERIOD']))
 					{
 						$newItems = [];
-						$fromDateValue = $this->getConvertedToServerTime($filterParameters['TIME_PERIOD']['from']);
+						$fromDateValue = new DateTime($filterParameters['TIME_PERIOD']['from']);
 						$daysCount = $this->getDaysCountInTimePeriod();
 						for ($i = 1; $i <= $daysCount; $i++)
 						{
@@ -2044,8 +2022,8 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 		$filterParameters = $this->getFilterParameters();
 		if (!empty($filterParameters['TIME_PERIOD']))
 		{
-			$fromDateValue = $this->getConvertedToServerTime($filterParameters['TIME_PERIOD']['from']);
-			$toDateValue = $this->getConvertedToServerTime($filterParameters['TIME_PERIOD']['to']);
+			$fromDateValue = new DateTime($filterParameters['TIME_PERIOD']['from']);
+			$toDateValue = new DateTime($filterParameters['TIME_PERIOD']['to']);
 
 			$fromDateYear = (int)$fromDateValue->format('Y');
 			$toDateYear = (int)$toDateValue->format('Y');
@@ -2082,7 +2060,7 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 		$filterParameters = $this->getFilterParameters();
 		if (!empty($filterParameters['TIME_PERIOD']))
 		{
-			$fromDateValue = $this->getConvertedToServerTime($filterParameters['TIME_PERIOD']['from']);
+			$fromDateValue = new DateTime($filterParameters['TIME_PERIOD']['from']);
 
 			return $fromDateValue->format('n');
 		}

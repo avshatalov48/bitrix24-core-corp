@@ -146,13 +146,12 @@ class TraceTable extends ORM\Data\DataManager
 	 */
 	public static function getTraceByEntity($entityTypeId, $entityId)
 	{
-		$row = TraceEntityTable::getRow([
-			'select' => ['TRACE.*'],
+		$row = static::getRow([
 			'filter' => [
-				'=ENTITY_TYPE_ID' => $entityTypeId,
-				'=ENTITY_ID' => $entityId
+				'=ENTITY.ENTITY_TYPE_ID' => $entityTypeId,
+				'=ENTITY.ENTITY_ID' => $entityId
 			],
-			'order' => ['ID' => 'DESC']
+			'order' => ['ENTITY.ID' => 'DESC']
 		]);
 
 		return $row ? $row : null;

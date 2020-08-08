@@ -320,7 +320,6 @@ include("InAppNotifier");
 		redrawMenu()
 		{
 			let popupPoints = [
-				{title: BX.message("USER_DISK_MENU_UPLOAD"), sectionCode: "usermenu", id: "upload"},
 				{
 					title: BX.message("USER_DISK_MENU_SORT_DATE_CREATE"),
 					sectionCode: "sort",
@@ -332,6 +331,25 @@ include("InAppNotifier");
 				{title: BX.message("USER_DISK_MENU_SORT_NAME"), sectionCode: "sort", id: "NAME"},
 				{title: BX.message("USER_DISK_MENU_SORT_MIX"), sectionCode: "mix_sort", id: "MIXSORT"}
 			];
+
+			if(typeof this.list["setFloatingButton"] !== "undefined")
+			{
+				this.list.setFloatingButton({
+					icon:"plus",
+					callback:()=>{
+						bitrix24Disk.show({
+							listener: () => this.refresh(),
+							folderId: this.folderId,
+							storageId: this.storageId,
+							multipleUpload: true
+						});
+					},
+				});
+			}
+			else
+			{
+				popupPoints.unshift({title: BX.message("USER_DISK_MENU_UPLOAD"), sectionCode: "usermenu", id: "upload"});
+			}
 
 			if (this.ownerId !== this.userId && this.entityType === "user")
 			{

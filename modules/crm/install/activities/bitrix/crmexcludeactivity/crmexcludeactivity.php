@@ -18,17 +18,22 @@ class CBPCrmExcludeActivity
 		}
 
 		$documentId = $this->GetDocumentId();
-		list($entityTypeName, $entityId) = explode('_', $documentId[2]);
+		[$entityTypeName, $entityId] = explode('_', $documentId[2]);
 
 		//add to exclusion list
-		\Bitrix\Crm\Exclusion\Store::addFromEntity(
-			\CCrmOwnerType::ResolveID($entityTypeName),
-			$entityId,
-			GetMessage('CRM_EXA_COMMENT')
-		);
-
-		//delete document
-		$this->workflow->GetService("DocumentService")->DeleteDocument($documentId);
+		try
+		{
+			\Bitrix\Crm\Exclusion\Manager::excludeEntity(
+				\CCrmOwnerType::ResolveID($entityTypeName),
+				$entityId,
+				false,
+				['COMMENT' => GetMessage('CRM_EXA_COMMENT')]
+			);
+		}
+		catch(\Bitrix\Main\SystemException $ex)
+		{
+			$this->WriteToTrackingService($ex->getMessage(), 0, CBPTrackingType::Error);
+		}
 
 		return CBPActivityExecutionStatus::Closed;
 	}

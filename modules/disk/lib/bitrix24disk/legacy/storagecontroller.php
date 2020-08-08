@@ -9,6 +9,7 @@ use Bitrix\Disk\Desktop;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Folder;
+use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\ProxyType;
 use Bitrix\Disk\Internals\Controller;
@@ -208,6 +209,11 @@ class StorageController extends Controller
 		if(!$this->isActualApiDiskVersion())
 		{
 			throw new OldDiskVersionException;
+		}
+
+		if (Bitrix24Manager::isUserRestricted($this->getUser()->GetID()))
+		{
+			$this->sendJsonAccessDeniedResponse('restricted_access');
 		}
 
 		$this->storage = $this->getStorage();
@@ -822,7 +828,6 @@ class StorageController extends Controller
 			}
 
 			$newFile = $storage->addFile($filename, $parentFolderId, $tmpFile, array('originalTimestamp' => $this->request->getPost('originalTimestamp')));
-			$tmpFile->delete();
 
 			if($newFile)
 			{
@@ -1105,9 +1110,9 @@ class StorageController extends Controller
 			$headers = array();
 			foreach ($_SERVER as $name => $value)
 			{
-				if (substr($name, 0, 5) == 'HTTP_')
+				if (mb_substr($name, 0, 5) == 'HTTP_')
 				{
-					$headerName = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))));
+					$headerName = str_replace(' ', '-', ucwords(mb_strtolower(str_replace('_', ' ', mb_substr($name, 5)))));
 					$headers[$headerName] = $value;
 				}
 			}
@@ -1144,8 +1149,8 @@ class StorageController extends Controller
 	 */
 	private function compareStringVersion($a , $b)
 	{
-		$a = str_pad($a, strlen($b), '0', STR_PAD_LEFT);
-		$b = str_pad($b, strlen($a), '0', STR_PAD_LEFT);
+		$a = str_pad($a, mb_strlen($b), '0', STR_PAD_LEFT);
+		$b = str_pad($b, mb_strlen($a), '0', STR_PAD_LEFT);
 
 		return strcmp($a, $b);
 	}

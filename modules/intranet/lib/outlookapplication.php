@@ -64,7 +64,7 @@ class OutlookApplication extends \Bitrix\Main\Authentication\Application
 		if($type)
 		{
 			$typeTitle = Loc::getMessage('WS_OUTLOOK_APP_TYPE_'.$type);
-			if(strlen($typeTitle) > 0)
+			if($typeTitle <> '')
 			{
 				$message = Loc::getMessage('WS_OUTLOOK_APP_SYSCOMMENT_TYPE', array(
 					'#TYPE#' => $typeTitle,

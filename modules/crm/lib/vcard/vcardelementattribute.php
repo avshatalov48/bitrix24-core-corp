@@ -105,14 +105,14 @@ class VCardElementAttribute
 				$params = explode(';', $this->rawParams);
 				foreach($params as $param)
 				{
-					$pos = stripos($param, '=');
+					$pos = mb_stripos($param, '=');
 					if($pos === false)
 					{
 						continue;
 					}
 
-					$name = trim(preg_replace(array("/^\"/", "/\"$/"), '', substr($param, 0, $pos)));
-					$this->params[$name] = preg_split("/\s*\,\s*/", substr($param, $pos + 1), -1, PREG_SPLIT_NO_EMPTY);
+					$name = trim(preg_replace(array("/^\"/", "/\"$/"), '', mb_substr($param, 0, $pos)));
+					$this->params[$name] = preg_split("/\s*\,\s*/", mb_substr($param, $pos + 1), -1, PREG_SPLIT_NO_EMPTY);
 				}
 			}
 		}
@@ -180,15 +180,15 @@ class VCardElementAttribute
 		}
 
 		$pos = $match[0][1] + 1;
-		$name = trim(substr($str, 0, $pos));
-		$value = trim(substr($str, $pos + 1));
+		$name = trim(mb_substr($str, 0, $pos));
+		$value = trim(mb_substr($str, $pos + 1));
 		$params = '';
-		$pos = stripos($name, ';');
+		$pos = mb_stripos($name, ';');
 
 		if($pos !== false)
 		{
-			$params = trim(substr($name, $pos + 1));
-			$name = trim(substr($name, 0, $pos));
+			$params = trim(mb_substr($name, $pos + 1));
+			$name = trim(mb_substr($name, 0, $pos));
 		}
 
 		//region Support Apple Contacts format
@@ -196,7 +196,7 @@ class VCardElementAttribute
 		if(preg_match("/^(item[1-9]+)\./", $name, $match) === 1)
 		{
 			$groupName = $match[1];
-			$name = substr($name, strlen($match[0]));
+			$name = mb_substr($name, mb_strlen($match[0]));
 		}
 		//endregion
 

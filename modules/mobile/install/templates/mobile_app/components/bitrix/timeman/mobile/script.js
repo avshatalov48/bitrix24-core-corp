@@ -205,7 +205,7 @@
 	var query = function(action, data, callback, bForce) {
 		data["site_id"] = BX.message("SITE_ID");
 		data["sessid"] = BX.bitrix_sessid();
-		if (location)
+		if (data.hasOwnProperty('collectGeoData') && data.collectGeoData && location)
 		{
 			data["lat"] = location.coords.latitude;
 			data["lon"] = location.coords.longitude;
@@ -298,6 +298,12 @@
 					this.bind();
 					this.check(true);
 					this.inited = true;
+					this.collectGeoData = false;
+					if (BX.type.isPlainObject(DATA))
+					{
+						this.collectGeoData = (DATA.hasOwnProperty('COLLECT_GEO_DATA') ?
+							DATA['COLLECT_GEO_DATA'] === 'Y' : false);
+					}
 				},
 				collectNodes : function(){ },
 				destroy : function(id) {
@@ -750,15 +756,26 @@
 						return BX.PreventDefault(e);
 					}
 				}
-				query('open', {timestamp: selectedTimestamp, report: errorReport, request_id : this.id}, BX.proxy(this.checkQuery, this));
+				query('open', {
+					timestamp: selectedTimestamp,
+					report: errorReport,
+					request_id: this.id,
+					collectGeoData: this.collectGeoData
+				}, BX.proxy(this.checkQuery, this));
 				return BX.PreventDefault(e);
 			};
 			d.prototype.pause = function(e) {
-				query('pause', {request_id : this.id}, BX.proxy(this.checkQuery, this));
+				query('pause', {
+					request_id: this.id,
+					collectGeoData: this.collectGeoData
+				}, BX.proxy(this.checkQuery, this));
 				return BX.PreventDefault(e);
 			};
 			d.prototype.resume = function(e) {
-				query('reopen', {request_id : this.id}, BX.proxy(this.checkQuery, this));
+				query('reopen', {
+					request_id: this.id,
+					collectGeoData: this.collectGeoData
+				}, BX.proxy(this.checkQuery, this));
 				return BX.PreventDefault(e);
 			};
 			d.prototype.stop = function(e) {
@@ -781,7 +798,12 @@
 						return BX.PreventDefault(e);
 					}
 				}
-				var q = {timestamp: selectedTimestamp, report: errorReport, request_id : this.id};
+				var q = {
+					timestamp: selectedTimestamp,
+					report: errorReport,
+					request_id : this.id,
+					collectGeoData: this.collectGeoData
+				};
 				if (this.DATA["REPORT_REQ"] != "A")
 				{
 					q["REPORT"] = this.DATA["REPORT"];
@@ -954,7 +976,10 @@
 					this._callback = BX.proxy(this.checkQuery, this);
 				if (!BX(this.nodes["editReason"]) || BX.type.isNotEmptyString(this.nodes["editReason"].value))
 				{
-					var data = {}, nodes = ["startTimestamp", "finishTimestamp", "pauseTimestamp"], j, i, d = {request_id : this.id};
+					var data = {}, nodes = ["startTimestamp", "finishTimestamp", "pauseTimestamp"], j, i, d = {
+						request_id: this.id,
+						collectGeoData: this.collectGeoData
+					};
 					for (i=0;i<nodes.length;i++)
 					{
 						if ((j=nodes[i]) && this.nodes[j] &&
@@ -1042,7 +1067,8 @@
 					var d = {
 						entry_id : this.DATA.ID,
 						report : this.nodes["report"].value,
-						report_ts : new Date(this.DATA.REPORT_TS * 1000).valueOf()
+						report_ts : new Date(this.DATA.REPORT_TS * 1000).valueOf(),
+						collectGeoData: this.collectGeoData
 					};
 					query('report', d, this._callback);
 				}

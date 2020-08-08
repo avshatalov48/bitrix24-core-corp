@@ -85,15 +85,19 @@ $currentFilterPresetID = isset($arResult['GRID_FILTER_ID']) ? $arResult['GRID_FI
 		$isExpired = $dataItem['IS_EXPIRED'];
 		$isImportant = $dataItem['IS_IMPORTANT'];
 
-		$wrapperStyle = $isCompleted
-			? 'background:#f5f6f8;'
-			: ($isExpired ? 'background:#fae9e7;' : '');
+		$wrapperStyle = ($isCompleted ? 'background:#f5f6f8;' : ($isExpired ? 'background:#fae9e7;' : ''));
 
-		$redirectParams = array('url' => $item['SHOW_URL']);
-		//Crutch for Task view
-		if($dataItem['TYPE_ID'] === CCrmActivityType::Task)
-			$redirectParams['bx24ModernStyle'] = true;
-		?><li class="crm_company_list_item" data-entity-id="<?=$item['ID']?>" style="<?=$wrapperStyle?>" onclick="BX.CrmMobileContext.redirect(<?=CUtil::PhpToJSObject($redirectParams)?>);">
+		if ($dataItem['TYPE_ID'] === CCrmActivityType::Task)
+		{
+			$taskId = $item['ASSOCIATED_ENTITY_ID'];
+			$onClick = CMobileHelper::getTaskLink($taskId);
+		}
+		else
+		{
+			$redirectParams = ['url' => $item['SHOW_URL']];
+			$onClick = 'BX.CrmMobileContext.redirect('.CUtil::PhpToJSObject($redirectParams).');';
+		}
+		?><li class="crm_company_list_item" data-entity-id="<?=$item['ID']?>" style="<?=$wrapperStyle?>" onclick="<?=$onClick?>">
 			<?if($dataItem['LIST_IMAGE_URL'] !== ''):?>
 				<img src="<?=htmlspecialcharsbx($dataItem['LIST_IMAGE_URL'])?>" style="width:20px;padding:10px 15px 0 8px;float:left;" />
 			<?endif;?>
@@ -109,7 +113,7 @@ $currentFilterPresetID = isset($arResult['GRID_FILTER_ID']) ? $arResult['GRID_FI
 				<?endif;?>
 			</div>
 			<div class="clb"<?=$isImportant ? ' style="margin-bottom:10px;"' : ''?>></div>
-		</li><?
+		</li><?php
 		unset($item);
 	endfor;
 

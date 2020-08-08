@@ -45,7 +45,7 @@ __IncludeLang($_SERVER['DOCUMENT_ROOT'].$this->GetFolder().'/lang/'.LANGUAGE_ID.
 			<?=htmlspecialcharsbx($fld['SP_FIELD'])?> (<?=htmlspecialcharsbx($fld['SP_FIELD_TYPE'])?>): 
 		</td>
 		<td>
-			<?=(substr($fld['FIELD_ID'], 0, 9) == 'PROPERTY_' ? GetMessage('SL_SETTINGS_FIELD_PROP') : GetMessage('SL_SETTINGS_FIELD_FLD'));?> &quot;<?=htmlspecialcharsbx($arResult['TYPES'][$fld['FIELD_ID']])?>&quot;
+			<?=(mb_substr($fld['FIELD_ID'], 0, 9) == 'PROPERTY_' ? GetMessage('SL_SETTINGS_FIELD_PROP') : GetMessage('SL_SETTINGS_FIELD_FLD'));?> &quot;<?=htmlspecialcharsbx($arResult['TYPES'][$fld['FIELD_ID']])?>&quot;
 		</td>
 <?
 	endforeach;

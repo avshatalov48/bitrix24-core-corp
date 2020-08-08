@@ -28,14 +28,14 @@ class MultiFieldBase extends BaseType\Base
 			$value = $value[0];
 		}
 
-		if (is_array($value) && is_array($value[strtoupper($fieldType->getType())]))
+		if (is_array($value) && is_array($value[mb_strtoupper($fieldType->getType())]))
 		{
-			foreach ($value[strtoupper($fieldType->getType())] as $val)
+			foreach ($value[mb_strtoupper($fieldType->getType())] as $val)
 			{
 				if (!empty($val))
 				{
 					$result[] = \CCrmFieldMulti::GetEntityNameByComplex(
-						strtoupper($fieldType->getType()).'_'.$val['VALUE_TYPE'], false
+							mb_strtoupper($fieldType->getType()).'_'.$val['VALUE_TYPE'], false
 						)
 						.': '.$val['VALUE'];
 				}
@@ -122,7 +122,7 @@ class MultiFieldBase extends BaseType\Base
 				'FM_MNEMONIC' => static::generateControlName($field),
 				'ENTITY_ID'   => $fieldType->getDocumentType()[2],
 				'ELEMENT_ID'  => 0,
-				'TYPE_ID'     => strtoupper($fieldType->getType()),
+				'TYPE_ID'     => mb_strtoupper($fieldType->getType()),
 				'VALUES'      => $value
 			),
 			null,

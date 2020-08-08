@@ -244,7 +244,7 @@ abstract class Item extends LazyAccess
 	{
 		$expression = trim((string) $expression);
 
-		return $expression[0] == '/' && $expression[strlen($expression) - 1] == '/';
+		return $expression[0] == '/' && $expression[mb_strlen($expression) - 1] == '/';
 	}
 
 	/**
@@ -597,13 +597,6 @@ abstract class Item extends LazyAccess
 			);
 
 			$transState = $this->getTransitionState();
-			// no access check in "create" mode
-			if(!($transState && $transState->isInProgress() && $transState->isModeCreate()))
-			{
-				$queryParameters = $ac->addDataBaseAccessCheck($queryParameters, array(
-					'USER_ID' => $this->getUserId(),
-				));
-			}
 
 			$result = $dc::getList($queryParameters)->fetch();
 			if(!is_array($result))
@@ -1419,7 +1412,7 @@ abstract class Item extends LazyAccess
 				$message = $e->getMessage();
 				$found = array();
 				$data = array();
-				if(preg_match('#Unknown field definition `([a-zA-Z0-9_]+)`#', $message, $found) && $found[1] && strlen($found[1]))
+				if(preg_match('#Unknown field definition `([a-zA-Z0-9_]+)`#', $message, $found) && $found[1] && mb_strlen($found[1]))
 				{
 					$message = Loc::getMessage('TASKS_ITEM_UNKNOWN_FIELD', array('FIELD_NAME' => $found[1]));
 					$data = array('FIELD_NAME' => $found[1]);
@@ -1509,7 +1502,7 @@ abstract class Item extends LazyAccess
 				$message = $e->getMessage();
 				$found = array();
 				$data = array();
-				if(preg_match('#Unknown field definition `([a-zA-Z0-9_]+)`#', $message, $found) && $found[1] && strlen($found[1]))
+				if(preg_match('#Unknown field definition `([a-zA-Z0-9_]+)`#', $message, $found) && $found[1] && mb_strlen($found[1]))
 				{
 					$message = Loc::getMessage('TASKS_ITEM_UNKNOWN_FIELD', array('FIELD_NAME' => $found[1]));
 					$data = array('FIELD_NAME' => $found[1]);
@@ -1827,6 +1820,11 @@ abstract class Item extends LazyAccess
 		return $this->export();
 	}
 
+	public function getRawValues()
+	{
+		return $this->values;
+	}
+
 	/**
 	 * Converts current entity into a new one, using $converter
 	 *
@@ -1894,7 +1892,7 @@ abstract class Item extends LazyAccess
 		$name = ToLower(trim((string) $name));
 
 		// can*() methods stand for rights checking
-		if(strpos($name, 'can') === 0)
+		if(mb_strpos($name, 'can') === 0)
 		{
 			return $this->callCanMethod($name, $arguments);
 		}

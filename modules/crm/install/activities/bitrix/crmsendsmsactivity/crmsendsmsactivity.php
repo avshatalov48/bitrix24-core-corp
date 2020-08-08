@@ -47,10 +47,15 @@ class CBPCrmSendSmsActivity extends CBPActivity
 		$messageFrom = (string)$this->MessageFrom;
 
 		//compatibility for REST providers
-		if (strpos($providerId, '|') !== false)
+		if (mb_strpos($providerId, '|') !== false)
 		{
 			$messageFrom = $providerId;
 			$providerId = 'rest';
+		}
+
+		if ($providerId === ':default:')
+		{
+			[$providerId, $messageFrom] = $this->resolveDefaultProvider();
 		}
 
 		if ($providerId === 'rest')
@@ -156,7 +161,8 @@ class CBPCrmSendSmsActivity extends CBPActivity
 				'FieldName' => 'provider_id',
 				'Type' => 'select',
 				'Required' => true,
-				'Options' => static::makeProvidersSelectOptions($providers)
+				'Options' => static::makeProvidersSelectOptions($providers),
+				'Default' => ':default:',
 			),
 			'MessageFrom' => array(
 				'Name' => GetMessage('CRM_SSMSA_MESSAGE_FROM'),
@@ -193,7 +199,7 @@ class CBPCrmSendSmsActivity extends CBPActivity
 
 		//fix old values
 		$values = $dialog->getCurrentValues();
-		if (!empty($values['provider_id']) && strpos($values['provider_id'], '|') !== false)
+		if (!empty($values['provider_id']) && mb_strpos($values['provider_id'], '|') !== false)
 		{
 			$values['message_from'] = $values['provider_id'];
 			$values['provider_id'] = 'rest';
@@ -454,7 +460,15 @@ class CBPCrmSendSmsActivity extends CBPActivity
 			return static::getProvidersListOld();
 		}
 
-		$result = array();
+		$result = [
+			[
+				'IS_INTERNAL' => false,
+				'ID'          => ':default:',
+				'NAME'        => GetMessage('CRM_SSMSA_PROVIDER_DEFAULT'),
+				'CAN_USE'     => true,
+				'FROM_LIST'   => []
+			]
+		];
 
 		foreach (SmsManager::getSenderInfoList(true) as $sender)
 		{
@@ -590,6 +604,25 @@ class CBPCrmSendSmsActivity extends CBPActivity
 		}
 
 		return $result->getId();
+	}
+
+	private function resolveDefaultProvider()
+	{
+		$providerId = $messageFrom = null;
+
+		if (SmsManager::canUse())
+		{
+			$defaults = SmsManager::getEditorCommon();
+			$providerId = $defaults['senderId'];
+			$messageFrom = $defaults['from'];
+
+			if (!$providerId)
+			{
+				$providerId = array_shift(array_keys(SmsManager::getSenderSelectList()));
+			}
+		}
+
+		return [$providerId, $messageFrom];
 	}
 
 	private function sendByRestOld($providerId, $phoneNumber, $messageText)

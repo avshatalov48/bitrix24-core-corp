@@ -17,7 +17,7 @@ class DataGrouping
 			return false;
 		}
 
-		$contextID = strtoupper($contextID);
+		$contextID = mb_strtoupper($contextID);
 		return $contextID === self::DATE || $contextID === self::USER;
 	}
 

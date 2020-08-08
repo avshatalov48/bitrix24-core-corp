@@ -109,12 +109,19 @@ html.bx-ios.bx-ios-fix-frame-focus, .bx-ios.bx-ios-fix-frame-focus body {
 	position: absolute;
 	top: 0;
 	left: 0;
-	padding: 20px 19px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
 	-webkit-transition: opacity .6s ease-out;
 	transition: opacity .6s ease-out;
 	-webkit-animation: socialRotateBack .4s;
 	animation: socialRotateBack .4s;
 	opacity: 0;
+	overflow: hidden;
+	box-sizing: border-box;
 }
 
 .b24-widget-button-icon-animation {
@@ -518,7 +525,7 @@ html.bx-ios.bx-ios-fix-frame-focus, .bx-ios.bx-ios-fix-frame-focus body {
 	display: none;
 }
 .b24-widget-button-bottom .b24-widget-button-close {
-	display: block;
+	display: flex;
 	-webkit-animation: socialRotate .4s;
 	animation: socialRotate .4s;
 	opacity: 1;
@@ -753,7 +760,7 @@ html.bx-ios.bx-ios-fix-frame-focus, .bx-ios.bx-ios-fix-frame-focus body {
 		transform: rotate(90deg);
 	}
 	100% {
-		-webkit-transform: rotate(0deg);
+		-webkit-transform: rotate(0deg);.b24-widget-button-inner-item
 		transform: rotate(0deg);
 	}
 }

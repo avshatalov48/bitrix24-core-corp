@@ -15,7 +15,7 @@ class Handler extends BaseUseCaseHandler
 	 * @return Result|\Bitrix\Timeman\Service\BaseServiceResult
 	 * @throws \Exception
 	 */
-	public function handle($shiftPlanForm)
+	public function handle($shiftPlanForm, $forced = false)
 	{
 		$scheduleId = DependencyManager::getInstance()->getShiftRepository()->findScheduleIdByShiftId($shiftPlanForm->shiftId);
 		if (!$scheduleId || !$this->getPermissionManager()->canUpdateShiftPlan($scheduleId))
@@ -23,6 +23,6 @@ class Handler extends BaseUseCaseHandler
 			return (new Result())->addError(new Error(Loc::getMessage('TM_SCHEDULE_RESULT_ERROR_PERMISSION_MANAGE_SCHEDULES')));
 		}
 
-		return DependencyManager::getInstance()->getShiftPlanService()->add($shiftPlanForm);
+		return DependencyManager::getInstance()->getShiftPlanService()->add($shiftPlanForm, $forced);
 	}
 }

@@ -262,6 +262,35 @@ class Bitrix24Manager
 		return '';
 	}
 	/**
+	 * Prepare JavaScript for opening purchaise information by info-helper slider
+	 * @param array $params Info-helper params.
+	 * @return string
+	 * @throws Main\LoaderException
+	 */
+	public static function prepareLicenseInfoHelperScript(array $params)
+	{
+		$script = '';
+
+		if(ModuleManager::isModuleInstalled('bitrix24')
+			&& Loader::includeModule('bitrix24')
+			&& ModuleManager::isModuleInstalled('ui')
+			&& Loader::includeModule('ui')
+		)
+		{
+			if ((is_string($params['ID']) && $params['ID'] !== ''))
+			{
+				$script = 'if (top.hasOwnProperty("BX") && top.BX !== null && typeof(top.BX) === "function"'.
+					' && top.BX.hasOwnProperty("UI") && top.BX.UI !== null && typeof(top.BX.UI) === "object"'.
+					' && top.BX.UI.hasOwnProperty("InfoHelper") && top.BX.UI.InfoHelper !== null'.
+					' && typeof(top.BX.UI.InfoHelper) === "object" && top.BX.UI.InfoHelper.hasOwnProperty("show")'.
+					' && typeof(top.BX.UI.InfoHelper.show) === "function"){top.BX.UI.InfoHelper.show("'.
+					\CUtil::JSEscape($params['ID']).'");}';
+			}
+		}
+
+		return $script;
+	}
+	/**
 	 * Prepare HTML for license purchase information.
 	 * @param array $params Popup params.
 	 * @return string

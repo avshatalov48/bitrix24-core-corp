@@ -77,6 +77,6 @@ final class Configuration
 			return false;
 		}
 
-		return strpos($contentType, 'application/zip') !== false;
+		return mb_strpos($contentType, 'application/zip') !== false;
 	}
 }

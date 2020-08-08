@@ -30,10 +30,10 @@ foreach ($arResult['ITEMS'] as &$arItem)
 	$viewUrl = CComponentEngine::MakePathFromTemplate($arParams["PATHS"]["PATH_TO_TASKS_TASK"], array("task_id" => $task["ID"], "action" => "view"));
 	$editUrl = CComponentEngine::MakePathFromTemplate($arParams["PATHS"]["PATH_TO_TASKS_TASK"], array("task_id" => $task["ID"], "action" => "edit"));
 	$createUrl = CComponentEngine::MakePathFromTemplate($arParams["PATHS"]["PATH_TO_TASKS_TASK"], array("task_id" => 0, "action" => "edit"));
-	$createUrl = $createUrl.(strpos($createUrl, "?") === false ? "?" : "&")."PARENT_ID=".$task["ID"];
+	$createUrl = $createUrl.(mb_strpos($createUrl, "?") === false ? "?" : "&")."PARENT_ID=".$task["ID"];
 
 	if ($arResult['IFRAME'] === 'Y')
-		$viewUrl = $viewUrl.(strpos($viewUrl, "?") === false ? "?" : "&")."IFRAME=Y";
+		$viewUrl = $viewUrl.(mb_strpos($viewUrl, "?") === false ? "?" : "&")."IFRAME=Y";
 
 	?>
 	<tr class="task-list-item task-depth-<?php echo $depth?> task-status-<?php echo tasksStatus2String($task["STATUS"])?>"
@@ -280,17 +280,19 @@ foreach ($arResult['ITEMS'] as &$arItem)
 					// Force special format for russian version of site.
 					if (LANGUAGE_ID === 'ru')
 					{
-						if (strlen(trim($task['CREATED_BY_NAME']) . trim($task['CREATED_BY_LAST_NAME'])))
+						if(trim($task['CREATED_BY_NAME']).trim($task['CREATED_BY_LAST_NAME']) <> '')
 						{
 							echo htmlspecialcharsbx(
 								htmlspecialcharsback($task['CREATED_BY_LAST_NAME'])
-								. ' '
-								. substr(htmlspecialcharsback($task['CREATED_BY_NAME']), 0, 1)
-								. '.'
+								.' '
+								.mb_substr(htmlspecialcharsback($task['CREATED_BY_NAME']), 0, 1)
+								.'.'
 							);
 						}
 						else
+						{
 							echo htmlspecialcharsbx($task['CREATED_BY_LOGIN']);
+						}
 					}
 					else
 					{
@@ -319,17 +321,19 @@ foreach ($arResult['ITEMS'] as &$arItem)
 						// Force special format for russian version of site.
 						if (LANGUAGE_ID === 'ru')
 						{
-							if (strlen(trim($task['RESPONSIBLE_LAST_NAME']) . trim($task['RESPONSIBLE_NAME'])))
+							if(trim($task['RESPONSIBLE_LAST_NAME']).trim($task['RESPONSIBLE_NAME']) <> '')
 							{
 								echo htmlspecialcharsbx(
 									htmlspecialcharsback($task['RESPONSIBLE_LAST_NAME'])
-									. ' '
-									. substr(htmlspecialcharsback($task['RESPONSIBLE_NAME']), 0, 1)
-									. '.'
+									.' '
+									.mb_substr(htmlspecialcharsback($task['RESPONSIBLE_NAME']), 0, 1)
+									.'.'
 								);
 							}
 							else
+							{
 								echo htmlspecialcharsbx($task['RESPONSIBLE_LOGIN']);
+							}
 						}
 						else
 						{

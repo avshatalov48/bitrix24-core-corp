@@ -11,6 +11,7 @@ $MESS["TASKS_FILTER_CHANGED_DATE"] = "Дата изменения";
 $MESS["TASKS_FILTER_CREATED_DATE"] = "Дата создания";
 $MESS["TASKS_FILTER_CLOSED_DATE"] = "Дата закрытия";
 $MESS["TASKS_FILTER_ACTIVE"] = "Находилась в работе";
+$MESS["TASKS_FILTER_ACTIVITY_DATE"] = "Активность";
 $MESS["TASKS_FILTER_TIME_ESTIMATE"] = "Плановые трудозатраты";
 $MESS["TASKS_FILTER_ALLOW_TIME_TRACKING"] = "Учитывать время";
 

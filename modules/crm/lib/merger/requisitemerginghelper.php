@@ -349,9 +349,9 @@ class RequisiteMergingHelper
 					else
 					{
 						$isSeedValueEmpty = ($seedValue === null
-							|| (is_string($seedValue) ? strlen($seedValue) === 0 : empty($seedValue)));
+							|| (is_string($seedValue) ? $seedValue == '' : empty($seedValue)));
 						$isTargValueEmpty = ($targValue === null
-							|| (is_string($targValue) ? strlen($targValue) === 0 : empty($targValue)));
+							|| (is_string($targValue) ? $targValue == '' : empty($targValue)));
 						if (!$isSeedValueEmpty && !$isTargValueEmpty && $seedValue != $targValue)
 						{
 							$result = false;
@@ -395,9 +395,9 @@ class RequisiteMergingHelper
 							$seedValue = isset($seedRequisite[$fieldName]) ? $seedRequisite[$fieldName] : null;
 							$targValue = isset($targRequisite[$fieldName]) ? $targRequisite[$fieldName] : null;
 							$isSeedValueEmpty = ($seedValue === null
-								|| (is_string($seedValue) ? strlen($seedValue) === 0 : empty($seedValue)));
+								|| (is_string($seedValue) ? $seedValue == '' : empty($seedValue)));
 							$isTargValueEmpty = ($targValue === null
-								|| (is_string($targValue) ? strlen($targValue) === 0 : empty($targValue)));
+								|| (is_string($targValue) ? $targValue == '' : empty($targValue)));
 							if (!$isSeedValueEmpty && !$isTargValueEmpty && $seedValue == $targValue)
 							{
 								$result = true;
@@ -464,9 +464,9 @@ class RequisiteMergingHelper
 				else
 				{
 					$isSeedValueEmpty = ($seedValue === null
-						|| (is_string($seedValue) ? strlen($seedValue) === 0 : empty($seedValue)));
+						|| (is_string($seedValue) ? $seedValue == '' : empty($seedValue)));
 					$isTargValueEmpty = ($targValue === null
-						|| (is_string($targValue) ? strlen($targValue) === 0 : empty($targValue)));
+						|| (is_string($targValue) ? $targValue == '' : empty($targValue)));
 					if (!$isSeedValueEmpty && $isTargValueEmpty)
 					{
 						$targRequisite[$fieldName] = $seedValue;
@@ -546,9 +546,9 @@ class RequisiteMergingHelper
 					$seedValue = isset($seedBankDetail[$fieldName]) ? $seedBankDetail[$fieldName] : null;
 					$targValue = isset($targBankDetail[$fieldName]) ? $targBankDetail[$fieldName] : null;
 					$isSeedValueEmpty = ($seedValue === null
-						|| (is_string($seedValue) ? strlen($seedValue) === 0 : empty($seedValue)));
+						|| (is_string($seedValue) ? $seedValue == '' : empty($seedValue)));
 					$isTargValueEmpty = ($targValue === null
-						|| (is_string($targValue) ? strlen($targValue) === 0 : empty($targValue)));
+						|| (is_string($targValue) ? $targValue == '' : empty($targValue)));
 					if (!$isSeedValueEmpty && !$isTargValueEmpty && $seedValue != $targValue)
 					{
 						$result = false;
@@ -584,9 +584,9 @@ class RequisiteMergingHelper
 						$seedValue = isset($seedBankDetail[$fieldName]) ? $seedBankDetail[$fieldName] : null;
 						$targValue = isset($targBankDetail[$fieldName]) ? $targBankDetail[$fieldName] : null;
 						$isSeedValueEmpty = ($seedValue === null
-							|| (is_string($seedValue) ? strlen($seedValue) === 0 : empty($seedValue)));
+							|| (is_string($seedValue) ? $seedValue == '' : empty($seedValue)));
 						$isTargValueEmpty = ($targValue === null
-							|| (is_string($targValue) ? strlen($targValue) === 0 : empty($targValue)));
+							|| (is_string($targValue) ? $targValue == '' : empty($targValue)));
 						if (!$isSeedValueEmpty && !$isTargValueEmpty && $seedValue == $targValue)
 						{
 							$result = true;
@@ -632,9 +632,9 @@ class RequisiteMergingHelper
 				$seedValue = isset($seedBankDetail[$fieldName]) ? $seedBankDetail[$fieldName] : array();
 				$targValue = isset($targBankDetail[$fieldName]) ? $targBankDetail[$fieldName] : array();
 				$isSeedValueEmpty = ($seedValue === null
-					|| (is_string($seedValue) ? strlen($seedValue) === 0 : empty($seedValue)));
+					|| (is_string($seedValue) ? $seedValue == '' : empty($seedValue)));
 				$isTargValueEmpty = ($targValue === null
-					|| (is_string($targValue) ? strlen($targValue) === 0 : empty($targValue)));
+					|| (is_string($targValue) ? $targValue == '' : empty($targValue)));
 				if (!$isSeedValueEmpty && $isTargValueEmpty)
 				{
 					$targBankDetail[$fieldName] = $seedValue;

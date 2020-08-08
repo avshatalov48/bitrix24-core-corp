@@ -8,6 +8,27 @@ use Bitrix\Bitrix24\Integrator;
 
 class CIntranetInviteDialogComponentAjaxController extends \Bitrix\Main\Engine\Controller
 {
+	protected function isInvitingUsersAllowed()
+	{
+		global $USER;
+
+		if (
+			(
+				Loader::includeModule('bitrix24')
+				&& !\CBitrix24::isInvitingUsersAllowed()
+			)
+			|| (
+				!ModuleManager::isModuleInstalled('bitrix24')
+				&& !$USER->CanDoOperation('edit_all_users')
+			)
+		)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
 	protected function isExtranetInstalled()
 	{
 		$bExtranetInstalled = ModuleManager::IsModuleInstalled("extranet");
@@ -35,6 +56,11 @@ class CIntranetInviteDialogComponentAjaxController extends \Bitrix\Main\Engine\C
 
 	public function inviteAction()
 	{
+		if (!$this->isInvitingUsersAllowed())
+		{
+			return false;
+		}
+
 		if (!$this->isMoreUserAvailable())
 		{
 			$this->addError(new \Bitrix\Main\Error("User limit"));
@@ -65,7 +91,7 @@ class CIntranetInviteDialogComponentAjaxController extends \Bitrix\Main\Engine\C
 
 			foreach($arError as $strErrorText)
 			{
-				if(strlen($strErrorText) > 0)
+				if($strErrorText <> '')
 				{
 					$strError .= '<li style="list-style-position: inside;">'.$strErrorText.'</li>';
 				}
@@ -87,6 +113,11 @@ class CIntranetInviteDialogComponentAjaxController extends \Bitrix\Main\Engine\C
 
 	public function selfAction()
 	{
+		if (!$this->isInvitingUsersAllowed())
+		{
+			return false;
+		}
+
 		if (Loader::includeModule("socialservices"))
 		{
 			\Bitrix\Socialservices\Network::setRegisterSettings(array(
@@ -103,6 +134,11 @@ class CIntranetInviteDialogComponentAjaxController extends \Bitrix\Main\Engine\C
 
 	public function addAction()
 	{
+		if (!$this->isInvitingUsersAllowed())
+		{
+			return false;
+		}
+
 		if (!$this->isMoreUserAvailable())
 		{
 			$this->addError(new \Bitrix\Main\Error("User limit"));
@@ -209,6 +245,11 @@ class CIntranetInviteDialogComponentAjaxController extends \Bitrix\Main\Engine\C
 
 	public function inviteByPhoneAction()
 	{
+		if (!$this->isInvitingUsersAllowed())
+		{
+			return false;
+		}
+
 		if (!$this->isMoreUserAvailable())
 		{
 			$this->addError(new \Bitrix\Main\Error("User limit"));
@@ -238,7 +279,7 @@ class CIntranetInviteDialogComponentAjaxController extends \Bitrix\Main\Engine\C
 
 			foreach($arError as $strErrorText)
 			{
-				if(strlen($strErrorText) > 0)
+				if($strErrorText <> '')
 				{
 					$strError .= '<li style="list-style-position: inside;">'.$strErrorText.'</li>';
 				}
@@ -262,6 +303,11 @@ class CIntranetInviteDialogComponentAjaxController extends \Bitrix\Main\Engine\C
 		global $USER;
 
 		if (!Loader::includeModule("bitrix24"))
+		{
+			return false;
+		}
+
+		if (!$this->isInvitingUsersAllowed())
 		{
 			return false;
 		}

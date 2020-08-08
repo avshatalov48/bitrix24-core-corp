@@ -16,6 +16,7 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Context;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Localization\Loc;
+use \Bitrix\Main\Loader;
 
 $adminsUserIdList = [];
 $res  = \Bitrix\Main\UserGroupTable::getList([
@@ -337,10 +338,23 @@ foreach($arResult['ROWS'] as $key => $row)
 
 	if (in_array('deactivate', $actions))
 	{
+		$deactivateTitle = Loc::getMessage('INTRANET_USER_LIST_ACTION_DEACTIVATE_TITLE');
+		$deactivateOnclick = 'jsBXIUL.activityAction("deactivate", '.$userFields["ID"].')';
+
+		if (
+			Loader::includeModule("bitrix24")
+			&& !Bitrix\Bitrix24\Feature::isFeatureEnabled("user_dismissal")
+			&& !\Bitrix\Bitrix24\Integrator::isIntegrator($userFields["ID"])
+		)
+		{
+			$deactivateTitle.= "<span class='intranet-user-list-lock-icon'></span>";
+			$deactivateOnclick = "top.BX.UI.InfoHelper.show('limit_dismiss');";
+		}
+
 		$arResult['ROWS'][$key]['actions'][] = [
 			'TITLE' => Loc::getMessage('INTRANET_USER_LIST_ACTION_DEACTIVATE_TITLE'),
-			'TEXT' => Loc::getMessage('INTRANET_USER_LIST_ACTION_DEACTIVATE'),
-			'ONCLICK' => 'jsBXIUL.activityAction("deactivate", '.$userFields["ID"].')'
+			'TEXT' => $deactivateTitle,
+			'ONCLICK' => $deactivateOnclick
 		];
 	}
 

@@ -274,7 +274,7 @@ while ($row = $result->fetch())
 	// full name
 	$row['FULL_NAME'] = $row['NAME']."\n".$row['LAST_NAME'];
 
-	if (!strlen(trim($row['FULL_NAME'])))
+	if (trim($row['FULL_NAME']) == '')
 	{
 		$row['FULL_NAME'] = $row['LOGIN'];
 	}

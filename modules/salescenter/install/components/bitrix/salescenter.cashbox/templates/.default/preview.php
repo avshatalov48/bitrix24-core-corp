@@ -31,6 +31,9 @@ Extension::load(['ui.buttons', 'ui.icons', 'ui.common', 'ui.alerts',]);
 						</div>
 						<hr class="ui-hr" style="margin-bottom: 15px;">
 						<div class="ui-text-2" style="margin-bottom: 20px;"><?=Loc::getMessage($arResult['handlerDescription']['description'])?></div>
+						<div class="salescenter-button-container">
+							<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigCashBox(event);"><?=Loc::getMessage('SC_CASHBOX_LINK_CONNECT')?></a>
+						</div>
 						<div style="padding-top: 20px;padding-bottom: 20px;" class="salescenter-button-container">
 							<button class="ui-btn ui-btn-md ui-btn-primary" onclick="location.href='<?=$arResult['addUrl'];?>';"><?=Loc::getMessage("SC_ADD_CASHBOX_BUTTOM")?></button>
 						</div>

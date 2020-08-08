@@ -12,8 +12,11 @@
 
 namespace Bitrix\Tasks\Manager;
 
-use Bitrix\Main\Data\Cache;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Comments;
+use Bitrix\Tasks\Integration\Extranet;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
+use Bitrix\Tasks\Integration\Timeman;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
 use Bitrix\Tasks\Manager\Task\Accomplice;
 use Bitrix\Tasks\Manager\Task\Auditor;
@@ -34,7 +37,6 @@ use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\UserField\Task as UserField;
-use Bitrix\Tasks\Internals\Task\LogTable;
 
 final class Task extends \Bitrix\Tasks\Manager
 {
@@ -117,43 +119,42 @@ final class Task extends \Bitrix\Tasks\Manager
 
 	private static function doAdd($userId, array $data, array $parameters)
 	{
-		$errors = static::ensureHaveErrorCollection($parameters);
+		$userId = (int)$userId;
 
+		$errors = static::ensureHaveErrorCollection($parameters);
 		$data = static::normalizeData($data);
 
 		static::inviteMembers($data, $errors);
 		static::adaptSet($data);
-
 		static::ensureDatePlanChangeAllowed($userId, $data);
-
 		static::setDefaultUFValues($userId, $data);
 
 		$task = \CTaskItem::add(static::stripSubEntityData($data), $userId, $parameters);
-
 		$taskId = $task->getId();
 
 		if ($taskId)
 		{
-			$cache = Cache::createInstance();
-			$cache->clean(\CTasks::FILTER_LIMIT_CACHE_KEY, \CTasks::CACHE_TASKS_COUNT_DIR_NAME);
+			$commentPoster = Comments\Task\CommentPoster::getInstance($taskId, $userId);
+			$commentPoster->enableDeferredPostMode();
+			$commentPoster->clearComments();
 
-			if (!\Bitrix\Tasks\Integration\Extranet\User::isExtranet($userId) && $data[ "ADD_TO_TIMEMAN" ] == "Y")
+			if (
+				$data['ADD_TO_TIMEMAN'] === 'Y'
+				&& $userId === (int)$data['RESPONSIBLE_ID']
+				&& $userId === User::getId()
+				&& !Extranet\User::isExtranet($userId)
+			)
 			{
 				// add the task to planner only if the user this method executed under is current and responsible for the task
-				if ($userId == $data[ 'RESPONSIBLE_ID' ] && $userId == \Bitrix\Tasks\Util\User::getId())
-				{
-					\CTaskPlannerMaintance::plannerActions(array('add' => array($taskId)));
-				}
+				\CTaskPlannerMaintance::plannerActions(['add' => [$taskId]]);
 			}
-			if ($data[ "ADD_TO_FAVORITE" ] == "Y")
+			if ($data['ADD_TO_FAVORITE'] == "Y")
 			{
 				$task->addToFavorite();
 			}
 
 			// add sub-entities (SE_*)
-			$subEntityParams = array_merge(
-				$parameters, array('MODE' => static::MODE_ADD)
-			);
+			$subEntityParams = array_merge($parameters, ['MODE' => static::MODE_ADD]);
 
 			if (array_key_exists(Reminder::getCode(true), $data))
 			{
@@ -380,8 +381,13 @@ final class Task extends \Bitrix\Tasks\Manager
 		static::ensureDatePlanChangeAllowed($userId, $data);
 		$cleanData = static::stripSubEntityData($data);
 
+		$commentPoster = Comments\Task\CommentPoster::getInstance($taskId, $userId);
+		$commentPoster->clearComments();
+
+		$action = ActionDictionary::ACTION_TASK_EDIT;
+
 		// under some conditions we may loose rights (for edit or read, or both) during update, so a little trick is needed
-		$canEditBefore = $task->isActionAllowed(\CTaskItem::ACTION_EDIT); // get our rights before doing anything
+		$canEditBefore = $task->checkAccess($action); // get our rights before doing anything
 		if (!empty($cleanData))
 		{
 			// spike: save parameters before CTasks::Update(), at low level, to be sure worker will work out correctly
@@ -396,11 +402,13 @@ final class Task extends \Bitrix\Tasks\Manager
 					ParameterTable::add($parameter);
 				}
 			}
+			$commentPoster->enableDeferredPostMode();
 
-			$task->update($cleanData, $parameters[ 'TASK_ACTION_UPDATE_PARAMETERS' ]); // do not check return result, because method will throw an exception on error
+			$task->update($cleanData, $parameters['TASK_ACTION_UPDATE_PARAMETERS']); // do not check return result, because method will throw an exception on error
 		}
+
 		$canReadAfter = $task->checkCanRead();
-		$canEditAfter = $canReadAfter && $task->isActionAllowed(\CTaskItem::ACTION_EDIT);
+		$canEditAfter = $canReadAfter && $task->checkAccess($action);
 		$rightsLost = $canEditBefore && !$canEditAfter;
 		$adminUserId = \Bitrix\Tasks\Util\User::getAdminId();
 
@@ -445,6 +453,9 @@ final class Task extends \Bitrix\Tasks\Manager
 		}
 
 		Template::manageTaskReplication($userId, $taskId, $data, $subEntityParams);
+
+		$commentPoster->postComments();
+		$commentPoster->clearComments();
 
 		return $task;
 	}
@@ -716,8 +727,7 @@ final class Task extends \Bitrix\Tasks\Manager
 			'EDIT.ORIGINATOR' => true,
 			'FAVORITE.ADD' => true,
 			'FAVORITE.DELETE' => false,
-			'DAYPLAN.ADD' => !\Bitrix\Tasks\Integration\Extranet\User::isExtranet($userId)
-				&& \Bitrix\Tasks\Integration\Timeman::canUse()
+			'DAYPLAN.ADD' => (!Extranet\User::isExtranet($userId) && Timeman::canUse())
 		);
 	}
 
@@ -728,8 +738,8 @@ final class Task extends \Bitrix\Tasks\Manager
 			return;
 		}
 
-		$extranetSite = \Bitrix\Tasks\Integration\Extranet::isExtranetSite();
-		$extranetUser = \Bitrix\Tasks\Integration\Extranet\User::isExtranet($userId);
+		$extranetSite = Extranet::isExtranetSite();
+		$extranetUser = Extranet\User::isExtranet($userId);
 
 		// no dayplan for extranet site, even if intranet user goes to extranet site
 		$plan = array();
@@ -765,7 +775,7 @@ final class Task extends \Bitrix\Tasks\Manager
 			$task[ 'TIMER_IS_RUNNING_FOR_CURRENT_USER' ] = false;
 
 			$can[ $task[ 'ID' ] ][ 'ACTION' ][ 'ADD_TO_DAY_PLAN' ] = $can[ $task[ 'ID' ] ][ 'ACTION' ][ 'DAYPLAN.ADD' ] =
-				!$extranetUser && $canAddToPlan && \Bitrix\Tasks\Integration\Timeman::canUse();
+				!$extranetUser && $canAddToPlan && Timeman::canUse();
 		}
 		unset($task);
 
@@ -785,16 +795,16 @@ final class Task extends \Bitrix\Tasks\Manager
 
 	public static function getList($userId, array $listParameters = array(), array $parameters = array())
 	{
-		$data = array();
-		$can = array();
+		$data = [];
+		$can = [];
 
 		$errors = static::ensureHaveErrorCollection($parameters);
 
 		// todo: get rid of LIST_PARAMETERS, if can. Move limit, filter, sort, etc.. to the first level
 
-		if(array_key_exists('NAV_PARAMS', $listParameters) && !empty($listParameters['NAV_PARAMS']))
+		if (array_key_exists('NAV_PARAMS', $listParameters) && !empty($listParameters['NAV_PARAMS']))
 		{
-			$params = array('NAV_PARAMS' => $listParameters['NAV_PARAMS']);
+			$params = ['NAV_PARAMS' => $listParameters['NAV_PARAMS']];
 		}
 		else
 		{
@@ -808,109 +818,88 @@ final class Task extends \Bitrix\Tasks\Manager
 			$params = false;
 			if (!empty($navParams))
 			{
-				$params = array('NAV_PARAMS' => $navParams);
+				$params = ['NAV_PARAMS' => $navParams];
 			}
 		}
 
-		if (array_key_exists('SORTING', (array)$listParameters['order'])
-			&& array_key_exists('GROUP_ID', $listParameters[ 'legacyFilter' ])
+		$getNewCommentsCount = in_array('NEW_COMMENTS_COUNT', $listParameters['select'], true);
+
+		if (
+			array_key_exists('SORTING', (array)$listParameters['order'])
+			&& array_key_exists('GROUP_ID', $listParameters['legacyFilter'])
 		)
-		{ // need for sorting in group
-			$params['SORTING_GROUP_ID'] = $listParameters[ 'legacyFilter' ]['GROUP_ID'];
+		{
+			$params['SORTING_GROUP_ID'] = $listParameters['legacyFilter']['GROUP_ID'];
 		}
 
 		if (array_key_exists('USE_MINIMAL_SELECT_LEGACY', $parameters))
 		{
-			$params['USE_MINIMAL_SELECT_LEGACY'] = $parameters[ 'USE_MINIMAL_SELECT_LEGACY'];
+			$params['USE_MINIMAL_SELECT_LEGACY'] = $parameters['USE_MINIMAL_SELECT_LEGACY'];
 		}
 		if (array_key_exists('MAKE_ACCESS_FILTER', $parameters))
 		{
 			$params['MAKE_ACCESS_FILTER'] = $parameters['MAKE_ACCESS_FILTER'];
 		}
 
-		if(in_array('NEW_COMMENTS_COUNT', $listParameters[ 'select' ]))
+		if ($getNewCommentsCount)
 		{
-			$listParameters[ 'select' ][]='CREATED_DATE';
-			$listParameters[ 'select' ][]='VIEWED_DATE';
+			$listParameters['select'][] = 'CREATED_DATE';
+			$listParameters['select'][] = 'VIEWED_DATE';
 		}
 
-		if (!array_key_exists('RETURN_ACCESS', $parameters) ||
-			(array_key_exists('RETURN_ACCESS', $parameters) && $parameters['RETURN_ACCESS'] != 'N'))
+		if (
+			!array_key_exists('RETURN_ACCESS', $parameters)
+			|| (array_key_exists('RETURN_ACCESS', $parameters) && $parameters['RETURN_ACCESS'] != 'N')
+		)
 		{
-			$listParameters[ 'select' ][]='ALLOW_CHANGE_DEADLINE';
-			$listParameters[ 'select' ][]='TASK_CONTROL';
-			$listParameters[ 'select' ][]='ALLOW_TIME_TRACKING';
+			$listParameters['select'][] = 'ALLOW_CHANGE_DEADLINE';
+			$listParameters['select'][] = 'TASK_CONTROL';
+			$listParameters['select'][] = 'ALLOW_TIME_TRACKING';
 		}
 
 		// an exception about sql error may fall here
-		list($items, $res) = \CTaskItem::fetchListArray(
+		[$items, $res] = \CTaskItem::fetchListArray(
 			$userId,
-			$listParameters[ 'order' ],
-			$listParameters[ 'legacyFilter' ],
+			$listParameters['order'],
+			$listParameters['legacyFilter'],
 			$params,
-			$listParameters[ 'select' ]
+			$listParameters['select']
 		);
-
-		$filterLog = ['LOGIC' => 'OR'];
 
 		if (is_array($items) && !empty($items))
 		{
 			foreach ($items as $taskData)
 			{
-				if (!array_key_exists('RETURN_ACCESS', $parameters) ||
-					(array_key_exists('RETURN_ACCESS', $parameters) && $parameters['RETURN_ACCESS'] != 'N'))
+				$taskId = $taskData['ID'];
+
+				if (!array_key_exists('RETURN_ACCESS', $parameters) || $parameters['RETURN_ACCESS'] != 'N')
 				{
-					$taskData['ACTION'] = $can[$taskData['ID']]['ACTION'] = static::translateAllowedActionNames(
+					$taskData['ACTION'] = $can[$taskId]['ACTION'] = static::translateAllowedActionNames(
 						\CTaskItem::getAllowedActionsArray($userId, $taskData, true)
 					);
 				}
 
-				if (in_array('NEW_COMMENTS_COUNT', $listParameters['select']))
-				{
-					$taskData['NEW_COMMENTS_COUNT'] = 0;
-				}
-
-				$data[$taskData['ID']] = $taskData;
-
-				if (in_array('NEW_COMMENTS_COUNT', $listParameters['select']))
-				{
-					$str = $taskData['VIEWED_DATE'] ? $taskData['VIEWED_DATE'] : $taskData['CREATED_DATE'];
-
-					$filterLog[] = [
-						'>CREATED_DATE' => $str,
-						'TASK_ID' => $taskData['ID']
-					];
-				}
+				$data[$taskId] = $taskData;
 			}
 
-
-
-			if (in_array('NEW_COMMENTS_COUNT', $listParameters['select']))
+			if ($getNewCommentsCount)
 			{
-				$result = LogTable::getList([
-					'select' => ['TASK_ID', 'FIELD', 'FROM_VALUE', 'TO_VALUE'],
-					'filter' => [
-						'!USER_ID' => $userId,
-						'FIELD' => ['COMMENT'],
-						$filterLog
-					]
-				]);
-
-				while ($row = $result->fetch())
+				$newComments = Comments\Task::getNewCommentsCountForTasks(array_keys($items), $userId);
+				foreach ($newComments as $taskId => $commentsCount)
 				{
-					$data[$row['TASK_ID']]['NEW_COMMENTS_COUNT']++;
+					$data[$taskId]['NEW_COMMENTS_COUNT'] = $commentsCount;
 				}
 			}
 		}
 
-		return array(
+		return [
 			'DATA' => $data,
 			'CAN' => $can,
 			'ERRORS' => $errors,
-			'AUX' => array(
+			'AUX' => [
 				'OBJ_RES' => $res,
-			)
-		);
+			],
+		];
 	}
 
 	public static function getCount(array $filter = array(), array $params = array())

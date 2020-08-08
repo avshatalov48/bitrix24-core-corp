@@ -108,7 +108,7 @@ if($arParams['TYPE'] === 'details')
 				'SCHEME_NAME' => \Bitrix\Crm\Conversion\QuoteConversionScheme::resolveName($schemeID),
 				'SCHEME_DESCRIPTION' => \Bitrix\Crm\Conversion\QuoteConversionScheme::getDescription($schemeID),
 				'IS_PERMITTED' => $isPermitted,
-				'LOCK_SCRIPT' => $isPermitted ? '' : $restriction->preparePopupScript()
+				'LOCK_SCRIPT' => $isPermitted ? '' : $restriction->prepareInfoHelperScript()
 			),
 			'CODE' => 'convert',
 			'TEXT' => GetMessage('QUOTE_CREATE_ON_BASIS'),
@@ -278,7 +278,7 @@ if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show')
 			'SCHEME_NAME' => \Bitrix\Crm\Conversion\QuoteConversionScheme::resolveName($schemeID),
 			'SCHEME_DESCRIPTION' => \Bitrix\Crm\Conversion\QuoteConversionScheme::getDescription($schemeID),
 			'IS_PERMITTED' => $isPermitted,
-			'LOCK_SCRIPT' => $isPermitted ? '' : $restriction->preparePopupScript()
+			'LOCK_SCRIPT' => $isPermitted ? '' : $restriction->prepareInfoHelperScript()
 		),
 		'CODE' => 'convert',
 		'TEXT' => GetMessage('QUOTE_CREATE_ON_BASIS'),

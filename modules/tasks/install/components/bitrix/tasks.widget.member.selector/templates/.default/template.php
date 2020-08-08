@@ -1,6 +1,7 @@
 <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -14,6 +15,13 @@ $helper = $arResult['HELPER'];
 	<div id="<?=$helper->getScopeId()?>" class="tasks task-form-field <?=$arParams['DISPLAY']?> <?=($arParams['READ_ONLY'] ? 'readonly' : '')?>" <?if($arParams['MAX_WIDTH'] > 0):?>style="max-width: <?=$arParams['MAX_WIDTH']?>px"<?endif?>>
 
 		<?$helper->displayWarnings();?>
+
+		<?php
+		if (Loader::IncludeModule('bitrix24'))
+		{
+			$APPLICATION->IncludeComponent("bitrix:bitrix24.limit.lock", "");
+		}
+		?>
 
 		<span class="js-id-tdp-mem-sel-is-items tasks-h-invisible">
 		    <script type="text/html" data-bx-id="tdp-mem-sel-is-item">
@@ -44,7 +52,14 @@ $helper = $arResult['HELPER'];
 
 	    <span class="task-form-field-controls">
 	        <span class="task-form-field-loading"><?=Loc::getMessage('TASKS_COMMON_LOADING')?>...</span>
-	        <input class="js-id-tdp-mem-sel-is-search js-id-network-selector-search task-form-field-search task-form-field-input" type="text" value="" autocomplete="off" />
+	        <input
+				class="js-id-tdp-mem-sel-is-search js-id-network-selector-search task-form-field-search task-form-field-input"
+				type="text"
+				value=""
+				autocomplete="off"
+				data-groupId="<?= array_key_exists('GROUP_ID', $arParams) ? $arParams['GROUP_ID'] : 0 ?>"
+				data-role="<?= array_key_exists('ROLE_KEY', $arParams) ? $arParams['ROLE_KEY'] : 0 ?>"
+			/>
 
 		    <?if($arParams['MAX'] == 1 && $arParams['MIN'] == 1): // single and required?>
 			    <a href="javascript:void(0);" class="js-id-tdp-mem-sel-is-open-form task-form-field-link">

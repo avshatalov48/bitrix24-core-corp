@@ -1,92 +1,113 @@
 <?php
-namespace Bitrix\Tasks\Internals;
+namespace Bitrix\Tasks\Internals\Counter;
 
-use Bitrix\Main;
 use Bitrix\Main\Entity\DataManager;
 
+/**
+ * Class CounterTable
+ *
+ * @package Bitrix\Tasks\Internals
+ */
 class CounterTable extends DataManager
 {
-	public static function getTableName()
+	public static function getTableName(): string
 	{
 		return 'b_tasks_counters';
 	}
 
-	public static function getClass()
+	public static function getClass(): string
 	{
-		return get_called_class();
+		return static::class;
 	}
 
-	public static function getMap()
+	public static function getMap(): array
 	{
-		return array(
-			'ID' => array(
+		return [
+			'ID' => [
 				'data_type' => 'integer',
 				'primary' => true,
 				'autocomplete' => true,
-			),
-			'USER_ID' => array(
+			],
+			'USER_ID' => [
 				'data_type' => 'integer',
 				'required' => true,
-			),
-			'GROUP_ID' => array(
+			],
+			'GROUP_ID' => [
 				'data_type' => 'integer',
 				'required' => true,
-			),
+			],
 
-			'OPENED' => array(
-				'data_type' => 'integer'
-			),
-			'CLOSED' => array(
-				'data_type' => 'integer'
-			),
+			'OPENED' => [
+				'data_type' => 'integer',
+			],
+			'CLOSED' => [
+				'data_type' => 'integer',
+			],
+			'EXPIRED' => [
+				'data_type' => 'integer',
+			],
+			'NEW_COMMENTS' => [
+				'data_type' => 'integer',
+			],
 
-			'MY_EXPIRED' => array(
-				'data_type' => 'integer'
-			),
-			'MY_EXPIRED_SOON' => array(
-				'data_type' => 'integer'
-			),
-			'MY_NOT_VIEWED' => array(
-				'data_type' => 'integer'
-			),
-			'MY_WITHOUT_DEADLINE' => array(
-				'data_type' => 'integer'
-			),
+			'MY_EXPIRED' => [
+				'data_type' => 'integer',
+			],
+			'MY_EXPIRED_SOON' => [
+				'data_type' => 'integer',
+			],
+			'MY_NOT_VIEWED' => [
+				'data_type' => 'integer',
+			],
+			'MY_WITHOUT_DEADLINE' => [
+				'data_type' => 'integer',
+			],
+			'MY_NEW_COMMENTS' => [
+				'data_type' => 'integer',
+			],
 
-			'ORIGINATOR_EXPIRED' => array(
-				'data_type' => 'integer'
-			),
-			'ORIGINATOR_WITHOUT_DEADLINE' => array(
-				'data_type' => 'integer'
-			),
-			'ORIGINATOR_WAIT_CTRL' => array(
-				'data_type' => 'integer'
-			),
+			'ORIGINATOR_WITHOUT_DEADLINE' => [
+				'data_type' => 'integer',
+			],
+			'ORIGINATOR_EXPIRED' => [
+				'data_type' => 'integer',
+			],
+			'ORIGINATOR_WAIT_CTRL' => [
+				'data_type' => 'integer',
+			],
+			'ORIGINATOR_NEW_COMMENTS' => [
+				'data_type' => 'integer',
+			],
 
-			'AUDITOR_EXPIRED' => array(
-				'data_type' => 'integer'
-			),
+			'AUDITOR_EXPIRED' => [
+				'data_type' => 'integer',
+			],
+			'AUDITOR_NEW_COMMENTS' => [
+				'data_type' => 'integer',
+			],
 
-			'ACCOMPLICES_EXPIRED' => array(
-				'data_type' => 'integer'
-			),
-			'ACCOMPLICES_EXPIRED_SOON' => array(
-				'data_type' => 'integer'
-			),
-			'ACCOMPLICES_NOT_VIEWED' => array(
-				'data_type' => 'integer'
-			),
+			'ACCOMPLICES_EXPIRED' => [
+				'data_type' => 'integer',
+			],
+			'ACCOMPLICES_EXPIRED_SOON' => [
+				'data_type' => 'integer',
+			],
+			'ACCOMPLICES_NOT_VIEWED' => [
+				'data_type' => 'integer',
+			],
+			'ACCOMPLICES_NEW_COMMENTS' => [
+				'data_type' => 'integer',
+			],
 
 			// references
-			'USER' => array(
+			'USER' => [
 				'data_type' => 'Bitrix\Main\UserTable',
-				'reference' => array('=this.USER_ID' => 'ref.ID')
-			),
-
-			'GROUP' => array(
+				'reference' => ['=this.USER_ID' => 'ref.ID'],
+			],
+			'GROUP' => [
 				'data_type' => 'Bitrix\Socialnetwork\Workgroup',
-				'reference' => array('=this.GROUP_ID' => 'ref.ID')
-			),
-		);
+				'reference' => ['=this.GROUP_ID' => 'ref.ID'],
+			],
+		];
 	}
 }

@@ -100,7 +100,7 @@ class CCrmTemplateManager
 			if (array_key_exists($key, $replacements) || empty($mapper))
 				continue;
 
-			$replacements[$key] = $mapper->mapPath(substr($key, 1, -1));
+			$replacements[$key] = $mapper->mapPath(mb_substr($key, 1, -1));
 		}
 
 		return str_replace(array_keys($replacements), array_values($replacements), $template);

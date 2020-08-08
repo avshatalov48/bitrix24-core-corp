@@ -1,6 +1,7 @@
 <?
-
-IncludeModuleLangFile(__FILE__);
+use Bitrix\Main\Loader,
+	Bitrix\Main\Localization\Loc,
+	Bitrix\Catalog;
 
 class CCrmVat
 {
@@ -8,18 +9,25 @@ class CCrmVat
 
 	public static function GetAll()
 	{
-		if (!CModule::IncludeModule('catalog'))
+		if (!Loader::includeModule('catalog'))
 			return false;
 
 		$VATS = isset(self::$VATS) ? self::$VATS : null;
 
-		if(!$VATS)
+		if (!$VATS)
 		{
-			$VATS = array();
-			$dbResultList = CCatalogVat::GetList( array('C_SORT' => 'ASC'));
-
-			while ($arVat = $dbResultList->Fetch())
-				$VATS[$arVat['ID']] = $arVat;
+			$VATS = [];
+			$iterator = Catalog\VatTable::getList([
+				'select' => ['ID', 'ACTIVE', 'SORT', 'NAME', 'RATE'],
+				'order' => ['SORT' => 'ASC']
+			]);
+			while ($row = $iterator->fetch())
+			{
+				$id = (int)$row['ID'];
+				$row['C_SORT'] = $row['SORT']; // compatibility - legacy code
+				$VATS[$id] = $row;
+			}
+			unset($row, $iterator);
 
 			self::$VATS = $VATS;
 		}
@@ -29,7 +37,8 @@ class CCrmVat
 
 	public static function GetByID($vatID)
 	{
-		if(intval($vatID) <= 0)
+		$vatID = (int)$vatID;
+		if ($vatID <= 0)
 			return false;
 
 		$arVats = self::GetAll();
@@ -39,10 +48,13 @@ class CCrmVat
 
 	public static function GetVatRatesListItems()
 	{
-		$listItems = array('' => GetMessage('CRM_VAT_NOT_SELECTED'));
+		$listItems = array('' => Loc::getMessage('CRM_VAT_NOT_SELECTED'));
 		foreach (self::GetAll() as $vatRate)
 		{
-			if ($vatRate['ACTIVE'] !== 'Y') continue;
+			if ($vatRate['ACTIVE'] !== 'Y')
+			{
+				continue;
+			}
 			$listItems[$vatRate['ID']] = $vatRate['NAME'];
 		}
 		unset($vatRate);
@@ -51,9 +63,7 @@ class CCrmVat
 
 	public static function GetFieldCaption($fieldName)
 	{
-		$result = GetMessage("CRM_VAT_FIELD_{$fieldName}");
+		$result = Loc::getMessage("CRM_VAT_FIELD_{$fieldName}");
 		return is_string($result) ? $result : '';
 	}
 }
-
-?>

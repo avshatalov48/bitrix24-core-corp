@@ -1633,6 +1633,10 @@ BX.namespace('BX.Crm.Activity');
 				callback : {
 					select : function(item, type, search, bUndeleted)
 					{
+						if (BX.type.isString(item.name))
+						{
+							item.name = BX.util.htmlspecialcharsback(item.name);
+						}
 						me.addItem(item, type);
 						if (me.selectOne)
 							BX.SocNetLogDestination.closeDialog();
@@ -2437,34 +2441,6 @@ BX.namespace('BX.Crm.Activity');
 			_prepareSliderContent: function(slider)
 			{
 				var me = this;
-
-				if (me.getType() == BX.CrmActivityType.email && !me._settings['completed'])
-				{
-					var fieldCompleted = this._getNode('field-completed');
-					var sliderCloseHandler = function(event)
-					{
-						top.BX.removeCustomEvent(slider, 'SidePanel.Slider:onClose', sliderCloseHandler);
-						top.BX.removeCustomEvent(slider, 'SidePanel.Slider:onDestroy', sliderCloseHandler);
-
-						if (me._settings['completed'])
-							return;
-
-						fieldCompleted.disabled = true;
-						me._editor.setActivityCompleted(
-							me.getId(),
-							true,
-							function (result)
-							{
-								me._settings['completed'] = !!result['COMPLETED'];
-								fieldCompleted.checked = !!result['COMPLETED'];
-								fieldCompleted.disabled = false;
-							}
-						);
-					};
-
-					top.BX.addCustomEvent(slider, 'SidePanel.Slider:onClose', sliderCloseHandler);
-					top.BX.addCustomEvent(slider, 'SidePanel.Slider:onDestroy', sliderCloseHandler);
-				}
 
 				var additionalSwitcher = this._getNode('additional-switcher');
 				var additionalFields = this._getNode('additional-fields');

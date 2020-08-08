@@ -44,8 +44,8 @@ $menu[] = array(
 $menu[] = array("SEPARATOR"=>"Y");
 
 $menu[] = array(
-	"TEXT"=>((strlen($arParams["BIZPROC_EDIT_MENU_LIST_MESSAGE"]) > 0) ? htmlspecialcharsbx($arParams["BIZPROC_EDIT_MENU_LIST_MESSAGE"]) : Loc::getMessage("BIZPROC_WFEDIT_MENU_LIST")),
-	"TITLE"=>((strlen($arParams["BIZPROC_EDIT_MENU_LIST_TITLE_MESSAGE"]) > 0) ? htmlspecialcharsbx($arParams["BIZPROC_EDIT_MENU_LIST_TITLE_MESSAGE"]) : GetMessage("BIZPROC_WFEDIT_MENU_LIST_TITLE")),
+	"TEXT"=>(($arParams["BIZPROC_EDIT_MENU_LIST_MESSAGE"] <> '') ? htmlspecialcharsbx($arParams["BIZPROC_EDIT_MENU_LIST_MESSAGE"]) : Loc::getMessage("BIZPROC_WFEDIT_MENU_LIST")),
+	"TITLE"=>(($arParams["BIZPROC_EDIT_MENU_LIST_TITLE_MESSAGE"] <> '') ? htmlspecialcharsbx($arParams["BIZPROC_EDIT_MENU_LIST_TITLE_MESSAGE"]) : GetMessage("BIZPROC_WFEDIT_MENU_LIST_TITLE")),
 	"LINK"=>$arResult['LIST_PAGE_URL'],
 	"ICON"=>"btn_list",
 );
@@ -57,13 +57,13 @@ if (!array_key_exists("SKIP_BP_TYPE_SELECT", $arParams) || $arParams["SKIP_BP_TY
 	$subMenu[] = array(
 		"TEXT"	=> Loc::getMessage("BIZPROC_WFEDIT_MENU_ADD_STATE"),
 		"TITLE"	=> Loc::getMessage("BIZPROC_WFEDIT_MENU_ADD_STATE_TITLE"),
-		"ONCLICK"=> "if(confirm('".Loc::getMessage("BIZPROC_WFEDIT_MENU_ADD_WARN")."'))window.location='".str_replace("#ID#", "0", $arResult["EDIT_PAGE_TEMPLATE"]).(strpos($arResult["EDIT_PAGE_TEMPLATE"], "?")?"&":"?")."init=statemachine';"
+		"ONCLICK"=> "if(confirm('".Loc::getMessage("BIZPROC_WFEDIT_MENU_ADD_WARN")."'))window.location='".str_replace("#ID#", "0", $arResult["EDIT_PAGE_TEMPLATE"]).(mb_strpos($arResult["EDIT_PAGE_TEMPLATE"], "?")? "&" : "?")."init=statemachine';"
 	);
 
 	$subMenu[] = array(
 		"TEXT"	=> Loc::getMessage("BIZPROC_WFEDIT_MENU_ADD_SEQ"),
 		"TITLE"	=> Loc::getMessage("BIZPROC_WFEDIT_MENU_ADD_SEQ_TITLE"),
-		"ONCLICK" => "if(confirm('".Loc::getMessage("BIZPROC_WFEDIT_MENU_ADD_WARN")."'))window.location='".str_replace("#ID#", "0", $arResult["EDIT_PAGE_TEMPLATE"]).(strpos($arResult["EDIT_PAGE_TEMPLATE"], "?")?"&":"?")."';"
+		"ONCLICK" => "if(confirm('".Loc::getMessage("BIZPROC_WFEDIT_MENU_ADD_WARN")."'))window.location='".str_replace("#ID#", "0", $arResult["EDIT_PAGE_TEMPLATE"]).(mb_strpos($arResult["EDIT_PAGE_TEMPLATE"], "?")? "&" : "?")."';"
 	);
 
 	$menu[] = array(
@@ -104,7 +104,7 @@ function BCPProcessExport()
 		return false;
 	}
 	<?$v = str_replace("&amp;", "&", str_replace("#ID#", $ID, $arResult["EDIT_PAGE_TEMPLATE"]));?>
-	window.open('<?=CUtil::JSEscape($v)?><?if(strpos($v, "?")):?>&<?else:?>?<?endif?>action=exportTemplate&<?=bitrix_sessid_get()?>');
+	window.open('<?=CUtil::JSEscape($v)?><?if(mb_strpos($v, "?")):?>&<?else:?>?<?endif?>action=exportTemplate&<?=bitrix_sessid_get()?>');
 }
 
 function BCPProcessImport()
@@ -156,7 +156,7 @@ function BCPSaveUserParams()
 	var data = JSToPHP(arUserParams, 'USER_PARAMS');
 
 	jsExtLoader.onajaxfinish = BCPSaveTemplateComplete;
-	jsExtLoader.startPost('<?= CUtil::JSEscape($v) ?><?if(strpos($v, "?")):?>&<?else:?>?<?endif?><?=bitrix_sessid_get()?>&action=saveAjax&saveuserparams=Y', data);
+	jsExtLoader.startPost('<?= CUtil::JSEscape($v) ?><?if(mb_strpos($v, "?")):?>&<?else:?>?<?endif?><?=bitrix_sessid_get()?>&action=saveAjax&saveuserparams=Y', data);
 }
 
 function BCPSaveTemplate(save)
@@ -173,7 +173,7 @@ function BCPSaveTemplate(save)
 
 	jsExtLoader.onajaxfinish = BCPSaveTemplateComplete;
 	// TODO: add sessid
-	jsExtLoader.startPost('<?=CUtil::JSEscape($v)?><?if(strpos($v, "?")):?>&<?else:?>?<?endif?><?=bitrix_sessid_get()?>&action=saveAjax'+
+	jsExtLoader.startPost('<?=CUtil::JSEscape($v)?><?if(mb_strpos($v, "?")):?>&<?else:?>?<?endif?><?=bitrix_sessid_get()?>&action=saveAjax'+
 		(save ? '': '&apply=Y'),
 		data);
 }
@@ -274,7 +274,7 @@ function GetJSLangMess($f, $actId)
 
 foreach($arResult['ACTIVITIES'] as $actId => $actProps)
 {
-	$actPath = substr($actProps["PATH_TO_ACTIVITY"], strlen($_SERVER["DOCUMENT_ROOT"]));
+	$actPath = mb_substr($actProps["PATH_TO_ACTIVITY"], mb_strlen($_SERVER["DOCUMENT_ROOT"]));
 	if(file_exists($actProps["PATH_TO_ACTIVITY"]."/".$actId.".js"))
 	{
 		echo '<script src="'.$actPath.'/'.$actId.'.js"></script>';

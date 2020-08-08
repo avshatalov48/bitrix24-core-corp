@@ -8,8 +8,8 @@ if (!function_exists("__blogUFfileEditMobile"))
 	{
 		$result = false;
 		if (
-			strpos($arParams['arUserField']['FIELD_NAME'], 'UF_BLOG_POST_DOC') === 0 
-			|| strpos($arParams['arUserField']['FIELD_NAME'], 'UF_BLOG_COMMENT_DOC') === 0
+			mb_strpos($arParams['arUserField']['FIELD_NAME'], 'UF_BLOG_POST_DOC') === 0
+			|| mb_strpos($arParams['arUserField']['FIELD_NAME'], 'UF_BLOG_COMMENT_DOC') === 0
 		)
 		{
 			$componentParams = array(
@@ -177,11 +177,11 @@ if (!empty($arParams["POST_PROPERTY"]))
 				continue;
 			}
 
-			$arPostField["EDIT_FORM_LABEL"] = strLen($arPostField["EDIT_FORM_LABEL"]) > 0 ? $arPostField["EDIT_FORM_LABEL"] : $arPostField["FIELD_NAME"];
+			$arPostField["EDIT_FORM_LABEL"] = $arPostField["EDIT_FORM_LABEL"] <> '' ? $arPostField["EDIT_FORM_LABEL"] : $arPostField["FIELD_NAME"];
 			$arPostField["EDIT_FORM_LABEL"] = htmlspecialcharsEx($arPostField["EDIT_FORM_LABEL"]);
 			$arPostField["~EDIT_FORM_LABEL"] = $arPostField["EDIT_FORM_LABEL"];
 			if (
-				strlen($arResult["ERROR_MESSAGE"]) > 0 
+				$arResult["ERROR_MESSAGE"] <> '' 
 				&& !empty($_POST[$FIELD_NAME])
 			)
 			{

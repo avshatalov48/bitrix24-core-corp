@@ -109,12 +109,12 @@ $containerId = 'crm-tracking-order';
 				<div class="ui-alert ui-alert-primary ui-alert-xs" style="font-size: 11px;">
 					<span class="ui-alert-message">
 						<?
-						$textId = strtoupper(str_replace(
+						$textId = mb_strtoupper(str_replace(
 							' ',
 							'_',
 							Loc::getMessage('CRM_TRACKING_ORDER_STEP_INSTALL_CODE_EXAMPLE_ID')
 						));
-						$textSum = strtoupper(str_replace(
+						$textSum = mb_strtoupper(str_replace(
 							' ',
 							'_',
 							Loc::getMessage('CRM_TRACKING_ORDER_STEP_INSTALL_CODE_EXAMPLE_SUM')

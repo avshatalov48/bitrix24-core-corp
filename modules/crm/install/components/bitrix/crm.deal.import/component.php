@@ -171,7 +171,7 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 		{
 			if (isset($_SESSION['CRM_IMPORT_FILE_FIELD_'.$key]) && !empty($_SESSION['CRM_IMPORT_FILE_FIELD_'.$key]))
 			{
-				$currentKey = strtoupper($_SESSION['CRM_IMPORT_FILE_FIELD_'.$key]);
+				$currentKey = mb_strtoupper($_SESSION['CRM_IMPORT_FILE_FIELD_'.$key]);
 				$data = trim(htmlspecialcharsback($data));
 
 				if ($currentKey === 'ID')
@@ -180,7 +180,7 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 					continue;
 				}
 
-				if (strpos($currentKey, '~') === 0 || empty($data))
+				if (mb_strpos($currentKey, '~') === 0 || empty($data))
 				{
 					continue;
 				}
@@ -607,7 +607,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 				foreach($arResult['HEADERS'] as $arField):
 					//echo '"'.$arField['name'].'";';
 					$arFields[$arField['id']] = $arField['name'];
-					$arFieldsUpper[$arField['id']] = strtoupper($arField['name']);
+					$arFieldsUpper[$arField['id']] = mb_strtoupper($arField['name']);
 					if ($arField['mandatory'] == 'Y')
 						$arRequireFields[$arField['id']] = $arField['name'];
 				endforeach;
@@ -635,7 +635,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 						$fileEncoding = $_POST['hidden_file_import_encoding'];
 					}
 
-					if($fileEncoding !== '' && $fileEncoding !== '_' && $fileEncoding !== strtolower(SITE_CHARSET))
+					if($fileEncoding !== '' && $fileEncoding !== '_' && $fileEncoding !== mb_strtolower(SITE_CHARSET))
 					{
 						$convertCharsetErrorMsg = '';
 						$fileHandle = fopen($_SESSION['CRM_IMPORT_FILE'], 'rb');
@@ -644,9 +644,9 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 						fclose($fileHandle);
 
 						//HACK: Remove UTF-8 BOM
-						if($fileEncoding === 'utf-8' && substr($fileContents, 0, 3) === "\xEF\xBB\xBF")
+						if($fileEncoding === 'utf-8' && mb_substr($fileContents, 0, 3) === "\xEF\xBB\xBF")
 						{
-							$fileContents = substr($fileContents, 3);
+							$fileContents = mb_substr($fileContents, 3);
 						}
 
 						$fileContents = CharsetConverter::ConvertCharset($fileContents, $fileEncoding, SITE_CHARSET, $convertCharsetErrorMsg);
@@ -740,7 +740,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 						'name' => $value,
 						'items' => $arFields,
 						'type' => 'list',
-						'value' => isset($arFields[strtoupper($value)])? strtoupper($value): array_search(strtoupper($value), $arFieldsUpper),
+						'value' => isset($arFields[mb_strtoupper($value)])? mb_strtoupper($value) : array_search(mb_strtoupper($value), $arFieldsUpper),
 					);
 				}
 				$arResult['FIELDS']['tab_2'][] = array(
@@ -798,7 +798,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 
 			$arConfig = Array();
 			foreach ($_POST as $key => $value)
-				if(strpos($key, 'IMPORT_FILE_FIELD_') !== false)
+				if(mb_strpos($key, 'IMPORT_FILE_FIELD_') !== false)
 					$_SESSION['CRM_'.$key] = $value;
 
 			ob_start();
@@ -841,7 +841,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 		{
 			@unlink($_SESSION['CRM_IMPORT_FILE']);
 			foreach ($_SESSION as $key => $value)
-				if(strpos($key, 'CRM_IMPORT_FILE') !== false)
+				if(mb_strpos($key, 'CRM_IMPORT_FILE') !== false)
 					unset($_SESSION[$key]);
 
 			$categoryID = isset($_POST['category_id']) ? (int)$_POST['category_id'] : -1;
@@ -866,7 +866,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 	{
 		@unlink($_SESSION['CRM_IMPORT_FILE']);
 		foreach ($_SESSION as $key => $value)
-			if(strpos($key, 'CRM_IMPORT_FILE') !== false)
+			if(mb_strpos($key, 'CRM_IMPORT_FILE') !== false)
 				unset($_SESSION[$key]);
 
 		$arResult['STEP'] = 1;
@@ -875,7 +875,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 	{
 		@unlink($_SESSION['CRM_IMPORT_FILE']);
 		foreach ($_SESSION as $key => $value)
-			if(strpos($key, 'CRM_IMPORT_FILE') !== false)
+			if(mb_strpos($key, 'CRM_IMPORT_FILE') !== false)
 				unset($_SESSION[$key]);
 
 		$categoryID = isset($_POST['category_id']) ? (int)$_POST['category_id'] : -1;
@@ -931,7 +931,7 @@ $encodings = array(
 	'koi8-r' => 'KOI8-R'
 );
 
-$siteEncoding = strtolower(SITE_CHARSET);
+$siteEncoding = mb_strtolower(SITE_CHARSET);
 $arResult['ENCODING_SELECTOR_ID'] = 'import_file_encoding';
 $arResult['HIDDEN_FILE_IMPORT_ENCODING'] = 'hidden_file_import_encoding';
 

@@ -141,7 +141,7 @@ class CCrmSonetRelation extends CAllCrmSonetRelation
 		foreach($items as &$item)
 		{
 			$data = $DB->PrepareInsert(self::TABLE_NAME, $item);
-			if(strlen($bulkColumns) == 0)
+			if($bulkColumns == '')
 			{
 				$bulkColumns = $data[0];
 			}
@@ -167,7 +167,7 @@ class CCrmSonetRelation extends CAllCrmSonetRelation
 			$query .= "($value)";
 		}
 
-		if(strlen($query) == 0)
+		if($query == '')
 		{
 			return;
 		}

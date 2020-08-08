@@ -99,6 +99,7 @@ class Session
 				'SYSTEM' => 'Y',
 				'FROM_USER_ID' => 0,
 				'TO_CHAT_ID' => $chatId,
+				'URL_PREVIEW' => 'N',
 				'MESSAGE' => Loc::getMessage('IMOL_MESSAGE_SESSION_REPLY_TIME_LIMIT_'.$blockReason, [
 					'#A_START#' => '[URL=' . \Bitrix\UI\Util::getArticleUrlByCode('10632966') . ']',
 					'#A_END#' => '[/URL]',

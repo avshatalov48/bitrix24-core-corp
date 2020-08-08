@@ -45,6 +45,15 @@ $APPLICATION->restartBuffer();
 						<div class="crm-activity-planner-slider-header-control-text"><?=getMessage('CRM_ACTIVITY_PLANNER_MORE_SLIDER') ?></div>
 						<div class="crm-activity-planner-slider-header-control-triangle"></div>
 					</div>
+					<? if (\CCrmActivityType::Email == $activity['TYPE_ID'] && $activity['UF_MAIL_MESSAGE'] > 0): ?>
+						<? $APPLICATION->includeComponent(
+							'bitrix:mail.message.actions',
+							'',
+							array(
+								'MESSAGE_ID' => $activity['UF_MAIL_MESSAGE'],
+							)
+						); ?>
+					<? endif ?>
 				</div>
 			</div><!--crm-task-list-header-->
 			<div class="crm-task-list-inner" data-role="additional-fields" style="display: none; ">
@@ -133,7 +142,7 @@ $APPLICATION->restartBuffer();
 									{
 										continue;
 									}
-									$entityType = 'CRM_'.strtoupper(CCrmOwnerType::ResolveName($communication['ENTITY_TYPE_ID']));
+									$entityType = 'CRM_'.mb_strtoupper(CCrmOwnerType::ResolveName($communication['ENTITY_TYPE_ID']));
 									$entityID = $communication['ENTITY_ID'];
 									?>
 									<div class="crm-task-list-person-info-phone-block">

@@ -1,6 +1,7 @@
 <?php
 
 use \Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Access\ActionDictionary;
 
 define('STOP_STATISTICS',    true);
 define('NO_AGENT_CHECK',     true);
@@ -10,7 +11,7 @@ define('PUBLIC_AJAX_MODE', true);
 
 $SITE_ID = '';
 if (isset($_GET["SITE_ID"]) && is_string($_GET['SITE_ID']))
-	$SITE_ID = substr(preg_replace("/[^a-z0-9_]/i", "", $_GET["SITE_ID"]), 0, 2);
+	$SITE_ID = mb_substr(preg_replace("/[^a-z0-9_]/i", "", $_GET["SITE_ID"]), 0, 2);
 
 if ($SITE_ID != '')
 	define("SITE_ID", $SITE_ID);
@@ -48,7 +49,7 @@ if (isset($_POST['batchId']))
 if ( ! is_array($batch) )
 {
 	CTaskAssert::log(
-		'Batch not given. File: ' . __FILE__, 
+		'Batch not given. File: ' . __FILE__,
 		CTaskAssert::ELL_ERROR
 	);
 	exit();
@@ -76,12 +77,12 @@ function BXTasksIsDynaParamValue($request)
 	if ( ! is_string($request) )
 		return (false);
 
-	return(substr($request, 0, 4) === '#RC#');
+	return(mb_substr($request, 0, 4) === '#RC#');
 }
 
 
 /**
- * 
+ *
  * @param array $arData with element "arDataName"
  * @param string $strRequest, for example: #RC#arDataName#-2#field1#field2#...#fieldN
  */
@@ -89,13 +90,13 @@ function BXTasksParseAndGetDynaParamValue($arData, $strRequest)
 {
 	CTaskAssert::assert(
 		is_array($arData)
-		&& is_string($strRequest) 
-		&& (substr($strRequest, 0, 4) === '#RC#')
+		&& is_string($strRequest)
+		&& (mb_substr($strRequest, 0, 4) === '#RC#')
 	);
 
 	$dataCount = count($arData);
 
-	$strToParse   = substr($strRequest, 4);
+	$strToParse = mb_substr($strRequest, 4);
 	$arrayToParse = explode('#', $strToParse);
 
 	CTaskAssert::assert(
@@ -160,7 +161,7 @@ try
 				// Don't allow fields started not from the letter, because they will not be filtered during DB query
 				$testForLetters = '';
 				foreach (array_keys($arAction['taskData']) as $fieldName)
-					$testForLetters .= substr($fieldName, 0, 1);
+					$testForLetters .= mb_substr($fieldName, 0, 1);
 
 				CTaskAssert::assert((bool)preg_match('/^[A-Za-z]*$/', $testForLetters));
 
@@ -181,7 +182,7 @@ try
 				$arErrors = array();
 				$justCreatedTaskId = false;
 				try
-				{		
+				{
 					$oTask = CTaskItem::add($arAction['taskData'], $loggedInUserId);
 					$justCreatedTaskId = $oTask->getId();
 				}
@@ -231,7 +232,7 @@ try
 				// Don't allow fields started not from the letter, because they will not be filtered during DB query
 				$testForLetters = '';
 				foreach (array_keys($arAction['taskData']) as $fieldName)
-					$testForLetters .= substr($fieldName, 0, 1);
+					$testForLetters .= mb_substr($fieldName, 0, 1);
 
 				CTaskAssert::assert((bool)preg_match('/^[A-Za-z]*$/', $testForLetters));
 
@@ -307,14 +308,14 @@ try
 
 					case 'CTaskItem::startExecutionOrRenewAndStart':
 						if (
-							( ! $oTask->isActionAllowed(CTaskItem::ACTION_START) )
-							&& $oTask->isActionAllowed(CTaskItem::ACTION_RENEW)
+							( ! $oTask->checkAccess(ActionDictionary::ACTION_TASK_START) )
+							&& $oTask->checkAccess(ActionDictionary::ACTION_TASK_RENEW)
 						)
 						{
 							$returnValue = $oTask->renew();
 						}
 
-						if ($oTask->isActionAllowed(CTaskItem::ACTION_START))
+						if ($oTask->checkAccess(ActionDictionary::ACTION_TASK_START))
 							$returnValue = $oTask->startExecution();
 					break;
 
@@ -363,8 +364,8 @@ try
 				}
 
 				$rsUser = CUser::GetList(
-					$by = 'ID', $order = 'ASC', 
-					array('ID' => $userId), 
+					$by = 'ID', $order = 'ASC',
+					array('ID' => $userId),
 					array('FIELDS' => array('NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN'))
 				);
 
@@ -373,7 +374,7 @@ try
 				if ($arUser = $rsUser->Fetch())
 				{
 					$returnValue = CUser::FormatName(
-						$nt, 
+						$nt,
 						array(
 							'NAME'        => $arUser['NAME'],
 							'LAST_NAME'   => $arUser['LAST_NAME'],
@@ -847,7 +848,7 @@ try
 				if ( ! empty($arUsers) )
 				{
 					$rsUser = CUser::GetList(
-						$by = 'ID', $order = 'ASC', 
+						$by = 'ID', $order = 'ASC',
 						array('ID' => implode("|", array_keys($arUsers))),
 						array('FIELDS' => array('ID', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN'))
 					);
@@ -855,7 +856,7 @@ try
 					while ($arUser = $rsUser->fetch())
 					{
 						$arUsers[$arUser['ID']]['NAME_FORMATTED'] = CUser::FormatName(
-							$nameTemplate, 
+							$nameTemplate,
 							array(
 								'NAME'        => $arUser['NAME'],
 								'LAST_NAME'   => $arUser['LAST_NAME'],
@@ -902,7 +903,7 @@ try
 
 			default:
 				throw new Exception(
-					'Unknown operation requested. File: ' . __FILE__ 
+					'Unknown operation requested. File: ' . __FILE__
 						. '; action: ' . $arAction['operation']
 				);
 			break;
@@ -924,10 +925,10 @@ try
 catch (Exception $e)
 {
 	CTaskAssert::log(
-		'Exception. Current file: ' . __FILE__ 
+		'Exception. Current file: ' . __FILE__
 			. '; exception file: ' . $e->GetFile()
 			. '; line: ' . $e->GetLine()
-			. '; message: ' . $e->GetMessage(), 
+			. '; message: ' . $e->GetMessage(),
 		CTaskAssert::ELL_ERROR
 	);
 

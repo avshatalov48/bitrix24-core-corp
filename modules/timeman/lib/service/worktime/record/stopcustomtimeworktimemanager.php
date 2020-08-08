@@ -7,6 +7,7 @@ use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
 use Bitrix\Timeman\Model\Worktime\Report\WorktimeReport;
 use Bitrix\Timeman\Service\Worktime\Result\WorktimeServiceResult;
 use Bitrix\Timeman\Service\Worktime\Violation\WorktimeViolation;
+use Bitrix\Timeman\Service\Worktime\WorktimeLiveFeedManager;
 
 class StopCustomTimeWorktimeManager extends StopWorktimeManager
 {
@@ -28,20 +29,28 @@ class StopCustomTimeWorktimeManager extends StopWorktimeManager
 		{
 			return $baseResult;
 		}
-		if (!Schedule::isScheduleFlexible($this->getSchedule()) && $this->isEmptyEventReason())
+		if (!Schedule::isScheduleFlextime($this->getSchedule()) && $this->isEmptyEventReason())
 		{
 			return (new WorktimeServiceResult())
 				->addReasonNeededError();
 		}
-		$this->wasRecordExpired = $this->getRecord()->isExpired($this->getSchedule(), $this->getShift());
+		$this->wasRecordExpired = $this->isExpired();
 		return new WorktimeServiceResult();
+	}
+
+	public function onBeforeRecordSave(WorktimeRecord $record, WorktimeLiveFeedManager $liveFeedManager)
+	{
+		if (!$record->isApproved())
+		{
+			$liveFeedManager->continueWorkdayPostTrackingForApprover($record->getId(), $record->remindActualApprovedBy());
+		}
 	}
 
 	/**
 	 * @param WorktimeRecord $record
 	 * @param $schedule
 	 */
-	public function notifyOfAction($record, $schedule)
+	public function notifyOfActionOldStyle($record, $schedule)
 	{
 		if (!$record->isApproved())
 		{
@@ -60,14 +69,14 @@ class StopCustomTimeWorktimeManager extends StopWorktimeManager
 		}
 	}
 
-	public function buildRecordViolations($record, $schedule, $violationRulesList = [])
+	public function buildRecordViolations($record, $schedule)
 	{
 		return $this->buildWorktimeViolations($record, $schedule, [
 			WorktimeViolation::TYPE_EARLY_ENDING,
 			WorktimeViolation::TYPE_LATE_ENDING,
 			WorktimeViolation::TYPE_MIN_DAY_DURATION,
 			WorktimeViolation::TYPE_EDITED_ENDING,
-		], $violationRulesList);
+		]);
 	}
 
 	/**
@@ -75,7 +84,7 @@ class StopCustomTimeWorktimeManager extends StopWorktimeManager
 	 */
 	protected function setApproved($record)
 	{
-		if (!$this->getSchedule() || $this->getSchedule()->isFlexible())
+		if (!$this->getSchedule() || $this->getSchedule()->isFlextime())
 		{
 			return;
 		}
@@ -129,7 +138,7 @@ class StopCustomTimeWorktimeManager extends StopWorktimeManager
 		return parent::getRecordedStopTimestamp($record);
 	}
 
-	protected function checkIntersectingRecords()
+	protected function checkOverlappingRecords()
 	{
 		return true;
 	}
@@ -140,21 +149,10 @@ class StopCustomTimeWorktimeManager extends StopWorktimeManager
 	 */
 	private function buildEditedViolations($record)
 	{
-		if (!$this->getSchedule())
-		{
-			return [];
-		}
-		$rules = [$this->getSchedule()->getScheduleViolationRules()];
-		if ($this->getPersonalViolationRules())
-		{
-			$rules[] = $this->getPersonalViolationRules();
-		}
-
 		return $this->buildWorktimeViolations(
 			$record,
 			$this->getSchedule(),
-			[WorktimeViolation::TYPE_EDITED_ENDING,],
-			$rules
+			[WorktimeViolation::TYPE_EDITED_ENDING,]
 		);
 	}
 }

@@ -55,7 +55,6 @@ $MESS["CRM_FIELD_LEAD_DEFAULT_LIST_VIEW"] = "Вид списка (по умол�
 $MESS["CRM_SECTION_INVOICE_CONFIG"] = "Настройка счетов";
 $MESS["CRM_FIELD_INVOICE_DEFAULT_LIST_VIEW"] = "Вид списка (по умолчанию)";
 $MESS["CRM_FIELD_EXPORT_PRODUCT_ROWS"] = "Экспортировать с детализацией по товарным позициям";
-$MESS["CRM_FIELD_CREATE_DEAL_ON_ORDER"] = "Создавать новую сделку при создании заказа";
 $MESS["CRM_FIELD_ENABLE_LEAD_DELETION_EVENT"] = "Регистрировать события удаления лидов";
 $MESS["CRM_FIELD_ENABLE_DEAL_DELETION_EVENT"] = "Регистрировать события удаления сделок";
 $MESS["CRM_FIELD_ENABLE_CONTACT_DELETION_EVENT"] = "Регистрировать события удаления контактов";
@@ -75,4 +74,5 @@ $MESS["CRM_FIELD_ENABLE_LEAD_RECYCLE_BIN"] = "Включить корзину д
 $MESS["CRM_FIELD_ENABLE_CONTACT_RECYCLE_BIN"] = "Включить корзину для контактов";
 $MESS["CRM_FIELD_ENABLE_COMPANY_RECYCLE_BIN"] = "Включить корзину для компаний";
 $MESS["CRM_FIELD_ENABLE_DEAL_RECYCLE_BIN"] = "Включить корзину для сделок";
+$MESS["CRM_FIELD_ENTITY_ADDRESS_FORMAT_LINK"] = "Изменить формат адреса можно в настройках портала";
 ?>

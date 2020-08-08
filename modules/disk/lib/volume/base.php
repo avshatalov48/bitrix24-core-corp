@@ -500,7 +500,7 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 				),
 			);
 
-			$row = VolumeTable::getList($parameter)->fetchRaw();
+			$row = VolumeTable::getList($parameter)->fetch();
 
 			foreach ($row as $key => $value)
 			{
@@ -1268,7 +1268,7 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 			throw new Main\ArgumentNullException('Wrong parameter indicatorTypeId');
 		}
 
-		if (strpos($indicatorTypeId, __NAMESPACE__) !== false)
+		if (mb_strpos($indicatorTypeId, __NAMESPACE__) !== false)
 		{
 			$className = $indicatorTypeId;
 		}

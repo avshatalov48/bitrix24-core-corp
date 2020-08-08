@@ -74,4 +74,5 @@ $arResult['TEMPLATE_DATA'] = array(
 $arResult['JS_DATA'] = array(
 	'state' => $layout,
 	'structure' => $helper->signStructure($stateStructure),
+	'taskLimitExceeded' => $arResult['TASK_LIMIT_EXCEEDED'],
 );

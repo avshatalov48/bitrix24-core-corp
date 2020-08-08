@@ -9,6 +9,7 @@
 namespace Bitrix\Crm\SiteButton;
 
 use Bitrix\Rest\RestException;
+use Bitrix\Crm\UI\Webpack;
 
 /**
  * Class Rest
@@ -16,16 +17,18 @@ use Bitrix\Rest\RestException;
  */
 class Rest
 {
-	public static function onRestServiceBuildDescription()
+	public static function onRestServiceBuildDescription(): array
 	{
-		return array(
-			'crm' => array(
-				'crm.button.list' => array(__CLASS__, 'getButtonList'),
-				'crm.button.guest.register' => array(__CLASS__, 'registerGuest'),
-			)
-		);
+		return [
+			'crm' => [
+				'crm.button.list' => [__CLASS__, 'getButtonList'],
+				'crm.button.widgets.get' => [__CLASS__, 'getButtonWidgets'],
+				'crm.button.guest.register' => [__CLASS__, 'registerGuest'],
+			],
+		];
 	}
 
+	/** @noinspection PhpUnused */
 	public static function registerGuest($params)
 	{
 		if(!Manager::checkWritePermission())
@@ -62,7 +65,7 @@ class Rest
 
 			$data['ENTITIES'][] = array(
 				'ENTITY_TYPE_ID' => $entity['ENTITY_TYPE_ID'],
-				'ENTITY_ID' => $entity['ENTITY_ID']
+				'ENTITY_ID' => $entity['ENTITY_ID'],
 			);
 			$isWrongFormatEntity = false;
 		}
@@ -75,7 +78,8 @@ class Rest
 		return Guest::register($data);
 	}
 
-	public static function getButtonList()
+	/** @noinspection PhpUnused */
+	public static function getButtonList(): array
 	{
 		if (Preset::checkVersion())
 		{
@@ -98,4 +102,32 @@ class Rest
 		return $result;
 	}
 
+	/** @noinspection PhpUnused */
+	public static function getButtonWidgets($params): ?array
+	{
+		if (!isset($params['ID']))
+		{
+			throw new RestException('Wrong format of parameter ID.');
+		}
+
+		$button = Webpack\Button::instance($params['ID']);
+		$button->configure();
+		$widgets = $button->getWidgets();
+
+		$resources = [];
+		foreach ($button->getWidgetResources() as $resource)
+		{
+			$resources[] = [
+				'path' => $resource->getPath(),
+				'type' => $resource->getType(),
+			];
+		}
+
+		return (!empty($widgets) && !empty($resources)) ?
+			[
+				'widgets' => $widgets,
+				'resources' => $resources,
+			]
+			: null;
+	}
 }

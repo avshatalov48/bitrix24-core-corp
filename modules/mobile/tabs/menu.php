@@ -21,7 +21,7 @@ class Menu implements Tabable
 			"imageName" => "menu_2",
 			"badgeCode" => "more",
 			"component" => [
-				"settings" => ["useSearch" => true],
+				"settings" => ["useSearch" => true, "useLargeTitleMode" => true],
 				"name" => "JSMenuComponent",
 				"title" => GetMessage("MD_COMPONENT_MORE"),
 				"componentCode" => "settings",
@@ -70,6 +70,16 @@ class Menu implements Tabable
 	public function setContext($context)
 	{
 		$this->context = $context;
+	}
+
+	public function getShortTitle()
+	{
+		return Loc::getMessage("TAB_NAME_MORE_SHORT");
+	}
+
+	public function getId()
+	{
+		return "more";
 	}
 }
 

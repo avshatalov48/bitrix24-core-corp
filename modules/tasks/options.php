@@ -45,9 +45,9 @@ $aTabs = array(
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
-if($REQUEST_METHOD=="POST" && strlen($Update.$Apply.$RestoreDefaults)>0 && check_bitrix_sessid())
+if($REQUEST_METHOD=="POST" && $Update.$Apply.$RestoreDefaults <> '' && check_bitrix_sessid())
 {
-	if(strlen($RestoreDefaults)>0)
+	if($RestoreDefaults <> '')
 	{
 		COption::RemoveOption("tasks");
 	}
@@ -67,7 +67,7 @@ if($REQUEST_METHOD=="POST" && strlen($Update.$Apply.$RestoreDefaults)>0 && check
 			}
 		}
 
-		if(strlen($Update)>0 && strlen($_REQUEST["back_url_settings"])>0)
+		if($Update <> '' && $_REQUEST["back_url_settings"] <> '')
 		{
 			LocalRedirect($_REQUEST["back_url_settings"]);
 		}
@@ -131,7 +131,7 @@ foreach ($arSites as $site)
 	{
 ?>
 		<tr>
-			<td align="right"><?php echo GetMessage("TASKS_".strtoupper($key))?>:</td>
+			<td align="right"><?php echo GetMessage("TASKS_".mb_strtoupper($key))?>:</td>
 			<td><input type="text" size="40" value="<?=htmlspecialcharsbx(COption::GetOptionString("tasks", $key, $value, $site["LID"]))?>" name="<?php echo $key?>_<?php echo htmlspecialcharsbx($site["LID"]); ?>"></td>
 		</tr>
 <?php
@@ -147,7 +147,7 @@ $subTabControl->End();
 <?php $tabControl->Buttons();?>
 	<input type="submit" name="Update" value="<?php echo GetMessage("MAIN_SAVE")?>" title="<?php echo GetMessage("MAIN_OPT_SAVE_TITLE")?>" />
 	<input type="submit" name="Apply" value="<?php echo GetMessage("MAIN_APPLY")?>" title="<?php echo GetMessage("MAIN_OPT_APPLY_TITLE")?>">
-	<?php if(strlen($_REQUEST["back_url_settings"])>0):?>
+	<?php if($_REQUEST["back_url_settings"] <> ''):?>
 		<input type="button" name="Cancel" value="<?php echo GetMessage("MAIN_OPT_CANCEL")?>" title="<?php echo GetMessage("MAIN_OPT_CANCEL_TITLE")?>" onclick="window.location='<?php echo htmlspecialcharsbx(CUtil::addslashes($_REQUEST["back_url_settings"]))?>'">
 		<input type="hidden" name="back_url_settings" value="<?=htmlspecialcharsbx($_REQUEST["back_url_settings"])?>">
 	<?php endif?>

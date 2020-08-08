@@ -2,8 +2,8 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\Integration;
+use Bitrix\Tasks\Item\Task\Template;
 use Bitrix\Tasks\Util\Result;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util\UserField;
@@ -13,8 +13,9 @@ Loc::loadMessages(__FILE__);
 $helper = $arResult['HELPER'];
 $arParams =& $helper->getComponent()->arParams;
 
-/** @var \Bitrix\Tasks\Item\Task\Template $template */
+/** @var Template $template */
 $template = $arResult['ITEM'];
+$taskLimitExceeded = $arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'];
 
 $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER_TASKS_TEMPLATES"]);
 ?>
@@ -22,53 +23,58 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 <?if($arParams["ENABLE_MENU_TOOLBAR"]):?>
 
 	<?php
-    if(!$_REQUEST['IFRAME']) {
-        $APPLICATION->IncludeComponent(
-            'bitrix:tasks.interface.topmenu',
-            '',
-            array(
-                'USER_ID' => $arParams['USER_ID'],
+	if(!$_REQUEST['IFRAME']) {
+		$APPLICATION->IncludeComponent(
+			'bitrix:tasks.interface.topmenu',
+			'',
+			array(
+				'USER_ID' => $arParams['USER_ID'],
 
-                'GROUP_ID' => $arParams['GROUP_ID'],
-                'SECTION_URL_PREFIX' => '',
+				'GROUP_ID' => $arParams['GROUP_ID'],
+				'SECTION_URL_PREFIX' => '',
 
-                'PATH_TO_GROUP_TASKS' => $arParams['PATH_TO_GROUP_TASKS'],
-                'PATH_TO_GROUP_TASKS_TASK' => $arParams['PATH_TO_GROUP_TASKS_TASK'],
-                'PATH_TO_GROUP_TASKS_VIEW' => $arParams['PATH_TO_GROUP_TASKS_VIEW'],
-                'PATH_TO_GROUP_TASKS_REPORT' => $arParams['PATH_TO_GROUP_TASKS_REPORT'],
+				'PATH_TO_GROUP_TASKS' => $arParams['PATH_TO_GROUP_TASKS'],
+				'PATH_TO_GROUP_TASKS_TASK' => $arParams['PATH_TO_GROUP_TASKS_TASK'],
+				'PATH_TO_GROUP_TASKS_VIEW' => $arParams['PATH_TO_GROUP_TASKS_VIEW'],
+				'PATH_TO_GROUP_TASKS_REPORT' => $arParams['PATH_TO_GROUP_TASKS_REPORT'],
 
-                'PATH_TO_USER_TASKS' => $arParams['PATH_TO_USER_TASKS'],
-                'PATH_TO_USER_TASKS_TASK' => $arParams['PATH_TO_USER_TASKS_TASK'],
-                'PATH_TO_USER_TASKS_VIEW' => $arParams['PATH_TO_USER_TASKS_VIEW'],
-                'PATH_TO_USER_TASKS_REPORT' => $arParams['PATH_TO_USER_TASKS_REPORT'],
-                'PATH_TO_USER_TASKS_TEMPLATES' => $arParams['PATH_TO_USER_TASKS_TEMPLATES'],
-                'PATH_TO_USER_TASKS_PROJECTS_OVERVIEW' => $arParams['PATH_TO_USER_TASKS_PROJECTS_OVERVIEW'],
+				'PATH_TO_USER_TASKS' => $arParams['PATH_TO_USER_TASKS'],
+				'PATH_TO_USER_TASKS_TASK' => $arParams['PATH_TO_USER_TASKS_TASK'],
+				'PATH_TO_USER_TASKS_VIEW' => $arParams['PATH_TO_USER_TASKS_VIEW'],
+				'PATH_TO_USER_TASKS_REPORT' => $arParams['PATH_TO_USER_TASKS_REPORT'],
+				'PATH_TO_USER_TASKS_TEMPLATES' => $arParams['PATH_TO_USER_TASKS_TEMPLATES'],
+				'PATH_TO_USER_TASKS_PROJECTS_OVERVIEW' => $arParams['PATH_TO_USER_TASKS_PROJECTS_OVERVIEW'],
 
-                'PATH_TO_CONPANY_DEPARTMENT' => $arParams['PATH_TO_CONPANY_DEPARTMENT'],
+				'PATH_TO_CONPANY_DEPARTMENT' => $arParams['PATH_TO_CONPANY_DEPARTMENT'],
 
-                'MARK_TEMPLATES' => 'Y',
-                'MARK_ACTIVE_ROLE' => 'N'
-            ),
-            $component,
-            array('HIDE_ICONS' => true)
-        );
-    }?>
+				'MARK_TEMPLATES' => 'Y',
+				'MARK_ACTIVE_ROLE' => 'N'
+			),
+			$component,
+			array('HIDE_ICONS' => true)
+		);
+	}?>
 
 	<?$this->SetViewTarget("pagetitle", 100);?>
 	<div class="task-list-toolbar">
 		<div class="task-list-toolbar-actions">
-            <?php
+			<?php
 			if (!$_REQUEST['IFRAME'])
-            {
-            	?><a href="<?=htmlspecialcharsbx($toList)?>" class="task-list-back">
-					<?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TO_LIST')?>
+			{
+				?><a href="<?=htmlspecialcharsbx($toList)?>" class="task-list-back">
+				<?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TO_LIST')?>
 				</a><?php
-            }
-            ?>
-			<button class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting webform-cogwheel" id="templateViewPopupMenuOptions"></button>
-			<?if(!$helper->checkHasFatals()):?>
-				<a class="webform-small-button webform-small-button-blue bx24-top-toolbar-add" href="<?=htmlspecialcharsbx($arParams["PATH_TO_TASKS_TEMPLATE_CREATE_SUB"])?>"><span class="webform-small-button-left"></span><span class="webform-small-button-icon"></span><span class="webform-small-button-text"><?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_ADD_SUBTEMPLATE')?></span><span class="webform-small-button-right"></span></a>
-			<?endif?>
+			}
+
+			$buttonIcon = ($taskLimitExceeded ? 'ui-btn-icon-lock' : 'ui-btn-icon-add');
+			$href = ($taskLimitExceeded ? '' : htmlspecialcharsbx($arParams['PATH_TO_TASKS_TEMPLATE_CREATE_SUB']));
+			?>
+			<button class="ui-btn ui-btn-light-border ui-btn-icon-setting" id="templateViewPopupMenuOptions"></button>
+			<?if (!$helper->checkHasFatals() && \Bitrix\Tasks\Access\TemplateAccessController::can(User::getId(), \Bitrix\Tasks\Access\ActionDictionary::ACTION_TEMPLATE_CREATE)):?>
+				<a class="ui-btn ui-btn-primary ui-btn-medium <?=$buttonIcon?>" id="subTemplateAdd" href="<?=$href?>">
+					<?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_ADD_SUBTEMPLATE')?>
+				</a>
+			<?php endif?>
 		</div>
 	</div>
 	<?$this->EndViewTarget();?>
@@ -78,14 +84,20 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 <?$helper->displayFatals();?>
 <?if(!$helper->checkHasFatals()):?>
 
-	<?
+	<?php
 	$diskUfCode = Integration\Disk\UserField::getMainSysUFCode();
 	$templateData = $arResult['TEMPLATE_DATA'];
 	$templateEData = $templateData['TEMPLATE'];
+	$canCreate = \Bitrix\Tasks\Access\TemplateAccessController::can(User::getId(), \Bitrix\Tasks\Access\ActionDictionary::ACTION_TEMPLATE_CREATE);
 	$canUpdate = $template->canUpdate();
 	$canDelete = $template->canDelete();
 	$userFields = $arResult['TEMPLATE_DATA']['USER_FIELDS'];
 	$matchWorkTime = $template['MATCH_WORK_TIME'] == 'Y';
+
+	if ($taskLimitExceeded)
+	{
+		$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
+	}
 	?>
 
 	<div id="<?=$helper->getScopeId()?>" class="task-detail tasks">
@@ -112,12 +124,12 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 				<?
 				$checkListItems = $templateData['SE_CHECKLIST'];
 
-				if (strlen($template["DESCRIPTION"])):
+				if($template["DESCRIPTION"] <> ''):
 					$extraDesc = $canUpdate || !empty($checkListItems)
 						|| (isset($userFields[$diskUfCode]) && !UserField::isValueEmpty($userFields[$diskUfCode]["VALUE"]))
 					?>
-					<div class="task-detail-description<?if (!$extraDesc):?> task-detail-description-only<?endif?>"
-					     id="task-detail-description"><?=$template["DESCRIPTION"]?></div>
+					<div class="task-detail-description<? if(!$extraDesc):?> task-detail-description-only<? endif ?>"
+						 id="task-detail-description"><?= $template["DESCRIPTION"] ?></div>
 				<? endif ?>
 
 				<?if ($canUpdate || !empty($checkListItems)):?>
@@ -178,7 +190,7 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 							<div class="task-detail-supertask"><?
 								?><span class="task-detail-supertask-label"><?=Loc::getMessage($parentItem['ENTITY_TYPE'] == 'T' ? 'TASKS_PARENT_TASK' : 'TASKS_PARENT_TEMPLATE')?>:</span><?
 								?><span class="task-detail-supertask-name"><a href="<?=$parentItem["URL"]?>"
-							                                                  class="task-detail-group-link"><?=htmlspecialcharsbx($parentItem["TITLE"])?></a></span>
+																			  class="task-detail-group-link"><?=htmlspecialcharsbx($parentItem["TITLE"])?></a></span>
 							</div>
 						<? endif ?>
 					</div>
@@ -211,58 +223,66 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 		</div>
 
 		<div class="task-detail-buttons">
+			<?
+			$links = [];
+			$links[] = array(
+				'CODE' => 'CREATE_BY',
+				'GROUP' => 'MORE',
+				'TITLE' => Loc::getMessage('TASKS_TEMPLATE_CREATE_TASK'),
+				'TYPE' => 'link',
+				'URL' => $arParams['PATH_TO_TASKS_TEMPLATE_CREATE_TASK'],
+				'ACTIVE' => $template['TPARAM_TYPE'] != 1,
+				'MENU_CLASS' => 'menu-popup-item-create',
+			);
 
-			<?$APPLICATION->IncludeComponent(
+			$links[] = array(
+				'CODE' => 'CREATE_SUB',
+				'GROUP' => 'MORE',
+				'TITLE' => Loc::getMessage('TASKS_TEMPLATE_CREATE_SUB'),
+				'TYPE' => 'link',
+				'URL' => $arParams['PATH_TO_TASKS_TEMPLATE_CREATE_SUB'],
+				'MENU_CLASS' => 'menu-popup-item-create',
+				'ACTIVE' => $canCreate
+			);
+
+			$links[] = array(
+				'CODE' => 'COPY',
+				'GROUP' => 'MORE',
+				'TITLE' => Loc::getMessage('TASKS_TEMPLATE_COPY'),
+				'TYPE' => 'link',
+				'URL' => $arParams['PATH_TO_TASKS_TEMPLATE_COPY'],
+				'MENU_CLASS' => 'menu-popup-item-copy',
+				'ACTIVE' => $canCreate
+			);
+
+			$links[] = array(
+				'CODE' => 'DELETE',
+				'GROUP' => 'MORE',
+				'TITLE' => Loc::getMessage('TASKS_COMMON_DELETE'),
+				'ACTIVE' => $canDelete,
+				'MENU_CLASS' => 'menu-popup-item-delete',
+			);
+			$links[] = array(
+				'CODE' => 'UPDATE',
+				'ACTIVE' => $canUpdate,
+				'TITLE' => Loc::getMessage('TASKS_COMMON_EDIT'),
+				'TYPE' => 'link',
+				'URL' => $arParams['PATH_TO_TASKS_TEMPLATE_EDIT'],
+				'KEEP_SLIDER'=>true
+			);
+
+			$APPLICATION->IncludeComponent(
 				"bitrix:tasks.widget.buttons",
 				"",
 				array(
 					'TEMPLATE_CONTROLLER_ID' => $helper->getId().'-buttons',
-					'SCHEME' => array(
-						array(
-							'CODE' => 'CREATE_BY',
-							'GROUP' => 'MORE',
-							'TITLE' => Loc::getMessage('TASKS_TEMPLATE_CREATE_TASK'),
-							'TYPE' => 'link',
-							'URL' => $arParams['PATH_TO_TASKS_TEMPLATE_CREATE_TASK'],
-							'ACTIVE' => $template['TPARAM_TYPE'] != 1,
-							'MENU_CLASS' => 'menu-popup-item-create',
-						),
-						array(
-							'CODE' => 'CREATE_SUB',
-							'GROUP' => 'MORE',
-							'TITLE' => Loc::getMessage('TASKS_TEMPLATE_CREATE_SUB'),
-							'TYPE' => 'link',
-							'URL' => $arParams['PATH_TO_TASKS_TEMPLATE_CREATE_SUB'],
-							'MENU_CLASS' => 'menu-popup-item-create',
-						),
-						array(
-							'CODE' => 'COPY',
-							'GROUP' => 'MORE',
-							'TITLE' => Loc::getMessage('TASKS_TEMPLATE_COPY'),
-							'TYPE' => 'link',
-							'URL' => $arParams['PATH_TO_TASKS_TEMPLATE_COPY'],
-							'MENU_CLASS' => 'menu-popup-item-copy',
-						),
-						array(
-							'CODE' => 'DELETE',
-							'GROUP' => 'MORE',
-							'TITLE' => Loc::getMessage('TASKS_COMMON_DELETE'),
-							'ACTIVE' => $canDelete,
-							'MENU_CLASS' => 'menu-popup-item-delete',
-						),
-						array(
-							'CODE' => 'UPDATE',
-							'ACTIVE' => $canUpdate,
-							'TITLE' => Loc::getMessage('TASKS_COMMON_EDIT'),
-							'TYPE' => 'link',
-							'URL' => $arParams['PATH_TO_TASKS_TEMPLATE_EDIT'],
-                            'KEEP_SLIDER'=>true
-						)
-					)
+					'SCHEME' => $links
 				),
 				$helper->getComponent(),
 				array("HIDE_ICONS" => "Y")
-			);?>
+			);
+
+			?>
 
 		</div>
 
@@ -273,26 +293,26 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 						<?=Loc::getMessage("TASKS_TASK_SUBTASKS")?>
 					</div>
 					<?
-						$pathParams = array();
-						if(is_array($arParams))
+					$pathParams = array();
+					if(is_array($arParams))
+					{
+						foreach($arParams as $param => $value)
 						{
-							foreach($arParams as $param => $value)
-							{
-								if(strpos($param, 'PATH_') == 0)
-									$pathParams[$param] = $value;
-							}
+							if(mb_strpos($param, 'PATH_') == 0)
+								$pathParams[$param] = $value;
 						}
+					}
 
-						$APPLICATION->IncludeComponent(
-							'bitrix:tasks.templates.list',
-							'',
-							array_merge($pathParams, array(
-								'HIDE_MENU'        => 'Y',
-								'HIDE_FILTER'      => 'Y',
-								'BASE_TEMPLATE_ID' => $template->getId(),
-								'SET_TITLE'        => 'N',
-							)), null, array("HIDE_ICONS" => "Y")
-						);
+					$APPLICATION->IncludeComponent(
+						'bitrix:tasks.templates.list',
+						'',
+						array_merge($pathParams, array(
+							'HIDE_MENU'        => 'Y',
+							'HIDE_FILTER'      => 'Y',
+							'BASE_TEMPLATE_ID' => $template->getId(),
+							'SET_TITLE'        => 'N',
+						)), null, array("HIDE_ICONS" => "Y")
+					);
 					?>
 				</div>
 			</div>
@@ -386,195 +406,198 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 	$this->SetViewTarget("sidebar", 100);
 	?>
 
-		<div class="task-detail-sidebar">
+	<div class="task-detail-sidebar">
 
-			<div class="task-detail-sidebar-content">
+		<div class="task-detail-sidebar-content">
 
-				<?if($template["DEADLINE_AFTER"]
-					|| $template["START_DATE_PLAN_AFTER"]
-					|| $template["END_DATE_PLAN_AFTER"]
-					|| ($template["ALLOW_TIME_TRACKING"] === "Y" && $template["TIME_ESTIMATE"] > 0)
-				):?>
+			<?if($template["DEADLINE_AFTER"]
+				|| $template["START_DATE_PLAN_AFTER"]
+				|| $template["END_DATE_PLAN_AFTER"]
+				|| ($template["ALLOW_TIME_TRACKING"] === "Y" && $template["TIME_ESTIMATE"] > 0)
+			):?>
 
-					<div class="task-detail-sidebar-status">
-						<span id="task-detail-status-name" class="task-detail-sidebar-status-text"><?=Loc::getMessage('TASKS_TTDP_DATES');?></span>
+				<div class="task-detail-sidebar-status">
+					<span id="task-detail-status-name" class="task-detail-sidebar-status-text"><?=Loc::getMessage('TASKS_TTDP_DATES');?></span>
+				</div>
+
+				<?if($template["DEADLINE_AFTER"]):?>
+					<div class="task-detail-sidebar-item task-detail-sidebar-item-deadline">
+						<div class="task-detail-sidebar-item-title"><?=Loc::getMessage("TASKS_FIELD_DEADLINE_AFTER")?>:</div>
+						<div class="task-detail-sidebar-item-value"><?=$helper->formatDateAfter($matchWorkTime, $template["DEADLINE_AFTER"])?></div>
 					</div>
-
-					<?if($template["DEADLINE_AFTER"]):?>
-						<div class="task-detail-sidebar-item task-detail-sidebar-item-deadline">
-							<div class="task-detail-sidebar-item-title"><?=Loc::getMessage("TASKS_FIELD_DEADLINE_AFTER")?>:</div>
-							<div class="task-detail-sidebar-item-value"><?=$helper->formatDateAfter($matchWorkTime, $template["DEADLINE_AFTER"])?></div>
-						</div>
-					<?endif?>
-
-					<?if($template["START_DATE_PLAN_AFTER"]):?>
-						<div class="task-detail-sidebar-item">
-							<div class="task-detail-sidebar-item-title"><?=Loc::getMessage("TASKS_FIELD_START_DATE_PLAN_AFTER")?>:</div>
-							<div class="task-detail-sidebar-item-value"><?=$helper->formatDateAfter($matchWorkTime, $template["START_DATE_PLAN_AFTER"])?></div>
-						</div>
-					<?endif?>
-
-					<?if($template["END_DATE_PLAN_AFTER"]):?>
-						<div class="task-detail-sidebar-item">
-							<div class="task-detail-sidebar-item-title"><?=Loc::getMessage("TASKS_FIELD_END_DATE_PLAN_AFTER")?>:</div>
-							<div class="task-detail-sidebar-item-value"><?=$helper->formatDateAfter($matchWorkTime, $template["END_DATE_PLAN_AFTER"])?></div>
-						</div>
-					<?endif?>
-
-					<?if($template["ALLOW_TIME_TRACKING"] === "Y" && $template["TIME_ESTIMATE"] > 0):?>
-						<div class="task-detail-sidebar-item">
-							<div class="task-detail-sidebar-item-title"><?=Loc::getMessage("TASKS_FIELD_TIME_ESTIMATE")?>:</div>
-							<div class="task-detail-sidebar-item-value" id="task-detail-estimate-time-<?=$template["ID"]?>">
-								<?=\Bitrix\Tasks\UI::formatTimeAmount($template["TIME_ESTIMATE"]);?>
-							</div>
-						</div>
-					<?endif?>
-
 				<?endif?>
 
-				<?$APPLICATION->IncludeComponent(
-					'bitrix:tasks.widget.member.selector',
-					'view',
-					array(
-						'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_ORIGINATOR'],
-						'READ_ONLY' => true,
-						'ROLE' => 'ORIGINATOR',
-						'MAX' => 1,
-						'TITLE' => Loc::getMessage('TASKS_TTDP_TEMPLATE_USER_VIEW_ORIGINATOR'),
-						'HIDE_IF_EMPTY' => 'N',
-					),
-					$helper->getComponent(),
-					array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
-				);?>
+				<?if($template["START_DATE_PLAN_AFTER"]):?>
+					<div class="task-detail-sidebar-item">
+						<div class="task-detail-sidebar-item-title"><?=Loc::getMessage("TASKS_FIELD_START_DATE_PLAN_AFTER")?>:</div>
+						<div class="task-detail-sidebar-item-value"><?=$helper->formatDateAfter($matchWorkTime, $template["START_DATE_PLAN_AFTER"])?></div>
+					</div>
+				<?endif?>
 
-				<?$APPLICATION->IncludeComponent(
-					'bitrix:tasks.widget.member.selector',
-					'view',
-					array(
-						'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_RESPONSIBLE'],
-						'READ_ONLY' => !$canUpdate || $template['TPARAM_TYPE'] == 1 /*for new user*/,
-						'ROLE' => 'RESPONSIBLES',
-						'MIN' => 1,
-						'ENABLE_SYNC' => true,
-						'ENTITY_ID' => $template->getId(),
-						'ENTITY_ROUTE' => 'task.template',
-						'TITLE' => Loc::getMessage('TASKS_TTDP_TEMPLATE_USER_VIEW_RESPONSIBLE'),
-						'HIDE_IF_EMPTY' => 'N',
-					),
-					$helper->getComponent(),
-					array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
-				);?>
+				<?if($template["END_DATE_PLAN_AFTER"]):?>
+					<div class="task-detail-sidebar-item">
+						<div class="task-detail-sidebar-item-title"><?=Loc::getMessage("TASKS_FIELD_END_DATE_PLAN_AFTER")?>:</div>
+						<div class="task-detail-sidebar-item-value"><?=$helper->formatDateAfter($matchWorkTime, $template["END_DATE_PLAN_AFTER"])?></div>
+					</div>
+				<?endif?>
 
-				<?$APPLICATION->IncludeComponent(
-					'bitrix:tasks.widget.member.selector',
-					'view',
-					array(
-						'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_ACCOMPLICE'],
-						'READ_ONLY' => !$canUpdate,
-						'ROLE' => 'ACCOMPLICES',
-						'ENABLE_SYNC' => true,
-						'ENTITY_ID' => $template->getId(),
-						'ENTITY_ROUTE' => 'task.template',
-						'TITLE' => Loc::getMessage('TASKS_TTDP_TEMPLATE_USER_VIEW_ACCOMPLICES'),
-						'HIDE_IF_EMPTY' => !$canUpdate,
-					),
-					$helper->getComponent(),
-					array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
-				);?>
+				<?if($template["ALLOW_TIME_TRACKING"] === "Y" && $template["TIME_ESTIMATE"] > 0):?>
+					<div class="task-detail-sidebar-item">
+						<div class="task-detail-sidebar-item-title"><?=Loc::getMessage("TASKS_FIELD_TIME_ESTIMATE")?>:</div>
+						<div class="task-detail-sidebar-item-value" id="task-detail-estimate-time-<?=$template["ID"]?>">
+							<?=\Bitrix\Tasks\UI::formatTimeAmount($template["TIME_ESTIMATE"]);?>
+						</div>
+					</div>
+				<?endif?>
 
-				<?$APPLICATION->IncludeComponent(
-					'bitrix:tasks.widget.member.selector',
-					'view',
-					array(
-						'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_AUDITOR'],
-						'READ_ONLY' => !$canUpdate,
-						'ROLE' => 'AUDITORS',
-						'ENABLE_SYNC' => true,
-						'ENTITY_ID' => $template->getId(),
-						'ENTITY_ROUTE' => 'task.template',
-						'TITLE' => Loc::getMessage('TASKS_TTDP_TEMPLATE_USER_VIEW_AUDITORS'),
-						'USER' => $arResult['DATA']['USER'][User::getId()],
-						'HIDE_IF_EMPTY' => !$canUpdate,
-					),
-					$helper->getComponent(),
-					array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
-				);?>
+			<?endif?>
 
-				<?//replication?>
-				<?if(
-					!$arParams["PUBLIC_MODE"] &&
-					$template['TPARAM_TYPE'] != 1 &&
-					!$template['BASE_TEMPLATE_ID'] &&
+			<?$APPLICATION->IncludeComponent(
+				'bitrix:tasks.widget.member.selector',
+				'view',
+				array(
+					'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_ORIGINATOR'],
+					'READ_ONLY' => true,
+					'ROLE' => 'ORIGINATOR',
+					'MAX' => 1,
+					'TITLE' => Loc::getMessage('TASKS_TTDP_TEMPLATE_USER_VIEW_ORIGINATOR'),
+					'HIDE_IF_EMPTY' => 'N',
+				),
+				$helper->getComponent(),
+				array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
+			);?>
 
-					!(!$canUpdate && $template['REPLICATE'] == 'N')
-				):?>
+			<?$APPLICATION->IncludeComponent(
+				'bitrix:tasks.widget.member.selector',
+				'view',
+				array(
+					'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_RESPONSIBLE'],
+					'READ_ONLY' => !$canUpdate || $template['TPARAM_TYPE'] == 1 /*for new user*/,
+					'ROLE' => 'RESPONSIBLES',
+					'MIN' => 1,
+					'ENABLE_SYNC' => true,
+					'ENTITY_ID' => $template->getId(),
+					'ENTITY_ROUTE' => 'task.template',
+					'TITLE' => Loc::getMessage('TASKS_TTDP_TEMPLATE_USER_VIEW_RESPONSIBLE'),
+					'HIDE_IF_EMPTY' => 'N',
+				),
+				$helper->getComponent(),
+				array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
+			);?>
 
-					<div class="task-detail-sidebar-info-title"><?=Loc::getMessage("TASKS_SIDEBAR_REGULAR_TASK")?></div>
+			<?$APPLICATION->IncludeComponent(
+				'bitrix:tasks.widget.member.selector',
+				'view',
+				array(
+					'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_ACCOMPLICE'],
+					'READ_ONLY' => !$canUpdate,
+					'ROLE' => 'ACCOMPLICES',
+					'ENABLE_SYNC' => true,
+					'ENTITY_ID' => $template->getId(),
+					'ENTITY_ROUTE' => 'task.template',
+					'TITLE' => Loc::getMessage('TASKS_TTDP_TEMPLATE_USER_VIEW_ACCOMPLICES'),
+					'HIDE_IF_EMPTY' => !$canUpdate,
+					'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
+				),
+				$helper->getComponent(),
+				array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
+			);?>
+
+			<?$APPLICATION->IncludeComponent(
+				'bitrix:tasks.widget.member.selector',
+				'view',
+				array(
+					'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_AUDITOR'],
+					'READ_ONLY' => !$canUpdate,
+					'ROLE' => 'AUDITORS',
+					'ENABLE_SYNC' => true,
+					'ENTITY_ID' => $template->getId(),
+					'ENTITY_ROUTE' => 'task.template',
+					'TITLE' => Loc::getMessage('TASKS_TTDP_TEMPLATE_USER_VIEW_AUDITORS'),
+					'USER' => $arResult['DATA']['USER'][User::getId()],
+					'HIDE_IF_EMPTY' => !$canUpdate,
+					'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
+				),
+				$helper->getComponent(),
+				array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
+			);?>
+
+			<?//replication?>
+			<?if(
+				!$arParams["PUBLIC_MODE"] &&
+				$template['TPARAM_TYPE'] != 1 &&
+				!$template['BASE_TEMPLATE_ID'] &&
+
+				!(!$canUpdate && $template['REPLICATE'] == 'N')
+			):?>
+
+				<div class="task-detail-sidebar-info-title"><?=Loc::getMessage("TASKS_SIDEBAR_REGULAR_TASK")?></div>
+				<div class="task-detail-sidebar-info">
+					<?$APPLICATION->IncludeComponent(
+						'bitrix:tasks.widget.replication',
+						'view',
+						array(
+							'DATA' => $template['REPLICATE_PARAMS'],
+							'COMPANY_WORKTIME' => $arResult['AUX_DATA']['COMPANY_WORKTIME'],
+							'REPLICATE' => $template["REPLICATE"],
+							'ENABLE_SYNC' => $canUpdate,
+							'ENTITY_ID' => $template->getId(),
+							'ENABLE_TEMPLATE_LINK' => 'N',
+							'TEMPLATE_CREATED_BY' => $template['CREATED_BY'],
+							'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
+						),
+						$helper->getComponent(),
+						array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
+					);?>
+				</div>
+
+			<?endif?>
+
+			<?//tags?>
+			<?if(!$arParams["PUBLIC_MODE"]):?>
+
+				<?$tags = $template['SE_TAG']?>
+				<?if($canUpdate || count($tags)):?>
+
+					<?$tagString = \Bitrix\Tasks\UI\Task\Tag::formatTagString($tags);?>
+
+					<div class="task-detail-sidebar-info-title"><?=Loc::getMessage("TASKS_TASK_TAGS")?></div>
 					<div class="task-detail-sidebar-info">
-						<?$APPLICATION->IncludeComponent(
-							'bitrix:tasks.widget.replication',
-							'view',
-							array(
-								'DATA' => $template['REPLICATE_PARAMS'],
-								'COMPANY_WORKTIME' => $arResult['AUX_DATA']['COMPANY_WORKTIME'],
-								'REPLICATE' => $template["REPLICATE"],
-								'ENABLE_SYNC' => $canUpdate,
-								'ENTITY_ID' => $template->getId(),
-								'ENABLE_TEMPLATE_LINK' => 'N',
-								'TEMPLATE_CREATED_BY' => $template['CREATED_BY'],
-							),
-							$helper->getComponent(),
-							array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
-						);?>
-					</div>
-
-				<?endif?>
-
-				<?//tags?>
-				<?if(!$arParams["PUBLIC_MODE"]):?>
-
-					<?$tags = $template['SE_TAG']?>
-					<?if($canUpdate || count($tags)):?>
-
-						<?$tagString = \Bitrix\Tasks\UI\Task\Tag::formatTagString($tags);?>
-
-						<div class="task-detail-sidebar-info-title"><?=Loc::getMessage("TASKS_TASK_TAGS")?></div>
-						<div class="task-detail-sidebar-info">
-							<div class="task-detail-sidebar-info-tag"><?
-								if ($canUpdate)
-								{
-									$APPLICATION->IncludeComponent(
-										"bitrix:tasks.tags.selector",
-										".default",
-										array(
-											"NAME" => "TAGS",
-											"VALUE" => $tagString,
-										),
-										null,
-										array("HIDE_ICONS" => "Y")
-									);
-								}
-								else
-								{
-									print(htmlspecialcharsbx($tagString));
-								}
-								?>
-							</div>
+						<div class="task-detail-sidebar-info-tag"><?
+							if ($canUpdate)
+							{
+								$APPLICATION->IncludeComponent(
+									"bitrix:tasks.tags.selector",
+									".default",
+									array(
+										"NAME" => "TAGS",
+										"VALUE" => $tagString,
+									),
+									null,
+									array("HIDE_ICONS" => "Y")
+								);
+							}
+							else
+							{
+								print(htmlspecialcharsbx($tagString));
+							}
+							?>
 						</div>
-					<?endif?>
-
-				<?endif?>
-
-				<?if(!$arParams["PUBLIC_MODE"] && $template['TPARAM_TYPE'] == 1):?>
-
-					<div class="task-detail-sidebar-info task-detail-sidebar-info-type-new-hint">
-						<?=Loc::getMessage('TASKS_TTV_TYPE_FOR_NEW_USER_HINT');?>
 					</div>
-
 				<?endif?>
 
-			</div>
+			<?endif?>
+
+			<?if(!$arParams["PUBLIC_MODE"] && $template['TPARAM_TYPE'] == 1):?>
+
+				<div class="task-detail-sidebar-info task-detail-sidebar-info-type-new-hint">
+					<?=Loc::getMessage('TASKS_TTV_TYPE_FOR_NEW_USER_HINT');?>
+				</div>
+
+			<?endif?>
+
 		</div>
+	</div>
 
 	<?
 	$this->EndViewTarget();

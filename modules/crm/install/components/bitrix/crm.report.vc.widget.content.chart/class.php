@@ -190,7 +190,7 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 					continue;
 				}
 
-				$stageCodeUpped = strtoupper($stageCode);
+				$stageCodeUpped = mb_strtoupper($stageCode);
 				$summary[$stageCodeUpped] = 0;
 			}
 
@@ -206,7 +206,7 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 				{
 					$stage = $data['stages'][$stageCode];
 					$source = $data['sources'][$sourceCode];
-					$stageCodeUpped = strtoupper($stageCode);
+					$stageCodeUpped = mb_strtoupper($stageCode);
 					$items = $userDataItems[$stageCode];
 					$itemDef = [
 						'quantity' => 0,
@@ -226,10 +226,7 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 
 					if (!empty($user) && $stage['pathToList'] && $source['hasPathToList'] && $item['quantity'])
 					{
-						$path = new \Bitrix\Main\Web\Uri($stage['pathToList']);
-						$path->addParams([
-							'apply_filter' => 'Y',
-							//'from_analytics' => 'Y',
+						$filterParameters = [
 							Tracking\UI\Filter::SourceId => [$sourceCode ?: 'organic'],
 							'DATE_CREATE_datesel' => 'RANGE',
 							'DATE_CREATE_from' => $periodFrom->format(Date::getFormat()),
@@ -238,10 +235,34 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 							'ASSIGNED_BY_ID_value' => [$user['ID']],
 							'ASSIGNED_BY_ID_name' => [$user['NAME']],
 							'ASSIGNED_BY_ID_label' => [$user['NAME']],
-						]);
+
+							'DATE_INSERT_datesel' => 'RANGE',
+							'DATE_INSERT_from' => $periodFrom->format(Date::getFormat()),
+							'DATE_INSERT_to' => $periodTo->format(Date::getFormat()),
+							'RESPONSIBLE_ID' => [$user['ID']],
+							'RESPONSIBLE_ID_value' => [$user['ID']],
+							'RESPONSIBLE_ID_name' => [$user['NAME']],
+							'RESPONSIBLE_ID_label' => [$user['NAME']],
+						];
+
+						$details = $item['details'] ?? null;
+						if ($details)
+						{
+							foreach ($details as $detailIndex => $detailItem)
+							{
+								$details[$detailIndex] = [
+									'NAME' => $detailItem['name'],
+									'VALUE' => self::formatNumber($detailItem['quantity']),
+									'PATH' => self::getFilterUrl($detailItem['path'], $filterParameters)
+								];
+							}
+						}
+
 						$row[$stageCodeUpped] = [
+							'NAME' => $item['name'],
 							'VALUE' => $item['quantityPrint'],
-							'PATH' => $path->getLocator()
+							'PATH' => self::getFilterUrl($item['path'] ?: $stage['pathToList'], $filterParameters),
+							'DETAILS' => $details,
 						];
 					}
 					else
@@ -271,7 +292,7 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 				$isEmpty = true;
 				foreach ($stages as $stageCode)
 				{
-					$stageCode = strtoupper($stageCode);
+					$stageCode = mb_strtoupper($stageCode);
 					if (is_array($row[$stageCode]))
 					{
 						if (!empty($row[$stageCode]['VALUE']))
@@ -335,7 +356,7 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 				continue;
 			}
 
-			$stageCode = strtoupper($stageCode);
+			$stageCode = mb_strtoupper($stageCode);
 			$columns[] = [
 				"id" => $stageCode,
 				"name" => empty($messages[$stageCode]) ? $stage['caption'] : $messages[$stageCode],
@@ -401,7 +422,7 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 		];
 		foreach ($data['dict']['stages'] as $stageCode)
 		{
-			$stageCodeUpped = strtoupper($stageCode);
+			$stageCodeUpped = mb_strtoupper($stageCode);
 			$organic[$stageCodeUpped] = 0;
 			$summary[$stageCodeUpped] = 0;
 			$summaryAd[$stageCodeUpped] = 0;
@@ -422,7 +443,7 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 			{
 				$stage = $data['stages'][$stageCode];
 				$source = $data['sources'][$sourceCode];
-				$stageCodeUpped = strtoupper($stageCode);
+				$stageCodeUpped = mb_strtoupper($stageCode);
 				$items = $data['items'][$stageCode];
 				$itemDef = [
 					'quantity' => 0,
@@ -442,19 +463,35 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 
 				if ($stage['pathToList'] && $source['hasPathToList'] && $item['quantity'])
 				{
-					$path = new \Bitrix\Main\Web\Uri($stage['pathToList']);
-					$path->addParams([
-						'apply_filter' => 'Y',
-						//'from_analytics' => 'Y',
+					$filterParameters = [
 						Tracking\UI\Filter::SourceId => [$sourceCode ?: 'organic'],
 						'DATE_CREATE_datesel' => 'RANGE',
 						'DATE_CREATE_from' => $periodFrom->format(Date::getFormat()),
 						'DATE_CREATE_to' => $periodTo->format(Date::getFormat()),
-					]);
+						'DATE_INSERT_datesel' => 'RANGE',
+						'DATE_INSERT_from' => $periodFrom->format(Date::getFormat()),
+						'DATE_INSERT_to' => $periodTo->format(Date::getFormat()),
+					];
+
+					$details = $item['details'] ?? null;
+					if ($details)
+					{
+						foreach ($details as $detailIndex => $detailItem)
+						{
+							$details[$detailIndex] = [
+								'NAME' => $detailItem['name'],
+								'VALUE' => self::formatNumber($detailItem['quantity']),
+								'PATH' => self::getFilterUrl($detailItem['path'], $filterParameters)
+							];
+						}
+					}
+
 					//TRACKING_ASSIGNED
 					$row[$stageCodeUpped] = [
 						'VALUE' => $item['quantityPrint'],
-						'PATH' => $path->getLocator()
+						'NAME' => $item['name'],
+						'PATH' => self::getFilterUrl($item['path'] ?: $stage['pathToList'], $filterParameters),
+						'DETAILS' => $details,
 					];
 				}
 				else
@@ -605,7 +642,7 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 		];
 		foreach ($data['stages'] as $stageCode => $stage)
 		{
-			$stageCode = strtoupper($stageCode);
+			$stageCode = mb_strtoupper($stageCode);
 			$columns[] = [
 				"id" => $stageCode,
 				"name" => empty($messages[$stageCode]) ? $stage['caption'] : $messages[$stageCode],
@@ -729,15 +766,27 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 		foreach ($this->dataProvider->getProviders() as $stage)
 		{
 			$stageCode = $stage->getCode();
-			$data['stages'][$stageCode] = [
-				'code' => $stageCode,
-				'caption' => $stage->getName(),
-				'pathToList' => $stage->getPath(),
-				'sum' => 0,
-				'quantity' => 0,
-			];
+			if (!empty($data['stages'][$stageCode]))
+			{
+				$data['stages'][$stageCode]['caption'] .= ', '
+					. $stage->getName();
+			}
+			else
+			{
+				$data['stages'][$stageCode] = [
+					'code' => $stageCode,
+					'caption' => $stage->getName(),
+					'pathToList' => $stage->getPath(),
+					'sum' => 0,
+					'quantity' => 0,
+				];
+			}
 
-			$data['items'][$stageCode] = [];
+			if (!is_array($data['items'][$stageCode]))
+			{
+				$data['items'][$stageCode] = [];
+			}
+
 			foreach ($stage->getData() as $row)
 			{
 				$sourceCode = $row[Tracking\Analytics\Provider\Base::TrackingSourceId] ?: 0;
@@ -768,6 +817,31 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 					'quantity' => $stageQuantity,
 					'views' => $stageViews,
 				] + $emptyItem;
+
+				if ($groupByAssigned)
+				{
+					$prev = $data['items'][$stageCode][$sourceCode][$assigned] ?? null;
+				}
+				else
+				{
+					$prev = $data['items'][$stageCode][$sourceCode] ?? null;
+				}
+
+				$row['path'] = $stage->getPath();
+				$row['name'] = $stage->getEntityName();
+				if ($prev)
+				{
+					$details = $prev['details'] ?? [$prev];
+					if ($details && $details[0]['path'] != $row['path'])
+					{
+						$details[] = $row;
+						$row['details'] = $details;
+					}
+
+					$row['sum'] += $prev['sum'];
+					$row['views'] += $prev['views'];
+					$row['quantity'] += $prev['quantity'];
+				}
 
 				if ($groupByAssigned)
 				{
@@ -899,12 +973,12 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 		$data['conversion'] = $this->calculateConversion(
 			$lastStage['quantity'],
 			$firstStage['quantity'],
-			true
+			false
 		);
 		$data['roi'] = $this->calculateRoi(
 			$lastStage['sum'],
 			$firstStage['sum'],
-			false
+			true
 		);
 
 		if (!$groupByAssigned)
@@ -913,6 +987,17 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 		}
 
 		return $data;
+	}
+
+	protected static function getFilterUrl($path, array $parameters)
+	{
+		$path = new \Bitrix\Main\Web\Uri($path);
+		$path->addParams([
+			'apply_filter' => 'Y',
+			//'from_analytics' => 'Y',
+		] + $parameters);
+
+		return $path->getLocator();
 	}
 
 

@@ -20,7 +20,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 foreach ($arParams['SERVICES'] as $id => $settings)
 {
 	$k++;
-	?><a href="?STEP=setup&SERVICE=<?=$id; ?>" class="post-dialog-service-item post-dialog-service-name"<? if (strlen($settings['name']) > 15) { ?> style="font-size: 18px; "<? } ?>>
+	?><a href="?STEP=setup&SERVICE=<?=$id; ?>" class="post-dialog-service-item post-dialog-service-name"<? if (mb_strlen($settings['name']) > 15) { ?> style="font-size: 18px; "<? } ?>>
 		<span class="post-dialog-serv-item-align"></span>
 		<? if ($settings['icon']) { ?>
 		<img src="<?=$settings['icon']; ?>" alt="<?=$settings['name']; ?>"/>

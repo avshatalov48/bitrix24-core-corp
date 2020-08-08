@@ -137,7 +137,7 @@ class CDiskBizprocStartComponent extends BaseComponent implements SidePanelWrapp
 			}
 		}
 
-		if ($this->arParams['TEMPLATE_ID'] > 0 && strlen($this->request->getPost('CancelStartParamWorkflow')) <= 0
+		if ($this->arParams['TEMPLATE_ID'] > 0 && $this->request->getPost('CancelStartParamWorkflow') == ''
 			&& (array_key_exists($this->arParams['TEMPLATE_ID'], $this->arResult['TEMPLATES']) || array_key_exists($this->arParams['TEMPLATE_ID'], $this->arResult['TEMPLATES_OLD'])))
 		{
 			if(array_key_exists($this->arParams['TEMPLATE_ID'], $this->arResult['TEMPLATES']))
@@ -162,7 +162,7 @@ class CDiskBizprocStartComponent extends BaseComponent implements SidePanelWrapp
 			{
 				$canStartWorkflow = true;
 			}
-			elseif ($this->request->isPost() && strlen($this->request->getPost('DoStartParamWorkflow')) > 0 && check_bitrix_sessid())
+			elseif ($this->request->isPost() && $this->request->getPost('DoStartParamWorkflow') <> '' && check_bitrix_sessid())
 			{
 				$errorsTemporary = array();
 				$request = $this->request->getPostList()->toArray();
@@ -234,7 +234,7 @@ class CDiskBizprocStartComponent extends BaseComponent implements SidePanelWrapp
 				else
 				{
 					$this->arResult['SHOW_MODE'] = 'StartWorkflowSuccess';
-					if (strlen($this->arResult['back_url']) > 0)
+					if ($this->arResult['back_url'] <> '')
 					{
 						LocalRedirect(str_replace('#WF#', $workflowId, $this->request->getQuery('back_url')));
 						$this->end(true);
@@ -243,7 +243,7 @@ class CDiskBizprocStartComponent extends BaseComponent implements SidePanelWrapp
 			}
 			else
 			{
-				$doStartParam = ($this->request->isPost() && strlen($this->request->getPost('DoStartParamWorkflow') && check_bitrix_sessid()) > 0);
+				$doStartParam = ($this->request->isPost() && $this->request->getPost('DoStartParamWorkflow') && check_bitrix_sessid() <> '');
 				$keys = array_keys($workflowTemplate['PARAMETERS']);
 				foreach ($keys as $key)
 				{

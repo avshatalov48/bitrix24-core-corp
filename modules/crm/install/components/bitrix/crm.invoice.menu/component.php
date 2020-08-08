@@ -139,7 +139,7 @@ if($arParams['TYPE'] === 'list')
 				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
 				'NAVIGATION_CONTEXT_ID' => $entityType
 			);
-			if (isset($_REQUEST['WG']) && strtoupper($_REQUEST['WG']) === 'Y')
+			if (isset($_REQUEST['WG']) && mb_strtoupper($_REQUEST['WG']) === 'Y')
 			{
 				$widgetDataFilter = \Bitrix\Crm\Widget\Data\InvoiceDataSource::extractDetailsPageUrlParams($_REQUEST);
 				if (!empty($widgetDataFilter))
@@ -284,7 +284,7 @@ if ($arParams['TYPE'] == 'show' && !empty($arParams['ELEMENT_ID']) && $arParams[
 
 		unset($componentPath, $params, $res, $data, $uri, $href);
 	}
-	elseif(strpos($paySystem['ACTION_FILE'], 'bill') !== false)
+	elseif(mb_strpos($paySystem['ACTION_FILE'], 'bill') !== false)
 	{
 		$menuItems[] = [
 			'text' => GetMessage('INVOICE_PAYMENT_HTML'),

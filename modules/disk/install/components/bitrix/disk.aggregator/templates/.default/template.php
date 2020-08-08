@@ -29,7 +29,7 @@ if($USER->isAdmin())
 	{
 		$sNewFolderPath = implode('/', array_slice(explode('/', $sNewFolderPath), 0, -1));
 	}
-	if(strlen($sNewFolderPath) > 0 && substr($sNewFolderPath, -1, 1) !== '/')
+	if($sNewFolderPath <> '' && mb_substr($sNewFolderPath, -1, 1) !== '/')
 	{
 		$sNewFolderPath .= '/';
 	}

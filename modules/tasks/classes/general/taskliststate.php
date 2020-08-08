@@ -56,6 +56,7 @@ class CTaskListState
 	const VIEW_TASK_CATEGORY_WAIT_CTRL   = 0x0800000;	// CTasks::STATE_SUPPOSEDLY_COMPLETED
 	const VIEW_TASK_CATEGORY_WO_DEADLINE = 0x0A00000;	// tasks without DEADLINE, created NOT by the current user
 	const VIEW_TASK_CATEGORY_ALL         = 0x0B00000;
+	const VIEW_TASK_CATEGORY_NEW_COMMENTS = 0x0C00000;
 
 	// view mode parameters
 	const VIEW_MODE_GANTT_OPTION_ZOOM    = 'ZOOM';
@@ -206,6 +207,8 @@ class CTaskListState
 
 	public function resetState()
 	{
+		$groupsEnabled = \COption::GetOptionString("tasks", "tasksDisableDefaultListGroups", null) ? 'N' : 'Y';
+
 		$this->state = array(
 			self::TOC_SECTION_SELECTED       => self::VIEW_SECTION_ROLES,
 			self::TOC_ROLE_SELECTED          => self::VIEW_ROLE_RESPONSIBLE,
@@ -218,10 +221,10 @@ class CTaskListState
 			),
 			self::TOC_SUBMODES               => array(
 				self::VIEW_SUBMODE_WITH_GROUPS => array(
-					self::TOC_SELECTED => 'Y'
+					self::TOC_SELECTED => $groupsEnabled
 				),
 				self::VIEW_SUBMODE_WITH_SUBTASKS => array(
-					self::TOC_SELECTED => 'Y'
+					self::TOC_SELECTED => $groupsEnabled
 				)
 			),
 			self::TOC_VIEW_MODE_PARAMETERS  => array(
@@ -822,7 +825,7 @@ class CTaskListState
 		if ($arMap === null)
 		{
 			$arMap = array(
-				self::VIEW_SUBMODE_WITH_GROUPS   => GetMessage('TASKS_LIST_CTRL_SUBMODE_WITH_GROUPS_V2'),
+				self::VIEW_SUBMODE_WITH_GROUPS   => GetMessage('TASKS_LIST_CTRL_SUBMODE_WITH_GROUPS_V3'),
 				self::VIEW_SUBMODE_WITH_SUBTASKS => GetMessage('TASKS_LIST_CTRL_SUBMODE_WITH_SUBTASKS_V2')
 			);
 		}
@@ -961,7 +964,8 @@ class CTaskListState
 				self::VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES => GetMessage('TASKS_LIST_CTRL_CATEGORY_EXPIRED_CANDIDATES'),
 				self::VIEW_TASK_CATEGORY_ATTENTION   => GetMessage('TASKS_LIST_CTRL_CATEGORY_ATTENTION'),
 				self::VIEW_TASK_CATEGORY_WAIT_CTRL   => GetMessage('TASKS_LIST_CTRL_CATEGORY_WAIT_CTRL'),
-				self::VIEW_TASK_CATEGORY_WO_DEADLINE => GetMessage('TASKS_LIST_CTRL_CATEGORY_WO_DEADLINE')
+				self::VIEW_TASK_CATEGORY_WO_DEADLINE => GetMessage('TASKS_LIST_CTRL_CATEGORY_WO_DEADLINE'),
+				self::VIEW_TASK_CATEGORY_NEW_COMMENTS => GetMessage('TASKS_LIST_CTRL_CATEGORY_NEW_COMMENTS'),
 			);
 		}
 

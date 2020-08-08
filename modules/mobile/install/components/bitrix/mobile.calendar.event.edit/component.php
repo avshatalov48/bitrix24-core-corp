@@ -4,7 +4,7 @@ if(!CModule::IncludeModule('calendar') || (!(isset($GLOBALS['USER']) && is_objec
 	return;
 
 $userId = $GLOBALS['USER']->GetID();
-$eventId = intVal($arParams['EVENT_ID']);
+$eventId = intval($arParams['EVENT_ID']);
 $arResult['NEW'] = !$eventId;
 
 if (isset($_REQUEST['app_calendar_action']))
@@ -22,8 +22,8 @@ if (isset($_REQUEST['app_calendar_action']))
 		// Save event info
 		$type = 'user';
 		$ownerId = $userId;
-		$id = intVal($_POST['event_id']);
-		$sectId = intVal($_POST['sect_id']);
+		$id = intval($_POST['event_id']);
+		$sectId = intval($_POST['sect_id']);
 		$newMeeting = $_POST['new_meeting'] == 'Y';
 
 		$arFields = array(
@@ -70,12 +70,12 @@ if (isset($_REQUEST['app_calendar_action']))
 			{
 				foreach($attendees as $attId)
 				{
-					$arFields['ATTENDEES_CODES'][] = 'U'.intVal($attId);
+					$arFields['ATTENDEES_CODES'][] = 'U'.intval($attId);
 				}
 			}
 
 			if ($newMeeting && !in_array($ownerId, $attendees))
-				$arFields['ATTENDEES_CODES'][] = 'U'.intVal($ownerId);
+				$arFields['ATTENDEES_CODES'][] = 'U'.intval($ownerId);
 
 			$arFields['ATTENDEES'] = CCalendar::GetDestinationUsers($arFields['ATTENDEES_CODES']);
 
@@ -97,7 +97,7 @@ if (isset($_REQUEST['app_calendar_action']))
 	}
 	elseif($_REQUEST['app_calendar_action'] == 'drop_event' && check_bitrix_sessid())
 	{
-		$res = CCalendar::DeleteEvent(intVal($_POST['event_id']));
+		$res = CCalendar::DeleteEvent(intval($_POST['event_id']));
 	}
 
 	die();

@@ -175,7 +175,7 @@ class CCrmEMail
 		$result = array();
 		foreach($out[0] as $email)
 		{
-			$email = strtolower($email);
+			$email = mb_strtolower($email);
 			if (!in_array($email, $result, true))
 			{
 				$result[] = $email;
@@ -408,6 +408,18 @@ class CCrmEMail
 		return $adminList;
 	}
 
+	protected static function log($tag, $message, array $data = null)
+	{
+		$logEntry = "$tag: $message";
+
+		if (!empty($data))
+		{
+			$logEntry .= "\r\n" . Bitrix\Main\Web\Json::encode($data);
+		}
+
+		addMessage2Log($logEntry, 'crm', 3);
+	}
+
 	public static function imapEmailMessageAdd($msgFields, $actionVars = null, &$error = null)
 	{
 		global $DB;
@@ -417,16 +429,66 @@ class CCrmEMail
 		if (!\CModule::includeModule('crm'))
 			return false;
 
+		$eventPid = sprintf('%x%x', time(), rand(0, 0xffffffff));
+
 		$messageId = isset($msgFields['ID']) ? intval($msgFields['ID']) : 0;
 		$mailboxId = isset($msgFields['MAILBOX_ID']) ? intval($msgFields['MAILBOX_ID']) : 0;
 
 		if (empty($mailboxId))
+		{
+			static::log(
+				$eventPid,
+				'CCrmEmail: empty MAILBOX_ID',
+				array(
+					'ID' => $msgFields['ID'],
+					'MAILBOX_ID' => $msgFields['MAILBOX_ID'],
+				)
+			);
+
 			return false;
+		}
 
 		$mailbox = \CMailBox::getById($mailboxId)->fetch();
 
 		if (empty($mailbox))
+		{
+			static::log(
+				$eventPid,
+				'CCrmEmail: empty mailbox',
+				array(
+					'ID' => $msgFields['ID'],
+					'MAILBOX_ID' => $msgFields['MAILBOX_ID'],
+				)
+			);
+
 			return false;
+		}
+
+		$crmNewEntityOptionName = empty($msgFields['IS_OUTCOME']) ? 'crm_new_entity_in' : 'crm_new_entity_out';
+		static::log(
+			$eventPid,
+			'CCrmEmail: IMAP email message received',
+			array(
+				'ID' => $msgFields['ID'],
+				'MAILBOX_ID' => $msgFields['MAILBOX_ID'],
+				'MSG_HASH' => $msgFields['MSG_HASH'],
+				'OPTIONS' => array_filter(array(
+					'flags' => $mailbox['OPTIONS']['flags'],
+					'crm_sync_from' => $mailbox['OPTIONS']['crm_sync_from'],
+					//'crm_lead_resp' => $mailbox['OPTIONS']['crm_lead_resp'],
+					//'crm_new_lead_for' => $mailbox['OPTIONS']['crm_new_lead_for'],
+					$crmNewEntityOptionName => $mailbox['OPTIONS'][$crmNewEntityOptionName],
+				)),
+				'TAGS' => array_keys(array_filter(array(
+					'IS_INCOME' => empty($msgFields['IS_OUTCOME']),
+					'IS_OUTCOME' => !empty($msgFields['IS_OUTCOME']),
+					'IS_DRAFT' => !empty($msgFields['IS_DRAFT']),
+					'IS_TRASH' => !empty($msgFields['IS_TRASH']),
+					'IS_SPAM' => !empty($msgFields['IS_SPAM']),
+					'__forced' => !empty($msgFields['__forced']),
+				))),
+			)
+		);
 
 		$isForced = !empty($msgFields['__forced']);
 
@@ -435,6 +497,8 @@ class CCrmEMail
 			$timestamp = makeTimestamp($msgFields['FIELD_DATE'], FORMAT_DATETIME) - \CTimeZone::getOffset();
 			if ($timestamp < (int) $mailbox['OPTIONS']['crm_sync_from'])
 			{
+				static::log($eventPid, 'CCrmEmail: too old');
+
 				return false;
 			}
 		}
@@ -465,12 +529,15 @@ class CCrmEMail
 		}
 
 		$isIncome = empty($msgFields['IS_OUTCOME']);
+		$isDraft = !empty($msgFields['IS_DRAFT']);
 		$isTrash = !empty($msgFields['IS_TRASH']);
 		$isSpam = !empty($msgFields['IS_SPAM']);
 		$isUnseen = empty($msgFields['IS_SEEN']);
 
-		if (!$isForced and $isTrash || $isSpam)
+		if (!$isForced and $isDraft || $isTrash || $isSpam)
 		{
+			static::log($eventPid, 'CCrmEmail: draft|trash|spam');
+
 			return false;
 		}
 
@@ -528,12 +595,16 @@ class CCrmEMail
 		if (!$isForced && $isIncome && preg_match('/\nX-EVENT_NAME:/i', $msgFields['HEADER']))
 		{
 			$defaultEmailFrom = \Bitrix\Main\Config\Option::get('main', 'email_from', 'admin@'.$GLOBALS['SERVER_NAME']);
-			$defaultEmailFrom = strtolower(trim($defaultEmailFrom));
+			$defaultEmailFrom = mb_strtolower(trim($defaultEmailFrom));
 
 			foreach ($sender as $item)
 			{
-				if (strtolower(trim($item)) == $defaultEmailFrom)
+				if (mb_strtolower(trim($item)) == $defaultEmailFrom)
+				{
+					static::log($eventPid, 'CCrmEmail: system email');
+
 					return false;
+				}
 			}
 		}
 
@@ -553,7 +624,7 @@ class CCrmEMail
 					false,
 					array('ID', 'URN', 'UF_MAIL_MESSAGE')
 				)->fetch();
-				if ($matchActivity && strtolower($matchActivity['URN']) == strtolower($matches[1]))
+				if ($matchActivity && mb_strtolower($matchActivity['URN']) == mb_strtolower($matches[1]))
 				{
 					\CCrmActivity::update(
 						$matchActivity['ID'],
@@ -563,6 +634,8 @@ class CCrmEMail
 						false,
 						false
 					);
+
+					static::log($eventPid, 'CCrmEmail: matches outgoing');
 
 					return true;
 				}
@@ -579,7 +652,7 @@ class CCrmEMail
 			);
 
 			$res = \Bitrix\Main\UserTable::getList(array(
-				'select' => array('EMAIL', 'UF_DEPARTMENT'),
+				'select' => array('ID', 'EMAIL', 'UF_DEPARTMENT'),
 				'filter' => $filter,
 			));
 
@@ -590,6 +663,15 @@ class CCrmEMail
 					$departments = empty($employee['UF_DEPARTMENT']) ? array() : (array) $employee['UF_DEPARTMENT'];
 					if (reset($departments) > 0)
 					{
+						static::log(
+							$eventPid,
+							'CCrmEmail: from employee',
+							array(
+								'USER_ID' => $employee['ID'],
+								'USER_EMAIL' => $employee['EMAIL'],
+							)
+						);
+
 						$error = new \Bitrix\Main\Error(Loc::getMessage('CRM_EMAIL_IMAP_ERROR_EMPLOYE_IN'));
 						return false;
 					}
@@ -599,11 +681,12 @@ class CCrmEMail
 				{
 					// @TODO: index
 					$employee = \Bitrix\Mail\MailboxTable::getList(array(
-						'select' => array('NAME', 'LOGIN'),
+						'select' => array('ID', 'EMAIL', 'NAME', 'LOGIN', 'USER_ID'),
 						'filter' => array(
 							'=ACTIVE'  => 'Y',
 							array(
 								'LOGIC' => 'OR',
+								'EMAIL' => $sender,
 								'NAME'  => $sender,
 								'LOGIN' => $sender,
 							),
@@ -613,6 +696,18 @@ class CCrmEMail
 
 					if (!empty($employee))
 					{
+						static::log(
+							$eventPid,
+							'CCrmEmail: from employee',
+							array(
+								'USER_ID' => $employee['USER_ID'],
+								'MAILBOX_ID' => $employee['ID'],
+								'MAILBOX_EMAIL' => $employee['EMAIL'],
+								'MAILBOX_NAME' => $employee['NAME'],
+								'MAILBOX_LOGIN' => $employee['LOGIN'],
+							)
+						);
+
 						$error = new \Bitrix\Main\Error(Loc::getMessage('CRM_EMAIL_IMAP_ERROR_EMPLOYE_IN'));
 						return false;
 					}
@@ -620,17 +715,33 @@ class CCrmEMail
 			}
 			else
 			{
+				$employees = array();
+
 				while ($employee = $res->fetch())
 				{
 					$departments = empty($employee['UF_DEPARTMENT']) ? array() : (array) $employee['UF_DEPARTMENT'];
 					if (reset($departments) > 0)
+					{
+						$employees[] = array(
+							'USER_ID' => $employee['ID'],
+							'USER_EMAIL' => $employee['EMAIL'],
+						);
 						$employeesEmails[] = $employee['EMAIL'];
+					}
 				}
 
-				$employeesEmails = array_unique(array_map('strtolower', $employeesEmails));
+				$employeesEmails = array_unique(array_map('mb_strtolower', $employeesEmails));
 
 				if (count($employeesEmails) >= count($rcpt))
 				{
+					static::log(
+						$eventPid,
+						'CCrmEmail: to employees',
+						array(
+							'LIST' => $employees,
+						)
+					);
+
 					$error = new \Bitrix\Main\Error(Loc::getMessage('CRM_EMAIL_IMAP_ERROR_EMPLOYE_OUT'));
 					return false;
 				}
@@ -639,24 +750,44 @@ class CCrmEMail
 				{
 					// @TODO: index
 					$res = \Bitrix\Mail\MailboxTable::getList(array(
-						'select' => array('NAME', 'LOGIN'),
+						'select' => array('ID', 'EMAIL',  'NAME', 'LOGIN', 'USER_ID'),
 						'filter' => array(
 							'=ACTIVE'  => 'Y',
 							array(
 								'LOGIC' => 'OR',
+								'EMAIL' => $rcpt,
 								'NAME'  => $rcpt,
 								'LOGIN' => $rcpt,
 							),
 						),
 					));
 
-					while ($employee = $res->fetch())
-						$employeesEmails[] = check_email($employee['NAME'], true) ? $employee['NAME'] : $employee['LOGIN'];
+					$employees = array();
 
-					$employeesEmails = array_unique(array_map('strtolower', $employeesEmails));
+					while ($employee = $res->fetch())
+					{
+						$employees[] = array(
+							'USER_ID' => $employee['USER_ID'],
+							'MAILBOX_ID' => $employee['ID'],
+							'MAILBOX_EMAIL' => $employee['EMAIL'],
+							'MAILBOX_NAME' => $employee['NAME'],
+							'MAILBOX_LOGIN' => $employee['LOGIN'],
+						);
+						$employeesEmails[] = (check_email($employee['EMAIL'], true) ? $employee['EMAIL'] : (check_email($employee['NAME'], true) ? $employee['NAME'] : $employee['LOGIN']));
+					}
+
+					$employeesEmails = array_unique(array_map('mb_strtolower', $employeesEmails));
 
 					if (count($employeesEmails) >= count($rcpt))
 					{
+						static::log(
+							$eventPid,
+							'CCrmEmail: to employees',
+							array(
+								'LIST' => $employees,
+							)
+						);
+
 						$error = new \Bitrix\Main\Error(Loc::getMessage('CRM_EMAIL_IMAP_ERROR_EMPLOYE_OUT'));
 						return false;
 					}
@@ -755,6 +886,14 @@ class CCrmEMail
 		$targetActivity = Bitrix\Crm\Activity\Provider\Email::getParentByEmail($msgFields);
 		if (!empty($targetActivity))
 		{
+			static::log(
+				$eventPid,
+				'CCrmEmail: parent found',
+				array(
+					'ACTIVITY_ID' => $targetActivity['ID'],
+				)
+			);
+
 			$parentId = $targetActivity['ID'];
 
 			$isForced = true;
@@ -787,6 +926,15 @@ class CCrmEMail
 
 			if (!empty($owner))
 			{
+				static::log(
+					$eventPid,
+					'CCrmEmail: parent owner is active lead|deal',
+					array(
+						'OWNER_TYPE_ID' => $targetActivity['OWNER_TYPE_ID'],
+						'OWNER_ID' => $targetActivity['OWNER_ID'],
+					)
+				);
+
 				$ownerTypeId = $targetActivity['OWNER_TYPE_ID'];
 				$ownerId = $targetActivity['OWNER_ID'];
 			}
@@ -797,10 +945,15 @@ class CCrmEMail
 		{
 			if (!empty($mailbox['OPTIONS']['crm_new_lead_for']) && is_array($mailbox['OPTIONS']['crm_new_lead_for']))
 			{
-				$forceNewLead = (boolean) array_intersect(
-					array_map('strtolower', array_map('trim', $sender)),
-					array_map('strtolower', array_map('trim', $mailbox['OPTIONS']['crm_new_lead_for']))
+				$matches = array_intersect(
+					array_map('mb_strtolower', array_map('trim', $sender)),
+					array_map('mb_strtolower', array_map('trim', $mailbox['OPTIONS']['crm_new_lead_for']))
 				);
+
+				if ($forceNewLead = (boolean) $matches)
+				{
+					static::log($eventPid, 'CCrmEmail: force new lead', $matches);
+				}
 			}
 		}
 
@@ -943,6 +1096,17 @@ class CCrmEMail
 			$facility->setTrace($trace);
 
 			$emailFacility->setBindings($facility->getActivityBindings());
+
+			$criterions = $selector->getCriteria();
+			static::log(
+				$eventPid,
+				'CCrmEmail: search results',
+				array(
+					'SEARCH_VALUE' => reset($criterions)->getValue(),
+					'IS_EXCLUSION' => $selector->hasExclusions(),
+					'LIST' => $facility->getActivityBindings(),
+				)
+			);
 
 			if ($parentId > 0 && ($ownerTypeId > 0 && $ownerId > 0))
 			{
@@ -1091,6 +1255,16 @@ class CCrmEMail
 
 		if ($facility->getRegisteredId() > 0)
 		{
+			static::log(
+				$eventPid,
+				'CCrmEmail: created entity',
+				array(
+					'ENTITY_TYPE' => \CCrmOwnerType::resolveName($facility->getRegisteredTypeId()),
+					'ENTITY_TYPE_ID' => $facility->getRegisteredTypeId(),
+					'ENTITY_ID' => $facility->getRegisteredId(),
+				)
+			);
+
 			$emailFacility->setBindings($facility->getActivityBindings(), true);
 
 			$channelTrackerParams = array(
@@ -1136,7 +1310,7 @@ class CCrmEMail
 		$res = \CMailAttachment::getList(array(), array('MESSAGE_ID' => $messageId));
 		while ($attachment = $res->fetch())
 		{
-			if (getFileExtension(strtolower($attachment['FILE_NAME'])) == 'vcf' && !$denyNewContact)
+			if (getFileExtension(mb_strtolower($attachment['FILE_NAME'])) == 'vcf' && !$denyNewContact)
 			{
 				if ($attachment['FILE_ID'])
 					$attachment['FILE_DATA'] = \CMailAttachment::getContents($attachment);
@@ -1383,6 +1557,17 @@ class CCrmEMail
 		$activityId = \CCrmActivity::add($activityFields, false, false, array('REGISTER_SONET_EVENT' => true));
 		if ($activityId > 0)
 		{
+			static::log(
+				$eventPid,
+				'CCrmEmail: created activity',
+				array(
+					'ID' => $activityId,
+					'OWNER_ID' => $ownerId,
+					'OWNER_TYPE_ID' => $ownerTypeId,
+					'RESPONSIBLE_ID' => $userId,
+				)
+			);
+
 			if (!empty($checkInlineFiles))
 			{
 				foreach ($filesData as $item)
@@ -1412,15 +1597,15 @@ class CCrmEMail
 
 			\Bitrix\Crm\Activity\MailMetaTable::add(array(
 				'ACTIVITY_ID'      => $activityId,
-				'MSG_ID_HASH'      => !empty($msgId) ? md5(strtolower($msgId)) : '',
-				'MSG_INREPLY_HASH' => !empty($inReplyTo) ? md5(strtolower($inReplyTo)) : '',
+				'MSG_ID_HASH'      => !empty($msgId) ? md5(mb_strtolower($msgId)) : '',
+				'MSG_INREPLY_HASH' => !empty($inReplyTo) ? md5(mb_strtolower($inReplyTo)) : '',
 				'MSG_HEADER_HASH'  => $msgFields['MSG_HASH'],
 			));
 
 			$res = \Bitrix\Crm\Activity\MailMetaTable::getList(array(
 				'select' => array('ACTIVITY_ID'),
 				'filter' => array(
-					'=MSG_INREPLY_HASH' => md5(strtolower($msgId)),
+					'=MSG_INREPLY_HASH' => md5(mb_strtolower($msgId)),
 				),
 			));
 			while ($mailMeta = $res->fetch())
@@ -1470,7 +1655,7 @@ class CCrmEMail
 			}
 		}
 
-		$crmEmail = strtolower(trim(COption::GetOptionString('crm', 'mail', '')));
+		$crmEmail = mb_strtolower(trim(COption::GetOptionString('crm', 'mail', '')));
 
 		$msgID = isset($arMessageFields['ID']) ? intval($arMessageFields['ID']) : 0;
 		$mailboxID = isset($arMessageFields['MAILBOX_ID']) ? intval($arMessageFields['MAILBOX_ID']) : 0;
@@ -1548,7 +1733,7 @@ class CCrmEMail
 
 		// Check URN
 		if ($targActivity
-			&& (!isset($targActivity['URN']) || strtoupper($targActivity['URN']) !== strtoupper($targInfo['URN'])))
+			&& (!isset($targActivity['URN']) || mb_strtoupper($targActivity['URN']) !== mb_strtoupper($targInfo['URN'])))
 		{
 			$targActivity = null;
 		}
@@ -1691,10 +1876,10 @@ class CCrmEMail
 			for ($i=0, $ic=count($arACTION_VARS); $i < $ic ; $i++)
 			{
 				$v = $arACTION_VARS[$i];
-				if($pos = strpos($v, '='))
+				if($pos = mb_strpos($v, '='))
 				{
-					$name = substr($v, 0, $pos);
-					${$name} = urldecode(substr($v, $pos+1));
+					$name = mb_substr($v, 0, $pos);
+					${$name} = urldecode(mb_substr($v, $pos + 1));
 				}
 			}
 
@@ -1931,7 +2116,7 @@ class CCrmEMail
 		$emailQty = count($arCommEmails);
 		if(empty($arBindingData) && $emailQty > 0)
 		{
-			if(strtoupper(COption::GetOptionString('crm', 'email_create_lead_for_new_addresser', 'Y')) !== 'Y')
+			if(mb_strtoupper(COption::GetOptionString('crm', 'email_create_lead_for_new_addresser', 'Y')) !== 'Y')
 			{
 				// Creation of new lead is not allowed
 				return true;
@@ -2061,7 +2246,8 @@ class CCrmEMail
 				);
 
 				//Region automation
-				\Bitrix\Crm\Automation\Factory::runOnAdd(\CCrmOwnerType::Lead, $leadID);
+				$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $leadID);
+				$starter->setUserId($userID)->runOnAdd();
 				//End region
 
 				$arCommData = array();
@@ -2090,7 +2276,7 @@ class CCrmEMail
 				$dbAttachment = CMailAttachment::GetList(array(), array('MESSAGE_ID' => $msgID));
 				while ($arAttachment = $dbAttachment->Fetch())
 				{
-					if(GetFileExtension(strtolower($arAttachment['FILE_NAME'])) === 'vcf')
+					if(GetFileExtension(mb_strtolower($arAttachment['FILE_NAME'])) === 'vcf')
 					{
 						if ($arAttachment['FILE_ID'])
 							$arAttachment['FILE_DATA'] = CMailAttachment::getContents($arAttachment);
@@ -2150,7 +2336,7 @@ class CCrmEMail
 		$arBannedAttachments = array();
 		while ($arAttachment = $dbAttachment->Fetch())
 		{
-			if (GetFileExtension(strtolower($arAttachment['FILE_NAME'])) === 'vcf')
+			if (GetFileExtension(mb_strtolower($arAttachment['FILE_NAME'])) === 'vcf')
 			{
 				if ($arAttachment['FILE_ID'])
 					$arAttachment['FILE_DATA'] = CMailAttachment::getContents($arAttachment);
@@ -2406,11 +2592,11 @@ class CCrmEMail
 		foreach ($arCommunications as &$commDatum)
 		{
 			$commID = isset($commDatum['id']) ? intval($commDatum['id']) : 0;
-			$commEntityType = isset($commDatum['entityType']) ? strtolower(strval($commDatum['entityType'])) : '';
+			$commEntityType = isset($commDatum['entityType'])? mb_strtolower(strval($commDatum['entityType'])) : '';
 			$commEntityType = array_search($commEntityType, $socNetLogDestTypes);
 			$commEntityID = isset($commDatum['entityId']) ? intval($commDatum['entityId']) : 0;
 
-			$commType = isset($commDatum['type']) ? strtoupper(strval($commDatum['type'])) : '';
+			$commType = isset($commDatum['type'])? mb_strtoupper(strval($commDatum['type'])) : '';
 			if($commType === '')
 			{
 				$commType = 'EMAIL';
@@ -2428,14 +2614,14 @@ class CCrmEMail
 				$rcptFieldName = 'to';
 				if (isset($commDatum['__field']))
 				{
-					$commDatum['__field'] = strtolower($commDatum['__field']);
+					$commDatum['__field'] = mb_strtolower($commDatum['__field']);
 					if (in_array($commDatum['__field'], array('to', 'cc', 'bcc')))
 					{
 						$rcptFieldName = $commDatum['__field'];
 					}
 				}
 
-				${$rcptFieldName}[] = strtolower(trim($commValue));
+				${$rcptFieldName}[] = mb_strtolower(trim($commValue));
 			}
 
 			$key = md5(sprintf(
@@ -2443,7 +2629,7 @@ class CCrmEMail
 				$commEntityType,
 				$commEntityID,
 				$commType,
-				strtolower(trim($commValue))
+				mb_strtolower(trim($commValue))
 			));
 			$arComms[$key] = array(
 				'ID' => $commID,
@@ -2669,10 +2855,10 @@ class CCrmEMail
 		for ($i=0, $ic=count($arACTION_VARS); $i < $ic ; $i++)
 		{
 			$v = $arACTION_VARS[$i];
-			if($pos = strpos($v, '='))
+			if($pos = mb_strpos($v, '='))
 			{
-				$name = substr($v, 0, $pos);
-				${$name} = urldecode(substr($v, $pos+1));
+				$name = mb_substr($v, 0, $pos);
+				${$name} = urldecode(mb_substr($v, $pos + 1));
 			}
 		}
 		return true;
@@ -2725,7 +2911,7 @@ class CCrmEMail
 		$eol = CEvent::GetMailEOL();
 		foreach($messageHeaders as $headerName => &$headerValue)
 		{
-			if(strlen($header) > 0)
+			if($header <> '')
 			{
 				$header .= $eol;
 			}
@@ -2831,37 +3017,6 @@ class CCrmEMail
 						}
 					}
 				}
-
-				break;
-			}
-		}
-	}
-
-	public static function OnImapEmailMessageModified(\Bitrix\Main\Event $event)
-	{
-		$resp = $event->getParameter('user');
-		$hash = $event->getParameter('hash');
-		$seen = $event->getParameter('seen');
-
-		$res = \Bitrix\Crm\Activity\MailMetaTable::getList(array(
-			'select' => array('ACTIVITY_ID'),
-			'filter' => array('=MSG_HEADER_HASH' => $hash),
-		));
-
-		while ($mailMeta = $res->fetch())
-		{
-			if ($activity = \CCrmActivity::getById($mailMeta['ACTIVITY_ID'], false))
-			{
-				if ($activity['TYPE_ID'] != \CCrmActivityType::Email || $activity['DIRECTION'] != \CCrmActivityDirection::Incoming)
-					break;
-
-				if ($resp > 0 && $activity['RESPONSIBLE_ID'] != $resp)
-					break;
-
-				\CCrmActivity::update($activity['ID'], array(
-					'EDITOR_ID' => $activity['RESPONSIBLE_ID'],
-					'COMPLETED' => $seen ? 'Y' : 'N',
-				), false);
 
 				break;
 			}

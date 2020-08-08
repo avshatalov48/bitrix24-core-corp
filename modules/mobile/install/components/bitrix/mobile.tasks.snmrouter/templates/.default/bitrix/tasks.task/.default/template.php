@@ -21,15 +21,19 @@ if ($arResult["TEMPLATE_DATA"]["ERROR"])
 Asset::getInstance()->addJs(SITE_TEMPLATE_PATH.'/log_mobile.js');
 Asset::getInstance()->addJs($templateFolder.'/../.default/script.js');
 
+$guid = str_replace('-', '', $arParams["GUID"]);
+$arResult["FORM_ID"] = "MOBILE_TASK_EDIT_{$guid}";
+$arResult["GRID_ID"] = "MOBILE_TASK_EDIT_{$guid}";
+
 $task = &$arResult["DATA"]["TASK"];
 $can = $arResult["CAN"]["TASK"]["ACTION"];
-$arResult["FORM_ID"] = 'MOBILE_TASK_EDIT';
-$arResult["GRID_ID"] = 'MOBILE_TASK_EDIT';
 
 $statuses = CTaskItem::getStatusMap();
 $status = Loc::getMessage("TASKS_STATUS_".$statuses[$task["REAL_STATUS"]]);
 
 $task["STATUS"] = (empty($status) ? GetMessage("TASKS_STATUS_STATE_UNKNOWN") : $status);
+
+$taskLimitExceeded = $arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'];
 
 ob_start();
 $APPLICATION->IncludeComponent(
@@ -43,7 +47,7 @@ $APPLICATION->IncludeComponent(
 		'INPUT_PREFIX' => 'data[SE_CHECKLIST]',
 		'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
 		'CONVERTED' => $arResult['DATA']['CHECKLIST_CONVERTED'],
-		'CAN_ADD_ACCOMPLICE' => $can['EDIT'],
+		'CAN_ADD_ACCOMPLICE' => $can['EDIT'] && !$taskLimitExceeded,
 		'TASK_GUID' => $arParams['GUID'],
 		'DISK_FOLDER_ID' => $arResult['AUX_DATA']['DISK_FOLDER_ID'],
 	],
@@ -81,8 +85,6 @@ $APPLICATION->IncludeComponent(
 		'TABS' => array( // Tabs to show for mobile version it is redundant just to keep compatibility with web version
 			array(
 				"id" => "task_base",
-				"title" => GetMessage("MB_TASKS_BASE_SETTINGS"),
-				"name" => GetMessage("MB_TASKS_BASE_SETTINGS"),
 				"fields" => array(
 					array(
 						"type" => "text",
@@ -130,17 +132,18 @@ $APPLICATION->IncludeComponent(
 						"placeholder" => GetMessage("MB_TASKS_TASK_SETTINGS_DEADLINE_PLACEHOLDER"),
 						"value" => $task["DEADLINE"]
 					),
-					($task["ID"] > 0 ? array(
+					($task["ID"] > 0 && !$taskLimitExceeded ? [
 						"type" => "select",
 						"id" => "data[MARK]",
 						"class" => "bx-tasks-task-mark bx-tasks-task-mark-".$task["MARK"],
 						"name" => GetMessage("MB_TASKS_TASK_SETTINGS_MARK"),
-						"items" => array(
+						"items" => [
 							"NULL" => GetMessage('MB_TASKS_TASK_SETTINGS_MARK_NULL'),
 							"P" => GetMessage('MB_TASKS_TASK_SETTINGS_MARK_P'),
-							"N" => GetMessage('MB_TASKS_TASK_SETTINGS_MARK_N')),
+							"N" => GetMessage('MB_TASKS_TASK_SETTINGS_MARK_N'),
+						],
 						"value" => ($task["MARK"] == "N" || $task["MARK"] == "P" ? $task["MARK"] : "NULL")
-					) : null),
+					] : null),
 					array(
 						"type" => "section",
 						"id" => "timeplanning",
@@ -177,52 +180,51 @@ $APPLICATION->IncludeComponent(
 							"</span>".
 							"<input type='number' name='data[DURATION_PLAN]' value='".intval($task["DURATION_PLAN"])."' />"
 					),
-					array(
+					[
 						"type" => ($can["EDIT.ORIGINATOR"] ? "select-user" : "user"),
 						"id" => "data[SE_ORIGINATOR][ID]",
 						"name" => GetMessage("MB_TASKS_TASK_SETTINGS_AUTHOR_ID"),
 						"item" => $task["SE_ORIGINATOR"],
 						"value" => $task["CREATED_BY"],
-						"canDrop" => false
-					),
-					array(
+						"canDrop" => false,
+					],
+					[
 						"type" => "select-users",
 						"id" => "data[SE_AUDITOR][]",
 						"name" => GetMessage("MB_TASKS_TASK_SETTINGS_AUDITORS"),
 						"items" => $task["SE_AUDITOR"],
-						"value" => $task["AUDITORS"]
-					),
-					array(
+						"value" => $task["AUDITORS"],
+						"canAdd" => !$taskLimitExceeded,
+					],
+					[
 						"type" => "select-users",
 						"id" => "data[SE_ACCOMPLICE][]",
 						"name" => GetMessage("MB_TASKS_TASK_SETTINGS_ACCOMPLICES"),
 						"items" => $task["SE_ACCOMPLICE"],
-						"value" => $task["ACCOMPLICES"]
-					),
-					array(
+						"value" => $task["ACCOMPLICES"],
+						"canAdd" => !$taskLimitExceeded,
+					],
+					[
 						"type" => "checkbox",
 						"id" => "ADDITIONAL[]",
 						"name" => GetMessage("MB_TASKS_TASK_SETTINGS_ADDITIONAL"),
-						"items" => array(
+						"items" => [
 							"ALLOW_CHANGE_DEADLINE" => GetMessage("MB_TASKS_TASK_SETTINGS_ADDITIONAL_ALLOW_CHANGE_DEADLINE"),
 							"MATCH_WORK_TIME" => GetMessage("MB_TASKS_TASK_SETTINGS_ADDITIONAL_MATCH_WORK_TIME"),
-							"TASK_CONTROL" => GetMessage("MB_TASKS_TASK_SETTINGS_ADDITIONAL_TASK_CONTROL"))
-							+ ($task["ID"] > 0 ? array() : array(
-//								"ADD_IN_REPORT" => GetMessage("MB_TASKS_TASK_SETTINGS_ADDITIONAL_ADD_IN_REPORT"),
-								"ADD_TO_TIMEMAN" => GetMessage("MB_TASKS_TASK_SETTINGS_ADDITIONAL_ADD_INTO_DAY_PLAN")
-							))
-							+ ((!($task["ID"] > 0) && ($can["FAVORITE.ADD"] || $can["FAVORITE.DELETE"])) ?
-								array("ADD_TO_FAVORITE" => GetMessage("TASKS_FAVORITES_0")) :
-								array()
-							)
-							//"CONSEQUENCE" => GetMessage("MB_TASKS_TASK_SETTINGS_ADDITIONAL_CONSEQUENCE")
-						,
-						"value" => array_merge(($task["TASK_CONTROL"]=="Y" ? array("TASK_CONTROL") : array()),
-								($task["MATCH_WORK_TIME"]=="Y" ? array("MATCH_WORK_TIME") : array()),
-								($task["ALLOW_CHANGE_DEADLINE"]=="Y" ? array("ALLOW_CHANGE_DEADLINE") : array())
-							//	+ ($task["CONSEQUENCE"]=="Y" ? array("CONSEQUENCE") : array())
+						]
+						+ ($taskLimitExceeded ? [] : ["TASK_CONTROL" => GetMessage("MB_TASKS_TASK_SETTINGS_ADDITIONAL_TASK_CONTROL")])
+						+ ($task["ID"] > 0 ? [] : ["ADD_TO_TIMEMAN" => GetMessage("MB_TASKS_TASK_SETTINGS_ADDITIONAL_ADD_INTO_DAY_PLAN")])
+						+ (
+							$task["ID"] <= 0 && ($can["FAVORITE.ADD"] || $can["FAVORITE.DELETE"])
+								? ["ADD_TO_FAVORITE" => GetMessage("TASKS_FAVORITES_0")]
+								: []
+						),
+						"value" => array_merge(
+							($task["ALLOW_CHANGE_DEADLINE"] == "Y" ? ["ALLOW_CHANGE_DEADLINE"] : []),
+							($task["MATCH_WORK_TIME"] == "Y" ? ["MATCH_WORK_TIME"] : []),
+							($task["TASK_CONTROL"] == "Y" ? ["TASK_CONTROL"] : [])
 						)
-					),
+					],
 					(is_array($arResult["AUX_DATA"]) && is_array($arResult["AUX_DATA"]["USER_FIELDS"]) &&
 						array_key_exists("UF_TASK_WEBDAV_FILES", $arResult["AUX_DATA"]["USER_FIELDS"]) ? array(
 						"type" => "disk",

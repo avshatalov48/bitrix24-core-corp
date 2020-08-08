@@ -13,4 +13,6 @@ $MESS["DISK_UF_FILE_DISABLE_AUTO_COMMENT"] = "Не добавлять автом
 $MESS["DISK_UF_FILE_ENABLE_AUTO_COMMENT"] = "Добавлять автоматический комментарий";
 $MESS["DISK_UF_FILE_IS_DELETED"] = "(Удалён)";
 $MESS["DISK_UF_FILE_RESTORE"] = "Восстановить";
+$MESS["DISK_UF_FILE_SHOW_GRID"] = "Показать, как коллаж";
+$MESS["DISK_UF_FILE_SHOW_GALLERY"] = "Показать, как галерею";
 ?>

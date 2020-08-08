@@ -11,10 +11,9 @@ use Bitrix\UI\Buttons\Color;
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/timeman.worktime.grid/templates/.default/violation-style.css');
 \Bitrix\Main\Loader::includeModule('ui');
 $timeHelper = TimeHelper::getInstance();
-Extension::load(['ui.buttons', 'ui.buttons.icons', 'ui.hint', 'loader']);
+Extension::load(['ui.buttons', 'ui.buttons.icons', 'ui.hint', 'loader', 'ui.forms']);
 CJSCore::Init(['timeman', 'sidepanel', 'date']);
 \Bitrix\Main\Page\Asset::getInstance()->addJS('/bitrix/js/timeman/component/basecomponent.js');
-
 \Bitrix\UI\Toolbar\Facade\Toolbar::addFilter([
 	'FILTER_ID' => $arResult['FILTER']['ID'],
 	'GRID_ID' => $arResult['GRID_ID'],
@@ -207,22 +206,28 @@ endif; ?>
 		<form>
 			<div class="timeman-entity-config-block">
 				<label class="period-setting-label"><?php echo htmlspecialcharsbx(Loc::getMessage('JS_CORE_TM')); ?></label>
-				<select name="UF_TIMEMAN" class="timeman-grid-settings-select"
-					<? if (!$arResult['canManageSettings']): ?> disabled="disabled"<? endif; ?>>
-					<option value=""><?php echo htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_INHERIT')); ?></option>
-					<option value="Y"><?php echo htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_ON')); ?></option>
-					<option value="N"><?php echo htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_OFF')); ?></option>
-				</select>
+				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown">
+					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+					<select name="UF_TIMEMAN" class="ui-ctl-element"
+						<? if (!$arResult['canManageSettings']): ?> disabled="disabled"<? endif; ?>>
+						<option value=""><?php echo htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_INHERIT')); ?></option>
+						<option value="Y"><?php echo htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_ON')); ?></option>
+						<option value="N"><?php echo htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_OFF')); ?></option>
+					</select>
+				</div>
 			</div>
 			<div class="timeman-entity-config-block" data-role="tm-settings-day-report">
 				<label class="period-setting-label"><?php echo htmlspecialcharsbx(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_HINT_REPORT_REQ')); ?></label>
-				<select name="UF_TM_REPORT_REQ" class="timeman-grid-settings-select"
-					<? if (!$arResult['canManageSettings']): ?> disabled="disabled"<? endif; ?>>
-					<option value=""><?php echo htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_INHERIT')); ?></option>
-					<option value="Y"><?php echo htmlspecialcharsbx(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_HINT_REPORT_REQ_Y')); ?></option>
-					<option value="N"><?php echo htmlspecialcharsbx(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_HINT_REPORT_REQ_N')); ?></option>
-					<option value="A"><?php echo htmlspecialcharsbx(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_HINT_REPORT_REQ_A')); ?></option>
-				</select>
+				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown">
+					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+					<select name="UF_TM_REPORT_REQ" class="ui-ctl-element"
+						<? if (!$arResult['canManageSettings']): ?> disabled="disabled"<? endif; ?>>
+						<option value=""><?php echo htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_INHERIT')); ?></option>
+						<option value="Y"><?php echo htmlspecialcharsbx(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_HINT_REPORT_REQ_Y')); ?></option>
+						<option value="N"><?php echo htmlspecialcharsbx(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_HINT_REPORT_REQ_N')); ?></option>
+						<option value="A"><?php echo htmlspecialcharsbx(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_HINT_REPORT_REQ_A')); ?></option>
+					</select>
+				</div>
 			</div>
 			<div class="tm-settings-popup-violations-wrapper" data-role="schedule-personal-violations">
 				<label class="period-setting-label"><?= htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_VIOLATION_CONTROL_RECORD_TITLE')); ?></label>

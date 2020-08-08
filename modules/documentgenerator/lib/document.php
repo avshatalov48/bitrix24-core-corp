@@ -29,15 +29,14 @@ use Bitrix\Main\Web\Uri;
  * @property-read int IMAGE_ID
  * @property-read int PDF_ID
  */
-final class Document
+class Document
 {
-	const THIS_PLACEHOLDER = 'this';
-	const STAMPS_ENABLED_PLACEHOLDER = 'stampsEnabled';
-	const IMAGE = 'jpg';
-	const PDF = 'pdf';
+	public const THIS_PLACEHOLDER = 'this';
+	public const STAMPS_ENABLED_PLACEHOLDER = 'stampsEnabled';
+	public const IMAGE = 'jpg';
+	public const PDF = 'pdf';
 
-	const ERROR_NO_TRANSFORMER_MODULE = 'ERROR_NO_TRANSFORMER_MODULE';
-	const ERROR_TRANSFORMATION = 'ERROR_TRANSFORMATION';
+	public const ERROR_NO_TRANSFORMER_MODULE = 'ERROR_NO_TRANSFORMER_MODULE';
 
 	/** @var array Current field descriptions */
 	protected $fields = [];
@@ -80,25 +79,31 @@ final class Document
 	}
 
 	/**
+	 * Creates new document from template on specific value.
+	 * Template should have specified sourceType.
+	 *
 	 * @param Template $template
 	 * @param mixed $value
 	 * @param array $data
-	 * @return Document|false
+	 * @return Document|null
 	 */
-	public static function createByTemplate(Template $template, $value, array $data = [])
+	public static function createByTemplate(Template $template, $value, array $data = []): ?Document
 	{
 		$fields = $template->getFields();
 		$body = $template->getBody();
 		if(!$body && $data['FILE_ID'] > 0)
 		{
-			$body = new Docx(FileTable::getContent($data['FILE_ID']));
+			$bodyClassName = $template->getBodyClassName();
+			$body = new $bodyClassName(FileTable::getContent($data['FILE_ID']));
 		}
 		if(!$body)
 		{
-			return false;
+			return null;
 		}
 
-		$document = new static($body, $fields, $data, $value);
+		$documentClassName = Driver::getInstance()->getDocumentClassName();
+		/** @var static $document */
+		$document = new $documentClassName($body, $fields, $data, $value);
 		$document->setTemplate($template);
 		if($template->WITH_STAMPS === 'Y')
 		{
@@ -109,37 +114,41 @@ final class Document
 	}
 
 	/**
+	 * Loads document from database by id
+	 *
 	 * @param $documentId
-	 * @return static|false
+	 * @return Document|null
 	 */
-	public static function loadById($documentId)
+	public static function loadById(int $documentId): ?Document
 	{
-		if($documentId > 0)
+		if($documentId <= 0)
 		{
-			$documentData = DocumentTable::getById($documentId)->fetch();
-			if($documentData)
+			return null;
+		}
+		$documentData = DocumentTable::getById($documentId)->fetch();
+		if($documentData)
+		{
+			$template = Template::loadById($documentData['TEMPLATE_ID']);
+			if($template)
 			{
-				$template = Template::loadById($documentData['TEMPLATE_ID']);
-				if($template)
-				{
-					$template->setSourceType($documentData['PROVIDER']);
-					$document = static::createByTemplate($template, $documentData['VALUE'], $documentData);
-				}
-				else
-				{
-					$body = new Docx(FileTable::getContent($documentData['FILE_ID']));
-					$document = new static($body, [], $documentData, $documentData['VALUE']);
-				}
-				if(is_array($documentData['VALUES']))
-				{
-					$document->setValues($documentData['VALUES']);
-				}
-
-				return $document;
+				$template->setSourceType($documentData['PROVIDER']);
+				$document = static::createByTemplate($template, $documentData['VALUE'], $documentData);
 			}
+			else
+			{
+				$body = new Docx(FileTable::getContent($documentData['FILE_ID']));
+				$documentClassName = Driver::getInstance()->getDocumentClassName();
+				$document = new $documentClassName($body, [], $documentData, $documentData['VALUE']);
+			}
+			if(is_array($documentData['VALUES']))
+			{
+				$document->setValues($documentData['VALUES']);
+			}
+
+			return $document;
 		}
 
-		return false;
+		return null;
 	}
 
 	public function __get($name)
@@ -156,9 +165,10 @@ final class Document
 	 * @param int $pdfId
 	 * @return Document
 	 */
-	public function setPdfId($pdfId)
+	public function setPdfId(int $pdfId): Document
 	{
-		$this->data['PDF_ID'] = (int)$pdfId;
+		$this->data['PDF_ID'] = $pdfId;
+
 		return $this;
 	}
 
@@ -166,9 +176,10 @@ final class Document
 	 * @param int $imageId
 	 * @return Document
 	 */
-	public function setImageId($imageId)
+	public function setImageId(int $imageId): Document
 	{
-		$this->data['IMAGE_ID'] = (int)$imageId;
+		$this->data['IMAGE_ID'] = $imageId;
+
 		return $this;
 	}
 
@@ -178,7 +189,7 @@ final class Document
 	 * @param array $values
 	 * @return $this
 	 */
-	public function setValues(array $values)
+	public function setValues(array $values): Document
 	{
 		foreach($values as $placeholder => $value)
 		{
@@ -207,12 +218,15 @@ final class Document
 	 * @param array $fields
 	 * @return $this
 	 */
-	public function setFields(array $fields)
+	public function setFields(array $fields): Document
 	{
 		foreach($fields as $name => $field)
 		{
 			// do not let change these fields
-			if($name == Template::DOCUMENT_PROVIDER_PLACEHOLDER || $name == Template::MAIN_PROVIDER_PLACEHOLDER)
+			if(
+				$name === Template::DOCUMENT_PROVIDER_PLACEHOLDER
+				|| $name === Template::MAIN_PROVIDER_PLACEHOLDER
+			)
 			{
 				continue;
 			}
@@ -229,9 +243,9 @@ final class Document
 	 * @param bool $requiredOnly
 	 * @return array
 	 */
-	public function checkFields($requiredOnly = true)
+	public function checkFields(bool $requiredOnly = true): array
 	{
-		$requiredFields = [];
+		$emptyFields = [];
 
 		if($this->result->isSuccess())
 		{
@@ -245,42 +259,56 @@ final class Document
 			$values = $this->getValues($fieldNames);
 			foreach($fieldNames as $placeholder)
 			{
-				if(isset($this->fields[$placeholder]) && isset($this->fields[$placeholder]['REQUIRED']) && $this->fields[$placeholder]['REQUIRED'] == 'Y' && empty($values[$placeholder]))
+				if(
+					isset($this->fields[$placeholder]['REQUIRED'])
+					&& $this->fields[$placeholder]['REQUIRED'] === 'Y'
+					&& empty($values[$placeholder])
+				)
 				{
-					$requiredFields[$placeholder] = $this->fields[$placeholder];
+					$emptyFields[$placeholder] = $this->fields[$placeholder];
 				}
-				elseif(empty($values[$placeholder]) && !isset($this->getExternalValues()[$placeholder]) && !$requiredOnly)
+				elseif(
+					!$requiredOnly
+					&& empty($values[$placeholder])
+					&& !isset($this->getExternalValues()[$placeholder])
+				)
 				{
-					$requiredFields[$placeholder] = [];
+					$emptyFields[$placeholder] = [];
 				}
 			}
 
 			foreach($this->selectFields as $placeholder => $field)
 			{
-				if($field['VALUE'] && is_array($field['VALUE']) && DataProviderManager::getInstance()->getValueFromList($field['VALUE']) == $field['VALUE'])
+				if(
+					$field['VALUE']
+					&& is_array($field['VALUE'])
+					&& DataProviderManager::getInstance()->getValueFromList($field['VALUE']) === $field['VALUE']
+				)
 				{
-					$requiredFields[$placeholder] = $field;
+					$emptyFields[$placeholder] = $field;
 				}
 			}
 		}
 
-		return $requiredFields;
+		return $emptyFields;
 	}
 
 	/**
 	 * @return Template|null
 	 */
-	public function getTemplate()
+	public function getTemplate(): ?Template
 	{
 		return $this->template;
 	}
 
 	/**
+	 *
+	 *
 	 * @param bool $sendToTransformation
 	 * @param bool $skipTransformationError
 	 * @return Result
 	 */
-	public function getFile($sendToTransformation = true, $skipTransformationError = false)
+	public function getFile(bool $sendToTransformation = true, bool $skipTransformationError = false): Result
 	{
 		if(!$this->result->isSuccess())
 		{
@@ -378,7 +406,11 @@ final class Document
 	 * @param bool $skipTransformationError
 	 * @return Result
 	 */
-	public function update(array $values, $sendToTransformation = true, $skipTransformationError = false)
+	public function update(
+		array $values,
+		bool $sendToTransformation = true,
+		bool $skipTransformationError = false
+	): Result
 	{
 		if($this->ID > 0)
 		{
@@ -387,20 +419,17 @@ final class Document
 				Template::DOCUMENT_PROVIDER_PLACEHOLDER => $this->values[Template::DOCUMENT_PROVIDER_PLACEHOLDER],
 			];
 			$this->selectFields = [];
+
 			return $this->setValues($values)->process()->save()->getFile($sendToTransformation, $skipTransformationError);
 		}
-		else
-		{
-			$this->result->addError(new Error('Cant update not saved document'));
-		}
 
-		return $this->result;
+		return $this->result->addError(new Error('Cant update not saved document'));
 	}
 
 	/**
 	 * @return string
 	 */
-	public function getTitle()
+	public function getTitle(): string
 	{
 		if(isset($this->externalValues['DocumentTitle']))
 		{
@@ -428,7 +457,7 @@ final class Document
 	 * @param bool $preview
 	 * @return string
 	 */
-	public function getNumber($preview = true)
+	public function getNumber(bool $preview = true): string
 	{
 		if(isset($this->externalValues['DocumentNumber']))
 		{
@@ -470,11 +499,7 @@ final class Document
 		return $number;
 	}
 
-	/**
-	 * @return DateTime
-	 * @throws \Bitrix\Main\ObjectException
-	 */
-	public function getCreateTime()
+	public function getCreateTime(): DateTime
 	{
 		if(!isset($this->data['CREATE_TIME']) || empty($this->data['CREATE_TIME']))
 		{
@@ -484,11 +509,7 @@ final class Document
 		return $this->data['CREATE_TIME'];
 	}
 
-	/**
-	 * @return DateTime
-	 * @throws \Bitrix\Main\ObjectException
-	 */
-	public function getUpdateTime()
+	public function getUpdateTime(): DateTime
 	{
 		if(!isset($this->data['UPDATE_TIME']) || empty($this->data['UPDATE_TIME']))
 		{
@@ -499,39 +520,43 @@ final class Document
 	}
 
 	/**
-	 * @return DataProvider|Nameable|false
+	 * @return DataProvider|Nameable|null
 	 */
-	public function getProvider()
+	public function getProvider(): ?DataProvider
 	{
 		if(isset($this->fields[Template::MAIN_PROVIDER_PLACEHOLDER]))
 		{
 			$mainField = $this->fields[Template::MAIN_PROVIDER_PLACEHOLDER];
-			return DataProviderManager::getInstance()->createDataProvider($mainField, $this->getValue(Template::MAIN_PROVIDER_PLACEHOLDER));
+
+			return DataProviderManager::getInstance()->createDataProvider(
+				$mainField,
+				$this->getValue(Template::MAIN_PROVIDER_PLACEHOLDER)
+			);
 		}
-		elseif($this->data['PROVIDER'] && $this->data['VALUE'])
+
+		if($this->data['PROVIDER'] && $this->data['VALUE'])
 		{
 			return DataProviderManager::getInstance()->getDataProvider($this->data['PROVIDER'], $this->data['VALUE']);
 		}
-		else
-		{
-			return false;
-		}
+
+		return null;
 	}
 
 	/**
 	 * @param bool $status
 	 * @return $this
 	 */
-	public function enableStamps($status = true)
+	public function enableStamps(bool $status = true): Document
 	{
 		$this->setValues([static::STAMPS_ENABLED_PLACEHOLDER => ($status === true)]);
+
 		return $this;
 	}
 
 	/**
 	 * @return bool
 	 */
-	public function isStampsEnabled()
+	public function isStampsEnabled(): bool
 	{
 		return ($this->getValue(static::STAMPS_ENABLED_PLACEHOLDER) === true);
 	}
@@ -539,7 +564,7 @@ final class Document
 	/**
 	 * @return string
 	 */
-	public function getCreationMethod()
+	public function getCreationMethod(): ?string
 	{
 		return $this->getValue(CreationMethod::CREATION_METHOD_PLACEHOLDER);
 	}
@@ -552,7 +577,11 @@ final class Document
 	 * @param bool $groupsAsArrays
 	 * @return array
 	 */
-	public function getFields(array $fieldNames = [], $isConvertValuesToString = false, $groupsAsArrays = false)
+	public function getFields(
+		array $fieldNames = [],
+		bool $isConvertValuesToString = false,
+		bool $groupsAsArrays = false
+	): array
 	{
 		DataProviderManager::getInstance()->setContext(Context::createFromDocument($this));
 		Loc::loadLanguageFile(__FILE__);
@@ -585,7 +614,10 @@ final class Document
 				$value = '';
 			}
 			$valueParts = explode('.', $value);
-			if($valueParts[0] && in_array($valueParts[0], $this->fieldNames) || isset($fields[$placeholder]))
+			if(
+				isset($fields[$placeholder])
+				|| ($valueParts[0] && in_array($valueParts[0], $this->fieldNames, true))
+			)
 			{
 				continue;
 			}
@@ -631,7 +663,7 @@ final class Document
 	/**
 	 * @return int
 	 */
-	public function getUserId()
+	public function getUserId(): ?int
 	{
 		$userId = $this->userId;
 		if($userId === null)
@@ -646,19 +678,20 @@ final class Document
 	 * @param int $userId
 	 * @return $this
 	 */
-	public function setUserId($userId)
+	public function setUserId(int $userId): Document
 	{
 		$userId = (int)$userId;
 		$this->userId = $userId;
+
 		return $this;
 	}
 
 	/**
 	 * @param mixed $value
 	 * @param bool $isConvertToString
-	 * @return string
+	 * @return string|object|Value
 	 */
-	protected function normalizeValue($value, $isConvertToString = false)
+	protected function normalizeValue($value, bool $isConvertToString = false)
 	{
 		$result = $value;
 
@@ -682,11 +715,11 @@ final class Document
 	 * @param string $value
 	 * @return string
 	 */
-	protected function getFieldGroup($value)
+	protected function getFieldGroup($value): string
 	{
 		$group = Loc::getMessage('DOCUMENT_GROUP_NAME');
 
-		if(empty($value) || strpos($value, 'this.SOURCE.') !== 0)
+		if(empty($value) || mb_strpos($value, 'this.SOURCE.') !== 0)
 		{
 			return $group;
 		}
@@ -719,7 +752,7 @@ final class Document
 	 *
 	 * @return $this
 	 */
-	protected function process()
+	protected function process(): Document
 	{
 		// here we get actual number
 		$this->getNumber(false);
@@ -727,16 +760,19 @@ final class Document
 		if(!$this->template)
 		{
 			$this->result->addError(new Error('Cant process document without template'));
+
 			return $this;
 		}
 		if($this->template->isDeleted())
 		{
 			$this->result->addError(new Error('Cant process document on deleted template'));
+
 			return $this;
 		}
 		if(!$this->template->getSourceType())
 		{
 			$this->result->addError(new Error('Cant process document on template without sourceType'));
+
 			return $this;
 		}
 		DataProviderManager::getInstance()->setContext(Context::createFromDocument($this));
@@ -780,7 +816,7 @@ final class Document
 	 * @return $this
 	 * @throws \Exception
 	 */
-	protected function save()
+	protected function save(): Document
 	{
 		if($this->result->isSuccess())
 		{
@@ -841,7 +877,7 @@ final class Document
 		return $this;
 	}
 
-	protected function actualizeFields()
+	protected function actualizeFields(): void
 	{
 		$provider = $this->getProvider();
 		if(!$provider)
@@ -871,7 +907,7 @@ final class Document
 	/**
 	 * Link providers by their names and values.
 	 */
-	protected function resolveProviders()
+	protected function resolveProviders(): void
 	{
 		$this->actualizeFields();
 		foreach($this->fields as $name => $field)
@@ -884,7 +920,7 @@ final class Document
 	 * @param array $field Field description.
 	 * @param string $name
 	 */
-	protected function resolveProvider(array $field, $name)
+	protected function resolveProvider(array $field, string $name): void
 	{
 		if(!$field['PROVIDER'])
 		{
@@ -955,7 +991,7 @@ final class Document
 	 * @param array $fieldNames
 	 * @return array
 	 */
-	protected function getValues(array $fieldNames)
+	protected function getValues(array $fieldNames): array
 	{
 		$values = [];
 		foreach($fieldNames as $fieldName)
@@ -1021,10 +1057,7 @@ final class Document
 		{
 			$value = $externalValues[$name];
 			$value = $this->resolveValue($value);
-			if(isset($this->fields[$name]))
-			{
-				$value = DataProviderManager::getInstance()->prepareValue($value, $this->fields[$name]);
-			}
+			$value = DataProviderManager::getInstance()->prepareValue($value, $this->fields[$name]);
 		}
 
 		return $value;
@@ -1053,7 +1086,7 @@ final class Document
 		}
 		elseif(is_callable($value))
 		{
-			$value = call_user_func($value);
+			$value = $value();
 		}
 
 		return $value;
@@ -1069,7 +1102,7 @@ final class Document
 	 * @param string $name
 	 * @param DataProvider|null $dataProvider
 	 * @param string $fullChain
-	 * @return string
+	 * @return mixed
 	 */
 	protected function getProviderValue($name, DataProvider $dataProvider = null, $fullChain = '')
 	{
@@ -1102,11 +1135,14 @@ final class Document
 				{
 					return $value;
 				}
-				else
-				{
-					// initialize child data provider manually
-					$value = DataProviderManager::getInstance()->createDataProvider($dataProvider->getFields()[$providerName], $value, $dataProvider, $providerName);
-				}
+
+				// initialize child data provider manually
+				$value = DataProviderManager::getInstance()->createDataProvider(
+					$dataProvider->getFields()[$providerName],
+					$value,
+					$dataProvider,
+					$providerName
+				);
 			}
 			array_shift($nameParts);
 			// combine valueName from all parts but first
@@ -1118,19 +1154,31 @@ final class Document
 				// we need to return $name as it is.
 				// In Body there will be a cycle with this $name as placeholder.
 				$providerFields = $value->getFields();
-				if(!in_array($valueName, $providerFields, true) && $valueName != ArrayDataProvider::NUMBER_PLACEHOLDER)
+				if(
+					$valueName !== ArrayDataProvider::NUMBER_PLACEHOLDER
+					&& !in_array($valueName, $providerFields, true)
+				)
 				{
 					return $name;
 				}
 			}
 			// if there is PROVIDER in field description then we need to initialize new provider of this type on $value.
-			if(isset($this->fields[$providerName]) && isset($this->fields[$providerName]['PROVIDER']))
+			if(isset($this->fields[$providerName]['PROVIDER']))
 			{
-				$value = DataProviderManager::getInstance()->createDataProvider($this->fields[$providerName], $value, $dataProvider, $providerName);
+				$value = DataProviderManager::getInstance()->createDataProvider(
+					$this->fields[$providerName],
+					$value,
+					$dataProvider,
+					$providerName
+				);
 			}
 			if($value instanceof DataProvider)
 			{
-				if($this->isCheckAccess && $value->isLoaded() && !DataProviderManager::getInstance()->checkDataProviderAccess($value))
+				if(
+					$this->isCheckAccess
+					&& $value->isLoaded()
+					&& !DataProviderManager::getInstance()->checkDataProviderAccess($value)
+				)
 				{
 					$value = null;
 				}
@@ -1154,9 +1202,14 @@ final class Document
 	 * @param DataProvider $dataProvider
 	 * @param $placeholder
 	 * @param $providerName
-	 * @return bool
+	 * @return mixed
 	 */
-	protected function handleMultipleProviderValue(array $value, DataProvider $dataProvider, $placeholder, $providerName)
+	protected function handleMultipleProviderValue(
+		array $value,
+		DataProvider $dataProvider,
+		string $placeholder,
+		string $providerName
+	)
 	{
 		$fullPlaceholder = $placeholder;
 		$placeholderParts = explode('.', $placeholder);
@@ -1167,12 +1220,12 @@ final class Document
 			{
 				continue;
 			}
-			if(strlen($placeholder) > 0)
+			if($placeholder !== '')
 			{
 				$placeholder .= '.';
 			}
 			$placeholder .= $part;
-			if($part == $providerName)
+			if($part === $providerName)
 			{
 				break;
 			}
@@ -1199,7 +1252,7 @@ final class Document
 			$group = [];
 			foreach($this->fields as $field)
 			{
-				if(is_string($field['VALUE']) && strpos($field['VALUE'], $fullPlaceholder) !== false)
+				if(is_string($field['VALUE']) && mb_strpos($field['VALUE'], $fullPlaceholder) !== false)
 				{
 					$group = $field['GROUP'];
 					break;
@@ -1231,7 +1284,7 @@ final class Document
 	 * @param array $fieldNames
 	 * @return $this
 	 */
-	public function excludeFields(array $fieldNames)
+	public function excludeFields(array $fieldNames): Document
 	{
 		$this->body->setExcludedPlaceholders($fieldNames);
 
@@ -1242,7 +1295,7 @@ final class Document
 	 * @param Storage $storage
 	 * @return $this
 	 */
-	public function setStorage(Storage $storage)
+	public function setStorage(Storage $storage): Document
 	{
 		$this->body->setStorage($storage);
 
@@ -1253,7 +1306,7 @@ final class Document
 	 * @param Template $template
 	 * @return $this
 	 */
-	public function setTemplate(Template $template)
+	public function setTemplate(Template $template): Document
 	{
 		$this->template = $template;
 
@@ -1267,7 +1320,7 @@ final class Document
 	 * @param bool $unique
 	 * @return array
 	 */
-	protected function getExternalValues($unique = false)
+	protected function getExternalValues(bool $unique = false): array
 	{
 		$result = $this->externalValues;
 		if($unique)
@@ -1296,7 +1349,7 @@ final class Document
 	 * @param $userId
 	 * @return boolean
 	 */
-	public function hasAccess($userId = null)
+	public function hasAccess(int $userId = null): bool
 	{
 		if($userId === null)
 		{
@@ -1313,28 +1366,20 @@ final class Document
 	}
 
 	/**
-	 * @return TransformerManager|false
+	 * @return TransformerManager
 	 * @throws \Bitrix\Main\LoaderException
 	 */
-	protected function getTransformer()
+	protected function getTransformer(): ?TransformerManager
 	{
-		if($this->transformer === null)
+		if($this->transformer === null && Loader::includeModule('transformer'))
 		{
-			$this->transformer = false;
-			if(Loader::includeModule('transformer'))
-			{
-				$this->transformer = new TransformerManager($this);
-			}
+			$this->transformer = new TransformerManager($this);
 		}
 
 		return $this->transformer;
 	}
 
-	/**
-	 * @return int
-	 * @throws \Bitrix\Main\LoaderException
-	 */
-	protected function getPullTag()
+	protected function getPullTag(): ?string
 	{
 		$transformer = $this->getTransformer();
 		if($transformer)
@@ -1342,14 +1387,10 @@ final class Document
 			return $transformer->getPullTag();
 		}
 
-		return false;
+		return null;
 	}
 
-	/**
-	 * @return Result
-	 * @throws \Bitrix\Main\LoaderException
-	 */
-	protected function transform()
+	protected function transform(): Result
 	{
 		$transformer = $this->getTransformer();
 		if($transformer)
@@ -1360,38 +1401,22 @@ final class Document
 		return (new Result())->addError(new Error(Loc::getMessage('DOCUMENT_TRANSOFMER_MODULE_ERROR'), static::ERROR_NO_TRANSFORMER_MODULE));
 	}
 
-	/**
-	 * @param bool $absolute
-	 * @return \Bitrix\Main\Web\Uri
-	 */
-	public function getImageUrl($absolute = false)
+	public function getImageUrl(bool $absolute = false): Uri
 	{
 		return new ContentUri(UrlManager::getInstance()->create('documentgenerator.api.document.getimage', ['id' => $this->ID, 'ts' => $this->getUpdateTime()->getTimestamp()], $absolute)->getUri());
 	}
 
-	/**
-	 * @param bool $absolute
-	 * @return \Bitrix\Main\Web\Uri
-	 */
-	public function getPdfUrl($absolute = false)
+	public function getPdfUrl(bool $absolute = false): Uri
 	{
 		return new ContentUri(UrlManager::getInstance()->create('documentgenerator.api.document.getpdf', ['id' => $this->ID, 'ts' => $this->getUpdateTime()->getTimestamp()], $absolute)->getUri());
 	}
 
-	/**
-	 * @param bool $absolute
-	 * @return \Bitrix\Main\Web\Uri
-	 */
-	public function getPrintUrl($absolute = false)
+	public function getPrintUrl(bool $absolute = false): Uri
 	{
 		return new ContentUri(UrlManager::getInstance()->create('documentgenerator.api.document.showpdf', ['id' => $this->ID, 'print' => 'y', 'ts' => $this->getUpdateTime()->getTimestamp()], $absolute)->getUri());
 	}
 
-	/**
-	 * @param bool $absolute
-	 * @return \Bitrix\Main\Web\Uri
-	 */
-	public function getDownloadUrl($absolute = false)
+	public function getDownloadUrl(bool $absolute = false): Uri
 	{
 		return new ContentUri(UrlManager::getInstance()->create('documentgenerator.api.document.getfile', ['id' => $this->ID, 'ts' => $this->getUpdateTime()->getTimestamp()], $absolute)->getUri());
 	}
@@ -1400,7 +1425,7 @@ final class Document
 	 * @param bool $status
 	 * @return Result
 	 */
-	public function enablePublicUrl($status = true)
+	public function enablePublicUrl(bool $status = true): Result
 	{
 		$result = new Result();
 
@@ -1420,12 +1445,9 @@ final class Document
 				]);
 			}
 		}
-		else
+		elseif($link)
 		{
-			if($link)
-			{
-				$result = ExternalLinkTable::deleteByDocumentId($this->ID);
-			}
+			$result = ExternalLinkTable::deleteByDocumentId($this->ID);
 		}
 
 		return $result;
@@ -1435,12 +1457,12 @@ final class Document
 	 * @param bool $absolute
 	 * @return Uri|false
 	 */
-	public function getPublicUrl($absolute = true)
+	public function getPublicUrl(bool $absolute = true): ?Uri
 	{
 		$link = ExternalLinkTable::getByDocumentId($this->ID);
 		if(!$link)
 		{
-			return false;
+			return null;
 		}
 
 		if($link)
@@ -1453,13 +1475,13 @@ final class Document
 			return new Uri($link);
 		}
 
-		return false;
+		return null;
 	}
 
 	/**
 	 * @return array
 	 */
-	protected function getFieldNames()
+	protected function getFieldNames(): array
 	{
 		$fieldNames = [];
 		foreach($this->getDefaultFields() as $placeholder => $field)
@@ -1483,10 +1505,10 @@ final class Document
 	}
 
 	/**
-	 * @param bool $docx
+	 * @param bool $isDocxIfNoPdf
 	 * @return int
 	 */
-	public function getEmailDiskFile($docx = false)
+	public function getEmailDiskFile(bool $isDocxIfNoPdf = false): int
 	{
 		if($this->PDF_ID > 0)
 		{
@@ -1496,12 +1518,12 @@ final class Document
 				$storage = new $file['STORAGE_TYPE'];
 				if($storage instanceof Disk)
 				{
-					return $file['STORAGE_WHERE'];
+					return (int) $file['STORAGE_WHERE'];
 				}
 			}
 		}
 
-		if($docx && $this->FILE_ID > 0)
+		if($isDocxIfNoPdf && $this->FILE_ID > 0)
 		{
 			$file = FileTable::getById($this->FILE_ID)->fetch();
 			if($file)
@@ -1509,7 +1531,7 @@ final class Document
 				$storage = new $file['STORAGE_TYPE'];
 				if($storage instanceof Disk)
 				{
-					return $file['STORAGE_WHERE'];
+					return (int) $file['STORAGE_WHERE'];
 				}
 			}
 		}
@@ -1521,7 +1543,7 @@ final class Document
 	 * @param string $extension
 	 * @return string
 	 */
-	public function getFileName($extension = '')
+	public function getFileName(string $extension = ''): string
 	{
 		if($extension === '')
 		{
@@ -1531,6 +1553,8 @@ final class Document
 	}
 
 	/**
+	 * Uploads new externally-formed document
+	 *
 	 * @param Template $template
 	 * @param $value
 	 * @param $title
@@ -1541,7 +1565,15 @@ final class Document
 	 * @return Result
 	 * @throws \Exception
 	 */
-	public static function upload(Template $template, $value, $title, $number, $fileId, $pdfId = null, $imageId = null)
+	public static function upload(
+		Template $template,
+		$value,
+		string $title,
+		string $number,
+		int $fileId,
+		int $pdfId = null,
+		int $imageId = null
+	): Result
 	{
 		$result = new Result();
 
@@ -1588,28 +1620,28 @@ final class Document
 		{
 			$document = static::loadById($result->getId());
 			EventManager::getInstance()->send(new Event(Driver::MODULE_ID, 'onCreateDocument', ['document' => $document]));
-			return $document->getFile(true, true);
+
+			$result = $document->getFile(true, true);
 		}
-		else
-		{
-			return $result;
-		}
+
+		return $result;
 	}
 
 	/**
 	 * @param bool $isCheckAccess
 	 * @return Document
 	 */
-	public function setIsCheckAccess($isCheckAccess)
+	public function setIsCheckAccess(bool $isCheckAccess): Document
 	{
 		$this->isCheckAccess = $isCheckAccess;
+
 		return $this;
 	}
 
 	/**
 	 * @return bool
 	 */
-	public function getIsCheckAccess()
+	public function getIsCheckAccess(): bool
 	{
 		return ($this->isCheckAccess === true);
 	}
@@ -1617,7 +1649,7 @@ final class Document
 	/**
 	 * @return array
 	 */
-	protected function getDefaultFields()
+	protected function getDefaultFields(): array
 	{
 		return [
 			'DocumentTitle' => [

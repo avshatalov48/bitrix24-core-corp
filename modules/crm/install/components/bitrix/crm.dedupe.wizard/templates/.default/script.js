@@ -39,6 +39,7 @@ if(typeof(BX.Crm.DedupeWizard) === "undefined")
 			this._contextId = BX.prop.getString(this._settings, "contextId", "");
 			this._typeInfos = BX.prop.getObject(this._settings, "typeInfos", {});
 			this._config = BX.prop.getObject(this._settings, "config", {});
+			this._mergeMode = 'auto';
 			
 			this._steps = BX.prop.getObject(this._settings, "steps", {});
 			for(var key in this._steps)
@@ -188,6 +189,25 @@ if(typeof(BX.Crm.DedupeWizard) === "undefined")
 		getUnResolvedItemCount: function()
 		{
 			return(this._conflictedItemCount - this._resolvedItemCount);
+		},
+		setMergeMode: function(mergeMode)
+		{
+			this._mergeMode = mergeMode;
+			for (var i in this._steps)
+			{
+				var step = this._steps[i];
+				var node = BX(step.getId());
+				if (node)
+				{
+					node.classList.remove('crm-dedupe-wizard-container-merge-auto');
+					node.classList.remove('crm-dedupe-wizard-container-merge-manual');
+					node.classList.add('crm-dedupe-wizard-container-merge-' + mergeMode);
+				}
+			}
+		},
+		getMergeMode: function()
+		{
+			return this._mergeMode;
 		},
 		openDedupeList: function()
 		{
@@ -531,7 +551,8 @@ if(typeof(BX.Crm.DedupeWizardMerging) === "undefined")
 		this._mergedItemCount = 0;
 		this._conflictedItemCount = 0;
 
-		this._mergeStartHandler = BX.delegate(this.onMergeStartButtonClick, this);
+		this._automaticMergeStartHandler = BX.delegate(this.onAutomaticMergeStartButtonClick, this);
+		this._manualMergeStartHandler = BX.delegate(this.onManualMergeStartButtonClick, this);
 	};
 	BX.extend(BX.Crm.DedupeWizardMerging, BX.Crm.DedupeWizardStep);
 	/*
@@ -556,17 +577,38 @@ if(typeof(BX.Crm.DedupeWizardMerging) === "undefined")
 	{
 		this.getTitleWrapper().innerHTML = this.getMessage("duplicatesFound").replace("#COUNT#", this._totalEntityCount);
 		this.getSubtitleWrapper().innerHTML = this.getMessage("matchesFound").replace("#COUNT#", this._totalItemCount);
-		var buttonBox = document.body.querySelector('.crm-dedupe-wizard-start-control-box');
-		var button = BX(BX.prop.getString(this._settings, "buttonId"));
+		var buttonBox = BX(this.getId()).querySelector('.crm-dedupe-wizard-start-control-box');
+		var autoMergeButton = BX(BX.prop.getString(this._settings, "buttonId"));
+		var manualMergeButton = BX(BX.prop.getString(this._settings, "alternateButtonId"));
 		var icon = document.body.querySelector('.crm-dedupe-wizard-start-icon-merging');
 
-		if(button)
+		if(autoMergeButton)
 		{
 			buttonBox.classList.add('crm-dedupe-wizard-start-control-box-default-state');
-			BX.bind(button, "click", this._mergeStartHandler);
-			BX.bind(button, "click", function() {
+			BX.bind(autoMergeButton, "click", this._automaticMergeStartHandler);
+			BX.bind(autoMergeButton, "click", function() {
 				buttonBox.classList.remove('crm-dedupe-wizard-start-control-box-default-state');
-				button.style.display = 'none';
+				buttonBox.classList.remove('crm-dedupe-wizard-start-control-box-ready-to-merge-state');
+				autoMergeButton.style.display = 'none';
+
+				if(manualMergeButton)
+					manualMergeButton.style.display = 'none';
+
+				icon.classList.add('crm-dedupe-wizard-start-icon-refresh-repeat-animation');
+			});
+		}
+
+		if(manualMergeButton)
+		{
+			BX.bind(manualMergeButton, "click", this._manualMergeStartHandler);
+			BX.bind(manualMergeButton, "click", function() {
+				buttonBox.classList.remove('crm-dedupe-wizard-start-control-box-default-state');
+				buttonBox.classList.remove('crm-dedupe-wizard-start-control-box-ready-to-merge-state');
+				manualMergeButton.style.display = 'none';
+
+				if(autoMergeButton)
+					autoMergeButton.style.display = 'none';
+
 				icon.classList.add('crm-dedupe-wizard-start-icon-refresh-repeat-animation');
 			});
 		}
@@ -588,7 +630,8 @@ if(typeof(BX.Crm.DedupeWizardMerging) === "undefined")
 				{
 					entityTypeName: BX.CrmEntityType.resolveName(this._wizard.getEntityTypeId()),
 					types: selectedTypeNames,
-					scope: currentScope
+					scope: currentScope,
+					mode: this._wizard.getMergeMode()
 				}
 		}).then(
 			function(response)
@@ -651,10 +694,19 @@ if(typeof(BX.Crm.DedupeWizardMerging) === "undefined")
 			}.bind(this)
 		);
 	};
-	BX.Crm.DedupeWizardMerging.prototype.onMergeStartButtonClick = function(e)
+	BX.Crm.DedupeWizardMerging.prototype.onAutomaticMergeStartButtonClick = function(e)
 	{
 		this._currentItemIndex = 0;
 
+		this._wizard.setMergeMode('auto');
+		this.prepareProgressBar();
+		this.merge();
+	};
+	BX.Crm.DedupeWizardMerging.prototype.onManualMergeStartButtonClick = function(e)
+	{
+		this._currentItemIndex = 0;
+
+		this._wizard.setMergeMode('manual');
 		this.prepareProgressBar();
 		this.merge();
 	};
@@ -752,6 +804,10 @@ if(typeof(BX.Crm.DedupeWizardConflictResolving) === "undefined")
 		{
 			BX.bind(listButtonId, "click", this.onListButtonClick.bind(this));
 		}
+		if (this._wizard.getMergeMode() == 'manual')
+		{
+			this._buttonClickHandler();
+		}
 	};
 	BX.Crm.DedupeWizardConflictResolving.prototype.adjustTitle = function()
 	{
@@ -779,7 +835,7 @@ if(typeof(BX.Crm.DedupeWizardConflictResolving) === "undefined")
 	{
 		var eventName = BX.prop.getString(params, "key", "");
 
-		if(eventName !== "onCrmEntityMergeComplete")
+		if(eventName !== "onCrmEntityMergeComplete" && eventName !== "onCrmEntityMergeSkip")
 		{
 			return;
 		}
@@ -811,6 +867,13 @@ if(typeof(BX.Crm.DedupeWizardConflictResolving) === "undefined")
 			}
 		}
 
+		var skipped = BX.prop.getInteger(value, "skipped", 0);
+		if (skipped > 0)
+		{
+			var total = this._wizard.getTotalEntityCount();
+			this._wizard.setTotalEntityCount(Math.max(total - skipped, 0));
+		}
+
 		if(this._wizard.getUnResolvedItemCount() === 0)
 		{
 			window.setTimeout(function(){ this.end(); }.bind(this),  0);
@@ -823,6 +886,39 @@ if(typeof(BX.Crm.DedupeWizardConflictResolving) === "undefined")
 	BX.Crm.DedupeWizardConflictResolving.create = function(id, settings)
 	{
 		var self = new BX.Crm.DedupeWizardConflictResolving();
+		self.initialize(id, settings);
+		return self;
+	};
+}
+
+if(typeof(BX.Crm.DedupeWizardMergingFinish) === "undefined")
+{
+	BX.Crm.DedupeWizardMergingFinish = function()
+	{
+		BX.Crm.DedupeWizardMergingFinish.superclass.constructor.apply(this);
+	};
+	BX.extend(BX.Crm.DedupeWizardMergingFinish, BX.Crm.DedupeWizardStep);
+
+	BX.Crm.DedupeWizardMergingFinish.prototype.start = function()
+	{
+		BX.Crm.DedupeWizardMergingFinish.superclass.start.apply(this, arguments);
+		this.layout();
+	};
+	BX.Crm.DedupeWizardMergingFinish.prototype.layout = function()
+	{
+		var count = this._wizard.getTotalEntityCount();
+		if (parseInt(count) > 0)
+		{
+			this.getSubtitleWrapper().innerHTML = this.getMessage("duplicatesComplete").replace("#COUNT#", count);
+		}
+		else
+		{
+			this.getSubtitleWrapper().innerHTML = this.getMessage("duplicatesCompleteEmpty");
+		}
+	};
+	BX.Crm.DedupeWizardMergingFinish.create = function(id, settings)
+	{
+		var self = new BX.Crm.DedupeWizardMergingFinish();
 		self.initialize(id, settings);
 		return self;
 	};

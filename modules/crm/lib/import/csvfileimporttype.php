@@ -20,7 +20,7 @@ class CsvFileImportType
 
 	public static function resolveID($name)
 	{
-		$name = strtoupper(strval($name));
+		$name = mb_strtoupper(strval($name));
 		if($name === self::GMAIL_NAME)
 		{
 			return self::GMAIL;

@@ -1,4 +1,8 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+/** @global CUser $USER */
+/** @global CMain $APPLICATION */
+
+use Bitrix\Main\Loader;
 
 $arResult["is_ajax_post"] = (intval($_REQUEST["comment_post_id"]) > 0 ? "Y" : "N");
 $arResult["Post"]["IS_IMPORTANT"] = false;
@@ -10,6 +14,18 @@ if (
 	$arResult["Post"]["IS_IMPORTANT"] = true;
 	unset($arResult["POST_PROPERTIES"]["DATA"]["UF_BLOG_POST_IMPRTNT"]);
 }
+
+$arResult['UF_FILE'] = [];
+if (
+	isset($arResult["POST_PROPERTIES"]["DATA"]["UF_BLOG_POST_FILE"])
+	&& (!empty($arResult["POST_PROPERTIES"]["DATA"]["UF_BLOG_POST_FILE"]["VALUE"]))
+)
+{
+	$arResult['UF_FILE'] = $arResult["POST_PROPERTIES"]["DATA"]['UF_BLOG_POST_FILE'];
+	unset($arResult["POST_PROPERTIES"]["DATA"]['UF_BLOG_POST_FILE']);
+}
+
+$arResult["POST_PROPERTIES"]["SHOW"] = (!empty($arResult["POST_PROPERTIES"]["DATA"]) ? 'Y' : 'N');
 
 $arResult["Post"]["SPERMX"] = $arResult["Post"]["SPERM"];
 if (
@@ -53,5 +69,11 @@ elseif (!empty($arParams["LOG_ID"]))
 		$arResult['TOP_RATING_DATA'] = $ratingData[$arParams["LOG_ID"]];
 	}
 }
+
+$arResult['MOBILE_API_VERSION'] = (
+	Loader::includeModule('mobileapp')
+		? \CMobile::getApiVersion()
+		: intval($APPLICATION->getPageProperty('api_version'))
+);
 
 ?>

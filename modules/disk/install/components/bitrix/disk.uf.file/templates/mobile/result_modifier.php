@@ -5,7 +5,7 @@ if (!\Bitrix\Main\Loader::includeModule('mobileapp'))
 	return;
 }
 
-if (strpos($this->__page, "show") !== 0)
+if (mb_strpos($this->__page, "show") !== 0)
 {
 	return;
 }
@@ -16,9 +16,13 @@ $arParams["SMALL_SIZE"] = array("width" => 75, "height" => 100); // inline rough
 
 $arParams["HTML_SIZE"] = (!!$arParams["HTML_SIZE"] ? $arParams["HTML_SIZE"] : false); // inline from parser
 
-$images = $files = $deletedFiles = array();
+$images = $files = $deletedFiles = [];
 
-$max_dimension = max(array(intval(CMobile::getInstance()->getDevicewidth()), intval(CMobile::getInstance()->getDeviceheight())));
+$arResult['deviceWidth'] = (CMobile::getInstance()->getDevice() ? intval(CMobile::getInstance()->getDevicewidth()) : 1336);
+$arResult['deviceHeight'] = (CMobile::getInstance()->getDevice() ? intval(CMobile::getInstance()->getDeviceheight()) : 768);
+$arResult['devicePixelRatio'] = (CMobile::getInstance()->getDevice() ? intval(CMobile::getInstance()->getPixelRatio()) : 1);
+
+$max_dimension = max([ $arResult['deviceWidth'], $arResult['deviceHeight'] ]);
 if ($max_dimension < 650)
 {
 	$max_dimension = 650;
@@ -39,7 +43,7 @@ foreach ($arResult['FILES'] as $id => $file)
 		&& !empty($arParams['arUserField']['VALUE_INLINE'])
 		&& is_array($arParams['arUserField']['VALUE_INLINE'])
 		&& in_array($file['ID'], $arParams['arUserField']['VALUE_INLINE'])
-	)
+	) // inline in comments
 	{
 		$file['HIDDEN'] = 'Y';
 	}
@@ -49,16 +53,10 @@ foreach ($arResult['FILES'] as $id => $file)
 		$file["PREVIEW_URL"] = str_replace("/bitrix/tools/disk/uf.php", SITE_DIR."mobile/ajax.php", $file["PREVIEW_URL"]);
 	}
 
-	if (isset($file["DOWNLOAD_URL"]))
-	{
-		$file["DOWNLOAD_URL"] = str_replace("/bitrix/tools/disk/uf.php", SITE_DIR."mobile/ajax.php", $file["DOWNLOAD_URL"]);
-		$file["DOWNLOAD_URL"] = $file["DOWNLOAD_URL"].(strpos($file["DOWNLOAD_URL"], "?") === false ? "?" : "&")."mobile_action=disk_uf_view&filename={$file['NAME']}";
-	}
-
 	if (isset($file["PATH"]))
 	{
 		$file["PATH"] = str_replace("/bitrix/tools/disk/uf.php", SITE_DIR."mobile/ajax.php", $file["PATH"]);
-		$file["PATH"] = $file["PATH"].(strpos($file["PATH"], "?") === false ? "?" : "&")."mobile_action=disk_uf_view";
+		$file["PATH"] = $file["PATH"].(mb_strpos($file["PATH"], "?") === false ? "?" : "&")."mobile_action=disk_uf_view";
 	}
 
 	if($file['IS_MARK_DELETED'])
@@ -67,7 +65,7 @@ foreach ($arResult['FILES'] as $id => $file)
 	}
 	elseif (array_key_exists("IMAGE", $file))
 	{
-		$src = $file["PREVIEW_URL"].(strpos($file["PREVIEW_URL"], "?") === false ? "?" : "&")."cache_image=Y&mobile_action=disk_uf_view";
+		$src = $file["PREVIEW_URL"].(mb_strpos($file["PREVIEW_URL"], "?") === false ? "?" : "&")."cache_image=Y&mobile_action=disk_uf_view";
 		$arParams["THUMB_SIZE"]["signature"] = \Bitrix\Disk\Security\ParameterSigner::getImageSignature($file["ID"], $arParams["THUMB_SIZE"]["width"], $arParams["THUMB_SIZE"]["height"]);
 
 		$file["THUMB"] = array(
@@ -236,6 +234,14 @@ foreach ($arResult['FILES'] as $id => $file)
 	}
 	else
 	{
+		$file['NAME_WO_EXTENSION'] = mb_substr($file['NAME'], 0, (mb_strlen($file['NAME']) - mb_strlen($file['EXTENSION']) - 1));
+
+		if (isset($file["DOWNLOAD_URL"]))
+		{
+			$file["DOWNLOAD_URL"] = str_replace("/bitrix/tools/disk/uf.php", SITE_DIR."mobile/ajax.php", $file["DOWNLOAD_URL"]);
+			$file["DOWNLOAD_URL"] = $file["DOWNLOAD_URL"].(mb_strpos($file["DOWNLOAD_URL"], "?") === false ? "?" : "&")."mobile_action=disk_uf_view&filename=".$file['NAME'];
+		}
+
 		$arResult["FILES"][$id] = $files[$id] = $file;
 	}
 }
@@ -245,4 +251,19 @@ if ($this->__page == "show")
 	$arResult['IMAGES'] = $images;
 	$arResult['FILES'] = $files;
 	$arResult['DELETED_FILES'] = $deletedFiles;
+
+	$arResult['IMAGES_COUNT'] = 0;
+	foreach($images as $image)
+	{
+		if (
+			empty($file['HIDDEN'])
+			|| $file['HIDDEN'] != 'Y'
+		)
+		{
+			$arResult['IMAGES_COUNT']++;
+		}
+	}
+
+	$arResult['FILES_LIMIT'] = 3;
+	$arResult['IMAGES_LIMIT'] = intval(floor(($arResult['deviceWidth']/$arResult['devicePixelRatio'] - 34 ) / 58)) * 3;
 }

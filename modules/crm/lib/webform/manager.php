@@ -8,6 +8,7 @@
 namespace Bitrix\Crm\WebForm;
 
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Loader;
 
 class Manager
 {
@@ -145,5 +146,10 @@ class Manager
 	public static function isEmbeddingAvailable()
 	{
 		return Option::get('crm', '~webfrom_embedding_available', 'N') === 'Y';
+	}
+
+	public static function isOrdersAvailable()
+	{
+		return Option::get('crm', '~webform_add_orders', 'N') === 'Y' && Loader::includeModule('salescenter');
 	}
 }

@@ -262,7 +262,7 @@ class CrmOrderConnectorInstagramView extends CBitrixComponent
 
 			foreach ($data as $itemKey => $item)
 			{
-				$specialized[strtoupper($itemKey)] = static::specializeCharsArray($item);
+				$specialized[mb_strtoupper($itemKey)] = static::specializeCharsArray($item);
 			}
 		}
 		else
@@ -362,7 +362,7 @@ class CrmOrderConnectorInstagramView extends CBitrixComponent
 
 		$name = (string)$lines[0];
 		$name = trim((string)preg_replace(static::getPriceRegexp(), '', $name));
-		$name = strlen($name) > 150 ? substr($name, 0, 150).'...' : $name;
+		$name = mb_strlen($name) > 150 ? mb_substr($name, 0, 150).'...' : $name;
 
 		if ($name === '' || !preg_match("/\p{L}+/i", $name))
 		{
@@ -520,7 +520,7 @@ class CrmOrderConnectorInstagramView extends CBitrixComponent
 							$value = ToLower($value);
 							$media[$key] = ToLower((string)$media[$key]);
 
-							if ($value && $media[$key] && strpos($media[$key], $value) !== false)
+							if ($value && $media[$key] && mb_strpos($media[$key], $value) !== false)
 							{
 								$success = true;
 								break;

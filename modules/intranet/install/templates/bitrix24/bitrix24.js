@@ -90,6 +90,15 @@
 		}
 	});
 
+	BX.addCustomEvent("onPullEvent-bitrix24", BX.delegate(function(command,params){
+		if (command == "userLimitNotify")
+		{
+			BX.UI.Notification.Center.notify({
+				content: params.message
+			});
+		}
+	}, this));
+
 	BX.addCustomEvent(window, "onImUpdateCounter", function(counters){
 
 		if (!counters)
@@ -99,18 +108,7 @@
 	});
 
 	BX.addCustomEvent("onCounterDecrement", function(iDecrement) {
-
-		var counterWrap = BX("menu-counter-live-feed", true);
-		if (!counterWrap)
-			return;
-
-		iDecrement = parseInt(iDecrement);
-		var oldVal = parseInt(counterWrap.innerHTML);
-		var newVal = oldVal - iDecrement;
-		if (newVal > 0)
-			counterWrap.innerHTML = newVal;
-		else
-			BX.removeClass(counterWrap.parentNode.parentNode.parentNode, "menu-item-with-index");
+		B24.decrementCounter(BX("menu-counter-live-feed"), iDecrement)
 	});
 
 	BX.addCustomEvent("onImUpdateCounterNotify", function(counter) {
@@ -161,7 +159,7 @@
 		else
 			B24.connectionStatus("online");
 	}, this));
-	
+
 //==connection status
 
 	if (BX.browser.SupportLocalStorage())
@@ -308,6 +306,17 @@ var B24 = {
 			if (BX.getClass("BX.Bitrix24.LeftMenuClass"))
 			{
 				BX.Bitrix24.LeftMenuClass.updateCounters(counters, send);
+			}
+		});
+	},
+
+	decrementCounter : function(node, iDecrement)
+	{
+		BX.ready(function ()
+		{
+			if (BX.getClass("BX.Bitrix24.LeftMenuClass"))
+			{
+				BX.Bitrix24.LeftMenuClass.decrementCounter(node, iDecrement);
 			}
 		});
 	},

@@ -1,13 +1,4 @@
-<?
-/**
- * Bitrix Framework
- * @package bitrix
- * @subpackage tasks
- * @copyright 2001-2016 Bitrix
- *
- * @access private
- */
-
+<?php
 namespace Bitrix\Tasks\Util\Notification;
 
 use Bitrix\Im\User;
@@ -23,9 +14,22 @@ use Bitrix\Tasks\Util\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class Task
+ *
+ * @package Bitrix\Tasks\Util\Notification
+ */
 final class Task
 {
-	public static function createOverdueChats()
+	/**
+	 * If there is no chat yet, creates it and posts message about task's expiration.
+	 *
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function createOverdueChats(): void
 	{
 		if (
 			$GLOBALS['__TASKS_DEVEL_ENV__']
@@ -51,7 +55,16 @@ final class Task
 		}
 	}
 
-	private static function getOverdueTasks()
+	/**
+	 * Returns overdue tasks for today with more than 1 unique member
+	 *
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private static function getOverdueTasks(): array
 	{
 		$query = new Query(TaskTable::getEntity());
 		$query->setSelect([
@@ -114,16 +127,26 @@ final class Task
 			}
 		}
 
-		return array_filter($tasks, function($item) use($uniqueMembers) {
-			return count($uniqueMembers[$item['ID']]) > 1;
-		});
+		return array_filter(
+			$tasks,
+			static function($item) use($uniqueMembers)
+			{
+				return count($uniqueMembers[$item['ID']]) > 1;
+			}
+		);
 	}
 
-	private static function getDayStartDateTime()
+	/**
+	 * Returns start time of current day (00:00:00)
+	 *
+	 * @return DateTime
+	 * @throws \Bitrix\Main\ObjectException
+	 */
+	private static function getDayStartDateTime(): DateTime
 	{
 		$now = new DateTime();
 		$structure = $now->getTimeStruct();
-		$now->add('-T'.($structure['SECOND'] + 60*$structure['MINUTE'] + 3600*$structure['HOUR']).'S');
+		$now->add('-T'.($structure['SECOND'] + 60 * $structure['MINUTE'] + 3600 * $structure['HOUR']).'S');
 
 		return $now;
 	}

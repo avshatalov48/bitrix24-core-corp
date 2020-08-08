@@ -27,6 +27,12 @@ class Base extends \Bitrix\Bizproc\Automation\Trigger\BaseTrigger
 	{
 		$result = new Main\Result();
 
+		if (!Factory::canUseAutomation())
+		{
+			$result->addError(new Main\Error('Automation is unavailable.'));
+			return $result;
+		}
+
 		$automationTarget = Factory::createTarget($documentType, $taskId);
 
 		$trigger = new static();

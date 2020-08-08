@@ -75,4 +75,13 @@ class Notify implements Tabable
 		$this->context = $context;
 	}
 
+	public function getShortTitle()
+	{
+		return Loc::getMessage("TAB_NAME_NOTIFY");
+	}
+
+	public function getId()
+	{
+		return "notify";
+	}
 }

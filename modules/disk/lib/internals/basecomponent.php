@@ -246,9 +246,9 @@ abstract class BaseComponent extends \CBitrixComponent implements Errorable
 		$this->realActionName = null;
 		//todo? action prefix? Url Manager?
 		$action = $this->arParams[$this->actionPrefix]?: $this->request->getQuery($this->actionPrefix);
-		if($action && is_string($action) && isset($listOfActions[strtolower($action)]))
+		if($action && is_string($action) && isset($listOfActions[mb_strtolower($action)]))
 		{
-			$this->realActionName = strtolower($action);
+			$this->realActionName = mb_strtolower($action);
 		}
 
 		if(!$this->realActionName || $this->realActionName == 'default')
@@ -375,7 +375,7 @@ abstract class BaseComponent extends \CBitrixComponent implements Errorable
 	{
 		foreach ($required as $item)
 		{
-			if(!isset($inputParams[$item]) || (!$inputParams[$item] && !(is_string($inputParams[$item]) && strlen($inputParams[$item]))))
+			if(!isset($inputParams[$item]) || (!$inputParams[$item] && !(is_string($inputParams[$item]) && mb_strlen($inputParams[$item]))))
 			{
 				$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_BASE_COMPONENT_ERROR_REQUIRED_PARAMETER', array('#PARAM#' => $item)), self::ERROR_REQUIRED_PARAMETER)));
 				return false;

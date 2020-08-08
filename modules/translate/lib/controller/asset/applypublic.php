@@ -348,7 +348,7 @@ class ApplyPublic
 					continue;
 				}
 
-				if ((substr($name, -4) === '.php') && is_file($fullPath))
+				if ((mb_substr($name, -4) === '.php') && is_file($fullPath))
 				{
 					$files[$langFolderRelPath.'/'.$name] = $fullPath;
 				}

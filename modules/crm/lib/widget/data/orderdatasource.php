@@ -126,7 +126,7 @@ abstract class OrderDataSource extends DataSource
 	 */
 	public static function extractDetailsPageUrlParams(array $request)
 	{
-		if(!(isset($request['WG']) && strtoupper($request['WG']) === 'Y'))
+		if(!(isset($request['WG']) && mb_strtoupper($request['WG']) === 'Y'))
 		{
 			return array();
 		}

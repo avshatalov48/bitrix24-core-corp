@@ -13,12 +13,12 @@ class UI
 	{
 		$str = (string) $str;
 
-		if(!strlen($str))
+		if($str == '')
 		{
 			return $str;
 		}
 
-		return ToLower(substr($str, 0, 1)).substr($str, 1);
+		return ToLower(mb_substr($str, 0, 1)).mb_substr($str, 1);
 	}
 
 	public static function getPluralForm($n)
@@ -60,9 +60,10 @@ class UI
 		return $path;
 	}
 
-	public static function getAvatar($fileId, $width = 50, $height = 50)
+	public static function getAvatar($fileId, $width = 50, $height = 50, $immediate = false)
 	{
 		$fileId = intval($fileId);
+		$immediate = !!$immediate;
 		if ($fileId < 1) {
 			return "";
 		}
@@ -74,7 +75,9 @@ class UI
 				$file,
 				array("width" => $width, "height" => $height),
 				BX_RESIZE_IMAGE_EXACT,
-				false
+				false,
+				false,
+				$immediate
 			);
 
 			return $fileInfo["src"];

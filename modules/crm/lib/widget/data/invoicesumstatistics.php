@@ -50,7 +50,7 @@ class InvoiceSumStatistics extends InvoiceDataSource
 		$semanticID = $filter->getExtraParam('semanticID', PhaseSemantics::UNDEFINED);
 		$isJunk = $filter->getExtraParam('isJunk', null);
 
-		$group = isset($params['group']) ? strtoupper($params['group']) : '';
+		$group = isset($params['group'])? mb_strtoupper($params['group']) : '';
 		if($group !== ''
 			&& $group !== self::GROUP_BY_USER
 			&& $group !== self::GROUP_BY_DATE)
@@ -72,7 +72,7 @@ class InvoiceSumStatistics extends InvoiceDataSource
 			}
 			if(isset($selectItem['aggregate']))
 			{
-				$aggregate = strtoupper($selectItem['aggregate']);
+				$aggregate = mb_strtoupper($selectItem['aggregate']);
 			}
 		}
 

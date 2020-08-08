@@ -25,7 +25,7 @@ class Log
 			}
 		}
 
-		$title = strlen($title) > 0? $title: "DEBUG";
+		$title = $title <> ''? $title: "DEBUG";
 
 		return self::writeToFile("imbot.log", $data, $title);
 	}
@@ -34,7 +34,7 @@ class Log
 	{
 		$log = "\n------------------------\n";
 		$log .= date("Y.m.d G:i:s")."\n";
-		if (strlen($title) > 0)
+		if ($title <> '')
 		{
 			$log .= $title."\n";
 		}

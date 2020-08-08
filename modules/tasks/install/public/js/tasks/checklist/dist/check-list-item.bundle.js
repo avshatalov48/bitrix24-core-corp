@@ -1,5 +1,5 @@
 this.BX = this.BX || {};
-(function (exports,main_core) {
+(function (exports,main_core_events,main_core) {
 	'use strict';
 
 	var TreeItem =
@@ -146,8 +146,8 @@ this.BX = this.BX || {};
 	      return this === this.getParent().getFirstDescendant();
 	    }
 	  }, {
-	    key: "isLastDescendants",
-	    value: function isLastDescendants() {
+	    key: "isLastDescendant",
+	    value: function isLastDescendant() {
 	      return this === this.getParent().getLastDescendant();
 	    }
 	  }, {
@@ -175,7 +175,7 @@ this.BX = this.BX || {};
 	    value: function getRightSibling() {
 	      var _this3 = this;
 
-	      if (this.isLastDescendants()) {
+	      if (this.isLastDescendant()) {
 	        return null;
 	      }
 
@@ -186,6 +186,48 @@ this.BX = this.BX || {};
 
 	      if (index !== -1) {
 	        return parentDescendants[index + 1];
+	      }
+
+	      return null;
+	    }
+	  }, {
+	    key: "getLeftSiblingThrough",
+	    value: function getLeftSiblingThrough() {
+	      if (this === this.getRootNode()) {
+	        return null;
+	      }
+
+	      if (this.isFirstDescendant()) {
+	        return this.getParent();
+	      }
+
+	      var leftSiblingThrough = this.getLeftSibling();
+
+	      while (leftSiblingThrough && leftSiblingThrough.getDescendantsCount() > 0) {
+	        leftSiblingThrough = leftSiblingThrough.getLastDescendant();
+	      }
+
+	      return leftSiblingThrough;
+	    }
+	  }, {
+	    key: "getRightSiblingThrough",
+	    value: function getRightSiblingThrough() {
+	      if (this.getDescendantsCount() > 0) {
+	        return this.getFirstDescendant();
+	      }
+
+	      if (!this.isLastDescendant()) {
+	        return this.getRightSibling();
+	      }
+
+	      var parent = this;
+
+	      while (parent.getParent() !== null && parent.isLastDescendant()) {
+	        parent = parent.getParent();
+	      }
+
+	      if (parent !== this.getRootNode()) {
+	        return parent.getRightSibling();
 	      }
 
 	      return null;
@@ -595,7 +637,7 @@ this.BX = this.BX || {};
 	}
 
 	function _templateObject31() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-item\" id=\"", "\">\n\t\t\t\t<div class=\"tasks-checklist-item-inner droppable ", "\"\n\t\t\t\t\t onclick=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"tasks-checklist-item-flag-block\">\n\t\t\t\t\t\t<div class=\"tasks-checklist-item-flag\">\n\t\t\t\t\t\t\t<label class=\"tasks-checklist-item-flag-element\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t<span class=\"tasks-checklist-item-flag-sub-checklist-progress\" id=\"progress_", "\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t<span class=\"tasks-checklist-item-flag-element-decorate\"/>\n\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-checklist-item-content-block\">\n\t\t\t\t\t\t<div class=\"tasks-checklist-item-number\">", "</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"tasks-checklist-item-description\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-checklist-item-additional-block\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-checklist-item-actions-block\">\n\t\t\t\t\t\t<input class=\"tasks-checklist-item-group-checkbox\" id=\"select_", "\" type=\"checkbox\"\n\t\t\t\t\t\t\t   onclick=\"", "\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-checklist-item-attachment\">\n\t\t\t\t\t<div class=\"tasks-checklist-item-attachment-list\" id=\"attachments_", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-checklist-sublist-items-wrapper\" id=\"subItems_", "\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-item\" id=\"", "\">\n\t\t\t\t<div class=\"tasks-checklist-item-inner droppable ", "\"\n\t\t\t\t\t onmousedown=\"", "\" onmouseup=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"tasks-checklist-item-flag-block\">\n\t\t\t\t\t\t<div class=\"tasks-checklist-item-flag\">\n\t\t\t\t\t\t\t<label class=\"tasks-checklist-item-flag-element\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t<span class=\"tasks-checklist-item-flag-sub-checklist-progress\" id=\"progress_", "\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t<span class=\"tasks-checklist-item-flag-element-decorate\"/>\n\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-checklist-item-content-block\">\n\t\t\t\t\t\t<div class=\"tasks-checklist-item-number\">", "</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"tasks-checklist-item-description\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-checklist-item-additional-block\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-checklist-item-actions-block\">\n\t\t\t\t\t\t<input class=\"tasks-checklist-item-group-checkbox\" id=\"select_", "\" type=\"checkbox\"\n\t\t\t\t\t\t\t   onclick=\"", "\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-checklist-item-attachment\">\n\t\t\t\t\t<div class=\"tasks-checklist-item-attachment-list\" id=\"attachments_", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-checklist-sublist-items-wrapper\" id=\"subItems_", "\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
 
 	  _templateObject31 = function _templateObject31() {
 	    return data;
@@ -625,7 +667,7 @@ this.BX = this.BX || {};
 	}
 
 	function _templateObject28() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-wrapper tasks-checklist-item-group-editor-collapse\" id=\"", "\">\n\t\t\t\t<div class=\"tasks-checklist-header-wrapper droppable\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"tasks-checklist-header-block\">\n\t\t\t\t\t\t<div class=\"tasks-checklist-header-inner\">\n\t\t\t\t\t\t\t<div class=\"tasks-checklist-header-name\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t<div class=\"tasks-checklist-header-name-edit-btn\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"tasks-checklist-header-progress-block\">\n\t\t\t\t\t\t\t\t<div class=\"tasks-checklist-header-progress\" id=\"progress_", "\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-checklist-header-actions\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"tasks-checklist-action-collapse-btn collapsed\" onclick=\"", "\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-checklist-items-wrapper\">\n\t\t\t\t\t<div class=\"tasks-checklist-items-list\" id=\"subItems_", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-wrapper tasks-checklist-item-group-editor-collapse\" id=\"", "\">\n\t\t\t\t<div class=\"tasks-checklist-header-wrapper droppable\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"tasks-checklist-header-block\">\n\t\t\t\t\t\t<div class=\"tasks-checklist-header-inner\">\n\t\t\t\t\t\t\t<div class=\"tasks-checklist-header-name\"\n\t\t\t\t\t\t\t\t onmousedown=\"", "\"\n\t\t\t\t\t\t\t\t onmouseup=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t<div class=\"tasks-checklist-header-name-edit-btn\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"tasks-checklist-header-progress-block\">\n\t\t\t\t\t\t\t\t<div class=\"tasks-checklist-header-progress\" id=\"progress_", "\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-checklist-header-actions\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"tasks-checklist-action-collapse-btn collapsed\" onclick=\"", "\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-checklist-items-wrapper\">\n\t\t\t\t\t<div class=\"tasks-checklist-items-list\" id=\"subItems_", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
 
 	  _templateObject28 = function _templateObject28() {
 	    return data;
@@ -805,7 +847,7 @@ this.BX = this.BX || {};
 	}
 
 	function _templateObject10() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-checklist-header-name tasks-checklist-header-name-edit-mode\">\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-after-icon ui-ctl-xs ui-ctl-no-padding ui-ctl-underline \n\t\t\t\t\t\t\t\ttasks-checklist-header-name-editor\">\n\t\t\t\t\t\t<input class=\"ui-ctl-element\" type=\"text\" id=\"text_", "\"\n\t\t\t\t\t\t\t   value=\"", "\"\n\t\t\t\t\t\t\t   onkeypress=\"", "\"\n\t\t\t\t\t\t\t   onblur=\"", "\"/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" onclick=\"", "\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-checklist-header-name tasks-checklist-header-name-edit-mode\">\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-after-icon ui-ctl-xs ui-ctl-no-padding ui-ctl-underline \n\t\t\t\t\t\t\t\ttasks-checklist-header-name-editor\">\n\t\t\t\t\t\t<input class=\"ui-ctl-element\" type=\"text\" id=\"text_", "\"\n\t\t\t\t\t\t\t   value=\"", "\"\n\t\t\t\t\t\t\t   onkeypress=\"", "\"\n\t\t\t\t\t\t\t   onkeydown=\"", "\"\n\t\t\t\t\t\t\t   onblur=\"", "\"/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" onclick=\"", "\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"]);
 
 	  _templateObject10 = function _templateObject10() {
 	    return data;
@@ -1128,6 +1170,17 @@ this.BX = this.BX || {};
 	        }
 	      }
 	    }
+	  }, {
+	    key: "getMemberLinkLayout",
+	    value: function getMemberLinkLayout(type, name, url) {
+	      var messageId = "TASKS_CHECKLIST_".concat(type.toUpperCase(), "_ICON_HINT");
+	      return "\n\t\t\t<span class=\"tasks-checklist-item-auditor\">\n\t\t\t\t<a class=\"tasks-checklist-item-".concat(type, "-icon\" title=\"").concat(main_core.Loc.getMessage(messageId), "\"></a>\n\t\t\t\t<a href=\"").concat(url, "\" class=\"tasks-checklist-item-").concat(type, "-link\">").concat(name, "</a>\n\t\t\t</span>\n\t\t");
+	    }
+	  }, {
+	    key: "getLinkLayout",
+	    value: function getLinkLayout(url) {
+	      return "<a class=\"tasks-checklist-item-link\" href=\"".concat(url, "\" target=\"_blank\">").concat(url, "</a>");
+	    }
 	  }]);
 
 	  function CheckListItem() {
@@ -1170,6 +1223,7 @@ this.BX = this.BX || {};
 	      var position = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 	      babelHelpers.get(babelHelpers.getPrototypeOf(CheckListItem.prototype), "add", this).call(this, item, position);
 	      item.optionManager = this.optionManager;
+	      item.clickEventHandler = this.clickEventHandler;
 	    }
 	  }, {
 	    key: "isTaskRoot",
@@ -1351,7 +1405,7 @@ this.BX = this.BX || {};
 	        this.getNotificationBalloon(action, data);
 	      }
 
-	      main_core.Event.EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {
+	      main_core_events.EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {
 	        action: 'delete'
 	      });
 	      this.input = null;
@@ -1611,8 +1665,8 @@ this.BX = this.BX || {};
 	      });
 	      this.processMemberSelect(resultAuditor);
 	      this.getNotificationBalloon(action, data);
-	      main_core.Event.EventEmitter.emit('BX.Tasks.CheckListItem:auditorAdded', auditor);
-	      main_core.Event.EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {
+	      main_core_events.EventEmitter.emit('BX.Tasks.CheckListItem:auditorAdded', auditor);
+	      main_core_events.EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {
 	        action: 'addAuditor'
 	      });
 	    }
@@ -1629,8 +1683,8 @@ this.BX = this.BX || {};
 	      });
 	      this.processMemberSelect(resultAccomplice);
 	      this.getNotificationBalloon(action, data);
-	      main_core.Event.EventEmitter.emit('BX.Tasks.CheckListItem:accompliceAdded', accomplice);
-	      main_core.Event.EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {
+	      main_core_events.EventEmitter.emit('BX.Tasks.CheckListItem:accompliceAdded', accomplice);
+	      main_core_events.EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {
 	        action: 'addAccomplice'
 	      });
 	    }
@@ -1643,6 +1697,7 @@ this.BX = this.BX || {};
 	      var mentioned = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 
 	      if (!this.checkCanAddAccomplice()) {
+	        this.isSelectorLoading = false;
 	        return;
 	      }
 
@@ -1723,7 +1778,7 @@ this.BX = this.BX || {};
 	    value: function onDeleteAttachmentClick(fileId) {
 	      this.fields.removeAttachment(fileId);
 	      main_core.Dom.remove(this.getAttachmentsContainer().querySelector("#disk-attach-".concat(fileId)));
-	      main_core.Event.EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {
+	      main_core_events.EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {
 	        action: 'deleteAttachment'
 	      });
 	    }
@@ -1760,11 +1815,11 @@ this.BX = this.BX || {};
 	            nameFormatted = _ref.nameFormatted,
 	            type = _ref.type;
 	        var regExp = new RegExp(nameFormatted, 'g');
-	        var href = userPath.replace('#user_id#', id).replace('#USER_ID#', id);
-	        title = title.replace(regExp, "<a href=".concat(href, " class=\"tasks-checklist-item-").concat(type, "\">").concat(nameFormatted, "</a>"));
+	        var url = userPath.replace('#user_id#', id).replace('#USER_ID#', id);
+	        title = title.replace(regExp, CheckListItem.getMemberLinkLayout(type, nameFormatted, url));
 	      });
 	      title = title.replace(/(https?:\/\/[^\s]+)/g, function (url) {
-	        return "<a class=\"tasks-checklist-item-link\" href=\"".concat(url, "\" target=\"_blank\">").concat(url, "</a>");
+	        return CheckListItem.getLinkLayout(url);
 	      });
 	      return main_core.Tag.render(_templateObject9(), this.getTitleNodeClass(), title);
 	    }
@@ -1969,7 +2024,7 @@ this.BX = this.BX || {};
 	      var nodeId = this.getNodeId();
 
 	      if (this.isCheckList()) {
-	        return main_core.Tag.render(_templateObject10(), nodeId, this.fields.getDisplayTitle(), this.onInputKeyPressed.bind(this), this.rememberInputState.bind(this), this.clearInput.bind(this));
+	        return main_core.Tag.render(_templateObject10(), nodeId, this.fields.getDisplayTitle(), this.onInputKeyPressed.bind(this), this.onInputKeyDown.bind(this), this.rememberInputState.bind(this), this.clearInput.bind(this));
 	      }
 
 	      var progressBarLayout = new BX.UI.ProgressRound({
@@ -2022,6 +2077,7 @@ this.BX = this.BX || {};
 	      this.input = updateModeLayout.querySelector("#text_".concat(this.getNodeId()));
 	      this.input.focus();
 	      this.input.setSelectionRange(this.input.value.length, this.input.value.length);
+	      this.inputCursorPosition = CheckListItem.getInputSelection(this.input);
 
 	      if (this.input.value === '' || this.input.value.length === 0) {
 	        setTimeout(function () {
@@ -2099,7 +2155,7 @@ this.BX = this.BX || {};
 
 	        if (!rootNode.checkActiveUpdateExist()) {
 	          this.enableUpdateMode();
-	          main_core.Event.EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {
+	          main_core_events.EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {
 	            action: 'toggleUpdateMode'
 	          });
 	        }
@@ -2127,21 +2183,71 @@ this.BX = this.BX || {};
 	        this.getMemberSelector(e, this.optionManager.defaultMemberSelectorType, true);
 	      }
 
-	      main_core.Event.EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {
+	      main_core_events.EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {
 	        action: 'inputKeyPressed'
 	      });
 	    }
 	  }, {
 	    key: "onInputKeyDown",
 	    value: function onInputKeyDown(e) {
-	      if (e.keyCode === 9) {
-	        this.toggleUpdateMode(e);
-	        e.preventDefault();
+	      var keys = {
+	        tab: 9,
+	        up: 38,
+	        down: 40
+	      };
+
+	      switch (e.keyCode) {
+	        default:
+	          // do nothing
+	          break;
+
+	        case keys.tab:
+	          {
+	            if (!this.isCheckList()) {
+	              (e.shiftKey ? this.tabOut.bind(this) : this.tabIn.bind(this))();
+	            }
+
+	            this.retrieveFocus();
+	            break;
+	          }
+
+	        case keys.up:
+	          {
+	            var leftSiblingThrough = this.getLeftSiblingThrough();
+
+	            if (leftSiblingThrough && leftSiblingThrough !== this.getRootNode()) {
+	              leftSiblingThrough.toggleUpdateMode(e);
+	            }
+
+	            break;
+	          }
+
+	        case keys.down:
+	          {
+	            var rightSiblingThrough = this.getRightSiblingThrough();
+
+	            if (rightSiblingThrough) {
+	              rightSiblingThrough.toggleUpdateMode(e);
+	            }
+
+	            break;
+	          }
 	      }
 	    }
 	  }, {
-	    key: "onHeaderNameClick",
-	    value: function onHeaderNameClick(e) {
+	    key: "onHeaderMouseDown",
+	    value: function onHeaderMouseDown(e) {
+	      this.clickEventHandler.handleMouseDown(e);
+	      this.clickEventHandler.registerClickDoneCallback(this.onHeaderClickDone.bind(this, e));
+	    }
+	  }, {
+	    key: "onHeaderMouseUp",
+	    value: function onHeaderMouseUp(e) {
+	      this.clickEventHandler.handleMouseUp(e);
+	    }
+	  }, {
+	    key: "onHeaderClickDone",
+	    value: function onHeaderClickDone(e) {
 	      if (!this.checkCanUpdate() || this.checkSkipUpdate(e, 'header')) {
 	        return;
 	      }
@@ -2149,8 +2255,19 @@ this.BX = this.BX || {};
 	      this.toggleUpdateMode(e);
 	    }
 	  }, {
-	    key: "onInnerContainerClick",
-	    value: function onInnerContainerClick(e) {
+	    key: "onInnerContainerMouseDown",
+	    value: function onInnerContainerMouseDown(e) {
+	      this.clickEventHandler.handleMouseDown(e);
+	      this.clickEventHandler.registerClickDoneCallback(this.onInnerContainerClickDone.bind(this, e));
+	    }
+	  }, {
+	    key: "onInnerContainerMouseUp",
+	    value: function onInnerContainerMouseUp(e) {
+	      this.clickEventHandler.handleMouseUp(e);
+	    }
+	  }, {
+	    key: "onInnerContainerClickDone",
+	    value: function onInnerContainerClickDone(e) {
 	      if (!this.checkCanUpdate() || this.checkSkipUpdate(e, 'item')) {
 	        return;
 	      }
@@ -2178,7 +2295,7 @@ this.BX = this.BX || {};
 	        main_core.Dom.insertBefore(this.getImportantLayout(), this.container.querySelector('.tasks-checklist-item-description'));
 	      }
 
-	      main_core.Event.EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {
+	      main_core_events.EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {
 	        action: 'toggleImportant'
 	      });
 	      this.retrieveFocus();
@@ -2557,7 +2674,7 @@ this.BX = this.BX || {};
 
 	      this.handleCheckListIsEmpty();
 	      this.handleTaskOptions();
-	      main_core.Event.EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {
+	      main_core_events.EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {
 	        action: action
 	      });
 	    }
@@ -2583,7 +2700,7 @@ this.BX = this.BX || {};
 	        main_core.Dom.addClass(this.container, 'mobile-task-checklist-item-wrapper-animate');
 	        this.handleCheckListIsEmpty();
 	        this.handleTaskOptions();
-	        main_core.Event.EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {
+	        main_core_events.EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {
 	          action: action
 	        });
 	      }
@@ -2978,7 +3095,7 @@ this.BX = this.BX || {};
 	        }
 	      }
 
-	      main_core.Event.EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {
+	      main_core_events.EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {
 	        action: 'fileUpload'
 	      });
 	    }
@@ -3022,7 +3139,7 @@ this.BX = this.BX || {};
 	        size: BX.UI.ProgressBar.Size.MEDIUM,
 	        textAfter: CheckListItem.getProgressText(value, maxValue)
 	      });
-	      this.container = main_core.Tag.render(_templateObject28(), nodeId, layouts.dndButton, this.onHeaderNameClick.bind(this), this.getTitleLayout(), nodeId, this.progress.getContainer(), layouts.groupButton, this.onCollapseButtonClick.bind(this), nodeId, children, layouts.listActionsPanel);
+	      this.container = main_core.Tag.render(_templateObject28(), nodeId, layouts.dndButton, this.onHeaderMouseDown.bind(this), this.onHeaderMouseUp.bind(this), this.getTitleLayout(), nodeId, this.progress.getContainer(), layouts.groupButton, this.onCollapseButtonClick.bind(this), nodeId, children, layouts.listActionsPanel);
 	      return this.container;
 	    }
 	  }, {
@@ -3052,7 +3169,7 @@ this.BX = this.BX || {};
 	        fill: false,
 	        color: BX.UI.ProgressRound.Color.PRIMARY
 	      });
-	      this.container = main_core.Tag.render(_templateObject31(), nodeId, this.fields.getIsComplete() ? 'tasks-checklist-item-solved' : '', this.onInnerContainerClick.bind(this), layouts.dndButton, this.onCompleteButtonClick.bind(this), nodeId, this.progress.getContainer(), this.fields.getDisplaySortIndex(), this.fields.getIsImportant() ? this.getImportantLayout() : '', this.getTitleLayout(), layouts.deleteButton, nodeId, this.onSelectCheckboxClick.bind(this), nodeId, layouts.attachments, nodeId, children);
+	      this.container = main_core.Tag.render(_templateObject31(), nodeId, this.fields.getIsComplete() ? 'tasks-checklist-item-solved' : '', this.onInnerContainerMouseDown.bind(this), this.onInnerContainerMouseUp.bind(this), layouts.dndButton, this.onCompleteButtonClick.bind(this), nodeId, this.progress.getContainer(), this.fields.getDisplaySortIndex(), this.fields.getIsImportant() ? this.getImportantLayout() : '', this.getTitleLayout(), layouts.deleteButton, nodeId, this.onSelectCheckboxClick.bind(this), nodeId, layouts.attachments, nodeId, children);
 	      return this.container;
 	    }
 	  }, {
@@ -3883,7 +4000,7 @@ this.BX = this.BX || {};
 	        maxValue: this.fields.getTotalCount(),
 	        statusType: BX.UI.ProgressRound.Status.COUNTER
 	      });
-	      this.container = main_core.Tag.render(_templateObject39(), nodeId, nodeId, this.progress.getContainer(), this.onHeaderNameClick.bind(this), this.getTitleLayout(), this.checkCanUpdate() ? settingsLayout : '', this.onCollapseButtonClick.bind(this), nodeId, children, this.checkCanAdd() ? addButtonLayout : '');
+	      this.container = main_core.Tag.render(_templateObject39(), nodeId, nodeId, this.progress.getContainer(), this.onHeaderClickDone.bind(this), this.getTitleLayout(), this.checkCanUpdate() ? settingsLayout : '', this.onCollapseButtonClick.bind(this), nodeId, children, this.checkCanAdd() ? addButtonLayout : '');
 	      return this.container;
 	    }
 	  }, {
@@ -3900,7 +4017,7 @@ this.BX = this.BX || {};
 	        fill: false,
 	        color: BX.UI.ProgressRound.Color.PRIMARY
 	      });
-	      this.container = main_core.Tag.render(_templateObject41(), nodeId, this.fields.getIsComplete() ? this.checkedClass : '', this.fields.getIsImportant() ? 'mobile-task-checklist-item-important' : '', this.onInnerContainerClick.bind(this), nodeId, this.onCompleteButtonClick.bind(this), this.progress.getContainer(), this.fields.getDisplaySortIndex(), this.getTitleLayout(), this.getAttachmentsLayout(), this.checkCanUpdate() ? settingsLayout : '', nodeId, children);
+	      this.container = main_core.Tag.render(_templateObject41(), nodeId, this.fields.getIsComplete() ? this.checkedClass : '', this.fields.getIsImportant() ? 'mobile-task-checklist-item-important' : '', this.onInnerContainerClickDone.bind(this), nodeId, this.onCompleteButtonClick.bind(this), this.progress.getContainer(), this.fields.getDisplaySortIndex(), this.getTitleLayout(), this.getAttachmentsLayout(), this.checkCanUpdate() ? settingsLayout : '', nodeId, children);
 	      return this.container;
 	    }
 	  }], [{
@@ -3919,5 +4036,5 @@ this.BX = this.BX || {};
 	exports.CheckListItem = CheckListItem;
 	exports.MobileCheckListItem = MobileCheckListItem;
 
-}((this.BX.Tasks = this.BX.Tasks || {}),BX));
+}((this.BX.Tasks = this.BX.Tasks || {}),BX.Event,BX));
 //# sourceMappingURL=check-list-item.bundle.js.map

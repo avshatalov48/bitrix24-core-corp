@@ -503,4 +503,13 @@ class Base
 	public static function deleteByOwner($entityTypeId, $entityId)
 	{
 	}
+
+	/**
+	 * @param array $activityFields
+	 * @return null|string
+	 */
+	public static function getCustomViewLink(array $activityFields): ?string
+	{
+		return null;
+	}
 }

@@ -18,6 +18,7 @@ class QueueManager
 
 	const EVENT_QUEUE_OPERATORS_ADD = 'OnQueueOperatorsAdd';
 	const EVENT_QUEUE_OPERATORS_DELETE = 'OnQueueOperatorsDelete';
+	const EVENT_QUEUE_OPERATORS_CHANGE = 'OnQueueOperatorsChange';
 
 	public function __construct($id, $config = array())
 	{
@@ -196,7 +197,7 @@ class QueueManager
 	 * @param $queueBefore
 	 * @param $queueAfter
 	 */
-	private function sendQueueChangeEvents($queueBefore, $queueAfter)
+	private function sendQueueChangeEvents($queueBefore, $queueAfter): void
 	{
 		$queueRemoved = array_diff($queueBefore, $queueAfter); //list of removed operators
 		$queueAdded = array_diff($queueAfter, $queueBefore); //list of added operators
@@ -209,6 +210,11 @@ class QueueManager
 		if (!empty($queueAdded))
 		{
 			$this->sendQueueOperatorsAddEvent($queueAdded);
+		}
+
+		if (!empty($queueAdded) || !empty($queueRemoved))
+		{
+			$this->sendQueueOperatorsChangeEvent($queueBefore, $queueAfter);
 		}
 	}
 
@@ -239,6 +245,24 @@ class QueueManager
 			'operators' => $operators
 		);
 		$event = new \Bitrix\Main\Event('imopenlines', self::EVENT_QUEUE_OPERATORS_DELETE, $eventData);
+		$event->send();
+	}
+
+	/**
+	 * Send event with lists of queue operators from changed line.
+	 *
+	 * @param $queueBefore
+	 * @param $queueAfter
+	 */
+	private function sendQueueOperatorsChangeEvent($queueBefore, $queueAfter): void
+	{
+		$eventData = [
+			'line' => $this->id,
+			'operators_before' => $queueBefore,
+			'operators_after' => $queueAfter
+		];
+
+		$event = new \Bitrix\Main\Event('imopenlines', self::EVENT_QUEUE_OPERATORS_CHANGE, $eventData);
 		$event->send();
 	}
 }

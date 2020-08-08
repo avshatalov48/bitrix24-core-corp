@@ -3,7 +3,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 $arParams['ID'] = preg_replace('/[^a-zA-Z_0-9]*/', '', $arParams['ID']);
 
-if (strlen($arParams['ID']) <= 0)
+if ($arParams['ID'] == '')
 	return;
 
 $arParams['ALLOW_CLOSE'] = $arParams['ALLOW_CLOSE'] == 'N' ? 'N' : 'Y';

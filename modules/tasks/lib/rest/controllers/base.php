@@ -33,7 +33,7 @@ class Base extends Controller
 				{
 					case 'param':
 						list($fieldType, $fieldName, $fieldDesc) = explode(' ', $paramText, 3);
-						$fieldName = substr($fieldName, 1);
+						$fieldName = mb_substr($fieldName, 1);
 
 						$docParams[$paramName][$fieldName] = [
 							'type'        => $fieldType,
@@ -58,7 +58,7 @@ class Base extends Controller
 					'name'        => $param->getName(),
 					'description' => $docParams['param'][$param->getName()]['description'],
 					'optional'    => $param->isOptional(),
-					'default'     => $param->isOptional() ? strtolower((string)$param->getDefaultValue()) : 'null',
+					'default'     => $param->isOptional()? mb_strtolower((string)$param->getDefaultValue()) : 'null',
 					'type'        => $docParams['param'][$param->getName()]['type'] //TODO php 7+
 				];
 			}
@@ -66,7 +66,7 @@ class Base extends Controller
 			preg_match('#\/\*\*\n.*?\* (.*?)$#im', $method->getDocComment(), $match);
 			$title = trim($match[1]);
 
-			$methodName = substr($method->getName(), 0, -6);
+			$methodName = mb_substr($method->getName(), 0, -6);
 			$list[$methodName] = [
 				'comment'   => $title,
 				//				'docComment'=>trim($method->getDocComment()),

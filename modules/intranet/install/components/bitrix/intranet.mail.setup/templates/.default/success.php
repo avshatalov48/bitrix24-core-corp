@@ -14,7 +14,7 @@ $service = $arParams['SERVICES'][$arParams['MAILBOX']['SERVICE_ID']];
 					<? if ($service['icon']) { ?>
 					<img src="<?=$service['icon']; ?>" alt="<?=$service['name']; ?>">
 					<? } else {?>
-					<span class="post-dialog-success-cell"><?=(strpos($arParams['MAILBOX']['LOGIN'], '@') === false ? $service['name'] : $arParams['MAILBOX']['LOGIN']); ?></span>
+					<span class="post-dialog-success-cell"><?=(mb_strpos($arParams['MAILBOX']['LOGIN'], '@') === false ? $service['name'] : $arParams['MAILBOX']['LOGIN']); ?></span>
 					<? } ?>
 				</td>
 				<td class="post-dialog-title-img"></td>

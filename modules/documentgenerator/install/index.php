@@ -1,7 +1,7 @@
 <?php
 global $MESS;
 $PathInstall = str_replace("\\", "/", __FILE__);
-$PathInstall = substr($PathInstall, 0, strlen($PathInstall)-strlen("/index.php"));
+$PathInstall = mb_substr($PathInstall, 0, mb_strlen($PathInstall) - mb_strlen("/index.php"));
 
 IncludeModuleLangFile($PathInstall."/install.php");
 
@@ -20,9 +20,7 @@ class documentgenerator extends CModule
 	{
 		$arModuleVersion = [];
 
-		$path = str_replace("\\", "/", __FILE__);
-		$path = substr($path, 0, strlen($path) - strlen("/index.php"));
-		include($path."/version.php");
+		include(__DIR__.'/version.php');
 
 		if (is_array($arModuleVersion) && array_key_exists("VERSION", $arModuleVersion))
 		{
@@ -42,7 +40,7 @@ class documentgenerator extends CModule
 	function DoInstall()
 	{
 		global $APPLICATION, $step;
-		$step = IntVal($step);
+		$step = intval($step);
 		if($step < 2)
 		{
 			if(!class_exists('\DOMDocument', true) || !class_exists('\ZipArchive', true))
@@ -73,7 +71,7 @@ class documentgenerator extends CModule
 
 		if (!$DB->Query("SELECT 'x' FROM b_documentgenerator_template", true))
 		{
-			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/db/".strtolower($DB->type)."/install.sql");
+			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/db/".mb_strtolower($DB->type)."/install.sql");
 		}
 
 		if($errors !== false)
@@ -118,7 +116,7 @@ class documentgenerator extends CModule
 	function DoUninstall()
 	{
 		global $DOCUMENT_ROOT, $APPLICATION, $step;
-		$step = IntVal($step);
+		$step = intval($step);
 		if($step<2)
 		{
 			$APPLICATION->IncludeAdminFile(GetMessage("DOCUMENTGENERATOR_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/".$this->MODULE_ID."/install/unstep1.php");
@@ -142,7 +140,7 @@ class documentgenerator extends CModule
 
 		if (!isset($params['savedata']) || $params['savedata'] !== "Y")
 		{
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/".$this->MODULE_ID."/install/db/".strtolower($DB->type)."/uninstall.sql");
+			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/".$this->MODULE_ID."/install/db/".mb_strtolower($DB->type)."/uninstall.sql");
 		}
 
 		if($errors !== false)

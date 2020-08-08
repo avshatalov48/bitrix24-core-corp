@@ -3,7 +3,11 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 use Bitrix\Tasks\Util;
 
 //region TITLE
-if($arParams['GROUP_ID'] > 0)
+if ($arParams['PROJECT_VIEW'] === 'Y')
+{
+	$sTitle = $sTitleShort = GetMessage("TASKS_TITLE_PROJECT");
+}
+elseif($arParams['GROUP_ID'] > 0)
 {
 	$sTitle = $sTitleShort = GetMessage("TASKS_TITLE_GROUP_TASKS");
 }

@@ -9,6 +9,7 @@ use Bitrix\Main\UI\Filter;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Tasks\Internals\Effective;
 use Bitrix\Tasks\Internals\Counter\EffectiveTable;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\User;
 
 Loc::loadMessages(__FILE__);
@@ -74,8 +75,24 @@ class TasksReportEffectiveDetailComponent extends TasksBaseComponent
 
 	protected function getData()
 	{
-		$this->arResult['VIOLATION_LIST'] = $this->getViolationList();
+		$taskLimitExceeded = TaskLimit::isLimitExceeded();
+
+		if (!$taskLimitExceeded)
+		{
+			$this->arResult['VIOLATION_LIST'] = $this->getViolationList();
+		}
+		else
+		{
+			$nav = new PageNavigation('nav-effective');
+			$nav->allowAllRecords(true)->setPageSize($this->getPageSize())->initFromUri();
+			$nav->setRecordCount(0);
+
+			$this->arResult['NAV'] = $nav;
+			$this->arResult['VIOLATION_LIST'] = [];
+		}
+
 		$this->arParams['HEADERS'] = $this->getGridHeaders();
+		$this->arResult['TASK_LIMIT_EXCEEDED'] = $taskLimitExceeded;
 	}
 
 	private function getViolationList()
@@ -136,7 +153,7 @@ class TasksReportEffectiveDetailComponent extends TasksBaseComponent
 				'DATE' => 'DATETIME',
 				'DATE_REPAIR' => 'DATETIME_REPAIR',
 				'TASK_TITLE',
-				'TASK_DEADLINE',
+				'DEADLINE' => 'TASK_DEADLINE',
 				'USER_TYPE',
 				'TASK_ORIGINATOR_ID' => 'TASK.CREATOR.ID',
 				'TASK_ZOMBIE' => 'TASK.ZOMBIE',

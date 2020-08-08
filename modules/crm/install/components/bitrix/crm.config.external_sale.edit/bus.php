@@ -15,11 +15,11 @@ if (!check_bitrix_sessid())
 	die("ER".GetMessage("BPWC_WNC_EMPTY_SESSID")." [bsid=".bitrix_sessid().";]");
 
 $errorMessage = "";
-if (strlen($_POST["LOGIN"]) <= 0)
+if ($_POST["LOGIN"] == '')
 	$errorMessage .= GetMessage("BPWC_WNC_EMPTY_LOGIN")."<br>";
-if (strlen($_POST["PASSWORD"]) <= 0)
+if ($_POST["PASSWORD"] == '')
 	$errorMessage .= GetMessage("BPWC_WNC_EMPTY_PASSWORD")."<br>";
-if (strlen($_POST["SERVER"]) <= 0)
+if ($_POST["SERVER"] == '')
 	$errorMessage .= GetMessage("BPWC_WNC_EMPTY_URL")."<br>";
 
 $cnt = CCrmExternalSale::Count();
@@ -31,11 +31,11 @@ if ($arLimitationSettings["MAX_SHOPS"] > 0)
 		$errorMessage .= GetMessage("BPWC_WNC_MAX_SHOPS")."<br>";
 }
 
-if (strlen($errorMessage) <= 0)
+if ($errorMessage == '')
 {
 	$arCrmUrl = parse_url($_POST["SERVER"]);
 
-	$crmUrlScheme = strtolower($arCrmUrl["scheme"]);
+	$crmUrlScheme = mb_strtolower($arCrmUrl["scheme"]);
 	if ($crmUrlScheme != "https")
 		$crmUrlScheme = "http";
 	$crmUrlHost = $arCrmUrl["host"];
@@ -47,7 +47,7 @@ if (strlen($errorMessage) <= 0)
 		"ACTIVE" => "Y",
 		"LOGIN" => $_POST["LOGIN"],
 		"PASSWORD" => $_POST["PASSWORD"],
-		"NAME" => (strlen($_POST["SITE_NAME"]) > 0) ? $_POST["SITE_NAME"] : false,
+		"NAME" => ($_POST["SITE_NAME"] <> '') ? $_POST["SITE_NAME"] : false,
 		"IMPORT_SIZE" => 10,
 		"IMPORT_PERIOD" => 7,
 		"IMPORT_PREFIX" => "EShop".$cnt,
@@ -76,7 +76,7 @@ if (strlen($errorMessage) <= 0)
 	}
 }
 
-if (strlen($errorMessage) <= 0)
+if ($errorMessage == '')
 	echo "OK"."/crm/configs/external_sale/?do_show_wizard=Y&do_show_wizard_id=".intval($res);
 else
 	echo "ER".$errorMessage;

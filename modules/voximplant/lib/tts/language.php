@@ -2,6 +2,7 @@
 
 namespace Bitrix\Voximplant\Tts;
 
+use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -108,21 +109,29 @@ class Language
 	 * @param string $lang ID of the language.
 	 * @return string
 	 */
-	public static function getDefaultVoice($lang = 'ru')
+	public static function getDefaultVoice($lang = null)
 	{
-		if ($lang == 'ru')
+		static $defaultVoices = [
+			'ru' => self::RU_RUSSIAN_FEMALE, //	Russian
+			'en' => self::US_ENGLISH_MALE, // English
+			'de' => self::EUR_GERMAN_FEMALE, //	German
+			'ua' => self::RU_RUSSIAN_FEMALE, //	Ukrainian
+			'la' => self::EUR_SPANISH_FEMALE, // Spanish
+			'br' => self::BR_PORTUGUESE_FEMALE, // Portuguese
+			'fr' => self::EUR_FRENCH_FEMALE, //	French
+			'sc' => self::CH_CHINESE_FEMALE, //	Chinese Simplified
+			'tc' => self::CH_CHINESE_FEMALE, //	Chinese Traditional
+			'pl' => self::EUR_POLISH_FEMALE, //	Polish
+			'it' => self::EUR_ITALIAN_FEMALE, // Italian
+			'tr' => self::EUR_TURKISH_FEMALE, // Turkish
+			'ja' => self::JP_JAPANESE_FEMALE, // Japanese
+		];
+
+		if ($lang === null)
 		{
-			$voice = self::RU_RUSSIAN_FEMALE;
-		}
-		else if ($lang == 'de')
-		{
-			$voice = self::EUR_GERMAN_FEMALE;
-		}
-		else
-		{
-			$voice = self::US_ENGLISH_MALE;
+			$lang = Context::getCurrent()->getLanguage();
 		}
 
-		return $voice;
+		return $defaultVoices[$lang] ?? self::US_ENGLISH_MALE;
 	}
 }

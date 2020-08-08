@@ -111,7 +111,7 @@ $user_action_menu_number = rand();
 								echo htmlspecialcharsbx($dept_name);
 							else
 							{
-								if (strlen(trim($arParams["PATH_TO_CONPANY_DEPARTMENT"])) > 0)
+								if (trim($arParams["PATH_TO_CONPANY_DEPARTMENT"]) <> '')
 									echo '<a href="',CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_CONPANY_DEPARTMENT"], array("ID" => $dept_id)),'">',htmlspecialcharsbx($dept_name),'</a>';
 								else
 									echo '<a href="',$arParams['STRUCTURE_PAGE'].'?set_filter_',$arParams['STRUCTURE_FILTER'],'=Y&',$arParams['STRUCTURE_FILTER'],'_UF_DEPARTMENT=',$dept_id,'">',htmlspecialcharsbx($dept_name),'</a>';
@@ -122,7 +122,7 @@ $user_action_menu_number = rand();
 					break;
 
 				default:
-					if (substr($key, 0, 3) == 'UF_' && is_array($arResult['USER_PROP'][$key]))
+					if (mb_substr($key, 0, 3) == 'UF_' && is_array($arResult['USER_PROP'][$key]))
 					{
 						$arResult['USER_PROP'][$key]['VALUE'] = $value;
 						$APPLICATION->IncludeComponent(
@@ -158,7 +158,7 @@ $user_action_menu_number = rand();
 				echo $dep_name."<br>";
 			else
 			{
-				if (strlen(trim($arParams["PATH_TO_CONPANY_DEPARTMENT"])) > 0)
+				if (trim($arParams["PATH_TO_CONPANY_DEPARTMENT"]) <> '')
 					echo '<a href="',CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_CONPANY_DEPARTMENT"], array("ID" => $dep_id)),'">',$dep_name,'</a>';
 				else
 					echo '<a href="',$arParams['STRUCTURE_PAGE'].'?set_filter_',$arParams['STRUCTURE_FILTER'],'=Y&',$arParams['STRUCTURE_FILTER'],'_UF_DEPARTMENT=',$dep_id,'">',$dep_name,'</a>';
@@ -176,7 +176,7 @@ $user_action_menu_number = rand();
 				echo $dep_name."<br>";
 			else
 			{
-				if (strlen(trim($arParams["PATH_TO_CONPANY_DEPARTMENT"])) > 0)
+				if (trim($arParams["PATH_TO_CONPANY_DEPARTMENT"]) <> '')
 					echo '<a href="',CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_CONPANY_DEPARTMENT"], array("ID" => $dep_id)),'">',$dep_name,'</a>';
 				else
 					echo '<a href="',$arParams['STRUCTURE_PAGE'].'?set_filter_',$arParams['STRUCTURE_FILTER'],'=Y&',$arParams['STRUCTURE_FILTER'],'_UF_DEPARTMENT=',$dep_id,'">',$dep_name,'</a>';

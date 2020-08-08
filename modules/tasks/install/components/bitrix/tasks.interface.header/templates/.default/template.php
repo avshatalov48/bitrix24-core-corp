@@ -14,18 +14,17 @@ if (!isset($arParams['MENU_GROUP_ID']))
 	array(
 		'GRID_ID' => $arParams['GRID_ID'],
 		'FILTER_ID' => $arParams['FILTER_ID'],
-
-		'USER_ID' => $arParams[ 'USER_ID' ],
-
+		'USER_ID' => $arParams['USER_ID'],
 		'GROUP_ID' => $arParams['MENU_GROUP_ID'],
+		'PROJECT_VIEW' => $arParams['PROJECT_VIEW'],
 		'SECTION_URL_PREFIX' => '',
 
-		'MARK_SECTION_KANBAN'=>$arParams['MARK_SECTION_KANBAN'],
 		'USE_AJAX_ROLE_FILTER' => $arParams['USE_AJAX_ROLE_FILTER'],
-		'MARK_ACTIVE_ROLE'=>$arParams['MARK_ACTIVE_ROLE'],
-		'MARK_SECTION_ALL'=>$arParams['MARK_SECTION_ALL'],
-		'MARK_SPECIAL_PRESET'=>$arParams['MARK_SPECIAL_PRESET'],
-		'MARK_TEMPLATES'=>$arParams['MARK_TEMPLATES'],
+		'MARK_ACTIVE_ROLE' => $arParams['MARK_ACTIVE_ROLE'],
+		'MARK_SECTION_ALL' => $arParams['MARK_SECTION_ALL'],
+		'MARK_SPECIAL_PRESET' => $arParams['MARK_SPECIAL_PRESET'],
+		'MARK_TEMPLATES' => $arParams['MARK_TEMPLATES'],
+		'MARK_SECTION_PROJECTS' => $arParams['MARK_SECTION_PROJECTS'],
 
 		'PATH_TO_GROUP_TASKS' => $arParams[ 'PATH_TO_GROUP_TASKS' ],
 		'PATH_TO_GROUP_TASKS_TASK' => $arParams[ 'PATH_TO_GROUP_TASKS_TASK' ],
@@ -83,6 +82,8 @@ $APPLICATION->IncludeComponent(
 		'POPUP_MENU_ITEMS'=>$arParams['POPUP_MENU_ITEMS'],
 		'SORT_FIELD'=>$arParams['SORT_FIELD'],
 		'SORT_FIELD_DIR'=>$arParams['SORT_FIELD_DIR'],
+
+		'PROJECT_VIEW' => $arParams['PROJECT_VIEW']
 	),
 	$component,
 	array('HIDE_ICONS' => true)
@@ -106,7 +107,9 @@ $APPLICATION->IncludeComponent(
 		'PATH_TO_GROUP_TASKS' => $arParams[ 'PATH_TO_GROUP_TASKS' ],
 		'DEFAULT_ROLEID' => $arParams[ 'DEFAULT_ROLEID' ],
 
-		'SHOW_TOOLBAR'=>$arParams['MARK_SPECIAL_PRESET']=='Y' || $arParams['MARK_SECTION_ALL']=='Y' ? 'N' : 'Y'
+		'SHOW_TOOLBAR'=>$arParams['MARK_SPECIAL_PRESET']=='Y' || $arParams['MARK_SECTION_ALL']=='Y' ? 'N' : 'Y',
+		'PROJECT_VIEW' => $arParams['PROJECT_VIEW'],
+		'VIEW_MODE_LIST' => $arParams['PROJECT_VIEW'] == 'Y' ? ['VIEW_MODE_KANBAN', 'VIEW_MODE_LIST', 'VIEW_MODE_TIMELINE', 'VIEW_MODE_CALENDAR', 'VIEW_MODE_GANTT', 'VIEW_MODE_SPRINT'] : []
 	),
 	$component,
 	array('HIDE_ICONS' => true)

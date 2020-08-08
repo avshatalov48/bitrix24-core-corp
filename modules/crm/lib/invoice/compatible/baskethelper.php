@@ -13,7 +13,7 @@ class BasketHelper
 		$enableCustomCurrency = false)
 	{
 		$siteId = is_string($siteId) ? trim($siteId) : '';
-		if (strlen($siteId) <= 0)
+		if ($siteId == '')
 		{
 			$errors[] = [
 				'CODE' => 'PARAM',

@@ -119,7 +119,7 @@ class Button extends Base
 		return $parameter;
 	}
 
-	protected function getWidgets()
+	public function getWidgets()
 	{
 		if ($this->widgets !== null)
 		{
@@ -136,7 +136,7 @@ class Button extends Base
 			}
 
 			$item = $this->button->getItemByType($typeId);
-			$config = isset($item['CONFIG']) ? $item['CONFIG'] : [];
+			$config = $item['CONFIG'] ?? [];
 			$typeWidgets = SiteButton\ChannelManager::getWidgets(
 				$typeId,
 				$item['EXTERNAL_ID'],
@@ -250,7 +250,7 @@ class Button extends Base
 		);
 	}
 
-	protected function getWidgetResources()
+	public function getWidgetResources()
 	{
 		$resources = array();
 		$widgetList = SiteButton\Manager::getWidgetList();

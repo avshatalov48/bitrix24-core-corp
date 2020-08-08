@@ -34,7 +34,7 @@ class CIntranetMailCheckComponent extends CBitrixComponent
 		if ($settedUp !== false)
 		{
 			$isMobileInstalled = COption::GetOptionString('main', 'wizard_mobile_installed', 'N', SITE_ID) == 'Y';
-			$isMobileVersion = strpos($APPLICATION->GetCurPage(), SITE_DIR . 'm/') === 0;
+			$isMobileVersion = mb_strpos($APPLICATION->GetCurPage(), SITE_DIR.'m/') === 0;
 			if ($isMobileInstalled && $isMobileVersion)
 			{
 				$settedUp = false;

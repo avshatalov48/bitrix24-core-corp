@@ -46,7 +46,7 @@ foreach ($arGroupSubjects as $ind => $arGroupSubject)
 		$idTmp = CSocNetGroupSubject::Add($arGroupSubject);
 		if ($idTmp)
 		{
-			$arGroupSubjectsId[$ind] = IntVal($idTmp);
+			$arGroupSubjectsId[$ind] = intval($idTmp);
 		}
 		else
 		{
@@ -55,7 +55,7 @@ foreach ($arGroupSubjects as $ind => $arGroupSubject)
 		}
 	}
 }
-if (StrLen($errorMessage) <= 0)
+if ($errorMessage == '')
 {
 	$pathToImages = $WIZARD_SERVICE_ABSOLUTE_PATH."/images/";
 
@@ -181,7 +181,7 @@ if (StrLen($errorMessage) <= 0)
 			$idTmp = CSocNetGroup::Add($arGroup);
 			if ($idTmp)
 			{
-				$arGroupsId[$ind] = IntVal($idTmp);
+				$arGroupsId[$ind] = intval($idTmp);
 			}
 			else
 			{
@@ -192,7 +192,7 @@ if (StrLen($errorMessage) <= 0)
 	}
 }
 
-if (StrLen($errorMessage) <= 0)
+if ($errorMessage == '')
 {
 	foreach ($arGroupsId as $ind => $val)
 	{
@@ -220,7 +220,7 @@ if (StrLen($errorMessage) <= 0)
 	}
 }
 
-if (strLen($errorMessage) <= 0)
+if ($errorMessage == '')
 {
 	$userTagList = [
 		Loc::getMessage('SONET_USER_TAG_1'),
@@ -238,7 +238,7 @@ if (strLen($errorMessage) <= 0)
 	}
 }
 
-if (StrLen($errorMessage) <= 0)
+if ($errorMessage == '')
 {
 	// set EUV vor news
 	$dbResult = CSocNetEventUserView::GetList(

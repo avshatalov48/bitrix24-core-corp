@@ -1,6 +1,8 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
+use Bitrix\Crm;
+
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
@@ -35,8 +37,8 @@ global $APPLICATION;
 // Preparing of URL templates -->
 $arParams['PATH_TO_START'] = CrmCheckPath('PATH_TO_START', isset($arParams['PATH_TO_START']) ? $arParams['PATH_TO_START'] : '', Option::get('crm', 'path_to_start', '/crm/start/', false));
 
-$arParams['PATH_TO_ORDER_LIST'] = isset($arParams['PATH_TO_ORDER_LIST']) ? $arParams['PATH_TO_ORDER_LIST'] : '#SITE_DIR#shop/orders/list/';
-$arParams['PATH_TO_ORDER_KANBAN'] = isset($arParams['PATH_TO_ORDER_KANBAN']) ? $arParams['PATH_TO_ORDER_KANBAN'] : '#SITE_DIR#shop/orders/kanban/';
+$arParams['PATH_TO_ORDER_LIST'] = $arParams['PATH_TO_ORDER_LIST'] <> ''? $arParams['PATH_TO_ORDER_LIST'] : '#SITE_DIR#shop/orders/list/';
+$arParams['PATH_TO_ORDER_KANBAN'] = $arParams['PATH_TO_ORDER_KANBAN'] <> ''? $arParams['PATH_TO_ORDER_KANBAN'] : '#SITE_DIR#shop/orders/kanban/';
 
 $arParams['PATH_TO_ACTIVITY_LIST'] = (isset($arParams['PATH_TO_ACTIVITY_LIST']) && $arParams['PATH_TO_ACTIVITY_LIST'] !== '') ? $arParams['PATH_TO_ACTIVITY_LIST'] : '#SITE_DIR#crm/activity/';
 $arParams['PATH_TO_COMPANY_LIST'] = CrmCheckPath('PATH_TO_COMPANY_LIST', isset($arParams['PATH_TO_COMPANY_LIST']) ? $arParams['PATH_TO_COMPANY_LIST'] : '', '#SITE_DIR#crm/company/list/');
@@ -75,6 +77,7 @@ $arParams['PATH_TO_REPORT_LIST'] = (isset($arParams['PATH_TO_REPORT_LIST']) && $
 $arParams['PATH_TO_DEAL_FUNNEL'] = (isset($arParams['PATH_TO_DEAL_FUNNEL']) && $arParams['PATH_TO_DEAL_FUNNEL'] !== '') ? $arParams['PATH_TO_DEAL_FUNNEL'] : '#SITE_DIR#crm/reports/';
 $arParams['PATH_TO_EVENT_LIST'] = (isset($arParams['PATH_TO_EVENT_LIST']) && $arParams['PATH_TO_EVENT_LIST'] !== '') ? $arParams['PATH_TO_EVENT_LIST'] : '#SITE_DIR#crm/events/';
 $arParams['PATH_TO_PRODUCT_LIST'] = (isset($arParams['PATH_TO_PRODUCT_LIST']) && $arParams['PATH_TO_PRODUCT_LIST'] !== '') ? $arParams['PATH_TO_PRODUCT_LIST'] : '#SITE_DIR#crm/product/index.php';
+$arParams['PATH_TO_CATALOG'] = (isset($arParams['PATH_TO_CATALOG']) && $arParams['PATH_TO_CATALOG'] !== '') ? $arParams['PATH_TO_CATALOG'] : '#SITE_DIR#crm/catalog/';
 $arParams['PATH_TO_SETTINGS'] = (isset($arParams['PATH_TO_SETTINGS']) && $arParams['PATH_TO_SETTINGS'] !== '') ? $arParams['PATH_TO_SETTINGS'] : '#SITE_DIR#crm/configs/';
 $arParams['PATH_TO_SEARCH_PAGE'] = (isset($arParams['PATH_TO_SEARCH_PAGE']) && $arParams['PATH_TO_SEARCH_PAGE'] !== '') ? $arParams['PATH_TO_SEARCH_PAGE'] : '#SITE_DIR#search/index.php?where=crm';
 $arParams['PATH_TO_PRODUCT_MARKETPLACE'] = (isset($arParams['PATH_TO_PRODUCT_MARKETPLACE']) && $arParams['PATH_TO_PRODUCT_MARKETPLACE'] !== '') ? $arParams['PATH_TO_PRODUCT_MARKETPLACE'] : '#SITE_DIR#marketplace/category/crm/';
@@ -163,7 +166,7 @@ if(is_array($navigationIndex))
 		}
 
 		//At present time setting date are ignored
-		$arParams['PATH_TO_'.strtoupper($k).'_INDEX'] = $arParams['PATH_TO_'.strtoupper($k.'_'.$page)];
+		$arParams['PATH_TO_'.mb_strtoupper($k).'_INDEX'] = $arParams['PATH_TO_'.mb_strtoupper($k.'_'.$page)];
 	}
 }
 //<-- Preparing of URL templates
@@ -402,14 +405,28 @@ if (\Bitrix\Main\Loader::includeModule('report') && \Bitrix\Report\VisualConstru
 
 if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
 {
-	$stdItems['CATALOGUE'] = array(
-		'ID' => 'PRODUCT',
-		'MENU_ID' => 'menu_crm_product',
-		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOGUE_2'),
-		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOGUE_2'),
-		'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PRODUCT_LIST']),
-		'ICON' => 'catalog'
-	);
+	if (\Bitrix\Main\Loader::includeModule('catalog') && \Bitrix\Catalog\Config\State::isProductCardSliderEnabled())
+	{
+		$stdItems['CATALOGUE'] = array(
+			'ID' => 'CATALOG',
+			'MENU_ID' => 'menu_crm_catalog',
+			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOGUE_2'),
+			'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOGUE_2'),
+			'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CATALOG']),
+			'ICON' => 'catalog'
+		);
+	}
+	else
+	{
+		$stdItems['CATALOGUE'] = array(
+			'ID' => 'PRODUCT',
+			'MENU_ID' => 'menu_crm_product',
+			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOGUE_2'),
+			'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOGUE_2'),
+			'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PRODUCT_LIST']),
+			'ICON' => 'catalog'
+		);
+	}
 }
 
 if (\Bitrix\Main\Config\Option::get("crm", "crm_shop_enabled", "N") === 'Y')
@@ -676,7 +693,7 @@ else
 {
 	foreach($itemInfos as &$itemInfo)
 	{
-		$itemID = isset($itemInfo['ID']) ? strtoupper($itemInfo['ID']) : '';
+		$itemID = isset($itemInfo['ID'])? mb_strtoupper($itemInfo['ID']) : '';
 		if(isset($stdItems[$itemID]))
 		{
 			$item = $stdItems[$itemID];
@@ -686,7 +703,7 @@ else
 		{
 			$items[] = array(
 				'ID' => $itemID,
-				'MENU_ID' => "menu_crm_".strtolower($itemID),
+				'MENU_ID' => "menu_crm_".mb_strtolower($itemID),
 				'NAME' => isset($itemInfo['NAME']) ? $itemInfo['NAME'] : $itemID,
 				'URL' => isset($itemInfo['URL']) ? $itemInfo['URL'] : '',
 				'COUNTER' => isset($itemInfo['COUNTER']) ? intval($itemInfo['COUNTER']) : 0,
@@ -712,7 +729,7 @@ $arResult['ADDITIONAL_ITEM'] = array(
 	'ICON' => 'more'
 );
 
-$options = CUserOptions::GetOption('crm.control.panel', strtolower($arResult['ID']));
+$options = CUserOptions::GetOption('crm.control.panel', mb_strtolower($arResult['ID']));
 if (!$options)
 {
 	$options = array('fixed' => 'N');

@@ -8,6 +8,7 @@ require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_befo
 
 use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Location;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -91,7 +92,7 @@ elseif($action === 'SAVE')
 	$sourceEntityID =  isset($params['LEAD_ID']) ? (int)$params['LEAD_ID'] : 0;
 
 	$enableRequiredUserFieldCheck = !isset($_POST['ENABLE_REQUIRED_USER_FIELD_CHECK'])
-		|| strtoupper($_POST['ENABLE_REQUIRED_USER_FIELD_CHECK']) === 'Y';
+		|| mb_strtoupper($_POST['ENABLE_REQUIRED_USER_FIELD_CHECK']) === 'Y';
 
 	$isNew = $ID === 0;
 	$isCopyMode = $isNew && $sourceEntityID > 0;
@@ -161,6 +162,10 @@ elseif($action === 'SAVE')
 			$fields[$fieldName] = $_POST[$fieldName];
 		}
 	}
+	$USER_FIELD_MANAGER->EditFormAddFields(\CCrmLead::USER_FIELD_ENTITY_ID, $fields, [
+		'FORM' => $fields,
+		'FILES' => [],
+	]);
 
 	if(isset($_POST['OBSERVER_IDS']))
 	{
@@ -172,6 +177,28 @@ elseif($action === 'SAVE')
 	if(isset($_POST['TARGET_STATUS_ID']))
 	{
 		$fieldCheckOptions['STATUS_ID'] = $_POST['TARGET_STATUS_ID'];
+	}
+	//endregion
+
+	//region ADDRESS
+	if(Main\Loader::includeModule('location') && isset($_POST['ADDRESS']))
+	{
+		$addressJson = (string)$_POST['ADDRESS'];
+		if ($addressJson !== '')
+		{
+			$locationAddress = Location\Entity\Address::fromJson(
+				Crm\EntityAddress::prepareJsonValue($addressJson)
+			);
+			if ($locationAddress)
+			{
+				$fields['ADDRESS_LOC_ADDR'] = $locationAddress;
+				unset($fields['ADDRESS']);
+			}
+		}
+		elseif (!$isNew)
+		{
+			$fields['ADDRESS_DELETE'] = 'Y';
+		}
 	}
 	//endregion
 
@@ -223,7 +250,11 @@ elseif($action === 'SAVE')
 					$createdEntities[\CCrmOwnerType::Company] = array($companyID);
 				}
 			}
-			elseif($companyItem['title'] || (isset($companyItem['multifields']) && is_array($companyItem['multifields'])))
+			elseif(
+				$companyItem['title']
+				|| (isset($companyItem['multifields']) && is_array($companyItem['multifields']))
+				|| (isset($companyItem['requisites']) && is_array($companyItem['requisites']))
+			)
 			{
 				if(!isset($updateEntityInfos[CCrmOwnerType::Company]))
 				{
@@ -289,7 +320,11 @@ elseif($action === 'SAVE')
 					$createdEntities[CCrmOwnerType::Contact][] = $contactID;
 				}
 			}
-			elseif($contactItem['title'] || (isset($contactItem['multifields']) && is_array($contactItem['multifields'])))
+			elseif(
+				$contactItem['title']
+				|| (isset($contactItem['multifields']) && is_array($contactItem['multifields']))
+				|| (isset($contactItem['requisites']) && is_array($contactItem['requisites']))
+			)
 			{
 				if(!isset($updateEntityInfos[CCrmOwnerType::Contact]))
 				{
@@ -654,15 +689,14 @@ elseif($action === 'SAVE')
 
 		if($isNew)
 		{
-			\Bitrix\Crm\Automation\Factory::runOnAdd(\CCrmOwnerType::Lead, $ID);
+			$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $ID);
+			$starter->setUserIdFromCurrent()->runOnAdd();
 		}
-		else if(is_array($previousFields)
-			&& isset($fields['STATUS_ID'])
-			&& isset($previousFields['STATUS_ID'])
-			&& $fields['STATUS_ID'] !== $previousFields['STATUS_ID']
-		)
+		else if(is_array($previousFields))
 		{
-			\Bitrix\Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Lead, $ID);
+			$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $ID);
+			$starter->setUserIdFromCurrent();
+			$starter->runOnUpdate($fields, $previousFields);
 		}
 	}
 
@@ -775,36 +809,36 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 	$ID = isset($_POST['ACTION_ENTITY_ID']) ? max((int)$_POST['ACTION_ENTITY_ID'], 0) : 0;
 	$guid = isset($_POST['GUID']) ? $_POST['GUID'] : "lead_{$ID}_custom_editor";
 	$configID = isset($_POST['CONFIG_ID']) ? $_POST['CONFIG_ID'] : '';
-	$forceDefaultConfig = !isset($_POST['FORCE_DEFAULT_CONFIG']) || strtoupper($_POST['FORCE_DEFAULT_CONFIG']) === 'Y';
+	$forceDefaultConfig = !isset($_POST['FORCE_DEFAULT_CONFIG']) || mb_strtoupper($_POST['FORCE_DEFAULT_CONFIG']) === 'Y';
 	$params = isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : array();
 	$context = isset($_POST['CONTEXT']) && is_array($_POST['CONTEXT']) ? $_POST['CONTEXT'] : array();
 	$fieldNames = isset($_POST['FIELDS']) && is_array($_POST['FIELDS']) ? $_POST['FIELDS'] : array();
 	$title = isset($_POST['TITLE']) ? $_POST['TITLE'] : '';
 
 	$enableConfigScopeToggle = !isset($_POST['ENABLE_CONFIG_SCOPE_TOGGLE'])
-		|| strtoupper($_POST['ENABLE_CONFIG_SCOPE_TOGGLE']) === 'Y';
+		|| mb_strtoupper($_POST['ENABLE_CONFIG_SCOPE_TOGGLE']) === 'Y';
 	$enableConfigurationUpdate = !isset($_POST['ENABLE_CONFIGURATION_UPDATE'])
-		|| strtoupper($_POST['ENABLE_CONFIGURATION_UPDATE']) === 'Y';
+		|| mb_strtoupper($_POST['ENABLE_CONFIGURATION_UPDATE']) === 'Y';
 	$enableFieldsContextMenu = !isset($_POST['ENABLE_FIELDS_CONTEXT_MENU'])
-		|| strtoupper($_POST['ENABLE_FIELDS_CONTEXT_MENU']) === 'Y';
-	$isEmbedded = isset($_POST['IS_EMBEDDED']) && strtoupper($_POST['IS_EMBEDDED']) === 'Y';
+		|| mb_strtoupper($_POST['ENABLE_FIELDS_CONTEXT_MENU']) === 'Y';
+	$isEmbedded = isset($_POST['IS_EMBEDDED']) && mb_strtoupper($_POST['IS_EMBEDDED']) === 'Y';
 	$enableRequiredUserFieldCheck = !isset($_POST['ENABLE_REQUIRED_USER_FIELD_CHECK'])
-		|| strtoupper($_POST['ENABLE_REQUIRED_USER_FIELD_CHECK']) === 'Y';
+		|| mb_strtoupper($_POST['ENABLE_REQUIRED_USER_FIELD_CHECK']) === 'Y';
 	$enableSearchHistory = !isset($_POST['ENABLE_SEARCH_HISTORY'])
-		|| strtoupper($_POST['ENABLE_SEARCH_HISTORY']) === 'Y';
+		|| mb_strtoupper($_POST['ENABLE_SEARCH_HISTORY']) === 'Y';
 	$enableCommunicationControls = !isset($_POST['ENABLE_COMMUNICATION_CONTROLS'])
-		|| strtoupper($_POST['ENABLE_COMMUNICATION_CONTROLS']) === 'Y';
+		|| mb_strtoupper($_POST['ENABLE_COMMUNICATION_CONTROLS']) === 'Y';
 
 	$enableAvailableFieldsInjection = isset($_POST['ENABLE_AVAILABLE_FIELDS_INJECTION'])
-		&& strtoupper($_POST['ENABLE_AVAILABLE_FIELDS_INJECTION']) === 'Y';
+		&& mb_strtoupper($_POST['ENABLE_AVAILABLE_FIELDS_INJECTION']) === 'Y';
 	$enableExternalLayoutResolvers = isset($_POST['ENABLE_EXTERNAL_LAYOUT_RESOLVERS'])
-		&& strtoupper($_POST['ENABLE_EXTERNAL_LAYOUT_RESOLVERS']) === 'Y';
+		&& mb_strtoupper($_POST['ENABLE_EXTERNAL_LAYOUT_RESOLVERS']) === 'Y';
 
 	$enableConfigVariability = !isset($_POST['ENABLE_CONFIG_VARIABILITY'])
-		|| strtoupper($_POST['ENABLE_CONFIG_VARIABILITY']) === 'Y';
+		|| mb_strtoupper($_POST['ENABLE_CONFIG_VARIABILITY']) === 'Y';
 
-	$isReadOnly = isset($_POST['READ_ONLY']) && strtoupper($_POST['READ_ONLY']) === 'Y';
-	$showEmptyFields = isset($_POST['SHOW_EMPTY_FIELDS']) && strtoupper($_POST['SHOW_EMPTY_FIELDS']) === 'Y';
+	$isReadOnly = isset($_POST['READ_ONLY']) && mb_strtoupper($_POST['READ_ONLY']) === 'Y';
+	$showEmptyFields = isset($_POST['SHOW_EMPTY_FIELDS']) && mb_strtoupper($_POST['SHOW_EMPTY_FIELDS']) === 'Y';
 	$initialMode = isset($_POST['INITIAL_MODE']) ? $_POST['INITIAL_MODE'] : '';
 
 	CBitrixComponent::includeComponentClass('bitrix:crm.lead.details');
@@ -821,6 +855,11 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 	$component->setEntityID($ID);
 
 	$context['SKIP_PRODUCT_DATA'] = 'Y';
+	if(!isset($context['PARAMS']))
+	{
+		$context['PARAMS'] = array();
+	}
+	$context['PARAMS'] = array_merge($params, $context['PARAMS']);
 
 	if(empty($fieldNames))
 	{
@@ -865,13 +904,13 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 	}
 
 	$scopePrefix = '';
-	if(isset($_POST['FORCE_DEFAULT_SCOPE']) && strtoupper($_POST['FORCE_DEFAULT_SCOPE']) === 'Y')
+	if(isset($_POST['FORCE_DEFAULT_SCOPE']) && mb_strtoupper($_POST['FORCE_DEFAULT_SCOPE']) === 'Y')
 	{
 		$scopePrefix = $component->getDefaultConfigID();
 	}
 
 	$optionPrefix = '';
-	if(isset($_POST['FORCE_DEFAULT_OPTIONS']) && strtoupper($_POST['FORCE_DEFAULT_OPTIONS']) === 'Y')
+	if(isset($_POST['FORCE_DEFAULT_OPTIONS']) && mb_strtoupper($_POST['FORCE_DEFAULT_OPTIONS']) === 'Y')
 	{
 		$optionPrefix = $component->getDefaultConfigID();
 	}

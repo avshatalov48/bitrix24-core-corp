@@ -161,30 +161,37 @@
 		createUsersObject(options = {})
 		{
 			let userList = new UserList(this.ui, {
-				filterUserList: items =>
+				filterUserList: (items, loadMore) =>
 				{
-					let hasAllRecipients = false;
-					let modifiedItems = items.filter(item =>
+					if(userList.searcher.currentQueryString === "" && options.useRecentSelected)
 					{
-						if (item.params.id)
+						return userList.recent.get();
+					}
+
+					let hasAllRecipients = false;
+					let modifiedItems = items
+						.filter(item => options.hideUnnamed ? item.hasName : true)
+						.map(item =>
 						{
-							if(item.params.id === "A" && options.showAll === true)
+							if (item.params.id)
 							{
-								item.color = "#dbf188";
-								hasAllRecipients = true;
+								if (item.params.id === "A" && options.showAll === true)
+								{
+									item.color = "#dbf188";
+									hasAllRecipients = true;
+								}
+								else
+								{
+									item.color = "#d5f1fc";
+								}
+
+								item.id = `users/${item.params.id}`;
 							}
-							else
-							{
-								item.color = "#d5f1fc";
-							}
 
-							item.id = `users/${item.params.id}`;
-						}
+							return item;
+						});
 
-						return item;
-					});
-
-					if(!hasAllRecipients && userList.searcher.currentQueryString.length  === 0 && options.showAll === true)
+					if(!loadMore && !hasAllRecipients && userList.searcher.currentQueryString.length  === 0 && options.showAll === true)
 					{
 						modifiedItems.unshift({
 							title: BX.message("RECIPIENT_ALL"),
@@ -223,6 +230,11 @@
 						{
 							if (data.text === "")
 							{
+								if (options.useRecentSelected)
+								{
+									this.items = userList.recent.get();
+								}
+
 								this.draw();
 							}
 							else
@@ -233,6 +245,51 @@
 						}
 					}
 				}
+			});
+
+			userList.setOptions({disablePagination:true});
+			userList.recent = {
+				limit:10,
+				read:function(){
+					this.lastSelected = Application.storageById("recipients").getObject("last", {users:[]});
+				},
+				get:function()
+				{
+					this.read();
+					return this.lastSelected.users.map(user =>{
+						user.hasName = user.title !== "";
+						delete user.checked;
+						user.sectionCode = "people";
+						return user;
+					});
+				},
+				add:function(users)
+				{
+					let lastSelected = this.lastSelected["users"];
+					users.forEach(user=>
+					{
+						if(!lastSelected.find(selected=>user.id === selected.id))
+						{
+							lastSelected.unshift(user);
+						}
+					});
+
+
+					while(lastSelected.length > this.limit)
+					{
+						lastSelected.pop();
+					}
+
+					Application.storageById("recipients").setObject("last", {users: lastSelected});
+					return this.lastSelected;
+				}
+			};
+
+
+			BX.addCustomEvent("onRecipientSelected", (selectedData)=>
+			{
+				if(selectedData.users)
+					userList.recent.add(selectedData.users);
 			});
 
 			return userList;
@@ -270,12 +327,13 @@
 			return new Promise((resolve, reject) =>
 			{
 				let scopes = Object.keys(this.datasets);
-				let initResult = scopes.reduce((result, value) =>
+				let initDataFunction = ()=>scopes.reduce((result, value) =>
 				{
 					result[value] = [];
 					return result;
 				}, {});
-
+				let initResult = initDataFunction();
+				let rawResult = initDataFunction();
 				this.ui.allowMultipleSelection(options.allowMultipleSelection);
 				if(options.title)
 				{
@@ -310,11 +368,16 @@
 											"imageUrl": item.imageUrl
 										});
 									}
+
+									rawResult[scope].push(item);
 								}
 							}
+
+
 							return result;
 						}, initResult);
 
+						BX.onCustomEvent("onRecipientSelected", [rawResult]);
 						resolve(result);
 					})
 					.catch(e => reject(e));

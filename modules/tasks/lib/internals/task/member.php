@@ -13,6 +13,11 @@ use Bitrix\Main,
 
 class MemberTable extends Main\Entity\DataManager
 {
+	public const MEMBER_TYPE_ORIGINATOR = 'O';
+	public const MEMBER_TYPE_RESPONSIBLE = 'R';
+	public const MEMBER_TYPE_ACCOMPLICE = 'A';
+	public const MEMBER_TYPE_AUDITOR = 'U';
+
 	/**
 	 * Returns DB table name for entity.
 	 *
@@ -55,25 +60,25 @@ class MemberTable extends Main\Entity\DataManager
 
 			// references
 			'USER' => array(
-				'data_type' => 'Bitrix\Main\User',
+				'data_type' => 'Bitrix\Main\UserTable',
 				'reference' => array('=this.USER_ID' => 'ref.ID')
 			),
 			'TASK' => array(
-				'data_type' => 'Bitrix\Tasks\Internals\Task',
+				'data_type' => 'Bitrix\Tasks\Internals\TaskTable',
 				'reference' => array('=this.TASK_ID' => 'ref.ID')
 			),
 			'TASK_FOLLOWED' => array(
-				'data_type' => 'Task',
+				'data_type' => 'Bitrix\Tasks\Internals\TaskTable',
 				'reference' => array(
 					'=this.TASK_ID' => 'ref.ID',
-					'=this.TYPE' => array('?', 'U')
+					'=this.TYPE' => array('?', self::MEMBER_TYPE_AUDITOR)
 				)
 			),
 			'TASK_COWORKED' => array(
-				'data_type' => 'Task',
+				'data_type' => 'Bitrix\Tasks\Internals\TaskTable',
 				'reference' => array(
 					'=this.TASK_ID' => 'ref.ID',
-					'=this.TYPE' => array('?', 'A')
+					'=this.TYPE' => array('?', self::MEMBER_TYPE_ACCOMPLICE)
 				)
 			),
 		);

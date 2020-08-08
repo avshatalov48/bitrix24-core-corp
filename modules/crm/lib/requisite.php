@@ -40,6 +40,7 @@ class RequisiteTable extends Entity\DataManager
 			'XML_ID' => array('data_type' => 'string', 'validation' => array(__CLASS__, 'validateXmlId')),
 			'ORIGINATOR_ID' => array('data_type' => 'string'),
 			'ACTIVE' => array('data_type' => 'boolean', 'values' => array('N', 'Y'), 'default_value' => 'Y'),
+			'ADDRESS_ONLY' => array('data_type' => 'boolean', 'values' => array('N', 'Y'), 'default_value' => 'N'),
 			'SORT' => array('data_type' => 'integer', 'default_value' => 500),
 			'RQ_NAME' => array('data_type' => 'string', 'validation' => array(__CLASS__, 'validateRqStringField150')),
 			'RQ_FIRST_NAME' => array('data_type' => 'string', 'validation' => array(__CLASS__, 'validateRqStringField50')),

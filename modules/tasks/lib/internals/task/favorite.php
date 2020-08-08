@@ -272,7 +272,7 @@ class FavoriteTable extends Entity\DataManager
 				'reference' => array('=this.USER_ID' => 'ref.ID')
 			),
 			'TASK' => array(
-				'data_type' => 'Bitrix\Tasks\TaskTable',
+				'data_type' => 'Bitrix\Tasks\Internals\TaskTable',
 				'reference' => array('=this.TASK_ID' => 'ref.ID')
 			),
 		);

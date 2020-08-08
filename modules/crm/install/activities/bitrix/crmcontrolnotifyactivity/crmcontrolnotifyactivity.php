@@ -176,7 +176,7 @@ class CBPCrmControlNotifyActivity
 			"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
 			"MESSAGE_OUT" => CBPHelper::ConvertTextForMail($messageText),
 			"ATTACH" => $attach,
-			'NOTIFY_TAG' => 'ROBOT|'.implode('|', array_map('strtoupper', $documentId))
+			'NOTIFY_TAG' => 'ROBOT|'.implode('|', array_map('mb_strtoupper', $documentId))
 		);
 
 		if ($from)
@@ -196,7 +196,7 @@ class CBPCrmControlNotifyActivity
 	{
 		$arErrors = array();
 
-		if (!array_key_exists("MessageText", $arTestProperties) || strlen($arTestProperties["MessageText"]) <= 0)
+		if (!array_key_exists("MessageText", $arTestProperties) || $arTestProperties["MessageText"] == '')
 			$arErrors[] = array("code" => "NotExist", "parameter" => "MessageText", "message" => GetMessage("CRM_CTRNA_EMPTY_MESSAGE"));
 
 		if (array_key_exists('ToHead', $arTestProperties) && $arTestProperties['ToHead'] == 'N' && empty($arTestProperties['ToUsers']))

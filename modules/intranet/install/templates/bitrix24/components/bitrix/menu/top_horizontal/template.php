@@ -17,7 +17,8 @@ foreach ($arResult as $item)
 		"ID" => $item["PARAMS"]["menu_item_id"],
 		"COUNTER" => isset($item["PARAMS"]["counter_num"]) && intval($item["PARAMS"]["counter_num"]) ? $item["PARAMS"]["counter_num"] : "",
 		"IS_ACTIVE" => $item["SELECTED"],
-		"IS_LOCKED" => ""
+		"IS_LOCKED" => "",
+		"CLASS" => $item["PARAMS"]["class"],
 	);
 
 	if (isset($item["PARAMS"]["action"]) && is_array($item["PARAMS"]["action"]))

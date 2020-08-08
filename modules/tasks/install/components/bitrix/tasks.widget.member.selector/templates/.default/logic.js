@@ -86,7 +86,10 @@ BX.namespace('Tasks.Component');
 						popupOffsetLeft: 40,
 
 						readOnly: this.option('readOnly'),
-						parent: this
+						parent: this,
+
+						userType: this.option('userType'),
+						taskLimitExceeded: this.option('taskLimitExceeded'),
 					};
 
 					var types = this.option('types');
@@ -207,6 +210,15 @@ BX.namespace('Tasks.Component');
 			// link clicked
 			openAddForm: function()
 			{
+				var userType = this.option('userType');
+				var taskLimitExceeded = this.option('taskLimitExceeded');
+
+				if ((userType === 'accomplice' || userType === 'auditor') && taskLimitExceeded)
+				{
+					BX.UI.InfoHelper.show('limit_tasks_observers_participants');
+					return;
+				}
+
 				if(this.option('hidePreviousIfSingleAndRequired')) // special behaviour
 				{
 					if(this.vars.constraint.min == 1 && this.vars.constraint.max == 1)

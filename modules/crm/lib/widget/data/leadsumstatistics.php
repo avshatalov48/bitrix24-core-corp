@@ -26,7 +26,7 @@ class LeadSumStatistics extends LeadDataSource
 	*/
 	public function initializeDemoData(array $data, array $params)
 	{
-		$group = isset($params['group']) ? strtoupper($params['group']) : '';
+		$group = isset($params['group'])? mb_strtoupper($params['group']) : '';
 		if($group === self::GROUP_BY_SOURCE)
 		{
 			$statuses = \CCrmStatus::GetStatusList('SOURCE');
@@ -69,7 +69,7 @@ class LeadSumStatistics extends LeadDataSource
 		$semanticID = $filter->getExtraParam('semanticID', PhaseSemantics::UNDEFINED);
 		$isJunk = $filter->getExtraParam('isJunk', null);
 
-		$group = isset($params['group']) ? strtoupper($params['group']) : '';
+		$group = isset($params['group'])? mb_strtoupper($params['group']) : '';
 		if($group !== ''
 			&& $group !== self::GROUP_BY_USER
 			&& $group !== self::GROUP_BY_DATE
@@ -92,7 +92,7 @@ class LeadSumStatistics extends LeadDataSource
 			}
 			if(isset($selectItem['aggregate']))
 			{
-				$aggregate = strtoupper($selectItem['aggregate']);
+				$aggregate = mb_strtoupper($selectItem['aggregate']);
 			}
 		}
 

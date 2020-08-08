@@ -2,7 +2,11 @@
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true){die();}
 
 use Bitrix\Main\Localization\Loc;
-\Bitrix\Main\UI\Extension::load("ui.buttons.icons");
+use Bitrix\Main\Loader;
+use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
+
+Extension::load("ui.buttons.icons");
 
 $isIFrame = $_REQUEST['IFRAME'] == 'Y';
 
@@ -25,8 +29,14 @@ Loc::loadMessages(__FILE__);
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').' no-background no-all-paddings pagetitle-toolbar-field-view ');
 $isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
-?>
-<?php $APPLICATION->IncludeComponent(
+$taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
+
+if ($taskLimitExceeded)
+{
+	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
+}
+
+$APPLICATION->IncludeComponent(
 	'bitrix:tasks.interface.topmenu',
 	'',
 	array(
@@ -46,7 +56,8 @@ $isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
 	),
 	$component,
 	array('HIDE_ICONS' => true)
-); ?>
+);
+?>
 
 <?
 if ($isBitrix24Template)
@@ -97,8 +108,7 @@ if ($isBitrix24Template)
 	$this->EndViewTarget();
 }
 ?>
-
-<div id="<?=$arResult['HELPER']->getScopeId()?>">
+<div class="<?=($arResult['TASK_LIMIT_EXCEEDED']? 'task-report-locked' : '')?>" id="<?=$arResult['HELPER']->getScopeId()?>">
 	<div class="task-report-row task-report-row-50-50">
 		<div class="task-report-container">
 			<div class="task-report-container-title">
@@ -225,4 +235,14 @@ if (isset($arResult['FILTERS']) && is_array($arResult['FILTERS']))
 }
 ?>
 
-<?=$arResult['HELPER']->initializeExtension();?>
+<?=$arResult['HELPER']->initializeExtension()?>
+
+<script type="text/javascript">
+	BX.ready(function() {
+		var taskLimitExceeded = <?=Json::encode($taskLimitExceeded)?>;
+		if (taskLimitExceeded)
+		{
+			BX.UI.InfoHelper.show('limit_tasks_efficiency');
+		}
+	});
+</script>

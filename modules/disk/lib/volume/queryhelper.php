@@ -96,7 +96,7 @@ class QueryHelper
 						$val = array_map(array($sqlHelper, 'forSql'), $val);
 						$where[] = "$key IN('".implode("', '", $val)."')";
 					}
-					elseif (is_string($val) && strlen($val) > 0)
+					elseif (is_string($val) && $val <> '')
 					{
 						$where[] = "$key IN(".$val.')';
 					}
@@ -110,7 +110,7 @@ class QueryHelper
 						$val = array_map(array($sqlHelper, 'forSql'), $val);
 						$where[] = "$key NOT IN('".implode("', '", $val)."')";
 					}
-					elseif (is_string($val) && strlen($val) > 0)
+					elseif (is_string($val) && $val <> '')
 					{
 						$where[] = "$key NOT IN(".$val.')';
 					}

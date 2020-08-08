@@ -82,7 +82,7 @@ else
 			'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
 			'ELEMENT_ID' => $arResult['VARIABLES']['company_id'],
 			'TYPE' => 'list',
-			'MYCOMPANY_MODE' => ($arResult['MYCOMPANY_MODE'] === 'Y' ? 'Y' : 'N') 
+			'MYCOMPANY_MODE' => ($arResult['MYCOMPANY_MODE'] === 'Y' ? 'Y' : 'N')
 		),
 		$component
 	);
@@ -115,6 +115,7 @@ else
 			'PATH_TO_COMPANY_WIDGET' => $arResult['PATH_TO_COMPANY_WIDGET'],
 			'PATH_TO_CONTACT_EDIT' => $arResult['PATH_TO_CONTACT_EDIT'],
 			'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'],
+			'PATH_TO_COMPANY_MERGE' => $arResult['PATH_TO_COMPANY_MERGE'],
 			'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
 			'MYCOMPANY_MODE' => ($arResult['MYCOMPANY_MODE'] === 'Y' ? 'Y' : 'N'),
 			'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID']

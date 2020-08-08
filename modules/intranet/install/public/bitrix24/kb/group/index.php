@@ -8,6 +8,11 @@ if (
 }
 
 require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php');
+
+if (SITE_TEMPLATE_ID !== 'landing24')
+{
+	localRedirect('/kb/');
+}
 ?>
 
 <?$APPLICATION->IncludeComponent(

@@ -276,7 +276,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 	{
 		$basketCode = !empty($this->request['BASKET_CODE']) ? trim($this->request['BASKET_CODE']) : '';
 
-		if(strlen($basketCode) <= 0)
+		if($basketCode == '')
 		{
 			$this->addError('BASKET_CODE is not defined');
 			return;

@@ -2,23 +2,20 @@
 namespace Bitrix\Tasks\Copy\Integration;
 
 use Bitrix\Main\Config\Option;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Socialnetwork\Copy\Integration\Feature;
-use Bitrix\Socialnetwork\Copy\Integration\Helper;
 use Bitrix\Tasks\Copy\TaskManager;
 
-class Group implements Feature, Helper
+class Group implements Feature
 {
-	private $stepper;
-
 	private $executiveUserId;
 	private $features = [];
 
-	private $moduleId = "tasks";
-	private $queueOption = "TasksGroupQueue";
-	private $checkerOption = "TasksGroupChecker_";
-	private $stepperOption = "TasksGroupStepper_";
-	private $errorOption = "TasksGroupError_";
+	const MODULE_ID = "tasks";
+	const QUEUE_OPTION = "TasksGroupQueue";
+	const CHECKER_OPTION = "TasksGroupChecker_";
+	const STEPPER_OPTION = "TasksGroupStepper_";
+	const STEPPER_CLASS = GroupStepper::class;
+	const ERROR_OPTION = "TasksGroupError_";
 
 	private $projectTerm = [];
 
@@ -26,8 +23,6 @@ class Group implements Feature, Helper
 	{
 		$this->executiveUserId = $executiveUserId;
 		$this->features = $features;
-
-		$this->stepper = GroupStepper::class;
 	}
 
 	/**
@@ -42,6 +37,13 @@ class Group implements Feature, Helper
 
 	public function copy($groupId, $copiedGroupId)
 	{
+		$taskCopyManager = new TaskManager($this->executiveUserId, []);
+		$mapIdsCopiedStages = $taskCopyManager->copyKanbanStages($groupId, $copiedGroupId);
+		if (in_array("robots", $this->features))
+		{
+			$taskCopyManager->copyGroupRobots($groupId, $copiedGroupId);
+		}
+
 		$tasksIds = $this->getTasksIdsByGroupId($this->executiveUserId, $groupId);
 		if (!$tasksIds)
 		{
@@ -50,14 +52,7 @@ class Group implements Feature, Helper
 
 		$this->addToQueue($copiedGroupId);
 
-		Option::set($this->moduleId, $this->checkerOption.$copiedGroupId, "Y");
-
-		$taskCopyManager = new TaskManager($this->executiveUserId, []);
-		$mapIdsCopiedStages = $taskCopyManager->copyKanbanStages($groupId, $copiedGroupId);
-		if (in_array("robots", $this->features))
-		{
-			$taskCopyManager->copyGroupRobots($groupId, $copiedGroupId);
-		}
+		Option::set(self::MODULE_ID, self::CHECKER_OPTION.$copiedGroupId, "Y");
 
 		$dataToCopy = [
 			"executiveUserId" => $this->executiveUserId,
@@ -67,11 +62,11 @@ class Group implements Feature, Helper
 			"mapIdsCopiedStages" => $mapIdsCopiedStages,
 			"projectTerm" => $this->projectTerm
 		];
-		Option::set($this->moduleId, $this->stepperOption.$copiedGroupId, serialize($dataToCopy));
+		Option::set(self::MODULE_ID, self::STEPPER_OPTION.$copiedGroupId, serialize($dataToCopy));
 
 		$agent = \CAgent::getList([], [
-			"MODULE_ID" => $this->moduleId,
-			"NAME" => $this->stepper."::execAgent();"
+			"MODULE_ID" => self::MODULE_ID,
+			"NAME" => GroupStepper::class."::execAgent();"
 		])->fetch();
 		if (!$agent)
 		{
@@ -113,56 +108,11 @@ class Group implements Feature, Helper
 
 	private function addToQueue(int $copiedGroupId)
 	{
-		$option = Option::get($this->moduleId, $this->queueOption, "");
+		$option = Option::get(self::MODULE_ID, self::QUEUE_OPTION, "");
 		$option = ($option !== "" ? unserialize($option) : []);
 		$option = (is_array($option) ? $option : []);
 
 		$option[] = $copiedGroupId;
-		Option::set($this->moduleId, $this->queueOption, serialize($option));
-	}
-
-	/**
-	 * Returns a module id for work with options.
-	 * @return string
-	 */
-	public function getModuleId()
-	{
-		return $this->moduleId;
-	}
-
-	/**
-	 * Returns a map of option names.
-	 *
-	 * @return array
-	 */
-	public function getOptionNames()
-	{
-		return [
-			"queue" => $this->queueOption,
-			"checker" => $this->checkerOption,
-			"stepper" => $this->stepperOption,
-			"error" => $this->errorOption
-		];
-	}
-
-	/**
-	 * Returns a link to stepper class.
-	 * @return string
-	 */
-	public function getLinkToStepperClass()
-	{
-		return $this->stepper;
-	}
-
-	/**
-	 * Returns a text map.
-	 * @return array
-	 */
-	public function getTextMap()
-	{
-		return [
-			"title" => Loc::getMessage("GROUP_STEPPER_PROGRESS_TITLE"),
-			"error" => Loc::getMessage("GROUP_STEPPER_PROGRESS_ERROR")
-		];
+		Option::set(self::MODULE_ID, self::QUEUE_OPTION, serialize($option));
 	}
 }

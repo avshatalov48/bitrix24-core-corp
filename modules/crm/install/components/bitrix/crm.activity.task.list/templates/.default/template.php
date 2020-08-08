@@ -110,7 +110,7 @@ function crm_activity_task_delete_grid(title, message, btnTitle, path)
 		{
 			$arColumns['ENTITY_TYPE'] = !empty($arTask['ENTITY_TYPE'])? GetMessage('CRM_ENTITY_TYPE_'.$arTask['ENTITY_TYPE']): '';
 			$arColumns['ENTITY_TITLE'] = !empty($arTask['ENTITY_TITLE'])?
-				'<a href="'.$arTask['ENTITY_LINK'].'" bx-tooltip-user-id="'.$arTask['ENTITY_TYPE'].'_'.$arTask['ENTITY_ID'].'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.'.strtolower($arTask['ENTITY_TYPE']).'.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon'.($arTask['ENTITY_TYPE'] == 'LEAD' || $arTask['ENTITY_TYPE'] == 'DEAL' || $arTask['ENTITY_TYPE'] == 'QUOTE' ? '_no_photo': '_'.strtolower($arTask['ENTITY_TYPE'])).'">'.$arTask['ENTITY_TITLE'].'</a>'
+				'<a href="'.$arTask['ENTITY_LINK'].'" bx-tooltip-user-id="'.$arTask['ENTITY_TYPE'].'_'.$arTask['ENTITY_ID'].'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.'.mb_strtolower($arTask['ENTITY_TYPE']).'.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon'.($arTask['ENTITY_TYPE'] == 'LEAD' || $arTask['ENTITY_TYPE'] == 'DEAL' || $arTask['ENTITY_TYPE'] == 'QUOTE' ? '_no_photo': '_'.mb_strtolower($arTask['ENTITY_TYPE'])).'">'.$arTask['ENTITY_TITLE'].'</a>'
 				: '';
 		}
 		else

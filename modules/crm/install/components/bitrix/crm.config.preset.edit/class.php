@@ -407,6 +407,25 @@ class PresetEditComponent extends \CBitrixComponent
 
 		}
 
+		$booleanUserFields = [];
+		global $USER_FIELD_MANAGER;
+		foreach ($USER_FIELD_MANAGER->GetUserFields(RequisiteTable::getUfId(), 0, LANGUAGE_ID) as $userField)
+		{
+			if ($userField['USER_TYPE_ID'] === 'boolean')
+			{
+				$booleanUserFields[] = $userField['FIELD_NAME'];
+			}
+		}
+
+		foreach ($fieldList as $index => $field)
+		{
+			$fieldList[$index]['OPTIONS'] = [];
+			if (in_array($field['FIELD_NAME'], $booleanUserFields))
+			{
+				$fieldList[$index]['OPTIONS']['disableTitleEdit'] = true;
+			}
+		}
+
 		$res = new \CDBResult;
 		$res->InitFromArray($fieldList);
 		$res->NavStart($pageSize);

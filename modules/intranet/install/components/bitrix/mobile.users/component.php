@@ -5,12 +5,12 @@ if (!CModule::IncludeModule("intranet"))
     return 0;
 }
 
-if(IntVal($arParams["dep"]) > 0)
-	$arParams["dep"] =  IntVal($arParams["dep"]);
-if(IntVal($arParams["id"]) > 0)
-	$arParams["id"] =  IntVal($arParams["id"]);
+if(intval($arParams["dep"]) > 0)
+	$arParams["dep"] =  intval($arParams["dep"]);
+if(intval($arParams["id"]) > 0)
+	$arParams["id"] =  intval($arParams["id"]);
 	
-if(strlen($_REQUEST["name"]) > 0)
+if($_REQUEST["name"] <> '')
 	$arResult["search_name"] = $_REQUEST["name"];
 	
 $arParams['PATH_TO_COMPANY_DEPARTMENT'] = "index.php?dep=#ID#";
@@ -29,19 +29,19 @@ $componentPage = "index";
 $arListParams = array('SELECT' => array('UF_*'), "NAV_PARAMS" => Array("nPageSize"=>10));
 $arFilter = array("ACTIVE"=>"Y");
 $arFilter["!UF_DEPARTMENT"] = false;
-if(IntVal($_REQUEST["dep"]) > 0)
+if(intval($_REQUEST["dep"]) > 0)
 {
 	$arFilter["UF_DEPARTMENT"] = $_REQUEST["dep"];
 	$componentPage = "department";
-	$arResult["cur_dep"] = IntVal($_REQUEST["dep"]);
+	$arResult["cur_dep"] = intval($_REQUEST["dep"]);
 }
-if(IntVal($_REQUEST["id"]) > 0)
+if(intval($_REQUEST["id"]) > 0)
 {
 	$arFilter["ID"] = $_REQUEST["id"];
 	$componentPage = "user";
 	unset($arListParams["NAV_PARAMS"]);
 }
-if(strlen($arResult["search_name"]) > 0)
+if($arResult["search_name"] <> '')
 {
 	$arFilter["NAME"] = $arResult["search_name"];
 }
@@ -63,7 +63,7 @@ while($arUser = $dbUsers->Fetch())
 {
 	foreach($arUser as $k => $value)
 	{
-		if(!in_array($k, $arSelect) && substr($k, 0, 3) != 'UF_') 
+		if(!in_array($k, $arSelect) && mb_substr($k, 0, 3) != 'UF_')
 			unset($arUser[$k]);
 		elseif ($k == "PERSONAL_COUNTRY" || $k == "WORK_COUNTRY")
 			$arUser[$k] = GetCountryByID($value);

@@ -55,7 +55,7 @@ function CheckOption($option, $value, &$error)
 {
 	if (!in_array($option, array('encryption')) && empty($value))
 	{
-		$error = GetMessage('INTR_MAIL_INP_'.strtoupper($option).'_EMPTY');
+		$error = GetMessage('INTR_MAIL_INP_'.mb_strtoupper($option).'_EMPTY');
 	}
 
 	if (empty($error))
@@ -64,7 +64,7 @@ function CheckOption($option, $value, &$error)
 		{
 			case 'server':
 				$regExp = '`(?:(?:http|https|ssl|tls|imap)://)?((?:[a-z0-9](?:-*[a-z0-9])*\.?)+)`';
-				if (preg_match($regExp, strtolower($value), $matches) && strlen($matches[1]) > 0)
+				if (preg_match($regExp, mb_strtolower($value), $matches) && $matches[1] <> '')
 				{
 					$value = $matches[1];
 				}
@@ -91,10 +91,10 @@ function CheckOption($option, $value, &$error)
 				break;
 			case 'link':
 				$regExp = '`((?:http|https)://)?((?:[a-z0-9](?:-*[a-z0-9])*\.?)+)(:[0-9]+)?(/.*)?`';
-				if (preg_match($regExp, strtolower($value), $matches) && strlen($matches[2]) > 0)
+				if (preg_match($regExp, mb_strtolower($value), $matches) && $matches[2] <> '')
 				{
 					$value = $matches[0];
-					if (strlen($matches[1]) == 0)
+					if ($matches[1] == '')
 						$value = 'http://' . $value;
 				}
 				else

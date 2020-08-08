@@ -6,7 +6,6 @@ CJSCore::RegisterExt('voximplant_config_rent', array(
 	'lang' => '/bitrix/components/bitrix/voximplant.config.rent/templates/.default/lang/'.LANGUAGE_ID.'/template.php',
 ));
 CJSCore::Init(array('voximplant.common', 'voximplant_config_rent', 'loader', 'sidepanel', 'ui.alerts', 'ui.hint', 'ui.buttons'));
-\Bitrix\Voximplant\Ui\Helper::initLicensePopups();
 
 $isBitrix24Template = (SITE_TEMPLATE_ID == "bitrix24");
 if($isBitrix24Template)
@@ -25,7 +24,7 @@ if($isBitrix24Template)
 {
 	$this->EndViewTarget();
 }
-
+$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 ?>
 
 <div id="voximplant-rent" class="voximplant-container"></div>

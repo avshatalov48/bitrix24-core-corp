@@ -39,7 +39,7 @@ class CIntranetMailConfigHomeComponent extends CBitrixComponent
 		$this->arParams['MAILBOX']  = CIntranetMailSetupHelper::getUserMailbox($USER->getId());
 
 		foreach ($this->arParams['SERVICES'] as $i => $item)
-			$this->arParams['SERVICES'][$i]['server'] = strtolower($item['server']);
+			$this->arParams['SERVICES'][$i]['server'] = mb_strtolower($item['server']);
 
 		$page = '';
 		if (array_key_exists('config', $_REQUEST))
@@ -325,7 +325,7 @@ class CIntranetMailConfigHomeComponent extends CBitrixComponent
 		if ($USER->isAdmin() || $USER->canDoOperation('bitrix24_config'))
 		{
 			$crDomains = CControllerClient::ExecuteEvent('OnMailControllerGetMemberDomains', array('REGISTERED' => true));
-			$this->arParams['REG_DOMAIN'] = empty($crDomains['result']) ? false : strtolower(reset($crDomains['result']));
+			$this->arParams['REG_DOMAIN'] = empty($crDomains['result'])? false : mb_strtolower(reset($crDomains['result']));
 		}
 
 		ob_start();

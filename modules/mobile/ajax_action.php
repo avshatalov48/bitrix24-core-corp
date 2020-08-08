@@ -35,6 +35,10 @@ $ajaxActions = [
 		"no_check_auth" => true,
 		"file" => $pathToComponents."mobile.data/actions/save_device_token.php"
 	],
+	"get_element_crm_list" => [
+		"json" => true,
+		"file" => $pathToComponents."mobile.data/actions/crm_elements.php"
+	],
 	"get_user_list" => [
 		"json" => true,
 		"file" => $pathToComponents."mobile.data/actions/users_groups.php"

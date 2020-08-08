@@ -13,6 +13,7 @@ $MESS["CRM_OPTIONS_PATH_TO_COMPANY_IMPORT"] = "Company import page:";
 $MESS["CRM_OPTIONS_PATH_TO_COMPANY_LIST"] = "Company view page:";
 $MESS["CRM_OPTIONS_PATH_TO_COMPANY_SHOW"] = "Contact view page:";
 $MESS["CRM_OPTIONS_PATH_TO_COMPANY_WIDGET"] = "Company widgets path template";
+$MESS["CRM_OPTIONS_PATH_TO_CONFIG_CHECKER"] = "Path to configuration validation wizard";
 $MESS["CRM_OPTIONS_PATH_TO_CONTACT_DETAILS"] = "Contact details page";
 $MESS["CRM_OPTIONS_PATH_TO_CONTACT_EDIT"] = "Contact editor page:";
 $MESS["CRM_OPTIONS_PATH_TO_CONTACT_IMPORT"] = "Contact import page:";

@@ -1,11 +1,15 @@
 <?
 IncludeModuleLangFile(__FILE__);
 
+use Bitrix\Dav\Integration\Calendar\SyncConnector;
+
 if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_exists("CDavCalendarHandler"))
 {
 	class CDavCalendarHandler
 		extends CDavGroupdavHandler
 	{
+		const ENABLE_ATTENDEE_DESC = true;
+
 		protected function GetMethodMinimumPrivilege($method)
 		{
 			static $arMethodMinimumPrivilegeMap = array(
@@ -87,19 +91,18 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 			$calendarId = $this->GetCalendarId($siteId, $account, $arPath);
 			if ($calendarId[0] > 0)
 			{
-				$arCalendarList = CCalendar::GetCalendarList($calendarId, array('skipExchange' => true, 'active' => true));
-				if (count($arCalendarList) > 0)
+				$calendarList = SyncConnector::getCalendarSectionList($calendarId);
+				if (count($calendarList) > 0)
 				{
-					$name = isset($arCalendarList[0]["~NAME"]) ? $arCalendarList[0]["~NAME"] : $arCalendarList[0]["NAME"];
+					$name = isset($calendarList[0]["~NAME"]) ? $calendarList[0]["~NAME"] : $calendarList[0]["NAME"];
 					$resource->AddProperty('displayname', $name, CDavGroupDav::DAV);
-					$resource->AddProperty('calendar-description', $arCalendarList[0]["DESCRIPTION"], CDavGroupDav::CALDAV);
-					$resource->AddProperty('calendar-color', $arCalendarList[0]["COLOR"], CDavGroupDav::ICAL);
+					$resource->AddProperty('calendar-description', $calendarList[0]["DESCRIPTION"], CDavGroupDav::CALDAV);
+					$resource->AddProperty('calendar-color', $calendarList[0]["COLOR"], CDavGroupDav::ICAL);
 				}
 			}
 
 			$request = $this->groupdav->GetRequest();
 			$resource->AddProperty('getctag', $this->GetCTag($siteId, $account, $arPath), CDavGroupDav::CALENDARSERVER);
-
 
 			$arAccount = null;
 			if ($account != null)
@@ -137,12 +140,12 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 			$principal = IntVal($principal);
 			$calendarIdNorm = implode("-", $calendarId);
 
-			static $arCalendarPrivilegesCache = array();
+			static $arCalendarPrivilegesCache = [];
 
 
 			if (!isset($arCalendarPrivilegesCache[$calendarIdNorm][$principal]))
 			{
-				$arPriv = array();
+				$arPriv = [];
 				// $arPrivOrig = array('bAccess' => true/false, 'bReadOnly' => true/false, 'privateStatus' => 'time'/'title');
 				$arPrivOrig = CCalendar::GetUserPermissionsForCalendar($calendarId, $principal);
 				if ($arPrivOrig['bAccess'])
@@ -240,8 +243,8 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 
 			if (!isset($calendarId[0], $calendarId[1]))
 			{
-				$arCalendarList = CCalendar::GetCalendarList($calendarId, array('skipExchange' => true, 'active' => true));
-				foreach ($arCalendarList as $calendar)
+				$calendarList = SyncConnector::getCalendarSectionList($calendarId);
+				foreach ($calendarList as $calendar)
 				{
 					$resource = new CDavResource($path.$calendar["ID"]."/");
 					$this->GetCalendarProperties($resource, $siteId, $account, array($calendar["ID"]), 0);
@@ -270,22 +273,24 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 			$futureMonth = (isset($calendarSettings['syncPeriodFuture']) && $calendarSettings['syncPeriodFuture'] > 0) ?
 				$calendarSettings['syncPeriodFuture']: 12; // default one year into the future
 
-			$arFilter = array(
+			$arFilter = [
 				'DATE_START' => ConvertTimeStamp(time() - $pastMonth * 31 * 24 * 3600, "FULL"),
 				'DATE_END' => ConvertTimeStamp(time() + $futureMonth * 31 * 24 * 3600, "FULL")
-			);
+			];
 
 			if (($id || $requestDocument->GetRoot() && $requestDocument->GetRoot()->GetTag() != 'propfind') && !$this->PrepareFilters($arFilter, $requestDocument, $id))
 				return false;
 
 			if ($calendarId[0] > 0)
 			{
-				$arEvents = \CCalendar::GetDavCalendarEventsList($calendarId, $arFilter);
+				$eventList = SyncConnector::getCalendarEventList($calendarId, $arFilter);
 
-				foreach ($arEvents as $event)
+				foreach ($eventList as $event)
 				{
 					if (!$this->CheckPrivileges('DAV::read', $currentPrincipal, $calendarId))
+					{
 						$this->ClearPrivateData($event);
+					}
 
 					$resource = new CDavResource($path.$this->GetPath($event));
 					$resource->AddProperty('getetag', $this->GetETag($calendarId, $event));
@@ -350,8 +355,8 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 			}
 			elseif ($requestDocument->GetRoot()->GetTag() == 'calendar-multiget')
 			{
-				$arIds = array();
-				$arXmlIds = array();
+				$arIds = [];
+				$arXmlIds = [];
 
 				$arProp = $requestDocument->GetPath('/calendar-multiget/DAV::href');
 				foreach ($arProp as $prop)
@@ -446,8 +451,18 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 					$iCalEvent["PRIORITY"] = 5;
 			}
 
-			if (isset($event["DESCRIPTION"]) && strlen($event["DESCRIPTION"]) > 0)
-				$iCalEvent["DESCRIPTION"] = $event["DESCRIPTION"];
+			if ((isset($event["DESCRIPTION"]) && strlen($event["DESCRIPTION"]) > 0) || $event['ATTENDEES_CODES'])
+			{
+				if (isset($event['ATTENDEES_CODES']) && self::ENABLE_ATTENDEE_DESC)
+				{
+					$users = self::GetAttendees($event['ATTENDEES_CODES']);
+					$iCalEvent["DESCRIPTION"] = GetMessage('ATTENDEES_EVENT').': '.$users.' =#=#=#= '.$event["DESCRIPTION"];
+				}
+				else
+				{
+					$iCalEvent["DESCRIPTION"] = $event["DESCRIPTION"];
+				}
+			}
 
 			if (isset($event["REMIND"]) && is_array($event["REMIND"]) && count($event["REMIND"]) > 0)
 			{
@@ -495,7 +510,7 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 			{
 				$event["EXDATE"] = explode(';', $event["EXDATE"]);
 
-				$exdate = array();
+				$exdate = [];
 				foreach ($event["EXDATE"] as $date)
 				{
 					if ($event["DT_SKIP_TIME"] == 'Y')
@@ -560,18 +575,28 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 		// return array/boolean array with entry, false if no read rights, null if $id does not exist
 		public function Read($calendarId, $id)
 		{
-			$arEvents = CCalendar::GetDavCalendarEventsList($calendarId, array("DAV_XML_ID" => str_replace('%25', '%', $id)));
-			if (count($arEvents) <= 0)
+			$eventList = SyncConnector::getCalendarEventList(
+				$calendarId,
+				["DAV_XML_ID" => str_replace('%25', '%', $id)]
+			);
+
+			if (count($eventList) <= 0)
+			{
 				return null;
+			}
 
 			$request = $this->groupdav->GetRequest();
 			if (!$this->CheckPrivileges('urn:ietf:params:xml:ns:caldav:read-free-busy', $request->GetPrincipal(), $calendarId))
+			{
 				return false;
+			}
 
-			$event = $arEvents[0];
+			$event = $eventList[0];
 
 			if (!$this->CheckPrivileges('DAV::read', $request->GetPrincipal(), $calendarId))
+			{
 				$this->ClearPrivateData($event);
+			}
 
 			return $event;
 		}
@@ -637,12 +662,12 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 			$arVAlarm = $event->GetComponents("VALARM");
 			if (count($arVAlarm) > 0 && $event->GetPropertyValue("X-MOZ-LASTACK") == null)
 			{
-				$arPeriodMapTmp = array("M" => "min", "H" => "hour", "D" => "day");
+				$arPeriodMapTmp = array("M" => "min", "H" => "hour", "D" => "day", "S" => "min");
 				foreach ($arVAlarm as $valarm)
 				{
 					$trigger = $valarm->GetPropertyValue("TRIGGER");
 
-					if (preg_match('/^-P(T?)([0-9]+)([HMD])$/i', $trigger, $arMatches))
+					if (preg_match('/^[-]?P(T?)([0-9]+)([HMDS])$/i', $trigger, $arMatches))
 					{
 						$arFields["PROPERTY_REMIND_SETTINGS"][] = $arMatches[2]."_".$arPeriodMapTmp[$arMatches[3]];
 					}
@@ -660,7 +685,7 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 					if (isset($rrule["BYDAY"]))
 					{
 						$ar = explode(",", $rrule["BYDAY"]);
-						$ar1 = array();
+						$ar1 = [];
 						foreach ($ar as $v)
 							$ar1[] = $arWeekDayMap[strtoupper($v)];
 						$arFields["PROPERTY_PERIOD_ADDITIONAL"] = implode(",", $ar1);
@@ -702,7 +727,7 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 			$exDatesVal = $event->GetProperties("EXDATE");
 			if (count($exDatesVal) > 0)
 			{
-				$arFields["EXDATE"] = array();
+				$arFields["EXDATE"] = [];
 				foreach ($exDatesVal as $val)
 				{
 					$arFields["EXDATE"][] = CDavICalendarTimeZone::GetFormattedServerDate($val->Value());
@@ -731,7 +756,7 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 				if (isset($arParams["byday"]))
 				{
 					$arOld = explode(",", $arParams["byday"]);
-					$arNew = array();
+					$arNew = [];
 					foreach ($arOld as $v)
 					{
 						$v = trim($v);
@@ -935,29 +960,30 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 				$arFields['XML_ID'] = $arFields['DAV_XML_ID'];
 
 			CDav::Report("CDavCalendarHandler::Put", "arFields", $arFields);
-			$eventId = CCalendarSync::ModifyEvent($calendarId, $arFields, $params);
 
+			$recEvents = [];
 			if (count($arEvents) > 1)
 			{
-				$recEvents = array();
 				for($i = 1; $i <= count($arEvents) - 1; $i++)
 				{
 					$recEvents[] = $this->ConvertICalToArray($arEvents[$i], $cal);
 				}
-
-				CCalendarSync::ModifyReccurentInstances(array(
-					'events' => $recEvents,
-					'parentId' => $eventId,
-					'calendarId' => $calendarId
-				));
 			}
 
+			$eventId = SyncConnector::modifyEvent($calendarId, [
+				'fields' => $arFields,
+				'instances' => $recEvents
+			]);
 
 			if (is_bool($eventId))
+			{
 				return $eventId;
+			}
 
 			if (!is_numeric($eventId))
+			{
 				return false;
+			}
 
 			//header('ETag: '.$this->GetETag($calendarId, $xmlId));
 			//$path = preg_replace('|(.*)/[^/]*|', '\1/', $request->GetPath());
@@ -974,13 +1000,48 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 
 			$request = $this->groupdav->GetRequest();
 
-			$oldEvent = $this->GetEntry('DELETE', $id, $calendarId);
-			if (!is_array($oldEvent))
-				return $oldEvent;
+			$event = $this->GetEntry('DELETE', $id, $calendarId);
+			if (!is_array($event))
+				return $event;
 
 			CDav::Report("CDavCalendarHandler::Delete", "id", $id);
 
-			return CCalendar::DeleteCalendarEvent($calendarId, $oldEvent["ID"], $request->GetPrincipal()->Id());
+			return SyncConnector::deleteEvent($calendarId,[
+				'eventId' => $event["ID"],
+				'userId' => $request->GetPrincipal()->Id()
+			]);
+		}
+
+		public function GetAttendees($codeAttendees)
+		{
+			$userIdList = [];
+			$userList = [];
+
+			foreach ($codeAttendees as $codeAttend)
+			{
+				if (substr($codeAttend, 0, 1) === 'U')
+				{
+					$userId = (int)(substr($codeAttend, 1));
+					$userIdList[] = $userId;
+				}
+				}
+
+			if (!empty($userIdList))
+			{
+				$res = \Bitrix\Main\UserTable::getList(array(
+						'filter' => array(
+								'=ID' => $userIdList,
+							),
+						'select' => array('NAME', 'LAST_NAME'),
+					));
+
+				while ($user = $res->fetch())
+					{
+						$userList[] = $user['NAME'].' '.$user['LAST_NAME'];
+					}
+			}
+
+			return implode(', ', $userList);
 		}
 	}
 }

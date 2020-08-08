@@ -7,8 +7,8 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
+use Bitrix\Main\ORM\Query\Filter;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
-use Bitrix\Tasks\Internals\DataBase\Helper\Common;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
 use Bitrix\Tasks\Item\Task;
 use Bitrix\Tasks\Item\Task\Collection\CheckList;
@@ -209,7 +209,7 @@ class SearchIndex
 	 * @param $isFullTextIndexEnabled
 	 * @return string
 	 */
-	public static function prepareStringToSearch($string, $isFullTextIndexEnabled = true)
+	public static function prepareStringToSearch($string, $isFullTextIndexEnabled = true): string
 	{
 		$string = trim($string);
 		$string = ToUpper($string);
@@ -217,7 +217,7 @@ class SearchIndex
 
 		if ($isFullTextIndexEnabled)
 		{
-			$string = Common::getMatchOperationValue($string);
+			$string = Filter\Helper::matchAgainstWildcard($string, '*');
 		}
 
 		return $string;

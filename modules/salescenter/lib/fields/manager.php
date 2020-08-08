@@ -184,7 +184,7 @@ class Manager
 					$value = $this->getValue($parameter['FIELD']);
 					if($value)
 					{
-						$urlParameters[strtolower($parameter['FIELD'])] = $value;
+						$urlParameters[mb_strtolower($parameter['FIELD'])] = $value;
 					}
 				}
 			}

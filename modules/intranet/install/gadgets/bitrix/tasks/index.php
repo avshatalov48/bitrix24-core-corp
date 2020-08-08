@@ -6,7 +6,7 @@ if(!IsModuleInstalled("tasks"))
 
 $arGadgetParams["SHOW"] = ($arGadgetParams["SHOW"]?$arGadgetParams["SHOW"]:"Y");
 
-if (strlen(trim($arGadgetParams["TITLE"])) > 0)
+if (trim($arGadgetParams["TITLE"]) <> '')
 	$arGadget["TITLE"] = htmlspecialcharsback($arGadgetParams["TITLE"]);
 elseif ($arParams["MODE"] == "SG")
 	$arGadget["TITLE"] = GetMessage('GD_TASKS_TITLE_GROUP');

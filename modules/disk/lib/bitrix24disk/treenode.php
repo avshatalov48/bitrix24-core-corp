@@ -228,7 +228,7 @@ final class TreeNode
 			return '/';
 		}
 
-		return substr($path, 0, strrpos($path, '/', -2))?: '/';
+		return mb_substr($path, 0, mb_strrpos($path, '/', -2))?: '/';
 	}
 
 	/**

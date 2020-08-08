@@ -12,9 +12,9 @@ $siteID = isset($_REQUEST['site']) ? $_REQUEST['site'] : '';
 $entityType = isset($_REQUEST['entityType']) ? $_REQUEST['entityType'] : '';
 $viewType = isset($_REQUEST['viewType']) ? $_REQUEST['viewType'] : '';
 $filterId = isset($_REQUEST['filter_id']) ? $_REQUEST['filter_id'] : 'CRM_LEAD_LIST_V12';
-$siteID = substr(preg_replace('/[^a-z0-9_]/i', '', $siteID), 0, 2);
-$entityType = strtolower($entityType);
-$viewType = strtolower($viewType);
+$siteID = mb_substr(preg_replace('/[^a-z0-9_]/i', '', $siteID), 0, 2);
+$entityType = mb_strtolower($entityType);
+$viewType = mb_strtolower($viewType);
 
 if ($siteID !== '')
 {
@@ -99,7 +99,7 @@ else
 	{
 		if ($generalFields && $entityType !== 'order')
 		{
-			if (substr($field->getId(), 0, 3) == 'UF_')
+			if (mb_substr($field->getId(), 0, 3) == 'UF_')
 			{
 				$result = array_merge(
 					$result,
@@ -121,7 +121,7 @@ else
 	// fill result with user fields
 	$userTypeManager = new \CCrmUserType(
 		$USER_FIELD_MANAGER,
-		'CRM_' . strtoupper($entityType)
+		'CRM_'.mb_strtoupper($entityType)
 	);
 	$labelCodes = [
 		'LIST_FILTER_LABEL', 'LIST_COLUMN_LABEL', 'EDIT_FORM_LABEL'
@@ -248,9 +248,7 @@ else
 	}
 }
 
-$response = new Main\HttpResponse(
-	Main\Application::getInstance()->getContext()
-);
+$response = new Main\HttpResponse();
 $response->addHeader('Content-Type', 'application/json');
 $response->flush(Main\Web\Json::encode(array_values($result)));
 

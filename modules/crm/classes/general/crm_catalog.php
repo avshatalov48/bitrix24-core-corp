@@ -1,6 +1,7 @@
 <?php
 use Bitrix\Main\Loader,
-	Bitrix\Catalog;
+	Bitrix\Catalog,
+	Bitrix\Iblock;
 
 if (!Loader::includeModule('iblock'))
 {
@@ -76,7 +77,8 @@ class CAllCrmCatalog
 				"WORKFLOW" => 'N',
 				"BIZPROC" => 'N',
 				"VERSION" => 1,
-				"GROUP_ID" => array(2 => "R"),
+				"GROUP_ID" => array(1 => "X", 2 => "R"),
+				"LIST_MODE" => 'S'
 			);
 
 			$iblockId = $ib->Add($arFields);
@@ -100,6 +102,7 @@ class CAllCrmCatalog
 			));
 			if (!$res)
 			{
+				/** @var $ex \CAdminException */
 				if (($ex = $GLOBALS["APPLICATION"]->GetException()) !== false)
 					self::RegisterError($ex->GetString());
 				else
@@ -163,7 +166,7 @@ class CAllCrmCatalog
 
 		$DB->Add($tableName, $arFields, array(), '', false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
 
-		if(strlen($DB->db_Error) > 0)
+		if($DB->db_Error <> '')
 		{
 			self::RegisterError($DB->db_Error);
 			return false;
@@ -176,17 +179,24 @@ class CAllCrmCatalog
 		);
 
 		// get default vat
+		// TODO: replace this code to use preset vat id
 		$defCatVatId = 0;
-		$dbVat = CCatalogVat::GetList(array('SORT' => 'ASC'));
-		if ($arVat = $dbVat->Fetch())
+		$iterator = \Bitrix\Catalog\VatTable::getList([
+			'select' => ['ID', 'SORT'],
+			'order' => ['SORT' => 'ASC'],
+			'limit' => 1
+		]);
+		$vat = $iterator->fetch();
+		if (!empty($vat))
 		{
-			$defCatVatId = $arVat['ID'];
-			unset($arVat);
+			$defCatVatId = (int)$vat['ID'];
 		}
-		unset($dbVat);
-		$defCatVatId = intval($defCatVatId);
+		unset($vat, $iterator);
 		if ($defCatVatId > 0)
+		{
 			$arFields['VAT_ID'] = $defCatVatId;
+		}
+		unset($defCatVatId);
 
 		// add crm iblock to catalog
 		$CCatalog = new CCatalog();
@@ -472,7 +482,7 @@ class CAllCrmCatalog
 
 	public static function CreateCatalog($originatorID = '', $name = '', $siteID = null)
 	{
-		if(!is_string($originatorID) || strlen($originatorID) == 0)
+		if(!is_string($originatorID) || $originatorID == '')
 		{
 			$originatorID = null;
 		}
@@ -541,7 +551,7 @@ class CAllCrmCatalog
 				'BIZPROC' => 'N',
 				'VERSION' => 1,
 				'GROUP_ID' => array(1 => 'X', 2 => 'R'),
-				'LIST_MODE' => 'S'
+				'LIST_MODE' => Iblock\IblockTable::LIST_MODE_COMBINED
 			)
 		);
 
@@ -550,6 +560,8 @@ class CAllCrmCatalog
 			self::RegisterError($iblock->LAST_ERROR);
 			return false;
 		}
+
+		self::createMorePhoto($iblockID);
 
 		//creation of catalog
 		$result = CCrmCatalog::Add(
@@ -602,6 +614,8 @@ class CAllCrmCatalog
 				return false;
 			}
 
+			self::createMorePhoto($offersId);
+
 			$offersFields = [
 				'IBLOCK_ID' => $offersId,
 				'PRODUCT_IBLOCK_ID' => $iblockID,
@@ -641,21 +655,98 @@ class CAllCrmCatalog
 	}
 	// <-- Event handlers
 
+	/**
+	 * @param $iblockId
+	 * @return void
+	 *
+	 * @throws \Bitrix\Main\LoaderException
+	 */
 	protected static function setCrmGroupRights($iblockId)
 	{
 		$iblockTypeId = self::GetCatalogTypeID();
-		\CIBlockRights::setGroupRight(\CCrmSaleHelper::getShopGroupIdByType('admin'), $iblockTypeId, 'X', $iblockId);
-		\CIBlockRights::setGroupRight(\CCrmSaleHelper::getShopGroupIdByType('manager'), $iblockTypeId, 'W', $iblockId);
+		$crmAdminGroupId = \CCrmSaleHelper::getShopGroupIdByType('admin');
+		$crmManagerGroupId = \CCrmSaleHelper::getShopGroupIdByType('manager');
+		if (!empty($crmAdminGroupId))
+		{
+			\CIBlockRights::setGroupRight($crmAdminGroupId, $iblockTypeId, 'X', $iblockId);
+		}
+		if (!empty($crmManagerGroupId))
+		{
+			\CIBlockRights::setGroupRight($crmManagerGroupId, $iblockTypeId, 'W', $iblockId);
+		}
 		if (Loader::includeModule('catalog'))
 		{
 			$catalog = \CCatalogSku::GetInfoByProductIBlock($iblockId);
 			if (!empty($catalog))
 			{
-				\CIBlockRights::setGroupRight(\CCrmSaleHelper::getShopGroupIdByType('admin'), $iblockTypeId, 'X', $catalog['IBLOCK_ID']);
-				\CIBlockRights::setGroupRight(\CCrmSaleHelper::getShopGroupIdByType('manager'), $iblockTypeId, 'W', $catalog['IBLOCK_ID']);
+				if (!empty($crmAdminGroupId))
+				{
+					\CIBlockRights::setGroupRight($crmAdminGroupId, $iblockTypeId, 'X', $catalog['IBLOCK_ID']);
+				}
+				if (!empty($crmManagerGroupId))
+				{
+					\CIBlockRights::setGroupRight($crmManagerGroupId, $iblockTypeId, 'W', $catalog['IBLOCK_ID']);
+				}
 			}
 			unset($catalog);
 		}
+		unset($crmManagerGroupId, $crmAdminGroupId);
 		unset($iblockTypeId);
+	}
+
+	// TODO: remove after refactoring
+	private static function createMorePhoto(int $iblockId): void
+	{
+		if (!Loader::includeModule('bitrix24'))
+		{
+			return;
+		}
+		if (!Loader::includeModule('iblock'))
+		{
+			return;
+		}
+
+		$propertyId = \CIBlockPropertyTools::createProperty(
+			$iblockId,
+			\CIBlockPropertyTools::CODE_MORE_PHOTO,
+			[
+				'XML_ID' => \CIBlockPropertyTools::CODE_MORE_PHOTO,
+				'MULTIPLE_CNT' => 1,
+				'WITH_DESCRIPTION' => 'Y'
+			]
+		);
+		if (empty($propertyId))
+		{
+			return;
+		}
+
+		$features = [];
+		$iterator = Iblock\PropertyFeatureTable::getList([
+			'select' => ['*'],
+			'filter' => ['=PROPERTY_ID' => $propertyId]
+		]);
+		while ($row = $iterator->fetch())
+		{
+			$features[] = [
+				'MODULE_ID' => $row['MODULE_ID'],
+				'FEATURE_ID' => $row['FEATURE_ID'],
+				'IS_ENABLED' => $row['IS_ENABLED']
+			];
+		}
+		unset($row, $iterator);
+		$features[] = [
+			'MODULE_ID' => 'iblock',
+			'FEATURE_ID' => Iblock\Model\PropertyFeature::FEATURE_ID_LIST_PAGE_SHOW,
+			'IS_ENABLED' => 'Y'
+		];
+		$features[] = [
+			'MODULE_ID' => 'iblock',
+			'FEATURE_ID' => Iblock\Model\PropertyFeature::FEATURE_ID_DETAIL_PAGE_SHOW,
+			'IS_ENABLED' => 'Y'
+		];
+
+		$internaResult = Iblock\Model\PropertyFeature::setFeatures($propertyId, $features);
+		$result = $internaResult->isSuccess();
+		unset($features, $internaResult);
 	}
 }

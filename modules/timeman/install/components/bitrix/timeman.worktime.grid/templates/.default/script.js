@@ -106,13 +106,7 @@
 						{
 							if (parseInt(this.gridConfigOptions.schedules[i].id) === parseInt(scheduleData.id))
 							{
-								this.gridConfigOptions.schedules[i] = {
-									id: scheduleData.id,
-									name: scheduleData.name,
-									link: scheduleData.links.update,
-									shiftplanLink: scheduleData.links.shiftPlan,
-									scheduleType: scheduleData.scheduleType
-								}
+								this.gridConfigOptions.schedules[i] = this.buildScheduleItem(scheduleData);
 							}
 						}
 						this.updateShiftPlansBtnVisibility();
@@ -123,18 +117,23 @@
 					var scheduleData = event.getData()['schedule'];
 					if (scheduleData)
 					{
-						var item = {
-							id: scheduleData.id,
-							name: scheduleData.name,
-							link: scheduleData.links.update,
-							shiftplanLink: scheduleData.links.shiftPlan,
-							scheduleType: scheduleData.scheduleType
-						};
+						var item = this.buildScheduleItem(scheduleData);
 						this.gridConfigOptions.schedules.push(item);
 						this.updateShiftPlansBtnVisibility();
 					}
 				}
 			}.bind(this)));
+		},
+		buildScheduleItem: function (scheduleData)
+		{
+			return {
+				id: scheduleData.id,
+				name: scheduleData.name,
+				link: scheduleData.links.update,
+				canReadShiftPlan: scheduleData.canReadShiftPlan,
+				shiftplanLink: scheduleData.links.shiftPlan,
+				scheduleType: scheduleData.scheduleType
+			};
 		},
 		updateShiftPlansBtnVisibility: function ()
 		{
@@ -526,7 +525,7 @@
 				titleBar: BX.message('TM_WORKTIME_GRID_SCHEDULE_DELETE_CONFIRM_TITLE'),
 				content: BX.util.htmlspecialchars(BX.message('TM_WORKTIME_GRID_SCHEDULE_DELETE_CONFIRM').replace('#SCHEDULE_NAME#', (schedule.name))),
 				buttons: [
-					new BX.PopupWindowButton({
+					new BX.UI.Button({
 						text: BX.message('TM_WORKTIME_GRID_SCHEDULE_DELETE_CONFIRM_NO'),
 						className: 'ui-btn ui-btn-danger',
 						events: {
@@ -536,7 +535,7 @@
 							}.bind(this)
 						}
 					}),
-					new BX.PopupWindowButton({
+					new BX.UI.Button({
 						text: BX.message('TM_WORKTIME_GRID_SCHEDULE_DELETE_CONFIRM_YES'),
 						className: 'ui-btn ui-btn-success',
 						events: {
@@ -671,7 +670,6 @@
 			}
 			this.initHints();
 			this.highlightDepartmentRows();
-			this.scrollToToday();
 		},
 		onNavigationArrowClick: function (e)
 		{
@@ -1152,7 +1150,6 @@
 			this.applyGridConfigOptions();
 			this.initHints();
 			this.highlightDepartmentRows();
-			this.scrollToToday();
 			this.settingsData = undefined;
 		},
 		initHints: function ()

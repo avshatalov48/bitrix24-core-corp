@@ -103,8 +103,9 @@ Class ImConnector extends CModule
 		$eventManager->registerEventHandler('imopenlines', 'OnImopenlineDelete', 'imconnector', '\Bitrix\ImConnector\InfoConnectors', 'onImopenlineDelete');
 		$eventManager->registerEventHandler('rest', 'OnRestAppDelete', 'imconnector', '\Bitrix\ImConnector\Rest\CustomConnectors', 'OnRestAppDelete');
 
-		CAgent::AddAgent("\Bitrix\ImConnector\Connectors\Instagram::initializeReceiveMessages();", "imconnector", "N", 900);
 		CAgent::AddAgent("\Bitrix\ImConnector\InfoConnectors::infoConnectorsUpdateAgent();", "imconnector", "Y", 21600, "", "Y", ConvertTimeStamp((time() + 21600), 'FULL'));
+		CAgent::AddAgent('\Bitrix\ImConnector\Status::cleanupDuplicates();', "imconnector", "N", 60, "", "Y", ConvertTimeStamp(time()+CTimeZone::GetOffset()+600, "FULL"));
+		CAgent::AddAgent('\Bitrix\ImConnector\Connectors\Olx::initializeReceiveMessages();', 'imconnector', 'N', 60, "", "Y", ConvertTimeStamp(time()+CTimeZone::GetOffset()+600, "FULL"));
 
 		return true;
 	}
@@ -149,6 +150,7 @@ Class ImConnector extends CModule
 		$eventManager->unRegisterEventHandler('imconnector', 'OnDeleteStatusConnector', 'imconnector', '\Bitrix\ImConnector\InfoConnectors', 'onChangeStatusConnector');
 		$eventManager->unRegisterEventHandler('rest', 'OnRestAppDelete', 'imconnector', '\Bitrix\ImConnector\Rest\CustomConnectors', 'OnRestAppDelete');
 
+		CAgent::RemoveModuleAgents('imconnector');
 		ModuleManager::unRegisterModule($this->MODULE_ID);
 
 		return true;

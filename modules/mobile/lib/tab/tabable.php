@@ -42,6 +42,10 @@ interface Tabable
 
 	public function getTitle();
 
+	public function getShortTitle();
+
+	public function getId();
+
 	/**
 	 * @param Context $context
 	 * @return void

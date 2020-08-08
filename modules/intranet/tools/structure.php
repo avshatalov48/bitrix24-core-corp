@@ -147,7 +147,7 @@ else
 		if(is_array($ID))
 		{
 			$arErrors = $ID;
-			foreach ($arErrors as $key => $val) {if (strlen($val) <= 0) unset($arErrors[$key]);}
+			foreach ($arErrors as $key => $val) {if ($val == '') unset($arErrors[$key]);}
 			$ID = 0;
 			die('error:<li>'.implode('</li><li>', $arErrors)).'</li>';
 		}

@@ -51,7 +51,7 @@ class CCrmActivity extends CAllCrmActivity
 			}
 
 			$data = $DB->PrepareInsert(self::BINDING_TABLE_NAME, $arBinding);
-			if(strlen($bulkColumns) == 0)
+			if($bulkColumns == '')
 			{
 				$bulkColumns = $data[0];
 			}
@@ -77,7 +77,7 @@ class CCrmActivity extends CAllCrmActivity
 			$query .= "($value)";
 		}
 
-		if(strlen($query) == 0)
+		if($query == '')
 		{
 			self::RegisterError(array('text' => 'Could not build query.'));
 			return false;
@@ -240,7 +240,7 @@ class CCrmActivity extends CAllCrmActivity
 			}
 
 			$data = $DB->PrepareInsert(self::COMMUNICATION_TABLE_NAME, $arComm);
-			if(strlen($bulkColumns) == 0)
+			if($bulkColumns == '')
 			{
 				$bulkColumns = $data[0];
 			}
@@ -266,7 +266,7 @@ class CCrmActivity extends CAllCrmActivity
 			$query .= "($value)";
 		}
 
-		if(strlen($query) == 0)
+		if($query == '')
 		{
 			self::RegisterError(array('text' => 'Could not build query.'));
 			return false;

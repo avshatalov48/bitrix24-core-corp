@@ -84,7 +84,7 @@ class CompositeTreeItem extends TreeItem
 		return (this === this.getParent().getFirstDescendant());
 	}
 
-	isLastDescendants()
+	isLastDescendant()
 	{
 		return (this === this.getParent().getLastDescendant());
 	}
@@ -109,7 +109,7 @@ class CompositeTreeItem extends TreeItem
 
 	getRightSibling()
 	{
-		if (this.isLastDescendants())
+		if (this.isLastDescendant())
 		{
 			return null;
 		}
@@ -120,6 +120,53 @@ class CompositeTreeItem extends TreeItem
 		if (index !== -1)
 		{
 			return parentDescendants[index + 1];
+		}
+
+		return null;
+	}
+
+	getLeftSiblingThrough()
+	{
+		if (this === this.getRootNode())
+		{
+			return null;
+		}
+
+		if (this.isFirstDescendant())
+		{
+			return this.getParent();
+		}
+
+		let leftSiblingThrough = this.getLeftSibling();
+		while (leftSiblingThrough && leftSiblingThrough.getDescendantsCount() > 0)
+		{
+			leftSiblingThrough = leftSiblingThrough.getLastDescendant();
+		}
+
+		return leftSiblingThrough;
+	}
+
+	getRightSiblingThrough()
+	{
+		if (this.getDescendantsCount() > 0)
+		{
+			return this.getFirstDescendant();
+		}
+
+		if (!this.isLastDescendant())
+		{
+			return this.getRightSibling();
+		}
+
+		let parent = this;
+		while (parent.getParent() !== null && parent.isLastDescendant())
+		{
+			parent = parent.getParent();
+		}
+
+		if (parent !== this.getRootNode())
+		{
+			return parent.getRightSibling();
 		}
 
 		return null;

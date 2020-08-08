@@ -139,10 +139,10 @@ else
 		}
 		else
 		{
-			if (strlen($arUser["PASSWORD"]) > 32)
+			if (mb_strlen($arUser["PASSWORD"]) > 32)
 			{
-				$salt = substr($arUser["PASSWORD"], 0, strlen($arUser["PASSWORD"]) - 32);
-				$db_password = substr($arUser["PASSWORD"], -32);
+				$salt = mb_substr($arUser["PASSWORD"], 0, mb_strlen($arUser["PASSWORD"]) - 32);
+				$db_password = mb_substr($arUser["PASSWORD"], -32);
 			}
 			else
 			{
@@ -153,7 +153,7 @@ else
 			$altPassword = null;
 			if ($arParams['OTP'])
 			{
-				$altPassword = substr($oRequest->arParameters['password'], 0, -6);
+				$altPassword = mb_substr($oRequest->arParameters['password'], 0, -6);
 			}
 
 			if ($err)
@@ -271,7 +271,7 @@ else
 		$ar_member = Array(
 			"MEMBER_ID" => $oRequest->member_id,
 			"SECRET_ID" => $oRequest->arParameters['member_secret_id'],
-			"NAME" => (strlen($oRequest->arParameters['name']) > 0? $oRequest->arParameters['name']: $oRequest->arParameters['url']),
+			"NAME" => ($oRequest->arParameters['name'] <> ''? $oRequest->arParameters['name']: $oRequest->arParameters['url']),
 			"URL" => $oRequest->arParameters['url'],
 			"EMAIL" => $oRequest->arParameters['email'],
 			"CONTACT_PERSON" => $oRequest->arParameters['contact_person'],
@@ -366,7 +366,7 @@ else
 		set_time_limit(1200);
 		if ($arCommand !== false)
 		{
-			if ($oRequest->arParameters['sendfile'] == 'Y' && strlen($arCommand['ADD_PARAMS']) > 3)
+			if ($oRequest->arParameters['sendfile'] == 'Y' && mb_strlen($arCommand['ADD_PARAMS']) > 3)
 			{
 				$arParams = unserialize($arCommand['ADD_PARAMS']);
 				if (is_array($arParams) && array_key_exists('FILE', $arParams))
@@ -386,7 +386,7 @@ else
 					$oResponse->text = GetMessage('CTRLR_WS_ERR_FILE_NOT_FOUND');
 				}
 			}
-			elseif (strlen($arCommand['COMMAND']) > 0)
+			elseif ($arCommand['COMMAND'] <> '')
 			{
 				$oResponse->status = '200 OK';
 				$oResponse->arParameters['query'] = $arCommand['COMMAND'];
@@ -514,7 +514,7 @@ else
 	else
 	{
 		ShowError(GetMessage("CTRLR_WS_ERR_RUN").$oResponse->text.'. '.GetMessage("CTRLR_WS_ERR_RUN_TRY"));
-		if (strlen($_SERVER['HTTP_REFERER']) > 0)
+		if ($_SERVER['HTTP_REFERER'] <> '')
 			echo '<br>'.'<a href="'.htmlspecialcharsbx(CHTTP::urnEncode($_SERVER['HTTP_REFERER'])).'">'.GetMessage("CTRLR_WS_ERR_RUN_BACK").'</a>';
 	}
 	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");

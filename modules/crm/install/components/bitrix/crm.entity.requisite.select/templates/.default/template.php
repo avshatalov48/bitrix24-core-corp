@@ -65,7 +65,7 @@ $APPLICATION->SetAdditionalCSS("/bitrix/components/bitrix/crm.entity.details/tem
 
 
 $guid = $arResult['GUID'];
-$prexix = strtolower($guid);
+		$prexix = mb_strtolower($guid);
 $containerID = "{$prexix}_container";
 ?>
 

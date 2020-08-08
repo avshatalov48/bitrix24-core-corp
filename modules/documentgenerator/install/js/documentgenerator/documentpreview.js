@@ -21,6 +21,8 @@
 		this.imageNode = null;
 		this.printUrl = null;
 		this.pdfUrl = null;
+		this.hash = (options.hash ? options.hash : '' );
+		this.isPublicMode = (options.isPublicMode ? options.isPublicMode : false);
 		this.isTransformationError = false;
 		this.transformationErrorNode = null;
 		this.transformationErrorMessage = '';
@@ -64,12 +66,19 @@
 			}
 			else if(this.documentId > 0 && !this.imageUrl)
 			{
+				var action = 'documentgenerator.api.document.get';
+				var data = {
+					id: this.documentId
+				};
+				if(this.isPublicMode && BX.type.isString(this.hash) && this.hash.length > 10)
+				{
+					action = 'documentgenerator.api.publicdocument.get';
+					data.hash = this.hash;
+				}
 				isPushEventInited = true;
 				setTimeout(BX.proxy(function(){
-					BX.ajax.runAction('documentgenerator.api.document.get', {
-						data: {
-							id: this.documentId
-						}
+					BX.ajax.runAction(action, {
+						data: data
 					}).then(BX.proxy(function(response){
 						isPushEventInited = false;
 						if(response.data.document.imageUrl)
@@ -522,6 +531,7 @@
 		this.progress = false;
 		this.links = {};
 		this.linksLoaded = false;
+		this.intranetExtensions = null;
 		this.id = id;
 		this.text = 'Document';
 		this.className = '';
@@ -705,6 +715,10 @@
 		{
 			this.links.templateList = this.templateListUrl;
 		}
+		if(response.data.intranetExtensions)
+		{
+			this.intranetExtensions = response.data.intranetExtensions;
+		}
 	};
 
 	BX.DocumentGenerator.Button.prototype.prepareLinksForPopup = function()
@@ -745,6 +759,14 @@
 				text: this.templatesText,
 				onclick: 'BX.DocumentGenerator.openUrl(\'' + this.links.templateList + '\', null, 930)'
 			}
+		}
+
+		if(this.intranetExtensions)
+		{
+			result.push({
+				delimiter: true
+			});
+			result.push(this.intranetExtensions);
 		}
 
 		return result;

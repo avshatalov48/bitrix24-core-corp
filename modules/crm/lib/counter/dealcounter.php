@@ -32,7 +32,7 @@ class DealCounter extends EntityCounter
 	 */
 	public function prepareDetailsPageUrl($url = '')
 	{
-		$urlParams = array('counter' => strtolower($this->getTypeName()), 'clear_nav' => 'Y');
+		$urlParams = array('counter' => mb_strtolower($this->getTypeName()), 'clear_nav' => 'Y');
 
 		//We may ignore DEAL_CATEGORY_ID parameter - it will be supplied by the crm.deal.list component.
 		self::externalizeExtras(array_diff_key($this->extras, array('DEAL_CATEGORY_ID' => true)), $urlParams);
@@ -298,7 +298,21 @@ class DealCounter extends EntityCounter
 					$query->addSelect('QTY');
 				}
 
-				$query->addFilter('=STAGE_SEMANTIC_ID', 'P');
+				if (
+					isset($options['STAGE_SEMANTIC_ID'])
+					&& $options['STAGE_SEMANTIC_ID']
+				)
+				{
+					$query->addFilter(
+						'=STAGE_SEMANTIC_ID',
+						$options['STAGE_SEMANTIC_ID']
+					);
+				}
+				else
+				{
+					$query->addFilter('=STAGE_SEMANTIC_ID', 'P');
+				}
+
 				$query->addFilter('=IS_RECURRING', 'N');
 				//echo '<pre>', $query->getQuery(), "</pre>";
 				$results[] = $query;

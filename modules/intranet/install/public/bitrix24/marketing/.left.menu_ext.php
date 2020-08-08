@@ -70,6 +70,20 @@ if (\Bitrix\Sender\Security\Access::current()->canViewRc())
 	);
 }
 
+if (
+	method_exists(\Bitrix\Sender\Security\Access::current(), 'canViewToloka')
+	&& \Bitrix\Sender\Security\Access::current()->canViewToloka()
+)
+{
+	$aMenuLinks[] = Array(
+		GetMessage('SERVICES_MENU_MARKETING_YANDEX_TOLOKA'),
+		"/marketing/toloka/",
+		Array(),
+		Array(),
+		""
+	);
+}
+
 if (\Bitrix\Sender\Security\Access::current()->canViewLetters())
 {
 	$aMenuLinks[] = Array(

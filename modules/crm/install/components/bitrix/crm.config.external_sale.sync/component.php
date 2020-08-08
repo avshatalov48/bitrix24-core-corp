@@ -10,21 +10,21 @@ if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 	return;
 }
 
-if (strlen($arParams["PAGE_VAR"]) <= 0)
+if ($arParams["PAGE_VAR"] == '')
 	$arParams["PAGE_VAR"] = "page";
-if (strlen($arParams["ID_VAR"]) <= 0)
+if ($arParams["ID_VAR"] == '')
 	$arParams["ID_VAR"] = "id";
 
 $arParams["PATH_TO_INDEX"] = trim($arParams["PATH_TO_INDEX"]);
-if (strlen($arParams["PATH_TO_INDEX"]) <= 0)
+if ($arParams["PATH_TO_INDEX"] == '')
 	$arParams["PATH_TO_INDEX"] = $APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=index";
 
 $arParams["PATH_TO_EDIT"] = trim($arParams["PATH_TO_EDIT"]);
-if (strlen($arParams["PATH_TO_EDIT"]) <= 0)
+if ($arParams["PATH_TO_EDIT"] == '')
 	$arParams["PATH_TO_EDIT"] = $APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=edit&".$arParams["ID_VAR"]."=#id#";
 
 $arParams["PATH_TO_SYNC"] = trim($arParams["PATH_TO_SYNC"]);
-if (strlen($arParams["PATH_TO_SYNC"]) <= 0)
+if ($arParams["PATH_TO_SYNC"] == '')
 	$arParams["PATH_TO_SYNC"] = $APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=sync&".$arParams["ID_VAR"]."=#id#";
 
 $arResult["FatalErrorMessage"] = "";
@@ -36,7 +36,7 @@ $arResult["BP"] = false;
 $arResult["PATH_TO_INDEX"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_INDEX"], array());
 $arResult["PATH_TO_EDIT"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_EDIT"], array("id" => $arParams["ID"]));
 
-if (strlen($arResult["FatalErrorMessage"]) <= 0)
+if ($arResult["FatalErrorMessage"] == '')
 {
 	if ($arParams["ID"] > 0)
 	{
@@ -55,7 +55,7 @@ if (strlen($arResult["FatalErrorMessage"]) <= 0)
 	}
 }
 
-if (strlen($arResult["FatalErrorMessage"]) <= 0)
+if ($arResult["FatalErrorMessage"] == '')
 {
 	if ($arResult["BP"]["ACTIVE"] != "Y")
 		$arResult["FatalErrorMessage"] .= GetMessage("BPWC_WLC_WRONG_BP_ACTIVE").". ";

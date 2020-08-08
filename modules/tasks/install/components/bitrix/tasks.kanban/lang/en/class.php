@@ -18,7 +18,9 @@ $MESS["TASK_LIST_TASK_NOT_INSTALLED"] = "The Tasks module is not installed.";
 $MESS["TASK_LIST_TITLE"] = "Tasks";
 $MESS["TASK_LIST_TITLE_GROUP"] = "Workgroup tasks";
 $MESS["TASK_LIST_TITLE_MY"] = "My tasks";
+$MESS["TASK_LIST_TITLE_SPRINT"] = "Sprint tasks";
 $MESS["TASK_LIST_TITLE_TIMELINE"] = "Deadline";
 $MESS["TASK_LIST_UNKNOWN_ACTION"] = "Unknown action.";
 $MESS["TASK_LIST_USER_NOT_FOUND"] = "The user was not found.";
+$MESS["TASK_PROJECT_TITLE"] = "Project";
 ?>

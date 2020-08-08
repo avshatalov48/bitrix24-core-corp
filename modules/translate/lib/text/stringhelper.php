@@ -104,7 +104,7 @@ class StringHelper
 			return mb_strtolower($str, $encoding);
 		}
 
-		return strtolower($str);
+		return mb_strtolower($str);
 	}
 
 	/**
@@ -124,7 +124,7 @@ class StringHelper
 			return mb_strtoupper($str, $encoding);
 		}
 
-		return strtoupper($str);
+		return mb_strtoupper($str);
 	}
 
 	/**

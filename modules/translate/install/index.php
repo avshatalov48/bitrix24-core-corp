@@ -24,9 +24,7 @@ class translate extends \CModule
 	{
 		$arModuleVersion = array();
 
-		$path = str_replace("\\", '/', __FILE__);
-		$path = substr($path, 0, strlen($path) - strlen('/index.php'));
-		include($path.'/version.php');
+		include(__DIR__.'/version.php');
 
 		if (is_array($arModuleVersion) && array_key_exists('VERSION', $arModuleVersion))
 		{
@@ -50,8 +48,8 @@ class translate extends \CModule
 			$errors = $DB->runSqlBatch(sprintf(
 				'%s/bitrix/modules/%s/install/db/%s/install.sql',
 				$_SERVER['DOCUMENT_ROOT'],
-				strtolower($this->MODULE_ID),
-				strtolower($DB->type)
+				mb_strtolower($this->MODULE_ID),
+				mb_strtolower($DB->type)
 			));
 			if($errors !== false)
 			{
@@ -63,8 +61,8 @@ class translate extends \CModule
 			$errors = $DB->runSqlBatch(sprintf(
 				'%s/bitrix/modules/%s/install/db/%s/install_ft.sql',
 				$_SERVER['DOCUMENT_ROOT'],
-				strtolower($this->MODULE_ID),
-				strtolower($DB->type)
+				mb_strtolower($this->MODULE_ID),
+				mb_strtolower($DB->type)
 			));
 			if($errors !== false)
 			{
@@ -106,8 +104,8 @@ class translate extends \CModule
 			$errors = $DB->runSqlBatch(sprintf(
 				'%s/bitrix/modules/%s/install/db/%s/uninstall.sql',
 				$_SERVER['DOCUMENT_ROOT'],
-				strtolower($this->MODULE_ID),
-				strtolower($DB->type)
+				mb_strtolower($this->MODULE_ID),
+				mb_strtolower($DB->type)
 			));
 			if ($errors !== false)
 			{

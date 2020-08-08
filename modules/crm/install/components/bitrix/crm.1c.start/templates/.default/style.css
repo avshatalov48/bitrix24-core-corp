@@ -61,7 +61,7 @@
 	white-space: nowrap;
 	font: 13px/20px 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
 }
-
+.onec-placement-block .ui-tile-list-item { padding: 0; }
 .onec-logo-container { margin-bottom: 10px; }
 
 .onec-logo {

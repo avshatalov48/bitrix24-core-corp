@@ -1,0 +1,2 @@
+<?php
+$MESS["TM_SHIFTPLAN_SERVICE_OVERLAPPING_SHIFT_PLANS_EXIST"] = "У сотрудника уже назначена смена \"#SHIFT_NAME#\" по графику \"#SCHEDULE_NAME#\" на #SHIFT_DATE# с #SHIFT_START_TIME# до #SHIFT_END_TIME#. Уверены, что хотите назначить смену?";

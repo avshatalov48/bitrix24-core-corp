@@ -20,7 +20,7 @@ Loc::loadLanguageFile(__FILE__);
 			),
 			"LAZYLOAD" => "Y",
 			"INPUT_NAME" => 'DEST_CODES[]',
-			"USE_SYMBOLIC_ID" => "Y",
+			"USE_SYMBOLIC_ID" => true,
 			"BUTTON_SELECT_CAPTION" => Loc::getMessage("CRM_SL_EVENT_EDIT_MPF_WHERE_1"),
 			"API_VERSION" => 3,
 			"SELECTOR_OPTIONS" => array(

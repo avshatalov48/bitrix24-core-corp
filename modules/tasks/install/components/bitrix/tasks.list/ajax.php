@@ -1,6 +1,10 @@
 <?php
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Helper\Filter;
+use Bitrix\Tasks\Integration\CRM\UserField;
+use Bitrix\Tasks\Util\User;
 
 define('STOP_STATISTICS',    true);
 define('NO_AGENT_CHECK',     true);
@@ -11,7 +15,7 @@ define('BX_SECURITY_SHOW_MESSAGE', true);
 
 $SITE_ID = '';
 if (isset($_GET["SITE_ID"]) && is_string($_GET['SITE_ID']))
-	$SITE_ID = substr(preg_replace("/[^a-z0-9_]/i", "", $_GET["SITE_ID"]), 0, 2);
+	$SITE_ID = mb_substr(preg_replace("/[^a-z0-9_]/i", "", $_GET["SITE_ID"]), 0, 2);
 
 if ($SITE_ID != '')
 	define("SITE_ID", $SITE_ID);
@@ -67,33 +71,27 @@ if (check_bitrix_sessid())
 
 			if ($_POST["mode"] == "load")
 			{
-				$arOrder = $_POST["order"] ? $_POST["order"] : array();
-				$arFilter = $_POST["filter"] ? $_POST["filter"] : array();
-				$arFilter["PARENT_ID"] = intval($_POST["id"]);
-				$depth = intval($_POST["depth"]) + 1;
+				$userId = User::getId();
+				$groupId = (array_key_exists('GROUP_ID', $_POST['filter']) ? $_POST['filter']['GROUP_ID'] : 0);
+				$subTasksMode = (array_key_exists('PARENT_ID', $_POST['filter']) && count($_POST['filter']) === 1);
 
-				$bGannt = false;
-				if (isset($_POST['bGannt']))
-					$bGannt = (bool) $_POST['bGannt'];
-
-				// Override CHECK_PERMISSIONS, if it was given in $_POST['filter']
+				$arFilter = ($subTasksMode ? [] : Filter::getInstance($userId, $groupId)->process());
+				$arFilter['PARENT_ID'] = (int)$_POST['id'];
 				$arFilter['CHECK_PERMISSIONS'] = 'Y';
+				unset($arFilter['ONLY_ROOT_TASKS']);
 
 				$params = [
-					'LOAD_PARAMETERS' => true
+					'LOAD_PARAMETERS' => true,
 				];
-				if (array_key_exists('GROUP_ID', $_POST['filter']))
+				if ($groupId)
 				{
-					$params['SORTING_GROUP_ID'] = $_POST['filter']['GROUP_ID'];
+					$params['SORTING_GROUP_ID'] = $groupId;
 				}
 
-				list($tasks, $rsTask) = CTaskItem::fetchList(
-					\Bitrix\Tasks\Util\User::getId(),
-					$arOrder,
-					$arFilter,
-					$params,
-					array('*', \Bitrix\Tasks\Integration\CRM\UserField::getMainSysUFCode())
-				);
+				$order = ($_POST["order"] ?: []);
+				$select = ['*', UserField::getMainSysUFCode()];
+
+				[$tasks, $rsTask] = CTaskItem::fetchList($userId, $order, $arFilter, $params, $select);
 
 				$arTasks = array();
 				$arTasksIDs = array();
@@ -118,6 +116,7 @@ if (check_bitrix_sessid())
 					$arTasks[$task["ID"]] = $task;
 				}
 
+				$bGannt = (isset($_POST['bGannt']) ? (bool)$_POST['bGannt'] : false);
 				if($bGannt)
 				{
 					$res = \Bitrix\Tasks\Task\DependenceTable::getListByLegacyTaskFilter($arFilter);
@@ -155,6 +154,7 @@ if (check_bitrix_sessid())
 					echo "[";
 				}
 
+				$depth = (int)$_POST['depth'] + 1;
 				foreach ($arTasks as $task)
 				{
 					++$i;
@@ -176,7 +176,7 @@ if (check_bitrix_sessid())
 					if ($bIsJSON)
 					{
 						tasksRenderJSON(
-							$task, $arChildrenCount["PARENT_" . $task["ID"]], 
+							$task, $arChildrenCount["PARENT_" . $task["ID"]],
 							$arPaths, true, $bGannt, false, $nameTemplate, array(), false, array('DISABLE_IFRAME_POPUP' => !!$_REQUEST['DISABLE_IFRAME_POPUP'])
 						);
 
@@ -226,7 +226,7 @@ if (check_bitrix_sessid())
 				$oTask = CTaskItem::getInstanceFromPool($_POST['id'], \Bitrix\Tasks\Util\User::getId());
 				$arTask = $oTask->getData($bEscape = false);
 
-				if ($_POST["mode"] == "delete" && $oTask->isActionAllowed(CTaskItem::ACTION_REMOVE))
+				if ($_POST["mode"] == "delete" && $oTask->checkAccess(ActionDictionary::ACTION_TASK_REMOVE))
 				{
 					$APPLICATION->RestartBuffer();
 
@@ -241,8 +241,8 @@ if (check_bitrix_sessid())
 
 						if ($_POST["type"] == "json")
 						{
-							echo "['strError' : '" 
-								. CUtil::JSEscape(htmlspecialcharsbx($strError)) 
+							echo "['strError' : '"
+								. CUtil::JSEscape(htmlspecialcharsbx($strError))
 								. "']";
 						}
 						else
@@ -287,9 +287,9 @@ if (check_bitrix_sessid())
 				else
 				{
 					$arActionsMap = array(
-						'close' => 'complete', 'start' => 'startExecution', 
-						'accept' => 'accept', 'renew' => 'renew', 
-						'defer' => 'defer',  'decline' => 'decline', 
+						'close' => 'complete', 'start' => 'startExecution',
+						'accept' => 'accept', 'renew' => 'renew',
+						'defer' => 'defer',  'decline' => 'decline',
 						'approve' => 'approve', 'disapprove' => 'disapprove',
 						'pause' => 'pauseExecution'
 					);
@@ -352,9 +352,9 @@ if (check_bitrix_sessid())
 					}
 					elseif ($_POST["mode"] == "responsible")
 					{
-						if ($oTask->isActionAllowed(CTaskItem::ACTION_EDIT))
+						if ($oTask->checkAccess(ActionDictionary::ACTION_TASK_EDIT))
 							$arFields["RESPONSIBLE_ID"] = intval($_POST["responsible"]);
-						elseif ($oTask->isActionAllowed(CTaskItem::ACTION_DELEGATE))
+						elseif ($oTask->checkAccess(ActionDictionary::ACTION_TASK_DELEGATE, \Bitrix\Tasks\Access\Model\TaskModel::createFromTaskItem($oTask)))
 							$oTask->delegate( (int) $_POST['responsible'] );
 					}
 					elseif ($_POST["mode"] == "accomplices")
@@ -447,7 +447,13 @@ if (check_bitrix_sessid())
 				}
 			}
 		}
-		elseif ($_POST["mode"] == "add" && strlen(trim($_POST["title"])) > 0 && intval($_POST["responsible"]) > 0 && in_array($_POST["priority"], array(0, 1, 2)) && \Bitrix\Tasks\Util\User::isAuthorized())
+		elseif (
+			$_POST["mode"] == "add"
+			&& trim($_POST["title"]) <> ''
+			&& intval($_POST["responsible"]) > 0
+			&& in_array($_POST["priority"], array(0, 1, 2))
+			&& \Bitrix\Tasks\Util\User::isAuthorized()
+		)
 		{
 			$columnsOrder = null;
 
@@ -539,7 +545,7 @@ if (check_bitrix_sessid())
 					$html = ob_get_clean();
 
 					if (
-						isset($_POST['type']) 
+						isset($_POST['type'])
 						&& (
 							($_POST['type'] === 'json_with_html')
 							|| ($_POST['type'] === 'json')

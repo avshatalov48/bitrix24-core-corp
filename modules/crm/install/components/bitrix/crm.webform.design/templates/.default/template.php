@@ -70,7 +70,7 @@ $containerId = 'form-editor-v2';
 						<?foreach ($arResult['THEME_NAMES'] as $code => $name):?>
 							<option
 								value="<?=htmlspecialcharsbx($code)?>"
-								<?=(strpos($arResult['DESIGN']['theme'], $code) === 0 ? 'selected' : '')?>
+								<?=(mb_strpos($arResult['DESIGN']['theme'], $code) === 0 ? 'selected' : '')?>
 							>
 								<?=htmlspecialcharsbx($name)?>
 							</option>

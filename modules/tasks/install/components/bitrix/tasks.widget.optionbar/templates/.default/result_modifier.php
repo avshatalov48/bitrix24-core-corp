@@ -40,6 +40,6 @@ foreach($arParams['OPTIONS'] as $k => $option)
 //$arResult['TEMPLATE_DATA'] = array(
 //	// contains data generated in result_modifier.php
 //);
-//$arResult['JS_DATA'] = array(
-//	// everything you put here, will be accessible inside js controller through this.option('keyName')
-//);
+$arResult['JS_DATA'] = [
+	'taskLimitExceeded' => $arResult['TASK_LIMIT_EXCEEDED'],
+];

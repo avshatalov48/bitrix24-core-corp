@@ -2,7 +2,7 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 
-$filterContainerID = strtolower($arParams['GRID_ID']).'_filter_popup';
+$filterContainerID = mb_strtolower($arParams['GRID_ID']).'_filter_popup';
 
 // Ignore service vars
 if(isset($arResult['GET_VARS']['grid_filter_id']))

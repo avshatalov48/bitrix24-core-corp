@@ -8,7 +8,7 @@ CUtil::InitJSCore(array('core', 'ls', 'ajax', 'date', 'popup'));
 
 if (Loader::includeModule('calendar'))
 {
-	CUtil::InitJSCore(array('userfield_resourcebooking'));
+	\Bitrix\Crm\Integration\Calendar::loadResourcebookingExtention();
 }
 
 $APPLICATION->SetPageProperty(

@@ -62,7 +62,7 @@ class Form extends Webpack\Base
 		}
 		else
 		{
-			return '\\Bitrix\\Crm\\UI\\Webpack\\Form::rebuildResources();';
+			return '\\Bitrix\\Crm\\UI\\Webpack\\Form::rebuildResourcesAgent();';
 		}
 	}
 

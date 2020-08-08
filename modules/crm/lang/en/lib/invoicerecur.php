@@ -10,7 +10,7 @@ $MESS["CRM_INVOICE_RECURRING_ENTITY_LAST_EXECUTION_FIELD"] = "Date the last recu
 $MESS["CRM_INVOICE_RECURRING_ENTITY_LIMIT_DATE_FIELD"] = "By date";
 $MESS["CRM_INVOICE_RECURRING_ENTITY_LIMIT_REPEAT_FIELD"] = "By number of instances";
 $MESS["CRM_INVOICE_RECURRING_ENTITY_NEXT_EXECUTION_FIELD"] = "Date the next recurring invoice will be generated";
-$MESS["CRM_INVOICE_RECURRING_ENTITY_PARAMS_FIELD"] = "Parameters to calculate the next recurring deal";
+$MESS["CRM_INVOICE_RECURRING_ENTITY_PARAMS_FIELD"] = "Parameters to calculate the next recurring invoice";
 $MESS["CRM_INVOICE_RECURRING_ENTITY_SEND_BILL_FIELD"] = "Send invoice by email";
 $MESS["CRM_INVOICE_RECURRING_ENTITY_START_DATE_FIELD"] = "Date to start creating recurring invoices from";
 ?>

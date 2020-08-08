@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Tracking\Internals;
 
 use Bitrix\Main;
+use Bitrix\Crm;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Main\ORM\Data\DataManager;
 
@@ -64,6 +65,38 @@ class TraceEntityTable extends DataManager
 	 */
 	public static function addEntity($traceId, $entityTypeId, $entityId)
 	{
+		if (!$entityTypeId || !$entityId)
+		{
+			return false;
+		}
+
+		/** @var Main\Orm\Data\DataManager $entityClass */
+		$entityClass = null;
+		switch ($entityTypeId)
+		{
+			case \CCrmOwnerType::Lead:
+				$entityClass = Crm\LeadTable::class;
+				break;
+			case \CCrmOwnerType::Deal:
+				$entityClass = Crm\DealTable::class;
+				break;
+			case \CCrmOwnerType::Contact:
+				$entityClass = Crm\ContactTable::class;
+				break;
+			case \CCrmOwnerType::Company:
+				$entityClass = Crm\CompanyTable::class;
+				break;
+		}
+
+		if ($entityClass)
+		{
+			$entityRow = $entityClass::getRow(['select' => ['ID'], 'filter' => ['=ID' => $entityId]]);
+			if (!$entityRow)
+			{
+				return false;
+			}
+		}
+
 		$tags = [];
 		$hasChild = false;
 		$rows = TraceTable::getList([

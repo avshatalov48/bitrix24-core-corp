@@ -75,7 +75,7 @@ foreach($arResult["TITLE_ITEMS"] as $title => $arTitleItem)
 							{
 								$couterId = "";
 								$counter = 0;
-								if (array_key_exists("counter_id", $arItem["PARAMS"]) && strlen($arItem["PARAMS"]["counter_id"]) > 0)
+								if (array_key_exists("counter_id", $arItem["PARAMS"]) && $arItem["PARAMS"]["counter_id"] <> '')
 								{
 									$couterId = $arItem["PARAMS"]["counter_id"] == "live-feed" ? "**" : $arItem["PARAMS"]["counter_id"];
 									$counter = isset($GLOBALS["LEFT_MENU_COUNTERS"]) && array_key_exists($couterId, $GLOBALS["LEFT_MENU_COUNTERS"]) ? $GLOBALS["LEFT_MENU_COUNTERS"][$couterId] : 0;
@@ -119,7 +119,7 @@ foreach($arResult["TITLE_ITEMS"] as $title => $arTitleItem)
 									<?if (isset($arItem["PARAMS"]["is_application"])):?>
 										data-app-id="<?=$arItem["PARAMS"]["app_id"]?>"
 									<?endif?>
-									class="menu-item-block <?if ($isCompositeMode === false && $arItem["SELECTED"]):?> menu-item-active<?endif?><?if($isCompositeMode === false && $counter > 0 && strlen($couterId) > 0 && (!$arItem["SELECTED"] || ($arItem["SELECTED"] && $couterId == "bp_tasks"))):?> menu-item-with-index<?endif?><?if ((IsModuleInstalled("bitrix24") && $arItem["PARAMS"]["menu_item_id"] == "menu_live_feed") || $arItem["PARAMS"]["menu_item_id"] == "menu_all_groups"):?> menu-item-live-feed<?endif?>">
+									class="menu-item-block <?if ($isCompositeMode === false && $arItem["SELECTED"]):?> menu-item-active<?endif?><?if($isCompositeMode === false && $counter > 0 && $couterId <> '' && (!$arItem["SELECTED"] || ($arItem["SELECTED"] && $couterId == "bp_tasks"))):?> menu-item-with-index<?endif?><?if ((IsModuleInstalled("bitrix24") && $arItem["PARAMS"]["menu_item_id"] == "menu_live_feed") || $arItem["PARAMS"]["menu_item_id"] == "menu_all_groups"):?> menu-item-live-feed<?endif?>">
 									<?if (!((IsModuleInstalled("bitrix24") && $arItem["PARAMS"]["menu_item_id"] == "menu_live_feed") || $arItem["PARAMS"]["menu_item_id"] == "menu_all_groups")):?>
 										<span class="menu-fav-editable-btn menu-favorites-btn" onclick="B24menuItemsObj.openMenuPopup(this, '<?=CUtil::JSEscape($arItem["PARAMS"]["menu_item_id"])?>')"><span class="menu-favorites-btn-icon"></span></span>
 										<span class="menu-favorites-btn menu-favorites-draggable" onmousedown="BX.addClass(this.parentNode, 'menu-item-draggable');" onmouseup="BX.removeClass(this.parentNode, 'menu-item-draggable');"><span class="menu-fav-draggable-icon"></span></span>
@@ -142,7 +142,7 @@ foreach($arResult["TITLE_ITEMS"] as $title => $arTitleItem)
 										<?endif?>
 									">
 										<span class="menu-item-link-text"><?=$arItem["TEXT"]?></span>
-										<?if (strlen($couterId) > 0):
+										<?if ($couterId <> ''):
 											$itemCounter = "";
 											$crmAttrs = "";
 											if ($isCompositeMode === false)
@@ -150,12 +150,12 @@ foreach($arResult["TITLE_ITEMS"] as $title => $arTitleItem)
 												$itemCounter = ($arItem["PARAMS"]["counter_id"] == "mail_unseen" ? ($counter > 99 ? "99+" : $counter) : ($counter > 50 ? "50+" : $counter));
 												$crmAttrs = ($arItem["PARAMS"]["counter_id"] == "crm_cur_act" ? ' data-counter-crmstream="'.intval($counterCrm).'" data-counter-crmact="'.intval($counterAct).'"' : "");
 											}
-										?><span class="menu-item-index-wrap"><span class="menu-item-index" <?=$crmAttrs?> id="menu-counter-<?=strtolower($arItem["PARAMS"]["counter_id"])?>"><?=$itemCounter?></span></span>
+										?><span class="menu-item-index-wrap"><span class="menu-item-index" <?=$crmAttrs?> id="menu-counter-<?= mb_strtolower($arItem["PARAMS"]["counter_id"])?>"><?=$itemCounter?></span></span>
 											<?if (!empty($arItem["PARAMS"]["warning_link"])):?>
 												<span onclick="window.location.replace('<?=$arItem["PARAMS"]["warning_link"]; ?>'); return false; "
 													<? if (!empty($arItem["PARAMS"]["warning_title"])):?>title="<?=$arItem["PARAMS"]["warning_title"]; ?>"<?endif?>
 													class="menu-post-warn-icon"
-													id="menu-counter-warning-<?=strtolower($arItem["PARAMS"]["counter_id"]); ?>"></span>
+													id="menu-counter-warning-<?= mb_strtolower($arItem["PARAMS"]["counter_id"]); ?>"></span>
 											<?endif?>
 										<?endif;?>
 									</a>

@@ -120,6 +120,60 @@ class CCrmSalesTunnelsController extends \Bitrix\Main\Engine\Controller
 	 * @param array $data
 	 * @return array
 	 */
+	public function accessCategoryAction($data = [])
+	{
+		if (!SalesTunnels::canCurrentUserEditTunnels())
+		{
+			return ['success' => false, 'errors' => [Loc::getMessage('CRM_ST_ACCESS_ERROR')]];
+		}
+
+		try
+		{
+			$result = DealCategory::setPermissionById($data['id'], $data['access']);
+			if (!$result->isSuccess())
+			{
+				throw new \Bitrix\Main\ArgumentException(implode('', $result->getErrorMessages()));
+			}
+		}
+		catch (\Exception $ex)
+		{
+			return ['success' => false, 'errors' => [$ex->getMessage()]];
+		}
+
+		return ['success' => true];
+	}
+
+	/**
+	 * @param array $data
+	 * @return array
+	 */
+	public function copyAccessCategoryAction($data = [])
+	{
+		if (!SalesTunnels::canCurrentUserEditTunnels())
+		{
+			return ['success' => false, 'errors' => [Loc::getMessage('CRM_ST_ACCESS_ERROR')]];
+		}
+
+		try
+		{
+			$result = DealCategory::copyPermissionById($data['id'], $data['donorId']);
+			if (!$result->isSuccess())
+			{
+				throw new \Bitrix\Main\ArgumentException(implode('', $result->getErrorMessages()));
+			}
+		}
+		catch (\Exception $ex)
+		{
+			return ['success' => false, 'errors' => [$ex->getMessage()]];
+		}
+
+		return ['success' => true];
+	}
+
+	/**
+	 * @param array $data
+	 * @return array
+	 */
 	public function removeCategoryAction($data = [])
 	{
 		if (!SalesTunnels::canCurrentUserEditTunnels())

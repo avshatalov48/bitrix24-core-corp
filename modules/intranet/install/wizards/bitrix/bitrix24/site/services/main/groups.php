@@ -20,7 +20,7 @@ if (intval($taskID) > 0)
 	);
 }
 */
-	
+
 
 $arGroups = Array();
 
@@ -64,7 +64,7 @@ $SiteGroups = array();
 $group = new CGroup;
 foreach ($arGroups as $arGroup)
 {
-	
+
 	//Add Group
 	$dbResult = CGroup::GetList($by, $order, Array("STRING_ID" => $arGroup["STRING_ID"], "STRING_ID_EXACT_MATCH" => "Y"));
 	if ($arExistsGroup = $dbResult->Fetch())
@@ -74,10 +74,10 @@ foreach ($arGroups as $arGroup)
 
 	if ($groupID <= 0)
 		continue;
-	
+
 	$SiteGroup["STRING_ID"] = $arGroup["STRING_ID"];
 	$SiteGroups[$arGroup["STRING_ID"]] = $groupID;
-	
+
 	//Set tasks binding to module
 	$arTasksID = Array();
 	foreach ($arGroup["TASKS_MODULE"] as $taskName)
@@ -108,7 +108,7 @@ foreach ($arGroups as $arGroup)
 			WizardServices::SetFilePermission(Array(WIZARD_SITE_ID, WIZARD_SITE_DIR), Array($groupID => 'R'));
 		}
 	}
-		
+
 	if (WIZARD_IS_RERUN === false)
 	{
 		if ($arGroup["STRING_ID"] == "EMPLOYEES_".WIZARD_SITE_ID)
@@ -131,8 +131,8 @@ while($arGroupUser = $dbGroupUsers->Fetch())
 	}
 	else
 	{
-		if(substr($arGroupUser["STRING_ID"], -2) == WIZARD_SITE_ID)
-			define("WIZARD_".substr($arGroupUser["STRING_ID"], 0, -3)."_GROUP", $arGroupUser["ID"]);
+		if(mb_substr($arGroupUser["STRING_ID"], -2) == WIZARD_SITE_ID)
+			define("WIZARD_".mb_substr($arGroupUser["STRING_ID"], 0, -3)."_GROUP", $arGroupUser["ID"]);
 	}
 }
 
@@ -176,20 +176,20 @@ if($res = $z->Fetch())
 $dbResult = CGroup::GetList($by, $order, Array("STRING_ID" => "EMPLOYEES_".WIZARD_SITE_ID, "STRING_ID_EXACT_MATCH" => "Y"));
 if ($arExistsGroup = $dbResult->Fetch())
 	$groupID = $arExistsGroup["ID"];
-	
+
 if($groupID && WIZARD_SITE_DEPARTAMENT && CModule::IncludeModule("iblock"))
 {
 
 	$rsIBlock = CIBlock::GetList(array(), array("CODE" => "departments", "TYPE" => "structure"));
-	$iblockID = false; 
+	$iblockID = false;
 	if ($arIBlock = $rsIBlock->Fetch())
 	{
-		$iblockID = $arIBlock["ID"]; 
-	
+		$iblockID = $arIBlock["ID"];
+
 		$arFilter["ID"] = WIZARD_SITE_DEPARTAMENT;
 		$rsSections = CIBlockSection::GetList(array(), $arFilter);
 		$arSection = $rsSections->GetNext();
-		
+
 		$arFilter = array (
 			"LEFT_MARGIN" => $arSection["LEFT_MARGIN"],
 			"RIGHT_MARGIN" => $arSection["RIGHT_MARGIN"],
@@ -197,13 +197,13 @@ if($groupID && WIZARD_SITE_DEPARTAMENT && CModule::IncludeModule("iblock"))
 			'ACTIVE' => 'Y',
 			'GLOBAL_ACTIVE' => 'Y',
 		);
-				
+
 		$rsSections = CIBlockSection::GetList(array("left_margin"=>"asc"), $arFilter);
 		$arSectionUsers = array();
 		while($arSection = $rsSections->GetNext())
 		{
 			$arSectionUsers[] =  $arSection['ID'];
-			
+
 		}
 
 		$rsUsers = CUser::GetList(($by="id"), ($order="asc"), array("UF_DEPARTMENT" => $arSectionUsers));
@@ -212,7 +212,7 @@ if($groupID && WIZARD_SITE_DEPARTAMENT && CModule::IncludeModule("iblock"))
 			CUser::AppendUserGroup($arUsers["ID"], $groupID);
 		}
 	}
-	
+
 	$dbResult = CGroup::GetList($by, $order, Array("STRING_ID" => "PERSONNEL_DEPARTMENT", "STRING_ID_EXACT_MATCH" => "Y"));
 	if ($arExistsGroup = $dbResult->Fetch())
 	{
@@ -221,7 +221,7 @@ if($groupID && WIZARD_SITE_DEPARTAMENT && CModule::IncludeModule("iblock"))
 		$arSubordinateGroups[] = $SiteGroups["EMPLOYEES_".WIZARD_SITE_ID];
 		CGroup::SetSubordinateGroups($groupID, $arSubordinateGroups);
 	}
-	
+
 	CGroup::SetSubordinateGroups($SiteGroups["PORTAL_ADMINISTRATION_".WIZARD_SITE_ID], Array($SiteGroups["EMPLOYEES_".WIZARD_SITE_ID]));
 }
 
@@ -232,7 +232,7 @@ if($allowGuests == "Y" && !WIZARD_IS_INSTALLED)
 	while ($arExistsGroup = $dbResult->Fetch())
 	{
 		if($arExistsGroup["ID"] != 1 && $arExistsGroup["ID"] !=2)
-		{			 
+		{
 			if(!in_array($arExistsGroup["STRING_ID"], $SiteGroup["STRING_ID"]))
 			{
 				$allowGuests = COption::GetOptionString("main", "wizard_allow_group", "N", $site_id);
@@ -251,6 +251,7 @@ if (!WIZARD_IS_INSTALLED)
 $groupObject = new CGroup;
 $groupsData = array(
 	array(
+		"~ID" => "15",
 		"ACTIVE" => "Y",
 		"C_SORT" => 100,
 		"NAME" => GetMessage("SALE_USER_GROUP_SHOP_ADMIN_NAME"),
@@ -260,6 +261,7 @@ $groupsData = array(
 		"TASK_RIGHTS" => array("catalog" => "W", "main" => "R", "iblock" => "X")
 	),
 	array(
+		"~ID" => "16",
 		"ACTIVE" => "Y",
 		"C_SORT" => 100,
 		"NAME" => GetMessage("SALE_USER_GROUP_SHOP_MANAGER_NAME"),
@@ -273,7 +275,7 @@ global $APPLICATION;
 foreach ($groupsData as $groupData)
 {
 	$groupId = $groupObject->add($groupData);
-	if (strlen($groupObject->LAST_ERROR) <= 0 && $groupId)
+	if ($groupObject->LAST_ERROR == '' && $groupId)
 	{
 		foreach($groupData["BASE_RIGHTS"] as $moduleId => $letter)
 		{

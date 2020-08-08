@@ -54,7 +54,7 @@ class Type
 	public static function setScope($scope, array $params = [])
 	{
 		//self::$scopeInit ||
-		if (!is_string($scope))
+		if (!is_string($scope) || !$scope)
 		{
 			return;
 		}
@@ -74,6 +74,7 @@ class Type
 
 	/**
 	 * Clear selected scope.
+	 * @return void
 	 */
 	public static function clearScope()
 	{
@@ -148,7 +149,7 @@ class Type
 		}
 
 		// compatibility, huh
-		return $strict ? null : ['PAGE', 'STORE', 'SMN', 'PREVIEW'];
+		return $strict ? null : ['PAGE', 'STORE', 'SMN'];
 	}
 
 	/**
@@ -174,7 +175,7 @@ class Type
 	{
 		if (is_string($code))
 		{
-			$code = strtoupper(trim($code));
+			$code = mb_strtoupper(trim($code));
 			$types = Site::getTypes();
 			if (array_key_exists($code, $types))
 			{

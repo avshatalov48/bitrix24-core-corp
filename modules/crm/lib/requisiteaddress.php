@@ -70,25 +70,58 @@ class RequisiteAddress extends EntityAddress
 	{
 		if(self::$typeInfos === null)
 		{
+			self::$typeInfos = self::getTypesList();
+
+			$defaultId = static::getDefaultTypeId();
+			foreach (self::$typeInfos as $id => $typeInfo)
+			{
+				self::$typeInfos[$id]['IS_DEFAULT'] = ($id === $defaultId);
+			}
+		}
+		return self::$typeInfos;
+	}
+
+	public static function getTypesList()
+	{
+		static $addressTypes;
+		if($addressTypes === null)
+		{
+			$addressTypes = [];
 			self::includeModuleFile();
 
-			self::$typeInfos = parent::getTypeInfos();
-			self::$typeInfos[self::Home] = array(
+			$addressTypes[self::Delivery] = [
+				'ID' => self::Delivery,
+				'DESCRIPTION' => GetMessage('CRM_REQUISITE_ADDRESS_TYPE_DELIVERY')
+			];
+			$addressTypes += parent::getTypeInfos();
+			$addressTypes[self::Home] = array(
 				'ID' => self::Home,
 				'DESCRIPTION' => GetMessage('CRM_REQUISITE_ADDRESS_TYPE_HOME')
 			);
-			self::$typeInfos[self::Beneficiary] = array(
+			$addressTypes[self::Beneficiary] = array(
 				'ID' => self::Beneficiary,
 				'DESCRIPTION' => GetMessage('CRM_REQUISITE_ADDRESS_TYPE_BENEFICIARY')
 			);
 		}
-		return self::$typeInfos;
+		return $addressTypes;
+	}
+
+	public static function getDefaultTypeId()
+	{
+		$veryDefaultId = self::Delivery;
+		$defaultId = Main\Config\Option::get('crm', 'requisite_default_address_type', $veryDefaultId);
+		$addressTypes = self::getTypesList();
+
+		return (isset($addressTypes[$defaultId]) ? $defaultId : $veryDefaultId);
 	}
 
 	public static function getClientTypeInfos()
 	{
 		self::includeModuleFile();
 		return array_merge(
+			array(
+				array('id' => self::Delivery, 'name' => GetMessage('CRM_REQUISITE_ADDRESS_TYPE_DELIVERY')),
+			),
 			parent::getClientTypeInfos(),
 			array(
 				array('id' => self::Home, 'name' => GetMessage('CRM_REQUISITE_ADDRESS_TYPE_HOME')),
@@ -159,7 +192,8 @@ class RequisiteAddress extends EntityAddress
 					'REGION',
 					'PROVINCE',
 					'COUNTRY',
-					'COUNTRY_CODE'
+					'COUNTRY_CODE',
+					'LOC_ADDR_ID'
 				)
 			);
 			$query->setFilter(array('=REF_RQ.ENTITY_TYPE_ID' => $entityTypeId, '@REF_RQ.ENTITY_ID' => $entityIds));
@@ -177,7 +211,8 @@ class RequisiteAddress extends EntityAddress
 					'REGION' => isset($row['REGION']) ? $row['REGION'] : '',
 					'PROVINCE' => isset($row['PROVINCE']) ? $row['PROVINCE'] : '',
 					'COUNTRY' => isset($row['COUNTRY']) ? $row['COUNTRY'] : '',
-					'COUNTRY_CODE' => isset($row['COUNTRY_CODE']) ? $row['COUNTRY_CODE'] : ''
+					'COUNTRY_CODE' => isset($row['COUNTRY_CODE']) ? $row['COUNTRY_CODE'] : '',
+					'LOC_ADDR_ID' => isset($row['LOC_ADDR_ID']) ? (int)$row['LOC_ADDR_ID'] : 0
 				);
 			}
 		}

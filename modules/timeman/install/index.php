@@ -51,9 +51,9 @@ class timeman extends CModule
 				$APPLICATION->ThrowException(implode("", $errors));
 				return false;
 			}
-
-			$this->InstallTasks();
 		}
+
+		$this->InstallTasks();
 
 		RegisterModule($this->MODULE_ID);
 

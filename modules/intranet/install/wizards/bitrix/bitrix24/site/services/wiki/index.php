@@ -40,7 +40,7 @@ $arFields = array(
 
 $obBlocktype = new CIBlockType;
 $IBLOCK_TYPE_ID = $obBlocktype->Add($arFields);
-if (strLen($IBLOCK_TYPE_ID) <= 0)
+if ($IBLOCK_TYPE_ID == '')
 {
 	$strWarning .= $obBlocktype->LAST_ERROR;
 	$bVarsFromForm = true;

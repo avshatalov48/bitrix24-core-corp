@@ -3,7 +3,7 @@
 // js/css
 $APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
-$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-paddings grid-mode pagetitle-toolbar-field-view flexible-layout crm-toolbar');
+$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-paddings grid-mode pagetitle-toolbar-field-view crm-toolbar');
 $asset = Bitrix\Main\Page\Asset::getInstance();
 $asset->addJs('/bitrix/js/crm/common.js');
 
@@ -114,7 +114,7 @@ else
 				'BINDING' => array(
 					'category' => 'crm.navigation',
 					'name' => 'index',
-					'key' => strtolower($arResult['NAVIGATION_CONTEXT_ID'])
+					'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
 				)
 			)
 		),

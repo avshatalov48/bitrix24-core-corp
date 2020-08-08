@@ -131,7 +131,7 @@ class ProfilePost
 						continue;
 					}
 
-					$postField["EDIT_FORM_LABEL"] = strLen($postField["EDIT_FORM_LABEL"]) > 0 ? $postField["EDIT_FORM_LABEL"] : $postField["FIELD_NAME"];
+					$postField["EDIT_FORM_LABEL"] = $postField["EDIT_FORM_LABEL"] <> '' ? $postField["EDIT_FORM_LABEL"] : $postField["FIELD_NAME"];
 					$postField["~EDIT_FORM_LABEL"] = $postField["EDIT_FORM_LABEL"];
 					$postField["EDIT_FORM_LABEL"] = htmlspecialcharsEx($postField["EDIT_FORM_LABEL"]);
 					$result["POST_PROPERTIES"]["DATA"][$FIELD_NAME] = $postField;
@@ -270,7 +270,7 @@ class ProfilePost
 		if (
 			$postId > 0
 			&& !empty($ufList)
-			&& strlen($detailText) > 0
+			&& $detailText <> ''
 			&& preg_match_all('/\[DISK\sFILE\sID=([n]*)(\d+)\]/', $detailText, $matches)
 		)
 		{
@@ -481,7 +481,7 @@ class ProfilePost
 		$text = (!empty($params['text']) ? trim($params['text']) : '');
 		$additionalData = (!empty($params['additionalData']) ? $params['additionalData'] : []);
 
-		if (strlen($text) <= 0)
+		if ($text == '')
 		{
 			return $result;
 		}
@@ -635,7 +635,7 @@ class ProfilePost
 			$title = (!empty($params['title']) ? $params['title'] : '');
 			$result['DETAIL_TEXT'] = (!empty($params['text']) ? $params['text'] : '');
 
-			if (strlen($title) <= 0)
+			if ($title == '')
 			{
 				$result["MICRO"] = "Y";
 				$result["TITLE"] = preg_replace(
@@ -646,7 +646,7 @@ class ProfilePost
 				$result["TITLE"] = trim($result["TITLE"], " \t\n\r\0\x0B\xA0");
 
 				if (
-					strlen($result["TITLE"]) <= 0
+					$result["TITLE"] == ''
 					&& !empty($params["files"])
 					&& is_array($params["files"])
 				)

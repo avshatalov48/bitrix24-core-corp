@@ -128,7 +128,7 @@
 		}
 		if(!this.exportAllowed)
 		{
-			viOpenTrialPopup('excel-export');
+			BX.UI.InfoHelper.show('limit_contact_center_telephony_excel_export');
 			return;
 		}
 

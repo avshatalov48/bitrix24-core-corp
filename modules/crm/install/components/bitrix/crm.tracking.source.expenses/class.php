@@ -158,7 +158,7 @@ class CrmTrackingExpensesComponent extends \CBitrixComponent implements Controll
 		$sorting = $gridOptions->getSorting(array('sort' => $defaultSort));
 
 		$by = key($sorting['sort']);
-		$order = strtoupper(current($sorting['sort'])) === 'ASC' ? 'ASC' : 'DESC';
+		$order = mb_strtoupper(current($sorting['sort'])) === 'ASC' ? 'ASC' : 'DESC';
 
 		$list = array();
 		foreach ($this->getUiGridColumns() as $column)

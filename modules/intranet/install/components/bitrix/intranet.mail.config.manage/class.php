@@ -79,7 +79,7 @@ class CIntranetMailConfigManageComponent extends CBitrixComponent
 			$serviceId = $mailbox['SERVICE_ID'];
 			if (empty($serviceMailboxes[$serviceId]))
 				$serviceMailboxes[$serviceId] = array();
-			$serviceMailboxes[$serviceId][] = strtolower($mailbox['LOGIN']);
+			$serviceMailboxes[$serviceId][] = mb_strtolower($mailbox['LOGIN']);
 		}
 
 		$this->arParams['SERVICES'] = array();
@@ -97,7 +97,7 @@ class CIntranetMailConfigManageComponent extends CBitrixComponent
 						continue 2;
 			}
 
-			$service['server'] = strtolower($service['server']);
+			$service['server'] = mb_strtolower($service['server']);
 
 			if (empty($serviceMailboxes[$service['id']]))
 				$serviceMailboxes[$service['id']] = array();
@@ -117,7 +117,7 @@ class CIntranetMailConfigManageComponent extends CBitrixComponent
 					{
 						foreach ($crUsers['result'] as $email)
 						{
-							$email = strtolower($email);
+							$email = mb_strtolower($email);
 							if (!in_array($email, $serviceMailboxes[$service['id']]))
 							{
 								list($login, $domain) = explode('@', $email, 2);
@@ -162,7 +162,7 @@ class CIntranetMailConfigManageComponent extends CBitrixComponent
 
 					foreach ($serviceUsers as $login)
 					{
-						$login = strtolower($login);
+						$login = mb_strtolower($login);
 						if (!in_array(sprintf('%s@%s', $login, $service['server']), $serviceMailboxes[$service['id']]))
 							$service['users'][$service['server']][] = $login;
 					}
@@ -254,7 +254,7 @@ class CIntranetMailConfigManageComponent extends CBitrixComponent
 
 					$sqlHelper = \Bitrix\Main\Application::getConnection()->getSqlHelper();
 
-					$words = preg_split('/\s+/', strtolower(trim($filterData['FIND'])), ($wordsLimit = 10)+1);
+					$words = preg_split('/\s+/', mb_strtolower(trim($filterData['FIND'])), ($wordsLimit = 10) + 1);
 					$words = array_unique(array_slice($words, 0, $wordsLimit));
 					foreach ($words as $word)
 					{
@@ -338,7 +338,7 @@ class CIntranetMailConfigManageComponent extends CBitrixComponent
 
 				while ($mailbox = $res->fetch())
 				{
-					$mailbox['EMAIL_NAME'] = $mailbox['SERVER_TYPE'] == 'imap' && strpos($mailbox['NAME'], '@') > 0
+					$mailbox['EMAIL_NAME'] = $mailbox['SERVER_TYPE'] == 'imap' && mb_strpos($mailbox['NAME'], '@') > 0
 						? $mailbox['NAME'] : $mailbox['LOGIN'];
 
 					$mailboxes[$mailbox['ID']] = $mailbox;
@@ -350,7 +350,7 @@ class CIntranetMailConfigManageComponent extends CBitrixComponent
 			if (!empty($filterData['FILTER_APPLIED']))
 			{
 				if (isset($filterData['FIND']) && trim($filterData['FIND']))
-					$searchString = strtolower(trim($filterData['FIND']));
+					$searchString = mb_strtolower(trim($filterData['FIND']));
 
 				if (!empty($filterData['HAS_USER']))
 				{
@@ -361,7 +361,7 @@ class CIntranetMailConfigManageComponent extends CBitrixComponent
 				}
 
 				if (!empty($filterData['DOMAIN_NAME']))
-					$domainName = strtolower($filterData['DOMAIN_NAME']);
+					$domainName = mb_strtolower($filterData['DOMAIN_NAME']);
 			}
 
 			$arRows = array();
@@ -384,13 +384,13 @@ class CIntranetMailConfigManageComponent extends CBitrixComponent
 				$userIds = array();
 				while ($mailbox = $res->fetch())
 				{
-					$mailbox['EMAIL_NAME'] = $mailbox['SERVER_TYPE'] == 'imap' && strpos($mailbox['NAME'], '@') > 0
+					$mailbox['EMAIL_NAME'] = $mailbox['SERVER_TYPE'] == 'imap' && mb_strpos($mailbox['NAME'], '@') > 0
 						? $mailbox['NAME'] : $mailbox['LOGIN'];
 
 					if (!empty($domainName) && !preg_match(sprintf('/@%s$/i', preg_quote($domainName, '/')), $mailbox['EMAIL_NAME']))
 						continue;
 
-					if (!empty($searchString) && strpos($mailbox['EMAIL_NAME'], $searchString) === false)
+					if (!empty($searchString) && mb_strpos($mailbox['EMAIL_NAME'], $searchString) === false)
 						continue;
 
 					$arRows[$mailbox['ID']] = array($mailbox['USER_ID'], $mailbox['ID']);
@@ -428,7 +428,7 @@ class CIntranetMailConfigManageComponent extends CBitrixComponent
 							$mailboxName = sprintf('%s@%s', $login, $domain);
 							$mailboxId   = sprintf('%u:%s', $service['id'], $mailboxName);
 
-							if (!empty($searchString) && strpos($mailboxName, $searchString) === false)
+							if (!empty($searchString) && mb_strpos($mailboxName, $searchString) === false)
 								continue;
 
 							$arRows[$mailboxId] = array(0, $mailboxId);
@@ -527,7 +527,7 @@ class CIntranetMailConfigManageComponent extends CBitrixComponent
 
 				$arCols['EMAIL'] = $mailbox['EMAIL_NAME'];
 
-				if ($mailbox['SERVER_TYPE'] == 'imap' && !strpos($arCols['EMAIL'], '@'))
+				if ($mailbox['SERVER_TYPE'] == 'imap' && !mb_strpos($arCols['EMAIL'], '@'))
 					$arCols['EMAIL'] .= '<br><span style="font-weight: normal; ">imap://'.$mailbox['SERVER'].':'.$mailbox['PORT'].'</span>';
 
 				if ($row[0] > 0)

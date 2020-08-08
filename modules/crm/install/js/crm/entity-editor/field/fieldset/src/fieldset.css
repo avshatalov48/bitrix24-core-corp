@@ -1,0 +1,14 @@
+.ui-entity-editor-content-block-field-fieldset-wrapper {
+	border: solid 1px #f0f1f3;
+	background: #fdfdfd;
+	padding: 15px;
+}
+.ui-entity-editor-field-fieldset .ui-entity-editor-section-edit{
+	padding: 0;
+	background-color: transparent;
+	width: 100%;
+}
+
+.ui-entity-editor-field-fieldset-delete {
+	text-align: right;
+}

@@ -15,8 +15,11 @@ class TasksWidgetReplicationComponent extends TasksBaseComponent
 	protected function checkParameters()
 	{
 		$this->arParams['DATA'] = ReplicateParams::createValueStructure($this->arParams['DATA'])->get();
-		$this->tryParseIntegerParameter($this->arParams['USER_ID'], 0, true);
-		$this->tryParseArrayParameter($this->arParams['COMPANY_WORKTIME'], static::getCompanyWorkTime());
+		$this->arResult['TASK_LIMIT_EXCEEDED'] = static::tryParseBooleanParameter($this->arParams['TASK_LIMIT_EXCEEDED']);
+
+		static::tryParseIntegerParameter($this->arParams['USER_ID'], 0, true);
+		static::tryParseArrayParameter($this->arParams['COMPANY_WORKTIME'], static::getCompanyWorkTime());
+
 		return $this->errors->checkNoFatals();
 	}
 

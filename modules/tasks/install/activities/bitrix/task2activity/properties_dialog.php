@@ -30,7 +30,6 @@ foreach ($arDocumentFields as $fieldKey => $fieldValue)
 {
 	if (
 		($fieldValue['UserField']['USER_TYPE']['USER_TYPE_ID'] === 'crm')
-		&& ($fieldValue['UserField']['USER_TYPE']['CLASS_NAME'] === 'CUserTypeCrm')
 		&& CModule::IncludeModule('crm')
 	)
 	{

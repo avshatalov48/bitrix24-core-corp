@@ -124,7 +124,11 @@ if ($arParams["PAGE_ID"] == 'group')
 			&& isset($arResult["Urls"][$firstMenuItemCode])
 		)
 		{
-			LocalRedirect($arResult["Urls"][$firstMenuItemCode]);
+			$url = $arResult["Urls"][$firstMenuItemCode];
+			if (mb_substr($url, 0, 1) === "/")
+			{
+				LocalRedirect($url);
+			}
 		}
 	}
 	elseif ($firstKeyDefault != 'general')
@@ -198,7 +202,7 @@ $arResult["CanView"]["chat"] = (
 );
 $arResult["CanView"]["general"] = true;
 
-$arResult["Title"]["chat"] = ((array_key_exists("chat", $arResult["ActiveFeatures"]) && StrLen($arResult["ActiveFeatures"]["chat"]) > 0) ? $arResult["ActiveFeatures"]["chat"] : GetMessage("SONET_UM_CHAT"));
+$arResult["Title"]["chat"] = ((array_key_exists("chat", $arResult["ActiveFeatures"]) && $arResult["ActiveFeatures"]["chat"] <> '') ? $arResult["ActiveFeatures"]["chat"] : GetMessage("SONET_UM_CHAT"));
 $arResult["OnClicks"] = array(
 	"chat" => "BXIM.openMessenger('sg".$arResult["Group"]["ID"]."');"
 );

@@ -206,7 +206,7 @@ if(check_bitrix_sessid())
 	{
 		if(CCrmPerms::IsAdmin())
 		{
-			$conv = strtoupper($_GET['conv']);
+			$conv = mb_strtoupper($_GET['conv']);
 			if($conv === 'EXEC')
 			{
 				$mailFrom = COption::GetOptionString('crm', 'email_from');

@@ -110,9 +110,9 @@ BX.namespace('Tasks.Component');
 
 			openAddForm: function()
 			{
-				if(this.option('restricted') && B24)
+				if (this.option('restricted'))
 				{
-					B24.licenseInfoPopup.show(this.code(), BX.message('TASKS_TTDP_LICENSE_TITLE'), '<span>'+BX.message('TASKS_TTDP_LICENSE_BODY')+'</span>');
+					BX.UI.InfoHelper.show('limit_tasks_gantt');
 					return;
 				}
 

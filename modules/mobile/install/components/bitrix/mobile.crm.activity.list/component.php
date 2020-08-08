@@ -18,8 +18,8 @@ if (!$userPerms->IsAccessEnabled())
 global $APPLICATION;
 $arResult['RUBRIC'] = array('ENABLED' => false);
 
-$enablePaging = $arResult['ENABLE_PAGING'] = isset($_REQUEST['PAGING']) && strtoupper($_REQUEST['PAGING']) === 'Y';
-$enableSearch = $arResult['ENABLE_SEARCH'] = isset($_REQUEST['SEARCH']) && strtoupper($_REQUEST['SEARCH']) === 'Y';
+$enablePaging = $arResult['ENABLE_PAGING'] = isset($_REQUEST['PAGING']) && mb_strtoupper($_REQUEST['PAGING']) === 'Y';
+$enableSearch = $arResult['ENABLE_SEARCH'] = isset($_REQUEST['SEARCH']) && mb_strtoupper($_REQUEST['SEARCH']) === 'Y';
 $arResult['SEARCH_VALUE'] = '';
 
 if($enableSearch)
@@ -92,8 +92,14 @@ $navParams = $CGridOptions->GetNavParams($navParams);
 $navParams['bShowAll'] = false;
 
 $filter = $CGridOptions->GetFilter($arResult['FILTER']);
+$subjectFiler = "";
+if (isset($filter['SUBJECT']))
+{
+	$subjectFiler = $filter['SUBJECT'];
+}
 
 $arResult['GRID_FILTER_APPLIED'] = isset($filter['GRID_FILTER_APPLIED']) && $filter['GRID_FILTER_APPLIED'];
+
 if($arResult['GRID_FILTER_APPLIED'])
 {
 	$filterID = $arResult['GRID_FILTER_ID'] = isset($filter['GRID_FILTER_ID']) ? $filter['GRID_FILTER_ID'] : '';
@@ -104,6 +110,10 @@ else // filter_my_not_completed by default
 	$filter = $arResult['FILTER_PRESETS']['filter_my_not_completed']['fields'];
 	$filter['GRID_FILTER_ID'] = $arResult['GRID_FILTER_ID'] = 'filter_my_not_completed';
 	$filter['GRID_FILTER_NAME'] = $arResult['GRID_FILTER_NAME'] = $arResult['FILTER_PRESETS']['filter_my_not_completed']['name'];
+	if (!empty($subjectFiler))
+	{
+		$filter['%SUBJECT'] = $arResult['SEARCH_VALUE'] = $subjectFiler;
+	}
 }
 
 if(isset($filter['SUBJECT']))
@@ -126,7 +136,7 @@ if($entityTypeID > 0 && $entityID > 0)
 		)
 	);
 	$arResult['RUBRIC']['TITLE'] = CCrmOwnerType::GetCaption($entityTypeID, $entityID);
-	$arResult['RUBRIC']['FILTER_PRESETS'] = array('clear_filter', 'filter_not_completed', 'filter_completed');
+	$arResult['RUBRIC']['FILTER_PRESETS'] = array('filter_all', 'filter_not_completed', 'filter_completed');
 }
 
 $arResult['ITEMS'] = array();
@@ -201,7 +211,7 @@ $arResult['PERMISSIONS'] = array(
 		|| CCrmDeal::CheckUpdatePermission(0, $userPerms)
 );
 
-$format = isset($_REQUEST['FORMAT']) ? strtolower($_REQUEST['FORMAT']) : '';
+$format = isset($_REQUEST['FORMAT'])? mb_strtolower($_REQUEST['FORMAT']) : '';
 // Only JSON format is supported
 if($format !== '' && $format !== 'json')
 {

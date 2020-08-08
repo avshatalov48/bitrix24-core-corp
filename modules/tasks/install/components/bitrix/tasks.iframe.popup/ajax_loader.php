@@ -10,7 +10,7 @@ define('PUBLIC_AJAX_MODE', true);
 
 $SITE_ID = '';
 if (isset($_GET["SITE_ID"]) && is_string($_GET['SITE_ID']))
-	$SITE_ID = substr(preg_replace("/[^a-z0-9_]/i", "", $_GET["SITE_ID"]), 0, 2);
+	$SITE_ID = mb_substr(preg_replace("/[^a-z0-9_]/i", "", $_GET["SITE_ID"]), 0, 2);
 
 if ($SITE_ID != '')
 	define("SITE_ID", $SITE_ID);
@@ -66,11 +66,11 @@ try
 					$multiple = 'Y';
 
 				$onSelectFunctionName = null;
-				if (isset($inData['onSelectFunctionName']) && strlen($inData['onSelectFunctionName']))
+				if (isset($inData['onSelectFunctionName']) && mb_strlen($inData['onSelectFunctionName']))
 					$onSelectFunctionName = $inData['onSelectFunctionName'];
 
 				$onChangeFunctionName = null;
-				if (isset($inData['onChangeFunctionName']) && strlen($inData['onChangeFunctionName']))
+				if (isset($inData['onChangeFunctionName']) && mb_strlen($inData['onChangeFunctionName']))
 					$onChangeFunctionName = $inData['onChangeFunctionName'];
 
 				$selectedUsersIds = array();
@@ -114,7 +114,7 @@ try
 			case 'socialnetwork.group.selector':
 				CTaskAssert::assert(isset($inData['bindElement'], $inData['jsObjectName']));
 				$onSelectFuncName = null;
-				if (isset($inData['onSelectFuncName']) && strlen($inData['onSelectFuncName']))
+				if (isset($inData['onSelectFuncName']) && mb_strlen($inData['onSelectFuncName']))
 					$onSelectFuncName = $inData['onSelectFuncName'];
 
 				$APPLICATION->IncludeComponent(

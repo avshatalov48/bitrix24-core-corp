@@ -37,7 +37,7 @@ Loc::loadMessages(__FILE__);
 				'ICONCLASS' => 'view',
 				'TITLE' => Loc::getMessage('CRM_CLL2_EDIT_TITLE'),
 				'TEXT' => Loc::getMessage('CRM_CLL2_EDIT'),
-				'ONCLICK' => "bxCRMLLTInstance.editItem('".CUtil::JSEscape($arLoc['PATH_TO_LOCATIONS_EDIT'])."', '".CUtil::JSEscape($arParams['PATH_TO_LOCATIONS_LIST']).(strlen($arResult['FILTER_VALUES']['PARENT_ID']) ? '?PARENT_ID='.intval($arResult['FILTER_VALUES']['PARENT_ID']) : '')."')",
+				'ONCLICK' => "bxCRMLLTInstance.editItem('".CUtil::JSEscape($arLoc['PATH_TO_LOCATIONS_EDIT'])."', '".CUtil::JSEscape($arParams['PATH_TO_LOCATIONS_LIST']).($arResult['FILTER_VALUES']['PARENT_ID'] <> ''? '?PARENT_ID='.intval($arResult['FILTER_VALUES']['PARENT_ID']) : '')."')",
 			);
 		}
 

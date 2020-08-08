@@ -50,6 +50,15 @@ class Requisite extends BaseRequisite
 		if($addressFields === false)
 		{
 			$addressFields = [
+				'DELIVERY_ADDRESS' => [
+					'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_REQUISITE_DELIVERY_ADDRESS_TITLE'),
+					'PROVIDER' => Address::class,
+					'VALUE' => 'DELIVERY_ADDRESS_RAW',
+					'OPTIONS' => [
+						'TYPE_ID' => 11,
+						'COUNTRY_ID' => $this->getDocumentCountryId(),
+					],
+				],
 				'PRIMARY_ADDRESS' => [
 					'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_REQUISITE_PRIMARY_ADDRESS_TITLE'),
 					'PROVIDER' => Address::class,
@@ -156,6 +165,7 @@ class Requisite extends BaseRequisite
 		if($types === null)
 		{
 			$types = [
+				RequisiteAddress::Delivery => 'DELIVERY_ADDRESS',
 				RequisiteAddress::Primary => 'PRIMARY_ADDRESS',
 				RequisiteAddress::Registered => 'REGISTERED_ADDRESS',
 				RequisiteAddress::Home => 'HOME_ADDRESS',

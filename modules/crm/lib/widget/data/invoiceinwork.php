@@ -66,7 +66,7 @@ class InvoiceInWork extends InvoiceDataSource
 			}
 			if(isset($selectItem['aggregate']))
 			{
-				$aggregate = strtoupper($selectItem['aggregate']);
+				$aggregate = mb_strtoupper($selectItem['aggregate']);
 			}
 		}
 
@@ -79,7 +79,7 @@ class InvoiceInWork extends InvoiceDataSource
 		{
 			throw new Main\ArgumentException('Could not find column name in select params', 'params');
 		}
-		$group = isset($params['group']) ? strtoupper($params['group']) : '';
+		$group = isset($params['group'])? mb_strtoupper($params['group']) : '';
 		if($group !== '' && $group !== self::GROUP_BY_DATE && $group !== self::GROUP_BY_USER)
 		{
 			$group = '';
@@ -282,7 +282,7 @@ class InvoiceInWork extends InvoiceDataSource
 			{
 				if(isset($sortItem['name']) && $sortItem['name'] === $name)
 				{
-					$order = isset($sortItem['order']) && strtolower($sortItem['order']) === 'desc'
+					$order = isset($sortItem['order']) && mb_strtolower($sortItem['order']) === 'desc'
 						? SORT_DESC : SORT_ASC;
 					Collection::sortByColumn($results, array($name => $order));
 					break;

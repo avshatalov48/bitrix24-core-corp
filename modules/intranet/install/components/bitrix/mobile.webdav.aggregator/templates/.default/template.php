@@ -15,7 +15,7 @@ foreach ($arResult['STRUCTURE'] as $node)
 	?><li><?
 	if($node["TYPE"] == "file")
 	{
-		?><a data-icon="none" href="<?=$link?>" rel="external"><img class="ui-li-icon" src="<?=$templateFolder?>/images/icons/ic<?=substr($node["FILE_EXTENTION"], 1)?>.gif" border="0"><?=$node['NAME']?></a><?
+		?><a data-icon="none" href="<?=$link?>" rel="external"><img class="ui-li-icon" src="<?=$templateFolder?>/images/icons/ic<?= mb_substr($node["FILE_EXTENTION"], 1)?>.gif" border="0"><?=$node['NAME']?></a><?
 	}
 	elseif($node["TYPE"] == "up")
 	{

@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Crm\UserField\Visibility\VisibilityManager;
+
 IncludeModuleLangFile(__FILE__);
 
 class CCrmUserType
@@ -78,6 +80,7 @@ class CCrmUserType
 		}
 
 		$result = $this->postFilterFields($result);
+		$result = $this->postFilterAccessCheck($result, $user_id);
 
 		return $result;
 	}
@@ -785,12 +788,12 @@ class CCrmUserType
 		}
 
 		// 2. Try to interpret value as enum VALUE or XML_ID
-		$uv = strtoupper(trim($value));
+		$uv = mb_strtoupper(trim($value));
 
 		$success = false;
 		foreach($enums as $enumID => &$enum)
 		{
-			if(strtoupper($enum[$fieldName]) === $uv || (isset($enum['XML_ID']) && $enum['XML_ID'] === $value))
+			if(mb_strtoupper($enum[$fieldName]) === $uv || (isset($enum['XML_ID']) && $enum['XML_ID'] === $value))
 			{
 				$ID = $enumID;
 				$success = true;
@@ -841,7 +844,7 @@ class CCrmUserType
 		if(preg_match('/^\[([A-Z]+)\]/i', $value, $m) > 0)
 		{
 			$valueType = CCrmOwnerType::Undefined;
-			$prefix = strtoupper($m[1]);
+			$prefix = mb_strtoupper($m[1]);
 			if($prefix === 'L')
 			{
 				$valueType = CCrmOwnerType::Lead;
@@ -868,7 +871,7 @@ class CCrmUserType
 				return false;
 			}
 
-			$value = substr($value, strlen($m[0]));
+			$value = mb_substr($value, mb_strlen($m[0]));
 		}
 
 		// 1. Try to interpret data as entity ID
@@ -990,10 +993,10 @@ class CCrmUserType
 			return;
 		}
 
-		$isContactEnabled = isset($settings['CONTACT']) && strtoupper($settings['CONTACT']) === 'Y';
-		$isCompanyEnabled = isset($settings['COMPANY']) && strtoupper($settings['COMPANY']) === 'Y';
-		$isLeadEnabled = isset($settings['LEAD']) && strtoupper($settings['LEAD']) === 'Y';
-		$isDealEnabled = isset($settings['DEAL']) && strtoupper($settings['DEAL']) === 'Y';
+		$isContactEnabled = isset($settings['CONTACT']) && mb_strtoupper($settings['CONTACT']) === 'Y';
+		$isCompanyEnabled = isset($settings['COMPANY']) && mb_strtoupper($settings['COMPANY']) === 'Y';
+		$isLeadEnabled = isset($settings['LEAD']) && mb_strtoupper($settings['LEAD']) === 'Y';
+		$isDealEnabled = isset($settings['DEAL']) && mb_strtoupper($settings['DEAL']) === 'Y';
 
 		if(is_array($value))
 		{
@@ -1136,21 +1139,21 @@ class CCrmUserType
 		}
 		elseif($typeID === 'boolean')
 		{
-			$yes = strtoupper(GetMessage('MAIN_YES'));
+			$yes = mb_strtoupper(GetMessage('MAIN_YES'));
 			//$no = strtoupper(GetMessage('MAIN_NO'));
 
 			if(is_array($data))
 			{
 				foreach($data as &$v)
 				{
-					$s = strtoupper($v);
+					$s = mb_strtoupper($v);
 					$v = ($s === $yes || $s === 'Y' || $s === 'YES' || (is_numeric($s) && intval($s) > 0)) ? 1 : 0;
 				}
 				unset($v);
 			}
 			elseif(is_string($data) && $data !== '')
 			{
-				$s = strtoupper($data);
+				$s = mb_strtoupper($data);
 				$data = ($s === $yes || $s === 'Y' || $s === 'YES' || (is_numeric($s) && intval($s) > 0)) ? 1 : 0;
 			}
 			elseif(isset($arUserField['SETTINGS']['DEFAULT_VALUE']))
@@ -1256,7 +1259,7 @@ class CCrmUserType
 					{
 						$val = (string)$val;
 
-						if (strlen($val) <= 0)
+						if ($val == '')
 						{
 							//Empty value is always 'N' (not default field value)
 							$val = 'N';
@@ -1400,8 +1403,23 @@ class CCrmUserType
 				}
 				else if ($isMultiple && is_array($arValue[$ID][$FIELD_NAME]))
 				{
-					array_walk($arValue[$ID][$FIELD_NAME], create_function('&$v',  '$v = htmlspecialcharsbx($v);'));
-					$arReplaceValue[$ID][$FIELD_NAME] = implode($delimiter, $arValue[$ID][$FIELD_NAME]);
+					$value = [];
+
+					$valueCount = count($arValue[$ID][$FIELD_NAME]);
+					for($i = 0; $i < $valueCount; $i++)
+					{
+						$value[] = htmlspecialcharsback($arValue[$ID][$FIELD_NAME][$i]);
+					}
+
+					$arReplaceValue[$ID][$FIELD_NAME] = $this->cUFM->getPublicView(
+						array_merge(
+							$arUserField,
+							['ENTITY_VALUE_ID' => $ID, 'VALUE' => $value]
+						),
+						[
+							'CONTEXT' => 'CRM_GRID'
+						]
+					);
 				}
 			}
 		}
@@ -1494,7 +1512,7 @@ class CCrmUserType
 								if(!$textonly)
 								{
 									$surl = GetIBlockElementLinkById($arList[$KEY][$FIELD_VALUE_ID]['ID']);
-									if ($surl && strlen($surl) > 0)
+									if ($surl && $surl <> '')
 									{
 										$sname = '<a href="'.$surl.'">'.$sname.'</a>';
 									}
@@ -1587,7 +1605,7 @@ class CCrmUserType
 									if(!$textonly)
 									{
 										Bitrix\Main\UI\Extension::load("ui.tooltip");
-										$sname = '<a href="'.$link.'" target="_blank" bx-tooltip-user-id="'.$CID.'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.'.strtolower($FIELD_VALUE_NAME).'.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon'.($FIELD_VALUE_NAME == 'LEAD' || $FIELD_VALUE_NAME == 'DEAL' || $FIELD_VALUE_NAME == 'QUOTE' ? '_no_photo': '_'.strtolower($FIELD_VALUE_NAME)).'">'.$sname.'</a>';
+										$sname = '<a href="'.$link.'" target="_blank" bx-tooltip-user-id="'.$CID.'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.'.mb_strtolower($FIELD_VALUE_NAME).'.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon'.($FIELD_VALUE_NAME == 'LEAD' || $FIELD_VALUE_NAME == 'DEAL' || $FIELD_VALUE_NAME == 'QUOTE' ? '_no_photo': '_'.mb_strtolower($FIELD_VALUE_NAME)).'">'.$sname.'</a>';
 									}
 									else
 									{
@@ -1660,7 +1678,7 @@ class CCrmUserType
 					'items' => Array('' => '') + $ar
 				);
 			}
-			elseif(substr($arUserField['USER_TYPE']['USER_TYPE_ID'], 0, 5) === 'rest_')
+			elseif(mb_substr($arUserField['USER_TYPE']['USER_TYPE_ID'], 0, 5) === 'rest_')
 			{
 				// skip REST type fields here
 				continue;
@@ -1700,10 +1718,13 @@ class CCrmUserType
 		{
 			$userTypeID = $arUserField['USER_TYPE_ID'];
 			$settings = isset($arUserField['SETTINGS']) ? $arUserField['SETTINGS'] : array();
+			$userType = ($arUserField['USER_TYPE'] ?? []);
 
 			$info = array(
 				'TYPE' => $userTypeID,
 				'ATTRIBUTES' => array(CCrmFieldInfoAttr::Dynamic),
+				'SETTINGS' => $settings,
+				'USER_TYPE' => $userType,
 				'LABELS' => array(
 					'LIST' => isset($arUserField['LIST_COLUMN_LABEL']) ? $arUserField['LIST_COLUMN_LABEL'] : '',
 					'FORM' => isset($arUserField['EDIT_FORM_LABEL']) ? $arUserField['EDIT_FORM_LABEL'] : '',
@@ -2182,7 +2203,7 @@ class CCrmUserType
 		$bNorm = false;
 		foreach($arFields as $k => $FIELD_NAME)
 		{
-			if (strpos($FIELD_NAME, 'UF_') === 0)
+			if (mb_strpos($FIELD_NAME, 'UF_') === 0)
 			{
 				if (!isset($arUserFields[$FIELD_NAME]))
 				{
@@ -2216,7 +2237,7 @@ class CCrmUserType
 			$userTypeID = isset($arUserField['USER_TYPE_ID']) ? $arUserField['USER_TYPE_ID'] : '';
 			$forceExactMode = $userTypeID === 'crm_status' || $userTypeID === 'crm';
 
-			if ($arUserField['USER_TYPE']['BASE_TYPE'] != 'file' && (is_array($value) || strlen($value) > 0))
+			if ($arUserField['USER_TYPE']['BASE_TYPE'] != 'file' && (is_array($value) || $value <> ''))
 			{
 				if ($arUserField['SHOW_FILTER'] == 'I' || $forceExactMode)
 					$arFilter['='.$FIELD_NAME] = $value;
@@ -2400,6 +2421,16 @@ class CCrmUserType
 		}
 
 		return $fields;
+	}
+
+	protected function postFilterAccessCheck(array $userFields, ?int $userId): array
+	{
+		if (!$userId)
+		{
+			$userId = \CCrmSecurityHelper::GetCurrentUserID();
+		}
+
+		return VisibilityManager::getVisibleUserFields($userFields, $userId);
 	}
 }
 

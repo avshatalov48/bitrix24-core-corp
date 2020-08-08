@@ -174,6 +174,23 @@ class Handler
 					$lastDestinationList['CONTACTS'][$code] = $code;
 					$crmContactCounter++;
 				}
+				elseif(
+					!empty($params['MULTI'])
+					&& $params['MULTI'] == 'Y'
+					&& preg_match('/^CRMCONTACT(\d+)(:([A-F0-9]{8}))?$/i', $code, $matches)
+				)
+				{
+					if($crmContactCounter >= $crmContactLimit)
+					{
+						continue;
+					}
+					if(!isset($lastDestinationList['CONTACTS_MULTI']))
+					{
+						$lastDestinationList['CONTACTS_MULTI'] = [];
+					}
+					$lastDestinationList['CONTACTS_MULTI'][$code] = $code;
+					$crmContactCounter++;
+				}
 				elseif(preg_match('/^CRMCOMPANY(\d+)$/i', $code, $matches))
 				{
 					if($crmCompanyCounter >= $crmCompanyLimit)
@@ -185,6 +202,23 @@ class Handler
 						$lastDestinationList['COMPANIES'] = [];
 					}
 					$lastDestinationList['COMPANIES'][$code] = $code;
+					$crmCompanyCounter++;
+				}
+				elseif(
+					!empty($params['MULTI'])
+					&& $params['MULTI'] == 'Y'
+					&& preg_match('/^CRMCOMPANY(\d+)(:([A-F0-9]{8}))?$/i', $code, $matches)
+				)
+				{
+					if($crmCompanyCounter >= $crmCompanyLimit)
+					{
+						continue;
+					}
+					if(!isset($lastDestinationList['COMPANIES_MULTI']))
+					{
+						$lastDestinationList['COMPANIES_MULTI'] = [];
+					}
+					$lastDestinationList['COMPANIES_MULTI'][$code] = $code;
 					$crmCompanyCounter++;
 				}
 				elseif(preg_match('/^CRMDEAL(\d+)$/i', $code, $matches))
@@ -212,6 +246,23 @@ class Handler
 					}
 					$lastDestinationList['LEADS'][$code] = $code;
 					$crmLeadCounter++;
+				}
+				elseif(
+					!empty($params['MULTI'])
+					&& $params['MULTI'] == 'Y'
+					&& preg_match('/^CRMLEAD(\d+)(:([A-F0-9]{8}))?$/i', $code, $matches)
+				)
+				{
+					if($crmLeadCounter >= $crmLeadLimit)
+					{
+						continue;
+					}
+					if(!isset($lastDestinationList['LEADS_MULTI']))
+					{
+						$lastDestinationList['LEADS_MULTI'] = [];
+					}
+						$lastDestinationList['LEADS_MULTI'][$code] = $code;
+						$crmLeadCounter++;
 				}
 				elseif(preg_match('/^CRMORDER(\d+)$/i', $code, $matches))
 				{

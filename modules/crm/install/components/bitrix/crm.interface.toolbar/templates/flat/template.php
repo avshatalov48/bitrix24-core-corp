@@ -21,7 +21,7 @@ $labelText = '';
 					<tr><?php
 					foreach($arParams['BUTTONS'] as $item)
 					{
-						if ($item['LABEL'] === true)
+						if (isset($item['LABEL']) && $item['LABEL'] === true)
 						{
 							$labelText = isset($item['TEXT']) ? $item['TEXT'] : '';
 							continue;

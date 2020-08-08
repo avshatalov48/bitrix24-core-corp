@@ -367,7 +367,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		$userFields = [];
 		foreach ($this->request as $key => $value)
 		{
-			if(strpos($key, 'UF_') === 0)
+			if(mb_strpos($key, 'UF_') === 0)
 			{
 				$userFields[$key] = $value;
 			}
@@ -375,8 +375,22 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 		if (!empty($userFields))
 		{
+			$GLOBALS['USER_FIELD_MANAGER']->EditFormAddFields(\Bitrix\Crm\Order\Manager::getUfId(), $userFields, [
+				'FORM' => $userFields,
+				'FILES' => [],
+			]);
+
 			$GLOBALS['USER_FIELD_MANAGER']->Update(\Bitrix\Crm\Order\Manager::getUfId(), $id, $userFields);
 		}
+
+
+		\Bitrix\Crm\Tracking\UI\Details::saveEntityData(
+			\CCrmOwnerType::Order,
+			$order->getId(),
+			$this->request,
+			$isNew
+		);
+
 
 		\CBitrixComponent::includeComponentClass('bitrix:crm.order.details');
 		$component = new \CCrmOrderDetailsComponent();
@@ -450,7 +464,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		$props = array_filter(
 			$formData,
 			function($k){
-				return substr($k, 0, 9) == 'PROPERTY_';
+				return mb_substr($k, 0, 9) == 'PROPERTY_';
 			},
 			ARRAY_FILTER_USE_KEY
 		);
@@ -459,15 +473,15 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		{
 			foreach($props as $id => $value)
 			{
-				$propId = substr($id, 9);
+				$propId = mb_substr($id, 9);
 
 				if (isset($this->request[$id]))
 				{
-					$result[substr($id, 9)] = $this->request[$id];
+					$result[mb_substr($id, 9)] = $this->request[$id];
 				}
-				elseif ((int)$propId > 0 || (substr($propId, 0 , 1) == 'n'))
+				elseif ((int)$propId > 0 || (mb_substr($propId, 0, 1) == 'n'))
 				{
-					$result[substr($id, 9)] = $value;
+					$result[mb_substr($id, 9)] = $value;
 				}
 			}
 		}
@@ -642,7 +656,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
-		if(strlen($isReturn) > 0)
+		if($isReturn <> '')
 		{
 			$setResult = $paymentObj->setReturn($isReturn);
 
@@ -699,7 +713,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
-		if(strlen($fieldName) <= 0 || ($fieldName != 'DEDUCTED' && $fieldName != 'ALLOW_DELIVERY'))
+		if($fieldName == '' || ($fieldName != 'DEDUCTED' && $fieldName != 'ALLOW_DELIVERY'))
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_WRONG_FIELD_NAME'));
 			return;
@@ -951,7 +965,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			$value = 1;
 			foreach ($this->request['PARAMS']['enumeration'] as $option)
 			{
-				if (strlen($option['VALUE']) > 0)
+				if ($option['VALUE'] <> '')
 				{
 					\Bitrix\Crm\Order\PropertyVariant::add([
 						'ORDER_PROPS_ID' => $result->getId(),
@@ -1131,8 +1145,9 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		{
 			if (
 				$order->getUserId() !== \Bitrix\Crm\Order\Manager::getAnonymousUserID()
-				&&  !empty($order->getUserId())
+				&& !empty($order->getUserId())
 				&& (int)$formData['USER_PROFILE'] > 0
+				&& (int)$formData['USER_PROFILE'] !== (int)$formData['OLD_USER_PROFILE']
 			)
 			{
 				$profileData = \Bitrix\Sale\OrderUserProperties::getList(
@@ -1243,9 +1258,19 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 		$freshData['USER_PROFILE'] = $changedFields['USER_PROFILE'];
 
+		$oldDeliveryId = isset($changedFields['DELIVERY_ID']) ? (int)$changedFields['DELIVERY_ID'] : null;
+		$newDeliveryId = isset($freshData['DELIVERY_ID']) ? (int)$freshData['DELIVERY_ID'] : null;
+		$isDeliverySystemChanged = ($oldDeliveryId !== $newDeliveryId);
+
+		$oldPaymentSystemId = isset($changedFields['PAY_SYSTEM_ID']) ? (int)$changedFields['PAY_SYSTEM_ID'] : null;
+		$newPaymentSystemId = isset($freshData['PAY_SYSTEM_ID']) ? (int)$freshData['PAY_SYSTEM_ID'] : null;
+		$isPaymentSystemChanged = ($oldPaymentSystemId !== $newPaymentSystemId);
+
 		if (
 			(isset($changedFields['OLD_PERSON_TYPE_ID']) && (int)$changedFields['OLD_PERSON_TYPE_ID'] !== (int)$freshData['PERSON_TYPE_ID'])
 			|| (isset($changedFields['OLD_USER_ID']) && (int)$changedFields['OLD_USER_ID'] !== (int)$freshData['USER_ID'])
+			|| $isDeliverySystemChanged
+			|| $isPaymentSystemChanged
 		)
 		{
 			\CBitrixComponent::includeComponentClass('bitrix:crm.order.details');
@@ -1320,15 +1345,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 				'cacheProductProviderData' => true,
 				'propsFiles' => $this->preparePropertyFiles(),
 				//we have to skip this errors during refreshing, but not during saving the order
-				'acceptableErrorCodes' =>
-					[
-						"CATALOG_QUANTITY_NOT_ENOGH", "SALE_ORDER_SYSTEM_SHIPMENT_LESS_QUANTITY",
-						"CATALOG_NO_QUANTITY_PRODUCT", "SALE_SHIPMENT_SYSTEM_QUANTITY_ERROR",
-						"SALE_BASKET_ITEM_WRONG_AVAILABLE_QUANTITY",
-						"SALE_BASKET_ITEM_REMOVE_IMPOSSIBLE_BECAUSE_SHIPPED", "OB_DELIVERY_NOT_FOUND",
-						"SALE_ORDEREDIT_ERROR_CHANGE_USER_WITH_PAID_PAYMENTS", "SALE_SHIPMENT_WRONG_DELIVERY_SERVICE"
-						//"SALE_BASKET_AVAILABLE_QUANTITY",
-					]
+				'acceptableErrorCodes' => $this->getDefaultAcceptableErrorCodes()
 			],
 			$settings
 		);
@@ -1353,6 +1370,24 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		return $order;
 	}
 
+	/**
+	 * @return string[]
+	 */
+	protected function getDefaultAcceptableErrorCodes(): array
+	{
+		return [
+			'CATALOG_QUANTITY_NOT_ENOGH',
+			'SALE_ORDER_SYSTEM_SHIPMENT_LESS_QUANTITY',
+			'CATALOG_NO_QUANTITY_PRODUCT',
+			'SALE_SHIPMENT_SYSTEM_QUANTITY_ERROR',
+			'SALE_BASKET_ITEM_WRONG_AVAILABLE_QUANTITY',
+			'SALE_BASKET_ITEM_REMOVE_IMPOSSIBLE_BECAUSE_SHIPPED',
+			'OB_DELIVERY_NOT_FOUND',
+			'SALE_ORDEREDIT_ERROR_CHANGE_USER_WITH_PAID_PAYMENTS',
+			'SALE_SHIPMENT_WRONG_DELIVERY_SERVICE',
+		];
+	}
+
 	protected function skuSelectAction()
 	{
 		if(isset($this->request['SKU_PROPS']) && is_array($this->request['SKU_PROPS']) && !empty($this->request['SKU_PROPS']))
@@ -1371,7 +1406,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		}
 		else
 		{
-			$this->addError(Loc::getMessage("CRM_ORDER_DA_PROPERTIES_ABSENT"));
+			$this->addError(Loc::getMessage("CRM_ORDER_DA_PROPERTIES_ORDER_ABSENT"));
 			return;
 		}
 
@@ -1395,7 +1430,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
-		if(strlen($this->request['BASKET_CODE']) > 0)
+		if($this->request['BASKET_CODE'] <> '')
 		{
 			$basketCode = $this->request['BASKET_CODE'];
 		}
@@ -1586,9 +1621,9 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
-		if((int)($this->request['QUANTITY']) > 0)
+		if((float)($this->request['QUANTITY']) > 0)
 		{
-			$quantity = (int)$this->request['QUANTITY'];
+			$quantity = (float)$this->request['QUANTITY'];
 		}
 		else
 		{
@@ -1601,7 +1636,17 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
-		if(!$order = $this->buildOrder($formData))
+		$settings = (isset($formData['PRODUCT']))
+			? []
+			: [
+				'acceptableErrorCodes' => array_merge(
+					$this->getDefaultAcceptableErrorCodes(),
+					['DELIVERY_CALCULATION']
+				)
+			];
+		
+		$order = $this->buildOrder($formData, $settings);
+		if(!$order)
 		{
 			return;
 		}
@@ -1729,7 +1774,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 	protected function deleteProductAction()
 	{
-		if(strlen($this->request['BASKET_CODE']) > 0)
+		if($this->request['BASKET_CODE'] <> '')
 		{
 			$basketCode = $this->request['BASKET_CODE'];
 		}
@@ -1796,7 +1841,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
-		if(strlen($this->request['GROUP_ACTION']) > 0)
+		if($this->request['GROUP_ACTION'] <> '')
 		{
 			$groupAction = $this->request['GROUP_ACTION'];
 		}
@@ -1903,7 +1948,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		{
 			foreach($coupons as $coupon)
 			{
-				if(strlen($coupon) > 0)
+				if($coupon <> '')
 				{
 					DiscountCouponsManager::add($coupon);
 				}
@@ -2162,7 +2207,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		$files = [];
 		foreach ($_FILES as $id => $fileData)
 		{
-			$propertyId = substr($id, 9);
+			$propertyId = mb_substr($id, 9);
 			if ($propertyId > 0 && !isset($_FILES[$propertyId]['DELETE']))
 			{
 				foreach ($fileData as $key => $value)

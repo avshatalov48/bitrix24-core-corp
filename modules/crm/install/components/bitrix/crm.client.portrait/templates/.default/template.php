@@ -320,7 +320,7 @@ if (isset($arParams['IS_FRAME']) && $arParams['IS_FRAME'] === 'Y' && empty($arPa
 				'bitrix:crm.widget_panel',
 				'',
 				array(
-					'GUID' => strtolower($arResult['ENTITY_TYPE']).'_portrait',
+					'GUID' => mb_strtolower($arResult['ENTITY_TYPE']).'_portrait',
 					'ENTITY_TYPE' => $arResult['ENTITY_TYPE'],
 					'ENTITY_ID' => $arResult['ELEMENT']['ID'],
 					'ENTITY_TYPES' => array(

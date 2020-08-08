@@ -829,6 +829,11 @@ class File extends BaseObject
 
 	private function isNeedToJoinVersion($createdBy)
 	{
+		if(Configuration::getFileVersionTtl() === 0 && !$this->hasAttachedObjects())
+		{
+			return true;
+		}
+
 		$now = new DateTime;
 		if($this->updateTime && $this->updatedBy == $createdBy)
 		{
@@ -1145,7 +1150,15 @@ class File extends BaseObject
 	 */
 	public function markDeleted($deletedBy)
 	{
-		return $this->markDeletedInternal($deletedBy);
+		$status = $this->markDeletedInternal($deletedBy);
+		if ($status)
+		{
+			$notifyManager = Driver::getInstance()->getDeletionNotifyManager();
+			$notifyManager->put($this, $deletedBy);
+			$notifyManager->send();
+		}
+
+		return $status;
 	}
 
 	/**
@@ -1410,9 +1423,21 @@ class File extends BaseObject
 		return $totalData['CNT'];
 	}
 
-	protected function restoreFromHistoricalData(array $data)
-	{}
+	public function hasAttachedObjects(): bool
+	{
+		$query = new Query(AttachedObjectTable::getEntity());
+		$query
+			->addSelect('ID')
+			->setFilter([
+				'=OBJECT_ID' => $this->id,
+			])
+			->setLimit(1)
+		;
 
+		$data = $query->exec()->fetch();
+
+		return !empty($data['ID']);
+	}
 
 	protected function updateLinksAttributes(array $attr)
 	{

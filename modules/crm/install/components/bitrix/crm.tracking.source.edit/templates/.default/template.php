@@ -69,8 +69,8 @@ $containerId = 'crm-analytics-source-ads-editor';
 					<i></i>
 				</span>
 			<?
-			$sourceDesc = Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_DESC_' . strtoupper($arResult['ROW']['CODE']) . '1')
-				?: Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_DESC_' . strtoupper($arResult['ROW']['CODE']))
+			$sourceDesc = Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_DESC_'.mb_strtoupper($arResult['ROW']['CODE']) . '1')
+				?: Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_DESC_'.mb_strtoupper($arResult['ROW']['CODE']))
 					?: Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_AUTO_CONFIGURED');
 			?>
 			<div class="crm-analytics-source-section">

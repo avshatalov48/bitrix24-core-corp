@@ -13,7 +13,7 @@ CJSCore::Init([
 	"voximplant.common", "voximplant_config_edit", "voximplant.numberrent", "ui.tilegrid", "ui.buttons",
 	"ui.forms", "ui.alerts", "ui.hint", "player", "sidepanel", "phone_number"
 ]);
-\Bitrix\Voximplant\Ui\Helper::initLicensePopups();
+
 $melodiesToLoad = [];
 ?>
 
@@ -32,6 +32,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 	"ITEMS" => $arResult["CONFIG_MENU"],
 	"TITLE_HTML" => Loc::getMessage("VOX_CONFIG_TELEPHONY_24") . "<span class=\"logo-color\"> 24</span>"
 ));
+$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 ?>
 
 <div id="vi-editor-root" class="voximplant-config-root">
@@ -177,14 +178,14 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 							<div class="voximplant-number-settings-choice voximplant-number-settings-bold-text">
 								<input id="vi-set-ivr" name="IVR" type="checkbox" data-role="enable-ivr"
 									   data-locked="<?= (\Bitrix\Voximplant\Ivr\Ivr::isEnabled() ? "N" : "Y") ?>"
-									   data-license-popup="main"
+									   data-license-popup="limit_contact_center_telephony_ivr"
 									   class="voximplant-number-settings-checkbox"
 									   <? if ($arResult["ITEM"]["IVR"] == "Y") { ?>checked<? } ?> value="Y">
 								<label for="vi-set-ivr" class="voximplant-number-settings-label"><?= Loc::getMessage("TELEPHONY_USE_IVR_2") ?></label>
 								<? if (!\Bitrix\Voximplant\Ivr\Ivr::isEnabled()): ?>
 									<div class="tel-lock-holder-select"
 										 title="<?= GetMessage("VI_CONFIG_LOCK_ALT") ?>">
-										<div onclick="BX.Voximplant.showLicensePopup('main')"
+										<div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_ivr')"
 											 class="tel-lock <?= (CVoxImplantAccount::IsDemo() ? 'tel-lock-demo' : '') ?>"></div>
 									</div>
 								<? endif ?>
@@ -353,7 +354,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 									<? if (!CVoxImplantAccount::IsPro() || CVoxImplantAccount::IsDemo()): ?>
 										<div class="tel-lock-holder-select"
 											 title="<?= GetMessage("VI_CONFIG_LOCK_ALT") ?>">
-											<div onclick="BX.Voximplant.showLicensePopup('main')"
+											<div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_source')"
 												 class="tel-lock <?= (CVoxImplantAccount::IsDemo() ? 'tel-lock-demo' : '') ?>"></div>
 										</div>
 									<? endif; ?>
@@ -362,7 +363,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 											viCrmSource = BX('vi_crm_source_select').options.selectedIndex;
 											BX.bind(BX('vi_crm_source_select'), 'change', function (e)
 											{
-												BX.Voximplant.showLicensePopup('main');
+												BX.UI.InfoHelper.show('limit_contact_center_telephony_source');
 												this.selectedIndex = viCrmSource;
 											});
 										</script>
@@ -396,9 +397,9 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 							   class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_RECORD") ?></label>
 
 						<?if ($arResult['RECORD_LIMIT']['ENABLE']):?>
-							<div class="tel-lock-holder-title" title="<?=GetMessage("VI_CONFIG_LOCK_RECORD_ALT", Array("#LIMIT#" => $arResult['RECORD_LIMIT']['LIMIT'], '#REMAINING#' => $arResult['RECORD_LIMIT']['REMAINING']))?>"><div onclick="BX.Voximplant.showLicensePopup('main')"  class="tel-lock tel-lock-half <?=(CVoxImplantAccount::IsDemo()? 'tel-lock-demo': '')?>"></div></div>
+							<div class="tel-lock-holder-title" title="<?=GetMessage("VI_CONFIG_LOCK_RECORD_ALT", Array("#LIMIT#" => $arResult['RECORD_LIMIT']['LIMIT'], '#REMAINING#' => $arResult['RECORD_LIMIT']['REMAINING']))?>"><div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_records')"  class="tel-lock tel-lock-half <?=(CVoxImplantAccount::IsDemo()? 'tel-lock-demo': '')?>"></div></div>
 						<?elseif (!$arResult['RECORD_LIMIT']['ENABLE'] && $arResult['RECORD_LIMIT']['DEMO']):?>
-							<div class="tel-lock-holder-title" title="<?=GetMessage("VI_CONFIG_LOCK_ALT")?>"><div onclick="BX.Voximplant.showLicensePopup('main')"  class="tel-lock tel-lock-demo"></div></div>
+							<div class="tel-lock-holder-title" title="<?=GetMessage("VI_CONFIG_LOCK_ALT")?>"><div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_records')"  class="tel-lock tel-lock-demo"></div></div>
 						<?endif;?>
 					</div>
 					<div class="voximplant-number-settings-inner tel-set-height-animated" data-role="recording-settings"
@@ -424,7 +425,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 							<? if (!\Bitrix\Voximplant\Transcript::isEnabled() || \Bitrix\Voximplant\Transcript::isDemo()): ?>
 								<div class="tel-lock-holder-select"
 									 title="<?= Loc::getMessage("VI_CONFIG_LOCK_ALT") ?>">
-									<div onclick="BX.Voximplant.showLicensePopup('main')"
+									<div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_call_transcription')"
 										 class="tel-lock <?= (\Bitrix\Voximplant\Transcript::isDemo() ? 'tel-lock-demo' : '') ?>"></div>
 								</div>
 							<? endif; ?>
@@ -461,7 +462,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 						</label>
 						<? if (!CVoxImplantAccount::IsPro() || CVoxImplantAccount::IsDemo()): ?>
 							<div class="tel-lock-holder-title" title="<?= GetMessage("VI_CONFIG_LOCK_ALT") ?>">
-								<div onclick="BX.Voximplant.showLicensePopup('main')"
+								<div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_customer_rate')"
 									 class="tel-lock <?= (CVoxImplantAccount::IsDemo() ? 'tel-lock-demo' : '') ?>"></div>
 							</div>
 						<? endif; ?>
@@ -474,7 +475,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 							BX.bind(BX('vi_vote'), 'change', function (e)
 							{
 								BX('vi_vote').checked = false;
-								BX.Voximplant.showLicensePopup('main');
+								BX.UI.InfoHelper.show('limit_contact_center_telephony_customer_rate');
 							});
 						</script>
 					<? endif; ?>
@@ -682,13 +683,13 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 							   <? if ($arResult["ITEM"]["CAN_BE_SELECTED"] === "Y"): ?>checked="checked"<? endif ?>
 								data-role="number-selection"
 							   data-locked="<?= (\Bitrix\Voximplant\Limits::canSelectLine() ? "N" : "Y") ?>"
-							   data-license-popup="line-selection"
+							   data-license-popup="limit_contact_center_telephony_line_selection"
 						/>
 						<label for="vi_can_be_selected"
 							   class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_ALLOW_TO_SELECT_NUMBER_FOR_OUTGOING_CALL") ?></label>
 						<? if (!\Bitrix\Voximplant\Limits::canSelectLine() || CVoxImplantAccount::IsDemo()): ?>
 							<div class="tel-lock-holder-select" title="<?= GetMessage("VI_CONFIG_LOCK_ALT") ?>">
-								<div onclick="BX.Voximplant.showLicensePopup('line-selection')"
+								<div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_line_selection')"
 									 class="tel-lock <?= (CVoxImplantAccount::IsDemo() ? 'tel-lock-demo' : '') ?>"></div>
 							</div>
 						<? endif; ?>

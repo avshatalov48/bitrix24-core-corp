@@ -7,7 +7,7 @@ use Bitrix\Main\Context\Culture;
 use Bitrix\Main\Localization\CultureTable;
 use Bitrix\Main\Localization\Loc;
 
-final class Context
+class Context
 {
 	protected $isCheckAccess;
 	protected $region;
@@ -22,7 +22,7 @@ final class Context
 	 * @param Document $document
 	 * @return Context
 	 */
-	public static function createFromDocument(Document $document)
+	public static function createFromDocument(Document $document): Context
 	{
 		$context = new static();
 		$context->setIsCheckAccess($document->getIsCheckAccess());
@@ -39,7 +39,7 @@ final class Context
 	/**
 	 * @return bool
 	 */
-	public function getIsCheckAccess()
+	public function getIsCheckAccess(): bool
 	{
 		return ($this->isCheckAccess === true);
 	}
@@ -48,7 +48,7 @@ final class Context
 	 * @param bool $isCheckAccess
 	 * @return Context
 	 */
-	public function setIsCheckAccess($isCheckAccess)
+	public function setIsCheckAccess(bool $isCheckAccess): Context
 	{
 		$this->isCheckAccess = $isCheckAccess;
 		return $this;
@@ -58,7 +58,7 @@ final class Context
 	 * @param mixed $region
 	 * @return Context
 	 */
-	public function setRegion($region)
+	public function setRegion($region): Context
 	{
 		$this->region = $region;
 		$culture = false;
@@ -102,7 +102,7 @@ final class Context
 	/**
 	 * @return string
 	 */
-	public function getRegionLanguageId()
+	public function getRegionLanguageId(): string
 	{
 		if($this->region)
 		{
@@ -119,7 +119,7 @@ final class Context
 	/**
 	 * @return Culture
 	 */
-	public function getCulture()
+	public function getCulture(): Culture
 	{
 		if(!$this->culture)
 		{

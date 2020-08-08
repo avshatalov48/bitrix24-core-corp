@@ -56,7 +56,7 @@ class CrmTrackingChannelSiteComponent extends \CBitrixComponent
 		$list = is_array($list) ? $list : [];
 		foreach ($list as $item)
 		{
-			if (!is_string($item) || strlen($item) > 30)
+			if (!is_string($item) || mb_strlen($item) > 30)
 			{
 				continue;
 			}

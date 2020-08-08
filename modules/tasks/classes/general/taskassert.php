@@ -115,7 +115,7 @@ class CTaskAssert
 		}
 
 		list($usec, $sec) = explode(" ", microtime());
-		$strMessage = date('Y-m-d H:i:s', $sec) . '.' . substr($usec, 2, 4)
+		$strMessage = date('Y-m-d H:i:s', $sec).'.'.mb_substr($usec, 2, 4)
 			. ' ' . self::$sessId . ' ' . $prefix . $logMessage . "\n";
 
 		if ($showBacktrace && function_exists('debug_backtrace'))
@@ -296,8 +296,8 @@ class CTaskAssert
 					&& (
 						preg_match('/^[0-9]{1,}$/', $value)		// positive integer
 						|| (		// or negative integer
-							(substr($value, 0, 1) === '-')
-							&& preg_match('/^[0-9]{1,}$/', substr($value, 1))
+							(mb_substr($value, 0, 1) === '-')
+							&& preg_match('/^[0-9]{1,}$/', mb_substr($value, 1))
 						)
 					)
 				)

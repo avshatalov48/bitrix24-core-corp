@@ -4,16 +4,26 @@ namespace Bitrix\SalesCenter\Integration;
 
 use Bitrix\Crm\Activity\Provider\OpenLine;
 use Bitrix\Crm\Activity\Provider\WebForm;
+use Bitrix\Crm\Activity\Provider\Sms;
 use Bitrix\Crm\ActivityTable;
 use Bitrix\Crm\Binding\DealContactTable;
 use Bitrix\Crm\Binding\LeadContactTable;
 use Bitrix\Crm\DealTable;
 use Bitrix\Crm\LeadTable;
-use Bitrix\Crm\Order\Order;
+use Bitrix\SalesCenter;
+use Bitrix\Main;
+use Bitrix\Crm\Integration;
+use Bitrix\Crm\Automation;
+use Bitrix\Crm\Order;
 use Bitrix\Crm\Settings\ContactSettings;
 use Bitrix\Crm\Settings\DealSettings;
 use Bitrix\Crm\WebForm\Internals\FormTable;
+use Bitrix\Crm\Timeline;
+use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Query\Query;
+use Bitrix\Crm\Requisite\EntityLink;
+
+Main\Localization\Loc::loadMessages(__FILE__);
 
 class CrmManager extends Base
 {
@@ -92,7 +102,7 @@ class CrmManager extends Base
 					{
 						foreach($navigationIndex as $code => $value)
 						{
-							if(strtoupper($code) === 'DEAL')
+							if(mb_strtoupper($code) === 'DEAL')
 							{
 								$parts = explode(':', $value);
 								if(is_array($parts) && count($parts) >= 2)
@@ -181,7 +191,7 @@ class CrmManager extends Base
 					{
 						foreach($navigationIndex as $code => $value)
 						{
-							if(strtoupper($code) === 'CONTACT')
+							if(mb_strtoupper($code) === 'CONTACT')
 							{
 								$parts = explode(':', $value);
 								if(is_array($parts) && count($parts) >= 2)
@@ -429,7 +439,7 @@ class CrmManager extends Base
 			}
 			elseif($ownerTypeId == \CCrmOwnerType::Order)
 			{
-				$order = Order::load($ownerId);
+				$order = Order\Order::load($ownerId);
 				if($order)
 				{
 					$collection = $order->getContactCompanyCollection();
@@ -458,5 +468,403 @@ class CrmManager extends Base
 		return (
 			$this->isEnabled && class_exists('\Bitrix\Crm\Integration\SalesCenterManager')
 		);
+	}
+
+	public function saveTriggerOnOrderPaid($dealId, $stageId)
+	{
+		$target = $this->getDealAutomationTarget();
+
+		if ($target === null)
+		{
+			return 0;
+		}
+
+		$dealCategoryId = \CCrmDeal::GetCategoryID($dealId);
+		$stages = \CCrmDeal::GetStages($dealCategoryId);
+
+		$triggers = $target->getTriggers(array_keys($stages));
+		$trigger = $this->findTriggerOnOrderPaid($triggers);
+		if ($trigger)
+		{
+			if ($trigger['DOCUMENT_STATUS'] === $stageId)
+			{
+				return $trigger['ID'];
+			}
+
+			$trigger['DELETED'] = 'Y';
+			$target->setTriggers([$trigger]);
+		}
+
+		if ($stageId)
+		{
+			$result = $target->setTriggers([
+				[
+					'DOCUMENT_STATUS' => $stageId,
+					'CODE' => Automation\Trigger\OrderPaidTrigger::getCode(),
+					'NAME' => Automation\Trigger\OrderPaidTrigger::getName()
+				]
+			]);
+
+			if ($result)
+			{
+				return $result[0]['ID'];
+			}
+		}
+
+		return 0;
+	}
+
+	protected function getDealAutomationTarget()
+	{
+		if (!Loader::includeModule('bizproc'))
+		{
+			return null;
+		}
+
+		$runtime = \CBPRuntime::GetRuntime();
+		$runtime->StartRuntime();
+
+		$documentService = $runtime->GetService('DocumentService');
+
+		return $documentService->createAutomationTarget([
+			'crm',
+			\CCrmDocumentDeal::class,
+			'DEAL',
+		]);
+	}
+
+	protected function findTriggerOnOrderPaid(array $triggers)
+	{
+		foreach ($triggers as $trigger)
+		{
+			if ($trigger['CODE'] === Automation\Trigger\OrderPaidTrigger::getCode())
+			{
+				return $trigger;
+			}
+		}
+
+		return [];
+	}
+
+	public function getStageWithOrderPaidTrigger($dealId)
+	{
+		$target = $this->getDealAutomationTarget();
+
+		$dealCategoryId = \CCrmDeal::GetCategoryID($dealId);
+		$stages = \CCrmDeal::GetStages($dealCategoryId);
+
+		$triggers = $target->getTriggers(array_keys($stages));
+		$trigger = $this->findTriggerOnOrderPaid($triggers);
+		if ($trigger)
+		{
+			return $trigger['DOCUMENT_STATUS'];
+		}
+
+		return '';
+	}
+
+	public function sendOrderBySms(Order\Order $order, array $sendingInfo)
+	{
+		$entityCommunication = $this->getEntityCommunication($order);
+		if ($entityCommunication === null)
+		{
+			return false;
+		}
+
+		if (mb_strpos($sendingInfo['provider'], '|') === false)
+		{
+			$senderId = $sendingInfo['provider'];
+			$messageFrom = $this->getMessageFromValue($senderId);
+		}
+		else
+		{
+			$senderId = 'rest';
+			$messageFrom = $sendingInfo['provider'];
+		}
+
+		$messageTo = $this->getEntityCommunicationPhone($entityCommunication);
+		$messageBody = str_replace(
+			'#LINK#',
+			LandingManager::getInstance()->getUrlInfoByOrder($order)['shortUrl'],
+			$sendingInfo['text']
+		);
+		$orderId = $order->getId();
+		$dealId = $order->getDealBinding()->getDealId();
+
+		if (
+			!$senderId
+			|| $messageTo === ''
+		)
+		{
+			return false;
+		}
+
+		$bindings = [
+			[
+				'OWNER_TYPE_ID' => \CCrmOwnerType::Order,
+				'OWNER_ID' => $orderId,
+			],
+			[
+				'OWNER_TYPE_ID' => \CCrmOwnerType::Deal,
+				'OWNER_ID' => $dealId,
+			],
+			[
+				'OWNER_TYPE_ID' => $entityCommunication::getEntityType(),
+				'OWNER_ID' => $entityCommunication->getField('ENTITY_ID')
+			]
+		];
+
+		$result =  Integration\SmsManager::sendMessage([
+			'SENDER_ID' => $senderId,
+			'AUTHOR_ID' => $order->getField('RESPONSIBLE_ID'),
+			'MESSAGE_FROM' => $messageFrom,
+			'MESSAGE_TO' => $messageTo,
+			'MESSAGE_BODY' => $messageBody,
+			'MESSAGE_HEADERS' => [
+				'module_id' => 'crm',
+				'bindings' => $bindings
+			]
+		]);
+
+		if($result->isSuccess())
+		{
+			$this->addTimelineEntryOnSend($order);
+
+			Sms::addActivity([
+				'AUTHOR_ID' => $order->getField('RESPONSIBLE_ID'),
+				'DESCRIPTION' => $messageBody,
+				'ASSOCIATED_ENTITY_ID' => $result->getId(),
+				'BINDINGS' => $bindings,
+				'COMMUNICATIONS' => [
+					[
+						'ENTITY_TYPE' => $entityCommunication::getEntityTypeName(),
+						'ENTITY_TYPE_ID' => $entityCommunication::getEntityType(),
+						'ENTITY_ID' => $entityCommunication->getField('ENTITY_ID'),
+						'TYPE' => \CCrmFieldMulti::PHONE,
+						'VALUE' => $messageTo
+					]
+				]
+			]);
+		}
+
+		return $result->isSuccess();
+	}
+
+	/**
+	 * @param $senderId
+	 * @return mixed|string
+	 */
+	protected function getMessageFromValue($senderId)
+	{
+		$fromList = Integration\SmsManager::getSenderFromList($senderId);
+		foreach ($fromList as $item)
+		{
+			if (
+				isset($item['id'])
+				&& $item['id']
+			)
+			{
+				return $item['id'];
+			}
+		}
+
+		return '';
+	}
+
+	/**
+	 * @param Order\Order $order
+	 * @return Order\Company|Order\Contact|null
+	 * @throws Main\ArgumentException
+	 * @throws Main\ArgumentTypeException
+	 * @throws Main\SystemException
+	 */
+	protected function getEntityCommunication(Order\Order $order)
+	{
+		/** @var Order\Contact $contact */
+		$contact = $order->getContactCompanyCollection()->getPrimaryContact();
+		if ($contact)
+		{
+			return $contact;
+		}
+
+		/** @var Order\Company $company */
+		$company = $order->getContactCompanyCollection()->getPrimaryCompany();
+		if ($company)
+		{
+			return $company;
+		}
+
+		return null;
+	}
+
+	protected function getEntityCommunicationPhone(Order\ContactCompanyEntity $entity)
+	{
+		$phoneList = \CCrmFieldMulti::GetEntityFields($entity::getEntityTypeName(), $entity->getField('ENTITY_ID'), 'PHONE', true, false);
+		foreach ($phoneList as $phone)
+		{
+			$parser = Main\PhoneNumber\Parser::getInstance();
+
+			return $parser->parse($phone['VALUE'])->format();
+		}
+
+		return '';
+	}
+
+	public function saveSmsTemplate($template)
+	{
+		Main\Config\Option::set('salescenter', 'salescenter_sms_template', $template);
+	}
+
+	public function getSmsTemplate()
+	{
+		return Main\Config\Option::get(
+			'salescenter',
+			'salescenter_sms_template',
+			Main\Localization\Loc::getMessage('SALESCENTER_CRMMANAGER_SMS_TEMPLATE_2')
+		);
+	}
+
+	private function addTimelineEntryOnSend(Order\Order $order): void
+	{
+		$orderId = $order->getId();
+		$dealId = $order->getDealBinding()->getDealId();
+		$bindings = [
+			[
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
+				'ENTITY_ID' => $orderId,
+			]
+		];
+
+		if ($order->getDealBinding())
+		{
+			$bindings[] = [
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+				'ENTITY_ID' => $dealId,
+			];
+		}
+
+		$params = [
+			'ORDER_FIELDS' => $order->getFieldValues(),
+			'SETTINGS' => [
+				'CHANGED_ENTITY' => \CCrmOwnerType::OrderName,
+				'FIELDS' => [
+					'ORDER_ID' => $orderId,
+					'DEAL_ID' => $dealId,
+					'SENT' => 'Y',
+					'DESTINATION' => 'SMS',
+				]
+			],
+			'BINDINGS' => $bindings
+		];
+
+		Timeline\OrderController::getInstance()->onSend($orderId, $params);
+	}
+
+	public static function getDefaultMyCompanyPhoneId(): int
+	{
+		return Main\Config\Option::get(
+			'salescenter',
+			'salescenter_default_my_company_phone_id',
+			0
+		);
+	}
+
+	public static function setDefaultMyCompanyPhoneId($id): void
+	{
+		Main\Config\Option::set(
+			'salescenter',
+			'salescenter_default_my_company_phone_id',
+			intval($id)
+		);
+	}
+
+	public static function getPublishedCompanyName(): string
+	{
+		$company = \CCrmCompany::GetByID(EntityLink::getDefaultMyCompanyId());
+
+		return (string)$company['TITLE'] ?? '';
+	}
+
+	public static function getPublishedCompanyPhone(): array
+	{
+		$result = [
+			'ID' => 0,
+			'VALUE'=>''
+		];
+
+		$list = [];
+		$companyId = EntityLink::getDefaultMyCompanyId();
+		if($companyId>0)
+		{
+			$dbRes = \CCrmFieldMulti::GetList(
+				['ID' => 'asc'],
+				[
+					'ENTITY_ID' => \CCrmOwnerType::CompanyName,
+					'ELEMENT_ID' => $companyId,
+					'TYPE_ID' => \CCrmFieldMulti::PHONE,
+				]
+			);
+			while ($crmFieldMultiData = $dbRes->Fetch())
+			{
+				$phoneNumberId = $crmFieldMultiData['ID'];
+				if ($phoneNumberId)
+				{
+					$list[] = [
+						'ID' => $crmFieldMultiData['ID'],
+						'VALUE'=>$crmFieldMultiData['VALUE']
+					];
+
+					if(static::getDefaultMyCompanyPhoneId() == $phoneNumberId)
+					{
+						$result = [
+							'ID' => $crmFieldMultiData['ID'],
+							'VALUE'=>$crmFieldMultiData['VALUE']
+						];
+					}
+				}
+			}
+		}
+
+		if($result['ID'] == 0)
+		{
+			if(static::getDefaultMyCompanyPhoneId() !== 0)
+			{
+				static::setDefaultMyCompanyPhoneId(0);
+			}
+
+			if(count($list)>0 && isset($list[0]))
+			{
+				$result = $list[0];
+			}
+		}
+
+
+		return $result;
+	}
+
+	public static function getPublishedCompanyEmail(): array
+	{
+		$result = [];
+		$companyId = EntityLink::getDefaultMyCompanyId();
+		if($companyId>0)
+		{
+			$dbRes = \CCrmFieldMulti::GetList(
+				['ID' => 'asc'],
+				[
+					'ENTITY_ID' => \CCrmOwnerType::CompanyName,
+					'ELEMENT_ID' => $companyId,
+					'TYPE_ID' => \CCrmFieldMulti::EMAIL,
+				]
+			);
+			if(($crmFieldMultiData = $dbRes->Fetch()) && $emailId = $crmFieldMultiData['ID'])
+			{
+				$result = [
+					'ID' => $crmFieldMultiData['ID'],
+					'VALUE'=>$crmFieldMultiData['VALUE']
+				];
+			}
+		}
+
+		return $result;
 	}
 }

@@ -47,7 +47,7 @@ class CControllerLog
 			unset($arFields["ID"]);
 		}
 
-		if(($ID === false || array_key_exists("NAME", $arFields)) && strlen($arFields["NAME"]) <= 0)
+		if(($ID === false || array_key_exists("NAME", $arFields)) && $arFields["NAME"] == '')
 		{
 			$arMsg[] = array(
 				"id" => "NAME",
@@ -220,7 +220,7 @@ class CControllerLog
 		$arFilterNew = array();
 		foreach ($arFilter as $k=>$value)
 		{
-			if (strlen($value)>0 || $value === false)
+			if ($value <> '' || $value === false)
 			{
 				$arFilterNew[$k]=$value;
 			}
@@ -251,7 +251,7 @@ class CControllerLog
 			LEFT JOIN b_controller_member M ON L.CONTROLLER_MEMBER_ID=M.ID
 			LEFT JOIN b_controller_task T ON T.ID = L.TASK_ID
 			LEFT JOIN b_user U ON U.ID = L.USER_ID
-			".(strlen($strWhere) <= 0? "": "WHERE ".$strWhere)."
+			".($strWhere == ''? "": "WHERE ".$strWhere)."
 		";
 
 		$strOrder = CControllerAgent::_OrderBy($arOrder, $arFields);
@@ -267,7 +267,7 @@ class CControllerLog
 				SELECT count('x') CNT
 				FROM b_controller_log L
 				".$obWhere->GetJoins()."
-				".(strlen($strWhere) <= 0? "": "WHERE ".$strWhere)."
+				".($strWhere == ''? "": "WHERE ".$strWhere)."
 			");
 			$ar_cnt = $res_cnt->Fetch();
 
@@ -279,13 +279,13 @@ class CControllerLog
 			$dbr = $DB->Query($strSelect.$strSql.$strOrder, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 		}
 
-		$dbr->is_filtered = (strlen($strWhere) > 0);
+		$dbr->is_filtered = ($strWhere <> '');
 
 		return $dbr;
 	}
 
 	public static function GetByID($ID)
 	{
-		return CControllerLog::GetList(Array(), Array("ID"=>IntVal($ID)));
+		return CControllerLog::GetList(Array(), Array("ID"=>intval($ID)));
 	}
 }

@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Timeman\Service\Worktime\Violation;
 
+use Bitrix\Main\EO_User_Collection;
 use Bitrix\Main\Error;
 use Bitrix\Timeman\Helper\EntityCodesHelper;
 use Bitrix\Timeman\Model\Schedule\Schedule;
@@ -278,7 +279,7 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 	{
 		$violations = [];
 		$violationsConfig = $this->getViolationRules();
-		$maxExactStart = $violationsConfig['MAX_EXACT_START'];
+		$maxExactStart = $violationsConfig->getMaxExactStart();
 		if (!ViolationRules::isViolationConfigured($maxExactStart))
 		{
 			return [];
@@ -300,7 +301,7 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 	{
 		$violations = [];
 		$violationsConfig = $this->getViolationRules();
-		$startFrom = $violationsConfig['RELATIVE_START_FROM'];
+		$startFrom = $violationsConfig->getRelativeStartFrom();
 		if (ViolationRules::isViolationConfigured($startFrom))
 		{
 			if ($recordedStartSeconds < $startFrom)
@@ -313,7 +314,7 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 			}
 		}
 
-		$startTo = $violationsConfig['RELATIVE_START_TO'];
+		$startTo = $violationsConfig->getRelativeStartTo();
 		if (ViolationRules::isViolationConfigured($startTo))
 		{
 			if ($recordedStartSeconds > $startTo)
@@ -330,7 +331,7 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 
 	private function buildOffsetStopViolations($recordedStopSeconds)
 	{
-		$minOffsetEnd = $this->getViolationRules()['MIN_OFFSET_END'];
+		$minOffsetEnd = $this->getViolationRules()->getMinOffsetEnd();
 		if (!$this->getShift() || !ViolationRules::isViolationConfigured($minOffsetEnd))
 		{
 			return [];
@@ -376,7 +377,7 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 	{
 		$violations = [];
 		$violationsConfig = $this->getViolationRules();
-		$stopFrom = $violationsConfig['RELATIVE_END_FROM'];
+		$stopFrom = $violationsConfig->getRelativeEndFrom();
 		if (ViolationRules::isViolationConfigured($stopFrom))
 		{
 			if ($recordedStopSeconds < $stopFrom)
@@ -389,7 +390,7 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 			}
 		}
 
-		$stopTo = $violationsConfig['RELATIVE_END_TO'];
+		$stopTo = $violationsConfig->getRelativeEndTo();
 		if (ViolationRules::isViolationConfigured($stopTo))
 		{
 			if ($recordedStopSeconds > $stopTo)
@@ -411,6 +412,7 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 	 */
 	protected function findActiveUsers(Schedule $schedule, $checkingEntityCode)
 	{
+		/** @var UserCollection $userCollection */
 		$userCollection = new UserCollection();
 		if (EntityCodesHelper::getAllUsersCode() === $checkingEntityCode)
 		{

@@ -7,8 +7,15 @@ namespace Bitrix\Tasks\Integration\SocialNetwork;
 
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Socialnetwork\LogRightTable;
+use Bitrix\SocialNetwork\LogTable;
+use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Internals\Task\MemberTable;
+use Bitrix\Tasks\Internals\TaskTable;
+use Bitrix\Tasks\Internals\UserOption;
 
-class Log
+class Log extends SocialNetwork
 {
 	const EVENT_ID_TASK = 'tasks';
 
@@ -80,5 +87,244 @@ class Log
 		);
 
 		return $result;
+	}
+
+	/**
+	 * @param $logId
+	 * @param $type
+	 * @param $userId
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function onAfterLogFollowSet($logId, $type, $userId)
+	{
+		if (!static::includeModule())
+		{
+			return;
+		}
+
+		$taskId = 0;
+		$userId = (int)$userId;
+
+		$res = LogTable::getList([
+			'select' => ['SOURCE_ID'],
+			'filter' => [
+				'=ID' => $logId,
+				'=EVENT_ID' => 'tasks',
+			],
+		]);
+		if ($data = $res->fetch())
+		{
+			$taskId = (int)$data['SOURCE_ID'];
+		}
+
+		if ($type === 'Y')
+		{
+			UserOption::delete($taskId, $userId, UserOption\Option::MUTED);
+		}
+		else
+		{
+			UserOption::add($taskId, $userId, UserOption\Option::MUTED);
+		}
+	}
+
+	public static function onAfterSocNetLogCommentAdd($id, $arFields)
+	{
+		if (
+			!is_array($arFields)
+			|| !isset($arFields['SOURCE_ID'])
+			|| !isset($arFields['LOG_ID'])
+			|| !isset($arFields['EVENT_ID'])
+		)
+		{
+			return;
+		}
+
+		if (
+			$arFields['EVENT_ID'] !== 'tasks_comment'
+		)
+		{
+			return;
+		}
+
+		$shareDest = isset($arFields['SHARE_DEST']) ? unserialize($arFields['SHARE_DEST']) : null;
+
+		$isNew = false;
+		if (
+			isset($_POST['ACTION'][0]['OPERATION'])
+			&& $_POST['ACTION'][0]['OPERATION'] === 'task.add'
+		)
+		{
+			$isNew = true;
+		}
+		elseif (
+			is_array($shareDest)
+			&& isset($shareDest[0][0][0])
+			&& strpos($shareDest[0][0][0], 'COMMENT_POSTER_COMMENT_TASK_ADD') === 0
+		)
+		{
+			$isNew = true;
+		}
+
+		$userId = (int) $arFields['USER_ID'];
+		$logId = (int) $arFields['LOG_ID'];
+		self::updateLogRights($logId, $userId, $isNew);
+	}
+
+	public static function updateLogRights(int $logId, int $userId, bool $isNew = false)
+	{
+		if (!static::includeModule())
+		{
+			return;
+		}
+
+		$log = LogTable::getById($logId)->fetch();
+		if (!$log)
+		{
+			return;
+		}
+
+		$taskId = (int) $log['SOURCE_ID'];
+
+		$task = self::getTask($taskId);
+		if (!$task)
+		{
+			return;
+		}
+
+		$rights = [];
+
+		if ($userId && !$isNew)
+		{
+			$rights['U'.$userId] = 'U'.$userId;
+		}
+
+		$members = self::getTaskMembers($taskId);
+		foreach ($members as $member)
+		{
+			if (
+				$isNew
+				&& $member['TYPE'] = MemberTable::MEMBER_TYPE_ORIGINATOR
+				&& $userId == $member['USER_ID']
+			)
+			{
+				continue;
+			}
+
+			$rights['U'.$member['USER_ID']] = 'U'.$member['USER_ID'];
+		}
+
+		if ($task['GROUP_ID'])
+		{
+			$rights['SG'.$task['GROUP_ID']] = 'SG'.$task['GROUP_ID'];
+		}
+
+		// drop all rights
+		\CSocNetLogRights::DeleteByLogID($log['ID']);
+
+		foreach ($rights as $row)
+		{
+			LogRightTable::add([
+				'LOG_ID' => $log['ID'],
+				'GROUP_CODE' => $row,
+				'LOG_UPDATE' => new \Bitrix\Main\DB\SqlExpression(\Bitrix\Main\Application::getInstance()->getConnection()->getSqlHelper()->getCurrentDateTimeFunction())
+			]);
+		}
+
+	}
+
+	public static function hideLogByTaskId($taskId)
+	{
+		if (!static::includeModule())
+		{
+			return;
+		}
+
+		$log = self::getLogByTaskId((int) $taskId);
+		if (!$log)
+		{
+			return;
+		}
+		if ($log['INACTIVE'] !== 'Y')
+		{
+			LogTable::update($log['ID'], ['INACTIVE' => 'Y']);
+		}
+	}
+
+	public static function showLogByTaskId($taskId)
+	{
+		if (!static::includeModule())
+		{
+			return;
+		}
+
+		$log = self::getLogByTaskId((int) $taskId);
+		if (!$log)
+		{
+			return;
+		}
+		if ($log['INACTIVE'] === 'Y')
+		{
+			LogTable::update($log['ID'], ['INACTIVE' => 'N']);
+		}
+	}
+
+	public static function deleteLogByTaskId($taskId)
+	{
+		if (!static::includeModule())
+		{
+			return;
+		}
+
+		$log = self::getLogByTaskId((int) $taskId);
+		if (!$log)
+		{
+			return;
+		}
+		LogTable::delete($log['ID']);
+	}
+
+	private static function getTask(int $taskId)
+	{
+		$res = TaskTable::query()
+			->addSelect('ID')
+			->addSelect('GROUP_ID')
+			->where('ID', $taskId)
+			->exec()
+			->fetch();
+
+		return $res;
+	}
+
+	private static function getTaskMembers(int $taskId)
+	{
+		$res = \Bitrix\Tasks\Internals\Task\MemberTable::query()
+			->addSelect('USER_ID')
+			->addSelect('TYPE')
+			->where('TASK_ID', $taskId)
+			->exec()
+			->fetchAll();
+
+		foreach ($res as $member)
+		{
+			$members[] = $member;
+		}
+
+		return $members;
+	}
+
+	private static function getLogByTaskId(int $taskId)
+	{
+		$dbRes = LogTable::getList([
+			'select' => ['ID', 'INACTIVE'],
+			'filter' => [
+				'=EVENT_ID' => 'tasks',
+				'=SOURCE_ID' => $taskId
+			],
+			'limit' => 1
+		]);
+
+		return $dbRes->fetch();
 	}
 }

@@ -165,7 +165,7 @@ elseif($header["type"] == "checkbox")
 	echo ' align="center"';
 		?>><?
 	if($header["type"] == "checkbox"
-		&& strlen($aRow["data"][$id]) > 0
+		&& $aRow["data"][$id] <> ''
 		&& ($aRow["data"][$id] == 'Y' || $aRow["data"][$id] == 'N')
 	)
 	{
@@ -197,8 +197,8 @@ else: //!empty($arParams["ROWS"])
 			<?foreach($arParams["FOOTER"] as $footer):?>
 					<?$type = isset($footer['type']) ? $footer['type'] : ''?>
 					<?if($type === "row_count"):?>
-						<?$wrapperID = strtolower($arParams["GRID_ID"])."_row_count_wrapper";?>
-						<?$buttonID = strtolower($arParams["GRID_ID"])."_row_count_button";?>
+						<?$wrapperID = mb_strtolower($arParams["GRID_ID"])."_row_count_wrapper";?>
+						<?$buttonID = mb_strtolower($arParams["GRID_ID"])."_row_count_button";?>
 						<td id="<?=$wrapperID?>">
 							<?=$footer["title"]?>: <a id="<?=$buttonID?>" href="#"><?=$footer["show_row_count"]?></a>
 							<script type="text/javascript">
@@ -206,7 +206,7 @@ else: //!empty($arParams["ROWS"])
 									function()
 									{
 										BX.CrmHtmlLoader.create(
-											"<?=strtolower($arParams["GRID_ID"])."_row_count"?>",
+											"<?=mb_strtolower($arParams["GRID_ID"])."_row_count"?>",
 											{
 												"action": "GET_ROW_COUNT",
 												"params": { "GRID_ID": "<?=$arParams["GRID_ID"]?>" },

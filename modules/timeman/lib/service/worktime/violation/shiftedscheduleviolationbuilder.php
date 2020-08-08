@@ -19,6 +19,7 @@ class ShiftedScheduleViolationBuilder extends WorktimeViolationBuilder
 	private $worktimeRepository;
 	/** @var ShiftRepository */
 	private $shiftRepository;
+	private $plan = false;
 
 	public function __construct(
 		WorktimeViolationParams $params,
@@ -68,6 +69,19 @@ class ShiftedScheduleViolationBuilder extends WorktimeViolationBuilder
 			->setShift($shift)
 			->setShiftPlan($shiftPlan)
 			->setSchedule($shift->obtainSchedule());
+	}
+
+	protected function getShiftPlan()
+	{
+		if ($this->plan === false)
+		{
+			$this->plan = parent::getShiftPlan();
+			if (!$this->plan)
+			{
+				$this->plan = $this->shiftPlanRepository->findActiveByRecord($this->getRecord());
+			}
+		}
+		return $this->plan;
 	}
 
 	protected function buildStartViolations()

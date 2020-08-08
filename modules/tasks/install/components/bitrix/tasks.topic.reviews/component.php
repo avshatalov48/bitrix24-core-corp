@@ -1,8 +1,8 @@
 <?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
-$arParams["TASK_ID"] = intVal(intVal($arParams["TASK_ID"]) <= 0 ? $GLOBALS["ID"] : $arParams["TASK_ID"]);
-$arParams["TASK_ID"] = intVal(intVal($arParams["TASK_ID"]) <= 0 ? $_REQUEST["TASK_ID"] : $arParams["TASK_ID"]);
+$arParams["TASK_ID"] = intval(intVal($arParams["TASK_ID"]) <= 0 ? $GLOBALS["ID"] : $arParams["TASK_ID"]);
+$arParams["TASK_ID"] = intval(intVal($arParams["TASK_ID"]) <= 0 ? $_REQUEST["TASK_ID"] : $arParams["TASK_ID"]);
 
 if (!CModule::IncludeModule("forum"))
 {
@@ -14,12 +14,12 @@ elseif (!CModule::IncludeModule("tasks"))
 	ShowError(GetMessage("F_NO_MODULE_TASKS"));
 	return 0;
 }
-elseif (intVal($arParams["FORUM_ID"]) <= 0)
+elseif (intval($arParams["FORUM_ID"]) <= 0)
 {
 	ShowError(GetMessage("F_ERR_FID_EMPTY"));
 	return 0;
 }
-elseif (intVal($arParams["TASK_ID"]) <= 0)
+elseif (intval($arParams["TASK_ID"]) <= 0)
 {
 	ShowError(GetMessage("F_ERR_TID_EMPTY"));
 	return 0;
@@ -28,8 +28,8 @@ elseif (intVal($arParams["TASK_ID"]) <= 0)
 	Input params
  * ****************************************************************** */
 /* * *************** BASE ******************************************* */
-$arParams["FORUM_ID"] = intVal($arParams["FORUM_ID"]);
-$arParams["TASK_ID"] = intVal($arParams["TASK_ID"]);
+$arParams["FORUM_ID"] = intval($arParams["FORUM_ID"]);
+$arParams["TASK_ID"] = intval($arParams["TASK_ID"]);
 /* * *************** URL ******************************************** */
 $URL_NAME_DEFAULT = array(
 	"read" => "PAGE_NAME=read&FID=#FID#&TID=#TID#&MID=#MID#",
@@ -38,12 +38,12 @@ $URL_NAME_DEFAULT = array(
 );
 foreach ($URL_NAME_DEFAULT as $URL => $URL_VALUE)
 {
-	if (empty($arParams["URL_TEMPLATES_".strToUpper($URL)]))
+	if (empty($arParams["URL_TEMPLATES_".mb_strtoupper($URL)]))
 	{
 		continue;
 	}
-	$arParams["~URL_TEMPLATES_".strToUpper($URL)] = $arParams["URL_TEMPLATES_".strToUpper($URL)];
-	$arParams["URL_TEMPLATES_".strToUpper($URL)] = htmlspecialcharsbx($arParams["~URL_TEMPLATES_".strToUpper($URL)]);
+	$arParams["~URL_TEMPLATES_".mb_strtoupper($URL)] = $arParams["URL_TEMPLATES_".mb_strtoupper($URL)];
+	$arParams["URL_TEMPLATES_".mb_strtoupper($URL)] = htmlspecialcharsbx($arParams["~URL_TEMPLATES_".mb_strtoupper($URL)]);
 }
 /* * *************** ADDITIONAL ************************************* */
 $arParams["POST_FIRST_MESSAGE"] = (isset($arParams["POST_FIRST_MESSAGE"]) && $arParams["POST_FIRST_MESSAGE"] == "Y" ? "Y" : "N");
@@ -53,8 +53,8 @@ if (empty($arParams["POST_FIRST_MESSAGE_TEMPLATE"]))
 	$arParams["POST_FIRST_MESSAGE_TEMPLATE"] = "#IMAGE# \n [url=#LINK#]#TITLE#[/url]\n\n#BODY#";
 }
 $arParams["SUBSCRIBE_AUTHOR_ELEMENT"] = (isset($arParams["SUBSCRIBE_AUTHOR_ELEMENT"]) && $arParams["SUBSCRIBE_AUTHOR_ELEMENT"] == "Y" ? "Y" : "N");
-$arParams["IMAGE_SIZE"] = (isset($arParams["IMAGE_SIZE"]) && intVal($arParams["IMAGE_SIZE"]) > 0 ? $arParams["IMAGE_SIZE"] : 300);
-$arParams["MESSAGES_PER_PAGE"] = intVal($arParams["MESSAGES_PER_PAGE"] > 0 ? $arParams["MESSAGES_PER_PAGE"] : COption::GetOptionString("forum", "MESSAGES_PER_PAGE", "10"));
+$arParams["IMAGE_SIZE"] = (isset($arParams["IMAGE_SIZE"]) && intval($arParams["IMAGE_SIZE"]) > 0 ? $arParams["IMAGE_SIZE"] : 300);
+$arParams["MESSAGES_PER_PAGE"] = intval($arParams["MESSAGES_PER_PAGE"] > 0 ? $arParams["MESSAGES_PER_PAGE"] : COption::GetOptionString("forum", "MESSAGES_PER_PAGE", "10"));
 $arParams["DATE_TIME_FORMAT"] = trim(empty($arParams["DATE_TIME_FORMAT"]) ? \Bitrix\Tasks\UI::getDateTimeFormat() : $arParams["DATE_TIME_FORMAT"]);
 $arParams["USE_CAPTCHA"] = ($arParams["USE_CAPTCHA"] == "Y" ? "Y" : "N");
 
@@ -303,11 +303,11 @@ if ($GLOBALS["USER"]->IsAuthorized() && $arResult["USER"]["PERMISSION"] > "E")
 	$arResult["USER"]["SUBSCRIBE"] = $arUserSubscribe;
 	foreach ($arUserSubscribe as $res)
 	{
-		if (intVal($res["TOPIC_ID"]) <= 0)
+		if (intval($res["TOPIC_ID"]) <= 0)
 		{
 			$arResult["USER"]["FORUM_SUBSCRIBE"] = "Y";
 		}
-		elseif (intVal($res["TOPIC_ID"]) == intVal($arResult["FORUM_TOPIC_ID"]))
+		elseif (intval($res["TOPIC_ID"]) == intval($arResult["FORUM_TOPIC_ID"]))
 		{
 			$arResult["USER"]["TOPIC_SUBSCRIBE"] = "Y";
 		}
@@ -317,7 +317,7 @@ if ($GLOBALS["USER"]->IsAuthorized() && $arResult["USER"]["PERMISSION"] > "E")
 /* * ************ 4. Get message list ******************************* */
 $ORDER_DIRECTION = 'ASC';
 if ($arParams['PREORDER'] === 'ACCORD_FORUM_SETTINGS')
-	$ORDER_DIRECTION = strtoupper($arResult['FORUM']['ORDER_DIRECTION']);
+	$ORDER_DIRECTION = mb_strtoupper($arResult['FORUM']['ORDER_DIRECTION']);
 elseif ($arParams['PREORDER'] === 'N')
 	$ORDER_DIRECTION = 'DESC';
 
@@ -331,10 +331,10 @@ if ($arResult["FORUM_TOPIC_ID"] > 0)
 {
 	$page_number = $GLOBALS["NavNum"] + 1;
 
-	$MID = intVal($_REQUEST["MID"]);
+	$MID = intval($_REQUEST["MID"]);
 	unset($_GET["MID"]);
 	unset($GLOBALS["MID"]);
-	if (intVal($MID) > 0)
+	if (intval($MID) > 0)
 	{
 		$pageNo = CForumMessage::GetMessagePage(
 			$MID, $arParams["MESSAGES_PER_PAGE"], $GLOBALS["USER"]->GetUserGroupArray(), $arResult["FORUM_TOPIC_ID"], array(
@@ -402,8 +402,8 @@ if ($arResult["FORUM_TOPIC_ID"] > 0)
 			"bShowAll" => false
 		);
 
-		if ((intVal($MID) > 0) && ($pageNo > 0))
-				$arFields["iNumPage"] = intVal($pageNo);
+		if ((intval($MID) > 0) && ($pageNo > 0))
+				$arFields["iNumPage"] = intval($pageNo);
 
 		$db_res = CForumMessage::GetListEx(
 			$arOrder,
@@ -426,7 +426,7 @@ if ($arResult["FORUM_TOPIC_ID"] > 0)
 		if ($db_res)
 		{
 			$arResult["NAV_STRING"] = $db_res->GetPageNavStringEx($navComponentObject, GetMessage("NAV_OPINIONS"), $arParams["PAGE_NAVIGATION_TEMPLATE"]);
-			$number = intVal($db_res->NavPageNomer - 1) * $arParams["MESSAGES_PER_PAGE"] + 1;
+			$number = intval($db_res->NavPageNomer - 1) * $arParams["MESSAGES_PER_PAGE"] + 1;
 			while ($res = $db_res->GetNext())
 			{
 				/*				 * ************ Message info ************************************** */
@@ -447,7 +447,7 @@ if ($arResult["FORUM_TOPIC_ID"] > 0)
 				$res["ATTACH_FILE"] = array();
 				/*				 * ************ Message info/************************************** */
 				/*				 * ************ Author info *************************************** */
-				$res["AUTHOR_ID"] = intVal($res["AUTHOR_ID"]);
+				$res["AUTHOR_ID"] = intval($res["AUTHOR_ID"]);
 				$res["AUTHOR_URL"] = "";
 				if (!empty($arParams["URL_TEMPLATES_PROFILE_VIEW"]))
 				{
@@ -518,7 +518,7 @@ if ($arResult["FORUM_TOPIC_ID"] > 0)
 		if (!empty($arMessages))
 		{
 			$res = array_keys($arMessages);
-			$arFilter = array("FORUM_ID" => $arParams["FORUM_ID"], "TOPIC_ID" => $arResult["FORUM_TOPIC_ID"], "APPROVED" => "Y", ">MESSAGE_ID" => intVal(min($res)) - 1, "<MESSAGE_ID" => intVal(max($res)) + 1);
+			$arFilter = array("FORUM_ID" => $arParams["FORUM_ID"], "TOPIC_ID" => $arResult["FORUM_TOPIC_ID"], "APPROVED" => "Y", ">MESSAGE_ID" => intval(min($res)) - 1, "<MESSAGE_ID" => intval(max($res)) + 1);
 			$db_files = CForumFiles::GetList(array("MESSAGE_ID" => "ASC"), $arFilter);
 			if ($db_files && $res = $db_files->Fetch())
 			{
@@ -596,7 +596,7 @@ if ($arResult["SHOW_POST_FORM"] == "Y")
 	$arResult["REVIEW_FILES"] = array();
 	foreach ($_REQUEST["FILES"] as $key => $val)
 	{
-		if (intVal($val) <= 0)
+		if (intval($val) <= 0)
 			continue;
 
 		$resForumFile = CForumFiles::GetList(array(), array('FILE_ID' => $val));

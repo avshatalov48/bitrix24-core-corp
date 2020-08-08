@@ -208,6 +208,7 @@ BX.Bitrix24.Configs.IpSettingsClass = (function()
 })();
 
 BX.Bitrix24.Configs.Functions = {
+	addressFormatList: [],
 	init : function ()
 	{
 		var toAllCheckBox = BX('allow_livefeed_toall');
@@ -275,6 +276,17 @@ BX.Bitrix24.Configs.Functions = {
 			});
 		}
 
+		var addressFormatSelect = BX('location_address_format_select');
+
+		if(addressFormatSelect)
+		{
+			BX.bind(addressFormatSelect, 'change', function ()
+			{
+				var addressFormatDescription = BX('location_address_format_description');
+				addressFormatDescription.innerHTML = BX.Bitrix24.Configs.Functions.addressFormatList[addressFormatSelect.value];
+			});
+		}
+
 		if (BX.type.isDomNode((BX("smtp_use_auth"))))
 		{
 			BX.bind(BX("smtp_use_auth"), "change", BX.proxy(function ()
@@ -282,6 +294,7 @@ BX.Bitrix24.Configs.Functions = {
 				this.showHideSmtpAuth();
 			}, this));
 		}
+
 	},
 
 	submitForm : function (button)
@@ -344,5 +357,27 @@ BX.Bitrix24.Configs.Functions = {
 			closeIcon: { right : "12px", top : "10px"},
 			content: '<div style="padding: 15px; width: 300px; font-size: 13px">' + BX.message("CONFIG_DISK_EXTENDED_FULLTEXT_INFO") + '</div>'
 		}).show();
+	},
+
+	geoDataSwitch: function (element)
+	{
+		if (element.checked)
+		{
+			element.checked = false;
+
+			BX.UI.Dialogs.MessageBox.show({
+				'modal': true,
+				'minWidth': BX.message('CONFIG_COLLECT_GEO_DATA_CONFIRM').length > 400 ? 640 : 480,
+				'title': BX.message('CONFIG_COLLECT_GEO_DATA'),
+				'message': BX.message('CONFIG_COLLECT_GEO_DATA_CONFIRM'),
+				'buttons': BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
+				'okCaption': BX.message('CONFIG_COLLECT_GEO_DATA_OK'),
+				'onOk': function ()
+				{
+					element.checked = true;
+					return true;
+				}
+			});
+		}
 	}
 };

@@ -136,6 +136,7 @@ class ExternalLinkTable extends Main\Entity\DataManager
 			{
 				$hash = $item['HASH'];
 				$urlManager = UrlManager::getInstance();
+				$result['hash'] = $hash;
 				$result['publicDownloadUrl'] = $urlManager->create('documentgenerator.api.publicdocument.getFile', [
 					'id' => $documentId,
 					'hash' => $hash,

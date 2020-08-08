@@ -131,6 +131,7 @@
 
 .salescenter-paysystem-wrapper {
 	margin: 15px 0 20px 0;
+	padding: 0 15px 0 21px !important;
 }
 
 .salescenter-main-header {
@@ -151,6 +152,13 @@
 	width: 97px;
 	height: 97px;
 	border-radius: 50%;
+}
+
+.salescenter-default-icon { width: 97px; }
+.salescenter-default-icon i {
+	background-image: url(images/default.svg);
+	background-size: 50% auto;
+	background-color: #56C472;
 }
 
 .salescenter-cash-icon { width: 97px; }
@@ -177,71 +185,85 @@
 .salescenter-qiwi-icon { width: 97px; }
 .salescenter-qiwi-icon i {
 	background-image: url(images/qiwi.svg);
-	background-size: 70% auto;
+	background-size: 80% auto;
 	background-color: #E9832C;
 }
 
 .salescenter-webmoney-icon { width: 97px; }
 .salescenter-webmoney-icon i {
 	background-image: url(images/webmoney.svg);
-	background-size: 70% auto;
+	background-size: 90% auto;
 	background-color: #006FA8;
+}
+
+.salescenter-yandexcheckout-icon { width: 97px; }
+.salescenter-yandexcheckout-icon i {
+	background-image: url(images/yandexcheckout.svg);
+	background-size: 90% auto;
+	background-color: #0697F2;
 }
 
 .salescenter-yandexcheckout-alfabank-icon { width: 97px; }
 .salescenter-yandexcheckout-alfabank-icon i {
 	background-image: url(images/yandexcheckout_alfabank.svg);
-	background-size: 70% auto;
+	background-size: 85% auto;
 	background-color: #EE2A23;
 }
 
 .salescenter-yandexcheckout-bank_card-icon { width: 97px; }
 .salescenter-yandexcheckout-bank_card-icon i {
 	background-image: url(images/yandexcheckout_bank_card.svg);
-	background-size: 70% auto;
+	background-size: 80% auto;
 	background-color: #19D0C8;
 }
 
 .salescenter-yandexcheckout-yandex_money-icon { width: 97px; }
 .salescenter-yandexcheckout-yandex_money-icon i {
 	background-image: url(images/yandexcheckout_yandex_money.svg);
-	background-size: 70% auto;
-	background-color: #E10505;
+	background-size: 85% auto;
+	background-color: #FFA900;
 }
 
 .salescenter-yandexcheckout-sberbank-icon { width: 97px; }
 .salescenter-yandexcheckout-sberbank-icon i {
 	background-image: url(images/yandexcheckout_sberbank.svg);
-	background-size: 70% auto;
-	background-color: #327D36;
+	background-size: 85% auto;
+	background-color: #2C9B47;
 }
 
 .salescenter-yandexcheckout-sberbank_sms-icon { width: 97px; }
 .salescenter-yandexcheckout-sberbank_sms-icon i {
 	background-image: url(images/yandexcheckout_sberbank_sms.svg);
-	background-size: 70% auto;
-	background-color: #327D36;
+	background-size: 85% auto;
+	background-color: #289D37;
 }
 
 .salescenter-yandexcheckout-qiwi-icon { width: 97px; }
 .salescenter-yandexcheckout-qiwi-icon i {
 	background-image: url(images/yandexcheckout_qiwi.svg);
-	background-size: 70% auto;
+	background-size: 80% auto;
 	background-color: #E9832C;
 }
 
 .salescenter-yandexcheckout-webmoney-icon { width: 97px; }
 .salescenter-yandexcheckout-webmoney-icon i {
 	background-image: url(images/yandexcheckout_webmoney.svg);
-	background-size: 70% auto;
+	background-size: 90% auto;
 	background-color: #006FA8;
 }
 
 .salescenter-yandexcheckout-embedded-icon { width: 97px; }
 .salescenter-yandexcheckout-embedded-icon i {
 	background-image: url(images/yandexcheckout_embedded.svg);
-	background-size: 45% auto;
-	background-color: #2C9B47;
+	background-size: 90% auto;
+	background-color: #0697F2;
+}
+
+.salescenter-yandexcheckout-tinkoff_bank-icon { width: 97px; }
+.salescenter-yandexcheckout-tinkoff_bank-icon i {
+	background-image: url(images/yandexcheckout_tinkoff_bank.svg);
+	background-size: 85% auto;
+	background-color: #FFE52B;
 }
 
 .salescenter-liqpay-icon { width: 97px; }
@@ -256,6 +278,69 @@
 	background-image: url(images/uapay.svg);
 	background-size: 70% auto;
 	background-color: #E41F18;
+}
+
+.salescenter-skb-skb-icon { width: 97px; }
+.salescenter-skb-skb-icon i {
+	background-image: url(images/skb_skb.svg);
+	background-size: 85% auto;
+	background-color: #F65E64;
+}
+
+.salescenter-skb-delobank-icon { width: 97px; }
+.salescenter-skb-delobank-icon i {
+	background-image: url(images/skb_delobank.svg);
+	background-size: 85% auto;
+	background-color: #F65E64;
+}
+
+.salescenter-skb-gazenergobank-icon { width: 97px; }
+.salescenter-skb-gazenergobank-icon i {
+	background-image: url(images/skb_gazenergobank.svg);
+	background-size: 85% auto;
+	background-color: #F65E64;
+}
+
+.salescenter-bepaid-widget-icon{ width: 97px; }
+.salescenter-bepaid-widget-icon i{
+	background-image: url(images/bepaid_widget.svg);
+	background-size: 70% auto;
+	background-color: #E36F10;
+}
+
+.salescenter-bepaid-checkout-icon { width: 97px; }
+.salescenter-bepaid-checkout-icon i {
+	background-image: url(images/bepaid_checkout.svg);
+	background-size: 70% auto;
+	background-color: #E36F10;
+}
+
+.salescenter-cashondelivery-icon { width: 97px; }
+.salescenter-cashondelivery-icon i {
+	background-image: url(images/cashondelivery.svg);
+	background-size: 65% auto;
+	background-color: #39A68E;
+}
+
+.salescenter-cashondeliverycalc-icon { width: 97px; }
+.salescenter-cashondeliverycalc-icon i {
+	background-image: url(images/cashondeliverycalc.svg);
+	background-size: 65% auto;
+	background-color: #39A68E;
+}
+
+.salescenter-orderdocument-icon { width: 97px; }
+.salescenter-orderdocument-icon i {
+	background-image: url(images/orderdocument.svg);
+	background-size: 50% auto;
+	background-color: #2FA8CD;
+}
+
+.salescenter-paymaster-icon { width: 97px; }
+.salescenter-paymaster-icon i {
+	background-image: url(images/paymaster.svg);
+	background-size: 90% auto;
+	background-color: #1B7195;
 }
 
 .salescenter-main-header-right-block {
@@ -412,7 +497,7 @@
 	width: 130px;
 }
 
-.salescenter-paysystem-link {
-	text-decoration: none;
-	cursor: pointer;
+.salescenter-button-container {
+	padding-top: 5px;
+	margin-bottom: 15px;
 }

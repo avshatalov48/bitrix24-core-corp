@@ -501,13 +501,13 @@ class CrmActivityVisitComponent extends \CBitrixComponent
 					false,
 					array('OWNER_TYPE_ID' => CCrmOwnerType::Activity, 'OWNER_ID' => $activity['ID'])
 				);
-				if(is_array($info) && in_array(GetFileExtension(strtolower($info["NAME"])), $mediaExtensions))
+				if(is_array($info) && in_array(GetFileExtension(mb_strtolower($info["NAME"])), $mediaExtensions))
 				{
 					$recordUrl = CCrmUrlUtil::ToAbsoluteUrl($info["VIEW_URL"]);
 					if($activity["STORAGE_TYPE_ID"] == CCrmActivityStorageType::WebDav)
 					{
 						//Hacks for flv player
-						if(substr($recordUrl, -1) !== "/")
+						if(mb_substr($recordUrl, -1) !== "/")
 						{
 							$recordUrl .= "/";
 						}
@@ -527,7 +527,7 @@ class CrmActivityVisitComponent extends \CBitrixComponent
 					if($activity["STORAGE_TYPE_ID"] == CCrmActivityStorageType::WebDav)
 					{
 						//Hacks for flv player
-						if(substr($photoUrl, -1) !== "/")
+						if(mb_substr($photoUrl, -1) !== "/")
 						{
 							$photoUrl .= "/";
 						}

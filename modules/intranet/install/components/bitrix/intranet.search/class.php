@@ -306,7 +306,7 @@ class CIntranetSearchComponent extends CBitrixComponent
 	 */
 	protected function initFilterName($filterName)
 	{
-		if (strlen($filterName) <= 0 || !preg_match("/^[A-Za-z_][A-Za-z0-9_]*$/", $filterName))
+		if ($filterName == '' || !preg_match("/^[A-Za-z_][A-Za-z0-9_]*$/", $filterName))
 		{
 			return 'find_';
 		}

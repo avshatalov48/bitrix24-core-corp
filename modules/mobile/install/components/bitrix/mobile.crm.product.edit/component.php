@@ -214,13 +214,17 @@ if (check_bitrix_sessid())
 					{
 						if (is_array($value))
 						{
-							if (strlen($value['VALUE']))
+							if($value['VALUE'] <> '')
+							{
 								$arPropsValues[$arProp['ID']][$key] = doubleval($value['VALUE']);
+							}
 						}
 						else
 						{
-							if (strlen($value))
+							if($value <> '')
+							{
 								$arPropsValues[$arProp['ID']][$key] = doubleval($value);
+							}
 						}
 					}
 				}
@@ -228,13 +232,17 @@ if (check_bitrix_sessid())
 				{
 					if (is_array($_POST[$propID]))
 					{
-						if (strlen($_POST[$propID]['VALUE']))
+						if($_POST[$propID]['VALUE'] <> '')
+						{
 							$arPropsValues[$arProp['ID']] = doubleval($_POST[$propID]['VALUE']);
+						}
 					}
 					else
 					{
-						if (strlen($_POST[$propID]))
+						if($_POST[$propID] <> '')
+						{
 							$arPropsValues[$arProp['ID']] = doubleval($_POST[$propID]);
+						}
 					}
 				}
 			}
@@ -300,71 +308,20 @@ if (check_bitrix_sessid())
 			}
 		}
 
-		/*if ($bAjax || $bAjaxSubmit)
+		$arJsonData = array();
+		if (isset($err) && !empty($err))
 		{
-			$APPLICATION->RestartBuffer();
-			$ajaxResponse = array(
-				'err' => '',
-				'productId' => 0,
-				'productData' => array()
-			);
-			if (isset($err[0]))
-				$ajaxResponse['err'] = $err;
-			else
-			{
-				$ajaxResponse['productId'] = $productID;
-				$dbRes = CCrmProduct::GetList(array(), array('ID' => $productID, '~REAL_PRICE' => true), array('ID', 'NAME', 'ACTIVE', 'PRICE', 'CURRENCY_ID', 'MEASURE', 'VAT_ID', 'VAT_INCLUDED'), array('nTopCount' => 1));
-				if ($row = $dbRes->Fetch())
-				{
-					if ($row['ACTIVE'] === 'Y')
-					{
-						$currencyTo = isset($_POST['currencyTo']) ? $_POST['currencyTo'] : '';
-						$currencyFrom = isset($row['CURRENCY_ID']) ? $row['CURRENCY_ID'] : '';
-						if (strlen($currencyFrom) > 0 && strlen($currencyTo) > 0 && $currencyFrom !== $currencyTo)
-							$row['PRICE'] = CCrmCurrency::ConvertMoney(doubleval($row['PRICE']), $currencyFrom, $currencyTo);
-						$ajaxResponse['productData'] = $row;
-						$measureInfo = array();
-						if (isset($row['MEASURE']) && intval($row['MEASURE']) > 0)
-						{
-							$measureInfo = \Bitrix\Crm\Measure::getProductMeasures(intval($row['ID']));
-							$measureInfo = $measureInfo[intval($row['ID'])][0];
-						}
-						else
-						{
-							$measureInfo = \Bitrix\Crm\Measure::getDefaultMeasure();
-						}
-						if (is_array($measureInfo) && isset($measureInfo['CODE']) && isset($measureInfo['SYMBOL']))
-						{
-							$ajaxResponse['measureData'] = array(
-								'code' => $measureInfo['CODE'],
-								'name' => $measureInfo['SYMBOL']
-							);
-						}
-					}
-				}
-				unset($dbRes, $row);
-			}
-			Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
-			echo CUtil::PhpToJsObject($ajaxResponse);
-			exit();
+			$arJsonData = array("error" => preg_replace("/<br( )?(\/)?>/i", "\n", $err));
 		}
 		else
-		{*/
-			$arJsonData = array();
-			if (isset($err) && !empty($err))
-			{
-				$arJsonData = array("error" => preg_replace("/<br( )?(\/)?>/i", "\n", $err));
-			}
-			else
-			{
-				$arJsonData = array("success" => "Y", "itemId" => $productID);
-			}
+		{
+			$arJsonData = array("success" => "Y", "itemId" => $productID);
+		}
 
-			$APPLICATION->RestartBuffer();
-			echo \Bitrix\Main\Web\Json::encode($arJsonData);
-			CMain::FinalActions();
-			die();
-		//}
+		$APPLICATION->RestartBuffer();
+		echo \Bitrix\Main\Web\Json::encode($arJsonData);
+		CMain::FinalActions();
+		die();
 	}
 }
 
@@ -374,7 +331,7 @@ if ($productID <= 0)
 	$arResult['MODE'] = 'CREATE';
 
 	$productIDParName = isset($arParams['PRODUCT_ID_PAR_NAME']) ? strval($arParams['PRODUCT_ID_PAR_NAME']) : '';
-	if (strlen($productIDParName) == 0)
+	if ($productIDParName == '')
 	{
 		$productIDParName = 'product_id';
 	}
@@ -647,6 +604,16 @@ $arResult['FIELDS'][] = array(
 	'value' => $product['~DETAIL_PICTURE']
 );
 
+$CCrmUserType = new CCrmMobileHelper();
+$CCrmUserType->prepareUserFields(
+	$arResult['FIELDS'],
+	'CRM_PRODUCT',
+	$arResult['ELEMENT']['ID'],
+	false,
+	'product_details',
+	$USER->GetID()
+);
+
 // Product properties
 $propsFormData = array();
 foreach ($arProps as $propID => $arProp)
@@ -680,7 +647,7 @@ foreach ($arProps as $propID => $arProp)
 			);
 			if ($arProp['MULTIPLE'] == 'Y')
 			{
-				if (is_array($arProp['DEFAULT_VALUE']) || strlen($arProp['DEFAULT_VALUE']))
+				if (is_array($arProp['DEFAULT_VALUE']) || mb_strlen($arProp['DEFAULT_VALUE']))
 					$propsFormData[$propID]['n1'] = array('VALUE' => '', 'DESCRIPTION' => '');
 			}
 		}
@@ -773,7 +740,7 @@ foreach ($arProps as $propID => $arProp)
 			);
 			if ($arProp['MULTIPLE'] == 'Y')
 			{
-				if (is_array($arProp['DEFAULT_VALUE']) || strlen($arProp['DEFAULT_VALUE']))
+				if (is_array($arProp['DEFAULT_VALUE']) || mb_strlen($arProp['DEFAULT_VALUE']))
 					$propsFormData[$propID]['n1'] = array('VALUE' => '', 'DESCRIPTION' => '');
 			}
 		}

@@ -23,17 +23,13 @@ if(!CCrmPerms::IsAccessEnabled())
 
 $arResult['BITRIX24'] = \Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24');
 $arResult['IS_EXCLUSION_ACCESSIBLE'] = \Bitrix\Crm\Exclusion\Access::current()->canRead();
+
 $arResult['IS_BIZPRPOC_ENABLED'] = CModule::IncludeModule('bizproc') && CBPRuntime::isFeatureEnabled();
 $arResult['IS_AUTOMATION_LEAD_ENABLED'] = \Bitrix\Crm\Automation\Factory::isAutomationAvailable(\CCrmOwnerType::Lead);
 $arResult['IS_AUTOMATION_DEAL_ENABLED'] = \Bitrix\Crm\Automation\Factory::isAutomationAvailable(\CCrmOwnerType::Deal);
-$arResult['IS_AUTOMATION_ORDER_ENABLED'] = false;
-//TODO: remove later
-if (Bitrix\Main\Config\Option::get("crm", "crm_shop_enabled", "N") === 'Y')
-{
-	$arResult['IS_AUTOMATION_ORDER_ENABLED'] = \Bitrix\Crm\Automation\Factory::isAutomationAvailable(\CCrmOwnerType::Order);
-}
-
+$arResult['IS_AUTOMATION_ORDER_ENABLED'] = \Bitrix\Crm\Automation\Factory::isAutomationAvailable(\CCrmOwnerType::Order);
 $arResult['IS_AUTOMATION_INVOICE_ENABLED'] = \Bitrix\Crm\Automation\Factory::isAutomationAvailable(\CCrmOwnerType::Invoice);
+
 $arResult['IS_APP_CONFIGURATION_ENABLED'] = \Bitrix\Main\Loader::includeModule('rest') && is_callable('\Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl');
 $arResult['SMS_SENDERS'] = array();
 $smsSenders = \Bitrix\Crm\Integration\SmsManager::getSenderInfoList();
@@ -69,7 +65,7 @@ if ($numeratorQuote)
 	$arResult['NUMERATOR_QUOTE_ID'] = $numeratorQuote['id'];
 }
 
-$title = GetMessage(GetMessage('CRM_TITLE1'));
+$title = GetMessage('CRM_TITLE1');
 if (!is_string($title) || empty($title))
 	$title = GetMessage('CRM_TITLE');
 $APPLICATION->SetTitle($title);

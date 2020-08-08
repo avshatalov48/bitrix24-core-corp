@@ -162,7 +162,7 @@ endforeach;
 				break;
 				
 				default: 
-					if (substr($key, 0, 3) == 'UF_' && is_array($arResult['USER_PROPERTIES'][$key]))
+					if (mb_substr($key, 0, 3) == 'UF_' && is_array($arResult['USER_PROPERTIES'][$key]))
 					{
 						ob_start();
 						$arResult['USER_PROPERTIES'][$key]['VALUE'] = $arUser[$key];

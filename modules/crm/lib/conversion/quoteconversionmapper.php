@@ -173,7 +173,7 @@ class QuoteConversionMapper extends EntityConversionMapper
 				$dstFieldID = $srcFieldID;
 			}
 
-			if(strpos($srcFieldID, 'UF_') === 0 && strpos($dstFieldID, 'UF_') === 0)
+			if(mb_strpos($srcFieldID, 'UF_') === 0 && mb_strpos($dstFieldID, 'UF_') === 0)
 			{
 				self::mapUserField(\CCrmOwnerType::Quote, $srcFieldID, $srcFields, $dstEntityTypeID, $dstFieldID, $dstFields, $options);
 			}

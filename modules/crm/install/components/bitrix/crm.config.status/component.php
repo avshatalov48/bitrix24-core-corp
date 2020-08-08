@@ -130,7 +130,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() &&
 				$arField['SORT'] = $iPrevSort + 10;
 			$iPrevSort = $arField['SORT'];
 
-			if (substr($id, 0, 1) == 'n')
+			if (mb_substr($id, 0, 1) == 'n')
 			{
 				if (trim($arField['VALUE']) == "")
 					continue;

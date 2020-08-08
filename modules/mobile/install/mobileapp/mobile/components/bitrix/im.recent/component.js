@@ -25,8 +25,8 @@ RecentList.init = function()
 	/* set cross-links in class */
 	let links = [
 		'base', 'cache', 'pull', 'push',
-		'queue', 'notify', 'notifier', 'event',
-		'action', 'search', 'chatCreate'
+		'queue', 'notify', 'notifier', 'event', 'promotion',
+		'action', 'search', 'chatCreate', 'topMenu'
 	];
 	links.forEach((subClass) => {
 		if (typeof this[subClass] != 'undefined')
@@ -57,6 +57,9 @@ RecentList.init = function()
 	this.debugLog = BX.componentParameters.get('PULL_DEBUG', false);
 	this.generalChatId = BX.componentParameters.get('IM_GENERAL_CHAT_ID', 0);
 
+	this.viewLoaded = false;
+	BX.onViewLoaded(() => this.viewLoaded = true);
+
 	this.imagePath = component.path+'images';
 
 	this.list = [];
@@ -64,6 +67,11 @@ RecentList.init = function()
 	this.blocked = {};
 
 	this.lastRecentRequest = null;
+	this.lastMessageDate = null;
+
+	this.haveElementsToLoad = false;
+	this.elementsPerPage = 50;
+	this.isLoadingNextElements = false;
 
 	this.siteId = BX.componentParameters.get('SITE_ID', 's1');
 	this.siteDir = BX.componentParameters.get('SITE_DIR', '/');
@@ -80,6 +88,7 @@ RecentList.init = function()
 	this.messageCount = 0;
 	this.messageCountArray = {};
 
+	this.loadMoreAfterErrorInterval = 5000;
 	this.listRequestAfterErrorInterval = 10000;
 	this.updateCounterInterval = 1000;
 
@@ -89,15 +98,22 @@ RecentList.init = function()
 
 	this.dialogCache = new ChatDialogCache();
 
-	if (!Application.storage.getObject('settings.chat', {vueChat: true}).vueChat)
-	{
-		this.dialogCache.setDatabase(this.cache.database);
-		this.dialogCache.getStore();
-	}
+	//if (!Application.storage.getObject('settings.chat', {vueChat: true}).vueChat)
+	//{
+	//	this.dialogCache.setDatabase(this.cache.database);
+	//	this.dialogCache.getStore();
+	//}
+
+	this.swipeHelperShowLimit = 2;
+
+	this.options = Application.storage.getObject('settings.chat.recent', {
+		swipeHelperShowCounter: 0
+	});
 
 	ChatDataConverter.init({
 		'userId': this.userId,
 		'generalChatId': this.generalChatId,
+		'isIntranetInvitationAdmin': this.isIntranetInvitationAdmin(),
 		'listType': this.isRecent()? 'recent': 'lines',
 		'updateRuntimeDataFunction': this.updateRuntimeDataElement.bind(this)
 	});
@@ -109,32 +125,32 @@ RecentList.init = function()
 		BX.onViewLoaded(this.refresh.bind(this));
 	});
 
-	/* start */
-	/**
-	 * Push object must be initiated before View will be loaded
-	 * to avoid race-condition bug in method "actionExecute" (see code below)
-	 */
 	this.push.init();
+	this.queue.init();
+
+	this.search.init();
+	this.event.init();
+	this.cache.init();
+	this.pull.init();
+
+	this.notifier.init();
+
+	if (this.isRecent())
+	{
+		this.notify.init();
+	}
 
 	BX.onViewLoaded(() =>
 	{
 		this.dialogOptionInit();
 		this.action.init();
-		this.event.init();
-		this.search.init();
+		this.topMenu.init();
+		this.promotion.init();
 
-		if (this.isRecent())
-		{
-			this.notify.init();
-		}
-
-		this.notifier.init();
-		this.queue.init();
-		this.cache.init();
-		this.pull.init();
-
-		this.refresh({start: true});
+		this.redraw();
 	});
+
+	this.refresh({start: true});
 
 	BX.addCustomEvent("onImDetailShowed", (data) =>
 	{
@@ -216,6 +232,11 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 
 	let element = this.getElement(dialogId, true);
 
+	if (element.unread)
+	{
+		this.action.read(dialogId);
+	}
+
 	if (element)
 	{
 		titleParams = {
@@ -243,6 +264,25 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 			text: BX.message('IM_DIALOG_UNNAMED'),
 			callback: -1
 		};
+	}
+
+	if (element.type === 'chat' && element.chat.entity_type === 'GENERAL')
+	{
+		titleParams.imageUrl = this.imagePath + '/avatar_general_x3.png';
+	}
+
+	if (element.type == 'notification' || dialogId === 'notify')
+	{
+		let dialogParams = this.getOpenDialogParams(dialogId);
+		let pageParams = {
+			data : dialogParams,
+			unique : true,
+			url : env.siteDir+"mobile/im/notify.php"
+		};
+		BX.postWebEvent("onNotifyRefresh", {});
+		PageManager.openPage(pageParams);
+
+		return true;
 	}
 
 	if (Application.getApiVersion() >= 25 && Application.isWebComponentSupported())
@@ -304,7 +344,6 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 		let pageParams = {};
 
 		let mobileConfig = Application.storage.getObject('settings.chat', {
-			vueChat: true,
 			quoteEnable: ChatPerformance.isGestureQuoteSupported(),
 			quoteFromRight: Application.getApiVersion() < 31,
 			backgroundType: 'LIGHT_GRAY'
@@ -314,7 +353,6 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 		if (
 			!RecentList.isOpenlinesRecent()
 			&& Application.getApiVersion() >= 29
-			&& mobileConfig.vueChat === true
 			&& (
 				/^[0-9]+$/.test(dialogId) // digit
 				|| !element
@@ -544,7 +582,7 @@ RecentList.updateCounter = function(delay)
 	if (this.isRecent())
 	{
 		BX.postComponentEvent("onUpdateBadges", [{
-			'messages' : this.messageCount,
+			'messages' : this.messageCount + this.notify.counter,
 			'notifications' : this.notify.counter
 		}, true], "communication");
 	}
@@ -569,6 +607,11 @@ RecentList.isOpenlinesRecent = function()
 RecentList.isOpenlinesOperator = function()
 {
 	return BX.componentParameters.get('OPENLINES_USER_IS_OPERATOR', false);
+};
+
+RecentList.isIntranetInvitationAdmin = function()
+{
+	return BX.componentParameters.get('INTRANET_INVITATION_IS_ADMIN', false);
 };
 
 RecentList.cleaner = function()
@@ -596,22 +639,27 @@ RecentList.checkRevision = function(newRevision)
 
 RecentList.dialogOptionInit = function()
 {
+	if (!this.viewLoaded)
+	{
+		return false;
+	}
+
 	if (this.isRecent())
 	{
 		dialogList.setSections([
 			{title : '', id : "pinned", backgroundColor: "#ffffff", sortItemParams:{order: "desc"}},
 			{title : '', id : "general", backgroundColor: "#ffffff", sortItemParams:{order: "desc"}}
 		]);
+
+		return true;
 	}
-	else
-	{
-		dialogList.setSections([
-			{title : '', id : "general", backgroundColor: "#ffffff", sortItemParams:{order: "asc"}},
-			{title : BX.message("OL_SECTION_PIN"), id : "pinned", backgroundColor: "#f6f6f6", sortItemParams:{order: "asc"}},
-			{title : BX.message("OL_SECTION_WORK"), id : "work", backgroundColor: "#ffffff", styles : { title: {color:"#e66467"}}, sortItemParams:{order: "asc"}},
-			{title : BX.message("OL_SECTION_ANSWERED"), id : "answered", backgroundColor: "#ffffff", styles: { title : {color:"#6EA44E"}}, sortItemParams:{order: "desc"}}
-		]);
-	}
+
+	dialogList.setSections([
+		{title : '', id : "general", backgroundColor: "#ffffff", sortItemParams:{order: "asc"}},
+		{title : BX.message("OL_SECTION_PIN"), id : "pinned", backgroundColor: "#f6f6f6", sortItemParams:{order: "asc"}},
+		{title : BX.message("OL_SECTION_WORK"), id : "work", backgroundColor: "#ffffff", height: 15, styles : { title: {font: {size:15, color:"#e66467", fontStyle: "medium"}}}, sortItemParams:{order: "asc"}},
+		{title : BX.message("OL_SECTION_ANSWERED"), id : "answered", backgroundColor: "#ffffff", height: 15, styles: { title : {font: {size:15, color:"#6EA44E", fontStyle: "medium"}}}, sortItemParams:{order: "desc"}}
+	]);
 
 	return true;
 };
@@ -623,8 +671,11 @@ RecentList.refresh = function(params)
 	clearTimeout(this.refreshTimeout);
 
 	let recentParams = {};
+
 	if (this.isRecent())
 	{
+		recentParams['LIMIT'] = this.elementsPerPage;
+
 		if (this.isOpenlinesOperator())
 		{
 			recentParams['SKIP_OPENLINES'] = 'Y';
@@ -636,6 +687,7 @@ RecentList.refresh = function(params)
 		{
 			recentParams['SKIP_CHAT'] = 'Y';
 			recentParams['SKIP_DIALOG'] = 'Y';
+			recentParams['SKIP_NOTIFICATION'] = 'Y';
 		}
 	}
 
@@ -643,7 +695,7 @@ RecentList.refresh = function(params)
 	if (this.lastRecentRequest)
 	{
 		sendRecentLimit = true;
-		recentParams['LAST_UPDATE'] = this.lastRecentRequest;
+		recentParams['LAST_UPDATE'] = this.lastMessageDate;
 	}
 
 	ChatRestRequest.abort('refresh');
@@ -652,18 +704,24 @@ RecentList.refresh = function(params)
 	let requestMethods = {
 		serverTime: ['server.time'],
 		revision: ['im.revision.get'],
-		recent: ['im.recent.get', recentParams],
 		counters: ['im.counters.get', {}],
 	};
 
 	if (params.start)
 	{
+		if (this.isRecent())
+		{
+			this.haveElementsToLoad = true;
+		}
+
+		requestMethods.promotion = ['im.promotion.get', {DEVICE_TYPE: 'mobile'}];
 		requestMethods.userData = ['im.user.get'];
 		requestMethods.businessUsers = ['im.user.business.get', {'USER_DATA': 'Y'}];
 	}
 
 	if (this.isRecent())
 	{
+		requestMethods.recent = ['im.recent.list', recentParams];
 		requestMethods.userCounters = ['user.counters'];
 		if (params.start)
 		{
@@ -672,9 +730,17 @@ RecentList.refresh = function(params)
 		}
 	}
 
+	if (this.isOpenlinesRecent())
+	{
+		requestMethods.recent = ['im.recent.get', recentParams];
+	}
+
 	ChatTimer.start('recent', 'load', 3000, () => {
 		this.loadingFlag = true;
-		dialogList.setTitle({text: BX.message('IM_REFRESH_TITLE'), useProgress:true});
+		if (this.viewLoaded)
+		{
+			dialogList.setTitle({text: BX.message('IM_REFRESH_TITLE'), useProgress:true, largeMode:true});
+		}
 		console.warn("RecentList.refresh: slow connection show progress icon");
 	});
 
@@ -686,7 +752,10 @@ RecentList.refresh = function(params)
 
 		if (this.loadingFlag)
 		{
-			dialogList.setTitle({text: BX.message('COMPONENT_TITLE'), useProgress:false});
+			if (this.viewLoaded)
+			{
+				dialogList.setTitle({text: BX.message('COMPONENT_TITLE'), useProgress:false, largeMode:true});
+			}
 			this.loadingFlag = false;
 		}
 
@@ -695,6 +764,7 @@ RecentList.refresh = function(params)
 		let recentError = result.recent.error();
 		let countersError = result.counters.error();
 		let userDataError = params.start? result.userData.error(): false;
+		let promotionError = params.start? result.promotion.error(): false;
 		let userCountersError = this.isRecent()? result.userCounters.error(): false;
 		let lastSearchError = this.isRecent() && params.start? result.lastSearch.error(): false;
 		let colleaguesError = this.isRecent() && params.start? result.colleagues.error(): false;
@@ -715,8 +785,13 @@ RecentList.refresh = function(params)
 		if (result.recent && !recentError)
 		{
 			this.lastRecentRequest = result.recent.time().date_start;
-
 			console.info("RecentList.update: recent list", result.recent.data());
+			let originalData = Utils.objectClone(result.recent.data());
+
+			if (this.isRecent() && result.recent.data().items.length < this.elementsPerPage)
+			{
+				this.haveElementsToLoad = false;
+			}
 
 			if (sendRecentLimit)
 			{
@@ -727,7 +802,7 @@ RecentList.refresh = function(params)
 					this.list = this.list.filter(element => !recentIndex.includes(element.id)).concat(recentList);
 					this.redraw();
 				}
-				else
+				else if (this.viewLoaded)
 				{
 					dialogList.stopRefreshing();
 				}
@@ -736,6 +811,37 @@ RecentList.refresh = function(params)
 			{
 				this.list = ChatDataConverter.getListFormat(result.recent.data());
 				this.redraw();
+
+				if (
+					params.start &&
+					this.list.length > 0 &&
+					this.options.swipeHelperShowCounter < this.swipeHelperShowLimit
+				)
+				{
+					let firstElement = ChatDataConverter.getElementFormat(this.list[0]);
+					firstElement.showSwipeActions = true;
+
+					if (this.viewLoaded)
+					{
+						dialogList.updateItem({id: firstElement.id}, firstElement);
+					}
+
+					this.options.swipeHelperShowCounter++;
+					Application.storage.setObject('settings.chat.recent', this.options);
+				}
+
+				if (this.isRecent())
+				{
+					if (originalData.items.length)
+					{
+						this.lastMessageDate = this.getLastMessageDate(originalData.items);
+					}
+
+					if (originalData.items.length === this.elementsPerPage)
+					{
+						this.drawBottomLoader();
+					}
+				}
 			}
 		}
 		// counters block
@@ -796,6 +902,12 @@ RecentList.refresh = function(params)
 		if (result.userData && !userDataError)
 		{
 			this.userData = ChatDataConverter.getUserDataFormat(result.userData.data());
+		}
+
+		// userData block
+		if (result.promotion && !promotionError)
+		{
+			this.promotion.promoActive = result.promotion.data();
 		}
 
 		// last search block
@@ -876,7 +988,10 @@ RecentList.refresh = function(params)
 				else
 				{
 					this.loadingFlag = true;
-					dialogList.setTitle({text: BX.message('IM_REFRESH_TITLE'), useProgress:true});
+					if (this.viewLoaded)
+					{
+						dialogList.setTitle({text: BX.message('IM_REFRESH_TITLE'), useProgress:true, largeMode:true});
+					}
 
 					console.error("RecentList.refresh: we have some problems with request, we will be check again soon", error.ex);
 
@@ -913,7 +1028,10 @@ RecentList.refresh = function(params)
 			ChatTimer.stop('recent', 'error', true);
 		}
 
-		dialogList.stopRefreshing();
+		if (this.viewLoaded)
+		{
+			dialogList.stopRefreshing();
+		}
 	}, false, (xhr) => {
 		ChatRestRequest.register('refresh', xhr);
 	});
@@ -921,15 +1039,200 @@ RecentList.refresh = function(params)
 	return true;
 };
 
-RecentList.redraw = function()
+RecentList.loadMore = function()
 {
-	this.queue.clear();
+	clearTimeout(this.loadMoreTimeout);
+
+	let recentParams = this.prepareLoadMoreParams();
+
+	BX.rest.callMethod('im.recent.list', recentParams).then(result => {
+		result = result.data().items;
+
+		if (result.length < this.elementsPerPage)
+		{
+			this.haveElementsToLoad = false;
+		}
+
+		if (result.length > 0)
+		{
+			this.lastMessageDate = this.getLastMessageDate(result);
+
+			let listConverted = this.prepareListWithNewElements(result);
+			if (this.viewLoaded)
+			{
+				dialogList.setItems(listConverted);
+
+				if (result.length === this.elementsPerPage)
+				{
+					this.drawBottomLoader();
+				}
+			}
+
+			this.isLoadingNextElements = false
+		}
+		else
+		{
+			this.removeBottomLoader();
+		}
+	}).catch(error => {
+		console.warn('Error during im.recent.list', error);
+		this.loadMoreAfterTimeout()
+	});
+};
+
+RecentList.prepareLoadMoreParams = function()
+{
+	let params = {};
+	if (this.isRecent())
+	{
+		if (this.isOpenlinesOperator())
+		{
+			params['SKIP_OPENLINES'] = 'Y';
+		}
+	}
+	else if (this.isOpenlinesRecent())
+	{
+		if (this.isOpenlinesOperator())
+		{
+			params['SKIP_CHAT'] = 'Y';
+			params['SKIP_DIALOG'] = 'Y';
+		}
+	}
+
+	if (this.lastMessageDate)
+	{
+		params['LAST_MESSAGE_UPDATE'] = this.lastMessageDate;
+	}
+
+	return params;
+};
+
+RecentList.isReadyToLoadMore = function(event)
+{
+	return event.offset.y >= event.contentSize.height * 0.8
+	&& !this.isLoadingNextElements
+	&& this.haveElementsToLoad
+};
+
+RecentList.prepareListWithNewElements = function(newItems)
+{
+	let newList = ChatDataConverter.getListFormat(newItems);
+	let currentListIndex = this.list.map(element => element.id);
+	this.list = newList.filter(element => !currentListIndex.includes(element.id)).concat(this.list);
 
 	let listConverted = [];
 	this.list.forEach((element) => {
 		listConverted.push(ChatDataConverter.getElementFormat(element));
 		this.messageCountArray[element.id] = element.counter;
 	});
+
+	return listConverted;
+};
+
+RecentList.drawBottomLoader = function(id = 'loading')
+{
+	if (!this.viewLoaded)
+	{
+		return false;
+	}
+
+	dialogList.addItems([{
+		id: id,
+		title: BX.message('IM_DIALOG_UNNAMED'),
+		type: "loading",
+		unselectable: true,
+		params: { action: 'progress' },
+		sectionCode: 'general'
+	}]);
+
+	return true;
+};
+
+RecentList.removeBottomLoader = function(id = 'loading')
+{
+	if (!this.viewLoaded)
+	{
+		return false;
+	}
+
+	dialogList.removeItem({'id': id});
+
+	return true;
+};
+
+RecentList.loadMoreAfterTimeout = function()
+{
+	clearTimeout(this.loadMoreTimeout);
+	this.loadMoreTimeout = setTimeout(() =>
+	{
+		this.loadMore();
+	}, this.loadMoreAfterErrorInterval);
+};
+
+RecentList.getLastMessageDate = function(collection)
+{
+	let min = collection[0].date_update;
+	collection.forEach(item => {
+		if (new Date(item.date_update).getTime() < new Date(min).getTime())
+		{
+			min = item.date_update;
+		}
+	});
+
+	return min;
+};
+
+RecentList.clearAllCounters = function()
+{
+	if (this.viewLoaded)
+	{
+		let newList = [];
+
+		this.list.forEach(element => {
+			element.counter = 0;
+			element.unread = false;
+
+			let formattedElement = ChatDataConverter.getElementFormat(element);
+			newList.push(formattedElement);
+		});
+
+		dialogList.setItems(newList);
+	}
+	else
+	{
+		this.list.forEach(element => {
+			element.counter = 0;
+			element.unread = false;
+		});
+	}
+
+	this.messageCountArray = [];
+	this.notify.counter = 0;
+	this.updateCounter(false);
+	this.cache.update({recent: true});
+};
+
+RecentList.redraw = function()
+{
+	this.queue.clear();
+
+	let listConverted = [];
+	this.list.forEach((element) =>
+	{
+		if (this.viewLoaded)
+		{
+			listConverted.push(ChatDataConverter.getElementFormat(element));
+		}
+		if (element.type !== 'notification')
+		{
+			this.messageCountArray[element.id] = element.counter;
+		}
+	});
+
+	if (!this.viewLoaded)
+	{
+		return false
+	}
 
 	if (listConverted.length <= 0)
 	{
@@ -953,24 +1256,49 @@ RecentList.redraw = function()
 
 RecentList.openEmptyScreen = function()
 {
-	if (Application.getApiVersion() < 23)
+	if (!this.viewLoaded)
+	{
 		return false;
+	}
+
+	if (Application.getApiVersion() < 23)
+	{
+		return false;
+	}
 
 	let params = {};
 	if (this.isRecent())
 	{
-		params = {
-			"upperText": BX.message('IM_EMPTY_TEXT_1'),
-			"lowerText": Application.getPlatform() == "ios"? BX.message('IM_EMPTY_TEXT_APPLE'): BX.message('IM_EMPTY_TEXT_ANDROID'),
-			"iconName":"ws_chat",
-			"listener": () => this.chatCreate.open()
-		};
-		if (Application.getPlatform() == "ios")
+		if (BX.componentParameters.get('INTRANET_INVITATION_CAN_INVITE', false))
 		{
-			params["startChatButton"] = {
-				"text": BX.message('IM_EMPTY_BUTTON')
+			params = {
+				"upperText": BX.message('IM_EMPTY_TEXT_1'),
+				"lowerText": BX.message('IM_EMPTY_TEXT_INVITE'),
+				"iconName":"ws_employees",
+				"listener": () => IntranetInvite.openRegisterSlider({
+					originator: 'im.recent',
+					registerUrl: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_URL', ''),
+					rootStructureSectionId: BX.componentParameters.get('INTRANET_INVITATION_ROOT_STRUCTURE_SECTION_ID', 0),
+					adminConfirm: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM', false),
+					disableAdminConfirm: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM_DISABLE', false),
+					sharingMessage: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_SHARING_MESSAGE', '')
+				})
 			};
 		}
+		else
+		{
+			params = {
+				"upperText": BX.message('IM_EMPTY_TEXT_1'),
+				"lowerText": BX.message('IM_EMPTY_TEXT_CREATE'),
+				"iconName":"ws_employees",
+				"listener": () => this.chatCreate.open()
+			};
+		}
+
+		params["startChatButton"] = {
+			"text": BX.message('IM_EMPTY_BUTTON'),
+			"iconName": "ws_plus"
+		};
 	}
 	else
 	{
@@ -988,8 +1316,15 @@ RecentList.openEmptyScreen = function()
 
 RecentList.closeEmptyScreen = function()
 {
-	if (Application.getApiVersion() < 23)
+	if (!this.viewLoaded)
+	{
 		return false;
+	}
+
+	if (Application.getApiVersion() < 23)
+	{
+		return false;
+	}
 
 	dialogList.welcomeScreen.hide();
 
@@ -1107,7 +1442,10 @@ RecentList.updateElement = function(elementId, data, immediately)
 	elementId = this.list[index].id;
 
 	this.list[index] = ChatUtils.objectMerge(this.list[index], data);
-	this.messageCountArray[elementId] = this.list[index].counter;
+	if (this.list[index].type !== 'notification')
+	{
+		this.messageCountArray[elementId] = this.list[index].counter;
+	}
 
 	this.queue.add(this.queue.TYPE_UPDATE, elementId, this.list[index]);
 
@@ -1139,6 +1477,12 @@ RecentList.deleteElement = function(elementId)
 	this.cache.update({recent: true});
 
 	this.queue.delete(this.queue.TYPE_ALL, elementId);
+
+	if (!this.viewLoaded)
+	{
+		return false;
+	}
+
 	dialogList.removeItem({"params.id" : elementId});
 
 	this.listEmpty = true;
@@ -1150,6 +1494,7 @@ RecentList.deleteElement = function(elementId)
 			break;
 		}
 	}
+
 	if (this.listEmpty)
 	{
 		dialogList.setItems(this.getEmptyElement());
@@ -1926,7 +2271,7 @@ RecentList.pull.eventExecute = function(data)
 
 			if (
 				extra && extra.server_time_ago <= 5
-				&& formattedElement.chat.type != 'lines'
+				//&& formattedElement.chat.type != 'lines'
 				&& params.message.senderId != this.base.userId
 				&& !formattedElement.chat.mute_list[this.base.userId]
 			)
@@ -2027,6 +2372,13 @@ RecentList.pull.eventExecute = function(data)
 		if (command == 'readMessage' || command == 'readMessageChat')
 		{
 			this.base.dialogCache.updateDialog(params.dialogId, {unreadList: []});
+		}
+	}
+	else if (command == 'readAllChats')
+	{
+		if (this.base.isRecent())
+		{
+			this.base.clearAllCounters();
 		}
 	}
 	else if (command == 'startWriting')
@@ -2155,6 +2507,28 @@ RecentList.pull.eventExecute = function(data)
 			user: params.user,
 		}));
 	}
+	else if (command == 'userInvite')
+	{
+		if (this.base.isOpenlinesRecent())
+		{
+			return false;
+		}
+		let index = this.base.list.findIndex((listElement) => listElement && listElement.id == params.userId);
+		if (index == -1)
+		{
+			let element = ChatDataConverter.getElementByEntity('user', params.user);
+			element.invited = params.invited;
+
+			this.base.setElement(params.userId, element);
+		}
+		else
+		{
+			this.base.updateElement(params.userId, {
+				user: params.user,
+				invited: params.invited,
+			});
+		}
+	}
 	else if (command == 'chatMuteNotify')
 	{
 		let muteList = {};
@@ -2249,6 +2623,12 @@ RecentList.pull.eventExecute = function(data)
 			pinned: params.active,
 		}, true);
 	}
+	else if (command == 'chatUnread')
+	{
+		this.base.updateElement(params.dialogId, {
+			unread: params.active,
+		});
+	}
 	else if (command == 'deleteBot')
 	{
 		if (this.base.isOpenlinesRecent())
@@ -2273,6 +2653,57 @@ RecentList.pull.eventExecute = function(data)
 			this.notify.counter = params.counter;
 			this.notify.refresh();
 			this.base.updateCounter(false);
+
+			let userName = params.userName ? params.userName : "";
+			let firstName = userName? params.userName.split(" ")[0] : "";
+			let lastName = userName? params.userName.split(" ")[1] : "";
+
+			if (!params.onlyFlash)
+			{
+				let elem = this.base.getElement('notify');
+				if (elem)
+				{
+					this.base.updateElement('notify', {
+						counter: params.counter,
+						message: {
+							author_id: params.userId,
+							date: params.date,
+							id: params.id,
+							text: params.text
+						},
+						user: {
+							id: params.userId,
+							name: userName,
+							first_name: firstName,
+							last_name: lastName
+						},
+					});
+				}
+				else
+				{
+					this.base.setElement('notify', {
+						id: 'notify',
+						type: 'notification',
+						counter: params.counter,
+						message: {
+							author_id: params.userId,
+							date: params.date,
+							id: params.id,
+							text: params.text
+						},
+						user: {
+							id: params.userId,
+							name: userName,
+							first_name: firstName,
+							last_name: lastName
+						},
+						avatar: {
+							url: this.base.imagePath + '/avatar_notify_x3.png',
+						}
+					});
+				}
+			}
+
 		}
 		else if (command == 'readNotifyList' || command == 'unreadNotifyList' || command == 'confirmNotify')
 		{
@@ -2282,6 +2713,9 @@ RecentList.pull.eventExecute = function(data)
 			{
 				this.notify.refresh();
 			}
+			this.base.updateElement('notify', {
+				counter: params.counter
+			});
 		}
 	}
 	else if (command == 'generalChatId')
@@ -2401,6 +2835,8 @@ RecentList.queue.worker = function()
 {
 	let executeTime = new Date();
 
+	let listChange = false;
+
 	let listAdd = [];
 	for (let id in this.list[this.TYPE_ADD])
 	{
@@ -2408,7 +2844,11 @@ RecentList.queue.worker = function()
 		{
 			continue;
 		}
-		listAdd.push(ChatDataConverter.getElementFormat(this.list[this.TYPE_ADD][id]));
+		if (this.base.viewLoaded)
+		{
+			listAdd.push(ChatDataConverter.getElementFormat(this.list[this.TYPE_ADD][id]));
+		}
+		listChange = true;
 		delete this.list[this.TYPE_ADD][id];
 	}
 	if (listAdd.length > 0)
@@ -2430,10 +2870,14 @@ RecentList.queue.worker = function()
 		{
 			continue;
 		}
-		listUpdate.push({
-			filter: {"params.id" : this.list[this.TYPE_UPDATE][id]['id']},
-			element: ChatDataConverter.getElementFormat(this.list[this.TYPE_UPDATE][id])
-		});
+		if (this.base.viewLoaded)
+		{
+			listUpdate.push({
+				filter: {"params.id" : this.list[this.TYPE_UPDATE][id]['id']},
+				element: ChatDataConverter.getElementFormat(this.list[this.TYPE_UPDATE][id])
+			});
+		}
+		listChange = true;
 		delete this.list[this.TYPE_UPDATE][id];
 	}
 	if (listUpdate.length > 0)
@@ -2441,7 +2885,7 @@ RecentList.queue.worker = function()
 		dialogList.updateItems(listUpdate);
 	}
 
-	if (listAdd.length > 0 || listUpdate.length > 0)
+	if (listChange)
 	{
 		console.info('RecentList.queue.worker: added - '+listAdd.length+' / updated - '+listUpdate.length+' ('+(new Date() - executeTime)+'ms)', {add: listAdd, update: listUpdate});
 		this.base.updateCounter(false);
@@ -2591,47 +3035,182 @@ RecentList.notifier.show = function(params, delay)
 		}
 	}
 
-	InAppNotifier.showNotification({
+	let notify = {
 		title: ChatUtils.htmlspecialcharsback(params.title),
 		backgroundColor: "#E6000000",
-		imageUrl: ChatUtils.getAvatar(params.avatar),
 		message: ChatUtils.htmlspecialcharsback(params.text),
 		data: params
-	});
+	};
+
+	let avatar = ChatUtils.getAvatar(params.avatar);
+	if (avatar)
+	{
+		notify.imageUrl = avatar;
+	}
+
+	InAppNotifier.showNotification(notify);
 
 	return true;
 };
 
+/* Promotion API */
+RecentList.promotion = {};
+
+RecentList.promotion.init = function ()
+{
+	this.promo = {
+		'im:video:01042020:mobile': {
+			type: 'spotlight',
+			config: {
+				target: 'call_video',
+				text: BX.message('IM_PROMO_VIDEO_01042020_MOBILE')
+					.split(' #BR# ').join("\n")
+					.split('#BR# ').join("\n")
+					.split(' #BR#').join("\n")
+					.split('#BR#').join("\n")
+			}
+		},
+	};
+
+	this.promoActive = [];
+};
+
+RecentList.promotion.dialogCheck = function (dialogId)
+{
+	if (
+		!dialogId.startsWith('chat')
+		&& dialogId !== this.base.userId.toString()
+		&& Application.getApiVersion() >= 34
+	)
+	{
+		this.show('im:video:01042020:mobile');
+	}
+};
+
+RecentList.promotion.showSpotlight = function(config)
+{
+	const spotlight = dialogs.createSpotlight();
+
+	spotlight.setTarget(config.target);
+	spotlight.setHint({text: config.text});
+	spotlight.show();
+};
+
+RecentList.promotion.show = function(id)
+{
+	if (!this.promo[id] || !this.promoActive.includes(id))
+	{
+		return false;
+	}
+
+	const promo = this.promo[id];
+
+	if (promo.type === 'spotlight')
+	{
+		this.showSpotlight(promo.config);
+	}
+
+	this.read(id);
+	this.save(id);
+
+	return true;
+};
+
+RecentList.promotion.read = function(id)
+{
+	this.promoActive = this.promoActive.filter(element => element !== id);
+};
+
+RecentList.promotion.save = function(id)
+{
+	BX.rest.callMethod('im.promotion.read', {id: id});
+};
+
+
+/* Top-menu API */
+
+RecentList.topMenu = {};
+
+RecentList.topMenu.init = function()
+{
+	if (!this.base.viewLoaded)
+	{
+		return false;
+	}
+
+	if (!this.base.isRecent())
+	{
+		return false;
+	}
+
+	let topMenuInstance = dialogs.createPopupMenu();
+	topMenuInstance.setData(
+		[{ id: "readAll", title: BX.message('IM_READ_ALL'), sectionCode: "general", iconName: "read"}],
+		[{ id: "general" }],
+		(event, item) => {
+			if (event === 'onItemSelected' && item.id === 'readAll')
+			{
+				this.onReadAll();
+			}
+		}
+	);
+
+	dialogList.setRightButtons([{type: "search", callback: ()=> {
+		dialogList.showSearchBar()
+	}}, {type: "more", callback: ()=> {
+		topMenuInstance.show();
+	}}]);
+
+	return true;
+};
+
+RecentList.topMenu.onReadAll = function()
+{
+	this.base.clearAllCounters();
+
+	BX.rest.callMethod('im.dialog.readAll')
+		.then(result => {
+			console.log('im.dialog.readAll result:', result);
+		})
+		.catch(error => {
+			console.log('im.dialog.readAll error:', error);
+		})
+	;
+};
 
 /* Actions API */
 RecentList.action = {};
 
 RecentList.action.init = function()
 {
-	//dialogList.setPreviewUrlProvider(this.showPreview.bind(this));
-
-	if (this.base.isRecent())
+	if (!this.base.viewLoaded)
 	{
-		let openCreateWidget = {
-			type:"plus",
-			callback: () => this.chatCreate.open(),
-			icon:"plus",
-			animation: "hide_on_scroll",
-			color: "#515f69"
-		};
-
-		if(Application.getPlatform() == "ios")
-		{
-			dialogList.setRightButtons([openCreateWidget]);
-		}
-		else
-		{
-			if(Application.getApiVersion() >= 24)
-			{
-				dialogList.setFloatingButton(openCreateWidget);
-			}
-		}
+		return false;
 	}
+
+	if (!this.base.isRecent())
+	{
+		return false;
+	}
+
+	let openCreateWidget = {
+		type:"plus",
+		callback: () => this.chatCreate.open(),
+		icon:"plus",
+		animation: "hide_on_scroll",
+		color: "#60C7EF"
+	};
+
+	if(typeof dialogList["setFloatingButton"] !== "undefined")
+	{
+		dialogList.setFloatingButton(openCreateWidget);
+	}
+	else
+	{
+		dialogList.setRightButtons([openCreateWidget]);
+	}
+
+	return true;
 };
 
 RecentList.action.showPreview = function(listElement)
@@ -2663,6 +3242,115 @@ RecentList.action.pin = function(elementId, active)
 	BX.rest.callMethod('im.recent.pin', {'DIALOG_ID': elementId, 'ACTION': active? 'Y': 'N'})
 		.then((result) =>
 		{
+			if (result.data()) // TODO ALERT IF ERROR
+			{
+				this.base.unblockElement(elementId);
+			}
+			else
+			{
+				this.base.unblockElement(elementId, true);
+			}
+		})
+		.catch(() =>
+		{
+			this.base.unblockElement(elementId, true);
+		});
+
+	return true;
+};
+
+RecentList.action.read = function(elementId)
+{
+	let element = this.base.getElement(elementId, true);
+
+	if (Application.getApiVersion() < 34)
+	{
+		this.base.updateElement(elementId, {
+			counter: 0
+		}, true);
+	}
+	else
+	{
+		this.base.updateElement(elementId, {
+			unread: false,
+			counter: 0
+		}, true);
+	}
+
+	this.base.messageCountArray[element.id] = 0;
+	this.base.updateCounter(false);
+
+	this.base.blockElement(elementId, true, (id, params) => {
+		this.base.updateElement(id, {
+			unread: params.unread,
+			counter: params.counter
+		}, true);
+	}, {unread: element.unread, counter: element.counter});
+
+	ChatRestRequest.abort('read');
+
+	let requestMethods = {
+		setReadStatus: ['im.recent.unread', {'DIALOG_ID': elementId, 'ACTION': 'N'}],
+	};
+
+	if (element.counter)
+	{
+		requestMethods.dialogRead = ['im.dialog.read', {'DIALOG_ID': elementId}];
+	}
+
+	BX.rest.callBatch(requestMethods, (result) => {
+		ChatRestRequest.unregister('refresh');
+
+		let unreadError = result.setReadStatus.error();
+		let dialogReadError = element.counter? result.dialogRead.error() : false;
+
+		if (unreadError || dialogReadError)
+		{
+			console.log('Action.read error', result);
+			this.base.unblockElement(elementId, true);
+		}
+		else
+		{
+			console.log('Action.read result', result);
+			this.base.unblockElement(elementId);
+		}
+	}, false, (xhr) => {ChatRestRequest.register('read', xhr);});
+
+	return true;
+};
+
+RecentList.action.unread = function(elementId)
+{
+	let element = this.base.getElement(elementId, true);
+
+	if (Application.getApiVersion() < 34)
+	{
+		this.base.updateElement(elementId, {
+			counter: 1
+		}, true);
+	}
+	else
+	{
+		this.base.updateElement(elementId, {
+			unread: true,
+			counter: element.counter
+		}, true);
+	}
+
+	this.base.messageCountArray[element.id] = 1;
+	this.base.updateCounter(false);
+
+	this.base.blockElement(elementId, true, (id, params) => {
+		this.base.updateElement(id, {
+			unread: params.unread,
+			counter: params.counter
+		}, true);
+	}, {unread: element.unread, counter: element.counter});
+
+	BX.rest.callMethod('im.recent.unread', {'DIALOG_ID': elementId, 'ACTION': 'Y'})
+		.then((result) =>
+		{
+			console.log('Result action.unread', result);
 			if (result.data()) // TODO ALERT IF ERROR
 			{
 				this.base.unblockElement(elementId);
@@ -2781,6 +3469,76 @@ RecentList.action.leave = function(elementId)
 		{
 			this.base.unblockElement(elementId, true);
 		});
+
+	return true;
+};
+
+RecentList.action.inviteResend = function(elementId)
+{
+	BX.ajax.runAction('intranet.controller.invite.reinvite', {data: {
+	   params: {
+		  userId: elementId
+	   }
+	}}).then((response) => {
+		if (response.status == 'error')
+		{
+			InAppNotifier.showNotification({
+				backgroundColor: "#E6000000",
+				message: response.errors.map(element => element.message).join('. ')
+			});
+		}
+		else
+		{
+			InAppNotifier.showNotification({
+				backgroundColor: "#E6000000",
+				message: BX.message('INVITE_RESEND_DONE')
+			});
+		}
+	}, (response) => {
+		InAppNotifier.showNotification({
+			backgroundColor: "#E6000000",
+			message: BX.message('IM_LIST_ACTION_ERROR')
+		});
+	});
+
+	return true;
+};
+
+RecentList.action.inviteCancel = function(elementId)
+{
+	let element = this.base.getElement(elementId, true);
+
+	this.base.deleteElement(elementId);
+
+	this.base.blockElement(elementId, true, (id, params) => {
+		this.base.setElement(id, params, true);
+	}, element);
+
+	BX.ajax.runAction('intranet.controller.invite.deleteinvitation', {data: {
+	   params: {
+		  userId: elementId
+	   }
+	}}).then((response) => {
+		if (response.status == 'error')
+		{
+			InAppNotifier.showNotification({
+				backgroundColor: "#E6000000",
+				message: response.errors.map(element => element.message).join('. ')
+			});
+			this.base.unblockElement(elementId, true);
+		}
+		else
+		{
+			this.base.unblockElement(elementId);
+		}
+	}, (response) => {
+		this.base.unblockElement(elementId, true);
+
+		InAppNotifier.showNotification({
+			backgroundColor: "#E6000000",
+			message: BX.message('IM_LIST_ACTION_ERROR')
+		});
+	});
 
 	return true;
 };
@@ -2975,6 +3733,7 @@ RecentList.event.init = function ()
 		onScopeSelected : this.onScopeSelected,
 		onUserTypeText : this.onSearchTextType,
 		onSearchItemSelected : this.onSearchItemSelected,
+		onScroll: ChatUtils.throttle(this.onScroll, 50, this),
 	};
 
 	this.lastSearchList = [];
@@ -2985,7 +3744,9 @@ RecentList.event.init = function ()
 	BX.addCustomEvent("onOpenDialog", this.onOpenDialog.bind(this));
 	BX.addCustomEvent("onDialogIsOpen", this.onDialogIsOpen.bind(this));
 	BX.addCustomEvent("onLoadLastMessage", this.onLoadLastMessage.bind(this));
+	BX.addCustomEvent("chatdialog::init::complete", this.onDialogInitComplete.bind(this));
 	BX.addCustomEvent("chatdialog::counter::change", this.onDialogCounterChange.bind(this));
+	BX.addCustomEvent("chatdialog::notification::readAll", this.onNotificationReadAll.bind(this));
 	BX.addCustomEvent("chatbackground::task::status::success", this.onReadMessage.bind(this));
 };
 
@@ -2993,7 +3754,7 @@ RecentList.event.router = function(eventName, listElement)
 {
 	if (this.handlersList[eventName])
 	{
-		if (eventName != 'onUserTypeText')
+		if (eventName != 'onUserTypeText' && eventName != 'onScroll')
 		{
 			console.log('RecentList.event.router: catch event - '+eventName, listElement);
 		}
@@ -3024,10 +3785,24 @@ RecentList.event.onDialogIsOpen = function(event)
 	}
 };
 
+RecentList.event.onDialogInitComplete = function(event)
+{
+	console.info('RecentList.event.onDialogInitComplete: ', event);
+	this.promotion.dialogCheck(event.dialogId.toString());
+};
+
 RecentList.event.onDialogCounterChange = function(event)
 {
 	console.info('RecentList.event.onDialogCounterChange: ', event);
 	this.base.updateElement(event.dialogId, {counter: event.counter});
+};
+
+RecentList.event.onNotificationReadAll = function(event) {
+	console.info('RecentList.event.onNotificationReadAll');
+	this.base.updateElement('notify', {
+		unread: false,
+		counter: 0
+	}, true);
 };
 
 RecentList.event.onReadMessage = function(taskId, result)
@@ -3092,6 +3867,14 @@ RecentList.event.onItemAction = function(listElement)
 	{
 		this.action.pin(listElement.item.params.id, false);
 	}
+	else if (listElement.action.identifier === "unread")
+	{
+		this.action.unread(listElement.item.params.id)
+	}
+	else if (listElement.action.identifier === "read")
+	{
+		this.action.read(listElement.item.params.id);
+	}
 	else if (listElement.action.identifier === "mute")
 	{
 		this.action.mute(listElement.item.params.id, true)
@@ -3099,6 +3882,18 @@ RecentList.event.onItemAction = function(listElement)
 	else if (listElement.action.identifier === "unmute")
 	{
 		this.action.mute(listElement.item.params.id, false);
+	}
+	else if (listElement.action.identifier === "inviteResend")
+	{
+		this.action.inviteResend(listElement.item.params.id);
+	}
+	else if (listElement.action.identifier === "inviteCancel")
+	{
+		this.action.inviteCancel(listElement.item.params.id);
+	}
+	else if (listElement.action.identifier === "profile")
+	{
+		this.base.openUserProfile(listElement.item.params.id);
 	}
 	else if (listElement.action.identifier === "chatinfo")
 	{
@@ -3191,6 +3986,14 @@ RecentList.event.onScopeSelected = function(event)
 	this.onSearchTextType({text: ChatSearchScopes.result.text})
 };
 
+RecentList.event.onScroll = function(event)
+{
+	if (this.base.isReadyToLoadMore(event))
+	{
+		this.base.isLoadingNextElements = true;
+		this.base.loadMore();
+	}
+};
 
 
 
@@ -3220,6 +4023,14 @@ RecentList.chatCreate.open = function ()
 			"SKIP_LIST": [this.base.userId],
 
 			"SEARCH_MIN_SIZE": this.base.searchMinTokenLength,
+
+			"INTRANET_INVITATION_CAN_INVITE": BX.componentParameters.get('INTRANET_INVITATION_CAN_INVITE', false),
+			"INTRANET_INVITATION_REGISTER_URL": BX.componentParameters.get('INTRANET_INVITATION_REGISTER_URL', ''),
+			"INTRANET_INVITATION_ROOT_STRUCTURE_SECTION_ID": BX.componentParameters.get('INTRANET_INVITATION_ROOT_STRUCTURE_SECTION_ID', 0),
+			"INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM": BX.componentParameters.get('INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM', false),
+			"INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM_DISABLE": BX.componentParameters.get('INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM_DISABLE', false),
+			"INTRANET_INVITATION_REGISTER_SHARING_MESSAGE": BX.componentParameters.get('INTRANET_INVITATION_REGISTER_SHARING_MESSAGE', ''),
+			"INTRANET_INVITATION_IS_ADMIN": BX.componentParameters.get('INTRANET_INVITATION_IS_ADMIN', false)
 		},
 		rootWidget: {
 			name: "chat.create",
@@ -3231,9 +4042,17 @@ RecentList.chatCreate.open = function ()
 					{ title: BX.message('IM_SCOPE_USERS'), id: ChatSearchScopes.TYPE_USER },
 					{ title: BX.message('IM_SCOPE_DEPARTMENTS'), id: ChatSearchScopes.TYPE_DEPARTMENT },
 				],
-				modal: true,
-			}
-		}
+				backdrop: {
+					shouldResizeContent: true,
+					showOnTop: true,
+					topPosition: 100
+				},
+				supportInvites: (
+					BX.componentParameters.get('INTRANET_INVITATION_CAN_INVITE', false)
+					&& Application.getApiVersion() >= 34
+				)
+			},
+		},
 	});
 };
 
@@ -3550,7 +4369,17 @@ RecentList.search.onSearchShow = function()
 	let items = [];
 	let sections = [];
 
-	let employees = [];
+	// Temporarily add notification chat to user list in search
+	//TODO: remove
+	let employees = [
+		{
+			id: 'notify',
+			type: 'notification',
+			title: BX.message("NOTIFICATION_TITLE"),
+			imageUrl: this.base.imagePath + '/avatar_notify_x2.png',
+			params: {action: 'item', id: 'notify'}
+		}
+	];
 	let employeesIndex = {};
 
 	if (this.base.list.length > 0)
@@ -3663,7 +4492,12 @@ RecentList.search.onSearchItemSelected = function(listElement)
 			description: listElement.subtitle,
 			avatar: listElement.imageUrl
 		});
-		this.lastSearchAdd(listElement.params.id);
+
+		//TODO: remove
+		if (listElement.id !== 'notify')
+		{
+			this.lastSearchAdd(listElement.params.id);
+		}
 	}
 
 	return true;

@@ -4,13 +4,21 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use \Bitrix\Main\Loader;
-use \Bitrix\Main\Engine\Contract\Controllerable;
+use Bitrix\Main\Errorable;
+use Bitrix\Main\ErrorCollection;
+use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Engine\Contract\Controllerable;
+use Bitrix\Intranet\ContactCenter;
+use Bitrix\Main\Localization\Loc;
 
-use \Bitrix\Intranet\ContactCenter;
+Loc::loadMessages(__FILE__);
 
-class CIntranetContactCenterListComponent extends \CBitrixComponent implements Controllerable
+class CIntranetContactCenterListComponent extends \CBitrixComponent implements Controllerable, Errorable
 {
+	/** @var  ErrorCollection */
+	private $errorCollection;
+
 	private $moduleList = array(
 		'mail',
 		'voximplant',
@@ -31,6 +39,8 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 
 	public function onPrepareComponentParams($arParams)
 	{
+		$this->errorCollection = new ErrorCollection();
+
 		if (intval($arParams['CACHE_TIME']) < 0)
 		{
 			$arParams['CACHE_TIME'] = 86400;
@@ -91,11 +101,7 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 	 */
 	private function saleGetItems()
 	{
-		$itemsList = $this->getContactCenterHandler()->saleGetItems()->getData();
-
-		$itemsList["sale"]["ONCLICK"] = "BX.SidePanel.Instance.open('/marketplace/detail/bitrix.eshop/')";
-
-		return $itemsList;
+		return $this->getContactCenterHandler()->saleGetItems()->getData();
 	}
 
 	/**
@@ -244,7 +250,16 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 					'itemCode' => $itemCode,
 					'allowChangeHistory' => false
 				);
-				$item["ONCLICK"] = $this->getOnclickScript($item["LINK"], $itemParams);
+
+				if(empty($item['CONNECTION_INFO_HELPER_LIMIT']))
+				{
+					$item['ONCLICK'] = $this->getOnclickScript($item['LINK'], $itemParams);
+				}
+				else
+				{
+					$item['ONCLICK'] = 'BX.UI.InfoHelper.show(\'' . $item['CONNECTION_INFO_HELPER_LIMIT'] . '\');';
+				}
+
 			}
 		}
 
@@ -510,6 +525,45 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 		return $itemsList;
 	}
 
+	public function getRestAppAction($code)
+	{
+		$row = \Bitrix\Rest\AppTable::getRow([
+			'select' => [
+				'ID', 'APP_NAME', 'CLIENT_ID', 'CLIENT_SECRET',
+				'URL_INSTALL', 'STATUS',
+				'MENU_NAME' => 'LANG.MENU_NAME',
+				'MENU_NAME_DEFAULT' => 'LANG_DEFAULT.MENU_NAME',
+				'MENU_NAME_LICENSE' => 'LANG_LICENSE.MENU_NAME',
+			],
+			'filter' => [
+				'=CODE' => $code
+			],
+		]);
+		if(!$row)
+		{
+			$this->errorCollection[] = new Error(Loc::getMessage('ICCL_MARKETPLACE_APPLICATION_NOT_FOUND_ERROR'));
+			return null;
+		}
+
+		$isLocal = $row['STATUS'] === \Bitrix\Rest\AppTable::STATUS_LOCAL;
+		if($isLocal)
+		{
+			$onlyApi = empty($row['MENU_NAME']) && empty($row['MENU_NAME_DEFAULT']) && empty($row['MENU_NAME_LICENSE']);
+			return [
+				'TYPE' => $onlyApi ? 'A' : 'N'
+			];
+		}
+
+		$result = \Bitrix\Rest\Marketplace\Client::getApp($code);
+		if(isset($result['ITEMS']))
+		{
+			return $result['ITEMS'];
+		}
+
+		$this->errorCollection[] = new Error(Loc::getMessage('ICCL_MARKETPLACE_APPLICATION_NOT_FOUND_ERROR'));
+		return null;
+	}
+
 	/**
 	 * @return mixed|void
 	 * @throws \Bitrix\Main\LoaderException
@@ -528,5 +582,22 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 
 			$this->includeComponentTemplate();
 		}
+	}
+
+	/**
+	 * @return array|\Bitrix\Main\Error[]
+	 */
+	public function getErrors()
+	{
+		return $this->errorCollection->toArray();
+	}
+
+	/**
+	 * @param string $code
+	 * @return \Bitrix\Main\Error|null
+	 */
+	public function getErrorByCode($code)
+	{
+		return $this->errorCollection->getErrorByCode($code);
 	}
 }

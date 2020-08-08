@@ -1,7 +1,7 @@
 <?
 
+use Bitrix\Timeman\Helper\EntityCodesHelper;
 use Bitrix\Timeman\Model\Schedule\Schedule;
-use Bitrix\Timeman\Model\Schedule\ScheduleTable;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
 use Bitrix\Timeman\Service\DependencyManager;
 
@@ -65,12 +65,12 @@ class CTimeMan
 			$record = WorktimeRecord::wakeUpRecord($arInfo);
 			foreach ($actionsBuilder->getAllActions() as $worktimeAction)
 			{
-				$info['TM_FREE'] = $worktimeAction->getSchedule() && $worktimeAction->getSchedule()->isFlexible();
+				$info['TM_FREE'] = $worktimeAction->getSchedule() && $worktimeAction->getSchedule()->isFlextime();
 			}
 			foreach ($actionsBuilder->getStartActions() as $startAction)
 			{
 				// for cases, when user had fixed schedule and now user has flextime
-				$info['TM_FREE'] = $startAction->getSchedule() && $startAction->getSchedule()->isFlexible();
+				$info['TM_FREE'] = $startAction->getSchedule() && $startAction->getSchedule()->isFlextime();
 			}
 			$info['ID'] = $arInfo['ID'];
 
@@ -98,16 +98,14 @@ class CTimeMan
 			];
 			if (!empty($actionsBuilder->getStopActions()))
 			{
-				$schedule = DependencyManager::getInstance()
-					->getScheduleProvider()
-					->getScheduleWithShifts($info['SCHEDULE_ID']);
-				$shift = null;
-
-				if ($schedule && $info['SHIFT_ID'] > 0)
+				foreach ($actionsBuilder->getStopActions() as $stopAction)
 				{
-					$shift = $schedule->obtainShiftByPrimary($info['SHIFT_ID']);
+					if ($stopAction->getRecord() && $stopAction->getRecord()->getId() === $record->getId()
+						&& $stopAction->getRecordManager())
+					{
+						$info['INFO']['RECOMMENDED_CLOSE_TIMESTAMP'] = $stopAction->getRecordManager()->getRecommendedStopTimestamp();
+					}
 				}
-				$info['INFO']['RECOMMENDED_CLOSE_TIMESTAMP'] = $record->getRecommendedStopTimestamp($schedule, $shift);
 			}
 			if ($arInfo['LAST_PAUSE'])
 			{
@@ -131,7 +129,7 @@ class CTimeMan
 		{
 			foreach ($actionsBuilder->getStartActions() as $worktimeAction)
 			{
-				$info['TM_FREE'] = $worktimeAction->getSchedule() && $worktimeAction->getSchedule()->isFlexible();
+				$info['TM_FREE'] = $worktimeAction->getSchedule() && $worktimeAction->getSchedule()->isFlextime();
 			}
 		}
 
@@ -603,7 +601,7 @@ class CTimeMan
 
 			$arUFValues = [];
 
-			$arEnumFields = ['UF_TIMEMAN', 'UF_TM_REPORT_REQ', 'UF_TM_FREE', 'UF_REPORT_PERIOD'];
+			$arEnumFields = ['UF_TIMEMAN', 'UF_TM_REPORT_REQ', 'UF_REPORT_PERIOD'];
 			foreach ($arEnumFields as $fld)
 			{
 				$dbRes = CUserFieldEnum::GetList([], [
@@ -615,13 +613,13 @@ class CTimeMan
 				}
 			}
 
-			$arSettings = ['UF_TIMEMAN', 'UF_TM_MAX_START', 'UF_TM_MIN_FINISH', 'UF_TM_MIN_DURATION', 'UF_TM_REPORT_REQ', 'UF_TM_REPORT_TPL', 'UF_TM_FREE', 'UF_TM_REPORT_DATE', 'UF_TM_DAY', 'UF_REPORT_PERIOD', 'UF_TM_TIME', 'UF_TM_ALLOWED_DELTA'];
+			$arSettings = ['UF_TIMEMAN', 'UF_TM_MAX_START', 'UF_TM_MIN_FINISH', 'UF_TM_MIN_DURATION', 'UF_TM_REPORT_REQ', 'UF_TM_REPORT_TPL', 'UF_TM_REPORT_DATE', 'UF_TM_DAY', 'UF_REPORT_PERIOD', 'UF_TM_TIME', 'UF_TM_ALLOWED_DELTA'];
 			$arReportSettings = ['UF_TM_REPORT_DATE', 'UF_TM_DAY', 'UF_TM_TIME'];
 			$dbRes = CIBlockSection::GetList(
 				["LEFT_MARGIN" => "ASC"],
 				['IBLOCK_ID' => $ibDept, 'ACTIVE' => 'Y'],
 				false,
-				['ID', 'IBLOCK_SECTION_ID', 'UF_TIMEMAN', 'UF_TM_MAX_START', 'UF_TM_MIN_FINISH', 'UF_TM_MIN_DURATION', 'UF_TM_REPORT_REQ', 'UF_TM_REPORT_TPL', 'UF_TM_FREE', 'UF_REPORT_PERIOD', 'UF_TM_REPORT_DATE', 'UF_TM_DAY', 'UF_TM_TIME', 'UF_TM_ALLOWED_DELTA']
+				['ID', 'IBLOCK_SECTION_ID', 'UF_TIMEMAN', 'UF_TM_MAX_START', 'UF_TM_MIN_FINISH', 'UF_TM_MIN_DURATION', 'UF_TM_REPORT_REQ', 'UF_TM_REPORT_TPL', 'UF_REPORT_PERIOD', 'UF_TM_REPORT_DATE', 'UF_TM_DAY', 'UF_TM_TIME', 'UF_TM_ALLOWED_DELTA']
 			);
 			while ($arRes = $dbRes->Fetch())
 			{
@@ -650,13 +648,31 @@ class CTimeMan
 						)
 					);
 				}
-
+				$arSectionSettings['UF_TM_FREE'] = 'N';
 				self::$SECTIONS_SETTINGS_CACHE[$arRes['ID']] = $arSectionSettings;
 			}
 
 			if (CACHED_timeman_settings !== false)
 			{
 				$CACHE_MANAGER->Set($cache_id, self::$SECTIONS_SETTINGS_CACHE);
+			}
+		}
+		$departmentIds = array_keys(self::$SECTIONS_SETTINGS_CACHE);
+		if (!empty($departmentIds))
+		{
+			$schedules = DependencyManager::getInstance()->getScheduleRepository()
+				->findSchedulesByEntityCodes(EntityCodesHelper::buildDepartmentCodes($departmentIds));
+			foreach ($schedules as $code => $depSchedules)
+			{
+				foreach ($depSchedules as $depSchedule)
+				{
+					/** @var Schedule $depSchedule */
+					if ($depSchedule->isFlextime())
+					{
+						$depId = (string)EntityCodesHelper::getDepartmentId($code);
+						self::$SECTIONS_SETTINGS_CACHE[$depId]['UF_TM_FREE'] = 'Y';
+					}
+				}
 			}
 		}
 	}

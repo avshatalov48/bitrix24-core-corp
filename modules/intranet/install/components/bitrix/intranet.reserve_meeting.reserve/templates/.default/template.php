@@ -1,6 +1,6 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 <?
-if (strlen($arResult["FatalError"]) > 0)
+if ($arResult["FatalError"] <> '')
 {
 	?>
 	<span class='errortext'><?=$arResult["FatalError"]?></span><br /><br />
@@ -8,7 +8,7 @@ if (strlen($arResult["FatalError"]) > 0)
 }
 else
 {
-	if (strlen($arResult["ErrorMessage"]) > 0)
+	if ($arResult["ErrorMessage"] <> '')
 	{
 		?>
 		<span class='errortext'><?=$arResult["ErrorMessage"]?></span><br /><br />
@@ -20,19 +20,19 @@ else
 	<tr>
 		<td colspan="2"><?=$arResult['MEETING']['DESCRIPTION'] ?></td>
 	</tr>
-	<?if (StrLen($arResult["MEETING"]["UF_FLOOR"]) > 0):?>
+	<?if ($arResult["MEETING"]["UF_FLOOR"] <> ''):?>
 	<tr>
 		<td width="10%"><?= GetMessage("INTASK_C29T_FLOOR") ?>:</td>
 		<td width="90%"><?= $arResult["MEETING"]["UF_FLOOR"]; ?></td>
 	</tr>
 	<?endif;?>
-	<?if (StrLen($arResult["MEETING"]["UF_PLACE"]) > 0):?>
+	<?if ($arResult["MEETING"]["UF_PLACE"] <> ''):?>
 	<tr>
 		<td><?= GetMessage("INTASK_C29T_PLACE") ?>:</td>
 		<td><?= $arResult["MEETING"]["UF_PLACE"]; ?></td>
 	</tr>
 	<?endif;?>
-	<?if (StrLen($arResult["MEETING"]["UF_PHONE"]) > 0):?>
+	<?if ($arResult["MEETING"]["UF_PHONE"] <> ''):?>
 	<tr>
 		<td><?= GetMessage("INTASK_C29T_PHONE") ?>:</td>
 		<td><?= $arResult["MEETING"]["UF_PHONE"]; ?></td>
@@ -100,11 +100,11 @@ else
 					<select name="start_time" onchange="RMR_CalcEndTime()">
 						<?
 						$aMpM = IsAmPmMode();
-						$s = (StrLen($arResult["Item"]["StartTime"]) > 0 ? $arResult["Item"]["StartTime"] : "08:00");
+						$s = ($arResult["Item"]["StartTime"] <> '' ? $arResult["Item"]["StartTime"] : "08:00");
 						
 						for ($i = 0; $i < 48; $i++)
 						{
-							$t = IntVal($i / 2);
+							$t = intval($i / 2);
 							if ($aMpM)
 							{
 								if ($t >= 12)
@@ -363,7 +363,7 @@ else
 	<br />
 	<script language="JavaScript">
 	RMR_CalcEndTime();
-	RMR_RegularityChange("<?= (StrLen($arResult["Item"]["Regularity"]) <= 0 ? "NONE" : $arResult["Item"]["Regularity"]) ?>");
+	RMR_RegularityChange("<?= ($arResult["Item"]["Regularity"] == '' ? "NONE" : $arResult["Item"]["Regularity"]) ?>");
 	</script>
 	<?
 }

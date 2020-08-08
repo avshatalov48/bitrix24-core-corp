@@ -107,15 +107,15 @@ $arResult['SUM_TOTAL'] = isset($arParams['SUM_TOTAL']) ? $arParams['SUM_TOTAL'] 
 $arResult['TAX_VALUE_WT'] = round(doubleval($arParams['SUM_TOTAL'] - doubleval($arParams['TAX_VALUE'])), 2);
 
 //SAVING MODE. ONSUBMIT: SAVE ALL PRODUCT ROWS ON SUBMIT, ONCHANGE: SAVE PRODUCT ROWS AFTER EVERY CHANGE (AJAX)
-$arResult['SAVING_MODE'] = isset($arParams['SAVING_MODE']) ? strtoupper($arParams['SAVING_MODE']) : 'ONSUBMIT';
+$arResult['SAVING_MODE'] = isset($arParams['SAVING_MODE'])? mb_strtoupper($arParams['SAVING_MODE']) : 'ONSUBMIT';
 if($arResult['SAVING_MODE'] != 'ONSUBMIT' && $arResult['SAVING_MODE'] != 'ONCHANGE')
 {
 	$arResult['SAVING_MODE'] = 'ONSUBMIT';
 }
 
 $arResult['FORM_ID'] = isset($arParams['FORM_ID']) ? $arParams['FORM_ID'] : '';
-$arResult['PREFIX'] = htmlspecialcharsbx($ownerID > 0 ? strtolower($ownerName).'_'.strval($ownerID) : 'new_'.strtolower($ownerName));
-$arResult['CONTAINER_CLASS'] = htmlspecialcharsbx(strtolower($ownerName).'-product-rows');
+$arResult['PREFIX'] = htmlspecialcharsbx($ownerID > 0 ? mb_strtolower($ownerName).'_'.strval($ownerID) : 'new_'.mb_strtolower($ownerName));
+$arResult['CONTAINER_CLASS'] = htmlspecialcharsbx(mb_strtolower($ownerName).'-product-rows');
 $arResult['ROW_CLASS'] = '';
 $arResult['PRODUCT_DATA_FIELD_NAME'] = isset($arParams['PRODUCT_DATA_FIELD_NAME']) ? $arParams['PRODUCT_DATA_FIELD_NAME'] : 'PRODUCT_ROW_DATA';
 

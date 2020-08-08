@@ -72,7 +72,7 @@ if ($CCrmLead->cPerms->HavePerm('LEAD', BX_CRM_PERM_NONE, 'ADD'))
 }
 
 $METHOD = $arData['method'];
-if (strlen($METHOD) <= 0)
+if ($METHOD == '')
 {
 	$METHOD = 'lead.add';
 }

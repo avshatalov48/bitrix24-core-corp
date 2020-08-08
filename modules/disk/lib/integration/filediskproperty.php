@@ -441,11 +441,11 @@ class FileDiskProperty
 		{
 			$value['VALUE'] = array_diff($value['VALUE'], array(''));
 			$value['VALUE'] = implode(',', $value['VALUE']);
-			return strlen(trim($value['VALUE'], "\n\r\t"));
+			return mb_strlen(trim($value['VALUE'], "\n\r\t"));
 		}
 		else
 		{
-			return strlen(trim($value['VALUE'], "\n\r\t"));
+			return mb_strlen(trim($value['VALUE'], "\n\r\t"));
 		}
 	}
 

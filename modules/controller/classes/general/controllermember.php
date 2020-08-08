@@ -103,7 +103,7 @@ class CAllControllerMember
 
 		if(empty($arVars))
 		{
-			if(strlen($DB->GetErrorMessage()) > 0)
+			if($DB->GetErrorMessage() <> '')
 				$e = new CApplicationException(GetMessage("CTRLR_MEM_ERR3")." ".$DB->GetErrorMessage());
 			else
 				$e = new CApplicationException(GetMessage("CTRLR_MEM_ERR2"));
@@ -127,7 +127,7 @@ class CAllControllerMember
 		if($oResponse->OK() || preg_match("/^(STP0|FIN)/", $oResponse->text))
 			return $oResponse->text;
 
-		$str = strlen($oResponse->text)? $oResponse->text: $oResponse->status;
+		$str = $oResponse->text <> ''? $oResponse->text : $oResponse->status;
 		$e = new CApplicationException(GetMessage("CTRLR_MEM_ERR3")." ".$str);
 		$APPLICATION->ThrowException($e);
 
@@ -703,7 +703,7 @@ class CAllControllerMember
 				{
 					$arFilterNew[$k] = $value;
 				}
-				elseif(strlen($value) > 0)
+				elseif($value <> '')
 				{
 					if(array_key_exists("date_format", $arOptions) && preg_match($date_field, $k))
 						$arFilterNew[$k] = ConvertTimeStamp(MakeTimeStamp($value, $arOptions["date_format"]), "FULL");
@@ -717,7 +717,7 @@ class CAllControllerMember
 
 		$r = $obWhereCnt->GetQuery($arFilterNew);
 		$r = $obWhere->GetQuery($arFilterNew);
-		if(strlen($r) > 0)
+		if($r <> '')
 			$strWhere .= " AND (".$r.") ";
 
 		$userFieldsWhere = $obUserFieldsSql->GetFilter();
@@ -728,7 +728,7 @@ class CAllControllerMember
 		{
 			foreach($arOrder as $key => $value)
 			{
-				$key = strtoupper($key);
+				$key = mb_strtoupper($key);
 				if(array_key_exists($key, $arFields) && isset($arFields[$key]["LEFT_JOIN"]))
 					$obWhere->c_joins[$key]++;
 			}
@@ -776,7 +776,7 @@ class CAllControllerMember
 		$strSelect = "M.ID AS ID\n";
 		foreach($arSelect as $key)
 		{
-			$key = strtoupper($key);
+			$key = mb_strtoupper($key);
 			if(array_key_exists($key, $arFields) && !array_key_exists($key, $duplicates))
 			{
 				$duplicates[$key]++;
@@ -887,7 +887,7 @@ class CAllControllerMember
 
 	public static function GetByID($ID)
 	{
-		return CControllerMember::GetList(Array(), Array("ID"=>IntVal($ID)));
+		return CControllerMember::GetList(Array(), Array("ID"=>intval($ID)));
 	}
 
 
@@ -1288,7 +1288,7 @@ class CAllControllerMember
 			}
 		}
 
-		if (($ID === false || array_key_exists("NAME", $arFields)) && strlen($arFields["NAME"]) <= 0)
+		if (($ID === false || array_key_exists("NAME", $arFields)) && $arFields["NAME"] == '')
 		{
 			$arMsg[] = array(
 				"id" => "NAME",
@@ -1296,7 +1296,7 @@ class CAllControllerMember
 			);
 		}
 
-		if (($ID === false || array_key_exists("URL", $arFields)) && strlen($arFields["URL"]) <= 0)
+		if (($ID === false || array_key_exists("URL", $arFields)) && $arFields["URL"] == '')
 		{
 			$arMsg[] = array(
 				"id" => "URL",
@@ -1544,8 +1544,8 @@ class CAllControllerMember
 
 	public static function _GoodURL($url)
 	{
-		$url = strtolower(trim($url, " \t\r\n./"));
-		if(substr($url, 0, 7) != "http://" && substr($url, 0, 8) != "https://")
+		$url = mb_strtolower(trim($url, " \t\r\n./"));
+		if(mb_substr($url, 0, 7) != "http://" && mb_substr($url, 0, 8) != "https://")
 			$url = "http://".$url;
 		return $url;
 	}

@@ -181,7 +181,7 @@ class Base
 	{
 		if(count(static::getViewableExtensions()) > 0)
 		{
-			return in_array(strtolower($this->fileExtension), static::getViewableExtensions());
+			return in_array(mb_strtolower($this->fileExtension), static::getViewableExtensions());
 		}
 
 		return true;
@@ -529,7 +529,7 @@ class Base
 			return static::getViewExtension();
 		}
 
-		return strtolower($this->fileExtension);
+		return mb_strtolower($this->fileExtension);
 	}
 
 	public static function className()

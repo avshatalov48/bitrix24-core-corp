@@ -46,7 +46,7 @@ if (is_array($paymentData) && $paySystemID > 0)
 
 	if ($arPaySysAction = $dbPaySysAction->Fetch())
 	{
-		if (strlen($arPaySysAction["ACTION_FILE"]) > 0)
+		if ($arPaySysAction["ACTION_FILE"] <> '')
 		{
 			CSalePaySystemAction::InitParamArrays(
 				$paymentData['ORDER'],
@@ -71,8 +71,8 @@ if (is_array($paymentData) && $paySystemID > 0)
 			$pathToAction = $_SERVER["DOCUMENT_ROOT"].$arPaySysAction["ACTION_FILE"];
 
 			$pathToAction = str_replace("\\", "/", $pathToAction);
-			while (substr($pathToAction, strlen($pathToAction) - 1, 1) == "/")
-				$pathToAction = substr($pathToAction, 0, strlen($pathToAction) - 1);
+			while (mb_substr($pathToAction, mb_strlen($pathToAction) - 1, 1) == "/")
+				$pathToAction = mb_substr($pathToAction, 0, mb_strlen($pathToAction) - 1);
 
 			if (file_exists($pathToAction))
 			{
@@ -87,7 +87,7 @@ if (is_array($paymentData) && $paySystemID > 0)
 				}
 			}
 
-			if (strlen($arPaySysAction["ENCODING"]) > 0)
+			if ($arPaySysAction["ENCODING"] <> '')
 			{
 				define("BX_SALE_ENCODING", $arPaySysAction["ENCODING"]);
 				AddEventHandler("main", "OnEndBufferContent", "ChangeEncoding");

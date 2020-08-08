@@ -127,6 +127,7 @@ else
 	<? $APPLICATION->includeComponent(
 		'bitrix:main.mail.form', '',
 		array(
+			'VERSION' => 2,
 			'FORM_ID' => $formId,
 			'LAYOUT_ONLY' => true,
 			'EDITOR_TOOLBAR' => true,

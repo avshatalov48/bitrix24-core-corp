@@ -53,7 +53,7 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 
 	protected function getAction()
 	{
-		return isset($this->arParams['ACTION']) ? strtoupper((string) $this->arParams['ACTION']) : '';
+		return isset($this->arParams['ACTION'])? mb_strtoupper((string)$this->arParams['ACTION']) : '';
 	}
 
 	protected function getPlannerId()
@@ -154,7 +154,7 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 					'=RESPONSIBLE_ID' => \CCrmSecurityHelper::getCurrentUserId(),
 					'>CREATED' => $createdSince,
 					'@OWNER_TYPE_ID' => array(\CCrmOwnerType::Lead, \CCrmOwnerType::Contact, \CCrmOwnerType::Company),
-					'=OWNER_MULTI.TYPE_ID' => strtoupper($commType),
+					'=OWNER_MULTI.TYPE_ID' => mb_strtoupper($commType),
 				),
 				'group' => array(
 					'OWNER_TYPE_ID', 'OWNER_ID', 'OWNER_MULTI.VALUE_TYPE', 'OWNER_MULTI.VALUE',
@@ -176,7 +176,7 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 				while (($item = $res->fetch()) && count($activity['__communications']) < 10)
 				{
 					$item['ENTITY_TYPE'] = \CCrmOwnerType::resolveName($item['ENTITY_TYPE_ID']);
-					$item['TYPE'] = strtoupper($commType);
+					$item['TYPE'] = mb_strtoupper($commType);
 
 					$id = sprintf(
 						'CRM%s%u:%s',
@@ -475,7 +475,7 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 		$activity = $error = null;
 
 		if ($activityId > 0)
-			$activity = CCrmActivity::GetByID($activityId, false);
+			$activity = CCrmActivity::getList(array(), array('ID' => $activityId), false, false, array('*', 'UF_*'))->fetch();
 		elseif ($calendarEventId > 0)
 			$activity = CCrmActivity::GetByCalendarEventId($calendarEventId, false);
 
@@ -733,10 +733,12 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 			{
 				$result[] = array(
 					'fileId' => $file['FILE_ID'],
-					'fileName'   => $file['NAME'],
-					'viewURL'    => $file['VIEW_URL'],
+					'fileName' => $file['NAME'],
+					'viewURL' => $file['VIEW_URL'],
 					'previewURL' => $file['PREVIEW_URL'],
-					'fileSize'   => $file['SIZE'],
+					'fileSize' => $file['SIZE'],
+					'objectId' => $file['ID'],
+					'bytes' => $file['BYTES'],
 				);
 			}
 		}
@@ -1123,7 +1125,7 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 
 		if (empty($data['ownerType']) && empty($data['ownerId']) && !empty($communicationsData[0]))
 		{
-			$data['ownerType'] = isset($communicationsData[0]['entityType']) ? strtoupper(strval($communicationsData[0]['entityType'])) : '';
+			$data['ownerType'] = isset($communicationsData[0]['entityType'])? mb_strtoupper(strval($communicationsData[0]['entityType'])) : '';
 			$data['ownerId'] = isset($communicationsData[0]['entityId']) ? intval($communicationsData[0]['entityId']) : 0;
 		}
 
@@ -1137,8 +1139,8 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 
 		$ID = isset($data['id']) ? intval($data['id']) : 0;
 		$typeID = isset($data['type']) ? intval($data['type']) : CCrmActivityType::Activity;
-		$providerId = isset($data['providerId']) ? strtoupper(strval($data['providerId'])) : '';
-		$providerTypeId = isset($data['providerTypeId']) ? strtoupper(strval($data['providerTypeId'])) : '';
+		$providerId = isset($data['providerId'])? mb_strtoupper(strval($data['providerId'])) : '';
+		$providerTypeId = isset($data['providerTypeId'])? mb_strtoupper(strval($data['providerTypeId'])) : '';
 
 		$activity = array(
 			'TYPE_ID' => $typeID,
@@ -1163,7 +1165,7 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 			return $result;
 		}
 
-		$ownerTypeName = isset($data['ownerType']) ? strtoupper(strval($data['ownerType'])) : '';
+		$ownerTypeName = isset($data['ownerType'])? mb_strtoupper(strval($data['ownerType'])) : '';
 		if($provider::checkOwner() && $ownerTypeName === '')
 		{
 			$result->addError(new Main\Error('OWNER TYPE IS NOT DEFINED!'));
@@ -1258,7 +1260,6 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 			'LOCATION' => $location,
 			'DIRECTION' => $direction,
 			'NOTIFY_TYPE' => CCrmActivityNotifyType::None,
-			'SETTINGS' => array()
 		);
 
 		$arFields['NOTIFY_TYPE'] = isset($data['notifyType']) ? (int)$data['notifyType'] : CCrmActivityNotifyType::Min;
@@ -1267,7 +1268,7 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 		$isNew = $ID <= 0;
 		$arPreviousFields = $ID > 0 ? CCrmActivity::GetByID($ID) : array();
 
-		$disableStorageEdit = isset($data['disableStorageEdit']) && strtoupper($data['disableStorageEdit']) === 'Y';
+		$disableStorageEdit = isset($data['disableStorageEdit']) && mb_strtoupper($data['disableStorageEdit']) === 'Y';
 		if(!$disableStorageEdit)
 		{
 			$storageTypeID = isset($data['storageTypeID']) ? intval($data['storageTypeID']) : Integration\StorageType::Undefined;
@@ -1357,6 +1358,8 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 
 			$arFields['BINDINGS'] = array_values($arBindings);
 			$arFields['COMMUNICATIONS'] = $communications;
+
+			$arFields['SETTINGS'] = array();
 
 			$providerResult = $provider::postForm($arFields, $data);
 			if(!$providerResult->isSuccess())
@@ -1513,9 +1516,9 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 		foreach ($rawData as $commData)
 		{
 			$commID = isset($commData['id']) ? (int)$commData['id'] : 0;
-			$commEntityType = isset($commData['entityType']) ? strtoupper(strval($commData['entityType'])) : '';
+			$commEntityType = isset($commData['entityType'])? mb_strtoupper(strval($commData['entityType'])) : '';
 			$commEntityID = isset($commData['entityId']) ? intval($commData['entityId']) : 0;
-			$commType = isset($commData['type']) ? strtoupper(strval($commData['type'])) : '';
+			$commType = isset($commData['type'])? mb_strtoupper(strval($commData['type'])) : '';
 			$commValue = isset($commData['value']) ? strval($commData['value']) : '';
 
 			if($commEntityID <= 0 && $commType === CCrmFieldMulti::PHONE && $ownerTypeName !== 'DEAL')

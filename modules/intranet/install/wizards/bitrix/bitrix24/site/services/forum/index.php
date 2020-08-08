@@ -328,6 +328,6 @@ COption::SetOptionString("forum", "SHOW_VOTES", "N");
 COption::SetOptionString("forum", "file_max_size", 10485760);
 
 $FORUM_FROM_EMAIL = COption::GetOptionString("main", "email_from");
-if (strlen($FORUM_FROM_EMAIL) > 0)
+if ($FORUM_FROM_EMAIL <> '')
 	COption::SetOptionString("forum", "FORUM_FROM_EMAIL", $FORUM_FROM_EMAIL);
 ?>

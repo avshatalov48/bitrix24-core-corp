@@ -27,7 +27,7 @@ if (!empty($arResult['TASK']['PARAMETERS']['REQUEST']))
 		$checkedTypes = array();
 		foreach ($arResult['TASK']['PARAMETERS']['REQUEST'] as $request)
 		{
-			$type = strtolower($request['Type']);
+			$type = mb_strtolower($request['Type']);
 			if (!in_array($type, $checkedTypes))
 			{
 				if (isset($arResult['TypesMap'][$type]))
@@ -49,6 +49,11 @@ if (!empty($arResult['TASK']['PARAMETERS']['REQUEST']))
 			}
 		}
 	}
+}
+
+if ($arResult['TASK']['MODULE_ID'] === 'rpa')
+{
+	$arResult["SKIP_BP"] = 'Y';
 }
 
 if (!empty($arResult["TASK"]["DESCRIPTION"]))
@@ -104,7 +109,7 @@ if (is_array($arResult['TASK']['PARAMETERS']['DOCUMENT_ID'])
 	if ($arResult['TASK']['PARAMETERS']['DOCUMENT_ID'][0] === 'crm')
 	{
 		list($entityType, $entityId) = explode('_', $arResult['TASK']['PARAMETERS']['DOCUMENT_ID'][2]);
-		$entityType = strtolower($entityType);
+		$entityType = mb_strtolower($entityType);
 		$url .= 'mobile/crm/'.$entityType.'/?page=view&'.$entityType.'_id='.$entityId;
 	}
 	else

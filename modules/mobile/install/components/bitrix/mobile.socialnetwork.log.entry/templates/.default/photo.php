@@ -26,7 +26,7 @@
 	if ($arEvent["EVENT"]["EVENT_ID"] == "photo")
 	{
 		$photo_section_id = $arEvent["EVENT"]["SOURCE_ID"];
-		if (strlen($arEvent["EVENT"]["PARAMS"]) > 0)
+		if ($arEvent["EVENT"]["PARAMS"] <> '')
 		{
 			$arEventParams = unserialize(htmlspecialcharsback($arEvent["EVENT"]["PARAMS"]));
 			if (
@@ -42,7 +42,7 @@
 		if (intval($arEvent["EVENT"]["SOURCE_ID"]) > 0)
 			$arPhotoItems = array($arEvent["EVENT"]["SOURCE_ID"]);
 
-		if (strlen($arEvent["EVENT"]["PARAMS"]) > 0)
+		if ($arEvent["EVENT"]["PARAMS"] <> '')
 		{
 			$arEventParams = unserialize(htmlspecialcharsback($arEvent["EVENT"]["PARAMS"]));
 			if (
@@ -54,7 +54,7 @@
 		}
 	}
 
-	if (strlen($arEvent["EVENT"]["PARAMS"]) > 0)
+	if ($arEvent["EVENT"]["PARAMS"] <> '')
 	{
 		$arEventParams = unserialize(htmlspecialcharsback($arEvent["EVENT"]["PARAMS"]));
 
@@ -86,7 +86,7 @@
 		}
 
 		if (
-			strlen($photo_iblock_type) > 0
+			$photo_iblock_type <> ''
 			&& intval($photo_iblock_id) > 0
 			&& intval($photo_section_id) > 0
 			&& count($arPhotoItems) > 0

@@ -8,6 +8,8 @@
 
 	BXCrmActivityEmailController.init = function (options)
 	{
+		var ctrl = this;
+
 		if (this.__inited)
 			return;
 
@@ -46,6 +48,19 @@
 
 				BX.bind(items[i], 'click', this.handleLogItemClick.bind(this, items[i].getAttribute('data-id')));
 			}
+
+			BX.Event.EventEmitter.subscribe(
+				'BXMailMessageActions:CRM_EXCLUDE',
+				function (event)
+				{
+					if (ctrl.options.mailMessageId == event.getData().messageId)
+					{
+						var slider = top.BX.SidePanel.Instance.getSliderByWindow(window);
+						slider.setCacheable(false);
+						slider.close();
+					}
+				}
+			);
 		}
 
 		this.__inited = true;
@@ -499,28 +514,11 @@
 
 		var mailForm = BXMainMailForm.getForm(this.options.formId);
 
-		BX.addCustomEvent(mailForm, 'MailForm:field:rcptSelectorClose', BXCrmActivityEmail.handleRcptSelectorClose.bind(this));
 		BX.addCustomEvent(mailForm, 'MailForm:footer:buttonClick', BXCrmActivityEmail.handleFooterButtonClick.bind(this));
 		BX.addCustomEvent(mailForm, 'MailForm:submit', BXCrmActivityEmail.handleFormSubmit.bind(this));
 		BX.addCustomEvent(mailForm, 'MailForm:submit:ajaxSuccess', BXCrmActivityEmail.handleFormSubmitSuccess.bind(this));
 
 		this.htmlForm.__inited = true;
-	};
-
-	BXCrmActivityEmail.handleRcptSelectorClose = function (form, field)
-	{
-		if (!field.params.name.match(/^DATA\[(to|cc|bcc)\]$/))
-			return;
-
-		for (var i = 0, target; i < form.fields.length; i++)
-		{
-			target = form.fields[i];
-			if (target.selector == field.selector || !target.params.name.match(/^DATA\[(to|cc|bcc)\]$/))
-				continue;
-
-			BX.SocNetLogDestination.obItems[target.selector] = BX.SocNetLogDestination.obItems[field.selector];
-			BX.SocNetLogDestination.obItemsLast[target.selector] = BX.SocNetLogDestination.obItemsLast[field.selector];
-		}
 	};
 
 	BXCrmActivityEmail.handleFooterButtonClick = function (form, button)
@@ -555,7 +553,7 @@
 		}
 
 		// @TODO: use events
-		var uploads;
+		var uploads, items, totalSize = 0;
 		for (var i in form.postForm.controllers)
 		{
 			if (!form.postForm.controllers.hasOwnProperty(i))
@@ -577,6 +575,28 @@
 				form.showError(BX.message('CRM_ACT_EMAIL_REPLY_UPLOADING'));
 				return BX.PreventDefault(event);
 			}
+
+			if (BX.message('CRM_ACT_EMAIL_MAX_SIZE') > 0)
+			{
+				try
+				{
+					items = form.postForm.controllers[i].handler.agent.queue.items.items;
+					totalSize = Object.keys(items).reduce(
+						function (sum, k)
+						{
+							return sum + (items[k].file ? parseInt(items[k].file.sizeInt || items[k].file.size) : 0);
+						},
+						totalSize
+					);
+				}
+				catch (err) {}
+			}
+		}
+
+		if (BX.message('CRM_ACT_EMAIL_MAX_SIZE') > 0 && BX.message('CRM_ACT_EMAIL_MAX_SIZE') <= Math.ceil(totalSize / 3) * 4) // base64 coef.
+		{
+			form.showError(BX.message('CRM_ACT_EMAIL_MAX_SIZE_EXCEED'));
+			return BX.PreventDefault(event);
 		}
 
 		if ('edit' == this.ctrl.options.type)

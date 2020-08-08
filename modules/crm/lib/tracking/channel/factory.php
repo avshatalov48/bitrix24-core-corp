@@ -104,6 +104,9 @@ class Factory
 			case Base::Order:
 				$class = Order::class;
 				break;
+			case Base::SalesCenter:
+				$class = SalesCenter::class;
+				break;
 		}
 
 		return $class;
@@ -178,6 +181,9 @@ class Factory
 			Base::Callback,
 			Base::FbLeadAds,
 			Base::VkLeadAds,
+			Base::Rest,
+			Base::Order,
+			Base::SalesCenter,
 		];
 	}
 

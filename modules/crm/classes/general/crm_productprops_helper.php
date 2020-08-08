@@ -12,6 +12,7 @@ class CCrmProductPropsHelper
 {
 	protected static $whiteListByOperation = null;
 	protected static $blackList = null;
+	protected static $typeListSupportingUrlTemplate = null;
 
 	public static function GetUserTypeWhiteListByOperation()
 	{
@@ -71,6 +72,39 @@ class CCrmProductPropsHelper
 		}
 
 		return self::$blackList;
+	}
+
+	/**
+	 * @return array|null
+	 */
+	public static function getTypeListSupportingUrlTemplate(): ?array
+	{
+		if (self::$typeListSupportingUrlTemplate === null)
+		{
+			self::$typeListSupportingUrlTemplate = array(
+				'E:EAutocomplete',
+				'E:EList'
+			);
+		}
+
+		return self::$typeListSupportingUrlTemplate;
+	}
+
+	/**
+	 * @param array $propertyInfo
+	 * @return bool
+	 */
+	public static function isTypeSupportingUrlTemplate(array $propertyInfo): bool
+	{
+		if (empty($propertyInfo['PROPERTY_TYPE']) || empty($propertyInfo['USER_TYPE']))
+		{
+			return false;
+		}
+
+		$urlTemplateSupportTypeList = static::getTypeListSupportingUrlTemplate();
+		$fullType = "{$propertyInfo['PROPERTY_TYPE']}:{$propertyInfo['USER_TYPE']}";
+
+		return in_array($fullType, $urlTemplateSupportTypeList, true);
 	}
 
 	public static function GetPropsTypesDescriptions($userType = false, $arOperations = array())
@@ -393,10 +427,10 @@ class CCrmProductPropsHelper
 			return;
 		}
 
-		$isContactEnabled = isset($settings['CONTACT']) && strtoupper($settings['CONTACT']) === 'Y';
-		$isCompanyEnabled = isset($settings['COMPANY']) && strtoupper($settings['COMPANY']) === 'Y';
-		$isLeadEnabled = isset($settings['LEAD']) && strtoupper($settings['LEAD']) === 'Y';
-		$isDealEnabled = isset($settings['DEAL']) && strtoupper($settings['DEAL']) === 'Y';
+		$isContactEnabled = isset($settings['CONTACT']) && mb_strtoupper($settings['CONTACT']) === 'Y';
+		$isCompanyEnabled = isset($settings['COMPANY']) && mb_strtoupper($settings['COMPANY']) === 'Y';
+		$isLeadEnabled = isset($settings['LEAD']) && mb_strtoupper($settings['LEAD']) === 'Y';
+		$isDealEnabled = isset($settings['DEAL']) && mb_strtoupper($settings['DEAL']) === 'Y';
 
 		if(is_array($value))
 		{
@@ -456,7 +490,7 @@ class CCrmProductPropsHelper
 		if(preg_match('/^\[([A-Z]+)\]/i', $value, $m) > 0)
 		{
 			$valueType = CCrmOwnerType::Undefined;
-			$prefix = strtoupper($m[1]);
+			$prefix = mb_strtoupper($m[1]);
 			if($prefix === 'L')
 			{
 				$valueType = CCrmOwnerType::Lead;
@@ -483,7 +517,7 @@ class CCrmProductPropsHelper
 				return false;
 			}
 
-			$value = substr($value, strlen($m[0]));
+			$value = mb_substr($value, mb_strlen($m[0]));
 		}
 
 		// 1. Try to interpret data as entity ID
@@ -607,7 +641,7 @@ class CCrmProductPropsHelper
 		}
 		else
 		{
-			$exportType = strtolower($exportType);
+			$exportType = mb_strtolower($exportType);
 		}
 
 		switch ($exportType)

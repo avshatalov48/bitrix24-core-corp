@@ -5,7 +5,7 @@ define('NO_AGENT_CHECK', true);
 define('PUBLIC_AJAX_MODE', true);
 define('DisableEventsCheck', true);
 
-$siteID = isset($_REQUEST['site']) ? substr(preg_replace('/[^a-z0-9_]/i', '', $_REQUEST['site']), 0, 2) : '';
+$siteID = isset($_REQUEST['site'])? mb_substr(preg_replace('/[^a-z0-9_]/i', '', $_REQUEST['site']), 0, 2) : '';
 if($siteID !== '')
 {
 	define('SITE_ID', $siteID);
@@ -77,7 +77,7 @@ $componentParams['OWNER'] = $bindings[0];
 $componentParams['BINDINGS'] = $componentData['params']['BINDINGS'] = $bindings;
 
 //Sanitaizing of Permission Type
-$permissionType = isset($componentParams['PERMISSION_TYPE']) ? strtoupper($componentParams['PERMISSION_TYPE']) : 'READ';
+$permissionType = isset($componentParams['PERMISSION_TYPE'])? mb_strtoupper($componentParams['PERMISSION_TYPE']) : 'READ';
 if($permissionType !== 'READ' && !CCrmActivity::CheckUpdatePermission($ownerTypeID, $ownerID, $userPermissions))
 {
 	$componentParams['PERMISSION_TYPE'] = $componentData['params']['PERMISSION_TYPE'] = 'READ';

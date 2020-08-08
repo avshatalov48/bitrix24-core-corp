@@ -150,7 +150,7 @@ class CTasksTools
 
 	public function __call($name, $arguments)
 	{
-		$nameHash = md5(strtolower($name));
+		$nameHash = md5(mb_strtolower($name));
 
 		if (
 			($nameHash === 'b6a4f4c2248041c6e78365b01996ceee')
@@ -166,7 +166,7 @@ class CTasksTools
 
 	public static function __callStatic($name, $arguments)
 	{
-		$nameHash = md5(strtolower($name));
+		$nameHash = md5(mb_strtolower($name));
 
 		if (
 			($nameHash === 'b6a4f4c2248041c6e78365b01996ceee')
@@ -183,8 +183,8 @@ class CTasksTools
 	public static function IsIphoneOrIpad()
 	{
 		if (
-			(strpos($_SERVER['HTTP_USER_AGENT'], 'iPhone') !== false)
-			|| (strpos($_SERVER['HTTP_USER_AGENT'], 'iPad') !== false)
+			(mb_strpos($_SERVER['HTTP_USER_AGENT'], 'iPhone') !== false)
+			|| (mb_strpos($_SERVER['HTTP_USER_AGENT'], 'iPad') !== false)
 		)
 			return (true);
 		else
@@ -198,7 +198,7 @@ class CTasksTools
      * @return mixed|string
      * @deprecated
      */
-	public static function FormatDatetimeBeauty($in, $arParams = array(), 
+	public static function FormatDatetimeBeauty($in, $arParams = array(),
 		$formatDatetimePHP = false
 	)
 	{
@@ -236,8 +236,8 @@ class CTasksTools
 		}
 
 		if (
-			(strpos($formatDatetimePHP, 'A') !== false)
-			|| (strpos($formatDatetimePHP, 'a') !== false)
+			(mb_strpos($formatDatetimePHP, 'A') !== false)
+			|| (mb_strpos($formatDatetimePHP, 'a') !== false)
 		)
 		{
 			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
@@ -266,7 +266,7 @@ class CTasksTools
 					' g', ' G', 'g', 'G',
 					' h', ' H', 'h', 'H',
 					':i', ':s', 'i', 's'
-				), 
+				),
 				'',
 				$formatPHP
 			);
@@ -285,15 +285,15 @@ class CTasksTools
 		}
 
 		$formatPHPWoSeconds = str_replace(
-			array(':SS', ':ss', ':S', ':s', 's', 'S'), 
-			'', 
+			array(':SS', ':ss', ':S', ':s', 's', 'S'),
+			'',
 			$formatPHP
 		);
 
 		$dateTimeFormated = FormatDate($formatPHPWoSeconds, MakeTimeStamp($in));
 
 		if (defined(LANGUAGE_ID)
-			&& (strcasecmp(LANGUAGE_ID, 'EN') !== 0) 
+			&& (strcasecmp(LANGUAGE_ID, 'EN') !== 0)
 			&& (strcasecmp(LANGUAGE_ID, 'DE') !== 0)
 		)
 		{
@@ -307,16 +307,16 @@ class CTasksTools
 			$curYear = date('Y');
 			$dateTimeFormated = str_replace(
 				array(
-					'-' . $curYear, 
-					'/' . $curYear, 
-					' ' . $curYear, 
+					'-' . $curYear,
+					'/' . $curYear,
+					' ' . $curYear,
 					'.' . $curYear,
-					$curYear . '-', 
-					$curYear . '/', 
-					$curYear . ' ', 
+					$curYear . '-',
+					$curYear . '/',
+					$curYear . ' ',
 					$curYear . '.'
-				), 
-				'', 
+				),
+				'',
 				$dateTimeFormated
 			);
 		}
@@ -334,19 +334,19 @@ class CTasksTools
 	{
 		static $bUseHtmlSanitizer = null;
 		static $oSanitizer = null;
-	
+
 		// Init sanitizer (if we need it) only once at hit
 		if ($bUseHtmlSanitizer === null)
 		{
 			$bSanitizeLevel = COption::GetOptionString('tasks', 'sanitize_level');
-	
+
 			if ($bSanitizeLevel >= 0)
 			{
 				$bUseHtmlSanitizer = true;
 
-				if ( ! 
+				if ( !
 					in_array(
-						$bSanitizeLevel, 
+						$bSanitizeLevel,
 						array(
 							CBXSanitizer::SECURE_LEVEL_HIGH,
 							CBXSanitizer::SECURE_LEVEL_MIDDLE,
@@ -357,7 +357,7 @@ class CTasksTools
 				{
 					$bSanitizeLevel = CBXSanitizer::SECURE_LEVEL_HIGH;
 				}
-	
+
 				$oSanitizer = new CBXSanitizer();
 				$oSanitizer->SetLevel($bSanitizeLevel);
 				$oSanitizer->AddTags(
@@ -375,7 +375,7 @@ class CTasksTools
 			else
 				$bUseHtmlSanitizer = false;
 		}
-	
+
 		if ( ! $bUseHtmlSanitizer )
 			return ($rawHtml);
 
@@ -392,8 +392,8 @@ class CTasksTools
 	{
 		// Roles allowed for extranet user to grant access to read task in group
 		static $arAllowedRoles = array(
-			SONET_ROLES_MODERATOR, 
-			SONET_ROLES_USER, 
+			SONET_ROLES_MODERATOR,
+			SONET_ROLES_USER,
 			SONET_ROLES_OWNER
 		);
 
@@ -426,9 +426,9 @@ class CTasksTools
 			return true;
 
 		$rsUsers = CUser::GetList(
-			$by = "id", 
-			$order = "asc", 
-			array("ID" => $userId), 
+			$by = "id",
+			$order = "asc",
+			array("ID" => $userId),
 			array("SELECT" => array("UF_DEPARTMENT"))
 		);
 
@@ -466,7 +466,7 @@ class CTasksTools
 
 		// Get tasks data
 		$rsTask = CTasks::GetList(
-			array(), 
+			array(),
 			array('FORUM_TOPIC_ID' => $arData['PARAM2'])
 			);
 		$arTask = $rsTask->Fetch();
@@ -491,9 +491,9 @@ class CTasksTools
 			);
 
 		$rsUser = CUser::GetList(
-			$by = 'last_name', 
-			$order = 'asc', 
-			$arFilter, 
+			$by = 'last_name',
+			$order = 'asc',
+			$arFilter,
 			array('SELECT' => array('UF_DEPARTMENT'))
 			);
 
@@ -507,28 +507,28 @@ class CTasksTools
 			if ($arTask["GROUP_ID"])
 			{
 				$pathTemplate = str_replace(
-					"#group_id#", 
-					$arTask["GROUP_ID"], 
+					"#group_id#",
+					$arTask["GROUP_ID"],
 					COption::GetOptionString(
-						"tasks", 
-						"paths_task_group_entry", 
-						"/extranet/workgroups/group/#group_id#/tasks/task/view/#task_id#/", 
+						"tasks",
+						"paths_task_group_entry",
+						"/extranet/workgroups/group/#group_id#/tasks/task/view/#task_id#/",
 						$extranetSiteId
 						)
 					);
 
 				$pathTemplate = str_replace(
-					"#GROUP_ID#", 
-					$arTask["GROUP_ID"], 
+					"#GROUP_ID#",
+					$arTask["GROUP_ID"],
 					$pathTemplate
 					);
 			}
 			else
 			{
 				$pathTemplate = COption::GetOptionString(
-					"tasks", 
-					"paths_task_user_entry", 
-					"/extranet/contacts/personal/user/#user_id#/tasks/task/view/#task_id#/", 
+					"tasks",
+					"paths_task_user_entry",
+					"/extranet/contacts/personal/user/#user_id#/tasks/task/view/#task_id#/",
 					$extranetSiteId
 					);
 			}
@@ -538,46 +538,46 @@ class CTasksTools
 			if ($arTask["GROUP_ID"])
 			{
 				$pathTemplate = str_replace(
-					"#group_id#", 
-					$arTask["GROUP_ID"], 
+					"#group_id#",
+					$arTask["GROUP_ID"],
 					COption::GetOptionString(
-						"tasks", 
-						"paths_task_group_entry", 
-						"/workgroups/group/#group_id#/tasks/task/view/#task_id#/", 
+						"tasks",
+						"paths_task_group_entry",
+						"/workgroups/group/#group_id#/tasks/task/view/#task_id#/",
 						$defSiteId
 						)
 					);
 
 				$pathTemplate = str_replace(
-					"#GROUP_ID#", 
-					$arTask["GROUP_ID"], 
+					"#GROUP_ID#",
+					$arTask["GROUP_ID"],
 					$pathTemplate
 					);
 			}
 			else
 			{
 				$pathTemplate = COption::GetOptionString(
-					"tasks", 
-					"paths_task_user_entry", 
-					"/company/personal/user/#user_id#/tasks/task/view/#task_id#/", 
+					"tasks",
+					"paths_task_user_entry",
+					"/company/personal/user/#user_id#/tasks/task/view/#task_id#/",
 					$defSiteId
 					);
 			}
 		}
 
 		$messageUrl = CComponentEngine::MakePathFromTemplate(
-			$pathTemplate, 
+			$pathTemplate,
 			array(
-				"user_id" => $arData['USER_ID'], 
-				"task_id" => $arTask["ID"], 
+				"user_id" => $arData['USER_ID'],
+				"task_id" => $arTask["ID"],
 				"action"  => "view"
 				)
 			);
-		
-		if (strlen($arData['ENTITY_ID']))
+
+		if($arData['ENTITY_ID'] <> '')
 		{
 			$messageUrl = \Bitrix\Tasks\Integration\Forum\Comment::makeUrl($messageUrl, $arData['ENTITY_ID']);
-		}	
+		}
 
 		// Replace path to correct in URL
 		$arData['URL'] = $messageUrl;
@@ -771,11 +771,11 @@ class CTasksTools
 
 	/**
 	 * This is workaround for some troubles with options
-	 * 
+	 *
 	 * @access private
 	 * @param string $siteId of option
 	 * @param string $defaultValue, if option is not set
-	 * 
+	 *
 	 * @throws TasksException
 	 * @return string
 	 */
@@ -787,11 +787,11 @@ class CTasksTools
 
 	/**
 	 * This is workaround for some troubles with options
-	 * 
+	 *
 	 * @access private
 	 * @param string $siteId of option
 	 * @param string $defaultValue, if option is not set
-	 * 
+	 *
 	 * @throws TasksException
 	 * @return string
 	 */
@@ -856,29 +856,7 @@ class CTasksTools
 
 	public static function getRandFunction()
 	{
-		global $DBType;
-
-		$dbtype = strtolower($DBType);
-
-		switch ($dbtype)
-		{
-			case 'mysql':
-				return ' RAND(' . rand(0, 1000000) . ') ';
-			break;
-
-			case 'mssql':
-				return ' newid() ';
-			break;
-
-			case 'oracle':
-				return ' DBMS_RANDOM.RANDOM() ';
-			break;
-
-			default:
-				CTaskAssert::log('unknown DB type: ' . $dbtype, CTaskAssert::ELL_ERROR);
-				return ' ID ';
-			break;
-		}
+		return ' RAND(' . rand(0, 1000000) . ') ';
 	}
 
 

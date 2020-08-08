@@ -46,7 +46,7 @@ final class TypeFile
 
 	public static function getByExtension($extension)
 	{
-		switch(strtolower($extension))
+		switch(mb_strtolower($extension))
 		{
 			case 'jpe':
 			case 'jpg':
@@ -128,11 +128,11 @@ final class TypeFile
 			case 'epub':
 			case 'msg':
 			case 'eml':
-			// IMAGES
+				// IMAGES
 			case 'tif':
 			case 'tiff':
 			case 'psd':
-			// FONTS
+				// FONTS
 			case 'ttf':
 			case 'otf':
 			case 'eot':
@@ -198,7 +198,7 @@ final class TypeFile
 	{
 		$mimes = static::getMimeTypeExtensionList();
 		$mimes = array_flip($mimes);
-		$mimeType = strtolower($mimeType);
+		$mimeType = mb_strtolower($mimeType);
 		if (isset($mimes[$mimeType]))
 		{
 			return $mimes[$mimeType];
@@ -216,7 +216,7 @@ final class TypeFile
 	public static function getMimeTypeByFilename($filename)
 	{
 		$mimes = static::getMimeTypeExtensionList();
-		$extension = strtolower(getFileExtension($filename));
+		$extension = mb_strtolower(getFileExtension($filename));
 		if (isset($mimes[$extension]))
 		{
 			return $mimes[$extension];

@@ -118,7 +118,7 @@ class Img implements \Bitrix\Main\Errorable
 		if (
 			!$canvas
 			|| !$type
-			|| strlen($type) <= 0
+			|| $type == ''
 		)
 		{
 			return $result;
@@ -126,7 +126,7 @@ class Img implements \Bitrix\Main\Errorable
 
 		$textTypeValue = StressLevel::getTypeDescription($type, $value);
 
-		if (strlen($textTypeValue) > 0)
+		if ($textTypeValue <> '')
 		{
 			$textType = new \ImagickDraw();
 			$fontPath = $this->getImagePartsPath().'/OpenSans-Semibold.ttf';
@@ -268,7 +268,7 @@ class Img implements \Bitrix\Main\Errorable
 		if (
 			!$text
 			|| !$canvas
-			|| strlen($text) <= 0
+			|| $text == ''
 		)
 		{
 			return false;
@@ -559,8 +559,8 @@ class Img implements \Bitrix\Main\Errorable
 		$imageCaption->setFontSize($factor*8);
 		$imageCaption->setTextAlignment(\Imagick::ALIGN_CENTER);
 
-		$caption = strtoupper(Loc::getMessage('INTRANET_USER_PROFILE_STRESSLEVEL_IMG_VALUE_CAPTION'));
-		if (strlen($caption) <= 0)
+		$caption = mb_strtoupper(Loc::getMessage('INTRANET_USER_PROFILE_STRESSLEVEL_IMG_VALUE_CAPTION'));
+		if ($caption == '')
 		{
 			return false;
 		}
@@ -630,7 +630,7 @@ class Img implements \Bitrix\Main\Errorable
 		$imagePowered->setTextAlignment(\Imagick::ALIGN_LEFT);
 
 		$poweredText = Loc::getMessage('INTRANET_USER_PROFILE_STRESSLEVEL_IMG_POWERED2');
-		if (strlen($poweredText) > 0)
+		if ($poweredText <> '')
 		{
 			$error = "";
 			if (LANG_CHARSET != "UTF-8")

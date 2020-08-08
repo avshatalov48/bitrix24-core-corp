@@ -69,7 +69,7 @@ $isFormInline = $defaultTemplateContainerId == $templateContainerId;
 		$addStyle = $counter > 0 ? 'display: none;' : '';
 		$type = htmlspecialcharsbx($type);
 		$msgType = $type === 'AUTO' ? 'DELAY' : $type;
-		$typeLower = strtolower($type);
+		$typeLower = mb_strtolower($type);
 		$counter++;
 		$view = !empty($arResult['VIEWS'][$typeLower]) ? $arResult['VIEWS'][$typeLower] : [];
 		?>

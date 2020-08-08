@@ -19,13 +19,14 @@ $componentParameters = array(
 if ($_REQUEST['IFRAME'] == 'Y')
 {
 	$APPLICATION->IncludeComponent(
-		"bitrix:intranet.pageslider.wrapper",
+		"bitrix:ui.sidepanel.wrapper",
 		"",
-		array(
+		[
 			'POPUP_COMPONENT_NAME' => "bitrix:main.userconsent.consent.list",
 			"POPUP_COMPONENT_TEMPLATE_NAME" => "",
 			"POPUP_COMPONENT_PARAMS" => $componentParameters,
-		)
+			"USE_UI_TOOLBAR" => "Y"
+		]
 	);
 }
 else

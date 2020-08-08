@@ -730,12 +730,15 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 			if ($check['LINK_PARAMS'])
 			{
 				$cashbox = \Bitrix\Sale\Cashbox\Manager::getObjectById($check['CASHBOX_ID']);
-				$check['CHECK_LINK'] = CCrmViewHelper::RenderInfo(
-					$cashbox->getCheckLink($check['LINK_PARAMS']),
-					Loc::getMessage('CRM_ORDER_CHECK_LINK'),
-					'',
-					array('TARGET' => '_blank')
-				);
+				if ($cashbox)
+				{
+					$check['CHECK_LINK'] = CCrmViewHelper::RenderInfo(
+						$cashbox->getCheckLink($check['LINK_PARAMS']),
+						Loc::getMessage('CRM_ORDER_CHECK_LINK'),
+						'',
+						array('TARGET' => '_blank')
+					);
+				}
 			}
 
 			$check['STATUS_NAME'] = Loc::getMessage('CRM_ORDER_CASHBOX_STATUS_'.$check['STATUS']);

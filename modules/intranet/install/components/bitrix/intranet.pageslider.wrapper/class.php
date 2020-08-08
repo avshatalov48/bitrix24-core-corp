@@ -8,6 +8,13 @@ Loc::loadMessages(__FILE__);
 
 class IntranetPageSliderWrapperComponent extends \CBitrixComponent
 {
+	public function onPrepareComponentParams($params)
+	{
+		$params['SHOW_TITLE'] = $params['SHOW_TITLE'] ?? 'Y';
+
+		return $params;
+	}
+
 	public function executeComponent()
 	{
 		/** @var CMain $APPLICATION */

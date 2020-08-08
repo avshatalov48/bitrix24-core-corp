@@ -69,8 +69,8 @@ if(!$arResult["SCORING_ENABLED"] && \Bitrix\Main\Loader::includeModule("bitrix24
 		"CRM_ML_MODEL_LIST_SCORING_MODEL_READY": '<?= GetMessageJS("CRM_ML_MODEL_LIST_SCORING_MODEL_READY")?>',
 		"CRM_ML_MODEL_LIST_SCORING_MODEL_QUALITY": '<?= GetMessageJS("CRM_ML_MODEL_LIST_SCORING_MODEL_QUALITY")?>',
 		"CRM_ML_MODEL_LIST_SCORING_MODEL_TRAINING_DATE": '<?= GetMessageJS("CRM_ML_MODEL_LIST_SCORING_MODEL_TRAINING_DATE")?>',
-		"CRM_SCORING_LICENSE_TITLE": '<?= \Bitrix\Crm\Ml\Scoring::getLicenseInfoTitle()?>',
-		"CRM_SCORING_LICENSE_TEXT": '<?= \Bitrix\Crm\Ml\Scoring::getLicenseInfoText()?>',
+		"CRM_SCORING_LICENSE_TITLE": '<?= CUtil::JSEscape(\Bitrix\Crm\Ml\Scoring::getLicenseInfoTitle())?>',
+		"CRM_SCORING_LICENSE_TEXT": '<?= CUtil::JSEscape(\Bitrix\Crm\Ml\Scoring::getLicenseInfoText())?>',
 	});
 
 	BX.Crm.scoringModelList = new BX.Crm.Scoring.ModelList({

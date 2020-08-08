@@ -123,7 +123,7 @@ use Bitrix\Main\Localization\Loc;
 						><?= htmlspecialcharsbx(htmlspecialcharsbx($shiftForm->getFormattedBreakDuration()))
 							?></span>
 						<input name="<?= $shiftFormName . "[$shiftIndex][breakDurationFormatted]" ?>"
-								data-role="timeman-shift-link-break-time"
+								data-role="timeman-shift-break-time"
 								type="hidden"
 								class="timeman-schedule-form-worktime-input-value-text"
 								value="<?= htmlspecialcharsbx($shiftForm->getFormattedBreakDuration()) ?>">

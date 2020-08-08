@@ -15,29 +15,34 @@ class CTasksNotifySchema
 	{
 	}
 
-
-	public static function OnGetNotifySchema()
+	/**
+	 * @return array[][]
+	 */
+	public static function OnGetNotifySchema(): array
 	{
-		return array(
-			'tasks' => array(
-				'comment' => array(
-					'NAME'      => GetMessage('TASKS_NS_COMMENT'),
-					'PUSH' 		=> 'Y'
-				),
-				'reminder' => array(
-					'NAME'      => GetMessage('TASKS_NS_REMINDER'),
-					'PUSH' 		=> 'Y'
-				),
-				'manage' => array(
-					'NAME'      => GetMessage('TASKS_NS_MANAGE'),
-					'PUSH' 		=> 'Y'
-				),
-				'task_assigned' => array(
-					'NAME'      => GetMessage('TASKS_NS_TASK_ASSIGNED'),
-					'PUSH' 		=> 'Y'
-				),
-			),
-		);
+		return [
+			'tasks' => [
+				'comment' => [
+					'NAME' => GetMessage('TASKS_NS_COMMENT'),
+					'PUSH' => 'Y',
+					'MAIL' => 'N',
+					'XMPP' => 'N',
+					'DISABLED' => [IM_NOTIFY_FEATURE_XMPP],
+				],
+				'reminder' => [
+					'NAME' => GetMessage('TASKS_NS_REMINDER'),
+					'PUSH' => 'Y',
+				],
+				'manage' => [
+					'NAME' => GetMessage('TASKS_NS_MANAGE'),
+					'PUSH' => 'Y',
+				],
+				'task_assigned' => [
+					'NAME' => GetMessage('TASKS_NS_TASK_ASSIGNED'),
+					'PUSH' => 'Y',
+				],
+			],
+		];
 	}
 }
 

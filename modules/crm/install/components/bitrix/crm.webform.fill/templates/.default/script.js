@@ -89,15 +89,33 @@ function CrmWebForm(params)
 		if (BX.type.isArray(params.fields) && this.webForm)
 		{
 			params.fields.forEach(function(field){
-				if (field.type === 'resourcebooking' && BX.Calendar
-					&& BX.Calendar.UserField && BX.Calendar.UserField.getResourceBookingFieldLive)
+				if (field.type === 'resourcebooking' && BX.Calendar)
 				{
-					var liveFormController = BX.Calendar.UserField.getResourceBookingFieldLive({
-						wrap: BX(field.name),
-						field: field
-					});
-					liveFormController.init();
-					this.webForm.getField(field.name).registerChecker(BX.proxy(liveFormController.check, liveFormController));
+					var liveFormController;
+					if (BX.Calendar.Resourcebooking)
+					{
+						liveFormController = BX.Calendar.Resourcebooking.getLiveField({
+							wrap: BX(field.name),
+							field: field
+						});
+
+						if (liveFormController && BX.type.isFunction(liveFormController.check))
+						{
+							this.webForm.getField(field.name).registerChecker(liveFormController.check.bind(liveFormController));
+						}
+					}
+					else if (BX.Calendar.UserField && BX.Calendar.UserField.getResourceBookingFieldLive)
+					{
+						liveFormController = BX.Calendar.UserField.getResourceBookingFieldLive({
+							wrap: BX(field.name),
+							field: field
+						});
+						if (liveFormController && BX.type.isFunction(liveFormController.init))
+						{
+							liveFormController.init();
+							this.webForm.getField(field.name).registerChecker(BX.proxy(liveFormController.check, liveFormController));
+						}
+					}
 				}
 			}, this);
 		}

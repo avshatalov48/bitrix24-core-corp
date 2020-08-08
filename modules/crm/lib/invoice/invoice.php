@@ -46,7 +46,7 @@ class Invoice extends Sale\Order
 	{
 		$id = (int)$this->getField('ID');
 		$accountNumber = $this->getField('ACCOUNT_NUMBER');
-		if (is_string($accountNumber) && strlen($accountNumber) > 0 || is_numeric($accountNumber))
+		if (is_string($accountNumber) && $accountNumber <> '' || is_numeric($accountNumber))
 		{
 			$res = static::getList(
 				[
@@ -120,7 +120,7 @@ class Invoice extends Sale\Order
 	protected function setAccountNumber()
 	{
 		$accountNumber = $this->getField('ACCOUNT_NUMBER');
-		if (!((is_string($accountNumber) && strlen($accountNumber) > 0) || is_numeric($accountNumber)))
+		if (!((is_string($accountNumber) && $accountNumber <> '') || is_numeric($accountNumber)))
 		{
 			parent::setAccountNumber();
 		}

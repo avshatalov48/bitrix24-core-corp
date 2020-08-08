@@ -23,7 +23,7 @@ if ($exch1cEnabled)
 	if ($license_name = COption::GetOptionString("main", "~controller_group_name"))
 	{
 		preg_match("/(project|tf)$/is", $license_name, $matches);
-		if (strlen($matches[0]) > 0)
+		if ($matches[0] <> '')
 			$exch1cEnabled = false;
 	}
 }

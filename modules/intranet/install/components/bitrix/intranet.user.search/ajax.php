@@ -10,7 +10,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_befo
 CModule::IncludeModule('intranet');
 
 $SITE_ID = trim($_REQUEST['SITE_ID']);
-$SITE_ID = substr(preg_replace("/[^a-z0-9_]/i", "", $SITE_ID), 0, 2);
+$SITE_ID = mb_substr(preg_replace("/[^a-z0-9_]/i", "", $SITE_ID), 0, 2);
 
 if (isset($_REQUEST["nt"]))
 {
@@ -43,7 +43,7 @@ if ($_REQUEST['MODE'] == 'EMPLOYEES')
 			include_once($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/main/classes/".$GLOBALS['DBType']."/favorites.php");
 
 		$arLastSelected = CUserOptions::GetOption("intranet", "user_search", array());
-		if (is_array($arLastSelected) && strlen($arLastSelected['last_selected']) > 0)
+		if (is_array($arLastSelected) && $arLastSelected['last_selected'] <> '')
 			$arLastSelected = array_unique(explode(',', $arLastSelected['last_selected']));
 		else
 			$arLastSelected = false;

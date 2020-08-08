@@ -9,6 +9,7 @@
 namespace Bitrix\Tasks\Processor\Task\Scheduler\RelationManager;
 
 use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Internals\RunTime;
 use Bitrix\Tasks\Internals\Task\ProjectDependenceTable;
 use Bitrix\Tasks\Processor\Task\Scheduler\Result\Impact;
@@ -253,7 +254,7 @@ final class Project extends \Bitrix\Tasks\Processor\Task\Scheduler\RelationManag
 		}
 
 		$instance = \CTaskItem::getInstance($task['ID'], $this->getUserId()); // todo: user should come from outside
-		return $instance->isActionAllowed(\CTaskItem::ACTION_CHANGE_DEADLINE);
+		return $instance->checkAccess(ActionDictionary::ACTION_TASK_DEADLINE);
 	}
 
 	public function dumpRelations($relations)

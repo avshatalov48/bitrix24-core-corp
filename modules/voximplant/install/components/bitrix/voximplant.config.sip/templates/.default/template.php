@@ -32,23 +32,17 @@ if($isBitrix24Template)
 	<div id="detail-connector" class="voximplant-ats">
 		<div>
 			<div class="tel-set-text-block tel-set-text-grey">
-				<?=GetMessage('VI_CONFIG_SIP_CONNECT_INFO_P1');?><br>
-				<?=GetMessage('VI_CONFIG_SIP_CONNECT_INFO_P2');?><br>
-
 				<?if ($arResult['SIP_ENABLE']):?>
-					<br>
-					<?=GetMessage('VI_SIP_PAID_BEFORE', Array('#DATE#' => '<b>'.$arResult['DATE_END'].'</b>'))?><br><br>
+					<p><?=GetMessage('VI_SIP_PAID_BEFORE', Array('#DATE#' => '<b>'.$arResult['DATE_END'].'</b>'))?></p>
+					<p><?=GetMessage('VI_SIP_PAID_NOTICE')?></p>
 					<?if (!empty($arResult['LINK_TO_BUY'])):?>
-
 						<a class="ui-btn ui-btn-primary" href="<?=$arResult["LINK_TO_BUY"]?>" target="_blank"><?=GetMessage('VI_SIP_BUTTON')?></a>
 					<?endif;?>
 				<?else:?>
-					<?=GetMessage('VI_CONFIG_SIP_INFO_2');?><br><br>
 					<?if (!empty($arResult['LINK_TO_BUY'])):?>
-						<?=GetMessage('VI_CONFIG_SIP_CONNECT_INFO_P3');?><br><br>
-
-						<?=GetMessage('VI_SIP_PAID_FREE', Array('#COUNT#' => '<b>'.$arResult['TEST_MINUTES'].'</b>'))?>
-						<br>
+						<p><?=GetMessage('VI_CONFIG_SIP_CONNECT_INFO_P1');?></p>
+						<p><?=GetMessage('VI_CONFIG_SIP_CONNECT_INFO_P2_2', Array('#COUNT#' => '<b>'.$arResult['TEST_MINUTES'].'</b>'))?></p>
+						<p><?=GetMessage('VI_CONFIG_SIP_CONNECT_INFO_P3_2')?></p>
 					<?else:?>
 						<div><?=GetMessage('VI_CONFIG_SIP_CONNECT_DISABLE');?></div><br>
 					<?endif;?>
@@ -59,12 +53,12 @@ if($isBitrix24Template)
 							<?=GetMessage('VI_CONFIG_SIP_CONFIG_INFO', Array('#LINK_START#' => '<a href="'.$arResult['LINK_TO_DOC'].'" target="_blank">', '#LINK_END#' => '</a>'));?>
 						</span>
 					</div>
+					<p><?=GetMessage('VI_CONFIG_SIP_CONNECT_INFO_P4_2');?></p>
 					<div class="tel-set-inp-add-new" style="margin-bottom: 35px">
 						<span class="ui-btn ui-btn-primary" onclick="BX.Voximplant.Sip.connectModule('<?=$arResult['LINK_TO_BUY']?>')" >
 							<?=GetMessage('VI_CONFIG_SIP_ACCEPT_3')?>
 						</span>
 					</div>
-
 				<?endif;?>
 			</div>
 			<div id="phone-config-sip-wrap"></div>

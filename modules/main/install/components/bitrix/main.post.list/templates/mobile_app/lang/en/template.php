@@ -13,4 +13,5 @@ $MESS["BPC_MES_VOTE1"] = "Like";
 $MESS["BPC_MES_VOTE2"] = "Dislike";
 $MESS["B_B_PC_COM_ERROR"] = "Error:";
 $MESS["INCORRECT_SERVER_RESPONSE"] = "Incorrect server response.";
+$MESS["MPL_MOBILE_PUBLISHING"] = "Publishing&hellip;";
 ?>

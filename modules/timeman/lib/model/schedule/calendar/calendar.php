@@ -55,9 +55,16 @@ class Calendar extends EO_Calendar
 			$parentExclusions = $this->obtainParentCalendar()->obtainExclusions();
 			foreach ($parentExclusions as $parentExclusion)
 			{
-				if (!array_key_exists($parentExclusion->getYear(), $result))
+				foreach ($parentExclusion->getDates() as $month => $days)
 				{
-					$result[$parentExclusion->getYear()] = $parentExclusion->getDates();
+					if (!array_key_exists($parentExclusion->getYear(), $result))
+					{
+						$result[$parentExclusion->getYear()] = $parentExclusion->getDates();
+					}
+					elseif (!array_key_exists($month, $result[$parentExclusion->getYear()]))
+					{
+						$result[$parentExclusion->getYear()][$month] = $days;
+					}
 				}
 			}
 		}
@@ -95,5 +102,16 @@ class Calendar extends EO_Calendar
 		{
 			return [];
 		}
+	}
+
+	public function hasHoliday(\DateTime $date)
+	{
+		$exclusionDates = $this->obtainFinalExclusions();
+		$year = $date->format('Y');
+		$month = $date->format('n');
+		$day = $date->format('j');
+		return array_key_exists($year, $exclusionDates) &&
+			   array_key_exists($month, $exclusionDates[$year]) &&
+			   array_key_exists($day, $exclusionDates[$year][$month]);
 	}
 }

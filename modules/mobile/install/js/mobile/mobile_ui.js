@@ -30,7 +30,7 @@
 							"targetWidth": 1000,
 							"targetHeight": 1000,
 							"encodingType": 0,
-							"mediaType": 0,
+							"mediaType": 2,
 							"allowsEdit": true,
 							"correctOrientation": "YES",
 							"saveToPhotoAlbum": "NO",
@@ -500,7 +500,7 @@
 
 				if (
 					typeof BXRL != 'undefined'
-					&& BXRL.render != 'undefined'
+					&& typeof BXRL.render != 'undefined'
 					&& BX.type.isNotEmptyString(params.likeNodeClass)
 				)
 				{
@@ -528,43 +528,34 @@
 					}
 				}
 
-				if (
-					!likeButtonNode
-				)
+				if (!likeButtonNode)
 				{
+					var menuItems = [];
+
 					var highlightNode = BX.findParent(targetNode, { className: params.copyItemClass }, node);
 
-					if (!highlightNode)
+					if (highlightNode)
 					{
-						return false;
-					}
-
-					var textBlock;
-					if (BX.type.isNotEmptyString(params.copyTextClass))
-					{
-						var copyableBlock = BX.findChild(highlightNode, { className: params.copyTextClass }, true);
-						if (copyableBlock)
+						var textBlock = null;
+						if (BX.type.isNotEmptyString(params.copyTextClass))
 						{
-							textBlock = copyableBlock;
+							var copyableBlock = BX.findChild(highlightNode, { className: params.copyTextClass }, true);
+							if (copyableBlock)
+							{
+								textBlock = copyableBlock;
+							}
+						}
+						else
+						{
+							textBlock = highlightNode;
 						}
 
-					}
-					else
-					{
-						textBlock = highlightNode;
-					}
+						if (textBlock)
+						{
+							BX.addClass(highlightNode, "long-tap-activate");
 
-					if (!textBlock)
-					{
-						return false;
-					}
-
-					BX.addClass(highlightNode, "long-tap-activate");
-
-					(new BXMobileApp.UI.ActionSheet({
-						buttons: [
-							{
-								title: BX.message("MUI_COPY"),
+							menuItems.push({
+								title: BX.message("MUI_COPY_TEXT"),
 								callback: function ()
 								{
 									var text = BX.MobileTools.getTextBlock(textBlock);
@@ -587,16 +578,50 @@
 									}
 
 								}
-							}
-						]
-					}, "copydialog")).show();
+							});
 
-					app.exec("callVibration");
+							setTimeout(function ()
+							{
+								BX.removeClass(highlightNode, "long-tap-activate");
+							}, 1000);
+						}
+					}
 
-					setTimeout(function ()
+					var menuItemsNode = null;
+					if (BX.hasClass(targetNode, 'mobile-longtap-menu'))
 					{
-						BX.removeClass(highlightNode, "long-tap-activate");
-					}, 1000);
+						menuItemsNode = targetNode;
+					}
+					else
+					{
+						menuItemsNode = BX.findParent(targetNode, { className: 'mobile-longtap-menu'}, node);
+					}
+
+					if (menuItemsNode)
+					{
+						var menuEventName = menuItemsNode.getAttribute('bx-longtap-menu-eventname');
+						if (BX.type.isNotEmptyString(menuEventName))
+						{
+							var
+								emitter = new BX.Event.EventEmitter(),
+								eventResult = {
+									menuItems: menuItems
+								};
+							emitter.emit(menuEventName, {
+								targetNode: targetNode,
+								menuItems: menuItems
+							});
+						}
+					}
+
+					if (menuItems.length > 0)
+					{
+						(new BXMobileApp.UI.ActionSheet({
+							buttons: menuItems
+						}, "menudialog")).show();
+
+						app.exec("callVibration");
+					}
 				}
 			});
 		},

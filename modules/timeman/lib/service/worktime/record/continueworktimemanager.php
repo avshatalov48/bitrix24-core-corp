@@ -33,7 +33,8 @@ class ContinueWorktimeManager extends WorktimeManager
 				$record ? $record->getUserId() : 0,
 				$record ? $record->getId() : 0,
 				TimeHelper::getInstance()->getUtcNowTimestamp(),
-				$eventForm ? $eventForm->reason : ''
+				$eventForm ? $eventForm->reason : '',
+				$this->worktimeRecordForm->device
 			),
 		];
 	}

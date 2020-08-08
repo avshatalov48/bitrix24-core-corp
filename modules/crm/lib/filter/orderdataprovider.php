@@ -5,6 +5,7 @@ use Bitrix\Main;
 use Bitrix\Sale;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Counter\EntityCounterType;
+use Bitrix\Crm\Tracking;
 
 Loc::loadMessages(__FILE__);
 Main\Loader::includeModule('sale');
@@ -110,6 +111,8 @@ class OrderDataProvider extends EntityDataProvider
 			'SHIPMENT_DELIVERY_DOC_DATE' => $this->createField('SHIPMENT_DELIVERY_DOC_DATE', array('type' => 'date')),
 			'XML_ID' => $this->createField('XML_ID'),
 		);
+
+		Tracking\UI\Filter::appendFields($result, $this);
 
 		$result = array_merge($result, $this->getPropertyFields());
 
@@ -246,6 +249,10 @@ class OrderDataProvider extends EntityDataProvider
 		{
 			return $this->getPropertyListData($fieldID);
 		}
+		elseif(Tracking\UI\Filter::hasField($fieldID))
+		{
+			return Tracking\UI\Filter::getFieldData($fieldID);
+		}
 
 		return null;
 	}
@@ -353,7 +360,7 @@ class OrderDataProvider extends EntityDataProvider
 			}
 			else
 			{
-				$type = strtolower($property['TYPE']);
+				$type = mb_strtolower($property['TYPE']);
 			}
 
 			$name = htmlspecialcharsbx("{$property['NAME']} ({$property['PERSON_TYPE_NAME']}) [{$property['LID']}]");

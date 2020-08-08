@@ -412,13 +412,19 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 
 		if ($this->mode === ComponentMode::CREATION)
 		{
+			$order = null;
+
 			if ((int)$this->arParams['EXTRAS']['ORDER_ID'] > 0)
 			{
 				$this->arResult['ORDER_ID'] = (int)$this->arParams['EXTRAS']['ORDER_ID'];
 				$order = Crm\Order\Order::load($this->arResult['ORDER_ID']);
-				$this->orderPayment = $order->getPaymentCollection()->createItem();
+				if ($order)
+				{
+					$this->orderPayment = $order->getPaymentCollection()->createItem();
+				}
 			}
-			else
+
+			if ($order)
 			{
 				$this->addError(self::COMPONENT_ERROR_EMPTY_ORDER_ID);
 				$this->showErrors();

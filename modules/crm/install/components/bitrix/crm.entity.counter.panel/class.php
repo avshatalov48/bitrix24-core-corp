@@ -102,7 +102,7 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 			$this->entityListUrl = $this->arParams['PATH_TO_ENTITY_LIST'];
 		}
 
-		$this->recalculate = isset($_REQUEST['recalc']) && strtoupper($_REQUEST['recalc']) === 'Y';
+		$this->recalculate = isset($_REQUEST['recalc']) && mb_strtoupper($_REQUEST['recalc']) === 'Y';
 
 		$data = array();
 		$codes = array();

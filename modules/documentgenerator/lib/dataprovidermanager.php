@@ -12,61 +12,55 @@ use Bitrix\DocumentGenerator\Value\Multiple;
 use Bitrix\DocumentGenerator\Value\Name;
 use Bitrix\DocumentGenerator\Value\PhoneNumber;
 use Bitrix\Main\Context\Culture;
+use Bitrix\Main\Event;
+use Bitrix\Main\EventManager;
+use Bitrix\Main\EventResult;
 use Bitrix\Main\IO\File;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Type\Date;
 
-final class DataProviderManager
+class DataProviderManager
 {
-	const MAX_DEPTH_LEVEL_ROOT_PROVIDERS = 2;
-
-	/** @var DataProviderManager */
-	private static $instance;
+	public const MAX_DEPTH_LEVEL_ROOT_PROVIDERS = 2;
 
 	protected $providersCache = [];
 	protected $accessCache = [];
 	protected $phrases = [];
 	protected $loadedPhrasePath = [];
 	protected $context;
+	protected $substitutionProviders = [];
 
-	private function __construct()
+	public function __construct()
 	{
 		$this->context = new Context();
-	}
-
-	private function __clone()
-	{
+		$this->fillSubstitutionProviders();
 	}
 
 	/**
 	 * @return DataProviderManager
 	 */
-	public static function getInstance()
+	public static function getInstance(): DataProviderManager
 	{
-		if(!isset(self::$instance))
-		{
-			self::$instance = new DataProviderManager();
-		}
-
-		return self::$instance;
+		return Driver::getInstance()->getDataProviderManager();
 	}
 
 	/**
 	 * @param Context $context
 	 * @return DataProviderManager
 	 */
-	public function setContext(Context $context)
+	public function setContext(Context $context): DataProviderManager
 	{
 		$this->context = $context;
+
 		return $this;
 	}
 
 	/**
 	 * @return Context
 	 */
-	public function getContext()
+	public function getContext(): Context
 	{
 		return $this->context;
 	}
@@ -79,15 +73,15 @@ final class DataProviderManager
 	 * @param string $moduleId
 	 * @return bool
 	 */
-	public static function checkProviderName($providerClassName, $moduleId = null)
+	public static function checkProviderName($providerClassName, $moduleId = null): bool
 	{
 		$result = is_a($providerClassName, DataProvider::class, true);
 
 		$documentProviders = [
-			strtolower(ArrayDataProvider::class),
-			strtolower(User::class),
+			mb_strtolower(ArrayDataProvider::class),
+			mb_strtolower(User::class),
 		];
-		if(in_array(strtolower($providerClassName), $documentProviders))
+		if(in_array(mb_strtolower($providerClassName), $documentProviders, true))
 		{
 			return true;
 		}
@@ -95,10 +89,16 @@ final class DataProviderManager
 		{
 			$result = false;
 			$providers = static::getInstance()->getList(['filter' => ['MODULE' => $moduleId]]);
-			$providerClassName = strtolower($providerClassName);
+			$providerClassName = mb_strtolower($providerClassName);
 			foreach($providers as $name => $provider)
 			{
-				if($name == $providerClassName || (isset($provider['ORIGINAL']) && $provider['ORIGINAL'] == $providerClassName))
+				if(
+					$name === $providerClassName
+					|| (
+						isset($provider['ORIGINAL'])
+						&& $provider['ORIGINAL'] === $providerClassName
+					)
+				)
 				{
 					return true;
 				}
@@ -106,6 +106,46 @@ final class DataProviderManager
 		}
 
 		return $result;
+	}
+
+	protected function fillSubstitutionProviders(): void
+	{
+		$event = new Event(Driver::MODULE_ID, 'onDataProviderManagerFillSubstitutionProviders');
+		$providers = [];
+		EventManager::getInstance()->send($event);
+		foreach($event->getResults() as $result)
+		{
+			if($result->getType() === EventResult::SUCCESS && is_array($result->getParameters()))
+			{
+				/** @noinspection SlowArrayOperationsInLoopInspection */
+				$providers = array_merge($providers, $result->getParameters());
+			}
+		}
+
+		$this->setSubstitutionProviders($providers);
+	}
+
+	public function setSubstitutionProviders(array $substitutionProviders): DataProviderManager
+	{
+		$this->substitutionProviders = $substitutionProviders;
+
+		return $this;
+	}
+
+	protected function getSubstitutionProvider(string $provider): ?string
+	{
+		foreach($this->substitutionProviders as $originalProvider => $substitutionProvider)
+		{
+			if(
+				strtolower($provider) === strtolower($originalProvider)
+				&& is_a($substitutionProvider, $provider, true)
+			)
+			{
+				return $substitutionProvider;
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -117,7 +157,7 @@ final class DataProviderManager
 	 */
 	public function getDataProviderValue(DataProvider $dataProvider, $placeholder)
 	{
-		if(($placeholder !== 0 && empty($placeholder)) || is_array($placeholder) || is_object($placeholder))
+		if($placeholder !== 0 && empty($placeholder))
 		{
 			return false;
 		}
@@ -170,7 +210,7 @@ final class DataProviderManager
 		// rewrite inner values from options.
 		$value = false;
 		$values = [];
-		if(isset($fieldDescription['OPTIONS']) && isset($fieldDescription['OPTIONS']['VALUES']) && is_array($fieldDescription['OPTIONS']['VALUES']))
+		if(isset($fieldDescription['OPTIONS']['VALUES']) && is_array($fieldDescription['OPTIONS']['VALUES']))
 		{
 			$values = $fieldDescription['OPTIONS']['VALUES'];
 		}
@@ -210,6 +250,7 @@ final class DataProviderManager
 						$selectedFound = true;
 					}
 				}
+				unset($calcVal);
 			}
 			if(!$selectedFound)
 			{
@@ -221,6 +262,7 @@ final class DataProviderManager
 						break;
 					}
 				}
+				unset($calcVal);
 			}
 			if(!$selectedFound)
 			{
@@ -229,6 +271,7 @@ final class DataProviderManager
 					$calcVal['SELECTED'] = true;
 					break;
 				}
+				unset($calcVal);
 			}
 			$value = $calculatedValue;
 		}
@@ -242,18 +285,15 @@ final class DataProviderManager
 			$value = $calculatedValue;
 		}
 
-		if($value)
+		if($value && isset($fieldDescription['PROVIDER']))
 		{
-			if(isset($fieldDescription['PROVIDER']))
+			// if $value is array and Provider does not accept array as value - returns $values as it is - to allow user decide
+			// which value to use.
+			if(is_array($value) && !$this->isProviderArray($fieldDescription['PROVIDER']))
 			{
-				// if $value is array and Provider does not accept array as value - returns $values as it is - to allow user decide
-				// which value to use.
-				if(is_array($value) && !$this->isProviderArray($fieldDescription['PROVIDER']))
-				{
-					return $value;
-				}
-				$value = $this->createDataProvider($fieldDescription, $value, $dataProvider, $placeholder);
+				return $value;
 			}
+			$value = $this->createDataProvider($fieldDescription, $value, $dataProvider, $placeholder);
 		}
 
 		return $value;
@@ -266,9 +306,14 @@ final class DataProviderManager
 	 * @param mixed $value
 	 * @param DataProvider|null $parentDataProvider
 	 * @param string $placeholder
-	 * @return DataProvider|false
+	 * @return DataProvider|null
 	 */
-	public function createDataProvider(array $fieldDescription, $value = null, DataProvider $parentDataProvider = null, $placeholder = null)
+	public function createDataProvider(
+		array $fieldDescription,
+		$value = null,
+		DataProvider $parentDataProvider = null,
+		$placeholder = null
+	): ?DataProvider
 	{
 		if(!$value && isset($fieldDescription['VALUE']))
 		{
@@ -277,7 +322,7 @@ final class DataProviderManager
 
 		if(!$value)
 		{
-			return false;
+			return null;
 		}
 
 		if($value instanceof Value)
@@ -287,11 +332,7 @@ final class DataProviderManager
 
 		if(isset($fieldDescription['PROVIDER']))
 		{
-			$options = [];
-			if(isset($fieldDescription['OPTIONS']))
-			{
-				$options = $fieldDescription['OPTIONS'];
-			}
+			$options = $fieldDescription['OPTIONS'] ?? [];
 			if(!isset($options['VALUES']))
 			{
 				$options['VALUES'] = [];
@@ -305,10 +346,11 @@ final class DataProviderManager
 					$options['VALUES'] = array_merge($options['VALUES'], $this->reformOptionValues($parentProviderOptions['VALUES'], $placeholder));
 				}
 			}
+
 			return $this->getDataProvider($fieldDescription['PROVIDER'], $value, $options, $parentDataProvider);
 		}
 
-		return false;
+		return null;
 	}
 
 	/**
@@ -339,7 +381,7 @@ final class DataProviderManager
 			$format = $fieldDescription['FORMAT'];
 		}
 
-		if($type != DataProvider::FIELD_TYPE_NAME && (is_array($value) && !is_array_assoc($value) || $value instanceof \Traversable))
+		if($type !== DataProvider::FIELD_TYPE_NAME && $this->isMultiple($value))
 		{
 			$result = [];
 			foreach($value as $singleValue)
@@ -352,16 +394,14 @@ final class DataProviderManager
 			if(!empty($result))
 			{
 				// no need for Multiple if there is only one item.
-				if(count($result) == 1)
+				if(!($result[0] instanceof DateTime) && count($result) === 1)
 				{
 					return reset($result);
 				}
 				return new Multiple($result, $format);
 			}
-			else
-			{
-				return null;
-			}
+
+			return null;
 		}
 
 		return $this->getValueByType($value, $type, $format);
@@ -414,7 +454,7 @@ final class DataProviderManager
 	protected function getValue($valueDescription, DataProvider $parentDataProvider = null, $placeholder = null)
 	{
 		$value = false;
-		if($parentDataProvider && is_string($valueDescription) && $placeholder != $valueDescription)
+		if($parentDataProvider && is_string($valueDescription) && $placeholder !== $valueDescription)
 		{
 			$value = $parentDataProvider->getValue($valueDescription);
 		}
@@ -434,16 +474,29 @@ final class DataProviderManager
 	 * @param mixed $value
 	 * @param array $options
 	 * @param DataProvider $parentDataProvider
-	 * @return DataProvider|false
+	 * @return DataProvider|null
 	 */
-	public function getDataProvider($providerClassName, $value, array $options = [], DataProvider $parentDataProvider = null)
+	public function getDataProvider(
+		$providerClassName,
+		$value,
+		array $options = [],
+		DataProvider $parentDataProvider = null
+	): ?DataProvider
 	{
 		$valueHash = $this->getValueHash($value, $options);
 		if(!isset($this->providersCache[$providerClassName][$valueHash]))
 		{
-			$provider = false;
-			if(DataProviderManager::checkProviderName($providerClassName))
+			$provider = null;
+			if(self::checkProviderName($providerClassName))
 			{
+				if(!isset($options['noSubstitution']) || $options['noSubstitution'] !== true)
+				{
+					$substitutionProvider = $this->getSubstitutionProvider($providerClassName);
+					if($substitutionProvider)
+					{
+						$providerClassName = $substitutionProvider;
+					}
+				}
 				/** @var DataProvider $provider */
 				$provider = new $providerClassName($value, $options);
 				if($parentDataProvider)
@@ -468,10 +521,10 @@ final class DataProviderManager
 	 * @return array
 	 * @internal
 	 */
-	public function getArray(DataProvider $dataProvider, array $params = [], array $stack = [])
+	public function getArray(DataProvider $dataProvider, array $params = [], array $stack = []): array
 	{
 		$result = [];
-		if(in_array(get_class($dataProvider), $stack))
+		if(in_array(get_class($dataProvider), $stack, true))
 		{
 			return $result;
 		}
@@ -529,11 +582,15 @@ final class DataProviderManager
 	 * @param array $params
 	 * @return array
 	 */
-	public function getList(array $params = [])
+	public function getList(array $params = []): array
 	{
 		$providers = Registry\DataProvider::getList($params);
 		$moduleId = null;
-		if(isset($params['filter']) && isset($params['filter']['MODULE']) && is_string($params['filter']['MODULE']) && !empty($params['filter']['MODULE']))
+		if(
+			isset($params['filter']['MODULE'])
+			&& is_string($params['filter']['MODULE'])
+			&& !empty($params['filter']['MODULE'])
+		)
 		{
 			$moduleId = $params['filter']['MODULE'];
 		}
@@ -548,7 +605,7 @@ final class DataProviderManager
 		{
 			foreach($providers as $key => $provider)
 			{
-				if(isset($provider['MODULE']) && $moduleId != $provider['MODULE'])
+				if(isset($provider['MODULE']) && $moduleId !== $provider['MODULE'])
 				{
 					unset($providers[$key]);
 				}
@@ -556,7 +613,7 @@ final class DataProviderManager
 		}
 		if($moduleId === Driver::REST_MODULE_ID)
 		{
-			$providers[strtolower(Rest::class)] = [
+			$providers[mb_strtolower(Rest::class)] = [
 				'CLASS' => Rest::class,
 				'NAME' => Driver::REST_MODULE_ID,
 				'MODULE' => Driver::REST_MODULE_ID,
@@ -574,12 +631,18 @@ final class DataProviderManager
 	 * @param bool $isCopyFields
 	 * @return array
 	 */
-	public function getDefaultTemplateFields($providerClassName, array $placeholders = [], array $mainProviderOptions = [], $isAddRootGroups = true, $isCopyFields = false)
+	public function getDefaultTemplateFields(
+		$providerClassName,
+		array $placeholders = [],
+		array $mainProviderOptions = [],
+		$isAddRootGroups = true,
+		$isCopyFields = false
+	): array
 	{
 		$fields = [];
 
-		$sourceFields = DataProviderManager::getInstance()->getProviderPlaceholders($providerClassName, $placeholders, $mainProviderOptions, $isCopyFields);
-		$documentFields = DataProviderManager::getInstance()->getProviderPlaceholders(DataProvider\Document::class);
+		$sourceFields = $this->getProviderPlaceholders($providerClassName, $placeholders, $mainProviderOptions, $isCopyFields);
+		$documentFields = $this->getProviderPlaceholders(DataProvider\Document::class);
 		if($isAddRootGroups)
 		{
 			Loc::loadLanguageFile(__DIR__.'/document.php');
@@ -591,6 +654,7 @@ final class DataProviderManager
 			{
 				array_unshift($field['GROUP'], Loc::getMessage('DOCUMENT_GROUP_NAME'));
 			}
+			unset($field);
 		}
 		if(empty($placeholders))
 		{
@@ -622,7 +686,12 @@ final class DataProviderManager
 	 * @param bool $isCopyFields
 	 * @return array
 	 */
-	public function getProviderPlaceholders($providerClassName, array $placeholders = [], array $options = [], $isCopyFields = false)
+	public function getProviderPlaceholders(
+		$providerClassName,
+		array $placeholders = [],
+		array $options = [],
+		$isCopyFields = false
+	): array
 	{
 		$result = [];
 		$dataProvider = $this->getDataProvider($providerClassName, ' ', $options);
@@ -651,9 +720,9 @@ final class DataProviderManager
 	 * @param string $value
 	 * @return string
 	 */
-	public function valueToPlaceholder($value)
+	public function valueToPlaceholder(string $value): string
 	{
-		$placeholder = strtolower($value);
+		$placeholder = mb_strtolower($value);
 		$placeholder = str_replace(['_', '.'], ' ', $placeholder);
 		$placeholder = ucwords($placeholder);
 		$placeholder = str_replace(' ', '', $placeholder);
@@ -669,7 +738,7 @@ final class DataProviderManager
 	public function getProviderField(DataProvider $dataProvider, $placeholder)
 	{
 		$nameParts = explode('.', $placeholder);
-		if(count($nameParts) == 1)
+		if(count($nameParts) === 1)
 		{
 			return $dataProvider->getFields()[$placeholder];
 		}
@@ -703,7 +772,16 @@ final class DataProviderManager
 	 * @param bool $stopRecursion
 	 * @return array
 	 */
-	public function getProviderFields(DataProvider $parentDataProvider, $placeholders = [], $isCopyFields = false, array $chain = [], array $group = [], $isArray = false, array $providers = [], $stopRecursion = false)
+	public function getProviderFields(
+		DataProvider $parentDataProvider,
+		$placeholders = [],
+		$isCopyFields = false,
+		array $chain = [],
+		array $group = [],
+		$isArray = false,
+		array $providers = [],
+		$stopRecursion = false
+	): array
 	{
 		$values = [];
 		if($parentDataProvider->isRootProvider())
@@ -721,7 +799,7 @@ final class DataProviderManager
 			// build copied placeholders map
 			foreach($fields as $placeholder => $field)
 			{
-				if(isset($field['OPTIONS']) && isset($field['OPTIONS']['COPY']))
+				if(isset($field['OPTIONS']['COPY']))
 				{
 					if(is_array($placeholders) && !empty($placeholders))
 					{
@@ -730,7 +808,7 @@ final class DataProviderManager
 						$currentValue = $this->valueToPlaceholder(implode('.', $copyChain));
 						foreach($placeholders as $name)
 						{
-							if(strpos($name, $currentValue) === 0)
+							if(mb_strpos($name, $currentValue) === 0)
 							{
 								$copyPlaceholders[$placeholder] = $field['OPTIONS']['COPY'];
 								$placeholders[] = str_replace($this->valueToPlaceholder($placeholder), $this->valueToPlaceholder($field['OPTIONS']['COPY']), $name);
@@ -755,7 +833,7 @@ final class DataProviderManager
 				$currentValue = $this->valueToPlaceholder(implode('.', $chain));
 				foreach($placeholders as $name)
 				{
-					if(strpos($name, $currentValue) === 0)
+					if(mb_strpos($name, $currentValue) === 0)
 					{
 						$goDeeper = true;
 						break;
@@ -791,7 +869,19 @@ final class DataProviderManager
 				{
 					$stopRecursion = true;
 				}
-				$values = array_merge($values, $this->getProviderFields($dataProvider, $placeholders, $isCopyFields, $chain, $group, $isArray, $providers, $stopRecursion));
+				$values = array_merge(
+					$values,
+					$this->getProviderFields(
+						$dataProvider,
+						$placeholders,
+						$isCopyFields,
+						$chain,
+						$group,
+						$isArray,
+						$providers,
+						$stopRecursion
+					)
+				);
 				$isArray = false;
 			}
 			else
@@ -816,7 +906,7 @@ final class DataProviderManager
 		{
 			foreach($values as $field)
 			{
-				if(is_string($field['VALUE']) && strpos($field['VALUE'], $sourcePlaceholder) !== false)
+				if(is_string($field['VALUE']) && mb_strpos($field['VALUE'], $sourcePlaceholder) !== false)
 				{
 					$field['VALUE'] = str_replace($sourcePlaceholder, $destPlaceholder, $field['VALUE']);
 					$values[] = $field;
@@ -834,7 +924,7 @@ final class DataProviderManager
 	 * @param array $options
 	 * @return string
 	 */
-	protected function getValueHash($value, array $options = [])
+	protected function getValueHash($value, array $options = []): string
 	{
 		$valueHash = $value;
 		if(is_object($value))
@@ -859,7 +949,7 @@ final class DataProviderManager
 	 * @param string $placeholder
 	 * @return array
 	 */
-	protected function reformOptionValues(array $values, $placeholder)
+	protected function reformOptionValues(array $values, string $placeholder): array
 	{
 		$result = [];
 		foreach($values as $name => $value)
@@ -887,7 +977,7 @@ final class DataProviderManager
 	 * @param $providerClassName
 	 * @return bool
 	 */
-	public function isProviderArray($providerClassName)
+	public function isProviderArray($providerClassName): bool
 	{
 		return (
 			is_a($providerClassName, ArrayDataProvider::class, true) ||
@@ -913,10 +1003,7 @@ final class DataProviderManager
 			}
 			if($firstAsDefault === true)
 			{
-				foreach($values as $value)
-				{
-					return $value['VALUE'];
-				}
+				return reset($values)['VALUE'];
 			}
 		}
 
@@ -928,7 +1015,7 @@ final class DataProviderManager
 	 * @param string $code
 	 * @return null|string
 	 */
-	public function getLangPhraseValue(DataProvider $dataProvider, $code)
+	public function getLangPhraseValue(DataProvider $dataProvider, $code): ?string
 	{
 		$phrasesPath = $dataProvider->getLangPhrasesPath();
 		if($phrasesPath === null)
@@ -950,16 +1037,17 @@ final class DataProviderManager
 	 * @param $region
 	 * @return $this
 	 */
-	public function setRegion($region)
+	public function setRegion($region): DataProviderManager
 	{
 		$this->context->setRegion($region);
+
 		return $this;
 	}
 
 	/**
 	 * @return string
 	 */
-	public function getRegion()
+	public function getRegion(): string
 	{
 		return $this->context->getRegion();
 	}
@@ -967,7 +1055,7 @@ final class DataProviderManager
 	/**
 	 * @return string
 	 */
-	public function getRegionLanguageId()
+	public function getRegionLanguageId(): string
 	{
 		return $this->context->getRegionLanguageId();
 	}
@@ -976,9 +1064,9 @@ final class DataProviderManager
 	 * @param string $path
 	 * @param string $region
 	 */
-	protected function loadLangPhrases($path, $region)
+	protected function loadLangPhrases(string $path, string $region): void
 	{
-		if(isset($this->loadedPhrasePath[$path]) && isset($this->loadedPhrasePath[$path][$region]))
+		if(isset($this->loadedPhrasePath[$path][$region]))
 		{
 			return;
 		}
@@ -1014,15 +1102,14 @@ final class DataProviderManager
 		}
 		if(is_array($phrases))
 		{
-			$phrases = [$region => $phrases];
-			$this->phrases = array_merge($this->phrases, $phrases);
+			$this->phrases[$region] = array_merge($this->phrases[$region], $phrases);
 		}
 	}
 
 	/**
 	 * @return Culture
 	 */
-	public function getCulture()
+	public function getCulture(): Culture
 	{
 		return $this->context->getCulture();
 	}
@@ -1032,7 +1119,7 @@ final class DataProviderManager
 	 * @param null $userId
 	 * @return bool
 	 */
-	public function checkDataProviderAccess(DataProvider $dataProvider, $userId = null)
+	public function checkDataProviderAccess(DataProvider $dataProvider, $userId = null): bool
 	{
 		if(!$userId)
 		{
@@ -1057,14 +1144,14 @@ final class DataProviderManager
 	 * @param $region
 	 * @return array
 	 */
-	public function getRegionPhrases($region)
+	public function getRegionPhrases($region): array
 	{
 		$providers = $this->getList();
-		$loadedProviders = $phrases = [];
+		$loadedProviders = [];
 		foreach($providers as $providerDescription)
 		{
 			$this->getDataProviderRegionPhrases($providerDescription['CLASS'], $region, $loadedProviders);
-			$loadedProviders[strtolower($providerDescription['CLASS'])] = true;
+			$loadedProviders[mb_strtolower($providerDescription['CLASS'])] = true;
 		}
 
 		return $this->phrases[$region];
@@ -1076,9 +1163,14 @@ final class DataProviderManager
 	 * @param array $loadedProviders
 	 * @param array $field
 	 */
-	public function getDataProviderRegionPhrases($providerClassName, $region, &$loadedProviders = [], array $field = [])
+	public function getDataProviderRegionPhrases(
+		$providerClassName,
+		$region,
+		&$loadedProviders = [],
+		array $field = []
+	): void
 	{
-		$providerClassName = strtolower($providerClassName);
+		$providerClassName = mb_strtolower($providerClassName);
 		if(isset($loadedProviders[$providerClassName]))
 		{
 			return;
@@ -1108,13 +1200,28 @@ final class DataProviderManager
 				$this->loadLangPhrases($phrasesPath, $region);
 			}
 			$loadedProviders[$providerClassName] = true;
-			foreach($provider->getFields() as $placeholder => $field)
+			foreach($provider->getFields() as $placeholder => $providerField)
 			{
-				if(isset($field['PROVIDER']) && !empty($field['PROVIDER']) && !isset($loadedProviders[strtolower($field['PROVIDER'])]))
+				if(!empty($providerField['PROVIDER']) && !isset($loadedProviders[mb_strtolower($providerField['PROVIDER'])]))
 				{
-					$this->getDataProviderRegionPhrases($field['PROVIDER'], $region, $loadedProviders, $field);
+					$this->getDataProviderRegionPhrases($providerField['PROVIDER'], $region, $loadedProviders, $providerField);
 				}
 			}
 		}
+	}
+
+	protected function isMultiple($value): bool
+	{
+		if(!is_array($value))
+		{
+			return false;
+		}
+
+		if($value instanceof \Traversable)
+		{
+			return true;
+		}
+
+		return array_keys($value) === range(0, count($value) - 1);
 	}
 }

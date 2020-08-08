@@ -2,6 +2,8 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Bizproc\BaseType\Value;
+use Bitrix\Crm\EntityBankDetail;
+use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Main\Loader;
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
@@ -18,6 +20,10 @@ use Bitrix\DocumentGenerator;
  * @property-read int DocumentDocx
  * @property-read string DocumentNumber
  * @property-read array Values
+ * @property-read string EnablePublicUrl
+ * @property-read int MyCompanyId
+ * @property-read int MyCompanyRequisiteId
+ * @property-read int MyCompanyBankDetailId
  */
 class CBPCrmGenerateEntityDocumentActivity
 	extends CBPActivity
@@ -32,6 +38,10 @@ class CBPCrmGenerateEntityDocumentActivity
 			'UseSubscription' => 'N',
 			'WithStamps' => '',
 			'Values' => [],
+			'EnablePublicUrl' => 'Y',
+			'MyCompanyId' => null,
+			'MyCompanyRequisiteId' => null,
+			'MyCompanyBankDetailId' => null,
 
 			//return
 			'DocumentId' => null,
@@ -118,14 +128,32 @@ class CBPCrmGenerateEntityDocumentActivity
 		{
 			$value = $this->prepareValue($value);
 		}
+		unset($value);
+
+		$myCompanyId = (int) $this->MyCompanyId;
+		if($myCompanyId > 0)
+		{
+			$values['MY_COMPANY'] = $myCompanyId;
+		}
+		$myCompanyRequisiteId = (int) $this->MyCompanyRequisiteId;
+		if($myCompanyRequisiteId > 0)
+		{
+			$values['MY_COMPANY.REQUISITE'] = $myCompanyRequisiteId;
+		}
+		$myCompanyBankDetailId = (int) $this->MyCompanyBankDetailId;
+		if($myCompanyBankDetailId > 0)
+		{
+			$values['MY_COMPANY.BANK_DETAIL'] = $myCompanyBankDetailId;
+		}
 
 		\Bitrix\DocumentGenerator\CreationMethod::markDocumentAsCreatedByAutomation($document);
-		if(method_exists($document, 'setUserId'))
+		$targetUserId = CBPHelper::ExtractUsers($this->GetRootActivity()->{CBPDocument::PARAM_TAGRET_USER}, $this->GetDocumentId(), true);
+		if (!$targetUserId)
 		{
-			//todo make a property
-			$user = new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser);
-			$document->setUserId($user->getId());
+			$targetUserId = $this->getResponsibleId();
 		}
+
+		$document->setUserId($targetUserId);
 
 		$result = $document->setValues($values)->getFile();
 		if(!$result->isSuccess())
@@ -138,10 +166,12 @@ class CBPCrmGenerateEntityDocumentActivity
 		$this->DocumentId = $documentData['id'];
 		$this->DocumentNumber = $documentData['number'];
 		$this->DocumentDocx = \Bitrix\DocumentGenerator\Model\FileTable::getBFileId($document->FILE_ID);
-		$result = $document->enablePublicUrl();
-		if($result->isSuccess())
+		if($this->EnablePublicUrl === 'Y')
 		{
-			$this->DocumentUrl = $document->getPublicUrl();
+			$result = $document->enablePublicUrl();
+			if ($result->isSuccess()) {
+				$this->DocumentUrl = $document->getPublicUrl();
+			}
 		}
 
 		//If don`t need to wait for PDF - close activity
@@ -154,6 +184,15 @@ class CBPCrmGenerateEntityDocumentActivity
 		$this->Subscribe($this);
 		$this->WriteToTrackingService(GetMessage("CRM_GEDA_NAME_WAIT_FOR_EVENT_LOG"));
 		return CBPActivityExecutionStatus::Executing;
+	}
+
+	protected function getResponsibleId()
+	{
+		$documentId = $this->GetDocumentId();
+		list($typeName, $ownerID) = explode('_', $documentId[2]);
+		$ownerTypeID = \CCrmOwnerType::ResolveID($typeName);
+
+		return CCrmOwnerType::GetResponsibleID($ownerTypeID, $ownerID, false);
 	}
 
 	public function Subscribe(IBPActivityExternalEventListener $eventHandler)
@@ -243,7 +282,6 @@ class CBPCrmGenerateEntityDocumentActivity
 			'STAMP',
 		];
 
-		$entityTypeName = $documentType[2];
 		$entityTypeId = \CCrmOwnerType::ResolveID($documentType[2]);
 		$providerClassName = static::getDataProviderByEntityTypeId($entityTypeId);
 		if(!$providerClassName)
@@ -256,6 +294,57 @@ class CBPCrmGenerateEntityDocumentActivity
 		foreach($templates as $template)
 		{
 			$templatesList[$template['ID']] = $template['NAME'];
+		}
+
+		$myCompanies = [];
+		$res = \CCrmCompany::GetListEx(
+			['ID' => 'ASC'],
+			['IS_MY_COMPANY' => 'Y'],
+			false,
+			false,
+			['ID', 'TITLE']
+		);
+		while($myCompany = $res->Fetch())
+		{
+			$myCompanies[$myCompany['ID']] = $myCompany['TITLE'];
+		}
+
+		$requisiteIds = [];
+		$myCompanyRequisites = [];
+		if(!empty($myCompanies))
+		{
+			$requisite = new EntityRequisite();
+			$res = $requisite->getList(
+				array(
+					'order' => array('SORT' => 'ASC', 'ID' => 'ASC'),
+					'filter' => array(
+						'=ENTITY_TYPE_ID' => \CCrmOwnerType::Company,
+						'@ENTITY_ID' => array_keys($myCompanies)
+					),
+					'select' => array('ID', 'NAME', 'ENTITY_ID'),
+				)
+			);
+			while($data = $res->fetch())
+			{
+				$myCompanyRequisites[$data['ENTITY_ID']][$data['ID']] = $data['NAME'];
+				$requisiteIds[] = $data['ID'];
+			}
+		}
+		$myCompanyBankDetails = [];
+		if(!empty($requisiteIds))
+		{
+			$res = EntityBankDetail::getSingleInstance()->getList([
+				'order' => ['NAME' => 'ASC'],
+				'filter' => [
+					'=ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
+					'=ENTITY_ID' => $requisiteIds
+				],
+				'select' => ['ID', 'NAME', 'ENTITY_ID'],
+			]);
+			while($data = $res->fetch())
+			{
+				$myCompanyBankDetails[$data['ENTITY_ID']][$data['ID']] = $data['NAME'];
+			}
 		}
 
 		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, array(
@@ -290,11 +379,40 @@ class CBPCrmGenerateEntityDocumentActivity
 			],
 			'Values' => [
 				'FieldName' => 'values',
-			]
+			],
+			'EnablePublicUrl' => [
+				'Name' => GetMessage('CRM_GEDA_NAME_PUBLIC_URL'),
+				'FieldName' => 'public_url',
+				'Default' => 'Y',
+				'Type' => 'bool',
+			],
+			'MyCompanyId' => [
+				'Name' => GetMessage('CRM_GEDA_NAME_MY_COMPANY_ID'),
+				'FieldName' => 'my_company_id',
+				'Type' => 'select',
+				'Options' => $myCompanies,
+				'FullMap' => [
+					'myCompanyRequisites' => $myCompanyRequisites,
+					'myCompanyBankDetails' => $myCompanyBankDetails,
+				],
+			],
+			'MyCompanyRequisiteId' => [
+				'Name' => GetMessage('CRM_GEDA_NAME_MY_COMPANY_REQUISITE_ID'),
+				'FieldName' => 'my_company_requisite_id',
+				'Type' => 'select',
+			],
+			'MyCompanyBankDetailId' => [
+				'Name' => GetMessage('CRM_GEDA_NAME_MY_COMPANY_BANK_DETAIL_ID'),
+				'FieldName' => 'my_company_bank_detail_id',
+				'Type' => 'select',
+			],
 		);
+
 		$dialog->setMap($map);
+		$myCompanyId = $dialog->getCurrentValue('my_company_id');
+		$myCompanyRequisiteId = $dialog->getCurrentValue('my_company_requisite_id');
 		$templateId = $dialog->getCurrentValue('template_id');
-		if($formName && $formName == 'bizproc_automation_robot_dialog' && !$templateId)
+		if($formName && $formName === 'bizproc_automation_robot_dialog' && !$templateId)
 		{
 			$templateId = key($templatesList);
 		}
@@ -318,6 +436,14 @@ class CBPCrmGenerateEntityDocumentActivity
 				}
 			}
 		}
+		if($myCompanyId > 0)
+		{
+			$map['MyCompanyRequisiteId']['Options'] = $myCompanyRequisites[$myCompanyId] ?? [];
+		}
+		if($myCompanyRequisiteId > 0)
+		{
+			$map['MyCompanyBankDetailId']['Options'] = $myCompanyBankDetails[$myCompanyRequisiteId] ?? [];
+		}
 		$dialog->setMap($map);
 
 		return $dialog;
@@ -329,8 +455,12 @@ class CBPCrmGenerateEntityDocumentActivity
 		$properties = [
 			'TemplateId' => $arCurrentValues['template_id'],
 			'UseSubscription' => ($arCurrentValues['use_subscription'] === 'Y') ? 'Y' : 'N',
+			'EnablePublicUrl' => ($arCurrentValues['public_url'] === 'N') ? 'N' : 'Y',
 			'WithStamps' => $arCurrentValues['with_stamps'],
 			'Values' => $arCurrentValues['Values'],
+			'MyCompanyId' => $arCurrentValues['my_company_id'],
+			'MyCompanyRequisiteId' => $arCurrentValues['my_company_requisite_id'],
+			'MyCompanyBankDetailId' => $arCurrentValues['my_company_bank_detail_id'],
 		];
 
 		$errors = self::ValidateProperties($properties, new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));

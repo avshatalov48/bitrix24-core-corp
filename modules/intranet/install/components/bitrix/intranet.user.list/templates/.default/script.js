@@ -121,14 +121,20 @@
 				}).then(function (response) {
 					BX.Main.gridManager.reload(this.gridId);
 				}.bind(this), function (response) {
-					var DeleteErrorPopup = BX.PopupWindowManager.create('delete_error' + Math.floor(Math.random() * 1000), button, {
-						content: response,
-						offsetLeft: -10,
-						offsetTop: 7,
-						autoHide: true
-					});
+					if (
+						BX.type.isNotEmptyObject(response)
+						&& BX.type.isArray(response.errors)
+					)
+					{
+						var DeleteErrorPopup = BX.PopupWindowManager.create('delete_error' + Math.floor(Math.random() * 1000), null, {
+							content: response.errors[0].message,
+							offsetLeft: -10,
+							offsetTop: 7,
+							autoHide: true
+						});
 
-					DeleteErrorPopup.show();
+						DeleteErrorPopup.show();
+					}
 				}.bind(this));
 			}
 		},

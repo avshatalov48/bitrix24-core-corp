@@ -39,7 +39,7 @@ echo $bExists ? 'bx-sp-unavail' : ''
 ?>" onclick="SLsetListValue(this)">
 		<input type="radio" name="sp_list_id" value="<?=$ID_CLEAR?>" id="<?=$ID_CLEAR?>"<?=$bExists ? ' disabled="disabled"' : ''?> />
 		<?if ($url_img):?><img src="<?=htmlspecialcharsbx($url_img)?>" border="0" />&nbsp;<?endif;?><a href="<?=htmlspecialcharsbx($url_list)?>" target="_blank"><?=htmlspecialcharsex($list['TITLE'])?></a>
-		<?if (strlen($list['DESCRIPTION']) > 0):?><br /><small><?=htmlspecialcharsex($list['DESCRIPTION'])?></small><?endif;?>
+		<?if ($list['DESCRIPTION'] <> ''):?><br /><small><?=htmlspecialcharsex($list['DESCRIPTION'])?></small><?endif;?>
 	</div>
 <?
 	endforeach;

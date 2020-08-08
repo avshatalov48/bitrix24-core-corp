@@ -16,9 +16,8 @@ const FieldCheckbox = {
 				<input :type="field.type" 
 					:value="item.value"
 					v-model="selected"
-					@blur="$emit('input-blur', this)"
-					@focus="$emit('input-focus', this)"
-					onclick="this.blur()"
+					@blur="$emit('input-blur')"
+					@focus="$emit('input-focus')"
 				>
 				<span class="b24-form-control-desc">{{ item.label }}</span>
 			</label>

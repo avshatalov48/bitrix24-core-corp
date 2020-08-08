@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 use Bitrix\Tasks;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 
 Loc::loadMessages(__FILE__);
 
@@ -41,6 +42,18 @@ class TasksAutomationComponent extends \CBitrixComponent
 		}
 
 		if (!Tasks\Integration\Bizproc\Automation\Factory::canUseAutomation())
+		{
+			ShowError(Loc::getMessage('TASKS_AUTOMATION_NOT_AVAILABLE'));
+			return;
+		}
+
+		if (!Tasks\Access\TaskAccessController::can($this->getUserId(), Tasks\Access\ActionDictionary::ACTION_TASK_ROBOT_EDIT, $this->getTaskId()))
+		{
+			ShowError(Loc::getMessage('TASKS_AUTOMATION_NOT_AVAILABLE'));
+			return;
+		}
+
+		if (TaskLimit::isLimitExceeded())
 		{
 			ShowError(Loc::getMessage('TASKS_AUTOMATION_NOT_AVAILABLE'));
 			return;

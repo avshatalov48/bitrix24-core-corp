@@ -7,9 +7,12 @@
  */
 namespace Bitrix\Crm\Tracking;
 
+use Bitrix\Main;
 use Bitrix\Main\Type\DateTime;
 
-use Bitrix\Crm\UtmTable;
+use Bitrix\Sale;
+
+use Bitrix\Crm;
 use Bitrix\Crm\Tracking;
 //use Bitrix\Crm\Entity\Identificator;
 
@@ -169,13 +172,100 @@ class Entity
 		}
 
 		// add utm
-		UtmTable::addEntityUtmFromFields($entityTypeId, $entityId, $fields);
+		Crm\UtmTable::addEntityUtmFromFields($entityTypeId, $entityId, $fields);
 
 		// track orders in deals
-		self::traceOrder($entityTypeId, $entityId, $fields);
+		self::traceOrderFromFields($entityTypeId, $entityId, $fields);
 
 		// check attribution window
 		self::checkAttrWindow($entityTypeId, $entityId, $fields);
+	}
+
+	public static function onSaleOrderSaved(Main\Event $event)
+	{
+		$order = $event->getParameter('ENTITY');
+		/** @var Crm\Order\Order $order */
+
+		if (!$order->isNew())
+		{
+			return;
+		}
+
+		self::traceLocalOrder($order->getId());
+	}
+
+	public static function onLocalShopChannelSaved()
+	{
+		if (!Main\Loader::includeModule('sale'))
+		{
+			return;
+		}
+
+		Main\EventManager::getInstance()->registerEventHandler(
+			'sale',
+			Sale\EventActions::EVENT_ON_ORDER_SAVED,
+			'crm',
+			self::class,
+			'onSaleOrderSaved'
+		);
+	}
+
+	/**
+	 * Event handler of entity updating by REST .
+	 *
+	 * @param int $entityTypeId Entity Type ID.
+	 * @param int $entityId Entity ID.
+	 * @param array $fields New Entity Type ID.
+	 * @return void
+	 */
+	public static function onRestAfterUpdate($entityTypeId, $entityId, array $fields)
+	{
+		if (!$entityTypeId || !$entityId)
+		{
+			return;
+		}
+
+		$allowedTypes = [
+			\CCrmOwnerType::Lead, \CCrmOwnerType::Contact, \CCrmOwnerType::Company,
+			\CCrmOwnerType::Deal, \CCrmOwnerType::Quote,
+		];
+		if (!in_array($entityTypeId, $allowedTypes, true))
+		{
+			return;
+		}
+
+		$traceId = null;
+		if (!empty($fields['TRACE']) && is_numeric($fields['TRACE']))
+		{
+			$traceId = (int) $fields['TRACE'];
+		}
+
+		if (!$traceId)
+		{
+			$trace = Tracking\Trace::create($fields['TRACE'] ?? null);
+			foreach (Crm\UtmTable::getCodeList() as $utmCode)
+			{
+				if (!empty($fields[$utmCode]))
+				{
+					$trace->addUtm($utmCode, $fields[$utmCode]);
+				}
+			}
+
+			if ($trace->getSourceId())
+			{
+				$previousTraceData = Tracking\Internals\TraceTable::getTraceByEntity($entityTypeId, $entityId);
+				if (!$previousTraceData || $previousTraceData['SOURCE_ID'] != $trace->getSourceId())
+				{
+					$traceId = $trace->save();
+				}
+			}
+		}
+
+		if ($traceId)
+		{
+			Tracking\Trace::appendChannel($traceId, new Tracking\Channel\Rest());
+			Tracking\Trace::appendEntity($traceId, $entityTypeId, $entityId);
+		}
 	}
 
 	/**
@@ -213,7 +303,7 @@ class Entity
 		if (!$traceId)
 		{
 			$trace = Tracking\Trace::create(isset($fields['TRACE']) ? $fields['TRACE'] : null);
-			foreach (UtmTable::getCodeList() as $utmCode)
+			foreach (Crm\UtmTable::getCodeList() as $utmCode)
 			{
 				if (!empty($fields[$utmCode]))
 				{
@@ -289,21 +379,20 @@ class Entity
 		Internals\TraceEntityTable::addEntity($row['TRACE_ID'], $toEntityTypeId, $toEntityId);
 	}
 
-	protected static function traceOrder($entityTypeId, $entityId, $fields)
+	/**
+	 * Trace local order.
+	 *
+	 * @param int $orderId Order ID.
+	 * @return void
+	 */
+	protected static function traceLocalOrder($orderId)
 	{
-		if (!in_array($entityTypeId, [\CCrmOwnerType::Deal], true))
-		{
-			return;
-		}
+		self::traceOrder($orderId, \CCrmOwnerType::Order, $orderId);
+	}
 
-		$orderNumberFieldCode = Tracking\Channel\Order::getDealField();
-		if (!$orderNumberFieldCode)
-		{
-			return;
-		}
-
-		$orderId = isset($fields[$orderNumberFieldCode]) ? trim($fields[$orderNumberFieldCode]) : null;
-		if (!$orderId)
+	protected static function traceOrder($orderId, $entityTypeId, $entityId)
+	{
+		if (!$orderId || !$entityId || !$entityTypeId)
 		{
 			return;
 		}
@@ -319,6 +408,33 @@ class Entity
 		}
 
 		Tracking\Trace::appendEntity($traceId, $entityTypeId, $entityId);
+	}
+
+	protected static function traceOrderFromFields($entityTypeId, $entityId, $fields)
+	{
+		if (!in_array($entityTypeId, [\CCrmOwnerType::Deal], true))
+		{
+			return;
+		}
+
+		$hasOriginator = !empty($fields['ORIGINATOR_ID']) && $fields['ORIGINATOR_ID'] === 'bitrix.cms.sync';
+		if ($hasOriginator && !empty($fields['ORIGIN_ID']))
+		{
+			$orderId = trim($fields['ORIGIN_ID']);
+		}
+		else
+		{
+			$fieldName = Tracking\Channel\Order::getDealField();
+			$orderId = ($fieldName && isset($fields[$fieldName]))
+				? trim($fields[$fieldName])
+				: null;
+		}
+
+
+		if ($orderId)
+		{
+			self::traceOrder($orderId, $entityTypeId, $entityId);
+		}
 	}
 
 	protected static function checkAttrWindow($entityTypeId, $entityId, $fields)

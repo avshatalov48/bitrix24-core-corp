@@ -199,14 +199,14 @@ class InvoiceExist extends InvoiceEntity
 					$nextExecution = $this->calculateNextExecutionDate($today->add('1 day'));
 				}
 				$this->setFieldNoDemand("NEXT_EXECUTION", $nextExecution);
-				$activityValue = 'Y';
 				if (!$this->isActive())
 				{
-					$activityValue = 'N';
-					$this->setFieldNoDemand("NEXT_EXECUTION", null);
+					$this->deactivate();
 				}
-
-				$this->setFieldNoDemand("ACTIVE", $activityValue);
+				else
+				{
+					$this->setFieldNoDemand("ACTIVE", 'Y');
+				}
 			}
 
 			$this->save();
@@ -249,7 +249,7 @@ class InvoiceExist extends InvoiceEntity
 		$userFields = $this->getUserFieldInstance()->GetEntityFields($invoiceId);
 		foreach ($userFields as $key => $field)
 		{
-			if ($field["USER_TYPE"]["BASE_TYPE"] == "file" && !empty($field['VALUE']))
+			if ($field["USER_TYPE"]["BASE_TYPE"] === "file" && !empty($field['VALUE']))
 			{
 				if (is_array($field['VALUE']))
 				{
@@ -284,7 +284,6 @@ class InvoiceExist extends InvoiceEntity
 			|| $this->getCalculateParameter('DATE_PAY_BEFORE_TYPE') === Entity\Invoice::UNSET_DATE_PAY_BEFORE
 		)
 		{
-			if (empty($period))
 				return null;
 		}
 
@@ -329,7 +328,16 @@ class InvoiceExist extends InvoiceEntity
 		$result = new Main\ORM\Data\AddResult();
 		$invoiceController = $this->getControllerInstance();
 		$reCalculateInvoice = false;
-		$newInvoiceId = $invoiceController->Add($fields, $reCalculateInvoice, $this->templateFields['LID']);
+		try
+		{
+			$newInvoiceId = $invoiceController->Add($fields, $reCalculateInvoice, $this->templateFields['LID']);
+		}
+		catch (Main\SystemException $exception)
+		{
+			$result->addError(new Main\Error($exception->getMessage(), $exception->getCode()));
+			return $result;
+		}
+
 		if ($newInvoiceId)
 		{
 			$responsibleId = (int)$fields['RESPONSIBLE_ID'];
@@ -468,5 +476,11 @@ class InvoiceExist extends InvoiceEntity
 			];
 		}
 		return $result;
+	}
+
+	public function deactivate(): void
+	{
+		$this->setFieldNoDemand('ACTIVE', 'N');
+		$this->setFieldNoDemand('NEXT_EXECUTION', null);
 	}
 }

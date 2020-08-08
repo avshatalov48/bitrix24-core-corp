@@ -240,7 +240,7 @@ class CIntranetUserSelectorHelper
 			}
 
 			$arLastSelected = CUserOptions::GetOption("intranet", "user_search", array());
-			if (is_array($arLastSelected) && strlen($arLastSelected['last_selected']) > 0)
+			if (is_array($arLastSelected) && $arLastSelected['last_selected'] <> '')
 			{
 				$arLastSelected = array_unique(explode(',', $arLastSelected['last_selected']));
 			}

@@ -517,9 +517,9 @@ class SaleTarget
 		{
 			foreach ($permissions['INTRANET'] as $code)
 			{
-				if (strpos($code, 'D') === 0)
+				if (mb_strpos($code, 'D') === 0)
 				{
-					$departments[] = (int)substr($code, 1);
+					$departments[] = (int)mb_substr($code, 1);
 				}
 			}
 		}
@@ -527,9 +527,9 @@ class SaleTarget
 		{
 			foreach ($permissions['SUBINTRANET'] as $code)
 			{
-				if (strpos($code, 'D') === 0)
+				if (mb_strpos($code, 'D') === 0)
 				{
-					$departments[] = (int)substr($code, 1);
+					$departments[] = (int)mb_substr($code, 1);
 				}
 			}
 		}

@@ -36,8 +36,14 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		list($entityTypeName, $entityId) = explode('_', $documentId[2]);
+		[$entityTypeName, $entityId] = explode('_', $documentId[2]);
 		$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
+
+		if ($this->isAlreadyConverted($entityTypeId, $entityId))
+		{
+			$this->WriteToTrackingService(GetMessage("CRM_CVTDA_ALREADY_CONVERTED"), 0, CBPTrackingType::Error);
+			return CBPActivityExecutionStatus::Closed;
+		}
 
 		try
 		{
@@ -62,7 +68,9 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 			$converter->setTargetItem($itemTypeId, $options);
 		}
 
-		$conversionResult = $converter->execute();
+		$conversionResult = $converter->execute([
+			'USER_ID' => \CCrmOwnerType::GetResponsibleID($entityTypeId, $entityId, false)
+		]);
 
 		\Bitrix\Crm\Automation\Factory::registerConversionResult($entityTypeId, $entityId, $conversionResult);
 
@@ -86,7 +94,7 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 		$start = ConvertTimeStamp(time() + CTimeZone::GetOffset(), 'FULL');
 
 		$documentId = $this->GetDocumentId();
-		list($typeName, $id) = explode('_', $documentId[2]);
+		[$typeName, $id] = explode('_', $documentId[2]);
 		$typeId = \CCrmOwnerType::ResolveID($typeName);
 
 		$allItems = static::getItemsList($documentId);
@@ -174,17 +182,18 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 				'Required' => true,
 				'Multiple' => true,
 				'Options' => static::getItemsList($documentType)
-			],
-			'DealCategoryId' => [
-				'Name' => GetMessage('CRM_CVTDA_DEAL_CATEGORY_ID'),
-				'FieldName' => 'deal_category_id',
-				'Type' => 'select',
-				'Options' => \Bitrix\Crm\Category\DealCategory::getSelectListItems()
 			]
 		];
 
 		if ($documentType[2] === \CCrmOwnerType::LeadName)
 		{
+			$map['DealCategoryId'] = [
+				'Name' => GetMessage('CRM_CVTDA_DEAL_CATEGORY_ID'),
+				'FieldName' => 'deal_category_id',
+				'Type' => 'select',
+				'Options' => \Bitrix\Crm\Category\DealCategory::getSelectListItems()
+			];
+
 			$map['DisableActivityCompletion'] = [
 				'Name' => GetMessage('CRM_CVTDA_DISABLE_ACTIVITY_COMPLETION'),
 				'FieldName' => 'disable_activity_completion',
@@ -227,7 +236,7 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 
 		$arProperties = array(
 			'Items' => $arCurrentValues['items'],
-			'DealCategoryId' => $arCurrentValues['deal_category_id'],
+			'DealCategoryId' => $arCurrentValues['deal_category_id'] ?? 0,
 			'DisableActivityCompletion' => $arCurrentValues['disable_activity_completion']
 		);
 
@@ -246,5 +255,27 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 		$arCurrentActivity["Properties"] = $arProperties;
 
 		return true;
+	}
+
+	private function isAlreadyConverted(int $entityTypeId, string $entityId): bool
+	{
+		if ($entityTypeId === \CCrmOwnerType::Lead)
+		{
+			$result = \CCrmLead::GetListEx(
+				array(),
+				array('=ID' => $entityId, 'CHECK_PERMISSIONS' => 'N'),
+				false,
+				false,
+				array('STATUS_ID')
+			);
+			$presentFields = is_object($result) ? $result->Fetch() : null;
+
+			if ($presentFields && $presentFields['STATUS_ID'] === 'CONVERTED')
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

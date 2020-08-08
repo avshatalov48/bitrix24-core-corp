@@ -2,6 +2,7 @@ import * as Item from './item';
 import * as Component from './components/field';
 import * as Messages from "../../form/messages";
 import * as Design from "../../form/design";
+import Event from "../../util/event";
 
 type Options = {
 	type: ?string;
@@ -27,8 +28,13 @@ let DefaultOptions: Options = {
 	required: false,
 };
 
-class Controller
+class Controller extends Event
 {
+	events: Object = {
+		blur: 'blur',
+		focus: 'focus',
+		changeSelected: 'change:selected',
+	};
 	options: Options = DefaultOptions;
 	id: String;
 	name: String;
@@ -83,6 +89,7 @@ class Controller
 
 	constructor(options: Options = DefaultOptions)
 	{
+		super(options);
 		this.adjust(options);
 	}
 
@@ -146,6 +153,11 @@ class Controller
 		return !this.validators.some((validator) => !validator.call(this, value));
 	}
 
+	hasValidValue()
+	{
+		return this.values().some(value => value !== '' && this.validate(value));
+	}
+
 	isEmptyRequired(): boolean
 	{
 		let items = this.selectedItems();
@@ -163,6 +175,11 @@ class Controller
 
 	valid(): boolean
 	{
+		if (!this.visible)
+		{
+			return true;
+		}
+
 		this.validated = true;
 		let items = this.selectedItems();
 
@@ -187,6 +204,11 @@ class Controller
 		}
 
 		let item = this.constructor.createItem(options);
+
+		item.subscribe(item.events.changeSelected, (data, obj, type) => {
+			this.emit(this.events.changeSelected, {data, type, item: obj});
+		});
+
 		this.items.push(item);
 		return item;
 	}

@@ -47,7 +47,7 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 		}
 		else
 		{
-			$this->guid = $this->arResult['~GUID'] = strtolower(CCrmOwnerType::ResolveName($this->entityTypeID)).'_'.$this->entityID;
+			$this->guid = $this->arResult['~GUID'] = mb_strtolower(CCrmOwnerType::ResolveName($this->entityTypeID)).'_'.$this->entityID;
 		}
 
 		$this->arResult['READ_ONLY'] = isset($this->arParams['~READ_ONLY'])
@@ -105,7 +105,7 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 				{
 					$this->arResult['TABS'][] = array(
 						'id' => 'tab_rest_'.$placementHandler['ID'],
-						'name' => strlen($placementHandler['TITLE']) > 0
+						'name' => $placementHandler['TITLE'] <> ''
 							? $placementHandler['TITLE']
 							: $placementHandler['APP_NAME'],
 						'enabled' => true,
@@ -139,7 +139,7 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 		}
 		else
 		{
-			$initMode = strtolower($initMode);
+			$initMode = mb_strtolower($initMode);
 			if($initMode !== 'edit' && $initMode !== 'view')
 			{
 				$initMode = '';

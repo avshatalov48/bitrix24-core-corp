@@ -13,7 +13,7 @@ use \Bitrix\ImOpenLines\Config,
  * Class Yandex
  * @package Bitrix\ImConnector\Connectors
  */
-class Yandex
+class Yandex extends Base
 {
 	/**
 	 * @param $value

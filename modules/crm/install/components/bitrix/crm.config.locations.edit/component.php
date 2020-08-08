@@ -112,7 +112,7 @@ if(check_bitrix_sessid())
 		{
 			$COUNTRY_NAME = isset($_POST['COUNTRY_NAME']) ? trim($_POST['COUNTRY_NAME']) : '';
 
-			if (strlen($COUNTRY_NAME)<=0)
+			if ($COUNTRY_NAME == '')
 				$strError .= GetMessage("CRM_ERROR_COUNTRY_NAME")."<br>";
 			/*
 			for ($i = 0; $i<$countLang; $i++)
@@ -129,7 +129,7 @@ if(check_bitrix_sessid())
 		{
 			$CITY_NAME = isset($_POST['CITY_NAME']) ? trim($_POST['CITY_NAME']) : '';
 
-			if (strlen($CITY_NAME) <= 0)
+			if ($CITY_NAME == '')
 				$strError .= GetMessage("CRM_ERROR_CITY_NAME")."<br>";
 			/*
 			for ($i = 0; $i<$countLang; $i++)
@@ -149,7 +149,7 @@ if(check_bitrix_sessid())
 			$REGION_ID = trim($_POST['REGION_ID']);
 			$REGION_NAME = isset($_POST['REGION_NAME']) ? trim($_POST['REGION_NAME']) : '';
 
-			if (strlen($REGION_NAME) <= 0)
+			if ($REGION_NAME == '')
 				$strError .= GetMessage("CRM_ERROR_REGION_NAME")."<br>";
 			/*
 			for ($i = 0; $i<$countLang; $i++)
@@ -163,7 +163,7 @@ if(check_bitrix_sessid())
 			*/
 		}
 
-		if (strlen($strError) <= 0)
+		if ($strError == '')
 		{
 			$arFields = array(
 				"SORT" => $SORT,
@@ -238,14 +238,14 @@ if(check_bitrix_sessid())
 			}
 
 			$arFields["LOC_DEFAULT"] = "N";
-			if (isset($_POST['LOC_DEFAULT']) && strlen($_POST['LOC_DEFAULT']) > 0)
+			if (isset($_POST['LOC_DEFAULT']) && $_POST['LOC_DEFAULT'] <> '')
 				$arFields["LOC_DEFAULT"] = $_POST['LOC_DEFAULT'];
 
 			if ($ID > 0)
 			{
 				$ID = CSaleLocation::Update($ID, $arFields);
 
-				if (IntVal($ID) <= 0)
+				if (intval($ID) <= 0)
 				{
 					if ($ex = $APPLICATION->GetException())
 						$strError .= $ex->GetString()."<br>";
@@ -256,7 +256,7 @@ if(check_bitrix_sessid())
 			else
 			{
 				$ID = CSaleLocation::Add($arFields);
-				if (IntVal($ID) <= 0 )
+				if (intval($ID) <= 0 )
 				{
 					if ($ex = $APPLICATION->GetException())
 						$strError = $ex->GetString()."<br>";
@@ -265,17 +265,17 @@ if(check_bitrix_sessid())
 				}
 			}
 
-			if ($ID > 0 && strlen($strError) <= 0)
+			if ($ID > 0 && $strError == '')
 			{
 				$arZipList = $_REQUEST["ZIP"];
 				CSaleLocation::SetLocationZIP($ID, $arZipList);
 			}
 
 //			die();
-			if(strlen($strError) <= 0)
+			if($strError == '')
 			{
 				LocalRedirect(
-					isset($_POST['apply']) || strlen($strError) > 0
+					isset($_POST['apply']) || $strError <> ''
 						? CComponentEngine::MakePathFromTemplate(
 						$arParams['PATH_TO_LOCATIONS_EDIT'],
 						array('loc_id' => $ID)
@@ -289,7 +289,7 @@ if(check_bitrix_sessid())
 
 		}
 
-		if(strlen($strError) > 0)
+		if($strError <> '')
 			ShowError($strError);
 
 	}

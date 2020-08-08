@@ -105,6 +105,11 @@ class ConfigTable extends Main\Entity\DataManager
 				'title' => Loc::getMessage('CONFIG_ENTITY_CHECK_AVAILABLE_FIELD'),
 				'default_value' => 'N',
 			]),
+			new BooleanField('WATCH_TYPING', [
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('CONFIG_ENTITY_WATCH_TYPING_FIELD'),
+				'default_value' => 'N',
+			]),
 			new BooleanField('WELCOME_BOT_ENABLE', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_WELCOME_BOT_ENABLE_FIELD'),

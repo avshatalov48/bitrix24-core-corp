@@ -111,8 +111,8 @@ class CIntranetStructureListComponent extends CBitrixComponent
 						isset($_REQUEST[$filterName . '_'.$value])
 							? $_REQUEST[$filterName . '_'.$value]
 							: (
-								isset($_REQUEST['flt_'.strtolower($value)]) // from user_profile
-									? $_REQUEST['flt_'.strtolower($value)]
+								isset($_REQUEST['flt_'.mb_strtolower($value)]) // from user_profile
+									? $_REQUEST['flt_'.mb_strtolower($value)]
 									: null)
 					);
 				}
@@ -370,7 +370,7 @@ class CIntranetStructureListComponent extends CBitrixComponent
 	 */
 	protected function initFilterName($filterName)
 	{
-		if (strlen($filterName) <= 0 || !preg_match("/^[A-Za-z_][A-Za-z0-9_]*$/", $filterName))
+		if ($filterName == '' || !preg_match("/^[A-Za-z_][A-Za-z0-9_]*$/", $filterName))
 		{
 			return 'find_';
 		}
@@ -409,8 +409,8 @@ class CIntranetStructureListComponent extends CBitrixComponent
 	 */
 	protected function initCache($cntStartCacheId)
 	{
-		$this->cacheDir  = '/'  . SITE_ID . $this->getRelativePath()
-					. '/' . substr(md5($cntStartCacheId), 0, 5)
+		$this->cacheDir  = '/'.SITE_ID.$this->getRelativePath()
+			.'/'.mb_substr(md5($cntStartCacheId), 0, 5)
 					. '/' . trim(CDBResult::NavStringForCache($this->arParams['USERS_PER_PAGE'], false), '|');
 
 		$this->cacheId = $this->getName() . '|' . SITE_ID;
@@ -424,7 +424,7 @@ class CIntranetStructureListComponent extends CBitrixComponent
 
 		if (
 			isset($this->arParams['LIST_URL'])
-			&& strlen($this->arParams['LIST_URL']) > 0
+			&& $this->arParams['LIST_URL'] <> ''
 		)
 		{
 			$this->cacheId .= "|" . $this->arParams['LIST_URL'];
@@ -608,8 +608,8 @@ class CIntranetStructureListComponent extends CBitrixComponent
 				{
 					if (
 						is_array($value) && count($value) <= 0
-						|| !is_array($value) && strlen($value) <= 0
-						|| !in_array($k, $arSelect) && substr($k, 0, 3) != 'UF_'
+						|| !is_array($value) && $value == ''
+						|| !in_array($k, $arSelect) && mb_substr($k, 0, 3) != 'UF_'
 					)
 					{
 						unset($arUser[$k]);

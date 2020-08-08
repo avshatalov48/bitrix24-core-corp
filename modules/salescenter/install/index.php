@@ -1,7 +1,7 @@
 <?php
 global $MESS;
 $PathInstall = str_replace("\\", "/", __FILE__);
-$PathInstall = substr($PathInstall, 0, strlen($PathInstall)-strlen("/index.php"));
+$PathInstall = mb_substr($PathInstall, 0, mb_strlen($PathInstall) - mb_strlen("/index.php"));
 
 IncludeModuleLangFile($PathInstall."/install.php");
 
@@ -22,9 +22,7 @@ class salescenter extends CModule
 	{
 		$arModuleVersion = [];
 
-		$path = str_replace("\\", "/", __FILE__);
-		$path = substr($path, 0, strlen($path) - strlen("/index.php"));
-		include($path."/version.php");
+		include(__DIR__.'/version.php');
 
 		if (is_array($arModuleVersion) && array_key_exists("VERSION", $arModuleVersion))
 		{
@@ -44,7 +42,7 @@ class salescenter extends CModule
 	function DoInstall()
 	{
 		global $APPLICATION, $step;
-		$step = IntVal($step);
+		$step = intval($step);
 		if($step < 2)
 		{
 			$notInstalledRequiredModules = [];
@@ -78,7 +76,7 @@ class salescenter extends CModule
 
 		if(!$DB->Query("SELECT 'x' FROM b_salescenter_page", true))
 		{
-			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/db/".strtolower($DB->type)."/install.sql");
+			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/db/".mb_strtolower($DB->type)."/install.sql");
 		}
 
 		if($errors !== false)
@@ -95,7 +93,9 @@ class salescenter extends CModule
 		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('landing', 'onLandingAfterUnPublication', 'salescenter', '\Bitrix\SalesCenter\Integration\LandingManager', 'onLandingAfterUnPublication');
 		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('landing', 'onBeforeSiteRecycle', 'salescenter', '\Bitrix\SalesCenter\Integration\LandingManager', 'onBeforeSiteRecycle');
 		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('landing', 'onBeforeLandingRecycle', 'salescenter', '\Bitrix\SalesCenter\Integration\LandingManager', 'onBeforeLandingRecycle');
+		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('landing', 'onLandingStartPublication', 'salescenter', '\Bitrix\SalesCenter\Integration\LandingManager', 'onLandingStartPublication');
 		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('sale', 'OnSaleOrderPaid', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'onSalePayOrder');
+		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('sale', 'OnSaleOrderSaved', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'OnSaleOrderSaved');
 		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('sale', 'OnSalePsServiceProcessRequestBeforePaid', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'onSalePsServiceProcessRequestBeforePaid');
 		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('sale', 'OnPrintableCheckSend', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'OnPrintableCheckSend');
 		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('sale', 'OnCheckPrintError', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'OnCheckPrintError');
@@ -132,7 +132,7 @@ class salescenter extends CModule
 	function DoUninstall()
 	{
 		global $DOCUMENT_ROOT, $APPLICATION, $step;
-		$step = IntVal($step);
+		$step = intval($step);
 		if($step < 2)
 		{
 			$APPLICATION->IncludeAdminFile(GetMessage("SALESCENTER_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/".$this->MODULE_ID."/install/unstep1.php");
@@ -146,6 +146,7 @@ class salescenter extends CModule
 		}
 
 		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('sale', 'OnSaleOrderPaid', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'onSalePayOrder');
+		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('sale', 'OnSaleOrderSaved', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'OnSaleOrderSaved');
 		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('sale', 'OnSalePsServiceProcessRequestBeforePaid', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'onSalePsServiceProcessRequestBeforePaid');
 		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('sale', 'OnPrintableCheckSend', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'OnPrintableCheckSend');
 		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('sale', 'OnCheckPrintError', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'OnCheckPrintError');
@@ -157,6 +158,7 @@ class salescenter extends CModule
 		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('landing', 'onLandingAfterUnPublication', 'salescenter', '\Bitrix\SalesCenter\Integration\LandingManager', 'onLandingAfterUnPublication');
 		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('landing', 'onBeforeSiteRecycle', 'salescenter', '\Bitrix\SalesCenter\Integration\LandingManager', 'onBeforeSiteRecycle');
 		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('landing', 'onBeforeLandingRecycle', 'salescenter', '\Bitrix\SalesCenter\Integration\LandingManager', 'onBeforeLandingRecycle');
+        \Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('landing', 'onLandingStartPublication', 'salescenter', '\Bitrix\SalesCenter\Integration\LandingManager', 'onLandingStartPublication');
 		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('crm', 'OnActivityAdd', 'salescenter', '\Bitrix\SalesCenter\Integration\CrmManager', 'onActivityAdd');
 		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('pull', 'OnGetDependentModule', 'salescenter', '\Bitrix\SalesCenter\Driver', 'onGetDependentModule');
 		\Bitrix\SalesCenter\Integration\ImManager::unInstallApplication();
@@ -174,7 +176,7 @@ class salescenter extends CModule
 
 		if(!isset($params['savedata']) || $params['savedata'] !== "Y")
 		{
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/".$this->MODULE_ID."/install/db/".strtolower($DB->type)."/uninstall.sql");
+			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/".$this->MODULE_ID."/install/db/".mb_strtolower($DB->type)."/uninstall.sql");
 		}
 
 		if($errors !== false)

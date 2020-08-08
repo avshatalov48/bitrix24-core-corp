@@ -62,7 +62,7 @@ elseif (empty($_REQUEST["preview_comment"]) || $_REQUEST["preview_comment"] == "
 	$FORUM_TOPIC_ID = $arResult["FORUM_TOPIC_ID"] ? $arResult["FORUM_TOPIC_ID"] : 0;
 	$strErrorMessage = "";
 
-	if (strLen($_POST["REVIEW_TEXT"]) < 1)
+	if (mb_strlen($_POST["REVIEW_TEXT"]) < 1)
 	{
 		if (empty($_REQUEST["FILES"]) && empty($_FILES))
 		{
@@ -197,17 +197,17 @@ else
 	$arResult["MESSAGE_VIEW"] = array(
 		"POST_MESSAGE_TEXT" => $parser->convertText($_POST["REVIEW_TEXT"]),
 		"AUTHOR_NAME" => htmlspecialcharsEx($arResult["USER"]["SHOWED_NAME"]),
-		"AUTHOR_ID" => intVal($USER->GetID()),
+		"AUTHOR_ID" => intval($USER->GetID()),
 		"AUTHOR_URL" => CComponentEngine::MakePathFromTemplate($arParams["URL_TEMPLATES_PROFILE_VIEW"], array("UID" => $USER->GetID())),
 		"POST_DATE" => CForumFormat::DateFormat($arParams["DATE_TIME_FORMAT"], time()+CTimeZone::GetOffset()),
 		"FILES" => array()
 	);
 
 	$arFields = array(
-		"FORUM_ID" => intVal($arParams["FORUM_ID"]),
+		"FORUM_ID" => intval($arParams["FORUM_ID"]),
 		"TOPIC_ID" => 0,
 		"MESSAGE_ID" => 0,
-		"USER_ID" => intVal($GLOBALS["USER"]->GetID())
+		"USER_ID" => intval($GLOBALS["USER"]->GetID())
 	);
 
 	$arFiles = array();
@@ -216,7 +216,7 @@ else
 
 	foreach ($_FILES as $key => $val)
 	{
-		if ((substr($key, 0, strLen("FILE_NEW")) == "FILE_NEW") && !empty($val["name"]))
+		if ((mb_substr($key, 0, mb_strlen("FILE_NEW")) == "FILE_NEW") && !empty($val["name"]))
 		{
 			$arFiles[] = $_FILES[$key];
 		}

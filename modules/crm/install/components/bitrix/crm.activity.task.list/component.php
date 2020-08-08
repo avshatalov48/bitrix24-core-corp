@@ -35,7 +35,7 @@ $CCrmActivity = new CCrmActivityTask();
 
 $arParams['GRID_ID_SUFFIX'] = '';
 $arResult['GADGET'] = 'N';
-if (isset($arParams['GADGET_ID']) && strlen($arParams['GADGET_ID']) > 0)
+if (isset($arParams['GADGET_ID']) && $arParams['GADGET_ID'] <> '')
 	$arResult['GADGET'] = 'Y';
 
 $arFilter = $arSort = array();

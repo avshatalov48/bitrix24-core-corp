@@ -541,29 +541,30 @@ class CVoxImplantSip
 		{
 			return '/settings/license_phone_sip.php';
 		}
-		else
+		$account = new CVoxImplantAccount();
+		switch ($account->GetAccountLang())
 		{
-			if (LANGUAGE_ID == 'ru')
-			{
-				return 'http://www.1c-bitrix.ru/buy/intranet.php#tab-call-link';
-			}
-			else if (LANGUAGE_ID == 'ua')
-			{
-				return 'http://www.1c-bitrix.ua/buy/intranet.php#tab-call-link';
-			}
-			else if (LANGUAGE_ID == 'kz')
-			{
+			case 'ru':
+				return 'https://www.1c-bitrix.ru/buy/products/b24.php#tab-section-4';
+			case 'ua':
+				return 'https://www.bitrix.ua/buy/intranet.php#tab-call-link';
+			case 'kz':
 				return 'https://www.1c-bitrix.kz/buy/intranet.php#tab-call-link';
-			}
-			else if (LANGUAGE_ID == 'de')
-			{
+			case 'by':
+				return 'https://www.1c-bitrix.by/buy/intranet.php#tab-call-link';
+			case 'de':
 				return 'https://www.bitrix24.de/prices/self-hosted-telephony.php';
-			}
-			else
-			{
-				return 'https://www.bitrix24.com/prices/self-hosted-telephony.php';
-			}
+			default:
+				if($account->GetAccountCurrency() === 'USD')
+				{
+					return 'https://www.bitrix24.com/prices/self-hosted-telephony.php';
+				}
+				if($account->GetAccountCurrency() === 'EUR')
+				{
+					return 'https://www.bitrix24.eu/prices/self-hosted-telephony.php';
+				}
 		}
+		return '';
 	}
 }
 ?>

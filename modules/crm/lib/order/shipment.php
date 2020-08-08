@@ -43,6 +43,14 @@ class Shipment extends Sale\Shipment
 			}
 		}
 
+		if (!$this->isSystem() && !$isNew && $this->isChanged())
+		{
+			Crm\Automation\Trigger\ShipmentChangedTrigger::execute(
+				[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getField('ORDER_ID')]],
+				['SHIPMENT' => $this]
+			);
+		}
+
 		if ($this->fields->isChanged('ALLOW_DELIVERY') && $this->isAllowDelivery())
 		{
 			Crm\Automation\Trigger\AllowDeliveryTrigger::execute(
@@ -51,27 +59,81 @@ class Shipment extends Sale\Shipment
 			);
 		}
 
-		if ($this->fields->isChanged('DEDUCTED') && $this->getField('DEDUCTED') == "Y")
+		if ($this->fields->isChanged('TRACKING_NUMBER') && !empty($this->getField('TRACKING_NUMBER')))
 		{
-			Crm\Automation\Trigger\DeductedTrigger::execute(
+			Crm\Automation\Trigger\FillTrackingNumberTrigger::execute(
 				[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getField('ORDER_ID')]],
 				['SHIPMENT' => $this]
 			);
+		}
+
+		if ($this->fields->isChanged('DEDUCTED'))
+		{
+			if ($this->getField('DEDUCTED') == "Y")
+			{
+				Crm\Automation\Trigger\DeductedTrigger::execute(
+					[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getField('ORDER_ID')]],
+					['SHIPMENT' => $this]
+				);
+			}
+
+			if (!$this->isSystem() && !$this->getOrder()->isNew())
+			{
+				$timelineParams = [
+					'FIELDS' => $this->getFieldValues(),
+					'SETTINGS' => [
+						'CHANGED_ENTITY' => \CCrmOwnerType::OrderShipmentName,
+						'FIELDS' => [
+							'ORDER_DEDUCTED' => $this->getField('DEDUCTED'),
+							'ORDER_DONE' => 'N'
+						],
+					],
+					'BINDINGS' => $this->getTimelineBindings()
+				];
+
+				Crm\Timeline\OrderShipmentController::getInstance()->onDeducted($this->getId(), $timelineParams);
+			}
 		}
 
 		if(Main\Loader::includeModule('pull'))
 		{
 			\CPullWatch::AddToStack(
 				'CRM_ENTITY_ORDER_SHIPMENT',
-				array(
+				[
 					'module_id' => 'crm',
 					'command' => 'onOrderShipmentSave',
-					'params' => array(
+					'params' => [
 						'FIELDS' => $this->getFieldValues()
-					)
-				)
+					]
+				]
 			);
 		}
+	}
+
+	/**
+	 * @return array
+	 */
+	private function getTimelineBindings() : array
+	{
+		$bindings = [
+			[
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
+				'ENTITY_ID' => $this->getOrder()->getId()
+			]
+		];
+
+		if ($this->getOrder()->getDealbinding())
+		{
+			/** @var DealBinding $dealBindings */
+			$dealBindings = $this->getOrder()->getDealBinding();
+
+			$bindings[] = [
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+				'ENTITY_ID' => $dealBindings->getDealId()
+			];
+		}
+
+		return $bindings;
 	}
 
 	/**
@@ -80,9 +142,16 @@ class Shipment extends Sale\Shipment
 	 */
 	private function addTimelineEntryOnCreate()
 	{
+		$fields = $this->getFields()->getValues();
+		$createdBy = $this->getOrder()->getField('CREATED_BY');
+		if ($createdBy)
+		{
+			$fields['ORDER_CREATED_BY'] = $createdBy;
+		}
+
 		Crm\Timeline\OrderShipmentController::getInstance()->onCreate(
 			$this->getId(),
-			array('FIELDS' => $this->getFields()->getValues())
+			array('FIELDS' => $fields)
 		);
 	}
 
@@ -127,5 +196,16 @@ class Shipment extends Sale\Shipment
 			Crm\Timeline\TimelineType::CREATION,
 			$selectedFields
 		);
+	}
+
+	public function delete()
+	{
+		$deleteResult = parent::delete();
+		if ($deleteResult->isSuccess() && (int)$this->getId() > 0)
+		{
+			Crm\Timeline\TimelineEntry::deleteByOwner(\CCrmOwnerType::OrderShipment, $this->getId());
+		}
+
+		return $deleteResult;
 	}
 }

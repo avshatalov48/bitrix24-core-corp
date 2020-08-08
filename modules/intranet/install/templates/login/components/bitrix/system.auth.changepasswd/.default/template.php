@@ -6,7 +6,7 @@
 	<?
 	ShowMessage($arParams["~AUTH_RESULT"]);
 	?>
-	<?if (strlen($arResult["BACKURL"]) > 0): ?>
+	<?if ($arResult["BACKURL"] <> ''): ?>
 	<input type="hidden" name="backurl" value="<?=$arResult["BACKURL"]?>" />
 	<? endif ?>
 	<input type="hidden" name="AUTH_FORM" value="Y">

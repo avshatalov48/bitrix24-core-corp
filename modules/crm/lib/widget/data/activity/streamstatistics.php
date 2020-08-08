@@ -41,7 +41,7 @@ class StreamStatistics extends DataSource
 			throw new Main\ObjectNotFoundException("The 'filter' is not found in params.");
 		}
 
-		$group = isset($params['group']) ? strtoupper($params['group']) : '';
+		$group = isset($params['group'])? mb_strtoupper($params['group']) : '';
 		if($group !== '' && $group !== self::GROUP_BY_USER && $group !== self::GROUP_BY_DATE && $group !== self::GROUP_BY_STREAM)
 		{
 			$group = '';
@@ -330,7 +330,7 @@ class StreamStatistics extends DataSource
 	 */
 	public function initializeDemoData(array $data, array $params)
 	{
-		$group = isset($params['group']) ? strtoupper($params['group']) : '';
+		$group = isset($params['group'])? mb_strtoupper($params['group']) : '';
 		if($group === self::GROUP_BY_STREAM)
 		{
 			$streams = StatisticsStream::getDescriptions();

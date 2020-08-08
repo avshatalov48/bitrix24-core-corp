@@ -102,6 +102,9 @@ class CAllCrmDeal
 				'OPPORTUNITY' => array(
 					'TYPE' => 'double'
 				),
+				'IS_MANUAL_OPPORTUNITY' => array(
+					'TYPE' => 'char'
+				),
 				'TAX_VALUE' => array(
 					'TYPE' => 'double'
 				),
@@ -215,10 +218,12 @@ class CAllCrmDeal
 			'TITLE' => array('FIELD' => 'L.TITLE', 'TYPE' => 'string'),
 			'TYPE_ID' => array('FIELD' => 'L.TYPE_ID', 'TYPE' => 'string'),
 			'STAGE_ID' => array('FIELD' => 'L.STAGE_ID', 'TYPE' => 'string'),
+			'ORDER_STAGE' => array('FIELD' => 'L.ORDER_STAGE', 'TYPE' => 'string'),
 			'PROBABILITY' => array('FIELD' => 'L.PROBABILITY', 'TYPE' => 'int'),
 			'CURRENCY_ID' => array('FIELD' => 'L.CURRENCY_ID', 'TYPE' => 'string'),
 			'EXCH_RATE' => array('FIELD' => 'L.EXCH_RATE', 'TYPE' => 'double'),
 			'OPPORTUNITY' => array('FIELD' => 'L.OPPORTUNITY', 'TYPE' => 'double'),
+			'IS_MANUAL_OPPORTUNITY' => array('FIELD' => 'L.IS_MANUAL_OPPORTUNITY', 'TYPE' => 'char'),
 			'TAX_VALUE' => array('FIELD' => 'L.TAX_VALUE', 'TYPE' => 'double'),
 			'ACCOUNT_CURRENCY_ID' => array('FIELD' => 'L.ACCOUNT_CURRENCY_ID', 'TYPE' => 'string'),
 			'OPPORTUNITY_ACCOUNT' => array('FIELD' => 'L.OPPORTUNITY_ACCOUNT', 'TYPE' => 'double'),
@@ -342,6 +347,8 @@ class CAllCrmDeal
 				$result['C_ACTIVITY_RESP_NAME'] = array('FIELD' => 'ACUSR.NAME', 'TYPE' => 'string', 'FROM' => $commonActivityJoin);
 				$result['C_ACTIVITY_RESP_LAST_NAME'] = array('FIELD' => 'ACUSR.LAST_NAME', 'TYPE' => 'string', 'FROM' => $commonActivityJoin);
 				$result['C_ACTIVITY_RESP_SECOND_NAME'] = array('FIELD' => 'ACUSR.SECOND_NAME', 'TYPE' => 'string', 'FROM' => $commonActivityJoin);
+				$result['C_ACTIVITY_TYPE_ID'] = array('FIELD' => 'AC.TYPE_ID', 'TYPE' => 'int', 'FROM' => $commonActivityJoin);
+				$result['C_ACTIVITY_PROVIDER_ID'] = array('FIELD' => 'AC.PROVIDER_ID', 'TYPE' => 'string', 'FROM' => $commonActivityJoin);
 
 				$userID = CCrmPerms::GetCurrentUserID();
 				if($userID > 0)
@@ -351,6 +358,8 @@ class CAllCrmDeal
 					$result['ACTIVITY_ID'] = array('FIELD' => 'UA.ACTIVITY_ID', 'TYPE' => 'int', 'FROM' => $activityJoin);
 					$result['ACTIVITY_TIME'] = array('FIELD' => 'UA.ACTIVITY_TIME', 'TYPE' => 'datetime', 'FROM' => $activityJoin);
 					$result['ACTIVITY_SUBJECT'] = array('FIELD' => 'A.SUBJECT', 'TYPE' => 'string', 'FROM' => $activityJoin);
+					$result['ACTIVITY_TYPE_ID'] = array('FIELD' => 'A.TYPE_ID', 'TYPE' => 'int', 'FROM' => $activityJoin);
+					$result['ACTIVITY_PROVIDER_ID'] = array('FIELD' => 'A.PROVIDER_ID', 'TYPE' => 'string', 'FROM' => $activityJoin);
 				}
 			}
 
@@ -434,50 +443,55 @@ class CAllCrmDeal
 
 		if (!empty($arFilter['ACTIVE_TIME_PERIOD_from']) || !empty($arFilter['%STAGE_ID_FROM_HISTORY']) || !empty($arFilter['%STAGE_ID_FROM_SUPPOSED_HISTORY']) || !empty($arFilter['%STAGE_SEMANTIC_ID_FROM_HISTORY']))
 		{
-
 			global $DB;
-			$supposedHistoryCaseSql = "L.ID IN (SELECT DISTINCT DSHWS.OWNER_ID FROM b_crm_deal_stage_history_with_supposed DSHWS WHERE ";
-			$supposedHistoryCaseSqlWhereStarted = false;
+
+			$supposedHistoryConditions = [];
 
 			if (!empty($arFilter['ACTIVE_TIME_PERIOD_from']) && !empty($arFilter['ACTIVE_TIME_PERIOD_to']))
 			{
-				$supposedHistoryCaseSql .= "DSHWS.LAST_UPDATE_DATE <= ".
-										   $DB->CharToDateFunction($arFilter['ACTIVE_TIME_PERIOD_to'], 'SHORT');
-				$supposedHistoryCaseSql .= " AND DSHWS.CLOSE_DATE >= ".
-										   $DB->CharToDateFunction($arFilter['ACTIVE_TIME_PERIOD_from'], 'SHORT');
-				$supposedHistoryCaseSqlWhereStarted = true;
+				$supposedHistoryConditions[] = "DSHWS.LAST_UPDATE_DATE <= " . $DB->CharToDateFunction($arFilter['ACTIVE_TIME_PERIOD_to'], 'SHORT');
+				$supposedHistoryConditions[] = "DSHWS.CLOSE_DATE >= " . $DB->CharToDateFunction($arFilter['ACTIVE_TIME_PERIOD_from'], 'SHORT');
 			}
-
 
 			if (!empty($arFilter['%STAGE_SEMANTIC_ID_FROM_HISTORY']))
 			{
 				$stageSemanticIdsFromFilter = is_array($arFilter['%STAGE_SEMANTIC_ID_FROM_HISTORY']) ? $arFilter['%STAGE_SEMANTIC_ID_FROM_HISTORY'] : array($arFilter['%STAGE_SEMANTIC_ID_FROM_HISTORY']);
-				$supposedHistoryCaseSql .= $supposedHistoryCaseSqlWhereStarted ? ' AND ' : ' ';
-				$supposedHistoryCaseSql  .= " DSHWS.IS_SUPPOSED = 'N' AND DSHWS.STAGE_SEMANTIC_ID  IN (" . implode(',', array_map(function($el) {return "'" . $el . "'";}, $stageSemanticIdsFromFilter)) . ")";
-				$supposedHistoryCaseSqlWhereStarted = true;
+				$stageIdsForSql = [];
+				foreach ($stageSemanticIdsFromFilter as $value)
+				{
+					$stageIdsForSql[] = "'" . \Bitrix\Main\Application::getConnection()->getSqlHelper()->forSql($value) . "'";
+				}
+				$supposedHistoryConditions[] = "DSHWS.IS_SUPPOSED = 'N'";
+				$supposedHistoryConditions[] = "DSHWS.STAGE_SEMANTIC_ID IN (" . implode(', ', $stageIdsForSql) . ")";
 			}
-
 
 			if (!empty($arFilter['%STAGE_ID_FROM_HISTORY']))
 			{
 				$statusIdsFromFilter = is_array($arFilter['%STAGE_ID_FROM_HISTORY']) ? $arFilter['%STAGE_ID_FROM_HISTORY'] : array($arFilter['%STAGE_ID_FROM_HISTORY']);
-				$supposedHistoryCaseSql .= $supposedHistoryCaseSqlWhereStarted ? ' AND ' : ' ';
-				$supposedHistoryCaseSql .= " DSHWS.IS_SUPPOSED = 'N' AND DSHWS.STAGE_ID  IN (" . implode(',', array_map(function($el) {return "'" . $el . "'";}, $statusIdsFromFilter)) . ")";
-				$supposedHistoryCaseSqlWhereStarted = true;
+				$statusIdsForSql = [];
+				foreach ($statusIdsFromFilter as $value)
+				{
+					$statusIdsForSql[] = "'" . \Bitrix\Main\Application::getConnection()->getSqlHelper()->forSql($value) . "'";
+				}
+				$supposedHistoryConditions[] = "DSHWS.IS_SUPPOSED = 'N'";
+				$supposedHistoryConditions[] = "DSHWS.STAGE_ID  IN (" . implode(',', $statusIdsForSql) . ")";
 			}
-
 
 			if (!empty($arFilter['%STAGE_ID_FROM_SUPPOSED_HISTORY']))
 			{
 				$statusIdsFromFilter = is_array($arFilter['%STAGE_ID_FROM_SUPPOSED_HISTORY']) ? $arFilter['%STAGE_ID_FROM_SUPPOSED_HISTORY'] : array($arFilter['%STAGE_ID_FROM_SUPPOSED_HISTORY']);
-				$supposedHistoryCaseSql .= $supposedHistoryCaseSqlWhereStarted ? ' AND ' : ' ';
-				$supposedHistoryCaseSql .= " DSHWS.STAGE_ID  IN (" . implode(',', array_map(function($el) {return "'" . $el . "'";}, $statusIdsFromFilter)) . ")";
-				$supposedHistoryCaseSqlWhereStarted = true;
+				$statusIdsForSql = [];
+				foreach ($statusIdsFromFilter as $value)
+				{
+					$statusIdsForSql[] = "'" . \Bitrix\Main\Application::getConnection()->getSqlHelper()->forSql($value) . "'";
+				}
+				$supposedHistoryConditions[] = "DSHWS.STAGE_ID IN (" . implode(',', $statusIdsForSql) . ")";
 			}
 
-			$supposedHistoryCaseSql .=" )";
-
-			$sqlData['WHERE'][] = $supposedHistoryCaseSql;
+			if(count($supposedHistoryConditions) > 0)
+			{
+				$sqlData['WHERE'][] = "L.ID IN (SELECT DISTINCT DSHWS.OWNER_ID FROM b_crm_deal_stage_history_with_supposed DSHWS WHERE ". implode(" AND ", $supposedHistoryConditions) ." )";
+			}
 		}
 
 		if(isset($arFilter['CALENDAR_DATE_FROM']) && $arFilter['CALENDAR_DATE_FROM'] !== ''
@@ -745,6 +759,7 @@ class CAllCrmDeal
 			'PRODUCT_ID' => 'L.PRODUCT_ID',
 			'PROBABILITY' => 'L.PROBABILITY',
 			'OPPORTUNITY' => 'L.OPPORTUNITY',
+			'IS_MANUAL_OPPORTUNITY' => 'L.IS_MANUAL_OPPORTUNITY',
 			'TAX_VALUE' => 'L.TAX_VALUE',
 			'CURRENCY_ID' => 'L.CURRENCY_ID',
 			'IS_RECURRING' => 'L.IS_RECURRING',
@@ -768,6 +783,7 @@ class CAllCrmDeal
 			'EXCH_RATE' => 'L.EXCH_RATE',
 			'ORIGINATOR_ID' => 'L.ORIGINATOR_ID', //EXTERNAL SYSTEM THAT OWNS THIS ITEM
 			'ORIGIN_ID' => 'L.ORIGIN_ID', //ITEM ID IN EXTERNAL SYSTEM
+			'ORDER_STAGE' => 'L.ORDER_STAGE',
 			'ASSIGNED_BY_LOGIN' => 'U.LOGIN',
 			'ASSIGNED_BY_NAME' => 'U.NAME',
 			'ASSIGNED_BY_LAST_NAME' => 'U.LAST_NAME',
@@ -846,7 +862,7 @@ class CAllCrmDeal
 
 		foreach($arSelect as $field)
 		{
-			$field = strtoupper($field);
+			$field = mb_strtoupper($field);
 			if (array_key_exists($field, $arFields))
 				$arSqlSelect[$field] = $arFields[$field].($field != '*' ? ' AS '.$field : '');
 		}
@@ -881,7 +897,7 @@ class CAllCrmDeal
 				$CDBResult->InitFromArray(array());
 				return $CDBResult;
 			}
-			if(strlen($sSqlPerm) > 0)
+			if($sSqlPerm <> '')
 			{
 				$sSqlPerm = ' AND '.$sSqlPerm;
 			}
@@ -959,6 +975,12 @@ class CAllCrmDeal
 				'TABLE_ALIAS' => 'L',
 				'FIELD_NAME' => 'L.OPPORTUNITY',
 				'FIELD_TYPE' => 'int',
+				'JOIN' => false
+			),
+			'IS_MANUAL_OPPORTUNITY' => array(
+				'TABLE_ALIAS' => 'L',
+				'FIELD_NAME' => 'L.IS_MANUAL_OPPORTUNITY',
+				'FIELD_TYPE' => 'string',
 				'JOIN' => false
 			),
 			'TAX_VALUE' => array(
@@ -1114,12 +1136,12 @@ class CAllCrmDeal
 
 		$sSqlSearch = '';
 		foreach($arSqlSearch as $r)
-			if (strlen($r) > 0)
+			if ($r <> '')
 				$sSqlSearch .= "\n\t\t\t\tAND  ($r) ";
 		$CCrmUserType = new CCrmUserType($GLOBALS['USER_FIELD_MANAGER'], self::$sUFEntityID);
 		$CCrmUserType->ListPrepareFilter($arFilter);
 		$r = $obUserFieldsSql->GetFilter();
-		if (strlen($r) > 0)
+		if ($r <> '')
 			$sSqlSearch .= "\n\t\t\t\tAND ($r) ";
 
 		if (!empty($sQueryWhereFields))
@@ -1139,8 +1161,8 @@ class CAllCrmDeal
 			$arOrder = Array('DATE_CREATE' => 'DESC');
 		foreach($arOrder as $by => $order)
 		{
-			$by = strtoupper($by);
-			$order = strtolower($order);
+			$by = mb_strtoupper($by);
+			$order = mb_strtolower($order);
 			if ($order != 'asc')
 				$order = 'desc';
 
@@ -1225,46 +1247,46 @@ class CAllCrmDeal
 
 	public static function GetTopIDs($top, $sortType = 'ASC', $userPermissions = null)
 	{
-		if($top <= 0)
+		$top = (int) $top;
+		if ($top <= 0)
 		{
 			return array();
 		}
 
-		$sortType = strtoupper($sortType) !== 'DESC' ? 'ASC' : 'DESC';
+		$sortType = mb_strtoupper($sortType) !== 'DESC' ? 'ASC' : 'DESC';
 
 		$permissionSql = '';
-		if(!CCrmPerms::IsAdmin())
+		if (!CCrmPerms::IsAdmin())
 		{
-			if(!$userPermissions)
+			if (!$userPermissions)
 			{
 				$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 			}
 
-			$permissionSql = self::BuildPermSql(
-				'L',
-				'READ',
-				array(
-					'PERMS' => $userPermissions,
-					'RAW_QUERY' => array('TOP' => $top, 'SORT_TYPE' => $sortType)
-				)
-			);
+			$permissionSql = self::BuildPermSql('L', 'READ', ['PERMS' => $userPermissions]);
 		}
 
-		if($permissionSql === false)
+		if ($permissionSql === false)
 		{
-			return array();
+			return [];
 		}
 
-		$connection = \Bitrix\Main\Application::getConnection();
-		$sql = $permissionSql === ''
-			? $connection->getSqlHelper()->getTopSql("SELECT ID FROM b_crm_deal ORDER BY ID {$sortType}", $top)
-			: "SELECT L.ID FROM b_crm_deal L INNER JOIN ($permissionSql) LP ON L.ID = LP.ENTITY_ID";
-		$dbResult = $connection->query($sql);
+		$query = new Bitrix\Main\Entity\Query(Crm\DealTable::getEntity());
+		$query->addSelect('ID');
+		$query->addOrder('ID', $sortType);
+		$query->setLimit($top);
 
-		$results = array();
-		while($field = $dbResult->fetch())
+		if ($permissionSql !== '')
 		{
-			$results[] = (int)$field['ID'];
+			$permissionSql = mb_substr($permissionSql, 7);
+			$query->where('ID', 'in', new Bitrix\Main\DB\SqlExpression($permissionSql));
+		}
+
+		$rs = $query->exec();
+		$results = [];
+		while ($field = $rs->fetch())
+		{
+			$results[] = (int) $field['ID'];
 		}
 		return $results;
 	}
@@ -1682,7 +1704,7 @@ class CAllCrmDeal
 			{
 				$arFields['TITLE'] = self::GetDefaultTitle($ID);
 				$sUpdate = $DB->PrepareUpdate('b_crm_deal', array('TITLE' => $arFields['TITLE']));
-				if(strlen($sUpdate) > 0)
+				if($sUpdate <> '')
 				{
 					$DB->Query("UPDATE b_crm_deal SET {$sUpdate} WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 				};
@@ -1888,7 +1910,7 @@ class CAllCrmDeal
 				)
 				{
 					$url = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Deal, $ID);
-					$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0) ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
+					$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
 
 					$arMessageFields = array(
 						"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
@@ -1951,7 +1973,7 @@ class CAllCrmDeal
 		{
 			$arFields['OPPORTUNITY'] = str_replace(array(',', ' '), array('.', ''), $arFields['OPPORTUNITY']);
 			//HACK: MSSQL returns '.00' for zero value
-			if(strpos($arFields['OPPORTUNITY'], '.') === 0)
+			if(mb_strpos($arFields['OPPORTUNITY'], '.') === 0)
 			{
 				$arFields['OPPORTUNITY'] = '0'.$arFields['OPPORTUNITY'];
 			}
@@ -2020,6 +2042,14 @@ class CAllCrmDeal
 							array('*', 'UF_*')
 						);
 						$currentFields = $dbResult->Fetch();
+					}
+
+					if(!array_key_exists('OBSERVER_IDS', $currentFields))
+					{
+						$currentFields['OBSERVER_IDS'] = Crm\Observer\ObserverManager::getEntityObserverIDs(
+							\CCrmOwnerType::Deal,
+							$ID
+						);
 					}
 				}
 
@@ -2732,7 +2762,7 @@ class CAllCrmDeal
 
 			unset($arFields['ID']);
 			$sUpdate = $DB->PrepareUpdate('b_crm_deal', $arFields);
-			if (strlen($sUpdate) > 0)
+			if ($sUpdate <> '')
 			{
 				$DB->Query("UPDATE b_crm_deal SET {$sUpdate} WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 				$bResult = true;
@@ -3052,7 +3082,7 @@ class CAllCrmDeal
 					{
 						$title = CCrmOwnerType::GetCaption(CCrmOwnerType::Deal, $ID, false);
 						$url = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Deal, $ID);
-						$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0) ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
+						$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
 
 						if (
 							$sonetEvent['TYPE'] == CCrmLiveFeedEvent::Responsible
@@ -3592,6 +3622,18 @@ class CAllCrmDeal
 			);
 		}
 
+		if (isset($arFieldsOrig['IS_MANUAL_OPPORTUNITY'])
+			&& isset($arFieldsModif['IS_MANUAL_OPPORTUNITY'])
+			&& $arFieldsOrig['IS_MANUAL_OPPORTUNITY'] != $arFieldsModif['IS_MANUAL_OPPORTUNITY'])
+		{
+			$arMsg[] = Array(
+				'ENTITY_FIELD' => 'IS_MANUAL_OPPORTUNITY',
+				'EVENT_NAME' => GetMessage('CRM_FIELD_COMPARE_IS_MANUAL_OPPORTUNITY'),
+				'EVENT_TEXT_1' => GetMessage('CRM_FIELD_COMPARE_IS_MANUAL_OPPORTUNITY_'.($arFieldsOrig['IS_MANUAL_OPPORTUNITY'] == 'Y' ? 'Y' : 'N')),
+				'EVENT_TEXT_2' => GetMessage('CRM_FIELD_COMPARE_IS_MANUAL_OPPORTUNITY_'.($arFieldsModif['IS_MANUAL_OPPORTUNITY'] == 'Y' ? 'Y' : 'N')),
+			);
+		}
+
 		if(isset($arFieldsOrig['SOURCE_ID']) && isset($arFieldsModif['SOURCE_ID'])
 			&& $arFieldsOrig['SOURCE_ID'] != $arFieldsModif['SOURCE_ID'])
 		{
@@ -3779,11 +3821,14 @@ class CAllCrmDeal
 		if (is_array($arTotalInfo))
 		{
 			$arFields = array(
-				'OPPORTUNITY' => isset($arTotalInfo['OPPORTUNITY']) ? $arTotalInfo['OPPORTUNITY'] : 0.0,
 				'TAX_VALUE' => isset($arTotalInfo['TAX_VALUE']) ? $arTotalInfo['TAX_VALUE'] : 0.0
 			);
 
 			$entity = new CCrmDeal($checkPerms);
+			if (!$entity::isManualOpportunity($ID))
+			{
+				$arFields['OPPORTUNITY'] = isset($arTotalInfo['OPPORTUNITY']) ? $arTotalInfo['OPPORTUNITY'] : 0.0;
+			}
 			$entity->Update($ID, $arFields);
 		}
 	}
@@ -4183,7 +4228,7 @@ class CAllCrmDeal
 			}
 			elseif (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
 			{
-				if(strlen($v) > 0)
+				if($v <> '')
 				{
 					$arFilter['>='.$arMatch[1]] = $v;
 				}
@@ -4191,7 +4236,7 @@ class CAllCrmDeal
 			}
 			elseif (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
 			{
-				if(strlen($v) > 0)
+				if($v <> '')
 				{
 					if (($arMatch[1] == 'DATE_CREATE' || $arMatch[1] == 'DATE_MODIFY') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
 					{
@@ -4211,7 +4256,7 @@ class CAllCrmDeal
 				}
 				unset($arFilter[$k]);
 			}
-			elseif ($k != 'ID' && $k != 'LOGIC' && $k != '__INNER_FILTER' && strpos($k, 'UF_') !== 0 && preg_match('/^[^\=\%\?\>\<]{1}/', $k) === 1)
+			elseif ($k != 'ID' && $k != 'LOGIC' && $k != '__INNER_FILTER' && mb_strpos($k, 'UF_') !== 0 && preg_match('/^[^\=\%\?\>\<]{1}/', $k) === 1)
 			{
 				$arFilter['%'.$k] = $v;
 				unset($arFilter[$k]);
@@ -4643,7 +4688,7 @@ class CAllCrmDeal
 		}
 		else
 		{
-			$type = strtolower($type);
+			$type = mb_strtolower($type);
 		}
 
 		CPullWatch::AddToStack(
@@ -5059,6 +5104,29 @@ class CAllCrmDeal
 		);
 
 		return (bool) $queryObject->fetch();
+	}
+
+	public static function isManualOpportunity($ID)
+	{
+		$ID = intval($ID);
+		if($ID <= 0)
+		{
+			return false;
+		}
+
+		$dbRes = self::GetListEx(
+			array(),
+			array('ID' => $ID, 'CHECK_PERMISSIONS' => 'N'),
+			false,
+			false,
+			array('ID', 'IS_MANUAL_OPPORTUNITY')
+		);
+
+		if ($arRes = $dbRes->Fetch())
+		{
+			return ($arRes['IS_MANUAL_OPPORTUNITY'] == 'Y');
+		}
+		return false;
 	}
 }
 

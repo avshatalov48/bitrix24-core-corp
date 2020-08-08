@@ -6,6 +6,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectException;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\Json;
 use Bitrix\Sale\Helpers\Order\Builder\BuildingException;
 use Bitrix\Sale\TradingPlatform;
@@ -23,7 +24,7 @@ if (!Loader::includeModule('sale'))
  * @package Bitrix\Crm\Order
  * @internal
  */
-final class OrderBuilderCrm extends OrderBuilder
+class OrderBuilderCrm extends OrderBuilder
 {
 	/** @var Order  */
 	protected $order = null;
@@ -47,6 +48,7 @@ final class OrderBuilderCrm extends OrderBuilder
 			->setContactCompanyCollection()
 			->setProperties()
 			->setUser()
+			->setDealBinding()
 			->setTradeBindingCollection()
 			->buildBasket()
 			->buildPayments()
@@ -56,7 +58,7 @@ final class OrderBuilderCrm extends OrderBuilder
 	}
 
 	/**
-	 * @return $this
+	 * @return OrderBuilder
 	 * @throws \Bitrix\Main\NotImplementedException
 	 */
 	public function buildBasket()
@@ -77,11 +79,13 @@ final class OrderBuilderCrm extends OrderBuilder
 						{
 							$fields = array_intersect_key($p, array_flip(BasketItem::getAllFields()));
 							$fields = array_merge($fieldsValues, $fields);
-
-							//todo: convert it due to currency format
-							$fields['PRICE'] = str_replace([' ', chr(160), ','], ['', '', '.'], $fields['PRICE']);
-							$fields['QUANTITY'] = str_replace([' ', chr(160), ','], ['', '', '.'], $fields['QUANTITY']);
-
+							$currency = $fields['CURRENCY'] ?? $this->order->getCurrency();
+							$fields['PRICE'] = $this->unFormatPrice($fields['PRICE'], $currency);
+							$fields['QUANTITY'] = str_replace(
+								[' ', chr(194).chr(160), chr(160), ','],
+								['', '', '', '.'],
+								$fields['QUANTITY']
+							);
 							$fields['OFFER_ID'] = $fields['PRODUCT_ID'];
 							$this->formData['PRODUCT'][$k] = $fields;
 						}
@@ -102,6 +106,22 @@ final class OrderBuilderCrm extends OrderBuilder
 		}
 
 		return parent::buildBasket();
+	}
+
+	protected function unFormatPrice(string $formattedPrice, string $currency): float
+	{
+		if(!Loader::includeModule('currency'))
+		{
+			throw new SystemException('Can\'t include module "currency"');
+		}
+
+		$formattedPrice = str_replace(
+			[chr(194).chr(160), chr(160)],
+			'&nbsp;',
+			$formattedPrice
+		);
+
+		return (float)\CCurrencyLang::getUnFormattedValue($formattedPrice, $currency);
 	}
 
 	/**
@@ -164,7 +184,7 @@ final class OrderBuilderCrm extends OrderBuilder
 			'PAY_RETURN_DATE', 'PAY_VOUCHER_DATE', 'DATE_RESPONSIBLE_ID'
 		];
 
-		if(is_array($this->formData["PAYMENT"]))
+		if (is_array($this->formData["PAYMENT"]))
 		{
 			foreach($this->formData["PAYMENT"] as $idx => $data)
 			{
@@ -202,6 +222,28 @@ final class OrderBuilderCrm extends OrderBuilder
 		}
 
 		return parent::buildShipments();
+	}
+
+	protected function setDealBinding()
+	{
+		$dealId = $this->formData['DEAL_ID'] ?? 0;
+
+		if ($dealId)
+		{
+			$dealBinding = $this->order->getDealBinding();
+
+			if ($dealBinding === null)
+			{
+				$dealBinding = $this->order->createDealBinding();
+			}
+
+			if ($dealBinding)
+			{
+				$dealBinding->setField('DEAL_ID', $this->formData['DEAL_ID']);
+			}
+		}
+
+		return $this;
 	}
 
 	protected function setContactCompanyCollection()
@@ -260,7 +302,7 @@ final class OrderBuilderCrm extends OrderBuilder
 		$tradeCollection = $this->order->getTradeBindingCollection();
 		$tradeCollection->clearCollection();
 
-		if(strlen($platform) > 0)
+		if($platform <> '')
 		{
 			$instance = TradingPlatform\Landing\Landing::getInstanceByCode($platform);
 			$tradeCollection->createItem($instance);
@@ -312,7 +354,7 @@ final class OrderBuilderCrm extends OrderBuilder
 			if (
 				isset($clientProperties[$property->getPropertyId()])
 				&& !is_array($property->getValue())
-				&& !strlen($property->getValue())
+				&& !mb_strlen($property->getValue())
 			)
 			{
 				$property->setValue($clientProperties[$property->getPropertyId()]);

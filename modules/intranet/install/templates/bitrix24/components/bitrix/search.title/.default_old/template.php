@@ -6,12 +6,12 @@ CJSCore::Init(array('finder'));
 $this->setFrameMode(true);
 
 $inputId = trim($arParams["~INPUT_ID"]);
-if(strlen($inputId) <= 0)
+if($inputId == '')
 	$inputId = "title-search-input";
 $inputId = CUtil::JSEscape($inputId);
 
 $containerId = trim($arParams["~CONTAINER_ID"]);
-if(strlen($containerId) <= 0)
+if($containerId == '')
 {
 	$containerId = "title-search";
 }

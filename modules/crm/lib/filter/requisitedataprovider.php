@@ -149,7 +149,9 @@ class RequisiteDataProvider extends DataProvider
 						$addressLabels = RequisiteAddress::getShortLabels(RequisiteAddress::Primary);
 						foreach(array_keys($requisite->getAddressFieldMap(RequisiteAddress::Primary)) as $fieldKey)
 						{
-							if($fieldKey === 'ADDRESS_2' || $fieldKey === 'COUNTRY_CODE')
+							if($fieldKey === 'ADDRESS_2'
+								|| $fieldKey === 'COUNTRY_CODE'
+								|| $fieldKey === 'LOC_ADDR_ID')
 							{
 								continue;
 							}

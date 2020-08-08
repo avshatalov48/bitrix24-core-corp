@@ -161,7 +161,7 @@ if (
 
 	foreach ($arID as $ID)
 	{
-		if (strlen($ID) <= 0)
+		if ($ID == '')
 		{
 			continue;
 		}

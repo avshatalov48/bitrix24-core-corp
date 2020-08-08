@@ -35,7 +35,7 @@ class CrmWebFormEditTemplate
 
 	public static function callGetFieldByType($type, $params)
 	{
-		$type = strtoupper(substr($type, 0, 1)) . substr($type, 1);
+		$type = mb_strtoupper(mb_substr($type, 0, 1)).mb_substr($type, 1);
 		$callableField = array(__CLASS__, 'getField' . $type);
 
 		if(is_callable($callableField))
@@ -53,7 +53,7 @@ class CrmWebFormEditTemplate
 
 	public static function callGetFieldItemByType($type, $params)
 	{
-		$type = strtoupper(substr($type, 0, 1)) . substr($type, 1);
+		$type = mb_strtoupper(mb_substr($type, 0, 1)).mb_substr($type, 1);
 		$callableField = array(__CLASS__, 'getField' . $type . 'Item');
 
 		$result = null;
@@ -67,7 +67,7 @@ class CrmWebFormEditTemplate
 
 	public static function callGetFieldSettingsItemByType($type, $params)
 	{
-		$type = strtoupper(substr($type, 0, 1)) . substr($type, 1);
+		$type = mb_strtoupper(mb_substr($type, 0, 1)).mb_substr($type, 1);
 		$callableField = array(__CLASS__, 'getField' . $type . 'SettingsItem');
 
 		$result = null;
@@ -90,13 +90,13 @@ class CrmWebFormEditTemplate
 			}
 
 			$isEscapedValue = false;
-			if(substr($paramKey, 0, 1) == '~')
+			if(mb_substr($paramKey, 0, 1) == '~')
 			{
-				$paramKey = substr($paramKey, 1);
+				$paramKey = mb_substr($paramKey, 1);
 				$isEscapedValue = true;
 			}
 
-			$replaceData['from'][] = '%' . strtolower($paramKey) . '%';
+			$replaceData['from'][] = '%'.mb_strtolower($paramKey) . '%';
 			$replaceData['to'][] = $isEscapedValue ? $paramValue : htmlspecialcharsbx($paramValue);
 		}
 
@@ -151,7 +151,7 @@ class CrmWebFormEditTemplate
 
 
 
-		$params['URL_DISPLAY_STYLE'] = (substr($params['ENTITY_FIELD_NAME'], 0, 3) == 'UF_' ? 'initial' : 'none');
+		$params['URL_DISPLAY_STYLE'] = (mb_substr($params['ENTITY_FIELD_NAME'], 0, 3) == 'UF_' ? 'initial' : 'none');
 
 		if(is_array($params['ITEMS']))
 		{
@@ -165,6 +165,7 @@ class CrmWebFormEditTemplate
 						'item_id' => $item['ID'],
 						'item_value' => $item['VALUE'],
 						'item_discount' => $item['DISCOUNT'] ?: '',
+						'item_custom_price' => $item['CUSTOM_PRICE'] === 'Y' ? 'checked' : '',
 					)
 				);
 			}
@@ -181,6 +182,7 @@ class CrmWebFormEditTemplate
 						'item_name' => $item['NAME'],
 						'item_price' => $item['PRICE'],
 						'item_discount' => $item['DISCOUNT'] ?: '',
+						'item_custom_price' => $item['CUSTOM_PRICE'] === 'Y' ? 'checked' : '',
 						'currency_short_name' => $params['CURRENCY_SHORT_NAME'],
 					)
 				);
@@ -762,6 +764,10 @@ class CrmWebFormEditTemplate
 				<input data-bx-crm-webform-product-item-input="" name="FIELD[%name%][ITEMS][%item_id%][VALUE]" value="%item_value%" class="crm-webform-edit-task-options-account-setup-goods-name" placeholder="' . Loc::getMessage('CRM_WEBFORM_EDIT_DOC_INVOICE_PRODUCT_CHOICE_NAME1') . '">
 				<input name="FIELD[%name%][ITEMS][%item_id%][PRICE]" value="%item_price%" class="crm-webform-edit-task-options-account-setup-goods-price" placeholder="' . Loc::getMessage('CRM_WEBFORM_EDIT_DOC_INVOICE_PRODUCT_CHOICE_PRICE1') . ', %currency_short_name%">
 				<input type="' . (WebForm\Manager::isEmbeddingAvailable() ? 'text' : 'hidden') . '" name="FIELD[%name%][ITEMS][%item_id%][DISCOUNT]" value="%item_discount%" class="crm-webform-edit-task-options-account-setup-goods-price" placeholder="' . Loc::getMessage('CRM_WEBFORM_EDIT_DOC_INVOICE_PRODUCT_CHOICE_DISCOUNT') . ', %currency_short_name%">
+				<label style="' . (WebForm\Manager::isOrdersAvailable() ? '' : 'display: none;') . '" class="crm-webform-edit-task-options-account-setup-goods-price-custom">
+				 	<input type="checkbox" name="FIELD[%name%][ITEMS][%item_id%][CUSTOM_PRICE]" value="Y" %item_custom_price%>
+				 	Custom price
+				</label>
 			</label>
 		';
 	}
@@ -794,7 +800,7 @@ class CrmWebFormEditTemplate
 		$result = null;
 		if (\Bitrix\Main\Loader::includeModule('calendar'))
 		{
-			CJSCore::Init(['userfield_resourcebooking']);
+			\Bitrix\Crm\Integration\Calendar::loadResourcebookingUserfieldExtention();
 			$result = [
 				'DISPLAY_PART' => '<div class="crm-webform-resourcebooking-wrap"></div>',
 				'SETTINGS' => '&nbsp;'

@@ -128,7 +128,7 @@ class Condition
 				}
 				else
 				{
-					$result = (strpos($value, $f) !== false);
+					$result = (mb_strpos($value, $f) !== false);
 				}
 
 				if (!$result)
@@ -156,7 +156,7 @@ class Condition
 					}
 					else
 					{
-						$result = (strpos($f, $v) !== false);
+						$result = (mb_strpos($f, $v) !== false);
 					}
 
 					if ($result)

@@ -45,7 +45,7 @@ class CCurrencyClassifierComponent extends \CBitrixComponent
 
 			foreach ($this->arResult['LANGUAGE_IDS'] as $languageId)
 			{
-				$upperLanguageId = strtoupper($languageId);
+				$upperLanguageId = mb_strtoupper($languageId);
 				$currencyLangProps = $currencyData[$upperLanguageId];
 
 				$currencyLangProps['CURRENCY'] = $currencyId;
@@ -76,7 +76,7 @@ class CCurrencyClassifierComponent extends \CBitrixComponent
 				}
 				else
 				{
-					if (strlen($values['FULL_NAME']) == 0)
+					if ($values['FULL_NAME'] == '')
 					{
 						$values['FULL_NAME'] = $currencyId;
 					}
@@ -84,7 +84,7 @@ class CCurrencyClassifierComponent extends \CBitrixComponent
 					$currencyLangProps = $values;
 					$currencyLangProps['CURRENCY'] = $currencyId;
 
-					$lowerType = strtolower($type);
+					$lowerType = mb_strtolower($type);
 					$fields['LANG'][$lowerType] = $currencyLangProps;
 				}
 			}
@@ -126,7 +126,7 @@ class CCurrencyClassifierComponent extends \CBitrixComponent
 			}
 			elseif ($formMode == 'EDIT')
 			{
-				$fullNameLength = strlen($values['FULL_NAME']);
+				$fullNameLength = mb_strlen($values['FULL_NAME']);
 				$maxFullNameLength = 50;
 				$maxSepAndDecPointLength = 5;
 				$maxSignLength = 48;
@@ -136,13 +136,13 @@ class CCurrencyClassifierComponent extends \CBitrixComponent
 					$this->arResult['ERRORS'][$type]['FULL_NAME'] = Loc::getMessage('CRM_CURRENCY_CLASSIFIER_FIELD_FULL_NAME_ERROR');
 
 				if ($values['THOUSANDS_VARIANT'] == 'OWN')
-					if (strlen($values['THOUSANDS_SEP']) > $maxSepAndDecPointLength)
+					if (mb_strlen($values['THOUSANDS_SEP']) > $maxSepAndDecPointLength)
 						$this->arResult['ERRORS'][$type]['THOUSANDS_SEP'] = Loc::getMessage('CRM_CURRENCY_CLASSIFIER_FIELD_MAX_LENGTH_ERROR', array('#max_length#' => $maxSepAndDecPointLength));
 
-				if (strlen($values['SIGN']) > $maxSignLength)
+				if (mb_strlen($values['SIGN']) > $maxSignLength)
 					$this->arResult['ERRORS'][$type]['SIGN'] = Loc::getMessage('CRM_CURRENCY_CLASSIFIER_FIELD_MAX_LENGTH_ERROR', array('#max_length#' => $maxSignLength));
 
-				if (strlen($values['DEC_POINT']) > $maxSepAndDecPointLength)
+				if (mb_strlen($values['DEC_POINT']) > $maxSepAndDecPointLength)
 					$this->arResult['ERRORS'][$type]['DEC_POINT'] = Loc::getMessage('CRM_CURRENCY_CLASSIFIER_FIELD_MAX_LENGTH_ERROR', array('#max_length#' => $maxSepAndDecPointLength));
 
 				if (!preg_match('/^[0-9]{0,3}$/', $values['DECIMALS']) || ($values['DECIMALS'] > $maxDecimalsValue))
@@ -168,7 +168,7 @@ class CCurrencyClassifierComponent extends \CBitrixComponent
 			$formMode = $request->get('current_form_mode');
 			$afterAdding = $request->get('after_adding');
 			$this->arResult['TARGET_FORM_MODE'] = $formMode;
-			$lowerCaseFormMode = strtolower($formMode);
+			$lowerCaseFormMode = mb_strtolower($formMode);
 
 			$lastValues = array(
 				'ADD' => array(
@@ -316,7 +316,7 @@ class CCurrencyClassifierComponent extends \CBitrixComponent
 				$langSettings = array();
 				$langSettings['HIDE_ZERO'] = $request->get('add_hide_zero_' . $languageId) ? 'Y' : 'N';
 
-				$currencyLangSettings[strtoupper($languageId)] = $langSettings;
+				$currencyLangSettings[mb_strtoupper($languageId)] = $langSettings;
 			}
 		}
 		else
@@ -341,7 +341,7 @@ class CCurrencyClassifierComponent extends \CBitrixComponent
 				$langSettings['SIGN_POSITION'] = $request->get('edit_sign_position_' . $languageId);
 				$langSettings['CONTENT_EXPANDED'] = ($this->arResult['PRIMARY_FORM_MODE'] == 'EDIT' && $formatTemplate == '-') ? 'Y' : $request->get('expandable_content_hidden_input_' . $languageId);
 
-				$currencyLangSettings[strtoupper($languageId)] = $langSettings;
+				$currencyLangSettings[mb_strtoupper($languageId)] = $langSettings;
 			}
 		}
 
@@ -383,11 +383,11 @@ class CCurrencyClassifierComponent extends \CBitrixComponent
 				$langSettings['SIGN'] = trim(str_replace('&#', '[*]', $formatString));
 				$langSettings['SIGN'] = trim(str_replace('#', '', $langSettings['SIGN']));
 				$langSettings['SIGN'] = trim(str_replace('[*]', '&#', $langSettings['SIGN']));
-				$langSettings['SIGN_POSITION'] = (strpos($formatString, '#') == 0) ? 'A' : 'B';
+				$langSettings['SIGN_POSITION'] = (mb_strpos($formatString, '#') == 0) ? 'A' : 'B';
 				$langSettings['FORMAT_TEMPLATE'] = $formatTemplate;
 				$langSettings['CONTENT_EXPANDED'] = ($formatTemplate == '-') ? 'Y' : 'N';
 
-				$currencyLangSettings[strtoupper($currencyLang['LID'])] = $langSettings;
+				$currencyLangSettings[mb_strtoupper($currencyLang['LID'])] = $langSettings;
 			}
 		}
 		else
@@ -401,7 +401,7 @@ class CCurrencyClassifierComponent extends \CBitrixComponent
 				$langSettings['HIDE_ZERO'] = 'Y';
 				$langSettings['CONTENT_EXPANDED'] = 'N';
 
-				$currencyLangSettings[strtoupper($languageId)] = $langSettings;
+				$currencyLangSettings[mb_strtoupper($languageId)] = $langSettings;
 			}
 		}
 
@@ -446,7 +446,7 @@ class CCurrencyClassifierComponent extends \CBitrixComponent
 		]);
 		while ($language = $languageList->fetch())
 		{
-			$title = trim(Loc::getMessage('BX_CRM_COMPONENT_CCC_LANGUAGE_TITLE_'.strtoupper($language['LANGUAGE_ID'])));
+			$title = trim(Loc::getMessage('BX_CRM_COMPONENT_CCC_LANGUAGE_TITLE_'.mb_strtoupper($language['LANGUAGE_ID'])));
 			if ($title === '')
 				$title = $language['NAME'];
 			$languageId = $language['LANGUAGE_ID'];

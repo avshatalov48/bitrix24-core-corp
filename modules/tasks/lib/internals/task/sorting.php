@@ -2,9 +2,6 @@
 namespace Bitrix\Tasks\Internals\Task;
 
 use Bitrix\Main\Application;
-use Bitrix\Main\DB\MssqlConnection;
-use Bitrix\Main\DB\MysqlCommonConnection;
-use Bitrix\Main\DB\OracleConnection;
 use Bitrix\Main\Entity;
 use Bitrix\Main\HttpApplication;
 use Bitrix\Main\Localization\Loc;

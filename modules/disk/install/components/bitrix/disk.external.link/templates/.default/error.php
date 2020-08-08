@@ -14,13 +14,13 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 use Bitrix\Main\Localization\Loc;
 
 $langId = $component->getLangId();
-switch(strtolower($langId))
+switch(mb_strtolower($langId))
 {
 	case 'en':
 	case 'de':
 	case 'ru':
 	case 'ua':
-		$langForBanner = strtolower($langId);
+	$langForBanner = mb_strtolower($langId);
 		break;
 	default:
 		$langForBanner = Loc::getDefaultLang($langId);

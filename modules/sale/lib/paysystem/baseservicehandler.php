@@ -82,7 +82,7 @@ abstract class BaseServiceHandler
 				$content = require($templatePath);
 
 				$buffer = ob_get_contents();
-				if (strlen($buffer) > 0)
+				if ($buffer <> '')
 					$content = $buffer;
 
 				if ($this->service->getField('ENCODING') != '')

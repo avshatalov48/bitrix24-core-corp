@@ -1,7 +1,7 @@
 <?
 class CExtranetWizardServices
 {
-	function GetTemplates($relativePath)
+	public static function GetTemplates($relativePath)
 	{
 		$absolutePath = $_SERVER["DOCUMENT_ROOT"].$relativePath;
 		$absolutePath = str_replace("\\", "/", $absolutePath);
@@ -56,7 +56,7 @@ class CExtranetWizardServices
 		return $arWizardTemplates;
 	}
 
-	function GetTemplatesPath($path)
+	public static function GetTemplatesPath($path)
 	{
 		$templatesPath = $path."/templates";
 
@@ -66,7 +66,7 @@ class CExtranetWizardServices
 		return $templatesPath;
 	}
 
-	function GetServices($wizardPath, $serviceFolder = "", $arFilter = Array())
+	public static function GetServices($wizardPath, $serviceFolder = "", $arFilter = Array())
 	{
 		$arServices = Array();
 
@@ -174,7 +174,7 @@ class CExtranetWizardServices
 		return $currentSiteID;
 	}
 
-	function GetThemes($relativePath)
+	public static function GetThemes($relativePath)
 	{
 		$arThemes = Array();
 
@@ -322,7 +322,7 @@ class CExtranetWizardServices
 		);
 	}
 
-	function SetUserOption($category, $option, $settings, $common = false, $userID = false)
+	public static function SetUserOption($category, $option, $settings, $common = false, $userID = false)
 	{
 		global $DBType;
 		require_once($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/main/classes/".strtolower($DBType)."/favorites.php");
@@ -360,7 +360,7 @@ class CExtranetWizardServices
 	}
 	
 	
-	function ReplaceMacrosRecursive($filePath, $arReplace)
+	public static function ReplaceMacrosRecursive($filePath, $arReplace)
 	{
 
 		clearstatcache();

@@ -30,19 +30,22 @@ class SearchAction extends Search\SearchAction
 			->getSearchValue()
 		;
 
-		if (
-			Search\Content::canUseFulltextSearch($fulltextContent) &&
-			Reindex\HeadIndex::isReady()
-		)
+		if (!Search\Content::canUseFulltextSearch($fulltextContent))
+		{
+			return [];
+		}
+
+		if (Reindex\HeadIndex::isReady())
 		{
 			$filter["*HEAD_INDEX.SEARCH_INDEX"] = $fulltextContent;
 		}
-		elseif (
-			Search\Content::canUseFulltextSearch($fulltextContent) &&
-			Reindex\BaseObjectIndex::isReady()
-		)
+		elseif (Reindex\BaseObjectIndex::isReady())
 		{
 			$filter["*SEARCH_INDEX"] = $fulltextContent;
+		}
+		else
+		{
+			return [];
 		}
 
 		$securityContext = new Disk\Security\DiskSecurityContext($this->getCurrentUser()->getId());

@@ -50,7 +50,14 @@
 		this.initEvents();
 		if(!options.imageUrl && !this.isTransformationError)
 		{
-			this.initPreviewMessage(2);
+			if(options.pdfUrl)
+			{
+				this.showPdf();
+			}
+			else
+			{
+				this.initPreviewMessage(2);
+			}
 		}
 		if(options.documentUrl)
 		{
@@ -833,12 +840,12 @@
 				}
 				if(result.hasOwnProperty(placeholder))
 				{
-					if((BX.type.isString(result[placeholder].value) || BX.type.isNumber(result[placeholder].value)) && input.tagName === 'INPUT' || input.tagName === 'TEXTAREA')
+					if((BX.type.isString(result[placeholder].value) || BX.type.isNumber(result[placeholder].value) || BX.type.isNull(result[placeholder].value)) && input.tagName === 'INPUT' || input.tagName === 'TEXTAREA')
 					{
 						input.value = result[placeholder].value;
 						if(result[placeholder].hasOwnProperty('default'))
 						{
-							input.setAttribute('bx-default', result[placeholder].default);
+							input.setAttribute('bx-default', (result[placeholder].default ? result[placeholder].default : ''));
 						}
 					}
 					else if(typeof result[name].value === 'object' && BX.type.isNotEmptyObject(result[placeholder].value) && input.tagName === 'SELECT')

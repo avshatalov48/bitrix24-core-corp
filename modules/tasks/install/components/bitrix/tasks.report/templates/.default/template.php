@@ -290,7 +290,7 @@ endif;
 								}
 							}
 						?>
-						<span class="webform-field webform-field-textbox<?php if(!strlen($groupName)):?> webform-field-textbox-empty<?php endif?> webform-field-textbox-clearable">
+						<span class="webform-field webform-field-textbox<?php if($groupName == ''):?> webform-field-textbox-empty<?php endif?> webform-field-textbox-clearable">
 							<span class="webform-field-textbox-inner" id="task-report-filter-group">
 								<input type="text" id="filter-field-group" class="webform-field-textbox" value="<?php echo $groupName?>" />
 								<a class="webform-field-textbox-clear" href=""></a>
@@ -322,7 +322,7 @@ endif;
 							}
 						}
 					?>
-					<span class="webform-field webform-field-textbox<?php if(!strlen($userName)):?> webform-field-textbox-empty<?php endif?> webform-field-textbox-clearable">
+					<span class="webform-field webform-field-textbox<?php if($userName == ''):?> webform-field-textbox-empty<?php endif?> webform-field-textbox-clearable">
 						<span class="webform-field-textbox-inner">
 							<input type="text" id="filter-field-employee" class="webform-field-textbox" value="<?php echo $userName?>" />
 							<a class="webform-field-textbox-clear" href=""></a>

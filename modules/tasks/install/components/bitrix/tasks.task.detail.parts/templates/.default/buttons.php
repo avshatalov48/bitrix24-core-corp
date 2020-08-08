@@ -216,7 +216,7 @@ if ($arResult["TASK"]["REAL_STATUS"] == CTasks::STATE_DECLINED)
 
 				<?else:?>
 
-					{ code: 'COPY', text : '<?php echo CUtil::JSEscape(GetMessage("TASKS_COPY_TASK")); ?>', title : '<?php echo CUtil::JSEscape(GetMessage("TASKS_COPY_TASK_EX")); ?>', className : "menu-popup-item-copy", href : "<?php echo $copyUrl.(strpos($copyUrl, "?") === false ? "?" : "&")."COPY=".$arResult["TASK"]["ID"].($arResult["IS_IFRAME"] ? "&IFRAME=Y" : "")?>" }
+					{ code: 'COPY', text : '<?php echo CUtil::JSEscape(GetMessage("TASKS_COPY_TASK")); ?>', title : '<?php echo CUtil::JSEscape(GetMessage("TASKS_COPY_TASK_EX")); ?>', className : "menu-popup-item-copy", href : "<?php echo $copyUrl.(mb_strpos($copyUrl, "?") === false ? "?" : "&")."COPY=".$arResult["TASK"]["ID"].($arResult["IS_IFRAME"] ? "&IFRAME=Y" : "")?>" }
 					,{ code: 'ADD_SUBTASK', text : '<?php echo CUtil::JSEscape(GetMessage("TASKS_ADD_SUBTASK_2")); ?>', title : '<?php echo CUtil::JSEscape(GetMessage("TASKS_ADD_SUBTASK_2")); ?>', className : "menu-popup-item-create", href: "<?php echo CUtil::JSEscape($createSubtaskUrl)?>", onclick : function(event, item) {AddPopupSubtask(<?php echo $arResult["TASK"]["ID"]?>, event);} }
 					,{ code: 'FAVORITE', inFavorite: <?=($inFavorite ? 'true' : 'false')?>, text : '<?=CUtil::JSEscape($favoriteItemMessage)?>', title : '<?=CUtil::JSEscape($favoriteItemMessage)?>', className : "task-menu-popup-item-favorite", onclick : function(event, item) {
 							item.inFavorite = !item.inFavorite;
@@ -276,7 +276,7 @@ if ($arResult["TASK"]["REAL_STATUS"] == CTasks::STATE_DECLINED)
 			$editURL  = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_TASKS_TASK"], array("task_id" => $arResult["TASK"]["ID"], "action" => "edit"));
 			if ($arResult["IS_IFRAME"])
 			{
-				$editURL .= ((strpos($editURL, "?") === false ? "?" : "&") ? "?" : "&")."IFRAME=Y";
+				$editURL .= ((mb_strpos($editURL, "?") === false ? "?" : "&") ? "?" : "&")."IFRAME=Y";
 			}
 			?><a href="<?php echo $editURL?>" class="webform-small-button-link task-button-edit-link"><?php echo GetMessage("TASKS_EDIT_TASK")?></a><?php
 		}

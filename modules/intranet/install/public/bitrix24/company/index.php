@@ -1,4 +1,5 @@
 <?
+define("BX_SKIP_USER_LIMIT_CHECK", true);
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/company/index.php");
 $APPLICATION->SetTitle(GetMessage("COMPANY_TITLE"));

@@ -19,6 +19,7 @@ $MESS["TASKS_ADD_QUICK_TASK"] = "Создать быструю задачу";
 
 
 $MESS["TASKS_USER_SORT"] = "Сортировка";
+$MESS["TASKS_BTN_SORT_RECOMMENDED_LABEL"] = "Рекомендуется";
 $MESS["TASKS_BTN_SORT_DIR_ASC"] = "По возрастанию";
 $MESS["TASKS_BTN_SORT_DIR_DESC"] = "По убыванию";
 
@@ -33,7 +34,9 @@ $MESS['TASKS_BTN_SORT_TIME_ESTIMATE'] = "Плановые трудозатрат
 $MESS['TASKS_BTN_SORT_ALLOW_TIME_TRACKING']= "Учитывать время";
 $MESS['TASKS_BTN_SORT_CREATED_DATE'] = "Дата создания";
 $MESS['TASKS_BTN_SORT_CHANGED_DATE'] = "Дата изменения";
+$MESS['TASKS_BTN_SORT_ACTIVITY_DATE'] = "По активности";
 $MESS['TASKS_BTN_SORT_CLOSED_DATE'] = "Дата закрытия";
 $MESS['TASKS_BTN_SORT_SORTING'] = "Моя сортировка";
 
 $MESS['TASKS_SPOTLIGHT_ADD_TASK'] = "Эта кнопка создает задачу";
+$MESS['TASKS_BTN_GROUP_BY_POPUP_TEXT'] = "При сортировке «по активности» группировка задач не доступна";

@@ -21,7 +21,7 @@
 	  like: 'like',
 	  dislike: 'dislike'
 	});
-	BX.Vue.cloneComponent('bx-imopenlines-message', 'bx-messenger-message', {
+	BX.Vue.cloneComponent('bx-imopenlines-message', 'bx-im-view-message', {
 	  methods: {
 	    checkFormShow: function checkFormShow() {
 	      if (!this.message.params || !this.message.params.IMOL_FORM) {

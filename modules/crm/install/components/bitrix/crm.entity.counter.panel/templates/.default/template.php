@@ -18,7 +18,7 @@ use Bitrix\Crm\Counter\EntityCounterType;
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/message.js');
 
 $guid = $arResult['GUID'];
-$prefix = strtolower($guid);
+$prefix = mb_strtolower($guid);
 $caption = $arResult['ENTITY_CAPTION'];
 $total = isset($arResult['TOTAL']) ? $arResult['TOTAL'] : '0';
 $data = isset($arResult['DATA']) ? $arResult['DATA'] : array();

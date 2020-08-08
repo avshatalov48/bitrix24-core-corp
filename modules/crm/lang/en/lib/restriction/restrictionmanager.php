@@ -92,4 +92,21 @@ $MESS["CRM_RESTR_MGR_POPUP_CONTENT_2"] = "Add the following to your CRM:
 <strong>Advanced Telephony + Advanced CRM and other useful features are available in selected commercial plans.</strong>
 ";
 $MESS["CRM_RESTR_MGR_POPUP_TITLE"] = "Advanced CRM in Bitrix24";
+$MESS["CRM_ST_ROBOTS_POPUP_TEXT"] = "
+	Bitrix24 CRM Automated Sales<br><br>
+	Create scenarios for CRM to push your deals forward: assign tasks, plan meetings, launch targeted ad campaigns and issue invoices. Automation rules will guide your manager to next steps at each deal stage to finish the job.<br><br>
+	Triggers automatically react to the client actions (when site is visited, form is filled out, social network comment is posted or a call is made) and launch an automation rule helping graduate lead into a deal.<br><br>
+	Automation rules and triggers are doing all the routine operations without any training for your managers: configure once and keep working!<br><br>
+	Add automation rules and boost your sales!<br><br>
+	This tool is available on commercial Bitrix24 subscriptions only.
+";
+$MESS["CRM_ST_ROBOTS_POPUP_TITLE"] = "Automation rules";
+$MESS["CRM_WEBFORM_EDIT_POPUP_LIMITED_TEXT"] = "Signature can be removed only on commercial plans.";
+$MESS["CRM_WEBFORM_EDIT_POPUP_LIMITED_TITLE"] = "Extended CRM forms";
+$MESS["CRM_BUTTON_EDIT_OPENLINE_MULTI_POPUP_LIMITED_TEXT"] = "Extra Open Channels are available on commercial plans only.";
+$MESS["CRM_WEBFORM_LIST_POPUP_LIMITED_TEXT"] = "Your current plan limits the number of CRM forms you can have. In order to add new forms, please upgrade your plan. 
+<br><br>
+TIP: Selected commercial plans come with unlimited CRM forms.
+<br><br>
+Try Bitrix24 Professional free for 30 days.";
 ?>

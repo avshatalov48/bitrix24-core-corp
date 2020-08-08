@@ -28,9 +28,9 @@ if (
 	{
 		$bSuccess = false;
 
-		if (strpos($url, "?") > 0)
+		if (mb_strpos($url, "?") > 0)
 		{
-			$arUrlParam = explode("&", substr($url, strpos($url, "?")+1));
+			$arUrlParam = explode("&", mb_substr($url, mb_strpos($url, "?") + 1));
 			foreach ($arUrlParam as $url_param)
 			{
 				list($key, $val) = explode("=", $url_param, 2);
@@ -43,7 +43,7 @@ if (
 		}
 
 		if (
-			strpos($url, "success=Y") > 0
+			mb_strpos($url, "success=Y") > 0
 			&& intval($new_post_id) > 0
 		)
 		{

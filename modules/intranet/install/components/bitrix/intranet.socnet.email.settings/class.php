@@ -20,7 +20,7 @@ class CIntranetSocnetEmailSettingsComponent extends \CBitrixComponent
 		$this->arResult['EMAIL_FORWARD_TO'] = array();
 
 		if (
-			$this->arParams['USER_ID'] == IntVal($USER->GetID())
+			$this->arParams['USER_ID'] == intval($USER->GetID())
 			&& \Bitrix\Main\Loader::includeModule('mail')
 			&& method_exists('Bitrix\Mail\User','getForwardTo')
 		)

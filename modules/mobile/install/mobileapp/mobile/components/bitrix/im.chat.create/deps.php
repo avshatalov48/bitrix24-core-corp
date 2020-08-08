@@ -8,4 +8,5 @@ return [
 	'chat/dataconverter',
 	'chat/timer',
 	'chat/searchscopes',
+	'intranet/invite',
 ];

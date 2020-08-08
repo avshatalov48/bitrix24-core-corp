@@ -83,7 +83,7 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 		{
 			$record = $this->worktimeRepository->findByIdWith(
 				$this->arResult['RECORD_ID'],
-				['USER', 'WORKTIME_EVENTS', 'SCHEDULE', 'SHIFT', 'SCHEDULE.SCHEDULE_VIOLATION_RULES', 'SCHEDULE.SHIFTS', 'REPORTS']
+				['USER', 'WORKTIME_EVENTS', 'SCHEDULE', 'SHIFT', 'SCHEDULE.SCHEDULE_VIOLATION_RULES', 'REPORTS']
 			);
 			if (!$record)
 			{
@@ -176,7 +176,7 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 			->fetchObject();
 		$this->mainUser = $this->useEmployeesTimezone() ? $employee : $currentUser;
 		$this->oppositeUser = $this->useEmployeesTimezone() ? $currentUser : $employee;
-
+		$recordManager = DependencyManager::getInstance()->buildWorktimeRecordManager($record, $record->obtainSchedule(), $record->obtainShift());
 		$userManagers = $this->findUserManagers($userHelper->getManagerIds($employee->getId())) ?: [$employee->getId()];
 		$this->showingOffset = $this->mainUser->obtainUtcOffset();
 
@@ -223,9 +223,9 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 		if ($recordForm->recordedStopTimestamp <= 0)
 		{
 			$recordedStop = Loc::getMessage('JS_CORE_TMP_EXPIRE');
-			if ($record->isExpired($record->obtainSchedule(), $record->obtainShift()))
+			if ($recordManager->isRecordExpired())
 			{
-				$expectedStop = $record->getRecommendedStopTimestamp($record->obtainSchedule(), $record->obtainShift());
+				$expectedStop = $recordManager->getRecommendedStopTimestamp();
 				if ($expectedStop)
 				{
 					$recommendStop = $this->timeHelper->convertUtcTimestampToHoursMinutesAmPm($expectedStop, $this->showingOffset);

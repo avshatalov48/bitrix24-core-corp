@@ -176,7 +176,7 @@ class DownloadController extends Internals\Controller
 	protected function processActionDownloadFile()
 	{
 		$fileData = $this->file->getFile();
-		\CFile::viewByUser($fileData, array('force_download' => true, 'cache_time' => 0, 'attachment_name' => $this->file->getName()));
+		\CFile::viewByUser($fileData, array('force_download' => true, 'cache_time' => Configuration::DEFAULT_CACHE_TIME, 'attachment_name' => $this->file->getName()));
 	}
 
 	protected function processActionShowViewHtml($pathToView, $mode = '', $print = '', $preview = '', $sizeType = '', $printUrl = '', $autostart = 'Y')
@@ -235,7 +235,7 @@ class DownloadController extends Internals\Controller
 		$fileName = $this->version->getView()->getName();
 		$fileData = $this->version->getView()->getData();
 
-		$cacheTime = 0;
+		$cacheTime = Configuration::DEFAULT_CACHE_TIME;
 
 		$this->showFileByArray($fileName, $fileData, $cacheTime);
 	}
@@ -250,7 +250,7 @@ class DownloadController extends Internals\Controller
 		$fileName = $this->file->getView()->getName();
 		$fileData = $this->file->getView()->getData();
 
-		$cacheTime = 0;
+		$cacheTime = Configuration::DEFAULT_CACHE_TIME;
 
 		$this->showFileByArray($fileName, $fileData, $cacheTime);
 	}
@@ -292,8 +292,8 @@ class DownloadController extends Internals\Controller
 			$this->end();
 		}
 
-		$isImage = TypeFile::isImage($fileData['ORIGINAL_NAME']);
-		$cacheTime = $isImage? 86400 : 0;
+		$isImage = TypeFile::isImage($fileData['ORIGINAL_NAME']) || TypeFile::isImage($fileName);
+		$cacheTime = $isImage? 86400 : Configuration::DEFAULT_CACHE_TIME;
 
 		$this->showFileByArray($fileName, $fileData, $cacheTime);
 	}
@@ -320,7 +320,7 @@ class DownloadController extends Internals\Controller
 			$this->end();
 		}
 
-		if(TypeFile::isImage($fileData['ORIGINAL_NAME']))
+		if (TypeFile::isImage($fileData['ORIGINAL_NAME']) || TypeFile::isImage($fileName))
 		{
 			$fileData = $this->resizeImage($fileData, $this->file->getId());
 		}
@@ -338,7 +338,7 @@ class DownloadController extends Internals\Controller
 		}
 
 		$fileData = $this->version->getFile();
-		\CFile::viewByUser($fileData, array('force_download' => false, 'cache_time' => 0, 'attachment_name' => $this->file->getName()));
+		\CFile::viewByUser($fileData, array('force_download' => false, 'cache_time' => Configuration::DEFAULT_CACHE_TIME, 'attachment_name' => $this->file->getName()));
 	}
 
 	protected function processActionCopyToMe()

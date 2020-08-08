@@ -564,7 +564,7 @@
 											if(ivrDefaults.MAX_GROUPS > 0 && groupCount >= ivrDefaults.MAX_GROUPS)
 											{
 												e.target.value = e.target.options.item(2).value;
-												BX.Voximplant.showLicensePopup('groups');
+												BX.UI.InfoHelper.show('limit_contact_center_telephony_groups');
 											}
 											else
 											{
@@ -1100,18 +1100,12 @@
 
 	BX.IvrEditor.prototype.showUnavailablePopup = function()
 	{
-		if(B24 && B24.licenseInfoPopup)
-		{
-			B24.licenseInfoPopup.show('ivr-limit-popup', BX.message('VOX_IVR_NOT_ALLOWED_TITLE'), BX.message('VOX_IVR_NOT_ALLOWED_TEXT'));
-		}
+		BX.UI.InfoHelper.show('limit_contact_center_telephony_ivr');
 	};
 
 	BX.IvrEditor.prototype.showLimitReachedPopup = function()
 	{
-		if(B24 && B24.licenseInfoPopup)
-		{
-			B24.licenseInfoPopup.show('ivr-limit-popup', BX.message('VOX_IVR_LIMIT_REACHED_TITLE'), BX.message('VOX_IVR_LIMIT_REACHED_TEXT'));
-		}
+		BX.UI.InfoHelper.show('limit_contact_center_telephony_ivr');
 	};
 
 	BX.IvrEditor.prototype.showGroupSettings = function (action, groupId)

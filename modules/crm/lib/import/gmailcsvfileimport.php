@@ -91,7 +91,7 @@ class GMailCsvFileImport extends CsvFileImport
 		$emailInfos = $this->getMultipleField('E-mail', $data);
 		foreach($emailInfos as &$emailInfo)
 		{
-			$valueType = strtoupper($emailInfo['VALUE_TYPE']);
+			$valueType = mb_strtoupper($emailInfo['VALUE_TYPE']);
 			if($valueType !== 'WORK' && $valueType !== 'HOME')
 			{
 				$valueType = 'OTHER';
@@ -103,7 +103,7 @@ class GMailCsvFileImport extends CsvFileImport
 		$phoneInfos = $this->getMultipleField('Phone', $data);
 		foreach($phoneInfos as &$phoneInfo)
 		{
-			$valueType = strtoupper($phoneInfo['VALUE_TYPE']);
+			$valueType = mb_strtoupper($phoneInfo['VALUE_TYPE']);
 			if($valueType !== 'WORK' && $valueType !== 'HOME' && $valueType !== 'MOBILE')
 			{
 				$valueType = 'OTHER';
@@ -115,7 +115,7 @@ class GMailCsvFileImport extends CsvFileImport
 		$webInfos = $this->getMultipleField('Website', $data);
 		foreach($webInfos as &$webInfo)
 		{
-			$valueType = strtoupper($webInfo['VALUE_TYPE']);
+			$valueType = mb_strtoupper($webInfo['VALUE_TYPE']);
 			if($valueType === 'HOME PAGE')
 			{
 				$valueType = 'HOME';
@@ -131,7 +131,7 @@ class GMailCsvFileImport extends CsvFileImport
 		$imInfos = $this->getInstantMessengers($data);
 		foreach($imInfos as &$imInfo)
 		{
-			$valueType = strtoupper($imInfo['VALUE_TYPE']);
+			$valueType = mb_strtoupper($imInfo['VALUE_TYPE']);
 			if($valueType !== 'SKYPE' && $valueType !== 'ICQ' && $valueType !== 'MSN' && $valueType !== 'JABBER')
 			{
 				$valueType = 'OTHER';
@@ -146,7 +146,7 @@ class GMailCsvFileImport extends CsvFileImport
 		$homeAddress = '';
 		foreach($addressInfos as &$addressInfo)
 		{
-			$type = strtoupper($addressInfo['VALUE_TYPE']);
+			$type = mb_strtoupper($addressInfo['VALUE_TYPE']);
 			if($workAddress === '' && $type === 'WORK')
 			{
 				$workAddress = $addressInfo['VALUE'];

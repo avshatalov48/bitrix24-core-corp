@@ -34,7 +34,7 @@ class CrmOrderPropsFormEditTemplate
 
 	public static function callGetFieldByType($type, $params)
 	{
-		$type = strtoupper(substr($type, 0, 1)) . substr($type, 1);
+		$type = mb_strtoupper(mb_substr($type, 0, 1)).mb_substr($type, 1);
 		$callableField = array(__CLASS__, 'getField' . $type);
 
 		if(is_callable($callableField))
@@ -52,7 +52,7 @@ class CrmOrderPropsFormEditTemplate
 
 	public static function callGetFieldItemByType($type, $params)
 	{
-		$type = strtoupper(substr($type, 0, 1)) . substr($type, 1);
+		$type = mb_strtoupper(mb_substr($type, 0, 1)).mb_substr($type, 1);
 		$callableField = array(__CLASS__, 'getField' . $type . 'Item');
 
 		$result = null;
@@ -66,7 +66,7 @@ class CrmOrderPropsFormEditTemplate
 
 	public static function callGetFieldSettingsItemByType($type, $params)
 	{
-		$type = strtoupper(substr($type, 0, 1)) . substr($type, 1);
+		$type = mb_strtoupper(mb_substr($type, 0, 1)).mb_substr($type, 1);
 		$callableField = array(__CLASS__, 'getField' . $type . 'SettingsItem');
 
 		$result = null;
@@ -91,13 +91,13 @@ class CrmOrderPropsFormEditTemplate
 			$paramValue = (string)$paramValue;
 
 			$isEscapedValue = false;
-			if(substr($paramKey, 0, 1) == '~')
+			if(mb_substr($paramKey, 0, 1) == '~')
 			{
-				$paramKey = substr($paramKey, 1);
+				$paramKey = mb_substr($paramKey, 1);
 				$isEscapedValue = true;
 			}
 
-			$replaceData['from'][] = '%' . strtolower($paramKey) . '%';
+			$replaceData['from'][] = '%'.mb_strtolower($paramKey) . '%';
 			$replaceData['to'][] = $isEscapedValue ? $paramValue : htmlspecialcharsbx($paramValue);
 		}
 
@@ -124,7 +124,7 @@ class CrmOrderPropsFormEditTemplate
 			$params['ENTITY_CAPTION'] = '-';
 		}
 
-		$params['URL_DISPLAY_STYLE'] = (substr($params['ENTITY_FIELD_NAME'], 0, 3) == 'UF_' ? 'initial' : 'none');
+		$params['URL_DISPLAY_STYLE'] = (mb_substr($params['ENTITY_FIELD_NAME'], 0, 3) == 'UF_' ? 'initial' : 'none');
 		$params['SHOW_MULTIPLE'] = $params['MULTIPLE'] === 'Y' ? 'multiple' : '';
 		$params['~SHOW_MATCH_ANCHOR'] = $params['ENTITY_NAME'] === 'ORDER' ? 'style="display: none;"' : '';
 
@@ -138,7 +138,7 @@ class CrmOrderPropsFormEditTemplate
 
 				if (isset($item['SRC']) && !empty($item['FILE_NAME']))
 				{
-					$fileName = strlen($item['FILE_NAME']) > 35 ? '...'.substr($item['FILE_NAME'], -32) : $item['FILE_NAME'];
+					$fileName = mb_strlen($item['FILE_NAME']) > 35 ? '...'.mb_substr($item['FILE_NAME'], -32) : $item['FILE_NAME'];
 					$fileSrc = '<a href="'.$item['SRC'].'" title="'.Loc::getMessage('CRM_ORDERFORM_EDIT_TMPL_FILE_DOWNLOAD')
 						.'" target="_blank">'.$fileName.'</a>';
 				}
@@ -661,7 +661,7 @@ class CrmOrderPropsFormEditTemplate
 
 		foreach ($fields as $field)
 		{
-			$str .= '<input type="hidden" name="FIELD[%name%]['.$field.']" value="%'.strtolower($field).'%">';
+			$str .= '<input type="hidden" name="FIELD[%name%]['.$field.']" value="%'.mb_strtolower($field).'%">';
 		}
 
 		return $str;

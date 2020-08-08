@@ -49,3 +49,4 @@ $MESS["CRM_ORDER_SD_NOT_CHOSEN"] = "Не выбран";
 $MESS["CRM_ORDER_SHIPMENT_EXTRA_SERVICES"] = "Доп. услуги";
 $MESS["CRM_ORDER_SHIPMENT_TITLE2"] = "Отгрузка № #ACCOUNT_NUMBER#";
 $MESS["CRM_ORDER_ERROR_SHIPMENT_SERVICE_RESTRICTED"] = "Служба доставки не попадает под ограничения";
+$MESS["CRM_ORDER_SD_SHIPMENT_NOT_FOUND"] = "Отгрузка не найдена";

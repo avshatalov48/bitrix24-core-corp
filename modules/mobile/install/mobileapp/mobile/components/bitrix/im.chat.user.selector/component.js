@@ -21,6 +21,12 @@ ChatUserSelector.init = function()
 	this.userId = parseInt(BX.componentParameters.get('USER_ID', 0));
 	this.dialogId = BX.componentParameters.get('DIALOG_ID', 0);
 
+	let config = Application.storage.getObject('settings.chat', {
+		historyShow: true
+	});
+
+	this.historyShow = config.historyShow;
+
 	if (!this.dialogId)
 	{
 		this.close();
@@ -181,13 +187,14 @@ ChatUserSelector.event.onRecipientsReceived = function(event)
 		this.rest.chatExtend({
 			'CHAT_ID': this.base.dialogId.toString().substr(4),
 			'USERS': users,
-		})
+			'HIDE_HISTORY': this.base.historyShow? 'N': 'Y'
+		});
 	}
 	else
 	{
 		this.rest.chatAdd({
 			'USERS': users,
-		})
+		});
 	}
 
 	return true;

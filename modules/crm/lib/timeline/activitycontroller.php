@@ -483,6 +483,7 @@ class ActivityController extends EntityController
 				|| $providerID === Activity\Provider\Request::getId()
 				|| $providerID === Activity\Provider\OpenLine::getId()
 				|| $providerID === Activity\Provider\RestApp::getId()
+				|| $providerID === Activity\Provider\Delivery::getId()
 			)
 			{
 				return true;
@@ -565,9 +566,9 @@ class ActivityController extends EntityController
 		{
 			//LIKE VI_b298cc809d17d8ae.1475506018.843270c
 			$originID = isset($data['ORIGIN_ID']) ? $data['ORIGIN_ID'] : '';
-			if(strpos($originID, 'VI_') !== false)
+			if(mb_strpos($originID, 'VI_') !== false)
 			{
-				$callId = substr($originID, 3);
+				$callId = mb_substr($originID, 3);
 				$callInfo = Integration\VoxImplantManager::getCallInfo($callId);
 				if(is_array($callInfo))
 				{
@@ -671,9 +672,9 @@ class ActivityController extends EntityController
 		{
 			//LIKE VI_b298cc809d17d8ae.1475506018.843270c
 			$originID = isset($fields['ORIGIN_ID']) ? $fields['ORIGIN_ID'] : '';
-			if(strpos($originID, 'VI_') !== false)
+			if(mb_strpos($originID, 'VI_') !== false)
 			{
-				$callId = substr($originID, 3);
+				$callId = mb_substr($originID, 3);
 				$callInfo = Integration\VoxImplantManager::getCallInfo($callId);
 				if(is_array($callInfo))
 				{
@@ -763,7 +764,7 @@ class ActivityController extends EntityController
 					);
 					if(is_array($info))
 					{
-						$ext = GetFileExtension(strtolower($info['NAME']));
+						$ext = GetFileExtension(mb_strtolower($info['NAME']));
 
 						if(in_array($ext, $mediaExtensions))
 						{

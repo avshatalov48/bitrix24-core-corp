@@ -46,19 +46,19 @@ $name = $arResult["NAME"];
 
 	BX.ready(function()
 	{
-		<?if (strlen($arParams["FORM_NAME"]) > 0 && strlen($arParams["INPUT_NAME"]) > 0):?>
+		<?if ($arParams["FORM_NAME"] <> '' && $arParams["INPUT_NAME"] <> ''):?>
 			O_<?=$name?>.searchInput = document.forms["<?=CUtil::JSEscape($arParams["FORM_NAME"])?>"].element["<?=CUtil::JSEscape($arParams["INPUT_NAME"])?>"];
-		<?elseif (strlen($arParams["INPUT_NAME"]) > 0):?>
+		<?elseif ($arParams["INPUT_NAME"] <> ''):?>
 			O_<?=$name?>.searchInput = BX("<?=CUtil::JSEscape($arParams["INPUT_NAME"])?>");
 		<?else:?>
 			O_<?=$name?>.searchInput = BX("<?=$name?>_task_input");
 		<?endif?>
 
-		<?if (strlen($arParams["ON_CHANGE"]) > 0):?>
+		<?if ($arParams["ON_CHANGE"] <> ''):?>
 			O_<?=$name?>.onChange = <?=CUtil::JSEscape($arParams["ON_CHANGE"])?>;
 		<?endif?>
 
-		<?if (strlen($arParams["ON_SELECT"]) > 0):?>
+		<?if ($arParams["ON_SELECT"] <> ''):?>
 			O_<?=$name?>.onSelect= <?=CUtil::JSEscape($arParams["ON_SELECT"])?>;
 		<?endif?>
 
@@ -73,7 +73,7 @@ $name = $arResult["NAME"];
 	<table class="finder-box-layout">
 		<tr>
 			<td class="finder-box-left-column">
-				<?if (!isset($arParams["INPUT_NAME"]) || strlen($arParams["INPUT_NAME"]) == 0):?>
+				<?if (!isset($arParams["INPUT_NAME"]) || $arParams["INPUT_NAME"] == ''):?>
 					<div class="finder-box-search">
 						<input class="finder-box-search-textbox" name="<?=$name?>_task_input" id="<?=$name?>_task_input"/>
 					</div>

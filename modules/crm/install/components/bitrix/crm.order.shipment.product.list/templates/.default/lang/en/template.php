@@ -11,6 +11,7 @@ $MESS["CRM_ORDER_SPLT_DELETE_ITEM"] = "Remove item";
 $MESS["CRM_ORDER_SPLT_DELETE_ITEM_FROM_SHIPMENT"] = "Remove item from shipment";
 $MESS["CRM_ORDER_SPLT_DELETE_STORE"] = "Remove shipment from warehouse";
 $MESS["CRM_ORDER_SPLT_FIND_BY_BARCODE"] = "Find by barcode";
+$MESS["CRM_ORDER_SPLT_ITEMS_HAVE_BARCODES"] = "Bundle items have barcodes";
 $MESS["CRM_ORDER_SPLT_MARKING_CODE"] = "Marking code";
 $MESS["CRM_ORDER_SPLT_TO_REMOVE"] = "Remove";
 ?>

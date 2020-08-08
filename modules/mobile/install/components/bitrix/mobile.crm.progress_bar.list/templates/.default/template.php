@@ -50,7 +50,6 @@ elseif($entityTypeID === CCrmOwnerType::Invoice)
 											'LAYOUT' => 'big',
 											'ENTITY_TYPE_ID' => $entityTypeID,
 											'ENTITY_ID' => 0,
-											//'PREFIX' => strtolower($UID).'_',
 											'CURRENT_ID' => $item['STATUS_ID']
 										)
 									);

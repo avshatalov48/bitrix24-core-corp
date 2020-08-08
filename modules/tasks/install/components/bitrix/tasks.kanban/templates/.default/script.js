@@ -40,47 +40,6 @@ BX.Tasks.KanbanComponent.ClickSort = function(event, item)
 	}
 };
 
-BX.Tasks.KanbanComponent.SetSort = function(enabled, order)
-{
-	var selectorId = "tasks-popupMenuOptions";
-	var menuId = "popupMenuOptions";
-	var disabledClass = "webform-button-disable";
-	var menu = BX.PopupMenu.getMenuById(menuId);
-	var menuItems = [];
-
-	if (menu)
-	{
-		menuItems = menu.menuItems;
-	}
-
-	// set icons in menu
-	for (var i = 0, c = menuItems.length; i < c; i++)
-	{
-		if (menuItems[i].params)
-		{
-			if (order === menuItems[i].params.order)
-			{
-				BX.addClass(BX(menuItems[i].layout.item), "menu-popup-item-accept");
-			}
-			else
-			{
-				BX.removeClass(BX(menuItems[i].layout.item), "menu-popup-item-accept");
-			}
-		}
-	}
-
-	// enabled/disabled
-	if (enabled)
-	{
-		BX.removeClass(BX(selectorId), disabledClass);
-	}
-	else
-	{
-		BX.addClass(BX(selectorId), disabledClass);
-	}
-	BX.data(BX(selectorId), "disabled", !enabled);
-};
-
 BX.Tasks.KanbanComponent.filterId = {};
 BX.Tasks.KanbanComponent.defaultPresetId = {};
 
@@ -110,21 +69,19 @@ BX.Tasks.KanbanComponent.onReady = function()
 
 	// refresh sort-button after reload kanban
 	BX.addCustomEvent("onKanbanChanged", BX.delegate(function(data) {
-		// debugger
+		var roleId = 'view_all';
 		var filterObject = BX.Main.filterManager.getById(BX.Tasks.KanbanComponent.filterId);
-		var fields = filterObject.getFilterFieldsValues();
-		var roleid = fields.ROLEID || 'view_all';//debugger
-		BX.onCustomEvent("Tasks.Toolbar.reload", [roleid]); //FIRE
-
-		BX.Tasks.KanbanComponent.SetSort(
-			data.canSortItem, 
-			data.newTaskOrder
-		);
+		if (filterObject)
+		{
+			var fields = filterObject.getFilterFieldsValues();
+			roleId = fields.ROLEID || roleId;
+		}
+		BX.onCustomEvent("Tasks.Toolbar.reload", [roleId]);
 	}));
 
-	BX.addCustomEvent('Tasks.TopMenu:onItem', function(roleId, url){
+	BX.addCustomEvent('Tasks.TopMenu:onItem', function(roleId, url) {
 		var filterManager = BX.Main.filterManager.getById(BX.Tasks.KanbanComponent.filterId);
-		if(!filterManager)
+		if (!filterManager)
 		{
 			alert('BX.Main.filterManager not initialised');
 			return;
@@ -132,55 +89,45 @@ BX.Tasks.KanbanComponent.onReady = function()
 
 		var fields = {
 			preset_id: BX.Tasks.KanbanComponent.defaultPresetId,
-			additional: { ROLEID: roleId }
+			additional: {ROLEID: (roleId === 'view_all' ? 0 : roleId)}
 		};
-
 		var filterApi = filterManager.getApi();
 		filterApi.setFilter(fields);
 
 		window.history.pushState(null, null, url);
 	});
 
-	BX.addCustomEvent('Tasks.Toolbar:onItem', function(counterId){
+	BX.addCustomEvent('Tasks.Toolbar:onItem', function(counterId) {
 		var filterManager = BX.Main.filterManager.getById(BX.Tasks.KanbanComponent.filterId);
-		if(!filterManager)
+		if (!filterManager)
 		{
 			alert('BX.Main.filterManager not initialised');
 			return;
 		}
-
 		var filterApi = filterManager.getApi();
+		var filterFields = filterManager.getFilterFieldsValues();
 
-		if(Number(counterId) === 8388608) //\CTaskListState::VIEW_TASK_CATEGORY_WAIT_CTRL
+		if (Number(counterId) === 12582912 || Number(counterId) === 6291456)
 		{
-			// debugger
-			var fields = { STATUS: { 0: '4' } };
-			var f = filterManager.getFilterFieldsValues();
-			if (f.hasOwnProperty('ROLEID') && f.ROLEID != '')
-			{
-				fields.ROLEID = f.ROLEID;
-			}
-			else
-			{
-				fields.ROLEID = 'view_role_originator';
-			}
-
-			//\CTasks::STATE_SUPPOSEDLY_COMPLETED
+			var fields = {
+				ROLEID: (filterFields.hasOwnProperty('ROLEID') ? filterFields.ROLEID : 0),
+				PROBLEM: counterId
+			};
 			filterApi.setFields(fields);
 			filterApi.apply();
 		}
 		else
 		{
-			// debugger
-			var fields = {additional:{}};
-			var f = filterManager.getFilterFieldsValues();
-			if(f.hasOwnProperty('ROLEID'))
+			fields = {
+				preset_id: BX.Tasks.KanbanComponent.defaultPresetId,
+				additional: {
+					PROBLEM: counterId,
+				}
+			};
+			if (filterFields.hasOwnProperty('ROLEID'))
 			{
-				fields.additional.ROLEID = f.ROLEID;
+				fields.additional.ROLEID = filterFields.ROLEID;
 			}
-			fields.preset_id= BX.Tasks.KanbanComponent.defaultPresetId;
-			fields.additional.PROBLEM= counterId;
-
 			filterApi.setFilter(fields);
 		}
 	});

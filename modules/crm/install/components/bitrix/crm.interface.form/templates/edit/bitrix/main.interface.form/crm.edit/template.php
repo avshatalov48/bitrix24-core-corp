@@ -100,7 +100,7 @@ foreach($mainTab['fields'] as &$field):
 	endif;
 
 	//Skip empty BP params
-	if(strpos($field['id'], 'BP_PARAMETERS') === 0 && $field['value'] === '')
+	if(mb_strpos($field['id'], 'BP_PARAMETERS') === 0 && $field['value'] === '')
 	{
 		continue;
 	}
@@ -210,7 +210,7 @@ foreach($arSections as &$arSection):
 				echo '<div id="'.$field["id"].'" class="crm-fld-block-readonly">', $val, '</div>';
 				break;
 			case 'custom':
-				$isUserField = strpos($field['id'], 'UF_') === 0;
+				$isUserField = mb_strpos($field['id'], 'UF_') === 0;
 				$wrap = isset($field['wrap']) && $field['wrap'] === true;
 				if($isUserField):
 					?><div class="bx-crm-edit-user-field"><?
@@ -406,7 +406,7 @@ foreach($arSections as &$arSection):
 									<?=CUtil::PhpToJsObject(CCrmEntitySelectorHelper::PreparePopupItems($entityType, false, isset($params['NAME_TEMPLATE']) ? $params['NAME_TEMPLATE'] : \Bitrix\Crm\Format\PersonNameFormatter::getFormat()))?>,
 									false,
 									false,
-									['<?=CUtil::JSEscape(strtolower($entityType))?>'],
+									['<?=CUtil::JSEscape(mb_strtolower($entityType))?>'],
 									<?=CUtil::PhpToJsObject(CCrmEntitySelectorHelper::PrepareCommonMessages())?>,
 									true
 								);
@@ -441,7 +441,7 @@ foreach($arSections as &$arSection):
 				{
 					$entityID = $inputValue = isset($params['INPUT_VALUE']) ? $params['INPUT_VALUE'] : '';
 					$entityType = isset($params['ENTITY_TYPE']) ? $params['ENTITY_TYPE'] : '';
-					switch (substr($entityID, 0, 2))
+					switch(mb_substr($entityID, 0, 2))
 					{
 						case 'C_':
 							$valEntityType = 'contact';
@@ -452,7 +452,7 @@ foreach($arSections as &$arSection):
 						default:
 							$valEntityType = '';
 					}
-					$entityID = intval(substr($entityID, intval(strpos($entityID, '_')) + 1));
+					$entityID = intval(mb_substr($entityID, intval(mb_strpos($entityID, '_')) + 1));
 					$editorID = "{$arParams['FORM_ID']}_{$field['id']}";
 					$containerID = "{$arParams['FORM_ID']}_FIELD_CONTAINER_{$field['id']}";
 					$createEntitiesBlockID = "{$arParams['FORM_ID']}_CREATE_ENTITIES_{$field['id']}";

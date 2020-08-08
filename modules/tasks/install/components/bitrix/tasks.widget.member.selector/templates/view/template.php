@@ -1,6 +1,7 @@
 <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -15,6 +16,11 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 	<?
 	$readOnly = $arResult['TEMPLATE_DATA']['READ_ONLY'];
 	$multiple = $arParams['MAX'] > 1;
+
+	if (Loader::IncludeModule('bitrix24'))
+	{
+		$APPLICATION->IncludeComponent("bitrix:bitrix24.limit.lock", "");
+	}
 
 	if($arParams['HIDE_IF_EMPTY'] && !count($arParams['DATA']))
 	{
@@ -36,6 +42,7 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 
 		<div class="task-detail-sidebar-info-title <?if($multiple):?>task-detail-sidebar-info-title-line<?endif?>">
 			<?=($arParams['TITLE'] != '' ? htmlspecialcharsbx($arParams['TITLE']) : '&nbsp;')?>
+			<?=($arResult['TASK_LIMIT_EXCEEDED']? '<span class="tariff-lock"></span>' : '')?>
 		</div>
 
 		<div class="js-id-mem-sel-is-items<?if($multiple):?> task-detail-sidebar-info-users-list<?endif?>">

@@ -131,7 +131,8 @@ class Manager
 		{
 			if ($this->getTabAvailabilityState($tabId))
 			{
-				$tab = $this->getTabInstance($tabId)->getData();
+				$tabInstance = $this->getTabInstance($tabId);
+				$tab = array_merge(["id"=>$tabInstance->getId(), "title"=>$tabInstance->getShortTitle()], $tabInstance->getData());
 				if ($tabConfig != null && array_key_exists($tabId, $tabConfig))
 				{
 					$tab["sort"] = $tabConfig[$tabId];

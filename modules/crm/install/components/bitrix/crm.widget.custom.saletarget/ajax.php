@@ -8,7 +8,7 @@ define('PUBLIC_AJAX_MODE', true);
 
 if (isset($_REQUEST['site']) && is_string($_REQUEST['site']))
 {
-	$siteId = substr(preg_replace('/[^a-z0-9_]/i', '', $_REQUEST['site']), 0, 2);
+	$siteId = mb_substr(preg_replace('/[^a-z0-9_]/i', '', $_REQUEST['site']), 0, 2);
 	if (!$siteId)
 	{
 		define('SITE_ID', $siteId);
@@ -59,7 +59,7 @@ if (!$curUser || !$curUser->IsAuthorized() || !check_bitrix_sessid() || $_SERVER
 
 CUtil::JSPostUnescape();
 
-$action = !empty($_REQUEST['action']) ? strtoupper($_REQUEST['action']) : null;
+$action = !empty($_REQUEST['action'])? mb_strtoupper($_REQUEST['action']) : null;
 
 if (empty($action))
 	$sendError('Unknown action.');

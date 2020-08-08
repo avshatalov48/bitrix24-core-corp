@@ -48,7 +48,7 @@ class CCrmSearch
 		if (!isset(self::$arMess[$ENTITY_TYPE]))
 		{
 			self::$arMess[$ENTITY_TYPE] = \Bitrix\Main\Localization\Loc::loadLanguageFile(
-				$_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/components/bitrix/crm.'.strtolower($ENTITY_TYPE).'.show/component.php'
+				$_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/components/bitrix/crm.'.mb_strtolower($ENTITY_TYPE).'.show/component.php'
 			);
 		}
 
@@ -156,7 +156,7 @@ class CCrmSearch
 		);
 		foreach ($arEntity as $_k => $_v)
 		{
-			if ($_k == $sTitle || strpos($_k, '_BY_') !== false || strpos($_k, 'DATE_') === 0 || strpos($_k, 'UF_') === 0)
+			if ($_k == $sTitle || mb_strpos($_k, '_BY_') !== false || mb_strpos($_k, 'DATE_') === 0 || mb_strpos($_k, 'UF_') === 0)
 				continue ;
 
 			if($ENTITY_TYPE === 'CONTACT' && ($_k === 'NAME' || $_k === 'SECOND_NAME' || $_k === 'LAST_NAME'))
@@ -204,9 +204,9 @@ class CCrmSearch
 			}
 		}
 
-		$sDetailURL = CComponentEngine::MakePathFromTemplate(COption::GetOptionString('crm', 'path_to_'.strtolower($ENTITY_TYPE).'_show'),
+		$sDetailURL = CComponentEngine::MakePathFromTemplate(COption::GetOptionString('crm', 'path_to_'.mb_strtolower($ENTITY_TYPE).'_show'),
 			array(
-				strtolower($ENTITY_TYPE).'_id' => $arEntity['ID']
+				mb_strtolower($ENTITY_TYPE).'_id' => $arEntity['ID']
 			)
 		);
 
@@ -295,7 +295,7 @@ class CCrmSearch
 			'SITE_ID' => $arSitePath,
 			'PERMISSIONS' => $arAttr,
 			'BODY' => $sBody,
-			'TAGS' => 'crm,'.strtolower($ENTITY_TYPE).','.GetMessage('CRM_'.$ENTITY_TYPE)
+			'TAGS' => 'crm,'.mb_strtolower($ENTITY_TYPE).','.GetMessage('CRM_'.$ENTITY_TYPE)
 		);
 
 		if (self::$bReIndex)
@@ -308,7 +308,7 @@ class CCrmSearch
 	{
 		$arFilter = array();
 		$ENTITY_TYPE = 'LEAD';
-		if (isset($NS['ID']) && strlen($NS['ID']) > 0 && preg_match('/^[A-Z]+\.\d+$/'.BX_UTF_PCRE_MODIFIER, $NS['ID']))
+		if (isset($NS['ID']) && $NS['ID'] <> '' && preg_match('/^[A-Z]+\.\d+$/'.BX_UTF_PCRE_MODIFIER, $NS['ID']))
 		{
 			$arTemp = explode('.', $NS['ID']);
 			$ENTITY_TYPE = $arTemp[0];

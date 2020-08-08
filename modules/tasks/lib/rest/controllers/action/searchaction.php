@@ -10,10 +10,9 @@ use Bitrix\Main\Search;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Tasks\Exception;
-use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Internals\SearchIndex;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
-use Bitrix\Tasks\Util\Restriction\Bitrix24FilterLimitRestriction;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\FilterLimit;
 
 use CComponentEngine;
 use CTasks;
@@ -45,7 +44,7 @@ class SearchAction extends Search\SearchAction
 	{
 		$result = [];
 
-		if (Bitrix24FilterLimitRestriction::isLimitExceeded())
+		if (FilterLimit::isLimitExceeded())
 		{
 			return $result;
 		}
@@ -81,10 +80,10 @@ class SearchAction extends Search\SearchAction
 	 */
 	protected function provideLimits($searchQuery, array $options = null)
 	{
-		if (Bitrix24FilterLimitRestriction::isLimitExceeded())
+		if (FilterLimit::isLimitExceeded())
 		{
 			$type = 'TASK';
-			$info = Bitrix24FilterLimitRestriction::prepareStubInfo([
+			$info = FilterLimit::prepareStubInfo([
 				'TITLE' => Loc::getMessage("TASKS_CONTROLLER_SEARCH_ACTION_TASKS_LIMIT_EXCEEDED_TITLE"),
 				'CONTENT' => Loc::getMessage("TASKS_CONTROLLER_SEARCH_ACTION_TASKS_LIMIT_EXCEEDED"),
 				'GLOBAL_SEARCH' => true,

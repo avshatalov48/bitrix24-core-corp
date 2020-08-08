@@ -19,7 +19,7 @@ $arParams['IBLOCK_TYPE'] = $arParams['IBLOCK_TYPE'];
 if (!$arParams['IBLOCK_TYPE'])
 	$arParams['IBLOCK_TYPE'] = COption::GetOptionString('intranet', 'iblock_type');
 
-if (strlen(trim($arParams["NAME_TEMPLATE"])) <= 0)
+if (trim($arParams["NAME_TEMPLATE"]) == '')
 	$arParams["NAME_TEMPLATE"] = CSite::GetNameFormat();
 $arParams['SHOW_LOGIN'] = $arParams['SHOW_LOGIN'] != "N" ? "Y" : "N";
 

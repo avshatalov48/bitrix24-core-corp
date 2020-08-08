@@ -169,7 +169,7 @@ export class Dialog
 
 		return new VuexBuilder()
 			.addModel(ApplicationModel.create().useDatabase(false).setVariables(applicationVariables))
-			.addModel(MessagesModel.create())
+			.addModel(MessagesModel.create().setVariables({host: this.host}))
 			.addModel(DialoguesModel.create().setVariables({host: this.host}))
 			.addModel(FilesModel.create().setVariables({host: this.host, default: {name: this.getLocalize('IM_MESSENGER_MESSAGE_FILE_DELETED')}}))
 			.addModel(UsersModel.create().setVariables({host: this.host, default: {name: this.getLocalize('IM_MESSENGER_MESSAGE_USER_ANONYM')}}))

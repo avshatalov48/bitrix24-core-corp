@@ -403,12 +403,14 @@
 			{
 				item.__progressBarWidth = Math.ceil(progress);
 				item.__progressBarWidth = (item.__progressBarWidth > 100 ? 100 : item.__progressBarWidth);
+				item.__progressBar = BX(item.id + 'Progress');
 				if (item.__progressBar)
 					item.__progressBar.style.width = item.__progressBarWidth + '%';
 			}
 		},
 		onUploadDone : function(item, result)
 		{
+			item.__progressBar = BX(item.id + 'Progress');
 			if (item.__progressBar)
 				item.__progressBar.style.width = '100%';
 			this.counter.uploading = BX.util.deleteFromArray(this.counter.uploading, BX.util.array_search(item.id, this.counter.uploading));
@@ -639,6 +641,33 @@
 				}
 			}
 		},
+		restoreFile : function(row, item)
+		{
+			if (!BX(row))
+			{
+				return;
+			}
+			var html = this.templates["new"].text;
+			for (var ii in item)
+			{
+				if (item.hasOwnProperty(ii))
+				{
+					html = html.replace(new RegExp("#" + ii.toLowerCase() + "#", "gi"), BX.util.htmlspecialchars(item[ii])).
+					replace(new RegExp("#" + ii.toUpperCase() + "#", "gi"), BX.util.htmlspecialchars(item[ii]));
+				}
+			}
+			var TR = BX.create('TR', { attrs: this.templates["new"].attrs, html: html } );
+			TR.setAttribute("id", row.getAttribute("id"));
+			row.parentNode.replaceChild(TR, row);
+			this.__bindEventsToNode(row, item);
+			this.__checkButton();
+			var status = item.file.uploadStatus;
+			this.agent.queue.restoreFiles(new BX.UploaderUtils.Hash(item.id, item), true, false);
+			item.file.uploadStatus = status;
+			item.__progressBar = BX(item.id + 'Progress');
+			item.__progressBarWidth = 5;
+			this.agent.submit();
+		},
 		__checkButton : function()
 		{
 			var button = BX(this.CID + 'ButtonClose'),
@@ -655,11 +684,12 @@
 		__bindEventsToNode : function(row, item)
 		{
 			var
-				delFunc = BX.delegate(function() { this.deleteFile(row, item); }, this),
-				replaceFunc = BX.delegate(function(e) { BX.PreventDefault(e); this.replaceFile(row, item); return false;}, this),
+				delFunc = function() { this.deleteFile(row, item); }.bind(this),
+				replaceFunc = function(e) { BX.PreventDefault(e); this.replaceFile(row, item); return false;}.bind(this),
+				restoreFunc = function(e) { BX.PreventDefault(e); this.restoreFile(row, item); return false;}.bind(this),
 				closeBtn = BX.findChild(row, {attribute: { id : item.id + 'Cancel'} }, true),
-				replaceBtn = BX.findChild(row, {attribute: { id : item.id + 'Replace'} }, true)/*,
-				restoreBtn = BX.findChild(row, {attribute: { id : item.id + 'Restore'} }, true)*/;
+				replaceBtn = BX.findChild(row, {attribute: { id : item.id + 'Replace'} }, true),
+				restoreBtn = BX.findChild(row, {attribute: { id : item.id + 'Restore'} }, true);
 			if (closeBtn && !closeBtn.hasAttribute("bx-bound"))
 			{
 				closeBtn.setAttribute("bx-bound", "Y");
@@ -669,6 +699,11 @@
 			{
 				replaceBtn.setAttribute("bx-bound", "Y");
 				BX.bind(replaceBtn, 'click', replaceFunc);
+			}
+			if (restoreBtn && !restoreBtn.hasAttribute("bx-bound"))
+			{
+				restoreBtn.setAttribute("bx-bound", "Y");
+				BX.bind(restoreBtn, 'click', restoreFunc);
 			}
 		},
 		onUploadWindowFirstShow : function(popup)

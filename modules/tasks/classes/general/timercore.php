@@ -9,7 +9,7 @@
 /**
  * This class is for internal use only, it can be changed any way without
  * notifications. Use CTaskTimerManager instead.
- * 
+ *
  * @access private
  */
 final class CTaskTimerCore
@@ -22,12 +22,7 @@ final class CTaskTimerCore
 	 */
 	public static function start($userId, $taskId)
 	{
-		global $DB, $DBType;
-
-		static $dbtype = null;
-
-		if ($dbtype === null)
-			$dbtype = strtolower($DBType);
+		global $DB;
 
 		$userId = (int) $userId;
 		$taskId = (int) $taskId;
@@ -55,21 +50,10 @@ final class CTaskTimerCore
 		if ($arData === false)		// there is no timer in DB?
 		{
 			// create it
-			if ($dbtype === 'mysql')
-			{
-				$DB->query(
-					"INSERT IGNORE INTO b_tasks_timer (USER_ID, TASK_ID, TIMER_STARTED_AT, TIMER_ACCUMULATOR) 
-					VALUES ($userId, $taskId, $ts, 0)"
-				);
-			}
-			else
-			{
-				$DB->query(
-					"INSERT INTO b_tasks_timer (USER_ID, TASK_ID, TIMER_STARTED_AT, TIMER_ACCUMULATOR) 
-					VALUES ($userId, $taskId, $ts, 0)",
-					true
-				);
-			}
+			$DB->query(
+				"INSERT IGNORE INTO b_tasks_timer (USER_ID, TASK_ID, TIMER_STARTED_AT, TIMER_ACCUMULATOR) 
+				VALUES ($userId, $taskId, $ts, 0)"
+			);
 
 			$arData = self::get($userId);
 		}

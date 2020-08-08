@@ -3,6 +3,7 @@ namespace Bitrix\Timeman\Form\Worktime;
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Timeman\Helper\TimeHelper;
+use Bitrix\Timeman\Model\Schedule\ScheduleTable;
 use Bitrix\Timeman\Model\User\User;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecordTable;
@@ -187,17 +188,7 @@ class WorktimeRecordForm extends CompositeForm
 			(new Filter\Validator\StringValidator('recordedStopDateFormatted', 'recordedStartDateFormatted'))
 			,
 			(new Filter\Validator\CallbackValidator('recordedStopDateFormatted', 'recordedStartDateFormatted'))
-				->configureCallback(function ($value) {
-					if (!is_string($value))
-					{
-						return false;
-					}
-					$timestamp = TimeHelper::getInstance()
-						->buildTimestampByFormattedDateForServer(
-							$value
-						);
-					return $timestamp !== false && $timestamp < \DateTime::createFromFormat('Y', 2060)->getTimestamp();
-				})
+				->configureCallback($this->getRecordedValidateCallback())
 			,
 			(new Filter\Validator\LoadableValidator('id', 'userId', 'recordedStartTimestamp',
 				'startOffset', 'actualStartTimestamp',
@@ -211,6 +202,13 @@ class WorktimeRecordForm extends CompositeForm
 				->configureCallback(function ($value) {
 					return (int)$value;
 				})
+			,
+			(new Filter\Validator\RangeValidator('device'))
+				->configureRange([
+					ScheduleTable::ALLOWED_DEVICES_B24TIME,
+					ScheduleTable::ALLOWED_DEVICES_BROWSER,
+					ScheduleTable::ALLOWED_DEVICES_MOBILE,
+				])
 			,
 			(new Filter\Validator\RangeValidator('useEmployeesTimezone'))
 				->configureRange([0, 1])
@@ -301,5 +299,18 @@ class WorktimeRecordForm extends CompositeForm
 	public function getUserFields()
 	{
 		return $this->getUser() ? $this->getUser()->collectValues() : [];
+	}
+
+	private function getRecordedValidateCallback(): callable
+	{
+		return function ($value)
+		{
+			if (!is_string($value))
+			{
+				return false;
+			}
+			$timestamp = TimeHelper::getInstance()->buildTimestampByFormattedDateForServer($value);
+			return ($timestamp !== false && $timestamp < \DateTime::createFromFormat('Y', 2060)->getTimestamp());
+		};
 	}
 }

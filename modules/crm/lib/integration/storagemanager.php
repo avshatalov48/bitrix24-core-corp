@@ -71,6 +71,7 @@ class StorageManager
 
 		if($storageTypeID === StorageType::Disk)
 		{
+			$params['USE_MONTH_FOLDERS'] = true;
 			return DiskManager::saveEmailAttachment($fileData, $siteID, $params);
 		}
 		elseif($storageTypeID === StorageType::WebDav)

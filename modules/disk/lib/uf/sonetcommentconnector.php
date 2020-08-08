@@ -19,11 +19,11 @@ final class SonetCommentConnector extends StubConnector implements ISupportForei
 		$return = array();
 
 		if (
-			strpos($comment["EVENT_ID"], "crm_") === 0
+			mb_strpos($comment["EVENT_ID"], "crm_") === 0
 			&& Loader::includeModule('crm')
 		)
 		{
-			if (strpos($comment["EVENT_ID"], "_message_comment") > 0)
+			if (mb_strpos($comment["EVENT_ID"], "_message_comment") > 0)
 			{
 				$connector = new CrmMessageCommentConnector($comment["ID"], $comment["LOG_ID"]);
 				$subData = $connector->getDataToShow();
@@ -86,7 +86,7 @@ final class SonetCommentConnector extends StubConnector implements ISupportForei
 
 		if ($comment = $this->loadLogCommentData())
 		{
-			if (strpos($comment["EVENT_ID"], "crm_") === 0)
+			if (mb_strpos($comment["EVENT_ID"], "crm_") === 0)
 			{
 				$queryLog = \CSocNetLog::getList(
 					array(),

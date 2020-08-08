@@ -53,16 +53,20 @@ BX.crmPaySys = {
 						BX.crmPSActionFile.reloadPreview(result.TEMPLATE);
 						BX.crmPaySys.bindInputsChange();
 					}
-					
+					else
+					{
+						BX.crmPSActionFile.removeTemplatePreview();
+					}
+
 					var frame = BX('frame');
 					frame.parentNode.style.opacity = '1';
 				}, this),
 			onfailure: function() {
-					var frame = BX('frame');
-					frame.parentNode.style.opacity = '1';
+				var frame = BX('frame');
+				frame.parentNode.style.opacity = '1';
 
-					BX.debug('onfailure: getHandlerTemplate');
-				}
+				BX.debug('onfailure: getHandlerTemplate');
+			}
 		});
 	},
 	bindInputsChange : function ()
@@ -437,7 +441,7 @@ BX.crmPSPropType = {
 		var bHide = !bShow;
 		var parents = {};
 		var i, typeSelector;
-		
+
 		for (i = 0, l = BX.crmPaySys.formObj.elements.length; i< l; i++)
 		{
 			if (!/^TYPE_/.test(BX.crmPaySys.formObj.elements[i].name))
@@ -513,8 +517,7 @@ BX.crmPSPropType = {
 	{
 		this.hideItems(true);
 	},
-	
-	
+
 	ShowTab : function(tab_id, on)
 	{
 		var sel = (on? '-selected':'');
@@ -535,7 +538,7 @@ BX.crmPSPropType = {
 		var tab_right = document.getElementById('tab_right_'+tab_id);
 		tab_right.className = (on? 'bx-tab-right-hover':'bx-tab-right');
 	},
-	
+
 	SelectTab : function(tab_id)
 	{
 		var div = document.getElementById('inner_tab_'+tab_id);
@@ -584,10 +587,6 @@ BX.crmPSActionFile = {
 		for(var key in params)
 			this[key] = params[key];
 
-		var actFileSelector = BX.crmPaySys.formObj["ACTION_FILE"];
-		if (actFileSelector)
-			BX.bind(actFileSelector, 'change', BX.delegate(BX.crmPSActionFile.onSelect, this));
-
 		if (BX.crmPaySys.simpleMode)
 			this.hideNoneSimpleRows();
 	},
@@ -597,6 +596,17 @@ BX.crmPSActionFile = {
 		return BX.crmPaySys.formObj["ACTION_FILE"].value;
 	},
 
+	getPsMode: function()
+	{
+		var psModeSelector = BX.crmPaySys.formObj["PS_MODE"];
+		if (psModeSelector)
+		{
+			return psModeSelector.value;
+		}
+
+		return null;
+	},
+
 	onSelect: function()
 	{
 		if (BX('SECURITY'))
@@ -604,36 +614,27 @@ BX.crmPSActionFile = {
 		this.getAjaxFields();
 	},
 
+	onPsModeSelect: function()
+	{
+		BX.crmPSActionFile.onHandlerModeChange();
+		BX.crmPSActionFile.onSelect();
+	},
+
 	getAjaxFields: function(params)
 	{
-		var actionFile = this.getId();
+		var actionFile = this.getId(),
+			psMode = this.getPsMode(),
+			data = {
+				'id': actionFile,
+				'action': 'get_fields',
+				'person_type': BX.crmPSPersonType.getId(),
+				'sessid': BX.bitrix_sessid()
+			};
 
-		if (this.arFields[actionFile] &&
-			BX("ACTION_FILE").value !== this.documentHandler
-		)
+		if (psMode)
 		{
-			BX.crmPSPropType.aTabs = [];
-			for (var i in this.arFields[actionFile])
-			{
-				if (this.arFields[actionFile].hasOwnProperty(i))
-					BX.crmPSPropType.aTabs.push(i);
-			}
-
-			this.insertFields(actionFile, this.arFields[actionFile]);
-
-			if (this.arFieldsList[actionFile])
-				this.setFieldsList(this.arFieldsList[actionFile]);
-
-			BX.crmPaySys.getTemplatePreview();
-			return;
+			data.ps_mode = psMode;
 		}
-
-		var data = {
-			'id': actionFile,
-			'action': 'get_fields',
-			'person_type': BX.crmPSPersonType.getId(),
-			'sessid': BX.bitrix_sessid()
-		};
 
 		var frame = BX('frame');
 		frame.parentNode.style.opacity = '0.5';
@@ -700,24 +701,19 @@ BX.crmPSActionFile = {
 					}
 
 					this.onHandlerModeChange();
-					
+
 					var actionFile = BX.crmPaySys.formObj["ACTION_FILE"].parentNode.parentNode;
-					
+
 					if (result.PS_MODE_LIST
 						|| BX("ACTION_FILE").value === this.documentHandler
 					)
 					{
-						var tdContent = [];
-						if (result.PS_MODE_LIST)
+						var tdContent = BX.create('td', { props : {className : 'bx-field-value'}, });
+						if (result.hasOwnProperty('PAYMENT_MODE'))
 						{
-							var select = BX.create('select', {attrs: {name: 'PS_MODE', id: 'PS_MODE'}});
-							BX.crmPSPropType.insertOptions(select, result.PS_MODE_LIST);
-							BX.bind(select, 'change', function () {
-								BX.crmPSActionFile.onHandlerModeChange();
-							});
-							tdContent.push(select);
+							tdContent.innerHTML = result.PAYMENT_MODE;
 						}
-						
+
 						if (BX("ACTION_FILE").value === this.documentHandler)
 						{
 							var span = BX.create(
@@ -733,7 +729,7 @@ BX.crmPSActionFile = {
 							BX.bind(span, 'click', function () {
 								BX.SidePanel.Instance.open(result.INVOICE_DOC_ADD_LINK, {width: 930, events: {onCloseComplete: function() {BX.crmPSActionFile.onSelect(BX("ACTION_FILE"));}}});
 							});
-							tdContent.push(span);
+							tdContent.appendChild(span);
 						}
 
 						var tr = BX.create('tr', {
@@ -745,16 +741,10 @@ BX.crmPSActionFile = {
 										text : result.PAYMENT_MODE_TITLE+':'
 									}
 								),
-								BX.create(
-									'td',
-									{
-										props : {className : 'bx-field-value'},
-										children : tdContent
-									}
-								)
+								tdContent
 							]
 						});
-						
+
 						BX.insertAfter(tr, actionFile);
 					}
 
@@ -778,7 +768,7 @@ BX.crmPSActionFile = {
 	onHandlerModeChange: function ()
 	{
 		var hidden = BX('ACTION_FILE').value.indexOf(this.documentHandler) === 0;
-		
+
 		BX('MODE_SWITCHER').style.display = hidden ? 'none' : 'table';
 		BX('bx-tabs').style.display = hidden ? 'none' : 'table';
 		BX('bx-tabs').nextElementSibling.style.display = hidden ? 'none' : 'table';
@@ -815,7 +805,16 @@ BX.crmPSActionFile = {
 			}
 		}
 	},
-	
+
+	removeTemplatePreview: function()
+	{
+		var frame = BX('frame');
+		if (frame)
+		{
+			BX.remove(frame.parentNode);
+		}
+	},
+
 	saveFields: function()
 	{
 		for (var i = 0, l = BX.crmPaySys.formObj.elements.length; i < l; i++)
@@ -940,19 +939,19 @@ BX.crmPSActionFile = {
 				});
 
 				var table = BX.create('table', {attrs : {'cellspacing' : '0'}, children : [
-					BX.create('tr', {children : [
-						BX.create('td', {attrs : {className : 'bx-tab-left', id : 'tab_left_'+groupId}, children : [BX.create('div', {attrs : {className : 'empty'}})]}),
-						BX.create('td', {text : this.groups[groupId].NAME, attrs : {className : 'bx-tab', id : 'tab_'+groupId}}),
-						BX.create('td', {attrs : {className : 'bx-tab-right', id : 'tab_right_'+groupId}, children : [BX.create('div', {attrs : {className : 'empty'}})]})
-					]})
-				]});
+						BX.create('tr', {children : [
+								BX.create('td', {attrs : {className : 'bx-tab-left', id : 'tab_left_'+groupId}, children : [BX.create('div', {attrs : {className : 'empty'}})]}),
+								BX.create('td', {text : this.groups[groupId].NAME, attrs : {className : 'bx-tab', id : 'tab_'+groupId}}),
+								BX.create('td', {attrs : {className : 'bx-tab-right', id : 'tab_right_'+groupId}, children : [BX.create('div', {attrs : {className : 'empty'}})]})
+							]})
+					]});
 
 				td.appendChild(table);
 
 				tab.parentNode.insertBefore(td, lastTab);
 			}
 		}
-		
+
 		var nextSibling = tabs.nextElementSibling;
 		var container = BX.findChild(nextSibling, {tag : 'td'}, true);
 
@@ -964,9 +963,9 @@ BX.crmPSActionFile = {
 			var wrapper = BX.create('div', {attrs : {id : 'inner_tab_'+groupId, className : 'bx-edit-tab-inner'}, children : [BX.create('div', {attrs : {className : 'bx-edit-table'}, children : [BX.create('table', {attrs : {className : 'bx-edit-table', id : groupId+'_edit_table'}})]})]});
 			wrapper.style.display = 'none';
 			container.appendChild(wrapper);
-			
+
 			table = BX(groupId+'_edit_table');
-			
+
 			var arFields = arFieldsByGroups[groupId];
 			for (var fieldId in arFields)
 			{
@@ -1302,7 +1301,7 @@ BX.crmPSActionFile = {
 			BX.crmPSPropType.replaceValueField(typeSelector);
 			if (BX.crmPaySys.simpleMode)
 				typeSelector.style.display = 'none';
-			
+
 			if (!BX.crmPaySys.simpleMode && columns[i] !== 'ACTIVE')
 			{
 				typeSelector.style.marginBottom = '5px';

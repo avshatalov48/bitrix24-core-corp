@@ -37,7 +37,19 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 			0,
 			$this->userPermissions
 		);
-		if (!($hasReadPermission && Crm\Restriction\RestrictionManager::isDuplicateControlPermitted()))
+		$hasUpdatePermission = Crm\Security\EntityAuthorization::checkUpdatePermission(
+			$this->entityTypeID,
+			0,
+			$this->userPermissions
+		);
+		$hasDeletePermission = Crm\Security\EntityAuthorization::checkDeletePermission(
+			$this->entityTypeID,
+			0,
+			$this->userPermissions
+		);
+
+		if (!($hasReadPermission && $hasUpdatePermission && $hasDeletePermission &&
+			Crm\Restriction\RestrictionManager::isDuplicateControlPermitted()))
 		{
 			ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 			return;
@@ -57,11 +69,14 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 		$this->arResult['PATH_TO_MERGER'] = isset($this->arParams['PATH_TO_MERGER']) ? $this->arParams['PATH_TO_MERGER'] : '';
 		if($this->arResult['PATH_TO_MERGER'] !== '')
 		{
-			$this->arResult['PATH_TO_MERGER'] = \CHTTP::urlAddParams($this->arResult['PATH_TO_MERGER'], array('queue' => strtolower($this->entityTypeName) . '_dedupe_queue'));
+			$this->arResult['PATH_TO_MERGER'] = \CHTTP::urlAddParams($this->arResult['PATH_TO_MERGER'], array('queue' => mb_strtolower($this->entityTypeName).'_dedupe_queue'));
 		}
 
 		$this->arResult['PATH_TO_DEDUPE_LIST'] = isset($this->arParams['PATH_TO_DEDUPE_LIST'])
 			? $this->arParams['PATH_TO_DEDUPE_LIST'] : '';
+
+		$this->arResult['PATH_TO_ENTITY_LIST'] = isset($this->arParams['PATH_TO_ENTITY_LIST'])
+			? $this->arParams['PATH_TO_ENTITY_LIST'] : '';
 		
 		$indexedTypeScopeMap = array();
 		foreach(Crm\Integrity\DuplicateIndexBuilder::getExistedTypeScopeMap($this->entityTypeID, $this->userID) as

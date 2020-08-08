@@ -9,12 +9,40 @@ namespace Bitrix\Crm\Tracking\Analytics\Provider;
 
 use Bitrix\Crm;
 
-
+/**
+ * Class CompleteDeal
+ * @package Bitrix\Crm\Tracking\Analytics\Provider
+ */
 class CompleteDeal extends Base
 {
+	/**
+	 * Get code.
+	 *
+	 * @return string
+	 */
 	public function getCode()
 	{
 		return 'deals-success';
+	}
+
+	/**
+	 * Get entity ID.
+	 *
+	 * @return int|null
+	 */
+	public function getEntityId()
+	{
+		return \CCrmOwnerType::Deal;
+	}
+
+	/**
+	 * Get entity name.
+	 *
+	 * @return string|null
+	 */
+	public function getEntityName()
+	{
+		return \CCrmOwnerType::getCategoryCaption($this->getEntityId());
 	}
 
 	public function getPath()

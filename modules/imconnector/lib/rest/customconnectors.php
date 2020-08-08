@@ -311,6 +311,7 @@ if(Loader::includeModule('rest'))
 				&& !empty($params['NAME'])
 				&& !empty($params['ICON']['DATA_IMAGE'])
 				&& !empty($appId)
+				&& !empty($params['PLACEMENT_HANDLER'])
 			)
 			{
 				$registerParams = array(
@@ -404,6 +405,14 @@ if(Loader::includeModule('rest'))
 					'result' => false,
 					'error' => Library::ERROR_IMCONNECTOR_REST_NO_APPLICATION_ID,
 					'error_description' => Loc::getMessage('IMCONNECTOR_REST_NO_APPLICATION_ID')
+				);
+			}
+			else if(empty($params['PLACEMENT_HANDLER']))
+			{
+				$result = array(
+					'result' => false,
+					'error' => Library::ERROR_IMCONNECTOR_REST_NO_PLACEMENT_HANDLER,
+					'error_description' => Loc::getMessage('IMCONNECTOR_REST_NO_PLACEMENT_HANDLER')
 				);
 			}
 			else

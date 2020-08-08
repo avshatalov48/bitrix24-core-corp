@@ -374,15 +374,18 @@ BX.Mobile.Crm.Detail = {
 	{
 		for (var i = 0; i < form.elements.length; i++)
 		{
-			if (form[i].tagName == "SELECT")
+			if (form[i].tagName === "SELECT")
 			{
-				var selNode = form[i].options[form[i].selectedIndex];
-				if (selNode && selNode.value)
-					dataFormValues[form[i].name] = selNode.value;
-				else
-					dataFormValues[form[i].name] = "";
+				dataFormValues[form[i].name] = '';
+				var options = form[i].options;
+				for (var j = 0; j < options.length; j++){
+					if (options[j].selected && options[j].value){
+						var optionName = (form[i].name).replace('[]','['+j+']');
+						dataFormValues[optionName] = options[j].value;
+					}
+				}
 			}
-			if (form[i].tagName == "INPUT" && form[i].type == "checkbox")
+			else if (form[i].tagName == "INPUT" && form[i].type == "checkbox")
 			{
 				if (form[i].checked)
 					dataFormValues[form[i].name] = form[i].value;
@@ -390,7 +393,9 @@ BX.Mobile.Crm.Detail = {
 					dataFormValues[form[i].name] = "";
 			}
 			else
+				{
 				dataFormValues[form[i].name] = form[i].value;
+			}
 		}
 
 		return dataFormValues;

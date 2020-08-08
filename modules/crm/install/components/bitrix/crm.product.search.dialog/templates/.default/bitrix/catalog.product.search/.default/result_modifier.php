@@ -1,7 +1,9 @@
 <?php
-use Bitrix\Iblock;
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
+
+use Bitrix\Iblock,
+	Bitrix\Main\Config\Option;
 
 /** @var array $arParams */
 /** @var array $arResult */
@@ -231,15 +233,30 @@ foreach ($arProducts as $productID => $arItems)
 			{
 				if (isset($userType['GetPublicViewHTML']))
 				{
-					$viewValues[] = call_user_func_array(
-						$userType['GetPublicViewHTML'],
-						array(
-							$property,
-							array(
-								'VALUE' => $value
+					$htmlControlName = [];
+					$productDetailPageUrl = Option::get('crm', 'product_detail_page_url', '');
+					if (CCrmProductPropsHelper::isTypeSupportingUrlTemplate($property))
+					{
+						$htmlControlName = [
+							'DETAIL_URL' => CComponentEngine::MakePathFromTemplate(
+								$productDetailPageUrl,
+								[
+									'product_id' => $arItems['ID'],
+								]
 							),
-							array()
-						));
+						];
+					}
+
+					$method = $userType['GetPublicViewHTML'];
+					$params = [
+						$property,
+						[
+							'VALUE' => $value,
+						],
+						$htmlControlName
+					];
+
+					$viewValues[] = call_user_func_array($method, $params);
 				}
 				else
 				{

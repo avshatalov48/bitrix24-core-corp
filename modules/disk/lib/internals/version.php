@@ -47,6 +47,13 @@ final class VersionTable extends DataManager
 					'=this.OBJECT_ID' => 'ref.ID'
 				),
 			),
+			'ATTACHED_OBJECT' => array(
+				'data_type' => AttachedObjectTable::class,
+				'reference' => array(
+					'=this.OBJECT_ID' => 'ref.OBJECT_ID',
+					'=this.ID' => 'ref.VERSION_ID'
+				),
+			),
 			'SIZE' => array(
 				'data_type' => 'integer',
 				'required' => true,

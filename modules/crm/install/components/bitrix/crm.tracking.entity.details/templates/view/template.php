@@ -101,10 +101,13 @@ $containerId = 'crm-tracking-entity-details-view';
 
 					<div class="crm-tracking-entity-details-popup-list">
 						<br>
-						<?foreach ($trace['PAGES'] as $page):?>
+						<?foreach ($trace['PAGES'] as $pageIndex => $page):?>
 							<div class="crm-tracking-entity-details-popup-item">
 								<span class="crm-tracking-entity-details-popup-time">
-									<?=htmlspecialcharsbx($page['DATE_INSERT'])?>
+									<?=((!$pageIndex) && !empty($page['IS_REF'])
+										? Loc::getMessage('CRM_TRACKING_ENTITY_DETAILS_REF_DOMAIN')
+										: htmlspecialcharsbx($page['DATE_INSERT'])
+									)?>
 								</span>
 								<a target="_blank" href="<?=\CUtil::JSEscape(htmlspecialcharsbx($page['URL']))?>"
 									class="crm-tracking-entity-details-popup-decs"

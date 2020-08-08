@@ -9,6 +9,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Type\Dictionary;
 use Bitrix\Tasks\Copy\Task as TaskCopier;
 use Bitrix\Tasks\Integration\Forum\Task\Comment;
@@ -184,7 +185,7 @@ class Task extends Base
 		{
 			$task = $this->getTaskItemObject($entityId);
 
-			$fields = $task->getData(false, ["select" => ["*"]]);
+			$fields = $task->getData(false, ["select" => ["*", "UF_*"]]);
 
 			return (is_array($fields) ? $fields : []);
 		}
@@ -343,6 +344,7 @@ class Task extends Base
 		$fields = $this->cleanDate($fields);
 		$fields = $this->cleanStatus($fields);
 		$fields = $this->cleanForumData($fields);
+		$fields = $this->cleanSystemUfData($fields);
 		return $fields;
 	}
 
@@ -372,6 +374,12 @@ class Task extends Base
 	private function cleanForumData($fields)
 	{
 		unset($fields["FORUM_TOPIC_ID"]);
+		return $fields;
+	}
+
+	private function cleanSystemUfData(array $fields): array
+	{
+		unset($fields["UF_TASK_WEBDAV_FILES"]);
 		return $fields;
 	}
 
@@ -445,11 +453,11 @@ class Task extends Base
 			$projectStartDate = TasksDateTime::createFrom($startPoint);
 			$projectFinishDate = TasksDateTime::createFrom($endPoint);
 
-			$datePlanTime = new \DateTime($datePlan);
-			$startPointTime = new \DateTime($startPoint);
+			$datePlanTime = TasksDateTime::createFrom($datePlan);
+			$startPointTime = TasksDateTime::createFrom($startPoint);
 			if ($datePlanTime < $startPointTime)
 			{
-				$phpDateTimeFormat = \Bitrix\Main\Type\DateTime::convertFormatToPhp(FORMAT_DATETIME);
+				$phpDateTimeFormat = DateTime::convertFormatToPhp(FORMAT_DATETIME);
 				$datePlan = $startPointTime->format($phpDateTimeFormat);
 			}
 
@@ -457,12 +465,12 @@ class Task extends Base
 			{
 				$projectFinishDate->addSecond(86399);
 
-				$datePlanTime = new \DateTime($datePlan);
-				$endPointTime = new \DateTime($endPoint);
-				$endPointTime->add(new \DateInterval("PT86399S"));
+				$datePlanTime = TasksDateTime::createFrom($datePlan);
+				$endPointTime = TasksDateTime::createFrom($endPoint);
+				$endPointTime->add("PT86399S");
 				if ($datePlanTime > $endPointTime)
 				{
-					$phpDateFormat = \Bitrix\Main\Type\DateTime::convertFormatToPhp(FORMAT_DATE);
+					$phpDateFormat = DateTime::convertFormatToPhp(FORMAT_DATE);
 					$datePlan = $endPointTime->format($phpDateFormat);
 				}
 			}
@@ -486,9 +494,7 @@ class Task extends Base
 
 	private function getGroupDatePlan($currentDatePlan, $taskCreatedDate)
 	{
-		$datePlan = $this->getRecountedGroupDeadline($currentDatePlan, $taskCreatedDate);
-
-		return $datePlan;
+		return $this->getRecountedGroupDeadline($currentDatePlan, $taskCreatedDate);
 	}
 
 	private function getRecountedProjectDeadline($currentFieldDate, $taskCreatedDate)
@@ -498,29 +504,27 @@ class Task extends Base
 			$projectTerm = $this->projectTerm;
 
 			$startPoint = $projectTerm["start_point"];
-			$startPointTime = new \DateTime($startPoint);
+			$startPointTime = TasksDateTime::createFrom($startPoint);
 
 			$oldStartPoint = ($projectTerm["old_start_point"] ? $projectTerm["old_start_point"] : $taskCreatedDate);
-			$oldStartPointTime = new \DateTime($oldStartPoint);
+			$oldStartPointTime = TasksDateTime::createFrom($oldStartPoint);
 
-			$currentFieldDateTime = new \DateTime($currentFieldDate);
-			$interval = new \DateInterval("PT".(
-				$currentFieldDateTime->getTimestamp()-$oldStartPointTime->getTimestamp())."S");
+			$currentFieldDateTime = TasksDateTime::createFrom($currentFieldDate);
 
-			$startPointTime->add($interval);
+			$startPointTime->add("PT".($currentFieldDateTime->getTimestamp()-$oldStartPointTime->getTimestamp())."S");
 
-			$phpDateTimeFormat = \Bitrix\Main\Type\DateTime::convertFormatToPhp(FORMAT_DATETIME);
+			$phpDateTimeFormat = DateTime::convertFormatToPhp(FORMAT_DATETIME);
 			$deadline = $startPointTime->format($phpDateTimeFormat);
 
 			$endPoint = $projectTerm["end_point"];
 			if ($endPoint)
 			{
-				$deadlineTime = new \DateTime($deadline);
-				$endPointTime = new \DateTime($endPoint);
-				$endPointTime->add(new \DateInterval("PT86399S"));
+				$deadlineTime = TasksDateTime::createFrom($deadline);
+				$endPointTime = TasksDateTime::createFrom($endPoint);
+				$endPointTime->add("PT86399S");
 				if ($deadlineTime > $endPointTime)
 				{
-					$phpDateFormat = \Bitrix\Main\Type\DateTime::convertFormatToPhp(FORMAT_DATE);
+					$phpDateFormat = DateTime::convertFormatToPhp(FORMAT_DATE);
 					$deadline = $endPointTime->format($phpDateFormat);
 				}
 			}
@@ -561,15 +565,13 @@ class Task extends Base
 		try
 		{
 			$startPoint = $this->projectTerm["start_point"];
-			$startPointTime = new \DateTime($startPoint);
+			$startPointTime = TasksDateTime::createFrom($startPoint);
 
-			$createdDate = new \DateTime($taskCreatedDate);
-			$currentDeadlineTime = new \DateTime($currentDeadline);
-			$interval = new \DateInterval("PT".(
-					$currentDeadlineTime->getTimestamp()-$createdDate->getTimestamp())."S");
-			$startPointTime->add($interval);
+			$createdDate = TasksDateTime::createFrom($taskCreatedDate);
+			$currentDeadlineTime = TasksDateTime::createFrom($currentDeadline);
+			$startPointTime->add("PT".($currentDeadlineTime->getTimestamp()-$createdDate->getTimestamp())."S");
 
-			$phpDateTimeFormat = \Bitrix\Main\Type\DateTime::convertFormatToPhp(FORMAT_DATETIME);
+			$phpDateTimeFormat = DateTime::convertFormatToPhp(FORMAT_DATETIME);
 			return $startPointTime->format($phpDateTimeFormat);
 		}
 		catch (\Exception $exception)
@@ -593,12 +595,6 @@ class Task extends Base
 	private function addSocnetLog($copiedTaskId, $copiedTopicId, Result $result): void
 	{
 		if (!Loader::includeModule("forum"))
-		{
-			return;
-		}
-
-		//todo tmp main revision
-		if (!method_exists($this->topicCopier, "getMapIdsByImplementer"))
 		{
 			return;
 		}

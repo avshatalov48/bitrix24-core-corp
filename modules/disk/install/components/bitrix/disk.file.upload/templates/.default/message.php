@@ -98,6 +98,7 @@ HTML
 	</td>
 	<td class="bx-disk-popup-upload-file-progress-container-lasttd">
 		<span class="bx-disk-popup-upload-file-progress-btn-error" id="#id#Cancel"></span>
+		<span class="bx-disk-popup-upload-file-progress-btn-decencel" id="#id#Restore"></span>
 	</td>
 </tr>
 HTML

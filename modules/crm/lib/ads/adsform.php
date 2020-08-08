@@ -107,7 +107,7 @@ class AdsForm extends AdsService
 	 */
 	public static function getServiceTypeName($type)
 	{
-		return Loc::getMessage('CRM_ADS_FORM_TYPE_NAME_' . strtoupper($type));
+		return Loc::getMessage('CRM_ADS_FORM_TYPE_NAME_'.mb_strtoupper($type));
 	}
 
 	/**
@@ -459,7 +459,7 @@ class AdsForm extends AdsService
 			return null;
 		}
 
-		return Loc::getMessage('CRM_ADS_FORM_TYPE_ERR_DISABLED_' . strtoupper($type));
+		return Loc::getMessage('CRM_ADS_FORM_TYPE_ERR_DISABLED_'.mb_strtoupper($type));
 	}
 
 	protected static function isDisabled()

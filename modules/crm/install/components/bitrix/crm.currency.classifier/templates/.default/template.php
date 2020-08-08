@@ -30,7 +30,7 @@ elseif (isset($arResult['ERRORS']['UPDATE']))
 	ShowError($arResult['ERRORS']['UPDATE']);
 }
 
-$APPLICATION->SetAdditionalCSS("/bitrix/components/bitrix/crm.entity.editor/templates/.default/style.css");
+$APPLICATION->SetAdditionalCSS("/bitrix/js/crm/entity-editor/css/style.css");
 $APPLICATION->SetAdditionalCSS("/bitrix/js/crm/css/slider.css");
 ?>
 
@@ -74,7 +74,7 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/crm/css/slider.css");
 											<div class="crm-entity-widget-content-block-select">
 												<select class="crm-entity-widget-content-select crm-select-hidden-arrow" id="add_classifier_currency_id" name="add_classifier_currency_id" size="8">
 													<? foreach ($arResult['CLASSIFIER'] as $key => $value)
-														echo "<option value=".HtmlFilter::encode($key).">".HtmlFilter::encode($value[strtoupper(LANGUAGE_ID)]['FULL_NAME'])."</option>";?>
+														echo "<option value=".HtmlFilter::encode($key).">".HtmlFilter::encode($value[mb_strtoupper(LANGUAGE_ID)]['FULL_NAME'])."</option>";?>
 												</select>
 											</div>
 										</div>
@@ -163,7 +163,7 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/crm/css/slider.css");
 					<div class="crm-entity-stream-container" style="width: 100%; vertical-align: top;">
 						<? foreach ($arResult['LANGUAGES'] as $key => $value)
 						{
-							$upperKey = strtoupper($key);
+							$upperKey = mb_strtoupper($key);
 						?>
 							<div class="crm-entity-card-widget">
 								<div class="crm-entity-card-widget-title">
@@ -288,7 +288,7 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/crm/css/slider.css");
 					<div class="crm-entity-stream-container" style="width: 100%; vertical-align: top;">
 						<? foreach ($arResult['LANGUAGES'] as $key => $value)
 						{
-							$upperKey = strtoupper($key);
+							$upperKey = mb_strtoupper($key);
 						?>
 							<div class="crm-entity-card-widget">
 								<div class="crm-entity-card-widget-title">

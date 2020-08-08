@@ -78,7 +78,7 @@ class CalendarTable extends Main\ORM\Data\DataManager
 			,
 			(new Fields\Relations\Reference('PARENT_CALENDAR', CalendarTable::class,
 				Join::on('this.PARENT_CALENDAR_ID', 'ref.ID')))
-				->configureJoinType('inner')
+				->configureJoinType('LEFT')
 			,
 		];
 	}

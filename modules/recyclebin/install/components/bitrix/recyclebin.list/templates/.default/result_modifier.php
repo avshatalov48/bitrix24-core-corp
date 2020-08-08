@@ -7,6 +7,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 $arResult['ROWS'] = [];
 
 use Bitrix\Bitrix24\Feature;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Recyclebin\Internals\User;
 
@@ -57,41 +58,82 @@ function getUserName($row)
 	return $cache[$row['USER_ID']];
 }
 
-function prepareActionsColumn($row)
+/**
+ * @return string
+ */
+function getLicensePopupShowAction()
+{
+	$popupTitle = Loc::getMessage('RECYCLEBIN_LICENSE_POPUP_TITLE');
+	$popupText = GetMessageJS('RECYCLEBIN_LICENSE_POPUP_TEXT');
+
+	return "BX.Bitrix24.LicenseInfoPopup.show('recyclebin', '{$popupTitle}', '{$popupText}');";
+}
+
+/**
+ * @param $entityId
+ * @param $entityType
+ * @param $restoreDisablingOptions
+ * @return string
+ * @throws \Bitrix\Main\LoaderException
+ */
+function getColumnRestoreAction($entityId, $entityType, $restoreDisablingOptions)
+{
+	if (!Loader::includeModule('bitrix24'))
+	{
+		return "BX.Recyclebin.List.restore({$entityId}, '{$entityType}')";
+	}
+
+	if (!Feature::isFeatureEnabled("recyclebin"))
+	{
+		if ($restoreDisablingOptions['EXISTS'])
+		{
+			if ($restoreDisablingOptions['IS_ON'])
+			{
+				return "BX.UI.InfoHelper.show('{$restoreDisablingOptions['SLIDER_CODE']}');";
+			}
+			return "BX.Recyclebin.List.restore({$entityId}, '{$entityType}')";
+		}
+
+		return getLicensePopupShowAction();
+	}
+
+	return "BX.Recyclebin.List.restore({$entityId}, '{$entityType}')";
+}
+
+/**
+ * @param $entityId
+ * @param $entityType
+ * @return string
+ */
+function getColumnRemoveAction($entityId, $entityType)
+{
+	return "BX.Recyclebin.List.remove({$entityId}, '{$entityType}')";
+}
+
+/**
+ * @param $row
+ * @param $restoreDisablingOptions
+ * @return array
+ * @throws \Bitrix\Main\LoaderException
+ */
+function prepareActionsColumn($row, $restoreDisablingOptions)
 {
 	$list = [];
 
-	if (\CModule::IncludeModule('bitrix24'))
-	{
-		if (Feature::isFeatureEnabled("recyclebin"))
-		{
-			$restoreAction = 'BX.Recyclebin.List.restore('.(int)$row['ID'].', "'.$row['ENTITY_TYPE'].'")';
-		}
-		else
-		{
-			$restoreAction = 'BX.Bitrix24.LicenseInfoPopup.show("recyclebin", "'.
-							 Loc::getMessage('RECYCLEBIN_LICENSE_POPUP_TITLE').
-							 '", "'.
-							 GetMessageJS('RECYCLEBIN_LICENSE_POPUP_TEXT').
-							 '");';
-		}
-	}
-	else
-	{
-		$restoreAction = 'BX.Recyclebin.List.restore('.(int)$row['ID'].', "'.$row['ENTITY_TYPE'].'")';
-	}
+	$entityId = (int)$row['ID'];
+	$entityType = $row['ENTITY_TYPE'];
 
 	$list[] = [
-		"text"    => GetMessageJS('RECYCLEBIN_CONTEXT_MENU_TITLE_RESTORE'),
-		'onclick' => $restoreAction,
+		"text" => GetMessageJS('RECYCLEBIN_CONTEXT_MENU_TITLE_RESTORE'),
+		'onclick' => getColumnRestoreAction($entityId, $entityType, $restoreDisablingOptions),
+		'className' => ($restoreDisablingOptions['IS_ON'] ? 'recyclebin-list-menu-popup-item-lock' : ''),
 	];
 
-	if (User::isSuper() || User::isAdmin())
+	if (User::isSuper())
 	{
-		$deleteAction = 'BX.Recyclebin.List.remove('.(int)$row['ID'].', "'.$row['ENTITY_TYPE'].'")';
 		$list[] = [
-			"text"    => GetMessageJS('RECYCLEBIN_CONTEXT_MENU_TITLE_REMOVE'),
-			'onclick' => $deleteAction,
+			"text" => GetMessageJS('RECYCLEBIN_CONTEXT_MENU_TITLE_REMOVE'),
+			'onclick' => getColumnRemoveAction($entityId, $entityType, $restoreDisablingOptions),
 		];
 	}
 
@@ -99,45 +141,102 @@ function prepareActionsColumn($row)
 }
 
 /**
+ * @param $entityTypes
+ * @param $entityAdditionalData
  * @return array
  */
-function prepareGroupActions()
+function getRestoreDisablingOptions($entityTypes, $entityAdditionalData)
 {
-	if (\CModule::IncludeModule('bitrix24'))
+	$restoreDisablingExists = false;
+	$isRestoreDisablingOn = false;
+	$restoreDisablingType = '';
+	$sliderCode = '';
+
+	foreach ($entityTypes as $typeId => $type)
 	{
-		if (Feature::isFeatureEnabled("recyclebin"))
+		$entityLimitData = $entityAdditionalData[$typeId]['LIMIT_DATA'];
+		if (isset($entityLimitData['RESTORE']['DISABLE']))
 		{
-			$restoreAction = 'BX.Recyclebin.List.restoreBatch();';
+			$restoreDisablingExists = true;
+			if ($entityLimitData['RESTORE']['DISABLE'])
+			{
+				$isRestoreDisablingOn = true;
+				$restoreDisablingType = $typeId;
+				$sliderCode = $entityLimitData['RESTORE']['SLIDER_CODE'];
+				break;
+			}
 		}
-		else
-		{
-			$restoreAction = 'BX.Bitrix24.LicenseInfoPopup.show("recyclebin", "'.
-							 Loc::getMessage('RECYCLEBIN_LICENSE_POPUP_TITLE').
-							 '", "'.
-							 GetMessageJS('RECYCLEBIN_LICENSE_POPUP_TEXT').
-							 '");';
-		}
-	}
-	else
-	{
-		$restoreAction = 'BX.Recyclebin.List.restoreBatch();';
 	}
 
-	$items = [
-		[
-			"TYPE"     => \Bitrix\Main\Grid\Panel\Types::BUTTON,
-			"TEXT"     => GetMessage("RECYCLEBIN_GROUP_ACTIONS_RESTORE"),
-			"VALUE"    => "restore",
-			"ONCHANGE" => [
-				[
-					"ACTION" => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-					"DATA"   => [['JS' => $restoreAction]]
-				]
-			]
-		]
+	return [
+		'EXISTS' => $restoreDisablingExists,
+		'IS_ON' => $isRestoreDisablingOn,
+		'TYPE' => $restoreDisablingType,
+		'SLIDER_CODE' => $sliderCode,
+	];
+}
+
+/**
+ * @param $restoreDisablingOptions
+ * @return string
+ * @throws \Bitrix\Main\LoaderException
+ */
+function getGroupRestoreAction($restoreDisablingOptions)
+{
+	if (!Loader::includeModule('bitrix24'))
+	{
+		return "BX.Recyclebin.List.restoreBatch();";
+	}
+
+	if (!Feature::isFeatureEnabled('recyclebin'))
+	{
+		if ($restoreDisablingOptions['EXISTS'])
+		{
+			if ($restoreDisablingOptions['IS_ON'])
+			{
+				return "BX.UI.InfoHelper.show('{$restoreDisablingOptions['SLIDER_CODE']}');";
+			}
+			return "BX.Recyclebin.List.restoreBatch();";
+		}
+
+		return getLicensePopupShowAction();
+	}
+
+	return "BX.Recyclebin.List.restoreBatch();";
+}
+
+/**
+ * @return string
+ */
+function getGroupRemoveAction()
+{
+	return "BX.Recyclebin.List.removeBatch();";
+}
+
+/**
+ * @param $restoreDisablingOptions
+ * @return array
+ * @throws \Bitrix\Main\LoaderException
+ */
+function prepareGroupActions($restoreDisablingOptions)
+{
+	$iconLock = ($restoreDisablingOptions['IS_ON'] ? ' ui-btn-icon-lock' : '');
+
+	$items = [];
+	$items[] = [
+		"TYPE"     => \Bitrix\Main\Grid\Panel\Types::BUTTON,
+		"TEXT"     => GetMessage("RECYCLEBIN_GROUP_ACTIONS_RESTORE"),
+		"VALUE"    => "restore",
+		"CLASS" => 'ui-btn ui-btn-light-border ui-btn-medium'.$iconLock, // Added a new button with a lock icon
+		"ONCHANGE" => [
+			[
+				"ACTION" => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
+				"DATA"   => [['JS' => getGroupRestoreAction($restoreDisablingOptions)]],
+			],
+		],
 	];
 
-	if (User::isSuper() || User::isAdmin())
+	if (User::isSuper())
 	{
 		$items[] = [
 			"TYPE"     => \Bitrix\Main\Grid\Panel\Types::BUTTON,
@@ -146,20 +245,19 @@ function prepareGroupActions()
 			"ONCHANGE" => [
 				[
 					"ACTION" => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-					"DATA"   => [['JS' => "BX.Recyclebin.List.removeBatch();"]]
-				]
-			]
+					"DATA"   => [['JS' => getGroupRemoveAction()]],
+				],
+			],
 		];
 	}
-	$groupActions = [
+
+	return [
 		'GROUPS' => [
 			[
-				'ITEMS' => $items
-			]
-		]
+				'ITEMS' => $items,
+			],
+		],
 	];
-
-	return $groupActions;
 }
 
 function getDateTimeFormat()
@@ -255,6 +353,8 @@ function formatDateRecycle($date)
 	return $str;
 }
 
+$restoreDisablingOptions = getRestoreDisablingOptions($arResult['ENTITY_TYPES'], $arResult['ENTITY_ADDITIONAL_DATA']);
+
 if (!empty($arResult['GRID']['DATA']))
 {
 	$users = [];
@@ -267,7 +367,7 @@ if (!empty($arResult['GRID']['DATA']))
 	{
 		$arResult['ROWS'][] = [
 			"id"      => $row["ID"],
-			'actions' => prepareActionsColumn($row),
+			'actions' => prepareActionsColumn($row, $restoreDisablingOptions),
 			'columns' => [
 				'ID'          => $row['ID'],
 				'ENTITY_ID'   => $row['ENTITY_ID'],
@@ -280,4 +380,4 @@ if (!empty($arResult['GRID']['DATA']))
 		];
 	}
 }
-$arResult['GROUP_ACTIONS'] = prepareGroupActions();
+$arResult['GROUP_ACTIONS'] = prepareGroupActions($restoreDisablingOptions);

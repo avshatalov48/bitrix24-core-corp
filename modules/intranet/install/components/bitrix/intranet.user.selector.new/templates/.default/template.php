@@ -40,22 +40,22 @@ $ajaxUrl = $this->__component->GetPath() . '/ajax.php?' .
 	<?php endforeach?>
 
 	BX.ready(function() {
-		<?php if (strlen($arParams["FORM_NAME"]) > 0 && strlen($arParams["INPUT_NAME"]) > 0):?>
+		<?php if ($arParams["FORM_NAME"] <> '' && $arParams["INPUT_NAME"] <> ''):?>
 			window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].searchInput = document.forms["<?php echo CUtil::JSEscape($arParams["FORM_NAME"])?>"].element["<?php echo CUtil::JSEscape($arParams["INPUT_NAME"])?>"];
-		<?php elseif(strlen($arParams["INPUT_NAME"]) > 0):?>
+		<?php elseif($arParams["INPUT_NAME"] <> ''):?>
 			window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].searchInput = BX("<?php echo CUtil::JSEscape($arParams["INPUT_NAME"])?>");
 		<?php else:?>
 			window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].searchInput = BX('<?=CUtil::jsEscape($arResult['NAME']) ?>_user_input');
 		<?php endif?>
 
-		<?php if (strlen($arParams["ON_CHANGE"]) > 0):?>
+		<?php if ($arParams["ON_CHANGE"] <> ''):?>
 			window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].onChange = <?php echo CUtil::JSEscape($arParams["ON_CHANGE"])?>;
 			window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].onChange(window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].arSelected);
 		<?php endif?>
 
-		<?php if (strlen($arParams["ON_SELECT"]) > 0):?>
+		<?php if ($arParams["ON_SELECT"] <> ''):?>
 			window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].onSelect= <?php echo CUtil::JSEscape($arParams["ON_SELECT"])?>;
-		<?php elseif (strlen($arParams["ON_SECTION_SELECT"]) > 0):?>
+		<?php elseif ($arParams["ON_SECTION_SELECT"] <> ''):?>
 			window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].onSectionSelect= <?php echo CUtil::JSEscape($arParams["ON_SECTION_SELECT"])?>;
 		<?php endif?>
 
@@ -68,7 +68,7 @@ $ajaxUrl = $this->__component->GetPath() . '/ajax.php?' .
 	<table class="finder-box-layout" cellspacing="0">
 		<tr>
 			<td class="finder-box-left-column">
-				<?php if (!isset($arParams["INPUT_NAME"]) || strlen($arParams["INPUT_NAME"]) == 0):?>
+				<?php if (!isset($arParams["INPUT_NAME"]) || $arParams["INPUT_NAME"] == ''):?>
 				<div class="finder-box-search"><input name="<?php echo $arResult["NAME"]?>_user_input" autocomplete="off" id="<?php echo $arResult["NAME"]?>_user_input" class="finder-box-search-textbox" /></div>
 				<?php endif?>
 				<?php if($arParams["DISPLAY_TABS"] == 'Y'): ?>

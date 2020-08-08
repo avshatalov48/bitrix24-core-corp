@@ -130,7 +130,7 @@ class ChannelType
 			return self::UNDEFINED;
 		}
 
-		$typeName = strtoupper($typeName);
+		$typeName = mb_strtoupper($typeName);
 		if($typeName === self::EXTERNAL_CUSTOM_NAME)
 		{
 			return self::EXTERNAL_CUSTOM;

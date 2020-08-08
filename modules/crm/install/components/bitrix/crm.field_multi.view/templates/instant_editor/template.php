@@ -28,7 +28,7 @@ $crmFieldMultiViewTemplates = array(
 </span>'
 );
 
-$typeID = strtoupper($arResult['TYPE_ID']);
+$typeID = mb_strtoupper($arResult['TYPE_ID']);
 $readOnly = isset($arResult['READ_ONLY']) ? $arResult['READ_ONLY'] : false;
 
 ?>
@@ -38,23 +38,23 @@ $readOnly = isset($arResult['READ_ONLY']) ? $arResult['READ_ONLY'] : false;
 	$value = $arValue['VALUE'];
 	$fieldID = "FM.{$typeID}.{$valueType}.{$ID}";?>
 	<tr>
-		<td class="bx-field-name bx-padding"><?=htmlspecialcharsbx(CCrmFieldMulti::GetEntityName($typeID, strtoupper($valueType), true))?>:</td>
+		<td class="bx-field-name bx-padding"><?=htmlspecialcharsbx(CCrmFieldMulti::GetEntityName($typeID, mb_strtoupper($valueType), true))?>:</td>
 		<td class="bx-field-value">
 			<?if($readOnly):
 				echo '<div class="crm-fld-block-readonly">', CCrmFieldMulti::GetTemplate($typeID, $valueType, $value), '</div>';
 			else:
 				$templateType = '_INPUT_';
-				$editorFieldType = strtolower($typeID);
+				$editorFieldType = mb_strtolower($typeID);
 
 				if($typeID === 'PHONE' || $typeID === 'EMAIL' || $typeID === 'WEB'):
 					$templateType = '_LINK_';
 
 					if($typeID === 'WEB' && $valueType !== 'WORK' && $valueType !== 'HOME' && $valueType !== 'OTHER'):
-						$editorFieldType .= '-'.strtolower($valueType);
+						$editorFieldType .= '-'.mb_strtolower($valueType);
 					endif;
 				elseif($typeID === 'IM'):
 					$templateType = $valueType === 'SKYPE' || $valueType === 'ICQ' || $valueType === 'MSN' ? '_LINK_' : '_INPUT_';
-					$editorFieldType .= '-'.strtolower($valueType);
+					$editorFieldType .= '-'.mb_strtolower($valueType);
 				endif;
 
 				$template = isset($crmFieldMultiViewTemplates[$templateType]) ? $crmFieldMultiViewTemplates[$templateType] : '';

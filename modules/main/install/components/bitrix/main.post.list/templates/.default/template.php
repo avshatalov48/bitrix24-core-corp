@@ -184,6 +184,7 @@ if ($this->__component->__parent instanceof \Bitrix\Main\Engine\Contract\Control
 	$ajaxParams = [
 		"componentName" => $this->__component->__parent->getName(),
 		"processComment" => method_exists($this->__component->__parent, "processCommentAction"),
+		"navigateComment" => method_exists($this->__component->__parent, "navigateCommentAction"),
 		"readComment" => method_exists($this->__component->__parent, "readCommentAction"),
 		"params" => $this->__component->__parent->getSignedParameters()
 	];
@@ -264,7 +265,7 @@ if ($arParams["SHOW_POST_FORM"] == "Y")
 	?><div class="feed-com-add-box-outer" id="record-<?=$prefixNode?>-form-holder">
 
 		<div class="feed-com-avatar feed-com-avatar-<?=($AUTHOR_AVATAR == '/bitrix/images/1.gif' ? "N" : "Y")?>"><?
-			?><img width="37" height="37" src="<?=$AUTHOR_AVATAR?>"><?
+			?><img width="37" height="37" src="<?=\CHTTP::urnEncode($AUTHOR_AVATAR)?>"><?
 		?></div>
 
 		<div class="feed-com-add-box">

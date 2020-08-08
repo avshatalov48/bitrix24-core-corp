@@ -66,7 +66,7 @@ if($action === 'SAVE_CONTACT')
 
 	if(isset($data['export']))
 	{
-		$arFields['EXPORT'] =  strtoupper($data['export']) === 'Y' ? 'Y' : 'N';
+		$arFields['EXPORT'] = mb_strtoupper($data['export']) === 'Y' ? 'Y' : 'N';
 	}
 
 	$email = isset($data['email']) ? $data['email'] : '';
@@ -148,7 +148,7 @@ if($action === 'SAVE_CONTACT')
 elseif($action === 'ENABLE_SONET_SUBSCRIPTION')
 {
 	$userID = CCrmSecurityHelper::GetCurrentUserID();
-	$entityTypeName = isset($_POST['ENTITY_TYPE']) ? strtoupper($_POST['ENTITY_TYPE']) : '';
+	$entityTypeName = isset($_POST['ENTITY_TYPE'])? mb_strtoupper($_POST['ENTITY_TYPE']) : '';
 	$entityID = isset($_POST['ENTITY_ID']) ? intval($_POST['ENTITY_ID']) : 0;
 	if($userID > 0 && $entityTypeName === CCrmOwnerType::ContactName && $entityID > 0 && CCrmContact::CheckReadPermission($entityID))
 	{
@@ -160,7 +160,7 @@ elseif($action === 'ENABLE_SONET_SUBSCRIPTION')
 			$userID
 		);
 
-		$enable = isset($_POST['ENABLE']) && strtoupper($_POST['ENABLE']) === 'Y' ;
+		$enable = isset($_POST['ENABLE']) && mb_strtoupper($_POST['ENABLE']) === 'Y' ;
 
 		if($isEnabled !== $enable)
 		{

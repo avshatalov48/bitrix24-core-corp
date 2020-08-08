@@ -274,12 +274,6 @@ class CVoxImplantUser
 			return $result;
 		}
 
-		if(static::IsExtranet($arUser))
-		{
-			$result->addError(new \Bitrix\Main\Error(GetMessage('VI_ERROR_USER_NO_EXTRANET')));
-			return $result;
-		}
-
 		if($arUser['UF_VI_PASSWORD'] == '')
 		{
 			if(!$autoRegister)
@@ -335,10 +329,13 @@ class CVoxImplantUser
 		$phoneEnable = false;
 		$phonePassword = '';
 
-		$arUser = \Bitrix\Main\UserTable::getRow(array(
-			'select' => array('UF_VI_PASSWORD', 'UF_VI_BACKPHONE', 'UF_VI_PHONE', 'UF_VI_PHONE_PASSWORD', 'UF_PHONE_INNER', 'UF_DEPARTMENT'),
-			'filter' => array('=ID' => $userId, '=ACTIVE' => 'Y', '=IS_REAL_USER' => 'Y')
-		));
+		$arUser = \Bitrix\Main\UserTable::getRow([
+			'select' => ['UF_VI_PASSWORD', 'UF_VI_BACKPHONE', 'UF_VI_PHONE', 'UF_VI_PHONE_PASSWORD', 'UF_PHONE_INNER', 'UF_DEPARTMENT'],
+			'filter' => [
+				'=ID' => $userId,
+				'=ACTIVE' => 'Y',
+			]
+		]);
 		if ($arUser)
 		{
 			if (strlen($arUser['UF_VI_PASSWORD']) > 0)

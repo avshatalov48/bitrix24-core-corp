@@ -172,7 +172,7 @@ class CUserCMLImport
 
 	function MakeFileArray($file)
 	{
-		if((strlen($file)>0) && is_file($this->files_dir.$file))
+		if(($file <> '') && is_file($this->files_dir.$file))
 			return CFile::MakeFileArray($this->files_dir.$file);
 		else
 			return array("tmp_name"=>"", "del"=>"Y");
@@ -208,7 +208,7 @@ class CUserCMLImport
 		if (!$XML_ID)
 			return false;
 
-		return 'UF_1C_PR'.strtoupper(substr(md5($XML_ID), 0, 12));
+		return 'UF_1C_PR'.mb_strtoupper(mb_substr(md5($XML_ID), 0, 12));
 	}
 
 	function GetPropertyByXML_ID($XML_ID, $arData = null)
@@ -403,7 +403,7 @@ class CUserCMLImport
 		$rs = $DB->Query("SELECT ID, ATTRIBUTES FROM b_xml_tree WHERE PARENT_ID = ".intval($xml_root_id)." AND NAME='".GetMessage('IBLOCK_XML2_USER_TAG_CLASSIFIER')."'");
 		if($ar = $rs->Fetch())
 		{
-			if(strlen($ar["ATTRIBUTES"]) > 0)
+			if($ar["ATTRIBUTES"] <> '')
 			{
 				$attrs = unserialize($ar["ATTRIBUTES"]);
 				if(is_array($attrs))
@@ -485,7 +485,7 @@ class CUserCMLImport
 			$rs = $DB->Query($query);
 			if($ar = $rs->Fetch())
 			{
-				if(strlen($ar["ATTRIBUTES"]) > 0)
+				if($ar["ATTRIBUTES"] <> '')
 				{
 					$attrs = unserialize($ar["ATTRIBUTES"]);
 					if(is_array($attrs))
@@ -600,7 +600,7 @@ class CUserCMLImport
 				CFile::Delete($arCurrentUser['PERSONAL_PHOTO']);
 			}
 
-			if (strlen($arXMLElement[GetMessage('IBLOCK_XML2_USER_TAG_PHOTO')]) > 0)
+			if ($arXMLElement[GetMessage('IBLOCK_XML2_USER_TAG_PHOTO')] <> '')
 			{
 				$arFields['PERSONAL_PHOTO'] = $this->MakeFileArray($arXMLElement[GetMessage('IBLOCK_XML2_USER_TAG_PHOTO')]);
 			}
@@ -812,16 +812,16 @@ class CUserCMLImport
 			if ($this->arParams['UPDATE_LOGIN'])
 			{
 				$arFields['LOGIN'] = $arFields[$this->CalcPropertyFieldName($this->arParams['LOGIN_PROPERTY_XML_ID'])];
-				if (strlen($arFields['LOGIN']) <= 0) unset($arFields['LOGIN']);
+				if ($arFields['LOGIN'] == '') unset($arFields['LOGIN']);
 			}
 
 			if ($this->arParams['UPDATE_PASSWORD'])
 			{
 				$arFields['PASSWORD'] = $arFields['CONFIRM_PASSWORD'] = $arFields[$this->CalcPropertyFieldName($this->arParams['PASSWORD_PROPERTY_XML_ID'])];
-				if (strlen($arFields['PASSWORD']) <= 0) { unset($arFields['PASSWORD']); unset($arFields['CONFIRM_PASSWORD']); }
+				if ($arFields['PASSWORD'] == '') { unset($arFields['PASSWORD']); unset($arFields['CONFIRM_PASSWORD']); }
 			}
 
-			if (!$this->arParams['UPDATE_EMAIL'] || strlen($arFields['EMAIL']) <= 0) unset($arFields['EMAIL']);
+			if (!$this->arParams['UPDATE_EMAIL'] || $arFields['EMAIL'] == '') unset($arFields['EMAIL']);
 		}
 
 		$bNew = $CURRENT_USER <= 0;
@@ -978,7 +978,7 @@ class CUserCMLImport
 			$rs = $DB->Query("SELECT ID, ATTRIBUTES FROM b_xml_tree WHERE PARENT_ID = ".intval($xml_root_id)." AND NAME='".GetMessage('IBLOCK_XML2_USER_TAG_ABSENCE')."'");
 			if($ar = $rs->Fetch())
 			{
-				if(strlen($ar["ATTRIBUTES"]) > 0)
+				if($ar["ATTRIBUTES"] <> '')
 				{
 					$attrs = unserialize($ar["ATTRIBUTES"]);
 					if(is_array($attrs))
@@ -1044,9 +1044,9 @@ class CUserCMLImport
 
 		$TYPE = ToUpper($TYPE);
 
-		if (false !== strpos($TYPE, GetMessage('INTR_IAC_VACATION')))
+		if (false !== mb_strpos($TYPE, GetMessage('INTR_IAC_VACATION')))
 			return $this->arAbsenceTypes['VACATION'];
-		elseif (false !== strpos($TYPE, GetMessage('INTR_IAC_ASSIGNMENT')))
+		elseif (false !== mb_strpos($TYPE, GetMessage('INTR_IAC_ASSIGNMENT')))
 			return $this->arAbsenceTypes['ASSIGNMENT'];
 		else
 			return $this->arAbsenceTypes['OTHER'];

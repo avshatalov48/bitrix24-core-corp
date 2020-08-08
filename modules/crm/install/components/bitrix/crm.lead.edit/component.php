@@ -79,7 +79,7 @@ $arResult['EXTERNAL_CONTEXT'] = isset($_REQUEST['external_context']) ? $_REQUEST
 //Show error message if required
 if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['error']))
 {
-	$errorID = strtolower($_GET['error']);
+	$errorID = mb_strtolower($_GET['error']);
 	if(preg_match('/^crm_err_/', $errorID) === 1)
 	{
 		if(!isset($_SESSION[$errorID]))
@@ -323,7 +323,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 		if(isset($_POST['COMMENTS']))
 		{
 			$comments = isset($_POST['COMMENTS']) ? trim($_POST['COMMENTS']) : '';
-			if($comments !== '' && strpos($comments, '<') !== false)
+			if($comments !== '' && mb_strpos($comments, '<') !== false)
 			{
 				$comments = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($comments);
 			}
@@ -462,7 +462,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 
 		if(isset($_POST['OPENED']))
 		{
-			$arFields['OPENED'] = strtoupper($_POST['OPENED']) === 'Y' ? 'Y' : 'N';
+			$arFields['OPENED'] = mb_strtoupper($_POST['OPENED']) === 'Y' ? 'Y' : 'N';
 		}
 		elseif(!$bEdit)
 		{
@@ -486,7 +486,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 
 		if(isset($_REQUEST['is_return_customer']))
 		{
-			$arFields['IS_RETURN_CUSTOMER'] = strtoupper($_REQUEST['is_return_customer']) === 'Y' ? 'Y' : 'N';
+			$arFields['IS_RETURN_CUSTOMER'] = mb_strtoupper($_REQUEST['is_return_customer']) === 'Y' ? 'Y' : 'N';
 		}
 
 		if(isset($_POST['LFM']))
@@ -528,7 +528,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 		if($processProductRows)
 		{
 			$prodJson = isset($_POST[$productDataFieldName]) ? strval($_POST[$productDataFieldName]) : '';
-			$arProd = $arResult['PRODUCT_ROWS'] = strlen($prodJson) > 0 ? CUtil::JsObjectToPhp($prodJson) : array();
+			$arProd = $arResult['PRODUCT_ROWS'] = $prodJson <> '' ? CUtil::JsObjectToPhp($prodJson) : array();
 			if(!empty($arProd))
 			{
 				if($bCopy)
@@ -556,7 +556,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 		if(array_key_exists($productRowSettingsFieldName, $_POST))
 		{
 			$settingsJson = isset($_POST[$productRowSettingsFieldName]) ? strval($_POST[$productRowSettingsFieldName]) : '';
-			$arSettings = strlen($settingsJson) > 0 ? CUtil::JsObjectToPhp($settingsJson) : array();
+			$arSettings = $settingsJson <> '' ? CUtil::JsObjectToPhp($settingsJson) : array();
 			if(is_array($arSettings))
 			{
 				$productRowSettings['ENABLE_DISCOUNT'] = isset($arSettings['ENABLE_DISCOUNT']) ? $arSettings['ENABLE_DISCOUNT'] === 'Y' : false;
@@ -664,13 +664,15 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 		}
 
 		//Region automation
+		$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $arResult['ELEMENT']['ID']);
+		$starter->setUserIdFromCurrent();
 		if (!$bEdit)
 		{
-			\Bitrix\Crm\Automation\Factory::runOnAdd(\CCrmOwnerType::Lead, $arResult['ELEMENT']['ID']);
+			$starter->runOnAdd();
 		}
-		elseif (isset($arFields['STATUS_ID']) && is_array($arResult['ELEMENT']) && $arFields['STATUS_ID'] != $arResult['ELEMENT']['STATUS_ID'])
+		else
 		{
-			\Bitrix\Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Lead, $arResult['ELEMENT']['ID']);
+			$starter->runOnUpdate($arFields, $arResult['ELEMENT']);
 		}
 		//end automation
 
@@ -1424,11 +1426,11 @@ if (IsModuleInstalled('bizproc') && CBPRuntime::isFeatureEnabled())
 				'id' => 'BP_STATE_NAME_'.$bizProcIndex,
 				'name' => GetMessage('CRM_FIELD_BP_STATE_NAME'),
 				'type' => 'label',
-				'value' => strlen($arDocumentState['STATE_TITLE']) > 0 ? $arDocumentState['STATE_TITLE'] : $arDocumentState['STATE_NAME']
+				'value' => $arDocumentState['STATE_TITLE'] <> '' ? $arDocumentState['STATE_TITLE'] : $arDocumentState['STATE_NAME']
 			);
 		}
 
-		if (strlen($arDocumentState['ID']) <= 0)
+		if ($arDocumentState['ID'] == '')
 		{
 			ob_start();
 			CBPDocument::StartWorkflowParametersShow(

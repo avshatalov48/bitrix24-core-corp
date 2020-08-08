@@ -121,7 +121,7 @@ $APPLICATION->IncludeComponent(
 	)
 );
 
-$prefixLower = strtolower($arResult['PREFIX']);
+$prefixLower = mb_strtolower($arResult['PREFIX']);
 $companySpecifiedClientFields = array('CLIENT_CONTACT', 'CLIENT_TP_ID');
 if (LANGUAGE_ID === 'ru')
 	$companySpecifiedClientFields[] = 'CLIENT_TPA_ID';
@@ -177,7 +177,7 @@ elseif(isset($arResult['ELEMENT']['DISK_FILES']))
 
 	BX.ready(function(){
 		BX.CrmQuoteEditor.create(
-			"<?=strtolower($arResult['FORM_ID'])?>",
+			"<?=mb_strtolower($arResult['FORM_ID'])?>",
 			<?=CUtil::PhpToJSObject($editorSettings)?>
 		);
 	});

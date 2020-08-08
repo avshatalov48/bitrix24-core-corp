@@ -4,7 +4,6 @@ namespace Bitrix\Timeman\Service\Agent;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Timeman\Form\Worktime\WorktimeRecordForm;
 use Bitrix\Timeman\Helper\TimeHelper;
-use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
 use Bitrix\Timeman\Repository\Worktime\WorktimeRepository;
 use Bitrix\Timeman\Service\DependencyManager;
 use Bitrix\Timeman\Service\Worktime\WorktimeService;
@@ -32,14 +31,19 @@ class AutoCloseWorktimeAgent
 
 	public function closeRecord($recordId)
 	{
-		$record = $this->worktimeRepository->findByIdWith($recordId, ['SCHEDULE', 'SHIFT', 'SCHEDULE.SHIFTS']);
-		if (!$record || !$record->obtainSchedule() || !$record->obtainSchedule()->isAutoClosing()
-			|| $record->getRecordedStopTimestamp() > 0)
+		$record = $this->worktimeRepository->findByIdWith($recordId, ['SCHEDULE', 'SHIFT']);
+		if (!$record || $record->getRecordedStopTimestamp() > 0 ||
+			!$record->obtainSchedule() || !$record->obtainSchedule()->isAutoClosing())
 		{
 			return '';
 		}
-		$schedule = $record->obtainSchedule();
-		$recordStopUtcTimestamp = $record->buildStopTimestampForAutoClose($schedule, $record->obtainShift());
+		$manager = DependencyManager::getInstance()
+			->buildWorktimeRecordManager(
+				$record,
+				$record->obtainSchedule(),
+				$record->obtainShift()
+			);
+		$recordStopUtcTimestamp = $manager->buildStopTimestampForAutoClose();
 		if ($recordStopUtcTimestamp === null)
 		{
 			return '';

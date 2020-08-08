@@ -13,7 +13,7 @@ class CrmQuotes extends \Bitrix\Main\UI\Selector\EntityBase
 		return (
 			is_array($options)
 			&& isset($options['prefixType'])
-			&& strtolower($options['prefixType']) == 'short'
+			&& mb_strtolower($options['prefixType']) == 'short'
 				? self::PREFIX_SHORT
 				: self::PREFIX_FULL
 		);
@@ -23,9 +23,9 @@ class CrmQuotes extends \Bitrix\Main\UI\Selector\EntityBase
 	{
 		$clientTitle = (isset($data['COMPANY_TITLE'])) ? $data['COMPANY_TITLE'] : '';
 		$clientTitle .= (
-			strlen($clientTitle) > 0
+			$clientTitle <> ''
 			&& isset($data['CONTACT_FULL_NAME'])
-			&& strlen($data['CONTACT_FULL_NAME']) > 0
+			&& $data['CONTACT_FULL_NAME'] <> ''
 				? ', '
 				: ''
 		).$data['CONTACT_FULL_NAME'];
@@ -181,7 +181,7 @@ class CrmQuotes extends \Bitrix\Main\UI\Selector\EntityBase
 		$prefix = self::getPrefix($entityOptions);
 
 		if (
-			strlen($search) > 0
+			$search <> ''
 			&& (
 				empty($entityOptions['enableSearch'])
 				|| $entityOptions['enableSearch'] != 'N'

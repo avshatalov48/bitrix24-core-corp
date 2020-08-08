@@ -150,15 +150,15 @@ if (CModule::IncludeModule('webservice'))
 				{
 					$resFormHtml=base64_decode($response->Value["return"]);
 						//removing BOM
-					if(substr($resFormHtml, 0,3) == pack("CCC",0xef,0xbb,0xbf))
-						$resFormHtml=substr($resFormHtml, 3);
+					if(mb_substr($resFormHtml, 0, 3) == pack("CCC", 0xef, 0xbb, 0xbf))
+						$resFormHtml = mb_substr($resFormHtml, 3);
 
 					if (!$isUTF)
 						$resFormHtml=$APPLICATION->ConvertCharset($resFormHtml,"UTF-8",SITE_CHARSET);
 
 					if ($arActionType == "ACTIVATION")
 					{
-						if (!strpos($resFormHtml,GetMessage("ERROR_RESP_MESSAGE")))
+						if (!mb_strpos($resFormHtml, GetMessage("ERROR_RESP_MESSAGE")))
 						{
 							CUserOptions::SetOption($this->__name, "ACTIVATION", "Y", false, $ID);
 							$arResult["FORWARD_BUTTON"]="FORWARD_TO_PAYROLL_FROM";

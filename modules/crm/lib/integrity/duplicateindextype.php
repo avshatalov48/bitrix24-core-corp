@@ -219,7 +219,7 @@ class DuplicateIndexType
 			return $typeID;
 		}
 
-		if(strpos($typeName, '|') !== false)
+		if(mb_strpos($typeName, '|') !== false)
 		{
 			$typeNames = explode('|', $typeName);
 			foreach($typeNames as $name)
@@ -241,7 +241,7 @@ class DuplicateIndexType
 			return self::UNDEFINED;
 		}
 
-		$typeName = strtoupper(trim($typeName));
+		$typeName = mb_strtoupper(trim($typeName));
 		if($typeName === '')
 		{
 			return self::UNDEFINED;

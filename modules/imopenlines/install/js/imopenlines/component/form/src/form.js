@@ -9,9 +9,9 @@
 
 import {Vue} from "ui.vue";
 import {Vuex} from "ui.vue.vuex";
-import 'im.component.message';
+import 'im.view.message';
 
-BX.Vue.cloneComponent('bx-test-form', 'bx-messenger-message',
+BX.Vue.cloneComponent('bx-test-form', 'bx-im-view-message',
 	{
 		data()
 		{

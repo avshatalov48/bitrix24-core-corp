@@ -23,7 +23,7 @@ if(CModule::IncludeModule('crm'))
 		$options['oauth_token'] = $authToken;
 	}
 
-	if (isset($_REQUEST['preview']) && strtoupper($_REQUEST['preview']) == 'Y')
+	if (isset($_REQUEST['preview']) && mb_strtoupper($_REQUEST['preview']) == 'Y')
 		$options['preview'] = true;
 
 	CCrmFileProxy::WriteDiskFileToResponse(

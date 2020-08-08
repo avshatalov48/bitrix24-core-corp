@@ -33,6 +33,7 @@ $arDefaultUrlTemplates404 = array(
 	'shipment_details' => 'shipment/details/#shipment_id#/',
 	'payment_details' => 'payment/details/#payment_id#/',
 	'automation' => 'automation/#category_id#/',
+	'analytics/list' => 'analytics/list/',
 	'kanban' => 'kanban/',
 );
 
@@ -57,10 +58,10 @@ if ($arParams['SEF_MODE'] == 'Y')
 
 	foreach ($arUrlTemplates as $url => $value)
 	{
-		if(strlen($arParams['PATH_TO_ORDER_'.strToUpper($url)]) <= 0)
-			$arResult['PATH_TO_ORDER_'.strToUpper($url)] = $arParams['SEF_FOLDER'].$value;
+		if($arParams['PATH_TO_ORDER_'.mb_strtoupper($url)] == '')
+			$arResult['PATH_TO_ORDER_'.mb_strtoupper($url)] = $arParams['SEF_FOLDER'].$value;
 		else
-			$arResult['PATH_TO_ORDER_'.strToUpper($url)] = $arParams['PATH_TO_'.strToUpper($url)];
+			$arResult['PATH_TO_ORDER_'.mb_strtoupper($url)] = $arParams['PATH_TO_'.mb_strtoupper($url)];
 	}
 }
 else

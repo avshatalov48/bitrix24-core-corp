@@ -341,7 +341,7 @@ final class ImportManager implements IErrorable
 			$originalExtension = TypeFile::getExtensionByMimeType($mimeType);
 		}
 
-		$newExtension = strtolower(trim(getFileExtension($fileName), '.'));
+		$newExtension = mb_strtolower(trim(getFileExtension($fileName), '.'));
 		if ($originalExtension !== $newExtension && $originalExtension !== null)
 		{
 			return getFileNameWithoutExtension($fileName) . '.' . $originalExtension;
@@ -414,7 +414,7 @@ final class ImportManager implements IErrorable
 	{
 		foreach ($required as $item)
 		{
-			if(!isset($inputParams[$item]) || (!$inputParams[$item] && !(is_string($inputParams[$item]) && strlen($inputParams[$item]))))
+			if(!isset($inputParams[$item]) || (!$inputParams[$item] && !(is_string($inputParams[$item]) && mb_strlen($inputParams[$item]))))
 			{
 				if($item === 'size' && is_numeric($inputParams[$item]) && ((int)$inputParams[$item]) === 0)
 				{

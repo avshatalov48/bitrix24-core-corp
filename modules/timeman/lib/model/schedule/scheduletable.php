@@ -225,6 +225,10 @@ class ScheduleTable extends Main\ORM\Data\DataManager
 			,
 			(new Fields\IntegerField('UPDATED_BY'))
 			,
+			(new Fields\IntegerField('DELETED_BY'))
+			,
+			(new Fields\StringField('DELETED_AT'))
+			,
 			(new Fields\IntegerField('CREATED_BY'))
 				->configureDefaultValue(function () {
 					global $USER;

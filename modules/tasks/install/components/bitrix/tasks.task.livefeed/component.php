@@ -47,7 +47,7 @@ if ( !array_key_exists("AVATAR_SIZE", $arParams)
 		$arParams["AVATAR_SIZE"] = 30;
 }
 	
-if (strlen($arParams["NAME_TEMPLATE"]) <= 0)
+if ($arParams["NAME_TEMPLATE"] == '')
 	$arParams["NAME_TEMPLATE"] = CSite::GetNameFormat();
 
 $arResult['PHOTO'] = false;
@@ -77,7 +77,7 @@ if ($arResult['USER'] = $rsUser->Fetch())
 	if ($arResult['USER']['PERSONAL_PHOTO'] > 0 && CModule::IncludeModule("intranet"))
 		$arResult['PHOTO'] = CIntranetUtils::InitImage($arResult['USER']['PERSONAL_PHOTO'], $arParams["AVATAR_SIZE"], 0, BX_RESIZE_IMAGE_EXACT);
 
-	$arResult['PATH_TO_USER'] = CComponentEngine::MakePathFromTemplate((strlen($arParams["PATH_TO_USER"]) > 0 ? $arParams["PATH_TO_USER"] : COption::GetOptionString('intranet', 'path_user', '/company/personal/user/#USER_ID#/')), array("USER_ID" => $arResult['USER']["ID"], "user_id" => $arResult['USER']["ID"]));
+	$arResult['PATH_TO_USER'] = CComponentEngine::MakePathFromTemplate(($arParams["PATH_TO_USER"] <> '' ? $arParams["PATH_TO_USER"] : COption::GetOptionString('intranet', 'path_user', '/company/personal/user/#USER_ID#/')), array("USER_ID" => $arResult['USER']["ID"], "user_id" => $arResult['USER']["ID"]));
 }
 
 if ($arParams['TASK']["DESCRIPTION"])
@@ -89,6 +89,11 @@ $arResult["PATH_TO_LOG_TAG"] = $folderUsers."log/?TAG=#tag#";
 if (defined('SITE_TEMPLATE_ID') && SITE_TEMPLATE_ID === 'bitrix24')
 {
 	$arResult["PATH_TO_LOG_TAG"] .= "&apply_filter=Y";
+}
+
+if ($this->getTemplateName() === 'mobile')
+{
+	$this->setSiteTemplateId('mobile_app');
 }
 
 $this->IncludeComponentTemplate();

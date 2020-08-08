@@ -1807,9 +1807,9 @@ BX.CrmSaleSettings = (function ()
 			{
 				BX.bind(element, "click", this.close);
 			},
-			close: function ()
+			close: function (callback)
 			{
-				window.top.BX.SidePanel.Instance.close();
+				window.top.BX.SidePanel.Instance.close(false, callback);
 			},
 			open: function (url)
 			{
@@ -1841,7 +1841,9 @@ BX.CrmSaleSettings = (function ()
 			});
 			if (this.slider)
 			{
-				this.slider.close();
+				this.slider.close(function () {
+					top.location.reload();
+				});
 			}
 		}.bind(this), function (response) {
 

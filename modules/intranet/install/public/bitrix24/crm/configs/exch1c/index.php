@@ -7,7 +7,7 @@ $templateName = ".default";
 if ($license_name = COption::GetOptionString("main", "~controller_group_name"))
 {
 	$f = preg_match("/(project|tf|crm)$/is", $license_name, $matches);
-	if (strlen($matches[0]) > 0)
+	if ($matches[0] <> '')
 		$templateName = "free";
 }
 

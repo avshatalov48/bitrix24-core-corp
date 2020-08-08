@@ -166,12 +166,12 @@ $arParams["SHOW_SEARCH_TAGS_CLOUD"] = (
 );
 
 $arParams["PATH_TO_GROUPS_LIST"] = \Bitrix\Socialnetwork\ComponentHelper::getWorkgroupSEFUrl();
-$arParams["PATH_TO_GROUP_TAG"] = $arParams["PATH_TO_GROUPS_LIST"].(strpos($arParams["PATH_TO_GROUPS_LIST"], '?') !== false ? '&' : '?')."TAG=#tag#&apply_filter=Y";
+$arParams["PATH_TO_GROUP_TAG"] = $arParams["PATH_TO_GROUPS_LIST"].(mb_strpos($arParams["PATH_TO_GROUPS_LIST"], '?') !== false ? '&' : '?')."TAG=#tag#&apply_filter=Y";
 
 $arResult["Group"]["KEYWORDS_LIST"] = array();
 if (
 	isset($arResult["Group"]["KEYWORDS"])
-	&& strlen($arResult["Group"]["KEYWORDS"]) > 0
+	&& $arResult["Group"]["KEYWORDS"] <> ''
 )
 {
 	$arResult["Group"]["KEYWORDS_LIST"] = explode(',', $arResult["Group"]["KEYWORDS"]);

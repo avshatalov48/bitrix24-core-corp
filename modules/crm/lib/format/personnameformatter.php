@@ -135,15 +135,15 @@ class PersonNameFormatter
 	}
 	public static function hasFirstName($format)
 	{
-		return stripos($format, '#NAME#') !== false;
+		return mb_stripos($format, '#NAME#') !== false;
 	}
 	public static function hasSecondName($format)
 	{
-		return stripos($format, '#SECOND_NAME#') !== false;
+		return mb_stripos($format, '#SECOND_NAME#') !== false;
 	}
 	public static function hasLastName($format)
 	{
-		return stripos($format, '#LAST_NAME#') !== false;
+		return mb_stripos($format, '#LAST_NAME#') !== false;
 	}
 	public static function tryParseFormatID($format, $defaultFormatID = '')
 	{

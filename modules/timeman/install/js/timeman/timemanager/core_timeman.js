@@ -776,13 +776,13 @@ BX.CTimeMan.prototype.PauseDay = function(e)
 	this.setReport('');
 	this.Query('pause', {}, BX.proxy(this._Update, this));
 	return BX.PreventDefault(e);
-}
+};
 
 BX.CTimeMan.prototype.calendarEntryAdd = function(params, cb)
 {
 	calendarLastParams = params;
 	this.Query('calendar_add', params, cb || BX.proxy(this._Update, this));
-}
+};
 
 BX.CTimeMan.prototype.taskPost = function(entry, callback)
 {
@@ -812,13 +812,13 @@ BX.CTimeMan.prototype.taskPost = function(entry, callback)
 		this.Query('task', this.TASK_CHANGES, BX.proxy(this._Update, this));
 		this.TASK_CHANGES = {add: [], remove: []};
 	}
-}
+};
 
 BX.CTimeMan.prototype.taskEntryAdd = function(params, cb)
 {
 	this.TASKS = [];
 	this.Query('task', params, cb || BX.proxy(this._Update, this));
-}
+};
 
 
 /***********************************************************/
@@ -1163,7 +1163,7 @@ BX.CTimeManWindow.prototype.CreateLayoutTable = function()
 
 		return t;
 	}
-}
+};
 
 BX.CTimeManWindow.prototype.CreateNoticeRow = function(DATA)
 {
@@ -1199,7 +1199,7 @@ BX.CTimeManWindow.prototype.CreateNoticeRow = function(DATA)
 
 		if (this.NOTICE_TIMER)
 		{
-			BX.timer.stop(this.NOTICE_TIMER)
+			BX.timer.stop(this.NOTICE_TIMER);
 			this.NOTICE_TIMER = null;
 		}
 
@@ -1244,7 +1244,7 @@ BX.CTimeManWindow.prototype.CreateNoticeRow = function(DATA)
 	}
 
 	return this.NOTICE;
-}
+};
 
 BX.CTimeManWindow.prototype.CreateMainRow = function(DATA)
 {
@@ -1314,12 +1314,12 @@ BX.CTimeManWindow.prototype.CreateMainRow = function(DATA)
 
 	if (DATA.STATE != 'PAUSED')
 	{
-		this.MAIN_ROW_CELL_TIMER.firstChild.className = 'webform-small-button tm-webform-button-pause';
+		this.MAIN_ROW_CELL_TIMER.firstChild.className = 'ui-btn ui-btn-icon-pause tm-btn-pause';
 		BX.hide(row_pause);
 	}
 	else
 	{
-		this.MAIN_ROW_CELL_TIMER.firstChild.className = 'webform-small-button tm-webform-button-play';
+		this.MAIN_ROW_CELL_TIMER.firstChild.className = 'ui-btn ui-btn-icon-start tm-btn-start';
 		BX.show(row_pause);
 
 		this.PAUSE_TIMER = BX.timer(row_pause.lastChild, {
@@ -1342,11 +1342,15 @@ BX.CTimeManWindow.prototype.CreateMainRow = function(DATA)
 	{
 		this.MAIN_BUTTON = this.MAIN_ROW_CELL_BTN.appendChild(BX.create('DIV', {
 			props: {className: 'tm-popup-button-handler'},
-			events: {
-				click: BX.proxy(this.MainButtonClick, this)
-			},
-
-			html: '<span class="webform-small-button tm-popup-main-button webform-small-button-' + (DATA.STATE != 'CLOSED' ? 'decline' : 'accept') + '"><span class="webform-small-button-text">' + BX.message('JS_CORE_TM_' + btn) + '</span></span>'
+			children: [
+				BX.create('button', {
+					props: {className: 'ui-btn ' + (DATA.STATE != 'CLOSED' ? 'ui-btn-danger ui-btn-icon-stop' : 'ui-btn-success ui-btn-icon-start') },
+					text: BX.message('JS_CORE_TM_' + btn),
+					events: {
+						click: BX.proxy(this.MainButtonClick, this)
+					},
+				})
+			]
 		}));
 
 		if(DATA.CAN_OPEN_AND_RELAUNCH)
@@ -1406,19 +1410,28 @@ BX.CTimeManWindow.prototype.CreateMainRow = function(DATA)
 	this.MAIN_ROW.className = className;
 
 	return this.MAIN_ROW;
-}
+};
 
 BX.CTimeManWindow.prototype.CreateMainPauseControl = function(DATA)
 {
-	var c = BX.create('SPAN', {
+	var c = BX.create('button', {
 		events: {
 			click: BX.proxy(this.PauseButtonClick, this)
 		},
-		html: '<span class="webform-button-icon"></span><span class="webform-small-button-text text-pause">' + BX.message('JS_CORE_TM_PAUSE') + '</span><span class="webform-small-button-text text-play">' + BX.message('JS_CORE_TM_UNPAUSE') + '</span>'
+		children: [
+			BX.create('span', {
+				props: { className: "text-pause" },
+				text : BX.message('JS_CORE_TM_UNPAUSE')
+			}),
+			BX.create('span', {
+				props: { className: "text-start" },
+				text : BX.message('JS_CORE_TM_PAUSE')
+			}),
+		]
 	});
 
 	return c;
-}
+};
 
 BX.CTimeManWindow.prototype.CreateReport = function()
 {
@@ -1426,7 +1439,7 @@ BX.CTimeManWindow.prototype.CreateReport = function()
 		this.REPORT = new BX.CTimeManReport(this);
 
 	return this.REPORT.Create();
-}
+};
 
 BX.CTimeManWindow.prototype.CreateEvent = function(event, additional_props, fulldate)
 {
@@ -1466,7 +1479,7 @@ BX.CTimeManWindow.prototype.CreateEvent = function(event, additional_props, full
 			})
 		]
 	});
-}
+};
 
 BX.CTimeManWindow.prototype.EVENTWND = {};
 
@@ -1494,7 +1507,7 @@ BX.CTimeManWindow.prototype.showEvent = function(e)
 	this.EVENTWND[event_id].Show();
 
 	return BX.PreventDefault(e);
-}
+};
 
 
 BX.CTimeManWindow.prototype.CreateEventsForm = function(cb)
@@ -1518,7 +1531,7 @@ BX.CTimeManWindow.prototype.CreateEventsForm = function(cb)
 
 			if (!bEnterPressed)
 			{
-				BX.addClass(inp_Name.parentNode, 'tm-popup-event-form-disabled')
+				BX.addClass(inp_Name.parentNode, 'tm-popup-event-form-disabled');
 				inp_Name.value = BX.message('JS_CORE_TM_EVENTS_ADD');
 			}
 			else
@@ -3428,7 +3441,7 @@ BX.CTimeManReport.prototype.Create = function()
 				props: {className: 'tm-popup-report-buttons'},
 				children: [
 					(this.REPORT_BTN = BX.create('SPAN', {
-						props: {className: 'webform-small-button webform-small-button-accept webform-button-disable'},
+						props: {className: 'ui-btn ui-btn-success ui-btn-disabled'},
 						events: {click: BX.proxy(this._btnClick, this)},
 						html: BX.message('JS_CORE_TM_B_SAVE')
 					}))
@@ -3454,12 +3467,14 @@ BX.CTimeManReport.prototype.setEditMode = function(f)
 	if (this.bCanSave)
 	{
 		BX.addClass(this.REPORT_CONTAINER, 'tm-popup-report-editmode');
-		BX.removeClass(this.REPORT_BTN, 'webform-button-disable');
+		BX.removeClass(this.REPORT_BTN, 'ui-btn-disabled');
+		BX.adjust(this.REPORT_BTN, {props: {disabled: false}});
 	}
 	else
 	{
 		BX.removeClass(this.REPORT_CONTAINER, 'tm-popup-report-editmode');
-		BX.addClass(this.REPORT_BTN, 'webform-button-disable');
+		BX.addClass(this.REPORT_BTN, 'ui-btn-disabled');
+		BX.adjust(this.REPORT_BTN, {props: {disabled: true}});
 	}
 };
 

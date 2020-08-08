@@ -653,11 +653,31 @@ table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign div.empty {
 	margin: 0 0 5px 0;
 }
 
+.crm-dedupe-wizard-merge-block-manual {
+	display: none;
+}
+
+.crm-dedupe-wizard-container-merge-manual .crm-dedupe-wizard-merge-block-manual {
+	display: block;
+}
+
+.crm-dedupe-wizard-container-merge-manual .crm-dedupe-wizard-merge-block-auto {
+	display: none;
+}
+
+.crm-dedupe-wizard-container-merge-manual {
+
+}
+
 .crm-dedupe-wizard-start-control-box {
 	margin-bottom: 37px;
 	height: 39px;
 	width: 100%;
 	text-align: center;
+}
+
+.crm-dedupe-wizard-start-control-box.crm-dedupe-wizard-start-control-box-ready-to-merge-state {
+	height: 74px;
 }
 
 .crm-dedupe-wizard-status-bar {
@@ -695,6 +715,10 @@ table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign div.empty {
 
 .crm-dedupe-wizard-start-combination .crm-dedupe-wizard-start-btn {
 	margin-bottom: 18px;
+}
+
+.crm-dedupe-wizard-start-combination .crm-dedupe-wizard-merge-btn {
+	margin-bottom: 9px;
 }
 
 .crm-dedupe-wizard-start-combination .crm-dedupe-wizard-start-title {

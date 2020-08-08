@@ -149,9 +149,9 @@ class CBPTask2Activity
 		$arUnsetFields = [];
 		foreach ($fields as $fieldName => $fieldValue)
 		{
-			if (substr($fieldName, -5) === '_text')
+			if (mb_substr($fieldName, -5) === '_text')
 			{
-				$fields[substr($fieldName, 0, -5)] = $fieldValue;
+				$fields[mb_substr($fieldName, 0, -5)] = $fieldValue;
 				$arUnsetFields[] = $fieldName;
 			}
 		}
@@ -175,7 +175,7 @@ class CBPTask2Activity
 				{
 					foreach($fields[$fieldName] as $key => $fileId)
 					{
-						if(!empty($fileId) && is_string($fileId) && substr($fileId, 0, 1) != 'n')
+						if(!empty($fileId) && is_string($fileId) && mb_substr($fileId, 0, 1) != 'n')
 						{
 							if(CModule::IncludeModule("disk") && \Bitrix\Disk\Configuration::isSuccessfullyConverted())
 							{
@@ -277,7 +277,7 @@ class CBPTask2Activity
 						$checkListItem = implode(', ', \CBPHelper::MakeArrayFlat($checkListItem));
 					}
 
-					\CTaskCheckListItem::add($taskItem, ['TITLE' => substr( (string) $checkListItem, 0, 255)]);
+					\CTaskCheckListItem::add($taskItem, ['TITLE' => mb_substr((string)$checkListItem, 0, 255)]);
 				}
 			}
 		}
@@ -417,7 +417,7 @@ class CBPTask2Activity
 					{
 						foreach($arCurrentValues[$k] as $key => $fileId)
 						{
-							if(!empty($fileId) && is_string($fileId) && substr($fileId, 0, 1) != 'n')
+							if(!empty($fileId) && is_string($fileId) && mb_substr($fileId, 0, 1) != 'n')
 							{
 								$item = \Bitrix\Disk\Internals\FileTable::getList(array(
 									'select' => array('ID'),
@@ -446,9 +446,9 @@ class CBPTask2Activity
 		{
 			foreach (static::$arAllowedTasksFieldNames as $field)
 			{
-				if ((!is_array($arCurrentValues[$field]) && (strlen($arCurrentValues[$field]) <= 0)
+				if ((!is_array($arCurrentValues[$field]) && ($arCurrentValues[$field] == '')
 					|| is_array($arCurrentValues[$field]) && (count($arCurrentValues[$field]) <= 0))
-					&& (strlen($arCurrentValues[$field."_text"]) > 0))
+					&& ($arCurrentValues[$field."_text"] <> ''))
 				{
 					$arCurrentValues[$field] = $arCurrentValues[$field."_text"];
 				}
@@ -509,7 +509,7 @@ class CBPTask2Activity
 			if (in_array($field, array("CREATED_BY", "RESPONSIBLE_ID", "ACCOMPLICES", "AUDITORS")))
 			{
 				$value = $arCurrentValues[$field];
-				if (strlen($value) > 0)
+				if ($value <> '')
 				{
 					$arErrorsTmp = array();
 					$r = CBPHelper::UsersStringToArray($value, $documentType, $arErrorsTmp);
@@ -542,7 +542,7 @@ class CBPTask2Activity
 					{
 						if ($field == "PRIORITY")
 						{
-							if (strlen($value) <= 0)
+							if ($value == '')
 								$value = null;
 
 							if ($value != null && !array_key_exists($value, $arTaskPriority))
@@ -557,7 +557,7 @@ class CBPTask2Activity
 						}
 						elseif ($field == "GROUP_ID")
 						{
-							if (strlen($value) <= 0)
+							if ($value == '')
 								$value = null;
 							if ($value != null && !array_key_exists($value, $arGroups))
 							{
@@ -571,16 +571,16 @@ class CBPTask2Activity
 						}
 						elseif (in_array($field, array("ALLOW_CHANGE_DEADLINE", "TASK_CONTROL", "ADD_IN_REPORT", 'ALLOW_TIME_TRACKING')))
 						{
-							if (strtoupper($value) == "Y" || $value === true || $value."!" == "1!")
+							if (mb_strtoupper($value) == "Y" || $value === true || $value."!" == "1!")
 								$value = "Y";
-							elseif (strtoupper($value) == "N" || $value === false || $value."!" == "0!")
+							elseif (mb_strtoupper($value) == "N" || $value === false || $value."!" == "0!")
 								$value = "N";
 							else
 								$value = null;
 						}
 						else
 						{
-							if (!is_array($value) && strlen($value) <= 0)
+							if (!is_array($value) && $value == '')
 								$value = null;
 						}
 					}
@@ -636,12 +636,12 @@ class CBPTask2Activity
 			$properties["Fields"][$field["FIELD_NAME"]] = $r;
 		}
 
-		$properties["HoldToClose"] = ((strtoupper($arCurrentValues["HOLD_TO_CLOSE"]) == "Y") ? true : false);
-		$properties["AsChildTask"] = ((strtoupper($arCurrentValues["AS_CHILD_TASK"]) == "Y") ? 1 : 0);
+		$properties["HoldToClose"] = ((mb_strtoupper($arCurrentValues["HOLD_TO_CLOSE"]) == "Y") ? true : false);
+		$properties["AsChildTask"] = ((mb_strtoupper($arCurrentValues["AS_CHILD_TASK"]) == "Y") ? 1 : 0);
 		$properties["CheckListItems"] = $arCurrentValues["CHECK_LIST_ITEMS"];
 		$properties["TimeEstimateHour"] = $arCurrentValues["TIME_ESTIMATE_H"];
 		$properties["TimeEstimateMin"] = $arCurrentValues["TIME_ESTIMATE_M"];
-		$properties["AUTO_LINK_TO_CRM_ENTITY"] = ((strtoupper($arCurrentValues["AUTO_LINK_TO_CRM_ENTITY"]) == "Y") ? true : false);
+		$properties["AUTO_LINK_TO_CRM_ENTITY"] = ((mb_strtoupper($arCurrentValues["AUTO_LINK_TO_CRM_ENTITY"]) == "Y") ? true : false);
 
 		if (count($errors) > 0)
 		{

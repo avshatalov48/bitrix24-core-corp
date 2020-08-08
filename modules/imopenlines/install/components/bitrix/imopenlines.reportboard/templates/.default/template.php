@@ -26,13 +26,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	<? endif; ?>
 	<?php
 
+	$boardId = \Bitrix\ImOpenLines\Integrations\Report\EventHandler::getOpenLinesBoardId();
+	$filter = new \Bitrix\Report\VisualConstructor\Helper\Filter($boardId);
+
 	/** @var CAllMain $APPLICATION */
 	$APPLICATION->IncludeComponent(
 		'bitrix:report.visualconstructor.board.base',
 		'',
 		array(
-			'BOARD_ID' => \Bitrix\ImOpenLines\Integrations\Report\EventHandler::getOpenLinesBoardId(),
-			'IS_DEFAULT_MODE_DEMO' => true
+			'BOARD_ID' => $boardId,
+			'IS_DEFAULT_MODE_DEMO' => true,
+			'FILTER' => $filter
 		),
 		null,
 		array()

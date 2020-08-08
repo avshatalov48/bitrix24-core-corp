@@ -79,7 +79,7 @@ $containerId = 'crm-analytics-report-view-chart-grid' . ($arParams['IS_TRAFFIC']
 		}
 
 		$isSummaryRow = $row['ID'] && in_array($row['ID'], ['summary', 'summary-ad']);
-		if ($isSummaryRow || strpos($row['ID'], 'user-id-') === 0)
+		if ($isSummaryRow || mb_strpos($row['ID'], 'user-id-') === 0)
 		{
 			foreach ($row as $key => $value)
 			{
@@ -112,9 +112,42 @@ $containerId = 'crm-analytics-report-view-chart-grid' . ($arParams['IS_TRAFFIC']
 				continue;
 			}
 
+
+
 			$path = CUtil::JSEscape(htmlspecialcharsbx($value['PATH']));
 			$num = htmlspecialcharsbx($value['VALUE']);
-			$value = '<div onclick="BX.SidePanel.Instance.open(\'' . $path . '\');" class="crm-report-chart-grid-value-link">' . $num . '</div>';
+			$name = htmlspecialcharsbx($value['NAME']);
+
+			if (empty($value['DETAILS']))
+			{
+				$value = '<div onclick="BX.SidePanel.Instance.open(\'' . $path . '\');" class="crm-report-chart-grid-value-link">'
+					. $num
+					. ($name ? ('<span class="crm-report-chart-grid-value-link-faded"> - ' . $name . '</span>') : '')
+					. '</div>';
+			}
+			else
+			{
+				$detailItems = $value['DETAILS'];
+				$value = '<div onclick="toggleGridDetails(this)" class="crm-report-chart-grid-value-link">'
+					. $num
+					. '<span class="crm-report-chart-grid-value-link-faded"> - ' . Loc::getMessage('CRM_REPORT_VC_W_C_CHART_SUM') . '</span>'
+					. '</div>';
+				$value .= '<div>';
+				foreach ($detailItems as $detailItem)
+				{
+					$path = CUtil::JSEscape(htmlspecialcharsbx($detailItem['PATH']));
+					$num = htmlspecialcharsbx($detailItem['VALUE']);
+					$name = htmlspecialcharsbx($detailItem['NAME']);
+					$value .= '<div>'
+						. '<span onclick="BX.SidePanel.Instance.open(\'' . $path . '\');" '
+							. 'class="crm-report-chart-grid-value-link crm-report-chart-grid-value-link-faded"'
+						. '>'
+						. $num . ' - ' . $name
+						. '</span></div>';
+				}
+				$value .= '</div>';
+			}
+
 			$row[$key] = $value;
 		}
 
@@ -147,6 +180,14 @@ $containerId = 'crm-analytics-report-view-chart-grid' . ($arParams['IS_TRAFFIC']
 </div>
 
 <script>
+	function toggleGridDetails(node)
+	{
+		var target = node.nextElementSibling;
+		target.style.display = target.style.display === 'none'
+			? ''
+			: 'none';
+	}
+
 	BX.ready(function () {
 		BX.Main.gridManager
 			.getInstanceById('<?=\CUtil::JSEscape($containerId . '-grid')?>')

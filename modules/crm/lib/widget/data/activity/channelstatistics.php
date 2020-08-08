@@ -48,9 +48,9 @@ class ChannelStatistics extends DataSource
 		$direction = $filter->getExtraParam('directon', \CCrmActivityDirection::Undefined);
 
 		$enableGroupKey = isset($params['group']) &&
-			is_string($params['group']) &&
-			isset($params['enableGroupKey']) &&
-			$params['enableGroupKey'] === true ? strtoupper($params['group']) : false;
+		is_string($params['group']) &&
+		isset($params['enableGroupKey']) &&
+		$params['enableGroupKey'] === true? mb_strtoupper($params['group']) : false;
 
 		$group = array();
 		if (isset($params['group']) && (is_string($params['group']) || is_array($params['group'])))
@@ -61,7 +61,7 @@ class ChannelStatistics extends DataSource
 			}
 			foreach ($params['group'] as $g)
 			{
-				$g = strtoupper($g);
+				$g = mb_strtoupper($g);
 				if ($g === self::GROUP_BY_USER
 					|| $g === self::GROUP_BY_DATE
 					|| $g === self::GROUP_BY_CHANNEL
@@ -86,7 +86,7 @@ class ChannelStatistics extends DataSource
 			}
 			if(isset($selectItem['aggregate']))
 			{
-				$aggregate = strtoupper($selectItem['aggregate']);
+				$aggregate = mb_strtoupper($selectItem['aggregate']);
 			}
 		}
 
@@ -434,7 +434,7 @@ class ChannelStatistics extends DataSource
 	 */
 	public function initializeDemoData(array $data, array $params)
 	{
-		$group = isset($params['group']) ? strtoupper($params['group']) : '';
+		$group = isset($params['group'])? mb_strtoupper($params['group']) : '';
 		if($group === self::GROUP_BY_CHANNEL)
 		{
 			$identityField = isset($data['identityField']) && $data['identityField'] !== ''

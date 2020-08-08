@@ -97,7 +97,7 @@ class LiveMailCsvFileImport extends CsvFileImport
 		$websiteInfos = $this->getWebsites($data);
 		foreach($websiteInfos as &$websiteInfo)
 		{
-			$valueType = strtoupper($websiteInfo['VALUE_TYPE']);
+			$valueType = mb_strtoupper($websiteInfo['VALUE_TYPE']);
 			if($valueType === 'PERSONAL')
 			{
 				$valueType = 'HOME';

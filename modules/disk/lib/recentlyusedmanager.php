@@ -88,6 +88,24 @@ final class RecentlyUsedManager
 		return true;
 	}
 
+	public function remove($user, $objectId): bool
+	{
+		$userId = User::resolveUserId($user);
+		if (!$userId)
+		{
+			$this->errorCollection[] = new Error('Could not get user id.');
+
+			return false;
+		}
+
+		RecentlyUsedTable::deleteBatch([
+			'USER_ID' => $userId,
+			'OBJECT_ID' => (int)$objectId,
+		]);
+
+		return true;
+	}
+
 	/**
 	 * Fixes cold start, when we don't have any data in RecentlyUsedTable.
 	 * @param mixed|int|User|\CAllUser $user User.
@@ -248,7 +266,7 @@ final class RecentlyUsedManager
 				'USER_ID' => $userId,
 			),
 			'limit' => 1,
-		))->fetchRaw();
+		))->fetch();
 	}
 
 	private function isFirstRun($userId)

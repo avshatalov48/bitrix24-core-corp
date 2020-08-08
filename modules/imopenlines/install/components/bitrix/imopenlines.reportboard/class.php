@@ -55,6 +55,10 @@ class CImOpenLinesReportBoardComponent extends \CBitrixComponent
 	public function executeComponent()
 	{
 		$this->includeComponentLang('class.php');
+		if(!Loader::includeModule('report'))
+		{
+			return false;
+		}
 
 		if($this->checkModules())
 		{

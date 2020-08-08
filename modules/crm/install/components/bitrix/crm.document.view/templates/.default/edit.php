@@ -42,9 +42,9 @@ function displayField($placeholder, array $field, $required = false)
 	{
 		?>
 		<textarea class="crm-document-edit-input crm-document-edit-input-textarea" name="values[<?=htmlspecialcharsbx($placeholder);?>]" id="field-<?=\CUtil::JSEscape($placeholder);?>"<?if($required){?> required<?}
-		if(isset($field['DEFAULT']))
+		if(array_key_exists('DEFAULT', $field))
 		{
-			?> bx-default="<?=htmlspecialcharsbx($field['DEFAULT']);?>"<?
+			?> bx-default="<?=htmlspecialcharsbx($field['DEFAULT'] ?? '');?>"<?
 		}
 		?>><?=htmlspecialcharsbx($field['VALUE']);?></textarea>
 		<?
@@ -53,9 +53,9 @@ function displayField($placeholder, array $field, $required = false)
 	{
 		?>
 		<input onclick="BX.calendar({node: this, field: this, bTime: true, bSetFocus: false, bUseSecond: true})" class="crm-document-edit-input crm-document-edit-date" name="values[<?=htmlspecialcharsbx($placeholder);?>]" value="<?=htmlspecialcharsbx($field['VALUE']);?>"<?if($required){?> required<?}?> id="field-<?=\CUtil::JSEscape($placeholder);?>"<?
-		if(isset($field['DEFAULT']))
+		if(array_key_exists('DEFAULT', $field))
 		{
-			?> bx-default="<?=htmlspecialcharsbx($field['DEFAULT']);?>"<?
+			?> bx-default="<?=htmlspecialcharsbx($field['DEFAULT'] ?? '');?>"<?
 		}
 		?>>
 		<?
@@ -64,9 +64,9 @@ function displayField($placeholder, array $field, $required = false)
 	{
 		?>
 		<input class="crm-document-edit-input" name="values[<?=htmlspecialcharsbx($placeholder);?>]" value="<?=htmlspecialcharsbx($field['VALUE']);?>"<?if($required){?> required<?}?> id="field-<?=\CUtil::JSEscape($placeholder);?>"<?
-		if(isset($field['DEFAULT']))
+        if(array_key_exists('DEFAULT', $field))
 		{
-			?> bx-default="<?=htmlspecialcharsbx($field['DEFAULT']);?>"<?
+			?> bx-default="<?=htmlspecialcharsbx($field['DEFAULT'] ?? '');?>"<?
 		}
 		?>>
 		<?

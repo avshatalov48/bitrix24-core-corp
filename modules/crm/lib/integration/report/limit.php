@@ -292,7 +292,7 @@ class Limit
 	public static function getEntityLimit($boardId, $entityType)
 	{
 
-		$entityType = strtolower($entityType);
+		$entityType = mb_strtolower($entityType);
 
 		$boardLimits = Feature::getVariable("crm_analytics_limits_for_boards");
 		if(is_array($boardLimits) && isset($boardLimits[$boardId]))

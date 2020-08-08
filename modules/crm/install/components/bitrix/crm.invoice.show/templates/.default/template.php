@@ -59,8 +59,8 @@ if(!empty($arResult['FIELDS']['tab_event']))
 }
 
 $enableInstantEdit = $arResult['ENABLE_INSTANT_EDIT'];
-$instantEditorID = strtolower($arResult['FORM_ID']).'_editor';
-$treeDispatcherID = strtolower($arResult['FORM_ID']).'_tree_disp';
+$instantEditorID = mb_strtolower($arResult['FORM_ID']).'_editor';
+$treeDispatcherID = mb_strtolower($arResult['FORM_ID']).'_tree_disp';
 
 $element = isset($arResult['ELEMENT']) ? $arResult['ELEMENT'] : null;
 if($element)
@@ -88,7 +88,7 @@ $APPLICATION->IncludeComponent(
 	'bitrix:crm.entity.quickpanelview',
 	'',
 	array(
-		'GUID' => strtolower($arResult['FORM_ID']).'_qpv',
+		'GUID' => mb_strtolower($arResult['FORM_ID']).'_qpv',
 		'FORM_ID' => $arResult['TACTILE_FORM_ID'],
 		'ENTITY_TYPE_NAME' => CCrmOwnerType::InvoiceName,
 		'ENTITY_ID' => $arResult['ELEMENT_ID'],

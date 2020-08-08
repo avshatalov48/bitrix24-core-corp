@@ -131,6 +131,10 @@ elseif($action === 'SAVE')
 			$fields[$fieldName] = $_POST[$fieldName];
 		}
 	}
+	$USER_FIELD_MANAGER->EditFormAddFields(\CCrmQuote::USER_FIELD_ENTITY_ID, $fields, [
+		'FORM' => $fields,
+		'FILES' => [],
+	]);
 
 	//region CLIENT
 	$primaryClientTypeName = isset($_POST['CLIENT_PRIMARY_ENTITY_TYPE']) ? $_POST['CLIENT_PRIMARY_ENTITY_TYPE'] : '';

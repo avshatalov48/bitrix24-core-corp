@@ -452,24 +452,24 @@ final class Calendar
 				}
 			}
 
-			$time = explode('.', (string) $calendarSettings['work_time_start']);
-			if(intval($time[0]))
+			[$startHours, $startMinutes] = explode('.', (string)$calendarSettings['work_time_start']);
+			if(isset($startHours))
 			{
-				$result['HOURS']['START']['H'] = intval($time[0]);
+				$result['HOURS']['START']['H'] = (int)$startHours;
 			}
-			if(intval($time[1]))
+			if(isset($startMinutes))
 			{
-				$result['HOURS']['START']['M'] = intval($time[1]);
+				$result['HOURS']['START']['M'] = (int)$startMinutes;
 			}
 
-			$time = explode('.', (string) $calendarSettings['work_time_end']);
-			if(intval($time[0]))
+			[$endHours, $endMinutes] = explode('.', (string)$calendarSettings['work_time_end']);
+			if(isset($endHours))
 			{
-				$result['HOURS']['END']['H'] = intval($time[0]);
+				$result['HOURS']['END']['H'] = (int)$endHours;
 			}
-			if(intval($time[1]))
+			if(isset($endMinutes))
 			{
-				$result['HOURS']['END']['M'] = intval($time[1]);
+				$result['HOURS']['END']['M'] = (int)$endMinutes;
 			}
 		}
 

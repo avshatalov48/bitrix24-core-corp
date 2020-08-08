@@ -29,7 +29,7 @@ $arParams['SEF_MODE'] = $arParams['SEF_MODE']=='N'?'N':'Y';
 $arParams['CACHE_TIME'] = intval($arParams['CACHE_TIME']);
 $arParams["IBLOCK_USER_ID"] = intval($arParams["IBLOCK_USER_ID"]);
 $arParams["IBLOCK_GROUP_ID"] = intval($arParams["IBLOCK_GROUP_ID"]);
-if (strlen(trim($arParams["NAME_TEMPLATE"])) <= 0)
+if (trim($arParams["NAME_TEMPLATE"]) == '')
     $arParams["NAME_TEMPLATE"] = CSite::GetNameFormat();
 $cachePath = str_replace(array(":", "//"), "/", "/".SITE_ID."/".$componentName."/");
 $arParams["EXPAND_ALL"] = "N";
@@ -45,8 +45,8 @@ foreach ($keys as $key)
         if ($dbRes && $arRes = $dbRes->Fetch())
         {
             $path = "/m".$arRes['LIST_PAGE_URL'];
-            if (SubStr($path,0,1) != '/') $path = '/'.$path;
-            if (SubStr($path,-1,1) != '/') $path .= '/';
+            if (mb_substr($path, 0, 1) != '/') $path = '/'.$path;
+            if (mb_substr($path, -1, 1) != '/') $path .= '/';
             $path .= '#PATH#';
             if (SITE_ID == $arRes['LID'])
             {
@@ -69,8 +69,8 @@ $arParams = array_merge($arParams, $arUrlTemplates);
 
 $currentUserID = $USER->GetID();
 
-if (SubStr($arParams["GROUP_FILE_PATH"],0,1) != '/') $arParams["GROUP_FILE_PATH"] = '/'.$arParams["GROUP_FILE_PATH"];
-if (SubStr($arParams["USER_FILE_PATH"],0,1) != '/') $arParams["USER_FILE_PATH"] = '/'.$arParams["USER_FILE_PATH"];
+if (mb_substr($arParams["GROUP_FILE_PATH"], 0, 1) != '/') $arParams["GROUP_FILE_PATH"] = '/'.$arParams["GROUP_FILE_PATH"];
+if (mb_substr($arParams["USER_FILE_PATH"], 0, 1) != '/') $arParams["USER_FILE_PATH"] = '/'.$arParams["USER_FILE_PATH"];
 
 $rIBGroup = CIBlock::GetList(Array(), Array(
 	"ID"=>$arParams["IBLOCK_GROUP_ID"],
@@ -112,7 +112,7 @@ if ($arParams["SEF_MODE"] === "Y")
     if ($arParams["SEF_FOLDER"] != "/")
         $arParams["SEF_FOLDER"] = "/".Trim($arParams["SEF_FOLDER"], "/ \t\n\r\0\x0B")."/";
     if (!preg_match("'/$'", $requestURL)) $currentPageUrl = $currentPageUrl.'/';
-    $currentPageUrl = SubStr($requestURL, StrLen($arParams["SEF_FOLDER"]));
+	$currentPageUrl = mb_substr($requestURL, mb_strlen($arParams["SEF_FOLDER"]));
     if ($currentPageUrl == false) $currentPageUrl = '/';
 } else {
     ShowError(GetMessage("WD_NOT_SEF_MODE"));
@@ -136,7 +136,7 @@ if (isset($_SERVER['HTTP_DESTINATION']))
 {
     $_SERVER['HTTP_DESTINATION'] = CWebDavBase::_udecode($_SERVER['HTTP_DESTINATION']);
     $pu = parse_url($_SERVER['HTTP_DESTINATION']);
-    $pu['path'] = substr($pu['path'],  strlen($arParams['SEF_FOLDER']));
+	$pu['path'] = mb_substr($pu['path'], mb_strlen($arParams['SEF_FOLDER']));
     foreach ($modes as $modeName=>$path)
     {
         if (preg_match_all("'/{$path}(.*)'", $pu['path'], $arValues))
@@ -157,11 +157,11 @@ $depth = 0;
 
 // OTHER SHARES
 // ******************************************************
-if (IntVal($mode) > 0 || in_array($mode, Array("group", "private", "user")))
+if (intval($mode) > 0 || in_array($mode, Array("group", "private", "user")))
 {
 	$tUrl = $rootPath.$localPath;
-	$tUrl = substr($tUrl, 0, strrpos($tUrl , '/'));
-	$tUrl = substr($tUrl, 0, strrpos($tUrl , '/'));
+	$tUrl = mb_substr($tUrl, 0, mb_strrpos($tUrl, '/'));
+	$tUrl = mb_substr($tUrl, 0, mb_strrpos($tUrl, '/'));
 	if($localPath == "/")
 		$tUrl = $arParams["SEF_FOLDER"];
 	$folderTree[] = array('NAME'=>GetMessage('WD_ROOT'), 'PATH' => $tUrl, 'DEPTH_LEVEL' => -1, "TYPE" => "up");
@@ -206,7 +206,7 @@ if (intval($mode) > 0)
 			if($val["TYPE"] == "E")
 			{
 				$tmp["TYPE"] = "file";
-				$tmp["FILE_EXTENTION"] = htmlspecialcharsbx(strtolower(strrchr($val['NAME'] , '.')));
+				$tmp["FILE_EXTENTION"] = htmlspecialcharsbx(mb_strtolower(strrchr($val['NAME'], '.')));
 			}
 			else
 			{
@@ -300,7 +300,7 @@ if (CBXFeatures::IsFeatureEnabled("Workgroups"))
             foreach (array('PERMISSION', 'CHECK_CREATOR') as $propName)
                 $arParams[$propName] = $groupPerms[$propName];
 
-            $arParams["DOCUMENT_TYPE"] = array("webdav", "CIBlockDocumentWebdavSocnet", "iblock_".$arParams['IBLOCK_GROUP_ID']."_group_".intVal($arVariables['GROUP_ID']));
+            $arParams["DOCUMENT_TYPE"] = array("webdav", "CIBlockDocumentWebdavSocnet", "iblock_".$arParams['IBLOCK_GROUP_ID']."_group_".intval($arVariables['GROUP_ID']));
             $obGroup = new CWebDavIblock($arParams['IBLOCK_GROUP_ID'], $localPath, $arParams);
             $obGroup->SetRootSection($sectionID);
 
@@ -336,7 +336,7 @@ if (CBXFeatures::IsFeatureEnabled("Workgroups"))
 					if($val["TYPE"] == "E")
 					{
 						$tmp["TYPE"] = "file";
-						$tmp["FILE_EXTENTION"] = htmlspecialcharsbx(strtolower(strrchr($val['NAME'] , '.')));
+						$tmp["FILE_EXTENTION"] = htmlspecialcharsbx(mb_strtolower(strrchr($val['NAME'], '.')));
 					}
 					else
 					{
@@ -413,7 +413,7 @@ if ($mode == 'private')
                 $currentPageUrl = str_replace(array('#USER_ID#', '#PATH#'), array($currentUserID, ''), $arParams["USER_FILE_PATH"]);
                 foreach (array('PERMISSION', 'CHECK_CREATOR') as $propName)
                     $arParams[$propName] = $ownerPerms[$propName];
-                $arParams["DOCUMENT_TYPE"] = array("webdav", "CIBlockDocumentWebdavSocnet", "iblock_".$arParams['IBLOCK_USER_ID']."_user_".intVal($currentUserID));
+                $arParams["DOCUMENT_TYPE"] = array("webdav", "CIBlockDocumentWebdavSocnet", "iblock_".$arParams['IBLOCK_USER_ID']."_user_".intval($currentUserID));
 				$cnt = count($arLocalPath);
 				if($cnt > 0)
 				{
@@ -444,7 +444,7 @@ if ($mode == 'private')
 						if($val["TYPE"] == "E")
 						{
 							$tmp["TYPE"] = "file";
-							$tmp["FILE_EXTENTION"] = htmlspecialcharsbx(strtolower(strrchr($val['NAME'] , '.')));
+							$tmp["FILE_EXTENTION"] = htmlspecialcharsbx(mb_strtolower(strrchr($val['NAME'], '.')));
 						}
 						else
 						{
@@ -481,7 +481,7 @@ if ($mode == 'user')
     {
         $userName = $arLocalPath[0];
         $userFilter = array();
-        if (strpos($userName, '(') !== false)
+        if (mb_strpos($userName, '(') !== false)
         {
             $userFilter = array('LOGIN_EQUAL' => trim($userName, '()'));
         } else {
@@ -520,7 +520,7 @@ if ($mode == 'user')
         $userPerms = CIBlockWebdavSocnet::GetUserMaxPermission( 'user', $userID, $currentUserID, $arParams['IBLOCK_USER_ID']);
         foreach (array('PERMISSION', 'CHECK_CREATOR') as $propName)
             $arParams[$propName] = $userPerms[$propName];
-        $arParams["DOCUMENT_TYPE"] = array("webdav", "CIBlockDocumentWebdavSocnet", "iblock_".$arParams['IBLOCK_USER_ID']."_user_".intVal($userID));
+        $arParams["DOCUMENT_TYPE"] = array("webdav", "CIBlockDocumentWebdavSocnet", "iblock_".$arParams['IBLOCK_USER_ID']."_user_".intval($userID));
         $obGroup = new CWebDavIblock($arParams['IBLOCK_USER_ID'],  $localPath, $arParams);
         $obGroup->SetRootSection($sectionID);
 
@@ -555,7 +555,7 @@ if ($mode == 'user')
 				if($val["TYPE"] == "E")
 				{
 					$tmp["TYPE"] = "file";
-					$tmp["FILE_EXTENTION"] = htmlspecialcharsbx(strtolower(strrchr($val['NAME'] , '.')));
+					$tmp["FILE_EXTENTION"] = htmlspecialcharsbx(mb_strtolower(strrchr($val['NAME'], '.')));
 				}
 				else
 				{

@@ -7,6 +7,5 @@ drop table if exists b_intranet_ustat_hour;
 drop table if exists b_intranet_ustat_day;
 drop table if exists b_intranet_dstat_hour;
 drop table if exists b_intranet_dstat_day;
-drop table if exists b_intranet_usersubord;
-drop table if exists b_intranet_user2dep;
 drop table if exists b_intranet_queue;
+drop table if exists b_intranet_invitation;

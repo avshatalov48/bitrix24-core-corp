@@ -225,12 +225,12 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 				elseif (!isset($params["MEASURE_CODE"]))
 					$params["MEASURE_CODE"] = 0;
 
-				if(strlen($basketItem->getField("MEASURE_NAME")) > 0)
+				if($basketItem->getField("MEASURE_NAME") <> '')
 					$params["MEASURE_TEXT"] = $basketItem->getField("MEASURE_NAME");
 				elseif(!isset($params["MEASURE_TEXT"]))
 					$params["MEASURE_TEXT"] = "";
 
-				if(strlen($params["EDIT_PAGE_URL"]) > 0)
+				if($params["EDIT_PAGE_URL"] <> '')
 				{
 					$params["EDIT_PAGE_URL"] = '/shop/settings/'.str_replace('.php', '/', $params["EDIT_PAGE_URL"]);
 				}

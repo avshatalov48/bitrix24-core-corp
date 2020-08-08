@@ -575,7 +575,7 @@
 	{
 		if (!this.canRent)
 		{
-			BX.Voximplant.showLicensePopup('numbers');
+			BX.UI.InfoHelper.show('limit_contact_center_telephony_rent_numbers');
 			return;
 		}
 
@@ -1470,7 +1470,7 @@
 				e.stopPropagation();
 				e.preventDefault();
 
-				BX.Voximplant.showLicensePopup('main');
+				BX.UI.InfoHelper.show('limit_contact_center_telephony_rent_numbers')
 			}
 			else
 			{

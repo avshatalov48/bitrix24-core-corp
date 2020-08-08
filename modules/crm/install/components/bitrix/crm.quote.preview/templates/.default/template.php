@@ -30,9 +30,9 @@ $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm-preview.css');
 		</tr>
 		<tr>
 			<td><?= GetMessage('CRM_FIELD_BEGINDATE')?>: </td>
-			<td><?=(strlen($arResult["BEGINDATE"]) > 0 ? FormatDateFromDB($arResult["BEGINDATE"], "SHORT") : GetMessage("CRM_NO_DATE"))?></td>
+			<td><?=($arResult["BEGINDATE"] <> '' ? FormatDateFromDB($arResult["BEGINDATE"], "SHORT") : GetMessage("CRM_NO_DATE"))?></td>
 			<td><?= GetMessage('CRM_FIELD_CLOSEDATE')?>: </td>
-			<td><?=(strlen($arResult["CLOSEDATE"]) > 0 ? FormatDateFromDB($arResult["CLOSEDATE"], "SHORT") : GetMessage("CRM_NO_DATE"))?></td>
+			<td><?=($arResult["CLOSEDATE"] <> '' ? FormatDateFromDB($arResult["CLOSEDATE"], "SHORT") : GetMessage("CRM_NO_DATE"))?></td>
 		</tr>
 		<tr><td colspan="4"><div class="crm-preview-info-spacer"></div></td></tr>
 		<tr>

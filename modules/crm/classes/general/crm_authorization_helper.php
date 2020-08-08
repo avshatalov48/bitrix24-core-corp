@@ -76,7 +76,7 @@ class CCrmAuthorizationHelper
 	{
 		$entityTypeName = is_numeric($entityType)
 			? CCrmOwnerType::ResolveName($entityType)
-			: strtoupper(strval($entityType));
+			: mb_strtoupper(strval($entityType));
 
 		$entityID = intval($entityID);
 
@@ -103,7 +103,7 @@ class CCrmAuthorizationHelper
 	{
 		$entityTypeName = is_numeric($entityType)
 			? CCrmOwnerType::ResolveName($entityType)
-			: strtoupper(strval($entityType));
+			: mb_strtoupper(strval($entityType));
 
 		if(!$userPermissions)
 		{
@@ -117,7 +117,7 @@ class CCrmAuthorizationHelper
 	{
 		$entityTypeName = is_numeric($entityType)
 			? CCrmOwnerType::ResolveName($entityType)
-			: strtoupper(strval($entityType));
+			: mb_strtoupper(strval($entityType));
 
 		if(!$userPermissions)
 		{
@@ -131,7 +131,7 @@ class CCrmAuthorizationHelper
 	{
 		$entityTypeName = is_numeric($entityType)
 			? CCrmOwnerType::ResolveName($entityType)
-			: strtoupper(strval($entityType));
+			: mb_strtoupper(strval($entityType));
 
 		if(!$userPermissions)
 		{

@@ -170,14 +170,14 @@ class MobileWebComponent extends \CBitrixComponent
 			];
 
 			// Get resource mapping from CoreJS extensions
-			$jsCore = ['main:ajax', 'mobile.pull.client']; // TODO after realease `main.core` change this relation
+			$jsCore = ['ajax', 'mobile.pull.client'];
 			if (isset($config["rel"]) && !empty($config["rel"]))
 			{
 				$jsCore = array_merge($jsCore, $config["rel"]);
 			}
 
 			$resources = \Bitrix\Main\UI\Extension::getResourceList($jsCore, [
-				'skip_extensions' => ['pull.client']
+				'skip_extensions' => ['pull.client', 'rest.client']
 			]);
 
 			if (
@@ -312,11 +312,11 @@ class MobileWebComponent extends \CBitrixComponent
 			{
 				$index++;
 
-				if (substr($localPath, 0, 1) === '/')
+				if (mb_substr($localPath, 0, 1) === '/')
 				{
-					$localPath = substr($localPath, 1);
+					$localPath = mb_substr($localPath, 1);
 				}
-				if (substr($localPath, -1) === '/')
+				if (mb_substr($localPath, -1) === '/')
 				{
 					foreach ($this->getResourceMapForFolder($path, $localPath) as $folderFilePath)
 					{
@@ -334,7 +334,7 @@ class MobileWebComponent extends \CBitrixComponent
 		$contentWithInjection = str_replace(
 			array_map(function ($rule)
 			{
-				return "#" . strtoupper($rule) . "#";
+				return "#".mb_strtoupper($rule) . "#";
 			},
 			array_keys($injectionContent)),
 			array_values($injectionContent),

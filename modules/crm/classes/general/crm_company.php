@@ -94,6 +94,9 @@ class CAllCrmCompany
 				'ADDRESS_COUNTRY_CODE' => array(
 					'TYPE' => 'string'
 				),
+				'ADDRESS_LOC_ADDR_ID' => array(
+					'TYPE' => 'integer'
+				),
 				'ADDRESS_LEGAL' => array(
 					'TYPE' => 'string'
 				),
@@ -120,6 +123,9 @@ class CAllCrmCompany
 				),
 				'REG_ADDRESS_COUNTRY_CODE' => array(
 					'TYPE' => 'string'
+				),
+				'REG_ADDRESS_LOC_ADDR_ID' => array(
+					'TYPE' => 'integer'
 				),
 				'BANKING_DETAILS' => array(
 					'TYPE' => 'string'
@@ -261,10 +267,22 @@ class CAllCrmCompany
 
 		if(!(is_array($arOptions) && isset($arOptions['DISABLE_ADDRESS']) && $arOptions['DISABLE_ADDRESS']))
 		{
-			$addrJoin = 'LEFT JOIN b_crm_addr ADDR ON L.ID = ADDR.ENTITY_ID AND ADDR.TYPE_ID = '
-				.EntityAddress::Primary.' AND ADDR.ENTITY_TYPE_ID = '.CCrmOwnerType::Company;
-			$regAddrJoin = 'LEFT JOIN b_crm_addr R_ADDR ON L.ID = R_ADDR.ENTITY_ID AND R_ADDR.TYPE_ID = '
-				.EntityAddress::Registered.' AND R_ADDR.ENTITY_TYPE_ID = '.CCrmOwnerType::Company;
+			if (COption::GetOptionString('crm', '~CRM_CONVERT_COMPANY_ADDRESSES', 'N') === 'Y')
+			{
+				$addrJoin = 'LEFT JOIN b_crm_addr ADDR ON L.ID = ADDR.ENTITY_ID AND ADDR.TYPE_ID = '
+					.EntityAddress::Primary.' AND ADDR.ENTITY_TYPE_ID = '.CCrmOwnerType::Company;
+				$regAddrJoin = 'LEFT JOIN b_crm_addr R_ADDR ON L.ID = R_ADDR.ENTITY_ID AND R_ADDR.TYPE_ID = '
+					.EntityAddress::Registered.' AND R_ADDR.ENTITY_TYPE_ID = '.CCrmOwnerType::Company;
+			}
+			else
+			{
+				$addrJoin = 'LEFT JOIN b_crm_addr ADDR ON L.ID = ADDR.ANCHOR_ID AND ADDR.TYPE_ID = '
+					.EntityAddress::Primary.' AND ADDR.ANCHOR_TYPE_ID = '.CCrmOwnerType::Company.
+					' AND ADDR.IS_DEF = 1';
+				$regAddrJoin = 'LEFT JOIN b_crm_addr R_ADDR ON L.ID = R_ADDR.ANCHOR_ID AND R_ADDR.TYPE_ID = '
+					.EntityAddress::Registered.' AND R_ADDR.ANCHOR_TYPE_ID = '.CCrmOwnerType::Company.
+					' AND R_ADDR.IS_DEF = 1';
+			}
 
 			$result['ADDRESS'] = array('FIELD' => 'ADDR.ADDRESS_1', 'TYPE' => 'string', 'FROM' => $addrJoin);
 			$result['ADDRESS_2'] = array('FIELD' => 'ADDR.ADDRESS_2', 'TYPE' => 'string', 'FROM' => $addrJoin);
@@ -274,6 +292,7 @@ class CAllCrmCompany
 			$result['ADDRESS_PROVINCE'] = array('FIELD' => 'ADDR.PROVINCE', 'TYPE' => 'string', 'FROM' => $addrJoin);
 			$result['ADDRESS_COUNTRY'] = array('FIELD' => 'ADDR.COUNTRY', 'TYPE' => 'string', 'FROM' => $addrJoin);
 			$result['ADDRESS_COUNTRY_CODE'] = array('FIELD' => 'ADDR.COUNTRY_CODE', 'TYPE' => 'string', 'FROM' => $addrJoin);
+			$result['ADDRESS_LOC_ADDR_ID'] = array('FIELD' => 'ADDR.LOC_ADDR_ID', 'TYPE' => 'integer', 'FROM' => $addrJoin);
 
 			$result['ADDRESS_LEGAL'] = array('FIELD' => 'R_ADDR.ADDRESS_1', 'TYPE' => 'string', 'FROM' => $regAddrJoin);
 			$result['REG_ADDRESS'] = array('FIELD' => 'R_ADDR.ADDRESS_1', 'TYPE' => 'string', 'FROM' => $regAddrJoin);
@@ -284,6 +303,7 @@ class CAllCrmCompany
 			$result['REG_ADDRESS_PROVINCE'] = array('FIELD' => 'R_ADDR.PROVINCE', 'TYPE' => 'string', 'FROM' => $regAddrJoin);
 			$result['REG_ADDRESS_COUNTRY'] = array('FIELD' => 'R_ADDR.COUNTRY', 'TYPE' => 'string', 'FROM' => $regAddrJoin);
 			$result['REG_ADDRESS_COUNTRY_CODE'] = array('FIELD' => 'R_ADDR.COUNTRY_CODE', 'TYPE' => 'string', 'FROM' => $regAddrJoin);
+			$result['REG_ADDRESS_LOC_ADDR_ID'] = array('FIELD' => 'R_ADDR.LOC_ADDR_ID', 'TYPE' => 'integer', 'FROM' => $regAddrJoin);
 		}
 
 		// Creation of field aliases
@@ -401,46 +421,46 @@ class CAllCrmCompany
 
 	public static function GetTopIDs($top, $sortType = 'ASC', $userPermissions = null)
 	{
-		if($top <= 0)
+		$top = (int) $top;
+		if ($top <= 0)
 		{
-			return array();
+			return [];
 		}
 
-		$sortType = strtoupper($sortType) !== 'DESC' ? 'ASC' : 'DESC';
+		$sortType = mb_strtoupper($sortType) !== 'DESC' ? 'ASC' : 'DESC';
 
 		$permissionSql = '';
-		if(!CCrmPerms::IsAdmin())
+		if (!CCrmPerms::IsAdmin())
 		{
-			if(!$userPermissions)
+			if (!$userPermissions)
 			{
 				$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 			}
 
-			$permissionSql = self::BuildPermSql(
-				'L',
-				'READ',
-				array(
-					'PERMS' => $userPermissions,
-					'RAW_QUERY' => array('TOP' => $top, 'SORT_TYPE' => $sortType)
-				)
-			);
+			$permissionSql = self::BuildPermSql('L', 'READ', ['PERMS' => $userPermissions]);
 		}
 
-		if($permissionSql === false)
+		if ($permissionSql === false)
 		{
-			return array();
+			return [];
 		}
 
-		$connection = \Bitrix\Main\Application::getConnection();
-		$sql = $permissionSql === ''
-			? $connection->getSqlHelper()->getTopSql("SELECT ID FROM b_crm_company ORDER BY ID {$sortType}", $top)
-			: "SELECT L.ID FROM b_crm_company L INNER JOIN ($permissionSql) LP ON L.ID = LP.ENTITY_ID";
-		$dbResult = $connection->query($sql);
+		$query = new Main\Entity\Query(Crm\CompanyTable::getEntity());
+		$query->addSelect('ID');
+		$query->addOrder('ID', $sortType);
+		$query->setLimit($top);
 
-		$results = array();
-		while($field = $dbResult->fetch())
+		if ($permissionSql !== '')
 		{
-			$results[] = (int)$field['ID'];
+			$permissionSql = mb_substr($permissionSql, 7);
+			$query->where('ID', 'in', new Main\DB\SqlExpression($permissionSql));
+		}
+
+		$rs = $query->exec();
+		$results = [];
+		while ($field = $rs->fetch())
+		{
+			$results[] = (int) $field['ID'];
 		}
 		return $results;
 	}
@@ -598,7 +618,7 @@ class CAllCrmCompany
 
 		foreach($arSelect as $field)
 		{
-			$field = strtoupper($field);
+			$field = mb_strtoupper($field);
 			if(array_key_exists($field, $arFields))
 				$arSqlSelect[$field] = $arFields[$field].($field != '*' ? ' AS '.$field : '');
 		}
@@ -654,7 +674,7 @@ class CAllCrmCompany
 				return $CDBResult;
 			}
 
-			if(strlen($sSqlPerm) > 0)
+			if($sSqlPerm <> '')
 			{
 				$sSqlPerm = ' AND '.$sSqlPerm;
 			}
@@ -791,12 +811,12 @@ class CAllCrmCompany
 
 		$sSqlSearch = '';
 		foreach($arSqlSearch as $r)
-			if(strlen($r) > 0)
+			if($r <> '')
 				$sSqlSearch .= "\n\t\t\t\tAND  ($r) ";
 		$CCrmUserType = new CCrmUserType($GLOBALS['USER_FIELD_MANAGER'], self::$sUFEntityID);
 		$CCrmUserType->ListPrepareFilter($arFilter);
 		$r = $obUserFieldsSql->GetFilter();
-		if (strlen($r) > 0)
+		if ($r <> '')
 			$sSqlSearch .= "\n\t\t\t\tAND ($r) ";
 
 		if (!empty($sQueryWhereFields))
@@ -815,8 +835,8 @@ class CAllCrmCompany
 			$arOrder = Array('DATE_CREATE' => 'DESC');
 		foreach($arOrder as $by => $order)
 		{
-			$by = strtoupper($by);
-			$order = strtolower($order);
+			$by = mb_strtoupper($by);
+			$order = mb_strtolower($order);
 			if ($order != 'asc')
 				$order = 'desc';
 
@@ -1083,7 +1103,7 @@ class CAllCrmCompany
 
 			if(isset($arFields['LOGO'])
 				&& is_array($arFields['LOGO'])
-				&& strlen(CFile::CheckImageFile($arFields['LOGO'])) === 0)
+				&& CFile::CheckImageFile($arFields['LOGO']) == '')
 			{
 				$arFields['LOGO']['MODULE_ID'] = 'crm';
 				CFile::SaveForDB($arFields, 'LOGO', 'crm');
@@ -1165,7 +1185,9 @@ class CAllCrmCompany
 					'REGION' => isset($arFields['ADDRESS_REGION']) ? $arFields['ADDRESS_REGION'] : null,
 					'PROVINCE' => isset($arFields['ADDRESS_PROVINCE']) ? $arFields['ADDRESS_PROVINCE'] : null,
 					'COUNTRY' => isset($arFields['ADDRESS_COUNTRY']) ? $arFields['ADDRESS_COUNTRY'] : null,
-					'COUNTRY_CODE' => isset($arFields['ADDRESS_COUNTRY_CODE']) ? $arFields['ADDRESS_COUNTRY_CODE'] : null
+					'COUNTRY_CODE' => isset($arFields['ADDRESS_COUNTRY_CODE']) ? $arFields['ADDRESS_COUNTRY_CODE'] : null,
+					'LOC_ADDR_ID' => isset($arFields['ADDRESS_LOC_ADDR_ID']) ? (int)$arFields['ADDRESS_LOC_ADDR_ID'] : 0,
+					'LOC_ADDR' => isset($arFields['ADDRESS_LOC_ADDR']) ? $arFields['ADDRESS_LOC_ADDR'] : null
 				)
 			);
 
@@ -1181,7 +1203,9 @@ class CAllCrmCompany
 					'REGION' => isset($arFields['REG_ADDRESS_REGION']) ? $arFields['REG_ADDRESS_REGION'] : null,
 					'PROVINCE' => isset($arFields['REG_ADDRESS_PROVINCE']) ? $arFields['REG_ADDRESS_PROVINCE'] : null,
 					'COUNTRY' => isset($arFields['REG_ADDRESS_COUNTRY']) ? $arFields['REG_ADDRESS_COUNTRY'] : null,
-					'COUNTRY_CODE' => isset($arFields['REG_ADDRESS_COUNTRY_CODE']) ? $arFields['REG_ADDRESS_COUNTRY_CODE'] : null
+					'COUNTRY_CODE' => isset($arFields['REG_ADDRESS_COUNTRY_CODE']) ? $arFields['REG_ADDRESS_COUNTRY_CODE'] : null,
+					'LOC_ADDR_ID' => isset($arFields['REG_ADDRESS_LOC_ADDR_ID']) ? (int)$arFields['REG_ADDRESS_LOC_ADDR_ID'] : 0,
+					'LOC_ADDR' => isset($arFields['REG_ADDRESS_LOC_ADDR']) ? $arFields['REG_ADDRESS_LOC_ADDR'] : null
 				)
 			);
 
@@ -1273,7 +1297,7 @@ class CAllCrmCompany
 				)
 				{
 					$url = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Company, $ID);
-					$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0) ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
+					$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
 
 					$arMessageFields = array(
 						"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
@@ -1306,7 +1330,7 @@ class CAllCrmCompany
 				}
 			}
 		}
-		
+
 		return $result;
 	}
 	static public function BuildEntityAttr($userID, $arAttr = array())
@@ -1471,7 +1495,7 @@ class CAllCrmCompany
 						}
 					}
 				}
-				elseif(is_array($arFields['LOGO']) && strlen(CFile::CheckImageFile($arFields['LOGO'])) === 0)
+				elseif(is_array($arFields['LOGO']) && CFile::CheckImageFile($arFields['LOGO']) == '')
 				{
 					//Old file editor (file id is not saved yet)
 					$arFields['LOGO']['MODULE_ID'] = 'crm';
@@ -1583,7 +1607,7 @@ class CAllCrmCompany
 
 			unset($arFields["ID"]);
 			$sUpdate = $DB->PrepareUpdate('b_crm_company', $arFields, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
-			if (strlen($sUpdate) > 0)
+			if ($sUpdate <> '')
 			{
 				$DB->Query("UPDATE b_crm_company SET {$sUpdate} WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 				$bResult = true;
@@ -1621,7 +1645,8 @@ class CAllCrmCompany
 				|| isset($arFields['ADDRESS_POSTAL_CODE'])
 				|| isset($arFields['ADDRESS_REGION'])
 				|| isset($arFields['ADDRESS_PROVINCE'])
-				|| isset($arFields['ADDRESS_COUNTRY']))
+				|| isset($arFields['ADDRESS_COUNTRY'])
+				|| isset($arFields['ADDRESS_LOC_ADDR_ID']))
 			{
 				EntityAddress::register(
 					CCrmOwnerType::Company,
@@ -1643,8 +1668,17 @@ class CAllCrmCompany
 						'COUNTRY' => isset($arFields['ADDRESS_COUNTRY'])
 							? $arFields['ADDRESS_COUNTRY'] : (isset($arRow['ADDRESS_COUNTRY']) ? $arRow['ADDRESS_COUNTRY'] : null),
 						'COUNTRY_CODE' => isset($arFields['ADDRESS_COUNTRY_CODE'])
-							? $arFields['ADDRESS_COUNTRY_CODE'] : (isset($arRow['ADDRESS_COUNTRY_CODE']) ? $arRow['ADDRESS_COUNTRY_CODE'] : null)
-					)
+							? $arFields['ADDRESS_COUNTRY_CODE'] : (isset($arRow['ADDRESS_COUNTRY_CODE']) ? $arRow['ADDRESS_COUNTRY_CODE'] : null),
+						'LOC_ADDR_ID' => isset($arFields['ADDRESS_LOC_ADDR_ID'])
+							? (int)$arFields['ADDRESS_LOC_ADDR_ID'] : (isset($arRow['ADDRESS_LOC_ADDR_ID']) ? (int)$arRow['ADDRESS_LOC_ADDR_ID'] : 0),
+						'LOC_ADDR' => isset($arFields['ADDRESS_LOC_ADDR']) ? $arFields['ADDRESS_LOC_ADDR'] : null
+					),
+					[
+						'updateLocationAddress' => !(
+							(isset($arFields['ADDRESS_LOC_ADDR_ID']) && $arFields['ADDRESS_LOC_ADDR_ID'] > 0) ||
+							(isset($arFields['ADDRESS_LOC_ADDR']) && is_object($arFields['ADDRESS_LOC_ADDR']))
+						)
+					]
 				);
 			}
 
@@ -1654,7 +1688,8 @@ class CAllCrmCompany
 				|| isset($arFields['REG_ADDRESS_POSTAL_CODE'])
 				|| isset($arFields['REG_ADDRESS_REGION'])
 				|| isset($arFields['REG_ADDRESS_PROVINCE'])
-				|| isset($arFields['REG_ADDRESS_COUNTRY']))
+				|| isset($arFields['REG_ADDRESS_COUNTRY'])
+				|| isset($arFields['REG_ADDRESS_LOC_ADDR_ID']))
 			{
 				EntityAddress::register(
 					CCrmOwnerType::Company,
@@ -1676,8 +1711,17 @@ class CAllCrmCompany
 						'COUNTRY' => isset($arFields['REG_ADDRESS_COUNTRY'])
 							? $arFields['REG_ADDRESS_COUNTRY'] : (isset($arRow['REG_ADDRESS_COUNTRY']) ? $arRow['REG_ADDRESS_COUNTRY'] : null),
 						'COUNTRY_CODE' => isset($arFields['REG_ADDRESS_COUNTRY_CODE'])
-							? $arFields['REG_ADDRESS_COUNTRY_CODE'] : (isset($arRow['REG_ADDRESS_COUNTRY_CODE']) ? $arRow['REG_ADDRESS_COUNTRY_CODE'] : null)
-					)
+							? $arFields['REG_ADDRESS_COUNTRY_CODE'] : (isset($arRow['REG_ADDRESS_COUNTRY_CODE']) ? $arRow['REG_ADDRESS_COUNTRY_CODE'] : null),
+						'LOC_ADDR_ID' => isset($arFields['REG_ADDRESS_LOC_ADDR_ID'])
+							? (int)$arFields['REG_ADDRESS_LOC_ADDR_ID'] : (isset($arRow['REG_ADDRESS_LOC_ADDR_ID']) ? (int)$arRow['REG_ADDRESS_LOC_ADDR_ID'] : 0),
+						'LOC_ADDR' => isset($arFields['REG_ADDRESS_LOC_ADDR']) ? $arFields['REG_ADDRESS_LOC_ADDR'] : null
+					),
+					[
+						'updateLocationAddress' => !(
+							(isset($arFields['REG_ADDRESS_LOC_ADDR_ID']) && $arFields['REG_ADDRESS_LOC_ADDR_ID'] > 0) ||
+							(isset($arFields['REG_ADDRESS_LOC_ADDR']) && is_object($arFields['REG_ADDRESS_LOC_ADDR']))
+						)
+					]
 				);
 			}
 
@@ -1855,7 +1899,7 @@ class CAllCrmCompany
 					{
 						$title = CCrmOwnerType::GetCaption(CCrmOwnerType::Company, $ID, false);
 						$url = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Company, $ID);
-						$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0) ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
+						$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
 
 						if ($sonetEventFields['PARAMS']['FINAL_RESPONSIBLE_ID'] != $modifiedByID)
 						{
@@ -2216,7 +2260,7 @@ class CAllCrmCompany
 			}
 		}
 
-		if(strlen($this->LAST_ERROR) > 0)
+		if($this->LAST_ERROR <> '')
 			return false;
 
 		return true;
@@ -2432,7 +2476,7 @@ class CAllCrmCompany
 		// converts data from filter
 		if (isset($arFilter['FIND_list']) && !empty($arFilter['FIND']))
 		{
-			$arFilter[strtoupper($arFilter['FIND_list'])] = $arFilter['FIND'];
+			$arFilter[mb_strtoupper($arFilter['FIND_list'])] = $arFilter['FIND'];
 			unset($arFilter['FIND_list'], $arFilter['FIND']);
 		}
 
@@ -2495,7 +2539,7 @@ class CAllCrmCompany
 			}
 			elseif (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
 			{
-				if(strlen($v) > 0)
+				if($v <> '')
 				{
 					$arFilter['>='.$arMatch[1]] = $v;
 				}
@@ -2503,7 +2547,7 @@ class CAllCrmCompany
 			}
 			elseif (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
 			{
-				if(strlen($v) > 0)
+				if($v <> '')
 				{
 					if (($arMatch[1] == 'DATE_CREATE' || $arMatch[1] == 'DATE_MODIFY') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
 					{
@@ -2523,7 +2567,7 @@ class CAllCrmCompany
 				}
 				unset($arFilter[$k]);
 			}
-			elseif ($k != 'ID' && $k != 'LOGIC' && $k != '__INNER_FILTER' && strpos($k, 'UF_') !== 0 && preg_match('/^[^\=\%\?\>\<]{1}/', $k) === 1)
+			elseif ($k != 'ID' && $k != 'LOGIC' && $k != '__INNER_FILTER' && mb_strpos($k, 'UF_') !== 0 && preg_match('/^[^\=\%\?\>\<]{1}/', $k) === 1)
 			{
 				$arFilter['%'.$k] = $v;
 				unset($arFilter[$k]);

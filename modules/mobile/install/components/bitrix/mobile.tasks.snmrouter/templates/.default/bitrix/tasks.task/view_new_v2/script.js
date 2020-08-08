@@ -58,13 +58,16 @@
 			this.actSuccess = BX.delegate(this.actSuccess, this);
 			this.actFailure = BX.delegate(this.actFailure, this);
 
-			this.canReadAllComments = false;
-			this.commentsToRead = [];
-
 			this.stub = null;
 			this.platformDelta = (window.platform === 'ios' ? 60 : 0);
 			this.formInterface = BX.Mobile.Grid.Form.getByFormId(this.option('formId'));
 			this.forceHideButtons = false;
+
+			this.timeout = 0;
+			this.timeoutSec = 2000;
+			this.commentsList = null;
+			this.unreadComments = new Map();
+			this.commentsToRead = new Map();
 
 			BX.hide(BX('commentsStub'));
 
@@ -121,51 +124,62 @@
 
 		bindEvents: function()
 		{
-			this.comments = new Map();
-			this.commentsList = null;
+			BX.addCustomEvent(window, 'OnUCHasBeenInitialized', function(xmlId, list) {
+				console.log('OnUCHasBeenInitialized', list);
+				if (xmlId === 'TASK_' + this.task.ID)
+				{
+					this.commentsList = list;
+					BXMobileApp.Events.postToComponent('task.view.onCommentsRead', {taskId: this.task.ID, newCommentsCount: 0}, 'tasks.list');
+					console.log(this.commentsList.getCommentsCount());
+				}
+			}.bind(this));
+
 			BX.addCustomEvent(window, 'onUCFormSubmit', BX.delegate(function() {
 				console.log('tasks: onUCFormSubmit');
 				this.hideCommentsStub();
 			}, this));
 
-			BX.addCustomEvent(window, "OnUCHasBeenInitialized", function(xmlId, list) {
-				if (xmlId === "TASK_" + this.task["ID"])
+			BX.addCustomEvent(window, 'OnUCCommentWasPulled', function(id, data) {
+				console.log('OnUCCommentWasPulled');
+				if (id[0] === 'TASK_' + this.task.ID)
 				{
-					this.commentsList = list;
+					var author = data.messageFields['AUTHOR'];
+					if (Number(author['ID']) !== Number(BX.message('USER_ID')))
+					{
+						this.hideCommentsStub();
+						this.unreadComments.set(id[1], new Date());
+					}
+					console.log(this.unreadComments);
 				}
 			}.bind(this));
 
-			BX.addCustomEvent(window, "OnUCCommentWasPulled", function(id, data) {
-				if (id[0] === "TASK_" + this.task["ID"])
-				{
-					var author = data.messageFields["AUTHOR"];
-					if (Number(author["ID"]) !== Number(BX.message("USER_ID")))
-						this.comments.set(id[1]);
-				}
-			}.bind(this));
-			var changeCounter = function(xmlId, id) {
-				console.log('OnUCCommentWasRead:', arguments);
-/*				if (xmlId === ("TASK_" + this.task.ID) && this.comments.delete(id[1]))
-				{
-					BXMobileApp.Events.postToComponent('task.view.onCommentsRead', {taskId: this.task.ID, newCommentsCount : this.comments.size}, 'tasks.view');
-					BXMobileApp.Events.postToComponent('task.view.onCommentsRead', {taskId: this.task.ID, newCommentsCount : this.comments.size}, 'tasks.list');
-				}
-*/			}.bind(this);
-			BX.addCustomEvent(window, "OnUCCommentWasRead", changeCounter);
-			BX.addCustomEvent(window, "OnUCommentWasAdded", function(xmlId, id) {
-				console.log('OnUCCommentWasAdded:', arguments);
-				if (xmlId === ("TASK_" + this.task["ID"]))
-				{
-					changeCounter(xmlId, id);
-					console.log('this.commentsList.getCommentsCount():', this.commentsList.getCommentsCount());
-				}
-			}.bind(this));
-			BX.addCustomEvent(window, "OnUCommentWasDeleted", function(xmlId, id) {
+			BX.addCustomEvent(window, 'OnUCommentWasDeleted', function(xmlId, id) {
 				console.log('OnUCommentWasDeleted:', arguments);
-				if (xmlId === ("TASK_" + this.task["ID"]))
+				var commentId = id[1];
+				if (xmlId === ('TASK_' + this.task.ID) && this.unreadComments.delete(commentId))
 				{
-					changeCounter(xmlId, id);
+					BXMobileApp.Events.postToComponent('task.view.onCommentsRead', {taskId: this.task.ID, newCommentsCount: this.unreadComments.size}, 'tasks.view');
+					BXMobileApp.Events.postToComponent('task.view.onCommentsRead', {taskId: this.task.ID, newCommentsCount: this.unreadComments.size}, 'tasks.list');
+
 					console.log('this.commentsList.getCommentsCount():', this.commentsList.getCommentsCount());
+				}
+			}.bind(this));
+
+			BX.addCustomEvent(window, 'OnUCCommentWasRead', function(xmlId, id) {
+				console.log('OnUCCommentWasRead:', arguments);
+				var commentId = id[1];
+				if (xmlId === ('TASK_' + this.task.ID) && this.unreadComments.has(commentId))
+				{
+					this.commentsToRead.set(commentId, this.unreadComments.get(commentId));
+					this.unreadComments.delete(commentId);
+
+					BXMobileApp.Events.postToComponent('task.view.onCommentsRead', {taskId: this.task.ID, newCommentsCount: this.unreadComments.size}, 'tasks.view');
+					BXMobileApp.Events.postToComponent('task.view.onCommentsRead', {taskId: this.task.ID, newCommentsCount: this.unreadComments.size}, 'tasks.list');
+
+					if (this.timeout <= 0)
+					{
+						this.timeout = setTimeout(this.readComments.bind(this), this.timeoutSec);
+					}
 				}
 			}.bind(this));
 
@@ -355,6 +369,14 @@
 			});
 		},
 
+		readComments: function()
+		{
+			this.timeout = 0;
+			this.commentsToRead.clear();
+
+			BX.ajax.runAction('tasks.task.view.update', {data: {taskId: this.task.ID}});
+		},
+
 		onScrollEvent: function()
 		{
 			if (this.forceHideButtons)
@@ -371,16 +393,12 @@
 
 			if (scrollTop > topBorder)
 			{
-				if (!BX.hasClass(upButton, showClass))
-				{
-					BX.addClass(upButton, showClass);
-				}
+				BX.addClass(upButton, showClass);
 			}
 			else
 			{
 				BX.removeClass(upButton, showClass);
 			}
-			BX.show(upButton);
 
 			downButton.style.display = (scrollTop < bottomBorder ? 'block' : 'none');
 		},

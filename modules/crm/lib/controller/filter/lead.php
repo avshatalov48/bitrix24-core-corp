@@ -8,7 +8,7 @@ class Lead extends \Bitrix\Crm\Controller\Filter\Base
 		$filterId = trim($filterId);
 
 		$filterSettings = new \Bitrix\Crm\Filter\LeadSettings([
-			'ID' => strlen($filterId) > 0 ? $filterId : 'CRM_LEAD_LIST_V12'
+			'ID' => $filterId <> '' ? $filterId : 'CRM_LEAD_LIST_V12'
 		]);
 
 		return $this->getList($filterSettings);
@@ -21,7 +21,7 @@ class Lead extends \Bitrix\Crm\Controller\Filter\Base
 
 
 		$filterSettings = new \Bitrix\Crm\Filter\LeadSettings([
-			'ID' => strlen($filterId) > 0 ? $filterId : 'CRM_LEAD_LIST_V12'
+			'ID' => $filterId <> '' ? $filterId : 'CRM_LEAD_LIST_V12'
 		]);
 
 		return $this->getField($filterSettings, $id);

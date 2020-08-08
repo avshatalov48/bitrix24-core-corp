@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'):
 	die();
 endif;
 
-if(strlen($arResult['ERROR_MESSAGE'])>0):
+if($arResult['ERROR_MESSAGE'] <> ''):
 	?>
 	<div class="crm-errors">
 		<div class="crm-error-text">

@@ -80,7 +80,7 @@ class CDiskCommonStoragePageTemplate
 		$entityId = array_pop($pieces);
 		$commonStorage = $driver->addCommonStorage(array(
 			'NAME' => $title,
-			'ENTITY_ID' => substr($entityId . '_' . $arParams['site'], 0, 32),
+			'ENTITY_ID' => mb_substr($entityId.'_'.$arParams['site'], 0, 32),
 			'SITE_ID' => $arParams['site'],
 		), array());
 		if(!$commonStorage)

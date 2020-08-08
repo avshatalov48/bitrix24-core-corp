@@ -129,9 +129,9 @@ class CCrmProductFile
 					));
 			}
 
-			$p = strpos($input_name, "[");
+			$p = mb_strpos($input_name, "[");
 			if($p > 0)
-				$del_name = substr($input_name, 0, $p)."_del".substr($input_name, $p);
+				$del_name = mb_substr($input_name, 0, $p)."_del".mb_substr($input_name, $p);
 			else
 				$del_name = $input_name."_del";
 
@@ -144,7 +144,7 @@ class CCrmProductFile
 
 	function GetImgSrc($params = array())
 	{
-		if(is_array($params) && isset($params['url_template']) && (strlen($params['url_template']) > 0))
+		if(is_array($params) && isset($params['url_template']) && ($params['url_template'] <> ''))
 			return str_replace(
 				array('#product_id#', '#field_id#', '#file_id#'),
 				array($this->_element_id, $this->_field_id, $this->_file_id),

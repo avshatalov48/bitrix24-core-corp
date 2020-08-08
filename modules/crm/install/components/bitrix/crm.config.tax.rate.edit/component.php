@@ -60,11 +60,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') // process data from popup dialog
 
 		if($lpEnabled)
 		{
-			if(strlen($_REQUEST['LOCATION']['L']))
+			if($_REQUEST['LOCATION']['L'] <> '')
+			{
 				$LOCATION1 = explode(':', $_REQUEST['LOCATION']['L']);
+			}
 
-			if(strlen($_REQUEST['LOCATION']['G']))
+			if($_REQUEST['LOCATION']['G'] <> '')
+			{
 				$LOCATION2 = explode(':', $_REQUEST['LOCATION']['G']);
+			}
 		}
 		else
 		{
@@ -107,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') // process data from popup dialog
 
 		$arFields['TAX_LOCATION'] = $arLocation;
 
-		if (strlen($strError) <= 0)
+		if ($strError == '')
 		{
 			if ($ID > 0)
 			{

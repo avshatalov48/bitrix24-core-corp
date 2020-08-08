@@ -62,7 +62,7 @@ if (!$templateParams->record)
 }
 
 
-if ($templateParams->record->isExpired($templateParams->schedule, $templateParams->shift))
+if ($templateParams->isRecordExpired())
 {
 	if ($templateParams->absence)
 	{

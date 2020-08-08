@@ -22,9 +22,10 @@ class EntityAddressType
 	const Post = 8;
 	const Beneficiary = 9;
 	const Bank = 10;
+	const Delivery = 11;
 
 	const First = 1;
-	const Last = 10;
+	const Last = 11;
 
 	const PrimaryName = 'PRIMARY';
 	const SecondaryName = 'SECONDARY';
@@ -36,6 +37,7 @@ class EntityAddressType
 	const PostName = 'POST';
 	const BeneficiaryName = 'BENEFICIARY';
 	const BankName = 'BANK';
+	const DeliveryName = 'DELIVERY';
 
 	private static $ALL_DESCRIPTIONS = array();
 
@@ -60,13 +62,14 @@ class EntityAddressType
 			self::Custom,
 			self::Post,
 			self::Beneficiary,
-			self::Bank
+			self::Bank,
+			self::Delivery
 		);
 	}
 
 	public static function resolveID($name)
 	{
-		$name = strtoupper(trim(strval($name)));
+		$name = mb_strtoupper(trim(strval($name)));
 		if($name == '')
 		{
 			return self::Undefined;
@@ -103,6 +106,9 @@ class EntityAddressType
 
 			case self::BankName:
 				return self::Bank;
+
+			case self::DeliveryName:
+				return self::Delivery;
 
 			default:
 				return self::Undefined;
@@ -154,6 +160,9 @@ class EntityAddressType
 			case self::Bank:
 				return self::BankName;
 
+			case self::Delivery:
+				return self::DeliveryName;
+
 			case self::Undefined:
 			default:
 				return '';
@@ -175,7 +184,8 @@ class EntityAddressType
 				self::Custom => GetMessage('CRM_ADDRESS_TYPE_CUSTOM'),
 				self::Post => GetMessage('CRM_ADDRESS_TYPE_POST'),
 				self::Beneficiary => GetMessage('CRM_ADDRESS_TYPE_BENEFICIARY'),
-				self::Bank => GetMessage('CRM_ADDRESS_TYPE_BANK')
+				self::Bank => GetMessage('CRM_ADDRESS_TYPE_BANK'),
+				self::Delivery => GetMessage('CRM_ADDRESS_TYPE_DELIVERY'),
 			);
 		}
 

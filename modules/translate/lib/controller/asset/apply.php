@@ -157,7 +157,7 @@ class Apply
 						$encodingOut = Main\Localization\Translation::getCurrentEncoding();
 					}
 				}
-				$this->convertEncoding = (strtolower($encodingIn) !== strtolower($encodingOut));
+				$this->convertEncoding = (mb_strtolower($encodingIn) !== mb_strtolower($encodingOut));
 				$this->encodingIn = $encodingIn;
 				$this->encodingOut = $encodingOut;
 			}
@@ -363,7 +363,7 @@ class Apply
 					continue;
 				}
 
-				if ((substr($name, -4) === '.php') && is_file($fullPath))
+				if ((mb_substr($name, -4) === '.php') && is_file($fullPath))
 				{
 					$files[$langFolderRelPath.'/'.$name] = $fullPath;
 				}

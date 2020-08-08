@@ -36,7 +36,7 @@ class SmsManager
 		$list = array();
 		if (static::canUse())
 		{
-			$list = MessageService\Sender\SmsManager::getSenderSelectList();
+			$list = MessageService\Sender\SmsManager::getSenderInfoList();
 		}
 		return $list;
 	}
@@ -257,7 +257,29 @@ class SmsManager
 	 */
 	public static function getEditorDefaults()
 	{
-		return (array)\CUserOptions::GetOption('crm', 'sms_manager_editor', array('senderId' => null, 'from' => null));
+		return (array)\CUserOptions::GetOption('crm', 'sms_manager_editor', self::getEditorCommon());
+	}
+
+	/**
+	 * Sets default parameters for all users
+	 * @param array $defaults
+	 * @return void
+	 */
+	public static function setEditorDefaultsCommon(array $defaults)
+	{
+		$config = array(
+			'senderId' => isset($defaults['senderId']) ? (string)$defaults['senderId'] : null,
+			'from' => isset($defaults['from']) ? (string)$defaults['from'] : null
+		);
+		\Bitrix\Main\Config\Option::set('crm', 'sms_manager_editor', serialize($config));
+	}
+
+	/**
+	 * @return array
+	 */
+	public static function getEditorCommon()
+	{
+		return (array)unserialize(\Bitrix\Main\Config\Option::get('crm', 'sms_manager_editor', serialize(array('senderId' => null, 'from' => null))));
 	}
 
 	/**

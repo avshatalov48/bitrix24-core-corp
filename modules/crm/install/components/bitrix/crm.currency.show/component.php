@@ -20,7 +20,7 @@ $currencyID = isset($arParams['CURRENCY_ID']) ? strval($arParams['CURRENCY_ID'])
 if(!isset($currencyID[0]))
 {
 	$currencyIDParName = isset($arParams['CURRENCY_ID_PAR_NAME']) ? strval($arParams['CURRENCY_ID_PAR_NAME']) : '';
-	if(strlen($currencyIDParName) == 0)
+	if($currencyIDParName == '')
 	{
 		$currencyIDParName = 'currency_id';
 	}
@@ -137,9 +137,9 @@ $arResult['CURRENCY_LOCALIZATIONS'] = $currencyLocs;
 
 foreach($langs as $k => $v)
 {
-	$lid = strtoupper($k);
+	$lid = mb_strtoupper($k);
 	$arResult['FIELDS']['tab_1'][] = array(
-		'id' => 'localization_info_'.strtolower($lid),
+		'id' => 'localization_info_'.mb_strtolower($lid),
 		'name' => $v['NAME'],
 		'type' => 'section'
 	);
@@ -169,7 +169,7 @@ foreach($langs as $k => $v)
 
 	$thousandsVariant = isset($currencyLoc['THOUSANDS_VARIANT']) ? $currencyLoc['THOUSANDS_VARIANT'] : '';
 	$thousandsVariant = isset($thousandsVariant[0])
-		? GetMessage('CRM_CURRENCY_THOUSANDS_VARIANT_'.strtoupper($thousandsVariant))
+		? GetMessage('CRM_CURRENCY_THOUSANDS_VARIANT_'.mb_strtoupper($thousandsVariant))
 		: (isset($currencyLoc['THOUSANDS_SEP']) ? $currencyLoc['THOUSANDS_SEP'] : '');
 
 	$arResult['FIELDS']['tab_1'][] = array(

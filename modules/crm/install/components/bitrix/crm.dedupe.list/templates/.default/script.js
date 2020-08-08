@@ -2013,7 +2013,14 @@ if(typeof(BX.CrmDedupeEntity) === "undefined")
 			else
 			{
 				imageWrapper.appendChild(
-					BX.create("DIV", { props: { className: "crm-avatar crm-avatar-user" } })
+					BX.create("DIV", {
+						props: {
+							className: "ui-icon ui-icon-common-user crm-avatar crm-avatar-user"
+						},
+						children: [
+							BX.create('i', {})
+						]
+					})
 				);
 			}
 

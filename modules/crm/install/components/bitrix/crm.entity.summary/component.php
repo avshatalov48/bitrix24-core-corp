@@ -11,7 +11,7 @@ if (!CModule::IncludeModule('crm'))
 //CModule::IncludeModule('fileman');
 $ID = $arResult['ID'] = isset($arParams['ID']) ? $arParams['ID'] : '';
 $arResult['CONTAINER_ID'] = $ID;
-$options = CUserOptions::GetOption('crm.entity.summary', strtolower($ID));
+$options = CUserOptions::GetOption('crm.entity.summary', mb_strtolower($ID));
 if(!$options)
 {
 	$options = array('isFolded' => 'Y');

@@ -4,6 +4,7 @@ namespace Bitrix\Disk\Uf;
 
 use Bitrix\Disk\AttachedObject;
 use Bitrix\Disk\BaseObject;
+use Bitrix\Disk\Configuration;
 use Bitrix\Disk\CrumbStorage;
 use Bitrix\Disk\Document\CloudImport;
 use Bitrix\Disk\Document\DocumentHandler;
@@ -685,7 +686,7 @@ class Controller extends Internals\Controller
 		}
 
 		$dialogName = $this->request->getQuery('dialogName');
-		if (strlen($dialogName) <= 0)
+		if ($dialogName == '')
 		{
 			$dialogName = 'DiskFileDialog';
 		}
@@ -915,7 +916,7 @@ class Controller extends Internals\Controller
 			$this->sendJsonErrorResponse();
 		}
 		$dialogName = $this->request->getPost('FORM_NAME') ?: 'DiskFileDialog';
-		$typeStorage = strtolower($this->request->getPost('FORM_TAB_TYPE'));
+		$typeStorage = mb_strtolower($this->request->getPost('FORM_TAB_TYPE'));
 		if(!in_array($typeStorage, array('user', 'common', 'group', 'cloud', 'recently_used'), true))
 		{
 			$this->errorCollection->add(array(new Error("Invalid storage type {$typeStorage}")));
@@ -1215,12 +1216,18 @@ class Controller extends Internals\Controller
 			$fileData = $version->getFile();
 		}
 
-		$isImage = TypeFile::isImage($fileData["ORIGINAL_NAME"]);
-		$cacheTime = $isImage? 86400 : 0;
+		$isImage = TypeFile::isImage($fileData['ORIGINAL_NAME']) || TypeFile::isImage($fileName);
+		$cacheTime = $isImage? 86400 : Configuration::DEFAULT_CACHE_TIME;
 
 		if($isImage)
 		{
 			$fileData = $this->resizeImage($fileData, $attachedModel->getId());
+		}
+
+		if ($isImage && $showFile && $attachedModel->getConnector()->isAnonymousAllowed())
+		{
+			$response = \Bitrix\Main\Context::getCurrent()->getResponse();
+			$response->addHeader("X-Bitrix-Public-Link", "img");
 		}
 
 		\CFile::viewByUser($fileData, array('force_download' => !$showFile, 'cache_time' => $cacheTime, 'attachment_name' => $fileName));
@@ -1246,7 +1253,7 @@ class Controller extends Internals\Controller
 		$fileName = $file->getView()->getName();
 		$fileData = $file->getView()->getData();
 
-		$cacheTime = 0;
+		$cacheTime = Configuration::DEFAULT_CACHE_TIME;
 
 		\CFile::viewByUser($fileData, array('force_download' => false, 'cache_time' => $cacheTime, 'attachment_name' => $fileName));
 	}
@@ -1287,7 +1294,7 @@ class Controller extends Internals\Controller
 		$fileName = $version->getView()->getName();
 		$fileData = $version->getView()->getData();
 
-		$cacheTime = 0;
+		$cacheTime = Configuration::DEFAULT_CACHE_TIME;
 
 		\CFile::viewByUser($fileData, array('force_download' => false, 'cache_time' => $cacheTime, 'attachment_name' => $fileName));
 	}
@@ -1500,7 +1507,7 @@ class Controller extends Internals\Controller
 			'NAME' => $file['name'],
 			'CREATED_BY' => $this->getUser()->getId(),
 		);
-		if(strpos($file['name'], 'videomessage') === 0)
+		if(mb_strpos($file['name'], 'videomessage') === 0)
 		{
 			$folder = $storage->getFolderForRecordedFiles();
 			$data['CODE'] = File::CODE_RECORDED_FILE;
@@ -1655,7 +1662,7 @@ class Controller extends Internals\Controller
 
 			$width = $this->request->getQuery('width');
 			$height = $this->request->getQuery('height');
-			if (TypeFile::isImage($fileData["ORIGINAL_NAME"]) && ($width > 0 || $height > 0))
+			if ((TypeFile::isImage($fileData['ORIGINAL_NAME']) || TypeFile::isImage($fileName)) && ($width > 0 || $height > 0))
 			{
 				$signature = $this->request->getQuery('signature');
 				if(!$signature)

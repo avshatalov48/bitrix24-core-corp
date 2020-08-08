@@ -1,4 +1,5 @@
 <?php
 return [
-	'reload/listeners'
+	'reload/listeners',
+	'calls/logging',
 ];

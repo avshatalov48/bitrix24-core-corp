@@ -312,7 +312,7 @@ class NewDiskStorage extends DiskStorage
 
 	private function formatObjectRowToResponse(array $row)
 	{
-		if(empty($row['TYPE']) || empty($row['ID']) || strlen($row['NAME']) === 0)
+		if(empty($row['TYPE']) || empty($row['ID']) || $row['NAME'] == '')
 		{
 			return array();
 		}
@@ -437,12 +437,12 @@ class NewDiskStorage extends DiskStorage
 	private function getLockFromRow(array $row, $prefix = self::LOCK_PREFIX_IN_SELECT)
 	{
 		$lockData = array();
-		$length = strlen(self::LOCK_PREFIX_IN_SELECT);
+		$length = mb_strlen(self::LOCK_PREFIX_IN_SELECT);
 		foreach ($row as $key => $value)
 		{
-			if (strpos($key, $prefix) === 0)
+			if (mb_strpos($key, $prefix) === 0)
 			{
-				$lockData[substr($key, $length)] = $value;
+				$lockData[mb_substr($key, $length)] = $value;
 			}
 		}
 
@@ -648,7 +648,7 @@ class NewDiskStorage extends DiskStorage
 				continue;
 			}
 
-			if(!$treeNode->isLink() || is_string($id) && substr($id, 0, 1) === TreeNode::TREE_SYMLINK_PREFIX)
+			if(!$treeNode->isLink() || is_string($id) && mb_substr($id, 0, 1) === TreeNode::TREE_SYMLINK_PREFIX)
 			{
 				continue;
 			}

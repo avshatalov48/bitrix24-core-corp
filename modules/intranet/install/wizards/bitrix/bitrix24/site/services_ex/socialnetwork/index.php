@@ -4,10 +4,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 if (!CModule::IncludeModule("socialnetwork"))
 	return;
 
-$APPLICATION->SetGroupRight("socialnetwork", WIZARD_EXTRANET_ADMIN_GROUP, "W");
-$APPLICATION->SetGroupRight("socialnetwork", WIZARD_EXTRANET_CREATE_WG_GROUP, "K");
-
-COption::SetOptionString("socialnetwork", "allow_frields", "N", false, WIZARD_SITE_ID, false, WIZARD_SITE_ID);
+COption::SetOptionString("socialnetwork", "allow_frields", "N", false, WIZARD_SITE_ID);
 COption::SetOptionString("socialnetwork", "subject_path_template", WIZARD_SITE_DIR."workgroups/group/search/#subject_id#/", false, WIZARD_SITE_ID);
 COption::SetOptionString("socialnetwork", "group_path_template", WIZARD_SITE_DIR."workgroups/group/#group_id#/", false, WIZARD_SITE_ID);
 COption::SetOptionString("socialnetwork", "messages_path", WIZARD_SITE_DIR."contacts/personal/messages/", false, WIZARD_SITE_ID);
@@ -27,7 +24,7 @@ CUserOptions::SetOption("intranet", "~gadgets_sonet_group_extranet", $arOptions,
 socialnetwork::__SetLogFilter(WIZARD_SITE_ID);
 
 $cnt = CSocNetGroupSubject::GetList(array(), array("SITE_ID" => WIZARD_SITE_ID), array());
-if (IntVal($cnt) > 0)
+if (intval($cnt) > 0)
 	return;
 
 $arGroupSubjects = array();
@@ -49,7 +46,7 @@ foreach ($arGroupSubjects as $ind => $arGroupSubject)
 	$idTmp = CSocNetGroupSubject::Add($arGroupSubject);
 	if ($idTmp)
 	{
-		$arGroupSubjectsId[$ind] = IntVal($idTmp);
+		$arGroupSubjectsId[$ind] = intval($idTmp);
 	}
 	else
 	{

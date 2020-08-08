@@ -2,120 +2,209 @@
 
 namespace Bitrix\Tasks\Internals;
 
+use Bitrix\Main;
 use Bitrix\Main\Application;
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Db\SqlQueryException;
-use Bitrix\Main\ObjectPropertyException;
-use Bitrix\Main\SystemException;
-
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Loader;
+use Bitrix\Pull\Event;
+use Bitrix\Tasks\Comments;
 use Bitrix\Tasks\Internals\Counter\Agent;
+use Bitrix\Tasks\Internals\Counter\CounterTable;
 use Bitrix\Tasks\Internals\Counter\EffectiveTable;
+use Bitrix\Tasks\Internals\Counter\Name;
 use Bitrix\Tasks\Item\Task;
+use Bitrix\Tasks\Update\CounterRecount;
 use Bitrix\Tasks\Util\Collection;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
+use CTasks;
+use CUserCounter;
+use CUserOptions;
+use CUserTypeSQL;
+use Exception;
+use ReflectionClass;
 
-use \Exception;
-use \CTasks;
-
+/**
+ * Class Counter
+ *
+ * @package Bitrix\Tasks\Internals
+ */
 class Counter
 {
-	const DEFAULT_DEADLINE_LIMIT = 86400;
-	private static $instance = null;
+	public const DEFAULT_DEADLINE_LIMIT = 86400;
+
+	private static $instance;
 	private static $prefix = 'tasks_';
+
 	private $userId;
 	private $groupId;
-	private $counters = array();
+	private $counters;
+	private $incrementsToSkip = [];
 
+	/**
+	 * Counter constructor.
+	 *
+	 * @param $userId
+	 * @param int $groupId
+	 * @throws Main\ArgumentException
+	 * @throws Main\DB\SqlQueryException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	private function __construct($userId, $groupId = 0)
 	{
 		$this->userId = (int)$userId;
 		$this->groupId = (int)$groupId;
 
-		$this->counters = $this->loadCounters();
-		if (!$this->counters)
+		if (!($this->counters = $this->loadCounters()))
 		{
 			$this->recountAllCounters();
 			$this->counters = $this->loadCounters();
 		}
 	}
 
-	private function loadCounters()
+	/**
+	 * @param string $increment
+	 */
+	public function addIncrementToSkip(string $increment): void
 	{
-		$select = array();
-		foreach ($this->getMap() as $key)
-		{
-			$select[] = "SUM({$key}) AS {$key}";
-		}
-
-		$sql = "
-			SELECT 
-				GROUP_ID, ".join(',', $select)."
-			FROM 
-				b_tasks_counters 
-			WHERE
-				USER_ID = {$this->userId}  
-				".($this->groupId > 0 ? "AND GROUP_ID = {$this->groupId}" : "")." 
-			GROUP BY 
-				GROUP_ID";
-
-		$res = Application::getConnection()->query($sql);
-
-		$list = array();
-		while ($item = $res->fetch())
-		{
-			$list[$item['GROUP_ID']] = $item;
-		}
-
-		return $list;
-	}
-
-	private function getMap()
-	{
-		return array(
-			'OPENED',
-			'CLOSED',
-			'MY_EXPIRED',
-			'MY_EXPIRED_SOON',
-			'MY_NOT_VIEWED',
-			'MY_WITHOUT_DEADLINE',
-			'ORIGINATOR_WITHOUT_DEADLINE',
-			'ORIGINATOR_EXPIRED',
-			'ORIGINATOR_WAIT_CTRL',
-			'AUDITOR_EXPIRED',
-			'ACCOMPLICES_EXPIRED',
-			'ACCOMPLICES_EXPIRED_SOON',
-			'ACCOMPLICES_NOT_VIEWED'
+		$this->setIncrementsToSkip(
+			array_unique(
+				array_merge(
+					$this->getIncrementsToSkip(),
+					[$increment]
+				)
+			)
 		);
 	}
 
-	private function recountAllCounters()
+	/**
+	 * @param string $increment
+	 */
+	public function deleteIncrementToSkip(string $increment): void
+	{
+		$currentIncrements = $this->getIncrementsToSkip();
+
+		if (in_array($increment, $currentIncrements, true))
+		{
+			unset($currentIncrements[array_search($increment, $currentIncrements, true)]);
+		}
+
+		$this->setIncrementsToSkip($currentIncrements);
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getIncrementsToSkip(): array
+	{
+		return $this->incrementsToSkip;
+	}
+
+	/**
+	 * @param array $countersIncrementsToSkip
+	 */
+	public function setIncrementsToSkip(array $countersIncrementsToSkip): void
+	{
+		$this->incrementsToSkip = $countersIncrementsToSkip;
+	}
+
+	/**
+	 * @return array
+	 * @throws Main\DB\SqlQueryException
+	 */
+	private function loadCounters(): array
+	{
+		$counters = [];
+		$select = implode(',', $this->getMap());
+		$res = Application::getConnection()->query("
+			SELECT GROUP_ID, {$select}
+			FROM b_tasks_counters 
+			WHERE
+				USER_ID = {$this->userId}
+				".($this->groupId > 0 ? "AND GROUP_ID = {$this->groupId}" : "")." 
+			GROUP BY GROUP_ID
+		");
+		while ($item = $res->fetch())
+		{
+			$counters[$item['GROUP_ID']] = $item;
+		}
+
+		return $counters;
+	}
+
+	/**
+	 * @return array|string[]
+	 */
+	private function getMap(): array
+	{
+		return [
+			'EXPIRED',
+			'MY_EXPIRED',
+			'ORIGINATOR_EXPIRED',
+			'ACCOMPLICES_EXPIRED',
+			'AUDITOR_EXPIRED',
+			'NEW_COMMENTS',
+			'MY_NEW_COMMENTS',
+			'ORIGINATOR_NEW_COMMENTS',
+			'ACCOMPLICES_NEW_COMMENTS',
+			'AUDITOR_NEW_COMMENTS',
+		];
+	}
+
+	/**
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function recountAllCounters(): void
 	{
 		if (!$this->userId)
 		{
 			return;
 		}
 
-		$reflect = new \ReflectionClass('\Bitrix\Tasks\Internals\Counter\Name');
-		$collect = new Collection();
+		$counterNamesCollection = new Collection();
+		$reflect = new ReflectionClass(Name::class);
 		foreach ($reflect->getConstants() as $counterName)
 		{
-			$collect->push($counterName);
+			$counterNamesCollection->push($counterName);
 		}
 
-		$this->processRecalculate($collect);
-		$this->saveCounters();
+		$this->processRecalculate($counterNamesCollection);
 	}
 
-	public function processRecalculate($plan)
+	/**
+	 * @param string $counterName
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public function recount(string $counterName): void
 	{
-		/** @var Collection $plan */
-		$plan = $plan->export();
-		$plan = array_unique($plan);
-
-		foreach ($plan as $counterName)
+		if (!$this->userId)
 		{
-			$method = 'calc'.implode('', array_map('ucfirst', explode('_', $counterName)));
+			return;
+		}
+
+		$counterNamesCollection = new Collection();
+		$counterNamesCollection->push($counterName);
+
+		$this->processRecalculate($counterNamesCollection);
+	}
+
+	/**
+	 * @param Collection $counterNamesCollection
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public function processRecalculate(Collection $counterNamesCollection): void
+	{
+		$counterNames = array_unique($counterNamesCollection->export());
+		foreach ($counterNames as $name)
+		{
+			$method = 'calc'.implode('', array_map('ucfirst', explode('_', $name)));
 			if (method_exists($this, $method))
 			{
 				$this->{$method}(true);
@@ -125,411 +214,361 @@ class Counter
 		$this->saveCounters();
 	}
 
-	private function saveCounters()
+	/**
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 * @throws Exception
+	 */
+	private function saveCounters(): void
 	{
 		if (!$this->userId)
 		{
 			return;
 		}
 
-
 		foreach ($this->counters as $groupId => $counters)
 		{
-			$sql = Application::getConnection()->getSqlHelper()->prepareMerge(
-				'b_tasks_counters',
-				array('USER_ID', 'GROUP_ID'),
-				array_merge(
-					$counters,
-					array(
-						'USER_ID' => $this->userId,
-						'GROUP_ID' => $groupId
-					)
-				),
-				$counters
-			);
+			$list = CounterTable::getList([
+				'select' => ['ID'],
+				'filter' => [
+					'=USER_ID' => $this->userId,
+					'=GROUP_ID' => $groupId,
+				],
+			]);
 
-			Application::getConnection()->queryExecute(current($sql));
+			if ($item = $list->fetch())
+			{
+				CounterTable::update($item, $counters);
+			}
+			else
+			{
+				CounterTable::add(array_merge(['USER_ID' => $this->userId, 'GROUP_ID' => $groupId], $counters));
+			}
 		}
 
-		\CUserCounter::Set(
-			$this->userId,
-			self::getPrefix().Counter\Name::MY,
-			$this->get(Counter\Name::MY),
-			'**',
-			'',
-			false
-		);
-		\CUserCounter::Set(
-			$this->userId,
-			self::getPrefix().Counter\Name::ACCOMPLICES,
-			$this->get(Counter\Name::ACCOMPLICES),
-			'**',
-			'',
-			false
-		);
-		\CUserCounter::Set(
-			$this->userId,
-			self::getPrefix().Counter\Name::AUDITOR,
-			$this->get(Counter\Name::AUDITOR),
-			'**',
-			'',
-			false
-		);
-		\CUserCounter::Set(
-			$this->userId,
-			self::getPrefix().Counter\Name::ORIGINATOR,
-			$this->get(Counter\Name::ORIGINATOR),
-			'**',
-			'',
-			false
-		);
-
-		\CUserCounter::Set(
-			$this->userId,
-			self::getPrefix().Counter\Name::TOTAL,
-			$this->get(Counter\Name::TOTAL),
-			'**',
-			'',
-			false
-		);
+		$this->saveCountersByNames([Name::TOTAL]);
 	}
 
-	public static function getPrefix()
+	/**
+	 * @param array $names
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function saveCountersByNames(array $names): void
+	{
+		foreach ($names as $name)
+		{
+			CUserCounter::Set($this->userId, self::getPrefix().$name, $this->get($name), '**', '', false);
+		}
+	}
+
+	/**
+	 * @return string
+	 */
+	public static function getPrefix(): string
 	{
 		return self::$prefix;
 	}
 
+	/**
+	 * @param $role
+	 * @param array $params
+	 * @return array|array[]
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public function getCounters($role, $params = []): array
+	{
+		$skipAccessCheck = (isset($params['SKIP_ACCESS_CHECK']) && $params['SKIP_ACCESS_CHECK']);
+
+		if (!$skipAccessCheck && !$this->isAccessToCounters())
+		{
+			return [];
+		}
+
+		switch (strtolower($role))
+		{
+			case Counter\Role::ALL:
+				$counters = [
+					'total' => [
+						'counter' => $this->get(Name::TOTAL),
+						'code' => '',
+					],
+					'expired' => [
+						'counter' => $this->get(Name::EXPIRED),
+						'code' => Counter\Type::TYPE_EXPIRED,
+					],
+					'new_comments' => [
+						'counter' => $this->get(Name::NEW_COMMENTS),
+						'code' => Counter\Type::TYPE_NEW_COMMENTS,
+					],
+				];
+				break;
+
+			case Counter\Role::RESPONSIBLE:
+				$counters = [
+					'total' => [
+						'counter' => $this->get(Name::MY),
+						'code' => '',
+					],
+					'expired' => [
+						'counter' => $this->get(Name::MY_EXPIRED),
+						'code' => Counter\Type::TYPE_EXPIRED,
+					],
+					'new_comments' => [
+						'counter' => $this->get(Name::MY_NEW_COMMENTS),
+						'code' => Counter\Type::TYPE_NEW_COMMENTS,
+					],
+				];
+				break;
+
+			case Counter\Role::ORIGINATOR:
+				$counters = [
+					'total' => [
+						'counter' => $this->get(Name::ORIGINATOR),
+						'code' => '',
+					],
+					'expired' => [
+						'counter' => $this->get(Name::ORIGINATOR_EXPIRED),
+						'code' => Counter\Type::TYPE_EXPIRED,
+					],
+					'new_comments' => [
+						'counter' => $this->get(Name::ORIGINATOR_NEW_COMMENTS),
+						'code' => Counter\Type::TYPE_NEW_COMMENTS,
+					],
+				];
+				break;
+
+			case Counter\Role::ACCOMPLICE:
+				$counters = [
+					'total' => [
+						'counter' => $this->get(Name::ACCOMPLICES),
+						'code' => '',
+					],
+					'expired' => [
+						'counter' => $this->get(Name::ACCOMPLICES_EXPIRED),
+						'code' => Counter\Type::TYPE_EXPIRED,
+					],
+					'new_comments' => [
+						'counter' => $this->get(Name::ACCOMPLICES_NEW_COMMENTS),
+						'code' => Counter\Type::TYPE_NEW_COMMENTS,
+					],
+				];
+				break;
+
+			case Counter\Role::AUDITOR:
+				$counters = [
+					'total' => [
+						'counter' => $this->get(Name::AUDITOR),
+						'code' => '',
+					],
+					'expired' => [
+						'counter' => $this->get(Name::AUDITOR_EXPIRED),
+						'code' => Counter\Type::TYPE_EXPIRED,
+					],
+					'new_comments' => [
+						'counter' => $this->get(Name::AUDITOR_NEW_COMMENTS),
+						'code' => Counter\Type::TYPE_NEW_COMMENTS,
+					],
+				];
+				break;
+
+			default:
+				$counters = [];
+				break;
+		}
+
+		return $counters;
+	}
+
+	/**
+	 * @param $name
+	 * @return bool|int|mixed
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	public function get($name)
 	{
 		switch ($name)
 		{
+			case Name::TOTAL:
+				$value = $this->get(Name::EXPIRED) + $this->get(Name::NEW_COMMENTS);
+				break;
+
+			case Name::MY:
+				$value = $this->get(Name::MY_EXPIRED) + $this->get(Name::MY_NEW_COMMENTS);
+				break;
+
+			case Name::ORIGINATOR:
+				$value = $this->get(Name::ORIGINATOR_EXPIRED) + $this->get(Name::ORIGINATOR_NEW_COMMENTS);
+				break;
+
+			case Name::ACCOMPLICES:
+				$value = $this->get(Name::ACCOMPLICES_EXPIRED) + $this->get(Name::ACCOMPLICES_NEW_COMMENTS);
+				break;
+
+			case Name::AUDITOR:
+				$value = $this->get(Name::AUDITOR_EXPIRED) + $this->get(Name::AUDITOR_NEW_COMMENTS);
+				break;
+
+			case Name::EFFECTIVE:
+				$value = $this->getKpi();
+				break;
+
 			default:
-
-				if($this->groupId > 0
-				   && !in_array($name, [
-				   	Counter\Name::MY_EXPIRED,
-				   	Counter\Name::MY_WITHOUT_DEADLINE,
-				   	Counter\Name::ORIGINATOR_WITHOUT_DEADLINE,
-					Counter\Name::MY_EXPIRED_SOON,
-					Counter\Name::ORIGINATOR_EXPIRED,
-					Counter\Name::ACCOMPLICES_EXPIRED,
-					Counter\Name::ACCOMPLICES_EXPIRED_SOON,
-					Counter\Name::AUDITOR_EXPIRED,
-					Counter\Name::ORIGINATOR_WAIT_CONTROL
-					]))
-				{
-					return 0;
-				}
-
-				return $this->getInternal($name);
-				break;
-			case Counter\Name::MY:
-				return $this->get(Counter\Name::MY_EXPIRED) +
-					   $this->get(Counter\Name::MY_EXPIRED_SOON) +
-					   $this->get(Counter\Name::MY_WITHOUT_DEADLINE) +
-					   $this->get(Counter\Name::MY_NOT_VIEWED);
-				break;
-			case Counter\Name::ORIGINATOR:
-				return $this->get(Counter\Name::ORIGINATOR_EXPIRED) +
-					   $this->get(Counter\Name::ORIGINATOR_WITHOUT_DEADLINE) +
-					   $this->get(Counter\Name::ORIGINATOR_WAIT_CONTROL);
-				break;
-			case Counter\Name::ACCOMPLICES:
-				return $this->get(Counter\Name::ACCOMPLICES_EXPIRED) +
-					   $this->get(Counter\Name::ACCOMPLICES_EXPIRED_SOON) +
-					   $this->get(Counter\Name::ACCOMPLICES_NOT_VIEWED);
-				break;
-			case Counter\Name::AUDITOR:
-				return $this->get(Counter\Name::AUDITOR_EXPIRED);
-				break;
-			case Counter\Name::EFFECTIVE:
-				return $this->getKpi();
-				break;
-			case Counter\Name::TOTAL:
-				return $this->get(Counter\Name::MY) +
-					   $this->get(Counter\Name::ACCOMPLICES) +
-					   $this->get(Counter\Name::AUDITOR) +
-					   $this->get(Counter\Name::ORIGINATOR);
+				$value = $this->getInternal($name);
 				break;
 		}
+
+		return $value;
 	}
 
+	/**
+	 * @return bool|int
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	private function getKpi()
 	{
 		$efficiency = Effective::getEfficiencyFromUserCounter($this->userId);
-
-		if (!$efficiency)
+		if (!$efficiency && ($efficiency = Effective::getAverageEfficiency(null, null, $this->userId)))
 		{
-			$efficiency = Effective::getAverageEfficiency(null, null, $this->userId);
-
-			if ($efficiency)
-			{
-				Effective::setEfficiencyToUserCounter($this->userId, $efficiency);
-			}
+			Effective::setEfficiencyToUserCounter($this->userId, $efficiency);
 		}
 
 		return $efficiency;
-
-		/*$filterOptions = new Filter\Options(
-			Effective::getFilterId(),
-			Effective::getPresetList()
-		);
-
-		$defId = $filterOptions->getDefaultFilterId();
-		$settings = $filterOptions->getFilterSettings($defId);
-		$filtersRaw = Filter\Options::fetchFieldValuesFromFilterSettings($settings);
-
-		$dateFrom = DateTime::createFrom($filtersRaw['DATETIME_from']);
-		$dateTo = DateTime::createFrom($filtersRaw['DATETIME_to']);
-
-		$groupId = array_key_exists('GROUP_ID', $filtersRaw) && $filtersRaw['GROUP_ID']>0 ? $filtersRaw['GROUP_ID'] : 0;
-
-		$counters = \Bitrix\Tasks\Internals\Effective::getCountersByRange($dateFrom, $dateTo, $this->userId, $groupId);
-		if (($counters['CLOSED'] + $counters['OPENED']) == 0)
-		{
-			$kpi = 100;
-		}
-		else
-		{
-			$kpi = round(100 - ($counters['VIOLATIONS'] / ($counters['OPENED'] + $counters['CLOSED'])) * 100);
-		}
-
-		return $kpi < 0 ? 0 : $kpi;*/
 	}
 
-	private function getInternal($name)
+	/**
+	 * @param string $name
+	 * @param int|null $groupId
+	 * @return int
+	 */
+	private function getInternal(string $name, ?int $groupId = null): int
 	{
-		$name = strtoupper($name);
-		if ($this->groupId > 0)
+		$name = mb_strtoupper($name);
+
+		if ($this->groupId > 0 || isset($groupId))
 		{
-			if (!array_key_exists($this->groupId, $this->counters) ||
-				!array_key_exists($name, $this->counters[$this->groupId]))
+			$groupId = ($this->groupId > 0 ? $this->groupId : $groupId);
+
+			if (
+				!array_key_exists($groupId, $this->counters)
+				|| !array_key_exists($name, $this->counters[$groupId])
+			)
 			{
 				return 0;
 			}
 
-			return $this->counters[$this->groupId][$name];
+			return $this->counters[$groupId][$name];
 		}
-		else
+
+		$counter = 0;
+		foreach ($this->counters as $counters)
 		{
-			$counter = 0;
-			foreach ($this->counters as $groupId => $counters)
-			{
-				$counter += $counters[$name];
-			}
-
-			return $counter;
+			$counter += $counters[$name];
 		}
-	}
 
-	public static function onBeforeTaskAdd()
-	{
+		return $counter;
 	}
 
 	/**
-	 * Recalculates counters and efficiency after task adding
-	 *
-	 * @param array $fields
+	 * @param $deadline
+	 * @return bool
 	 */
-	public static function onAfterTaskAdd(array $fields)
+	public static function isDeadlineExpired($deadline): bool
 	{
-		$responsible = new Collection;
-		$originator = new Collection;
-		$accomplice = new Collection;
-		$auditor = new Collection;
-
-		$responsible->push(Counter\Name::OPENED);
-		$responsible->push(Counter\Name::MY_EXPIRED);
-		$responsible->push(Counter\Name::MY_EXPIRED_SOON);
-		$responsible->push(Counter\Name::MY_WITHOUT_DEADLINE);
-
-		$originator->push(Counter\Name::OPENED);
-		$originator->push(Counter\Name::ORIGINATOR_WAIT_CONTROL);
-		$originator->push(Counter\Name::ORIGINATOR_EXPIRED);
-		$originator->push(Counter\Name::ORIGINATOR_WITHOUT_DEADLINE);
-
-		if ($fields['RESPONSIBLE_ID'] != $fields['CREATED_BY'])
-		{
-			$responsible->push(Counter\Name::MY_NOT_VIEWED);
-			$originator->push(Counter\Name::MY_NOT_VIEWED);
-		}
-
-		$accomplice->push(Counter\Name::ACCOMPLICES_NOT_VIEWED);
-		$accomplice->push(Counter\Name::ACCOMPLICES_EXPIRED);
-		$accomplice->push(Counter\Name::ACCOMPLICES_EXPIRED_SOON);
-
-		$auditor->push(Counter\Name::AUDITOR_EXPIRED);
-
-		$countersMap = [
-			'RESPONSIBLE_ID' => $responsible,
-			'CREATED_BY' => $originator,
-			'ACCOMPLICES' => $accomplice,
-			'AUDITORS' => $auditor
-		];
-
-		$efficiencyMap = [];
-		foreach ($fields['ACCOMPLICES'] as $userId)
-		{
-			$efficiencyMap[$userId] = 'A';
-		}
-		$efficiencyMap[$fields['RESPONSIBLE_ID']] = 'R';
-
-		$mode = 'ADD';
-		$task = Task::makeInstanceFromSource($fields, User::getAdminId());
-
-		static::recalculateCounters($fields, $countersMap, $mode);
-		static::recalculateEfficiency($fields, $efficiencyMap, $task, $mode);
-
-		if ($fields['DEADLINE'] && DateTime::createFrom($fields['DEADLINE']))
-		{
-			Agent::add($fields['ID'], DateTime::createFrom($fields['DEADLINE']));
-		}
-	}
-
-	/**
-	 * Recalculates counters by user roles
-	 *
-	 * @param $fields
-	 * @param $map
-	 * @param $mode
-	 */
-	private static function recalculateCounters($fields, $map, $mode)
-	{
-		/** @var  Collection $plan */
-		foreach ($map as $key => $plan)
-		{
-			if (in_array($key, ['CREATED_BY', 'RESPONSIBLE_ID']))
-			{
-				$counter = static::getInstance($fields[$key]);
-				if ($counter instanceof static)
-				{
-					$counter->processRecalculate($plan);
-				}
-			}
-			else if (in_array($key, ['ACCOMPLICES', 'AUDITORS']))
-			{
-				if ($key === 'ACCOMPLICES')
-				{
-					$plan->push(Counter\Name::OPENED);
-
-					if ($mode === 'DELETE')
-					{
-						$plan->push(Counter\Name::CLOSED);
-					}
-				}
-
-				foreach ($fields[$key] as $userId)
-				{
-					$counter = static::getInstance($userId);
-					if ($counter instanceof static)
-					{
-						$counter->processRecalculate($plan);
-					}
-				}
-			}
-		}
-	}
-
-	/**
-	 * Recalculates efficiency for responsible user and accomplices
-	 *
-	 * @param $fields
-	 * @param $map
-	 * @param Task $task
-	 * @param $mode
-	 * @throws SqlQueryException
-	 * @throws Exception
-	 */
-	private static function recalculateEfficiency($fields, $map, Task $task, $mode)
-	{
-		foreach ($map as $userId => $userType)
-		{
-			Effective::modify($userId, $userType, $task, $fields['GROUP_ID'], false);
-		}
-
-		if ($mode === 'DELETE')
-		{
-			Effective::repair($fields['ID']);
-		}
-	}
-
-	public static function deadlineIsExpired($deadline)
-	{
-		if (!$deadline)
+		if (!$deadline || !($deadline = DateTime::createFrom($deadline)))
 		{
 			return false;
 		}
 
-		$deadline = DateTime::createFromUserTime($deadline);
-		if (!$deadline)
+		return $deadline->checkLT(self::getExpiredTime());
+	}
+
+	/**
+	 * @param $deadline
+	 * @return bool
+	 */
+	public static function isDeadlineExpiredSoon($deadline): bool
+	{
+		if (!$deadline || !($deadline = DateTime::createFrom($deadline)))
 		{
 			return false;
 		}
 
-		$expired = self::getExpiredTime();
-
-		return $deadline->checkLT($expired);
+		return $deadline->checkGT(self::getExpiredTime()) && $deadline->checkLT(self::getExpiredSoonTime());
 	}
 
 	/**
 	 * @return DateTime
 	 */
-	public static function getExpiredTime()
+	public static function getExpiredTime(): DateTime
 	{
-		$expired = new DateTime();
-
-		return $expired;
-	}
-
-	public static function deadlineIsExpiredSoon($deadline)
-	{
-		if (!$deadline)
-		{
-			return false;
-		}
-
-		$deadline = DateTime::createFrom($deadline);
-
-		$expired = self::getExpiredTime();
-		$expiredSoon = self::getExpiredSoonTime();
-
-		return $deadline->checkGT($expired) && $deadline->checkLT($expiredSoon);
+		return new DateTime();
 	}
 
 	/**
 	 * @return DateTime
 	 */
-	public static function getExpiredSoonTime()
+	public static function getExpiredSoonTime(): DateTime
 	{
-		$expiredSoon = DateTime::createFromTimestamp(time() + Counter::getDeadlineTimeLimit());
-
-		return $expiredSoon;
+		return DateTime::createFromTimestamp(time() + self::getDeadlineTimeLimit());
 	}
 
-	public static function getDeadlineTimeLimit($reCache = false)
+	/**
+	 * @param bool $reCache
+	 * @return int
+	 */
+	public static function getDeadlineTimeLimit($reCache = false): int
 	{
 		static $time;
 
 		if (!$time || $reCache)
 		{
-			$time = \CUserOptions::GetOption('tasks', 'deadlineTimeLimit', self::DEFAULT_DEADLINE_LIMIT);
+			$time = CUserOptions::GetOption(
+				'tasks',
+				'deadlineTimeLimit',
+				self::DEFAULT_DEADLINE_LIMIT
+			);
 		}
 
 		return $time;
 	}
 
 	/**
+	 * @param $timeLimit
+	 * @return int
+	 */
+	public static function setDeadlineTimeLimit($timeLimit): int
+	{
+		CUserOptions::SetOption('tasks', 'deadlineTimeLimit', $timeLimit);
+		return self::getDeadlineTimeLimit(true);
+	}
+
+	/**
 	 * @param $userId
 	 * @param int $groupId
-	 * @param bool $recache
-	 *
-	 * @return self
+	 * @param bool $reCache
+	 * @return static
+	 * @throws Main\ArgumentException
+	 * @throws Main\DB\SqlQueryException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
 	 */
-	public static function getInstance($userId, $groupId = 0, $recache = false)
+	public static function getInstance($userId, $groupId = 0, $reCache = false): self
 	{
-		if ($recache || !self::$instance ||
-			!array_key_exists($userId, self::$instance) ||
-			!array_key_exists($groupId, self::$instance[$userId]))
+		if (
+			$reCache
+			|| !self::$instance
+			|| !array_key_exists($userId, self::$instance)
+			|| !array_key_exists($groupId, self::$instance[$userId])
+		)
 		{
 			self::$instance[$userId][$groupId] = new self($userId, $groupId);
 		}
@@ -537,93 +576,131 @@ class Counter
 		return self::$instance[$userId][$groupId];
 	}
 
-	public static function onBeforeTaskUpdate()
+	public static function onBeforeTaskAdd(): void
 	{
+
 	}
 
 	/**
-	 * @param $fields
-	 * @param $newFields
-	 * @param array $params
-	 * [
-	 * FORCE_RECOUNT_COUNTER = Y|N
-	 * ]
+	 * @param array $fields
+	 * @throws Exception
 	 */
-	public static function onAfterTaskUpdate($fields, $newFields, array $params = array())
+	public static function onAfterTaskAdd(array $fields): void
 	{
+		$efficiencyMap = array_fill_keys($fields['ACCOMPLICES'], 'A');
+		$efficiencyMap[$fields['RESPONSIBLE_ID']] = 'R';
+
+		$task = Task::makeInstanceFromSource($fields, User::getAdminId());
+		$taskId = $task->getId();
+
+		self::recalculateEfficiency($fields, $efficiencyMap, $task, 'ADD');
+
+		if ($fields['DEADLINE'] && ($deadline = DateTime::createFrom($fields['DEADLINE'])))
+		{
+			Agent::add($taskId, $deadline);
+		}
+	}
+
+	public static function onBeforeTaskUpdate(): void
+	{
+
+	}
+
+	/**
+	 * @param array $fields
+	 * @param array $newFields
+	 * @param array $params
+	 * @throws Exception
+	 */
+	public static function onAfterTaskUpdate(array $fields, array $newFields, array $params = []): void
+	{
+		self::updateAgents($fields, $newFields);
+
+		if (
+			(isset($params['FORCE_RECOUNT_COUNTER']) && $params['FORCE_RECOUNT_COUNTER'] === 'Y')
+			|| self::needUpdateRecounts($fields, $newFields)
+		)
+		{
+			if ($task = Task::getInstance($fields['ID'], User::getAdminId()))
+			{
+				self::updateEfficiency($fields, $newFields, $task);
+				self::updateCounters($fields, $newFields);
+			}
+		}
+
+	}
+
+	/**
+	 * @param array $fields
+	 * @param array $newFields
+	 */
+	private static function updateAgents(array $fields, array $newFields): void
+	{
+		$taskId = (int)$fields['ID'];
+
 		if (self::fieldChanged('DEADLINE', $fields, $newFields))
 		{
-			if (!$newFields['DEADLINE'] || !DateTime::createFrom($newFields['DEADLINE']))
+			if ($newFields['DEADLINE'] && ($deadline = DateTime::createFrom($newFields['DEADLINE'])))
 			{
-				Agent::remove($fields['ID']);
+				Agent::add($taskId, $deadline);
 			}
 			else
 			{
-				Agent::add($fields['ID'], DateTime::createFrom($newFields['DEADLINE']));
+				Agent::remove($taskId);
 			}
 		}
-
-		if (
-			$params['FORCE_RECOUNT_COUNTER'] === 'Y'
-			|| self::fieldChanged('STATUS', $fields, $newFields)
-			|| self::fieldChanged('DEADLINE', $fields, $newFields)
-			|| self::fieldChanged('GROUP_ID', $fields, $newFields)
-			|| self::fieldChanged('RESPONSIBLE_ID', $fields, $newFields)
-			|| self::fieldChanged('CREATED_BY', $fields, $newFields)
-			|| self::fieldChanged('AUDITORS', $fields, $newFields)
-			|| self::fieldChanged('ACCOMPLICES', $fields, $newFields)
-		)
-		{
-			$task = Task::getInstance($fields['ID'], User::getAdminId());
-			if ($task)
-			{
-				self::onAfterUpdateTaskInternal($fields, $task);
-				self::onAfterUpdateTaskInternal($newFields, $task);
-
-				self::updateEffective($fields, $newFields, $task);
-			}
-		}
-
 	}
 
 	/**
-	 * @param $fields
-	 * @param $newFields
+	 * @param array $fields
+	 * @param array $newFields
+	 * @return bool
+	 */
+	private static function needUpdateRecounts(array $fields, array $newFields): bool
+	{
+		return in_array(true, self::getChangeFact($fields, $newFields), true);
+	}
+
+	/**
+	 * @param array $fields
+	 * @param array $newFields
 	 * @param Task $task
-	 * @throws ArgumentException
-	 * @throws SqlQueryException
-	 * @throws ObjectPropertyException
-	 * @throws SystemException
+	 * @throws Main\ArgumentException
+	 * @throws Main\Db\SqlQueryException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
 	 * @throws Exception
 	 */
-	private static function updateEffective($fields, $newFields, Task $task): void
+	private static function updateEfficiency(array $fields, array $newFields, Task $task): void
 	{
-		$responsibleChanged = self::fieldChanged('RESPONSIBLE_ID', $fields, $newFields);
-		$accomplicesChanged = self::fieldChanged('ACCOMPLICES', $fields, $newFields);
-		$deadlineChanged = self::fieldChanged('DEADLINE', $fields, $newFields);
-		$groupChanged = self::fieldChanged('GROUP_ID', $fields, $newFields);
-		$statusChanged = self::fieldChanged('STATUS', $fields, $newFields);
+		[
+			$statusChanged,
+			$deadlineChanged,
+			$groupChanged,
+			$responsibleChanged,
+			$accomplicesChanged,
+		] = self::getChangeFact($fields, $newFields);
 
 		$taskId = $fields['ID'];
 
-		$oldStatus = (int)($fields['STATUS'] > 0? $fields['STATUS'] : $fields['REAL_STATUS']);
-		$newStatus = (int)($newFields['STATUS'] > 0? $newFields['STATUS'] : $newFields['REAL_STATUS']);
+		$oldStatus = (int)($fields['STATUS'] > 0 ? $fields['STATUS'] : $fields['REAL_STATUS']);
+		$newStatus = (int)($newFields['STATUS'] > 0 ? $newFields['STATUS'] : $newFields['REAL_STATUS']);
 
-		$oldGroupId = $fields['GROUP_ID'];
-		$newGroupId = $newFields['GROUP_ID'];
-		$groupId = ($groupChanged? $newGroupId : $oldGroupId);
+		$deadline = ($deadlineChanged ? $newFields['DEADLINE'] : $fields['DEADLINE']);
+		$isViolation = self::isDeadlineExpired($deadline);
 
-		$oldResponsibleId = $fields['RESPONSIBLE_ID'];
-		$newResponsibleId = $newFields['RESPONSIBLE_ID'];
+		$oldGroupId = (int)$fields['GROUP_ID'];
+		$newGroupId = (int)$newFields['GROUP_ID'];
+		$groupId = ($groupChanged ? $newGroupId : $oldGroupId);
 
-		$oldAccomplices = (array)$fields['ACCOMPLICES'];
-		$newAccomplices = (array)$newFields['ACCOMPLICES'];
+		$oldResponsibleId = (int)$fields['RESPONSIBLE_ID'];
+		$newResponsibleId = (int)$newFields['RESPONSIBLE_ID'];
+
+		$oldAccomplices = array_map('intval', (array)$fields['ACCOMPLICES']);
+		$newAccomplices = array_map('intval', (array)$newFields['ACCOMPLICES']);
 		$accomplicesIn = array_diff($newAccomplices, $oldAccomplices);
 		$accomplicesOut = array_diff($oldAccomplices, $newAccomplices);
 		$allAccomplices = array_unique(array_merge($oldAccomplices, $newAccomplices));
-
-		$deadline = ($newFields['DEADLINE']? $newFields['DEADLINE'] : $fields['DEADLINE']);
-		$isViolation = self::deadlineIsExpired($deadline);
 
 		$responsibleModified = false;
 		$accomplicesModified = false;
@@ -633,14 +710,14 @@ class Counter
 		$statesInProgress = [CTasks::STATE_NEW, Ctasks::STATE_PENDING, CTasks::STATE_IN_PROGRESS];
 
 		// TASK DEFERRED OR COMPLETED
-		if ($statusChanged && in_array($newStatus, $statesCompleted))
+		if ($statusChanged && in_array($newStatus, $statesCompleted, true))
 		{
 			Effective::repair($taskId);
 			Effective::modify($oldResponsibleId, 'R', $task, $oldGroupId, false);
 
 			foreach ($oldAccomplices as $userId)
 			{
-				if ($userId != $oldResponsibleId)
+				if ($userId !== $oldResponsibleId)
 				{
 					Effective::modify($userId, 'A', $task, $oldGroupId, false);
 				}
@@ -655,7 +732,7 @@ class Counter
 			{
 				foreach ($accomplicesIn as $userId)
 				{
-					if ($userId != $oldResponsibleId && $userId != $newResponsibleId)
+					if ($userId !== $oldResponsibleId && $userId !== $newResponsibleId)
 					{
 						Effective::modify($userId, 'A', $task, $groupId, false);
 					}
@@ -666,12 +743,15 @@ class Counter
 		}
 
 		// TASK RESTARTED
-		if ($statusChanged && in_array($oldStatus, $statesCompleted) && in_array($newStatus, $statesInProgress))
+		if (
+			$statusChanged
+			&& in_array($oldStatus, $statesCompleted, true)
+			&& in_array($newStatus, $statesInProgress, true)
+		)
 		{
 			if (!$responsibleChanged)
 			{
 				Effective::modify($oldResponsibleId, 'R', $task, $groupId, $isViolation);
-
 				$responsibleModified = true;
 			}
 
@@ -679,19 +759,18 @@ class Counter
 			{
 				foreach ($oldAccomplices as $userId)
 				{
-					if ($userId != $oldResponsibleId && $userId != $newResponsibleId)
+					if ($userId !== $oldResponsibleId && $userId !== $newResponsibleId)
 					{
 						Effective::modify($userId, 'A', $task, $groupId, $isViolation);
 					}
 				}
-
 				$accomplicesModified = true;
 			}
 
 			$canProceed = true;
 		}
 
-		if (!$canProceed && in_array($oldStatus, $statesCompleted))
+		if (!$canProceed && in_array($oldStatus, $statesCompleted, true))
 		{
 			return;
 		}
@@ -699,8 +778,9 @@ class Counter
 		// RESPONSIBLE CHANGED
 		if ($responsibleChanged)
 		{
-			if (($activeViolations = Effective::checkActiveViolations($taskId, $oldResponsibleId)) &&
-				in_array($oldResponsibleId, $newAccomplices))
+			if (
+				($activeViolations = Effective::checkActiveViolations($taskId, $oldResponsibleId))
+				&& in_array($oldResponsibleId, $newAccomplices, true))
 			{
 				EffectiveTable::update($activeViolations[0]['ID'], ['USER_TYPE' => 'A', 'GROUP_ID' => $groupId]);
 			}
@@ -729,7 +809,7 @@ class Counter
 		{
 			foreach ($accomplicesOut as $userId)
 			{
-				if ($userId != $oldResponsibleId && $userId != $newResponsibleId)
+				if ($userId !== $oldResponsibleId && $userId !== $newResponsibleId)
 				{
 					Effective::repair($taskId, $userId, 'A');
 					Effective::modify($userId, 'A', $task, $oldGroupId, false);
@@ -738,7 +818,7 @@ class Counter
 
 			foreach ($accomplicesIn as $userId)
 			{
-				if ($userId != $oldResponsibleId && $userId != $newResponsibleId)
+				if ($userId !== $oldResponsibleId && $userId !== $newResponsibleId)
 				{
 					Effective::modify($userId, 'A', $task, $groupId, $isViolation);
 				}
@@ -746,7 +826,7 @@ class Counter
 		}
 
 		// DEADLINE CHANGED
-		if ($deadlineChanged && !self::deadlineIsExpired($deadline))
+		if ($deadlineChanged && !$isViolation)
 		{
 			Effective::repair($taskId);
 
@@ -759,11 +839,11 @@ class Counter
 
 			if (!$accomplicesModified)
 			{
-				$accomplices = ($accomplicesChanged? array_diff($newAccomplices, $accomplicesIn) : $allAccomplices);
+				$accomplices = ($accomplicesChanged ? array_diff($newAccomplices, $accomplicesIn) : $allAccomplices);
 
 				foreach ($accomplices as $userId)
 				{
-					if ($userId != $oldResponsibleId && $userId != $newResponsibleId)
+					if ($userId !== $oldResponsibleId && $userId !== $newResponsibleId)
 					{
 						Effective::modify($userId, 'A', $task, $groupId, false);
 					}
@@ -790,11 +870,11 @@ class Counter
 
 				if (!$accomplicesModified)
 				{
-					$accomplices = ($accomplicesChanged? array_diff($newAccomplices, $accomplicesIn) : $allAccomplices);
+					$accomplices = ($accomplicesChanged ? array_diff($newAccomplices, $accomplicesIn) : $allAccomplices);
 
 					foreach ($accomplices as $userId)
 					{
-						if ($userId != $oldResponsibleId && $userId != $newResponsibleId)
+						if ($userId !== $oldResponsibleId && $userId !== $newResponsibleId)
 						{
 							Effective::modify($userId, 'A', $task, $newGroupId, false);
 						}
@@ -810,11 +890,11 @@ class Counter
 
 				if (!$accomplicesModified)
 				{
-					$accomplices = ($accomplicesChanged? array_diff($newAccomplices, $accomplicesIn) : $allAccomplices);
+					$accomplices = ($accomplicesChanged ? array_diff($newAccomplices, $accomplicesIn) : $allAccomplices);
 
 					foreach ($accomplices as $userId)
 					{
-						if ($userId != $oldResponsibleId && $userId != $newResponsibleId)
+						if ($userId !== $oldResponsibleId && $userId !== $newResponsibleId)
 						{
 							Effective::modify($userId, 'A', $task, $newGroupId, $isViolation);
 						}
@@ -824,441 +904,1011 @@ class Counter
 		}
 	}
 
-	private static function fieldChanged($key, $fields, $newFields)
+	/**
+	 * @param array $fields
+	 * @param array $newFields
+	 * @throws Main\ArgumentException
+	 * @throws Main\DB\SqlQueryException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private static function updateCounters(array $fields, array $newFields): void
 	{
-		return array_key_exists($key, $newFields) && $newFields[$key] != $fields[$key];
-	}
+		[
+			,
+			$deadlineChanged,
+			$groupChanged,
+			$responsibleChanged,
+			$accomplicesChanged,
+			$creatorChanged,
+			$auditorsChanged,
+		] = self::getChangeFact($fields, $newFields);
 
-	private static function onAfterUpdateTaskInternal($fields, Task $task)
-	{
-		$responsible = new Collection;
-		$originator = new Collection;
-		$auditor = new Collection;
-		$accomplice = new Collection;
+		$taskId = $fields['ID'];
 
-		if (!array_key_exists('CREATED_BY', $fields) ||
-			!array_key_exists('RESPONSIBLE_ID', $fields) ||
-			!array_key_exists('GROUP_ID', $fields))
+		$wasExpired = self::isDeadlineExpired($fields['DEADLINE']);
+
+		$oldGroupId = (int)$fields['GROUP_ID'];
+		$newGroupId = (int)$newFields['GROUP_ID'];
+
+		$oldResponsibleId = (int)$fields['RESPONSIBLE_ID'];
+		$newResponsibleId = (int)$newFields['RESPONSIBLE_ID'];
+
+		$oldCreator = (int)$fields['CREATED_BY'];
+		$newCreator = (int)$newFields['CREATED_BY'];
+
+		$oldAccomplices = array_map('intval', (array)$fields['ACCOMPLICES']);
+		$newAccomplices = array_map('intval', (array)$newFields['ACCOMPLICES']);
+
+		$oldAuditors = array_map('intval', (array)$fields['AUDITORS']);
+		$newAuditors = array_map('intval', (array)$newFields['AUDITORS']);
+
+		$oldMembers = array_unique(
+			array_merge(
+				[$oldCreator, $oldResponsibleId],
+				$oldAccomplices,
+				$oldAuditors
+			)
+		);
+		$newMembers = array_unique(
+			array_merge(
+				[
+					($creatorChanged ? $newCreator : $oldCreator),
+					($responsibleChanged ? $newResponsibleId : $oldResponsibleId),
+				],
+				($accomplicesChanged ? $newAccomplices : $oldAccomplices),
+				($auditorsChanged ? $newAuditors : $oldAuditors)
+			)
+		);
+		$allMembers = array_unique(array_merge($oldMembers, $newMembers));
+		$membersIn = array_diff($newMembers, $oldMembers);
+		$membersOut = array_diff($oldMembers, $newMembers);
+		$staticMembers = array_diff($allMembers, array_merge($membersIn, $membersOut));
+
+		foreach ($membersOut as $userId)
 		{
-			if (!array_key_exists('RESPONSIBLE_ID', $fields))
+			if (self::isMuted($taskId, $userId))
 			{
-				$fields['RESPONSIBLE_ID'] = $task['RESPONSIBLE_ID'];
+				continue;
 			}
 
-			if (!array_key_exists('CREATED_BY', $fields))
-			{
-				$fields['CREATED_BY'] = $task['CREATED_BY'];
-			}
+			$newCommentsCount = Comments\Task::getNewCommentsCountForTasks([$taskId], $userId)[$taskId];
 
-			if (!array_key_exists('GROUP_ID', $fields))
+			$instance = self::getInstance($userId);
+			$instance->changeCounter($oldGroupId, Name::NEW_COMMENTS, -$newCommentsCount);
+			$instance->changeCounter($oldGroupId, Name::EXPIRED, -$wasExpired);
+
+			if ($userId === $oldResponsibleId)
 			{
-				$fields['GROUP_ID'] = $task['GROUP_ID'];
+				$instance->changeCounter($oldGroupId, Name::MY_NEW_COMMENTS, -$newCommentsCount);
+				$instance->changeCounter($oldGroupId, Name::MY_EXPIRED, -$wasExpired);
 			}
+			if ($userId === $oldCreator && $oldCreator !== $oldResponsibleId)
+			{
+				$instance->changeCounter($oldGroupId, Name::ORIGINATOR_NEW_COMMENTS, -$newCommentsCount);
+				$instance->changeCounter($oldGroupId, Name::ORIGINATOR_EXPIRED, -$wasExpired);
+			}
+			if (in_array($userId, $oldAccomplices, true))
+			{
+				$instance->changeCounter($oldGroupId, Name::ACCOMPLICES_NEW_COMMENTS, -$newCommentsCount);
+				$instance->changeCounter($oldGroupId, Name::ACCOMPLICES_EXPIRED, -$wasExpired);
+			}
+			if (in_array($userId, $oldAuditors, true))
+			{
+				$instance->changeCounter($oldGroupId, Name::AUDITOR_NEW_COMMENTS, -$newCommentsCount);
+				$instance->changeCounter($oldGroupId, Name::AUDITOR_EXPIRED, -$wasExpired);
+			}
+			$instance->saveCounters();
 		}
 
-		$originator->push(Counter\Name::OPENED);
-		$originator->push(Counter\Name::CLOSED);
-
-		$originator->push(Counter\Name::ORIGINATOR_WAIT_CONTROL);
-
-		$responsible->push(Counter\Name::MY_NOT_VIEWED);
-		$originator->push(Counter\Name::MY_NOT_VIEWED);
-
-		$responsible->push(Counter\Name::OPENED);
-		$responsible->push(Counter\Name::CLOSED);
-
-		//		if ($fields['RESPONSIBLE_ID'] != $fields['CREATED_BY'])
-		//		{
-			$responsible->push(Counter\Name::MY_NOT_VIEWED);
-			$originator->push(Counter\Name::MY_NOT_VIEWED);
-
-		//			if ($fields['DEADLINE'])
-		//			{
-				$originator->push(Counter\Name::ORIGINATOR_EXPIRED);
-				$responsible->push(Counter\Name::MY_EXPIRED_SOON);
-				$responsible->push(Counter\Name::MY_EXPIRED);
-		//			}
-		//			else
-		//			{
-				$originator->push(Counter\Name::ORIGINATOR_WITHOUT_DEADLINE);
-				$responsible->push(Counter\Name::MY_WITHOUT_DEADLINE);
-
-				$originator->push(Counter\Name::ORIGINATOR_EXPIRED);
-				$responsible->push(Counter\Name::MY_EXPIRED_SOON);
-				$responsible->push(Counter\Name::MY_EXPIRED);
-		//			}
-		//		}
-		//		else
-		//		{
-		//			if ($fields['DEADLINE'])
-		//			{
-		//				$responsible->push(Counter\Name::MY_EXPIRED_SOON);
-		//				$responsible->push(Counter\Name::MY_EXPIRED);
-		//			}
-		//		}
-
-		if (!empty($fields['AUDITORS']))
+		if (!$deadlineChanged && $wasExpired)
 		{
-			if ($fields['DEADLINE'])
-			{
-				$auditor->push(Counter\Name::AUDITOR_EXPIRED);
-			}
-		}
+			$groupId = ($groupChanged ? $newGroupId : $oldGroupId);
 
-		if (!empty($fields['ACCOMPLICES']))
-		{
-			$accomplice->push(Counter\Name::ACCOMPLICES_NOT_VIEWED);
-
-			if ($fields['DEADLINE'])
+			foreach ($membersIn as $userId)
 			{
-				$accomplice->push(Counter\Name::ACCOMPLICES_EXPIRED);
-				$accomplice->push(Counter\Name::ACCOMPLICES_EXPIRED_SOON);
+				if (self::isMuted($taskId, $userId))
+				{
+					continue;
+				}
+
+				$instance = self::getInstance($userId);
+				$instance->changeCounter($groupId, Name::EXPIRED, $wasExpired);
+
+				if ($userId === $newResponsibleId)
+				{
+					$instance->changeCounter($groupId, Name::MY_EXPIRED, $wasExpired);
+				}
+				if ($userId === $newCreator && $newCreator !== $newResponsibleId)
+				{
+					$instance->changeCounter($groupId, Name::ORIGINATOR_EXPIRED, $wasExpired);
+				}
+				if (in_array($userId, $newAccomplices, true))
+				{
+					$instance->changeCounter($groupId, Name::ACCOMPLICES_EXPIRED, $wasExpired);
+				}
+				if (in_array($userId, $newAuditors, true))
+				{
+					$instance->changeCounter($groupId, Name::AUDITOR_EXPIRED, $wasExpired);
+				}
+				$instance->saveCounters();
 			}
 		}
 
-		if(array_key_exists('CREATED_BY', $fields))
+		foreach ($staticMembers as $userId)
 		{
-			$originator->push(Counter\Name::MY_EXPIRED);
-			$originator->push(Counter\Name::MY_EXPIRED_SOON);
-			$originator->push(Counter\Name::MY_NOT_VIEWED);
-			$originator->push(Counter\Name::MY_WITHOUT_DEADLINE);
-		}
-
-		// PROCESS RECALCULATE
-		if ($responsible->count() > 0)
-		{
-			if ($fields['RESPONSIBLE_ID'])
+			if (self::isMuted($taskId, $userId))
 			{
-				$counter = self::getInstance($fields['RESPONSIBLE_ID']);
-				$counter->processRecalculate($responsible);
+				continue;
+			}
+
+			$instance = self::getInstance($userId);
+			$instance->processRecalculate(
+				new Collection([
+					Name::EXPIRED,
+					Name::MY_EXPIRED,
+					Name::ORIGINATOR_EXPIRED,
+					Name::ACCOMPLICES_EXPIRED,
+					Name::AUDITOR_EXPIRED,
+				])
+			);
+
+			if ($groupChanged)
+			{
+				$newCommentsCount = Comments\Task::getNewCommentsCountForTasks([$taskId], $userId)[$taskId];
+
+				$instance->changeCounter($oldGroupId, Name::NEW_COMMENTS, -$newCommentsCount);
+				$instance->changeCounter($newGroupId, Name::NEW_COMMENTS, +$newCommentsCount);
+
+				if ($userId === $oldResponsibleId)
+				{
+					$instance->changeCounter($oldGroupId, Name::MY_NEW_COMMENTS, -$newCommentsCount);
+					$instance->changeCounter($newGroupId, Name::MY_NEW_COMMENTS, +$newCommentsCount);
+				}
+				if ($userId === $oldCreator && $oldCreator !== $oldResponsibleId)
+				{
+					$instance->changeCounter($oldGroupId, Name::ORIGINATOR_NEW_COMMENTS, -$newCommentsCount);
+					$instance->changeCounter($newGroupId, Name::ORIGINATOR_NEW_COMMENTS, +$newCommentsCount);
+				}
+				if (in_array($userId, $oldAccomplices, true))
+				{
+					$instance->changeCounter($oldGroupId, Name::ACCOMPLICES_NEW_COMMENTS, -$newCommentsCount);
+					$instance->changeCounter($newGroupId, Name::ACCOMPLICES_NEW_COMMENTS, +$newCommentsCount);
+				}
+				if (in_array($userId, $oldAuditors, true))
+				{
+					$instance->changeCounter($oldGroupId, Name::AUDITOR_NEW_COMMENTS, -$newCommentsCount);
+					$instance->changeCounter($newGroupId, Name::AUDITOR_NEW_COMMENTS, +$newCommentsCount);
+				}
+				$instance->saveCounters();
 			}
 		}
-
-		if ($originator->count() > 0)
-		{
-			$counter = self::getInstance($fields['CREATED_BY']);
-			$counter->processRecalculate($originator);
-		}
-
-		if ($auditor->count() > 0)
-		{
-			foreach ($fields['AUDITORS'] as $userId)
-			{
-				$counter = self::getInstance($userId);
-				$counter->processRecalculate($auditor);
-			}
-		}
-
-		if ($accomplice->count() > 0)
-		{
-			foreach ($fields['ACCOMPLICES'] as $userId)
-			{
-				$accomplice->push(Counter\Name::OPENED);
-				$accomplice->push(Counter\Name::CLOSED);
-
-				$counter = static::getInstance($userId);
-				$counter->processRecalculate($accomplice);
-			}
-		}
-	}
-
-	public static function onBeforeTaskDelete()
-	{
-	}
-
-	public static function onAfterTaskDelete($fields)
-	{
-		$responsible = new Collection;
-		$originator = new Collection;
-		$accomplice = new Collection;
-		$auditor = new Collection;
-
-		$responsible->push(Counter\Name::OPENED);
-		$responsible->push(Counter\Name::CLOSED);
-		$responsible->push(Counter\Name::MY_EXPIRED);
-		$responsible->push(Counter\Name::MY_EXPIRED_SOON);
-		$responsible->push(Counter\Name::MY_WITHOUT_DEADLINE);
-
-		$originator->push(Counter\Name::OPENED);
-		$originator->push(Counter\Name::CLOSED);
-		$originator->push(Counter\Name::ORIGINATOR_WAIT_CONTROL);
-		$originator->push(Counter\Name::ORIGINATOR_EXPIRED);
-		$originator->push(Counter\Name::ORIGINATOR_WITHOUT_DEADLINE);
-
-		if ((int)$fields['RESPONSIBLE_ID'] !== (int)$fields['CREATED_BY'])
-		{
-			$responsible->push(Counter\Name::MY_NOT_VIEWED);
-			$originator->push(Counter\Name::MY_NOT_VIEWED);
-		}
-
-		$accomplice->push(Counter\Name::ACCOMPLICES_NOT_VIEWED);
-		$accomplice->push(Counter\Name::ACCOMPLICES_EXPIRED);
-		$accomplice->push(Counter\Name::ACCOMPLICES_EXPIRED_SOON);
-
-		$auditor->push(Counter\Name::AUDITOR_EXPIRED);
-
-		$countersMap = [
-			'RESPONSIBLE_ID' => $responsible,
-			'CREATED_BY' => $originator,
-			'ACCOMPLICES' => $accomplice,
-			'AUDITORS' => $auditor,
-		];
-
-		$efficiencyMap = [];
-		foreach ($fields['ACCOMPLICES'] as $userId)
-		{
-			$efficiencyMap[$userId] = 'A';
-		}
-		$efficiencyMap[$fields['RESPONSIBLE_ID']] = 'R';
-
-		$mode = 'DELETE';
-		$task = Task::makeInstanceFromSource($fields, User::getAdminId());
-
-		static::recalculateCounters($fields, $countersMap, $mode);
-		static::recalculateEfficiency($fields, $efficiencyMap, $task, $mode);
-
-		Agent::remove($fields['ID']);
-	}
-
-	public static function onBeforeTaskViewedFirstTime()
-	{
-	}
-
-	public static function onAfterTaskViewedFirstTime($taskId, $userId, $onTaskAdd)
-	{
-		if ($onTaskAdd)
-		{
-			return;
-		}
-
-		$responsible = new Collection();
-		$responsible->push(Counter\Name::MY_NOT_VIEWED);
-		$responsible->push(Counter\Name::ACCOMPLICES_NOT_VIEWED);
-		$responsible->push(Counter\Name::OPENED);
-		$responsible->push(Counter\Name::CLOSED);
-
-		$counter = static::getInstance($userId);
-		$counter->processRecalculate($responsible);
-	}
-
-	public static function setDeadlineTimeLimit($timeLimit)
-	{
-		\CUserOptions::SetOption('tasks', 'deadlineTimeLimit', $timeLimit);
-
-		return Counter::getDeadlineTimeLimit(true);
-	}
-
-	public function recount($counter)
-	{
-		if (!$this->userId)
-		{
-			return;
-		}
-
-		$plan = new Collection();
-		$plan->push($counter);
-
-		$this->processRecalculate($plan);
 	}
 
 	/**
-	 * @param string $type
-	 *
+	 * @param array $fields
+	 * @param array $newFields
 	 * @return array
 	 */
-	public function getCounters($type)
+	private static function getChangeFact(array $fields, array $newFields): array
 	{
-		if (!self::isAccessToCounters())
-		{
-			return array();
-		}
-
-		$type = strtolower($type);
-		switch ($type)
-		{
-			case Counter\Role::RESPONSIBLE:
-				$data = array(
-					'total' => array(
-						'counter' => $this->get(Counter\Name::MY),
-						'code' => ''
-					),
-
-					'wo_deadline' => array(
-						'counter' => $this->get(Counter\Name::MY_WITHOUT_DEADLINE),
-						'code' => Counter\Type::TYPE_WO_DEADLINE
-					),
-
-					'expired' => array(
-						'counter' => $this->get(Counter\Name::MY_EXPIRED),
-						'code' => Counter\Type::TYPE_EXPIRED
-					),
-
-					'expired_soon' => array(
-						'counter' => $this->get(Counter\Name::MY_EXPIRED_SOON),
-						'code' => Counter\Type::TYPE_EXPIRED_CANDIDATES
-					),
-
-					'not_viewed' => array(
-						'counter' => $this->get(Counter\Name::MY_NOT_VIEWED),
-						'code' => Counter\Type::TYPE_NEW
-					),
-				);
-				break;
-			case Counter\Role::ACCOMPLICE:
-				$data = array(
-					'total' => array(
-						'counter' => $this->get(Counter\Name::ACCOMPLICES),
-						'code' => ''
-					),
-
-					'expired' => array(
-						'counter' => $this->get(Counter\Name::ACCOMPLICES_EXPIRED),
-						'code' => Counter\Type::TYPE_EXPIRED
-					),
-
-					'expired_soon' => array(
-						'counter' => $this->get(Counter\Name::ACCOMPLICES_EXPIRED_SOON),
-						'code' => Counter\Type::TYPE_EXPIRED_CANDIDATES
-					),
-
-					'not_viewed' => array(
-						'counter' => $this->get(Counter\Name::ACCOMPLICES_NOT_VIEWED),
-						'code' => Counter\Type::TYPE_NEW
-					),
-				);
-				break;
-			case Counter\Role::ORIGINATOR:
-				$data = array(
-					'total' => array(
-						'counter' => $this->get(Counter\Name::ORIGINATOR),
-						'code' => ''
-					),
-					'wo_deadline' => array(
-						'counter' => $this->get(Counter\Name::ORIGINATOR_WITHOUT_DEADLINE),
-						'code' => Counter\Type::TYPE_WO_DEADLINE
-					),
-					'expired' => array(
-						'counter' => $this->get(Counter\Name::ORIGINATOR_EXPIRED),
-						'code' => Counter\Type::TYPE_EXPIRED
-					),
-					'wait_ctrl' => array(
-						'counter' => $this->get(Counter\Name::ORIGINATOR_WAIT_CONTROL),
-						'code' => Counter\Type::TYPE_WAIT_CTRL
-					),
-				);
-				break;
-			case Counter\Role::AUDITOR:
-				$data = array(
-					'total' => array(
-						'counter' => $this->get(Counter\Name::AUDITOR),
-						'code' => ''
-					),
-					'expired' => array(
-						'counter' => $this->get(Counter\Name::AUDITOR_EXPIRED),
-						'code' => Counter\Type::TYPE_EXPIRED
-					),
-				);
-				break;
-			default:
-			case Counter\Role::ALL:
-				$data = array(
-					'total' => array(
-						'counter' => $this->get(Counter\Name::MY) +
-									 $this->get(Counter\Name::ACCOMPLICES) +
-									 $this->get(Counter\Name::AUDITOR) +
-									 $this->get(Counter\Name::ORIGINATOR),
-						'code' => ''
-					),
-
-					'wo_deadline' => array(
-						'counter' => $this->get(Counter\Name::MY_WITHOUT_DEADLINE) +
-									 $this->get(Counter\Name::ORIGINATOR_WITHOUT_DEADLINE),
-						'code' => Counter\Type::TYPE_WO_DEADLINE
-					),
-
-					'expired' => array(
-						'counter' => $this->get(Counter\Name::MY_EXPIRED) +
-									 $this->get(Counter\Name::ACCOMPLICES_EXPIRED) +
-									 $this->get(Counter\Name::AUDITOR_EXPIRED) +
-									 $this->get(Counter\Name::ORIGINATOR_EXPIRED),
-						'code' => Counter\Type::TYPE_EXPIRED
-					),
-
-					'expired_soon' => array(
-						'counter' => $this->get(Counter\Name::MY_EXPIRED_SOON) +
-									 $this->get(Counter\Name::ACCOMPLICES_EXPIRED_SOON),
-						'code' => Counter\Type::TYPE_EXPIRED_CANDIDATES
-					),
-
-					'not_viewed' => array(
-						'counter' => $this->get(Counter\Name::MY_NOT_VIEWED) +
-									 $this->get(Counter\Name::ACCOMPLICES_NOT_VIEWED),
-						'code' => Counter\Type::TYPE_NEW
-					),
-
-					'wait_ctrl' => array(
-						'counter' => $this->get(Counter\Name::ORIGINATOR_WAIT_CONTROL),
-						'code' => Counter\Type::TYPE_WAIT_CTRL
-					),
-				);
-				break;
-		}
-
-		return $data;
+		return [
+			self::fieldChanged('STATUS', $fields, $newFields),
+			self::fieldChanged('DEADLINE', $fields, $newFields),
+			self::fieldChanged('GROUP_ID', $fields, $newFields),
+			self::fieldChanged('RESPONSIBLE_ID', $fields, $newFields),
+			self::fieldChanged('ACCOMPLICES', $fields, $newFields),
+			self::fieldChanged('CREATED_BY', $fields, $newFields),
+			self::fieldChanged('AUDITORS', $fields, $newFields),
+		];
 	}
 
-	private function isAccessToCounters()
+	/**
+	 * @param $key
+	 * @param $fields
+	 * @param $newFields
+	 * @return bool
+	 */
+	private static function fieldChanged($key, $fields, $newFields): bool
 	{
-		return $this->userId == User::getId()
-			|| User::isSuper()
-			|| \CTasks::IsSubordinate($this->userId, User::getId());
+		return (array_key_exists($key, $newFields) && $newFields[$key] != $fields[$key]);
 	}
 
-	private function calcOpened($reCache = false)
+	public static function onBeforeTaskDelete(): void
 	{
-		static $count = null;
 
-		if ($count == null || $reCache)
+	}
+
+	/**
+	 * @param $fields
+	 * @throws Main\ArgumentException
+	 * @throws Main\Db\SqlQueryException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function onAfterTaskDelete($fields): void
+	{
+		$efficiencyMap = array_fill_keys($fields['ACCOMPLICES'], 'A');
+		$efficiencyMap[$fields['RESPONSIBLE_ID']] = 'R';
+
+		$task = Task::makeInstanceFromSource($fields, User::getAdminId());
+		$taskId = $task->getId();
+
+		self::recalculateEfficiency($fields, $efficiencyMap, $task, 'DELETE');
+		Agent::remove($taskId);
+
+		$groupId = (int)$fields['GROUP_ID'];
+		$createdBy = (int)$fields['CREATED_BY'];
+		$responsibleId = (int)$fields['RESPONSIBLE_ID'];
+		$accomplices = $fields['ACCOMPLICES'];
+		$auditors = $fields['AUDITORS'];
+		$accomplices = array_map('intval', (is_array($accomplices) ? $accomplices : $accomplices->toArray()));
+		$auditors = array_map('intval', (is_array($auditors) ? $auditors : $auditors->toArray()));
+
+		$isExpired = self::isDeadlineExpired($fields['DEADLINE']);
+
+		$usersToRecountCounters = array_unique(array_merge([$createdBy, $responsibleId], $accomplices, $auditors));
+		foreach ($usersToRecountCounters as $userId)
 		{
-			$statusSupposedlyCompleted = \CTasks::STATE_SUPPOSEDLY_COMPLETED;
-			$statusCompleted = \CTasks::STATE_COMPLETED;
-			$statusDeferred = \CTasks::STATE_DEFERRED;
+			if (self::isMuted($taskId, $userId))
+			{
+				return;
+			}
 
-			$sql = "
-				SELECT 
-					COUNT(t.ID) as COUNT,
-					t.GROUP_ID
-				FROM 
-					b_tasks AS t
-					JOIN b_tasks_member as tm ON 
-						tm.TASK_ID = t.ID AND 
-						tm.USER_ID = {$this->userId} AND
-						tm.TYPE IN('A', 'R') 
-					".($this->groupId > 0 ? 'JOIN b_sonet_group as sg on sg.ID = t.GROUP_ID' : '')."
-				WHERE
-					/*t.CREATED_BY != {$this->userId} AND*/
+			$newCommentsCount = Comments\Task::getNewCommentsCountForTasks([$taskId], $userId)[$taskId];
 
-					t.ZOMBIE = 'N'
-					".($this->groupId > 0 ? " AND t.GROUP_ID = {$this->groupId} AND sg.CLOSED != 'Y'" : "")."
-					AND (
-						t.STATUS != {$statusSupposedlyCompleted}
-						AND t.STATUS != {$statusCompleted}
-						AND	t.STATUS != {$statusDeferred}
-					)
-				GROUP BY 
-					t.GROUP_ID
-			";
+			$instance = self::getInstance($userId);
+			$instance->changeCounter($groupId, Name::NEW_COMMENTS, -$newCommentsCount);
+			$instance->changeCounter($groupId, Name::EXPIRED, -$isExpired);
 
-			$this->changeCounter(
-				Counter\Name::OPENED,
-				Application::getConnection()->query($sql)->fetchAll()
+			if ($userId === $responsibleId)
+			{
+				$instance->changeCounter($groupId, Name::MY_NEW_COMMENTS, -$newCommentsCount);
+				$instance->changeCounter($groupId, Name::MY_EXPIRED, -$isExpired);
+			}
+			if ($userId === $createdBy && $createdBy !== $responsibleId)
+			{
+				$instance->changeCounter($groupId, Name::ORIGINATOR_NEW_COMMENTS, -$newCommentsCount);
+				$instance->changeCounter($groupId, Name::ORIGINATOR_EXPIRED, -$isExpired);
+			}
+			if (in_array($userId, $accomplices, true))
+			{
+				$instance->changeCounter($groupId, Name::ACCOMPLICES_NEW_COMMENTS, -$newCommentsCount);
+				$instance->changeCounter($groupId, Name::ACCOMPLICES_EXPIRED, -$isExpired);
+			}
+			if (in_array($userId, $auditors, true))
+			{
+				$instance->changeCounter($groupId, Name::AUDITOR_NEW_COMMENTS, -$newCommentsCount);
+				$instance->changeCounter($groupId, Name::AUDITOR_EXPIRED, -$isExpired);
+			}
+			$instance->saveCounters();
+		}
+	}
+
+	/**
+	 * @param $fields
+	 * @param $map
+	 * @param Task $task
+	 * @param $mode
+	 * @throws Main\Db\SqlQueryException
+	 */
+	private static function recalculateEfficiency($fields, $map, Task $task, $mode): void
+	{
+		foreach ($map as $userId => $userType)
+		{
+			Effective::modify($userId, $userType, $task, $fields['GROUP_ID'], false);
+		}
+
+		if ($mode === 'DELETE')
+		{
+			Effective::repair($fields['ID']);
+		}
+	}
+
+	/**
+	 * @param int $taskId
+	 * @param int $userId
+	 * @throws Main\ArgumentException
+	 * @throws Main\DB\SqlQueryException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function onBeforeTaskViewed(int $taskId, int $userId): void
+	{
+		if (self::isMuted($taskId, $userId))
+		{
+			return;
+		}
+
+		$task = new Task($taskId, User::getAdminId());
+		$taskData = $task->getData(['GROUP_ID', 'CREATED_BY', 'RESPONSIBLE_ID', 'ACCOMPLICES', 'AUDITORS']);
+
+		[$isCreator, $isResponsible, $isAccomplice, $isAuditor] = self::getUserRoles($userId, $taskData);
+		if (!$isCreator && !$isResponsible && !$isAccomplice && !$isAuditor)
+		{
+			return;
+		}
+
+		$newCommentsCount = Comments\Task::getNewCommentsCountForTasks([$taskId], $userId)[$taskId];
+		$newCommentsCount = -$newCommentsCount;
+
+		if ($newCommentsCount === 0)
+		{
+			return;
+		}
+
+		$changes = [
+			Name::NEW_COMMENTS => $newCommentsCount,
+		];
+		if ($isCreator && !$isResponsible)
+		{
+			$changes[Name::ORIGINATOR_NEW_COMMENTS] = $newCommentsCount;
+		}
+		if ($isResponsible)
+		{
+			$changes[Name::MY_NEW_COMMENTS] = $newCommentsCount;
+		}
+		if ($isAccomplice)
+		{
+			$changes[Name::ACCOMPLICES_NEW_COMMENTS] = $newCommentsCount;
+		}
+		if ($isAuditor)
+		{
+			$changes[Name::AUDITOR_NEW_COMMENTS] = $newCommentsCount;
+		}
+
+		$instance = self::getInstance($userId);
+		foreach ($changes as $name => $value)
+		{
+			$instance->changeCounter((int)$taskData['GROUP_ID'], $name, $value);
+		}
+		$instance->saveCounters();
+	}
+
+	/**
+	 * @param int $taskId
+	 * @param int $userId
+	 */
+	public static function onAfterTaskViewed(int $taskId, int $userId): void
+	{
+
+	}
+
+	/**
+	 * @param Task $task
+	 */
+	public static function onTaskExpiredSoon(Task $task): void
+	{
+
+	}
+
+	/**
+	 * @param Task $task
+	 * @throws Main\ArgumentException
+	 * @throws Main\DB\SqlQueryException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function onTaskExpired(Task $task): void
+	{
+		$taskId = $task->getId();
+		$groupId = (int)$task['GROUP_ID'];
+		$createdBy = (int)$task['CREATED_BY'];
+		$responsibleId = (int)$task['RESPONSIBLE_ID'];
+		$accomplices = $task['ACCOMPLICES'];
+		$auditors = $task['AUDITORS'];
+		$accomplices = array_map('intval', (is_array($accomplices) ? $accomplices : $accomplices->toArray()));
+		$auditors = array_map('intval', (is_array($auditors) ? $auditors : $auditors->toArray()));
+
+		$usersToRecountEfficiency = array_unique(array_merge([$responsibleId], $accomplices));
+		foreach ($usersToRecountEfficiency as $userId)
+		{
+			if (!Effective::checkActiveViolations($taskId, $userId, $groupId))
+			{
+				$userType = ((int)$userId === $responsibleId ? 'R' : 'A');
+				Effective::modify($userId, $userType, $task, $groupId, true);
+			}
+		}
+
+		$usersToRecountCounters = array_unique(array_merge($usersToRecountEfficiency, [$createdBy], $auditors));
+		foreach ($usersToRecountCounters as $userId)
+		{
+			$instance = self::getInstance($userId);
+			$instance->processRecalculate(
+				new Collection([
+					Name::EXPIRED,
+					Name::MY_EXPIRED,
+					Name::ORIGINATOR_EXPIRED,
+					Name::ACCOMPLICES_EXPIRED,
+					Name::AUDITOR_EXPIRED,
+				])
 			);
 		}
+		// foreach ($usersToRecountCounters as $userId)
+		// {
+		// 	if (self::isMuted($taskId, $userId))
+		// 	{
+		// 		continue;
+		// 	}
+		//
+		// 	$instance = self::getInstance($userId);
+		// 	$instance->changeCounter($groupId, Name::EXPIRED, 1);
+		//
+		// 	if ($userId === $responsibleId)
+		// 	{
+		// 		$instance->changeCounter($groupId, Name::MY_EXPIRED, 1);
+		// 	}
+		// 	if ($userId === $createdBy && $createdBy !== $responsibleId)
+		// 	{
+		// 		$instance->changeCounter($groupId, Name::ORIGINATOR_EXPIRED, 1);
+		// 	}
+		// 	if (in_array($userId, $accomplices, true))
+		// 	{
+		// 		$instance->changeCounter($groupId, Name::ACCOMPLICES_EXPIRED, 1);
+		// 	}
+		// 	if (in_array($userId, $auditors, true))
+		// 	{
+		// 		$instance->changeCounter($groupId, Name::AUDITOR_EXPIRED, 1);
+		// 	}
+		// 	$instance->saveCounters();
+		// }
+
+		self::sendPushCounters([$userId]);
 	}
 
-	private function changeCounter($name, $counters)
+	/**
+	 * @param int $taskId
+	 * @param int $userId
+	 * @param array $parameters
+	 * @throws Main\ArgumentException
+	 * @throws Main\DB\SqlQueryException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function onAfterCommentAdd(int $taskId, int $userId, array $parameters): void
+	{
+		$task = new Task($taskId, User::getAdminId());
+		$taskData = $task->getData(['GROUP_ID', 'CREATED_BY', 'RESPONSIBLE_ID', 'ACCOMPLICES', 'AUDITORS']);
+
+		$groupId = (int)$taskData['GROUP_ID'];
+		$createdBy = (int)$taskData['CREATED_BY'];
+		$responsibleId = (int)$taskData['RESPONSIBLE_ID'];
+		$accomplices = $taskData['ACCOMPLICES'];
+		$auditors = $taskData['AUDITORS'];
+		$accomplices = array_map('intval', (is_array($accomplices) ? $accomplices : $accomplices->toArray()));
+		$auditors = array_map('intval', (is_array($auditors) ? $auditors : $auditors->toArray()));
+
+		$usersToRecountCounters = array_unique(array_merge([$createdBy, $responsibleId], $accomplices, $auditors));
+		foreach ($usersToRecountCounters as $id)
+		{
+			if (
+				$id === $userId
+				|| $parameters['COMMENT_TYPE'] === Comments\Internals\Comment::TYPE_EXPIRED
+				|| self::isMuted($taskId, $id)
+			)
+			{
+				continue;
+			}
+
+			$instance = self::getInstance($id);
+			if (in_array('onAfterCommentAdd', $instance->getIncrementsToSkip(), true))
+			{
+				$instance->deleteIncrementToSkip('onAfterCommentAdd');
+				continue;
+			}
+
+			$instance->changeCounter($groupId, Name::NEW_COMMENTS, 1);
+
+			if ($id === $responsibleId)
+			{
+				$instance->changeCounter($groupId, Name::MY_NEW_COMMENTS, 1);
+			}
+			if ($id === $createdBy && $createdBy !== $responsibleId)
+			{
+				$instance->changeCounter($groupId, Name::ORIGINATOR_NEW_COMMENTS, 1);
+			}
+			if (in_array($id, $accomplices, true))
+			{
+				$instance->changeCounter($groupId, Name::ACCOMPLICES_NEW_COMMENTS, 1);
+			}
+			if (in_array($id, $auditors, true))
+			{
+				$instance->changeCounter($groupId, Name::AUDITOR_NEW_COMMENTS, 1);
+			}
+			$instance->saveCounters();
+		}
+	}
+
+	/**
+	 * @param int $taskId
+	 * @param int $userId
+	 * @param int $commentId
+	 * @throws Main\ArgumentException
+	 * @throws Main\DB\SqlQueryException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function onBeforeCommentDelete(int $taskId, int $userId, int $commentId): void
+	{
+		$task = new Task($taskId, User::getAdminId());
+		$taskData = $task->getData(['GROUP_ID', 'CREATED_BY', 'RESPONSIBLE_ID', 'ACCOMPLICES', 'AUDITORS']);
+
+		$groupId = (int)$taskData['GROUP_ID'];
+		$createdBy = (int)$taskData['CREATED_BY'];
+		$responsibleId = (int)$taskData['RESPONSIBLE_ID'];
+		$accomplices = $taskData['ACCOMPLICES'];
+		$auditors = $taskData['AUDITORS'];
+		$accomplices = array_map('intval', (is_array($accomplices) ? $accomplices : $accomplices->toArray()));
+		$auditors = array_map('intval', (is_array($auditors) ? $auditors : $auditors->toArray()));
+
+		$usersToRecountCounters = array_unique(array_merge([$createdBy, $responsibleId], $accomplices, $auditors));
+		foreach ($usersToRecountCounters as $id)
+		{
+			if (
+				$id === $userId
+				|| self::isMuted($taskId, $id)
+				|| !Comments\Task::isCommentNew($taskId, $id, $commentId)
+			)
+			{
+				continue;
+			}
+
+			$instance = self::getInstance($id);
+			$instance->changeCounter($groupId, Name::NEW_COMMENTS, -1);
+
+			if ($id === $responsibleId)
+			{
+				$instance->changeCounter($groupId, Name::MY_NEW_COMMENTS, -1);
+			}
+			if ($id === $createdBy && $createdBy !== $responsibleId)
+			{
+				$instance->changeCounter($groupId, Name::ORIGINATOR_NEW_COMMENTS, -1);
+			}
+			if (in_array($id, $accomplices, true))
+			{
+				$instance->changeCounter($groupId, Name::ACCOMPLICES_NEW_COMMENTS, -1);
+			}
+			if (in_array($id, $auditors, true))
+			{
+				$instance->changeCounter($groupId, Name::AUDITOR_NEW_COMMENTS, -1);
+			}
+			$instance->saveCounters();
+		}
+	}
+
+	/**
+	 * @param int $taskId
+	 * @param int $userId
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private static function isMuted(int $taskId, int $userId): bool
+	{
+		return UserOption::isOptionSet($taskId, $userId, UserOption\Option::MUTED);
+	}
+
+	/**
+	 * @param int $taskId
+	 * @param int $userId
+	 * @param int $commentId
+	 */
+	public static function onAfterCommentDelete(int $taskId, int $userId, int $commentId): void
+	{
+
+	}
+
+	/**
+	 * @param int $userId
+	 * @param int $groupId
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function onBeforeCommentsReadAll(int $userId, int $groupId = 0): void
+	{
+		$counters = [
+			Name::NEW_COMMENTS,
+			Name::MY_NEW_COMMENTS,
+			Name::ORIGINATOR_NEW_COMMENTS,
+			Name::ACCOMPLICES_NEW_COMMENTS,
+			Name::AUDITOR_NEW_COMMENTS,
+		];
+		$instance = self::getInstance($userId);
+		foreach ($counters as $name)
+		{
+			if ($groupId)
+			{
+				$instance->changeCounter($groupId, $name, -$instance->getInternal($name, $groupId));
+			}
+			else
+			{
+				$instance->setCounter($name, []);
+			}
+		}
+		$instance->saveCounters();
+	}
+
+	/**
+	 * @param int $userId
+	 */
+	public static function onAfterCommentsReadAll(int $userId): void
+	{
+
+	}
+
+	/**
+	 * @param int $taskId
+	 * @param int $userId
+	 * @param bool $added
+	 * @throws Main\ArgumentException
+	 * @throws Main\DB\SqlQueryException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function onAfterTaskMuteChange(int $taskId, int $userId, bool $added): void
+	{
+		$task = new Task($taskId, User::getAdminId());
+		$taskData = $task->getData(['DEADLINE', 'GROUP_ID', 'CREATED_BY', 'RESPONSIBLE_ID', 'ACCOMPLICES', 'AUDITORS']);
+
+		[$isCreator, $isResponsible, $isAccomplice, $isAuditor] = self::getUserRoles($userId, $taskData);
+		if (!$isCreator && !$isResponsible && !$isAccomplice && !$isAuditor)
+		{
+			return;
+		}
+
+		$newCommentsCount = Comments\Task::getNewCommentsCountForTasks([$taskId], $userId)[$taskId];
+		$newCommentsCount = ($added ? -$newCommentsCount : $newCommentsCount);
+
+		$isExpired = (int)self::isDeadlineExpired($taskData['DEADLINE']);
+		$isExpired = ($added ? -$isExpired : $isExpired);
+
+		if ($newCommentsCount === 0 && $isExpired === 0)
+		{
+			return;
+		}
+
+		$changes = [
+			Name::NEW_COMMENTS => $newCommentsCount,
+			Name::EXPIRED => $isExpired,
+		];
+		if ($isCreator && !$isResponsible)
+		{
+			$changes[Name::ORIGINATOR_NEW_COMMENTS] = $newCommentsCount;
+			$changes[Name::ORIGINATOR_EXPIRED] = $isExpired;
+		}
+		if ($isResponsible)
+		{
+			$changes[Name::MY_NEW_COMMENTS] = $newCommentsCount;
+			$changes[Name::MY_EXPIRED] = $isExpired;
+		}
+		if ($isAccomplice)
+		{
+			$changes[Name::ACCOMPLICES_NEW_COMMENTS] = $newCommentsCount;
+			$changes[Name::ACCOMPLICES_EXPIRED] = $isExpired;
+		}
+		if ($isAuditor)
+		{
+			$changes[Name::AUDITOR_NEW_COMMENTS] = $newCommentsCount;
+			$changes[Name::AUDITOR_EXPIRED] = $isExpired;
+		}
+
+		$instance = self::getInstance($userId);
+		foreach ($changes as $name => $value)
+		{
+			$instance->changeCounter((int)$taskData['GROUP_ID'], $name, $value);
+		}
+		$instance->saveCounters();
+	}
+
+	/**
+	 * @param int $userId
+	 * @param array $taskData
+	 * @return array
+	 */
+	private static function getUserRoles(int $userId, array $taskData): array
+	{
+		$createdBy = [(int)$taskData['CREATED_BY']];
+		$responsibleId = [(int)$taskData['RESPONSIBLE_ID']];
+		$accomplices = $taskData['ACCOMPLICES'];
+		$auditors = $taskData['AUDITORS'];
+
+		$accomplices = array_map('intval', (is_array($accomplices) ? $accomplices : $accomplices->toArray()));
+		$auditors = array_map('intval', (is_array($auditors) ? $auditors : $auditors->toArray()));
+
+		return [
+			in_array($userId, $createdBy, true),
+			in_array($userId, $responsibleId, true),
+			in_array($userId, $accomplices, true),
+			in_array($userId, $auditors, true),
+		];
+	}
+
+	/**
+	 * @param int $groupId
+	 * @param string $name
+	 * @param int $value
+	 */
+	public function changeCounter(int $groupId, string $name, int $value): void
 	{
 		$name = strtoupper($name);
+
+		$newValue = $this->counters[$groupId][$name] + $value;
+		$newValue = ($newValue < 0 ? 0 : $newValue);
+
+		$this->counters[$groupId][$name] = $newValue;
+	}
+
+	/**
+	 * @return array
+	 */
+	public static function getDefaultCountersToRecount(): array
+	{
+		return [
+			Name::EXPIRED,
+			Name::NEW_COMMENTS,
+		];
+	}
+
+	/**
+	 * @param array $countersToRecount
+	 * @throws Main\ArgumentOutOfRangeException
+	 */
+	public static function runCounterRecount(array $countersToRecount = []): void
+	{
+		$countersToRecount = array_intersect($countersToRecount, self::getDefaultCountersToRecount());
+
+		if (empty($countersToRecount))
+		{
+			return;
+		}
+
+		Option::set("tasks", "countersToRecount", serialize($countersToRecount));
+		Option::set("tasks", "needCounterRecount", "Y");
+
+		CounterRecount::bind();
+	}
+
+	/**
+	 * @return string
+	 */
+	private function getMuteFilter(): string
+	{
+		$muteCondition = UserOption::getFilterSql($this->userId, UserOption\Option::MUTED);
+		return ($muteCondition === "" ? $muteCondition : "AND NOT {$muteCondition}");
+	}
+
+	/**
+	 * @return array
+	 */
+	private static function getUserTypeSqlParts(): array
+	{
+		$userType = new CUserTypeSQL();
+		$userType->SetEntity('FORUM_MESSAGE', 'FM.ID');
+		$userType->SetFilter([
+			'LOGIC' => 'OR',
+			'UF_TASK_COMMENT_TYPE' => null,
+			'!UF_TASK_COMMENT_TYPE' => Comments\Internals\Comment::TYPE_EXPIRED,
+		]);
+		$userTypeFilter = $userType->GetFilter();
+		$userTypeJoin = $userType->GetJoin('FM.ID');
+
+		return [
+			$userTypeJoin,
+			(!$userTypeFilter ? "" : "AND ({$userTypeFilter})"),
+		];
+	}
+
+	/**
+	 * @return array|string[]
+	 */
+	private function getGroupSqlParts(): array
+	{
+		return [
+			($this->groupId > 0 ? "INNER JOIN b_sonet_group SG ON SG.ID = T.GROUP_ID" : ""),
+			($this->groupId > 0 ? "AND T.GROUP_ID = {$this->groupId} AND SG.CLOSED != 'Y'" : ""),
+		];
+	}
+
+	private function getCounterFilter(): string
+	{
+		$counterFilter = '';
+
+		$startCounterDate = \COption::GetOptionString("tasks", "tasksDropCommentCounters", null);
+		if ($startCounterDate)
+		{
+			$counterFilter = " AND FM.POST_DATE > '{$startCounterDate}'";
+		}
+
+		return $counterFilter;
+	}
+
+	/**
+	 * @throws Main\ArgumentException
+	 * @throws Main\Db\SqlQueryException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public function recountNewCommentsCounters(): void
+	{
+		$muteCondition = $this->getMuteFilter();
+		[$userTypeJoin, $userTypeFilter] = self::getUserTypeSqlParts();
+		[$groupJoin, $groupFilter] = $this->getGroupSqlParts();
+
+		$sql = "
+			SELECT
+				COUNT(DISTINCT FM.ID) AS COUNT,
+				T.GROUP_ID,
+				TM.TYPE
+			FROM b_tasks T
+				LEFT JOIN b_tasks_viewed TV ON TV.TASK_ID = T.ID AND TV.USER_ID = {$this->userId}
+				INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID AND TM.USER_ID = {$this->userId}
+				LEFT JOIN b_tasks_member TM2 ON TM2.TASK_ID = T.ID AND TM2.USER_ID = {$this->userId} AND TM2.TYPE = 'R'
+				INNER JOIN b_forum_message FM ON FM.TOPIC_ID = T.FORUM_TOPIC_ID
+				{$userTypeJoin}
+				{$groupJoin}
+			WHERE
+				NOT (TM.TYPE = 'O' AND TM2.TYPE IS NOT NULL AND TM2.TYPE = 'R')
+				AND T.ZOMBIE = 'N'
+				AND (
+					(TV.VIEWED_DATE IS NOT NULL AND FM.POST_DATE > TV.VIEWED_DATE)
+					OR (TV.VIEWED_DATE IS NULL AND FM.POST_DATE >= T.CREATED_DATE)
+				)
+				AND FM.NEW_TOPIC = 'N'
+				AND FM.AUTHOR_ID <> {$this->userId}
+				{$muteCondition}
+				{$userTypeFilter}
+				{$groupFilter}
+				{$this->getCounterFilter()}
+			GROUP BY T.GROUP_ID, TM.TYPE
+		";
+
+		$roles = [
+			'R' => Name::MY_NEW_COMMENTS,
+			'O' => Name::ORIGINATOR_NEW_COMMENTS,
+			'A' => Name::ACCOMPLICES_NEW_COMMENTS,
+			'U' => Name::AUDITOR_NEW_COMMENTS,
+		];
+		$counters = Application::getConnection()->query($sql)->fetchAll();
+
+		$this->changeCountersByRoles($roles, $counters);
+		$this->recount(Name::NEW_COMMENTS);
+	}
+
+	/**
+	 * @throws Main\ArgumentException
+	 * @throws Main\Db\SqlQueryException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public function recountExpiredCounters(): void
+	{
+		$expiredTime = self::getExpiredTime()->format('Y-m-d H:i:s');
+		$statuses = [CTasks::STATE_PENDING, CTasks::STATE_IN_PROGRESS];
+		$statuses = implode(',', $statuses);
+		$muteCondition = $this->getMuteFilter();
+		[$groupJoin, $groupFilter] = $this->getGroupSqlParts();
+
+		$sql = "
+			SELECT
+				COUNT(DISTINCT T.ID) AS COUNT,
+				T.GROUP_ID,
+				TM.TYPE
+			FROM b_tasks T
+				INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID AND TM.USER_ID = {$this->userId}
+				LEFT JOIN b_tasks_member TM2 ON TM2.TASK_ID = T.ID AND TM2.USER_ID = {$this->userId} AND TM2.TYPE = 'R'
+				{$groupJoin}
+			WHERE
+				NOT (TM.TYPE = 'O' AND TM2.TYPE IS NOT NULL AND TM2.TYPE = 'R')
+				AND T.DEADLINE < '{$expiredTime}'
+				AND T.ZOMBIE = 'N'
+				AND T.STATUS IN ({$statuses})
+				{$muteCondition}
+				{$groupFilter}
+			GROUP BY T.GROUP_ID, TM.TYPE
+		";
+
+		$roles = [
+			'R' => Name::MY_EXPIRED,
+			'O' => Name::ORIGINATOR_EXPIRED,
+			'A' => Name::ACCOMPLICES_EXPIRED,
+			'U' => Name::AUDITOR_EXPIRED,
+		];
+		$counters = Application::getConnection()->query($sql)->fetchAll();
+
+		$this->changeCountersByRoles($roles, $counters);
+		$this->recount(Name::EXPIRED);
+	}
+
+	/**
+	 * @param array $roles
+	 * @param array $counters
+	 */
+	private function changeCountersByRoles(array $roles, array $counters): void
+	{
+		foreach ($roles as $role => $counterName)
+		{
+			$counterData = [];
+			foreach ($counters as $roleCounter)
+			{
+				if ($roleCounter['TYPE'] === $role)
+				{
+					$counterData[] = [
+						'GROUP_ID' => (int)$roleCounter['GROUP_ID'],
+						'COUNT' => (int)$roleCounter['COUNT'],
+					];
+				}
+			}
+			$this->setCounter($counterName, $counterData);
+		}
+	}
+
+	/**
+	 * @param array $users
+	 * @throws Main\ArgumentException
+	 * @throws Main\DB\SqlQueryException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function sendPushCounters(array $users): void
+	{
+		if (!Loader::includeModule('pull'))
+		{
+			return;
+		}
+
+		$types = [
+			Counter\Role::ALL,
+			Counter\Role::RESPONSIBLE,
+			Counter\Role::ORIGINATOR,
+			Counter\Role::ACCOMPLICE,
+			Counter\Role::AUDITOR,
+		];
+
+		foreach ($users as $userId)
+		{
+			$pushData = ['userId' => $userId];
+			$counter = self::getInstance($userId);
+
+			foreach ($types as $type)
+			{
+				$data = $counter->getCounters($type, ['SKIP_ACCESS_CHECK' => true]);
+				foreach ($data as $key => $value)
+				{
+					$pushData[$type][$key] = $value['counter'];
+				}
+			}
+
+			Event::add([$userId], [
+				'module_id' => 'tasks',
+				'command' => 'user_counter',
+				'params' => $pushData,
+			]);
+		}
+	}
+
+	/**
+	 * @return bool
+	 */
+	private function isAccessToCounters(): bool
+	{
+		return $this->userId === User::getId()
+			|| User::isSuper()
+			|| CTasks::IsSubordinate($this->userId, User::getId());
+	}
+
+	#region calculations
+
+	/**
+	 * @param $name
+	 * @param $counters
+	 */
+	private function setCounter($name, $counters): void
+	{
+		$name = mb_strtoupper($name);
 		$counts = array();
 
 		foreach ($counters as $data)
@@ -1284,536 +1934,440 @@ class Counter
 		}
 	}
 
-	private function calcClosed($reCache = false)
+	/**
+	 * @param bool $reCache
+	 * @throws Main\Db\SqlQueryException
+	 */
+	private function calcNewComments($reCache = false): void
 	{
 		static $count = null;
 
-		if ($count == null || $reCache)
+		if ($count === null || $reCache)
 		{
-			$statusSupposedlyCompleted = \CTasks::STATE_SUPPOSEDLY_COMPLETED;
-			$statusCompleted = \CTasks::STATE_COMPLETED;
-			$statusDeferred = \CTasks::STATE_DEFERRED;
+			$muteCondition = $this->getMuteFilter();
+			[$userTypeJoin, $userTypeFilter] = self::getUserTypeSqlParts();
+			[$groupJoin, $groupFilter] = $this->getGroupSqlParts();
 
 			$sql = "
-				SELECT 
-					COUNT(t.ID) as COUNT,
-					t.GROUP_ID
-				FROM 
-					b_tasks AS t
-					JOIN b_tasks_member as tm ON 
-						tm.TASK_ID = t.ID AND 
-						tm.USER_ID = {$this->userId} AND
-						tm.TYPE IN('A', 'R') 
-					".($this->groupId > 0 ? 'JOIN b_sonet_group as sg on sg.ID = t.GROUP_ID' : '')."
+				SELECT
+					COUNT(DISTINCT FM.ID) AS COUNT,
+					T.GROUP_ID
+				FROM b_tasks T
+					LEFT JOIN b_tasks_viewed TV ON TV.TASK_ID = T.ID AND TV.USER_ID = {$this->userId}
+					INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID AND TM.USER_ID = {$this->userId}
+					INNER JOIN b_forum_message FM ON FM.TOPIC_ID = T.FORUM_TOPIC_ID
+					{$userTypeJoin}
+					{$groupJoin}
 				WHERE
-					t.CREATED_BY != {$this->userId} 
-					AND DATE(t.CLOSED_DATE) = DATE(NOW())
-					AND t.ZOMBIE = 'N'
-					".($this->groupId > 0 ? " AND t.GROUP_ID = {$this->groupId} AND sg.CLOSED != 'Y'" : "")."
+					T.ZOMBIE = 'N'
 					AND (
-						t.STATUS = {$statusSupposedlyCompleted}
-						OR t.STATUS = {$statusCompleted}
+						(TV.VIEWED_DATE IS NOT NULL AND FM.POST_DATE > TV.VIEWED_DATE)
+						OR (TV.VIEWED_DATE IS NULL AND FM.POST_DATE >= T.CREATED_DATE)
 					)
-				GROUP BY 
-					t.GROUP_ID
+					AND FM.NEW_TOPIC = 'N'
+					AND FM.AUTHOR_ID <> {$this->userId}
+					{$muteCondition}
+					{$userTypeFilter}
+					{$groupFilter}
+					{$this->getCounterFilter()}
+				GROUP BY T.GROUP_ID
 			";
 
-			$this->changeCounter(
-				Counter\Name::CLOSED,
-				Application::getConnection()->query($sql)->fetchAll()
-			);
-		}
-	}
-
-	private function calcMyNotViewed($reCache = false)
-	{
-		static $count = null;
-
-		if ($count == null || $reCache)
-		{
-			$statusSupposedlyCompleted = \CTasks::STATE_SUPPOSEDLY_COMPLETED;
-			$statusCompleted = \CTasks::STATE_COMPLETED;
-			$statusDeferred = \CTasks::STATE_DEFERRED;
-
-			$sql = "
-				SELECT 
-					COUNT(t.ID) as COUNT,
-					t.GROUP_ID
-				FROM 
-					b_tasks as t
-					/*JOIN b_tasks_member as tm ON tm.TASK_ID = t.ID AND tm.TYPE = 'R'*/
-					LEFT JOIN b_tasks_viewed as tv
-						ON tv.TASK_ID = t.ID AND tv.USER_ID = {$this->userId}/*tm.USER_ID*/
-					".($this->groupId > 0 ? 'JOIN b_sonet_group as sg on sg.ID = t.GROUP_ID' : '')."
-				WHERE
-					(tv.TASK_ID IS NULL OR tv.TASK_ID = 0) AND
-					t.CREATED_BY != t.RESPONSIBLE_ID AND
-					t.RESPONSIBLE_ID /*tm.USER_ID*/ = {$this->userId} AND
-					t.ZOMBIE = 'N' AND
-					
-					".($this->groupId > 0 ? " t.GROUP_ID = {$this->groupId} AND sg.CLOSED != 'Y' AND" : "")."
-					(
-						t.STATUS <3
-					)
-				GROUP BY
-					t.GROUP_ID
-					
-					
-				
-			";
-
-			$this->changeCounter(
-				Counter\Name::MY_NOT_VIEWED,
-				Application::getConnection()->query($sql)->fetchAll()
-			);
-		}
-	}
-
-	private function calcMyWithoutDeadline($reCache = false)
-	{
-		static $count = null;
-
-		if ($count == null || $reCache)
-		{
-			$statusSupposedlyCompleted = \CTasks::STATE_SUPPOSEDLY_COMPLETED;
-			$statusCompleted = \CTasks::STATE_COMPLETED;
-			$statusDeferred = \CTasks::STATE_DEFERRED;
-
-			$sql = "
-				SELECT 
-					COUNT(t.ID) as COUNT,
-					GROUP_ID
-				FROM 
-					b_tasks as t
-					".($this->groupId > 0 ? 'JOIN b_sonet_group as sg on sg.ID = t.GROUP_ID' : '')."
-				WHERE 
-					(DEADLINE = '' OR DEADLINE IS NULL)
-					AND RESPONSIBLE_ID = {$this->userId}
-					AND RESPONSIBLE_ID != CREATED_BY
-					AND ZOMBIE = 'N'
-					".($this->groupId > 0 ? " AND GROUP_ID = {$this->groupId} AND sg.CLOSED != 'Y'" : "")."
-					AND (
-						STATUS != {$statusSupposedlyCompleted}
-						AND STATUS != {$statusCompleted}
-						AND	STATUS != {$statusDeferred}
-					)
-				GROUP BY 
-					GROUP_ID
-			";
-
-			$this->changeCounter(
-				Counter\Name::MY_WITHOUT_DEADLINE,
-				Application::getConnection()->query($sql)->fetchAll()
-			);
-		}
-	}
-
-	private function calcMyExpired($reCache = false)
-	{
-		static $count = null;
-
-		if ($count == null || $reCache)
-		{
-			$expiredTime = Counter::getExpiredTime()->format('Y-m-d H:i:s');
-			$statusSupposedlyCompleted = \CTasks::STATE_SUPPOSEDLY_COMPLETED;
-			$statusCompleted = \CTasks::STATE_COMPLETED;
-			$statusDeferred = \CTasks::STATE_DEFERRED;
-
-			$sql = "
-				SELECT 
-					COUNT(t.ID) as COUNT,
-					t.GROUP_ID
-				FROM 
-					b_tasks as t
-					/*INNER JOIN b_tasks_member as tm 
-						ON tm.TASK_ID = t.ID AND tm.TYPE = 'R'*/
-					".($this->groupId > 0 ? 'JOIN b_sonet_group as sg on sg.ID = t.GROUP_ID' : '')."
-				WHERE 
-					t.DEADLINE < '{$expiredTime}'
-					/*AND tm.USER_ID = {$this->userId}*/
-	   				AND RESPONSIBLE_ID =  {$this->userId}
-					AND t.ZOMBIE = 'N'
-					".($this->groupId > 0 ? " AND t.GROUP_ID = {$this->groupId} AND sg.CLOSED != 'Y'" : "")."
-					AND (
-						t.STATUS != {$statusSupposedlyCompleted}
-						AND t.STATUS != {$statusCompleted}
-						AND	t.STATUS != {$statusDeferred}
-					)
-				GROUP BY 
-					t.GROUP_ID
-			";
-
-			$this->changeCounter(
-				Counter\Name::MY_EXPIRED,
-				Application::getConnection()->query($sql)->fetchAll()
-			);
-		}
-	}
-
-	private function calcMyExpiredSoon($reCache = false)
-	{
-		static $count = null;
-
-		if ($count == null || $reCache)
-		{
-			$expiredSoonTime = Counter::getExpiredSoonTime()->format('Y-m-d H:i:s');;
-			$expiredTime = Counter::getExpiredTime()->format('Y-m-d H:i:s');
-			$statusSupposedlyCompleted = \CTasks::STATE_SUPPOSEDLY_COMPLETED;
-			$statusCompleted = \CTasks::STATE_COMPLETED;
-			$statusDeferred = \CTasks::STATE_DEFERRED;
-
-			$sql = "
-				SELECT 
-					COUNT(t.ID) as COUNT,
-					GROUP_ID
-				FROM 
-					b_tasks t
-					".($this->groupId > 0 ? 'JOIN b_sonet_group as sg on sg.ID = t.GROUP_ID' : '')."
-				WHERE 
-					DEADLINE < '{$expiredSoonTime}'
-					AND DEADLINE >= '{$expiredTime}'
-					AND RESPONSIBLE_ID = {$this->userId}
-					/*AND RESPONSIBLE_ID != CREATED_BY*/
-					AND ZOMBIE = 'N'
-					".($this->groupId > 0 ? " AND GROUP_ID = {$this->groupId} AND sg.CLOSED != 'Y'" : "")."
-					AND (
-						STATUS != {$statusSupposedlyCompleted}
-						AND STATUS != {$statusCompleted}
-						AND	STATUS != {$statusDeferred}
-					)
-				GROUP BY 
-					GROUP_ID
-			";
-
-			$this->changeCounter(
-				Counter\Name::MY_EXPIRED_SOON,
-				Application::getConnection()->query($sql)->fetchAll()
-			);
-		}
-	}
-
-	private function calcAuditorExpired($reCache = false)
-	{
-		static $count = null;
-
-		if ($count == null || $reCache)
-		{
-			$expiredTime = Counter::getExpiredTime()->format('Y-m-d H:i:s');
-
-			$statusSupposedlyCompleted = \CTasks::STATE_SUPPOSEDLY_COMPLETED;
-			$statusCompleted = \CTasks::STATE_COMPLETED;
-			$statusDeferred = \CTasks::STATE_DEFERRED;
-
-			$sql = "
-				SELECT 
-					COUNT(t.ID) as COUNT,
-					t.GROUP_ID
-				FROM 
-					b_tasks as t
-					INNER JOIN b_tasks_member as tm 
-						ON tm.TASK_ID = t.ID AND tm.TYPE = 'U'
-					".($this->groupId > 0 ? 'JOIN b_sonet_group as sg on sg.ID = t.GROUP_ID' : '')."
-				WHERE 
-					t.DEADLINE < '{$expiredTime}'
-					AND tm.USER_ID = {$this->userId}
-					
-					
-					AND t.ZOMBIE = 'N'
-					".($this->groupId > 0 ? " AND t.GROUP_ID = {$this->groupId} AND sg.CLOSED != 'Y'" : "")."
-					AND (
-						t.STATUS != {$statusSupposedlyCompleted}
-						AND t.STATUS != {$statusCompleted}
-						AND	t.STATUS != {$statusDeferred}
-					)
-				GROUP BY 
-					t.GROUP_ID
-			";
-
-			$this->changeCounter(
-				Counter\Name::AUDITOR_EXPIRED,
-				Application::getConnection()->query($sql)->fetchAll()
-			);
-		}
-	}
-
-	private function calcAccomplicesExpiredSoon($reCache = false)
-	{
-		static $count = null;
-
-		if ($count == null || $reCache)
-		{
-			$expiredTime = Counter::getExpiredTime()->format('Y-m-d H:i:s');
-			$expiredSoonTime = Counter::getExpiredSoonTime()->format('Y-m-d H:i:s');;
-
-			$statusSupposedlyCompleted = \CTasks::STATE_SUPPOSEDLY_COMPLETED;
-			$statusCompleted = \CTasks::STATE_COMPLETED;
-			$statusDeferred = \CTasks::STATE_DEFERRED;
-
-			$sql = "
-				SELECT 
-					COUNT(t.ID) as COUNT,
-					t.GROUP_ID
-				FROM 
-					b_tasks as t
-					INNER JOIN b_tasks_member as tm
-						ON tm.TASK_ID = t.ID AND tm.TYPE = 'A'
-					".($this->groupId > 0 ? 'JOIN b_sonet_group as sg on sg.ID = t.GROUP_ID' : '')."
-				WHERE
-					DEADLINE < '{$expiredSoonTime}'
-					AND DEADLINE >= '{$expiredTime}'
-					
-					AND tm.USER_ID = {$this->userId}
-					AND t.ZOMBIE = 'N'
-					".($this->groupId > 0 ? " AND t.GROUP_ID = {$this->groupId} AND sg.CLOSED != 'Y'" : "")."
-					AND (
-						t.STATUS != {$statusSupposedlyCompleted}
-						AND t.STATUS != {$statusCompleted}
-						AND	t.STATUS != {$statusDeferred}
-					)
-				GROUP BY 
-					t.GROUP_ID
-			";
-
-			$this->changeCounter(
-				Counter\Name::ACCOMPLICES_EXPIRED_SOON,
-				Application::getConnection()->query($sql)->fetchAll()
-			);
-		}
-	}
-
-	private function calcAccomplicesExpired($reCache = false)
-	{
-		static $count = null;
-
-		if ($count == null || $reCache)
-		{
-			$expiredTime = Counter::getExpiredTime()->format('Y-m-d H:i:s');
-
-			$statusSupposedlyCompleted = \CTasks::STATE_SUPPOSEDLY_COMPLETED;
-			$statusCompleted = \CTasks::STATE_COMPLETED;
-			$statusDeferred = \CTasks::STATE_DEFERRED;
-
-			$sql = "
-				SELECT 
-					COUNT(t.ID) as COUNT,
-					t.GROUP_ID
-				FROM 
-					b_tasks as t
-					INNER JOIN b_tasks_member as tm
-						ON tm.TASK_ID = t.ID AND tm.TYPE = 'A'
-					".($this->groupId > 0 ? 'JOIN b_sonet_group as sg on sg.ID = t.GROUP_ID' : '')."
-				WHERE
-					t.DEADLINE < '{$expiredTime}'
-					AND tm.USER_ID = {$this->userId}
-					AND t.ZOMBIE = 'N'
-					".($this->groupId > 0 ? " AND t.GROUP_ID = {$this->groupId} AND sg.CLOSED != 'Y'" : "")."
-					AND (
-						t.STATUS != {$statusSupposedlyCompleted}
-						AND t.STATUS != {$statusCompleted}
-						AND	t.STATUS != {$statusDeferred}
-					)
-				GROUP BY 
-					t.GROUP_ID
-			";
-
-			$this->changeCounter(
-				Counter\Name::ACCOMPLICES_EXPIRED,
-				Application::getConnection()->query($sql)->fetchAll()
-			);
-		}
-	}
-
-	private function calcAccomplicesNotViewed($reCache = false)
-	{
-		static $count = null;
-
-		if ($count == null || $reCache)
-		{
-			$statusSupposedlyCompleted = \CTasks::STATE_SUPPOSEDLY_COMPLETED;
-			$statusCompleted = \CTasks::STATE_COMPLETED;
-			$statusDeferred = \CTasks::STATE_DEFERRED;
-
-			$sql = "
-				SELECT 
-					COUNT(t.ID) as COUNT,
-					t.GROUP_ID
-				FROM 
-					b_tasks as t
-					INNER JOIN b_tasks_member as tm
-						ON tm.TASK_ID = t.ID AND tm.TYPE = 'A'
-					LEFT JOIN b_tasks_viewed as tv
-						ON tv.TASK_ID = t.ID AND tv.USER_ID = {$this->userId}
-						
-					".($this->groupId > 0 ? 'JOIN b_sonet_group as sg on sg.ID = t.GROUP_ID' : '')."
-				WHERE
-					(tv.TASK_ID IS NULL OR tv.TASK_ID = 0)
-					AND tm.USER_ID = {$this->userId}
-					AND t.ZOMBIE = 'N'
-					".($this->groupId > 0 ? " AND t.GROUP_ID = {$this->groupId} AND sg.CLOSED != 'Y'" : "")."
-					AND (
-						t.STATUS < 3
-					)
-				GROUP BY 
-					t.GROUP_ID
-			";
-
-			$this->changeCounter(
-				Counter\Name::ACCOMPLICES_NOT_VIEWED,
-				Application::getConnection()->query($sql)->fetchAll()
-			);
-		}
-	}
-
-	private function calcOriginatorExpired($reCache = false)
-	{
-		static $count = null;
-
-		if ($count == null || $reCache)
-		{
-			$expiredTime = Counter::getExpiredTime()->format('Y-m-d H:i:s');
-
-			$statusSupposedlyCompleted = \CTasks::STATE_SUPPOSEDLY_COMPLETED;
-			$statusCompleted = \CTasks::STATE_COMPLETED;
-			$statusDeferred = \CTasks::STATE_DEFERRED;
-
-			$sql = "
-				SELECT 
-					COUNT(t.ID) as COUNT,
-					GROUP_ID
-				FROM 
-					b_tasks t
-					
-					".($this->groupId > 0 ? 'JOIN b_sonet_group as sg on sg.ID = t.GROUP_ID' : '')."
-				WHERE 
-					DEADLINE < '{$expiredTime}'
-					AND CREATED_BY = {$this->userId}
-					AND RESPONSIBLE_ID != CREATED_BY
-					AND ZOMBIE = 'N'
-					".($this->groupId > 0 ? " AND GROUP_ID = {$this->groupId} AND sg.CLOSED != 'Y'" : "")."
-					AND (
-						STATUS != {$statusSupposedlyCompleted}
-						AND STATUS != {$statusCompleted}
-						AND	STATUS != {$statusDeferred}
-					)
-				GROUP BY 
-					GROUP_ID
-			";
-
-			$this->changeCounter(
-				Counter\Name::ORIGINATOR_EXPIRED,
-				Application::getConnection()->query($sql)->fetchAll()
-			);
-		}
-	}
-
-	private function calcOriginatorWaitCtrl($reCache = false)
-	{
-		static $count = null;
-
-		if ($count == null || $reCache)
-		{
-			$statusSupposedlyCompleted = \CTasks::STATE_SUPPOSEDLY_COMPLETED;
-
-			$sql = "
-				SELECT 
-					COUNT(t.ID) as COUNT,
-					GROUP_ID
-				FROM 
-					b_tasks t
-					
-					".($this->groupId > 0 ? 'JOIN b_sonet_group as sg on sg.ID = t.GROUP_ID' : '')."
-				WHERE 
-					CREATED_BY = {$this->userId}
-					AND RESPONSIBLE_ID != CREATED_BY
-					AND ZOMBIE = 'N'
-					".($this->groupId > 0 ? " AND GROUP_ID = {$this->groupId} AND sg.CLOSED != 'Y'" : "")."
-					AND STATUS = {$statusSupposedlyCompleted}
-				GROUP BY 
-					GROUP_ID
-			";
-
-			$this->changeCounter(
-				Counter\Name::ORIGINATOR_WAIT_CONTROL,
-				Application::getConnection()->query($sql)->fetchAll()
-			);
-		}
-	}
-
-	private function calcOriginatorWithoutDeadline($reCache = false)
-	{
-		static $count = null;
-
-		if ($count == null || $reCache)
-		{
-			$statusSupposedlyCompleted = \CTasks::STATE_SUPPOSEDLY_COMPLETED;
-			$statusCompleted = \CTasks::STATE_COMPLETED;
-			$statusDeferred = \CTasks::STATE_DEFERRED;
-
-			$sql = "
-				SELECT 
-					COUNT(t.ID) as COUNT,
-					GROUP_ID
-				FROM 
-					b_tasks t
-					
-					".($this->groupId > 0 ? 'JOIN b_sonet_group as sg on sg.ID = t.GROUP_ID' : '')."
-				WHERE 
-					(DEADLINE IS NULL OR DEADLINE = '')
-					AND CREATED_BY = {$this->userId}
-					AND RESPONSIBLE_ID != CREATED_BY
-					AND ZOMBIE = 'N'
-					".($this->groupId > 0 ? " AND GROUP_ID = {$this->groupId} AND sg.CLOSED != 'Y'" : "")."
-					AND (
-						STATUS != {$statusSupposedlyCompleted}
-						AND STATUS != {$statusCompleted}
-						AND	STATUS != {$statusDeferred}
-					)
-				GROUP BY 
-					GROUP_ID
-			";
-
-			$this->changeCounter(
-				Counter\Name::ORIGINATOR_WITHOUT_DEADLINE,
+			$this->setCounter(
+				Name::NEW_COMMENTS,
 				Application::getConnection()->query($sql)->fetchAll()
 			);
 		}
 	}
 
 	/**
-	 * @param array $users
+	 * @param bool $reCache
+	 * @throws Main\Db\SqlQueryException
 	 */
-	public static function sendPushCounters(array $users)
+	private function calcMyNewComments($reCache = false): void
 	{
-		$tag = 'task_counters';
-		$types = [
-			Counter\Role::ALL,
-			Counter\Role::RESPONSIBLE,
-			Counter\Role::ACCOMPLICE,
-			Counter\Role::ORIGINATOR,
-			Counter\Role::AUDITOR,
-		];
+		static $count = null;
 
-		foreach ($users as $userId)
+		if ($count === null || $reCache)
 		{
-			$pushData = ['userId' => $userId];
-			$counter = self::getInstance($userId);
+			$muteCondition = $this->getMuteFilter();
+			[$userTypeJoin, $userTypeFilter] = self::getUserTypeSqlParts();
+			[$groupJoin, $groupFilter] = $this->getGroupSqlParts();
 
-			foreach ($types as $type)
-			{
-				$data = $counter->getCounters($type);
+			$sql = "
+				SELECT
+					COUNT(DISTINCT FM.ID) AS COUNT,
+					T.GROUP_ID
+				FROM b_tasks T
+					LEFT JOIN b_tasks_viewed TV ON TV.TASK_ID = T.ID AND TV.USER_ID = {$this->userId}
+					INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID AND TM.USER_ID = {$this->userId} AND TM.TYPE = 'R'
+					INNER JOIN b_forum_message FM ON FM.TOPIC_ID = T.FORUM_TOPIC_ID
+					{$userTypeJoin}
+					{$groupJoin}
+				WHERE
+					T.ZOMBIE = 'N'
+					AND (
+						(TV.VIEWED_DATE IS NOT NULL AND FM.POST_DATE > TV.VIEWED_DATE)
+						OR (TV.VIEWED_DATE IS NULL AND FM.POST_DATE >= T.CREATED_DATE)
+					)
+					AND FM.NEW_TOPIC = 'N'
+					AND FM.AUTHOR_ID <> {$this->userId}
+					{$muteCondition}
+					{$userTypeFilter}
+					{$groupFilter}
+					{$this->getCounterFilter()}
+				GROUP BY T.GROUP_ID
+			";
 
-				foreach ($data as $key => $value)
-				{
-					$pushData[$type][$key] = $value['counter'];
-				}
-			}
-
-			\CPullWatch::Add($userId, $tag);
-			\CPullWatch::AddToStack($tag, [
-				'module_id' => 'tasks',
-				'command' => 'user_counter',
-				'params' => $pushData,
-			]);
+			$this->setCounter(
+				Name::MY_NEW_COMMENTS,
+				Application::getConnection()->query($sql)->fetchAll()
+			);
 		}
 	}
+
+	/**
+	 * @param bool $reCache
+	 * @throws Main\Db\SqlQueryException
+	 */
+	private function calcOriginatorNewComments($reCache = false): void
+	{
+		static $count = null;
+
+		if ($count === null || $reCache)
+		{
+			$muteCondition = $this->getMuteFilter();
+			[$userTypeJoin, $userTypeFilter] = self::getUserTypeSqlParts();
+			[$groupJoin, $groupFilter] = $this->getGroupSqlParts();
+
+			$sql = "
+				SELECT
+					COUNT(DISTINCT FM.ID) AS COUNT,
+					T.GROUP_ID
+				FROM b_tasks T
+					LEFT JOIN b_tasks_viewed TV ON TV.TASK_ID = T.ID AND TV.USER_ID = {$this->userId}
+					INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID AND TM.USER_ID = {$this->userId} AND TM.TYPE = 'O'
+					INNER JOIN b_forum_message FM ON FM.TOPIC_ID = T.FORUM_TOPIC_ID
+					{$userTypeJoin}
+					{$groupJoin}
+				WHERE
+					T.ZOMBIE = 'N'
+					AND NOT EXISTS (
+						SELECT 'x'
+						FROM b_tasks_member
+						WHERE TASK_ID = T.ID AND USER_ID = {$this->userId} AND TYPE = 'R'
+					)
+					AND (
+						(TV.VIEWED_DATE IS NOT NULL AND FM.POST_DATE > TV.VIEWED_DATE)
+						OR (TV.VIEWED_DATE IS NULL AND FM.POST_DATE >= T.CREATED_DATE)
+					)
+					AND FM.NEW_TOPIC = 'N'
+					AND FM.AUTHOR_ID <> {$this->userId}
+					{$muteCondition}
+					{$userTypeFilter}
+					{$groupFilter}
+					{$this->getCounterFilter()}
+				GROUP BY T.GROUP_ID
+			";
+
+			$this->setCounter(
+				Name::ORIGINATOR_NEW_COMMENTS,
+				Application::getConnection()->query($sql)->fetchAll()
+			);
+		}
+	}
+
+	/**
+	 * @param bool $reCache
+	 * @throws Main\Db\SqlQueryException
+	 */
+	private function calcAccomplicesNewComments($reCache = false): void
+	{
+		static $count = null;
+
+		if ($count === null || $reCache)
+		{
+			$muteCondition = $this->getMuteFilter();
+			[$userTypeJoin, $userTypeFilter] = self::getUserTypeSqlParts();
+			[$groupJoin, $groupFilter] = $this->getGroupSqlParts();
+
+			$sql = "
+				SELECT
+					COUNT(DISTINCT FM.ID) AS COUNT,
+					T.GROUP_ID
+				FROM b_tasks T
+					LEFT JOIN b_tasks_viewed TV ON TV.TASK_ID = T.ID AND TV.USER_ID = {$this->userId}
+					INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID AND TM.USER_ID = {$this->userId} AND TM.TYPE = 'A'
+					INNER JOIN b_forum_message FM ON FM.TOPIC_ID = T.FORUM_TOPIC_ID
+					{$userTypeJoin}
+					{$groupJoin}
+				WHERE
+					T.ZOMBIE = 'N'
+					AND (
+						(TV.VIEWED_DATE IS NOT NULL AND FM.POST_DATE > TV.VIEWED_DATE)
+						OR (TV.VIEWED_DATE IS NULL AND FM.POST_DATE >= T.CREATED_DATE)
+					)
+					AND FM.NEW_TOPIC = 'N'
+					AND FM.AUTHOR_ID <> {$this->userId}
+					{$muteCondition}
+					{$userTypeFilter}
+					{$groupFilter}
+					{$this->getCounterFilter()}
+				GROUP BY T.GROUP_ID
+			";
+
+			$this->setCounter(
+				Name::ACCOMPLICES_NEW_COMMENTS,
+				Application::getConnection()->query($sql)->fetchAll()
+			);
+		}
+	}
+
+	/**
+	 * @param bool $reCache
+	 * @throws Main\Db\SqlQueryException
+	 */
+	private function calcAuditorNewComments($reCache = false): void
+	{
+		static $count = null;
+
+		if ($count === null || $reCache)
+		{
+			$muteCondition = $this->getMuteFilter();
+			[$userTypeJoin, $userTypeFilter] = self::getUserTypeSqlParts();
+			[$groupJoin, $groupFilter] = $this->getGroupSqlParts();
+
+			$sql = "
+				SELECT
+					COUNT(DISTINCT FM.ID) AS COUNT,
+					T.GROUP_ID
+				FROM b_tasks T
+					LEFT JOIN b_tasks_viewed TV ON TV.TASK_ID = T.ID AND TV.USER_ID = {$this->userId}
+					INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID AND TM.USER_ID = {$this->userId} AND TM.TYPE = 'U'
+					INNER JOIN b_forum_message FM ON FM.TOPIC_ID = T.FORUM_TOPIC_ID
+					{$userTypeJoin}
+					{$groupJoin}
+				WHERE
+					T.ZOMBIE = 'N'
+					AND (
+						(TV.VIEWED_DATE IS NOT NULL AND FM.POST_DATE > TV.VIEWED_DATE)
+						OR (TV.VIEWED_DATE IS NULL AND FM.POST_DATE >= T.CREATED_DATE)
+					)
+					AND FM.NEW_TOPIC = 'N'
+					AND FM.AUTHOR_ID <> {$this->userId}
+					{$muteCondition}
+					{$userTypeFilter}
+					{$groupFilter}
+					{$this->getCounterFilter()}
+				GROUP BY T.GROUP_ID
+			";
+
+			$this->setCounter(
+				Name::AUDITOR_NEW_COMMENTS,
+				Application::getConnection()->query($sql)->fetchAll()
+			);
+		}
+	}
+
+	/**
+	 * @param bool $reCache
+	 * @throws Main\Db\SqlQueryException
+	 */
+	private function calcExpired($reCache = false): void
+	{
+		static $count = null;
+
+		if ($count === null || $reCache)
+		{
+			$expiredTime = self::getExpiredTime()->format('Y-m-d H:i:s');
+			$statuses = [CTasks::STATE_PENDING, CTasks::STATE_IN_PROGRESS];
+			$statuses = implode(',', $statuses);
+			$muteCondition = $this->getMuteFilter();
+			[$groupJoin, $groupFilter] = $this->getGroupSqlParts();
+
+			$sql = "
+				SELECT
+					COUNT(DISTINCT T.ID) AS COUNT,
+					T.GROUP_ID
+				FROM b_tasks T
+					INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID AND TM.USER_ID = {$this->userId}
+					{$groupJoin}
+				WHERE
+					T.DEADLINE < '{$expiredTime}'
+					AND T.ZOMBIE = 'N'
+					AND T.STATUS IN ({$statuses})
+					{$muteCondition}
+					{$groupFilter}
+				GROUP BY T.GROUP_ID
+			";
+
+			$this->setCounter(
+				Name::EXPIRED,
+				Application::getConnection()->query($sql)->fetchAll()
+			);
+		}
+	}
+
+	/**
+	 * @param bool $reCache
+	 * @throws Main\Db\SqlQueryException
+	 */
+	private function calcMyExpired($reCache = false): void
+	{
+		static $count = null;
+
+		if ($count === null || $reCache)
+		{
+			$expiredTime = self::getExpiredTime()->format('Y-m-d H:i:s');
+			$statuses = [CTasks::STATE_PENDING, CTasks::STATE_IN_PROGRESS];
+			$statuses = implode(',', $statuses);
+			$muteCondition = $this->getMuteFilter();
+			[$groupJoin, $groupFilter] = $this->getGroupSqlParts();
+
+			$sql = "
+				SELECT
+					COUNT(DISTINCT T.ID) AS COUNT,
+					T.GROUP_ID
+				FROM b_tasks T
+					INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID AND TM.USER_ID = {$this->userId} AND TM.TYPE = 'R'
+					{$groupJoin}
+				WHERE
+					T.DEADLINE < '{$expiredTime}'
+					AND T.ZOMBIE = 'N'
+					AND T.STATUS IN ({$statuses})
+					{$muteCondition}
+					{$groupFilter}
+				GROUP BY T.GROUP_ID
+			";
+
+			$this->setCounter(
+				Name::MY_EXPIRED,
+				Application::getConnection()->query($sql)->fetchAll()
+			);
+		}
+	}
+
+	/**
+	 * @param bool $reCache
+	 * @throws Main\Db\SqlQueryException
+	 */
+	private function calcOriginatorExpired($reCache = false): void
+	{
+		static $count = null;
+
+		if ($count === null || $reCache)
+		{
+			$expiredTime = self::getExpiredTime()->format('Y-m-d H:i:s');
+			$statuses = [CTasks::STATE_PENDING, CTasks::STATE_IN_PROGRESS];
+			$statuses = implode(',', $statuses);
+			$muteCondition = $this->getMuteFilter();
+			[$groupJoin, $groupFilter] = $this->getGroupSqlParts();
+
+			$sql = "
+				SELECT
+					COUNT(DISTINCT T.ID) AS COUNT,
+					T.GROUP_ID
+				FROM b_tasks T
+					INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID AND TM.USER_ID = {$this->userId} AND TM.TYPE = 'O'
+					{$groupJoin}
+				WHERE
+					T.DEADLINE < '{$expiredTime}'
+					AND T.ZOMBIE = 'N'
+					AND T.STATUS IN ({$statuses})
+					AND NOT EXISTS (
+						SELECT 'x'
+						FROM b_tasks_member
+						WHERE TASK_ID = T.ID AND USER_ID = {$this->userId} AND TYPE = 'R'
+					)
+					{$muteCondition}
+					{$groupFilter}
+				GROUP BY T.GROUP_ID
+			";
+
+			$this->setCounter(
+				Name::ORIGINATOR_EXPIRED,
+				Application::getConnection()->query($sql)->fetchAll()
+			);
+		}
+	}
+
+	/**
+	 * @param bool $reCache
+	 * @throws Main\Db\SqlQueryException
+	 */
+	private function calcAccomplicesExpired($reCache = false): void
+	{
+		static $count = null;
+
+		if ($count === null || $reCache)
+		{
+			$expiredTime = self::getExpiredTime()->format('Y-m-d H:i:s');
+			$statuses = [CTasks::STATE_PENDING, CTasks::STATE_IN_PROGRESS];
+			$statuses = implode(',', $statuses);
+			$muteCondition = $this->getMuteFilter();
+			[$groupJoin, $groupFilter] = $this->getGroupSqlParts();
+
+			$sql = "
+				SELECT
+					COUNT(DISTINCT T.ID) AS COUNT,
+					T.GROUP_ID
+				FROM b_tasks T
+					INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID AND TM.USER_ID = {$this->userId} AND TM.TYPE = 'A'
+					{$groupJoin}
+				WHERE
+					T.DEADLINE < '{$expiredTime}'
+					AND T.ZOMBIE = 'N'
+					AND T.STATUS IN ({$statuses})
+					{$muteCondition}
+					{$groupFilter}
+				GROUP BY T.GROUP_ID
+			";
+
+			$this->setCounter(
+				Name::ACCOMPLICES_EXPIRED,
+				Application::getConnection()->query($sql)->fetchAll()
+			);
+		}
+	}
+
+	/**
+	 * @param bool $reCache
+	 * @throws Main\Db\SqlQueryException
+	 */
+	private function calcAuditorExpired($reCache = false): void
+	{
+		static $count = null;
+
+		if ($count === null || $reCache)
+		{
+			$expiredTime = self::getExpiredTime()->format('Y-m-d H:i:s');
+			$statuses = [CTasks::STATE_PENDING, CTasks::STATE_IN_PROGRESS];
+			$statuses = implode(',', $statuses);
+			$muteCondition = $this->getMuteFilter();
+			[$groupJoin, $groupFilter] = $this->getGroupSqlParts();
+
+			$sql = "
+				SELECT
+					COUNT(DISTINCT T.ID) AS COUNT,
+					T.GROUP_ID
+				FROM b_tasks T
+					INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID AND TM.USER_ID = {$this->userId} AND TM.TYPE = 'U'
+					{$groupJoin}
+				WHERE
+					T.DEADLINE < '{$expiredTime}'
+					AND T.ZOMBIE = 'N'
+					AND T.STATUS IN ({$statuses})
+					{$muteCondition}
+					{$groupFilter}
+				GROUP BY T.GROUP_ID
+			";
+
+			$this->setCounter(
+				Name::AUDITOR_EXPIRED,
+				Application::getConnection()->query($sql)->fetchAll()
+			);
+		}
+	}
+
+	#endregion
 }

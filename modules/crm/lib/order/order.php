@@ -20,19 +20,21 @@ if (!Main\Loader::includeModule('sale'))
 class Order extends Sale\Order
 {
 	protected $contactCompanyCollection = null;
+
+	/** @var DealBinding|null $dealBinding */
 	protected $dealBinding = null;
 
 	private $requisiteList = [];
-	const TOTAL_COUNT_CACHE_ID =  'crm_order_total_count';
 
 	/**
 	 * @param $siteId
 	 * @param null $userId
 	 * @param null $currency
 	 * @return Sale\Order
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\NotImplementedException
-	 * @throws \Bitrix\Main\ObjectException
+	 * @throws Main\ArgumentNullException
+	 * @throws Main\ArgumentOutOfRangeException
+	 * @throws Main\NotImplementedException
+	 * @throws Main\ObjectException
 	 */
 	public static function create($siteId, $userId = null, $currency = null)
 	{
@@ -48,11 +50,11 @@ class Order extends Sale\Order
 
 	/**
 	 * @return Sale\Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\ArgumentTypeException
-	 * @throws \Bitrix\Main\NotImplementedException
-	 * @throws \Exception
+	 * @throws Main\ArgumentException
+	 * @throws Main\ArgumentOutOfRangeException
+	 * @throws Main\ArgumentTypeException
+	 * @throws Main\NotImplementedException
+	 * @throws Main\SystemException
 	 */
 	protected function add()
 	{
@@ -74,26 +76,84 @@ class Order extends Sale\Order
 			$this->setContactCompanyRequisites();
 		}
 
-		$dealBinding = $this->getDealBinding();
-		if(!$dealBinding->isExist())
-		{
-			$dealBinding->create();
-		}
-
 		$this->addTimelineEntryOnCreate();
 
 		return $result;
 	}
 
 	/**
+	 * @param $checkId
+	 * @param array $settings
+	 * @throws Main\ArgumentException
+	 * @throws Main\SystemException
+	 */
+	public function addTimelineCheckEntryOnCreate($checkId, array $settings = []) : void
+	{
+		if ((int)$checkId <= 0)
+		{
+			return;
+		}
+
+		Crm\Timeline\OrderCheckController::getInstance()->onPrintCheck(
+			$checkId,
+			$this->getTimelineEntryParamsOnCheckPrint($settings)
+		);
+	}
+
+	/**
+	 * @param array $settings
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\SystemException
+	 */
+	private function getTimelineEntryParamsOnCheckPrint(array $settings)
+	{
+		return [
+			'ORDER_FIELDS' => $this->getFieldValues(),
+			'SETTINGS' => $settings,
+			'BINDINGS' => $this->getTimelineBindings(),
+		];
+	}
+
+	/**
+	 * @param bool $withDeal
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\SystemException
+	 */
+	private function getTimelineBindings($withDeal = true) : array
+	{
+		$bindings = [
+			[
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
+				'ENTITY_ID' => $this->getId()
+			]
+		];
+
+		if (
+			$withDeal === true
+			&& $this->getDealBinding()
+		)
+		{
+			$bindings[] = [
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+				'ENTITY_ID' => $this->getDealBinding()->getDealId()
+			];
+		}
+
+		return $bindings;
+	}
+
+	/**
 	 * @param string $name
 	 * @param float|int|mixed|string $oldValue
 	 * @param float|int|mixed|string $value
-	 * @return Main\Entity\Result|Sale\Result
+	 * @return Sale\Result
 	 * @throws Main\ArgumentException
 	 * @throws Main\ArgumentNullException
 	 * @throws Main\ArgumentOutOfRangeException
 	 * @throws Main\NotImplementedException
+	 * @throws Main\NotSupportedException
 	 * @throws Main\ObjectNotFoundException
 	 */
 	protected function onFieldModify($name, $oldValue, $value)
@@ -121,7 +181,6 @@ class Order extends Sale\Order
 	/**
 	 * @throws Main\ArgumentException
 	 * @throws Main\ArgumentTypeException
-	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 * @return void
 	 */
@@ -163,19 +222,27 @@ class Order extends Sale\Order
 	/**
 	 * @return Sale\Result
 	 * @throws Main\ArgumentException
+	 * @throws Main\ArgumentNullException
 	 * @throws Main\LoaderException
 	 * @throws Main\NotSupportedException
+	 * @throws Main\SystemException
 	 */
 	protected function onAfterSave()
 	{
 		$result = parent::onAfterSave();
 
-		if ($this->fields->isChanged('CANCELED') && $this->isCanceled())
+		if ($this->fields->isChanged('CANCELED') && $this->isCanceled() && Crm\Automation\Factory::canUseAutomation())
 		{
 			Crm\Automation\Trigger\OrderCanceledTrigger::execute(
 				[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getId()]],
 				['ORDER' => $this]
 			);
+		}
+
+		$dealBinding = $this->getDealBinding();
+		if ($dealBinding && $this->getDealBinding()->isChanged())
+		{
+			$this->addTimelineEntryOnBindingDealChanged();
 		}
 
 		if ($this->isNew())
@@ -188,9 +255,19 @@ class Order extends Sale\Order
 			{
 				$this->runAutomationOnStatusChanged();
 				$this->addTimelineEntryOnStatusModify();
+
+				if (
+					$this->getField('STATUS_ID') === OrderStatus::getFinalStatus()
+					&& $this->getDealBinding()
+				)
+				{
+					$params = $this->getTimelineEntryParamsOnSetFinalStatus();
+
+					$this->addTimelineEntryNotifyBindingDeal($params);
+				}
 			}
 
-			if ($this->fields->isChanged('PRICE') || $this->fields->isChanged('CURRENCY') )
+			if ($this->fields->isChanged('PRICE') || $this->fields->isChanged('CURRENCY'))
 			{
 				$this->updateTimelineCreationEntity();
 			}
@@ -211,35 +288,173 @@ class Order extends Sale\Order
 			if($this->fields->isChanged('RESPONSIBLE_ID'))
 			{
 				Permissions\Order::updatePermission($this->getId(), $this->getField('RESPONSIBLE_ID'));
+
+				Crm\Automation\Trigger\ResponsibleChangedTrigger::execute(
+					[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getId()]],
+					['ORDER' => $this]
+				);
 			}
 
 			static::resetCounters($this->getField('RESPONSIBLE_ID'));
 		}
 
-		$this->appendBuyerGroups();
-
-		if(Main\Loader::includeModule('pull'))
+		if ($this->getFields()->isChanged('PAYED') && $this->isPaid())
 		{
-			\CPullWatch::AddToStack(
-				'CRM_ENTITY_ORDER',
-				array(
-					'module_id' => 'crm',
-					'command' => 'onOrderSave',
-					'params' => array(
-						'FIELDS' => $this->getFieldValues()
-					)
-				)
+			if ($this->getDealBinding())
+			{
+				$this->changeOrderStageDealOnPaid();
+
+				if (Crm\Automation\Factory::canUseAutomation())
+				{
+					Crm\Automation\Trigger\OrderPaidTrigger::execute(
+						[['OWNER_TYPE_ID' => \CCrmOwnerType::Deal, 'OWNER_ID' => $this->getDealBinding()->getDealId()]],
+						['ORDER' => $this]
+					);
+				}
+			}
+
+			Crm\Timeline\OrderController::getInstance()->onPay(
+				$this->getId(),
+				$this->getTimelineEntryParamsOnPaid()
 			);
 		}
 
-		if ($this->getDealBinding()->isExist())
+		if ($this->getFields()->isChanged('DEDUCTED') && $this->isDeducted())
 		{
-			$this->getDealBinding()->onAfterOrderSave();
+			Crm\Timeline\OrderController::getInstance()->onDeduct(
+				$this->getId(),
+				$this->getTimelineEntryParamsOnDeducted()
+			);
+		}
+
+		$this->appendBuyerGroups();
+
+		if (Main\Loader::includeModule('pull'))
+		{
+			\CPullWatch::AddToStack(
+				'CRM_ENTITY_ORDER',
+				[
+					'module_id' => 'crm',
+					'command' => 'onOrderSave',
+					'params' => [
+						'FIELDS' => $this->getFieldValues()
+					]
+				]
+			);
 		}
 
 		Crm\Search\SearchContentBuilderFactory::create(\CCrmOwnerType::Order)->build($this->getId());
+
 		return $result;
 	}
+
+	private function changeOrderStageDealOnPaid()
+	{
+		$fields = ['ORDER_STAGE' => OrderStage::PAID];
+
+		$deal = new \CCrmDeal(false);
+		$deal->Update($this->getDealBinding()->getDealId(), $fields);
+	}
+
+	/**
+	 * @return array
+	 */
+	protected function getTimelineEntryParamsOnSetFinalStatus() : array
+	{
+		return [
+			'ORDER_FIELDS' => $this->getFieldValues(),
+			'SETTINGS' => [
+				'CHANGED_ENTITY' => \CCrmOwnerType::OrderName,
+				'FIELDS' => [
+					'ORDER_DONE' => 'Y',
+				],
+			]
+		];
+	}
+
+	/**
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\SystemException
+	 */
+	protected function getTimelineEntryParamsOnPaid() : array
+	{
+		return [
+			'ORDER_FIELDS' => $this->getFieldValues(),
+			'SETTINGS' => [
+				'CHANGED_ENTITY' => \CCrmOwnerType::OrderPaymentName,
+				'FIELDS' => [
+					'ORDER_PAID' => $this->getField('PAYED'),
+					'ORDER_DONE' => ($this->getField('STATUS_ID') === OrderStatus::getFinalStatus()) ? 'Y' : 'N',
+				]
+			],
+			'BINDINGS' => $this->getTimelineBindings(false)
+		];
+	}
+
+	/**
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\SystemException
+	 */
+	protected function getTimelineEntryParamsOnCreate() : array
+	{
+		return [
+			'ORDER_FIELDS' => $this->getFieldValues(),
+			'BINDINGS' => $this->getTimelineBindings(false)
+		];
+	}
+
+	/**
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\SystemException
+	 */
+	protected function getTimelineEntryParamsOnDeducted() : array
+	{
+		return [
+			'ORDER_FIELDS' => $this->getFieldValues(),
+			'SETTINGS' => [
+				'CHANGED_ENTITY' => \CCrmOwnerType::OrderShipmentName,
+				'FIELDS' => [
+					'ORDER_DEDUCTED' => $this->getField('DEDUCTED')
+				]
+			],
+			'BINDINGS' => $this->getTimelineBindings()
+		];
+	}
+
+	/**
+	 * @throws Main\ArgumentException
+	 * @throws Main\SystemException
+	 */
+	protected function addTimelineEntryOnBindingDealChanged()
+	{
+		Crm\Timeline\OrderController::getInstance()->onBindingDealCreation(
+			$this->getId(),
+			$this->getDealBinding()->getDealId(),
+			[
+				'ORDER_FIELDS' => $this->getFieldValues(),
+				'IS_NEW_ORDER' => $this->isNew() ? 'Y' : 'N',
+				'IS_NEW_DEAL' => $this->getDealBinding()->isNewCrmDeal() ? 'Y' : 'N'
+			]
+		);
+	}
+
+	/**
+	 * @param array $params
+	 * @throws Main\ArgumentException
+	 * @throws Main\SystemException
+	 */
+	protected function addTimelineEntryNotifyBindingDeal(array $params) : void
+	{
+		Crm\Timeline\OrderController::getInstance()->notifyBindingDeal(
+			$this->getId(),
+			$this->getDealBinding()->getDealId(),
+			$params
+		);
+	}
+
 
 	/**
 	 * return void
@@ -259,7 +474,8 @@ class Order extends Sale\Order
 	 */
 	private function runAutomationOnAdd()
 	{
-		Crm\Automation\Factory::runOnAdd(\CCrmOwnerType::Order, $this->getId());
+		$starter = new Crm\Automation\Starter(\CCrmOwnerType::Order, $this->getId());
+		$starter->runOnAdd();
 	}
 
 	/**
@@ -267,49 +483,25 @@ class Order extends Sale\Order
 	 */
 	private function runAutomationOnStatusChanged()
 	{
+		//TODO: use Crm\Automation\Starter
 		Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Order, $this->getId());
 	}
 
 	/**
 	 * @throws Main\ArgumentException
-	 * @return void;
+	 * @throws Main\SystemException
 	 */
 	private function addTimelineEntryOnCreate()
 	{
-		$contactBindings = [];
-		foreach($this->getContactCompanyCollection()->getContacts() as $contact)
-		{
-			$contactBindings[] = [
-				'CONTACT_ID' => $contact->getId(),
-			];
-		}
-		$companyId = null;
-		$company = $this->getContactCompanyCollection()->getPrimaryCompany();
-		if($company)
-		{
-			$companyId = $company->getId();
-		}
-
 		Crm\Timeline\OrderController::getInstance()->onCreate(
 			$this->getId(),
-			[
-				'FIELDS' => [
-					'ID' => $this->getId(),
-					'CREATED_BY' => $this->getField('CREATED_BY'),
-					'RESPONSIBLE_ID' => $this->getField('RESPONSIBLE_ID'),
-					'DATE_INSERT' => $this->getField('DATE_INSERT'),
-					'PRICE' => $this->getField('PRICE'),
-					'CURRENCY' => $this->getField('CURRENCY'),
-					'DEAL_ID' => $this->getDealBinding()->getDealId(),
-					'CONTACT_BINDINGS' => $contactBindings,
-					'COMPANY_ID' => $companyId,
-				],
-			]
+			$this->getTimelineEntryParamsOnCreate()
 		);
 	}
 
 	/**
 	 * @throws Main\ArgumentException
+	 * @throws Main\SystemException
 	 */
 	private function addTimelineEntryOnCancel()
 	{
@@ -324,27 +516,32 @@ class Order extends Sale\Order
 			$fields['EMP_CANCELED_ID'] = $this->getField('EMP_CANCELED_ID');
 		}
 
-		Crm\Timeline\OrderController::getInstance()->onCancel($this->getId(), ['FIELDS' => $fields]);
+		Crm\Timeline\OrderController::getInstance()->onCancel(
+			$this->getId(),
+			[
+				'FIELDS' => $fields,
+				'BINDINGS' => $this->getTimelineBindings()
+			]
+		);
 	}
 
 	/**
 	 * @throws Main\ArgumentException
-	 * @return void;
+	 * @throws Main\SystemException
 	 */
 	private function addTimelineEntryOnStatusModify()
 	{
-		$fields = $this->getFields();
-		$originalValues  = $fields->getOriginalValues();
+		$originalValues = $this->getFields()->getOriginalValues();
 
-		$modifyParams = array(
-			'PREVIOUS_FIELDS' => array('STATUS_ID' => $originalValues['STATUS_ID']),
-			'CURRENT_FIELDS' => array(
+		$params = [
+			'PREVIOUS_FIELDS' => ['STATUS_ID' => $originalValues['STATUS_ID']],
+			'CURRENT_FIELDS' => [
 				'STATUS_ID' => $this->getField('STATUS_ID'),
 				'EMP_STATUS_ID' => $this->getField('EMP_STATUS_ID')
-			),
-		);
-
-		Crm\Timeline\OrderController::getInstance()->onModify($this->getId(), $modifyParams);
+			],
+			'BINDINGS' => $this->getTimelineBindings()
+		];
+		Crm\Timeline\OrderController::getInstance()->onModify($this->getId(), $params);
 	}
 
 	/**
@@ -354,7 +551,7 @@ class Order extends Sale\Order
 	private function updateTimelineCreationEntity()
 	{
 		$fields = $this->getFields();
-		$selectedFields =[
+		$selectedFields = [
 			'DATE_INSERT_TIMESTAMP' => $fields['DATE_INSERT']->getTimestamp(),
 			'PRICE' => $fields['PRICE'],
 			'CURRENCY' => $fields['CURRENCY']
@@ -369,11 +566,11 @@ class Order extends Sale\Order
 
 	/**
 	 * @return Sale\Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\ArgumentTypeException
-	 * @throws \Bitrix\Main\NotImplementedException
-	 * @throws \Exception
+	 * @throws Main\ArgumentException
+	 * @throws Main\ArgumentOutOfRangeException
+	 * @throws Main\ArgumentTypeException
+	 * @throws Main\NotImplementedException
+	 * @throws Main\SystemException
 	 */
 	private function addContactCompany()
 	{
@@ -410,12 +607,11 @@ class Order extends Sale\Order
 
 	/**
 	 * @return Sale\Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentTypeException
-	 * @throws \Bitrix\Main\ObjectNotFoundException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
-	 * @throws \Exception
+	 * @throws Main\ArgumentException
+	 * @throws Main\ArgumentTypeException
+	 * @throws Main\ObjectNotFoundException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
 	 */
 	protected function saveEntities()
 	{
@@ -428,11 +624,19 @@ class Order extends Sale\Order
 			$result->addErrors($r->getErrors());
 		}
 
-		$dealBinding = $this->getDealBinding();
-		$r = $dealBinding->save();
-		if(!$r->isSuccess())
+		$dealBinding = $this->dealBinding;
+		if ($dealBinding)
 		{
-			$result->addErrors($r->getErrors());
+			$r = $dealBinding->save();
+			if (!$r->isSuccess())
+			{
+				$result->addErrors($r->getErrors());
+			}
+
+			if ($dealBinding->isDeleted())
+			{
+				$this->dealBinding = null;
+			}
 		}
 
 		return $result;
@@ -460,7 +664,14 @@ class Order extends Sale\Order
 			$result->addErrors($r->getErrors());
 		}
 
-		Crm\Binding\OrderDealTable::deleteByOrderId($orderId);
+		/** @var DealBinding $dealBinding */
+		$dealBinding = $registry->get(ENTITY_CRM_ORDER_DEAL_BINDING);
+
+		$r = $dealBinding::deleteNoDemand($orderId);
+		if (!$r->isSuccess())
+		{
+			$result->addErrors($r->getErrors());
+		}
 
 		return $result;
 	}
@@ -489,15 +700,19 @@ class Order extends Sale\Order
 				}
 			}
 
-			Crm\Binding\OrderDealTable::deleteByOrderId($order->getId());
+			$dealBinding = $order->getDealBinding();
+			if ($dealBinding)
+			{
+				$dealBinding->delete();
+			}
 		}
 	}
 
 	/**
 	 * @return ContactCompanyCollection|null
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentTypeException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws Main\ArgumentException
+	 * @throws Main\ArgumentTypeException
+	 * @throws Main\SystemException
 	 */
 	public function getContactCompanyCollection()
 	{
@@ -526,9 +741,9 @@ class Order extends Sale\Order
 
 	/**
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentTypeException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws Main\ArgumentException
+	 * @throws Main\ArgumentTypeException
+	 * @throws Main\SystemException
 	 */
 	public function isChanged()
 	{
@@ -562,6 +777,11 @@ class Order extends Sale\Order
 		{
 			$contactCompanyCollection->clearChanged();
 		}
+
+		if ($dealBinding = $this->getDealBinding())
+		{
+			$dealBinding->clearChanged();
+		}
 	}
 
 	/**
@@ -586,6 +806,8 @@ class Order extends Sale\Order
 			{
 				static::resetCounters($responsibleId);
 			}
+
+			Crm\Timeline\TimelineEntry::deleteByOwner(\CCrmOwnerType::Order, $id);
 		}
 
 		return $result;
@@ -766,7 +988,25 @@ class Order extends Sale\Order
 			$this->dealBinding = $this->loadDealBinding();
 		}
 
+		if ($this->dealBinding && $this->dealBinding->isDeleted())
+		{
+			return null;
+		}
+
 		return $this->dealBinding;
+	}
+
+	/**
+	 * @return DealBinding|null
+	 * @throws Main\ArgumentException
+	 * @throws Main\SystemException
+	 */
+	public function loadDealBinding()
+	{
+		$registry = Sale\Registry::getInstance(static::getRegistryType());
+
+		$dealBindingClassName = $registry->get(ENTITY_CRM_ORDER_DEAL_BINDING);
+		return $dealBindingClassName::load($this);
 	}
 
 	/**
@@ -774,33 +1014,20 @@ class Order extends Sale\Order
 	 * @throws Main\ArgumentException
 	 * @throws Main\SystemException
 	 */
-	protected function loadDealBinding()
+	public function createDealBinding()
 	{
 		$registry = Sale\Registry::getInstance(static::getRegistryType());
 
+		/** @var DealBinding $dealBindingClassName */
 		$dealBindingClassName = $registry->get(ENTITY_CRM_ORDER_DEAL_BINDING);
-		return new $dealBindingClassName($this);
-	}
 
+		$this->dealBinding = $dealBindingClassName::create($this);
+
+		return $this->dealBinding;
+	}
 	/**
-	 * @return int
+	 * @return Main\ORM\Entity
+	 * @throws Main\ArgumentException
+	 * @throws Main\SystemException
 	 */
-	public static function countTotal()
-	{
-		if(defined('BX_COMP_MANAGED_CACHE') && $GLOBALS['CACHE_MANAGER']->Read(600, self::TOTAL_COUNT_CACHE_ID, 'b_sale_order'))
-		{
-			return $GLOBALS['CACHE_MANAGER']->Get(self::TOTAL_COUNT_CACHE_ID);
-		}
-
-		$orderQuery = self::getList([
-			'count_total' => true
-		]);
-		$result = $orderQuery->getCount();
-
-		if(defined('BX_COMP_MANAGED_CACHE'))
-		{
-			$GLOBALS['CACHE_MANAGER']->Set(self::TOTAL_COUNT_CACHE_ID, $result);
-		}
-		return $result;
-	}
 }

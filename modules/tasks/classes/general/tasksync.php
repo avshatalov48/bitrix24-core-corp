@@ -126,11 +126,11 @@ class CTaskSync
 			"DESCRIPTION" => $arModifyEventArray["BODY"],
 			"DESCRIPTION_IN_BBCODE" => 'N',
 			"CREATED_DATE" => $arModifyEventArray["DATE_CREATE"],
-			"PRIORITY" => self::$PriorityMapping[strtolower($arModifyEventArray["IMPORTANCE"])],
+			"PRIORITY" => self::$PriorityMapping[mb_strtolower($arModifyEventArray["IMPORTANCE"])],
 			"DURATION_FACT" => ceil($arModifyEventArray["ACTUAL_WORK"] / 60),
 			"START_DATE_PLAN" => $arModifyEventArray["START_DATE"],
 			"DEADLINE" => $arModifyEventArray["DUE_DATE"],
-			"STATUS" => self::$StatusMapping[strtolower($arModifyEventArray["STATUS"])],
+			"STATUS" => self::$StatusMapping[mb_strtolower($arModifyEventArray["STATUS"])],
 			"DURATION_PLAN" => ceil($arModifyEventArray["TOTAL_WORK"] / 60),
 			"DURATION_TYPE" => "hours"
 		);
@@ -224,7 +224,7 @@ class CTaskSync
 			"USER_ID" => $arFields["RESPONSIBLE_ID"],
 			"SUBJECT" => $arFields["TITLE"],
 			"BODY" => $arFields["DESCRIPTION"],
-			"IMPORTANCE" => $priorityMapping[strtolower($arFields["PRIORITY"])],
+			"IMPORTANCE" => $priorityMapping[mb_strtolower($arFields["PRIORITY"])],
 			'GUID'        => $arFields['GUID'],
 			//'SERIALIZED_DATA' => serialize(array('DESCRIPTION' => $arFields["DESCRIPTION"], 'TITLE' => $arFields["TITLE"])),
 			"ACTUAL_WORK" => $arFields["DURATION_FACT"] * 60,
@@ -333,7 +333,7 @@ class CTaskSync
 		}
 		if ($arFields["PRIORITY"])
 		{
-			$arModifyEventArray["IMPORTANCE"] = $priorityMapping[strtolower($arFields["PRIORITY"])];
+			$arModifyEventArray["IMPORTANCE"] = $priorityMapping[mb_strtolower($arFields["PRIORITY"])];
 		}
 
 		if (isset($arFields['GUID']))

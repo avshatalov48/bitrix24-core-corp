@@ -11,5 +11,4 @@ $MESS["SALE_TYPE_PAYMENT_CASH_LESS"] = "Безготівкова оплата";
 $MESS["SALE_TYPE_PAYMENT_CARD_TRANSACTION"] = "Еквайрингова оплата";
 $MESS["SALE_TYPE_PROFILE"] = "Профайл";
 $MESS["SALE_TYPE_USER_PROFILE"] = "Профайл";
-$MESS["SALE_TYPE_USER_PROFILE_CONTACT_COMPANY"] = "Профайл";
 ?>

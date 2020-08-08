@@ -40,7 +40,7 @@ else
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => GetMessage('CRM_DEAL_CATEGORY_ADD'),
 		'TITLE' => GetMessage('CRM_DEAL_CATEGORY_ADD_TITLE'),
-		'ONCLICK' => $restriction->preparePopupScript(),
+		'ONCLICK' => $restriction->prepareInfoHelperScript(),
 		'HIGHLIGHT' => true
 	);
 }

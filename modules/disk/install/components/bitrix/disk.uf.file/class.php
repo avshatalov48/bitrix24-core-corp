@@ -14,9 +14,39 @@ use Bitrix\Main\Localization\Loc;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-class CDiskUfFileComponent extends BaseComponent
+\Bitrix\Main\Loader::includeModule('disk');
+
+class CDiskUfFileComponent extends BaseComponent implements \Bitrix\Main\Engine\Contract\Controllerable
 {
+	const VIEW_TYPE_WEB			= '';
+	const VIEW_TYPE_WEB_GRID	= 'grid';
+	const VIEW_TYPE_MOBILE		= 'mobile';
+	const VIEW_TYPE_MOBILE_GRID	= 'mobile_grid';
+
 	protected $editMode = false;
+
+	public function configureActions()
+	{
+		return [];
+	}
+
+	protected function getViewTypesList()
+	{
+		return [
+			self::VIEW_TYPE_WEB,
+			self::VIEW_TYPE_WEB_GRID,
+			self::VIEW_TYPE_MOBILE,
+			self::VIEW_TYPE_MOBILE_GRID,
+		];
+	}
+
+	protected function getGridViewTypesList()
+	{
+		return [
+			self::VIEW_TYPE_WEB_GRID,
+			self::VIEW_TYPE_MOBILE_GRID,
+		];
+	}
 
 	protected function prepareParams()
 	{
@@ -52,7 +82,67 @@ class CDiskUfFileComponent extends BaseComponent
 			$this->arParams['ENABLE_AUTO_BINDING_VIEWER'] = null;
 		}
 
+		$this->arParams['USE_TOGGLE_VIEW'] = (isset($this->arParams['USE_TOGGLE_VIEW']) && $this->arParams['USE_TOGGLE_VIEW'] == 'Y' ? 'Y' : 'N');
+
 		return $this;
+	}
+
+	protected function getComponentSignedParameters()
+	{
+		$result = [];
+
+		if ($this->arParams['USE_TOGGLE_VIEW'] == 'Y')
+		{
+			$result = [
+				'MOBILE' => $this->arParams['MOBILE'],
+				'PARAMS' => [],
+				'EXTENDED_PREVIEW' => $this->arParams['EXTENDED_PREVIEW'],
+				'INLINE' => $this->arParams['INLINE'],
+				'USE_TOGGLE_VIEW' => $this->arParams['USE_TOGGLE_VIEW'],
+			];
+
+			foreach($this->arParams['PARAMS'] as $key => $value)
+			{
+				$allowedKeysList = [
+					'arUserField',
+					'INLINE',
+					'DISABLE_MOD_ZIP',
+					'DISABLE_LOCAL_EDIT',
+					'MAX_SIZE',
+					'THUMB_SIZE',
+					'HTML_SIZE',
+					'SIZE'
+				];
+
+				if (!in_array($key, $allowedKeysList))
+				{
+					continue;
+				}
+
+				if (
+					$key == 'arUserField'
+					&& is_array($value)
+				)
+				{
+					$defaults = [
+						'ENTITY_ID',
+						'FIELD_NAME',
+						'USER_TYPE_ID',
+						'ENTITY_VALUE_ID',
+						'VALUE',
+						'VALUE_INLINE'
+					];
+
+					$value = array_intersect_key(
+						$value, array_flip($defaults)
+					);
+				}
+
+				$result['PARAMS'][$key] = $value;
+			}
+		}
+
+		return $result;
 	}
 
 	protected function processActionDefault()
@@ -61,6 +151,9 @@ class CDiskUfFileComponent extends BaseComponent
 			'FILES' => $this->loadFilesData(),
 			'UID' => $this->getComponentId(),
 		);
+
+		$this->arResult['SIGNED_PARAMS'] = $this->getComponentSignedParameters();;
+
 		$driver = Driver::getInstance();
 
 		$this->arResult['CLOUD_DOCUMENT'] = array();
@@ -538,5 +631,45 @@ class CDiskUfFileComponent extends BaseComponent
 		}
 
 		return [$documentHandlerName, $documentHandlerCode, $isLocal];
+	}
+
+	public function toggleViewTypeAction(array $params = [])
+	{
+
+		$viewType = (isset($params['viewType']) ? $params['viewType'] : '');
+		if (!in_array($viewType, $this->getViewTypesList()))
+		{
+			$viewType = self::VIEW_TYPE_WEB;
+		}
+
+		$componentParams = $this->arParams;
+		$componentParams['CONTROLLER_HIT'] = 'Y';
+		$componentParams['PARAMS']['LAZYLOAD'] = 'N';
+
+		if (
+			isset($componentParams['PARAMS'])
+			&& isset($componentParams['PARAMS']['MOBILE'])
+			&& $componentParams['PARAMS']['MOBILE'] == 'Y'
+			&& !defined('BX_MOBILE')
+		)
+		{
+			define('BX_MOBILE', true);
+		}
+
+		if (
+			isset($componentParams['PARAMS'])
+			&& isset($componentParams['PARAMS']['arUserField'])
+			&& !empty($componentParams['PARAMS']['arUserField']['ENTITY_ID'])
+			&& !empty($componentParams['PARAMS']['arUserField']['ENTITY_VALUE_ID'])
+		)
+		{
+			\Bitrix\Disk\Uf\UserFieldManager::setTemplateType([
+				'ENTITY_ID' => $componentParams['PARAMS']['arUserField']['ENTITY_ID'],
+				'ENTITY_VALUE_ID' => $componentParams['PARAMS']['arUserField']['ENTITY_VALUE_ID'],
+				'VALUE' =>  (in_array($viewType, $this->getGridViewTypesList()) ? 'grid' : 'gallery')
+			]);
+		}
+
+		return new \Bitrix\Main\Engine\Response\Component('bitrix:disk.uf.file', $viewType, $componentParams);
 	}
 }

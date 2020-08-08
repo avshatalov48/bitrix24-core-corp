@@ -1,0 +1,2 @@
+<?php
+$MESS ["LOCATION_ADDRESS_REPOSITORY_API_KEY_ERROR"] = "Для заполнения адресов с помощью Google API необходимо сохранить ключи в настройках. Как это сделать - можно прочитать в <a href='https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=43&LESSON_ID=7545&LESSON_PATH=3913.4565.4790.7545'>документации</a>.";

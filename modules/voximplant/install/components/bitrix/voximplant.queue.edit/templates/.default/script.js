@@ -160,7 +160,7 @@
 		{
 			if(this.maximumGroupMembers > 0 && this.getSelectedCount() > this.maximumGroupMembers)
 			{
-				BX.Voximplant.showLicensePopup('groups');
+				BX.UI.InfoHelper.show('limit_contact_center_telephony_group_size');
 				this.deleteLastItem();
 				BX.SocNetLogDestination.closeDialog(this.params.name);
 				return;
@@ -370,7 +370,7 @@
 							events: {
 								click: function(e)
 								{
-									BX.Voximplant.showLicensePopup('groups');
+									BX.UI.InfoHelper.show('limit_contact_center_telephony_group_size');
 								}
 							}
 						})
@@ -387,7 +387,7 @@
 							events: {
 								click: function(e)
 								{
-									BX.Voximplant.showLicensePopup('groups');
+									BX.UI.InfoHelper.show('limit_contact_center_telephony_group_size');
 								}
 							}
 						})
@@ -410,7 +410,7 @@
 		{
 			if(this.destination.maximumGroupMembers > 0 && this.destination.getSelectedCount() >= this.destination.maximumGroupMembers)
 			{
-				BX.Voximplant.showLicensePopup('groups');
+				BX.UI.InfoHelper.show('limit_contact_center_telephony_group_size');
 			}
 			else
 			{
@@ -592,7 +592,7 @@
 			{
 				BX.PreventDefault(e);
 				e.target.checked = false;
-				BX.Voximplant.showLicensePopup('main');
+				BX.UI.InfoHelper.show('limit_contact_center_telephony_intercept')
 				return false;
 			}
 		});

@@ -23,7 +23,7 @@ if (!$currentUser || !$currentUser->IsAuthorized() || !check_bitrix_sessid() || 
 CUtil::JSPostUnescape();
 
 $action = isset($_POST['ACTION']) ? $_POST['ACTION'] : '';
-if(strlen($action) == 0)
+if($action == '')
 {
 	echo CUtil::PhpToJSObject(array('ERROR' => 'Invalid request. The "Action" parameter is not found.'));
 	die();

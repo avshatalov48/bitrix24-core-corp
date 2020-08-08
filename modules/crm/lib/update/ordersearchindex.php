@@ -1,5 +1,5 @@
 <?
-namespace Bitrix\Crm\Update\UserField;
+namespace Bitrix\Crm\Update;
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Config\Option;

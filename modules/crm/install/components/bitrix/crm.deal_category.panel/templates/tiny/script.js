@@ -130,5 +130,5 @@ this.BX.Crm.Deal = this.BX.Crm.Deal || {};
 
 	exports.Panel = Panel;
 
-}((this.BX.Crm.Deal.Category = this.BX.Crm.Deal.Category || {}),BX,BX));
+}((this.BX.Crm.Deal.Category = this.BX.Crm.Deal.Category || {}),BX,BX.Main));
 //# sourceMappingURL=script.js.map

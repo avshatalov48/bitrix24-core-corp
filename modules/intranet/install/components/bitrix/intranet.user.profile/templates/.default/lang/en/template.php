@@ -106,4 +106,5 @@ $MESS["INTRANET_USER_PROFILE_integrator"] = "Bitrix24 partner";
 $MESS["INTRANET_USER_PROFILE_invited"] = "Invited";
 $MESS["INTRANET_USER_PROFILE_shop"] = "Web store user";
 $MESS["INTRANET_USER_PROFILE_visitor"] = "Guest";
+$MESS["NTRANET_USER_PROFILE_MOBILE_GOOGLE_PLAY_URL"] = "https://play.google.com/store/apps/details?id=com.bitrix24.android";
 ?>

@@ -13,7 +13,8 @@ ChatDataConverter.init = function(config)
 {
 	this.userId = parseInt(config.userId)? parseInt(config.userId): 0;
 	this.generalChatId = parseInt(config.generalChatId)? parseInt(config.generalChatId): 0;
-	this.listType = config.listType == 'lines'? 'lines': 'recent';
+	this.isIntranetInvitationAdmin = config.isIntranetInvitationAdmin === true;
+	this.listType = config.listType === 'lines'? 'lines': 'recent';
 	this.updateRuntimeData = typeof config.updateRuntimeDataFunction == 'function'? config.updateRuntimeDataFunction: (element) => {};
 	this.imagePath = component.path+'images';
 };
@@ -23,16 +24,16 @@ ChatDataConverter.getElementFormat = function(element)
 	let item = {};
 	// item.useEstimatedHeight = true;
 	item.id = element.id;
+	item.date = ChatUtils.getTimestamp(element.message.date);
 
 	item.params = {
 		id : element.id,
-		date : ChatUtils.getTimestamp(element.message.date),
 		type : element.type,
 		useLetterImage : true,
 	};
 
 	item.sortValues = {
-		order : item.params.date
+		order : item.date
 	};
 
 	if (element.type == 'user')
@@ -42,6 +43,43 @@ ChatDataConverter.getElementFormat = function(element)
 		item.color = element.user.color;
 		item.sectionCode = element.pinned? 'pinned': 'general';
 		item.subtitle = element.message.text;
+
+		if (item.subtitle)
+		{
+			if (!element.user.last_activity_date)
+			{
+				item.color = "#6b6b6b";
+			}
+		}
+		else
+		{
+			if (
+				!element.user.last_activity_date
+				&& !(element.user.bot || element.user.network)
+			)
+			{
+				item.color = "#6b6b6b";
+				item.subtitle = BX.message("USER_INVITED");
+			}
+			else if (element.user.work_position)
+			{
+				item.subtitle = element.user.work_position;
+			}
+			else
+			{
+				item.subtitle = BX.message("IM_LIST_EMPLOYEE");
+			}
+		}
+	}
+	else if (element.type == 'notification')
+	{
+		item.title = BX.message("NOTIFICATION_TITLE");
+		item.imageUrl = this.imagePath + '/avatar_notify_x3.png';
+		item.sectionCode = element.pinned? 'pinned': 'general';
+		let messageText = ChatMessengerCommon.purifyText(element.message.text);
+		item.subtitle = element.user.first_name && element.user.last_name ?
+			element.user.first_name + ' ' + element.user.last_name.charAt(0) + ': ' + messageText :
+			messageText;
 	}
 	else
 	{
@@ -50,7 +88,7 @@ ChatDataConverter.getElementFormat = function(element)
 
 		if (element.chat.id == this.generalChatId && !item.imageUrl)
 		{
-			item.imageUrl = this.imagePath+'/avatar_general.png';
+			item.imageUrl = this.imagePath+'/avatar_general_x3.png';
 		}
 
 		item.color = element.chat.color;
@@ -103,6 +141,18 @@ ChatDataConverter.getElementFormat = function(element)
 
 	item.messageCount = element.counter;
 
+	if (Application.getApiVersion() < 34)
+	{
+		if (!element.counter && element.unread)
+		{
+			item.messageCount = 1;
+		}
+	}
+	else
+	{
+		item.unread = !element.counter && element.unread;
+	}
+
 	item.backgroundColor = element.pinned? '#f6f6f6': '#ffffff';
 
 	item.styles = {};
@@ -114,16 +164,26 @@ ChatDataConverter.getElementFormat = function(element)
 
 	item.actions = this.getActionList(element);
 
+	item.menuMode = 'dialog';
+
 	this.updateRuntimeData(element);
 
 	return item;
 };
 
-ChatDataConverter.getElementFormatByEntity = function(type, entity)
+ChatDataConverter.getElementByEntity = function(type, entity)
 {
 	let result = {
-		id: entity.id,
+		id: parseInt(entity.id),
 		type: type,
+		counter: 0,
+		invited: false,
+		pinned: false,
+		title: "",
+		avatar: {
+			url: "",
+			color: ""
+		},
 		message: {
 			id: 0,
 			text: "",
@@ -138,14 +198,20 @@ ChatDataConverter.getElementFormatByEntity = function(type, entity)
 	if (type == 'user')
 	{
 		result.user = entity;
+		result.avatar.color =  entity.color;
+		result.avatar.url =  entity.avatar;
+		result.title =  entity.name;
 	}
 	else
 	{
 		result.user = {};
 		result.chat = entity;
+		result.avatar.color =  entity.color;
+		result.avatar.url =  entity.avatar;
+		result.title =  entity.name;
 	}
 
-	return this.getElementFormat(result);
+	return result;
 };
 
 ChatDataConverter.getAvatarFormat = function(element)
@@ -158,6 +224,10 @@ ChatDataConverter.getAvatarFormat = function(element)
 		{
 			result = {image: {name: 'status_'+status}};
 		}
+	}
+	else if (element.type == 'notification')
+	{
+
 	}
 	else
 	{
@@ -321,16 +391,13 @@ ChatDataConverter.getTitleFormat = function(type, entity)
 
 ChatDataConverter.getCounterFormat = function(element)
 {
-	let result = {};
+	let result = {backgroundColor: '#47AADE'};
 	if (element.type != 'chat')
 	{
 		return result;
 	}
 
-	if (element.chat.type == 'lines' || element.chat.type == 'call')
-	{
-	}
-	else
+	if (!(element.chat.type == 'lines' || element.chat.type == 'call'))
 	{
 		if (element.chat.mute_list[this.userId])
 		{
@@ -395,6 +462,28 @@ ChatDataConverter.getTextFormat = function(element)
 	else if (element.message.author_id == this.userId)
 	{
 		result = {image: {name : 'reply', sizeMultiplier: 0.7}};
+	}
+	else if (
+		element.type === 'user'
+		&& !(element.user.bot || element.user.network)
+		&& !element.user.last_activity_date
+	)
+	{
+		result = {
+			font: {
+				size: '13',
+				color: '#525C69',
+				fontStyle: 'medium',
+			},
+			cornerRadius: 12,
+			backgroundColor: "#EEF2F4",
+			padding: {
+				top:3.5,
+				right:12,
+				bottom:3.5,
+				left:12
+			}
+		}
 	}
 
 	return result;
@@ -520,11 +609,73 @@ ChatDataConverter.getActionList = function(element)
 	if (element.type == 'user')
 	{
 		result = [];
+
+		if (
+			!element.user.last_activity_date
+			&& !(element.user.bot || element.user.network)
+		)
+		{
+			if (
+				this.isIntranetInvitationAdmin
+				|| element.invited && element.invited.originator_id == this.userId
+			)
+			{
+				if (element.invited && element.invited.can_resend)
+				{
+					result.push({
+						title : BX.message("ELEMENT_MENU_INVITE_RESEND"),
+						identifier : "inviteResend",
+						color : "#aac337"
+					});
+				}
+				result.push({
+					title : BX.message("ELEMENT_MENU_INVITE_CANCEL"),
+					color : "#df532d",
+					identifier : "inviteCancel",
+				});
+			}
+		}
+		else
+		{
+			result.push({
+				title : element.unread || element.counter? BX.message("ELEMENT_MENU_READ"): BX.message("ELEMENT_MENU_UNREAD"),
+				iconName : "action_"+(element.unread || element.counter? "read": "unread"),
+				identifier : element.unread || element.counter? "read": "unread",
+				color : "#23ce2c",
+				direction: 'leftToRight'
+			});
+			result.push({
+				title : element.pinned? BX.message("ELEMENT_MENU_UNPIN"): BX.message("ELEMENT_MENU_PIN"),
+				identifier : element.pinned? "unpin": "pin",
+				color : "#3e99ce",
+				iconName : "action_"+(element.pinned? "unpin": "pin"),
+				direction: 'leftToRight'
+			});
+			result.push({
+				title : BX.message("ELEMENT_MENU_PROFILE"),
+				identifier : "profile",
+				color : "#3e99ce",
+				iconName : "action_userlist",
+			});
+		}
+
+	}
+	else if (element.type == 'notification')
+	{
+		result = [];
+		result.push({
+			title : element.unread || element.counter? BX.message("ELEMENT_MENU_READ"): BX.message("ELEMENT_MENU_UNREAD"),
+			iconName : "action_"+(element.unread || element.counter? "read": "unread"),
+			identifier : element.unread || element.counter? "read": "unread",
+			color : "#23ce2c",
+			direction: 'leftToRight'
+		});
 		result.push({
 			title : element.pinned? BX.message("ELEMENT_MENU_UNPIN"): BX.message("ELEMENT_MENU_PIN"),
 			identifier : element.pinned? "unpin": "pin",
 			color : "#3e99ce",
 			iconName : "action_"+(element.pinned? "unpin": "pin"),
+			direction: 'leftToRight'
 		});
 		result.push({
 			title : BX.message("ELEMENT_MENU_DELETE"),
@@ -573,7 +724,8 @@ ChatDataConverter.getActionList = function(element)
 						title : element.pinned? BX.message("ELEMENT_MENU_UNPIN"): BX.message("ELEMENT_MENU_PIN"),
 						identifier : element.pinned? "unpin": "pin",
 						iconName : "action_"+(element.pinned? "unpin": "pin"),
-						color : "#3e99ce"
+						color : "#3e99ce",
+						direction: 'leftToRight'
 					},
 					{
 						title : BX.message("ELEMENT_MENU_SPAM"),
@@ -590,7 +742,8 @@ ChatDataConverter.getActionList = function(element)
 						title : element.pinned? BX.message("ELEMENT_MENU_UNPIN"): BX.message("ELEMENT_MENU_PIN"),
 						identifier : element.pinned? "unpin": "pin",
 						iconName : "action_"+(element.pinned? "unpin": "pin"),
-						color : "#3e99ce"
+						color : "#3e99ce",
+						direction: 'leftToRight'
 					},
 					{
 						title : BX.message("ELEMENT_MENU_LEAVE"),
@@ -605,6 +758,13 @@ ChatDataConverter.getActionList = function(element)
 		{
 			result = [];
 			result.push({
+				title : element.unread || element.counter? BX.message("ELEMENT_MENU_READ"): BX.message("ELEMENT_MENU_UNREAD"),
+				iconName : "action_"+(element.unread || element.counter? "read": "unread"),
+				identifier : element.unread || element.counter? "read": "unread",
+				color : "#23ce2c",
+				direction: 'leftToRight'
+			});
+			result.push({
 				title : element.chat.mute_list[this.userId]? BX.message("ELEMENT_MENU_UNMUTE"): BX.message("ELEMENT_MENU_MUTE"),
 				identifier : element.chat.mute_list[this.userId]? "unmute": "mute",
 				iconName : "action_"+(element.chat.mute_list[this.userId]? "unmute": "mute"),
@@ -616,11 +776,12 @@ ChatDataConverter.getActionList = function(element)
 					title : element.pinned? BX.message("ELEMENT_MENU_UNPIN"): BX.message("ELEMENT_MENU_PIN"),
 					iconName : "action_"+(element.pinned? "unpin": "pin"),
 					identifier : element.pinned? "unpin": "pin",
-					color : "#3e99ce"
+					color : "#3e99ce",
+					direction: 'leftToRight'
 				});
 			}
 			result.push({
-				title : BX.message("ELEMENT_MENU_DELETE"),
+				title : BX.message("ELEMENT_MENU_HIDE"),
 				iconName : "action_delete",
 				identifier : "hide",
 				color : "#df532d"
@@ -634,6 +795,12 @@ ChatDataConverter.getActionList = function(element)
 ChatDataConverter.getListFormat = function (list)
 {
 	let result = [];
+	let resultIndex = {};
+
+	if (list.items)
+	{
+		list = [...list.items, ...list.pinned];
+	}
 
 	list.forEach((element) => {
 		if (!element) return;
@@ -650,7 +817,15 @@ ChatDataConverter.getListFormat = function (list)
 			element.chat.date_create = new Date(element.chat.date_create);
 		}
 
-		result.push(element);
+		if (resultIndex[element.id] !== undefined)
+		{
+			result[resultIndex[element.id]] = element;
+		}
+		else
+		{
+			let newLength = result.push(element);
+			resultIndex[element.id] = newLength - 1;
+		}
 	});
 
 	return result;
@@ -681,21 +856,40 @@ ChatDataConverter.getUserDataFormat = function (user, options = {})
 	}
 	if (user.id > 0)
 	{
-		if (typeof (user.last_activity_date) != 'undefined')
+		if (user.last_activity_date)
 		{
-			user.last_activity_date = (!dateAtom? new Date(user.last_activity_date): user.last_activity_date.toString());
+			user.last_activity_date = !dateAtom? new Date(user.last_activity_date): user.last_activity_date.toString();
 		}
-		if (typeof (user.mobile_last_date) != 'undefined')
+		else
 		{
-			user.mobile_last_date = (!dateAtom? new Date(user.mobile_last_date): user.mobile_last_date.toString());
+			user.last_activity_date = false;
 		}
-		if (typeof (user.idle) != 'undefined')
+
+		if (user.mobile_last_date)
 		{
-			user.idle = user.idle? (!dateAtom? new Date(user.idle): user.idle.toString()): false;
+			user.mobile_last_date = !dateAtom? new Date(user.mobile_last_date): user.mobile_last_date.toString();
 		}
-		if (typeof (user.absent) != 'undefined')
+		else
 		{
-			user.absent = user.absent? (!dateAtom? new Date(user.absent): user.absent.toString()): false;
+			user.mobile_last_date = false;
+		}
+
+		if (user.idle)
+		{
+			user.idle = !dateAtom? new Date(user.idle): user.idle.toString();
+		}
+		else
+		{
+			user.idle = false;
+		}
+
+		if (user.absent)
+		{
+			user.absent = !dateAtom? new Date(user.absent): user.absent.toString();
+		}
+		else
+		{
+			user.absent = false;
 		}
 	}
 
@@ -742,12 +936,21 @@ ChatDataConverter.getSearchElementFormat = function(element, recent)
 	{
 		item.id = element.user.id;
 		item.params.id = element.user.id;
+		item.params.external_auth_id = element.user.external_auth_id;
 
 		item.title = element.user.name+(element.user.id == this.userId? ' ('+BX.message("IM_YOU")+')': '');
 		item.imageUrl = ChatUtils.getAvatar(element.user.avatar);
 		item.color = element.user.color;
 		item.shortTitle = element.user.first_name? element.user.first_name: element.user.name;
-		item.subtitle = element.user.work_position? element.user.work_position: BX.message("IM_LIST_EMPLOYEE");
+		item.subtitle = element.user.work_position? element.user.work_position: '';
+		if (!element.user.work_position)
+		{
+			item.subtitle = element.user.extranet? BX.message("IM_LIST_EXTRANET"): BX.message("IM_LIST_EMPLOYEE");
+		}
+	}
+	else if (type == 'notification')
+	{
+
 	}
 	else
 	{
@@ -756,8 +959,12 @@ ChatDataConverter.getSearchElementFormat = function(element, recent)
 
 		item.title = element.chat.name;
 		item.shortTitle = element.chat.name;
-		item.subtitle = element.chat.type == "open"? BX.message('IM_LIST_CHAT_OPEN'): BX.message('IM_LIST_CHAT');
+		item.subtitle = element.chat.type == "open"? BX.message('IM_LIST_CHAT_OPEN_NEW'): BX.message('IM_LIST_CHAT_NEW');
 		item.imageUrl = ChatUtils.getAvatar(element.chat.avatar);
+		if (element.chat.id == this.generalChatId)
+		{
+			item.imageUrl = this.imagePath + '/avatar_general_x3.png';
+		}
 		item.color = element.chat.color;
 	}
 
@@ -807,12 +1014,17 @@ ChatDataConverter.getListElementByChat = function(element)
 	item.useLetterImage = true;
 	item.title = item.source.name;
 	item.imageUrl = ChatUtils.getAvatar(item.source.avatar);
+	if (item.source.id == this.generalChatId)
+	{
+		item.imageUrl = this.imagePath + '/avatar_general_x3.png';
+	}
+
 	item.color = item.source.color;
 	item.shortTitle = item.source.name;
 
 	if (item.source.type == "chat")
 	{
-		item.subtitle = BX.message('IM_LIST_CHAT');
+		item.subtitle = BX.message('IM_LIST_CHAT_NEW');
 	}
 	else if (item.source.type == "open")
 	{
@@ -878,7 +1090,6 @@ ChatDataConverter.getListElementByDepartment = function(element)
 
 	return item;
 };
-
 
 ChatDataConverter.getPushFormat = function(push)
 {
@@ -1035,6 +1246,12 @@ ChatDataConverter.preparePushFormat = function(element)
 		&& typeof result.users.id !== 'undefined'
 	)
 	{
+		let lastActivityDate = new Date();
+		if (typeof result.message === 'object' && result.message.date)
+		{
+			lastActivityDate = result.message.date;
+		}
+
 		let user = {};
 		user.id = result.users.id;
 		user.color = result.users.color;
@@ -1054,6 +1271,7 @@ ChatDataConverter.preparePushFormat = function(element)
 		user.external_auth_id = result.users.external_auth_id || 'default';
 		user.work_position = result.users.work_position || '';
 		user.gender = result.users.gender === 'F'? 'F': 'M';
+		user.last_activity_date = lastActivityDate;
 
 		userId = user.id;
 		userName = user.name;

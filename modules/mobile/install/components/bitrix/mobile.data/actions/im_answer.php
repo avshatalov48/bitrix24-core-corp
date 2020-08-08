@@ -26,9 +26,9 @@ if ($USER->IsJustAuthorized())
 
 		$arParams = false;
 		$userId = intval($USER->GetID());
-		if (substr($_REQUEST['RECIPIENT_ID'], 0, 4) == 'chat')
+		if (mb_substr($_REQUEST['RECIPIENT_ID'], 0, 4) == 'chat')
 		{
-			$chatId = intval(substr($_REQUEST['RECIPIENT_ID'], 4));
+			$chatId = intval(mb_substr($_REQUEST['RECIPIENT_ID'], 4));
 			if (CIMChat::GetGeneralChatId() != $chatId || !CIMChat::CanSendMessageToGeneralChat($userId))
 			{
 				$arParams = Array(

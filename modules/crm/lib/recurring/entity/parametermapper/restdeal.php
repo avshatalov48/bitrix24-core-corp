@@ -87,7 +87,7 @@ class RestDeal extends DealMap
 			}
 			elseif (in_array($code, $typeParameters) && !empty($item))
 			{
-				$item = strtolower($item);
+				$item = mb_strtolower($item);
 				$this->map[$code] = (int)Calculator::resolveTypeId($item);
 			}
 			else

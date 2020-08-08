@@ -5,34 +5,34 @@ if (!CModule::IncludeModule("intranet"))
 if (!CModule::IncludeModule("iblock"))
 	return ShowError(GetMessage("EC_IBLOCK_MODULE_NOT_INSTALLED"));
 
-$iblockId = IntVal($arParams["IBLOCK_ID"]);
+$iblockId = intval($arParams["IBLOCK_ID"]);
 
 $arParams["PAGE_VAR"] = Trim($arParams["PAGE_VAR"]);
-if (StrLen($arParams["PAGE_VAR"]) <= 0)
+if ($arParams["PAGE_VAR"] == '')
 	$arParams["PAGE_VAR"] = "page";
 
 $arParams["MEETING_VAR"] = Trim($arParams["MEETING_VAR"]);
-if (StrLen($arParams["MEETING_VAR"]) <= 0)
+if ($arParams["MEETING_VAR"] == '')
 	$arParams["MEETING_VAR"] = "meeting_id";
 
-$meetingId = IntVal($arParams["MEETING_ID"]);
+$meetingId = intval($arParams["MEETING_ID"]);
 if ($meetingId <= 0)
-	$meetingId = IntVal($_REQUEST[$arParams["MEETING_VAR"]]);
+	$meetingId = intval($_REQUEST[$arParams["MEETING_VAR"]]);
 
 $arParams["ITEM_VAR"] = Trim($arParams["ITEM_VAR"]);
-if (StrLen($arParams["ITEM_VAR"]) <= 0)
+if ($arParams["ITEM_VAR"] == '')
 	$arParams["ITEM_VAR"] = "item_id";
 
-$itemId = IntVal($arParams["ITEM_ID"]);
+$itemId = intval($arParams["ITEM_ID"]);
 if ($itemId <= 0)
-	$itemId = IntVal($_REQUEST[$arParams["ITEM_VAR"]]);
+	$itemId = intval($_REQUEST[$arParams["ITEM_VAR"]]);
 
 $arParams["PATH_TO_MEETING"] = Trim($arParams["PATH_TO_MEETING"]);
-if (StrLen($arParams["PATH_TO_MEETING"]) <= 0)
+if ($arParams["PATH_TO_MEETING"] == '')
 	$arParams["PATH_TO_MEETING"] = HtmlSpecialCharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=meeting&".$arParams["MEETING_VAR"]."=#meeting_id#");
 
 $arParams["PATH_TO_MEETING_LIST"] = Trim($arParams["PATH_TO_MEETING_LIST"]);
-if (StrLen($arParams["PATH_TO_MEETING_LIST"]) <= 0)
+if ($arParams["PATH_TO_MEETING_LIST"] == '')
 	$arParams["PATH_TO_MEETING_LIST"] = HtmlSpecialCharsbx($APPLICATION->GetCurPage());
 
 $arParams["SET_TITLE"] = ($arParams["SET_TITLE"] == "Y" ? "Y" : "N");
@@ -60,7 +60,7 @@ if ($arParams["SET_TITLE"] == "Y")
 if ($arParams["SET_NAVCHAIN"] == "Y")
 	$APPLICATION->AddChainItem(GetMessage("INTASK_C36_PAGE_TITLE1"), CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_MEETING_LIST"], array()));
 
-if (StrLen($arResult["FatalError"]) <= 0)
+if ($arResult["FatalError"] == '')
 {
 	$arSelectFields = array("IBLOCK_ID");
 	foreach ($arResult["ALLOWED_FIELDS"] as $key => $value)
@@ -78,7 +78,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 		$arResult["FatalError"] = GetMessage("INAF_MEETING_NOT_FOUND")." ";
 }
 
-if (StrLen($arResult["FatalError"]) <= 0)
+if ($arResult["FatalError"] == '')
 {
 	$arResult["MEETING"] = $arMeeting;
 
@@ -111,7 +111,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 		$arResult["FatalError"] = GetMessage("INAF_ITEM_NOT_FOUND")." ";
 }
 
-if (StrLen($arResult["FatalError"]) <= 0)
+if ($arResult["FatalError"] == '')
 {
 	$arResult["ITEM"] = $arElement;
 

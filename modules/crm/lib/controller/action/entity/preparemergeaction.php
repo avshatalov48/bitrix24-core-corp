@@ -53,7 +53,7 @@ class PrepareMergeAction extends Main\Engine\Action
 
 		sort($entityIDs, SORT_NUMERIC);
 		$hash = md5(
-			\CCrmOwnerType::ResolveName($entityTypeID).':'.strtoupper($gridID).':'.implode(',', $entityIDs)
+			\CCrmOwnerType::ResolveName($entityTypeID).':'.mb_strtoupper($gridID).':'.implode(',', $entityIDs)
 		);
 
 		$_SESSION['CRM_ENTITY_MERGE_DATA'][$hash] = [

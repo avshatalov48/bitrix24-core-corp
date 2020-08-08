@@ -22,7 +22,11 @@ $APPLICATION->SetPageProperty("title", $sTitle);
 $APPLICATION->SetTitle($sTitleShort);
 //endregion TITLE
 
-$arResult['JS_DATA']['filterId'] = $arParams['FILTER_ID'];
+$arResult['JS_DATA'] = [
+	'filterId' => $arParams['FILTER_ID'],
+	'taskLimitExceeded' => $arResult['TASK_LIMIT_EXCEEDED'],
+	'pathToTasks' => $arParams['PATH_TO_TASKS'],
+];
 
 function prepareEffective($row, $arParams)
 {

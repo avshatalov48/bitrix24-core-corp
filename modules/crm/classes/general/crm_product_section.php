@@ -352,14 +352,7 @@ class CCrmProductSection
 			{
 				$select = [];
 			}
-			$res = CIBlockSection::GetNavChain($catalogId, $sectionId, $select);
-			if (is_object($res))
-			{
-				while ($row = $res->Fetch())
-				{
-					$result[] = $row;
-				}
-			}
+			$result = CIBlockSection::GetNavChain($catalogId, $sectionId, $select, true);
 		}
 
 		return $result;
@@ -373,7 +366,8 @@ class CCrmProductSectionDbResult extends CDBResult
 		'CATALOG_ID' => 'IBLOCK_ID',
 		'SECTION_ID' => 'IBLOCK_SECTION_ID',
 		'NAME' => 'NAME',
-		'XML_ID' => 'XML_ID'
+		'XML_ID' => 'XML_ID',
+		'SORT' => 'SORT'
 	);
 	function Fetch()
 	{

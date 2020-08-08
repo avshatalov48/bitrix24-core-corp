@@ -2906,6 +2906,29 @@ table.quote td { padding: 0.95em 1.5em; }
 	max-height: 80px;
 }
 
+.crm-act-email-file-archive-block {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-wrap: wrap;
+	flex-wrap: wrap;
+	width: 100%;
+	margin-top: 10px;
+}
+
+.crm-act-email-file-archive-link {
+	color: #828B95;
+	border-bottom: 1px solid transparent;
+	-webkit-transition: border-bottom .3s;
+	transition: border-bottom .3s;
+	cursor: pointer;
+}
+
+.crm-act-email-file-archive-link:hover {
+	color: #828B95;
+	border-bottom-color: #828B95;
+}
+
 /* RIBBON */
 
 .crm-task-list-mail-item-ribbon { position: relative; }

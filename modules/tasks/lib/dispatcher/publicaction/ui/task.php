@@ -74,6 +74,8 @@ final class Task extends \Bitrix\Tasks\Dispatcher\PublicAction
 			'CANCEL_ACTION_IS_EVENT' => true,
 		));
 
+		$componentParameters["ACTION"] = "edit";
+
 		Tasks\Dispatcher::globalDisable();
 
 		$result->setData(static::getComponentHTML(

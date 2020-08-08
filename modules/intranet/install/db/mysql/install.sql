@@ -118,30 +118,23 @@ create table if not exists b_intranet_dstat_day (
 	KEY `DAY` (`DAY`)
 );
 
-create table if not exists b_intranet_usersubord
-(
-	ID int(11) NOT NULL auto_increment,
-	DIRECTOR_ID int(18) not null,
-	SUBORDINATE_ID int(18) not null,
-
-	PRIMARY KEY (ID),
-	KEY ix_intranet_usersubord_ds (DIRECTOR_ID, SUBORDINATE_ID)
-);
-
-create table if not exists b_intranet_user2dep (
-	ID int(11) not null auto_increment,
-	USER_ID int(11) not null,
-	DEPARTMENT_ID int(11),
-	WEIGHT tinyint default '1',
-
-	primary key(ID),
-	KEY ix_intranet_user2dep_udi (USER_ID, WEIGHT, DEPARTMENT_ID)
-);
-
 create table if not exists b_intranet_queue
 (
 	ENTITY_TYPE varchar(20) NOT NULL,
 	ENTITY_ID varchar(10) NOT NULL,
 	LAST_ITEM varchar(255) NOT NULL,
 	PRIMARY KEY (ENTITY_TYPE, ENTITY_ID)
+);
+
+create table if not exists b_intranet_invitation (
+	ID int(11) not null auto_increment,
+	USER_ID int(11) not null,
+	ORIGINATOR_ID int(11) not null,
+	INVITATION_TYPE varchar(50) null,
+	DATE_CREATE datetime not null,
+	INITIALIZED char(1) not null default 'N',
+
+	PRIMARY KEY(ID),
+	INDEX ix_intranet_invitation_created (DATE_CREATE),
+	UNIQUE INDEX ix_intranet_invitation_user_originator (USER_ID, ORIGINATOR_ID)
 );

@@ -190,7 +190,6 @@ CModule::AddAutoloadClasses(
 		'CCrmProductSectionDbResult' => 'classes/general/crm_product_section.php',
 		'CCrmActivityDbResult' => 'classes/general/crm_activity.php',
 		'CCrmInvoiceRestService' => 'classes/general/restservice_invoice.php',
-		'CCrmRestHelper' => 'classes/general/restservice.php',
 		'CCrmInvoiceEvent' => 'classes/general/crm_invoice_event.php',
 		'CCrmInvoiceEventFormat' => 'classes/general/crm_invoice_event.php',
 		'CCrmLeadReportHelper' => 'classes/general/crm_report_helper.php',
@@ -297,9 +296,14 @@ CModule::AddAutoloadClasses(
 		'\Bitrix\Crm\Preview\Product' => 'lib/preview/product.php',
 		'\Bitrix\Crm\Preview\Quote' => 'lib/preview/quote.php',
 		'\Bitrix\Crm\Preview\Route' => 'lib/preview/route.php',
+		'\Bitrix\Crm\Product\B24Catalog' => 'lib/product/b24catalog.php',
+		'\Bitrix\Crm\Product\Catalog' => 'lib/product/catalog.php',
+		'\Bitrix\Crm\Product\Url\ProductBuilder' => 'lib/product/url/productbuilder.php',
+		'\Bitrix\Crm\Product\Url\Registry' => 'lib/product/url/registry.php',
+		'\Bitrix\Crm\Product\Url\ShopBuilder' => 'lib/product/url/shopbuilder.php',
 		'\Bitrix\Crm\AddressTable' => 'lib/address.php',
+		'\Bitrix\Crm\UserField\Types\ElementType' => 'lib/userfield/types/elementtype.php',
 		'\Bitrix\Crm\UtmTable' => 'lib/utm.php',
-
 	)
 );
 
@@ -311,6 +315,15 @@ foreach ($classAliases as $classAlias)
 {
 	class_alias($classAlias[0], $classAlias[1]);
 }
+
+CJSCore::RegisterExt('crm_common', array(
+	'js' => [
+		'/bitrix/js/crm/common.js'
+	],
+	'css' => [
+		'/bitrix/js/crm/css/crm.css'
+	],
+));
 
 CJSCore::RegisterExt('crm_activity_planner', array(
 	'js' => array('/bitrix/js/crm/activity_planner.js', '/bitrix/js/crm/communication_search.js'),
@@ -346,6 +359,14 @@ if (IsModuleInstalled('socialnetwork'))
 {
 	CJSCore::RegisterExt('crm_sonet_commentaux', array(
 		'js' => '/bitrix/js/crm/socialnetwork.js'
+	));
+}
+
+if (IsModuleInstalled('disk'))
+{
+	CJSCore::RegisterExt('crm_disk_uploader', array(
+		'js' => '/bitrix/js/crm/disk_uploader.js',
+		'css' => '/bitrix/js/disk/css/legacy_uf_common.css'
 	));
 }
 

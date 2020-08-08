@@ -7,7 +7,7 @@ namespace Bitrix\ImConnector;
 class Converter
 {
 	const ERROR_EMPTY_SERVER_RESPONSE = "EMPTY_SERVER_RESPONSE";
-	
+
 	/**
 	 * Converts class \Bitrix\ImConnector\Result copy in an array.
 	 *
@@ -21,7 +21,7 @@ class Converter
 		if(!$object->isSuccess())
 		{
 			$result['ERROR'] = array();
-			
+
 			foreach ($object->getErrors() as $error)
 			{
 				if(!($error instanceof Error))
@@ -83,16 +83,20 @@ class Converter
 	{
 		if(Library::isEmpty($data))
 		{
-			$data = '#EMPTY#';
-		}
-		else
-		{
 			if(is_array($data))
 			{
-				foreach ($data as $key => $value)
-				{
-					$data[$key] = self::convertStubInEmpty($value);
-				}
+				$data = '#EMPTY_ARRAY#';
+			}
+			else
+			{
+				$data = '#EMPTY#';
+			}
+		}
+		elseif(is_array($data))
+		{
+			foreach ($data as $key => $value)
+			{
+				$data[$key] = self::convertStubInEmpty($value);
 			}
 		}
 
@@ -111,16 +115,18 @@ class Converter
 		{
 			$data = '';
 		}
-		else
+		elseif($data === '#EMPTY_ARRAY#')
 		{
-			if(is_array($data))
+			$data = [];
+		}
+		elseif(is_array($data))
+		{
+			foreach ($data as $key => $value)
 			{
-				foreach ($data as $key => $value)
-				{
-					$data[$key] = self::convertEmptyInStub($value);
-				}
+				$data[$key] = self::convertEmptyInStub($value);
 			}
 		}
+
 		return $data;
 	}
 }

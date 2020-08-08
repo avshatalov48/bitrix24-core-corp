@@ -3890,6 +3890,31 @@ if(typeof(BX.CrmEntityInfo) === "undefined")
 			}
 			this._settings["advancedInfo"]["multiFields"] = multifields;
 		},
+		setRequisites: function(requisites)
+		{
+			if(!BX.type.isArray(requisites))
+			{
+				return;
+			}
+			if(!BX.type.isPlainObject(this._settings["advancedInfo"]))
+			{
+				this._settings["advancedInfo"] = {};
+			}
+			this._settings["advancedInfo"]["requisiteData"] = requisites;
+			this._settings["advancedInfo"]["hasEditRequisiteData"] = true;
+		},
+		setRequisitesForSave: function(requisites)
+		{
+			if(!BX.type.isPlainObject(requisites))
+			{
+				return;
+			}
+			this._settings["requisitesForSave"] = requisites;
+		},
+		getRequisitesForSave: function()
+		{
+			return BX.prop.getObject(this._settings, "requisitesForSave", {});
+		},
 		getMultifields: function()
 		{
 			return BX.prop.getArray(
@@ -4115,6 +4140,14 @@ if(typeof(BX.CrmEntityInfo) === "undefined")
 			return (
 				BX.type.isPlainObject(advancedInfo) && BX.type.isArray(advancedInfo["requisiteData"])
 					? advancedInfo["requisiteData"] : []
+			);
+		},
+		hasEditRequisiteData: function()
+		{
+			var advancedInfo = this.getSetting("advancedInfo", null);
+			return (
+				BX.type.isPlainObject(advancedInfo) && BX.type.isBoolean(advancedInfo["hasEditRequisiteData"])
+					? advancedInfo["hasEditRequisiteData"] : false
 			);
 		},
 		prepareRequisiteData: function(context)
@@ -11398,7 +11431,8 @@ if(typeof(BX.CrmAddressType) === "undefined")
 		custom: 7,
 		post: 8,
 		beneficiary: 9,
-		bank: 10
+		bank: 10,
+		delivery: 11
 	};
 }
 

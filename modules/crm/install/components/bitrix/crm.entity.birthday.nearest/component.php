@@ -42,7 +42,7 @@ $arResult['DATE_FORMAT'] = $arParams['DATE_FORMAT'] !== ''
 $arParams['INTERVAL_IN_DAYS'] = isset($arParams['INTERVAL_IN_DAYS']) ? (int)$arParams['INTERVAL_IN_DAYS'] : 7;
 $intervalInDays = $arParams['INTERVAL_IN_DAYS'] > 0 ? $arParams['INTERVAL_IN_DAYS'] : 7;
 
-$arParams['CHECK_PERMISSIONS'] = isset($arParams['CHECK_PERMISSIONS']) ? strtoupper($arParams['CHECK_PERMISSIONS']) : 'Y';
+$arParams['CHECK_PERMISSIONS'] = isset($arParams['CHECK_PERMISSIONS'])? mb_strtoupper($arParams['CHECK_PERMISSIONS']) : 'Y';
 $enablePermissionCheck = $arParams['CHECK_PERMISSIONS'] !== 'N';
 
 $arParams['LIMIT'] = isset($arParams['LIMIT']) ? (int)$arParams['LIMIT'] : 5;

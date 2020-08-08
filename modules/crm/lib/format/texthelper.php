@@ -36,7 +36,7 @@ class TextHelper
 	public static function sanitizeHtml($html)
 	{
 		$html = strval($html);
-		if($html === '' || strpos($html, '<') === false)
+		if($html === '' || mb_strpos($html, '<') === false)
 		{
 			return $html;
 		}

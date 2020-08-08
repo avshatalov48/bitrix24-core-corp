@@ -131,7 +131,7 @@ if($bInternal)
 	}
 	elseif($arResult['TAB_ID'] !== '')
 	{
-		$filterFieldPrefix = strtoupper($arResult['TAB_ID']).'_';
+		$filterFieldPrefix = mb_strtoupper($arResult['TAB_ID']).'_';
 	}
 }
 
@@ -147,7 +147,7 @@ if($arResult['VIEW_ID'] !== '')
 }
 elseif($arResult['TAB_ID'] !== '')
 {
-	$arResult['GRID_ID'] .= '_'.strtoupper($arResult['TAB_ID']);
+	$arResult['GRID_ID'] .= '_'.mb_strtoupper($arResult['TAB_ID']);
 }
 
 
@@ -585,12 +585,12 @@ while ($arEvent = $obRes->Fetch())
 		$arEvent['EVENT_TEXT_2'] = strip_tags($arEvent['~EVENT_TEXT_2'], '<br><br/>');
 	}
 
-	if (strlen($arEvent['EVENT_TEXT_1'])>255 || strlen($arEvent['EVENT_TEXT_2'])>255)
+	if (mb_strlen($arEvent['EVENT_TEXT_1']) > 255 || mb_strlen($arEvent['EVENT_TEXT_2']) > 255)
 	{
 		$arEvent['EVENT_DESC'] = '<div id="event_desc_short_'.$arEvent['ID'].'"><a href="#more" onclick="crm_event_desc('.$arEvent['ID'].'); return false;">'.GetMessage('CRM_EVENT_DESC_MORE').'</a></div>';
 		$arEvent['EVENT_DESC'] .= '<div id="event_desc_full_'.$arEvent['ID'].'" style="display: none"><b>'.GetMessage('CRM_EVENT_DESC_BEFORE').'</b>:<br>'.($arEvent['EVENT_TEXT_1']).'<br><br><b>'.GetMessage('CRM_EVENT_DESC_AFTER').'</b>:<br>'.($arEvent['EVENT_TEXT_2']).'</div>';
 	}
-	else if (strlen($arEvent['EVENT_TEXT_1'])>0 && strlen($arEvent['EVENT_TEXT_2'])>0)
+	else if ($arEvent['EVENT_TEXT_1'] <> '' && $arEvent['EVENT_TEXT_2'] <> '')
 		$arEvent['EVENT_DESC'] = ($arEvent['EVENT_TEXT_1']).' <span>&rarr;</span> '.($arEvent['EVENT_TEXT_2']);
 	else
 		$arEvent['EVENT_DESC'] = !empty($arEvent['EVENT_TEXT_1'])? ($arEvent['EVENT_TEXT_1']): '';

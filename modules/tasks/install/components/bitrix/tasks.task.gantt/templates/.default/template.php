@@ -11,6 +11,10 @@ $isIFrame = $_REQUEST['IFRAME'] == 'Y';
 Loc::loadMessages(__FILE__);
 CUtil::InitJSCore(array('popup', 'tooltip', 'gantt', 'tasks_util_query', 'task_info_popup', 'task-popups', 'CJSTask'));
 
+\Bitrix\Main\UI\Extension::load([
+	'ui.counter',
+]);
+
 $APPLICATION->AddHeadScript("/bitrix/components/bitrix/tasks.list/templates/.default/script.js");
 $APPLICATION->AddHeadScript("/bitrix/components/bitrix/tasks.list/templates/.default/gantt-view.js");
 $APPLICATION->AddHeadScript("/bitrix/js/tasks/task-iframe-popup.js");
@@ -30,65 +34,32 @@ if (\Bitrix\Tasks\Util\DisposableAction::needConvertTemplateFiles())
 		array("HIDE_ICONS" => "Y")
 	);
 }
-
+$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
 $APPLICATION->IncludeComponent(
 	'bitrix:main.calendar',
 	'',
-	array(
-		'SILENT' => 'Y',
-	),
+	['SILENT' => 'Y'],
 	null,
-	array('HIDE_ICONS' => 'Y')
+	['HIDE_ICONS' => 'Y']
 );
-
-$arPaths = array(
-	"PATH_TO_TASKS_TASK" => $arParams['GROUP_ID'] > 0 ? $arParams['PATH_TO_GROUP_TASKS_TASK'] : $arParams["PATH_TO_USER_TASKS_TASK"],
-	"PATH_TO_USER_PROFILE" => $arParams["PATH_TO_USER_PROFILE"]
-);
-
 $APPLICATION->IncludeComponent(
 	"bitrix:tasks.iframe.popup",
 	".default",
-	array(
-		//		"ON_BEFORE_HIDE" => "onBeforeHide",
-		//		"ON_AFTER_HIDE" => "onAfterHide",
-		//		"ON_BEFORE_SHOW" => "onBeforeShow",
-		//		"ON_AFTER_SHOW" => "onAfterShow",
-
-
-		//		"ON_TASK_ADDED" => "onPopupTaskAdded",
-		//		'ON_TASK_ADDED_MULTIPLE' => 'onPopupTaskAdded',
-		//		"ON_TASK_CHANGED" => "onPopupTaskChanged",
-		//		"ON_TASK_DELETED" => "onPopupTaskDeleted"
-	),
+	[],
 	null,
-	array("HIDE_ICONS" => "Y")
+	["HIDE_ICONS" => "Y"]
 );
 
-$cs = \Bitrix\Tasks\UI::translateCalendarSettings($arResult['CALENDAR_SETTINGS']);
+$arPaths = [
+	"PATH_TO_TASKS_TASK" => $arParams['GROUP_ID'] > 0 ? $arParams['PATH_TO_GROUP_TASKS_TASK'] : $arParams["PATH_TO_USER_TASKS_TASK"],
+	"PATH_TO_USER_PROFILE" => $arParams["PATH_TO_USER_PROFILE"]
+];
 
+$cs = \Bitrix\Tasks\UI::translateCalendarSettings($arResult['CALENDAR_SETTINGS']);
 $holidays = $cs['HOLIDAYS'];
 $hours = $cs['HOURS'];
 $weekEnds = $cs['WEEK_END'];
 $weekStart = $cs['WEEK_START'];
-
-if (Loader::IncludeModule('bitrix24'))
-{
-	$APPLICATION->IncludeComponent("bitrix:bitrix24.limit.lock", "", array(
-		"FEATURE_GROUP_NAME" => "tasks"
-	));
-
-	$billingCurrency = \CBitrix24::BillingCurrency();
-	$arProductPrices = \CBitrix24::getPrices($billingCurrency);
-	$price = \CBitrix24::ConvertCurrency($arProductPrices["TF1"]["PRICE"], $billingCurrency);
-
-	$trialTitle = GetMessageJS('TASKS_LIST_TRIAL_EXPIRED_TITLE_V2');
-	$trialMessage = preg_replace(
-		"#(\r\n|\n)#",
-		"<br />",
-		GetMessageJS('TASKS_LIST_TRIAL_EXPIRED_TEXT', array('#PRICE#' => $price))
-	);
-}
 
 $currentGroupId = $arParams['GROUP_ID'];
 $canDragTasks = false;
@@ -213,7 +184,7 @@ else
 
             	if (message !== '')
 				{
-					BX.Bitrix24.LicenseInfoPopup.show('tasks', '<?= $trialTitle?>', message);
+					BX.UI.InfoHelper.show('limit_tasks_gantt');
 					return;
 				}
 
@@ -287,7 +258,7 @@ else
 
                             if (trialExpired)
                             {
-                            	BX.Bitrix24.LicenseInfoPopup.show('popupTaskTrial', '<?=$trialTitle?>', '<?=$trialMessage?>');
+								BX.UI.InfoHelper.show('limit_tasks_gantt');
                             }
                             else
 							{
@@ -608,6 +579,7 @@ if ($isBitrix24Template)
 		'COMPANY_WORKTIME' => $arResult['COMPANY_WORKTIME'],
 		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
 		'GANTT_MODE' => true,
+		'PROJECT_VIEW' => $arParams['PROJECT_VIEW'],
 
 		'USER_ID' => $arParams['USER_ID'],
 		'GROUP_ID' => $arParams['GROUP_ID'],
@@ -615,6 +587,7 @@ if ($isBitrix24Template)
 		'MARK_ACTIVE_ROLE' => $arParams['MARK_ACTIVE_ROLE'],
 		'MARK_SECTION_ALL' => $arParams['MARK_SECTION_ALL'],
 		'MARK_SPECIAL_PRESET' => $arParams['MARK_SPECIAL_PRESET'],
+		'MARK_SECTION_PROJECTS' => $arParams['MARK_SECTION_PROJECTS'],
 
 
 		'PATH_TO_USER_TASKS' => $arParams['PATH_TO_USER_TASKS'],

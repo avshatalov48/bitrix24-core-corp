@@ -91,7 +91,7 @@ class Agent
 				break;
 			//the agent in the cloud-bitrix24
 			case self::TYPE_AGENT_B24:
-				$time = 180;
+				$time = 50;
 				break;
 			//agent on cron
 			case self::TYPE_AGENT_CRON:

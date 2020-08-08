@@ -11,7 +11,7 @@ BX.namespace("BX.CRM.Kanban");
  */
 BX.CRM.Kanban.Grid = function(options)
 {
-	
+
 	BX.Kanban.Grid.apply(this, arguments);
 
 	BX.addCustomEvent(this, "Kanban.DropZone:onBeforeItemCaptured", BX.delegate(this.onBeforeItemCaptured, this));
@@ -211,7 +211,7 @@ BX.CRM.Kanban.Grid.prototype = {
 			this.isItKanban(el.target) ? this.currentNode = el.target : this.currentNode = null;
 
 			if(
-				!BX.findParent(el.target, {"className": "main-kanban-item"}) && 
+				!BX.findParent(el.target, {"className": "main-kanban-item"}) &&
 				!BX.findParent(el.target, {"className": "ui-action-panel"})
 			)
 			{
@@ -395,7 +395,7 @@ BX.CRM.Kanban.Grid.prototype = {
 			{
 				var gridData = this.getData();
 				this.accessNotifyDialog = new BX.Intranet.NotifyDialog({
-					listUserData: [],
+					listUserData: this.getData().admins,
 					notificationHandlerUrl: this.getAjaxHandlerPath() +
 											"?action=notifyAdmin&version=2&entity_type=" +
 											gridData.entityType,
@@ -403,11 +403,10 @@ BX.CRM.Kanban.Grid.prototype = {
 						sendButton: BX.message("CRM_KANBAN_NOTIFY_BUTTON"),
 						title: BX.message("CRM_KANBAN_NOTIFY_TITLE"),
 						header: BX.message("CRM_KANBAN_NOTIFY_HEADER"),
-						description: BX.message("CRM_KANBAN_NOTIFY_TEXT")
+						description: BX.message("CRM_KANBAN_NOTIFY_TEXT2")
 					}
 				});
 			}
-			this.accessNotifyDialog.setUsersForNotify(this.getData().admins);
 			this.accessNotifyDialog.show();
 		}
 	},
@@ -991,6 +990,7 @@ BX.CRM.Kanban.Grid.prototype = {
 				// show editor
 				var context = {};
 				context[((gridData.entityType === "DEAL") ? "STAGE_ID" : "STATUS_ID")] = columnId;
+				context['NOT_CHANGE_STATUS'] = 'Y';
 				this.progressBarEditor = BX.Crm.PartialEditorDialog.create(
 					"progressbar-entity-editor",
 					{
@@ -1237,7 +1237,7 @@ BX.CRM.Kanban.Grid.prototype = {
 					);
 				}
 				this.setData(gridData);
-				this.customFieldsPopup = null;
+				this.destroyFieldsSelectPopup();
 
 				// remove all columns
 				var exist = [], id = null;
@@ -1573,13 +1573,15 @@ BX.CRM.Kanban.Grid.prototype = {
 		if(this.currentPopupFields !== viewType)
 		{
 			this.currentPopupFields = viewType;
-			this.customFieldsPopup = null;
+			this.destroyFieldsSelectPopup();
 		}
 
-		if (!this.customFieldsPopup)
+		var customFieldsPopup = BX.Main.PopupManager.getPopupById("kanban_custom_fields");
+
+		if (!customFieldsPopup)
 		{
 			// base popup with fields and save action
-			this.customFieldsPopup = new BX.PopupWindow(
+			customFieldsPopup = BX.Main.PopupManager.create(
 				"kanban_custom_fields",
 				window.body,
 				{
@@ -1765,7 +1767,7 @@ BX.CRM.Kanban.Grid.prototype = {
 												{
 												}.bind(this)
 											);
-											this.customFieldsPopup.close();
+											customFieldsPopup.close();
 										}.bind(this)
 									}
 							}
@@ -1778,8 +1780,8 @@ BX.CRM.Kanban.Grid.prototype = {
 									{
 										click: function()
 										{
-											this.customFieldsPopup.close();
-											this.customFieldsPopup = null;
+											customFieldsPopup.close();
+											this.destroyFieldsSelectPopup();
 										}.bind(this)
 									}
 							}
@@ -1801,9 +1803,9 @@ BX.CRM.Kanban.Grid.prototype = {
 
 			loader.show();
 
-			this.customFieldsPopup.setContent(loaderContainer);
+			customFieldsPopup.setContent(loaderContainer);
 
-			this.customFieldsPopup.setTitleBar(
+			customFieldsPopup.setTitleBar(
 				BX.message("CRM_KANBAN_CUSTOM_FIELDS_" + viewType.toUpperCase())
 			);
 
@@ -1826,26 +1828,19 @@ BX.CRM.Kanban.Grid.prototype = {
 				onsuccess: function(result)
 				{
 					loader.destroy();
+					
+					result.push({
+						ID: "CLIENT",
+						NAME: "CLIENT",
+						LABEL: BX.message("CRM_EDITOR_FIELD_CLIENT")
+					});
 
 					if (viewType === "edit")
 					{
 						result.push({
-							ID: "CLIENT",
-							NAME: "CLIENT",
-							LABEL: BX.message("CRM_EDITOR_FIELD_CLIENT")
-						});
-						result.push({
 							ID: "OPPORTUNITY_WITH_CURRENCY",
 							NAME: "OPPORTUNITY_WITH_CURRENCY",
 							LABEL: BX.message("CRM_EDITOR_FIELD_OPPORTUNITY_WITH_CURRENCY")
-						});
-					}
-					else
-					{
-						result.push({
-							ID: "CLIENT",
-							NAME: "CLIENT",
-							LABEL: BX.message("CRM_EDITOR_FIELD_CLIENT")
 						});
 					}
 
@@ -2003,16 +1998,25 @@ BX.CRM.Kanban.Grid.prototype = {
 
 					var customFieldsContainer = this.customFieldsContainer;
 
-					this.customFieldsPopup.setContent(
+					customFieldsPopup.setContent(
 						this.customFieldsContainer
 					);
 
-					this.customFieldsPopup.adjustPosition();
+					customFieldsPopup.adjustPosition();
 
 				}.bind(this)
 			});
 		}
-		this.customFieldsPopup.show();
+		customFieldsPopup.show();
+	},
+
+	destroyFieldsSelectPopup: function()
+	{
+		var customFieldsPopup = BX.Main.PopupManager.getPopupById("kanban_custom_fields");
+		if (customFieldsPopup)
+		{
+			customFieldsPopup.destroy();
+		}
 	},
 
 	/**
@@ -2742,6 +2746,7 @@ BX.CRM.Kanban.Grid.prototype = {
 				autohide: true,
 				bindOptions: { forceBindPosition: true },
 				autoHide: true,
+				cacheable: false,
 				closeByEsc: true
 			}
 		);

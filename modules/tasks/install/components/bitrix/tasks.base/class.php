@@ -54,7 +54,7 @@ abstract class TasksBaseComponent extends CBitrixComponent
 			$request = static::getRequest();
 
 			$arResult = array();
-			$this->auxParams = $this->makeAuxParams();
+			$this->auxParams = $this->makeAuxParams($request->toArray());
 
 			static::checkRequiredModules($this->arParams, $arResult, $this->errors, $this->auxParams);
 
@@ -141,7 +141,7 @@ abstract class TasksBaseComponent extends CBitrixComponent
 	 */
 	protected function showSpotlight($code)
 	{
-		if ($code == 'timeline')
+		if ($code == 'simple_counters')
 		{
 			if (CUserOptions::getOption('spotlight', 'view_date_tasks_' . $code, false))
 			{
@@ -149,14 +149,16 @@ abstract class TasksBaseComponent extends CBitrixComponent
 			}
 			if (\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24'))
 			{
-				return $this->getPortalDaysAge() >= 30;
+				$dateCreate = Util::getPortalCreateTimestamp();
+				$timestamp = strtotime('25-05-2020'); // release date with a simple counter
+				return $dateCreate < $timestamp;
 			}
 			return true;
 		}
 		return false;
 	}
 
-	protected function makeAuxParams()
+	protected function makeAuxParams($request = null)
 	{
 		return array(
 			// you may also do an ajax hit on non-ajax urls, but in general this is not a good idea
@@ -164,6 +166,7 @@ abstract class TasksBaseComponent extends CBitrixComponent
 			'CLASS_NAME' => static::getComponentClassName(),
 			'ID' => $this->getId(),
 			'SIGNATURE' => $this->getSignature(),
+			'REQUEST' => $request
 		);
 	}
 
@@ -211,6 +214,7 @@ abstract class TasksBaseComponent extends CBitrixComponent
 			$auxParams = array(
 				'QUERY_TYPE' => static::QUERY_TYPE_AJAX,
 				'CLASS_NAME' => static::getComponentClassName(),
+				'REQUEST' => $request
 			);
 
 			static::checkSiteId($request, $errors); // SITE_ID should be present in request
@@ -248,7 +252,7 @@ abstract class TasksBaseComponent extends CBitrixComponent
 					$result = static::dispatch($plan, $errors, $auxParams, $arParams);
 					if(is_object($plan))
 					{
-						$result = $plan ->exportResult();
+						$result = $plan->exportResult();
 					}
 
 					if($errors->checkNoFatals())
@@ -344,7 +348,10 @@ abstract class TasksBaseComponent extends CBitrixComponent
 	 */
 	protected function doPostAction()
 	{
-		$this->arResult['ERROR'] = $this->errors->getAll(true);
+		foreach ($this->errors as $error)
+		{
+			$this->arResult['ERROR'][$error->getCode()] = $error->toArray();
+		}
 		$this->arResult['COMPONENT_DATA']['ID'] = $this->auxParams['ID']; // for queries
 		$this->arResult['COMPONENT_DATA']['SIGNATURE'] = $this->auxParams['SIGNATURE']; // for human-readable js
 		$this->arResult['COMPONENT_DATA']['QUERY_TYPE'] = $this->auxParams['QUERY_TYPE'];
@@ -565,7 +572,18 @@ abstract class TasksBaseComponent extends CBitrixComponent
 			)
 		);
 
+		$access = static::checkRights($arParams, $arResult, $auxParams);
+		if ($access instanceof Util\Error)
+		{
+			$errors->add($access->getCode(), $access->getMessage(), $access->getType());
+		}
+
 		return $errors->checkNoFatals();
+	}
+
+	protected static function checkRights(array $arParams, array $arResult, array $auxParams): ?Util\Error
+	{
+		return null;
 	}
 
 	protected static function getEffectiveUserId($arParams)
@@ -613,7 +631,7 @@ abstract class TasksBaseComponent extends CBitrixComponent
 	}
 
 	/**
-	 * Check conditions on which the component starts to show interest to the current request. 
+	 * Check conditions on which the component starts to show interest to the current request.
 	 * There could be some general conditions besides the main dispatching process.
 	 * @param mixed[] $request
 	 * @return boolean
@@ -803,7 +821,7 @@ abstract class TasksBaseComponent extends CBitrixComponent
 		{
 			$fld = $default;
 		}
-			
+
 		return $fld;
 	}
 

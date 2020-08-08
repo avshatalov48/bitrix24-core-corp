@@ -232,7 +232,9 @@ HTML;
 						<div class="crm-start-channel-item-header" data-role="open-chanel">
 							<div class="crm-start-channel-open"></div>
 							<div class="crm-start-channel-title">
-								<div class="crm-start-channel-user-avatar" {$user["STYLE_USER_PHOTO"]}></div>
+								<div class="ui-icon ui-icon-common-user crm-start-channel-user-avatar">
+									<i {$user["STYLE_USER_PHOTO"]}></i>
+								</div>
 								<div class="crm-start-channel-username$class">{$user["USER"]}</div>
 								<div class="crm-start-channel-user-position">{$user["WORK_POSITION"]}</div>
 							</div>
@@ -290,7 +292,7 @@ HTML;
 		{
 			$videoUrl = GetMessageJS("CRM_MANAGER_CNTR_VIDEO", array("#VOLUME#" => "&volume=0"));
 		}
-		$icon = strpos(GetMessage("CRM_MANAGER_CNTR_VIDEO"), "#VOLUME#") === false ? "info" : "video";
+		$icon = mb_strpos(GetMessage("CRM_MANAGER_CNTR_VIDEO"), "#VOLUME#") === false ? "info" : "video";
 		$id = randString(10);
 		$title = GetMessage("CRM_MANAGER_CNTR_TITLE");
 		$innerHTML .= <<<HTML

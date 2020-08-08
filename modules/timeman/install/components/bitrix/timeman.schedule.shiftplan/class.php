@@ -81,6 +81,8 @@ class TimemanShiftPlanComponent extends Timeman\Component\BaseComponent
 			$this->arResult['scheduleUpdateLink'] = DependencyManager::getInstance()->getUrlManager()->getUriTo(TimemanUrlManager::URI_SCHEDULE_UPDATE, ['SCHEDULE_ID' => $this->arResult['SCHEDULE_ID']]) . '?hideShiftPlanBtn=Y';
 		}
 		$this->arResult['SHOW_ADD_USER_BUTTON'] = $this->userPermissionManager->canUpdateSchedule($this->arResult['SCHEDULE_ID']);
+		$this->arResult['errorCodeOverlappingPlans'] = \Bitrix\Timeman\Service\Schedule\Result\ShiftPlanServiceResult::ERROR_CODE_OVERLAPPING_SHIFT_PLAN;
+
 		$this->includeComponentTemplate();
 	}
 }

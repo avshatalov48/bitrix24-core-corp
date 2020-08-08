@@ -13,6 +13,7 @@ $MESS["TASKS_GANTT_MONTH_NOV"] = "Ноябрь";
 $MESS["TASKS_GANTT_MONTH_DEC"] = "Декабрь";
 $MESS["TASKS_CANNOT_ADD_DEPENDENCY"] = "Невозможно добавить связь между данными задачами";
 $MESS["TASKS_TITLE_GROUP_TASKS"] = "Задачи группы";
+$MESS["TASKS_TITLE_PROJECT"] = "Проект";
 $MESS["TASKS_TITLE"] = "Задачи";
 $MESS["TASKS_TITLE_MY"] = "Мои задачи";
 $MESS["TASKS_CLOSE_PAGE_CONFIRM"] = "Возможно, внесенные изменения не сохранятся.";

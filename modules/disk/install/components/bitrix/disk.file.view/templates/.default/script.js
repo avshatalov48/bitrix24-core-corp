@@ -668,7 +668,15 @@ BX.Disk.FileViewClass = (function ()
 			{
 				text: BX.message('DISK_FILE_VIEW_FILE_GO_TO_HISTORY'),
 				onclick: function() {
-					BX.SidePanel.Instance.open(self.urls.fileHistory);
+					if (self.object.isHistoryBlocked)
+					{
+						BX.SidePanel.Instance.open(self.urls.fileHistory);
+					}
+					else
+					{
+						BX.UI.InfoHelper.show('limit_office_version_storage');
+					}
+
 					this.close();
 				}
 			}

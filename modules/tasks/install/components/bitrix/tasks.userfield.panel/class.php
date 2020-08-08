@@ -3,11 +3,12 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Localization\LanguageTable;
-use Bitrix\Tasks\Util\UserField;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\Result;
-use Bitrix\Tasks\Util\User;
-use Bitrix\Tasks\Util\UserField\Restriction;
 use Bitrix\Tasks\Util\Type\DateTime;
+use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\Util\UserField;
+use Bitrix\Tasks\Util\UserField\Restriction;
 
 Loc::loadMessages(__FILE__);
 
@@ -39,35 +40,28 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 		$state = array();
 
 		$this->ctrl = static::getControllerByEntity($this->arParams['ENTITY_CODE']);
-		$entityCode = $this->ctrl->getEntityCode();
+		$entityCode = $this->ctrl::getEntityCode();
 
-		if($this->ctrl)
+		if ($this->ctrl && Restriction::canUse($entityCode))
 		{
-			if(!Restriction::canUse($entityCode))
+			$fields = $this->ctrl::getScheme();
+			$types = $this->ctrl::getTypes();
+
+			foreach ($fields as $ufCode => $ufDesc)
 			{
-				$this->errors->add('ACTION_RESTRICTED', Loc::getMessage('TASKS_TUFE_UF_USAGE_RESTRICTED'));
+				$fields[$ufCode]['VALUE'] = $this->getUfValue($ufCode, $ufDesc);
+				$fields[$ufCode]['LABEL'] = $this->getUfLabel($ufDesc);
 			}
-			else
+
+			$this->stateCtrl = static::getStateController($this->ctrl);
+			if($this->stateCtrl)
 			{
-				$fields = $this->ctrl->getScheme();
-				$types = $this->ctrl->getTypes();
-
-				foreach ($fields as $ufCode => $ufDesc)
+				$state = $this->stateCtrl->get();
+				foreach($state as $ufCode => $ufState)
 				{
-					$fields[$ufCode]['VALUE'] = $this->getUfValue($ufCode, $ufDesc);
-					$fields[$ufCode]['LABEL'] = $this->getUfLabel($ufDesc);
-				}
-
-				$this->stateCtrl = static::getStateController($this->ctrl);
-				if($this->stateCtrl)
-				{
-					$state = $this->stateCtrl->get();
-					foreach($state as $ufCode => $ufState)
+					if(in_array($ufCode, $this->arParams['EXCLUDE']))
 					{
-						if(in_array($ufCode, $this->arParams['EXCLUDE']))
-						{
-							unset($state[$ufCode]);
-						}
+						unset($state[$ufCode]);
 					}
 				}
 			}
@@ -81,6 +75,7 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 			'USE' => Restriction::canUse($entityCode, $this->userId),
 			'MANAGE' => Restriction::canManage($entityCode, $this->userId),
 			'CREATE_MANDATORY' => Restriction::canCreateMandatory($entityCode, $this->userId),
+			'TASK_LIMIT_EXCEEDED' => TaskLimit::isLimitExceeded(TaskLimit::isLimitExist() ? 0 : 100),
 		);
 	}
 
@@ -261,7 +256,10 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 		{
 			$result->addError('ILLEGAL_ARGUMENT.LABEL', Loc::getMessage('TASKS_TUFE_EMPTY_LABEL'));
 		}
-		if (!Restriction::canManage($ufController->getEntityCode()))
+		if (
+			!Restriction::canManage($ufController->getEntityCode())
+			&& TaskLimit::isLimitExceeded(TaskLimit::isLimitExist() ? 0 : 100)
+		)
 		{
 			$result->addError('ACTION_RESTRICTED', Loc::getMessage('TASKS_TUFE_UF_MANAGING_RESTRICTED'));
 		}
@@ -416,13 +414,6 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 				if(!$ufController)
 				{
 					$result->addError('ILLEGAL_ARGUMENT.ENTITY_CODE', Loc::getMessage('TASKS_TUFE_UF_UNKNOWN_ENTITY_CODE'));
-				}
-				else
-				{
-					if(!Restriction::canManage($ufController->getEntityCode()))
-					{
-						$result->addError('ACTION_RESTRICTED', Loc::getMessage('TASKS_TUFE_UF_MANAGING_RESTRICTED'));
-					}
 				}
 
 				if($result->isSuccess())

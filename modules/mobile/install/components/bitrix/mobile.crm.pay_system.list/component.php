@@ -29,7 +29,7 @@ if($mode === '' && isset($_REQUEST['mode']))
 	$mode = $_REQUEST['mode'];
 }
 
-$mode = strtoupper(trim($mode));
+$mode = mb_strtoupper(trim($mode));
 $arResult['MODE'] = $arParams['MODE'] = $mode;
 
 $contextID = isset($arParams['CONTEXT_ID']) ? $arParams['CONTEXT_ID'] : '';
@@ -60,7 +60,7 @@ $arResult['RELOAD_URL_TEMPLATE'] = $APPLICATION->GetCurPageParam(
 	array('AJAX_CALL', 'SEARCH', 'FORMAT', 'save', 'apply_filter', 'clear_filter', 'person_type_id')
 );
 
-$format = isset($_REQUEST['FORMAT']) ? strtolower($_REQUEST['FORMAT']) : '';
+$format = isset($_REQUEST['FORMAT'])? mb_strtolower($_REQUEST['FORMAT']) : '';
 // Only JSON format is supported
 if($format !== '' && $format !== 'json')
 {

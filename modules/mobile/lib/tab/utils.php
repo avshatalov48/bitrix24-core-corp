@@ -16,6 +16,7 @@ class Utils
 		$jsCode = <<<JS
 		PageManager.openComponent("JSStackComponent",
 				{
+					title:"$title",
 					scriptPath:"$scriptPath",
 					componentCode: "$code",
 					params : $params,

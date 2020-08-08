@@ -76,21 +76,21 @@ class CAllCrmInvoice
 
 		if ($ID !== false && isset($arFields['ACCOUNT_NUMBER']))
 		{
-			if (strlen($arFields['ACCOUNT_NUMBER']) <= 0)
+			if ($arFields['ACCOUNT_NUMBER'] == '')
 				$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_IS_MISSING', array('%FIELD_NAME%' => GetMessage('CRM_FIELD_ACCOUNT_NUMBER')))."<br />\n";
 		}
 
-		if (($ID == false || isset($arFields['ORDER_TOPIC'])) && strlen($arFields['ORDER_TOPIC']) <= 0)
+		if (($ID == false || isset($arFields['ORDER_TOPIC'])) && $arFields['ORDER_TOPIC'] == '')
 			$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_IS_MISSING', array('%FIELD_NAME%' => GetMessage('CRM_FIELD_ORDER_TOPIC')))."<br />\n";
 
-		if (!empty($arFields['ORDER_TOPIC']) && strlen($arFields['ORDER_TOPIC']) > 255)
+		if (!empty($arFields['ORDER_TOPIC']) && mb_strlen($arFields['ORDER_TOPIC']) > 255)
 			$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_FIELD_ORDER_TOPIC')))."<br />\n";
 
-		if (!empty($arFields['COMMENTS']) && strlen($arFields['COMMENTS']) > 2000)
+		if (!empty($arFields['COMMENTS']) && mb_strlen($arFields['COMMENTS']) > 2000)
 			$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_FIELD_COMMENTS')))
 				.' ('.GetMessage('CRM_FIELD_COMMENTS_INCORRECT_INFO').").<br />\n";
 
-		if (!empty($arFields['USER_DESCRIPTION']) && strlen($arFields['USER_DESCRIPTION']) > 2000)
+		if (!empty($arFields['USER_DESCRIPTION']) && mb_strlen($arFields['USER_DESCRIPTION']) > 2000)
 			$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_FIELD_USER_DESCRIPTION')))
 				.' ('.GetMessage('CRM_FIELD_USER_DESCRIPTION_INCORRECT_INFO').").<br />\n";
 
@@ -103,18 +103,18 @@ class CAllCrmInvoice
 
 		if ($bStatusSuccess)
 		{
-			if (!empty($arFields['PAY_VOUCHER_NUM']) && strlen($arFields['PAY_VOUCHER_NUM']) > 20)
+			if (!empty($arFields['PAY_VOUCHER_NUM']) && mb_strlen($arFields['PAY_VOUCHER_NUM']) > 20)
 				$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_FIELD_PAY_VOUCHER_NUM')))."<br />\n";
 			if (!empty($arFields['PAY_VOUCHER_DATE']) && !CheckDateTime($arFields['PAY_VOUCHER_DATE']))
 				$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_FIELD_PAY_VOUCHER_DATE')))."<br />\n";
-			if (!empty($arFields['REASON_MARKED']) && strlen($arFields['REASON_MARKED']) > 255)
+			if (!empty($arFields['REASON_MARKED']) && mb_strlen($arFields['REASON_MARKED']) > 255)
 				$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_FIELD_REASON_MARKED_SUCCESS')))."<br />\n";
 		}
 		elseif ($bStatusFailed)
 		{
 			if (!empty($arFields['DATE_MARKED']) && !CheckDateTime($arFields['DATE_MARKED']))
 				$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_FIELD_DATE_MARKED')))."<br />\n";
-			if (!empty($arFields['REASON_MARKED']) && strlen($arFields['REASON_MARKED']) > 255)
+			if (!empty($arFields['REASON_MARKED']) && mb_strlen($arFields['REASON_MARKED']) > 255)
 				$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_FIELD_REASON_MARKED')))."<br />\n";
 		}
 
@@ -165,7 +165,7 @@ class CAllCrmInvoice
 			}
 		}
 
-		if (strlen($this->LAST_ERROR) > 0)
+		if ($this->LAST_ERROR <> '')
 			return false;
 
 		return true;
@@ -189,7 +189,7 @@ class CAllCrmInvoice
 			$this->LAST_ERROR .= $e->GetString();
 		}
 
-		if (strlen($this->LAST_ERROR) > 0)
+		if ($this->LAST_ERROR <> '')
 			return false;
 
 		return true;
@@ -900,7 +900,8 @@ class CAllCrmInvoice
 
 		$arPrevOrder = ($tmpOrderId !== 0) ? CCrmInvoice::GetByID($tmpOrderId, $this->bCheckPermission) : null;
 
-		$userId = CCrmSecurityHelper::GetCurrentUserID();
+		$userId = isset($options['CURRENT_USER'])
+			? (int)$options['CURRENT_USER'] : CCrmSecurityHelper::GetCurrentUserID();
 
 		if (!isset($arFields['RESPONSIBLE_ID']) || (int)$arFields['RESPONSIBLE_ID'] <= 0)
 		{
@@ -960,7 +961,7 @@ class CAllCrmInvoice
 		{
 			$arFields['~DATE_BILL'] = $DB->CharToDateFunction(
 				isset($arFields['DATE_BILL']) && $arFields['DATE_BILL'] !== '' ?
-					$arFields['DATE_BILL'] : ConvertTimeStamp(time(), 'SHORT', SITE_ID),
+					$arFields['DATE_BILL'] : ConvertTimeStamp(time() + CTimeZone::GetOffset(), 'SHORT', SITE_ID),
 				'SHORT',
 				false
 			);
@@ -1252,10 +1253,18 @@ class CAllCrmInvoice
 			$bGetBasketXmlIds = false;
 			foreach ($arProduct as &$productRow)
 			{
-				if (isset($productRow['ID']) && intval($productRow['ID']) === 0 && isset($productRow['PRODUCT_ID']))
+				if (!isset($productRow['ID']))
+				{
+					$productRow['ID'] = 0;
+				}
+				if (intval($productRow['ID']) === 0 && isset($productRow['PRODUCT_ID']))
+				{
 					$arNewProducts[] = $productRow['PRODUCT_ID'];
+				}
 				else
+				{
 					$bGetBasketXmlIds = true;
+				}
 			}
 			unset($productRow);
 			$arXmlIds = array();
@@ -2507,7 +2516,7 @@ class CAllCrmInvoice
 				{
 					$curVal = trim($post["PR_INVOICE_".$arPropertyFields["ID"]]);
 					if ($arPropertyFields["TYPE"] == "CHECKBOX"
-						&& strlen($curVal) <= 0
+						&& $curVal == ''
 						&& $arPropertyFields["REQUIED"] != "Y")
 					{
 						$curVal = "N";
@@ -3390,7 +3399,7 @@ class CAllCrmInvoice
 					unset($tmpCatalogId, $dbRes);
 					if ($catalogId > 0)
 					{
-						$databaseType = strtoupper($DBType);
+						$databaseType = mb_strtoupper($DBType);
 						$strSql = '';
 						switch ($databaseType)
 						{
@@ -3491,7 +3500,7 @@ class CAllCrmInvoice
 		if (COption::GetOptionString('crm', '~CRM_INVOICE_EXCH1C_UPDATE_12_5_17', 'N') === 'Y')
 		{
 			$pref = COption::GetOptionString('sale', '1C_SALE_ACCOUNT_NUMBER_SHOP_PREFIX', '');
-			if (strlen(strval($pref)) < 1)
+			if (mb_strlen(strval($pref)) < 1)
 				COption::SetOptionString('sale', '1C_SALE_ACCOUNT_NUMBER_SHOP_PREFIX', 'CRM_');
 			COption::SetOptionString('crm', '~CRM_INVOICE_EXCH1C_UPDATE_12_5_19', 'Y');
 			// disable after the separation invoices and orders
@@ -3764,7 +3773,7 @@ class CAllCrmInvoice
 				'ENTITY_ID' => 'CRM_INVOICE',
 				'FIELD_NAME' => $fieldName,
 				'USER_TYPE_ID' => 'integer',
-				'XML_ID' => strtolower($fieldName),
+				'XML_ID' => mb_strtolower($fieldName),
 				'SORT' => strval($maxUFSort + 10),
 				'MULTIPLE' => null,
 				'MANDATORY' => null,
@@ -4512,9 +4521,9 @@ class CAllCrmInvoice
 			}
 		}
 
-		$sDetailURL = CComponentEngine::MakePathFromTemplate(COption::GetOptionString('crm', 'path_to_'.strtolower($sEntityType).'_show'),
+		$sDetailURL = CComponentEngine::MakePathFromTemplate(COption::GetOptionString('crm', 'path_to_'.mb_strtolower($sEntityType).'_show'),
 			array(
-				strtolower($sEntityType).'_id' => $arInvoice['ID']
+				mb_strtolower($sEntityType).'_id' => $arInvoice['ID']
 			)
 		);
 
@@ -4585,7 +4594,7 @@ class CAllCrmInvoice
 			'SITE_ID' => $arSitePath,
 			'PERMISSIONS' => $arAttr,
 			'BODY' => $sBody,
-			'TAGS' => 'crm,'.strtolower($sEntityType).','.GetMessage('CRM_'.$sEntityType)
+			'TAGS' => 'crm,'.mb_strtolower($sEntityType).','.GetMessage('CRM_'.$sEntityType)
 		);
 
 		if ($bReindex)
@@ -4600,7 +4609,7 @@ class CAllCrmInvoice
 
 		$srcCurrencyID = strval($srcCurrencyID);
 		$dstCurrencyID = strval($dstCurrencyID);
-		if (strlen($srcCurrencyID) <= 0 || strlen($dstCurrencyID) <= 0)
+		if ($srcCurrencyID == '' || $dstCurrencyID == '')
 			$srcCurrencyID = $dstCurrencyID = '';
 
 		foreach ($arProductRows as $row)
@@ -4826,7 +4835,7 @@ class CAllCrmInvoice
 
 			if (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
 			{
-				if(strlen($v) > 0)
+				if($v <> '')
 				{
 					$arFilter['>='.$arMatch[1]] = $v;
 				}
@@ -4834,7 +4843,7 @@ class CAllCrmInvoice
 			}
 			elseif (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
 			{
-				if(strlen($v) > 0)
+				if($v <> '')
 				{
 					if (($arMatch[1] == 'DATE_PAY_BEFORE' || $arMatch[1] == 'DATE_INSERT') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
 					{
@@ -5656,7 +5665,7 @@ class CAllCrmInvoice
 			return false;
 		}
 
-		if (strlen($arOrder["SUM_PAID"]) > 0)
+		if ($arOrder["SUM_PAID"] <> '')
 			$arOrder["PRICE"] -= $arOrder["SUM_PAID"];
 
 		$service = \Bitrix\Sale\PaySystem\Manager::getObjectById($arOrder["PAY_SYSTEM_ID"]);
@@ -5737,7 +5746,7 @@ class CAllCrmInvoice
 			{
 				while($ar = $obTitle->Fetch())
 				{
-					if (isset($ar['PARAM2']) && strlen($ar['PARAM2']) > 0)
+					if (isset($ar['PARAM2']) && $ar['PARAM2'] <> '')
 					{
 						$result[] = (int)$ar['PARAM2'];
 					}

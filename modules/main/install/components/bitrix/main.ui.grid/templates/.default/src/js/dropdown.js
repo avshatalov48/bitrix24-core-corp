@@ -100,7 +100,9 @@
 				});
 			}
 
-			return prepareItems(this.getItems());
+			const items = prepareItems(this.getItems());
+			BX.onCustomEvent(window, 'Dropdown::onPrepareItems', [this.id, this.menuId, items])
+			return items;
 		},
 
 		createMenu: function()
@@ -114,8 +116,8 @@
 				{
 					'autoHide': true,
 					'offsetTop': -8,
-					'offsetLeft': 40,
-					'maxHeight': 208,
+					'offsetLeft': +(this.dropdown.dataset.menuOffsetLeft || 40),
+					'maxHeight': +(this.dropdown.dataset.menuMaxHeight || 170),
 					'angle': {
 						'position': 'bottom',
 						'offset': 0

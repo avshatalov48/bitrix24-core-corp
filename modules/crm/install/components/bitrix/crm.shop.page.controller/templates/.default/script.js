@@ -109,7 +109,7 @@
 							"/shop/orders/payment/details/(\\d+)/",
 							"/shop/orders/shipment/details/(\\d+)/",
 							"/shop/orderform/",
-							"/shop/buyer/",
+							"/shop/buyer/"
 						]
 					},
 					{

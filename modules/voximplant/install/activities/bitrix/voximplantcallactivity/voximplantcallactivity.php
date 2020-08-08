@@ -430,6 +430,9 @@ class CBPVoximplantCallActivity extends CBPActivity
 				case \CCrmOwnerType::DealName:
 					$communications = $this->getDealCommunications($entityId);
 					break;
+				case \CCrmOwnerType::OrderName:
+					$communications = $this->getOrderCommunications($entityId);
+					break;
 			}
 
 			$communications = array_slice($communications, 0, 1);
@@ -479,6 +482,31 @@ class CBPVoximplantCallActivity extends CBPActivity
 		if (empty($communications) && $entityCompanyID > 0)
 		{
 			$communications = $this->getPhoneFromFM(CCrmOwnerType::CompanyName, $entityCompanyID);
+		}
+
+		return $communications;
+	}
+
+	private function getOrderCommunications($id)
+	{
+		$communications = [];
+
+		$dbRes = \Bitrix\Crm\Order\ContactCompanyCollection::getList(array(
+			'select' => array('ENTITY_ID', 'ENTITY_TYPE_ID'),
+			'filter' => array(
+				'=ORDER_ID' => $id,
+				'@ENTITY_TYPE_ID' => [\CCrmOwnerType::Contact, \CCrmOwnerType::Company],
+				'IS_PRIMARY' => 'Y'
+			),
+			'order' => ['ENTITY_TYPE_ID' => 'ASC']
+		));
+		while ($row = $dbRes->fetch())
+		{
+			$communications = $this->getPhoneFromFM(CCrmOwnerType::ResolveName($row['ENTITY_TYPE_ID']), $row['ENTITY_ID']);
+			if ($communications)
+			{
+				break;
+			}
 		}
 
 		return $communications;

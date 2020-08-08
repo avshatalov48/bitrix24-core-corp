@@ -51,28 +51,40 @@ ob_start();
 			<tr>
 				<td width="40%" class="bx-field-name"><?=Loc::getMessage('CRM_PS_FIELD_ACTION_FILE')?>: </td>
 				<td class="bx-field-value">
-					<select name="ACTION_FILE" id="ACTION_FILE">
-						<?foreach ($arResult['PAY_SYSTEM_LIST'] as $id => $name):?>
-							<option value="<?=$id;?>" <?=(strpos($arResult['PAY_SYSTEM']['ACTION_FILE'], $id) !== false) ? 'selected' : ''?>><?=$name;?></option>
-						<?endforeach;?>
-					</select>
+					<?php
+					echo Bitrix\Sale\Internals\Input\Enum::getEditHtml(
+						'ACTION_FILE',
+						[
+							'OPTIONS' => $arResult['PAY_SYSTEM_LIST'],
+							'ID' => 'ACTION_FILE',
+							'ONCHANGE' => "BX.crmPSActionFile.onSelect()",
+						],
+						$arResult['ACTION_FILE'] ?? null
+					);
+					?>
 				</td>
 			</tr>
 			<?
-				$isInvoiceHandler = strpos($arResult['PAY_SYSTEM']['ACTION_FILE'], 'invoicedocument') === 0;
+				$isInvoiceHandler = mb_strpos($arResult['PAY_SYSTEM']['ACTION_FILE'], 'invoicedocument') === 0;
 				$postfix = $isInvoiceHandler ? '_DOCUMENT' : '';
 			?>
 			<?if (isset($arResult['PS_MODE']) || $isInvoiceHandler):?>
 				<tr>
 					<td width="40%" class="bx-field-name"><?=Loc::getMessage('CRM_PS_FIELD_PS_MODE'.$postfix)?>: </td>
 					<td class="bx-field-value">
-						<?if ($arResult['PS_MODE']):?>
-							<select name="PS_MODE" id="PS_MODE" onchange="BX.crmPSActionFile.onHandlerModeChange(this);">
-								<?foreach ($arResult['PS_MODE'] as $id => $name):?>
-									<option value="<?=$id;?>" <?=($arResult['PAY_SYSTEM']['PS_MODE'] == $id) ? 'selected' : ''?>><?=$name;?></option>
-								<?endforeach;?>
-							</select>
-						<?endif;?>
+						<?php if ($arResult['PS_MODE'])
+						{
+							echo Bitrix\Sale\Internals\Input\Enum::getEditHtml(
+								'PS_MODE',
+								[
+									'OPTIONS' => $arResult['PS_MODE'],
+									'ID' => 'PS_MODE',
+									'ONCHANGE' => "BX.crmPSActionFile.onPsModeSelect()",
+								],
+								$arResult['PAY_SYSTEM']['PS_MODE'] ?? null
+							);
+						}
+						?>
 						<?if ($isInvoiceHandler):?>
 							<span class="bx-button-add-template" onclick='BX.SidePanel.Instance.open("<?=$arResult['INVOICE_DOC_ADD_LINK'];?>", {width: 930, events: {onCloseComplete: function() {BX.crmPSActionFile.onSelect(BX("ACTION_FILE"));}}});'>
 								<?=Loc::getMessage('CRM_PS_FIELD_TEMPLATE_DOCUMENT_ADD');?>
@@ -191,7 +203,7 @@ ob_start();
 		$i++;
 		$j++;
 
-		if ($i % 3 === 0 && (strpos($id, 'BILLUA_COLUMN_SUM_') !== false || strpos($id, 'BILLUA_COLUMN_PRICE_') !== false))
+		if ($i % 3 === 0 && (mb_strpos($id, 'BILLUA_COLUMN_SUM_') !== false || mb_strpos($id, 'BILLUA_COLUMN_PRICE_') !== false))
 			$j--;
 
 		if(!is_array($field))
@@ -205,8 +217,10 @@ ob_start();
 		if($prevType == 'section')
 			$className[] = 'bx-after-heading';
 
-		if(strlen($field['class']))
+		if($field['class'] <> '')
+		{
 			$className[] = $field['class'];
+		}
 	?>
 		<tr<?if(!empty($className)):?> class="<?=implode(' ', $className)?>"<?endif?><?if(!empty($style)):?> style="<?= $style ?>"<?endif?>>
 	<?
@@ -232,7 +246,7 @@ ob_start();
 			if($field["required"])
 				$bWasRequired = true;
 	?>
-			<td class="bx-field-name<?if($field["type"] <> 'label') echo' bx-padding'?> bx-props-field-width"<?if($field["title"] <> '') echo ' title="'.htmlspecialcharsEx($field["title"]).'"'?>><?=($field["required"]? '<span class="required">*</span>':'')?><?if(strlen($field["name"])):?><?=htmlspecialcharsEx($field["name"])?>:<?endif?></td>
+			<td class="bx-field-name<?if($field["type"] <> 'label') echo' bx-padding'?> bx-props-field-width"<?if($field["title"] <> '') echo ' title="'.htmlspecialcharsEx($field["title"]).'"'?>><?=($field["required"]? '<span class="required">*</span>':'')?><? if($field["name"] <> ''):?><?= htmlspecialcharsEx($field["name"]) ?>:<?endif?></td>
 	<?
 		endif
 	?>

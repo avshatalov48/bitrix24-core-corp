@@ -133,7 +133,7 @@ class CCrmWebFormFillComponent extends \CBitrixComponent
 		$utmDictionary = \Bitrix\Crm\UtmTable::getCodeList();
 		foreach ($placeholders as $placeholderCode => $placeholderValue)
 		{
-			$utmName = strtoupper($placeholderCode);
+			$utmName = mb_strtoupper($placeholderCode);
 			if (!in_array($utmName, $utmDictionary))
 			{
 				continue;
@@ -283,26 +283,7 @@ class CCrmWebFormFillComponent extends \CBitrixComponent
 				$resultError = false;
 				$resultText = $this->arResult['FORM']['RESULT_SUCCESS_TEXT'];
 				$resultId = $result->getId();
-				if($this->arResult['FORM']['IS_PAY'] == 'Y')
-				{
-					$resultEntity = $result->getResultEntity();
-					if($resultEntity && $resultEntity->getInvoiceId())
-					{
-						$resultRedirectUrl = \CAllCrmInvoice::getPublicLink($resultEntity->getInvoiceId());
-						if($resultRedirectUrl)
-						{
-							$uri = new \Bitrix\Main\Web\Uri($resultRedirectUrl);
-							$uri->addParams(array('form_id' => $this->formId));
-							$resultRedirectUrl = $uri->getLocator();
-						}
-					}
-				}
-
-				if(!$resultRedirectUrl)
-				{
-					$resultRedirectUrl = $this->arResult['FORM']['RESULT_SUCCESS_URL'];
-				}
-
+				$resultRedirectUrl = $result->getUrl();
 				$gid = $this->processPostGuest($result);
 			}
 		}
@@ -541,7 +522,7 @@ class CCrmWebFormFillComponent extends \CBitrixComponent
 		if (Loader::includeModule('bitrix24'))
 		{
 			$zone = \CBitrix24::getPortalZone();
-			$zone = strtolower($zone);
+			$zone = mb_strtolower($zone);
 			if (in_array($zone, array('kz', 'by', 'ua')))
 			{
 				$this->arResult['PHONE_COUNTRY_CODE'] = $zone;
@@ -629,7 +610,7 @@ class CCrmWebFormFillComponent extends \CBitrixComponent
 				}
 				$backgroundImageSrcHttp = $image['src'];
 				$backgroundImageSrcHttps = $backgroundImageSrcHttp;
-				if(substr($backgroundImageSrcHttp, 0, 1) == '/')
+				if(mb_substr($backgroundImageSrcHttp, 0, 1) == '/')
 				{
 					$backgroundImageSrcHttp = $siteNameHttp . $backgroundImageSrcHttp;
 					$backgroundImageSrcHttps = $siteNameHttps . $backgroundImageSrcHttps;
@@ -642,7 +623,7 @@ class CCrmWebFormFillComponent extends \CBitrixComponent
 			}
 		}
 
-		$ogLang = strtoupper(\Bitrix\Main\Context::getCurrent()->getLanguage());
+		$ogLang = mb_strtoupper(\Bitrix\Main\Context::getCurrent()->getLanguage());
 		$ogLogo = $this->arResult['CUSTOMIZATION']['OG_IMAGE'];
 		if(isset($this->arResult['CUSTOMIZATION']['OG_IMAGE_' . $ogLang]))
 		{
@@ -771,7 +752,7 @@ class CCrmWebFormFillComponent extends \CBitrixComponent
 		$cacheId = $this->getCacheID();
 		$cacheId .= '|agr' . $this->arParams['SHOW_AGREEMENT'] ;
 		$cacheId .= '|succ' . $this->arParams['SHOW_SUCCESS'] ;
-		$cacheId .= '|' . substr($this->arParams['SECURITY_CODE'], 0, 32);
+		$cacheId .= '|'.mb_substr($this->arParams['SECURITY_CODE'], 0, 32);
 		$cacheId .= '|' . $this->getLanguageId();
 
 		if($this->startResultCache($this->arParams['CACHE_TIME'], $cacheId))

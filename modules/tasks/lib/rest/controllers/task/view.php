@@ -5,17 +5,14 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Engine\AutoWire\Parameter;
 use Bitrix\Main\Engine\CurrentUser;
-use Bitrix\Main\Event;
+use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Tasks\Internals\Task\ViewedTable;
 use Bitrix\Tasks\Rest\Controllers\Base;
-
 use CTaskItem;
-use Exception;
 
 Loc::loadMessages(__FILE__);
 
@@ -31,55 +28,37 @@ class View extends Base
 	 */
 	public function getPrimaryAutoWiredParameter()
 	{
-		return new ExactParameter(
-			CTaskItem::class, 'task', function ($className, $id) {
-			$userId = CurrentUser::get()->getId();
-
-			return new $className($id, $userId);
-		}
-		);
+		return new ExactParameter(CTaskItem::class, 'task', static function($className, $id) {
+			return new $className($id, CurrentUser::get()->getId());
+		});
 	}
 
 	/**
+	 * Updates task's last view date with given value (timestamp) or current time.
+	 *
 	 * @param CTaskItem $task
+	 * @param null|string $viewedDate
 	 * @throws ArgumentException
-	 * @throws ObjectException
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
-	 * @throws Exception
+	 * @throws LoaderException
 	 */
-	public function updateAction(CTaskItem $task)
+	public function updateAction(CTaskItem $task, $viewedDate = null): void
 	{
-		$taskId = $task->getId();
-		$userId = CurrentUser::get()->getId();
-
 		if (!$task->checkCanRead())
 		{
 			return;
 		}
 
-		$list = ViewedTable::getList([
-			'select' => ['TASK_ID', 'USER_ID'],
-			'filter' => [
-				'=TASK_ID' => $taskId,
-				'=USER_ID' => $userId,
-			],
-		]);
+		$taskId = $task->getId();
+		$userId = CurrentUser::get()->getId();
 
-		if ($item = $list->fetch())
+		$viewedDateToSave = null;
+		if ($viewedDate && ($timestamp = strtotime($viewedDate)))
 		{
-			ViewedTable::update($item, ['VIEWED_DATE' => new DateTime()]);
-		}
-		else
-		{
-			ViewedTable::add([
-				'TASK_ID' => $taskId,
-				'USER_ID' => $userId,
-				'VIEWED_DATE' => new DateTime(),
-			]);
+			$viewedDateToSave = DateTime::createFromTimestamp($timestamp);
 		}
 
-		$event = new Event('tasks', 'onTaskUpdateViewed', ['taskId' => $taskId, 'userId' => $userId]);
-		$event->send();
+		ViewedTable::set($taskId, $userId, $viewedDateToSave);
 	}
 }

@@ -19,4 +19,5 @@ $MESS["CRM_SSMSA_SEND_ACTIVITY_SUBJECT"] = "Исходящее SMS сообще�
 $MESS["CRM_SSMSA_NO_MESSAGESERVICE"] = "Не установлен модуль 'Служба сообщений'";
 $MESS["CRM_SSMSA_FROM_DEFAULT"] = "по умолчанию";
 $MESS["CRM_SSMSA_TIMELINE_ERROR"] = "Сообщение не отправлено. #ERROR_TEXT#";
+$MESS["CRM_SSMSA_PROVIDER_DEFAULT"] = "По умолчанию (из настроек CRM)";
 ?>

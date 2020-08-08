@@ -1,7 +1,7 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 $APPLICATION->AddHeadString('<script src="'.CUtil::GetAdditionalFileURL("/bitrix/components/bitrix/mobile.socialnetwork.log/templates/.default/script_attached.js").'"></script>', true);
 
-if (strlen($arResult["FatalError"])>0)
+if ($arResult["FatalError"] <> '')
 {
 	?><span class='errortext'><?=$arResult["FatalError"]?></span><br /><br /><?
 }
@@ -52,12 +52,22 @@ else
 							icon: 'checkbox',
 							arrowFlag: true,
 							action: function() {
-								var path = '<?php echo CUtil::JSEscape($arParams['PATH_TO_TASKS_SNM_ROUTER']); ?>';
-								path = path
-									.replace('__ROUTE_PAGE__', 'list')
-									.replace('#USER_ID#',
-										<?php echo (int) $GLOBALS['USER']->GetID(); ?>);
-								BXMobileApp.PageManager.loadPageUnique({url: path, bx24ModernStyle: true});
+								if (<?=\Bitrix\MobileApp\Mobile::getApiVersion()?> >= 31)
+								{
+									BXMobileApp.Events.postToComponent(
+										"taskbackground::task::action",
+										[{groupId: <?=(int)$arParams["GROUP_ID"]?>}],
+										"background"
+									);
+								}
+								else
+								{
+									var path = '<?php echo CUtil::JSEscape($arParams['PATH_TO_TASKS_SNM_ROUTER']); ?>';
+									path = path
+										.replace('__ROUTE_PAGE__', 'list')
+										.replace('#USER_ID#', <?php echo (int) $GLOBALS['USER']->GetID(); ?>);
+									BXMobileApp.PageManager.loadPageUnique({url: path, bx24ModernStyle: true});
+								}
 							}
 						},
 						{
@@ -288,7 +298,7 @@ else
 			?><span id="blog-post-first-after"></span><?
 	}
 
-	if(strlen($arResult["ErrorMessage"])>0)
+	if($arResult["ErrorMessage"] <> '')
 	{
 		?><span class='errortext'><?=$arResult["ErrorMessage"]?></span><br /><br /><?
 	}
@@ -339,18 +349,18 @@ else
 				{
 					if (
 						array_key_exists("TITLE_24", $arEvent["EVENT_FORMATTED"])
-						&& strlen($arEvent["EVENT_FORMATTED"]["TITLE_24"]) > 0
+						&& $arEvent["EVENT_FORMATTED"]["TITLE_24"] <> ''
 					)
-						$strTopic .= '<div class="post-item-top-text post-item-top-arrow'.(strlen($arEvent["EVENT_FORMATTED"]["STYLE"]) > 0 ? ' post-item-'.$arEvent["EVENT_FORMATTED"]["STYLE"] : '').'">'.$arEvent["EVENT_FORMATTED"]["TITLE_24"].'</div>';
+						$strTopic .= '<div class="post-item-top-text post-item-top-arrow'.($arEvent["EVENT_FORMATTED"]["STYLE"] <> '' ? ' post-item-'.$arEvent["EVENT_FORMATTED"]["STYLE"] : '').'">'.$arEvent["EVENT_FORMATTED"]["TITLE_24"].'</div>';
 
 					if (in_array($arEvent["EVENT"]["EVENT_ID"], array("system", "system_groups", "system_friends")))
 					{
 						foreach($arEvent["EVENT_FORMATTED"]["DESTINATION"] as $arDestination)
 						{
-							if (strlen($arDestination["URL"]) > 0)
-								$strTopic .= '<a href="'.$arDestination["URL"].'" class="post-item-topic-description"><span'.(strlen($arDestination["STYLE"]) > 0 ? ' class="post-item-top-text-'.$arDestination["STYLE"].'"' : '').'>'.$arDestination["TITLE"].'</span></a>';
+							if ($arDestination["URL"] <> '')
+								$strTopic .= '<a href="'.$arDestination["URL"].'" class="post-item-topic-description"><span'.($arDestination["STYLE"] <> '' ? ' class="post-item-top-text-'.$arDestination["STYLE"].'"' : '').'>'.$arDestination["TITLE"].'</span></a>';
 							else
-								$strTopic .= '<span class="post-item-topic-description"><span'.(strlen($arDestination["STYLE"]) > 0 ? ' class="post-item-top-text-'.$arDestination["STYLE"].'"' : '').'>'.$arDestination["TITLE"].'</span></span>';
+								$strTopic .= '<span class="post-item-topic-description"><span'.($arDestination["STYLE"] <> '' ? ' class="post-item-top-text-'.$arDestination["STYLE"].'"' : '').'>'.$arDestination["TITLE"].'</span></span>';
 						}
 					}
 					else
@@ -361,10 +371,10 @@ else
 							if ($i > 0)
 								$strTopic .= ', ';
 
-							if (strlen($arDestination["URL"]) > 0)
-								$strTopic .= '<a href="'.$arDestination["URL"].'" class="post-item-destination'.(strlen($arDestination["STYLE"]) > 0 ? ' post-item-dest-'.$arDestination["STYLE"] : '').'">'.$arDestination["TITLE"].'</a>';
+							if ($arDestination["URL"] <> '')
+								$strTopic .= '<a href="'.$arDestination["URL"].'" class="post-item-destination'.($arDestination["STYLE"] <> '' ? ' post-item-dest-'.$arDestination["STYLE"] : '').'">'.$arDestination["TITLE"].'</a>';
 							else
-								$strTopic .= '<span class="post-item-destination'.(strlen($arDestination["STYLE"]) > 0 ? ' post-item-dest-'.$arDestination["STYLE"] : '').'">'.$arDestination["TITLE"].'</span>';
+								$strTopic .= '<span class="post-item-destination'.($arDestination["STYLE"] <> '' ? ' post-item-dest-'.$arDestination["STYLE"] : '').'">'.$arDestination["TITLE"].'</span>';
 
 							$i++;
 						}
@@ -377,11 +387,11 @@ else
 				}
 				elseif (
 					array_key_exists("TITLE_24", $arEvent["EVENT_FORMATTED"])
-					&& strlen($arEvent["EVENT_FORMATTED"]["TITLE_24"]) > 0
+					&& $arEvent["EVENT_FORMATTED"]["TITLE_24"] <> ''
 				)
-					$strTopic .= '<div class="post-item-top-text'.(strlen($arEvent["EVENT_FORMATTED"]["STYLE"]) > 0 ? ' post-item-'.$arEvent["EVENT_FORMATTED"]["STYLE"] : '').'">'.$arEvent["EVENT_FORMATTED"]["TITLE_24"].'</div>';
+					$strTopic .= '<div class="post-item-top-text'.($arEvent["EVENT_FORMATTED"]["STYLE"] <> '' ? ' post-item-'.$arEvent["EVENT_FORMATTED"]["STYLE"] : '').'">'.$arEvent["EVENT_FORMATTED"]["TITLE_24"].'</div>';
 				else
-					$strTopic .= '<div class="post-item-top-text'.(strlen($arEvent["EVENT_FORMATTED"]["STYLE"]) > 0 ? ' post-item-'.$arEvent["EVENT_FORMATTED"]["STYLE"] : '').'">'.$arEvent["EVENT_FORMATTED"]["TITLE"].'</div>';
+					$strTopic .= '<div class="post-item-top-text'.($arEvent["EVENT_FORMATTED"]["STYLE"] <> '' ? ' post-item-'.$arEvent["EVENT_FORMATTED"]["STYLE"] : '').'">'.$arEvent["EVENT_FORMATTED"]["TITLE"].'</div>';
 
 				$strCreatedBy = "";
 				if (
@@ -396,7 +406,7 @@ else
 						$strCreatedBy .= '<a class="post-item-top-title" href="'.str_replace(array("#user_id#", "#USER_ID#", "#id#", "#ID#"), $arEvent["CREATED_BY"]["TOOLTIP_FIELDS"]["ID"], $arEvent["CREATED_BY"]["TOOLTIP_FIELDS"]["PATH_TO_SONET_USER_PROFILE"]).'">'.CUser::FormatName($arParams["NAME_TEMPLATE"], $arEvent["CREATED_BY"]["TOOLTIP_FIELDS"], ($arParams["SHOW_LOGIN"] != "N" ? true : false)).'</a>';
 					elseif (
 						array_key_exists("FORMATTED", $arEvent["CREATED_BY"])
-						&& strlen($arEvent["CREATED_BY"]["FORMATTED"]) > 0
+						&& $arEvent["CREATED_BY"]["FORMATTED"] <> ''
 					)
 						$strCreatedBy .= '<div class="post-item-top-title">'.$arEvent["CREATED_BY"]["FORMATTED"].'</div>';
 				}
@@ -421,11 +431,11 @@ else
 				if (
 					array_key_exists("DESCRIPTION", $arEvent["EVENT_FORMATTED"])
 					&& (
-						(!is_array($arEvent["EVENT_FORMATTED"]["DESCRIPTION"]) && strlen($arEvent["EVENT_FORMATTED"]["DESCRIPTION"]) > 0)
+						(!is_array($arEvent["EVENT_FORMATTED"]["DESCRIPTION"]) && $arEvent["EVENT_FORMATTED"]["DESCRIPTION"] <> '')
 						|| (is_array($arEvent["EVENT_FORMATTED"]["DESCRIPTION"]) && count($arEvent["EVENT_FORMATTED"]["DESCRIPTION"]) > 0)
 					)
 				)
-					$strDescription = '<div class="post-item-description'.(strlen($arEvent["EVENT_FORMATTED"]["DESCRIPTION_STYLE"]) > 0 ? ' post-item-description-'.$arEvent["EVENT_FORMATTED"]["DESCRIPTION_STYLE"].'"' : '').'">'.(is_array($arEvent["EVENT_FORMATTED"]["DESCRIPTION"]) ? '<span>'.implode('</span> <span>', $arEvent["EVENT_FORMATTED"]["DESCRIPTION"]).'</span>' : $arEvent["EVENT_FORMATTED"]["DESCRIPTION"]).'</div>';
+					$strDescription = '<div class="post-item-description'.($arEvent["EVENT_FORMATTED"]["DESCRIPTION_STYLE"] <> '' ? ' post-item-description-'.$arEvent["EVENT_FORMATTED"]["DESCRIPTION_STYLE"].'"' : '').'">'.(is_array($arEvent["EVENT_FORMATTED"]["DESCRIPTION"]) ? '<span>'.implode('</span> <span>', $arEvent["EVENT_FORMATTED"]["DESCRIPTION"]).'</span>' : $arEvent["EVENT_FORMATTED"]["DESCRIPTION"]).'</div>';
 
 				if ($arParams["LOG_ID"] <= 0)
 				{
@@ -468,7 +478,7 @@ else
 					)
 					&& (
 						$arParams["SHOW_RATING"] != "Y" 
-						|| strlen($arParams["EVENT"]["RATING_TYPE_ID"]) <= 0 
+						|| $arParams["EVENT"]["RATING_TYPE_ID"] == ''
 						|| intval($arParams["EVENT"]["RATING_ENTITY_ID"]) <= 0
 					)
 				);
@@ -478,12 +488,12 @@ else
 				if (
 					array_key_exists("EVENT_FORMATTED", $arEvent)
 					&& array_key_exists("DATETIME_FORMATTED", $arEvent["EVENT_FORMATTED"])
-					&& strlen($arEvent["EVENT_FORMATTED"]["DATETIME_FORMATTED"]) > 0
+					&& $arEvent["EVENT_FORMATTED"]["DATETIME_FORMATTED"] <> ''
 				)
 					$datetime = $arEvent["EVENT_FORMATTED"]["DATETIME_FORMATTED"];
 				elseif (
 					array_key_exists("DATETIME_FORMATTED", $arEvent)
-					&& strlen($arEvent["DATETIME_FORMATTED"]) > 0
+					&& $arEvent["DATETIME_FORMATTED"] <> ''
 				)
 					$datetime = $arEvent["DATETIME_FORMATTED"];
 				elseif ($arEvent["LOG_DATE_DAY"] == ConvertTimeStamp())
@@ -495,7 +505,7 @@ else
 
 					<div class="post-item-top-wrap">
 						<div class="post-item-top">
-							<div class="avatar<?=(strlen($arEvent["EVENT_FORMATTED"]["AVATAR_STYLE"]) > 0 ? " ".$arEvent["EVENT_FORMATTED"]["AVATAR_STYLE"] : "")?>"<?=(strlen($arEvent["AVATAR_SRC"]) > 0 ? " style=\"background:url('".$arEvent["AVATAR_SRC"]."') 0 0 no-repeat; background-size: 29px 29px;\"" : "")?>></div>
+							<div class="avatar<?=($arEvent["EVENT_FORMATTED"]["AVATAR_STYLE"] <> '' ? " ".$arEvent["EVENT_FORMATTED"]["AVATAR_STYLE"] : "")?>"<?=($arEvent["AVATAR_SRC"] <> '' ? " style=\"background:url('".$arEvent["AVATAR_SRC"]."') 0 0 no-repeat; background-size: 29px 29px;\"" : "")?>></div>
 							<div class="post-item-top-cont">
 								<?=$strCreatedBy?><?
 								if ($arParams["LOG_ID"] > 0)
@@ -503,7 +513,7 @@ else
 									?><div class="post-date"><?=$datetime?></div><?
 								}
 								?><div class="post-item-top-topic"><?=$strTopic ?></div><?
-								if (strlen($strDescription) > 0)
+								if ($strDescription <> '')
 									echo $strDescription;
 							?></div><?
 							if ($arParams["LOG_ID"] <= 0)
@@ -545,7 +555,7 @@ else
 							$bHasComments = false;
 
 						if (
-							strlen($arEvent["EVENT"]["RATING_TYPE_ID"]) > 0
+							$arEvent["EVENT"]["RATING_TYPE_ID"] <> ''
 							&& $arEvent["EVENT"]["RATING_ENTITY_ID"] > 0
 							&& $arParams["SHOW_RATING"] == "Y"
 						)
@@ -689,7 +699,7 @@ else
 									$arComponentParams["FOLLOW"] = $arEvent["EVENT"]["FOLLOW"];
 
 								if (
-									strlen($arEvent["EVENT"]["RATING_TYPE_ID"])>0
+									$arEvent["EVENT"]["RATING_TYPE_ID"] <> ''
 									&& $arEvent["EVENT"]["RATING_ENTITY_ID"] > 0
 									&& $arParams["SHOW_RATING"] == "Y"
 								)
@@ -730,7 +740,7 @@ else
 								if ($arEvent["EVENT"]["EVENT_ID"] == "photo")
 								{
 									$photo_section_id = $arEvent["EVENT"]["SOURCE_ID"];
-									if (strlen($arEvent["EVENT"]["PARAMS"]) > 0)
+									if ($arEvent["EVENT"]["PARAMS"] <> '')
 									{
 										$arEventParams = unserialize(htmlspecialcharsback($arEvent["EVENT"]["PARAMS"]));
 										if (
@@ -747,7 +757,7 @@ else
 									if (intval($arEvent["EVENT"]["SOURCE_ID"]) > 0)
 										$arPhotoItems = array($arEvent["EVENT"]["SOURCE_ID"]);
 
-									if (strlen($arEvent["EVENT"]["PARAMS"]) > 0)
+									if ($arEvent["EVENT"]["PARAMS"] <> '')
 									{
 										$arEventParams = unserialize(htmlspecialcharsback($arEvent["EVENT"]["PARAMS"]));
 										if (
@@ -760,7 +770,7 @@ else
 									}
 								}
 
-								if (strlen($arEvent["EVENT"]["PARAMS"]) > 0)
+								if ($arEvent["EVENT"]["PARAMS"] <> '')
 								{
 									$arEventParams = unserialize(htmlspecialcharsback($arEvent["EVENT"]["PARAMS"]));
 
@@ -785,7 +795,7 @@ else
 										$photo_detail_url = $arParams["PATH_TO_".($arEvent["EVENT"]["ENTITY_TYPE"] == SONET_SUBSCRIBE_ENTITY_GROUP ? "GROUP" : "USER")."_PHOTO_ELEMENT"];
 
 									if (
-										strlen($photo_iblock_type) > 0
+										$photo_iblock_type <> ''
 										&& intval($photo_iblock_id) > 0
 										&& intval($photo_section_id) > 0
 										&& count($arPhotoItems) > 0
@@ -889,7 +899,7 @@ else
 
 							?></div><?
 						}
-						elseif (strlen($arEvent["EVENT_FORMATTED"]["MESSAGE"]) > 0)
+						elseif ($arEvent["EVENT_FORMATTED"]["MESSAGE"] <> '')
 						{
 
 							// body
@@ -914,7 +924,7 @@ else
 												array_key_exists("IS_IMPORTANT", $arEvent["EVENT_FORMATTED"])
 												&& $arEvent["EVENT_FORMATTED"]["IS_IMPORTANT"]
 												&& array_key_exists("TITLE_24_2", $arEvent["EVENT_FORMATTED"])
-												&& strlen($arEvent["EVENT_FORMATTED"]["TITLE_24_2"]) > 0
+												&& $arEvent["EVENT_FORMATTED"]["TITLE_24_2"] <> ''
 											)
 											{
 													?><div class="lenta-important-block-title"><?=$arEvent["EVENT_FORMATTED"]["TITLE_24_2"]?></div><?
@@ -944,12 +954,12 @@ else
 							{
 								?><div class="lenta-info-block-wrapp"<?=$strOnClick?>><?=CSocNetTextParser::closetags(htmlspecialcharsback($arEvent["EVENT_FORMATTED"]["MESSAGE"]))?></div><?
 							}
-							elseif (!in_array($arEvent["EVENT"]["EVENT_ID"], array("system", "system_groups", "system_friends")) && strlen($arEvent["EVENT_FORMATTED"]["MESSAGE"]) > 0) // all other events
+							elseif (!in_array($arEvent["EVENT"]["EVENT_ID"], array("system", "system_groups", "system_friends")) && $arEvent["EVENT_FORMATTED"]["MESSAGE"] <> '') // all other events
 							{
 								?><div class="<?=$post_item_style?>"<?=$strOnClick?> id="post_block_check_cont_<?=$arEvent["EVENT"]["ID"]?>"><?
 									if (
 										array_key_exists("TITLE_24_2", $arEvent["EVENT_FORMATTED"])
-										&& strlen($arEvent["EVENT_FORMATTED"]["TITLE_24_2"]) > 0
+										&& $arEvent["EVENT_FORMATTED"]["TITLE_24_2"] <> ''
 									)
 									{
 										?><div class="post-text-title" id="post_text_title_<?=$arEvent["EVENT"]["ID"]?>"><?=$arEvent["EVENT_FORMATTED"]["TITLE_24_2"]?></div><?
@@ -967,7 +977,7 @@ else
 					?></div><? // post-item-top-wrap
 
 					if (
-						strlen($strBottomBlock) > 0
+						$strBottomBlock <> ''
 						&& !in_array($arEvent["EVENT"]["EVENT_ID"], array("system", "system_group", "system_friends", "photo"))
 					)
 					{
@@ -1110,7 +1120,7 @@ else
 										array_key_exists("CREATED_BY", $arComment)
 										&& is_array($arComment["CREATED_BY"])
 										&& array_key_exists("FORMATTED", $arComment["CREATED_BY"])
-										&& strlen($arComment["CREATED_BY"]["FORMATTED"]) > 0
+										&& $arComment["CREATED_BY"]["FORMATTED"] <> ''
 									)
 										$strCreatedBy = $arComment["CREATED_BY"]["FORMATTED"];
 
@@ -1121,9 +1131,9 @@ else
 										&& (MakeTimeStamp($arComment["EVENT"]["LOG_DATE"]) - intval($arResult["TZ_OFFSET"])) > $arResult["LAST_LOG_TS"]
 									);
 									?><div class="post-comment-block<?=($bUnread ? " post-comment-new" : "")?>">
-										<div class="avatar"<?=(strlen($arComment["AVATAR_SRC"]) > 0 ? " style=\"background:url('".$arComment["AVATAR_SRC"]."') no-repeat; background-size: 29px 29px;\"" : "")?>></div>
+										<div class="avatar"<?=($arComment["AVATAR_SRC"] <> '' ? " style=\"background:url('".$arComment["AVATAR_SRC"]."') no-repeat; background-size: 29px 29px;\"" : "")?>></div>
 										<div class="post-comment-cont"><?
-											if (strlen($arComment["CREATED_BY"]["URL"]) > 0)
+											if ($arComment["CREATED_BY"]["URL"] <> '')
 											{
 												?><a href="<?=$arComment["CREATED_BY"]["URL"]?>" class="post-comment-author"><?=$strCreatedBy?></a><?
 											}
@@ -1133,14 +1143,14 @@ else
 											}
 											?><div class="post-comment-text"><?
 												$message = (array_key_exists("EVENT_FORMATTED", $arComment) && array_key_exists("MESSAGE", $arComment["EVENT_FORMATTED"]) ? $arComment["EVENT_FORMATTED"]["MESSAGE"] : $arComment["EVENT"]["MESSAGE"]);
-												if (strlen($message) > 0)
+												if ($message <> '')
 													echo CSocNetTextParser::closetags(htmlspecialcharsback($message));
 											?></div>
 											<div class="post-comment-time"><?
 												echo (
 													array_key_exists("EVENT_FORMATTED", $arComment)
 													&& array_key_exists("DATETIME", $arComment["EVENT_FORMATTED"])
-													&& strlen($arComment["EVENT_FORMATTED"]["DATETIME"]) > 0
+													&& $arComment["EVENT_FORMATTED"]["DATETIME"] <> ''
 														? $arComment["EVENT_FORMATTED"]["DATETIME"]
 														: ($arComment["LOG_DATE_DAY"] == ConvertTimeStamp() ? $arComment["LOG_TIME_FORMAT"] : $arComment["LOG_DATE_DAY"]." ".$arComment["LOG_TIME_FORMAT"])
 												);
@@ -1150,7 +1160,7 @@ else
 											ob_start();
 
 											if (
-												strlen($arComment["EVENT"]["RATING_TYPE_ID"]) > 0
+												$arComment["EVENT"]["RATING_TYPE_ID"] <> ''
 												&& $arComment["EVENT"]["RATING_ENTITY_ID"] > 0
 												&& $arParams["SHOW_RATING"] == "Y"
 											)
@@ -1178,7 +1188,7 @@ else
 											$strBottomBlockComments = ob_get_contents();
 											ob_end_clean();
 
-											if (strlen($strBottomBlockComments) > 0)
+											if ($strBottomBlockComments <> '')
 											{
 												?><?=$strBottomBlockComments;?><? // comments rating
 											}

@@ -4,7 +4,7 @@ global $APPLICATION;
 
 \Bitrix\Main\UI\Extension::load("ui.buttons");
 
-$gridId = strlen($arParams['GRID_ID']) > 0 ? strtolower($arParams['GRID_ID']) : 'invoice';
+$gridId = $arParams['GRID_ID'] <> ''? mb_strtolower($arParams['GRID_ID']) : 'invoice';
 $navContainerId = "{$gridId}_list_nav";
 $activeNavBarItemElementId = '';
 $activeNavBarItemName = '';
@@ -14,7 +14,7 @@ foreach($arParams['NAVIGATION_ITEMS'] as $barItem)
 {
 	$barItemQty++;
 	$barItemId = isset($barItem['id']) ? $barItem['id'] : $barItemQty;
-	$barItemElementId = strtolower("{$gridId}_{$barItemId}");
+	$barItemElementId = mb_strtolower("{$gridId}_{$barItemId}");
 	$barItemName = isset($barItem['name']) ? $barItem['name'] : $barItemId;
 	$barItemUrl = isset($barItem['url']) ? $barItem['url'] : '';
 

@@ -411,7 +411,7 @@ $APPLICATION->IncludeComponent(
 		'SORT_VARS' => $arResult['SORT_VARS'],
 		'ROWS' => $arResult['GRID_DATA'],
 		'CUSTOM_EDITABLE_COLUMNS' => array(
-			'S' => array('NAME')
+			'S' => array('NAME', 'SORT')
 		),
 		'FOOTER' =>
 			array

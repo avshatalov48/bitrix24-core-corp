@@ -71,6 +71,7 @@ class Address extends HashDataProvider
 			'PROVINCE',
 			'COUNTRY',
 			//'COUNTRY_CODE',
+			//'LOC_ADDR_ID',
 		];
 	}
 

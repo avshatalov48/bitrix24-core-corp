@@ -802,38 +802,38 @@ class GoogleHandler extends DocumentHandler implements IViewer, FileCreatable
 			}
 
 			$headerAuthenticate = $headers->get('WWW-Authenticate');
-			if(is_string($headerAuthenticate) && strpos($headerAuthenticate, 'insufficient') !== false)
+			if(is_string($headerAuthenticate) && mb_strpos($headerAuthenticate, 'insufficient') !== false)
 			{
 				$this->errorCollection[] = new Error(
 					'Insufficient scope (403)', self::ERROR_CODE_INSUFFICIENT_SCOPE
 				);
 				return false;
 			}
-			elseif(strpos($errorMessage, 'The authenticated user has not installed the app with client') !== false)
+			elseif(mb_strpos($errorMessage, 'The authenticated user has not installed the app with client') !== false)
 			{
 				$this->errorCollection[] = new Error(
 					'The authenticated user has not installed the app (403)', self::ERROR_CODE_NOT_INSTALLED_APP
 				);
 			}
-			elseif(strpos($errorMessage, 'The authenticated user has not granted the app') !== false)
+			elseif(mb_strpos($errorMessage, 'The authenticated user has not granted the app') !== false)
 			{
 				$this->errorCollection[] = new Error(
 					'The authenticated user has not granted the app (403)', self::ERROR_CODE_NOT_GRANTED_APP
 				);
 			}
-			elseif(strpos($errorMessage, 'Invalid accessLevel') !== false)
+			elseif(mb_strpos($errorMessage, 'Invalid accessLevel') !== false)
 			{
 				$this->errorCollection[] = new Error(
 					'Invalid accessLevel (403)', self::ERROR_CODE_INVALID_ACCESS_LEVEL
 				);
 			}
-			elseif(strpos($errorMessage, 'is not properly configured as a Google Drive app') !== false)
+			elseif(mb_strpos($errorMessage, 'is not properly configured as a Google Drive app') !== false)
 			{
 				$this->errorCollection[] = new Error(
 					'The app does not exist or is not properly configured as a Google Drive app (403)', self::ERROR_CODE_APP_NOT_CONFIGURED
 				);
 			}
-			elseif(strpos($errorMessage, 'is blacklisted') !== false)
+			elseif(mb_strpos($errorMessage, 'is blacklisted') !== false)
 			{
 				$this->errorCollection[] = new Error(
 					'The app is blacklisted as a Google Drive app. (403)', self::ERROR_CODE_APP_IN_BLACKLIST
@@ -1132,7 +1132,7 @@ class GoogleHandler extends DocumentHandler implements IViewer, FileCreatable
 
 	private function isGoogleDocument($mimeType)
 	{
-		return strpos($mimeType, 'application/vnd.google-apps.') !== false;
+		return mb_strpos($mimeType, 'application/vnd.google-apps.') !== false;
 	}
 
 	/**

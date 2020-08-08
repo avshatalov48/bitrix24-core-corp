@@ -187,7 +187,7 @@ else
 								$value = '';
 								if (isset($arProduct['SECTION_PATH'][$pathIndex]['NAME'])
 									&& is_string($arProduct['SECTION_PATH'][$pathIndex]['NAME'])
-									&& strlen($arProduct['SECTION_PATH'][$pathIndex]['NAME']) > 0)
+									&& $arProduct['SECTION_PATH'][$pathIndex]['NAME'] <> '')
 								{
 									$value = $arProduct['SECTION_PATH'][$pathIndex]['NAME'];
 								}

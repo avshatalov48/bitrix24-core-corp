@@ -27,9 +27,9 @@ CModule::AddAutoloadClasses(
 
 CJSCore::RegisterExt('voximplant', array(
 	'js' => array(
-		'/bitrix/js/voximplant/voximplant.js',
 		'/bitrix/js/voximplant/client.js',
 	),
+	'rel' => ['webrtc_adapter'],
 	'oninit' => function()
 	{
 		global $USER;
@@ -52,7 +52,8 @@ CJSCore::RegisterExt('voximplant', array(
 				'voximplantServer' => $voximplantServer,
 				'voximplantLogin' => $voximplantLogin,
 				'voximplantLines' => CVoxImplantConfig::GetLines(true, true),
-				'voximplantDefaultLineId' => CVoxImplantUser::getUserOutgoingLine($USER->getId())
+				'voximplantDefaultLineId' => CVoxImplantUser::getUserOutgoingLine($USER->getId()),
+				'voximplantSdkUrl' => \CUtil::GetAdditionalFileURL("/bitrix/js/voximplant/voximplant.min.js")
 			)
 		);
 	}

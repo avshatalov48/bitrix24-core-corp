@@ -67,7 +67,7 @@ abstract class Manager
 
 		foreach($data as $field => $value)
 		{
-			$start = substr($field, 0, 3);
+			$start = mb_substr($field, 0, 3);
 			if($start == 'UF_' || $start == static::SE_PREFIX) // we have no other fields that start from SE_ or UF_, so allow
 			{
 				continue;
@@ -270,9 +270,9 @@ abstract class Manager
 			return false;
 		}
 
-		if(strpos($key, static::SE_PREFIX) === 0)
+		if(mb_strpos($key, static::SE_PREFIX) === 0)
 		{
-			$key = substr($key, strlen(static::SE_PREFIX), strlen($key) - strlen(static::SE_PREFIX));
+			$key = mb_substr($key, mb_strlen(static::SE_PREFIX), mb_strlen($key) - mb_strlen(static::SE_PREFIX));
 			$legal = array_flip(static::getLegalSubEntities());
 
 			return isset($legal[$key]) ? $key : false;

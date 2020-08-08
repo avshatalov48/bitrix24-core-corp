@@ -4,7 +4,7 @@
  * @package bitrix
  * @subpackage tasks
  * @copyright 2001-2013 Bitrix
- * 
+ *
  * @global CMain $APPLICATION
  * @global CDatabase $DB
  */
@@ -22,7 +22,6 @@ use Bitrix\Tasks\Internals\DataBase\Tree\TargetNodeNotFoundException;
 use Bitrix\Tasks\Internals\Task\TemplateTable;
 use Bitrix\Tasks\Internals\Task\Template\DependenceTable;
 use Bitrix\Tasks\Template;
-use Bitrix\Tasks\Util\User;
 
 Loc::loadMessages(__FILE__);
 
@@ -280,7 +279,7 @@ class CTaskTemplates
 		////////////////////////////////////
 		// deal with other data
 
-		if ((is_set($arFields, "TITLE") || $ID === false) && strlen($arFields["TITLE"]) <= 0)
+		if ((is_set($arFields, "TITLE") || $ID === false) && $arFields["TITLE"] == '')
 		{
 			$this->_errors[] = array("text" => GetMessage("TASKS_BAD_TITLE"), "id" => "ERROR_BAD_TASKS_TITLE");
 		}
@@ -632,10 +631,10 @@ class CTaskTemplates
 		}
 		else
 		{
-			$isReplicateParamsChanged = 
+			$isReplicateParamsChanged =
 				(
-					isset($arFields['REPLICATE']) 
-					&& 
+					isset($arFields['REPLICATE'])
+					&&
 					($arCurData['REPLICATE'] !== $arFields['REPLICATE'])
 				)
 				||
@@ -705,7 +704,7 @@ class CTaskTemplates
 							/** @noinspection PhpDynamicAsStaticMethodCallInspection */
 							$ares = CAgent::AddAgent(
 								$name,
-								'tasks', 
+								'tasks',
 								'N', 		// is periodic?
 								86400, 		// interval
 								$nextTime, 	// datecheck
@@ -963,382 +962,32 @@ class CTaskTemplates
 	 * @return bool|CDBResult
 	 *
 	 * @global $DB CDatabase
-	 * @global $DBType string
 	 */
 	public static function GetList($arOrder, $arFilter = array(), $arNavParams = array(), $arParams = array(), $arSelect = array())
 	{
-		global $DB, $DBType, $USER_FIELD_MANAGER;
+		global $DB, $USER_FIELD_MANAGER;
 
-		if (!array_key_exists('ZOMBIE', $arFilter) || $arFilter['ZOMBIE'] != 'Y')
-		{
-			$arFilter['ZOMBIE'] = 'N';
-		}
+		$arOrder = is_array($arOrder) ? $arOrder : [];
+		$arFilter = is_array($arFilter) ? $arFilter : [];
+		$arNavParams = is_array($arNavParams) ? $arNavParams : [];
+		$arParams = is_array($arParams) ? $arParams : [];
+		$arSelect = is_array($arSelect) ? $arSelect : [];
 
-		$arSqlSearch = CTaskTemplates::GetFilter($arFilter, $arParams);
-
-		$obUserFieldsSql = new CUserTypeSQL();
-		$obUserFieldsSql->SetEntity("TASKS_TASK_TEMPLATE", "TT.ID");
-		$obUserFieldsSql->SetSelect($arSelect);
-		$obUserFieldsSql->SetFilter($arFilter);
-		$obUserFieldsSql->SetOrder($arOrder);
-
-		$r = $obUserFieldsSql->GetFilter();
-		if (strlen($r) > 0)
-		{
-			$arSqlSearch[] = "(".$r.")";
-		}
-
-		$arFields = array(
-
-			// task fields
-			'ID' => 						array('FIELD' => 'TT.ID', 'DEFAULT' => true),
-			'TITLE' => 						array('FIELD' => 'TT.TITLE', 'DEFAULT' => true),
-			'DESCRIPTION' => 				array('FIELD' => 'TT.DESCRIPTION', 'DEFAULT' => true),
-			'DESCRIPTION_IN_BBCODE' => 		array('FIELD' => 'TT.DESCRIPTION_IN_BBCODE', 'DEFAULT' => true),
-			'PRIORITY' => 					array('FIELD' => 'TT.PRIORITY', 'DEFAULT' => true),
-			'STATUS' => 					array('FIELD' => 'TT.STATUS', 'DEFAULT' => true),
-			'STAGE_ID' => 			        array('FIELD' => 'TT.STAGE_ID', 'DEFAULT' => true),
-			'RESPONSIBLE_ID' => 			array('FIELD' => 'TT.RESPONSIBLE_ID', 'DEFAULT' => true),
-			'DEADLINE_AFTER' => 			array('FIELD' => 'TT.DEADLINE_AFTER', 'DEFAULT' => true),
-			'START_DATE_PLAN_AFTER' =>		array('FIELD' => 'TT.START_DATE_PLAN_AFTER', 'DEFAULT' => true),
-			'END_DATE_PLAN_AFTER' =>		array('FIELD' => 'TT.END_DATE_PLAN_AFTER', 'DEFAULT' => true),
-			'REPLICATE' => 					array('FIELD' => 'TT.REPLICATE', 'DEFAULT' => true),
-			'CREATED_BY' => 				array('FIELD' => 'TT.CREATED_BY', 'DEFAULT' => true),
-			'XML_ID' => 					array('FIELD' => 'TT.XML_ID', 'DEFAULT' => true),
-			'ALLOW_CHANGE_DEADLINE' => 		array('FIELD' => 'TT.ALLOW_CHANGE_DEADLINE', 'DEFAULT' => true),
-			'ALLOW_TIME_TRACKING'   => 		array('FIELD' => 'TT.ALLOW_TIME_TRACKING', 'DEFAULT' => true),
-			'TASK_CONTROL' => 				array('FIELD' => 'TT.TASK_CONTROL', 'DEFAULT' => true),
-			'ADD_IN_REPORT' => 				array('FIELD' => 'TT.ADD_IN_REPORT', 'DEFAULT' => true),
-			'GROUP_ID' => 					array('FIELD' => 'TT.GROUP_ID', 'DEFAULT' => true),
-			'PARENT_ID' => 					array('FIELD' => 'TT.PARENT_ID', 'DEFAULT' => true),
-			'MULTITASK' => 					array('FIELD' => 'TT.MULTITASK', 'DEFAULT' => true),
-			'SITE_ID' => 					array('FIELD' => 'TT.SITE_ID', 'DEFAULT' => true),
-			'ACCOMPLICES' => 				array('FIELD' => 'TT.ACCOMPLICES', 'DEFAULT' => true),
-			'AUDITORS' => 					array('FIELD' => 'TT.AUDITORS', 'DEFAULT' => true),
-			'RESPONSIBLES' => 				array('FIELD' => 'TT.RESPONSIBLES', 'DEFAULT' => true),
-			'FILES' => 						array('FIELD' => 'TT.FILES', 'DEFAULT' => true),
-			'TAGS' => 						array('FIELD' => 'TT.TAGS', 'DEFAULT' => true),
-			'DEPENDS_ON' => 				array('FIELD' => 'TT.DEPENDS_ON', 'DEFAULT' => true),
-
-			// template parameters
-			'TASK_ID' => 					array('FIELD' => 'TT.TASK_ID', 'DEFAULT' => true),
-			'TPARAM_TYPE' => 				array('FIELD' => 'TT.TPARAM_TYPE', 'DEFAULT' => true),
-			'TPARAM_REPLICATION_COUNT' => 	array('FIELD' => 'TT.TPARAM_REPLICATION_COUNT', 'DEFAULT' => true),
-			'REPLICATE_PARAMS' => 			array('FIELD' => 'TT.REPLICATE_PARAMS', 'DEFAULT' => true),
-
-			// virtual
-			'BASE_TEMPLATE_ID' => 			array('FIELD' => 'CASE WHEN TDD.'.Template\DependencyTable::getPARENTIDColumnName().' IS NULL THEN 0 ELSE TDD.'.Template\DependencyTable::getPARENTIDColumnName().' END', 'DEFAULT' => false),
-			'TEMPLATE_CHILDREN_COUNT' => 	array('FIELD' => 'CASE WHEN TEMPLATE_CHILDREN_COUNT IS NULL THEN 0 ELSE TEMPLATE_CHILDREN_COUNT END', 'DEFAULT' => false),
-
-			// additional
-			'CREATED_BY_NAME' => 			array('FIELD' => 'CU.NAME', 'DEFAULT' => true, 'ALWAYS' => true),
-			'CREATED_BY_LAST_NAME' => 		array('FIELD' => 'CU.LAST_NAME ', 'DEFAULT' => true, 'ALWAYS' => true),
-			'CREATED_BY_SECOND_NAME' =>		array('FIELD' => 'CU.SECOND_NAME', 'DEFAULT' => true, 'ALWAYS' => true),
-			'CREATED_BY_LOGIN' => 			array('FIELD' => 'CU.LOGIN', 'DEFAULT' => true, 'ALWAYS' => true),
-			'CREATED_BY_WORK_POSITION' => 	array('FIELD' => 'CU.WORK_POSITION', 'DEFAULT' => true, 'ALWAYS' => true),
-			'CREATED_BY_PHOTO' => 			array('FIELD' => 'CU.PERSONAL_PHOTO', 'DEFAULT' => true, 'ALWAYS' => true),
-			'RESPONSIBLE_NAME' => 			array('FIELD' => 'RU.NAME', 'DEFAULT' => true, 'ALWAYS' => true),
-			'RESPONSIBLE_LAST_NAME' => 		array('FIELD' => 'RU.LAST_NAME', 'DEFAULT' => true, 'ALWAYS' => true),
-			'RESPONSIBLE_SECOND_NAME' => 	array('FIELD' => 'RU.SECOND_NAME', 'DEFAULT' => true, 'ALWAYS' => true),
-			'RESPONSIBLE_LOGIN' => 			array('FIELD' => 'RU.LOGIN', 'DEFAULT' => true, 'ALWAYS' => true),
-			'RESPONSIBLE_WORK_POSITION' => 	array('FIELD' => 'RU.WORK_POSITION', 'DEFAULT' => true, 'ALWAYS' => true),
-			'RESPONSIBLE_PHOTO' => 			array('FIELD' => 'RU.PERSONAL_PHOTO', 'DEFAULT' => true, 'ALWAYS' => true),
-		);
-
-		$filterByBaseTemplate =		false;
-		$selectBaseTemplateId =		false;
-		$useChildrenCount =			false;
-
-		if (!is_array($arSelect))
-			$arSelect = array();
-
-		$defaultSelect = array();
-		$alwaysSelect = array();
-		foreach($arFields as $field => $rule)
-		{
-			if($rule['DEFAULT'])
-				$defaultSelect[] = $field;
-			if($rule['ALWAYS'])
-				$alwaysSelect[] = $field;
-		}
-
-		if (count($arSelect) <= 0)
-			$arSelect = $defaultSelect;
-		elseif(in_array("*", $arSelect))
-			$arSelect = array_diff(array_merge($defaultSelect, $arSelect)/*all plus smth*/, array("*")/*minus star*/);
-
-		$arSelect = array_merge($arSelect, $alwaysSelect);
-
-		$selectBaseTemplateId = in_array('BASE_TEMPLATE_ID', $arSelect);
-		$useChildrenCount = in_array('TEMPLATE_CHILDREN_COUNT', $arSelect);
-
-		if (!is_array($arOrder))
-			$arOrder = array();
-
-		foreach($arOrder as $field => $direction)
-		{
-			if($field == 'BASE_TEMPLATE_ID')
-			{
-				$selectBaseTemplateId = true;
-			}
-			if($field == 'TEMPLATE_CHILDREN_COUNT')
-			{
-				$useChildrenCount = true;
-			}
-		}
-
-		if (!is_array($arFilter))
-			$arFilter = array();
-
-		if (!is_array($arParams))
-			$arParams = array();
-
-		foreach($arFilter as $key => $value)
-		{
-			$keyParsed = CTasks::MkOperationFilter($key);
-			if($keyParsed['FIELD'] == 'BASE_TEMPLATE_ID')
-			{
-				$filterByBaseTemplate = true;
-			}
-			if($keyParsed['FIELD'] == 'TEMPLATE_CHILDREN_COUNT')
-			{
-				$useChildrenCount = true;
-			}
-		}
-
-		$includeSubtree = 	$arParams['INCLUDE_TEMPLATE_SUBTREE'] === true || $arParams['INCLUDE_TEMPLATE_SUBTREE'] === 'Y';
-		$excludeSubtree = 	$arParams['EXCLUDE_TEMPLATE_SUBTREE'] === true || $arParams['EXCLUDE_TEMPLATE_SUBTREE'] === 'Y';
-
-		$treeJoin = '';
-		if($excludeSubtree)
-		{
-			$treeJoin = "";
-		}
-		else
-		{
-			$treeJoin = "LEFT JOIN ".Template\DependencyTable::getTableName()." TD on TT.ID = TD.TEMPLATE_ID".($includeSubtree ? "" : " AND TD.DIRECT = '1'");
-		}
-
-		$temporalTableName = \Bitrix\Tasks\DB\Helper::getTemporaryTableNameSql();
-
-		$accessSql = static::getAccessSql($arParams);
-
-		$strFrom = "FROM
-				b_tasks_template TT
-
-			".$treeJoin."
-
-			".($selectBaseTemplateId ? "
-			LEFT JOIN
-				".Template\DependencyTable::getTableName()." TDD ON TT.ID = TDD.TEMPLATE_ID AND TDD.DIRECT = '1'
-			" : "
-			")."
-
-			".($useChildrenCount ? "
-				LEFT JOIN (
-					SELECT TTI.ID, COUNT(TDDC.TEMPLATE_ID) AS TEMPLATE_CHILDREN_COUNT
-					from
-						b_tasks_template TTI
-						INNER JOIN ".Template\DependencyTable::getTableName()." TDDC ON TTI.ID = TDDC.PARENT_TEMPLATE_ID AND TDDC.DIRECT = '1'
-					GROUP BY TTI.ID
-				) ".$temporalTableName." on ".$temporalTableName.".ID = TT.ID
-			" : "
-			")."
-
-			LEFT JOIN
-				b_user CU ON CU.ID = TT.CREATED_BY
-			LEFT JOIN
-				b_user RU ON RU.ID = TT.RESPONSIBLE_ID
-
-			".$accessSql."
-
-			".$obUserFieldsSql->GetJoin("TT.ID")."
-
-			" . (
-					sizeof($arSqlSearch)
-					? "WHERE " . implode(" AND ", $arSqlSearch)
-					: ""
-			) . " ";
-
-		$arSqlOrder = [];
-		foreach ($arOrder as $by => $order)
-		{
-			$by = strtolower($by);
-			$order = strtolower($order);
-			if ($order != "asc")
-				$order = "desc";
-
-			if ($by == "task")
-				$arSqlOrder[] = " TT ".$order." ";
-			elseif ($by == "id")
-				$arSqlOrder[] = " TT.ID ".$order." ";
-			elseif ($by == "group_id")
-				$arSqlOrder[] = " TT.GROUP_ID ".$order." ";
-			elseif ($by == "title")
-				$arSqlOrder[] = " TT.TITLE ".$order." ";
-			elseif ($by == "deadline")
-				$arSqlOrder[] = " TT.DEADLINE_AFTER ".$order." ";
-			elseif ($by == "depends_on")
-				$arSqlOrder[] = " TT.DEPENDS_ON ".$order." ";
-			elseif ($by == "rand")
-				$arSqlOrder[] = CTasksTools::getRandFunction();
-			elseif ($by === 'creator_last_name')
-				$arSqlOrder[] = " CU.LAST_NAME ".$order." ";
-			elseif ($by === 'responsible_last_name')
-				$arSqlOrder[] = " RU.LAST_NAME ".$order." ";
-			elseif ($by === 'tparam_type')
-				$arSqlOrder[] = " TT.TPARAM_TYPE ".$order." ";
-			elseif ($by === 'template_children_count')
-				$arSqlOrder[] = " TEMPLATE_CHILDREN_COUNT ".$order." ";
-			elseif ($by === 'base_template_id')
-				$arSqlOrder[] = " BASE_TEMPLATE_ID ".$order." ";
-			elseif(substr($by, 0, 3) === 'uf_')
-			{
-				if ($s = $obUserFieldsSql->GetOrder($by))
-					$arSqlOrder[$by] = " ".$s." ".$order." ";
-			}
-			else
-			{
-				$arSqlOrder[] = " TT.ID ".$order." ";
-				$by = "id";
-			}
-
-			if (
-				($by !== 'rand')
-				&& ( ! in_array(strtoupper($by), $arSelect) )
-			)
-			{
-				$arSelect[] = strtoupper($by);
-			}
-		}
-
-		$strSqlOrder = "";
-		DelDuplicateSort($arSqlOrder);
-		$arSqlOrderCnt = count($arSqlOrder);
-		for ($i = 0; $i < $arSqlOrderCnt; $i++)
-		{
-			if ($i == 0)
-				$strSqlOrder = " ORDER BY ";
-			else
-				$strSqlOrder .= ",";
-
-			$strSqlOrder .= $arSqlOrder[$i];
-		}
-
-		if (!in_array("ID", $arSelect))
-			$arSelect[] = "ID";
-
-		$arSqlSelect = array();
-		foreach ($arSelect as $field)
-		{
-			$field = strtoupper($field);
-			if (array_key_exists($field, $arFields))
-			{
-				$arSqlSelect[$field] = \Bitrix\Tasks\DB\Helper::wrapColumnWithFunction($arFields[$field]['FIELD'], $arFields[$field]['WRAP'])." AS ".$field;
-			}
-		}
-
-		if (!sizeof($arSqlSelect))
-			$arSqlSelect = "TT.ID AS ID";
-		else
-			$arSqlSelect = implode(",\n", $arSqlSelect);
-
-		$ufSelect = $obUserFieldsSql->GetSelect();
-		if(strlen($ufSelect))
-		{
-			$arSqlSelect .= $ufSelect;
-		}
-
-		$strSql = "
-			SELECT 
-				". $arSqlSelect."
-				". $strFrom."
-				". $strSqlOrder;
-
-		if (isset($arNavParams["NAV_PARAMS"]) && is_array($arNavParams["NAV_PARAMS"]))
-		{
-			$nTopCount = (int) $arNavParams['NAV_PARAMS']['nTopCount'];
-
-			if ($nTopCount > 0)
-			{
-				$strSql = $DB->TopSql($strSql, $nTopCount);
-				$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-
-				$res->SetUserFields($USER_FIELD_MANAGER->GetUserFields("TASKS_TASK_TEMPLATE"));
-			}
-			else
-			{
-				$res_cnt = $DB->Query("SELECT COUNT(TT.ID) as C " . $strFrom);
-				$res_cnt = $res_cnt->Fetch();
-				$res = new CDBResult();
-				$res->SetUserFields($USER_FIELD_MANAGER->GetUserFields("TASKS_TASK_TEMPLATE"));
-				$res->NavQuery($strSql, $res_cnt["C"], $arNavParams["NAV_PARAMS"]);
-			}
-		}
-		else
-		{
-			$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-			$res->SetUserFields($USER_FIELD_MANAGER->GetUserFields("TASKS_TASK_TEMPLATE"));
-		}
-
-		return ($res);
-	}
-
-	private static function getAccessSql($arParams)
-	{
-		$accessSql = '';
-
-		if (isset($arParams['USER_ID']))
-		{
-			$executiveUserId = (int)$arParams['USER_ID'];
-			$isAdmin = (array_key_exists('USER_IS_ADMIN', $arParams)? $arParams['USER_IS_ADMIN'] : User::isSuper($executiveUserId));
-
-			if (!$isAdmin)
-			{
-				$mixin = \Bitrix\Tasks\Internals\RunTime\Task\Template::getAccessCheckSql([
-					'USER_ID' => $executiveUserId,
-					'OPERATION_NAME' => 'read',
-				]);
-
-				$accessSql .= "\n
-					/*access*/
-					INNER JOIN (
-						" . $mixin['sql'] . "
-					) ACCESS on ACCESS.TEMPLATE_ID = TT.ID
-					/*access end*/
-				\n";
-			}
-		}
-
-		return $accessSql;
+		$provider = new \Bitrix\Tasks\Provider\TemplateProvider($DB, $USER_FIELD_MANAGER);
+		return $provider->getList($arOrder, $arFilter, $arSelect, $arParams, $arNavParams);
 	}
 
 	public static function GetCount($includeSubTemplates = false, array $params = [])
 	{
-		global $DB;
+		global $DB, $USER_FIELD_MANAGER;
 
-		$tableName = Template\DependencyTable::getTableName();
-		$parentIdColumnName = Template\DependencyTable::getPARENTIDColumnName();
-
-		if (intval(\Bitrix\Tasks\Util\User::getId()))
+		if (!array_key_exists('USER_ID', $params))
 		{
-			$strSql = "
-				SELECT COUNT(*) AS CNT
-				FROM b_tasks_template TT
-				" . self::getAccessSql($params) . "
-				" . (!$includeSubTemplates? "LEFT JOIN " . $tableName . " TDD ON TT.ID = TDD.TEMPLATE_ID AND TDD.DIRECT = '1'" : "") . "
-				" . (!$includeSubTemplates? "WHERE TDD." . $parentIdColumnName . " IS NULL" : "");
-
-			if ($dbRes = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__))
-			{
-				if ($arRes = $dbRes->Fetch())
-				{
-					return $arRes["CNT"];
-				}
-			}
+			$params['USER_ID'] = (int) \Bitrix\Tasks\Util\User::getId();
 		}
 
-		return 0;
+		$provider = new \Bitrix\Tasks\Provider\TemplateProvider($DB, $USER_FIELD_MANAGER);
+		return $provider->getCount($includeSubTemplates, $params);
 	}
 
 	function GetFilter($arFilter, $arParams)
@@ -1354,7 +1003,7 @@ class CTaskTemplates
 			$key = $res["FIELD"];
 			$cOperationType = $res["OPERATION"];
 
-			$key = strtoupper($key);
+			$key = mb_strtoupper($key);
 
 			switch ($key)
 			{

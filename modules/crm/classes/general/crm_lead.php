@@ -135,6 +135,9 @@ class CAllCrmLead
 				'ADDRESS_COUNTRY_CODE' => array(
 					'TYPE' => 'string'
 				),
+				'ADDRESS_LOC_ADDR_ID' => array(
+					'TYPE' => 'integer'
+				),
 				'CURRENCY_ID' => array(
 					'TYPE' => 'crm_currency'
 				),
@@ -319,6 +322,7 @@ class CAllCrmLead
 			$result['ADDRESS_PROVINCE'] = array('FIELD' => 'ADDR.PROVINCE', 'TYPE' => 'string', 'FROM' => $addrJoin);
 			$result['ADDRESS_COUNTRY'] = array('FIELD' => 'ADDR.COUNTRY', 'TYPE' => 'string', 'FROM' => $addrJoin);
 			$result['ADDRESS_COUNTRY_CODE'] = array('FIELD' => 'ADDR.COUNTRY_CODE', 'TYPE' => 'string', 'FROM' => $addrJoin);
+			$result['ADDRESS_LOC_ADDR_ID'] = array('FIELD' => 'ADDR.LOC_ADDR_ID', 'TYPE' => 'integer', 'FROM' => $addrJoin);
 		}
 
 		// Creation of field aliases
@@ -407,50 +411,48 @@ class CAllCrmLead
 		if (!empty($arFilter['ACTIVE_TIME_PERIOD_from']) || !empty($arFilter['%STATUS_ID_FROM_HISTORY']) || !empty($arFilter['%STATUS_ID_FROM_SUPPOSED_HISTORY']) || !empty($arFilter['%STATUS_SEMANTIC_ID_FROM_HISTORY']))
 		{
 			global $DB;
-			$supposedHistoryCaseSql = "L.ID IN (SELECT DISTINCT LSHWS.OWNER_ID FROM b_crm_lead_status_history_with_supposed LSHWS WHERE ";
-			$supposedHistoryCaseSqlWhereStarted = false;
+			$supposedHistoryConditions = [];
+
 			if (!empty($arFilter['ACTIVE_TIME_PERIOD_from']) && !empty($arFilter['ACTIVE_TIME_PERIOD_to']))
 			{
-				$supposedHistoryCaseSql .= "LSHWS.LAST_UPDATE_DATE <= ".
-										   $DB->CharToDateFunction($arFilter['ACTIVE_TIME_PERIOD_to'], 'SHORT');
-				$supposedHistoryCaseSql .= " AND LSHWS.CLOSE_DATE >= ".
-										   $DB->CharToDateFunction($arFilter['ACTIVE_TIME_PERIOD_from'], 'SHORT');
-
-				$supposedHistoryCaseSqlWhereStarted = true;
+				$supposedHistoryConditions[] = "LSHWS.LAST_UPDATE_DATE <= " . $DB->CharToDateFunction($arFilter['ACTIVE_TIME_PERIOD_to'], 'SHORT');
+				$supposedHistoryConditions[] = "LSHWS.CLOSE_DATE >= " . $DB->CharToDateFunction($arFilter['ACTIVE_TIME_PERIOD_from'], 'SHORT');
 			}
-
-
 			if (!empty($arFilter['%STATUS_SEMANTIC_ID_FROM_HISTORY']))
 			{
 				$statusSemanticIdsFromFilter = is_array($arFilter['%STATUS_SEMANTIC_ID_FROM_HISTORY']) ? $arFilter['%STATUS_SEMANTIC_ID_FROM_HISTORY'] : array($arFilter['%STATUS_SEMANTIC_ID_FROM_HISTORY']);
-				$supposedHistoryCaseSql .= $supposedHistoryCaseSqlWhereStarted ? ' AND ' : ' ';
-				$supposedHistoryCaseSql  .= " LSHWS.IS_SUPPOSED = 'N' AND LSHWS.STATUS_SEMANTIC_ID  IN (" . implode(',', array_map(function($el) {return "'" . $el . "'";}, $statusSemanticIdsFromFilter)) . ")";
-				$supposedHistoryCaseSqlWhereStarted = true;
+				$statusSemanticIdsForSql = [];
+				foreach ($statusSemanticIdsFromFilter as $value)
+				{
+					$statusSemanticIdsForSql[] = "'" . \Bitrix\Main\Application::getConnection()->getSqlHelper()->forSql($value) . "'";
+				}
+				$supposedHistoryConditions[] = "LSHWS.IS_SUPPOSED = 'N'";
+				$supposedHistoryConditions[] = "LSHWS.STATUS_SEMANTIC_ID IN (" . implode(', ', $statusSemanticIdsForSql) . ")";
 			}
-
-
 			if (!empty($arFilter['%STATUS_ID_FROM_HISTORY']))
 			{
 				$statusIdsFromFilter = is_array($arFilter['%STATUS_ID_FROM_HISTORY']) ? $arFilter['%STATUS_ID_FROM_HISTORY'] : array($arFilter['%STATUS_ID_FROM_HISTORY']);
-				$supposedHistoryCaseSql .= $supposedHistoryCaseSqlWhereStarted ? ' AND ' : ' ';
-				$supposedHistoryCaseSql .= " LSHWS.IS_SUPPOSED = 'N' AND LSHWS.STATUS_ID  IN (" . implode(',', array_map(function($el) {return "'" . $el . "'";}, $statusIdsFromFilter)) . ")";
-				$supposedHistoryCaseSqlWhereStarted = true;
+				$statusIdsForSql = [];
+				foreach ($statusIdsFromFilter as $value)
+				{
+					$statusIdsForSql[] = "'" . \Bitrix\Main\Application::getConnection()->getSqlHelper()->forSql($value) . "'";
+				}
+				$supposedHistoryConditions[] = "LSHWS.IS_SUPPOSED = 'N'";
+				$supposedHistoryConditions[] = "LSHWS.STATUS_ID  IN (" . implode(', ', $statusIdsForSql) . ")";
 			}
-
 			if (!empty($arFilter['%STATUS_ID_FROM_SUPPOSED_HISTORY']))
 			{
 				$statusIdsFromFilter = is_array($arFilter['%STATUS_ID_FROM_SUPPOSED_HISTORY']) ? $arFilter['%STATUS_ID_FROM_SUPPOSED_HISTORY'] : array($arFilter['%STATUS_ID_FROM_SUPPOSED_HISTORY']);
-				$supposedHistoryCaseSql .= $supposedHistoryCaseSqlWhereStarted ? ' AND ' : ' ';
-				$supposedHistoryCaseSql .= " LSHWS.STATUS_ID  IN (" . implode(',', array_map(function($el) {return "'" . $el . "'";}, $statusIdsFromFilter)) . ")";
-				$supposedHistoryCaseSqlWhereStarted = true;
+				$statusIdsForSql = [];
+				foreach ($statusIdsFromFilter as $value)
+				{
+					$statusIdsForSql[] = "'" . \Bitrix\Main\Application::getConnection()->getSqlHelper()->forSql($value) . "'";
+				}
+				$supposedHistoryConditions[] .= " LSHWS.STATUS_ID  IN (" . implode(', ', $statusIdsForSql) . ")";
 			}
 
-			$supposedHistoryCaseSql .=" )";
-
-			$sqlData['WHERE'][] = $supposedHistoryCaseSql;
+			$sqlData['WHERE'][] = "L.ID IN (SELECT DISTINCT LSHWS.OWNER_ID FROM b_crm_lead_status_history_with_supposed LSHWS WHERE " . implode(" AND ", $supposedHistoryConditions) . ")";
 		}
-
-
 
 		if(isset($arFilter['CALENDAR_DATE_FROM']) && $arFilter['CALENDAR_DATE_FROM'] !== ''
 		&& isset($arFilter['CALENDAR_DATE_TO']) && $arFilter['CALENDAR_DATE_TO'] !== '')
@@ -586,46 +588,46 @@ class CAllCrmLead
 
 	public static function GetTopIDs($top, $sortType = 'ASC', $userPermissions = null)
 	{
-		if($top <= 0)
+		$top = (int) $top;
+		if ($top <= 0)
 		{
-			return array();
+			return [];
 		}
 
-		$sortType = strtoupper($sortType) !== 'DESC' ? 'ASC' : 'DESC';
+		$sortType = mb_strtoupper($sortType) !== 'DESC' ? 'ASC' : 'DESC';
 
 		$permissionSql = '';
-		if(!CCrmPerms::IsAdmin())
+		if (!CCrmPerms::IsAdmin())
 		{
-			if(!$userPermissions)
+			if (!$userPermissions)
 			{
 				$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 			}
 
-			$permissionSql = self::BuildPermSql(
-				'L',
-				'READ',
-				array(
-					'PERMS' => $userPermissions,
-					'RAW_QUERY' => array('TOP' => $top, 'SORT_TYPE' => $sortType)
-				)
-			);
+			$permissionSql = self::BuildPermSql('L', 'READ', ['PERMS' => $userPermissions]);
 		}
 
-		if($permissionSql === false)
+		if ($permissionSql === false)
 		{
-			return array();
+			return [];
 		}
 
-		$connection = \Bitrix\Main\Application::getConnection();
-		$sql = $permissionSql === ''
-			? $connection->getSqlHelper()->getTopSql("SELECT ID FROM b_crm_lead ORDER BY ID {$sortType}", $top)
-			: "SELECT L.ID FROM b_crm_lead L INNER JOIN ($permissionSql) LP ON L.ID = LP.ENTITY_ID";
-		$dbResult = $connection->query($sql);
+		$query = new Bitrix\Main\Entity\Query(Crm\LeadTable::getEntity());
+		$query->addSelect('ID');
+		$query->addOrder('ID', $sortType);
+		$query->setLimit($top);
 
-		$results = array();
-		while($field = $dbResult->fetch())
+		if ($permissionSql !== '')
 		{
-			$results[] = (int)$field['ID'];
+			$permissionSql = mb_substr($permissionSql, 7);
+			$query->where('ID', 'in', new Bitrix\Main\DB\SqlExpression($permissionSql));
+		}
+
+		$rs = $query->exec();
+		$results = [];
+		while ($field = $rs->fetch())
+		{
+			$results[] = (int) $field['ID'];
 		}
 		return $results;
 	}
@@ -850,7 +852,7 @@ class CAllCrmLead
 
 		foreach($arSelect as $field)
 		{
-			$field = strtoupper($field);
+			$field = mb_strtoupper($field);
 			if(array_key_exists($field, $arFields))
 				$arSqlSelect[$field] = $arFields[$field].($field != '*' ? ' AS '.$field : '');
 		}
@@ -905,7 +907,7 @@ class CAllCrmLead
 				$CDBResult->InitFromArray(array());
 				return $CDBResult;
 			}
-			if(strlen($sSqlPerm) > 0)
+			if($sSqlPerm <> '')
 			{
 				$sSqlPerm = ' AND '.$sSqlPerm;
 			}
@@ -1102,12 +1104,12 @@ class CAllCrmLead
 
 		$sSqlSearch = '';
 		foreach($arSqlSearch as $r)
-			if(strlen($r) > 0)
+			if($r <> '')
 				$sSqlSearch .= "\n\t\t\t\tAND  ($r) ";
 		$CCrmUserType = new CCrmUserType($GLOBALS['USER_FIELD_MANAGER'], self::$sUFEntityID);
 		$CCrmUserType->ListPrepareFilter($arFilter);
 		$r = $obUserFieldsSql->GetFilter();
-		if(strlen($r) > 0)
+		if($r <> '')
 			$sSqlSearch .= "\n\t\t\t\tAND ($r) ";
 
 		if(!empty($sQueryWhereFields))
@@ -1128,8 +1130,8 @@ class CAllCrmLead
 			$arOrder = Array('DATE_CREATE' => 'DESC');
 		foreach ($arOrder as $by => $order)
 		{
-			$by = strtoupper($by);
-			$order = strtolower($order);
+			$by = mb_strtoupper($by);
+			$order = mb_strtolower($order);
 			if($order != 'asc')
 				$order = 'desc';
 
@@ -1498,7 +1500,7 @@ class CAllCrmLead
 		{
 			$arFields['TITLE'] = self::GetDefaultTitle($ID);
 			$sUpdate = $DB->PrepareUpdate('b_crm_lead', array('TITLE' => $arFields['TITLE']));
-			if(strlen($sUpdate) > 0)
+			if($sUpdate <> '')
 			{
 				$DB->Query("UPDATE b_crm_lead SET {$sUpdate} WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 			};
@@ -1548,10 +1550,12 @@ class CAllCrmLead
 			'REGION' => isset($arFields['ADDRESS_REGION']) ? $arFields['ADDRESS_REGION'] : null,
 			'PROVINCE' => isset($arFields['ADDRESS_PROVINCE']) ? $arFields['ADDRESS_PROVINCE'] : null,
 			'COUNTRY' => isset($arFields['ADDRESS_COUNTRY']) ? $arFields['ADDRESS_COUNTRY'] : null,
-			'COUNTRY_CODE' => isset($arFields['ADDRESS_COUNTRY_CODE']) ? $arFields['ADDRESS_COUNTRY_CODE'] : null
+			'COUNTRY_CODE' => isset($arFields['ADDRESS_COUNTRY_CODE']) ? $arFields['ADDRESS_COUNTRY_CODE'] : null,
+			'LOC_ADDR_ID' => isset($arFields['ADDRESS_LOC_ADDR_ID']) ? (int)$arFields['ADDRESS_LOC_ADDR_ID'] : 0,
+			'LOC_ADDR' => isset($arFields['ADDRESS_LOC_ADDR']) ? $arFields['ADDRESS_LOC_ADDR'] : null
 		);
 
-		if(!\Bitrix\Crm\EntityAddress::isEmpty($addressFields))
+		if(!\Bitrix\Crm\EntityAddress::isEmpty($addressFields) || $addressFields['LOC_ADDR'])
 		{
 			\Bitrix\Crm\EntityAddress::register(
 				CCrmOwnerType::Lead,
@@ -1691,7 +1695,7 @@ class CAllCrmLead
 			)
 			{
 				$url = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Lead, $ID);
-				$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0) ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
+				$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
 
 				$arMessageFields = array(
 					"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
@@ -2269,8 +2273,15 @@ class CAllCrmLead
 			}
 
 			unset($arFields['ID']);
+
+			$notChangeStatus = ($_POST['NOT_CHANGE_STATUS'] ?? 'N');
+			if ($notChangeStatus === 'Y')
+			{
+				unset($arFields['STATUS_ID']);
+			}
+
 			$sUpdate = $DB->PrepareUpdate('b_crm_lead', $arFields, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
-			if (strlen($sUpdate) > 0)
+			if ($sUpdate <> '')
 			{
 				$DB->Query("UPDATE b_crm_lead SET {$sUpdate} WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 				if(isset($arFields['COMPANY_TITLE']))
@@ -2357,13 +2368,22 @@ class CAllCrmLead
 			//endregion
 
 			//region Address
-			if(isset($arFields['ADDRESS'])
+			if(isset($arFields['ADDRESS_DELETE']) && ($arFields['ADDRESS_DELETE'] === 'Y'))
+			{
+				\Bitrix\Crm\EntityAddress::unregister(
+					CCrmOwnerType::Lead,
+					$ID,
+					\Bitrix\Crm\EntityAddress::Primary);
+			}
+			elseif(isset($arFields['ADDRESS'])
 				|| isset($arFields['ADDRESS_2'])
 				|| isset($arFields['ADDRESS_CITY'])
 				|| isset($arFields['ADDRESS_POSTAL_CODE'])
 				|| isset($arFields['ADDRESS_REGION'])
 				|| isset($arFields['ADDRESS_PROVINCE'])
-				|| isset($arFields['ADDRESS_COUNTRY']))
+				|| isset($arFields['ADDRESS_COUNTRY'])
+				|| isset($arFields['ADDRESS_LOC_ADDR_ID'])
+				|| isset($arFields['ADDRESS_LOC_ADDR']))
 			{
 				\Bitrix\Crm\EntityAddress::register(
 					CCrmOwnerType::Lead,
@@ -2385,8 +2405,17 @@ class CAllCrmLead
 						'COUNTRY' => isset($arFields['ADDRESS_COUNTRY'])
 							? $arFields['ADDRESS_COUNTRY'] : (isset($arRow['ADDRESS_COUNTRY']) ? $arRow['ADDRESS_COUNTRY'] : null),
 						'COUNTRY_CODE' => isset($arFields['ADDRESS_COUNTRY_CODE'])
-							? $arFields['ADDRESS_COUNTRY_CODE'] : (isset($arRow['ADDRESS_COUNTRY_CODE']) ? $arRow['ADDRESS_COUNTRY_CODE'] : null)
+							? $arFields['ADDRESS_COUNTRY_CODE'] : (isset($arRow['ADDRESS_COUNTRY_CODE']) ? $arRow['ADDRESS_COUNTRY_CODE'] : null),
+						'LOC_ADDR_ID' => isset($arFields['ADDRESS_LOC_ADDR_ID'])
+							? (int)$arFields['ADDRESS_LOC_ADDR_ID'] : (isset($arRow['ADDRESS_LOC_ADDR_ID']) ? (int)$arRow['ADDRESS_LOC_ADDR_ID'] : 0),
+						'LOC_ADDR' => isset($arFields['ADDRESS_LOC_ADDR']) ? $arFields['ADDRESS_LOC_ADDR'] : null
+					),
+					[
+						'updateLocationAddress' => !(
+							(isset($arFields['ADDRESS_LOC_ADDR_ID']) && $arFields['ADDRESS_LOC_ADDR_ID'] > 0) ||
+							(isset($arFields['ADDRESS_LOC_ADDR']) && is_object($arFields['ADDRESS_LOC_ADDR']))
 					)
+					]
 				);
 			}
 			//endregion
@@ -2639,7 +2668,7 @@ class CAllCrmLead
 					{
 						$title = CCrmOwnerType::GetCaption(CCrmOwnerType::Lead, $ID, false);
 						$url = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Lead, $ID);
-						$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0) ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
+						$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
 
 						if (
 							$sonetEventFields['PARAMS']['FINAL_RESPONSIBLE_ID'] != $modifiedByID
@@ -3016,7 +3045,7 @@ class CAllCrmLead
 		{
 			$arFields['OPPORTUNITY'] = str_replace(array(',', ' '), array('.', ''), $arFields['OPPORTUNITY']);
 			//HACK: MSSQL returns '.00' for zero value
-			if(strpos($arFields['OPPORTUNITY'], '.') === 0)
+			if(mb_strpos($arFields['OPPORTUNITY'], '.') === 0)
 			{
 				$arFields['OPPORTUNITY'] = '0'.$arFields['OPPORTUNITY'];
 			}
@@ -3095,6 +3124,14 @@ class CAllCrmLead
 						{
 							$currentFields['FM'] = Crm\Entity\Lead::getInstance()->getEntityMultifields($ID, array('skipEmpty' => true));
 						}
+					}
+
+					if(!array_key_exists('OBSERVER_IDS', $currentFields))
+					{
+						$currentFields['OBSERVER_IDS'] = Crm\Observer\ObserverManager::getEntityObserverIDs(
+							\CCrmOwnerType::Lead,
+							$ID
+						);
 					}
 				}
 
@@ -3720,7 +3757,7 @@ class CAllCrmLead
 			}
 			else
 			{
-				$arFilter[strtoupper($arFilter['FIND_list'])] = $arFilter['FIND'];
+				$arFilter[mb_strtoupper($arFilter['FIND_list'])] = $arFilter['FIND'];
 			}
 			unset($arFilter['FIND_list'], $arFilter['FIND']);
 		}
@@ -3769,7 +3806,7 @@ class CAllCrmLead
 			}
 			elseif (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
 			{
-				if(strlen($v) > 0)
+				if($v <> '')
 				{
 					$arFilter['>='.$arMatch[1]] = $v;
 				}
@@ -3777,7 +3814,7 @@ class CAllCrmLead
 			}
 			elseif (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
 			{
-				if(strlen($v) > 0)
+				if($v <> '')
 				{
 					if (($arMatch[1] == 'DATE_CREATE' || $arMatch[1] == 'DATE_MODIFY' || $arMatch[1] == 'DATE_CLOSED')
 						&& !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
@@ -3806,7 +3843,7 @@ class CAllCrmLead
 				}
 				unset($arFilter['STATUS_CONVERTED']);
 			}
-			elseif ($k != 'ID' && $k != 'LOGIC' && $k != '__INNER_FILTER' && strpos($k, 'UF_') !== 0 && preg_match('/^[^\=\%\?\>\<]{1}/', $k) === 1)
+			elseif ($k != 'ID' && $k != 'LOGIC' && $k != '__INNER_FILTER' && mb_strpos($k, 'UF_') !== 0 && preg_match('/^[^\=\%\?\>\<]{1}/', $k) === 1)
 			{
 				$arFilter['%'.$k] = $v;
 				unset($arFilter[$k]);
@@ -4477,7 +4514,7 @@ class CAllCrmLead
 			'BIRTHDATE', 'FM', 'COMPANY_TITLE', 'POST',
 			'ADDRESS', 'ADDRESS_2', 'ADDRESS_CITY', 'ADDRESS_REGION',
 			'ADDRESS_PROVINCE', 'ADDRESS_POSTAL_CODE',
-			'ADDRESS_COUNTRY', 'ADDRESS_COUNTRY_CODE',
+			'ADDRESS_COUNTRY', 'ADDRESS_COUNTRY_CODE', 'ADDRESS_LOC_ADDR_ID'
 		);
 	}
 

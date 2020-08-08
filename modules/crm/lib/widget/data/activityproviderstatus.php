@@ -46,7 +46,7 @@ class ActivityProviderStatus extends DataSource
 		$item = array();
 		$anchor = $provider::getStatusAnchor();
 
-		if (isset($anchor['HTML']) && strlen($anchor['HTML']) > 0)
+		if (isset($anchor['HTML']) && $anchor['HTML'] <> '')
 		{
 			$item = array(
 				'html' => (string)$anchor['HTML']

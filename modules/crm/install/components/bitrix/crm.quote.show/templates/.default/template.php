@@ -50,8 +50,8 @@ $arResult['CRM_CUSTOM_PAGE_TITLE'] = GetMessage(
 );
 
 $enableInstantEdit = $arResult['ENABLE_INSTANT_EDIT'];
-$instantEditorID = strtolower($arResult['FORM_ID']).'_editor';
-$treeDispatcherID = strtolower($arResult['FORM_ID']).'_tree_disp';
+$instantEditorID = mb_strtolower($arResult['FORM_ID']).'_editor';
+$treeDispatcherID = mb_strtolower($arResult['FORM_ID']).'_tree_disp';
 /*---bizproc---$bizprocDispatcherID = strtolower($arResult['FORM_ID']).'_bp_disp';*/
 
 $arTabs = array();
@@ -128,7 +128,7 @@ $APPLICATION->IncludeComponent(
 	'bitrix:crm.entity.quickpanelview',
 	'',
 	array(
-		'GUID' => strtolower($arResult['FORM_ID']).'_qpv',
+		'GUID' => mb_strtolower($arResult['FORM_ID']).'_qpv',
 		'FORM_ID' => $arResult['TACTILE_FORM_ID'],
 		'ENTITY_TYPE_NAME' => CCrmOwnerType::QuoteName,
 		'ENTITY_ID' => $arResult['ELEMENT_ID'],
@@ -207,7 +207,7 @@ $APPLICATION->IncludeComponent(
 );
 
 
-$prefixLower = strtolower($arResult['PREFIX']);
+$prefixLower = mb_strtolower($arResult['PREFIX']);
 $scriptSettings = array(
 	'formId' => $arResult['FORM_ID'],
 	// instant editor settings ->

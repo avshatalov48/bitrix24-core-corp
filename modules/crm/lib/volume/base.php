@@ -463,9 +463,9 @@ abstract class Base
 				continue;
 			}
 			$key0 = trim($key, '<>!=@');
-			if (strlen($key) > strlen($key0))
+			if (mb_strlen($key) > mb_strlen($key0))
 			{
-				$operator = substr($key, 0, strlen($key) - strlen($key0));
+				$operator = mb_substr($key, 0, mb_strlen($key) - mb_strlen($key0));
 			}
 			else
 			{
@@ -549,9 +549,9 @@ abstract class Base
 		$isAllValueApplied = false;
 
 		$key0 = trim($key, '<>!=');
-		if (strpos($key0, '.') !== false)
+		if (mb_strpos($key0, '.') !== false)
 		{
-			$key0 = substr($key0, 0, strpos($key0,'.'));
+			$key0 = mb_substr($key0, 0, mb_strpos($key0, '.'));
 			if ($entity->hasField($key0))
 			{
 				$query->addFilter($key, $value);
@@ -813,7 +813,7 @@ abstract class Base
 			throw new Main\ArgumentNullException('Wrong parameter indicatorTypeId');
 		}
 
-		if (strpos($indicatorId, __NAMESPACE__) !== false)
+		if (mb_strpos($indicatorId, __NAMESPACE__) !== false)
 		{
 			$className = $indicatorId;
 		}
@@ -1158,7 +1158,7 @@ abstract class Base
 			$result = $connection->query($querySql);
 			while ($row = $result->fetch())
 			{
-				self::$tablesInformation[strtolower($row['TABLE_NAME'])] = $row;
+				self::$tablesInformation[mb_strtolower($row['TABLE_NAME'])] = $row;
 			}
 		}
 	}
@@ -1198,13 +1198,13 @@ abstract class Base
 						$ufName = $entity::getUfId();
 						if ($ufName != '')
 						{
-							$utmEntityTableName = 'b_utm_'.strtolower($ufName);
+							$utmEntityTableName = 'b_utm_'.mb_strtolower($ufName);
 							if (isset(self::$tablesInformation[$utmEntityTableName]))
 							{
 								$this->tableList[] = $utmEntityTableName;
 							}
 
-							$utsEntityTableName = 'b_uts_'.strtolower($ufName);
+							$utsEntityTableName = 'b_uts_'.mb_strtolower($ufName);
 							if (isset(self::$tablesInformation[$utsEntityTableName]))
 							{
 								$this->tableList[] = $utsEntityTableName;
@@ -1251,7 +1251,7 @@ abstract class Base
 				{
 					/** @var ORM\Data\DataManager $entity */
 					$ufName = $entity::getUfId();
-					if (strlen($ufName) > 0)
+					if ($ufName <> '')
 					{
 						$userFieldList = Main\UserFieldTable::getList(array(
 							'filter' => array(
@@ -1417,7 +1417,7 @@ abstract class Base
 		if ($userField['MULTIPLE'] === 'Y')
 		{
 			$ufId = $userField['ID'];
-			$utmEntityTableName = 'b_utm_'.strtolower($ufName);
+			$utmEntityTableName = 'b_utm_'.mb_strtolower($ufName);
 
 			if (isset(self::$tablesInformation[$utmEntityTableName]))
 			{
@@ -1508,7 +1508,7 @@ abstract class Base
 		else
 		{
 			$ufEntityTableFieldName = $userField['FIELD_NAME'];
-			$utsEntityTableName = 'b_uts_'.strtolower($ufName);
+			$utsEntityTableName = 'b_uts_'.mb_strtolower($ufName);
 
 			if (isset(self::$tablesInformation[$utsEntityTableName]))
 			{

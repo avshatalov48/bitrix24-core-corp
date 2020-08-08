@@ -18,7 +18,7 @@ $restriction = \Bitrix\Crm\Restriction\RestrictionManager::getPermissionControlR
 $arResult['IS_PERMITTED'] = $restriction->hasPermission();
 if(!$arResult['IS_PERMITTED'])
 {
-	$arResult['LOCK_SCRIPT'] = $restriction->preparePopupScript();
+	$arResult['LOCK_SCRIPT'] = $restriction->prepareInfoHelperScript();
 }
 
 $arParams['PATH_TO_ROLE_EDIT'] = CrmCheckPath('PATH_TO_ROLE_EDIT', $arParams['PATH_TO_ROLE_EDIT'], $APPLICATION->GetCurPage());
@@ -37,10 +37,12 @@ if($arResult['IS_PERMITTED'])
 	if ($_SERVER['REQUEST_METHOD'] == 'POST' && (isset($_POST['save']) || isset($_POST['apply'])) && check_bitrix_sessid())
 	{
 
+		$permissions = (isset($_POST['ROLE_PERMS']) && is_array($_POST['ROLE_PERMS'])) ? $_POST['ROLE_PERMS'] : [];
+		$permissions = CCrmRole::normalizePermissions($permissions);
 		$bVarsFromForm = true;
 		$arFields = array(
 			'NAME' => $_POST['NAME'],
-			'RELATION' => isset($_POST['ROLE_PERMS'])? $_POST['ROLE_PERMS']: Array()
+			'RELATION' => $permissions
 		);
 
 		$CCrmRole = new CcrmRole();

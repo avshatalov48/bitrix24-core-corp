@@ -104,7 +104,7 @@ $gridManagerCfg = array(
 );
 echo CCrmViewHelper::RenderDealStageSettings();
 $prefix = $arResult['GRID_ID'];
-$prefixLC = strtolower($arResult['GRID_ID']);
+$prefixLC = mb_strtolower($arResult['GRID_ID']);
 
 $arResult['GRID_DATA'] = array();
 $arColumns = array();
@@ -315,7 +315,7 @@ if($arResult['ENABLE_TOOLBAR'])
 		'bitrix:crm.interface.toolbar',
 		'',
 		array(
-			'TOOLBAR_ID' => strtolower($arResult['GRID_ID']).'_toolbar',
+			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']).'_toolbar',
 			'BUTTONS' => array($addButton)
 		),
 		$component,
@@ -402,7 +402,7 @@ if(!Bitrix\Main\Grid\Context::isInternalRequest()
 				'BINDING' => array(
 					'category' => 'crm.navigation',
 					'name' => 'index',
-					'key' => strtolower($arResult['NAVIGATION_CONTEXT_ID'])
+					'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
 				)
 			),
 			'LIMITS' => isset($arResult['LIVE_SEARCH_LIMIT_INFO']) ? $arResult['LIVE_SEARCH_LIMIT_INFO'] : null,

@@ -146,11 +146,48 @@ class LeadMerger extends EntityMerger
 		//Field ContactID is obsolete. It is replaced by ContactIDs
 		//Field StatusID is progress field
 		//Field StatusDescription depend on StatusID
-		if($fieldID === 'CONTACT_ID' || $fieldID === 'STATUS_ID' || $fieldID === 'STATUS_DESCRIPTION')
+		//Field ADDRESS_LOC_ADDR_ID is redundant if other address parts are same
+		if($fieldID === 'CONTACT_ID' || $fieldID === 'STATUS_ID' || $fieldID === 'STATUS_DESCRIPTION' || $fieldID === 'ADDRESS_LOC_ADDR_ID')
 		{
 			return false;
 		}
 		return parent::canMergeEntityField($fieldID);
+	}
+
+	protected static function applyMappedValue(string $fieldID, array &$seed, array &$targ)
+	{
+		if ($fieldID === 'ADDRESS')
+		{
+			$locationAddressId = (int)$seed['ADDRESS_LOC_ADDR_ID'];
+			if ($locationAddressId > 0 && Main\Loader::includeModule('location'))
+			{
+				unset($targ['ADDRESS_LOC_ADDR_ID']);
+				$targ['ADDRESS_LOC_ADDR'] = \Bitrix\Crm\EntityAddress::cloneLocationAddress($locationAddressId);
+			}
+			else
+			{
+				foreach (self::getBaseAddressFieldNames() as $fieldName)
+				{
+					$targ[$fieldName] = $seed[$fieldName];
+				}
+			}
+			return;
+		}
+		parent::applyMappedValue($fieldID, $seed, $targ);
+	}
+
+	protected static function getBaseAddressFieldNames():array
+	{
+		return [
+			'ADDRESS',
+			'ADDRESS_2',
+			'ADDRESS_CITY',
+			'ADDRESS_POSTAL_CODE',
+			'ADDRESS_REGION',
+			'ADDRESS_PROVINCE',
+			'ADDRESS_COUNTRY',
+			'ADDRESS_COUNTRY_CODE',
+		];
 	}
 
 	protected function mergeBoundEntitiesBatch(array &$seeds, array &$targ, $skipEmpty = false, array $options = array())
@@ -335,6 +372,30 @@ class LeadMerger extends EntityMerger
 				'VALUE' => Binding\EntityBinding::prepareEntityIDs(\CCrmOwnerType::Contact, $resultContactBindings),
 			);
 		}
+		// check all address components
+		if($fieldID === 'ADDRESS')
+		{
+			$targetId = (int)$targ['ID'];
+			$result = parent::innerPrepareEntityFieldMergeData($fieldID, $fieldParams, $seeds, $targ, $options);
+			if ($targetId > 0)
+			{
+				$result['SOURCE_ENTITY_IDS'] = [$targetId];
+			}
+			foreach (self::getBaseAddressFieldNames() as $addrFieldID)
+			{
+				if ($addrFieldID === $fieldID)
+				{
+					continue;
+				}
+				$mergeData = parent::innerPrepareEntityFieldMergeData($addrFieldID, $fieldParams, $seeds, $targ, $options);
+				$result['IS_MERGED'] = $result['IS_MERGED'] && $mergeData['IS_MERGED'];
+				if (!$result['IS_MERGED'])
+				{
+					break;
+				}
+			}
+			return $result;
+		}
 		return parent::innerPrepareEntityFieldMergeData($fieldID, $fieldParams, $seeds, $targ, $options);
 	}
 
@@ -400,6 +461,11 @@ class LeadMerger extends EntityMerger
 		Timeline\CreationEntry::rebind(\CCrmOwnerType::Lead, $seedID, $targID);
 		Timeline\MarkEntry::rebind(\CCrmOwnerType::Lead, $seedID, $targID);
 		Timeline\CommentEntry::rebind(\CCrmOwnerType::Lead, $seedID, $targID);
+
+		Crm\Tracking\Entity::rebindTrace(
+			\CCrmOwnerType::Lead, $seedID,
+			\CCrmOwnerType::Lead, $targID
+		);
 	}
 	protected function resolveMergeCollisions($seedID, $targID, array &$results)
 	{

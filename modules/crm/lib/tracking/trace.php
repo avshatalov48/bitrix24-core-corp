@@ -205,17 +205,32 @@ class Trace
 		$channels = self::getValueByKey($data, 'channels');
 		if (is_array($channels))
 		{
-			foreach ($channels as $channel)
+			foreach ($channels as $channelData)
 			{
-				if (empty($channel['code']))
+				if (empty($channelData['code']))
 				{
 					continue;
 				}
 
-				$this->channelCollection->addChannel(
-					$channel['code'],
-					isset($channel['value']) ? $channel['value'] : null
+				if (!Channel\Factory::isKnown($channelData['code']))
+				{
+					continue;
+				}
+
+				$channel = Channel\Factory::create(
+					$channelData['code'],
+					isset($channelData['value']) ? $channelData['value'] : null
 				);
+
+				if ($channel->isSupportChannelDetecting())
+				{
+					foreach ($channel->getChannels() as $detectedChannel)
+					{
+						$this->channelCollection->setChannel($detectedChannel);
+					}
+				}
+
+				$this->channelCollection->setChannel($channel);
 			}
 		}
 
@@ -284,7 +299,7 @@ class Trace
 	/**
 	 * Get url.
 	 *
-	 * @return array
+	 * @return string
 	 */
 	public function getUrl()
 	{
@@ -300,7 +315,7 @@ class Trace
 	 */
 	public function addUtm($name, $value)
 	{
-		$name = strtoupper($name);
+		$name = mb_strtoupper($name);
 		if (in_array($name, UtmTable::getCodeList()) && $value)
 		{
 			$this->utm[$name] = $value;
@@ -336,7 +351,12 @@ class Trace
 		return $this;
 	}
 
-	protected function getSourceId()
+	/*
+	 * Get source ID.
+	 *
+	 * @return int|null
+	 */
+	public function getSourceId()
 	{
 		return $this->sourceId ?: $this->channelCollection->getSourceId();
 	}
@@ -379,10 +399,28 @@ class Trace
 	public function setReferrer($ref)
 	{
 		$ref = trim($ref);
-		if ($ref && !$this->sourceId)
+		if (!$ref)
+		{
+			return $this;
+		}
+
+		if (!$this->sourceId)
 		{
 			$this->sourceId = Internals\SourceTable::getSourceByReferrer($ref);
 		}
+
+		$refUri = new Uri($ref);
+		$page = [
+			'URL' => $ref,
+			'DATE_INSERT' => (!empty($this->pages)
+				? $this->pages[0]['DATE_INSERT']
+				: new DateTime()
+			),
+			'TITLE' => $refUri->getHost(),
+			'IS_REF' => true,
+		];
+
+		$this->pages = array_merge([$page], $this->pages);
 
 		return $this;
 	}

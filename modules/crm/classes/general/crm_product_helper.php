@@ -223,17 +223,17 @@ class CCrmProductHelper
 		}
 
 		$value = trim($value);
-		$dot = strpos($value, '.');
-		$comma = strpos($value, ',');
-		$isNegative = (substr($value, 0, 1) === '-');
+		$dot = mb_strpos($value, '.');
+		$comma = mb_strpos($value, ',');
+		$isNegative = (mb_substr($value, 0, 1) === '-');
 
 		if ($dot === false && $comma !== false && $comma >= 0)
 		{
-			$s1 = substr($value, 0, $comma);
-			$decimalLength = strlen($value) - $comma - 1;
+			$s1 = mb_substr($value, 0, $comma);
+			$decimalLength = mb_strlen($value) - $comma - 1;
 			if ($decimalLength > 0)
 			{
-				$s1 .= '.'.substr($value, $comma + 1, $decimalLength);
+				$s1 .= '.'.mb_substr($value, $comma + 1, $decimalLength);
 			}
 			$value = $s1;
 		}

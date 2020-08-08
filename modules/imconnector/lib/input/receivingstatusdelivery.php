@@ -5,8 +5,7 @@ use \Bitrix\Main\Localization\Loc,
 	\Bitrix\Main\Event,
 	\Bitrix\Main\Type\DateTime;
 use \Bitrix\ImConnector\Result,
-	\Bitrix\ImConnector\Library,
-	\Bitrix\ImConnector\Connectors\Instagram;
+	\Bitrix\ImConnector\Library;
 
 Loc::loadMessages(__FILE__);
 /**
@@ -47,9 +46,6 @@ class ReceivingStatusDelivery
 		{
 			if(!Library::isEmpty($status['message']['date']))
 				$status['message']['date'] = DateTime::createFromTimestamp($status['message']['date']);
-
-			//Hack is designed for the Instagram
-			Instagram::newCommentDeliveryProcessing($status, $this->connector, $this->line);
 
 			$event = $this->sendEvent($status);
 			if(!$event->isSuccess())

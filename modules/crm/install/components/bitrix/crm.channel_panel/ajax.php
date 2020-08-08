@@ -57,7 +57,7 @@ if($action === 'MARK_AS_ENABLED')
 	}
 	else
 	{
-		$enabled = !isset($_POST['ENABLED']) || strtoupper($_POST['ENABLED']) === 'Y';
+		$enabled = !isset($_POST['ENABLED']) || mb_strtoupper($_POST['ENABLED']) === 'Y';
 		CBitrixComponent::includeComponentClass('bitrix:crm.channel_panel');
 		CCrmChannelPanelComponent::markAsEnabled($guid, $enabled);
 		__CrmChannelPanelEndJsonResonse(array('GUID' => $guid, 'ENABLED' => $enabled ? 'Y' : 'N'));

@@ -207,7 +207,7 @@ if(is_array($arResult["LIST"]))
 		$html .= '
 			<br><br>
 			<a class="href-action" href="javascript:void(0)" onclick="toggle_input(\'import\'); return false;">'.GetMessage("CRM_FE_ENUM_IMPORT").'</a>
-			<div id="import" style="'.(strlen($arResult["FORM_DATA"]["LIST_TEXT_VALUES"]) > 0? '': 'display:none; ').'width:100%">
+			<div id="import" style="'.($arResult["FORM_DATA"]["LIST_TEXT_VALUES"] <> ''? '': 'display:none; ').'width:100%">
 				<p>'.GetMessage("CRM_FE_ENUM_IMPORT_HINT").'</p>
 				<textarea name="LIST_TEXT_VALUES" id="LIST_TEXT_VALUES" style="width:100%" rows="20">'.($arResult["FORM_DATA"]["LIST_TEXT_VALUES"]).'</textarea>
 			</div>
@@ -216,7 +216,7 @@ if(is_array($arResult["LIST"]))
 		$html .= '
 			<br><br>
 			<a class="href-action" href="javascript:void(0)" onclick="toggle_input(\'defaults\'); return false;">'.($arResult["FORM_DATA"]["MULTIPLE"] == "Y"? GetMessage("CRM_FE_ENUM_DEFAULTS"): GetMessage("CRM_FE_ENUM_DEFAULT")).'</a>
-			<div id="defaults" style="'.(strlen($arResult["FORM_DATA"]["LIST_TEXT_VALUES"]) > 0? '': 'display:none; ').'width:100%">
+			<div id="defaults" style="'.($arResult["FORM_DATA"]["LIST_TEXT_VALUES"] <> ''? '': 'display:none; ').'width:100%">
 			<br>
 		';
 

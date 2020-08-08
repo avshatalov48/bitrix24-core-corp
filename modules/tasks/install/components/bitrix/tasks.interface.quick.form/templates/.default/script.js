@@ -388,7 +388,13 @@ BX.Tasks.QuickForm.prototype.fireEnterKey = function(event)
 
 BX.Tasks.QuickForm.prototype.getGrid = function()
 {
-	if (this.gridId && BX.Main && BX.Main.gridManager)
+	if (
+		this.gridId
+		&& BX.Main
+		&& BX.Main.gridManager
+		&& BX.Tasks.GridInstance
+		&& !BX.Tasks.GridInstance.checkCanMove()
+	)
 	{
 		return BX.Main.gridManager.getInstanceById(this.gridId);
 	}

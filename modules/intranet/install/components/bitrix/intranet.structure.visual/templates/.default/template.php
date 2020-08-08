@@ -59,19 +59,19 @@ if (!function_exists('__intr_vis_get_div')):
 				'ID' => $arEntry['UF_HEAD'],
 				'NAME' => strip_tags($headName),
 				'POSITION' => $arUsers[$arEntry['UF_HEAD']]['WORK_POSITION'],
-				'PHOTO' => $arUsers[$arEntry['UF_HEAD']]['PERSONAL_PHOTO']['CACHE']['src'],
+				'PHOTO' => \CHTTP::urnEncode($arUsers[$arEntry['UF_HEAD']]['PERSONAL_PHOTO']['CACHE']['src']),
 				'PROFILE' => $arUsers[$arEntry['UF_HEAD']]['PROFILE_URL']
 			);
 
 			if ($arUsers[$arEntry['UF_HEAD']]['PROFILE_URL']):
 ?>
-		<a href="<?=htmlspecialcharsbx($arUsers[$arEntry['UF_HEAD']]['PROFILE_URL'])?>" class="structure-avatar"<?if ($arUsers[$arEntry['UF_HEAD']]['PERSONAL_PHOTO']):?> style="background: url('<?=$arUsers[$arEntry['UF_HEAD']]['PERSONAL_PHOTO']['CACHE']['src']?>') no-repeat scroll center center transparent; background-size: cover;"<?endif;?> bx-tooltip-user-id="<?=($arParams['USE_USER_LINK'] == 'Y' ? $arEntry['UF_HEAD'] : '')?>" bx-tooltip-classname="intrantet-user-selector-tooltip"></a>
+		<a href="<?=htmlspecialcharsbx($arUsers[$arEntry['UF_HEAD']]['PROFILE_URL'])?>" class="structure-avatar"<?if ($arUsers[$arEntry['UF_HEAD']]['PERSONAL_PHOTO']):?> style="background: url('<?=\CHTTP::urnEncode($arUsers[$arEntry['UF_HEAD']]['PERSONAL_PHOTO']['CACHE']['src'])?>') no-repeat scroll center center transparent; background-size: cover;"<?endif;?> bx-tooltip-user-id="<?=($arParams['USE_USER_LINK'] == 'Y' ? $arEntry['UF_HEAD'] : '')?>" bx-tooltip-classname="intrantet-user-selector-tooltip"></a>
 		<a href="<?=htmlspecialcharsbx($arUsers[$arEntry['UF_HEAD']]['PROFILE_URL'])?>" class="structure-boss-name" bx-tooltip-user-id="<?=($arParams['USE_USER_LINK'] == 'Y' ? $arEntry['UF_HEAD'] : '')?>" bx-tooltip-classname="intrantet-user-selector-tooltip"><?=$headName?></a>
 
 <?
 			else: // $arUsers[$arEntry['UF_HEAD']]['PROFILE_URL']
 ?>
-		<span class="structure-avatar"<?if ($arUsers[$arEntry['UF_HEAD']]['PERSONAL_PHOTO']):?> style="background: url('<?=$arUsers[$arEntry['UF_HEAD']]['PERSONAL_PHOTO']['CACHE']['src']?>') no-repeat scroll center center transparent; background-size: cover;"<?endif;?> bx-tooltip-user-id="<?=($arParams['USE_USER_LINK'] == 'Y' ? $arEntry['UF_HEAD'] : '')?>" bx-tooltip-classname="intrantet-user-selector-tooltip"></span>
+		<span class="structure-avatar"<?if ($arUsers[$arEntry['UF_HEAD']]['PERSONAL_PHOTO']):?> style="background: url('<?=\CHTTP::urnEncode($arUsers[$arEntry['UF_HEAD']]['PERSONAL_PHOTO']['CACHE']['src'])?>') no-repeat scroll center center transparent; background-size: cover;"<?endif;?> bx-tooltip-user-id="<?=($arParams['USE_USER_LINK'] == 'Y' ? $arEntry['UF_HEAD'] : '')?>" bx-tooltip-classname="intrantet-user-selector-tooltip"></span>
 		<div class="structure-boss-name" bx-tooltip-user-id="<?=($arParams['USE_USER_LINK'] == 'Y' ? $arEntry['UF_HEAD'] : '')?>" bx-tooltip-classname="intrantet-user-selector-tooltip"><?=$headName?></div>
 <?
 			endif; // $arUsers[$arEntry['UF_HEAD']]['PROFILE_URL']
@@ -113,13 +113,13 @@ if (!function_exists('__intr_vis_get_div')):
 
 			$name = strip_tags(CUser::FormatName($arParams['NAME_TEMPLATE'], $arEntry['EMPLOYEES'][$i]));
 
-?><span class="structure-avatar"<?if ($arEntry['EMPLOYEES'][$i]['PERSONAL_PHOTO']):?> style="background: url('<?=$arEntry['EMPLOYEES'][$i]['PERSONAL_PHOTO']['CACHE']['src']?>') no-repeat scroll center center transparent; background-size: cover;"<?endif;?> data-user="<?=$arEntry['EMPLOYEES'][$i]['ID']?>" data-dpt="<?=$arEntry['ID']?>" bx-tooltip-user-id="<?=($arParams['USE_USER_LINK'] == 'Y' ? $arEntry['EMPLOYEES'][$i]['ID'] : '')?>" bx-tooltip-classname="intrantet-user-selector-tooltip"></span><?
+?><span class="structure-avatar"<?if ($arEntry['EMPLOYEES'][$i]['PERSONAL_PHOTO']):?> style="background: url('<?=\CHTTP::urnEncode($arEntry['EMPLOYEES'][$i]['PERSONAL_PHOTO']['CACHE']['src'])?>') no-repeat scroll center center transparent; background-size: cover;"<?endif;?> data-user="<?=$arEntry['EMPLOYEES'][$i]['ID']?>" data-dpt="<?=$arEntry['ID']?>" bx-tooltip-user-id="<?=($arParams['USE_USER_LINK'] == 'Y' ? $arEntry['EMPLOYEES'][$i]['ID'] : '')?>" bx-tooltip-classname="intrantet-user-selector-tooltip"></span><?
 
 			$arJSEmployees[] = array(
 				'ID' => $arEntry['EMPLOYEES'][$i]['ID'],
 				'NAME' => $name,
 				'POSITION' => $arEntry['EMPLOYEES'][$i]['WORK_POSITION'],
-				'PHOTO' => is_array($arEntry['EMPLOYEES'][$i]['PERSONAL_PHOTO']) ? $arEntry['EMPLOYEES'][$i]['PERSONAL_PHOTO']['CACHE']['src'] : '',
+				'PHOTO' => is_array($arEntry['EMPLOYEES'][$i]['PERSONAL_PHOTO']) ? \CHTTP::urnEncode($arEntry['EMPLOYEES'][$i]['PERSONAL_PHOTO']['CACHE']['src']) : '',
 				'PROFILE' => $arEntry['EMPLOYEES'][$i]['PROFILE_URL']
 			);
 		endfor;

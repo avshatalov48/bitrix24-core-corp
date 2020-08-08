@@ -1,0 +1,21 @@
+<?php
+$phrasesConfig = [
+	'encoding' => 'Windows-1251',
+	'lang' => 'ua',
+	'phrases' => [
+		'CRM_REQUISITE_ENTITY_RQ_NAME_UA_FIELD' => 'П.І.Б.',
+		'CRM_REQUISITE_ENTITY_RQ_COMPANY_NAME_UA_FIELD' => 'Скорочене найменування організації',
+		'CRM_REQUISITE_ENTITY_RQ_DIRECTOR_UA_FIELD' => 'Ген. директор',
+		'CRM_REQUISITE_ENTITY_RQ_ACCOUNTANT_UA_FIELD' => 'Гол. бухгалтер',
+		'CRM_REQUISITE_ENTITY_RQ_ADDR_UA_FIELD' => 'Адреса',
+		'CRM_REQUISITE_ENTITY_RQ_CONTACT_UA_FIELD' => 'Контактна особа',
+		'CRM_REQUISITE_ENTITY_RQ_EMAIL_UA_FIELD' => 'E-Mail',
+		'CRM_REQUISITE_ENTITY_RQ_PHONE_UA_FIELD' => 'Телефон',
+		'CRM_REQUISITE_ENTITY_RQ_FAX_UA_FIELD' => 'Факс',
+		'CRM_REQUISITE_ENTITY_RQ_INN_UA_FIELD' => 'ІПН',
+		'CRM_REQUISITE_ENTITY_RQ_EDRPOU_UA_FIELD' => 'ЄДРПОУ',
+		'CRM_REQUISITE_ENTITY_RQ_DRFO_UA_FIELD' => 'ДРФО',
+		'CRM_REQUISITE_ENTITY_RQ_VAT_PAYER_UA_FIELD' => 'Платник ПДВ',
+		'CRM_REQUISITE_ENTITY_RQ_VAT_CERT_NUM_UA_FIELD' => 'Номер свідоцтва'
+	]
+];

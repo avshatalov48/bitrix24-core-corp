@@ -1,0 +1,38 @@
+<?
+$MESS['INTRANET_SITE_LINK'] = "https://www.bitrix24.ru/";
+$MESS['INTRANET_USER_JOIN_INFO_TEXT'] = "#SPAN_START# Битрикс24 – это 5 полезных инструментов #SPAN_END# для вашего бизнеса, чтобы работать вместе, успевать вовремя и повышать продажи!";
+$MESS['INTRANET_USER_JOIN_MORE'] = "Узнать больше";
+$MESS['INTRANET_USER_JOIN_INFO_TEXT3'] = "Что такое Битрикс24?";
+$MESS['INTRANET_USER_JOIN_IMG_LINK'] = "https://www.bitrix24.ru/images/content/mail/ru.png";
+$MESS['INTRANET_USER_JOIN_ACCEPT'] = "Присоединиться";
+$MESS['INTRANET_USER_JOIN_TEXT'] = "#NAME# приглашает вас в #BLOCK_START#Битрикс#BLOCK_MIDDLE#24#BLOCK_END#";
+$MESS['INTRANET_USER_JOIN_FOOTER'] = "Это автоматическое сообщение. Когда вы перейдете в Битрикс24, то сможете управлять настройками всех уведомлений.";
+$MESS['INTRANET_MAIL_TITLE_IM_NEW_NOTIFY'] = "Новое уведомление от #NAME#";
+$MESS['INTRANET_MAIL_TITLE_IM_NEW_MESSAGE'] = "Новое сообщение от #NAME#";
+$MESS['INTRANET_MAIL_TITLE_IM_NEW_MESSAGE_GROUP'] = "Новые сообщения от #NAME#";
+$MESS['INTRANET_BITRIX24'] = "Битрикс24";
+$MESS['INTRANET_CHANGE_NOTIFY_SETTINGS'] = "Изменить настройки уведомлений";
+$MESS['INTRANET_OPEN'] = "Посмотреть";
+$MESS['INTRANET_OPEN_NOTIFY'] = "Перейти к уведомлениям";
+$MESS['INTRANET_MAIL_EVENTS_UNSUBSCRIBE'] = "Отписаться от всех писем";
+$MESS['INTRANET_USER_JOIN_MESSAGE'] = "Рады, что вы к нам присоединились!<br> Заходите в наш Битрикс24 со своим логином и паролем и подключайтесь к обсуждению. Здесь мы сможем вместе работать над проектами и задачами, управлять документами, планировать встречи и собрания.";
+$MESS['INTRANET_USER_JOIN_MESSAGE_REQUEST_MESSAGE'] = "Остался один шаг — дождаться подтверждения от администратора. Это может занять какое-то время.";
+$MESS['INTRANET_USER_JOIN_REQUEST_REJECT_MESSAGE'] = "К сожалению, ваша регистрация отклонена. Вы можете повторно отправить запрос и уточнить причины у администратора";
+$MESS['INTRANET_USER_JOIN_QUESTIONS'] = "Есть вопросы?";
+$MESS['INTRANET_USER_JOIN_HELP1'] = "Мы на 95% уверены, что у нас уже есть ответ :)";
+$MESS['INTRANET_USER_JOIN_HELP2'] = "Почитайте #LINK_START#советы в разделе Поддержка#LINK_END#";
+$MESS['INTRANET_USER_JOIN_HELP3'] = "Запишитесь на ближайшие #LINK_START#тематические вебинары#LINK_END#";
+$MESS['INTRANET_USER_JOIN_HELP4'] = " ";
+$MESS['INTRANET_USER_JOIN_PARTNERS_LINK'] = " ";
+$MESS['INTRANET_USER_JOIN_WEBINARS_LINK'] = "https://www.bitrix24.ru/support/webinars.php";
+$MESS['INTRANET_USER_JOIN_TITLE_BITRIX24_USER_JOIN'] = "Ваша регистрация на #URL# успешно завершена";
+$MESS['INTRANET_USER_JOIN_TITLE_BITRIX24_USER_JOIN_REQUEST'] = "Спасибо за регистрацию на #URL#";
+$MESS['INTRANET_USER_JOIN_TITLE_BITRIX24_USER_JOIN_REQUEST_CONFIRM'] = "Ваша регистрация на #URL# подтверждена";
+$MESS['INTRANET_USER_JOIN_TITLE_BITRIX24_USER_JOIN_REQUEST_REJECT'] = "Ваша регистрация на #URL# отклонена";
+$MESS['INTRANET_USER_JOIN_APPLE_IMG_LINK'] = "https://www.1c-bitrix.ru/images/mail/appstore.png";
+$MESS['INTRANET_USER_JOIN_APPLE_APP_LINK'] = "https://itunes.apple.com/ru/app/bitrix24/id561683423?l=ru&ls=1&mt=8";
+$MESS['INTRANET_USER_JOIN_GOOGLEPLAY_IMG_LINK'] = "https://www.1c-bitrix.ru/images/mail/googleplay.png";
+$MESS['INTRANET_USER_JOIN_GOOGLEPLAY_APP_LINK'] = "https://play.google.com/store/apps/details?id=com.bitrix24.android";
+$MESS['INTRANET_USER_JOIN_MOBILE_TEXT1'] = "Оставайтесь всегда на связи!";
+$MESS['INTRANET_USER_JOIN_MOBILE_TEXT2'] = "Установите бесплатное мобильное приложение Битрикс24";
+?>

@@ -1,4 +1,6 @@
 <?
+$MESS["CONFIG_CHECKER"] = "Check configuration";
+$MESS["CONFIG_CHECKER_TITLE"] = "Check configuration after importing the solution preset";
 $MESS["CRM_LEAD_SL_SUBSCRIBE"] = "Follow";
 $MESS["CRM_LEAD_SL_SUBSCRIBE_TITLE"] = "Follow this lead (the lead's events will be visible in your Activity Stream)";
 $MESS["CRM_LEAD_SL_UNSUBSCRIBE"] = "Unfollow";

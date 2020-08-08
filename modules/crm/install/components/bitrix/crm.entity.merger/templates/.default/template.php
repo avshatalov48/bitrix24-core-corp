@@ -9,10 +9,11 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @var CCrmEntityProgressBarComponent $component */
 
 //\CJSCore::Init(array('date'));
+\CJSCore::Init(array('ls'));
 \Bitrix\Main\UI\Extension::load(['ui.fonts.opensans', 'ui.notification', 'main.loader']);
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 $guid = $arResult['GUID'];
-$prefix = strtolower($guid);
+$prefix = mb_strtolower($guid);
 $primaryEditorWrapperID = "{$prefix}_primary_wrapper";
 $primaryEditorSwitchName = "{$prefix}_primary_switch";
 $secondaryEditorContainerID = "{$prefix}_secondary_container";
@@ -89,6 +90,7 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'n
 	</div>
 </div>
 <?
+
 $APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
 	'CLASS_NAME' => 'crm-entity-merger-panel',
 	'BUTTONS' => [

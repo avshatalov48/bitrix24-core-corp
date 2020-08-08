@@ -54,6 +54,8 @@ class CBPCrmCreateLeadContactActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
+		$leadFields['FM'] = Bitrix\Crm\Entity\Lead::getInstance()->getEntityMultifields($entityId, array('skipEmpty' => true));
+
 		if($leadFields['CONTACT_ID'] > 0)
 		{
 			$this->ContactId = $leadFields['CONTACT_ID'];

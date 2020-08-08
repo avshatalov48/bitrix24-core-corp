@@ -8,7 +8,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\UserTable;
 
-final class User extends EntityDataProvider
+class User extends EntityDataProvider
 {
 	protected $nameData = [];
 	protected $workDepartment;

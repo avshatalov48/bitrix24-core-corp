@@ -70,56 +70,55 @@ class CalendarService
 		{
 			return CalendarServiceResult::createByResult($res);
 		}
+		if ($parentCalendar && $calendar->getParentCalendarId() > 0 && !$calendar->obtainParentCalendar())
+		{
+			$calendar->setParentCalendar($parentCalendar);
+		}
 
-
-		$calendarId = $calendar->getId();
-		$this->calendarRepository->deleteCalendarExclusions($calendarId);
+		$this->calendarRepository->deleteCalendarExclusions($calendar->getId());
+		$calendar->unsetExclusions();
 
 		$dates = CalendarFormHelper::convertDatesToDbFormat($calendarForm->dates);
 		foreach ($dates as $year => $yearDatesToSave)
 		{
-			$exclusions = CalendarExclusion::create($calendarId, $year, $yearDatesToSave);
 			if ($parentCalendar && $parentCalendar->obtainExclusionsByYear($year))
 			{
 				$parentYearDates = $parentCalendar->obtainExclusionsByYear($year)->getDates();
-				if ($this->isSameDates($parentYearDates, $yearDatesToSave))
+				foreach ($parentYearDates as $month => $days)
 				{
-					continue;
+					if (array_key_exists($month, $yearDatesToSave))
+					{
+						if ($this->isSameDates($yearDatesToSave[$month], $days))
+						{
+							unset($yearDatesToSave[$month]);
+						}
+					}
 				}
+				$yearDatesToSave = array_filter($yearDatesToSave);
 			}
-			$exclusionsResult = $this->calendarRepository->save($exclusions);
-			if (!$exclusionsResult->isSuccess())
+			if (!empty($yearDatesToSave))
 			{
-				return CalendarServiceResult::createByResult($exclusionsResult);
+				$exclusions = CalendarExclusion::create($calendar->getId(), $year, $yearDatesToSave);
+
+				$exclusionsResult = $this->calendarRepository->save($exclusions);
+				if (!$exclusionsResult->isSuccess())
+				{
+					return CalendarServiceResult::createByResult($exclusionsResult);
+				}
+				$calendar->addToExclusions($exclusions);
 			}
-			$calendar->addToExclusions($exclusions);
 		}
 		return (new CalendarServiceResult())->setCalendar($calendar);
 	}
 
-	private function isSameDates($parentDatesForYear, $datesToCompare)
+	private function isSameDates($parentDatesForMonth, $datesToCompare)
 	{
-		foreach ($parentDatesForYear as $month => $parentMonthDates)
+		if (count($parentDatesForMonth) !== count($datesToCompare) ||
+			array_diff(array_keys($parentDatesForMonth), array_keys($datesToCompare)) ||
+			array_diff(array_keys($datesToCompare), array_keys($parentDatesForMonth)))
 		{
-			if (!array_key_exists($month, $datesToCompare))
-			{
-				if (empty($parentMonthDates))
-				{
-					continue;
-				}
-				return false;
-			}
-			$datesSource = array_map('intval', array_keys($parentMonthDates));
-
-			$datesToCompareForYear = array_map('intval', array_keys($datesToCompare[$month]));
-
-			if (array_diff($datesToCompareForYear, $datesSource)
-				|| array_diff($datesSource, $datesToCompareForYear))
-			{
-				return false;
-			}
+			return false;
 		}
-
 		return true;
 	}
 

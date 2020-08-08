@@ -11,7 +11,16 @@ use Bitrix\Main\SystemException;
 
 class CCrmSaleHelper
 {
+	public const CROUP_PREFIX = 'CRM_SHOP_';
+	public const GROUP_CRM_ADMIN = 'ADMIN';
+	public const GROUP_CRM_MANAGER = 'MANAGER';
+
 	private static $userIdsWithShopAccess = [];
+
+	public static function getGroupCode(string $code): string
+	{
+		return self::CROUP_PREFIX.$code;
+	}
 
 	public static function Calculate($productRows, $currencyID, $personTypeID, $enableSaleDiscount = false, $siteId = SITE_ID, $arOptions = array())
 	{
@@ -321,13 +330,13 @@ class CCrmSaleHelper
 		return $locationPropertyId;
 	}
 
-	public static function getShopGroupIdByType($type)
+	public static function getShopGroupIdByType($type): ?int
 	{
 		$groupId = null;
-		$queryObject = CGroup::getList($by = "ID", $order = "ASC", array("STRING_ID" => "CRM_SHOP_".strtoupper($type)));
+		$queryObject = CGroup::getList($by = "ID", $order = "ASC", array("STRING_ID" => "CRM_SHOP_".mb_strtoupper($type)));
 		if ($group = $queryObject->fetch())
 		{
-			$groupId = $group["ID"];
+			$groupId = (int)$group["ID"];
 		}
 		return $groupId;
 	}
@@ -653,7 +662,7 @@ class CCrmSaleHelper
 		foreach ($groupsData as $groupData)
 		{
 			$groupId = $groupObject->add($groupData);
-			if (strlen($groupObject->LAST_ERROR) <= 0 && $groupId)
+			if ($groupObject->LAST_ERROR == '' && $groupId)
 			{
 				foreach($groupData["BASE_RIGHTS"] as $moduleId => $letter)
 				{

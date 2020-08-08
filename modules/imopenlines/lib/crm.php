@@ -1137,9 +1137,13 @@ class Crm
 				!isset($statuses[$session->getConfig('CRM_SOURCE')])
 			)
 			{
-				$crmSource = $session->getData('CONFIG_ID') . '|' . CrmCommon::getCommunicationType($session->getData('USER_CODE'), true);
+				$crmSource = $session->getData('CONFIG_ID') . '|' .
+					CrmCommon::getCommunicationType(
+						$session->getData('USER_CODE'), true
+					);
+				$crmSource = substr($crmSource, 0, 50);
 
-				if (!isset($statuses[$config['CRM_SOURCE']]))
+				if (!isset($statuses[$session->getConfig('CRM_SOURCE')]))
 				{
 					$entity = new \CCrmStatus("SOURCE");
 					$entity->Add(array(

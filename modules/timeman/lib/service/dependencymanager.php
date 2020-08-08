@@ -3,7 +3,12 @@ namespace Bitrix\Timeman\Service;
 
 use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Helper\UserHelper;
+use Bitrix\Timeman\Model\Schedule\Schedule;
+use Bitrix\Timeman\Model\Schedule\ScheduleCollection;
+use Bitrix\Timeman\Model\Schedule\Shift\Shift;
+use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
 use Bitrix\Timeman\Provider\Schedule\ScheduleProvider;
+use Bitrix\Timeman\Provider\Schedule\ShiftPlanProvider;
 use Bitrix\Timeman\Repository\AbsenceRepository;
 use Bitrix\Timeman\Repository\DepartmentRepository;
 use Bitrix\Timeman\Repository\Schedule\CalendarRepository;
@@ -17,6 +22,9 @@ use Bitrix\Timeman\Service\Agent\AutoCloseWorktimeAgent;
 use Bitrix\Timeman\Service\Agent\WorktimeAgentManager;
 use Bitrix\Timeman\Service\Notification\InstantMessageNotifier;
 use Bitrix\Timeman\Service\Schedule\ViolationRulesService;
+use Bitrix\Timeman\Service\Worktime\Action\ShiftsManager;
+use Bitrix\Timeman\Service\Worktime\Action\WorktimeActionList;
+use Bitrix\Timeman\Service\Worktime\Action\WorktimeRecordManager;
 use Bitrix\Timeman\Service\Worktime\Notification\WorktimeNotifierFactory;
 use Bitrix\Timeman\Service\Schedule\CalendarService;
 use Bitrix\Timeman\Service\Schedule\ScheduleAssignmentsService;
@@ -24,12 +32,12 @@ use Bitrix\Timeman\Service\Schedule\ScheduleService;
 use Bitrix\Timeman\Service\Schedule\ShiftPlanService;
 use Bitrix\Timeman\Service\Schedule\ShiftService;
 use Bitrix\Timeman\Repository\Worktime\WorktimeRepository;
-use Bitrix\Timeman\Service\Worktime\Record\WorktimeRecordManagerFactory;
+use Bitrix\Timeman\Service\Worktime\Record\WorktimeManagerFactory;
 use Bitrix\Timeman\Service\Worktime\Violation\WorktimeViolationBuilderFactory;
 use Bitrix\Timeman\Service\Worktime\Violation\WorktimeViolationManager;
-use Bitrix\Timeman\Service\Worktime\WorktimeActionList;
 use Bitrix\Timeman\Service\Worktime\WorktimeEventsManager;
 use Bitrix\Timeman\Service\Worktime\Notification\WorktimeNotificationService;
+use Bitrix\Timeman\Service\Worktime\WorktimeLiveFeedManager;
 use Bitrix\Timeman\Service\Worktime\WorktimeService;
 use Bitrix\Timeman\TimemanUrlManager;
 
@@ -52,6 +60,10 @@ class DependencyManager
 	protected static $violationRulesRepository;
 	private static $scheduleProvider;
 
+	protected function __construct()
+	{
+	}
+
 	/**
 	 * @return DependencyManager
 	 */
@@ -63,11 +75,6 @@ class DependencyManager
 		}
 		return static::$instance;
 	}
-
-	protected function __construct()
-	{
-	}
-
 
 	/**
 	 * @return TimeHelper
@@ -98,10 +105,7 @@ class DependencyManager
 		return static::$scheduleRepository;
 	}
 
-	/**
-	 * @return ViolationRulesRepository
-	 */
-	public function getViolationRulesRepository()
+	public function getViolationRulesRepository(): ViolationRulesRepository
 	{
 		if (!static::$violationRulesRepository)
 		{
@@ -113,10 +117,7 @@ class DependencyManager
 		return static::$violationRulesRepository;
 	}
 
-	/**
-	 * @return ShiftRepository
-	 */
-	public function getShiftRepository()
+	public function getShiftRepository(): ShiftRepository
 	{
 		if (!static::$shiftRepository)
 		{
@@ -125,10 +126,7 @@ class DependencyManager
 		return static::$shiftRepository;
 	}
 
-	/**
-	 * @return ShiftPlanRepository
-	 */
-	public function getShiftPlanRepository()
+	public function getShiftPlanRepository(): ShiftPlanRepository
 	{
 		if (!static::$shiftPlanRepository)
 		{
@@ -153,23 +151,28 @@ class DependencyManager
 	 * @param array $options
 	 * @return WorktimeService
 	 */
-	public function getWorktimeService()
+	public function getWorktimeService(): WorktimeService
 	{
 		return new WorktimeService(
-			new WorktimeRecordManagerFactory(
+			new WorktimeManagerFactory(
 				$this->getViolationManager(),
-				$this->getWorktimeRepository(),
-				$this->getShiftPlanRepository()
+				$this->getViolationRulesRepository(),
+				$this->getWorktimeRepository()
 			),
 			$this->getWorktimeAgentManager(),
 			$this->getWorktimeActionList(),
 			$this->getWorktimeRepository(),
-			$this->getViolationRulesRepository(),
-			$this->getWorktimeNotificationService()
+			$this->getWorktimeNotificationService(),
+			$this->getLiveFeedManager()
 		);
 	}
 
-	public function getWorktimeRepository()
+	public function getLiveFeedManager(): WorktimeLiveFeedManager
+	{
+		return new WorktimeLiveFeedManager();
+	}
+
+	public function getWorktimeRepository(): WorktimeRepository
 	{
 		if (!static::$worktimeRepository)
 		{
@@ -178,10 +181,15 @@ class DependencyManager
 		return static::$worktimeRepository;
 	}
 
+	public function getShiftPlanProvider(): ShiftPlanProvider
+	{
+		return new ShiftPlanProvider();
+	}
+
 	/**
 	 * @return CalendarRepository
 	 */
-	public function getCalendarRepository()
+	public function getCalendarRepository(): CalendarRepository
 	{
 		if (!static::$calendarRepository)
 		{
@@ -193,7 +201,7 @@ class DependencyManager
 	/**
 	 * @return WorktimeReportRepository
 	 */
-	public function getWorktimeReportRepository()
+	public function getWorktimeReportRepository(): WorktimeReportRepository
 	{
 		if (!static::$worktimeReportRepository)
 		{
@@ -205,7 +213,7 @@ class DependencyManager
 	/**
 	 * @return AbsenceRepository
 	 */
-	public function getAbsenceRepository()
+	public function getAbsenceRepository(): AbsenceRepository
 	{
 		if (!static::$absenceRepository)
 		{
@@ -257,7 +265,7 @@ class DependencyManager
 
 	public function getWorktimeAgentManager()
 	{
-		return new WorktimeAgentManager($this->getViolationRulesRepository(), $this->getShiftPlanRepository());
+		return new WorktimeAgentManager($this->getViolationRulesRepository(), $this->getWorktimeRepository(), $this->getShiftPlanProvider(), $this->getScheduleProvider());
 	}
 
 	public function getScheduleService()
@@ -267,7 +275,7 @@ class DependencyManager
 			new ShiftService($this->getShiftRepository(), $this->getShiftPlanRepository(), $this->getWorktimeAgentManager()),
 			$this->getScheduleAssignmentsService(),
 			$this->getViolationRulesService(),
-			$this->getWorktimeService(),
+			$this->getWorktimeAgentManager(),
 			$this->getScheduleProvider()
 		);
 	}
@@ -300,17 +308,17 @@ class DependencyManager
 		);
 	}
 
-	public function getWorktimeActionList()
+	public function getWorktimeActionList(): WorktimeActionList
 	{
-		if (static::$worktimeActionList)
+		if (static::$worktimeActionList === null)
 		{
-			return static::$worktimeActionList;
+			static::$worktimeActionList = new WorktimeActionList(
+				$this->getShiftPlanProvider(),
+				$this->getWorktimeRepository(),
+				$this->getScheduleProvider()
+			);
 		}
-		return new WorktimeActionList(
-			$this->getShiftPlanRepository(),
-			$this->getWorktimeRepository(),
-			$this->getScheduleProvider()
-		);
+		return static::$worktimeActionList;
 	}
 
 	/**
@@ -353,6 +361,26 @@ class DependencyManager
 		return new AutoCloseWorktimeAgent(
 			$this->getWorktimeRepository(),
 			$this->getWorktimeService()
+		);
+	}
+
+	public function buildShiftsManager(int $userId, ?ScheduleCollection $activeSchedules = null): ShiftsManager
+	{
+		if ($activeSchedules === null)
+		{
+			$activeSchedules = $this->getScheduleProvider()->findSchedulesCollectionByUserId($userId);
+		}
+		return new ShiftsManager($userId, $activeSchedules, $this->getShiftPlanProvider());
+	}
+
+	public function buildWorktimeRecordManager(WorktimeRecord $record, ?Schedule $schedule, ?Shift $shift, ?ScheduleCollection $activeSchedules = null): WorktimeRecordManager
+	{
+		return new WorktimeRecordManager(
+			$record,
+			$schedule,
+			$shift,
+			$this->getTimeHelper()->getUserDateTimeNow($record->getUserId()),
+			$this->buildShiftsManager($record->getUserId(), $activeSchedules)
 		);
 	}
 }

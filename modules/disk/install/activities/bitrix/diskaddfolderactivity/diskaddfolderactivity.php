@@ -114,7 +114,13 @@ class CBPDiskAddFolderActivity
 			$this->DetailUrl = $urlManager->encodeUrn($urlManager->getHostUrl().$urlManager->getPathFolderList($newFolder));
 		}
 		else
-			$this->WriteToTrackingService(GetMessage('BPDAF_ADD_FOLDER_ERROR'));
+		{
+			$this->WriteToTrackingService(GetMessage('BPDAF_ADD_FOLDER_ERROR'), 0, CBPTrackingType::Error);
+			foreach ($folder->getErrors() as $error)
+			{
+				$this->WriteToTrackingService($error->getMessage(), 0, CBPTrackingType::Error);
+			}
+		}
 
 		return CBPActivityExecutionStatus::Closed;
 	}

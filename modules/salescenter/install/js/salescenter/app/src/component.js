@@ -3,6 +3,8 @@ import {Vuex} from 'ui.vue.vuex';
 import {Manager} from 'salescenter.manager';
 import {Loader} from 'main.loader';
 import {Type, Uri} from 'main.core';
+import {MixinTemplatesType} from "./components/templates-type-mixin";
+
 import 'popup';
 import 'ui.buttons';
 import 'ui.buttons.icons';
@@ -13,11 +15,18 @@ import 'ui.pinner';
 import {config} from './config';
 
 Vue.component(config.templateName, {
+
+	mixins:[MixinTemplatesType],
+
 	data()
 	{
 		return {
 			isShowPreview: false,
 			isShowPayment: false,
+			isShowPaymentBySms: false,
+			isShowPaymentByEmail: false,
+			isShowPaymentByCash: false,
+			isShowPaymentByQr: false,
 			pageTitle: '',
 			currentPageId: null,
 			actions: [],
@@ -32,11 +41,15 @@ Vue.component(config.templateName, {
 			ordersCount: null,
 			editedPageId: null,
 			isOrderPublicUrlAvailable: null,
+			currentPageTitle: null
 		};
 	},
 
 	created()
 	{
+		this.$root.$on("on-show-company-contacts", (value) => {
+			this.showCompanyContacts(value);
+		})
 	},
 
 	updated()
@@ -47,12 +60,20 @@ Vue.component(config.templateName, {
 	mounted()
 	{
 		this.createPinner();
-		this.createLoader();
-		this.$root.$app.fillPages().then(() =>
+
+		if (this.$root.$app.context === 'deal')
 		{
-			this.refreshOrdersCount();
-			this.openFirstPage();
-		});
+			this.showPaymentBySmsForm();
+		}
+		else
+		{
+			this.createLoader();
+			this.$root.$app.fillPages().then(() =>
+			{
+				this.refreshOrdersCount();
+				this.openFirstPage();
+			});
+		}
 		this.isOrderPublicUrlAvailable = this.$root.$app.isOrderPublicUrlAvailable;
 		this.isOrderPublicUrlExists = this.$root.$app.isOrderPublicUrlExists;
 
@@ -81,19 +102,19 @@ Vue.component(config.templateName, {
 			}
 			else
 			{
-				this.$refs['leftSide'].remove();
+				// this.$refs['leftSide'].remove();
 			}
 
 			if(sidepanel && leftPanel)
 			{
-				leftPanel.appendChild(sidepanel);
-				BX.show(sidepanel);
+				// leftPanel.appendChild(sidepanel);
+				// BX.show(sidepanel);
 
 				let nav = this.$refs['sidepanelNav'];
 				if(nav)
 				{
-					leftPanel.appendChild(nav);
-					BX.show(nav);
+					// leftPanel.appendChild(nav);
+					// BX.show(nav);
 				}
 			}
 		},
@@ -158,6 +179,7 @@ Vue.component(config.templateName, {
 		openFirstPage()
 		{
 			this.isShowPayment = false;
+			this.isShowPaymentBySms = false;
 			this.isShowPreview = true;
 			if(this.pages && this.pages.length > 0)
 			{
@@ -211,6 +233,7 @@ Vue.component(config.templateName, {
 			this.currentPageId = page.id;
 			this.hideActionsPopup();
 			this.isShowPayment = false;
+			this.isShowPaymentBySms = false;
 			this.isShowPreview = true;
 			this.setPageTitle(this.pageTitle);
 			if(page.isFrameDenied !== true)
@@ -233,6 +256,10 @@ Vue.component(config.templateName, {
 				offsetTop: 0,
 				closeByEsc: true,
 			});
+		},
+		showCompanyContacts({target})
+		{
+			BX.Salescenter.Manager.openSlider(this.$root.$app.options.urlSettingsCompanyContacts, {});
 		},
 		showAddPageActionPopup({target}, isWebform = false)
 		{
@@ -341,7 +368,7 @@ Vue.component(config.templateName, {
 					}
 					else
 					{
-						if(!this.isShowPayment)
+						if(!this.isShowPayment || !this.isShowPaymentBySms)
 						{
 							this.isShowPreview = true;
 						}
@@ -353,10 +380,34 @@ Vue.component(config.templateName, {
 		showPaymentForm()
 		{
 			this.isShowPayment = true;
+			this.isShowPaymentBySms = false;
 			this.isShowPreview = false;
 			if(this.isOrderPublicUrlAvailable)
 			{
 				this.setPageTitle(this.localize.SALESCENTER_LEFT_PAYMENT_ADD);
+			}
+			else
+			{
+				this.setPageTitle(this.localize.SALESCENTER_DEFAULT_TITLE);
+			}
+		},
+		showPaymentBySmsForm()
+		{
+			this.isShowPayment = false;
+			this.isShowPaymentBySms = true;
+			this.isShowPreview = false;
+			this.currentPageTitle = this.$root.$app.options.title;
+
+			if(this.isOrderPublicUrlAvailable)
+			{
+				let title = this.localize.SALESCENTER_LEFT_PAYMENT_BY_SMS;
+
+				if(this.currentPageTitle)
+				{
+					title = this.currentPageTitle;
+				}
+
+				this.setPageTitle(title);
 			}
 			else
 			{
@@ -415,9 +466,16 @@ Vue.component(config.templateName, {
 			{
 				return;
 			}
-			if(this.isShowPayment && !this.isShowStartInfo)
+			if((this.isShowPayment || this.isShowPaymentBySms) && !this.isShowStartInfo)
 			{
-				this.$root.$app.sendPayment(event.target, skipPublicMessage);
+				if (this.editable)
+				{
+					this.$root.$app.sendPayment(event.target, skipPublicMessage);
+				}
+				else
+				{
+					this.$root.$app.resendPayment(event.target);
+				}
 			}
 			else if(this.currentPage && this.currentPage.isActive)
 			{
@@ -499,12 +557,17 @@ Vue.component(config.templateName, {
 		},
 		connect()
 		{
-			Manager.startConnection({
+			var loader = new BX.Loader({size: 200});
+
+			loader.show(document.body);
+			BX.Salescenter.Manager.connect({
+				no_redirect: 'Y',
 				context: this.$root.$app.context,
 			}).then(() =>
 			{
-				Manager.loadConfig().then((result) =>
+				BX.Salescenter.Manager.loadConfig().then((result) =>
 				{
+					loader.hide();
 					if(result.isSiteExists)
 					{
 						this.$root.$app.isSiteExists = result.isSiteExists;
@@ -513,19 +576,30 @@ Vue.component(config.templateName, {
 						{
 							this.isOrderPublicUrlExists = true;
 							this.$root.$app.isOrderPublicUrlExists = true;
+							this.$root.$app.orderPublicUrl = result.orderPublicUrl;
 							this.isOrderPublicUrlAvailable = result.isOrderPublicUrlAvailable;
 							this.$root.$app.isOrderPublicUrlAvailable = result.isOrderPublicUrlAvailable;
-							if(!this.isShowPayment)
+							if(!this.isShowPayment && !this.isShowPaymentBySms)
 							{
 								this.openFirstPage();
 							}
 							else
 							{
-								this.showPaymentForm();
+								if (this.isShowPaymentBySms)
+								{
+									this.showPaymentBySmsForm();
+								}
+								else
+								{
+									this.showPaymentForm();
+								}
 							}
 						});
 					}
 				});
+			}).catch(function()
+			{
+				loader.hide();
 			});
 		},
 		checkRecycle()
@@ -720,7 +794,7 @@ Vue.component(config.templateName, {
 			{
 				res = (!this.pages || this.pages.length <= 0);
 			}
-			else if(this.isShowPayment)
+			else if(this.isShowPayment || this.isShowPaymentBySms)
 			{
 				res = !this.isOrderPublicUrlAvailable;
 			}
@@ -728,9 +802,11 @@ Vue.component(config.templateName, {
 			return res;
 		},
 
-		wrapperHeight()
+		getWrapperHeight()
 		{
-			if(this.isShowPreview || this.isShowPayment)
+			if(	this.isShowPreview ||
+				this.isShowPayment ||
+				this.isShowPaymentBySms )
 			{
 				const position = BX.pos(this.$root.$el);
 				let offset = position.top + 20;
@@ -782,11 +858,18 @@ Vue.component(config.templateName, {
 			{
 				return false
 			}
-			if (this.isShowPayment)
+			if (this.isShowPayment || this.isShowPaymentBySms)
 			{
+				if (
+					this.isShowPaymentBySms
+					&& this.$root.$app.options.contactPhone === ''
+				)
+				{
+					return false;
+				}
+
 				return this.$store.getters['orderCreation/isAllowedSubmit'];
 			}
-
 			return this.currentPage;
 		},
 
@@ -802,12 +885,9 @@ Vue.component(config.templateName, {
 	},
 
 	template: `
-		<div class="salescenter-app-wrapper" :style="{height: wrapperHeight}">
+		<div class="salescenter-app-wrapper" :style="{minHeight: getWrapperHeight}">
 			<div class="ui-sidepanel-sidebar salescenter-app-sidebar" ref="sidebar">
-				<div class="ui-sidepanel-head">
-					<div class="ui-sidepanel-title">{{localize.SALESCENTER_DEFAULT_TITLE}}</div>
-				</div>
-				<ul class="ui-sidepanel-menu" ref="sidepanelMenu">
+				<ul class="ui-sidepanel-menu" ref="sidepanelMenu" v-if="this.$root.$app.context !== 'deal'">
 					<li :class="{'salescenter-app-sidebar-menu-active': isPagesOpen}" class="ui-sidepanel-menu-item">
 						<a class="ui-sidepanel-menu-link" @click.stop.prevent="isPagesOpen = !isPagesOpen;">
 							<div class="ui-sidepanel-menu-link-text">{{localize.SALESCENTER_LEFT_PAGES}}</div>
@@ -876,16 +956,29 @@ Vue.component(config.templateName, {
 						</ul>
 					</li>
 				</ul>
+				<ul class="ui-sidepanel-menu" ref="sidepanelMenu" v-if="this.$root.$app.context === 'deal'">
+					<li v-if="this.$root.$app.isPaymentCreationAvailable" :class="{ 'salescenter-app-sidebar-menu-active': this.isShowPaymentBySms}" class="ui-sidepanel-menu-item" @click="showPaymentBySmsForm">
+						<a class="ui-sidepanel-menu-link">
+							<div class="ui-sidepanel-menu-link-text">{{localize.SALESCENTER_LEFT_SEND_BY_SMS}}</div>
+						</a>
+					</li>
+					<li class="ui-sidepanel-menu-item ui-sidepanel-menu-item-sm">
+						<a class="ui-sidepanel-menu-link" v-on:click="showCompanyContacts(event)">
+							<div class="ui-sidepanel-menu-link-text">{{localize.SALESCENTER_LEFT_PAYMENT_COMPANY_CONTACTS}}</div>
+						</a>
+					</li>
+					<li class="ui-sidepanel-menu-item ui-sidepanel-menu-item-sm">
+						<a class="ui-sidepanel-menu-link" v-on:click="BX.Salescenter.Manager.openFeedbackPayOrderForm(event)">
+							<div class="ui-sidepanel-menu-link-text">{{localize.SALESCENTER_LEFT_PAYMENT_OFFER_SCRIPT}}</div>
+						</a>
+					</li>
+					<li class="ui-sidepanel-menu-item ui-sidepanel-menu-item-sm">
+						<a class="ui-sidepanel-menu-link" v-on:click="BX.Salescenter.Manager.openHowPayDealWorks(event)">
+							<div class="ui-sidepanel-menu-link-text">{{localize.SALESCENTER_LEFT_PAYMENT_HOW_WORKS}}</div>
+						</a>
+					</li>
+				</ul>
 			</div>
-			<div class="salescenter-app-helper-nav" ref="sidepanelNav">
-				<a class="salescenter-app-helper-nav-item" @click="openControlPanel">
-					<span class="salescenter-app-helper-nav-item-text">{{localize.SALESCENTER_PAYMENT_TYPE_ADD}}</span>
-				</a>
-				<a class="salescenter-app-helper-nav-item" @click="openHelpDesk">
-					<span class="salescenter-app-helper-nav-item-text">{{localize.SALESCENTER_HOW}}</span>
-				</a>
-			</div> 
-			<div class="salescenter-app-left-side" ref="leftSide"></div>
 			<div class="salescenter-app-right-side">
 				<div class="salescenter-app-page-header" v-show="isShowPreview && !isShowStartInfo">
 					<div class="salescenter-btn-action ui-btn ui-btn-link ui-btn-dropdown ui-btn-xs" @click="showActionsPopup($event)">{{localize.SALESCENTER_RIGHT_ACTIONS_BUTTON}}</div>
@@ -894,7 +987,7 @@ Vue.component(config.templateName, {
 				</div>
 				<template v-if="isShowStartInfo">
 					<div class="salescenter-app-page-content salescenter-app-start-wrapper">
-						<div class="ui-title-1 ui-text-center ui-color-medium" style="margin-bottom: 20px;">{{localize.SALESCENTER_INFO_TEXT_TOP}}</div>
+						<div class="ui-title-1 ui-text-center ui-color-medium" style="margin-bottom: 20px;">{{localize.SALESCENTER_INFO_TEXT_TOP_2}}</div>
 						<div class="ui-hr ui-mv-25"></div>
 						<template v-if="this.isOrderPublicUrlExists">
 							<div class="salescenter-title-5 ui-title-5 ui-text-center ui-color-medium">{{localize.SALESCENTER_INFO_TEXT_BOTTOM_PUBLIC}}</div>
@@ -909,9 +1002,12 @@ Vue.component(config.templateName, {
 							</div>
 						</template>
 						<template v-else>
-							<div class="salescenter-title-5 ui-title-5 ui-text-center ui-color-medium">{{localize.SALESCENTER_INFO_TEXT_BOTTOM}}</div>
+							<div class="salescenter-title-5 ui-title-5 ui-text-center ui-color-medium">{{localize.SALESCENTER_INFO_TEXT_BOTTOM_2}}</div>
 							<div style="padding-top: 5px;" class="ui-text-center">
 								<div class="ui-btn ui-btn-primary ui-btn-lg" @click="connect">{{localize.SALESCENTER_INFO_CREATE}}</div>
+							</div>
+							<div style="padding-top: 5px;" class="ui-text-center">
+								<div class="ui-btn ui-btn-link ui-btn-lg" @click="BX.Salescenter.Manager.openHowPayDealWorks(event)">{{localize.SALESCENTER_HOW}}</div>
 							</div>
 						</template>
 					</div>
@@ -939,14 +1035,18 @@ Vue.component(config.templateName, {
 			        <div ref="paymentsLimit" v-show="isShowPayment && !isShowStartInfo"></div>
 				</template>
 				<template v-else>
-			        <component v-show="isShowPayment && !isShowStartInfo" :is="config.templateAddPaymentName"></component>
+			        <component v-if="isShowPayment && !isShowStartInfo" :is="config.templateAddPaymentName"></component>
+		        </template>
+		        <template v-if="isShowPaymentBySms && !isShowStartInfo">
+			        <component :is="config.templateAddPaymentBySms" 
+			        @send="send" 
+			        :isAllowedSubmitButton="isAllowedSubmitButton"></component>
 		        </template>
 			</div>
 			<div class="ui-button-panel-wrapper salescenter-button-panel" ref="buttonsPanel">
 				<div class="ui-button-panel">
-					<button :class="{
-						'ui-btn-disabled': !this.isAllowedSubmitButton
-					}" class="ui-btn ui-btn-md ui-btn-success" @click="send($event)">{{localize.SALESCENTER_SEND}}</button>
+					<button :class="{'ui-btn-disabled': !this.isAllowedSubmitButton}" class="ui-btn ui-btn-md ui-btn-success" @click="send($event)" v-if="editable">{{localize.SALESCENTER_SEND}}</button>
+					<button :class="{'ui-btn-disabled': !this.isAllowedSubmitButton}" class="ui-btn ui-btn-md ui-btn-success" @click="send($event)" v-else>{{localize.SALESCENTER_RESEND}}</button>
 					<button class="ui-btn ui-btn-md ui-btn-link" @click="close">{{localize.SALESCENTER_CANCEL}}</button>
 					<button v-if="isShowPayment && !isShowStartInfo && !this.$root.$app.isPaymentsLimitReached" class="ui-btn ui-btn-md ui-btn-link btn-send-crm" @click="send($event, 'y')">{{localize.SALESCENTER_SAVE_ORDER}}</button>
 				</div>

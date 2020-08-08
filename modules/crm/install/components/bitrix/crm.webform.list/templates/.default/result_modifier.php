@@ -63,7 +63,7 @@ if($arResult['PERM_CAN_EDIT'])
 		}
 		foreach ($adsTypes as $adsType)
 		{
-			$adsTypeUpper = strtoupper($adsType);
+			$adsTypeUpper = mb_strtoupper($adsType);
 			$actionSendToAds = array(
 				'popup' => true,
 				'id' => 'send_to_ads_' . $adsType,
@@ -139,7 +139,7 @@ foreach($arResult['ITEMS'] as $item)
 	{
 		$entityListPath = \Bitrix\Main\Config\Option::get(
 			'crm',
-			'path_to_' . strtolower($entityCounter['ENTITY_NAME']) . '_list',
+			'path_to_'.mb_strtolower($entityCounter['ENTITY_NAME']) . '_list',
 			''
 		);
 		$entityCountDisplay = (int) $entityCounter['VALUE'];
@@ -147,7 +147,7 @@ foreach($arResult['ITEMS'] as $item)
 		{
 			if ($entityCounter['ENTITY_NAME'] != 'INVOICE')
 			{
-				$entityListPath .= strpos($entityListPath, '?') === false ? '?' : '&';
+				$entityListPath .= mb_strpos($entityListPath, '?') === false ? '?' : '&';
 				$entityListPath .= 'WEBFORM_ID[]=' . $item['ID'] . '&apply_filter=Y';
 			}
 

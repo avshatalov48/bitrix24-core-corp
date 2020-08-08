@@ -21,12 +21,6 @@ $request = HttpApplication::getInstance()->getContext()->getRequest();
 
 $listConnector = Connector::getListConnectorReal(true, false);
 
-//Temporary - TODO - remove with removing old instagram connector
-if(!empty($listConnector[Library::ID_INSTAGRAM_CONNECTOR]))
-{
-	unset($listConnector[Library::ID_INSTAGRAM_CONNECTOR]);
-}
-
 /**
  * Description of options
  *

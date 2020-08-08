@@ -3,6 +3,7 @@ namespace Bitrix\Timeman\Repository\Schedule;
 
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\Result;
+use Bitrix\Timeman\Helper\EntityCodesHelper;
 use Bitrix\Timeman\Model\Schedule\Violation\ViolationRulesCollection;
 use Bitrix\Timeman\Model\Schedule\Violation\ViolationRules;
 use Bitrix\Timeman\Model\Schedule\Violation\ViolationRulesTable;
@@ -26,43 +27,44 @@ class ViolationRulesRepository
 		return $rules->save();
 	}
 
-	public function findFirstByScheduleIdAndEntityCode($scheduleId, $entityCode)
+	public function findFirstByScheduleIdAndEntityCode($scheduleId, $entityCode): ?ViolationRules
 	{
-		$entitiesCodesData = [];
-		if (preg_match('#U[0-9]+#', $entityCode) === 1)
+		$possibleEntityCodesForRules = [];
+		if (EntityCodesHelper::isUser($entityCode))
 		{
-			$userId = (int)substr($entityCode, 1);
-			$entitiesCodesData = $this->departmentRepository->buildUserDepartmentsPriorityTree($userId);
+			$userId = EntityCodesHelper::getUserId($entityCode);
+			$possibleEntityCodesForRules = $this->departmentRepository->buildUserDepartmentsPriorityTrees($userId);
 		}
-		elseif (preg_match('#DR[0-9]+#', $entityCode) === 1)
+		elseif (EntityCodesHelper::isDepartment($entityCode))
 		{
-			$departmentId = (int)substr($entityCode, 2);
-			$entitiesCodesData[] = $this->departmentRepository->buildDepartmentsPriorityTree($departmentId);
+			$departmentId = EntityCodesHelper::getDepartmentId($entityCode);
+			$possibleEntityCodesForRules[] = $this->departmentRepository->buildDepartmentsPriorityTree($departmentId);
 		}
 		$uniqueCodes = [];
-		foreach ($entitiesCodesData as $entityCodeValues)
+		foreach ($possibleEntityCodesForRules as $entityCodeValues)
 		{
-			$uniqueCodes = array_merge($uniqueCodes, $entityCodeValues);
+			$uniqueCodes[] = $entityCodeValues;
 		}
-		$uniqueCodes = array_unique($uniqueCodes);
 		if (empty($uniqueCodes))
 		{
-			return [];
+			return null;
 		}
 
+		$uniqueCodes = array_merge(...$uniqueCodes);
+		$uniqueCodes = array_unique($uniqueCodes);
 		$violationRulesList = ViolationRulesTable::query()
 			->addSelect('*')
 			->whereIn('ENTITY_CODE', $uniqueCodes)
 			->where('SCHEDULE_ID', $scheduleId)
 			->exec()
 			->fetchCollection();
-		foreach ($entitiesCodesData as $entityCodes)
+		foreach ($possibleEntityCodesForRules as $entitiesCodesTreeByPriority)
 		{
-			foreach ($entityCodes as $entityCode)
+			foreach ($entitiesCodesTreeByPriority as $entityCodeFromTree)
 			{
 				foreach ($violationRulesList as $violationRules)
 				{
-					if ($violationRules->getEntityCode() === $entityCode)
+					if ($violationRules->getEntityCode() === $entityCodeFromTree)
 					{
 						return $violationRules;
 					}

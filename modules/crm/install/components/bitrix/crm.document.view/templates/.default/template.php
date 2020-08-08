@@ -108,7 +108,7 @@ $APPLICATION->IncludeComponent(
 				</div>
 				<div class="docs-preview-error-img"></div>
 			</div>
-			<div class="docs-preview-upload" id="docs-preview-node"<?if(!$arResult['isTransformationError'] && !$arResult['imageUrl']){?> style="display: block;"<?}?>>
+			<div class="docs-preview-upload" id="docs-preview-node"<?if(!$arResult['isTransformationError'] && !$arResult['imageUrl'] && !$arResult['pdfUrl']){?> style="display: block;"<?}?>>
 				<div class="docs-preview-upload-message">
 					<span class="docs-preview-upload-message-text" id="docs-preview-node-message"><?=Loc::getMessage('CRM_DOCUMENT_VIEW_PREVIEW_TIME_MESSAGE');?></span>
 					<div class="docs-preview-upload-progress">

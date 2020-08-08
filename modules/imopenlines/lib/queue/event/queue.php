@@ -63,15 +63,32 @@ abstract class Queue
 	 * Basic check that the operator is active.
 	 *
 	 * @param $userId
+	 * @param bool $ignorePause
 	 * @return bool
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\LoaderException
 	 * @throws \Bitrix\Main\ObjectException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function isOperatorActive($userId)
+	public function isOperatorActive($userId, bool $ignorePause = false)
 	{
-		return ImOpenLines\Queue::isOperatorActive($userId, Config::isTimeManActive(), $this->configLine['CHECK_AVAILABLE']);
+		return ImOpenLines\Queue::isOperatorActive($userId, $this->configLine['CHECK_AVAILABLE'], $ignorePause);
+	}
+
+	/**
+	 * Are there any available operators in the line.
+	 *
+	 * @param bool $ignorePause
+	 *
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function isOperatorsActiveLine(bool $ignorePause = false): bool
+	{
+		return ImOpenLines\Queue::isOperatorsActiveLine($this->configLine['ID'], $this->configLine['CHECK_AVAILABLE'], $ignorePause);
 	}
 
 	/**

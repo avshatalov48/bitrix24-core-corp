@@ -1,28 +1,29 @@
-<?
-global $MESS;
-$PathInstall = str_replace("\\", "/", __FILE__);
-$PathInstall = substr($PathInstall, 0, strlen($PathInstall)-strlen("/index.php"));
+<?php
 
-IncludeModuleLangFile($PathInstall."/install.php");
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
 
-if(class_exists("imbot")) return;
-
-Class imbot extends CModule
+if (class_exists('imbot'))
 {
-	var $MODULE_ID = "imbot";
-	var $MODULE_VERSION;
-	var $MODULE_VERSION_DATE;
-	var $MODULE_NAME;
-	var $MODULE_DESCRIPTION;
-	var $MODULE_GROUP_RIGHTS = "Y";
+	return;
+}
 
-	function imbot()
+Loc::loadMessages(__FILE__);
+
+Class imbot extends \CModule
+{
+	public $MODULE_ID = "imbot";
+	public $MODULE_VERSION;
+	public $MODULE_VERSION_DATE;
+	public $MODULE_NAME;
+	public $MODULE_DESCRIPTION;
+	public $MODULE_GROUP_RIGHTS = "Y";
+
+	public function __construct()
 	{
 		$arModuleVersion = array();
 
-		$path = str_replace("\\", "/", __FILE__);
-		$path = substr($path, 0, strlen($path) - strlen("/index.php"));
-		include($path."/version.php");
+		include(__DIR__.'/version.php');
 
 		if (is_array($arModuleVersion) && array_key_exists("VERSION", $arModuleVersion))
 		{
@@ -35,18 +36,18 @@ Class imbot extends CModule
 			$this->MODULE_VERSION_DATE = IMBOT_VERSION_DATE;
 		}
 
-		$this->MODULE_NAME = GetMessage("IMBOT_MODULE_NAME");
-		$this->MODULE_DESCRIPTION = GetMessage("IMBOT_MODULE_DESCRIPTION");
+		$this->MODULE_NAME = Loc::getMessage("IMBOT_MODULE_NAME");
+		$this->MODULE_DESCRIPTION = Loc::getMessage("IMBOT_MODULE_DESCRIPTION");
 	}
 
-	function DoInstall()
+	public function DoInstall()
 	{
-		global $DOCUMENT_ROOT, $APPLICATION, $step;
+		global $APPLICATION, $step;
 		$step = IntVal($step);
 		if($step < 2)
 		{
 			$this->CheckModules();
-			$APPLICATION->IncludeAdminFile(GetMessage("IMBOT_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/step1.php");
+			$APPLICATION->IncludeAdminFile(Loc::getMessage("IMBOT_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/step1.php");
 		}
 		elseif($step == 2)
 		{
@@ -57,35 +58,35 @@ Class imbot extends CModule
 				));
 				$this->InstallFiles();
 			}
-			$APPLICATION->IncludeAdminFile(GetMessage("IMBOT_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/step2.php");
+			$APPLICATION->IncludeAdminFile(Loc::getMessage("IMBOT_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/step2.php");
 		}
 		return true;
 	}
 
-	function InstallEvents()
+	public function InstallEvents()
 	{
 		return true;
 	}
 
-	function CheckModules()
+	public function CheckModules()
 	{
 		global $APPLICATION;
 
-		if (!CModule::IncludeModule('pull') || !CPullOptions::GetQueueServerStatus())
+		if (!Main\Loader::includeModule('pull') || !CPullOptions::GetQueueServerStatus())
 		{
-			$this->errors[] = GetMessage('IMBOT_CHECK_PULL');
+			$this->errors[] = Loc::getMessage('IMBOT_CHECK_PULL');
 		}
 
 		if (!IsModuleInstalled('im'))
 		{
-			$this->errors[] = GetMessage('IMBOT_CHECK_IM');
+			$this->errors[] = Loc::getMessage('IMBOT_CHECK_IM');
 		}
 		else
 		{
-			$imVersion = \Bitrix\Main\ModuleManager::getVersion('im');
+			$imVersion = Main\ModuleManager::getVersion('im');
 			if (version_compare("16.1.0", $imVersion) == 1)
 			{
-				$this->errors[] = GetMessage('IMBOT_CHECK_IM_VERSION');
+				$this->errors[] = Loc::getMessage('IMBOT_CHECK_IM_VERSION');
 			}
 		}
 
@@ -100,18 +101,36 @@ Class imbot extends CModule
 		}
 	}
 
-	function InstallDB($params = Array())
+	public function InstallDB($params = Array())
 	{
 		global $DB, $APPLICATION;
 
 		$this->errors = false;
+
+		if (!$DB->query("SELECT 'x' FROM b_im_bot_network_session WHERE 1=0", true))
+		{
+			$errors = $DB->runSqlBatch(sprintf(
+				'%s/bitrix/modules/%s/install/db/%s/install.sql',
+				$_SERVER['DOCUMENT_ROOT'],
+				mb_strtolower($this->MODULE_ID),
+				mb_strtolower($DB->type)
+			));
+			if($errors !== false)
+			{
+				if (!$this->errors)
+				{
+					$this->errors = $errors;
+				}
+			}
+		}
+
 		if (strlen($params['PUBLIC_URL']) > 0 && strlen($params['PUBLIC_URL']) < 12)
 		{
 			if (!$this->errors)
 			{
 				$this->errors = Array();
 			}
-			$this->errors[] = GetMessage('IMBOT_CHECK_PUBLIC_PATH');
+			$this->errors[] = Loc::getMessage('IMBOT_CHECK_PUBLIC_PATH');
 		}
 
 		if($this->errors !== false)
@@ -120,35 +139,35 @@ Class imbot extends CModule
 			return false;
 		}
 
-		RegisterModule("imbot");
+		Main\ModuleManager::registerModule($this->MODULE_ID);
 
-		COption::SetOptionString("imbot", "portal_url", $params['PUBLIC_URL']);
+		\COption::SetOptionString("imbot", "portal_url", $params['PUBLIC_URL']);
 
 		RegisterModuleDependences('im', 'OnAfterUserRead', 'imbot', '\Bitrix\ImBot\Event', 'onUserRead');
 		RegisterModuleDependences('im', 'OnAfterMessagesLike', 'imbot', '\Bitrix\ImBot\Event', 'onMessageLike');
 		RegisterModuleDependences('im', 'OnStartWriting', 'imbot', '\Bitrix\ImBot\Event', 'onStartWriting');
 		RegisterModuleDependences('im', 'OnSessionVote', 'imbot', '\Bitrix\ImBot\Event', 'onSessionVote');
 
-		CModule::IncludeModule('imbot');
+		Main\Loader::includeModule('imbot');
 
 		return true;
 	}
 
-	function InstallFiles()
+	public function InstallFiles()
 	{
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/public", $_SERVER["DOCUMENT_ROOT"]."/", true, true);
 
 		return true;
 	}
 
-	function UnInstallEvents()
+	public function UnInstallEvents()
 	{
 		return true;
 	}
 
-	function DoUninstall()
+	public function DoUninstall()
 	{
-		global $DOCUMENT_ROOT, $APPLICATION, $step, $DB;
+		global $APPLICATION, $step, $DB;
 		$step = IntVal($step);
 
 		$botCount = 0;
@@ -160,26 +179,28 @@ Class imbot extends CModule
 		}
 		if ($botCount > 0)
 		{
-			$APPLICATION->IncludeAdminFile(GetMessage("IMBOT_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/imbot/install/unstep0.php");
+			$APPLICATION->IncludeAdminFile(Loc::getMessage("IMBOT_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/unstep0.php");
 		}
 		else if($step<2)
 		{
-			$APPLICATION->IncludeAdminFile(GetMessage("IMBOT_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/imbot/install/unstep1.php");
+			$APPLICATION->IncludeAdminFile(Loc::getMessage("IMBOT_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/unstep1.php");
 		}
 		else if($step==2)
 		{
 			$this->UnInstallDB(array("savedata" => $_REQUEST["savedata"]));
 			$this->UnInstallFiles();
 
-			$APPLICATION->IncludeAdminFile(GetMessage("IMBOT_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/imbot/install/unstep2.php");
+			$APPLICATION->IncludeAdminFile(Loc::getMessage("IMBOT_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/unstep2.php");
 		}
 	}
 
-	function UnInstallDB($arParams = Array())
+	public function UnInstallDB($arParams = Array())
 	{
+		global $APPLICATION, $DB;
+
 		$this->errors = false;
 
-		CModule::IncludeModule('imbot');
+		Main\Loader::includeModule('imbot');
 
 		UnRegisterModuleDependences('im', 'OnAfterUserRead', 'imbot', '\Bitrix\ImBot\Event', 'onUserRead');
 		UnRegisterModuleDependences('im', 'OnAfterMessagesLike', 'imbot', '\Bitrix\ImBot\Event', 'onMessageLike');
@@ -193,7 +214,9 @@ Class imbot extends CModule
 			$className = $dirElement->getName();
 			$className = explode('.', $className);
 			if ($className[0] == 'base')
+			{
 				continue;
+			}
 
 			if (class_exists('\\Bitrix\\ImBot\\Bot\\'.ucfirst($className[0])) && method_exists('\\Bitrix\\ImBot\\Bot\\'.ucfirst($className[0]), 'unRegister'))
 			{
@@ -201,14 +224,29 @@ Class imbot extends CModule
 			}
 		}
 
-		UnRegisterModule("imbot");
+		if (!isset($arParams['savedata']) || $arParams['savedata'] !== true)
+		{
+			$errors = $DB->runSqlBatch(sprintf(
+				'%s/bitrix/modules/%s/install/db/%s/uninstall.sql',
+				$_SERVER['DOCUMENT_ROOT'],
+				strtolower($this->MODULE_ID),
+				strtolower($DB->type)
+			));
+			if ($errors !== false)
+			{
+				$APPLICATION->ThrowException(implode("<br>", $errors));
+
+				return false;
+			}
+		}
+
+		Main\ModuleManager::unRegisterModule($this->MODULE_ID);
 
 		return true;
 	}
 
-	function UnInstallFiles($arParams = array())
+	public function UnInstallFiles($arParams = array())
 	{
 		return true;
 	}
 }
-?>

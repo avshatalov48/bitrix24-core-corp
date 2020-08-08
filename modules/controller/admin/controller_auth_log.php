@@ -70,7 +70,7 @@ $authLogList = AuthLogTable::getList(array(
 		'USER_NAME',
 	),
 	'filter' => $listFilter,
-	'order' => array(strtoupper($by) => $order),
+	'order' => array(mb_strtoupper($by) => $order),
 	'count_total' => true,
 	'offset' => $nav->getOffset(),
 	'limit' => $nav->getLimit(),

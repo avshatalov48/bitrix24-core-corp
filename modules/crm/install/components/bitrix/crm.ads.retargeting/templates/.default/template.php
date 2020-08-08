@@ -12,7 +12,7 @@ $audienceId = $arParams['AUDIENCE_ID'];
 $autoRemoveDayNumber = $arParams['AUTO_REMOVE_DAY_NUMBER'];
 $provider = $arParams['PROVIDER'];
 $type = htmlspecialcharsbx($provider['TYPE']);
-$typeUpped = strtoupper($type);
+$typeUpped = mb_strtoupper($type);
 
 $namePrefix = htmlspecialcharsbx($arParams['INPUT_NAME_PREFIX']);
 ?>

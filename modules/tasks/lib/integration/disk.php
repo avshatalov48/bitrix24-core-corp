@@ -269,7 +269,7 @@ abstract class Disk extends \Bitrix\Tasks\Integration
 			{
 				if((string) $attachmentId != '')
 				{
-					if(strpos($attachmentId, FileUserType::NEW_FILE_PREFIX) === 0)
+					if(mb_strpos($attachmentId, FileUserType::NEW_FILE_PREFIX) === 0)
 					{
 						$unattached[$attachmentId] = $attachmentId;
 					}

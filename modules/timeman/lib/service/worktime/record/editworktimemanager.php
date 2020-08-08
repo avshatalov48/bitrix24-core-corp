@@ -1,9 +1,6 @@
 <?php
 namespace Bitrix\Timeman\Service\Worktime\Record;
 
-use Bitrix\Main\Error;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Model\Schedule\Schedule;
 use Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEvent;
 use Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEventTable;
@@ -11,6 +8,7 @@ use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
 use Bitrix\Timeman\Model\Worktime\Report\WorktimeReport;
 use Bitrix\Timeman\Service\Worktime\Result\WorktimeServiceResult;
 use Bitrix\Timeman\Service\Worktime\Violation\WorktimeViolation;
+use Bitrix\Timeman\Service\Worktime\WorktimeLiveFeedManager;
 
 class EditWorktimeManager extends WorktimeManager
 {
@@ -39,11 +37,19 @@ class EditWorktimeManager extends WorktimeManager
 		return $record;
 	}
 
+	public function onBeforeRecordSave(WorktimeRecord $record, WorktimeLiveFeedManager $liveFeedManager)
+	{
+		if (!$record->isApproved())
+		{
+			$liveFeedManager->continueWorkdayPostTrackingForApprover($record->getId(), $record->remindActualApprovedBy());
+		}
+	}
+
 	/**
 	 * @param WorktimeRecord $record
 	 * @param $schedule
 	 */
-	public function notifyOfAction($record, $schedule)
+	public function notifyOfActionOldStyle($record, $schedule)
 	{
 		if (!$record->isApproved())
 		{
@@ -51,9 +57,9 @@ class EditWorktimeManager extends WorktimeManager
 		}
 	}
 
-	public function buildRecordViolations($record, $schedule, $violationRulesList = [])
+	public function buildRecordViolations($record, $schedule)
 	{
-		if (!$schedule || !$record)
+		if (!$record)
 		{
 			return [];
 		}
@@ -61,7 +67,7 @@ class EditWorktimeManager extends WorktimeManager
 		{
 			return [];
 		}
-		return $this->buildWorktimeViolations($record, $schedule, $this->possibleViolationTypes, $violationRulesList);
+		return $this->buildWorktimeViolations($record, $schedule, $this->possibleViolationTypes);
 	}
 
 	/**
@@ -69,19 +75,9 @@ class EditWorktimeManager extends WorktimeManager
 	 */
 	protected function setApproved($record)
 	{
-		$rules = [];
-		if ($this->getPersonalViolationRules())
-		{
-			$rules[] = $this->getPersonalViolationRules();
-		}
-		if ($this->getSchedule())
-		{
-			$rules[] = $this->getSchedule()->getScheduleViolationRules();
-		}
 		$record->approve(empty($this->buildRecordViolations(
 			$record,
-			$this->getSchedule(),
-			$rules
+			$this->getSchedule()
 		)));
 	}
 
@@ -97,9 +93,9 @@ class EditWorktimeManager extends WorktimeManager
 		}
 		if ($this->getSchedule())
 		{
-			if ((!$this->getSchedule()->isFlexible() && $this->isEmptyEventReason()))
+			if ((!$this->getSchedule()->isFlextime() && $this->isEmptyEventReason()))
 			{
-				if ($this->getRecord()->isExpired($this->getSchedule(), $this->getShift()))
+				if ($this->isExpired())
 				{
 					$this->worktimeRecordForm->resetBreakLengthFields();
 					$this->worktimeRecordForm->resetStartFields();
@@ -110,7 +106,7 @@ class EditWorktimeManager extends WorktimeManager
 				}
 			}
 		}
-		if (!Schedule::isScheduleFlexible($this->getSchedule()) && $this->isEmptyEventReason())
+		if (!Schedule::isScheduleFlextime($this->getSchedule()) && $this->isEmptyEventReason())
 		{
 			return (new WorktimeServiceResult())
 				->addReasonNeededError();
@@ -133,7 +129,8 @@ class EditWorktimeManager extends WorktimeManager
 				$this->worktimeRecordForm->editedBy,
 				$record->getId(),
 				$record->getRecordedStartTimestamp(),
-				$this->worktimeRecordForm->getFirstEventForm()->reason
+				$this->worktimeRecordForm->getFirstEventForm()->reason,
+				$this->worktimeRecordForm->device
 			);
 			if ($this->needToSaveCompatibleReports())
 			{
@@ -153,7 +150,8 @@ class EditWorktimeManager extends WorktimeManager
 				$this->worktimeRecordForm->editedBy,
 				$record->getId(),
 				$record->getRecordedStopTimestamp(),
-				$this->worktimeRecordForm->getFirstEventForm()->reason
+				$this->worktimeRecordForm->getFirstEventForm()->reason,
+				$this->worktimeRecordForm->device
 			);
 			if ($this->needToSaveCompatibleReports())
 			{
@@ -173,7 +171,8 @@ class EditWorktimeManager extends WorktimeManager
 				$this->worktimeRecordForm->editedBy,
 				$record->getId(),
 				$record->getRecordedBreakLength(),
-				$this->worktimeRecordForm->getFirstEventForm()->reason
+				$this->worktimeRecordForm->getFirstEventForm()->reason,
+				$this->worktimeRecordForm->device
 			);
 			if ($this->needToSaveCompatibleReports())
 			{
@@ -189,33 +188,13 @@ class EditWorktimeManager extends WorktimeManager
 		return $events;
 	}
 
-	/**
-	 * @param WorktimeRecord|null $record
-	 * @return WorktimeServiceResult
-	 */
-	protected function verifyAfterUpdatingRecord($record)
-	{
-		$result = parent::verifyAfterUpdatingRecord($record);
-		if (!$result->isSuccess())
-		{
-			return $result;
-		}
-		if ($record && $this->worktimeRecordForm->recordedStartSeconds !== null)
-		{
-			$startTimestamp = $record->getRecordedStartTimestamp();
-			if ($startTimestamp > TimeHelper::getInstance()->getUtcNowTimestamp())
-			{
-				return $result->addError(new Error(
-						Loc::getMessage('TM_BASE_SERVICE_RESULT_ERROR_START_GREATER_THAN_NOW'),
-						WorktimeServiceResult::ERROR_FOR_USER)
-				);
-			}
-		}
-		return $result;
-	}
-
-	protected function checkIntersectingRecords()
+	protected function checkStartGreaterThanNow()
 	{
 		return true;
+	}
+
+	protected function checkOverlappingRecords()
+	{
+		return false;
 	}
 }

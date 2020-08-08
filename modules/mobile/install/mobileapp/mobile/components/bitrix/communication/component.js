@@ -17,18 +17,23 @@
 
 	class AppCounters
 	{
-		/**
-		 *  Mobile interface badges
-		 */
 		constructor()
 		{
 			this.total = 0;
-			this.config = {};
-			this.configAssociation = {
+			this.firstSetBadge = true;
+
+			this.applicationCounterConfig = {};
+
+			this.tabNameMapConfigName = {
 				'stream': 'socialnetwork_livefeed',
-				'notifications': 'im_messenger',
 				'messages': 'im_messenger',
 				'openlines': 'im_messenger',
+				'tasks_total': 'tasks_total',
+			};
+
+			this.userCounterMapTabName = {
+				'**': 'stream',
+				'im': 'messages',
 				'tasks_total': 'tasks_total',
 			};
 
@@ -43,15 +48,14 @@
 			let userCountersDates = this.sharedStorage.get('userCountersDates');
 			this.userCountersDates = userCountersDates? JSON.parse(userCountersDates): {};
 
+			BX.addCustomEvent("onUpdateConfig", this.onUpdateApplicationCounterConfig.bind(this));
 			BX.addCustomEvent("onSetUserCounters", this.onSetUserCounters.bind(this));
 			BX.addCustomEvent("onClearLiveFeedCounter", this.onClearLiveFeedCounter.bind(this));
 			BX.addCustomEvent("onUpdateBadges", this.onUpdateBadges.bind(this));
-			BX.addCustomEvent("onUpdateConfig", this.onUpdateConfig.bind(this));
-			BX.addCustomEvent("onPullEvent-main", this.onPull.bind(this));
+			BX.addCustomEvent("onPullEvent-main", this.onPullEvent.bind(this));
 			BX.addCustomEvent("requestUserCounters", this.requestUserCounters.bind(this));
 
-			this.updateCountersInterval = 500;
-			this.updateUserCountersInterval = 500;
+			this.updateCacheTimeout = 500;
 
 			this.databaseMessenger = new ReactDatabase(ChatDatabaseName, CONFIG.USER_ID, CONFIG.LANGUAGE_ID, CONFIG.SITE_ID);
 
@@ -61,28 +65,35 @@
 		onSetUserCounters(counters, time)
 		{
 			let startTime = null;
+			let siteId = CONFIG.SITE_ID;
 
 			if (
 				time
-				&& typeof this.userCounters[CONFIG.SITE_ID] == 'object'
-				&& typeof this.userCountersDates[CONFIG.SITE_ID] == 'object'
+				&& typeof this.userCounters[siteId] == 'object'
+				&& typeof this.userCountersDates[siteId] == 'object'
 			)
 			{
 				startTime = time.start*1000;
 
-				for (let counter in this.userCountersDates[CONFIG.SITE_ID])
+				for (let counterName in this.userCountersDates[siteId])
 				{
-					if (!this.userCountersDates[CONFIG.SITE_ID].hasOwnProperty(counter))
+					if (!this.userCountersDates[siteId].hasOwnProperty(counterName))
 					{
 						continue;
 					}
-					if (typeof counters[CONFIG.SITE_ID][counter] == 'undefined')
+
+					if (
+						typeof counters[siteId] == 'undefined'
+						|| typeof counters[siteId][counterName] == 'undefined'
+					)
 					{
-						if (this.userCountersDates[CONFIG.SITE_ID][counter] <= startTime)
-						{
-							delete this.userCounters[CONFIG.SITE_ID][counter];
-							delete this.userCountersDates[CONFIG.SITE_ID][counter];
-						}
+						continue;
+					}
+
+					if (this.userCountersDates[siteId][counterName] <= startTime)
+					{
+						delete this.userCounters[siteId][counterName];
+						delete this.userCountersDates[siteId][counterName];
 					}
 				}
 			}
@@ -92,29 +103,90 @@
 
 		onClearLiveFeedCounter(params)
 		{
-			let startTime = null;
-
-			if (
+			let siteId = CONFIG.SITE_ID;
+			if (!(
 				BX.type.isNotEmptyString(params.counterCode)
 				&& typeof params.serverTimeUnix != 'undefined'
-				&& typeof this.userCounters[CONFIG.SITE_ID] == 'object'
-				&& typeof this.userCountersDates[CONFIG.SITE_ID] == 'object'
-			)
+				&& typeof this.userCounters[siteId] == 'object'
+				&& typeof this.userCountersDates[siteId] == 'object'
+			))
 			{
-				startTime = params.serverTimeUnix * 1000;
+				return false;
+			}
 
-				var counters = {};
-				counters[CONFIG.SITE_ID] = {};
-				counters[CONFIG.SITE_ID][params.counterCode] = 0;
+			let startTime = params.serverTimeUnix * 1000;
 
-				if (this.userCountersDates[CONFIG.SITE_ID][params.counterCode] <= startTime)
+			if (this.userCountersDates[siteId][params.counterCode] <= startTime)
+			{
+				delete this.userCounters[siteId][params.counterCode];
+				delete this.userCountersDates[siteId][params.counterCode];
+			}
+
+			let counters = {};
+			counters[siteId] = {};
+			counters[siteId][params.counterCode] = 0;
+
+			this.onUpdateUserCounters(counters, startTime);
+
+			return true;
+		}
+
+		onPullEvent(command, params, extra)
+		{
+			if (command == 'user_counter')
+			{
+				this.onUpdateUserCounters(params, extra.server_time_unix*1000);
+			}
+		}
+
+		onUpdateBadges(params, delay)
+		{
+			let needUpdate = false;
+
+			for (let element in params)
+			{
+				if (!params.hasOwnProperty(element))
 				{
-					delete this.userCounters[CONFIG.SITE_ID][params.counterCode];
-					delete this.userCountersDates[CONFIG.SITE_ID][params.counterCode];
+					continue;
 				}
 
-				this.onUpdateUserCounters(counters, startTime);
+				params[element] = Number(params[element]);
+
+				if (Number.isNaN(params[element]))
+				{
+					continue;
+				}
+
+				if (this.counters[element] == params[element])
+				{
+					continue;
+				}
+
+				this.counters[element] = params[element];
+				needUpdate = true;
 			}
+
+			if (needUpdate)
+			{
+				this.update(delay === false);
+			}
+		}
+
+		onUpdateApplicationCounterConfig(config)
+		{
+			this.applicationCounterConfig = {};
+
+			for (let counterName in config)
+			{
+				if (!config.hasOwnProperty(counterName))
+				{
+					continue;
+				}
+
+				this.applicationCounterConfig[counterName] = !!config[counterName];
+			}
+
+			this.update();
 		}
 
 		onUpdateUserCounters(counters, startTime)
@@ -122,60 +194,80 @@
 			let currentTime = (new Date()).getTime();
 			startTime = startTime || currentTime;
 
-			for (let site in counters)
+			let siteId = CONFIG.SITE_ID;
+
+			if (typeof counters != 'object' || typeof counters[siteId] != 'object')
 			{
-				if (!counters.hasOwnProperty(site))
+				return false;
+			}
+
+			for (let counter in counters[siteId])
+			{
+				if (!counters[siteId].hasOwnProperty(counter))
 				{
 					continue;
 				}
 
-				for (let counter in counters[site])
-				{
-					if (!counters[site].hasOwnProperty(counter))
-					{
-						continue;
-					}
+				counters[siteId][counter] = Number(counters[siteId][counter]);
 
-					if (typeof this.userCountersDates[site] == 'undefined')
+				if (Number.isNaN(counters[siteId][counter]))
+				{
+					delete counters[siteId][counter];
+					continue;
+				}
+
+				if (typeof this.userCountersDates[siteId] == 'undefined')
+				{
+					this.userCountersDates[siteId] = {};
+				}
+
+				if (typeof this.userCountersDates[siteId][counter] == 'undefined')
+				{
+					this.userCountersDates[siteId][counter] = startTime;
+
+				}
+				else
+				{
+					if (this.userCountersDates[siteId][counter] >= startTime)
 					{
-						this.userCountersDates[site] = {};
-					}
-					if (typeof this.userCountersDates[site][counter] == 'undefined')
-					{
-						this.userCountersDates[site][counter] = startTime;
+						delete counters[siteId][counter];
 					}
 					else
 					{
-						if (this.userCountersDates[site][counter] >= startTime)
-						{
-							delete counters[site][counter];
-						}
-						else
-						{
-							this.userCountersDates[site][counter] = startTime;
-						}
+						this.userCountersDates[siteId][counter] = startTime;
 					}
 				}
 			}
 
 			this.userCounters = Utils.objectMerge(this.userCounters, counters);
-			if (!counters[CONFIG.SITE_ID])
-				return false;
 
 			let needUpdate = false;
-			if (counters[CONFIG.SITE_ID].hasOwnProperty('**'))
+			for (let userCounter in this.userCounterMapTabName)
 			{
-				counters[CONFIG.SITE_ID]['**'] = parseInt(counters[CONFIG.SITE_ID]['**']);
-				if (this.counters['stream'] != counters[CONFIG.SITE_ID]['**'])
+				if (!this.userCounterMapTabName.hasOwnProperty(userCounter))
 				{
-					this.counters['stream'] = counters[CONFIG.SITE_ID]['**'];
-					needUpdate = true;
+					continue;
 				}
-			}
 
-			if (this.counters['tasks_total'] != counters[CONFIG.SITE_ID]['tasks_total'])
-			{
-				this.counters['tasks_total'] = counters[CONFIG.SITE_ID]['tasks_total'];
+				if (typeof this.userCounters[siteId][userCounter] == 'undefined')
+				{
+					continue;
+				}
+
+				let value = Number(this.userCounters[siteId][userCounter]);
+				if (Number.isNaN(value))
+				{
+					delete this.userCounters[siteId][userCounter];
+					continue;
+				}
+
+				let tabName = this.userCounterMapTabName[userCounter];
+				if (this.counters[tabName] == value)
+				{
+					continue;
+				}
+
+				this.counters[tabName] = value;
 				needUpdate = true;
 			}
 
@@ -194,57 +286,6 @@
 			return true;
 		}
 
-		onPull(command, params, extra)
-		{
-			if (command == 'user_counter')
-			{
-				this.onUpdateUserCounters(params, extra.server_time_unix*1000);
-			}
-		}
-
-		requestUserCounters(params)
-		{
-			console.info('Counters.requestUserCounters: ', params);
-
-			if (params.component && params.component.toString().length > 0)
-			{
-				BX.postComponentEvent("onUpdateUserCounters", [this.userCounters], params.component);
-			}
-			if (params.web)
-			{
-				BX.postWebEvent("onUpdateUserCounters", this.userCounters);
-			}
-		}
-
-		onUpdateBadges(params, delay)
-		{
-			let needUpdate = false;
-			for (let element in params)
-			{
-				if (!params.hasOwnProperty(element))
-				{
-					continue;
-				}
-
-				params[element] = parseInt(params[element]);
-				if (this.counters[element] != params[element])
-				{
-					this.counters[element] = params[element];
-					needUpdate = true;
-				}
-			}
-			if (needUpdate)
-			{
-				this.update(delay === false);
-			}
-		}
-
-		onUpdateConfig(config)
-		{
-			this.config = config;
-			this.update();
-		}
-
 		update(delay)
 		{
 			if (delay)
@@ -255,39 +296,30 @@
 				}
 				return true;
 			}
+
 			clearTimeout(this.updateCountersTimeout);
 			this.updateCountersTimeout = null;
 
-			let total = 0;
+			let total = Object.keys(this.counters)
+				.filter(counterType => this.isEnableApplicationCounterType(counterType))
+				.reduce((currentTotal, key) => {
+					let counter = Number(this.counters[key]);
+					let value = Number.isNaN(counter)? 0: counter;
+					return currentTotal + value;
+				}, 0)
+			;
 
-			for (let element in this.counters)
-			{
-				if (!this.counters.hasOwnProperty(element))
-				{
-					continue;
-				}
-
-				this.counters[element] = parseInt(this.counters[element]);
-				if (this.counters[element] <= 0)
-				{
-					this.counters[element] = 0;
-				}
-
-				if (this.checkConfigCounter(element))
-				{
-					total += this.counters[element];
-				}
-			}
-
-			console.info("AppCounters.update: update counters: "+this.total+"\n", this.counters);
+			console.info("AppCounters.update: update counters: "+total+"\n", this.counters);
 			Application.setBadges(this.counters);
 
-			if (this.total != total)
+			if (this.firstSetBadge || this.total != total)
 			{
 				this.total = total;
+
 				if (!Application.isBackground())
 				{
 					Application.setIconBadge(this.total);
+					this.firstSetBadge = false;
 				}
 			}
 
@@ -296,15 +328,15 @@
 			return true;
 		}
 
-		checkConfigCounter(counter)
+		isEnableApplicationCounterType(tabName)
 		{
-			let configName = this.configAssociation[counter];
-			if (!configName)
+			let counterName = this.tabNameMapConfigName[tabName];
+			if (!counterName)
 			{
-				return true;
+				return false;
 			}
 
-			return this.config[configName] === true;
+			return this.applicationCounterConfig[counterName] === true;
 		}
 
 		loadFromCache()
@@ -322,7 +354,7 @@
 					let cacheData = JSON.parse(items[0].VALUE);
 					for (let counterType of cacheData.counterTypes)
 					{
-						this.config[counterType.type] = counterType.value;
+						this.applicationCounterConfig[counterType.type] = counterType.value;
 					}
 
 					console.info('SettingsNotify.loadCache: config load from cache', cacheData.counterTypes);
@@ -346,9 +378,23 @@
 				this.sharedStorage.set('userCounters', JSON.stringify(this.userCounters));
 				this.sharedStorage.set('userCountersDates', JSON.stringify(this.userCountersDates));
 				console.info("AppCounters.updateCache: userCounters updated");
-			}, this.updateUserCountersInterval);
+			}, this.updateCacheTimeout);
 
 			return true;
+		}
+
+		requestUserCounters(params)
+		{
+			console.info('Counters.requestUserCounters: ', params);
+
+			if (params.component && params.component.toString().length > 0)
+			{
+				BX.postComponentEvent("onUpdateUserCounters", [this.userCounters], params.component);
+			}
+			if (params.web)
+			{
+				BX.postWebEvent("onUpdateUserCounters", this.userCounters);
+			}
 		}
 	}
 
@@ -399,6 +445,7 @@
 				Application.registerPushNotifications(
 					function (data)
 					{
+						console.log("registerPushNotifications", data)
 
 						var dt = (Application.getPlatform() === "ios"
 								? "APPLE"
@@ -434,10 +481,11 @@
 								device_name : (typeof device.name == "undefined"? device.model: device.name),
 								uuid : device.uuid,
 								device_token : token,
+								device_token_voip : data.voip ? data.voip : '',
 								device_type : dt,
 							}
 						})
-							.then((data) => console.log(data))
+							.then((data) => console.log("save_device_token response ", data))
 							.catch((e) => console.error(e))
 						;
 					}
@@ -480,7 +528,7 @@
 			)
 			{
 				params = tag.split("|");
-				result = link + "mobile/log/?ACTION=CONVERT&ENTITY_TYPE_ID=BLOG_POST&ENTITY_ID=" + params[2] + "&commentId=" + params[3];
+				result = link + "mobile/log/?ACTION=CONVERT&ENTITY_TYPE_ID=BLOG_POST&ENTITY_ID=" + params[2] + "&commentId=" + params[3] + "#com" + params[3];
 			}
 
 			else if(

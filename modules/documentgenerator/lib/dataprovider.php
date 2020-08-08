@@ -4,12 +4,12 @@ namespace Bitrix\DocumentGenerator;
 
 abstract class DataProvider
 {
-	const FIELD_TYPE_IMAGE = 'IMAGE';
-	const FIELD_TYPE_STAMP = 'STAMP';
-	const FIELD_TYPE_DATE = 'DATE';
-	const FIELD_TYPE_TEXT = 'TEXT';
-	const FIELD_TYPE_NAME = 'NAME';
-	const FIELD_TYPE_PHONE = 'PHONE';
+	public const FIELD_TYPE_IMAGE = 'IMAGE';
+	public const FIELD_TYPE_STAMP = 'STAMP';
+	public const FIELD_TYPE_DATE = 'DATE';
+	public const FIELD_TYPE_TEXT = 'TEXT';
+	public const FIELD_TYPE_NAME = 'NAME';
+	public const FIELD_TYPE_PHONE = 'PHONE';
 
 	protected $source;
 	protected $data;

@@ -15,6 +15,7 @@ use Bitrix\Timeman\Model\User\User;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
 use Bitrix\Timeman\Security\UserPermissionsManager;
 use Bitrix\Timeman\Service\DependencyManager;
+use Bitrix\Timeman\Service\Worktime\Action\WorktimeRecordManager;
 use Bitrix\Timeman\Service\Worktime\Violation\WorktimeViolation;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
@@ -76,6 +77,8 @@ class TemplateParams
 	private $timeHelper;
 	private $shortTimeFormat;
 	private $isShiftPlan = false;
+	/** @var WorktimeRecordManager */
+	private $recordManager;
 
 	/**
 	 * TemplateParams constructor.
@@ -88,7 +91,15 @@ class TemplateParams
 	 * @param $drawingDate
 	 * @param bool $isShiftPlan
 	 */
-	public function __construct(User $user, User $currentUser, $record, $schedule, $shift, $shiftPlan, $drawingDate, $isShiftPlan = false)
+	public function __construct(User $user,
+								User $currentUser,
+								?WorktimeRecordManager $recordManager,
+								?Schedule $schedule,
+								?Shift $shift,
+								?ShiftPlan $shiftPlan,
+								$drawingDate,
+								$isShiftPlan = false
+	)
 	{
 		if ($user->getId() === null)
 		{
@@ -101,7 +112,8 @@ class TemplateParams
 		$this->user = $user;
 		$this->userId = $this->user->getId();
 		$this->currentUser = $currentUser;
-		$this->record = $record;
+		$this->record = $recordManager ? $recordManager->getRecord() : null;
+		$this->recordManager = $recordManager;
 		$this->schedule = $schedule;
 		$this->shift = $shift;
 		$this->shiftPlan = $shiftPlan;
@@ -134,6 +146,11 @@ class TemplateParams
 		}
 
 		$this->initHint();
+	}
+
+	public function isRecordExpired()
+	{
+		return $this->recordManager && $this->recordManager->isRecordExpired();
 	}
 
 	private function buildFormattedStartEndDates($timezoneUserId)

@@ -11,9 +11,9 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
  */
 
 $gridID = $arParams['~GRID_ID'];
-$gridIDLc = strtolower($gridID);
+$gridIDLc = mb_strtolower($gridID);
 $filterID = isset($arParams['~FILTER_ID']) ? $arParams['~FILTER_ID'] : $gridID;
-$filterIDLc = strtolower($filterID);
+$filterIDLc = mb_strtolower($filterID);
 
 //region Prepare custom fields
 if(isset($arParams['~FILTER']) && is_array($arParams['~FILTER']))
@@ -131,10 +131,25 @@ if($hasNavigationBar)
 	{
 		$this->SetViewTarget('below_pagetitle', 100);
 	}
-
 	?><div class="crm-view-switcher pagetitle-align-right-container">
 <!--	<div class="crm-view-switcher-name">--><?//=GetMessage('CRM_INT_FILTER_NAV_BAR_TITLE')?><!--:</div>-->
 	<div class="crm-view-switcher-list"><?
+
+		$bindingMenuMask = '/(lead|deal|invoice|quote|company|contact)/i';
+		if (
+			preg_match($bindingMenuMask, $arParams['GRID_ID'], $bindingMenuMatches) &&
+			\Bitrix\Main\Loader::includeModule('intranet')
+		) {
+			$APPLICATION->includeComponent(
+				'bitrix:intranet.binding.menu',
+				'',
+				array(
+					'SECTION_CODE' => 'crm_switcher',
+					'MENU_CODE' => $bindingMenuMatches[0]
+				)
+			);
+		}
+
 		$itemQty = 0;
 		foreach($navigationBarItems as $barItem)
 		{
@@ -151,7 +166,7 @@ if($hasNavigationBar)
 				continue;
 			}
 
-			$itemElementID = strtolower("{$gridID}_{$itemID}");
+			$itemElementID = mb_strtolower("{$gridID}_{$itemID}");
 			$itemConfig = array('id' => $itemID, 'name' => $itemName, 'elementId' => $itemElementID, 'url' => $itemUrl);
 			$className = 'crm-view-switcher-list-item';
 			if(isset($barItem['active']) && $barItem['active'])

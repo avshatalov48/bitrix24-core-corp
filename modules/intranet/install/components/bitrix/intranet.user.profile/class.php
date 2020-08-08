@@ -124,9 +124,16 @@ class CIntranetUserProfileComponent extends UserProfile
 		$this->arResult["isExtranetSite"] = (Loader::includeModule("extranet") && \CExtranet::isExtranetSite());
 
 		$this->arResult["IS_CURRENT_USER_INTEGRATOR"] = false;
+		$this->arResult["isFireUserEnabled"] = true;
+
 		if ($this->arResult["isCloud"])
 		{
 			$this->arResult["IS_CURRENT_USER_INTEGRATOR"] = \Bitrix\Bitrix24\Integrator::isIntegrator($USER->GetID());
+
+			if (!Bitrix\Bitrix24\Feature::isFeatureEnabled("user_dismissal"))
+			{
+				$this->arResult["isFireUserEnabled"] = false;
+			}
 		}
 
 		$this->processShowYear();

@@ -10,7 +10,7 @@ $isInExportMode = false;
 $isStExport = false;    // Step-by-step export mode
 if (!empty($sExportType))
 {
-	$sExportType = strtolower(trim($sExportType));
+	$sExportType = mb_strtolower(trim($sExportType));
 	switch ($sExportType)
 	{
 		case 'csv':
@@ -91,7 +91,7 @@ $curParam = $APPLICATION->GetCurParam();
 $curParam = preg_replace('/(^|[^\w])bxajaxid=[\d\w]*([^\d\w]|$)/', '', $curParam);
 $curParam = preg_replace('/(?<!\w)list_section_id=\d*(?=([^\d]|$))/', 'list_section_id=#section_id#', $curParam);
 $curParam = preg_replace('/(^|&)tree=\w*(?=(&|$))/', '', $curParam);
-$arResult['PAGE_URI_TEMPLATE'] = $arParams['PATH_TO_PRODUCT_LIST'].(strlen($curParam) > 0 ? '?'.$curParam.'&tree=Y' : '?tree=Y');
+$arResult['PAGE_URI_TEMPLATE'] = $arParams['PATH_TO_PRODUCT_LIST'].($curParam <> '' ? '?'.$curParam.'&tree=Y' : '?tree=Y');
 unset($curParam);
 
 $arFilter = $arSort = array();
@@ -355,7 +355,7 @@ if (!$isInExportMode && check_bitrix_sessid())
 			$actionData['ACTIVE'] = true;
 			$actionData['NAME'] = $_POST['action'];
 			unset($_POST['action'], $_REQUEST['action']);
-			
+
 			if ($actionData['NAME'] === 'ADD_SECTION')
 			{
 				$actionData['SECTION_NAME'] = trim(isset($_POST['sectionName']) ? $_POST['sectionName'] : '', " \n\r\t");
@@ -477,15 +477,15 @@ foreach ($arFilter as $k => $v)
 }
 foreach($gridFilter as $key => $value)
 {
-	if (substr($key, -5) == "_from")
+	if (mb_substr($key, -5) == "_from")
 	{
 		$op = ">=";
-		$new_key = substr($key, 0, -5);
+		$new_key = mb_substr($key, 0, -5);
 	}
-	else if (substr($key, -3) == "_to")
+	else if (mb_substr($key, -3) == "_to")
 	{
 		$op = "<=";
-		$new_key = substr($key, 0, -3);
+		$new_key = mb_substr($key, 0, -3);
 		if (array_key_exists($new_key, $arDateFilter))
 		{
 			if (!preg_match("/\\d\\d:\\d\\d:\\d\\d\$/", $value))
@@ -585,7 +585,7 @@ if ($isStExport && $isStExportIncludeSubsections)
 //Show error message if required
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['error']))
 {
-	$errorID = strtolower($_GET['error']);
+	$errorID = mb_strtolower($_GET['error']);
 	if (preg_match('/^crm_err_/', $errorID) === 1)
 	{
 		if (!isset($_SESSION[$errorID]))
@@ -624,7 +624,7 @@ if (!$bSkipSections)
 		$matches = array();
 		if (preg_match('/^([!><=%?][><=%]?[<]?|)(\w+)$/', $k, $matches))
 		{
-			if (isset($matches[2]) && strlen($matches[2]) > 0)
+			if (isset($matches[2]) && $matches[2] <> '')
 			{
 				if (in_array($matches[2], $arFiltrableField, true))
 					$arSectionFilter[$matches[1].$arFiltrableFieldMap[$matches[2]]] = $v;
@@ -654,12 +654,12 @@ if ($actionData['ACTIVE'])
 					$arSectionId = $arProductId = array();
 					foreach ($actionData['ID'] as $sId)
 					{
-						if (is_string($sId) && strlen($sId) > 1)
+						if (is_string($sId) && mb_strlen($sId) > 1)
 						{
 							if ($sId[0] === 'P')
-								$arProductId[] = intval(substr($sId, 1));
+								$arProductId[] = intval(mb_substr($sId, 1));
 							else if ($sId[0] === 'S')
-								$arSectionId[] = intval(substr($sId, 1));
+								$arSectionId[] = intval(mb_substr($sId, 1));
 						}
 					}
 					if (!empty($arSectionId))
@@ -752,8 +752,8 @@ if ($actionData['ACTIVE'])
 			{
 				foreach($actionData['FIELDS'] as $ID => $arSrcData)
 				{
-					$type = substr($ID, 0, 1);
-					$ID = intval(substr($ID, 1));
+					$type = mb_substr($ID, 0, 1);
+					$ID = intval(mb_substr($ID, 1));
 					if ($type === 'S')
 					{
 						$arUpdateData = array();
@@ -814,7 +814,7 @@ if ($actionData['ACTIVE'])
 			}
 		}
 
-		if (strlen($errorMessage) > 0)
+		if ($errorMessage <> '')
 		{
 			if (!$actionData['AJAX_CALL'])
 			{
@@ -885,10 +885,10 @@ if ($actionData['ACTIVE'])
 
 			$sId = $actionData['ID'];
 			$elementType = '';
-			if (is_string($sId) && strlen($sId) > 1)
+			if (is_string($sId) && mb_strlen($sId) > 1)
 			{
 				$elementType = $sId[0];
-				$ID = intval(substr($sId, 1));
+				$ID = intval(mb_substr($sId, 1));
 
 				$DB->StartTransaction();
 				$result = true;
@@ -918,7 +918,7 @@ if ($actionData['ACTIVE'])
 			}
 		}
 
-		if (strlen($errorMessage) > 0)
+		if ($errorMessage <> '')
 		{
 			$errorID = uniqid('crm_err_');
 			$_SESSION[$errorID] = $errorMessage;
@@ -1009,7 +1009,7 @@ foreach ($selectedFields as $fieldName)
 {
 	if (preg_match('/^PROPERTY_\d+$/', $fieldName))
 	{
-		$selectedPropertyIds[] = (int)substr($fieldName, 9);
+		$selectedPropertyIds[] = (int)mb_substr($fieldName, 9);
 
 		if (isset($arProps[$fieldName]))
 		{
@@ -1433,14 +1433,25 @@ while($arElement = $obRes->GetNext())
 							}
 							else
 							{
-								$arPropertyValues[$arElement['ID']][$propID][] = call_user_func_array(
-									$arPropUserTypeList[$arProperty['USER_TYPE']][$methodName],
-									array(
-										$propertyInfo,
-										array("VALUE" => $arProperty["VALUE"]),
-										$controlSettings
-									)
-								);
+								if (CCrmProductPropsHelper::isTypeSupportingUrlTemplate($propertyInfo))
+								{
+									$controlSettings['DETAIL_URL'] =
+										 CComponentEngine::MakePathFromTemplate(
+											$arParams['PATH_TO_PRODUCT_SHOW'],
+											[
+												'product_id' => $arProperty['VALUE'],
+											]
+										);
+								}
+								$method = $arPropUserTypeList[$arProperty['USER_TYPE']][$methodName];
+								$params = [
+									$propertyInfo,
+									[
+										"VALUE" => $arProperty["VALUE"]
+									],
+									$controlSettings
+								];
+								$arPropertyValues[$arElement['ID']][$propID][] = call_user_func_array($method, $params);
 							}
 							unset($propertyInfo);
 						}

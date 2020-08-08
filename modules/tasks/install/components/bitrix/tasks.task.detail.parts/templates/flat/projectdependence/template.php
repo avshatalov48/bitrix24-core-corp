@@ -2,7 +2,6 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die(); 
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Tasks\Integration\Bitrix24;
 
 Loc::loadMessages(__FILE__);
 
@@ -11,7 +10,7 @@ $prefix = htmlspecialcharsbx($arParams['TEMPLATE_DATA']['INPUT_PREFIX']);
 
 $taskUrl = str_replace(array('#task_id#', '#action#'), array('{{DEPENDS_ON_ID}}', 'view'), $arParams['TEMPLATE_DATA']['PATH_TO_TASKS_TASK']);
 
-Bitrix24\UI::initLicensePopup('');
+$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
 ?>
 
 <div id="bx-component-scope-<?=htmlspecialcharsbx($templateId)?>">

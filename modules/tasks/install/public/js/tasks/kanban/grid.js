@@ -1,3 +1,4 @@
+/* eslint-disable */
 (function() {
 
 "use strict";
@@ -20,6 +21,7 @@ BX.Tasks.Kanban.Grid = function(options)
 	BX.addCustomEvent(this, "Kanban.Grid:onColumnLoadAsync", BX.delegate(this.onColumnLoadAsync, this));
 	BX.addCustomEvent(this, "Kanban.Grid:onColumnRemovedAsync", BX.delegate(this.onColumnRemovedAsync, this));
 	BX.addCustomEvent(this, "Kanban.Grid:onColumnAddedAsync", BX.delegate(this.onColumnAddedAsync, this));
+	BX.addCustomEvent(this, "Kanban.Grid:onRender", BX.delegate(this.onRender, this));
 
 	BX.addCustomEvent(this, "Kanban.Grid:onRender", BX.delegate(this.onGridRender, this));
 
@@ -27,8 +29,26 @@ BX.Tasks.Kanban.Grid = function(options)
 	BX.addCustomEvent("onTaskTimerChange", BX.delegate(this.onTaskTimerChange, this));
 	BX.addCustomEvent("onTasksGroupSelectorChange", BX.delegate(this.onTasksGroupSelectorChange, this));
 	BX.addCustomEvent("onTaskSortChanged", BX.delegate(this.onTaskSortChanged, this));
-	BX.addCustomEvent("tasksTaskEvent", BX.delegate(this.tasksTaskEvent, this));
 	BX.addCustomEvent("onPullEvent-im", BX.delegate(this.tasksTaskPull, this));
+	BX.addCustomEvent("onPullEvent-tasks", BX.delegate(this.tasksTaskPull, this));
+
+	BX.addCustomEvent("Kanban.Grid:multiSelectModeOn", BX.delegate(this.startActionPanel, this));
+	BX.addCustomEvent("Kanban.Grid:multiSelectModeOff", BX.delegate(this.stopActionPanel, this));
+	BX.addCustomEvent("Kanban.Grid:selectItem", BX.delegate(this.setTotalSelectedItems, this));
+	BX.addCustomEvent("Kanban.Grid:unSelectItem", BX.delegate(this.setTotalSelectedItems, this));
+	BX.addCustomEvent("Kanban.Grid:onItemDragStart", BX.delegate(this.setKanbanDragMode, this));
+	BX.addCustomEvent("Kanban.Grid:onItemDragStop", BX.delegate(this.unSetKanbanDragMode, this));
+	BX.addCustomEvent("Kanban.Grid:onItemDragStart", BX.delegate(this.setKanbanRealtimeMode, this));
+	BX.addCustomEvent("Kanban.Grid:onItemDragStop", BX.delegate(this.unSetKanbanRealtimeMode, this));
+
+	if(this.isMultiSelect())
+	{
+		BX.addCustomEvent("Kanban.Grid:onItemDragStartMultiple", BX.delegate(this.setKanbanDragMode, this));
+		BX.addCustomEvent("Kanban.Grid:onItemDragStopMultiple", BX.delegate(this.unSetKanbanDragMode, this));
+	}
+
+	this.ownerId = Number(options.ownerId);
+	this.groupId = Number(options.groupId);
 };
 
 BX.Tasks.Kanban.Grid.prototype = {
@@ -47,10 +67,10 @@ BX.Tasks.Kanban.Grid.prototype = {
 	{
 		var url = this.getAjaxHandlerPath();
 		var gridData = this.getData();
-		
+
 		data.sessid = BX.bitrix_sessid();
 		data.params = this.getData().params;
-		
+
 		if (data.action !== "undefined")
 		{
 			url += url.indexOf("?") === -1 ? "?" : "&";
@@ -63,6 +83,10 @@ BX.Tasks.Kanban.Grid.prototype = {
 			{
 				url += "&personal=" + data.params.PERSONAL;
 			}
+			if (data.groupAction === "Y")
+			{
+				url += "&groupMode=Y";
+			}
 		}
 
 		BX.ajax({
@@ -74,7 +98,16 @@ BX.Tasks.Kanban.Grid.prototype = {
 			onfailure: onfailure
 		});
 	},
-	
+
+	/**
+	 * Returns true, if Kanban in realtime work mode.
+	 * @return {boolean}
+	 */
+	isRealtimeMode: function()
+	{
+		return this.data.newTaskOrder === "actual";
+	},
+
 	/**
 	 * Show popup for request access.
 	 * @returns {void}
@@ -89,7 +122,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 			if (this.accessNotifyDialog === null)
 			{
 				this.accessNotifyDialog = new BX.Intranet.NotifyDialog({
-					listUserData: [],
+					listUserData: this.getData().admins,
 					notificationHandlerUrl: this.getAjaxHandlerPath() + "?action=notifyAdmin",
 					popupTexts: {
 						sendButton: BX.message("TASKS_KANBAN_NOTIFY_BUTTON"),
@@ -99,7 +132,6 @@ BX.Tasks.Kanban.Grid.prototype = {
 					}
 				});
 			}
-			this.accessNotifyDialog.setUsersForNotify(this.getData().admins);
 			this.accessNotifyDialog.show();
 		}
 	},
@@ -112,7 +144,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 	onItemDragStart: function(item)
 	{
 		this.setDragMode(BX.Kanban.DragMode.ITEM);
-		
+
 		var gridData = this.getData();
 		var itemData = item.getData();
 
@@ -176,7 +208,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 		});
 
 	},
-	
+
 	/**
 	 * Add item to the column in order.
 	 * @param {Object} data
@@ -185,26 +217,93 @@ BX.Tasks.Kanban.Grid.prototype = {
 	addItemOrder: function(data)
 	{
 		var gridData = this.getData();
-		var column = this.getColumn(data.columnId);
-		var columnItems = column ? column.getItems() : [];
+		var columnOne = null;
+		var columnItems = [];
 
-		// new task - in top
-		if (gridData.newTaskOrder === "desc")
+		// get columnId
+		if (!data.columnId && data.columns)
 		{
+			for (var i = 0, c = data.columns.length; i < c; i++)
+			{
+				columnOne = this.getColumn(data.columns[i]);
+				if (columnOne)
+				{
+					data.columnId = columnOne.getId();
+				}
+			}
+		}
+		if (!data.columnId)
+		{
+			columnOne = this.getColumns()[0];
+			data.columnId = columnOne.getId();
+		}
+		if (data.columnId && !columnOne)
+		{
+			columnOne = this.getColumn(data.columnId);
+			if (!columnOne)
+			{
+				columnOne = this.getColumns()[0];
+				data.columnId = columnOne.getId();
+			}
+		}
+		if (columnOne)
+		{
+			columnItems = columnOne.getItems();
+		}
+
+		if (
+			gridData.newTaskOrder === "desc" || // new task - in top
+			this.isRealtimeMode()// realtime kanban
+		)
+		{
+			// for realtime mode we try to find place by actual date
+			if (this.isRealtimeMode() && !data.targetId && columnItems.length > 0)
+			{
+				if (typeof data.data["date_activity_ts"] !== "undefined")
+				{
+					var activityTS = data.data["date_activity_ts"];
+					if (activityTS > 0)
+					{
+						for (var i = 0, c = columnItems.length; i < c; i++)
+						{
+							if (
+								data.id !== columnItems[i].getId() &&
+								columnItems[i].data["date_activity_ts"] < activityTS
+							)
+							{
+								data.targetId = columnItems[i].getId();
+								break;
+							}
+						}
+					}
+				}
+			}
 			// get first item in column
-			if (columnItems.length > 0)
+			else if (!data.targetId && columnItems.length > 0)
 			{
 				data.targetId = columnItems[0].getId();
+				if (data.targetId === data.id && columnItems[1])
+				{
+					data.targetId = columnItems[1].getId();
+				}
 			}
+
+			// remove first
+			if (this.isRealtimeMode() && columnOne && !columnOne.getDraftItem())
+			{
+				this.removeItem(data.id);
+				//this.updateItem(data.id, data, true);
+			}
+
 			this.addItem(data);
 		}
 		// new task - in bottom (only if not exist next page)
-		else if (columnItems.length >= column.total)
+		else if (columnOne && columnItems.length >= columnOne.total)
 		{
 			this.addItem(data);
 		}
 	},
-	
+
 	/**
 	 * System update item.
 	 * @param {Object} item
@@ -217,14 +316,14 @@ BX.Tasks.Kanban.Grid.prototype = {
 		if (
 			notDestroy !== true &&
 			BX.Bitrix24 &&
-			BX.Bitrix24.Slider && 
+			BX.Bitrix24.Slider &&
 			BX.Bitrix24.Slider.destroy
 		)
 		{
 			var url = this.getItem(item).getTaskUrl(item);
 			BX.Bitrix24.Slider.destroy(url);
 		}
-		
+
 		BX.Kanban.Grid.prototype.updateItem.apply(this, arguments);
 	},
 
@@ -266,6 +365,44 @@ BX.Tasks.Kanban.Grid.prototype = {
 	onColumnAddedAsync: function(promises)
 	{
 		promises.push(BX.delegate(this.addStage, this));
+	},
+
+	/**
+	 * Event handler on first render.
+	 * @param {BX.Kanban.Grid} grid Current grid.
+	 * @returns {void}
+	 */
+	onRender: function(grid)
+	{
+		var gridData = grid.getData();
+
+		if (
+			grid.firstRenderComplete ||
+			gridData["kanbanType"] !== "TL"
+		)
+		{
+			return;
+		}
+
+		if (gridData["setClientDate"] === true)
+		{
+			var promise = new BX.Promise();
+			this.fadeOut();
+
+			this.ajax({
+					action: "setClientDate",
+					clientDate: gridData["clientDate"],
+					clientTime: gridData["clientTime"]
+				},
+				function(data)
+				{
+					this.removeItems();
+					this.loadData(data);
+					promise.fulfill();
+					this.fadeIn();
+				}.bind(this)
+			);
+		}
 	},
 
 	/**
@@ -324,6 +461,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 			{
 				if (data && !data.error)
 				{
+					this.actionPanel = null;
 					promise.fulfill();
 				}
 				else if (data)
@@ -364,6 +502,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 			{
 				if (data && !data.error)
 				{
+					this.actionPanel = null;
 					promise.fulfill(data);
 				}
 				else if (data)
@@ -391,12 +530,14 @@ BX.Tasks.Kanban.Grid.prototype = {
 	{
 		var promise = new BX.Promise();
 		var nextItem = item.getColumn().getNextItemSibling(item);
+		var gridData = this.getData();
 
 		this.ajax({
 				action: "addTask",
 				taskName: item.getData().title,
 				columnId: item.getColumn().getId(),
-				beforeItemId: nextItem ? nextItem.getId() : 0
+				beforeItemId: (gridData.newTaskOrder === "desc" && nextItem)
+								? nextItem.getId() : 0
 			},
 			function(data)
 			{
@@ -537,6 +678,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 			},
 			function(data)
 			{
+				this.actionPanel = null;
 				if (data && data.error)
 				{
 					BX.Kanban.Utils.showErrorDialog(data.error, data.fatal);
@@ -576,7 +718,10 @@ BX.Tasks.Kanban.Grid.prototype = {
 	onApplyFilter: function(filterId, values, filterInstance, promise, params)
 	{
 		this.fadeOut();
-		params.autoResolve = false;
+		if (params)
+		{
+			params.autoResolve = false;
+		}
 		this.ajax({
 				action: "applyFilter"
 			},
@@ -584,12 +729,18 @@ BX.Tasks.Kanban.Grid.prototype = {
 			{
 				this.removeItems();
 				this.loadData(data);
-				promise.fulfill();
+				if (promise)
+				{
+					promise.fulfill();
+				}
 				this.fadeIn();
 			}.bind(this),
 			function(error)
 			{
-				promise.reject();
+				if (promise)
+				{
+					promise.reject();
+				}
 				this.fadeIn();
 			}.bind(this)
 		);
@@ -661,7 +812,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 				// reload
 				this.removeItems();
 				this.loadData(data);
-				BX.onCustomEvent(this, "onKanbanChanged", [data]);
+				BX.onCustomEvent(this, "onKanbanChanged", []);
 			}.bind(this),
 			function(error)
 			{
@@ -669,7 +820,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 			}.bind(this)
 		);
 	},
-	
+
 	/**
 	 * Hook on sort selector.
 	 * @param {Object} data
@@ -681,72 +832,32 @@ BX.Tasks.Kanban.Grid.prototype = {
 		gridData.newTaskOrder = data.newTaskOrder;
 		this.setData(gridData);
 	},
-	
+
 	/**
-	 * Hook on update task in slider.
-	 * @param {String} type
 	 * @param {Object} data
-	 * @returns {undefined}
+	 * @return {int}
 	 */
-	tasksTaskEvent: function(type, data)
+	recognizeTaskId: function(data)
 	{
-		if (!(data && data.task && data.task.ID))
+		var taskId = 0;
+
+		if (data.TASK_ID)
 		{
-			return;
+			taskId = parseInt(data.TASK_ID);
 		}
-		
-		var taskId = data.task.ID;
-		
-		if (type === "DELETE")
+		else if (data.taskId)
 		{
-			this.removeItem(taskId);
+			taskId = parseInt(data.taskId);
 		}
-		else if (
-			type === "UPDATE" || type === "ADD" 
-			|| type === "UPDATE_STAGE"
-		)
+		else if (data["entityXmlId"])
 		{
-			var task = this.getItem(taskId);
-			var columns = this.getColumns();
-			var columnId = task ? task.getColumnId() : columns[0].getId();
-			
-			if (typeof(data.task.STAGE_ID) !== "undefined")
+			if (data["entityXmlId"].indexOf("TASK_") === 0)
 			{
-				columnId = data.task.STAGE_ID;
-			}
-			
-			if (task || type === "ADD")
-			{
-				this.ajax({
-						action: "refreshTask",
-						taskId: taskId,
-						columnId: columnId
-					},
-					function(data)
-					{
-						if (data && !data.error)
-						{
-							// if move stage - delete first
-							if (type === "UPDATE_STAGE")
-							{
-								this.removeItem(taskId);
-							}
-							if (type === "ADD" || type === "UPDATE_STAGE")
-							{
-								this.addItemOrder(data);
-							}
-							else
-							{
-								this.updateItem(data.id, data, true);
-							}
-						}
-					}.bind(this),
-					function(error)
-					{
-					}.bind(this)
-				);
+				taskId = parseInt(data["entityXmlId"].substr(5));
 			}
 		}
+
+		return taskId;
 	},
 
 	/**
@@ -757,28 +868,78 @@ BX.Tasks.Kanban.Grid.prototype = {
 	 */
 	tasksTaskPull: function(command, data)
 	{
-		if (command === "notify")
-		{
-			var params = data.params ? data.params : {};
+		var taskId = this.recognizeTaskId(data);
 
-			if (params.operation === "ADD" && params.taskId)
-			{
-				this.ajax({
-						action: "newTask",
-						taskId: params.taskId
-					},
-					function(data)
-					{
-						if (data && !data.error)
-						{
-							this.addItemOrder(data);
+		switch (command)
+		{
+			case "comment_add":
+			case "stage_change":
+			case "task_view":
+				if (taskId)
+				{
+					BX.onCustomEvent(this, "onKanbanChanged", []);
+
+					BX.ajax.runAction('tasks.task.list', {data: {
+						filter: {ID: taskId},
+						params: {
+							RETURN_ACCESS: 'Y',
+							SIFT_THROUGH_FILTER: {
+								userId: this.ownerId,
+								groupId: this.groupId
+							}
 						}
-					}.bind(this),
-					function(error)
+					}}).then(function(response) {
+						if (response.data.tasks.length > 0)
+						{
+							this.ajax({
+									action: "refreshTask",
+									taskId: taskId
+								},
+								function(data)
+								{
+									if (data && !data.error)
+									{
+										this.addItemOrder(data);
+									}
+								}.bind(this),
+								function(error)
+								{
+								}.bind(this)
+							);
+						}
+						else
+						{
+							this.removeItem(taskId);
+						}
+					}.bind(this));
+				}
+				break;
+
+			case "comment_read_all":
+				BX.onCustomEvent(this, "onKanbanChanged", []);
+				Object.values(this.getItems()).forEach(function(item) {
+					var data = item.data;
+					var counter = item.task_counter;
+					var counterValue = counter.getValue();
+					if (counterValue > 0 && (!data.is_expired || counterValue > 1))
 					{
-					}.bind(this)
-				);
-			}
+						data.counter.value = (data.is_expired ? 1 : 0);
+						counter.update(data.counter.value);
+						item.render();
+					}
+				});
+				break;
+
+			case "task_remove":
+				if (taskId)
+				{
+					BX.onCustomEvent(this, "onKanbanChanged", []);
+					this.removeItem(taskId);
+				}
+				break;
+
+			default:
+				break;
 		}
 	},
 
@@ -798,7 +959,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 
 		this.getRenderToContainer().classList[showBorder ? "add" : "remove"]("tasks-kanban-border");
 	},
-	
+
 	/**
 	 * Change view demo.
 	 * @param {Int} viewId
@@ -825,6 +986,281 @@ BX.Tasks.Kanban.Grid.prototype = {
 				BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
 			}.bind(this)
 		);
+	},
+
+	/**
+	 * Build the action panel.
+	 */
+	initActionPanel: function()
+	{
+		this.actionPanel = new BX.UI.ActionPanel({
+			renderTo: document.querySelector(".pagetitle-wrap"),
+			removeLeftPosition: true,
+			maxHeight: 56,
+			parentPosition: "bottom"
+		});
+
+		this.actionPanel.draw();
+
+		var grid = this;
+		var stages = [];
+		var gridData = this.getData();
+
+		// move to stage item
+		if (
+			gridData.kanbanType !== "TL" &&
+			gridData.rights.canSortItem
+		)
+		{
+			var changeStageHandler = function(columnId, columnName)
+			{
+				return function()
+				{
+					BX.Tasks.Kanban.Actions.simpleAction(grid, {
+							action: "moveTask",
+							columnId: columnId,
+							columnName: BX.util.htmlspecialchars(columnName)
+						}
+					);
+				};
+			};
+			// gets stages
+			this.getColumns().forEach(function(/*BX.Kanban.Column*/column) {
+				stages.push({
+					text: column.getName(),
+					onclick: changeStageHandler(column.getId(), column.getName())
+				});
+			});
+			this.actionPanel.appendItem({
+				id: "stage",
+				text: BX.message("TASKS_KANBAN_PANEL_STAGE"),
+				items: stages
+			});
+		}
+
+		// building panel below
+
+		this.actionPanel.appendItem({
+			id: "complete",
+			text: BX.message("TASKS_KANBAN_PANEL_COMPLETE"),
+			onclick: function()
+			{
+				BX.UI.Dialogs.MessageBox.confirm(
+					BX.message("TASKS_KANBAN_PANEL_CONFIRM_MESS_COMPLETE"),
+					BX.message("TASKS_KANBAN_PANEL_CONFIRM_TITLE"),
+					function (messageBox)
+					{
+						BX.Tasks.Kanban.Actions.simpleAction(grid, {
+								action: "completeTask"
+							}
+						);
+						messageBox.close();
+					}
+				);
+			}
+		});
+
+		this.actionPanel.appendItem({
+			id: "deadline",
+			text: BX.message("TASKS_KANBAN_PANEL_DEADLINE"),
+			onclick: function()
+			{
+				BX.Tasks.Kanban.Actions.deadline(
+					grid,
+					this.layout.container
+				);
+				BX.PreventDefault();
+			}
+		});
+
+		this.actionPanel.appendItem({
+			id: "members",
+			text: BX.message("TASKS_KANBAN_PANEL_MEMBERS"),
+			items: [
+				{
+					text: BX.message("TASKS_KANBAN_PANEL_MEMBERS_RESPONSE"),
+					onclick: function()
+					{
+						BX.Tasks.Kanban.Actions.member(
+							grid,
+							this.layout.container,
+							"delegateTask"
+						);
+						BX.PreventDefault();
+					}
+				},
+				{
+					text: BX.message("TASKS_KANBAN_PANEL_MEMBERS_CREATED"),
+					onclick: function()
+					{
+						BX.Tasks.Kanban.Actions.member(
+							grid,
+							this.layout.container,
+							"changeAuthorTask"
+						);
+						BX.PreventDefault();
+					}
+				},
+				{
+					text: BX.message("TASKS_KANBAN_PANEL_MEMBERS_CORESPONSE"),
+					onclick: function()
+					{
+						BX.Tasks.Kanban.Actions.member(
+							grid,
+							this.layout.container,
+							"addAccompliceTask"
+						);
+						BX.PreventDefault();
+					}
+				},
+				{
+					text: BX.message("TASKS_KANBAN_PANEL_MEMBERS_AUDITOR"),
+					onclick: function()
+					{
+						BX.Tasks.Kanban.Actions.member(
+							grid,
+							this.layout.container,
+							"addAuditorTask"
+						);
+						BX.PreventDefault();
+					}
+				}
+			]
+		});
+
+		this.actionPanel.appendItem({
+			id: "group",
+			text: BX.message("TASKS_KANBAN_PANEL_GROUP"),
+			onclick: function()
+			{
+				BX.Tasks.Kanban.Actions.member(
+					grid,
+					this.layout.container,
+					"changeGroupTask",
+					"group"
+				);
+				BX.PreventDefault();
+			}
+		});
+
+		this.actionPanel.appendItem({
+			id: "favorite",
+			text: BX.message("TASKS_KANBAN_PANEL_FAVORITE"),
+			items: [
+				{
+					text: BX.message("TASKS_KANBAN_PANEL_FAVORITE_ADD"),
+					onclick: function()
+					{
+						BX.Tasks.Kanban.Actions.simpleAction(grid, {
+								action: "addFavoriteTask"
+							}
+						);
+					}
+				},
+				{
+					text: BX.message("TASKS_KANBAN_PANEL_FAVORITE_REMOVE"),
+					onclick: function()
+					{
+						BX.Tasks.Kanban.Actions.simpleAction(grid, {
+								action: "deleteFavoriteTask"
+							}
+						);
+					}
+				}
+			]
+		});
+
+		this.actionPanel.appendItem({
+			id: "delete",
+			text: BX.message("TASKS_KANBAN_PANEL_DELETE"),
+			onclick: function()
+			{
+				BX.UI.Dialogs.MessageBox.confirm(
+					BX.message("TASKS_KANBAN_PANEL_CONFIRM_MESS_DELETE"),
+					BX.message("TASKS_KANBAN_PANEL_CONFIRM_TITLE"),
+					function (messageBox)
+					{
+						BX.Tasks.Kanban.Actions.simpleAction(grid, {
+								action: "deleteTask"
+							}
+						);
+						messageBox.close();
+					}
+				);
+			}
+		});
+	},
+
+	/**
+	 * Show action panel.
+	 * @returns {void}
+	 */
+	startActionPanel: function()
+	{
+		if (!this.actionPanel)
+		{
+			this.initActionPanel();
+		}
+
+		this.actionPanel.showPanel();
+	},
+
+	/**
+	 * Hide action panel.
+	 * @returns {void}
+	 */
+	stopActionPanel: function()
+	{
+		if (!this.actionPanel)
+		{
+			return;
+		}
+
+		this.actionPanel.hidePanel();
+	},
+
+	setTotalSelectedItems: function()
+	{
+		if(!this.actionPanel)
+		{
+			this.initActionPanel();
+		}
+
+		this.actionPanel.setTotalSelectedItems(this.getSelectedItems().size);
+	},
+
+	/**
+	 * Set Kanban drag mode on.
+	 * @returns {void}
+	 */
+	setKanbanDragMode: function()
+	{
+		BX.addClass(document.body, "task-kanban-drag-mode");
+	},
+
+	/**
+	 * Set Kanban drag mode off.
+	 * @returns {void}
+	 */
+	unSetKanbanDragMode: function()
+	{
+		BX.removeClass(document.body, "task-kanban-drag-mode");
+	},
+
+	setKanbanRealtimeMode: function()
+	{
+		if(this.isRealtimeMode())
+		{
+			this.getOuterContainer().classList.add("tasks-kanban-realtime-mode")
+		}
+	},
+
+	unSetKanbanRealtimeMode: function()
+	{
+		if(this.isRealtimeMode())
+		{
+			this.getOuterContainer().classList.remove("tasks-kanban-realtime-mode")
+		}
 	}
 };
 

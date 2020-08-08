@@ -117,9 +117,9 @@ class CCrmOrderProductDetailsComponent extends \CBitrixComponent
 				'editable' => true,
 				'required' => true,
 				'data' => array(
-					'affectedFields' => array('MEASURE', 'QUANTITY'),
+					'affectedFields' => array('MEASURE_CODE', 'QUANTITY'),
 					'measure' => array(
-						'name' => 'MEASURE',
+						'name' => 'MEASURE_CODE',
 						'items'=> \CCrmInstantEditorHelper::PrepareListOptions($measureListItems)
 					),
 					'amount' => 'QUANTITY',

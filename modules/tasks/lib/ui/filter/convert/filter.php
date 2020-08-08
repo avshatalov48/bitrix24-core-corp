@@ -63,7 +63,7 @@ final class Filter
 
 		foreach(array_keys($filter) as $key)
 		{
-			if(strpos($key, '!') !== false && $key != '!STATUS')
+			if(mb_strpos($key, '!') !== false && $key != '!STATUS')
 			{
 				return array();
 			}
@@ -166,7 +166,7 @@ final class Filter
 		foreach($filter as $key=>$val)
 		{
 			$key = trim($key);
-			if(substr($key, 0, 12) == '::SUBFILTER-')
+			if(mb_substr($key, 0, 12) == '::SUBFILTER-')
 			{
 				$val = self::normalizeFilter($val);
 			}
@@ -206,7 +206,7 @@ final class Filter
 				unset($newFilter[$key]);
 			}
 
-			if(strpos($key, 'META:') !== false)
+			if(mb_strpos($key, 'META:') !== false)
 			{
 				$f = static::prepareMetaField($key, $val);
 				if(!empty($f) && is_array($f))
@@ -222,21 +222,21 @@ final class Filter
 
 	private static function prepareMetaField($key, $val)
 	{
-		if(substr($key, 0,2) == '#R')
+		if(mb_substr($key, 0, 2) == '#R')
 		{
 			return static::prepareDateField($key, $val);
 		}
-		else if(strpos($key, 'META:') !== false)
+		else if(mb_strpos($key, 'META:') !== false)
 		{
 			$key = str_replace('META:','',$key);
 			$key = str_replace('_TS','',$key);
 			$val = date('d.m.Y H:i:s', $val);
 
-			if(strpos($key, '>')!==false)
+			if(mb_strpos($key, '>') !== false)
 			{
 				$key .= '_from';
 			}
-			else if(strpos($key, '<')!==false)
+			else if(mb_strpos($key, '<') !== false)
 			{
 				$key .= '_to';
 			}
@@ -263,8 +263,8 @@ final class Filter
 		$res = \CTasks::MkOperationFilter($key);
 		$cOperationType = $res["OPERATION"];
 
-		$fieldName      = substr($res["FIELD"], 5, -3);	// Cutoff prefix "META:" and suffix "_TS"
-		$operationCode = (int) substr($cOperationType, 1);
+		$fieldName = mb_substr($res["FIELD"], 5, -3);	// Cutoff prefix "META:" and suffix "_TS"
+		$operationCode = (int)mb_substr($cOperationType, 1);
 		
 		switch($operationCode)
 		{

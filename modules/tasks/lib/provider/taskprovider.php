@@ -1,0 +1,1154 @@
+<?php
+
+namespace Bitrix\Tasks\Provider;
+
+use Bitrix\Main\UserTable;
+use Bitrix\Tasks\Access\Model\UserModel;
+use Bitrix\Tasks\Access\Permission\PermissionDictionary;
+use Bitrix\Tasks\Access\Role\RoleDictionary;
+use Bitrix\Tasks\Access\TaskAccessController;
+use Bitrix\Tasks\Internals\UserOption;
+use \CDBResult;
+use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\Integration;
+
+class TaskProvider
+{
+	use UserProviderTrait;
+
+	private $db;
+	private $userFieldManager;
+	private $obUserFieldsSql;
+
+	private
+		$arOrder,
+		$arFilter,
+		$arSelect,
+		$arParams,
+		$arGroup,
+		$arFields,
+		$arSqlOrder 			= [],
+		$arSqlSelect 			= [],
+		$arOptimizedFilter,
+		$arJoins				= [],
+		$relatedJoins,
+		$relatedJoinsForCount,
+		$accessSql 				= '',
+		$arSqlSearch,
+		$userFieldsJoin 		= false,
+		$strGroupBy,
+		$strSqlOrder 			= '',
+		$bIgnoreErrors 			= false,
+		$nPageTop 				= false,
+		$bGetZombie 			= false,
+		$deleteMessageId 		= false,
+		$useAccessAsWhere,
+		$distinct 				= 'DISTINCT',
+		$bIgnoreDbErrors 		= false,
+		$bSkipUserFields 		= false,
+		$bSkipExtraTables 		= false,
+		$bSkipJoinTblViewed 	= false,
+		$bNeedJoinMembersTable 	= false,
+		$disableOptimization	= false,
+		$canUseOptimization		= false;
+
+	/* @var $accessController TaskAccessController */
+	private $accessController;
+
+	public function __construct(\CDatabase $db, \CUserTypeManager $userFieldManager)
+	{
+		$this->db = $db;
+		$this->userFieldManager = $userFieldManager;
+	}
+
+	/**
+	 * @param array $arOrder
+	 * @param array $arFilter
+	 * @param array $arSelect
+	 * @param array $arParams
+	 * @param array $arGroup
+	 *
+	 * @return CDBResult
+	 */
+	public function getList($arOrder = [], $arFilter = [], $arSelect = [], $arParams = [], array $arGroup = []): CDBResult
+	{
+		$this->configure($arOrder, $arFilter, $arSelect, $arParams, $arGroup);
+
+		$this
+			->makeArFields()
+			->makeArSelect()
+			->makeArSqlOrder()
+			->makeArSqlSelect()
+			->makeArJoins()
+			->makeRelatedJoins()
+			->makeFilter()
+			->makeAccessSql()
+			->makeGroupBy()
+			->makeOrderBy();
+
+		return $this->executeQuery();
+	}
+
+	public function getCount($arFilter = [], $arParams = [], $arGroup = []): CDBResult
+	{
+		$this->configure([], $arFilter, [], $arParams, $arGroup);
+
+		/* arFields */
+		$this->arFields = [
+			'GROUP_ID'       => 'T.GROUP_ID',
+			'CREATED_BY'     => 'T.CREATED_BY',
+			'RESPONSIBLE_ID' => 'T.RESPONSIBLE_ID',
+			'ACCOMPLICE'     => 'TM.USER_ID',
+			'AUDITOR'        => 'TM.USER_ID'
+		];
+
+		/* arSelect*/
+		$this->arSelect[] = "COUNT(".($this->canUseOptimization ? 'distinct ' : '')."T.ID) AS CNT";
+
+		/* arGroup */
+		$this->arGroup = array_intersect($this->arGroup, array_keys($this->arFields));
+		if (!empty($this->arGroup))
+		{
+			$arGroupByFields = array();
+			foreach ($this->arGroup as $fieldName)
+			{
+				$this->arSelect[] = $this->arFields[$fieldName] . ' AS ' . $fieldName;
+
+				if (($fieldName === 'ACCOMPLICE') || ($fieldName === 'AUDITOR'))
+				{
+					$this->bNeedJoinMembersTable = true;
+				}
+				$arGroupByFields[] = $this->arFields[$fieldName];
+			}
+
+			$this->arGroup = $arGroupByFields;
+		}
+
+		/* additionalJoins */
+		if ($this->canUseOptimization)
+		{
+			$optimized = \CTasks::tryOptimizeFilter($this->arFilter);
+			$this->arOptimizedFilter = $optimized['FILTER'];
+			$this->arJoins = array_merge($this->arJoins, $optimized['JOINS']);
+		}
+
+		if (isset($this->arParams['bUseRightsCheck']))
+		{
+			$this->arOptimizedFilter['CHECK_PERMISSIONS'] = ((bool) $this->arParams['bUseRightsCheck']) ? 'Y' : 'N';
+		}
+
+		/* arSqlSearch */
+		$fParams = array(
+			'bMembersTableJoined' => $this->bNeedJoinMembersTable,
+			'USER_ID' => $this->userId,
+		);
+		$fParams['ENABLE_LEGACY_ACCESS'] = !$this->useAccessAsWhere;
+
+		$this->arSqlSearch = \CTasks::GetFilter(
+			$this->arOptimizedFilter,
+			'',
+			$fParams
+		);
+		$this->arSqlSearch[] = "T.ZOMBIE = 'N'";
+
+		/* arJoin */
+		if (!$this->bSkipUserFields)
+		{
+			$filter = $this->obUserFieldsSql->GetFilter();
+			if (!empty($filter))
+			{
+				$this->arSqlSearch[] = "(". $filter .")";
+			}
+
+			$this->arJoins[] = $this->obUserFieldsSql->GetJoin("T.ID");
+		}
+
+		if ($this->bNeedJoinMembersTable)
+		{
+			$this->arJoins[] = "INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID ";
+		}
+		if (!$this->bSkipExtraTables)
+		{
+			$this->arJoins[] = "INNER JOIN b_user CU ON CU.ID = T.CREATED_BY";
+			$this->arJoins[] = "INNER JOIN b_user RU ON RU.ID = T.RESPONSIBLE_ID";
+		}
+		if (!$this->bSkipJoinTblViewed)
+		{
+			$viewedBy = \CTasks::getViewedBy($this->arOptimizedFilter, $this->userId);
+			$this->arJoins[] = "LEFT JOIN b_tasks_viewed TV ON TV.TASK_ID = T.ID AND TV.USER_ID = " . $viewedBy;
+		}
+
+		if ($this->useAccessAsWhere && \CTasks::needAccessRestriction($this->arOptimizedFilter, $fParams))
+		{
+			$fParams['APPLY_MEMBER_FILTER'] = $this->makePossibleForwardedMemberFilter($this->arFilter);
+			$fParams['APPLY_FILTER'] = \CTasks::makePossibleForwardedFilter($this->arFilter);
+			$fParams['PUT_SELECT_INTO_WHERE'] = true;
+
+			$accessSql = \CTasks::appendJoinRights('', $fParams);
+			if (!empty($accessSql))
+			{
+				$this->arSqlSearch[] = $accessSql;
+			}
+		}
+
+		$this->makeAccessSql();
+
+		$strSql = "
+			SELECT
+				". implode(",\n", $this->arSelect) ."
+			FROM b_tasks T
+			". (!empty($this->arJoins) ? implode("\n", $this->arJoins) : "") ."
+			WHERE
+			(". implode(") AND (", $this->arSqlSearch) .")
+			". (!empty($this->arGroup) ? "GROUP BY " . implode(", ", $this->arGroup) : "") ."
+		";
+
+		$res = $this->db->Query($strSql, $this->bIgnoreDbErrors, "File: ".__FILE__."<br>Line: ".__LINE__);
+
+		return $res;
+	}
+
+	private function executeQuery(): \CDBResult
+	{
+		if (
+			is_array($this->arParams)
+			&& array_key_exists("NAV_PARAMS", $this->arParams)
+			&& is_array($this->arParams["NAV_PARAMS"])
+		)
+		{
+			$nTopCount = intval($this->arParams['NAV_PARAMS']['nTopCount']);
+			if($nTopCount > 0)
+			{
+				$res = $this->executeTopQuery($nTopCount);
+			}
+			else
+			{
+				$res = $this->executeLimitQuery();
+			}
+		}
+		else
+		{
+			$res = $this->executeNonLimitQuery();
+		}
+
+		return $res;
+	}
+
+	private function executeLimitQuery(): \CDBResult
+	{
+		$res_cnt = $this->db->Query($this->buildCountQuery());
+		$res_cnt = $res_cnt->Fetch();
+		$totalTasksCount = (int) $res_cnt["C"];	// unknown by default
+
+		$strSql = $this->buildQuery();
+
+		// Sync counters in case of mistiming
+//				CTaskCountersProcessorHomeostasis::onTaskGetList($arFilter, $totalTasksCount);
+
+		$res = new \CDBResult();
+		$res->SetUserFields($this->userFieldManager->GetUserFields("TASKS_TASK"));
+		$rc = $res->NavQuery($strSql, $totalTasksCount, $this->arParams["NAV_PARAMS"], $this->bIgnoreErrors);
+
+		if ($this->bIgnoreErrors && ($rc === false))
+		{
+			throw new \TasksException('', \TasksException::TE_SQL_ERROR);
+		}
+		return $res;
+	}
+
+	private function executeNonLimitQuery(): \CDBResult
+	{
+		$res = $this->db->Query($this->buildQuery(), $this->bIgnoreErrors, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+
+		if ($res === false)
+		{
+			throw new \TasksException('', \TasksException::TE_SQL_ERROR);
+		}
+		$res->SetUserFields($this->userFieldManager->GetUserFields("TASKS_TASK"));
+
+		return $res;
+	}
+
+	private function executeTopQuery(int $nTopCount): \CDBResult
+	{
+		$strSql = $this->db->TopSql($this->buildQuery(), $nTopCount);
+		$res = $this->db->Query($strSql, $this->bIgnoreErrors, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+		if ($res === false)
+		{
+			throw new \TasksException('', \TasksException::TE_SQL_ERROR);
+		}
+		$res->SetUserFields($this->userFieldManager->GetUserFields("TASKS_TASK"));
+		return $res;
+	}
+
+	private function buildQuery(): string
+	{
+		$strSql = "
+			SELECT " . $this->distinct . "
+			" . implode(",\n", $this->arSqlSelect) . "
+			" . $this->obUserFieldsSql->GetSelect();
+
+		$strFrom = "
+			FROM b_tasks T
+			" . implode("\n", $this->arJoins) . "
+			" . implode("\n", $this->relatedJoins) . "
+			" . $this->obUserFieldsSql->GetJoin("T.ID") . "
+			" . (count($this->arSqlSearch)? "WHERE " . implode(" AND ", $this->arSqlSearch) : "");
+
+		$strSql .= "
+			" . $strFrom . "
+			" . $this->strGroupBy . "
+			" . $this->strSqlOrder;
+
+		if (($this->nPageTop !== false) && is_numeric($this->nPageTop))
+		{
+			$strSql = $this->db->TopSql($strSql, $this->nPageTop);
+		}
+
+		return $strSql;
+	}
+
+	private function buildCountQuery(): string
+	{
+		$strFromForCount = "
+			FROM b_tasks T
+			" . implode("\n", $this->arJoins) . "
+			" . implode("\n", $this->relatedJoinsForCount) . "
+			" . ($this->userFieldsJoin? $this->obUserFieldsSql->GetJoin("T.ID") : "") . "
+			" . (count($this->arSqlSearch)? "WHERE " . implode(" AND ", $this->arSqlSearch) : "");
+
+		return "SELECT COUNT(DISTINCT T.ID) as C " . $strFromForCount;
+	}
+
+	private function makeOrderBy(): self
+	{
+		DelDuplicateSort($this->arSqlOrder);
+		for ($i = 0, $arSqlOrderCnt = count($this->arSqlOrder); $i < $arSqlOrderCnt; $i++)
+		{
+			if ($i == 0)
+			{
+				$this->strSqlOrder = " ORDER BY ";
+			}
+			else
+			{
+				$this->strSqlOrder .= ",";
+			}
+
+			$this->strSqlOrder .= $this->arSqlOrder[$i];
+		}
+
+		return $this;
+	}
+
+	private function makeGroupBy(): self
+	{
+		if (isset($this->relatedJoins['FULL_SEARCH']) || isset($this->relatedJoins['COMMENT_SEARCH']))
+		{
+			$this->arGroup[] = "T.ID";
+		}
+		$this->strGroupBy = (!empty($this->arGroup)? 'GROUP BY ' . implode(',', $this->arGroup) : "");
+
+		return $this;
+	}
+
+	private function makeFilter(): self
+	{
+		$this->arParams['ENABLE_LEGACY_ACCESS'] = !$this->useAccessAsWhere; // manual legacy access switch
+		$this->arSqlSearch = \CTasks::GetFilter($this->arOptimizedFilter, '', $this->arParams);
+
+		if (!$this->bGetZombie)
+		{
+			$this->arSqlSearch[] = " T.ZOMBIE = 'N' ";
+		}
+
+		if ($this->accessSql !== '')
+		{
+			$this->arSqlSearch[] = $this->accessSql;
+		}
+
+		$r = $this->obUserFieldsSql->GetFilter();
+		if ($r <> '')
+		{
+			$this->userFieldsJoin = true;
+			$this->arSqlSearch[] = "(".$r.")";
+		}
+
+		return $this;
+	}
+
+	private function joinTaskMembers()
+	{
+		$this->arJoins[] = "INNER JOIN b_tasks_member TMACCESS ON T.ID = TMACCESS.TASK_ID";
+	}
+
+	private function makeAccessSql(): self
+	{
+		if ($this->useAccessAsWhere && \CTasks::needAccessRestriction($this->arOptimizedFilter, $this->arParams))
+		{
+			$buildAccessSql = true;
+			$this->arParams['APPLY_FILTER'] = \CTasks::makePossibleForwardedFilter($this->arOptimizedFilter);
+
+			if ($this->arParams['MAKE_ACCESS_FILTER'])
+			{
+				$viewedUserId = \CTasks::getViewedUserId($this->arFilter, $this->userId);
+
+				$runtimeOptions = \CTasks::makeAccessFilterRuntimeOptions($this->arFilter, [
+					'USER_ID' => $this->userId,
+					'VIEWED_USER_ID' => $viewedUserId
+				]);
+
+				if (!is_array($this->arParams['ACCESS_FILTER_RUNTIME_OPTIONS']))
+				{
+					$this->arParams['ACCESS_FILTER_RUNTIME_OPTIONS'] = $runtimeOptions;
+				}
+				else
+				{
+					foreach ($runtimeOptions as $key => $value)
+					{
+						$this->arParams['ACCESS_FILTER_RUNTIME_OPTIONS'][$key] += $value;
+					}
+				}
+
+				if ($viewedUserId == $this->userId)
+				{
+					$buildAccessSql = \CTasks::checkAccessSqlBuilding($runtimeOptions);
+				}
+			}
+
+			if ($buildAccessSql)
+			{
+				$this->buildAccessSql();
+			}
+		}
+
+		return $this;
+	}
+
+	private function buildAccessSql(): self
+	{
+		$this->joinTaskMembers();
+
+		$query = [];
+		$permissions = $this->getPermissions();
+
+		// user in tasks
+		$query[] = 'TMACCESS.USER_ID = '. $this->userId;
+
+		// user can view subordinate tasks
+		$subordinate = (UserModel::createFromId($this->userId))->getAllSubordinates();
+		if (!empty($subordinate))
+		{
+			$query[] = 'TMACCESS.user_id IN ('. implode(',', $subordinate) .')';
+		}
+
+		// user can view all department tasks
+		if (in_array(PermissionDictionary::TASK_DEPARTMENT_VIEW, $permissions))
+		{
+			$departmentMembers = $this->getDepartmentMembers();
+			if (!empty($departmentMembers))
+			{
+				$query[] = '
+					TMACCESS.type IN ("'. RoleDictionary::ROLE_RESPONSIBLE .'", "'. RoleDictionary::ROLE_DIRECTOR .'", "'. RoleDictionary::ROLE_ACCOMPLICE .'")
+					AND TMACCESS.user_id IN ('. implode(',', $departmentMembers) .')
+				';
+			}
+		}
+
+		// user can view all non department tasks
+		if (in_array(PermissionDictionary::TASK_NON_DEPARTMENT_VIEW, $permissions))
+		{
+			$departmentMembers = $this->getDepartmentMembers();
+			$query[] = '
+				TMACCESS.type IN ("'. RoleDictionary::ROLE_RESPONSIBLE .'", "'. RoleDictionary::ROLE_DIRECTOR .'", "'. RoleDictionary::ROLE_ACCOMPLICE .'")
+				AND TMACCESS.user_id NOT IN ('. (!empty($departmentMembers) ? implode(',', $departmentMembers) : 0) .')
+			';
+		}
+
+		// user can view group tasks
+		$userGroups = Integration\SocialNetwork\Group::getIdsByAllowedAction('view_all', true, $this->userId);
+		if (!empty($userGroups))
+		{
+			$query[] = '
+				T.GROUP_ID IN ('. implode(',', $userGroups) .')
+			';
+		}
+
+		if (!empty($query))
+		{
+			$this->arSqlSearch[] = '((' . implode(') OR (', $query) . '))';
+		}
+
+		return $this;
+	}
+
+	private function makeRelatedJoins(): self
+	{
+		$params = [
+			'USER_ID' => $this->userId,
+			'VIEWED_BY' => \CTasks::getViewedBy($this->arFilter, $this->userId),
+			'SORTING_GROUP_ID' => (isset($this->arParams['SORTING_GROUP_ID']) && $this->arParams['SORTING_GROUP_ID'] > 0? $this->arParams['SORTING_GROUP_ID'] : false)
+		];
+		$this->relatedJoins = \CTasks::getRelatedJoins($this->arSelect, $this->arOptimizedFilter, $this->arOrder, $params);
+		$this->relatedJoinsForCount = array_merge(
+			[
+				'CREATOR' => "INNER JOIN " . UserTable::getTableName() . " CU ON CU.ID = T.CREATED_BY",
+				'RESPONSIBLE' => "INNER JOIN " . UserTable::getTableName() . " RU ON RU.ID = T.RESPONSIBLE_ID"
+			],
+			\CTasks::getRelatedJoins([], $this->arOptimizedFilter, [], $params)
+		);
+
+		return $this;
+	}
+
+	private function makeArJoins(): self
+	{
+		$optimized = \CTasks::tryOptimizeFilter($this->arFilter);
+		$this->arOptimizedFilter = $optimized['FILTER'];
+		$this->arJoins = $optimized['JOINS'];
+
+		if (!empty($optimized['JOINS']))
+		{
+			$this->distinct = 'DISTINCT';
+			$this->arParams['SOURCE_FILTER'] = $this->arFilter;
+		}
+
+		return $this;
+	}
+
+	private function makeArSqlSelect(): self
+	{
+		foreach ($this->arSelect as $field)
+		{
+			$field = strtoupper($field);
+			if (array_key_exists($field, $this->arFields))
+				$this->arSqlSelect[$field] = $this->arFields[$field]." AS ".$field;
+		}
+
+		if (!sizeof($this->arSqlSelect))
+		{
+			$this->arSqlSelect = "T.ID AS ID";
+		}
+
+		return $this;
+	}
+
+	private function makeArSqlOrder(): self
+	{
+		foreach ($this->arOrder as $by => $order)
+		{
+			$needle = null;
+			$by = strtolower($by);
+			$order = strtolower($order);
+
+			if ($by === 'deadline')
+			{
+				if ( ! in_array($order, array('asc', 'desc', 'asc,nulls', 'desc,nulls'), true) )
+					$order = 'asc,nulls';
+			}
+			else
+			{
+				if ($order !== 'asc')
+					$order = 'desc';
+			}
+
+			switch ($by)
+			{
+				case 'id':
+					$this->arSqlOrder[] = " ID ".$order." ";
+					break;
+
+				case 'title':
+					$this->arSqlOrder[] = " TITLE ".$order." ";
+					$needle = 'TITLE';
+					break;
+
+				case 'time_spent_in_logs':
+					$this->arSqlOrder[] = " TIME_SPENT_IN_LOGS ".$order." ";
+					$needle = 'TIME_SPENT_IN_LOGS';
+					break;
+
+				case 'date_start':
+					$this->arSqlOrder[] = " T.DATE_START ".$order." ";
+					$needle = 'DATE_START';
+					break;
+
+				case 'created_date':
+					$this->arSqlOrder[] = " T.CREATED_DATE ".$order." ";
+					$needle = 'CREATED_DATE';
+					break;
+
+				case 'changed_date':
+					$this->arSqlOrder[] = " T.CHANGED_DATE ".$order." ";
+					$needle = 'CHANGED_DATE';
+					break;
+
+				case 'closed_date':
+					$this->arSqlOrder[] = " T.CLOSED_DATE ".$order." ";
+					$needle = 'CLOSED_DATE';
+					break;
+
+				case 'activity_date':
+					$this->arSqlOrder[] = " T.ACTIVITY_DATE ".$order." ";
+					$needle = 'ACTIVITY_DATE';
+					break;
+
+				case 'start_date_plan':
+					$this->arSqlOrder[] = " T.START_DATE_PLAN ".$order." ";
+					$needle = 'START_DATE_PLAN';
+					break;
+
+				case 'end_date_plan':
+					$this->arSqlOrder[] = " T.END_DATE_PLAN ".$order." ";
+					$needle = 'END_DATE_PLAN';
+					break;
+
+				case 'deadline':
+					$orderClause = $this->getOrderSql(
+						'T.DEADLINE',
+						$order,
+						$default_order = 'asc,nulls',
+						$nullable = true
+					);
+					$needle = 'DEADLINE_ORIG';
+
+					if ( !is_array($orderClause) )
+						$this->arSqlOrder[] = $orderClause;
+					else   // we have to add select field in order to correctly sort
+					{
+						//         COLUMN ALIAS      COLUMN EXPRESSION
+						$this->arFields[$orderClause[1]] = $orderClause[0];
+
+						if ( ! in_array($orderClause[1], $this->arSelect) )
+							$this->arSelect[] = $orderClause[1];
+
+						$this->arSqlOrder[] = $orderClause[2];	// order expression
+					}
+					break;
+
+				case 'status':
+//					$arSqlOrder[] = " STATUS ".$order." ";
+//					$needle = 'STATUS';
+					break;
+				case 'real_status':
+					$this->arSqlOrder[] = " REAL_STATUS ".$order." ";
+					$needle = 'REAL_STATUS';
+					break;
+
+				case 'status_complete':
+					$this->arSqlOrder[] = " STATUS_COMPLETE ".$order." ";
+					$needle = 'STATUS_COMPLETE';
+					break;
+
+				case 'priority':
+					$this->arSqlOrder[] = " PRIORITY ".$order." ";
+					$needle = 'PRIORITY';
+					break;
+
+				case 'mark':
+					$this->arSqlOrder[] = " MARK ".$order." ";
+					$needle = 'MARK';
+					break;
+
+				case 'originator_name':
+				case 'created_by':
+					$this->arSqlOrder[] = " CREATED_BY_LAST_NAME ".$order." ";
+					$needle = 'CREATED_BY_LAST_NAME';
+					break;
+
+				case 'responsible_name':
+				case 'responsible_id':
+					$this->arSqlOrder[] = " RESPONSIBLE_LAST_NAME ".$order." ";
+					$needle = 'RESPONSIBLE_LAST_NAME';
+					break;
+
+				case 'group_id':
+					$this->arSqlOrder[] = " GROUP_ID ".$order." ";
+					$needle = 'GROUP_ID';
+					break;
+
+				case 'time_estimate':
+					$this->arSqlOrder[] = " TIME_ESTIMATE ".$order." ";
+					$needle = 'TIME_ESTIMATE';
+					break;
+
+				case 'allow_change_deadline':
+					$this->arSqlOrder[] = " ALLOW_CHANGE_DEADLINE ".$order." ";
+					$needle = 'ALLOW_CHANGE_DEADLINE';
+					break;
+
+				case 'allow_time_tracking':
+					$this->arSqlOrder[] = " ALLOW_TIME_TRACKING ".$order." ";
+					$needle = 'ALLOW_TIME_TRACKING';
+					break;
+
+				case 'match_work_time':
+					$this->arSqlOrder[] = " MATCH_WORK_TIME ".$order." ";
+					$needle = 'MATCH_WORK_TIME';
+					break;
+
+				case 'favorite':
+					$this->arSqlOrder[] = " FAVORITE ".$order." ";
+					$needle = 'FAVORITE';
+					break;
+
+				case 'sorting':
+					$asc = stripos($order, "desc") === false;
+					$this->arSqlOrder = array_merge($this->arSqlOrder, $this->getSortingOrderBy($asc));
+					$needle = "SORTING";
+					break;
+
+				case 'message_id':
+					$this->arSqlOrder[] = " MESSAGE_ID " . $order . " ";
+					$needle = 'MESSAGE_ID';
+					break;
+
+				case 'is_pinned':
+					$this->arSqlOrder[] = " IS_PINNED " . $order . " ";
+					$needle = 'IS_PINNED';
+					break;
+
+				default:
+					if (substr($by, 0, 3) === 'uf_')
+					{
+						if ($s = $this->obUserFieldsSql->GetOrder($by))
+							$this->arSqlOrder[$by] = " ".$s." ".$order." ";
+					}
+					else
+						\CTaskAssert::logWarning('[0x9a92cf7d] invalid sort by field requested: ' . $by);
+					break;
+			}
+
+			if (
+				($needle !== null)
+				&& ( ! in_array($needle, $this->arSelect) )
+			)
+			{
+				$this->arSelect[] = $needle;
+			}
+		}
+
+		return $this;
+	}
+
+	private function makeArSelect(): self
+	{
+		if (count($this->arSelect) <= 0 || in_array("*", $this->arSelect))
+		{
+			$this->arSelect = array_keys($this->arFields);
+		}
+		elseif (!in_array("ID", $this->arSelect))
+		{
+			$this->arSelect[] = "ID";
+		}
+
+		// add fields that are NOT selected by default
+		//$this->arFields["FAVORITE"] = "CASE WHEN FVT.TASK_ID IS NULL THEN 'N' ELSE 'Y' END";
+
+		// If DESCRIPTION selected, than BBCODE flag must be selected too
+		if (
+			in_array('DESCRIPTION', $this->arSelect)
+			&& ( ! in_array('DESCRIPTION_IN_BBCODE', $this->arSelect) )
+		)
+		{
+			$this->arSelect[] = 'DESCRIPTION_IN_BBCODE';
+		}
+
+		if (!Integration\Forum::isInstalled())
+		{
+			$this->arSelect = array_diff($this->arSelect, ['COMMENTS_COUNT', 'FORUM_ID']);
+		}
+
+		if ($this->deleteMessageId)
+		{
+			$this->arSelect = array_diff($this->arSelect, ['MESSAGE_ID']);
+		}
+
+		return $this;
+	}
+
+	private function makeArFields(bool $isCount = false): self
+	{
+		$this->arFields = [
+			"ID" => "T.ID",
+			"TITLE" => "T.TITLE",
+			"DESCRIPTION" => "T.DESCRIPTION",
+			"DESCRIPTION_IN_BBCODE" => "T.DESCRIPTION_IN_BBCODE",
+			"DECLINE_REASON" => "T.DECLINE_REASON",
+			"PRIORITY" => "T.PRIORITY",
+			// 1) deadline in past, real status is not STATE_SUPPOSEDLY_COMPLETED and not STATE_COMPLETED and (not STATE_DECLINED or responsible is not me (user))
+			// 2) viewed by noone(?) and created not by me (user) and (STATE_NEW or STATE_PENDING)
+			"STATUS" => "
+				CASE
+					WHEN
+						T.DEADLINE < DATE_ADD(". $this->db->CurrentTimeFunction() .", INTERVAL ".
+				Counter::getDeadlineTimeLimit()." SECOND)
+						AND T.DEADLINE >= ". $this->db->CurrentTimeFunction() ."
+						AND T.STATUS != '4'
+						AND T.STATUS != '5'
+						AND (
+							T.STATUS != '7'
+							OR T.RESPONSIBLE_ID != ". $this->userId ."
+						)
+					THEN
+						'-3'
+					WHEN
+						T.DEADLINE < ". $this->db->CurrentTimeFunction() ." AND T.STATUS != '4' AND T.STATUS != '5' AND (T.STATUS != '7' OR T.RESPONSIBLE_ID != ". $this->userId .")
+					THEN
+						'-1'
+					WHEN
+						TV.USER_ID IS NULL
+						AND
+						T.CREATED_BY != ". $this->userId ."
+						AND
+						(T.STATUS = 1 OR T.STATUS = 2)
+					THEN
+						'-2'
+					ELSE
+						T.STATUS
+				END
+			",
+			"NOT_VIEWED" => "
+				CASE
+					WHEN
+						TV.USER_ID IS NULL
+						AND
+						T.CREATED_BY != ". $this->userId ."
+						AND
+						(T.STATUS = 1 OR T.STATUS = 2)
+					THEN
+						'Y'
+					ELSE
+						'N'
+				END
+			",
+			// used in ORDER BY to make completed tasks go after (or before) all other tasks
+			"STATUS_COMPLETE" => "
+				CASE
+					WHEN
+						T.STATUS = '5'
+					THEN
+						'2'
+					ELSE
+						'1'
+					END
+			",
+			"REAL_STATUS" => "T.STATUS",
+			"MULTITASK" => "T.MULTITASK",
+			"STAGE_ID" => "T.STAGE_ID",
+			"RESPONSIBLE_ID" => "T.RESPONSIBLE_ID",
+			"RESPONSIBLE_NAME" => "RU.NAME",
+			"RESPONSIBLE_LAST_NAME" => "RU.LAST_NAME",
+			"RESPONSIBLE_SECOND_NAME" => "RU.SECOND_NAME",
+			"RESPONSIBLE_LOGIN" => "RU.LOGIN",
+			"RESPONSIBLE_WORK_POSITION" => "RU.WORK_POSITION",
+			"RESPONSIBLE_PHOTO" => "RU.PERSONAL_PHOTO",
+			"DATE_START" => $this->db->DateToCharFunction("T.DATE_START", "FULL"),
+			"DURATION_FACT" => "(SELECT SUM(TE.MINUTES) FROM b_tasks_elapsed_time TE WHERE TE.TASK_ID = T.ID GROUP BY TE.TASK_ID)",
+			"TIME_ESTIMATE" => "T.TIME_ESTIMATE",
+			"TIME_SPENT_IN_LOGS" => "(SELECT SUM(TE.SECONDS) FROM b_tasks_elapsed_time TE WHERE TE.TASK_ID = T.ID GROUP BY TE.TASK_ID)",
+			"REPLICATE" => "T.REPLICATE",
+			"DEADLINE" => $this->db->DateToCharFunction("T.DEADLINE", "FULL"),
+			"DEADLINE_ORIG" => "T.DEADLINE",
+			"START_DATE_PLAN" => $this->db->DateToCharFunction("T.START_DATE_PLAN", "FULL"),
+			"END_DATE_PLAN" => $this->db->DateToCharFunction("T.END_DATE_PLAN", "FULL"),
+			"CREATED_BY" => "T.CREATED_BY",
+			"CREATED_BY_NAME" => "CU.NAME",
+			"CREATED_BY_LAST_NAME" => "CU.LAST_NAME",
+			"CREATED_BY_SECOND_NAME" => "CU.SECOND_NAME",
+			"CREATED_BY_LOGIN" => "CU.LOGIN",
+			"CREATED_BY_WORK_POSITION" => "CU.WORK_POSITION",
+			"CREATED_BY_PHOTO" => "CU.PERSONAL_PHOTO",
+			"CREATED_DATE" => $this->db->DateToCharFunction("T.CREATED_DATE", "FULL"),
+			"CHANGED_BY" => "T.CHANGED_BY",
+			"CHANGED_DATE" => $this->db->DateToCharFunction("T.CHANGED_DATE", "FULL"),
+			"STATUS_CHANGED_BY" => "T.CHANGED_BY",
+			"STATUS_CHANGED_DATE" =>
+				'CASE WHEN T.STATUS_CHANGED_DATE IS NULL THEN '
+				. $this->db->DateToCharFunction("T.CHANGED_DATE", "FULL")
+				. ' ELSE '
+				. $this->db->DateToCharFunction("T.STATUS_CHANGED_DATE", "FULL")
+				. ' END ',
+			"CLOSED_BY" => "T.CLOSED_BY",
+			"CLOSED_DATE" => $this->db->DateToCharFunction("T.CLOSED_DATE", "FULL"),
+			"ACTIVITY_DATE" => $this->db->DateToCharFunction("T.ACTIVITY_DATE", "FULL"),
+			'GUID' => 'T.GUID',
+			"XML_ID" => "T.XML_ID",
+			"MARK" => "T.MARK",
+			"ALLOW_CHANGE_DEADLINE" => "T.ALLOW_CHANGE_DEADLINE",
+			"ALLOW_CHANGE_DEADLINE_COUNT" => "T.ALLOW_CHANGE_DEADLINE_COUNT",
+			"ALLOW_CHANGE_DEADLINE_COUNT_VALUE" => "T.ALLOW_CHANGE_DEADLINE_COUNT_VALUE",
+			"ALLOW_CHANGE_DEADLINE_MAXTIME" => "T.ALLOW_CHANGE_DEADLINE_MAXTIME",
+			"ALLOW_CHANGE_DEADLINE_MAXTIME_VALUE" => "T.ALLOW_CHANGE_DEADLINE_MAXTIME_VALUE",
+			"ALLOW_TIME_TRACKING" => 'T.ALLOW_TIME_TRACKING',
+			"MATCH_WORK_TIME" => "T.MATCH_WORK_TIME",
+			"TASK_CONTROL" => "T.TASK_CONTROL",
+			"ADD_IN_REPORT" => "T.ADD_IN_REPORT",
+			"GROUP_ID" => "CASE WHEN T.GROUP_ID IS NULL THEN 0 ELSE T.GROUP_ID END",
+			"FORUM_TOPIC_ID" => "T.FORUM_TOPIC_ID",
+			"PARENT_ID" => "T.PARENT_ID",
+			"COMMENTS_COUNT" => "FT.POSTS",
+			"FORUM_ID" => "FT.FORUM_ID",
+			"MESSAGE_ID" => "MIN(TSIF.MESSAGE_ID)",
+			"SITE_ID" => "T.SITE_ID",
+			"SUBORDINATE" => ($strSql = \CTasks::GetSubordinateSql('', $this->arParams)) ? "CASE WHEN EXISTS(".$strSql.") THEN 'Y' ELSE 'N' END" : "'N'",
+			"EXCHANGE_MODIFIED" => "T.EXCHANGE_MODIFIED",
+			"EXCHANGE_ID" => "T.EXCHANGE_ID",
+			"OUTLOOK_VERSION" => "T.OUTLOOK_VERSION",
+			"VIEWED_DATE" => $this->db->DateToCharFunction("TV.VIEWED_DATE", "FULL"),
+			"DEADLINE_COUNTED" => "T.DEADLINE_COUNTED",
+			"FORKED_BY_TEMPLATE_ID" => "T.FORKED_BY_TEMPLATE_ID",
+
+			"FAVORITE" => "CASE WHEN FVT.TASK_ID IS NULL THEN 'N' ELSE 'Y' END",
+			"SORTING" => "SRT.SORT",
+
+			"DURATION_PLAN_SECONDS" => "T.DURATION_PLAN",
+			"DURATION_TYPE_ALL" => "T.DURATION_TYPE",
+
+			"DURATION_PLAN" => "
+				case
+					when
+						T.DURATION_TYPE = '".\CTasks::TIME_UNIT_TYPE_MINUTE."' or T.DURATION_TYPE = '".\CTasks::TIME_UNIT_TYPE_HOUR."'
+					then
+						ROUND(T.DURATION_PLAN / 3600, 0)
+					when
+						T.DURATION_TYPE = '".\CTasks::TIME_UNIT_TYPE_DAY."' or T.DURATION_TYPE = '' or T.DURATION_TYPE is null
+					then
+						ROUND(T.DURATION_PLAN / 86400, 0)
+					else
+						T.DURATION_PLAN
+				end
+			",
+			"DURATION_TYPE" => "
+				case
+					when
+						T.DURATION_TYPE = '".\CTasks::TIME_UNIT_TYPE_MINUTE."'
+					then
+						'".\CTasks::TIME_UNIT_TYPE_HOUR."'
+					else
+						T.DURATION_TYPE
+				end
+			"
+		];
+
+		if ($this->bGetZombie)
+		{
+			$this->arFields['ZOMBIE'] = 'T.ZOMBIE';
+		}
+
+		if ($this->userId)
+		{
+			$this->arFields['IS_MUTED'] = UserOption::getSelectSql($this->userId, UserOption\Option::MUTED);
+			$this->arFields['IS_PINNED'] = UserOption::getSelectSql($this->userId, UserOption\Option::PINNED);
+		}
+
+		return $this;
+	}
+
+	/**
+	 * @param array $arOrder
+	 * @param array $arFilter
+	 * @param array $arSelect
+	 * @param array $arParams
+	 * @param array $arGroup
+	 */
+	private function configure($arOrder = [], $arFilter = [], $arSelect = [], $arParams = [], array $arGroup = []): void
+	{
+		$this->arOrder 		= is_array($arOrder) ? $arOrder: [];
+		$this->arFilter 	= $arFilter;
+		$this->arSelect 	= $arSelect;
+		$this->arParams 	= $arParams;
+		$this->arGroup 		= $arGroup;
+
+		if ( !is_array($this->arParams) )
+		{
+			$this->nPageTop = $this->arParams;
+			$this->arParams = false;
+		}
+		else
+		{
+			if (isset($this->arParams['nPageTop']))
+				$this->nPageTop = $this->arParams['nPageTop'];
+
+			if (isset($this->arParams['bIgnoreErrors']))
+				$this->bIgnoreErrors = (bool) $this->arParams['bIgnoreErrors'];
+
+			if (isset($this->arParams['bGetZombie']))
+				$this->bGetZombie = (bool) $this->arParams['bGetZombie'];
+
+			if (isset($this->arParams['bIgnoreDbErrors']))
+				$this->bIgnoreDbErrors = (bool) $this->arParams['bIgnoreDbErrors'];
+
+			if (isset($this->arParams['bSkipUserFields']))
+				$this->bSkipUserFields = (bool) $this->arParams['bSkipUserFields'];
+
+			if (isset($this->arParams['bSkipExtraTables']))
+				$this->bSkipExtraTables = (bool) $this->arParams['bSkipExtraTables'];
+
+			if (isset($this->arParams['bSkipJoinTblViewed']))
+				$this->bSkipJoinTblViewed = (bool) $this->arParams['bSkipJoinTblViewed'];
+
+			if (isset($this->arParams['bNeedJoinMembersTable']))
+				$this->bNeedJoinMembersTable = (bool) $this->arParams['bNeedJoinMembersTable'];
+		}
+
+		if (!in_array('MESSAGE_ID', $this->arSelect))
+		{
+			$this->deleteMessageId = true;
+		}
+
+		$this->disableOptimization = (is_array($this->arParams) && $this->arParams['DISABLE_OPTIMIZATION'] === true);
+		$this->useAccessAsWhere = !(is_array($this->arParams) && $this->arParams['DISABLE_ACCESS_OPTIMIZATION'] === true);
+		$this->canUseOptimization = !$this->disableOptimization && !$this->bNeedJoinMembersTable;
+
+		// First level logic MUST be 'AND', because of backward compatibility
+		// and some requests for checking rights, attached at first level of filter.
+		// Situtation when there is OR-logic at first level cannot be resolved
+		// in general case.
+		// So if there is OR-logic, it is FATAL error caused by programmer.
+		// But, if you want to use OR-logic at the first level of filter, you
+		// can do this by putting all your filter conditions to the ::SUBFILTER-xxx,
+		// except CHECK_PERMISSIONS, SUBORDINATE_TASKS (if you don't know exactly,
+		// what are consequences of this fields in OR-logic of subfilters).
+		if (isset($this->arFilter['::LOGIC']))
+		{
+			\CTaskAssert::assert($this->arFilter['::LOGIC'] === 'AND');
+		}
+
+		$this->invokeUserTypeSql();
+		$this->setUserId();
+	}
+
+	private function setUserId(): void
+	{
+		if (
+			is_array($this->arParams)
+			&& array_key_exists('USER_ID', $this->arParams)
+			&& ($this->arParams['USER_ID'] > 0)
+		)
+		{
+			$this->userId = (int) $this->arParams['USER_ID'];
+		}
+		else
+		{
+			$this->userId = (int) User::getId();
+		}
+	}
+
+	private function invokeUserTypeSql(): void
+	{
+		$this->obUserFieldsSql = new \CUserTypeSQL();
+		$this->obUserFieldsSql->SetEntity("TASKS_TASK", "T.ID");
+		$this->obUserFieldsSql->SetSelect($this->arSelect);
+		$this->obUserFieldsSql->SetFilter($this->arFilter);
+		$this->obUserFieldsSql->SetOrder($this->arOrder);
+	}
+
+	private function getOrderSql($by, $order, $default_order, $nullable = true)
+	{
+		$o = $this->parseOrder($order, $default_order, $nullable);
+		//$o[0] - bNullsFirst
+		//$o[1] - asc|desc
+		if($o[0])
+		{
+			if($o[1] == "asc")
+				return $by." asc";
+			else
+				return "length(".$by.")>0 asc, ".$by." desc";
+		}
+		else
+		{
+			if($o[1] == "asc")
+				return "length(".$by.")>0 desc, ".$by." asc";
+			else
+				return $by." desc";
+		}
+	}
+
+	private function parseOrder($order, $default_order, $nullable = true)
+	{
+		static $arOrder = array(
+			"nulls,asc"  => array(true,  "asc" ),
+			"asc,nulls"  => array(false, "asc" ),
+			"nulls,desc" => array(true,  "desc"),
+			"desc,nulls" => array(false, "desc"),
+			"asc"        => array(true,  "asc" ),
+			"desc"       => array(false, "desc"),
+		);
+		$order = strtolower(trim($order));
+		if(array_key_exists($order, $arOrder))
+			$o = $arOrder[$order];
+		elseif(array_key_exists($default_order, $arOrder))
+			$o = $arOrder[$default_order];
+		else
+			$o = $arOrder["desc,nulls"];
+
+		//There is no need to "reverse" nulls order when
+		//column can not contain nulls
+		if(!$nullable)
+		{
+			if($o[1] == "asc")
+				$o[0] = true;
+			else
+				$o[0] = false;
+		}
+
+		return $o;
+	}
+
+	private function getSortingOrderBy($asc = true)
+	{
+		$order = array();
+		$direction = $asc ? "ASC" : "DESC";
+
+		$order[] = " ISNULL(SORTING) ".$direction." ";
+		$order[] = " SORTING ".$direction." ";
+
+		return $order;
+	}
+
+	private function makePossibleForwardedMemberFilter($filter)
+	{
+		$result = array();
+
+		if (is_array($filter) && !empty($filter))
+		{
+			// cannot forward filer with LOGIC OR or LOGIC NOT
+			if (array_key_exists('LOGIC', $filter) && $filter['LOGIC'] != 'AND')
+			{
+				return $result;
+			}
+			if (array_key_exists('::LOGIC', $filter) && $filter['::LOGIC'] != 'AND')
+			{
+				return $result;
+			}
+
+			/** @see \CTasks::GetSqlByFilter() */
+			if (array_key_exists('AUDITOR', $filter)) // we have equality to AUDITOR, not negation
+			{
+				$result[] = [
+					'=TYPE' => 'U',
+					'=USER_ID' => $filter['AUDITOR'],
+				];
+			}
+			else if (array_key_exists('ACCOMPLICE', $filter)) // we have equality to ACCOMPLICE, not negation
+			{
+				$result[] = [
+					'=TYPE' => 'A',
+					'=USER_ID' => $filter['ACCOMPLICE'],
+				];
+			}
+		}
+
+		return $result;
+	}
+
+	private function getAccessController(): TaskAccessController
+	{
+		if (!$this->accessController)
+		{
+			$this->accessController = new TaskAccessController($this->userId);
+		}
+		return $this->accessController;
+	}
+}

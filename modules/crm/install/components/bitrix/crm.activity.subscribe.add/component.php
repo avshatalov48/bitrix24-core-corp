@@ -22,19 +22,19 @@ if (is_array($arParams['ENTITY_ID']))
 else if ($arParams['ENTITY_ID'] != 'all')
 	$arParams['ENTITY_ID'] = (int)$arParams['ENTITY_ID'];
 
-$arResult['FORM_TYPE'] = strtoupper($arParams['FORM_TYPE']);
-$arResult['ENTITY_TYPE'] = strtoupper($arParams['ENTITY_TYPE']);
+$arResult['FORM_TYPE'] = mb_strtoupper($arParams['FORM_TYPE']);
+$arResult['ENTITY_TYPE'] = mb_strtoupper($arParams['ENTITY_TYPE']);
 $arResult['ENTITY_ID'] = $arParams['ENTITY_ID'];
 // FORM_ENTITY_TYPE and FORM_ENTITY_ID are identification of entity's context (if ENTITY_TYPE == 'CONTACT' and FORM_ENTITY_TYPE == 'DEAL', then we are working with a conpany in context of some deal)
 $arResult['FORM_ENTITY_TYPE'] = isset($arParams['FORM_ENTITY_TYPE']) ? $arParams['FORM_ENTITY_TYPE'] : $arResult['ENTITY_TYPE'];
 $arResult['FORM_ENTITY_ID'] = isset($arParams['FORM_ENTITY_ID']) ? $arParams['FORM_ENTITY_ID'] : $arResult['ENTITY_ID'];
 
 $sEmailFrom = COption::GetOptionString('crm', 'email_from');
-if(strlen($sEmailFrom) === 0)
+if($sEmailFrom == '')
 {
 	// Using current user email
 	$userName = $USER->GetFullName();
-	$sEmailFrom = strlen($userName) > 0 ? $USER->GetFullName().' <'.$USER->GetEmail().'>' : $USER->GetEmail();
+	$sEmailFrom = $userName <> '' ? $USER->GetFullName().' <'.$USER->GetEmail().'>' : $USER->GetEmail();
 }
 $arResult['EMAIL_FROM'] = $sEmailFrom;
 
@@ -56,7 +56,7 @@ if ($arResult['ENTITY_ID'] == 'all')
 	// converts data from filter
 	if (isset($arFilter['FIND_list']) && !empty($arFilter['FIND']))
 	{
-		$arFilter[strtoupper($arFilter['FIND_list'])] = $arFilter['FIND'];
+		$arFilter[mb_strtoupper($arFilter['FIND_list'])] = $arFilter['FIND'];
 		unset($arFilter['FIND_list'], $arFilter['FIND']);
 	}
 
@@ -82,7 +82,7 @@ if ($arResult['ENTITY_ID'] == 'all')
 		}
 		elseif (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
 		{
-			if(strlen($v) > 0)
+			if($v <> '')
 			{
 				$arFilter['>='.$arMatch[1]] = $v;
 			}
@@ -90,7 +90,7 @@ if ($arResult['ENTITY_ID'] == 'all')
 		}
 		elseif (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
 		{
-			if(strlen($v) > 0)
+			if($v <> '')
 			{
 				if (($arMatch[1] == 'DATE_CREATE' || $arMatch[1] == 'DATE_MODIFY') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
 				{
@@ -109,7 +109,7 @@ if ($arResult['ENTITY_ID'] == 'all')
 			}
 			unset($arFilter[$k]);
 		}
-		elseif ($k != 'LOGIC' && strpos($k, 'UF_') !== 0)
+		elseif ($k != 'LOGIC' && mb_strpos($k, 'UF_') !== 0)
 		{
 			$arFilter['%'.$k] = $v;
 			unset($arFilter[$k]);
@@ -247,7 +247,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			foreach ($arAttachs as $k => $arAttach)
 			{
 				// Fix for issue #29769
-				if($arAttach['error'] == 0 && isset($arAttach['tmp_name']) && strlen($arAttach['tmp_name']) > 0 && is_uploaded_file($arAttach['tmp_name']))
+				if($arAttach['error'] == 0 && isset($arAttach['tmp_name']) && $arAttach['tmp_name'] <> '' && is_uploaded_file($arAttach['tmp_name']))
 				{
 					$CPosting->SaveFile($SID, $arAttach);
 				}
@@ -320,7 +320,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 
 // check if only one is selected form the entity of a choice on which mailbox to send
 $arResult['EMAIL'] = array();
-if (count($arResult['ENTITY_ID']) == 1 && $arResult['ENTITY_ID'][0] > 0)
+if (is_array($arResult['ENTITY_ID']) && count($arResult['ENTITY_ID']) == 1 && $arResult['ENTITY_ID'][0] > 0)
 {
 	$arFilter = array(
 		'ENTITY_ID' => $arResult['ENTITY_TYPE'],

@@ -19,6 +19,21 @@ type Provider = {
 	user: ?ProviderUser|Function;
 };
 
+const EventTypes = {
+	initBefore: 'init:before',
+	init: 'init',
+	show: 'show',
+	showFirst: 'show:first',
+	hide: 'hide',
+	submit: 'submit',
+	submitBefore: 'submit:before',
+	sendSuccess: 'send:success',
+	sendError: 'send:error',
+	destroy: 'destroy',
+	fieldFocus: 'field:focus',
+	fieldBlur: 'field:blur',
+	fieldChangeSelected: 'field:change:selected',
+};
 const ViewTypes = ['inline', 'popup', 'panel', 'widget'];
 const ViewPositions = ['left', 'center', 'right'];
 const ViewVerticals = ['top', 'bottom'];
@@ -41,13 +56,60 @@ type Currency = {
 	format: string;
 };
 
-type Handlers = {
-	hide: Array<Function>;
-	show: Array<Function>;
+type Identification = {
+	type: string;
+	id: string;
+	sec: ?string;
+	address: ?string;
+};
+
+type AnalyticsItem = {
+	name: ?string,
+	code: ?string,
+};
+type Analytics = {
+	field: ?AnalyticsItem,
+	category: ?string,
+	template: ?AnalyticsItem,
+	eventTemplate: ?AnalyticsItem,
+};
+
+type ReCaptcha = {
+	key: ?string,
+	use: ?boolean,
+};
+
+type DependenceCondition = {
+	target: string;
+	event: string;
+	value: string;
+	operation: ?string;
+};
+type DependenceAction = {
+	target: string;
+	type: string;
+	value: string;
+};
+
+type Dependence = {
+	condition: DependenceCondition;
+	action: DependenceAction;
+};
+
+type SubmitResponseRedirect = {
+	url: ?string;
+	delay: ?number;
+};
+type SubmitResponse = {
+	resultId: number;
+	pay: ?boolean;
+	message: ?string;
+	redirect: ?SubmitResponseRedirect;
 };
 
 type Options = {
 	id: ?string;
+	identification: ?Identification;
 	provider: ?Provider;
 	languages: ?Array;
 	messages: ?Object;
@@ -62,9 +124,13 @@ type Options = {
 	design: ?string;
 	fields: Array<Field.Options>;
 	agreements: Array<Field.AgreementField.Options>;
+	properties: Object;
 	date: ?DateOptions;
 	currency: ?Currency;
-	handlers: ?Handlers;
+	analytics: ?Analytics;
+	recaptcha: ?ReCaptcha;
+	dependencies: ?Array<Dependence>;
+	handlers: ?Object;
 };
 
 export {
@@ -73,7 +139,16 @@ export {
 	Currency,
 	Options,
 	View,
+	EventTypes,
 	ViewTypes,
 	ViewPositions,
 	ViewVerticals,
+	Identification,
+	SubmitResponse,
+	Analytics,
+	AnalyticsItem,
+	ReCaptcha,
+	Dependence,
+	DependenceAction,
+	DependenceCondition,
 }

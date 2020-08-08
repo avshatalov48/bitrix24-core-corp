@@ -109,7 +109,7 @@ BX.Mobile.Crm.Deal.Edit = {
 			onDeleteEventName: this.onDeleteCompanyEventName
 		};
 		this.companyEditor = new BX.Mobile.Crm.EntityEditor(companyParams);
-		
+
 		if (this.mode !== "VIEW")
 		{
 			//on delete company
@@ -205,6 +205,7 @@ BX.Mobile.Crm.Deal.Edit = {
 		BXMobileApp.UI.Page.LoadingScreen.show();
 
 		var form = BX(this.formId);
+
 		if(form)
 		{
 			var dataFormValues = {sessid:BX.bitrix_sessid()};

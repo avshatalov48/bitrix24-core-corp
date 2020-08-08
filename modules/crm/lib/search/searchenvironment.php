@@ -64,7 +64,7 @@ class SearchEnvironment
 			|| $options['ENABLE_PHONE_DETECTION'] !== false
 		)
 		{
-			$numCount = strlen(preg_replace('/[^0-9]/', '', $str));
+			$numCount = mb_strlen(preg_replace('/[^0-9]/', '', $str));
 			if($numCount >= 3 && $numCount <= 15 && preg_match('/^[0-9\(\)\+\-\#\;\,\*\s]+$/', $str) === 1)
 			{
 				$str = \NormalizePhone($str, 3);

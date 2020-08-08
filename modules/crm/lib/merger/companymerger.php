@@ -290,6 +290,11 @@ class CompanyMerger extends EntityMerger
 		Timeline\CreationEntry::rebind(\CCrmOwnerType::Company, $seedID, $targID);
 		Timeline\MarkEntry::rebind(\CCrmOwnerType::Company, $seedID, $targID);
 		Timeline\CommentEntry::rebind(\CCrmOwnerType::Company, $seedID, $targID);
+
+		Crm\Tracking\Entity::rebindTrace(
+			\CCrmOwnerType::Company, $seedID,
+			\CCrmOwnerType::Company, $targID
+		);
 	}
 	/**
 	 * Resolve merging collisions

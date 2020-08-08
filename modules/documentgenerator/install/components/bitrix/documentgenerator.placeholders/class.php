@@ -267,7 +267,7 @@ class DocumentsPlaceholderComponent extends CBitrixComponent
 		$placeholderChain = '';
 		foreach($requestFilter as $name => $value)
 		{
-			if(strpos($name, 'provider') === 0 && strlen($name) > 8 && !empty($value))
+			if(mb_strpos($name, 'provider') === 0 && mb_strlen($name) > 8 && !empty($value))
 			{
 				$placeholderChain .= '.'.$value;
 			}
@@ -295,7 +295,7 @@ class DocumentsPlaceholderComponent extends CBitrixComponent
 				{
 					$title = $placeholder;
 				}
-				if(!empty($placeholderChain) && strpos($field['VALUE'], $placeholderChain) !== 0)
+				if(!empty($placeholderChain) && mb_strpos($field['VALUE'], $placeholderChain) !== 0)
 				{
 					unset($placeholders[$placeholder]);
 					continue;

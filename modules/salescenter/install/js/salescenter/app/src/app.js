@@ -12,12 +12,14 @@ import {config} from "./config";
 import './component';
 import './component.css';
 import './bx-salescenter-app-add-payment';
+import './bx-salescenter-app-add-payment-by-sms';
 
 export class App
 {
 	constructor(options = {
 		dialogId: null,
 		sessionId: null,
+		lineId: null,
 		orderAddPullTag: null,
 		landingPublicationPullTag: null,
 		landingUnPublicationPullTag: null,
@@ -25,14 +27,18 @@ export class App
 		isOrderPublicUrlAvailable: false,
 		isCatalogAvailable: false,
 		isOrderPublicUrlExists: false,
+		isApplePayAvailable: false,
 	})
 	{
 		this.slider = BX.SidePanel.Instance.getTopSlider();
 		this.dialogId = options.dialogId;
 		this.sessionId = parseInt(options.sessionId);
+		this.lineId = parseInt(options.lineId);
 		this.orderAddPullTag = options.orderAddPullTag;
 		this.landingPublicationPullTag = options.landingPublicationPullTag;
 		this.landingUnPublicationPullTag = options.landingUnPublicationPullTag;
+		this.paySystemList = options.paySystemList;
+		this.cashboxList = options.cashboxList;
 		this.options = options;
 		this.isProgress = false;
 		this.fillPagesTimeout = false;
@@ -41,6 +47,20 @@ export class App
 		this.fillPagesQueue = [];
 		this.ownerTypeId = '';
 		this.ownerId = '';
+		this.stageOnOrderPaid = '';
+		this.sendingMethod = '';
+		this.sendingMethodDesc = {};
+		this.urlSettingsSmsSenders = options.urlSettingsSmsSenders;
+		this.iMessage = false;
+		this.isApplePayAvailable = options.isApplePayAvailable;
+		this.orderPublicUrl = '';
+		this.fileControl = options.fileControl;
+
+		if(Type.isString(options.stageOnOrderPaid))
+		{
+			this.stageOnOrderPaid = options.stageOnOrderPaid;
+		}
+
 		if(Type.isBoolean(options.isFrame))
 		{
 			this.isFrame = options.isFrame;
@@ -49,6 +69,7 @@ export class App
 		{
 			this.isFrame = true;
 		}
+
 		if(Type.isBoolean(options.isOrderPublicUrlAvailable))
 		{
 			this.isOrderPublicUrlAvailable = options.isOrderPublicUrlAvailable;
@@ -57,6 +78,7 @@ export class App
 		{
 			this.isOrderPublicUrlAvailable = false;
 		}
+
 		if(Type.isBoolean(options.isOrderPublicUrlExists))
 		{
 			this.isOrderPublicUrlExists = options.isOrderPublicUrlExists;
@@ -65,6 +87,12 @@ export class App
 		{
 			this.isOrderPublicUrlExists = false;
 		}
+
+		if(Type.isString(options.orderPublicUrl))
+		{
+			this.orderPublicUrl = options.orderPublicUrl;
+		}
+
 		if(Type.isBoolean(options.isCatalogAvailable))
 		{
 			this.isCatalogAvailable = options.isCatalogAvailable;
@@ -73,18 +101,22 @@ export class App
 		{
 			this.isCatalogAvailable = false;
 		}
+
 		if(Type.isBoolean(options.disableSendButton))
 		{
 			this.disableSendButton = options.disableSendButton;
 		}
+
 		if(options.ownerTypeId)
 		{
 			this.ownerTypeId = options.ownerTypeId;
 		}
+
 		if(options.ownerId)
 		{
 			this.ownerId = options.ownerId;
 		}
+
 		if(Type.isString(options.context) && options.context.length > 0)
 		{
 			this.context = options.context;
@@ -93,6 +125,7 @@ export class App
 		{
 			this.context = 'imopenlines_app';
 		}
+
 		if(Type.isBoolean(options.isPaymentsLimitReached))
 		{
 			this.isPaymentsLimitReached = options.isPaymentsLimitReached;
@@ -100,6 +133,12 @@ export class App
 		else
 		{
 			this.isPaymentsLimitReached = false;
+		}
+
+		if(!Type.isUndefined(options.sendingMethod))
+		{
+			this.sendingMethod = options.sendingMethod;
+			this.sendingMethodDesc = this.options.sendingMethodDesc;
 		}
 
 		this.isPaymentCreationAvailable = (
@@ -428,6 +467,15 @@ export class App
 			return null;
 		}
 		const basket = this.store.getters['orderCreation/getBasket']();
+		const deliveryId = this.store.getters['orderCreation/getDeliveryId'];
+		const delivery = this.store.getters['orderCreation/getDelivery'];
+		const total = this.store.getters['orderCreation/getTotal'];
+		const propertyValues = this.store.getters['orderCreation/getPropertyValues'];
+		const deliveryExtraServicesValues = this.store.getters['orderCreation/getDeliveryExtraServicesValues'];
+		const expectedDelivery = this.store.getters['orderCreation/getExpectedDelivery'];
+		const deliveryResponsibleId = this.store.getters['orderCreation/getDeliveryResponsibleId'];
+		const personTypeId = this.store.getters['orderCreation/getPersonTypeId'];
+
 		if (!this.store.getters['orderCreation/isAllowedSubmit'] || this.isProgress)
 		{
 			return null;
@@ -436,20 +484,31 @@ export class App
 		this.startProgress(buttonEvent);
 
 		this.store.dispatch('orderCreation/refreshBasket', {
-			timeout: 0,
 			onsuccess: () => {
 				BX.ajax.runAction('salescenter.order.createPayment', {
 					data: {
 						basketItems: basket,
 						options: {
 							dialogId: this.dialogId,
+							sendingMethod: this.sendingMethod,
+							sendingMethodDesc: this.sendingMethodDesc,
 							sessionId: this.sessionId,
+							lineId: this.lineId,
 							ownerTypeId: this.ownerTypeId,
 							ownerId: this.ownerId,
+							iMessage: this.iMessage,
+							stageOnOrderPaid: this.stageOnOrderPaid,
 							skipPublicMessage,
+							deliveryId: deliveryId,
+							deliveryPrice: delivery,
+							expectedDeliveryPrice: expectedDelivery,
+							deliveryResponsibleId: deliveryResponsibleId,
+							personTypeId: personTypeId,
+							propertyValues: propertyValues,
+							deliveryExtraServicesValues: deliveryExtraServicesValues,
 						},
 					},
-					analyticsLabel: 'salescenterCreatePayment',
+					analyticsLabel: (this.context === 'deal') ? 'salescenterCreatePaymentSms' : 'salescenterCreatePayment',
 					getParameters: {
 						dialogId: this.dialogId,
 						context: this.context,
@@ -484,17 +543,66 @@ export class App
 					{
 						this.slider.data.set('action', 'sendPayment');
 						this.slider.data.set('order', result.data.order);
+
+						if (result.data.deal)
+						{
+							this.slider.data.set('deal', result.data.deal);
+						}
 						this.closeApplication();
 					}
-				}).catch((error) =>
+				}).catch((data) =>
 				{
+					data.errors.forEach((error) => {
+						alert(error.message);
+					});
 					this.stopProgress(buttonEvent);
-					App.showError(error);
+					App.showError(data);
 				});
 			},
 			onfailure: () => {
 				this.stopProgress(buttonEvent);
 			}
+		});
+	}
+
+	resendPayment(buttonEvent)
+	{
+		if (!this.isPaymentCreationAvailable)
+		{
+			this.closeApplication();
+			return null;
+		}
+
+		if (!this.store.getters['orderCreation/isAllowedSubmit'] || this.isProgress)
+		{
+			return null;
+		}
+
+		this.startProgress(buttonEvent);
+
+		BX.ajax.runAction('salescenter.order.resendPayment', {
+			data: {
+				orderId: this.options.associatedEntityId,
+				options: {
+					sendingMethod: this.sendingMethod,
+					sendingMethodDesc: this.sendingMethodDesc,
+					stageOnOrderPaid: this.stageOnOrderPaid
+				},
+			},
+			getParameters: {
+				context: this.context,
+			}
+		}).then((result) =>
+		{
+			this.stopProgress(buttonEvent);
+			this.closeApplication();
+		}).catch((data) =>
+		{
+			data.errors.forEach((error) => {
+				alert(error.message);
+			});
+			this.stopProgress(buttonEvent);
+			App.showError(data);
 		});
 	}
 
@@ -510,5 +618,10 @@ export class App
 		{
 			return new Promise((resolve, reject) => {});
 		}
+	}
+
+	setIMessage(payment, isChecked)
+	{
+		this.iMessage = isChecked;
 	}
 }

@@ -15,9 +15,9 @@
  	#JS#
 </head>
 <body>
-	<div id="messenger-root"></div>
+	<div id="messenger-dialog"></div>
 	<script type="text/javascript">
-		const ChatDialog = new BX.Messenger.Runtime.Dialog();
+		BX.Messenger.Application.Launch('mobileDialog', {node: '#messenger-dialog'});
 	</script>
 </body>
 </html>

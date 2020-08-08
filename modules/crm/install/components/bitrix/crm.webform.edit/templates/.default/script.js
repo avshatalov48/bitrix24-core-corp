@@ -17,6 +17,7 @@ var CrmFormEditor = function(params)
 		this.currency = params.currency;
 		this.actionRequestUrl = params.actionRequestUrl;
 		this.canRemoveCopyright = params.canRemoveCopyright;
+		this.showRestrictionPopup = params.showRestrictionPopup;
 
 		this.entityDictionary = params.entityDictionary;
 		this.schemesDictionary = params.schemesDictionary;
@@ -303,18 +304,9 @@ var CrmFormEditor = function(params)
 
 		if(!this.canRemoveCopyright)
 		{
-			BX.bind(BX('COPYRIGHT_REMOVED_CONT'), 'click', BX.proxy(function(e){
-				if(!B24 || !B24['licenseInfoPopup'])
-				{
-					return;
-				}
-
+			BX.bind(BX('COPYRIGHT_REMOVED_CONT'), 'click', BX.proxy(function(e) {
 				BX.PreventDefault(e);
-				B24.licenseInfoPopup.show(
-					'crm_webform_copyright',
-					this.mess.dlgRemoveCopyrightTitle,
-					'<span>' + this.mess.dlgRemoveCopyrightText + '</span>'
-				);
+				this.showRestrictionPopup();
 			}, this));
 		}
 
@@ -885,19 +877,25 @@ var CrmFormEditor = function(params)
 
 	this.initFieldTypeResourcebooking = function(field)
 	{
-		if (BX.Calendar && BX.Calendar.UserField
-			&& BX.type.isFunction(BX.Calendar.UserField.getResourceBookingCrmFormField))
+		BX.Runtime.loadExtension('calendar.resourcebookinguserfield').then(function(exports)
 		{
-			var resourcebookingField = new BX.Calendar.UserField.getResourceBookingCrmFormField({field: field});
-
-			if (resourcebookingField)
+			var ResourcebookingUserfield = exports.ResourcebookingUserfield;
+			if (BX.type.isFunction(ResourcebookingUserfield))
 			{
-				resourcebookingField.init();
+				var editFieldController = ResourcebookingUserfield.initCrmFormFieldController({field: field});
+				field.edit = editFieldController.showSettingsPopup.bind(editFieldController);
 			}
-
-			// Custom handler
-			field.edit = BX.proxy(resourcebookingField.showSettingsPopup, resourcebookingField);
-		}
+			else if (BX.Calendar && BX.Calendar.UserField
+				&& BX.type.isFunction(BX.Calendar.UserField.getResourceBookingCrmFormField))
+			{
+				var resourcebookingField = new BX.Calendar.UserField.getResourceBookingCrmFormField({field: field});
+				if (resourcebookingField)
+				{
+					resourcebookingField.init();
+				}
+				field.edit = resourcebookingField.showSettingsPopup.bind(resourcebookingField);
+			}
+		});
 	};
 
 	this.findField = function(fieldName)
@@ -1480,7 +1478,8 @@ CrmWebFormEditEntityScheme.prototype =
 						{
 							'name': item.VALUE || '',
 							'price': item.PRICE || '',
-							'discount': item.DISCOUNT || ''
+							'discount': item.DISCOUNT || '',
+							'custom_price': item.CUSTOM_PRICE || ''
 						}
 					);
 				}, this);
@@ -2932,7 +2931,8 @@ CrmFormEditorProductSelector.prototype =
 			'id': 'n' + this.helper.generateId(),
 			'name': '',
 			'price': '',
-			'discount': ''
+			'discount': '',
+			'custom_price': '',
 		});
 	},
 
@@ -2993,13 +2993,15 @@ CrmFormEditorProductSelector.prototype =
 			'item_value': itemData.name,
 			'item_price': itemData.price,
 			'item_discount': itemData.discount || '',
+			'item_custom_price': itemData.custom_price === 'Y' ? 'checked' : '',
 			'currency_short_name': this.caller.currency.SHORT_NAME
 		});
 
 		var fieldItem = {
 			'ID': itemData.id,
 			'PRICE': itemData.price,
-			'DISCOUNT': itemData.DISCOUNT,
+			'DISCOUNT': itemData.discount,
+			'CUSTOM_PRICE': itemData.custom_price,
 			'VALUE': itemData.name
 		};
 

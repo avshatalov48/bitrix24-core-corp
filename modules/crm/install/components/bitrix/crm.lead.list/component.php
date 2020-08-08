@@ -77,7 +77,7 @@ $isInExportMode = false;
 $isStExport = false;    // Step-by-step export mode
 if (!empty($sExportType))
 {
-	$sExportType = strtolower(trim($sExportType));
+	$sExportType = mb_strtolower(trim($sExportType));
 	switch ($sExportType)
 	{
 		case 'csv':
@@ -186,7 +186,7 @@ $addressLabels = EntityAddress::getShortLabels();
 //Show error message if required
 if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['error']))
 {
-	$errorID = strtolower($_GET['error']);
+	$errorID = mb_strtolower($_GET['error']);
 	if(preg_match('/^crm_err_/', $errorID) === 1)
 	{
 		if(!isset($_SESSION[$errorID]))
@@ -215,7 +215,7 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['error']))
 CUtil::InitJSCore(array('ajax', 'tooltip'));
 
 $arResult['GADGET'] = 'N';
-if (isset($arParams['GADGET_ID']) && strlen($arParams['GADGET_ID']) > 0)
+if (isset($arParams['GADGET_ID']) && $arParams['GADGET_ID'] <> '')
 {
 	$arResult['GADGET'] = 'Y';
 	$arResult['GADGET_ID'] = $arParams['GADGET_ID'];
@@ -233,7 +233,7 @@ if (!empty($arParams['INTERNAL_FILTER']) && is_array($arParams['INTERNAL_FILTER'
 {
 	if(empty($arParams['GRID_ID_SUFFIX']))
 	{
-		$arParams['GRID_ID_SUFFIX'] = $this->GetParent() !== null ? strtoupper($this->GetParent()->GetName()) : '';
+		$arParams['GRID_ID_SUFFIX'] = $this->GetParent() !== null? mb_strtoupper($this->GetParent()->GetName()) : '';
 	}
 	$arFilter = $arParams['INTERNAL_FILTER'];
 }
@@ -250,7 +250,7 @@ if (isset($arParams['WIDGET_DATA_FILTER']) && isset($arParams['WIDGET_DATA_FILTE
 	$enableWidgetFilter = true;
 	$widgetFilter = $arParams['WIDGET_DATA_FILTER'];
 }
-elseif (!$bInternal && isset($_REQUEST['WG']) && strtoupper($_REQUEST['WG']) === 'Y')
+elseif (!$bInternal && isset($_REQUEST['WG']) && mb_strtoupper($_REQUEST['WG']) === 'Y')
 {
 	$enableWidgetFilter = true;
 	$widgetFilter = $_REQUEST;
@@ -620,7 +620,7 @@ $CCrmUserType->ListAddHeaders($arResult['HEADERS']);
 $arBPData = array();
 if ($isBizProcInstalled)
 {
-	$arBPData = CBPDocument::GetWorkflowTemplatesForDocumentType(array('crm', 'CCrmDocumentLead', 'LEAD'));
+	$arBPData = CBPDocument::GetWorkflowTemplatesForDocumentType(array('crm', 'CCrmDocumentLead', 'LEAD'), false);
 	$arDocumentStates = CBPDocument::GetDocumentStates(
 		array('crm', 'CCrmDocumentLead', 'LEAD'),
 		null
@@ -759,12 +759,12 @@ if(check_bitrix_sessid())
 		{
 			if(isset($_POST['ACTION_OPENED']))
 			{
-				$actionData['OPENED'] = strtoupper($_POST['ACTION_OPENED']) === 'Y' ? 'Y' : 'N';
+				$actionData['OPENED'] = mb_strtoupper($_POST['ACTION_OPENED']) === 'Y' ? 'Y' : 'N';
 				unset($_POST['ACTION_OPENED'], $_REQUEST['ACTION_OPENED']);
 			}
 			else
 			{
-				$actionData['OPENED'] = strtoupper($controls['ACTION_OPENED']) === 'Y' ? 'Y' : 'N';
+				$actionData['OPENED'] = mb_strtoupper($controls['ACTION_OPENED']) === 'Y' ? 'Y' : 'N';
 			}
 		}
 
@@ -981,7 +981,7 @@ foreach ($arFilter as $k => $v)
 		}
 		unset($arFilter['COMMUNICATION_TYPE']);
 	}
-	elseif ($k != 'ID' && $k != 'LOGIC' && $k != '__INNER_FILTER' && $k != '__JOINS' && $k != '__CONDITIONS' && strpos($k, 'UF_') !== 0 && preg_match('/^[^\=\%\?\>\<]{1}/', $k) === 1)
+	elseif ($k != 'ID' && $k != 'LOGIC' && $k != '__INNER_FILTER' && $k != '__JOINS' && $k != '__CONDITIONS' && mb_strpos($k, 'UF_') !== 0 && preg_match('/^[^\=\%\?\>\<]{1}/', $k) === 1)
 	{
 		$arFilter['%'.$k] = $v;
 		unset($arFilter[$k]);
@@ -1151,8 +1151,8 @@ if($actionData['ACTIVE'])
 							);
 
 							//Region automation
-							if (isset($arUpdateData['STATUS_ID']) && $arUpdateData['STATUS_ID'] != $arLead['STATUS_ID'])
-								\Bitrix\Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Lead, $ID);
+							$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $ID);
+							$starter->setUserIdFromCurrent()->runOnUpdate($arUpdateData, $arLead);
 							//end region
 						}
 						else
@@ -1278,7 +1278,8 @@ if($actionData['ACTIVE'])
 						);
 
 						//Region automation
-						\Bitrix\Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Lead, $ID);
+						$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $ID);
+						$starter->setUserIdFromCurrent()->runOnUpdate($arUpdateData, []);
 						//end region
 					}
 					else
@@ -1342,6 +1343,8 @@ if($actionData['ACTIVE'])
 							CCrmBizProcEventType::Edit,
 							$arErrors
 						);
+						$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $ID);
+						$starter->setUserIdFromCurrent()->runOnUpdate($arUpdateData, []);
 					}
 					else
 					{
@@ -1354,7 +1357,7 @@ if($actionData['ACTIVE'])
 		{
 			if(isset($actionData['OPENED']) && $actionData['OPENED'] != '')
 			{
-				$isOpened = strtoupper($actionData['OPENED']) === 'Y' ? 'Y' : 'N';
+				$isOpened = mb_strtoupper($actionData['OPENED']) === 'Y' ? 'Y' : 'N';
 				$arIDs = array();
 				if ($actionData['ALL_ROWS'])
 				{
@@ -1423,6 +1426,8 @@ if($actionData['ACTIVE'])
 							CCrmBizProcEventType::Edit,
 							$arErrors
 						);
+						$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $ID);
+						$starter->setUserIdFromCurrent()->runOnUpdate($arUpdateData, []);
 					}
 					else
 					{
@@ -1561,7 +1566,7 @@ $arSelectMap = array_fill_keys($arSelect, true);
 
 $arResult['IS_BIZPROC_AVAILABLE'] = $isBizProcInstalled;
 $arResult['ENABLE_BIZPROC'] = $isBizProcInstalled
-	&& (!isset($arParams['ENABLE_BIZPROC']) || strtoupper($arParams['ENABLE_BIZPROC']) === 'Y');
+	&& (!isset($arParams['ENABLE_BIZPROC']) || mb_strtoupper($arParams['ENABLE_BIZPROC']) === 'Y');
 
 $arResult['ENABLE_TASK'] = IsModuleInstalled('tasks');
 
@@ -2015,7 +2020,7 @@ if(isset($arSort['nearest_activity']))
 
 			if (!isset($arSort['ID']))
 			{
-				$order = strtoupper($arSort['nearest_activity']);
+				$order = mb_strtoupper($arSort['nearest_activity']);
 				if ($order === 'ASC' || $order === 'DESC')
 				{
 					$arSort['ID'] = $arSort['nearest_activity'];
@@ -2049,7 +2054,7 @@ else
 	{
 		if(strncmp($k, 'address', 7) === 0)
 		{
-			$addressSort[strtoupper($k)] = $v;
+			$addressSort[mb_strtoupper($k)] = $v;
 		}
 	}
 
@@ -2204,6 +2209,25 @@ if ($arResult['CAN_EXCLUDE'])
 	$arResult['CAN_EXCLUDE'] = !empty($excludeApplicableList);
 }
 
+$allDocumentStates = [];
+if ($arResult['ENABLE_BIZPROC'] && !empty($arResult['LEAD']))
+{
+	$entityIds = array_map(function ($item)
+		{
+			return "LEAD_{$item['ID']}";
+		},
+		$arResult['LEAD']);
+
+	$documentStates = CBPDocument::GetDocumentStates(
+		array('crm', 'CCrmDocumentLead', 'LEAD'),
+		array('crm', 'CCrmDocumentLead', $entityIds)
+	);
+	foreach ($documentStates as $stateId => $documentState)
+	{
+		$allDocumentStates[$documentState['DOCUMENT_ID'][2]][$stateId] = $documentState;
+	}
+}
+
 foreach($arResult['LEAD'] as &$arLead)
 {
 	$entityID = $arLead['ID'];
@@ -2215,7 +2239,7 @@ foreach($arResult['LEAD'] as &$arLead)
 	$arLead['CONVERSION_TYPE_ID'] = LeadConversionDispatcher::resolveTypeID($arLead);
 	$arLead['CAN_EXCLUDE'] = in_array($arLead['ID'], $excludeApplicableList);
 
-	if (!empty($arLead['WEB']) && strpos($arLead['WEB'], '://') === false)
+	if (!empty($arLead['WEB']) && mb_strpos($arLead['WEB'], '://') === false)
 		$arLead['WEB'] = 'http://'.$arLead['WEB'];
 
 	$currencyID =  isset($arLead['CURRENCY_ID']) ? $arLead['CURRENCY_ID'] : CCrmCurrency::GetBaseCurrencyID();
@@ -2485,10 +2509,8 @@ foreach($arResult['LEAD'] as &$arLead)
 		$arLead['BIZPROC_STATUS'] = '';
 		$arLead['BIZPROC_STATUS_HINT'] = '';
 
-		$arDocumentStates = CBPDocument::GetDocumentStates(
-			array('crm', 'CCrmDocumentLead', 'LEAD'),
-			array('crm', 'CCrmDocumentLead', "LEAD_{$entityID}")
-		);
+		$arDocumentStates = is_array($allDocumentStates["LEAD_{$entityID}"]) ?
+			$allDocumentStates["LEAD_{$entityID}"] : [];
 
 		$arLead['PATH_TO_BIZPROC_LIST'] =  CHTTP::urlAddParams(
 			CComponentEngine::MakePathFromTemplate(

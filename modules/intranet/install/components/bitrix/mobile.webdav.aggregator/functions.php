@@ -78,7 +78,7 @@ if (!function_exists('_getPath'))
             $dav = (CWebDavBase::IsDavHeaders('check_all')?'D':'W');
         if ($dav == 'W')
         {
-            $spath = substr($path,  strlen($sef_folder)-1);
+			$spath = mb_substr($path, mb_strlen($sef_folder) - 1);
             if (empty($spath)) $spath .= '/';
             return $spath;
         } else 
@@ -163,7 +163,7 @@ if (!function_exists('MakeDavRedirect'))
                     $_SERVER['HTTP_DESTINATION'] = urldecode($_SERVER['HTTP_DESTINATION']);
                     $pu = parse_url($_SERVER['HTTP_DESTINATION']);
                     $ob->SetBaseURL($baseURL);
-                    if (strpos($pu['path'], $baseURL) === false)
+                    if (mb_strpos($pu['path'], $baseURL) === false)
                     {
                         CHTTP::SetStatus('405 Method not allowed');
                         header('Allow: ' . join(',', array_keys($ob->allow)));

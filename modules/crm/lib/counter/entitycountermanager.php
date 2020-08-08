@@ -76,11 +76,11 @@ class EntityCounterManager
 				}
 			}
 
-			$entityName = strtolower(\CCrmOwnerType::DealName);
+			$entityName = mb_strtolower(\CCrmOwnerType::DealName);
 			$extendedMode = isset($extras['EXTENDED_MODE']) && $extras['EXTENDED_MODE'] === true;
 			foreach($typeIDs as $typeID)
 			{
-				$typeName = strtolower(EntityCounterType::resolveName($typeID));
+				$typeName = mb_strtolower(EntityCounterType::resolveName($typeID));
 				if($typeName === '')
 				{
 					continue;
@@ -102,12 +102,12 @@ class EntityCounterManager
 		}
 		else
 		{
-			$entityName = strtolower(\CCrmOwnerType::ResolveName($entityTypeID));
+			$entityName = mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeID));
 			if($entityName !== '')
 			{
 				foreach($typeIDs as $typeID)
 				{
-					$typeName = strtolower(EntityCounterType::resolveName($typeID));
+					$typeName = mb_strtolower(EntityCounterType::resolveName($typeID));
 					if($typeName !== '')
 					{
 						$results[] = "crm_{$entityName}_{$typeName}";

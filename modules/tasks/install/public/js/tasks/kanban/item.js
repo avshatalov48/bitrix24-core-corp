@@ -1,3 +1,5 @@
+/*eslint-disable*/
+
 (function() {
 
 "use strict";
@@ -112,7 +114,7 @@ BX.Tasks.Kanban.Item.prototype = {
 	 */
 	getDeadline: function()
 	{
-		return this.date_deadline.innerText;
+		return this.deadlineNotificationDate;
 	},
 
 	/**
@@ -135,12 +137,46 @@ BX.Tasks.Kanban.Item.prototype = {
 
 		this.setDataKey("status", code);
 
-		if (code === "deferred")
-		{
-			BX.addClass(this.task_status_title, "tasks-kanban-item-blue");
-			this.task_status_title.textContent = BX.message("TASKS_KANBAN_STATUS_DEFERRED");
-		}
-		else if (code === "completed" || code === "completed_supposedly")
+		// if (code === "deferred")
+		// {
+		// 	// BX.addClass(this.task_status_title, "tasks-kanban-item-blue");
+		// 	// this.task_status_title.textContent = BX.message("TASKS_KANBAN_STATUS_DEFERRED");
+		// }
+		// else if (code === "completed" || code === "completed_supposedly")
+		// {
+		// 	// BX.hide(this.task_complete);
+		// 	// BX.addClass(this.task_status_title, "tasks-kanban-item-gray");
+		// 	// if (code === "completed_supposedly")
+		// 	// {
+		// 	// 	this.task_status_title.textContent = BX.message("TASKS_KANBAN_STATUS_COMPLETED_SUPPOSEDLY");
+		// 	// }
+		// 	// else
+		// 	// {
+		// 	// 	this.task_status_title.textContent = BX.message("TASKS_KANBAN_STATUS_COMPLETED");
+		// 	// }
+		// }
+		// else if (code === "overdue")
+		// {
+		// 	// this.task_status_title.textContent = BX.message("TASKS_KANBAN_STATUS_OVERDUE");
+		// }
+		// else if (code === "in_progress")
+		// {
+		// 	// this.task_status_title.textContent = BX.message("TASKS_KANBAN_STATUS_PROGRESS");
+		// }
+		// else if (code === "pause")
+		// {
+		// 	// this.task_status_title.textContent = BX.message("TASKS_KANBAN_STATUS_PAUSE");
+		// }
+		// else if (code === "new")
+		// {
+		// 	// BX.addClass(this.task_status_title, "tasks-kanban-item-white-blue");
+		// 	// this.task_status_title.textContent = BX.message("TASKS_KANBAN_STATUS_NEW");
+		// }
+		// else
+		// {
+		// 	BX.hide(this.task_status_title);
+		// }
+		if (code === "completed" || code === "completed_supposedly")
 		{
 			BX.hide(this.task_complete);
 			BX.addClass(this.task_status_title, "tasks-kanban-item-gray");
@@ -152,24 +188,6 @@ BX.Tasks.Kanban.Item.prototype = {
 			{
 				this.task_status_title.textContent = BX.message("TASKS_KANBAN_STATUS_COMPLETED");
 			}
-		}
-		else if (code === "overdue")
-		{
-			BX.addClass(this.task_status_title, "tasks-kanban-item-red");
-			this.task_status_title.textContent = BX.message("TASKS_KANBAN_STATUS_OVERDUE");
-		}
-		else if (code === "in_progress")
-		{
-			this.task_status_title.textContent = BX.message("TASKS_KANBAN_STATUS_PROGRESS");
-		}
-		else if (code === "pause")
-		{
-			this.task_status_title.textContent = BX.message("TASKS_KANBAN_STATUS_PAUSE");
-		}
-		else if (code === "new")
-		{
-			BX.addClass(this.task_status_title, "tasks-kanban-item-white-blue");
-			this.task_status_title.textContent = BX.message("TASKS_KANBAN_STATUS_NEW");
 		}
 		else
 		{
@@ -186,6 +204,52 @@ BX.Tasks.Kanban.Item.prototype = {
 			BX.removeClass(this.task_start, "tasks-kanban-task-pause");
 			this.task_start.setAttribute("title", BX.message("TASKS_KANBAN_TITLE_START"));
 		}
+
+		if (data.muted && !BX.hasClass(this.task_mute, "tasks-kanban-task-muted"))
+		{
+			BX.addClass(this.container, "tasks-kanban-task-muted");
+			this.task_mute.setAttribute("title", BX.message("TASKS_KANBAN_TITLE_UNMUTE"));
+			this.task_counter.setColor(BX.UI.Counter.Color.GRAY);
+		}
+		else if (!data.muted)
+		{
+			BX.removeClass(this.container, "tasks-kanban-task-muted");
+			this.task_mute.setAttribute("title", BX.message("TASKS_KANBAN_TITLE_MUTE"));
+			this.task_counter.setColor(data.is_expired ? BX.UI.Counter.Color.DANGER : BX.UI.Counter.Color.SUCCESS);
+		}
+	},
+
+	/**
+	 * Action for mute/unmute the task.
+	 * @returns {void}
+	 */
+	muteTask: function()
+	{
+		var taskId = this.getId();
+		var data = this.getData();
+		var action = data.muted ? "unmuteTask" : "muteTask";
+
+		this.getGrid().ajax({
+				action: action,
+				taskId: taskId
+			},
+			function(data)
+			{
+				if (data && !data.error)
+				{
+					this.getGrid().updateItem(this.getId(), data);
+				}
+				else if (data)
+				{
+					BX.Kanban.Utils.showErrorDialog(data.error, data.fatal);
+				}
+				BX.onCustomEvent(this, "onKanbanChanged", []);
+			}.bind(this),
+			function(error)
+			{
+				BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
+			}.bind(this)
+		);
 	},
 
 	/**
@@ -282,13 +346,13 @@ BX.Tasks.Kanban.Item.prototype = {
 	{
 		var data = this.getData();
 		var format = BX.date.convertBitrixFormat(BX.message("FORMAT_DATETIME"));
+		var value = BX.date.format(format, data.date_deadline || data.date_day_end);
 
 		BX.calendar({
 			node: BX.proxy_context,
+			value: value,
+			currentTime: value,
 			bTime: true,
-			currentTime: data.date_deadline
-						? BX.date.format(format, data.date_deadline)
-						: BX.date.format(format, data.date_day_end),
 			callback: function(data)
 			{
 				this.getGrid().ajax({
@@ -501,66 +565,51 @@ BX.Tasks.Kanban.Item.prototype = {
 			for (var i = 0, c = data.tags.length; i < c; i++)
 			{
 				this.tag = BX.create("span", {
-					text: "#" + data.tags[i],
-					events: {
-						click: BX.delegate(function(e) {
-							this.setFilterTag();
-							e.stopPropagation();
-						}, this)
-					}
+					props: {
+						className: "ui-label ui-label-tag-light ui-label-fill ui-label-sm ui-label-link"
+					},
+					children: [
+						BX.create("span", {
+							props: {
+								className: "ui-label-inner"
+							},
+							text: "#" + data.tags[i],
+							events: {
+								click: BX.delegate(function(e) {
+									this.setFilterTag();
+									e.stopPropagation();
+								}, this)
+							}
+						})
+					]
 				});
 				this.tags.appendChild(this.tag);
 			}
 		}
+
 		// deadline
 		this.switchClass(
-			this.date_deadline,
-			"tasks-kanban-item-deadline",
-			data.date_deadline || data.allow_change_deadline
-		);
-		this.switchClass(
-			this.date_deadline,
-			"tasks-kanban-item-set-deadline",
-			data.allow_change_deadline && !data.date_deadline
-		);
-		this.switchClass(
-			this.date_deadline,
+			this.date_deadline_container,
 			"tasks-kanban-item-pointer",
 			data.allow_change_deadline
 		);
-		this.date_deadline.setAttribute(
-			"title",
-			BX.message(data.date_deadline
-			? "TASKS_KANBAN_TITLE_DEADLINE"
-			: "TASKS_KANBAN_TITLE_DEADLINE_SET")
-		);
-		if (data.date_deadline || data.allow_change_deadline)
+		if (data.allow_change_deadline)
 		{
-			BX.bind(this.date_deadline, "click", BX.delegate(function(e) {
+			BX.bind(this.date_deadline_container, "click", BX.delegate(function(e) {
 				this.deadlineTask();
 				e.stopPropagation();
 			}, this));
 		}
 		else
 		{
-			BX.unbind(this.date_deadline, "click", BX.delegate(function(e) {
+			BX.unbind(this.date_deadline_container, "click", BX.delegate(function(e) {
 				this.deadlineTask();
 				e.stopPropagation();
 			}, this));
 		}
-		if (data.date_deadline)
-		{
-			var format = (new Date(data.date_deadline * 1000)).getFullYear() ===
-						 (new Date()).getFullYear()
-						? this.dateFormats["short"][formatLang]
-						: this.dateFormats["full"][formatLang];
-			data.overdue = Date.now() > data.date_deadline * 1000;
-			this.date_deadline.textContent = BX.date.format(format, data.date_deadline);
-		}
-		else
-		{
-			this.date_deadline.textContent = "";
-		}
+
+		this.deadlineNotificationDate = (data.date_deadline ? data.deadline.value.replace('&minus;', '-') : '');
+
 		// set status
 		if (data.deferred)
 		{
@@ -594,33 +643,17 @@ BX.Tasks.Kanban.Item.prototype = {
 		{
 			this.setStatus("");
 		}
+
 		// info block
-		this.switchVisible(this.task_content,
-			data.count_comments > 0 || data.count_files > 0 ||
-			data.check_list.complete !== 0 || data.check_list.work !== 0
-		);
-		// comments
 		this.switchVisible(
-			this.count_comments,
-			data.count_comments > 0
+			this.task_content,
+			data.count_files > 0 || data.check_list.complete !== 0 || data.check_list.work !== 0
 		);
-		this.switchClass(
-			this.count_comments,
-			"tasks-kanban-item-super-blue",
-			data.log.comment > 0
-		);
-		this.count_comments.setAttribute(
-			"href",
-			this.getTaskUrl(this.getId()) + "#updates"
-		);
-		this.count_comments.setAttribute(
-			"title",
-			BX.message("TASKS_KANBAN_TITLE_COMMENTS").replace("#count#", data.count_comments)
-		);
-		this.count_comments.textContent = data.log.comment > 0
-											? "+" + data.log.comment
-											: data.count_comments;
-		// checklist
+
+		// new comments
+		this.switchVisible(this.task_counter_container, (data.counter.value > 0));
+
+		//region checklist
 		this.switchVisible(
 			this.check_list,
 			data.check_list.complete !== 0 || data.check_list.work !== 0
@@ -639,6 +672,9 @@ BX.Tasks.Kanban.Item.prototype = {
 										? "+" + data.log.checklist
 										: data.check_list.complete + "/" +
 										 (+data.check_list.complete + +data.check_list.work);
+
+		// endregion
+
 		// files
 		this.switchVisible(
 			this.count_files,
@@ -797,7 +833,7 @@ BX.Tasks.Kanban.Item.prototype = {
 			withoutControl
 		);
 		this.switchVisible(
-			this.track_control,
+			this.task_start,
 			!withoutControl
 		);
 		this.switchVisible(
@@ -820,7 +856,7 @@ BX.Tasks.Kanban.Item.prototype = {
 	{
 		var data = this.getData();
 
-		// common container
+		//region common container
 		this.container = BX.create("div", {
 			props: {
 				className: "tasks-kanban-item"
@@ -833,60 +869,93 @@ BX.Tasks.Kanban.Item.prototype = {
 						typeof BX.Bitrix24.PageSlider !== "undefined"
 					)
 					{
-						BX.Bitrix24.PageSlider.open(this.getTaskUrl(this.getId()));
+						// BX.Bitrix24.PageSlider.open(this.getTaskUrl(this.getId()));
 					}
 				}.bind(this)
 			}
 		});
-		// title link
+
+		//endregion
+
+		//region title link
 		this.link = BX.create("a", {
 			props: {
-				className: "tasks-kanban-item-title"
+				className: data.counter.value > 0 ? "tasks-kanban-item-title" : "tasks-kanban-item-title tasks-kanban-item-title--with-counter"
 			}
 		});
 		this.container.appendChild(this.link);
-		// tags
+
+		//endregion
+
+		//region tags
 		this.tags = BX.create("span", {
 			props: {
 				className: "tasks-kanban-item-tags"
 			}
 		});
 		this.container.appendChild(this.tags);
-		// background
-		this.containerImg = BX.create("a", {
-			props: {
-				className: "tasks-kanban-item-image"
-			}
-		});
-		this.container.appendChild(this.containerImg);
-		// status
+
+		//endregion
+
+		//region status
 		this.task_status = BX.create("div", {
 			props: {
 				className: "tasks-kanban-item-task-status"
 			}
 		});
 		this.container.appendChild(this.task_status);
-		// deadline
-		this.date_deadline = BX.create("div", {
-			props: {
-				title: BX.message("TASKS_KANBAN_TITLE_DEADLINE")
-			}
-		});
-		this.task_status.appendChild(this.date_deadline);
-		// status title
+
+		//endregion
+
+		//region status title
 		this.task_status_title = BX.create("div", {
 			props: {
 				className: "tasks-kanban-item-status"
 			}
 		});
 		this.task_status.appendChild(this.task_status_title);
-		// info block
+
+		//endregion
+
+		//region background
+		this.containerImg = BX.create("a", {
+			props: {
+				className: "tasks-kanban-item-image"
+			}
+		});
+		this.container.appendChild(this.containerImg);
+
+		//endregion
+
+		//region info block
 		this.task_content = BX.create("div", {
 			props: { className: "tasks-kanban-item-info" }
 		});
 		this.container.appendChild(this.task_content);
-		// comments / checklist / files
-		this.count_comments = BX.create("a", {
+
+		//endregion
+
+		//region deadline
+		this.date_deadline = new BX.UI.Label({
+			text: data.deadline.value.replace('&minus;', '-'),
+			color: data.deadline.color,
+			fill: (data.date_deadline ? data.deadline.fill : false),
+			size: BX.UI.Label.Size.SM,
+		});
+		this.date_deadline_container = BX.create("div", {
+			props: {
+				className: "tasks-kanban-item-deadline",
+			},
+			children: [
+				this.date_deadline.getContainer()
+			]
+		});
+		this.container.appendChild(this.date_deadline_container);
+
+		//endregion
+
+		//region comments / checklist / files
+	/*	this.count_comments = BX.create("a", {
 			props: {
 				className: "tasks-kanban-item-comments"
 			},
@@ -896,7 +965,8 @@ BX.Tasks.Kanban.Item.prototype = {
 				}
 			}
 		});
-		this.task_content.appendChild(this.count_comments);
+		this.task_content.appendChild(this.count_comments);*/
+
 		this.check_list = BX.create("div", {
 			props: {
 				className: "tasks-kanban-item-checklist"
@@ -909,28 +979,65 @@ BX.Tasks.Kanban.Item.prototype = {
 			}
 		});
 		this.task_content.appendChild(this.count_files);
-		// user block
+
+		this.actions_container = BX.create("div", {
+			props: {
+				className: "tasks-kanban-actions-container"
+			}
+		});
+		this.container.appendChild(this.actions_container);
+
+		//endregion
+
+		//region user block
 		this.user_container = BX.create("div", {
 			props: {
 				className: "tasks-kanban-item-users"
 			}
 		});
-		this.container.appendChild(this.user_container);
-		// time
+		this.actions_container.appendChild(this.user_container);
+
+		//endregion
+
+		//region  time
 		this.time_logs = BX.create("div", {
 			props: {
 				className: "tasks-kanban-item-timelogs"
 			}
 		});
-		this.container.appendChild(this.time_logs);
-		// controls block
+		this.actions_container.appendChild(this.time_logs);
+
+		//endregion
+
+		//region controls block
 		this.track_control = BX.create("div", {
 			props: {
 				className: "tasks-kanban-item-control"
 			}
 		});
 		this.container.appendChild(this.track_control);
-		// start button
+
+		//endregion
+
+		//region mute button
+		this.task_mute = BX.create("div", {
+			props: {
+				className: "tasks-kanban-task-mute"
+			},
+			events: {
+				click: function (e)
+				{
+					this.muteTask();
+					e.stopPropagation();
+				}.bind(this)
+			}
+		});
+		// BX.hide(this.task_mute);
+		this.track_control.appendChild(this.task_mute);
+
+		//endregion
+
+		//region start button
 		this.task_start = BX.create("div", {
 			props: {
 				className: "tasks-kanban-task-start"
@@ -944,7 +1051,32 @@ BX.Tasks.Kanban.Item.prototype = {
 			}
 		});
 		this.track_control.appendChild(this.task_start);
-		// complete button
+		//endregion
+
+		//region checked button
+		if(this.getGrid().isMultiSelect())
+		{
+			this.task_check = BX.create("div", {
+				props: {
+					className: "tasks-kanban-item-checkbox"
+				},
+				events: {
+					click: function()
+					{
+						this.checked = !this.checked;
+						this.checked
+							? BX.addClass(this.checkedButton, "tasks-kanban-item-checkbox-checked")
+							: BX.removeClass(this.checkedButton, "tasks-kanban-item-checkbox-checked");
+					}.bind(this)
+				}
+			});
+
+			this.container.appendChild(this.task_check);
+		}
+
+		//endregion
+
+		//region complete button
 		this.task_complete = BX.create("div", {
 			props: {
 				className: "tasks-kanban-task-complete",
@@ -959,7 +1091,28 @@ BX.Tasks.Kanban.Item.prototype = {
 			}
 		});
 		this.track_control.appendChild(this.task_complete);
-		// hover / shadow
+
+		//endregion
+
+		//region Counters
+		this.task_counter = new BX.UI.Counter({
+			value: data.counter.value,
+			color: data.counter.color,
+			animate: true
+		});
+		this.task_counter_container = BX.create("div", {
+			props: {
+				className: "tasks-kanban-task-counter",
+			},
+			children: [
+				this.task_counter.getContainer()
+			]
+		});
+		this.container.appendChild(this.task_counter_container);
+
+		//endregion
+
+		//region hover / shadow
 		this.container.appendChild(this.createShadow());
 		this.container.addEventListener("mouseenter", function()
 		{
@@ -969,6 +1122,8 @@ BX.Tasks.Kanban.Item.prototype = {
 		{
 			this.removeHoverClass(this.container);
 		}.bind(this), false);
+
+		//endregion
 	},
 
 	/**
@@ -980,6 +1135,51 @@ BX.Tasks.Kanban.Item.prototype = {
 		return BX.create("div", {
 			props: { className: "tasks-kanban-item-shadow" }
 		});
+	},
+
+	/**
+	 * @returns {Element}
+	 */
+	getContainer: function()
+	{
+		if (this.layout.container !== null)
+		{
+			return this.layout.container;
+		}
+
+		this.layout.container = BX.create("div", {
+			attrs: {
+				className: this.grid.firstRenderComplete ? "main-kanban-item main-kanban-item-new" : "main-kanban-item",
+				"data-id": this.getId(),
+				"data-type": "item"
+			},
+			children: [
+				this.getDragTarget(),
+				this.getBodyContainer()
+			],
+			events: {
+				click: this.handleClick.bind(this)
+			}
+		});
+
+		this.makeDraggable();
+		this.makeDroppable();
+
+		BX.addCustomEvent("Kanban.Grid:onItemDragStart", function() {
+			if(this.getGrid().isRealtimeMode())
+			{
+				this.disableDropping();
+			}
+		}.bind(this));
+
+		BX.addCustomEvent("Kanban.Grid:onItemDragStop", function() {
+			if(this.getGrid().isRealtimeMode())
+			{
+				this.enableDropping();
+			}
+		}.bind(this));
+
+		return this.layout.container;
 	},
 
 	/**
@@ -1005,7 +1205,7 @@ BX.Tasks.Kanban.Item.prototype = {
 		clearTimeout(this.timer);
 		itemBlock.classList.remove("tasks-kanban-item-hover");
 	}
-	
+
 };
 
 })();

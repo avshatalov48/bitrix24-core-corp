@@ -36,7 +36,7 @@ $this->__component->params = $APPLICATION->IncludeComponent(
 );
 ?></div><?
 if ($arParams["CAN_REVOTE"] == "Y" || $arParams["CAN_VOTE"] == "Y") {
-	?><a href="<?=(strlen($arParams["ACTION_PAGE"]) > 0 ? $arParams["ACTION_PAGE"] : $APPLICATION->GetCurPageParam("", array("VOTE_ID","VOTING_OK","VOTE_SUCCESSFULL", "view_form", "view_result")))?>" <?
+	?><a href="<?=($arParams["ACTION_PAGE"] <> '' ? $arParams["ACTION_PAGE"] : $APPLICATION->GetCurPageParam("", array("VOTE_ID","VOTING_OK","VOTE_SUCCESSFULL", "view_form", "view_result")))?>" <?
 		?>id="vote-revote-<?=$arParams["UID"]?>" class="bx-vote-button bx-vote-button-vote" <?
 		?>><?=($arParams["CAN_REVOTE"] == "Y" ? GetMessage("VOTE_RESUBMIT_BUTTON") : GetMessage("VOTE_SUBMIT_BUTTON"))?></a><?
 }

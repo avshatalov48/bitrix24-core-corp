@@ -18,6 +18,7 @@ class DataInstallStep extends CWizardStep
 		$wizard =& $this->GetWizard();
 		$serviceID = $wizard->GetVar("nextStep");
 		$serviceStage = $wizard->GetVar("nextStepStage");
+		$siteID = $wizard->GetVar("siteID");
 
 		if ($serviceID == "finish")
 		{
@@ -50,8 +51,8 @@ class DataInstallStep extends CWizardStep
 		{
 			$formName = $wizard->GetFormName();
 			$response = "window.ajaxForm.StopAjax(); window.ajaxForm.SetStatus('100'); window.ajaxForm.Post('".$nextService."', '".$nextServiceStage."','".$status."');";
-			COption::SetOptionString("main", "wizard_first" . substr($wizard->GetID(), 7)  . "_" . $wizard->GetVar("siteID"), "Y", false, $siteID);
-			COption::SetOptionString("main", "~wizard_first" . substr($wizard->GetID(), 7)  . "_" . $wizard->GetVar("siteID"), "Y");
+			COption::SetOptionString("main", "wizard_first".mb_substr($wizard->GetID(), 7)  . "_" . $wizard->GetVar("siteID"), "Y", false, $siteID);
+			COption::SetOptionString("main", "~wizard_id", mb_substr($wizard->GetID(), 7), false, $siteID);
 		}
 		else
 		{
@@ -92,7 +93,7 @@ class DataInstallStep extends CWizardStep
 			<div id="error_notice">
 				<div class="inst-note-block inst-note-block-red">
 					<div class="inst-note-block-icon"></div>
-					<div class="inst-note-block-label">'.GetMessage("INST_ERROR_OCCURED").'</div><br />
+					<div class="inst-note-block-label">'.GetMessage("INST_ERROR_OCCURED").'</div><br style="clear:both" />
 					<div class="inst-note-block-text">'.GetMessage("INST_ERROR_NOTICE").'<div id="error_text"></div></div>
 				</div>
 			</div>
@@ -168,9 +169,9 @@ class DataInstallStep extends CWizardStep
 			}
 			else
 			{
-				if(substr($arGroupUser["STRING_ID"], -2) == $wizard->GetVar("siteID"))
+				if(mb_substr($arGroupUser["STRING_ID"], -2) == $wizard->GetVar("siteID"))
 				{
-					define("WIZARD_".substr($arGroupUser["STRING_ID"], 0, -3)."_GROUP", $arGroupUser["ID"]);
+					define("WIZARD_".mb_substr($arGroupUser["STRING_ID"], 0, -3)."_GROUP", $arGroupUser["ID"]);
 				}
 			}
 		}
@@ -256,7 +257,7 @@ class DataInstallExtranetStep extends CWizardStep
 
 		COption::SetOptionString("main", "wizard_site_folder_extranet", "/extranet/");
 		COption::SetOptionString("main", "wizard_site_code_extranet", "ex");
-		COption::SetOptionString("main", "wizard_site_name_extranet", "Экстранет");
+		COption::SetOptionString("main", "wizard_site_name_extranet", "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ");
 	}
 
 	function OnPostForm()
@@ -327,7 +328,7 @@ class DataInstallExtranetStep extends CWizardStep
 			<div id="error_notice">
 				<div class="inst-note-block inst-note-block-red">
 					<div class="inst-note-block-icon"></div>
-					<div class="inst-note-block-label">'.GetMessage("INST_ERROR_OCCURED").'</div><br />
+					<div class="inst-note-block-label">'.GetMessage("INST_ERROR_OCCURED").'</div><br style="clear:both" />
 					<div class="inst-note-block-text">'.GetMessage("INST_ERROR_NOTICE").'<div id="error_text"></div></div>
 				</div>
 			</div>

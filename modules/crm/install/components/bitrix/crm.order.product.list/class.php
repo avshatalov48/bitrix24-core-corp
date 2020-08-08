@@ -198,7 +198,7 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 		{
 			$item = $_SESSION['ORDER_BASKET'][$this->order->getId()]['ITEMS'][$_REQUEST['parent_id']];
 			$productId = $item['PRODUCT_ID'];
-			$parentQuantity = (int)$item['QUANTITY'];
+			$parentQuantity = (float)$item['QUANTITY'];
 		}
 		elseif ((int)$_REQUEST['parent_id'] > 0)
 		{
@@ -206,7 +206,7 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 			if ($basketItem = $basket->getItemByBasketCode((int)$_REQUEST['parent_id']))
 			{
 				$productId = $basketItem->getProductId();
-				$parentQuantity = (int)$basketItem->getQuantity();
+				$parentQuantity = (float)$basketItem->getQuantity();
 			}
 		}
 
@@ -372,6 +372,7 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 				$data["PARENT_ID"] = $values["PARENT_ID"];
 			}
 			$data["DISCOUNT_PRICE"] = CCrmCurrency::MoneyToString($values['DISCOUNT_PRICE'], $values['CURRENCY']);
+			$data["CUSTOM_PRICE"] = $values["CUSTOM_PRICE"];
 			$rows[] = $data;
 		}
 
@@ -465,34 +466,7 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 
 	private function initCouponsData($newUserId, $orderId = 0, $oldUserId = 0)
 	{
-		$newUserId = (int)$newUserId;
-		$orderId = (int)$orderId;
-
-		$params = array('userId' => $newUserId);
-
-		if ($oldUserId !== null)
-		{
-			$oldUserId = (int)$oldUserId;
-			if ($oldUserId != $newUserId)
-				$params["oldUserId"] = $oldUserId;
-		}
-
-		if ($orderId > 0)
-		{
-			$params['orderId'] = $orderId;
-
-			DiscountCouponsManager::init(
-				DiscountCouponsManager::MODE_ORDER,
-				$params
-			);
-		}
-		else
-		{
-			DiscountCouponsManager::init(
-				DiscountCouponsManager::MODE_MANAGER,
-				$params
-			);
-		}
+		\Bitrix\Sale\Helpers\Admin\OrderEdit::initCouponsData($newUserId, $orderId, $oldUserId);
 	}
 
 	private function addRequiredFields($flippedVisibleColumns)
@@ -638,7 +612,6 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 		$this->arResult['CAN_UPDATE_ORDER'] = \Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission(intval($this->arResult['ORDER_ID']), $this->userPermissions);
 		$this->arResult['VAT_RATES'] = $this->getVatRates();
 
-		\Bitrix\Sale\Helpers\Admin\OrderEdit::initCouponsData($this->order->getUserId(), $this->order->getId(), null);
 		$this->arResult["DISCOUNTS_LIST"] = \Bitrix\Sale\Helpers\Admin\OrderEdit::getOrderedDiscounts($this->order);
 
 		if(is_array($this->arResult["DISCOUNTS_LIST"]['DISCOUNT_LIST']))

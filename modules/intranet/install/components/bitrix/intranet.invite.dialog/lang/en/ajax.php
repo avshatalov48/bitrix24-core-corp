@@ -11,4 +11,5 @@ $MESS["BX24_INVITE_DIALOG_INVITE_PHONE"] = "<b><b>Congratulations!</b><br><br>Bi
 $MESS["BX24_INVITE_DIALOG_SELF"] = "<b>Congratulations!</b><br><br>Quick registration settings have been updated.";
 $MESS["BX24_INVITE_DIALOG_WARNING_CREATE_MAILBOX_ERROR"] = "Error creating new mailbox:";
 $MESS["BX24_INVITE_DIALOG_WARNING_MAILBOX_PASSWORD_CONFIRM"] = "Your password and confirmation password do not match";
+$MESS["BX24_INVITE_DIALOG_INTEGRATOR_INVITE_TEXT"] = "I'm inviting you to join our Bitrix24! You will get full Bitrix24 partner permissions to help us set up and configure Bitrix24 account. Those are full access permissions except you cannot add or delete system administrators.";
 ?>

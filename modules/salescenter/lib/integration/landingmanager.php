@@ -10,6 +10,7 @@ use Bitrix\Landing\Rights;
 use Bitrix\Landing\Site;
 use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
@@ -18,13 +19,17 @@ use Bitrix\Main\ORM\Data\UpdateResult;
 use Bitrix\Main\Result;
 use Bitrix\Main\Web\Uri;
 use Bitrix\SalesCenter\Driver;
+use Bitrix\Sale;
+use Bitrix\Crm\Order;
 use Bitrix\SalesCenter\Model\Meta;
 use Bitrix\SalesCenter\Model\PageTable;
 
 class LandingManager extends Base
 {
-	const SITE_TEMPLATE_CODE = 'store-chats';
-	const OPTION_SALESCENTER_SITE_ID = '~connected_site_id';
+	public const SITE_TEMPLATE_CODE = 'store-chats';
+
+	protected const OPTION_SALESCENTER_SITE_ID = '~connected_site_id';
+	protected const OPTION_SALESCENTER_INSTALL_DEFAULT_SITES_TRIES_COUNT = '~install_default_site_tries_count';
 
 	protected $connectedSite;
 	protected $orderPublicUrlInfo;
@@ -57,12 +62,13 @@ class LandingManager extends Base
 			$landingId = $event->getParameter('id');
 			if($landingId != static::getInstance()->getConnectedSiteId())
 			{
-				static::getInstance()->setConnectedSiteId($landingId);
-				static::getInstance()->createWebFormPages();
 				if(static::getInstance()->isConnectionAvailable())
 				{
 					\Bitrix\Landing\PublicAction\Site::publication($landingId, true);
 				}
+
+				static::getInstance()->createWebFormPages();
+				static::getInstance()->setConnectedSiteId($landingId);
 			}
 		}
 
@@ -150,6 +156,15 @@ class LandingManager extends Base
 						}
 						$content = '<meta property="og:title" content="'.$title.'" />
 						<meta property="og:description" content="'.$description.'" />';
+						if(!$image)
+						{
+							$fields = $hook->getPageFields();
+							if(isset($fields['METAOG_IMAGE']))
+							{
+								$field = $fields['METAOG_IMAGE'];
+								$image = $field->getValue();
+							}
+						}
 						if($image)
 						{
 							$content .= '<meta property="og:image" content="'.$image.'" />';
@@ -246,6 +261,21 @@ class LandingManager extends Base
 
 		return new EventResult(EventResult::SUCCESS);
 	}
+
+	public static function onLandingStartPublication(Event $event)
+    {
+        $result = new EventResult(EventResult::SUCCESS);
+        $siteId = (int) $event->getParameter('siteId');
+
+        if($siteId === static::getInstance()->getConnectedSiteId())
+        {
+            \Bitrix\Landing\Manager::enableFeatureTmp(
+                \Bitrix\Landing\Manager::FEATURE_PUBLICATION_SITE
+            );
+        }
+
+        return $result;
+    }
 	//endregion
 
 	//region site
@@ -283,7 +313,7 @@ class LandingManager extends Base
 	 */
 	public function isSiteExists()
 	{
-		return ($this->isEnabled && $this->getConnectedSite() !== false);
+		return ($this->isEnabled && $this->getConnectedSite() !== null);
 	}
 
 	/**
@@ -294,29 +324,36 @@ class LandingManager extends Base
 	{
 		if(is_string($code))
 		{
-			return strpos($code, static::SITE_TEMPLATE_CODE) === 0;
+			return mb_strpos($code, static::SITE_TEMPLATE_CODE) === 0;
 		}
 
 		return false;
 	}
 
 	/**
-	 * @return array|false
+	 * @return array|null
 	 */
 	protected function getConnectedSite()
 	{
-		if($this->connectedSite === null)
+		if ($this->connectedSite === null)
 		{
-			$this->connectedSite = false;
-
 			$siteId = $this->getConnectedSiteId();
-			if($siteId > 0 && $this->isEnabled)
+			if ($siteId > 0 && $this->isEnabled)
 			{
 				Rights::setOff();
-				$this->connectedSite = Site::getList(['select' => ['ID', 'ACTIVE', 'XML_ID'], 'filter' => [
-					'=ID' => $siteId,
-					'=DELETED' => 'N',
-				]])->fetch();
+				$site = Site::getList([
+					'select' => ['ID', 'ACTIVE', 'XML_ID'],
+					'filter' => [
+						'=ID' => $siteId,
+						'=DELETED' => 'N',
+					],
+				])->fetch();
+
+				if ($site)
+				{
+					$this->connectedSite = $site;
+				}
+
 				Rights::setOn();
 			}
 		}
@@ -337,6 +374,64 @@ class LandingManager extends Base
 					'type' => 'STORE'
 				]
 			);
+		}
+
+		return false;
+	}
+
+	public function tryInstallDefaultSiteOnce(): void
+	{
+		if(!$this->isEnabled())
+		{
+			return;
+		}
+
+		if(!$this->isTriedInstallDefaultSite())
+		{
+			$this->installDefaultSite();
+			$this->markTriedInstallDefaultSiteStatus();
+		}
+	}
+
+	protected function isTriedInstallDefaultSite(): bool
+	{
+		return (
+			(int) Option::get(
+				Driver::MODULE_ID,
+				static::OPTION_SALESCENTER_INSTALL_DEFAULT_SITES_TRIES_COUNT,
+				0) > 0
+		);
+	}
+
+	protected function markTriedInstallDefaultSiteStatus(): void
+	{
+		Option::set(
+			Driver::MODULE_ID,
+			static::OPTION_SALESCENTER_INSTALL_DEFAULT_SITES_TRIES_COUNT,
+			1
+		);
+	}
+
+	protected function installDefaultSite(): bool
+	{
+		if($this->isSiteExists())
+		{
+			return true;
+		}
+
+		if($this->isEnabled())
+		{
+			$componentName = 'bitrix:landing.demo';
+			$className = \CBitrixComponent::includeComponentClass($componentName);
+			$demoCmp = new $className;
+			/** @var \LandingSiteDemoComponent $demoCmp */
+			$demoCmp->initComponent($componentName);
+			$demoCmp->arParams = [
+				'TYPE' => 'STORE',
+				'DISABLE_REDIRECT' => 'Y'
+			];
+
+			return $demoCmp->actionSelect('store-chats-dark');
 		}
 
 		return false;
@@ -524,7 +619,6 @@ class LandingManager extends Base
 	{
 		if($this->orderPublicUrlInfo === null)
 		{
-			$this->orderPublicUrlInfo = false;
 			if($this->isEnabled && $this->isSiteExists())
 			{
 				Rights::setOff();
@@ -547,6 +641,11 @@ class LandingManager extends Base
 			}
 		}
 
+		if (!$this->orderPublicUrlInfo)
+		{
+			return false;
+		}
+
 		$orderPublicUrlInfo = $this->orderPublicUrlInfo;
 
 		if(is_array($orderPublicUrlInfo) && !empty($urlParameters))
@@ -556,7 +655,58 @@ class LandingManager extends Base
 			$orderPublicUrlInfo['url'] = $uri->getLocator();
 		}
 
+		$orderPublicUrlInfo['shortUrl'] = UrlManager::getInstance()->getHostUrl().\CBXShortUri::GetShortUri($orderPublicUrlInfo['url']);
+
 		return $orderPublicUrlInfo;
+	}
+
+	/**
+	 * Get url info by order.
+	 *
+	 * @param Sale\Order $order Order.
+	 * @param array $urlParameters Url parameters.
+	 * @return array|false
+	 */
+	public function getUrlInfoByOrder(Sale\Order $order, array $urlParameters = [])
+	{
+		static $info = [];
+
+		if (!isset($info[$order->getId()]))
+		{
+			$urlInfo = false;
+			if ($this->isOrderPublicUrlAvailable())
+			{
+				$urlParameters = [
+						'orderId' => $order->getId(),
+						'access' => $order->getHash()
+					] + $urlParameters;
+
+				$urlInfo = $this->getOrderPublicUrlInfo($urlParameters);
+			}
+
+			$info[$order->getId()] = $urlInfo;
+		}
+
+		return $info[$order->getId()];
+	}
+
+	/**
+	 * Get url info by orderId.
+	 *
+	 * @param $orderId
+	 * @param array $urlParameters
+	 * @return mixed|null
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 */
+	public function getUrlInfoByOrderId($orderId, array $urlParameters = [])
+	{
+		$order = Order\Order::load($orderId);
+		if (!$order)
+		{
+			return null;
+		}
+
+		return $this->getUrlInfoByOrder($order);
 	}
 
 	/**
@@ -599,6 +749,7 @@ class LandingManager extends Base
 			'select' => ['*'],
 			'filter' => [
 				'=LID' => $landingIds,
+				'=DELETED' => 'N',
 				'CONTENT' => '%data-b24form=%',
 			]
 		])->fetchAll();
@@ -912,7 +1063,7 @@ class LandingManager extends Base
 		if($this->isSiteExists())
 		{
 			$xmlId = $this->getConnectedSite()['XML_ID'];
-			list(, $code) = explode('|', $xmlId);
+			[, $code] = explode('|', $xmlId);
 
 			return $code;
 		}

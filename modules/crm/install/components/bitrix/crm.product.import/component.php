@@ -1,4 +1,6 @@
 <?php
+use Bitrix\Iblock;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 define('NO_KEEP_STATISTIC', 'Y');
@@ -164,7 +166,7 @@ if(isset($_REQUEST['getSample']) && $_REQUEST['getSample'] == 'csv')
 		foreach($arResult['HEADERS'] as $arField)
 		{
 			$currentKey = $arField['id'];
-			if (substr($currentKey, 0, 9) === 'PROPERTY_' && is_array($arProps) && !empty($arProps))
+			if (mb_substr($currentKey, 0, 9) === 'PROPERTY_' && is_array($arProps) && !empty($arProps))
 			{
 				if (is_array($arProps[$currentKey])
 					&& isset($arProps[$currentKey]['PROPERTY_TYPE'])
@@ -172,7 +174,7 @@ if(isset($_REQUEST['getSample']) && $_REQUEST['getSample'] == 'csv')
 					&& ($i === 0
 						|| (isset($arProps[$currentKey]['MULTIPLE']) && $arProps[$currentKey]['MULTIPLE'] === 'Y')))
 				{
-					$propID = intval(substr($currentKey, 9));
+					$propID = intval(mb_substr($currentKey, 9));
 					$propValue = null;
 
 					if ($arProps[$currentKey]['PROPERTY_TYPE'] === 'S'
@@ -243,7 +245,7 @@ if(isset($_REQUEST['getSample']) && $_REQUEST['getSample'] == 'csv')
 						if (isset($arProps[$currentKey]['MULTIPLE']) && $arProps[$currentKey]['MULTIPLE'] === 'Y')
 							$propValue .= ($i + 1);
 						$fileExt = 'txt';
-						if (isset($arProps[$currentKey]['FILE_TYPE']) && strlen($arProps[$currentKey]['FILE_TYPE']) > 0)
+						if (isset($arProps[$currentKey]['FILE_TYPE']) && $arProps[$currentKey]['FILE_TYPE'] <> '')
 						{
 							$arFileExt = explode(',', $arProps[$currentKey]['FILE_TYPE']);
 							$nFileExt = count($arFileExt);
@@ -690,7 +692,7 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 					$productIndex = $data;
 					$data = null;
 				}
-				else if (substr($currentKey, 0, 1) === '~' || empty($data))
+				else if (mb_substr($currentKey, 0, 1) === '~' || empty($data))
 				{
 					continue;
 				}
@@ -727,7 +729,7 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 					$data = array_search($data, $arMeasures);
 					$data = ($data === false) ? null : intval($data);
 				}
-				else if (substr($currentKey, 0, 11) === 'SECTION_ID_')
+				else if (mb_substr($currentKey, 0, 11) === 'SECTION_ID_')
 				{
 					$data = trim(strval($data));
 				}
@@ -740,15 +742,15 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 					if (CCrmUrlUtil::HasScheme($data) && CCrmUrlUtil::IsSecureUrl($data))
 					{
 						$data = CFile::MakeFileArray($data);
-						if (is_array($data) && strlen(CFile::CheckImageFile($data)) === 0)
+						if (is_array($data) && CFile::CheckImageFile($data) == '')
 							$data = array_merge($data, array('MODULE_ID' => 'crm'));
 						else
 							$data = null;
 					}
 				}
-				else if (substr($currentKey, 0, 9) === 'PROPERTY_' && is_array($arProps) && !empty($arProps))
+				else if (mb_substr($currentKey, 0, 9) === 'PROPERTY_' && is_array($arProps) && !empty($arProps))
 				{
-					$propID = intval(substr($currentKey, 9));
+					$propID = intval(mb_substr($currentKey, 9));
 
 					if ($arProps[$currentKey]['MULTIPLE'] === 'Y' && !isset($arMultipleProps[$propID]))
 						$arMultipleProps[$propID] = $key;
@@ -792,14 +794,14 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 							{
 								$data = CFile::MakeFileArray($data);
 								$file = new CFile();
-								if (is_array($data) && strlen($file->CheckFile($data)) === 0)
+								if (is_array($data) && $file->CheckFile($data) == '')
 									$prop = array('VALUE' => array_merge($data, array('MODULE_ID' => 'crm')));
 								unset($file);
 							}
 						} else if ($arProps[$currentKey]['PROPERTY_TYPE'] === 'S'
 							&& $arProps[$currentKey]['USER_TYPE'] === 'HTML')
 						{
-							if (strtoupper(substr($data, 0, 6)) !== '[TEXT]')
+							if (mb_strtoupper(mb_substr($data, 0, 6)) !== '[TEXT]')
 							{
 								$data = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($data);
 							}
@@ -963,10 +965,10 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 		$arProductSections = array();
 		foreach ($arProduct as $key => $value)
 		{
-			if (substr($key, 0, 11) === 'SECTION_ID_')
+			if (mb_substr($key, 0, 11) === 'SECTION_ID_')
 			{
-				$strLevel = substr($key, 11);
-				if ($strLevel !== false && strlen($strLevel) > 0)
+				$strLevel = mb_substr($key, 11);
+				if ($strLevel !== false && $strLevel <> '')
 				{
 					$sectionLevel = intval($strLevel);
 					if ($sectionLevel > 0)
@@ -987,9 +989,9 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 		if (isset($arProduct['XML_ID']))
 		{
 			$xmlId = strval($arProduct['XML_ID']);
-			$xmlId = substr($xmlId, 0, 256);
+			$xmlId = mb_substr($xmlId, 0, 256);
 
-			if (strlen($xmlId) > 0)
+			if ($xmlId <> '')
 			{
 				$res = CCrmProduct::GetList(['ID' => 'DESC'], ['=XML_ID' => $xmlId], ['ID'], ['nTopCount' => 1]);
 				if (is_object($res))
@@ -1039,20 +1041,36 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 					array(
 						'ACTIVE' => 'Y',
 						'EMPTY' => 'N',
-						'PROPERTY_TYPE' => 'F',
 						'CHECK_PERMISSIONS' => 'N'
 					)
 				);
+				$oldPropertyValues = [];
 				$propertyValues = [];
 				while ($row = $res->Fetch())
 				{
-					if (isset($row['ID'])
-						&& isset($row['MULTIPLE']) && $row['MULTIPLE'] === 'Y'
-						&& isset($row['PROPERTY_VALUE_ID']))
+					if ($row['PROPERTY_TYPE'] === Iblock\PropertyTable::TYPE_FILE)
+					{
+						if (isset($row['ID'])
+							&& isset($row['MULTIPLE']) && $row['MULTIPLE'] === 'Y'
+							&& isset($row['PROPERTY_VALUE_ID']))
+						{
+							$propertyId = (int)$row['ID'];
+							$propertyValueId = (int)$row['PROPERTY_VALUE_ID'];
+							$propertyValues[$propertyId][$propertyValueId] = ['del' => 'Y'];
+						}
+					}
+					else
 					{
 						$propertyId = (int)$row['ID'];
 						$propertyValueId = (int)$row['PROPERTY_VALUE_ID'];
-						$propertyValues[$propertyId][$propertyValueId] = ['del' => 'Y'];
+						if (!isset($oldPropertyValues[$propertyId]))
+						{
+							$oldPropertyValues[$propertyId] = [];
+						}
+						$oldPropertyValues[$propertyId][$propertyValueId] = [
+							'VALUE' => $row['VALUE'],
+							'DESCRIPTION' => $row['DESCRIPTION']
+						];
 					}
 				}
 				unset($res, $row, $propertyId, $propertyValueId);
@@ -1069,6 +1087,18 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 					}
 				}
 				unset($propertyId, $newPropertyValues, $propertyValueId, $propertyValue);
+
+				if (!empty($oldPropertyValues))
+				{
+					foreach (array_keys($oldPropertyValues) as $propertyId)
+					{
+						if (!isset($arProduct['PROPERTY_VALUES'][$propertyId]))
+						{
+							$arProduct['PROPERTY_VALUES'][$propertyId] = $oldPropertyValues[$propertyId];
+						}
+					}
+				}
+				unset($oldPropertyValues);
 			}
 			
 			if (!CCrmProduct::Update($productId, $arProduct))
@@ -1174,7 +1204,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 						$fileEncoding = $_POST['hidden_file_import_encoding'];
 					}
 
-					if($fileEncoding !== '' && $fileEncoding !== '_' && $fileEncoding !== strtolower(SITE_CHARSET))
+					if($fileEncoding !== '' && $fileEncoding !== '_' && $fileEncoding !== mb_strtolower(SITE_CHARSET))
 					{
 						$convertCharsetErrorMsg = '';
 						$fileHandle = fopen($_SESSION['CRM_IMPORT_FILE'], 'rb');
@@ -1182,9 +1212,9 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 						fclose($fileHandle);
 
 						//HACK: Remove UTF-8 BOM
-						if($fileEncoding === 'utf-8' && substr($fileContents, 0, 3) === "\xEF\xBB\xBF")
+						if($fileEncoding === 'utf-8' && mb_substr($fileContents, 0, 3) === "\xEF\xBB\xBF")
 						{
-							$fileContents = substr($fileContents, 3);
+							$fileContents = mb_substr($fileContents, 3);
 						}
 
 						$fileContents = CharsetConverter::ConvertCharset($fileContents, $fileEncoding, SITE_CHARSET, $convertCharsetErrorMsg);
@@ -1331,7 +1361,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 
 			$arConfig = Array();
 			foreach ($_POST as $key => $value)
-				if(strpos($key, 'IMPORT_FILE_FIELD_') !== false)
+				if(mb_strpos($key, 'IMPORT_FILE_FIELD_') !== false)
 					$_SESSION['CRM_'.$key] = $value;
 
 			ob_start();
@@ -1374,7 +1404,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 		{
 			@unlink($_SESSION['CRM_IMPORT_FILE']);
 			foreach ($_SESSION as $key => $value)
-				if(strpos($key, 'CRM_IMPORT_FILE') !== false)
+				if(mb_strpos($key, 'CRM_IMPORT_FILE') !== false)
 					unset($_SESSION[$key]);
 
 			LocalRedirect(
@@ -1391,7 +1421,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 	{
 		@unlink($_SESSION['CRM_IMPORT_FILE']);
 		foreach ($_SESSION as $key => $value)
-			if(strpos($key, 'CRM_IMPORT_FILE') !== false)
+			if(mb_strpos($key, 'CRM_IMPORT_FILE') !== false)
 				unset($_SESSION[$key]);
 
 		$arResult['STEP'] = 1;
@@ -1400,7 +1430,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 	{
 		@unlink($_SESSION['CRM_IMPORT_FILE']);
 		foreach ($_SESSION as $key => $value)
-			if(strpos($key, 'CRM_IMPORT_FILE') !== false)
+			if(mb_strpos($key, 'CRM_IMPORT_FILE') !== false)
 				unset($_SESSION[$key]);
 
 		LocalRedirect(
@@ -1448,7 +1478,7 @@ $encodings = array(
 	'koi8-r' => 'KOI8-R'
 );
 
-$siteEncoding = strtolower(SITE_CHARSET);
+$siteEncoding = mb_strtolower(SITE_CHARSET);
 $arResult['ENCODING_SELECTOR_ID'] = 'import_file_encoding';
 $arResult['HIDDEN_FILE_IMPORT_ENCODING'] = 'hidden_file_import_encoding';
 

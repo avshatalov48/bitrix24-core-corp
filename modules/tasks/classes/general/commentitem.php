@@ -6,8 +6,11 @@
  * @copyright 2001-2013 Bitrix
  */
 
+use Bitrix\Disk;
+use Bitrix\Main;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\SocialNetwork;
 use Bitrix\Tasks\Integration\Disk\Rest\Attachment;
 use Bitrix\Tasks\Integration\Forum\Task\Comment;
 
@@ -186,58 +189,104 @@ final class CTaskCommentItem extends CTaskSubItemAbstract
 		return $fields;
 	}
 
-	final protected function fetchListFromDb($taskData, $arOrder = array(), $arFilter = array())
+	final protected function fetchListFromDb($taskData, $order = [], $filter = [])
 	{
 		CTaskAssert::assertLaxIntegers($taskData['ID']);
 
-		$arItemsData = array();
-		$rsData = null;
+		$comments = [];
+		$commentsResult = null;
 
-		if ($topicId = intval($taskData['FORUM_TOPIC_ID']))
+		if ($topicId = (int)$taskData['FORUM_TOPIC_ID'])
 		{
-			CTaskAssert::assert(\Bitrix\Main\Loader::IncludeModule('forum'));
+			CTaskAssert::assert(Main\Loader::includeModule('disk'));
+			CTaskAssert::assert(Main\Loader::includeModule('forum'));
+			CTaskAssert::assert(Main\Loader::includeModule('socialnetwork'));
 
-			if (!is_array($arFilter))
-			{
-				$arFilter = array();
-			}
+			$filter = (is_array($filter) ? $filter : []);
+			$filter['TOPIC_ID'] = $topicId;
 
-			$arFilter['TOPIC_ID'] = $topicId;
+			$commentsResult = CForumMessage::GetList($order, $filter);
 
-			$rsData = CForumMessage::GetList($arOrder, $arFilter/*, false, 0, array("SELECT" => array("UF_FORUM_MESSAGE_DOC"))*/);
-
-			if (!is_object($rsData))
+			if (!is_object($commentsResult))
 			{
 				throw new Exception();
 			}
 
-			CTaskAssert::assert(\Bitrix\Main\Loader::includeModule('disk'));
-
-			$driver = \Bitrix\Disk\Driver::getInstance();
-			$userFieldManager = $driver->getUserFieldManager();
-
-			while ($arData = $rsData->fetch())
+			while ($comment = $commentsResult->fetch())
 			{
-				if ($arData['NEW_TOPIC'] == 'Y') // typically the first one is a non-interesting system message, so skip it
+				// typically the first one is a non-interesting system message, so skip it
+				if ($comment['NEW_TOPIC'] === 'Y')
 				{
 					continue;
 				}
 
-				$attachedObjects = $userFieldManager->getAttachedObjectByEntity(
-					'FORUM_MESSAGE',
-					$arData['ID'],
-					'UF_FORUM_MESSAGE_DOC'
-				);
-				foreach ($attachedObjects as $object)
-				{
-					$arData['ATTACHED_OBJECTS_IDS'][] = $object->getId();
-				}
+				$comment = static::parseCommentPostMessage($comment);
+				$comment = static::getCommentAttachmentIds($comment);
 
-				$arItemsData[] = $arData;
+				$comments[] = $comment;
 			}
 		}
 
-		return (array($arItemsData, $rsData));
+		return [$comments, $commentsResult];
+	}
+
+	/**
+	 * @param array $comment
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private static function parseCommentPostMessage(array $comment): array
+	{
+		/** @var Socialnetwork\CommentAux\TaskInfo $commentAuxProvider */
+		$commentAuxProvider = Socialnetwork\CommentAux\Base::findProvider(
+			['POST_TEXT' => $comment['POST_MESSAGE']],
+			['needSetParams' => false]
+		);
+		if ($commentAuxProvider)
+		{
+			$forumPostLivefeedProvider = new Socialnetwork\Livefeed\ForumPost();
+			$dbres = Socialnetwork\LogCommentTable::getList([
+				'filter' => [
+					'SOURCE_ID' => $comment['ID'],
+					'EVENT_ID' => $forumPostLivefeedProvider->getEventId(),
+				],
+				'select' => ['EVENT_ID', 'SHARE_DEST', 'LOG_ID'],
+			]);
+			if ($sonetCommentFields = $dbres->fetch())
+			{
+				$auxParams = $commentAuxProvider->getParamsFromFields($sonetCommentFields);
+				if (!empty($auxParams))
+				{
+					$commentAuxProvider->setParams($auxParams);
+					$comment['POST_MESSAGE'] = $commentAuxProvider->getText();
+				}
+			}
+		}
+
+		return $comment;
+	}
+
+	/**
+	 * @param array $comment
+	 * @return array
+	 */
+	private static function getCommentAttachmentIds(array $comment): array
+	{
+		$driver = Disk\Driver::getInstance();
+		$userFieldManager = $driver->getUserFieldManager();
+		$attachedObjects = $userFieldManager->getAttachedObjectByEntity(
+			'FORUM_MESSAGE',
+			$comment['ID'],
+			'UF_FORUM_MESSAGE_DOC'
+		);
+		foreach ($attachedObjects as $object)
+		{
+			$comment['ATTACHED_OBJECTS_IDS'][] = $object->getId();
+		}
+
+		return $comment;
 	}
 
 	final protected function fetchDataFromDb($taskId, $itemId)
@@ -331,50 +380,47 @@ final class CTaskCommentItem extends CTaskSubItemAbstract
 			elseif ($methodName === 'getlist')
 			{
 				$taskId = $argsParsed[0];
-				$order = is_array($argsParsed[1]) ? $argsParsed[1] : array();
-				$filter = is_array($argsParsed[2]) ? $argsParsed[2] : array();
-				$oTaskItem = CTaskItem::getInstance($taskId, $executiveUserId);
-				[$oCommentItems, $rsData] = self::fetchList($oTaskItem, $order, $filter);
+				$task = CTaskItem::getInstance($taskId, $executiveUserId);
+				$order = (is_array($argsParsed[1]) ? $argsParsed[1] : []);
+				$filter = (is_array($argsParsed[2]) ? $argsParsed[2] : []);
 
-				$returnValue = array();
+				[$commentItems, ] = self::fetchList($task, $order, $filter);
 
-				foreach ($oCommentItems as $oCommentItem)
+				$returnValue = [];
+				foreach ($commentItems as $commentItem)
 				{
-					$returnValue[] = $oCommentItem->getData(false);
+					$returnValue[] = $commentItem->getData(false);
 				}
 			}
 			else
 			{
-				$returnValue = call_user_func_array(array('self', $methodName), $argsParsed);
+				$returnValue = call_user_func_array(['self', $methodName], $argsParsed);
 			}
 		}
 		else
 		{
-			$taskId     = array_shift($argsParsed);
-			$itemId     = array_shift($argsParsed);
-			$oTaskItem  = CTaskItem::getInstance($taskId, $executiveUserId);
-			$obComment  = new self($oTaskItem, $itemId);
+			$taskId = array_shift($argsParsed);
+			$itemId = array_shift($argsParsed);
+			$task = CTaskItem::getInstance($taskId, $executiveUserId);
+			$comment = new self($task, $itemId);
 
 			if ($methodName === 'get')
 			{
-				CTaskAssert::assert(\Bitrix\Main\Loader::includeModule('disk'));
+				CTaskAssert::assert(Main\Loader::includeModule('disk'));
+				CTaskAssert::assert(Main\Loader::includeModule('forum'));
+				CTaskAssert::assert(Main\Loader::includeModule('socialnetwork'));
 
-				$driver = \Bitrix\Disk\Driver::getInstance();
-				$userFieldManager = $driver->getUserFieldManager();
-
-				$returnValue = $obComment->getData();
-				foreach ($userFieldManager->getAttachedObjectByEntity('FORUM_MESSAGE', $itemId, 'UF_FORUM_MESSAGE_DOC') as $attachedObject)
-				{
-					$returnValue['ATTACHED_OBJECTS_IDS'][] = $attachedObject->getId();
-				}
+				$returnValue = $comment->getData();
+				$returnValue = static::parseCommentPostMessage($returnValue);
+				$returnValue = static::getCommentAttachmentIds($returnValue);
 			}
 			else
 			{
-				$returnValue = call_user_func_array(array($obComment, $methodName), $argsParsed);
+				$returnValue = call_user_func_array([$comment, $methodName], $argsParsed);
 			}
 		}
 
-		return (array($returnValue, null));
+		return [$returnValue, null];
 	}
 
 	public static function onEventFilter($arParams, $arHandler)
@@ -402,30 +448,30 @@ final class CTaskCommentItem extends CTaskSubItemAbstract
 			return;
 		}
 
-		switch (strtolower($arHandler['EVENT_NAME']))
+		switch(mb_strtolower($arHandler['EVENT_NAME']))
 		{
 			case 'ontaskcommentadd':
-				$arEventFields['FIELDS_AFTER']         =  array('ID' => $commentId, 'TASK_ID' => $taskId);
+				$arEventFields['FIELDS_AFTER'] = array('ID' => $commentId, 'TASK_ID' => $taskId);
 				$arEventFields['IS_ACCESSIBLE_BEFORE'] = 'N';
-			break;
+				break;
 
 			case 'ontaskcommentupdate':
-				$arEventFields['FIELDS_BEFORE']        =  array('ID' => $commentId, 'TASK_ID' => $taskId);
-				$arEventFields['FIELDS_AFTER']         =  array('ID' => $commentId, 'TASK_ID' => $taskId, 'ACTION' => 'EDIT');
-			break;
+				$arEventFields['FIELDS_BEFORE'] = array('ID' => $commentId, 'TASK_ID' => $taskId);
+				$arEventFields['FIELDS_AFTER'] = array('ID' => $commentId, 'TASK_ID' => $taskId, 'ACTION' => 'EDIT');
+				break;
 
 			case 'ontaskcommentdelete':
-				$arEventFields['FIELDS_BEFORE']        =  array('ID' => $commentId, 'TASK_ID' => $taskId);
-				$arEventFields['FIELDS_AFTER']         =  array('ID' => $commentId, 'TASK_ID' => $taskId, 'ACTION' => 'DEL');
+				$arEventFields['FIELDS_BEFORE'] = array('ID' => $commentId, 'TASK_ID' => $taskId);
+				$arEventFields['FIELDS_AFTER'] = array('ID' => $commentId, 'TASK_ID' => $taskId, 'ACTION' => 'DEL');
 				break;
 
 			default:
 				throw new Exception(
 					'tasks\' RPC event handler: onEventFilter: '
-					. 'not allowed $arHandler[\'EVENT_NAME\']: '
-					. $arHandler['EVENT_NAME']
+					.'not allowed $arHandler[\'EVENT_NAME\']: '
+					.$arHandler['EVENT_NAME']
 				);
-			break;
+				break;
 		}
 
 		return ($arEventFields);

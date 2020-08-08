@@ -1,13 +1,14 @@
 <?php
 
-use \Bitrix\Main\Application;
-use \Bitrix\Main\Localization\Loc;
-use \Bitrix\Crm\EntityRequisite;
-use \Bitrix\Crm\EntityBankDetail;
-use \Bitrix\Crm\EntityPreset;
-use \Bitrix\Crm\Integration\ClientResolver;
-use \Bitrix\Crm\Integration\Rest\AppPlacement;
-use \Bitrix\Rest\PlacementTable;
+use Bitrix\Main\Application;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\EntityRequisite;
+use Bitrix\Crm\EntityBankDetail;
+use Bitrix\Crm\EntityPreset;
+use Bitrix\Crm\Integration\ClientResolver;
+use Bitrix\Crm\Integration\Rest\AppPlacement;
+use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Rest\PlacementTable;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
@@ -270,15 +271,15 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 		$this->arParams['PATH_TO_USER_PROFILE'] = CrmCheckPath('PATH_TO_USER_PROFILE', $this->arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
 		$this->arParams['NAME_TEMPLATE'] = empty($this->arParams['NAME_TEMPLATE']) ? $this->site->GetNameFormat(false) : str_replace(array("#NOBR#", "#/NOBR#"), array("", ""), $this->arParams["NAME_TEMPLATE"]);
 
-		$this->arParams['POPUP_MODE'] = (isset($this->arParams['POPUP_MODE']) && strtoupper($this->arParams['POPUP_MODE']) === 'Y') ? 'Y' : 'N';
+		$this->arParams['POPUP_MODE'] = (isset($this->arParams['POPUP_MODE']) && mb_strtoupper($this->arParams['POPUP_MODE']) === 'Y') ? 'Y' : 'N';
 		$this->popupManagerId = isset($this->arParams['POPUP_MANAGER_ID']) ? strval($this->arParams['POPUP_MANAGER_ID']) : '';
 		$this->readOnlyMode = $this->arParams['READ_ONLY_MODE'] === 'Y';
 		$this->popupMode = $this->arParams['POPUP_MODE'] === 'Y';
 
-		$this->arParams['INNER_FORM_MODE'] = (isset($this->arParams['INNER_FORM_MODE']) && strtoupper($this->arParams['INNER_FORM_MODE']) === 'Y') ? 'Y' : 'N';
+		$this->arParams['INNER_FORM_MODE'] = (isset($this->arParams['INNER_FORM_MODE']) && mb_strtoupper($this->arParams['INNER_FORM_MODE']) === 'Y') ? 'Y' : 'N';
 		$this->innerFormMode = ($this->arParams['INNER_FORM_MODE'] === 'Y');
 
-		$this->arParams['IS_LAST_IN_FORM'] = (isset($this->arParams['IS_LAST_IN_FORM']) && strtoupper($this->arParams['IS_LAST_IN_FORM']) === 'Y') ? 'Y' : 'N';
+		$this->arParams['IS_LAST_IN_FORM'] = (isset($this->arParams['IS_LAST_IN_FORM']) && mb_strtoupper($this->arParams['IS_LAST_IN_FORM']) === 'Y') ? 'Y' : 'N';
 		$this->isLastInForm = (!$this->innerFormMode || $this->arParams['IS_LAST_IN_FORM'] === 'Y');
 
 		$this->requisite = new EntityRequisite();
@@ -1339,7 +1340,7 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 			$sectionId = 'section_requisite_info';
 			if ($this->fieldsOptionalEnabled
 				&& isset($this->sectionsOptionalTitles[$sectionId])
-				&& strlen($this->sectionsOptionalTitles[$sectionId]) > 0)
+				&& $this->sectionsOptionalTitles[$sectionId] <> '')
 			{
 				$sectionTitle = $this->sectionsOptionalTitles[$sectionId];
 			}
@@ -1528,7 +1529,7 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 			$sectionId = 'section_requisite_values';
 			if ($this->fieldsOptionalEnabled
 				&& isset($this->sectionsOptionalTitles[$sectionId])
-				&& strlen($this->sectionsOptionalTitles[$sectionId]) > 0)
+				&& $this->sectionsOptionalTitles[$sectionId] <> '')
 			{
 				$sectionTitle = $this->sectionsOptionalTitles[$sectionId];
 			}
@@ -2215,6 +2216,17 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 				unset($addressLabels, $fieldTypeMap, $ufMap, $fields, $field, $isUF);
 			}
 		}
+
+		// Details search feautures
+		$restrictionInn = RestrictionManager::getDetailsSearchByInnRestriction();
+		$restrictionEdrpou = RestrictionManager::getDetailsSearchByEdrpouRestriction();
+		$this->arResult['FEATURES'] = [
+			'detailsSearchByInn' => ($restrictionInn->hasPermission() ? 'Y' : 'N'),
+			'detailsSearchByEdrpou' => ($restrictionEdrpou->hasPermission() ? 'Y' : 'N'),
+			'detailsSearchByInnInfoScript' => $restrictionInn->prepareInfoHelperScript(),
+			'detailsSearchByEdrpouInfoScript' => $restrictionEdrpou->prepareInfoHelperScript()
+		];
+		unset($restrictionInn, $restrictionEdrpou);
 	}
 
 	protected function checkModules()

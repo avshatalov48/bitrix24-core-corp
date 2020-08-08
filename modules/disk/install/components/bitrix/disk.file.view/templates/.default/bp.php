@@ -63,7 +63,7 @@ $sortBpLog = false;
 					$strStopBizProc = "javascript:BX.Disk['FileViewClass_{$component->getComponentId()}'].stopBizProc('{$bizProcArray['ID']}');";
 					$strLogBizProc = "javascript:BX.Disk['FileViewClass_{$component->getComponentId()}'].showLogBizProc('{$key}');";
 					$trClass = "bizproc-document-process";
-					if(!strlen($bizProcArray["WORKFLOW_STATUS"]) > 0)
+					if(!mb_strlen($bizProcArray["WORKFLOW_STATUS"]) > 0)
 					{
 						$trClass = "bizproc-document-finished";
 					}
@@ -77,7 +77,7 @@ $sortBpLog = false;
 						<tr>
 							<th class="bizproc-field-name"><?= $bizProcArray['TEMPLATE_NAME'] ?></th>
 							<th class="bizproc-field-value">
-								<? if(strlen($bizProcArray["WORKFLOW_STATUS"]) > 0) { ?>
+								<? if($bizProcArray["WORKFLOW_STATUS"] <> '') { ?>
 									<a class="webform-small-button webform-button-transparent" href="<?= $strStopBizProc ?>"><?= Loc::getMessage('DISK_FILE_VIEW_BIZPROC_STOP_BUTTON') ?></a>
 								<? }else if($arResult['BIZPROC_PERMISSION']['DROP']) { $checkAction = false; ?>
 									<a class="webform-small-button webform-button-transparent" href="<?= $strDelBizProc ?>"><?= Loc::getMessage('DISK_FILE_VIEW_BIZPROC_DELETE_BUTTON') ?></a>
@@ -141,7 +141,7 @@ $sortBpLog = false;
 			$strDelBizProc = "javascript:BX.Disk['FileViewClass_{$component->getComponentId()}'].deleteBizProc('{$idWorkflow}');";
 			$strStopBizProc = "javascript:BX.Disk['FileViewClass_{$component->getComponentId()}'].stopBizProc('{$idWorkflow}');";
 			$trClass = "bizproc-document-process";
-			if(!strlen($arResult['BIZPROC_LIST'][$_GET['log_workflow']]["WORKFLOW_STATUS"]) > 0)
+			if(!mb_strlen($arResult['BIZPROC_LIST'][$_GET['log_workflow']]["WORKFLOW_STATUS"]) > 0)
 			{
 				$trClass = "bizproc-document-finished";
 			}
@@ -155,7 +155,7 @@ $sortBpLog = false;
 					<tr>
 						<th class="bizproc-field-name"><?= $arResult['BIZPROC_LIST'][$_GET['log_workflow']]['TEMPLATE_NAME'] ?></th>
 						<th class="bizproc-field-value">
-							<? if(strlen($arResult['BIZPROC_LIST'][$_GET['log_workflow']]["WORKFLOW_STATUS"]) > 0) { ?>
+							<? if($arResult['BIZPROC_LIST'][$_GET['log_workflow']]["WORKFLOW_STATUS"] <> '') { ?>
 								<a class="webform-small-button webform-button-transparent" href="<?= $strStopBizProc ?>"><?= Loc::getMessage('DISK_FILE_VIEW_BIZPROC_STOP_BUTTON') ?></a>
 							<? }else if($arResult['BIZPROC_PERMISSION']['DROP']) { $checkAction = false; ?>
 								<a class="webform-small-button webform-button-transparent" href="<?= $strDelBizProc ?>"><?= Loc::getMessage('DISK_FILE_VIEW_BIZPROC_DELETE_BUTTON') ?></a>

@@ -5,7 +5,7 @@ $APPLICATION->SetPageProperty("BodyClass", "newpost-page");
 if($arResult["delete_blog_post"] == "Y")
 {
 	$APPLICATION->RestartBuffer();
-	if(strlen($arResult["ERROR_MESSAGE"])>0)
+	if($arResult["ERROR_MESSAGE"] <> '')
 	{
 		?>
 		<script bxrunfirst="yes">
@@ -16,7 +16,7 @@ if($arResult["delete_blog_post"] == "Y")
 		</div>
 		<?
 	}
-	if(strlen($arResult["OK_MESSAGE"])>0)
+	if($arResult["OK_MESSAGE"] <> '')
 	{
 		?>
 		<div class="feed-add-successfully">
@@ -32,7 +32,7 @@ else
 	<div class="feed-wrap">
 	<div class="feed-add-post-block blog-post-edit">
 	<?
-	if(strlen($arResult["OK_MESSAGE"])>0)
+	if($arResult["OK_MESSAGE"] <> '')
 	{
 		?>
 		<div class="feed-add-successfully">
@@ -40,7 +40,7 @@ else
 		</div>
 		<?
 	}
-	if(strlen($arResult["ERROR_MESSAGE"])>0)
+	if($arResult["ERROR_MESSAGE"] <> '')
 	{
 		?>
 		<div class="feed-add-error">
@@ -48,7 +48,7 @@ else
 		</div>
 		<?
 	}
-	if(strlen($arResult["FATAL_MESSAGE"])>0)
+	if($arResult["FATAL_MESSAGE"] <> '')
 	{
 		?>
 		<div class="feed-add-error">
@@ -56,7 +56,7 @@ else
 		</div>
 		<?
 	}
-	elseif(strlen($arResult["UTIL_MESSAGE"])>0)
+	elseif($arResult["UTIL_MESSAGE"] <> '')
 	{
 		?>
 		<div class="feed-add-successfully">
@@ -85,7 +85,7 @@ else
 					top.bxBlogImageId = '<?=$arResult["Image"]["ID"]?>';
 					top.bxBlogImageIdWidth = '<?=CUtil::JSEscape($arResult["Image"]["source"]["width"])?>';
 					top.bxBlogImageIdSrc = '<?=CUtil::JSEscape($arResult["Image"]["source"]["src"])?>';
-				<?elseif(strlen($arResult["ERROR_MESSAGE"]) > 0):?>
+				<?elseif($arResult["ERROR_MESSAGE"] <> ''):?>
 					window.bxBlogImageError = top.bxBlogImageError = '<?=CUtil::JSEscape($arResult["ERROR_MESSAGE"])?>';
 				<?endif;?>
 			</script>

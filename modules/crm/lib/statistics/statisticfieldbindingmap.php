@@ -15,7 +15,7 @@ class StatisticFieldBindingMap
 			throw new Main\ArgumentTypeException('typeName', 'string');
 		}
 
-		$this->typeName = strtolower($typeName);
+		$this->typeName = mb_strtolower($typeName);
 	}
 	/**
 	* @return string

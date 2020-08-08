@@ -142,7 +142,7 @@ elseif($mode === 'CALC_PRODUCT_PRICES')
 //{ SRC_CURRENCY_ID:'RUB', SRC_EXCH_RATE:1, DST_CURRENCY_ID:'USD', PRODUCTS:[ { ID:1, PRICE:1.0 }...] }
 
 // National currency is default currency
-	$srcCurrencyID = isset($data['SRC_CURRENCY_ID']) && strlen(strval($data['SRC_CURRENCY_ID'])) > 0 ? strval($data['SRC_CURRENCY_ID']) : CCrmCurrency::GetBaseCurrencyID();
+	$srcCurrencyID = isset($data['SRC_CURRENCY_ID']) && strval($data['SRC_CURRENCY_ID']) <> '' ? strval($data['SRC_CURRENCY_ID']) : CCrmCurrency::GetBaseCurrencyID();
 //	$srcExchRate = 0.0;
 //	if(isset($data['SRC_EXCH_RATE']))
 //	{
@@ -154,7 +154,7 @@ elseif($mode === 'CALC_PRODUCT_PRICES')
 //		$srcExchRate = ($srcCurrency = CCrmCurrency::GetByID($srcCurrencyID)) ? $srcCurrency['EXCH_RATE'] : 1.0;
 //	}
 
-	$dstCurrencyID = isset($data['DST_CURRENCY_ID']) && strlen(strval($data['DST_CURRENCY_ID'])) > 0 ? strval($data['DST_CURRENCY_ID']) : CCrmCurrency::GetBaseCurrencyID();
+	$dstCurrencyID = isset($data['DST_CURRENCY_ID']) && strval($data['DST_CURRENCY_ID']) <> '' ? strval($data['DST_CURRENCY_ID']) : CCrmCurrency::GetBaseCurrencyID();
 //	$dstExchRate = ($dstCurrency = CCrmCurrency::GetByID($dstCurrencyID)) ? $dstCurrency['EXCH_RATE'] : 1.0;
 
 	$arProducts = isset($data['PRODUCTS']) && is_array($data['PRODUCTS']) ? $data['PRODUCTS'] : array();
@@ -207,8 +207,8 @@ elseif($mode === 'CONVERT_MONEY')
 	}
 
 	$srcSum = isset($data['SRC_SUM']) ? doubleval($data['SRC_SUM']) : 0.0;
-	$srcCurrencyID = isset($data['SRC_CURRENCY_ID']) && strlen(strval($data['SRC_CURRENCY_ID'])) > 0 ? strval($data['SRC_CURRENCY_ID']) : CCrmCurrency::GetBaseCurrencyID();
-	$dstCurrencyID = isset($data['DST_CURRENCY_ID']) && strlen(strval($data['DST_CURRENCY_ID'])) > 0 ? strval($data['DST_CURRENCY_ID']) : CCrmCurrency::GetBaseCurrencyID();
+	$srcCurrencyID = isset($data['SRC_CURRENCY_ID']) && strval($data['SRC_CURRENCY_ID']) <> '' ? strval($data['SRC_CURRENCY_ID']) : CCrmCurrency::GetBaseCurrencyID();
+	$dstCurrencyID = isset($data['DST_CURRENCY_ID']) && strval($data['DST_CURRENCY_ID']) <> '' ? strval($data['DST_CURRENCY_ID']) : CCrmCurrency::GetBaseCurrencyID();
 
 	__CrmPropductRowListEndResponse(array('SUM' => CCrmCurrency::ConvertMoney($srcSum, $srcCurrencyID, $dstCurrencyID)));
 }
@@ -302,7 +302,7 @@ elseif($mode === 'ADD_PRODUCT')
 
 	if(isset($_POST['TAX_INCLUDED']))
 	{
-		$fields['TAX_INCLUDED'] = strtoupper($_POST['TAX_INCLUDED']) === 'Y' ? 'Y' : 'N';
+		$fields['TAX_INCLUDED'] = mb_strtoupper($_POST['TAX_INCLUDED']) === 'Y' ? 'Y' : 'N';
 	}
 
 	//Is always enabled for disable requests to product catalog
@@ -404,12 +404,12 @@ elseif($mode === 'UPDATE_PRODUCT')
 
 	if(isset($_POST['TAX_INCLUDED']))
 	{
-		$fields['TAX_INCLUDED'] = strtoupper($_POST['TAX_INCLUDED']) === 'Y' ? 'Y' : 'N';
+		$fields['TAX_INCLUDED'] = mb_strtoupper($_POST['TAX_INCLUDED']) === 'Y' ? 'Y' : 'N';
 	}
 
 	if(isset($_POST['CUSTOMIZED']))
 	{
-		$fields['CUSTOMIZED'] = strtoupper($_POST['CUSTOMIZED']) === 'Y' ? 'Y' : 'N';
+		$fields['CUSTOMIZED'] = mb_strtoupper($_POST['CUSTOMIZED']) === 'Y' ? 'Y' : 'N';
 	}
 
 	if(!CCrmProductRow::Update($ID, $fields))
@@ -446,7 +446,7 @@ elseif($mode === 'SAVE_PRODUCTS')
 	}
 
 	$prodJson = isset($_POST['PRODUCT_ROW_DATA']) ? strval($_POST['PRODUCT_ROW_DATA']) : '';
-	$arProducts = $arResult['PRODUCT_ROWS'] = strlen($prodJson) > 0 ? CUtil::JsObjectToPhp($prodJson) : array();
+	$arProducts = $arResult['PRODUCT_ROWS'] = $prodJson <> '' ? CUtil::JsObjectToPhp($prodJson) : array();
 
 	if (!\Bitrix\Crm\Security\EntityAuthorization::checkUpdatePermission($ownerTypeID, $ownerID, $perms))
 	{
@@ -521,12 +521,12 @@ elseif($mode === 'SAVE_PRODUCTS')
 
 		if(isset($arProduct['TAX_INCLUDED']))
 		{
-			$fields['TAX_INCLUDED'] = strtoupper($arProduct['TAX_INCLUDED']) === 'Y' ? 'Y' : 'N';
+			$fields['TAX_INCLUDED'] = mb_strtoupper($arProduct['TAX_INCLUDED']) === 'Y' ? 'Y' : 'N';
 		}
 
 		if(isset($arProduct['CUSTOMIZED']))
 		{
-			$fields['CUSTOMIZED'] = strtoupper($arProduct['CUSTOMIZED']) === 'Y' ? 'Y' : 'N';
+			$fields['CUSTOMIZED'] = mb_strtoupper($arProduct['CUSTOMIZED']) === 'Y' ? 'Y' : 'N';
 		}
 
 		if(isset($arProduct['SORT']))
@@ -608,13 +608,13 @@ elseif($mode === 'CALCULATE_TOTALS')
 		$productRow['PRICE'] = isset($productRow['PRICE']) ? doubleval($productRow['PRICE']) : 1.0;
 		$productRow['PRICE_EXCLUSIVE'] = isset($productRow['PRICE_EXCLUSIVE']) ? doubleval($productRow['PRICE_EXCLUSIVE']) : 1.0;
 		$productRow['CUSTOMIZED'] = isset($productRow['CUSTOMIZED'])
-			&& strtoupper($productRow['CUSTOMIZED']) === 'Y' ? 'Y' : 'N';
+			&& mb_strtoupper($productRow['CUSTOMIZED']) === 'Y' ? 'Y' : 'N';
 		if($productRow['CUSTOMIZED'] === 'Y')
 		{
 			$productRow['TAX_RATE'] = isset($productRow['TAX_RATE']) ? doubleval($productRow['TAX_RATE']) : 0.0;
 		}
 		$productRow['TAX_INCLUDED'] = isset($productRow['TAX_INCLUDED'])
-			&& strtoupper($productRow['TAX_INCLUDED']) === 'Y' ? 'Y' : 'N';
+			&& mb_strtoupper($productRow['TAX_INCLUDED']) === 'Y' ? 'Y' : 'N';
 		$totalDiscount += round($productRow['DISCOUNT_SUM'] * $productRow['QUANTITY'], 2);
 	}
 	unset($productRow);
@@ -623,7 +623,7 @@ elseif($mode === 'CALCULATE_TOTALS')
 		? $_POST['CURRENCY_ID'] : CCrmCurrency::GetBaseCurrencyID();
 
 	$clientTypeName = isset($_POST['CLIENT_TYPE_NAME']) && $_POST['CLIENT_TYPE_NAME'] !== ''
-		? strtoupper($_POST['CLIENT_TYPE_NAME']) : 'CONTACT';
+		? mb_strtoupper($_POST['CLIENT_TYPE_NAME']) : 'CONTACT';
 
 	$personTypeIDs = CCrmPaySystem::getPersonTypeIDs();
 	if(empty($personTypeIDs))
@@ -637,7 +637,7 @@ elseif($mode === 'CALCULATE_TOTALS')
 		__CrmPropductRowListEndResponse(array('ERROR' => 'COULD_NOT_FIND_PERSON_TYPE'));
 	}
 
-	$enableSaleDiscount = isset($_POST['ENABLE_ADDITIONAL_DISCOUNT']) && strtoupper($_POST['ENABLE_ADDITIONAL_DISCOUNT']) === 'Y';
+	$enableSaleDiscount = isset($_POST['ENABLE_ADDITIONAL_DISCOUNT']) && mb_strtoupper($_POST['ENABLE_ADDITIONAL_DISCOUNT']) === 'Y';
 
 	$calculateOptions = array();
 	$isLDTaxAllowed = isset($_POST['ALLOW_LD_TAX']) ? $_POST['ALLOW_LD_TAX'] === 'Y' : CCrmTax::isTaxMode();

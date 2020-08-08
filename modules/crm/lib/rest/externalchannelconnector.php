@@ -199,15 +199,15 @@ class CCrmExternalChannelConnector
 			}
 		}
 
-		if(is_set($fields['NAME']) && strlen($fields['NAME'])>32)
+		if(is_set($fields['NAME']) && mb_strlen($fields['NAME']) > 32)
 		{
 			$errors[] = "The length of NAME should not exceed 32 characters.";
 		}
-		if(is_set($fields['ORIGINATOR_ID']) && strlen($fields['ORIGINATOR_ID'])>32)
+		if(is_set($fields['ORIGINATOR_ID']) && mb_strlen($fields['ORIGINATOR_ID']) > 32)
 		{
 			$errors[] = "The length of ORIGINATOR_ID should not exceed 32 characters.";
 		}
-		if(is_set($fields['EXTERNAL_SERVER_HOST']) && strlen($fields['EXTERNAL_SERVER_HOST'])>128)
+		if(is_set($fields['EXTERNAL_SERVER_HOST']) && mb_strlen($fields['EXTERNAL_SERVER_HOST']) > 128)
 		{
 			$errors[] = "The length of EXTERNAL_SERVER_HOST should not exceed 128 characters.";
 		}
@@ -231,7 +231,7 @@ class CCrmExternalChannelConnector
 			);
 		}
 
-		if(strlen($originatorId) <= 0)
+		if($originatorId == '')
 		{
 			throw new ArgumentException('Originator ID must be not empty string.', 'ORIGINATOR_ID');
 		}
@@ -269,7 +269,7 @@ class CCrmExternalChannelConnector
 			);
 		}
 
-		if(strlen($originatorId) <= 0)
+		if($originatorId == '')
 		{
 			throw new ArgumentException('Originator ID must be not empty string.', 'ORIGINATOR_ID');
 		}

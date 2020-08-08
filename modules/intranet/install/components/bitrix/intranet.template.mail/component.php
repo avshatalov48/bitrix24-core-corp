@@ -7,7 +7,13 @@ if (!CModule::IncludeModule("intranet"))
 	return;
 }
 
-if ($arParams["TEMPLATE_TYPE"] == "USER_INVITATION" || $arParams["TEMPLATE_TYPE"] == "EXTRANET_INVITATION")
+use Bitrix\Main\Loader;
+
+if (
+	$arParams["TEMPLATE_TYPE"] == "USER_INVITATION"
+	|| $arParams["TEMPLATE_TYPE"] == "EXTRANET_INVITATION"
+	|| $arParams["TEMPLATE_TYPE"] == "USER_ADD"
+)
 {
 	$arParams["USER_TEXT"] = htmlspecialcharsback($arParams["USER_TEXT"]);
 
@@ -119,5 +125,29 @@ if ($arParams["TEMPLATE_TYPE"] == "IM_NEW_MESSAGE_GROUP")
 	}
 }
 
-$this->IncludeComponentTemplate();
+$this->arResult["LICENSE_PREFIX"] = "";
+if (Loader::includeModule("bitrix24"))
+{
+	$this->arResult["LICENSE_PREFIX"] = \CBitrix24::getLicensePrefix();
+}
+
+if (
+	$arParams["TEMPLATE_TYPE"] == "BITRIX24_USER_JOIN"
+	|| $arParams["TEMPLATE_TYPE"] == "BITRIX24_USER_JOIN_REQUEST"
+	|| $arParams["TEMPLATE_TYPE"] == "BITRIX24_USER_JOIN_REQUEST_CONFIRM"
+	|| $arParams["TEMPLATE_TYPE"] == "BITRIX24_USER_JOIN_REQUEST_REJECT"
+)
+{
+	if (Loader::includeModule("ui"))
+	{
+		$arResult["HELPDESK_URL"] = \Bitrix\UI\Util::getHelpdeskUrl();
+	}
+
+	$this->IncludeComponentTemplate("bitrix24_user_join");
+}
+else
+{
+	$this->IncludeComponentTemplate();
+}
+
 ?>

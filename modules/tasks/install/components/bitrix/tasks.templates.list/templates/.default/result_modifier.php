@@ -8,7 +8,7 @@ use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Main\Grid;
-use Bitrix\Tasks\Util\UserField;
+use Bitrix\Tasks\Access\ActionDictionary;
 
 $GLOBALS['APPLICATION']->AddHeadScript("/bitrix/components/bitrix/tasks.templates.list/templates/.default/script.js");
 $GLOBALS['APPLICATION']->AddHeadScript("/bitrix/components/bitrix/tasks.list/templates/.default/table-view.js");
@@ -66,99 +66,107 @@ $arResult['JS_DATA'] = [
 	]
 ];
 
-
-
 /**
  * @param $row
  * @param $arParams
- *
+ * @param $arResult
  * @return array
  */
-function prepareTaskRowActions($row, $arParams)
+function prepareTaskRowActions($row, $arParams, $arResult)
 {
     $strIframe = '';
-    if($_REQUEST['IFRAME'])
+    $strIframe2 = '';
+
+    if ($_REQUEST['IFRAME'])
     {
         $strIframe = '?IFRAME='.($_REQUEST['IFRAME'] == 'Y' ? 'Y' : 'N');
         $strIframe2 = '?IFRAME='.($_REQUEST['IFRAME'] == 'Y' ? 'Y' : 'N');
     }
 
 	$userId = Util\User::getId();
-
-	$urlPath = $arParams['PATH_TO_USER_TASKS_TEMPLATES'];
 	$urlPathAction = $arParams['PATH_TO_USER_TEMPLATES_TEMPLATE'];
 	$urlTaskPath = $arParams['PATH_TO_USER_TASKS_TASK'];
 
+	$newTemplateLink = CComponentEngine::MakePathFromTemplate($urlPathAction, [
+		'user_id' => $userId,
+		'action' => 'edit',
+		'template_id' => 0,
+	]);
+
+	$allowedActions = $row['ALLOWED_ACTIONS'];
 	$actions = [];
 
-	if ($row['ALLOWED_ACTIONS']['READ'])
+
+	if (array_key_exists(ActionDictionary::ACTION_TEMPLATE_READ, $allowedActions) && $allowedActions[ActionDictionary::ACTION_TEMPLATE_READ])
 	{
 		$actions[] = [
-			"text" => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_VIEW'),
+			'text' => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_VIEW'),
 			'href' => CComponentEngine::MakePathFromTemplate(
 				$urlPathAction,
 				[
-					'user_id'     => $userId,
-					'action'      => 'view',
-					'template_id' => $row['ID']
+					'user_id' => $userId,
+					'action' => 'view',
+					'template_id' => $row['ID'],
 				]
-			).$strIframe
+			).$strIframe,
 		];
-		$actions[] = [
-			"text" => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_COPY'),
-			'href' => CComponentEngine::MakePathFromTemplate(
-					$urlPathAction,
-					[
-						'user_id'     => $userId,
-						'action'      => 'edit',
-						'template_id' => 0
-					]
-				).'?COPY='.$row['ID'].$strIframe2
-		];
+		if (array_key_exists(ActionDictionary::ACTION_TEMPLATE_CREATE, $allowedActions) && $allowedActions[ActionDictionary::ACTION_TEMPLATE_CREATE])
+		{
+			$actions[] = [
+				'text' => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_COPY'),
+				'href' => $newTemplateLink.'?COPY='.$row['ID'].$strIframe2,
+			];
+		}
 	}
 
-	if ($row['ALLOWED_ACTIONS']['UPDATE'])
+	if (array_key_exists(ActionDictionary::ACTION_TEMPLATE_EDIT, $allowedActions) && $allowedActions[ActionDictionary::ACTION_TEMPLATE_EDIT])
 	{
 		$actions[] = [
-			"text" => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_CREATE_TASK'),
+			'text' => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_CREATE_TASK'),
 			'href' => CComponentEngine::MakePathFromTemplate(
-					$urlTaskPath,
-					[
-						'user_id' => $userId,
-						'action'  => 'edit',
-						'task_id' => 0
+				$urlTaskPath,
+				[
+					'user_id' => $userId,
+					'action' => 'edit',
+					'task_id' => 0,
 				]
-				).'?TEMPLATE='.$row['ID'].$strIframe2
+			).'?TEMPLATE='.$row['ID'].$strIframe2,
 		];
+		if (\Bitrix\Tasks\Access\TemplateAccessController::can($userId, ActionDictionary::ACTION_TEMPLATE_CREATE))
+		{
+			$addSubTemplateAction = [
+				'text' => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_CREATE_SUB_TEMPLATE'),
+			];
+			if ($arResult['TASK_LIMIT_EXCEEDED'])
+			{
+				$addSubTemplateAction['onclick'] = "BX.UI.InfoHelper.show('limit_tasks_templates_subtasks');";
+				$addSubTemplateAction['className'] = 'tasks-list-menu-popup-item-lock';
+			}
+			else
+			{
+				$addSubTemplateAction['href'] = $newTemplateLink.'?BASE_TEMPLATE='.$row['ID'].$strIframe2;
+			}
+
+			$actions[] = $addSubTemplateAction;
+		}
 		$actions[] = [
-			"text" => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_CREATE_SUB_TEMPLATE'),
-			'href' => CComponentEngine::MakePathFromTemplate(
-					$urlPathAction,
-					[
-						'user_id'     => $userId,
-						'action'      => 'edit',
-						'template_id' => 0
-					]
-				).'?BASE_TEMPLATE='.$row['ID'].$strIframe2
-		];
-		$actions[] = [
-			"text" => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_EDIT'),
+			'text' => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_EDIT'),
 			'href' => CComponentEngine::MakePathFromTemplate(
 				$urlPathAction,
 				[
-					'user_id'     => $userId,
-					'action'      => 'edit',
-					'template_id' => $row['ID']
+					'user_id' => $userId,
+					'action' => 'edit',
+					'template_id' => $row['ID'],
 				]
-			).$strIframe
+			).$strIframe,
 		];
 	}
 
-	if ($row['ALLOWED_ACTIONS']['DELETE'])
+	if (array_key_exists(ActionDictionary::ACTION_TEMPLATE_REMOVE, $allowedActions) && $allowedActions[ActionDictionary::ACTION_TEMPLATE_REMOVE])
 	{
 		$actions[] = [
-			"text"    => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_DELETE'),
-			'onclick' => 'DeleteTemplate('.$row['ID'].');'
+			'text' => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_DELETE'),
+			'onclick' => 'DeleteTemplate('.$row['ID'].');',
 		];
 	}
 
@@ -363,7 +371,7 @@ function getDateAfter(DateTime $now, $seconds)
 
 function prepareTag($row, $arParams)
 {
-	$list = array();
+	$list = [];
 
 	if (!array_key_exists('TAGS', $row) || !is_array($row['TAGS']))
 	{
@@ -372,11 +380,11 @@ function prepareTag($row, $arParams)
 
 	foreach ($row['TAGS'] as $tag)
 	{
-		//		$list[] = '<a href="javascript:;" onclick="BX.Tasks.GridActions.filter(\''.$tag.'\')">#'.$tag.'</a>';
-		$list[] = '<a href="javascript:;">#'.$tag.'</a>';
+		$safeTag = htmlspecialcharsbx($tag);
+		$list[] = "<a href=\"javascript:void(0)\">#{$safeTag}</a>";
 	}
 
-	return join(', ', $list);
+	return implode(', ', $list);
 }
 
 function prepareTaskTemplateRow($row, $arParams)
@@ -573,13 +581,13 @@ if (!empty($arResult['GRID']['DATA']))
 			'has_child' => $row['CHILDS_COUNT'] > 0 && !$arResult['IS_SEARCH_MODE'],
 			'parent_id' => \Bitrix\Main\Grid\Context::isInternalRequest() ? $row['BASE_TEMPLATE_ID'] : 0,
 			"parent_group_id" => $row["GROUP_ID"],
-			'actions' => prepareTaskRowActions($row, $arParams),
+			'actions' => prepareTaskRowActions($row, $arParams, $arResult),
 			'attrs' => array(
 				"data-type" => "task-template",
 				"data-group-id" => $row['GROUP_ID'],
 				//				"data-can-edit" => true,//$row['ACTION']['EDIT'] === true ? "true" : "false"
 			),
-			'columns' => prepareTaskTemplateRow($row, $arParams)
+			'columns' => prepareTaskTemplateRow($row, $arParams),
 		);
 
 		$arResult['ROWS'][] = $rowItem;

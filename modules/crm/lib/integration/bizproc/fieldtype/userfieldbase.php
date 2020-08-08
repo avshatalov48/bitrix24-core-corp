@@ -39,7 +39,15 @@ class UserFieldBase extends BaseType\Base
 		);
 		if ($sType == 'iblock_element' || $sType == 'iblock_section')
 		{
-			$arUserField['SETTINGS']['IBLOCK_ID'] = $fieldType->getOptions();
+			$options = $fieldType->getOptions();
+			if (is_array($options))
+			{
+				$arUserField['SETTINGS'] = $fieldType->getOptions();
+			}
+			else
+			{
+				$arUserField['SETTINGS']['IBLOCK_ID'] = $fieldType->getOptions();
+			}
 		}
 		elseif ($sType == 'crm_status')
 		{
@@ -245,6 +253,6 @@ class UserFieldBase extends BaseType\Base
 
 	protected static function getUserType(FieldType $fieldType)
 	{
-		return substr($fieldType->getType(), 3);
+		return mb_substr($fieldType->getType(), 3);
 	}
 }

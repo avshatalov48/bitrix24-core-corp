@@ -276,7 +276,7 @@ class CUserHRXMLImport
 			}
 
 			if (isset($data->IndicativePerson->GenderCode))
-				$tempUserData['PERSONAL_GENDER'] = substr((string) $data->IndicativePerson->GenderCode, 0, 1);
+				$tempUserData['PERSONAL_GENDER'] = mb_substr((string)$data->IndicativePerson->GenderCode, 0, 1);
 
 			if (isset($data->IndicativePerson->BirthDate))
 			{
@@ -1013,8 +1013,8 @@ class CUserHRXMLImport
 
 function hr_SortIDArray($first, $second)
 {
-	$first = strlen($first);
-	$second = strlen($second);
+	$first = mb_strlen($first);
+	$second = mb_strlen($second);
 	if ($first > $second)
 		return 1;
 	if ($first < $second)
@@ -1068,10 +1068,10 @@ if (!class_exists('CArray2XML'))
 
 		private function StartElement($key, $value='')
 		{
-			if ($st=strpos($key, '>>'))
+			if ($st = mb_strpos($key, '>>'))
 			{
-				$data = ' '.substr($key, $st+2);
-				$key = substr($key, 0, $st);
+				$data = ' '.mb_substr($key, $st + 2);
+				$key = mb_substr($key, 0, $st);
 			}
 			else $data = '';
 			array_push($this->elementStack, $key);

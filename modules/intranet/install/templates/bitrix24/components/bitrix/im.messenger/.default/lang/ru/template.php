@@ -10,6 +10,7 @@ $MESS["IM_MESSENGER_OPEN_OL"] = "Открыть чат Открытой лини
 $MESS["IM_MESSENGER_OPEN_EMAIL"] = "Перейти к электронной почте";
 $MESS["IM_MESSENGER_OPEN_LF"] = "Перейти к живой ленте";
 $MESS["IM_MESSENGER_OPEN_NETWORK"] = "Перейти в Битрикс24 Network";
+$MESS["IM_MESSENGER_OPEN_MOBILE"] = "Скачать бесплатное мобильное приложение";
 $MESS["IM_MESSENGER_ONLINE"] = "Онлайн";
 $MESS["IM_FULLSCREEN_COPYRIGHT"] = "&copy; 2001-2016 «Битрикс», «1С-Битрикс»";
 $MESS["IM_FULLSCREEN_BACK"] = "Закрыть";

@@ -14,11 +14,15 @@ use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\SystemException;
+use Bitrix\Crm;
 
 class CCrmAdminPageController extends \CBitrixComponent implements Controllerable
 {
 	private $pageList = array();
 	private $listMenuItems = array();
+
+	/** @var \Bitrix\Crm\Product\Url\ShopBuilder */
+	private $urlBuilder = null;
 
 	public function configureActions()
 	{
@@ -55,6 +59,8 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 		try
 		{
 			$this->checkRequiredParams();
+
+			$this->initUrlBuilder();
 
 			$this->prepareMenuToRender();
 
@@ -104,9 +110,13 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 
 		$items = [];
 
-		if (Loader::includeModule("iblock"))
+		if ($this->checkRequiredModules())
 		{
+			$this->initUrlBuilder();;
+
 			$iblockId = (int) $post["iblock_id"];
+			$this->urlBuilder->setIblockId($iblockId);
+			$this->urlBuilder->setUrlParams([]);
 			$queryObject = CIBlockSection::getList(
 				["LEFT_MARGIN" => "ASC"],
 				[
@@ -155,6 +165,23 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 		return true;
 	}
 
+	private function checkRequiredModules(): bool
+	{
+		return (
+			Loader::includeModule('iblock')
+			&& Loader::includeModule('catalog')
+			&& Loader::includeModule('crm')
+		);
+	}
+
+	private function initUrlBuilder(): void
+	{
+		if ($this->checkRequiredModules() && $this->urlBuilder === null)
+		{
+			$this->urlBuilder = new Crm\Product\Url\ShopBuilder();
+		}
+	}
+
 	private function hasSectionChild($iblockId, $sectionId)
 	{
 		$queryObject = CIBlockSection::getList(
@@ -164,24 +191,15 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 				"SECTION_ID" => $sectionId,
 			],
 			false,
-			["ID"]
+			["ID"],
+			["nTopCount" => 1]
 		);
 		return ($queryObject->fetch());
 	}
 
 	private function getSectionUrl($iblockId, $sectionId, $selfFolder)
 	{
-		$url = $selfFolder."menu_catalog_category_".$iblockId."/".$sectionId."/";
-
-		$baseUrl = CIBlock::getAdminSectionListLink($iblockId, ["catalog" => null, "skip_public" => true]);
-		$baseUrl = $baseUrl."&find_section_section=".$sectionId."&SECTION_ID=".$sectionId."&apply_filter=Y";
-		$baseUrl = explode("?", $baseUrl);
-		if (count($baseUrl) == 2)
-		{
-			$url .= "?".$baseUrl[1];
-		}
-
-		return $url;
+		return $this->urlBuilder->getSectionListUrl($sectionId);
 	}
 
 	private function prepareMenuToRender()
@@ -307,7 +325,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 			$pageId = (!empty($item["items_id"]) ? $item["items_id"] : "");
 			if ($pageId)
 			{
-				if ($this->arParams["SEF_FOLDER"] != "/bitrix/admin/" && strpos($item["url"], "/bitrix/admin/") !== false)
+				if ($this->arParams["SEF_FOLDER"] != "/bitrix/admin/" && mb_strpos($item["url"], "/bitrix/admin/") !== false)
 				{
 					$item["url"] = str_replace("/bitrix/admin/", "", $item["url"]);
 				}
@@ -483,17 +501,17 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 		if ($folder404 != "/")
 			$folder404 = "/".trim($folder404, "/ \t\n\r\0\x0B")."/";
 
-		if (strpos($requestUrl, $folder404) !== 0)
+		if (mb_strpos($requestUrl, $folder404) !== 0)
 		{
 			return false;
 		}
 
-		if (($i = strpos($requestUrl, '/index.php')) !== false)
+		if (($i = mb_strpos($requestUrl, '/index.php')) !== false)
 		{
-			$requestUrl = substr($requestUrl, 0, $i);
+			$requestUrl = mb_substr($requestUrl, 0, $i);
 		}
 
-		return substr($requestUrl, strlen($folder404));
+		return mb_substr($requestUrl, mb_strlen($folder404));
 	}
 
 	protected function formatResult()
@@ -544,7 +562,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 				if (!isset($menuItem["URL_CONSTANT"]))
 				{
 					$menuItem["URL"] = $this->pageList[$menuItem["ID"]]["fullUrl"];
-					if (strpos($this->pageList[$menuItem["ID"]]["url"], $this->arParams["SEF_FOLDER"]) !== 0)
+					if (mb_strpos($this->pageList[$menuItem["ID"]]["url"], $this->arParams["SEF_FOLDER"]) !== 0)
 					{
 						$menuItem["URL"] = $this->arParams["SEF_FOLDER"].$menuItem["URL"];
 					}
@@ -626,7 +644,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 
 	private function getPagePathForAjaxPages($pageId)
 	{
-		if (strpos($pageId, "menu_catalog_category") !== false)
+		if (mb_strpos($pageId, "menu_catalog_category") !== false)
 		{
 			return $this->arParams["SEF_FOLDER"]."cat_section_admin.php";
 		}

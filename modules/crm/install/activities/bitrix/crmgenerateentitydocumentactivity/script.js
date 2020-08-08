@@ -16,6 +16,9 @@
 		this.entityType = params.entityType;
 		this.entityTypeId = params.entityTypeId;
 		this.selectTemplateNodeId = params.selectTemplateNodeId;
+		this.selectMyCompanyNodeId = params.selectMyCompanyNodeId;
+		this.selectMyCompanyRequisiteNodeId = params.selectMyCompanyRequisiteNodeId;
+		this.selectMyCompanyBankDetailNodeId = params.selectMyCompanyBankDetailNodeId;
 		this.selectFieldNodeId = params.selectFieldNodeId;
 		this.textFieldNodeId = params.textFieldNodeId;
 		this.deleteRowClassName = params.deleteRowClassName;
@@ -24,6 +27,7 @@
 		this.fieldTableRowClassName = params.fieldTableRowClassName;
 		this.fieldTableRowTagName = params.fieldTableRowTagName || 'tr';
 		this.isRobot = params.isRobot === true;
+		this.requisitesMap = params.requisitesMap;
 
 		this.initEvents();
 	};
@@ -59,6 +63,49 @@
 		});
 
 		BX.bind(BX(this.addNewFieldButtonNodeId), 'click', BX.proxy(this.addNewField, this));
+		BX.bind(BX(this.selectMyCompanyNodeId), 'change', function(event) {
+			event.preventDefault();
+			var myCompanyId = parseInt(BX(this.selectMyCompanyNodeId).value);
+			var requisites = this.requisitesMap.myCompanyRequisites[myCompanyId];
+			this.adjustSelect(BX(this.selectMyCompanyRequisiteNodeId), requisites);
+			this.adjustSelect(BX(this.selectMyCompanyBankDetailNodeId));
+		}.bind(this));
+
+		BX.bind(BX(this.selectMyCompanyRequisiteNodeId), 'change', function(event) {
+			event.preventDefault();
+			var requisiteId = parseInt(BX(this.selectMyCompanyRequisiteNodeId).value);
+			var bankDetails = this.requisitesMap.myCompanyBankDetails[requisiteId];
+			this.adjustSelect(BX(this.selectMyCompanyBankDetailNodeId), bankDetails);
+		}.bind(this));
+	};
+
+	BX.Crm.Activity.CrmGenerateEntityDocumentActivity.adjustSelect = function(selectNodeId, variants)
+	{
+		var selectNode = BX(selectNodeId);
+		if(!selectNode)
+		{
+			return;
+		}
+		var options = [selectNode.querySelector('option')];
+		if(variants)
+		{
+			for(var variantId in variants)
+			{
+				if(variants.hasOwnProperty(variantId))
+				{
+					options.push(BX.Dom.create('option', {
+						attrs: {
+							value: parseInt(variantId),
+						},
+						text: variants[variantId]
+					}));
+				}
+			}
+		}
+		BX.clean(selectNode);
+		options.forEach(function(node) {
+			selectNode.appendChild(node);
+		}.bind(this));
 	};
 
 	BX.Crm.Activity.CrmGenerateEntityDocumentActivity.addNewField = function(event)

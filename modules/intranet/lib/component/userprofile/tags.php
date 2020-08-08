@@ -257,12 +257,12 @@ class Tags
 		{
 			$countData = \Bitrix\Socialnetwork\UserTagTable::getUserTagCountData([
 				'userId' => $this->getProfileId(),
-				'tagName' => strtolower($tag)
+				'tagName' => mb_strtolower($tag)
 			]);
 
 			$usersTopData = \Bitrix\Socialnetwork\UserTagTable::getUserTagTopData([
 				'userId' => $this->getProfileId(),
-				'tagName' => strtolower($tag),
+				'tagName' => mb_strtolower($tag),
 				'topCount' => 3
 			]);
 

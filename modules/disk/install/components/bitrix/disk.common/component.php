@@ -102,13 +102,13 @@ if ($arParams['SEF_MODE'] == 'Y')
 	$arParams['SEF_FOLDER'] = rtrim($arParams['SEF_FOLDER'], '/') . '/';
 	foreach ($arUrlTemplates as $url => $value)
 	{
-		if(empty($arParams['PATH_TO_' . strtoupper($url)]))
+		if(empty($arParams['PATH_TO_'.mb_strtoupper($url)]))
 		{
-			$arResult['PATH_TO_' . strtoupper($url)] = $arParams['SEF_FOLDER'] . $value;
+			$arResult['PATH_TO_'.mb_strtoupper($url)] = $arParams['SEF_FOLDER'] . $value;
 		}
-		elseif(is_string($arParams['PATH_TO_' . strtoupper($url)]))
+		elseif(is_string($arParams['PATH_TO_'.mb_strtoupper($url)]))
 		{
-			$arResult['PATH_TO_' . strtoupper($url)] = $arParams['PATH_TO_' . strtoupper($url)];
+			$arResult['PATH_TO_'.mb_strtoupper($url)] = $arParams['PATH_TO_'.mb_strtoupper($url)];
 		}
 	}
 }

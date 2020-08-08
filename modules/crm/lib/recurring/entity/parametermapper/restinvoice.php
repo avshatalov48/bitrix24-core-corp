@@ -89,7 +89,7 @@ class RestInvoice extends InvoiceMap
 		{
 			if ($fieldName === self::FIELD_PERIOD_NAME || $fieldName === self::FIELD_DATE_PAY_BEFORE_PERIOD_NAME)
 			{
-				$periodName = strtolower($params[$fieldName]);
+				$periodName = mb_strtolower($params[$fieldName]);
 				$this->map[$code] = (int)Calculator::resolveTypeId($periodName);
 			}
 			elseif ($fieldName === self::FIELD_IS_WORKING_ONLY_NAME)

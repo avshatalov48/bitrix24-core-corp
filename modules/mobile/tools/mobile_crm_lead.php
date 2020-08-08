@@ -32,7 +32,7 @@ if(!function_exists('__CrmShowEndJsonResonse'))
 	}
 }
 
-if($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"])>0 && check_bitrix_sessid())
+if($_SERVER["REQUEST_METHOD"]=="POST" && $_POST["action"] <> '' && check_bitrix_sessid())
 {
 	$action = $_POST["action"];
 
@@ -116,7 +116,16 @@ if($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"])>0 && check_bit
 					//Region automation
 					if (class_exists('\Bitrix\Crm\Automation\Factory'))
 					{
-						\Bitrix\Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Lead, $entityID);
+						if (class_exists('\Bitrix\Crm\Automation\Starter'))
+						{
+							$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $entityID);
+							$starter->setContextToMobile()->setUserIdFromCurrent();
+							$starter->runOnUpdate($fields, []);
+						}
+						else
+						{
+							\Bitrix\Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Lead, $entityID);
+						}
 					}
 					//end region
 

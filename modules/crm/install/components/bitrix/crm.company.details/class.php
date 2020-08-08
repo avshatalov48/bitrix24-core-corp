@@ -1,6 +1,8 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Location\Service\FormatService;
+use Bitrix\Location\Service\SourceService;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
@@ -18,6 +20,8 @@ Loc::loadMessages(__FILE__);
 
 class CCrmCompanyDetailsComponent extends CBitrixComponent
 {
+	use Crm\Entity\Traits\VisibilityConfig;
+
 	/** @var string */
 	protected $guid = '';
 	/** @var int */
@@ -109,7 +113,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		/** @global \CMain $APPLICATION */
 		global $APPLICATION;
 
-		$this->enableOutmodedFields = \Bitrix\Crm\Settings\CompanySettings::getCurrent()->areOutmodedRequisitesEnabled();
+		$this->enableOutmodedFields = false;//\Bitrix\Crm\Settings\CompanySettings::getCurrent()->areOutmodedRequisitesEnabled();
 
 		//region Params
 		$this->arResult['ENTITY_ID'] = isset($this->arParams['~ENTITY_ID']) ? (int)$this->arParams['~ENTITY_ID'] : 0;
@@ -149,7 +153,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		);
 
 		$this->enableSearchHistory = !isset($this->arParams['~ENABLE_SEARCH_HISTORY'])
-			|| strtoupper($this->arParams['~ENABLE_SEARCH_HISTORY']) === 'Y';
+			|| mb_strtoupper($this->arParams['~ENABLE_SEARCH_HISTORY']) === 'Y';
 
 		$this->setEntityID($this->arResult['ENTITY_ID']);
 
@@ -352,6 +356,19 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 
 		//region Config
 		$this->prepareConfiguration();
+		//endregion
+
+		//region CONTROLLERS
+		$this->arResult['ENTITY_CONTROLLERS'] = array(
+			array(
+				"name" => "REQUISITE_CONTROLLER",
+				"type" => "requisite_controller",
+				"config" => array(
+					'requisiteFieldId' => 'REQUISITES',
+					'addressFieldId' => 'ADDRESS',
+				)
+			),
+		);
 		//endregion
 
 		//region TABS
@@ -700,6 +717,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 						$multiFieldConfigElements,
 						array(
 							array('name' => 'CONTACT'),
+							array('name' => 'ADDRESS'),
 							array('name' => 'REQUISITES')
 						)
 					)
@@ -893,19 +911,25 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 								'url' => '/bitrix/components/bitrix/crm.contact.show/ajax.php?'.bitrix_sessid_get()
 							)
 						)
-					)
+					),
+					'clientEditorFieldsParams' => [
+						CCrmOwnerType::ContactName => [
+							'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact, 'requisite'),
+							'ADDRESS' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact,'requisite_address'),
+						],
+						CCrmOwnerType::CompanyName => [
+							'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company, 'requisite'),
+							'ADDRESS' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company,'requisite_address'),
+						]
+					]
 				)
 			),
 			array(
 				'name' => 'REQUISITES',
 				'title' => Loc::getMessage('CRM_COMPANY_FIELD_REQUISITES'),
-				'type' => 'requisite_list',
+				'type' => 'requisite',
 				'editable' => true,
-				'data' => array(
-					'presets'=> \CCrmInstantEditorHelper::PrepareListOptions(
-						\Bitrix\Crm\EntityPreset::getActiveItemList()
-					)
-				)
+				'data' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company,'requisite')
 			)
 		);
 
@@ -924,7 +948,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 			$this->arResult['ENTITY_FIELDS'][] = array(
 				'name' => 'ADDRESS',
 				'title' => Loc::getMessage('CRM_COMPANY_FIELD_ADDRESS'),
-				'type' => 'address',
+				'type' => 'address_form',
 				'editable' => true,
 				'data' => array(
 					'fields' => array(
@@ -944,7 +968,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 			$this->arResult['ENTITY_FIELDS'][] = array(
 				'name' => 'ADDRESS_LEGAL',
 				'title' => Loc::getMessage('CRM_COMPANY_FIELD_ADDRESS_LEGAL'),
-				'type' => 'address',
+				'type' => 'address_form',
 				'editable' => true,
 				'data' => array(
 					'fields' => array(
@@ -959,6 +983,17 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 					'labels' => \Bitrix\Crm\EntityAddress::getLabels(),
 					'view' => 'REG_ADDRESS_HTML'
 				)
+			);
+		}
+		elseif (CModule::IncludeModule('location'))
+		{
+			$this->arResult['ENTITY_FIELDS'][] = array(
+				'name' => 'ADDRESS',
+				'title' => Loc::getMessage('CRM_CONTACT_FIELD_ADDRESS'),
+				'type' => 'requisite_address',
+				'editable' => true,
+				'virtual' => true,
+				'data' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company,'requisite_address')
 			);
 		}
 
@@ -1023,6 +1058,9 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		$this->userFieldInfos = array();
 		$userFields = $this->prepareEntityUserFields();
 		$enumerationFields = array();
+
+		$visibilityConfig = $this->prepareEntityFieldvisibilityConfigs(CCrmOwnerType::Company);
+
 		foreach($userFields as $userField)
 		{
 			$fieldName = $userField['FIELD_NAME'];
@@ -1054,11 +1092,18 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 				);
 			}
 
+			$data = ['fieldInfo' => $fieldInfo];
+
+			if(isset($visibilityConfig[$fieldName]))
+			{
+				$data['visibilityConfigs'] = $visibilityConfig[$fieldName];
+			}
+
 			$this->userFieldInfos[$fieldName] = array(
 				'name' => $fieldName,
 				'title' => isset($userField['EDIT_FORM_LABEL']) ? $userField['EDIT_FORM_LABEL'] : $fieldName,
 				'type' => 'userField',
-				'data' => array('fieldInfo' => $fieldInfo)
+				'data' => $data
 			);
 
 			if(isset($userField['MANDATORY']) && $userField['MANDATORY'] === 'Y')
@@ -1404,10 +1449,14 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 			}
 
 			//region Requisites
-			$this->entityData['REQUISITES'] = \CCrmEntitySelectorHelper::PrepareRequisiteData(
-				CCrmOwnerType::Company,
-				$this->entityID
-			);
+			if (!$this->isCopyMode)
+			{
+				$this->entityData['REQUISITES'] = \CCrmEntitySelectorHelper::PrepareRequisiteData(
+					CCrmOwnerType::Company,
+					$this->entityID,
+					['VIEW_FORMATTED' => true, 'ADDRESS_AS_JSON' => true]
+				);
+			}
 			//endregion
 		}
 		else
@@ -1482,25 +1531,28 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		}
 		//endregion
 
-		$this->entityData['ADDRESS_HTML'] = CompanyAddressFormatter::format(
-			$this->entityData,
-			array(
-				'TYPE_ID' => EntityAddress::Primary,
-				'SEPARATOR' => AddressSeparator::HtmlLineBreak,
-				'NL2BR' => true,
-				'HTML_ENCODE' => true
-			)
-		);
+		if($this->enableOutmodedFields)
+		{
+			$this->entityData['ADDRESS_HTML'] = CompanyAddressFormatter::format(
+				$this->entityData,
+				array(
+					'TYPE_ID' => EntityAddress::Primary,
+					'SEPARATOR' => AddressSeparator::HtmlLineBreak,
+					'NL2BR' => true,
+					'HTML_ENCODE' => true
+				)
+			);
 
-		$this->entityData['REG_ADDRESS_HTML'] = CompanyAddressFormatter::format(
-			$this->entityData,
-			array(
-				'TYPE_ID' => EntityAddress::Registered,
-				'SEPARATOR' => AddressSeparator::HtmlLineBreak,
-				'NL2BR' => true,
-				'HTML_ENCODE' => true
-			)
-		);
+			$this->entityData['REG_ADDRESS_HTML'] = CompanyAddressFormatter::format(
+				$this->entityData,
+				array(
+					'TYPE_ID' => EntityAddress::Registered,
+					'SEPARATOR' => AddressSeparator::HtmlLineBreak,
+					'NL2BR' => true,
+					'HTML_ENCODE' => true
+				)
+			);
+		}
 
 		\Bitrix\Crm\Tracking\UI\Details::prepareEntityData(
 			\CCrmOwnerType::Company,
@@ -1545,7 +1597,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		{
 			$this->isMyCompany = false;
 			$isMyCompany = $this->request->get('mycompany');
-			if(is_string($isMyCompany) && strtoupper($isMyCompany) === 'Y')
+			if(is_string($isMyCompany) && mb_strtoupper($isMyCompany) === 'Y')
 			{
 				$this->isMyCompany = true;
 			}

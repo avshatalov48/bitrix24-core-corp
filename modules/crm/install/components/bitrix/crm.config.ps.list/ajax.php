@@ -41,7 +41,6 @@ if (!function_exists('__CrmConfigPsEndResponse'))
 
 		require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/epilog_after.php');
 
-		$APPLICATION->EpilogActions();
 		die();
 	}
 }
@@ -50,7 +49,7 @@ if (!function_exists('__CrmConfigPsEndResponse'))
 $APPLICATION->RestartBuffer();
 header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 $action = isset($_POST['action']) ? $_POST['action'] : '';
-if (strlen($action) == 0)
+if ($action == '')
 	__CrmActivityEditorEndResponse(array('ERROR' => 'Invalid data!'));
 
 $result = array();

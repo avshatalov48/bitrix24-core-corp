@@ -20,7 +20,9 @@ class DealCategoryTable extends Entity\DataManager
 			'CREATED_DATE' => array('data_type' => 'date', 'required' => true),
 			'NAME' => array('data_type' => 'string'),
 			'IS_LOCKED' => array('data_type' => 'boolean', 'values' => array('N', 'Y'), 'default_value' => 'N'),
-			'SORT' => array('data_type' => 'integer')
+			'SORT' => array('data_type' => 'integer'),
+			'ORIGIN_ID' => array('data_type' => 'string'),
+			'ORIGINATOR_ID' => array('data_type' => 'string')
 		);
 	}
 

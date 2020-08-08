@@ -181,7 +181,7 @@ if (count($arResult['arAccessUsers']['READ']) > 1 || $arResult['arAccessUsers'][
 			$str
 		);
 
-		$str = preg_replace('/class="([^"]*)"/i', 'class="\\1" onchange="window.BXTMREPORT.Filter();"', $str);
+		$str = preg_replace('/name="department"/i', 'name="department" onchange="window.BXTMREPORT.Filter();"', $str);
 
 		return $str;
 	}

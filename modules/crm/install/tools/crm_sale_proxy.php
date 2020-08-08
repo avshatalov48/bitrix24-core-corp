@@ -30,17 +30,17 @@ if (isset($_REQUEST["__BX_CRM_QUERY_STRING_PREFIX"]))
 {
 	$prefix = $_REQUEST["__BX_CRM_QUERY_STRING_PREFIX"];
 	$prefix = preg_replace("/%0D|%0A|\r|\n/i", "", $prefix);
-	if (substr($prefix, 0, strlen("/bitrix/tools/crm_sale_proxy.php?")) == "/bitrix/tools/crm_sale_proxy.php?")
-		$prefix = substr($prefix, strlen("/bitrix/tools/crm_sale_proxy.php?"));
-	if (substr($path, 0, strlen($prefix)) != $prefix)
+	if (mb_substr($prefix, 0, mb_strlen("/bitrix/tools/crm_sale_proxy.php?")) == "/bitrix/tools/crm_sale_proxy.php?")
+		$prefix = mb_substr($prefix, mb_strlen("/bitrix/tools/crm_sale_proxy.php?"));
+	if (mb_substr($path, 0, mb_strlen($prefix)) != $prefix)
 		$path = $prefix.$path;
 }
 
 $path = ltrim($path, "/");
-if (($pos = strpos($path, "/")) !== false)
+if (($pos = mb_strpos($path, "/")) !== false)
 {
-	$externalSaleId = intval(substr($path, 0, $pos));
-	$path = substr($path, $pos);
+	$externalSaleId = intval(mb_substr($path, 0, $pos));
+	$path = mb_substr($path, $pos);
 }
 
 $proxy = new CCrmExternalSaleProxy($externalSaleId);
@@ -96,7 +96,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 }
 else
 {
-	$request["PATH"] .= ((strpos($request["PATH"], "?") !== false) ? "&" : "?")."CRM_MANAGER_USER_ID=".intval($USER->GetID())."&bxpublic=Y&nocdn=Y&externalcontext=crm";
+	$request["PATH"] .= ((mb_strpos($request["PATH"], "?") !== false) ? "&" : "?")."CRM_MANAGER_USER_ID=".intval($USER->GetID())."&bxpublic=Y&nocdn=Y&externalcontext=crm";
 }
 
 $response = $proxy->Send($request);
@@ -107,7 +107,7 @@ $body = $response["BODY"];
 
 if (isset($response["CONTENT"]["ENCODING"]) && (in_array($response["CONTENT"]["TYPE"], array("text/xml", "application/xml", "text/html", "application/x-javascript"))))
 {
-	$utf8Encoding = (strtoupper($response["CONTENT"]["ENCODING"]) == "UTF-8");
+	$utf8Encoding = (mb_strtoupper($response["CONTENT"]["ENCODING"]) == "UTF-8");
 	if (!$utf8Encoding && defined("BX_UTF"))
 		$body = CharsetConverter::ConvertCharset($body, $response["CONTENT"]["ENCODING"], "UTF-8");
 	elseif ($utf8Encoding && !defined("BX_UTF"))
@@ -156,11 +156,11 @@ $body = str_replace(
 	$body
 );
 
-if (strpos($arPath["path"], '.css') !== false)
+if (mb_strpos($arPath["path"], '.css') !== false)
 {
 	header('Content-Type: text/css');
 }
-elseif (strpos($arPath["path"], '.js') !== false)
+elseif (mb_strpos($arPath["path"], '.js') !== false)
 {
 	header('Content-Type: application/x-javascript');
 }

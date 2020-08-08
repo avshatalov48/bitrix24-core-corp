@@ -164,7 +164,7 @@ class CheckListFields
 	 */
 	private function convertToCamelCase($name)
 	{
-		return str_replace('_', '', lcfirst(ucwords(strtolower($name), '_')));
+		return str_replace('_', '', lcfirst(ucwords(mb_strtolower($name), '_')));
 	}
 
 	/**
@@ -265,7 +265,7 @@ class CheckListFields
 
 			if (is_string($value) && trim($value) !== '')
 			{
-				return trim(substr($value, 0, $maxTitleLength));
+				return trim(mb_substr($value, 0, $maxTitleLength));
 			}
 
 			return null;
@@ -397,7 +397,7 @@ class CheckListFields
 
 		$checkTitle = static function($value)
 		{
-			return $value !== '' && strlen($value) <= 255;
+			return $value !== '' && mb_strlen($value) <= 255;
 		};
 
 		$checkBoolean = static function($value)

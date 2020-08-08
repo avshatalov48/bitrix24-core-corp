@@ -57,8 +57,7 @@ BX.ready(
 endif;
 if (is_array($arResult['STEXPORT_PARAMS']))
 {
-	\Bitrix\Main\UI\Extension::load('ui.progressbar');
-	\Bitrix\Main\UI\Extension::load('ui.buttons');
+	\Bitrix\Main\UI\Extension::load(['ui.progressbar', 'ui.buttons', 'ajax']);
 	\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 	\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/export.js');
 	?>
@@ -73,4 +72,12 @@ if (is_array($arResult['STEXPORT_PARAMS']))
 		}
 	);
 	</script><?
+}
+if (array_key_exists("IS_NEED_TO_CHECK", $arResult))
+{
+	?><?$APPLICATION->IncludeComponent(
+			"bitrix:crm.config.checker",
+			"invisible"
+	);?><?
+
 }

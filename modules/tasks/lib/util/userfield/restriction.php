@@ -9,21 +9,25 @@
 namespace Bitrix\Tasks\Util\UserField;
 
 use Bitrix\Main\UserFieldTable;
-use Bitrix\Tasks\Util;
-use Bitrix\Tasks\Util\UserField;
 use Bitrix\Tasks\Integration\Bitrix24;
+use Bitrix\Tasks\Util;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
+use Bitrix\Tasks\Util\UserField;
 
 final class Restriction
 {
 	public static function canUse($entityCode, $userId = 0, $forceUpdate = false)
 	{
-		if(static::hadUserFieldsBefore($entityCode, $forceUpdate)) // you can read\write field values, but editing scheme is not guaranteed
+		// you can read\write field values, but editing scheme is not guaranteed
+		if (
+			static::hadUserFieldsBefore($entityCode, $forceUpdate)
+			|| Bitrix24\Task::checkFeatureEnabled('task_user_field')
+		)
 		{
 			return true;
 		}
 
-		// otherwise, bitrix24 will tell us
-		return Bitrix24\Task::checkFeatureEnabled('task_user_field');
+		return !TaskLimit::isLimitExceeded((TaskLimit::isLimitExist() ? 0 : 100));
 	}
 
 	public static function canManage($entityCode, $userId = 0)
@@ -40,12 +44,14 @@ final class Restriction
 	private static function checkUserFieldsExists($entityCode)
 	{
 		$filter = ['=ENTITY_ID' => $entityCode];
+		$fieldsToExclude = ['UF_MAIL_MESSAGE'];
 
 		$className = UserField::getControllerClassByEntityCode($entityCode);
 		if ($className)
 		{
-			$filter['!@FIELD_NAME'] = array_keys($className::getSysScheme());
+			$fieldsToExclude = array_merge($fieldsToExclude, array_keys($className::getSysScheme()));
 		}
+		$filter['!@FIELD_NAME'] = $fieldsToExclude;
 
 		$item = UserFieldTable::getList([
 			'filter' => $filter,
@@ -53,7 +59,7 @@ final class Restriction
 			'select' => ['ID']
 		])->fetch();
 
-		return intval($item['ID']) > 0;
+		return (int)$item['ID'] > 0;
 	}
 
 	private static function hadUserFieldsBefore($entityCode, $forceUpdate)

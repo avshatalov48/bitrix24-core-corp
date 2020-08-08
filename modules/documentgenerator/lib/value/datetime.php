@@ -101,23 +101,23 @@ class DateTime extends Value implements Nameable
 	}
 
 	/**
-	 * @param string $modifier
+	 * @param string|array $modifier
 	 * @return array
 	 */
 	public static function parseModifier($modifier)
 	{
 		$data = parent::parseModifier($modifier);
+		if(is_array($modifier))
+		{
+			return $data;
+		}
 		if(empty($data))
 		{
 			$data = ['format' => $modifier];
 		}
-		else
+		elseif(!empty($modifier))
 		{
-			$format = '';
-			if(isset($data['format']))
-			{
-				$format = $data['format'];
-			}
+			$format = $data['format'] ?? '';
 			$parts = explode(',', $modifier);
 			foreach($parts as $part)
 			{
@@ -125,7 +125,7 @@ class DateTime extends Value implements Nameable
 				{
 					continue;
 				}
-				if(strpos($part, '=') === false)
+				if(mb_strpos($part, '=') === false)
 				{
 					if(!empty($format))
 					{

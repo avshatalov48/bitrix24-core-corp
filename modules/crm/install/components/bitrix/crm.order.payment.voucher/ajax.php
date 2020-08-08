@@ -52,12 +52,12 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			$paymentCollection = $order->getPaymentCollection();
 			$payment = $paymentCollection->getItemById($id);
 
-			if (isset($fieldValues['PAY_RETURN_DATE']) && strlen($fieldValues['PAY_RETURN_DATE']) > 0)
+			if (isset($fieldValues['PAY_RETURN_DATE']) && $fieldValues['PAY_RETURN_DATE'] <> '')
 			{
 				$fieldValues['PAY_RETURN_DATE'] = new Bitrix\Main\Type\Date($fieldValues['PAY_RETURN_DATE']);
 			}
 
-			if (isset($fieldValues['PAY_VOUCHER_DATE']) && strlen($fieldValues['PAY_VOUCHER_DATE']) > 0)
+			if (isset($fieldValues['PAY_VOUCHER_DATE']) && $fieldValues['PAY_VOUCHER_DATE'] <> '')
 			{
 				$fieldValues['PAY_VOUCHER_DATE'] = new Bitrix\Main\Type\Date($fieldValues['PAY_VOUCHER_DATE']);
 			}

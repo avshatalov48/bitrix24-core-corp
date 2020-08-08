@@ -26,12 +26,13 @@ if(!isset($arReturn['ERROR']))
 		$personTypeId = isset($_REQUEST['person_type']) ? $_REQUEST['person_type'] : 0;
 		$paySystemId = isset($_REQUEST['pay_system_id']) ? $_REQUEST['pay_system_id'] : 0;
 		$action = isset($_REQUEST['action']) ? trim($_REQUEST['action']) : '';
+		$psMode = isset($_REQUEST['ps_mode']) ? trim($_REQUEST['ps_mode']) : null;
 
 		switch ($action)
 		{
 			case 'get_fields':
 
-				$arReturn['FIELDS'] = CCrmPaySystem::getPSCorrespondence($ID);
+				$arReturn['FIELDS'] = CCrmPaySystem::getPSCorrespondence($ID, $psMode);
 
 				$path = \Bitrix\Sale\PaySystem\Manager::getPathToHandlerFolder($ID);
 				if (\Bitrix\Main\IO\File::isFileExists(\Bitrix\Main\Application::getDocumentRoot().$path.'/.description.php'))
@@ -104,9 +105,20 @@ if(!isset($arReturn['ERROR']))
 					if ($handlerModeList)
 					{
 						$arReturn['PS_MODE_LIST'] = $handlerModeList;
+
+						$psMode = $psMode ?? array_shift(array_keys($handlerModeList));
+						$arReturn["PAYMENT_MODE"] = Bitrix\Sale\Internals\Input\Enum::getEditHtml(
+							'PS_MODE',
+							array(
+								'OPTIONS' => $handlerModeList,
+								'ID' => 'PS_MODE',
+								'ONCHANGE' => "BX.crmPSActionFile.onPsModeSelect()",
+							),
+							$psMode
+						);
 					}
 
-					if (strpos($ID, 'invoicedocument') === 0)
+					if (mb_strpos($ID, 'invoicedocument') === 0)
 					{
 						$arReturn["PAYMENT_MODE_TITLE"] = Loc::getMessage('CRM_PS_PS_MODE_DOCUMENT_TITLE');
 
@@ -139,7 +151,7 @@ if(!isset($arReturn['ERROR']))
 				$arParamsTemplate = array_merge($arParamsTemplate, $service->getDemoParams());
 				$service->setTemplateMode(\Bitrix\Sale\PaySystem\BaseServiceHandler::STRING);
 				$service->setTemplateParams($arParamsTemplate);
-				if (strpos($service->getField('ACTION_FILE'), 'bill') !== false || strpos($service->getField('ACTION_FILE'), 'quote') !== false)
+				if (mb_strpos($service->getField('ACTION_FILE'), 'bill') !== false || mb_strpos($service->getField('ACTION_FILE'), 'quote') !== false)
 				{
 					$payment = PaySystem\Manager::getPaymentObjectByData(array('PERSON_TYPE_ID' => $personTypeId));
 					$result = $service->showTemplate($payment, 'template');
@@ -154,7 +166,7 @@ if(!isset($arReturn['ERROR']))
 				$request = $context->getRequest();
 				$formData = $request->get('formData');
 
-				$arPsActFields = CCrmPaySystem::getPSCorrespondence($formData['data']["ACTION_FILE"]);
+				$arPsActFields = CCrmPaySystem::getPSCorrespondence($formData['data']["ACTION_FILE"], $formData['data']['PS_MODE'] ?? null);
 
 				$filedList = explode(",", $formData['data']['PS_ACTION_FIELDS_LIST']);
 				$arActParams = array();
@@ -169,7 +181,7 @@ if(!isset($arReturn['ERROR']))
 					$typeTmp = $formData['data']["TYPE_".$val];
 					$valueTmp = $formData['data']["VALUE1_".$val];
 
-					if (is_string($typeTmp) && strlen($typeTmp) === 0)
+					if (is_string($typeTmp) && $typeTmp == '')
 						$valueTmp = $formData['data']["VALUE2_".$val];
 
 					if ($val == 'USER_COLUMNS')
@@ -189,7 +201,7 @@ if(!isset($arReturn['ERROR']))
 						}
 					}
 
-					if (is_string($typeTmp) && strlen($typeTmp) === 0 || $typeTmp === 'CHECKBOX')
+					if (is_string($typeTmp) && $typeTmp == '' || $typeTmp === 'CHECKBOX')
 					{
 						$arActParams[$val] = \Bitrix\Main\Text\Encoding::convertEncoding($valueTmp, 'utf-8', SITE_CHARSET);
 					}
@@ -212,7 +224,7 @@ if(!isset($arReturn['ERROR']))
 					)
 				);
 
-				if (strpos($service->getField('ACTION_FILE'), 'bill') !== false || strpos($service->getField('ACTION_FILE'), 'quote') !== false)
+				if (mb_strpos($service->getField('ACTION_FILE'), 'bill') !== false || mb_strpos($service->getField('ACTION_FILE'), 'quote') !== false)
 				{
 					$arParamsTemplate = array_merge($service->getDemoParams(), $arActParams);
 					$service->setTemplateMode(\Bitrix\Sale\PaySystem\BaseServiceHandler::STRING);
@@ -233,7 +245,7 @@ if(!isset($arReturn['ERROR']))
 						$personTypeId = array_shift($personTypeList);
 
 						$shopId = \Bitrix\Sale\BusinessValue::get('YANDEX_INVOICE_SHOP_ID', 'PAYSYSTEM_'.$paySystemId, $personTypeId);
-						if (strlen($shopId) > 0)
+						if ($shopId <> '')
 						{
 							$dbRes = \Bitrix\Sale\Internals\YandexSettingsTable::getById($shopId);
 							if (!$dbRes->fetch())

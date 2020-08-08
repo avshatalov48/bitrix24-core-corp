@@ -101,7 +101,7 @@ class ActivityStatisticEntry
 		$markId = isset($entityFields['RESULT_MARK']) ? (int)$entityFields['RESULT_MARK'] : 0;
 		$streamId = isset($entityFields['RESULT_STREAM']) ? (int)$entityFields['RESULT_STREAM'] : 0;
 		$sourceId = isset($entityFields['RESULT_SOURCE_ID']) ? (string)$entityFields['RESULT_SOURCE_ID'] : '';
-		if (strlen($sourceId) === 0)
+		if ($sourceId == '')
 			$sourceId = Crm\Activity\CommunicationStatistics::DEFAULT_SOURCE;
 
 		$currencyId = isset($entityFields['RESULT_CURRENCY_ID']) ? (string)$entityFields['RESULT_CURRENCY_ID'] : '';

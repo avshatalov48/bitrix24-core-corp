@@ -85,7 +85,7 @@ class Type
 			return self::UNDEFINED;
 		}
 
-		$name = strtoupper($name);
+		$name = mb_strtoupper($name);
 		if($name === self::PHONE_NAME)
 		{
 			return self::PHONE;

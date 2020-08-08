@@ -60,6 +60,10 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 		$sort = $this->request->get('SORT');
 		$xmlId = $this->request->get('XML_ID');
 		$isCash = $this->request->get('IS_CASH');
+		$encoding = $this->request->get('ENCODING');
+		$newWindow = $this->request->get('NEW_WINDOW');
+		$allowEditPayment = $this->request->get('ALLOW_EDIT_PAYMENT');
+		$code = $this->request->get('CODE');
 
 		$path = PaySystem\Manager::getPathToHandlerFolder($handler);
 		if ($path === null)
@@ -82,24 +86,24 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 			return [];
 		}
 
-		$fields = array(
+		$fields = [
 			"NAME" => $name,
 			"PSA_NAME" => $name,
-			"ACTIVE" => ($active == 'Y') ? 'Y' : 'N',
-			"CAN_PRINT_CHECK" => ($isCanPrintCheck == 'Y') ? 'Y' : 'N',
-			"CODE" => '',
-			"NEW_WINDOW" => 'N',
-			"ALLOW_EDIT_PAYMENT" => 'Y',
+			"ACTIVE" => $active ?? 'Y',
+			"CAN_PRINT_CHECK" => ($isCanPrintCheck === 'Y') ? 'Y' : 'N',
+			"CODE" => $code ? $code : '',
+			"NEW_WINDOW" => ($newWindow === 'Y') ? 'Y' : 'N',
+			"ALLOW_EDIT_PAYMENT" => ($allowEditPayment === 'Y') ? 'Y' : 'N',
 			"IS_CASH" => isset($isCash) ? $isCash : 'N',
 			"ENTITY_REGISTRY_TYPE" => Registry::REGISTRY_TYPE_ORDER,
 			"SORT" => $sort,
-			"ENCODING" => '',
+			"ENCODING" => $encoding,
 			"DESCRIPTION" => $description,
 			"ACTION_FILE" => $handler,
 			'PS_MODE' => $psMode,
 			'XML_ID' => $xmlId,
 			'AUTO_CHANGE_1C' => 'N',
-		);
+		];
 
 		$file = $this->request->getFile('LOGOTIP');
 		if ($file !== null && $file["error"] == 0)

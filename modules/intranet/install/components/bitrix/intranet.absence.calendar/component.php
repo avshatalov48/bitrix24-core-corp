@@ -70,7 +70,7 @@ foreach ($arFullControlsList as $control)
 $arParams['DETAIL_URL_PERSONAL'] = isset($arParams['DETAIL_URL_PERSONAL']) ? $arParams['DETAIL_URL_PERSONAL'] : '/company/personal/user/#USER_ID#/calendar/?EVENT_ID=#EVENT_ID#';
 $arParams['DETAIL_URL_DEPARTMENT'] = isset($arParams['DETAIL_URL_DEPARTMENT']) ? $arParams['DETAIL_URL_DEPARTMENT'] : '/company/structure.php?set_filter_structure=Y&structure_UF_DEPARTMENT=#ID#';
 
-if (strlen($arParams['IBLOCK_TYPE']) <= 0)
+if ($arParams['IBLOCK_TYPE'] == '')
 	$arParams['IBLOCK_TYPE'] = COption::GetOptionString('intranet', 'iblock_type');
 $arParams['IBLOCK_ID'] = intval($arParams['IBLOCK_ID']);
 if ($arParams['IBLOCK_ID'] <= 0)
@@ -143,7 +143,7 @@ if ($arParams['AJAX_CALL'] == 'DATA')
 	$arParams['USERS_ALL'] = $arParams['USERS_ALL'] == 'Y' ? 'Y' : 'N';
 
 	$arResult['ERROR_CODE'] = '';
-	if (strlen($arParams['CALLBACK']) <= 0)
+	if ($arParams['CALLBACK'] == '')
 		$arResult['ERROR_CODE'] = 'ERROR_NO_CALLBACK';
 	elseif ($arParams['TS_START'] <= 0)
 		$arResult['ERROR_CODE'] = 'ERROR_NO_TS_START';

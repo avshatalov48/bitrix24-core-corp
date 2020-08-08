@@ -1,0 +1,3 @@
+<?php
+$MESS["CRM_AUTOMATION_TRIGGER_FIELD_CHANGED_NAME"] = "Изменены поля";
+?>

@@ -27,7 +27,7 @@ if ($_REQUEST['MODE'] == 'SEARCH')
 	if (isset($_GET['SOCNET_GROUP_ID']))
 		$group_id = $_GET['SOCNET_GROUP_ID'];
 
-	if ($EXTERNAL == "E" && strlen($site) > 0 && !CExtranet::IsIntranetUser())
+	if ($EXTERNAL == "E" && $site <> '' && !CExtranet::IsIntranetUser())
 	{
 		$arUsersInMyGroupsID = CExtranet::GetMyGroupsUsers($site);
 		$arPublicUsersID = CExtranet::GetPublicUsers();
@@ -100,7 +100,7 @@ if ($_REQUEST['MODE'] == 'SEARCH')
 				$arUsersToFilter[] = $arRequests["USER_ID"];
 		}
 	}
-	elseif ($EXTERNAL == 'A' && strlen($site) > 0 && CModule::IncludeModule("extranet") && CExtranet::IsExtranetSite($site))
+	elseif ($EXTERNAL == 'A' && $site <> '' && CModule::IncludeModule("extranet") && CExtranet::IsExtranetSite($site))
 	{
 		if ($GLOBALS["APPLICATION"]->GetGroupRight("socialnetwork") >= "W"):
 			$arUsersToFilter = CExtranet::GetExtranetGroupUsers();
@@ -150,7 +150,7 @@ if ($_REQUEST['MODE'] == 'SEARCH')
 				die();
 			}
 		}
-		elseif (strlen($matches[1]) > 0)
+		elseif ($matches[1] <> '')
 		{
 			$search = $matches[1];
 		}

@@ -110,7 +110,8 @@ class CBPCrmCreateReturnLeadActivity
 			}
 
 			//Region automation
-			\Bitrix\Crm\Automation\Factory::runOnAdd(\CCrmOwnerType::Lead, $id);
+			$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $id);
+			$starter->setContextToBizproc()->runOnAdd();
 			//End region
 		}
 

@@ -94,6 +94,16 @@
 	color: #215f98;
 }
 
+.b24-form-recaptcha {
+	display: flex;
+	justify-content: flex-end;
+	margin: 0 31px 20px 0;
+}
+
+.b24-form-content form {
+	margin: 0;
+}
+
 .b24-form-padding-side {
 	padding-left: 31px;
 	padding-right: 31px;
@@ -109,4 +119,17 @@
 		padding-left: 18px;
 		padding-right: 18px;
 	}
+}
+
+
+.b24-form-compact .b24-form-header-padding{
+
+}
+.b24-form-compact .b24-form-header-title{
+	font-size: 17px;
+	line-height: 15px;
+}
+.b24-form-compact .b24-form-padding-side {
+	padding-left: 10px;
+	padding-right: 10px;
 }

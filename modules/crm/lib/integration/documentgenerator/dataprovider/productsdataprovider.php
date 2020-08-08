@@ -6,6 +6,7 @@ use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
 use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
 use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\Iblock\ElementTable;
+use Bitrix\Main\Localization\Loc;
 
 abstract class ProductsDataProvider extends CrmEntityDataProvider
 {
@@ -24,6 +25,14 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 		if($this->fields === null)
 		{
 			parent::getFields();
+
+			if($this->hasStatusField())
+			{
+				$this->fields['STATUS'] = [
+					'TITLE' => Loc::getMessage('CRM_DOCGEN_PRODUCTSDATAPROVIDER_STATUS_TITLE'),
+					'VALUE' => [$this, 'getStatus'],
+				];
+			}
 
 			if(!$this->isLightMode())
 			{
@@ -403,14 +412,14 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 			$rate = $product->getRawValue('TAX_RATE');
 			if($rate > 0 || ($rate == 0 && isset($taxNames[$rate])))
 			{
-				if(!isset($taxes[$product->getRawValue('TAX_RATE')]))
+				if(!isset($taxes[$rate]))
 				{
 					$name = GetMessage('CRM_DOCGEN_PRODUCTSDATAPROVIDER_TAX_VAT_NAME');
 					if(isset($taxNames[$rate]))
 					{
 						$name = $taxNames[$rate];
 					}
-					$taxes[$product->getRawValue('TAX_RATE')] = [
+					$taxes[$rate] = [
 						'NAME' => $name,
 						'VALUE' => 0,
 						'NETTO' => 0,
@@ -475,5 +484,29 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 		}
 
 		return false;
+	}
+
+	protected function hasStatusField(): bool
+	{
+		return ($this->getStatusEntityId() !== null);
+	}
+
+	protected function getStatusEntityId(): ?string
+	{
+		return null;
+	}
+
+	public function getStatus(): ?string
+	{
+		$statusId = (string) $this->data['STATUS_ID'];
+		$crmStatus = new \CCrmStatus($this->getStatusEntityId());
+
+		$data = $crmStatus->GetStatusByStatusId($statusId);
+		if($data['NAME'])
+		{
+			return $data['NAME'];
+		}
+
+		return null;
 	}
 }

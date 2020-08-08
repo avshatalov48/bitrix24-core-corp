@@ -19,7 +19,7 @@ $taxID = isset($arParams['TAX_ID']) ? strval($arParams['TAX_ID']) : '';
 if($taxID[0] <=0 )
 {
 	$taxIDParName = isset($arParams['TAX_ID_PAR_NAME']) ? strval($arParams['TAX_ID_PAR_NAME']) : '';
-	if(strlen($taxIDParName) == 0)
+	if($taxIDParName == '')
 	{
 		$taxIDParName = 'tax_id';
 	}
@@ -45,7 +45,7 @@ $arResult['TAX_ID'] = $taxID;
 $arResult['TAX'] = $tax;
 $isEditMode = $taxID > 0;
 
-$arResult['FORM_ID'] = isset($arParams['FORM_ID']) && strlen($arParams['FORM_ID']) > 0 ? $arParams['FORM_ID'] : 'CRM_TAX_EDIT_FORM';
+$arResult['FORM_ID'] = isset($arParams['FORM_ID']) && $arParams['FORM_ID'] <> '' ? $arParams['FORM_ID'] : 'CRM_TAX_EDIT_FORM';
 $arResult['GRID_ID'] = 'CRM_TAX_EDIT_GRID';
 $arResult['BACK_URL'] = CComponentEngine::MakePathFromTemplate(
 	$arParams['PATH_TO_TAX_LIST'],

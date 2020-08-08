@@ -20,11 +20,11 @@ final class SonetLogConnector extends StubConnector implements ISupportForeignCo
 		$data = array();
 
 		if (
-			strpos($log["EVENT_ID"], "crm_") === 0
+			mb_strpos($log["EVENT_ID"], "crm_") === 0
 			&& Loader::includeModule('crm')
 		)
 		{
-			if (strpos($log["EVENT_ID"], "_message") > 0)
+			if (mb_strpos($log["EVENT_ID"], "_message") > 0)
 			{
 				$connector = new CrmMessageConnector($log["ID"]);
 				$subData = $connector->getDataToShow();
@@ -135,7 +135,7 @@ final class SonetLogConnector extends StubConnector implements ISupportForeignCo
 
 		if ($log = $this->loadLogEntryData())
 		{
-			if (strpos($log["EVENT_ID"], "crm_") === 0 && Loader::includeModule('crm'))
+			if (mb_strpos($log["EVENT_ID"], "crm_") === 0 && Loader::includeModule('crm'))
 			{
 				$userPermissions = \CCrmPerms::getUserPermissions($userId);
 				if ($log["ENTITY_TYPE"] == "CRMACTIVITY")

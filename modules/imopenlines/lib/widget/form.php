@@ -202,6 +202,7 @@ class Form
 			), 'CLIENT FORM CRM');
 
 			$chat = new Chat($this->chatId);
+			//TODO: Replace with the method \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId or \Bitrix\ImOpenLines\Chat::parseLiveChatEntityId
 			list($configId) = explode('|', $chat->getData('ENTITY_ID'));
 
 			$resultChatLoad = $chat->load(Array(
@@ -252,8 +253,12 @@ class Form
 							$userUpdate['NAME'] = $userName;
 						}
 					}
-					if (isset($fields['EMAIL']) && Tools\Email::validate($fields['EMAIL']) && !Tools\Email::isSame($user->getEmail(), $fields['EMAIL']))
+					if (isset($fields['EMAIL']) &&
+						Tools\Email::validate($fields['EMAIL']) &&
+						!Tools\Email::isSame($user->getEmail(), $fields['EMAIL'])
+					)
 					{
+						$fields['EMAIL'] = Tools\Email::normalize($fields['EMAIL']);
 						$userUpdate['EMAIL'] = $fields['EMAIL'];
 					}
 					if (isset($fields['PHONE']) && Tools\Phone::validate($fields['PHONE']) && !Tools\Phone::isSame($user->getPhone(ImUser::PHONE_MOBILE), $fields['PHONE']))

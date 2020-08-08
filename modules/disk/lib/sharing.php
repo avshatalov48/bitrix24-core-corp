@@ -458,6 +458,10 @@ final class Sharing extends Internals\Model
 		$objectToSharing = $data['REAL_OBJECT'];
 		//resolve to last real object. In table we write only real (not link) id.
 		$objectToSharing = $objectToSharing->getRealObject();
+		if (!$objectToSharing)
+		{
+			return null;
+		}
 		$data['REAL_OBJECT_ID'] = $objectToSharing->getId();
 		$data['REAL_STORAGE_ID'] = $objectToSharing->getStorageId();
 
@@ -569,18 +573,18 @@ final class Sharing extends Internals\Model
 						'cmd' => 'detach',
 					));
 					list($subTag, $tag) = $sharingModel->getNotifyTags();
-					Driver::getInstance()->sendNotify(substr($sharingModel->getToEntity(), 1), array(
+					Driver::getInstance()->sendNotify(mb_substr($sharingModel->getToEntity(), 1), array(
 						'FROM_USER_ID' => $sharingModel->getCreatedBy(),
 						'NOTIFY_EVENT' => 'sharing',
 						'NOTIFY_TAG' => $tag,
 						'NOTIFY_SUB_TAG' => $subTag,
-						'NOTIFY_MESSAGE' => Loc::getMessage($isFolder ? 'DISK_SHARING_MODEL_AUTOCONNECT_NOTIFY' : 'DISK_SHARING_MODEL_AUTOCONNECT_NOTIFY_FILE', array(
-							'#NAME#' => '<a href="' . $pathInListing . '">' . $objectToSharing->getName() . '</a>',
+						'NOTIFY_MESSAGE' => Loc::getMessage($isFolder? 'DISK_SHARING_MODEL_AUTOCONNECT_NOTIFY' : 'DISK_SHARING_MODEL_AUTOCONNECT_NOTIFY_FILE', array(
+							'#NAME#' => '<a href="'.$pathInListing.'">'.$objectToSharing->getName().'</a>',
 							'#DESCRIPTION#' => $sharingModel->getDescription(),
-							'#DISCONNECT_LINK#' => '<a href="' . $uriToDisconnect . '">' . Loc::getMessage('DISK_SHARING_MODEL_TEXT_DISCONNECT_LINK') . '</a>',
+							'#DISCONNECT_LINK#' => '<a href="'.$uriToDisconnect.'">'.Loc::getMessage('DISK_SHARING_MODEL_TEXT_DISCONNECT_LINK').'</a>',
 						)),
-						'NOTIFY_MESSAGE_OUT' => strip_tags(Loc::getMessage($isFolder ? 'DISK_SHARING_MODEL_AUTOCONNECT_NOTIFY' : 'DISK_SHARING_MODEL_AUTOCONNECT_NOTIFY_FILE', array(
-							'#NAME#' => '<a href="' . $pathInListing . '">' . $objectToSharing->getName() . '</a>',
+						'NOTIFY_MESSAGE_OUT' => strip_tags(Loc::getMessage($isFolder? 'DISK_SHARING_MODEL_AUTOCONNECT_NOTIFY' : 'DISK_SHARING_MODEL_AUTOCONNECT_NOTIFY_FILE', array(
+							'#NAME#' => '<a href="'.$pathInListing.'">'.$objectToSharing->getName().'</a>',
 							'#DESCRIPTION#' => $sharingModel->getDescription(),
 							'#DISCONNECT_LINK#' => '',
 						))),
@@ -614,7 +618,7 @@ final class Sharing extends Internals\Model
 					continue;
 				}
 				list($subTag, $tag) = $sharingModel->getNotifyTags();
-				Driver::getInstance()->sendNotify(substr($sharingModel->getToEntity(), 1), array(
+				Driver::getInstance()->sendNotify(mb_substr($sharingModel->getToEntity(), 1), array(
 					'NOTIFY_BUTTONS' => $buttons,
 					'NOTIFY_TYPE' => 'IM_NOTIFY_CONFIRM',
 					'FROM_USER_ID' => $sharingModel->getCreatedBy(),
@@ -929,11 +933,11 @@ final class Sharing extends Internals\Model
 		switch($this->type)
 		{
 			case SharingTable::TYPE_TO_USER:
-				if(substr($this->toEntity, 0, 1) !== self::CODE_USER)
+				if(mb_substr($this->toEntity, 0, 1) !== self::CODE_USER)
 				{
 					return null;
 				}
-				$userId = (int)substr($this->toEntity, 1);
+				$userId = (int)mb_substr($this->toEntity, 1);
 				$storage = Driver::getInstance()->getStorageByUserId($userId);
 				if(!$storage)
 				{
@@ -941,11 +945,11 @@ final class Sharing extends Internals\Model
 				}
 				return $storage;
 			case SharingTable::TYPE_TO_GROUP:
-				if(substr($this->toEntity, 0, 2) !== self::CODE_SOCNET_GROUP)
+				if(mb_substr($this->toEntity, 0, 2) !== self::CODE_SOCNET_GROUP)
 				{
 					return null;
 				}
-				return Driver::getInstance()->getStorageByGroupId((int)substr($this->toEntity, 2));
+				return Driver::getInstance()->getStorageByGroupId((int)mb_substr($this->toEntity, 2));
 		}
 		return null;
 	}
@@ -1397,7 +1401,7 @@ final class Sharing extends Internals\Model
 				)
 			);
 			list($subTag, $tag) = $sharingModel->getNotifyTags();
-			Driver::getInstance()->sendNotify(substr($sharingModel->getToEntity(), 1), array(
+			Driver::getInstance()->sendNotify(mb_substr($sharingModel->getToEntity(), 1), array(
 				'FROM_USER_ID' => $sharingModel->getCreatedBy(),
 				'NOTIFY_EVENT' => 'sharing',
 				'NOTIFY_TAG' => $tag,

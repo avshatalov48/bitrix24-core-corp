@@ -44,4 +44,13 @@ if (sizeof($arResult["VALUE"]) > 0)
 $arResult["NAME"] = htmlspecialcharsbx($arParams["NAME"]);
 $arResult["~NAME"] = $arParams["NAME"];
 
+if (isset($arParams["PATH_TO_TASKS"]) && !empty($arParams["PATH_TO_TASKS"]))
+{
+	$arResult['PATH_TO_TASKS'] = $arParams["PATH_TO_TASKS"];
+}
+else
+{
+	$arResult['PATH_TO_TASKS'] = '/company/personal/user/'.$USER->GetID().'/tasks/';
+}
+
 $this->IncludeComponentTemplate();

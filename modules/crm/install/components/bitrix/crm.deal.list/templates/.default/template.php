@@ -106,7 +106,7 @@ $gridManagerCfg = array(
 );
 echo CCrmViewHelper::RenderDealStageSettings();
 $prefix = $arResult['GRID_ID'];
-$prefixLC = strtolower($arResult['GRID_ID']);
+$prefixLC = mb_strtolower($arResult['GRID_ID']);
 
 $arResult['GRID_DATA'] = array();
 $arColumns = array();
@@ -395,6 +395,7 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 			'PRODUCT_ID' => isset($arDeal['PRODUCT_ROWS']) ? htmlspecialcharsbx(CCrmProductRow::RowsToString($arDeal['PRODUCT_ROWS'])) : '',
 			'STATE_ID' => isset($arResult['STATE_LIST'][$arDeal['STATE_ID']]) ? $arResult['STATE_LIST'][$arDeal['STATE_ID']] : $arDeal['STATE_ID'],
 			'WEBFORM_ID' => isset($arResult['WEBFORM_LIST'][$arDeal['WEBFORM_ID']]) ? $arResult['WEBFORM_LIST'][$arDeal['WEBFORM_ID']] : $arDeal['WEBFORM_ID'],
+			'ORDER_STAGE' => CCrmViewHelper::RenderDealOrderStageControl($arDeal['ORDER_STAGE']),
 			'STAGE_ID' => CCrmViewHelper::RenderDealStageControl(
 				array(
 					'PREFIX' => "{$arResult['GRID_ID']}_PROGRESS_BAR_",
@@ -450,6 +451,8 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 				'ACTIVITY_SUBJECT' => isset($arDeal['~ACTIVITY_SUBJECT']) ? $arDeal['~ACTIVITY_SUBJECT'] : '',
 				'ACTIVITY_TIME' => isset($arDeal['~ACTIVITY_TIME']) ? $arDeal['~ACTIVITY_TIME'] : '',
 				'ACTIVITY_EXPIRED' => isset($arDeal['~ACTIVITY_EXPIRED']) ? $arDeal['~ACTIVITY_EXPIRED'] : '',
+				'ACTIVITY_TYPE_ID' => isset($arDeal['~ACTIVITY_TYPE_ID']) ? $arDeal['~ACTIVITY_TYPE_ID'] : '',
+				'ACTIVITY_PROVIDER_ID' => isset($arDeal['~ACTIVITY_PROVIDER_ID']) ? $arDeal['~ACTIVITY_PROVIDER_ID'] : '',
 				'ALLOW_EDIT' => $arDeal['EDIT'],
 				'MENU_ITEMS' => $arActivityMenuItems,
 				'USE_GRID_EXTENSION' => true
@@ -487,6 +490,8 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 				'ACTIVITY_RESPONSIBLE_NAME' => isset($arDeal['~C_ACTIVITY_RESP_NAME']) ? $arDeal['~C_ACTIVITY_RESP_NAME'] : '',
 				'ACTIVITY_RESPONSIBLE_LAST_NAME' => isset($arDeal['~C_ACTIVITY_RESP_LAST_NAME']) ? $arDeal['~C_ACTIVITY_RESP_LAST_NAME'] : '',
 				'ACTIVITY_RESPONSIBLE_SECOND_NAME' => isset($arDeal['~C_ACTIVITY_RESP_SECOND_NAME']) ? $arDeal['~C_ACTIVITY_RESP_SECOND_NAME'] : '',
+				'ACTIVITY_TYPE_ID' => isset($arDeal['~C_ACTIVITY_TYPE_ID']) ? $arDeal['~C_ACTIVITY_TYPE_ID'] : '',
+				'ACTIVITY_PROVIDER_ID' => isset($arDeal['~C_ACTIVITY_PROVIDER_ID']) ? $arDeal['~C_ACTIVITY_PROVIDER_ID'] : '',
 				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
 				'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
 				'ALLOW_EDIT' => $arDeal['EDIT'],
@@ -753,6 +758,18 @@ if(!$isInternal
 				'VALUE' => 'merge',
 				'ONCHANGE' => array(
 					array(
+						'ACTION' => Bitrix\Main\Grid\Panel\Actions::CREATE,
+						'DATA' => array(
+							array_merge(
+								$applyButton,
+								['SETTINGS' => [
+									'minSelectedRows' => 2,
+									'buttonId' => 'apply_button'
+								]]
+							)
+						)
+					),
+					array(
 						'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
 						'DATA' => array(array('JS' => "BX.CrmUIGridExtension.applyAction('{$gridManagerID}', 'merge')"))
 					)
@@ -784,6 +801,9 @@ if(!$isInternal
 			'NAME' => GetMessage('CRM_DEAL_ACTION_DELETE'),
 			'VALUE' => 'delete',
 			'ONCHANGE' => array(
+				array(
+					'ACTION' => Bitrix\Main\Grid\Panel\Actions::RESET_CONTROLS,
+				),
 				array(
 					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
 					'DATA' => array(array('JS' => "BX.CrmUIGridExtension.applyAction('{$gridManagerID}', 'delete')"))
@@ -947,7 +967,7 @@ if($arResult['ENABLE_TOOLBAR'])
 		'bitrix:crm.interface.toolbar',
 		'',
 		array(
-			'TOOLBAR_ID' => strtolower($arResult['GRID_ID']).'_toolbar',
+			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']).'_toolbar',
 			'BUTTONS' => array($addButton)
 		),
 		$component,
@@ -1065,7 +1085,7 @@ $APPLICATION->IncludeComponent(
 			'BINDING' => array(
 				'category' => 'crm.navigation',
 				'name' => 'index',
-				'key' => strtolower($arResult['NAVIGATION_CONTEXT_ID'])
+				'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
 			)
 		),
 		'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'],

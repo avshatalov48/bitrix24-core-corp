@@ -47,7 +47,8 @@ class CompanyAddress extends EntityAddress
 					'REGION' => 'REG_ADDRESS_REGION',
 					'PROVINCE' => 'REG_ADDRESS_PROVINCE',
 					'COUNTRY' => 'REG_ADDRESS_COUNTRY',
-					'COUNTRY_CODE' => 'REG_ADDRESS_COUNTRY_CODE'
+					'COUNTRY_CODE' => 'REG_ADDRESS_COUNTRY_CODE',
+					'LOC_ADDR_ID' => 'REG_ADDRESS_LOC_ADDR_ID'
 				);
 			}
 			else
@@ -60,7 +61,8 @@ class CompanyAddress extends EntityAddress
 					'REGION' => 'ADDRESS_REGION',
 					'PROVINCE' => 'ADDRESS_PROVINCE',
 					'COUNTRY' => 'ADDRESS_COUNTRY',
-					'COUNTRY_CODE' => 'ADDRESS_COUNTRY_CODE'
+					'COUNTRY_CODE' => 'ADDRESS_COUNTRY_CODE',
+					'LOC_ADDR_ID' => 'ADDRESS_LOC_ADDR_ID'
 				);
 			}
 		}
@@ -90,7 +92,7 @@ class CompanyAddress extends EntityAddress
 			$fieldName = $aliases[$fieldName];
 		}
 
-		return stripos($fieldName, 'REG_') === 0 ? EntityAddress::Registered : EntityAddress::Primary;
+		return mb_stripos($fieldName, 'REG_') === 0 ? EntityAddress::Registered : EntityAddress::Primary;
 	}
 
 	/**

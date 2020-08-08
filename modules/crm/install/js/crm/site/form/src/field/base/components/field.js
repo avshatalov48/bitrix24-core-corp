@@ -1,8 +1,14 @@
+import {Controller} from "../controller";
 import "./css/field.css";
 import "./css/animation.css";
 
 const Field = {
-	props: ['field'],
+	props: {
+		field: {
+			type: Controller,
+			required: true,
+		},
+	},
 	components: {
 	},
 	template: `
@@ -68,9 +74,12 @@ const Field = {
 		},
 		hasErrors()
 		{
-			return this.field.validated
-				&& !this.field.focused
-				&& !this.field.valid();
+			if (!this.field.validated || this.field.focused)
+			{
+				return false;
+			}
+
+			return !this.field.valid();
 		},
 	},
 	methods: {
@@ -80,11 +89,17 @@ const Field = {
 		onFocus()
 		{
 			this.field.focused = true;
+			this.field.emit(this.field.events.focus);
+
 		},
 		onBlur()
 		{
 			this.field.focused = false;
 			this.field.valid();
+			setTimeout(() => {
+				this.field.emit(this.field.events.blur);
+			}, 350);
+
 		},
 		onKeyDown(e)
 		{

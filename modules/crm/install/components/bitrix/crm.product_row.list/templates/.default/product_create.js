@@ -14,8 +14,74 @@ if (typeof BX.CrmProductCreateDialog === "undefined")
 	BX.CrmProductCreateDialog.prototype = {
 		show: function ()
 		{
-			var self = this;
+			var bindToElement = (typeof this.settings["bindToElement"] === "undefined" || this.settings["bindToElement"]);
 			var zIndex = 996;
+			var popup = new BX.PopupWindow(
+				"CrmProductCreateDialog_" + this.random,
+				(bindToElement ? this.initialControl : null),
+				{
+					overlay: {opacity: 10},
+					titleBar: " ",
+					autoHide: false,
+					draggable: true,
+					offsetLeft: 0,
+					offsetTop: 0,
+					zIndex: zIndex - 1100,
+					bindOptions: (bindToElement ? {forceBindPosition: false} : false),
+					closeByEsc: true,
+					closeIcon: { top: '10px', right: '15px' },
+					cacheable: false
+				}
+			);
+
+			if (this.settings['lazyLoad'])
+			{
+				var loaderContainer = BX.create(
+					"div",
+					{
+						attrs: {
+							style: "height: 300px; width: 600px;"
+						}
+					}
+				);
+				popup.setContent(loaderContainer);
+				popup.show();
+				var loader = new BX.Loader();
+				loader.show(loaderContainer);
+
+				BX.ajax.runComponentAction(this.settings['componentName'], "getProductCreateDialogParams", {
+					mode: 'class',
+					signedParameters: this.settings['signedParameters'],
+				}).then(
+					BX.delegate(function (result) {
+						this.settings = BX.mergeEx(this.settings, result.data);
+						this.settings['lazyLoad'] = false;
+						this.messages = this.settings["messages"];
+						this.doShow(popup);
+					}, this),
+					BX.delegate(function (result) {
+						var errorContainer = BX.create(
+							"div",
+							{
+								attrs: {
+									className: "bx-crm-dialog-quick-create-error-wrap",
+								},
+								text: result.errors.map(function(item) { return item.message }).join(", ")
+							}
+						);
+						popup.setContent(errorContainer);
+						popup.adjustPosition();
+					}, this)
+				);
+			}
+			else
+			{
+				this.doShow(popup);
+			}
+		},
+		doShow: function (popup)
+		{
+			var self = this;
 			var fieldsContainer = BX.create(
 				"TABLE",
 				{
@@ -220,7 +286,7 @@ if (typeof BX.CrmProductCreateDialog === "undefined")
 			);
 
 			var hidden = BX.create(
-				"INPUT", {attrs: {type: "hidden", "name": "sessid", value: this.settings['sessid']}}
+				"INPUT", {attrs: {type: "hidden", "name": "sessid", value: BX.bitrix_sessid()}}
 			);
 			if (hidden)
 				form.appendChild(hidden);
@@ -237,70 +303,6 @@ if (typeof BX.CrmProductCreateDialog === "undefined")
 			hidden = null;
 
 			form.appendChild(content);
-
-			var popup = new BX.PopupWindow(
-				"CrmProductCreateDialog_" + this.random,
-				this.initialControl/*null*/,
-				{
-					overlay: {opacity: 10},
-					autoHide: false,
-					draggable: true,
-					offsetLeft: 0,
-					offsetTop: 0,
-					zIndex: zIndex - 1100,
-					bindOptions: {forceBindPosition: false},
-					closeByEsc: true,
-					closeIcon: { top: '10px', right: '15px' },
-					titleBar: this.messages["dialogTitle"],
-					events:
-					{
-						onPopupClose: function(){
-							if(popup) {
-								popup.destroy();
-							}
-						}
-					},
-					content: form,
-					buttons: [
-						new BX.PopupWindowButton(
-							{
-								text: this.messages["buttonCreateTitle"],
-								className: "popup-window-button-accept",
-								events:
-								{
-									"click": function()
-									{
-										if (popup)
-										{
-											if (content)
-											{
-												self.popupContentId = content.id;
-												self.errorContainerId = errorContainer.id;
-												self.popup = popup;
-												self.createProduct();
-											}
-										}
-									}
-								}
-							}
-						),
-						new BX.PopupWindowButtonLink(
-							{
-								text: this.messages["buttonCancelTitle"],
-								className: "popup-window-button-link-cancel",
-								events:
-								{
-									"click": function()
-									{
-										if (popup)
-											popup.close();
-									}
-								}
-							}
-						)
-					]
-				}
-			);
 			for (spIndex = 0; spIndex < scriptPack.length; spIndex++)
 			{
 				if (scriptPack[spIndex]["scripts"].length > 0)
@@ -308,6 +310,46 @@ if (typeof BX.CrmProductCreateDialog === "undefined")
 				if (scriptPack[spIndex]["styles"].length > 0)
 					BX.loadCSS(scriptPack[spIndex]["styles"]);
 			}
+			popup.setTitleBar(this.messages["dialogTitle"]);
+			popup.setContent(form);
+			popup.setButtons([
+				new BX.PopupWindowButton(
+					{
+						text: this.messages["buttonCreateTitle"],
+						className: "popup-window-button-accept",
+						events:
+							{
+								"click": function()
+								{
+									if (popup)
+									{
+										if (content)
+										{
+											self.popupContentId = content.id;
+											self.errorContainerId = errorContainer.id;
+											self.popup = popup;
+											self.createProduct();
+										}
+									}
+								}
+							}
+					}
+				),
+				new BX.PopupWindowButtonLink(
+					{
+						text: this.messages["buttonCancelTitle"],
+						className: "popup-window-button-link-cancel",
+						events:
+							{
+								"click": function()
+								{
+									if (popup)
+										popup.close();
+								}
+							}
+					}
+				)
+			]);
 			popup.show();
 			if (popup.popupContainer)
 				BX.scrollToNode(popup.popupContainer);

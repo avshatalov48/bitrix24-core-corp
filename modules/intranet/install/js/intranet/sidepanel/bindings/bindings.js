@@ -15,7 +15,8 @@
 		rules: [
 			{
 				condition: [
-					/^(http|https):\/\/([^\/]+)\/knowledge/i
+					/^(http|https):\/\/([^\/]+)\/knowledge/i,
+					/^(http|https):\/\/([^\/]+)\/extranet\/knowledge/i
 				],
 				handler: function(event, link) {
 
@@ -125,7 +126,19 @@
 				],
 				options: {
 					width: 940,
+					allowChangeHistory: false,
 					cacheable: false
+				}
+			},
+			{
+				condition: [
+					new RegExp("/marketplace\/placement/"),
+					new RegExp("/marketplace\/view/"),
+				],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false,
+					customLeftBoundary: 0
 				}
 			},
 			{
@@ -168,7 +181,7 @@
 			},
 			{
 				condition: [
-					/\/online\/\?(IM_DIALOG|IM_HISTORY)=(.+)/i
+					/\?(IM_DIALOG|IM_HISTORY)=(.+)/i
 				],
 				handler: function(event, link)
 				{
@@ -194,12 +207,53 @@
 			},
 			{
 				condition: [
+					new RegExp(location.origin+'/online\/$'),
+					/^\/online\/$/
+				],
+				handler: function(event, link)
+				{
+					if (!window.BXIM)
+					{
+						return;
+					}
+
+					BXIM.openMessenger();
+
+					event.preventDefault();
+				}
+			},
+			{
+				condition: [
+					/^(https|http):\/\/(.*)\/online\/call\/([.\-0-9a-zA-Z]+)/i,
+					/^(https|http):\/\/(.*)\/video\/([.\-0-9a-zA-Z]+)/i
+				],
+				allowCrossDomain: true,
+				handler: function(event, link)
+				{
+					if (!window.BXIM)
+					{
+						return;
+					}
+
+					if (typeof BXIM.openVideoconfByUrl !== "function")
+					{
+						return;
+					}
+
+					if (BXIM.openVideoconfByUrl(link.url))
+					{
+						event.preventDefault();
+					}
+				}
+			},
+			{
+				condition: [
 					/^(http|https):\/\/helpdesk\.bitrix24\.([a-zA-Z\.]{2,})\/open\/([a-zA-Z0-9_|]+)/i
 				],
 				allowCrossDomain: true,
 				handler: function(event, link)
 				{
-					if (BX.desktop)
+					if (BX.desktop && BXIM.context === 'DESKTOP')
 					{
 						return true;
 					}
@@ -342,6 +396,32 @@
 			},
 			{
 				condition: [
+					'^' + siteDir + 'mail/message/new'
+				],
+				options: {
+					width: 1080,
+					loader: 'create-mail-loader'
+				}
+			},
+			{
+				condition: [
+					'^' + siteDir + 'mail/message/\\d+'
+				],
+				options: {
+					width: 1080,
+					loader: 'view-mail-loader'
+				}
+			},
+			{
+				condition: [
+					'^' + siteDir + 'mail/config/dirs'
+				],
+				options: {
+					width: 640
+				}
+			},
+			{
+				condition: [
 					'^' + siteDir + 'mail/(blacklist|signature|config|message)'
 				],
 				options: {
@@ -373,6 +453,40 @@
 						var slider = new BX.Calendar.SliderLoader(link.matches[1]);
 						slider.show();
 						event.preventDefault();
+					}
+				}
+			},
+			{
+				condition: ['/configs/userfield_list.php'],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false,
+				}
+			},
+			{
+				condition: ['/configs/userfield.php'],
+				options: {
+					width: 900,
+					cacheable: false,
+					allowChangeHistory: false,
+				}
+			},
+			{
+				condition: [
+					"/shop/catalog/(\\d+)/product/(\\d+)/variation/(\\d+)/"
+				],
+				options: {
+					cacheable: false
+				}
+			},
+			{
+				condition: [
+					"/shop/catalog/(\\d+)/product/(\\d+)/",
+				],
+				options: {
+					cacheable: false,
+					label: {
+						text: BX.message('INTRANET_BINDINGS_PRODUCT')
 					}
 				}
 			},

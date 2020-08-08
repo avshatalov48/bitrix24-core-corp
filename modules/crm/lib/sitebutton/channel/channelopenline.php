@@ -134,11 +134,11 @@ class ChannelOpenLine implements iProvider
 		Loc::loadMessages(__FILE__); // TODO: remove with dependence main: deeply lazy Load loc files
 		Loc::loadMessages(\Bitrix\Main\Application::getDocumentRoot() . '/bitrix/modules/imconnector/lib/connector.php');
 
-		$result = array();
+		$result = [];
 		$lines = explode(',', $id);
 		foreach ($lines as $lineId)
 		{
-			$lineConfig = isset($config[$lineId]) ? $config[$lineId] : array();
+			$lineConfig = $config[$lineId] ?? [];
 			$widgets = self::getWidgetsById($lineId, $removeCopyright, $lang, $lineConfig);
 			$result = array_merge($result, $widgets);
 		}
@@ -267,7 +267,7 @@ class ChannelOpenLine implements iProvider
 	 */
 	public static function getName()
 	{
-		return Loc::getMessage('CRM_BUTTON_MANAGER_TYPE_NAME_' . strtoupper(self::getType()));
+		return Loc::getMessage('CRM_BUTTON_MANAGER_TYPE_NAME_'.mb_strtoupper(self::getType()));
 	}
 
 	/**
@@ -287,7 +287,7 @@ class ChannelOpenLine implements iProvider
 			return array();
 		}
 
-		$excluded = isset($config['excluded']) ? $config['excluded'] : array();
+		$excluded = $config['excluded'] ?? array();
 
 		$widgets = array();
 		$sort = 400;

@@ -36,8 +36,8 @@ foreach($arParams["BUTTONS"] as $index=>$item):
 	if($newBar || !empty($item["ALIGN"])):
 
 		$onclick = "";
-		if (substr(strtolower($item["LINK"]), 0, 11) == 'javascript:')
-			$onclick = substr($item["LINK"], 11);
+		if (mb_substr(mb_strtolower($item["LINK"]), 0, 11) == 'javascript:')
+			$onclick = mb_substr($item["LINK"], 11);
 		else
 			$onclick = "jsUtils.Redirect([], '".CUtil::JSUrlEscape($item["LINK"])."')";
 

@@ -1,5 +1,8 @@
 /*region main section*/
 
+#left-panel {
+	padding: 0 0 0 21px !important;
+}
 
 #workarea-content {
 	background-color: #EEF2F4 !important;
@@ -14,6 +17,7 @@
 	-ms-flex-align: start;
 	-webkit-box-align: start;
 	align-items: flex-start;
+	margin-right: 15px;
 }
 
 .salescenter-main-header {
@@ -50,6 +54,14 @@
 	background-image: url(images/orangedata.svg);
 	background-size: 70% auto;
 	background-color: #FF9A01;
+}
+
+.salescenter-offline-icon { width: 97px; }
+
+.salescenter-offline-icon i {
+	background-image: url(images/offline.svg);
+	background-size: 50% auto;
+	background-color: #359FD0;
 }
 
 .salescenter-angle-icon-after {
@@ -339,4 +351,58 @@ select.salescenter-control-input {
 	padding: 0 30px 0 6px;
 	background: #fff url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2011%207%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Ctitle%3EPath%3C/title%3E%3Cpath%20d%3D%22M5.485%204.228L1.37.114%200%201.484l4.8%204.8.685.687%205.486-5.485L9.6.115%205.484%204.227z%22%20fill%3D%22%23535C69%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E') center right 10px no-repeat;
 	background-size: 12px 12px;
+}
+
+.salescenter-offline-instruction-list {
+	list-style-type: none;
+	counter-reset: num;
+	margin: 20px 0 40px 5px;
+	padding: 0;
+}
+
+.salescenter-offline-instruction-item {
+	position: relative;
+	padding-left: 33px;
+}
+
+.salescenter-offline-instruction-item:before {
+	counter-increment: num;
+	content: counter(num);
+	color: #fff;
+	position: absolute;
+	left: 0;
+	top: -1px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #2fc6f6;
+	border-radius: 10px;
+	width: 20px;
+	height: 20px;
+	font: 11px/15px 'OpenSans-Bold', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	text-align: center;
+	box-sizing: border-box;
+}
+
+.salescenter-offline-instruction-item + .salescenter-offline-instruction-item {
+	margin-top: 20px;
+}
+
+.salescenter-offline-icon {
+	width: 97px;
+	height: 97px;
+
+}
+
+.salescenter-cashbox-wrapper-offline .salescenter-main-header-left-block {
+	padding-right: 20px;
+	padding-top: 12px;
+}
+
+.salescenter-offline-instruction-link {
+	margin-left: 9px;
+}
+
+.salescenter-button-container {
+	padding-top: 5px;
 }

@@ -586,7 +586,7 @@ class PresetListComponent extends \CBitrixComponent
 			elseif($this->actionData['NAME'] == 'ADD_PRESET' && is_array($this->actionData['FIELDS']))
 			{
 				$fields = array(
-					'NAME' => substr($this->actionData['FIELDS']['NAME'], 0, 255),
+					'NAME' => mb_substr($this->actionData['FIELDS']['NAME'], 0, 255),
 					'ACTIVE' => ($this->actionData['FIELDS']['ACTIVE'] === 'Y') ? 'Y' : 'N',
 					'SORT' => $this->actionData['FIELDS']['SORT'],
 					'COUNTRY_ID' => $this->actionData['FIELDS']['COUNTRY_ID'],

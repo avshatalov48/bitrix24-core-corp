@@ -20,7 +20,7 @@ class PhaseSemantics
 			return false;
 		}
 
-		$semanticID = strtoupper($semanticID);
+		$semanticID = mb_strtoupper($semanticID);
 		return $semanticID === self::PROCESS
 			|| $semanticID === self::SUCCESS
 			|| $semanticID === self::FAILURE;
@@ -49,7 +49,7 @@ class PhaseSemantics
 			return false;
 		}
 
-		$semanticID = strtoupper($semanticID);
+		$semanticID = mb_strtoupper($semanticID);
 		return $semanticID === self::SUCCESS || $semanticID === self::FAILURE;
 	}
 	/**
@@ -62,7 +62,7 @@ class PhaseSemantics
 			return false;
 		}
 
-		$semanticID = strtoupper($semanticID);
+		$semanticID = mb_strtoupper($semanticID);
 		return $semanticID === self::FAILURE;
 	}
 	/**

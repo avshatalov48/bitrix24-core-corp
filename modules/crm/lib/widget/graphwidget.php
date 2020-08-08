@@ -195,7 +195,7 @@ class GraphWidget extends Widget
 				continue;
 			}
 
-			$valueKey = strtoupper($name).'_'.$selectField;
+			$valueKey = mb_strtoupper($name).'_'.$selectField;
 
 			$graph = array(
 				'name' => $name,

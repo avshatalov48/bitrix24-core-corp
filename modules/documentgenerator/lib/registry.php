@@ -76,7 +76,7 @@ abstract class Registry
 				}
 				elseif(GetFileExtension($fileName) == 'php')
 				{
-					$fullClassName = strtolower($fullBaseClassName.$subPath.GetFileNameWithoutExtension($fileName));
+					$fullClassName = mb_strtolower($fullBaseClassName.$subPath.GetFileNameWithoutExtension($fileName));
 					if($this->checkClassName($fullClassName))
 					{
 						$result[$fullClassName] = [
@@ -109,7 +109,7 @@ abstract class Registry
 				{
 					if($fullClassName && $this->checkClassName($fullClassName) && is_array($description))
 					{
-						$result[strtolower($fullClassName)] = $description;
+						$result[mb_strtolower($fullClassName)] = $description;
 					}
 				}
 			}

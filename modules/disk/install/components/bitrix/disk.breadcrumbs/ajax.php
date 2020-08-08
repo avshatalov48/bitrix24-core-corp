@@ -11,7 +11,7 @@ define('BX_SECURITY_SHOW_MESSAGE', true);
 define("NOT_CHECK_PERMISSIONS", true);
 
 $siteId = isset($_REQUEST['SITE_ID']) && is_string($_REQUEST['SITE_ID'])? $_REQUEST['SITE_ID'] : '';
-$siteId = substr(preg_replace('/[^a-z0-9_]/i', '', $siteId), 0, 2);
+$siteId = mb_substr(preg_replace('/[^a-z0-9_]/i', '', $siteId), 0, 2);
 if(!empty($siteId) && is_string($siteId))
 {
 	define('SITE_ID', $siteId);
@@ -127,12 +127,12 @@ class DiskBreadcrumbsAjaxController extends \Bitrix\Disk\Internals\Controller
 			$baseUrlFolderList = $storage->getProxyType()->getBaseUrlTashcanList();
 		}
 
-		if (strpos($path, $baseUrlFolderList) !== 0)
+		if (mb_strpos($path, $baseUrlFolderList) !== 0)
 		{
 			if ($storage->getProxyType() instanceof \Bitrix\Disk\ProxyType\Common)
 			{
 				$path .= 'path/';
-				if (strpos($path, $baseUrlFolderList) !== 0)
+				if (mb_strpos($path, $baseUrlFolderList) !== 0)
 				{
 					$this->sendJsonErrorResponse();
 				}
@@ -143,7 +143,7 @@ class DiskBreadcrumbsAjaxController extends \Bitrix\Disk\Internals\Controller
 			}
 		}
 
-		$relativePath = substr($path, strlen($baseUrlFolderList) - 1);
+		$relativePath = mb_substr($path, mb_strlen($baseUrlFolderList) - 1);
 
 		if ($relativePath !== '/')
 		{

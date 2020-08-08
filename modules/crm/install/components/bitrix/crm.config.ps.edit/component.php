@@ -42,7 +42,7 @@ if($psID <= 0)
 {
 	$psIDParName = isset($arParams['PS_ID_PAR_NAME']) ? strval($arParams['PS_ID_PAR_NAME']) : '';
 
-	if(strlen($psIDParName) == 0)
+	if($psIDParName == '')
 		$psIDParName = 'ps_id';
 
 	$psID = isset($_REQUEST[$psIDParName]) ? (int)$_REQUEST[$psIDParName] : 0;
@@ -93,14 +93,14 @@ if (check_bitrix_sessid())
 			"NEW_WINDOW" => (($_POST['NEW_WINDOW'] == "Y") ? "Y" : "N" ),
 			"HAVE_PREPAY" => "N",
 			"HAVE_RESULT" => "N",
-			"ENTITY_REGISTRY_TYPE" => (strpos($handler, 'quote_') !== false) ? REGISTRY_TYPE_CRM_QUOTE : REGISTRY_TYPE_CRM_INVOICE,
+			"ENTITY_REGISTRY_TYPE" => (mb_strpos($handler, 'quote_') !== false) ? REGISTRY_TYPE_CRM_QUOTE : REGISTRY_TYPE_CRM_INVOICE,
 			"HAVE_ACTION" => "N",
 			"HAVE_PAYMENT" => "N",
 			"HAVE_RESULT_RECEIVE" => "N",
 			"PS_MODE" => $_POST['PS_MODE']
 		);
 
-		if (isset($_POST['NAME']) && strlen($_POST['NAME']) > 0)
+		if (isset($_POST['NAME']) && $_POST['NAME'] <> '')
 		{
 			$arActFields['NAME'] = trim($_POST['NAME']);
 			$arActFields['PSA_NAME'] = $arActFields['NAME'];
@@ -121,9 +121,9 @@ if (check_bitrix_sessid())
 		if (isset($_POST['DESCRIPTION']))
 			$arActFields['DESCRIPTION'] = $_POST['DESCRIPTION'];
 
-		if (strlen($errorMessage) <= 0)
+		if ($errorMessage == '')
 		{
-			if (isset($_POST["ACTION_FILE"]) && strlen(trim($_POST["ACTION_FILE"])) > 0)
+			if (isset($_POST["ACTION_FILE"]) && trim($_POST["ACTION_FILE"]) <> '')
 				$actionFile = CCrmPaySystem::getActionPath($_POST["ACTION_FILE"]);
 			else
 				$errorMessage .= GetMessage("CRM_PS_EMPTY_SCRIP").".<br>";
@@ -131,8 +131,8 @@ if (check_bitrix_sessid())
 			if (isset($actionFile))
 			{
 				$actionFile = str_replace("\\", "/", $actionFile);
-				while (substr($actionFile, strlen($actionFile) - 1, 1) == "/")
-					$actionFile = substr($actionFile, 0, strlen($actionFile) - 1);
+				while (mb_substr($actionFile, mb_strlen($actionFile) - 1, 1) == "/")
+					$actionFile = mb_substr($actionFile, 0, mb_strlen($actionFile) - 1);
 
 				$pathToAction = $_SERVER["DOCUMENT_ROOT"].$actionFile;
 				if (!file_exists($pathToAction))
@@ -143,13 +143,13 @@ if (check_bitrix_sessid())
 			{
 				$arActParams = array();
 
-				if (strpos($_POST['ACTION_FILE'], 'bill') !== 0 || empty($_POST['PS_MODE']))
+				if (mb_strpos($_POST['ACTION_FILE'], 'bill') !== 0 || empty($_POST['PS_MODE']))
 				{
-					if (isset($_POST['PS_ACTION_FIELDS_LIST']) && strlen($_POST['PS_ACTION_FIELDS_LIST']) > 0)
+					if (isset($_POST['PS_ACTION_FIELDS_LIST']) && $_POST['PS_ACTION_FIELDS_LIST'] <> '')
 					{
 						$filedList = explode(",", $_POST['PS_ACTION_FIELDS_LIST']);
 
-						$arPsActFields = CCrmPaySystem::getPSCorrespondence($_POST["ACTION_FILE"] ?: 'bill');
+						$arPsActFields = CCrmPaySystem::getPSCorrespondence($_POST["ACTION_FILE"] ?: 'bill', $_POST["PS_MODE"]);
 						CCrmPaySystem::rewritePSCorrByRqSource($personTypeId, $arPsActFields, array('PSA_CODE' => $handler));
 
 						foreach ($filedList as $val)
@@ -162,7 +162,7 @@ if (check_bitrix_sessid())
 							$typeTmp = $_POST["TYPE_".$val];
 							$valueTmp = $_POST["VALUE1_".$val];
 
-							if (is_string($typeTmp) && strlen($typeTmp) <= 0)
+							if (is_string($typeTmp) && $typeTmp == '')
 								$valueTmp = $_POST["VALUE2_".$val];
 
 							if ($val == 'USER_COLUMNS')
@@ -342,7 +342,7 @@ if (check_bitrix_sessid())
 						if (openssl_pkey_get_public($publicKey))
 						{
 							$shopId = \Bitrix\Sale\BusinessValue::get('YANDEX_INVOICE_SHOP_ID', 'PAYSYSTEM_'.$psID, $personTypeId);
-							if (strlen($shopId) > 0)
+							if ($shopId <> '')
 							{
 								$dbRes = \Bitrix\Sale\Internals\YandexSettingsTable::getById($shopId);
 								if ($dbRes->fetch())
@@ -360,7 +360,7 @@ if (check_bitrix_sessid())
 					if (array_key_exists('YANDEX_PUBLIC_KEY_DEL', $_REQUEST))
 					{
 						$shopId = \Bitrix\Sale\BusinessValue::get('YANDEX_INVOICE_SHOP_ID', 'PAYSYSTEM_'.$psID, $personTypeId);
-						if (strlen($shopId) > 0)
+						if ($shopId <> '')
 							\Bitrix\Sale\Internals\YandexSettingsTable::update($shopId, array('PUB_KEY' => ''));
 					}
 				}
@@ -373,7 +373,7 @@ if (check_bitrix_sessid())
 			}
 		}
 
-		if (strlen($errorMessage) <= 0)
+		if ($errorMessage == '')
 		{
 			$urlPattern = (isset($_POST['apply']) ? $arParams['PATH_TO_PS_EDIT'] : $arParams['PATH_TO_PS_LIST']);
 			if ($isSidePanel)
@@ -435,7 +435,7 @@ if (array_key_exists('AJAX', $_REQUEST) && $_REQUEST['AJAX'] == 'Y')
 		$personTypeId = array_shift($personTypeList);
 
 		$shopId = \Bitrix\Sale\BusinessValue::get('YANDEX_INVOICE_SHOP_ID', 'PAYSYSTEM_'.$psID, $personTypeId);
-		if (strlen($shopId) > 0)
+		if ($shopId <> '')
 		{
 			$dbRes = \Bitrix\Sale\Internals\YandexSettingsTable::getById($shopId);
 			$yandexSettings = $dbRes->fetch();
@@ -493,7 +493,7 @@ if ($arPaySys['ACTION_FILE'] == 'yandexinvoice')
 	$shopId = \Bitrix\Sale\BusinessValue::get('YANDEX_INVOICE_SHOP_ID', 'PAYSYSTEM_'.$psID, $personTypeId);
 
 	$yandexSettings = array();
-	if (strlen($shopId) > 0)
+	if ($shopId <> '')
 	{
 		$dbRes = \Bitrix\Sale\Internals\YandexSettingsTable::getById($shopId);
 		$yandexSettings = $dbRes->fetch();
@@ -516,7 +516,7 @@ if ($arPaySys['ACTION_FILE'] == 'yandexinvoice')
 		'VALUE' => $value
 	);
 
-	if (strlen($yandexSettings['PUB_KEY']) > 0)
+	if ($yandexSettings['PUB_KEY'] <> '')
 		$value = GetMessage('CRM_PS_PUB_KEY_YANDEX_SUCCESS')." <br><input type='checkbox' name='YANDEX_PUBLIC_KEY_DEL'> ".GetMessage('CRM_PS_ACT_SEC_DEL');
 	else
 		$value = "<input type='file' name='YANDEX_PUBLIC_KEY' value='".GetMessage('CRM_PS_ACT_SEC_LOAD')."'>";
@@ -539,7 +539,7 @@ if ($arResult['ACTION_FILE'] === 'invoicedocument')
 	];
 	$arResult['INVOICE_DOC_ADD_LINK'] = $uri->addParams($params)->getLocator();
 }
-$arResult['PS_ACT_FIELDS'] = CCrmPaySystem::getPSCorrespondence($arPaySys['ACTION_FILE']);
+$arResult['PS_ACT_FIELDS'] = CCrmPaySystem::getPSCorrespondence($arPaySys['ACTION_FILE'], $arPaySys['PS_MODE']);
 CCrmPaySystem::rewritePSCorrByRqSource($ptID, $arResult['PS_ACT_FIELDS'], array('PSA_CODE' => $arPaySys['ACTION_FILE']));
 $arResult['ACTION_FIELDS_LIST'] =  implode(',', array_keys($arResult['PS_ACT_FIELDS']));
 $arResult['SIMPLE_MODE'] = CCrmPaySystem::isFormSimple();
@@ -709,7 +709,7 @@ foreach ($fieldsByGroups as $group => $fields)
 			}
 		}
 
-		if (strlen($arCorr['TYPE']) === 0 || $arCorr['TYPE'] === 'CHECKBOX'|| $arCorr['TYPE'] === 'USER_COLUMN_LIST')
+		if ($arCorr['TYPE'] == '' || $arCorr['TYPE'] === 'CHECKBOX'|| $arCorr['TYPE'] === 'USER_COLUMN_LIST')
 			$arParamsTemplate[$idCorr] = $arCorr['VALUE'];
 
 		$res  = ' ' . CCrmPaySystem::getActionSelector($idCorr, $arCorr);
@@ -756,7 +756,7 @@ if ($service)
 
 	$service->setTemplateMode(\Bitrix\Sale\PaySystem\BaseServiceHandler::STRING);
 	$service->setTemplateParams($arParamsTemplate);
-	if (strpos($service->getField('ACTION_FILE'), 'bill') !== false || strpos($service->getField('ACTION_FILE'), 'quote') !== false)
+	if (mb_strpos($service->getField('ACTION_FILE'), 'bill') !== false || mb_strpos($service->getField('ACTION_FILE'), 'quote') !== false)
 	{
 		$payment = PaySystem\Manager::getPaymentObjectByData($arResult['PAY_SYSTEM']);
 		$result = $service->showTemplate($payment, 'template');

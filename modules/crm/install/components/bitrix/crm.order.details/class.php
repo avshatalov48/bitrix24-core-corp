@@ -287,55 +287,17 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			$formData['CLIENT'] = $clientInfo;
 		}
 
-		$searchCode = 'CRM_CONTACT';
-		$businessValueDomain = Sale\BusinessValue::INDIVIDUAL_DOMAIN;
 		if (!empty($clientInfo['COMPANY_ID']))
 		{
-			$searchCode = 'CRM_COMPANY';
-			$businessValueDomain = Sale\BusinessValue::ENTITY_DOMAIN;
-		}
-
-		$personTypeRaw = Sale\PersonType::getList([
-			'filter' => [
-				'CODE' => $searchCode,
-				'=ACTIVE' => 'Y',
-				'ENTITY_REGISTRY_TYPE' => 'ORDER'
-			],
-			'select' => ['ID'],
-			'limit' => 1
-		]);
-		if ($personType = $personTypeRaw->fetch())
-		{
-			$formData['PERSON_TYPE_ID'] = (int)$personType['ID'];
+			$formData['PERSON_TYPE_ID'] = Order\PersonType::getCompanyPersonTypeId();
 		}
 		else
 		{
-			$personTypeRaw = Sale\PersonType::getList([
-				'filter' => [
-					'ENTITY_REGISTRY_TYPE' => 'ORDER',
-					'=ACTIVE' => 'Y',
-					'BIZVAL.DOMAIN' => $businessValueDomain,
-				],
-				'select' => ['ID'],
-				'runtime' => array(
-					new Main\Entity\ReferenceField(
-						'BIZVAL',
-						'Bitrix\Sale\Internals\BusinessValuePersonDomainTable',
-						array(
-							'=this.ID' => 'ref.PERSON_TYPE_ID'
-						),
-						array('join_type' => 'LEFT')
-					),
-				),
-				'limit' => 1
-			]);
-			if ($personType = $personTypeRaw->fetch())
-			{
-				$formData['PERSON_TYPE_ID'] = (int)$personType['ID'];
-			}
+			$formData['PERSON_TYPE_ID'] = Order\PersonType::getContactPersonTypeId();
 		}
 
-		$settings =	[
+		$formData['CURRENCY'] = \CCrmCurrency::GetBaseCurrencyID();
+		$settings = [
 			'createUserIfNeed' => '',
 			'acceptableErrorCodes' => [],
 			'cacheProductProviderData' => true,
@@ -343,6 +305,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		$builderSettings = new Builder\SettingsContainer($settings);
 		$orderBuilder = new Crm\Order\OrderBuilderCrm($builderSettings);
 		$director = new Builder\Director;
+		/** @var Order\Order $order */
 		$order = $director->createOrder($orderBuilder, $formData);
 
 		$fuserId = (int)$this->request->get('FUSER_ID');
@@ -356,8 +319,16 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 
 		if($order && isset($clientInfo['DEAL_ID']) && $clientInfo['DEAL_ID'] > 0)
 		{
-			/** @var Order\Order $order */
-			$order->getDealBinding()->setDealId($clientInfo['DEAL_ID']);
+			$dealBinding = $order->getDealBinding();
+			if ($dealBinding === null)
+			{
+				$dealBinding = $order->createDealBinding();
+			}
+
+			if ($dealBinding)
+			{
+				$dealBinding->setField('DEAL_ID', $clientInfo['DEAL_ID']);
+			}
 		}
 
 		return $order;
@@ -877,7 +848,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 					'enableEditInView' => true,
 					'formated' => 'RESPONSIBLE_FORMATTED_NAME',
 					'position' => 'RESPONSIBLE_WORK_POSITION',
-					'photoUrl' => 'RESPONSIBLE_PHOTO_URL',
+					'photoUrl' => 'RESPONSIBLE_PERSONAL_PHOTO',
 					'showUrl' => 'PATH_TO_RESPONSIBLE_USER',
 					'pathToProfile' => $this->arResult['PATH_TO_USER_PROFILE']
 				)
@@ -1046,6 +1017,8 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			);
 		}
 
+		\Bitrix\Crm\Tracking\UI\Details::appendEntityFields($this->arResult['ENTITY_FIELDS']);
+
 		$this->arResult['ENTITY_FIELDS'] = array_merge(
 			$this->arResult['ENTITY_FIELDS'],
 			array_values($this->userFieldInfos)
@@ -1157,7 +1130,8 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				$defaultValue = $property['DEFAULT_VALUE'];
 				$id = $property['ID'];
 				$name = "PROPERTY_{$id}";
-				if($property['TYPE'] === 'LOCATION' || $property['TYPE'] === 'FILE')
+				$simplePropertyTypes = ['STRING', 'NUMBER', 'ENUM', 'DATE', 'Y/N'];
+				if (!in_array($property['TYPE'], $simplePropertyTypes, true))
 				{
 					$property['ONCHANGE'] = "BX.onCustomEvent('CrmOrderPropertySetCustom', ['{$name}']);";
 					if($property['TYPE'] === 'LOCATION')
@@ -1179,6 +1153,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 
 			$this->entityData['USER_PROFILE'] = !is_null($this->profileId) ? (int)$this->profileId : 'NEW';
 			$this->entityData['OLD_USER_ID'] = null;
+			$this->entityData['OLD_USER_PROFILE'] = null;
 		}
 		else
 		{
@@ -1428,7 +1403,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 					'#ACCOUNT_NUMBER#' => $this->entityData['ACCOUNT_NUMBER']
 				));
 
-			if(strlen($this->entityData['ORDER_TOPIC']) > 0)
+			if($this->entityData['ORDER_TOPIC'] <> '')
 			{
 				$title .= ' "'.$this->entityData['ORDER_TOPIC'].'"';
 			}
@@ -1479,6 +1454,12 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			}
 		}
 		//endregion
+
+		\Bitrix\Crm\Tracking\UI\Details::prepareEntityData(
+			\CCrmOwnerType::Order,
+			$this->order->getId(),
+			$this->entityData
+		);
 
 		//endregion
 		return ($this->arResult['ENTITY_DATA'] = $this->entityData);
@@ -1561,7 +1542,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			{
 				$code = (int)$propertyData['ID'];
 			}
-			elseif (is_array($property->getValue()) || strlen($property->getValue()) > 0)
+			elseif (is_array($property->getValue()) || $property->getValue() <> '')
 			{
 				$code = 'n'.$property->getId();
 			}
@@ -1571,7 +1552,8 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				continue;
 			}
 
-			if($property->getType() === 'LOCATION' || $property->getType() === 'FILE')
+			$simplePropertyTypes = ['STRING', 'NUMBER', 'ENUM', 'DATE', 'Y/N'];
+			if (!in_array($property->getType(), $simplePropertyTypes, true))
 			{
 				$params = $property->getProperty();
 				$name = "PROPERTY_{$code}";
@@ -1658,8 +1640,15 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			if(!empty($documentNum))
 			{
 				$documentInfo = htmlspecialcharsbx($documentNum);
-				$documentDate = htmlspecialcharsbx($shipment->getField('DELIVERY_DOC_DATE'));
-				$documentInfo .= !empty($documentDate) ? " ".$documentDate : "";
+
+				$documentDate = $shipment->getField('DELIVERY_DOC_DATE');
+				if ($documentDate)
+				{
+					$documentDate = htmlspecialcharsbx(
+						(new Main\Type\Date($documentDate))->toString()
+					);
+					$documentInfo .= !empty($documentDate) ? " ".$documentDate : "";
+				}
 			}
 
 			$delivery = $shipment->getDelivery();
@@ -1768,7 +1757,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				$calcPrice = $shipment->calculateDelivery();
 				$price = $calcPrice->getPrice();
 
-				$fields['PRICE_DELIVERY_CALCULATED'] = $price;
+				$fields['EXPECTED_PRICE_DELIVERY'] = $price;
 				$fields['FORMATTED_PRICE_DELIVERY_CALCULATED'] =  str_replace('&nbsp;', ' ', CCrmCurrency::MoneyToString(
 					$shipment->getField('PRICE_DELIVERY'),
 					$shipment->getField('CURRENCY'),
@@ -1897,11 +1886,11 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 	{
 		$paySystemLogoPath = '';
 
-		if(strlen($logotip) > 0 )
+		if($logotip <> '' )
 		{
 			$paySystemLogoPath = intval($logotip) > 0 ? \CFile::GetPath($logotip) : '';
 		}
-		elseif(strlen($psaActionFile))
+		elseif($psaActionFile <> '')
 		{
 			$paySystemLogoPath = '/bitrix/images/sale/sale_payments/'.$psaActionFile.'.png';
 		}
@@ -2084,7 +2073,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			/** @var \Bitrix\Sale\PaySystem\Service $paySystem */
 			if($paySystem = $payment->getPaySystem())
 			{
-				if(strlen($paySystem->getField('NAME')) > 0)
+				if($paySystem->getField('NAME') <> '')
 				{
 					$paySystemName = htmlspecialcharsbx($paySystem->getField('NAME'));
 				}
@@ -2194,10 +2183,14 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 
 		return $result;
 	}
+
 	/**
 	 * @param Order\Order $order
-	 *
 	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\NotImplementedException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
 	 */
 	public function prepareProperties(Order\Order $order)
 	{
@@ -2223,16 +2216,6 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		while ($property = $propertiesData->fetch())
 		{
 			$rawProperties[$property['ID']] = $property;
-			$property['ENABLE_MENU'] = $allowConfig;
-			$preparedData = $this->formatProperty($property);
-			if($property['SETTINGS']['IS_HIDDEN'] === 'Y')
-			{
-				$result["HIDDEN"][] = $preparedData;
-			}
-			else
-			{
-				$result['ACTIVE'][] = $preparedData;
-			}
 		}
 
 		$propertyCollection = $order->getPropertyCollection();
@@ -2243,18 +2226,34 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			$property = $propertyValue->getProperty();
 			$value = $propertyValue->getValue();
 
-			if(empty($property['ID']) && !empty($value) && !is_array($value))
+			if (empty($property['ID']))
 			{
-				$fieldValues = $propertyValue->getFieldValues();
-				if (isset($rawProperties[$fieldValues['ORDER_PROPS_ID']])){
-					$property = $rawProperties[$fieldValues['ORDER_PROPS_ID']];
-					$property['ORDER_PROPS_ID'] = $fieldValues['ORDER_PROPS_ID'];
+				if(!empty($value) && !is_array($value))
+				{
+					$fieldValues = $propertyValue->getFieldValues();
+					if (isset($rawProperties[$fieldValues['ORDER_PROPS_ID']])){
+						$property = $rawProperties[$fieldValues['ORDER_PROPS_ID']];
+						$property['ORDER_PROPS_ID'] = $fieldValues['ORDER_PROPS_ID'];
+					}
+					$property['ID'] = 'n'.$propertyValue->getId();
+					$property['ENABLE_MENU'] = false;
+					$property['IS_DRAG_ENABLED'] = false;
+					$preparedData = $this->formatProperty($property);
+					$result['ACTIVE'][] = $preparedData;
 				}
-				$property['ID'] = 'n'.$propertyValue->getId();
-				$property['ENABLE_MENU'] = false;
-				$property['IS_DRAG_ENABLED'] = false;
+			}
+			else
+			{
+				$property['ENABLE_MENU'] = $allowConfig;
 				$preparedData = $this->formatProperty($property);
-				$result['ACTIVE'][] = $preparedData;
+				if($property['IS_HIDDEN'] === 'Y')
+				{
+					$result["HIDDEN"][] = $preparedData;
+				}
+				else
+				{
+					$result['ACTIVE'][] = $preparedData;
+				}
 			}
 		}
 
@@ -2285,10 +2284,8 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				return 'list';
 			case 'FILE' :
 				return 'order_property_file';
-			case 'LOCATION' :
-				return 'custom';
 		}
-		return '';
+		return 'custom';
 	}
 
 	private function getPropertyLinkInfo($property)
@@ -2366,14 +2363,15 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			));
 		}
 
-		if($property['TYPE'] === 'LOCATION' || $property['TYPE'] === 'FILE')
+		$simplePropertyTypes = ['STRING', 'NUMBER', 'ENUM', 'DATE', 'Y/N'];
+		if (!in_array($property['TYPE'], $simplePropertyTypes, true))
 		{
 			$data += array(
 				'edit' => "{$name}_EDIT_HTML",
 				'view' => "{$name}_VIEW_HTML",
 				'empty' => "{$name}_EMPTY_HTML",
 				'type' => $property['TYPE'],
-				'classNames' => ['crm-entity-widget-content-block-field-'.strtolower($property['TYPE'])]
+				'classNames' => ['crm-entity-widget-content-block-field-'.mb_strtolower($property['TYPE'])]
 			);
 		}
 		elseif ($property['TYPE'] === 'ENUM')

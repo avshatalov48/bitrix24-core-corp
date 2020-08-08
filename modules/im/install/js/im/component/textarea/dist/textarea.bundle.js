@@ -389,7 +389,10 @@
 	      }
 	    },
 	    onKeyUp: function onKeyUp(event) {
-	      this.$emit('keyup', event);
+	      this.$emit('keyup', {
+	        event: event,
+	        text: this.currentMessage
+	      });
 	      this.textChangeEvent();
 	    },
 	    onPaste: function onPaste(event) {
@@ -418,6 +421,10 @@
 	      }
 
 	      this.insertText(event.text, event.breakline, event.position, event.cursor, event.focus);
+	      this.$emit('keyup', {
+	        event: event,
+	        text: this.currentMessage
+	      });
 	      return true;
 	    },
 	    onFocusSet: function onFocusSet() {

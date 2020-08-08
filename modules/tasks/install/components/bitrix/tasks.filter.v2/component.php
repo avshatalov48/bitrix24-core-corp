@@ -64,8 +64,8 @@ if ($bUseRoleFilter)
 	$lifeTime = CTasksTools::CACHE_TTL_UNLIM;
 	$cacheID = md5($arResult['LOGGED_IN_USER'] . "user" . $arParams["USER_ID"]);
 	$cacheDir = "/tasks/filter_tt_v2roles_"
-		. '/' . substr($cacheID, -4, 2)
-		. '/' . substr($cacheID, -2)
+		.'/'.mb_substr($cacheID, -4, 2)
+		.'/'.mb_substr($cacheID, -2)
 		. '/' . $cacheID;
 	$bNeedCacheData = false;
 	if (defined('BX_COMP_MANAGED_CACHE') && $obCache->InitCache($lifeTime, $cacheID, $cacheDir))
@@ -280,9 +280,9 @@ else
 			$arCacheTags[] = "tasks_group_" . (int) $arParams["GROUP_ID"];
 		}
 
-		$cacheDir = "/tasks/filter_tt_v2_" . $taskType 
-			. '/' . substr($cacheID, -4, 2) 
-			. '/' . substr($cacheID, -2) 
+		$cacheDir = "/tasks/filter_tt_v2_".$taskType
+			.'/'.mb_substr($cacheID, -4, 2)
+			.'/'.mb_substr($cacheID, -2)
 			. '/' . $cacheID;
 
 		if(defined('BX_COMP_MANAGED_CACHE') && $obCache->InitCache($lifeTime, $cacheID, $cacheDir))

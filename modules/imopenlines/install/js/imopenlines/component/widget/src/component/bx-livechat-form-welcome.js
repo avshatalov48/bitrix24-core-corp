@@ -12,7 +12,7 @@ import 'ui.forms';
 
 import {Vue} from "ui.vue";
 import {Vuex} from "ui.vue.vuex";
-import {Utils} from "im.utils";
+import {Utils} from "im.lib.utils";
 import {FormType} from "../const";
 
 Vue.component('bx-livechat-form-welcome',
@@ -85,7 +85,7 @@ Vue.component('bx-livechat-form-welcome',
 
 			if (name || email || phone)
 			{
-				this.$root.$bitrixWidget.sendForm(FormType.welcome, {name, email, phone});
+				this.$root.$bitrixApplication.sendForm(FormType.welcome, {name, email, phone});
 			}
 
 			this.hideForm();

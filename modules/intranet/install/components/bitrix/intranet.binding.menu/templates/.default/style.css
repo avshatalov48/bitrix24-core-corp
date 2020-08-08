@@ -1,0 +1,50 @@
+.intranet-binding-menu-btn-round {
+	border-radius: calc(var(--ui-btn-height) / 2) !important;
+}
+
+.intranet-binding-menu-btn-round .ui-btn-main,
+.intranet-binding-menu-btn-round .ui-btn-menu {
+	text-transform: none;
+	height: 27px;
+	font: 13px/25px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.intranet-binding-menu-btn-round .ui-btn-main {
+	border-top-left-radius: calc(var(--ui-btn-height) / 2) !important;
+	border-bottom-left-radius: calc(var(--ui-btn-height) / 2) !important;
+	padding: 0 12px;
+}
+
+.intranet-binding-menu-btn-round .ui-btn-menu {
+	border-top-right-radius: calc(var(--ui-btn-height) / 2) !important;
+	border-bottom-right-radius: calc(var(--ui-btn-height) / 2) !important;
+}
+
+.bitrix24-dark-theme .ui-btn-themes.intranet-binding-menu-btn-round,
+.bitrix24-dark-theme .ui-btn-themes.intranet-binding-menu-btn-round:hover {
+	background: none;
+}
+
+.intranet-binding-menu-btn {
+	margin-right: 10px;
+	display: inline-flex !important;
+}
+
+.intranet-binding-menu-btn + script + .ui-btn {
+	margin-left: 0;
+}
+
+#crm_invoice_toolbar .intranet-binding-menu-btn,
+#toolbar_quote_show_1 .intranet-binding-menu-btn {
+	--ui-btn-border-color: #c6cdd3 !important;
+	--ui-btn-colors-after-bg: #535c69 !important;
+	--ui-btn-colors-before-bg: #535c69 !important;
+	--ui-btn-background-hover: #cfd4d8 !important;
+	--ui-btn-background: transparent !important;
+	background-color: transparent !important;
+}
+
+#crm_invoice_toolbar .intranet-binding-menu-btn a,
+#toolbar_quote_show_1 .intranet-binding-menu-btn a {
+	color: rgb(83, 91, 105) !important;
+}

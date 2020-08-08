@@ -1,9 +1,11 @@
 <?php
 
+use Bitrix\Main\Config;
 use Bitrix\Main\Localization\Loc;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
+Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . '/bitrix/components/bitrix/crm.activity.editor/ajax.php');
 Loc::loadMessages(__FILE__);
 
 class CrmActivityEmailComponent extends CBitrixComponent
@@ -23,7 +25,7 @@ class CrmActivityEmailComponent extends CBitrixComponent
 		);
 
 		$action = !empty($this->arParams['ACTION']) ? $this->arParams['ACTION'] : 'create';
-		switch (strtolower($action))
+		switch(mb_strtolower($action))
 		{
 			case 'view':
 				return $this->executeView();
@@ -267,7 +269,7 @@ class CrmActivityEmailComponent extends CBitrixComponent
 				$this->arParams['~ACTIVITY']['DESCRIPTION_HTML']
 			);
 
-			$activity['__message_type'] = !empty($activity['__message_type']) ? strtoupper($activity['__message_type']) : '';
+			$activity['__message_type'] = !empty($activity['__message_type'])? mb_strtoupper($activity['__message_type']) : '';
 			switch ($activity['__message_type'])
 			{
 				case 'FWD':
@@ -550,6 +552,8 @@ class CrmActivityEmailComponent extends CBitrixComponent
 			$authors[$item['ID']] = $item;
 		}
 
+		$trackingAvailable = Config\Option::get('main', 'track_outgoing_emails_read', 'Y') == 'Y';
+
 		foreach ($this->arResult['LOG'] as $k => $log)
 		{
 			foreach ($log as $i => $item)
@@ -576,6 +580,9 @@ class CrmActivityEmailComponent extends CBitrixComponent
 					$item['LOG_TITLE'] = $authors[$authorId]['NAME_FORMATTED'] ?: $item['SETTINGS']['EMAIL_META']['__email'];
 					$item['LOG_IMAGE'] = $authors[$authorId]['IMAGE_URL'];
 				}
+
+				$item['__trackable'] = isset($item['SETTINGS']['IS_BATCH_EMAIL']) && !$item['SETTINGS']['IS_BATCH_EMAIL'];
+				$item['__trackable'] *= $trackingAvailable || $item['SETTINGS']['READ_CONFIRMED'] > 0;
 
 				$this->arResult['LOG'][$k][$i] = $item;
 			}
@@ -723,7 +730,7 @@ class CrmActivityEmailComponent extends CBitrixComponent
 					{
 						foreach ($activity['COMMUNICATIONS'] as $item)
 						{
-							if (in_array(strtolower($item['VALUE']), $activityEmailMeta[$field]))
+							if (in_array(mb_strtolower($item['VALUE']), $activityEmailMeta[$field]))
 							{
 								if (empty($fromItem) || $typesPriority[$item['ENTITY_TYPE_ID']] < $typesPriority[$fromItem['ENTITY_TYPE_ID']])
 									$fromItem = $item;
@@ -777,9 +784,9 @@ class CrmActivityEmailComponent extends CBitrixComponent
 					$foundEmails = array();
 					foreach ($activity['COMMUNICATIONS'] as $k => $item)
 					{
-						if (in_array(strtolower($item['VALUE']), $activityEmailMeta[$field]))
+						if (in_array(mb_strtolower($item['VALUE']), $activityEmailMeta[$field]))
 						{
-							$foundEmails[] = strtolower($item['VALUE']);
+							$foundEmails[] = mb_strtolower($item['VALUE']);
 
 							$itemView = array(
 								'IMAGE' => $item['IMAGE_URL'],
@@ -814,7 +821,7 @@ class CrmActivityEmailComponent extends CBitrixComponent
 
 							if ($field != $replyField)
 							{
-								if ($item == strtolower(trim($activityEmailMeta['__email'])))
+								if ($item == mb_strtolower(trim($activityEmailMeta['__email'])))
 									$itemView['IMAGE'] = $author['IMAGE_URL'];
 							}
 
@@ -833,7 +840,7 @@ class CrmActivityEmailComponent extends CBitrixComponent
 						{
 							if ($field != $replyField)
 							{
-								if ($item == strtolower(trim($activityEmailMeta['__email'])))
+								if ($item == mb_strtolower(trim($activityEmailMeta['__email'])))
 									continue;
 							}
 
@@ -876,7 +883,7 @@ class CrmActivityEmailComponent extends CBitrixComponent
 					{
 						if (!empty($activityEmailMeta['__email']))
 						{
-							$replyToEmail = strtolower(trim($activityEmailMeta['__email']));
+							$replyToEmail = mb_strtolower(trim($activityEmailMeta['__email']));
 						}
 						else
 						{
@@ -904,7 +911,7 @@ class CrmActivityEmailComponent extends CBitrixComponent
 					$activity['ITEM_TO'] = array(array(
 						'IMAGE' => $author['IMAGE_URL'],
 						'TITLE' => !empty($activityEmailMeta['__email'])
-							? strtolower(trim($activityEmailMeta['__email']))
+							? mb_strtolower(trim($activityEmailMeta['__email']))
 							: $author['NAME_FORMATTED'],
 					));
 				}
@@ -928,7 +935,7 @@ class CrmActivityEmailComponent extends CBitrixComponent
 		{
 			$subFilter = array();
 			foreach ($unknownEmails as $item)
-				$subFilter[] = array('VALUE' => $item);
+				$subFilter[] = array('RAW_VALUE' => $item);
 			$res = \CCrmFieldMulti::getList(
 				array(),
 				array(
@@ -941,7 +948,7 @@ class CrmActivityEmailComponent extends CBitrixComponent
 			while ($item = $res->fetch())
 			{
 				$itemTypeId = \CCrmOwnerType::resolveId($item['ENTITY_ID']);
-				$itemEmail  = strtolower(trim($item['VALUE']));
+				$itemEmail = mb_strtolower(trim($item['VALUE']));
 
 				if (!empty($suggested[$itemEmail]) && $typesPriority[$suggested[$itemEmail]['ENTITY_TYPE_ID']] < $typesPriority[$itemTypeId])
 					continue;
@@ -1027,13 +1034,13 @@ class CrmActivityEmailComponent extends CBitrixComponent
 			{
 				$inList = false;
 
-				$lastEmail = strtolower(trim($lastEmail));
+				$lastEmail = mb_strtolower(trim($lastEmail));
 				foreach ($mailboxes as $k => $item)
 				{
 					if (empty($item['name']))
 						continue;
 
-					if (strtolower(trim(sprintf('%s <%s>', $item['name'], $item['email']))) == $lastEmail)
+					if (mb_strtolower(trim(sprintf('%s <%s>', $item['name'], $item['email']))) == $lastEmail)
 					{
 						$inList = $k;
 						break;
@@ -1045,10 +1052,10 @@ class CrmActivityEmailComponent extends CBitrixComponent
 					if (preg_match('/.*?[<\[\(](.+?)[>\]\)].*/i', $lastEmail, $matches))
 						$lastEmail = $matches[1];
 
-					$lastEmail = strtolower(trim($lastEmail));
+					$lastEmail = mb_strtolower(trim($lastEmail));
 					foreach ($mailboxes as $k => $item)
 					{
-						if (strtolower($item['email']) == $lastEmail)
+						if (mb_strtolower($item['email']) == $lastEmail)
 						{
 							$inList = $k;
 							break;

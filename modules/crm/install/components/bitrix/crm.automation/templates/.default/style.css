@@ -402,7 +402,7 @@
 
 .automation-base-node-edit {
 	float: right;
-	font-family: 'OpenSans-Semibold';
+	font-family: "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	font-size: 14px;
 	color: #1058d0;
 	text-transform: lowercase;
@@ -410,11 +410,10 @@
 }
 
 .automation-base-node-title {
-	font-family: 'OpenSans-Regular';
 	float: left;
 	overflow: hidden;
-	font-size: 16px;
 	color: #000;
+	font: 16px/22px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 .bitrix24-light-theme :not(.side-panel) .automation-base-node-title {

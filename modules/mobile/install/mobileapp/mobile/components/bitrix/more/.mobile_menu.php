@@ -20,9 +20,11 @@ global $USER;
  */
 
 $allowedFeatures = [];
+
 $hereDocGetMessage = function ($code) {
 	return Loc::getMessage($code);
 };
+
 if (CModule::IncludeModule("socialnetwork"))
 {
 	$arUserActiveFeatures = CSocNetFeatures::getActiveFeatures(SONET_ENTITY_USER, $USER->getId());
@@ -56,7 +58,6 @@ if (CModule::IncludeModule("socialnetwork"))
 	}
 }
 
-$isExtranetUser = (\CModule::includeModule("extranet") && !\CExtranet::isIntranetUser());
 $diskEnabled = \Bitrix\Main\Config\Option::get('disk', 'successfully_converted', false) && CModule::includeModule('disk');
 $userId = $USER->getId();
 $siteDir = SITE_DIR;
@@ -77,7 +78,7 @@ if ($isExtranetUser)
 }
 
 $imageDir = $this->getPath() . "/images/";
-$canInviteUsers = (IsModuleInstalled("bitrix24") && $USER->CanDoOperation('bitrix24_invite')) ? "1" : "0";
+
 $diskComponentVersion = \Bitrix\MobileApp\Janative\Manager::getComponentVersion("user.disk");
 $calendarComponentVersion = \Bitrix\MobileApp\Janative\Manager::getComponentVersion("calendar.events");
 
@@ -235,39 +236,31 @@ JS
 			"color" => "#AF9245",
 			"title" => Loc::getMessage($isExtranetUser ? "MB_CONTACTS" : "MB_COMPANY"),
 			"attrs" => [
-				"onclick" => <<<JS
-						if(Application.getApiVersion() >= 22)
-						{
-							PageManager.openComponent(
-							"JSComponentList", 
-							{
-								title:"{$hereDocGetMessage($isExtranetUser ? "MB_CONTACTS" : "MB_COMPANY")}", 
-								settings:{useSearch:true}, 
-								scriptPath:availableComponents["users"]["publicUrl"],
-								params:{
-									canInvite: {$canInviteUsers},
-									userId:{$userId}
-								}
-							});
-						}
-						else
-						{
-							PageManager.openList({
-								url:"/mobile/?mobile_action=get_user_list&tags=Y&detail_url=/mobile/users/?user_id=",
-								table_settings: {
-									showTitle:"YES",
-									name:"{$hereDocGetMessage($isExtranetUser ? "MB_CONTACTS" : "MB_COMPANY")}",
-									type:"users",
-									alphabet_index: "YES",
-									outsection: "NO"
-								}
-							});
-						}
+				"onclick" =>
+<<<JS
+					var inviteParams = BX.componentParameters.get("invite");
 
-						
+					PageManager.openComponent(
+					"JSComponentList", 
+					{
+						title:"{$hereDocGetMessage($isExtranetUser ? "MB_CONTACTS" : "MB_COMPANY")}", 
+						settings: {useSearch: true}, 
+						componentCode: "users",
+						scriptPath: availableComponents["users"]["publicUrl"],
+						params:{
+							COMPONENT_CODE: "users",
+							canInvite: (inviteParams.canInviteUsers ? inviteParams.canInviteUsers : false),
+							rootStructureSectionId: (inviteParams.rootStructureSectionId ? inviteParams.rootStructureSectionId : 1),
+							registerUrl: (inviteParams.registerUrl ? inviteParams.registerUrl : ''),
+							registerAdminConfirm: (inviteParams.registerAdminConfirm ? inviteParams.registerAdminConfirm : false),
+							disableRegisterAdminConfirm: (inviteParams.disableRegisterAdminConfirm ? inviteParams.disableRegisterAdminConfirm : false),
+							sharingMessage: (inviteParams.registerSharingMessage ? inviteParams.registerSharingMessage : ''),
+							userId: {$userId}
+						}
+					})
 JS
 			],
-
+			"id" => "users",
 		],
 		[
 			"imageUrl" => $imageDir . "favorite/icon-disk.png",
@@ -366,7 +359,7 @@ if (CModule::IncludeModule("rest"))
 		}
 
 		$lang = in_array(LANGUAGE_ID, ["ru", "en", "de"]) ? LANGUAGE_ID : LangSubst(LANGUAGE_ID);
-		if (strlen($apps["MENU_NAME"]) > 0 || strlen($apps['MENU_NAME_DEFAULT']) > 0 || strlen($apps['MENU_NAME_LICENSE']) > 0)
+		if ($apps["MENU_NAME"] <> '' || $apps['MENU_NAME_DEFAULT'] <> '' || $apps['MENU_NAME_LICENSE'] <> '')
 		{
 			$appRightAvailable = false;
 			if (\CRestUtil::isAdmin())
@@ -394,11 +387,11 @@ if (CModule::IncludeModule("rest"))
 			{
 				$appName = $apps["MENU_NAME"];
 
-				if (strlen($appName) <= 0)
+				if ($appName == '')
 				{
 					$appName = $apps['MENU_NAME_DEFAULT'];
 				}
-				if (strlen($appName) <= 0)
+				if ($appName == '')
 				{
 					$appName = $apps['MENU_NAME_LICENSE'];
 				}
@@ -593,7 +586,8 @@ if (CModule::IncludeModule("socialnetwork"))
 				"useLetterImage" => true,
 				"color" => "#40465A",
 				"params" => [
-
+					"useSearchBar"=> true,
+					"cache"=>false,
 					"url" => str_replace("#group_id#", $arGroups["GROUP_ID"], $strGroupSubjectLinkTemplate),
 					"data-modern-style" => "Y"
 				],
@@ -648,7 +642,8 @@ if (CModule::IncludeModule("socialnetwork"))
 			"useLetterImage" => true,
 			"color" => "#40465A",
 			"params" => [
-
+				"useSearchBar"=> true,
+				"cache"=>false,
 				"url" => str_replace("#group_id#", $arGroups["GROUP_ID"], $strGroupSubjectLinkTemplate),
 				"data-modern-style" => "Y"
 			],
@@ -750,7 +745,7 @@ JS
 $settingsComponentPath = \Bitrix\MobileApp\Janative\Manager::getComponentPath("settings");
 $settingsUserId = $USER->GetID();
 $settingsSiteId = SITE_ID;
-
+$isUserAdmin = ((\CModule::IncludeModule('bitrix24') ? \CBitrix24::isPortalAdmin($settingsUserId) : $USER->isAdmin()))? "true": "false";
 
 $settingsLanguageId = LANGUAGE_ID;
 
@@ -774,6 +769,7 @@ $menuStructure[] = [
 								"USER_ID": $settingsUserId,
 								"SITE_ID": "$settingsSiteId",
 								"LANGUAGE_ID": "$settingsLanguageId",
+								"IS_ADMIN": $isUserAdmin
 							},
 							rootWidget:{
 								name:"settings",

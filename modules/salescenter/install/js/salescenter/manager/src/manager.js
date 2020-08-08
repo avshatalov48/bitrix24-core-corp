@@ -865,7 +865,67 @@ export class Manager
 
 	static openHowToConfigPaySystem(event)
 	{
-		Manager.openHelper(event, 'redirect=detail&code=9600843', 'pay_system_connect');
+		Manager.openHelper(event, 'redirect=detail&code=10460164', 'pay_system_connect');
+	}
+
+	static openHowToConfigSkbPaySystem(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=11538458', 'pay_system_connect');
+	}
+
+	static openHowToConfigBePaidPaySystem(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=11538452', 'pay_system_connect');
+	}
+
+	static openHowToConfigLiqPayPaySystem(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=11814321', 'pay_system_connect');
+	}
+
+	static openHowToConfigUaPayPaySystem(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=11825299', 'pay_system_connect');
+	}
+
+	static openHowToUseOfflineCashBox(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=11271760', 'cashbox_connect');
+	}
+
+	static openHowToConfigCashBox(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=11120562', 'cashbox_connect');
+	}
+
+	static openHowToSell(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=11274792', 'crmstore_connect');
+	}
+
+	static openHowToWork(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=11553526', 'companycontacts_connect');
+	}
+
+	static openWhatClientSee(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=11278264', 'client_view');
+	}
+
+	static openHowPayDealWorks(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=11274792', 'pay_deal');
+	}
+
+	static openFormPagesHelp(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=9606749', 'forms');
+	}
+
+	static openCommonPagesHelp(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=9604717', 'common_pages');
 	}
 
 	static openHelper(event = null, url = '', analyticsArticle = '')
@@ -902,6 +962,40 @@ export class Manager
 		return Manager.openSlider('/bitrix/components/bitrix/salescenter.feedback/slider.php', {width: 735});
 	}
 
+	static openFeedbackFormParams(event, params, options={})
+	{
+		if(event && Type.isFunction(event.preventDefault))
+		{
+			event.preventDefault();
+		}
+
+		if(!Type.isPlainObject(params))
+		{
+			params = {};
+		}
+
+		let url = (new Uri('/bitrix/components/bitrix/salescenter.feedback/slider.php')).setQueryParams(params).toString();
+		return Manager.openSlider(url, options);
+	}
+
+	static openFeedbackPayOrderForm(event)
+	{
+		if(event && Type.isFunction(event.preventDefault))
+		{
+			event.preventDefault();
+		}
+		return Manager.openSlider('/bitrix/components/bitrix/salescenter.feedback/slider.php?feedback_type=pay_order', {width: 735});
+	}
+
+	static openFeedbackDeliveryOfferForm(event)
+	{
+		if(event && Type.isFunction(event.preventDefault))
+		{
+			event.preventDefault();
+		}
+		return Manager.openSlider('/bitrix/components/bitrix/salescenter.feedback/slider.php?feedback_type=delivery_offer', {width: 735});
+	}
+
 	static openApplication(params = {})
 	{
 		let url = new Uri('/saleshub/app/');
@@ -911,12 +1005,12 @@ export class Manager
 		}
 		return new Promise((resolve, reject) =>
 		{
-			Manager.openSlider(url.toString(), {width: 873}).then((slider) =>
+			Manager.openSlider(url.toString()).then((slider) =>
 			{
 				resolve(slider.getData());
 			}).catch((reason) =>
 			{
-				reject(reason);
+
 			});
 		});
 	}
@@ -929,6 +1023,7 @@ export class Manager
 			{
 				reject('wrong params');
 			}
+			params = {...params, ...{action: 'salescenter.manager.addAnalytic', sessid: BX.bitrix_sessid()}};
 			let request = new XMLHttpRequest();
 			let url = new Uri('/bitrix/services/main/ajax.php');
 			url.setQueryParams(params);
@@ -944,7 +1039,7 @@ export class Manager
 			request.send();
 		});
 	}
-	
+
 	static getFieldsMap()
 	{
 		return new Promise((resolve, reject) =>

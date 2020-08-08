@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Main\Engine\UrlManager;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Viewer;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
@@ -92,13 +94,16 @@ foreach (array('REPLY_TO', 'REPLY_ALL', 'REPLY_CC') as $field)
 		if (\CCrmOwnerType::isDefined($item['ENTITY_TYPE_ID']))
 		{
 			$item['ENTITY_TYPE'] = \CCrmOwnerType::resolveName($item['ENTITY_TYPE_ID']);
-			$id = 'CRM'.$item['ENTITY_TYPE'].$item['ENTITY_ID'].':'.hash('crc32b', $item['TYPE'].':'.$item['VALUE']);
-			$type = $socNetLogDestTypes[$item['ENTITY_TYPE']];
+//			$id = 'CRM'.$item['ENTITY_TYPE'].$item['ENTITY_ID'].':'.hash('crc32b', $item['TYPE'].':'.$item['VALUE']);
+			$id = 'CRM'.$item['ENTITY_TYPE'].$item['ENTITY_ID'];
+			$id = \Bitrix\Crm\Integration\Main\UISelector\CrmEntity::getMultiKey($id, $item['VALUE']);
+			$type = $socNetLogDestTypes[$item['ENTITY_TYPE']].'_MULTI';
 		}
 		else
 		{
-			$id   = 'U'.md5($item['VALUE']);
-			$type = 'users';
+//			$id   = 'U'.md5($item['VALUE']);
+			$id   = 'MC'.$item['VALUE'];
+			$type = 'mailcontacts';
 		}
 
 		switch ($field)
@@ -154,7 +159,7 @@ $readDatetimeFormatted = !empty($activity['SETTINGS']['READ_CONFIRMED']) && $act
 							<span>
 								<? if (\CCrmActivityDirection::Outgoing == $activity['DIRECTION']): ?>
 									<?=getMessage('CRM_ACT_EMAIL_VIEW_SENT', array('#DATETIME#' => $startDatetimeFormatted)) ?><!--
-									--><? if (isset($activity['SETTINGS']['IS_BATCH_EMAIL']) && !$activity['SETTINGS']['IS_BATCH_EMAIL']): ?>,
+									--><? if ($activity['__trackable']): ?>,
 										<span class="read-confirmed-datetime">
 											<? if (!empty($readDatetimeFormatted)): ?>
 												<?=getMessage('CRM_ACT_EMAIL_VIEW_READ_CONFIRMED', array('#DATETIME#' => $readDatetimeFormatted)) ?>
@@ -227,7 +232,43 @@ $readDatetimeFormatted = !empty($activity['SETTINGS']['READ_CONFIRMED']) && $act
 	</div>
 	<div id="activity_<?=$activity['ID'] ?>_body" class="crm-task-list-mail-item-inner-body crm-task-list-mail-item-inner-body-slider"></div>
 </div>
-<? if (!empty($activity['__files'])): ?>
+<? if (!empty($activity['__files'])):
+
+	$viewerItemAttributes = function ($item) use (&$activity)
+	{
+		$attributes = Viewer\ItemAttributes::tryBuildByFileId($item['fileId'], $item['viewURL'])
+			->setTitle($item['fileName'])
+			->setGroupBy(sprintf('crm_activity_%u_files', $activity['ID']))
+			->addAction(array(
+				'type' => 'download',
+			));
+
+		if (isset($item['objectId']) && $item['objectId'] > 0)
+		{
+			$attributes->addAction(array(
+				'type' => 'copyToMe',
+				'text' => Loc::getMessage('CRM_ACT_EMAIL_DISK_ACTION_SAVE_TO_OWN_FILES'),
+				'action' => 'BX.Disk.Viewer.Actions.runActionCopyToMe',
+				'params' => array(
+					'objectId' => $item['objectId'],
+				),
+				'extension' => 'disk.viewer.actions',
+				'buttonIconClass' => 'ui-btn-icon-cloud',
+			));
+		}
+
+		return $attributes;
+	};
+
+	$diskFiles = array_filter(
+		$activity['__files'],
+		function ($item)
+		{
+			return isset($item['objectId']) && $item['objectId'] > 0;
+		}
+	);
+
+	?>
 	<div class="crm-task-list-mail-file-block crm-task-list-mail-border-bottom">
 		<div class="crm-task-list-mail-file-text"><?=getMessage('CRM_ACT_EMAIL_ATTACHES') ?>:</div>
 		<div class="crm-task-list-mail-file-inner">
@@ -237,7 +278,7 @@ $readDatetimeFormatted = !empty($activity['SETTINGS']['READ_CONFIRMED']) && $act
 					<div class="crm-task-list-mail-file-item-image">
 						<span class="crm-task-list-mail-file-link-image">
 							<img class="crm-task-list-mail-file-item-img" src="<?=htmlspecialcharsbx($item['previewURL']) ?>"
-								<?=Viewer\ItemAttributes::tryBuildByFileId($item['fileId'], $item['viewURL'])->setTitle($item['fileName'])->setGroupBy(sprintf('crm_activity_%u_files', $activity['ID'])) ?>>
+								<?=$viewerItemAttributes($item) ?>>
 						</span>
 					</div>
 				<? endforeach ?>
@@ -248,13 +289,24 @@ $readDatetimeFormatted = !empty($activity['SETTINGS']['READ_CONFIRMED']) && $act
 					<div class="crm-task-list-mail-file-item diskuf-files-entity">
 						<span class="feed-com-file-icon feed-file-icon-<?=htmlspecialcharsbx(\Bitrix\Main\IO\Path::getExtension($item['fileName'])) ?>"></span>
 						<a class="crm-task-list-mail-file-link" href="<?=htmlspecialcharsbx($item['viewURL']) ?>" target="_blank"
-							<?=Viewer\ItemAttributes::tryBuildByFileId($item['fileId'], $item['viewURL'])->setTitle($item['fileName'])->setGroupBy(sprintf('crm_activity_%u_files', $activity['ID'])) ?>>
+							<?=$viewerItemAttributes($item) ?>>
 							<?=htmlspecialcharsbx($item['fileName']) ?>
 						</a>
 						<div class="crm-task-list-mail-file-link-info"><?=htmlspecialcharsbx($item['fileSize']) ?></div>
 					</div>
 				<? endforeach ?>
 			</div>
+			<? if (count($diskFiles) > 1 && \Bitrix\Crm\Integration\DiskManager::isModZipEnabled()): ?>
+				<div class="crm-act-email-file-archive-block">
+					<? $href = UrlManager::getInstance()->create('crm.api.attachment.download.downloadArchive', [
+                        'ownerTypeId' => \CCrmOwnerType::Activity,
+                        'ownerId' => $activity['ID'],
+                        'fileIds' => array_column($diskFiles, 'objectId'),
+                    ]); ?>
+					<a class="crm-act-email-file-archive-link" href="<?=htmlspecialcharsbx($href) ?>"><?=Loc::getMessage('CRM_ACT_EMAIL_DISK_FILE_DOWNLOAD_ARCHIVE') ?></a>
+					<div class="crm-task-list-mail-file-link-info">&nbsp;(<?=\CFile::formatSize(array_sum(array_column($diskFiles, 'bytes'))) ?>)</div>
+				</div>
+			<? endif ?>
 		</div>
 	</div>
 <? endif ?>
@@ -305,10 +357,13 @@ $readDatetimeFormatted = !empty($activity['SETTINGS']['READ_CONFIRMED']) && $act
 	}
 
 	$selectorParams = array(
-		'pathToAjax'               => '/bitrix/components/bitrix/crm.activity.editor/ajax.php?soc_net_log_dest=search_email_comms',
+//		'pathToAjax'               => '/bitrix/components/bitrix/crm.activity.editor/ajax.php?soc_net_log_dest=search_email_comms',
 		'extranetUser'             => false,
 		'isCrmFeed'                => true,
+		'CrmTypes'                 => array('CRMCONTACT', 'CRMCOMPANY', 'CRMLEAD'),
 		'useClientDatabase'        => false,
+		'enableUsers'              => false,
+		'enableEmailUsers'         => true,
 		'allowAddUser'             => true,
 		'allowAddCrmContact'       => false,
 		'allowSearchEmailUsers'    => false,
@@ -329,6 +384,7 @@ $readDatetimeFormatted = !empty($activity['SETTINGS']['READ_CONFIRMED']) && $act
 	$APPLICATION->includeComponent(
 		'bitrix:main.mail.form', '',
 		array(
+			'VERSION' => 2,
 			'FORM_ID' => $formId,
 			'LAYOUT_ONLY' => true,
 			'SUBMIT_AJAX' => true,

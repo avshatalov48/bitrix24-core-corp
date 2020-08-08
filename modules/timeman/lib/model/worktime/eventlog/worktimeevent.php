@@ -18,15 +18,13 @@ class WorktimeEvent extends EO_WorktimeEvent implements WorktimeRecordIdStorable
 		return $this->timeHelper;
 	}
 
-	public static function create($eventName, $userId, $recordId, $recordedValue = null, $reason = null, $userUtcOffset = null)
+	public static function create($eventName, $userId, $recordId, $recordedValue = null, $reason = null, $eventSource = null)
 	{
 		$workTimeEvent = new static();
-		$workTimeEvent->setUserId($userId);
 		$workTimeEvent->setEventType($eventName);
-		if ($userUtcOffset === null)
-		{
-			$userUtcOffset = $workTimeEvent->getTimeHelper()->getUserUtcOffset($userId);
-		}
+		$workTimeEvent->setUserId($userId);
+		$workTimeEvent->setWorktimeRecordId($recordId);
+		$userUtcOffset = $workTimeEvent->getTimeHelper()->getUserUtcOffset($userId);
 		$workTimeEvent->setRecordedOffset($userUtcOffset);
 		$workTimeEvent->setReason($reason);
 
@@ -36,7 +34,7 @@ class WorktimeEvent extends EO_WorktimeEvent implements WorktimeRecordIdStorable
 			$workTimeEvent->setRecordedValue($workTimeEvent->getTimeHelper()->getUtcNowTimestamp());
 		}
 		$workTimeEvent->setActualTimestamp($workTimeEvent->getTimeHelper()->getUtcNowTimestamp());
-		$workTimeEvent->setWorktimeRecordId($recordId);
+		$workTimeEvent->setEventSource($eventSource);
 
 		return $workTimeEvent;
 	}

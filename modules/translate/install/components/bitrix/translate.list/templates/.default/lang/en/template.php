@@ -1,5 +1,4 @@
 <?
-$MESS["CONFRIM_REWRITE_LANG_FILES"] = "Attention! The existing strings that are not found in the imported file will be deleted. Are you sure you want to replace the contents of localization files completely?";
 $MESS["TRANS_PATH"] = "Path:";
 $MESS["TRANS_PATH_SEARCH"] = "Path + search";
 $MESS["TR_ADD_UPDATE_LANG_FILES"] = "add new translations, update messages found in CSV file";
@@ -61,7 +60,7 @@ $MESS["TR_LIST_IMPORT_CSV"] = "Import from CSV";
 $MESS["TR_LIST_REFRESH_INDEX"] = "Index";
 $MESS["TR_NO_REWRITE_LANG_FILES"] = "import only new messages";
 $MESS["TR_REINDEX"] = "Index imported messages:";
-$MESS["TR_REWRITE_LANG_FILES"] = "entirely replace all existing messages with new ones";
+$MESS["TR_STARTING_PATH"] = "Select folders to translate";
 $MESS["TR_UPDATE_LANG_FILES"] = "update existing messages";
 $MESS["TR_UPLOAD_CSV_FILE"] = "CSV file:";
 $MESS["TR_UPLOAD_CSV_FILE_EMPTY_ERROR"] = "File to upload is required";

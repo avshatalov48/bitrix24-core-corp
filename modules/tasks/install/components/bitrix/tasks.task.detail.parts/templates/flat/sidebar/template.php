@@ -17,6 +17,7 @@ $taskData = $templateData["DATA"]["TASK"];
 $can = $templateData["DATA"]["TASK"]["ACTION"];
 $workingTime = $templateData["AUX_DATA"]["COMPANY_WORKTIME"];
 $stages = isset($arParams['TEMPLATE_DATA']['DATA']['STAGES']) ? $arParams['TEMPLATE_DATA']['DATA']['STAGES'] : array();
+$taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
 ?>
 
 <div class="task-detail-sidebar">
@@ -100,7 +101,11 @@ $stages = isset($arParams['TEMPLATE_DATA']['DATA']['STAGES']) ? $arParams['TEMPL
 			</div>
 		<?endif;?>
 
-		<?if (!$arParams["PUBLIC_MODE"] && \Bitrix\Tasks\Integration\Bizproc\Automation\Factory::canUseAutomation()):?>
+		<?if (
+				!$arParams["PUBLIC_MODE"]
+				&& \Bitrix\Tasks\Integration\Bizproc\Automation\Factory::canUseAutomation()
+				&& \Bitrix\Tasks\Access\TaskAccessController::can($arParams['USER']['ID'], \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_ROBOT_EDIT, $taskData["ID"])
+		):?>
 			<div class="task-detail-sidebar-item task-detail-sidebar-item-robot">
 				<div class="task-detail-sidebar-item-title"><?=Loc::getMessage('TASKS_SIDEBAR_AUTOMATION')?>:</div>
 				<div class="task-detail-sidebar-item-value">
@@ -148,17 +153,12 @@ $stages = isset($arParams['TEMPLATE_DATA']['DATA']['STAGES']) ? $arParams['TEMPL
 
 		<div class="task-detail-sidebar-item task-detail-sidebar-item-mark">
 			<div class="task-detail-sidebar-item-title"><?=Loc::getMessage("TASKS_MARK")?>:</div>
-			<div class="task-detail-sidebar-item-value<? if (!$can["EDIT"]):?> task-detail-sidebar-item-readonly<?endif?>"><?
-				?><span class="task-detail-sidebar-item-mark-<?=strtolower($taskData["MARK"])?>" id="task-detail-mark"><?
-				if ($taskData["MARK"])
-				{
-					echo Loc::getMessage("TASKS_MARK_".$taskData["MARK"]);
-				}
-				else
-				{
-					echo Loc::getMessage("TASKS_MARK_NONE");
-				}
-			?></span></div>
+			<div class="task-detail-sidebar-item-value<?if(!$can["RATE"]):?> task-detail-sidebar-item-readonly<?php endif?>">
+				<?=($taskLimitExceeded ? '<span class="tariff-lock"></span>' : '')?>
+				<span class="task-detail-sidebar-item-mark-<?= mb_strtolower($taskData["MARK"])?>" id="task-detail-mark">
+					<?=Loc::getMessage(($taskData["MARK"] ? "TASKS_MARK_".$taskData["MARK"] : "TASKS_MARK_NONE"))?>
+				</span>
+			</div>
 		</div>
 
 		<?$APPLICATION->IncludeComponent(
@@ -177,6 +177,8 @@ $stages = isset($arParams['TEMPLATE_DATA']['DATA']['STAGES']) ? $arParams['TEMPL
 				'HIDE_IF_EMPTY' => 'N',
 				'DISABLE_JS_IF_READ_ONLY' => 'Y',
 				'ENTITY_ID' => $taskData["ID"],
+				'GROUP_ID' => (array_key_exists('GROUP_ID', $taskData)) ? $taskData['GROUP_ID'] : 0,
+				'ROLE_KEY' => \Bitrix\Tasks\Access\Role\RoleDictionary::ROLE_DIRECTOR
 			),
 			null,
 			array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -187,7 +189,7 @@ $stages = isset($arParams['TEMPLATE_DATA']['DATA']['STAGES']) ? $arParams['TEMPL
 			'view',
 			array(
 				'DATA' => $taskData["SE_RESPONSIBLE"],
-				'READ_ONLY' => !$can["EDIT"],
+				'READ_ONLY' => ( \Bitrix\Tasks\Access\TaskAccessController::can(\Bitrix\Tasks\Util\User::getId(), \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_CHANGE_RESPONSIBLE, $taskData['ID']) ? 'N' : 'Y'),
 				'ROLE' => 'RESPONSIBLE',
 				'FIELD_NAME' => 'SE_RESPONSIBLE',
 				'MIN' => 1,
@@ -202,7 +204,9 @@ $stages = isset($arParams['TEMPLATE_DATA']['DATA']['STAGES']) ? $arParams['TEMPL
 				'NAME_TEMPLATE' => $arParams["NAME_TEMPLATE"],
 				'HIDE_IF_EMPTY' => 'N',
 				'DISABLE_JS_IF_READ_ONLY' => 'Y',
-				'CHECK_ABSENCE'=>'Y'
+				'CHECK_ABSENCE'=>'Y',
+				'GROUP_ID' => (array_key_exists('GROUP_ID', $taskData)) ? $taskData['GROUP_ID'] : 0,
+				'ROLE_KEY' => \Bitrix\Tasks\Access\Role\RoleDictionary::ROLE_RESPONSIBLE
 			),
 			null,
 			array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -213,7 +217,7 @@ $stages = isset($arParams['TEMPLATE_DATA']['DATA']['STAGES']) ? $arParams['TEMPL
 			'view',
 			array(
 				'DATA' => $taskData["SE_ACCOMPLICE"],
-				'READ_ONLY' => !$can["EDIT"],
+				'READ_ONLY' => ( \Bitrix\Tasks\Access\TaskAccessController::can(\Bitrix\Tasks\Util\User::getId(), \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_CHANGE_ACCOMPLICES, $taskData['ID']) ? 'N' : 'Y'),
 				'ROLE' => 'ACCOMPLICES',
 				'FIELD_NAME' => 'SE_ACCOMPLICE',
 				'ENABLE_SYNC' => true,
@@ -224,8 +228,11 @@ $stages = isset($arParams['TEMPLATE_DATA']['DATA']['STAGES']) ? $arParams['TEMPL
 				'PATH_TO_USER_PROFILE' => $arParams["PATH_TO_USER_PROFILE"],
 				'PATH_TO_TASKS' => $arParams["PATH_TO_TASKS"],
 				'NAME_TEMPLATE' => $arParams["NAME_TEMPLATE"],
-				'HIDE_IF_EMPTY' => !$can["EDIT"],
+				'HIDE_IF_EMPTY' => ( \Bitrix\Tasks\Access\TaskAccessController::can(\Bitrix\Tasks\Util\User::getId(), \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_CHANGE_ACCOMPLICES, $taskData['ID']) ? 'N' : 'Y'),
 				'DISABLE_JS_IF_READ_ONLY' => 'Y',
+				'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
+				'GROUP_ID' => (array_key_exists('GROUP_ID', $taskData)) ? $taskData['GROUP_ID'] : 0,
+				'ROLE_KEY' => \Bitrix\Tasks\Access\Role\RoleDictionary::ROLE_ACCOMPLICE
 			),
 			null,
 			array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -255,7 +262,10 @@ $stages = isset($arParams['TEMPLATE_DATA']['DATA']['STAGES']) ? $arParams['TEMPL
 					$arParams['TEMPLATE_DATA']['I_AM_AUDITOR'] ?
 					'TASKS_TTDP_TEMPLATE_USER_VIEW_LEAVE_AUDITOR' :
 					'TASKS_TTDP_TEMPLATE_USER_VIEW_ENTER_AUDITOR'
-				)
+				),
+				'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
+				'GROUP_ID' => (array_key_exists('GROUP_ID', $taskData)) ? $taskData['GROUP_ID'] : 0,
+				'ROLE_KEY' => \Bitrix\Tasks\Access\Role\RoleDictionary::ROLE_AUDITOR
 			),
 			null,
 			array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -306,7 +316,8 @@ $stages = isset($arParams['TEMPLATE_DATA']['DATA']['STAGES']) ? $arParams['TEMPL
 							".default",
 							array(
 								"NAME" => "TAGS",
-								"VALUE" => $arParams["TEMPLATE_DATA"]["TAGS"]
+								"VALUE" => $arParams["TEMPLATE_DATA"]["TAGS"],
+								"PATH_TO_TASKS" => $arParams["PATH_TO_TASKS"]
 							),
 							null,
 							array("HIDE_ICONS" => "Y")
@@ -376,12 +387,13 @@ if(\Bitrix\Main\Loader::includeModule('rest'))
 		can: <?=CUtil::PhpToJSObject($can)?>,
 		allowTimeTracking: <?=CUtil::PhpToJSObject($taskData["ALLOW_TIME_TRACKING"] === "Y")?>,
 		messages: {
-			emptyDeadline: "<?=CUtil::JSEscape(Loc::getMessage("TASKS_SIDEBAR_DEADLINE_NO"))?>"
+			emptyDeadline: "<?=CUtil::JSEscape(Loc::getMessage("TASKS_SIDEBAR_DEADLINE_NO"))?>",
 		},
 		user: <?=CUtil::PhpToJSObject($arParams['USER'])?>,
 		iAmAuditor: <?=($arParams['TEMPLATE_DATA']['I_AM_AUDITOR'] ? 'true' : 'false')?>,
 		pathToTasks: "<?=CUtil::JSEscape($arParams["PATH_TO_TASKS"])?>",
 		stageId: <?=$taskData["STAGE_ID"]?>,
-		stages: <?= \CUtil::PhpToJSObject(array_values($stages), false, false, true)?>
+		stages: <?= \CUtil::PhpToJSObject(array_values($stages), false, false, true)?>,
+		taskLimitExceeded: <?=CUtil::PhpToJSObject($taskLimitExceeded)?>
 	});
 </script>

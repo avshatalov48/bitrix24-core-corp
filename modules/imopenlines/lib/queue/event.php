@@ -284,7 +284,7 @@ class Event
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function onAfterTMDayEnd($data)
+	public static function onAfterTMDayEnd($data): void
 	{
 		$userId = $data['USER_ID'];
 
@@ -296,7 +296,10 @@ class Event
 			{
 				foreach ($listLine as $lineId)
 				{
-					self::initialization($lineId)->returnNotAcceptedSessionsToQueue($userId, ImOpenLines\Queue::REASON_OPERATOR_DAY_END);
+					if (!\Bitrix\ImOpenLines\Queue::isOperatorSingleInLine($lineId, $userId))
+					{
+						self::initialization($lineId)->returnNotAcceptedSessionsToQueue($userId, ImOpenLines\Queue::REASON_OPERATOR_DAY_END);
+					}
 				}
 			}
 
@@ -334,6 +337,47 @@ class Event
 
 		return true;
 	}
+
+	/**
+	 * Changing the list of responsible persons in the open line queue.
+	 *
+	 * @param \Bitrix\Main\Event $event
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function OnQueueOperatorsChange(\Bitrix\Main\Event $event): bool
+	{
+		$eventData = $event->getParameters();
+
+		//if amount of operators has been increased from 1, then we need to return his not accepted sessions to queue
+		if (
+			!empty($eventData['line']) &&
+			is_array($eventData['operators_before']) &&
+			is_array($eventData['operators_after']) &&
+			count($eventData['operators_before']) <= 1 &&
+			count($eventData['operators_after']) >= 2
+		)
+		{
+			foreach ($eventData['operators_before'] as $singleOperatorId)
+			{
+				$queueInstance = self::initialization($eventData['line']);
+
+				if (!$queueInstance->isOperatorActive($singleOperatorId))
+				{
+					$queueInstance->returnNotAcceptedSessionsToQueue(
+						$singleOperatorId,
+						ImOpenLines\Queue::REASON_OPERATOR_NOT_AVAILABLE
+					);
+				}
+			}
+		}
+
+		return true;
+	}
+
 
 	/**
 	 * Delete the user.
@@ -428,12 +472,29 @@ class Event
 				{
 					foreach ($listLine as $lineId)
 					{
-						self::initialization($lineId)->returnSessionsUsersToQueueIsStartAbsence([$userId], $durationAbsenceDay, ImOpenLines\Queue::REASON_OPERATOR_ABSENT);
+						if (!\Bitrix\ImOpenLines\Queue::isOperatorSingleInLine($lineId, $userId))
+						{
+							self::initialization($lineId)->returnSessionsUsersToQueueIsStartAbsence(
+								[$userId],
+								$durationAbsenceDay,
+								ImOpenLines\Queue::REASON_OPERATOR_ABSENT
+							);
+						}
 					}
 				}
 			}
 
-			ImOpenLines\Debug::addQueueEvent( __METHOD__, 0, 0, ['eventData' => $eventData, 'durationAbsenceDay' => $durationAbsenceDay, 'isVacation' => $isVacation, 'listLine' => $listLine]);
+			ImOpenLines\Debug::addQueueEvent(
+				__METHOD__,
+				0,
+				0,
+				[
+					'eventData' => $eventData,
+					'durationAbsenceDay' => $durationAbsenceDay,
+					'isVacation' => $isVacation,
+					'listLine' => $listLine
+				]
+			);
 		}
 	}
 	//END Absence
@@ -608,6 +669,7 @@ class Event
 	{
 		if ($messageData['AUTHOR_ID'] > 0)
 		{
+			//TODO: Replace with the method \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId or \Bitrix\ImOpenLines\Chat::parseLiveChatEntityId
 			list($connectorId, $lineId) = explode('|', $messageData['CHAT_ENTITY_ID']);
 
 			self::initialization($lineId)->checkFreeSlotOnMessageSend($messageData);
