@@ -338,11 +338,11 @@ class CVoxImplantUser
 		]);
 		if ($arUser)
 		{
-			if (strlen($arUser['UF_VI_PASSWORD']) > 0)
+			if ($arUser['UF_VI_PASSWORD'] <> '')
 			{
 				$userPassword = $arUser['UF_VI_PASSWORD'];
 			}
-			if (strlen($arUser['UF_VI_PHONE_PASSWORD']) > 0)
+			if ($arUser['UF_VI_PHONE_PASSWORD'] <> '')
 			{
 				$phonePassword = $arUser['UF_VI_PHONE_PASSWORD'];
 			}

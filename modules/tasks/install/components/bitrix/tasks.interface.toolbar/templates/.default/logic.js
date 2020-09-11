@@ -58,13 +58,6 @@ BX.namespace('Tasks.Component');
 					}
 				}.bind(this));
 
-				BX.addCustomEvent('Tasks.Toolbar.Reload', function(roleId) {
-					if (this.option('groupId'))
-					{
-						this.rerender(roleId);
-					}
-				}.bind(this));
-
 				BX.addCustomEvent('Tasks.TopMenu:onItem', function(roleId) {
 					this.rerender(roleId);
 				}.bind(this));
@@ -77,10 +70,13 @@ BX.namespace('Tasks.Component');
 
 			onUserCounter: function(data)
 			{
+				var userId = Number(this.option('userId'));
+				var groupId = Number(this.option('groupId'));
+
 				if (
 					!this.option('showCounters')
-					|| this.option('groupId')
-					|| Number(this.option('userId')) !== Number(data.userId)
+					|| userId !== Number(data.userId)
+					|| !data.hasOwnProperty(groupId)
 				)
 				{
 					return;
@@ -97,7 +93,7 @@ BX.namespace('Tasks.Component');
 						roleId = fields.ROLEID || roleId;
 					}
 
-					this.option('counters', this.prepareCounters(data[roleId]));
+					this.option('counters', this.prepareCounters(data[groupId][roleId]));
 					this.render();
 				}
 			},

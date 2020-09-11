@@ -7,6 +7,9 @@ use Bitrix\Crm\Recovery;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Binding;
 use Bitrix\Crm\Timeline;
+use Bitrix\Main\Localization\Loc;
+
+Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/crm/lib/webform/entity.php');
 
 class ContactMerger extends EntityMerger
 {
@@ -32,6 +35,15 @@ class ContactMerger extends EntityMerger
 	protected function getEntityUserFieldsInfo()
 	{
 		return \CCrmContact::GetUserFields();
+	}
+	/**
+	 * Get field caption
+	 * @param string $fieldId
+	 * @return string
+	 */
+	protected function getFieldCaption(string $fieldId):string
+	{
+		return \CCrmContact::GetFieldCaption($fieldId);
 	}
 	protected function getEntityResponsibleID($entityID, $roleID)
 	{
@@ -84,6 +96,37 @@ class ContactMerger extends EntityMerger
 		{
 			$recoveryData->setResponsibleID((int)$fields['ASSIGNED_BY_ID']);
 		}
+	}
+
+	protected static function getFieldConflictResolver(string $fieldId, string $type): ConflictResolver\Base
+	{
+		switch($fieldId)
+		{
+			case 'NAME':
+				$resolver = new Crm\Merger\ConflictResolver\NameField($fieldId);
+				$resolver->setRelatedFieldsCheckRequired(true);
+				$resolver->setEmptyValues(static::getEqualTitleValues());
+				return $resolver;
+
+			case 'SECOND_NAME':
+			case 'LAST_NAME':
+				return new Crm\Merger\ConflictResolver\NameField($fieldId);
+
+			case 'COMMENTS':
+				return new Crm\Merger\ConflictResolver\HtmlField($fieldId);
+
+			case 'SOURCE_ID':
+				return new Crm\Merger\ConflictResolver\SourceField($fieldId);
+
+			case 'SOURCE_DESCRIPTION':
+				return new Crm\Merger\ConflictResolver\TextField($fieldId);
+
+			case 'EXPORT':
+			case 'OPENED':
+				return new Crm\Merger\ConflictResolver\IgnoredField($fieldId);
+		}
+
+		return parent::getFieldConflictResolver($fieldId, $type);
 	}
 
 	protected static function canMergeEntityField($fieldID)
@@ -288,6 +331,25 @@ class ContactMerger extends EntityMerger
 			'NOTIFY_MESSAGE_OUT' => $html
 		);
 	}
+
+	protected static function isFieldNotEmpty(array $fieldInfo, array $fields, string $fieldId): bool
+	{
+		$fieldValue = $fields[$fieldId];
+		return !($fieldId === 'NAME'
+			&& in_array($fieldValue, static::getEqualTitleValues(), true));
+	}
+
+	/**
+	 * @return array
+	 */
+	protected static function getEqualTitleValues(): array
+	{
+		return [
+			Loc::getMessage('CRM_WEBFORM_ENTITY_FIELD_NAME_CONTACT_TEMPLATE'),
+			Loc::getMessage('CRM_CONTACT_UNNAMED')
+		];
+	}
+
 	private static function includeLangFile()
 	{
 		if(!self::$langIncluded)

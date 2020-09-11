@@ -75,18 +75,6 @@ class LocationRepository
 	}
 
 	/**
-	 * @param string $input
-	 * @param array $restriction
-	 * @param string $languageId
-	 * @param int $searchScope
-	 * @return Entity\Generic\Collection|Entity\Location|Entity\Location\Collection|bool|null
-	 */
-	public function autocomplete(string $input, array $restriction, string $languageId, int $searchScope)
-	{
-		return $this->findStrategy->autocomplete($input, $restriction, $languageId, $searchScope);
-	}
-
-	/**
 	 * @param Entity\Location $location
 	 * @return Result
 	 */
@@ -122,10 +110,5 @@ class LocationRepository
 	public function saveParents(Entity\Location\Parents $parents)
 	{
 		return $this->saveStrategy->saveParents($parents);
-	}
-
-	public function findChildren(Entity\Location $location, string $languageId, int $searchScope)
-	{
-		return $this->findStrategy->findChildren($location, $languageId, $searchScope);
 	}
 }

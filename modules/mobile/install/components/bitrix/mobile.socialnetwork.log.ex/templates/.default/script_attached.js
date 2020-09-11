@@ -1170,7 +1170,7 @@ function __MSLOpenLogEntryNew(params, event)
 
 	if (BX('post_more_limiter_' + params.log_id))
 	{
-		params.showMoreButton = (BX('post_more_limiter_' + params.log_id).style.display != 'none');
+		params.showMoreButton = (BX('post_more_limiter_' + params.log_id).style.visibility != 'hidden');
 	}
 
 	if (BX('post_item_top_' + params.log_id))
@@ -2926,7 +2926,7 @@ BitrixMSL.prototype.drawDetailPage = function(data)
 				&& data.showMoreButton == 'YES'
 			)
 			{
-				BX('post_more_limiter').style.display = 'block';
+				BX('post_more_limiter').style.visibility = 'visible';
 				BX.bind(BX('post_more_limiter'), 'click', function()
 				{
 					oMSL.expandText(data.log_id);
@@ -2934,7 +2934,7 @@ BitrixMSL.prototype.drawDetailPage = function(data)
 			}
 			else
 			{
-				BX('post_more_limiter').style.display = 'none';
+				BX('post_more_limiter').style.visibility = 'hidden';
 			}
 		}
 
@@ -2950,7 +2950,7 @@ BitrixMSL.prototype.drawDetailPage = function(data)
 				BX('post_block_check_more_' + data.log_id).style.display = "none";
 			}
 
-			BX('post_more_limiter').style.display = 'none';
+			BX('post_more_limiter').style.visibility = 'hidden';
 			BitrixMobile.LazyLoad.showImages(false); // when redraw detail 2
 		}
 		else
@@ -5453,11 +5453,11 @@ BitrixMSL.prototype.expandText = function(id)
 
 	if (BX('post_more_limiter_' + id))
 	{
-		BX('post_more_limiter_' + id).style.display = "none";
+		BX('post_more_limiter_' + id).style.visibility = "hidden";
 	}
 	else if (BX('post_more_limiter'))
 	{
-		BX('post_more_limiter').style.display = "none";
+		BX('post_more_limiter').style.visibility = "hidden";
 	}
 
 	var arImages = BX.findChildren(checkBlock, { tagName: "img" }, true);
@@ -6086,7 +6086,7 @@ BitrixMSL.prototype.checkNodesHeight = function()
 
 				if (BX(nodeToCheckId.more_button_id))
 				{
-					BX(nodeToCheckId.more_button_id).style.display = "block";
+					BX(nodeToCheckId.more_button_id).style.visibility = "visible";
 				}
 			}
 			else
@@ -6098,7 +6098,7 @@ BitrixMSL.prototype.checkNodesHeight = function()
 
 				if (BX(nodeToCheckId.more_button_id))
 				{
-					BX(nodeToCheckId.more_button_id).style.display = "none";
+					BX(nodeToCheckId.more_button_id).style.visibility = "hidden";
 				}
 			}
 		}

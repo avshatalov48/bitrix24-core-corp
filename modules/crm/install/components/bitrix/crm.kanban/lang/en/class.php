@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ACCESS_NOTIFY_MESSAGE"] = "Please <a href=\"#URL#\">configure CRM kanban stages</a> for me, or grant me an appropriate permission so I could do it myself.";
 $MESS["CRM_KANBAN_BOOLEAN_0"] = "No";
 $MESS["CRM_KANBAN_BOOLEAN_1"] = "Yes";
@@ -7,6 +7,10 @@ $MESS["CRM_KANBAN_CHAR_Y"] = "Yes";
 $MESS["CRM_KANBAN_COMPANY"] = "Company";
 $MESS["CRM_KANBAN_CONTACT"] = "Contact";
 $MESS["CRM_KANBAN_CRM_NOT_INSTALLED"] = "The CRM module is not installed.";
+$MESS["CRM_KANBAN_DELETE_CANCEL"] = "Cancel";
+$MESS["CRM_KANBAN_DELETE_RESTORE_SUCCESS"] = "Items have been recovered successfully.";
+$MESS["CRM_KANBAN_DELETE_SUCCESS"] = "Item #ELEMENT_NAME# has been deleted.";
+$MESS["CRM_KANBAN_DELETE_SUCCESS_MULTIPLE"] = "Items have been deleted.";
 $MESS["CRM_KANBAN_EMAIL_TYPE_HOME"] = "Private";
 $MESS["CRM_KANBAN_EMAIL_TYPE_OTHER"] = "Other";
 $MESS["CRM_KANBAN_EMAIL_TYPE_WORK"] = "Work";
@@ -41,4 +45,3 @@ $MESS["CRM_KANBAN_TITLE_INVOICE"] = "Kanban, invoices";
 $MESS["CRM_KANBAN_TITLE_LEAD"] = "Kanban, leads";
 $MESS["CRM_KANBAN_TITLE_QUOTE"] = "Kanban, quotes";
 $MESS["CRM_KANBAN_TRACKING_SOURCE_ID"] = "Sales Intelligence";
-?>

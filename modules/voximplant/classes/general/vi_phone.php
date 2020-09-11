@@ -51,33 +51,33 @@ class CVoxImplantPhone
 
 	public static function Normalize($number, $minLength = 10)
 	{
-		if (substr($number, 0, 2) == '+8')
+		if (mb_substr($number, 0, 2) == '+8')
 		{
-			$number = '008'.substr($number, 2);
+			$number = '008'.mb_substr($number, 2);
 		}
 		$number = self::stripLetters($number);
 		$number = str_replace("+", "", $number);
-		if (substr($number, 0, 2) == '80' || substr($number, 0, 2) == '81' || substr($number, 0, 2) == '82')
+		if (mb_substr($number, 0, 2) == '80' || mb_substr($number, 0, 2) == '81' || mb_substr($number, 0, 2) == '82')
 		{
 		}
-		else if (substr($number, 0, 2) == '00')
+		else if (mb_substr($number, 0, 2) == '00')
 		{
-			$number = substr($number, 2);
+			$number = mb_substr($number, 2);
 		}
-		else if (substr($number, 0, 3) == '011')
+		else if (mb_substr($number, 0, 3) == '011')
 		{
-			$number = substr($number, 3);
+			$number = mb_substr($number, 3);
 		}
-		else if (substr($number, 0, 1) == '8' && strlen($number) === 11)
+		else if (mb_substr($number, 0, 1) == '8' && mb_strlen($number) === 11)
 		{
-			$number = '7'.substr($number, 1);
+			$number = '7'.mb_substr($number, 1);
 		}
-		else if (substr($number, 0, 1) == '0')
+		else if (mb_substr($number, 0, 1) == '0')
 		{
-			$number = substr($number, 1);
+			$number = mb_substr($number, 1);
 		}
 
-		if($minLength > 0 && strlen($number) < $minLength)
+		if($minLength > 0 && mb_strlen($number) < $minLength)
 		{
 			return false;
 		}
@@ -179,7 +179,7 @@ class CVoxImplantPhone
 	public static function ActivateCallerID($number, $code)
 	{
 		$number = CVoxImplantPhone::Normalize($number);
-		if ($number && strlen($code) > 0)
+		if ($number && $code <> '')
 		{
 			$ViHttp = new CVoxImplantHttp();
 			$ViHttp->ClearConfigCache();
@@ -217,7 +217,7 @@ class CVoxImplantPhone
 				$categories = Array();
 
 				$countryName = GetMessage('VI_PHONE_CODE_'.$value->country_code);
-				if (strlen($countryName) <= 0)
+				if ($countryName == '')
 					$countryName = $value->country_code.' (+'.$value->phone_prefix.')';
 
 				foreach ($value->phone_categories as $category)

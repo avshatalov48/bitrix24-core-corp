@@ -78,7 +78,7 @@ class CVoxImplantInvoiceListComponent extends CBitrixComponent implements \Bitri
 
 		$result = [];
 
-		if (strlen($filter["INVOICE_DATE_from"]) > 0)
+		if ($filter["INVOICE_DATE_from"] <> '')
 		{
 			try
 			{
@@ -87,7 +87,7 @@ class CVoxImplantInvoiceListComponent extends CBitrixComponent implements \Bitri
 			{
 			}
 		}
-		if (strlen($filter["INVOICE_DATE_to"]) > 0)
+		if ($filter["INVOICE_DATE_to"] <> '')
 		{
 			try
 			{

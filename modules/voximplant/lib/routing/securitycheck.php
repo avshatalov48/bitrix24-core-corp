@@ -22,7 +22,7 @@ class SecurityCheck extends Node
 		if($config['PORTAL_MODE'] == 'LINK' || $config['PORTAL_MODE'] == 'RENT')
 		{
 			$portalNumber = $call->getPortalNumber();
-			if(substr($portalNumber, 0, 1) != '+')
+			if(mb_substr($portalNumber, 0, 1) != '+')
 			{
 				$portalNumber = '+' . $portalNumber;
 			}

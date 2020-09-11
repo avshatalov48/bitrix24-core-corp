@@ -40,6 +40,6 @@ $APPLICATION->IncludeComponent(
 		'ENTITY_TYPE_ID' => CCrmOwnerType::Lead,
 		'PATH_TO_MERGER' => '/crm/lead/merge/',
 		'PATH_TO_DEDUPE_LIST' => '/crm/lead/dedupelist/',
-		'PATH_TO_ENTITY_LIST' => '/crm/lead/',
+		'PATH_TO_ENTITY_LIST' => '/crm/lead/?redirect_to',
 	]
 );

@@ -12,6 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
  */
 
 use Bitrix\Crm\Tracking;
+use Bitrix\Main\Localization\Loc;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 if(SITE_TEMPLATE_ID === 'bitrix24')
@@ -1121,6 +1122,11 @@ $APPLICATION->IncludeComponent(
 	BX.ready(
 		function()
 		{
+			BX.Crm.PartialEditorDialog.messages =
+			{
+				entityHasInaccessibleFields: "<?= CUtil::JSEscape(Loc::getMessage('CRM_DEAL_HAS_INACCESSIBLE_FIELDS')) ?>",
+			};
+
 			BX.CrmEntityManager.entityCreateUrls = <?=CUtil::PhpToJSObject($arResult['ENTITY_CREATE_URLS'])?>;
 			BX.CrmDealCategory.infos = <?=CUtil::PhpToJSObject(
 				Bitrix\Crm\Category\DealCategory::getJavaScriptInfos($arResult['CATEGORY_ACCESS']['CREATE'])

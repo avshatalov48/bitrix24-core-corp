@@ -10,6 +10,7 @@ export class Google extends BaseSource
 {
 	#code = 'GOOGLE';
 	#languageId = '';
+	#sourceLanguageId = '';
 	#loaderPromise = null;
 	#map;
 	#photoService;
@@ -27,12 +28,19 @@ export class Google extends BaseSource
 
 		this.#languageId = props.languageId;
 
+		if(!Type.isString(props.sourceLanguageId) || props.sourceLanguageId.trim() === '')
+		{
+			throw new SourceCreationError('props.sourceLanguageId must be a string');
+		}
+
+		this.#sourceLanguageId = props.sourceLanguageId;
+
 		if(!Type.isString(props.apiKey) || props.apiKey.trim() === '')
 		{
 			throw new SourceCreationError('props.apiKey must be a string');
 		}
 
-		this.#loaderPromise = Loader.load(props.apiKey, props.languageId);
+		this.#loaderPromise = Loader.load(props.apiKey, props.sourceLanguageId);
 
 		this.#map = new Map({
 			googleSource: this,

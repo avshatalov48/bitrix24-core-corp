@@ -41,8 +41,8 @@ class Connector
 			self::isConnector($idConnector)
 		)
 		{
-			$idConnector = self::getConnectorRealId($idConnector);
-			$className = "Bitrix\\ImConnector\\Connectors\\" . $idConnector;
+			$realIdConnector = self::getConnectorRealId($idConnector);
+			$className = 'Bitrix\\ImConnector\\Connectors\\' . $realIdConnector;
 			if(class_exists($className))
 			{
 				$class = $className;

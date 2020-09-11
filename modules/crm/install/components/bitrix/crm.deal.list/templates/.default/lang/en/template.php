@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ALL"] = "Total";
 $MESS["CRM_DEAL_ACTION_DELETE"] = "Delete";
 $MESS["CRM_DEAL_ACTION_MERGE"] = "Merge";
@@ -57,6 +57,7 @@ $MESS["CRM_DEAL_EXCLUDE"] = "Add to exceptions";
 $MESS["CRM_DEAL_EXCLUDE_CONFIRM"] = "Are you sure you want to add the deal to exceptions?";
 $MESS["CRM_DEAL_EXCLUDE_CONFIRM_HELP"] = "About exceptions list...";
 $MESS["CRM_DEAL_EXCLUDE_TITLE"] = "Add deal to exceptions";
+$MESS["CRM_DEAL_HAS_INACCESSIBLE_FIELDS"] = "Access to this function was denied because there are fields unavailable to you. Please contact the administrator to get access and resolve the issue.";
 $MESS["CRM_DEAL_LIST_ADD"] = "Add deal";
 $MESS["CRM_DEAL_LIST_ADD_SHORT"] = "Deal";
 $MESS["CRM_DEAL_LIST_APPLY_BUTTON"] = "Apply";
@@ -105,4 +106,3 @@ $MESS["CRM_REBUILD_SEARCH_CONTENT_STATE"] = "#processed# of #total#";
 $MESS["CRM_SHOW_ROW_COUNT"] = "Show quantity";
 $MESS["CRM_STAGE_INIT"] = "- Deal Stage -";
 $MESS["CRM_TIMELINE_REBUILD_SEARCH_CONTENT_DLG_TITLE"] = "Rebuild search index for leads, deals, contacts, companies and other entities";
-?>

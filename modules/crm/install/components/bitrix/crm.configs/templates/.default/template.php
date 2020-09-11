@@ -85,6 +85,7 @@ if($arResult['PERM_CONFIG'])
 
 	$bpHelperUrl = 'javascript:BX.CrmConfigClass.showInfoHelper(\'limit_crm_bp_automation\', event)';
 	$automationHelperUrl = 'javascript:BX.CrmConfigClass.showInfoHelper(\'limit_crm_robots\', event)';
+	$automationOrderHelperUrl = 'javascript:BX.CrmConfigClass.showInfoHelper(\'limit_shop_robots\', event)';
 
 	$items['tab_content_automation']['BP']['URL'] = $siteDir.'/crm/configs/bp/';
 	$items['tab_content_automation']['BP']['ICON_CLASS'] = 'img-bp';
@@ -122,7 +123,7 @@ if($arResult['PERM_CONFIG'])
 
 	if(!$arResult['IS_AUTOMATION_ORDER_ENABLED'])
 	{
-		$items['tab_content_automation']['AUTOMATION_ORDER']['URL'] = $automationHelperUrl;
+		$items['tab_content_automation']['AUTOMATION_ORDER']['URL'] = $automationOrderHelperUrl;
 		$items['tab_content_automation']['AUTOMATION_ORDER']['LOCKED'] = true;
 	}
 

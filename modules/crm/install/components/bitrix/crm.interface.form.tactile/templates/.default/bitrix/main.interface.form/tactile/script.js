@@ -3684,7 +3684,7 @@ if(typeof(BX.CrmFormSectionSetting) === "undefined")
 					{
 						id: info["id"],
 						className: "crm-offer-popup-item menu-popup-no-icon",
-						text: info["name"],
+						text: BX.Text.encode(info["name"]),
 						onclick: BX.delegate(this._onRestoreFieldMenuItemClick, this)
 					}
 				);

@@ -964,7 +964,7 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 				?>
 				<tr data-bx-right="<?=$right?>">
 					<td class="content-edit-form-field-name">
-						<?=(!empty($arNames[$right]["provider"]) ? $arNames[$right]["provider"].": " : "").$arNames[$right]["name"]?>
+						<?=(!empty($arNames[$right]["provider"]) ? $arNames[$right]["provider"].": " : "").htmlspecialcharsbx($arNames[$right]["name"])?>
 					</td>
 					<td class="content-edit-form-field-input" colspan="2">
 						<?foreach($arIps as $ip):?>

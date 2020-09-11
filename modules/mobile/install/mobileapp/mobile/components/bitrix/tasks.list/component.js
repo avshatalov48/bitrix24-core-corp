@@ -347,16 +347,18 @@ include('InAppNotifier');
 				return;
 			}
 
-			if (!data[this.role])
+			const counters = data[0];
+
+			if (!counters[this.role])
 			{
-				console.log({error: `${this.role} not found in data`, data});
+				console.log({error: `${this.role} not found in counters`, counters});
 			}
 
 			this.counters = {};
 
 			Object.keys(Filter.presetsMap).forEach((presetType) => {
 				const subPresets = Filter.presetsMap[presetType];
-				const counter = data[presetType];
+				const counter = counters[presetType];
 
 				this.counters[presetType] = counter;
 				this.counters[`${presetType}_total`] = 0;

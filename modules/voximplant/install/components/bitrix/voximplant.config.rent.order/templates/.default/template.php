@@ -46,7 +46,7 @@ if (!$statusMessage)
 						 style="<?= ($showAddButton ? 'margin-bottom: 32px;' : '') ?>">
 						<div class="tel-set-inner-wrap">
 							<div class="tel-number-order-info">
-								<? if (substr($arResult['ORDER_STATUS']['OPERATOR_STATUS'], 0, 7) == 'ACTIVE_'): ?>
+								<? if (mb_substr($arResult['ORDER_STATUS']['OPERATOR_STATUS'], 0, 7) == 'ACTIVE_'): ?>
 									<div class="tel-order-form-desc"><?= GetMessage('VI_CONFIG_RENT_ORDER_INFO_TITLE_2') ?></div>
 									<div class="tel-order-form-info-box">
 										<div class="tel-order-form-info"><?= GetMessage('VI_CONFIG_RENT_ORDER_INFO_ACCOUNT') ?>
@@ -94,7 +94,7 @@ if (!$statusMessage)
 
 				<div id="vi_rent_order_div" class="tel-set-main-wrap tel-set-main-wrap-white"
 					 style="margin-top: 15px; <?=$showForm ? "" : "display:none; "?>">
-					<div class="ui-alert ui-alert-warning"><?= GetMessage('VI_CONFIG_RENT_FORM_TITLE_'.strtoupper($arResult['ACCOUNT_LANG'])) ?></div>
+					<div class="ui-alert ui-alert-warning"><?= GetMessage('VI_CONFIG_RENT_FORM_TITLE_'.mb_strtoupper($arResult['ACCOUNT_LANG'])) ?></div>
 					<div class="voximplant-control-row">
 						<div class="voximplant-control-subtitle"><?= GetMessage('VI_CONFIG_RENT_ORDER_COMPANY_NAME') ?></div>
 						<input id="vi_rent_order_name" type="text" class="voximplant-control-input">

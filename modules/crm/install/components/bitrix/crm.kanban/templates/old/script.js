@@ -7,7 +7,7 @@ if (typeof(BX.CrmKanbanHelper) === 'undefined')
 		this._delayStack = settings.DELAY_BETWEEN_LOADING || 25;//seconds
 		this._type = settings.ENTITY_TYPE || '';
 		this._gridId = settings.GRID_ID || '';
-		this._ajaxPath = settings.AJAX_PATH || '/bitrix/components/bitrix/crm.kanban/ajax.php';
+		this._ajaxPath = settings.AJAX_PATH || '/bitrix/components/bitrix/crm.kanban/ajax.old.php';
 		this._data = settings.DATA || {};
 		this._data.container = settings.CONTAINER || document.body;
 		this._currency = settings.CURRENCY || '';

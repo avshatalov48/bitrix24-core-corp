@@ -23,7 +23,7 @@ final class GoogleSource extends BaseSource
 		$apiKey = static::findApiKey();
 		$apiKeyBack = static::findApiKeyBackend();
 		$this->apiKey = $apiKey;
-		$this->repository = new Repository($apiKeyBack, $httpClient, $cachePool);
+		$this->repository = new Repository($apiKeyBack, $httpClient, $this, $cachePool);
 	}
 
 	/**
@@ -56,7 +56,25 @@ final class GoogleSource extends BaseSource
 	public function getJSParams(): array
 	{
 		return [
-			'apiKey' => $this->apiKey
+			'apiKey' => $this->apiKey,
+			'showPhotos' => Option::get('location', 'google_map_show_photos', 'N') === 'Y',
+			'useGeocodingService' => Option::get('location', 'google_use_geocoding_service', 'N') === 'Y',
 		];
+	}
+
+	/** @inheritDoc */
+	public function convertLang(string $bitrixLang): string
+	{
+		// https://developers.google.com/maps/faq#languagesupport
+
+		$langMap = [
+			'br' => 'pt-BR',	// Portuguese (Brazil)
+			'la' => 'es', 		// Spanish
+			'sc' => 'zh-CN', 	// Chinese (Simplified)
+			'tc' => 'zh-TW', 	// Chinese (Traditional)
+			'vn' => 'vi' 		// Vietnamese
+		];
+
+		return $langMap[$bitrixLang] ?? $bitrixLang;
 	}
 }

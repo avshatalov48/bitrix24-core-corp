@@ -35,4 +35,13 @@ abstract class BaseSource
 	{
 		return [];
 	}
+
+	/**
+	 * @param string $bitrixLang
+	 * @return string
+	 */
+	public function convertLang(string $bitrixLang): string
+	{
+		return $bitrixLang;
+	}
 }

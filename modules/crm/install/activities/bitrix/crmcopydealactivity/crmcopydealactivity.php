@@ -79,6 +79,12 @@ class CBPCrmCopyDealActivity
 		if ($stageId)
 		{
 			$fields['STAGE_ID'] = $stageId;
+
+			if($fields['CATEGORY_ID'] !== Crm\Category\DealCategory::resolveFromStageID($stageId))
+			{
+				$this->WriteToTrackingService(GetMessage("CRM_CDA_STAGE_SELECTION_ERROR"), 0, CBPTrackingType::Error);
+				return CBPActivityExecutionStatus::Closed;
+			}
 		}
 
 		$responsibles = CBPHelper::ExtractUsers($this->Responsible, $this->GetDocumentId());

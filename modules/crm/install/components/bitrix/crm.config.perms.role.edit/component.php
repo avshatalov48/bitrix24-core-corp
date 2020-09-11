@@ -38,7 +38,6 @@ if($arResult['IS_PERMITTED'])
 	{
 
 		$permissions = (isset($_POST['ROLE_PERMS']) && is_array($_POST['ROLE_PERMS'])) ? $_POST['ROLE_PERMS'] : [];
-		$permissions = CCrmRole::normalizePermissions($permissions);
 		$bVarsFromForm = true;
 		$arFields = array(
 			'NAME' => $_POST['NAME'],

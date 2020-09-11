@@ -139,7 +139,16 @@ class Absence
 		$requestReport = \Bitrix\Main\Config\Option::get('timeman', 'request_report', "0");
 		if ($requestReport == "1")
 		{
-			$result = true;
+			$skipReport = \Bitrix\Main\Config\Option::get('timeman', 'skip_report', "0");
+			if ($skipReport == "0")
+			{
+				$result = true;
+			}
+			else
+			{
+				$skipReport = Json::decode($skipReport);
+				$result = !$skipReport || !in_array($userId, $skipReport);
+			}
 		}
 		else if ($requestReport == "0")
 		{

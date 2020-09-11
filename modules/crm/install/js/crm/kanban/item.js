@@ -1109,15 +1109,18 @@ BX.CRM.Kanban.Item.prototype = {
 	{
 		var type = BX.data(BX.proxy_context, "type");
 		var data = this.getData();
-		var contactCategories = data[type];
+		var contactInfo = data[type];
 
-		if (Object.keys(contactCategories).length > 1)
+		if (
+			typeof contactInfo === 'object'
+			&& Object.keys(contactInfo).length > 1
+		)
 		{
-			this.showManyContacts(contactCategories, type);
+			this.showManyContacts(contactInfo, type);
 		}
 		else
 		{
-			this.showSingleContact(contactCategories, type);
+			this.showSingleContact(contactInfo, type);
 		}
 	},
 
@@ -1177,12 +1180,21 @@ BX.CRM.Kanban.Item.prototype = {
 		var menuItems = [];
 		var fields = [];
 
+		// converting the entity's own contact data into an object for correct use
+		if (Array.isArray(contactCategories))
+		{
+			contactCategories = {0: contactCategories};
+		}
+
 		for (var category in contactCategories)
 		{
-			menuItems.push({
-				delimiter: true,
-				text: this.getMessage(category)
-			});
+			if (category === 'company' || category === 'contact')
+			{
+				menuItems.push({
+					delimiter: true,
+					text: this.getMessage(category)
+				});
+			}
 
 			fields = contactCategories[category];
 			for (var i = 0, c = fields.length; i < c; i++)
@@ -1218,9 +1230,9 @@ BX.CRM.Kanban.Item.prototype = {
 		BX.bind(window, "scroll", BX.proxy(this.adjustPopup, this));
 	},
 
-	showSingleContact: function(contactCategories, type)
+	showSingleContact: function(contactInfo, type)
 	{
-		var fields = this.getSingleContactCategory(contactCategories);
+		var fields = this.getSingleContactCategory(contactInfo);
 
 		if (!Array.isArray(fields))
 		{
@@ -1235,9 +1247,9 @@ BX.CRM.Kanban.Item.prototype = {
 		});
 	},
 
-	getSingleContactCategory: function(contactCategories)
+	getSingleContactCategory: function(contactInfo)
 	{
-		return contactCategories[Object.keys(contactCategories)[0]];
+		return (typeof contactInfo === 'object' ? contactInfo[Object.keys(contactInfo)[0]] : contactInfo);
 	},
 
 	getMessage: function(title)
@@ -1503,6 +1515,12 @@ BX.CRM.Kanban.Item.prototype = {
 
 		draggableItem = this.getGrid().getItemByElement(itemNode);
 
+		if (draggableItem.getColumn().getId() === this.getColumn().getId())
+		{
+			this.getGrid().resetMultiSelectMode();
+			this.getGrid().cleanSelectedItems();
+			return;
+		}
 
 		event = new BX.Kanban.DragEvent();
 		event.setItem(draggableItem);

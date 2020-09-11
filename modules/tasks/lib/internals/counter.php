@@ -1873,12 +1873,18 @@ class Counter
 			$pushData = ['userId' => $userId];
 			$counter = self::getInstance($userId);
 
-			foreach ($types as $type)
+			$groupIds = array_keys($counter->counters);
+			foreach ($groupIds as $groupId)
 			{
-				$data = $counter->getCounters($type, ['SKIP_ACCESS_CHECK' => true]);
-				foreach ($data as $key => $value)
+				$groupCounter = self::getInstance($userId, $groupId);
+
+				foreach ($types as $type)
 				{
-					$pushData[$type][$key] = $value['counter'];
+					$data = $groupCounter->getCounters($type, ['SKIP_ACCESS_CHECK' => true]);
+					foreach ($data as $key => $value)
+					{
+						$pushData[$groupId][$type][$key] = $value['counter'];
+					}
 				}
 			}
 

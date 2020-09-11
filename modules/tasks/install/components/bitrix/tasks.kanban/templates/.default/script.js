@@ -67,18 +67,6 @@ BX.Tasks.KanbanComponent.onReady = function()
 		}
 	}));
 
-	// refresh sort-button after reload kanban
-	BX.addCustomEvent("onKanbanChanged", BX.delegate(function(data) {
-		var roleId = 'view_all';
-		var filterObject = BX.Main.filterManager.getById(BX.Tasks.KanbanComponent.filterId);
-		if (filterObject)
-		{
-			var fields = filterObject.getFilterFieldsValues();
-			roleId = fields.ROLEID || roleId;
-		}
-		BX.onCustomEvent("Tasks.Toolbar.reload", [roleId]);
-	}));
-
 	BX.addCustomEvent('Tasks.TopMenu:onItem', function(roleId, url) {
 		var filterManager = BX.Main.filterManager.getById(BX.Tasks.KanbanComponent.filterId);
 		if (!filterManager)

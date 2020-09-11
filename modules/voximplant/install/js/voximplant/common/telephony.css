@@ -1028,7 +1028,7 @@
 }
 
 .tel-set-item {
-	margin: 0 5px;
+	/*margin: 0 5px;*/
 	overflow: hidden;
 	padding-bottom: 20px;
 	vertical-align: top;
@@ -2776,7 +2776,7 @@
 }
 
 .ui-page-slider-wrapper .voximplant-ats {
-	padding: 24px;
+	padding: 20px;
 }
 
 .voximplant-connected-ats {}

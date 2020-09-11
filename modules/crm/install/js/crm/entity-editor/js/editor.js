@@ -100,6 +100,8 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 
 		this._helpWrapper = null;
 		this._dragConfig = {};
+
+		this._ufAccessRights = {};
 	};
 	BX.Crm.EntityEditor.prototype =
 	{
@@ -177,6 +179,8 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 				duplicateControlConfig
 			);
 			//endregion
+
+			this._ufAccessRights = BX.prop.getObject(this._settings, "ufAccessRights", {});
 
 			this._context = BX.prop.getObject(this._settings, "context", {});
 			this._contextId = BX.prop.getString(this._settings, "contextId", "");

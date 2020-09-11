@@ -44,7 +44,7 @@ final class AddressLimit
 			$res = AddressTable::getList([
 				'select' => ['CNT'],
 				'filter' => [
-					'LOCATION.SOURCE_CODE' => 'GOOGLE'
+					'=LOCATION.SOURCE_CODE' => 'GOOGLE'
 				],
 				'runtime' => [
 					new ExpressionField('CNT', 'COUNT(*)')

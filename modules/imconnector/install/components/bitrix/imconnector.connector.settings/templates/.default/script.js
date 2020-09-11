@@ -729,6 +729,8 @@
 		{
 			var newItem = {};
 
+			item.NAME = BX.util.htmlspecialchars(item.NAME);
+
 			newItem.id = item.ID;
 			newItem.title = item.NAME;
 			newItem.text = item.NAME;

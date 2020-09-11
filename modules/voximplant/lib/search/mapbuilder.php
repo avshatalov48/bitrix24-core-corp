@@ -52,10 +52,10 @@ class MapBuilder
 		if($value == '')
 			return $this;
 
-		$length = strlen($value);
-		if($length >= 10 && substr($value, 0, 1) === '7')
+		$length = mb_strlen($value);
+		if($length >= 10 && mb_substr($value, 0, 1) === '7')
 		{
-			$altPhone = '8'.substr($value, 1);
+			$altPhone = '8'.mb_substr($value, 1);
 			$this->tokens[$altPhone] = true;
 		}
 
@@ -65,7 +65,7 @@ class MapBuilder
 		{
 			for($i = 0; $i < $bound; $i++)
 			{
-				$key = substr($value, $i);
+				$key = mb_substr($value, $i);
 				$this->tokens[$key] = true;
 			}
 		}

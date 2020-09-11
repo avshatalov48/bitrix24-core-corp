@@ -3285,7 +3285,8 @@ if(typeof BX.Crm.EntityEditorSection === "undefined")
 				{
 					editor: field ? field._editor : null,
 					config: field ? BX.prop.getObject(data, "visibilityConfigs", null) : null,
-					field: field ? field : null
+					field: field ? field : null,
+					ufAccessRights: this._editor._ufAccessRights
 				}
 			);
 

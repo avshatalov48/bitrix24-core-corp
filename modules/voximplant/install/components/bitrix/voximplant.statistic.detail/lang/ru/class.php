@@ -31,6 +31,7 @@ $MESS["TELEPHONY_FILTER_HAS_RECORD"] = "Запись звонка";
 $MESS["TEL_STAT_EXPORT_LOCK_ERROR"] = "В настоящий момент выгрузка уже формируется, попробуйте, пожалуйста позднее.";
 $MESS["TEL_STAT_SHOW_TRANSCRIPT"] = "Открыть расшифровку";
 $MESS["TEL_STAT_ACTION_DOWNLOAD"] = "Скачать запись";
+$MESS["TEL_STAT_ACTION_VOX_DOWNLOAD"] = "Загрузить запись на портал";
 $MESS["TEL_STAT_ACTION_SHOW_TRANSCRIPTION"] = "Открыть расшифровку";
 $MESS["TEL_STAT_ACTION_SHOW_LOG"] = "Открыть журнал";
 ?>

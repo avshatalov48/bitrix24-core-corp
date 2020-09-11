@@ -1109,6 +1109,11 @@ this.BX.Location = this.BX.Location || {};
 	      value: ''
 	    });
 
+	    _sourceLanguageId.set(babelHelpers.assertThisInitialized(_this), {
+	      writable: true,
+	      value: ''
+	    });
+
 	    _loaderPromise$2.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
 	      value: null
@@ -1140,11 +1145,17 @@ this.BX.Location = this.BX.Location || {};
 
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _languageId$2, props.languageId);
 
+	    if (!main_core.Type.isString(props.sourceLanguageId) || props.sourceLanguageId.trim() === '') {
+	      throw new location_core.SourceCreationError('props.sourceLanguageId must be a string');
+	    }
+
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _sourceLanguageId, props.sourceLanguageId);
+
 	    if (!main_core.Type.isString(props.apiKey) || props.apiKey.trim() === '') {
 	      throw new location_core.SourceCreationError('props.apiKey must be a string');
 	    }
 
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _loaderPromise$2, Loader.load(props.apiKey, props.languageId));
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _loaderPromise$2, Loader.load(props.apiKey, props.sourceLanguageId));
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _map$2, new Map({
 	      googleSource: babelHelpers.assertThisInitialized(_this),
 	      languageId: babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _languageId$2)
@@ -1206,6 +1217,8 @@ this.BX.Location = this.BX.Location || {};
 	var _code = new WeakMap();
 
 	var _languageId$2 = new WeakMap();
+
+	var _sourceLanguageId = new WeakMap();
 
 	var _loaderPromise$2 = new WeakMap();
 

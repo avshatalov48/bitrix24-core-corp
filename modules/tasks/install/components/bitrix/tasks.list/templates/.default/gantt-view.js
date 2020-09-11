@@ -187,24 +187,6 @@ function onPopupTaskChanged(task) {
 	}
 }
 
-function counterUpdate()
-{
-	var filterId = ganttFilterId || null;
-	if (filterId)
-	{
-		var filterObject = BX.Main.filterManager.getById(filterId);
-		var fields = filterObject.getFilterFieldsValues();
-		var roleid = fields.ROLEID || 'view_all';//debugger
-
-		BX.onCustomEvent("Tasks.Toolbar.Reload", [roleid]); //FIRE
-	}
-}
-
-BX.addCustomEvent(window, 'onGanttTaskUpdateBars', counterUpdate);
-BX.addCustomEvent(window, 'onTaskDelete', counterUpdate);
-BX.addCustomEvent(window, 'onTasksQuickFormExecuted', counterUpdate);
-
-
 function onPopupTaskAdded(task)
 {
 	BX.onCustomEvent("onTaskListTaskAdd", [task]);

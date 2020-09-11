@@ -103,7 +103,7 @@ class CVoxImplantDocuments
 		foreach ($result as $key => $verification)
 		{
 			$regionName = GetMessage('VI_DOCS_COUNTRY_'.$verification->REGION);
-			$regionName = strlen($regionName) > 0? $regionName: $verification->REGION;
+			$regionName = $regionName <> ''? $regionName: $verification->REGION;
 
 			$verifications[$key]['REGION'] = $verification->REGION;
 			$verifications[$key]['REGION_NAME'] = $regionName;

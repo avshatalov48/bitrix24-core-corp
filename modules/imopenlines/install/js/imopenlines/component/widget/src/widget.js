@@ -490,11 +490,6 @@ export class Widget
 
 	prepareFileData(files)
 	{
-		if (Cookie.get(null, 'BITRIX_LIVECHAT_AUTH'))
-		{
-			return files;
-		}
-
 		if (!Utils.types.isArray(files))
 		{
 			return files;

@@ -437,6 +437,21 @@
 					});
 				}
 			}
+
+			if (this.exportManager)
+			{
+				items.push({
+					text: BX.util.htmlspecialchars(BX.message('TM_WORKTIME_GRID_CONFIG_MENU_TITLE_EXPORT_EXCEL')),
+					id: 'showExportExcel',
+					className: 'menu-popup-no-icon js-id-editSchedules',
+					onclick: function ()
+					{
+						this.exportManager.startExport(this.exportManager.getExcelExportType());
+						this.closeGridConfigPopup();
+					}.bind(this)
+				});
+			}
+
 			return items;
 		},
 		closeGridConfigPopup: function ()

@@ -1,7 +1,7 @@
 <?
 global $MESS;
 $PathInstall = str_replace("\\", "/", __FILE__);
-$PathInstall = substr($PathInstall, 0, strlen($PathInstall)-strlen("/index.php"));
+$PathInstall = mb_substr($PathInstall, 0, mb_strlen($PathInstall) - mb_strlen("/index.php"));
 
 IncludeModuleLangFile($PathInstall."/install.php");
 
@@ -20,9 +20,7 @@ Class voximplant extends CModule
 	{
 		$arModuleVersion = array();
 
-		$path = str_replace("\\", "/", __FILE__);
-		$path = substr($path, 0, strlen($path) - strlen("/index.php"));
-		include($path."/version.php");
+		include(__DIR__.'/version.php');
 
 		if (is_array($arModuleVersion) && array_key_exists("VERSION", $arModuleVersion))
 		{
@@ -42,7 +40,7 @@ Class voximplant extends CModule
 	function DoInstall()
 	{
 		global $DOCUMENT_ROOT, $APPLICATION, $step;
-		$step = IntVal($step);
+		$step = intval($step);
 		if($step < 2)
 		{
 			$this->CheckModules();
@@ -119,7 +117,7 @@ Class voximplant extends CModule
 		global $DB, $APPLICATION;
 
 		$this->errors = false;
-		if (strlen($params['PUBLIC_URL']) > 0 && strlen($params['PUBLIC_URL']) < 12)
+		if ($params['PUBLIC_URL'] <> '' && mb_strlen($params['PUBLIC_URL']) < 12)
 		{
 			if (!$this->errors)
 			{
@@ -128,7 +126,7 @@ Class voximplant extends CModule
 			$this->errors[] = GetMessage('VI_CHECK_PUBLIC_PATH');
 		}
 		if(!$this->errors && !$DB->Query("SELECT 'x' FROM b_voximplant_phone", true))
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/voximplant/install/db/".strtolower($DB->type)."/install.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/voximplant/install/db/".mb_strtolower($DB->type)."/install.sql");
 
 		if($this->errors !== false)
 		{
@@ -551,7 +549,7 @@ Class voximplant extends CModule
 	function DoUninstall()
 	{
 		global $DOCUMENT_ROOT, $APPLICATION, $step;
-		$step = IntVal($step);
+		$step = intval($step);
 		if($step<2)
 		{
 			$APPLICATION->IncludeAdminFile(GetMessage("VI_UNINSTALL_TITLE_2"), $DOCUMENT_ROOT."/bitrix/modules/voximplant/install/unstep1.php");
@@ -575,7 +573,7 @@ Class voximplant extends CModule
 		$this->errors = false;
 
 		if (!$arParams['savedata'])
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/voximplant/install/db/".strtolower($DB->type)."/uninstall.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/voximplant/install/db/".mb_strtolower($DB->type)."/uninstall.sql");
 
 		if(is_array($this->errors))
 			$arSQLErrors = $this->errors;

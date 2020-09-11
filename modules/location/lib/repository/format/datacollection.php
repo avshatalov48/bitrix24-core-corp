@@ -43,6 +43,12 @@ class DataCollection
 						'description' => ''
 					],
 					[
+						'sort' => 350,
+						'type' => FieldType::ADM_LEVEL_2,
+						'name' => Loc::getMessage('LOCATION_REPO_FRMT_ADM_LEVEL_2', null, $languageId),
+						'description' =>''
+					],
+					[
 						'sort' => 300,
 						'type' => FieldType::ADM_LEVEL_1,
 						'name' => Loc::getMessage('LOCATION_REPO_FRMT_REGION', null, $languageId),
@@ -218,6 +224,12 @@ class DataCollection
 						'type' => FieldType::LOCALITY,
 						'name' => Loc::getMessage('LOCATION_REPO_FRMT_LOCALITY', null, $languageId),
 						'description' => ''
+					],
+					[
+						'sort' => 350,
+						'type' => FieldType::ADM_LEVEL_2,
+						'name' => Loc::getMessage('LOCATION_REPO_FRMT_ADM_LEVEL_2', null, $languageId),
+						'description' =>''
 					],
 					[
 						'sort' => 300,

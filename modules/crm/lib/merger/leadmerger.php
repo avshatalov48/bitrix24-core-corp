@@ -33,6 +33,15 @@ class LeadMerger extends EntityMerger
 	{
 		return \CCrmLead::GetUserFields();
 	}
+	/**
+	 * Get field caption
+	 * @param string $fieldId
+	 * @return string
+	 */
+	protected function getFieldCaption(string $fieldId):string
+	{
+		return \CCrmLead::GetFieldCaption($fieldId);
+	}
 	protected function getEntityResponsibleID($entityID, $roleID)
 	{
 		$dbResult = \CCrmLead::GetListEx(
@@ -89,56 +98,55 @@ class LeadMerger extends EntityMerger
 		}
 	}
 
-	protected static function resolveEntityFieldConflict(array &$seed, array &$targ, $fieldID)
+	protected static function getFieldConflictResolver(string $fieldId, string $type): ConflictResolver\Base
 	{
-		$seedID = isset($seed['ID']) ? (int)$seed['ID'] : 0;
-		$targID = isset($targ['ID']) ? (int)$targ['ID'] : 0;
-
-		//Field Title is ignored
-		if($fieldID === 'TITLE')
+		switch($fieldId)
 		{
-			return true;
+			case 'NAME':
+				$resolver = new Crm\Merger\ConflictResolver\NameField($fieldId);
+				$resolver->setRelatedFieldsCheckRequired(true);
+				return $resolver;
+
+			case 'SECOND_NAME':
+			case 'LAST_NAME':
+				return new Crm\Merger\ConflictResolver\NameField($fieldId);
+
+			case 'TITLE':
+				//Field Title is ignored
+				return new Crm\Merger\ConflictResolver\IgnoredField($fieldId);
+
+			case 'ADDRESS_LOC_ADDR_ID':
+				//Field Location in address is ignored
+				return new Crm\Merger\ConflictResolver\IgnoredField($fieldId);
+
+			case 'CONTACT_ID':
+				//Crutch for ContactID Field. It is obsolete and can be ignored. See DealMerger::innerMergeBoundEntities.
+				return new Crm\Merger\ConflictResolver\IgnoredField($fieldId);
+
+			case 'OPPORTUNITY':
+				//Crutch for Opportunity Field. It can be ignored if ProductRows are not empty. We will recalculate Opportunity after merging of ProductRows. See DealMerger::innerMergeBoundEntities.
+				$resolver = new Crm\Merger\ConflictResolver\OpportunityField($fieldId);
+				$resolver->setEntityTypeId(\CCrmOwnerType::Lead);
+				return $resolver;
+
+			case 'TAX_VALUE':
+				//Crutch for TaxValue Field. It can be ignored. We will recalculate TaxValue after merging of ProductRows. See DealMerger::innerMergeBoundEntities.
+				return new Crm\Merger\ConflictResolver\IgnoredField($fieldId);
+
+			case 'COMMENTS':
+				return new Crm\Merger\ConflictResolver\HtmlField($fieldId);
+
+			case 'SOURCE_ID':
+				return new Crm\Merger\ConflictResolver\SourceField($fieldId);
+
+			case 'SOURCE_DESCRIPTION':
+				return new Crm\Merger\ConflictResolver\TextField($fieldId);
+
+			case 'OPENED':
+				return new Crm\Merger\ConflictResolver\IgnoredField($fieldId);
 		}
 
-		if($fieldID === 'CONTACT_ID')
-		{
-			//Crutch for ContactID Field. It is obsolete and can be ignored. See LeadMerger::innerMergeBoundEntities.
-			return true;
-		}
-
-		//Crutch for Opportunity Field. It can be ignored if ProductRows are not empty. We will recalculate Opportunity after merging of ProductRows. See LeadMerger::innerMergeBoundEntities.
-		if($fieldID === 'OPPORTUNITY')
-		{
-			$seedProductRows = isset($seed['PRODUCT_ROWS']) && is_array($seed['PRODUCT_ROWS'])
-				? $seed['PRODUCT_ROWS'] : \CCrmLead::LoadProductRows($seedID);
-
-			if(!empty($seedProductRows))
-			{
-				$seed['PRODUCT_ROWS'] = $seedProductRows;
-			}
-
-			$targProductRows = isset($targ['PRODUCT_ROWS']) && is_array($targ['PRODUCT_ROWS'])
-				? $targ['PRODUCT_ROWS'] : \CCrmLead::LoadProductRows($targID);
-
-			if(!empty($targProductRows))
-			{
-				$targ['PRODUCT_ROWS'] = $targProductRows;
-			}
-
-			if(!empty($seedProductRows) || !empty($targProductRows))
-			{
-				//Opportunity is depends on Product Rows. Product Rows will be merged in innerMergeBoundEntities
-				return true;
-			}
-		}
-
-		//Crutch for TaxValue Field. It can be ignored. We will recalculate TaxValue after merging of ProductRows. See DealMerger::innerMergeBoundEntities.
-		if($fieldID === 'TAX_VALUE')
-		{
-			return true;
-		}
-
-		return parent::resolveEntityFieldConflict($seed,$targ, $fieldID);
+		return parent::getFieldConflictResolver($fieldId, $type);
 	}
 
 	protected static function canMergeEntityField($fieldID)

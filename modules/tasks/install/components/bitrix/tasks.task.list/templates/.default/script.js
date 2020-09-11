@@ -623,26 +623,8 @@ BX(function() {
 			});
 		},
 
-		reloadToolbar: function()
-		{
-			var filterId = this.getGrid().getId() || null;
-			if (filterId)
-			{
-				var roleId = 'view_all';
-				var filterObject = BX.Main.filterManager.getById(filterId);
-				if (filterObject)
-				{
-					var fields = filterObject.getFilterFieldsValues();
-					roleId = fields.ROLEID || roleId;
-				}
-				BX.onCustomEvent('Tasks.Toolbar.Reload', [roleId]);
-			}
-		},
-
 		onPullView: function(data)
 		{
-			this.reloadToolbar();
-
 			if (this.userId !== Number(data.USER_ID))
 			{
 				return;
@@ -675,8 +657,6 @@ BX(function() {
 
 		onPullCommentReadAll: function(data)
 		{
-			this.reloadToolbar();
-
 			if (this.userId !== Number(data.USER_ID) || this.groupId !== Number(data.GROUP_ID))
 			{
 				return;
@@ -699,8 +679,6 @@ BX(function() {
 							);
 						}
 					}.bind(this));
-
-					this.reloadToolbar();
 				}
 			}.bind(this));
 			this.query.execute();
@@ -748,8 +726,6 @@ BX(function() {
 
 		onPullComment: function(data)
 		{
-			this.reloadToolbar();
-
 			if (this.checkComment(data))
 			{
 				var xmlId = data.entityXmlId.split('_');
@@ -762,8 +738,6 @@ BX(function() {
 
 		onPullRemove: function(data)
 		{
-			this.reloadToolbar();
-
 			if (this.checkCanMove())
 			{
 				this.removeItem(data.TASK_ID.toString());
@@ -772,8 +746,6 @@ BX(function() {
 
 		onUserOptionChanged: function(data)
 		{
-			this.reloadToolbar();
-
 			if (!this.checkCanMove() || this.userId !== Number(data.USER_ID))
 			{
 				return;

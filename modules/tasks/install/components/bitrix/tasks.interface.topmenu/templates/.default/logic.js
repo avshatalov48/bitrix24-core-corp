@@ -103,24 +103,22 @@ BX.namespace('Tasks.Component');
 
 			onUserCounter: function(data)
 			{
-				var userId = Number(data.userId);
-				delete data.userId;
-
-				if (!this.isMyList() || this.userId !== userId)
+				if (!this.isMyList() || this.userId !== Number(data.userId))
 				{
 					return;
 				}
 
-				Object.keys(data).forEach(function(role) {
+				Object.keys(data[0]).forEach(function(role) {
 					var roleButton = BX('tasks_panel_menu_' + (this.groupId ? 'group_' : '') + role);
 					if (roleButton)
 					{
-						roleButton.querySelector('.main-buttons-item-counter').innerText = (data[role].total || '');
+						roleButton.querySelector('.main-buttons-item-counter').innerText = (data[0][role].total || '');
 					}
 				}.bind(this));
 			},
 
-			onFilterApply: function(filterId, data, ctx) {
+			onFilterApply: function(filterId, data, ctx)
+			{
 				try
 				{
 					var roleId = ctx.getFilterFieldsValues().ROLEID;
@@ -147,11 +145,16 @@ BX.namespace('Tasks.Component');
 						}
 					}
 				}
-				catch (e){}
+				catch (e)
+				{
+
+				}
 			},
 
-			sliderInit: function () {
-				if (window === window.top) {
+			sliderInit: function ()
+			{
+				if (window === window.top)
+				{
 					top.BX.SidePanel.Instance.bindAnchors({
 						rules: [
 							{

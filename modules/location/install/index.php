@@ -41,7 +41,6 @@ Class location extends CModule
 		$this->InstallDB();
 		$this->InstallEvents();
 
-		RegisterModule("location");
 		$GLOBALS["errors"] = $this->errors;
 		$this->setDefaultFormatCode();
 		$APPLICATION->IncludeAdminFile(Loc::getMessage("LOCATION_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/location/install/step1.php");
@@ -93,7 +92,7 @@ Class location extends CModule
 			$this->UnInstallDB(array(
 				"savedata" => $_REQUEST["savedata"],
 			));
-			UnRegisterModule("location");
+
 			$this->UnInstallFiles();
 			$this->UnInstallEvents();
 			\CAgent::RemoveModuleAgents('location');
@@ -118,7 +117,19 @@ Class location extends CModule
 		if($this->errors !== false)
 		{
 			$APPLICATION->ThrowException(implode("", $this->errors));
+			return false;
 		}
+
+		/*
+		 * Reason: registerModule() could already be used in updaters
+		 * bitrix24 20.5.100, bitrix24 20.5.200, location 20.5.1
+		*/
+		if(!\Bitrix\Main\ModuleManager::isModuleInstalled($this->MODULE_ID))
+		{
+			\Bitrix\Main\ModuleManager::registerModule($this->MODULE_ID);
+		}
+
+		return true;
 	}
 
 	public function UnInstallDB($arParams = Array())
@@ -134,7 +145,12 @@ Class location extends CModule
 		if($this->errors !== false)
 		{
 			$APPLICATION->ThrowException(implode("", $this->errors));
+			return false;
 		}
+
+		\Bitrix\Main\ModuleManager::unRegisterModule($this->MODULE_ID);
+
+		return true;
 	}
 
 	public function InstallFiles($arParams = array())
@@ -161,12 +177,16 @@ Class location extends CModule
 	{
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->registerEventHandler("ui", "onUIFormInitialize", "location", "\\Bitrix\\Location\\Infrastructure\\EventHandler", "onUIFormInitialize");
+
+		return true;
 	}
 
 	public function UnInstallEvents()
 	{
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->unRegisterEventHandler("ui", "onUIFormInitialize", "location", "\\Bitrix\\Location\\Infrastructure\\EventHandler", "onUIFormInitialize");
+
+		return true;
 	}
 }
 ?>

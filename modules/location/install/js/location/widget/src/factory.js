@@ -72,6 +72,7 @@ export default class Factory
 		const sourceCode = props.sourceCode || BX.message('LOCATION_WIDGET_SOURCE_CODE');
 		const sourceParams = props.sourceParams || BX.message('LOCATION_WIDGET_SOURCE_PARAMS');
 		const languageId = props.languageId || BX.message('LOCATION_WIDGET_LANGUAGE_ID');
+		const sourceLanguageId = props.sourceLanguageId || BX.message('LOCATION_WIDGET_SOURCE_LANGUAGE_ID');
 
 		const addressFormat = props.addressFormat || new Format(
 			JSON.parse(
@@ -91,7 +92,7 @@ export default class Factory
 
 		if(sourceCode && sourceParams)
 		{
-			source = this.createSource(sourceCode, sourceParams, languageId);
+			source = this.createSource(sourceCode, sourceParams, languageId, sourceLanguageId);
 		}
 
 		if(source)
@@ -108,9 +109,12 @@ export default class Factory
 
 			if(!props.useFeatures || props.useFeatures.map !== false)
 			{
+				let showPhotos = (sourceParams.hasOwnProperty('showPhotos') && sourceParams.showPhotos === true);
+				let useGeocodingService = (sourceParams.hasOwnProperty('useGeocodingService') && sourceParams.useGeocodingService === true);
+
 				const DEFAULT_THUMBNAIL_HEIGHT = 80;
 				const DEFAULT_THUMBNAIL_WIDTH = 150;
-				const DEFAULT_MAX_PHOTO_COUNT = 0;
+				const DEFAULT_MAX_PHOTO_COUNT = showPhotos ? 5 : 0;
 				const DEFAULT_MAP_BEHAVIOR = 'auto';
 
 				features.push(
@@ -122,6 +126,7 @@ export default class Factory
 						thumbnailWidth: props.thumbnailWidth || DEFAULT_THUMBNAIL_WIDTH,
 						maxPhotoCount: props.maxPhotoCount || DEFAULT_MAX_PHOTO_COUNT,
 						mapBehavior: props.mapBehavior || DEFAULT_MAP_BEHAVIOR,
+						useGeocodingService,
 					}));
 			}
 		}
@@ -190,7 +195,7 @@ export default class Factory
 				popup: popup,
 				gallery: gallery,
 				locationRepository: new LocationRepository(),
-				// geocodingService: props.source.geocodingService
+				geocodingService: props.useGeocodingService ? props.source.geocodingService : null
 			})
 		};
 
@@ -210,13 +215,14 @@ export default class Factory
 
 
 	// todo: add custom sources
-	createSource(code: string, params: {}, languageId: string): BaseSource
+	createSource(code: string, params: {}, languageId: string, sourceLanguageId: string): BaseSource
 	{
 		let source = null;
 
 		if(code === 'GOOGLE')
 		{
 			params.languageId = languageId;
+			params.sourceLanguageId = sourceLanguageId;
 
 			try
 			{

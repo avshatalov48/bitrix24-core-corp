@@ -707,6 +707,8 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 		{
 			\Bitrix\Main\Loader::includeModule('calendar');
 		}
+
+		$this->prepareUfAccessRightRestriction();
 	}
 
 	protected function getAdditionalUserFieldTypeList()
@@ -771,5 +773,17 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 		}
 
 		return $result;
+	}
+
+	protected function prepareUfAccessRightRestriction(): void
+	{
+		$restriction = RestrictionManager::getUfAccessRightsRestriction();
+
+		$this->arResult['USER_FIELD_ACCESS_RIGHTS']['IS_PERMITTED'] = $restriction->hasPermission();
+
+		if(!$this->arResult['USER_FIELD_ACCESS_RIGHTS']['IS_PERMITTED'])
+		{
+			$this->arResult['USER_FIELD_ACCESS_RIGHTS']['LOCK_SCRIPT'] = $restriction->prepareInfoHelperScript();
+		}
 	}
 }

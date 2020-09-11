@@ -72,9 +72,9 @@ class VoximplantSipAjaxController extends \Bitrix\Main\Engine\Controller
 		));
 		while ($row = $cursor->fetch())
 		{
-			if (strlen($row['PHONE_NAME']) <= 0)
+			if ($row['PHONE_NAME'] == '')
 			{
-				$row['PHONE_NAME'] = substr($row['SEARCH_ID'], 0, 3) == 'reg'? GetMessage('VI_CONFIG_SIP_CLOUD_TITLE'): GetMessage('VI_CONFIG_SIP_OFFICE_TITLE');
+				$row['PHONE_NAME'] = mb_substr($row['SEARCH_ID'], 0, 3) == 'reg'? GetMessage('VI_CONFIG_SIP_CLOUD_TITLE'): GetMessage('VI_CONFIG_SIP_OFFICE_TITLE');
 				$row['PHONE_NAME'] = str_replace('#ID#', $row['ID'], $row['PHONE_NAME']);
 			}
 			$result[] = $row;

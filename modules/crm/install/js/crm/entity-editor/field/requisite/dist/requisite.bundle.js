@@ -1818,7 +1818,7 @@ this.BX = this.BX || {};
 	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
 	          var item = _step.value;
 	          menu.push({
-	            text: item.name,
+	            text: main_core.Text.encode(item.name),
 	            value: item.value,
 	            onclick: this.onSelect.bind(this, item)
 	          });
@@ -2171,12 +2171,12 @@ this.BX = this.BX || {};
 	        var bandDetails = requisite.getBankDetails();
 	        var selectedBankDetailId = requisite.getSelectedBankDetailId();
 	        return bandDetails.length ? main_core.Tag.render(_templateObject4$1(), main_core.Loc.getMessage('REQUISITE_TOOLTIP_BANK_DETAILS_TITLE'), bandDetails.map(function (bankDetail, index) {
-	          return main_core.Tag.render(_templateObject5$1(), _this.onSetSelectedBankDetails.bind(_this), id, index, requisite.isSelected() && index === selectedBankDetailId ? ' checked' : '', _this._canChangeDefaultRequisite ? '' : ' disabled', bankDetail.value);
+	          return main_core.Tag.render(_templateObject5$1(), _this.onSetSelectedBankDetails.bind(_this), id, index, requisite.isSelected() && index === selectedBankDetailId ? ' checked' : '', _this._canChangeDefaultRequisite ? '' : ' disabled', main_core.Text.encode(bankDetail.value));
 	        }), renderRequisiteEditButtonNode(id)) : renderRequisiteEditButtonNode(id);
 	      };
 
 	      return main_core.Tag.render(_templateObject6(), this.onMouseEnter.bind(this), this.onMouseLeave.bind(this), requisites.map(function (requisite, index) {
-	        return main_core.Tag.render(_templateObject7(), requisite.isSelected() ? ' crm-rq-org-item-selected' : '', _this.onSetSelectedRequisite.bind(_this, index), requisite.getTitle(), requisite.getSubtitle().length ? main_core.Tag.render(_templateObject8(), requisite.getSubtitle()) : '', renderRequisiteBankDetails(requisite, index));
+	        return main_core.Tag.render(_templateObject7(), requisite.isSelected() ? ' crm-rq-org-item-selected' : '', _this.onSetSelectedRequisite.bind(_this, index), main_core.Text.encode(requisite.getTitle()), requisite.getSubtitle().length ? main_core.Tag.render(_templateObject8(), main_core.Text.encode(requisite.getSubtitle())) : '', renderRequisiteBankDetails(requisite, index));
 	      }), this._isReadonly ? '' : main_core.Tag.render(_templateObject9(), this.onStartAddRequisite.bind(this), main_core.Loc.getMessage('REQUISITE_TOOLTIP_ADD')));
 	    }
 	  }, {

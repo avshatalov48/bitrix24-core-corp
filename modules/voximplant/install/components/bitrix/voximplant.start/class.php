@@ -538,7 +538,7 @@ class VoximplantStartComponent extends \CBitrixComponent
 			'count' => $telephonyAppsCount,
 			'title' => Loc::getMessage("VOX_START_TOTAL_APPLICATIONS"),
 			'description' => Loc::getMessage("VOX_START_SEE_ALL"),
-			'onclick' => "BX.SidePanel.Instance.open('/marketplace/?category=telephony')"
+			'onclick' => "BX.SidePanel.Instance.open('/marketplace/?category=telephony&from=voip_start')"
 		];
 
 		$integrationsUrl = static::INTEGRATIONS_URL;

@@ -1,6 +1,8 @@
 <?php
 
-use \Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Security\Sign\Signer;
+use Bitrix\Main\Security\Sign\BadSignatureException;
 use Bitrix\Tasks\Access\ActionDictionary;
 
 define('STOP_STATISTICS',    true);
@@ -794,15 +796,21 @@ try
 
 			case 'tasks.list::getOriginators()':
 			case 'tasks.list::getResponsibles()':
-				CTaskAssert::assert(
-					isset($arAction['userId'], $arAction['groupId'], $arAction['rawState'])
-				);
+				try
+				{
+					$rawState = (new Signer())->unsign($arAction['rawState'], 'tasks.list.controls');
+				}
+				catch (BadSignatureException $exception)
+				{
+					die();
+				}
 
+				CTaskAssert::assert(isset($arAction['userId'], $arAction['groupId'], $rawState));
 				CTaskAssert::assertLaxIntegers($arAction['userId'], $arAction['groupId']);
-				CTaskAssert::assert(unserialize($arAction['rawState']) !== false);
+				CTaskAssert::assert((unserialize($rawState, ['allowed_classes' => false]) !== false));
 
 				$oListState = CTaskListState::getInstance($loggedInUserId);
-				$oListState->setRawState($arAction['rawState']); // just update current value of an option
+				$oListState->setRawState($rawState); // just update current value of an option
 
 				$oListCtrl = CTaskListCtrl::getInstance($arAction['userId']);
 				$oListCtrl->useState($oListState); // just saving reference to $oListState inside $oListCtrl

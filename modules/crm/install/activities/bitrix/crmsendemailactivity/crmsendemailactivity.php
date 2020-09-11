@@ -639,7 +639,7 @@ class CBPCrmSendEmailActivity extends CBPActivity
 	{
 		$arErrors = array();
 
-		if (empty($arTestProperties["MessageText"]))
+		if ($arTestProperties["MessageText"] === "")
 		{
 			$arErrors[] = array("code" => "NotExist", "parameter" => "MessageText", "message" => GetMessage("CRM_SEMA_EMPTY_PROP"));
 		}

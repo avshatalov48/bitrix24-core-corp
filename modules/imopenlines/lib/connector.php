@@ -203,9 +203,10 @@ class Connector
 						$customDataMessage = '';
 						$customDataAttach = null;
 
-						if (!empty($_SESSION['LIVECHAT']['CUSTOM_DATA']))
+						$customData = \Bitrix\ImOpenLines\Widget\Cache::get($params['connector']['user_id'], 'CUSTOM_DATA');
+						if ($customData)
 						{
-							$customDataAttach = \CIMMessageParamAttach::GetAttachByJson($_SESSION['LIVECHAT']['CUSTOM_DATA']);
+							$customDataAttach = \CIMMessageParamAttach::GetAttachByJson($customData);
 							if ($customDataAttach && $customDataAttach->IsEmpty())
 							{
 								$customDataAttach = null;

@@ -1181,8 +1181,10 @@ if (typeof BX.Crm.EntityFieldVisibilityConfigurator === "undefined")
 
 		this._isEnabled = false;
 		this._isChanged = false;
+		this._isPermitted = true;
 
 		this._items = [];
+		this._ufAccessRights = {};
 	};
 
 	BX.Crm.EntityFieldVisibilityConfigurator.prototype =
@@ -1196,11 +1198,41 @@ if (typeof BX.Crm.EntityFieldVisibilityConfigurator === "undefined")
 			this._editor = BX.prop.get(this.getSettings(), "editor", {});
 			this._field = BX.prop.get(this.getSettings(), "field", null);
 
+			this._ufAccessRights = BX.prop.getObject(this.getSettings(), "ufAccessRights", {});
+			this._isPermitted = BX.prop.getBoolean(this._ufAccessRights, "IS_PERMITTED", true);
+
 			this._squares = [];
 			this._isEnabled = !this.isEmpty();
 
 			this.initializeItems();
 			//BX.addCustomEvent(this._settings.userFieldConfigurator, "onSave", BX.delegate(this.onUserFieldConfigurationSave, this));
+		},
+		initializeItems: function()
+		{
+			this._items = [];
+			var accessCodes = BX.prop.getObject(this._config, "accessCodes", []);
+
+			for (var key in accessCodes) {
+				this.addItem(this.createUserInfo(accessCodes[key]));
+			}
+		},
+		addItem: function (data)
+		{
+			if (this._items === null)
+			{
+				this._items = [];
+			}
+
+			this._items.push(data);
+
+			return data;
+		},
+		createUserInfo: function(item)
+		{
+			return {
+				ID: item.id,
+				FORMATTED_NAME: BX.util.htmlspecialcharsback(BX.prop.getString(item, "name", "")),
+			};
 		},
 		onUserFieldConfigurationSave: function(fieldName, entityTypeId)
 		{
@@ -1308,12 +1340,20 @@ if (typeof BX.Crm.EntityFieldVisibilityConfigurator === "undefined")
 				},
 			};
 		},
-		onSquareClick: function(e){
-			var square = e.target.parentElement;
-			var userId = square.getAttribute('data-user-id');
-			this._isChanged = true;
-			this.removeItem(userId);
-			this.adjust();
+		onSquareClick: function(e)
+		{
+			if (!this._isPermitted)
+			{
+				this.runLockScript();
+			}
+			else
+			{
+				var square = e.target.parentElement;
+				var userId = square.getAttribute('data-user-id');
+				this._isChanged = true;
+				this.removeItem(userId);
+				this.adjust();
+			}
 		},
 		setEnabled: function (enabled)
 		{
@@ -1337,7 +1377,14 @@ if (typeof BX.Crm.EntityFieldVisibilityConfigurator === "undefined")
 		},
 		open: function (anchor)
 		{
-			this.getUserSelector().open(anchor);
+			if (!this._isPermitted)
+			{
+				this.runLockScript();
+			}
+			else
+			{
+				this.getUserSelector().open(anchor);
+			}
 		},
 		close: function()
 		{
@@ -1379,9 +1426,25 @@ if (typeof BX.Crm.EntityFieldVisibilityConfigurator === "undefined")
 		},
 		onSwitchCheckBoxClick: function (e)
 		{
-			this._isChanged = true;
-			this.setEnabled(this._switchCheckBox.checked);
-			this.adjust();
+			if (!this._isPermitted)
+			{
+				this.runLockScript();
+				this._switchCheckBox.checked = this._isEnabled;
+			}
+			else
+			{
+				this._isChanged = true;
+				this.setEnabled(this._switchCheckBox.checked);
+				this.adjust();
+			}
+		},
+		runLockScript: function()
+		{
+			var lockScript = BX.prop.getString(this._ufAccessRights, "LOCK_SCRIPT", "");
+			if(lockScript !== "")
+			{
+				eval(lockScript);
+			}
 		},
 		getUserSelector: function()
 		{
@@ -1422,29 +1485,9 @@ if (typeof BX.Crm.EntityFieldVisibilityConfigurator === "undefined")
 			}
 			return -1;
 		},
-		initializeItems: function()
-		{
-			this._items = [];
-			var accessCodes = BX.prop.getObject(this._config, "accessCodes", []);
-
-			for (var key in accessCodes) {
-				this.addItem(this.createUserInfo(accessCodes[key]));
-			}
-		},
 		getItems: function()
 		{
 			return (this._items || []);
-		},
-		addItem: function (data)
-		{
-			if (this._items === null)
-			{
-				this._items = [];
-			}
-
-			this._items.push(data);
-
-			return data;
 		},
 		removeItems: function()
 		{
@@ -1457,13 +1500,6 @@ if (typeof BX.Crm.EntityFieldVisibilityConfigurator === "undefined")
 			{
 				this._items = BX.util.deleteFromArray(this._items, id);
 			}
-		},
-		createUserInfo: function(item)
-		{
-			return {
-				ID: item.id,
-				FORMATTED_NAME: BX.util.htmlspecialcharsback(BX.prop.getString(item, "name", "")),
-			};
 		},
 		isCustomized: function()
 		{

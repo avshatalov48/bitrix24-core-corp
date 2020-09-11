@@ -553,16 +553,14 @@ else
 
 					?><div id="rating_text" class="post-item-informers bx-ilike-block" data-counter="0" style="display: none;"></div><?
 
-					?><span id="comments_control" style="display: none;"><?
-						?><div class="post-item-informers post-item-inform-comments" onclick="oMSL.setFocusOnCommentForm();"><?
-							?><div class="post-item-inform-comments-box"><?
-								?><span class="post-item-inform-icon"></span><?
-								?><div class="post-item-inform-left"><?=GetMessage('MOBILE_LOG_COMMENT')?></div><?
-							?></div><?
+					?><div id="comments_control" style="display: none;" class="post-item-informers post-item-inform-comments" onclick="oMSL.setFocusOnCommentForm();"><?
+						?><div class="post-item-inform-comments-box"><?
+							?><span class="post-item-inform-icon"></span><?
+							?><div class="post-item-inform-left"><?=GetMessage('MOBILE_LOG_COMMENT')?></div><?
 						?></div><?
-					?></span><?
+					?></div><?
 
-					?><a id="post_more_limiter"  onclick="oMSL.expandText();" class="post-item-more" ontouchstart="this.classList.toggle('post-item-more-pressed')" ontouchend="this.classList.toggle('post-item-more-pressed')" style="display: none;"><?
+					?><a id="post_more_limiter"  onclick="oMSL.expandText();" class="post-item-more" ontouchstart="this.classList.toggle('post-item-more-pressed')" ontouchend="this.classList.toggle('post-item-more-pressed')" style="visibility: hidden;"><?
 						?><?=GetMessage("MOBILE_LOG_EXPAND")?><?
 					?></a><?
 

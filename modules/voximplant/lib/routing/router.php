@@ -138,13 +138,13 @@ class Router
 		$queueId = 0;
 		$userId = 0;
 
-		if(substr($phoneNumber, 0, 6) == 'queue:')
+		if(mb_substr($phoneNumber, 0, 6) == 'queue:')
 		{
-			$queueId = (int)substr($phoneNumber, 6);
+			$queueId = (int)mb_substr($phoneNumber, 6);
 		}
-		else if(substr($phoneNumber, 0, 5) == 'user:')
+		else if(mb_substr($phoneNumber, 0, 5) == 'user:')
 		{
-			$userId = (int)substr($phoneNumber, 5);
+			$userId = (int)mb_substr($phoneNumber, 5);
 		}
 		else
 		{

@@ -8,6 +8,7 @@ define('BX_SECURITY_SHOW_MESSAGE', true);
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
 define('DisableEventsCheck', true);
+define("BX_FORCE_DISABLE_SEPARATED_SESSION_MODE", true);
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 

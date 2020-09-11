@@ -1,6 +1,8 @@
 <?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Main\Localization\Loc;
+
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -57,6 +59,11 @@ $backgroundImageCss = 'url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D
 	BX.ready(
 		function()
 		{
+			BX.Crm.PartialEditorDialog.messages =
+			{
+				entityHasInaccessibleFields: "<?= CUtil::JSEscape(Loc::getMessage('CRM_ENTITY_ED_PROG_HAS_INACCESSIBLE_FIELDS')) ?>",
+			};
+
 			BX.Crm.EntityDetailProgressStep.backgroundImageCss = "<?=CUtil::JSEscape($backgroundImageCss)?>";
 			BX.Crm.EntityDetailProgressStep.defaultBackgroundColor = "<?=CUtil::JSEscape($defaultBackgroundColor)?>";
 			BX.Crm.EntityDetailProgressControl.defaultColors =

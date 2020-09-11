@@ -140,7 +140,7 @@ this.BX = this.BX || {};
 	      this._domNodes.requisiteClearButton = main_core.Tag.render(_templateObject(), this.onSearchStringClear.bind(this));
 	      this._domNodes.requisiteSearchButton = main_core.Tag.render(_templateObject2(), this.onSearchButtonClick.bind(this));
 	      var placeholder = this._placeholderText.length ? main_core.Loc.getMessage('REQUISITE_AUTOCOMPLETE_FILL_IN').replace('#FIELD_NAME#', this._placeholderText) : "";
-	      this._domNodes.requisiteSearchString = main_core.Tag.render(_templateObject3(), placeholder);
+	      this._domNodes.requisiteSearchString = main_core.Tag.render(_templateObject3(), main_core.Text.encode(placeholder));
 
 	      if (!this._isPermitted) {
 	        this._domNodes.requisiteSearchString.setAttribute('onclick', this._featureRestrictionCallback);

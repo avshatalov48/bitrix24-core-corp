@@ -22,7 +22,7 @@ return [
 		'location.google'
 	],
 	'skip_core' => false,
-	'oninit' => function()
+	'oninit' => static function()
 	{
 		if(!\Bitrix\Main\Loader::includeModule('location'))
 		{
@@ -31,13 +31,20 @@ return [
 
 		$sourceCode = '';
 		$sourceParams = [];
+		$sourceLanguageId = LANGUAGE_ID;
 
 		if($source = Service\SourceService::getInstance()->getSource())
 		{
-			if(!Service\AddressService::getInstance()->isLimitReached())
+			$salescenterReceivePaymentAppArea = (defined('SALESCENTER_RECEIVE_PAYMENT_APP_AREA')
+				&& SALESCENTER_RECEIVE_PAYMENT_APP_AREA === true
+			);
+
+			if($salescenterReceivePaymentAppArea || !Service\AddressService::getInstance()->isLimitReached()
+			)
 			{
 				$sourceCode = $source->getCode();
 				$sourceParams = $source->getJSParams();
+				$sourceLanguageId = $source->convertLang(LANGUAGE_ID);
 			}
 		}
 
@@ -50,6 +57,7 @@ return [
 				'LOCATION_WIDGET_SOURCE_PARAMS' => $sourceParams,
 				'LOCATION_WIDGET_DEFAULT_FORMAT' => $format,
 				'LOCATION_WIDGET_LANGUAGE_ID' => LANGUAGE_ID,
+				'LOCATION_WIDGET_SOURCE_LANGUAGE_ID' => $sourceLanguageId,
 			]
 		];
 	}

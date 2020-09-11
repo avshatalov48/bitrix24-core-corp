@@ -248,15 +248,18 @@ class EntityAddress
 		{
 			$prevLinkEntityId = $links[0]->getAddressLinkEntityId();
 			$linkEntityId = $linkIdentifier['entityId'];
+			$targetLinkIdentifier = null;
 			if ($prevLinkIdentifier)
 			{
 				$isEntityTypeAreDifferent = ($links[0]->getAddressLinkEntityType() !== $prevLinkIdentifier['entityType']);
 				$isEntityIdAreDifferent = ($links[0]->getAddressLinkEntityId() !== $prevLinkIdentifier['entityId']);
+				$targetLinkIdentifier = $prevLinkIdentifier;
 			}
 			else
 			{
-			$isEntityTypeAreDifferent = ($links[0]->getAddressLinkEntityType() !== $linkIdentifier['entityType']);
-			$isEntityIdAreDifferent = ($links[0]->getAddressLinkEntityId() !== $linkIdentifier['entityId']);
+				$isEntityTypeAreDifferent = ($links[0]->getAddressLinkEntityType() !== $linkIdentifier['entityType']);
+				$isEntityIdAreDifferent = ($links[0]->getAddressLinkEntityId() !== $linkIdentifier['entityId']);
+				$targetLinkIdentifier = $linkIdentifier;
 			}
 			$prevIdComponents = [];
 			$idComponents = [];
@@ -286,8 +289,8 @@ class EntityAddress
 			{
 				throw new Main\SystemException(
 					'Location address has incorrect link "'.$links[0]->getAddressLinkEntityType().', '.
-					$links[0]->getAddressLinkEntityId().'". Must be "'.$linkIdentifier['entityType'].', '.
-					$linkIdentifier['entityId'].'".'
+					$links[0]->getAddressLinkEntityId().'". Must be "'.$targetLinkIdentifier['entityType'].', '.
+					$targetLinkIdentifier['entityId'].'".', 1010
 				);
 			}
 		}
@@ -295,7 +298,7 @@ class EntityAddress
 		{
 			throw new Main\SystemException(
 				'Location address (id: '.$address->getId().', supposed link: "'.$linkIdentifier['entityType'].', '.
-				$linkIdentifier['entityId'].'") must have only one link.'
+				$linkIdentifier['entityId'].'") must have only one link.', 1015
 			);
 		}
 
@@ -999,14 +1002,22 @@ class EntityAddress
 
 		/** @var $locationAddress Address */
 		$locationAddress = null;
+		$isLocationAddressLost = false;
 		if (static::isLocationModuleIncluded()
 			&& isset($data['LOC_ADDR'])
 			&& $data['LOC_ADDR'] instanceof Address)
 		{
 			$addr = $data['LOC_ADDR'];
-			static::resetLocationAddressLink($addr, $typeID, $entityTypeID, $entityID, $prevEntityTypeId, $prevEntityId);
+			static::resetLocationAddressLink(
+				$addr,
+				$typeID,
+				$entityTypeID,
+				$entityID,
+				$prevEntityTypeId,
+				$prevEntityId
+			);
 			if ($addr->save()->isSuccess())
-		{
+			{
 				$locationAddress = $addr;
 			}
 			unset($addr);
@@ -1018,13 +1029,58 @@ class EntityAddress
 			$addr = Address::load((int)$data['LOC_ADDR_ID']);
 			if ($addr instanceof Address)
 			{
-				static::resetLocationAddressLink($addr, $typeID, $entityTypeID, $entityID, $prevEntityTypeId, $prevEntityId);
-				$locationAddress = $addr;
+				try
+				{
+					static::resetLocationAddressLink(
+						$addr,
+						$typeID,
+						$entityTypeID,
+						$entityID,
+						$prevEntityTypeId,
+						$prevEntityId
+					);
+				}
+				catch (Main\SystemException $e)
+				{
+					if ($isContactCompanyCompatibility && $e->getCode() === 1010)
+					{
+						$isLocationAddressLost = true;
+					}
+					else
+					{
+						throw $e;
+					}
+				}
+				if ($isLocationAddressLost)
+				{
+					$addr->setId(0);
+					$linkIdentifier = static::getLocationAddressLinkIndentifier($typeID, $entityTypeID, $entityID);
+					$addr->setLinks(
+						new AddressLinkCollection(
+							[
+								new Address\AddressLink(
+									$linkIdentifier['entityId'],
+									$linkIdentifier['entityType']
+								)
+							]
+						)
+					);
+					unset($linkIdentifier);
+					if ($addr->save()->isSuccess())
+					{
+						$locationAddress = $addr;
+					}
+					unset($addr);
+				}
+				else
+				{
+					$locationAddress = $addr;
+				}
 			}
 			unset($addr);
 		}
 
-		if (static::isLocationModuleIncluded() && $prevAddressId > 0)
+		if (!$isLocationAddressLost && static::isLocationModuleIncluded() && $prevAddressId > 0)
 		{
 			if ($locationAddress)
 			{
@@ -1045,7 +1101,9 @@ class EntityAddress
 		}
 		unset($prevAddressId);
 
-		if ($locationAddress && isset($options['updateLocationAddress']) && $options['updateLocationAddress'])
+		if ($locationAddress
+			&& ($isContactCompanyCompatibility
+				|| isset($options['updateLocationAddress']) && $options['updateLocationAddress']))
 		{
 			if (static::updateLocationAddressFields($locationAddress, $data))
 			{

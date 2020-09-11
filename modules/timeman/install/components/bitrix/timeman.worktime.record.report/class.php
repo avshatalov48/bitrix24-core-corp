@@ -144,7 +144,7 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 		$this->arResult['errorMessages'][] = htmlspecialcharsbx($errorMessage);
 	}
 
-	private function findUserManagers($getManagerIds)
+	private function findUserManagers(array $getManagerIds): array
 	{
 		return Timeman\Service\DependencyManager::getInstance()
 			->getScheduleRepository()
@@ -177,7 +177,7 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 		$this->mainUser = $this->useEmployeesTimezone() ? $employee : $currentUser;
 		$this->oppositeUser = $this->useEmployeesTimezone() ? $currentUser : $employee;
 		$recordManager = DependencyManager::getInstance()->buildWorktimeRecordManager($record, $record->obtainSchedule(), $record->obtainShift());
-		$userManagers = $this->findUserManagers($userHelper->getManagerIds($employee->getId())) ?: [$employee->getId()];
+		$userManagers = $this->findUserManagers($userHelper->getManagerIds($employee->getId()) ?: [$employee->getId()]);
 		$this->showingOffset = $this->mainUser->obtainUtcOffset();
 
 		$recordedStartDate = $this->timeHelper->createUserDateTimeFromFormat(

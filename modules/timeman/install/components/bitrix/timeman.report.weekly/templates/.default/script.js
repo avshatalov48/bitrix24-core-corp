@@ -52,6 +52,15 @@ function JCTimeManReport(id, params)
 
 	BX.ready(BX.delegate(this.Init, this));
 	BX.addCustomEvent('onWorkReportMarkChange', BX.proxy(this.UpdateCell,this));
+
+	BX.bind(window, 'hashchange', function ()
+	{
+		if (BX.SidePanel.Instance)
+		{
+			BX.SidePanel.Instance.closeAll();
+		}
+		this.ShowSlider();
+	}.bind(this));
 }
 
 JCTimeManReport.prototype.Init = function()
@@ -662,23 +671,40 @@ JCTimeManReport.prototype.setData = function(data)
 	for(i=0;i<this.icons.length;i++)
 		this.icons[i].style.display = display;
 	this.PARTS.NAV.innerHTML = this.DATA.NAV;
-	h = window.location.hash;
-	if (h.length != 0)
+	var hashParams = this.getHashParams();
+	if (hashParams)
 	{
-		urlReportID = 0;
-		urlUser = 0;
-		regUser = h.match(/user_id=[0-9]+/g);
-		regReport = h.match(/report=[0-9]+/g);
-		if (regReport && regReport.length>0)
-			urlReportID = parseInt(regReport[0].replace("report=",""));
-		if (regUser && regUser.length>0)
-			urlUser = parseInt(regUser[0].replace("user_id=",""));
-		if (urlReportID>0 && urlUser>0)
-			BX.StartSlider(urlUser,urlReportID);
+		BX.StartSlider(hashParams.userId,hashParams.reportId);
 		window.location.hash = "";
 	 }
 	this.CheckOverdue();
-}
+};
+
+JCTimeManReport.prototype.getHashParams = function()
+{
+	var h = window.location.hash;
+	if (h.length !== 0)
+	{
+		var regUser = h.match(/user_id=[0-9]+/g);
+		var regReport = h.match(/report=[0-9]+/g);
+
+		var reportId = 0, userId = 0;
+
+		if (regReport && regReport.length>0)
+			reportId = parseInt(regReport[0].replace("report=",""));
+		if (regUser && regUser.length>0)
+			userId = parseInt(regUser[0].replace("user_id=",""));
+
+		if (reportId > 0 && userId > 0)
+		{
+			return {
+				userId: userId,
+				reportId: reportId
+			};
+		}
+	}
+	return null;
+};
 
 JCTimeManReport.prototype.__nullifyDate = function(date, bDay)
 {
@@ -841,12 +867,21 @@ JCTimeManReport.prototype.setReportsData = function(data)
 }
 JCTimeManReport.prototype.ShowSlider = function()
 {
-	for(i=0;i<window.SLIDE.length;i++)
+	for (i = 0; i < window.SLIDE.length; i++)
 	{
-		if(window.SLIDE[i].oCell == this)
+		if (window.SLIDE[i].oCell == this)
 		{
 			BX.StartSlider(window.SLIDE[i].user_id,window.SLIDE[i].report);
 			break;
+		}
+		else if(this instanceof JCTimeManReport)
+		{
+			var hashParams = this.getHashParams();
+			if (hashParams)
+			{
+				BX.StartSlider(hashParams.userId, hashParams.reportId);
+				break;
+			}
 		}
 	}
 }

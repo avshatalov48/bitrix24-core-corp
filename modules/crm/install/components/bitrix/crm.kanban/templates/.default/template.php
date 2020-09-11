@@ -98,12 +98,18 @@ include 'editors.php';
 <script type="text/javascript">
 
 	var Kanban;
-	var ajaxHandlerPath = "<?= $this->getComponent()->getPath()?>/ajax.php";
+	var ajaxHandlerPath = "<?= $this->getComponent()->getPath()?>/ajax.old.php";
 
 	BX.ready(
 		function()
 		{
 			"use strict";
+
+			BX.Crm.PartialEditorDialog.messages =
+			{
+				entityHasInaccessibleFields: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_HAS_INACCESSIBLE_FIELDS')) ?>",
+			};
+
 			BX.Currency.setCurrencyFormat(
 				"<?= $arParams['CURRENCY']?>",
 				<?= \CUtil::PhpToJSObject(\CCurrencyLang::GetFormatDescription($arParams['CURRENCY']), false, true)?>
@@ -251,7 +257,11 @@ include 'editors.php';
 			BX.message(
 				{
 					CRM_KANBAN_POPUP_PARAMS_SAVE: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_POPUP_PARAMS_SAVE'));?>",
-					CRM_KANBAN_POPUP_PARAMS_CANCEL: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_POPUP_PARAMS_CANCEL'));?>"
+					CRM_KANBAN_POPUP_PARAMS_CANCEL: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_POPUP_PARAMS_CANCEL'));?>",
+					CRM_KANBAN_DELETE_SUCCESS_MULTIPLE: "<?= GetMessageJS('CRM_KANBAN_DELETE_SUCCESS_MULTIPLE') ?>",
+					CRM_KANBAN_DELETE_SUCCESS: "<?= GetMessageJS('CRM_KANBAN_DELETE_SUCCESS') ?>",
+					CRM_KANBAN_DELETE_CANCEL: "<?= GetMessageJS('CRM_KANBAN_DELETE_CANCEL') ?>",
+					CRM_KANBAN_DELETE_RESTORE_SUCCESS: "<?= GetMessageJS('CRM_KANBAN_DELETE_RESTORE_SUCCESS') ?>",
 				}
 			);
 		}

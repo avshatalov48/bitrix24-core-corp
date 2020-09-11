@@ -110,9 +110,7 @@
 	 * @subpackage imopenlines
 	 * @copyright 2001-2019 Bitrix
 	 */
-	var WidgetModel =
-	/*#__PURE__*/
-	function (_VuexBuilderModel) {
+	var WidgetModel = /*#__PURE__*/function (_VuexBuilderModel) {
 	  babelHelpers.inherits(WidgetModel, _VuexBuilderModel);
 
 	  function WidgetModel() {
@@ -498,9 +496,7 @@
 	 * @subpackage imopenlines
 	 * @copyright 2001-2019 Bitrix
 	 */
-	var WidgetRestClient =
-	/*#__PURE__*/
-	function () {
+	var WidgetRestClient = /*#__PURE__*/function () {
 	  function WidgetRestClient(params) {
 	    babelHelpers.classCallCheck(this, WidgetRestClient);
 	    this.queryAuthRestore = false;
@@ -650,9 +646,7 @@
 	 * @copyright 2001-2019 Bitrix
 	 */
 
-	var WidgetRestAnswerHandler =
-	/*#__PURE__*/
-	function (_BaseRestHandler) {
+	var WidgetRestAnswerHandler = /*#__PURE__*/function (_BaseRestHandler) {
 	  babelHelpers.inherits(WidgetRestAnswerHandler, _BaseRestHandler);
 
 	  function WidgetRestAnswerHandler() {
@@ -821,9 +815,7 @@
 	 * @copyright 2001-2019 Bitrix
 	 */
 
-	var WidgetImPullCommandHandler =
-	/*#__PURE__*/
-	function () {
+	var WidgetImPullCommandHandler = /*#__PURE__*/function () {
 	  babelHelpers.createClass(WidgetImPullCommandHandler, [{
 	    key: "getModuleId",
 	    value: function getModuleId() {
@@ -863,9 +855,7 @@
 	  return WidgetImPullCommandHandler;
 	}();
 
-	var WidgetImopenlinesPullCommandHandler =
-	/*#__PURE__*/
-	function () {
+	var WidgetImopenlinesPullCommandHandler = /*#__PURE__*/function () {
 	  babelHelpers.createClass(WidgetImopenlinesPullCommandHandler, null, [{
 	    key: "create",
 	    value: function create() {
@@ -969,9 +959,7 @@
 	 * @copyright 2001-2020 Bitrix
 	 */
 
-	var Widget =
-	/*#__PURE__*/
-	function () {
+	var Widget = /*#__PURE__*/function () {
 	  /* region 01. Initialize and store data */
 	  function Widget() {
 	    var _this = this;
@@ -1437,10 +1425,6 @@
 	    key: "prepareFileData",
 	    value: function prepareFileData(files) {
 	      var _this5 = this;
-
-	      if (im_lib_cookie.Cookie.get(null, 'BITRIX_LIVECHAT_AUTH')) {
-	        return files;
-	      }
 
 	      if (!im_lib_utils.Utils.types.isArray(files)) {
 	        return files;
@@ -2785,9 +2769,7 @@
 	 * @subpackage imopenlines
 	 * @copyright 2001-2019 Bitrix
 	 */
-	var WidgetPublicManager =
-	/*#__PURE__*/
-	function () {
+	var WidgetPublicManager = /*#__PURE__*/function () {
 	  function WidgetPublicManager(config) {
 	    babelHelpers.classCallCheck(this, WidgetPublicManager);
 	    this.developerInfo = 'Do not use private methods.';

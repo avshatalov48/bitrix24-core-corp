@@ -9,4 +9,5 @@ $MESS["CRM_EVENT_TYPE_SNS"] = "Письмо с почты";
 $MESS["CRM_EVENT_TYPE_VIEW"] = "Просмотр";
 $MESS["CRM_EVENT_TYPE_EXPORT"] = "Экспорт";
 $MESS["CRM_EVENT_TYPE_DELETE"] = "Удаление";
+$MESS["CRM_EVENT_TYPE_MERGER"] = "Объединение дубликатов";
 ?>

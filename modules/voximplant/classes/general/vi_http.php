@@ -529,12 +529,12 @@ class CVoxImplantHttp
 
 	public function CreateSipRegistration($server, $login, $password = '', $authUser = '', $outboundProxy = '')
 	{
-		if (strlen($server) <= 3)
+		if (mb_strlen($server) <= 3)
 		{
 			$this->error = new CVoxImplantError(__METHOD__, 'SERVER_INCORRECT', 'Server is not correct');
 			return false;
 		}
-		if (strlen($login) <= 0)
+		if ($login == '')
 		{
 			$this->error = new CVoxImplantError(__METHOD__, 'LOGIN_INCORRECT', 'Login is not correct');
 			return false;
@@ -560,12 +560,12 @@ class CVoxImplantHttp
 			$this->error = new CVoxImplantError(__METHOD__, 'REG_ID_INCORRECT', 'Registration ID is not correct');
 			return false;
 		}
-		if (strlen($server) <= 3)
+		if (mb_strlen($server) <= 3)
 		{
 			$this->error = new CVoxImplantError(__METHOD__, 'SERVER_INCORRECT', 'Server is not correct');
 			return false;
 		}
-		if (strlen($login) <= 0)
+		if ($login == '')
 		{
 			$this->error = new CVoxImplantError(__METHOD__, 'LOGIN_INCORRECT', 'Login is not correct');
 			return false;
@@ -628,7 +628,7 @@ class CVoxImplantHttp
 
 	public function AddCallerID($number)
 	{
-		if (strlen($number) < 10)
+		if (mb_strlen($number) < 10)
 		{
 			$this->error = new CVoxImplantError(__METHOD__, 'CALLERID_INCORRECT', 'CallerID is not correct');
 			return false;
@@ -649,7 +649,7 @@ class CVoxImplantHttp
 
 	public function DelCallerID($number)
 	{
-		if (strlen($number) < 10)
+		if (mb_strlen($number) < 10)
 		{
 			$this->error = new CVoxImplantError(__METHOD__, 'CALLERID_INCORRECT', 'CallerID is not correct');
 			return false;
@@ -670,7 +670,7 @@ class CVoxImplantHttp
 
 	public function GetCallerIDs($number = '')
 	{
-		if ($number > 0 && strlen($number) < 10)
+		if ($number > 0 && mb_strlen($number) < 10)
 		{
 			$this->error = new CVoxImplantError(__METHOD__, 'CALLERID_INCORRECT', 'CallerID is not correct');
 			return false;
@@ -691,7 +691,7 @@ class CVoxImplantHttp
 
 	public function VerifyCallerID($number)
 	{
-		if (strlen($number) < 10)
+		if (mb_strlen($number) < 10)
 		{
 			$this->error = new CVoxImplantError(__METHOD__, 'CALLERID_INCORRECT', 'CallerID is not correct');
 			return false;
@@ -712,12 +712,12 @@ class CVoxImplantHttp
 
 	public function ActivateCallerID($number, $code)
 	{
-		if (strlen($number) < 10)
+		if (mb_strlen($number) < 10)
 		{
 			$this->error = new CVoxImplantError(__METHOD__, 'CALLERID_INCORRECT', 'CallerID is not correct');
 			return false;
 		}
-		if (strlen($code) <= 0)
+		if ($code == '')
 		{
 			$this->error = new CVoxImplantError(__METHOD__, 'CODE_INCORRECT', 'Code for activation is not correct');
 			return false;
@@ -908,7 +908,7 @@ class CVoxImplantHttp
 
 	private function Query($command, $params = array(), $options = array())
 	{
-		if (strlen($command) <= 0 || !is_array($params))
+		if ($command == '' || !is_array($params))
 		{
 			return false;
 		}

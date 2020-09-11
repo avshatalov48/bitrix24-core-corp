@@ -367,7 +367,7 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 			this._products = [];
 
 			var table = this.getTable();
-			
+
 			for (i in products)
 			{
 				if (!products.hasOwnProperty(i))
@@ -388,7 +388,7 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 			}
 
 			this.calculateTotals(false);
-			
+
 		},
 		_createRow: function ()
 		{
@@ -402,7 +402,7 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 			rowIndex = rowNumber - 1;
 			row.id = row.id.replace("#N#", rowIndex);
 			row.className = (rowNumber % 2) === 0 ? "crm-items-table-even-row" : "crm-items-table-odd-row";
-			
+
 			BX.findChildren(row, function (el) {
 				if (el && BX.type.isElementNode(el))
 				{
@@ -416,9 +416,9 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 						BX.setTextContent(el, (nProducts + 1).toString() + ".");
 				}
 			}, true);
-			
+
 			row.style.display = "";
-			
+
 			return row;
 
 		},
@@ -1423,13 +1423,13 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 
 				productData.push(item);
 			}
-			
+
 			var successCallback = this._updateCalculatedTotals;
 			if (!needMarkAsChanged)
 			{
 				successCallback = this._updateNoDemandCalculatedTotals;
 			}
-			
+
 			BX.ajax(
 				{
 					'url': this._serviceUrl,
@@ -1464,7 +1464,7 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 		{
 			var locationId = 0,
 				locationInput = document.getElementsByName(locationInputId)[0];
-			
+
 			if (locationInput && BX.type.isElementNode(locationInput))
 			{
 				locationId = locationInput.value;
@@ -5114,7 +5114,7 @@ if (typeof(BX.CrmProductSearch) === "undefined")
 					if (item && item.hasOwnProperty('title'))
 					{
 						htmlContent += '<tr id="row_' + i + '">';
-						htmlContent += '<td class="title-search-item">' + item["title"] + '</td>';
+						htmlContent += '<td class="title-search-item">' + BX.Text.encode(item["title"]) + '</td>';
 						htmlContent += '</tr>';
 						this._data[i] = item;
 					}

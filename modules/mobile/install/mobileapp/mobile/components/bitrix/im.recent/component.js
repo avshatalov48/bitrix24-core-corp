@@ -1869,8 +1869,8 @@ RecentList.push.updateList = function()
 		};
 
 		event.params.userInChat[event.params.chatId] = [this.base.userId];
-
-		event.params.message.text = senderMessage.toString();
+		
+		event.params.message.text  = senderMessage.toString().replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 		if (push.senderCut)
 		{

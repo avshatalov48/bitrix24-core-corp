@@ -538,7 +538,7 @@ else
 						$strOnClickMore = ' onclick="oMSL.expandText('.intval($arEvent["EVENT"]["ID"]).');"';
 					}
 
-					?><a id="post_more_limiter_<?=intval($arEvent["EVENT"]["ID"])?>" <?=$strOnClickMore?> class="post-item-more" ontouchstart="this.classList.toggle('post-item-more-pressed')" ontouchend="this.classList.toggle('post-item-more-pressed')" style="display: none;"><?
+					?><a id="post_more_limiter_<?=intval($arEvent["EVENT"]["ID"])?>" <?=$strOnClickMore?> class="post-item-more" ontouchstart="this.classList.toggle('post-item-more-pressed')" ontouchend="this.classList.toggle('post-item-more-pressed')" style="visibility: hidden;"><?
 						?><?=GetMessage("MOBILE_LOG_EXPAND")?><?
 					?></a><?
 				}

@@ -1391,9 +1391,6 @@ class CCrmEMail
 			false
 		);
 
-		$site   = \CSite::getList($by = 'sort', $order = 'desc', array('DEFAULT' => 'Y', 'ACTIVE' => 'Y'))->fetch();
-		$siteId = !empty($site['LID']) ? $site['LID'] : 's1';
-
 		$storageTypeId = \CCrmActivity::getDefaultStorageTypeID();
 		$elementIds = array();
 		foreach ($filesData as $i => $fileData)
@@ -1409,7 +1406,7 @@ class CCrmEMail
 			if (trim($fileData['ORIGINAL_NAME']) == '')
 				$fileData['ORIGINAL_NAME'] = $fileData['FILE_NAME'];
 			$elementId = StorageManager::saveEmailAttachment(
-				$fileData, $storageTypeId, $siteId,
+				$fileData, $storageTypeId, '',
 				array('USER_ID' => $userId)
 			);
 			if ($elementId > 0)
@@ -1462,6 +1459,7 @@ class CCrmEMail
 
 		$nowTimestamp = time();
 
+		$siteId = \Bitrix\Crm\Integration\Main\Site::getPortalSiteId();
 		$datetime = convertTimeStamp($nowTimestamp + $currentUserOffset, 'FULL', $siteId);
 		if (!empty($msgFields['FIELD_DATE']) && $DB->isDate($msgFields['FIELD_DATE'], FORMAT_DATETIME))
 		{
@@ -2427,17 +2425,6 @@ class CCrmEMail
 		// <-- Creating of new event
 
 		// Creating new activity -->
-		$siteID = '';
-		$dbSites = CSite::GetList($by = 'sort', $order = 'desc', array('DEFAULT' => 'Y', 'ACTIVE' => 'Y'));
-		$defaultSite = is_object($dbSites) ? $dbSites->Fetch() : null;
-		if(is_array($defaultSite))
-		{
-			$siteID = $defaultSite['LID'];
-		}
-		if($siteID === '')
-		{
-			$siteID = 's1';
-		}
 
 		$storageTypeID =  CCrmActivity::GetDefaultStorageTypeID();
 		$arElementIDs = array();
@@ -2454,7 +2441,7 @@ class CCrmEMail
 			if (trim($fileData['ORIGINAL_NAME']) == '')
 				$fileData['ORIGINAL_NAME'] = $fileData['FILE_NAME'];
 			$elementID = StorageManager::saveEmailAttachment(
-				$fileData, $storageTypeID, $siteID,
+				$fileData, $storageTypeID, '',
 				array('USER_ID' => $userID)
 			);
 			if($elementID > 0)

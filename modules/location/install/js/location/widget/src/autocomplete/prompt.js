@@ -122,26 +122,10 @@ export default class Prompt extends EventEmitter
 			.replace(/,+/gi, '')
 			.split(new RegExp(/\s+/g));
 
-		/*
-		 * todo: case
-		 */
-		for(let word of spWords)
-		{
-			word = word.trim();
+		const pattern = new RegExp(`(${spWords.join('|')})`, 'gi');
 
-			if(word.length <= 0)
-			{
-				continue;
-			}
+		result = locationName.replace(pattern, match => `<strong>${match}</strong>`);
 
-			result = result.replace(
-				new RegExp(word, 'gi'),
-				`###@@@${word}@@@###`
-			);
-		}
-
-		result = result.replace(/###@@@/g, '<strong>');
-		result = result.replace(/@@@###/g, '</strong>');
 		return result;
 	}
 

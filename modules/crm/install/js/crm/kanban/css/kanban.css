@@ -1105,7 +1105,7 @@ a.crm-kanban-sidepanel:hover {
 	height: 27px;
 	opacity: .5;
 	background: no-repeat center;
-	background-image: url(/bitrix/js/ui/buttons/images/ui-loader-wait-white.min.svg?v=1.1);
+	background-image: url(/bitrix/js/ui/buttons/src/css/images/ui-loader-wait-white.min.svg);
 	content: '';
 	transition: 160ms color linear, 160ms transform linear, 160ms opacity linear, 160ms background-color linear;
 }

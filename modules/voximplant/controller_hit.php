@@ -12,8 +12,6 @@ if(!CModule::IncludeModule("voximplant"))
 if (is_object($APPLICATION))
 	$APPLICATION->RestartBuffer();
 
-while(ob_end_clean());
-
 CVoxImplantHistory::WriteToLog($_POST, 'PORTAL HIT');
 
 $version = (int)\Bitrix\Main\Context::getCurrent()->getRequest()->getHeader("X-Version") ?: 1;

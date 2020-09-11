@@ -43,7 +43,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 				<div class="voximplant-control-select-flexible">
 					<select class="voximplant-control-select" name="TYPE" id="QUEUE_TYPE">
 						<? foreach (array(CVoxImplantConfig::QUEUE_TYPE_EVENLY, CVoxImplantConfig::QUEUE_TYPE_STRICTLY, CVoxImplantConfig::QUEUE_TYPE_ALL) as $k): ?>
-							<option value="<?= $k ?>"<?= ($k == $arResult["ITEM"]["TYPE"] ? " selected" : "") ?>><?= GetMessage("VI_CONFIG_EDIT_QUEUE_TYPE_".strtoupper($k)) ?></option>
+							<option value="<?= $k ?>"<?= ($k == $arResult["ITEM"]["TYPE"] ? " selected" : "") ?>><?= GetMessage("VI_CONFIG_EDIT_QUEUE_TYPE_".mb_strtoupper($k)) ?></option>
 						<? endforeach; ?>
 					</select>
 					<span data-hint="<?=htmlspecialcharsbx(GetMessage("VI_CONFIG_EDIT_QUEUE_TYPE_TIP"))?><br><br><?=htmlspecialcharsbx(GetMessage("VI_CONFIG_EDIT_QUEUE_TYPE_TIP_2"))?><br><i><?=htmlspecialcharsbx(GetMessage("VI_CONFIG_EDIT_QUEUE_TYPE_TIP_ASTERISK_3"))?></i>"></span>

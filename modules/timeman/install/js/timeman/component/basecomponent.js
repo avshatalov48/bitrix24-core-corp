@@ -8,6 +8,10 @@
 	{
 		var scheduleCreateSliderWidth = options.scheduleCreateSliderWidth ? options.scheduleCreateSliderWidth : 1200;
 		this.container = options.containerSelector ? document.querySelector(options.containerSelector) : document;
+
+		this.exportManager = ((options.exportManager && options.exportManager instanceof BX.Timeman.Export) ?
+			options.exportManager : null);
+
 		if (window === window.top)
 		{
 			BX.SidePanel.Instance.bindAnchors({

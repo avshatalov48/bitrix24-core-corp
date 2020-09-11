@@ -360,7 +360,7 @@ class CVoxImplantConfig
 		if($config['PORTAL_MODE'] === self::MODE_SIP)
 		{
 			// VI_CONFIG_SIP_OFFICE_DEF and VI_CONFIG_SIP_CLOUD_DEF have wrong values here, it's ok
-			$result = substr($config['SEARCH_ID'], 0, 3) == 'reg'? GetMessage('VI_CONFIG_SIP_OFFICE_DEF'): GetMessage('VI_CONFIG_SIP_CLOUD_DEF');
+			$result = mb_substr($config['SEARCH_ID'], 0, 3) == 'reg'? GetMessage('VI_CONFIG_SIP_OFFICE_DEF'): GetMessage('VI_CONFIG_SIP_CLOUD_DEF');
 			$result = str_replace('#ID#', $config['ID'], $result);
 		}
 		else if($config['PORTAL_MODE'] === self::MODE_RENT)
@@ -396,7 +396,7 @@ class CVoxImplantConfig
 		}
 		else if($config['PORTAL_MODE'] == self::MODE_SIP)
 		{
-			$result = substr($config['SEARCH_ID'], 0, 3) == 'reg'? GetMessage('VI_CONFIG_SIP_CLOUD_DEF'): GetMessage('VI_CONFIG_SIP_OFFICE_DEF');
+			$result = mb_substr($config['SEARCH_ID'], 0, 3) == 'reg'? GetMessage('VI_CONFIG_SIP_CLOUD_DEF'): GetMessage('VI_CONFIG_SIP_OFFICE_DEF');
 			$result = str_replace('#ID#', $config['ID'], $result);
 		}
 		else if($config['PORTAL_MODE'] === self::MODE_LINK)
@@ -418,7 +418,7 @@ class CVoxImplantConfig
 			return COption::GetOptionString("main", "~PARAM_PHONE_SIP", 'N') == 'Y';
 		}
 
-		return COption::GetOptionString("voximplant", "mode_".strtolower($mode));
+		return COption::GetOptionString("voximplant", "mode_".mb_strtolower($mode));
 	}
 
 	public static function SetModeStatus($mode, $enable)
@@ -432,7 +432,7 @@ class CVoxImplantConfig
 		}
 		else
 		{
-			COption::SetOptionString("voximplant", "mode_".strtolower($mode), $enable? true: false);
+			COption::SetOptionString("voximplant", "mode_".mb_strtolower($mode), $enable? true: false);
 		}
 
 		return true;
@@ -519,7 +519,7 @@ class CVoxImplantConfig
 	{
 		if ($lang !== false)
 		{
-			$lang = strtoupper($lang);
+			$lang = mb_strtoupper($lang);
 			if ($lang == 'KZ')
 			{
 				$lang = 'RU';
@@ -557,7 +557,7 @@ class CVoxImplantConfig
 			$res = CFile::GetFileArray($fileId);
 			if ($res && $res['MODULE_ID'] == 'voximplant')
 			{
-				if (substr($res['SRC'], 0, 4) == 'http' || substr($res['SRC'], 0, 2) == '//')
+				if (mb_substr($res['SRC'], 0, 4) == 'http' || mb_substr($res['SRC'], 0, 2) == '//')
 				{
 					$result = $res['SRC'];
 				}
@@ -584,7 +584,7 @@ class CVoxImplantConfig
 
 	public static function GetConfig($id, $type = self::GET_BY_ID)
 	{
-		if (strlen($id) <= 0)
+		if ($id == '')
 		{
 			return Array('ERROR' => 'Config is`t found for undefined id/number');
 		}
@@ -659,7 +659,7 @@ class CVoxImplantConfig
 			$sipResult = $viSip->Get($config["ID"]);
 
 			$result['PHONE_NAME'] = preg_replace("/[^0-9\#\*]/i", "", $result['PHONE_NAME']);
-			$result['PHONE_NAME'] = strlen($result['PHONE_NAME']) >= 4? $result['PHONE_NAME']: '';
+			$result['PHONE_NAME'] = mb_strlen($result['PHONE_NAME']) >= 4? $result['PHONE_NAME']: '';
 
 			if($sipResult)
 			{
@@ -702,12 +702,12 @@ class CVoxImplantConfig
 			$result['BACKUP_LINE'] = self::GetBriefConfig(['SEARCH_ID' => $result['BACKUP_LINE']]);
 		}
 
-		if (strlen($result['FORWARD_NUMBER']) > 0)
+		if ($result['FORWARD_NUMBER'] <> '')
 		{
 			$result["FORWARD_NUMBER"] = NormalizePhone($result['FORWARD_NUMBER'], 1);
 		}
 
-		if (strlen($result['WORKTIME_DAYOFF_NUMBER']) > 0)
+		if ($result['WORKTIME_DAYOFF_NUMBER'] <> '')
 		{
 			$result["WORKTIME_DAYOFF_NUMBER"] = NormalizePhone($result['WORKTIME_DAYOFF_NUMBER'], 1);
 		}

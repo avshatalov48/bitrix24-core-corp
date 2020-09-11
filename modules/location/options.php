@@ -32,6 +32,16 @@ if($moduleAccess >= 'W' && Loader::includeModule($module_id)):
 			$useGoogleApi = $_REQUEST['use_google_api'] === 'Y' ? 'Y' : 'N';
 			Option::set('location', 'use_google_api', $useGoogleApi);
 		}
+		if(isset($_REQUEST['google_map_show_photos']))
+		{
+			$googleMapShowPhotos = $_REQUEST['google_map_show_photos'] === 'Y' ? 'Y' : 'N';
+			Option::set('location', 'google_map_show_photos', $googleMapShowPhotos);
+		}
+		if(isset($_REQUEST['google_use_geocoding_service']))
+		{
+			$googleUseGeocodingService = $_REQUEST['google_use_geocoding_service'] === 'Y' ? 'Y' : 'N';
+			Option::set('location', 'google_use_geocoding_service', $googleUseGeocodingService);
+		}
 
 		if(isset($_REQUEST['google_map_api_key']))
 		{
@@ -75,6 +85,8 @@ if($moduleAccess >= 'W' && Loader::includeModule($module_id)):
 	}
 
 	$useGoogleApi = Option::get('location', 'use_google_api', $location_default_option['use_google_api']);
+	$googleMapShowPhotos = Option::get('location', 'google_map_show_photos', $location_default_option['google_map_show_photos']);
+	$googleUseGeocodingService = Option::get('location', 'google_use_geocoding_service', $location_default_option['google_use_geocoding_service']);
 	$googleApiKey = Option::get('location', 'google_map_api_key', $location_default_option['google_map_api_key']);
 	$googleApiKeyBakend = Option::get('location', 'google_map_api_key_backend', $location_default_option['google_map_api_key_backend']);
 
@@ -90,13 +102,29 @@ if($moduleAccess >= 'W' && Loader::includeModule($module_id)):
 				<input type="checkbox" name="use_google_api" value="Y"<?=($useGoogleApi === 'Y' ? ' checked' : '')?> onclick="onUseGoogleApiChange(this.checked);">
 			</td>
 		</tr>
+		<tr id="location-key-input-row-0"<?=$apiKeyDisplayString?>>
+			<td width="40%" valign="top"><?=Loc::getMessage('LOCATION_OPT_GOOGLE_SHOW_PLACE_PHOTOS')?>:</td>
+			<td width="60%">
+				<input type="hidden" name="google_map_show_photos" value="N">
+				<input type="checkbox" name="google_map_show_photos" value="Y"<?=($googleMapShowPhotos === 'Y' ? ' checked' : '')?> >
+				<?=BeginNote();?><?=Loc::getMessage('LOCATION_OPT_GOOGLE_SHOW_PLACE_PHOTOS_WARNING')?><?=EndNote();?>
+			</td>
+		</tr>
 		<tr id="location-key-input-row-1"<?=$apiKeyDisplayString?>>
+			<td width="40%" valign="top"><?=Loc::getMessage('LOCATION_OPT_GOOGLE_USE_GEOCODING_SERVICE')?>:</td>
+			<td width="60%">
+				<input type="hidden" name="google_use_geocoding_service" value="N">
+				<input type="checkbox" name="google_use_geocoding_service" value="Y"<?=($googleUseGeocodingService === 'Y' ? ' checked' : '')?> >
+				<?=BeginNote();?><?=Loc::getMessage('LOCATION_OPT_GOOGLE_SHOW_PLACE_PHOTOS_WARNING')?><?=EndNote();?>
+			</td>
+		</tr>
+		<tr id="location-key-input-row-2"<?=$apiKeyDisplayString?>>
 			<td width="40%" valign="top"><?=Loc::getMessage('LOCATION_OPT_GOOGLE_API_KEY2')?>:</td>
 			<td width="60%">
 				<input type="text" name="google_map_api_key" size="40" value="<?=htmlspecialcharsbx($googleApiKey)?>">
 			</td>
 		</tr>
-		<tr id="location-key-input-row-2"<?=$apiKeyDisplayString?>>
+		<tr id="location-key-input-row-3"<?=$apiKeyDisplayString?>>
 			<td width="40%" valign="top"><?=Loc::getMessage('LOCATION_OPT_GOOGLE_API_KEY_BACK')?>:</td>
 			<td width="60%">
 				<input type="text" name="google_map_api_key_backend" size="40" value="<?=htmlspecialcharsbx($googleApiKeyBakend)?>">
@@ -153,8 +181,10 @@ if($moduleAccess >= 'W' && Loader::includeModule($module_id)):
 		function onUseGoogleApiChange(checked)
 		{
 			var display = checked ? '' : 'none';
+			BX('location-key-input-row-0').style.display = display;
 			BX('location-key-input-row-1').style.display = display;
 			BX('location-key-input-row-2').style.display = display;
+			BX('location-key-input-row-3').style.display = display;
 		}
 
 	</script>

@@ -1,12 +1,13 @@
 <?php
+
+use Bitrix\Main\Localization\Loc;
+
 /**
  * Bitrix Framework
  * @package bitrix
  * @subpackage ldap
- * @copyright 2001-2016 Bitrix
+ * @copyright 2001-2020 Bitrix
  */
-
-IncludeModuleLangFile(__FILE__);
 
 class CLDAP
 {
@@ -343,7 +344,7 @@ class CLDAP
 		return $result;
 	}
 
-	function OnUserLogin($arArgs)
+	function OnUserLogin(&$arArgs)
 	{
 		global $APPLICATION;
 
@@ -383,12 +384,12 @@ class CLDAP
 			{
 				if($err = $APPLICATION->GetException())
 				{
-					$result_message = Array("MESSAGE"=>$err->GetString()."<br>", "TYPE"=>"ERROR");
+					$arArgs['RESULT_MESSAGE'] = Array("MESSAGE"=>$err->GetString()."<br>", "TYPE"=>"ERROR");
 				}
 				else
 				{
 					$APPLICATION->ThrowException("Unknown error");
-					$result_message = Array("MESSAGE"=>"Unknown error"."<br>", "TYPE"=>"ERROR");
+					$arArgs['RESULT_MESSAGE'] = Array("MESSAGE"=>"Unknown error"."<br>", "TYPE"=>"ERROR");
 				}
 
 				return false;
@@ -415,11 +416,17 @@ class CLDAP
 
 					$ID = $xLDAP->SetUser($arLdapUser, (COption::GetOptionString("ldap", "add_user_when_auth", "Y")=="Y"));
 
-					if($ID > 0)
+					if ($ID > 0)
 					{
 						$arArgs["STORE_PASSWORD"] = "N";
 						$xLDAP->Disconnect();
 						return $ID;
+					}
+
+					if(\Bitrix\Ldap\Limit::isUserLimitExceeded())
+					{
+						$arArgs['RESULT_MESSAGE'] = \Bitrix\Ldap\Limit::getUserLimitNotifyMessage();
+						break;
 					}
 				}
 
@@ -1112,24 +1119,6 @@ class CLDAP
 		else
 		{
 			$ldapUserID = 0;
-
-			/*
-			if (isset($_REQUEST['ldap_user_id']) && strlen($_REQUEST['ldap_user_id']) == 32)
-			{
-				$dbUser = CUser::GetList(
-					$O='', $B='',
-					array('XML_ID' => $_REQUEST['ldap_user_id'], 'EXTERNAL_AUTH_ID' => $arLdapUser['EXTERNAL_AUTH_ID']),
-					array('FIELDS' => array('ID', 'XML_ID'))
-				);
-
-				if ($arUser = $dbUser->Fetch())
-				{
-					if($arUser['XML_ID'])
-						$ldapUserID = $arUser['ID'];
-				}
-			}
-			*/
-
 			$bitrixUserId = 0;
 			$res = CUser::GetList(
 				$O="", $B="",
@@ -1155,7 +1144,7 @@ class CLDAP
 
 			if($bitrixUserId <= 0 && $ldapUserID <= 0)
 			{
-				if($bAddNew)
+				if($bAddNew && !\Bitrix\Ldap\Limit::isUserLimitExceeded())
 				{
 					if($arLdapUser["EMAIL"] == '')
 					{
@@ -1256,6 +1245,13 @@ class CLDAP
 		}
 
 		return $result;
+	}
+
+	public static function onEventLogGetAuditTypes(): array
+	{
+		return array(
+			"LDAP_USER_LIMIT_EXCEEDED" => Loc::getMessage("LDAP_USER_LIMIT_EXCEEDED_EVENT_TYPE"),
+		);
 	}
 }
 

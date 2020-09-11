@@ -119,15 +119,15 @@ class CVoxImplantIncoming
 			);
 
 			$callName = $params['CALLER_ID'];
-			if (isset($params['CRM']['CONTACT']['NAME']) && strlen($params['CRM']['CONTACT']['NAME']) > 0)
+			if (isset($params['CRM']['CONTACT']['NAME']) && $params['CRM']['CONTACT']['NAME'] <> '')
 			{
 				$callName = $params['CRM']['CONTACT']['NAME'];
 			}
-			if (isset($params['CRM']['COMPANY']) && strlen($params['CRM']['COMPANY']) > 0)
+			if (isset($params['CRM']['COMPANY']) && $params['CRM']['COMPANY'] <> '')
 			{
 				$callName .= ' ('.$params['CRM']['COMPANY'].')';
 			}
-			else if (isset($params['CRM']['CONTACT']['POST']) && strlen($params['CRM']['CONTACT']['POST']) > 0)
+			else if (isset($params['CRM']['CONTACT']['POST']) && $params['CRM']['CONTACT']['POST'] <> '')
 			{
 				$callName .= ' ('.$params['CRM']['CONTACT']['POST'].')';
 			}
@@ -483,7 +483,7 @@ class CVoxImplantIncoming
 			$callsCount++;
 			if ($callsCount >= $blackListCount)
 			{
-				$number = substr($number, 0, 20);
+				$number = mb_substr($number, 0, 20);
 				VI\BlacklistTable::add(array(
 					"PHONE_NUMBER" => $number
 				));

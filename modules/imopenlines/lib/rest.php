@@ -683,8 +683,11 @@ class Rest extends \IRestService
 		];
 
 		$_SESSION['LIVECHAT']['REGISTER'] = $result;
-		$_SESSION['LIVECHAT']['TRACE_DATA'] = (string)$params['TRACE_DATA'];
-		$_SESSION['LIVECHAT']['CUSTOM_DATA'] = (string)$params['CUSTOM_DATA'];
+
+		\Bitrix\ImOpenLines\Widget\Cache::set($userData['ID'], [
+			'TRACE_DATA' => (string)$params['TRACE_DATA'],
+	 		'CUSTOM_DATA' => (string)$params['CUSTOM_DATA'],
+		]);
 
 		return $result;
 	}
@@ -940,9 +943,10 @@ class Rest extends \IRestService
 			throw new \Bitrix\Rest\RestException("Config id is not specified.", "WRONG_REQUEST", \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$_SESSION['LIVECHAT']['TRACE_DATA'] = (string)$params['TRACE_DATA'];
-
-		$_SESSION['LIVECHAT']['CUSTOM_DATA'] = (string)$params['CUSTOM_DATA'];
+		\Bitrix\ImOpenLines\Widget\Cache::set($USER->GetId(), [
+	 		'TRACE_DATA' => (string)$params['TRACE_DATA'],
+	 		'CUSTOM_DATA' => (string)$params['CUSTOM_DATA'],
+		]);
 
 		$result = \Bitrix\Imopenlines\Widget\Dialog::get($USER->GetID(), $params['CONFIG_ID']);
 		if (!$result)

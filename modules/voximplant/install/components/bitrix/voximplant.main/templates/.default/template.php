@@ -9,7 +9,7 @@ function getBalance($amount)
 	$amount = round(floatval($amount), 2);
 	$amount = $amount.'';
 	$str = '';
-	$amountCount = strlen($amount);
+	$amountCount = mb_strlen($amount);
 	for ($i = 0; $i < $amountCount; $i++)
 	{
 		if ($amount[$i] == '.')
@@ -46,7 +46,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 								</span>
 								<span class="tel-balance-box-line"></span>
 							</span>
-							<span class="tel-balance-sum-currency sum-currency-<?=strtoupper($arResult['CURRENCY']);?>"></span>
+							<span class="tel-balance-sum-currency sum-currency-<?= mb_strtoupper($arResult['CURRENCY']);?>"></span>
 						</div>
 						<?endif;?>
 					</td>

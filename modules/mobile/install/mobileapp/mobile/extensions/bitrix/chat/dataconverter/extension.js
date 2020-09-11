@@ -819,6 +819,10 @@ ChatDataConverter.getListFormat = function (list)
 
 		if (resultIndex[element.id] !== undefined)
 		{
+			if (element.options && element.options.default_user_record)
+			{
+				return;
+			}
 			result[resultIndex[element.id]] = element;
 		}
 		else

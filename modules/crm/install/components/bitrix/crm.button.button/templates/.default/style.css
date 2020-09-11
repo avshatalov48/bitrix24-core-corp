@@ -534,7 +534,7 @@ html.bx-ios.bx-ios-fix-frame-focus, .bx-ios.bx-ios-fix-frame-focus body {
 	display: none;
 }
 .b24-widget-button-top .b24-widget-button-close {
-	display: block;
+	display: flex;
 	-webkit-animation: socialRotate .4s;
 	animation: socialRotate .4s;
 	opacity: 1;

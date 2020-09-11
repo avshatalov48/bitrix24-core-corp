@@ -744,7 +744,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 						$task_id = intval($_POST["task_id"]);
 						$dbTasks = CTasks::GetList([], [
 							'ID' => $task_id,
-							'RESPONSIBLE_ID' => $USER->GetID(),
+							'DOER' => $USER->GetId(),
 						]);
 						if ($arTask = $dbTasks->Fetch())
 						{

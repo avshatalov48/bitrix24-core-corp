@@ -51,14 +51,16 @@ class Input
 
 		$this->authorize($params);
 
-		$params["DATA"] = unserialize(base64_decode($params["DATA"]));
+		$params['DATA'] = unserialize(base64_decode($params['DATA']), ['allowed_classes' => false]);
 
 		$params = Converter::convertEmptyInStub($params);
 
 		$params = Encoding::convertEncoding($params, 'UTF-8', SITE_CHARSET);
 
 		if(!is_array($params['DATA']))
-			$params['DATA'] = array();
+		{
+			$params['DATA'] = [];
+		}
 
 		$this->params = $params;
 	}

@@ -820,32 +820,10 @@ this.BX.Location = this.BX.Location || {};
 	      }
 
 	      var spWords = searchPhrase.replace(/,+/gi, '').split(new RegExp(/\s+/g));
-	      /*
-	       * todo: case
-	       */
-
-	      var _iterator = _createForOfIteratorHelper$1(spWords),
-	          _step;
-
-	      try {
-	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-	          var word = _step.value;
-	          word = word.trim();
-
-	          if (word.length <= 0) {
-	            continue;
-	          }
-
-	          result = result.replace(new RegExp(word, 'gi'), "###@@@".concat(word, "@@@###"));
-	        }
-	      } catch (err) {
-	        _iterator.e(err);
-	      } finally {
-	        _iterator.f();
-	      }
-
-	      result = result.replace(/###@@@/g, '<strong>');
-	      result = result.replace(/@@@###/g, '</strong>');
+	      var pattern = new RegExp("(".concat(spWords.join('|'), ")"), 'gi');
+	      result = locationName.replace(pattern, function (match) {
+	        return "<strong>".concat(match, "</strong>");
+	      });
 	      return result;
 	    }
 	  }]);
@@ -929,12 +907,12 @@ this.BX.Location = this.BX.Location || {};
 	var _getLocationFromList2 = function _getLocationFromList2(externalId) {
 	  var result = null;
 
-	  var _iterator2 = _createForOfIteratorHelper$1(babelHelpers.classPrivateFieldGet(this, _locationList)),
-	      _step2;
+	  var _iterator = _createForOfIteratorHelper$1(babelHelpers.classPrivateFieldGet(this, _locationList)),
+	      _step;
 
 	  try {
-	    for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-	      var location = _step2.value;
+	    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	      var location = _step.value;
 
 	      if (location.externalId === externalId) {
 	        result = location;
@@ -942,9 +920,9 @@ this.BX.Location = this.BX.Location || {};
 	      }
 	    }
 	  } catch (err) {
-	    _iterator2.e(err);
+	    _iterator.e(err);
 	  } finally {
-	    _iterator2.f();
+	    _iterator.f();
 	  }
 
 	  if (!result) {
@@ -3591,6 +3569,7 @@ this.BX.Location = this.BX.Location || {};
 	      var sourceCode = props.sourceCode || BX.message('LOCATION_WIDGET_SOURCE_CODE');
 	      var sourceParams = props.sourceParams || BX.message('LOCATION_WIDGET_SOURCE_PARAMS');
 	      var languageId = props.languageId || BX.message('LOCATION_WIDGET_LANGUAGE_ID');
+	      var sourceLanguageId = props.sourceLanguageId || BX.message('LOCATION_WIDGET_SOURCE_LANGUAGE_ID');
 	      var addressFormat = props.addressFormat || new location_core.Format(JSON.parse(BX.message('LOCATION_WIDGET_DEFAULT_FORMAT')));
 	      var features = [];
 
@@ -3604,7 +3583,7 @@ this.BX.Location = this.BX.Location || {};
 	      var source = null;
 
 	      if (sourceCode && sourceParams) {
-	        source = this.createSource(sourceCode, sourceParams, languageId);
+	        source = this.createSource(sourceCode, sourceParams, languageId, sourceLanguageId);
 	      }
 
 	      if (source) {
@@ -3617,9 +3596,11 @@ this.BX.Location = this.BX.Location || {};
 	        }
 
 	        if (!props.useFeatures || props.useFeatures.map !== false) {
+	          var showPhotos = sourceParams.hasOwnProperty('showPhotos') && sourceParams.showPhotos === true;
+	          var useGeocodingService = sourceParams.hasOwnProperty('useGeocodingService') && sourceParams.useGeocodingService === true;
 	          var DEFAULT_THUMBNAIL_HEIGHT = 80;
 	          var DEFAULT_THUMBNAIL_WIDTH = 150;
-	          var DEFAULT_MAX_PHOTO_COUNT = 0;
+	          var DEFAULT_MAX_PHOTO_COUNT = showPhotos ? 5 : 0;
 	          var DEFAULT_MAP_BEHAVIOR = 'auto';
 	          features.push(this.createMapFeature({
 	            addressFormat: addressFormat,
@@ -3628,7 +3609,8 @@ this.BX.Location = this.BX.Location || {};
 	            thumbnailHeight: props.thumbnailHeight || DEFAULT_THUMBNAIL_HEIGHT,
 	            thumbnailWidth: props.thumbnailWidth || DEFAULT_THUMBNAIL_WIDTH,
 	            maxPhotoCount: props.maxPhotoCount || DEFAULT_MAX_PHOTO_COUNT,
-	            mapBehavior: props.mapBehavior || DEFAULT_MAP_BEHAVIOR
+	            mapBehavior: props.mapBehavior || DEFAULT_MAP_BEHAVIOR,
+	            useGeocodingService: useGeocodingService
 	          }));
 	        }
 	      }
@@ -3692,8 +3674,8 @@ this.BX.Location = this.BX.Location || {};
 	          map: props.source.map,
 	          popup: popup,
 	          gallery: gallery,
-	          locationRepository: new location_core.LocationRepository() // geocodingService: props.source.geocodingService
-
+	          locationRepository: new location_core.LocationRepository(),
+	          geocodingService: props.useGeocodingService ? props.source.geocodingService : null
 	        })
 	      };
 	      var result;
@@ -3709,11 +3691,12 @@ this.BX.Location = this.BX.Location || {};
 
 	  }, {
 	    key: "createSource",
-	    value: function createSource(code, params, languageId) {
+	    value: function createSource(code, params, languageId, sourceLanguageId) {
 	      var source = null;
 
 	      if (code === 'GOOGLE') {
 	        params.languageId = languageId;
+	        params.sourceLanguageId = sourceLanguageId;
 
 	        try {
 	          source = new location_google.Google(params);

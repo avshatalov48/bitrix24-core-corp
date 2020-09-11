@@ -5,6 +5,7 @@ if (!\Bitrix\Main\Loader::includeModule("socialnetwork"))
 	return;
 }
 
+use Bitrix\Main\Security\Sign\Signer;
 use Bitrix\Tasks\Internals\Counter;
 
 $request = \Bitrix\Main\HttpApplication::getInstance()->getContext()->getRequest();
@@ -142,7 +143,7 @@ if (
 	// get states description
 	$oListState = CTaskListState::getInstance($loggedInUserId);
 	$arResult['VIEW_STATE'] = $oListState->getState();
-	$arResult['VIEW_STATE_RAW'] = $oListState->getRawState();
+	$arResult['VIEW_STATE_RAW'] = (new Signer())->sign($oListState->getRawState(), 'tasks.list.controls');
 
 	$arResult["LIST_CTRL"] = $oListCtrl = CTaskListCtrl::getInstance($arParams['USER_ID']);
 	$oListCtrl->useState($oListState);

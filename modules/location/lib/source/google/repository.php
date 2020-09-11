@@ -13,6 +13,7 @@ use Bitrix\Location\Repository\Location\Capability\IFindByText;
 use Bitrix\Location\Repository\Location\Capability\IFindParents;
 use Bitrix\Location\Repository\Location\IRepository;
 use Bitrix\Location\Repository\Location\IScope;
+use Bitrix\Location\Repository\Location\ISource;
 use Bitrix\Location\Service\LocationService;
 use Bitrix\Location\Source\Google\Converters;
 use Bitrix\Location\Source\Google\Converters\BaseConverter;
@@ -29,7 +30,7 @@ Loc::loadMessages(__FILE__);
  * @package Bitrix\Location\Source
  */
 class Repository
-	implements IRepository, IFindByExternalId, IFindByPoint, IFindByText, IFindParents, IScope
+	implements IRepository, IFindByExternalId, IFindByPoint, IFindByText, IFindParents, IScope, ISource
 {
 	/** @var string  */
 	protected $apiKey = '';
@@ -39,13 +40,20 @@ class Repository
 	protected $httpClient = null;
 	/** @var CachedPool */
 	protected $cachePool = null;
+	/** @var GoogleSource  */
+	protected $googleSource = null;
 
-
-	public function __construct(string $apiKey, HttpClient $httpClient, CachedPool $cachePool = null)
+	public function __construct(
+		string $apiKey,
+		HttpClient $httpClient,
+		GoogleSource $googleSource,
+		CachedPool $cachePool = null
+	)
 	{
 		$this->apiKey = $apiKey;
 		$this->httpClient = $httpClient;
 		$this->cachePool = $cachePool;
+		$this->googleSource = $googleSource;
 	}
 
 	public function isScopeSatisfy(int $scope): bool
@@ -56,7 +64,7 @@ class Repository
 	/** @inheritDoc */
 	public function findByExternalId(string $locationExternalId, string $sourceCode, string $languageId)
 	{
-		if($sourceCode !== self::$sourceCode || $locationExternalId == '')
+		if($sourceCode !== self::$sourceCode || $locationExternalId === '')
 		{
 			return null;
 		}
@@ -66,7 +74,7 @@ class Repository
 			new Converters\ByIdConverter($languageId),
 			[
 				'placeid' => $locationExternalId,
-				'language' => $languageId
+				'language' => $this->googleSource->convertLang($languageId)
 			]
 		);
 	}
@@ -81,7 +89,7 @@ class Repository
 			new Converters\ByCoordsConverter($languageId),
 			[
 				'latlng' => $point->getLatitude().','.$point->getLongitude(),
-				'language' => $languageId
+				'language' => $this->googleSource->convertLang($languageId)
 			]
 		);
 	}
@@ -101,7 +109,7 @@ class Repository
 			new Converters\ByQueryConverter($languageId),
 			[
 				'query' => $query,
-				'language' => $languageId
+				'language' => $this->googleSource->convertLang($languageId)
 			]
 		);
 	}
@@ -321,7 +329,8 @@ class Repository
 		return $finder->find($findParams);
 	}
 
-	public static function getSourceCode()
+	/** @inheritDoc */
+	public static function getSourceCode(): string
 	{
 		return self::$sourceCode;
 	}

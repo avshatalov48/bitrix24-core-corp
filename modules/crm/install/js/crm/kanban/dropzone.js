@@ -59,13 +59,15 @@ BX.CRM.Kanban.DropZone.prototype = {
 			return;
 		}
 
+		var checkedElements = this.getGrid().getChecked();
+
 		draggableItem = this.getGrid().getItemByElement(itemNode);
 		this.captureItem(draggableItem);
 		this.getDropZoneArea().unsetActive();
 
-		if(this.getGrid().getChecked().length > 1)
+		if(checkedElements.length > 1)
 		{
-			this.droppedItems = this.getGrid().getChecked();
+			this.droppedItems = checkedElements;
 
 			for (var i = 0; i < this.droppedItems.length; i++)
 			{
@@ -195,16 +197,21 @@ BX.CRM.Kanban.DropZone.prototype = {
 			return this.layout.container
 		}
 
+		var childrens = [];
+
+		childrens.push(this.getNameContainer());
+		if (this.getId() !== 'DELETED')
+		{
+			childrens.push(this.getCancelLink());
+		}
+		childrens.push(this.getBgContainer());
+
 		this.layout.container = BX.create("div", {
 			attrs: {
 				className: "main-kanban-dropzone",
 				"data-id": this.getId()
 			},
-			children: [
-				this.getNameContainer(),
-				this.getCancelLink(),
-				this.getBgContainer()
-			]
+			children: childrens
 		});
 
 		this.makeDroppable();

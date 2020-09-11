@@ -618,7 +618,7 @@ a {
 
 .lenta-info-block-wrapp,
 .lenta-info-block-wrapp-full {
-	padding-bottom: 6px;
+	padding: 0 16px 16px 16px;
 	overflow: hidden;
 	position: relative
 }
@@ -693,6 +693,7 @@ a {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	padding-right: 10px;
 }
 
 .lenta-info-name-description {
@@ -806,6 +807,7 @@ a {
 	border-bottom: .5px solid #dbdde0;
 	/*border-bottom: 1px solid rgba(82,92,105,.1);*/
 	box-sizing: border-box;
+	justify-content: space-between;
 }
 
 .lenta-item .post-item-inform-wrap {
@@ -1613,7 +1615,7 @@ a {
 }
 
 .post-item-text {
-	padding: 0 0 8px 0;
+	padding: 0 0 16px 0;
 	color: #333333;
 	font-size: 16px;
 	line-height: 21px;
@@ -1655,7 +1657,10 @@ a {
 	font-weight: normal;
 }
 
-.post-item-important input~.unchecked { display: inline-block; }
+.post-item-important input~.unchecked {
+	display: inline-block;
+	margin: 10px 0 10px 0;
+}
 .post-item-important input:checked~.checked { display: inline-block; }
 .post-item-important input:checked~.unchecked { display: none; }
 
@@ -1724,7 +1729,7 @@ a {
 .post-item-top-wrap .post-item-attached-file-link,
 .post-comment-detail .post-item-attached-file-link {
 	display: flex;
-	align-items: center;
+	align-items: baseline;
 	padding-left: 12px;
 	width: 100%;
 	font-size: 15px;
@@ -1814,8 +1819,7 @@ a.post-item-inline-attached-file,
 }
 
 .post-item-more {
-	margin-bottom: 3px;
-	margin-left: auto;
+	margin-bottom: 2px;
 	/*padding: 6px 0 6px 0;*/
 	font: 15px -apple-system, BlinkMacSystemFont, Arial, Helvetica, sans-serif;
 	color: #828B95;
@@ -2996,7 +3000,7 @@ table.forum-spoiler th {
 }
 
 .post-item-informers {
-	margin: -5px 23px 0 0;
+	margin: -5px 12px 0 0;
 }
 .post-comment-control-item {
 	margin: 0 10px 0 0;

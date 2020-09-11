@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Recycling;
 
 use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Crm\Settings\ActivitySettings;
 
 Main\Localization\Loc::loadMessages(__FILE__);
 
@@ -473,9 +474,15 @@ class ActivityController extends BaseController
 
 		$provider = \CCrmActivity::GetActivityProvider($fields);
 		$associatedEntityID = isset($fields['ASSOCIATED_ENTITY_ID']) ? (int)$fields['ASSOCIATED_ENTITY_ID'] : 0;
+
 		if($provider && $associatedEntityID > 0)
 		{
-			$provider::deleteAssociatedEntity($associatedEntityID, $fields);
+			$deleteParams = [];
+			if ($provider === Crm\Activity\Provider\Task::class)
+			{
+				$deleteParams['SKIP_TASKS'] = ActivitySettings::getValue(ActivitySettings::KEEP_UNBOUND_TASKS);
+			}
+			$provider::deleteAssociatedEntity($associatedEntityID, $fields, $deleteParams);
 		}
 
 		Relation::deleteByRecycleBin($recyclingEntityID);

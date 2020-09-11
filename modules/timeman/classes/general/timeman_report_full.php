@@ -479,6 +479,8 @@ class CTimeManReportFull
 
 class CUserReportFull
 {
+	private $oneDayTime = 3600 * 24;
+
 	function __construct($USER_ID = 0)
 	{
 		global $USER;
@@ -509,7 +511,7 @@ class CUserReportFull
 		if($USER_ID == false)
 			$USER_ID = $this->USER_ID;
 
-		$arFields = Array("UF_LAST_REPORT_DATE"=>$LastDate);
+		$arFields = Array("UF_LAST_REPORT_DATE"=>$LastDate,"UF_DELAY_TIME"=>"");
 
 		if ($USER->Update($USER_ID,$arFields))
 		{
@@ -552,110 +554,155 @@ class CUserReportFull
 		return false;
 	}
 
-
+	// todo add tests
+	/**
+	 * @return array
+	 */
 	public function Recalc()
 	{
-		$arParams = $this->GetSettings();
-		$last_date = $this->GetLastDate();
-		$time = CTimeman::MakeShortTS($arParams["UF_TM_TIME"]);
+		$settings = $this->GetSettings();
+		$lastReportDate = $this->GetLastDate();
 
-		$arFields = Array(
-			"DATE_FROM"=>"",
-			"DATE_TO"=>"",
-			"DATE_SUBMIT"=>""
-		);
+		$submitDay = $settings["UF_TM_REPORT_DATE"];
+		$submitDayTime = CTimeman::MakeShortTS($settings["UF_TM_TIME"]);
 
-		if ($arParams["UF_REPORT_PERIOD"])
+		$fields = [
+			"DATE_FROM" => "",
+			"DATE_TO" => "",
+			"DATE_SUBMIT" => ""
+		];
+
+		if (!$settings["UF_REPORT_PERIOD"])
 		{
-			switch ($arParams["UF_REPORT_PERIOD"])
-			{
-				case "WEEK":
-					$arFields["DATE_FROM"] = ConvertTimeStampForReport($last_date+3600*24,"SHORT");
-					if ($arParams["UF_TM_DAY"]<=4)//mon,tue,wen,thu
-					{
-						if ($last_date>strtotime("last sun -1 week") && $last_date<strtotime("last sun") || $last_date>=strtotime("last sun"))
-							$arFields["DATE_FROM"] = $last_date+3600*24;
-						else
-							$arFields["DATE_FROM"] = strtotime("next mon",$last_date);
-						$arFields["DATE_TO"] = strtotime("next sun", $arFields["DATE_FROM"]);
-						if ($arParams["UF_TM_DAY"] === null)
-						{
-							$arFields["DATE_SUBMIT"] = strtotime("next " . reset($this->days), $arFields["DATE_TO"]) + $time;
-						}
-						else
-						{
-							$arFields["DATE_SUBMIT"] = strtotime("next " . $this->days[$arParams["UF_TM_DAY"] - 1], $arFields["DATE_TO"]) + $time;
-						}
+			return $fields;
+		}
 
-					}
-					else//fri,sat,sun
-					{
-						if ($last_date>strtotime("last sun") && $last_date<strtotime("next sun") || $last_date>=strtotime("next sun"))
-							$arFields["DATE_FROM"] = $last_date+3600*24;
-						else
-							$arFields["DATE_FROM"] = strtotime("mon next week",$last_date-date('Z'));
-						$arFields["DATE_TO"] = strtotime("next sun", $arFields["DATE_FROM"]);
-						if ($arParams["UF_TM_DAY"] === null)
-						{
-							$arFields["DATE_SUBMIT"] = strtotime("last " . reset($this->days), $arFields["DATE_TO"]) + $time;
-						}
-						else
-						{
-							$arFields["DATE_SUBMIT"] = strtotime("last " . $this->days[$arParams["UF_TM_DAY"] - 1], $arFields["DATE_TO"]) + $time;
-						}
-					}
+		switch ($settings["UF_REPORT_PERIOD"])
+		{
+			case "WEEK":
+				$fields["DATE_FROM"] = ConvertTimeStampForReport($lastReportDate+$this->oneDayTime,"SHORT");
+				if ($settings["UF_TM_DAY"]<=4)//mon,tue,wen,thu
+				{
+					if ($lastReportDate>strtotime("last sun -1 week"))
+						$fields["DATE_FROM"] = $lastReportDate+$this->oneDayTime;
+					else
+						$fields["DATE_FROM"] = strtotime("next mon",$lastReportDate);
 
-				break;
-				case "MONTH":
-					$arFields["DATE_FROM"] = ConvertTimeStampForReport($last_date+3600*24,"SHORT");
-					if ($arParams["UF_TM_REPORT_DATE"]<=20)
+					$fields["DATE_TO"] = strtotime("next sun", $fields["DATE_FROM"]);
+					if ($settings["UF_TM_DAY"] === null)
 					{
-						if ($last_date>strtotime("last day of last month -1 month") && $last_date<strtotime("last day of last month") || $last_date>=strtotime("last day of last month"))
-							$arFields["DATE_FROM"] = $last_date+3600*24;
-						else
-							$arFields["DATE_FROM"] = strtotime("first day of next month",$last_date);
-						$arFields["DATE_TO"] = strtotime("last day of this month", $arFields["DATE_FROM"]);
-						$arFields["DATE_SUBMIT"] = strtotime("last day of this month", CTimeMan::RemoveHoursTS($arFields["DATE_TO"]))+$arParams["UF_TM_REPORT_DATE"]*3600*24+$time;
-
-						if ($arFields["DATE_SUBMIT"]<$arFields["DATE_FROM"])
-						{
-							$arFields["DATE_FROM"] = strtotime("first day of next month",$arFields["DATE_FROM"]);
-							$arFields["DATE_TO"] = strtotime("last day of this month", $arFields["DATE_FROM"]);
-							$arFields["DATE_SUBMIT"] = strtotime("last day of last month", CTimeMan::RemoveHoursTS($arFields["DATE_TO"]))+$arParams["UF_TM_REPORT_DATE"]*3600*24+$time;
-						}
+						$fields["DATE_SUBMIT"] = strtotime(
+							"next " . reset($this->days), $fields["DATE_TO"]
+						) + $submitDayTime;
 					}
 					else
 					{
-						if ($last_date && $last_date>strtotime("first day of this month") && $last_date<strtotime("last day of this month") || $last_date>=strtotime("last day of this month"))
-							$arFields["DATE_FROM"] = $last_date+3600*24;
-						else
-							$arFields["DATE_FROM"] = strtotime("first day of this month", $last_date);
-
-						$arFields["DATE_TO"] = strtotime("last day of this month", $arFields["DATE_FROM"]);
-						$arFields["DATE_SUBMIT"] = strtotime("last day of last month", CTimeMan::RemoveHoursTS($arFields["DATE_TO"]))+$arParams["UF_TM_REPORT_DATE"]*3600*24+$time;
-
-						if ($arFields["DATE_SUBMIT"]<$arFields["DATE_FROM"])
-						{
-							$arFields["DATE_FROM"] = strtotime("first day of next month",$arFields["DATE_FROM"]);
-							$arFields["DATE_TO"] = strtotime("last day of this month", $arFields["DATE_FROM"]);
-							$arFields["DATE_SUBMIT"] = strtotime("last day of last month", CTimeMan::RemoveHoursTS($arFields["DATE_TO"]))+$arParams["UF_TM_REPORT_DATE"]*3600*24+$time;
-						}
+						$fields["DATE_SUBMIT"] = strtotime(
+							"next " . $this->days[$settings["UF_TM_DAY"] - 1],
+							$fields["DATE_TO"]
+						) + $submitDayTime;
 					}
-				break;
-				case "DAY":
-					$arFields["DATE_FROM"] = $last_date+3600*24;
-					$arFields["DATE_TO"] = $last_date+3600*24;
-					$arFields["DATE_SUBMIT"] = CTimeMan::RemoveHoursTS($arFields["DATE_FROM"])+$time;
-				break;
+				}
+				else//fri,sat,sun
+				{
+					if ($lastReportDate>strtotime("last sun"))
+						$fields["DATE_FROM"] = $lastReportDate+$this->oneDayTime;
+					else
+						$fields["DATE_FROM"] = strtotime("mon next week",$lastReportDate-date('Z'));
 
-			}
+					$fields["DATE_TO"] = strtotime("next sun", $fields["DATE_FROM"]);
 
-			$arFields["DATE_FROM"] = ConvertTimeStampForReport($arFields["DATE_FROM"],"SHORT");
-			$arFields["DATE_TO"] = ConvertTimeStampForReport($arFields["DATE_TO"] ,"SHORT");
-			$arFields["DATE_SUBMIT"] = ConvertTimeStampForReport($arFields["DATE_SUBMIT"] ,"FULL");
+					if ($settings["UF_TM_DAY"] === null)
+					{
+						$fields["DATE_SUBMIT"] = strtotime(
+							"last " . reset($this->days),
+							$fields["DATE_TO"]
+						) + $submitDayTime;
+					}
+					else
+					{
+						$fields["DATE_SUBMIT"] = strtotime(
+							"last " . $this->days[$settings["UF_TM_DAY"] - 1],
+							$fields["DATE_TO"]
+						) + $submitDayTime;
+					}
+				}
+			break;
+			case "MONTH":
+				$fields["DATE_FROM"] = $lastReportDate + $this->oneDayTime;
+				$submitDate = $this->getSubmitDateForNextReport($lastReportDate, $submitDay);
+				$fields["DATE_TO"] = $submitDate;
+				$fields["DATE_SUBMIT"] = $submitDate + $submitDayTime;
+			break;
+			case "DAY":
+				$fields["DATE_FROM"] = $lastReportDate + $this->oneDayTime;
+				$fields["DATE_TO"] = $lastReportDate + $this->oneDayTime;
+				$fields["DATE_SUBMIT"] = CTimeMan::RemoveHoursTS($fields["DATE_FROM"]) + $submitDayTime;
+			break;
+
 		}
 
-		return $arFields;
+		$fields["DATE_FROM"] = ConvertTimeStampForReport($fields["DATE_FROM"], "SHORT");
+		$fields["DATE_TO"] = ConvertTimeStampForReport($fields["DATE_TO"], "SHORT");
+		$fields["DATE_SUBMIT"] = ConvertTimeStampForReport($fields["DATE_SUBMIT"], "FULL");
+
+		return $fields;
+	}
+
+	private function getSubmitDateForNextReport(int $lastReportDate, int $submitDay): int
+	{
+		if ($this->isSubmitDateReportSameMonth($lastReportDate, $submitDay))
+		{
+			$firstDayOfMonth = strtotime('first day of this month', $lastReportDate);
+		}
+		else
+		{
+			$firstDayOfMonth = strtotime('first day of next month', $lastReportDate);
+		}
+
+		$submitDate = $firstDayOfMonth + ($submitDay * $this->oneDayTime - $this->oneDayTime);
+
+		if (date('m', $firstDayOfMonth) != date('m', $submitDate))
+		{
+			if ($this->isSubmitDateReportSameMonth($lastReportDate, $submitDay))
+			{
+				return strtotime('last day of this month', $lastReportDate);
+			}
+			else
+			{
+				return strtotime('last day of next month', $lastReportDate);
+			}
+
+		}
+
+		return $submitDate;
+	}
+
+	private function isSubmitDateReportSameMonth(int $lastReportDate, int $submitDay): bool
+	{
+		if ($this->isLastDayOfMonth($lastReportDate))
+		{
+			return false;
+		}
+
+		if ($this->isPreviousReport($lastReportDate, $submitDay))
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	private function isLastDayOfMonth(int $lastReportDate): bool
+	{
+		return date("t", $lastReportDate) == date('d', $lastReportDate);
+	}
+
+	private function isPreviousReport(int $lastReportDate, int $submitDay): bool
+	{
+		return (date('d', $lastReportDate) < $submitDay);
 	}
 
 	public function GetLastDate()
@@ -809,18 +856,12 @@ class CUserReportFull
 			$fix = $arReportInfo['_FIX'];
 
 			//is time to show a report form?
-			if (
-				doubleval(MakeTimeStamp($arData["DATE_SUBMIT"],TM_FULL_FORMAT)) <= doubleval(time() + CTimeZone::GetOffset())
-				&& $arReportInfo["MODE"]
-			)
+			if ($this->isShowReportForm($arData["DATE_SUBMIT"]) && $arReportInfo["MODE"])
 			{
 				$arReportInfo["SHOW_REPORT_FORM"] = "Y";
 			}
 
-			if(
-				$arData["DATE_SUBMIT"]
-				&&(CTimeMan::RemoveHoursTS(MakeTimeStamp($arData["DATE_SUBMIT"],TM_FULL_FORMAT)) <= CTimeMan::RemoveHoursTS(time()))
-			)
+			if ($this->isReportDay($arData["DATE_SUBMIT"]))
 			{
 				$arReportInfo["IS_REPORT_DAY"] = "Y";
 
@@ -888,7 +929,7 @@ class CUserReportFull
 				"DATE_SUBMIT"=>$arData["DATE_SUBMIT"],
 				"SHOW_REPORT_FORM"=>"N",
 				"LAST_REPORT"=>$arSettings["UF_LAST_REPORT_DATE"],
-				"DELAY_TIME"=>$_SESSION['TIMEMAN_REPORT_DELAY_TIME_'.$this->USER_ID],
+				"DELAY_TIME"=>$arSettings["UF_DELAY_TIME"],
 				"IS_DELAY"=>"N",
 				"IS_REPORT_DAY"=>"N"
 			);
@@ -904,17 +945,13 @@ class CUserReportFull
 			}
 
 			//is time to show a report form?
-			if (doubleval(MakeTimeStamp($arData["DATE_SUBMIT"],TM_FULL_FORMAT))<=doubleval(time() + CTimeZone::GetOffset()) && $arReport["MODE"])
+			if ($this->isShowReportForm($arData["DATE_SUBMIT"]) && $arReport["MODE"])
 			{
 				$arReport["SHOW_REPORT_FORM"] = "Y";
 			}
 
 			//this is a report day?
-			if($arData["DATE_SUBMIT"]
-				&&(
-					CTimeMan::RemoveHoursTS(MakeTimeStamp($arData["DATE_SUBMIT"],TM_FULL_FORMAT)) <= CTimeMan::RemoveHoursTS(time() + CTimeZone::GetOffset())
-				)
-			)
+			if ($this->isReportDay($arData["DATE_SUBMIT"]))
 			{
 				$arReport["IS_REPORT_DAY"] = "Y";
 				$fix = $this->FixDateByHoliday($arData["DATE_FROM"],$arData["DATE_TO"]);
@@ -937,190 +974,374 @@ class CUserReportFull
 		return $arReport;
 	}
 
+	private function isReportDay(string $dateSubmit): bool
+	{
+		if (!$dateSubmit)
+		{
+			return false;
+		}
+		$dateSubmitTimeStamp = MakeTimeStamp($dateSubmit, TM_FULL_FORMAT);
+		$currentTimeWihOffset = time() + CTimeZone::getOffset();
+		return (CTimeMan::removeHoursTS($dateSubmitTimeStamp) <= CTimeMan::removeHoursTS($currentTimeWihOffset));
+	}
+
+	private function isShowReportForm(string $dateSubmit): bool
+	{
+		if (!$dateSubmit)
+		{
+			return false;
+		}
+		$dateSubmitTimeStamp = MakeTimeStamp($dateSubmit, TM_FULL_FORMAT);
+		$currentTimeWihOffset = time() + CTimeZone::getOffset();
+		return (doubleval($dateSubmitTimeStamp) <= doubleval($currentTimeWihOffset));
+	}
+
+	/**
+	 * @deprecated
+	 * @param bool $force
+	 * @return array
+	 */
 	public function GetReportData($force = false)
 	{
-		$arResult = Array(
-			"REPORT_INFO"=>Array(),
-			"REPORT_DATA"=>Array(),
-		);
+		$result = [
+			'REPORT_INFO' => [],
+			'REPORT_DATA' => [],
+		];
 
-		$date = $arResult["REPORT_INFO"] = $this->GetReportInfo();
+		$result['REPORT_INFO'] = $currentReportInfo = $this->getReportInfo();
 
-		if ($date["IS_REPORT_DAY"] == "N")
-			return $arResult;
-		elseif($date["IS_REPORT_DAY"] == "Y")
+		if ($this->isNeedSkipReport($currentReportInfo, $force))
 		{
-			if($date["IS_DELAY"]=="Y" && $date["DELAY_TIME"] < time())
+			return $result;
+		}
+
+		$userId = $this->USER_ID;
+
+		list($currentUser, $currentUserManagers) = $this->getManagersData($userId);
+
+		list($entriesInfo, $savedReport) = $this->getSavedReportFull($userId);
+
+		if (!$this->isSavedReport($entriesInfo['REPORT_ID']))
+		{
+			if (isset($_SESSION['report_files']) && is_array($_SESSION['report_files']))
 			{
-				$date["IS_DELAY"] = "N";
+				$entriesInfo['FILES'] = $_SESSION['report_files'];
 			}
 
-			if (($date["IS_DELAY"]=="Y" || $date["SHOW_REPORT_FORM"]=="N") && !$force)
-				return $arResult;
+			$entriesInfo['REPORT_DATE_FROM'] = MakeTimeStamp($currentReportInfo['DATE_FROM'], TM_SHORT_FORMAT);
+			$entriesInfo['REPORT_DATE_TO'] = MakeTimeStamp($currentReportInfo['DATE_TO'], TM_SHORT_FORMAT);
 		}
 
-		$datefomat = CSite::GetDateFormat("SHORT",SITE_ID);
-		$USER_ID = $this->USER_ID;
-		$arManagers = CTimeMan::GetUserManagers($USER_ID);
-		$arManagers[] = $USER_ID;
-		$user_url = COption::GetOptionString('intranet', 'path_user', '/company/personal/user/#USER_ID#/', SITE_ID);
+		$dateFrom = (($currentReportInfo['DATE_FROM']) ? $currentReportInfo['DATE_FROM'] : $savedReport['DATE_FROM']);
+		$dateTo = (($currentReportInfo['DATE_TO']) ? $currentReportInfo['DATE_TO'] : $savedReport['DATE_TO']);
 
-		$dbManagers = CUser::GetList($by='ID', $order='ASC', array('ID' => implode('|', $arManagers)));
-		$arCurrentUserManagers = array();
-		$arCurrentUser = Array();
-		while ($manager = $dbManagers->GetNext())
+		if ($this->isNeedClearTasksAndEvents($dateTo))
 		{
-			$manager['PHOTO'] =
-				$manager['PERSONAL_PHOTO'] > 0
-				? CIntranetUtils::InitImage($manager['PERSONAL_PHOTO'], 100, 100, BX_RESIZE_IMAGE_EXACT)
-				: array();
-			$userData = array(
+			$entriesInfo['TASKS'] = [];
+			$entriesInfo['EVENTS'] = [];
+		}
+
+		$entriesInfo = $this->preparePlannerData($entriesInfo);
+
+		$filter = [
+			'>=REPORT_DATE' => $dateFrom,
+			'<=REPORT_DATE' => $dateTo,
+			'USER_ID' => $userId
+		];
+		list($entriesInfo, $entryIds) = $this->prepareDailyReports($filter, $entriesInfo);
+		if (!in_array($entriesInfo["ID"], $entryIds))
+		{
+			$entriesInfo = $this->addCurrentReport($entriesInfo);
+		}
+
+		$entriesInfo = $this->clearEventsByCheckStatus($entriesInfo);
+
+		if (!$this->isSavedReport($entriesInfo["REPORT_ID"]))
+		{
+			$entriesInfo['DATE_TEXT'] = $this->getReportDateText(
+				$entriesInfo["REPORT_DATE_FROM"],
+				$entriesInfo["REPORT_DATE_TO"]
+			);
+		}
+
+		$result["REPORT_DATA"] = [
+			'FROM' => $currentUser,
+			'TO' => array_values($currentUserManagers),
+			'INFO' => $entriesInfo,
+			'REPORT' => $entriesInfo["REPORT"],
+			'PLANS' => $entriesInfo["PLANS"],
+			'REPORT_ID'=>($entriesInfo["REPORT_ID"] ? $entriesInfo["REPORT_ID"] : "")
+		];
+
+		return $result;
+	}
+
+	private function isNeedSkipReport(array $currentReportInfo, $force): bool
+	{
+		if ($currentReportInfo["IS_REPORT_DAY"] == "N")
+		{
+			return true;
+		}
+		elseif ($currentReportInfo["IS_REPORT_DAY"] == "Y")
+		{
+			if ($currentReportInfo["IS_DELAY"] == "Y" && $currentReportInfo["DELAY_TIME"] < time())
+			{
+				$currentReportInfo["IS_DELAY"] = "N";
+			}
+
+			if (($currentReportInfo["IS_DELAY"] == "Y" || $currentReportInfo["SHOW_REPORT_FORM"] == "N") && !$force)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private function getManagersData(int $userId): array
+	{
+		$managers = CTimeMan::getUserManagers($userId);
+		$managers[] = $userId;
+
+		$userUrl = COption::getOptionString('intranet', 'path_user', '/company/personal/user/#USER_ID#/', SITE_ID);
+
+		$queryObject = CUser::getList($by='ID', $order='ASC', ['ID' => implode('|', $managers)]);
+
+		$currentUser = [];
+		$currentUserManagers = [];
+
+		while ($manager = $queryObject->getNext())
+		{
+			$manager['PHOTO'] = (
+				$manager['PERSONAL_PHOTO'] > 0 ?
+				CIntranetUtils::initImage($manager['PERSONAL_PHOTO'], 100, 100, BX_RESIZE_IMAGE_EXACT) :
+				[]
+			);
+
+			$userData = [
 				'ID' => $manager['ID'],
 				'LOGIN' => $manager['LOGIN'],
-				'NAME' => CUser::FormatName(CSite::GetNameFormat(false), $manager, true, false),
-				'URL' => str_replace(array('#ID#', '#USER_ID#'), $manager['ID'], $user_url),
+				'NAME' => CUser::formatName(CSite::getNameFormat(false), $manager, true, false),
+				'URL' => str_replace(['#ID#', '#USER_ID#'], $manager['ID'], $userUrl),
 				'WORK_POSITION' => $manager['WORK_POSITION'],
 				'PHOTO' => $manager['PHOTO']['CACHE']['src'],
-			);
-			if ($userData["ID"] == $this->USER_ID)
-				$arCurrentUser = $userData;
+			];
+
+			if ($userData["ID"] == $userId)
+				$currentUser = $userData;
 			else
-				$arCurrentUserManagers[] = $userData;
+				$currentUserManagers[] = $userData;
 		}
-		if(count($arCurrentUserManagers) == 0)
-			$arCurrentUserManagers[] = $arCurrentUser;
-		$arInfo = CTimeMan::GetRuntimeInfo(true);
-		$dbReports = CTimeManReport::GetList(array('ID' => 'ASC'), array('ENTRY_ID' => $arInfo["ID"], 'REPORT_TYPE' => 'REPORT'));
-		if ($Report = $dbReports->Fetch())
-			$RTReport = $Report["REPORT"];
 
-		$dbReport = CTimeManReportFull::GetList(Array("DATE_FROM"=>"DESC"),Array("USER_ID"=>$USER_ID,"ACTIVE"=>"N"),Array(),Array("nTopCount"=>1));
-		if($arReport = $dbReport->Fetch())
+		if (count($currentUserManagers) == 0)
 		{
-			$arInfo["REPORT_DATE_FROM"] = MakeTimeStamp($arReport["DATE_FROM"], $datefomat);
-			$arInfo["REPORT_DATE_TO"] = MakeTimeStamp($arReport["DATE_TO"], $datefomat);
-			//$arInfo["TASKS"] = unserialize($arReport["TASKS"]);
-			$arInfo["REPORT"] = $arReport["REPORT"];
-			$arInfo["PLANS"] = $arReport["PLANS"];
-
-			if ($arReport["FILES"])
-				$arInfo["FILES"] = unserialize($arReport["FILES"]);
-
-			$arInfo["REPORT_ID"] = $arReport["ID"];
-			if ($arInfo["REPORT_DATE_FROM"]!=$arInfo["REPORT_DATE_TO"])
-				$arInfo['DATE_TEXT'] = FormatDate('j F', $arInfo["REPORT_DATE_FROM"])." - ".FormatDate('j F', $arInfo["REPORT_DATE_TO"]);
-			else
-				$arInfo['DATE_TEXT'] = FormatDate('j F', $arInfo["REPORT_DATE_TO"]);
-		}
-		else
-		{
-			if(isset($_SESSION['report_files']) && is_array($_SESSION['report_files']))
-				$arInfo["FILES"] = $_SESSION['report_files'];
-
-			$arInfo["REPORT_DATE_FROM"] = MakeTimeStamp($date["DATE_FROM"], TM_SHORT_FORMAT);
-			$arInfo["REPORT_DATE_TO"] = MakeTimeStamp($date["DATE_TO"], TM_SHORT_FORMAT);
-		}
-		$date_to = (($date["DATE_TO"])?$date["DATE_TO"]:$arReport["DATE_TO"]);
-		$date_to = MakeTimeStamp($date_to,CSite::GetDateFormat("SHORT", SITE_ID));
-		$today = CTimeMan::RemoveHoursTS(time());
-		if ($date_to<$today)
-		{
-			$arInfo["TASKS"] = Array();
-			$arInfo["EVENTS"] = Array();
+			$currentUserManagers[] = $currentUser;
 		}
 
-		$arLastTasks = Array();
-		$arFilter = Array(
-			">=REPORT_DATE" => (($date["DATE_FROM"])?$date["DATE_FROM"]:$arReport["DATE_FROM"]),
-			"<=REPORT_DATE" => (($date["DATE_TO"])?$date["DATE_TO"]:$arReport["DATE_TO"]),
-			"USER_ID"=>$USER_ID
+		return [$currentUser, $currentUserManagers];
+	}
+
+	private function getSavedReportFull(int $userId): array
+	{
+		$info = CTimeMan::getRuntimeInfo(true);
+
+		$datefomat = CSite::getDateFormat("SHORT",SITE_ID);
+
+		$queryObject = CTimeManReportFull::getList(
+			["DATE_FROM" => "DESC"],
+			["USER_ID"=> $userId, "=ACTIVE" => "N"],
+			[],
+			["nTopCount"=>1]
 		);
-		$arTaskIDs = Array();
-		$arEventIDs = Array();
-
-		if(is_array($arInfo['PLANNER']))
+		if ($report = $queryObject->fetch())
 		{
-			$arInfo = array_merge($arInfo, $arInfo['PLANNER']['DATA']);
-			unset($arInfo['PLANNER']);
+			$info["REPORT_DATE_FROM"] = MakeTimeStamp($report["DATE_FROM"], $datefomat);
+			$info["REPORT_DATE_TO"] = MakeTimeStamp($report["DATE_TO"], $datefomat);
+			//$info["TASKS"] = unserialize($report["TASKS"]);
+			$info["REPORT"] = $report["REPORT"];
+			$info["PLANS"] = $report["PLANS"];
+
+			if ($report["FILES"])
+				$info["FILES"] = unserialize($report["FILES"]);
+
+			$info["REPORT_ID"] = $report["ID"];
+
+			$info['DATE_TEXT'] = $this->getReportDateText($info["REPORT_DATE_FROM"], $info["REPORT_DATE_TO"]);
 		}
 
-		if(is_array($arInfo["TASKS"]))
-			foreach($arInfo["TASKS"] as $task)
-				$arTaskIDs[] = $task["ID"];
-		if(is_array($arInfo["EVENTS"]))
-			foreach($arInfo["EVENTS"] as $event)
-				$arEventIDs[] = $event["ID"];
+		return [$info, ($report ? $report : [])];
+	}
 
-		$res = CTimeManReportDaily::GetList(array(),$arFilter);
-		while($day = $res->Fetch())
+	private function isSavedReport($reportId): bool
+	{
+		return (bool) $reportId;
+	}
+
+	private function isNeedClearTasksAndEvents(string $dateTo): bool
+	{
+		$dateTo = MakeTimeStamp($dateTo, CSite::getDateFormat('SHORT', SITE_ID));
+		$today = CTimeMan::removeHoursTS(time());
+		return ($dateTo < $today);
+	}
+
+	private function preparePlannerData(array $entriesInfo): array
+	{
+		if (is_array($entriesInfo['PLANNER']))
 		{
-			$arDayTasks = unserialize($day["TASKS"]);
-			$arDayEvents = unserialize($day["EVENTS"]);
-			if (is_array($arDayTasks))
-				foreach($arDayTasks as $task)
+			$entriesInfo = array_merge($entriesInfo, $entriesInfo['PLANNER']['DATA']);
+			unset($entriesInfo['PLANNER']);
+		}
+		return $entriesInfo;
+	}
+
+	private function prepareDailyReports(array $filter, array $entriesInfo): array
+	{
+		list($taskIds, $eventIds) = $this->getTasksAndEventsIds($entriesInfo);
+
+		$entryIds = [];
+		$queryObject = CTimeManReportDaily::getList([], $filter);
+		while ($report = $queryObject->fetch())
+		{
+			$entriesInfo = $this->prepareDayliTasks($report, $taskIds, $entriesInfo);
+			$entriesInfo = $this->prepareDayliEvents($report, $eventIds, $entriesInfo);
+
+			list($entriesInfo, $entryIds) = $this->prepareDailyReportContent($report, $entryIds, $entriesInfo);
+		}
+
+		return [$entriesInfo, $entryIds];
+	}
+
+	private function getTasksAndEventsIds(array $entriesInfo): array
+	{
+		$taskIds = [];
+		$eventIds = [];
+
+		if (is_array($entriesInfo['TASKS']))
+		{
+			foreach($entriesInfo['TASKS'] as $task)
+			{
+				$taskIds[] = $task['ID'];
+			}
+		}
+
+		if (is_array($entriesInfo['EVENTS']))
+		{
+			foreach($entriesInfo['EVENTS'] as $event)
+			{
+				$eventIds[] = $event['ID'];
+			}
+		}
+
+		return [$taskIds, $eventIds];
+	}
+
+	private function prepareDayliTasks(array $report, array $taskIds, array $entriesInfo): array
+	{
+		$tasks = unserialize($report['TASKS']);
+
+		if (is_array($tasks))
+		{
+			foreach ($tasks as $task)
+			{
+				if (!in_array($task['ID'], $taskIds))
 				{
-					if (!in_array($task["ID"],$arTaskIDs))
+					$entriesInfo['TASKS'][] = $task;
+					$taskIds[] = $task['ID'];
+				}
+				else
+				{
+					foreach ($entriesInfo['TASKS'] as $key => $entryTask)
 					{
-						$arInfo["TASKS"][] = $task;
-						$arTaskIDs[] = $task["ID"];
-					}
-					else
-					{
-						foreach($arInfo["TASKS"] as $key=>$cur_task)
+						if ($entryTask['ID'] == $task['ID'])
 						{
-							if ($cur_task["ID"] == $task["ID"])
-							{
-								$arInfo["TASKS"][$key]["TIME"]+= $task["TIME"];
-							}
+							$entriesInfo['TASKS'][$key]['TIME'] += $task['TIME'];
 						}
 					}
 				}
-			if (is_array($arDayEvents))
-				foreach($arDayEvents as $event)
-					if (!in_array($event["ID"],$arEventIDs))
-					{
-						$arInfo["EVENTS"][] = $event;
-						$arEventIDs[] = $event["ID"];
-					}
-
-			if(strlen($day["REPORT"])>0 && !$arInfo["REPORT_ID"])
-			{
-				$day["REPORT"] = nl2br(htmlspecialcharsbx($day["REPORT"]));
-				$arInfo["REPORT"].="<b>".$day["REPORT_DATE"]."</b><br>".$day["REPORT"]."<br>";
 			}
 		}
 
-		if($RTReport && !$arInfo["REPORT_ID"])
-			$arInfo["REPORT"].="<b>".ConvertTimeStamp(time(),"SHORT")."</b><br>".nl2br(htmlspecialcharsbx($RTReport));
+		return $entriesInfo;
+	}
 
-		if (is_array($arInfo['EVENTS']))
+	private function prepareDayliEvents(array $report, array $eventIds, array $entriesInfo): array
+	{
+		$events = unserialize($report['EVENTS']);
+
+		if (is_array($events))
 		{
-			foreach ($arInfo['EVENTS'] as $key => $arEvent)
+			foreach ($events as $event)
+			{
+				if (!in_array($event['ID'], $eventIds))
+				{
+					$entriesInfo['EVENTS'][] = $event;
+					$eventIds[] = $event['ID'];
+				}
+			}
+		}
+
+		return $entriesInfo;
+	}
+
+	private function prepareDailyReportContent(array $report, array $entryIds, array $entriesInfo): array
+	{
+		if (strlen($report["REPORT"]) > 0 && !$entriesInfo["REPORT_ID"])
+		{
+			$entriesInfo["REPORT"] .= $this->getReportMessageHtml($report["REPORT_DATE"], $report["REPORT"]);
+			$entryIds[] = $report["ENTRY_ID"];
+		}
+
+		return [$entriesInfo, $entryIds];
+	}
+
+	private function getReportMessageHtml(string $reportDate, string $message): string
+	{
+		return "<b>".$reportDate."</b><br>".nl2br(htmlspecialcharsbx($message))."<br>";
+	}
+
+	private function addCurrentReport(array $entriesInfo): array
+	{
+		$queryObject = CTimeManReport::getList(
+			['ID' => 'ASC'],
+			['ENTRY_ID' => $entriesInfo['ID'], 'REPORT_TYPE' => 'REPORT']
+		);
+		if ($currentReport = $queryObject->fetch())
+		{
+			$reportDate = ConvertTimeStamp(time(),'SHORT');
+			if (strpos($entriesInfo['REPORT'], $reportDate) === false)
+			{
+				$entriesInfo['REPORT'] .= $this->getReportMessageHtml($reportDate, $currentReport['REPORT']);
+			}
+		}
+
+		return $entriesInfo;
+	}
+
+	private function clearEventsByCheckStatus(array $entriesInfo): array
+	{
+		if (is_array($entriesInfo['EVENTS']))
+		{
+			foreach ($entriesInfo['EVENTS'] as $key => $arEvent)
 			{
 				if ($arEvent['STATUS'] && $arEvent['STATUS'] != 'Y')
-					unset($arInfo['EVENTS'][$key]);
+					unset($entriesInfo['EVENTS'][$key]);
 			}
-			$arInfo['EVENTS'] = array_values($arInfo['EVENTS']);
+			$entriesInfo['EVENTS'] = array_values($entriesInfo['EVENTS']);
 		}
 
-		if(!$arInfo["REPORT_ID"])
+		return $entriesInfo;
+	}
+
+	private function getReportDateText(int $reportDateFrom, int $reportDateTo): string
+	{
+		if ($reportDateFrom != $reportDateTo)
 		{
-			if ($arInfo["REPORT_DATE_FROM"]!=$arInfo["REPORT_DATE_TO"])
-				$arInfo['DATE_TEXT'] = FormatDate('j F', $arInfo["REPORT_DATE_FROM"])." - ".FormatDate('j F', $arInfo["REPORT_DATE_TO"]);
-			else
-				$arInfo['DATE_TEXT'] = FormatDate('j F', $arInfo["REPORT_DATE_TO"]);
+			return FormatDate('j F', $reportDateFrom)." - ".FormatDate('j F', $reportDateTo);
 		}
-
-		$arResult["REPORT_DATA"] = array(
-			'FROM' => $arCurrentUser,
-			'TO' => array_values($arCurrentUserManagers),
-			'INFO' => $arInfo,
-			'REPORT' => $arInfo["REPORT"],
-			'PLANS' => $arInfo["PLANS"],
-			'REPORT_ID'=>($arInfo["REPORT_ID"]?$arInfo["REPORT_ID"]:"")
-		);
-
-		return $arResult;
+		else
+		{
+			return FormatDate('j F', $reportDateTo);
+		}
 	}
 
 	static function GetEntityID($XML_ID = false,$entity_id = false)
@@ -1148,14 +1369,23 @@ class CUserReportFull
 	public function CancelDelay()
 	{
 		global $USER;
-		$_SESSION['TIMEMAN_REPORT_DELAY_TIME_'.$USER->GetID()] = "";
+
+		$USER->update($USER->getID(), [
+			'UF_DELAY_TIME' => ''
+		]);
+
+		CReportSettings::clearCache($USER->getID());
 	}
 
 	function Delay($time = 3600)
 	{
 		global $USER;
 
-		$_SESSION['TIMEMAN_REPORT_DELAY_TIME_'.$USER->GetID()] = time() + $time;
+		$USER->update($USER->getID(), [
+			'UF_DELAY_TIME' => time() + $time
+		]);
+
+		CReportSettings::clearCache($USER->getID());
 
 		return true;
 	}
@@ -1205,6 +1435,7 @@ class CReportSettings
 					'UF_SETTING_DATE' => $arUser['UF_SETTING_DATE'],
 					'UF_TM_TIME' => $arUser['UF_TM_TIME'],
 					'UF_TM_DAY' => $arUser['UF_TM_DAY'],
+					'UF_DELAY_TIME' => $arUser['UF_DELAY_TIME'],
 				);
 
 				//exhibited a period of individual settings - if not, check section settings
@@ -1221,6 +1452,7 @@ class CReportSettings
 							'UF_TM_REPORT_DATE' => $res['UF_TM_REPORT_DATE'],
 							'UF_TM_TIME' => $res['UF_TM_TIME'],
 							'UF_TM_DAY' => $res['UF_TM_DAY'],
+							'UF_DELAY_TIME' => $arUser['UF_DELAY_TIME'],
 						);
 						//section settings were updated?
 						if(
@@ -1247,8 +1479,6 @@ class CReportSettings
 
 			$CACHE_MANAGER->Set($cache_id, $arSettings);
 		}
-
-		$arSettings['UF_DELAY_TIME'] = $_SESSION['TIMEMAN_REPORT_DELAY_TIME_'.$USER_ID];
 
 		return $arSettings;
 	}

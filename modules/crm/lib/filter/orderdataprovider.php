@@ -109,6 +109,10 @@ class OrderDataProvider extends EntityDataProvider
 			'COUPON' => $this->createField('COUPON'),
 			'SHIPMENT_TRACKING_NUMBER' => $this->createField('SHIPMENT_TRACKING_NUMBER'),
 			'SHIPMENT_DELIVERY_DOC_DATE' => $this->createField('SHIPMENT_DELIVERY_DOC_DATE', array('type' => 'date')),
+			'CHECK_PRINTED' => $this->createField(
+				'CHECK_PRINTED',
+				['type' => 'checkbox']
+			),
 			'XML_ID' => $this->createField('XML_ID'),
 		);
 

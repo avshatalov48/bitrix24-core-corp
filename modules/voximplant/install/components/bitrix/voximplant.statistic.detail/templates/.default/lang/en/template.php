@@ -1,12 +1,23 @@
-<?
+<?php
 $MESS["CT_BLL_SELECTED"] = "Record count";
+$MESS["TEL_STAT_ACTION_CLOSE"] = "Close";
+$MESS["TEL_STAT_ACTION_DOWNLOAD"] = "Upload recordings to Bitrix24";
+$MESS["TEL_STAT_ACTION_EXECUTE"] = "Run";
+$MESS["TEL_STAT_ACTION_STOP"] = "Stop";
 $MESS["TEL_STAT_BACK"] = "Back";
 $MESS["TEL_STAT_BACK_TITLE"] = "Back";
+$MESS["TEL_STAT_CANCEL"] = "Cancel";
+$MESS["TEL_STAT_DOWNLOAD_VOX_RECORD_ERROR"] = "Error uploading data. Please try again later.";
+$MESS["TEL_STAT_ERROR"] = "Error";
+$MESS["TEL_STAT_EXPORT_DETAIL_TO_EXCEL"] = "Export call details to Microsoft Excel";
+$MESS["TEL_STAT_EXPORT_DETAIL_TO_EXCEL_DESCRIPTION"] = "This will create a call details export file.";
+$MESS["TEL_STAT_EXPORT_DETAIL_TO_EXCEL_LONG_PROCESS"] = "Exporting a considerable amount of data may take some time.";
+$MESS["TEL_STAT_EXPORT_ERROR"] = "There was an error. Please try again later or contact your Bitrix24 administrator.";
 $MESS["TEL_STAT_EXPORT_TO_EXCEL"] = "Export to Excel";
 $MESS["TEL_STAT_FILTER_CANCEL"] = "Reset filter";
 $MESS["TEL_STAT_FILTER_CANCEL_TITLE"] = "Reset filter";
+$MESS["TEL_STAT_LOADING"] = "Uploading";
 $MESS["TEL_STAT_SHOW_COUNT"] = "Show quantity";
 $MESS["TEL_STAT_TOTAL"] = "Total";
 $MESS["TEL_STAT_USER_ID_CANCEL"] = "Reset employee filter";
 $MESS["TEL_STAT_USER_ID_CANCEL_TITLE"] = "Reset employee filter";
-?>

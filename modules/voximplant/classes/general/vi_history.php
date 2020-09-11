@@ -52,6 +52,7 @@ class CVoxImplantHistory
 			"INCOMING" =>			$params["INCOMING"],
 			"CALL_START_DATE" =>	$call->getDateCreate(),
 			"CALL_DURATION" =>		isset($params["CALL_DURATION"])? $params["CALL_DURATION"]: $params["DURATION"],
+			"CALL_RECORD_URL" => 	$params["URL"],
 			"CALL_STATUS" =>		$params["CALL_STATUS"],
 			"CALL_FAILED_CODE" =>	$params["CALL_FAILED_CODE"],
 			"CALL_FAILED_REASON" =>	$params["CALL_FAILED_REASON"],
@@ -64,21 +65,21 @@ class CVoxImplantHistory
 			"TRANSCRIPT_PENDING" => $params['TRANSCRIPT_PENDING'] == 'Y' ? 'Y' : 'N',
 		);
 
-		if (strlen($params["PHONE_NUMBER"]) > 0)
+		if ($params["PHONE_NUMBER"] <> '')
 			$arFields["PHONE_NUMBER"] = $params["PHONE_NUMBER"];
 
-		if (strlen($params["CALL_DIRECTION"]) > 0)
+		if ($params["CALL_DIRECTION"] <> '')
 			$arFields["CALL_DIRECTION"] = $params["CALL_DIRECTION"];
 
 		if ($call->getExternalLineId() && $externalLine = VI\Model\ExternalLineTable::getRowById($call->getExternalLineId()))
 		{
 			$arFields["PORTAL_NUMBER"] = $externalLine["NORMALIZED_NUMBER"];
 		}
-		else if (strlen($params["PORTAL_NUMBER"]) > 0)
+		else if ($params["PORTAL_NUMBER"] <> '')
 		{
 			$arFields["PORTAL_NUMBER"] = $params["PORTAL_NUMBER"];
 		}
-		else if (strlen($params["ACCOUNT_SEARCH_ID"]) > 0)
+		else if ($params["ACCOUNT_SEARCH_ID"] <> '')
 		{
 			$arFields["PORTAL_NUMBER"] = $params["ACCOUNT_SEARCH_ID"];
 		}
@@ -86,7 +87,7 @@ class CVoxImplantHistory
 		if($arFields['CALL_VOTE'] < 1 || $arFields['CALL_VOTE'] > 5)
 			$arFields['CALL_VOTE'] = null;
 
-		if (strlen($params["CALL_LOG"]) > 0)
+		if ($params["CALL_LOG"] <> '')
 			$arFields["CALL_LOG"] = $params["CALL_LOG"];
 
 		if ($arFields["INCOMING"] == CVoxImplantMain::CALL_INFO)
@@ -233,7 +234,7 @@ class CVoxImplantHistory
 			self::DownloadAgent($insertResult->getId(), $params['URL'], $attachToCrm);
 		}
 
-		if (strlen($params["ACCOUNT_PAYED"]) > 0 && in_array($params["ACCOUNT_PAYED"], Array('Y', 'N')))
+		if ($params["ACCOUNT_PAYED"] <> '' && in_array($params["ACCOUNT_PAYED"], Array('Y', 'N')))
 		{
 			CVoxImplantAccount::SetPayedFlag($params["ACCOUNT_PAYED"]);
 		}
@@ -293,7 +294,7 @@ class CVoxImplantHistory
 		self::WriteToLog('Downloading record ' . $recordUrl);
 		$historyID = intval($historyID);
 		$attachToCrm = ($attachToCrm == true);
-		if (strlen($recordUrl) <= 0 || $historyID <= 0)
+		if ($recordUrl == '' || $historyID <= 0)
 		{
 			return false;
 		}
@@ -344,7 +345,7 @@ class CVoxImplantHistory
 			{
 				$tempPath = \CFile::GetTempName('', bx_basename($fileName));
 			}
-			else if ($urlComponents && strlen($urlComponents["path"]) > 0)
+			else if ($urlComponents && $urlComponents["path"] <> '')
 			{
 				$tempPath = \CFile::GetTempName('', bx_basename($urlComponents["path"]));
 			}
@@ -378,7 +379,7 @@ class CVoxImplantHistory
 
 			if (is_array($recordFile) && $recordFile['size'] && $recordFile['size'] > 0)
 			{
-				if(strpos($recordFile['name'], '.') === false)
+				if(mb_strpos($recordFile['name'], '.') === false)
 				{
 					$recordFile['name'] = $recordFile['name'] . '.mp3';
 				}
@@ -614,7 +615,7 @@ class CVoxImplantHistory
 	public static function GetMessageForChat($callFields, $hasRecord = false, $prependPlus = true)
 	{
 		$result = '';
-		if (strlen($callFields["PHONE_NUMBER"]) > 0 && $callFields["PORTAL_USER_ID"] > 0 && $callFields["CALL_FAILED_CODE"] != 423)
+		if ($callFields["PHONE_NUMBER"] <> '' && $callFields["PORTAL_USER_ID"] > 0 && $callFields["CALL_FAILED_CODE"] != 423)
 		{
 			$formattedNumber = \Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($callFields["PHONE_NUMBER"])->format();
 			$formattedNumber = "[CALL={$formattedNumber}]" . $formattedNumber . "[/CALL]";
@@ -838,7 +839,7 @@ class CVoxImplantHistory
 			}
 		}
 		$f=fopen($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/voximplant.log", "a+t");
-		$w=fwrite($f, "\n------------------------\n".date("Y.m.d G:i:s")."\n".(strlen($title)>0? $title: 'DEBUG')."\n".print_r($data, 1)."\n------------------------\n");
+		$w=fwrite($f, "\n------------------------\n".date("Y.m.d G:i:s")."\n".($title <> ''? $title: 'DEBUG')."\n".print_r($data, 1)."\n------------------------\n");
 		fclose($f);
 
 		return true;

@@ -4,6 +4,8 @@ $fileman_google_map_api_key = \Bitrix\Main\Config\Option::get('fileman', 'google
 
 $location_default_option = [
 	'use_google_api' => 'Y',
+	'google_map_show_photos' => 'N',
+	'google_use_geocoding_service' => 'N',
 	'google_map_api_key' => $fileman_google_map_api_key,
 	'google_map_api_key_backend' => $fileman_google_map_api_key,
 	'address_format_code' => getDefaultAddressFormatCode()

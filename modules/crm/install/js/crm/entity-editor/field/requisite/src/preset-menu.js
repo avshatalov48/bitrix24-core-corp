@@ -1,7 +1,7 @@
 import {MenuManager} from "main.popup";
 import {EventEmitter} from "main.core.events";
 import {MessageBox} from 'ui.dialogs.messagebox';
-import {Loc} from "main.core";
+import {Loc, Text} from "main.core";
 
 export class PresetMenu extends EventEmitter
 {
@@ -42,7 +42,7 @@ export class PresetMenu extends EventEmitter
 		{
 			menu.push(
 				{
-					text: item.name,
+					text: Text.encode(item.name),
 					value: item.value,
 					onclick: this.onSelect.bind(this, item)
 				}

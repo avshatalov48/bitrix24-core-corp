@@ -250,15 +250,24 @@ final class Task extends Base
 		$localOffset = (new \DateTime())->getOffset();
 		$userOffset =  \CTimeZone::GetOffset(null, true);
 		$offset = $localOffset + $userOffset;
+		$newOffset = ($offset > 0 ? '+' : '').UI::formatTimeAmount($offset, 'HH:MI');
 
 		foreach ($dateFields as $fieldName => $fieldData)
 		{
-			if ($row[$fieldName])
+			if ($field = $row[$fieldName])
 			{
-				$date = new DateTime($row[$fieldName]);
-				if ($date)
+				if (is_array($field))
 				{
-					$newOffset = ($offset > 0 ? '+' : '').UI::formatTimeAmount($offset, 'HH:MI');
+					foreach ($field as $key => $value)
+					{
+						if ($date = new DateTime($value))
+						{
+							$row[$fieldName][$key] = mb_substr($date->format('c'), 0, -6).$newOffset;
+						}
+					}
+				}
+				else if ($date = new DateTime($field))
+				{
 					$row[$fieldName] = mb_substr($date->format('c'), 0, -6).$newOffset;
 				}
 			}

@@ -619,7 +619,7 @@ else
 	</tr>
 	<tr class="adm-detail-required-field">
 		<td><?echo GetMessage("LDAP_EDIT_GROUP_FILTER")?></td>
-		<td><textarea id="GROUP_FILTER" name="GROUP_FILTER" cols="50" rows="4" maxlength="2048"><?=$str_GROUP_FILTER?></textarea></td>
+		<td><textarea id="GROUP_FILTER" name="GROUP_FILTER" cols="50" rows="4"><?=$str_GROUP_FILTER?></textarea></td>
 	</tr>
 	<tr class="adm-detail-required-field">
 		<td><?echo GetMessage("LDAP_EDIT_GROUP_ATTR")?></td>
@@ -635,7 +635,7 @@ else
 	</tr>
 	<tr class="adm-detail-required-field">
 		<td><?echo GetMessage("LDAP_EDIT_USER_FILTER")?></td>
-		<td><textarea id="USER_FILTER" name="USER_FILTER" cols="50" rows="4" maxlength="2048"><?=$str_USER_FILTER?></textarea></td>
+		<td><textarea id="USER_FILTER" name="USER_FILTER" cols="50" rows="4"><?=$str_USER_FILTER?></textarea></td>
 	</tr>
 	<tr class="adm-detail-required-field">
 		<td><?echo GetMessage("LDAP_EDIT_USER_ATTR")?></td>

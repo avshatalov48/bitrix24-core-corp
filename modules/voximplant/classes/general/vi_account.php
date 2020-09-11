@@ -74,10 +74,10 @@ class CVoxImplantAccount
 
 	public function GetAccountName()
 	{
-		if (strlen($this->account_name)<=0)
+		if ($this->account_name == '')
 		{
 			$this->account_name = COption::GetOptionString("voximplant", self::ACCOUNT_NAME);
-			if (strlen($this->account_name)<=0)
+			if ($this->account_name == '')
 			{
 				if (!$this->UpdateAccountInfo())
 				{
@@ -179,10 +179,10 @@ class CVoxImplantAccount
 
 	public function GetAccountCurrency($allowUpdate = true)
 	{
-		if (strlen($this->account_currency)<=0)
+		if ($this->account_currency == '')
 		{
 			$this->account_currency = COption::GetOptionString("voximplant", self::ACCOUNT_CURRENCY);
-			if (strlen($this->account_currency)<=0 && $allowUpdate)
+			if ($this->account_currency == '' && $allowUpdate)
 			{
 				if (!$this->UpdateAccountInfo())
 				{
@@ -223,10 +223,10 @@ class CVoxImplantAccount
 
 	public function GetAccountLang($allowUpdate = true)
 	{
-		if (strlen($this->account_lang)<=0)
+		if ($this->account_lang == '')
 		{
 			$this->account_lang = COption::GetOptionString("voximplant", self::ACCOUNT_LANG);
-			if (strlen($this->account_lang)<=0)
+			if ($this->account_lang == '')
 			{
 				if(!$allowUpdate)
 					return false;

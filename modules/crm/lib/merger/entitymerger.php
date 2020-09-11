@@ -453,7 +453,17 @@ abstract class EntityMerger
 			//endregion Merge requisites
 		}
 
+		$historyItems = null;
+		if (isset($targ['HISTORY_ITEMS']))
+		{
+			$historyItems = $targ['HISTORY_ITEMS'];
+			unset($targ['HISTORY_ITEMS']);
+		}
 		$this->updateEntity($targID, $targ, self::ROLE_TARG, array('DISABLE_USER_FIELD_CHECK' => true));
+		if (is_array($historyItems))
+		{
+			$this->saveHistoryItems($targID, $historyItems);
+		}
 
 		foreach($seedIDs as $seedID)
 		{
@@ -569,7 +579,18 @@ abstract class EntityMerger
 		}
 		//endregion Merge requisites
 
+		$historyItems = null;
+		if (isset($targ['HISTORY_ITEMS']))
+		{
+			$historyItems = $targ['HISTORY_ITEMS'];
+			unset($targ['HISTORY_ITEMS']);
+		}
 		$this->updateEntity($targID, $targ, self::ROLE_TARG, array('DISABLE_USER_FIELD_CHECK' => true));
+
+		if (is_array($historyItems))
+		{
+			$this->saveHistoryItems($targID, $historyItems);
+		}
 
 		$this->rebind($seedID, $targID);
 
@@ -1150,6 +1171,7 @@ abstract class EntityMerger
 		}
 		$enableMap = $map !== null && !empty($map);
 
+		$historyItems = [];
 		foreach($fieldInfos as $fieldID => $fieldInfo)
 		{
 			if(!static::canMergeEntityField($fieldID))
@@ -1189,52 +1211,12 @@ abstract class EntityMerger
 				continue;
 			}
 
-			$targFlg = isset($targ[$fieldID]);
-			if(!$skipEmpty)
-			{
-				$type = isset($fieldInfo['TYPE']) ? $fieldInfo['TYPE'] : 'string';
-				if($type === 'string'
-					|| $type === 'char'
-					|| $type === 'datetime'
-					|| $type === 'crm_status'
-					|| $type === 'crm_currency')
-				{
-					$targFlg = $targFlg && $targ[$fieldID] !== '';
-				}
-				elseif($type === 'double')
-				{
-					$targFlg = $targFlg && doubleval($targ[$fieldID]) !== 0.0;
-				}
-				elseif($type === 'integer' || $type === 'user')
-				{
-					$targFlg = $targFlg && intval($targ[$fieldID]) !== 0;
-				}
-			}
+			$targFlg = static::doesFieldHaveValue($fieldInfo, $targ, $fieldID, $skipEmpty);
 
 			$seedValueMap = array();
 			foreach($seedMap as $seedID => $seed)
 			{
-				$seedFlg = isset($seed[$fieldID]);
-				if(!$skipEmpty)
-				{
-					$type = isset($fieldInfo['TYPE']) ? $fieldInfo['TYPE'] : 'string';
-					if($type === 'string'
-						|| $type === 'char'
-						|| $type === 'datetime'
-						|| $type === 'crm_status'
-						|| $type === 'crm_currency')
-					{
-						$seedFlg = $seedFlg && $seed[$fieldID] !== '';
-					}
-					elseif($type === 'double')
-					{
-						$seedFlg = $seedFlg && doubleval($seed[$fieldID]) !== 0.0;
-					}
-					elseif($type === 'integer' || $type === 'user')
-					{
-						$seedFlg = $seedFlg && intval($seed[$fieldID]) !== 0;
-					}
-				}
+				$seedFlg = static::doesFieldHaveValue($fieldInfo, $seed, $fieldID, $skipEmpty);
 
 				if($seedFlg)
 				{
@@ -1252,20 +1234,31 @@ abstract class EntityMerger
 				$currentSeedIDs = array_keys($seedValueMap);
 				$currentTarg = $targFlg ? $targ : $seedMap[array_shift($currentSeedIDs)];
 
+				$fieldConflictResolver = static::getFieldConflictResolver($fieldID, $fieldInfo['TYPE'] ?? 'string');
+				$fieldConflictResolver->setTarget($currentTarg);
+
 				foreach($currentSeedIDs as $seedID)
 				{
-					if($currentTarg[$fieldID] != $seedValueMap[$seedID]
-						&& !static::resolveEntityFieldConflict($seedMap[$seedID], $currentTarg, $fieldID)
-					)
-					{
-						throw new EntityMergerException(
-							\CCrmOwnerType::Undefined,
-							0,
-							self::ROLE_UNDEFINED,
-							EntityMergerException::CONFLICT_OCCURRED
-						);
-					}
+					$fieldConflictResolver->addSeed((int)$seedID, $seedMap[$seedID]);
 				}
+				$resolveResult = $fieldConflictResolver->resolve();
+				if(!$resolveResult->isSuccess())
+				{
+					throw new EntityMergerException(
+						\CCrmOwnerType::Undefined,
+						0,
+						self::ROLE_UNDEFINED,
+						EntityMergerException::CONFLICT_OCCURRED
+					);
+				}
+				$targFlg = $targFlg || $resolveResult->isTargetChanged();
+				$resolveResult->updateTarget($targ);
+
+				foreach($currentSeedIDs as $seedID)
+				{
+					$resolveResult->updateSeed((int)$seedID, $seedMap[$seedID]);
+				}
+				$historyItems = array_merge($historyItems, $resolveResult->getHistoryItems());
 			}
 
 			// Skip if target entity field is defined
@@ -1274,6 +1267,10 @@ abstract class EntityMerger
 			{
 				$targ[$fieldID] = $seedValueMap[array_keys($seedValueMap)[0]];
 			}
+		}
+		if (!empty($historyItems))
+		{
+			$targ['HISTORY_ITEMS'] = $historyItems;
 		}
 	}
 
@@ -1324,6 +1321,7 @@ abstract class EntityMerger
 			);
 		}
 
+		$historyItems = [];
 		foreach($fieldInfos as $fieldID => &$fieldInfo)
 		{
 			if(!static::canMergeEntityField($fieldID))
@@ -1343,46 +1341,33 @@ abstract class EntityMerger
 				}
 			}
 
-			$targFlg = isset($targ[$fieldID]);
-			$seedFlg = isset($seed[$fieldID]);
+			$targFlg = static::doesFieldHaveValue($fieldInfo, $targ, $fieldID, $skipEmpty);
+			$seedFlg = static::doesFieldHaveValue($fieldInfo, $seed, $fieldID, $skipEmpty);
+			$type = ($fieldInfo['TYPE'] ?? 'string');
 
-			if(!$skipEmpty)
-			{
-				$type = isset($fieldInfo['TYPE']) ? $fieldInfo['TYPE'] : 'string';
-				if($type === 'string'
-					|| $type === 'char'
-					|| $type === 'datetime'
-					|| $type === 'crm_status'
-					|| $type === 'crm_currency')
-				{
-					$targFlg = $targFlg && $targ[$fieldID] !== '';
-					$seedFlg = $seedFlg && $seed[$fieldID] !== '';
-				}
-				elseif($type === 'double')
-				{
-					$targFlg = $targFlg && doubleval($targ[$fieldID]) !== 0.0;
-					$seedFlg = $seedFlg && doubleval($seed[$fieldID]) !== 0.0;
-				}
-				elseif($type === 'integer' || $type === 'user')
-				{
-					$targFlg = $targFlg && intval($targ[$fieldID]) !== 0;
-					$seedFlg = $seedFlg && intval($seed[$fieldID]) !== 0;
-				}
-			}
-
+			$fieldConflictResolver = static::getFieldConflictResolver($fieldID, $type);
+			$fieldConflictResolver->addSeed((int)$seed['ID'], $seed);
+			$fieldConflictResolver->setTarget($targ);
 			if($targFlg
 				&& $seedFlg
-				&& $targ[$fieldID] != $seed[$fieldID]
 				&& $conflictResolutionMode === ConflictResolutionMode::ASK_USER
-				&& !static::resolveEntityFieldConflict($seed, $targ, $fieldID)
 			)
 			{
-				throw new EntityMergerException(
-					\CCrmOwnerType::Undefined,
-					0,
-					self::ROLE_UNDEFINED,
-					EntityMergerException::CONFLICT_OCCURRED
-				);
+				$resolveResult = $fieldConflictResolver->resolve();
+				if (!$resolveResult->isSuccess())
+				{
+					throw new EntityMergerException(
+						\CCrmOwnerType::Undefined,
+						0,
+						self::ROLE_UNDEFINED,
+						EntityMergerException::CONFLICT_OCCURRED
+					);
+				}
+				$resolveResult->updateSeed((int)$seed['ID'], $seed);
+				$resolveResult->updateTarget($targ);
+				$historyItems = array_merge($historyItems, $resolveResult->getHistoryItems());
+
+				$targFlg = $targFlg || $resolveResult->isTargetChanged();
 			}
 
 			// Skip if target entity field is defined
@@ -1392,6 +1377,66 @@ abstract class EntityMerger
 				$targ[$fieldID] = $seed[$fieldID];
 			}
 		}
+		if (!empty($historyItems))
+		{
+			$targ['HISTORY_ITEMS'] = $historyItems;
+		}
+	}
+
+	/**
+	 * Check is field empty or not.
+	 * @param array $fieldInfo
+	 * @param array $fields
+	 * @param string $fieldId
+	 * @param bool $skipEmpty
+	 * @return bool
+	 */
+	final protected static function doesFieldHaveValue(
+		array $fieldInfo,
+		array $fields,
+		string $fieldId,
+		bool $skipEmpty
+	): bool
+	{
+		$hasValue = isset($fields[$fieldId]);
+
+		if(!$skipEmpty)
+		{
+			$type = ($fieldInfo['TYPE'] ?? 'string');
+			$fieldValue = $fields[$fieldId];
+
+			if (!$hasValue = ($hasValue && static::isFieldNotEmpty($fieldInfo, $fields, $fieldId)))
+			{
+				return $hasValue;
+			}
+
+			if (in_array($type, ['string', 'char', 'datetime', 'crm_status', 'crm_currency'], true))
+			{
+				$hasValue = ($hasValue && $fieldValue !== '');
+			}
+			elseif ($type === 'double')
+			{
+				$hasValue = ($hasValue && (float)$fieldValue !== 0.0);
+			}
+			elseif ($type === 'integer' || $type === 'user')
+			{
+				$hasValue = ($hasValue && (int)$fieldValue !== 0);
+			}
+		}
+
+		return $hasValue;
+	}
+
+	/**
+	 * Additional verification rules for inherited classes
+	 * @param array $fieldInfo
+	 * @param array $fields
+	 * @param string $fieldId
+	 * @return bool
+	 */
+	protected static function isFieldNotEmpty(array $fieldInfo, array $fields, string $fieldId): bool
+	{
+		return true;
 	}
 
 	/** Check if source and target entities can be merged
@@ -1500,9 +1545,19 @@ abstract class EntityMerger
 		}
 	}
 
-	protected static function resolveEntityFieldConflict(array &$seed, array &$targ, $fieldID)
+	/**
+	 * Get field conflicts resolver.
+	 * @param string $fieldId
+	 * @param string $type
+	 * @return ConflictResolver\Base
+	 */
+	protected static function getFieldConflictResolver(string $fieldId, string $type): ConflictResolver\Base
 	{
-		return false;
+		if ($type === 'string')
+		{
+			return new Crm\Merger\ConflictResolver\StringField($fieldId);
+		}
+		return new ConflictResolver\Base($fieldId);
 	}
 
 	/**
@@ -1549,16 +1604,24 @@ abstract class EntityMerger
 			if(!$isMultiple
 				&& isset($targ[$fieldID])
 				&& isset($seed[$fieldID])
-				&& $targ[$fieldID] != $seed[$fieldID]
 				&& $conflictResolutionMode === ConflictResolutionMode::ASK_USER
 			)
 			{
-				throw new EntityMergerException(
-					\CCrmOwnerType::Undefined,
-					0,
-					self::ROLE_UNDEFINED,
-					EntityMergerException::CONFLICT_OCCURRED
-				);
+				$fieldConflictResolver = static::getFieldConflictResolver($fieldID, $typeID);
+				$fieldConflictResolver->setTarget($targ);
+				$fieldConflictResolver->addSeed((int)$seed['ID'], $seed);
+				$resolveResult = $fieldConflictResolver->resolve();
+				if(!$resolveResult->isSuccess())
+				{
+					throw new EntityMergerException(
+						\CCrmOwnerType::Undefined,
+						0,
+						self::ROLE_UNDEFINED,
+						EntityMergerException::CONFLICT_OCCURRED
+					);
+				}
+				$resolveResult->updateTarget($targ);
+				$resolveResult->updateSeed((int)$seed['ID'], $seed);
 			}
 
 			if($typeID === 'file')
@@ -1858,19 +1921,31 @@ abstract class EntityMerger
 				$currentSeedIDs = array_keys($seedValueMap);
 				$currentTarg = isset($targ[$fieldID]) ? $targ : $seedMap[array_shift($currentSeedIDs)];
 
+				$fieldConflictResolver = static::getFieldConflictResolver($fieldID, $typeID);
+				$fieldConflictResolver->setTarget($currentTarg);
 				foreach($currentSeedIDs as $seedID)
 				{
-					if($currentTarg[$fieldID] != $seedValueMap[$seedID]
-						&& !static::resolveEntityFieldConflict($seedMap[$seedID], $currentTarg, $fieldID)
-						&& ($sourceIDs === null || !in_array($seedID, $sourceIDs))
-					)
+					if($sourceIDs === null || !in_array($seedID, $sourceIDs))
 					{
-						throw new EntityMergerException(
-							\CCrmOwnerType::Undefined,
-							0,
-							self::ROLE_UNDEFINED,
-							EntityMergerException::CONFLICT_OCCURRED
-						);
+						$fieldConflictResolver->addSeed((int)$seedID, $seedMap[$seedID]);
+					}
+				}
+				$resolveResult = $fieldConflictResolver->resolve();
+				if(!$resolveResult->isSuccess())
+				{
+					throw new EntityMergerException(
+						\CCrmOwnerType::Undefined,
+						0,
+						self::ROLE_UNDEFINED,
+						EntityMergerException::CONFLICT_OCCURRED
+					);
+				}
+				$resolveResult->updateTarget($targ);
+				foreach($currentSeedIDs as $seedID)
+				{
+					if($sourceIDs === null || !in_array($seedID, $sourceIDs))
+					{
+						$resolveResult->updateSeed((int)$seedID, $seedMap[$seedID]);
 					}
 				}
 			}
@@ -2533,6 +2608,42 @@ abstract class EntityMerger
 	{
 		throw new Main\NotImplementedException('Method setupRecoveryData must be overridden');
 	}
+
+	/**
+	 * Get field caption
+	 * @param string $fieldId
+	 * @throws Main\NotImplementedException
+	 */
+	protected function getFieldCaption(string $fieldId):string
+	{
+		throw new Main\NotImplementedException('Method getFieldCaption must be overridden');
+	}
+
+	/**
+	 * Save history items
+	 */
+	protected function saveHistoryItems(int $entityId, array $historyItems)
+	{
+		$event = new \CCrmEvent();
+		foreach ($historyItems as $fieldId => $item)
+		{
+			$fieldId = (string)$fieldId;
+			$eventParams = [
+				'ENTITY_FIELD' => $fieldId,
+				'EVENT_NAME' => Main\Localization\Loc::getMessage('CRM_ENTITY_MERGER_HISTORY_ITEM_TITLE'),
+				'EVENT_TEXT_1' => Main\Localization\Loc::getMessage(
+					'CRM_ENTITY_MERGER_HISTORY_ITEM_VALUE', [
+						'#FIELD#' => $this->getFieldCaption($fieldId),
+						'#VALUE#' => implode(', ', array_unique($item))
+					]),
+				'ENTITY_TYPE' => \CCrmOwnerType::ResolveName($this->entityTypeID),
+				'ENTITY_ID' => $entityId,
+				'EVENT_TYPE' => \CCrmEvent::TYPE_MERGER
+			];
+			$event->Add($eventParams, false);
+		}
+	}
+
 	/**
 	 * Check entity read permission for user
 	 * @param int $entityID Entity ID.

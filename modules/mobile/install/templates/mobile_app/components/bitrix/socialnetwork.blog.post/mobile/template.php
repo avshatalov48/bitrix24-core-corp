@@ -867,7 +867,7 @@ if(!empty($arResult["Post"]))
 					$strOnClickMore = " onclick=\"oMSL.expandText(".intval($arParams["LOG_ID"]).");\"";
 				}
 
-				?><a id="post_more_limiter_<?=intval($arParams["LOG_ID"])?>" <?=$strOnClickMore?> class="post-item-more" ontouchstart="this.classList.toggle('post-item-more-pressed')" ontouchend="this.classList.toggle('post-item-more-pressed')" style="display: none;"><?
+				?><a id="post_more_limiter_<?=intval($arParams["LOG_ID"])?>" <?=$strOnClickMore?> class="post-item-more" ontouchstart="this.classList.toggle('post-item-more-pressed')" ontouchend="this.classList.toggle('post-item-more-pressed')" style="visibility: hidden;"><?
 					?><?=GetMessage("BLOG_LOG_EXPAND")?><?
 				?></a><?
 

@@ -20,21 +20,9 @@ use Bitrix\Main\EventResult;
 
 class DiskManager
 {
-	private static $defaultSiteID = null;
 	private static function getDefaultSiteID()
 	{
-		if(self::$defaultSiteID !== null)
-		{
-			return self::$defaultSiteID;
-		}
-
-		$portals = \CUtil::getSitesByWizard('portal');
-		if(is_array($portals) && is_array($portals[0]))
-		{
-			return (self::$defaultSiteID = $portals[0]['LID']);
-		}
-
-		return (self::$defaultSiteID = 's1');
+		return \Bitrix\Crm\Integration\Main\Site::getPortalSiteId();
 	}
 	public static function checkFileReadPermission($fileID, $userID = 0)
 	{

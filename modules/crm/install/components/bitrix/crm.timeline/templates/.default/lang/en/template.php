@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_TIMELINE_ACTIVITY_CREATION"] = "Activity created: #TITLE#";
 $MESS["CRM_TIMELINE_ACTIVITY_DELETION_CONFIRM"] = "Are you sure you want to delete this event?";
 $MESS["CRM_TIMELINE_ACTIVITY_DELETION_TITLE_CONFIRM"] = "Delete Event";
@@ -18,6 +18,7 @@ $MESS["CRM_TIMELINE_CANCEL_BTN"] = "Cancel";
 $MESS["CRM_TIMELINE_CHAT_INVITE"] = "Invite to chat";
 $MESS["CRM_TIMELINE_CHOOSE"] = "Select";
 $MESS["CRM_TIMELINE_COLLAPSE"] = "Collapse";
+$MESS["CRM_TIMELINE_COLLAPSE_SM"] = "collapse";
 $MESS["CRM_TIMELINE_COMMENT"] = "Comment";
 $MESS["CRM_TIMELINE_COMMENT_DELETION_CONFIRM"] = "Are you sure you want to delete this comment?";
 $MESS["CRM_TIMELINE_COMMENT_PLACEHOLDER"] = "Leave a comment";
@@ -30,6 +31,7 @@ $MESS["CRM_TIMELINE_DEAL_FAILED_MARK"] = "Deal lost";
 $MESS["CRM_TIMELINE_DEAL_LINK"] = "Deal linked";
 $MESS["CRM_TIMELINE_DEAL_SCHEDULE_STUB"] = "You don't have any scheduled activities. Move the deal stage, plan an activity or engage a wait.";
 $MESS["CRM_TIMELINE_DEAL_SUCCESS_MARK"] = "Deal won";
+$MESS["CRM_TIMELINE_DELIVERY_DELETION_CONFIRM"] = "Are you sure you want to delete this delivery?";
 $MESS["CRM_TIMELINE_DETAILS"] = "More";
 $MESS["CRM_TIMELINE_DOCUMENT"] = "Document";
 $MESS["CRM_TIMELINE_DOCUMENT_DELETION_CONFIRM"] = "Are you sure you want to delete this document?";
@@ -39,6 +41,7 @@ $MESS["CRM_TIMELINE_EMAIL_RENEWMARK"] = "Activity resumed";
 $MESS["CRM_TIMELINE_EMAIL_SUCCESSMARK"] = "Completed";
 $MESS["CRM_TIMELINE_EMPTY_COMMENT_MESSAGE"] = "The message text is empty.";
 $MESS["CRM_TIMELINE_EXPAND"] = "Expand";
+$MESS["CRM_TIMELINE_EXPAND_SM"] = "expand";
 $MESS["CRM_TIMELINE_FASTEN_LIMIT_MESSAGE"] = "You can add up to three events to Favorites.";
 $MESS["CRM_TIMELINE_FILTER_BUTTON_CAPTION"] = "Filter";
 $MESS["CRM_TIMELINE_FILTER_EMPTY_RESULT_STUB"] = "No entries have been found.";
@@ -200,4 +203,3 @@ $MESS["CRM_TIMELINE_WAIT_WEEK_NOMINATIVE"] = "week";
 $MESS["CRM_TIMELINE_WEBFORM_RENEWMARK"] = "CRM form activity resumed";
 $MESS["CRM_TIMELINE_WEBFORM_SUCCESSMARK"] = "CRM form activity completed";
 $MESS["CRM_TIMELINE_WEBFORM_TITLE"] = "Web form";
-?>

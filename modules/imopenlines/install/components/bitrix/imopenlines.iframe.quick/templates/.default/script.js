@@ -342,10 +342,10 @@ quickAnswersManager.prototype.renderResults = function(items)
 					BX.create('div', {
 						attrs: {
 							'data-bx-item-id': items[i].id,
-							'data-bx-item-text': items[i].text,
+							'data-bx-item-text': BX.Text.encode(items[i].text),
 							className: 'imopenlines-iframe-quick-result-item'
 						},
-						html: items[i].name,
+						html: BX.Text.encode(items[i].name),
 						events: {
 							click: function()
 							{
@@ -423,7 +423,7 @@ quickAnswersManager.prototype.putMessage = function(message, answerId)
 			}
 		});
 	}
-	this.frameCommunicationSend({'action': 'put', 'message': message});
+	this.frameCommunicationSend({'action': 'put', 'message': BX.Text.decode(message)});
 	this.frameCommunicationSend({'action': 'close'});
 };
 

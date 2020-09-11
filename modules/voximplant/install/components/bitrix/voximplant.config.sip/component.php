@@ -17,7 +17,7 @@ $result = $ViHttp->GetSipInfo();
 
 $arResult['SIP_ENABLE'] = (bool)$result->ACTIVE;
 $arResult['TEST_MINUTES'] = intval($result->FREE);
-$arResult['DATE_END'] = (strlen($result->DATE_END) > 0 ? new \Bitrix\Main\Type\Date($result->DATE_END, 'd.m.Y') : '');
+$arResult['DATE_END'] = ($result->DATE_END <> '' ? new \Bitrix\Main\Type\Date($result->DATE_END, 'd.m.Y') : '');
 
 $arResult['LINK_TO_BUY'] = CVoxImplantSip::getBuyLink();
 if (IsModuleInstalled('bitrix24'))
@@ -48,9 +48,9 @@ $res = Bitrix\Voximplant\ConfigTable::getList(Array(
 ));
 while ($row = $res->fetch())
 {
-	if (strlen($row['PHONE_NAME']) <= 0)
+	if ($row['PHONE_NAME'] == '')
 	{
-		$row['PHONE_NAME'] = substr($row['SEARCH_ID'], 0, 3) == 'reg'? GetMessage('VI_CONFIG_SIP_CLOUD_TITLE'): GetMessage('VI_CONFIG_SIP_OFFICE_TITLE');
+		$row['PHONE_NAME'] = mb_substr($row['SEARCH_ID'], 0, 3) == 'reg'? GetMessage('VI_CONFIG_SIP_CLOUD_TITLE'): GetMessage('VI_CONFIG_SIP_OFFICE_TITLE');
 		$row['PHONE_NAME'] = str_replace('#ID#', $row['ID'], $row['PHONE_NAME']);
 	}
 	$arResult['LIST_SIP_NUMBERS'][] = $row;

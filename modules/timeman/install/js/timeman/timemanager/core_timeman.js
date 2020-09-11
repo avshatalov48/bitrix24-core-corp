@@ -435,16 +435,6 @@ BX.CTimeMan.prototype.setData = function(DATA)
 	{
 		BX.onCustomEvent(this, 'onTimeManDataRecieved', [this.DATA]);
 	}
-
-	if (this.DATA.OPEN_NOW)
-	{
-		if (!this.WND.SHOW && !this.bWasForsedOpen)
-		{
-			this.Update();
-			BX.ready(BX.delegate(this.WND.Show, this.WND));
-		}
-		this.bWasForsedOpen = true;
-	}
 }
 
 BX.CTimeMan.prototype.Update = function(force)
@@ -5250,9 +5240,7 @@ BX.CTimeManReportForm.prototype.GetContentTimeRow = function()
 					? this.data.INFO.EXPIRED_DATE
 					: now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds() - tz_self + tz_emp
 			),
-		duration = parseInt(this.data.INFO.INFO.DURATION) > 0
-			? parseInt(this.data.INFO.INFO.DURATION)
-			: time_finish - this.data.INFO.INFO.TIME_START - this.data.INFO.INFO.TIME_LEAKS;
+		duration = time_finish - this.data.INFO.INFO.TIME_START - this.data.INFO.INFO.TIME_LEAKS;
 
 	var obTime = BX.create('DIV', {props: {className: 'tm-report-popup-time-brief'}});
 
@@ -7092,8 +7080,8 @@ BX.ReportSlider.prototype.NextReport = function()
 	}
 	if(nextreport!=this.cur_report)
 		this.ShowReport(nextreport)
-
-}
+	this.Recalc();
+};
 BX.ReportSlider.prototype.PrevReport = function()
 {
 	var prevreport = this.cur_report;
@@ -7108,8 +7096,8 @@ BX.ReportSlider.prototype.PrevReport = function()
 	}
 	if(prevreport!=this.cur_report)
 		this.ShowReport(prevreport)
-
-}
+	this.Recalc();
+};
 
 BX.ReportSlider.prototype.PopupClose = function()
 {

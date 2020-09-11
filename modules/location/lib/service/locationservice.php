@@ -138,28 +138,6 @@ final class LocationService extends BaseService
 
 	/**
 	 * @param Entity\Location $location
-	 * @param string $languageId
-	 * @param int $searchScope
-	 * @return Entity\Location\Collection|bool
-	 */
-	public function findChildren(Entity\Location $location, string $languageId, int $searchScope = LOCATION_SEARCH_SCOPE_ALL)
-	{
-		$result = false;
-
-		try
-		{
-			$result = $this->repository->findChildren($location, $languageId, $searchScope);
-		}
-		catch (RuntimeException $exception)
-		{
-			$this->processException($exception);
-		}
-
-		return $result;
-	}
-
-	/**
-	 * @param Entity\Location $location
 	 * @return Result
 	 */
 	public function save(Entity\Location $location)

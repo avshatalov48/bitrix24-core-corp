@@ -99,7 +99,7 @@ class VoximplantLinesComponent extends \CBitrixComponent
 		{
 			$expandedIds = array_map(function($a)
 			{
-				return substr($a, 0, 6) == "group_" ? (int)substr($a, 6) : (int)$a;
+				return mb_substr($a, 0, 6) == "group_" ? (int)mb_substr($a, 6) : (int)$a;
 			}, $expandedIds);
 			$expandedIds = array_filter($expandedIds);
 

@@ -106,7 +106,7 @@ class Im
 			'#BALANCE_TOP_UP#' =>  \CVoxImplantMain::GetRedirectToBuyLink()
 		);
 
-		if(strpos($link, '#BASE_NUMBER_EDIT#') !== false)
+		if(mb_strpos($link, '#BASE_NUMBER_EDIT#') !== false)
 		{
 			$row = ConfigTable::getList(array(
 				'select' => array('ID'),

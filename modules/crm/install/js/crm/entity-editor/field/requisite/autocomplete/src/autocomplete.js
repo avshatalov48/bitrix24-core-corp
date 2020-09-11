@@ -1,4 +1,4 @@
-import {Dom, Loc, Tag, Type} from "main.core";
+import {Dom, Loc, Tag, Text, Type} from "main.core";
 import {EventEmitter} from "main.core.events";
 import "./autocomplete.css"
 
@@ -54,7 +54,7 @@ export class RequisiteAutocompleteField extends EventEmitter
 		let placeholder = this._placeholderText.length ?
 			Loc.getMessage('REQUISITE_AUTOCOMPLETE_FILL_IN').replace('#FIELD_NAME#', this._placeholderText) : "";
 		this._domNodes.requisiteSearchString = Tag.render`
-			<input type="text" placeholder="${placeholder}" class="ui-ctl-element ui-ctl-textbox" />`;
+			<input type="text" placeholder="${Text.encode(placeholder)}" class="ui-ctl-element ui-ctl-textbox" />`;
 
 		if (!this._isPermitted)
 		{

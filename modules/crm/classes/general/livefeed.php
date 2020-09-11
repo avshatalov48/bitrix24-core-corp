@@ -2,6 +2,7 @@
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Main;
+use Bitrix\Main\Loader;
 
 class CCrmLiveFeedEntity
 {
@@ -331,17 +332,17 @@ class CCrmLiveFeedEvent
 					'EVENT_ID' => $eventID,
 					'COMMENT_EVENT_ID' => $eventID.self::CommentSuffix,
 					'COMMENT_ADD_CALLBACK' => (
-						($prefix == self::ActivityPrefix && $event == self::Add) 
+						($prefix == self::ActivityPrefix && $event == self::Add)
 							? array("CCrmLiveFeed", "AddCrmActivityComment")
 							: false
 					),
 					'COMMENT_UPDATE_CALLBACK' => (
-						($prefix == self::ActivityPrefix && $event == self::Add) 
+						($prefix == self::ActivityPrefix && $event == self::Add)
 							? array("CCrmLiveFeed", "UpdateCrmActivityComment")
 							: "NO_SOURCE"
 					),
 					'COMMENT_DELETE_CALLBACK' => (
-						($prefix == self::ActivityPrefix && $event == self::Add) 
+						($prefix == self::ActivityPrefix && $event == self::Add)
 							? array("CCrmLiveFeed", "DeleteCrmActivityComment")
 							: "NO_SOURCE"
 					)
@@ -577,7 +578,7 @@ class CCrmLiveFeed
 
 			self::OnBeforeSocNetLogEntryGetRights($arEventFields, $arRights);
 			if (
-				$arFields["ENTITY_TYPE"] == CCrmLiveFeedEntity::Activity 
+				$arFields["ENTITY_TYPE"] == CCrmLiveFeedEntity::Activity
 				&& $arActivity
 			)
 			{
@@ -662,8 +663,8 @@ class CCrmLiveFeed
 				$arResult["AVATAR_SRC"] = CSocNetLog::FormatEvent_CreateAvatar(
 					array(
 						'PERSONAL_PHOTO' => $fileID
-					), 
-					$arParams, 
+					),
+					$arParams,
 					''
 				);
 			}
@@ -690,15 +691,15 @@ class CCrmLiveFeed
 				"/bitrix/js/crm/activity.js",
 				"/bitrix/js/crm/common.js"
 			);
-			
+
 			if (IsModuleInstalled("tasks"))
 			{
 				$arResult["CACHED_CSS_PATH"][] = "/bitrix/js/tasks/css/tasks.css";
 			}
-			
+
 			if (is_array($arComponentReturn) && !empty($arComponentReturn["CACHED_CSS_PATH"]))
 			{
-				$arResult["CACHED_CSS_PATH"][] = $arComponentReturn["CACHED_CSS_PATH"];			
+				$arResult["CACHED_CSS_PATH"][] = $arComponentReturn["CACHED_CSS_PATH"];
 			}
 
 			if (is_array($arComponentReturn) && !empty($arComponentReturn["CACHED_JS_PATH"]))
@@ -1406,7 +1407,7 @@ class CCrmLiveFeed
 			}
 		}
 	}
-	
+
 	static public function OnBuildSocNetLogSql(&$arFields, &$arOrder, &$arFilter, &$arGroupBy, &$arSelectFields, &$arSqls)
 	{
 		if(!isset($arFilter['__CRM_JOINS']))
@@ -1875,15 +1876,15 @@ class CCrmLiveFeed
 				"ID" => $matches[2],
 				"CRM_PREFIX" => GetMessage('CRM_LF_'.$matches[1].'_DESTINATION_PREFIX'),
 				"URL" => (
-					$arParams["MOBILE"] != 'Y' 
+					$arParams["MOBILE"] != 'Y'
 						? CCrmOwnerType::GetEntityShowPath(CCrmLiveFeedEntity::ResolveEntityTypeID($matches[1]), $matches[2])
 						: (
-							isset($arParams["PATH_TO_".$matches[1]]) 
+							isset($arParams["PATH_TO_".$matches[1]])
 								? str_replace(
-									array("#company_id#", "#contact_id#", "#lead_id#", "#deal_id#"), 
-									$matches[2], 
+									array("#company_id#", "#contact_id#", "#lead_id#", "#deal_id#"),
+									$matches[2],
 									$arParams["PATH_TO_".$matches[1]]
-								) 
+								)
 								: '')
 				),
 				"TITLE" => htmlspecialcharsbx(CCrmOwnerType::GetCaption(CCrmLiveFeedEntity::ResolveEntityTypeID($matches[1]), $matches[2], false))
@@ -2349,7 +2350,7 @@ class CCrmLiveFeed
 	static public function OnAddRatingVote($rating_vote_id, $arRatingFields)
 	{
 		if (
-			CModule::IncludeModule("socialnetwork") 
+			CModule::IncludeModule("socialnetwork")
 			&& CModule::IncludeModule("im")
 		)
 		{
@@ -3703,7 +3704,7 @@ class CCrmLiveFeed
 		{
 			return false;
 		}
-		
+
 		if (!CModule::IncludeModule("socialnetwork"))
 		{
 			return true;
@@ -3796,7 +3797,7 @@ class CCrmLiveFeed
 								break;
 
 						}
-						
+
 						switch ($arActivity["TYPE_ID"])
 						{
 							case CCrmActivityType::Meeting:
@@ -3811,7 +3812,7 @@ class CCrmLiveFeed
 						}
 
 						if (
-							$ownerType 
+							$ownerType
 							&& $activityType
 						)
 						{
@@ -3951,14 +3952,14 @@ class CCrmLiveFeed
 		}
 
 		$dbCrmActivity = CCrmActivity::GetList(
-			array(), 
+			array(),
 			array(
 				'TYPE_ID' => CCrmActivityType::Task,
 				'ASSOCIATED_ENTITY_ID' => $taskId,
 				'CHECK_PERMISSIONS' => 'N'
-			), 
-			false, 
-			false, 
+			),
+			false,
+			false,
 			array('ID')
 		);
 		$arCrmActivity = $dbCrmActivity->Fetch();
@@ -3990,10 +3991,10 @@ class CCrmLiveFeed
 			$strURL = ForumAddPageParams(
 				$strURL,
 				array(
-					"MID" => $messageId, 
+					"MID" => $messageId,
 					"result" => "reply"
-				), 
-				false, 
+				),
+				false,
 				false
 			);
 			$sText = (COption::GetOptionString("forum", "FILTER", "Y") == "Y" ? $arMessage["POST_MESSAGE_FILTER"] : $arMessage["POST_MESSAGE"]);
@@ -4377,7 +4378,7 @@ class CCrmLiveFeed
 				"NO_SOURCE" => "Y"
 			);
 		}
-	}	
+	}
 
 	public static function GetLogEventLastUpdateTime($ID, $useTimeZome = true)
 	{
@@ -4525,7 +4526,7 @@ class CCrmLiveFeedFilter
 	private $entityTypeID = CCrmOwnerType::Undefined;
 	private $arCompanyItemsTop = null;
 	private $arItems = null;
-	
+
 	public function __construct($params)
 	{
 		if(!is_array($params))
@@ -4548,7 +4549,7 @@ class CCrmLiveFeedFilter
 				"NAME" => GetMessage("CRM_LF_COMPANY_PRESET_TOP_EXTENDED")
 			)
 		);
-		
+
 		$this->arCommonItemsTop = array(
 			"clearall" => array(
 				"ID" => "clearall",
@@ -4579,7 +4580,7 @@ class CCrmLiveFeedFilter
 					"EVENT_ID" => array()
 				)
 			)
-		);	
+		);
 	}
 
 	public function OnBeforeSonetLogFilterFill(&$arPageParamsToClear, &$arItemsTop, &$arItems, &$strAllItemTitle)
@@ -4663,7 +4664,7 @@ class CCrmLiveFeedComponent
 			$this->eventMeta = array(
 				CCrmActivityType::Meeting => array(
 					"SUBJECT" => array(
-						"CODE" => "COMBI_ACTIVITY_SUBJECT/ACTIVITY_ONCLICK", 
+						"CODE" => "COMBI_ACTIVITY_SUBJECT/ACTIVITY_ONCLICK",
 						"FORMAT" => "COMBI_TITLE"
 					),
 					"LOCATION" => array(
@@ -4675,7 +4676,7 @@ class CCrmLiveFeedComponent
 						"FORMAT" => "DATETIME"
 					),
 					"CLIENT_ID" => array(
-						"CODE" => "ACTIVITY_COMMUNICATIONS", 
+						"CODE" => "ACTIVITY_COMMUNICATIONS",
 						"FORMAT" => "COMMUNICATIONS"
 					),
 					"RESPONSIBLE" => array(
@@ -4685,7 +4686,7 @@ class CCrmLiveFeedComponent
 				),
 				CCrmActivityType::Call => array(
 					"SUBJECT" => array(
-						"CODE" => "COMBI_ACTIVITY_SUBJECT/ACTIVITY_ONCLICK", 
+						"CODE" => "COMBI_ACTIVITY_SUBJECT/ACTIVITY_ONCLICK",
 						"FORMAT" => "COMBI_TITLE"
 					),
 					"DATE" => array(
@@ -4693,7 +4694,7 @@ class CCrmLiveFeedComponent
 						"FORMAT" => "DATETIME"
 					),
 					"CLIENT_ID" => array(
-						"CODE" => "ACTIVITY_COMMUNICATIONS", 
+						"CODE" => "ACTIVITY_COMMUNICATIONS",
 						"FORMAT" => "COMMUNICATIONS"
 					),
 					"RESPONSIBLE" => array(
@@ -4703,7 +4704,7 @@ class CCrmLiveFeedComponent
 				),
 				CCrmActivityType::Email => array(
 					"SUBJECT" => array(
-						"CODE" => "COMBI_ACTIVITY_SUBJECT/ACTIVITY_ONCLICK", 
+						"CODE" => "COMBI_ACTIVITY_SUBJECT/ACTIVITY_ONCLICK",
 						"FORMAT" => "COMBI_TITLE"
 					),
 					"DATE" => array(
@@ -4711,7 +4712,7 @@ class CCrmLiveFeedComponent
 						"FORMAT" => "DATETIME"
 					),
 					"CLIENT_ID" => array(
-						"CODE" => "ACTIVITY_COMMUNICATIONS", 
+						"CODE" => "ACTIVITY_COMMUNICATIONS",
 						"FORMAT" => "COMMUNICATIONS"
 					),
 					"RESPONSIBLE" => array(
@@ -4748,7 +4749,7 @@ class CCrmLiveFeedComponent
 					"DEAL" => array(
 						"CODE" => "INVOICE_UF_DEAL_ID",
 						"FORMAT" => "DEAL_ID",
-					),					
+					),
 					"RESPONSIBLE" => array(
 						"CODE" => "INVOICE_RESPONSIBLE_ID",
 						"FORMAT" => "PERSON_ID"
@@ -4761,7 +4762,7 @@ class CCrmLiveFeedComponent
 			$this->eventMeta = array(
 				"crm_lead_add" => array(
 					"ADD_TITLE" => array(
-						"CODE" => "EVENT_PARAMS_TITLE", 
+						"CODE" => "EVENT_PARAMS_TITLE",
 						"FORMAT" => "TEXT_ADD"
 					),
 					"STATUS" => array(
@@ -4790,7 +4791,7 @@ class CCrmLiveFeedComponent
 						"FORMAT" => "LEAD_PROGRESS",
 					),
 					"START_STATUS_ID" => array(
-						"CODE" => "EVENT_PARAMS_START_STATUS_ID", 
+						"CODE" => "EVENT_PARAMS_START_STATUS_ID",
 						"FORMAT" => "LEAD_PROGRESS"
 					)
 				),
@@ -4800,7 +4801,7 @@ class CCrmLiveFeedComponent
 						"FORMAT" => "PERSON_ID",
 					),
 					"START_RESPONSIBLE_ID" => array(
-						"CODE" => "EVENT_PARAMS_START_RESPONSIBLE_ID", 
+						"CODE" => "EVENT_PARAMS_START_RESPONSIBLE_ID",
 						"FORMAT" => "PERSON_ID"
 					)
 				),
@@ -4810,7 +4811,7 @@ class CCrmLiveFeedComponent
 						"FORMAT" => "TEXT",
 					),
 					"START_TITLE" => array(
-						"CODE" => "EVENT_PARAMS_START_TITLE", 
+						"CODE" => "EVENT_PARAMS_START_TITLE",
 						"FORMAT" => "TEXT"
 					)
 				),
@@ -4844,7 +4845,7 @@ class CCrmLiveFeedComponent
 				),
 				"crm_contact_owner" => array(
 					"FINAL_OWNER_COMPANY_ID" => array(
-						"CODE" => "EVENT_PARAMS_FINAL_OWNER_COMPANY_ID", 
+						"CODE" => "EVENT_PARAMS_FINAL_OWNER_COMPANY_ID",
 						"FORMAT" => "COMPANY_ID"
 					),
 					"START_OWNER_COMPANY_ID" => array(
@@ -4858,7 +4859,7 @@ class CCrmLiveFeedComponent
 						"FORMAT" => "PERSON_ID",
 					),
 					"START_RESPONSIBLE_ID" => array(
-						"CODE" => "EVENT_PARAMS_START_RESPONSIBLE_ID", 
+						"CODE" => "EVENT_PARAMS_START_RESPONSIBLE_ID",
 						"FORMAT" => "PERSON_ID"
 					)
 				),
@@ -4907,7 +4908,7 @@ class CCrmLiveFeedComponent
 						"FORMAT" => "PERSON_ID",
 					),
 					"START_RESPONSIBLE_ID" => array(
-						"CODE" => "EVENT_PARAMS_START_RESPONSIBLE_ID", 
+						"CODE" => "EVENT_PARAMS_START_RESPONSIBLE_ID",
 						"FORMAT" => "PERSON_ID"
 					)
 				),
@@ -4917,7 +4918,7 @@ class CCrmLiveFeedComponent
 						"FORMAT" => "TEXT",
 					),
 					"START_TITLE" => array(
-						"CODE" => "EVENT_PARAMS_START_TITLE", 
+						"CODE" => "EVENT_PARAMS_START_TITLE",
 						"FORMAT" => "TEXT"
 					)
 				),
@@ -4972,7 +4973,7 @@ class CCrmLiveFeedComponent
 						"FORMAT" => "PERSON_ID",
 					),
 					"START_RESPONSIBLE_ID" => array(
-						"CODE" => "EVENT_PARAMS_START_RESPONSIBLE_ID", 
+						"CODE" => "EVENT_PARAMS_START_RESPONSIBLE_ID",
 						"FORMAT" => "PERSON_ID"
 					)
 				),
@@ -4982,7 +4983,7 @@ class CCrmLiveFeedComponent
 						"FORMAT" => "TEXT",
 					),
 					"START_TITLE" => array(
-						"CODE" => "EVENT_PARAMS_START_TITLE", 
+						"CODE" => "EVENT_PARAMS_START_TITLE",
 						"FORMAT" => "TEXT"
 					)
 				),
@@ -5089,7 +5090,7 @@ class CCrmLiveFeedComponent
 					$strResult .= "#cell_end#";
 					$strResult .= "#row_end#";
 				}
-				break;				
+				break;
 			case "LEAD_STATUS":
 				$infos = CCrmStatus::GetStatus('STATUS');
 				if (
@@ -5240,7 +5241,7 @@ class CCrmLiveFeedComponent
 					$strResult .= '<span class="feed-com-avatar crm-feed-user-avatar">';
 					$dbRes = CCrmContact::GetListEx(array(), array('=ID' => $arField["VALUE"], 'CHECK_PERMISSIONS' => 'N'), false, false, array('PHOTO'));
 					if (
-						($arRes = $dbRes->Fetch()) 
+						($arRes = $dbRes->Fetch())
 						&& (intval($arRes["PHOTO"]) > 0)
 					)
 					{
@@ -5252,14 +5253,14 @@ class CCrmLiveFeedComponent
 						);
 
 						if(
-							is_array($arFileTmp) 
+							is_array($arFileTmp)
 							&& isset($arFileTmp["src"])
 						)
 						{
 							$strResult .= '<img width="39" height="39" src="'.$arFileTmp['src'].'" alt="">';
 						}
 					}
-					$strResult .= '</span>';						
+					$strResult .= '</span>';
 
 					$strResult .= CCrmViewHelper::PrepareEntityBaloonHtml(
 						array(
@@ -5296,21 +5297,21 @@ class CCrmLiveFeedComponent
 
 					if (
 						(
-							array_key_exists("CONTACT_ID", $arField["VALUE"]) 
+							array_key_exists("CONTACT_ID", $arField["VALUE"])
 							&& intval($arField["VALUE"]["CONTACT_ID"]) > 0
 						)
 						|| (
-							array_key_exists("CONTACT_NAME", $arField["VALUE"]) 
+							array_key_exists("CONTACT_NAME", $arField["VALUE"])
 							&& $arField["VALUE"]["CONTACT_NAME"] <> ''
 						)
 						|| (
-							array_key_exists("CONTACT_LAST_NAME", $arField["VALUE"]) 
+							array_key_exists("CONTACT_LAST_NAME", $arField["VALUE"])
 							&& $arField["VALUE"]["CONTACT_LAST_NAME"] <> ''
 						)
 					)
 					{
 						if (
-							array_key_exists("CONTACT_ID", $arField["VALUE"]) 
+							array_key_exists("CONTACT_ID", $arField["VALUE"])
 							&& intval($arField["VALUE"]["CONTACT_ID"]) > 0
 						)
 						{
@@ -5330,7 +5331,7 @@ class CCrmLiveFeedComponent
 									);
 
 									if(
-										is_array($arFileTmp) 
+										is_array($arFileTmp)
 										&& isset($arFileTmp["src"])
 									)
 									{
@@ -5367,7 +5368,7 @@ class CCrmLiveFeedComponent
 								);
 
 								if(
-									is_array($arFileTmp) 
+									is_array($arFileTmp)
 									&& isset($arFileTmp["src"])
 								)
 								{
@@ -5380,7 +5381,7 @@ class CCrmLiveFeedComponent
 							$strResult .= '<span class="crm-feed-client-right">';
 
 							if (
-								array_key_exists("ENTITY_ID", $arField["VALUE"]) 
+								array_key_exists("ENTITY_ID", $arField["VALUE"])
 								&& intval($arField["VALUE"]["ENTITY_ID"]) > 0
 							)
 							{
@@ -5403,9 +5404,9 @@ class CCrmLiveFeedComponent
 							array(
 								'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
 								'ENTITY_ID' => (
-									array_key_exists("COMPANY_ID", $arField["VALUE"]) 
+									array_key_exists("COMPANY_ID", $arField["VALUE"])
 									&& intval($arField["VALUE"]["COMPANY_ID"]) > 0
-										? $arField["VALUE"]["COMPANY_ID"] 
+										? $arField["VALUE"]["COMPANY_ID"]
 										: intval($contactCompanyID)
 								),
 								'PREFIX' => '',
@@ -5430,7 +5431,7 @@ class CCrmLiveFeedComponent
 							)
 						);
 					}
-					
+
 					$strResult .= "#cell_end#";
 					$strResult .= "#row_end#";
 				}
@@ -5496,11 +5497,11 @@ class CCrmLiveFeedComponent
 
 					if (
 						(
-							array_key_exists("CONTACT_NAME", $arField["VALUE"]) 
+							array_key_exists("CONTACT_NAME", $arField["VALUE"])
 							&& $arField["VALUE"]["CONTACT_NAME"] <> ''
 						)
 						|| (
-							array_key_exists("CONTACT_LAST_NAME", $arField["VALUE"]) 
+							array_key_exists("CONTACT_LAST_NAME", $arField["VALUE"])
 							&& $arField["VALUE"]["CONTACT_LAST_NAME"] <> ''
 						)
 					)
@@ -5526,7 +5527,7 @@ class CCrmLiveFeedComponent
 					{
 						$strResult .= $arField["VALUE"]["COMPANY_TITLE"];
 					}
-					
+
 					$strResult .= "#cell_end#";
 					$strResult .= "#row_end#";
 				}
@@ -5558,7 +5559,7 @@ class CCrmLiveFeedComponent
 				break;
 			case "COMMUNICATIONS":
 				if (
-					is_array($arField["VALUE"]) 
+					is_array($arField["VALUE"])
 					&& count($arField["VALUE"]) > 0
 				)
 				{
@@ -5578,7 +5579,7 @@ class CCrmLiveFeedComponent
 						{
 							$dbRes = CCrmContact::GetListEx(array(), array('=ID' => $arCommunication["ENTITY_ID"], 'CHECK_PERMISSIONS' => 'N'), false, false, array('PHOTO'));
 							if (
-								($arRes = $dbRes->Fetch()) 
+								($arRes = $dbRes->Fetch())
 								&& (intval($arRes["PHOTO"]) > 0)
 							)
 							{
@@ -5590,7 +5591,7 @@ class CCrmLiveFeedComponent
 								);
 
 								if(
-									is_array($arFileTmp) 
+									is_array($arFileTmp)
 									&& isset($arFileTmp["src"])
 								)
 								{
@@ -5602,7 +5603,7 @@ class CCrmLiveFeedComponent
 						{
 							$dbRes = CCrmCompany::GetListEx(array(), array('=ID' => $arCommunication["ENTITY_ID"], 'CHECK_PERMISSIONS' => 'N'), false, false, array('LOGO'));
 							if (
-								($arRes = $dbRes->Fetch()) 
+								($arRes = $dbRes->Fetch())
 								&& (intval($arRes["LOGO"]) > 0)
 							)
 							{
@@ -5614,7 +5615,7 @@ class CCrmLiveFeedComponent
 								);
 
 								if(
-									is_array($arFileTmp) 
+									is_array($arFileTmp)
 									&& isset($arFileTmp["src"])
 								)
 								{
@@ -5690,7 +5691,7 @@ class CCrmLiveFeedComponent
 							$strResult .= '<div><span class="crm-feed-num-block">'.CCrmViewHelper::PrepareMultiFieldHtml(
 								'PHONE',
 								array(
-									'VALUE' => $arCommunication["VALUE"], 
+									'VALUE' => $arCommunication["VALUE"],
 									'VALUE_TYPE_ID' => 'WORK'
 								),
 								array(
@@ -5729,7 +5730,7 @@ class CCrmLiveFeedComponent
 
 					$strResult .= '</span>'; // crm-feed-client-right
 					$strResult .= '</div>';
-					
+
 					$moreCnt = count($arField["VALUE"]) - 1;
 					if ($moreCnt > 0)
 					{
@@ -5939,7 +5940,7 @@ class CCrmLiveFeedComponent
 
 		return $strResult;
 	}
-	
+
 	public function formatFields()
 	{
 		$arReturn = array();
@@ -6239,7 +6240,7 @@ class CCrmLiveFeedComponent
 		}
 
 		if (
-			isset($arParams["MAX_LENGTH"]) 
+			isset($arParams["MAX_LENGTH"])
 			&& intval($arParams["MAX_LENGTH"]) > 0
 		)
 		{
@@ -6946,7 +6947,7 @@ commented in http://jabber.bx/view.php?id=0063797
 							$res = self::resolveLFEntityFromUF($arEmailUser["UF_USER_CRM_ENTITY"]);
 							if (!empty($res))
 							{
-								list($k, $v) = $res;
+								[$k, $v] = $res;
 
 								if ($k && $v)
 								{
@@ -6998,7 +6999,7 @@ commented in http://jabber.bx/view.php?id=0063797
 				$res = self::resolveLFEntityFromUF($arPOST["INVITED_USER_CRM_ENTITY"][$userEmail]);
 				if (!empty($res))
 				{
-					list($k, $v) = $res;
+					[$k, $v] = $res;
 					if ($k && $v)
 					{
 						if (
@@ -7037,7 +7038,7 @@ commented in http://jabber.bx/view.php?id=0063797
 					$res = self::resolveLFEntityFromUF($arPOST["INVITED_USER_CRM_ENTITY"][$userEmail]);
 					if (!empty($res))
 					{
-						list($k, $v) = $res;
+						[$k, $v] = $res;
 
 						if ($k && $v)
 						{
@@ -7056,6 +7057,11 @@ commented in http://jabber.bx/view.php?id=0063797
 								"EMAIL" => $userEmail
 							);
 						}
+					}
+
+					if (Loader::includeModule('intranet') && class_exists('\Bitrix\Intranet\Integration\Mail\EmailUser'))
+					{
+						\Bitrix\Intranet\Integration\Mail\EmailUser::invite($invitedUserId);
 					}
 				}
 				else
@@ -7097,7 +7103,7 @@ commented in http://jabber.bx/view.php?id=0063797
 						$res = self::resolveLFEntityFromUF($arEmailUser["UF_USER_CRM_ENTITY"]);
 						if (!empty($res))
 						{
-							list($k, $v) = $res;
+							[$k, $v] = $res;
 
 							if ($k && $v)
 							{

@@ -1,4 +1,6 @@
-<?
+<?php
+$MESS["VI_CANCEL_DELETE_NUMBER_ERROR"] = "Phone number provider returned an error when trying to cancel disconnection. Please try again later.";
+$MESS["VI_DELETE_NUMBER_ERROR"] = "Phone number provider returned an error when disconnecting. Please try again later.";
 $MESS["VI_NUMBER_BUNDLE_WILL_BE_DELETED"] = "The bundle will be disconnected within 24 hours.";
 $MESS["VI_NUMBER_CONFIRM_ACTION"] = "Confirm action";
 $MESS["VI_NUMBER_CONFIRM_BUNDLE_DISCONNECTION"] = "Bundle cannot be partially disconnected. Do you want to disconnect all the numbers in the bundle?";
@@ -15,4 +17,3 @@ $MESS["VI_NUMBER_RENT_NUMBERS_ATTACHED"] = "The numbers #NUMBERS# is connected t
 $MESS["VI_NUMBER_RENT_NUMBER_ATTACHED"] = "The number #NUMBER# is connected to your Bitrix24!";
 $MESS["VI_NUMBER_RENT_NUMBER_RESERVED"] = "The number #NUMBER# is reserved to you!";
 $MESS["VI_NUMBER_RENT_UPLOAD_DOCUMENTS"] = "Upload documentation";
-?>

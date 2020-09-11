@@ -114,7 +114,7 @@ class CVoxImplantCrmHelper
 
 	public static function GetDataForPopup($callId, $phone, $userId = 0)
 	{
-		if (strlen($phone) <= 0 || !CModule::IncludeModule('crm'))
+		if ($phone == '' || !CModule::IncludeModule('crm'))
 		{
 			return false;
 		}
@@ -166,14 +166,14 @@ class CVoxImplantCrmHelper
 				foreach ($crm[$entity][0]['ACTIVITIES'] as $activity)
 				{
 					$overdue = 'N';
-					if (strlen($activity['DEADLINE']) > 0 && MakeTimeStamp($activity['DEADLINE']) < time())
+					if ($activity['DEADLINE'] <> '' && MakeTimeStamp($activity['DEADLINE']) < time())
 					{
 						$overdue = 'Y';
 					}
 
 					$arResult['ACTIVITIES'][$activity['ID']] = Array(
 						'TITLE' => $activity['SUBJECT'],
-						'DATE' => strlen($activity['DEADLINE']) > 0? $activity['DEADLINE']: $activity['END_TIME'],
+						'DATE' => $activity['DEADLINE'] <> ''? $activity['DEADLINE']: $activity['END_TIME'],
 						'OVERDUE' => $overdue,
 						'URL' => $activity['SHOW_URL'],
 					);
@@ -189,7 +189,7 @@ class CVoxImplantCrmHelper
 				foreach ($crm[$entity][0]['DEALS'] as $deal)
 				{
 					$opportunity = CCrmCurrency::MoneyToString($deal['OPPORTUNITY'], $deal['CURRENCY_ID']);
-					if (strpos('&', $opportunity))
+					if(mb_strpos('&', $opportunity))
 					{
 						$opportunity = CCrmCurrency::MoneyToString($deal['OPPORTUNITY'], $deal['CURRENCY_ID'], '#').' '.$deal['CURRENCY_ID'];
 					}
@@ -479,7 +479,7 @@ class CVoxImplantCrmHelper
 		);
 
 		$params = CVoxImplantHistory::PrepereData($callFields);
-		if (isset($additionalParams['DESCRIPTION']) && strlen($additionalParams['DESCRIPTION']) > 0)
+		if (isset($additionalParams['DESCRIPTION']) && $additionalParams['DESCRIPTION'] <> '')
 		{
 			$description = $additionalParams['DESCRIPTION'];
 		}
@@ -760,10 +760,10 @@ class CVoxImplantCrmHelper
 
 		$callId = $activity['ORIGIN_ID'];
 
-		if(strpos($callId, 'VI_') !== 0)
+		if(mb_strpos($callId, 'VI_') !== 0)
 			return false;
 
-		$callId = substr($callId, 3);
+		$callId = mb_substr($callId, 3);
 
 		return $callId;
 	}
@@ -818,9 +818,9 @@ class CVoxImplantCrmHelper
 		}
 
 		$originId = $params['ORIGIN_ID'];
-		if (substr($originId, 0, 3) == 'VI_')
+		if (mb_substr($originId, 0, 3) == 'VI_')
 		{
-			$callId = substr($originId, 3);
+			$callId = mb_substr($originId, 3);
 		}
 		else
 		{
@@ -873,7 +873,7 @@ class CVoxImplantCrmHelper
 			return false;
 		}
 
-		if (strlen($params['PHONE_NUMBER']) <= 0)
+		if ($params['PHONE_NUMBER'] == '')
 		{
 			static::$lastError = 'PHONE_NUMBER is empty';
 			return false;
@@ -1041,7 +1041,15 @@ class CVoxImplantCrmHelper
 			$arErrors
 		);
 
-		Bitrix\Crm\Automation\Factory::runOnAdd(\CCrmOwnerType::Lead, $leadId);
+		if (class_exists('\Bitrix\Crm\Automation\Starter'))
+		{
+			$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $leadId);
+			$starter->setContextModuleId('voximplant')->runOnAdd();
+		}
+		else
+		{
+			Bitrix\Crm\Automation\Factory::runOnAdd(\CCrmOwnerType::Lead, $leadId);
+		}
 	}
 
 	// Starts call trigger for all associated entities, except for created lead.
@@ -1102,7 +1110,7 @@ class CVoxImplantCrmHelper
 
 	public static function findDealsByPhone($phone)
 	{
-		if (strlen($phone) <= 0)
+		if ($phone == '')
 		{
 			return false;
 		}
@@ -1648,7 +1656,7 @@ class CVoxImplantCrmHelper
 		$result = array();
 		while ($row = $cursor->Fetch())
 		{
-			if(strlen($row['NAME']) > 0 || strlen($row['SECOND_NAME']) > 0 || strlen($row['LAST_NAME']) > 0)
+			if($row['NAME'] <> '' || $row['SECOND_NAME'] <> '' || $row['LAST_NAME'] <> '')
 				$formattedName = \CCrmLead::PrepareFormattedName(
 					array(
 						'HONORIFIC' => isset($row['HONORIFIC']) ? $row['HONORIFIC'] : '',

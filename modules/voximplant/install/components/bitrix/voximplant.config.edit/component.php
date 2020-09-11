@@ -224,13 +224,13 @@ if ($request->isPost() && check_bitrix_sessid())
 
 	if ($post["WORKTIME_DAYOFF_RULE"] == CVoxImplantIncoming::RULE_PSTN_SPECIFIC)
 	{
-		if (strlen($post["WORKTIME_DAYOFF_NUMBER"]) <= 0)
+		if ($post["WORKTIME_DAYOFF_NUMBER"] == '')
 		{
 			$post["WORKTIME_DAYOFF_RULE"] = CVoxImplantIncoming::RULE_HUNGUP;
 		}
 		else
 		{
-			$post["WORKTIME_DAYOFF_NUMBER"] = substr($post["WORKTIME_DAYOFF_NUMBER"], 0, 20);
+			$post["WORKTIME_DAYOFF_NUMBER"] = mb_substr($post["WORKTIME_DAYOFF_NUMBER"], 0, 20);
 		}
 	}
 	else
@@ -421,7 +421,7 @@ foreach ($melodies as $id)
 		}
 	}
 }
-$arResult["ITEM"]["MELODY_LANG"] = (empty($arResult["ITEM"]["MELODY_LANG"]) ? strtoupper(LANGUAGE_ID) : $arResult["ITEM"]["MELODY_LANG"]);
+$arResult["ITEM"]["MELODY_LANG"] = (empty($arResult["ITEM"]["MELODY_LANG"])? mb_strtoupper(LANGUAGE_ID) : $arResult["ITEM"]["MELODY_LANG"]);
 $arResult["ITEM"]["MELODY_LANG"] = (in_array($arResult["ITEM"]["MELODY_LANG"], CVoxImplantConfig::GetMelodyLanguages()) ? $arResult["ITEM"]["MELODY_LANG"] : "EN");
 $arResult["DEFAULT_MELODIES"] = CVoxImplantConfig::GetDefaultMelodies(false);
 

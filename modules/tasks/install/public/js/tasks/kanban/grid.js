@@ -812,7 +812,6 @@ BX.Tasks.Kanban.Grid.prototype = {
 				// reload
 				this.removeItems();
 				this.loadData(data);
-				BX.onCustomEvent(this, "onKanbanChanged", []);
 			}.bind(this),
 			function(error)
 			{
@@ -877,8 +876,6 @@ BX.Tasks.Kanban.Grid.prototype = {
 			case "task_view":
 				if (taskId)
 				{
-					BX.onCustomEvent(this, "onKanbanChanged", []);
-
 					BX.ajax.runAction('tasks.task.list', {data: {
 						filter: {ID: taskId},
 						params: {
@@ -916,7 +913,6 @@ BX.Tasks.Kanban.Grid.prototype = {
 				break;
 
 			case "comment_read_all":
-				BX.onCustomEvent(this, "onKanbanChanged", []);
 				Object.values(this.getItems()).forEach(function(item) {
 					var data = item.data;
 					var counter = item.task_counter;
@@ -933,7 +929,6 @@ BX.Tasks.Kanban.Grid.prototype = {
 			case "task_remove":
 				if (taskId)
 				{
-					BX.onCustomEvent(this, "onKanbanChanged", []);
 					this.removeItem(taskId);
 				}
 				break;

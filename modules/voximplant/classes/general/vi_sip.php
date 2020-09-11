@@ -55,7 +55,7 @@ class CVoxImplantSip
 			}
 		}
 
-		if (strlen($arAdd['PHONE_NAME']) > 0)
+		if ($arAdd['PHONE_NAME'] <> '')
 		{
 			$orm = VI\ConfigTable::getList(Array(
 				'filter' => Array('=PHONE_NAME' => $arAdd['PHONE_NAME'])
@@ -285,9 +285,9 @@ class CVoxImplantSip
 		{
 			$result['SERVER'] = trim($fields['SERVER']);
 			$result['SERVER'] = str_replace(Array('http://', 'https://'), '', $result['SERVER']);
-			if (strlen($result['SERVER']) > 100)
+			if (mb_strlen($result['SERVER']) > 100)
 				$errors[] = GetMessage('VI_SIP_SERVER_100');
-			else if (strlen($result['SERVER']) <= 0)
+			else if ($result['SERVER'] == '')
 				$errors[] = GetMessage('VI_SIP_SERVER_0');
 		}
 		else if ($type == self::CHECK_ADD)
@@ -298,9 +298,9 @@ class CVoxImplantSip
 		if (isset($fields['LOGIN']))
 		{
 			$result['LOGIN'] = trim($fields['LOGIN']);
-			if (strlen($result['LOGIN']) > 100)
+			if (mb_strlen($result['LOGIN']) > 100)
 				$errors[] = GetMessage('VI_SIP_LOGIN_100');
-			else if (strlen($result['LOGIN']) <= 0)
+			else if ($result['LOGIN'] == '')
 				$errors[] = GetMessage('VI_SIP_LOGIN_0');
 		}
 		else if ($type == self::CHECK_ADD)
@@ -311,7 +311,7 @@ class CVoxImplantSip
 		if (isset($fields['PASSWORD']))
 		{
 			$result['PASSWORD'] = trim($fields['PASSWORD']);
-			if (strlen($fields['PASSWORD']) > 100)
+			if (mb_strlen($fields['PASSWORD']) > 100)
 				$errors[] = GetMessage('VI_SIP_PASSWORD_100');
 		}
 
@@ -320,18 +320,18 @@ class CVoxImplantSip
 			if (isset($fields['INCOMING_SERVER']))
 			{
 				$result['INCOMING_SERVER'] = trim($fields['INCOMING_SERVER']);
-				if (strlen($fields['INCOMING_SERVER']) > 100)
+				if (mb_strlen($fields['INCOMING_SERVER']) > 100)
 					$errors[] = GetMessage('VI_SIP_INC_SERVER_100');
-				else if (strlen($fields['INCOMING_SERVER']) <= 0)
+				else if ($fields['INCOMING_SERVER'] == '')
 					$errors[] = GetMessage('VI_SIP_INC_SERVER_0');
 			}
 
 			if (isset($fields['INCOMING_LOGIN']))
 			{
 				$result['INCOMING_LOGIN'] = trim($fields['INCOMING_LOGIN']);
-				if (strlen($fields['INCOMING_LOGIN']) > 100)
+				if (mb_strlen($fields['INCOMING_LOGIN']) > 100)
 					$errors[] = GetMessage('VI_SIP_INC_LOGIN_100');
-				else if (strlen($fields['INCOMING_LOGIN']) <= 0)
+				else if ($fields['INCOMING_LOGIN'] == '')
 					$errors[] = GetMessage('VI_SIP_INC_LOGIN_0');
 
 				$result['SEARCH_ID'] = $result['INCOMING_LOGIN'];
@@ -340,7 +340,7 @@ class CVoxImplantSip
 			if (isset($fields['INCOMING_PASSWORD']))
 			{
 				$result['INCOMING_PASSWORD'] = trim($fields['INCOMING_PASSWORD']);
-				if (strlen($result['INCOMING_PASSWORD']) > 100)
+				if (mb_strlen($result['INCOMING_PASSWORD']) > 100)
 					$errors[] = GetMessage('VI_SIP_INC_PASSWORD_100');
 			}
 		}

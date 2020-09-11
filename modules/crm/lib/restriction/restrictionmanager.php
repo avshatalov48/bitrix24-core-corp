@@ -47,6 +47,8 @@ class RestrictionManager
 	private static $callListRestriction = null;
 	/** @var Bitrix24AccessRestriction|null  */
 	private static $addressSearchRestriction = null;
+	/** @var Bitrix24AccessRestriction|null  */
+	private static $ufAccessRightsRestriction = null;
 
 	/**
 	* @return SqlRestriction
@@ -201,6 +203,15 @@ class RestrictionManager
 	}
 
 	/**
+	 * @return Bitrix24AccessRestriction|null
+	 */
+	public static function getUfAccessRightsRestriction()
+	{
+		self::initialize();
+		return self::$ufAccessRightsRestriction;
+	}
+
+	/**
 	 * @return AccessRestriction
 	 */
 	public static function getDetailsSearchByEdrpouRestriction()
@@ -253,6 +264,7 @@ class RestrictionManager
 		self::$imconnectorRestriction->reset();
 		self::$callListRestriction->reset();
 		self::$addressSearchRestriction->reset();
+		self::$ufAccessRightsRestriction->reset();
 
 		self::$sqlRestriction = null;
 		self::$conversionRestriction = null;
@@ -273,6 +285,7 @@ class RestrictionManager
 		self::$imconnectorRestriction = null;
 		self::$callListRestriction = null;
 		self::$addressSearchRestriction = null;
+		self::$ufAccessRightsRestriction = null;
 
 		self::$isInitialized = false;
 	}
@@ -541,6 +554,24 @@ class RestrictionManager
 		{
 			self::$detailsSearchByEdrpouRestriction->permit(
 				Bitrix24Manager::isFeatureEnabled("crm_details_search_by_edrpou")
+			);
+		}
+		//endregion
+
+		//region UfAccessRightRestriction
+		self::$ufAccessRightsRestriction = new Bitrix24AccessRestriction(
+			'crm_cfg_uf_access_rights',
+			true,
+			null,
+			[
+				'ID' => 'limit_crm_fields_visible_to_selected_users'
+			]
+		);
+
+		if(!self::$ufAccessRightsRestriction->load())
+		{
+			self::$ufAccessRightsRestriction->permit(
+				Bitrix24Manager::isFeatureEnabled('crm_uf_access_rights')
 			);
 		}
 		//endregion

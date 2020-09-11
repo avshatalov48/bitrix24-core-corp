@@ -91,15 +91,15 @@ class Signaling
 		);
 
 		$callName = $call->getCallerId();
-		if (isset($config['CRM']['CONTACT']['NAME']) && strlen($config['CRM']['CONTACT']['NAME']) > 0)
+		if (isset($config['CRM']['CONTACT']['NAME']) && $config['CRM']['CONTACT']['NAME'] <> '')
 		{
 			$callName = $config['CRM']['CONTACT']['NAME'];
 		}
-		if (isset($config['CRM']['COMPANY']) && strlen($config['CRM']['COMPANY']) > 0)
+		if (isset($config['CRM']['COMPANY']) && $config['CRM']['COMPANY'] <> '')
 		{
 			$callName .= ' ('.$config['CRM']['COMPANY'].')';
 		}
-		else if (isset($config['CRM']['CONTACT']['POST']) && strlen($config['CRM']['CONTACT']['POST']) > 0)
+		else if (isset($config['CRM']['CONTACT']['POST']) && $config['CRM']['CONTACT']['POST'] <> '')
 		{
 			$callName .= ' ('.$config['CRM']['CONTACT']['POST'].')';
 		}
@@ -108,6 +108,7 @@ class Signaling
 		$push['send_immediately'] = 'Y';
 		$push['sound'] = 'call.aif';
 		$push['advanced_params'] = Array(
+			"id" => 'VI_CALL_'.$call->getCallId(),
 			"notificationsToCancel" => array('VI_CALL_'.$call->getCallId()),
 			"androidHighPriority" => true,
 		);
@@ -124,6 +125,7 @@ class Signaling
 		$pushParams = [
 			'callId' => $config['callId'],
 			'callerId' => $config['callerId'],
+			'callerName' => $callName,
 			'companyPhoneNumber' => $config['companyPhoneNumber'],
 			'config' => $config['config'],
 			'isCallback' => $config['isCallback'],

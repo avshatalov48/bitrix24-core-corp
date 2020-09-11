@@ -106,7 +106,7 @@ class Helper
 				array(
 					'MULTIPLE' => 'N',
 					'NAME' => $componentName,
-					'INPUT_NAME' => strtolower($componentName),
+					'INPUT_NAME' => mb_strtolower($componentName),
 					'SHOW_EXTRANET_USERS' => 'NONE',
 					'POPUP' => 'Y',
 					'SITE_ID' => SITE_DIR,

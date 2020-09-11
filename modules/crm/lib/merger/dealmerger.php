@@ -45,6 +45,15 @@ class DealMerger extends EntityMerger
 		return \CCrmDeal::GetUserFields();
 	}
 	/**
+	 * Get field caption
+	 * @param string $fieldId
+	 * @return string
+	 */
+	protected function getFieldCaption(string $fieldId):string
+	{
+		return \CCrmDeal::GetFieldCaption($fieldId);
+	}
+	/**
 	 * Get entity responsible ID
 	 * @param int $entityID Entity ID.
 	 * @param int $roleID Entity Role ID (is not required).
@@ -122,62 +131,42 @@ class DealMerger extends EntityMerger
 		return \CCrmDeal::CheckDeletePermission($entityID, $userPermissions);
 	}
 
-	protected static function resolveEntityFieldConflict(array &$seed, array &$targ, $fieldID)
+	protected static function getFieldConflictResolver(string $fieldId, string $type): ConflictResolver\Base
 	{
-		$seedID = isset($seed['ID']) ? (int)$seed['ID'] : 0;
-		$targID = isset($targ['ID']) ? (int)$targ['ID'] : 0;
-
-		//Field Title is ignored
-		if($fieldID === 'TITLE')
+		switch($fieldId)
 		{
-			return true;
+			case 'TITLE':
+				//Field Title is ignored
+				return new Crm\Merger\ConflictResolver\IgnoredField($fieldId);
+
+			case 'CONTACT_ID':
+				//Crutch for ContactID Field. It is obsolete and can be ignored. See DealMerger::innerMergeBoundEntities.
+				return new Crm\Merger\ConflictResolver\IgnoredField($fieldId);
+
+			case 'OPPORTUNITY':
+				//Crutch for Opportunity Field. It can be ignored if ProductRows are not empty. We will recalculate Opportunity after merging of ProductRows. See DealMerger::innerMergeBoundEntities.
+				$resolver = new Crm\Merger\ConflictResolver\OpportunityField($fieldId);
+				$resolver->setEntityTypeId(\CCrmOwnerType::Deal);
+				return $resolver;
+
+			case 'TAX_VALUE':
+				//Crutch for TaxValue Field. It can be ignored. We will recalculate TaxValue after merging of ProductRows. See DealMerger::innerMergeBoundEntities.
+				return new Crm\Merger\ConflictResolver\IgnoredField($fieldId);
+
+			case 'COMMENTS':
+				return new Crm\Merger\ConflictResolver\HtmlField($fieldId);
+
+			case 'SOURCE_ID':
+				return new Crm\Merger\ConflictResolver\SourceField($fieldId);
+
+			case 'SOURCE_DESCRIPTION':
+				return new Crm\Merger\ConflictResolver\TextField($fieldId);
+
+			case 'OPENED':
+				return new Crm\Merger\ConflictResolver\IgnoredField($fieldId);
 		}
 
-		if($fieldID === 'CONTACT_ID')
-		{
-			//Crutch for ContactID Field. It is obsolete and can be ignored. See DealMerger::innerMergeBoundEntities.
-			return true;
-		}
-
-		//Crutch for Opportunity Field. It can be ignored if ProductRows are not empty. We will recalculate Opportunity after merging of ProductRows. See DealMerger::innerMergeBoundEntities.
-		if($fieldID === 'OPPORTUNITY')
-		{
-			$seedProductRows = isset($seed['PRODUCT_ROWS']) && is_array($seed['PRODUCT_ROWS'])
-				? $seed['PRODUCT_ROWS'] : \CCrmDeal::LoadProductRows($seedID);
-
-			if(!empty($seedProductRows))
-			{
-				$seed['PRODUCT_ROWS'] = $seedProductRows;
-			}
-
-			$targProductRows = isset($targ['PRODUCT_ROWS']) && is_array($targ['PRODUCT_ROWS'])
-				? $targ['PRODUCT_ROWS'] : \CCrmDeal::LoadProductRows($targID);
-
-			if(!empty($targProductRows))
-			{
-				$targ['PRODUCT_ROWS'] = $targProductRows;
-			}
-
-			$seedIsManualOpportunity = isset($seed['IS_MANUAL_OPPORTUNITY']) && $seed['IS_MANUAL_OPPORTUNITY'] === 'Y';
-			$targIsManualOpportunity = isset($targ['IS_MANUAL_OPPORTUNITY']) && $targ['IS_MANUAL_OPPORTUNITY'] === 'Y';
-
-			if(
-				!$seedIsManualOpportunity &&
-				!$targIsManualOpportunity &&
-				(!empty($seedProductRows) || !empty($targProductRows)))
-			{
-				//Opportunity is depends on Product Rows. Product Rows will be merged in innerMergeBoundEntities
-				return true;
-			}
-		}
-
-		//Crutch for TaxValue Field. It can be ignored. We will recalculate TaxValue after merging of ProductRows. See DealMerger::innerMergeBoundEntities.
-		if($fieldID === 'TAX_VALUE')
-		{
-			return true;
-		}
-
-		return parent::resolveEntityFieldConflict($seed,$targ, $fieldID);
+		return parent::getFieldConflictResolver($fieldId, $type);
 	}
 
 	/** Check if source and target entities can be merged

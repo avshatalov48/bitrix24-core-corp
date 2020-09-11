@@ -50,7 +50,7 @@ $arAllOptions =	Array(
 		Array("ldap_create_duplicate_login_user", Loc::getMessage("LDAP_DUPLICATE_LOGIN_USER"), "Y", Array("checkbox")),
 		Loc::getMessage("LDAP_BITRIXVM_BLOCK"),
 		Array("bitrixvm_auth_support", Loc::getMessage("LDAP_BITRIXVM_SUPPORT"), "N", Array("checkbox")),
-		Array("bitrixvm_auth_net", Loc::getMessage('LDAP_BITRIXVM_NET'), "", Array("text", 40)),
+		Array("bitrixvm_auth_net", Loc::getMessage('LDAP_BITRIXVM_NET'), "", Array("textarea")),
 	);
 
 if($MOD_RIGHT>="W"):

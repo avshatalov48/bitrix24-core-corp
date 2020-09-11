@@ -5,10 +5,10 @@
  */
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-CJSCore::Init(["voximplant.common", "ui.alerts", "ui.buttons"]);
+CJSCore::Init(["voximplant.common", "ui.alerts", "ui.buttons", "ui.sidepanel-content"]);
 
 ?>
-<div class="tel-set-container">
+<div class="ui-slider-section">
     <div class="tel-set-item">
         <div class="bx-vi-docs-body">
 			<?=GetMessage('VI_DOCS_BODY_2');?>
@@ -21,7 +21,7 @@ CJSCore::Init(["voximplant.common", "ui.alerts", "ui.buttons"]);
         <?foreach ($arResult['DOCUMENTS'] as $key => $verification):?>
 			<? if ($verification['COUNTRY_CODE'] != $previousCountry): ?>
 				<div class="tel-set-item-select-wrap">
-					<div class="voximplant-title-dark"><?= htmlspecialcharsbx($verification['COUNTRY']) ?></div>
+					<div class="ui-slider-heading-4"><?= htmlspecialcharsbx($verification['COUNTRY']) ?></div>
 				</div>
 			<? endif ?>
 			<? if($verification['COUNTRY_CODE'] !== 'RU'): ?>
@@ -92,7 +92,7 @@ CJSCore::Init(["voximplant.common", "ui.alerts", "ui.buttons"]);
 									<? else: ?>
 										<td class="tel-phones-list-td" style="white-space: nowrap;"><?=htmlspecialcharsbx($document['OWNER'])?></td>
 									<? endif ?>
-									<td class="tel-phones-list-td"><?=(strlen($document['REVIEWER_COMMENT'])>0? $document['REVIEWER_COMMENT']: '-')?></td>
+									<td class="tel-phones-list-td"><?=($document['REVIEWER_COMMENT'] <> ''? $document['REVIEWER_COMMENT']: '-')?></td>
 								</tr>
 							<?endforeach;?>
 						<?endif;?>

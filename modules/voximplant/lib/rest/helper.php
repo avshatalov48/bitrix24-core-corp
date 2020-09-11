@@ -750,9 +750,9 @@ class Helper
 	{
 		$entityType = $parameters['ENTITY_TYPE'];
 		$entityId = $parameters['ENTITY_ID'];
-		if(strpos($entityType, 'CRM_') === 0)
+		if(mb_strpos($entityType, 'CRM_') === 0)
 		{
-			$entityType = substr($entityType, 4);
+			$entityType = mb_substr($entityType, 4);
 		}
 		else if (isset($parameters['ENTITY_TYPE_NAME']) && isset($parameters['ENTITY_ID']))
 		{
@@ -778,7 +778,7 @@ class Helper
 			$result = new Result();
 			return $result->addError(new Error("Outgoing line is not found", "LINE_NOT_FOUND"));
 		}
-		$lineNumber = substr($line['LINE_NUMBER'], 0, 8) === 'REST_APP' ? '' : $line['LINE_NUMBER'];
+		$lineNumber = mb_substr($line['LINE_NUMBER'], 0, 8) === 'REST_APP' ? '' : $line['LINE_NUMBER'];
 
 		list($extensionSeparator, $extension) = Parser::getInstance()->stripExtension($number);
 		$eventFields = array(
@@ -980,7 +980,7 @@ class Helper
 		{
 			$tempPath = \CFile::GetTempName('', bx_basename($fileName));
 		}
-		else if ($urlComponents && strlen($urlComponents["path"]) > 0)
+		else if ($urlComponents && $urlComponents["path"] <> '')
 		{
 			$tempPath = \CFile::GetTempName('', bx_basename($urlComponents["path"]));
 		}

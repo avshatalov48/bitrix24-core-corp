@@ -23,4 +23,5 @@ $MESS["CRM_ORDER_FILTER_DELIVERY_SERVICE"] = "Службы доставки";
 $MESS["CRM_ORDER_FILTER_XML_ID"] = "Внешний код заказа";
 $MESS["CRM_ORDER_FILTER_COUPON"] = "Купон, использованный в заказе";
 $MESS["CRM_ORDER_FILTER_SHIPMENT_TRACKING_NUMBER"] = "Идентификатор отправления";
+$MESS["CRM_ORDER_FILTER_CHECK_PRINTED"] = "Чек напечатан";
 $MESS["CRM_ORDER_FILTER_SHIPMENT_DELIVERY_DOC_DATE"] = "Дата документа отгрузки";

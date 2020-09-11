@@ -236,7 +236,7 @@ class CVoxImplantRestService extends IRestService
 
 		$viSip = new CVoxImplantSip();
 		$configId = $viSip->Add(Array(
-			'TYPE' => strtolower($arParams['TYPE']),
+			'TYPE' => mb_strtolower($arParams['TYPE']),
 			'PHONE_NAME' => $arParams['TITLE'],
 			'SERVER' => $arParams['SERVER'],
 			'LOGIN' => $arParams['LOGIN'],

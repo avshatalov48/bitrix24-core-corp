@@ -711,6 +711,24 @@ class CCrmOrderListComponent extends \CBitrixComponent
 				$docDateName = str_replace('SHIPMENT_DELIVERY_DOC_DATE', 'SHIPMENT.DELIVERY_DOC_DATE', $k);
 				$result[$docDateName] = $v;
 			}
+			elseif($name === 'CHECK_PRINTED')
+			{
+				if ($v === 'Y')
+				{
+					$result['ORDER_CHECK_PRINTED.STATUS'] = 'Y';
+				}
+				else
+				{
+					$result['=ORDER_CHECK_PRINTED.STATUS'] = null;
+				}
+
+				$runtime[] = new Main\ORM\Fields\Relations\Reference(
+					'ORDER_CHECK_PRINTED',
+					\Bitrix\Sale\Cashbox\Internals\CashboxCheckTable::getEntity(),
+					['=ref.ORDER_ID' => 'this.ID',],
+					['join_type' => 'LEFT',]
+				);
+			}
 			elseif ($name === 'USER')
 			{
 				$buyerFilter = Main\UserUtils::getAdminSearchFilter([
@@ -1298,7 +1316,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			unset($fieldName);
 		}
 
-		list($this->arResult['SORT'], $this->arResult['SORT_VARS']) = $this->getSortFields(
+		[$this->arResult['SORT'], $this->arResult['SORT_VARS']] = $this->getSortFields(
 			$arSort,
 			$gridOptions,
 			$visibleColumns,

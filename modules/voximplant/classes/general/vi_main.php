@@ -32,7 +32,7 @@ class CVoxImplantMain
 	public static function Enable($number = '')
 	{
 		$enable = !IsModuleInstalled('extranet') || CModule::IncludeModule('extranet') && CExtranet::IsIntranetUser();
-		if ($enable && strlen($number) > 0)
+		if ($enable && $number <> '')
 		{
 			if (!CVoxImplantPhone::Normalize($number))
 				$enable = false;
@@ -189,7 +189,7 @@ class CVoxImplantMain
 
 	public function	SendChatMessage($dialogId, $incomingType, $messageText, $attach = null)
 	{
-		if (strlen($dialogId) <= 0 || (strlen($messageText) <= 0 && is_null($attach)))
+		if ($dialogId == '' || ($messageText == '' && is_null($attach)))
 			return false;
 
 		if (CVoxImplantConfig::GetChatAction() == CVoxImplantConfig::INTERFACE_CHAT_NONE)
@@ -201,9 +201,9 @@ class CVoxImplantMain
 		// TODO CHECK NULL USER BEFORE SEND
 
 		$chatId = 0;
-		if (substr($dialogId, 0, 4) == 'chat')
+		if (mb_substr($dialogId, 0, 4) == 'chat')
 		{
-			$chatId = intval(substr($dialogId, 4));
+			$chatId = intval(mb_substr($dialogId, 4));
 
 			$message = Array(
 				"FROM_USER_ID" => ($incomingType == CVoxImplantMain::CALL_OUTGOING ? $this->userId : 0),
@@ -245,9 +245,9 @@ class CVoxImplantMain
 		if(!CModule::IncludeModule('im'))
 			return false;
 
-		if (substr($dialogId, 0, 4) == 'chat')
+		if (mb_substr($dialogId, 0, 4) == 'chat')
 		{
-			$chatId = intval(substr($dialogId, 4));
+			$chatId = intval(mb_substr($dialogId, 4));
 			$fieldValue = $additionalData['CRM'].'|'.$additionalData['CRM_ENTITY_TYPE'].'|'.$additionalData['CRM_ENTITY_ID'];
 
 			$chatFields = array(
@@ -823,7 +823,7 @@ class CVoxImplantMain
 	public static function isDbMySql()
 	{
 		global $DB;
-		return strtolower($DB->type) == 'mysql';
+		return $DB->type == 'MYSQL';
 	}
 
 	public static function getCallTypes()

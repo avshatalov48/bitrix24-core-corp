@@ -181,7 +181,7 @@ class Queue extends Node
 
 		if ($queue->getNoAnswerRule() == \CVoxImplantIncoming::RULE_PSTN_SPECIFIC)
 		{
-			if (strlen($queue->getForwardNumber()) > 0)
+			if ($queue->getForwardNumber() <> '')
 			{
 				$this->insertAfter(new Pstn($queue->getForwardNumber(),'voicemail'));
 				return false;

@@ -271,7 +271,7 @@
 					BX.Voximplant.hideLoader();
 					if(errorMessage)
 					{
-						BX.Voximplant.alert(BX.message("VI_NUMBER_ERROR"), errorMessage);
+						BX.Voximplant.alert(BX.message("VI_NUMBER_ERROR"), BX.message("VI_DELETE_NUMBER_ERROR"));
 					}
 					reject();
 				});
@@ -297,7 +297,7 @@
 				{
 					var error = response.errors[0];
 					BX.Voximplant.hideLoader();
-					BX.Voximplant.alert(BX.message("VI_NUMBER_ERROR"), error.message);
+					BX.Voximplant.alert(BX.message("VI_NUMBER_ERROR"), BX.message("VI_CANCEL_DELETE_NUMBER_ERROR"));
 					reject();
 				})
 			}.bind(this));

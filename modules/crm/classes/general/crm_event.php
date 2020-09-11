@@ -18,6 +18,7 @@ class CCrmEvent
 	const TYPE_VIEW = 3;
 	const TYPE_EXPORT = 4;
 	const TYPE_DELETE = 5;
+	const TYPE_MERGER = 6;
 
 	/** @var array  */
 	private static $eventTypes = null;
@@ -800,7 +801,8 @@ class CCrmEvent
 				self::TYPE_EMAIL => GetMessage('CRM_EVENT_TYPE_SNS'),
 				self::TYPE_VIEW => GetMessage('CRM_EVENT_TYPE_VIEW'),
 				self::TYPE_EXPORT => GetMessage('CRM_EVENT_TYPE_EXPORT'),
-				self::TYPE_DELETE => GetMessage('CRM_EVENT_TYPE_DELETE')
+				self::TYPE_DELETE => GetMessage('CRM_EVENT_TYPE_DELETE'),
+				self::TYPE_MERGER => GetMessage('CRM_EVENT_TYPE_MERGER'),
 			);
 		}
 		return self::$eventTypes;

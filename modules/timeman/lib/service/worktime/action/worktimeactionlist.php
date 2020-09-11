@@ -81,20 +81,10 @@ class WorktimeActionList
 				$this->userDateTime,
 				$this->shiftsManager
 			);
-
-			if ($recordSchedule && !$this->isScheduleInCollection($scheduleCollection, $recordSchedule))
-			{
-				$record = null;
-			}
 		}
 
 		$this->actions = $this->buildActions($record);
 		return $this;
-	}
-
-	private function isScheduleInCollection(ScheduleCollection $scheduleCollection, Schedule $schedule)
-	{
-		return $scheduleCollection->has($schedule);
 	}
 
 	private function buildActions(WorktimeRecord $record = null)

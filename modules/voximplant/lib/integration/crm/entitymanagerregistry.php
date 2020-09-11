@@ -68,7 +68,7 @@ class EntityManagerRegistry
 			if($config['PORTAL_MODE'] !== \CVoxImplantConfig::MODE_SIP)
 			{
 				$portalNumber = $call->getPortalNumber();
-				if(substr($portalNumber, 0, 1) != '+')
+				if(mb_substr($portalNumber, 0, 1) != '+')
 				{
 					$portalNumber = '+' . $portalNumber;
 				}

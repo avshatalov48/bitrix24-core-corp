@@ -11,7 +11,7 @@ class CVoxImplantEvent
 		$error = false;
 		if(is_set($arFields, "WORK_PHONE"))
 		{
-			if (strlen($arFields["WORK_PHONE"])>0)
+			if ($arFields["WORK_PHONE"] <> '')
 			{
 				$arCorrectPhones["WORK_PHONE"] = CVoxImplantPhone::Normalize($arFields["WORK_PHONE"]);
 				if (!$arCorrectPhones["WORK_PHONE"])
@@ -27,7 +27,7 @@ class CVoxImplantEvent
 		}
 		if(is_set($arFields, "PERSONAL_PHONE"))
 		{
-			if (strlen($arFields["PERSONAL_PHONE"])>0)
+			if ($arFields["PERSONAL_PHONE"] <> '')
 			{
 				$arCorrectPhones["PERSONAL_PHONE"] = CVoxImplantPhone::Normalize($arFields["PERSONAL_PHONE"]);
 				if (!$arCorrectPhones["PERSONAL_PHONE"])
@@ -43,7 +43,7 @@ class CVoxImplantEvent
 		}
 		if(is_set($arFields, "PERSONAL_MOBILE"))
 		{
-			if (strlen($arFields["PERSONAL_MOBILE"])>0)
+			if ($arFields["PERSONAL_MOBILE"] <> '')
 			{
 				$arCorrectPhones["PERSONAL_MOBILE"] = CVoxImplantPhone::Normalize($arFields["PERSONAL_MOBILE"]);
 				if (!$arCorrectPhones["PERSONAL_MOBILE"])
@@ -60,7 +60,7 @@ class CVoxImplantEvent
 		
 		if(is_set($arFields, "UF_PHONE_INNER"))
 		{
-			if (strlen($arFields["UF_PHONE_INNER"])>0)
+			if ($arFields["UF_PHONE_INNER"] <> '')
 			{
 				$phoneInner = intval(preg_replace("/[^0-9]/i", "", $arFields["UF_PHONE_INNER"]));
 				if ($phoneInner > 0 && $phoneInner < 10000)
@@ -117,7 +117,7 @@ class CVoxImplantEvent
 			));
 			while ($phone = $dbViPhone->fetch())
 			{
-				if (strlen($phone['PHONE_MNEMONIC']) > 0)
+				if ($phone['PHONE_MNEMONIC'] <> '')
 				{
 					$arPhones[$phone['PHONE_MNEMONIC']] = $phone;
 				}
@@ -126,7 +126,7 @@ class CVoxImplantEvent
 			$error = false;
 			if(is_set($arFields, "WORK_PHONE"))
 			{
-				if (strlen($arFields["WORK_PHONE"])>0)
+				if ($arFields["WORK_PHONE"] <> '')
 				{
 					$arCorrectPhones["WORK_PHONE"] = CVoxImplantPhone::Normalize($arFields["WORK_PHONE"]);
 					if (!$arCorrectPhones["WORK_PHONE"])
@@ -142,7 +142,7 @@ class CVoxImplantEvent
 			}
 			if(is_set($arFields, "PERSONAL_PHONE"))
 			{
-				if (strlen($arFields["PERSONAL_PHONE"])>0)
+				if ($arFields["PERSONAL_PHONE"] <> '')
 				{
 					$arCorrectPhones["PERSONAL_PHONE"] = CVoxImplantPhone::Normalize($arFields["PERSONAL_PHONE"]);
 					if (!$arCorrectPhones["PERSONAL_PHONE"])
@@ -158,7 +158,7 @@ class CVoxImplantEvent
 			}
 			if(is_set($arFields, "PERSONAL_MOBILE"))
 			{
-				if (strlen($arFields["PERSONAL_MOBILE"])>0)
+				if ($arFields["PERSONAL_MOBILE"] <> '')
 				{
 					$arCorrectPhones["PERSONAL_MOBILE"] = CVoxImplantPhone::Normalize($arFields["PERSONAL_MOBILE"]);
 					if (!$arCorrectPhones["PERSONAL_MOBILE"])
@@ -174,7 +174,7 @@ class CVoxImplantEvent
 			}
 			if(is_set($arFields, "UF_PHONE_INNER"))
 			{
-				if (strlen($arFields["UF_PHONE_INNER"])>0)
+				if ($arFields["UF_PHONE_INNER"] <> '')
 				{
 					$phoneInner = intval(preg_replace("/[^0-9]/i", "", $arFields["UF_PHONE_INNER"]));
 					if ($phoneInner > 0 && $phoneInner < 10000)
@@ -233,7 +233,7 @@ class CVoxImplantEvent
 					{
 						if ($phone != $arPhones[$mnemonic]['PHONE_NUMBER'])
 						{
-							if (strlen($phone) == 0)
+							if ($phone == '')
 							{
 								VI\PhoneTable::delete($arPhones[$mnemonic]['ID']);
 							}
@@ -243,7 +243,7 @@ class CVoxImplantEvent
 							}
 						}
 					}
-					else if (strlen($phone) > 0)
+					else if ($phone <> '')
 					{
 						VI\PhoneTable::add(Array('USER_ID' => intval($arFields['ID']), 'PHONE_NUMBER' => $phone, 'PHONE_MNEMONIC' => $mnemonic));
 					}

@@ -5,13 +5,17 @@
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
+use Bitrix\Main\Application;
 use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\UI\Buttons\Color;
+
+$messages = Loc::loadLanguageFile(Application::getDocumentRoot().$componentPath."/class.php");
 
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/timeman.worktime.grid/templates/.default/violation-style.css');
 \Bitrix\Main\Loader::includeModule('ui');
 $timeHelper = TimeHelper::getInstance();
-Extension::load(['ui.buttons', 'ui.buttons.icons', 'ui.hint', 'loader', 'ui.forms']);
+Extension::load(['ui.buttons', 'ui.buttons.icons', 'ui.hint', 'loader', 'ui.forms', 'timeman.export']);
 CJSCore::Init(['timeman', 'sidepanel', 'date']);
 \Bitrix\Main\Page\Asset::getInstance()->addJS('/bitrix/js/timeman/component/basecomponent.js');
 \Bitrix\UI\Toolbar\Facade\Toolbar::addFilter([
@@ -241,26 +245,8 @@ endif; ?>
 <script>
 	BX.ready(function ()
 	{
-		BX.message({
-			TIMEMAN_GRID_MENU_SCHEDULE_PERSONAL_VIOLATIONS_PREFIX: '<?= CUtil::JSEscape(Loc::getMessage('TIMEMAN_GRID_MENU_SCHEDULE_PERSONAL_VIOLATIONS_PREFIX')) ?>',
-			TM_WORKTIME_GRID_TIMEZONE_TOGGLE_TITLE: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_TIMEZONE_TOGGLE_TITLE')) ?>',
-			TM_WORKTIME_GRID_TIMEZONE_EMPLOYEES: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_TIMEZONE_EMPLOYEES')) ?>',
-			TM_WORKTIME_GRID_TIMEZONE_MINE: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_TIMEZONE_MINE')) ?>',
-			TM_WORKTIME_GRID_SCHEDULE_DELETE_CONFIRM: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_SCHEDULE_DELETE_CONFIRM')) ?>',
-			TM_WORKTIME_GRID_SCHEDULE_DELETE_CONFIRM_YES: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_SCHEDULE_DELETE_CONFIRM_YES')) ?>',
-			TM_WORKTIME_GRID_SCHEDULE_DELETE_CONFIRM_NO: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_SCHEDULE_DELETE_CONFIRM_NO')) ?>',
-			TM_WORKTIME_GRID_SCHEDULE_DELETE_CONFIRM_TITLE: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_SCHEDULE_DELETE_CONFIRM_TITLE')) ?>',
-			TM_WORKTIME_GRID_CONFIG_MENU_ACTION_DELETE: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_MENU_ACTION_DELETE')) ?>',
-			TM_WORKTIME_GRID_CONFIG_MENU_ACTION_EDIT: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_MENU_ACTION_EDIT')) ?>',
-			TM_WORKTIME_GRID_CONFIG_MENU_ACTION_READ: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_MENU_ACTION_READ')) ?>',
-			TM_WORKTIME_GRID_CONFIG_MENU_TITLE_SCHEDULES: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_MENU_TITLE_SCHEDULES')) ?>',
-			TM_WORKTIME_GRID_CONFIG_MENU_TITLE_SCHEDULE_EDIT: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_MENU_TITLE_SCHEDULE_EDIT')) ?>',
-			TM_WORKTIME_GRID_CONFIG_MENU_TITLE_STATS: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_MENU_TITLE_STATS')) ?>',
-			TM_WORKTIME_GRID_CONFIG_MENU_TITLE_START_END: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_MENU_TITLE_START_END')) ?>',
-			TM_WORKTIME_GRID_CONFIG_VIOLATIONS_MENU_TITLE_COMMON: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_VIOLATIONS_MENU_TITLE_COMMON')) ?>',
-			TM_WORKTIME_GRID_CONFIG_VIOLATIONS_MENU_TITLE_PERSONAL: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_VIOLATIONS_MENU_TITLE_PERSONAL')) ?>',
-			TM_WORKTIME_GRID_CONFIG_VIOLATIONS_MENU_TITLE: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_VIOLATIONS_MENU_TITLE')) ?>'
-		});
+		BX.message(<?=Json::encode($messages)?>);
+
 		BX.Timeman.Component.Worktime.Grid<?= CUtil::JSEscape($arResult['GRID_ID'])?> = new BX.Timeman.Component.Worktime.Grid({
 			flexibleScheduleTypeName: <?= CUtil::PhpToJSObject(\Bitrix\Timeman\Model\Schedule\Schedule::getFlextimeScheduleTypeName())?>,
 			gridId: <?= CUtil::PhpToJSObject($arResult['GRID_ID'])?>,
@@ -276,7 +262,8 @@ endif; ?>
 			canManageSettings: <?= CUtil::PhpToJSObject($arResult['canManageSettings']);?>,
 			defaultViolationShowIndividual: <?= CUtil::PhpToJSObject($arResult['GRID_OPTIONS']['SHOW_VIOLATIONS_INDIVIDUAL']);?>,
 			todayPositionedLeft: <?= $arResult['TODAY_POSITIONED_LEFT'] === true ? 'true' : 'false';?>,
-			baseDepartmentId: <?= CUtil::PhpToJSObject($arResult['baseDepartmentId']);?>
+			baseDepartmentId: <?= CUtil::PhpToJSObject($arResult['baseDepartmentId']);?>,
+			exportManager: new BX.Timeman.Export(<?=CUtil::PhpToJSObject($arResult['exportParams']);?>)
 		});
 	});
 </script>

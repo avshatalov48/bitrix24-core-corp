@@ -24,7 +24,7 @@ class CallerId extends Engine\Controller
 	{
 		$number = Parser::getInstance()->parse($phoneNumber);
 
-		if(!$number->isValid() && substr($phoneNumber, 0, 1) !== "+")
+		if(!$number->isValid() && mb_substr($phoneNumber, 0, 1) !== "+")
 		{
 			$number = Parser::getInstance()->parse("+" . $phoneNumber);
 		}
@@ -36,7 +36,7 @@ class CallerId extends Engine\Controller
 		}
 		$normalizedNumber = $number->format(Format::E164);
 		// remove +
-		$normalizedNumber = substr($normalizedNumber, 1);
+		$normalizedNumber = mb_substr($normalizedNumber, 1);
 
 		$result = CallerIdTable::getRow(['filter' => ['=NUMBER' => $normalizedNumber]]);
 		if(!$result)
@@ -70,7 +70,7 @@ class CallerId extends Engine\Controller
 		}
 		$normalizedNumber = $number->format(Format::E164);
 		// remove +
-		$normalizedNumber = substr($normalizedNumber, 1);
+		$normalizedNumber = mb_substr($normalizedNumber, 1);
 
 		$checkRow = CallerIdTable::getRow(['filter' => ['=NUMBER' => $normalizedNumber]]);
 		if($checkRow)
@@ -119,7 +119,7 @@ class CallerId extends Engine\Controller
 		}
 		$normalizedNumber = $number->format(Format::E164);
 		// remove +
-		$normalizedNumber = substr($normalizedNumber, 1);
+		$normalizedNumber = mb_substr($normalizedNumber, 1);
 
 		$apiClient = new \CVoxImplantHttp();
 		$result = $apiClient->verifyCallerID($normalizedNumber);
@@ -142,7 +142,7 @@ class CallerId extends Engine\Controller
 		}
 		$normalizedNumber = $number->format(Format::E164);
 		// remove +
-		$normalizedNumber = substr($normalizedNumber, 1);
+		$normalizedNumber = mb_substr($normalizedNumber, 1);
 
 		$row = CallerIdTable::getRow(['filter' => [
 			'=NUMBER' => $normalizedNumber

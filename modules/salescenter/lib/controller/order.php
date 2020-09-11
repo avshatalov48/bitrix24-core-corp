@@ -4,6 +4,7 @@ namespace Bitrix\SalesCenter\Controller;
 
 use Bitrix\Main;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale;
@@ -16,6 +17,8 @@ use Bitrix\SalesCenter\Integration\SaleManager;
 use Bitrix\Salescenter;
 use Bitrix\SalesCenter\OrderFacade;
 
+define('SALESCENTER_RECEIVE_PAYMENT_APP_AREA', true);
+
 Loc::loadMessages(__FILE__);
 
 class Order extends Base
@@ -25,6 +28,13 @@ class Order extends Base
 		return array(
 			'searchProduct' => array('class' => SearchProductAction::class)
 		);
+	}
+
+	protected function processBeforeAction(Action $action)
+	{
+		\CFile::DisableJSFunction(true);
+
+		return parent::processBeforeAction($action);
 	}
 
 	private function checkModules()
@@ -494,6 +504,11 @@ class Order extends Base
 
 	protected function obtainShipmentFields($deliveryId, $deliveryRelatedServiceValues, $deliveryResponsibleId)
 	{
+		if ((int)$deliveryId === 0)
+		{
+			$deliveryId = Sale\Delivery\Services\EmptyDeliveryService::getEmptyDeliveryServiceId();
+		}
+
 		/**
 		 * Delivery extra services
 		 */

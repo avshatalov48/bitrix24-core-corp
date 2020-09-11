@@ -64,7 +64,8 @@ class DuplicatePersonCriterion extends DuplicateCriterion
 			return '';
 		}
 
-		return mb_strtolower(trim($name));
+		return preg_replace('/[ ]+/' .BX_UTF_PCRE_MODIFIER, ' ',
+				mb_strtolower(rtrim(trim($name), '.')));
 	}
 	public static function register($entityTypeID, $entityID, $lastName, $name, $secondName, $isRaw = true)
 	{

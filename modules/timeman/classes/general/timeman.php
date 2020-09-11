@@ -1,5 +1,7 @@
 <?
 
+use Bitrix\Main\Context;
+use Bitrix\Main\Web\Cookie;
 use Bitrix\Timeman\Helper\EntityCodesHelper;
 use Bitrix\Timeman\Model\Schedule\Schedule;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
@@ -134,18 +136,6 @@ class CTimeMan
 		}
 
 		$info['PLANNER'] = CIntranetPlanner::getData(SITE_ID, $bFull);
-
-		$info['OPEN_NOW'] = (
-			$STATE == 'EXPIRED' || $STATE == 'CLOSED' && (
-				!$_SESSION['TM_FORCED_OPEN'] ||
-				CTimeMan::RemoveHoursTS($_SESSION['TM_FORCED_OPEN']) != CTimeMan::RemoveHoursTS(time())
-			)
-		);
-
-		if ($info['OPEN_NOW'])
-		{
-			$_SESSION['TM_FORCED_OPEN'] = time();
-		}
 
 		$info["FULL"] = $bFull;
 
@@ -784,7 +774,8 @@ class CTimeMan
 						|| (
 							$bCheckExistance
 							&& (
-								!($arUser = CUser::GetByID($arCurDpt['UF_HEAD'])->Fetch())
+								!($arUser = CUser::getList($by = 'ID', $order = 'ASC',
+									['ID'=> $arCurDpt['UF_HEAD']], ['FIELDS' => ['ACTIVE']])->fetch())
 								|| $arUser['ACTIVE'] == 'N'
 							)
 						)

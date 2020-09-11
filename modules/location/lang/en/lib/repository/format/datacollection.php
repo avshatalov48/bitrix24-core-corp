@@ -1,6 +1,7 @@
-<?
+<?php
 $MESS["LOCATION_REPO_FRMT_ADDR_1"] = "Street, house no.";
 $MESS["LOCATION_REPO_FRMT_ADDR_2"] = "Apartment, office, room, floor";
+$MESS["LOCATION_REPO_FRMT_ADM_LEVEL_2"] = "District";
 $MESS["LOCATION_REPO_FRMT_BUILDING"] = "House no.";
 $MESS["LOCATION_REPO_FRMT_COUNTRY"] = "Country";
 $MESS["LOCATION_REPO_FRMT_EU_DESCR"] = "Musterstr. 321<br/>54321 Musterstadt<br/>Deutschland";
@@ -19,4 +20,3 @@ $MESS["LOCATION_REPO_FRMT_UK_NAME"] = "UK";
 $MESS["LOCATION_REPO_FRMT_UNKNOWN"] = "Extra address information";
 $MESS["LOCATION_REPO_FRMT_US_DESCR"] = "137 One Nice Way<br/>Caprica, CA<br/>92908<br/>USA";
 $MESS["LOCATION_REPO_FRMT_US_NAME"] = "USA";
-?>

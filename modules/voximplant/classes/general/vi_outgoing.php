@@ -119,7 +119,7 @@ class CVoxImplantOutgoing
 			if($currentPrefix == '')
 				continue;
 
-			if($currentPrefix == substr($phoneNumber, 0, strlen($currentPrefix)))
+			if($currentPrefix == mb_substr($phoneNumber, 0, mb_strlen($currentPrefix)))
 			{
 				return $row['SEARCH_ID'] ?: $row['RENTED_NUMBER'] ?: $row['RENTED_GROUP_NUMBER'] ?: $row['CALLER_ID_NUMBER'];
 			}
@@ -438,10 +438,10 @@ class CVoxImplantOutgoing
 		$call->addUsers([$userId], VI\Model\CallUserTable::ROLE_CALLEE, VI\Model\CallUserTable::STATUS_INVITING);
 
 		$crmEntities = [];
-		if(isset($params['ENTITY_TYPE']) && isset($params['ENTITY_ID']) && strpos($params['ENTITY_TYPE'], 'CRM_') === 0)
+		if(isset($params['ENTITY_TYPE']) && isset($params['ENTITY_ID']) && mb_strpos($params['ENTITY_TYPE'], 'CRM_') === 0)
 		{
 			$crmEntities[] = [
-				'ENTITY_TYPE' => substr($params['ENTITY_TYPE'], 4),
+				'ENTITY_TYPE' => mb_substr($params['ENTITY_TYPE'], 4),
 				'ENTITY_ID' => $params['ENTITY_ID'],
 				'IS_PRIMARY' => 'Y',
 				'IS_CREATED' => 'N'
@@ -637,7 +637,7 @@ class CVoxImplantOutgoing
 
 		if($line['TYPE'] === 'REST')
 		{
-			$lineNumber = substr($line['LINE_NUMBER'], 0, 8) === 'REST_APP' ? '' : $line['LINE_NUMBER'];
+			$lineNumber = mb_substr($line['LINE_NUMBER'], 0, 8) === 'REST_APP' ? '' : $line['LINE_NUMBER'];
 			$restAppParams = $customData;
 			$restAppParams['APP_ID'] = $line['REST_APP_ID'];
 			$restAppParams['LINE_NUMBER'] = $lineNumber;

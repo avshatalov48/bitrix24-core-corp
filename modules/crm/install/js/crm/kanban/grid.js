@@ -188,7 +188,7 @@ BX.CRM.Kanban.Grid.prototype = {
 
 		for (var i = 0; i < items.length; i++)
 		{
-			this.actionItems.push(items[i].id)
+			this.actionItems.push(parseInt(items[i].id, 10))
 		}
 
 		return this.actionItems;
@@ -215,7 +215,6 @@ BX.CRM.Kanban.Grid.prototype = {
 				!BX.findParent(el.target, {"className": "ui-action-panel"})
 			)
 			{
-				this.resetMultiSelectMode();
 				this.stopActionPanel();
 				this.unSetKanbanDragMode();
 			}
@@ -318,7 +317,7 @@ BX.CRM.Kanban.Grid.prototype = {
 		return (
 			BX.type.isNotEmptyString(data.ajaxHandlerPath)
 				? data.ajaxHandlerPath
-				: "/bitrix/components/bitrix/crm.kanban/ajax.php"
+				: "/bitrix/components/bitrix/crm.kanban/ajax.old.php"
 		);
 
 	},
@@ -880,14 +879,10 @@ BX.CRM.Kanban.Grid.prototype = {
 			if (drop.getId() === "DELETED")
 			{
 				var ids = this.getItemsForAction();
-				setTimeout(function()
-					{
-						BX.CRM.Kanban.Actions.delete(
-							this,
-							ids.length ? ids : item.getId()
-						);
-					}.bind(this),
-					drop.getDropZoneArea().getDropZoneTimeout()
+				BX.CRM.Kanban.Actions.delete(
+					this,
+					ids.length ? ids : parseInt(item.getId(), 10),
+					drop
 				);
 			}
 		}

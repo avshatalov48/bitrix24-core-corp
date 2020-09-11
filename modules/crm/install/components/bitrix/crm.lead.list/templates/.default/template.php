@@ -40,6 +40,7 @@ Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.c
 use \Bitrix\Crm\Conversion\LeadConversionScheme;
 use \Bitrix\Crm\Category\DealCategory;
 use \Bitrix\Crm\Conversion\EntityConverter;
+use Bitrix\Main\Localization\Loc;
 
 ?><div id="batchConversionWrapper"></div><?
 ?><div id="batchDeletionWrapper"></div><?
@@ -1086,6 +1087,11 @@ $APPLICATION->IncludeComponent(
 				"<?=CCrmOwnerType::LeadName?>",
 				"<?='/bitrix/components/bitrix/crm.lead.details/ajax.php?'.bitrix_sessid_get()?>"
 			);
+
+			BX.Crm.PartialEditorDialog.messages =
+			{
+				entityHasInaccessibleFields: "<?= CUtil::JSEscape(Loc::getMessage('CRM_LEAD_HAS_INACCESSIBLE_FIELDS')) ?>",
+			};
 
 			var gridId = "<?= CUtil::JSEscape($arResult['GRID_ID'])?>";
 			BX.Crm.BatchDeletionManager.create(

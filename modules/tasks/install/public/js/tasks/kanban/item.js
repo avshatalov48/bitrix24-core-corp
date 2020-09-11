@@ -243,7 +243,6 @@ BX.Tasks.Kanban.Item.prototype = {
 				{
 					BX.Kanban.Utils.showErrorDialog(data.error, data.fatal);
 				}
-				BX.onCustomEvent(this, "onKanbanChanged", []);
 			}.bind(this),
 			function(error)
 			{

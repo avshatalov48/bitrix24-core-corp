@@ -512,8 +512,7 @@ if(!empty($htmlEditorConfigs))
 
 			BX.Crm.EntityEditorRequisiteSelector.messages =
 			{
-				bankDetails: "<?=GetMessageJS('CRM_ENTITY_ED_BANK_DETAILS')?>",
-				inn: "<?=GetMessageJS('CRM_ENTITY_ED_REQUISITE_INN')?>",
+				bankDetails: "<?=GetMessageJS('CRM_ENTITY_ED_BANK_DETAILS')?>"
 			};
 
 			BX.Crm.EntityEditorRequisiteListItem.messages =
@@ -735,7 +734,8 @@ if(!empty($htmlEditorConfigs))
 						options: <?=CUtil::PhpToJSObject($arResult['EDITOR_OPTIONS'])?>,
 						attributeConfig: <?=CUtil::PhpToJSObject($arResult['ATTRIBUTE_CONFIG'])?>,
 						showEmptyFields: <?=$arResult['SHOW_EMPTY_FIELDS'] ? 'true' : 'false'?>,
-						isEmbedded: <?=$arResult['IS_EMBEDDED'] ? 'true' : 'false'?>
+						isEmbedded: <?=$arResult['IS_EMBEDDED'] ? 'true' : 'false'?>,
+						ufAccessRights: <?=CUtil::PhpToJSObject($arResult['USER_FIELD_ACCESS_RIGHTS'])?>
 					}
 				)
 			);

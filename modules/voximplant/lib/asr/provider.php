@@ -24,7 +24,7 @@ class Provider {
 			$constants = $reflection->getConstants();
 			foreach ($constants as $constantName)
 			{
-				$result[$constantName] = Loc::getMessage("VOX_ASR_PROVIDER_" . strtoupper($constantName));
+				$result[$constantName] = Loc::getMessage("VOX_ASR_PROVIDER_".mb_strtoupper($constantName));
 			}
 		}
 		return $result;

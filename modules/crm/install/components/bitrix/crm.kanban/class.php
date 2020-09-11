@@ -3820,7 +3820,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 													: $val['value'];
 												if ((mb_strpos($val, 'imol|') === 0))
 												{
-													$item[$code][$contragentType] = $val;
+													$item[$code] = $val;
 													break;
 												}
 											}
@@ -3850,7 +3850,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 													: $val['value'];
 											if (mb_strpos($val, 'imol|') === 0)
 											{
-												$item[$code][] = $val;
+												$item[$code] = $val;
 												break;
 											}
 										}

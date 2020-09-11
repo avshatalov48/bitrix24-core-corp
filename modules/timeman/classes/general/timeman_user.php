@@ -1,5 +1,7 @@
 <?
 
+use Bitrix\Main\Context;
+use Bitrix\Main\Web\Cookie;
 use Bitrix\Timeman\Form\Worktime\WorktimeRecordForm;
 use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
@@ -168,7 +170,7 @@ class CTimeManUser
 			{
 				CUser::setLastActivityDate($this->USER_ID);
 				$APPLICATION->resetException();
-				unset($_SESSION['BX_TIMEMAN_LAST_PAUSE_' . $this->USER_ID]);
+				$this->deleteLastPauseInfo($this->USER_ID);
 				static::clearFullReportCache();
 
 				$data = WorktimeRecordTable::convertFieldsCompatible($result->getWorktimeRecord()->collectValues());
@@ -193,6 +195,13 @@ class CTimeManUser
 		}
 		$APPLICATION->ThrowException($recordForm->getFirstError()->getMessage());
 		return false;
+	}
+
+	private function deleteLastPauseInfo(int $userId)
+	{
+		$response = Context::getCurrent()->getResponse();
+		$cookie = new Cookie('TIMEMAN_LAST_PAUSE_'.$userId, '', time() - 24 * 3600);
+		$response->addCookie($cookie);
 	}
 
 	private function buildStopForm($timestamp, $report, $extraInformation)
@@ -292,10 +301,8 @@ class CTimeManUser
 
 				if ($leak > BX_TIMEMAN_ALLOWED_TIME_DELTA)
 				{
-					$_SESSION['BX_TIMEMAN_LAST_PAUSE_' . $this->USER_ID] = [
-						'DATE_START' => $ts_finish,
-						'DATE_FINISH' => $ts_finish + $leak,
-					];
+					$this->setLastPauseInfo($this->USER_ID, $ts_finish, $ts_finish + $leak);
+
 					$report = \Bitrix\Timeman\Model\Worktime\Report\WorktimeReport::createReopenReport(
 						$lastEntry['USER_ID'],
 						$lastEntry['ID']
@@ -321,6 +328,30 @@ class CTimeManUser
 		}
 
 		return false;
+	}
+
+	private function getLastPauseInfo(int $userId): array
+	{
+		$lastPause = Context::getCurrent()->getRequest()->getCookie('TIMEMAN_LAST_PAUSE_'.$userId);
+		if ($lastPause)
+		{
+			$explode = explode('|', $lastPause);
+			return [
+				'DATE_START' => (int) $explode[0],
+				'DATE_FINISH' => (int) $explode[1],
+			];
+		}
+		else
+		{
+			return [];
+		}
+	}
+
+	private function setLastPauseInfo(int $userId, int $dateStart, int $dateFinish): void
+	{
+		$lastPause = $dateStart.'|'.$dateFinish;
+		$cookie = new Cookie('TIMEMAN_LAST_PAUSE_'.$userId, $lastPause, 0);
+		Context::getCurrent()->getResponse()->addCookie($cookie);
 	}
 
 	private function buildPauseForm($extraInformation)
@@ -974,6 +1005,7 @@ class CTimeManUser
 				'UF_TM_REPORT_DATE' => $arUser['UF_TM_REPORT_DATE'],
 				'UF_TM_TIME' => $arUser['UF_TM_TIME'],
 				'UF_TM_DAY' => $arUser['UF_TM_DAY'],
+				'UF_DELAY_TIME' => $arUser['UF_DELAY_TIME'],
 				'UF_TM_REPORT_TPL' => $arUser['UF_TM_REPORT_TPL'],
 				'UF_TM_ALLOWED_DELTA' => $arUser['UF_TM_ALLOWED_DELTA'],
 			];
@@ -1226,13 +1258,17 @@ class CTimeManUser
 			}
 		}
 
-		if (!empty(CTimeManUser::$LAST_ENTRY[$this->USER_ID]) && isset($_SESSION['BX_TIMEMAN_LAST_PAUSE_' . $this->USER_ID]))
+		if (!empty(CTimeManUser::$LAST_ENTRY[$this->USER_ID]))
 		{
-			CTimeManUser::$LAST_ENTRY[$this->USER_ID]['LAST_PAUSE'] = $_SESSION['BX_TIMEMAN_LAST_PAUSE_' . $this->USER_ID];
-		}
-		else
-		{
-			unset(CTimeManUser::$LAST_ENTRY[$this->USER_ID]['LAST_PAUSE']);
+			$lastPauseInfo = $this->getLastPauseInfo($this->USER_ID);
+			if ($lastPauseInfo)
+			{
+				CTimeManUser::$LAST_ENTRY[$this->USER_ID]['LAST_PAUSE'] = $lastPauseInfo;
+			}
+			else
+			{
+				unset(CTimeManUser::$LAST_ENTRY[$this->USER_ID]['LAST_PAUSE']);
+			}
 		}
 
 		return CTimeManUser::$LAST_ENTRY[$this->USER_ID];

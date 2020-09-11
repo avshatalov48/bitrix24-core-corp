@@ -5,7 +5,7 @@ CJSCore::RegisterExt('voximplant_config_sip', array(
 	'js' => '/bitrix/components/bitrix/voximplant.config.sip/templates/.default/template.js',
 	'lang' => '/bitrix/components/bitrix/voximplant.config.sip/templates/.default/lang/'.LANGUAGE_ID.'/template.php',
 ));
-CJSCore::Init(['ui.buttons', 'ui.buttons.icons', 'ui.alerts', 'sidepanel', 'voximplant.common', 'voximplant_config_sip']);
+CJSCore::Init(['ui.buttons', 'ui.buttons.icons', 'ui.alerts', 'sidepanel', 'voximplant.common', 'voximplant_config_sip', 'ui.sidepanel-content']);
 
 $isBitrix24Template = (SITE_TEMPLATE_ID == "bitrix24");
 if($isBitrix24Template)
@@ -40,7 +40,7 @@ if($isBitrix24Template)
 					<?endif;?>
 				<?else:?>
 					<?if (!empty($arResult['LINK_TO_BUY'])):?>
-						<p><?=GetMessage('VI_CONFIG_SIP_CONNECT_INFO_P1');?></p>
+						<p style="margin-top: 0"><?=GetMessage('VI_CONFIG_SIP_CONNECT_INFO_P1');?></p>
 						<p><?=GetMessage('VI_CONFIG_SIP_CONNECT_INFO_P2_2', Array('#COUNT#' => '<b>'.$arResult['TEST_MINUTES'].'</b>'))?></p>
 						<p><?=GetMessage('VI_CONFIG_SIP_CONNECT_INFO_P3_2')?></p>
 					<?else:?>

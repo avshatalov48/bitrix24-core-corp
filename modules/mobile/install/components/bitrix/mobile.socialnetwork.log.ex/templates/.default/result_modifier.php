@@ -8,10 +8,11 @@ use Bitrix\Disk\Driver;
 $arResult['TOP_RATING_DATA'] = (
 	\Bitrix\Main\ModuleManager::isModuleInstalled('intranet')
 	&& !empty($arResult["arLogTmpID"])
-		? \Bitrix\Socialnetwork\ComponentHelper::getLivefeedRatingData(array(
+		? \Bitrix\Socialnetwork\ComponentHelper::getLivefeedRatingData([
+			'topCount' => 10,
 			'logId' => array_unique($arResult["arLogTmpID"]),
-		))
-		: array()
+		])
+		: []
 );
 
 $arResult['TARGET'] = (isset($arParams['TARGET']) ? $arParams['TARGET'] : '');

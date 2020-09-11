@@ -49,6 +49,7 @@ class BaseService
 
 	protected function isSuccess(Result $result)
 	{
-		return $result->isSuccess() || (!$result->isSuccess() && reset($result->getErrorMessages()) === 'There is no data to update.');
+		$errorMessages = $result->getErrorMessages();
+		return $result->isSuccess() || (!$result->isSuccess() && reset($errorMessages) === 'There is no data to update.');
 	}
 }

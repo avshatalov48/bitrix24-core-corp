@@ -105,7 +105,7 @@ else
 			ENTITY_TYPE: '<?=CUtil::JSEscape($arParams['ENTITY_TYPE_CHR'])?>',
 			GRID_ID: '<?= Helper::getGridId($arParams['ENTITY_TYPE_CHR'])?>',
 			SHOW_ACTIVITY: '<?=CUtil::JSEscape($arParams['SHOW_ACTIVITY'])?>',
-			AJAX_PATH: '/bitrix/components/bitrix/crm.kanban/ajax.php',
+			AJAX_PATH: '/bitrix/components/bitrix/crm.kanban/ajax.old.php',
 			CONTAINER: BX('kanban'),
 			DATA: <?= CUtil::PhpToJSObject($arResult['ITEMS'])?>,
 			EXTRA: <?= json_encode($arParams['EXTRA'])?>,

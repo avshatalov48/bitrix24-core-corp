@@ -407,6 +407,7 @@ if (!empty($arParams['TOP_RATING_DATA']))
 elseif (!empty($arResult["TEMPLATE_DATA"]["LOG_ID"]))
 {
 	$ratingData = \Bitrix\Socialnetwork\ComponentHelper::getLivefeedRatingData(array(
+		'topCount' => 10,
 		'logId' => array($arResult["TEMPLATE_DATA"]["LOG_ID"]),
 	));
 

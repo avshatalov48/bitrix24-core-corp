@@ -123,7 +123,7 @@ class CBPCrmSendSmsActivity extends CBPActivity
 			$arErrors[] = array("code" => "NotExist", "parameter" => "ProviderId", "message" => GetMessage("CRM_SSMSA_EMPTY_PROVIDER"));
 		}
 
-		if (empty($arTestProperties["MessageText"]))
+		if ($arTestProperties["MessageText"] === "")
 		{
 			$arErrors[] = array("code" => "NotExist", "parameter" => "MessageText", "message" => GetMessage("CRM_SSMSA_EMPTY_TEXT"));
 		}

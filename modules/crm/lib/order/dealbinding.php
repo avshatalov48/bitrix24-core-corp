@@ -8,6 +8,11 @@ use Bitrix\Sale\Internals\Entity;
 use Bitrix\Sale;
 use Bitrix\Sale\Result;
 
+if (!Main\Loader::includeModule('sale'))
+{
+	return;
+}
+
 /**
  * Class DealBinding
  * @package Bitrix\Crm\Order

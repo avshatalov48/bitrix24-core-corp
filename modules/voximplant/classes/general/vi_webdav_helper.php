@@ -695,13 +695,13 @@ class CVoxImplantDiskHelper
 		if (!($arHistory['CALL_START_DATE'] instanceof Bitrix\Main\Type\DateTime))
 			return false;
 
-		if (strlen($arHistory['PHONE_NUMBER']) <= 0)
+		if ($arHistory['PHONE_NUMBER'] == '')
 			return false;
 
 		if (intval($arFile['ID']) <= 0)
 			return false;
 
-		if (strlen($arFile['ORIGINAL_NAME']) <= 0)
+		if ($arFile['ORIGINAL_NAME'] == '')
 			return false;
 
 		if (intval($arFile['FILE_SIZE']) <= 0)

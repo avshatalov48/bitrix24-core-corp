@@ -288,7 +288,7 @@ class Session
 				$crmManager->setIgnoreSearchPerson();
 			}
 
-			$fields['CRM_TRACE_DATA'] = Crm\Tracker::getTraceData($params['CRM_TRACE_DATA']);
+			$fields['CRM_TRACE_DATA'] = Crm\Tracker::getTraceData($fields['USER_ID'], $params['CRM_TRACE_DATA']);
 		}
 		/* END CRM BLOCK */
 

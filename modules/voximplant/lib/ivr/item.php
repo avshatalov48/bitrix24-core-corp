@@ -122,7 +122,7 @@ final class Item
 			if($this->type = static::TYPE_FILE && $this->fileId > 0)
 			{
 				$fileRecord = \CFile::GetFileArray($this->fileId);
-				if (substr($fileRecord['SRC'], 0, 4) == 'http' || substr($fileRecord['SRC'], 0, 2) == '//')
+				if (mb_substr($fileRecord['SRC'], 0, 4) == 'http' || mb_substr($fileRecord['SRC'], 0, 2) == '//')
 					$result['FILE_SRC'] = $fileRecord['SRC'];
 				else
 					$result['FILE_SRC'] = \CVoxImplantHttp::GetServerAddress().$fileRecord['SRC'];

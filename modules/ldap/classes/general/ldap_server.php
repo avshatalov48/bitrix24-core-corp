@@ -520,7 +520,14 @@ class CLdapServer
 					continue;
 
 				if($oLdapServer->SetUser($arUserFields))
+				{
 					$cnt++;
+				}
+				else if(\Bitrix\Ldap\Limit::isUserLimitExceeded())
+				{
+					self::$syncErrors[] = \Bitrix\Ldap\Limit::getUserLimitNotifyMessage();
+					break;
+				}
 			}
 			else
 			{
@@ -546,7 +553,14 @@ class CLdapServer
 					$arUserFields["ID"] = $arUsers[$userLogin]["ID"];
 
 					if($oLdapServer->SetUser($arUserFields))
+					{
 						$cnt++;
+					}
+					else if(\Bitrix\Ldap\Limit::isUserLimitExceeded())
+					{
+						self::$syncErrors[] = \Bitrix\Ldap\Limit::getUserLimitNotifyMessage();
+						break;
+					}
 				}
 			}
 

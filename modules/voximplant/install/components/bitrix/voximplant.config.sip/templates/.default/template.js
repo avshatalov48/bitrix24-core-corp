@@ -71,7 +71,7 @@
 
 			return BX.createFragment([
 				BX.create("div", {
-					props: {className: "voximplant-title-dark"},
+					props: {className: "ui-slider-heading-4"},
 					text: BX.message("VI_CONFIG_SIP_PHONES"),
 				}),
 				BX.create("div", {

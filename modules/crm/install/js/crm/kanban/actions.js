@@ -122,81 +122,80 @@
 		 */
 		simpleAction: function(grid, params, disableNotify)
 		{
-
-			// for delete another effect - remove now
-			if (params.action === "delete" && BX.type.isArray(params["id"]))
+			if (grid.isMultiSelectMode())
 			{
-				for (var i = 0, c = params["id"].length; i< c; i++)
-				{
-					grid.hideItem(params["id"][i]);
-				}
+				grid.resetMultiSelectMode();
 			}
 
-			grid.ajax(
-				params,
-				function(data)
-				{
-					var gridData = grid.getData();
+			return new Promise(function(resolve,reject){
+				grid.ajax(
+					params,
+					function(data)
+					{
+						var gridData = grid.getData();
 
-					if (data && !data.error)
-					{
-						if (
-							!disableNotify
-							//params.action !== "delete"
-						)
+						if (data && !data.error)
 						{
-							grid.onApplyFilter();
-						}
-						grid.stopActionPanel();
-						var code = gridData.entityType;
-						if (
-							params.action === "delete" &&
-							params.ignore === "Y"
-						)
-						{
-							code += "_IGNORE";
-						}
-						else
-						{
-							code += "_" + params.action.toUpperCase();
-						}
-						if (disableNotify !== true)
-						{
-							this.notifySimpleAction(code, params);
-						}
-					}
-					else if (data)
-					{
-						// for change column
-						if (params.action === "status")
-						{
+							if (!disableNotify)
+							{
+								grid.onApplyFilter();
+							}
 							grid.stopActionPanel();
-							grid.onApplyFilter();
+							var code = gridData.entityType;
 							if (
-								gridData.entityType === "LEAD" ||
-								gridData.entityType === "DEAL"
+								params.action === "delete" &&
+								params.ignore === "Y"
 							)
 							{
-								BX.Kanban.Utils.showErrorDialog(
-									BX.message("CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_" + gridData.entityType)
-								);
+								code += "_IGNORE";
+							}
+							else
+							{
+								code += "_" + params.action.toUpperCase();
+							}
+							if (disableNotify !== true)
+							{
+								this.notifySimpleAction(code, params);
+							}
+							resolve(data);
+						}
+						else if (data)
+						{
+							// for change column
+							if (params.action === "status")
+							{
+								grid.stopActionPanel();
+								grid.onApplyFilter();
+								if (
+									gridData.entityType === "LEAD" ||
+									gridData.entityType === "DEAL"
+								)
+								{
+									BX.Kanban.Utils.showErrorDialog(
+										BX.message("CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_" + gridData.entityType)
+									);
+									reject(new Error(BX.message("CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_" + gridData.entityType)));
+								}
+								else
+								{
+									BX.Kanban.Utils.showErrorDialog(data.error, data.fatal);
+									reject(new Error(data.error));
+								}
 							}
 							else
 							{
 								BX.Kanban.Utils.showErrorDialog(data.error, data.fatal);
+								reject(new Error(data.error));
 							}
 						}
-						else
-						{
-							BX.Kanban.Utils.showErrorDialog(data.error, data.fatal);
-						}
-					}
-				}.bind(this),
-				function(error)
-				{
-					BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
-				}.bind(this)
-			);
+					}.bind(this),
+					function(error)
+					{
+						BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
+						reject(new Error(error));
+					}.bind(this)
+				);
+			}.bind(this));
 		},
 
 		/**
@@ -267,13 +266,81 @@
 
 		/**
 		 * Delete one item.
+		 * @param {BX.CRM.Kanban.Grid} grid
+		 * @param ids
+		 * @param {BX.CRM.Kanban.DropZone} drop
 		 */
-		delete: function(grid, id)
+		delete: function(grid, ids, drop)
 		{
+			ids = ids ? ids : grid.getCheckedId();
+
 			this.simpleAction(grid, {
 				action: "delete",
-				id: id ? id : grid.getCheckedId()
-			}, true);
+				id: ids
+			}, true)
+				.then(
+					function(response){
+
+						if (drop)
+						{
+							var removedItems = (ids.length ? drop.droppedItems : [drop.droppedItem]);
+							var deleteTitle = (
+								ids.length
+								? BX.message('CRM_KANBAN_DELETE_SUCCESS_MULTIPLE')
+								: BX.message('CRM_KANBAN_DELETE_SUCCESS').replace('#ELEMENT_NAME#', drop.droppedItem.data.name)
+							);
+
+							drop.empty();
+							drop.getDropZoneArea().hide();
+							drop.droppedItems = [];
+							grid.dropZonesShow = false;
+							grid.resetMultiSelectMode();
+							grid.resetActionPanel();
+							grid.resetDragMode();
+
+							var balloon = BX.UI.Notification.Center.notify({
+								content: deleteTitle,
+								actions: [
+									{
+										title: BX.message('CRM_KANBAN_DELETE_CANCEL'),
+										events: {
+											click: function() {
+												balloon.close();
+
+												BX.ajax.runComponentAction('bitrix:crm.kanban', 'restore', {
+													mode: 'ajax',
+													data: {
+														entityIds: ids,
+														entityTypeId: grid.data.entityTypeInt
+													}
+												}).then(function(response) {
+													removedItems.forEach(function(item){
+														var column = grid.getColumn(item.options.columnId);
+														column.addItem(item);
+													});
+													var autoHideDelay = 6000;
+													BX.UI.Notification.Center.notify({
+														content: BX.message('CRM_KANBAN_DELETE_RESTORE_SUCCESS'),
+														autoHideDelay: autoHideDelay,
+													});
+												}, function(response) {
+													BX.UI.Notification.Center.notify({
+														content: response.errors[0].message
+													});
+												});
+											}
+										}
+									}
+								]
+							});
+
+						}
+					}, function(response) {
+						BX.UI.Notification.Center.notify({
+							content: response.errors[0].message
+						});
+					}
+				);
 		},
 
 		/**

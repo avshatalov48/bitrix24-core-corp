@@ -5,14 +5,17 @@ use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Filter\NumberType;
 use Bitrix\Voximplant;
 use Bitrix\Voximplant\Security\Permissions;
 use Bitrix\Voximplant\Security\Helper;
 
 Loc::loadMessages(__FILE__);
 
-class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\Controllerable
+class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\Controllerable, \Bitrix\Main\Errorable
 {
+	use Bitrix\Main\ErrorableImplementation;
+
 	const LOCK_OPTION = 'export_statistic_detail_lock';
 	const MODULE = 'voximplant';
 
@@ -27,10 +30,20 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 	protected $userData = array();
 	protected $showCallCost = true;
 	protected $excelMode = false;
-	protected $exportRequest;
 	protected $enableExport = true;
+
+	protected $pageNumber = -1;
+	protected $pageSize = -1;
+
 	/** @var Permissions */
 	protected $userPermissions;
+
+	public function __construct($component = null)
+	{
+		parent::__construct($component);
+
+		$this->errorCollection = new \Bitrix\Main\ErrorCollection();
+	}
 
 	protected function init()
 	{
@@ -46,17 +59,19 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 			$this->showCallCost = false;
 		}
 
-		if ($_REQUEST['excel'] === 'Y' && $this->enableExport)
+		if ($this->arParams['STEXPORT_MODE'] === 'Y' && $this->arParams['EXPORT_TYPE'] === 'excel' && $this->enableExport)
 		{
 			if($this->getLock())
 			{
 				$this->excelMode = true;
+
+				$this->pageNumber = (int)$this->arParams['PAGE_NUMBER'];
+				$this->pageSize = (int)$this->arParams['STEXPORT_PAGE_SIZE'];
 			}
 			else
 			{
 				$this->arResult['ERROR_TEXT'] = Loc::getMessage("TEL_STAT_EXPORT_LOCK_ERROR");
 			}
-			$this->exportRequest = $_REQUEST["exportRequest"];
 		}
 	}
 
@@ -180,12 +195,12 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 	{
 		$filterOptions = new \Bitrix\Main\UI\Filter\Options($this->filterId);
 		$filter = $filterOptions->getFilter($this->getFilterDefinition());
-		
+
 		$result = array();
 
 		foreach ($filter as $k => $v)
 		{
-			if (strpos($k, "datesel") !== false)
+			if (mb_strpos($k, "datesel") !== false)
 			{
 				unset($filter[$k]);
 			}
@@ -216,12 +231,12 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 			}
 		}
 
-		if (strlen($filter["PHONE_NUMBER"]) > 0)
+		if ($filter["PHONE_NUMBER"] <> '')
 		{
 			$result["PHONE_NUMBER"] = CVoxImplantPhone::stripLetters($filter["PHONE_NUMBER"]);
 		}
 
-		if (strlen($filter["START_DATE_from"]) > 0)
+		if ($filter["START_DATE_from"] <> '')
 		{
 			try
 			{
@@ -231,7 +246,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 			}
 		}
 
-		if (strlen($filter["START_DATE_to"]) > 0)
+		if ($filter["START_DATE_to"] <> '')
 		{
 			try
 			{
@@ -241,24 +256,28 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 			}
 		}
 
-		if (intval($filter['CALL_DURATION_from']) > 0)
+		if (isset($filter['CALL_DURATION_from']) && $filter['CALL_DURATION_from'] != '')
 		{
-			$result[">=CALL_DURATION"] = (int)$filter['CALL_DURATION_from'];
+			$operation = $filter['CALL_DURATION_numsel'] == NumberType::MORE ? '>' : '>=';
+			$result[$operation."CALL_DURATION"] = (int)$filter['CALL_DURATION_from'];
 		}
 
-		if (intval($filter['CALL_DURATION_to']) > 0)
+		if (isset($filter['CALL_DURATION_to']) && $filter['CALL_DURATION_to'] != '')
 		{
-			$result["<=CALL_DURATION"] = (int)$filter['CALL_DURATION_to'];
+			$operation = $filter['CALL_DURATION_numsel'] == NumberType::LESS ? '<' : '<=';
+			$result[$operation."CALL_DURATION"] = (int)$filter['CALL_DURATION_to'];
 		}
 
-		if (floatval($filter['COST_from']) > 0)
+		if (isset($filter['COST_from']) && $filter['COST_from'] != '')
 		{
-			$result[">=COST"] = (float)$filter['COST_from'];
+			$operation = $filter['COST_numsel'] == NumberType::MORE ? '>' : '>=';
+			$result[$operation."COST"] = (float)$filter['COST_from'];
 		}
 
-		if (floatval($filter['COST_to']) > 0)
+		if (isset($filter['COST_to']) && $filter['COST_to'] != '')
 		{
-			$result["<=COST"] = (float)$filter['COST_to'];
+			$operation = $filter['COST_numsel'] == NumberType::LESS ? '<' : '<=';
+			$result[$operation."COST"] = (float)$filter['COST_from'];
 		}
 
 		if (isset($filter['PORTAL_NUMBER']))
@@ -375,7 +394,6 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 	{
 		global $APPLICATION;
 		$this->arResult["ENABLE_EXPORT"] = $this->enableExport;
-		$this->arResult["EXPORT_HREF"] = $APPLICATION->GetCurPageParam('excel=Y');
 		$this->arResult["TRIAL_TEXT"] = CVoxImplantMain::GetTrialText();
 
 		$this->arResult["GRID_ID"] = $this->gridId;
@@ -391,14 +409,65 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 			->setPageSize($pageSize)
 			->initFromUri();
 
-		$idRows = Voximplant\StatisticTable::getList([
-			"select" => ["ID"],
-			"runtime" => $this->getRuntimeFields($this->arResult['FILTER']),
-			"filter" => $this->getFilter($this->arResult['FILTER']),
-			"order" => $sorting["sort"],
-			"offset" => ($this->excelMode ? 0 : $nav->getOffset()),
-			"limit" => ($this->excelMode ? 0 : $nav->getLimit() + 1)
-		])->fetchAll();
+		$idRows = [];
+		$filter = $this->getFilter($this->arResult['FILTER']);
+
+		if ($this->excelMode)
+		{
+			if ((int)$this->arParams['STEXPORT_LAST_EXPORTED_ID'] !== -1)
+			{
+				$filter["<ID"] = (int)$this->arParams['STEXPORT_LAST_EXPORTED_ID'];
+			}
+
+			$idRows = Voximplant\StatisticTable::getList([
+				"select" => ["ID"],
+				"runtime" => $this->getRuntimeFields($this->arResult['FILTER']),
+				"filter" => $filter,
+				"order" => ['ID' => 'DESC'],
+				"limit" => $this->pageSize
+			])->fetchAll();
+
+			$this->arResult['LAST_EXPORTED_ID'] = $idRows[(count($idRows) - 1)]["ID"];
+			$this->arResult['PROCESSED_ITEMS'] = count($idRows);
+
+			if ($this->pageNumber === 1)
+			{
+				$this->arResult['FIRST_EXPORT_PAGE'] = true;
+
+				$rowsCountRecord = Voximplant\StatisticTable::getList([
+					"select" => [
+						"CNT" => Query::expr()->count("ID")
+					],
+					"runtime" => $this->getRuntimeFields($this->arResult['FILTER']),
+					"filter" => $filter,
+				])->fetch();
+
+				$this->arResult['TOTAL_ITEMS'] = $rowsCountRecord["CNT"];
+
+				$lastPage = (int)ceil((int)$this->arResult['TOTAL_ITEMS'] / (int)$this->pageSize);
+			}
+			else
+			{
+				$lastPage = (int)ceil((int)$this->arParams['STEXPORT_TOTAL_ITEMS'] / (int)$this->pageSize);
+			}
+
+			if ($this->pageNumber === $lastPage)
+			{
+				$this->arResult['LAST_EXPORT_PAGE'] = true;
+			}
+		}
+		else
+		{
+			$idRows = Voximplant\StatisticTable::getList([
+				"select" => ["ID"],
+				"runtime" => $this->getRuntimeFields($this->arResult['FILTER']),
+				"filter" => $filter,
+				"order" => $sorting["sort"],
+				"offset" => $nav->getOffset(),
+				"limit" => $nav->getLimit() + 1
+			])->fetchAll();
+		}
+
 		$idList = array_column($idRows, "ID");
 
 		$rows = array();
@@ -447,19 +516,19 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 				}
 				else
 				{
-					if (substr($row["PORTAL_NUMBER"], 0, 3) === 'sip')
+					if (mb_substr($row["PORTAL_NUMBER"], 0, 3) === 'sip')
 					{
-						$row["PORTAL_NUMBER"] = Loc::getMessage("TELEPHONY_PORTAL_PHONE_SIP_OFFICE", Array('#ID#' => substr($row["PORTAL_NUMBER"], 3)));
+						$row["PORTAL_NUMBER"] = Loc::getMessage("TELEPHONY_PORTAL_PHONE_SIP_OFFICE", Array('#ID#' => mb_substr($row["PORTAL_NUMBER"], 3)));
 					}
 					else
 					{
-						if (substr($row["PORTAL_NUMBER"], 0, 3) === 'reg')
+						if (mb_substr($row["PORTAL_NUMBER"], 0, 3) === 'reg')
 						{
-							$row["PORTAL_NUMBER"] = Loc::getMessage("TELEPHONY_PORTAL_PHONE_SIP_CLOUD", Array('#ID#' => substr($row["PORTAL_NUMBER"], 3)));
+							$row["PORTAL_NUMBER"] = Loc::getMessage("TELEPHONY_PORTAL_PHONE_SIP_CLOUD", Array('#ID#' => mb_substr($row["PORTAL_NUMBER"], 3)));
 						}
 						else
 						{
-							if (strlen($row["PORTAL_NUMBER"]) <= 0)
+							if ($row["PORTAL_NUMBER"] == '')
 							{
 								$row["PORTAL_NUMBER"] = Loc::getMessage("TELEPHONY_PORTAL_PHONE_EMPTY");
 							}
@@ -467,7 +536,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 					}
 				}
 
-				if ($row["PORTAL_USER_ID"] == 0 && strlen($row["PHONE_NUMBER"]) <= 0)
+				if ($row["PORTAL_USER_ID"] == 0 && $row["PHONE_NUMBER"] == '')
 				{
 					$row["CALL_DURATION_TEXT"] = '';
 					$row["INCOMING_TEXT"] = '';
@@ -479,12 +548,17 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 				}
 
 				$row['PHONE_NUMBER'] = static::formatPhoneNumber($row['PHONE_NUMBER']);
+				$row['CALL_START_DATE_RAW'] = $row['CALL_START_DATE'];
 				$row['CALL_START_DATE'] = $this->formatDate($row['CALL_START_DATE']);
 
 				$t_row = array(
 					"data" => $row,
 					"columns" => array(),
-					"editable" => false,
+					"editable" => (
+						!$row['CALL_RECORD_DOWNLOAD_URL'] &&
+						$row['CALL_RECORD_URL'] &&
+						$this->isDownloadLinkActual($row['CALL_START_DATE_RAW'])
+					) ? true : false,
 					"actions" => $this->getActions($row),
 				);
 				$rows[] = $t_row;
@@ -598,12 +672,27 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 	protected function getActions(array $row)
 	{
 		$result = array();
+
 		if(isset($row['CALL_RECORD_DOWNLOAD_URL']) && $row['CALL_RECORD_DOWNLOAD_URL'] != '')
 		{
 			$result[] = array(
 				"TITLE" => GetMessage("TEL_STAT_ACTION_DOWNLOAD"),
 				"TEXT" => GetMessage("TEL_STAT_ACTION_DOWNLOAD"),
 				"ONCLICK" => "window.open('".CUtil::JSEscape($row["CALL_RECORD_DOWNLOAD_URL"])."')",
+			);
+		}
+		elseif (
+			!is_null($row['CALL_START_DATE_RAW']) &&
+			isset($row['CALL_RECORD_URL']) &&
+			$row['CALL_RECORD_URL'] != '' &&
+			$this->isDownloadLinkActual($row['CALL_START_DATE_RAW'])
+		)
+		{
+			$result[] = array(
+				"TITLE" => GetMessage("TEL_STAT_ACTION_VOX_DOWNLOAD"),
+				"TEXT" => GetMessage("TEL_STAT_ACTION_VOX_DOWNLOAD"),
+				"ONCLICK" =>
+					"BX.VoximplantStatisticDetail.Instance.downloadVoxRecords([{historyId: ".CUtil::JSEscape($row["ID"])."}]);"
 			);
 		}
 
@@ -628,6 +717,53 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 		return $result;
 	}
 
+	public function downloadRecordAction(int $historyId)
+	{
+		$this->init();
+
+		$recordInfo = Voximplant\StatisticTable::getList([
+			'select' => [
+				'CALL_RECORD_URL',
+				'CALL_START_DATE'
+			],
+			'filter' => [
+				'=ID' => $historyId,
+			],
+		])->fetch();
+
+		$callStartDate = $recordInfo['CALL_START_DATE'];
+		$recordUrl = $recordInfo['CALL_RECORD_URL'];
+
+		if (!$recordUrl || !$this->isDownloadLinkActual($callStartDate))
+		{
+			$this->errorCollection[] = new Bitrix\Main\Error('Link to call recording is missing or expired.');
+			return null;
+		}
+
+		return \CVoxImplantHistory::DownloadAgent($historyId, $recordUrl, false, false);
+	}
+
+	protected function isDownloadLinkActual($callStartDate)
+	{
+		if ($callStartDate == null)
+		{
+			return false;
+		}
+
+		$callStartDate = new \Bitrix\Main\Type\DateTime($callStartDate);
+
+		$expireLinkDate = (clone $callStartDate)->add('2 months');
+
+		$now = new \Bitrix\Main\Type\DateTime();
+
+		if ($now > $expireLinkDate)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
 	protected function getUserHtml($userId, $phoneNumber, $callIcon)
 	{
 		if ($userId > 0)
@@ -644,7 +780,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 			$userHtml = "<span class='tel-stat-user-img user-avatar'></span> &mdash;";
 		}
 
-		if (strlen($phoneNumber) <= 0)
+		if ($phoneNumber == '')
 		{
 			$userHtml = Loc::getMessage('TELEPHONY_BILLING');
 		}
@@ -658,10 +794,10 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 
 	protected function getRecordHtml($id, $recordHref, $recordDownloadUrl, $transcriptId, $transcriptPending, $callId)
 	{
-		if (strlen($recordHref) > 0 || $transcriptId > 0)
+		if ($recordHref <> '' || $transcriptId > 0)
 		{
 			$recordHtml = '';
-			if(strlen($recordHref) > 0)
+			if($recordHref <> '')
 			{
 				$recordHtml .= '<div class="tel-player"><button class="vi-player-button" data-bx-record="'.$recordHref.'"></button></div>';
 
@@ -817,31 +953,24 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 
 		$this->prepareData();
 
-		$cookie = new \Bitrix\Main\Web\Cookie("VOX_STAT_EXPORT_REQUEST", $this->exportRequest, 0);
-		$cookie->setSecure(false);
-		$cookie->setHttpOnly(false);
-		$this->arResult['EXPORT_REQUEST_COOKIE_NAME'] = $cookie->getName();
-
 		if($this->excelMode)
 		{
 			$this->releaseLock();
-			$now = new \Bitrix\Main\Type\Date();
-			$filename = 'call_details_'.$now->format('Y_m_d').'.xls';
-			$APPLICATION->RestartBuffer();
 
-			\Bitrix\Main\Context::getCurrent()->getResponse()->addCookie($cookie);
-
-			header("Content-Type: application/vnd.ms-excel");
-			header("Content-Disposition: filename=".$filename);
 			$this->includeComponentTemplate('excel');
-			CMain::FinalActions();
-			die();
 		}
 		else
 		{
+			$this->arResult['EXPORT_PARAMS'] = [
+				'componentName' => 'bitrix:voximplant.statistic.detail',
+				'siteId' => SITE_ID,
+				'sToken' => 's'.time(),
+			];
+
 			$this->includeComponentTemplate();
-			return $this->arResult;
 		}
+
+		return $this->arResult;
 	}
 
 	public function configureActions()

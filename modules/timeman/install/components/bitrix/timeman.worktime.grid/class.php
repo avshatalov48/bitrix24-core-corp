@@ -3,14 +3,17 @@ namespace Bitrix\Timeman\Component\SchedulePlan;
 
 use \Bitrix\Main;
 use Bitrix\Main\Application;
+use Bitrix\Main\Component\ParameterSigner;
 use \Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\Type\Date;
+use Bitrix\Main\Type\RandomSequence;
 use \Bitrix\Timeman;
 use Bitrix\Timeman\Component\WorktimeGrid\Grid;
 use Bitrix\Timeman\Component\WorktimeGrid\TemplateParams;
 use Bitrix\Timeman\Helper\EntityCodesHelper;
 use Bitrix\Timeman\Helper\TimeHelper;
+use Bitrix\Timeman\Helper\UserHelper;
 use Bitrix\Timeman\Model\Schedule\Assignment\Department\ScheduleDepartment;
 use Bitrix\Timeman\Model\Schedule\ScheduleCollection;
 use Bitrix\Timeman\Model\Schedule\Shift\ShiftTable;
@@ -44,7 +47,7 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 	/** @var array */
 	protected $schedule;
 	private $grid;
-	private $gridId = 'TM_WORKTIME_GRID';
+	protected $gridId = 'TM_WORKTIME_GRID';
 	/** @var Timeman\Security\UserPermissionsManager */
 	private $userPermissionsManager;
 	private $dateTimeFormat;
@@ -88,22 +91,29 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 
 	public function executeComponent()
 	{
+		if ($this->prepareData())
+		{
+			$this->includeComponentTemplate();
+		}
+	}
+
+	protected function prepareData(): bool
+	{
 		$this->initViewResult();
 		if (!$this->currentUser)
 		{
 			showError(empty(Loc::getMessage('TM_WORKTIME_STATS_ACCESS_DENIED')) ?
 				Loc::getMessage('TM_WORKTIME_STATS_SCHEDULE_NOT_FOUND') :
 				Loc::getMessage('TM_WORKTIME_STATS_ACCESS_DENIED'));
-			return;
+			return false;
 		}
 		if ($this->arResult['PARTIAL_ITEM'] === 'shiftCell')
 		{
 			Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/js_core.php');
 			$this->arResult['templateParamsList'] = $this->buildParamsForPartialView();
 			$this->includeComponentTemplate('day-cell');
-			return;
+			return false;
 		}
-
 
 		if ($this->arResult['SCHEDULE_ID'] > 0)
 		{
@@ -112,7 +122,7 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 				($this->arResult['IS_SHIFTPLAN'] && !$this->scheduleCollection->getFirst()->isShifted()))
 			{
 				showError(Loc::getMessage('TM_WORKTIME_STATS_SCHEDULE_NOT_FOUND'));
-				return;
+				return false;
 			}
 		}
 
@@ -152,8 +162,141 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 		$this->initHolidays($this->extractUserIds($departmentsToUsersMap));
 		$this->makeUrls();
 		$this->initGridOptions();
+
+		$this->arResult['exportParams'] = $this->getExportParams();
+
 		$this->arResult['usersCollection'] = $this->usersCollection;
-		$this->includeComponentTemplate();
+
+		$this->prepareGridRow();
+
+		return true;
+	}
+
+	private function prepareGridRow()
+	{
+		if ($this->arResult['PARTIAL_ITEM'] === 'shiftCell')
+		{
+			return;
+		}
+		/** @var \Bitrix\Timeman\Model\User\UserCollection $usersCollection */
+		$usersCollection = $this->arResult['usersCollection'];
+
+		foreach ($this->arResult['DEPARTMENT_USERS_DATA'] as $departmentData)
+		{
+			$departmentId = $departmentData['ID'];
+			if ($this->arResult['DRAW_DEPARTMENT_SEPARATOR'])
+			{
+				$hintChain = '';
+				foreach ($departmentData['CHAIN'] as $chainIndex => $chainDepartment)
+				{
+					if ($chainIndex > 0)
+					{
+						$hintChain .= '<span class="tm-departments-delimiter"> &mdash; </span>';
+					}
+					$hintChain .= htmlspecialcharsbx($chainDepartment['NAME']);
+				}
+				$url = !empty($departmentData['URL']) ? $departmentData['URL'] : '#';
+				$depName = '<a data-hint-no-icon ' . ($this->arResult['isSlider'] ? ' target="_blank" ' : '') . '
+				data-hint="' . htmlspecialcharsbx($hintChain) . '"
+				href="' . $url . '">'
+					. htmlspecialcharsbx($departmentData['NAME'])
+					. '</a>';
+
+				$departmentSeparatorHtml = '<span class="tm-department-name">' . $depName . '</span>';
+				if ($this->arResult['canReadSettings'] && $this->arResult['showUserWorktimeSettings'])
+				{
+					$departmentSeparatorHtml .= '<span class="timeman-grid-settings-icon timeman-grid-settings-icon-time"
+					data-entity-code="' . \Bitrix\Timeman\Helper\EntityCodesHelper::buildDepartmentCode($departmentData['ID']) . '"
+					data-role="timeman-settings-toggle"
+					data-id="' . htmlspecialcharsbx($departmentData['ID']) . '"
+					data-type="department"></span>';
+				}
+
+				$this->arResult['ROWS'][] = [
+					'columns' => [
+						'USER_NAME' => $departmentSeparatorHtml,
+					],
+				];
+			}
+			$arResult = $this->arResult; // for template files
+			foreach ($departmentData['USERS'] as $userData)
+			{
+				$user = $usersCollection->getByPrimary($userData['ID']);
+				/** @var \Bitrix\Timeman\Model\User\User $user */
+
+				$data = [
+					'FORMATTED_NAME' => $user->buildFormattedName(),
+					'WORK_POSITION' => $user->getWorkPosition(),
+					'SHOW_DELETE_USER_BTN' => $this->arResult['SHOW_DELETE_USER_BTN'],
+					'USER_ID' => $user->getId(),
+					'PHOTO_SRC' => UserHelper::getInstance()->getPhotoPath($user['PERSONAL_PHOTO']) ?: '',
+					'USER_PROFILE_PATH' => UserHelper::getInstance()->getProfilePath($user->getId()),
+				];
+				$columns = [];
+				$columnClasses = [];
+
+				foreach ($this->arResult['HEADERS'] as $worktimeCellDataIndex => $worktimeCellData)
+				{
+					if ($worktimeCellData['id'] === 'USER_NAME')
+					{
+						ob_start();
+						require __DIR__ . '/templates/.default/_column-name.php';
+						$columns['USER_NAME'] = ob_get_clean();
+						continue;
+					}
+
+					##############
+					$templateParamsList = (array)$departmentData['USERS_DATA_BY_DATES'][$user->getId()][$worktimeCellData['id']];
+					ob_start();
+					require __DIR__ . '/templates/.default/day-cell.php';
+					$cellHtml = ob_get_clean();
+					$date = array_key_exists('date', $worktimeCellData) ? $worktimeCellData['date'] : $worktimeCellData['id'];
+					$columnClasses[$worktimeCellData['id']] = 'js-' . TemplateParams::getDayCellIdByData($user->getId(), $date);
+					if (!empty($this->arResult['HOLIDAYS'][$user->getId()][$worktimeCellData['id']]) && $this->arResult['HOLIDAYS'][$user->getId()][$worktimeCellData['id']] === true)
+					{
+						$columnClasses[$worktimeCellData['id']] .= ' tm-worktime-list-holiday-cell';
+					}
+					$columns[$worktimeCellData['id']] = $cellHtml;
+				}
+				if ($this->arResult['GRID_OPTIONS']['SHOW_STATS_COLUMNS'])
+				{
+					$userStats = $this->arResult['WORKTIME_STATISTICS'][$user->getId()];
+					$workedDays = $userStats['TOTAL_WORKDAYS'];
+					$workedDaysHtml = '';
+					if ($userStats['TOTAL_NOT_APPROVED_WORKDAYS'] > 0)
+					{
+						$workedDaysHtml = "<span style=\"color:red;font-size: 12px;\">("
+							. htmlspecialcharsbx($userStats['TOTAL_NOT_APPROVED_WORKDAYS'])
+							. ")</span>";
+					}
+
+					$percentagePersonal = ($workedDays > 0 ? round(($userStats['TOTAL_VIOLATIONS']['PERSONAL'] / $workedDays) * 100) : 0);
+					$percentageCommon = ($workedDays > 0 ? round(($userStats['TOTAL_VIOLATIONS']['COMMON'] / $workedDays) * 100) : 0);
+
+					$workedDaysValue = $workedDays . $workedDaysHtml;
+					$workedHoursValue = $userStats['TOTAL_WORKED_SECONDS'] >= 0 ?
+						preg_replace(
+							'#([0-9]+)([\D ]+)#',
+							'\\1<span>\\2</span>',
+							TimeHelper::getInstance()->convertSecondsToHoursMinutesLocal($userStats['TOTAL_WORKED_SECONDS']))
+						: '0';
+					$totalViolationPercent = '<span>'
+						. '<span data-role="violation-percentage-stat" data-type="individual">' . ($percentagePersonal . '<span>%</span></span>')
+						. '<span data-role="violation-percentage-stat" data-type="common">' . ($percentageCommon . '<span>%</span></span>')
+						. '</span>';
+					$columns['WORKED_DAYS'] = '<span class="timeman-grid-stat">' . $workedDaysValue . '</span>';
+					$columns['WORKED_HOURS'] = '<span class="timeman-grid-stat">' . $workedHoursValue . '</span>';
+					$columns['PERCENTAGE_OF_VIOLATIONS'] = '<span class="timeman-grid-stat">' . $totalViolationPercent . '</span>';
+				}
+				$row = [
+					'data' => [],
+					'columns' => $columns,
+					'columnClasses' => $columnClasses,
+				];
+
+				$this->arResult['ROWS'][] = $row;
+			}
+		}
 	}
 
 	private function findViolationRules($departmentsToUsersMap)
@@ -840,7 +983,7 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 		$this->filterDepartmentsToUsersMap($departmentsToUsersMap);
 	}
 
-	private function setTotalCount($departmentsToUsersMap)
+	protected function setTotalCount($departmentsToUsersMap)
 	{
 		$this->arResult['TOTAL_USERS_COUNT'] = 0;
 		foreach ($departmentsToUsersMap as $userCodes)
@@ -849,10 +992,17 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 		}
 	}
 
+	protected function getNavigationData(): array
+	{
+		return [
+			$this->getGrid()->getNavigation()->getLimit(),
+			$this->getGrid()->getNavigation()->getCurrentPage()
+		];
+	}
+
 	private function setLimitOffset(&$departmentsToUsersMap)
 	{
-		$limit = $this->getGrid()->getNavigation()->getLimit();
-		$currentPage = $this->getGrid()->getNavigation()->getCurrentPage();
+		list($limit, $currentPage) = $this->getNavigationData();
 		$expectedSkipCount = $currentPage > 0 ? $limit * ($currentPage - 1) : 0;
 		$actualSkipCount = 0;
 		$cnt = 0;
@@ -1407,5 +1557,27 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 				}
 			}
 		}
+	}
+
+	/**
+	 * @return array
+	 * @throws Main\ArgumentTypeException
+	 */
+	private function getExportParams(): array
+	{
+		$componentName = 'bitrix:timeman.worktime.export.excel';
+		$componentParams = [];
+		$stExportId = 'TIMEMAN_WORKTIME_GRID_EXPORT_MANAGER';
+		$randomSequence = new RandomSequence($stExportId);
+		$stExportManagerId = $stExportId.'_'.$randomSequence->randString();
+
+		return [
+			'componentName' => $componentName,
+			'siteId' => SITE_ID,
+			'stExportId' => $stExportId,
+			'managerId' => $stExportManagerId,
+			'sToken' => 's'.time(),
+			'signedParameters' => ParameterSigner::signParameters($componentName, $componentParams),
+		];
 	}
 }

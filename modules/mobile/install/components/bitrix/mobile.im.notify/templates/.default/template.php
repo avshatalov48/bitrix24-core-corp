@@ -117,6 +117,42 @@ if(empty($arResult['NOTIFY'])):?>
 				notifyValue: el.getAttribute('data-notifyValue')
 			})
 		}
+
+		function urlValidation(el)
+		{
+			let link = BX.util.htmlspecialcharsback(el.getAttribute('data-url'));
+
+			try
+			{
+				var url = new URL(link, location.origin);
+			}
+			catch(e)
+			{
+				el.style="";
+				el.onclick="";
+				return false;
+			}
+
+			var allowList = [
+				"http:",
+				"https:",
+				"ftp:",
+				"file:",
+				"tel:",
+				"callto:",
+				"mailto:",
+				"skype:",
+				"viber:",
+			];
+			if (allowList.indexOf(url.protocol) <= -1)
+			{
+				el.style="";
+				el.onclick="";
+				return false;
+			}
+
+			BXMobileApp.PageManager.loadPageBlank({url: url.href})
+		}
 	</script>
 <?endif;?>
 	<script type="text/javascript">
@@ -316,7 +352,7 @@ if(empty($arResult['NOTIFY'])):?>
 			'downtext': '<?=GetMessage('NM_DOWNTEXT')?>',
 			'loadtext': '<?=GetMessage('NM_LOADTEXT')?>',
 			'callback': function(){
-				app.titleAction("setParams", {text: "<?=GetMessage("NM_TITLE_2")?>", useProgress: true});
+				app.titleAction("setParams", {text: "<?=GetMessage("NM_TITLE")?>", useProgress: true});
 				location.reload();
 			}
 		});
@@ -346,17 +382,74 @@ if(empty($arResult['NOTIFY'])):?>
 			BitrixMobile.LazyLoad.showImages();
 		});
 
-		window.refreshEasingStart = false;
-
-		BXMobileApp.addCustomEvent("onBeforeNotificationsReload", function(){
-			app.titleAction("setParams", {text: "<?=GetMessage("NM_TITLE_2")?>", useProgress: true});
+		BX.addCustomEvent("onOpenPageAfter", () => {
+			window.skipReload = false;
+			if (window.needReload)
+			{
+				reloadAfterNewNotify()
+			}
+		});
+		BX.addCustomEvent("onHidePageBefore", () => {
+			window.skipReload = true;
 		});
 
-		BXMobileApp.addCustomEvent("onNotifyRefresh", function(){
-			location.reload();
-		})
+		window.refreshEasingStart = false;
+
+		BXMobileApp.addCustomEvent("onBeforeNotificationsReload", reloadAfterNewNotify);
+
+		function reloadAfterNewNotify()
+		{
+			if (window.skipReload || document.firstElementChild.scrollTop > 100)
+			{
+				window.needReload = true;
+			}
+			else
+			{
+				app.titleAction("setParams", {text: "<?=GetMessage("NM_TITLE")?>", useProgress: true});
+				location.reload();
+			}
+		}
+
+		BX.bind(document, "scroll", BX.debounce(function(e)
+		{
+			if (!window.needReload)
+			{
+				return false;
+			}
+
+			if(document.firstElementChild.scrollTop < 100)
+			{
+				window.needReload = false;
+				app.titleAction("setParams", {text: "<?=GetMessage("NM_TITLE")?>", useProgress: true});
+				location.reload();
+			}
+		}, 300));
+
 	</script>
 <?
+function decodeBbCode($text)
+{
+	$text = htmlspecialcharsbx($text);
+
+	$text = str_replace('[BR]', '<br>', $text);
+
+	$text = preg_replace_callback('/\[url=([^\s\]]+)\s*\](.*?)\[\/url\]/i', function($match) {
+		return '<span data-url="'.$match[1].'" onclick="urlValidation(this)" style="color: #2067b0;font-weight: bold;">'.$match[2].'</a>';
+	}, $text);
+
+	$text = preg_replace_callback('/\[url\](.*?)\[\/url\]/i', function($match) {
+		return '<span data-url="'.$match[1].'" onclick="urlValidation(this)" style="color: #2067b0;font-weight: bold;">'.$match[1].'</a>';
+	}, $text);
+
+	$text = preg_replace_callback('/\[([buis])\](.*?)\[(\/[buis])\]/i', function($match) {
+		return '<'.$match[1].'>'.$match[2].'<'.$match[3].'>';
+	}, $text);
+
+	$text = \Bitrix\Im\Text::removeBbCodes($text);
+
+	return $text;
+}
+
 function getNotifyParamsHtml($params)
 {
 	$result = '';
@@ -377,7 +470,7 @@ function getNotifyParamsHtml($params)
 						<span class="bx-messenger-attach-user-avatar">
 							'.($userNode['AVATAR']? '<img src="'.$userNode['AVATAR'].'" class="bx-messenger-attach-user-avatar-img">': '<span class="bx-messenger-attach-user-avatar-img bx-messenger-attach-user-avatar-default">').'
 						</span>
-						<span class="bx-messenger-attach-user-name">'.$userNode['NAME'].'</span>
+						<span class="bx-messenger-attach-user-name">'.htmlspecialcharsbx($userNode['NAME']).'</span>
 					</span>';
 				}
 				$blockResult .= '<span class="bx-messenger-attach-users">'.$subResult.'</span>';
@@ -388,7 +481,7 @@ function getNotifyParamsHtml($params)
 				foreach ($attach['LINK'] as $linkNode)
 				{
 					$subResult .= '<span class="bx-messenger-attach-link bx-messenger-attach-link-with-preview">
-						<a class="bx-messenger-attach-link-name" href="'.$linkNode['LINK'].'">'.($linkNode['NAME']? $linkNode['NAME']: $linkNode['LINK']).'</a>
+						<a class="bx-messenger-attach-link-name" href="'.$linkNode['LINK'].'">'.($linkNode['NAME']? htmlspecialcharsbx($linkNode['NAME']): $linkNode['LINK']).'</a>
 						'.(!$linkNode['PREVIEW']? '': '<span class="bx-messenger-file-image-src"><img src="'.$linkNode['PREVIEW'].'" class="bx-messenger-file-image-text"></span>').'
 					</span>';
 				}
@@ -396,7 +489,7 @@ function getNotifyParamsHtml($params)
 			}
 			else if (isset($attach['MESSAGE']))
 			{
-				$blockResult .= '<span class="bx-messenger-attach-message">'.$attach['MESSAGE'].'</span>';
+				$blockResult .= '<span class="bx-messenger-attach-message">'.decodeBbCode($attach['MESSAGE']).'</span>';
 			}
 			else if (isset($attach['HTML']))
 			{
@@ -409,8 +502,8 @@ function getNotifyParamsHtml($params)
 				{
 					$width = $gridNode['WIDTH'] ? 'width: '.$gridNode['WIDTH'].'px' : '';
 					$subResult .= '<span class="bx-messenger-attach-block bx-messenger-attach-block-'.(mb_strtolower($gridNode['DISPLAY'])).'" style="'.($gridNode['DISPLAY'] == 'LINE' ? $width : '').'">
-							<div class="bx-messenger-attach-block-name" style="'.($gridNode['DISPLAY'] == 'ROW' ? $width : '').'">'.$gridNode['NAME'].'</div>
-							<div class="bx-messenger-attach-block-value" style="'.($gridNode['COLOR'] ? 'color: '.$gridNode['COLOR'] : '').'">'.$gridNode['VALUE'].'</div>
+							<div class="bx-messenger-attach-block-name" style="'.($gridNode['DISPLAY'] == 'ROW' ? $width : '').'">'.htmlspecialcharsbx($gridNode['NAME']).'</div>
+							<div class="bx-messenger-attach-block-value" style="'.($gridNode['COLOR'] ? 'color: '.$gridNode['COLOR'] : '').'">'.decodeBbCode($gridNode['VALUE']).'</div>
 						</span>';
 				}
 				$blockResult .= '<span class="bx-messenger-attach-blocks">'.$subResult.'</span>';
@@ -424,7 +517,7 @@ function getNotifyParamsHtml($params)
 				}
 				if ($attach['DELIMITER']['COLOR'])
 				{
-					$style .= "background-color: ".$attach['DELIMITER']['COLOR'];
+					$style .= "background-color: ".htmlspecialcharsbx($attach['DELIMITER']['COLOR']);
 				}
 				if ($style)
 				{
@@ -451,7 +544,7 @@ function getNotifyParamsHtml($params)
 						'<div class="bx-messenger-file">
 							<div class="bx-messenger-file-attrs">
 								<span class="bx-messenger-file-title">
-									<span class="bx-messenger-file-title-name">'.$fileNode['NAME'].'</span>
+									<span class="bx-messenger-file-title-name">'.htmlspecialcharsbx($fileNode['NAME']).'</span>
 								</span>
 								'.($fileNode['SIZE']? '<span class="bx-messenger-file-size">'.CFile::FormatSize($fileNode['SIZE']).'</span>':'').'
 							</div>
@@ -462,7 +555,7 @@ function getNotifyParamsHtml($params)
 		}
 		if ($blockResult)
 		{
-			$color = $attachBlock['COLOR']? $attachBlock['COLOR']: '#818181';
+			$color = $attachBlock['COLOR']? htmlspecialcharsbx($attachBlock['COLOR']): '#818181';
 			$result .= '<div class="bx-messenger-attach" style="border-color:'.$color.'">'.$blockResult.'</div>';
 		}
 	}

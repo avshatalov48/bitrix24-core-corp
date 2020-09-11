@@ -31,6 +31,8 @@ use \Bitrix\SalesCenter;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
+define('SALESCENTER_RECEIVE_PAYMENT_APP_AREA', true);
+
 Loader::includeModule('sale');
 
 class CSalesCenterAppComponent extends CBitrixComponent implements Controllerable

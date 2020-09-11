@@ -14,7 +14,7 @@ Loc::loadMessages(__FILE__);
 
 /**
  * Class StatisticTable
- * 
+ *
  * Fields:
  * <ul>
  * <li> ID int mandatory
@@ -119,6 +119,10 @@ class StatisticTable extends Base
 			)),
 			new Entity\IntegerField('CALL_RECORD_ID', array(
 				'title' => Loc::getMessage('STATISTIC_ENTITY_CALL_RECORD_ID_FIELD'),
+			)),
+			new Entity\StringField('CALL_RECORD_URL', array(
+				'validation' => function(){return array(new Entity\Validator\Length(null, 2000));},
+				'title' => Loc::getMessage('STATISTIC_ENTITY_CALL_RECORD_URL_FIELD'),
 			)),
 			new Entity\IntegerField('CALL_WEBDAV_ID', array(
 				'title' => Loc::getMessage('STATISTIC_ENTITY_CALL_WEBDAV_ID_FIELD'),

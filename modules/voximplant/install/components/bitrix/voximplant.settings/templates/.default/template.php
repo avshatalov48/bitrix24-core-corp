@@ -3,7 +3,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\Loc;
 
-CJSCore::Init(['voximplant.common']);
+CJSCore::Init(['voximplant.common', 'ui.sidepanel-content']);
 
 $bodyClass = $APPLICATION->getPageProperty('BodyClass');
 $APPLICATION->setPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-all-paddings no-background');
@@ -16,11 +16,9 @@ foreach($arResult['INTERFACE_CHAT_OPTIONS'] as $action)
 
 <form method="post">
 	<?= bitrix_sessid_post() ?>
-	<div class="tel-set-container">
-		<div class="bx-edit-tab-title">
-			<div class="bx-form-title">
-				<?=GetMessage('VI_NUMBERS_TITLE_2')?>
-			</div>
+	<div class="ui-slider-section">
+		<div class="ui-slider-heading-4">
+			<?=GetMessage('VI_NUMBERS_TITLE_2')?>
 		</div>
 		<div class="tel-set-item bx-vi-options">
 			<div class="tel-set-item-desc"><?=GetMessage("VI_NUMBERS_CONFIG_BACKPHONE_TITLE")?></div>
@@ -36,11 +34,9 @@ foreach($arResult['INTERFACE_CHAT_OPTIONS'] as $action)
 	</div>
 
 	<? if(!$arResult['IS_REST_ONLY']): ?>
-		<div class="tel-set-container">
-			<div class="bx-edit-tab-title">
-				<div class="bx-form-title">
-					<?=GetMessage('VI_BACKUP_LINE_TITLE')?>
-				</div>
+		<div class="ui-slider-section">
+			<div class="ui-slider-heading-4">
+				<?=GetMessage('VI_BACKUP_LINE_TITLE')?>
 			</div>
 			<div class="tel-set-item bx-vi-options">
 				<div>
@@ -62,11 +58,9 @@ foreach($arResult['INTERFACE_CHAT_OPTIONS'] as $action)
 		</div>
 	<? endif ?>
 
-	<div class="tel-set-container">
-		<div class="bx-edit-tab-title">
-			<div class="bx-form-title">
-				<?=GetMessage('VI_INTERFACE_TITLE')?>
-			</div>
+	<div class="ui-slider-section">
+		<div class="ui-slider-heading-4">
+			<?=GetMessage('VI_INTERFACE_TITLE')?>
 		</div>
 		<div class="tel-set-item bx-vi-options">
 			<div class="tel-set-item-select-wrap">
@@ -81,11 +75,9 @@ foreach($arResult['INTERFACE_CHAT_OPTIONS'] as $action)
 	</div>
 
 	<? if($arResult['LEAD_ENABLED']): ?>
-		<div class="tel-set-container">
-			<div class="bx-edit-tab-title">
-				<div class="bx-form-title">
-					<?=GetMessage('VI_CRM_INTEGRATION_TITLE')?>
-				</div>
+		<div class="ui-slider-section">
+			<div class="ui-slider-heading-4">
+				<?=GetMessage('VI_CRM_INTEGRATION_TITLE')?>
 			</div>
 			<div class="tel-set-item bx-vi-options">
 				<div class="tel-set-item-desc"><?=GetMessage("VI_CRM_INTEGRATION_WORKFLOW_EXECUTION_TITLE")?></div>
@@ -101,11 +93,9 @@ foreach($arResult['INTERFACE_CHAT_OPTIONS'] as $action)
 	<? endif ?>
 
 	<? if(!$arResult['IS_REST_ONLY']): ?>
-		<div class="tel-set-container">
-			<div class="bx-edit-tab-title">
-				<div class="bx-form-title">
-					<?=GetMessage('VI_COMBINATIONS_TITLE')?>
-				</div>
+		<div class="ui-slider-section">
+			<div class="ui-slider-heading-4">
+				<?=GetMessage('VI_COMBINATIONS_TITLE')?>
 			</div>
 			<div class="tel-set-item bx-vi-options">
 				<div class="tel-set-item-desc"><?=GetMessage("VI_COMBINATION_INTERCEPT_GROUP")?></div>
@@ -124,11 +114,9 @@ foreach($arResult['INTERFACE_CHAT_OPTIONS'] as $action)
 	<? endif ?>
 
 	<? if ($arResult['SHOW_AUTOPAY']): ?>
-		<div class="tel-set-container">
-			<div class="bx-edit-tab-title">
-				<div class="bx-form-title">
-					<?=GetMessage('VI_AUTOPAY_TITLE')?>
-				</div>
+		<div class="ui-slider-section">
+			<div class="ui-slider-heading-4">
+				<?=GetMessage('VI_AUTOPAY_TITLE')?>
 			</div>
 			<div class="tel-set-item bx-vi-options">
 				<div class="tel-set-item-desc"><?=GetMessage("VI_AUTOPAY_LABEL_2")?></div>

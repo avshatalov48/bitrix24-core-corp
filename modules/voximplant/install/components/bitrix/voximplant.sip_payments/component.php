@@ -21,7 +21,7 @@ $result = $ViHttp->GetSipInfo();
 $arResult = array(
 	'FREE' => intval($result->FREE),
 	'ACTIVE' => $result->ACTIVE,
-	'DATE_END' => (strlen($result->DATE_END) > 0 ? new \Bitrix\Main\Type\Date($result->DATE_END, 'd.m.Y') : ''),
+	'DATE_END' => ($result->DATE_END <> '' ? new \Bitrix\Main\Type\Date($result->DATE_END, 'd.m.Y') : ''),
 );
 
 if ($result->ACTIVE != CVoxImplantConfig::GetModeStatus(CVoxImplantConfig::MODE_SIP))

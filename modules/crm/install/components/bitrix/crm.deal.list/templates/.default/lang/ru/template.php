@@ -105,4 +105,5 @@ $MESS["CRM_DEAL_ACTION_MERGE"] = "Объединить";
 $MESS["CRM_DEAL_BATCH_MERGE_COMPLETED"] = "Объединение сделок завершено.";
 $MESS["CRM_DEAL_BATCH_MERGE_COUNT_SUCCEEDED"] = "Успешно объединено: #number#.";
 $MESS["CRM_DEAL_BATCH_MERGE_COUNT_FAILED"] = "Не удалось объединить: #number#.";
+$MESS['CRM_DEAL_HAS_INACCESSIBLE_FIELDS'] = 'Вы не можете выполнить данную операцию! Есть поля, которые недоступны для вас. Обратитесь к администратору за получением доступа и решением данной проблемы.';
 ?>

@@ -82,7 +82,11 @@ final class AddressService extends BaseService
 	 */
 	public function save(Entity\Address $address)
 	{
-		if($this->isLimitReached() && AddressLimit::isAddressForLimitation($address))
+		$salescenterReceivePaymentAppArea = (defined('SALESCENTER_RECEIVE_PAYMENT_APP_AREA')
+			&& SALESCENTER_RECEIVE_PAYMENT_APP_AREA === true
+		);
+
+		if(!$salescenterReceivePaymentAppArea && $this->isLimitReached() && AddressLimit::isAddressForLimitation($address))
 		{
 			return (new Result())
 				->addError(

@@ -1,5 +1,5 @@
 import {PopupManager} from "main.popup";
-import {Tag, Type, Loc} from "main.core";
+import {Tag, Type, Loc, Text} from "main.core";
 import {EventEmitter} from "main.core.events";
 import {PresetMenu} from "./preset-menu";
 import {Loader} from "main.loader";
@@ -242,7 +242,7 @@ export class EntityEditorRequisiteTooltip
 							${bandDetails.map((bankDetail, index) => Tag.render`
 								<label class="crm-rq-org-requisite-item" onclick="${this.onSetSelectedBankDetails.bind(this)}">
 									<input type="radio" data-requisite-id="${id}" data-bankdetails-id="${index}" class="crm-rq-org-requisite-btn" ${requisite.isSelected() && (index === selectedBankDetailId) ? ' checked' : ''} ${this._canChangeDefaultRequisite ? '': ' disabled'}>
-									<span class="crm-rq-org-requisite-info">${bankDetail.value}</span>
+									<span class="crm-rq-org-requisite-info">${Text.encode(bankDetail.value)}</span>
 								</label>`)}
 						</div>
 						${renderRequisiteEditButtonNode(id)}
@@ -259,8 +259,8 @@ export class EntityEditorRequisiteTooltip
 				${requisites.map((requisite, index) => Tag.render`
 					<div class="crm-rq-org-item${requisite.isSelected() ? ' crm-rq-org-item-selected' : ''}" onclick="${this.onSetSelectedRequisite.bind(this, index)}">
 						<div class="crm-rq-org-info-container">
-							<div class="crm-rq-org-name">${requisite.getTitle()}</div>
-							${requisite.getSubtitle().length ? Tag.render`<div class="crm-rq-org-description">${requisite.getSubtitle()}</div>` : ''}
+							<div class="crm-rq-org-name">${Text.encode(requisite.getTitle())}</div>
+							${requisite.getSubtitle().length ? Tag.render`<div class="crm-rq-org-description">${Text.encode(requisite.getSubtitle())}</div>` : ''}
 							${renderRequisiteBankDetails(requisite, index)}
 						</div>
 					</div>

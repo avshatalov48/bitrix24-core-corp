@@ -101,7 +101,7 @@ class Auth
 			{
 				if ($USER->IsAuthorized())
 				{
-					if ($USER->GetParam('EXTERNAL_AUTH_ID') == User::EXTERNAL_AUTH_ID && substr($USER->GetParam('XML_ID'), 0, strlen(self::AUTH_TYPE)) == self::AUTH_TYPE)
+					if ($USER->GetParam('EXTERNAL_AUTH_ID') == User::EXTERNAL_AUTH_ID && mb_substr($USER->GetParam('XML_ID'), 0, mb_strlen(self::AUTH_TYPE)) == self::AUTH_TYPE)
 					{
 						$customAuthCode = \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get(self::AUTH_CUSTOM_ID_PARAM);
 						if ($customAuthCode && preg_match("/^[a-fA-F0-9]{32}$/i", $customAuthCode))
@@ -114,7 +114,7 @@ class Auth
 							$res = array(
 								'error' => 'LIVECHAT_AUTH_WIDGET_USER',
 								'error_description' => 'Livechat: you are authorized with a different user [1]',
-								'additional' => array('hash' => substr($USER->GetParam('XML_ID'), strlen(self::AUTH_TYPE)+1))
+								'additional' => array('hash' => mb_substr($USER->GetParam('XML_ID'), mb_strlen(self::AUTH_TYPE) + 1))
 							);
 							return false;
 						}
@@ -193,7 +193,7 @@ class Auth
 					$res = array(
 						'error' => 'LIVECHAT_AUTH_WIDGET_USER',
 						'error_description' => 'Livechat: you are authorized with a different user [2]',
-						'additional' => array('hash' => substr($USER->GetParam('XML_ID'), strlen(self::AUTH_TYPE)+1))
+						'additional' => array('hash' => mb_substr($USER->GetParam('XML_ID'), mb_strlen(self::AUTH_TYPE) + 1))
 					);
 					return false;
 				}
@@ -265,7 +265,7 @@ class Auth
 
 		/** @var \Bitrix\Main\Engine\Action $action */
 		$action = $event->getParameter('action');
-		if (!in_array(strtolower($action->getName()), ['download', 'showimage']))
+		if (!in_array(mb_strtolower($action->getName()), ['download', 'showimage']))
 		{
 			return false;
 		}
@@ -297,25 +297,12 @@ class Auth
 
 		$context = \Bitrix\Main\Context::getCurrent();
 
-		if (is_null($setCookie))
-		{
-			$setCookie = false;
-			if ($context->getRequest()->getCookieRaw('BITRIX_LIVECHAT_AUTH'))
-			{
-				$setCookie = true;
-			}
-		}
-
 		if ($USER->GetID() != $userId)
 		{
-			$USER->Authorize($userId, $setCookie, $setCookie, 'public');
+			$USER->Authorize($userId, false, false, 'public');
 		}
 
-		$cookie = new \Bitrix\Main\Web\Cookie('BITRIX_LIVECHAT_AUTH', 'Y', null, false);
-		$cookie->setHttpOnly(false);
-		$context->getResponse()->addCookie($cookie);
-
-		$authCode = str_replace(self::AUTH_TYPE.'|', '', $_SESSION["SESS_AUTH"]["XML_ID"]);
+		$authCode = str_replace(self::AUTH_TYPE.'|', '', $USER->GetParam("XML_ID"));
 
 		$cookie = new \Bitrix\Main\Web\Cookie('LIVECHAT_HASH', $authCode, null, false);
 		$cookie->setHttpOnly(false);
@@ -343,8 +330,8 @@ class Auth
 			$result = false;
 			foreach (\CRestServer::instance()->getQuery()['cmd'] as $key => $method)
 			{
-				$method = substr($method, 0, strrpos($method, '?'));
-				$result = in_array(strtolower($method), $whiteListMethods);
+				$method = mb_substr($method, 0, mb_strrpos($method, '?'));
+				$result = in_array(mb_strtolower($method), $whiteListMethods);
 				if (!$result)
 				{
 					break;

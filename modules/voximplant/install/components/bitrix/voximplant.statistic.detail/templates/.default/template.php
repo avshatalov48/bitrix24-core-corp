@@ -13,7 +13,10 @@ CJSCore::Init([
 	'voximplant_transcript',
 	'crm_activity_planner',
 	'player',
-	'ui.buttons'
+	'ui.buttons',
+	'ui.buttons.icons',
+	'ui.progressbar',
+	'ui.notification'
 ]);
 
 \Bitrix\Main\Page\Asset::getInstance()->addCss("/bitrix/components/bitrix/voximplant.statistic.detail/player/skins/audio/audio.css");
@@ -71,6 +74,30 @@ $totalContainer = '
 	</div>
 ';
 ?><div id="tel-stat-grid-container"><?
+
+	$actionPanel = [
+		"GROUPS" => [
+			"TYPE" => [
+				"ITEMS" => [
+					[
+						"ID" => "download_records",
+						"TYPE" => \Bitrix\Main\Grid\Panel\Types::BUTTON,
+						"TEXT" => Loc::getMessage("TEL_STAT_ACTION_DOWNLOAD"),
+						"VALUE" => "create_download_records_list",
+						"ONCHANGE" => [
+							[
+								"ACTION" => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
+								"DATA" => [
+									['JS' => "BX.VoximplantStatisticDetail.Instance.downloadSelectedVoxRecords()"]
+								]
+							]
+						],
+					],
+				],
+			]
+		],
+	];
+
 	$APPLICATION->IncludeComponent(
 		"bitrix:main.ui.grid",
 		"",
@@ -85,16 +112,17 @@ $totalContainer = '
 			"ALLOW_PIN_HEADER" => true,
 			"SHOW_PAGINATION" => true,
 			"SHOW_PAGESIZE" => true,
-			"SHOW_ROW_CHECKBOXES" => false,
+			"SHOW_ROW_CHECKBOXES" => true,
 			"SHOW_CHECK_ALL_CHECKBOXES" => false,
-			"SHOW_SELECTED_COUNTER" => false,
+			"SHOW_SELECTED_COUNTER" => true,
 			"PAGE_SIZES" => array(
 				array("NAME" => "10", "VALUE" => "10"),
 				array("NAME" => "20", "VALUE" => "20"),
 				array("NAME" => "50", "VALUE" => "50"),
 				array("NAME" => "100", "VALUE" => "100"),
 			),
-			'SHOW_ACTION_PANEL' => true,
+			"SHOW_ACTION_PANEL" => true,
+			"ACTION_PANEL" => $actionPanel,
 			"TOTAL_ROWS_COUNT_HTML" => $totalContainer,
 			"AJAX_MODE" => "Y",
 			"AJAX_ID" => CAjax::GetComponentID('bitrix:voximplant.statistic.detail', '.default', ''),
@@ -106,14 +134,30 @@ $totalContainer = '
 ?></div><?
 \Bitrix\Voximplant\Ui\Helper::renderCustomSelectors($arResult['FILTER_ID'], $arResult['FILTER']);
 ?>
+
 <script>
+	BX.message({
+		"TEL_STAT_EXPORT_DETAIL_TO_EXCEL": '<?=GetMessageJS("TEL_STAT_EXPORT_DETAIL_TO_EXCEL")?>',
+		"TEL_STAT_EXPORT_DETAIL_TO_EXCEL_DESCRIPTION": '<?=GetMessageJS("TEL_STAT_EXPORT_DETAIL_TO_EXCEL_DESCRIPTION")?>',
+		"TEL_STAT_EXPORT_DETAIL_TO_EXCEL_LONG_PROCESS": '<?=GetMessageJS("TEL_STAT_EXPORT_DETAIL_TO_EXCEL_LONG_PROCESS")?>',
+		"TEL_STAT_EXPORT_ERROR": '<?=GetMessageJS("TEL_STAT_EXPORT_ERROR")?>',
+		"TEL_STAT_ACTION_EXECUTE": '<?=GetMessageJS("TEL_STAT_ACTION_EXECUTE")?>',
+		"TEL_STAT_ACTION_STOP": '<?=GetMessageJS("TEL_STAT_ACTION_STOP")?>',
+		"TEL_STAT_ACTION_CLOSE": '<?=GetMessageJS("TEL_STAT_ACTION_CLOSE")?>',
+		"TEL_STAT_ERROR": '<?=GetMessageJS("TEL_STAT_ERROR")?>',
+		"TEL_STAT_DOWNLOAD_VOX_RECORD_ERROR": '<?=GetMessageJS("TEL_STAT_DOWNLOAD_VOX_RECORD_ERROR")?>',
+		"TEL_STAT_CANCEL": '<?=GetMessageJS("TEL_STAT_CANCEL")?>',
+		"TEL_STAT_LOADING": '<?=GetMessageJS("TEL_STAT_LOADING")?>',
+		"TEL_STAT_OUT_OF": '<?=GetMessageJS("TEL_STAT_OUT_OF")?>'
+	});
+
 	BX.ready(function() {
 		new BX.VoximplantStatisticDetail({
 			gridContainer: BX('<?=CUtil::JSEscape($arResult['GRID_ID'])?>'),
 			exportButton: BX('vi-stat-export'),
-			exportUrl: '<?=CUtil::JSEscape($arResult['EXPORT_HREF'])?>',
 			exportAllowed: <?= $arResult["ENABLE_EXPORT"] ? 'true' : 'false' ?>,
-			exportRequestCookieName: '<?=CUtil::JSEscape($arResult['EXPORT_REQUEST_COOKIE_NAME'])?>'
+			exportParams: <?= CUtil::PhpToJSObject($arResult['EXPORT_PARAMS'])?>,
+			exportType: 'excel'
 		});
 	});
 </script>
