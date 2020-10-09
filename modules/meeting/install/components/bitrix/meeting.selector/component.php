@@ -25,10 +25,10 @@ if ($_REQUEST['mode'] == 'selector_search')
 if ($_REQUEST['FILTER'])
 {
 	$arFilterValues = $_REQUEST['FILTER'];
-	if (isset($arFilterValues['TITLE']) && strlen(trim($arFilterValues['TITLE'])) > 0)
+	if (isset($arFilterValues['TITLE']) && trim($arFilterValues['TITLE']) <> '')
 		$arFilter['~TITLE'] = '%'.trim($arFilterValues['TITLE']).'%';
 
-	if (isset($arFilterValues['CURRENT_STATE']) && strlen($arFilterValues['CURRENT_STATE'])==1 && in_array($arFilterValues['CURRENT_STATE'], array(CMeeting::STATE_PREPARE, CMeeting::STATE_ACTION, CMeeting::STATE_CLOSED)))
+	if (isset($arFilterValues['CURRENT_STATE']) && mb_strlen($arFilterValues['CURRENT_STATE']) == 1 && in_array($arFilterValues['CURRENT_STATE'], array(CMeeting::STATE_PREPARE, CMeeting::STATE_ACTION, CMeeting::STATE_CLOSED)))
 		$arFilter['CURRENT_STATE'] = $arFilterValues['CURRENT_STATE'];
 
 	if (isset($arFilterValues['OWNER_ID']) && intval($arFilterValues['OWNER_ID']) > 0)

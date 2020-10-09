@@ -56,7 +56,7 @@ class Event
 			!empty($configLine['QUEUE_TYPE']) && !empty(ImOpenLines\Queue::$type[$configLine['QUEUE_TYPE']])
 		)
 		{
-			$queue = "Bitrix\\ImOpenLines\\Queue\\Event\\" . ucfirst(strtolower($configLine['QUEUE_TYPE']));
+			$queue = "Bitrix\\ImOpenLines\\Queue\\Event\\" . ucfirst(mb_strtolower($configLine['QUEUE_TYPE']));
 
 			$result = new $queue($configLine);
 		}

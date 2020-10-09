@@ -120,23 +120,21 @@ class CTaskNotifications
 			$arRecipientsIDs = array_unique($arRecipientsIDs);
 
 			$strResponsible = CTaskNotifications::__Users2String($arFields["RESPONSIBLE_ID"], $arUsers, $arFields["NAME_TEMPLATE"]);
-
-			$invariantDescription = GetMessage("TASKS_MESSAGE_RESPONSIBLE_ID").': [COLOR=#000]'.$strResponsible."[/COLOR]\r\n";
-
+			$invariantDescription = GetMessage("TASKS_MESSAGE_RESPONSIBLE_ID").': '.$strResponsible."\r\n";
 			if ($strAccomplices = CTaskNotifications::__Users2String($arFields["ACCOMPLICES"], $arUsers, $arFields["NAME_TEMPLATE"]))
-				$invariantDescription .= GetMessage("TASKS_MESSAGE_ACCOMPLICES").": [COLOR=#000]".$strAccomplices."[/COLOR]\r\n";
-
+			{
+				$invariantDescription .= GetMessage("TASKS_MESSAGE_ACCOMPLICES").": ".$strAccomplices."\r\n";
+			}
 			if ($strAuditors = CTaskNotifications::__Users2String($arFields["AUDITORS"], $arUsers, $arFields["NAME_TEMPLATE"]))
-				$invariantDescription .= GetMessage("TASKS_MESSAGE_AUDITORS").": [COLOR=#000]".$strAuditors."[/COLOR]\r\n";
+			{
+				$invariantDescription .= GetMessage("TASKS_MESSAGE_AUDITORS").": ".$strAuditors."\r\n";
+			}
 
 			// There is can be different messages for users (caused by differnent users' timezones)
-			$arVolatileDescriptions = array();
+			$arVolatileDescriptions = [];
 
 			// Is there correct deadline (it cause volatile part of message for different timezones)?
-			if (
-				$arFields["DEADLINE"]
-				&& (MakeTimeStamp($arFields['DEADLINE']) > 0)
-			)
+			if ($arFields['DEADLINE'] && MakeTimeStamp($arFields['DEADLINE']) > 0)
 			{
 				// Get unix timestamp for DEADLINE
 				$utsDeadline = MakeTimeStamp($arFields['DEADLINE']) - self::getUserTimeZoneOffset();
@@ -153,11 +151,10 @@ class CTaskNotifications
 
 						$deadlineAsString = \Bitrix\Tasks\UI::formatDateTime($bitrixTsDeadline, '^'.\Bitrix\Tasks\UI::getDateTimeFormat());
 
-						$arVolatileDescriptions[$tzOffset] = array(
-							'recipients'  => array(),
-							'description' => GetMessage('TASKS_MESSAGE_DEADLINE')
-								. ': [COLOR=#000]' . $deadlineAsString . "[/COLOR]\r\n"
-						);
+						$arVolatileDescriptions[$tzOffset] = [
+							'recipients'  => [],
+							'description' => GetMessage('TASKS_MESSAGE_DEADLINE').': '.$deadlineAsString."\r\n",
+						];
 					}
 
 					$arVolatileDescriptions[$tzOffset]['recipients'][] = $userId;
@@ -593,9 +590,9 @@ class CTaskNotifications
 							$tmpStr .= $value["TO_VALUE"];
 							break;
 					}
-					if((string)$tmpStr != '')
+					if ($tmpStr !== '')
 					{
-						$changeMessage .= ": [COLOR=#000]".$tmpStr."[/COLOR]";
+						$changeMessage .= ": ".$tmpStr;
 					}
 
 					$arInvariantChangesStrs[] = $changeMessage;

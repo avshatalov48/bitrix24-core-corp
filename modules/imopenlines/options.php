@@ -16,13 +16,13 @@ $aTabs = array(
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
-if(strlen($_POST['Update'])>0 && check_bitrix_sessid())
+if($_POST['Update'] <> '' && check_bitrix_sessid())
 {
-	if (strlen($_POST['PUBLIC_URL']) > 0 && strlen($_POST['PUBLIC_URL']) < 12)
+	if ($_POST['PUBLIC_URL'] <> '' && mb_strlen($_POST['PUBLIC_URL']) < 12)
 	{
 		$errorMessage = GetMessage('IMOPENLINES_ACCOUNT_ERROR_PUBLIC');
 	}
-	else if(strlen($_POST['Update'])>0)
+	else if($_POST['Update'] <> '')
 	{
 		if ($_POST['PUBLIC_URL'] != COption::GetOptionString("imopenlines", "portal_url"))
 		{
@@ -42,7 +42,7 @@ if(strlen($_POST['Update'])>0 && check_bitrix_sessid())
 			COption::SetOptionString("imopenlines", "exec_mode", $_POST['EXEC_MODE']);
 		}
 
-		if(strlen($Update)>0 && strlen($_REQUEST["back_url_settings"])>0)
+		if($Update <> '' && $_REQUEST["back_url_settings"] <> '')
 		{
 			LocalRedirect($_REQUEST["back_url_settings"]);
 		}

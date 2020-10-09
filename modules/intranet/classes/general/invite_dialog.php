@@ -12,6 +12,9 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Socialnetwork;
 use Bitrix\Main\UserTable;
 use Bitrix\Intranet\Invitation;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Engine\Router;
+use Bitrix\Main\Engine\UrlManager;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -21,20 +24,12 @@ class CIntranetInviteDialog
 
 	public static function ShowInviteDialogLink($arParams = array())
 	{
-		CJSCore::Init(array('popup'));
-		if (Loader::includeModule("bitrix24") && !CBitrix24::isMoreUserAvailable())
-		{
-			CBitrix24::initLicenseInfoPopupJS();
-		}
+		$invitationLink = UrlManager::getInstance()->create('getSliderContent', [
+			'c' => 'bitrix:intranet.invitation',
+			'mode' => Router::COMPONENT_MODE_AJAX,
+		]);
 
-		$arParams["MESS"] = array(
-			"BX24_INVITE_TITLE_INVITE" => GetMessage("BX24_INVITE_TITLE_INVITE"),
-			"BX24_INVITE_TITLE_ADD" => GetMessage("BX24_INVITE_TITLE_ADD"),
-			"BX24_INVITE_BUTTON" => GetMessage("BX24_INVITE_BUTTON"),
-			"BX24_CLOSE_BUTTON" => GetMessage("BX24_CLOSE_BUTTON"),
-			"BX24_LOADING" => GetMessage("BX24_LOADING"),
-		);
-		return "B24.Bitrix24InviteDialog.ShowForm(".CUtil::PhpToJSObject($arParams).")";
+		return "BX.SidePanel.Instance.open('".$invitationLink."', {cacheable: false, allowChangeHistory: false})";
 	}
 
 	public static function setSendPassword($value)
@@ -54,14 +49,23 @@ class CIntranetInviteDialog
 		$ID_ADDED = 0;
 
 		$bitrix24Installed = ModuleManager::isModuleInstalled('bitrix24');
-		$iDepartmentId = intval($arFields["DEPARTMENT_ID"]);
+
+		if (
+			isset($arFields["DEPARTMENT_ID"])
+			&& !is_array($arFields["DEPARTMENT_ID"])
+			&& intval($arFields["DEPARTMENT_ID"]) > 0
+		)
+		{
+			$arFields["DEPARTMENT_ID"] = [$arFields["DEPARTMENT_ID"]];
+		}
 
 		$siteIdByDepartmentId = self::getUserSiteId(array(
-			"UF_DEPARTMENT" => $iDepartmentId,
+			"UF_DEPARTMENT" => isset($arFields["DEPARTMENT_ID"]) && is_array($arFields["DEPARTMENT_ID"])
+				? $arFields["DEPARTMENT_ID"][0] : "",
 			"SITE_ID" => $SITE_ID
 		));
 
-		$bExtranet = ($iDepartmentId <= 0);
+		$bExtranet = isset($arFields["DEPARTMENT_ID"]) ? false : true;
 		$arGroups = self::getUserGroups($siteIdByDepartmentId, $bExtranet);
 
 		$strEmail = trim($arFields["ADD_EMAIL"]);
@@ -100,7 +104,7 @@ class CIntranetInviteDialog
 
 					$ID_TRANSFERRED = self::TransferEmailUser($arUser["ID"], array(
 						"GROUP_ID" => $arGroups,
-						"UF_DEPARTMENT" => $iDepartmentId,
+						"UF_DEPARTMENT" => $arFields["DEPARTMENT_ID"],
 						"SITE_ID" => $siteIdByDepartmentId,
 						"NAME" => $strName,
 						"LAST_NAME" => $strLastName,
@@ -124,7 +128,7 @@ class CIntranetInviteDialog
 					$bitrix24Installed
 					&& !ModuleManager::isModuleInstalled('extranet')
 					&& $arUser["EXTERNAL_AUTH_ID"] == 'socservices'
-					&& $iDepartmentId > 0
+					&& !empty($arFields["DEPARTMENT_ID"])
 					&& (
 						!isset($arUser["UF_DEPARTMENT"])
 						|| (
@@ -140,7 +144,7 @@ class CIntranetInviteDialog
 				{
 					$ID_TRANSFERRED = self::TransferExtranetUser($arUser["ID"], array(
 						"GROUP_ID" => $arGroups,
-						"UF_DEPARTMENT" => $iDepartmentId,
+						"UF_DEPARTMENT" => $arFields["DEPARTMENT_ID"],
 						"SITE_ID" => $siteIdByDepartmentId
 					));
 
@@ -198,7 +202,7 @@ class CIntranetInviteDialog
 				"GROUP_ID" => $arGroups,
 				"WORK_POSITION" => $strPosition,
 				"LID" => $siteIdByDepartmentId,
-				"UF_DEPARTMENT" => ($iDepartmentId > 0 ? array($iDepartmentId) : array())
+				"UF_DEPARTMENT" => $arFields["DEPARTMENT_ID"]
 			);
 
 			if (!self::getSendPassword())
@@ -367,7 +371,7 @@ class CIntranetInviteDialog
 		$bExtranetUser = false;
 		$bExtranetInstalled = (IsModuleInstalled("extranet") && COption::GetOptionString("extranet", "extranet_site") <> '');
 
-		if ($arFields["EMAIL"] <> '' || $arFields['PHONE'] <> '')
+		if (!empty($arFields["EMAIL"]) || !empty($arFields['PHONE']))
 		{
 			$isPhone = is_array($arFields['PHONE']) && !empty($arFields['PHONE']);
 			$phoneCountryList = [];
@@ -379,7 +383,8 @@ class CIntranetInviteDialog
 			}
 			else
 			{
-				$arEmailOriginal = preg_split("/[\n\r\t\\,;\\ ]+/", trim($arFields["EMAIL"]));
+				$arEmailOriginal = is_array($arFields["EMAIL"])
+					? $arFields["EMAIL"] : preg_split("/[\n\r\t\\,;\\ ]+/", trim($arFields["EMAIL"]));
 			}
 
 			$arEmail = $errorEmails = array();
@@ -395,7 +400,8 @@ class CIntranetInviteDialog
 
 				if($isPhone)
 				{
-					$phoneNumber = \Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($addr, $phoneCountryList[$index]);
+					$phoneCountry = isset($phoneCountryList[$index]) ? $phoneCountryList[$index] : "";
+					$phoneNumber = \Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($addr, $phoneCountry);
 					if($phoneNumber->isValid())
 					{
 						$arEmail[] = $phoneNumber->format(\Bitrix\Main\PhoneNumber\Format::E164);
@@ -650,7 +656,7 @@ class CIntranetInviteDialog
 			if (
 				!(
 					isset($arFields["UF_DEPARTMENT"])
-					&& intval($arFields["UF_DEPARTMENT"]) > 0
+					//&& intval($arFields["UF_DEPARTMENT"]) > 0
 				)
 			)
 			{
@@ -671,7 +677,7 @@ class CIntranetInviteDialog
 						);
 						if ($ar_up_department = $db_up_department->Fetch())
 						{
-							$arFields["UF_DEPARTMENT"] = $ar_up_department['ID'];
+							$arFields["UF_DEPARTMENT"] = [$ar_up_department['ID']];
 						}
 					}
 				}
@@ -989,9 +995,11 @@ class CIntranetInviteDialog
 			'EMAIL' => $userData['EMAIL'],
 			"PASSWORD" => $strPassword,
 			"CONFIRM_CODE" => $userData['CONFIRM_CODE'],
+			"NAME" => $userData['NAME'],
+			"LAST_NAME" => $userData['LAST_NAME'],
 			"GROUP_ID" => $userData['GROUP_ID'],
 			"LID" => $SITE_ID,
-			"UF_DEPARTMENT" => (intval($userData["UF_DEPARTMENT"]) > 0 ? array($userData["UF_DEPARTMENT"]) : array())
+			"UF_DEPARTMENT" => (is_array($userData["UF_DEPARTMENT"]) ? $userData["UF_DEPARTMENT"] : array($userData["UF_DEPARTMENT"]))
 		);
 
 		if(isset($userData['PHONE_NUMBER']))
@@ -1402,12 +1410,9 @@ class CIntranetInviteDialog
 			"EMAIL" => $arUser["EMAIL"]
 		);
 
-		if (
-			isset($arParams["UF_DEPARTMENT"])
-			&& intval($arParams["UF_DEPARTMENT"]) > 0
-		)
+		if (isset($arParams["UF_DEPARTMENT"]))
 		{
-			$arFields["UF_DEPARTMENT"] = array($arParams["UF_DEPARTMENT"]);
+			$arFields["UF_DEPARTMENT"] = !is_array($arParams["UF_DEPARTMENT"]) ? array($arParams["UF_DEPARTMENT"]) : $arParams["UF_DEPARTMENT"];
 		}
 
 		if (
@@ -1550,7 +1555,7 @@ class CIntranetInviteDialog
 			"NAME" => $arUser["NAME"],
 			"LAST_NAME" => $arUser["LAST_NAME"],
 			"EMAIL" => $arUser["EMAIL"],
-			"UF_DEPARTMENT" => array($arParams["UF_DEPARTMENT"]),
+			"UF_DEPARTMENT" => !is_array($arParams["UF_DEPARTMENT"]) ? array($arParams["UF_DEPARTMENT"]) : $arParams["UF_DEPARTMENT"],
 			"ADMIN_NOTES" => str_replace("~deactivated~", "", $arUser["ADMIN_NOTES"]),
 			"ACTIVE" => "Y"
 		);

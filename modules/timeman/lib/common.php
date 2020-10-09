@@ -79,7 +79,7 @@ class Common
 		{
 			foreach($networkRanges as $range)
 			{
-				if (strpos($range['ip_range'], "-") !== false)
+				if (mb_strpos($range['ip_range'], "-") !== false)
 				{
 					$ipRange = explode("-", $range['ip_range']);
 					$ipMinRange = ip2long($ipRange[0]);

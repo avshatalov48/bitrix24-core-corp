@@ -76,7 +76,7 @@ $MESS["CONFIG_GDRP_LABEL6"] = "Title*";
 $MESS["CONFIG_GDRP_LABEL7"] = "Date*";
 $MESS["CONFIG_GDRP_LABEL8"] = "Notification Email Address*";
 $MESS["CONFIG_GDRP_LABEL11"] = "(according to the <a href=\"https://www.bitrix24.ru/about/advertising.php\" target=\"_blank\">Agreement</a>)";
-$MESS["CONFIG_GDRP_TITLE1"] = "I consent to receiving emails from Bitrix, Inc. containing:";
+$MESS["CONFIG_GDRP_TITLE1"] = "I consent to receiving emails from Bitrix24 containing:";
 $MESS["CONFIG_GDRP_TITLE2"] = "If you accept the Data Processing Agreement, you must also provide the following information:";
 $MESS["CONFIG_GDRP_TITLE3"] = "Personal data processing apps:";
 $MESS["CONFIG_HEADER_GDRP"] = "GDPR Compliance";
@@ -92,6 +92,9 @@ You can watch attempts to log on to Bitrix24 from any IP address in the Event lo
 $MESS["CONFIG_IP_TITLE"] = "IP restrictions (allow access only from specified IP addresses or addresses ranges. Example: 192.168.0.7; 192.168.0.1-192.168.0.100)";
 $MESS["CONFIG_LIMIT_MAX_TIME_IN_DOCUMENT_HISTORY"] = "Document versions are kept for #NUM# days.";
 $MESS["CONFIG_LOCATION_ADDRESS_FORMAT"] = "Address format";
+$MESS["CONFIG_LOCATION_GOOGLE_SHOW_PLACE_PHOTOS"] = "Show Google photos for Your places map view (Google may charge additonal fee for this option)";
+$MESS["CONFIG_LOCATION_GOOGLE_USE_GEOCODING_SERVICE"] = "Use Geocoding service for unknown addresses (Google may charge additonal fee for this option)";
+$MESS["CONFIG_LOCATION_USE_GOOGLE_API"] = "Use Google API to show address hints and map";
 $MESS["CONFIG_LOGO_24"] = "Add \"24\" to company logo";
 $MESS["CONFIG_MARKETPLACE_MORE"] = "Learn more";
 $MESS["CONFIG_MARKETPLACE_TITLE"] = "Migrate data to Bitrix24 from other systems";

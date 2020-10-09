@@ -205,7 +205,7 @@ class Crm
 					));
 				}
 
-				if (!empty($entityData['FULL_NAME']) && strpos($entityData['TITLE'], $entityData['FULL_NAME']) === false)
+				if (!empty($entityData['FULL_NAME']) && mb_strpos($entityData['TITLE'], $entityData['FULL_NAME']) === false)
 				{
 					$entityGrid[] = Array('DISPLAY' => 'COLUMN', 'NAME' => Loc::getMessage('IMOL_MESSAGE_CRM_CARD_FULL_NAME'), 'VALUE' => $entityData['FULL_NAME']);
 				}

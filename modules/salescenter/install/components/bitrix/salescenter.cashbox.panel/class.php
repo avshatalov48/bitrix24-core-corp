@@ -86,43 +86,78 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 	private function getCashboxItems(): array
 	{
 		$cashboxes = [];
-		$cashboxDescriptions = [
-			[
-				'id' => 'atol',
-				'title' => Loc::getMessage('SCP_CASHBOX_ATOL'),
-				'image' => $this->getImagePath().'atol.svg',
-				'itemSelectedColor' => '#ED1B2F',
-				'itemSelectedImage' => $this->getImagePath().'atol_s.svg',
-				'itemSelected' => false,
-				'data' => [
-					'type' => 'cashbox',
-					'handler' => '\\Bitrix\\Sale\\Cashbox\\CashboxAtolFarmV4',
-					'connectPath' => $this->getCashboxEditUrl([
+		$zone = '';
+		if (Main\Loader::includeModule("bitrix24"))
+		{
+			$zone = \CBitrix24::getLicensePrefix();
+		}
+		elseif (Main\Loader::includeModule('intranet'))
+		{
+			$zone = \CIntranetUtils::getPortalZone();
+		}
+
+		$cashboxDescriptions = [];
+		if ($zone === 'ru') {
+			$cashboxDescriptions = [
+				[
+					'id' => 'atol',
+					'title' => Loc::getMessage('SCP_CASHBOX_ATOL'),
+					'image' => $this->getImagePath() . 'atol.svg',
+					'itemSelectedColor' => '#ED1B2F',
+					'itemSelectedImage' => $this->getImagePath() . 'atol_s.svg',
+					'itemSelected' => false,
+					'data' => [
+						'type' => 'cashbox',
 						'handler' => '\\Bitrix\\Sale\\Cashbox\\CashboxAtolFarmV4',
-						'preview' => 'y',
-					]),
-					'showMenu' => false,
+						'connectPath' => $this->getCashboxEditUrl([
+							'handler' => '\\Bitrix\\Sale\\Cashbox\\CashboxAtolFarmV4',
+							'preview' => 'y',
+						]),
+						'showMenu' => false,
+					],
 				],
-			],
-			[
-				'id' => 'orangedata',
-				'title' => Loc::getMessage('SCP_CASHBOX_ORANGE_DATA'),
-				'image' => $this->getImagePath().'orangedata.svg',
-				'itemSelectedColor' => '#FF9A01',
-				'itemSelectedImage' => $this->getImagePath().'orangedata_s.svg',
-				'itemSelected' => false,
-				'data' => [
-					'type' => 'cashbox',
-					'handler' => '\\Bitrix\\Sale\\Cashbox\\CashboxOrangeData',
-					'connectPath' => $this->getCashboxEditUrl([
+				[
+					'id' => 'orangedata',
+					'title' => Loc::getMessage('SCP_CASHBOX_ORANGE_DATA'),
+					'image' => $this->getImagePath() . 'orangedata.svg',
+					'itemSelectedColor' => '#FF9A01',
+					'itemSelectedImage' => $this->getImagePath() . 'orangedata_s.svg',
+					'itemSelected' => false,
+					'data' => [
+						'type' => 'cashbox',
 						'handler' => '\\Bitrix\\Sale\\Cashbox\\CashboxOrangeData',
-						'preview' => 'y',
-					]),
-					'showMenu' => false,
-					'recommendation' => true,
+						'connectPath' => $this->getCashboxEditUrl([
+							'handler' => '\\Bitrix\\Sale\\Cashbox\\CashboxOrangeData',
+							'preview' => 'y',
+						]),
+						'showMenu' => false,
+						'recommendation' => true,
+					],
 				],
-			],
-		];
+			];
+		}
+		elseif ($zone === 'ua')
+		{
+			$cashboxDescriptions = [
+					[
+					'id' => 'checkbox',
+					'title' => Loc::getMessage('SCP_CASHBOX_CHECKBOX'),
+					'image' => $this->getImagePath() . 'checkbox.svg',
+					'itemSelectedColor' => '#272BED',
+					'itemSelectedImage' => $this->getImagePath() . 'checkbox_s.svg',
+					'itemSelected' => false,
+					'data' => [
+						'type' => 'cashbox',
+						'handler' => '\\Bitrix\\Sale\\Cashbox\\CashboxCheckbox',
+						'connectPath' => $this->getCashboxEditUrl([
+							'handler' => '\\Bitrix\\Sale\\Cashbox\\CashboxCheckbox',
+							'preview' => 'y',
+						]),
+						'showMenu' => false,
+					],
+				],
+			];
+		}
 
 		$filter = SaleManager::getInstance()->getCashboxFilter(false);
 		$cashboxList = Sale\Cashbox\Internals\CashboxTable::getList([

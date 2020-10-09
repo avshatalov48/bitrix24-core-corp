@@ -18,7 +18,7 @@ if ($arResult['INCLUDE_LANG'])
 ?>
 				<div class="meeting-detail-title"><?=htmlspecialcharsbx($arResult['ITEM']['TITLE'])?></div>
 <?
-if (strlen($arResult['ITEM']['DESCRIPTION']) > 0):
+if ($arResult['ITEM']['DESCRIPTION'] <> ''):
 ?>
 				<div id="meeting-detail-description" class="meeting-detail-description"><?=$arResult['ITEM']['DESCRIPTION']?></div>
 <?

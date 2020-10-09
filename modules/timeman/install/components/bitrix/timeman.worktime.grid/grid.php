@@ -1073,7 +1073,7 @@ class Grid
 		{
 			case DateType::CURRENT_WEEK:
 				$dateTimeFrom = $this->getCurrentUserDate();
-				if (strtolower($dateTimeFrom->format('l')) !== $this->getFirstWeekDayWord())
+				if (mb_strtolower($dateTimeFrom->format('l')) !== $this->getFirstWeekDayWord())
 				{
 					$dateTimeFrom->modify('last ' . $this->getFirstWeekDayWord());
 				}

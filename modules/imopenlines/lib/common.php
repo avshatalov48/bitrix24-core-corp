@@ -154,7 +154,7 @@ class Common
 				if (defined('B24_LANGUAGE_ID'))
 					$lang = B24_LANGUAGE_ID;
 				else
-					$lang = substr((string)\Bitrix\Main\Config\Option::get('main', '~controller_group_name'), 0, 2);
+					$lang = mb_substr((string)\Bitrix\Main\Config\Option::get('main', '~controller_group_name'), 0, 2);
 			}
 
 			$areaConfig = \CBitrix24::getAreaConfig($lang);

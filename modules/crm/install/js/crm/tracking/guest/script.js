@@ -167,6 +167,10 @@
 		{
 			return this.getTags().utm_source || '';
 		},
+		isUtmSourceDetected: function ()
+		{
+			return TagTracker.isSourceDetected();
+		},
 		getGidCookie: function ()
 		{
 			return webPacker.cookie.get(this.cookieName)
@@ -331,6 +335,7 @@
 		}
 	};
 
+	var isUtmSourceDetected = null;
 	var TagTracker = {
 		lifespan: 28,
 		lsPageKey: 'b24_crm_guest_utm',
@@ -342,19 +347,25 @@
 		},
 		isSourceDetected: function ()
 		{
-			var key = this.tags[0];
-			var tag = webPacker.url.parameter.get(key);
-			if (tag === null || !tag)
+			if (isUtmSourceDetected === null)
 			{
-				return false;
+				var key = this.tags[0];
+				var tag = webPacker.url.parameter.get(key);
+				if (tag === null || !tag)
+				{
+					isUtmSourceDetected = false;
+				}
+				else if (this.list()[key] !== tag)
+				{
+					isUtmSourceDetected = true;
+				}
+				else
+				{
+					isUtmSourceDetected = (this.getTimestamp(true) - this.getTimestamp()) > this.sameTagLifeSpan;
+				}
 			}
 
-			if (this.list()[key] !== tag)
-			{
-				return true;
-			}
-
-			return (this.getTimestamp(true) - this.getTimestamp()) > this.sameTagLifeSpan;
+			return isUtmSourceDetected;
 		},
 		getGCLid: function ()
 		{

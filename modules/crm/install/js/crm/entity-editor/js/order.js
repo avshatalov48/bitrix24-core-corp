@@ -2608,7 +2608,7 @@ if(typeof BX.Crm.EntityEditorPayment === "undefined")
 			return;
 		}
 
-		var value = this._model.getField(this.getName());
+		var value = this._model.getField(this.getName()), newPaymentBlock;
 		this.clearError();
 
 		if (this._mode === BX.Crm.EntityEditorMode.view)
@@ -2617,7 +2617,7 @@ if(typeof BX.Crm.EntityEditorPayment === "undefined")
 			{
 				if(value.hasOwnProperty(i))
 				{
-					var newPaymentBlock = this.createPaymentContent(i, value[i]);
+					newPaymentBlock = this.createPaymentContent(i, value[i]);
 					this._paymentBlocks[i].parentNode.replaceChild(newPaymentBlock, this._paymentBlocks[i]);
 					this._paymentBlocks[i] = newPaymentBlock;
 					this._paidInput[i].value = value[i].PAID;
@@ -2647,6 +2647,10 @@ if(typeof BX.Crm.EntityEditorPayment === "undefined")
 						this._currency[i].parentNode.replaceChild(newCurrency, this._currency[i]);
 						this._currency[i] = newCurrency;
 					}
+
+					newPaymentBlock = this.createPaymentContent(i, value[i]);
+					this._paymentBlocks[i].parentNode.replaceChild(newPaymentBlock, this._paymentBlocks[i]);
+					this._paymentBlocks[i] = newPaymentBlock;
 
 					this.setPaySystem(i, value[i]);
 					this._logoImg[i].src = value[i].PAY_SYSTEM_LOGO_PATH;
@@ -3372,8 +3376,11 @@ if(typeof BX.Crm.EntityEditorShipment === "undefined")
 			this._extraServices[index] = this.createExtraServicesContent(index, value);
 
 			extraServices = BX.create('div', {
-				props: {id: 'crm-order-shipment-extra-services-'+index},
-				style:{background: '#f9f9f9', marginLeft: '15px', width: '100%', marginTop: '20px'},
+				props: {
+					id: 'crm-order-shipment-extra-services-'+index,
+					className: 'crm-order-shipment-extra-services-'+index
+				},
+				style:{background: '#f9f9f9', marginLeft: '15px', padding: '10px 0'},
 				children: this._extraServices[index]
 			});
 		}
@@ -4382,7 +4389,7 @@ if(typeof BX.Crm.EntityEditorPaymentStatus === "undefined")
 		{
 			this._wrapper = BX.create("div", { props: { className: "crm-entity-widget-content-block" } });
 		}
-		
+
 		var classNames = BX.prop.getArray(params, "classNames", []);
 		for(var i = 0, length = classNames.length;  i < length; i++)
 		{
@@ -4924,7 +4931,7 @@ if(typeof BX.Crm.EntityEditorOrderPropertyWrapper === "undefined")
 		this.setChildrenFields();
 		BX.Crm.EntityEditorOrderPropertyWrapper.superclass.layout.call(this);
 		var parent = this.getParent();
-		
+
 		if (parent instanceof BX.Crm.EntityEditorSection && BX.type.isDomNode(parent.getWrapper()))
 		{
 			parent.getWrapper().classList.add("crm-entity-card-widget-order-properties");

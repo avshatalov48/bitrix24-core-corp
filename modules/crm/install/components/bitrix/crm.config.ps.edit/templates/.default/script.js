@@ -738,7 +738,7 @@ BX.crmPSActionFile = {
 									'td',
 									{
 										props : {className : 'bx-field-name bx-padding'},
-										text : result.PAYMENT_MODE_TITLE+':'
+										text : BX.util.htmlspecialchars(result.PAYMENT_MODE_TITLE)+':'
 									}
 								),
 								tdContent
@@ -1096,8 +1096,8 @@ BX.crmPSActionFile = {
 			fieldValue = document.createElement("td");
 
 		fieldName.className = "bx-field-name bx-padding bx-props-field-width";
-		fieldName.title = arField.DESCR;
-		fieldName.innerHTML = arField.NAME+":";
+		fieldName.title = BX.util.htmlspecialchars(arField.DESCR);
+		fieldName.innerHTML = BX.util.htmlspecialchars(arField.NAME)+":";
 		row.appendChild(fieldName);
 
 		var valueHtml = '';

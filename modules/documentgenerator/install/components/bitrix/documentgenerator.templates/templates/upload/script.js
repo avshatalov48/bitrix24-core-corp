@@ -266,6 +266,37 @@ BX.DocumentGenerator.UploadTemplate.init = function(params)
 			location.href = editUrl;
 		}
 	}, this));
+
+	BX.addCustomEvent('SidePanel.Slider:onMessage', function(message)
+	{
+		if (message.getEventId() === 'numerator-saved-event')
+		{
+			var numeratorData = message.getData();
+			var numSelect = BX(BX.DocumentGenerator.UploadTemplate.numeratorSelectNode);
+			if (numSelect)
+			{
+				var options = numSelect.options;
+				var isNew = true;
+				for (var i = 0; i < options.length; i++)
+				{
+					var option = options[i];
+					if (option.value === numeratorData.id)
+					{
+						isNew = false;
+						option.innerText = numeratorData.name;
+					}
+				}
+				if (isNew)
+				{
+					numSelect.appendChild(BX.create('option', {
+						attrs: {value: numeratorData.id},
+						text: numeratorData.name
+					}, this.iframe.contentDocument));
+				}
+				numSelect.value = numeratorData.id;
+			}
+		}
+	});
 };
 
 BX.DocumentGenerator.UploadTemplate.initFile = function(id, item)
@@ -507,7 +538,7 @@ BX.DocumentGenerator.UploadTemplate.initProviderPopup = function()
 			}
 			content += '<span class="docs-template-load-popup-item">' +
 				'<input class="docs-template-load-popup-input" type="checkbox"' + checked + ' id="provider-check-' + key + '" value="' + self.providers[key].CLASS + '" onchange="BX.DocumentGenerator.UploadTemplate.onChangeProvider(this);">' +
-				'<label class="docs-template-load-popup-label" for="provider-check-' + key + '">' + self.providers[key].NAME + '</label>' +
+				'<label class="docs-template-load-popup-label" for="provider-check-' + key + '">' + BX.Text.encode(self.providers[key].NAME) + '</label>' +
 				'</span>'
 		}
 	}

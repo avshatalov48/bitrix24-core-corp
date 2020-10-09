@@ -35,6 +35,7 @@ class Menu
 		'CRM_COMPANY_LIST_TOOLBAR' => 'CRM_SWITCHER@COMPANY',
 		'CRM_INVOICE_LIST_TOOLBAR' => 'CRM_SWITCHER@INVOICE',
 		'CRM_QUOTE_LIST_TOOLBAR' => 'CRM_SWITCHER@QUOTE',
+		'CRM_ORDER_LIST_TOOLBAR' => 'CRM_SWITCHER@ORDER',
 		'TASK_USER_LIST_TOOLBAR' => 'TASKS_SWITCHER@USER',
 		'TASK_GROUP_LIST_TOOLBAR' => 'TASKS_SWITCHER@GROUP',
 		// crm_detail
@@ -96,7 +97,8 @@ class Menu
 					'contact' => [],
 					'company' => [],
 					'invoice' => [],
-					'quote' => []
+					'quote' => [],
+					'order' => []
 				]
 			],
 			'crm_detail' => [

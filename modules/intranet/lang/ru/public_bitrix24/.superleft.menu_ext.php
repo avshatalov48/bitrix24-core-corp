@@ -21,6 +21,7 @@ $MESS["MENU_DISK_SECTION"] = "Диск";
 $MESS["MENU_TIMEMAN_SECTION"] = "Время и отчеты";
 $MESS["MENU_IM_MESSENGER"] = "Чат и звонки";
 $MESS["MENU_MARKETPLACE_APPS"] = "Приложения";
+$MESS["MENU_DEVOPS"] = "Разработчикам";
 $MESS["MENU_MAIL_CHANGE_SETTINGS"] = "Изменить настройки";
 $MESS["MENU_EMPLOYEE"] = "Сотрудники";
 $MESS["MENU_RPA_SECTION"] = "Роботизация бизнеса (RPA)";

@@ -6,7 +6,7 @@ $arParams['UPDATE'] = $_REQUEST['MEETING_ITEM_VIEW'] == 'Y';
 $arParams['UPDATE_TASKS'] = $_REQUEST['MEETING_TASKS_RELOAD'] == 'Y';
 $arParams['COMMENTS'] = intval($_REQUEST['MEETING_ITEM_COMMENTS']);
 
-if (strlen($arParams["NAME_TEMPLATE"]) <= 0)
+if ($arParams["NAME_TEMPLATE"] == '')
 	$arParams["NAME_TEMPLATE"] = CSite::GetNameFormat(false);
 
 $arParams["NAME_TEMPLATE"] = str_replace(array("#NOBR", "#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);

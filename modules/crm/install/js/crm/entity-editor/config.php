@@ -58,6 +58,7 @@ return array(
 		'ui.dropdown',
 		'crm_disk_uploader',
 		'crm_common',
-		'crm_entity_editor_rel'
+		'crm_entity_editor_rel',
+		'ui.forms'
 	]
 );

@@ -50,7 +50,8 @@ class CDavRequest
 			'ios/10'            => 'dataaccess',    // iOS/10
 			'ios/11'            => 'dataaccess',    // iOS/11
 			'ios/12'            => 'dataaccess',    // iOS/12
-			'ios/13'            => 'dataaccess',    // iOS/12
+			'ios/13'            => 'dataaccess',    // iOS/13
+			'ios/14'            => 'dataaccess',    // iOS/14
 			'carddavbitrix24'   => 'dataaccess',
 			'caldavbitrix24'    => 'dataaccess',
 			'coredav'           => 'davkit',    //

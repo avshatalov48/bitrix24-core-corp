@@ -16,9 +16,9 @@ abstract class Base
 
 	public static function normalizeChatId($chatId = 0)
 	{
-		if (strpos($chatId, 'chat') === 0)
+		if (mb_strpos($chatId, 'chat') === 0)
 		{
-			$chatId = (int)substr($chatId, 4);
+			$chatId = (int)mb_substr($chatId, 4);
 		}
 
 		return $chatId;

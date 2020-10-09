@@ -343,11 +343,11 @@ final class Driver
 	{
 		if (Bitrix24Manager::getInstance()->isEnabled())
 		{
-			return Bitrix24Manager::getInstance()->isCurrentZone('ru');
+			return Bitrix24Manager::getInstance()->isCurrentZone(['ru', 'ua']);
 		}
 		elseif (IntranetManager::getInstance()->isEnabled())
 		{
-			return IntranetManager::getInstance()->isCurrentZone('ru');
+			return IntranetManager::getInstance()->isCurrentZone('ru') || IntranetManager::getInstance()->isCurrentZone('ua');
 		}
 
 		return true;

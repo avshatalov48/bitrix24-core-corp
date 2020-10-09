@@ -19,6 +19,9 @@ BX.Tasks.Kanban.Item = function(options)
 	/** @var {Element} **/
 	this.container = null;
 	this.timer = null;
+
+	this.isSprintView = (options.isSprintView === 'Y');
+	this.storyPoints = (this.data.storyPoints ? this.data.storyPoints : '');
 };
 
 BX.Tasks.Kanban.Item.prototype = {
@@ -126,7 +129,10 @@ BX.Tasks.Kanban.Item.prototype = {
 	{
 		var data = this.getData();
 
-		BX.show(this.task_complete);
+		if (this.task_complete)
+		{
+			BX.show(this.task_complete);
+		}
 		BX.show(this.task_status_title);
 		BX.style(this.task_status_title, "display", "inline-block");
 
@@ -176,46 +182,44 @@ BX.Tasks.Kanban.Item.prototype = {
 		// {
 		// 	BX.hide(this.task_status_title);
 		// }
-		if (code === "completed" || code === "completed_supposedly")
+		if (code === "completed")
 		{
-			BX.hide(this.task_complete);
+			if (this.task_complete)
+			{
+				BX.hide(this.task_complete);
+			}
 			BX.addClass(this.task_status_title, "tasks-kanban-item-gray");
-			if (code === "completed_supposedly")
-			{
-				this.task_status_title.textContent = BX.message("TASKS_KANBAN_STATUS_COMPLETED_SUPPOSEDLY");
-			}
-			else
-			{
-				this.task_status_title.textContent = BX.message("TASKS_KANBAN_STATUS_COMPLETED");
-			}
+			this.task_status_title.textContent = BX.message("TASKS_KANBAN_STATUS_COMPLETED");
 		}
 		else
 		{
 			BX.hide(this.task_status_title);
 		}
 
-		if (data.in_progress && !BX.hasClass(this.task_start, "tasks-kanban-task-pause"))
+		if (this.task_start && data.in_progress && !BX.hasClass(this.task_start, "tasks-kanban-task-pause"))
 		{
 			BX.addClass(this.task_start, "tasks-kanban-task-pause");
 			this.task_start.setAttribute("title", BX.message("TASKS_KANBAN_TITLE_PAUSE"));
 		}
-		else if (!data.in_progress)
+		else if (this.task_start && !data.in_progress)
 		{
 			BX.removeClass(this.task_start, "tasks-kanban-task-pause");
 			this.task_start.setAttribute("title", BX.message("TASKS_KANBAN_TITLE_START"));
 		}
 
-		if (data.muted && !BX.hasClass(this.task_mute, "tasks-kanban-task-muted"))
+		if (this.task_mute && data.muted && !BX.hasClass(this.task_mute, "tasks-kanban-task-muted"))
 		{
 			BX.addClass(this.container, "tasks-kanban-task-muted");
 			this.task_mute.setAttribute("title", BX.message("TASKS_KANBAN_TITLE_UNMUTE"));
 			this.task_counter.setColor(BX.UI.Counter.Color.GRAY);
 		}
-		else if (!data.muted)
+		else if (this.task_mute && !data.muted)
 		{
 			BX.removeClass(this.container, "tasks-kanban-task-muted");
 			this.task_mute.setAttribute("title", BX.message("TASKS_KANBAN_TITLE_MUTE"));
-			this.task_counter.setColor(data.is_expired ? BX.UI.Counter.Color.DANGER : BX.UI.Counter.Color.SUCCESS);
+			this.task_counter.setColor(
+				data.is_expired && !data.completed ? BX.UI.Counter.Color.DANGER : BX.UI.Counter.Color.SUCCESS
+			);
 		}
 	},
 
@@ -461,6 +465,15 @@ BX.Tasks.Kanban.Item.prototype = {
 	},
 
 	/**
+	 * Get scrum item storyPoints.
+	 * @return {String}
+	 */
+	getStoryPoints: function()
+	{
+		return this.storyPoints;
+	},
+
+	/**
 	 * Add or remove class for element.
 	 * @param {DOMNode} el
 	 * @param {String} className
@@ -607,7 +620,24 @@ BX.Tasks.Kanban.Item.prototype = {
 			}, this));
 		}
 
-		this.deadlineNotificationDate = (data.date_deadline ? data.deadline.value.replace('&minus;', '-') : '');
+		if (!this.isSprintView)
+		{
+			if (data.date_deadline)
+			{
+				this.deadlineNotificationDate = data.deadline.value.replace('&minus;', '-');
+				this.date_deadline.setText(this.deadlineNotificationDate);
+				this.date_deadline.setFill(data.deadline.fill);
+				this.date_deadline.setColor(data.deadline.color);
+			}
+			else
+			{
+				this.deadlineNotificationDate = '';
+				this.date_deadline.setText(BX.message("TASKS_KANBAN_NO_DATE"));
+				this.date_deadline.setFill(false);
+				this.date_deadline.setColor(BX.UI.Label.LIGHT);
+			}
+			this.date_deadline.setCustomClass("tasks-kanban-item-deadline");
+		}
 
 		// set status
 		if (data.deferred)
@@ -692,7 +722,7 @@ BX.Tasks.Kanban.Item.prototype = {
 										? "+" + data.log.file
 										: data.count_files;
 		// users
-		if (data.author)
+		if (!this.isSprintView && data.author)
 		{
 			if (this.author)
 			{
@@ -760,9 +790,12 @@ BX.Tasks.Kanban.Item.prototype = {
 				BX.remove(this.responsible);
 			}
 
+			var responsibleClassName = (this.isSprintView ?
+				'tasks-kanban-item-responsible-sprint' : 'tasks-kanban-item-responsible');
+
 			this.responsible = BX.create("div", {
 				props: {
-					className: "tasks-kanban-item-responsible",
+					className: responsibleClassName,
 					style: "cursor: pointer"
 				}
 			});
@@ -831,18 +864,15 @@ BX.Tasks.Kanban.Item.prototype = {
 			"tasks-kanban-item-without-control",
 			withoutControl
 		);
-		this.switchVisible(
-			this.task_start,
-			!withoutControl
-		);
-		this.switchVisible(
-			this.task_start,
-			data.allow_start
-		);
-		this.switchVisible(
-			this.task_complete,
-			data.allow_complete
-		);
+		if (this.task_start)
+		{
+			this.switchVisible(this.task_start, !withoutControl);
+			this.switchVisible(this.task_start, data.allow_start);
+		}
+		if (this.task_complete)
+		{
+			this.switchVisible(this.task_complete, data.allow_complete);
+		}
 
 		return this.container;
 	},
@@ -935,21 +965,24 @@ BX.Tasks.Kanban.Item.prototype = {
 		//endregion
 
 		//region deadline
-		this.date_deadline = new BX.UI.Label({
-			text: data.deadline.value.replace('&minus;', '-'),
-			color: data.deadline.color,
-			fill: (data.date_deadline ? data.deadline.fill : false),
-			size: BX.UI.Label.Size.SM,
-		});
-		this.date_deadline_container = BX.create("div", {
-			props: {
-				className: "tasks-kanban-item-deadline",
-			},
-			children: [
-				this.date_deadline.getContainer()
-			]
-		});
-		this.container.appendChild(this.date_deadline_container);
+		if (!this.isSprintView)
+		{
+			this.date_deadline = new BX.UI.Label({
+				text: data.deadline.value.replace('&minus;', '-'),
+				color: data.deadline.color,
+				fill: (data.date_deadline ? data.deadline.fill : false),
+				size: BX.UI.Label.Size.SM,
+			});
+			this.date_deadline_container = BX.create("div", {
+				props: {
+					className: "tasks-kanban-item-deadline",
+				},
+				children: [
+					this.date_deadline.getContainer()
+				]
+			});
+			this.container.appendChild(this.date_deadline_container);
+		}
 
 		//endregion
 
@@ -1008,49 +1041,59 @@ BX.Tasks.Kanban.Item.prototype = {
 
 		//endregion
 
-		//region controls block
-		this.track_control = BX.create("div", {
-			props: {
-				className: "tasks-kanban-item-control"
-			}
-		});
-		this.container.appendChild(this.track_control);
+		if (!this.isSprintView)
+		{
+			this.track_control = BX.create("div", {
+				props: {
+					className: "tasks-kanban-item-control"
+				}
+			});
+			this.container.appendChild(this.track_control);
 
-		//endregion
+			this.task_mute = BX.create("div", {
+				props: {
+					className: "tasks-kanban-task-mute"
+				},
+				events: {
+					click: function (e)
+					{
+						this.muteTask();
+						e.stopPropagation();
+					}.bind(this)
+				}
+			});
+			// BX.hide(this.task_mute);
+			this.track_control.appendChild(this.task_mute);
 
-		//region mute button
-		this.task_mute = BX.create("div", {
-			props: {
-				className: "tasks-kanban-task-mute"
-			},
-			events: {
-				click: function (e)
-				{
-					this.muteTask();
-					e.stopPropagation();
-				}.bind(this)
-			}
-		});
-		// BX.hide(this.task_mute);
-		this.track_control.appendChild(this.task_mute);
+			this.task_start = BX.create("div", {
+				props: {
+					className: "tasks-kanban-task-start"
+				},
+				events: {
+					click: function (e)
+					{
+						this.startTask();
+						e.stopPropagation();
+					}.bind(this)
+				}
+			});
+			this.track_control.appendChild(this.task_start);
 
-		//endregion
-
-		//region start button
-		this.task_start = BX.create("div", {
-			props: {
-				className: "tasks-kanban-task-start"
-			},
-			events: {
-				click: function (e)
-				{
-					this.startTask();
-					e.stopPropagation();
-				}.bind(this)
-			}
-		});
-		this.track_control.appendChild(this.task_start);
-		//endregion
+			this.task_complete = BX.create("div", {
+				props: {
+					className: "tasks-kanban-task-complete",
+					title: BX.message("TASKS_KANBAN_TITLE_COMPLETE")
+				},
+				events: {
+					click: function (e)
+					{
+						this.completeTask();
+						e.stopPropagation();
+					}.bind(this)
+				}
+			});
+			this.track_control.appendChild(this.task_complete);
+		}
 
 		//region checked button
 		if(this.getGrid().isMultiSelect())
@@ -1072,24 +1115,6 @@ BX.Tasks.Kanban.Item.prototype = {
 
 			this.container.appendChild(this.task_check);
 		}
-
-		//endregion
-
-		//region complete button
-		this.task_complete = BX.create("div", {
-			props: {
-				className: "tasks-kanban-task-complete",
-				title: BX.message("TASKS_KANBAN_TITLE_COMPLETE")
-			},
-			events: {
-				click: function (e)
-				{
-					this.completeTask();
-					e.stopPropagation();
-				}.bind(this)
-			}
-		});
-		this.track_control.appendChild(this.task_complete);
 
 		//endregion
 

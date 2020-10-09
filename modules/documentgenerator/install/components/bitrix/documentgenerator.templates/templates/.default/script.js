@@ -95,39 +95,7 @@ BX.DocumentGenerator.TemplateList.edit = function(templateId)
 	}
 	if(BX.SidePanel)
 	{
-		BX.SidePanel.Instance.open(uploadUri, {width: 845,
-			events: {
-				onMessage: function (event)
-				{
-					if (event.getEventId() === 'numerator-saved-event')
-					{
-						var numeratorData = event.getData();
-						var numSelect = this.iframe.contentDocument.querySelector('#docs-template-num-select');
-						if (numSelect)
-						{
-							var options = numSelect.options;
-							var isNew = true;
-							for (var i = 0; i < options.length; i++)
-							{
-								var option = options[i];
-								if (option.value === numeratorData.id)
-								{
-									isNew = false;
-									option.innerText = numeratorData.name;
-								}
-							}
-							if (isNew)
-							{
-								numSelect.appendChild(BX.create('option', {
-									attrs: {value: numeratorData.id},
-									text: numeratorData.name
-								}, this.iframe.contentDocument));
-							}
-							numSelect.value = numeratorData.id;
-						}
-					}
-				}
-			}});
+		BX.SidePanel.Instance.open(uploadUri, {width: 845});
 	}
 	else
 	{

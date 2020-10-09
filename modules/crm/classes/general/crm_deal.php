@@ -4674,6 +4674,35 @@ class CAllCrmDeal
 		$entity->Update($ID,$fields);
 	}
 
+	public static function RemoveObserverIDs($ID, array $userIDs)
+	{
+		if(empty($userIDs))
+		{
+			return;
+		}
+
+		$observerIDs = array_diff(
+			Crm\Observer\ObserverManager::getEntityObserverIDs(CCrmOwnerType::Deal, $ID),
+			$userIDs
+		);
+
+		$fields = array('OBSERVER_IDS' => $observerIDs);
+		$entity = new CCrmDeal(false);
+		$entity->Update($ID, $fields);
+	}
+
+	public static function ReplaceObserverIDs($ID, array $userIDs)
+	{
+		if(empty($userIDs))
+		{
+			return;
+		}
+
+		$fields = array('OBSERVER_IDS' => $userIDs);
+		$entity = new CCrmDeal(false);
+		$entity->Update($ID, $fields);
+	}
+
 	public static function PullChange($type, $arParams)
 	{
 		if(!CModule::IncludeModule('pull'))

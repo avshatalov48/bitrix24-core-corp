@@ -1,4 +1,5 @@
 <?
+define("BX_FORCE_DISABLE_SEPARATED_SESSION_MODE", true);
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 ?>
 

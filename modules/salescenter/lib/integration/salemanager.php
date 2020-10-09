@@ -617,10 +617,31 @@ class SaleManager extends Base
 	 */
 	public static function getCashboxHandlers()
 	{
-		return [
-			'\Bitrix\Sale\Cashbox\CashboxAtolFarmV4',
-			'\Bitrix\Sale\Cashbox\CashboxOrangeData',
-		];
+		$result = [];
+		$zone = '';
+		if (Main\Loader::includeModule("bitrix24"))
+		{
+			$zone = \CBitrix24::getLicensePrefix();
+		}
+		elseif (Main\Loader::includeModule('intranet'))
+		{
+			$zone = \CIntranetUtils::getPortalZone();
+		}
+		if ($zone === 'ru')
+		{
+			$result = [
+				'\Bitrix\Sale\Cashbox\CashboxAtolFarmV4',
+				'\Bitrix\Sale\Cashbox\CashboxOrangeData',
+			];
+		}
+		elseif ($zone === 'ua')
+		{
+			$result = [
+				'\Bitrix\Sale\Cashbox\CashboxCheckbox',
+			];
+		}
+
+		return $result;
 	}
 
 	/**
@@ -893,5 +914,15 @@ class SaleManager extends Base
 		}
 
 		return $result;
+	}
+
+	public function getEmptyDeliveryServiceId()
+	{
+		if (!$this->isEnabled())
+		{
+			return 0;
+		}
+
+		return Sale\Delivery\Services\EmptyDeliveryService::getEmptyDeliveryServiceId();
 	}
 }

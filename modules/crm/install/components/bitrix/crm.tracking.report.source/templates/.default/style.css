@@ -1,0 +1,90 @@
+.crm-tracking-report-source {
+
+}
+.crm-tracking-report-source-link {
+	cursor: pointer;
+	color: #2066B0;
+	border-bottom: 1px dashed transparent;
+}
+.crm-tracking-report-source-link:hover {
+	border-bottom: 1px solid #2066B0;
+}
+
+.crm-tracking-report-source-selector {
+	font-size: 14px;
+	margin: 10px 0 0 0;
+	color: #8f8f8f;
+}
+.crm-tracking-report-source-selector-link {
+	position: relative;
+	font-size: 14px;
+	margin: 10px 0 0 0;
+	color: #808993;
+	border-bottom: 1px dashed #808993;
+	cursor: pointer;
+}
+.crm-tracking-report-source-selector-link::after {
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8.306.754l-2.64 2.641L5 4.05l-.653-.655-2.64-2.64-.932.931 4.231 4.232 4.232-4.232z' fill='%23525C69' fill-rule='evenodd' opacity='.7'/%3E%3C/svg%3E") 50% 50% no-repeat;
+	position: absolute;
+	content: '';
+	width: 10px;
+	height: 6px;
+	right: -17px;
+	top: 8px;
+}
+
+.crm-tracking-report-source-row-text {
+	margin: 5px 0 0 0;
+	font: 12px/10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: rgba(128, 137, 147, 0.7);
+	white-space: nowrap;
+}
+
+.crm-tracking-report-source-rating {
+	display: flex;
+	align-items: center;
+}
+.crm-tracking-report-source-rating-icon {
+	display: inline-block;
+	margin: 0 8px 0 0;
+	width: 5px;
+	height: 5px;
+	border-radius: 100%;
+	background: rgba(128, 137, 147, 0.7);
+}
+.crm-tracking-report-source-rating-value {
+	display: inline-block;
+	margin: 0 8px 0 0;
+	padding: 0 8px 0 0 ;
+	border-right: 1px solid rgba(82,92,105,.17);
+	font: 13px/10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+.crm-tracking-report-source-rating-text {
+	font: 10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	text-transform: uppercase;
+	font-weight: bold;
+	white-space: nowrap;
+	color: rgba(128, 137, 147, 0.7);
+}
+.crm-tracking-report-source-rating-bold .crm-tracking-report-source-rating-value,
+.crm-tracking-report-source-rating-bold .crm-tracking-report-source-rating-text {
+	font-weight: bold;
+}
+.crm-tracking-report-source-rating-success .crm-tracking-report-source-rating-text {
+	color: #6F9300;
+}
+.crm-tracking-report-source-rating-success .crm-tracking-report-source-rating-icon {
+	background: #6F9300;
+}
+.crm-tracking-report-source-rating-warning .crm-tracking-report-source-rating-text {
+	color: #FF5752;
+}
+.crm-tracking-report-source-rating-warning .crm-tracking-report-source-rating-icon {
+	background: #FF5752;
+}
+.crm-tracking-report-source-rating-normal .crm-tracking-report-source-rating-text {
+	color: #1DB0DE;
+}
+.crm-tracking-report-source-rating-normal .crm-tracking-report-source-rating-icon {
+	background: #2FC6F6;
+}

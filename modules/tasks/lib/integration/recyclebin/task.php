@@ -21,6 +21,7 @@ use Bitrix\Tasks\Internals\Helper\Task\Dependence;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Kanban\StagesTable;
 use Bitrix\Tasks\Kanban\TaskStageTable;
+use Bitrix\Tasks\Scrum\Internal\ItemTable as ScrumItem;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
@@ -224,6 +225,8 @@ if (Loader::includeModule('recyclebin'))
 				]);
 
 				Integration\SocialNetwork\Log::showLogByTaskId($taskId);
+
+				ScrumItem::activateBySourceId($taskId);
 			}
 			catch (\Exception $e)
 			{
@@ -407,6 +410,8 @@ if (Loader::includeModule('recyclebin'))
 				Integration\Forum\Task\Topic::delete($task["FORUM_TOPIC_ID"]);
 
 				$USER_FIELD_MANAGER->Delete('TASKS_TASK', $taskId);
+
+				ScrumItem::deleteBySourceId($taskId);
 
 				TaskTable::delete($taskId);
 			}

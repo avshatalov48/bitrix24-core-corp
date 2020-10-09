@@ -21,6 +21,7 @@ Extension::load([
 
 $isMyTasks = $arResult['USER_ID'] === $arResult['OWNER_ID'];
 $showViewMode = $arParams['SHOW_VIEW_MODE'] == 'Y';
+$isSprintMode = $arParams['SPRINT_SELECTED'] == 'Y';
 $isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
 $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
 
@@ -104,7 +105,7 @@ if ($isBitrix24Template)
 		</div><?php
 	}
 
-	if (\Bitrix\Main\Loader::includeModule('intranet'))
+	if (\Bitrix\Main\Loader::includeModule('intranet') && !$isSprintMode)
 	{
 		$context = $arParams['GROUP_ID']
 			? ['GROUP_ID' => $arParams['GROUP_ID']]

@@ -7,6 +7,8 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale;
 use Bitrix\Sale\Cashbox;
+use Bitrix\SalesCenter\Integration\Bitrix24Manager;
+use Bitrix\SalesCenter\Integration\IntranetManager;
 use Bitrix\SalesCenter\Integration\SaleManager;
 
 /**
@@ -142,6 +144,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 
 			if($this->arResult['preview'])
 			{
+				$this->addConnectionInfoUrl();
 				$this->includeComponentTemplate('preview');
 			}
 			else
@@ -200,17 +203,23 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 	 */
 	protected function getMenuPages()
 	{
-		return [
+		$result = [
 			'cashbox_params' => [
 				'NAME' => Loc::getMessage('SC_MENU_ITEM_CASHBOX_PARAM'),
 			],
 			'settings' => [
 				'NAME' => Loc::getMessage('SC_MENU_ITEM_SETTINGS'),
 			],
-			'ofd_settings' => [
-				'NAME' => Loc::getMessage('SC_MENU_ITEM_OFD_SETTINGS'),
-			],
 		];
+
+		$additionalFieldsNeeded = $this->areAdditionalFieldsNeeded();
+		if ($additionalFieldsNeeded)
+		{
+			$result['ofd_settings'] = [
+				'NAME' => Loc::getMessage('SC_MENU_ITEM_OFD_SETTINGS'),
+			];
+		}
+		return $result;
 	}
 
 	/**
@@ -285,20 +294,6 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 				'type' => 'text',
 			],
 			[
-				'name' => 'OFD',
-				'title' => Loc::getMessage('SC_CASHBOX_FIELDS_OFD'),
-				'type' => 'list',
-				'data' => [
-					'items' => $this->getOfdItems(),
-				],
-			],
-			[
-				'name' => 'NUMBER_KKM',
-				'title' => Loc::getMessage('SC_CASHBOX_FIELDS_NUMBER_KKM'),
-				'type' => 'text',
-				'hint' => Loc::getMessage('SC_CASHBOX_FIELDS_NUMBER_KKM_HINT'),
-			],
-			[
 				'name' => 'USE_OFFLINE',
 				'title' => Loc::getMessage('SC_CASHBOX_FIELDS_USE_OFFLINE'),
 				'type' => 'boolean',
@@ -311,6 +306,26 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 			],
 		];
 
+		$additionalFieldsNeeded = $this->areAdditionalFieldsNeeded();
+
+		if ($additionalFieldsNeeded)
+		{
+			$fields[] = [
+				'name' => 'OFD',
+				'title' => Loc::getMessage('SC_CASHBOX_FIELDS_OFD'),
+				'type' => 'list',
+				'data' => [
+					'items' => $this->getOfdItems(),
+				],
+			];
+			$fields[] = [
+				'name' => 'NUMBER_KKM',
+				'title' => Loc::getMessage('SC_CASHBOX_FIELDS_NUMBER_KKM'),
+				'type' => 'text',
+				'hint' => Loc::getMessage('SC_CASHBOX_FIELDS_NUMBER_KKM_HINT'),
+			];
+		}
+
 		$requireFields = $this->handler::getGeneralRequiredFields();
 		foreach($fields as &$field)
 		{
@@ -321,6 +336,26 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 		}
 
 		return $fields;
+	}
+
+	protected function areAdditionalFieldsNeeded()
+	{
+		if (Bitrix24Manager::getInstance()->isEnabled())
+		{
+			if (Bitrix24Manager::getInstance()->isCurrentZone('ru'))
+			{
+				return true;
+			}
+		}
+		elseif (IntranetManager::getInstance()->isEnabled())
+		{
+			if (IntranetManager::getInstance()->isCurrentZone('ru'))
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -773,21 +808,26 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 	 */
 	protected function getHandlerDescription()
 	{
-		if($this->handler == '\Bitrix\Sale\Cashbox\CashboxOrangeData')
+		switch ($this->handler)
 		{
-			return [
-				'code' => 'orange',
-				'title' => 'SC_CASHBOX_ORANGE_TITLE',
-				'description' => 'SC_CASHBOX_ORANGE_DESCRITION',
-			];
-		}
-		else
-		{
-			return [
-				'code' => 'atol',
-				'title' => 'SC_CASHBOX_ATOL_TITLE',
-				'description' => 'SC_CASHBOX_ATOL_DESCRITION',
-			];
+			case '\Bitrix\Sale\Cashbox\CashboxOrangeData':
+				return [
+					'code' => 'orange',
+					'title' => 'SC_CASHBOX_ORANGE_TITLE',
+					'description' => 'SC_CASHBOX_ORANGE_DESCRITION',
+				];
+			case '\Bitrix\Sale\Cashbox\CashboxCheckbox':
+				return [
+					'code' => 'checkbox',
+					'title' => 'SC_CASHBOX_CHECKBOX_TITLE',
+					'description' => 'SC_CASHBOX_CHECKBOX_DESCRIPTION',
+				];
+			default:
+				return [
+					'code' => 'atol',
+					'title' => 'SC_CASHBOX_ATOL_TITLE',
+					'description' => 'SC_CASHBOX_ATOL_DESCRITION',
+				];
 		}
 	}
 
@@ -824,5 +864,13 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 	private function showOfflineInfo()
 	{
 		return $this->arResult['handler'] === self::OFFLINE_HANDLER_TYPE;
+	}
+
+	private function addConnectionInfoUrl()
+	{
+		if($this->handler == '\Bitrix\Sale\Cashbox\CashboxCheckbox')
+		{
+			$this->arResult['connectionInfoUrl'] = 'https://checkbox.in.ua/#get';
+		}
 	}
 }

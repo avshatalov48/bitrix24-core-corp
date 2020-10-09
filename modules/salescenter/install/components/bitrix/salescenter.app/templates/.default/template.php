@@ -7,7 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/components/bitrix/ui.image.input/templates/.default/script.js');
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/ui.image.input/templates/.default/style.css');
 
-\Bitrix\Main\UI\Extension::load(['salescenter.app', 'ui.common', 'currency', 'fileinput']);
+\Bitrix\Main\UI\Extension::load(['salescenter.app', 'ui.common', 'currency', 'fileinput', 'ui.entity-editor']);
 
 if (\Bitrix\Main\Loader::includeModule('location'))
 {
@@ -41,10 +41,10 @@ if (\Bitrix\Main\Loader::includeModule('socialnetwork'))
 		BX.ready(
 			function()
 			{
-				BX.Crm.EntityEditorUserSelector.users =  <?=CUtil::PhpToJSObject($socialNetworkData['ITEMS']['USERS'])?>;
-				BX.Crm.EntityEditorUserSelector.department = <?=CUtil::PhpToJSObject($socialNetworkData['ITEMS']['DEPARTMENT'])?>;
-				BX.Crm.EntityEditorUserSelector.departmentRelation = <?=CUtil::PhpToJSObject($socialNetworkData['ITEMS']['DEPARTMENT_RELATION'])?>;
-				BX.Crm.EntityEditorUserSelector.last = <?=CUtil::PhpToJSObject(array_change_key_case($socialNetworkData['ITEMS_LAST'], CASE_LOWER))?>;
+				BX.UI.EntityEditorUserSelector.users =  <?=CUtil::PhpToJSObject($socialNetworkData['ITEMS']['USERS'])?>;
+				BX.UI.EntityEditorUserSelector.department = <?=CUtil::PhpToJSObject($socialNetworkData['ITEMS']['DEPARTMENT'])?>;
+				BX.UI.EntityEditorUserSelector.departmentRelation = <?=CUtil::PhpToJSObject($socialNetworkData['ITEMS']['DEPARTMENT_RELATION'])?>;
+				BX.UI.EntityEditorUserSelector.last = <?=CUtil::PhpToJSObject(array_change_key_case($socialNetworkData['ITEMS_LAST'], CASE_LOWER))?>;
 			}
 		);
 	</script>

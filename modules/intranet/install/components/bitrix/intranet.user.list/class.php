@@ -824,17 +824,23 @@ class CIntranetUserListComponent extends UserList
 
 		if (
 			!empty($gridFilter['EXTRANET'])
-			&& $gridFilter['EXTRANET'] == 'Y'
 			&& Filter\UserDataProvider::getExtranetAvailability()
 		)
 		{
-			$result['UF_DEPARTMENT'] = false;
-			if (
-				Loader::includeModule('extranet')
-				&& ($extranetGroupId = \CExtranet::getExtranetUserGroupId())
-			)
+			if ($gridFilter['EXTRANET'] === 'Y')
 			{
-				$result['=GROUPS.GROUP_ID'] = $extranetGroupId;
+				$result['UF_DEPARTMENT'] = false;
+				if (
+					Loader::includeModule('extranet')
+					&& ($extranetGroupId = \CExtranet::getExtranetUserGroupId())
+				)
+				{
+					$result['=GROUPS.GROUP_ID'] = $extranetGroupId;
+				}
+			}
+			elseif ($gridFilter['EXTRANET'] === 'N')
+			{
+				$result['!UF_DEPARTMENT'] = false;
 			}
 		}
 		elseif (in_array($gridFilter['PRESET_ID'], ['company', 'employees']))

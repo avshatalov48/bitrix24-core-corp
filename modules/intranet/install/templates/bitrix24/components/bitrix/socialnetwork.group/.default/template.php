@@ -17,9 +17,12 @@ if ($arResult["FatalError"] <> '')
 }
 
 CUtil::InitJSCore(array("ajax", "tooltip"));
-UI\Extension::load("ui.buttons");
-UI\Extension::load("ui.alerts");
-UI\Extension::load("socialnetwork.common");
+UI\Extension::load([
+	'ui.buttons',
+	'ui.alerts',
+	'ui.icons.b24',
+	'socialnetwork.common'
+]);
 
 if ($arResult["ErrorMessage"] <> '')
 {

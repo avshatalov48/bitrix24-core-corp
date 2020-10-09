@@ -94,6 +94,8 @@ CREATE TABLE IF NOT EXISTS `b_documentgenerator_external_link` (
   `ID` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `DOCUMENT_ID` int(10) NOT NULL,
   `HASH` VARCHAR(32) NOT NULL,
+  `VIEWED_TIME` datetime NULL,
+  `VIEWED_IP` VARCHAR(20) NULL,
   PRIMARY KEY (ID),
   INDEX ix_docgen_ext_link_doc(DOCUMENT_ID),
   INDEX ix_docgen_ext_link_hash(HASH)

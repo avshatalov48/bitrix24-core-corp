@@ -591,10 +591,10 @@ td.bx-layout-inner-inner-cont {
 	background-size: 50%;
 }
 
-.group-default-avatar {
-	background: #535c6a url(images/group-default-avatar.svg) no-repeat center;
-	background-size: 100%;
-}
+/*.group-default-avatar {*/
+/*	background: #535c6a url(images/group-default-avatar.svg) no-repeat center;*/
+/*	background-size: 100%;*/
+/*}*/
 
 .user-img {
 	background-size: 24px;
@@ -971,9 +971,9 @@ td.bx-layout-inner-inner-cont {
 
 .pagetitle-toolbar-field-view .pagetitle-item {
 	display: inline-block;
-	padding: 0 10px 0 0;
+	padding: 0 5px 0 0;
 	min-width: 0;
-	height: 30px;
+	/*height: 30px;*/
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;

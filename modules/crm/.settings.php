@@ -20,5 +20,10 @@ return array(
 			'crm.selector'
 		],
 		'readonly' => true,
-	]
+	],
+	'entityFormScope' => [
+		'value' => [
+			'access' => '\\Bitrix\\Crm\\EntityForm\\ScopeAccess',
+		],
+	],
 );

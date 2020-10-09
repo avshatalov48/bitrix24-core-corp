@@ -16,6 +16,8 @@
 		this.bindEvents();
 
 		this.sortButton = null;
+
+		this.type = (options.type ? options.type : '');
 	};
 
 	BX.Tasks.Kanban.Column.prototype = {
@@ -202,6 +204,11 @@
 			}
 
 			return this.layout.titleBody;
+		},
+
+		getType: function()
+		{
+			return this.type;
 		}
 	};
 

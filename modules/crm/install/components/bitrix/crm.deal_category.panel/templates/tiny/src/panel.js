@@ -1,4 +1,4 @@
-import {Event, Loc, Type, Dom, Runtime, ajax} from 'main.core';
+import {Event, Loc, Type, Dom, Runtime, ajax, Text} from 'main.core';
 import {PopupMenuWindow} from 'main.popup';
 
 type PanelItem = {
@@ -27,7 +27,7 @@ export class Panel extends Event.EventEmitter
 	{
 		const item = {
 			id: options.ID,
-			text: options.NAME,
+			text: Text.encode(options.NAME),
 			href: options.URL,
 		};
 

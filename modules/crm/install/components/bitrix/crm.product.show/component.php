@@ -271,7 +271,7 @@ $arResult['FIELDS']['tab_1'][] = array(
 	'name' => GetMessage('CRM_FIELD_DESCRIPTION'),
 	'type' => 'custom',
 	'value' => (isset($product['DESCRIPTION_TYPE']) && $product['DESCRIPTION_TYPE'] === 'text') ?
-		$product['DESCRIPTION'] : $product['~DESCRIPTION'],
+		htmlspecialcharsEx($product['~DESCRIPTION']) : HTMLToTxt($product['~DESCRIPTION']),
 	'params' => array(),
 	'isTactile' => true,
 	'isHidden' => !(isset($product['~DESCRIPTION']) && $product['~DESCRIPTION'] <> '')
@@ -435,4 +435,3 @@ unset($arFields, $fieldID, $fieldName, $obFile, $obFileControl, $html);
 
 $this->IncludeComponentTemplate();
 include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.product/include/nav.php');
-?>

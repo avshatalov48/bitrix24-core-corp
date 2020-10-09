@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BPVDX_ADD"] = "Add";
 $MESS["BPVDX_CALENDAR"] = "Calendar";
 $MESS["BPVDX_DATETIME"] = "Date/Time";
@@ -75,9 +75,9 @@ $MESS["CRM_FIELD_MULTI_EMAIL"] = "E-mail";
 $MESS["CRM_FIELD_MULTI_IM"] = "Messenger";
 $MESS["CRM_FIELD_MULTI_PHONE"] = "Phone";
 $MESS["CRM_FIELD_MULTI_WEB"] = "Website";
+$MESS["CRM_FIELD_OBSERVER_IDS"] = "Observers";
 $MESS["CRM_FIELD_OPPORTUNITY_ACCOUNT"] = "Amount (in accounting currency)";
 $MESS["CRM_FIELD_ORIGINATOR_ID"] = "Web store ID";
 $MESS["IBD_DOCUMENT_XFORMOPTIONS1"] = "Specify each variant on a new line. If the variant value and the variant name are different, prefix the name with the value in square brackets. For example: [v1]Variant 1";
 $MESS["IBD_DOCUMENT_XFORMOPTIONS2"] = "Click \"Set\" when finished.";
 $MESS["IBD_DOCUMENT_XFORMOPTIONS3"] = "Set";
-?>

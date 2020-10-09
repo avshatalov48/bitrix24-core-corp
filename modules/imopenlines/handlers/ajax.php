@@ -263,7 +263,7 @@ else if($request->isPost() &&
 	else if ($request->getPost('COMMAND') == 'changeCrmEntity')
 	{
 		$control = new \Bitrix\ImOpenLines\Operator($chatId, $userId);
-		$result = $control->changeCrmEntity($request->getPost('MESSAGE_ID'), strtoupper($request->getPost('ENTITY_TYPE')), $request->getPost('ENTITY_ID'));
+		$result = $control->changeCrmEntity($request->getPost('MESSAGE_ID'), mb_strtoupper($request->getPost('ENTITY_TYPE')), $request->getPost('ENTITY_ID'));
 		if ($result)
 		{
 			echo \Bitrix\ImOpenLines\Common::objectEncode(Array(

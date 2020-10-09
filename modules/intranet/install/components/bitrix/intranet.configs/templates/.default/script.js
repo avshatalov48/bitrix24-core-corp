@@ -133,7 +133,7 @@ BX.Bitrix24.Configs.IpSettingsClass = (function()
 							},
 							children: [
 								BX.create('td', {
-									html: (pr.length > 0 ? pr + ': ' : '') + arRights[provider][right].name + '&nbsp;',
+									html: (pr.length > 0 ? pr + ': ' : '') + BX.util.htmlspecialchars(arRights[provider][right].name) + '&nbsp;',
 									props: {
 										'className': 'content-edit-form-field-name'
 									}
@@ -287,6 +287,16 @@ BX.Bitrix24.Configs.Functions = {
 			});
 		}
 
+		var useGoogleApiSwitch = BX('use_google_api_cb');
+
+		if(useGoogleApiSwitch)
+		{
+			BX.bind(useGoogleApiSwitch, 'click', function ()
+			{
+				BX('google_api_key_backend_row').style.display = (useGoogleApiSwitch.checked ? "" : "none");
+			});
+		}
+
 		if (BX.type.isDomNode((BX("smtp_use_auth"))))
 		{
 			BX.bind(BX("smtp_use_auth"), "change", BX.proxy(function ()
@@ -294,7 +304,6 @@ BX.Bitrix24.Configs.Functions = {
 				this.showHideSmtpAuth();
 			}, this));
 		}
-
 	},
 
 	submitForm : function (button)

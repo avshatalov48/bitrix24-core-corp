@@ -205,9 +205,9 @@ class Rest extends \IRestService
 		$transferId = null;
 		if (isset($arParams['TRANSFER_ID']))
 		{
-			if (substr($arParams['TRANSFER_ID'], 0, 5) == 'queue')
+			if (mb_substr($arParams['TRANSFER_ID'], 0, 5) == 'queue')
 			{
-				$arParams['QUEUE_ID'] = substr($arParams['TRANSFER_ID'], 5);
+				$arParams['QUEUE_ID'] = mb_substr($arParams['TRANSFER_ID'], 5);
 			}
 			else
 			{
@@ -337,9 +337,9 @@ class Rest extends \IRestService
 		$transferId = null;
 		if (isset($arParams['TRANSFER_ID']))
 		{
-			if (substr($arParams['TRANSFER_ID'], 0, 5) == 'queue')
+			if (mb_substr($arParams['TRANSFER_ID'], 0, 5) == 'queue')
 			{
-				$arParams['QUEUE_ID'] = substr($arParams['TRANSFER_ID'], 5);
+				$arParams['QUEUE_ID'] = mb_substr($arParams['TRANSFER_ID'], 5);
 			}
 			else
 			{
@@ -455,7 +455,7 @@ class Rest extends \IRestService
 	public static function networkJoin($arParams, $n, \CRestServer $server)
 	{
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
-		if (!isset($arParams['CODE']) || strlen($arParams['CODE']) != 32)
+		if (!isset($arParams['CODE']) || mb_strlen($arParams['CODE']) != 32)
 		{
 			throw new \Bitrix\Rest\RestException("You entered an invalid code", "CODE", \CRestServer::STATUS_WRONG_REQUEST);
 		}
@@ -487,7 +487,7 @@ class Rest extends \IRestService
 			throw new \Bitrix\Rest\RestException("Access for this method not allowed by session authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
 		}
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
-		if (!isset($arParams['CODE']) || strlen($arParams['CODE']) != 32)
+		if (!isset($arParams['CODE']) || mb_strlen($arParams['CODE']) != 32)
 		{
 			throw new \Bitrix\Rest\RestException("You entered an invalid code", "CODE", \CRestServer::STATUS_WRONG_REQUEST);
 		}
@@ -527,7 +527,10 @@ class Rest extends \IRestService
 		}
 
 		$isBitrix24 = \Bitrix\Main\Loader::includeModule('bitrix24');
-		if (!$isBitrix24 || !\CBitrix24::IsNfrLicense())
+		if (
+			$isBitrix24 && !\CBitrix24::IsNfrLicense()
+			|| !$isBitrix24 && !defined('IMOPENLINES_NETWORK_LIMIT')
+		)
 		{
 			$dateLimit = new \Bitrix\Main\Type\DateTime();
 			$dateLimit->add('-1 WEEK');
@@ -546,7 +549,7 @@ class Rest extends \IRestService
 		}
 
 		$arMessageFields['MESSAGE'] = trim($arParams['MESSAGE']);
-		if (strlen($arMessageFields['MESSAGE']) <= 0)
+		if ($arMessageFields['MESSAGE'] == '')
 		{
 			throw new \Bitrix\Rest\RestException("Message can't be empty", "MESSAGE_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
 		}
@@ -767,7 +770,7 @@ class Rest extends \IRestService
 			throw new \Bitrix\Rest\RestException("Session id is not specified.", "SESSION_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$action = strtolower($params['ACTION']);
+		$action = mb_strtolower($params['ACTION']);
 
 		\Bitrix\ImOpenlines\Session::voteAsUser($params['SESSION_ID'], $action);
 
@@ -1212,12 +1215,12 @@ class Rest extends \IRestService
 				{
 					$value = date('c', $value->getTimestamp());
 				}
-				else if (is_string($key) && in_array($key, $options['IMAGE_FIELD']) && is_string($value) && $value && strpos($value, 'http') !== 0)
+				else if (is_string($key) && in_array($key, $options['IMAGE_FIELD']) && is_string($value) && $value && mb_strpos($value, 'http') !== 0)
 				{
 					$value = \Bitrix\ImOpenLines\Common::getServerAddress().$value;
 				}
 
-				$key = str_replace('_', '', lcfirst(ucwords(strtolower($key), '_')));
+				$key = str_replace('_', '', lcfirst(ucwords(mb_strtolower($key), '_')));
 
 				$result[$key] = $value;
 			}

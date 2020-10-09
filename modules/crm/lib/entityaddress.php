@@ -712,7 +712,7 @@ class EntityAddress
 							'TYPE_ID' => $addressFields['TYPE_ID'],
 							'ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
 							'ANCHOR_TYPE_ID' => $addressFields['ENTITY_TYPE_ID'],
-							'ANCHOR_ID' => $addressFields['ENTITY_TYPE_ID'],
+							'ANCHOR_ID' => $addressFields['ENTITY_ID'],
 							'IS_DEF' => 1
 						],
 						'select' => ['TYPE_ID'],
@@ -767,7 +767,7 @@ class EntityAddress
 						'TYPE_ID' => $addressFields['TYPE_ID'],
 						'ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
 						'ANCHOR_TYPE_ID' => $addressFields['ENTITY_TYPE_ID'],
-						'ANCHOR_ID' => $addressFields['ENTITY_TYPE_ID'],
+						'ANCHOR_ID' => $addressFields['ENTITY_ID'],
 						'IS_DEF' => 1
 					],
 					'select' => ['ENTITY_ID'],

@@ -316,7 +316,7 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 
 	protected function getGroupsId(&$employeesGroupId, &$portalAdminGroupId)
 	{
-		\Bitrix\Intranet\Util::getGroupsId($employeesGroupId, $portalAdminGroupId);
+		[ $employeesGroupId, $portalAdminGroupId ] = \Bitrix\Intranet\Util::getGroupsId();
 	}
 
 	public function setAdminRightsAction()

@@ -21,7 +21,7 @@ else
 
 		echo '<div class="crm-gadg-stage">';
 		echo '<span class="crm-gadg-stage-left">', htmlspecialcharsbx(GetMessage('CRM_COLUMN_STAGE_ID')), ':<span>';
-		echo '<span class="crm-gadg-stage-right">', $arDeal['DEAL_STAGE_NAME'], '<span>';
+		echo '<span class="crm-gadg-stage-right">',htmlspecialcharsbx($arDeal['DEAL_STAGE_NAME']), '<span>';
 		echo '</div>';
 
 		$comments = isset($arDeal['~COMMENTS']) ? $arDeal['~COMMENTS'] : '';

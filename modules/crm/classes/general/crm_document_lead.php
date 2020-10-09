@@ -124,6 +124,14 @@ class CCrmDocumentLead extends CCrmDocument
 				'Editable' => true,
 				'Required' => false,
 			),
+			"OBSERVER_IDS" => array(
+				"Name" => GetMessage("CRM_FIELD_OBSERVER_IDS"),
+				"Type" => "user",
+				"Filterable" => true,
+				"Editable" => false,
+				"Required" => false,
+				"Multiple" => true,
+			),
 			'NAME' => array(
 				'Name' => GetMessage('CRM_LEAD_FIELD_NAME'),
 				'Type' => 'string',

@@ -4,7 +4,7 @@ if (strpos($_SERVER['SCRIPT_NAME'], "/bitrix/groupdav.php") === 0)
 
 if ($_SERVER['REQUEST_METHOD'] == 'PROPFIND' || $_SERVER['REQUEST_METHOD'] == 'OPTIONS')
 {
-	if (preg_match("/(bitrix|coredav|iphone|davkit|dataaccess|sunbird|lightning|cfnetwork|zideone|webkit|khtml|ical4ol|ios\\/([5-9]|10|11|12|13)|mac\\sos|mac_os_x|carddavbitrix24|caldavbitrix24|mac\\+os\\+x)/i", $_SERVER['HTTP_USER_AGENT']))
+	if (preg_match("/(bitrix|coredav|iphone|davkit|dataaccess|sunbird|lightning|cfnetwork|zideone|webkit|khtml|ical4ol|ios\\/([5-9]|10|11|12|13|14)|mac\\sos|mac_os_x|carddavbitrix24|caldavbitrix24|mac\\+os\\+x)/i", $_SERVER['HTTP_USER_AGENT']))
 	{
 		CHTTP::SetStatus("302 Found");
 		header('Location: /bitrix/groupdav.php/');

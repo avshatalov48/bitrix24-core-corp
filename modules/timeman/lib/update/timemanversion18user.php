@@ -403,7 +403,7 @@ class TimemanVersion18User
 				{
 					unset($res[$key]);
 				}
-				elseif (substr($res[$key], 0, 8) == '_PARENT_')
+				elseif (mb_substr($res[$key], 0, 8) == '_PARENT_')
 				{
 					$res[$key] = null;
 				}
@@ -468,9 +468,9 @@ class TimemanVersion18User
 
 				foreach ($arSettings as $k => $key)
 				{
-					if (!is_array($res[$key]) && substr($res[$key], 0, 8) == '_PARENT_')
+					if (!is_array($res[$key]) && mb_substr($res[$key], 0, 8) == '_PARENT_')
 					{
-						$parent = intval(substr($res[$key], 9));
+						$parent = intval(mb_substr($res[$key], 9));
 						unset($res[$key]);
 					}
 					else
@@ -488,7 +488,7 @@ class TimemanVersion18User
 				{
 					foreach ($res as $key => $value)
 					{
-						if (!is_array($res[$key]) && substr($res[$key], 0, 8) == '_PARENT_')
+						if (!is_array($res[$key]) && mb_substr($res[$key], 0, 8) == '_PARENT_')
 						{
 							$res[$key] = '';
 						}

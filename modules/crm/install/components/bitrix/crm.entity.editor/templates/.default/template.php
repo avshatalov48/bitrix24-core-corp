@@ -73,6 +73,7 @@ if(Main\Loader::includeModule('socialnetwork'))
 
 	$dstUsers = CSocNetLogDestination::GetUsers(array('id' => $destUserIDs));
 	$structure = CSocNetLogDestination::GetStucture(array('LAZY_LOAD' => true));
+	$socnetGroups = CSocNetLogDestination::getSocnetGroup();
 
 	$department = $structure['department'];
 	$departmentRelation = $structure['department_relation'];
@@ -82,6 +83,7 @@ if(Main\Loader::includeModule('socialnetwork'))
 			function()
 			{
 				BX.Crm.EntityEditorUserSelector.users =  <?=CUtil::PhpToJSObject($dstUsers)?>;
+				BX.Crm.EntityEditorUserSelector.socnetGroups =  <?=CUtil::PhpToJSObject($socnetGroups)?>;
 				BX.Crm.EntityEditorUserSelector.department = <?=CUtil::PhpToJSObject($department)?>;
 				BX.Crm.EntityEditorUserSelector.departmentRelation = <?=CUtil::PhpToJSObject($departmentRelation)?>;
 				BX.Crm.EntityEditorUserSelector.last = <?=CUtil::PhpToJSObject(array_change_key_case($last, CASE_LOWER))?>;
@@ -118,7 +120,12 @@ $configIconClassName = $arResult['ENTITY_CONFIG_SCOPE'] === Crm\Entity\EntityEdi
 	? 'crm-entity-card-common'
 	: 'crm-entity-card-private';
 
-$configCaption = Crm\Entity\EntityEditorConfigScope::getCaption($arResult['ENTITY_CONFIG_SCOPE']);
+$configCaption = Crm\Entity\EntityEditorConfigScope::getCaption(
+	$arResult['ENTITY_CONFIG_SCOPE'],
+	$arResult['CONFIG_ID'],
+	$arResult['USER_SCOPE_ID'],
+	($arParams['MODULE_ID'] ?? null)
+);
 
 	?><span id="<?=htmlspecialcharsbx($configIconID)?>" class="<?=$configIconClassName?>" title="<?=$configCaption?>">
 	</span><?
@@ -223,6 +230,8 @@ if(!empty($htmlEditorConfigs))
 				{
 					data: <?=CUtil::PhpToJSObject($arResult['ENTITY_CONFIG'])?>,
 					scope: "<?=CUtil::JSEscape($arResult['ENTITY_CONFIG_SCOPE'])?>",
+					userScopes: <?=CUtil::PhpToJSObject($arResult['USER_SCOPES'])?>,
+					userScopeId: "<?=CUtil::JSEscape($arResult['USER_SCOPE_ID'])?>",
 					enableScopeToggle: <?=$arResult['ENABLE_CONFIG_SCOPE_TOGGLE'] ? 'true' : 'false'?>,
 					canUpdatePersonalConfiguration: <?=$arResult['CAN_UPDATE_PERSONAL_CONFIGURATION'] ? 'true' : 'false'?>,
 					canUpdateCommonConfiguration: <?=$arResult['CAN_UPDATE_COMMON_CONFIGURATION'] ? 'true' : 'false'?>,
@@ -269,7 +278,21 @@ if(!empty($htmlEditorConfigs))
 				switchToCommonConfig: "<?=GetMessageJS('CRM_ENTITY_ED_SWITCH_TO_COMMON_CONFIG')?>",
 				couldNotFindEntityIdError: "<?=GetMessageJS('CRM_ENTITY_ED_COULD_NOT_FIND_ENTITY_ID')?>",
 				titleEdit: "<?=GetMessageJS('CRM_ENTITY_ED_TITLE_EDIT')?>",
-				titleEditUnsavedChanges: "<?=GetMessageJS('CRM_ENTITY_ED_TITLE_EDIT_UNSAVED_CHANGES')?>"
+				titleEditUnsavedChanges: "<?=GetMessageJS('CRM_ENTITY_ED_TITLE_EDIT_UNSAVED_CHANGES')?>",
+				checkScope: "<?=GetMessageJS('CRM_ENTITY_ED_CHECK_SCOPE')?>",
+				createScope: "<?=GetMessageJS('CRM_ENTITY_ED_CREATE_SCOPE')?>",
+				updateScope: "<?=GetMessageJS('CRM_ENTITY_ED_UPDATE_SCOPE')?>",
+			};
+
+			BX.Crm.EntityEditorScopeConfig.messages =
+			{
+				createScope: "<?=GetMessageJS('CRM_ENTITY_ED_CREATE_SCOPE')?>",
+				scopeName: "<?=GetMessageJS('CRM_ENTITY_ED_CONFIG_SCOPE_NAME')?>",
+				scopeNamePlaceholder: "<?=GetMessageJS('CRM_ENTITY_ED_CONFIG_SCOPE_NAME_PLACEHOLDER')?>",
+				scopeMembers: "<?=GetMessageJS('CRM_ENTITY_ED_CONFIG_SCOPE_MEMBERS')?>",
+				scopeSave: "<?=GetMessageJS('CRM_ENTITY_ED_CONFIG_SCOPE_SAVE')?>",
+				scopeCancel: "<?=GetMessageJS('CRM_ENTITY_ED_CONFIG_SCOPE_CANCEL')?>",
+				scopeSaved: "<?=GetMessageJS('CRM_ENTITY_ED_CONFIG_SCOPE_SAVED')?>",
 			};
 
 			BX.Crm.EntityUserFieldManager.messages =
@@ -681,10 +704,12 @@ if(!empty($htmlEditorConfigs))
 				BX.Crm.EntityEditor.create(
 					"<?=CUtil::JSEscape($guid)?>",
 					{
+						entityTypeName: "<?=CUtil::JSEscape($arResult['ENTITY_TYPE_NAME'])?>",
 						entityTypeId: <?=$arResult['ENTITY_TYPE_ID']?>,
 						entityId: <?=$arResult['ENTITY_ID']?>,
 						model: model,
 						config: config,
+						category: 'crm',
 						scheme: scheme,
 						validators: <?=CUtil::PhpToJSObject($arResult['ENTITY_VALIDATORS'])?>,
 						controllers: <?=CUtil::PhpToJSObject($arResult['ENTITY_CONTROLLERS'])?>,

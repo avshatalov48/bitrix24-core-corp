@@ -1,10 +1,11 @@
 <?php
+use \Bitrix\Imopenlines\Limit;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 ?>
 
-
-<?php if (\Bitrix\Main\Loader::includeModule('bitrix24') && !\Bitrix\Bitrix24\Feature::isFeatureEnabled("report_open_lines")): ?>
+<?php if (!Limit::canUseReport()): ?>
 	<div class="reports-stub">
 		<div class="reports-stub-content">
 			<div class="reports-stub-title"><?=\Bitrix\Main\Localization\Loc::getMessage('IMOPENLINES_REPORT_PAGE_LIMITATION_POPUP_TEXT_1')?></div>
@@ -12,7 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 			<img class="reports-stub-img" src="<?=$templateFolder?>/images/reports-stub.png" alt="">
 		</div>
 	</div>
-	<?php \CBitrix24::showTariffRestrictionButtons('report_open_lines'); ?>
+	<?php \CBitrix24::showTariffRestrictionButtons(Limit::OPTION_REPORT); ?>
 <?php else: ?>
 	<?php
 	$stepperHtml = \Bitrix\Main\Update\Stepper::getHtml('imopenlines');

@@ -170,7 +170,7 @@ class UserList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract
 
 	public static function getPhotoValue(array $params = [])
 	{
-		$result = '<div class="intranet-user-list-userpic"></div>';
+		$result = '<div class="intranet-user-list-userpic ui-icon ui-icon-common-user"><i></i></div>';
 
 		$userFields = (isset($params['FIELDS']) ? $params['FIELDS'] : []);
 //		$path = (isset($params['PATH']) ? $params['PATH'] : '');
@@ -214,7 +214,7 @@ class UserList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract
 				false
 			);
 
-			$result = '<div class="intranet-user-list-userpic" style="background-image: url(\''.\CHTTP::urnEncode($fileResized['src']).'\'); background-size: cover"></div>';
+			$result = '<div class="intranet-user-list-userpic ui-icon ui-icon-common-user"><i style="background-image: url(\''.\CHTTP::urnEncode($fileResized['src']).'\'); background-size: cover"></i></div>';
 		}
 
 		return $result;

@@ -738,5 +738,10 @@ $arUrlRewrite = array(
 		'ID' => 'bitrix:crm.catalog.controller',
 		'PATH' => '/crm/catalog/index.php',
 	),
+	array(
+		"CONDITION" => "#^/devops/#",
+		"ID" => "bitrix:rest.devops",
+		"PATH" => "/devops/index.php",
+	),
 );
 ?>

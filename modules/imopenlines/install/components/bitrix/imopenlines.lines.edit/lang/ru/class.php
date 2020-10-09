@@ -30,4 +30,10 @@ $MESS["OL_COMPONENT_LE_KPI_ANSWER_TIME_MINUTES_1"] = "минута";
 $MESS["OL_COMPONENT_LE_KPI_ANSWER_TIME_OWN"] = "Своё";
 $MESS["OL_COMPONENT_KPI_FIRST_ANSWER_TEXT"] = "Сотрудник #OPERATOR# превысил допустимое время ответа клиенту на первое сообщение. Диалог №#DIALOG#.";
 $MESS["OL_COMPONENT_KPI_FURTHER_ANSWER_TEXT"] = "Сотрудник #OPERATOR# превысил допустимое время ответа клиенту на сообщение. Диалог №#DIALOG#.";
+
+$MESS['OL_COMPONENT_CONFIG_EDIT_CRM_CREATE_IN_CHAT'] = 'Создать вручную в окне чата';
+$MESS['OL_COMPONENT_CONFIG_EDIT_CRM_CREATE_LEAD'] = 'Автоматически создать новый лид';
+$MESS['OL_COMPONENT_CONFIG_EDIT_CRM_CREATE_DEAL'] = 'Автоматически создавать сделку';
+$MESS['OL_COMPONENT_CONFIG_EDIT_CRM_CREATE_DEAL_SECOND'] = 'В какой воронке создавать сделку';
+$MESS['OL_COMPONENT_CONFIG_EDIT_CRM_CREATE_DEAL_THIRD'] = 'Использовать активную сделку, не создавая новую';
 ?>

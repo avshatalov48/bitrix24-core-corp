@@ -99,7 +99,7 @@ class RecordFormHelper
 			}
 			if ($user->obtainUtcOffset() < 0)
 			{
-				return '(UTC -' . substr($hoursMinutes, 1) . ')' . $name;
+				return '(UTC -'.mb_substr($hoursMinutes, 1) . ')' . $name;
 			}
 			return '(UTC +' . $hoursMinutes . ')' . $name;
 		}

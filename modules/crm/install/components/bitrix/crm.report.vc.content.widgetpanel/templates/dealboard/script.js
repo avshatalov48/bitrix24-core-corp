@@ -30,7 +30,7 @@
 				categories.forEach(function(categoryDescription)
 				{
 					menuItems.push({
-						text: categoryDescription.text,
+						text: BX.util.htmlspecialchars(categoryDescription.text),
 						dataset: categoryDescription,
 						onclick: this.onMenuItemClick.bind(this)
 					})

@@ -142,7 +142,7 @@ class User
 
 		return [
 			'ID' => (int)$userData['ID'],
-			'HASH' => substr($userData['XML_ID'], strlen(Auth::AUTH_TYPE)+1),
+			'HASH' => mb_substr($userData['XML_ID'], mb_strlen(Auth::AUTH_TYPE) + 1),
 			'NAME' => $name,
 			'FIRST_NAME' => $firstName,
 			'LAST_NAME' => $userData['LAST_NAME'],
@@ -165,7 +165,7 @@ class User
 		if (!$avatarUrl)
 			return '';
 
-		if (!in_array(strtolower(\GetFileExtension($avatarUrl)), Array('png', 'jpg', 'jpeg', 'gif')))
+		if (!in_array(mb_strtolower(\GetFileExtension($avatarUrl)), Array('png', 'jpg', 'jpeg', 'gif')))
 			return '';
 
 		$recordFile = \CFile::MakeFileArray($avatarUrl);

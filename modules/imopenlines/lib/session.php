@@ -277,10 +277,7 @@ class Session
 		{
 			$crmFieldsManager = $crmManager->getFields();
 			$crmFieldsManager->setDataFromUser($fields['USER_ID']);
-			if($this->config['CRM_CREATE'] != Config::CRM_CREATE_LEAD)
-			{
-				$crmManager->setSkipCreate();
-			}
+			$crmManager->setModeCreate($this->config['CRM_CREATE']);
 
 			if(Connector::isNeedCRMTracker($fields['SOURCE']))
 			{
@@ -966,34 +963,28 @@ class Session
 				$update['CLOSED'] = 'Y';
 
 				$params = [
-					"CLASS" => "bx-messenger-content-item-ol-end"
+					"CLASS" => "bx-messenger-content-item-ol-end",
+					"TYPE" => "lines",
+					"COMPONENT_ID" => "bx-imopenlines-message",
+					"IMOL_VOTE_SID" => $this->session['ID'],
+					"IMOL_VOTE_USER" => $this->session['VOTE'],
+					"IMOL_VOTE_HEAD" => $this->session['VOTE_HEAD'],
+					"IMOL_COMMENT_HEAD" => $this->session['COMMENT_HEAD'],
 				];
-				if ($this->config['VOTE_MESSAGE'] == 'Y')
+
+				$addMessageId = Im::addMessage([
+					"TO_CHAT_ID" => $this->session['CHAT_ID'],
+					"FROM_USER_ID" => $this->session['OPERATOR_ID'],
+					"MESSAGE" => Loc::getMessage('IMOL_SESSION_CLOSE_FINAL'),
+					"SYSTEM" => 'Y',
+					"RECENT_ADD" => $userViewChat? 'Y': 'N',
+					"PARAMS" => $params
+				]);
+
+				if(!empty($addMessageId))
 				{
-					$params["TYPE"] = "lines";
-					$params["COMPONENT_ID"] = "bx-imopenlines-message";
-					$params["IMOL_VOTE_SID"] = $this->session['ID'];
-					$params["IMOL_VOTE_USER"] = $this->session['VOTE'];
-					$params["IMOL_VOTE_HEAD"] = $this->session['VOTE_HEAD'];
-					$params["IMOL_COMMENT_HEAD"] = $this->session['COMMENT_HEAD'];
+					$lastMessageId = $addMessageId;
 				}
-				{
-
-					$addMessageId = Im::addMessage([
-						"TO_CHAT_ID" => $this->session['CHAT_ID'],
-						"FROM_USER_ID" => $this->session['OPERATOR_ID'],
-						"MESSAGE" => Loc::getMessage('IMOL_SESSION_CLOSE_FINAL'),
-						"SYSTEM" => 'Y',
-						"RECENT_ADD" => $userViewChat? 'Y': 'N',
-						"PARAMS" => $params
-					]);
-
-					if(!empty($addMessageId))
-					{
-						$lastMessageId = $addMessageId;
-					}
-				}
-
 			}
 			else
 			{
@@ -1005,32 +996,27 @@ class Session
 					$update['CLOSED'] = 'Y';
 
 					$params = [
-						"CLASS" => "bx-messenger-content-item-ol-end"
+						"CLASS" => "bx-messenger-content-item-ol-end",
+						"TYPE" => "lines",
+						"COMPONENT_ID" => "bx-imopenlines-message",
+						"IMOL_VOTE_SID" => $this->session['ID'],
+						"IMOL_VOTE_USER" => $this->session['VOTE'],
+						"IMOL_VOTE_HEAD" => $this->session['VOTE_HEAD'],
+						"IMOL_COMMENT_HEAD" => $this->session['COMMENT_HEAD'],
 					];
-					if ($this->config['VOTE_MESSAGE'] == 'Y')
-					{
-						$params["TYPE"] = "lines";
-						$params["COMPONENT_ID"] = "bx-imopenlines-message";
-						$params["IMOL_VOTE_SID"] = $this->session['ID'];
-						$params["IMOL_VOTE_USER"] = $this->session['VOTE'];
-						$params["IMOL_VOTE_HEAD"] = $this->session['VOTE_HEAD'];
-						$params["IMOL_COMMENT_HEAD"] = $this->session['COMMENT_HEAD'];
-					}
-					{
 
-						$addMessageId = Im::addMessage([
-							"TO_CHAT_ID" => $this->session['CHAT_ID'],
-							"FROM_USER_ID" => $this->session['OPERATOR_ID'],
-							"RECENT_ADD" => $userViewChat? 'Y': 'N',
-							"MESSAGE" => Loc::getMessage('IMOL_SESSION_CLOSE_FINAL'),
-							"SYSTEM" => 'Y',
-							"PARAMS" => $params
-						]);
+					$addMessageId = Im::addMessage([
+						"TO_CHAT_ID" => $this->session['CHAT_ID'],
+						"FROM_USER_ID" => $this->session['OPERATOR_ID'],
+						"RECENT_ADD" => $userViewChat? 'Y': 'N',
+						"MESSAGE" => Loc::getMessage('IMOL_SESSION_CLOSE_FINAL'),
+						"SYSTEM" => 'Y',
+						"PARAMS" => $params
+					]);
 
-						if(!empty($addMessageId))
-						{
-							$lastMessageId = $addMessageId;
-						}
+					if(!empty($addMessageId))
+					{
+						$lastMessageId = $addMessageId;
 					}
 				}
 				else if ($auto)
@@ -2380,9 +2366,9 @@ class Session
 
 				if(!empty($commentValue))
 				{
-					if(strlen($commentValue) > 10000)
+					if(mb_strlen($commentValue) > 10000)
 					{
-						$commentValue = substr($commentValue, 0, 10000) . '...';
+						$commentValue = mb_substr($commentValue, 0, 10000).'...';
 					}
 
 					$commentValueSafely = htmlspecialcharsbx($commentValue);
@@ -2727,81 +2713,6 @@ class Session
 		unset($kpi);
 
 		return true;
-	}
-
-	/**
-	 * Adds a lock to the session and chat.
-	 *
-	 * @param int $sessionId
-	 * @param Chat $chat
-	 * @param array $limit
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 */
-	public static function setReplyBlock(int $sessionId, Chat $chat , array $limit): void
-	{
-		if (!empty($limit['BLOCK_DATE']) && !empty($limit['BLOCK_REASON']))
-		{
-			Model\SessionTable::update($sessionId, Array(
-				'BLOCK_DATE' => $limit['BLOCK_DATE'],
-				'BLOCK_REASON' => $limit['BLOCK_REASON'],
-			));
-
-			$chat->updateFieldData([Chat::FIELD_SESSION => [
-				'ID' => $sessionId,
-				'BLOCK_DATE' => $limit['BLOCK_DATE'],
-				'BLOCK_REASON' => $limit['BLOCK_REASON'],
-			]]);
-		}
-
-	}
-
-	/**
-	 * Removes a block from the session and chat.
-	 *
-	 * @param int $sessionId
-	 * @param Chat $chat
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 */
-	public static function deleteReplyBlock(int $sessionId, Chat $chat): void
-	{
-		if ($sessionId > 0 && $chat)
-		{
-			Model\SessionTable::update($sessionId, Array(
-				'BLOCK_DATE' => null,
-				'BLOCK_REASON' => null,
-			));
-
-			$chat->updateFieldData([Chat::FIELD_SESSION => [
-				'ID' => $sessionId,
-				'BLOCK_DATE' => 0,
-				'BLOCK_REASON' => '',
-			]]);
-		}
-	}
-
-	/**
-	 * Checks if the ability to respond is blocked.
-	 *
-	 * @return bool
-	 * @throws Main\ObjectException
-	 */
-	public function isReplyBlocked(): bool
-	{
-		$sessionData = $this->getData();
-
-		if (!empty($sessionData['BLOCK_DATE']))
-		{
-			if ($sessionData['BLOCK_DATE'] < new Main\Type\DateTime())
-			{
-				return true;
-			}
-		}
-
-		return false;
 	}
 
 	/**

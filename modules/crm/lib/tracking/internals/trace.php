@@ -4,6 +4,8 @@ namespace Bitrix\Crm\Tracking\Internals;
 use Bitrix\Main\ORM;
 use Bitrix\Main\Type\DateTime;
 
+use Bitrix\Crm\Tracking\Channel;
+
 /**
  * Class TraceTable
  *
@@ -70,6 +72,10 @@ class TraceTable extends ORM\Data\DataManager
 			),
 			'ENTITY' => array(
 				'data_type' => TraceEntityTable::class,
+				'reference' => array('=this.ID' => 'ref.TRACE_ID'),
+			),
+			'TRACE_SOURCE' => array(
+				'data_type' => TraceSourceTable::class,
 				'reference' => array('=this.ID' => 'ref.TRACE_ID'),
 			),
 		];
@@ -179,5 +185,31 @@ class TraceTable extends ORM\Data\DataManager
 		])->fetch();
 
 		return $row ? $row['ID'] : null;
+	}
+
+	public static function deleteUnusedTraces($limit = 200)
+	{
+		$channelCodes = [];
+		foreach (Channel\Factory::getCodes() as $code)
+		{
+			if (Channel\Factory::create($code)->isSupportTraceDetecting())
+			{
+				$channelCodes[] = $code;
+			}
+		}
+
+		$rows = static::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'<DATE_CREATE' => (new DateTime())->add('-1 day'),
+				'=ENTITY.ID' => null,
+				'=CHANNEL.CODE' => $channelCodes,
+			],
+			'limit' => $limit ?: 50,
+		]);
+		foreach ($rows as $row)
+		{
+			static::delete($row['ID']);
+		}
 	}
 }

@@ -766,7 +766,7 @@ if (!empty($arResult['ERRORS']))
 				</div>
 			</div>
 			<div class="crm-webform-edit-task-edit-deal-sent-redirect-input-container">
-				<input type="text" placeholder="https://" name="CSS_PATH" value="<?=$arResult['FORM']['CSS_PATH']?>" class="crm-webform-edit-task-edit-deal-sent-redirect-input">
+				<input type="text" placeholder="https://" name="CSS_PATH" value="<?=htmlspecialcharsbx($arResult['FORM']['CSS_PATH'])?>" class="crm-webform-edit-task-edit-deal-sent-redirect-input">
 			</div>
 		</div>
 

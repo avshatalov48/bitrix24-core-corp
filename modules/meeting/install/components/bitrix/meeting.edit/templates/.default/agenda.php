@@ -123,7 +123,7 @@ if ($arResult['CAN_EDIT']):
 		</div>
 <?
 endif;
-if ($arResult['CAN_EDIT'] || strlen($arResult['MEETING']['PROTOCOL_TEXT']) > 0):
+if ($arResult['CAN_EDIT'] || $arResult['MEETING']['PROTOCOL_TEXT'] <> ''):
 ?>
 		<div class="meeting-agenda-protocol-text meeting-agenda-protocol-visible">
 			<span class="meeting-new-agenda-title"><?=GetMessage('ME_PROTO')?></span>

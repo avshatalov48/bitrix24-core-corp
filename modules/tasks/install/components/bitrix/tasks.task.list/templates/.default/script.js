@@ -5,6 +5,7 @@ BX.Tasks.GridActions = {
 	groupSelector: null,
 	registeredTimerNodes: {},
 	defaultPresetId: '',
+	getTotalCountProceed: false,
 
 	checkCanMove: function()
 	{
@@ -115,6 +116,61 @@ BX.Tasks.GridActions = {
 		}
 
 		return this.query;
+	},
+
+	getTotalCount: function(prefix, filter, params)
+	{
+		if (this.getTotalCountProceed)
+		{
+			return;
+		}
+		this.getTotalCountProceed = true;
+
+		var container = document.getElementById(prefix+'_row_count_wrapper');
+		this.showCountLoader(container);
+
+		var query = new BX.Tasks.Util.Query({url: '/bitrix/components/bitrix/tasks.task.list/ajax.php'});
+		query
+			.run('this.getTotalCount', {filter: filter, parameters: params})
+			.then(function(result) {
+				this.hideCountLoader(container);
+				if (result.data)
+				{
+					result.data = (typeof result.data == "number") ? result.data : 0;
+					var button = container.querySelector('a');
+					if (button)
+					{
+						button.remove();
+					}
+					container.append(result.data);
+				}
+				this.getTotalCountProceed = false;
+			}.bind(this))
+		query.execute();
+	},
+
+	showCountLoader: function(container)
+	{
+		var button = container.querySelector('a');
+		if (button)
+		{
+			button.style.display = 'none';
+		}
+
+		var loader = container.querySelector('.tasks-circle-loader-circular');
+		if (loader)
+		{
+			loader.style.display = 'inline';
+		}
+	},
+
+	hideCountLoader: function(container)
+	{
+		var loader = container.querySelector('.tasks-circle-loader-circular');
+		if (loader)
+		{
+			loader.style.display = 'none';
+		}
 	},
 
 	reloadRow: function(taskId)

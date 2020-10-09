@@ -288,7 +288,7 @@ BX.IntranetVSBlock.prototype.showEmployees = function()
 					'bx-tooltip-classname': 'intrantet-user-selector-tooltip'
 				},
 
-				html: '<a' + (this.employees[i].PHOTO ? ' style="background: url(\''+this.employees[i].PHOTO+'\') no-repeat scroll center center transparent; background-size: cover;"' : '') + ' class="structure-avatar" href="'+this.employees[i].PROFILE+'"></a><div class="structure-employee-name"><a href="'+this.employees[i].PROFILE+'">' + this.employees[i].NAME + '</a></div>' + (this.employees[i].POSITION ? '<div class="structure-employee-post">'+BX.util.htmlspecialchars(this.employees[i].POSITION)+'</div>' : '')
+				html: '<a class="ui-icon ui-icon-common-user structure-avatar" href="'+this.employees[i].PROFILE+'"><i ' + (this.employees[i].PHOTO ? ' style="background: url(\''+this.employees[i].PHOTO+'\') no-repeat scroll center center transparent; background-size: cover;"' : '') + '></i></a><div class="structure-employee-name"><a href="'+this.employees[i].PROFILE+'">' + this.employees[i].NAME + '</a></div>' + (this.employees[i].POSITION ? '<div class="structure-employee-post">'+BX.util.htmlspecialchars(this.employees[i].POSITION)+'</div>' : '')
 			});
 
 			if (this.bEdit)

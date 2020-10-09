@@ -426,6 +426,7 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 		$this->jsParams["signedParameters"] = $this->getSignedParameters();
 		$this->jsParams["componentName"] = $this->getName();
 		$this->jsParams["parentSelector"] = 'intranet-contact-list';
+		$this->jsParams['parentSelectorPartnersBlock'] = 'intranet-contact-rest-list';
 
 		return $this->jsParams;
 	}
@@ -577,7 +578,6 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 			$this->arResult["ITEMS"] = $this->getItems();
 			$this->arResult['REST_ITEMS'] = $this->getRestItems();
 			$this->arResult["JS_PARAMS"] = $this->getJsParams();
-			$this->arResult["JS_REST_PARAMS"] = $this->getJsRestParams();
 			$this->arResult["ADDITIONAL_STYLES"] = $this->additionalStyles;
 
 			$this->includeComponentTemplate();

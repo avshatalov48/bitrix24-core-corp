@@ -494,7 +494,7 @@ class ReceivingMessage
 					$fileName = Library::getNameFile($effectiveUrl);
 				}
 
-				if(empty($type) || $type == 'application/octet-stream')
+				if(empty($type) || $type == 'application/octet-stream' || $type == 'binary/octet-stream')
 				{
 					$fileTemp = new File($tempFilePath);
 					$type = $fileTemp->getContentType();

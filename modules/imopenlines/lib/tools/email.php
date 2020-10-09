@@ -40,7 +40,7 @@ class Email
 		}
 		else
 		{
-			$result = trim(strtolower($email));
+			$result = trim(mb_strtolower($email));
 		}
 
 		return $result;

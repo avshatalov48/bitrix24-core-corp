@@ -63,7 +63,7 @@ abstract class ViewComponent extends \CBitrixComponent
 	 * @return Result
 	 * @throws \Bitrix\Main\LoaderException
 	 */
-	protected function initDocument()
+	protected function initDocument(): Result
 	{
 		Loc::loadLanguageFile(__FILE__);
 		$result = new Result();
@@ -94,9 +94,9 @@ abstract class ViewComponent extends \CBitrixComponent
 						$this->value = $provider->getSource();
 					}
 					$this->template = $document->getTemplate();
-					if($this->template && $this->template->MODULE_ID != $this->getModule())
+					if($this->template && $this->template->MODULE_ID !== $this->getModule())
 					{
-						$result->addError(new Error(Loc::getMessage('DOCGEN_DOCUMENT_VIEW_ACCESS_ERROR')));
+						return $result->addError(new Error(Loc::getMessage('DOCGEN_DOCUMENT_VIEW_ACCESS_ERROR')));
 					}
 				}
 				else

@@ -72,7 +72,7 @@ class CCrmDocument
 		{
 			if (in_array($arType['USER_TYPE_ID'], $ignoredUserTypes))
 				continue;
-				
+
 			if ($arType['BASE_TYPE'] == 'enum')
 			{
 				$arType['BASE_TYPE'] = 'select';
@@ -1164,7 +1164,7 @@ class CCrmDocument
 					}
 				break;
 		}
-		
+
 		if (mb_strpos($arFieldType['Type'], 'UF:') === 0)
 		{
 			$sType = str_replace('UF:', '', $arFieldType['Type']);
@@ -1392,6 +1392,22 @@ class CCrmDocument
 			foreach ($arUserField as $sField)
 				if (isset($objDocument[$sField]))
 					$objDocument[$sField] = 'user_'.$objDocument[$sField];
+
+			if($arDocumentID['TYPE'] === CCrmOwnerType::LeadName || $arDocumentID['TYPE'] === CCrmOwnerType::DealName)
+			{
+				$observerIds = \Bitrix\Crm\Observer\ObserverManager::getEntityObserverIDs(
+					CCrmOwnerType::ResolveID($arDocumentID['TYPE']),
+					$arDocumentID['ID']
+				);
+				if(count($observerIds) > 0)
+				{
+					$objDocument['OBSERVER_IDS'] = array();
+					foreach ($observerIds as $id)
+					{
+						$objDocument['OBSERVER_IDS'][] = 'user_' . $id;
+					}
+				}
+			}
 
 			if (COption::GetOptionString('crm', 'bp_version', 2) == 2)
 			{
@@ -1627,7 +1643,7 @@ class CCrmDocument
 			}
 		}
 
-		foreach ($entities as list($type, $id))
+		foreach ($entities as [$type, $id])
 		{
 			$res = CCrmFieldMulti::GetList(
 				array('ID' => 'asc'),

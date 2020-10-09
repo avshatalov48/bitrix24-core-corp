@@ -1239,6 +1239,10 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				{
 					$img = '/bitrix/components/bitrix/salescenter.cashbox.panel/templates/.default/images/orangedata.svg';
 				}
+				elseif (mb_strpos($queryParams['handler'], Cashbox\CashboxCheckbox::class) !== false)
+				{
+					$img = '/bitrix/components/bitrix/salescenter.cashbox.panel/templates/.default/images/checkbox.svg';
+				}
 
 				$name = $cashboxHandler::getName();
 				$result['items'][] = [

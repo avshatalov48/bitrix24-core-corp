@@ -576,7 +576,12 @@ class CCrmSaleHelper
 		$groupId = self::getShopGroupIdByType($shopRole);
 		if ($groupId)
 		{
-			CUser::appendUserGroup($userId, [$groupId]);
+			$queryObject = CUser::getByID($userId);
+			$user = $queryObject->fetch();
+			if ($user && $user['EXTERNAL_AUTH_ID'] !== '__controller')
+			{
+				CUser::appendUserGroup($userId, [$groupId]);
+			}
 		}
 	}
 

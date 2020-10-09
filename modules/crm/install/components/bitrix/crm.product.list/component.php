@@ -1122,6 +1122,13 @@ if (!$bSkipSections)
 		$fetchIndex = 0;
 		while($fetchIndex++ < $navSectionFetchCount && $arSectionRow = $rsSection->Fetch())
 		{
+			if (isset($arSectionRow['DESCRIPTION']))
+			{
+				$arSectionRow['DESCRIPTION'] = ($arSectionRow['DESCRIPTION_TYPE'] != 'text'
+					? HTMLToTxt($arSectionRow['DESCRIPTION'])
+					: htmlspecialcharsEx($arSectionRow['DESCRIPTION'])
+				);
+			}
 			$arSectionRow['TYPE'] = 'S';
 			$arResultData[] = $arSectionRow;
 		}
@@ -1223,6 +1230,14 @@ else
 			{
 				if ($fetchIndex > $navPageInfo['offset'])
 				{
+					if (isset($arProductRow['DESCRIPTION']))
+					{
+						$arProductRow['DESCRIPTION'] = ($arProductRow['DESCRIPTION_TYPE'] != 'text'
+							? HTMLToTxt($arProductRow['DESCRIPTION'])
+							: htmlspecialcharsEx($arProductRow['DESCRIPTION'])
+						);
+					}
+
 					$arProductRow['TYPE'] = 'P';
 					$arResultData[] = $arProductRow;
 				}

@@ -289,6 +289,7 @@ if(typeof(BX.Crm.EntityEditorUserSelector) === "undefined")
 				this._id = id;
 				this._settings = settings ? settings : {};
 				this._isInitialized = false;
+				this._onlyUsers = BX.prop.getBoolean(this._settings, "onlyUsers", true);
 			},
 			getId: function()
 			{
@@ -313,18 +314,18 @@ if(typeof(BX.Crm.EntityEditorUserSelector) === "undefined")
 								select : BX.delegate(this.onSelect, this),
 								unSelect: BX.delegate(this.onSelect, this)
 							},
-							showSearchInput: true,
-							departmentSelectDisable: true,
+							showSearchInput: BX.prop.getBoolean(this._settings, "showSearchInput", true),
+							departmentSelectDisable: (this._onlyUsers ? true : false),
 							items:
 								{
 									users: BX.Crm.EntityEditorUserSelector.users,
 									groups: {},
-									sonetgroups: {},
+									sonetgroups: (this._onlyUsers ? {} : BX.Crm.EntityEditorUserSelector.socnetGroups),
 									department: BX.Crm.EntityEditorUserSelector.department,
 									departmentRelation : BX.SocNetLogDestination.buildDepartmentRelation(BX.Crm.EntityEditorUserSelector.department)
 								},
 							itemsLast: BX.Crm.EntityEditorUserSelector.last,
-							itemsSelected: {},
+							itemsSelected: BX.prop.getObject(this._settings, "itemsSelected", {}),
 							isCrmFeed: false,
 							useClientDatabase: false,
 							destSort: {},
@@ -351,7 +352,7 @@ if(typeof(BX.Crm.EntityEditorUserSelector) === "undefined")
 			},
 			onSelect: function(item, type, search, bUndeleted)
 			{
-				if(type !== "users")
+				if(this._onlyUsers && type !== "users")
 				{
 					return;
 				}

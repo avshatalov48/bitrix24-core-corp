@@ -15,6 +15,7 @@ use \Bitrix\Main\Error;
 use \Bitrix\Main\Loader;
 use \Bitrix\Main\Application;
 
+use Bitrix\Socialnetwork\Item\Workgroup;
 use \Bitrix\Tasks\Grid\Row\Content\Date;
 use \Bitrix\Tasks\Kanban\StagesTable;
 use \Bitrix\Tasks\Kanban\TaskStageTable;
@@ -27,6 +28,8 @@ use \Bitrix\Tasks\Integration\Disk\Connector\Task as ConnectorTask;
 use \Bitrix\Tasks\Access\ActionDictionary;
 
 use \Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Scrum\Internal\ItemTable;
+use Bitrix\Tasks\Scrum\Service\ItemService;
 
 class TasksKanbanComponent extends \CBitrixComponent
 {
@@ -174,30 +177,39 @@ class TasksKanbanComponent extends \CBitrixComponent
 									? \CSite::GetNameFormat(false)
 									: str_replace(array('#NOBR#', '#/NOBR#'), array('', ''), trim($params['~NAME_TEMPLATE']));
 
-		// get sprint id for this group
-		if (
-			isset($params['SPRINT_ID']) &&
-			$params['SPRINT_ID'] >= 0
-		)
+		$group = Bitrix\Socialnetwork\Item\Workgroup::getById($params['GROUP_ID']);
+		if ($group && $group->isScrumProject())
 		{
-			$sprint = \Bitrix\Tasks\Kanban\SprintTable::getSprint(
-				$params['GROUP_ID'],
-				$params['SPRINT_ID']
-			);
-			if ($sprint)
+			if (isset($params['SPRINT_ID']) && $params['SPRINT_ID'] >= 0)
 			{
-				$params['SPRINT_ID'] = $sprint['ID'];
+				StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
+				$params['SPRINT_SELECTED'] = 'Y';
 			}
 			else
 			{
 				$params['SPRINT_ID'] = 0;
+				$params['SPRINT_SELECTED'] = 'N';
 			}
-			$params['SPRINT_SELECTED'] = 'Y';
 		}
 		else
 		{
-			$params['SPRINT_ID'] = 0;
-			$params['SPRINT_SELECTED'] = 'N';
+			if (isset($params['SPRINT_ID']) && $params['SPRINT_ID'] >= 0)
+			{
+				$sprint = \Bitrix\Tasks\Kanban\SprintTable::getSprint(
+					$params['GROUP_ID'],
+					$params['SPRINT_ID']
+				);
+				if ($sprint)
+				{
+					$params['SPRINT_ID'] = $sprint['ID'];
+				}
+				else
+				{
+					$params['SPRINT_ID'] = 0;
+				}
+				StagesTable::setWorkMode(StagesTable::WORK_MODE_SPRINT);
+				$params['SPRINT_SELECTED'] = 'Y';
+			}
 		}
 
 		// force set last user group
@@ -217,10 +229,9 @@ class TasksKanbanComponent extends \CBitrixComponent
 				StagesTable::setWorkMode(StagesTable::WORK_MODE_USER);
 			}
 		}
-		else if ($params['SPRINT_ID'])
+		else if ($params['SPRINT_ID'] >= 0)
 		{
 			$this->arParams['STAGES_ENTITY_ID'] = $params['SPRINT_ID'];
-			StagesTable::setWorkMode(StagesTable::WORK_MODE_SPRINT);
 		}
 		else
 		{
@@ -1481,6 +1492,14 @@ class TasksKanbanComponent extends \CBitrixComponent
 		}
 
 		$item = $task->getData();
+
+		$storyPoints = '';
+		if ($this->arParams['SPRINT_SELECTED'] == 'Y')
+		{
+			$itemService = new ItemService();
+			$storyPoints = $itemService->getItemStoryPointsBySourceId($item['ID']);
+		}
+
 		$canEdit = $task->isActionAllowed(\CTaskItem::ACTION_EDIT);
 		$data = array(
 			// base
@@ -1539,6 +1558,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 			'completed' => $item['STATUS'] == \CTasks::STATE_COMPLETED,
 			'completed_supposedly' => $item['STATUS'] == \CTasks::STATE_SUPPOSEDLY_COMPLETED,
 			'muted' => $item['IS_MUTED'] === 'Y',
+			'storyPoints' => $storyPoints
 		);
 		if ($data['date_start'])
 		{
@@ -1578,7 +1598,8 @@ class TasksKanbanComponent extends \CBitrixComponent
 					$task['id'] => array(
 						'id' => $task['id'],
 						'columnId' => $task['stage_id'] > 0 ? $task['stage_id'] : $columnId,
-						'data' => $task
+						'data' => $task,
+						'isSprintView' => ($this->arParams['SPRINT_ID'] > 0 ? 'Y' : 'N')
 					)
 				);
 
@@ -1708,7 +1729,8 @@ class TasksKanbanComponent extends \CBitrixComponent
 				$items[$item['id']] = array(
 					'id' => $item['id'],
 					'columnId' => $column['ID'],
-					'data' => $item
+					'data' => $item,
+					'isSprintView' => ($this->arParams['SPRINT_SELECTED'] == 'Y' ? 'Y' : 'N')
 				);
 				if (
 					isset($filterTmp['ID']) &&
@@ -2288,11 +2310,23 @@ class TasksKanbanComponent extends \CBitrixComponent
 			}
 
 			$params = $this->arParams;
+
+			$responsibleId = $params['USER_ID'];
+			if (StagesTable::getWorkMode() == StagesTable::WORK_MODE_ACTIVE_SPRINT &&
+				Loader::includeModule('socialnetwork'))
+			{
+				$group = Workgroup::getById($params['GROUP_ID']);
+				if ($group)
+				{
+					$responsibleId =$group->getScrumMaster();
+				}
+			}
+
 			$stages = StagesTable::getStages($params['STAGES_ENTITY_ID']);
 			$fields = array(
 				'TITLE' => $this->convertUtf($taskName, true),
 				'CREATED_BY' => $this->userId,
-				'RESPONSIBLE_ID' => $params['USER_ID'],
+				'RESPONSIBLE_ID' => $responsibleId,
 				'GROUP_ID' => $params['GROUP_ID'],
 				'STAGE_ID' => isset($stages[$columnId]) ? $columnId : 0
 			);
@@ -2351,6 +2385,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 					);
 				}
 				\Bitrix\Tasks\Integration\Bizproc\Listener::onTaskAdd($newId, $task->getData());
+
+
+				if (StagesTable::getWorkMode() == StagesTable::WORK_MODE_ACTIVE_SPRINT)
+				{
+					$this->createScrumItem($params['SPRINT_ID'], $newId, $fields);
+				}
+
 				// output
 				return $this->getRawData($newId, $columnId);
 			}
@@ -2364,6 +2405,28 @@ class TasksKanbanComponent extends \CBitrixComponent
 		}
 
 		return array();
+	}
+
+	private function createScrumItem(int $sprintId, int $taskId, array $fields): void
+	{
+		try
+		{
+			$item = ItemTable::createItemObject();
+			$item->setSourceId($taskId);
+			$item->setEntityId($sprintId);
+			$item->setSort(0);
+			$item->setCreatedBy($fields['CREATED_BY']);
+			$item->setItemType(ItemTable::TASK_TYPE);
+			$result = ItemTable::add($item->getFieldsToCreateTaskItem());
+			if (!$result->isSuccess())
+			{
+				$this->addError($result->getErrorMessages()[0]);
+			}
+		}
+		catch(Exception $exception)
+		{
+			$this->addError($exception->getMessage());
+		}
 	}
 
 	/**
@@ -2478,7 +2541,18 @@ class TasksKanbanComponent extends \CBitrixComponent
 										$columnId
 									);
 								}
-
+							}
+							if (StagesTable::getWorkMode() === StagesTable::WORK_MODE_ACTIVE_SPRINT)
+							{
+								if ($stages[$columnId]['SYSTEM_TYPE'] === StagesTable::SYS_TYPE_FINISH)
+								{
+									$this->completeTask($taskId);
+								}
+								else
+								{
+									$this->renewTask($taskId);
+								}
+								StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
 							}
 						}
 						// or common
@@ -3282,12 +3356,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 						}
 						break;
 					case 'complete':
-						$task = \CTaskItem::getInstance($taskId, $this->userId);
-						if ($task->checkAccess(ActionDictionary::ACTION_TASK_COMPLETE) ||
-							$task->checkAccess(ActionDictionary::ACTION_TASK_APPROVE))
-						{
-							$task->complete();
-						}
+						$this->completeTask($taskId);
 						break;
 					case 'mute':
 						UserOption::add($taskId, $this->userId, UserOption\Option::MUTED);
@@ -3309,6 +3378,49 @@ class TasksKanbanComponent extends \CBitrixComponent
 		}
 
 		return array();
+	}
+
+	private function completeTask(int $taskId)
+	{
+		try
+		{
+			$task = \CTaskItem::getInstance($taskId, $this->userId);
+			if ($task->checkAccess(ActionDictionary::ACTION_TASK_COMPLETE) ||
+				$task->checkAccess(ActionDictionary::ACTION_TASK_APPROVE))
+			{
+				$task->complete();
+			}
+		}
+		catch(\Exception $exception)
+		{
+			$this->addError($exception->getMessage());
+		}
+	}
+
+	private function renewTask(int $taskId)
+	{
+		try
+		{
+			$task = \CTaskItem::getInstance($taskId, $this->userId);
+			if ($task->checkAccess(ActionDictionary::ACTION_TASK_RENEW) ||
+				$task->checkAccess(ActionDictionary::ACTION_TASK_APPROVE))
+			{
+				$queryObject = \CTasks::getList(
+					[],
+					['ID' => $taskId, '=STATUS' => \CTasks::STATE_COMPLETED],
+					['ID'],
+					['USER_ID' => $this->userId]
+				);
+				if ($queryObject->fetch())
+				{
+					$task->renew();
+				}
+			}
+		}
+		catch(\Exception $exception)
+		{
+			$this->addError($exception->getMessage());
+		}
 	}
 
 	/**

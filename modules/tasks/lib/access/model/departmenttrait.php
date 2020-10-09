@@ -65,6 +65,10 @@ trait DepartmentTrait
 	public function isInDepartment(int $userId, bool $recursive = false, array $roles = []): bool
 	{
 		$userDepartments = \CIntranetUtils::GetUserDepartments($userId);
+		if (!is_array($userDepartments))
+		{
+			return false;
+		}
 		return !empty(array_intersect($userDepartments, $this->getDepartments($roles)));
 	}
 

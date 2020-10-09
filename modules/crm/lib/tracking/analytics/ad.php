@@ -323,4 +323,49 @@ class Ad
 
 		return $expenses;
 	}
+
+	/**
+	 * Return true if it support expenses report.
+	 *
+	 * @return bool
+	 */
+	public function isSupportExpensesReport()
+	{
+		if ($this->isConnected())
+		{
+			return $this->account->hasExpensesReport();
+		}
+
+		return false;
+	}
+
+	/**
+	 * Get expenses report.
+	 *
+	 * @param Main\Type\Date|null $dateFrom Date from.
+	 * @param Main\Type\Date|null $dateTo Date to.
+	 * @return Main\Result
+	 */
+	public function getExpensesReport(Main\Type\Date $dateFrom = null, Main\Type\Date $dateTo = null)
+	{
+		if (!$this->isConnected())
+		{
+			return (new Main\Result())->addError(new Main\Error('Ads account not connected.'));
+		}
+
+		if (!$this->isSupportExpensesReport())
+		{
+			return (new Main\Result())->addError(new Main\Error('Expenses report not supported.'));
+		}
+
+		if ($this->account->hasAccounts())
+		{
+			if (!$this->accountId)
+			{
+				return (new Main\Result())->addError(new Main\Error('Ads account not selected.'));
+			}
+		}
+
+		return $this->account->getExpensesReport($this->accountId, $dateFrom, $dateTo);
+	}
 }

@@ -42,7 +42,7 @@ if($arParams['IS_SLIDER'])
 				<button class="ui-btn ui-btn-md ui-btn-light-border ui-btn-icon-print" id="crm-document-print"></button>
 				<?if(Bitrix24Manager::isEnabled())
 				{
-					?><button class="ui-btn ui-btn-md ui-btn-light-border" onclick="BX.DocumentGenerator.Feedback.open('<?=CUtil::JSEscape($arResult['PROVIDER']);?>', '<?=CUtil::JSEscape($arResult['TEMPLATE_NAME']);?>', '<?=CUtil::JSEscape($arResult['TEMPLATE_CODE']);?>');"><?=Loc::getMessage('CRM_DOCUMENT_VIEW_FEEDBACK');?></button>
+					?><button class="ui-btn ui-btn-md ui-btn-light-border" onclick="BX.DocumentGenerator.Feedback.open('<?=htmlspecialcharsbx(CUtil::JSEscape($arResult['PROVIDER']));?>', '<?=htmlspecialcharsbx(CUtil::JSEscape($arResult['TEMPLATE_NAME']));?>', '<?=htmlspecialcharsbx(CUtil::JSEscape($arResult['TEMPLATE_CODE']));?>');"><?=Loc::getMessage('CRM_DOCUMENT_VIEW_FEEDBACK');?></button>
 					<?
 				}?>
 				<button class="ui-btn ui-btn-md ui-btn-primary ui-btn-dropdown" id="crm-document-send"><?=Loc::getMessage('CRM_DOCUMENT_VIEW_SEND');?></button>

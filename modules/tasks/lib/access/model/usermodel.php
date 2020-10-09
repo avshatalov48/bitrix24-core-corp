@@ -3,6 +3,7 @@
 namespace Bitrix\Tasks\Access\Model;
 
 use Bitrix\Main\Access\User\AccessibleUser;
+use Bitrix\Main\UserTable;
 use Bitrix\Tasks\Access\Permission\TasksPermissionTable;
 use Bitrix\Tasks\Access\Role\TasksRoleRelationTable;
 
@@ -20,6 +21,10 @@ class UserModel extends \Bitrix\Main\Access\User\UserModel
 		$permissions,
 		$allSubordinates;
 
+	private
+		$isEmail,
+		$isExtranet;
+
 	public function getAllSubordinates(): array
 	{
 		if ($this->allSubordinates === null)
@@ -30,7 +35,7 @@ class UserModel extends \Bitrix\Main\Access\User\UserModel
 				return $this->allSubordinates;
 			}
 
-			$this->allSubordinates = \Bitrix\Tasks\Integration\Intranet\User::getSubordinate($this->userId, null, true);
+			$this->allSubordinates = \Bitrix\Tasks\Integration\Intranet\User::getSubordinate($this->userId, null, true, true);
 		}
 		return $this->allSubordinates;
 	}
@@ -65,6 +70,40 @@ class UserModel extends \Bitrix\Main\Access\User\UserModel
 			return $permissions[$permissionId];
 		}
 		return null;
+	}
+
+	public function isEmail(): bool
+	{
+		if ($this->isEmail === null)
+		{
+			$this->isEmail = false;
+
+			$user = UserTable::getList([
+				'select' => ['EXTERNAL_AUTH_ID'],
+				'filter' => [
+					'=ID' => $this->userId
+				],
+				'limit' => 1
+			])->fetch();
+
+			if (
+				$user
+				&& $user['EXTERNAL_AUTH_ID'] === 'email'
+			)
+			{
+				$this->isEmail = true;
+			}
+		}
+		return $this->isEmail;
+	}
+
+	public function isExtranet()
+	{
+		if ($this->isExtranet === null)
+		{
+			$this->isExtranet = \Bitrix\Tasks\Integration\Extranet\User::isExtranet($this->getUserId());
+		}
+		return $this->isExtranet;
 	}
 
 	private function getPermissions(): array

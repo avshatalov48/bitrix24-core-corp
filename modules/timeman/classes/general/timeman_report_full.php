@@ -41,9 +41,9 @@ class CTimeManReportFull
 		$strSql = "SELECT ".$arSqls["SELECT"]."
 		FROM b_timeman_report_full R ".
 		"	".$arSqls["FROM"]." ".
-		(strlen($arSqls["WHERE"])<=0 ? "" : "WHERE ".$arSqls["WHERE"]).
-		(strlen($arSqls["ORDERBY"])<=0 ? "" : " ORDER BY ".$arSqls["ORDERBY"]).
-		(strlen($arSqls["LIMIT"])>0?" ".$arSqls["LIMIT"]:"");
+		($arSqls["WHERE"] == '' ? "" : "WHERE ".$arSqls["WHERE"]).
+		($arSqls["ORDERBY"] == '' ? "" : " ORDER BY ".$arSqls["ORDERBY"]).
+		($arSqls["LIMIT"] <> ''?" ".$arSqls["LIMIT"]:"");
 
 		$res = $DB->Query($strSql, false, "FILE: ".__FILE__."<br> LINE: ".__LINE__);
 
@@ -120,7 +120,7 @@ class CTimeManReportFull
 		// SELECT -->
 		$arFieldsKeys = array_keys($arFields);
 
-		if (isset($arSelectFields) && !is_array($arSelectFields) && is_string($arSelectFields) && strlen($arSelectFields)>0 && array_key_exists($arSelectFields, $arFields))
+		if (isset($arSelectFields) && !is_array($arSelectFields) && is_string($arSelectFields) && $arSelectFields <> '' && array_key_exists($arSelectFields, $arFields))
 				$arSelectFields = array($arSelectFields);
 
 		if (!isset($arSelectFields)
@@ -136,19 +136,19 @@ class CTimeManReportFull
 							continue;
 					}
 
-					if (strlen($strSqlSelect) > 0)
+					if ($strSqlSelect <> '')
 							$strSqlSelect .= ", ";
 
 					if ($arField["FIELD_TYPE"] == "datetime")
 					{
-							if ((strtoupper($DB->type)=="ORACLE" || strtoupper($DB->type)=="MSSQL") && (array_key_exists($key, $arOrder)))
+							if (($DB->type == "ORACLE" || $DB->type == "MSSQL") && (array_key_exists($key, $arOrder)))
 								$strSqlSelect .= $arField["FIELD_NAME"]." as ".$key."_X1, ";
 
 							$strSqlSelect .= $DB->DateToCharFunction($arField["FIELD_NAME"], "FULL")." as ".$key;
 					}
 					elseif ($arField["FIELD_TYPE"] == "date")
 					{
-							if ((strtoupper($DB->type)=="ORACLE" || strtoupper($DB->type)=="MSSQL") && (array_key_exists($key, $arOrder)))
+							if (($DB->type == "ORACLE" || $DB->type == "MSSQL") && (array_key_exists($key, $arOrder)))
 								$strSqlSelect .= $arField["FIELD_NAME"]." as ".$key."_X1, ";
 
 							$strSqlSelect .= $DB->DateToCharFunction($arField["FIELD_NAME"], "SHORT")." as ".$key;
@@ -157,10 +157,10 @@ class CTimeManReportFull
 							$strSqlSelect .= $arField["FIELD_NAME"]." as ".$key;
 
 					if (isset($arField["FROM"])
-							&& strlen($arField["FROM"]) > 0
+							&& $arField["FROM"] <> ''
 							&& !in_array($arField["FROM"], $arAlreadyJoined))
 					{
-							if (strlen($strSqlFrom) > 0)
+							if ($strSqlFrom <> '')
 								$strSqlFrom .= " ";
 							$strSqlFrom .= $arField["FROM"];
 							$arAlreadyJoined[] = $arField["FROM"];
@@ -171,11 +171,11 @@ class CTimeManReportFull
 		{
 				foreach ($arSelectFields as $key => $val)
 				{
-					$val = strtoupper($val);
-					$key = strtoupper($key);
+					$val = mb_strtoupper($val);
+					$key = mb_strtoupper($key);
 					if (array_key_exists($val, $arFields))
 					{
-							if (strlen($strSqlSelect) > 0)
+							if ($strSqlSelect <> '')
 								$strSqlSelect .= ", ";
 
 							if (in_array($key, $arGroupByFunct))
@@ -186,14 +186,14 @@ class CTimeManReportFull
 							{
 								if ($arFields[$val]["FIELD_TYPE"] == "datetime")
 								{
-										if ((strtoupper($DB->type)=="ORACLE" || strtoupper($DB->type)=="MSSQL") && (array_key_exists($val, $arOrder)))
+										if (($DB->type == "ORACLE" || $DB->type == "MSSQL") && (array_key_exists($val, $arOrder)))
 											$strSqlSelect .= $arFields[$val]["FIELD_NAME"]." as ".$val."_X1, ";
 
 										$strSqlSelect .= $DB->DateToCharFunction($arFields[$val]["FIELD"], "FULL")." as ".$val;
 								}
 								elseif ($arFields[$val]["FIELD_TYPE"] == "date")
 								{
-										if ((strtoupper($DB->type)=="ORACLE" || strtoupper($DB->type)=="MSSQL") && (array_key_exists($val, $arOrder)))
+										if (($DB->type == "ORACLE" || $DB->type == "MSSQL") && (array_key_exists($val, $arOrder)))
 											$strSqlSelect .= $arFields[$val]["FIELD_NAME"]." as ".$val."_X1, ";
 
 										$strSqlSelect .= $DB->DateToCharFunction($arFields[$val]["FIELD_NAME"], "SHORT")." as ".$val;
@@ -203,10 +203,10 @@ class CTimeManReportFull
 							}
 
 							if (isset($arFields[$val]["FROM"])
-								&& strlen($arFields[$val]["FROM"]) > 0
+								&& $arFields[$val]["FROM"] <> ''
 								&& !in_array($arFields[$val]["FROM"], $arAlreadyJoined))
 							{
-								if (strlen($strSqlFrom) > 0)
+								if ($strSqlFrom <> '')
 										$strSqlFrom .= " ";
 								$strSqlFrom .= $arFields[$val]["FROM"];
 								$arAlreadyJoined[] = $arFields[$val]["FROM"];
@@ -226,8 +226,8 @@ class CTimeManReportFull
 		$arSqlOrder = Array();
 		foreach ($arOrder as $by => $order)
 		{
-				$by = strtoupper($by);
-				$order = strtoupper($order);
+			$by = mb_strtoupper($by);
+			$order = mb_strtoupper($order);
 
 				if ($order != "ASC")
 					$order = "DESC";
@@ -239,10 +239,10 @@ class CTimeManReportFull
 					$arSqlOrder[] = " ".$arFields[$by]["FIELD_NAME"]." ".$order." ";
 
 					if (isset($arFields[$by]["FROM"])
-							&& strlen($arFields[$by]["FROM"]) > 0
+							&& $arFields[$by]["FROM"] <> ''
 							&& !in_array($arFields[$by]["FROM"], $arAlreadyJoined))
 					{
-							if (strlen($strSqlFrom) > 0)
+							if ($strSqlFrom <> '')
 								$strSqlFrom .= " ";
 							$strSqlFrom .= $arFields[$by]["FROM"];
 							$arAlreadyJoined[] = $arFields[$by]["FROM"];
@@ -255,12 +255,12 @@ class CTimeManReportFull
 		$cnt = count($arSqlOrder);
 		for ($i=0; $i<$cnt; $i++)
 		{
-				if (strlen($strSqlOrderBy) > 0)
+				if ($strSqlOrderBy <> '')
 					$strSqlOrderBy .= ", ";
 
-				if(strtoupper($DB->type)=="ORACLE")
+				if($DB->type == "ORACLE")
 				{
-					if(substr($arSqlOrder[$i], -3)=="ASC")
+					if(mb_substr($arSqlOrder[$i], -3) == "ASC")
 							$strSqlOrderBy .= $arSqlOrder[$i]." NULLS FIRST";
 					else
 							$strSqlOrderBy .= $arSqlOrder[$i]." NULLS LAST";
@@ -270,16 +270,16 @@ class CTimeManReportFull
 		}
 		// <-- ORDER BY
 
-		if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) > 0)
+		if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) > 0)
 		{
-			$dbType = strtoupper($DB->type);
+			$dbType = $DB->type;
 			switch ($dbType)
 			{
 				case "MSSQL":
 					$strSqlSelect = "TOP ".$arNavStartParams["nTopCount"]." ".$strSqlSelect;
 					break;
 				case "ORACLE":
-					if(strlen($strSqlWhere)>0)
+					if($strSqlWhere <> '')
 						$strSqlWhere.=" AND ";
 					$strSqlWhere.= "ROWNUM<=".$arNavStartParams["nTopCount"];
 					break;
@@ -1285,7 +1285,7 @@ class CUserReportFull
 
 	private function prepareDailyReportContent(array $report, array $entryIds, array $entriesInfo): array
 	{
-		if (strlen($report["REPORT"]) > 0 && !$entriesInfo["REPORT_ID"])
+		if ($report["REPORT"] <> '' && !$entriesInfo["REPORT_ID"])
 		{
 			$entriesInfo["REPORT"] .= $this->getReportMessageHtml($report["REPORT_DATE"], $report["REPORT"]);
 			$entryIds[] = $report["ENTRY_ID"];
@@ -1841,7 +1841,7 @@ class CReportNotifications
 
 	public static function GetByID($ID)
 	{
-		$ID = IntVal($ID);
+		$ID = intval($ID);
 		$dbUser = CUser::GetByID($ID);
 		if ($arUser = $dbUser->GetNext())
 		{
@@ -1905,7 +1905,7 @@ class CReportNotifications
 
 	public static function FormatEvent($arFields, $arParams, $bMail = false)
 	{
-		$user_url = (strlen($arParams["PATH_TO_USER"]) > 0 ? $arParams["PATH_TO_USER"] : COption::GetOptionString('intranet', 'path_user', '/company/personal/user/#USER_ID#/', $arFields["SITE_ID"]));
+		$user_url = ($arParams["PATH_TO_USER"] <> '' ? $arParams["PATH_TO_USER"] : COption::GetOptionString('intranet', 'path_user', '/company/personal/user/#USER_ID#/', $arFields["SITE_ID"]));
 		$dbReport = CTimeManReportFull::GetByID($arFields["SOURCE_ID"]);
 		$arReport = $dbReport->Fetch();
 		if (!$arReport)
@@ -1931,7 +1931,7 @@ class CReportNotifications
 					'SEX'=>$manager["PERSONAL_GENDER"]
 				);
 
-			if (intVal($tmpUser["PERSONAL_PHOTO"]) <= 0)
+			if (intval($tmpUser["PERSONAL_PHOTO"]) <= 0)
 			{
 				switch($tmpUser["SEX"])
 				{
@@ -2024,7 +2024,7 @@ class CReportNotifications
 		else
 		{
 			$reportURL = COption::GetOptionString("timeman","WORK_REPORT_PATH","/timeman/work_report.php");
-			if (strlen($reportURL) == 0)
+			if ($reportURL == '')
 				$reportURL = "/timeman/work_report.php";
 			$reportURL = CSocNetLogTools::FormatEvent_GetURL(Array("URL"=>$reportURL,"SITE_ID"=>$arFields["SITE_ID"]));
 			$arResult["ENTITY"]["TYPE_MAIL"] = GetMessage("REPORT_TITLE_FOR_MAIL");
@@ -2076,10 +2076,10 @@ class CReportNotifications
 		{
 
 			$reportURL = COption::GetOptionString("timeman","WORK_REPORT_PATH","/timeman/work_report.php");
-			if (strlen($reportURL) == 0)
+			if ($reportURL == '')
 				$reportURL = "/timeman/work_report.php";
 			$reportURL = CSocNetLogTools::FormatEvent_GetURL(Array("URL"=>$reportURL,"SITE_ID"=>$arFields["LOG_SITE_ID"]));
-			if (strlen($reportURL) > 0)
+			if ($reportURL <> '')
 				$arResult["EVENT_FORMATTED"]["URL"] = $reportURL."#user_id=".$arLog["ENTITY_ID"]."&report=".$arLog["SOURCE_ID"];
 		}
 		else

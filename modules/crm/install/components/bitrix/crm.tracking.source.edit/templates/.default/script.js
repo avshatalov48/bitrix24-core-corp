@@ -87,7 +87,7 @@
 		}
 
 		value.replace(/[\s]/g, ',')
-			.replace(/[^\w,]/g, '')
+			.replace(/[^\w,\-.]/g, '')
 			.split(',')
 			.forEach(function (value) {
 				value = value.trim();

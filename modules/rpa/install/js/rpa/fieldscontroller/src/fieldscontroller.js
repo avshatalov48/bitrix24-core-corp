@@ -515,7 +515,7 @@ export class FieldsController
 
 		Array.from(this.hiddenFields.values()).forEach((userField: UserField) => {
 			items.push({
-				text: userField.getTitle(),
+				text: Text.encode(userField.getTitle()),
 				onclick: () =>
 				{
 					this.handleHiddenUserFieldClick(userField);

@@ -32,4 +32,5 @@ $MESS["TOP_MENU_CRM_TRACKING"] = "Сквозная аналитика";
 $MESS["TOP_MENU_AI"] = "Лаборатория AI";
 $MESS["MENU_SALESCENTER_SECTION"] = "Центр продаж";
 $MESS["MENU_RPA_SECTION"] = "Роботизация бизнеса (RPA)";
+$MESS["TOP_MENU_DEVOPS"] = "Разработчикам";
 ?>

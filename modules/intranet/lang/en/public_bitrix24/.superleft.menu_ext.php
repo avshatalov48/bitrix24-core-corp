@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["MENU_AI_SECTION"] = "AI Labs";
 $MESS["MENU_BIZPROC"] = "Workflows";
 $MESS["MENU_BLOG"] = "Conversations";
@@ -9,6 +9,7 @@ $MESS["MENU_CRM"] = "CRM";
 $MESS["MENU_CRM_MARKETING"] = "CRM Marketing";
 $MESS["MENU_CRM_TRACKING"] = "Sales Intelligence";
 $MESS["MENU_CRM_WEBFORM"] = "CRM Forms";
+$MESS["MENU_DEVOPS"] = "Developer resources";
 $MESS["MENU_DISK_SECTION"] = "Bitrix24.Drive";
 $MESS["MENU_EMPLOYEE"] = "Employees";
 $MESS["MENU_GROUP_SECTION"] = "Workgroups";
@@ -38,4 +39,3 @@ $MESS["MENU_TARIFF"] = "Subscription";
 $MESS["MENU_TASKS"] = "Tasks and Projects";
 $MESS["MENU_TELEPHONY_SECTION"] = "Telephony";
 $MESS["MENU_TIMEMAN_SECTION"] = "Time and Reports";
-?>

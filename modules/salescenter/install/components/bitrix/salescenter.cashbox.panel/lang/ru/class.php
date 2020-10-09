@@ -9,3 +9,4 @@ $MESS["SCP_CASHBOX_ATOL"] = "Атол";
 $MESS["SCP_CASHBOX_ORANGE_DATA"] = "Orange Data";
 $MESS["SCP_CASHBOX_OFFLINE"] = "Своя касса";
 $MESS["SCP_CASHBOX_APP_RECOMMEND"] = "Рекомендовать";
+$MESS["SCP_CASHBOX_CHECKBOX"] = "Checkbox";

@@ -1,4 +1,4 @@
-import {Reflection, Event, Type, Loc, Dom, Tag} from 'main.core';
+import {Reflection, Event, Type, Loc, Dom, Tag, Text} from 'main.core';
 import {Component} from 'rpa.component';
 import {Manager} from 'rpa.manager';
 
@@ -469,7 +469,7 @@ class Stage
 	{
 		this.layout.title = Tag.render`<span class="rpa-stage-phase-title">
 			<span class="rpa-stage-phase-title-inner">
-				<span class="rpa-stage-phase-name">${this.getName()}</span>
+				<span class="rpa-stage-phase-name">${Text.encode(this.getName())}</span>
 				<span class="rpa-stage-phase-icon-edit" onclick="${this.switchToEditMode.bind(this)}" title="${Loc.getMessage('RPA_STAGES_STAGE_CHANGE_TITLE')}"></span>
 			</span>
 			<span class="rpa-stage-phase-title-form">
@@ -484,7 +484,7 @@ class Stage
 	{
 		if(!this.layout.nameInput)
 		{
-			this.layout.nameInput = Tag.render`<input class="rpa-stage-phase-title-input" value="${this.getName()}" onblur="${this.switchToViewMode.bind(this)}" />`;
+			this.layout.nameInput = Tag.render`<input class="rpa-stage-phase-title-input" value="${Text.encode(this.getName())}" onblur="${this.switchToViewMode.bind(this)}" />`;
 		}
 
 		return this.layout.nameInput;

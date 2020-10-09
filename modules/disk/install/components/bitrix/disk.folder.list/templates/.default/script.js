@@ -1850,7 +1850,7 @@ BX.Disk.FolderListClass = (function (){
 				paddingTop: '70px',
 				paddingBottom: '70px'
 			},
-			content: messageDescription.replace('#NAME#', name),
+			content: messageDescription.replace('#NAME#', BX.util.htmlspecialchars(name)),
 			buttons: buttons
 		});
 	};

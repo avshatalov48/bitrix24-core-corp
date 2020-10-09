@@ -478,7 +478,7 @@ export default class Item extends Kanban.Item
 					{
 						this.layout.fieldList.appendChild(Tag.render`
 							<div class="rpa-kanban-item-field-item">
-								<span class="rpa-kanban-item-field-item-name">${fields[fieldName].title}</span>
+								<span class="rpa-kanban-item-field-item-name">${Text.encode(fields[fieldName].title)}</span>
 								${renderedUser}
 							</div>`
 						);
@@ -488,7 +488,7 @@ export default class Item extends Kanban.Item
 				{
 					this.layout.fieldList.appendChild(Tag.render`
 						<div class="rpa-kanban-item-field-item">
-							<span class="rpa-kanban-item-field-item-name">${fields[fieldName].title}</span>
+							<span class="rpa-kanban-item-field-item-name">${Text.encode(fields[fieldName].title)}</span>
 							<span class="rpa-kanban-item-field-item-value">${this.getDisplayableValue(fieldName)}</span>
 						</div>`
 					);

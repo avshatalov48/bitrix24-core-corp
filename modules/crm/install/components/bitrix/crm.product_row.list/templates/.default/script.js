@@ -1059,7 +1059,7 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 				var taxData = typeof(item['tax']) !== 'undefined' ? item['tax'] : {};
 				var itemTaxId = typeof(taxData['id']) !== 'undefined' ? parseInt(taxData['id']) : 0;
 				var taxInfo = itemTaxId > 0 ? this.getTaxById(itemTaxId) : null;
-				if(!taxInfo)
+				if(!taxInfo && itemId === 0)
 				{
 					taxInfo = this.getSetting('defaultTax', null);
 				}

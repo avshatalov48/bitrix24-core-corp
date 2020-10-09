@@ -44,7 +44,7 @@ ShowMessage($arResult['ERROR_MESSAGE']);
 		</div>
 		<div class="login-item">
 			<!--[if IE]><span class="login-label"><?=GetMessage("AUTH_PASSWORD")?></span><![endif]-->
-			<input class="login-inp" type="password" name="USER_PASSWORD" placeholder="<?=GetMessage("AUTH_PASSWORD")?>" maxlength="255"/>
+			<input class="login-inp" type="password" name="USER_PASSWORD" placeholder="<?=GetMessage("AUTH_PASSWORD")?>" maxlength="255" autocomplete="new-password" />
 		</div>
 		<?if($arResult["CAPTCHA_CODE"]):?>
 			<div class="login-item">
@@ -54,7 +54,7 @@ ShowMessage($arResult['ERROR_MESSAGE']);
 			</div>
 			<div class="login-item">
 				<span class="login-label"><?echo GetMessage("AUTH_CAPTCHA_PROMT")?></span>
-				<input class="login-inp" type="text" name="captcha_word" maxlength="50" value="" size="15" />
+				<input class="login-inp" type="text" name="captcha_word" maxlength="50" value="" size="15" autocomplete="off"/>
 			</div>
 		<?endif;?>
 

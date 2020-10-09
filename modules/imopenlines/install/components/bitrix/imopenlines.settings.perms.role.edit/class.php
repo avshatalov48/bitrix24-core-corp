@@ -73,10 +73,6 @@ class CImOpenlinesRoleEditComponent extends CBitrixComponent
 		$this->arResult['PERMISSION_MAP'] = \Bitrix\ImOpenlines\Security\Permissions::getMap();
 		$this->arResult['PERMISSIONS_URL'] = \Bitrix\ImOpenlines\Common::getPublicFolder()."permissions.php";
 		$this->arResult['CAN_EDIT'] = \Bitrix\ImOpenlines\Security\Helper::canUse();
-		if(!$this->arResult['CAN_EDIT'])
-		{
-			$this->arResult['TRIAL'] = \Bitrix\ImOpenlines\Security\Helper::getTrialText();
-		}
 
 		$this->arResult['IFRAME'] = $this->request['IFRAME'] === 'Y';
 

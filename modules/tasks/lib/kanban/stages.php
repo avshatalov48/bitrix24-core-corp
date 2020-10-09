@@ -8,6 +8,7 @@ use Bitrix\Tasks\Internals\TaskTable as Task;
 use Bitrix\Tasks\MemberTable;
 use Bitrix\Tasks\ProjectsTable;
 use Bitrix\Main\ORM\Fields\ArrayField;
+use Bitrix\Tasks\Scrum\Service\KanbanService;
 
 Loc::loadMessages(__FILE__);
 
@@ -61,6 +62,7 @@ class StagesTable extends Entity\DataManager
 	const WORK_MODE_USER = 'U';
 	const WORK_MODE_TIMELINE = 'P';
 	const WORK_MODE_SPRINT = 'S';
+	const WORK_MODE_ACTIVE_SPRINT = 'A';
 
 	/**
 	 * Returns DB table name for entity.
@@ -123,7 +125,8 @@ class StagesTable extends Entity\DataManager
 		return  $mode == self::WORK_MODE_GROUP ||
 				$mode == self::WORK_MODE_USER ||
 				$mode == self::WORK_MODE_TIMELINE ||
-				$mode == self::WORK_MODE_SPRINT;
+				$mode == self::WORK_MODE_SPRINT ||
+				$mode == self::WORK_MODE_ACTIVE_SPRINT;
 	}
 
 	/**
@@ -389,6 +392,11 @@ class StagesTable extends Entity\DataManager
 				{
 					$source = SprintTable::getStages($entityId);
 				}
+				else if ($entityType == self::WORK_MODE_ACTIVE_SPRINT)
+				{
+					$kanbanService = new KanbanService();
+					$source = $kanbanService->getKanbanStages($entityId);
+				}
 				else
 				{
 					return [];
@@ -646,7 +654,8 @@ class StagesTable extends Entity\DataManager
 		// if personal - search in another table
 		if (
 			self::getWorkMode() == self::WORK_MODE_USER ||
-			self::getWorkMode() == self::WORK_MODE_SPRINT
+			self::getWorkMode() == self::WORK_MODE_SPRINT ||
+			self::getWorkMode() == self::WORK_MODE_ACTIVE_SPRINT
 		)
 		{
 			$sql .= "
@@ -701,7 +710,8 @@ class StagesTable extends Entity\DataManager
 			(
 				$entityType == self::WORK_MODE_USER ||
 				$entityType == self::WORK_MODE_GROUP ||
-				$entityType == self::WORK_MODE_SPRINT
+				$entityType == self::WORK_MODE_SPRINT ||
+				$entityType == self::WORK_MODE_ACTIVE_SPRINT
 			)
 		)
 		{
@@ -1123,11 +1133,13 @@ class StagesTable extends Entity\DataManager
 		{
 			parent::delete($row['ID']);
 		}
+
+		//tmp
 		$res = SprintTable::getList([
 			'filter' => [
 				'GROUP_ID' => $groupId
 			]
-]		);
+		]		);
 		while ($row = $res->fetch())
 		{
 			SprintTable::delete($row['ID']);

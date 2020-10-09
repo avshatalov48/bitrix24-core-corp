@@ -770,6 +770,11 @@ this.BX = this.BX || {};
 	      Manager.openHelper(event, 'redirect=detail&code=11120562', 'cashbox_connect');
 	    }
 	  }, {
+	    key: "openHowToConfigCheckboxCashBox",
+	    value: function openHowToConfigCheckboxCashBox(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=12306679', 'cashbox_connect');
+	    }
+	  }, {
 	    key: "openHowToSell",
 	    value: function openHowToSell(event) {
 	      Manager.openHelper(event, 'redirect=detail&code=11274792', 'crmstore_connect');

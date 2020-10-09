@@ -101,7 +101,7 @@ export class OrderCreationModel extends VuexBuilderModel
 								),
 								basket: BX.prop.get(data,"items",[])
 							});
-							if (payload.onsuccess)
+							if (payload && payload.onsuccess)
 							{
 								payload.onsuccess();
 							}
@@ -115,7 +115,7 @@ export class OrderCreationModel extends VuexBuilderModel
 								errors: BX.prop.get(result,"errors", []),
 								basket: BX.prop.get(data,"items",[])
 							});
-							if (payload.onfailure)
+							if (payload && payload.onfailure)
 							{
 								payload.onfailure();
 							}

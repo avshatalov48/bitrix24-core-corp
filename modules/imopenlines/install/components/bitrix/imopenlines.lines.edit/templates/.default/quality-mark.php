@@ -19,8 +19,7 @@ use \Bitrix\Imopenlines\Limit;
 			if (!Limit::canUseVoteClient() || Limit::isDemoLicense())
 			{
 				?>
-				<span id="imol_vote"
-					  data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_LOCK_ALT'))?>"></span>
+				<span class="tariff-lock"></span>
 				<?
 				if (!Limit::canUseVoteClient())
 				{

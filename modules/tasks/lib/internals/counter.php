@@ -6,6 +6,7 @@ use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
+use Bitrix\Main\ModuleManager;
 use Bitrix\Pull\Event;
 use Bitrix\Tasks\Comments;
 use Bitrix\Tasks\Internals\Counter\Agent;
@@ -1855,7 +1856,7 @@ class Counter
 	 */
 	public static function sendPushCounters(array $users): void
 	{
-		if (!Loader::includeModule('pull'))
+		if (!ModuleManager::isModuleInstalled('pull') || !Loader::includeModule('pull'))
 		{
 			return;
 		}

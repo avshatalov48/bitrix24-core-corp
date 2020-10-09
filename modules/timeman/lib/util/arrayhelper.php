@@ -26,10 +26,10 @@ class ArrayHelper
 			return $array[$key];
 		}
 
-		if (($pos = strrpos($key, '.')) !== false)
+		if (($pos = mb_strrpos($key, '.')) !== false)
 		{
-			$array = static::getValue($array, substr($key, 0, $pos), $default);
-			$key = substr($key, $pos + 1);
+			$array = static::getValue($array, mb_substr($key, 0, $pos), $default);
+			$key = mb_substr($key, $pos + 1);
 		}
 
 		if (is_object($array))

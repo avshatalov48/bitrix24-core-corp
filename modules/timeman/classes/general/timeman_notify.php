@@ -308,7 +308,7 @@ class CTimeManNotify
 
 	public static function GetByID($ID)
 	{
-		$ID = IntVal($ID);
+		$ID = intval($ID);
 		$dbUser = CUser::GetByID($ID);
 		if ($arUser = $dbUser->GetNext())
 		{
@@ -331,7 +331,7 @@ class CTimeManNotify
 
 		$arResult = array();
 
-		$user_url = (strlen($arParams["PATH_TO_USER"]) > 0 ? $arParams["PATH_TO_USER"] : COption::GetOptionString('intranet', 'path_user', '/company/personal/user/#USER_ID#/', $arFields["SITE_ID"]));
+		$user_url = ($arParams["PATH_TO_USER"] <> '' ? $arParams["PATH_TO_USER"] : COption::GetOptionString('intranet', 'path_user', '/company/personal/user/#USER_ID#/', $arFields["SITE_ID"]));
 
 		$arManagers = CTimeMan::GetUserManagers($arFields["ENTITY_ID"]);
 		$arManagers[] = $arFields["ENTITY_ID"];
@@ -361,7 +361,7 @@ class CTimeManNotify
 				'PERSONAL_GENDER' => $manager['PERSONAL_GENDER']
 			);
 
-			if (intVal($info["PERSONAL_PHOTO"]) <= 0)
+			if (intval($info["PERSONAL_PHOTO"]) <= 0)
 			{
 				switch($info["PERSONAL_GENDER"])
 				{
@@ -390,7 +390,7 @@ class CTimeManNotify
 		$arResult["EVENT"] = $arFields;
 
 		$gender = trim($arChanger['PERSONAL_GENDER']);
-		if (strlen($gender) <= 0)
+		if ($gender == '')
 			$gender = 'N';
 
 		if(!$bMail)
@@ -530,7 +530,7 @@ class CTimeManNotify
 		if ($bMail)
 		{
 			$reportURL = COption::GetOptionString("timeman","TIMEMAN_REPORT_PATH","/timeman/timeman.php");
-			if (strlen($reportURL) == 0)
+			if ($reportURL == '')
 				$reportURL = "/timeman/timeman.php";
 
 			$reportURL = CSocNetLogTools::FormatEvent_GetURL(
@@ -786,13 +786,13 @@ class CTimeManNotify
 		{
 			$topicXmlId = $topicInfo['XML_ID'];
 		}
-		if ($topicXmlId !== null && strpos($topicXmlId, 'TIMEMAN_ENTRY_') === 0)
+		if ($topicXmlId !== null && mb_strpos($topicXmlId, 'TIMEMAN_ENTRY_') === 0)
 		{
 			if (isset($arFields['PARAM1']) && ($arFields['PARAM1'] === SONET_TIMEMAN_ENTRY_ENTITY || $arFields['PARAM1'] === 'TM'))
 			{
 				return;
 			}
-			$recordId = substr($topicXmlId, strlen('TIMEMAN_ENTRY_'));
+			$recordId = mb_substr($topicXmlId, mb_strlen('TIMEMAN_ENTRY_'));
 			if (!is_numeric($recordId) || (int)$recordId <= 0)
 			{
 				return;

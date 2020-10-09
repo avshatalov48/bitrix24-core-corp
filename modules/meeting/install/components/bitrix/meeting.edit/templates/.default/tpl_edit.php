@@ -1,7 +1,7 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 <?
 $bHasTitle = true;
-if (strlen($arResult['MEETING']['TITLE']) <= 0)
+if ($arResult['MEETING']['TITLE'] == '')
 {
 	$arResult['MEETING']['TITLE'] = GetMessage('ME_TITLE_DEFAULT');
 	$bHasTitle = false;

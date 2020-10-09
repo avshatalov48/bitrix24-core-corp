@@ -1,35 +1,32 @@
 <?php
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
-
-$arResult['enumValues'] = array(
-	'STATUS' => array(
-		CTasks::STATE_NEW,
+$arResult['enumValues'] = [
+	'STATUS' => [
 		CTasks::STATE_PENDING,
 		CTasks::STATE_IN_PROGRESS,
 		CTasks::STATE_SUPPOSEDLY_COMPLETED,
 		CTasks::STATE_COMPLETED,
 		CTasks::STATE_DEFERRED,
-		CTasks::STATE_DECLINED
-	),
-	'STATUS_PSEUDO' => array(
-		CTasks::STATE_NEW,
+	],
+	'STATUS_PSEUDO' => [
 		CTasks::STATE_PENDING,
 		CTasks::STATE_IN_PROGRESS,
 		CTasks::STATE_SUPPOSEDLY_COMPLETED,
 		CTasks::STATE_COMPLETED,
 		CTasks::STATE_DEFERRED,
-		CTasks::STATE_DECLINED,
-		CTasks::METASTATE_EXPIRED
-	),
-	'PRIORITY' => array(
+		CTasks::METASTATE_EXPIRED,
+	],
+	'PRIORITY' => [
 		CTasks::PRIORITY_AVERAGE,
-		CTasks::PRIORITY_HIGH
-	)
-);
+		CTasks::PRIORITY_HIGH,
+	],
+];
 
 IncludeModuleLangFile('/modules/tasks/lib/task.php');
-
 ?>
 
 <!-- hide compares for User and Group -->

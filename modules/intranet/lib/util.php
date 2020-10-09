@@ -512,7 +512,7 @@ class Util
 			}
 		}
 
-		self::getGroupsId($employeesGroupId, $portalAdminGroupId);
+		[ $employeesGroupId, $portalAdminGroupId ] = self::getGroupsId();
 
 		$currentUserGroups = \CUser::getUserGroup($userId);
 		foreach ($currentUserGroups as $groupKey => $group)
@@ -588,7 +588,7 @@ class Util
 			return false;
 		}
 
-		self::getGroupsId($employeesGroupId, $portalAdminGroupId);
+		[ $employeesGroupId, $portalAdminGroupId ] = self::getGroupsId();
 
 		$currentUserGroups = \CUser::getUserGroup($userId);
 		foreach ($currentUserGroups as $groupKey => $group)
@@ -616,7 +616,7 @@ class Util
 		return true;
 	}
 
-	public static function getGroupsId(&$employeesGroupId, &$portalAdminGroupId)
+	public static function getGroupsId()
 	{
 		$employeesGroupId = "";
 		$portalAdminGroupId = "";
@@ -641,6 +641,8 @@ class Util
 				}
 			}
 		}
+
+		return [ $employeesGroupId, $portalAdminGroupId ];
 	}
 }
 

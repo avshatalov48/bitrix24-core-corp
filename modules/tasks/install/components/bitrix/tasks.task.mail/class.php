@@ -8,11 +8,13 @@
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
-use \Bitrix\Main\Loader;
 use \Bitrix\Main\Localization\Loc;
 
 use \Bitrix\Tasks\Manager\Task;
 use \Bitrix\Tasks\Util\Error\Collection;
+use Bitrix\Tasks\Util;
+use Bitrix\Tasks\Access\Model\TaskModel;
+use Bitrix\Tasks;
 
 Loc::loadMessages(__FILE__);
 
@@ -23,6 +25,24 @@ class TasksMailTaskComponent extends TasksTaskComponent
 	protected $senderId = null;
 	private $replaceUser = false;
 	private $prevUser = false;
+
+	protected static function checkRights(array $arParams, array $arResult, array $auxParams): ?Util\Error
+	{
+		$error = new Util\Error(Loc::getMessage('TASKS_TT_NOT_FOUND_OR_NOT_ACCESSIBLE'), 'ACCESS_DENIED.NO_TASK');
+
+		$taskId = (int) $arParams[static::getParameterAlias('ID')];
+		$oldTask = $taskId ? TaskModel::createFromId($taskId) : null;
+		$accessCheckParams = null;
+		$action = Tasks\Access\ActionDictionary::ACTION_TASK_READ;
+
+		$res = (new Tasks\Access\TaskAccessController($arResult['USER_ID']))->check($action, $oldTask, $accessCheckParams);
+		if (!$res)
+		{
+			return $error;
+		}
+
+		return null;
+	}
 
 	protected function processExecutionStart()
 	{

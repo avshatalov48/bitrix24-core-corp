@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ENTITY_ED_CHANGE"] = "Изменить";
 $MESS["CRM_ENTITY_ED_CANCEL"] = "Отменить";
 $MESS["CRM_ENTITY_ED_CREATE"] = "Создать";
@@ -199,6 +199,15 @@ $MESS["CRM_ENTITY_ED_MOVE_ADDR_TO_REQUISITE_HTML"] = "Информация (зн
 $MESS["CRM_ENTITY_ED_MOVE_ADDR_TO_REQUISITE_BTN_START"] = "Запустить перенос";
 $MESS["CRM_ENTITY_ED_MOVE_ADDR_TO_REQUISITE_BTN_CANCEL"] = "Отменить";
 $MESS["CRM_ENTITY_ED_MOVE_ADDR_TO_REQUISITE_START_SUCCESS"] = "Перенос адресов запущен!";
+$MESS["CRM_ENTITY_ED_CHECK_SCOPE"] = "Выбрать \"#SCOPE_NAME#\"";
+$MESS["CRM_ENTITY_ED_CREATE_SCOPE"] = "Создать новое представление";
+$MESS["CRM_ENTITY_ED_UPDATE_SCOPE"] = "Изменить/удалить представление...";
+$MESS["CRM_ENTITY_ED_CONFIG_SCOPE_NAME"] = "Название представления:";
+$MESS["CRM_ENTITY_ED_CONFIG_SCOPE_NAME_PLACEHOLDER"] = "Введите название";
+$MESS["CRM_ENTITY_ED_CONFIG_SCOPE_MEMBERS"] = "Выбрать относящихся к представлению:";
+$MESS["CRM_ENTITY_ED_CONFIG_SCOPE_SAVE"] = "Сохранить";
+$MESS["CRM_ENTITY_ED_CONFIG_SCOPE_CANCEL"] = "Отменить";
+$MESS["CRM_ENTITY_ED_CONFIG_SCOPE_SAVED"] = "Представление сохранено";
 $MESS["CRM_EDITOR_MANUAL_OPPORTUNITY_CONFIRMATION_TITLE"] = "Отключение автоматического расчета суммы по товарам";
 $MESS["CRM_EDITOR_MANUAL_OPPORTUNITY_CONFIRMATION_TEXT"] = "Сумма перестанет пересчитываться автоматически. Вы уверены, что хотите продолжить?";
 $MESS["CRM_EDITOR_MANUAL_OPPORTUNITY_SET_AUTOMATIC"] = "Вернуть автоматический пересчет суммы";
@@ -209,4 +218,3 @@ $MESS["CRM_EDITOR_MANUAL_OPPORTUNITY_CHANGE_VALUE_MANUAL"] = "Оставить �
 $MESS["CRM_VISIBILITY_ATTR_TITLE"] = "Ограничить видимость поля";
 $MESS["CRM_VISIBILITY_ATTR_LABEL"] = "Видят это поле";
 $MESS["CRM_VISIBILITY_ADD_USER_BUTTON"] = "Добавить";
-?>

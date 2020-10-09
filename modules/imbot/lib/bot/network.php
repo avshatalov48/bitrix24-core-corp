@@ -1225,9 +1225,9 @@ class Network extends Base
 	 */
 	public static function getUserGeoData()
 	{
-		if (isset($_SESSION["SESS_AUTH"]['GEO_DATA']))
+		if (isset(\Bitrix\Main\Application::getInstance()->getKernelSession()['IMBOT']['GEO_DATA']))
 		{
-			return $_SESSION["SESS_AUTH"]['GEO_DATA'];
+			return \Bitrix\Main\Application::getInstance()->getKernelSession()['IMBOT']['GEO_DATA'];
 		}
 
 		$contryCode = \Bitrix\Main\Service\GeoIp\Manager::getCountryCode();
@@ -1248,7 +1248,9 @@ class Network extends Base
 			$cityName = \Bitrix\Main\Service\GeoIp\Manager::getCityName();
 		}
 
-		$result = $_SESSION["SESS_AUTH"]['GEO_DATA'] = $contryCode.($countryName? ' / '.$countryName: '').($cityName? ' / '.$cityName: '');
+		$result = $contryCode.($countryName? ' / '.$countryName: '').($cityName? ' / '.$cityName: '');
+		
+		\Bitrix\Main\Application::getInstance()->getKernelSession()['IMBOT']['GEO_DATA'] = $result;
 
 		return $result;
 	}

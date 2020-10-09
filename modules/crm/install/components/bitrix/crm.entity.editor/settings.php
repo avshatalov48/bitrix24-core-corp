@@ -6,6 +6,10 @@
  * @copyright 2001-2016 Bitrix
  */
 
+use Bitrix\Crm\Entity\EntityEditorConfigScope;
+use Bitrix\Crm\EntityForm\ScopeAccess;
+use Bitrix\Ui\EntityForm\Scope;
+
 /**
  * Bitrix vars
  *
@@ -64,10 +68,10 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 	elseif($action === 'save')
 	{
 		$scope = isset($_POST['scope'])
-			? mb_strtoupper($_POST['scope']) : \Bitrix\Crm\Entity\EntityEditorConfigScope::UNDEFINED;
-		if(!\Bitrix\Crm\Entity\EntityEditorConfigScope::isDefined($scope))
+			? mb_strtoupper($_POST['scope']) : EntityEditorConfigScope::UNDEFINED;
+		if(!EntityEditorConfigScope::isDefined($scope))
 		{
-			$scope = \Bitrix\Crm\Entity\EntityEditorConfigScope::PERSONAL;
+			$scope = EntityEditorConfigScope::PERSONAL;
 		}
 
 		$config = isset($_POST['config']) && is_array($_POST['config']) ? $_POST['config'] : array();
@@ -84,23 +88,37 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 			CUserOptions::SetOption('crm.entity.editor', $guid, $config, true);
 		}
 
-		if($scope === \Bitrix\Crm\Entity\EntityEditorConfigScope::COMMON)
+		if($scope === EntityEditorConfigScope::COMMON)
 		{
 			CUserOptions::SetOption('crm.entity.editor', "{$guid}_common", $config, true);
 		}
-		else
+		else if($scope === EntityEditorConfigScope::PERSONAL)
 		{
 			CUserOptions::SetOption('crm.entity.editor', $guid, $config);
+		}
+		else
+		{
+			$scopeId = (int)$_POST['userScopeId'];
+			if (
+				($scopeAccess = ScopeAccess::getInstance('crm'))
+				&& $scopeAccess->canUpdate($scopeId)
+			)
+			{
+				Scope::getInstance()->updateScopeConfig(
+					$scopeId,
+					$config
+				);
+			}
 		}
 
 		$options = isset($_POST['options']) && is_array($_POST['options']) ? $_POST['options'] : array();
 		if(!empty($options))
 		{
-			if($scope === \Bitrix\Crm\Entity\EntityEditorConfigScope::COMMON)
+			if($scope === EntityEditorConfigScope::COMMON)
 			{
 				CUserOptions::SetOption('crm.entity.editor', "{$guid}_common_opts", $options, true);
 			}
-			else
+			else if($scope === EntityEditorConfigScope::PERSONAL)
 			{
 				$optionID = "{$guid}_opts";
 				if($forAllUsers)
@@ -113,22 +131,28 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 				}
 				CUserOptions::SetOption('crm.entity.editor', $optionID, $options);
 			}
+			else
+			{
+				/**
+				 * @todo process the situation when $scope === EntityEditorConfigScope::CUSTOM
+				 */
+			}
 		}
 	}
 	elseif($action === 'reset')
 	{
 		$scope = isset($_POST['scope'])
-			? mb_strtoupper($_POST['scope']) : \Bitrix\Crm\Entity\EntityEditorConfigScope::UNDEFINED;
-		if(!\Bitrix\Crm\Entity\EntityEditorConfigScope::isDefined($scope))
+			? mb_strtoupper($_POST['scope']) : EntityEditorConfigScope::UNDEFINED;
+		if(!EntityEditorConfigScope::isDefined($scope))
 		{
-			$scope = \Bitrix\Crm\Entity\EntityEditorConfigScope::PERSONAL;
+			$scope = EntityEditorConfigScope::PERSONAL;
 		}
 
 		$forAllUsers = \CCrmAuthorizationHelper::CanEditOtherSettings()
 			&& isset($_POST['forAllUsers'])
 			&& $_POST['forAllUsers'] === 'Y';
 
-		if($scope === \Bitrix\Crm\Entity\EntityEditorConfigScope::COMMON)
+		if($scope === EntityEditorConfigScope::COMMON)
 		{
 			CUserOptions::DeleteOption('crm.entity.editor', "{$guid}_common", true, 0);
 			CUserOptions::DeleteOption('crm.entity.editor', "{$guid}_common_opts", true, 0);
@@ -150,7 +174,7 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 				CUserOptions::SetOption(
 					'crm.entity.editor',
 					"{$guid}_scope",
-					\Bitrix\Crm\Entity\EntityEditorConfigScope::PERSONAL
+					EntityEditorConfigScope::PERSONAL
 				);
 			}
 		}
@@ -167,9 +191,9 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 	elseif($action === 'setScope')
 	{
 		$scope = isset($_POST['scope'])
-			? mb_strtoupper($_POST['scope']) : \Bitrix\Crm\Entity\EntityEditorConfigScope::UNDEFINED;
+			? mb_strtoupper($_POST['scope']) : EntityEditorConfigScope::UNDEFINED;
 
-		if(\Bitrix\Crm\Entity\EntityEditorConfigScope::isDefined($scope))
+		if(EntityEditorConfigScope::isDefined($scope))
 		{
 			CUserOptions::SetOption('crm.entity.editor', "{$guid}_scope", $scope);
 		}

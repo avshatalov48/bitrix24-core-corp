@@ -237,7 +237,7 @@ class LiveChat
 		$chatId = $messageFields['TO_CHAT_ID'];
 
 		if (
-			strlen(trim($messageFields['MESSAGE'])) == 0 &&
+			trim($messageFields['MESSAGE']) == '' &&
 			empty($messageFields["ATTACH"]) &&
 			empty($messageFields["FILES"])
 		)
@@ -406,7 +406,7 @@ class LiveChat
 		if (!$avatarUrl)
 			return '';
 
-		if (!in_array(strtolower(\GetFileExtension($avatarUrl)), Array('png', 'jpg', 'jpeg')))
+		if (!in_array(mb_strtolower(\GetFileExtension($avatarUrl)), Array('png', 'jpg', 'jpeg')))
 			return '';
 
 		$recordFile = \CFile::MakeFileArray($avatarUrl);

@@ -18,8 +18,14 @@ final class Security
 				//todo: may be send push without the code for HOTP
 				if($params["code"] !== null)
 				{
+					$server = Main\Context::getCurrent()->getServer();
+
 					$pushMessage = Loc::getMessage("intranet_otp_push_code", ["#CODE#" => $params["code"]]);
-					$message = Loc::getMessage("intranet_push_otp_notification", ["#CODE#" => $params["code"]]);
+					$message = Loc::getMessage("intranet_push_otp_notification1", [
+						"#CODE#" => $params["code"],
+						"#IP#" => $server->getRemoteAddr(),
+						"#USER_AGENT#" => $server->get("HTTP_USER_AGENT"),
+					]);
 
 					\CIMNotify::Add([
 						"TO_USER_ID" => $params["userId"],

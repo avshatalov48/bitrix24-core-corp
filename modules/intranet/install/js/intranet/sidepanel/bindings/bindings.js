@@ -123,6 +123,7 @@
 			{
 				condition: [
 					new RegExp("/marketplace\/configuration/"),
+					new RegExp("/marketplace\/booklet/"),
 				],
 				options: {
 					width: 940,
@@ -177,6 +178,14 @@
 				],
 				options: {
 					customLeftBoundary: 0,
+				}
+			},
+			{
+				condition: [
+					new RegExp("/devops\/"),
+				],
+				options: {
+					cacheable: false
 				}
 			},
 			{
@@ -476,18 +485,49 @@
 					"/shop/catalog/(\\d+)/product/(\\d+)/variation/(\\d+)/"
 				],
 				options: {
-					cacheable: false
+					cacheable: false,
+					width: 960
 				}
 			},
 			{
 				condition: [
-					"/shop/catalog/(\\d+)/product/(\\d+)/",
+					"/shop/catalog/(\\d+)/product/(\\d+)/"
 				],
 				options: {
 					cacheable: false,
 					label: {
 						text: BX.message('INTRANET_BINDINGS_PRODUCT')
 					}
+				}
+			},
+			{
+				condition: [
+					"/shop/import/instagram/edit/"
+				],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false,
+					width: 700
+				}
+			},
+			{
+				condition: [
+					"/shop/import/instagram/feedback/"
+				],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false,
+					width: 580
+				}
+			},
+			{
+				condition: [
+					"/shop/import/instagram/"
+				],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false,
+					width: 1028
 				}
 			},
 		]

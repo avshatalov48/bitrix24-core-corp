@@ -94,8 +94,10 @@ class OrderBuilderCrm extends OrderBuilder
 					{
 						$this->getErrorsContainer()->addError(
 							new Error(
-								Loc::getMessage("CRM_ORDERBUILDER_PRODUCT_ERROR"),
-								['#BASKET_CODE#' => $k]
+								Loc::getMessage(
+									'CRM_ORDERBUILDER_PRODUCT_ERROR',
+									['#BASKET_CODE#' => $k]
+								)
 							)
 						);
 					}

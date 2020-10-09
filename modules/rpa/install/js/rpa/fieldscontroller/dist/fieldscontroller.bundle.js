@@ -595,7 +595,7 @@ this.BX = this.BX || {};
 	      var items = [];
 	      Array.from(this.hiddenFields.values()).forEach(function (userField) {
 	        items.push({
-	          text: userField.getTitle(),
+	          text: main_core.Text.encode(userField.getTitle()),
 	          onclick: function onclick() {
 	            _this9.handleHiddenUserFieldClick(userField);
 	          }

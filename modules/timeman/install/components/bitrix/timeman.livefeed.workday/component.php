@@ -19,5 +19,10 @@ $arParams['MANAGER']['PHOTO'] = $arParams['MANAGER']['PERSONAL_PHOTO'] > 0
 $arParams['USER']['PHOTO'] = $arParams['USER']['PHOTO']['CACHE']['src'];
 $arParams['MANAGER']['PHOTO'] = $arParams['MANAGER']['PHOTO']['CACHE']['src'];
 
+if ($this->getTemplateName() === 'mobile')
+{
+	$this->setSiteTemplateId('mobile_app');
+}
+
 $this->IncludeComponentTemplate();
 ?>

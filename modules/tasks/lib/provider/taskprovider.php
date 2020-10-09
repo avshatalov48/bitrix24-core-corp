@@ -32,8 +32,7 @@ class TaskProvider
 		$arSqlSelect 			= [],
 		$arOptimizedFilter,
 		$arJoins				= [],
-		$relatedJoins,
-		$relatedJoinsForCount,
+		$relatedJoins			= [],
 		$accessSql 				= '',
 		$arSqlSearch,
 		$userFieldsJoin 		= false,
@@ -41,6 +40,7 @@ class TaskProvider
 		$strSqlOrder 			= '',
 		$bIgnoreErrors 			= false,
 		$nPageTop 				= false,
+		$getPlusOne				= false,
 		$bGetZombie 			= false,
 		$deleteMessageId 		= false,
 		$useAccessAsWhere,
@@ -51,7 +51,8 @@ class TaskProvider
 		$bSkipJoinTblViewed 	= false,
 		$bNeedJoinMembersTable 	= false,
 		$disableOptimization	= false,
-		$canUseOptimization		= false;
+		$canUseOptimization		= false,
+		$countMode				= false;
 
 	/* @var $accessController TaskAccessController */
 	private $accessController;
@@ -92,119 +93,27 @@ class TaskProvider
 
 	public function getCount($arFilter = [], $arParams = [], $arGroup = []): CDBResult
 	{
-		$this->configure([], $arFilter, [], $arParams, $arGroup);
+		$this->countMode = true;
 
-		/* arFields */
-		$this->arFields = [
-			'GROUP_ID'       => 'T.GROUP_ID',
-			'CREATED_BY'     => 'T.CREATED_BY',
-			'RESPONSIBLE_ID' => 'T.RESPONSIBLE_ID',
-			'ACCOMPLICE'     => 'TM.USER_ID',
-			'AUDITOR'        => 'TM.USER_ID'
-		];
+		$this->configure([], $arFilter, ['*'], $arParams, $arGroup);
 
-		/* arSelect*/
-		$this->arSelect[] = "COUNT(".($this->canUseOptimization ? 'distinct ' : '')."T.ID) AS CNT";
+		$this
+			->makeArFields()
+			->makeArSelect()
+			->makeArSqlOrder()
+			->makeArSqlSelect()
+			->makeArJoins()
+			->makeRelatedJoins()
+			->makeFilter()
+			->makeAccessSql()
+			->makeGroupBy();
 
-		/* arGroup */
-		$this->arGroup = array_intersect($this->arGroup, array_keys($this->arFields));
-		if (!empty($this->arGroup))
+		$res = $this->db->Query($this->buildCountQuery(), $this->bIgnoreDbErrors, "File: ".__FILE__."<br>Line: ".__LINE__);
+
+		if ($res === false)
 		{
-			$arGroupByFields = array();
-			foreach ($this->arGroup as $fieldName)
-			{
-				$this->arSelect[] = $this->arFields[$fieldName] . ' AS ' . $fieldName;
-
-				if (($fieldName === 'ACCOMPLICE') || ($fieldName === 'AUDITOR'))
-				{
-					$this->bNeedJoinMembersTable = true;
-				}
-				$arGroupByFields[] = $this->arFields[$fieldName];
-			}
-
-			$this->arGroup = $arGroupByFields;
+			throw new \TasksException('', \TasksException::TE_SQL_ERROR);
 		}
-
-		/* additionalJoins */
-		if ($this->canUseOptimization)
-		{
-			$optimized = \CTasks::tryOptimizeFilter($this->arFilter);
-			$this->arOptimizedFilter = $optimized['FILTER'];
-			$this->arJoins = array_merge($this->arJoins, $optimized['JOINS']);
-		}
-
-		if (isset($this->arParams['bUseRightsCheck']))
-		{
-			$this->arOptimizedFilter['CHECK_PERMISSIONS'] = ((bool) $this->arParams['bUseRightsCheck']) ? 'Y' : 'N';
-		}
-
-		/* arSqlSearch */
-		$fParams = array(
-			'bMembersTableJoined' => $this->bNeedJoinMembersTable,
-			'USER_ID' => $this->userId,
-		);
-		$fParams['ENABLE_LEGACY_ACCESS'] = !$this->useAccessAsWhere;
-
-		$this->arSqlSearch = \CTasks::GetFilter(
-			$this->arOptimizedFilter,
-			'',
-			$fParams
-		);
-		$this->arSqlSearch[] = "T.ZOMBIE = 'N'";
-
-		/* arJoin */
-		if (!$this->bSkipUserFields)
-		{
-			$filter = $this->obUserFieldsSql->GetFilter();
-			if (!empty($filter))
-			{
-				$this->arSqlSearch[] = "(". $filter .")";
-			}
-
-			$this->arJoins[] = $this->obUserFieldsSql->GetJoin("T.ID");
-		}
-
-		if ($this->bNeedJoinMembersTable)
-		{
-			$this->arJoins[] = "INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID ";
-		}
-		if (!$this->bSkipExtraTables)
-		{
-			$this->arJoins[] = "INNER JOIN b_user CU ON CU.ID = T.CREATED_BY";
-			$this->arJoins[] = "INNER JOIN b_user RU ON RU.ID = T.RESPONSIBLE_ID";
-		}
-		if (!$this->bSkipJoinTblViewed)
-		{
-			$viewedBy = \CTasks::getViewedBy($this->arOptimizedFilter, $this->userId);
-			$this->arJoins[] = "LEFT JOIN b_tasks_viewed TV ON TV.TASK_ID = T.ID AND TV.USER_ID = " . $viewedBy;
-		}
-
-		if ($this->useAccessAsWhere && \CTasks::needAccessRestriction($this->arOptimizedFilter, $fParams))
-		{
-			$fParams['APPLY_MEMBER_FILTER'] = $this->makePossibleForwardedMemberFilter($this->arFilter);
-			$fParams['APPLY_FILTER'] = \CTasks::makePossibleForwardedFilter($this->arFilter);
-			$fParams['PUT_SELECT_INTO_WHERE'] = true;
-
-			$accessSql = \CTasks::appendJoinRights('', $fParams);
-			if (!empty($accessSql))
-			{
-				$this->arSqlSearch[] = $accessSql;
-			}
-		}
-
-		$this->makeAccessSql();
-
-		$strSql = "
-			SELECT
-				". implode(",\n", $this->arSelect) ."
-			FROM b_tasks T
-			". (!empty($this->arJoins) ? implode("\n", $this->arJoins) : "") ."
-			WHERE
-			(". implode(") AND (", $this->arSqlSearch) .")
-			". (!empty($this->arGroup) ? "GROUP BY " . implode(", ", $this->arGroup) : "") ."
-		";
-
-		$res = $this->db->Query($strSql, $this->bIgnoreDbErrors, "File: ".__FILE__."<br>Line: ".__LINE__);
 
 		return $res;
 	}
@@ -222,6 +131,18 @@ class TaskProvider
 			{
 				$res = $this->executeTopQuery($nTopCount);
 			}
+			elseif (is_numeric($this->nPageTop))
+			{
+				$res = $this->executeTopQuery($this->nPageTop);
+			}
+			elseif (
+				array_key_exists('nPageSize', $this->arParams['NAV_PARAMS'])
+				&& array_key_exists('iNumPage', $this->arParams['NAV_PARAMS'])
+				&& !array_key_exists('getTotalCount', $this->arParams['NAV_PARAMS'])
+			)
+			{
+				$res = $this->executeLimitOffsetQuery();
+			}
 			else
 			{
 				$res = $this->executeLimitQuery();
@@ -235,11 +156,37 @@ class TaskProvider
 		return $res;
 	}
 
+	private function executeLimitOffsetQuery(): \CDBResult
+	{
+		$sql = $this->buildQuery();
+
+		$pageSize = (int) $this->arParams['NAV_PARAMS']['nPageSize'];
+		$page = (int) $this->arParams['NAV_PARAMS']['iNumPage'];
+		$page = ($page > 0) ? $page : 1;
+
+		$sql .= "
+			LIMIT " . ($pageSize + $this->getPlusOne) . "
+			OFFSET " . ($page - 1) * $pageSize . "
+		";
+
+		$res = $this->db->Query($sql, $this->bIgnoreErrors, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+		if ($res === false)
+		{
+			throw new \TasksException('', \TasksException::TE_SQL_ERROR);
+		}
+
+		$res->NavPageNomer = $page;
+		$res->PAGEN = $page;
+		$res->SetUserFields($this->userFieldManager->GetUserFields("TASKS_TASK"));
+
+		return $res;
+	}
+
 	private function executeLimitQuery(): \CDBResult
 	{
 		$res_cnt = $this->db->Query($this->buildCountQuery());
 		$res_cnt = $res_cnt->Fetch();
-		$totalTasksCount = (int) $res_cnt["C"];	// unknown by default
+		$totalTasksCount = (int) $res_cnt["CNT"];	// unknown by default
 
 		$strSql = $this->buildQuery();
 
@@ -272,6 +219,7 @@ class TaskProvider
 
 	private function executeTopQuery(int $nTopCount): \CDBResult
 	{
+		$nTopCount += $this->getPlusOne;
 		$strSql = $this->db->TopSql($this->buildQuery(), $nTopCount);
 		$res = $this->db->Query($strSql, $this->bIgnoreErrors, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 		if ($res === false)
@@ -287,38 +235,40 @@ class TaskProvider
 		$strSql = "
 			SELECT " . $this->distinct . "
 			" . implode(",\n", $this->arSqlSelect) . "
-			" . $this->obUserFieldsSql->GetSelect();
-
-		$strFrom = "
+			" . $this->obUserFieldsSql->GetSelect() . "
 			FROM b_tasks T
 			" . implode("\n", $this->arJoins) . "
 			" . implode("\n", $this->relatedJoins) . "
 			" . $this->obUserFieldsSql->GetJoin("T.ID") . "
-			" . (count($this->arSqlSearch)? "WHERE " . implode(" AND ", $this->arSqlSearch) : "");
-
-		$strSql .= "
-			" . $strFrom . "
+			" . (count($this->arSqlSearch)? "WHERE " . implode(" AND ", $this->arSqlSearch) : "") . "
 			" . $this->strGroupBy . "
 			" . $this->strSqlOrder;
-
-		if (($this->nPageTop !== false) && is_numeric($this->nPageTop))
-		{
-			$strSql = $this->db->TopSql($strSql, $this->nPageTop);
-		}
 
 		return $strSql;
 	}
 
 	private function buildCountQuery(): string
 	{
-		$strFromForCount = "
+		$select[] = "COUNT(".($this->canUseOptimization ? "DISTINCT " : "")."T.ID) AS CNT";
+		foreach ($this->arGroup as $key)
+		{
+			if (array_key_exists($key, $this->arSqlSelect))
+			{
+				$select[] = $this->arSqlSelect[$key];
+			}
+		}
+
+		$strSql = "
+			SELECT 
+				". implode(",\n", $select) ."
 			FROM b_tasks T
 			" . implode("\n", $this->arJoins) . "
-			" . implode("\n", $this->relatedJoinsForCount) . "
-			" . ($this->userFieldsJoin? $this->obUserFieldsSql->GetJoin("T.ID") : "") . "
-			" . (count($this->arSqlSearch)? "WHERE " . implode(" AND ", $this->arSqlSearch) : "");
+			" . implode("\n", $this->relatedJoins) . "
+			" . $this->obUserFieldsSql->GetJoin("T.ID") . "
+			" . (count($this->arSqlSearch) ? "WHERE " . implode(" AND ", $this->arSqlSearch) : "") . "
+			" . $this->strGroupBy;
 
-		return "SELECT COUNT(DISTINCT T.ID) as C " . $strFromForCount;
+		return $strSql;
 	}
 
 	private function makeOrderBy(): self
@@ -343,7 +293,14 @@ class TaskProvider
 
 	private function makeGroupBy(): self
 	{
-		if (isset($this->relatedJoins['FULL_SEARCH']) || isset($this->relatedJoins['COMMENT_SEARCH']))
+		if (
+			!$this->countMode
+			&&
+			(
+				isset($this->relatedJoins['FULL_SEARCH'])
+				|| isset($this->relatedJoins['COMMENT_SEARCH'])
+			)
+		)
 		{
 			$this->arGroup[] = "T.ID";
 		}
@@ -490,14 +447,6 @@ class TaskProvider
 			'SORTING_GROUP_ID' => (isset($this->arParams['SORTING_GROUP_ID']) && $this->arParams['SORTING_GROUP_ID'] > 0? $this->arParams['SORTING_GROUP_ID'] : false)
 		];
 		$this->relatedJoins = \CTasks::getRelatedJoins($this->arSelect, $this->arOptimizedFilter, $this->arOrder, $params);
-		$this->relatedJoinsForCount = array_merge(
-			[
-				'CREATOR' => "INNER JOIN " . UserTable::getTableName() . " CU ON CU.ID = T.CREATED_BY",
-				'RESPONSIBLE' => "INNER JOIN " . UserTable::getTableName() . " RU ON RU.ID = T.RESPONSIBLE_ID"
-			],
-			\CTasks::getRelatedJoins([], $this->arOptimizedFilter, [], $params)
-		);
-
 		return $this;
 	}
 
@@ -928,7 +877,7 @@ class TaskProvider
 					else
 						T.DURATION_TYPE
 				end
-			"
+			",
 		];
 
 		if ($this->bGetZombie)
@@ -1017,6 +966,15 @@ class TaskProvider
 
 		$this->invokeUserTypeSql();
 		$this->setUserId();
+
+		if (
+			array_key_exists('NAV_PARAMS', $this->arParams)
+			&& is_array($this->arParams['NAV_PARAMS'])
+			&& array_key_exists('getPlusOne', $this->arParams['NAV_PARAMS'])
+		)
+		{
+			$this->getPlusOne = $this->arParams['NAV_PARAMS']['getPlusOne'];
+		}
 	}
 
 	private function setUserId(): void

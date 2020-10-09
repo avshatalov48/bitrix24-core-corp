@@ -154,7 +154,7 @@ class QueueManager
 			$fields['USER_WORK_POSITION'] = $user->getWorkPosition();
 			$avatar = $user->getAvatar();
 
-			if (substr($avatar, 0, 1) == '/')
+			if (mb_substr($avatar, 0, 1) == '/')
 			{
 				$avatar = \Bitrix\ImOpenLines\Common::getServerAddress() . $avatar;
 			}

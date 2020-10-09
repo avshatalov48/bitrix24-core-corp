@@ -409,7 +409,7 @@ class TemplateParams
 		$formattedTime = TimeHelper::getInstance()->convertSecondsToHoursMinutesLocal($violation->violatedSeconds, false);
 		if (strncmp('-', $formattedTime, 1) === 0)
 		{
-			$formattedTime = substr($formattedTime, 1);
+			$formattedTime = mb_substr($formattedTime, 1);
 		}
 		$editedText = Loc::getMessage('TM_WORKTIME_STATS_EDITED_MALE', ['#TIME#' => $formattedTime]);
 		if ($userGender === 'F')

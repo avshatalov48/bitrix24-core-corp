@@ -64,13 +64,13 @@ class TimeHelper
 		{
 			return 0;
 		}
-		if (strlen($value) > 0)
+		if ($value <> '')
 		{
 			list($hour, $min) = explode(':', $value, 2);
 
 			if ($this->isAmPmMode() && preg_match('/(am|pm)/i', $min, $match))
 			{
-				$ampm = strtolower($match[0]);
+				$ampm = mb_strtolower($match[0]);
 				if ($ampm == 'pm' && $hour < 12)
 				{
 					$hour += 12;

@@ -61,14 +61,14 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 		static::tryParseIntegerParameter($this->arParams['GROUP_ID'], 0);
 		static::tryParseIntegerParameter($this->arParams['SPRINT_ID'], 0);
 		static::tryParseArrayParameter($this->arParams['POPUP_MENU_ITEMS']);
-		static::tryParseArrayParameter(
+		static::tryParseStringParameter(
 			$this->arParams['SHOW_CREATE_TASK_BUTTON'],
 			($this->canCreateGroupTasks($groupId)? 'Y' : 'N')
 		);
 
-        $this->arResult['LIMIT_EXCEEDED'] = FilterLimit::isLimitExceeded();
-        $this->arResult['LIMITS'] = FilterLimit::prepareStubInfo();
-        $this->arResult['SPRINTS'] = $this->getSprints();
+		$this->arResult['LIMIT_EXCEEDED'] = FilterLimit::isLimitExceeded();
+		$this->arResult['LIMITS'] = FilterLimit::prepareStubInfo();
+		$this->arResult['SPRINTS'] = $this->getSprints();
 	}
 
 	protected function canCreateGroupTasks($groupId)

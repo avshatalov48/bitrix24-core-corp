@@ -41,11 +41,12 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 		if (!$configManager->canEditLine($post['CONFIG_ID']))
 			return false;
 
-		$boolParams = Array(
+		$boolParams = [
 			'ACTIVE',
 			'CRM',
 			'CRM_FORWARD',
 			'CRM_TRANSFER_CHANGE',
+			'CRM_CREATE_THIRD',
 			'CHECK_AVAILABLE',
 			'RECORDING',
 			'WORKTIME_ENABLE',
@@ -60,13 +61,13 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 			'KPI_FIRST_ANSWER_ALERT',
 			'KPI_FURTHER_ANSWER_ALERT',
 			'KPI_CHECK_OPERATOR_ACTIVITY'
-		);
+		];
 		foreach ($boolParams as $field)
 		{
 			$post['CONFIG'][$field] = isset($post['CONFIG'][$field])? $post['CONFIG'][$field]: 'N';
 		}
 
-		$post['CONFIG']['WORKTIME_DAYOFF'] = isset($post['CONFIG']['WORKTIME_DAYOFF'])? $post['CONFIG']['WORKTIME_DAYOFF']: Array();
+		$post['CONFIG']['WORKTIME_DAYOFF'] = isset($post['CONFIG']['WORKTIME_DAYOFF'])? $post['CONFIG']['WORKTIME_DAYOFF']: [];
 
 		if(empty($post['CONFIG']['LIMITATION_MAX_CHAT']) || !is_numeric($post['CONFIG']['MAX_CHAT']) || $post['CONFIG']['MAX_CHAT'] < 1)
 		{
@@ -81,15 +82,15 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 			$post['CONFIG']['MAX_CHAT'] = round($post['CONFIG']['MAX_CHAT']);
 		}
 
-		$queueList = Array();
-		$queueUsersFields = Array();
+		$queueList = [];
+		$queueUsersFields = [];
 
 		if (!empty($post['CONFIG']['QUEUE']['U']))
 		{
-			$arAccessCodes = Array();
+			$arAccessCodes = [];
 			foreach ($post['CONFIG']['QUEUE']['U'] as $userCode)
 			{
-				$userId = substr($userCode, 1);
+				$userId = mb_substr($userCode, 1);
 				if (\Bitrix\Im\User::getInstance($userId)->isExtranet())
 					continue;
 
@@ -99,7 +100,7 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 				if (!empty($post['CONFIG']['QUEUE_USERS_FIELDS']['U'][$userCode]) && is_array($post['CONFIG']['QUEUE_USERS_FIELDS']['U'][$userCode]))
 				{
 					$queueUsersFields[$userId] = $post['CONFIG']['QUEUE_USERS_FIELDS']['U'][$userCode];
-					if (substr($queueUsersFields[$userId]['USER_AVATAR'], 0, 1) == '/')
+					if (mb_substr($queueUsersFields[$userId]['USER_AVATAR'], 0, 1) == '/')
 					{
 						$queueUsersFields[$userId]['USER_AVATAR'] = \Bitrix\ImOpenLines\Common::getServerAddress() . $queueUsersFields[$userId]['USER_AVATAR'];
 					}
@@ -124,6 +125,7 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 
 		$configManager = new \Bitrix\ImOpenLines\Config();
 		$config = $configManager->get($post['CONFIG_ID']);
+
 		if($config['TEMPORARY'] == 'Y' && !$configManager->canActivateLine())
 		{
 			$post['CONFIG']['ACTIVE'] = 'N';
@@ -266,6 +268,75 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 		}
 
 		return $menuList;
+	}
+
+	/**
+	 * @param $config
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	private function getCrmFields($config): array
+	{
+		$result = [];
+		$selected = Config::CRM_CREATE_NONE;
+		$dealCategories = \Bitrix\ImOpenLines\Crm\Common::getDealCategories();
+		$secondItemsDeal = [];
+		if(
+			$dealCategories->isSuccess() &&
+			count($dealCategories->getData()) > 0)
+		{
+			foreach ($dealCategories->getData() as $category)
+			{
+				$secondItemsDeal[] = [
+					'ID' => $category['ID'],
+					'NAME' => $category['NAME'],
+					'SELECT' => $config['CRM_CREATE_SECOND'] == $category['ID']
+				];
+			}
+		}
+
+		if($config['CRM_CREATE'] === Config::CRM_CREATE_LEAD)
+		{
+			$selected = Config::CRM_CREATE_LEAD;
+		}
+		elseif($config['CRM_CREATE'] === Config::CRM_CREATE_DEAL)
+		{
+			$selected = Config::CRM_CREATE_DEAL;
+		}
+
+		if($this->arResult['IS_CRM_INSTALLED'] === 'Y')
+		{
+			$result = [
+				'CRM_CREATE_ITEMS' => [
+					[
+						'ID' => Config::CRM_CREATE_NONE,
+						'NAME' => Loc::getMessage('OL_COMPONENT_CONFIG_EDIT_CRM_CREATE_IN_CHAT'),
+						'SELECT' => $selected === Config::CRM_CREATE_NONE
+					],
+					[
+						'ID' => Config::CRM_CREATE_LEAD,
+						'NAME' => Loc::getMessage('OL_COMPONENT_CONFIG_EDIT_CRM_CREATE_LEAD'),
+						'SELECT' => $selected === Config::CRM_CREATE_LEAD
+					],
+					[
+						'ID' => Config::CRM_CREATE_DEAL,
+						'NAME' => Loc::getMessage('OL_COMPONENT_CONFIG_EDIT_CRM_CREATE_DEAL'),
+						'SELECT' => $selected === Config::CRM_CREATE_DEAL,
+						'SECOND_ITEMS' => $secondItemsDeal,
+						'SECOND_ITEMS_NAME' => Loc::getMessage('OL_COMPONENT_CONFIG_EDIT_CRM_CREATE_DEAL_SECOND'),
+						'THIRD_SELECT' => $config['CRM_CREATE_THIRD'] !== 'N',
+						'THIRD_NAME' => Loc::getMessage('OL_COMPONENT_CONFIG_EDIT_CRM_CREATE_DEAL_THIRD'),
+					],
+				],
+				'VISIBLE' => [
+					'SOURCE_DEAL_TITLE' => $selected === Config::CRM_CREATE_DEAL,
+					'CRM_TRANSFER_CHANGE' => $selected !== Config::CRM_CREATE_NONE ? $selected : false,
+				]
+			];
+		}
+
+		return $result;
 	}
 
 	private function showConfig()
@@ -553,6 +624,8 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 			}
 		}
 		//END Visible block
+
+		$this->arResult['CRM'] = $this->getCrmFields($config);
 
 		$this->includeComponentTemplate();
 

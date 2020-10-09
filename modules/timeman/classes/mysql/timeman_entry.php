@@ -86,7 +86,7 @@ class CTimeManEntry extends CAllTimeManEntry
 		$arSqls = CTimeManEntry::PrepareSql($arFields, $arOrder, $arFilter, $arGroupBy, $arSelectFields, $obUserFieldsSql);
 
 		$r = $obUserFieldsSql->GetFilter();
-		if(strlen($r)>0)
+		if($r <> '')
 			$strSqlUFFilter = " (".$r.") ";
 
 		if ($obUserFieldsSql->GetDistinct())
@@ -108,16 +108,16 @@ FROM
 	".$obUserFieldsSql->GetJoin("E.USER_ID")." "."
 ";
 
-		if (strlen($arSqls["WHERE"]) > 0)
+		if ($arSqls["WHERE"] <> '')
 			$strSql .= "WHERE ".$arSqls["WHERE"]." ";
 
-		if (strlen($strSqlUFFilter) > 0)
+		if ($strSqlUFFilter <> '')
 		{
-			$strSql .= (strlen($arSqls["WHERE"]) > 0) ? ' AND ' : ' WHERE ';
+			$strSql .= ($arSqls["WHERE"] <> '') ? ' AND ' : ' WHERE ';
 			$strSql .= $strSqlUFFilter;
 		}
 
-		if (strlen($arSqls["GROUPBY"]) > 0)
+		if ($arSqls["GROUPBY"] <> '')
 			$strSql .= "GROUP BY ".$arSqls["GROUPBY"]." ";
 
 		if (is_array($arGroupBy) && count($arGroupBy)==0)
@@ -129,10 +129,10 @@ FROM
 				return false;
 		}
 
-		if (strlen($arSqls["ORDERBY"]) > 0)
+		if ($arSqls["ORDERBY"] <> '')
 			$strSql .= "ORDER BY ".$arSqls["ORDERBY"]." ";
 
-		if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"])<=0)
+		if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"])<=0)
 		{
 			$strSql_tmp = "
 SELECT COUNT('x') as CNT
@@ -141,21 +141,21 @@ FROM
 	".$arSqls["FROM"]."
 	".$obUserFieldsSql->GetJoin("E.USER_ID")."
 ";
-			if (strlen($arSqls["WHERE"]) > 0)
+			if ($arSqls["WHERE"] <> '')
 				$strSql_tmp .= "WHERE ".$arSqls["WHERE"]." ";
 
-			if (strlen($strSqlUFFilter) > 0)
+			if ($strSqlUFFilter <> '')
 			{
-				$strSql_tmp .= (strlen($arSqls["WHERE"]) > 0) ? ' AND ' : ' WHERE ';
+				$strSql_tmp .= ($arSqls["WHERE"] <> '') ? ' AND ' : ' WHERE ';
 				$strSql_tmp .= $strSqlUFFilter;
 			}
 
-			if (strlen($arSqls["GROUPBY"]) > 0)
+			if ($arSqls["GROUPBY"] <> '')
 				$strSql_tmp .= "GROUP BY ".$arSqls["GROUPBY"]." ";
 
 			$dbRes = $DB->Query($strSql_tmp, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 			$cnt = 0;
-			if (strlen($arSqls["GROUPBY"]) <= 0)
+			if ($arSqls["GROUPBY"] == '')
 			{
 				if ($arRes = $dbRes->Fetch())
 					$cnt = $arRes["CNT"];
@@ -172,7 +172,7 @@ FROM
 		}
 		else
 		{
-			if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) > 0)
+			if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) > 0)
 				$strSql .= "LIMIT ".$arNavStartParams["nTopCount"];
 //echo '<pre>',$strSql,'</pre>'; die();
 			$dbRes = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);

@@ -32,4 +32,5 @@ $MESS["TOP_MENU_SITES"] = "Sites";
 $MESS["TOP_MENU_TASKS"] = "Tasks and Projects";
 $MESS["TOP_MENU_TELEPHONY"] = "Telephony";
 $MESS["TOP_MENU_TIMEMAN"] = "Time and Reports";
+$MESS["TOP_MENU_DEVOPS"] = "Developer resources";
 ?>

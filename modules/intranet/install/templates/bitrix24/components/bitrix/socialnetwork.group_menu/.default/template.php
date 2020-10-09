@@ -12,8 +12,7 @@ use Bitrix\Main\UI;
 use Bitrix\Main\Loader;
 
 CUtil::InitJSCore(array("popup", "ajax"));
-UI\Extension::load("socialnetwork.common");
-UI\Extension::load("ui.buttons");
+\Bitrix\Main\UI\Extension::load(["socialnetwork.common", "ui.icons.b24", "ui.buttons"]);
 
 if (Loader::includeModule('bitrix24'))
 {
@@ -94,13 +93,11 @@ if (!empty($arResult["bShowRequestSentMessage"]))
 ?><div class="profile-menu profile-menu-group">
 	<div class="profile-menu-inner">
 		<div class="profile-menu-top">
-			<a
-					href="<?=$arResult["Urls"]["View"]?>"
-					class="profile-menu-avatar group-default-avatar"
-			<?if ($arResult["Group"]["IMAGE_FILE"]["src"] <> ''):?>
-				style="background:url('<?=$arResult["Group"]["IMAGE_FILE"]["src"]?>') no-repeat center center; background-size: cover"
-			<?endif;?>
-			></a>
+			<a href="<?=$arResult["Urls"]["View"]?>" class="ui-icon ui-icon-common-user-group profile-menu-avatar">
+				<i <?if ($arResult["Group"]["IMAGE_FILE"]["src"] <> ''):?>
+					style="background:url('<?=$arResult["Group"]["IMAGE_FILE"]["src"]?>') no-repeat center center; background-size: cover"
+				<?endif;?>></i>
+			</a>
 			<div class="profile-menu-info<?=($arResult["Group"]["IS_EXTRANET"] == "Y" ? " profile-menu-group-info-extranet" : "")?>">
 				<a href="<?=$arResult["Urls"]["View"]?>" class="profile-menu-name"><?=$arResult["Group"]["NAME"]?></a>
 				<div class="profile-menu-type">

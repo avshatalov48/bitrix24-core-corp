@@ -19,6 +19,7 @@ class TimelineEntryCategory
 	const ACTIVITY_VISIT = 'activity-visit';
 	const ACTIVITY_MEETING = 'activity-meeting';
 	const ACTIVITY_EMAIL = 'activity-email';
+	const ACTIVITY_ZOOM = 'activity-zoom';
 	const WEB_FORM = 'web-form';
 	const CHAT = 'chat';
 	const CREATION = 'creation';
@@ -39,6 +40,7 @@ class TimelineEntryCategory
 			self::COMMENT => Loc::getMessage('CRM_TIMELINE_CATEGORY_COMMENT'),
 			self::DOCUMENT => Loc::getMessage('CRM_TIMELINE_CATEGORY_DOCUMENT'),
 			self::SMS => Loc::getMessage('CRM_TIMELINE_CATEGORY_SMS'),
+			self::ACTIVITY_ZOOM => Loc::getMessage('CRM_TIMELINE_CATEGORY_ZOOM'),
 			self::BIZ_PROCESS => Loc::getMessage('CRM_TIMELINE_CATEGORY_BIZ_PROCESS'),
 			self::ACTIVITY_REQUEST => Loc::getMessage('CRM_TIMELINE_CATEGORY_ACTIVITY_REQUEST'),
 			self::ACTIVITY_TASK => Loc::getMessage('CRM_TIMELINE_CATEGORY_ACTIVITY_TASK'),
@@ -116,6 +118,13 @@ class TimelineEntryCategory
 					$categoryFilter->where(
 						Main\Entity\Query::filter()
 							->where('ASSOCIATED_ENTITY_CLASS_NAME', Crm\Activity\Provider\Visit::getId())
+					);
+				}
+				elseif($entryCategoryID === self::ACTIVITY_ZOOM)
+				{
+					$categoryFilter->where(
+						Main\Entity\Query::filter()
+							->where('ASSOCIATED_ENTITY_CLASS_NAME', Crm\Activity\Provider\Zoom::getId())
 					);
 				}
 				elseif($entryCategoryID === self::ACTIVITY_MEETING)

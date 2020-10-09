@@ -75,18 +75,6 @@ class TasksTaskGanttComponent extends TasksTaskListComponent
 				$this->arResult['TASKS_LINKS'][$item['TASK_ID']][] = $item;
 			}
 		}
-
-		//region GANTT
-		$componentObject = null;
-		$this->arResult['NAV_STRING'] = $this->arResult['NAV_OBJECT']->getPageNavStringEx(
-			$componentObject,
-			"",
-			"arrows",
-			false,
-			null,
-			$this->grid->getOptions()->GetNavParams()
-		);
-		//endregion
 	}
 
 	protected function getSelect()

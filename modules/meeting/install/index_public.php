@@ -11,9 +11,9 @@ $meeting_folder = '/services/meeting/';
 
 $io = CBXVirtualIo::GetInstance();
 
-if (substr($meeting_folder, -4) != '.php')
+if (mb_substr($meeting_folder, -4) != '.php')
 {
-	$meeting_folder .= (substr($meeting_folder, -1) == '/' ? '' : '/').'index.php';
+	$meeting_folder .= (mb_substr($meeting_folder, -1) == '/' ? '' : '/').'index.php';
 }
 
 $fileName = $io->ExtractNameFromPath($meeting_folder);

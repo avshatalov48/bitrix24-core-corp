@@ -82,7 +82,7 @@ class ImOpenlinesMailHistoryComponent extends CBitrixComponent
 		}
 		else
 		{
-			$this->arResult['TEMPLATE_WIDGET_URL'] .= (substr($this->arResult['TEMPLATE_WIDGET_URL'], -1) != '?'? '?': '').'imolAction=answer';
+			$this->arResult['TEMPLATE_WIDGET_URL'] .= (mb_substr($this->arResult['TEMPLATE_WIDGET_URL'], -1) != '?'? '?': '').'imolAction=answer';
 		}
 		
 		$this->arResult['LANGUAGE_ID'] = $session['CONFIG_LANGUAGE_ID']? $session['CONFIG_LANGUAGE_ID']: null;

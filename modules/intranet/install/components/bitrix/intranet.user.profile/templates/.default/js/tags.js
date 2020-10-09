@@ -363,15 +363,19 @@
 
 				users.appendChild(BX.create('DIV', {
 					props: {
-						className: 'intranet-user-profile-tags-user'
+						className: 'ui-icon ui-icon-common-user intranet-user-profile-tags-user'
 					},
-					style: (
-						BX.type.isNotEmptyString(user.PERSONAL_PHOTO_SRC)
-							? {
-								backgroundImage: "url(\'" + user.PERSONAL_PHOTO_SRC + "\')"
-							}
-							: null
-					)
+					children: [
+						BX.create('i', {
+							style: (
+								BX.type.isNotEmptyString(user.PERSONAL_PHOTO_SRC)
+									? {
+										backgroundImage: "url(\'" + user.PERSONAL_PHOTO_SRC + "\')"
+									}
+									: null
+							)
+						})
+					]
 				}));
 			}
 

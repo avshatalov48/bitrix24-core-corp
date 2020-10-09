@@ -147,7 +147,7 @@ WHERE 1=1';
 			}
 		}
 
-		if (strlen($strOrder) > 0)
+		if ($strOrder <> '')
 		{
 			$strSql .= ' ORDER BY '.$strOrder;
 		}

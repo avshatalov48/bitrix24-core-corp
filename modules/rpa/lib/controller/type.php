@@ -98,7 +98,7 @@ class Type extends Base
 		$list = TypeTable::getList([
 			'select' => $select,
 			'filter' => $filter,
-			'order' => $order,
+			'order' => $order ?? [],
 			'offset' => $pageNavigation ? $pageNavigation->getOffset() : null,
 			'limit' => $pageNavigation ? $pageNavigation->getLimit(): null,
 		]);

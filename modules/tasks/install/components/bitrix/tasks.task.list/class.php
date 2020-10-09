@@ -4,13 +4,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 /**
  * Bitrix Framework
  * @package bitrix
- * @subpackage sale
- * @copyright 2001-2015 Bitrix
+ * @subpackage tasks
+ * @copyright 2001-2025 Bitrix
  */
-
-/** !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-/** This is alfa version of component! Don't use it! */
-/** !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\Entity\Query;
@@ -37,6 +33,8 @@ CBitrixComponent::includeComponentClass("bitrix:tasks.base");
 
 class TasksTaskListComponent extends TasksBaseComponent
 {
+	private const STORAGE_KEY = 'TASK_LIST_PAGING';
+
 	/** @var Filter */
 	protected $filter;
 	/** @var Grid */
@@ -62,6 +60,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 			'setViewState',
 			'getNearTasks',
 			'prepareGridRowsForTasks',
+			'getTotalCount'
 		];
 	}
 
@@ -269,6 +268,11 @@ class TasksTaskListComponent extends TasksBaseComponent
 		}
 
 		return $errors->checkNoFatals();
+	}
+
+	public static function getTotalCount($filter, $parameters)
+	{
+		return Manager\Task::getCount($filter, $parameters);
 	}
 
 	protected function checkParameters()
@@ -996,34 +1000,35 @@ class TasksTaskListComponent extends TasksBaseComponent
 	{
 		$this->grid->getOptions()->resetExpandedRows();
 
-		$parameters = [
+		$this->arParams['PROVIDER_PARAMETERS'] = [
 			'MAKE_ACCESS_FILTER' => true,
-			'ERRORS' => $this->errors,
 		];
+
 		$getListParameters = [
 			'select' => $this->getSelect(),
 			'legacyFilter' => $this->listParameters['filter'],
 			'order' => $this->getOrder(),
 		];
 
+		$page = $this->getPageNum();
+		$this->savePageNumToStorage($page);
+
 		if ($this->exportAs === false)
 		{
 			$getListParameters['NAV_PARAMS'] = [
 				'nPageSize' => $this->getPageSize(),
+				'getPlusOne' => true,
 				'bDescPageNumbering' => false,
 				'NavShowAll' => false,
 				'bShowAll' => false,
 				'showAlways' => false,
 				'SHOW_ALWAYS' => false,
+				'iNumPage' => $page
 			];
 		}
 		if (isset($this->listParameters['filter']['PARENT_ID']))
 		{
 			$getListParameters['NAV_PARAMS']['NavShowAll'] = true;
-		}
-		if (array_key_exists('clear_nav', $_REQUEST) && $_REQUEST['clear_nav'] == 'Y')
-		{
-			$getListParameters['NAV_PARAMS']['iNumPage'] = 1;
 		}
 
 		// @todo: needed to refactor
@@ -1033,7 +1038,19 @@ class TasksTaskListComponent extends TasksBaseComponent
 			$getListParameters['NAV_PARAMS']['nPageSize'] = 500;
 		}
 
+		$parameters = $this->arParams['PROVIDER_PARAMETERS'];
+		$parameters['ERRORS'] = $this->errors;
 		$mgrResult = Manager\Task::getList($this->userId, $getListParameters, $parameters);
+
+		$this->arResult['CURRENT_PAGE'] = (int) $mgrResult['AUX']['OBJ_RES']->PAGEN;
+
+		$this->arResult['ENABLE_NEXT_PAGE'] = false;
+		if (count($mgrResult['DATA']) > $this->getPageSize())
+		{
+			$this->arResult['ENABLE_NEXT_PAGE'] = true;
+			$keys = array_keys($mgrResult['DATA']);
+			unset($mgrResult['DATA'][array_pop($keys)]);
+		}
 
 		if (array_key_exists('TAG', array_flip($getListParameters['select'])))
 		{
@@ -1052,20 +1069,76 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 		$this->arResult['LIST'] = $this->setFilesCount($this->arResult['LIST']);
 		$this->arResult['LIST'] = $this->setCheckListCount($this->arResult['LIST']);
-
-		//region NAV
-		/** @var \CDBResult $navigation */
-		$navigation = $mgrResult['AUX']['OBJ_RES'];
-		$navigation->NavStart($this->getPageSize(), false);
-
-		$this->arResult['NAV_OBJECT'] = $navigation;
-		$this->arResult['TOTAL_RECORD_COUNT'] = $navigation->NavRecordCount;
 		$this->arResult['PAGE_SIZES'] = $this->pageSizes;
-		//endregion
 
 		if ($this->errors->checkHasFatals())
 		{
 			return;
+		}
+	}
+
+	/**
+	 * @return int
+	 */
+	private function getPageNum(): int
+	{
+		if (array_key_exists('clear_nav', $_REQUEST) && $_REQUEST['clear_nav'] == 'Y')
+		{
+			return 1;
+		}
+
+		if(isset($this->arParams['PAGE_NUMBER']) || isset($_REQUEST['page']))
+		{
+			$pageNum = (int)(isset($this->arParams['PAGE_NUMBER']) ? $this->arParams['PAGE_NUMBER'] : $_REQUEST['page']);
+			if($pageNum < 0)
+			{
+				//Backward mode
+				$offset = -($pageNum + 1);
+				$total = Manager\Task::getCount($this->listParameters['filter'], $this->arParams['PROVIDER_PARAMETERS']);
+				$pageNum = (int)(ceil($total / $this->getPageSize())) - $offset;
+				if($pageNum <= 0)
+				{
+					$pageNum = 1;
+				}
+			}
+			return $pageNum;
+		}
+
+		return $this->getPageNumFromStorage() ?? 1;
+	}
+
+	private function getPageNumFromStorage(): int
+	{
+		$app = \Bitrix\Main\Application::getInstance();
+		if (method_exists($app, 'getLocalSession'))
+		{
+			$localStorage = $app->getLocalSession(self::STORAGE_KEY);
+			if (!isset($localStorage[$this->arParams['GRID_ID']]))
+			{
+				return 0;
+			}
+			return $localStorage[$this->arParams['GRID_ID']];
+		}
+
+		if (isset($_SESSION[self::STORAGE_KEY][$this->arParams['GRID_ID']]))
+		{
+			return $_SESSION[self::STORAGE_KEY][$this->arParams['GRID_ID']];
+		}
+
+		return 0;
+	}
+
+	private function savePageNumToStorage(int $page)
+	{
+		$app = \Bitrix\Main\Application::getInstance();
+		if (method_exists($app, 'getLocalSession'))
+		{
+			$localStorage = $app->getLocalSession(self::STORAGE_KEY);
+			$localStorage->set($this->arParams['GRID_ID'], $page);
+		}
+		else
+		{
+			$_SESSION[self::STORAGE_KEY][$this->arParams['GRID_ID']] = $page;
 		}
 	}
 
@@ -1140,66 +1213,73 @@ class TasksTaskListComponent extends TasksBaseComponent
 		return $counters;
 	}
 
-	private function getSubTasks($taskId, $level = 0)
+	/**
+	 * @param $taskId
+	 * @param int $level
+	 * @return array
+	 */
+	private function getSubTasks($taskId, int $level = 0): array
 	{
-		$list = array();
+		$subTasks = [];
 
-		if(\CTasks::getTaskSubTree($taskId))
+		if (CTasks::getTaskSubTree($taskId))
 		{
 			$this->listParameters['filter']['PARENT_ID'] = $taskId;
-			$getListParameters = array(
-				'order'        => $this->getOrder(),
-				'select'       => $this->getSelect(),
+			$getListParameters = [
+				'select' => $this->getSelect(),
 				'legacyFilter' => $this->listParameters['filter'],
-			);
+				'order' => $this->getOrder(),
+			];
+			$level++;
 
 			$mgrResult = Manager\Task::getList($this->userId, $getListParameters);
-			$level ++;
-
-			if($mgrResult['DATA'])
+			if ($mgrResult['DATA'])
 			{
+				if (array_key_exists('TAG', array_flip($getListParameters['select'])))
+				{
+					$mgrResult['DATA'] = $this->mergeWithTags($mgrResult['DATA']);
+				}
+
 				foreach ($mgrResult['DATA'] as $item)
 				{
 					$item['__LEVEL'] = $level;
-					$list[] = $item;
+					$subTasks[] = $item;
 					if ($sub = $this->getSubTasks($item['ID'], $level))
 					{
-						$list = array_merge($list, $sub);
+						$subTasks = array_merge($subTasks, $sub);
 					}
 				}
 			}
 		}
 
-		return $list;
+		return $subTasks;
 	}
 
 	protected function display()
 	{
 		global $APPLICATION;
 
-		if($this->errors->checkNoFatals())
+		if ($this->errors->checkNoFatals())
 		{
 			if ($this->exportAs)
 			{
 				$APPLICATION->RestartBuffer();
 
-				//region SUB TASKS IN EXPORT EXCELL
-				$list = array();
-				foreach($this->arResult['LIST'] as $item)
+				if ($this->arResult['GROUP_BY_SUBTASK'])
 				{
-					$list[] = $item;
-
-					if($sub = $this->getSubTasks($item['ID']))
+					$list = [];
+					foreach ($this->arResult['LIST'] as $item)
 					{
-						$list = array_merge($list, $sub);
+						$list[] = $item;
+						if ($subTasks = $this->getSubTasks($item['ID']))
+						{
+							$list = array_merge($list, $subTasks);
+						}
 					}
+					$this->arResult['LIST'] = $list;
 				}
 
-				$this->arResult['LIST'] = $list;
-				//endregion
-
 				$this->IncludeComponentTemplate('export_'.mb_strtolower($this->exportAs));
-
 				parent::doFinalActions();
 			}
 			else
@@ -1213,7 +1293,6 @@ class TasksTaskListComponent extends TasksBaseComponent
 			{
 				ShowError($error);
 			}
-			return;
 		}
 	}
 }

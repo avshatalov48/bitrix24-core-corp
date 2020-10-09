@@ -5,6 +5,8 @@ if (defined('BX_IM_FULLSCREEN'))
 {
 	return;
 }
+use Bitrix\Main\Localization\Loc;
+
 \Bitrix\Main\UI\Extension::load('ui.tutor');
 $this->SetViewTarget("im-fullscreen");
 ?>
@@ -95,6 +97,20 @@ $this->SetViewTarget("im", 100);
 		<div class="help-block-counter-wrap" id="bx-help-notify">
 		</div>
 	</div>
+	<?
+	if ($arResult["SHOW_HELP_SPOTLIGHT"])
+	{
+		$APPLICATION->includeComponent("bitrix:spotlight", "", array(
+			"ID" => "help-spotlight",
+			"JS_OPTIONS" => array(
+				"targetElement" => "#bx-help-block",
+				"content"       => Loc::getMessage("IM_HELP_SPOTLIGHT"),
+				"targetVertex"  => "middle-center",
+				"lightMode"     => true
+			)
+		));
+	}
+	?>
 	<div id="bx-im-bar-notify" class="bx-im-informer <?=($arResult['OL_OPERATOR']?"":"bx-im-border-b")?>">
 		<div class="bx-im-informer-icon" title="<?=GetMessage('IM_MESSENGER_OPEN_NOTIFY');?>"></div>
 		<div class="bx-im-informer-num"></div>

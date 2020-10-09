@@ -5,11 +5,9 @@ $MESS["IMOL_CONFIG_EDIT_CRM"] = "Проверять клиента по базе
 $MESS["IMOL_CONFIG_EDIT_CRM_DISABLED"] = "Для акативации данной опции, вам необходимо включить модуль CRM в настройках Битрикс24.";
 $MESS["IMOL_CONFIG_EDIT_CRM_FORWARD_NEW"] = "Направлять обращение на ответственного сотрудника в случае идентификации клиента";
 $MESS["IMOL_CONFIG_EDIT_CRM_CREATE"] = "Если клиент не найден в CRM";
-$MESS["IMOL_CONFIG_EDIT_CRM_CREATE_NONE"] = "Создать вручную с помощью CRM-формы";
-$MESS["IMOL_CONFIG_EDIT_CRM_CREATE_IN_CHAT"] = "Создать вручную в окне чата";
-$MESS["IMOL_CONFIG_EDIT_CRM_CREATE_LEAD"] = "Автоматически создать новый лид";
 $MESS["IMOL_CONFIG_EDIT_CRM_CREATE_LEAD_DESC"] = "Новый лид будет создан только при получении информации, необходимой для обратного обращения к клиенту";
-$MESS["IMOL_CONFIG_EDIT_CRM_SOURCE"] = "Источник для нового лида";
+$MESS['IMOL_CONFIG_EDIT_CRM_SOURCE'] = 'Источник для нового лида';
+$MESS['IMOL_CONFIG_EDIT_CRM_SOURCE_DEAL'] = 'Источник для новой сделки';
 $MESS["IMOL_CONFIG_EDIT_CRM_SOURCE_TIP_NEW"] = "Если выбран пункт <br>\"<b>Источник открытой линии</b>\", то при создании нового лида будет автоматически указан источник, откуда написал клиент: Facebook, Skype, Telegram и т.д.";
 $MESS["IMOL_CONFIG_EDIT_CRM_SOURCE_INFO"] = "Если выбран пункт \"<b>Источник открытой линии</b>\", то при создании нового лида будет автоматически указан источник, откуда написал клиент: Facebook, Skype, Telegram и т.д.";
 $MESS["IMOL_CONFIG_EDIT_QUEUE"] = "Очередь";
@@ -62,7 +60,6 @@ $MESS["IMOL_CONFIG_EDIT_WORKTIME_TIME"] = "Режим работы";
 $MESS["IMOL_CONFIG_EDIT_WORKTIME_DAYOFF"] = "Выходные дни";
 $MESS["IMOL_CONFIG_EDIT_WORKTIME_HOLIDAYS"] = "Праздничные дни";
 $MESS["IMOL_CONFIG_EDIT_WORKTIME_HOLIDAYS_EXAMPLE"] = "Пример: 1.01,2.01,7.01,23.02,8.03,1.05,9.05,12.06,4.11,12.12";
-$MESS["IMOL_CONFIG_LOCK_ALT"] = "Есть ограничения, кликните чтобы узнать подробнее.";
 $MESS["IMOL_CONFIG_WEEK_MO"] = "Понедельник";
 $MESS["IMOL_CONFIG_WEEK_TU"] = "Вторник";
 $MESS["IMOL_CONFIG_WEEK_WE"] = "Среда";
@@ -123,14 +120,13 @@ $MESS["IMOL_CONFIG_EDIT_CONNECTORS"] = "Подключение каналов к
 $MESS["IMOL_CONFIG_EDIT_SAVE"] = "Сохранить";
 $MESS["IMOL_CONFIG_EDIT_APPLY"] = "Применить";
 $MESS["IMOL_CONFIG_EDIT_BACK"] = "Вернуться к списку";
+$MESS["IMOL_CONFIG_EDIT_POPUP_LIMITED_TITLE_DEFAULT"] = "На данном тарифном плане данный функционал не предусмотрен";
 $MESS["IMOL_CONFIG_EDIT_POPUP_LIMITED_TITLE"] = "Расширенные открытые линии";
 $MESS["IMOL_CONFIG_EDIT_POPUP_LIMITED_BUSINESS_USERS_TEXT_NEW"] = "На вашем тарифном плане есть ограничение на участников очереди.
 <br><br>
 В очереди могут быть только бизнес-пользователи.
 <br><br>
 Количество бизнес-пользователей зависит от тарифа вашего Битрикс24.";
-$MESS["IMOL_CONFIG_EDIT_POPUP_LIMITED_VOTE"] = "Оценка диалога клиентом доступна в тарифах: \"CRM+\", \"Команда\" и \"Компания\".<br><br>Оценка диалога клиентом позволяет оценить, насколько оператор сумел решить проблему клиента, тем самым являясь показателем эффективности и качества работы сотрудника.";
-$MESS["IMOL_CONFIG_EDIT_POPUP_LIMITED_QUEUE_ALL_NEW"] = "Режим распределения обращений между сотрудниками в очереди \"Одновременно всем\" доступен на тарифах: \"CRM+\", \"Команда\" и \"Компания\".<br><br>Режим \"Одновременно всем\" позволяет распределять обращения из открытых линий на всех сотрудников в очереди.";
 $MESS["IMOL_CONFIG_EDIT_POPUP_LIMITED_ACTIVE"] = "На вашем тарифном плане есть ограничение на количество активных открытых линий. Если вы хотите активировать данную линию, деактивируйте любую другую.";
 $MESS["IMOL_CONFIG_EDIT_CATEGORY_ADD"] = "добавить";
 $MESS["IMOL_CONFIG_EDIT_CATEGORY_DELETE"] = "удалить";
@@ -201,7 +197,8 @@ $MESS["IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_TIP_NEW"] = "<b>Отвеченные</b> -
 <b>Закрытые</b> - исключаются закрытые и ожидающие оценки обращения.";
 $MESS["IMOL_CONFIG_EDIT_MAX_CHAT_TITLE_NEW"] = "Максимальное количество обращений на одного оператора";
 $MESS["IMOL_CONFIG_EDIT_CRM_FORWARD_TIP"] = "Обращение поступит напрямую ответственному за этого клиента CRM, даже если этого сотрудника нет в <b>очереди ответственных</b> Открытой линии.";
-$MESS["IMOL_CONFIG_EDIT_CRM_TRANSFER_CHANGE"] = "Автоматически менять ответственного за лид при ручном перенаправлении обращения на другого оператора";
+$MESS['IMOL_CONFIG_EDIT_CRM_TRANSFER_CHANGE'] = 'Автоматически менять ответственного за лид при ручном перенаправлении обращения на другого оператора';
+$MESS['IMOL_CONFIG_EDIT_CRM_TRANSFER_CHANGE_DEAL'] = 'Автоматически менять ответственного за сделку при ручном перенаправлении обращения на другого оператора';
 $MESS["IMOL_CONFIG_EDIT_WORKTIME_DAYOFF_TIP"] = "Чтобы выделить несколько выходных дней, удерживайте клавишу <b>CTRL</b> в Windows или <b>CMD</b> в macOS.";
 $MESS["IMOL_CONFIG_EDIT_WELCOME_MESSAGE_NEW"] = "Отправить автоматический ответ на первое сообщение клиента";
 $MESS["IMOL_CONFIG_EDIT_WELCOME_MESSAGE_NEW_TIP"] = "Автоматический ответ будет отправлен сразу после первого обращения клиента в Открытую линию";

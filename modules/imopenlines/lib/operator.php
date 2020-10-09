@@ -204,9 +204,9 @@ class Operator
 			return false;
 		}
 
-		if (substr($params['TRANSFER_ID'], 0, 5) == 'queue')
+		if (mb_substr($params['TRANSFER_ID'], 0, 5) == 'queue')
 		{
-			\CUserCounter::Increment($this->userId, 'imopenlines_transfer_count_'.substr($params['TRANSFER_ID'], 5));
+			\CUserCounter::Increment($this->userId, 'imopenlines_transfer_count_'.mb_substr($params['TRANSFER_ID'], 5));
 		}
 
 		$chat = new Chat($this->chatId);

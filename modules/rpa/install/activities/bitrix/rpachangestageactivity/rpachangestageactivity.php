@@ -145,7 +145,7 @@ class CBPRpaChangeStageActivity extends CBPActivity
 	{
 		$errors = [];
 
-		$arProperties["Users"] = CBPHelper::UsersStringToArray($arCurrentValues["approve_users"], $documentType, $errors);
+		$arProperties["ModifiedBy"] = CBPHelper::UsersStringToArray($arCurrentValues["modified_by"], $documentType, $errors);
 		$arProperties["TargetStageId"] = $arCurrentValues['target_stage_id'];
 		if ($errors)
 		{

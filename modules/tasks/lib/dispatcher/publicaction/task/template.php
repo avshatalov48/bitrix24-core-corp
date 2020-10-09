@@ -114,48 +114,55 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 		$this->prepareMembers($data);
 		$this->prepareReplicateParams($data);
 
-		if ($this->errors->checkNoFatals())
+		if (!$this->errors->checkNoFatals())
 		{
-			$analyticsData = Manager\Task\Template::getAnalyticsData($data);
+			return $result;
+		}
 
-			$checkListItems = ($data['SE_CHECKLIST']?: []);
-			unset($data['SE_CHECKLIST']);
+		$analyticsData = Manager\Task\Template::getAnalyticsData($data);
 
-			$templatePermissions = null;
-			if (array_key_exists('SE_TEMPLATE_ACCESS', $data))
+		$checkListItems = ($data['SE_CHECKLIST']?: []);
+		unset($data['SE_CHECKLIST']);
+
+		$templatePermissions = null;
+		if (array_key_exists('SE_TEMPLATE_ACCESS', $data))
+		{
+			$templatePermissions = $data['SE_TEMPLATE_ACCESS'];
+			unset($data['SE_TEMPLATE_ACCESS']);
+		}
+
+		$template = new Item\Task\Template($data);
+		$saveResult = $template->save();
+
+		$this->errors->load($saveResult->getErrors());
+
+		$templateId = $template->getId();
+
+		if (!$templateId)
+		{
+			return $result;
+		}
+
+		$result['ID'] = $templateId;
+
+		$mergeResult = TemplateCheckListFacade::merge(
+			$templateId,
+			Util\User::getId(),
+			$checkListItems,
+			['analyticsData' => $analyticsData]
+		);
+		if (!$mergeResult->isSuccess())
+		{
+			$saveResult->loadErrors($mergeResult->getErrors());
+		}
+		// todo: also DATA and CAN keys here...
+
+		if ($templatePermissions !== null)
+		{
+			$res = $this->saveTemplatePermissions($template, $templatePermissions);
+			if (!$res->isSuccess())
 			{
-				$templatePermissions = $data['SE_TEMPLATE_ACCESS'];
-				unset($data['SE_TEMPLATE_ACCESS']);
-			}
-
-			$template = new Item\Task\Template($data);
-			$saveResult = $template->save();
-
-			$this->errors->load($saveResult->getErrors());
-
-			$templateId = $template->getId();
-
-			if ($templateId)
-			{
-				$result['ID'] = $templateId;
-
-				$mergeResult = TemplateCheckListFacade::merge(
-					$templateId,
-					Util\User::getId(),
-					$checkListItems,
-					['analyticsData' => $analyticsData]
-				);
-				if (!$mergeResult->isSuccess())
-				{
-					$saveResult->loadErrors($mergeResult->getErrors());
-				}
-				// todo: also DATA and CAN keys here...
-
-				$res = $this->saveTemplatePermissions($template, $templatePermissions);
-				if (!$res->isSuccess())
-				{
-					$saveResult->loadErrors($res->getErrors());
-				}
+				$saveResult->loadErrors($res->getErrors());
 			}
 		}
 
@@ -198,7 +205,7 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 			$checkListItems = $data['SE_CHECKLIST'];
 			unset($data['SE_CHECKLIST']);
 
-			$templatePermissions = [];
+			$templatePermissions = null;
 			if (array_key_exists('SE_TEMPLATE_ACCESS', $data))
 			{
 				$templatePermissions = $data['SE_TEMPLATE_ACCESS'];
@@ -223,7 +230,10 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 				}
 			}
 
-			if ($saveResult->isSuccess())
+			if (
+				$saveResult->isSuccess()
+				&& $templatePermissions !== null
+			)
 			{
 				$res = $this->saveTemplatePermissions($template, $templatePermissions);
 				if (!$res->isSuccess())
@@ -287,7 +297,7 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 		return $this->toggleReplication($id, false);
 	}
 
-	private function saveTemplatePermissions($template, $permissions)
+	private function saveTemplatePermissions($template, array $permissions)
 	{
 		$res = new Util\Result();
 

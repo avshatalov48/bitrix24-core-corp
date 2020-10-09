@@ -570,22 +570,12 @@ $arResult["SPOTLIGHT_ID"] = "new-collapsed-menu";
 $arResult["SHOW_LICENSE_BUTTON"] = false;
 if (
 	Loader::includeModule('bitrix24')
-	&& in_array(CBitrix24::getLicenseType(), array("project", "demo"))
+	&& \CBitrix24::getLicenseFamily() !== "company"
 	&& !(Loader::includeModule("extranet") && CExtranet::IsExtranetSite())
 )
 {
-	$portalCreationDate = intval(COption::GetOptionString("main", "~controller_date_create", ""));
-	if (
-		!in_array(LANGUAGE_ID, array("ru", "ua")) ||
-		(
-			in_array(LANGUAGE_ID, array("ru", "ua")) &&
-			($portalCreationDate + 86400 < time() || !$portalCreationDate)
-		)
-	)
-	{
-		$arResult["SHOW_LICENSE_BUTTON"] = true;
-		$arResult["B24_LICENSE_PATH"] = CBitrix24::PATH_LICENSE_ALL;
-		$arResult["LICENSE_BUTTON_COUNTER_URL"] = CBitrix24::PATH_COUNTER;
-		$arResult["HOST_NAME"] = BX24_HOST_NAME;
-	}
+	$arResult["SHOW_LICENSE_BUTTON"] = true;
+	$arResult["B24_LICENSE_PATH"] = CBitrix24::PATH_LICENSE_ALL;
+	$arResult["LICENSE_BUTTON_COUNTER_URL"] = CBitrix24::PATH_COUNTER;
+	$arResult["HOST_NAME"] = BX24_HOST_NAME;
 }

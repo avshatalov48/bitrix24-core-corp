@@ -302,6 +302,14 @@ class CCrmDocumentDeal extends CCrmDocument
 				"Required" => false,
 				"Multiple" => true,
 			),
+			"OBSERVER_IDS" => array(
+				"Name" => GetMessage("CRM_FIELD_OBSERVER_IDS"),
+				"Type" => "user",
+				"Filterable" => true,
+				"Editable" => false,
+				"Required" => false,
+				"Multiple" => true,
+			),
 			"COMPANY_ID" => array(
 				"Name" => GetMessage("CRM_FIELD_COMPANY_ID"),
 				"Type" => "UF:crm",

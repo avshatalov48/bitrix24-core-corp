@@ -150,6 +150,13 @@ class CDiskBizprocEditComponent extends BaseComponent implements SidePanelWrappa
 			}
 		}
 
+		if (method_exists('CBPDocument', 'signDocumentType'))
+		{
+			$this->arResult['DOCUMENT_TYPE_SIGNED'] = \CBPDocument::signDocumentType(
+				[$this->arParams['MODULE_ID'], $this->arResult['ENTITY'], $this->arResult['DOCUMENT_TYPE']]
+			);
+		}
+
 		return true;
 	}
 

@@ -738,18 +738,15 @@ export class Category extends Event.EventEmitter
 		const title = this.getTitle();
 		const titleEditor = this.getTitleEditor();
 		const {value} = titleEditor;
-		const safeValue = Text.encode(value.trim()) || Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER');
+		const newTitle = value.trim() || Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER');
 
-		if (title.innerHTML !== safeValue)
+		if (title.innerText !== newTitle)
 		{
-			title.innerHTML = safeValue;
+			title.innerText = newTitle;
+			Dom.attr(title, 'title', newTitle);
 
-			Tag.attrs(title)`
-				title: ${value.trim()};
-			`;
-
-			this.name = safeValue;
-			this.emit('Category:title:save', {categoryId: this.id, value: safeValue});
+			this.name = newTitle;
+			this.emit('Category:title:save', {categoryId: this.id, value: newTitle});
 		}
 	}
 
@@ -847,7 +844,7 @@ export class Category extends Event.EventEmitter
 		}).
 		map((category) => {
 			return {
-				text: category.name,
+				text: Text.encode(category.name),
 				dataset : {
 					categoryId : category.id,
 					access : category.access
@@ -1053,9 +1050,10 @@ export class Category extends Event.EventEmitter
 
 	getTitle(): HTMLHeadingElement
 	{
+		const safeTitle = Text.encode(this.name);
 		return this.cache.remember('title', () => (
 			Tag.render`
-				<h3 class="crm-st-category-info-title" title="${this.name}">${this.name}</h3>
+				<h3 class="crm-st-category-info-title" title="${safeTitle}">${safeTitle}</h3>
 			`
 		));
 	}
@@ -1069,7 +1067,7 @@ export class Category extends Event.EventEmitter
 				<input class="crm-st-category-info-title-editor" 
 					 onkeydown="${onKeyDown}"
 					 onblur="${onBlur}"
-					 value="${this.name}"
+					 value="${Text.encode(this.name)}"
 					 placeholder="${Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER')}"
 				 >
 			`;

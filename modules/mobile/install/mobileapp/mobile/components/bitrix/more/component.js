@@ -386,7 +386,7 @@
 	};
 
 	BX.onCustomEvent("onMenuLoaded", [this.result]);
-	let lastNotification = Application.getLastNotification();
+	let lastNotification = Application.getLastNotification("calendar_sync");
 	if(lastNotification["intent"] && lastNotification["intent"] === "calendar_sync")
 	{
 		if (Application.getPlatform() === "ios")

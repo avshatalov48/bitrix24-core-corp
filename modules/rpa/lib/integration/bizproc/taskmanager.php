@@ -329,7 +329,8 @@ class TaskManager
 		$tasksIterator = \CBPTaskService::GetList([], [
 			'@WORKFLOW_ID' => $workflowIds,
 			'ACTIVITY_NAME' => $robotData['Name'],
-			'ACTIVITY' => $robotData['Type']
+			'ACTIVITY' => $robotData['Type'],
+			'STATUS' => 0
 		], false, false, ['ID', 'PARAMETERS']);
 		$props = $robotData['Properties'];
 		while ($task = $tasksIterator->fetch())

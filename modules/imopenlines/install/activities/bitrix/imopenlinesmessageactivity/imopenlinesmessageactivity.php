@@ -4,6 +4,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 class CBPImOpenLinesMessageActivity
 	extends CBPActivity
 {
+	const ATTACHMENT_TYPE_FILE = 'file';
+	const ATTACHMENT_TYPE_DISK = 'disk';
+
 	public function __construct($name)
 	{
 		parent::__construct($name);
@@ -11,6 +14,9 @@ class CBPImOpenLinesMessageActivity
 			"Title" => "",
 			"MessageText" => "",
 			"IsSystem" => "",
+
+			'AttachmentType' => static::ATTACHMENT_TYPE_FILE,
+			'Attachment' => []
 		);
 	}
 
@@ -46,7 +52,7 @@ class CBPImOpenLinesMessageActivity
 		}
 
 		$messageText = (string)$this->MessageText;
-		if ($messageText && strpos($messageText, '<') !== false)
+		if ($messageText && mb_strpos($messageText, '<') !== false)
 		{
 			$messageText = HTMLToTxt($messageText);
 		}
@@ -68,44 +74,85 @@ class CBPImOpenLinesMessageActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		$messageFields = array(
-			"FROM_USER_ID" => $fromUserId,
-			"TO_CHAT_ID" => $chat['ID'],
-			"MESSAGE" => $messageText,
-		);
-
-		if ($isSystem)
+		if ($messageText)
 		{
-			$messageFields['SYSTEM'] = 'Y';
+			$messageFields = array(
+				"FROM_USER_ID" => $fromUserId,
+				"TO_CHAT_ID" => $chat['ID'],
+				"MESSAGE" => $messageText,
+			);
+
+			if ($isSystem)
+			{
+				$messageFields['SILENT_CONNECTOR'] = 'Y';
+			}
+			else
+			{
+				$messageFields['SKIP_USER_CHECK'] = 'Y';
+				$messageFields['PARAMS']['CLASS'] = "bx-messenger-content-item-ol-output";
+			}
+
+			$addResult = \Bitrix\ImOpenLines\Im::addMessage($messageFields);
+
+			if ($addResult)
+			{
+				$this->sendAttachments($chat['ID'], $fromUserId);
+			}
+			else
+			{
+				/** @var \CMain $app*/
+				$app = $GLOBALS["APPLICATION"];
+				/** @var \CApplicationException $exception */
+				$exception = $app->GetException();
+				$this->writeError($exception->GetString(), $fromUserId);
+			}
 		}
 		else
 		{
-			$messageFields['SKIP_USER_CHECK'] = 'Y';
-			$messageFields['PARAMS']['CLASS'] = "bx-messenger-content-item-ol-output";
-		}
-
-		$addResult = \Bitrix\ImOpenLines\Im::addMessage($messageFields);
-
-		if (!$addResult)
-		{
-			/** @var \CMain $app*/
-			$app = $GLOBALS["APPLICATION"];
-			/** @var \CApplicationException $exception */
-			$exception = $app->GetException();
-			$this->writeError($exception->GetString(), $fromUserId);
+			$this->sendAttachments($chat['ID'], $fromUserId);
 		}
 
 		return CBPActivityExecutionStatus::Closed;
 	}
 
-	public static function ValidateProperties($arTestProperties = array(), CBPWorkflowTemplateUser $user = null)
+	private function sendAttachments($chatId, $userId)
 	{
-		$arErrors = array();
+		$isDiskAttachments = ($this->AttachmentType === static::ATTACHMENT_TYPE_DISK);
 
-		if (!array_key_exists("MessageText", $arTestProperties) || strlen($arTestProperties["MessageText"]) <= 0)
-			$arErrors[] = array("code" => "NotExist", "parameter" => "MessageText", "message" => GetMessage("IMOL_MA_EMPTY_MESSAGE"));
+		if ($isDiskAttachments)
+		{
+			$attachmentFiles = (array)$this->Attachment;
+		}
+		else
+		{
+			$attachmentFiles = (array)$this->ParseValue($this->getRawProperty('Attachment'), 'file');
+		}
 
-		return array_merge($arErrors, parent::ValidateProperties($arTestProperties, $user));
+		$attachmentFiles = CBPHelper::MakeArrayFlat($attachmentFiles);
+		$attachmentFiles = array_unique(array_filter($attachmentFiles));
+
+		if (!$attachmentFiles)
+		{
+			return null;
+		}
+
+		if ($isDiskAttachments)
+		{
+			$attachmentFiles = array_map(function ($file)
+			{
+				return 'disk'.$file;
+			}, $attachmentFiles);
+		}
+		else
+		{
+			$attachmentFiles = \CIMDisk::UploadFileFromMain($chatId, $attachmentFiles);
+			$attachmentFiles = array_map(function ($file)
+			{
+				return 'upload'.$file;
+			}, $attachmentFiles);
+		}
+
+		return (bool)\CIMDisk::UploadFileFromDisk($chatId, $attachmentFiles, '', ['USER_ID' => $userId, 'SKIP_USER_CHECK' => true, 'LINES_SILENT_MODE' => $this->IsSystem === 'Y']);
 	}
 
 	public static function GetPropertiesDialog($documentType, $activityName, $workflowTemplate, $workflowParameters, $workflowVariables, $currentValues = null, $formName = "")
@@ -132,7 +179,22 @@ class CBPImOpenLinesMessageActivity
 				'FieldName' => 'is_system',
 				'Type' => 'bool',
 				'Default' => 'N'
-			)
+			),
+			'AttachmentType' => array(
+				'Name' => GetMessage('IMOL_MA_ATTACHMENT_TYPE'),
+				'FieldName' => 'attachment_type',
+				'Type' => 'select',
+				'Options' => array(
+					static::ATTACHMENT_TYPE_FILE => GetMessage('IMOL_MA_ATTACHMENT_FILE'),
+					static::ATTACHMENT_TYPE_DISK => GetMessage('IMOL_MA_ATTACHMENT_DISK')
+				)
+			),
+			'Attachment' => array(
+				'Name' => GetMessage('IMOL_MA_ATTACHMENT'),
+				'FieldName' => 'attachment',
+				'Type' => 'file',
+				'Multiple' => true
+			),
 		));
 
 		return $dialog;
@@ -143,8 +205,27 @@ class CBPImOpenLinesMessageActivity
 		$errors = array();
 		$properties = array(
 			'MessageText' => (string)$currentValues['message_text'],
-			'IsSystem' => $currentValues['is_system'] === 'Y' ? 'Y' : 'N'
+			'IsSystem' => $currentValues['is_system'] === 'Y' ? 'Y' : 'N',
+			'AttachmentType' => (string)$currentValues["attachment_type"],
+			'Attachment' => []
 		);
+
+		if ($properties['AttachmentType'] === static::ATTACHMENT_TYPE_DISK)
+		{
+			foreach ((array)$currentValues["attachment"] as $attachmentId)
+			{
+				$attachmentId = (int)$attachmentId;
+				if ($attachmentId > 0)
+				{
+					$properties['Attachment'][] = $attachmentId;
+				}
+			}
+		}
+		else
+		{
+			$properties['Attachment'] = isset($currentValues["attachment"])
+				? $currentValues["attachment"] : $currentValues["attachment_text"];
+		}
 
 		$errors = self::ValidateProperties($properties, new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));
 		if (count($errors) > 0)
@@ -169,6 +250,10 @@ class CBPImOpenLinesMessageActivity
 		{
 			$clients = $this->getLeadClients($entityId);
 		}
+		elseif ($entityTypeId == \CCrmOwnerType::Order)
+		{
+			$clients = $this->getOrderClients($entityId);
+		}
 		else
 		{
 			$clients = [[\CCrmOwnerType::ResolveName($entityTypeId), $entityId]];
@@ -183,14 +268,14 @@ class CBPImOpenLinesMessageActivity
 
 			while ($row = $iterator->fetch())
 			{
-				if (strpos($row['VALUE'], 'imol|') === false)
+				if (mb_strpos($row['VALUE'], 'imol|') === false)
 				{
 					continue;
 				}
 
-				$code = substr($row['VALUE'], 5);
+				$code = mb_substr($row['VALUE'], 5);
 
-				if (strpos($code, 'livechat') === 0)
+				if (mb_strpos($code, 'livechat') === 0)
 				{
 					$lowPriorityCode = $code;
 					$code = false;
@@ -240,6 +325,27 @@ class CBPImOpenLinesMessageActivity
 				}
 			}
 		}
+		return $clients;
+	}
+
+	private function getOrderClients($id)
+	{
+		$clients = [];
+
+		$dbRes = \Bitrix\Crm\Order\ContactCompanyCollection::getList(array(
+			'select' => array('ENTITY_ID', 'ENTITY_TYPE_ID'),
+			'filter' => array(
+				'=ORDER_ID' => $id,
+				'@ENTITY_TYPE_ID' => [\CCrmOwnerType::Contact, \CCrmOwnerType::Company],
+				'IS_PRIMARY' => 'Y'
+			),
+			'order' => ['ENTITY_TYPE_ID' => 'ASC']
+		));
+		while ($row = $dbRes->fetch())
+		{
+			$clients[] = [CCrmOwnerType::ResolveName($row['ENTITY_TYPE_ID']), $row['ENTITY_ID']];
+		}
+
 		return $clients;
 	}
 

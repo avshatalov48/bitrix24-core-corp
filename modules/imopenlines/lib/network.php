@@ -77,7 +77,7 @@ class Network
 						false,
 						true
 					);
-					$avatarUrl = substr($arFileTmp['src'], 0, 4) == 'http'? $arFileTmp['src']: \Bitrix\ImOpenLines\Common::getServerAddress().$arFileTmp['src'];
+					$avatarUrl = mb_substr($arFileTmp['src'], 0, 4) == 'http'? $arFileTmp['src']: \Bitrix\ImOpenLines\Common::getServerAddress().$arFileTmp['src'];
 				}
 
 				$userArray = [
@@ -198,7 +198,7 @@ class Network
 						false,
 						true
 					);
-					$avatarUrl = substr($arFileTmp['src'], 0, 4) == 'http'? $arFileTmp['src']: \Bitrix\ImOpenLines\Common::getServerAddress().$arFileTmp['src'];
+					$avatarUrl = mb_substr($arFileTmp['src'], 0, 4) == 'http'? $arFileTmp['src']: \Bitrix\ImOpenLines\Common::getServerAddress().$arFileTmp['src'];
 				}
 
 				$userArray = [
@@ -532,7 +532,7 @@ class Network
 		}
 		if (isset($params['USER']['TARIFF_LEVEL']) && !empty($params['USER']['TARIFF_LEVEL']))
 		{
-			$description .= '[BR][B]'.Loc::getMessage('IMOL_NETWORK_TARIFF_LEVEL').'[/B]: '.Loc::getMessage('IMOL_NETWORK_TARIFF_LEVEL_'.strtoupper($params['USER']['TARIFF_LEVEL'])).'[BR]';
+			$description .= '[BR][B]'.Loc::getMessage('IMOL_NETWORK_TARIFF_LEVEL').'[/B]: '.Loc::getMessage('IMOL_NETWORK_TARIFF_LEVEL_'.mb_strtoupper($params['USER']['TARIFF_LEVEL'])).'[BR]';
 		}
 		if (isset($params['USER']['TARIFF']) && !empty($params['USER']['TARIFF']))
 		{
@@ -677,7 +677,7 @@ class Network
 			'select' => Array('CHAT_ENTITY_TYPE' => 'CHAT.ENTITY_TYPE', 'CHAT_ENTITY_ID' => 'CHAT.ENTITY_ID', 'CHAT_ID'),
 			'filter' => array('=ID' => $params['MESSAGE_ID'])
 		))->fetch();
-		if (!$messageData || $messageData['CHAT_ENTITY_TYPE'] != 'LINES' || strpos($messageData['CHAT_ENTITY_ID'], 'network|'.$params['LINE_ID'].'|'.$params['GUID']) !== 0)
+		if (!$messageData || $messageData['CHAT_ENTITY_TYPE'] != 'LINES' || mb_strpos($messageData['CHAT_ENTITY_ID'], 'network|'.$params['LINE_ID'].'|'.$params['GUID']) !== 0)
 		{
 			return false;
 		}

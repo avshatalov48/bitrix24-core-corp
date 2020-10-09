@@ -1,6 +1,7 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
-use \Bitrix\Main\Localization\Loc;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+use \Bitrix\Imopenlines\Limit,
+	\Bitrix\Main\Localization\Loc;
 
 use \Bitrix\ImOpenLines\Config;
 
@@ -137,8 +138,7 @@ if ($arResult['CAN_EDIT'])
 						<option value="strictly" <?if($arResult["CONFIG"]["QUEUE_TYPE"] == Config::QUEUE_TYPE_STRICTLY) { ?>selected<? }?>>
 							<?=Loc::getMessage("IMOL_CONFIG_EDIT_QUEUE_TYPE_STRICTLY")?>
 						</option>
-						<option value="all" <?if($arResult["CONFIG"]["QUEUE_TYPE"] == Config::QUEUE_TYPE_ALL) { ?>selected<? }?>
-								<?if(!\Bitrix\Imopenlines\Limit::canUseQueueAll()) { ?>disabled<? }?>>
+						<option value="all" <?if($arResult["CONFIG"]["QUEUE_TYPE"] == Config::QUEUE_TYPE_ALL) { ?>selected<? }?>>
 							<?=Loc::getMessage("IMOL_CONFIG_EDIT_QUEUE_TYPE_ALL")?>
 						</option>
 					</select>
@@ -342,6 +342,7 @@ if ($arResult['CAN_EDIT'])
 				<?
 			}
 			?>
+			<?if(!empty($arResult['CRM'])):?>
 			<div id="imol_crm_block" <?if (!($arResult['CONFIG']['CRM'] == 'Y'  && $arResult['IS_CRM_INSTALLED'] == 'Y')){?>class="invisible"<?}?>>
 				<div class="imopenlines-control-container imopenlines-control-select">
 					<div class="imopenlines-control-subtitle">
@@ -350,18 +351,66 @@ if ($arResult['CAN_EDIT'])
 					</div>
 					<div class="imopenlines-control-inner">
 						<select name="CONFIG[CRM_CREATE]" id="imol_crm_create" class="imopenlines-control-input">
-							<option value="none" <?if($arResult["CONFIG"]["CRM_CREATE"] == "none") { ?>selected<? }?>>
-								<?=Loc::getMessage("IMOL_CONFIG_EDIT_CRM_CREATE_IN_CHAT")?>
-							</option>
-							<option value="lead" <?if($arResult["CONFIG"]["CRM_CREATE"] == "lead") { ?>selected<? }?>>
-								<?=Loc::getMessage("IMOL_CONFIG_EDIT_CRM_CREATE_LEAD")?>
-							</option>
+							<?foreach ($arResult['CRM']['CRM_CREATE_ITEMS'] as $option):?>
+								<option value="<?=$option['ID']?>" <?if($option['SELECT']): ?>selected<?endif;?>>
+									<?=htmlspecialcharsbx($option['NAME'])?>
+								</option>
+							<?endforeach;?>
 						</select>
 					</div>
 				</div>
+
+				<?foreach ($arResult['CRM']['CRM_CREATE_ITEMS'] as $option):?>
+					<?if(
+							!empty($option['SECOND_ITEMS']) ||
+							!empty($option['THIRD_NAME'])
+					):?>
+					<div<?if(!$option['SELECT']): ?> class="invisible"<?endif;?> id="imol_crm_create_second_<?=$option['ID']?>">
+						<div class="imopenlines-control-container imopenlines-control-select">
+							<?if(!empty($option['SECOND_ITEMS'])):?>
+								<?if(!empty($option['SECOND_ITEMS_NAME'])):?>
+								<div class="imopenlines-control-subtitle">
+									<?=$option['SECOND_ITEMS_NAME']?>
+								</div>
+								<?endif;?>
+							<div class="imopenlines-control-inner">
+								<select name="CONFIG[CRM_CREATE_SECOND]" id="imol_crm_create_second_<?=$option['ID']?>" class="imopenlines-control-input">
+									<?php
+									foreach ($option['SECOND_ITEMS'] as $secondItems)
+									{
+										?>
+										<option value="<?=$secondItems['ID']?>" <?if($secondItems['SELECT']):?>selected<?endif;?> >
+											<?=htmlspecialcharsbx($secondItems['NAME'])?>
+										</option>
+										<?
+									}
+									?>
+								</select>
+							</div>
+							<?endif;?>
+						</div>
+						<?if(!empty($option['THIRD_NAME'])):?>
+							<div class="imopenlines-control-checkbox-container">
+								<label class="imopenlines-control-checkbox-label">
+									<input type="checkbox"
+										   class="imopenlines-control-checkbox"
+										   name="CONFIG[CRM_CREATE_THIRD]"
+										   value="Y"
+										   <?if($option['THIRD_SELECT']) { ?>checked<? }?>>
+									<?=htmlspecialcharsbx($option['THIRD_NAME'])?>
+								</label>
+							</div>
+						<?endif;?>
+					</div>
+					<?endif;?>
+				<?endforeach;?>
 				<div class="imopenlines-control-container imopenlines-control-select" id="imol_crm_source">
-					<div class="imopenlines-control-subtitle">
+					<div id="imol_crm_source_title" class="imopenlines-control-subtitle<?if($arResult['CRM']['VISIBLE']['SOURCE_DEAL_TITLE']):?> invisible<?endif?>">
 						<?=Loc::getMessage("IMOL_CONFIG_EDIT_CRM_SOURCE")?>
+						<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage("IMOL_CONFIG_EDIT_CRM_SOURCE_TIP_NEW"))?>"></span>
+					</div>
+					<div id="imol_crm_source_title_deal" class="imopenlines-control-subtitle<?if(!$arResult['CRM']['VISIBLE']['SOURCE_DEAL_TITLE']):?> invisible<?endif?>">
+						<?=Loc::getMessage("IMOL_CONFIG_EDIT_CRM_SOURCE_DEAL")?>
 						<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage("IMOL_CONFIG_EDIT_CRM_SOURCE_TIP_NEW"))?>"></span>
 					</div>
 					<div class="imopenlines-control-inner">
@@ -391,7 +440,7 @@ if ($arResult['CAN_EDIT'])
 						<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage("IMOL_CONFIG_EDIT_CRM_FORWARD_TIP"))?>"></span>
 					</label>
 				</div>
-				<div class="imopenlines-control-checkbox-container <?=($arResult["CONFIG"]["CRM_CREATE"] != 'none' ? '' : 'invisible')?>"
+				<div class="imopenlines-control-checkbox-container<?if(!$arResult['CRM']['VISIBLE']['CRM_TRANSFER_CHANGE']):?> invisible<?endif;?>"
 					 id="imol_crm_source_rule">
 					<label class="imopenlines-control-checkbox-label">
 						<input type="checkbox"
@@ -399,10 +448,12 @@ if ($arResult['CAN_EDIT'])
 							   name="CONFIG[CRM_TRANSFER_CHANGE]"
 							   value="Y"
 							   <?if($arResult["CONFIG"]["CRM_TRANSFER_CHANGE"] == "Y") { ?>checked<? }?>  >
-						<?=Loc::getMessage("IMOL_CONFIG_EDIT_CRM_TRANSFER_CHANGE")?>
+						<span id="imol_crm_transfer_change_title"<?if($arResult['CRM']['VISIBLE']['CRM_TRANSFER_CHANGE'] !== Config::CRM_CREATE_LEAD):?> class="invisible"<?endif;?>><?=Loc::getMessage("IMOL_CONFIG_EDIT_CRM_TRANSFER_CHANGE")?></span>
+						<span id="imol_crm_transfer_change_title_deal"<?if($arResult['CRM']['VISIBLE']['CRM_TRANSFER_CHANGE'] !== Config::CRM_CREATE_DEAL):?> class="invisible"<?endif;?>><?=Loc::getMessage("IMOL_CONFIG_EDIT_CRM_TRANSFER_CHANGE_DEAL")?></span>
 					</label>
 				</div>
 			</div>
+			<?endif;?>
 		</div>
 	</div>
 </div>

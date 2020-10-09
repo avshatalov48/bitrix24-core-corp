@@ -98,7 +98,7 @@ if (empty($arParams['DISABLE_TOP_MENU']) || $arParams['DISABLE_TOP_MENU'] != 'Y'
 			for (i = 0; i < categories.length; ++i)
 			{
 				menuItems.push({
-					text: categories[i].name,
+					text: BX.Text.encode(categories[i].name),
 					category: categories[i],
 					onclick: function(e, item)
 					{

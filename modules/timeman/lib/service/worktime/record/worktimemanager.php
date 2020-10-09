@@ -319,7 +319,7 @@ abstract class WorktimeManager
 			return true;
 		}
 		return !is_string($this->worktimeRecordForm->getFirstEventForm()->reason)
-			   || strlen(trim($this->worktimeRecordForm->getFirstEventForm()->reason)) <= 0;
+			   || trim($this->worktimeRecordForm->getFirstEventForm()->reason) == '';
 	}
 
 	protected function getDeviceNotAllowedErrorText($device)

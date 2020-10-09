@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\DocumentGenerator\Driver;
+use Bitrix\DocumentGenerator\Model\ExternalLinkTable;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\Localization\Loc;
@@ -15,6 +16,7 @@ class DocumentsViewComponent extends CBitrixComponent
 	/** @var Document */
 	protected $document;
 	protected $errorCollection;
+	protected $isFirstTime = false;
 
 	public function __construct(CBitrixComponent $component = null)
 	{
@@ -36,7 +38,16 @@ class DocumentsViewComponent extends CBitrixComponent
 			return;
 		}
 
-		EventManager::getInstance()->send(new Event(Driver::MODULE_ID, 'onPublicView', ['document' => $this->document]));
+		EventManager::getInstance()->send(
+			new Event(
+				Driver::MODULE_ID,
+				'onPublicView',
+				[
+					'document' => $this->document,
+					'isFirstTime' => $this->isFirstTime,
+				]
+			)
+		);
 
 		$urlManager = \Bitrix\Main\Engine\UrlManager::getInstance();
 		$this->arResult = array_merge($this->document->getFile()->getData(), [
@@ -79,18 +90,26 @@ class DocumentsViewComponent extends CBitrixComponent
 			return;
 		}
 		$this->document = $document;
-		$link = \Bitrix\DocumentGenerator\Model\ExternalLinkTable::getByHash($this->arParams['HASH']);
-		if(!$link || $link['DOCUMENT_ID'] != $this->document->ID)
+		$link = ExternalLinkTable::getByHash($this->arParams['HASH']);
+		if(!$link || (int)$link['DOCUMENT_ID'] !== (int)$this->document->ID)
 		{
 			$this->errorCollection->add([new Error(Loc::getMessage('DOCGEN_VIEW_ERROR_LINK'))]);
 			return;
+		}
+		if(empty($link['VIEWED_TIME']) && !ExternalLinkTable::isUserEmployee())
+		{
+			$updateResult = ExternalLinkTable::update($link['ID'], [
+				'VIEWED_TIME' => new \Bitrix\Main\Type\DateTime(),
+				'VIEWED_IP' => \Bitrix\Main\Application::getInstance()->getContext()->getServer()->getRemoteAddr(),
+			]);
+			$this->isFirstTime = $updateResult->isSuccess();
 		}
 	}
 
 	/**
 	 * @return bool
 	 */
-	protected function isSuccess()
+	protected function isSuccess(): bool
 	{
 		return $this->errorCollection->isEmpty();
 	}

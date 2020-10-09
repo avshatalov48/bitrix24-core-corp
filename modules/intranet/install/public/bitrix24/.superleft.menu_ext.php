@@ -366,6 +366,23 @@ $arMenu[] = array(
 	""
 );
 
+//devops
+$arMenu[] = array(
+	GetMessage("MENU_DEVOPS"),
+	"/devops/",
+	array(),
+	array(
+		"real_link" => getLeftMenuItemLink(
+			"top_menu_id_devops",
+			"/devops/"
+		),
+		"class" => "menu-devops",
+		"menu_item_id" => "menu_devops_sect",
+		"top_menu_id" => "top_menu_id_devops"
+	),
+	""
+);
+
 if (LANGUAGE_ID === "ru")
 {
 	$arMenu[] = [

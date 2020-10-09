@@ -79,9 +79,9 @@ $taskForm = $arResult['taskForm'];
 														>
 															<?
 															$title = Loc::getMessage('TIMEMAN_DEFAULT_OPERATION_TITLE');
-															if (Loc::getMessage('OP_NAME_' . strtoupper($permission)))
+															if (Loc::getMessage('OP_NAME_'.mb_strtoupper($permission)))
 															{
-																$title = Loc::getMessage('OP_NAME_' . strtoupper($permission));
+																$title = Loc::getMessage('OP_NAME_'.mb_strtoupper($permission));
 															} ?>
 															<?= htmlspecialcharsbx($title) ?>
 														</option>

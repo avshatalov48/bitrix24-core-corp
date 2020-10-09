@@ -339,20 +339,21 @@
 					}
 				}
 
-				var userPic = (
+				var
+					userPic = '',
+					userName = '';
+
+				if (
 					typeof postData.AUTHOR_ID != 'undefined'
 					&& parseInt(postData.AUTHOR_ID) > 0
 					&& BX.type.isNotEmptyObject(authorsData)
 					&& BX.type.isNotEmptyObject(authorsData[postData.AUTHOR_ID])
 					&& BX.type.isNotEmptyString(authorsData[postData.AUTHOR_ID].PHOTO)
-						? BX.create('img', {
-							props: {
-								src: authorsData[postData.AUTHOR_ID].PHOTO,
-								alt: authorsData[postData.AUTHOR_ID].NAME + ' ' + authorsData[postData.AUTHOR_ID].LAST_NAME
-							}
-						})
-						: null
-				);
+				)
+				{
+					userPic = "background-size: cover; background-image: url('" + authorsData[postData.AUTHOR_ID].PHOTO + "')";
+					userName = authorsData[postData.AUTHOR_ID].NAME + ' ' + authorsData[postData.AUTHOR_ID].LAST_NAME;
+				}
 
 				this.postsWrapperNode.appendChild(BX.create('DIV', {
 					props: {
@@ -371,10 +372,17 @@
 
 									},
 									props: {
-										className: 'intranet-user-profile-thanks-user-userpic'
+										className: 'ui-icon ui-icon-common-user intranet-user-profile-thanks-user-userpic'
 									},
 									children: [
-										userPic
+										BX.create('i', {
+											props: {
+												style: userPic
+											},
+											attrs: {
+												title: userName
+											}
+										})
 									]
 								}),
 								BX.create('DIV', {

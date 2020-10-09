@@ -23,9 +23,15 @@ align-items: center;
     border-bottom: 1px dashed #2066B0;
     opacity: 0.4;
 }
-.crm-report-chart-grid-show-expenses .crm-report-chart-grid-link-expenses
-{
+.crm-report-chart-grid-show-expenses .crm-report-chart-grid-link-expenses {
     opacity: 1;
+}
+.crm-report-chart-grid-link {
+    cursor: pointer;
+    color: #2066B0;
+}
+.crm-report-chart-grid-link:hover {
+    text-decoration: underline;
 }
 
 .crm-report-chart-grid-user-icon.ui-icon,
@@ -110,7 +116,7 @@ align-items: center;
     display: inline-block;
     margin: 0 8px 0 0;
     padding: 0 8px 0 0;
-    border-right: 1px solid rgba(82,92,105,.17);
+    border-right: 1px solid rgba(82, 92, 105, 0.17);
     font: 13px/10px "Helvetica Neue", Arial, Helvetica, sans-serif;
     color: #364150;
 }

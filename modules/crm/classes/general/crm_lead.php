@@ -2414,7 +2414,7 @@ class CAllCrmLead
 						'updateLocationAddress' => !(
 							(isset($arFields['ADDRESS_LOC_ADDR_ID']) && $arFields['ADDRESS_LOC_ADDR_ID'] > 0) ||
 							(isset($arFields['ADDRESS_LOC_ADDR']) && is_object($arFields['ADDRESS_LOC_ADDR']))
-					)
+						)
 					]
 				);
 			}
@@ -4086,6 +4086,35 @@ class CAllCrmLead
 		$fields = array('OBSERVER_IDS' => $observerIDs);
 		$entity = new CCrmLead(false);
 		$entity->Update($ID,$fields);
+	}
+
+	public static function RemoveObserverIDs($ID, array $userIDs)
+	{
+		if(empty($userIDs))
+		{
+			return;
+		}
+
+		$observerIDs = array_diff(
+			Crm\Observer\ObserverManager::getEntityObserverIDs(CCrmOwnerType::Lead, $ID),
+			$userIDs
+		);
+
+		$fields = array('OBSERVER_IDS' => $observerIDs);
+		$entity = new CCrmLead(false);
+		$entity->Update($ID, $fields);
+	}
+
+	public static function ReplaceObserverIDs($ID, array $userIDs)
+	{
+		if(empty($userIDs))
+		{
+			return;
+		}
+
+		$fields = array('OBSERVER_IDS' => $userIDs);
+		$entity = new CCrmLead(false);
+		$entity->Update($ID, $fields);
 	}
 
 	public static function RebuildDuplicateIndex($IDs)

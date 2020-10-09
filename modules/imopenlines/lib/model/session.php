@@ -434,10 +434,10 @@ class SessionTable extends DataManager
 			}
 			if (
 				$field instanceof ExpressionField &&
-				substr($key, -7) === '_SINGLE'
+				mb_substr($key, -7) === '_SINGLE'
 			)
 			{
-				$ufMultiName = substr($key, 0, -7);
+				$ufMultiName = mb_substr($key, 0, -7);
 
 				if(self::getEntity()->hasField($ufMultiName) && self::getEntity()->getField($ufMultiName) instanceof UserTypeField)
 				{
@@ -461,7 +461,7 @@ class SessionTable extends DataManager
 	 */
 	public static function getList(array $parameters = [])
 	{
-		if(!empty($parameters['select']) && in_array('CHAT', array_map('strtoupper', $parameters['select'])))
+		if(!empty($parameters['select']) && in_array('CHAT', array_map('mb_strtoupper', $parameters['select'])))
 		{
 			Loader::includeModule('im');
 		}
@@ -578,9 +578,9 @@ class SessionTable extends DataManager
 
 			$transcriptLines = implode(" ", $transcriptLines);
 			$transcriptLines = Im\Text::removeBbCodes($transcriptLines);
-			if (strlen($transcriptLines) > 5000000)
+			if (mb_strlen($transcriptLines) > 5000000)
 			{
-				$transcriptLines = substr($transcriptLines, 0, 5000000);
+				$transcriptLines = mb_substr($transcriptLines, 0, 5000000);
 			}
 		}
 		else

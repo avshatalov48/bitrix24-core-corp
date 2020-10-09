@@ -24,6 +24,9 @@ class Base
 	const Ya = 'yandex';
 	const Ig = 'instagram';
 
+	/** @var string $code Code. */
+	protected $code;
+
 	/**
 	 * Get name.
 	 *
@@ -69,5 +72,16 @@ class Base
 		}
 
 		return Loc::getMessage('CRM_TRACKING_SOURCE_BASE_TRAFFIC_DESC', ['%name%' => $name]);
+	}
+
+
+	/**
+	 * Get code.
+	 *
+	 * @return string|null
+	 */
+	public function getCode()
+	{
+		return $this->code;
 	}
 }

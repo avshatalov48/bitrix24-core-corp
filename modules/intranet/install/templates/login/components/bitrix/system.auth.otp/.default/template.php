@@ -65,7 +65,7 @@ else
 		<div class="login-item">
 			<span class="login-label"><?echo GetMessage("AUTH_OTP_CAPTCHA_PROMT")?>:</span><br/>
 			<input type="hidden" name="captcha_sid" value="<?echo $arResult["CAPTCHA_CODE"]?>" />
-			<input class="login-inp" style="width:40%; display:inline-block" type="text" name="captcha_word" maxlength="50" value="" size="15" />
+			<input class="login-inp" style="width:40%; display:inline-block" type="text" name="captcha_word" maxlength="50" value="" size="15" autocomplete="off" />
 			<div style="display:inline-block; vertical-align: middle;margin-left:10px" ><img src="/bitrix/tools/captcha.php?captcha_sid=<?echo $arResult["CAPTCHA_CODE"]?>" width="180" height="40" alt="CAPTCHA" /></div>
 		</div>
 		<?endif;?>

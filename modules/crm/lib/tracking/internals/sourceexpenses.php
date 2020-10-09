@@ -11,6 +11,7 @@ use Bitrix\Main;
 class SourceExpensesTable extends Main\ORM\Data\DataManager
 {
 	const TYPE_MANUAL = 0;
+	const TYPE_AD = 1;
 
 	/**
 	 * Returns DB table name for entity.
@@ -56,6 +57,11 @@ class SourceExpensesTable extends Main\ORM\Data\DataManager
 					return new Main\Type\Date();
 				},
 			],
+			'IMPRESSIONS' => [
+				'data_type' => 'integer',
+				'required' => true,
+				'default_value' => 0
+			],
 			'ACTIONS' => [
 				'data_type' => 'integer',
 				'required' => true,
@@ -77,6 +83,15 @@ class SourceExpensesTable extends Main\ORM\Data\DataManager
 			'PACK' => [
 				'data_type' => ExpensesPackTable::class,
 				'reference' => ['=this.PACK_ID' => 'ref.ID'],
+			],
+			'SOURCE_CHILD_ID' => [
+				'data_type' => 'integer',
+				'required' => true,
+				'default_value' => 0
+			],
+			'SOURCE_CHILD' => [
+				'data_type' => SourceChildTable::class,
+				'reference' => ['=this.SOURCE_CHILD_ID' => 'ref.ID'],
 			],
 			'SOURCE' => [
 				'data_type' => SourceTable::class,

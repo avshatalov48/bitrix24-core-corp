@@ -24,10 +24,12 @@ class Support24 extends Network
 	const SCHEDULE_ACTION_INVOLVEMENT = 'involvement';
 	const SCHEDULE_ACTION_MESSAGE = 'message';
 	const SCHEDULE_ACTION_PARTNER_JOIN = 'partner_join';
+	const SCHEDULE_ACTION_HIDE_DIALOG = 'hide_dialog';
 
 	const SCHEDULE_DELETE_ALL = null;
 
 	const INVOLVEMENT_LAST_MESSAGE_BLOCK_TIME = 8; // hour
+	const HIDE_DIALOG_TIME = 5; // minuts
 
 	const LIST_BOX_SUPPORT_CODES = Array(
 		'ru' => '4df232699a9e1d0487c3972f26ea8d25',
@@ -947,6 +949,44 @@ class Support24 extends Network
 		}
 
 		return parent::onStartWriting($params);
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static function startDialogSession($params)
+	{
+		if (!parent::startDialogSession($params))
+		{
+			return false;
+		}
+
+		self::deleteScheduledAction($params['DIALOG_ID'], self::SCHEDULE_ACTION_HIDE_DIALOG);
+
+		return true;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static function finishDialogSession($params)
+	{
+		if (Main\Loader::includeModule('bitrix24'))
+		{
+			// Only for ru, by, kz regions.
+			$prefix = \CBitrix24::getLicensePrefix();
+			if (in_array($prefix, ['ru', 'by', 'kz'], true))
+			{
+				if (isset($params['DIALOG_ID']) && preg_match('/^[0-9]+$/i', $params['DIALOG_ID']))
+				{
+					$userId = (int)$params['DIALOG_ID'];
+
+					self::scheduleAction($userId, self::SCHEDULE_ACTION_HIDE_DIALOG, '', self::HIDE_DIALOG_TIME);
+				}
+			}
+		}
+
+		return parent::finishDialogSession($params);
 	}
 
 	/**
@@ -1946,6 +1986,11 @@ class Support24 extends Network
 			));
 
 			return true;
+		}
+		elseif ($action == self::SCHEDULE_ACTION_HIDE_DIALOG)
+		{
+			$botId = self::getBotId();
+			\CIMContactList::DialogHide($botId, $userId);
 		}
 		else
 		{

@@ -739,7 +739,7 @@ class Absence
 		}
 
 		$text = trim($text);
-		if (strlen($text) <= 0)
+		if ($text == '')
 		{
 			return false;
 		}
@@ -1142,7 +1142,7 @@ class Absence
 
 		$params = $event->getParameters();
 
-		if (isset($_SESSION['SESS_AUTH']['SET_LAST_DESKTOP']))
+		if (isset(\Bitrix\Main\Application::getInstance()->getKernelSession()['IM']['SET_LAST_DESKTOP']))
 		{
 			return false;
 		}
@@ -1150,7 +1150,7 @@ class Absence
 		$result = self::setDesktopStart($params['USER_ID']);
 		if ($result)
 		{
-			$_SESSION['SESS_AUTH']['SET_LAST_DESKTOP'] = 'Y';
+			\Bitrix\Main\Application::getInstance()->getKernelSession()['IM']['SET_LAST_DESKTOP'] = 'Y';
 		}
 
 		return true;

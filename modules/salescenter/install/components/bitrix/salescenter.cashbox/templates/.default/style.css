@@ -56,10 +56,18 @@
 	background-color: #FF9A01;
 }
 
+.salescenter-checkbox-icon { width: 97px; }
+
+.salescenter-checkbox-icon i {
+	background-image: url(images/checkbox.svg);
+	background-size: 70% auto;
+	background-color: #272BED;
+}
+
 .salescenter-offline-icon { width: 97px; }
 
 .salescenter-offline-icon i {
-	background-image: url(images/offline.svg);
+	background-image: url(images/checkbox.svg);
 	background-size: 50% auto;
 	background-color: #359FD0;
 }

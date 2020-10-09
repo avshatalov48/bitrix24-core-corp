@@ -195,8 +195,16 @@
 		{
 			if (selector.options[selector.selectedIndex].value == 'all')
 			{
-				BX.animationHandler.fadeSlideToggleByClass(BX('imol_limitation_max_chat_block'), false);
-				BX.animationHandler.fadeSlideToggleByClass(BX('imol_workers_time_block'), false);
+				if(BX.message('IMOL_CONFIG_EDIT_LIMIT_QUEUE_ALL') == 'Y')
+				{
+					BX.UI.InfoHelper.show(BX.message('IMOL_CONFIG_EDIT_LIMIT_INFO_HELPER_MESSAGE_TO_ALL'));
+					selector.selectedIndex = 0;
+				}
+				else
+				{
+					BX.animationHandler.fadeSlideToggleByClass(BX('imol_limitation_max_chat_block'), false);
+					BX.animationHandler.fadeSlideToggleByClass(BX('imol_workers_time_block'), false);
+				}
 			}
 			else
 			{
@@ -226,13 +234,38 @@
 		toggleCrmSourceRule: function()
 		{
 			var selector = BX('imol_crm_create');
-			if (selector.options[selector.selectedIndex].value != 'none')
+			if (selector.options[selector.selectedIndex].value == 'lead')
 			{
 				BX.animationHandler.fadeSlideToggleByClass(BX('imol_crm_source_rule'), true);
+
+				BX.removeClass(BX('imol_crm_transfer_change_title'), 'invisible');
+				BX.addClass(BX('imol_crm_transfer_change_title_deal'), 'invisible');
+
+				BX.removeClass(BX('imol_crm_source_title'), 'invisible');
+				BX.addClass(BX('imol_crm_source_title_deal'), 'invisible');
+
+				BX.animationHandler.fadeSlideToggleByClass(BX('imol_crm_create_second_deal'), false);
+			}
+			else if (selector.options[selector.selectedIndex].value == 'deal')
+			{
+				BX.animationHandler.fadeSlideToggleByClass(BX('imol_crm_source_rule'), true);
+
+				BX.addClass(BX('imol_crm_transfer_change_title'), 'invisible');
+				BX.removeClass(BX('imol_crm_transfer_change_title_deal'), 'invisible');
+
+				BX.addClass(BX('imol_crm_source_title'), 'invisible');
+				BX.removeClass(BX('imol_crm_source_title_deal'), 'invisible');
+
+				BX.animationHandler.fadeSlideToggleByClass(BX('imol_crm_create_second_deal'), true);
 			}
 			else
 			{
 				BX.animationHandler.fadeSlideToggleByClass(BX('imol_crm_source_rule'), false);
+
+				BX.removeClass(BX('imol_crm_source_title'), 'invisible');
+				BX.addClass(BX('imol_crm_source_title_deal'), 'invisible');
+
+				BX.animationHandler.fadeSlideToggleByClass(BX('imol_crm_create_second_deal'), false);
 			}
 		},
 		toggleQueueSettingsBlock: function(e)
@@ -259,6 +292,22 @@
 				BX.OpenLinesConfigEdit.changeRatingRequest(ratingRequest);
 			}
 		},
+		toggleWorkTimeBlock: function()
+		{
+			if(BX('imol_worktime_checkbox').getAttribute('data-limit') != 'Y')
+			{
+				BX.animationHandler.fadeSlideToggleByClass(BX('imol_worktime_block'));
+			}
+
+			if (BX('imol_check_available').checked || BX('imol_worktime_checkbox').checked)
+			{
+				BX('imol_worktime_answer_block').classList.remove("invisible");
+			}
+			else
+			{
+				BX('imol_worktime_answer_block').classList.add("invisible");
+			}
+		},
 		toggleBotBlock: function()
 		{
 			BX.animationHandler.fadeSlideToggleByClass(BX('imol_welcome_bot_block'))
@@ -276,21 +325,6 @@
 			//e.preventDefault();
 			BX.animationHandler.fadeSlideToggleByClass(BX('imol_workers_time_block'));
 			//BX.OpenLinesConfigEdit.toggleBoolInputValue(BX('imol_workers_time_input'));
-		},
-		toggleWorktimeBlock: function()
-		{
-			BX.animationHandler.fadeSlideToggleByClass(BX('imol_worktime_block'))
-		},
-		toggleWorktimeAnswerBlock: function()
-		{
-			if (BX('imol_check_available').checked || BX('imol_worktime_checkbox').checked)
-			{
-				BX('imol_worktime_answer_block').classList.remove("invisible");
-			}
-			else
-			{
-				BX('imol_worktime_answer_block').classList.add("invisible");
-			}
 		},
 		toggleNoAnswerRule: function()
 		{
@@ -495,6 +529,11 @@
 				BX.OpenLinesConfigEdit.toggleVoteBlock
 			);
 			BX.bind(
+				BX('imol_worktime_checkbox'),
+				'change',
+				BX.OpenLinesConfigEdit.toggleWorkTimeBlock
+			);
+			BX.bind(
 				BX('imol_crm_checkbox'),
 				'change',
 				BX.OpenLinesConfigEdit.toggleCrmBlock
@@ -510,19 +549,9 @@
 				BX.OpenLinesConfigEdit.toggleAutoMessageBlock
 			);
 			BX.bind(
-				BX('imol_worktime_checkbox'),
-				'change',
-				BX.OpenLinesConfigEdit.toggleWorktimeBlock
-			);
-			BX.bind(
-				BX('imol_worktime_checkbox'),
-				'change',
-				BX.OpenLinesConfigEdit.toggleWorktimeAnswerBlock
-			);
-			BX.bind(
 				BX('imol_check_available'),
 				'change',
-				BX.OpenLinesConfigEdit.toggleWorktimeAnswerBlock
+				BX.OpenLinesConfigEdit.toggleWorkTimeBlock
 			);
 			BX.bind(
 				BX('imol_action_close'),
@@ -609,7 +638,23 @@
 	};
 
 	window.BX.imolTrialHandler = {
-		openPopup : function(dialogId, text)
+		openPopup : function(dialogId)
+		{
+			if (
+				typeof(BX) != 'undefined' &&
+				typeof(BX.UI) != 'undefined' &&
+				typeof(BX.UI.InfoHelper) != 'undefined' &&
+				dialogId
+			)
+			{
+				BX.UI.InfoHelper.show(dialogId);
+			}
+			else
+			{
+				alert(BX.message('IMOL_CONFIG_EDIT_POPUP_LIMITED_TITLE_DEFAULT'));
+			}
+		},
+		openPopupOld : function(dialogId, text)
 		{
 			if (typeof(B24) != 'undefined' && typeof(B24.licenseInfoPopup) != 'undefined')
 			{
@@ -623,12 +668,17 @@
 
 		openPopupQueueAll : function ()
 		{
-			BX.imolTrialHandler.openPopup('imol_queue_all', BX.message('IMOL_CONFIG_EDIT_POPUP_LIMITED_QUEUE_ALL_NEW'));
+			BX.imolTrialHandler.openPopup(BX.message('IMOL_CONFIG_EDIT_LIMIT_INFO_HELPER_MESSAGE_TO_ALL'));
 		},
 
 		openPopupQueueVote : function ()
 		{
-			BX.imolTrialHandler.openPopup('imol_vote', BX.message('IMOL_CONFIG_EDIT_POPUP_LIMITED_VOTE'));
+			BX.imolTrialHandler.openPopup(BX.message('IMOL_CONFIG_EDIT_LIMIT_INFO_HELPER_CUSTOMER_RATE'));
+		},
+
+		openPopupWorkTime : function ()
+		{
+			BX.imolTrialHandler.openPopup(BX.message('IMOL_CONFIG_EDIT_LIMIT_INFO_HELPER_WORKHOUR_SETTING'));
 		},
 
 		init : function ()
@@ -637,11 +687,6 @@
 				BX('imol_queue_all'),
 				'click',
 				BX.imolTrialHandler.openPopupQueueAll
-			);
-			BX.bind(
-				BX('imol_vote'),
-				'click',
-				BX.imolTrialHandler.openPopupQueueVote
 			);
 		}
 
@@ -1451,7 +1496,7 @@
 			if (BX.message('LM_BUSINESS_USERS_ON') == 'Y' && BX.message('LM_BUSINESS_USERS').split(',').indexOf(item.id) == -1)
 			{
 				BX.SocNetLogDestination.closeDialog(this.id);
-				BX.imolTrialHandler.openPopup('imol_queue', BX.message('LM_BUSINESS_USERS_TEXT'));
+				BX.imolTrialHandler.openPopupOld('imol_queue', BX.message('LM_BUSINESS_USERS_TEXT'));
 				return false;
 			}
 			if(!BX.findChild(this.nodes.container, { attr : { 'data-id' : item.id }}, false, false))
@@ -1632,7 +1677,7 @@
 			if (BX.message('LM_BUSINESS_USERS_ON') == 'Y' && BX.message('LM_BUSINESS_USERS').split(',').indexOf(item.id) == -1)
 			{
 				BX.SocNetLogDestination.closeDialog(this.id);
-				BX.imolTrialHandler.openPopup('imol_queue', BX.message('LM_BUSINESS_USERS_TEXT'));
+				BX.imolTrialHandler.openPopupOld('imol_queue', BX.message('LM_BUSINESS_USERS_TEXT'));
 				return false;
 			}
 			if(!BX.findChild(this.nodes.container, { attr : { 'data-id' : item.id }}, false, false))

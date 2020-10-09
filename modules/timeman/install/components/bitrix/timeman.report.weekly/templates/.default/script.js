@@ -854,7 +854,9 @@ JCTimeManReport.prototype.setReportsData = function(data)
 
 					for (k=1; k<data[i].FOR_JS.CELL_COUNT; k++)
 					{
-						row.deleteCell(cell.cellIndex+1);
+						try {
+							row.deleteCell(cell.cellIndex+1);
+						} catch (err) {}
 					}
 
 					cell = null;cellcnt = 0;

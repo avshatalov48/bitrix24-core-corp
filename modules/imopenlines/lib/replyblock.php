@@ -7,6 +7,16 @@ use Bitrix\Main\Loader;
 
 class ReplyBlock
 {
+	/**
+	 * Adds a block to the session and chat.
+	 *
+	 * @param int $sessionId
+	 * @param Chat $chat
+	 * @param array $limit
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public static function add(int $sessionId, Chat $chat , array $limit): void
 	{
 		if (!empty($limit['BLOCK_DATE']) && !empty($limit['BLOCK_REASON']))
@@ -24,6 +34,15 @@ class ReplyBlock
 		}
 	}
 
+	/**
+	 * Removes a block from the session and chat.
+	 *
+	 * @param int $sessionId
+	 * @param Chat $chat
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public static function delete(int $sessionId, Chat $chat): void
 	{
 		if ($sessionId > 0 && $chat)
@@ -41,6 +60,12 @@ class ReplyBlock
 		}
 	}
 
+	/**
+	 * Checks if the session is blocked.
+	 *
+	 * @param Session $session
+	 * @return bool
+	 */
 	public static function isBlocked(Session $session): bool
 	{
 		$sessionData = $session->getData();
@@ -53,6 +78,16 @@ class ReplyBlock
 		return false;
 	}
 
+	/**
+	 * Gets block information from the previous session.
+	 *
+	 * @param array $sessionFields
+	 * @return array|null
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public static function getBlockFromPreviousSession(array $sessionFields): ?array
 	{
 		$result = null;

@@ -436,7 +436,6 @@ class CommentPoster
 				case 'UF_CRM_TASK':
 					$appendCrmFields = true;
 					continue 2;
-					break;
 
 				default:
 					if (mb_strpos($field, 'UF_') === 0)
@@ -499,7 +498,7 @@ class CommentPoster
 		$old = $values['FROM_VALUE'];
 		$new = $values['TO_VALUE'];
 
-		$noValue = Loc::getMessage('COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_VALUE_NO');
+		$noValue = Loc::getMessage('COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_VALUE_NOT_PRESENT_SINGLE_M');
 
 		switch ($field)
 		{
@@ -803,20 +802,21 @@ class CommentPoster
 	 * Builds comment text by parts data.
 	 *
 	 * @param array $partsData
+	 * @return string
 	 */
-	public static function getCommentText(array $partsData)
+	public static function getCommentText(array $partsData): string
 	{
 		$result = '';
 		$textList = [];
 
-		foreach($partsData as $partsItems)
+		foreach ($partsData as $partsItems)
 		{
 			if (!is_array($partsItems))
 			{
 				continue;
 			}
 
-			foreach($partsItems as list($messageCode, $replace))
+			foreach ($partsItems as [$messageCode, $replace])
 			{
 				if (empty($messageCode))
 				{
@@ -832,6 +832,34 @@ class CommentPoster
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @param array $partsData
+	 * @return array
+	 */
+	public static function getCommentCodes(array $partsData): array
+	{
+		$codes = [];
+
+		foreach ($partsData as $partsItems)
+		{
+			if (!is_array($partsItems))
+			{
+				continue;
+			}
+
+			foreach ($partsItems as [$messageCode, $replace])
+			{
+				if (empty($messageCode))
+				{
+					continue;
+				}
+				$codes[] = $messageCode;
+			}
+		}
+
+		return $codes;
 	}
 
 	/**

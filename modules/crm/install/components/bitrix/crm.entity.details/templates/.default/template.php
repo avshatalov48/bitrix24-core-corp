@@ -120,7 +120,8 @@ $tabContainerId = "{$guid}_tabs";
 							'EXTRAS' => $extras,
 							'READ_ONLY' => $readOnly,
 							'INITIAL_MODE' => $arResult['INITIAL_MODE'],
-							'DETAIL_MANAGER_ID' => $guid
+							'DETAIL_MANAGER_ID' => $guid,
+							'MODULE_ID' => 'crm'
 						)
 					)
 				);

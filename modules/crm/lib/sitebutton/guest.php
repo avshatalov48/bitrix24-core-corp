@@ -8,6 +8,7 @@
 
 namespace Bitrix\Crm\SiteButton;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Context;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Json;
@@ -76,7 +77,13 @@ class Guest
 			case 'registerOrder':
 				if (!empty($data['trace']))
 				{
-					Tracking\Trace::create($data['trace'])->save();
+					Tracking\Trace::create($data['trace'])->useTraceDetecting(false)->save();
+					Application::getInstance()->addBackgroundJob(
+						function ()
+						{
+							Tracking\Internals\TraceTable::deleteUnusedTraces();
+						}
+					);
 				}
 				break;
 

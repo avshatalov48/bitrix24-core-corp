@@ -16,9 +16,7 @@ Class meeting extends CModule
 	{
 		$arModuleVersion = array();
 
-		$path = str_replace("\\", "/", __FILE__);
-		$path = substr($path, 0, strlen($path) - strlen("/index.php"));
-		include($path."/version.php");
+		include(__DIR__.'/version.php');
 
 		$this->MODULE_VERSION = $arModuleVersion["VERSION"];
 		$this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
@@ -35,7 +33,7 @@ Class meeting extends CModule
 		// Database tables creation
 		if(!$DB->Query("SELECT 'x' FROM b_meeting WHERE 1=0", true))
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/meeting/install/db/".strtolower($DB->type)."/install.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/meeting/install/db/".mb_strtolower($DB->type)."/install.sql");
 		}
 
 		if($this->errors !== false)
@@ -62,7 +60,7 @@ Class meeting extends CModule
 
 		if(!array_key_exists("savedata", $arParams) || $arParams["savedata"] != "Y")
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/meeting/install/db/".strtolower($DB->type)."/uninstall.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/meeting/install/db/".mb_strtolower($DB->type)."/uninstall.sql");
 
 			if ($this->errors === false && CModule::IncludeModule('forum'))
 			{
@@ -122,7 +120,7 @@ Class meeting extends CModule
 	function DoInstall()
 	{
 		global $DB, $APPLICATION, $USER, $step;
-		$step = IntVal($step);
+		$step = intval($step);
 
 		if(!$USER->IsAdmin())
 			return;
@@ -164,7 +162,7 @@ Class meeting extends CModule
 		global $DB, $APPLICATION, $USER, $step;
 		if($USER->IsAdmin())
 		{
-			$step = IntVal($step);
+			$step = intval($step);
 			if($step < 2)
 			{
 				$APPLICATION->IncludeAdminFile(GetMessage("MEETING_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/meeting/install/unstep1.php");

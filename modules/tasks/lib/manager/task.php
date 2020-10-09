@@ -881,15 +881,6 @@ final class Task extends \Bitrix\Tasks\Manager
 
 				$data[$taskId] = $taskData;
 			}
-
-			if ($getNewCommentsCount)
-			{
-				$newComments = Comments\Task::getNewCommentsCountForTasks(array_keys($items), $userId);
-				foreach ($newComments as $taskId => $commentsCount)
-				{
-					$data[$taskId]['NEW_COMMENTS_COUNT'] = $commentsCount;
-				}
-			}
 		}
 
 		return [

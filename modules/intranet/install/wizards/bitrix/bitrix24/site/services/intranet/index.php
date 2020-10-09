@@ -102,11 +102,6 @@ $rsIBlock = CIBlock::GetList(array(), array("CODE" => "calendar_employees", "TYP
 if ($arIBlock = $rsIBlock->Fetch())
 	COption::SetOptionString("intranet", "iblock_calendar",  $arIBlock["ID"], false, WIZARD_SITE_ID);
 
-COption::SetOptionString('intranet', 'iblock_type_tasks', 'services', false, WIZARD_SITE_ID);
-$rsIBlock = CIBlock::GetList(array(), array("CODE" => "intranet_tasks", "TYPE" => "services", "SITE_ID" => WIZARD_SITE_ID));
-if ($arIBlock = $rsIBlock->Fetch())
-	COption::SetOptionString("intranet", "iblock_tasks",  $arIBlock["ID"], false, WIZARD_SITE_ID);
-
 COption::SetOptionString('intranet', 'path_user', WIZARD_SITE_DIR.'company/personal/user/#USER_ID#/', false, WIZARD_SITE_ID);
 
 COption::SetOptionString('intranet', 'path_task_user', WIZARD_SITE_DIR.'company/personal/user/#USER_ID#/tasks/', false, WIZARD_SITE_ID);

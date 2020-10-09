@@ -65,6 +65,16 @@ class ConfigTable extends Main\Entity\DataManager
 				'title' => Loc::getMessage('CONFIG_ENTITY_CRM_CREATE_FIELD'),
 				'default_value' => 'lead',
 			]),
+			new StringField('CRM_CREATE_SECOND', [
+				'validation' => [__CLASS__, 'validateText50'],
+				'title' => Loc::getMessage('CONFIG_ENTITY_CRM_CREATE_SECOND_FIELD'),
+				'default_value' => '',
+			]),
+			new StringField('CRM_CREATE_THIRD', [
+				'validation' => [__CLASS__, 'validateText50'],
+				'title' => Loc::getMessage('CONFIG_ENTITY_CRM_CREATE_THIRD_FIELD'),
+				'default_value' => '',
+			]),
 			new BooleanField('CRM_FORWARD', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_CRM_FORWARD_FIELD'),

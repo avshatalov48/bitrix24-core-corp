@@ -1356,6 +1356,7 @@
 	overflow: hidden;
 	margin: 0;
 	padding: 0;
+	position: absolute;
 }
 
 @keyframes page-hide {
@@ -1463,4 +1464,8 @@ select {
 .imopenlines-control-alert-popup.popup-window {
 	padding: 20px;
 	max-width: 362px;
+}
+
+.imopenlines-control-checkbox-label .tariff-lock {
+	margin: 1px 0 0 8px;
 }

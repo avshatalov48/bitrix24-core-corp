@@ -59,7 +59,7 @@ class ImOpenLinesLinesEditAjaxController extends \Bitrix\Main\Engine\Controller
 			);
 		}
 
-		if(strlen($avatarFile["name"]) == 0 || intval($avatarFile["size"]) == 0)
+		if($avatarFile["name"] == '' || intval($avatarFile["size"]) == 0)
 		{
 			return array (
 				'error' => 'Size error'//TODO
@@ -125,7 +125,7 @@ class ImOpenLinesLinesEditAjaxController extends \Bitrix\Main\Engine\Controller
 			$path = \CFile::getFileSRC($file);
 		}
 
-		if (substr($path, 0, 1) == '/')
+		if (mb_substr($path, 0, 1) == '/')
 		{
 			$path = \Bitrix\ImOpenLines\Common::getServerAddress() . $path;
 		}

@@ -64,24 +64,24 @@ class Helper
 		}
 		return $result;
 	}
-	
+
 	public static function canCurrentUserModifyLine()
 	{
 		$permissions = Permissions::createWithCurrentUser();
 		return $permissions->canModifyLines();
 	}
-	
+
 	public static function canCurrentUserModifyConnector()
 	{
 		$permissions = Permissions::createWithCurrentUser();
 		return $permissions->canModifyConnectors();
 	}
-	
+
 	public static function clearMenuCache()
 	{
 		\Bitrix\Main\Application::getInstance()->getTaggedCache()->clearByTag('bitrix:menu');
 	}
-	
+
 	public static function canUse()
 	{
 		if(!Loader::includeModule('bitrix24'))
@@ -89,7 +89,7 @@ class Helper
 
 		return Feature::isFeatureEnabled('imopenlines_security');
 	}
-	
+
 	public static function isMainMenuEnabled()
 	{
 		return (
@@ -99,14 +99,14 @@ class Helper
 			self::isCrmWidgetEnabled()
 		);
 	}
-	
+
 	public static function isCrmWidgetEnabled()
 	{
 		if (\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24') && !$GLOBALS['USER']->CanDoOperation('bitrix24_config'))
 		{
 			return false;
 		}
-			
+
 		if (is_null(self::$showWidgetLink))
 		{
 			self::$showWidgetLink = false;
@@ -119,7 +119,7 @@ class Helper
 				}
 			}
 		}
-		
+
 		return self::$showWidgetLink;
 	}
 	public static function isLinesMenuEnabled()
@@ -127,38 +127,25 @@ class Helper
 		$permissions = Permissions::createWithCurrentUser();
 		return $permissions->canViewLines();
 	}
-	
+
 	public static function isStatisticsMenuEnabled()
 	{
 		$permissions = Permissions::createWithCurrentUser();
 		return $permissions->canViewStatistics();
 	}
-	
+
 	public static function isSettingsMenuEnabled()
 	{
 		$permissions = Permissions::createWithCurrentUser();
 		return $permissions->canModifySettings();
 	}
-	
-	public static function getTrialText()
-	{
-		$title = Loc::getMessage("IMOL_TRIAL_S_TITLE");
-		$text = '<p>'.Loc::getMessage("IMOL_TRIAL_S_P1").'</p><p>'.Loc::getMessage("IMOL_TRIAL_S_P2").'</p> 
-			 <ul class="hide-features-list">
-			 	<li class="hide-features-list-item">'.Loc::getMessage("IMOL_TRIAL_S_F1").'</li>
-				<li class="hide-features-list-item">'.Loc::getMessage("IMOL_TRIAL_S_F2").'</li>
-				<li class="hide-features-list-item">'.Loc::getMessage("IMOL_TRIAL_S_F3").'</li> 
-				<li class="hide-features-list-item">'.Loc::getMessage("IMOL_TRIAL_S_F4").'</li>';
 
-		return array('TITLE' => $title, 'TEXT' => $text);
-	}
-	
 	public static function installRolesAgent()
 	{
 		$checkCursor = \Bitrix\ImOpenlines\Model\RoleTable::getList(array('limit' => 1));
 		if($checkCursor->fetch())
 			return "";
-		
+
 		$defaultRoles = array(
 			'ADMIN' => array(
 				'NAME' => GetMessage('IMOL_ROLE_ADMIN'),
@@ -291,7 +278,7 @@ class Helper
 				));
 			}
 		}
-		
+
 		return "";
 	}
 }

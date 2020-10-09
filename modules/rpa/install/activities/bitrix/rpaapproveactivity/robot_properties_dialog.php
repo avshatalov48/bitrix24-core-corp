@@ -63,7 +63,7 @@ $fieldsToSet = $dialog->getMap()['FieldsToSet'];
 					<input name="<?=htmlspecialcharsbx($responsibleType['FieldName'])?>" value="heads" <?=($responsibleTypeValue === 'heads')?'checked':''?> type="radio" class="ui-ctl-element">
 					<div class="ui-ctl-label-text"><?=htmlspecialcharsbx($responsibleType['Options']['heads'])?></div>
 				</label>
-				<span data-hint="<?=GetMessage('RPA_BP_APR_SPD_HELP_HEADS')?>"></span>
+				<span data-hint="<?=htmlspecialcharsbx(GetMessage('RPA_BP_APR_SPD_HELP_HEADS'))?>"></span>
 			</div>
 			<script>
 				BX.ready(function()
@@ -241,7 +241,7 @@ $fieldsToSet = $dialog->getMap()['FieldsToSet'];
 						<input type="checkbox" class="ui-ctl-element" name="<?=htmlspecialcharsbx($executiveResponsible['FieldName'])?>_enable" value="Y" data-role="exec-resp-cb" <?=CBPHelper::isEmptyValue($executiveResponsibleValue)?'':'checked'?>>
 						<div class="ui-ctl-label-text"><?=htmlspecialcharsbx($executiveResponsible['Name'])?></div>
 					</label>
-					<span data-hint="<?=GetMessage('RPA_BP_APR_SPD_HELP_EXECUTIVE')?>"></span>
+					<span data-hint="<?=htmlspecialcharsbx(GetMessage('RPA_BP_APR_SPD_HELP_EXECUTIVE'))?>"></span>
 					<div class="rpa-automation-field" data-role="exec-resp-block">
 						<div class="ui-ctl ui-ctl-w100">
 							<?=$dialog->renderFieldControl($executiveResponsible)?>
@@ -593,7 +593,15 @@ $fieldsToSet = $dialog->getMap()['FieldsToSet'];
 			BX.PopupMenu.show(
 				'rpa-approve-stage-switcher' + index,
 				this,
-				menuItems
+				menuItems,
+				{
+					events: {
+						onPopupClose: function(popup)
+						{
+							popup.destroy();
+						}
+					}
+				}
 			);
 		};
 

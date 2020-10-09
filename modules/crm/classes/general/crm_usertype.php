@@ -2111,7 +2111,7 @@ class CCrmUserType
 			$typeID = $arUserField['USER_TYPE']['USER_TYPE_ID'];
 
 			// Skip datetime - there is custom logic.
-			if($typeID === 'datetime')
+			if($typeID === 'datetime' || $typeID === 'date')
 			{
 				continue;
 			}

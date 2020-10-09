@@ -1,6 +1,8 @@
 <?
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
-use \Bitrix\Main\Localization\Loc;?>
+use \Bitrix\Main\Localization\Loc;
+use \Bitrix\Imopenlines\Limit;
+?>
 
 <div class="imopenlines-form-settings-section">
 	<div class="imopenlines-form-settings-block">
@@ -39,8 +41,28 @@ use \Bitrix\Main\Localization\Loc;?>
 							   value="Y"
 							   id="imol_worktime_checkbox"
 							   class="imopenlines-control-checkbox"
+							   data-limit="<?=!Limit::canWorkHourSettings()?'Y':'N';?>"
 							<? if ($arResult['CONFIG']['WORKTIME_ENABLE'] == 'Y') { ?>checked<? } ?>>
 						<?=Loc::getMessage('IMOL_CONFIG_EDIT_WORKTIME_ENABLE')?>
+						<?
+						if (!Limit::canWorkHourSettings() || Limit::isDemoLicense())
+						{
+							?>
+							<span class="tariff-lock"></span>
+						<?
+						if (!Limit::canWorkHourSettings())
+						{
+						?>
+							<script type="text/javascript">
+								BX.bind(BX('imol_worktime_checkbox'), 'change', function(e){
+									BX('imol_worktime_checkbox').checked = false;
+									window.BX.imolTrialHandler.openPopupWorkTime();
+								});
+							</script>
+							<?
+						}
+						}
+						?>
 					</label>
 				</div>
 			</div>

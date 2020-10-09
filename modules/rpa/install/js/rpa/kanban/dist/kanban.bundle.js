@@ -1781,10 +1781,10 @@ this.BX = this.BX || {};
 	            var renderedUser = _this7.renderUser(fieldName);
 
 	            if (renderedUser) {
-	              _this7.layout.fieldList.appendChild(main_core.Tag.render(_templateObject4$1(), fields[fieldName].title, renderedUser));
+	              _this7.layout.fieldList.appendChild(main_core.Tag.render(_templateObject4$1(), main_core.Text.encode(fields[fieldName].title), renderedUser));
 	            }
 	          } else {
-	            _this7.layout.fieldList.appendChild(main_core.Tag.render(_templateObject5$1(), fields[fieldName].title, _this7.getDisplayableValue(fieldName))); // field with link
+	            _this7.layout.fieldList.appendChild(main_core.Tag.render(_templateObject5$1(), main_core.Text.encode(fields[fieldName].title), _this7.getDisplayableValue(fieldName))); // field with link
 
 	            /*this.layout.fieldList.appendChild(Tag.render`
 	            	<div class="rpa-kanban-item-field-item">

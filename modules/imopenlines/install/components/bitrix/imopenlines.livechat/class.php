@@ -100,7 +100,7 @@ class ImOpenLinesComponentLines extends CBitrixComponent
 				}
 				$backgroundImageSrcHttp = $image['src'];
 				$backgroundImageSrcHttps = $backgroundImageSrcHttp;
-				if(substr($backgroundImageSrcHttp, 0, 1) == '/')
+				if(mb_substr($backgroundImageSrcHttp, 0, 1) == '/')
 				{
 					$backgroundImageSrcHttp = $siteNameHttp . $backgroundImageSrcHttp;
 					$backgroundImageSrcHttps = $siteNameHttps . $backgroundImageSrcHttps;
@@ -113,7 +113,7 @@ class ImOpenLinesComponentLines extends CBitrixComponent
 			}
 		}
 
-		$ogLang = strtoupper(\Bitrix\Main\Context::getCurrent()->getLanguage());
+		$ogLang = mb_strtoupper(\Bitrix\Main\Context::getCurrent()->getLanguage());
 		$ogLogo = $this->arResult['CUSTOMIZATION']['OG_IMAGE'];
 		if(isset($this->arResult['CUSTOMIZATION']['OG_IMAGE_' . $ogLang]))
 		{

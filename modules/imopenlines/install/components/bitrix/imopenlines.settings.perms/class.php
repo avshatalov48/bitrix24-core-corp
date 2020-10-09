@@ -87,10 +87,6 @@ class CImOpenlinesPermsComponent extends CBitrixComponent
 		$this->arResult['ROLE_ACCESS_CODES'] = $roleAccessCodes;
 		$this->arResult['ADD_URL'] = \Bitrix\ImOpenlines\Common::getPublicFolder().'editrole.php?ID=0';
 		$this->arResult['CAN_EDIT'] = \Bitrix\ImOpenlines\Security\Helper::canUse();
-		if(!$this->arResult['CAN_EDIT'])
-		{
-			$this->arResult['TRIAL'] = \Bitrix\ImOpenlines\Security\Helper::getTrialText();
-		}
 
 		$this->arResult['IFRAME'] = $this->request['IFRAME'] === 'Y';
 

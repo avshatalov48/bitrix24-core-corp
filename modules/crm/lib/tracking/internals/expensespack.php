@@ -11,6 +11,7 @@ use Bitrix\Main;
 class ExpensesPackTable extends Main\ORM\Data\DataManager
 {
 	const TYPE_MANUAL = 0;
+	const TYPE_AD = 1;
 
 	/**
 	 * Returns DB table name for entity.

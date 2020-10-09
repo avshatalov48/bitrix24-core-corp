@@ -24,6 +24,6 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 				</span>
 			</div>
 		<?php endforeach?>
-		<?php if (strlen($arResult["NAV_STRING"]) > 0 && $arResult["NAV_RESULT"]->NavPageCount > 1):?>
+		<?php if ($arResult["NAV_STRING"] <> '' && $arResult["NAV_RESULT"]->NavPageCount > 1):?>
 			<br /><?php echo $arResult["NAV_STRING"]?>
 		<?php endif?>

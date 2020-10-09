@@ -11,6 +11,8 @@ use \Bitrix\ImOpenLines\Crm,
 
 use \Bitrix\ImConnector\Connector;
 
+use \Bitrix\Crm\Category\DealCategory;
+
 use \Bitrix\Im\User as ImUser;
 
 Crm::loadMessages();
@@ -63,7 +65,7 @@ class Common
 		{
 			if($noImol === true)
 			{
-				$communicationType = strtoupper($messengerType);
+				$communicationType = mb_strtoupper($messengerType);
 			}
 			else
 			{
@@ -440,7 +442,7 @@ class Common
 		$parsedUserCode = Session\Common::parseUserCode($userCode);
 		$messengerType = $parsedUserCode['CONNECTOR_ID'];
 
-		$lineName = Loc::getMessage('IMOL_CRM_LINE_TYPE_' . strtoupper($messengerType));
+		$lineName = Loc::getMessage('IMOL_CRM_LINE_TYPE_'.mb_strtoupper($messengerType));
 
 		if (!$lineName && Loader::includeModule("imconnector"))
 		{
@@ -586,7 +588,7 @@ class Common
 	public static function getCrmEntityIdByTypeCode($crmEntityType)
 	{
 		$result = false;
-		$crmEntityType = strtoupper($crmEntityType);
+		$crmEntityType = mb_strtoupper($crmEntityType);
 
 		if (Loader::includeModule('crm'))
 		{
@@ -687,7 +689,7 @@ class Common
 			{
 				$activity = \Bitrix\Crm\Timeline\ActivityController::prepareScheduleDataModel($activity);
 
-				if (!empty($activity['ASSOCIATED_ENTITY']['COMMUNICATION']['VALUE']) && strpos( $activity['ASSOCIATED_ENTITY']['COMMUNICATION']['VALUE'],'imol|') === 0)
+				if (!empty($activity['ASSOCIATED_ENTITY']['COMMUNICATION']['VALUE']) && mb_strpos($activity['ASSOCIATED_ENTITY']['COMMUNICATION']['VALUE'], 'imol|') === 0)
 				{
 					$entityId = str_replace('imol|', '',  $activity['ASSOCIATED_ENTITY']['COMMUNICATION']['VALUE']);
 					$filter = [
@@ -701,6 +703,39 @@ class Common
 					$result = $chatData['ID'] > 0 ? $chatData['ID'] : 0;
 				}
 			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Return a list of funnels for sales transactions.
+	 *
+	 * @return Result
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public static function getDealCategories(): Result
+	{
+		$result = new Result();
+
+		if (!Loader::includeModule('crm'))
+		{
+			$result->addError(new Error(Loc::getMessage('IMOL_CRM_ERROR_NOT_LOAD_CRM'), Crm::ERROR_IMOL_NOT_LOAD_CRM, __METHOD__));
+		}
+		else
+		{
+			$categories = DealCategory::getSelectListItems();
+
+			foreach ($categories as $id => $category)
+			{
+				$categories[$id] = [
+					'ID' => $id,
+					'NAME' => $category,
+				];
+			}
+
+			$result->setData($categories);
 		}
 
 		return $result;

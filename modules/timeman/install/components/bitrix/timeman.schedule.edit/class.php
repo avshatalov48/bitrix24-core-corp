@@ -280,8 +280,8 @@ class TimemanScheduleComponent extends \Bitrix\Timeman\Component\BaseComponent
 		$systemCalendars = $this->calendarRepository->findByCodesWithExclusions(CalendarTable::getSystemCalendarCodes());
 		foreach ($systemCalendars as $systemCalendar)
 		{
-			$name = Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_SYSTEM_CALENDAR_HOLIDAYS_SINGLE_TITLE_' . strtoupper($systemCalendar->getSystemCode()));
-			$nameList = Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_SYSTEM_CALENDAR_HOLIDAYS_LIST_TITLE_' . strtoupper($systemCalendar->getSystemCode()));
+			$name = Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_SYSTEM_CALENDAR_HOLIDAYS_SINGLE_TITLE_'.mb_strtoupper($systemCalendar->getSystemCode()));
+			$nameList = Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_SYSTEM_CALENDAR_HOLIDAYS_LIST_TITLE_'.mb_strtoupper($systemCalendar->getSystemCode()));
 			if (empty($name) || empty($nameList))
 			{
 				continue;

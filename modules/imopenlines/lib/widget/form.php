@@ -440,10 +440,7 @@ class Form
 								}
 							}
 
-							if($session->getConfig('CRM_CREATE') != Config::CRM_CREATE_LEAD)
-							{
-								$crmManager->setSkipCreate();
-							}
+							$crmManager->setModeCreate($session->getConfig('CRM_CREATE'));
 
 							$crmManager->search();
 							$crmFieldsManager->setTitle($session->getChat()->getData('TITLE'));
@@ -467,7 +464,7 @@ class Form
 					if ($sessionStart)
 					{
 						$session->update(Array(
-							'SEND_FORM' => strtolower($type)
+							'SEND_FORM' => mb_strtolower($type)
 						));
 					}
 				}

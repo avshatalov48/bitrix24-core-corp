@@ -46,28 +46,20 @@ $nodes = [];
 				$avatarStyle = ' style="background-image:url(' . HtmlFilter::encode($item['personalPhoto']) . ')"';
 			}
 			?>
-			<div
-				class="mobile-grid-field-select-user-item-outer"
-			>
-				<div
-					class="mobile-grid-field-select-user-item"
-				>
+			<div class="mobile-grid-field-select-user-item-outer">
+				<div class="mobile-grid-field-select-user-item">
 
 					<del
 						id="<?= $arResult['userField']['~id'] ?>_del_<?= $item['userId'] ?>"
 					>
 					</del>
 
-					<div
-						class="avatar"
-						<?= $avatarStyle ?>
-					>
-					</div>
+					<div class="avatar" <?= $avatarStyle ?>></div>
 					<span
 						onclick="BXMobileApp.Events.postToComponent('onUserProfileOpen', [<?= $item['userId'] ?>], 'communication');"
 					>
-				<?= HtmlFilter::encode($item['name']) ?>
-			</span>
+						<?= $item['name'] ?>
+					</span>
 				</div>
 			</div>
 			<?php

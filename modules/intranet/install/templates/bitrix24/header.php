@@ -367,7 +367,8 @@ if ($isBitrix24Cloud)
 									"USE_LANGUAGE_GUESS" => (LANGUAGE_ID == "ru") ? "Y" : "N"
 								),
 								$searchParams),
-							false
+							false,
+							array('HIDE_ICONS' => 'Y')
 						);
 					?>
 					</div>

@@ -28,10 +28,12 @@ class TaskAccessController extends BaseAccessController
 		return parent::check($action, $item, $params);
 	}
 
-	public function dropItemCache(int $itemId)
+	public static function dropItemCache(int $itemId)
 	{
 		$key = 'TASK_'.$itemId;
 		unset(static::$cache[$key]);
+
+		\Bitrix\Tasks\Access\Model\TaskModel::invalidateCache($itemId);
 	}
 
 	protected function loadItem(int $itemId = null): AccessibleItem

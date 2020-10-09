@@ -3,13 +3,16 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use \Bitrix\Main\Loader,
 	\Bitrix\Main\Localization\Loc,
-	\Bitrix\Main\HttpApplication,
+	\Bitrix\Main\HttpApplication;
+
+use \Bitrix\Imopenlines\Limit,
+	\Bitrix\ImOpenLines\Config,
 	\Bitrix\ImOpenLines\Model\SessionTable;
 
 class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 {
-	protected $gridId = "imopenlines_statistic_v3";
-	protected $filterId = "imopenlines_statistic_detail_filter";
+	protected $gridId = 'imopenlines_statistic_v3';
+	protected $filterId = 'imopenlines_statistic_detail_filter';
 
 	/** @var  \Bitrix\Main\Grid\Options */
 	protected $gridOptions;
@@ -23,7 +26,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 
 	private function init()
 	{
-		$this->enableExport = true; // TODO check perm
+		$this->enableExport = Limit::canStatisticsExcel();
 		$this->userPermissions = \Bitrix\ImOpenlines\Security\Permissions::createWithCurrentUser();
 
 		$this->gridOptions = new CGridOptions($this->gridId);
@@ -50,7 +53,8 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 				]
 			];
 
-			$this->arResult['BUTTON_EXPORT'] = "BX.OpenLines.ExportManager.items['" . CUtil::JSEscape($stExportManagerId) . "'].startExport('excel')";
+			$this->arResult['BUTTON_EXPORT'] = 'BX.OpenLines.ExportManager.items[\'' . CUtil::JSEscape($stExportManagerId) . '\'].startExport(\'excel\')';
+			$this->arResult['LIMIT_EXPORT'] = false;
 
 			$this->arResult['STEXPORT_TOTAL_ITEMS'] = (isset($this->arParams['STEXPORT_TOTAL_ITEMS']) ?
 				(int)$this->arParams['STEXPORT_TOTAL_ITEMS'] : 0);
@@ -58,7 +62,8 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		}
 		else
 		{
-			$this->arResult['BUTTON_EXPORT'] = "viOpenTrialPopup('excel-export');";
+			$this->arResult['BUTTON_EXPORT'] = 'BX.UI.InfoHelper.show(\'' . Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_STATISTICS_EXCEL . '\');';
+			$this->arResult['LIMIT_EXPORT'] = true;
 		}
 
 		$request = HttpApplication::getInstance()->getContext()->getRequest();
@@ -67,7 +72,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		if ($request->get('CONFIG_ID'))
 		{
 			$this->configId = $request->get('CONFIG_ID');
-			$config = \Bitrix\ImOpenLines\Config::getInstance()->get($request->get('CONFIG_ID'));
+			$config = Config::getInstance()->get($request->get('CONFIG_ID'));
 			$this->arResult['LINE_NAME'] = $config['LINE_NAME'];
 		}
 
@@ -76,7 +81,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 
 	private function getConfigList()
 	{
-		$configManager = new \Bitrix\ImOpenLines\Config();
+		$configManager = new Config();
 		$result = $configManager->getList([
 				'select' => [
 					'ID',
@@ -88,7 +93,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			['QUEUE' => 'N']
 		);
 
-		$lines = Array();
+		$lines = [];
 		foreach ($result as $id => $config)
 		{
 			$lines[$config['ID']] = htmlspecialcharsbx($config['LINE_NAME']);
@@ -126,7 +131,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 	public static function getFormattedCrmColumn($row)
 	{
 		$crmData = Array();
-		$crmLinks = self::getCrmLink($row["data"]);
+		$crmLinks = self::getCrmLink($row['data']);
 		if (!empty($crmLinks))
 		{
 			foreach ($crmLinks as $type => $link)
@@ -135,7 +140,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			}
 		}
 
-		$crmActivityLink = self::getCrmActivityLink($row["data"]);
+		$crmActivityLink = self::getCrmActivityLink($row['data']);
 		if (!empty($crmActivityLink))
 		{
 			$crmData[] = '<a href="'.$crmActivityLink.'" target="_blank">'.self::getCrmName('ACTIVITY').'</a>';
@@ -228,15 +233,15 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 	{
 		$duration = intval($duration);
 		if ($duration <= 0)
-			return "-";
+			return '-';
 
 		$currentTime = new \Bitrix\Main\Type\DateTime();
 		$formatTime = $currentTime->getTimestamp()-$duration;
 		if ($duration < 3600)
 		{
 			$result = \FormatDate(Array(
-				"s" => "sdiff",
-				"i" => "idiff",
+				's' => 'sdiff',
+				'i' => 'idiff',
 			), $formatTime);
 		}
 		elseif ($duration >= 3600 && $duration < 86400)
@@ -249,8 +254,8 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			{
 				$formatTime = $currentTime->getTimestamp()-($duration % 3600);
 				$result = $result .' '. \FormatDate(Array(
-				"s" => "sdiff",
-				"i" => "idiff",
+				's' => 'sdiff',
+				'i' => 'idiff',
 				), $formatTime);
 			}
 		}
@@ -264,8 +269,8 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			{
 				$formatTime = $currentTime->getTimestamp()-ceil($duration % 86400);
 				$result = $result .' '. \FormatDate(Array(
-					"i" => "idiff",
-					"H" => "Hdiff",
+					'i' => 'idiff',
+					'H' => 'Hdiff',
 				), $formatTime);
 			}
 		}
@@ -283,25 +288,37 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 	 * @param string $field
 	 * @return string
 	 */
-	private static function formatVote($sessionId, $rating, $field = 'VOTE')
+	private static function formatVote($sessionId, $rating, $field = 'VOTE'): string
 	{
-		$rating = intval($rating);
+		$rating = (int)$rating;
 
 		$result = '-';
-		if ($field == 'VOTE' && in_array($rating, Array(5,1)))
+
+		if ($field === 'VOTE' && in_array($rating, [5,1]))
 		{
 			$result = '<span class="ol-stat-rating ol-stat-rating-'.$rating.'"></span>';
 		}
-		else if ($field == 'VOTE_HEAD' && $rating >= 1 && $rating <= 5)
+		else if ($field === 'VOTE_HEAD' && $rating >= 1 && $rating <= 5)
 		{
 			$result = '<span class="ol-stat-rating-head" title="'.$rating.'/5"><span class="ol-stat-rating-head-wrap ol-stat-rating-head-'.$rating.'"></span></span>';
 		}
-		else if ($field == 'VOTE_HEAD_PERM')
+		else if ($field === 'VOTE_HEAD_PERM')
 		{
-			$result = '<div id="ol-vote-head-placeholder-'.$sessionId.'"></div><script>BX.ready(function(){
+			if(Limit::canUseVoteHead())
+			{
+				$result = '<span style="display: inline-flex;" id="ol-vote-head-placeholder-'.$sessionId.'"></span><script>BX.ready(function(){
 				var voteChild = BX.MessengerCommon.linesVoteHeadNodes('.$sessionId.', '.$rating.', true);
 				BX("ol-vote-head-placeholder-'.$sessionId.'").appendChild(voteChild);
 			})</script>';
+			}
+			else
+			{
+				$result = '<span style="display: inline-flex;" id="ol-vote-head-placeholder-'.$sessionId.'" onclick="BX.UI.InfoHelper.show(\'' . Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_BOSS_RATE . '\');"><span style="margin-left: -5px;" class="tariff-lock"></span></span><script>BX.ready(function(){
+				var voteChild = BX.MessengerCommon.linesVoteHeadNodes('.$sessionId.', '.$rating.', false);
+				BX("ol-vote-head-placeholder-'.$sessionId.'").appendChild(voteChild);
+			})</script>';
+			}
+
 		}
 
 		return $result;
@@ -319,20 +336,35 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 
 		$comment = htmlspecialcharsbx($comment);
 
-		if ($field == 'COMMENT_HEAD' && strlen($comment) > 0)
+		if(!empty($comment))
 		{
-			$result = str_replace(["\r\n", "\r", "\n"], "<br />", $comment);
+			$comment = str_replace(["\r\n", "\r", "\n"], '<br />', $comment);
+		}
+
+		if ($field == 'COMMENT_HEAD' && $comment !== '')
+		{
+			$result = $comment;
 		}
 		else if ($field == 'COMMENT_HEAD_PERM')
 		{
-			$result = '
-				<div id="ol-comment-head-text-'.$sessionId.'">'.str_replace(["\r\n", "\r", "\n"], "<br />", $comment).'</div>
+			if(Limit::canUseVoteHead())
+			{
+				$result = '
+				<div id="ol-comment-head-text-'.$sessionId.'">' . $comment . '</div>
 				<div id="ol-comment-head-placeholder-'.$sessionId.'"></div><script>BX.ready(function(){
 				var voteChild = BX.MessengerCommon.linesCommentHeadNodes('.$sessionId.', BX("ol-comment-head-text-'.$sessionId.'").innerHTML.replace(/<br>/g, "\n"), true, "statistics");
 				BX("ol-comment-head-placeholder-'.$sessionId.'").appendChild(voteChild);
 				BX.style(BX("ol-comment-head-text-'.$sessionId.'"), \'display\', \'none\');
 			})</script>';
-
+			}
+			elseif($comment === '')
+			{
+				$result = '<span class = "bx-messenger-content-item-vote-comment-add"  onclick="BX.UI.InfoHelper.show(\'' . Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_BOSS_RATE . '\');"><span style="margin-top: 1px; margin-left: 5px;" class="tariff-lock"></span>' . Loc::getMessage('OL_STATS_COMMENT_HEAD_ADD') . '<span id="ol-comment-head-text-'.$sessionId.'"></span></span>';
+			}
+			else
+			{
+				$result = '<span id="ol-comment-head-text-'.$sessionId.'"  onclick="BX.UI.InfoHelper.show(\'' . Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_BOSS_RATE . '\');"><span style="margin-top: 1px; margin-left: 5px;" class="tariff-lock"></span>' . $comment . '</span>';
+			}
 		}
 
 		return $result;
@@ -623,7 +655,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		{
 			$value = $request->get('OPERATOR_ID');
 			$filter['OPERATOR_ID'] = (
-				is_string($value) && strtolower($value) === 'empty'
+				is_string($value) && mb_strtolower($value) === 'empty'
 					? 'empty'
 					: intval($value)
 			);
@@ -654,7 +686,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		if(isset($filter["OPERATOR_ID"]))
 		{
 			$filter["OPERATOR_ID"] = (
-				strtolower($filter["OPERATOR_ID"]) === 'empty'
+			mb_strtolower($filter["OPERATOR_ID"]) === 'empty'
 					? false
 					: (int)$filter["OPERATOR_ID"]
 			);
@@ -676,7 +708,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			}
 		}
 
-		if (strlen($filter["DATE_CREATE_from"]) > 0)
+		if ($filter["DATE_CREATE_from"] <> '')
 		{
 			try
 			{
@@ -686,7 +718,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			{
 			}
 		}
-		if (strlen($filter["DATE_CREATE_to"]) > 0)
+		if ($filter["DATE_CREATE_to"] <> '')
 		{
 			try
 			{
@@ -697,14 +729,14 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			}
 		}
 
-		if (strlen($filter["DATE_CLOSE_from"]) > 0)
+		if ($filter["DATE_CLOSE_from"] <> '')
 		{
 			try
 			{
 				$result[">=DATE_CLOSE"] = new \Bitrix\Main\Type\DateTime($filter["DATE_CLOSE_from"]);
 			} catch (Exception $e){}
 		}
-		if (strlen($filter["DATE_CLOSE_to"]) > 0)
+		if ($filter["DATE_CLOSE_to"] <> '')
 		{
 			try
 			{
@@ -1038,14 +1070,6 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		if (!$this->checkAccess())
 			return false;
 
-		$this->arResult["ENABLE_EXPORT"] = $this->enableExport;
-
-		if(!$this->enableExport)
-		{
-			$this->arResult['TRIAL'] = \Bitrix\ImOpenlines\Security\Helper::getTrialText(); // TODO restrict
-		}
-
-
 		$this->arResult["GRID_ID"] = $this->gridId;
 		$this->arResult["FILTER_ID"] = $this->filterId;
 		$this->arResult["FILTER"] = $this->getFilterDefinition();
@@ -1197,7 +1221,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			\Bitrix\ImOpenlines\Security\Helper::getCurrentUserId(),
 			$this->userPermissions->getPermission(\Bitrix\ImOpenlines\Security\Permissions::ENTITY_HISTORY, \Bitrix\ImOpenlines\Security\Permissions::ACTION_VIEW)
 		);
-		$configManager = new \Bitrix\ImOpenLines\Config();
+		$configManager = new Config();
 
 		$arUsers = $this->getUserData($userId);
 		$arSources = \Bitrix\ImConnector\Connector::getListConnector();
@@ -1372,16 +1396,18 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 				$newRow["TIME_MESSAGE_ANSWER_AVERAGE"] = self::formatDuration($newRow["TIME_MESSAGE_ANSWER_AVERAGE"]);
 				$newRow["TIME_MESSAGE_ANSWER_MAX"] = self::formatDuration($newRow["TIME_MESSAGE_ANSWER_MAX"]);
 
-				if ($configManager->canVoteAsHead($row["data"]["CONFIG_ID"]))
+				if (Config::canVoteAsHead($row['data']['CONFIG_ID'], false))
 				{
-					$newRow["VOTE_HEAD"] = self::formatVote($row["data"]["ID"], $row["data"]["VOTE_HEAD"], 'VOTE_HEAD_PERM');
-					$newRow["COMMENT_HEAD"] = self::formatComment($row["data"]["ID"], $row["data"]["COMMENT_HEAD"], 'COMMENT_HEAD_PERM');
+					$permissionVoteHead = 'VOTE_HEAD_PERM';
+					$permissionCommentHead = 'COMMENT_HEAD_PERM';
 				}
 				else
 				{
-					$newRow["VOTE_HEAD"] = self::formatVote($row["data"]["ID"], $row["data"]["VOTE_HEAD"], 'VOTE_HEAD');
-					$newRow["COMMENT_HEAD"] = self::formatComment($row["data"]["ID"], $row["data"]["COMMENT_HEAD"], 'COMMENT_HEAD');
+					$permissionVoteHead = 'VOTE_HEAD';
+					$permissionCommentHead = 'COMMENT_HEAD';
 				}
+				$newRow['VOTE_HEAD'] = self::formatVote($row['data']['ID'], $row['data']['VOTE_HEAD'], $permissionVoteHead);
+				$newRow['COMMENT_HEAD'] = self::formatComment($row['data']['ID'], $row['data']['COMMENT_HEAD'], $permissionCommentHead);
 			}
 
 			$actions = Array();

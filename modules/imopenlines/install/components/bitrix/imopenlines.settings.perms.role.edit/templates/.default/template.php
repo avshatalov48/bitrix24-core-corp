@@ -1,11 +1,14 @@
 <?
-use \Bitrix\Main\Localization\Loc as Loc;
+use \Bitrix\Main\UI\Extension,
+	\Bitrix\Main\Localization\Loc;
+
+use \Bitrix\Imopenlines\Limit;
 
 /**
  * @var array $arResult
  * @var CMain $APPLICATION
  */
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 $this->addExternalCss('/bitrix/css/main/table/style.css');
 
 if($arResult['ERRORS'] && $arResult['ERRORS'] instanceof \Bitrix\Main\ErrorCollection)
@@ -15,29 +18,22 @@ if($arResult['ERRORS'] && $arResult['ERRORS'] instanceof \Bitrix\Main\ErrorColle
 		ShowError($error);
 	}
 }
-if (\Bitrix\Main\Loader::includeModule('bitrix24'))
-	\CBitrix24::initLicenseInfoPopupJS();
 
 \CJSCore::init('sidepanel');
+$APPLICATION->IncludeComponent('bitrix:ui.info.helper', '', []);
+Extension::load('ui.alerts');
 ?>
 <script type="text/javascript">
-	function imolOpenTrialPopup(dialogId, text)
+	function openTrialInfoHelper(dialogId)
 	{
-		if (typeof(B24) != 'undefined' && typeof(B24.licenseInfoPopup) != 'undefined')
-		{
-			B24.licenseInfoPopup.show(dialogId, "<?=CUtil::JSEscape(Loc::getMessage("IMOL_ROLE_POPUP_LIMITED_TITLE"))?>", text);
-		}
-		else
-		{
-			alert(text);
-		}
+		BX.UI.InfoHelper.show(dialogId);
 	}
 </script>
 <form method="POST" action="<?=$arResult['ACTION_URI']?>" id="imol-role-form">
 	<input type="hidden" name="act" value="save">
 	<input type="hidden" name="ID" value="<?=htmlspecialcharsbx($arResult['ID'])?>">
 	<?echo bitrix_sessid_post()?>
-	<label for="form-input-name"><?=GetMessage('IMOL_ROLE_LABEL')?>:</label>
+	<label for="form-input-name"><?=Loc::getMessage('IMOL_ROLE_LABEL')?>:</label>
 	<input id="form-input-name" name="NAME" value="<?=htmlspecialcharsbx($arResult['NAME'])?>">
 	<br>
 	<br>
@@ -46,9 +42,9 @@ if (\Bitrix\Main\Loader::includeModule('bitrix24'))
 			<td>
 				<table class="table-blue">
 					<tr>
-						<th class="table-blue-td-title"><?=GetMessage('IMOL_ROLE_ENTITY')?></th>
-						<th class="table-blue-td-title"><?=GetMessage('IMOL_ROLE_ACTION')?></th>
-						<th class="table-blue-td-title"><?=GetMessage('IMOL_ROLE_PERMISSION')?></th>
+						<th class="table-blue-td-title"><?=Loc::getMessage('IMOL_ROLE_ENTITY')?></th>
+						<th class="table-blue-td-title"><?=Loc::getMessage('IMOL_ROLE_ACTION')?></th>
+						<th class="table-blue-td-title"><?=Loc::getMessage('IMOL_ROLE_PERMISSION')?></th>
 					</tr>
 					<?foreach ($arResult['PERMISSION_MAP'] as $entity => $actions)
 					{
@@ -59,8 +55,14 @@ if (\Bitrix\Main\Loader::includeModule('bitrix24'))
 								<tr class="<?=($firstAction ? 'tr-first' : '')?>">
 									<td class="table-blue-td-name">
 										<?=($firstAction ? htmlspecialcharsbx(\Bitrix\ImOpenlines\Security\Permissions::getEntityName($entity)) : '&nbsp;')?>
-										<?if ($entity == 'VOTE_HEAD' && (!\Bitrix\Imopenlines\Limit::canUseVoteHead() || \Bitrix\Imopenlines\Limit::isDemoLicense())):?>
-											<span class="tel-lock-holder-select" title="<?=GetMessage("IMOL_ROLE_LOCK_ALT")?>"><span onclick='imolOpenTrialPopup("imol_queue_all", "<?=CUtil::JSEscape(Loc::getMessage("IMOL_ROLE_POPUP_LIMITED_VOTE_HEAD"))?>")' class="tel-lock <?=(\Bitrix\Imopenlines\Limit::isDemoLicense()? 'tel-lock-half': '')?>"></span></span>
+										<?if (
+												$entity == 'VOTE_HEAD' &&
+												(
+														!\Bitrix\Imopenlines\Limit::canUseVoteHead() ||
+														\Bitrix\Imopenlines\Limit::isDemoLicense()
+												)
+										):?>
+											<span class="tariff-lock-holder-select" title="<?=Loc::getMessage("IMOL_ROLE_LOCK_ALT")?>"><span onclick="openTrialInfoHelper('<?=Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_BOSS_RATE?>');" class="tariff-lock"></span></span>
 										<?endif;?>
 									</td>
 									<td class="table-blue-td-param">
@@ -87,11 +89,12 @@ if (\Bitrix\Main\Loader::includeModule('bitrix24'))
 		</tr>
 	</table>
 	<?if($arResult['CAN_EDIT']):?>
-		<input type="submit" class="webform-small-button webform-small-button-accept" value="<?=GetMessage('IMOL_ROLE_SAVE')?>">
+		<input type="submit" class="webform-small-button webform-small-button-accept" value="<?=Loc::getMessage('IMOL_ROLE_SAVE')?>">
 	<?else:?>
-		<span class="webform-small-button webform-small-button-accept" onclick="viOpenTrialPopup('vi_role')">
-			<?=GetMessage('IMOL_ROLE_SAVE')?>
-			<div class="tel-lock-holder-title"><div class="tel-lock"></div></div></span>
+		<span class="webform-small-button webform-small-button-accept" onclick="openTrialInfoHelper('<?=Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_ACCESS_PERMISSIONS?>');">
+			<?=Loc::getMessage('IMOL_ROLE_SAVE')?>
+			<div class="tariff-lock-holder-title"><div class="tariff-lock"></div></div>
+		</span>
 	<?endif?>
 	<a class="webform-small-button"
 		<? if($arResult['IFRAME']): ?>
@@ -100,27 +103,16 @@ if (\Bitrix\Main\Loader::includeModule('bitrix24'))
 			href="<?=$arResult['PERMISSIONS_URL']?>"
 		<? endif; ?>
 	>
-		<?=GetMessage('IMOL_ROLE_CANCEL')?>
+		<?=Loc::getMessage('IMOL_ROLE_CANCEL')?>
 	</a>
+	<?if(!$arResult['CAN_EDIT']):?>
+	<div class="ui-alert ui-alert-warning" style="margin: 15px 0 0 0;">
+		<span class="ui-alert-message"><?=Loc::getMessage('IMOL_PERM_RESTRICTION')?></span>
+	</div>
+	<?endif?>
 </form>
 <?
 if(!$arResult['CAN_EDIT'])
-{
-	CBitrix24::initLicenseInfoPopupJS();
-	?>
-	<script type="text/javascript">
-		function viOpenTrialPopup(dialogId)
-		{
-			B24.licenseInfoPopup.show(dialogId, "<?=CUtil::JSEscape($arResult["TRIAL"]['TITLE'])?>", "<?=CUtil::JSEscape($arResult["TRIAL"]['TEXT'])?>");
-		}
-		BX.ready(function()
-		{
-			viOpenTrialPopup('permissions');
-		});
-	</script>
-	<?
-}
-else
 {
 	?>
 	<script>

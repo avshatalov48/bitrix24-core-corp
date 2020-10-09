@@ -82,7 +82,7 @@ class Entity
 						[
 							'RECYCLEBIN_ID' => $this->getId(),
 							'FILE_ID'       => $fileId,
-							'STORAGE_TYPE'  => $storageType
+							'STORAGE_TYPE'  => $storageType['STORAGE_TYPE']
 						]
 					);
 				}

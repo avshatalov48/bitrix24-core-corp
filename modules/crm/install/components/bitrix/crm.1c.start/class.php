@@ -209,6 +209,8 @@ class OnecStartComponent extends CBitrixComponent
 
 				if (\Bitrix\Main\ModuleManager::isModuleInstalled("rest"))
 				{
+					\Bitrix\Main\Loader::includeModule('sale');
+
 					$this->arResult['ITEMS'][] = array(
 						"id" => "doc",
 						"name" => Loc::getMessage("CRM_1C_START_DOC"),

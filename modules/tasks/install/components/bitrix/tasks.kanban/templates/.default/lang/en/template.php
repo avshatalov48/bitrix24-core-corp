@@ -1,6 +1,7 @@
-<?
+<?php
 $MESS["KANBAN_COLUMN_TITLE_PLACEHOLDER"] = "Name";
 $MESS["KANBAN_ITEM_TITLE_PLACEHOLDER"] = "Name #tag";
+$MESS["KANBAN_NO_ACTIVE_SPRINT"] = "You don't have an active sprint yet. Create one using the Planning view.";
 $MESS["KANBAN_POPUP_CLOSE"] = "Close";
 $MESS["KANBAN_POPUP_DETAIL"] = "Details";
 $MESS["KANBAN_POPUP_K_TEXT_1"] = "This view pictures your project (workgroup) tasks as a Kanban board. This task management mode shows all the stages from \"Pending\" to \"Completed\".";
@@ -24,4 +25,3 @@ $MESS["KANBAN_WO_GROUP_2"] = "Create your first project to start using tasks";
 $MESS["KANBAN_WO_GROUP_BUTTON"] = "Create Project";
 $MESS["KANBAN_WO_SPRINT"] = "You don't have a sprint yet. Create one using the task list.";
 $MESS["TASKS_CLOSE_PAGE_CONFIRM"] = "The changes you have made may be lost.";
-?>

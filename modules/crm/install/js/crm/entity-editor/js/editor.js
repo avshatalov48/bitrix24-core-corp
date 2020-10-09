@@ -113,11 +113,14 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 			this._model = BX.prop.get(this._settings, "model", null);
 			this._scheme = BX.prop.get(this._settings, "scheme", null);
 			this._config = BX.prop.get(this._settings, "config", null);
+			this._category = BX.prop.getString(this._settings, 'category', null);
 
 			this._serviceUrl = BX.prop.getString(this._settings, "serviceUrl", "");
 			this._entityTypeId = BX.prop.getInteger(this._settings, "entityTypeId", 0);
 			this._entityId = BX.prop.getInteger(this._settings, "entityId", 0);
 			this._isNew = this._entityId <= 0;
+
+			this._commonConfigEditUrl = BX.prop.getString(this._settings, "commonConfigEditUrl", "/configs/editor/?ENTITY_TYPE_ID=#ENTITY_TYPE_ID_VALUE#&MODULE_ID=#MODULE_ID#");
 
 			this._isEmbedded = BX.prop.getBoolean(this._settings, "isEmbedded", false);
 
@@ -2534,6 +2537,10 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 			}
 			return value;
 		},
+		canChangeCommonConfiguration: function()
+		{
+			return this._config.isCanChangeCommonConfiguration();
+		},
 		prepareConfigMenuItems: function()
 		{
 			var items = [];
@@ -2559,6 +2566,29 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 				}
 			);
 
+			if (this._config._userScopes)
+			{
+				for (var userScopeId in this._config._userScopes)
+				{
+					items.push(
+						{
+							text: this.getMessage('checkScope').replace('#SCOPE_NAME#', this._config._userScopes[userScopeId]['NAME']),
+							onclick: callback,
+							attributes: {
+								'data-id': userScopeId
+							},
+							className:
+								(
+									this._config.getScope() === BX.Crm.EntityConfigScope.custom
+									&& this._config._userScopeId === userScopeId
+								)
+							 	? "menu-popup-item-accept" : "menu-popup-item-none"
+
+						}
+					);
+				}
+			}
+
 			if(this.canChangeScheme())
 			{
 				items.push({ delimiter: true });
@@ -2574,10 +2604,34 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 
 				if(BX.prop.getBoolean(this._settings, "enableSettingsForAll", false))
 				{
+
 					items.push(
 						{
 							id: "forceCommonConfigForAllUsers",
 							text: this.getMessage("forceCommonConfigForAllUsers"),
+							onclick: callback,
+							className: "menu-popup-item-none"
+						}
+					);
+				}
+
+				if(this.canChangeCommonConfiguration())
+				{
+					items.push({delimiter: true});
+
+					items.push(
+						{
+							id: "createConfigForCheckedUsers",
+							text: this.getMessage('createScope'),
+							onclick: callback,
+							className: "menu-popup-item-none"
+						}
+					);
+
+					items.push(
+						{
+							id: "editCommonConfig",
+							text: this.getMessage('updateScope'),
 							onclick: callback,
 							className: "menu-popup-item-none"
 						}
@@ -2766,24 +2820,43 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 		},
 		//endregion
 		//region Configuration
+		getCommonConfigEditUrl: function(entityTypeId, moduleId)
+		{
+			return this._commonConfigEditUrl
+				.replace(/#ENTITY_TYPE_ID_VALUE#/gi, entityTypeId)
+				.replace(/#MODULE_ID#/gi, moduleId);
+		},
 		onMenuItemClick: function(event, menuItem)
 		{
 			var id = BX.prop.getString(menuItem, "id", "");
-			if(id === "resetConfig")
-			{
-				this.resetConfig();
-			}
-			else if(id === "switchToPersonalConfig")
-			{
-				this.setConfigScope(BX.Crm.EntityConfigScope.personal);
-			}
-			else if(id === "switchToCommonConfig")
-			{
-				this.setConfigScope(BX.Crm.EntityConfigScope.common);
-			}
-			else if(id === "forceCommonConfigForAllUsers")
-			{
-				this.forceCommonConfigScopeForAll();
+			switch (id) {
+				case 'resetConfig':
+					this.resetConfig();
+					break;
+				case 'switchToPersonalConfig':
+					this.setConfigScope(BX.Crm.EntityConfigScope.personal);
+					break;
+				case 'switchToCommonConfig':
+					this.setConfigScope(BX.Crm.EntityConfigScope.common);
+					break;
+				case 'forceCommonConfigForAllUsers':
+					this.forceCommonConfigScopeForAll();
+					break;
+				case 'createConfigForCheckedUsers':
+					this.createConfigScopeForCheckedUsers();
+					break;
+				case 'editCommonConfig':
+					BX.SidePanel.Instance.open(
+						this.getCommonConfigEditUrl(this._config._id, this._category),
+						{width: 980}
+					);
+					break;
+				default:
+					var attributes = BX.prop.getObject(menuItem, "attributes", "");
+					if (attributes['data-id'] !== undefined)
+					{
+						this.setConfigScope(BX.Crm.EntityConfigScope.custom, attributes['data-id']);
+					}
 			}
 
 			if(menuItem.menuWindow)
@@ -2791,17 +2864,33 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 				menuItem.menuWindow.close();
 			}
 		},
-		setConfigScope: function(scope)
+		setConfigScope: function(scope, userScopeId)
 		{
-			if(this._config.getScope() === scope)
+			if(
+				(
+					scope === this._config.getScope()
+					&& this._config.getScope() !== BX.Crm.EntityConfigScope.custom
+				)
+				||
+				(
+					scope === BX.Crm.EntityConfigScope.custom
+					&&
+					(userScopeId === undefined || userScopeId === this._config._userScopeId)
+				)
+			)
 			{
 				return;
 			}
 
-			this._config.setScope(scope).then(
+			this._config.setScope(scope, userScopeId, this._category).then(
 				function()
 				{
-					var eventArgs = { id: this._id, scope: scope, enableReload: true };
+					var eventArgs = {
+						id: this._id,
+						category: this._category,
+						scope: scope, userScopeId: userScopeId,
+						enableReload: true
+					};
 					BX.onCustomEvent(window, "BX.Crm.EntityEditor:onConfigScopeChange", [ this, eventArgs ]);
 
 					if(eventArgs["enableReload"] && !this._isEmbedded)
@@ -2826,6 +2915,18 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 					}
 				}.bind(this)
 			);
+		},
+		createConfigScopeForCheckedUsers: function()
+		{
+			var crmConfig = BX.Crm.EntityEditorScopeConfig.create(
+				this._id+'_config', {
+					editor: this,
+					config: this._config.toJSON(),
+					entityTypeId: this._config._id,
+					isCommonConfig: true,
+					category: this._category
+				});
+			crmConfig.open();
 		},
 		resetConfig: function()
 		{
@@ -3051,6 +3152,487 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 		var self = new BX.Crm.EntityEditor();
 		self.initialize(id, settings);
 		this.items[self.getId()] = self;
+		return self;
+	};
+}
+//endregion
+
+//region ENTITY EDITOR MODE
+if(typeof(BX.Crm.EntityEditorScopeConfig) === "undefined")
+{
+	BX.Crm.EntityEditorScopeConfig = function()
+	{
+		this._id = "";
+		this._settings = {};
+
+		this._editor = {};
+		this._config = {};
+		this._isCommonConfig = false;
+
+		this._popup = null;
+		this._selector = null;
+
+		this._name = "";
+		this._items = [];
+
+		this._nameInput = {};
+		this._usersInput = {};
+		this._nameInputError = null;
+		this._usersInputError = null;
+
+		this._entityId = "";
+		this._entityTypeId = '';
+
+		this._isOpened = false;
+		this._closeNotifier = null;
+
+		this._category = null;
+
+		this._onSquareClick = BX.delegate(this.onSquareClick, this);
+	};
+
+	BX.Crm.EntityEditorScopeConfig.prototype =
+		{
+			initialize: function(id, settings)
+			{
+				this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
+				this._settings = settings ? settings : {};
+
+				this._editor = this.getSetting('editor', {});
+				this._config = this.getSetting('config', {});
+				this._isCommonConfig = this.getSetting('isCommonConfig', false);
+
+				this._name = this.getSetting('name', '');
+				this._items = this.getSetting('items', []);
+
+				this._entityId = this.getSetting('entityId', null);
+
+				this._entityTypeId = this.getSetting('entityTypeId', null);
+				this._category = this.getSetting('category', null);
+
+				this._userSelector = null;
+			},
+			getId: function()
+			{
+				return this._id;
+			},
+			getSetting: function(name, defaultValue)
+			{
+				return (this._settings.hasOwnProperty(name) ? this._settings[name] : defaultValue);
+			},
+			getMessage: function(name)
+			{
+				var m = BX.Crm.EntityEditorScopeConfig.messages;
+				return m.hasOwnProperty(name) ? m[name] : name;
+			},
+			isOpened: function()
+			{
+				return this._isOpened;
+			},
+			open: function()
+			{
+				if(this._isOpened)
+				{
+					return;
+				}
+
+				this._popup = this.createPopup();
+
+				this._popup.show();
+			},
+			createPopup: function()
+			{
+				return (this._popup || new BX.PopupWindow(this._id, null, {
+					className: 'crm-entity-widget-content-client-editor-popup',
+					titleBar: this.getMessage('createScope'),
+					closeIcon : true,
+					autoHide: false,
+					closeByEsc: true,
+					padding: 0,
+					contentPadding: 0,
+					contentBackground: 'none',
+					draggable: true,
+					minWidth: 550,
+					maxWidth: 550,
+					content: this.prepareContent(),
+					buttons: this.prepareButtons(),
+					events:
+						{
+							onPopupShow: BX.delegate(this.onPopupShow, this),
+							onPopupClose: BX.delegate(this.onPopupClose, this),
+							onPopupDestroy: BX.delegate(this.onPopupDestroy, this)
+						},
+				}));
+			},
+			prepareContent: function()
+			{
+				var container = BX.create('div', {
+					style: {
+						padding: '0 20px',
+					}
+				});
+				container.appendChild(this.prepareNameControl());
+				container.appendChild(this.prepareUserSelectControl());
+
+				return container;
+			},
+			prepareNameControl: function()
+			{
+				var container = BX.create('div', {
+					style: {
+						paddingBottom: '25px',
+						marginBottom: '20px',
+						borderBottom: '1px solid #f2f2f4'
+					}
+				});
+				container.appendChild(BX.create('div', {
+					props: {
+						className: 'ui-ctl-label-text'
+					},
+					text: this.getMessage('scopeName')
+				}));
+
+				var control = BX.create('div', {
+					props:{
+						className: 'ui-ctl ui-ctl-textbox ui-ctl-w100'
+					}
+				});
+
+				this._nameInput = BX.create("input", {
+					props:{
+						className: 'ui-ctl-element',
+						value: this.getName(),
+						type: 'text',
+						placeholder: this.getMessage('scopeNamePlaceholder')
+					}
+				});
+
+				control.appendChild(this._nameInput);
+				container.appendChild(control);
+				return container;
+			},
+			prepareUserSelectControl: function()
+			{
+				var container = BX.create('div', {
+					style: {
+						paddingBottom: '25px',
+						borderBottom: '1px solid #f2f2f4'
+					}
+				});
+				container.appendChild(BX.create('div', {
+					props: {
+						className: 'ui-ctl-label-text'
+					},
+					text: this.getMessage('scopeMembers')
+				}));
+
+				var control = BX.create('div', {
+					props:{
+						className: 'ui-ctl ui-ctl-textbox ui-ctl-w100'
+					}
+				});
+
+				this._usersInput = BX.create("div", {
+					props:{
+						className: 'ui-ctl-element main-ui-control-entity main-ui-control'
+					},
+					attrs: {
+						id: 'user-selector-item',
+					},
+					events: {
+						click: BX.proxy(function(){
+							this.openUserSelector(control);
+						}, this)
+					}
+				});
+
+				control.appendChild(this._usersInput);
+				container.appendChild(control);
+
+				return container;
+			},
+			prepareButtons: function()
+			{
+				return [
+					new BX.UI.Button({
+						text: this.getMessage('scopeSave'),
+						tag: BX.UI.Button.Tag.LINK,
+						color: BX.UI.Button.Color.PRIMARY,
+						events: {
+							click: function(params, event) {
+								event.preventDefault();
+								this.processSave();
+							}.bind(this)
+						}
+					}),
+					new BX.UI.Button({
+						text: this.getMessage('scopeCancel'),
+						tag: BX.UI.Button.Tag.LINK,
+						color: BX.UI.Button.Color.LINK,
+						events: {
+							click: function(params, event) {
+								event.preventDefault();
+								this.processCancel();
+							}.bind(this)
+						}
+					})
+				];
+			},
+			close: function()
+			{
+				if (this._popup)
+				{
+					this._popup.close();
+				}
+			},
+			addCloseListener: function(listener)
+			{
+				this._closeNotifier.addListener(listener);
+			},
+			removeCloseListener: function(listener)
+			{
+				this._closeNotifier.removeListener(listener);
+			},
+			findItemIndexById: function (id)
+			{
+				for (var i = 0, length = this._items.length; i < length; i++)
+				{
+					if (this._items[i].ID === id)
+					{
+						return i;
+					}
+				}
+				return -1;
+			},
+			removeItem: function (userId)
+			{
+				var id = this.findItemIndexById(userId);
+				if (id >= 0)
+				{
+					this._items = BX.util.deleteFromArray(this._items, id);
+				}
+			},
+			adjust: function()
+			{
+				this.removeSquares();
+				this._items.forEach(function (currentUser, index, array) {
+					this.setSquare(currentUser.FORMATTED_NAME, currentUser.ID);
+				}, this);
+			},
+			addItem: function (data)
+			{
+				if (this._items === null)
+				{
+					this._items = [];
+				}
+
+				this._items.push(data);
+
+				return data;
+			},
+			setSquare: function(label, value)
+			{
+				var square = BX.decl(this.createSquareData(label, value));
+				square.setAttribute('data-user-id', value);
+
+				BX.bind(square, "click", BX.delegate(this._onSquareClick, this));
+
+				var squares = this.getSquares();
+				if(!squares.length)
+				{
+					BX.prepend(square, this._usersInput);
+				}
+				else
+				{
+					BX.insertAfter(square, squares[squares.length - 1]);
+				}
+			},
+			getSquares: function()
+			{
+				return BX.Filter.Utils.getByClass(this._usersInput, 'main-ui-square', true);
+			},
+			getItems: function()
+			{
+				return (this._items || []);
+			},
+			removeItems: function()
+			{
+				this._items = [];
+			},
+			createUserInfo: function(item)
+			{
+				return {
+					ID: item.id,
+					FORMATTED_NAME: BX.util.htmlspecialcharsback(BX.prop.getString(item, 'name', '')),
+				};
+			},
+			isCustomized: function()
+			{
+				var accessCodes = BX.prop.getObject(this._config, 'accessCodes', []);
+				return !!Object.keys(accessCodes).length;
+			},
+			openUserSelector: function (anchor)
+			{
+				this.getUserSelector().open(anchor);
+			},
+			getUserSelector: function()
+			{
+				if (!this._userSelector)
+				{
+					this._userSelector = BX.Crm.EntityEditorUserSelector.create(
+						'user-selector-item',
+						{
+							callback: BX.delegate(this.processItemSelect, this),
+							onlyUsers: false,
+							showSearchInput: false
+						}
+					);
+				}
+				return this._userSelector;
+			},
+			processItemSelect: function (selector, item)
+			{
+				var userId = BX.prop.getString(item, 'id', '');
+				if (this.findItemIndexById(userId) >= 0)
+				{
+					this.removeItem(userId);
+					this.adjust();
+					return;
+				}
+				this.addItem(this.createUserInfo(item));
+				this.adjust();
+			},
+			getName: function()
+			{
+				return this._name;
+			},
+			setName: function(name)
+			{
+				this._name = name;
+			},
+			processSave: function()
+			{
+				this.clearErrors();
+				this.setName(this._nameInput.value);
+
+				BX.ajax.runComponentAction('bitrix:ui.form.config', 'save', {
+					data: {
+						moduleId: this._category,
+						entityTypeId: this._entityTypeId,
+						name: this.getName(),
+						accessCodes: this.getItems(),
+						config: this._config,
+						common: 'Y'
+					}
+				}).then(
+					function(response) {
+						this.close();
+						BX.Crm.EntityEditorScopeConfig.prototype.notifyShow(response);
+						var scopeId = parseInt(response.data, 10);
+						this._editor.setConfigScope(BX.Crm.EntityConfigScope.custom, scopeId);
+					}.bind(this)
+				).catch(
+					function(response)
+					{
+						this.fillErrors(response.data);
+					}.bind(this)
+				);
+			},
+			fillErrors: function(errors)
+			{
+				if (errors.name)
+				{
+					this._nameInputError = this.createErrorElement(this._nameInput, errors.name.message);
+				}
+				if (errors.accessCodes)
+				{
+					this._usersInputError = this.createErrorElement(this._usersInput, errors.accessCodes.message);
+				}
+			},
+			createErrorElement: function(fieldNode, message)
+			{
+				var errorContainer = BX.create('div', {
+					props: {
+						className: 'crm-entity-widget-content-error-text'
+					}
+				});
+				errorContainer.innerHTML = message;
+				fieldNode.parentNode.parentNode.appendChild(errorContainer);
+
+				return errorContainer;
+			},
+			clearErrors: function()
+			{
+				if (this._nameInputError)
+				{
+					this._nameInputError.remove();
+				}
+				if (this._usersInputError)
+				{
+					this._usersInputError.remove();
+				}
+			},
+			notifyShow: function(response)
+			{
+				window.top.BX.UI.Notification.Center.notify({
+					content: this.getMessage('scopeSaved'),
+					width: 'auto',
+				});
+			},
+			processCancel: function()
+			{
+				this.close();
+			},
+			onPopupShow: function()
+			{
+				this._isOpened = true;
+			},
+			onPopupClose: function()
+			{
+				if(this._popup)
+				{
+					this._popup.destroy();
+				}
+			},
+			onPopupDestroy: function()
+			{
+				this._isOpened = false;
+				this._popup = null;
+			},
+			removeSquares: function()
+			{
+				this.getSquares().forEach(BX.remove);
+			},
+			createSquareData: function(label, value)
+			{
+				return {
+					block: 'main-ui-square',
+					name: label,
+					item: {
+						'_label': label,
+						'_value': value
+					},
+				};
+			},
+			onSquareClick: function(e)
+			{
+				e.preventDefault();
+				var square = e.target.parentElement;
+				var userId = square.getAttribute('data-user-id');
+				this.removeItem(userId);
+				this.adjust();
+			},
+		};
+
+	if(BX.Crm.EntityEditorScopeConfig.messages === undefined)
+	{
+		BX.Crm.EntityEditorScopeConfig.messages = {};
+	}
+
+	BX.Crm.EntityEditorScopeConfig.create = function(id, settings)
+	{
+		var self = new BX.Crm.EntityEditorScopeConfig();
+		self.initialize(id, settings);
 		return self;
 	};
 }

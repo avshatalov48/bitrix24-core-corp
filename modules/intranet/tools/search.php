@@ -755,11 +755,7 @@ class CIntranetSearch
 							false, false
 						),
 					"BODY" => $BODY,
-					//"TAGS" => $arIBlockElement["TAGS"],
 					"PARAM1" => "USER",
-					//"PARAM2" => $IBLOCK_ID,
-					//"DATE_FROM"=>(strlen($arIBlockElement["DATE_FROM"])>0? $arIBlockElement["DATE_FROM"] : false),
-					//"DATE_TO"=>(strlen($arIBlockElement["DATE_TO"])>0? $arIBlockElement["DATE_TO"] : false),
 					"SITE_ID" => $obj->arSites,
 					"PERMISSIONS" => array(2),
 					"URL" => "=ID=".$arUser["ID"],

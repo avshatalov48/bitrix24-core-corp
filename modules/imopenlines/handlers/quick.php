@@ -38,7 +38,7 @@ $params = array();
 $params['DOMAIN'] = $check['scheme'].'://'.$check['host'];
 $params['SERVER_NAME'] = $check['host'];
 
-if(!isset($_SERVER['HTTP_REFERER']) || empty($_SERVER['HTTP_REFERER']) || strpos($_SERVER['HTTP_REFERER'], $params['DOMAIN']) !== 0)
+if(!isset($_SERVER['HTTP_REFERER']) || empty($_SERVER['HTTP_REFERER']) || mb_strpos($_SERVER['HTTP_REFERER'], $params['DOMAIN']) !== 0)
 {
 	$style = "
 	    font-family: 'Helvetica Neue', Helvetica, sans-serif;

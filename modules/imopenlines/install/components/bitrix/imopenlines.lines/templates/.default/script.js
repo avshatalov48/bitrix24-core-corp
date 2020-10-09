@@ -328,12 +328,7 @@ CrmWebFormListItem.prototype =
 					{
 						return;
 					}
-
-					B24.licenseInfoPopup.show(
-						'crm_webform_activation',
-						this.caller.mess.dlgActiveCountLimitedTitle,
-						'<span>' + this.caller.mess.dlgActiveCountLimitedText + '</span>'
-					);
+					BX.UI.InfoHelper.show(this.caller.mess.limitInfoHelper);
 				}
 				else
 				{
@@ -378,12 +373,7 @@ CrmWebFormListItem.prototype =
 					{
 						return;
 					}
-
-					B24.licenseInfoPopup.show(
-						'crm_webform_activation',
-						this.caller.mess.dlgActiveCountLimitedTitle,
-						'<span>' + this.caller.mess.dlgActiveCountLimitedText + '</span>'
-					);
+					BX.UI.InfoHelper.show(this.caller.mess.limitInfoHelper);
 				}
 				else
 				{

@@ -30,7 +30,7 @@ if ($isBitrix24Template)
 }
 ?>
 
-<a href="https://helpdesk.bitrix24.ru/open/11705476" class="tasks-permission-header-link"><?= Loc::getMessage('TASKS_CONFIG_PERMISSIONS_HELP_LINK'); ?></a>
+<a href="<?= \Bitrix\UI\Util::getArticleUrlByCode('11705476'); ?>" class="tasks-permission-header-link"><?= Loc::getMessage('TASKS_CONFIG_PERMISSIONS_HELP_LINK'); ?></a>
 
 <?php
 if($isBitrix24Template)

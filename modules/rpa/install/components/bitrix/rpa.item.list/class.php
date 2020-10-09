@@ -114,7 +114,7 @@ class RpaItemListComponent extends \Bitrix\Rpa\Components\ItemList
 		$stage = $item->getStage();
 		if($stage)
 		{
-			$data['STAGE_ID'] = $stage->getName();
+			$data['STAGE_ID'] = htmlspecialcharsbx($stage->getName());
 		}
 
 		$data = array_merge($data, $this->getDisplay()->getValues($item->getId()));

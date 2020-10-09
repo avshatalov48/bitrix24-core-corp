@@ -428,6 +428,7 @@ class ResultEntity
 				$toList[] = $val;
 			}
 			$value = str_replace($fromList,	$toList, $value);
+			$value = preg_replace("/%([a-z0-9_]+?)%/i", '', $value);
 			$entityFields[$presetField['FIELD_NAME']] = $value;
 		}
 

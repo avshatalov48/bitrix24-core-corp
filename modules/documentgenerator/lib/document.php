@@ -326,6 +326,7 @@ class Document
 			{
 				$data = $provider->getAdditionalDocumentInfo($this);
 			}
+			$publicUrl = ExternalLinkTable::loadByDocumentId($this->ID);
 			$data = array_merge($data, [
 				'downloadUrl' => $this->getDownloadUrl(),
 				'publicUrl' => $this->getPublicUrl(),
@@ -339,6 +340,13 @@ class Document
 				'value' => $this->getValue(Template::MAIN_PROVIDER_PLACEHOLDER),
 				'values' => $this->getExternalValues(),
 			]);
+			if($publicUrl)
+			{
+				$data['publicUrlView'] = [
+					'time' => $publicUrl['VIEWED_TIME'],
+					'ip' => $publicUrl['VIEWED_IP'],
+				];
+			}
 			$template = $this->getTemplate();
 			if($template)
 			{

@@ -1,3 +1,2 @@
 <?
-$aMenuLinks = Array(
-);
+$aMenuLinks = [];

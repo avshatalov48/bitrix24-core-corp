@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Activity\Provider;
 
+use Bitrix\Crm;
 use Bitrix\Crm\Automation\Trigger\EmailSentTrigger;
 use Bitrix\Main\Config;
 use Bitrix\Main\Localization\Loc;
@@ -105,7 +106,7 @@ class Email extends Activity\Provider\Base
 		$direction = isset($activityFields['DIRECTION']) ? (int)$activityFields['DIRECTION'] : \CCrmActivityDirection::Undefined;
 		$parentID = isset($activityFields['PARENT_ID']) ? (int)$activityFields['PARENT_ID'] : 0;
 
-		if ($direction === \CCrmActivityDirection::Outgoing)
+		if ($direction === \CCrmActivityDirection::Outgoing && Crm\Automation\Factory::canUseAutomation())
 		{
 			EmailSentTrigger::execute($activityFields['BINDINGS'], $activityFields);
 		}

@@ -45,7 +45,7 @@ $params = array();
 $params['DOMAIN'] = $check['scheme'].'://'.$check['host'];
 $params['SERVER_NAME'] = $check['host'];
 
-if(!isset($_SERVER['HTTP_REFERER']) || empty($_SERVER['HTTP_REFERER']) || strpos($_SERVER['HTTP_REFERER'], $params['DOMAIN']) !== 0)
+if(!isset($_SERVER['HTTP_REFERER']) || empty($_SERVER['HTTP_REFERER']) || mb_strpos($_SERVER['HTTP_REFERER'], $params['DOMAIN']) !== 0)
 {
 	$style = "
 	    font-family: 'Helvetica Neue', Helvetica, sans-serif;
@@ -61,7 +61,7 @@ if(!isset($_SERVER['HTTP_REFERER']) || empty($_SERVER['HTTP_REFERER']) || strpos
 	die();
 }
 
-if(!isset($_SERVER['HTTP_REFERER']) || empty($_SERVER['HTTP_REFERER']) || strpos($_SERVER['HTTP_REFERER'], $params['DOMAIN']) !== 0)
+if(!isset($_SERVER['HTTP_REFERER']) || empty($_SERVER['HTTP_REFERER']) || mb_strpos($_SERVER['HTTP_REFERER'], $params['DOMAIN']) !== 0)
 {
 	$style = "
 	    font-family: 'Helvetica Neue', Helvetica, sans-serif;
@@ -87,9 +87,9 @@ if (
 	Loader::includeModule('ui');
 	\Bitrix\Main\UI\Extension::load("ui.buttons");
 
-	if (strpos($getRequest['DIALOG_ID'], 'chat') === 0)
+	if (mb_strpos($getRequest['DIALOG_ID'], 'chat') === 0)
 	{
-		$chatId = (int)substr($getRequest['DIALOG_ID'], 4);
+		$chatId = (int)mb_substr($getRequest['DIALOG_ID'], 4);
 	}
 
 	$fieldsMessage = [

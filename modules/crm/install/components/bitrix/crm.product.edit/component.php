@@ -752,6 +752,11 @@ if ($descriptionType === 'text')
 {
 	$description = nl2br($description);
 }
+$sanitizer = new \CBXSanitizer();
+$sanitizer->SetLevel(\CBXSanitizer::SECURE_LEVEL_LOW);
+$description = $sanitizer->SanitizeHtml($description);
+unset($sanitizer);
+
 $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'DESCRIPTION',
 	'name' => GetMessage('CRM_FIELD_PRODUCT_DESCRIPTION'),
@@ -1040,4 +1045,3 @@ foreach($propsFormData as $key => $value)
 
 $this->IncludeComponentTemplate();
 include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.product/include/nav.php');
-?>

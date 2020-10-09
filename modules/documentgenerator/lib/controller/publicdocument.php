@@ -42,9 +42,24 @@ class PublicDocument extends Document
 		return parent::getPdfAction($document, $fileName);
 	}
 
-	public function showPdfAction(\Bitrix\DocumentGenerator\Document $document, $print = 'y', \CRestServer $restServer = null, $hash = '')
+	public function showPdfAction(
+		\Bitrix\DocumentGenerator\Document $document,
+		$print = 'y',
+		$pdfUrl = null,
+		$width = 700,
+		$height = 900,
+		\CRestServer $restServer = null,
+		$hash = ''
+	)
 	{
-		return parent::showPdfAction($document, $print, $this->getActionUri('getPdf', ['id' => $document->ID, 'hash' => $hash]));
+		return parent::showPdfAction(
+			$document,
+			$print,
+			$this->getActionUri('getPdf', [
+				'id' => $document->ID,
+				'hash' => $hash,
+			]
+		));
 	}
 
 	public function getAction(\Bitrix\DocumentGenerator\Document $document, \CRestServer $restServer = null, $hash = '')

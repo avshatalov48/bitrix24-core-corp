@@ -160,7 +160,7 @@ class QuickAnswer
 	{
 		foreach($data as $key => $value)
 		{
-			$attribute = strtolower($key);
+			$attribute = mb_strtolower($key);
 			if(property_exists($this, $attribute))
 			{
 				$this->$attribute = $value;
@@ -180,7 +180,7 @@ class QuickAnswer
 
 	private static function generateNameFromText($text)
 	{
-		return substr($text, 0, 100);
+		return mb_substr($text, 0, 100);
 	}
 
 	/**

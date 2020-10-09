@@ -276,17 +276,24 @@ class ActivityController extends EntityController
 		}
 		elseif($prevCompleted && !$curCompleted)
 		{
-			//Add Renew event
-			$historyEntryID = MarkEntry::create(
-				array(
-					'MARK_TYPE_ID' => TimelineMarkType::RENEW,
-					'ENTITY_TYPE_ID' => \CCrmOwnerType::Activity,
-					'ENTITY_CLASS_NAME' => $providerID,
-					'ENTITY_ID' => $ownerID,
-					'AUTHOR_ID' => $authorID,
-					'BINDINGS' => self::mapBindings($currentBindings)
-				)
-			);
+			if($typeID == \CCrmActivityType::Provider && $providerID == Activity\Provider\Zoom::PROVIDER_ID)
+			{
+				// do nothing
+			}
+			else
+			{
+				//Add Renew event
+				$historyEntryID = MarkEntry::create(
+					array(
+						'MARK_TYPE_ID' => TimelineMarkType::RENEW,
+						'ENTITY_TYPE_ID' => \CCrmOwnerType::Activity,
+						'ENTITY_CLASS_NAME' => $providerID,
+						'ENTITY_ID' => $ownerID,
+						'AUTHOR_ID' => $authorID,
+						'BINDINGS' => self::mapBindings($currentBindings)
+					)
+				);
+			}
 		}
 
 		$enableHistoryPush = $historyEntryID > 0;
@@ -400,6 +407,20 @@ class ActivityController extends EntityController
 			$typeCategoryID = isset($data['TYPE_CATEGORY_ID']) ? (int)$data['TYPE_CATEGORY_ID'] : 0;
 			$settings = isset($data['SETTINGS']) && is_array($data['SETTINGS']) ? $data['SETTINGS'] : array();
 
+			if(
+				$typeCategoryID === \CCrmActivityType::Provider
+				&& isset($data['ASSOCIATED_ENTITY']['PROVIDER_ID'])
+				&& self::isActivityProviderSupported($data['ASSOCIATED_ENTITY']['PROVIDER_ID'])
+			)
+			{
+				$provider = \CAllCrmActivity::GetProviderById($data['ASSOCIATED_ENTITY']['PROVIDER_ID']);
+				$providerData = class_exists($provider) ? $provider::prepareHistoryItemData($data) : null;
+				if (is_array($providerData))
+				{
+					$data['PROVIDER_DATA'] = $providerData;
+				}
+			}
+
 			if($typeID === TimelineType::MARK && $typeCategoryID === TimelineMarkType::SUCCESS)
 			{
 				$isReplied = null;
@@ -484,6 +505,7 @@ class ActivityController extends EntityController
 				|| $providerID === Activity\Provider\OpenLine::getId()
 				|| $providerID === Activity\Provider\RestApp::getId()
 				|| $providerID === Activity\Provider\Delivery::getId()
+				|| $providerID === Activity\Provider\Zoom::getId()
 			)
 			{
 				return true;
@@ -502,6 +524,7 @@ class ActivityController extends EntityController
 			|| $providerID === Activity\Provider\Sms::getId()
 			|| $providerID === Activity\Provider\RestApp::getId()
 			|| $providerID === Activity\Provider\Visit::getId()
+			|| $providerID === Activity\Provider\Zoom::getId()
 		);
 	}
 
@@ -584,6 +607,23 @@ class ActivityController extends EntityController
 				$data['OPENLINE_INFO'] = array(
 					'MESSAGES' => \Bitrix\Crm\Integration\OpenLineManager::getSessionMessages($sessionID, 3)
 				);
+			}
+		}
+		elseif($providerID === Activity\Provider\Zoom::getId())
+		{
+			$conferenceId = isset($data['ASSOCIATED_ENTITY_ID']) ? (int)$data['ASSOCIATED_ENTITY_ID'] : 0;
+			if ($conferenceId > 0 && Main\Loader::includeModule('socialservices'))
+			{
+				$conference = \Bitrix\Socialservices\ZoomMeetingTable::getRowById($conferenceId);
+				if ($conference !== null)
+				{
+					$data['ZOOM_INFO'] = array(
+						'CONF_START_TIME' => $conference['CONFERENCE_STARTED']->getTimestamp(),
+						'CONF_URL' => $conference['SHORT_LINK'],
+						'DURATION' => $conference['DURATION'],
+						'TOPIC' => $conference['TITLE'],
+					);
+				}
 			}
 		}
 		else if($providerID === \Bitrix\Crm\Activity\Provider\RestApp::getId())
@@ -702,6 +742,27 @@ class ActivityController extends EntityController
 				{
 					$fields['SMS_INFO']['errorText'] = $smsFields['EXEC_ERROR'];
 				}
+			}
+		}
+		elseif($providerID === Activity\Provider\Zoom::getId())
+		{
+			$conferenceId = isset($fields['ASSOCIATED_ENTITY_ID']) ? (int)$fields['ASSOCIATED_ENTITY_ID'] : 0;
+			if ($conferenceId > 0 && Main\Loader::includeModule('socialservices'))
+			{
+				$conference = \Bitrix\Socialservices\ZoomMeetingTable::getRowById($conferenceId);
+				if ($conference !== null)
+				{
+					$fields['ZOOM_INFO'] = array(
+						'RECORDINGS' => \Bitrix\SocialServices\Integration\Zoom\Recording::getRecordings($conferenceId)->getData(),
+						'CONF_START_TIME' => $conference['CONFERENCE_STARTED']->getTimestamp(),
+						'CONF_URL' => $conference['SHORT_LINK'],
+						'DURATION' => $conference['DURATION'],
+						'TOPIC' => $conference['TITLE'],
+						'HAS_RECORDING' => $conference['HAS_RECORDING']
+					);
+				}
+
+				$fields['ZOOM_INFO']['PROVIDER_TYPE_ID'] = $fields['PROVIDER_TYPE_ID'];
 			}
 		}
 		elseif($providerID === Activity\Provider\OpenLine::getId())

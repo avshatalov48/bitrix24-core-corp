@@ -1,8 +1,9 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-use Bitrix\Main\Web\Json;
-use Bitrix\Main\Localization\Loc;
+use \Bitrix\Main\Web\Json,
+	\Bitrix\Main\Localization\Loc;
+use \Bitrix\Imopenlines\Limit;
 \Bitrix\Main\UI\Extension::load( "ui.fonts.opensans");
 
 /** @var CBitrixComponentTemplate $this */
@@ -268,7 +269,7 @@ if(\Bitrix\Main\Loader::includeModule("bitrix24"))
 <script>
 	BX.ready(function(){
 		(new CrmWebFormList(<?=Json::encode(
-			array(
+			[
 				'context' => 'crm_web_form_list_container',
 				'canEdit' => true,
 				'viewUserOptionName' => $arResult['userOptionViewType'],
@@ -276,17 +277,16 @@ if(\Bitrix\Main\Loader::includeModule("bitrix24"))
 				'actionList' => $arResult['actionList'],
 				'detailPageUrlTemplate' => $arResult['PATH_TO_EDIT'],
 				'actionRequestUrl' => $this->getComponent()->getPath() . '/ajax.php',
-				'canUseVoteClient' => \Bitrix\Imopenlines\Limit::canUseVoteClient(),
-				'mess' => array(
+				'canUseVoteClient' => Limit::canUseVoteClient(),
+				'mess' => [
 					'errorAction' => Loc::getMessage('OL_COMPONENT_LIST_ERROR_ACTION'),
 					'deleteConfirmation' => Loc::getMessage('OL_COMPONENT_LIST_DELETE_CONFIRM'),
 					'dlgBtnClose' => Loc::getMessage('OL_COMPONENT_LIST_CLOSE'),
 					'dlgBtnApply' => Loc::getMessage('OL_COMPONENT_LIST_APPLY_1'),
 					'dlgBtnCancel' => Loc::getMessage('OL_COMPONENT_LIST_CANCEL'),
-					'dlgActiveCountLimitedTitle' => Loc::getMessage('OL_COMPONENT_LIST_POPUP_LIMITED_TITLE'),
-					'dlgActiveCountLimitedText' => Loc::getMessage('OL_COMPONENT_LIST_POPUP_LIMITED_TEXT_NEW')
-				)
-			))?>
+					'limitInfoHelper' => Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_OL_NUMBER
+				]
+			])?>
 		));
 	});
 </script>

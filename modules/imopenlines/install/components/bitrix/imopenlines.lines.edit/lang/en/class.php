@@ -1,4 +1,9 @@
-<?
+<?php
+$MESS["OL_COMPONENT_CONFIG_EDIT_CRM_CREATE_DEAL"] = "Auto create a deal";
+$MESS["OL_COMPONENT_CONFIG_EDIT_CRM_CREATE_DEAL_SECOND"] = "Create deal in this funnel";
+$MESS["OL_COMPONENT_CONFIG_EDIT_CRM_CREATE_DEAL_THIRD"] = "Use an active deal, don't create a new one";
+$MESS["OL_COMPONENT_CONFIG_EDIT_CRM_CREATE_IN_CHAT"] = "Create manually in the chat window";
+$MESS["OL_COMPONENT_CONFIG_EDIT_CRM_CREATE_LEAD"] = "Auto create a new lead";
 $MESS["OL_COMPONENT_KPI_FIRST_ANSWER_TEXT"] = "#OPERATOR# exceeded maximum initial response time in conversation ##DIALOG#.";
 $MESS["OL_COMPONENT_KPI_FURTHER_ANSWER_TEXT"] = "#OPERATOR# exceeded maximum response time in conversation ##DIALOG#.";
 $MESS["OL_COMPONENT_LE_BOT_LIST"] = "chat bot  is not selected";
@@ -30,4 +35,3 @@ $MESS["OL_COMPONENT_LE_QUICK_ANSWERS_STORAGE_CREATE_ERROR_UNIQUE"] = "A Canned R
 $MESS["OL_COMPONENT_MODULE_IM_NOT_INSTALLED"] = "The Instant Messenger module is not installed.";
 $MESS["OL_COMPONENT_MODULE_NOT_INSTALLED"] = "The Open Channels module is not installed.";
 $MESS["OL_COMPONENT_MODULE_SOCIALNETWORK_NOT_INSTALLED"] = "The Social Network module is not installed.";
-?>

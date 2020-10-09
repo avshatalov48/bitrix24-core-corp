@@ -13,6 +13,7 @@ if(typeof(BX.CrmTimelineManager) === "undefined")
 		this._commentEditor = null;
 		this._waitEditor = null;
 		this._smsEditor = null;
+		this._zoomEditor = null;
 		this._chat = null;
 		this._schedule = null;
 		this._history = null;
@@ -194,6 +195,21 @@ if(typeof(BX.CrmTimelineManager) === "undefined")
 				this._smsEditor.setVisible(false);
 			}
 
+			if (BX.prop.getBoolean(this._settings, "enableZoom", false) && BX.prop.getBoolean(this._settings, "statusZoom", false))
+			{
+				this._zoomEditor = new BX.Crm.Zoom(
+					{
+						id: this._id,
+						manager: this,
+						ownerTypeId: this._ownerTypeId,
+						ownerId: this._ownerId,
+						container: this.getSetting("editorZoomContainer"),
+						userId: this._userId
+					}
+				);
+				this._zoomEditor.setVisible(false);
+			}
+
 			if(BX.prop.getBoolean(this._settings, "enableRest", false))
 			{
 				this._restEditor = BX.CrmTimelineRestEditor.create(
@@ -228,6 +244,7 @@ if(typeof(BX.CrmTimelineManager) === "undefined")
 					commentEditor: this._commentEditor,
 					waitEditor: this._waitEditor,
 					smsEditor: this._smsEditor,
+					zoomEditor: this._zoomEditor,
 					restEditor: this._restEditor,
 					readOnly: this._readOnly,
 					manager: this
@@ -895,11 +912,15 @@ if(typeof(BX.CrmTimelineManager) === "undefined")
 
 			return item;
 		},
-		loadMediaPlayer: function(id, filePath, mediaType, node, duration)
+		loadMediaPlayer: function(id, filePath, mediaType, node, duration, options)
 		{
 			if(!duration)
 			{
 				duration = 0;
+			}
+			if(!options)
+			{
+				options = {};
 			}
 			var player = new BX.Fileman.Player(id, {
 				sources: [
@@ -908,10 +929,10 @@ if(typeof(BX.CrmTimelineManager) === "undefined")
 						type: mediaType
 					}
 				],
-				isAudio: true,
-				skin: 'vjs-timeline_player-skin',
-				width: 350,
-				height: 30,
+				isAudio: !options.video,
+				skin: options.hasOwnProperty('skin') ? options.skin : 'vjs-timeline_player-skin',
+				width: options.width || 350,
+				height: options.height || 30,
 				duration: duration,
 				onInit: function(player)
 				{
@@ -929,6 +950,7 @@ if(typeof(BX.CrmTimelineManager) === "undefined")
 			BX.cleanNode(node, false);
 			node.appendChild(player.createElement());
 			player.init();
+			return player;
 		},
 		onActivityCreated: function(activity, data)
 		{
@@ -993,9 +1015,11 @@ if(typeof(BX.CrmTimeline) === "undefined")
 				throw "BX.CrmTimeline. Manager instance is not found.";
 			}
 
+			//
 			var datetimeFormat = BX.message("FORMAT_DATETIME").replace(/:SS/, "");
 			var dateFormat = BX.message("FORMAT_DATE");
 			this._timeFormat = BX.date.convertBitrixFormat(BX.util.trim(datetimeFormat.replace(dateFormat, "")));
+			//
 			this._year = (new Date()).getFullYear();
 
 			this._activityEditor = this.getSetting("activityEditor");
@@ -1810,6 +1834,19 @@ if(typeof(BX.CrmHistory) === "undefined")
 						activityEditor: this._activityEditor,
 						data: data,
 						vueComponent: BX.Crm.Delivery.Taxi.ActivityCompleted
+					}
+				);
+			}
+			else if(providerId === 'ZOOM')
+			{
+				return BX.CrmHistoryItemZoom.create(
+					data["ID"],
+					{
+						history: this,
+						fixedHistory: this._fixedHistory,
+						container: this._wrapper,
+						activityEditor: this._activityEditor,
+						data: data
 					}
 				);
 			}
@@ -2901,6 +2938,18 @@ if(typeof BX.CrmSchedule === "undefined")
 				else if(providerId === "IMOPENLINES_SESSION")
 				{
 					return BX.CrmScheduleItemActivityOpenLine.create(
+						itemId,
+						{
+							schedule: this,
+							container: this._wrapper,
+							activityEditor: this._activityEditor,
+							data: data
+						}
+					);
+				}
+				else if(providerId === "ZOOM")
+				{
+					return BX.CrmScheduleItemActivityZoom.create(
 						itemId,
 						{
 							schedule: this,
@@ -7686,6 +7735,10 @@ if(typeof(BX.CrmHistoryItemActivity) === "undefined")
 			{
 				return this.getMessage("visit");
 			}
+			else if (providerId === "ZOOM")
+			{
+				return this.getMessage("zoom");
+			}
 		}
 
 		return "";
@@ -11662,6 +11715,542 @@ if(typeof(BX.CrmHistoryItemOpenLine) === "undefined")
 	};
 }
 
+if(typeof(BX.CrmHistoryItemZoom) === "undefined")
+{
+	BX.CrmHistoryItemZoom = function()
+	{
+		BX.CrmHistoryItemZoom.superclass.constructor.apply(this);
+
+		this._videoDummy = null;
+		this._audioDummy = null;
+		this._videoPlayer = null;
+		this._audioPlayer = null;
+		this._audioLengthElement = null;
+		this._recordings = [];
+		this._currentRecordingIndex = 0;
+		this.zoomActivitySubject = null;
+
+		this._downloadWrapper = null;
+		this._downloadSubject = null;
+		this._downloadSubjectDetail = null;
+		this._downloadVideoLink = null;
+		this._downloadSeparator = null;
+		this._downloadAudioLink = null;
+		this._playVideoLink = null;
+	};
+	BX.extend(BX.CrmHistoryItemZoom, BX.CrmHistoryItemActivity);
+	BX.CrmHistoryItemZoom.prototype.prepareHeaderLayout = function()
+	{
+		var header = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-header" } });
+		header.appendChild(this.prepareTitleLayout());
+		if (!this._data.hasOwnProperty('PROVIDER_DATA') || this._data["PROVIDER_DATA"]["ZOOM_EVENT_TYPE"] !== 'ZOOM_CONF_JOINED')
+		{
+			header.appendChild(this.prepareSuccessfulLayout());
+		}
+		header.appendChild(this.prepareTimeLayout());
+
+		return header;
+	};
+	BX.CrmHistoryItemZoom.prototype.prepareSuccessfulLayout = function()
+	{
+		return BX.create("SPAN", {
+			attrs:{ className: "crm-entity-stream-content-event-successful"},
+			text: BX.message('CRM_TIMELINE_ZOOM_SUCCESSFUL_ACTIVITY')
+		});
+	};
+	BX.CrmHistoryItemZoom.prototype.prepareTitleLayout = function()
+	{
+		if (this._data.hasOwnProperty('PROVIDER_DATA') && this._data["PROVIDER_DATA"]["ZOOM_EVENT_TYPE"] === 'ZOOM_CONF_JOINED')
+		{
+			return BX.create("SPAN", {
+				attrs:{ className: "crm-entity-stream-content-event-title"},
+				text: BX.message('CRM_TIMELINE_ZOOM_JOINED_CONFERENCE')
+			});
+		}
+		else
+		{
+			return BX.create("SPAN", {
+				attrs:{ className: "crm-entity-stream-content-event-title"},
+				text: BX.message('CRM_TIMELINE_ZOOM_CONFERENCE_END')
+			});
+		}
+	};
+	BX.CrmHistoryItemZoom.prototype.prepareContent = function()
+	{
+		var wrapper = BX.create("DIV", { attrs: { className: "crm-entity-stream-section crm-entity-stream-section-history" } });
+		var entityDetailWrapper;
+		var zoomData = BX.prop.getObject(this.getAssociatedEntityData(), "ZOOM_INFO", null);
+		var subject = BX.prop.getString(this.getAssociatedEntityData(), "SUBJECT", null);
+
+		this._recordings = BX.prop.getArray(zoomData, "RECORDINGS", []);
+
+		wrapper.appendChild(
+			BX.create("DIV", { attrs: { className: "crm-entity-stream-section-icon crm-entity-stream-section-icon-zoom" } })
+		);
+
+		if (this.isFixed())
+			BX.addClass(wrapper, 'crm-entity-stream-section-top-fixed');
+
+		var contentWrapper = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-event" } });
+		wrapper.appendChild(
+			BX.create("DIV",
+				{
+					attrs: { className: "crm-entity-stream-section-content" },
+					children: [contentWrapper]
+				}
+			)
+		);
+
+		var header = this.prepareHeaderLayout();
+		contentWrapper.appendChild(header);
+
+		var detailWrapper = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-detail" } });
+		contentWrapper.appendChild(detailWrapper);
+
+		if (this._data.hasOwnProperty('PROVIDER_DATA') && this._data["PROVIDER_DATA"]["ZOOM_EVENT_TYPE"] === 'ZOOM_CONF_JOINED')
+		{
+			entityDetailWrapper = BX.create("DIV",
+				{
+					attrs: { className: "crm-entity-stream-content-detail-description" },
+					text: zoomData['CONF_URL']
+				}
+			);
+		}
+		else
+		{
+			entityDetailWrapper = BX.create("DIV",
+				{
+					attrs: { className: "crm-entity-stream-content-detail-description" },
+				}
+			);
+
+			if (this._recordings.length > 0)
+			{
+				if (this._recordings.length > 1)
+				{
+					//render video parts header
+
+					var tabs = this._recordings.map(function(recording, index)
+					{
+						return {
+							id: index,
+							title: BX.message("CRM_TIMELINE_ZOOM_MEETING_RECORD_PART").replace("#NUMBER#", index + 1),
+							time: recording["AUDIO"] ? recording["AUDIO"]["LENGTH_FORMATTED"] : "",
+							active: index === 0
+						}
+					});
+					var tabsComponent = new BX.CrmHistoryItemZoom.TabsComponent({
+						tabs: tabs,
+					});
+					tabsComponent.eventEmitter.subscribe("onTabChange", this._onTabChange.bind(this));
+					detailWrapper.appendChild(tabsComponent.render());
+				}
+
+				this._videoDummy = BX.create("DIV",
+					{
+						props: { className: "crm-entity-stream-content-detail-zoom-video-wrap"},
+						children: [
+							BX.create("DIV",
+								{
+									props: { className: "crm-entity-stream-content-detail-zoom-video" },
+									events:
+										{
+											click: this._onVideoDummyClick.bind(this)
+										},
+									children: [
+										BX.create("DIV", {
+											props: {className: "crm-entity-stream-content-detail-zoom-video-inner"},
+											children: [
+												BX.create("DIV", {
+													props: {className: "crm-entity-stream-content-detail-zoom-video-btn"},
+													dataset: {
+														hint: BX.message("CRM_TIMELINE_ZOOM_LOGIN_REQUIRED"),
+														'hintNoIcon': 'Y'
+													}
+												}),
+												BX.create("SPAN", {
+													props: {className: "crm-entity-stream-content-detail-zoom-video-text"},
+													text: BX.message("CRM_TIMELINE_ZOOM_CLICK_TO_WATCH")
+												})
+											]
+										})
+									]
+								}
+							)
+						]
+					});
+
+				BX.UI.Hint.init(this._videoDummy);
+
+				this._audioDummy = BX.create("DIV",
+					{
+						attrs: { className: "crm-audio-cap-wrap-container"},
+						children: [
+							BX.create("DIV",
+								{
+									attrs: { className: "crm-audio-cap-wrap" },
+									children:
+										[
+											this._audioLengthElement = BX.create(
+												"DIV",
+												{ attrs: { className: "crm-audio-cap-time" }, text: "00:15" }
+											)
+										],
+									events: { click: this._onAudioDummyClick.bind(this) }
+								}
+							)
+						]
+					}
+				);
+
+				if (zoomData['RECORDINGS'][0]['VIDEO'])
+				{
+					//video download link with token valid for 24h
+					var videoLinkExpireTS = (zoomData['RECORDINGS'][0]['VIDEO']['END_DATE_TS'] * 1000) + (60 * 60 * 23 * 1000);
+					if (videoLinkExpireTS < Date.now())
+					{
+						var videoLinkContainer = BX.create("DIV", {
+							props: {
+								className: "crm-entity-stream-content-detail-zoom-desc",
+							}
+						});
+
+						this._playVideoLink = BX.create("DIV", {
+							html: BX.message("CRM_TIMELINE_ZOOM_PLAY_LINK_VIDEO"),
+						});
+
+						var detailZoomCopyVideoLink = BX.create("A",
+							{
+								attrs: {
+									className: 'ui-link ui-link-dashed',
+								},
+								text: BX.message("CRM_TIMELINE_ZOOM_COPY_PASSWORD")
+							}
+						);
+
+						BX.clipboard.bindCopyClick(detailZoomCopyVideoLink, {
+							text: zoomData['RECORDINGS'][0]['VIDEO']['PASSWORD'],
+						});
+
+						videoLinkContainer.appendChild(this._playVideoLink);
+						videoLinkContainer.appendChild(detailZoomCopyVideoLink);
+						entityDetailWrapper.appendChild(videoLinkContainer);
+					}
+					else
+					{
+						entityDetailWrapper.appendChild(this._videoDummy);
+					}
+				}
+				if (zoomData['RECORDINGS'][0]['AUDIO'])
+				{
+					entityDetailWrapper.appendChild(this._audioDummy);
+				}
+
+				this._downloadWrapper = BX.create("DIV", {
+					props: {className: "crm-entity-stream-content-detail-zoom-desc"},
+				});
+
+				entityDetailWrapper.appendChild(this._downloadWrapper);
+
+				this._downloadSubject = BX.create("SPAN", {
+					props: {className: "crm-entity-stream-content-detail-zoom-desc-subject"},
+				});
+				this._downloadSubjectDetail = BX.create("SPAN", {
+					props: {className: "crm-entity-stream-content-detail-zoom-desc-detail"},
+				});
+				this._downloadVideoLink = BX.create("A", {
+					props: {className: "crm-entity-stream-content-detail-zoom-desc-link"},
+					text: BX.message("CRM_TIMELINE_ZOOM_DOWNLOAD_VIDEO")
+				});
+				this._downloadSeparator = BX.create("SPAN", {
+					props: {className: "crm-entity-stream-content-detail-zoom-desc-separate"},
+					html: "&mdash;"
+				});
+				this._downloadAudioLink = BX.create("A", {
+					props: {className: "crm-entity-stream-content-detail-zoom-desc-link"},
+					text: BX.message("CRM_TIMELINE_ZOOM_DOWNLOAD_AUDIO")
+				});
+				this.setCurrentRecording(0);
+			}
+			else
+			{
+				this.zoomActivitySubject = BX.create("DIV",
+					{
+						attrs: { className: "crm-entity-stream-content-detail-title" },
+						children:
+							[
+								BX.create("A",
+									{
+										attrs: { href: "#" },
+										events: { "click": this._headerClickHandler },
+										text: subject
+									}
+								)
+							]
+					}
+				);
+
+				entityDetailWrapper.appendChild(this.zoomActivitySubject);
+
+				if (zoomData['HAS_RECORDING'] === 'Y')
+				{
+					entityDetailWrapper.appendChild(BX.create("DIV", {
+						props: {className: "crm-entity-stream-content-detail-zoom-video"},
+						children: [
+							BX.create("DIV", {
+								props: {className: "crm-entity-stream-content-detail-zoom-video-inner"},
+								children: [
+									BX.create("DIV", {
+										props: {className: "crm-entity-stream-content-detail-zoom-video-img"},
+									}),
+									BX.create("SPAN", {
+										props: {className: "crm-entity-stream-content-detail-zoom-video-text"},
+										text: BX.message("CRM_TIMELINE_ZOOM_MEETING_RECORD_IN_PROCESS")
+									})
+								]
+							})
+						]
+					}));
+				}
+			}
+		}
+		/*else
+		{
+			detailWrapper.appendChild(BX.create("span", {text: "456"}));
+
+			var entityDetailWrapper = BX.create("DIV",
+				{
+					attrs: { className: "crm-entity-stream-content-detail-description" },
+					text: BX.prop.getString(zoomData, "CONF_URL", "")
+				}
+			);
+		}*/
+		//Content //todo
+
+
+		if(entityDetailWrapper)
+		{
+			detailWrapper.appendChild(entityDetailWrapper);
+		}
+
+		//region Author
+		var authorNode = this.prepareAuthorLayout();
+		if(authorNode)
+		{
+			contentWrapper.appendChild(authorNode);
+		}
+		//endregion
+
+		return wrapper;
+	};
+	BX.CrmHistoryItemZoom.prototype._onVideoDummyClick = function()
+	{
+		BX.UI.Hint.hide();
+		var recording = this._recordings[this._currentRecordingIndex]["VIDEO"];
+		if(!recording)
+		{
+			return;
+		}
+		this._videoPlayer = this._history.getManager().loadMediaPlayer(
+			"zoom_video_" + this.getId(),
+			recording["DOWNLOAD_URL"],
+			"video/mp4",
+			this._videoDummy,
+			recording["LENGTH"],
+			{
+				video: true,
+				skin: "",
+				width: 480,
+				height: 270
+			}
+		);
+	};
+	BX.CrmHistoryItemZoom.prototype._onAudioDummyClick = function()
+	{
+		var recording = this._recordings[this._currentRecordingIndex]["AUDIO"];
+		if(!recording)
+		{
+			return;
+		}
+		console.log(this.getId());
+		this._audioPlayer = this._history.getManager().loadMediaPlayer(
+			"zoom_audio_" + this.getId(),
+			recording["DOWNLOAD_URL"],
+			"audio/mp4",
+			this._audioDummy,
+			recording["LENGTH"]
+		);
+	};
+	BX.CrmHistoryItemZoom.prototype._onTabChange = function(event)
+	{
+		this.setCurrentRecording(event.data.tabId);
+	};
+	BX.CrmHistoryItemZoom.prototype.setCurrentRecording = function(recordingIndex)
+	{
+		this._currentRecordingIndex = recordingIndex;
+		var videoRecording = this._recordings[this._currentRecordingIndex]["VIDEO"];
+		var audioRecording = this._recordings[this._currentRecordingIndex]["AUDIO"];
+
+		if(videoRecording)
+		{
+			this._videoDummy.hidden = false;
+			if(this._videoPlayer)
+			{
+				this._videoPlayer.pause();
+				this._videoPlayer.setSource(videoRecording["DOWNLOAD_URL"]);
+				this._downloadVideoLink.href = videoRecording["DOWNLOAD_URL"];
+			}
+		}
+		else
+		{
+			this._videoDummy.hidden = true;
+		}
+
+		if(audioRecording)
+		{
+			this._audioDummy.hidden = false;
+			if(this._audioPlayer)
+			{
+				this._audioPlayer.pause();
+				this._audioPlayer.setSource(audioRecording["DOWNLOAD_URL"]);
+			}
+			this._downloadAudioLink.href = audioRecording["DOWNLOAD_URL"];
+			this._audioLengthElement.innerText = audioRecording["LENGTH_FORMATTED"];
+		}
+		else
+		{
+			this._audioDummy.hidden = true;
+		}
+
+		BX.clean(this._downloadWrapper);
+		if(audioRecording || videoRecording)
+		{
+			this._downloadWrapper.appendChild(this._downloadSubject);
+			this._downloadSubject.innerHTML = BX.util.htmlspecialchars(BX.message("CRM_TIMELINE_ZOOM_MEETING_RECORD").replace("#DURATION#", audioRecording["LENGTH_HUMAN"])) + " &mdash; "
+			this._downloadWrapper.appendChild(this._downloadSubjectDetail);
+		}
+		if (videoRecording)
+		{
+			this._downloadSubjectDetail.appendChild(this._downloadVideoLink);
+			this._downloadVideoLink.href = videoRecording['DOWNLOAD_URL'];
+			if (audioRecording)
+			{
+				this._downloadSubjectDetail.appendChild(this._downloadSeparator);
+			}
+
+			if (this._playVideoLink)
+			{
+				this._playVideoLink.lastElementChild.href = videoRecording["PLAY_URL"];
+				this._downloadVideoLink.href = videoRecording["PLAY_URL"];
+			}
+		}
+		if (audioRecording)
+		{
+			this._downloadSubjectDetail.appendChild(this._downloadAudioLink);
+			this._downloadAudioLink.href = audioRecording['DOWNLOAD_URL'];
+		}
+	};
+	BX.CrmHistoryItemZoom.prototype.prepareActions = function()
+	{
+	};
+	BX.CrmHistoryItemZoom.create = function(id, settings)
+	{
+		var self = new BX.CrmHistoryItemZoom();
+		self.initialize(id, settings);
+
+		//todo: remove debug
+		if(!window['zoom'])
+		{
+			window['zoom'] = [];
+		}
+		window['zoom'].push(self);
+		return self;
+	};
+
+	BX.CrmHistoryItemZoom.TabsComponent = function(config)
+	{
+		this.tabs = BX.prop.getArray(config, "tabs", []);
+		this.elements = {
+			container: null,
+			tabs: {}
+		};
+		this.eventEmitter = new BX.Event.EventEmitter(this, 'BX.CrmHistoryItemZoom.TabsComponent');
+	};
+
+	BX.CrmHistoryItemZoom.TabsComponent.prototype.render = function()
+	{
+		if(this.elements.container)
+		{
+			return this.elements.container;
+		}
+
+		this.elements.container = BX.create("DIV", {
+			props: {className: "crm-entity-stream-content-detail-zoom-section-wrapper"},
+			children: [
+				BX.create("DIV", {
+					props: {className: "crm-entity-stream-content-detail-zoom-section-list"},
+					children: this.tabs.map(this._renderTab, this)
+				})
+			]
+		});
+		return this.elements.container;
+	};
+	BX.CrmHistoryItemZoom.TabsComponent.prototype._renderTab = function(tabDescription)
+	{
+		var tabId = tabDescription.id;
+		this.elements.tabs[tabId] = BX.create("DIV", {
+			props: {className: "crm-entity-stream-content-detail-zoom-section" + (tabDescription.active ? " crm-entity-stream-content-detail-zoom-section-active": "")},
+			children: [
+				BX.create("DIV", {
+					props: {className: "crm-entity-stream-content-detail-zoom-section-inner"},
+					children: [
+						BX.create("DIV", {
+							props: {className: "crm-entity-stream-content-detail-zoom-section-title"},
+							text: tabDescription.title
+						}),
+						BX.create("DIV", {
+							props: {className: "crm-entity-stream-content-detail-zoom-section-time"},
+							text: tabDescription.time
+						})
+					]
+				})
+			],
+			events: {
+				click: function()
+				{
+					this.setActiveTab(tabDescription.id)
+				}.bind(this)
+			}
+		});
+		return this.elements.tabs[tabId];
+	};
+	BX.CrmHistoryItemZoom.TabsComponent.prototype.setActiveTab = function(tabId)
+	{
+		if(!this.elements.tabs[tabId])
+		{
+			throw new Error ("Tab " + tabId + " is not found");
+		}
+		for (var id in this.elements.tabs)
+		{
+			if(!this.elements.tabs.hasOwnProperty(id))
+			{
+				continue;
+			}
+			if (id == tabId)
+			{
+				this.elements.tabs[id].classList.add("crm-entity-stream-content-detail-zoom-section-active");
+			}
+			else
+			{
+				this.elements.tabs[id].classList.remove("crm-entity-stream-content-detail-zoom-section-active");
+			}
+		}
+		this.eventEmitter.emit("onTabChange", {
+			tabId: tabId
+		});
+	}
+}
+
 if(typeof(BX.CrmHistoryItemConversion) === "undefined")
 {
 	BX.CrmHistoryItemConversion = function()
@@ -14971,6 +15560,266 @@ if(typeof(BX.CrmScheduleItemActivityOpenLine) === "undefined")
 		return self;
 	};
 }
+
+//
+if(typeof(BX.CrmScheduleItemActivityZoom) === "undefined")
+{
+	BX.CrmScheduleItemActivityZoom = function()
+	{
+		BX.CrmScheduleItemActivityZoom.superclass.constructor.apply(this);
+	};
+	BX.extend(BX.CrmScheduleItemActivityZoom, BX.CrmScheduleItemActivity);
+
+	BX.CrmScheduleItemActivityZoom.prototype.getWrapperClassName = function()
+	{
+		return "crm-entity-stream-section-zoom";
+	};
+	BX.CrmScheduleItemActivityZoom.prototype.getIconClassName = function()
+	{
+		return "crm-entity-stream-section-icon crm-entity-stream-section-icon-zoom";
+	};
+	BX.CrmScheduleItemActivityZoom.prototype.getTypeDescription = function()
+	{
+		return this.getMessage("zoom");
+	};
+	BX.CrmScheduleItemActivityZoom.prototype.getPrepositionText = function(direction)
+	{
+	};
+	BX.CrmScheduleItemActivityZoom.prototype.prepareCommunicationNode = function(communicationValue)
+	{
+		return null;
+	};
+	BX.CrmScheduleItemActivityZoom.prototype.prepareContent = function(options)
+	{
+		var deadline = this.getDeadline();
+		var timeText = deadline ? this.formatDateTime(deadline) : this.getMessage("termless");
+
+		var entityData = this.getAssociatedEntityData();
+		var direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
+		var isDone = this.isDone();
+		var subject = BX.prop.getString(entityData, "SUBJECT", "");
+		var description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
+
+		var communication =  BX.prop.getObject(entityData, "COMMUNICATION", {});
+		var title = BX.prop.getString(communication, "TITLE", "");
+		var showUrl = BX.prop.getString(communication, "SHOW_URL", "");
+		var communicationValue = BX.prop.getString(communication, "TYPE", "") !== ""
+			? BX.prop.getString(communication, "VALUE", "") : "";
+
+		var wrapperClassName = this.getWrapperClassName();
+		if(wrapperClassName !== "")
+		{
+			wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-planned" + " " + wrapperClassName;
+		}
+		else
+		{
+			wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-planned";
+		}
+
+		var wrapper = BX.create("DIV", { attrs: { className: wrapperClassName } });
+
+		var iconClassName = this.getIconClassName();
+		if(this.isCounterEnabled())
+		{
+			iconClassName += " crm-entity-stream-section-counter";
+		}
+		wrapper.appendChild(BX.create("DIV", { attrs: { className: iconClassName } }));
+
+		//region Context Menu
+		if(this.isContextMenuEnabled())
+		{
+			wrapper.appendChild(this.prepareContextMenuButton());
+		}
+		//endregion
+
+		var contentWrapper = BX.create("DIV",
+			{ attrs: { className: "crm-entity-stream-section-content" } }
+		);
+		wrapper.appendChild(contentWrapper);
+
+		//region Details
+		if(description !== "")
+		{
+			//trim leading spaces
+			description = description.replace(/^\s+/,'');
+		}
+
+		var contentInnerWrapper = BX.create("DIV",
+			{
+				attrs: { className: "crm-entity-stream-content-event" }
+			}
+		);
+		contentWrapper.appendChild(contentInnerWrapper);
+
+		this._deadlineNode = BX.create("SPAN",
+			{ attrs: { className: "crm-entity-stream-content-event-time" }, text: timeText }
+		);
+
+		var headerWrapper = BX.create("DIV",
+			{
+				attrs: { className: "crm-entity-stream-content-header" },
+				children:
+					[
+						BX.create("SPAN",
+							{
+								attrs:
+									{
+										className: "crm-entity-stream-content-event-title"
+									},
+								text: this.getTypeDescription(direction)
+							}
+						),
+						this._deadlineNode
+					]
+			}
+		);
+		contentInnerWrapper.appendChild(headerWrapper);
+
+		var detailWrapper = BX.create("DIV",
+			{
+				attrs: { className: "crm-entity-stream-content-detail" }
+			}
+		);
+		contentInnerWrapper.appendChild(detailWrapper);
+
+		if (entityData['ZOOM_INFO'])
+		{
+			var topic = entityData['ZOOM_INFO']['TOPIC'];
+			var duration = entityData['ZOOM_INFO']['DURATION'];
+			var timestamp = parseInt(entityData['ZOOM_INFO']['CONF_START_TIME']);
+			timestamp += BX.CrmTimeline.prototype.getUserTimezoneOffset();
+			var date = new Date();
+			date.setTime(timestamp*1000);
+
+			var detailZoomMessage = BX.create("span",
+				{
+					text: this.getMessage("zoomCreatedMessage")
+						.replace("#CONFERENCE_TITLE#", topic)
+						.replace("#DATE_TIME#", this.formatDateTime(date))
+						.replace("#DURATION#", duration)
+				}
+			);
+
+			var detailZoomInfoLink = BX.create("A",
+				{
+					attrs:
+						{
+							href: entityData['ZOOM_INFO']['CONF_URL'],
+							target: "_blank",
+						},
+					text: entityData['ZOOM_INFO']['CONF_URL']
+				}
+			);
+
+			var detailZoomInfo = BX.create("DIV",
+				{
+					attrs: {className: "crm-entity-stream-content-detail-zoom-info"},
+					children: [ detailZoomMessage, detailZoomInfoLink ]
+				}
+			);
+
+			detailWrapper.appendChild(detailZoomInfo);
+
+			var detailZoomCopyInviteLink = BX.create("A",
+				{
+					attrs: {
+						className: 'ui-link ui-link-dashed',
+						"data-url": entityData['ZOOM_INFO']['CONF_URL']
+					},
+					text: this.getMessage("zoomCreatedCopyInviteLink"),
+				}
+			);
+			BX.clipboard.bindCopyClick(detailZoomCopyInviteLink, {
+				text: entityData['ZOOM_INFO']['CONF_URL'],
+			});
+
+			var detailZoomStartConferenceButton = BX.create("BUTTON",
+				{
+					attrs: {className: 'ui-btn ui-btn-sm ui-btn-primary'},
+					text: this.getMessage("zoomCreatedStartConference"),
+					events: { "click": function() {
+							window.open(entityData['ZOOM_INFO']['CONF_URL']);
+						}
+					}
+				}
+			);
+
+			var detailZoomCopyInviteLinkWrapper = BX.create("DIV",
+				{
+					attrs: {className: "crm-entity-stream-content-detail-zoom-link-wrapper"},
+					children: [ detailZoomCopyInviteLink ]
+				}
+			);
+			detailWrapper.appendChild(detailZoomCopyInviteLinkWrapper);
+			detailWrapper.appendChild(detailZoomStartConferenceButton);
+		}
+
+		var additionalDetails = this.prepareDetailNodes();
+		if(BX.type.isArray(additionalDetails))
+		{
+			for(var i = 0, length = additionalDetails.length; i < length; i++)
+			{
+				detailWrapper.appendChild(additionalDetails[i]);
+			}
+		}
+
+		//endregion
+		//region Set as Done Button
+		var setAsDoneButton = BX.create("INPUT",
+			{
+				attrs:
+					{
+						type: "checkbox",
+						className: "crm-entity-stream-planned-apply-btn",
+						checked: isDone
+					},
+				events: { change: this._setAsDoneButtonHandler }
+			}
+		);
+
+		if(!this.canComplete())
+		{
+			setAsDoneButton.disabled = true;
+		}
+
+		var buttonContainer = BX.create("DIV",
+			{
+				attrs: { className: "crm-entity-stream-content-detail-planned-action" },
+				children: [ setAsDoneButton ]
+			}
+		);
+		contentInnerWrapper.appendChild(buttonContainer);
+		//endregion
+
+		//region Author
+		var authorNode = this.prepareAuthorLayout();
+		if(authorNode)
+		{
+			contentInnerWrapper.appendChild(authorNode);
+		}
+		//endregion
+
+		//region  Actions
+		this._actionContainer = BX.create("DIV",
+			{
+				attrs: { className: "crm-entity-stream-content-detail-action" }
+			}
+		);
+		contentInnerWrapper.appendChild(this._actionContainer);
+		//endregion
+
+		return wrapper;
+	};
+	BX.CrmScheduleItemActivityZoom.prototype.prepareDetailNodes = function()
+	{
+	};
+	BX.CrmScheduleItemActivityZoom.create = function(id, settings)
+	{
+		var self = new BX.CrmScheduleItemActivityZoom();
+		self.initialize(id, settings);
+		return self;
+	};
+}
 //endregion
 
 //region Animation
@@ -15725,6 +16574,7 @@ if(typeof(BX.CrmTimelineMenuBar) === "undefined")
 		this._commentEditor = null;
 		this._waitEditor = null;
 		this._smsEditor = null;
+		this._zoomEditor = null;
 		this._readOnly = false;
 
 		this._menu = null;
@@ -15749,6 +16599,7 @@ if(typeof(BX.CrmTimelineMenuBar) === "undefined")
 			this._commentEditor = BX.prop.get(this._settings, "commentEditor");
 			this._waitEditor = BX.prop.get(this._settings, "waitEditor");
 			this._smsEditor = BX.prop.get(this._settings, "smsEditor");
+			this._zoomEditor = BX.prop.get(this._settings, "zoomEditor");
 			this._restEditor = BX.prop.get(this._settings, "restEditor");
 			this._manager = BX.prop.get(this._settings, "manager");
 			if(!(this._manager instanceof BX.CrmTimelineManager))
@@ -15876,43 +16727,24 @@ if(typeof(BX.CrmTimelineMenuBar) === "undefined")
 					}
 				);
 			}
-			else if(action === "comment" && this._commentEditor)
+			else if(["comment", "wait", "sms", "zoom"].indexOf(action) >= 0 && this[("_" + action + "Editor")])
 			{
-				if(this._waitEditor)
+				if (this._commentEditor)
 				{
-					this._waitEditor.setVisible(false);
+					this._commentEditor.setVisible(action === "comment");
 				}
-				if(this._smsEditor)
+				if (this._waitEditor)
 				{
-					this._smsEditor.setVisible(false);
+					this._waitEditor.setVisible(action === "wait");
 				}
-				this._commentEditor.setVisible(true);
-				this.setActiveItem(item);
-			}
-			else if(action === "wait" && this._waitEditor)
-			{
-				if(this._commentEditor)
+				if (this._smsEditor)
 				{
-					this._commentEditor.setVisible(false);
+					this._smsEditor.setVisible(action === "sms");
 				}
-				if(this._smsEditor)
+				if (this._zoomEditor)
 				{
-					this._smsEditor.setVisible(false);
+					this._zoomEditor.setVisible(action === "zoom");
 				}
-				this._waitEditor.setVisible(true);
-				this.setActiveItem(item);
-			}
-			else if(action === "sms" && this._smsEditor)
-			{
-				if(this._commentEditor)
-				{
-					this._commentEditor.setVisible(false);
-				}
-				if(this._waitEditor)
-				{
-					this._waitEditor.setVisible(false);
-				}
-				this._smsEditor.setVisible(true);
 				this.setActiveItem(item);
 			}
 			else if(action === "visit")

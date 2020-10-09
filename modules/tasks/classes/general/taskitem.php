@@ -10,6 +10,7 @@
 
 use Bitrix\Main\Localization\Loc;
 
+use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\CheckList\Internals\CheckList;
@@ -2055,12 +2056,12 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		$this->arTaskDependsOn      = null;
 		$this->arTaskFileAttachments = null;
 
+		$id = (int) $this->getId();
+
 		// $this instance may not have obtained via static::getInstance(), so the code above will not take effect on
 		// instances that actually have. Therefore, we need to drop each cache item for $this->getId() ALSO
 		if($clearStaticCache && is_array(static::$instances))
 		{
-			$id = $this->getId();
-
 			foreach(static::$instances as $key => $instance)
 			{
 				$key = explode('|', $key);

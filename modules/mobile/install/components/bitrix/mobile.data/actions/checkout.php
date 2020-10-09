@@ -296,6 +296,9 @@ else
 	$forceGenerate = \Bitrix\Mobile\Auth::removeOneTimeAuthHash($hitHash);
 	if (($needAppPass == 'mobile' && $USER->GetParam("APPLICATION_ID") === null) || $forceGenerate)
 	{
+		if($forceGenerate) {
+			setSessionExpired(false);
+		}
 		if ($appUUID <> '')
 		{
 			$result = ApplicationPasswordTable::getList(Array(
@@ -312,7 +315,6 @@ else
 		}
 
 		$password = ApplicationPasswordTable::generatePassword();
-
 		$res = ApplicationPasswordTable::add(array(
 			'USER_ID' => $USER->GetID(),
 			'APPLICATION_ID' => 'mobile',

@@ -49,7 +49,7 @@ class Rest extends \IRestService
 		$currentSettings = $tmUser->getSettings();
 
 		// temporary fix timeman bug
-		if(strpos($currentSettings['UF_TM_ALLOWED_DELTA'], ':') !== false)
+		if(mb_strpos($currentSettings['UF_TM_ALLOWED_DELTA'], ':') !== false)
 		{
 			$currentSettings['UF_TM_ALLOWED_DELTA'] = \CTimeMan::MakeShortTS($currentSettings['UF_TM_ALLOWED_DELTA']);
 		}
@@ -337,11 +337,11 @@ class Rest extends \IRestService
 		}
 
 		$text = $query['TEXT'];
-		$type = strtoupper($query['TYPE']) == \Bitrix\Timeman\Absence::REPORT_TYPE_WORK? \Bitrix\Timeman\Absence::REPORT_TYPE_WORK: \Bitrix\Timeman\Absence::REPORT_TYPE_PRIVATE;
+		$type = mb_strtoupper($query['TYPE']) == \Bitrix\Timeman\Absence::REPORT_TYPE_WORK? \Bitrix\Timeman\Absence::REPORT_TYPE_WORK: \Bitrix\Timeman\Absence::REPORT_TYPE_PRIVATE;
 		$addToCalendar = $query['CALENDAR'] === 'N'? false: (bool)$query['CALENDAR'];
 
 		$text = trim($text);
-		if (strlen($text) <= 0)
+		if ($text == '')
 		{
 			throw new \Bitrix\Rest\RestException("Text can't be empty", "TEXT_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
 		}
@@ -368,13 +368,13 @@ class Rest extends \IRestService
 			'register_idle' => \Bitrix\Timeman\Absence::isRegisterIdle(),
 			'register_desktop' => \Bitrix\Timeman\Absence::isRegisterDesktop(),
 
-			'report_request_type' => strtolower(\Bitrix\Timeman\Absence::getOptionReportEnableType()),
+			'report_request_type' => mb_strtolower(\Bitrix\Timeman\Absence::getOptionReportEnableType()),
 			'report_request_users' => \Bitrix\Timeman\Absence::getOptionReportEnableUsers(),
 
-			'report_simple_type' => strtolower(\Bitrix\Timeman\Absence::getOptionReportListSimpleType()),
+			'report_simple_type' => mb_strtolower(\Bitrix\Timeman\Absence::getOptionReportListSimpleType()),
 			'report_simple_users' => \Bitrix\Timeman\Absence::getOptionReportListSimpleUsers(),
 
-			'report_full_type' => strtolower(\Bitrix\Timeman\Absence::getOptionReportListFullType()),
+			'report_full_type' => mb_strtolower(\Bitrix\Timeman\Absence::getOptionReportListFullType()),
 			'report_full_users' => \Bitrix\Timeman\Absence::getOptionReportListFullUsers(),
 		);
 	}
@@ -412,11 +412,11 @@ class Rest extends \IRestService
 
 		if (array_key_exists('REPORT_REQUEST_TYPE', $query))
 		{
-			if (strtoupper($query['REPORT_REQUEST_TYPE']) == \Bitrix\Timeman\Absence::TYPE_ALL)
+			if (mb_strtoupper($query['REPORT_REQUEST_TYPE']) == \Bitrix\Timeman\Absence::TYPE_ALL)
 			{
 				\Bitrix\Timeman\Absence::setOptionRequestReport(true);
 			}
-			else if (strtoupper($query['REPORT_REQUEST_TYPE']) == \Bitrix\Timeman\Absence::TYPE_FOR_USER)
+			else if (mb_strtoupper($query['REPORT_REQUEST_TYPE']) == \Bitrix\Timeman\Absence::TYPE_FOR_USER)
 			{
 				if (array_key_exists('REPORT_REQUEST_USERS', $query))
 				{
@@ -439,11 +439,11 @@ class Rest extends \IRestService
 
 		if (array_key_exists('REPORT_SIMPLE_TYPE', $query))
 		{
-			if (strtoupper($query['REPORT_SIMPLE_TYPE']) == \Bitrix\Timeman\Absence::TYPE_ALL)
+			if (mb_strtoupper($query['REPORT_SIMPLE_TYPE']) == \Bitrix\Timeman\Absence::TYPE_ALL)
 			{
 				\Bitrix\Timeman\Absence::setOptionReportListSimple(true);
 			}
-			else if (strtoupper($query['REPORT_SIMPLE_TYPE']) == \Bitrix\Timeman\Absence::TYPE_FOR_USER)
+			else if (mb_strtoupper($query['REPORT_SIMPLE_TYPE']) == \Bitrix\Timeman\Absence::TYPE_FOR_USER)
 			{
 				if (array_key_exists('REPORT_SIMPLE_USERS', $query))
 				{
@@ -466,11 +466,11 @@ class Rest extends \IRestService
 
 		if (array_key_exists('REPORT_FULL_TYPE', $query))
 		{
-			if (strtoupper($query['REPORT_FULL_TYPE']) == \Bitrix\Timeman\Absence::TYPE_ALL)
+			if (mb_strtoupper($query['REPORT_FULL_TYPE']) == \Bitrix\Timeman\Absence::TYPE_ALL)
 			{
 				\Bitrix\Timeman\Absence::setOptionReportListFull(true);
 			}
-			else if (strtoupper($query['REPORT_FULL_TYPE']) == \Bitrix\Timeman\Absence::TYPE_FOR_USER)
+			else if (mb_strtoupper($query['REPORT_FULL_TYPE']) == \Bitrix\Timeman\Absence::TYPE_FOR_USER)
 			{
 				if (array_key_exists('REPORT_FULL_USERS', $query))
 				{
@@ -640,7 +640,7 @@ class Rest extends \IRestService
 
 	public static function getPublicDomain()
 	{
-		return (\Bitrix\Main\Context::getCurrent()->getRequest()->isHttps() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0) ? SITE_SERVER_NAME : \Bitrix\Main\Config\Option::get("main", "server_name", $_SERVER['SERVER_NAME']));
+		return (\Bitrix\Main\Context::getCurrent()->getRequest()->isHttps() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') ? SITE_SERVER_NAME : \Bitrix\Main\Config\Option::get("main", "server_name", $_SERVER['SERVER_NAME']));
 	}
 
 	public static function formatJsonAnswer($array)
@@ -660,7 +660,7 @@ class Rest extends \IRestService
 			{
 				$array[$name] = date('c', $value->getTimestamp());
 			}
-			else if ($name == 'AVATAR' && is_string($value) && $value && strpos($value, 'http') !== 0)
+			else if ($name == 'AVATAR' && is_string($value) && $value && mb_strpos($value, 'http') !== 0)
 			{
 				$array[$name] = self::getPublicDomain().$value;
 			}

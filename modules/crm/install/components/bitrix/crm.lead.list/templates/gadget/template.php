@@ -20,7 +20,7 @@ else
 
 		echo '<div class="crm-gadg-stage">';
 		echo '<span class="crm-gadg-stage-left">', htmlspecialcharsbx(GetMessage('CRM_COLUMN_STATUS')), ':<span>';
-		echo '<span class="crm-gadg-stage-right">', $arLead['LEAD_STATUS_NAME'], '<span>';
+		echo '<span class="crm-gadg-stage-right">', htmlspecialcharsbx($arLead['LEAD_STATUS_NAME']), '<span>';
 		echo '</div>';
 
 		$name = isset($arLead['LEAD_FORMATTED_NAME']) ? $arLead['LEAD_FORMATTED_NAME'] : '';

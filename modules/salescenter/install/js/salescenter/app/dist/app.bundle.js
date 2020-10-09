@@ -4,17 +4,12 @@ this.BX = this.BX || {};
 
 	DeliverySelector = DeliverySelector && DeliverySelector.hasOwnProperty('default') ? DeliverySelector['default'] : DeliverySelector;
 
-	function _createSuper(Derived) { return function () { var Super = babelHelpers.getPrototypeOf(Derived), result; if (_isNativeReflectConstruct()) { var NewTarget = babelHelpers.getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return babelHelpers.possibleConstructorReturn(this, result); }; }
-
-	function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
 	var ApplicationModel = /*#__PURE__*/function (_VuexBuilderModel) {
 	  babelHelpers.inherits(ApplicationModel, _VuexBuilderModel);
 
-	  var _super = _createSuper(ApplicationModel);
-
 	  function ApplicationModel() {
 	    babelHelpers.classCallCheck(this, ApplicationModel);
-	    return _super.apply(this, arguments);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ApplicationModel).apply(this, arguments));
 	  }
 
 	  babelHelpers.createClass(ApplicationModel, [{
@@ -79,17 +74,12 @@ this.BX = this.BX || {};
 	  return ApplicationModel;
 	}(ui_vue_vuex.VuexBuilderModel);
 
-	function _createSuper$1(Derived) { return function () { var Super = babelHelpers.getPrototypeOf(Derived), result; if (_isNativeReflectConstruct$1()) { var NewTarget = babelHelpers.getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return babelHelpers.possibleConstructorReturn(this, result); }; }
-
-	function _isNativeReflectConstruct$1() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
 	var OrderCreationModel = /*#__PURE__*/function (_VuexBuilderModel) {
 	  babelHelpers.inherits(OrderCreationModel, _VuexBuilderModel);
 
-	  var _super = _createSuper$1(OrderCreationModel);
-
 	  function OrderCreationModel() {
 	    babelHelpers.classCallCheck(this, OrderCreationModel);
-	    return _super.apply(this, arguments);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(OrderCreationModel).apply(this, arguments));
 	  }
 
 	  babelHelpers.createClass(OrderCreationModel, [{
@@ -159,7 +149,7 @@ this.BX = this.BX || {};
 	                  basket: BX.prop.get(data, "items", [])
 	                });
 
-	                if (payload.onsuccess) {
+	                if (payload && payload.onsuccess) {
 	                  payload.onsuccess();
 	                }
 	              }
@@ -171,7 +161,7 @@ this.BX = this.BX || {};
 	                  basket: BX.prop.get(data, "items", [])
 	                });
 
-	                if (payload.onfailure) {
+	                if (payload && payload.onfailure) {
 	                  payload.onfailure();
 	                }
 	              }
@@ -467,9 +457,9 @@ this.BX = this.BX || {};
 	  }
 	};
 
-	function _createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = _unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
-	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
 	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 	ui_vue.Vue.component(config.templateName, {
@@ -2155,18 +2145,12 @@ this.BX = this.BX || {};
 	  return Base;
 	}();
 
-	function _createSuper$2(Derived) { return function () { var Super = babelHelpers.getPrototypeOf(Derived), result; if (_isNativeReflectConstruct$2()) { var NewTarget = babelHelpers.getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return babelHelpers.possibleConstructorReturn(this, result); }; }
-
-	function _isNativeReflectConstruct$2() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
-
 	var Cash = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Cash, _Base);
 
-	  var _super = _createSuper$2(Cash);
-
 	  function Cash() {
 	    babelHelpers.classCallCheck(this, Cash);
-	    return _super.apply(this, arguments);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Cash).apply(this, arguments));
 	  }
 
 	  babelHelpers.createClass(Cash, [{
@@ -2188,20 +2172,14 @@ this.BX = this.BX || {};
 	  return Cash;
 	}(Base);
 
-	function _createSuper$3(Derived) { return function () { var Super = babelHelpers.getPrototypeOf(Derived), result; if (_isNativeReflectConstruct$3()) { var NewTarget = babelHelpers.getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return babelHelpers.possibleConstructorReturn(this, result); }; }
-
-	function _isNativeReflectConstruct$3() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
-
 	var Check = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Check, _Base);
-
-	  var _super = _createSuper$3(Check);
 
 	  function Check(props) {
 	    var _this;
 
 	    babelHelpers.classCallCheck(this, Check);
-	    _this = _super.call(this, props);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Check).call(this, props));
 	    _this.url = main_core.Type.isString(props.url) && props.url.length > 0 ? props.url : '';
 	    return _this;
 	  }
@@ -2225,20 +2203,14 @@ this.BX = this.BX || {};
 	  return Check;
 	}(Base);
 
-	function _createSuper$4(Derived) { return function () { var Super = babelHelpers.getPrototypeOf(Derived), result; if (_isNativeReflectConstruct$4()) { var NewTarget = babelHelpers.getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return babelHelpers.possibleConstructorReturn(this, result); }; }
-
-	function _isNativeReflectConstruct$4() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
-
 	var CheckSent = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(CheckSent, _Base);
-
-	  var _super = _createSuper$4(CheckSent);
 
 	  function CheckSent(props) {
 	    var _this;
 
 	    babelHelpers.classCallCheck(this, CheckSent);
-	    _this = _super.call(this, props);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CheckSent).call(this, props));
 	    _this.url = main_core.Type.isString(props.url) && props.url.length > 0 ? props.url : '';
 	    return _this;
 	  }
@@ -2262,20 +2234,14 @@ this.BX = this.BX || {};
 	  return CheckSent;
 	}(Base);
 
-	function _createSuper$5(Derived) { return function () { var Super = babelHelpers.getPrototypeOf(Derived), result; if (_isNativeReflectConstruct$5()) { var NewTarget = babelHelpers.getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return babelHelpers.possibleConstructorReturn(this, result); }; }
-
-	function _isNativeReflectConstruct$5() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
-
 	var Payment = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Payment, _Base);
-
-	  var _super = _createSuper$5(Payment);
 
 	  function Payment(props) {
 	    var _this;
 
 	    babelHelpers.classCallCheck(this, Payment);
-	    _this = _super.call(this, props);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Payment).call(this, props));
 	    _this.sum = typeof props.sum != 'undefined' ? props.sum : '0.00'; //.toFixed(2)
 
 	    _this.title = main_core.Type.isString(props.title) && props.title.length > 0 ? props.title : '';
@@ -2302,20 +2268,14 @@ this.BX = this.BX || {};
 	  return Payment;
 	}(Base);
 
-	function _createSuper$6(Derived) { return function () { var Super = babelHelpers.getPrototypeOf(Derived), result; if (_isNativeReflectConstruct$6()) { var NewTarget = babelHelpers.getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return babelHelpers.possibleConstructorReturn(this, result); }; }
-
-	function _isNativeReflectConstruct$6() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
-
 	var Sent = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Sent, _Base);
-
-	  var _super = _createSuper$6(Sent);
 
 	  function Sent(props) {
 	    var _this;
 
 	    babelHelpers.classCallCheck(this, Sent);
-	    _this = _super.call(this, props);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Sent).call(this, props));
 	    _this.url = main_core.Type.isString(props.url) && props.url.length > 0 ? props.url : '';
 	    return _this;
 	  }
@@ -2339,18 +2299,12 @@ this.BX = this.BX || {};
 	  return Sent;
 	}(Base);
 
-	function _createSuper$7(Derived) { return function () { var Super = babelHelpers.getPrototypeOf(Derived), result; if (_isNativeReflectConstruct$7()) { var NewTarget = babelHelpers.getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return babelHelpers.possibleConstructorReturn(this, result); }; }
-
-	function _isNativeReflectConstruct$7() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
-
 	var Watch = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Watch, _Base);
 
-	  var _super = _createSuper$7(Watch);
-
 	  function Watch() {
 	    babelHelpers.classCallCheck(this, Watch);
-	    return _super.apply(this, arguments);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Watch).apply(this, arguments));
 	  }
 
 	  babelHelpers.createClass(Watch, [{

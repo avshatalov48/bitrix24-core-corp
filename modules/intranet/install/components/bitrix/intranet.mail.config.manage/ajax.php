@@ -197,14 +197,14 @@ class CIntranetMailConfigManageAjax
 				if ($service['type'] == 'controller')
 				{
 					$crDomains = CControllerClient::ExecuteEvent('OnMailControllerGetDomains', array());
-					$arDomains = empty($crDomains['result']) ? array() : array_map('strtolower', $crDomains['result']);
+					$arDomains = empty($crDomains['result']) ? array() : array_map('mb_strtolower', $crDomains['result']);
 					if (!is_array($arDomains) || !in_array($domain, $arDomains))
 						$error = CMail::getErrorMessage(CMail::ERR_API_OP_DENIED);
 				}
 				else if ($service['type'] == 'crdomain')
 				{
 					$crDomains = CControllerClient::ExecuteEvent('OnMailControllerGetMemberDomains', array());
-					$arDomains = empty($crDomains['result']) ? array() : array_map('strtolower', $crDomains['result']);
+					$arDomains = empty($crDomains['result']) ? array() : array_map('mb_strtolower', $crDomains['result']);
 					if (!is_array($arDomains) || !in_array($domain, $arDomains))
 						$error = CMail::getErrorMessage(CMail::ERR_API_OP_DENIED);
 				}

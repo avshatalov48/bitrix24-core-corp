@@ -1,6 +1,6 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-if (strlen($arParams['CALLBACK_NAME']) <= 0)
+if ($arParams['CALLBACK_NAME'] == '')
 	$arParams['CALLBACK_NAME'] = 'showMeetingSelector';
 ?>
 <div class="meeting-other-popup-cont" id="meeting_selector" style="display: none;">

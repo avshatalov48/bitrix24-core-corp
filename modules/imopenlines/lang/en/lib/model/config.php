@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CONFIG_ENTITY_ACTIVE_FIELD"] = "Active";
 $MESS["CONFIG_ENTITY_AUTO_CLOSE_BOT_ID_FIELD"] = "Autoclosed dialog bot ID";
 $MESS["CONFIG_ENTITY_AUTO_CLOSE_FORM_ID_FIELD"] = "The ID of CRM form to use when auto closing conversation";
@@ -16,6 +16,8 @@ $MESS["CONFIG_ENTITY_CLOSE_FORM_ID_FIELD"] = "The ID of CRM form to use when clo
 $MESS["CONFIG_ENTITY_CLOSE_RULE_FIELD"] = "Conversation close rule";
 $MESS["CONFIG_ENTITY_CLOSE_TEXT_FIELD"] = "Text to use when closing conversation";
 $MESS["CONFIG_ENTITY_CRM_CREATE_FIELD"] = "Rule to apply when no CRM entry found";
+$MESS["CONFIG_ENTITY_CRM_CREATE_SECOND_FIELD"] = "Secondary rule to apply when CRM entry is missing";
+$MESS["CONFIG_ENTITY_CRM_CREATE_THIRD_FIELD"] = "Tertiary rule to apply when CRM entry is missing";
 $MESS["CONFIG_ENTITY_CRM_FIELD"] = "Find in CRM database";
 $MESS["CONFIG_ENTITY_CRM_FORWARD_FIELD"] = "Transfer to responsible person";
 $MESS["CONFIG_ENTITY_CRM_SOURCE_FIELD"] = "Call source for CRM entity";
@@ -67,4 +69,3 @@ $MESS["CONFIG_ENTITY_WORKTIME_FROM_FIELD"] = "Service time starts on";
 $MESS["CONFIG_ENTITY_WORKTIME_HOLIDAYS_FIELD"] = "Holidays";
 $MESS["CONFIG_ENTITY_WORKTIME_TIMEZONE_FIELD"] = "Channel time zone";
 $MESS["CONFIG_ENTITY_WORKTIME_TO_FIELD"] = "Service time ends on";
-?>

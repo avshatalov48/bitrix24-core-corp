@@ -54,6 +54,7 @@ class CImOpenLinesListComponent extends \CBitrixComponent
 			Array(
 				'QUEUE' => 'Y'
 			));
+
 		foreach ($result as $id => $config)
 		{
 			if (!is_null($limit))

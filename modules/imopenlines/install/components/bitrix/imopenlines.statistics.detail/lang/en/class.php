@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["OL_COMPONENT_ACCESS_DENIED"] = "You do not have permission to view statistics.";
 $MESS["OL_COMPONENT_MODULE_NOT_INSTALLED"] = "The Open Channels module is not installed.";
 $MESS["OL_COMPONENT_TABLE_ACTION_ANSWER"] = "Connect";
@@ -22,6 +22,7 @@ $MESS["OL_COMPONENT_TABLE_STATUS_OPERATOR_NEW"] = "Agent responded";
 $MESS["OL_COMPONENT_TABLE_STATUS_OPERATOR_SKIP_NEW"] = "Agent enqueued conversation";
 $MESS["OL_COMPONENT_TABLE_STATUS_WAIT_ACTION_2"] = "Conversation pending closure (waiting for rating or after auto reply)";
 $MESS["OL_COMPONENT_TABLE_YES"] = "Yes";
+$MESS["OL_STATS_COMMENT_HEAD_ADD"] = "add";
 $MESS["OL_STATS_FILTER_MESSAGE_COUNT"] = "Message count";
 $MESS["OL_STATS_FILTER_N"] = "No";
 $MESS["OL_STATS_FILTER_UNSET"] = "(none)";
@@ -82,4 +83,3 @@ $MESS["OL_STATS_HEADER_WORKTIME_TEXT"] = "Business hours";
 $MESS["OL_STATS_VOTE_AS_HEAD_BUTTON"] = "Rate";
 $MESS["OL_STAT_EXCEL_EXPORT_POPUP_BODY"] = "You are going to export conversations to a Microsoft Excel file. This operation may take quite a while to complete for a large set of data.";
 $MESS["OL_STAT_EXCEL_EXPORT_POPUP_TITLE"] = "Export to Microsoft Excel";
-?>

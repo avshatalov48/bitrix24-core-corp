@@ -141,67 +141,8 @@ foreach($arBlogPosts as $arBlogPostFields)
 		if (intval($logID) > 0)
 		{
 			CSocNetLog::Update($logID, array("TMP_ID" => $logID));
-//		CSocNetLogRights::SetForSonet($logID, $arSoFields["ENTITY_TYPE"], $arSoFields["ENTITY_ID"], "blog", "view_post", true);
 			CSocNetLogRights::Add($logID, array("G2", "U1"));
 		}
 	}
 }
-
-//comments
-/*$arBlogCommentFields = Array(
-	"TITLE" => GetMessage("BLOG_DEMO_COMMENT_TITLE"),
-	"POST_TEXT" => GetMessage("BLOG_DEMO_COMMENT_BODY"),
-	"BLOG_ID" => $blogID,
-	"POST_ID" => $postID,
-	"PARENT_ID" => 0,
-	"AUTHOR_ID" => 1,
-	"DATE_CREATE" => ConvertTimeStamp(false, "FULL"), 
-	"AUTHOR_IP" => "192.168.0.108",
-);
-	
-$commmentId = CBlogComment::Add($arBlogCommentFields);
-
-if (CModule::IncludeModule("socialnetwork"))
-{
-	$arAllow = array("HTML" => "N", "ANCHOR" => "N", "BIU" => "N", "IMG" => "N", "QUOTE" => "N", "CODE" => "N", "FONT" => "N", "LIST" => "N", "SMILES" => "N", "NL2BR" => "N", "VIDEO" => "N");
-	$text4message = $parserBlog->convert($arBlogCommentFields["POST_TEXT"], false, array(), $arAllow);
-	$text4mail = $parserBlog->convert4mail($arBlogCommentFields["POST_TEXT"]);
-
-	$arBlogUser = CBlogUser::GetByID(1, BLOG_BY_USER_ID); 
-	$arBlogUser = CBlogTools::htmlspecialcharsExArray($arBlogUser);	
-	
-	$AuthorName = CBlogUser::GetUserName($arBlogUser["~ALIAS"], $arUser["~NAME"], $arUser["~LAST_NAME"], $arUser["~LOGIN"], $arUser["~SECOND_NAME"]); 
-	
-	$commentUrl = CComponentEngine::MakePathFromTemplate(
-		WIZARD_SITE_DIR."company/personal/user/#user_id#/blog/#post_id#/", 
-		array(
-			"post_id"=> $postID,
-			"user_id" => 1
-		)
-	);
-				
-	if(strpos($commentUrl, "?") !== false)
-		$commentUrl .= "&";
-	else
-		$commentUrl .= "?";
-	$commentUrl .= "commentId=".$commmentId."#".$commmentId;
-
-	$arSoFields = array(
-		"ENTITY_TYPE" => "U",
-		"ENTITY_ID" => 1,
-		"EVENT_ID" => "blog_comment",
-		"=LOG_DATE" => $GLOBALS["DB"]->CurrentTimeFunction(),
-		"MESSAGE" => $text4message,
-		"TEXT_MESSAGE" => $text4mail,
-		"URL" => $commentUrl,
-		"MODULE_ID" => false,
-		"SOURCE_ID" => $commmentId,
-		"USER_ID" => 1,
-		"LOG_ID" => $logID,
-		"RATING_TYPE_ID" => "BLOG_COMMENT",
-		"RATING_ENTITY_ID" => intval($commmentId)
-	);
-
-	CSocNetLogComments::Add($arSoFields);
-}*/
 ?>

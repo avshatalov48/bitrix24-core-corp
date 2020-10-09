@@ -101,7 +101,7 @@ class LiveChatManager
 		}
 		if (isset($fields['CSS_PATH']))
 		{
-			$add['CSS_PATH'] = substr($fields['CSS_PATH'], 0, 255);
+			$add['CSS_PATH'] = mb_substr($fields['CSS_PATH'], 0, 255);
 		}
 		if (isset($fields['CSS_TEXT']))
 		{
@@ -199,7 +199,7 @@ class LiveChatManager
 		}
 		if (isset($fields['CSS_PATH']))
 		{
-			$update['CSS_PATH'] = substr($fields['CSS_PATH'], 0, 255);
+			$update['CSS_PATH'] = mb_substr($fields['CSS_PATH'], 0, 255);
 		}
 		if (isset($fields['CSS_TEXT']))
 		{
@@ -345,48 +345,76 @@ class LiveChatManager
 		return $this->config;
 	}
 
+	/**
+	 * @return array|bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	public function getPublicLink()
 	{
-		$orm = Model\LivechatTable::getList(array(
-			'select' => Array('BACKGROUND_IMAGE', 'CONFIG_NAME' => 'CONFIG.LINE_NAME', 'URL_CODE_PUBLIC'),
-			'filter' => Array('=CONFIG_ID' => $this->id)
-		));
+		$result = false;
+
+		$orm = Model\LivechatTable::getList([
+			'select' => ['BACKGROUND_IMAGE', 'CONFIG_NAME' => 'CONFIG.LINE_NAME', 'URL_CODE_PUBLIC', 'TEXT_PHRASES'],
+			'filter' => ['=CONFIG_ID' => $this->id]
+		]);
 		$config = $orm->fetch();
-		if (!$config)
-			return false;
-
-		$picture = '';
-		if ($config['BACKGROUND_IMAGE'] > 0)
+		if ($config)
 		{
-			$image = \CFile::ResizeImageGet(
-				$config['BACKGROUND_IMAGE'],
-				array('width' => 300, 'height' => 200), BX_RESIZE_IMAGE_PROPORTIONAL, false
-			);
-			if($image['src'])
+			$picture = '';
+			if ($config['BACKGROUND_IMAGE'] > 0)
 			{
-				$picture = $image['src'];
+				$image = \CFile::ResizeImageGet(
+					$config['BACKGROUND_IMAGE'],
+					array('width' => 300, 'height' => 200), BX_RESIZE_IMAGE_PROPORTIONAL, false
+				);
+				if($image['src'])
+				{
+					$picture = $image['src'];
+				}
 			}
-		}
 
-		$result = Array(
-			'ID' => $this->id,
-			'NAME' => Loc::getMessage('IMOL_LCM_PUBLIC_NAME'),
-			'LINE_NAME' => $config['CONFIG_NAME'],
-			'PICTURE' => $picture,
-			'URL' => self::getFormatedUrl($config['URL_CODE_PUBLIC']),
-			'URL_IM' => self::getFormatedUrl($config['URL_CODE_PUBLIC'])
-		);
+			$result = [
+				'ID' => $this->id,
+				'NAME' => Loc::getMessage('IMOL_LCM_PUBLIC_NAME'),
+				'LINE_NAME' =>
+					isset($config['TEXT_PHRASES']['BX_LIVECHAT_TITLE']) && $config['TEXT_PHRASES']['BX_LIVECHAT_TITLE'] !== '' ?
+						$config['TEXT_PHRASES']['BX_LIVECHAT_TITLE'] :
+						$config['CONFIG_NAME'],
+				'PICTURE' => $picture,
+				'URL' => self::getFormatedUrl($config['URL_CODE_PUBLIC']),
+				'URL_IM' => self::getFormatedUrl($config['URL_CODE_PUBLIC'])
+			];
+		}
 
 		return $result;
 	}
 
 	public function getWidget($type = self::TYPE_BUTTON, $lang = null, $config = array(), $force = false)
 	{
+		if (!\Bitrix\Main\Loader::includeModule('rest'))
+		{
+			return false;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('pull'))
+		{
+			return false;
+		}
+
+		if (!\CPullOptions::GetQueueServerStatus())
+		{
+			return false;
+		}
+
 		$charset = SITE_CHARSET;
 
 		$jsData = $this->getWidgetSource(Array('LANG' => $lang, 'CONFIG' => $config, 'FORCE' => $force ? 'Y' : 'N'));
 		if (!$jsData)
+		{
 			return false;
+		}
 
 		$codeWidget = '<script type="text/javascript">'.$jsData."</script>";
 
@@ -489,7 +517,7 @@ class LiveChatManager
 				continue;
 			}
 
-			$minPath = substr($path, 0, -3).'.min.js';
+			$minPath = mb_substr($path, 0, -3).'.min.js';
 			if (Main\IO\File::isFileExists($minPath))
 			{
 				$file = new \Bitrix\Main\IO\File($path);
@@ -517,7 +545,7 @@ class LiveChatManager
 				continue;
 			}
 
-			$minPath = substr($path, 0, -4).'.min.css';
+			$minPath = mb_substr($path, 0, -4).'.min.css';
 			if (Main\IO\File::isFileExists($minPath))
 			{
 				$file = new \Bitrix\Main\IO\File($path);

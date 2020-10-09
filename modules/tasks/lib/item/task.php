@@ -60,7 +60,7 @@ final class Task extends \Bitrix\Tasks\Item
 		$id = (int) $this->getId();
 		if ($id)
 		{
-			TaskAccessController::getInstance($this->getUserId())->dropItemCache($id);
+			TaskAccessController::dropItemCache($id);
 		}
 		return $result;
 	}

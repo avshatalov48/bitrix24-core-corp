@@ -130,7 +130,10 @@ if (typeof(BX.TasksGroupsSelectorInit) === "undefined")
 		// change add-button href
 		var setTaskAddHref = function(groupId)
 		{
-			BX(buttonAddId).setAttribute("href", pathTaskAdd + groupId);
+			if (BX(buttonAddId))
+			{
+				BX(buttonAddId).setAttribute("href", pathTaskAdd + groupId);
+			}
 		};
 
 		currentGroup.id = parseInt(currentGroup.id);
@@ -335,11 +338,11 @@ if (typeof BX.Tasks.SprintSelector === "undefined")
 			menuSprintItems.push({
 				sprintId: sprints[i]["ID"],
 				text: sprints[i]["START_TIME"]
-							+ " &mdash; " +
-						sprints[i]["FINISH_TIME"],
+					+ " &mdash; " +
+					sprints[i]["FINISH_TIME"],
 				className: (params.sprintId === parseInt(sprints[i]["ID"]))
-							? "menu-popup-item-accept"
-							: "menu-popup-item-none",
+					? "menu-popup-item-accept"
+					: "menu-popup-item-none",
 				onclick: function(e, menuItem)
 				{
 					BX.onCustomEvent(

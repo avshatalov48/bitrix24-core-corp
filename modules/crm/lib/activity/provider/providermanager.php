@@ -38,6 +38,11 @@ class ProviderManager
 				self::$providers[Visit::getId()] = Visit::className();
 			}
 
+			if (Zoom::isAvailable())
+			{
+				self::$providers[Zoom::getId()] = Zoom::className();
+			}
+
 			foreach(GetModuleEvents('crm', 'OnGetActivityProviders', true) as $event)
 			{
 				$result = (array)ExecuteModuleEventEx($event);

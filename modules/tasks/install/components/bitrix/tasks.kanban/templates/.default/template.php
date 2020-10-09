@@ -57,6 +57,9 @@ if (!$emptyKanban) {
     $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') . 'no-all-paddings no-background');
 }
 
+$isSprintView = Kanban\StagesTable::getWorkMode() == Kanban\StagesTable::WORK_MODE_SPRINT ||
+	Kanban\StagesTable::getWorkMode() == Kanban\StagesTable::WORK_MODE_ACTIVE_SPRINT;
+
 if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE_HEADER'] == 'Y') {
     $filterInstance = \Bitrix\Tasks\Helper\Filter::getInstance($arParams["USER_ID"], $arParams["GROUP_ID"]);
 
@@ -68,6 +71,19 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
     if ($isBitrix24Template) {
         $this->SetViewTarget('inside_pagetitle');
     }
+
+	$showViewMode = (
+		$arParams['KANBAN_SHOW_VIEW_MODE'] == 'Y' ||
+		Kanban\StagesTable::getWorkMode() == Kanban\StagesTable::WORK_MODE_USER ||
+		Kanban\StagesTable::getWorkMode() == Kanban\StagesTable::WORK_MODE_TIMELINE ||
+		!(Kanban\StagesTable::getWorkMode() == Kanban\StagesTable::WORK_MODE_GROUP && $arParams['GROUP_ID'] > 0)
+	);
+
+	$group = Bitrix\Socialnetwork\Item\Workgroup::getById($arParams['GROUP_ID']);
+	if ($group && $group->isScrumProject())
+	{
+		$showViewMode = ($isSprintView ? false : $showViewMode);
+	}
 
     $APPLICATION->IncludeComponent(
         'bitrix:tasks.interface.header',
@@ -86,11 +102,8 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
             'MENU_GROUP_ID' => !$arParams['GROUP_ID_FORCED'] || $arParams['PERSONAL'] == 'Y'
                 ? $arParams['GROUP_ID'] : 0,
 
-            'SHOW_VIEW_MODE' => $arParams['KANBAN_SHOW_VIEW_MODE'] == 'Y'
-            || Kanban\StagesTable::getWorkMode() == Kanban\StagesTable::WORK_MODE_USER
-            || Kanban\StagesTable::getWorkMode() == Kanban\StagesTable::WORK_MODE_TIMELINE
-            || !(Kanban\StagesTable::getWorkMode() == Kanban\StagesTable::WORK_MODE_GROUP
-                && $arParams['GROUP_ID'] > 0) ? 'Y' : 'N',
+            'SHOW_VIEW_MODE' => ($showViewMode ? 'Y' : 'N'),
+			'SHOW_FILTER' => ($isSprintView && $group->isScrumProject() ? 'N' : 'Y'),
             'USE_AJAX_ROLE_FILTER' => $arParams['PERSONAL'] == 'Y' ? 'Y' : 'N',
 
             'MARK_ACTIVE_ROLE' => $arParams['MARK_ACTIVE_ROLE'],
@@ -197,7 +210,7 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
 	<?if ($arParams['SPRINT_SELECTED'] == 'Y' && !$arParams['SPRINT_ID']):?>
 		<div class="tasks-kanban-start">
 			<div class="tasks-kanban-start-title-sm">
-				<?= Loc::getMessage('KANBAN_WO_SPRINT');?>
+				<?= Loc::getMessage('KANBAN_NO_ACTIVE_SPRINT');?>
 			</div>
 		</div>
 		<?
@@ -293,7 +306,8 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
                 COLUMN_TITLE_PLACEHOLDER: "<?= \CUtil::JSEscape(Loc::getMessage('KANBAN_COLUMN_TITLE_PLACEHOLDER'))?>"
             },
 			ownerId: <?= (int) $arParams["USER_ID"] ?>,
-			groupId: <?= (int) $arParams['GROUP_ID'] ?>
+			groupId: <?= (int) $arParams['GROUP_ID'] ?>,
+			isSprintView: '<?= ($isSprintView ? 'Y' : 'N') ?>'
         });
 
         Kanban.draw();
@@ -329,6 +343,8 @@ if ($type == 'P' && !in_array('P', $popupsShowed)) {
 } elseif ($type == 'K' && !in_array('K', $popupsShowed)) {
     $show = true;
 }
+
+$show = ($isSprintView ? false : $show);
 
 if ($show) {
     if ($type == 'P') {

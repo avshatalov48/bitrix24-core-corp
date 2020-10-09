@@ -104,7 +104,6 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 			? []
 			: $filterRequest['SOURCE_CODE'];
 
-		/** @var DateTime $periodFrom */
 		$this->arResult['DATA'] = $this->getComparedData($sources, $periodFrom, $periodTo);
 		if ($this->arParams['IS_GRID'])
 		{
@@ -117,7 +116,6 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 				$this->arResult['GRID'] = $this->getGridData($sources, $periodFrom, $periodTo);
 			}
 		}
-
 
 		return true;
 	}
@@ -892,12 +890,25 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 				continue;
 			}
 
+			$sourceObject = new Bitrix\Crm\Tracking\Analytics\Ad($source);
 			$data['sources'][$source['ID']] = [
 				'code' => $source['ID'],
 				'caption' => $source['CAPTION'],
 				'color' => $source['ICON_COLOR'],
 				'iconClass' => $source['ICON_CLASS'],
 				'hasPathToList' => $source['HAS_PATH_TO_LIST'],
+				'expensesReport' => [
+					'supported' => $sourceObject->isSupportExpensesReport(),
+					'options' => $sourceObject->isSupportExpensesReport()
+						? [
+							'sourceId' => $source['ID'],
+							'gridId' => 'crm-report-tracking-ad-le' . (\Bitrix\Crm\Settings\LeadSettings::isEnabled() ? '1' : '0'),
+							'from' => $periodFrom->format(Date::getFormat()),
+							'to' => $periodTo->format(Date::getFormat()),
+						]
+						: []
+					,
+				],
 			];
 		}
 

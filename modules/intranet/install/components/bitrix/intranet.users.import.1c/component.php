@@ -162,12 +162,7 @@ else
 	if(($_GET["mode"] == "file") && $ABS_FILE_NAME)
 	{
 		//Read http data
-		if(function_exists("file_get_contents"))
-			$DATA = file_get_contents("php://input");
-		elseif(isset($GLOBALS["HTTP_RAW_POST_DATA"]))
-			$DATA = &$GLOBALS["HTTP_RAW_POST_DATA"];
-		else
-			$DATA = false;
+        $DATA = file_get_contents("php://input");
 		//And save it the file
 		if($DATA !== false)
 		{

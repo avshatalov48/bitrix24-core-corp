@@ -898,6 +898,11 @@ export class Manager
 		Manager.openHelper(event, 'redirect=detail&code=11120562', 'cashbox_connect');
 	}
 
+	static openHowToConfigCheckboxCashBox(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=12306679', 'cashbox_connect');
+	}
+
 	static openHowToSell(event)
 	{
 		Manager.openHelper(event, 'redirect=detail&code=11274792', 'crmstore_connect');

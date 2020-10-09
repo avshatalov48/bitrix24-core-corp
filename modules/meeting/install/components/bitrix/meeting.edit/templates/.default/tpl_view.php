@@ -186,7 +186,7 @@ $APPLICATION->IncludeComponent(
 		<table cellspacing="0" class="meeting-detail-info-layout">
 			<tbody>
 <?
-if (strlen($arResult['MEETING']['PLACE']) > 0):
+if ($arResult['MEETING']['PLACE'] <> ''):
 ?>
 				<tr>
 					<td class="meeting-detail-left-column" valign="top"><?=GetMessage('ME_PLACE')?>:</td>
@@ -194,7 +194,7 @@ if (strlen($arResult['MEETING']['PLACE']) > 0):
 				</tr>
 <?
 endif;
-if (strlen($arResult['MEETING']['DATE_START']) > 0 && MakeTimeStamp($arResult['MEETING']['DATE_START'])>0):
+if ($arResult['MEETING']['DATE_START'] <> '' && MakeTimeStamp($arResult['MEETING']['DATE_START'])>0):
 ?>
 				<tr>
 					<td class="meeting-detail-left-column"><?=GetMessage('ME_DATE_START')?>:</td>
@@ -208,7 +208,7 @@ endif;
 					<td class="meeting-detail-right-column" id="meeting_state_text"><?=GetMessage('MEETING_STATE_'.$arResult['MEETING']['CURRENT_STATE'])?></td>
 				</tr>
 <?
-if (strlen($arResult['MEETING']['GROUP_NAME']) > 0):
+if ($arResult['MEETING']['GROUP_NAME'] <> ''):
 ?>
 				<tr>
 					<td class="meeting-detail-left-column" valign="top"><?=GetMessage('ME_GROUP')?>:</td>

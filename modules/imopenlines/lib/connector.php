@@ -23,6 +23,7 @@ class Connector
 	const EVENT_IMOPENLINE_MESSAGE_SEND = 'OnImopenlineMessageSend';
 	const EVENT_IMOPENLINE_MESSAGE_RECEIVE = 'OnImopenlineMessageReceive';
 
+	private const LOCK_MAX_ITERATIONS = 3;
 
 	static $noVote = array(
 		//self::TYPE_LIVECHAT,
@@ -85,13 +86,13 @@ class Connector
 		{
 			if (
 				(
-					strpos($params['message']['text'], '1') === 0
-					|| strpos($params['message']['text'], '0') === 0
+					mb_strpos($params['message']['text'], '1') === 0
+					|| mb_strpos($params['message']['text'], '0') === 0
 				)
 				&&
 				(
-					strlen(trim($params['message']['text'])) == 1
-					|| substr($params['message']['text'], 1, 1) == " "
+					mb_strlen(trim($params['message']['text'])) == 1
+					|| mb_substr($params['message']['text'], 1, 1) == " "
 				)
 			)
 			{
@@ -169,299 +170,326 @@ class Connector
 				}
 			}
 
-			if (strlen($addMessage["MESSAGE"]) > 0 || !empty($params['message']['files']) || !empty($addMessage["ATTACH"]))
+			$userCode = self::getUserCode($params['connector']);
+			$keyLock = Chat::PREFIX_KEY_LOCK_NEW_SESSION . $userCode;
+
+			$iteration = 0;
+			$isAddMessage = false;
+			do
 			{
-				$session = new Session();
-				$resultLoadSession = $session->load([
-					'USER_CODE' => self::getUserCode($params['connector']),
-					'CONNECTOR' => $params,
-					'DEFERRED_JOIN' => 'Y',
-					'VOTE_SESSION' => $voteSession? 'Y': 'N'
-				]);
-				if ($resultLoadSession)
+				$iteration++;
+				if (
+					$iteration > self::LOCK_MAX_ITERATIONS ||
+					Tools\Lock::getInstance()->set($keyLock)
+				)
 				{
-					$addMessage["TO_CHAT_ID"] = $session->getData('CHAT_ID');
-					if (!empty($params['message']['files']))
+					if (
+						!empty($params['message']['files']) ||
+						!empty($addMessage['ATTACH']) ||
+						$addMessage['MESSAGE'] <> ''
+					)
 					{
-						$params['message']['files'] = \CIMDisk::UploadFileFromMain(
-							$session->getData('CHAT_ID'),
-							$params['message']['files']
-						);
-
-						if ($params['message']['files'])
+						$session = new Session();
+						$resultLoadSession = $session->load([
+							'USER_CODE' => self::getUserCode($params['connector']),
+							'CONNECTOR' => $params,
+							'DEFERRED_JOIN' => 'Y',
+							'VOTE_SESSION' => $voteSession? 'Y': 'N'
+						]);
+						if ($resultLoadSession)
 						{
-							$addMessage["PARAMS"]['FILE_ID'] = $params['message']['files'];
-						}
-						else if (strlen($addMessage["MESSAGE"]) <= 0 && empty($addMessage["ATTACH"]))
-						{
-							$addMessage["MESSAGE"] = '[FILE]';
-						}
-					}
-
-					if ($session->isNowCreated())
-					{
-						$customDataMessage = '';
-						$customDataAttach = null;
-
-						$customData = \Bitrix\ImOpenLines\Widget\Cache::get($params['connector']['user_id'], 'CUSTOM_DATA');
-						if ($customData)
-						{
-							$customDataAttach = \CIMMessageParamAttach::GetAttachByJson($customData);
-							if ($customDataAttach && $customDataAttach->IsEmpty())
+							$addMessage["TO_CHAT_ID"] = $session->getData('CHAT_ID');
+							if (!empty($params['message']['files']))
 							{
+								$params['message']['files'] = \CIMDisk::UploadFileFromMain(
+									$session->getData('CHAT_ID'),
+									$params['message']['files']
+								);
+
+								if ($params['message']['files'])
+								{
+									$addMessage["PARAMS"]['FILE_ID'] = $params['message']['files'];
+								}
+								else if ($addMessage["MESSAGE"] == '' && empty($addMessage["ATTACH"]))
+								{
+									$addMessage["MESSAGE"] = '[FILE]';
+								}
+							}
+
+							if ($session->isNowCreated())
+							{
+								$customDataMessage = '';
 								$customDataAttach = null;
+
+								$customData = \Bitrix\ImOpenLines\Widget\Cache::get($params['connector']['user_id'], 'CUSTOM_DATA');
+								if ($customData)
+								{
+									$customDataAttach = \CIMMessageParamAttach::GetAttachByJson($customData);
+									if ($customDataAttach && $customDataAttach->IsEmpty())
+									{
+										$customDataAttach = null;
+									}
+									else
+									{
+										$customDataMessage = '[B]'.Loc::getMessage('IMOL_CONNECTOR_RECEIVED_DATA').'[/B]';
+									}
+								}
+								else // TODO remove this after delete old livechat - see \Bitrix\ImOpenLines\Connector::saveCustomData
+								{
+									if ($params['connector']['connector_id'] == self::TYPE_LIVECHAT)
+									{
+										$orm = \Bitrix\Im\Model\ChatTable::getById($params['chat']['id']);
+										$guestChatData = $orm->fetch();
+									}
+									else
+									{
+										$guestChatData = $session->getChat()->getData();
+									}
+
+									if ($guestChatData && $guestChatData['DESCRIPTION'] <> '')
+									{
+										$customDataMessage = '[B]'.Loc::getMessage('IMOL_CONNECTOR_RECEIVED_DATA').'[/B][BR] '.$guestChatData['DESCRIPTION'];
+									}
+								}
+
+								if ($params['connector']['connector_id'] == self::TYPE_LIVECHAT)
+								{
+									$chat = new Chat($params['chat']['id']);
+									$chat->updateFieldData([Chat::FIELD_LIVECHAT => [
+										'SESSION_ID' => $session->getData('ID'),
+										'SHOW_FORM' => 'Y'
+									]]);
+								}
+
+								if ($customDataMessage)
+								{
+									Im::addMessage([
+										"TO_CHAT_ID" => $session->getData('CHAT_ID'),
+										'MESSAGE' => $customDataMessage,
+										'ATTACH' => $customDataAttach,
+										'SYSTEM' => 'Y',
+										'SKIP_COMMAND' => 'Y',
+										"PARAMS" => [
+											"CLASS" => "bx-messenger-content-item-system"
+										],
+									]);
+								}
+							}
+
+							$session->joinUser();
+
+							$addVoteResult = false;
+							if($session->getData('OPERATOR_ID') > 0)
+							{
+								$userViewChat = \CIMContactList::InRecent($session->getData('OPERATOR_ID'), IM_MESSAGE_OPEN_LINE, $session->getData('CHAT_ID'));
 							}
 							else
 							{
-								$customDataMessage = '[B]'.Loc::getMessage('IMOL_CONNECTOR_RECEIVED_DATA').'[/B]';
+								$userViewChat  = false;
 							}
-						}
-						else // TODO remove this after delete old livechat - see \Bitrix\ImOpenLines\Connector::saveCustomData
-						{
-							if ($params['connector']['connector_id'] == self::TYPE_LIVECHAT)
+
+							if ($voteSession && $session->getData('WAIT_VOTE') == 'Y')
 							{
-								$orm = \Bitrix\Im\Model\ChatTable::getById($params['chat']['id']);
-								$guestChatData = $orm->fetch();
+								$voteValue = 0;
+								if (mb_strlen($addMessage["MESSAGE"]) > 1)
+								{
+									$userViewChat = true;
+								}
+								if (!in_array($params['connector']['connector_id'], self::$noVote) && mb_strpos($addMessage["MESSAGE"], '1') === 0)
+								{
+									$voteValue = 5;
+									$addMessage["MESSAGE"] = '[like]'.mb_substr($addMessage["MESSAGE"], 1);
+									$addVoteResult = $session->getConfig('VOTE_MESSAGE_2_LIKE');
+								}
+								else if (!in_array($params['connector']['connector_id'], self::$noVote) && mb_strpos($addMessage["MESSAGE"], '0') === 0)
+								{
+									$voteValue = 1;
+									$addMessage["MESSAGE"] = '[dislike]'.mb_substr($addMessage["MESSAGE"], 1);
+									$addVoteResult = $session->getConfig('VOTE_MESSAGE_2_DISLIKE');
+								}
+								if ($addVoteResult)
+								{
+									$addMessage['RECENT_ADD'] = $userViewChat? 'Y': 'N';
+									$session->update(['VOTE' => $voteValue, 'WAIT_VOTE' => 'N']);
+
+									if($session->getConfig('VOTE_CLOSING_DELAY') == 'Y')
+									{
+										$finishSession = true;
+									}
+
+									Chat::sendRatingNotify(Chat::RATING_TYPE_CLIENT, $session->getData('ID'), $voteValue, $session->getData('OPERATOR_ID'), $session->getData('USER_ID'));
+								}
 							}
 							else
 							{
-								$guestChatData = $session->getChat()->getData();
+								$voteSession = false;
 							}
 
-							if ($guestChatData && strlen($guestChatData['DESCRIPTION']))
+							$event = new Main\Event('imopenlines', self::EVENT_IMOPENLINE_MESSAGE_RECEIVE, $addMessage);
+							$event->send();
+
+							$eventMessageFields = $event->getParameters();
+							if (!empty($eventMessageFields['MESSAGE']))
 							{
-								$customDataMessage = '[B]'.Loc::getMessage('IMOL_CONNECTOR_RECEIVED_DATA').'[/B][BR] '.$guestChatData['DESCRIPTION'];
+								$addMessage['MESSAGE'] = $eventMessageFields['MESSAGE'];
 							}
-						}
-
-						if ($params['connector']['connector_id'] == self::TYPE_LIVECHAT)
-						{
-							$chat = new \Bitrix\ImOpenLines\Chat($params['chat']['id']);
-							$chat->updateFieldData([\Bitrix\ImOpenLines\Chat::FIELD_LIVECHAT => [
-								'SESSION_ID' => $session->getData('ID'),
-								'SHOW_FORM' => 'Y'
-							]]);
-						}
-
-						if ($customDataMessage)
-						{
-							Im::addMessage([
-								"TO_CHAT_ID" => $session->getData('CHAT_ID'),
-								'MESSAGE' => $customDataMessage,
-								'ATTACH' => $customDataAttach,
-								'SYSTEM' => 'Y',
-								'SKIP_COMMAND' => 'Y',
-								"PARAMS" => [
-									"CLASS" => "bx-messenger-content-item-system"
-								],
-							]);
-						}
-					}
-
-					$session->joinUser();
-
-					$addVoteResult = false;
-					if($session->getData('OPERATOR_ID') > 0)
-					{
-						$userViewChat = \CIMContactList::InRecent($session->getData('OPERATOR_ID'), IM_MESSAGE_OPEN_LINE, $session->getData('CHAT_ID'));
-					}
-					else
-					{
-						$userViewChat  = false;
-					}
-
-					if ($voteSession && $session->getData('WAIT_VOTE') == 'Y')
-					{
-						$voteValue = 0;
-						if (strlen($addMessage["MESSAGE"]) > 1)
-						{
-							$userViewChat = true;
-						}
-						if (!in_array($params['connector']['connector_id'], self::$noVote) && strpos($addMessage["MESSAGE"], '1') === 0)
-						{
-							$voteValue = 5;
-							$addMessage["MESSAGE"] = '[like]'.substr($addMessage["MESSAGE"], 1);
-							$addVoteResult = $session->getConfig('VOTE_MESSAGE_2_LIKE');
-						}
-						else if (!in_array($params['connector']['connector_id'], self::$noVote) && strpos($addMessage["MESSAGE"], '0') === 0)
-						{
-							$voteValue = 1;
-							$addMessage["MESSAGE"] = '[dislike]'.substr($addMessage["MESSAGE"], 1);
-							$addVoteResult = $session->getConfig('VOTE_MESSAGE_2_DISLIKE');
-						}
-						if ($addVoteResult)
-						{
-							$addMessage['RECENT_ADD'] = $userViewChat? 'Y': 'N';
-							$session->update(['VOTE' => $voteValue, 'WAIT_VOTE' => 'N']);
-
-							if($session->getConfig('VOTE_CLOSING_DELAY') == 'Y')
+							if (!empty($eventMessageFields['PARAMS']))
 							{
-								$finishSession = true;
+								$addMessage['PARAMS'] = $eventMessageFields['PARAMS'];
 							}
 
-							\Bitrix\ImOpenLines\Chat::sendRatingNotify(\Bitrix\ImOpenLines\Chat::RATING_TYPE_CLIENT, $session->getData('ID'), $voteValue, $session->getData('OPERATOR_ID'), $session->getData('USER_ID'));
-						}
-					}
-					else
-					{
-						$voteSession = false;
-					}
-
-					$event = new Main\Event('imopenlines', self::EVENT_IMOPENLINE_MESSAGE_RECEIVE, $addMessage);
-					$event->send();
-
-					$eventMessageFields = $event->getParameters();
-					if (!empty($eventMessageFields['MESSAGE']))
-					{
-						$addMessage['MESSAGE'] = $eventMessageFields['MESSAGE'];
-					}
-					if (!empty($eventMessageFields['PARAMS']))
-					{
-						$addMessage['PARAMS'] = $eventMessageFields['PARAMS'];
-					}
-
-					$messageId = Im::addMessage($addMessage);
-					if ($messageId)
-					{
-						$isGroupChatAllowed = \Bitrix\ImConnector\Connector::isChatGroup($params['connector']['connector_id']) != true;
-
-						if ($addMessage["MESSAGE"] && $params['extra']['disable_tracker'] !== 'Y' && $isGroupChatAllowed)
-						{
-							$tracker = new \Bitrix\ImOpenLines\Tracker();
-							$tracker->setSession($session);
-							$tracker->message([
-								'ID' => $messageId,
-								'TEXT' => $addMessage["MESSAGE"]
-							]);
-						}
-						if ($params['message']['id'])
-						{
-							if ($params['connector']['connector_id'] == self::TYPE_LIVECHAT)
+							$messageId = Im::addMessage($addMessage);
+							if ($messageId)
 							{
-								if ($session->isNowCreated())
+								$isGroupChatAllowed = \Bitrix\ImConnector\Connector::isChatGroup($params['connector']['connector_id']) != true;
+
+								if ($addMessage["MESSAGE"] && $params['extra']['disable_tracker'] !== 'Y' && $isGroupChatAllowed)
 								{
-									$updateParams = [
-										'CONNECTOR_MID' => $messageId,
-										'IMOL_SID' => $session->getData('ID'),
-										"IMOL_FORM" => "welcome",
-										"TYPE" => "lines",
-										"COMPONENT_ID" => "bx-imopenlines-message",
-									];
+									$tracker = new \Bitrix\ImOpenLines\Tracker();
+									$tracker->setSession($session);
+									$tracker->message([
+										'ID' => $messageId,
+										'TEXT' => $addMessage["MESSAGE"]
+									]);
 								}
-								else
+								if ($params['message']['id'])
 								{
-									$updateParams = [
-										'CONNECTOR_MID' => $messageId,
-									];
+									if ($params['connector']['connector_id'] == self::TYPE_LIVECHAT)
+									{
+										if ($session->isNowCreated())
+										{
+											$updateParams = [
+												'CONNECTOR_MID' => $messageId,
+												'IMOL_SID' => $session->getData('ID'),
+												"IMOL_FORM" => "welcome",
+												"TYPE" => "lines",
+												"COMPONENT_ID" => "bx-imopenlines-message",
+											];
+										}
+										else
+										{
+											$updateParams = [
+												'CONNECTOR_MID' => $messageId,
+											];
+										}
+										\CIMMessageParam::Set($params['message']['id'], $updateParams);
+										\CIMMessageParam::SendPull($params['message']['id'], array_keys($updateParams));
+
+										\Bitrix\ImOpenLines\Mail::removeSessionFromMailQueue($session->getData('ID'), false);
+									}
+
+									\CIMMessageParam::Set($messageId, ['CONNECTOR_MID' => $params['message']['id']]);
+									if (!in_array($params['connector']['connector_id'], [self::TYPE_LIVECHAT, self::TYPE_NETWORK]))
+									{
+										\CIMMessageParam::SendPull($messageId, ['CONNECTOR_MID']);
+									}
 								}
-								\CIMMessageParam::Set($params['message']['id'], $updateParams);
-								\CIMMessageParam::SendPull($params['message']['id'], array_keys($updateParams));
 
-								\Bitrix\ImOpenLines\Mail::removeSessionFromMailQueue($session->getData('ID'), false);
-							}
-
-							\CIMMessageParam::Set($messageId, ['CONNECTOR_MID' => $params['message']['id']]);
-							if (!in_array($params['connector']['connector_id'], [self::TYPE_LIVECHAT, self::TYPE_NETWORK]))
-							{
-								\CIMMessageParam::SendPull($messageId, ['CONNECTOR_MID']);
-							}
-						}
-
-						if ($addVoteResult)
-						{
-							Im::addMessage([
-								"TO_CHAT_ID" => $session->getData('CHAT_ID'),
-								"MESSAGE" => $addVoteResult,
-								"SYSTEM" => 'Y',
-								"IMPORTANT_CONNECTOR" => 'Y',
-								"PARAMS" => [
-									"CLASS" => "bx-messenger-content-item-ol-output"
-								],
-								"RECENT_ADD" => $userViewChat? 'Y': 'N'
-							]);
-						}
-
-						//Automatic messages
-						(new AutomaticAction($session))->automaticAddMessage($messageId, $finishSession, $voteSession);
-
-						$limit = ImConnector\Connector::getReplyLimit($params['connector']['connector_id']);
-						$chat = $session->getChat();
-						if (!empty($limit['BLOCK_DATE']) && !empty($limit['BLOCK_REASON']) && $chat)
-						{
-							$limit['BLOCK_DATE'] = (new DateTime())->add($limit['BLOCK_DATE'].' SECONDS');
-							ReplyBlock::add($session->getData('ID'), $chat, $limit);
-						}
-						elseif (ImConnector\Connector::isNeedToAutoDeleteBlock($params['connector']['connector_id']))
-						{
-							ReplyBlock::delete($session->getData('ID'), $chat);
-						}
-
-						$updateSession['MESSAGE_COUNT'] = true;
-						$updateSession['DATE_LAST_MESSAGE'] = new \Bitrix\Main\Type\DateTime();
-
-						if (isset($params['extra']))
-						{
-							foreach($params['extra'] as $field => $value)
-							{
-								$oldValue = $session->getData($field);
-								if ($oldValue != $value)
+								if ($addVoteResult)
 								{
-									$updateSession[$field] = $value;
+									Im::addMessage([
+										"TO_CHAT_ID" => $session->getData('CHAT_ID'),
+										"MESSAGE" => $addVoteResult,
+										"SYSTEM" => 'Y',
+										"IMPORTANT_CONNECTOR" => 'Y',
+										"PARAMS" => [
+											"CLASS" => "bx-messenger-content-item-ol-output"
+										],
+										"RECENT_ADD" => $userViewChat? 'Y': 'N'
+									]);
 								}
-							}
-						}
 
-						$session->update($updateSession);
+								//Automatic messages
+								(new AutomaticAction($session))->automaticAddMessage($messageId, $finishSession, $voteSession);
 
-						if (
-							$session->getConfig('AGREEMENT_MESSAGE') == 'Y' &&
-							!$session->chat->isNowCreated() &&
-							$session->getUser() && $session->getUser('USER_ID') == $params['message']['user_id'] &&
-							$session->getUser('USER_CODE') && $session->getUser('AGREES') == 'N'
-						)
-						{
-							\Bitrix\ImOpenLines\Common::setUserAgrees([
-								'AGREEMENT_ID' => $session->getConfig('AGREEMENT_ID'),
-								'CRM_ACTIVITY_ID' => $session->getData('CRM_ACTIVITY_ID'),
-								'SESSION_ID' => $session->getData('SESSION_ID'),
-								'CONFIG_ID' => $session->getData('CONFIG_ID'),
-								'USER_CODE' => $session->getUser('USER_CODE'),
-							]);
-						}
+								$limit = ImConnector\Connector::getReplyLimit($params['connector']['connector_id']);
+								$chat = $session->getChat();
+								if (!empty($limit['BLOCK_DATE']) && !empty($limit['BLOCK_REASON']) && $chat)
+								{
+									$limit['BLOCK_DATE'] = (new DateTime())->add($limit['BLOCK_DATE'].' SECONDS');
+									ReplyBlock::add($session->getData('ID'), $chat, $limit);
+								}
+								elseif (ImConnector\Connector::isNeedToAutoDeleteBlock($params['connector']['connector_id']))
+								{
+									ReplyBlock::delete($session->getData('ID'), $chat);
+								}
 
-						$queueManager = Queue::initialization($session);
-						if($queueManager)
-						{
-							$queueManager->automaticActionAddMessage($finishSession, $voteSession);
-						}
+								$updateSession['MESSAGE_COUNT'] = true;
+								$updateSession['DATE_LAST_MESSAGE'] = new \Bitrix\Main\Type\DateTime();
 
-						if (!$session->isNowCreated() && $finishSession === true)
-						{
-							$session->finish(true);
-						}
+								if (isset($params['extra']))
+								{
+									foreach($params['extra'] as $field => $value)
+									{
+										$oldValue = $session->getData($field);
+										if ($oldValue != $value)
+										{
+											$updateSession[$field] = $value;
+										}
+									}
+								}
+
+								$session->update($updateSession);
+
+								if (
+									$session->getConfig('AGREEMENT_MESSAGE') == 'Y' &&
+									!$session->chat->isNowCreated() &&
+									$session->getUser() && $session->getUser('USER_ID') == $params['message']['user_id'] &&
+									$session->getUser('USER_CODE') && $session->getUser('AGREES') == 'N'
+								)
+								{
+									\Bitrix\ImOpenLines\Common::setUserAgrees([
+										'AGREEMENT_ID' => $session->getConfig('AGREEMENT_ID'),
+										'CRM_ACTIVITY_ID' => $session->getData('CRM_ACTIVITY_ID'),
+										'SESSION_ID' => $session->getData('SESSION_ID'),
+										'CONFIG_ID' => $session->getData('CONFIG_ID'),
+										'USER_CODE' => $session->getUser('USER_CODE'),
+									]);
+								}
+
+								$queueManager = Queue::initialization($session);
+								if($queueManager)
+								{
+									$queueManager->automaticActionAddMessage($finishSession, $voteSession);
+								}
+
+								if (!$session->isNowCreated() && $finishSession === true)
+								{
+									$session->finish(true);
+								}
 
 						$this->callMessageTrigger($session, $messageId, $addMessage);
 
-						//In case it's not a vote message or system message we make a new record
-						if (!$voteSession && $params['message']['user_id'] != 0 && !\Bitrix\Im\User::getInstance($params['message']['user_id'])->isBot())
-						{
-							$kpi = new KpiManager($session->getData('ID'));
-							$kpi->addMessage(
-								[
-									'MESSAGE_ID' => $messageId,
-									'LINE_ID' => $session->getData('CONFIG_ID'),
-									'OPERATOR_ID' => $session->getData('OPERATOR_ID')
-								]
-							);
-						}
+								//In case it's not a vote message or system message we make a new record
+								if (!$voteSession && $params['message']['user_id'] != 0 && !\Bitrix\Im\User::getInstance($params['message']['user_id'])->isBot())
+								{
+									$kpi = new KpiManager($session->getData('ID'));
+									$kpi->addMessage(
+										[
+											'MESSAGE_ID' => $messageId,
+											'LINE_ID' => $session->getData('CONFIG_ID'),
+											'OPERATOR_ID' => $session->getData('OPERATOR_ID')
+										]
+									);
+								}
 
-						$result = [
-							'SESSION_ID' => $session->isNowCreated()? $session->getData('ID'): 0,
-							'MESSAGE_ID' => $messageId
-						];
+								$result = [
+									'SESSION_ID' => $session->isNowCreated()? $session->getData('ID'): 0,
+									'MESSAGE_ID' => $messageId
+								];
+							}
+						}
 					}
+
+					$isAddMessage = true;
+					Tools\Lock::getInstance()->delete($keyLock);
+				}
+				else
+				{
+					sleep($iteration);
 				}
 			}
+			while ($isAddMessage === false);
 		}
 
 		return $result;
@@ -891,7 +919,7 @@ class Connector
 		{
 			if ($messageFields['SYSTEM'] != 'Y' && self::isEnableSendMessageWithSignature($connectorId, $lineId) && $messageFields['AUTHOR_ID'] > 0)
 			{
-				$flags['TEXT'] = '[b]' . htmlspecialchars_decode(self::getOperatorName($lineId, $messageFields['AUTHOR_ID'], $messageFields['CHAT_ENTITY_ID'])) . ':[/b]'.(strlen($flags['TEXT'])>0? '[br] '.$flags['TEXT']: '');
+				$flags['TEXT'] = '[b]' . htmlspecialchars_decode(self::getOperatorName($lineId, $messageFields['AUTHOR_ID'], $messageFields['CHAT_ENTITY_ID'])) . ':[/b]'.($flags['TEXT'] <> ''? '[br] '.$flags['TEXT']: '');
 			}
 
 			$fields = array(
@@ -1066,11 +1094,11 @@ class Connector
 				{
 					$params[$key] = $value;
 				}
-				else if (strpos($key, 'IMOL_') === 0)
+				else if (mb_strpos($key, 'IMOL_') === 0)
 				{
 					$params[$key] = $value;
 				}
-				else if (strpos($key, 'IS_') === 0)
+				else if (mb_strpos($key, 'IS_') === 0)
 				{
 					$params[$key] = $value;
 				}
@@ -1190,11 +1218,11 @@ class Connector
 				{
 					$params[$key] = $value;
 				}
-				else if (strpos($key, 'IMOL_') === 0)
+				else if (mb_strpos($key, 'IMOL_') === 0)
 				{
 					$params[$key] = $value;
 				}
-				else if (strpos($key, 'IS_') === 0)
+				else if (mb_strpos($key, 'IS_') === 0)
 				{
 					$params[$key] = $value;
 				}
@@ -1219,7 +1247,7 @@ class Connector
 				$langId = '';
 				if ($config && $config['LANGUAGE_ID'])
 				{
-					$langId = strtolower($config['LANGUAGE_ID']);
+					$langId = mb_strtolower($config['LANGUAGE_ID']);
 				}
 
 				foreach ($messageFields['FILES'] as $file)
@@ -1271,7 +1299,7 @@ class Connector
 				!self::isNeedRichLinkData($connectorId, $messageFields['MESSAGE'])
 			)
 			{
-				$messageFields['MESSAGE'] = '[b]' . htmlspecialchars_decode(self::getOperatorName($lineId, $messageFields['AUTHOR_ID'], $messageFields['CHAT_ENTITY_ID'])) . ':[/b]'.(strlen($messageFields['MESSAGE'])>0? '[br] '.$messageFields['MESSAGE']: '');
+				$messageFields['MESSAGE'] = '[b]' . htmlspecialchars_decode(self::getOperatorName($lineId, $messageFields['AUTHOR_ID'], $messageFields['CHAT_ENTITY_ID'])) . ':[/b]'.($messageFields['MESSAGE'] <> ''? '[br] '.$messageFields['MESSAGE']: '');
 			}
 
 			$fields = array(
@@ -2073,7 +2101,7 @@ class Connector
 	{
 		$result = false;
 
-		$idConnector = strtolower($idConnector);
+		$idConnector = mb_strtolower($idConnector);
 
 		if($idConnector == self::TYPE_LIVECHAT)
 		{

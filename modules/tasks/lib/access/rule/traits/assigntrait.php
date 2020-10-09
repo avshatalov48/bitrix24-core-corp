@@ -5,19 +5,19 @@ namespace Bitrix\Tasks\Access\Rule\Traits;
 use Bitrix\Main\Access\User\UserSubordinate;
 use Bitrix\Main\Loader;
 use Bitrix\Tasks\Access\AccessibleTask;
+use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Tasks\Access\Permission\PermissionDictionary;
 
 trait AssignTrait
 {
 	private function canAssignTask(AccessibleTask $oldTask, string $role, $responsibleId, AccessibleTask $newTask = null): bool
 	{
-		// always allowed assign tasks to email users
-		if (filter_var($responsibleId, FILTER_VALIDATE_EMAIL))
+		$responsibleId = (int) $responsibleId;
+
+		if (!$responsibleId)
 		{
 			return true;
 		}
-
-		$responsibleId = (int) $responsibleId;
 
 		$members = $oldTask->getMembers($role);
 
@@ -40,9 +40,15 @@ trait AssignTrait
 			return true;
 		}
 
+		// always can assign to email users
+		if ((UserModel::createFromId($responsibleId))->isEmail())
+		{
+			return true;
+		}
+
 		// extranet user can assign tasks to any member of group which contains both users
 		if (
-			\Bitrix\Tasks\Integration\Extranet\User::isExtranet($this->user->getUserId())
+			$this->user->isExtranet()
 			&& $this->isMemberOfUserGroups($responsibleId)
 		)
 		{

@@ -84,7 +84,7 @@ class Tracker
 			$messageOriginId = intval($params['ID']);
 			$messageText = self::prepareMessage($params['TEXT']);
 
-			if (isset($params['ID']) && empty($messageOriginId) || strlen($messageText) <= 0)
+			if (isset($params['ID']) && empty($messageOriginId) || $messageText == '')
 			{
 				$result->addError(new Error(Loc::getMessage('IMOL_TRACKER_ERROR_NO_REQUIRED_PARAMETERS'), self::ERROR_IMOL_TRACKER_NO_REQUIRED_PARAMETERS, __METHOD__));
 			}
@@ -111,10 +111,7 @@ class Tracker
 							$crmFieldsManager->setEmails($emails);
 						}
 
-						if($session->getConfig('CRM_CREATE') != Config::CRM_CREATE_LEAD)
-						{
-							$crmManager->setSkipCreate();
-						}
+						$crmManager->setModeCreate($session->getConfig('CRM_CREATE'));
 
 						$crmManager->search();
 						$crmFieldsManager->setTitle($session->getChat()->getData('TITLE'));

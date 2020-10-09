@@ -33,7 +33,7 @@ else
 			</div>
 			<div class="login-item">
 				<span class="login-item-alignment"></span><span class="login-label"><?echo GetMessage("AUTH_CAPTCHA_PROMT")?></span>
-				<input class="login-inp" type="text" name="captcha_word" maxlength="50" value="" size="15" />
+				<input class="login-inp" type="text" name="captcha_word" maxlength="50" value="" size="15" autocomplete="off"/>
 			</div>
 <?endif?>
 		</div>

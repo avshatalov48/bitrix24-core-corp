@@ -14,8 +14,8 @@ if ($arResult['USER_COLUMN_FIELDS'])
 	$menuItems = array();
 	foreach ($arResult['USER_COLUMN_FIELDS'] as $id => $name)
 	{
-		$name = CUtil::addslashes($name);
-		$menuItems[] = '{text : \''.$name.'\', onclick : function() {BX.crmPSActionFile.addUserColumn(\''.$id.'\', \''.$name.'\');}}';
+		$name = htmlspecialcharsbx(CUtil::addslashes($name));
+		$menuItems[] = '{text : \''.htmlspecialcharsbx($name).'\', onclick : function() {BX.crmPSActionFile.addUserColumn(\''.$id.'\', \''.$name.'\');}}';
 	}
 
 	$userPropsList = '<input type="hidden" name="TYPE_USER_COLUMNS" id="TYPE_USER_COLUMNS" value="USER_COLUMN_LIST"><span onclick="BX.PopupMenu.show(\'user-props-list\', event, ['.implode(',', $menuItems).'], {angle : {offset : 50, position : \'top\'}});" class="crm-add-user-props">'.Loc::getMessage('CRM_ADD_USER_PROP').'</span>';
@@ -113,7 +113,7 @@ ob_start();
 				<td class="bx-field-value">
 					<select name="PERSON_TYPE_ID">
 						<?foreach ($arResult['PERSON_TYPE_LIST'] as $id => $name):?>
-							<option value="<?=$id;?>" <?=($arResult['PAY_SYSTEM']['PERSON_TYPE_ID'] == $id) ? 'selected' : ''?>><?=$name;?></option>
+							<option value="<?=$id;?>" <?=($arResult['PAY_SYSTEM']['PERSON_TYPE_ID'] == $id) ? 'selected' : ''?>><?=htmlspecialcharsbx($name);?></option>
 						<?endforeach;?>
 					</select>
 				</td>
@@ -123,7 +123,7 @@ ob_start();
 			<tbody id="SECURITY">
 			<?foreach ($arResult['SECURITY'] as $name => $value):?>
 				<tr>
-					<td width="40%" class="bx-field-name"><?=$value['NAME'];?>:</td>
+					<td width="40%" class="bx-field-name"><?=htmlspecialcharsbx($value['NAME']);?>:</td>
 					<td class="bx-field-value"><?=$value['VALUE'];?></td>
 				<tr>
 			<?endforeach;?>

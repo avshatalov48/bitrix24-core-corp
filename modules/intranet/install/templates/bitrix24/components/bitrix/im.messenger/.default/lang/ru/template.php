@@ -32,4 +32,5 @@ $MESS["IM_FULLSCREEN_BG_TITLE"] = "Фон";
 $MESS["IM_FULLSCREEN_BG_NUMBER"] = "№";
 $MESS["IM_FULLSCREEN_APPS"] = "Установите приложение";
 $MESS["IM_FULLSCREEN_DOWN_ITS"] = "https://itunes.apple.com/ru/app/bitrix24/id561683423";
+$MESS["IM_HELP_SPOTLIGHT"] = "Здесь вы найдете статьи и ответы на свои вопросы по Битрикс24";
 ?>

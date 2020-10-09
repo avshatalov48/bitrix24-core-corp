@@ -42,7 +42,7 @@ class Crm
 	const FIELDS_CONTACT = 'CONTACT_IDS';
 
 	const ERROR_IMOL_NO_SESSION = 'ERROR IMOPENLINES NO SESSION';
-	const ERROR_IMOL_CREATING_LEAD = 'ERROR IMOPENLINES CREATING LEAD';
+	const ERROR_IMOL_CREATING_CRM_ENTITY = 'ERROR IMOPENLINES CREATING CRM ENTITY';
 	const ERROR_IMOL_NOT_LOAD_CRM = 'ERROR IMOPENLINES NOT LOAD CRM';
 	const ERROR_IMOL_NOT_LOAD_IM = 'ERROR IMOPENLINES NOT LOAD IM';
 	const ERROR_IMOL_NO_CRM_BINDINGS = 'ERROR IMOPENLINES NO CRM BINDINGS';
@@ -137,6 +137,23 @@ class Crm
 	public function isSkipCreate()
 	{
 		return $this->skipCreate;
+	}
+
+	/**
+	 * @param string $mode
+	 * @return bool
+	 */
+	public function setModeCreate($mode = Config::CRM_CREATE_NONE): bool
+	{
+		if(
+			$mode !== Config::CRM_CREATE_LEAD &&
+			$mode !== Config::CRM_CREATE_DEAL
+		)
+		{
+			$this->setSkipCreate();
+		}
+
+		return $this->isSkipCreate();
 	}
 
 	/**
@@ -419,6 +436,7 @@ class Crm
 	}
 
 	/**
+	 *
 	 * @return Result
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\LoaderException
@@ -426,7 +444,7 @@ class Crm
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function registrationChanges()
+	public function registrationChanges(): Result
 	{
 		$result = new Result;
 		$fields = $this->getFields();
@@ -535,29 +553,18 @@ class Crm
 			//add Activity
 			else
 			{
-				$fieldsAddManager = $this->preparingFieldsAddCrmEntity();
+				$isCorrectEntity = $this->isFieldsCrmEntityCorrect();
 
-				if($fieldsAddManager->isSuccess())
+				if($isCorrectEntity->isSuccess())
 				{
-					$fieldsAdd = $fieldsAddManager->getData();
-
-					if ($this->isSkipSearch() == false)
+					if ($this->isSkipSearch() === false)
 					{
 						$this->search();
 					}
 
-					if ($this->isSkipCreate())
-					{
-						$facility->setRegisterMode($facility::REGISTER_MODE_ONLY_UPDATE);
-					}
+					$resultRegisterTouch = $this->registerTouch();
 
-					$facility->setUpdateClientMode($facility::UPDATE_MODE_NONE);
-					$isSuccessful = $facility->registerTouch(\CCrmOwnerType::Lead, $fieldsAdd, true, [
-						'CURRENT_USER' => $this->getResponsibleCrmId(),
-						'DISABLE_USER_FIELD_CHECK' => true
-					]);
-
-					if ($isSuccessful)
+					if ($resultRegisterTouch->isSuccess())
 					{
 						/** @var \Bitrix\Crm\Entity\Identificator\Complex $registeredEntity */
 						foreach ($facility->getRegisteredEntities() as $registeredEntity)
@@ -569,6 +576,7 @@ class Crm
 								'SAVE' => 'Y'
 							];
 
+							//TODO: deprecated
 							if(\CCrmOwnerType::ResolveName($registeredEntity->getTypeId()) == \CCrmOwnerType::LeadName)
 							{
 								ConfigStatistic::getInstance($session->getData('CONFIG_ID'))->addLead();
@@ -577,14 +585,13 @@ class Crm
 					}
 					else
 					{
-						if ($facility->hasErrors())
-						{
-							$errorDescriptions = implode(';', $facility->getErrorMessages());
-							$result->addError(new Error($errorDescriptions, self::ERROR_IMOL_CREATING_LEAD, __METHOD__, $fieldsAdd));
-						}
+						$result->addErrors($resultRegisterTouch->getErrors());
 					}
 
-					if($result->isSuccess() && !empty($this->getEntityManageFacility()->getActivityBindings()))
+					if(
+						$result->isSuccess() &&
+						!empty($this->getEntityManageFacility()->getActivityBindings())
+					)
 					{
 						/** @var \Bitrix\Crm\Entity\Identificator\ComplexCollection $updateEntites */
 						$updateEntites = $facility->getBindingCollection()->diff($facility->getRegisteredEntities());
@@ -643,7 +650,7 @@ class Crm
 				}
 				else
 				{
-					$result->addErrors($fieldsAddManager->getErrors());
+					$result->addErrors($isCorrectEntity->getErrors());
 				}
 			}
 		}
@@ -656,123 +663,306 @@ class Crm
 	}
 
 	/**
-	 * @return Result
 	 * @throws \Bitrix\Main\LoaderException
 	 */
-	protected function preparingFieldsAddCrmEntity()
+	protected function isFieldsCrmEntityCorrect(): Result
 	{
 		$result = new Result;
 
 		$fields = $this->getFields();
-		$session = $fields->getSession();
 
-		if (!empty($session))
+		if ($fields->getSession() === null)
 		{
+			$result->addError(new Error(Loc::getMessage('IMOL_CRM_ERROR_NO_SESSION'), self::ERROR_IMOL_NO_SESSION, __METHOD__));
+		}
+		else
+		{
+			$rawSourceId = $this->getSourceId();
+			if(!$rawSourceId->isSuccess())
+			{
+				$result->addErrors($rawSourceId->getErrors());
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @return Result
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	protected function getFieldsAddLead(): Result
+	{
+		$result = new Result;
+
+		$isCorrectEntity = $this->isFieldsCrmEntityCorrect();
+
+		if($isCorrectEntity->isSuccess())
+		{
+			$fields = $this->getFields();
+			$session = $fields->getSession();
+
 			$fieldsAdd = [];
 			$fieldsFmAdd = [];
 
 			$fieldsAdd['OPENED'] = 'Y';
 
-			$rawSourceId = $this->getSourceId();
-			if ($rawSourceId->isSuccess())
+			$fieldsAdd['SOURCE_ID'] = $this->getSourceId()->getResult();
+
+			if (!empty($fields->getTitle()))
 			{
-				$fieldsAdd['SOURCE_ID'] = $rawSourceId->getResult();
-
-				if (!empty($fields->getTitle()))
-				{
-					$fieldsAdd['TITLE'] = $fields->getTitle();
-				}
-				else
-				{
-					$fieldsAdd['TITLE'] = $session->getChat()->getData('TITLE');
-				}
-
-				if (!empty($fields->getPersonName()))
-				{
-					$fieldsAdd['NAME'] = $fields->getPersonName();
-				}
-
-				if (!empty($fields->getPersonLastName()))
-				{
-					$fieldsAdd['LAST_NAME'] = $fields->getPersonLastName();
-				}
-
-				if (!empty($fields->getPersonSecondName()))
-				{
-					$fieldsAdd['SECOND_NAME'] = $fields->getPersonSecondName();
-				}
-
-				if (!empty($fields->getPersonEmail()))
-				{
-					$fieldsFmAdd['EMAIL']['WORK'][] = $fields->getPersonEmail();
-				}
-
-				if (!empty($fields->getPersonPhone()))
-				{
-					$fieldsFmAdd['PHONE']['WORK'][] = $fields->getPersonPhone();
-				}
-
-				if (!empty($fields->getEmails()))
-				{
-					if(!empty($fieldsFmAdd['EMAIL']['WORK']))
-					{
-						$fieldsFmAdd['EMAIL']['WORK'] = array_merge($fieldsFmAdd['EMAIL']['WORK'], $fields->getEmails());
-						$fieldsFmAdd['EMAIL']['WORK'] = Tools\Email::getArrayUniqueValidate($fieldsFmAdd['EMAIL']['WORK']);
-					}
-					else
-					{
-						$fieldsFmAdd['EMAIL']['WORK'] = $fields->getEmails();
-					}
-				}
-
-				if (!empty($fields->getPhones()))
-				{
-					if(!empty($fieldsFmAdd['PHONE']['WORK']))
-					{
-						$fieldsFmAdd['PHONE']['WORK'] = array_merge($fieldsFmAdd['PHONE']['WORK'], $fields->getPhones());
-						$fieldsFmAdd['PHONE']['WORK'] = Tools\Phone::getArrayUniqueValidate($fieldsFmAdd['PHONE']['WORK']);
-					}
-					else
-					{
-						$fieldsFmAdd['PHONE']['WORK'] = $fields->getPhones();
-					}
-				}
-
-				if (!empty($fields->getPersonWebsite()))
-				{
-					if (strlen($fields->getPersonWebsite()) > 250)
-					{
-						$fieldsAdd['SOURCE_DESCRIPTION'] = $fields->getPersonWebsite();
-					}
-					else
-					{
-						$fieldsFmAdd['WEB']['HOME'][] = $fields->getPersonWebsite();
-					}
-				}
-
-				if (($userCode = $this->getCode()) && ($userCodeImol = $this->getCodeImol()))
-				{
-					$fieldsFmAdd['IM'][CrmCommon::getCommunicationType($userCode)][] = $userCodeImol;
-				}
-
-				if(!empty($fieldsFmAdd))
-				{
-					$fieldsAdd['FM'] = CrmCommon::formatMultifieldFields($fieldsFmAdd);
-				}
-
-				if(!empty($fieldsAdd))
-				{
-					$result->setData($fieldsAdd);
-				}
+				$fieldsAdd['TITLE'] = $fields->getTitle();
 			}
 			else
 			{
-				$result->addErrors($rawSourceId->getErrors());
+				$fieldsAdd['TITLE'] = $session->getChat()->getData('TITLE');
+			}
+
+			if (!empty($fields->getPersonName()))
+			{
+				$fieldsAdd['NAME'] = $fields->getPersonName();
+			}
+
+			if (!empty($fields->getPersonLastName()))
+			{
+				$fieldsAdd['LAST_NAME'] = $fields->getPersonLastName();
+			}
+
+			if (!empty($fields->getPersonSecondName()))
+			{
+				$fieldsAdd['SECOND_NAME'] = $fields->getPersonSecondName();
+			}
+
+			if (!empty($fields->getPersonEmail()))
+			{
+				$fieldsFmAdd['EMAIL']['WORK'][] = $fields->getPersonEmail();
+			}
+
+			if (!empty($fields->getPersonPhone()))
+			{
+				$fieldsFmAdd['PHONE']['WORK'][] = $fields->getPersonPhone();
+			}
+
+			if (!empty($fields->getEmails()))
+			{
+				if(!empty($fieldsFmAdd['EMAIL']['WORK']))
+				{
+					$fieldsFmAdd['EMAIL']['WORK'] = array_merge($fieldsFmAdd['EMAIL']['WORK'], $fields->getEmails());
+					$fieldsFmAdd['EMAIL']['WORK'] = Tools\Email::getArrayUniqueValidate($fieldsFmAdd['EMAIL']['WORK']);
+				}
+				else
+				{
+					$fieldsFmAdd['EMAIL']['WORK'] = $fields->getEmails();
+				}
+			}
+
+			if (!empty($fields->getPhones()))
+			{
+				if(!empty($fieldsFmAdd['PHONE']['WORK']))
+				{
+					$fieldsFmAdd['PHONE']['WORK'] = array_merge($fieldsFmAdd['PHONE']['WORK'], $fields->getPhones());
+					$fieldsFmAdd['PHONE']['WORK'] = Tools\Phone::getArrayUniqueValidate($fieldsFmAdd['PHONE']['WORK']);
+				}
+				else
+				{
+					$fieldsFmAdd['PHONE']['WORK'] = $fields->getPhones();
+				}
+			}
+
+			if (!empty($fields->getPersonWebsite()))
+			{
+				if (mb_strlen($fields->getPersonWebsite()) > 250)
+				{
+					$fieldsAdd['SOURCE_DESCRIPTION'] = $fields->getPersonWebsite();
+				}
+				else
+				{
+					$fieldsFmAdd['WEB']['HOME'][] = $fields->getPersonWebsite();
+				}
+			}
+
+			if (($userCode = $this->getCode()) && ($userCodeImol = $this->getCodeImol()))
+			{
+				$fieldsFmAdd['IM'][CrmCommon::getCommunicationType($userCode)][] = $userCodeImol;
+			}
+
+			if(!empty($fieldsFmAdd))
+			{
+				$fieldsAdd['FM'] = CrmCommon::formatMultifieldFields($fieldsFmAdd);
+			}
+
+			if(!empty($fieldsAdd))
+			{
+				$result->setData($fieldsAdd);
 			}
 		}
 		else
 		{
-			$result->addError(new Error(Loc::getMessage('IMOL_CRM_ERROR_NO_SESSION'), self::ERROR_IMOL_NO_SESSION, __METHOD__));
+			$result->addErrors($isCorrectEntity->getErrors());
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @return Result
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	protected function getFieldsAddDeal(): Result
+	{
+		$result = new Result;
+
+		$isCorrectEntity = $this->isFieldsCrmEntityCorrect();
+
+		if($isCorrectEntity->isSuccess())
+		{
+			$fields = $this->getFields();
+			$session = $fields->getSession();
+
+			$fieldsAdd = [];
+
+			$fieldsAdd['OPENED'] = 'Y';
+
+			$fieldsAdd['SOURCE_ID'] = $this->getSourceId()->getResult();
+
+			if (!empty($fields->getTitle()))
+			{
+				$fieldsAdd['TITLE'] = $fields->getTitle();
+			}
+			else
+			{
+				$fieldsAdd['TITLE'] = $session->getChat()->getData('TITLE');
+			}
+
+			if (!empty($fields->getPersonWebsite()))
+			{
+				$fieldsAdd['SOURCE_DESCRIPTION'] = $fields->getPersonWebsite();
+			}
+
+			if(!empty($session->getConfig('CRM_CREATE_SECOND')))
+			{
+				$fieldsAdd['CATEGORY_ID'] = $session->getConfig('CRM_CREATE_SECOND');
+			}
+
+			if(!empty($fieldsAdd))
+			{
+				$result->setData($fieldsAdd);
+			}
+		}
+		else
+		{
+			$result->addErrors($isCorrectEntity->getErrors());
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @return Result
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	protected function getFieldsAddContact(): Result
+	{
+		$result = new Result;
+
+		$isCorrectEntity = $this->isFieldsCrmEntityCorrect();
+
+		if($isCorrectEntity->isSuccess())
+		{
+			$fields = $this->getFields();
+			$session = $fields->getSession();
+
+			$fieldsAdd = [];
+			$fieldsFmAdd = [];
+
+			$fieldsAdd['SOURCE_ID'] = $this->getSourceId()->getResult();
+
+			if (!empty($fields->getPersonName()))
+			{
+				$fieldsAdd['NAME'] = $fields->getPersonName();
+			}
+
+			if (!empty($fields->getPersonLastName()))
+			{
+				$fieldsAdd['LAST_NAME'] = $fields->getPersonLastName();
+			}
+
+			if (!empty($fields->getPersonSecondName()))
+			{
+				$fieldsAdd['SECOND_NAME'] = $fields->getPersonSecondName();
+			}
+
+			if(!isset($fieldsAdd['NAME'], $fieldsAdd['LAST_NAME'], $fieldsAdd['SECOND_NAME']))
+			{
+				$fieldsAdd['NAME'] = LiveChat::getDefaultGuestName();
+			}
+
+			if (!empty($fields->getPersonEmail()))
+			{
+				$fieldsFmAdd['EMAIL']['WORK'][] = $fields->getPersonEmail();
+			}
+
+			if (!empty($fields->getPersonPhone()))
+			{
+				$fieldsFmAdd['PHONE']['WORK'][] = $fields->getPersonPhone();
+			}
+
+			if (!empty($fields->getEmails()))
+			{
+				if(!empty($fieldsFmAdd['EMAIL']['WORK']))
+				{
+					$fieldsFmAdd['EMAIL']['WORK'] = array_merge($fieldsFmAdd['EMAIL']['WORK'], $fields->getEmails());
+					$fieldsFmAdd['EMAIL']['WORK'] = Tools\Email::getArrayUniqueValidate($fieldsFmAdd['EMAIL']['WORK']);
+				}
+				else
+				{
+					$fieldsFmAdd['EMAIL']['WORK'] = $fields->getEmails();
+				}
+			}
+
+			if (!empty($fields->getPhones()))
+			{
+				if(!empty($fieldsFmAdd['PHONE']['WORK']))
+				{
+					$fieldsFmAdd['PHONE']['WORK'] = array_merge($fieldsFmAdd['PHONE']['WORK'], $fields->getPhones());
+					$fieldsFmAdd['PHONE']['WORK'] = Tools\Phone::getArrayUniqueValidate($fieldsFmAdd['PHONE']['WORK']);
+				}
+				else
+				{
+					$fieldsFmAdd['PHONE']['WORK'] = $fields->getPhones();
+				}
+			}
+
+			if (!empty($fields->getPersonWebsite()))
+			{
+				if (mb_strlen($fields->getPersonWebsite()) > 250)
+				{
+					$fieldsAdd['SOURCE_DESCRIPTION'] = $fields->getPersonWebsite();
+				}
+				else
+				{
+					$fieldsFmAdd['WEB']['HOME'][] = $fields->getPersonWebsite();
+				}
+			}
+
+			if (($userCode = $this->getCode()) && ($userCodeImol = $this->getCodeImol()))
+			{
+				$fieldsFmAdd['IM'][CrmCommon::getCommunicationType($userCode)][] = $userCodeImol;
+			}
+
+			if(!empty($fieldsFmAdd))
+			{
+				$fieldsAdd['FM'] = CrmCommon::formatMultifieldFields($fieldsFmAdd);
+			}
+
+			if(!empty($fieldsAdd))
+			{
+				$result->setData($fieldsAdd);
+			}
+		}
+		else
+		{
+			$result->addErrors($isCorrectEntity->getErrors());
 		}
 
 		return $result;
@@ -831,8 +1021,10 @@ class Crm
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\LoaderException
 	 * @throws \Bitrix\Main\ObjectException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function registerActivity()
+	public function registerActivity(): Result
 	{
 		$result = new Result;
 		$fields = $this->getFields();
@@ -892,6 +1084,127 @@ class Crm
 		} else
 		{
 			$result->addError(new Error(Loc::getMessage('IMOL_CRM_ERROR_NO_SESSION'), self::ERROR_IMOL_NO_SESSION, __METHOD__));
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @return Result
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	protected function registerTouch(): Result
+	{
+		$result = new Result;
+
+		$facility = $this->getEntityManageFacility();
+		$fields = $this->getFields();
+		$session = $fields->getSession();
+
+		if (Loader::includeModule('crm'))
+		{
+			if($session !== null)
+			{
+				if ($this->isSkipCreate())
+				{
+					$facility->setRegisterMode($facility::REGISTER_MODE_ONLY_UPDATE);
+				}
+
+				$facility->setUpdateClientMode($facility::UPDATE_MODE_NONE);
+
+				$isCorrectEntity = $this->isFieldsCrmEntityCorrect();
+				if($isCorrectEntity->isSuccess())
+				{
+					$oldRegisterMode = $facility->getRegisterMode();
+
+					//The creation mode of the deal
+					if($session->getConfig('CRM_CREATE') === Config::CRM_CREATE_DEAL)
+					{
+						$crmOwnerType = \CCrmOwnerType::Deal;
+						$contactId = $facility->getSelector()->getContactId();
+
+						if (!$contactId)
+						{
+							$fieldsContactAdd = $this->getFieldsAddContact()->getData();
+
+							$isRegisterContact = $facility->registerContact($fieldsContactAdd, true, [
+								'CURRENT_USER' => $this->getResponsibleCrmId(),
+								'DISABLE_USER_FIELD_CHECK' => true
+							]);
+
+							if(
+								$isRegisterContact &&
+								$facility->getRegisteredId() &&
+								$facility->getRegisteredTypeId() === \CCrmOwnerType::Contact
+							)
+							{
+								$contactId = $facility->getRegisteredId();
+							}
+							elseif ($facility->hasErrors())
+							{
+								$errorDescriptions = implode(';', $facility->getErrorMessages());
+								$result->addError(new Error($errorDescriptions, self::ERROR_IMOL_CREATING_CRM_ENTITY, __METHOD__, $fieldsContactAdd));
+							}
+						}
+
+						if($contactId)
+						{
+							$facility->getSelector()->setEntity(\CCrmOwnerType::Contact, $contactId);
+
+							$fieldsAdd = $this->getFieldsAddDeal()->getData();
+
+							if($session->getConfig('CRM_CREATE_THIRD') === 'N')
+							{
+								$facility->setRegisterMode($facility::REGISTER_MODE_ALWAYS_ADD);
+							}
+						}
+					}
+					//Mode for creating leads. By default.
+					else
+					{
+						$crmOwnerType = \CCrmOwnerType::Lead;
+						$fieldsAdd = $this->getFieldsAddLead()->getData();
+					}
+
+					if(!empty($fieldsAdd))
+					{
+						$isRegisterEntity = $facility->registerTouch($crmOwnerType, $fieldsAdd, true, [
+							'CURRENT_USER' => $this->getResponsibleCrmId(),
+							'DISABLE_USER_FIELD_CHECK' => true
+						]);
+
+						if(
+							$isRegisterEntity !== true &&
+							$facility->hasErrors()
+						)
+						{
+							$errorDescriptions = implode(';', $facility->getErrorMessages());
+							$result->addError(new Error($errorDescriptions, self::ERROR_IMOL_CREATING_CRM_ENTITY, __METHOD__, $fieldsAdd));
+						}
+					}
+					else
+					{
+						$result->addError(new Error(self::ERROR_IMOL_CREATING_CRM_ENTITY, '', __METHOD__));
+					}
+
+					//Resetting the entity registration mode
+					if($oldRegisterMode !== $facility->getRegisterMode())
+					{
+						$facility->setRegisterMode($oldRegisterMode);
+					}
+				}
+			}
+			else
+			{
+				$result->addError(new Error(Loc::getMessage('IMOL_CRM_ERROR_NO_SESSION'), self::ERROR_IMOL_NO_SESSION, __METHOD__));
+			}
+		}
+		else
+		{
+			$result->addError(new Error(Loc::getMessage('IMOL_CRM_ERROR_NOT_LOAD_CRM'), self::ERROR_IMOL_NOT_LOAD_CRM, __METHOD__));
 		}
 
 		return $result;
@@ -1002,7 +1315,7 @@ class Crm
 
 			if(!empty($personWebsite))
 			{
-				if (strlen($personWebsite) > 250 || $type == Crm::ENTITY_DEAL)
+				if (mb_strlen($personWebsite) > 250 || $type == Crm::ENTITY_DEAL)
 				{
 					if($type != Crm::ENTITY_COMPANY)
 					{
@@ -1141,9 +1454,9 @@ class Crm
 					CrmCommon::getCommunicationType(
 						$session->getData('USER_CODE'), true
 					);
-				$crmSource = substr($crmSource, 0, 50);
+				$crmSource = mb_substr($crmSource, 0, 50);
 
-				if (!isset($statuses[$session->getConfig('CRM_SOURCE')]))
+				if (!isset($statuses[$crmSource]))
 				{
 					$entity = new \CCrmStatus("SOURCE");
 					$entity->Add(array(
@@ -1280,49 +1593,76 @@ class Crm
 						switch ($entity['ENTITY_TYPE'])
 						{
 							case \CCrmOwnerType::LeadName:
-								$updateSession['CRM_CREATE_LEAD'] = 'Y';
+								if(empty($updateChat['LEAD']))
+								{
+									$updateChat['LEAD'] = $entity['ENTITY_ID'];
+									$updateSession['CRM_CREATE_LEAD'] = 'Y';
+								}
 								break;
 
 							case \CCrmOwnerType::DealName:
-								$updateSession['CRM_CREATE_DEAL'] = 'Y';
+								if(empty($updateChat['DEAL']))
+								{
+									$updateChat['DEAL'] = $entity['ENTITY_ID'];
+									$updateSession['CRM_CREATE_DEAL'] = 'Y';
+								}
 								break;
 
 							case \CCrmOwnerType::ContactName:
-								$updateSession['CRM_CREATE_CONTACT'] = 'Y';
+								if(empty($updateChat['CONTACT']))
+								{
+									$updateChat['CONTACT'] = $entity['ENTITY_ID'];
+									$updateSession['CRM_CREATE_CONTACT'] = 'Y';
+								}
 								break;
 
 							case \CCrmOwnerType::CompanyName:
-								$updateSession['CRM_CREATE_COMPANY'] = 'Y';
+								if(empty($updateChat['COMPANY']))
+								{
+									$updateChat['COMPANY'] = $entity['ENTITY_ID'];
+									$updateSession['CRM_CREATE_COMPANY'] = 'Y';
+								}
 								break;
 						}
 					}
 				}
 
 				//update chat
-				$entites = array_merge($this->registeredEntites, $this->updateEntites);
-
-				foreach ($entites as $entity)
+				foreach ($this->updateEntites as $entity)
 				{
 					switch ($entity['ENTITY_TYPE'])
 					{
 						case \CCrmOwnerType::LeadName:
-							$updateChat['LEAD'] = $entity['ENTITY_ID'];
+							if(empty($updateChat['LEAD']))
+							{
+								$updateChat['LEAD'] = $entity['ENTITY_ID'];
+							}
 							break;
 
 						case \CCrmOwnerType::DealName:
-							$updateChat['DEAL'] = $entity['ENTITY_ID'];
+							if(empty($updateChat['DEAL']))
+							{
+								$updateChat['DEAL'] = $entity['ENTITY_ID'];
+							}
 							break;
 
 						case \CCrmOwnerType::ContactName:
-							$updateChat['CONTACT'] = $entity['ENTITY_ID'];
+							if(empty($updateChat['CONTACT']))
+							{
+								$updateChat['CONTACT'] = $entity['ENTITY_ID'];
+							}
 							break;
 
 						case \CCrmOwnerType::CompanyName:
-							$updateChat['COMPANY'] = $entity['ENTITY_ID'];
+							if(empty($updateChat['COMPANY']))
+							{
+								$updateChat['COMPANY'] = $entity['ENTITY_ID'];
+							}
 							break;
 					}
 				}
 
+				//For backward compatibility, the most up-to-date entity.
 				if(!empty($updateChat))
 				{
 					if(!empty($updateChat['DEAL']))

@@ -39,10 +39,6 @@ $MESS["OL_COMPONENT_LIST_ITEM_PUBLIC_LINK_COPY"] = "Copy to Clipboard";
 $MESS["OL_COMPONENT_LIST_ITEM_START_EDIT_BUT_STOPPED"] = "Didn't finish";
 $MESS["OL_COMPONENT_LIST_MODIFY_DATE"] = "updated";
 $MESS["OL_COMPONENT_LIST_MODIFY_DATE_NOW"] = "updated now";
-$MESS["OL_COMPONENT_LIST_POPUP_LIMITED_TEXT_NEW"] = "You current plan limits the number of Open Channels you are allowed to have. In order to add another Open Channel, please upgrade your plan. 
-<br><br>
-TIP: <a href=\"/settings/license_all.php\" target=\"_blank\">Selected commercial plans</a> come with unlimited Open Channels.";
-$MESS["OL_COMPONENT_LIST_POPUP_LIMITED_TITLE"] = "Advanced Open Channels";
 $MESS["OL_COMPONENT_LIST_PROMO_1"] = "Open Channels consolidate various means of digital communications with your clients in Bitrix24.";
 $MESS["OL_COMPONENT_LIST_PROMO_2"] = "Impress your clients with your proficiency and personal approach.";
 $MESS["OL_COMPONENT_LIST_PROMO_3"] = "<b>Presales consulting</b> using digital channels";

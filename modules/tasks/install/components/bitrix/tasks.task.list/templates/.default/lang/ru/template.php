@@ -115,4 +115,7 @@ $MESS["TASKS_ADD_TASK_TO_TIMEMAN_EX"] = "Добавить в план рабоч
 $MESS["TASKS_CLOSE_PAGE_CONFIRM"] = "Возможно, внесенные изменения не сохранятся.";
 
 $MESS["TASKS_DELETE_SUCCESS"] = "Задача успешно удалена";
+
+$MESS["TASKS_ROW_COUNT_TITLE"] = "Всего";
+$MESS["TASKS_SHOW_ROW_COUNT"] = "Показать количество";
 ?>

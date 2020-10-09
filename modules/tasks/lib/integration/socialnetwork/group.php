@@ -49,71 +49,31 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 		);
 	}
 
-	public static function getIdsByAllowedAction($actionCode = 'view_all', $ownGroups = true, $userId = 0)
+	public static function getIdsByAllowedAction($actionCode = self::ACTION_VIEW_ALL_TASKS, $ownGroups = true, $userId = 0)
 	{
-		$result = array();
-
-		if(static::includeModule())
+		if (!static::includeModule())
 		{
-			$cacheKey = $actionCode.'-'.$ownGroups.'-'.$userId;
-
-			if(array_key_exists($cacheKey, static::$cache))
-			{
-				return static::$cache[$cacheKey];
-			}
-
-			$runtime = array();
-			if($ownGroups) // select only groups that are used in tasks
-			{
-				$runtime = array(new Entity\ReferenceField(
-					'TASKS',
-					TaskTable::getEntity(),
-					array(
-						'=ref.GROUP_ID' => 'this.ID',
-						// todo: get rid of zombie tasks, make an additional table to keep deleted tasks for MSExchange
-						'=ref.ZOMBIE' => array('?', 'N'),
-					),
-					array('join_type' => 'inner')
-				));
-			}
-
-			$res = WorkgroupTable::getList(array(
-				'runtime' => $runtime,
-				'filter' => array(
-					'=ACTIVE' => 'Y'
-				),
-				'select' => array(
-					'ID'
-				),
-				'group' => array(
-				    'ID'
-				)
-			));
-			$groupIds = array();
-			while($item = $res->fetch())
-			{
-				$groupIds[] = $item['ID'];
-			}
-
-			if(!empty($groupIds))
-			{
-				$access = static::can($groupIds, $actionCode, $userId);
-				if(is_array($access))
-				{
-					foreach($access as $id => $can)
-					{
-						if($can)
-						{
-							$result[] = intval($id);
-						}
-					}
-				}
-
-				static::$cache[$cacheKey] = $result;
-			}
+			return [];
 		}
 
-		return $result;
+		$cacheKey = $actionCode.'-'.$userId;
+
+		if(array_key_exists($cacheKey, static::$cache))
+		{
+			return static::$cache[$cacheKey];
+		}
+
+		$groups = \Bitrix\Socialnetwork\Item\Workgroup::getByFeatureOperation([
+			'feature' 	=> 'tasks',
+			'operation' => $actionCode,
+			'userId' 	=> $userId
+		]);
+
+		$groups = array_column($groups, 'ID');
+
+		static::$cache[$cacheKey] = $groups;
+
+		return static::$cache[$cacheKey];
 	}
 
 	public static function getData(array $groupIds)
@@ -184,7 +144,7 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 			'filter' => array(
 				'USER_ID' => $userId,
 				'=GROUP.ACTIVE' => 'Y',
-				'=GROUP.CLOSED' => 'N'
+				'=GROUP.CLOSED' => 'N',
 			),
 			'order' => array(
 				'DATE_VIEW' => 'DESC'

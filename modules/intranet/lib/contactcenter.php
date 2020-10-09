@@ -668,9 +668,9 @@ class ContactCenter
 			}
 
 			$title = $marketplaceApp['NAME'];
-			if (strlen($title) > 50)
+			if (mb_strlen($title) > 50)
 			{
-				$title = substr($title, 0, 50).'...';
+				$title = mb_substr($title, 0, 50).'...';
 			}
 
 			$img = $marketplaceApp['ICON_PRIORITY'] ?: $marketplaceApp['ICON'];

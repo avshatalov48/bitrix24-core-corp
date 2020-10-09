@@ -8,6 +8,7 @@
     overflow: hidden;
     font-family: 'OpenSans-Regular', Helvetica, Arial, sans-serif;
     color: #333;
+	padding: 0 0 10px 0;
 }
 
 .reports-stub-content {

@@ -5,6 +5,7 @@ use \Bitrix\Main\Entity;
 use \Bitrix\Main\Type\DateTime;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Scrum\Service\KanbanService;
 
 Loc::loadMessages(__FILE__);
 
@@ -314,14 +315,14 @@ class SprintTable extends Entity\DataManager
 			$result->addError(new Entity\EntityError(
 				Loc::getMessage('TASKS_SPRINT_ERROR_CANT_ADD_TO_SPRINT'),
 				'CANT_ADD_TO_SPRINT'
-  			));
+			));
 			return $result;
 		}
 
 		$result = TaskStageTable::add([
 			'TASK_ID' => $taskId,
 			'STAGE_ID' => $defaultStageId
-]		);
+		]		);
 
 		return $result;
 	}
@@ -348,7 +349,7 @@ class SprintTable extends Entity\DataManager
 					'ENTITY_TYPE' => StagesTable::WORK_MODE_SPRINT,
 					'ENTITY_ID' => $primary['ID']
 				]
-]			);
+			]			);
 			while ($row = $res->fetch())
 			{
 				StagesTable::systemDelete($row['ID']);

@@ -13,10 +13,10 @@
 /** @var CBitrixComponent $component */
 
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 use Bitrix\Main\Localization\Loc;
 
-Extension::load("ui.icons");
-Extension::load("ui.hint");
+Extension::load(["ui.icons", "ui.hint", "crm.report.tracking.ad.report"]);
 
 $containerId = 'crm-analytics-report-view-chart-grid' . ($arParams['IS_TRAFFIC'] ? '-traffic' : '');
 ?>
@@ -28,6 +28,7 @@ $containerId = 'crm-analytics-report-view-chart-grid' . ($arParams['IS_TRAFFIC']
 		{
 			if (array_key_exists('code', $row['SOURCE_CODE']))
 			{
+				$expensesReport = $row['SOURCE_CODE']['expensesReport'];
 				$sourceCaption = htmlspecialcharsbx($row['SOURCE_CODE']['caption']);
 				$sourceCode = htmlspecialcharsbx($row['SOURCE_CODE']['code']);
 				$sourceIconClass = htmlspecialcharsbx($row['SOURCE_CODE']['iconClass']);
@@ -38,7 +39,15 @@ $containerId = 'crm-analytics-report-view-chart-grid' . ($arParams['IS_TRAFFIC']
 					. '<div class="crm-report-chart-modal-title-icon ' . $sourceIconClass . '">'
 					. '<i ' . ($sourceColor ? 'style="background-color: ' . $sourceColor . '"' : '') . '></i>'
 					. '</div>'
-					. '<span>' . $sourceCaption . '</span>'
+					. (!$expensesReport['supported']
+						? '<span>' . $sourceCaption . '</span>'
+						: (
+							'<span '
+							. 'class="crm-report-chart-grid-link" '
+							. 'onclick="BX.Crm.Report.Tracking.Ad.Report.open(' . htmlspecialcharsbx(Json::encode($expensesReport['options'])) . ')"'
+							. '>' . $sourceCaption . '</span>'
+						)
+					)
 					. '</div>';
 
 				$row['SOURCE_COLOR'] = '<div class="crm-report-chart-modal-title-icon" style="background: ' . $sourceColor . '; width: 19px; height: 19px;"></div>';

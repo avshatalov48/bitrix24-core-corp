@@ -13,11 +13,11 @@ $arParams['MEETINGS_COUNT'] = intval($arParams['MEETINGS_COUNT']);
 if ($arParams['MEETINGS_COUNT'] <= 0)
 	$arParams['MEETINGS_COUNT'] = 20;
 
-if (strlen($arParams["NAME_TEMPLATE"]) <= 0)
+if ($arParams["NAME_TEMPLATE"] == '')
 	$arParams["NAME_TEMPLATE"] = CSite::GetNameFormat();
 
 $arParams['PAGER_TITLE'] = trim($arParams['PAGER_TITLE']);
-if (strlen($arParams['PAGER_TITLE']) <= 0)
+if ($arParams['PAGER_TITLE'] == '')
 	$arParams['PAGER_TITLE'] = GetMessage('ML_PAGER_TITLE');
 
 $arResult['MEETINGS'] = array();
@@ -54,13 +54,13 @@ if ($_REQUEST['FILTER'])
 		$arResult['FILTER'] = array(); $arFilter['USER_ID'] = $arSubIDs;
 	}
 
-	if (isset($arFilterValues['TITLE']) && strlen(trim($arFilterValues['TITLE'])) > 0)
+	if (isset($arFilterValues['TITLE']) && trim($arFilterValues['TITLE']) <> '')
 	{
 		$arResult['FILTER']['TITLE'] = $arFilterValues['TITLE'];
 		$arFilter['~TITLE'] = '%'.trim($arFilterValues['TITLE']).'%';
 	}
 
-	if (isset($arFilterValues['CURRENT_STATE']) && strlen($arFilterValues['CURRENT_STATE'])==1 && in_array($arFilterValues['CURRENT_STATE'], array(CMeeting::STATE_PREPARE, CMeeting::STATE_ACTION, CMeeting::STATE_CLOSED)))
+	if (isset($arFilterValues['CURRENT_STATE']) && mb_strlen($arFilterValues['CURRENT_STATE']) == 1 && in_array($arFilterValues['CURRENT_STATE'], array(CMeeting::STATE_PREPARE, CMeeting::STATE_ACTION, CMeeting::STATE_CLOSED)))
 		$arResult['FILTER']['CURRENT_STATE'] = $arFilter['CURRENT_STATE'] = $arFilterValues['CURRENT_STATE'];
 
 	if (isset($arFilterValues['GROUP_ID']) && $arFilterValues['GROUP_ID'] > 0)
@@ -115,7 +115,7 @@ while ($arRes = $dbRes->GetNext())
 	}
 	$arUserIDs = array_merge($arUserIDs, array_keys($arRes['USERS']));
 
-	if(strlen($arRes['PLACE'])>0 && array_key_exists($arRes['PLACE'], $arResult['MEETING_ROOMS_LIST']))
+	if($arRes['PLACE'] <> '' && array_key_exists($arRes['PLACE'], $arResult['MEETING_ROOMS_LIST']))
 	{
 		$arRes['PLACE'] = $arResult['MEETING_ROOMS_LIST'][$arRes['PLACE']]['NAME'];
 	}

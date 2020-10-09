@@ -66,7 +66,7 @@ class Queue
 				!empty($chatManager)
 			)
 			{
-				$queue = "Bitrix\\ImOpenLines\\Queue\\" . ucfirst(strtolower($configData['QUEUE_TYPE']));
+				$queue = "Bitrix\\ImOpenLines\\Queue\\" . ucfirst(mb_strtolower($configData['QUEUE_TYPE']));
 
 				$result = new $queue($session);
 			}
@@ -510,7 +510,7 @@ class Queue
 
 				if (!empty($result['AVATAR']))
 				{
-					$result['AVATAR'] = substr($result['AVATAR'], 0, 4) == 'http' ? $result['AVATAR']: \Bitrix\ImOpenLines\Common::getServerAddress() . $result['AVATAR'];
+					$result['AVATAR'] = mb_substr($result['AVATAR'], 0, 4) == 'http' ? $result['AVATAR']: \Bitrix\ImOpenLines\Common::getServerAddress() . $result['AVATAR'];
 				}
 			}
 		}

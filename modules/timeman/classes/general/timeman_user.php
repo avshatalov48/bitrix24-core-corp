@@ -690,7 +690,7 @@ class CTimeManUser
 	{
 		$res = null;
 
-		if (!is_array($arIDs) && strlen($arIDs) > 0)
+		if (!is_array($arIDs) && $arIDs <> '')
 		{
 			$arIDs = unserialize($arIDs);
 		}
@@ -813,7 +813,7 @@ class CTimeManUser
 				$arTasks = [];
 			}
 
-			if (strlen($arActions['name']) > 0)
+			if ($arActions['name'] <> '')
 			{
 				$obt = new CTasks();
 				if ($ID = $obt->Add([

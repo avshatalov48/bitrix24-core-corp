@@ -64,7 +64,7 @@ class ScheduleTable extends Main\ORM\Data\DataManager
 		$reflection = new \ReflectionClass(__CLASS__);
 		$constants = array_diff($reflection->getConstants(), $reflection->getParentClass()->getConstants());
 		return array_filter($constants, function ($element) {
-			return strncmp('WORKTIME_RESTRICTION_', $element, strlen('WORKTIME_RESTRICTION_')) === 0;
+			return strncmp('WORKTIME_RESTRICTION_', $element, mb_strlen('WORKTIME_RESTRICTION_')) === 0;
 		}, ARRAY_FILTER_USE_KEY);
 	}
 

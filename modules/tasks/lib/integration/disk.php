@@ -413,6 +413,11 @@ abstract class Disk extends \Bitrix\Tasks\Integration
 				'MODULE_ID' => 'tasks',
 				'CLASS' => Disk\Connector\CheckList\Template::className(),
 			],
+			'SCRUM_ITEM' => [
+				'ENTITY_TYPE' => 'tasks_scrum_item',
+				'MODULE_ID' => 'tasks',
+				'CLASS' => Disk\Connector\ScrumItem::className(),
+			],
 		]);
 	}
 }

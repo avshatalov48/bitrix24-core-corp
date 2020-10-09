@@ -112,6 +112,37 @@ endif
 
 
 <?php
+
+//region Navigation
+ob_start();
+$APPLICATION->IncludeComponent(
+	'bitrix:tasks.interface.pagenavigation',
+	'',
+	[
+		'PAGE_NUM' => $arResult['CURRENT_PAGE'],
+		'ENABLE_NEXT_PAGE' => $arResult['ENABLE_NEXT_PAGE'],
+		'URL' => $APPLICATION->GetCurPage()
+	],
+	$component,
+	array('HIDE_ICONS' => 'Y')
+);
+$navigationHtml = ob_get_contents();
+ob_end_clean();
+//endregion
+
+$rowCountHtml = str_replace(
+	array('%prefix%', '%all%', '%show%', '%filter%', '%parameters%'),
+	array(CUtil::JSEscape(mb_strtolower($arParams['GRID_ID'])), GetMessage('TASKS_ROW_COUNT_TITLE'), GetMessage('TASKS_SHOW_ROW_COUNT'), \CUtil::PhpToJSObject($arParams['GET_LIST_PARAMETERS']['legacyFilter']), \CUtil::PhpToJSObject($arParams['PROVIDER_PARAMETERS'])),
+	'<div id="%prefix%_row_count_wrapper" class="tasks-list-row-count-wrapper">%all%: 
+		<a id="%prefix%_row_count" onclick="BX.Tasks.GridActions.getTotalCount(\'%prefix%\', %filter%, %parameters%)">
+			%show%
+		</a>
+		<svg class="tasks-circle-loader-circular" viewBox="25 25 50 50">
+			<circle class="tasks-circle-loader-path" cx="50" cy="50" r="20" fill="none" stroke-width="1" stroke-miterlimit="10"></circle>
+		</svg>
+	</div>'
+);
+
 $APPLICATION->IncludeComponent(
 	'bitrix:main.ui.grid',
 	'',
@@ -150,18 +181,13 @@ $APPLICATION->IncludeComponent(
 		"MESSAGES" => $arResult['MESSAGES'],
 
 		"ENABLE_COLLAPSIBLE_ROWS" => true,
-		//		'ALLOW_SAVE_ROWS_STATE'=>true,
-
 		"SHOW_MORE_BUTTON" => false,
 		'~NAV_PARAMS'       => $arResult['GET_LIST_PARAMS']['NAV_PARAMS'],
-		'NAV_OBJECT'       => $arResult['NAV_OBJECT'],
-		'NAV_STRING'       => $arResult['NAV_STRING'],
-
-		"TOTAL_ROWS_COUNT"  => $arResult['TOTAL_RECORD_COUNT'],
-		//		"CURRENT_PAGE" => $arResult[ 'NAV' ]->getCurrentPage(),
-		//		"ENABLE_NEXT_PAGE" => ($arResult[ 'NAV' ]->getPageSize() * $arResult[ 'NAV' ]->getCurrentPage()) < $arResult[ 'NAV' ]->getRecordCount(),
 		"PAGE_SIZES"        => $arResult['PAGE_SIZES'],
-		"DEFAULT_PAGE_SIZE" => 50
+		"DEFAULT_PAGE_SIZE" => 50,
+
+		"TOTAL_ROWS_COUNT_HTML" => $rowCountHtml,
+		"NAV_STRING" => $navigationHtml,
 	),
 	$component,
 	array('HIDE_ICONS' => 'Y')

@@ -1,7 +1,17 @@
-<?
+<?php
 $MESS["SC_ADD_CASHBOX_BUTTOM"] = "Add cash register";
 $MESS["SC_CASHBOX_ATOL_DESCRITION"] = "You have to use a cash register to receive payments using cash money or credit cards.";
 $MESS["SC_CASHBOX_ATOL_TITLE"] = "ATOL Online";
+$MESS["SC_CASHBOX_CHECKBOX_DESCRIPTION"] = "Connect a Checkbox cash register if your business must use financial transaction registering devices and issue receipts.";
+$MESS["SC_CASHBOX_CHECKBOX_INSTRUCTION_ITEM1"] = "Register at <a target='_blank' href='https://my.checkbox.in.ua/'>my.checkbox.in.ua</a>";
+$MESS["SC_CASHBOX_CHECKBOX_INSTRUCTION_ITEM2"] = "Select one of the key signing methods: signing agent, HSM cloud storage or Ukey app.";
+$MESS["SC_CASHBOX_CHECKBOX_INSTRUCTION_ITEM3"] = "In the cash register settings, enter your login, password and key you obtained on Checkbox website.";
+$MESS["SC_CASHBOX_CHECKBOX_INSTRUCTION_METHODS"] = "Learn more about key signing methods.";
+$MESS["SC_CASHBOX_CHECKBOX_INSTRUCTION_TITLE"] = "Connection instructions";
+$MESS["SC_CASHBOX_CHECKBOX_LINK_CONNECT"] = "Why do I need a cash register, and how do I connect it?";
+$MESS["SC_CASHBOX_CHECKBOX_TITLE"] = "Checkbox";
+$MESS["SC_CASHBOX_CHECKBOX_UKTZED_WARNING"] = "Receipts for excisable products are currently not supported for Checkbox cash registers. Excisable product code will not be printed on the receipt.";
+$MESS["SC_CASHBOX_CONNECTION_INFORMATION"] = "Connection information";
 $MESS["SC_CASHBOX_DELETE_CONFIRM"] = "Are you sure you want to delete the cash register?";
 $MESS["SC_CASHBOX_INSTRUCTION_ITEM1"] = "Become an OFD data transmission contractor";
 $MESS["SC_CASHBOX_INSTRUCTION_ITEM2"] = "Rent an online cash register from a cloud service (ATOL, Orange Data)";
@@ -9,6 +19,7 @@ $MESS["SC_CASHBOX_INSTRUCTION_ITEM3"] = "Create a cash register on your site: se
 $MESS["SC_CASHBOX_INSTRUCTION_ITEM4"] = "Check the \"Enable receipt printing\" box in the payment system settings if receipts are required.";
 $MESS["SC_CASHBOX_INSTRUCTION_ITEM5"] = " ";
 $MESS["SC_CASHBOX_INSTRUCTION_TITLE"] = "Cash register setup guide";
+$MESS["SC_CASHBOX_LINK_CONNECT"] = "How to set up a cash register";
 $MESS["SC_CASHBOX_OFFLINE_DESCRIPTION_DESC1"] = "If you already have a physical cash register you use regularly, you can continue using it as usual. Your sales person will scan the receipt and send it to the customer.";
 $MESS["SC_CASHBOX_OFFLINE_DESCRIPTION_DESC2"] = "If you sell quite a lot, and scanning and sending receipts becomes a burden, you can always connect a cloud based cash register to complement your physical cash register.";
 $MESS["SC_CASHBOX_OFFLINE_DESCRIPTION_TITLE"] = "Physical cash register";
@@ -24,4 +35,3 @@ $MESS["SC_CASHBOX_OFFLINE_TITLE"] = "Using your physical cash register";
 $MESS["SC_CASHBOX_ORANGE_DESCRITION"] = "You have to use a cash register to receive payments using cash money or credit cards.";
 $MESS["SC_CASHBOX_ORANGE_TITLE"] = "Orange Data";
 $MESS["SC_MENU_TITLE"] = "Settings";
-?>

@@ -2,15 +2,16 @@
 
 namespace Bitrix\ImOpenLines;
 
-use \Bitrix\ImOpenLines\Model\ConfigTable,
-	\Bitrix\ImOpenlines\QuickAnswers\ListsDataManager;
-
 use \Bitrix\Main,
 	\Bitrix\Main\Loader,
 	\Bitrix\Main\ModuleManager,
 	\Bitrix\Main\Localization\Loc;
 
 use \Bitrix\Bitrix24\Feature;
+
+use \Bitrix\Imopenlines\Limit,
+	\Bitrix\ImOpenLines\Model\ConfigTable,
+	\Bitrix\ImOpenlines\QuickAnswers\ListsDataManager;
 
 Loc::loadMessages(__FILE__);
 
@@ -23,6 +24,7 @@ class Config
 
 	const CRM_CREATE_NONE = 'none';
 	const CRM_CREATE_LEAD = 'lead';
+	const CRM_CREATE_DEAL = 'deal';
 
 	const TYPE_MAX_CHAT_ANSWERED = 'answered';
 	const TYPE_MAX_CHAT_ANSWERED_NEW = 'answered_new';
@@ -52,7 +54,7 @@ class Config
 	const EVENT_IMOPENLINE_CREATE = 'OnImopenlineCreate';
 	const EVENT_IMOPENLINE_DELETE = 'OnImopenlineDelete';
 	const EVENT_IMOPENLINE_CHANGE_QUEUE_TYPE = 'OnImopenlineChangeQueueType';
-	const EVENT_AFTER_IMOPENLINE_ACTIVITY_CHANGE = 'OnAfterImopenlineActivityChange';
+	const EVENT_AFTER_IMOPENLINE_ACTIVE_CHANGE = 'OnAfterImopenlineActiveChange';
 
 	const CONFIG_CACHE_TIME = 86400;
 
@@ -70,7 +72,7 @@ class Config
 	{
 		$companyName = \Bitrix\Main\Config\Option::get("main", "site_name", "");
 
-		$fields = Array();
+		$fields = [];
 		if (isset($params['LINE_NAME']) && !empty($params['LINE_NAME']))
 		{
 			$fields['LINE_NAME'] = $params['LINE_NAME'];
@@ -110,11 +112,29 @@ class Config
 
 		if (isset($params['CRM_CREATE']))
 		{
-			$fields['CRM_CREATE'] = in_array($params['CRM_CREATE'], Array(self::CRM_CREATE_LEAD, self::CRM_CREATE_NONE))? $params['CRM_CREATE']: self::CRM_CREATE_LEAD;
+			$fields['CRM_CREATE'] = in_array($params['CRM_CREATE'], [self::CRM_CREATE_NONE, self::CRM_CREATE_LEAD, self::CRM_CREATE_DEAL])? $params['CRM_CREATE']: self::CRM_CREATE_LEAD;
 		}
 		else if ($mode == self::MODE_ADD)
 		{
 			$fields['CRM_CREATE'] = self::CRM_CREATE_LEAD;
+		}
+
+		if (isset($params['CRM_CREATE_SECOND']))
+		{
+			$fields['CRM_CREATE_SECOND'] = $params['CRM_CREATE_SECOND'];
+		}
+		else if ($mode == self::MODE_ADD)
+		{
+			$fields['CRM_CREATE_SECOND'] = '';
+		}
+
+		if (isset($params['CRM_CREATE_THIRD']))
+		{
+			$fields['CRM_CREATE_THIRD'] = $params['CRM_CREATE_THIRD'] === 'N'? 'N': 'Y';
+		}
+		else if ($mode == self::MODE_ADD)
+		{
+			$fields['CRM_CREATE_THIRD'] = 'Y';
 		}
 
 		if (isset($params['CRM_FORWARD']))
@@ -220,7 +240,7 @@ class Config
 
 		if (isset($params['LANGUAGE_ID']))
 		{
-			$fields['LANGUAGE_ID'] = substr($params['LANGUAGE_ID'], 0, 2);
+			$fields['LANGUAGE_ID'] = mb_substr($params['LANGUAGE_ID'], 0, 2);
 		}
 
 		if (isset($params['AGREEMENT_MESSAGE']))
@@ -397,6 +417,10 @@ class Config
 		{
 			$fields["WORKTIME_ENABLE"] = 'N';
 		}
+		if ($fields['WORKTIME_ENABLE'] == 'Y' && !\Bitrix\Imopenlines\Limit::canWorkHourSettings())
+		{
+			$fields['WORKTIME_ENABLE'] = 'N';
+		}
 
 		if (isset($params['WORKTIME_TIMEZONE']))
 		{
@@ -572,7 +596,7 @@ class Config
 
 		if (isset($params['VOTE_MESSAGE_1_TEXT']))
 		{
-			$fields['VOTE_MESSAGE_1_TEXT'] = substr($params['VOTE_MESSAGE_1_TEXT'], 0, 100);
+			$fields['VOTE_MESSAGE_1_TEXT'] = mb_substr($params['VOTE_MESSAGE_1_TEXT'], 0, 100);
 		}
 		else if ($mode == self::MODE_ADD)
 		{
@@ -580,7 +604,7 @@ class Config
 		}
 		if (isset($params['VOTE_MESSAGE_1_LIKE']))
 		{
-			$fields['VOTE_MESSAGE_1_LIKE'] = substr($params['VOTE_MESSAGE_1_LIKE'], 0, 100);
+			$fields['VOTE_MESSAGE_1_LIKE'] = mb_substr($params['VOTE_MESSAGE_1_LIKE'], 0, 100);
 		}
 		else if ($mode == self::MODE_ADD)
 		{
@@ -588,7 +612,7 @@ class Config
 		}
 		if (isset($params['VOTE_MESSAGE_1_DISLIKE']))
 		{
-			$fields['VOTE_MESSAGE_1_DISLIKE'] = substr($params['VOTE_MESSAGE_1_DISLIKE'], 0, 100);
+			$fields['VOTE_MESSAGE_1_DISLIKE'] = mb_substr($params['VOTE_MESSAGE_1_DISLIKE'], 0, 100);
 		}
 		else if ($mode == self::MODE_ADD)
 		{
@@ -877,7 +901,7 @@ class Config
 					'line' => $id,
 					'active' => $fields['ACTIVE']
 				];
-				$event = new Main\Event('imopenlines', self::EVENT_AFTER_IMOPENLINE_ACTIVITY_CHANGE, $eventData);
+				$event = new Main\Event('imopenlines', self::EVENT_AFTER_IMOPENLINE_ACTIVE_CHANGE, $eventData);
 				$event->send();
 			}
 
@@ -1148,14 +1172,24 @@ class Config
 			return self::canDoOperation($id, Security\Permissions::ENTITY_JOIN, Security\Permissions::ACTION_PERFORM);
 	}
 
-	public static function canVoteAsHead($id)
+	/**
+	 * @param $id
+	 * @param bool $checkLimit
+	 * @return bool|mixed
+	 */
+	public static function canVoteAsHead($id, $checkLimit = true)
 	{
-		if (!\Bitrix\Imopenlines\Limit::canUseVoteHead())
+		$result = false;
+
+		if (
+			$checkLimit === false ||
+			Limit::canUseVoteHead()
+		)
 		{
-			return false;
+			$result =  self::canDoOperation($id, Security\Permissions::ENTITY_VOTE_HEAD, Security\Permissions::ACTION_PERFORM);
 		}
 
-		return self::canDoOperation($id, Security\Permissions::ENTITY_VOTE_HEAD, Security\Permissions::ACTION_PERFORM);
+		return $result;
 	}
 
 	public function get($id, $withQueue = true, $showOffline = true)
@@ -1230,6 +1264,11 @@ class Config
 		if (!\Bitrix\Imopenlines\Limit::canUseVoteClient())
 		{
 			$config['VOTE_MESSAGE'] = 'N';
+		}
+
+		if (!\Bitrix\Imopenlines\Limit::canWorkHourSettings())
+		{
+			$config['WORKTIME_ENABLE'] = 'N';
 		}
 
 		return $config;

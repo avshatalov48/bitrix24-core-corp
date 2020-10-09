@@ -16,6 +16,8 @@ Page\Asset::getInstance()->addJs($templateFolder.'/js/tags-users-popup.js');
 Page\Asset::getInstance()->addJs($templateFolder.'/js/form-entity.js');
 Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/socialnetwork.blog.blog/templates/.default/style.css');
 
+\Bitrix\Main\UI\Extension::load("ui.icons.b24");
+
 if (!$arResult["Permissions"]['view'])
 {
 	?><div class="ui-alert ui-alert-danger">
@@ -126,16 +128,17 @@ if (
 				</div>
 			</div>
 
-			<div
-				class="intranet-user-profile-userpic
+			<div class="intranet-user-profile-userpic ui-icon ui-icon-common-user
 				<?if ($arResult["IsOwnProfile"] || $arResult["Permissions"]['edit']):?>
 					intranet-user-profile-userpic-edit
 				<?endif?>"
-				id="intranet-user-profile-photo"
-				<?if (isset($arResult["User"]["PHOTO"]) && !empty($arResult["User"]["PHOTO"])):?>
-					style="background-image: url('<?=\CHTTP::urnEncode($arResult["User"]["PHOTO"])?>'); background-size: cover"
-				<?endif?>
 			>
+				<i
+					id="intranet-user-profile-photo"
+					<?if (isset($arResult["User"]["PHOTO"]) && !empty($arResult["User"]["PHOTO"])):?>
+						style="background-image: url('<?=\CHTTP::urnEncode($arResult["User"]["PHOTO"])?>'); background-size: cover"
+					<?endif?>
+				></i>
 				<?if ($arResult["IsOwnProfile"] || $arResult["Permissions"]['edit']):?>
 				<div class="intranet-user-profile-userpic-load">
 					<div class="intranet-user-profile-userpic-create" id="intranet-user-profile-photo-camera"><?=Loc::getMessage("INTRANET_USER_PROFILE_AVATAR_CAMERA")?></div>
@@ -442,11 +445,11 @@ if (
 									<?if ($i > 4):?>style="display: none" data-role="user-profile-item"<?endif?>
 								>
 									<div
-										class="intranet-user-profile-user-avatar"
-										<?if (isset($subUser["PHOTO"]) && !empty($subUser["PHOTO"])): ?>
-											style="background-image: url('<?=\CHTTP::urnEncode($subUser["PHOTO"])?>'); background-size: cover"
-										<?endif?>
-									></div>
+										class="ui-icon ui-icon-common-user intranet-user-profile-user-avatar">
+										<i <?if (isset($subUser["PHOTO"]) && !empty($subUser["PHOTO"])): ?>
+											style="background-image: url('<?=\CHTTP::urnEncode($subUser["PHOTO"])?>');"
+										<?endif?>></i>
+									</div>
 									<div class="intranet-user-profile-user-container">
 										<div class="intranet-user-profile-user-name"><?=$subUser["FULL_NAME"]?></div>
 										<div class="intranet-user-profile-user-position"><?=$subUser["WORK_POSITION"]?></div>
@@ -480,11 +483,10 @@ if (
 							?>
 								<a class="intranet-user-profile-grid-item" href="<?=$manager["LINK"]?>">
 									<div href="<?=$manager["LINK"]?>"
-										class="intranet-user-profile-user-avatar"
-										<?if (isset($manager["PHOTO"]) && !empty($manager["PHOTO"])):?>
-											style="background-image: url('<?=\CHTTP::urnEncode($manager["PHOTO"])?>'); background-size: cover"
-										<?endif?>
-									>
+										class="ui-icon ui-icon-common-user intranet-user-profile-user-avatar">
+										<i <?if (isset($manager["PHOTO"]) && !empty($manager["PHOTO"])):?>
+											style="background-image: url('<?=\CHTTP::urnEncode($manager["PHOTO"])?>');"
+										<?endif?>></i>
 									</div>
 									<div class="intranet-user-profile-user-container">
 										<div class="intranet-user-profile-user-name"><?=$manager["FULL_NAME"]?></div>

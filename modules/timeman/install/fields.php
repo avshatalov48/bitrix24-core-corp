@@ -329,7 +329,7 @@ $rsLanguage = CLanguage::GetList($by, $order, array());
 while($arLanguage = $rsLanguage->Fetch())
 {
 	$lang_file = $_SERVER['DOCUMENT_ROOT'].(
-			isset($updater) && is_object($updater) && strtoupper(get_class($updater)) === 'CUPDATER'
+			isset($updater) && is_object($updater) && mb_strtoupper(get_class($updater)) === 'CUPDATER'
 			? $updater->curModulePath
 			: BX_ROOT.'/modules/timeman'
 		)
@@ -443,7 +443,7 @@ if (!$bSkipUpdateForm)
 		$value = unserialize($arRes['VALUE']);
 		if ($value['tabs'])
 		{
-			if (!strpos($value['tabs'], 'UF_TIMEMAN'))
+			if (!mb_strpos($value['tabs'], 'UF_TIMEMAN'))
 			{
 				$v = preg_split(
 					'/(--\s*'.$arForms[$arRes['NAME']].'\s*--#--[^-]*--,)/',

@@ -29,4 +29,5 @@ $MESS ['SOAP_ACTIVATION_METHOD'] = "ПолучитьПИН";
 $MESS ['PAYROLL'] = "Расчетный листок за #DATE#";
 $MESS ['TITLE_HOLIDAY'] = "Остаток отпуска";
 $MESS ['ERROR_RESP_MESSAGE'] = "Описание&nbsp;ошибки";
+$MESS["payroll_error_url"] = "Не указан параметр \"URL веб-сервиса\".";
 ?>

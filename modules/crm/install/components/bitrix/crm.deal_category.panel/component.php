@@ -75,7 +75,7 @@ foreach(DealCategory::getAll(true) as $item)
 	$isActive = $ID === $arResult['CATEGORY_ID'];
 	if($isActive)
 	{
-		$arResult['CATEGORY_NAME'] = isset($item['NAME']) ? $item['NAME'] : "[{$ID}]";
+		$arResult['CATEGORY_NAME'] = htmlspecialcharsbx(isset($item['NAME']) ? $item['NAME'] : "[{$ID}]");
 	}
 
 	$arResult['ITEMS'][] = array(

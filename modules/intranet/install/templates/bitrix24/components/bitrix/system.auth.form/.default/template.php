@@ -1,6 +1,8 @@
 <?
 use Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker;
 use \Bitrix\Intranet\Binding;
+use \Bitrix\ImBot\Bot\Partner24;
+\Bitrix\Main\UI\Extension::load("ui.icons.b24");
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -186,7 +188,10 @@ else
 </script>
 
 <div class="user-block" id="user-block" onclick="showUserMenu()">
-	<span class="user-img user-default-avatar" <?if ($arResult["USER_PERSONAL_PHOTO_SRC"]):?>style="background: url('<?=$arResult["USER_PERSONAL_PHOTO_SRC"]?>') no-repeat center; background-size: cover;"<?endif?>></span><span class="user-name" id="user-name"><?=$arResult["USER_NAME"]?></span>
+	<span class="ui-icon ui-icon-common-user user-img">
+		<i <?if ($arResult["USER_PERSONAL_PHOTO_SRC"]):?>style="background: url('<?=$arResult["USER_PERSONAL_PHOTO_SRC"]?>') no-repeat center; background-size: cover;"<?endif?>></i>
+	</span>
+	<span class="user-name" id="user-name"><?=$arResult["USER_NAME"]?></span>
 </div>
 
 <?
@@ -239,15 +244,23 @@ $frame = $this->createFrame("b24_helper")->begin("");
 	CJSCore::Init(array('helper'));
 
 	$helpUrl = $arResult["HELPDESK_URL"]."/widget2/";
-	$helpUrl = CHTTP::urlAddParams($helpUrl, array(
-			"url" => urlencode("https://".$_SERVER["HTTP_HOST"].$APPLICATION->GetCurPageParam()),
-			"is_admin" => $isAdmin,
-			"user_id" => $USER->GetID(),
-			"tariff" => COption::GetOptionString("main", "~controller_group_name", ""),
-			"is_cloud" => $bitrix24Included ? "1" : "0",
-			"support_bot" => $support_bot,
-		)
-	);
+	$helpUrlParameters = [
+		"url" => "https://".$_SERVER["HTTP_HOST"].$APPLICATION->GetCurPageParam(),
+		"is_admin" => $isAdmin,
+		"user_id" => $USER->GetID(),
+		"user_email" => $USER->GetEmail(),
+		"tariff" => COption::GetOptionString("main", "~controller_group_name", ""),
+		"is_cloud" => $bitrix24Included ? "1" : "0",
+		"support_bot" => $support_bot,
+	];
+	$imBotIncluded = \Bitrix\Main\Loader::includeModule('imbot');
+	if($imBotIncluded)
+	{
+		$helpUrlParameters['support_partner_code'] = Partner24::getBotCode();
+		$supportPartnerName = $APPLICATION->ConvertCharsetArray(Partner24::getPartnerName(), SITE_CHARSET, 'utf-8');
+		$helpUrlParameters['support_partner_name'] = $supportPartnerName;
+	}
+	$helpUrl = CHTTP::urlAddParams($helpUrl, $helpUrlParameters, ["encode" => true]);
 
 	$frameOpenUrl = CHTTP::urlAddParams($helpUrl, array(
 			"action" => "open",
@@ -263,7 +276,7 @@ $frame = $this->createFrame("b24_helper")->begin("");
 		"support_bot" => $support_bot,
 		"is_admin" => $isAdmin,
 		"user_id" => $USER->GetID(),
-		"user_email" => urlencode($USER->GetEmail()),
+		"user_email" => $USER->GetEmail(),
 		"tariff" => COption::GetOptionString("main", "~controller_group_name", ""),
 		"host" => $host,
 		"key" => $bitrix24Included ? CBitrix24::RequestSign($host.$USER->GetID()) : md5($host.$USER->GetID().'BX_USER_CHECK'),
@@ -271,10 +284,14 @@ $frame = $this->createFrame("b24_helper")->begin("");
 		"user_date_register" => $arResult["USER_DATE_REGISTER"],
 		"portal_date_register" => $bitrix24Included ? COption::GetOptionString("main", "~controller_date_create", "") : "",
 		"partner_link" => COption::GetOptionString("bitrix24", "partner_id", 0) ? 'Y' : 'N',
-		"counter_update_date" => $arResult["COUNTER_UPDATE_DATE"]
+		"counter_update_date" => $arResult["COUNTER_UPDATE_DATE"],
 	);
+	if($imBotIncluded)
+	{
+		$notifyData['support_partner_code'] = $helpUrlParameters['support_partner_code'];
+		$notifyData['support_partner_name'] = $helpUrlParameters['support_partner_name'];
+	}
 	?>
-
 	<script>
 		BX.message({
 			HELPER_LOADER: '<?=GetMessageJS('B24_HELP_LOADER')?>',

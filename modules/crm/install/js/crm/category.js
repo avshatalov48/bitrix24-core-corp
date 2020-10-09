@@ -224,7 +224,7 @@ if(typeof(BX.Crm.DealCategoryChanger) === "undefined")
 			var itemInfos = this.getFilteredCategories();
 			for(var i = 0, length = itemInfos.length; i < length; i++)
 			{
-				results.push({ id: itemInfos[i]["id"], text: itemInfos[i]["name"], onclick: callback });
+				results.push({ id: itemInfos[i]["id"], text: BX.Text.encode(itemInfos[i]["name"]), onclick: callback });
 			}
 
 			return results;

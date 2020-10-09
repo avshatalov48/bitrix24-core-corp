@@ -22,7 +22,7 @@ use Bitrix\Crm\UtmTable;
  */
 class Trace
 {
-	const DETECT_TIME_MINUTES = 5;
+	const DETECT_TIME_MINUTES = 10;
 	const FIND_ENTITIES_TIME_DAYS = 7;
 
 	protected $id;
@@ -44,7 +44,10 @@ class Trace
 	protected $ref;
 
 	/** @var bool Use detecting of Date Create. */
-	private $useDetectingOfDateCreate;
+	private $useDetectingOfDateCreate = false;
+
+	/** @var bool Use trace detecting. */
+	private $useTraceDetecting = true;
 
 	/** @var DateTime|null Date create. */
 	private $dateCreate;
@@ -438,6 +441,18 @@ class Trace
 	}
 
 	/**
+	 * Use trace detecting.
+	 *
+	 * @param bool $mode Mode.
+	 * @return $this
+	 */
+	public function useTraceDetecting($mode = true)
+	{
+		$this->useTraceDetecting = $mode;
+		return $this;
+	}
+
+	/**
 	 * Get ID.
 	 *
 	 * @return int|null
@@ -459,7 +474,7 @@ class Trace
 
 	protected function detect()
 	{
-		if ($this->loaded)
+		if ($this->loaded || !$this->useTraceDetecting)
 		{
 			return null;
 		}
@@ -577,6 +592,8 @@ class Trace
 				/** @var Crm\Entity\Identificator\Complex $entity */
 				self::appendEntity($this->id, $entity->getTypeId(), $entity->getId());
 			}
+
+			Source\Level\TraceSplitter::instance()->split($this);
 		}
 
 		return $this->id;

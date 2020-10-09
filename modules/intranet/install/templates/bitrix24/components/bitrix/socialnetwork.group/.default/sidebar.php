@@ -53,13 +53,10 @@ if ($_REQUEST['BLOCK_RELOAD'] != 'Y')
 				<div class="socialnetwork-group-title"><?=GetMessage($arResult['Group']['PROJECT'] == 'Y' ? "SONET_C6_OWNERN_PROJECT" : "SONET_C6_OWNERN")?></div>
 				<div class="socialnetwork-group-users-list">
 					<div class="socialnetwork-group-user socialnetwork-group-owner-user">
-						<a
-							class="socialnetwork-group-user-avatar user-default-avatar"
-							href="<?=htmlspecialcharsback($arResult["Owner"]["USER_PROFILE_URL"])?>"
-							<? if ($avatar):?>
+						<a class="ui-icon ui-icon-common-user socialnetwork-group-user-avatar user-default-avatar" href="<?=htmlspecialcharsback($arResult["Owner"]["USER_PROFILE_URL"])?>">
+							<i <? if ($avatar):?>
 								style="background: url('<?=$avatar?>'); background-size: cover"
-							<? endif ?>
-						>
+							<? endif ?>></i>
 						</a>
 						<div class="socialnetwork-group-user-info">
 							<div class="socialnetwork-group-user-name
@@ -341,14 +338,10 @@ if ($_REQUEST['BLOCK_RELOAD'] != 'Y')
 					<div
 						class="socialnetwork-group-user socialnetwork-group-member-user
 						<?=($friend["USER_IS_EXTRANET"] === "Y" ? "socialnetwork-group-extranet-user" : "")?>">
-						<a
-							href="<?=htmlspecialcharsback($friend["USER_PROFILE_URL"])?>"
-							class="socialnetwork-group-member-avatar user-default-avatar"
-							title="<?=$userName?>"
-							<? if ($avatar): ?>
+						<a href="<?=htmlspecialcharsback($friend["USER_PROFILE_URL"])?>" class="ui-icon ui-icon-common-user socialnetwork-group-member-avatar" title="<?=$userName?>">
+							<i <? if ($avatar): ?>
 								style="background: url('<?=$avatar?>'); background-size: cover"
-							<? endif ?>
-						>
+							<? endif ?>></i>
 						</a>
 					</div><?
 					endforeach;

@@ -4,7 +4,7 @@ namespace Bitrix\Intranet\Controller;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/templates/bitrix24/components/bitrix/search.title/.default/class.php");
+require_once __DIR__."/../../install/templates/bitrix24/components/bitrix/search.title/.default/class.php";
 
 class SearchEntity extends \Bitrix\Main\Engine\Controller
 {

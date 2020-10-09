@@ -2,11 +2,14 @@
 namespace Bitrix\Crm\Integrity;
 use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Main\Localization\Loc;
+
 class DuplicateOrganizationCriterion extends DuplicateCriterion
 {
 	private static $langIncluded = false;
 	protected $title = '';
 	protected static $typeRx = null;
+	private static $ignoredTitles = false;
 
 	public function __construct($title)
 	{
@@ -176,6 +179,11 @@ class DuplicateOrganizationCriterion extends DuplicateCriterion
 		}
 
 		if($title === '')
+		{
+			return;
+		}
+
+		if (in_array($title, static::getIgnoredTitles()))
 		{
 			return;
 		}
@@ -582,5 +590,23 @@ class DuplicateOrganizationCriterion extends DuplicateCriterion
 		{
 			self::$langIncluded = IncludeModuleLangFile(__FILE__);
 		}
+	}
+
+	/**
+	 * Titles which should be interpreted as empty
+	 * @return array
+	 */
+	private static function getIgnoredTitles(): array
+	{
+		if(!self::$ignoredTitles)
+		{
+			Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/crm/lib/webform/entity.php');
+
+			self::$ignoredTitles = [
+				self::prepareCode(Loc::getMessage('CRM_WEBFORM_ENTITY_FIELD_NAME_COMPANY_TEMPLATE')),
+				self::prepareCode(\CCrmCompany::GetDefaultTitle())
+			];
+		}
+		return self::$ignoredTitles;
 	}
 }

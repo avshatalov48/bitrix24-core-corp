@@ -146,6 +146,9 @@ Class tasks extends CModule
 		$eventManager->registerEventHandler('socialnetwork', 'onContentFinalizeView', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\ContentViewHandler', 'onContentFinalizeView');
 		$eventManager->registerEventHandler('socialnetwork', 'onLogIndexGetContent', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\Log', 'onIndexGetContent');
 		$eventManager->registerEventHandler('socialnetwork', 'onAfterLogFollowSet', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\Log', 'onAfterLogFollowSet');
+
+		//Scrum
+		$eventManager->registerEventHandler('socialnetwork', 'onSocNetGroupDelete', 'tasks', 'Bitrix\Tasks\Scrum\Internal\EntityTable', 'onSocNetGroupDelete');
 		$eventManager->registerEventHandler('socialnetwork', 'OnAfterSocNetLogCommentAdd', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\Log', 'onAfterSocNetLogCommentAdd');
 
 		$this->InstallTasks();
@@ -244,6 +247,8 @@ Class tasks extends CModule
 			static::deleteFileField('TASKS_TASK_TEMPLATE');
 			static::deleteMailField();
 
+			static::deleteScrumItemFileField();
+
 			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/db/".mb_strtolower($DB->type)."/uninstall.sql");
 		}
 
@@ -322,7 +327,6 @@ Class tasks extends CModule
 
 		$eventManager->unRegisterEventHandler('socialnetwork', 'onLogIndexGetContent', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\Log', 'onIndexGetContent');
 		$eventManager->unRegisterEventHandler('socialnetwork', 'onAfterLogFollowSet', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\Log', 'onAfterLogFollowSet');
-		$eventManager->unRegisterEventHandler('socialnetwork', 'OnAfterSocNetLogCommentAdd', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\Log', 'onAfterSocNetLogCommentAdd');
 
 		// kanban
 		$eventManager->unRegisterEventHandler('socialnetwork', 'onSocNetGroupDelete', 'tasks', '\Bitrix\Tasks\Kanban\StagesTable', 'onSocNetGroupDelete');
@@ -445,6 +449,8 @@ Class tasks extends CModule
 		static::createChecklistFileField('TASKS_TASK_CHECKLIST', $errors);
 		static::createChecklistFileField('TASKS_TASK_TEMPLATE_CHECKLIST', $errors);
 
+		static::createScrumItemFileField($errors);
+
 		return $errors;
 	}
 
@@ -509,6 +515,37 @@ Class tasks extends CModule
 		}
 	}
 
+	private static function createScrumItemFileField(array &$errors)
+	{
+		global $APPLICATION;
+
+		$userField = new CUserTypeEntity();
+		$userFieldRes = \CUserTypeEntity::getList([], [
+			'ENTITY_ID' => 'TASKS_SCRUM_ITEM',
+			'FIELD_NAME' => 'UF_SCRUM_ITEM_FILES'
+		]);
+
+		if (!$userFieldRes->Fetch())
+		{
+			$userFieldId = $userField->Add([
+				'ENTITY_ID' => 'TASKS_SCRUM_ITEM',
+				'FIELD_NAME' => 'UF_SCRUM_ITEM_FILES',
+				'USER_TYPE_ID' => 'disk_file',
+				'MULTIPLE' => 'Y',
+				'MANDATORY' => 'N',
+				'SHOW_FILTER' => 'N',
+				'SHOW_IN_LIST' => 'N',
+				'EDIT_IN_LIST' => 'N',
+				'IS_SEARCHABLE' => 'N',
+			], false);
+
+			if (!$userFieldId && $APPLICATION->getException())
+			{
+				$errors[] = $APPLICATION->getException()->getString();
+			}
+		}
+	}
+
 	private static function deleteFileField($entity)
 	{
 		$rsUserType = CUserTypeEntity::getList(
@@ -533,6 +570,23 @@ Class tasks extends CModule
 			array(
 				'ENTITY_ID'  => 'TASKS_TASK',
 				'FIELD_NAME' => 'UF_MAIL_MESSAGE',
+			)
+		)->fetch();
+
+		if ($userType)
+		{
+			$userField = new \CUserTypeEntity;
+			$userField->delete($userType['ID']);
+		}
+	}
+
+	private static function deleteScrumItemFileField()
+	{
+		$userType = \CUserTypeEntity::getList(
+			array(),
+			array(
+				'ENTITY_ID'  => 'TASKS_SCRUM_ITEM',
+				'FIELD_NAME' => 'UF_SCRUM_ITEM_FILES',
 			)
 		)->fetch();
 

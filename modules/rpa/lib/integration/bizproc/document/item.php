@@ -40,10 +40,25 @@ class Item implements \IBPWorkflowDocument
 			$bpType = self::resolveUserFieldType($userType['USER_TYPE_ID']);
 			if ($bpType && mb_strpos($bpType, 'UF:') === 0)
 			{
+				switch ($bpType)
+				{
+					case 'UF:money':
+						$typeClass = Bizproc\UserType\Money::class;
+						break;
+					case 'UF:iblock_element':
+						$typeClass = Bizproc\UserType\IblockElement::class;
+						break;
+					case 'UF:iblock_section':
+						$typeClass = Bizproc\UserType\IblockSection::class;
+						break;
+					default:
+						$typeClass = Bizproc\UserType\UserFieldBase::class;
+				}
+
 				$result[$bpType] = [
 					'Name' => $userType['DESCRIPTION'],
 					'BaseType' => $userType['BASE_TYPE'],
-					'typeClass' => Bizproc\UserType\UserFieldBase::class,
+					'typeClass' => $typeClass,
 				];
 			}
 		}
@@ -537,13 +552,24 @@ class Item implements \IBPWorkflowDocument
 			$options = [];
 			if (isset($data['ENUM']))
 			{
+				$map = [];
 				foreach ($data['ENUM'] as $enum)
 				{
 					$options[$enum['XML_ID']] = $enum['VALUE'];
+					$map[$enum['XML_ID']] = $enum['ID'];
 				}
+				$property['Settings']['ExternalValues'] = $map;
 				$property['Settings']['ENUM'] = $data['ENUM'];
 			}
 			$property['Options'] = $options;
+		}
+		elseif ($fieldType === 'bool')
+		{
+			$property['Settings']['ExternalValues'] = ['N' => 0, 'Y' => 1];
+		}
+		elseif ($fieldType === 'user')
+		{
+			$property['Settings']['ExternalExtract'] = true;
 		}
 
 		return $property;

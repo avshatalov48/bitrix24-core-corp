@@ -50,7 +50,7 @@ class TimemanSettingsPermissionsComponent extends \Bitrix\Timeman\Component\Base
 
 		while ($task = $tasks->fetch())
 		{
-			$name = Loc::getMessage('TASK_NAME_' . strtoupper($task['NAME'])) ?: $task['NAME'];
+			$name = Loc::getMessage('TASK_NAME_'.mb_strtoupper($task['NAME'])) ?: $task['NAME'];
 			$this->arResult['tasks'][] = [
 				'ID' => $task['ID'],
 				'NAME' => $name,

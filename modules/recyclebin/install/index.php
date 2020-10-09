@@ -142,7 +142,7 @@ class recyclebin extends CModule
 	function DoUninstall()
 	{
 		global $DB, $DOCUMENT_ROOT, $APPLICATION, $step;
-		$step = IntVal($step);
+		$step = intval($step);
 		if($step < 2)
 		{
 			$APPLICATION->IncludeAdminFile(GetMessage("RECYCLEBIN_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/recyclebin/install/unstep1.php");

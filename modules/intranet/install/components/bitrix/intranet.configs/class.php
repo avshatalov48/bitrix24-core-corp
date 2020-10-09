@@ -303,7 +303,7 @@ final class IntranetConfigsComponent extends CBitrixComponent
 
 		if ($_POST["rating_text_like_y"] <> '')
 			COption::SetOptionString("main", "rating_text_like_y", htmlspecialcharsbx($_POST["rating_text_like_y"]));
-		/*if (strlen($_POST["rating_text_like_n"])>0)
+		/*if ($_POST["rating_text_like_n"] <> '')
 			COption::SetOptionString("main", "rating_text_like_n", htmlspecialcharsbx($_POST["rating_text_like_n"]));*/
 
 		//date/time format, week start
@@ -718,7 +718,7 @@ final class IntranetConfigsComponent extends CBitrixComponent
 				$arIpSettings = array();
 				foreach ($_POST as $key => $arItem)
 				{
-					if (strpos($key, "ip_access_rights_") !== false)
+					if (mb_strpos($key, "ip_access_rights_") !== false)
 					{
 						$right = str_replace("ip_access_rights_", "", $key);
 						if (is_array($arItem))
@@ -728,7 +728,7 @@ final class IntranetConfigsComponent extends CBitrixComponent
 								$ip = trim($ip);
 								if ($ip)
 								{
-									if (strpos($ip, "-") !== false)
+									if (mb_strpos($ip, "-") !== false)
 									{
 										$ipRange = explode("-", $ip);
 										preg_match('#^(?:\d{1,3}\.){3}\d{1,3}$#', $ipRange[0], $matches1);
@@ -798,18 +798,33 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			{
 				\Bitrix\Main\Config\Option::set('bitrix24', 'google_map_api_key', $_POST['google_api_key']);
 				\Bitrix\Main\Config\Option::set('bitrix24', 'google_map_api_key_host', BX24_HOST_NAME);
+				\Bitrix\Main\Config\Option::set('location', 'google_map_api_key', $_POST['google_api_key']);
 			}
 			else
 			{
 				\Bitrix\Main\Config\Option::set('fileman', 'google_map_api_key', $_POST['google_api_key']);
 				\Bitrix\Main\Config\Option::set('location', 'google_map_api_key', $_POST['google_api_key']);
-
 			}
 		}
 
-		if($this->arResult['SHOW_GOOGLE_API_KEY_FIELD_BACKEND'])
+		if($this->arResult['SHOW_USE_GOOGLE_API'] && array_key_exists('google_api_key_backend', $_POST))
 		{
 			\Bitrix\Main\Config\Option::set('location', 'google_map_api_key_backend', $_POST['google_api_key_backend']);
+		}
+
+		if($this->arResult['SHOW_USE_GOOGLE_API'] && array_key_exists('use_google_api', $_POST))
+		{
+			\Bitrix\Main\Config\Option::set('location', 'use_google_api', $_POST['use_google_api']);
+		}
+
+		if($this->arResult['SHOW_USE_GOOGLE_API'] && array_key_exists('google_map_show_photos', $_POST))
+		{
+			\Bitrix\Main\Config\Option::set('location', 'google_map_show_photos', $_POST['google_map_show_photos']);
+		}
+
+		if($this->arResult['SHOW_USE_GOOGLE_API'] && array_key_exists('google_use_geocoding_service', $_POST))
+		{
+			\Bitrix\Main\Config\Option::set('location', 'google_use_geocoding_service', $_POST['google_use_geocoding_service']);
 		}
 
 		if(isset($_REQUEST['address_format_code']) && $this->arResult['SHOW_ADDRESS_FORMAT'])
@@ -917,7 +932,10 @@ final class IntranetConfigsComponent extends CBitrixComponent
 
 		$this->arResult["ERROR"] = "";
 		$this->arResult["IS_BITRIX24"] = IsModuleInstalled("bitrix24");
-		$this->arResult['SHOW_GOOGLE_API_KEY_FIELD_BACKEND'] = false;
+		$this->arResult['IS_LOCATION_MODULE_INCLUDED'] = Loader::includeModule('location');
+		$this->arResult['SHOW_ADDRESS_FORMAT'] = $this->arResult['IS_LOCATION_MODULE_INCLUDED'];
+		$this->arResult['GOOGLE_MAP_SHOW_PHOTOS'] = (\Bitrix\Main\Config\Option::get('location', 'google_map_show_photos', 'N') === 'Y');
+		$this->arResult['GOOGLE_USE_GEOCODING_SERVICE'] = (\Bitrix\Main\Config\Option::get('location', 'google_use_geocoding_service', 'N') === 'Y');
 
 		if (Loader::includeModule("bitrix24"))
 		{
@@ -925,7 +943,7 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			$this->arResult["LICENSE_PREFIX"] = CBitrix24::getLicensePrefix();
 			$this->arResult["IS_LICENSE_PAID"] = CBitrix24::IsLicensePaid();
 			$this->arResult['SHOW_GOOGLE_API_KEY_FIELD'] = \CBitrix24::isCustomDomain();
-
+			$this->arResult['SHOW_USE_GOOGLE_API'] = false;
 		}
 		elseif(
 			(Loader::includeModule('fileman') && class_exists('Bitrix\Fileman\UserField\Address'))
@@ -933,15 +951,9 @@ final class IntranetConfigsComponent extends CBitrixComponent
 		)
 		{
 			$this->arResult['SHOW_GOOGLE_API_KEY_FIELD'] = true;
-
-			if(IsModuleInstalled("location"))
-			{
-				$this->arResult['SHOW_GOOGLE_API_KEY_FIELD_BACKEND'] = true;
-			}
-
+			$this->arResult['SHOW_USE_GOOGLE_API'] = true;
+			$this->arResult['USE_GOOGLE_API'] = $this->arResult['IS_LOCATION_MODULE_INCLUDED'] && \Bitrix\Main\Config\Option::get('location', 'use_google_api', 'Y') === 'Y';
 		}
-
-		$this->arResult['SHOW_ADDRESS_FORMAT'] = Loader::includeModule('location');
 
 		$this->arResult["DATE_FORMATS"] = array("DD.MM.YYYY", "DD/MM/YYYY", "MM.DD.YYYY", "MM/DD/YYYY", "YYYY/MM/DD", "YYYY-MM-DD");
 		$this->arResult["TIME_FORMATS"] = array("HH:MI:SS", "H:MI:SS T");
@@ -1081,7 +1093,7 @@ final class IntranetConfigsComponent extends CBitrixComponent
 		if($this->arResult['SHOW_GOOGLE_API_KEY_FIELD'])
 		{
 			//todo: split up fileman and location keys?
-			if(Loader::includeModule('location'))
+			if($this->arResult['IS_LOCATION_MODULE_INCLUDED'])
 			{
 				$this->arResult['GOOGLE_API_KEY'] = \Bitrix\Location\Source\Google\GoogleSource::findApiKey();
 			}
@@ -1096,12 +1108,9 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			}
 		}
 
-		if($this->arResult['SHOW_GOOGLE_API_KEY_FIELD_BACKEND'])
+		if($this->arResult['IS_LOCATION_MODULE_INCLUDED'])
 		{
-			if(Loader::includeModule('location'))
-			{
-				$this->arResult['GOOGLE_API_KEY_BACK'] = \Bitrix\Location\Source\Google\GoogleSource::findApiKeyBackend();
-			}
+			$this->arResult['GOOGLE_API_KEY_BACK'] = \Bitrix\Location\Source\Google\GoogleSource::findApiKeyBackend();
 		}
 
 		if($this->arResult['SHOW_ADDRESS_FORMAT'])

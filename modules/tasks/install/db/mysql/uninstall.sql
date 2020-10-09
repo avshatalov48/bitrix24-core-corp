@@ -79,3 +79,7 @@ DROP TABLE IF EXISTS b_tasks_role_relation;
 DROP TABLE IF EXISTS b_tasks_permission;
 
 DROP TABLE IF EXISTS b_tasks_template_permission;
+
+DROP TABLE IF EXISTS b_tasks_scrum_entity;
+
+DROP TABLE IF EXISTS b_tasks_scrum_item;

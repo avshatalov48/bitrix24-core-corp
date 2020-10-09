@@ -4,16 +4,14 @@ this.BX.Crm.Deal = this.BX.Crm.Deal || {};
 (function (exports,main_core,main_popup) {
 	'use strict';
 
-	var Panel =
-	/*#__PURE__*/
-	function (_Event$EventEmitter) {
+	var Panel = /*#__PURE__*/function (_Event$EventEmitter) {
 	  babelHelpers.inherits(Panel, _Event$EventEmitter);
 	  babelHelpers.createClass(Panel, null, [{
 	    key: "createMenuItem",
 	    value: function createMenuItem(options) {
 	      var item = {
 	        id: options.ID,
-	        text: options.NAME,
+	        text: main_core.Text.encode(options.NAME),
 	        href: options.URL
 	      };
 	      var count = Number.parseInt(options.COUNTER, 10);

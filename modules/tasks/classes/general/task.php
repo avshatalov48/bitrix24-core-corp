@@ -1376,7 +1376,7 @@ class CTasks
 						}
 
 						// drop access static cache
-						\Bitrix\Tasks\Access\TaskAccessController::getInstance($userID)->dropItemCache((int) $ID);
+						\Bitrix\Tasks\Access\TaskAccessController::dropItemCache((int) $ID);
 
 						// backward compatibility with PARENT_ID
 						if (array_key_exists('PARENT_ID', $arFields))
@@ -4784,9 +4784,9 @@ class CTasks
 	{
 		$relatedJoins = [];
 
-		$userId = ($params['USER_ID']?: User::getId());
+		$userId = ($params['USER_ID'] ? (int) $params['USER_ID']: User::getId());
 		$viewedBy = ($params['VIEWED_BY']?: $userId);
-		$sortingGroupId = $params['SORTING_GROUP_ID'];
+		$sortingGroupId = (int) $params['SORTING_GROUP_ID'];
 		$joinAlias = ($params['JOIN_ALIAS']?: "");
 		$sourceAlias = ($params['SOURCE_ALIAS']?: "T");
 
@@ -5719,6 +5719,14 @@ class CTasks
 		return $provider->getCount($arFilter, $arParams, $arGroupBy);
 	}
 
+	/**
+	 * @param $sql
+	 * @param $arParams
+	 * @return string
+	 *
+	 *
+	 * @deprecated since tasks 20.6.0
+	 */
 	public static function appendJoinRights($sql, $arParams)
 	{
 		$arParams['THIS_TABLE_ALIAS'] = 'T';
@@ -7281,7 +7289,6 @@ class CTasks
 
 		return (array_unique($arGroups));
 	}
-
 
 	/**
 	 * Convert every given string in array from BB-code to HTML

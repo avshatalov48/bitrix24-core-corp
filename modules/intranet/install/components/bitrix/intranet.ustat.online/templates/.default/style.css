@@ -107,6 +107,11 @@
 	overflow: hidden;
 }
 
+.bx-ie .intranet-ustat-online-icon.ui-icon,
+.bx-ie .intranet-ustat-online-icon.ui-icon-md {
+	width: 26px;
+}
+
 .intranet-ustat-online-icon:first-child {
 	animation: none;
 	opacity: 1;

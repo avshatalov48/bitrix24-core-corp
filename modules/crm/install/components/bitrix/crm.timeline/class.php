@@ -1,6 +1,7 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Crm\Activity\Provider\Zoom;
 use Bitrix\Main;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Type\DateTime;
@@ -136,6 +137,22 @@ class CCrmTimelineComponent extends CBitrixComponent
 			mb_strtolower($this->guid),
 			array()
 		);
+
+		if (!Zoom::isAvailable())
+		{
+			$this->arResult['ENABLE_ZOOM'] = false;
+			$this->arResult['STATUS_ZOOM'] = false;
+		}
+		elseif (!Zoom::isConnected())
+		{
+			$this->arResult['ENABLE_ZOOM'] = true;
+			$this->arResult['STATUS_ZOOM'] = false;
+		}
+		else
+		{
+			$this->arResult['ENABLE_ZOOM'] = true;
+			$this->arResult['STATUS_ZOOM'] = true;
+		}
 
 		if(!Crm\Integration\SmsManager::canUse())
 		{
@@ -352,7 +369,8 @@ class CCrmTimelineComponent extends CBitrixComponent
 						Crm\Filter\TimelineEntryCategory::ACTIVITY_MEETING,
 						Crm\Filter\TimelineEntryCategory::ACTIVITY_EMAIL,
 						Crm\Filter\TimelineEntryCategory::WEB_FORM,
-						Crm\Filter\TimelineEntryCategory::CHAT
+						Crm\Filter\TimelineEntryCategory::CHAT,
+						Crm\Filter\TimelineEntryCategory::ACTIVITY_ZOOM,
 					)
 				)
 			),
@@ -463,7 +481,7 @@ class CCrmTimelineComponent extends CBitrixComponent
 				'ID', 'OWNER_ID', 'OWNER_TYPE_ID',
 				'TYPE_ID', 'PROVIDER_ID', 'PROVIDER_TYPE_ID', 'ASSOCIATED_ENTITY_ID', 'DIRECTION',
 				'SUBJECT', 'STATUS', 'DESCRIPTION', 'DESCRIPTION_TYPE',
-				'DEADLINE', 'RESPONSIBLE_ID', 'SETTINGS'
+				'DEADLINE', 'RESPONSIBLE_ID', 'PROVIDER_PARAMS', 'SETTINGS'
 			),
 			array('QUERY_OPTIONS' => array('LIMIT' => 100, 'OFFSET' => 0))
 		);

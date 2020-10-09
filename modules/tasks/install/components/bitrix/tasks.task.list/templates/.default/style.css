@@ -217,3 +217,28 @@
 
 .main-grid-row-custom td:before { top: -1px }
 .main-grid-row-custom td:after 	{ bottom: -1px }
+
+
+.tasks-list-row-count-wrapper a {
+	cursor: pointer;
+}
+.tasks-circle-loader-circular {
+	height: 12px;
+	width: 12px;
+	-webkit-animation: rotate 1s linear infinite;
+	animation: rotate 1s linear infinite;
+	-webkit-transform-origin: center center;
+	transform-origin: center center;
+}
+.tasks-list-row-count-wrapper .tasks-circle-loader-circular {
+	display: none;
+}
+
+.tasks-circle-loader-path {
+	stroke: #868d95;
+	stroke-width: 7px;
+	stroke-dasharray: 60, 200;
+	stroke-dashoffset: 0;
+	animation: dash 1.5s ease-in-out infinite;
+	stroke-linecap: round;
+}

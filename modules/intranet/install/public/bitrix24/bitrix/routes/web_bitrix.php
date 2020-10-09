@@ -167,7 +167,7 @@ return function (RoutingConfigurator $routes) {
 	$routes->any('/marketplace/app/{any}', new PublicPageController('/marketplace/app/index.php'))
 		->where('any', '.*');
 
-	$routes->any('/marketplace/view/{APP}/{any}', new PublicPageController('/marketplace/app/index.php'))
+	$routes->any('/marketplace/view/{APP}/{any}', new PublicPageController('/marketplace/view/index.php'))
 		->where('APP', '[a-zA-Z0-9\\.\\_]+')
 		->where('any', '.*');
 

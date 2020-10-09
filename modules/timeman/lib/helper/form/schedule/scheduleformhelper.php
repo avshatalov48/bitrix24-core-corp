@@ -162,7 +162,7 @@ class ScheduleFormHelper
 			$signMap = $this->buildSignMapBySchedule($schedule);
 			foreach ($checkingCodesMap as $codeToCheck => $codeIncluded)
 			{
-				if (substr($signMap[$codeToCheck], 0, 8) === 'included' && substr($codeIncluded, 0, 8) === 'included')
+				if (mb_substr($signMap[$codeToCheck], 0, 8) === 'included' && mb_substr($codeIncluded, 0, 8) === 'included')
 				{
 					$result[$codeToCheck][$schedule->getId()] = $schedule;
 				}

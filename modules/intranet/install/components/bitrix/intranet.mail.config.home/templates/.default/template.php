@@ -1587,9 +1587,7 @@ if ($showDomainBlock)
 											<span class="post-dialog-inp-select-wrap">
 												<select name="encryption" class="post-dialog-inp-select">
 													<option value="Y"<? if ($arParams['MAILBOX']['USE_TLS'] == 'Y'): ?> selected="selected"<? endif ?>><?=getMessage('INTR_MAIL_INP_ENCRYPT_YES') ?></option>
-													<? if (PHP_VERSION_ID >= 50600): ?>
-														<option value="S"<? if ($arParams['MAILBOX']['USE_TLS'] == 'S'): ?> selected="selected"<? endif ?>><?=getMessage('INTR_MAIL_INP_ENCRYPT_SKIP') ?></option>
-													<? endif ?>
+                                                    <option value="S"<? if ($arParams['MAILBOX']['USE_TLS'] == 'S'): ?> selected="selected"<? endif ?>><?=getMessage('INTR_MAIL_INP_ENCRYPT_SKIP') ?></option>
 													<option value="N"<? if (!in_array($arParams['MAILBOX']['USE_TLS'], array('Y', 'S'))): ?> selected="selected"<? endif ?>><?=getMessage('INTR_MAIL_INP_ENCRYPT_NO') ?></option>
 												</select>
 											</span>
@@ -1700,9 +1698,7 @@ if ($showDomainBlock)
 											<span class="post-dialog-inp-select-wrap">
 												<select name="encryption" class="post-dialog-inp-select">
 													<option value="Y" selected="selected"><?=getMessage('INTR_MAIL_INP_ENCRYPT_YES') ?></option>
-													<? if (PHP_VERSION_ID >= 50600): ?>
-														<option value="S"><?=getMessage('INTR_MAIL_INP_ENCRYPT_SKIP') ?></option>
-													<? endif ?>
+                                                    <option value="S"><?=getMessage('INTR_MAIL_INP_ENCRYPT_SKIP') ?></option>
 													<option value="N"><?=getMessage('INTR_MAIL_INP_ENCRYPT_NO') ?></option>
 												</select>
 											</span>

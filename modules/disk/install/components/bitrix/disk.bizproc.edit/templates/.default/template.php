@@ -180,8 +180,19 @@ function BCPSaveTemplate(save)
 
 function BCPShowParams()
 {
+	<?php
+	$u = "/bitrix/admin/".$arResult['MODULE_ID']."_bizproc_wf_settings.php?mode=public&bxpublic=Y&lang="
+		.LANGUAGE_ID."&entity=".$arResult['ENTITY'];
+
+	if (isset($arResult['DOCUMENT_TYPE_SIGNED']))
+	{
+		$dts = $arResult['DOCUMENT_TYPE_SIGNED'];
+		$u = "/bitrix/tools/bizproc_wf_settings.php?mode=public&bxpublic=Y&lang=".LANGUAGE_ID."&dts=".$dts;
+	}
+	?>
+
 	(new BX.CAdminDialog({
-	'content_url': "/bitrix/admin/<?=$arResult['MODULE_ID']?>_bizproc_wf_settings.php?mode=public&bxpublic=Y&lang=<?=LANGUAGE_ID?>&entity=<?=$arResult['ENTITY']?>",
+	'content_url': '<?=CUtil::JSEscape($u)?>',
 	'content_post': 'workflowTemplateName=' 		+ encodeURIComponent(workflowTemplateName) + '&' +
 			'workflowTemplateDescription=' 	+ encodeURIComponent(workflowTemplateDescription) + '&' +
 			'workflowTemplateAutostart=' 	+ encodeURIComponent(workflowTemplateAutostart) + '&' +
@@ -239,13 +250,26 @@ td.statdel, td.statset {width:20px; height: 10px; cursor: pointer; margin-top: 7
 td.statdel {background: url(/bitrix/images/bizproc/stat_del.gif) 50% center no-repeat;}
 td.statset {background: url(/bitrix/images/bizproc/stat_sett.gif) 50% center no-repeat;}
 
-.activity {}
+.activity {
+	position: relative;
+}
+.activity-modern {
+	border: 2px #bebabb solid;
+	border-radius: 3px;
+}
+.activity .activity-comment {
+	position: absolute;
+	top: -5px;
+	right: -24px;
+}
 .activity .activityhead {background: url(/bitrix/images/bizproc/act_h.gif) left top repeat-x; height: 17px; overflow-y: hidden; background-color: #fec260;}
+.activity.activity-modern .activityhead {background-image: none; background-color: #f9cf82; padding-bottom: 1px}
 .activity .activityheadr {background: url(/bitrix/images/bizproc/act_hr.gif) right top no-repeat;}
 .activity .activityheadl {background: url(/bitrix/images/bizproc/act_hl.gif) left top no-repeat; height:17px; padding-left: 3px;}
 
 .activityerr {}
 .activityerr .activityhead {background: url(/bitrix/images/bizproc/err_act_h.gif) left top repeat-x; height: 17px; overflow-y: hidden; background-color: #ffb3b3;}
+.activityerr.activity-modern .activityhead {background-image: none; background-color: #ffb3b3;}
 .activityerr .activityheadr {background: url(/bitrix/images/bizproc/err_act_hr.gif) right top no-repeat;}
 .activityerr .activityheadl {background: url(/bitrix/images/bizproc/err_act_hl.gif) left top no-repeat; height:17px; padding-left: 3px;}
 
@@ -303,6 +327,9 @@ var workflowTemplateDescription = <?=CUtil::PhpToJSObject($arResult['TEMPLATE_DE
 var workflowTemplateAutostart = <?=CUtil::PhpToJSObject($arResult['TEMPLATE_AUTOSTART'])?>;
 
 var document_type = <?=CUtil::PhpToJSObject($arResult['DOCUMENT_TYPE'])?>;
+<?if (isset($arResult['DOCUMENT_TYPE_SIGNED'])):?>
+var document_type_signed = '<?=CUtil::JSEscape($arResult['DOCUMENT_TYPE_SIGNED'])?>';
+<?endif?>
 var MODULE_ID = <?=CUtil::PhpToJSObject($arResult['MODULE_ID'])?>;
 var ENTITY = <?=CUtil::PhpToJSObject($arResult['ENTITY'])?>;
 var BPMESS = <?=CUtil::PhpToJSObject($JSMESS)?>;

@@ -46,7 +46,12 @@ class Call extends Base implements Features\TraceDetectable
 	 */
 	public function isSupportTraceDetecting()
 	{
-		$phones = array_column(Tracking\Provider::getReadySources(), 'PHONE');
+		$phones = [];
+		foreach (Tracking\Provider::getReadySources() as $source)
+		{
+			$phones = array_merge($phones, $source['PHONE'] ?? []);
+		}
+
 		return in_array($this->getValue(), $phones);
 	}
 }

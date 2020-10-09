@@ -82,7 +82,11 @@ Extension::load([
 									<hr class="ui-hr" style="margin-bottom: 15px;">
 									<div class="ui-text-2" style="margin-bottom: 20px;"><?=Loc::getMessage($arResult['handlerDescription']['description'])?></div>
 									<div class="salescenter-button-container">
+										<?php if (mb_strtolower($arResult['handler']) === mb_strtolower('\Bitrix\Sale\Cashbox\CashboxCheckbox')): ?>
+										<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigCheckboxCashBox(event);"><?=Loc::getMessage('SC_CASHBOX_LINK_CONNECT')?></a>
+										<?php else:?>
 										<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigCashBox(event);"><?=Loc::getMessage('SC_CASHBOX_LINK_CONNECT')?></a>
+										<?php endif; ?>
 									</div>
 								</div>
 							</div>

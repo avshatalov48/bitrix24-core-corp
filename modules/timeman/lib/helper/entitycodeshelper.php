@@ -10,7 +10,7 @@ class EntityCodesHelper
 		{
 			if (preg_match('#U[0-9]+#', $entityCode) === 1)
 			{
-				$userIds[] = (int)substr($entityCode, 1);
+				$userIds[] = (int)mb_substr($entityCode, 1);
 			}
 		}
 		return $userIds;
@@ -23,7 +23,7 @@ class EntityCodesHelper
 		{
 			if (preg_match('#DR[0-9]+#', $entityCode) === 1)
 			{
-				$ids[] = (int)substr($entityCode, 2);
+				$ids[] = (int)mb_substr($entityCode, 2);
 			}
 		}
 		return $ids;

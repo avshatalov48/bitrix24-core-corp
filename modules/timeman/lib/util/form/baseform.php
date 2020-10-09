@@ -14,11 +14,11 @@ class BaseForm
 	 */
 	public function getFormName()
 	{
-		if (stripos(static::class, '\\') === false)
+		if (mb_stripos(static::class, '\\') === false)
 		{
 			return static::class;
 		}
-		return substr(strrchr(static::class, '\\'), 1);
+		return mb_substr(strrchr(static::class, '\\'), 1);
 	}
 
 	/**

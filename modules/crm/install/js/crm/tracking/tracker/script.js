@@ -701,25 +701,32 @@
 				return;
 			}
 
-			if (!webPacker.browser.isMobile())
+			if (webPacker.browser.isMobile())
 			{
-				return;
+				var items = Manager.Instance.getElementEngine().search();
+				items.filter(function (item) {
+					return item.values[0].type === 'phone';
+				}).forEach(function (item) {
+					if (!item.node || item.node.isTrackingHandled)
+					{
+						return;
+					}
+
+					webPacker.addEventListener(item.node, 'click', this.storeTrace.bind(this, item.values[0].value));
+					item.node.isTrackingHandled = true;
+				}, this);
 			}
 
-			var items = Manager.Instance.getElementEngine().search();
-			items.filter(function (item) {
-				return item.values[0].type === 'phone';
-			}).forEach(function (item) {
-				if (!item.node || item.node.isTrackingHandled)
+			if (Manager.Instance.source && window.b24Tracker.guest.isUtmSourceDetected())
+			{
+				var source = Manager.Instance.source;
+				if (source.replacement.phone[0])
 				{
-					return;
+					this.storeTrace(source.replacement.phone[0], true);
 				}
-
-				webPacker.addEventListener(item.node, 'click', this.onClick.bind(this, item.values[0].value));
-				item.node.isTrackingHandled = true;
-			}, this);
+			}
 		},
-		onClick: function (value)
+		storeTrace: function (value, skipMarking)
 		{
 			if (this.tracked.indexOf(value) >= 0)
 			{
@@ -730,7 +737,10 @@
 				channels: [{code: 'call', value: value}]
 			});
 			window.b24Tracker.guest.storeTrace(trace);
-			this.tracked.push(value);
+			if (!skipMarking)
+			{
+				this.tracked.push(value);
+			}
 		}
 	};
 

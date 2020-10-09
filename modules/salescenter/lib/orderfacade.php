@@ -12,7 +12,7 @@ class OrderFacade
 {
 	private $errorCollection;
 
-	private $fields = [];
+	private $fields;
 
 	public function __construct()
 	{
@@ -20,9 +20,19 @@ class OrderFacade
 
 		$this->fields = [
 			'SITE_ID' => SITE_ID,
-			'SHIPMENT' => [],
 			'PRODUCT' => [],
 		];
+
+		$deliveryId = Integration\SaleManager::getInstance()->getEmptyDeliveryServiceId();
+		if ($deliveryId > 0)
+		{
+			$this->fields['SHIPMENT'] = [
+				[
+					'DELIVERY_ID' => $deliveryId,
+					'ALLOW_DELIVERY' => 'Y',
+				]
+			];
+		}
 	}
 
 	public function setResponsibleId($responsibleId)

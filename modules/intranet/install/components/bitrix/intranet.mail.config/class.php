@@ -154,7 +154,7 @@ class CIntranetMailConfigComponent extends CBitrixComponent
 		{
 			$response = \CControllerClient::executeEvent('OnMailControllerGetDomains', array());
 			$domains = !empty($response['result']) && is_array($response['result'])
-				? array_map('strtolower', $response['result'])
+				? array_map('mb_strtolower', $response['result'])
 				: array();
 		}
 

@@ -57,12 +57,7 @@ $arParams['EMAIL_NOTIFY_IMMEDIATELY'] = $arParams['EMAIL_NOTIFY_IMMEDIATELY'] ==
 
 $start_time = time();
 
-if (function_exists("file_get_contents"))
-	$DATA = file_get_contents("php://input");
-elseif (isset($GLOBALS["HTTP_RAW_POST_DATA"]))
-	$DATA = &$GLOBALS["HTTP_RAW_POST_DATA"];
-else
-	$DATA = false;
+$DATA = file_get_contents("php://input");
 
 $bUSER_HAVE_ACCESS = false;
 if(isset($GLOBALS["USER"]) && is_object($GLOBALS["USER"]))

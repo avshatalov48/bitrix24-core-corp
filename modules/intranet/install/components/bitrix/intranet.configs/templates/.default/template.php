@@ -1060,11 +1060,35 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 				<input class="content-edit-form-field-input-text" name="google_api_key" value="<?=\Bitrix\Main\Text\HtmlFilter::encode($arResult['GOOGLE_API_KEY'])?>">
 			</td>
 		</tr>
-		<?if($arResult['SHOW_GOOGLE_API_KEY_FIELD_BACKEND']):?>
+		<?if($arResult['SHOW_USE_GOOGLE_API']):?>
 			<tr>
+				<td class="content-edit-form-field-name" style="width:370px; padding-right:30px"><?=GetMessage('CONFIG_LOCATION_USE_GOOGLE_API')?></td>
+				<td class="content-edit-form-field-input" colspan="2">
+					<input type="hidden" name="use_google_api" value="N">
+					<input type="checkbox" name="use_google_api" id="use_google_api_cb" value="Y"<?=($arResult['USE_GOOGLE_API'] ? ' checked' : '')?>>
+				</td>
+			</tr>
+			<tr>
+				<td class="content-edit-form-field-name" style="width:370px; padding-right:30px">
+					<?=GetMessage('CONFIG_LOCATION_GOOGLE_SHOW_PLACE_PHOTOS')?>
+				</td>
+				<td class="content-edit-form-field-input" colspan="2">
+					<input type="hidden" name="google_map_show_photos" value="N">
+					<input type="checkbox" name="google_map_show_photos" value="Y"<?=($arResult['GOOGLE_MAP_SHOW_PHOTOS'] ? ' checked' : '')?>>
+				</td>
+			</tr>
+			<tr>
+				<td class="content-edit-form-field-name" style="width:370px; padding-right:30px">
+					<?=GetMessage('CONFIG_LOCATION_GOOGLE_USE_GEOCODING_SERVICE')?>
+				</td>
+				<td class="content-edit-form-field-input" colspan="2">
+					<input type="hidden" name="google_use_geocoding_service" value="N">
+					<input type="checkbox" name="google_use_geocoding_service" value="Y"<?=($arResult['GOOGLE_USE_GEOCODING_SERVICE'] ? ' checked' : '')?>>
+				</td>
+			</tr>
+			<tr id="google_api_key_backend_row"<?=$arResult['USE_GOOGLE_API'] ? '' : ' style="display:none;"'?>>
 				<td class="content-edit-form-field-name" style="width:370px; padding-right:30px"><?=GetMessage('CONFIG_NAME_GOOGLE_API_KEY_FIELD_BACKEND')?></td>
 				<td class="content-edit-form-field-input" colspan="2">
-					<a name="google_api_key_backend"></a>
 					<input class="content-edit-form-field-input-text" name="google_api_key_backend" value="<?=\Bitrix\Main\Text\HtmlFilter::encode($arResult['GOOGLE_API_KEY_BACK'])?>">
 				</td>
 			</tr>

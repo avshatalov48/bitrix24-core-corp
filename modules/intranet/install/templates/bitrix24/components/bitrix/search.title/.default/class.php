@@ -151,7 +151,7 @@ final class CB24SearchTitle
 /*
 		if ($searchByEmail)
 		{
-			$selectFields[] = new \Bitrix\Main\Entity\ExpressionField('EMAIL_OK', 'CASE WHEN UPPER(%s) = "'.$DB->ForSql(strtoupper(str_replace('%', '%%', $searchStringOriginal))).'" THEN 1 ELSE 0 END', 'EMAIL');
+			$selectFields[] = new \Bitrix\Main\Entity\ExpressionField('EMAIL_OK', 'CASE WHEN UPPER(%s) = "'.$DB->ForSql(mb_strtoupper(str_replace('%', '%%', $searchStringOriginal))).'" THEN 1 ELSE 0 END', 'EMAIL');
 		}
 */
 

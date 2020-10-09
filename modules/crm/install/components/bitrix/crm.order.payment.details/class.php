@@ -293,7 +293,7 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 		if($this->entityID > 0)
 		{
 			$licensePrefix = Main\Loader::IncludeModule("bitrix24") ? \CBitrix24::getLicensePrefix() : "";
-			if (!Main\ModuleManager::isModuleInstalled("bitrix24") || in_array($licensePrefix, array("ru")))
+			if (!Main\ModuleManager::isModuleInstalled("bitrix24") || in_array($licensePrefix, array("ru", "ua")))
 			{
 				$this->arResult['TABS'][] = array(
 					'id' => 'tab_check',
@@ -424,7 +424,7 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 				}
 			}
 
-			if ($order)
+			if (!$order)
 			{
 				$this->addError(self::COMPONENT_ERROR_EMPTY_ORDER_ID);
 				$this->showErrors();

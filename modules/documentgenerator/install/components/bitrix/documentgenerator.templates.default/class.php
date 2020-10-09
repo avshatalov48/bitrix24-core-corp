@@ -141,21 +141,21 @@ class DocumentsDefaultTemplatesComponent extends CBitrixComponent
 			{
 				if(isset($template['ID']) && $template['ID'] > 0)
 				{
-					$install = '<a class="docs-template-link-action" onclick="BX.DocumentGenerator.TemplatesDefault.reinstall(\''.$template['CODE'].'\', \''.$template['NAME'].'\', this);">'.Loc::getMessage('DOCGEN_TEMPLATES_DEFAULT_REINSTALL').'</a>';
+					$install = '<a class="docs-template-link-action" onclick="BX.DocumentGenerator.TemplatesDefault.reinstall(\''.htmlspecialcharsbx(CUtil::JSEscape($template['CODE'])).'\', \''.htmlspecialcharsbx(CUtil::JSEscape($template['NAME'])).'\', this);">'.Loc::getMessage('DOCGEN_TEMPLATES_DEFAULT_REINSTALL').'</a>';
 				}
 				else
 				{
-					$install = '<a class="docs-template-link-action" onclick="BX.DocumentGenerator.TemplatesDefault.install(\''.$template['CODE'].'\', \''.$template['NAME'].'\', this);">'.Loc::getMessage('DOCGEN_TEMPLATES_DEFAULT_INSTALL').'</a>';
+					$install = '<a class="docs-template-link-action" onclick="BX.DocumentGenerator.TemplatesDefault.install(\''.htmlspecialcharsbx(CUtil::JSEscape($template['CODE'])).'\', \''.htmlspecialcharsbx(CUtil::JSEscape($template['NAME'])).'\', this);">'.Loc::getMessage('DOCGEN_TEMPLATES_DEFAULT_INSTALL').'</a>';
 				}
 
 				$grid['ROWS'][] = [
-					'id' => $template['CODE'],
+					'id' => htmlspecialcharsbx($template['CODE']),
 					'data' => $template,
 					'columns' => [
-						'NAME' => $template['NAME'],
-						'PROVIDERS' => implode(', ', $template['PROVIDER_NAMES']),
-						'REGION' => $this->getRegions()[$template['REGION']]['NAME'],
-						'SORT' => $template['SORT'],
+						'NAME' => htmlspecialcharsbx($template['NAME']),
+						'PROVIDERS' => htmlspecialcharsbx(implode(', ', $template['PROVIDER_NAMES'])),
+						'REGION' => htmlspecialcharsbx($this->getRegions()[$template['REGION']]['NAME']),
+						'SORT' => (int)$template['SORT'],
 						'INSTALL' => $install,
 					],
 				];

@@ -235,16 +235,10 @@ $groupPopupExists = false;
 			</div>
 
 			<?
-			$showInviteButton = CModule::IncludeModule("bitrix24") && CBitrix24::isInvitingUsersAllowed();
-			if ($showInviteButton && CModule::IncludeModule("intranet")):?>
-				<div class="menu-invite-employees" onclick="<?=CIntranetInviteDialog::ShowInviteDialogLink()?>">
-					<span class="menu-invite-icon-box">
-						<span class="menu-invite-icon"></span>
-					</span>
-					<span
-						class="menu-invite-employees-text"
-						onclick="<?=CIntranetInviteDialog::ShowInviteDialogLink()?>"
-					><?=Loc::getMessage("BITRIX24_INVITE_ACTION")?></span>
+			if (CModule::IncludeModule("bitrix24") && CBitrix24::isInvitingUsersAllowed()):?>
+				<div class="menu-invite-employees" onclick="<?=CIntranetInviteDialog::showInviteDialogLink()?>">
+					<span class="menu-invite-icon-box"><span class="menu-invite-icon"></span></span>
+					<span class="menu-invite-employees-text"><?=Loc::getMessage("BITRIX24_INVITE_ACTION")?></span>
 				</div>
 			<? endif ?>
 
@@ -477,7 +471,7 @@ $filter = CUserOptions::GetOption("intranet", "left_menu_group_filter_".SITE_ID,
 			$className = "group-panel-item";
 			$className .= $group["EXTRANET"] ? " group-panel-item-extranet" : " group-panel-item-intranet";
 			$className .= $group["FAVORITE"] ? " group-panel-item-favorite" : "";
-			?><a href="/workgroups/group/<?=$group["ID"]?>/" class="<?=$className?>" data-id="<?=$group["ID"]?>"><?
+			?><a href="<?=SITE_DIR?>workgroups/group/<?=$group["ID"]?>/" class="<?=$className?>" data-id="<?=$group["ID"]?>"><?
 				?><span
 					class="group-panel-item-text"
 					title="<?=htmlspecialcharsbx($group["NAME"])?>"><?=htmlspecialcharsbx($group["NAME"])?></span><?

@@ -29,11 +29,6 @@ if(!empty($arResult["ADDITIONAL_STYLES"]))
 	BX.ready(function() {
 		new BX.ContactCenter.Init(params);
 	})
-
-	var restparams = <?=CUtil::PhpToJSObject($arResult["JS_REST_PARAMS"])?>;
-	BX.ready(function() {
-		new BX.ContactCenter.Init(restparams);
-	})
 </script>
 <div class="intranet-contact-block">
 	<div class="intranet-contact-wrap" id="intranet-contact-wrap">

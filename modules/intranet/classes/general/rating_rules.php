@@ -96,6 +96,7 @@ class CRatingRulesIntranet
 						U.ACTIVE = 'Y'
 						AND (U.EXTERNAL_AUTH_ID NOT IN ('".implode("','", \Bitrix\Main\UserTable::getExternalUserTypes())."') OR U.EXTERNAL_AUTH_ID IS NULL)
 						AND (U2.ACTIVE = 'Y' OR U2.ID IS NULL) 
+						AND UD.ID > 0
 				) U2U
 				LEFT JOIN b_rating_user RU on RU.RATING_ID = ".intval($ratingId)." and RU.ENTITY_ID = U2U.SUBORDINATE_ID
 				LEFT JOIN b_rating_user RUS on RUS.RATING_ID = ".intval($ratingId)." and RUS.ENTITY_ID = U2U.USER_ID

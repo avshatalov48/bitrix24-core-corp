@@ -1,9 +1,9 @@
 <?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
-$arParams["FORUM_ID"] = intVal(COption::GetOptionInt("timeman","report_forum_id",""));
-$arParams["REPORT_ID"] = intVal($arParams["REPORT_ID"]);
-$arParams["ENTRY_ID"] = intVal($arParams["ENTRY_ID"]);
+$arParams["FORUM_ID"] = intval(COption::GetOptionInt("timeman","report_forum_id",""));
+$arParams["REPORT_ID"] = intval($arParams["REPORT_ID"]);
+$arParams["ENTRY_ID"] = intval($arParams["ENTRY_ID"]);
 
 $arResult["COMMENTS"] = Array();
 $user_url = COption::GetOptionString('intranet', 'path_user', '/company/personal/user/#USER_ID#/', $_REQUEST['site_id']);

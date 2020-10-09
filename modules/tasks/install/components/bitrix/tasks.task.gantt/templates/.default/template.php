@@ -649,7 +649,27 @@ if ($isBitrix24Template)
 <div id="gantt-container" class="tasks-gantt"></div>
 
 <br/>
-<?=$arResult["NAV_STRING"] ?>
+<?php
+
+//region Navigation
+ob_start();
+$APPLICATION->IncludeComponent(
+	'bitrix:tasks.interface.pagenavigation',
+	'',
+	[
+		'PAGE_NUM' => $arResult['CURRENT_PAGE'],
+		'ENABLE_NEXT_PAGE' => $arResult['ENABLE_NEXT_PAGE'],
+		'URL' => $APPLICATION->GetCurPage()
+	],
+	$component,
+	array('HIDE_ICONS' => 'Y')
+);
+$navigationHtml = ob_get_contents();
+ob_end_clean();
+//endregion
+?>
+
+<?= $navigationHtml; ?>
 
 <script>
 	BX.message({

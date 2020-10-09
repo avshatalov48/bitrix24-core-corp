@@ -257,7 +257,11 @@ class CBPTask2Activity
 					}
 				}
 
-				$this->WriteToTrackingService(GetMessage("BPSA_TRACK_ERROR").(!empty($errorDesc) ? ' '.implode(', ', $errorDesc) : ''));
+				$this->WriteToTrackingService(
+					GetMessage("BPSA_TRACK_ERROR").(!empty($errorDesc) ? ' '.implode(', ', $errorDesc) : ''),
+					0,
+					CBPTrackingType::Error
+				);
 			}
 
 			return false;

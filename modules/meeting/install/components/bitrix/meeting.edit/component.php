@@ -170,7 +170,7 @@ if ($arParams['MEETING_ID'] > 0)
 }
 
 if ($arParams['SET_NAVCHAIN'] !== 'N')
-	$APPLICATION->AddChainItem(strlen($arResult['MEETING']['TITLE']) > 0 ? $arResult['MEETING']['TITLE'] : GetMessage('ME_MEETING_ADD'), $arParams['MEETING_URL']);
+	$APPLICATION->AddChainItem($arResult['MEETING']['TITLE'] <> '' ? $arResult['MEETING']['TITLE'] : GetMessage('ME_MEETING_ADD'), $arParams['MEETING_URL']);
 
 if ($arParams['COPY'])
 {
@@ -237,14 +237,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_REQUEST['save']) && $arResul
 			'GROUP_ID' => $_REQUEST['GROUP_ID'],
 		);
 
-		if(strlen($_REQUEST['PLACE_ID'])>0)
+		if($_REQUEST['PLACE_ID'] <> '')
 			$arFields['PLACE'] = $_REQUEST['PLACE_ID'];
 
 		$TextParser = new CBXSanitizer();
 		$TextParser->SetLevel(CBXSanitizer::SECURE_LEVEL_LOW);
 		$arFields['DESCRIPTION'] = $TextParser->SanitizeHtml($arFields['DESCRIPTION']);
 
-		if (strlen($arFields['TITLE']) <= 0)
+		if ($arFields['TITLE'] == '')
 			$arFields['TITLE'] = GetMessage('ME_MEETING_TITLE_DEFAULT');
 
 		$arFields['FILES'] = \Bitrix\Main\UI\FileInputUtility::instance()->checkFiles(
@@ -455,7 +455,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_REQUEST['save']) && $arResul
 					else
 						$arFields['ITEM_ID'] = $arResult['MEETING']['AGENDA'][$key]['ITEM_ID'];
 
-					if (strlen($arFields['TITLE']) <= 0 || $arFields['TITLE'] == GetMessage('ME_MEETING_TITLE_DEFAULT') || $arFields['TITLE'] == GetMessage('ME_MEETING_TITLE_DEFAULT_1'))
+					if ($arFields['TITLE'] == '' || $arFields['TITLE'] == GetMessage('ME_MEETING_TITLE_DEFAULT') || $arFields['TITLE'] == GetMessage('ME_MEETING_TITLE_DEFAULT_1'))
 					{
 						if ($bNew && !$arFields['ITEM_ID'])
 							continue;
@@ -524,7 +524,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_REQUEST['save']) && $arResul
 						$responsibleId = $arFields['RESPONSIBLE'][0];
 						$arTaskFields = array(
 							'RESPONSIBLE_ID' => $responsibleId > 0 ? $responsibleId : $USER->GetID(),
-							'TITLE' => strlen($arFields['TITLE']) > 0 ? $arFields['TITLE'] : $arResult['MEETING']['AGENDA'][$key]['TITLE'],
+							'TITLE' => $arFields['TITLE'] <> '' ? $arFields['TITLE'] : $arResult['MEETING']['AGENDA'][$key]['TITLE'],
 							'DEADLINE' => $taskDeadline,
 							'TAGS' => array(),
 							'STATUS' => 2,

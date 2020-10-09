@@ -96,7 +96,7 @@ class CalendarTable extends Main\ORM\Data\DataManager
 		$reflection = new \ReflectionClass(__CLASS__);
 		$constants = array_diff($reflection->getConstants(), $reflection->getParentClass()->getConstants());
 		return array_filter($constants, function ($element) {
-			return strncmp('SYSTEM_CODE_', $element, strlen('SYSTEM_CODE_')) === 0;
+			return strncmp('SYSTEM_CODE_', $element, mb_strlen('SYSTEM_CODE_')) === 0;
 		}, ARRAY_FILTER_USE_KEY);
 	}
 }

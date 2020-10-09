@@ -14,11 +14,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/message.js');
 
-Bitrix\Main\UI\Extension::load(array('ui.buttons', 'ui.icons', 'ui.selector'));
+Bitrix\Main\UI\Extension::load(array('ui.buttons', 'ui.icons', 'ui.selector', 'crm.zoom', 'ui.timeline', 'ui.forms'));
 Bitrix\Main\UI\Extension::load(['crm.delivery.taxi']);
 
 //HACK: Preloading files for prevent trembling of player afer load.
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/timeline_player/timeline_player.css');
+Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/calendar/planner.css');
 
 if(\Bitrix\Main\Loader::includeModule('disk'))
 {
@@ -29,6 +30,7 @@ if(\Bitrix\Main\Loader::includeModule('disk'))
 		'disk_external_loader',
 		'ui.tooltip',
 		'ui.viewer',
+		'ui.hint',
 		'disk.document',
 		'disk.viewer.document-item',
 		'disk.viewer.actions',
@@ -79,6 +81,8 @@ $fileUploaderZoneId = "diskuf-selectdialog-{$prefix}";
 $fileInputName = "{$prefix}-sms-files";
 $fileUploaderInputName = "{$prefix}-sms-files-uploader";
 
+$zoomContainerID = "{$prefix}_zoom_container";
+
 $activityEditorID = "{$prefix}_editor";
 $scheduleItems = $arResult['SCHEDULE_ITEMS'];
 $historyItems = $arResult['HISTORY_ITEMS'];
@@ -108,6 +112,31 @@ if(!empty($arResult['ERRORS']))
 					<a data-item-id="wait" data-item-title="<?=GetMessage('CRM_TIMELINE_WAIT')?>" class="crm-entity-stream-section-new-action" href="#">
 							<?=GetMessage('CRM_TIMELINE_WAIT')?>
 					</a>
+					<?}?>
+					<?if(\Bitrix\Crm\Activity\Provider\Zoom::isAvailable())
+					{?>
+						<?if($arResult['ENABLE_ZOOM'])
+						{?>
+						<a data-item-id="zoom" data-item-title="ZOOM" class="crm-entity-stream-section-new-action"
+							href="#"
+							<?=$arResult['STATUS_ZOOM'] ? '' : 'onclick="BX.Crm.Zoom.onNotConnectedHandler('.$arResult['USER_ID'].')"'?>
+						>
+							<?=GetMessage('CRM_TIMELINE_ZOOM')?>
+						</a>
+						<?}
+						else
+						{
+							$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
+						?>
+						<a data-item-id="zoom" data-item-title="ZOOM"
+							class="crm-entity-stream-section-new-action crm-entity-stream-section-new-action-zoom"
+							href="#"
+							onclick="BX.Crm.Zoom.onNotAvailableHandler()"
+						>
+							<?=GetMessage('CRM_TIMELINE_ZOOM')?>
+							<span class="tariff-lock"></span>
+						</a>
+						<?}?>
 					<?}?>
 					<?if($arResult['ENABLE_CALL'])
 					{?>
@@ -312,6 +341,7 @@ if(!empty($arResult['ERRORS']))
 					</div>
 					<?endif;?>
 				</div>
+				<div id="<?=htmlspecialcharsbx($zoomContainerID)?>" class="crm-entity-stream-content-new-detail focus" style="display: none;"></div>
 			</div>
 		</div>
 	</div>
@@ -488,6 +518,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 				wait: "<?=GetMessageJS('CRM_TIMELINE_WAIT_TITLE')?>",
 				sms: "<?=GetMessageJS('CRM_TIMELINE_SMS')?>",
 				visit: "<?=GetMessageJS('CRM_TIMELINE_VISIT')?>",
+				zoom: "<?=GetMessageJS('CRM_TIMELINE_ZOOM')?>",
 				bizproc: "<?=GetMessageJS('CRM_TIMELINE_BIZPROC_TITLE')?>",
 				activityRequest: "<?=GetMessageJS('CRM_TIMELINE_ACTIVITY_REQUEST_TITLE_1')?>",
 				restApplication: "<?=GetMessageJS('CRM_TIMELINE_ACTIVITY_REST_APP_TITLE')?>",
@@ -512,7 +543,10 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 				outgoingCallRemove: "<?=GetMessageJS('CRM_TIMELINE_OUTGOING_CALL_DELETION_CONFIRM')?>",
 				incomingCallRemove: "<?=GetMessageJS('CRM_TIMELINE_INCOMING_CALL_DELETION_CONFIRM')?>",
 				document: "<?=GetMessageJS('CRM_TIMELINE_DOCUMENT')?>",
-				documentRemove: "<?=GetMessageJS('CRM_TIMELINE_DOCUMENT_DELETION_CONFIRM')?>"
+				documentRemove: "<?=GetMessageJS('CRM_TIMELINE_DOCUMENT_DELETION_CONFIRM')?>",
+				zoomCreatedMessage: '<?=GetMessageJS("CRM_TIMELINE_ZOOM_CREATED_CONFERENCE_MESSAGE")?>',
+				zoomCreatedCopyInviteLink: '<?=GetMessageJS("CRM_TIMELINE_ZOOM_CREATED_COPY_INVITE_LINK")?>',
+				zoomCreatedStartConference: '<?=GetMessageJS("CRM_TIMELINE_ZOOM_CREATED_START_CONFERENCE")?>',
 			};
 
 			BX.CrmTimelineWaitHelper.messages =
@@ -643,6 +677,18 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 				"CRM_TIMELINE_COLLAPSE": '<?=GetMessageJS("CRM_TIMELINE_COLLAPSE")?>',
 				"CRM_TIMELINE_SMS_UPLOAD_FILE": '<?=GetMessageJS("CRM_TIMELINE_SMS_UPLOAD_FILE")?>',
 				"CRM_TIMELINE_SMS_FIND_FILE": '<?=GetMessageJS("CRM_TIMELINE_SMS_FIND_FILE")?>',
+				"CRM_TIMELINE_ZOOM_SUCCESSFUL_ACTIVITY": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_SUCCESSFUL_ACTIVITY")?>',
+				"CRM_TIMELINE_ZOOM_CONFERENCE_END": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_CONFERENCE_END")?>',
+				"CRM_TIMELINE_ZOOM_JOINED_CONFERENCE": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_JOINED_CONFERENCE")?>',
+				"CRM_TIMELINE_ZOOM_MEETING_RECORD": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_MEETING_RECORD")?>',
+				"CRM_TIMELINE_ZOOM_MEETING_RECORD_PART": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_MEETING_RECORD_PART")?>',
+				"CRM_TIMELINE_ZOOM_MEETING_RECORD_IN_PROCESS": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_MEETING_RECORD_IN_PROCESS")?>',
+				"CRM_TIMELINE_ZOOM_DOWNLOAD_VIDEO": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_DOWNLOAD_VIDEO")?>',
+				"CRM_TIMELINE_ZOOM_DOWNLOAD_AUDIO": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_DOWNLOAD_AUDIO")?>',
+				"CRM_TIMELINE_ZOOM_CLICK_TO_WATCH": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_CLICK_TO_WATCH")?>',
+				"CRM_TIMELINE_ZOOM_LOGIN_REQUIRED": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_LOGIN_REQUIRED")?>',
+				"CRM_TIMELINE_ZOOM_PLAY_LINK_VIDEO": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_PLAY_LINK_VIDEO")?>',
+				"CRM_TIMELINE_ZOOM_COPY_PASSWORD": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_COPY_PASSWORD")?>',
 				"DISK_TMPLT_THUMB": '',
 				"DISK_TMPLT_THUMB2": '',
 			});
@@ -659,6 +705,8 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 					progressSemantics: "<?=CUtil::JSEscape($arResult['PROGRESS_SEMANTICS'])?>",
 					enableWait: <?=$arResult['ENABLE_WAIT'] ? 'true' : 'false'?>,
 					enableSms: <?=$arResult['ENABLE_SMS'] ? 'true' : 'false'?>,
+					enableZoom: <?=$arResult['ENABLE_ZOOM'] ? 'true' : 'false'?>,
+					statusZoom: <?=$arResult['STATUS_ZOOM'] ? 'true' : 'false'?>,
 					enableRest: <?=$arResult['ENABLE_REST'] ? 'true' : 'false'?>,
 					restPlacement: '<?=$arResult['REST_PLACEMENT']?>',
 					containerId: "<?=CUtil::JSEscape($listContainerID)?>",
@@ -694,6 +742,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 					editorSmsConfig: <?=CUtil::PhpToJSObject($arResult['SMS_CONFIG'])?>,
 					smsStatusDescriptions: <?=CUtil::PhpToJSObject($arResult['SMS_STATUS_DESCRIPTIONS'])?>,
 					smsStatusSemantics: <?=CUtil::PhpToJSObject($arResult['SMS_STATUS_SEMANTICS'])?>,
+					editorZoomContainer: "<?=CUtil::JSEscape($zoomContainerID)?>",
 					visitParameters: <?= \CUtil::PhpToJSObject($arResult['VISIT_PARAMETERS'])?>,
 					spotlightFastenShowed: <?=$spotlightFastenShowed ? 'true' : 'false'?>
 				}

@@ -56,6 +56,7 @@ class Auth
 		'disk.folder.uploadfile',
 	];
 
+	// TODO sync AUTH_ID_PARAM with file rest/services/rest/index.php
 	const AUTH_ID_PARAM = 'livechat_auth_id';
 	const AUTH_UID_PARAM = 'livechat_user_id';
 	const AUTH_CUSTOM_ID_PARAM = 'livechat_custom_auth_id';
@@ -302,7 +303,7 @@ class Auth
 			$USER->Authorize($userId, false, false, 'public');
 		}
 
-		$authCode = str_replace(self::AUTH_TYPE.'|', '', $USER->GetParam("XML_ID"));
+		$authCode = str_replace(self::AUTH_TYPE.'|', '', $_SESSION["SESS_AUTH"]["XML_ID"]);
 
 		$cookie = new \Bitrix\Main\Web\Cookie('LIVECHAT_HASH', $authCode, null, false);
 		$cookie->setHttpOnly(false);

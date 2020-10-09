@@ -18,6 +18,8 @@ class TaskModel
 {
 	use DepartmentTrait;
 
+	private static $cache = [];
+
 	private
 		$id = 0,
 		$members,
@@ -26,6 +28,11 @@ class TaskModel
 		$group;
 
 	private $task;
+
+	public static function invalidateCache(int $taskId)
+	{
+		unset(static::$cache[$taskId]);
+	}
 
 	public static function createNew(int $groupId = 0): self
 	{
@@ -38,9 +45,14 @@ class TaskModel
 
 	public static function createFromId(int $taskId): AccessibleItem
 	{
-		$model = new self();
-		$model->setId($taskId);
-		return $model;
+		if (!array_key_exists($taskId, static::$cache))
+		{
+			$model = new self();
+			$model->setId($taskId);
+			static::$cache[$taskId] = $model;
+		}
+
+		return static::$cache[$taskId];
 	}
 
 	public static function createFromTaskItem(\Bitrix\Tasks\Item\Task $item)

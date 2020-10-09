@@ -1515,13 +1515,6 @@ BX.CRM.Kanban.Item.prototype = {
 
 		draggableItem = this.getGrid().getItemByElement(itemNode);
 
-		if (draggableItem.getColumn().getId() === this.getColumn().getId())
-		{
-			this.getGrid().resetMultiSelectMode();
-			this.getGrid().cleanSelectedItems();
-			return;
-		}
-
 		event = new BX.Kanban.DragEvent();
 		event.setItem(draggableItem);
 		event.setTargetColumn(this.getColumn());
@@ -1537,6 +1530,12 @@ BX.CRM.Kanban.Item.prototype = {
 		if (success)
 		{
 			BX.onCustomEvent(this.getGrid(), "Kanban.Grid:onItemMoved", [draggableItem, this.getColumn(), this]);
+		}
+
+		if (draggableItem.getColumn().getId() === this.getColumn().getId())
+		{
+			this.getGrid().resetMultiSelectMode();
+			this.getGrid().cleanSelectedItems();
 		}
 	},
 

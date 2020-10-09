@@ -34,6 +34,21 @@ class TaskDeadlineRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return true;
 		}
 
+		if (
+			array_intersect($task->getMembers(RoleDictionary::ROLE_DIRECTOR), $this->user->getAllSubordinates())
+		)
+		{
+			return true;
+		}
+
+		if (
+			$task->isAllowedChangeDeadline()
+			&& array_intersect($task->getMembers(RoleDictionary::ROLE_RESPONSIBLE), $this->user->getAllSubordinates())
+		)
+		{
+			return true;
+		}
+
 		return $this->controller->check(ActionDictionary::ACTION_TASK_EDIT, $task, $params);
 	}
 }

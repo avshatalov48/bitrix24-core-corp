@@ -528,14 +528,14 @@
 	  }, {
 	    key: "renderTitle",
 	    value: function renderTitle() {
-	      this.layout.title = main_core.Tag.render(_templateObject7(), this.getName(), this.switchToEditMode.bind(this), main_core.Loc.getMessage('RPA_STAGES_STAGE_CHANGE_TITLE'), this.getNameInput());
+	      this.layout.title = main_core.Tag.render(_templateObject7(), main_core.Text.encode(this.getName()), this.switchToEditMode.bind(this), main_core.Loc.getMessage('RPA_STAGES_STAGE_CHANGE_TITLE'), this.getNameInput());
 	      return this.layout.title;
 	    }
 	  }, {
 	    key: "getNameInput",
 	    value: function getNameInput() {
 	      if (!this.layout.nameInput) {
-	        this.layout.nameInput = main_core.Tag.render(_templateObject8(), this.getName(), this.switchToViewMode.bind(this));
+	        this.layout.nameInput = main_core.Tag.render(_templateObject8(), main_core.Text.encode(this.getName()), this.switchToViewMode.bind(this));
 	      }
 
 	      return this.layout.nameInput;

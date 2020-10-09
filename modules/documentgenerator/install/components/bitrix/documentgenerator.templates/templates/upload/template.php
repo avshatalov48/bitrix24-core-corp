@@ -38,7 +38,7 @@ if($arResult['IS_SLIDER'])
 				</div>
 				<?if(Bitrix24Manager::isEnabled())
 				{
-					?><button class="ui-btn ui-btn-md ui-btn-light-border" onclick="BX.DocumentGenerator.Feedback.open('', '<?=\CUtil::JSEscape($arResult['TEMPLATE']['NAME'])?>', '<?=\CUtil::JSEscape($arResult['params']['defaultCode'])?>');"><?=Loc::getMessage('DOCGEN_TEMPLATE_ADD_FEEDBACK');?></button>
+					?><button class="ui-btn ui-btn-md ui-btn-light-border" onclick="BX.DocumentGenerator.Feedback.open('', '<?=\htmlspecialcharsbx(\CUtil::JSEscape($arResult['TEMPLATE']['NAME']))?>', '<?=\htmlspecialcharsbx(\CUtil::JSEscape($arResult['params']['defaultCode']))?>');"><?=Loc::getMessage('DOCGEN_TEMPLATE_ADD_FEEDBACK');?></button>
 					<?
 				}?>
 			</div>

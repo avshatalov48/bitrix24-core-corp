@@ -13,8 +13,9 @@ namespace Bitrix\Tasks\Integration\Forum\Task;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Pull\Event;
-use Bitrix\Socialnetwork\LogTable;
+use Bitrix\Socialnetwork\CommentAux;
 use Bitrix\Tasks\Comments;
+use Bitrix\Tasks\Integration\IM;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\SearchIndex;
@@ -22,6 +23,7 @@ use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
 use Bitrix\Tasks\Internals\Task\ViewedTable;
 use Bitrix\Tasks\Internals\UserOption;
+use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\Error;
 use Bitrix\Tasks\Util\Result;
@@ -104,7 +106,10 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 
 		// remove attachments from system comments
 		$sourceValues = [];
-		if (array_key_exists('UF_FORUM_MESSAGE_DOC', $GLOBALS))
+		if (
+			array_key_exists('AUX', $data)
+			&& array_key_exists('UF_FORUM_MESSAGE_DOC', $GLOBALS)
+		)
 		{
 			$sourceValues['UF_FORUM_MESSAGE_DOC'] = $GLOBALS['UF_FORUM_MESSAGE_DOC'];
 			unset($GLOBALS['UF_FORUM_MESSAGE_DOC']);
@@ -308,6 +313,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		$aux = (isset($arData['PARAMS']['AUX']) && $arData['PARAMS']['AUX'] == "Y");
 		$messageId  = $arData['MESSAGE_ID'];
 		$strMessage = $arData['PARAMS']['POST_MESSAGE'];
+		$isCompleteComment = false;
 
 		if ($parser === null)
 		{
@@ -515,12 +521,31 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 				if (!empty($arData['AUX_DATA']))
 				{
 					$arFieldsForSocnet['SHARE_DEST'] = $arData['AUX_DATA'];
+
+					if ($aux)
+					{
+						/** @var CommentAux\TaskInfo $commentAuxProvider */
+						$commentAuxProvider = CommentAux\Base::findProvider(
+							['POST_TEXT' => CommentAux\TaskInfo::POST_TEXT],
+							['needSetParams' => false]
+						);
+						if (!empty($auxParams = $commentAuxProvider->getParamsFromFields($arFieldsForSocnet)))
+						{
+							$completeCode = 'COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_5';
+							$codes = Comments\Task\CommentPoster::getCommentCodes($auxParams);
+
+							if (in_array($completeCode, $codes, true))
+							{
+								$isCompleteComment = true;
+							}
+						}
+					}
 				}
 
 				$comment_id = \CSocNetLogComments::Add($arFieldsForSocnet, [
 					'SET_SOURCE' => false,
 					'SEND_EVENT' => false,
-					'SUBSCRIBE' => false
+					'SUBSCRIBE' => false,
 				]);
 
 				if (\Bitrix\Socialnetwork\ComponentHelper::checkLivefeedTasksAllowed())
@@ -606,6 +631,14 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		Counter::onAfterCommentAdd((int)$taskId, (int)$occurAsUserId, ['COMMENT_TYPE' => $commentType]);
 		Counter::sendPushCounters($recipientsIds);
 
+		foreach ($recipientsIds as $userId)
+		{
+			if ($isCompleteComment && UserOption::isOptionSet($taskId, $userId, UserOption\Option::MUTED))
+			{
+				ViewedTable::set($taskId, $userId);
+			}
+		}
+
 		$taskParticipants = array_unique(array_merge($recipientsIds, [$occurAsUserId]));
 
 		if (Loader::includeModule('pull'))
@@ -636,7 +669,8 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 			]);
 		}
 
-		if (!$aux) {
+		if (!$aux)
+		{
 			$messageData = ['ID' => $messageId, 'POST_MESSAGE' => $strMessage];
 			static::sendNotification($messageData, $arTask, $occurAsUserId, $recipientsIds, $arData);
 		}
@@ -1206,9 +1240,17 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		return $userIdToShareList;
 	}
 
-	private static function sendNotification($messageData, $taskData, $fromUser, $toUsers, array $eventData = array())
+	/**
+	 * @param $messageData
+	 * @param $taskData
+	 * @param $fromUser
+	 * @param $toUsers
+	 * @param array $eventData
+	 * @return bool
+	 */
+	private static function sendNotification($messageData, $taskData, $fromUser, $toUsers, array $eventData = []): bool
 	{
-		if(empty($toUsers) || !\Bitrix\Tasks\Integration\IM::includeModule())
+		if (empty($toUsers) || !IM::includeModule())
 		{
 			return false;
 		}
@@ -1223,7 +1265,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 
 //		$messageTemplate = '[color=#000]#TASK_TITLE#[/color][br][i]#USER_NAME#:[/i] #TASK_COMMENT_TEXT#';
 //		$messageTemplatePush = '#USER_NAME#: #TASK_COMMENT_TEXT#';
-		$message = \Bitrix\Tasks\Util::trim(\CTextParser::clearAllTags($messageData['POST_MESSAGE']));
+		$message = (string)Util::trim(\CTextParser::clearAllTags($messageData['POST_MESSAGE']));
 
 //		if (
 //			Loader::includeModule('socialnetwork')
@@ -1239,45 +1281,46 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 //			$message = Comments\Task\CommentPoster::getCommentText($commentInfo);
 //		}
 
+		$messageTemplate = \CTaskNotifications::getGenderMessage($fromUser, 'TASKS_COMMENT_MESSAGE_ADD');
+		$messageTemplatePush = \CTaskNotifications::getGenderMessage($fromUser, 'TASKS_COMMENT_MESSAGE_ADD_PUSH');
+
 		$messageCropped = self::cropMessage($message);
-
-		$messageTemplate = \CTaskNotifications::getGenderMessage($fromUser, "TASKS_COMMENT_MESSAGE_ADD");
-		$messageTemplatePush = \CTaskNotifications::getGenderMessage($fromUser, "TASKS_COMMENT_MESSAGE_ADD_PUSH");
-
-		if($messageCropped != '')
+		if ($messageCropped !== '')
 		{
 			$messageTemplate .= Loc::getMessage('TASKS_COMMENT_MESSAGE_ADD_WITH_TEXT');
 			$messageTemplatePush .= ': #TASK_COMMENT_TEXT#';
 		}
 
-		\CTaskNotifications::SendMessageEx($taskData["ID"], $fromUser, $toUsers, array(
-			'INSTANT' => str_replace(
-				array("#TASK_COMMENT_TEXT#"),
-				array('[COLOR=#000000]'.$messageCropped.'[/COLOR]'),
-				$messageTemplate
-			),
-			'EMAIL' => str_replace(
-				array("#TASK_COMMENT_TEXT#"),
-				array($message),
-				$messageTemplate
-			),
-			'PUSH' => \CTaskNotifications::cropMessage($messageTemplatePush, array(
-				'USER_NAME' => 			User::formatName($user),
-				'TASK_TITLE' => 		$taskData["TITLE"],
-				'TASK_COMMENT_TEXT' => 	$message
-			), \CTaskNotifications::PUSH_MESSAGE_MAX_LENGTH)
-		), array(
-			'ENTITY_CODE' => 'COMMENT',
-			'ENTITY_OPERATION' => 'ADD',
-			'EVENT_DATA' => $eventData,
-			'NOTIFY_EVENT' => 'comment',
-			'NOTIFY_ANSWER' => true,
-			'TASK_DATA' => $taskData,
-			'TASK_URL' => array(
-				'PARAMETERS' => static::getUrlParameters($messageData['ID']),
-				'HASH' => static::makeUrlHash($messageData['ID'])
-			)
-		));
+		\CTaskNotifications::SendMessageEx(
+			$taskData['ID'],
+			$fromUser,
+			$toUsers,
+			[
+				'INSTANT' => str_replace('#TASK_COMMENT_TEXT#', $messageCropped, $messageTemplate),
+				'EMAIL' => str_replace('#TASK_COMMENT_TEXT#', $message, $messageTemplate),
+				'PUSH' => \CTaskNotifications::cropMessage(
+					$messageTemplatePush,
+					[
+						'USER_NAME' => User::formatName($user),
+						'TASK_TITLE' => $taskData['TITLE'],
+						'TASK_COMMENT_TEXT' => $message,
+					],
+					\CTaskNotifications::PUSH_MESSAGE_MAX_LENGTH
+				)
+			],
+			[
+				'ENTITY_CODE' => 'COMMENT',
+				'ENTITY_OPERATION' => 'ADD',
+				'EVENT_DATA' => $eventData,
+				'NOTIFY_EVENT' => 'comment',
+				'NOTIFY_ANSWER' => true,
+				'TASK_DATA' => $taskData,
+				'TASK_URL' => [
+					'PARAMETERS' => static::getUrlParameters($messageData['ID']),
+					'HASH' => static::makeUrlHash($messageData['ID']),
+				],
+			]
+		);
 
 //		\CTaskNotifications::SendMessageEx(
 //			$taskData["ID"],
@@ -1324,7 +1367,11 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		return true;
 	}
 
-	private static function cropMessage($message)
+	/**
+	 * @param string $message
+	 * @return string
+	 */
+	private static function cropMessage(string $message): string
 	{
 		// cropped message to instant messenger
 		if (mb_strlen($message) >= 100)
@@ -1333,7 +1380,9 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 			$message = mb_substr($message, 0, 99);
 
 			if (mb_substr($message, -1) === '[')
+			{
 				$message = mb_substr($message, 0, 98);
+			}
 
 			if (
 				(($lastLinkPosition = mb_strrpos($message, '[u')) !== false)
@@ -1344,7 +1393,9 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 			)
 			{
 				if (mb_strpos($message, ' ', $lastLinkPosition) === false)
+				{
 					$message = mb_substr($message, 0, $lastLinkPosition);
+				}
 			}
 
 			$message .= $dot;

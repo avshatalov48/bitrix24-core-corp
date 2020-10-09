@@ -59,7 +59,7 @@ if(!$arResult['ERROR'])
 					<div class="pagetitle-container pagetitle-align-right-container">
 						<?if(Bitrix24Manager::isEnabled())
 						{
-							?><button class="ui-btn ui-btn-md ui-btn-light-border" onclick="BX.DocumentGenerator.Feedback.open('<?=\CUtil::JSEscape($arParams['PROVIDER'])?>');"><?=\Bitrix\Main\Localization\Loc::getMessage('DOCGEN_TEMPLATE_LIST_FEEDBACK');?></button>
+							?><button class="ui-btn ui-btn-md ui-btn-light-border" onclick="BX.DocumentGenerator.Feedback.open('<?=\htmlspecialcharsbx(\CUtil::JSEscape($arParams['PROVIDER']))?>');"><?=\Bitrix\Main\Localization\Loc::getMessage('DOCGEN_TEMPLATE_LIST_FEEDBACK');?></button>
 							<?
 						}?>
 						<button class="ui-btn ui-btn-md ui-btn-light-border ui-btn-icon-setting" id="docgen-templates-settings-button"></button>

@@ -17,7 +17,10 @@ class CheckAccess extends Base
 			if($argument instanceof Document)
 			{
 				$userId = $this->action->getController()->getCurrentUser()->getId();
-				$argument->setUserId($userId);
+				if($userId > 0)
+				{
+					$argument->setUserId($userId);
+				}
 				if(!$argument->hasAccess())
 				{
 					$this->errorCollection[] = new Error(

@@ -73,26 +73,29 @@
 	{
 		var isFilled = false;
 		var ofdPage = BX.Salescenter.Cashbox.getPage('ofd_settings');
-		while(ofdPage.firstChild) {
-			ofdPage.removeChild(ofdPage.firstChild);
-		}
-		var form = BX.Salescenter.Cashbox.form;
-		for(var index in form.config)
+		if (ofdPage)
 		{
-			if(index > 0 && form.config.hasOwnProperty(index) && form.config[index].name.indexOf('OFD_SETTINGS') >= 0)
-			{
-				ofdPage.appendChild(form.renderSection(form.config[index], true));
-				isFilled = true;
+			while(ofdPage.firstChild) {
+				ofdPage.removeChild(ofdPage.firstChild);
 			}
-		}
+			var form = BX.Salescenter.Cashbox.form;
+			for(var index in form.config)
+			{
+				if(index > 0 && form.config.hasOwnProperty(index) && form.config[index].name.indexOf('OFD_SETTINGS') >= 0)
+				{
+					ofdPage.appendChild(form.renderSection(form.config[index], true));
+					isFilled = true;
+				}
+			}
 
-		if(!isFilled)
-		{
-			document.getElementById('salescenter-menu-page-ofd_settings').parentNode.style.display = 'none';
-		}
-		else
-		{
-			document.getElementById('salescenter-menu-page-ofd_settings').parentNode.style.display = 'block';
+			if(!isFilled)
+			{
+				document.getElementById('salescenter-menu-page-ofd_settings').parentNode.style.display = 'none';
+			}
+			else
+			{
+				document.getElementById('salescenter-menu-page-ofd_settings').parentNode.style.display = 'block';
+			}
 		}
 	};
 

@@ -51,7 +51,7 @@ final class User extends \Bitrix\Tasks\Integration\Intranet
 		return static::getSubordinate($userId, $allowedDepartments, true);
 	}
 
-	public static function getSubordinate($userId = 0, $allowedDepartments = null, $includeSubDepartments = false)
+	public static function getSubordinate($userId = 0, $allowedDepartments = null, $includeSubDepartments = false, $withFired = false)
 	{
 		if(!static::includeModule())
 		{
@@ -100,7 +100,7 @@ final class User extends \Bitrix\Tasks\Integration\Intranet
 		{
 			$arEmployees = array_merge(
 				$arEmployees,
-				static::getDepartmentsUsersIds($arQueueDepartmentsEmployees)
+				static::getDepartmentsUsersIds($arQueueDepartmentsEmployees, $withFired)
 			);
 		}
 
@@ -119,7 +119,7 @@ final class User extends \Bitrix\Tasks\Integration\Intranet
 		return ($arEmployees);
 	}
 
-	public static function getByDepartments(array $departmentsIds, array $fields = array('ID', 'UF_DEPARTMENT'))
+	public static function getByDepartments(array $departmentsIds, array $fields = array('ID', 'UF_DEPARTMENT'), $withFired = false)
 	{
 		$departmentsIds = array_unique(array_filter($departmentsIds));
 
@@ -130,12 +130,17 @@ final class User extends \Bitrix\Tasks\Integration\Intranet
 
 		$fields = array_unique(array_merge($fields, ['ID', 'UF_DEPARTMENT']));
 
+		$filter = [
+			'UF_DEPARTMENT' => $departmentsIds
+		];
+		if (!$withFired)
+		{
+			$filter['ACTIVE'] = 'Y';
+		}
+
 		$res = Util\User::getList(
 			[
-				'filter' => [
-					'ACTIVE' => 'Y',
-					'UF_DEPARTMENT' => $departmentsIds
-				],
+				'filter' => $filter,
 				'select' => $fields
 			]
 		);
@@ -182,9 +187,9 @@ final class User extends \Bitrix\Tasks\Integration\Intranet
 		));
 	}
 
-	private static function getDepartmentsUsersIds($departmentsIds)
+	private static function getDepartmentsUsersIds($departmentsIds, $withFired = false)
 	{
-		$res = static::getByDepartments($departmentsIds);
+		$res = static::getByDepartments($departmentsIds, ['ID', 'UF_DEPARTMENT'], $withFired);
 
 		if (!$res)
 		{

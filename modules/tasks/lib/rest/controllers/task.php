@@ -433,13 +433,16 @@ final class Task extends Base
 		}
 
 		$getListParams = [
-			'limit' => $pageNavigation->getLimit(),
-			'offset' => $pageNavigation->getOffset(),
-			'page' => $pageNavigation->getCurrentPage(),
 			'select' => $this->prepareSelect($select),
 			'legacyFilter' => ($filter ?: []),
 			'order' => ($order ?: []),
 			'group' => ($group ?: []),
+			'NAV_PARAMS' => [
+				'nPageSize' => $pageNavigation->getLimit(),
+				'iNumPageSize' => $pageNavigation->getOffset(),
+				'iNumPage' => $pageNavigation->getCurrentPage(),
+				'getTotalCount' => true,
+			],
 		];
 
 		$params['PUBLIC_MODE'] = 'Y'; // VERY VERY BAD HACK! DONT REPEAT IT !

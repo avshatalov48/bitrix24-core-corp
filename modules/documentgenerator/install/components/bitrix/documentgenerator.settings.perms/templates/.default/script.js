@@ -41,7 +41,7 @@
 				if(BX.type.isNotEmptyObject(role))
 				{
 					var template = BX('docgen-new-role-row').innerHTML;
-					template = this.replaceTemplateData(template, {ID: role.id, NAME: role.name, EDIT_URL: this.getEditRoleUrl(role.id)});
+					template = this.replaceTemplateData(template, {ID: parseInt(role.id), NAME: BX.Text.encode(role.name), EDIT_URL: this.getEditRoleUrl(role.id)});
 					var newElement = BX.create('tr', {html: template});
 					newElement.dataset.roleId = role.id;
 					this.rolesTableBody.insertBefore(newElement, this.rolesTableLastRow);
@@ -140,6 +140,10 @@
 
 	BX.DocumentGenerator.Perms.renderNewAccessCode = function(accessCode, provider, name, roleId)
 	{
+		accessCode = BX.Text.encode(accessCode);
+		provider = BX.Text.encode(provider);
+		name = BX.Text.encode(name);
+		roleId = parseInt(accessCode);
 		var template = BX('docgen-new-access-row').innerHTML;
 		template = this.replaceTemplateData(template, {PROVIDER: provider, NAME: name, ACCESS_CODE: accessCode});
 		var newElement = BX.create('tr', {html: template});

@@ -13,6 +13,7 @@
  		{
  			this.wrapper = params.wrapper;
  			this.inner = params.inner;
+ 			this.innerPartnersBlock = params.innerPartnersBlock;
  			this.tiles = params.tiles;
  			this.minTileWidth = 0;
  			this.maxTileWidth = 0;
@@ -68,6 +69,8 @@
 				}
 				this.inner.style.marginLeft = (obj.margin * -1) + 'px';
 				this.inner.style.marginTop = (obj.margin * -1) + 'px';
+				this.innerPartnersBlock.style.marginLeft = (obj.margin * -1) + 'px';
+				this.innerPartnersBlock.style.marginTop = (obj.margin * -1) + 'px';
 			}.bind(this));
 		},
 
@@ -396,6 +399,7 @@
 			new BX.ContactCenter.TileGrid({
 				wrapper: wrapper,
 				inner: BX(params.parentSelector),
+				innerPartnersBlock: BX(params.parentSelectorPartnersBlock),
 				tiles: title_list,
 				sizeSettings : {
 					minWidth : 190,

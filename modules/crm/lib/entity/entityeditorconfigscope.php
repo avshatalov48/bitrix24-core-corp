@@ -2,21 +2,32 @@
 namespace Bitrix\Crm\Entity;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Ui\EntityForm\Scope;
 
 class EntityEditorConfigScope
 {
 	const UNDEFINED = '';
 	const PERSONAL = 'P';
 	const COMMON = 'C';
+	const CUSTOM = 'CUSTOM';
 
-	private static $captions = array();
+	private static $captions = [];
 
-	public static function isDefined($scope)
+	/**
+	 * @param string $scope
+	 * @return bool
+	 */
+	public static function isDefined(string $scope): bool
 	{
-		return($scope == self::PERSONAL || $scope === self::COMMON);
+		return (in_array($scope, [self::PERSONAL, self::COMMON, self::CUSTOM], true));
 	}
 
-	public static function getCaptions()
+	/**
+	 * @param string $entityTypeId
+	 * @param string|null $moduleId
+	 * @return array
+	 */
+	public static function getCaptions(string $entityTypeId = '', ?string $moduleId = null): array
 	{
 		if(!self::$captions[LANGUAGE_ID])
 		{
@@ -26,15 +37,38 @@ class EntityEditorConfigScope
 				self::PERSONAL => Loc::getMessage('CRM_ENTITY_ED_CONFIG_SCOPE_PERSONAL'),
 				self::COMMON => Loc::getMessage('CRM_ENTITY_ED_CONFIG_SCOPE_COMMON')
 			);
+
+			if ($entityTypeId && $customScopes = Scope::getInstance()->getUserScopes($entityTypeId, $moduleId))
+			{
+				self::$captions[LANGUAGE_ID] = array_merge(
+					self::$captions[LANGUAGE_ID], ['CUSTOM' => $customScopes]
+				);
+			}
 		}
 
 		return self::$captions[LANGUAGE_ID];
 	}
 
-	public static function getCaption($scope)
+	/**
+	 * @param string $scope
+	 * @param string $entityTypeId
+	 * @param int|null $scopeId
+	 * @param string|null $moduleId
+	 * @return string|null
+	 */
+	public static function getCaption(
+		string $scope,
+		string $entityTypeId = '',
+		?int $scopeId = null,
+		?string $moduleId = null
+	): ?string
 	{
-		$captions = self::getCaptions();
-		return isset($captions[$scope]) ? $captions[$scope] : "[{$scope}]";
+		$captions = self::getCaptions($entityTypeId, $moduleId);
+		if ($scope === self::CUSTOM && $entityTypeId && $scopeId)
+		{
+			return ($captions[$scope][$scopeId]['NAME'] ?? null);
+		}
+		return ($captions[$scope] ?? "[{$scope}]");
 	}
 }
 

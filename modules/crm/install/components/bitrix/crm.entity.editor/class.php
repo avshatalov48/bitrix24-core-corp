@@ -11,6 +11,7 @@ use Bitrix\Crm\Agent\Requisite\ContactUfAddressConvertAgent;
 use Bitrix\Crm\Entity\EntityEditorConfigScope;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\Ui\EntityForm\Scope;
 
 Loc::loadMessages(__FILE__);
 
@@ -136,6 +137,35 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 			);
 		}
 
+		if (
+			is_array($configScope)
+			&&
+			(
+				\CCrmAuthorizationHelper::CheckConfigurationUpdatePermission()
+				|| Scope::getInstance()->isHasScope($configScope['userScopeId'])
+			)
+		)
+		{
+			$userScopeId = $this->arResult['USER_SCOPE_ID'] = $configScope['userScopeId'];
+			$configScope = $configScope['scope'];
+		}
+		// if userScope has been deleted or current user is not a member of this userScope
+		elseif (is_array($configScope) && !Scope::getInstance()->isHasScope($configScope['userScopeId']))
+		{
+			$userScopeId = $this->arResult['USER_SCOPE_ID'] = null;
+			$configScope = EntityEditorConfigScope::COMMON;
+		}
+		else
+		{
+			$userScopeId = $this->arResult['USER_SCOPE_ID'] = null;
+		}
+
+		$this->arResult['USER_SCOPES'] = (
+		isset($scopePrefix)
+			? Scope::getInstance()->getUserScopes($scopePrefix, ($this->arParams['MODULE_ID'] ?? null))
+			: null
+		);
+
 		$config = null;
 		if(!(isset($this->arParams['~FORCE_DEFAULT_CONFIG']) && $this->arParams['~FORCE_DEFAULT_CONFIG']))
 		{
@@ -171,6 +201,10 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 					0
 				);
 			}
+			elseif($configScope === EntityEditorConfigScope::CUSTOM)
+			{
+				$config = Scope::getInstance()->getScopeById($userScopeId);
+			}
 			else
 			{
 				$config = CUserOptions::GetOption(
@@ -180,7 +214,11 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 				);
 			}
 		}
-		elseif($configScope === EntityEditorConfigScope::UNDEFINED)
+
+		if(
+			(!$config && $configScope === EntityEditorConfigScope::CUSTOM)
+			|| $configScope === EntityEditorConfigScope::UNDEFINED
+		)
 		{
 			$configScope = is_array(CUserOptions::GetOption('crm.entity.editor', $this->configID, null))
 				? EntityEditorConfigScope::PERSONAL

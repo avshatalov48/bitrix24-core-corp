@@ -1130,6 +1130,10 @@ if(typeof BX.Crm.EntityEditorField === "undefined")
 	};
 	BX.Crm.EntityEditorField.prototype.needShowTitle = function()
 	{
+		/**
+		 * @todo check merge
+		 */
+		return true;
 		return this._schemeElement ? this._schemeElement.needShowTitle() : true;
 	};
 	BX.Crm.EntityEditorField.prototype.isVirtual = function()
@@ -1588,7 +1592,7 @@ if(typeof BX.Crm.EntityEditorField === "undefined")
 			);
 		}
 
-		this._errorContainer.innerHTML = error;
+		this._errorContainer.textContent = error;
 		this._wrapper.appendChild(this._errorContainer);
 		BX.addClass(this._wrapper, "crm-entity-widget-content-error");
 		this._hasError = true;

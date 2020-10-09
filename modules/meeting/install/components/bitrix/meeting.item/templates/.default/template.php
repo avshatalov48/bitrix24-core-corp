@@ -130,10 +130,11 @@ endif;
 <?
 	endif;
 
-	$arReport = count($arInstance['REPORTS']) > 0 ? $arInstance['REPORTS'][0] : array(
+	$arReport = !empty($arInstance['REPORTS']) ? $arInstance['REPORTS'][0] : array(
 		'ID' => 'n0',
 		'USER_ID' => $USER->GetID(),
 		'REPORT' => '',
+		'FILES' => array()
 	);
 ?>
 <?
@@ -163,7 +164,7 @@ endif;
 		$arFiles = array();
 		$arFilesExt = array();
 
-		if (count($arReport['FILES']) > 0)
+		if (!empty($arReport['FILES']))
 		{
 			foreach ($arReport['FILES'] as $arFile)
 			{
@@ -197,16 +198,16 @@ endif;
 						<div class="meeting-ques-info-bot-sep"></div>
 					</td>
 				</tr>
-				<tr class="meeting-ques-info-bottom<?=(count($arReport['FILES']) > 0 ? '' : ' meeting-ques-info-bot-last')?>">
+				<tr class="meeting-ques-info-bottom<?=(!empty($arReport['FILES']) ? '' : ' meeting-ques-info-bot-last')?>">
 					<td class="meeting-ques-left"><?=GetMessage('MI_REPORT')?>:</td>
 					<td class="meeting-ques-right">
-						<span class="meeting-ques-edit-item"><span><?=strlen($arReport['REPORT']) > 0 ? $arReport['REPORT'] : GetMessage('MI_REPORT_NO_REPORT')?></span>
+						<span class="meeting-ques-edit-item"><span><?=$arReport['REPORT'] <> '' ? $arReport['REPORT'] : GetMessage('MI_REPORT_NO_REPORT')?></span>
 							<?/*<div class="meeting-ag-edit-edit"></div>*/?>
 						</span>
 					</td>
 				</tr>
 <?
-		if (count($arReport['FILES']) > 0):
+		if (!empty($arReport['FILES'])):
 ?>
 				<tr class="meeting-ques-info-bottom meeting-ques-info-bot-last">
 					<td class="meeting-ques-left"><?=GetMessage('ME_FILES')?>:</td>

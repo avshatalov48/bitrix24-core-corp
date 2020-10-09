@@ -167,14 +167,14 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 			$LHE = new CLightHTMLEditor();
 
 			$LHE->Show([
-				'id' => ((strlen($_REQUEST["obname"]) > 0) ? $_REQUEST["obname"] : "oReportLHE"),
+				'id' => (($_REQUEST["obname"] <> '') ? $_REQUEST["obname"] : "oReportLHE"),
 				'content' => "",
 				'inputName' => "ITEM_DESCRIPTION",
 				'inputId' => "",
 				'width' => "100%",
 				'height' => "200px",
 				'bUseFileDialogs' => false,
-				'jsObjName' => ((strlen($_REQUEST["obname"]) > 0) ? $_REQUEST["obname"] : "oReportLHE"),
+				'jsObjName' => (($_REQUEST["obname"] <> '') ? $_REQUEST["obname"] : "oReportLHE"),
 				'toolbarConfig' => [
 					'Bold', 'Italic', 'Underline', 'Strike',
 					'ForeColor', 'FontList', 'FontSizeList',
@@ -343,7 +343,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 					$report = $dbreport->fetch();
 				}
 
-				if (is_array($report) && strlen($report['FILES']) > 0)
+				if (is_array($report) && $report['FILES'] <> '')
 				{
 					$arFiles = unserialize($report['FILES']);
 				}
@@ -384,7 +384,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 		}
 		else
 		{
-			$bAdminAction = substr($action, 0, 6) == 'admin_' || $action == 'calendar_show' || $action == 'add_comment_entry' || $action == 'add_comment_full_report' || $action == 'user_report_edit' || $action == 'report_full_setting';
+			$bAdminAction = mb_substr($action, 0, 6) == 'admin_' || $action == 'calendar_show' || $action == 'add_comment_entry' || $action == 'add_comment_full_report' || $action == 'user_report_edit' || $action == 'report_full_setting';
 			if (
 			!CTimeMan::CanUse($bAdminAction)
 			)
@@ -1159,10 +1159,10 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 
 									if (count((array)$res['REPORTS'][$key]) > 0)
 									{
-										if (strlen($arReport['REPORT']) > 150)
+										if (mb_strlen($arReport['REPORT']) > 150)
 										{
 											$arReport['REPORT_FULL'] = $arReport['REPORT'];
-											$arReport['REPORT'] = substr($arReport['REPORT'], 0, 150) . '...';
+											$arReport['REPORT'] = mb_substr($arReport['REPORT'], 0, 150).'...';
 										}
 
 										$res['REPORTS'][$key][0]['REPORT'] = htmlspecialcharsbx($arReport['REPORT']);
@@ -1226,7 +1226,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 						{
 							$report = preg_replace('/\s/', '', $_REQUEST['REPORT']);
 
-							if (strlen($report) <= 0)
+							if ($report == '')
 							{
 								$res = false;
 							}
@@ -1536,9 +1536,9 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 							}
 
 							$res['DESCRIPTION'] = HTMLToTxt($res['DESCRIPTION']);
-							if (strlen($res['DESCRIPTION']) > 150)
+							if (mb_strlen($res['DESCRIPTION']) > 150)
 							{
-								$res['DESCRIPTION'] = CUtil::closetags(substr($res['DESCRIPTION'], 0, 150)) . '...';
+								$res['DESCRIPTION'] = CUtil::closetags(mb_substr($res['DESCRIPTION'], 0, 150)) . '...';
 							}
 						}
 						else
@@ -1963,11 +1963,11 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 								if (IsAmPmMode() && ($key == 'UF_TM_MAX_START' || $key == 'UF_TM_MIN_FINISH'))
 								{
 									$v = trim($_REQUEST[$key]);
-									if (strlen($v) > 0)
+									if ($v <> '')
 									{
 										if (preg_match_all('/^(\d+):(\d+)\s*(am|pm)$/i', $v, $matches))
 										{
-											$v = (intval($matches[1][0]) + (strtolower($matches[3][0]) == 'pm' ? 12 : 0)) . ':' . $matches[2][0];
+											$v = (intval($matches[1][0]) + (mb_strtolower($matches[3][0]) == 'pm' ? 12 : 0)) . ':' . $matches[2][0];
 										}
 									}
 									$arFields[$key] = $v;
@@ -2303,10 +2303,10 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 
 												if (count($res['REPORTS'][$key]) > 0)
 												{
-													if (strlen($arReport['REPORT']) > 150)
+													if (mb_strlen($arReport['REPORT']) > 150)
 													{
 														$arReport['REPORT_FULL'] = $arReport['REPORT'];
-														$arReport['REPORT'] = substr($arReport['REPORT'], 0, 150) . '...';
+														$arReport['REPORT'] = mb_substr($arReport['REPORT'], 0, 150).'...';
 													}
 
 													$res['REPORTS'][$key][0]['REPORT'] = htmlspecialcharsbx($arReport['REPORT']);

@@ -109,9 +109,7 @@ this.BX.Crm = this.BX.Crm || {};
 	/**
 	 * Implements interface for works with marker
 	 */
-	var Marker =
-	/*#__PURE__*/
-	function (_Event$EventEmitter) {
+	var Marker = /*#__PURE__*/function (_Event$EventEmitter) {
 	  babelHelpers.inherits(Marker, _Event$EventEmitter);
 	  babelHelpers.createClass(Marker, null, [{
 	    key: "getMarkerFromPoint",
@@ -1135,9 +1133,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  return data;
 	}
 
-	var Column =
-	/*#__PURE__*/
-	function (_Kanban$Column) {
+	var Column = /*#__PURE__*/function (_Kanban$Column) {
 	  babelHelpers.inherits(Column, _Kanban$Column);
 
 	  function Column(options) {
@@ -1553,9 +1549,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Column;
 	}(main_kanban.Kanban.Column);
 
-	var Grid =
-	/*#__PURE__*/
-	function (_Kanban$Grid) {
+	var Grid = /*#__PURE__*/function (_Kanban$Grid) {
 	  babelHelpers.inherits(Grid, _Kanban$Grid);
 
 	  function Grid() {
@@ -1668,18 +1662,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Grid;
 	}(main_kanban.Kanban.Grid);
 
-	function _templateObject32() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span class=\"crm-st-generator-link-icon\" onclick=\"", "\">", "</span>\n\t\t\t"]);
-
-	  _templateObject32 = function _templateObject32() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
 	function _templateObject31() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span class=\"crm-st-robots-link-icon\"> </span>\n\t\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span class=\"crm-st-generator-link-icon\" onclick=\"", "\">", "</span>\n\t\t\t"]);
 
 	  _templateObject31 = function _templateObject31() {
 	    return data;
@@ -1689,7 +1673,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	function _templateObject30() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-category-action-drag\"\n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t>&nbsp;</span>\n\t\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span class=\"crm-st-robots-link-icon\"> </span>\n\t\t\t"]);
 
 	  _templateObject30 = function _templateObject30() {
 	    return data;
@@ -1699,7 +1683,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	function _templateObject29() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-category-info-title-container\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-category-action-drag\"\n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t>&nbsp;</span>\n\t\t\t"]);
 
 	  _templateObject29 = function _templateObject29() {
 	    return data;
@@ -1709,7 +1693,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	function _templateObject28() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-category-action-buttons\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-category-info-title-container\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"]);
 
 	  _templateObject28 = function _templateObject28() {
 	    return data;
@@ -1719,7 +1703,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	function _templateObject27() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<input class=\"crm-st-category-info-title-editor\" \n\t\t\t\t\t onkeydown=\"", "\"\n\t\t\t\t\t onblur=\"", "\"\n\t\t\t\t\t value=\"", "\"\n\t\t\t\t\t placeholder=\"", "\"\n\t\t\t\t >\n\t\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-category-action-buttons\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"]);
 
 	  _templateObject27 = function _templateObject27() {
 	    return data;
@@ -1729,7 +1713,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	function _templateObject26() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<h3 class=\"crm-st-category-info-title\" title=\"", "\">", "</h3>\n\t\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<input class=\"crm-st-category-info-title-editor\" \n\t\t\t\t\t onkeydown=\"", "\"\n\t\t\t\t\t onblur=\"", "\"\n\t\t\t\t\t value=\"", "\"\n\t\t\t\t\t placeholder=\"", "\"\n\t\t\t\t >\n\t\t\t"]);
 
 	  _templateObject26 = function _templateObject26() {
 	    return data;
@@ -1739,7 +1723,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	function _templateObject25() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\tdisplay: none;\n\t\t\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<h3 class=\"crm-st-category-info-title\" title=\"", "\">", "</h3>\n\t\t\t"]);
 
 	  _templateObject25 = function _templateObject25() {
 	    return data;
@@ -1749,7 +1733,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	function _templateObject24() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-remove-button\" \n\t\t\t\t\tonclick=\"", "\" \n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t> </span>\n\t\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\tdisplay: none;\n\t\t\t\t"]);
 
 	  _templateObject24 = function _templateObject24() {
 	    return data;
@@ -1759,7 +1743,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	function _templateObject23() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-option-button\" \n\t\t\t\t\tonclick=\"", "\" \n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t> </span>\n\t\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-remove-button\" \n\t\t\t\t\tonclick=\"", "\" \n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t> </span>\n\t\t\t"]);
 
 	  _templateObject23 = function _templateObject23() {
 	    return data;
@@ -1769,7 +1753,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	function _templateObject22() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\ttitle: ", ";\n\t\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-option-button\" \n\t\t\t\t\tonclick=\"", "\" \n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t> </span>\n\t\t\t"]);
 
 	  _templateObject22 = function _templateObject22() {
 	    return data;
@@ -1987,9 +1971,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	  return data;
 	}
-	var Category =
-	/*#__PURE__*/
-	function (_Event$EventEmitter) {
+	var Category = /*#__PURE__*/function (_Event$EventEmitter) {
 	  babelHelpers.inherits(Category, _Event$EventEmitter);
 	  babelHelpers.createClass(Category, null, [{
 	    key: "createGrid",
@@ -2601,15 +2583,15 @@ this.BX.Crm = this.BX.Crm || {};
 	      var title = this.getTitle();
 	      var titleEditor = this.getTitleEditor();
 	      var value = titleEditor.value;
-	      var safeValue = main_core.Text.encode(value.trim()) || main_core.Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER');
+	      var newTitle = value.trim() || main_core.Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER');
 
-	      if (title.innerHTML !== safeValue) {
-	        title.innerHTML = safeValue;
-	        main_core.Tag.attrs(title)(_templateObject22(), value.trim());
-	        this.name = safeValue;
+	      if (title.innerText !== newTitle) {
+	        title.innerText = newTitle;
+	        main_core.Dom.attr(title, 'title', newTitle);
+	        this.name = newTitle;
 	        this.emit('Category:title:save', {
 	          categoryId: this.id,
-	          value: safeValue
+	          value: newTitle
 	        });
 	      }
 	    }
@@ -2640,7 +2622,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      var _this20 = this;
 
 	      return this.cache.remember('optionButton', function () {
-	        var button = main_core.Tag.render(_templateObject23(), _this20.onOptionButtonClick.bind(_this20), main_core.Loc.getMessage('CRM_ST_EDIT_RIGHTS_CATEGORY'));
+	        var button = main_core.Tag.render(_templateObject22(), _this20.onOptionButtonClick.bind(_this20), main_core.Loc.getMessage('CRM_ST_EDIT_RIGHTS_CATEGORY'));
 	        return button;
 	      });
 	    }
@@ -2704,7 +2686,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return _this21.id !== category.id && category.id !== 'stub';
 	      }).map(function (category) {
 	        return {
-	          text: category.name,
+	          text: main_core.Text.encode(category.name),
 	          dataset: {
 	            categoryId: category.id,
 	            access: category.access
@@ -2782,10 +2764,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      var _this22 = this;
 
 	      return this.cache.remember('removeButton', function () {
-	        var button = main_core.Tag.render(_templateObject24(), _this22.onRemoveButtonClick.bind(_this22), main_core.Loc.getMessage('CRM_ST_REMOVE_CATEGORY'));
+	        var button = main_core.Tag.render(_templateObject23(), _this22.onRemoveButtonClick.bind(_this22), main_core.Loc.getMessage('CRM_ST_REMOVE_CATEGORY'));
 
 	        if (String(_this22.id) === '0') {
-	          main_core.Tag.style(button)(_templateObject25());
+	          main_core.Tag.style(button)(_templateObject24());
 	        }
 
 	        return button;
@@ -2886,23 +2868,22 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getTitle",
 	    value: function getTitle() {
-	      var _this25 = this;
-
+	      var safeTitle = main_core.Text.encode(this.name);
 	      return this.cache.remember('title', function () {
-	        return main_core.Tag.render(_templateObject26(), _this25.name, _this25.name);
+	        return main_core.Tag.render(_templateObject25(), safeTitle, safeTitle);
 	      });
 	    }
 	  }, {
 	    key: "getTitleEditor",
 	    value: function getTitleEditor() {
-	      var _this26 = this;
+	      var _this25 = this;
 
 	      return this.cache.remember('titleEditor', function () {
-	        var onKeyDown = _this26.onTitleEditorKeyDown.bind(_this26);
+	        var onKeyDown = _this25.onTitleEditorKeyDown.bind(_this25);
 
-	        var onBlur = _this26.onTitleEditorBlur.bind(_this26);
+	        var onBlur = _this25.onTitleEditorBlur.bind(_this25);
 
-	        return main_core.Tag.render(_templateObject27(), onKeyDown, onBlur, _this26.name, main_core.Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER'));
+	        return main_core.Tag.render(_templateObject26(), onKeyDown, onBlur, main_core.Text.encode(_this25.name), main_core.Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER'));
 	      });
 	    }
 	  }, {
@@ -2930,26 +2911,26 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getActionsButtons",
 	    value: function getActionsButtons() {
-	      var _this27 = this;
+	      var _this26 = this;
 
 	      return this.cache.remember('getActionsButtons', function () {
-	        return main_core.Tag.render(_templateObject28(), _this27.canEditTunnels ? _this27.getEditButton() : '', _this27.canEditTunnels ? _this27.getOptionButton() : '', _this27.canEditTunnels ? _this27.getRemoveButton() : '');
+	        return main_core.Tag.render(_templateObject27(), _this26.canEditTunnels ? _this26.getEditButton() : '', _this26.canEditTunnels ? _this26.getOptionButton() : '', _this26.canEditTunnels ? _this26.getRemoveButton() : '');
 	      });
 	    }
 	  }, {
 	    key: "getTitleContainer",
 	    value: function getTitleContainer() {
-	      var _this28 = this;
+	      var _this27 = this;
 
 	      return this.cache.remember('titleContainer', function () {
-	        return main_core.Tag.render(_templateObject29(), _this28.getTitle(), _this28.getTitleEditor(), _this28.getActionsButtons());
+	        return main_core.Tag.render(_templateObject28(), _this27.getTitle(), _this27.getTitleEditor(), _this27.getActionsButtons());
 	      });
 	    }
 	  }, {
 	    key: "getDragButton",
 	    value: function getDragButton() {
 	      return this.cache.remember('dragButton', function () {
-	        return main_core.Tag.render(_templateObject30(), main_core.Loc.getMessage('CRM_ST_CATEGORY_DRAG_BUTTON'));
+	        return main_core.Tag.render(_templateObject29(), main_core.Loc.getMessage('CRM_ST_CATEGORY_DRAG_BUTTON'));
 	      });
 	    }
 	  }, {
@@ -2979,7 +2960,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "showConfirmRemovePopup",
 	    value: function showConfirmRemovePopup() {
-	      var _this29 = this;
+	      var _this28 = this;
 
 	      return new Promise(function (resolve) {
 	        void new main_popup.PopupWindow({
@@ -2987,7 +2968,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          overlay: {
 	            opacity: 30
 	          },
-	          titleBar: main_core.Loc.getMessage('CRM_ST_REMOVE_CATEGORY_CONFIRM_POPUP_TITLE').replace('#name#', _this29.getTitle().innerText),
+	          titleBar: main_core.Loc.getMessage('CRM_ST_REMOVE_CATEGORY_CONFIRM_POPUP_TITLE').replace('#name#', _this28.getTitle().innerText),
 	          content: main_core.Loc.getMessage('CRM_ST_REMOVE_CATEGORY_CONFIRM_POPUP_DESCRIPTION'),
 	          buttons: [new main_popup.PopupWindowButton({
 	            text: main_core.Loc.getMessage('CRM_ST_REMOVE_CATEGORY_CONFIRM_REMOVE_BUTTON_LABEL'),
@@ -3018,7 +2999,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "getRobotsLinkIcon",
 	    value: function getRobotsLinkIcon() {
 	      return this.cache.remember('robotsLinkIcon', function () {
-	        return main_core.Tag.render(_templateObject31());
+	        return main_core.Tag.render(_templateObject30());
 	      });
 	    }
 	  }, {
@@ -3034,29 +3015,29 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "adjustRobotsLinkIcon",
 	    value: function adjustRobotsLinkIcon() {
-	      var _this30 = this;
+	      var _this29 = this;
 
 	      setTimeout(function () {
-	        if (_this30.hasTunnels()) {
-	          _this30.showRobotsLinkIcon();
+	        if (_this29.hasTunnels()) {
+	          _this29.showRobotsLinkIcon();
 
 	          return;
 	        }
 
-	        _this30.hideRobotsLinkIcon();
+	        _this29.hideRobotsLinkIcon();
 	      });
 	    }
 	  }, {
 	    key: "getGeneratorLinkIcon",
 	    value: function getGeneratorLinkIcon() {
-	      var _this31 = this;
+	      var _this30 = this;
 
 	      return this.cache.remember('generatorLinkIcon', function () {
 	        var onClick = function onClick() {
-	          return BX.SidePanel.Instance.open(_this31.generatorsListUrl);
+	          return BX.SidePanel.Instance.open(_this30.generatorsListUrl);
 	        };
 
-	        return main_core.Tag.render(_templateObject32(), onClick, _this31.generatorsCount);
+	        return main_core.Tag.render(_templateObject31(), onClick, _this30.generatorsCount);
 	      });
 	    }
 	  }, {
@@ -3069,9 +3050,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}(main_core.Event.EventEmitter);
 	babelHelpers.defineProperty(Category, "instances", []);
 
-	var Backend =
-	/*#__PURE__*/
-	function () {
+	var Backend = /*#__PURE__*/function () {
 	  function Backend() {
 	    babelHelpers.classCallCheck(this, Backend);
 	  }
@@ -3265,9 +3244,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	babelHelpers.defineProperty(Backend, "component", 'bitrix:crm.sales.tunnels');
 
-	var CategoryStub =
-	/*#__PURE__*/
-	function (_Category) {
+	var CategoryStub = /*#__PURE__*/function (_Category) {
 	  babelHelpers.inherits(CategoryStub, _Category);
 
 	  function CategoryStub(options) {
@@ -3309,9 +3286,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  return main_core.Loc.getMessage('CRM_ST_SAVE_ERROR');
 	}
 
-	var Manager =
-	/*#__PURE__*/
-	function () {
+	var Manager = /*#__PURE__*/function () {
 	  function Manager(options) {
 	    var _this = this;
 

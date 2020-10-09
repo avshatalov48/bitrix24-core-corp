@@ -5,7 +5,7 @@ CJSCore::Init(array('timeman'));
 	?><span class="feed-workday-left-side"><?
 		?><span class="feed-workday-table-text"><?=GetMessage("TIMEMAN_ENTRY_FROM")?>:</span><?
 		?><span class="feed-workday-avatar"
-			<? if (strlen($arParams["USER"]["PHOTO"]) > 0): ?>
+			<? if ($arParams["USER"]["PHOTO"] <> ''): ?>
 				style="background:url('<?=$arParams["USER"]["PHOTO"]?>') no-repeat center; background-size: cover;"
 			<? endif ?>
 			><?
@@ -20,7 +20,7 @@ CJSCore::Init(array('timeman'));
 	?><span class="feed-workday-right-side"><?
 		?><span class="feed-workday-table-text"><?=GetMessage("TIMEMAN_ENTRY_TO")?>:</span><?
 		?><span class="feed-workday-avatar"
-			<? if (strlen($arParams["MANAGER"]["PHOTO"]) > 0): ?>
+			<? if ($arParams["MANAGER"]["PHOTO"] <> ''): ?>
 				style="background:url('<?=$arParams["MANAGER"]["PHOTO"]?>') no-repeat center; background-size: cover;"
 			<? endif ?>
 			><?
