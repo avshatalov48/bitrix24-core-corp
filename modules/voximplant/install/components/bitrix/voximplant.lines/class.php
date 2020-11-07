@@ -280,7 +280,7 @@ class VoximplantLinesComponent extends \CBitrixComponent
 			"ID" => $row["ID"],
 			"NAME" => "<span class='voximplant-grid-icon voximplant-grid-sip'>" . $name . "</span>",
 			"TYPE" => $this->getLineTypeName(CVoxImplantConfig::MODE_SIP),
-			"DESCRIPTION" => CVoxImplantSip::getConnectionDescription($row),
+			"DESCRIPTION" => htmlspecialcharsbx(CVoxImplantSip::getConnectionDescription($row)),
 		];
 	}
 

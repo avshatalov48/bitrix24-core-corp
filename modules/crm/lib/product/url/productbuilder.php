@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Product\Url;
 
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 
 if (Loader::includeModule('catalog'))
 {
@@ -13,9 +14,41 @@ if (Loader::includeModule('catalog'))
 
 		protected const PATH_PREFIX = '/crm/catalog/';
 
+		public const PAGE_CSV_IMPORT = 'csvImport';
+
 		public function use(): bool
 		{
 			return (defined('CATALOG_PRODUCT') && defined('CRM_MODE'));
+		}
+
+		public function getContextMenuItems(string $pageType, array $items = [], array $options = []): ?array
+		{
+			if ($pageType !== self::PAGE_ELEMENT_LIST && $pageType !== self::PAGE_SECTION_LIST)
+			{
+				return null;
+			}
+
+			$result = [];
+
+			$importUrl = $this->fillUrlTemplate(
+				$this->getUrlTemplate(self::PAGE_CSV_IMPORT),
+				$this->templateVariables
+			);
+			if ($importUrl !== null)
+			{
+				$result[] = [
+					'TEXT' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_CSV_IMPORT_NAME'),
+					'TITLE' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_CSV_IMPORT_TITLE'),
+					'ONCLICK' => "location.href='".htmlspecialcharsbx($importUrl)."'"
+				];
+			}
+			unset($importUrl);
+			if (!empty($items))
+			{
+				$result = array_merge($result, $items);
+			}
+
+			return (!empty($result) ? $result: null);
 		}
 
 		protected function initUrlTemplates(): void
@@ -70,6 +103,9 @@ if (Loader::includeModule('catalog'))
 			$this->urlTemplates[self::PAGE_ELEMENT_SEARCH] = '/bitrix/tools/iblock/element_search.php'
 				.'?#LANGUAGE#'
 				.'#ADDITIONAL_PARAMETERS#';
+
+			$this->urlTemplates[self::PAGE_CSV_IMPORT] = '#PATH_PREFIX#'
+				.'import/';
 		}
 	}
 }

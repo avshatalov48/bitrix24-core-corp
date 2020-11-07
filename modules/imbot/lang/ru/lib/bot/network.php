@@ -1,6 +1,6 @@
-<?
+<?php
 $MESS["IMBOT_NETWORK_BOT_WORK_POSITION"] = "Открытая линия";
-$MESS["IMBOT_NETWORK_ERROR_BOT_NOT_FOUND"] = "Сообщение не отправлено![br]Отправка сообщений в данную открытую линию заблокирована.";
+$MESS["IMBOT_NETWORK_ERROR_LINE_DISABLED"] = "Сообщение не отправлено![br]Отправка сообщений в данную открытую линию заблокирована.";
 $MESS["IMBOT_NETWORK_ERROR_NOT_FOUND"] = "Сообщение не отправлено![br]Открытая линия в данный момент не доступна.";
 $MESS["IMBOT_NETWORK_FDC_END_WELCOME_1"] = "Здравствуйте, #USER_NAME#!
 
@@ -69,4 +69,18 @@ $MESS["IMBOT_NETWORK_FDC_30_WITH_SUPPORT_BOT"] = "Чат с Консультан
 $MESS["IMBOT_NETWORK_FDC_30_WITH_SUPPORT_BOT_2"] = "Спасибо, что выбрали тариф \"#TARIFF_NAME#\"! :) Теперь у вас есть #LINK_START_4#новый чат с Поддержкой для коммерческих клиентов#LINK_END_4#. Мы с удовольствием ответим на все вопросы и поможем вам :) 
 
 Этот чат закрываем, чтобы не запутаться :) Вся история сохранится, вы всегда сможете посмотреть переписку.";
-?>
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_EMPTY"] = "В настройках модуля \"Чат-боты Битрикс24\" необходимо указать публичный адрес сайта";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_MALFORMED"] = "Указан не корректный публичный адрес сайта.";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_LOCALHOST"] = "Публичный адрес сайта указывает на локальный хост: #HOST#";
+$MESS["IMBOT_NETWORK_ERROR_NETWORK_ERROR"] = "Ошибка сетевого соединения.";
+$MESS["IMBOT_NETWORK_ERROR_ANSWER_MALFORMED"] = "Получен ответ сервера не в JSON формате.";
+$MESS["IMBOT_NETWORK_ERROR_UNKNOWN_COMMAND"] = "Неправильная команда или несоответствие версий.";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_CONNECT_ERROR"] = "Ошибка проверки публичного адреса сайта: соединение не установлено.";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_WRONG_ANSWER_CODE"] = "Ошибка проверки публичного адреса сайта: неправильный http код ответа сервера.";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_ANSWER_MALFORMED"] = "Ошибка проверки публичного адреса сайта: нераспознаваемый ответ сервера.";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_WRONG_ANSWER"] = "Ошибка проверки публичного адреса сайта: неправильный ответ сервера.";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_FAIL"] = "Указанный публичный адрес сайта не доступен (код: #ERROR#).";
+$MESS["IMBOT_NETWORK_ERROR_TARIFF_NOT_FOUND"] = "Не удалось получить настройки для данного тарифа.";
+$MESS["IMBOT_NETWORK_ERROR_SETTINGS_FAIL"] = "Не удалось получить настройки (код: #ERROR#).";
+$MESS["IMBOT_NETWORK_ERROR_BOT_NOT_FOUND"] = "Открытая линия в данный момент не доступна.";
+$MESS["IMBOT_NETWORK_ERROR_LICENCE_ERROR"] = "Лицензия указанного сайта недействительна.";

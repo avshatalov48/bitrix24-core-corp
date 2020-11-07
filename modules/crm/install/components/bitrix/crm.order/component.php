@@ -2,6 +2,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use \Bitrix\Crm\Settings\OrderSettings;
+use Bitrix\Crm\Product\Url;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -43,6 +44,15 @@ $componentPage = '';
 $arComponentVariables = array('order_id', 'check_id', 'shipment_id', 'payment_id');
 
 $arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);
+
+$arParams['BUILDER_CONTEXT'] = isset($arParams['BUILDER_CONTEXT']) ? $arParams['BUILDER_CONTEXT'] : '';
+if (
+	$arParams['BUILDER_CONTEXT'] != Url\ShopBuilder::TYPE_ID
+	&& $arParams['BUILDER_CONTEXT'] != Url\ProductBuilder::TYPE_ID
+)
+{
+	$arParams['BUILDER_CONTEXT'] = Url\ShopBuilder::TYPE_ID;
+}
 
 if ($arParams['SEF_MODE'] == 'Y')
 {

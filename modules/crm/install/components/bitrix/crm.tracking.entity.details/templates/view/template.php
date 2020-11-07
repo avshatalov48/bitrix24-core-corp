@@ -128,48 +128,57 @@ $containerId = 'crm-tracking-entity-details-view';
 		BX.ready(function () {
 			let stopPropagation = true;
 			let context = BX('<?=$containerId?>');
-			let blocks = context.querySelectorAll('[data-role="trace"]');
-			Array.prototype.slice.call(blocks).forEach(function (block) {
-				let edit = block.querySelector('[data-role="trace/edit"]');
-				let view = block.querySelector('[data-role="trace/view"]');
-
-				let className = 'crm-tracking-entity-details-hidden';
-				let adjustText = function () {
-					view.textContent = BX.hasClass(block, className)
-						? view.getAttribute('data-caption-show')
-						: view.getAttribute('data-caption-hide')
-				};
-				adjustText();
-				BX.bind(view, 'click', function () {
-					BX.hasClass(block, className)
-						? BX.removeClass(block, className)
-						: BX.addClass(block, className);
-
-					adjustText();
-				});
-				BX.bind(edit, 'mouseup', function () {
-					stopPropagation = false;
-				});
-			}, this);
-
-			let defView = context.querySelector('[data-role="trace/def"]');
-			if (defView)
+			if (context)
 			{
-				BX.bind(defView, 'mouseup', function () {
-					stopPropagation = false;
-				});
-			}
-
-			let handler = function (e) {
-				if (!stopPropagation)
+				let blocks = context.querySelectorAll('[data-role="trace"]');
+				Array.prototype.slice.call(blocks).forEach(function(block)
 				{
-					stopPropagation = true;
-					return;
+					let edit = block.querySelector('[data-role="trace/edit"]');
+					let view = block.querySelector('[data-role="trace/view"]');
+
+					let className = 'crm-tracking-entity-details-hidden';
+					let adjustText = function()
+					{
+						view.textContent = BX.hasClass(block, className)
+							? view.getAttribute('data-caption-show')
+							: view.getAttribute('data-caption-hide')
+					};
+					adjustText();
+					BX.bind(view, 'click', function()
+					{
+						BX.hasClass(block, className)
+							? BX.removeClass(block, className)
+							: BX.addClass(block, className);
+
+						adjustText();
+					});
+					BX.bind(edit, 'mouseup', function()
+					{
+						stopPropagation = false;
+					});
+				}, this);
+
+				let defView = context.querySelector('[data-role="trace/def"]');
+				if (defView)
+				{
+					BX.bind(defView, 'mouseup', function()
+					{
+						stopPropagation = false;
+					});
 				}
-				e.stopPropagation();
-				e.stopImmediatePropagation();
-			};
-			BX.bind(context, 'mouseup', handler);
+
+				let handler = function(e)
+				{
+					if (!stopPropagation)
+					{
+						stopPropagation = true;
+						return;
+					}
+					e.stopPropagation();
+					e.stopImmediatePropagation();
+				};
+				BX.bind(context, 'mouseup', handler);
+			}
 		})
 	</script>
 </div>

@@ -1636,7 +1636,7 @@ if ($bTaxMode)
 			'CITY_OUT_LOCATION' => 'Y',
 			'LOCATION_VALUE' => $locValue,
 			'ORDER_PROPS_ID' => 'DEAL_'.$arResult['ELEMENT']['ID'],
-			'ONCITYCHANGE' => 'BX.onCustomEvent(\'CrmProductRowSetLocation\', [\'LOC_CITY\']);',
+			'ONCITYCHANGE' => 'CrmProductRowSetLocation',
 			'SHOW_QUICK_CHOOSE' => 'N'/*,
 			'SIZE1' => $arProperties['SIZE1']*/
 		),

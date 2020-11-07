@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ERROR_MAIL_FROM"] = "The \"From\" field is incorrect.";
 $MESS["CRM_FIELD_AUTO_GEN_RC"] = "Enable repeat sales mode";
 $MESS["CRM_FIELD_AUTO_USING_FINISHED_LEAD"] = "Enable legacy lead creation mode";
@@ -58,6 +58,7 @@ $MESS["CRM_FIELD_SERVICE_CODE_ALLOCATION"] = "Service code";
 $MESS["CRM_FIELD_VIEW_EVENT_GROUPING_INTERVAL"] = "Time interval for grouping events";
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "The CRM module is not installed.";
 $MESS["CRM_PERMISSION_DENIED"] = "Access denied";
+$MESS["CRM_RECYCLEBIN_TTL_TITLE"] = "Delete items moved to the Recycle Bin";
 $MESS["CRM_SECTION_ACTIVITY_CALENDAR"] = "Items in calendar";
 $MESS["CRM_SECTION_ACTIVITY_GENERAL_CONFIG"] = "Activity common parameters";
 $MESS["CRM_SECTION_ACTIVITY_INCOMING_EMAIL_CONFIG"] = "Incoming e-mail parameters";
@@ -75,4 +76,3 @@ $MESS["CRM_SECTION_MAIL_INFO"] = "Settings";
 $MESS["CRM_SECTION_QUOTE_CONFIG"] = "Quote configuration";
 $MESS["CRM_SM_LIST"] = "Settings";
 $MESS["SUBSCRIBE_MODULE_NOT_INSTALLED"] = "The Subscription module is not installed.";
-?>

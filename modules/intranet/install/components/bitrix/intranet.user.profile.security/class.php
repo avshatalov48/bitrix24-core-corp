@@ -40,9 +40,7 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 			if (Loader::includeModule('bitrix24'))
 			{
 				$isNeedSocServTab = false;
-				if (isset($activeSocServ['zoom']) &&
-					\Bitrix\Main\Config\Option::get('socialservices', 'zoom_cloud_enabled', 'N') === 'Y'
-				)
+				if (isset($activeSocServ['zoom']))
 				{
 					if (\CBitrix24::IsLicensePaid() || \CBitrix24::IsNfrLicense() || \CBitrix24::IsDemoLicense())
 					{

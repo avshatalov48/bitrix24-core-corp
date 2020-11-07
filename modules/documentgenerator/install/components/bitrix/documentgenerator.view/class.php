@@ -100,7 +100,6 @@ class DocumentsViewComponent extends CBitrixComponent
 		{
 			$updateResult = ExternalLinkTable::update($link['ID'], [
 				'VIEWED_TIME' => new \Bitrix\Main\Type\DateTime(),
-				'VIEWED_IP' => \Bitrix\Main\Application::getInstance()->getContext()->getServer()->getRemoteAddr(),
 			]);
 			$this->isFirstTime = $updateResult->isSuccess();
 		}

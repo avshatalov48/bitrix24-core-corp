@@ -14,7 +14,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();?>
 			<?=Loc::getMessage('DELIVERY_SERVICE_YANDEX_TAXI_CONNECT_TEXT_MORE')?>
 		</a>
 		<div class="salescenter-delivery-install-btn-container">
-			<button onclick="window.open('//taxi.yandex.ru/business/registration#form','_blank');return false;" class="ui-btn ui-btn-primary">
+			<button onclick="window.open('//taxi.yandex.ru/business/registration?ya_source=businessdelivery&ya_medium=module&ya_campaign=bitrix24&#form','_blank');return false;" class="ui-btn ui-btn-primary">
 				<?=Loc::getMessage('DELIVERY_SERVICE_YANDEX_TAXI_SIGN_UP')?>
 			</button>
 		</div>

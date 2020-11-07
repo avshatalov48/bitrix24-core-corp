@@ -7,8 +7,6 @@ if (!Main\Loader::includeModule('sale'))
 	return;
 }
 
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/general/order_tax.php");
-
 /**
  * Attention!
  * Temporary solution. After refactoring this class will drop

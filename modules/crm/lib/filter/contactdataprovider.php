@@ -10,7 +10,7 @@ use Bitrix\Crm\Counter\EntityCounterType;
 
 Loc::loadMessages(__FILE__);
 
-class ContactDataProvider extends EntityDataProvider
+class ContactDataProvider extends Main\Filter\EntityDataProvider
 {
 	/** @var ContactSettings|null */
 	protected $settings = null;

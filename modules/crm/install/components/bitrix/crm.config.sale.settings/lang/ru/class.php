@@ -52,6 +52,7 @@ $MESS["CRM_CHECK_TYPE_ON_PAY_ADVANCE"] = "Аванс";
 $MESS["CRM_CHECK_TYPE_ON_PAY_PREPAYMENT"] = "Предоплата";
 $MESS["CRM_CF_DEF_CURRENCY"] = "Валюта по умолчанию";
 $MESS["CRM_CF_USE_STORE_CONTROL"] = "Включить складской учет";
+$MESS["CRM_CF_USE_STORE_CONTROL_LOCK_TARIFF"] = "Перейти на расширенный тариф";
 $MESS["CRM_CF_ENABLE_RESERVATION"] = "Включить резервирование";
 $MESS["CRM_CF_RESERVATION_CLEAR_PERIOD"] = "Снятие резервов (через сколько дней)";
 $MESS["CRM_CF_PRODUCT_QUANTITY_DECREASE"] = "Количество товара уменьшается";

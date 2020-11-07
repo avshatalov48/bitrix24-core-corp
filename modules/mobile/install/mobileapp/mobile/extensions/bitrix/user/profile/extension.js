@@ -409,6 +409,10 @@
 			return true;
 		}
 
+		/**
+		 *
+		 * @returns {JSPopoverMenu}
+		 */
 		get popupMenu()
 		{
 			if(!this._popupMenu)

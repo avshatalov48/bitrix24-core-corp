@@ -7,7 +7,7 @@ use Bitrix\Crm;
 
 Loc::loadMessages(__FILE__);
 
-class TimelineDataProvider extends DataProvider
+class TimelineDataProvider extends Main\Filter\DataProvider
 {
 	/** @var TimelineSettings|null */
 	protected $settings = null;

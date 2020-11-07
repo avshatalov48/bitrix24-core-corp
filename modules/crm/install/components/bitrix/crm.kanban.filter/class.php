@@ -2,47 +2,51 @@
 
 class CrmKanbanFilterComponent extends \CBitrixComponent
 {
-	protected $type = '';
-	protected $types = array();
-
-	/**
-	 * Init class' vars.
-	 */
-	protected function init()
+	protected function init(): bool
 	{
 		if (!\Bitrix\Main\Loader::includeModule('crm'))
 		{
 			return false;
 		}
-		$this->types = array(
-			'lead' => \CCrmOwnerType::LeadName,
-			'deal' => \CCrmOwnerType::DealName,
-			'quote' => \CCrmOwnerType::QuoteName,
-			'invoice' => \CCrmOwnerType::InvoiceName,
-			'order' => \CCrmOwnerType::OrderName,
-		);
-		$this->type = mb_strtoupper(isset($this->arParams['ENTITY_TYPE'])? $this->arParams['ENTITY_TYPE'] : '');
-		if (!$this->type || !in_array($this->type, $this->types))
+
+		$type = $this->arParams['ENTITY_TYPE'] ?? '';
+		$entity = \Bitrix\Crm\Kanban\Entity::getInstance($type);
+		if(!$entity)
 		{
 			return false;
 		}
-		else
+
+		$categoryId = \Bitrix\Crm\Kanban\Helper::getCategoryId();
+		if($categoryId > 0 && $entity->isCategoriesSupported())
 		{
-			$this->arParams['ENTITY_TYPE'] = $this->type;
-		}
-		if (!isset($this->arParams['NAVIGATION_BAR']) || !is_array($this->arParams['NAVIGATION_BAR']))
-		{
-			$this->arParams['NAVIGATION_BAR'] = array();
+			$entity->setCategoryId($categoryId);
 		}
 
+		$filterParams = [
+			'LIMITS' => null,
+		];
+
 		$searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitRestriction();
-		$entityTypeID = \CCrmOwnerType::resolveID($this->type);
+		$entityTypeID = $entity->getTypeId();
 		if($searchRestriction->isExceeded($entityTypeID))
 		{
-			$this->arResult['LIVE_SEARCH_LIMIT_INFO'] = $searchRestriction->prepareStubInfo(
-				array('ENTITY_TYPE_ID' => $entityTypeID)
+			$filterParams['LIMITS'] = $searchRestriction->prepareStubInfo(
+				['LIMITS' => $entityTypeID]
 			);
 		}
+
+		$filter = $entity->getGridFilter();
+
+		$filterParams['GRID_ID'] = $entity->getGridId();
+		$filterParams['FILTER_ID'] = $entity->getGridId();
+		$filterParams['FILTER'] = $filter;
+		$filterParams['FILTER_FIELDS'] = $entity->getFilterOptions()->getFilter($filter);
+		$filterParams['FILTER_PRESETS'] = $entity->getFilterPresets();
+		$filterParams['ENABLE_LIVE_SEARCH'] = true;
+		$filterParams['NAVIGATION_BAR'] = $this->arParams['NAVIGATION_BAR'] ?: [];
+		$filterParams['LAZY_LOAD'] = $entity->getFilterLazyLoadParams() ?: false;
+
+		$this->arResult['filterParams'] = $filterParams;
 
 		return true;
 	}

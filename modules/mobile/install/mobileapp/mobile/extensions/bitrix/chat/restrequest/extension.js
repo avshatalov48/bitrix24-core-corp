@@ -26,6 +26,11 @@ ChatRestRequest.unregister = function (name, abort)
 	}
 };
 
+ChatRestRequest.isActive = function(name)
+{
+	return !!this.request[name];
+}
+
 ChatRestRequest.get = function(name)
 {
 	return this.request[name]? this.request[name]: null;

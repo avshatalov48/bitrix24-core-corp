@@ -888,6 +888,11 @@ export class Manager
 		Manager.openHelper(event, 'redirect=detail&code=11825299', 'pay_system_connect');
 	}
 
+	static openHowToConfigWoopkassaPaySystem(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=12183852', 'pay_system_connect');
+	}
+
 	static openHowToUseOfflineCashBox(event)
 	{
 		Manager.openHelper(event, 'redirect=detail&code=11271760', 'cashbox_connect');
@@ -1008,9 +1013,12 @@ export class Manager
 		{
 			url.setQueryParams(params);
 		}
+
+		let sliderOptions = params.hasOwnProperty('sliderOptions') ? params.sliderOptions : {};
+
 		return new Promise((resolve, reject) =>
 		{
-			Manager.openSlider(url.toString()).then((slider) =>
+			Manager.openSlider(url.toString(), sliderOptions).then((slider) =>
 			{
 				resolve(slider.getData());
 			}).catch((reason) =>

@@ -91,54 +91,42 @@ class OrderBuilder extends Order\OrderBuilderCrm
 
 			$paySystemList = Sale\PaySystem\Manager::getListWithRestrictions($payment);
 
-			$selectedPaySystem = null;
+			$applePayPaySystem = null;
+			$cashPaySystem = null;
 			$firstPaySystemInList = null;
 			foreach ($paySystemList as $paySystem)
 			{
-				if (
-					isset($this->formData['I_MESSAGE'])
-					&&
-					$this->formData['I_MESSAGE']
-					&&
-					Integration\SaleManager::getInstance()->isApplePayPayment($paySystem))
+				if ($this->isAllowApplePay($paySystem))
 				{
-					$selectedPaySystem = $paySystem;
-					break;
+					$applePayPaySystem = $paySystem;
 				}
 
 				if ($paySystem['ACTION_FILE'] === 'cash')
 				{
-					$selectedPaySystem = $paySystem;
-					break;
+					$cashPaySystem = $paySystem;
 				}
 
-				if (!$firstPaySystemInList
-					&&
-					(int)$paySystem['ID'] !== (int)Sale\PaySystem\Manager::getInnerPaySystemId())
+				if (!$firstPaySystemInList && (int)$paySystem['ID'] !== (int)Sale\PaySystem\Manager::getInnerPaySystemId())
 				{
 					$firstPaySystemInList = $paySystem;
 				}
 			}
 
-			if (!$selectedPaySystem)
+			if ($applePayPaySystem)
+			{
+				$selectedPaySystem = $applePayPaySystem;
+			}
+			elseif ($cashPaySystem)
+			{
+				$selectedPaySystem = $cashPaySystem;
+			}
+			else
 			{
 				$selectedPaySystem = $firstPaySystemInList;
 			}
 
 			if ($selectedPaySystem)
 			{
-				if (
-					isset($this->formData['I_MESSAGE'])
-					&&
-					$this->formData['I_MESSAGE']
-					&& !Integration\SaleManager::getInstance()->isApplePayPayment($selectedPaySystem)
-				)
-				{
-					$this->errorsContainer->addError(
-						new Main\Error("Apple Pay not found")
-					);
-				}
-
 				$fields['PAY_SYSTEM_ID'] = $selectedPaySystem['ID'];
 				$fields['PAY_SYSTEM_NAME'] = $selectedPaySystem['NAME'];
 			}
@@ -149,4 +137,17 @@ class OrderBuilder extends Order\OrderBuilderCrm
 		return $this;
 	}
 
+	/**
+	 * @param array $paySystem
+	 * @return bool
+	 * @throws Main\ArgumentNullException
+	 * @throws Main\ArgumentOutOfRangeException
+	 * @throws Main\LoaderException
+	 */
+	private function isAllowApplePay(array $paySystem): bool
+	{
+		return isset($this->formData['CONNECTOR'])
+			&& $this->formData['CONNECTOR'] === 'imessage'
+			&& Integration\SaleManager::getInstance()->isApplePayPayment($paySystem);
+	}
 }

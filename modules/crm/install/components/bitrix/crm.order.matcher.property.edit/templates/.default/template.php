@@ -7,6 +7,7 @@
  */
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Sale\Internals\Input;
 
 function renderInput($input, $name, $property)
@@ -34,7 +35,7 @@ function renderInput($input, $name, $property)
 					</span>
 				</div>
 				<div class="crm-entity-widget-content-block-inner">
-					<?=Input\Manager::getEditHtml($name, $input, $property[$name]).$input['RLABEL']?>
+					<?=Input\Manager::getEditHtml($name, $input, $property[$name]).HtmlFilter::encode($input['RLABEL'])?>
 
 					<?
 					if ($input['DESCRIPTION'])
@@ -68,7 +69,7 @@ function renderInput($input, $name, $property)
 					</span>
 				</div>
 				<div class="crm-entity-widget-content-block-inner">
-					<?=Input\Manager::getEditHtml($name, $input, $property[$name]).$input['RLABEL']?>
+					<?=Input\Manager::getEditHtml($name, $input, $property[$name]).HtmlFilter::encode($input['RLABEL'])?>
 
 					<?
 					if ($input['DESCRIPTION'])
@@ -101,7 +102,7 @@ function renderInput($input, $name, $property)
 					</span>
 				</div>
 				<div class="crm-entity-widget-content-block-inner">
-					<?=Input\Manager::getEditHtml($name, $input, $property[$name]).$input['RLABEL']?>
+					<?=Input\Manager::getEditHtml($name, $input, $property[$name]).HtmlFilter::encode($input['RLABEL'])?>
 
 					<?
 					if ($input['DESCRIPTION'])
@@ -135,7 +136,7 @@ function renderInput($input, $name, $property)
 					</span>
 				</div>
 				<div class="crm-entity-widget-content-block-inner crm-entity-widget-content-block-select">
-					<?=Input\Manager::getEditHtml($name, $input, $property[$name]).$input['RLABEL']?>
+					<?=Input\Manager::getEditHtml($name, $input, $property[$name]).HtmlFilter::encode($input['RLABEL'])?>
 
 					<?
 					if ($input['DESCRIPTION'])
@@ -168,7 +169,7 @@ function renderInput($input, $name, $property)
 					</span>
 				</div>
 				<div class="crm-entity-widget-content-block-inner">
-					<?=Input\Manager::getEditHtml($name, $input, $property[$name]).$input['RLABEL']?>
+					<?=Input\Manager::getEditHtml($name, $input, $property[$name]).HtmlFilter::encode($input['RLABEL'])?>
 
 					<?
 					if ($input['DESCRIPTION'])
@@ -202,7 +203,7 @@ function renderInput($input, $name, $property)
 					</span>
 				</div>
 				<div class="crm-entity-widget-content-block-inner">
-					<?=Input\Manager::getEditHtml($name, $input, $property[$name]).$input['RLABEL']?>
+					<?=Input\Manager::getEditHtml($name, $input, $property[$name]).HtmlFilter::encode($input['RLABEL'])?>
 
 					<?
 					if ($input['DESCRIPTION'])
@@ -235,7 +236,7 @@ function renderInput($input, $name, $property)
 					</span>
 				</div>
 				<div class="crm-entity-widget-content-block-inner">
-					<?=Input\Manager::getEditHtml($name, $input, $property[$name]).$input['RLABEL']?>
+					<?=Input\Manager::getEditHtml($name, $input, $property[$name]).HtmlFilter::encode($input['RLABEL'])?>
 
 					<?
 					if ($input['DESCRIPTION'])

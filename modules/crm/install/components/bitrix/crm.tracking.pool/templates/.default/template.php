@@ -12,7 +12,9 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 
-Extension::load(["ui.buttons", "ui.buttons.icons", "ui.icons", "popup", "ui.forms", "loader"]);
+$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
+
+Extension::load(["ui.buttons", "ui.buttons.icons", "ui.icons", "popup", "ui.forms", "loader", "ui.sidepanel-content"]);
 
 $containerId = 'crm-tracking-channel-pool';
 ?>
@@ -29,15 +31,11 @@ $containerId = 'crm-tracking-channel-pool';
 
 	<form method="post">
 		<?=bitrix_sessid_post();?>
-		<div class="crm-tracking-channel-pool-block">
-			<div class="crm-tracking-channel-pool-header">
+		<div class="ui-slider-section">
+			<div class="ui-slider-heading-3">
 				<?=Loc::getMessage('CRM_TRACKING_CHANNEL_POOL_HEAD_' . $arParams['TYPE_NAME'])?>
 			</div>
-			<div class="crm-tracking-channel-pool-desc">
-				<span class="crm-tracking-channel-pool-desc-text">
-					<?=Loc::getMessage('CRM_TRACKING_CHANNEL_POOL_DESC_' . $arParams['TYPE_NAME'])?>
-				</span>
-			</div>
+			<p class="ui-slider-paragraph-2"><?=Loc::getMessage('CRM_TRACKING_CHANNEL_POOL_DESC_' . $arParams['TYPE_NAME'])?></p>
 			<div class="crm-tracking-channel-pool-inner">
 				<div class="crm-tracking-channel-pool-inner-title">
 					<?=Loc::getMessage('CRM_TRACKING_CHANNEL_POOL_ITEMS_' . $arParams['TYPE_NAME'])?>:

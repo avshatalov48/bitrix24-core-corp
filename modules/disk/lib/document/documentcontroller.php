@@ -256,7 +256,7 @@ class DocumentController extends Internals\Controller
 			'APPLICATION' => $this->getApplication(),
 			'USER' => $this->getUser(),
 		));
-		include 'startpage.php';
+		include __DIR__ . '/../../document-startpage/startpage.php';
 
 		$this->end();
 	}

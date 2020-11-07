@@ -195,6 +195,11 @@ if(is_array($arResult['value']) && count($arResult['value']) > 0)
 
 		$arResult['value'] = ($arResult['userField']['VALUE'] ?: []);
 
+		if (!is_array($arResult['value']))
+		{
+			$arResult['value'] = [$arResult['value']];
+		}
+
 		Asset::getInstance()->addJs(
 			'/bitrix/js/mobile/userfield/mobile_field.js'
 		);

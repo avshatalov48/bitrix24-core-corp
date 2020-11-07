@@ -7,7 +7,7 @@ foreach ($arResult["VALUE"] as $res):
 	$name = $arParams["arUserField"]["FIELD_NAME"];
 
 ?><div class="fields datetime">
-<input type="text" name="<?=$name?>_from" value="<?=$res[0]?>"<?
+<input type="text" name="<?=$name?>_from" value="<?=htmlspecialcharsbx($res[0])?>"<?
 	if (intval($arParams["arUserField"]["SETTINGS"]["SIZE"]) > 0):
 		?> size="<?=$arParams["arUserField"]["SETTINGS"]["SIZE"]?>"<?
 	else:
@@ -27,7 +27,7 @@ foreach ($arResult["VALUE"] as $res):
             "SHOW_TIME" => $showTime ? 'Y' : 'N'),
 		$component,
 		array("HIDE_ICONS" => "Y"));
-?><span class="date-interval-hellip">&hellip;</span><input type="text" name="<?=$name?>_to" value="<?=$res[1]?>"<?
+?><span class="date-interval-hellip">&hellip;</span><input type="text" name="<?=$name?>_to" value="<?=htmlspecialcharsbx($res[1])?>"<?
 	if (intval($arParams["arUserField"]["SETTINGS"]["SIZE"]) > 0):
 		?> size="<?=$arParams["arUserField"]["SETTINGS"]["SIZE"]?>"<?
 	else:

@@ -1,6 +1,9 @@
 <?php
 namespace Bitrix\Crm\Color;
 
+/**
+ * @deprecated
+ */
 class PhaseColorSchemeManager
 {
 	public static function resolveSchemeByEntityTypeID($entityTypeID, array $params = null)

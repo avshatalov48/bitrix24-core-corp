@@ -8,6 +8,8 @@
 namespace Bitrix\Crm\Tracking\UI;
 
 use Bitrix\Main\Application;
+use Bitrix\Main\Filter\EntityDataProvider;
+use Bitrix\Main\Filter\Field;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\DB;
 use Bitrix\Crm;
@@ -56,15 +58,15 @@ class Filter
 	 * Append filter fields.
 	 *
 	 * @param array &$fields Fields.
-	 * @param Crm\Filter\EntityDataProvider $entityDataProvider Entity filter data provider.
+	 * @param EntityDataProvider $entityDataProvider Entity filter data provider.
 	 * @return void
 	 */
-	public static function appendFields(array &$fields, Crm\Filter\EntityDataProvider $entityDataProvider)
+	public static function appendFields(array &$fields, EntityDataProvider $entityDataProvider)
 	{
 		if (Crm\Tracking\Manager::isAccessible())
 		{
 			$fieldId = self::SourceId;
-			$fields[$fieldId] = new Crm\Filter\Field(
+			$fields[$fieldId] = new Field(
 				$entityDataProvider,
 				$fieldId,
 				[
@@ -76,7 +78,7 @@ class Filter
 		}
 
 		$fieldId = self::ChannelCode;
-		$fields[$fieldId] = new Crm\Filter\Field(
+		$fields[$fieldId] = new Field(
 			$entityDataProvider,
 			$fieldId,
 			[

@@ -6,7 +6,7 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
-class InvoiceDataProvider extends EntityDataProvider
+class InvoiceDataProvider extends Main\Filter\EntityDataProvider
 {
 	/** @var InvoiceSettings|null */
 	protected $settings = null;

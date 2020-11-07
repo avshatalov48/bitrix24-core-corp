@@ -83,7 +83,7 @@ class FaceidTrackerSettingsComponent extends CBitrixComponent
 		// save new values
 		foreach ($optionValues as $option => $value)
 		{
-			\Bitrix\Main\Config\Option::set('faceid', strtolower($option), $value);
+			\Bitrix\Main\Config\Option::set('faceid', mb_strtolower($option), $value);
 		}
 	}
 

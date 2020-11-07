@@ -52,7 +52,7 @@ else
 			return $botId;
 		}
 
-		public static function checkPublicUrl()
+		public static function checkPublicUrl($publicUrl = null)
 		{
 			if (!$url = \Bitrix\Main\Config\Option::get(self::MODULE_ID, "portal_url", ""))
 				return false;

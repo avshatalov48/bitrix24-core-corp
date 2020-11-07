@@ -5,7 +5,9 @@ class CVoxImplantHttp
 	const TYPE_CP = 'CP';
 	const VERSION = 20;
 
-	private $controllerUrl = 'https://telephony.bitrix.info/telephony/portal.php';
+	const CONTROLLER_RU = 'https://telephony-ru.bitrix.info/telephony/portal.php';
+	const CONTROLLER_OTHER = 'https://telephony.bitrix.info/telephony/portal.php';
+
 	private $licenceCode = '';
 	private $domain = '';
 	private $type = '';
@@ -14,10 +16,7 @@ class CVoxImplantHttp
 	function __construct()
 	{
 		$this->error = new CVoxImplantError(null, '', '');
-		if (defined('VOXIMPLANT_CONTROLLER_URL'))
-		{
-			$this->controllerUrl = VOXIMPLANT_CONTROLLER_URL;
-		}
+
 		if(defined('BX24_HOST_NAME'))
 		{
 			$this->licenceCode = BX24_HOST_NAME;
@@ -35,6 +34,22 @@ class CVoxImplantHttp
 		$this->domain = self::GetServerAddress();
 
 		return true;
+	}
+
+	public static function GetControllerUrl()
+	{
+		if (defined('VOXIMPLANT_CONTROLLER_URL'))
+		{
+			return VOXIMPLANT_CONTROLLER_URL;
+		}
+
+		$account = new CVoxImplantAccount();
+		$accountLang = $account->GetAccountLang(false);
+		if ($accountLang === "kz" || $accountLang === "ru")
+		{
+			return static::CONTROLLER_RU;
+		}
+		return static::CONTROLLER_OTHER;
 	}
 
 	public static function GetPortalType()
@@ -937,7 +952,7 @@ class CVoxImplantHttp
 		));
 		$httpClient->setHeader('User-Agent', 'Bitrix Telephony');
 		$httpClient->setCharset(\Bitrix\Main\Context::getCurrent()->getCulture()->getCharset());
-		$result = $httpClient->query('POST', $this->controllerUrl, $params);
+		$result = $httpClient->query('POST', static::GetControllerUrl(), $params);
 
 		if (!$result)
 		{

@@ -3,6 +3,7 @@
 namespace Bitrix\Disk\Volume;
 
 use Bitrix\Disk\Volume;
+use Bitrix\Main\Application;
 use Bitrix\Main\Type\DateTime;
 
 /**
@@ -71,6 +72,12 @@ class Task
 	 */
 	public function fixState()
 	{
+		$connection = Application::getConnection();
+		if (!$connection->lock('volume', 10))
+		{
+			return false;
+		}
+
 		if ($this->getId() > 0)
 		{
 			$taskParams = array();
@@ -93,27 +100,29 @@ class Task
 			$taskParams['LAST_ERROR'] = $this->getLastError();
 
 			$result = \Bitrix\Disk\Internals\VolumeTable::update($this->getId(), $taskParams);
-
-			return $result->isSuccess();
 		}
-
-		$result = \Bitrix\Disk\Internals\VolumeTable::add(array(
-			'INDICATOR_TYPE' => $this->getIndicatorType(),
-			'OWNER_ID' => $this->getOwnerId(),
-			'STORAGE_ID' => $this->getParam('STORAGE_ID'),
-			'AGENT_LOCK' => $this->getStatus(),
-			self::DROP_UNNECESSARY_VERSION => $this->getStatusSubTask(self::DROP_UNNECESSARY_VERSION),
-			self::DROP_TRASHCAN => $this->getStatusSubTask(self::DROP_TRASHCAN),
-			self::EMPTY_FOLDER => $this->getStatusSubTask(self::EMPTY_FOLDER),
-			self::DROP_FOLDER => $this->getStatusSubTask(self::DROP_FOLDER),
-			'LAST_FILE_ID' => ($this->getLastFileId() > 0 ? $this->getLastFileId() : null),
-			'FAIL_COUNT' => $this->getFailCount(),
-			'LAST_ERROR' => $this->getLastError(),
-		));
-		if ($result->isSuccess())
+		else
 		{
-			$this->id = $result->getId();
+			$result = \Bitrix\Disk\Internals\VolumeTable::add(array(
+				'INDICATOR_TYPE' => $this->getIndicatorType(),
+				'OWNER_ID' => $this->getOwnerId(),
+				'STORAGE_ID' => $this->getParam('STORAGE_ID'),
+				'AGENT_LOCK' => $this->getStatus(),
+				self::DROP_UNNECESSARY_VERSION => $this->getStatusSubTask(self::DROP_UNNECESSARY_VERSION),
+				self::DROP_TRASHCAN => $this->getStatusSubTask(self::DROP_TRASHCAN),
+				self::EMPTY_FOLDER => $this->getStatusSubTask(self::EMPTY_FOLDER),
+				self::DROP_FOLDER => $this->getStatusSubTask(self::DROP_FOLDER),
+				'LAST_FILE_ID' => ($this->getLastFileId() > 0 ? $this->getLastFileId() : null),
+				'FAIL_COUNT' => $this->getFailCount(),
+				'LAST_ERROR' => $this->getLastError(),
+			));
+			if ($result->isSuccess())
+			{
+				$this->id = $result->getId();
+			}
 		}
+
+		$connection->unlock('volume');
 
 		return $result->isSuccess();
 	}

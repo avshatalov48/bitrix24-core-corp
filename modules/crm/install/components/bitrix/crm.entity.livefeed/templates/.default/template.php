@@ -110,8 +110,6 @@ if($arResult['ENABLE_MESSAGE_ADD']):
 		);
 endif;
 
-$liveFeedFilter = new CCrmLiveFeedFilter(array('EntityTypeID' => $entityTypeID));
-AddEventHandler('socialnetwork', 'OnSonetLogFilterProcess', array($liveFeedFilter, 'OnSonetLogFilterProcess'));
 $APPLICATION->IncludeComponent(
 	'bitrix:socialnetwork.log.ex',
 	'',

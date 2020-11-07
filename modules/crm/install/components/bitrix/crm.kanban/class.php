@@ -7,67 +7,73 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Loader;
 use \Bitrix\Main\Application;
-use \Bitrix\Main\Config\Option;
-use \Bitrix\Crm\Tracking;
 use \Bitrix\Main\Result;
 use \Bitrix\Main\Entity\AddResult;
 use \Bitrix\Main\Error;
+use Bitrix\Main\Web\Uri;
+use \Bitrix\Sale;
+use \Bitrix\Rest\Marketplace;
+use \Bitrix\Crm\Kanban;
+use \Bitrix\Crm\Color\PhaseColorScheme;
+use \Bitrix\Crm\Format\PersonNameFormatter;
+use \Bitrix\Crm\Tracking;
 use \Bitrix\Crm\Order;
-use \Bitrix\Crm\Category\DealCategory;
 use \Bitrix\Crm\PhaseSemantics;
-use \Bitrix\Crm\Attribute\FieldAttributeManager;
-use \Bitrix\Crm\Color\PhaseColorSchemeManager;
 use \Bitrix\Crm\Observer\Entity\ObserverTable;
-use \Bitrix\Crm\Entity\EntityEditorConfigScope;
 use \Bitrix\Crm\Search\SearchEnvironment;
 use \Bitrix\Crm\Tracking\Internals\TraceChannelTable;
 use \Bitrix\Crm\Tracking\Channel;
-use \Bitrix\Sale;
-use \Bitrix\Rest\Marketplace;
 
 class CrmKanbanComponent extends \CBitrixComponent
 {
-	protected $type = '';
-	protected $fieldSum = '';
-	protected $currency = '';
-	protected $statusKey = 'STATUS_ID';
-	protected $categoryId = null;
+	protected const OPTION_CATEGORY = 'crm';
+	protected const MAX_SORTED_ITEMS_COUNT = 1000;
+	protected const OPTION_NAME_HIDE_CONTACT_CENTER = 'kanban_cc_hide';
+	protected const OPTION_NAME_HIDE_REST_DEMO = 'kanban_rest_hide';
+	protected const REST_CONFIGURATION_PLACEMENT_URL_CONTEST = 'crm_kanban';
+	protected const COLUMN_NAME_DELETED = 'DELETED';
+
+	/** @var Kanban\Entity */
+	protected $entity;
+	protected $fieldSum;
+	protected $currency;
+	protected $statusKey;
+	protected $categoryId;
 	protected $formatLang = 'ru';
-	protected $uid = 0;
+	protected $currentUserID = 0;
+
 	protected $blockPage = 1;
 	protected $blockSize = 20;
-	protected $maxSortSize = 1000;
-	protected $application = null;
-	protected $allowSemantics = array();
-	protected $allowStages = array();
-	protected $types = array();
-	protected $contact = array();
-	protected $company = array();
-	protected $fmTypes = array();
-	protected $usersIds = array();
-	protected $additionalSelect = array();
-	protected $additionalEdit = array();
-	protected $additionalTypes = array();
-	protected $items = array();
-	protected $requiredFields = array();
-	protected $schemeFields = array();
-	protected $userFields = array();
-	protected $dateFormats = array(
-		'short' => array(
+	protected $application;
+	protected $allowSemantics = [];
+	protected $allowStages = [];
+	protected $types = [];
+	protected $contact = [];
+	protected $company = [];
+	protected $fmTypes = [];
+	protected $additionalSelect = [];
+	protected $additionalEdit = [];
+	protected $additionalTypes = [];
+	protected $items = [];
+	protected $requiredFields = [];
+	protected $schemeFields = [];
+	protected $userFields = [];
+	protected $dateFormats = [
+		'short' => [
 			'en' => 'F j',
 			'de' => 'j. F',
 			'ru' => 'j F'
-		),
-		'full' => array(
+		],
+		'full' => [
 			'en' => 'F j, Y',
 			'de' => 'j. F Y',
 			'ru' => 'j F Y'
-		)
-	);
-	protected $avatarSize = array('width' => 38, 'height' => 38);
-	protected $allowedFMtypes = array('phone', 'email', 'im', 'web');
-	protected $pathMarkers = array('#lead_id#', '#contact_id#', '#company_id#', '#deal_id#', '#quote_id#', '#invoice_id#', '#order_id#');
-	protected $disableMoreFields = array(
+		]
+	];
+	protected $avatarSize = ['width' => 38, 'height' => 38];
+	protected $allowedFMtypes = ['phone', 'email', 'im', 'web'];
+	protected $pathMarkers = ['#lead_id#', '#contact_id#', '#company_id#', '#deal_id#', '#quote_id#', '#invoice_id#', '#order_id#'];
+	protected $disableMoreFields = [
 		'ACTIVE_TIME_PERIOD', 'PRODUCT_ROW_PRODUCT_ID', 'COMPANY_ID', 'COMPANY_TITLE',
 		'CONTACT_ID', 'CONTACT_FULL_NAME', 'EVENT_ID', 'EVENT_DATE', 'ACTIVITY_COUNTER',
 		'IS_RETURN_CUSTOMER', 'IS_NEW', 'IS_REPEATED_APPROACH', 'CURRENCY_ID', 'WEBFORM_ID',
@@ -77,18 +83,11 @@ class CrmKanbanComponent extends \CBitrixComponent
 		'ADDRESS', 'ADDRESS_POSTAL_CODE', 'ADDRESS_COUNTRY', 'CREATED_BY_ID', 'ORIGINATOR_ID', 'ORIGINATOR_ID',
 		'UTM_SOURCE', 'UTM_MEDIUM', 'UTM_CAMPAIGN', 'UTM_CONTENT', 'UTM_TERM',
 		'STAGE_ID_FROM_HISTORY', 'STAGE_ID_FROM_SUPPOSED_HISTORY', 'STAGE_SEMANTIC_ID_FROM_HISTORY'
-	);
-	protected $usersIdFields = array(
+	];
+	protected $usersIdFields = [
 		'ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID', 'RESPONSIBLE_ID', 'USER'
-	);
-	protected $selectPresets = array(
-		'lead' => array('ID', 'STATUS_ID', 'TITLE', 'DATE_CREATE', 'OPPORTUNITY', 'OPPORTUNITY_ACCOUNT', 'CURRENCY_ID', 'ACCOUNT_CURRENCY_ID', 'CONTACT_ID', 'COMPANY_ID', 'MODIFY_BY_ID', 'IS_RETURN_CUSTOMER', 'ASSIGNED_BY'),
-		'deal' => array('ID', 'STAGE_ID', 'TITLE', 'DATE_CREATE', 'BEGINDATE', 'OPPORTUNITY', 'OPPORTUNITY_ACCOUNT', 'EXCH_RATE', 'CURRENCY_ID', 'ACCOUNT_CURRENCY_ID', 'IS_REPEATED_APPROACH', 'IS_RETURN_CUSTOMER', 'CONTACT_ID', 'COMPANY_ID', 'MODIFY_BY_ID', 'ASSIGNED_BY', 'ORDER_STAGE'),
-		'quote' => array('ID', 'STATUS_ID', 'TITLE', 'DATE_CREATE', 'BEGINDATE', 'OPPORTUNITY', 'OPPORTUNITY_ACCOUNT', 'CURRENCY_ID', 'ACCOUNT_CURRENCY_ID', 'CONTACT_ID', 'COMPANY_ID', 'MODIFY_BY_ID', 'ASSIGNED_BY'),
-		'invoice' => array('ID', 'STATUS_ID', 'DATE_INSERT', 'DATE_INSERT_FORMAT', 'PAY_VOUCHER_DATE', 'DATE_BILL', 'ORDER_TOPIC', 'PRICE', 'CURRENCY', 'UF_CONTACT_ID', 'UF_COMPANY_ID', 'RESPONSIBLE_ID'),
-		'order' => array('ID', 'ACCOUNT_NUMBER', 'STATUS_ID', 'DATE_INSERT', 'PAY_VOUCHER_DATE', 'DATE_PAYED', 'ORDER_TOPIC', 'PRICE', 'CURRENCY', 'RESPONSIBLE_ID')
-	);
-	protected $exclusiveFieldsReturnCustomer = array(
+	];
+	protected $exclusiveFieldsReturnCustomer = [
 		'HONORIFIC' => true,
 		'LAST_NAME' => true,
 		'NAME' => true,
@@ -101,16 +100,58 @@ class CrmKanbanComponent extends \CBitrixComponent
 		'EMAIL' => true,
 		'WEB' => true,
 		'IM' => true
-	);
+	];
 
-	/**
-	 * Init class' vars.
-	 * @return bool
-	 */
-	protected function init()
+	public function onPrepareComponentParams($arParams): array
 	{
-		Loc::loadMessages(__FILE__);
+		$arParams['HIDE_CC'] = \CUserOptions::getOption(
+			static::OPTION_CATEGORY,
+			static::OPTION_NAME_HIDE_CONTACT_CENTER,
+			false
+		);
 
+		if (!isset($arParams['ADDITIONAL_FILTER']) || !is_array($arParams['ADDITIONAL_FILTER']))
+		{
+			$arParams['ADDITIONAL_FILTER'] = [];
+		}
+		if (!isset($arParams['EXTRA']) || !is_array($arParams['EXTRA']))
+		{
+			$arParams['EXTRA'] = [];
+		}
+		$arParams['PAGE'] = (int)$arParams['PAGE'];
+		$arParams['ONLY_COLUMNS'] = $arParams['ONLY_COLUMNS'] !== 'Y' ? 'N' : 'Y';
+		$arParams['ONLY_ITEMS'] = $arParams['ONLY_ITEMS'] !== 'Y' ? 'N' : 'Y';
+		$arParams['EMPTY_RESULT'] = $arParams['EMPTY_RESULT'] !== 'Y' ? 'N' : 'Y';
+		$arParams['IS_AJAX'] = $arParams['IS_AJAX'] !== 'Y' ? 'N' : 'Y';
+		$arParams['GET_AVATARS'] = $arParams['GET_AVATARS'] !== 'Y' ? 'N' : 'Y';
+		$arParams['FORCE_FILTER'] = $arParams['FORCE_FILTER'] !== 'Y' ? 'N' : 'Y';
+		$arParams['PATH_TO_USER'] = $arParams['PATH_TO_USER'] ?? '/company/personal/user/#user_id#/';
+		$arParams['PATH_TO_DEAL_KANBANCATEGORY'] = $arParams['PATH_TO_DEAL_KANBANCATEGORY'] ?? '';
+
+		return $arParams;
+	}
+
+	protected function fillDefaultAttributes(): void
+	{
+		$this->fmTypes = [
+			'EMAIL_WORK' => Loc::getMessage('CRM_KANBAN_EMAIL_TYPE_WORK'),
+			'EMAIL_HOME' => Loc::getMessage('CRM_KANBAN_EMAIL_TYPE_HOME'),
+			'EMAIL_OTHER' => Loc::getMessage('CRM_KANBAN_EMAIL_TYPE_OTHER'),
+			'PHONE_MOBILE' => Loc::getMessage('CRM_KANBAN_PHONE_TYPE_MOBILE'),
+			'PHONE_WORK' => Loc::getMessage('CRM_KANBAN_PHONE_TYPE_WORK'),
+			'PHONE_FAX' => Loc::getMessage('CRM_KANBAN_PHONE_TYPE_FAX'),
+			'PHONE_HOME' => Loc::getMessage('CRM_KANBAN_PHONE_TYPE_HOME'),
+			'PHONE_PAGER' => Loc::getMessage('CRM_KANBAN_PHONE_TYPE_PAGER'),
+			'PHONE_OTHER' => Loc::getMessage('CRM_KANBAN_PHONE_TYPE_OTHER'),
+		];
+
+		$this->allowSemantics = [
+			PhaseSemantics::PROCESS
+		];
+	}
+
+	protected function init(): bool
+	{
 		if (!Loader::includeModule('crm'))
 		{
 			ShowError(Loc::getMessage('CRM_KANBAN_CRM_NOT_INSTALLED'));
@@ -121,69 +162,55 @@ class CrmKanbanComponent extends \CBitrixComponent
 			return false;
 		}
 
-		$this->allowSemantics = array(
-			PhaseSemantics::PROCESS
-		);
+		$this->fillDefaultAttributes();
 
-		//type and types
-		$this->types = array(
-			'lead' => \CCrmOwnerType::LeadName,
-			'deal' => \CCrmOwnerType::DealName,
-			'quote' => \CCrmOwnerType::QuoteName,
-			'invoice' => \CCrmOwnerType::InvoiceName,
-			'order' => \CCrmOwnerType::OrderName,
-		);
-		$this->fmTypes = array(
-			'EMAIL_WORK' => Loc::getMessage('CRM_KANBAN_EMAIL_TYPE_WORK'),
-			'EMAIL_HOME' => Loc::getMessage('CRM_KANBAN_EMAIL_TYPE_HOME'),
-			'EMAIL_OTHER' => Loc::getMessage('CRM_KANBAN_EMAIL_TYPE_OTHER'),
-			'PHONE_MOBILE' => Loc::getMessage('CRM_KANBAN_PHONE_TYPE_MOBILE'),
-			'PHONE_WORK' => Loc::getMessage('CRM_KANBAN_PHONE_TYPE_WORK'),
-			'PHONE_FAX' => Loc::getMessage('CRM_KANBAN_PHONE_TYPE_FAX'),
-			'PHONE_HOME' => Loc::getMessage('CRM_KANBAN_PHONE_TYPE_HOME'),
-			'PHONE_PAGER' => Loc::getMessage('CRM_KANBAN_PHONE_TYPE_PAGER'),
-			'PHONE_OTHER' => Loc::getMessage('CRM_KANBAN_PHONE_TYPE_OTHER'),
-		);
-		$this->type = mb_strtoupper(isset($this->arParams['ENTITY_TYPE'])? $this->arParams['ENTITY_TYPE'] : '');
-		if (!$this->type || !in_array($this->type, $this->types))
+		if (!isset($this->arParams['~NAME_TEMPLATE']))
+		{
+			$this->arParams['~NAME_TEMPLATE'] = PersonNameFormatter::getFormat();
+		}
+		else
+		{
+			$this->arParams['~NAME_TEMPLATE'] = str_replace(
+				['#NOBR#', '#/NOBR#'],
+				['', ''],
+				trim($this->arParams['~NAME_TEMPLATE'])
+			);
+		}
+
+		$type = mb_strtoupper($this->arParams['ENTITY_TYPE'] ?? '');
+		$this->entity = Kanban\Entity::getInstance($type);
+		if(!$this->entity)
 		{
 			return false;
 		}
+
 		if (
-			$this->type == $this->types['deal'] &&
-			isset($this->arParams['EXTRA']['CATEGORY_ID']) &&
-			$this->arParams['EXTRA']['CATEGORY_ID'] > 0
+			isset($this->arParams['EXTRA']['CATEGORY_ID'])
+			&& $this->arParams['EXTRA']['CATEGORY_ID'] > 0
+			&& $this->entity->isCategoriesSupported()
 		)
 		{
-			$this->categoryId = (int)$this->arParams['EXTRA']['CATEGORY_ID'];
+			$this->entity->setCategoryId((int)$this->arParams['EXTRA']['CATEGORY_ID']);
 		}
-		$this->arParams['ENTITY_TYPE_CHR'] = array_flip($this->types);
-		$this->arParams['ENTITY_TYPE_CHR'] = mb_strtoupper($this->arParams['ENTITY_TYPE_CHR'][$this->type]);
-		$this->arParams['ENTITY_TYPE_INT'] = \CCrmOwnerType::resolveID($this->type);
-		$this->arParams['ENTITY_PATH'] = $this->getEntityPath($this->type);
-		$this->arParams['EDITOR_CONFIG_ID'] = $this->getEditorConfigId();
-		$this->arParams['HIDE_CC'] = \CUserOptions::getOption(
-			'crm',
-			'kanban_cc_hide',
-			false
-		);
+		$this->arParams['ENTITY_TYPE_CHR'] = $this->entity->getTypeName();
+		$this->arParams['ENTITY_TYPE_INT'] = $this->entity->getTypeId();
+		$this->arParams['ENTITY_PATH'] = $this->getEntityPath($this->entity->getTypeName());
+		$this->arParams['EDITOR_CONFIG_ID'] = $this->entity->getEditorConfigId();
+
 		if (
-			(
-				$this->type == $this->types['lead'] ||
-				$this->type == $this->types['deal']
-			) &&
+			$this->entity->isRestPlacementSupported() &&
 			Loader::includeModule('rest') &&
 			is_callable('\Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl')
 		)
 		{
 			$this->arParams['HIDE_REST'] = \CUserOptions::getOption(
-				'crm',
-				'kanban_rest_hide',
+				static::OPTION_CATEGORY,
+				static::OPTION_NAME_HIDE_REST_DEMO,
 				false
 			);
 			$this->arParams['REST_DEMO_URL'] = Marketplace\Url::getConfigurationPlacementUrl(
-				'crm_'.mb_strtolower($this->type),
-				'crm_kanban'
+				$this->entity->getConfigurationPlacementUrlCode(),
+				static::REST_CONFIGURATION_PLACEMENT_URL_CONTEST
 			);
 		}
 		else
@@ -192,185 +219,47 @@ class CrmKanbanComponent extends \CBitrixComponent
 			$this->arParams['REST_DEMO_URL'] = '';
 		}
 		//additional select-edit fields
-		if (
-			$this->type == $this->types['lead'] ||
-			$this->type == $this->types['deal'] ||
-			$this->type == $this->types['order']
-		)
-		{
-			$this->additionalSelect = \CUserOptions::getOption(
-				'crm',
-				'kanban_select_more_v4_'.
-				mb_strtolower($this->type) . '_' . intval($this->categoryId) .
-				($this->isEditorConfigCommon() ? '_common' : ''),
-				null
-			);
-			if ($this->additionalSelect === null)
-			{
-				if ($this->type !== $this->types['order'])
-				{
-					$this->additionalSelect = [
-						'TITLE' => '',
-						'OPPORTUNITY' => '',
-						'DATE_CREATE' => '',
-						'ORDER_STAGE' => '',
-						'CLIENT' => '',
-						'PROBLEM_NOTIFICATION' => '',
-					];
-				}
-				else
-				{
-					$this->additionalSelect = [
-						'TITLE' => '',
-						'PRICE' => '',
-						'DATE_INSERT' => '',
-						'CLIENT' => ''
-					];
-				}
-
-			}
-			$this->additionalEdit = (array)\CUserOptions::getOption(
-				'crm',
-				'kanban_edit_more_v4_'.mb_strtolower($this->type) . '_' . intval($this->categoryId),
-				array()
-			);
-		}
-		else
-		{
-			$this->additionalSelect = [
-				'TITLE' => '',
-				'OPPORTUNITY' => '',
-				'DATE_CREATE' => '',
-				'CLIENT' => ''
-			];
-		}
+		$this->additionalSelect = $this->entity->getAdditionalSelectFields();
+		$this->additionalEdit = $this->entity->getAdditionalEditFields();
 		//redefine price-field
-		if ($this->type != $this->types['quote'] && $this->type != $this->types['order'])
+		if ($this->entity->isCustomPriceFieldsSupported())
 		{
-			$slots = \Bitrix\Crm\Statistics\StatisticEntryManager::prepareSlotBingingData($this->type .  '_SUM_STATS');
-			if (is_array($slots) && isset($slots['SLOT_BINDINGS']) && is_array($slots['SLOT_BINDINGS']))
-			{
-				foreach ($slots['SLOT_BINDINGS'] as $slot)
-				{
-					if ($slot['SLOT'] == 'SUM_TOTAL')
-					{
-						$res = \CUserTypeEntity::getList(
-							[],
-							['FIELD_NAME' => $slot['FIELD']]
-						);
-						if ($row = $res->fetch())
-						{
-							$this->fieldSum = $slot['FIELD'];
-							break;
-						}
-					}
-				}
-			}
+			$this->fieldSum = $this->entity->getCustomPriceFieldName() ?? '';
+		}
+		if($this->arParams['PAGE'] > 1)
+		{
+			$this->blockPage = $this->arParams['PAGE'];
 		}
 		//init arParams
-		if (!isset($this->arParams['~NAME_TEMPLATE']))
-		{
-			$this->arParams['~NAME_TEMPLATE'] = \Bitrix\Crm\Format\PersonNameFormatter::getFormat();
-		}
-		else
-		{
-			$this->arParams['~NAME_TEMPLATE'] = str_replace(
-				array('#NOBR#', '#/NOBR#'),
-				array('', ''),
-				trim($this->arParams['~NAME_TEMPLATE'])
-			);
-		}
-		if (!isset($this->arParams['ADDITIONAL_FILTER']) || !is_array($this->arParams['ADDITIONAL_FILTER']))
-		{
-			$this->arParams['ADDITIONAL_FILTER'] = array();
-		}
-		if (isset($this->arParams['PAGE']) && $this->arParams['PAGE'] > 1)
-		{
-			$this->blockPage = intval($this->arParams['PAGE']);
-		}
-		if (!isset($this->arParams['ONLY_COLUMNS']) || $this->arParams['ONLY_COLUMNS'] != 'Y')
-		{
-			$this->arParams['ONLY_COLUMNS'] = 'N';
-		}
-		if (!isset($this->arParams['ONLY_ITEMS']) || $this->arParams['ONLY_ITEMS'] != 'Y')
-		{
-			$this->arParams['ONLY_ITEMS'] = 'N';
-		}
-		if (!isset($this->arParams['EMPTY_RESULT']) || $this->arParams['EMPTY_RESULT'] != 'Y')
-		{
-			$this->arParams['EMPTY_RESULT'] = 'N';
-		}
-		if (!isset($this->arParams['IS_AJAX']) || $this->arParams['IS_AJAX'] != 'Y')
-		{
-			$this->arParams['IS_AJAX'] = 'N';
-		}
-		if (!isset($this->arParams['GET_AVATARS']) || $this->arParams['GET_AVATARS'] != 'Y')
-		{
-			$this->arParams['GET_AVATARS'] = 'N';
-		}
-		if (!isset($this->arParams['EXTRA']) || !is_array($this->arParams['EXTRA']))
-		{
-			$this->arParams['EXTRA'] = array();
-		}
-		if (!isset($this->arParams['FORCE_FILTER']) || $this->arParams['FORCE_FILTER'] != 'Y')
-		{
-			$this->arParams['FORCE_FILTER'] = 'N';
-		}
-		if ($this->type == $this->types['deal'])
-		{
-			$this->statusKey = 'STAGE_ID';
-		}
-		if (LANGUAGE_ID == 'de' || LANGUAGE_ID == 'en')
+		$this->statusKey = $this->entity->getStageFieldName();
+		if (LANGUAGE_ID === 'de' || LANGUAGE_ID === 'en')
 		{
 			$this->formatLang = LANGUAGE_ID;
 		}
 
-		$this->uid = \CCrmSecurityHelper::GetCurrentUserID();
-		$this->arParams['USER_ID'] = $this->uid;
+		$this->currentUserID = \CCrmSecurityHelper::GetCurrentUserID();
+		$this->arParams['USER_ID'] = $this->currentUserID;
 		if (isset($this->arParams['PATH_TO_IMPORT']))
 		{
-			$uriImport = new \Bitrix\Main\Web\Uri(
+			$uriImport = new Uri(
 				$this->arParams['PATH_TO_IMPORT']
 			);
-			if ($this->categoryId)
-			{
-				$uriImport->addParams(array(
-					'category_id' => $this->categoryId
-				));
-			}
-			$uriImport->addParams(array(
+			$importUriParams = [
 				'from' => 'kanban'
-			));
+			];
+			if ($this->entity->getCategoryId() > 0)
+			{
+				$importUriParams['category_id'] = $this->entity->getCategoryId();
+			}
+			$uriImport->addParams($importUriParams);
 			$this->arParams['PATH_TO_IMPORT'] = $uriImport->getUri();
 		}
 		else
 		{
 			$this->arParams['PATH_TO_IMPORT'] = '';
 		}
-		if (!isset($this->arParams['PATH_TO_USER']))
-		{
-			$this->arParams['PATH_TO_USER'] = '/company/personal/user/#user_id#/';
-		}
-		if (!isset($this->arParams['PATH_TO_DEAL_KANBANCATEGORY']))
-		{
-			$this->arParams['PATH_TO_DEAL_KANBANCATEGORY'] = '';
-		}
-		// for invoice another base currency
-		if ($this->type == $this->types['invoice'])
-		{
-			$this->currency = $this->arParams['CURRENCY'] = \CCrmCurrency::getInvoiceDefault();
-		}
-		else
-		{
-			$this->currency = $this->arParams['CURRENCY'] = \CCrmCurrency::GetAccountCurrencyID();
-		}
-
+		$this->currency = $this->arParams['CURRENCY'] = $this->entity->getCurrency();
 		$this->application = $GLOBALS['APPLICATION'];
-
-		if ($this->type === $this->types['order'])
-		{
-			Loader::includeModule('sale');
-		}
 
 		return true;
 	}
@@ -386,128 +275,16 @@ class CrmKanbanComponent extends \CBitrixComponent
 	}
 
 	/**
-	 * Get status's color
-	 * @param string $code Code color.
+	 * Get stages description for current entity.
+	 *
+	 * @param boolean $isClear Clear static cache.
 	 * @return array
 	 */
-	protected function getStatusColor($code)
-	{
-		$colorScheme = PhaseColorSchemeManager::resolveSchemeByName(
-			$code
-		);
-		if ($colorScheme)
-		{
-			return $colorScheme->externalize();
-		}
-		else
-		{
-			return (array) unserialize(Option::get('crm', $code));
-		}
-	}
-
-	/**
-	 * Switch entity type to letter and returns it.
-	 * @param string $entityType Letter entity type.
-	 * @return string|null
-	 */
-	protected function makeEntityLetter(string $entityType): ?string
-	{
-		$entityType = mb_strtolower($entityType);
-
-		if ($entityType == 'deal')
-		{
-			return 'D';
-		}
-		else if ($entityType == 'lead')
-		{
-			return 'L';
-		}
-		else if ($entityType == 'contact')
-		{
-			return 'C';
-		}
-		else if ($entityType == 'company')
-		{
-			return 'CO';
-		}
-		else if ($entityType == 'order')
-		{
-			return 'O';
-		}
-
-		return null;
-	}
-
-	/**
-	 * Resolves full entity type from symbol.
-	 * @param string $entityType Entity type.
-	 * @return string
-	 */
-	protected function resolveEntityLetter(string $entityType): ?string
-	{
-		if ($entityType == 'D')
-		{
-			return 'deal';
-		}
-		else if ($entityType == 'L')
-		{
-			return 'lead';
-		}
-		else if ($entityType == 'C')
-		{
-			return 'contact';
-		}
-		else if ($entityType == 'CO')
-		{
-			return 'company';
-		}
-		else if ($entityType == 'O')
-		{
-			return 'order';
-		}
-
-		return null;
-	}
-
-	/**
-	 * Gets CRM statuses from database.
-	 * @param string $entityId Entity id.
-	 * @return array
-	 */
-	protected function getStatusesDB($entityId)
-	{
-		static $db = [];
-
-		if ($db)
-		{
-			return isset($db[$entityId]) ? $db[$entityId] : null;
-		}
-
-		$res = \CCrmStatus::getList(
-			['SORT' => 'ASC']
-		);
-		while ($row = $res->fetch())
-		{
-			if (!isset($db[$row['ENTITY_ID']]))
-			{
-				$db[$row['ENTITY_ID']] = [];
-			}
-			$db[$row['ENTITY_ID']][$row['STATUS_ID']] = $row['NAME'];
-		}
-
-		return isset($db[$entityId]) ? $db[$entityId] : null;
-	}
-
-	/**
-	 * Get all CRM statuses, stages, etc.
-	 * @param boolean $clear Clear static cache.
-	 * @return array
-	 */
-	protected function getStatuses($clear = false)
+	protected function getStatuses($isClear = false): array
 	{
 		static $statuses = null;
 
-		if ($clear)
+		if ($isClear)
 		{
 			$statuses = null;
 		}
@@ -517,157 +294,77 @@ class CrmKanbanComponent extends \CBitrixComponent
 			return $statuses;
 		}
 
-		$statuses = array();
-		$type = $this->type;
-		$types = $this->types;
-		$semantic = \CCrmStatus::GetEntityTypes();
-		$semantic = array_merge($semantic, [Order\OrderStatus::NAME => Order\OrderStatus::getSemanticInfo()]);
-		//colors
-		$colors = array(
-			'QUOTE_STATUS' => ($type == $types['quote']) ? $this->getStatusColor('CONFIG_STATUS_QUOTE_STATUS') : array(),
-			'INVOICE_STATUS' => ($type == $types['invoice']) ? $this->getStatusColor('CONFIG_STATUS_INVOICE_STATUS') : array(),
-			'ORDER_STATUS' => ($type == $types['order']) ? $this->getStatusColor('CONFIG_STATUS_ORDER_STATUS') : array(),
-			'STATUS' => ($type == $types['lead']) ? $this->getStatusColor('CONFIG_STATUS_STATUS') : array(),
-		);
-		if ($this->categoryId)
+		$statuses = [];
+		$allStatuses = [];
+		$statusEntityId = $this->entity->getStatusEntityId();
+		$statusList = \Bitrix\Crm\StatusTable::getList([
+			'filter' => [
+				'@ENTITY_ID' => [$statusEntityId, 'DEAL_TYPE', 'SOURCE'],
+			],
+			'order' => [
+				'SORT' => 'ASC',
+			],
+		]);
+		while($status = $statusList->fetch())
 		{
-			$categories = DealCategory::getList(array(
-				'filter' => array(
-					'ID' => $this->categoryId
-				)
-			))->fetchAll();
-			foreach ($categories as $cat)
-			{
-				$colors['DEAL_STAGE_' . $cat['ID']] = $this->getStatusColor(
-					'CONFIG_STATUS_DEAL_STAGE_' . $cat['ID']
-				);
-			}
+			$allStatuses[] = $status;
 		}
-		elseif ($type == $types['deal'])
+		if($statusEntityId === Order\OrderStatus::NAME)
 		{
-			$colors['DEAL_STAGE'] = $this->getStatusColor(
-				'CONFIG_STATUS_DEAL_STAGE'
-			);
-		}
-
-		//custom statuses
-		$custom = array_keys($colors);
-		$custom[] = 'DEAL_TYPE';
-		$custom[] = 'SOURCE';
-		$custom = array_flip($custom);
-		foreach ($custom as $code => &$value)
-		{
-			if (empty($value) || !is_array($value))
+			$orderStatuses = Order\OrderStatus::getListInCrmFormat($isClear);
+			foreach($orderStatuses as &$status)
 			{
-				unset($custom[$code]);
-			}
-		}
-		unset($value);
-
-		//common get
-		$db = array();
-		$res = \CCrmStatus::GetList(array('SORT' => 'ASC'));
-		while ($row = $res->fetch())
-		{
-			if (!isset($custom[$row['ENTITY_ID']]))
-			{
-				$db[] = $row;
-			}
-		}
-		foreach ($custom as $code => $value)
-		{
-			$db = array_merge($db, $value);
-		}
-		$orderStatuses = Order\OrderStatus::getListInCrmFormat($clear);
-		$db = array_merge($db, $orderStatuses);
-
-		foreach ($db as $row)
-		{
-			$row['STATUS_ID'] = htmlspecialcharsbx($row['STATUS_ID']);
-			if (in_array($row['ENTITY_ID'], array('DEAL_TYPE', 'SOURCE')))
-			{
-				if ($row['ENTITY_ID'] == 'DEAL_TYPE')
-				{
-					$row['ENTITY_ID'] = 'TYPE_ID';
-				}
-				elseif ($row['ENTITY_ID'] == 'SOURCE')
-				{
-					$row['ENTITY_ID'] = 'SOURCE_ID';
-				}
-				if (!isset($this->additionalTypes[$row['ENTITY_ID']]))
-				{
-					$this->additionalTypes[$row['ENTITY_ID']] = array();
-				}
-				$this->additionalTypes[$row['ENTITY_ID']][$row['STATUS_ID']] = $row['NAME'];
-				continue;
-			}
-			if (!isset($colors[$row['ENTITY_ID']]) || empty($colors[$row['ENTITY_ID']]))
-			{
-				continue;
-			}
-			if (!isset($statuses[$row['ENTITY_ID']]))
-			{
-				$statuses[$row['ENTITY_ID']] = array();
-			}
-			$row['COLOR'] = isset($colors[$row['ENTITY_ID']][$row['STATUS_ID']]) &&
-							isset($colors[$row['ENTITY_ID']][$row['STATUS_ID']]['COLOR'])
-							? htmlspecialcharsbx($colors[$row['ENTITY_ID']][$row['STATUS_ID']]['COLOR'])
-							: '';
-			if (isset($semantic[$row['ENTITY_ID']]) && isset($semantic[$row['ENTITY_ID']]['SEMANTIC_INFO'])
-				&&
-				(
-					!isset($semantic[$row['ENTITY_ID']]['SEMANTIC_INFO']['FINAL_SORT']) ||
-					$semantic[$row['ENTITY_ID']]['SEMANTIC_INFO']['FINAL_SORT'] == 0
-				)
-				&&
-				(
-					isset($semantic[$row['ENTITY_ID']]['SEMANTIC_INFO']['FINAL_SUCCESS_FIELD']) ||
-					isset($semantic[$row['ENTITY_ID']]['SEMANTIC_INFO']['FINAL_UNSUCCESS_FIELD'])
-				)
-				&&
-				(
-					$semantic[$row['ENTITY_ID']]['SEMANTIC_INFO']['FINAL_SUCCESS_FIELD'] == $row['STATUS_ID'] ||
-					$semantic[$row['ENTITY_ID']]['SEMANTIC_INFO']['FINAL_UNSUCCESS_FIELD'] == $row['STATUS_ID']
-				)
-			)
-			{
-				$semantic[$row['ENTITY_ID']]['SEMANTIC_INFO']['FINAL_SORT'] = $row['SORT'];
-			}
-			$statuses[$row['ENTITY_ID']][$row['STATUS_ID']] = $row;
-		}
-
-		//range statuses
-		foreach ($statuses as $id => &$entity)
-		{
-			$finalSort = isset($semantic[$id]) && isset($semantic[$id]['SEMANTIC_INFO'])
-						&& $semantic[$id]['SEMANTIC_INFO']['FINAL_SORT']
-						? $semantic[$id]['SEMANTIC_INFO']['FINAL_SORT']
-						: 0;
-			foreach ($entity as &$status)
-			{
-				if ($finalSort == $status['SORT'])
-				{
-					$status['PROGRESS_TYPE'] = 'WIN';
-				}
-				elseif ($finalSort < $status['SORT'])
-				{
-					$status['PROGRESS_TYPE'] = 'LOOSE';
-				}
-				else
-				{
-					$status['PROGRESS_TYPE'] = 'PROGRESS';
-				}
+				$status['SEMANTICS'] = Order\OrderStatus::getSemanticID($status['STATUS_ID']);
 			}
 			unset($status);
+			$allStatuses = array_merge($allStatuses, $orderStatuses);
 		}
-		unset($entity);
 
-		foreach ($statuses as $status)
+		$colorOffset = -1;
+		foreach ($allStatuses as $status)
 		{
-			if (!empty($status))
+			$status['STATUS_ID'] = htmlspecialcharsbx($status['STATUS_ID']);
+			if($status['ENTITY_ID'] !== $statusEntityId)
 			{
-				$statuses = $status;
+				if ($status['ENTITY_ID'] === 'DEAL_TYPE')
+				{
+					$status['ENTITY_ID'] = 'TYPE_ID';
+				}
+				elseif ($status['ENTITY_ID'] === 'SOURCE')
+				{
+					$status['ENTITY_ID'] = 'SOURCE_ID';
+				}
+				if (!isset($this->additionalTypes[$status['ENTITY_ID']]))
+				{
+					$this->additionalTypes[$status['ENTITY_ID']] = [];
+				}
+				$this->additionalTypes[$status['ENTITY_ID']][$status['STATUS_ID']] = $status['NAME'];
+				continue;
 			}
+
+			if ($status['SEMANTICS'] === PhaseSemantics::SUCCESS)
+			{
+				$status['PROGRESS_TYPE'] = 'WIN';
+			}
+			elseif ($status['SEMANTICS'] === PhaseSemantics::FAILURE)
+			{
+				$status['PROGRESS_TYPE'] = 'LOOSE';
+			}
+			else
+			{
+				$status['PROGRESS_TYPE'] = 'PROGRESS';
+				$status['SEMANTICS'] = PhaseSemantics::PROCESS;
+				$colorOffset++;
+			}
+			//set default color
+			if(empty($status['COLOR']))
+			{
+				$status['COLOR'] = PhaseColorScheme::getDefaultColorBySemantics($status['SEMANTICS'], [
+					'offset' => $colorOffset,
+				]);
+			}
+
+			$statuses[$status['STATUS_ID']] = $status;
 		}
 
 		return $statuses;
@@ -677,52 +374,17 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 * Make select from presets.
 	 * @return array
 	 */
-	protected function getSelect()
+	protected function getSelect(): array
 	{
-		global $USER_FIELD_MANAGER;
 		static $select = null;
 
 		if ($select === null)
 		{
-			$types = array_flip($this->types);
-			$select = $this->selectPresets[$types[$this->type]];
+			$additionalFields = array_keys($this->additionalSelect);
 
-			if (!empty($this->additionalSelect))
-			{
-				$additionalFields = array_keys($this->additionalSelect);
+			$select = $this->entity->getItemsSelect($additionalFields);
 
-				if ($this->type == $this->types['order'])
-				{
-					$ufSelect = preg_grep( "/^UF_/", $additionalFields);
-					$additionalFields = array_intersect($additionalFields,  Order\Order::getAllFields());
-					if (!empty($ufSelect))
-					{
-						$crmUserType = new CCrmUserType($USER_FIELD_MANAGER, Order\Order::getUfId());
-						$userOrderFields = $crmUserType->GetFields();
-						if (is_array($userOrderFields))
-						{
-							foreach ($ufSelect as $userFieldName)
-							{
-								if (isset($userOrderFields[$userFieldName]))
-								{
-									$additionalFields[] = $userFieldName;
-								}
-							}
-						}
-					}
-
-					if (isset($this->additionalSelect['SOURCE_ID']))
-					{
-						$additionalFields['SOURCE_ID'] = 'TRADING_PLATFORM.TRADING_PLATFORM.NAME';
-					}
-					if (isset($this->additionalSelect['USER']))
-					{
-						$additionalFields[] = 'USER_ID';
-					}
-				}
-				$select = array_merge($select, $additionalFields);
-			}
-			if ($this->fieldSum != '')
+			if (!empty($this->fieldSum))
 			{
 				$select[] = $this->fieldSum;
 			}
@@ -735,376 +397,332 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 * Make filter from env.
 	 * @return array
 	 */
-	protected function getFilter()
+	protected function getFilter(): array
 	{
 		static $filter = null;
 
-		if ($this->arParams['FORCE_FILTER'] == 'Y')
+		if ($this->arParams['FORCE_FILTER'] === 'Y')
 		{
 			return [];
 		}
 
-		if ($filter === null)
+		if ($filter !== null)
 		{
-			if ($this->categoryId !== null)
+			return $filter;
+		}
+
+		$filter = [];
+		$filterLogic = [
+			'TITLE', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'POST', 'COMMENTS', 'COMPANY_TITLE'
+		];
+		$filterAddress = [
+			'ADDRESS', 'ADDRESS_2', 'ADDRESS_PROVINCE', 'ADDRESS_REGION', 'ADDRESS_CITY',
+			'ADDRESS_COUNTRY', 'ADDRESS_POSTAL_CODE'
+		];
+		//from main.filter
+		$grid = $this->entity->getFilterOptions();
+		$gridFilter = $this->entity->getGridFilter();
+		$search = $grid->GetFilter($gridFilter);
+		\Bitrix\Crm\UI\Filter\EntityHandler::internalize($gridFilter, $search);
+		if (!isset($search['FILTER_APPLIED']))
+		{
+			$search = [];
+		}
+		if (!empty($search))
+		{
+			foreach ($search as $key => $item)
 			{
-				\Bitrix\Crm\Kanban\Helper::setCategoryId(
-					$this->categoryId
-				);
-			}
-			$filter = array();
-			$filterLogic = array(
-				'TITLE', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'POST', 'COMMENTS', 'COMPANY_TITLE'
-			);
-			$filterAddress = array(
-				'ADDRESS', 'ADDRESS_2', 'ADDRESS_PROVINCE', 'ADDRESS_REGION', 'ADDRESS_CITY',
-				'ADDRESS_COUNTRY', 'ADDRESS_POSTAL_CODE'
-			);
-			//from main.filter
-			$grid = \Bitrix\Crm\Kanban\Helper::getGrid($this->type);
-			$gridFilter = \Bitrix\Crm\Kanban\Helper::getFilter($this->type);
-			$search = (array)$grid->GetFilter($gridFilter);
-			\Bitrix\Crm\UI\Filter\EntityHandler::internalize($gridFilter, $search);
-			if (!isset($search['FILTER_APPLIED']))
-			{
-				$search = array();
-			}
-			if (!empty($search))
-			{
-				foreach ($search as $key => $item)
+				unset($search[$key]);
+				if (in_array(mb_substr($key, 0, 2), array('>=', '<=', '<>')))
 				{
-					unset($search[$key]);
-					if (in_array(mb_substr($key, 0, 2), array('>=', '<=', '<>')))
-					{
-						$key = mb_substr($key, 2);
-					}
-					if (in_array(mb_substr($key, 0, 1), array('=', '<', '>', '@', '!')))
-					{
-						$key = mb_substr($key, 1);
-					}
-					$search[$key] = $item;
+					$key = mb_substr($key, 2);
 				}
-				foreach ($gridFilter as $key => $item)
+				if (in_array(mb_substr($key, 0, 1), array('=', '<', '>', '@', '!')))
 				{
-					//fill filter by type
-					if ($item['type'] == 'date')
+					$key = mb_substr($key, 1);
+				}
+				$search[$key] = $item;
+			}
+			foreach ($gridFilter as $key => $item)
+			{
+				//fill filter by type
+				$fromFieldName = $key . '_from';
+				$toFieldName = $key . '_to';
+				if ($item['type'] === 'date')
+				{
+					if (!empty($search[$fromFieldName]))
 					{
-						if (isset($search[$key . '_from']) && $search[$key . '_from']!='')
-						{
-							$filter['>='.$key] = $search[$key . '_from'] . ' 00:00:00';
-							if ($this->type !== $this->types['order'])
-							{
-								$filter['FLT_DATE_EXIST'] = 'Y';
-							}
-						}
-						if (isset($search[$key . '_to']) && $search[$key . '_to']!='')
-						{
-							$filter['<='.$key] = $search[$key . '_to'] . ' 23:59:00';
-							if ($this->type !== $this->types['order'])
-							{
-								$filter['FLT_DATE_EXIST'] = 'Y';
-							}
-						}
+						$filter['>='.$key] = $search[$fromFieldName] . ' 00:00:00';
 					}
-					elseif ($item['type'] == 'number')
+					if (!empty($search[$toFieldName]))
 					{
-						$fltType = isset($search[$key . '_numsel'])
-									? $search[$key . '_numsel']
-									: 'exact';
-						if ($fltType == 'exact' && isset($search[$key . '_from']))
-						{
-							$filter[$key] = $search[$key . '_from'];
-						}
-						else if (
-							$fltType == 'range' &&
-							isset($search[$key . '_from']) &&
-							isset($search[$key . '_to'])
-						)
-						{
-							$filter['>='.$key] = $search[$key . '_from'];
-							$filter['<='.$key] = $search[$key . '_to'];
-						}
-						else if (
-							$fltType == 'more' &&
-							isset($search[$key . '_from'])
-						)
-						{
-							$filter['>'.$key] = $search[$key . '_from'];
-						}
-						else if (
-							$fltType == 'less' &&
-							isset($search[$key . '_to'])
-						)
-						{
-							$filter['<'.$key] = $search[$key . '_to'];
-						}
+						$filter['<='.$key] = $search[$toFieldName] . ' 23:59:00';
 					}
-					elseif (isset($search[$key]))
+				}
+				elseif ($item['type'] === 'number')
+				{
+					$fltType = $search[$key . '_numsel'] ?? 'exact';
+					if ($fltType === 'exact' && isset($search[$fromFieldName]))
 					{
-						if (in_array($key, $filterLogic))
-						{
-							$filter['?' . $key] = $search[$key];
-						}
-						elseif (in_array($key, $filterAddress))
-						{
-							$filter['=%' . $key] = $search[$key] . '%';
-						}
-						elseif ($key == 'STATUS_CONVERTED')
-						{
-							$filter[$key === 'N' ? 'STATUS_SEMANTIC_ID' : '!STATUS_SEMANTIC_ID'] = 'P';
-						}
-						elseif ($key == 'ORDER_TOPIC' || $key == 'ACCOUNT_NUMBER')
-						{
-							$filter['~' . $key] ='%' . $search[$key] . '%';
-						}
-						elseif (
-							$key == 'ENTITIES_LINKS' &&
-							(
-								$this->type == $this->types['quote'] ||
-								$this->type == $this->types['invoice']
-							)
-						)
-						{
-							$ownerData = explode('_', $search[$key]);
-							if (count($ownerData) > 1)
-							{
-								$ownerTypeName = \CCrmOwnerType::resolveName(
-									\CCrmOwnerType::resolveID($ownerData[0])
-								);
-								$ownerID = intval($ownerData[1]);
-								if (!empty($ownerTypeName) && $ownerID > 0)
-								{
-									if ($this->type == $this->types['invoice'])
-									{
-										$filter['UF_' . $ownerTypeName . '_ID'] = $ownerID;
-									}
-									else
-									{
-										$filter[$ownerTypeName . '_ID'] = $ownerID;
-									}
-								}
-							}
-						}
-						elseif (
-							($this->type == $this->types['quote']) &&
-							in_array(
-								$key, array(
-									'PRODUCT_ID', 'STATUS_ID', 'COMPANY_ID', 'LEAD_ID',
-									'DEAL_ID', 'CONTACT_ID', 'MYCOMPANY_ID'
-								)
-							)
-						)
-						{
-							$filter['=' . $key] = $search[$key];
-						}
-						else
-						{
-							$filter[$key] = $search[$key];
-						}
+						$filter[$key] = $search[$fromFieldName];
 					}
 					elseif (
-						isset($item['alias']) &&
-						isset($search[$item['alias']])
+						isset($search[$fromFieldName], $search[$toFieldName])
+						&& $fltType === 'range'
 					)
 					{
-						$filter['=' . $key] = $search[$item['alias']];
+						$filter['>='.$key] = $search[$fromFieldName];
+						$filter['<='.$key] = $search[$toFieldName];
 					}
-				}
-				//search index
-				if (isset($search['FIND']) && trim($search['FIND']) != '')
-				{
-					$search['FIND'] = trim($search['FIND']);
-					$filter['SEARCH_CONTENT'] = $search['FIND'];
-				}
-			}
-			if (isset($filter['COMMUNICATION_TYPE']))
-			{
-				if (!is_array($filter['COMMUNICATION_TYPE']))
-				{
-					$filter['COMMUNICATION_TYPE'] = array($filter['COMMUNICATION_TYPE']);
-				}
-				if (in_array(\CCrmFieldMulti::PHONE, $filter['COMMUNICATION_TYPE']))
-				{
-					$filter['HAS_PHONE'] = 'Y';
-				}
-				if (in_array(\CCrmFieldMulti::EMAIL, $filter['COMMUNICATION_TYPE']))
-				{
-					$filter['HAS_EMAIL'] = 'Y';
-				}
-				unset($filter['COMMUNICATION_TYPE']);
-			}
-			//overdue
-			if (
-				isset($filter['OVERDUE']) &&
-				(
-					$this->type == $this->types['quote'] ||
-					$this->type == $this->types['invoice']
-				)
-			)
-			{
-				$key = $this->type == $this->types['quote'] ? 'CLOSEDATE' : 'DATE_PAY_BEFORE';
-				$date = new \Bitrix\Main\Type\Date;
-				if ($filter['OVERDUE'] == 'Y')
-				{
-					$filter['<'.$key] = $date;
-					$filter['>'.$key] = \Bitrix\Main\Type\Date::createFromTimestamp(0);
-				}
-				else
-				{
-					$filter['>='.$key] = $date;
-				}
-			}
-			// counters
-			if (
-				isset($filter['ACTIVITY_COUNTER']) &&
-				($this->type == $this->types['lead'] || $this->type == $this->types['deal'])
-			)
-			{
-				if (is_array($filter['ACTIVITY_COUNTER']))
-				{
-					$counterTypeID = Bitrix\Crm\Counter\EntityCounterType::joinType(
-						array_filter($filter['ACTIVITY_COUNTER'], 'is_numeric')
-					);
-				}
-				else
-				{
-					$counterTypeID = (int)$filter['ACTIVITY_COUNTER'];
-				}
-
-				$counter = null;
-				if ($counterTypeID > 0)
-				{
-					// get assigned for this counter
-					$counterUserIDs = array();
-					if (isset($filter['ASSIGNED_BY_ID']))
-					{
-						if (is_array($filter['ASSIGNED_BY_ID']))
-						{
-							$counterUserIDs = array_filter($filter['ASSIGNED_BY_ID'], 'is_numeric');
-						}
-						elseif ($filter['ASSIGNED_BY_ID'] > 0)
-						{
-							$counterUserIDs[] = $filter['ASSIGNED_BY_ID'];
-						}
-					}
-					// set counter to the filter
-					try
-					{
-						$counter = Bitrix\Crm\Counter\EntityCounterFactory::create(
-							$this->type == $this->types['lead']
-							? \CCrmOwnerType::Lead
-							: \CCrmOwnerType::Deal,
-							$counterTypeID,
-							0
-						);
-						$filter += $counter->prepareEntityListFilter(
-							array(
-								'MASTER_ALIAS' => $this->type == $this->types['lead']
-													? \CCrmLead::TABLE_ALIAS
-													: \CCrmDeal::TABLE_ALIAS,
-								'MASTER_IDENTITY' => 'ID',
-								'USER_IDS' => $counterUserIDs
-							)
-						);
-						if (isset($filter['ASSIGNED_BY_ID']))
-						{
-							unset($filter['ASSIGNED_BY_ID']);
-						}
-					}
-					catch (\Bitrix\Main\NotSupportedException $e)
-					{
-					}
-					catch (\Bitrix\Main\ArgumentException $e)
-					{
-					}
-				}
-			}
-			//deal
-			if ($this->categoryId !== null)
-			{
-				$filter['CATEGORY_ID'] = $this->categoryId;
-			}
-			//invoice
-			if (
-				$this->type == $this->types['deal'] ||
-				$this->type == $this->types['invoice']
-			)
-			{
-				$filter['!IS_RECURRING'] = 'Y';
-			}
-			if (isset($filter['OVERDUE']))
-			{
-				unset($filter['OVERDUE']);
-			}
-			//detect success/fail columns
-			$semanticIds = array();
-			if (isset($filter['STATUS_SEMANTIC_ID']))
-			{
-				$semanticIds = (array)$filter['STATUS_SEMANTIC_ID'];
-			}
-			elseif (isset($filter['STAGE_SEMANTIC_ID']))
-			{
-				$semanticIds = (array)$filter['STAGE_SEMANTIC_ID'];
-			}
-			elseif (
-				$this->type == $this->types['quote'] &&
-				isset($filter['=STATUS_ID'])
-			)
-			{
-				// gets semantic for quotes
-				$res = \CCrmStatus::GetList(array(
-					'SORT' => 'ASC'
-				));
-				while ($row = $res->fetch())
-				{
-					if (
-						$row['ENTITY_ID'] == 'QUOTE_STATUS' &&
-						in_array($row['STATUS_ID'], $filter['=STATUS_ID'])
+					elseif (
+						$fltType === 'more'
+						&& isset($search[$fromFieldName])
 					)
 					{
-						$this->allowStages[] = $row['STATUS_ID'];
+						$filter['>'.$key] = $search[$fromFieldName];
+					}
+					elseif (
+						$fltType === 'less' &&
+						isset($search[$toFieldName])
+					)
+					{
+						$filter['<'.$key] = $search[$toFieldName];
 					}
 				}
+				elseif (isset($search[$key]))
+				{
+					if (in_array($key, $filterLogic, true))
+					{
+						$filter['?' . $key] = $search[$key];
+					}
+					elseif (in_array($key, $filterAddress, true))
+					{
+						$filter['=%' . $key] = $search[$key] . '%';
+					}
+					elseif ($key === 'STATUS_CONVERTED')
+					{
+						$filter[$key === 'N' ? 'STATUS_SEMANTIC_ID' : '!STATUS_SEMANTIC_ID'] = 'P';
+					}
+					elseif ($key === 'ORDER_TOPIC' || $key === 'ACCOUNT_NUMBER')
+					{
+						$filter['~' . $key] ='%' . $search[$key] . '%';
+					}
+					elseif (
+						$key === 'ENTITIES_LINKS' &&
+						(
+							$this->entity->isEntitiesLinksInFilterSupported()
+						)
+					)
+					{
+						$ownerData = explode('_', $search[$key]);
+						if (count($ownerData) > 1)
+						{
+							$ownerTypeName = \CCrmOwnerType::resolveName(
+								\CCrmOwnerType::resolveID($ownerData[0])
+							);
+							$ownerID = (int)$ownerData[1];
+							if (!empty($ownerTypeName) && $ownerID > 0)
+							{
+								$filter[$this->entity->getFilterFieldNameByEntityTypeName($ownerTypeName)] = $ownerID;
+							}
+						}
+					}
+					else
+					{
+						$filter[$this->entity->prepareFilterField($key)] = $search[$key];
+					}
+				}
+				elseif (isset($item['alias'], $search[$item['alias']]))
+				{
+					$filter['=' . $key] = $search[$item['alias']];
+				}
 			}
-			if (in_array(PhaseSemantics::SUCCESS, $semanticIds))
+			//search index
+			$find = $search['FIND'] ? trim($search['FIND']) : null;
+			if (!empty($find))
 			{
-				$this->allowSemantics[] = PhaseSemantics::SUCCESS;
+				$search['FIND'] = $find;
+				$filter['SEARCH_CONTENT'] = $search['FIND'];
 			}
-			if (in_array(PhaseSemantics::FAILURE, $semanticIds))
+		}
+		if (isset($filter['COMMUNICATION_TYPE']))
+		{
+			if (!is_array($filter['COMMUNICATION_TYPE']))
 			{
-				$this->allowSemantics[] = PhaseSemantics::FAILURE;
+				$filter['COMMUNICATION_TYPE'] = [$filter['COMMUNICATION_TYPE']];
 			}
-			if (isset($filter[$this->statusKey]))
+			if (in_array(\CCrmFieldMulti::PHONE, $filter['COMMUNICATION_TYPE']))
 			{
-				$this->allowStages = $filter[$this->statusKey];
+				$filter['HAS_PHONE'] = 'Y';
 			}
-
-			$entityTypeID = \CCrmOwnerType::resolveID($this->type);
-			//region Apply Search Restrictions
-			$searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitRestriction();
-			if(!$searchRestriction->isExceeded($entityTypeID))
+			if (in_array(\CCrmFieldMulti::EMAIL, $filter['COMMUNICATION_TYPE']))
 			{
-				SearchEnvironment::convertEntityFilterValues(
-					\CCrmOwnerType::resolveID($this->type),
-					$filter
+				$filter['HAS_EMAIL'] = 'Y';
+			}
+			unset($filter['COMMUNICATION_TYPE']);
+		}
+		//overdue
+		if (
+			isset($filter['OVERDUE'])
+			&& ($this->entity->isOverdueFilterSupported())
+		)
+		{
+			$key = $this->entity->getCloseDateFieldName();
+			$date = new \Bitrix\Main\Type\Date;
+			if ($filter['OVERDUE'] === 'Y')
+			{
+				$filter['<'.$key] = $date;
+				$filter['>'.$key] = \Bitrix\Main\Type\Date::createFromTimestamp(0);
+			}
+			else
+			{
+				$filter['>='.$key] = $date;
+			}
+		}
+		// counters
+		if (
+			isset($filter['ACTIVITY_COUNTER'])
+			&& $this->entity->isActivityCountersFilterSupported()
+		)
+		{
+			if (is_array($filter['ACTIVITY_COUNTER']))
+			{
+				$counterTypeID = Bitrix\Crm\Counter\EntityCounterType::joinType(
+					array_filter($filter['ACTIVITY_COUNTER'], 'is_numeric')
 				);
 			}
 			else
 			{
-				$arResult['LIVE_SEARCH_LIMIT_INFO'] = $searchRestriction->prepareStubInfo(
-					array('ENTITY_TYPE_ID' => $entityTypeID)
-				);
+				$counterTypeID = (int)$filter['ACTIVITY_COUNTER'];
 			}
-			//endregion
 
+			$counter = null;
+			if ($counterTypeID > 0)
+			{
+				// get assigned for this counter
+				$counterUserIDs = array();
+				if (isset($filter['ASSIGNED_BY_ID']))
+				{
+					if (is_array($filter['ASSIGNED_BY_ID']))
+					{
+						$counterUserIDs = array_filter($filter['ASSIGNED_BY_ID'], 'is_numeric');
+					}
+					elseif ($filter['ASSIGNED_BY_ID'] > 0)
+					{
+						$counterUserIDs[] = $filter['ASSIGNED_BY_ID'];
+					}
+				}
+				// set counter to the filter
+				try
+				{
+					$counter = Bitrix\Crm\Counter\EntityCounterFactory::create(
+						$this->entity->getTypeId(),
+						$counterTypeID,
+						0
+					);
+					$filter += $counter->prepareEntityListFilter(
+						array(
+							'MASTER_ALIAS' => $this->entity->getTableAlias(),
+							'MASTER_IDENTITY' => 'ID',
+							'USER_IDS' => $counterUserIDs
+						)
+					);
+					if (isset($filter['ASSIGNED_BY_ID']))
+					{
+						unset($filter['ASSIGNED_BY_ID']);
+					}
+				}
+				catch (\Bitrix\Main\NotSupportedException $e)
+				{
+				}
+				catch (\Bitrix\Main\ArgumentException $e)
+				{
+				}
+			}
+		}
+		//deal
+		if ($this->entity->isCategoriesSupported())
+		{
+			$filter['CATEGORY_ID'] = $this->entity->getCategoryId();
+		}
+		//invoice
+		if ($this->entity->isRecurringSupported())
+		{
+			$filter['!IS_RECURRING'] = 'Y';
+		}
+		if (isset($filter['OVERDUE']))
+		{
+			unset($filter['OVERDUE']);
+		}
+		//detect success/fail columns
+		$semanticIds = array();
+		if (isset($filter['STATUS_SEMANTIC_ID']))
+		{
+			$semanticIds = (array)$filter['STATUS_SEMANTIC_ID'];
+		}
+		elseif (isset($filter['STAGE_SEMANTIC_ID']))
+		{
+			$semanticIds = (array)$filter['STAGE_SEMANTIC_ID'];
+		}
+		elseif (
+			isset($filter['=STATUS_ID'])
+			&& $this->entity->getTypeName() === 'QUOTE'
+		)
+		{
+			//todo refactor it somehow
+			$list = \Bitrix\Crm\StatusTable::getList([
+				'order' => [
+					'SORT' => 'ASC',
+				],
+				'filter' => [
+					'=STATUS_ID' => $filter['=STATUS_ID'],
+					'=ENTITY_ID' => 'QUOTE_STATUS',
+				],
+			]);
+			while ($status = $list->fetch())
+			{
+				$this->allowStages[] = $status['STATUS_ID'];
+			}
+		}
+		if (in_array(PhaseSemantics::SUCCESS, $semanticIds, true))
+		{
+			$this->allowSemantics[] = PhaseSemantics::SUCCESS;
+		}
+		if (in_array(PhaseSemantics::FAILURE, $semanticIds, true))
+		{
+			$this->allowSemantics[] = PhaseSemantics::FAILURE;
+		}
+		if (isset($filter[$this->statusKey]))
+		{
+			$this->allowStages = $filter[$this->statusKey];
+		}
 
-			\CCrmEntityHelper::prepareMultiFieldFilter(
-				$filter,
-				array(),
-				'=%',
-				false
+		$entityTypeID = $this->entity->getTypeId();
+		//region Apply Search Restrictions
+		$searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitRestriction();
+		if(!$searchRestriction->isExceeded($entityTypeID))
+		{
+			SearchEnvironment::convertEntityFilterValues(
+				$entityTypeID,
+				$filter
 			);
 		}
+		else
+		{
+			$arResult['LIVE_SEARCH_LIMIT_INFO'] = $searchRestriction->prepareStubInfo(
+				array('ENTITY_TYPE_ID' => $entityTypeID)
+			);
+		}
+		//endregion
+
+		\CCrmEntityHelper::prepareMultiFieldFilter(
+			$filter,
+			array(),
+			'=%',
+			false
+		);
+
+		unset($filter['STAGE_SEMANTIC_ID']);
 
 		return $filter;
 	}
@@ -1118,10 +736,10 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 */
 	protected function getOrderFilter(array &$runtime) : array
 	{
-		$grid = \Bitrix\Crm\Kanban\Helper::getGrid($this->type);
-		$gridFilter = \Bitrix\Crm\Kanban\Helper::getFilter($this->type);
-		$gridFilterFields = (array)$grid->GetFilter($gridFilter);
-		\Bitrix\Crm\UI\Filter\EntityHandler::internalize($gridFilter, $gridFilterFields);
+		$grid = $this->entity->getFilterOptions();
+		$gridFilter = $this->entity->getGridFilter();
+		$search = $grid->GetFilter($gridFilter);
+		\Bitrix\Crm\UI\Filter\EntityHandler::internalize($gridFilter, $search);
 
 		$filterFields = [];
 		$componentName = 'bitrix:crm.order.list';
@@ -1133,7 +751,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		$crmCmp->initComponent($componentName);
 		if ($crmCmp->init())
 		{
-			$filterFields = $crmCmp->createGlFilter($gridFilterFields, $runtime);
+			$filterFields = $crmCmp->createGlFilter($search, $runtime);
 		}
 
 		if (!empty($filterFields['DELIVERY_SERVICE']))
@@ -1202,14 +820,14 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 * @param string $type
 	 * @return string
 	 */
-	protected function getEntityPath($type)
+	protected function getEntityPath($type): ?string
 	{
 		$params = $this->arParams;
-		$pathKey = 'PATH_TO_'.mb_strtoupper($type).'_DETAILS';
+		$pathKey = 'PATH_TO_'.$type.'_DETAILS';
 		$url = !array_key_exists($pathKey, $params) ? \CrmCheckPath($pathKey, '', '') : $params[$pathKey];
 		if(!($url !== '' && CCrmOwnerType::IsSliderEnabled(CCrmOwnerType::ResolveID($type))))
 		{
-			$pathKey = 'PATH_TO_'.mb_strtoupper($type).'_SHOW';
+			$pathKey = 'PATH_TO_'.$type.'_SHOW';
 			$url = !array_key_exists($pathKey, $params) ? \CrmCheckPath($pathKey, '', '') : $params[$pathKey];
 		}
 
@@ -1219,10 +837,10 @@ class CrmKanbanComponent extends \CBitrixComponent
 	/**
 	 * Get multi-fields for entity (phone, email, etc).
 	 * @param array $items
-	 * @param string $contragent
+	 * @param string $clientType
 	 * @return array
 	 */
-	protected function fillFMfields(array $items, $contragent)
+	protected function fillFMfields(array $items, string $clientType): array
 	{
 		$isOneElement = false;
 
@@ -1233,9 +851,10 @@ class CrmKanbanComponent extends \CBitrixComponent
 				$isOneElement = true;
 				$items = array($items['ID'] => $items);
 			}
-			$res = \CCrmFieldMulti::GetListEx(array(), array(
-															'ENTITY_ID' => $contragent,
-															'ELEMENT_ID' => array_keys($items)));
+			$res = \CCrmFieldMulti::GetListEx([], [
+				'ENTITY_ID' => $clientType,
+				'ELEMENT_ID' => array_keys($items)
+			]);
 			while ($row = $res->fetch())
 			{
 				$row['TYPE_ID'] = mb_strtolower($row['TYPE_ID']);
@@ -1245,19 +864,19 @@ class CrmKanbanComponent extends \CBitrixComponent
 				}
 				if (!isset($items[$row['ELEMENT_ID']]['FM']))
 				{
-					$items[$row['ELEMENT_ID']]['FM'] = array();
-					$items[$row['ELEMENT_ID']]['FM_VALUES'] = array();
+					$items[$row['ELEMENT_ID']]['FM'] = [];
+					$items[$row['ELEMENT_ID']]['FM_VALUES'] = [];
 				}
 				if (!isset($items[$row['ELEMENT_ID']]['FM'][$row['TYPE_ID']]))
 				{
-					$items[$row['ELEMENT_ID']]['FM'][$row['TYPE_ID']] = array();
-					$items[$row['ELEMENT_ID']]['FM_VALUES'][$row['TYPE_ID']] = array();
+					$items[$row['ELEMENT_ID']]['FM'][$row['TYPE_ID']] = [];
+					$items[$row['ELEMENT_ID']]['FM_VALUES'][$row['TYPE_ID']] = [];
 				}
 				$items[$row['ELEMENT_ID']]['FM'][$row['TYPE_ID']][] = $row;
-				$items[$row['ELEMENT_ID']]['FM_VALUES'][$row['TYPE_ID']][] = array(
+				$items[$row['ELEMENT_ID']]['FM_VALUES'][$row['TYPE_ID']][] = [
 					'value' => htmlspecialcharsbx($row['VALUE']),
 					'title' => $this->fmTypes[$row['COMPLEX_ID']]
-				);
+				];
 			}
 		}
 
@@ -1266,20 +885,23 @@ class CrmKanbanComponent extends \CBitrixComponent
 
 	/**
 	 * Companies or contacts.
-	 * @param string $contragent
+	 * @param string $clientType
 	 * @return array
+	 *
+	 * @uses $this->contact
+	 * @uses $this->company
 	 */
-	protected function getContragents($contragent)
+	protected function getClients(string $clientType): array
 	{
-		$items = array();
+		$items = [];
 
-		$path = $this->getEntityPath($contragent);
+		$path = $this->getEntityPath($clientType);
 
-		$contragent = mb_strtolower(trim($contragent));
-		$provider = '\CCrm'.$contragent;
+		$clientType = mb_strtolower(trim($clientType));
+		$provider = '\CCrm'.$clientType;
 		if (
 			is_callable(array($provider, 'getListEx')) &&
-			isset($this->{$contragent}) && !empty($this->{$contragent})
+			isset($this->{$clientType}) && !empty($this->{$clientType})
 		)
 		{
 			$select = array(
@@ -1288,7 +910,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 			$res = $provider::getListEx(
 				array(),
 				array(
-					'ID' => array_unique($this->{$contragent})
+					'ID' => array_unique($this->{$clientType})
 				),
 				false,
 				false,
@@ -1296,7 +918,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 			);
 			while ($row = $res->fetch())
 			{
-				if ($contragent == 'contact')
+				if ($clientType === 'contact')
 				{
 					$row['TITLE'] = \CCrmContact::prepareFormattedName(
 						$row,
@@ -1310,9 +932,60 @@ class CrmKanbanComponent extends \CBitrixComponent
 			}
 		}
 
-		$items = $this->fillFMfields($items, $contragent);
+		$items = $this->fillFMfields($items, $clientType);
 
 		return $items;
+	}
+
+	protected function getDeleteColumn(array $params): array
+	{
+		return [
+			'real_id' => static::COLUMN_NAME_DELETED,
+			'real_sort' => $params['real_sort'],
+			'id' => static::COLUMN_NAME_DELETED,
+			'name' => Loc::getMessage('CRM_KANBAN_SYS_STATUS_DELETE'),
+			'color' => '',
+			'type' => '',
+			'sort' => $params['sort'],
+			'count' => 0,
+			'total' => 0,
+			'currency' => $this->currency,
+			'dropzone' => true
+		];
+	}
+
+	protected function isDropZone(array $status): bool
+	{
+		if (!empty($this->allowStages) && !in_array($status['STATUS_ID'], $this->allowStages, true))
+		{
+			return true;
+		}
+		if (in_array($status['STATUS_ID'], $this->allowStages, true))
+		{
+			return false;
+		}
+		if (
+			(
+				$status['PROGRESS_TYPE'] === 'WIN' &&
+				!in_array(PhaseSemantics::SUCCESS, $this->allowSemantics, true)
+			)
+			||
+			(
+				$status['PROGRESS_TYPE'] === 'LOOSE' &&
+				!in_array(PhaseSemantics::FAILURE, $this->allowSemantics, true)
+			)
+			||
+			(
+				$status['PROGRESS_TYPE'] !== 'WIN' &&
+				$status['PROGRESS_TYPE'] !== 'LOOSE' &&
+				!in_array(PhaseSemantics::PROCESS, $this->allowSemantics, true)
+			)
+		)
+		{
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -1322,56 +995,32 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 * @param array $params Some additional params.
 	 * @return array
 	 */
-	protected function getColumns($clear = false, $withoutCache = false, array $params = array())
+	protected function getColumns($clear = false, $withoutCache = false, array $params = []): array
 	{
-		static $columns = array();
+		static $columns = [];
 
 		if ($withoutCache)
 		{
 			$clear = $withoutCache;
 		}
 
-		if ($this->arParams['ONLY_ITEMS'] == 'Y')
+		if ($this->arParams['ONLY_ITEMS'] === 'Y')
 		{
 			return $columns;
 		}
 
 		if ($clear)
 		{
-			$columns = array();
+			$columns = [];
 		}
 
-		if (!isset($params['originalColumns']))
-		{
-			$params['originalColumns'] = false;
-		}
-
-		$getDeleteCol = function($params)
-		{
-			return array(
-				'real_id' => 'DELETED',
-				'real_sort' => $params['real_sort'],
-				'id' => 'DELETED',
-				'name' => Loc::getMessage('CRM_KANBAN_SYS_STATUS_DELETE'),
-				'color' => '',
-				'type' => '',
-				'sort' => $params['sort'],
-				'count' => 0,
-				'total' => 0,
-				'currency' => $this->currency,
-				'dropzone' => true
-			);
-		};
+		$params['originalColumns'] = $params['originalColumns'] ?? false;
 
 		if (empty($columns))
 		{
 			$runtime = [];
 			$baseCurrency = $this->currency;
-			if ($this->type !== $this->types['order'])
-			{
-				$filter = $this->getFilter();
-			}
-			else
+			if ($this->entity->getTypeName() === 'ORDER')
 			{
 				$filter = $this->getOrderFilter($runtime);
 				if (isset($filter[$this->statusKey]))
@@ -1379,109 +1028,38 @@ class CrmKanbanComponent extends \CBitrixComponent
 					$this->allowStages = $filter[$this->statusKey];
 				}
 			}
-			$types = $this->types;
-			$statusCode = $this->statusKey;
+			else
+			{
+				$filter = $this->getFilter();
+			}
 			$sort = 0;
 			$winColumn = [];
-			$commonRequireds = [];
 			$userPerms = $this->getCurrentUserPermissions();
-			$column = [
-				'type' => 'PROGRESS'
-			];
-			// get all required fields
-			if
-			(
-				$this->type == $types['lead'] ||
-				$this->type == $types['deal']
-			)
-			{
-				foreach ($this->userFields as $row)
-				{
-					if ($row['MANDATORY'] == 'Y')
-					{
-						$commonRequireds[] = $row['FIELD_NAME'];
-					}
-				}
-				unset($row);
-			}
 			// prepare each status
-			$firstDropzone = false;
+			$isFirstDropZone = false;
 			foreach ($this->getStatuses($clear) as $status)
 			{
 				$sort += 100;
-				//set default color
-				if ($status['COLOR'] == '')
-				{
-					if ($status['PROGRESS_TYPE'] == 'WIN')
-					{
-						$status['COLOR'] = \CCrmViewHelper::SUCCESS_COLOR;
-					}
-					elseif ($status['PROGRESS_TYPE'] == 'LOOSE')
-					{
-						$status['COLOR'] = \CCrmViewHelper::FAILURE_COLOR;
-					}
-					else
-					{
-						$status['COLOR'] = \CCrmViewHelper::PROCESS_COLOR;
-					}
-				}
-				//detect drop zones
-				if (
-					!empty($this->allowStages) &&
-					!in_array($status['STATUS_ID'], $this->allowStages)
-				)
-				{
-					$dropzone = true;
-				}
-				else if (
-					in_array($status['STATUS_ID'], $this->allowStages)
-				)
-				{
-					$dropzone = false;
-				}
-				else if (
-					(
-						$status['PROGRESS_TYPE'] == 'WIN' &&
-						!in_array(PhaseSemantics::SUCCESS, $this->allowSemantics)
-					)
-					||
-					(
-						$status['PROGRESS_TYPE'] == 'LOOSE' &&
-						!in_array(PhaseSemantics::FAILURE, $this->allowSemantics)
-					)
-					||
-					(
-						$status['PROGRESS_TYPE'] != 'WIN' &&
-						$status['PROGRESS_TYPE'] != 'LOOSE' &&
-						!in_array(PhaseSemantics::PROCESS, $this->allowSemantics)
-					)
-				)
-				{
-					$dropzone = true;
-				}
-				else
-				{
-					$dropzone = false;
-				}
+				$isDropZone = $this->isDropZone($status);
 				// first drop zone
-				if (!$firstDropzone && $dropzone)
+				if (!$isFirstDropZone && $isDropZone)
 				{
-					$firstDropzone = true;
+					$isFirstDropZone = true;
 				}
 				// add 'delete' column
 				if (
-					$firstDropzone &&
+					$isFirstDropZone &&
 					!$params['originalColumns']
 				)
 				{
-					$firstDropzone = false;
-					$columns['DELETED'] = $getDeleteCol([
+					$isFirstDropZone = false;
+					$columns[static::COLUMN_NAME_DELETED] = $this->getDeleteColumn([
 						'real_sort' => $status['SORT'],
 						'sort' => $sort
 					]);
 				}
 				// format column
-				$column = array(
+				$column = [
 					'real_id' => $status['ID'],
 					'real_sort' => $status['SORT'],
 					'id' => $status['STATUS_ID'],
@@ -1492,36 +1070,13 @@ class CrmKanbanComponent extends \CBitrixComponent
 					'count' => 0,
 					'total' => 0,
 					'currency' => $baseCurrency,
-					'dropzone' => $dropzone,
-					'canAddItem' => true
-				);
-				// check create prermissions
-				if (
-					$this->type == $types['lead'] ||
-					$this->type == $types['deal']
-				)
-				{
-					if ($this->type == $types['lead'])
-					{
-						$perm = \CCrmLead::getStatusCreatePermissionType(
-							$column['id'], $userPerms
-						);
-					}
-					else
-					{
-						$perm = \CCrmDeal::getStageCreatePermissionType(
-							$column['id'], $userPerms, (int)$this->categoryId
-						);
-					}
-					if ($perm == BX_CRM_PERM_NONE)
-					{
-						$column['canAddItem'] = false;
-					}
-				}
+					'dropzone' => $isDropZone,
+					'canAddItem' => $this->entity->canAddItemToStage($status['STATUS_ID'], $userPerms),
+				];
 				// win column
 				if (
 					!$params['originalColumns'] &&
-					$status['PROGRESS_TYPE'] == 'WIN'
+					$status['PROGRESS_TYPE'] === 'WIN'
 				)
 				{
 					$winColumn[$status['STATUS_ID']] = $column;
@@ -1530,189 +1085,33 @@ class CrmKanbanComponent extends \CBitrixComponent
 				{
 					$columns[$status['STATUS_ID']] = $column;
 				}
-				// gets required fields for each column
-				if (
-					(
-						$this->type == $types['lead'] ||
-						$this->type == $types['deal']
-					)
-					&&
-					FieldAttributeManager::isEnabled()
-				)
-				{
-					if ($this->type == $types['lead'])
-					{
-						$requiredFields = FieldAttributeManager::getRequiredFields(
-							\CCrmOwnerType::Lead,
-							0,
-							array(
-								'STATUS_ID' => $status['STATUS_ID']
-							)
-						);
-					}
-					else
-					{
-						$requiredFields = FieldAttributeManager::getRequiredFields(
-							\CCrmOwnerType::Deal,
-							0,
-							array(
-								'STAGE_ID' => $status['STATUS_ID']
-							)
-						);
-					}
-					foreach ($requiredFields as $requiredFieldsBlock)
-					{
-						foreach ($requiredFieldsBlock as $key)
-						{
-							if (!isset($this->requiredFields[$key]))
-							{
-								$this->requiredFields[$key] = [];
-							}
-							$this->requiredFields[$key][] = $status['STATUS_ID'];
-						}
-					}
-					foreach ($commonRequireds as $key)
-					{
-						if (!isset($this->requiredFields[$key]))
-						{
-							$this->requiredFields[$key] = [];
-						}
-						$this->requiredFields[$key][] = $status['STATUS_ID'];
-					}
-				}
 			}
 
-			$columns += $winColumn;
-			$lastColumn = array_pop(array_values($columns));
+			$columns = $columns + $winColumn;
+			$lastColumn = array_values($columns)[count($columns) - 1];
 
-			if (!isset($columns['DELETED']))
+			if (!isset($columns[static::COLUMN_NAME_DELETED]))
 			{
-				$columns['DELETED'] = $getDeleteCol([
+				$columns[static::COLUMN_NAME_DELETED] = $this->getDeleteColumn([
 					'real_sort' => $lastColumn['real_sort'] + 10,
 					'sort' => $lastColumn['sort'] + 10
 				]);
 			}
 
 			//get sums and counts
-
-			$fieldSum = $this->fieldSum ? $this->fieldSum : 'OPPORTUNITY_ACCOUNT';
-
-			if ($this->type == $types['invoice'])
-			{
-				$stats = array();
-				$res = \CCrmInvoice::GetList(array(), $filter,
-											array('STATUS_ID', 'SUM' => 'PRICE'), false,
-											array('STATUS_ID', 'PRICE')
-						);
-				while ($row = $res->fetch())
-				{
-					$stats[] = $row;
-				}
-			}
-			elseif ($this->type == $types['order'])
-			{
-				$queryParameters = [
-					'filter' => $filter,
-					'select' => [
-						'STATUS_ID',
-						new \Bitrix\Main\Entity\ExpressionField('SUM', 'SUM(%s)', 'PRICE'),
-						new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(1)'),
-					]
-				];
-				if (!empty($runtime))
-				{
-					$queryParameters['runtime'] = $runtime;
-				}
-				$stats = array();
-				$res = Order\Order::getList($queryParameters);
-				while ($row = $res->fetch())
-				{
-					$stats[] = $row;
-				}
-			}
-			else
-			{
-				$provider = '\CCrm'.$this->type;
-				if (class_exists($provider))
-				{
-					if (method_exists($provider, 'getListEx'))
-					{
-						$options = [];
-						$select = [$statusCode];
-						if (mb_substr($fieldSum, 0, 3) == 'UF_')
-						{
-							$options['FIELD_OPTIONS'] = [
-								'UF_FIELDS' => [
-									$fieldSum => [
-										'FIELD' => $fieldSum,
-										'TYPE' => 'double'
-									]
-								]
-							];
-						}
-						else
-						{
-							$select[] = $fieldSum;
-						}
-						$res = $provider::GetListEx(array(), $filter,
-													array($statusCode, 'SUM' => $fieldSum), false,
-													$select,
-													$options);
-					}
-					else
-					{
-						$res = $provider::GetList(array(), $filter,
-													array($statusCode, 'SUM' => $fieldSum), false,
-													array($statusCode, $fieldSum));
-					}
-					while ($row = $res->fetch())
-					{
-						$stats[] = $row;
-					}
-				}
-			}
-
-			if ($stats)
-			{
-				foreach ($stats as $stat)
-				{
-					if (isset($columns[$stat[$statusCode]]))
-					{
-						//fill column
-						if ($this->type == $types['invoice'])
-						{
-							$columns[$stat[$statusCode]]['count'] = $stat['CNT'];
-							$columns[$stat[$statusCode]]['total'] = $stat['PRICE'];
-							$columns[$stat[$statusCode]]['total_format'] = \CCrmCurrency::MoneyToString(round($stat['PRICE']), $baseCurrency);
-						}
-						elseif ($this->type == $types['order'])
-						{
-							$columns[$stat[$statusCode]]['count'] = $stat['CNT'];
-							$columns[$stat[$statusCode]]['total'] = $stat['SUM'];
-							$columns[$stat[$statusCode]]['total_format'] = \CCrmCurrency::MoneyToString(round($stat['SUM']), $baseCurrency);
-						}
-						else
-						{
-							$columns[$stat[$statusCode]]['count'] = $stat['CNT'];
-							$columns[$stat[$statusCode]]['total'] = $stat[$fieldSum];
-							$columns[$stat[$statusCode]]['total_format'] = \CCrmCurrency::MoneyToString(round($stat[$fieldSum]), $baseCurrency);
-						}
-					}
-				}
-			}
+			$this->entity->fillStageTotalSums($filter, $runtime, $columns);
 		}
 
 		// without static cache
 		if ($withoutCache)
 		{
 			$tmpColumns = $columns;
-			$columns = array();
+			$columns = [];
+
 			return $tmpColumns;
 		}
-		else
-		{
-			return $columns;
-		}
+
+		return $columns;
 	}
 
 	/**
@@ -1723,7 +1122,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 * @param mixed $newValue New value.
 	 * @return array
 	 */
-	protected function arrayInsertAfter(array $array, $afterKey, $newKey, $newValue)
+	protected function arrayInsertAfter(array $array, $afterKey, $newKey, $newValue): array
 	{
 		if (isset($array[$newKey]))
 		{
@@ -1750,10 +1149,8 @@ class CrmKanbanComponent extends \CBitrixComponent
 			}
 			return $newArray;
 		}
-		else
-		{
-			return $array;
-		}
+
+		return $array;
 	}
 
 	/**
@@ -1764,22 +1161,23 @@ class CrmKanbanComponent extends \CBitrixComponent
 	protected function rememberLastId($lastId = false)
 	{
 		$lastIds = \CUserOptions::getOption(
-			'crm',
+			static::OPTION_CATEGORY,
 			'kanban_sort_last_id',
-			array()
+			[]
 		);
+		$typeName = $this->entity->getTypeName();
 		if ($lastId !== false)
 		{
-			$lastIds[$this->type] = $lastId;
+			$lastIds[$typeName] = $lastId;
 			\CUserOptions::setOption(
-				'crm',
+				static::OPTION_CATEGORY,
 				'kanban_sort_last_id',
 				$lastIds
 			);
 		}
 		else
 		{
-			return isset($lastIds[$this->type]) ? $lastIds[$this->type] : 0;
+			return $lastIds[$typeName] ?? 0;
 		}
 	}
 
@@ -1787,49 +1185,9 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 * Get last ID for current entity.
 	 * @return int
 	 */
-	protected function getLastId()
+	protected function getLastId(): int
 	{
-		static $lastId = null;
-
-		if ($lastId !== null)
-		{
-			return $lastId;
-		}
-
-		$lastId = 0;
-		$type = $this->type;
-		$provider = '\CCrm'.$type;
-		$method = method_exists($provider, 'getListEx') ? 'getListEx' : 'getList';
-
-		if (method_exists($provider, 'getTopIDs'))
-		{
-			$lastId = $provider::getTopIDs(1, 'DESC');
-			$lastId = !empty($lastId) ? array_shift($lastId) : 0;
-		}
-		else if (is_callable(array($provider, $method)))
-		{
-			$res = $provider::$method(
-				array(
-					'ID' => 'DESC'
-				),
-				array(
-					//
-				),
-				false,
-				array(
-					'nTopCount' => 1
-				),
-				array(
-					'ID'
-				)
-			);
-			if ($row = $res->fetch())
-			{
-				$lastId = $row['ID'];
-			}
-		}
-
-		return $lastId;
+		return $this->entity->getItemLastId();
 	}
 
 	/**
@@ -1839,28 +1197,23 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 */
 	protected function sort(array $items)
 	{
-		static $lastId = null;
 		static $lastIdremember = null;
 
 		if ($lastIdremember === null)
 		{
 			$lastIdremember = $this->rememberLastId();
 		}
-		if ($lastId === null)
-		{
-			$lastId = $this->getLastId();
-		}
 
-		$sortedIds = array();
-		$sort = \Bitrix\Crm\Kanban\SortTable::getPrevious(array(
-			'ENTITY_TYPE_ID' => $this->type,
+		$sortedIds = [];
+		$sort = Kanban\SortTable::getPrevious([
+			'ENTITY_TYPE_ID' => $this->entity->getTypeName(),
 			'ENTITY_ID' => array_keys($items),
-		));
+		]);
 		if (!empty($sort))
 		{
 			foreach ($sort as $id => $prev)
 			{
-				if ($prev>0 && !isset($items[$prev]))
+				if ($prev > 0 && !isset($items[$prev]))
 				{
 					continue;
 				}
@@ -1887,8 +1240,8 @@ class CrmKanbanComponent extends \CBitrixComponent
 					$moveItem = $items[$id];
 					unset($items[$id]);
 					$items = $this->arrayInsertAfter($items, null, $id, $moveItem);
-					\Bitrix\Crm\Kanban\SortTable::setPrevious(array(
-						'ENTITY_TYPE_ID' => $this->type,
+					Kanban\SortTable::setPrevious(array(
+						'ENTITY_TYPE_ID' => $this->entity->getTypeName(),
 						'ENTITY_ID' => $id,
 						'PREV_ENTITY_ID' => 0
 					));
@@ -1904,7 +1257,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 * @param int|int[] $entityId Entity id, or ids.
 	 * @return array
 	 */
-	protected function getTracesById($entityId)
+	protected function getTracesById($entityId): array
 	{
 		static $actualSources = null;
 		static $entityTypeId = null;
@@ -1916,7 +1269,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 
 		if ($entityTypeId === null)
 		{
-			$entityTypeId = \CCrmOwnerType::ResolveID($this->type);
+			$entityTypeId = $this->entity->getTypeId();
 		}
 		if ($actualSources === null)
 		{
@@ -1991,9 +1344,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		while ($row = $res->fetch())
 		{
 			$traceEntities[$row['TRACE_ID']] = [
-				'NAME' => isset($channelNames[$row['CODE']])
-						? $channelNames[$row['CODE']]
-						: Channel\Base::getNameByCode($row['CODE']),
+				'NAME' => $channelNames[$row['CODE']] ?? Channel\Base::getNameByCode($row['CODE']),
 				'DESC' => '',
 				'ICON' => '',
 				'ICON_COLOR' => '',
@@ -2020,42 +1371,33 @@ class CrmKanbanComponent extends \CBitrixComponent
 	/**
 	 * Base method for getting data.
 	 * @param array $filter Additional filter.
-	 * @param boolean $pagen Out by paging.
 	 * @return array
+	 * @noinspection SlowArrayOperationsInLoopInspection
 	 */
-	protected function getItems(array $filter = array(), $pagen = true)
+	protected function getItems(array $filter = []): array
 	{
 		static $path = null;
 		static $currency = null;
 		static $columns = null;
 
-		$result = array();
-		$type = $this->type;
-		$typeId = \CCrmOwnerType::ResolveID($type);
-		$types = $this->types;
-		$provider = '\CCrm'.$type;
-		if ($type == $types['order'])
-		{
-			$provider = Order\Order::class;
-		}
-		$method = method_exists($provider, 'getListEx') ? 'getListEx' : 'getList';
+		$result = [];
+		$type = $this->entity->getTypeName();
+		$typeId = $this->entity->getTypeId();
 		$runtime = [];
 		$select = $this->getSelect();
-		if ($type !== $types['order'])
+		if ($type === 'ORDER')
 		{
-			$filterCommon = $this->getFilter();
+			$filterCommon = $this->getOrderFilter($runtime);
 		}
 		else
 		{
-			$filterCommon = $this->getOrderFilter($runtime);
+			$filterCommon = $this->getFilter();
 		}
 
 		$addFields = $this->getAdditionalFields();
 		$addSelect = array_keys($this->additionalSelect);
 		$addTypes = $this->additionalTypes;
-		$navParams = $pagen ? array('iNumPage' => $this->blockPage, 'nPageSize' => $this->blockSize) : false;
 		$statusKey = $this->statusKey;
-		//$userFieldDispatcher = \Bitrix\Main\UserField\Dispatcher::instance();
 
 		if ($this->requiredFields)
 		{
@@ -2081,947 +1423,799 @@ class CrmKanbanComponent extends \CBitrixComponent
 		{
 			$columns = $this->getColumns();
 		}
-		if (class_exists($provider))
+
+		$parameters = [
+			'filter' => $filter,
+			'select' => $select,
+			'order' => ['ID' => 'DESC'],
+		];
+		if(!empty($runtime))
 		{
-			$queryParameters = [
-				'filter' => $filter,
-				'select' => $select,
-				'order' => ['ID' => 'DESC'],
-			];
+			$parameters['runtime'] = $runtime;
+		}
 
-			if (!empty($runtime))
+		/** @noinspection IssetConstructsCanBeMergedInspection */
+		$canGetAllItems = (
+			isset($filter[$statusKey]) &&
+			is_string($filter[$statusKey]) &&
+			isset($columns[$filter[$statusKey]]['count']) &&
+			$columns[$filter[$statusKey]]['count'] <= static::MAX_SORTED_ITEMS_COUNT
+		);
+
+		if(!$canGetAllItems)
+		{
+			$parameters['limit'] = $this->blockSize;
+			$parameters['offset'] = $this->blockSize * ($this->blockPage - 1);
+		}
+
+		$res = $this->entity->getItems($parameters);
+		if($canGetAllItems)
+		{
+			$res->NavStart($this->blockSize, false, $this->blockPage);
+		}
+
+		$timeOffset = \CTimeZone::GetOffset();
+		$timeFull = time() + $timeOffset;
+		$pageCount = $res->NavPageCount;
+		$specialReqKeys = [
+			'OPPORTUNITY' => 'OPPORTUNITY_WITH_CURRENCY',
+			'CONTACT_ID' => 'CLIENT'
+		];
+		$users = [];
+		$fileIds = [];
+		$crmEntities = [];
+		$iblockSects = array();
+		$iblockElements = array();
+		while ($row = $res->fetch())
+		{
+			$row = $this->entity->prepareItemCommonFields($row);
+
+			if ($row['CONTACT_ID'] > 0)
 			{
-				$queryParameters['runtime'] = $runtime;
+				$row['CONTACT_TYPE'] = 'CRM_CONTACT';
+				$this->contact[] = $row['CONTACT_ID'];
 			}
-			//user sorting
-			if (
-				isset($filter[$statusKey]) &&
-				is_string($filter[$statusKey]) &&
-				isset($columns[$filter[$statusKey]]['count']) &&
-				$columns[$filter[$statusKey]]['count'] <= $this->maxSortSize
-			)
+			if ($row['COMPANY_ID'] > 0)
 			{
-				//get all and sort
-				$sorting = true;
-				$db = array();
-				if ($this->type !== $types['order'])
-				{
-					$res = $provider::$method(array('ID' => 'DESC'), $filter, false, false, $select);
-				}
-				else
-				{
-					$res = $provider::$method($queryParameters);
-				}
-				while ($row = $res->fetch())
-				{
-					$db[$row['ID']] = $row;
-				}
-				if ($this->type === $types['order'] && !empty($db))
-				{
-					$db = $this->prepareOrderEntitiesFields($db);
-				}
-				$db = $this->sort($db);
-				//init query
-				$res = new CDBResult;
-				$res->initFromArray($db);
-				$res->navStart($this->blockSize, false, $this->blockPage);
+				$row['CONTACT_TYPE'] = 'CRM_COMPANY';
+				$this->company[] = $row['COMPANY_ID'];
 			}
-			else
+
+			//additional fields
+			$fields = array();
+			foreach ($addSelect as $code)
 			{
-				$sorting = false;
-				if ($this->type !== $types['order'])
+				if (array_key_exists($code, $row) && array_key_exists($code, $addFields))
 				{
-					$res = $provider::$method(
-						['ID' => 'DESC'],
-						$filter,
-						false,
-						false,
-						$select,
-						$pagen
-							? [
-							'QUERY_OPTIONS' => [
-								'LIMIT' => $this->blockSize,
-								'OFFSET' => $this->blockSize * ($this->blockPage - 1)
-							]
-						]
-							: [
-
-						]
-					);
-				}
-				else
-				{
-					$orders = [];
-					$queryParameters['limit'] = $this->blockSize;
-					$queryParameters['offset'] = ($this->blockPage - 1) * $this->blockSize;
-					$res = $provider::$method($queryParameters);
-					while ($order = $res->fetch())
+					if ($code === 'ASSIGNED_BY_ID' && isset($row['ASSIGNED_BY']))
 					{
-						$orders[$order['ID']] = $order;
+						$users[] = $row['ASSIGNED_BY'];
 					}
-					if (!empty($orders))
+					elseif ($code === 'RESPONSIBLE_ID' && isset($row['RESPONSIBLE_ID']))
 					{
-						$orders = $this->prepareOrderEntitiesFields($orders);
+						$users[] = $row['RESPONSIBLE_ID'];
 					}
-					$res = new CDBResult;
-					$res->initFromArray($orders);
-				}
-			}
-			$timeOffset = \CTimeZone::GetOffset();
-			$timeFull = time() + $timeOffset;
-			$pageCount = $res->NavPageCount;
-			$specialReqKeys = [
-				'OPPORTUNITY' => 'OPPORTUNITY_WITH_CURRENCY',
-				'CONTACT_ID' => 'CLIENT'
-			];
-			$users = [];
-			$fileIds = [];
-			$crmEntities = [];
-			$iblockSects = array();
-			$iblockElements = array();
-			while ($row = $res->fetch())
-			{
-				$row['FORMAT_TIME'] = true;
-				//base
-				if (!isset($row['ASSIGNED_BY']))
-				{
-					$row['ASSIGNED_BY'] = $row['RESPONSIBLE_ID'];
-				}
-				if ($type == $types['lead'])
-				{
-					$row['PRICE'] = $row['OPPORTUNITY'];
-					$row['DATE'] = $row['DATE_CREATE'];
-				}
-				elseif ($type == $types['deal'])
-				{
-					$row['PRICE'] = $row['OPPORTUNITY'];
-					$row['DATE'] = $row['DATE_CREATE'];
-				}
-				elseif ($type == $types['quote'])
-				{
-					$row['PRICE'] = $row['OPPORTUNITY'];
-					if ($row['BEGINDATE'])
+					elseif ($code === 'USER' && isset($row['USER_ID']))
 					{
-						$row['FORMAT_TIME'] = false;
-						$row['DATE'] = $row['BEGINDATE'];
+						$users[] = $row['USER_ID'];
 					}
-					else
+					if (isset($addTypes[$code]) && isset($addTypes[$code][$row[$code]]))
 					{
-						$row['DATE'] = $row['DATE_CREATE'];
+						$row[$code] = $addTypes[$code][$row[$code]];
 					}
-				}
-				elseif ($type == $types['invoice'])
-				{
-					$row['TITLE'] = $row['ORDER_TOPIC'];
-					$row['FORMAT_TIME'] = false;
-					$row['DATE'] = $row['PAY_VOUCHER_DATE'] ? $row['PAY_VOUCHER_DATE'] : $row['DATE_BILL'];
-					$row['CONTACT_ID'] = $row['UF_CONTACT_ID'];
-					$row['COMPANY_ID'] = $row['UF_COMPANY_ID'];
-					$row['CURRENCY_ID'] = $row['CURRENCY'];
-				}
-				elseif ($type == $types['order'])
-				{
-					$row['FORMAT_TIME'] = false;
-					$row['DATE'] = $row['DATE_INSERT'];
-				}
-				//redefine price
-				if ($this->fieldSum && array_key_exists($this->fieldSum, $row))
-				{
-					$row['PRICE'] = $row[$this->fieldSum];
-				}
-				elseif (isset($row['OPPORTUNITY_ACCOUNT']) && $row['OPPORTUNITY_ACCOUNT']!='')
-				{
-					$row['PRICE'] = $row['OPPORTUNITY_ACCOUNT'];
-				}
-				if (isset($row['ACCOUNT_CURRENCY_ID']) && $row['ACCOUNT_CURRENCY_ID']!='')
-				{
-					$row['CURRENCY_ID'] = $row['ACCOUNT_CURRENCY_ID'];
-				}
-
-				//contragent
-				if ($row['CONTACT_ID'] > 0)
-				{
-					$row['CONTACT_TYPE'] = 'CRM_CONTACT';
-					$this->contact[$row['ID']] = $row['CONTACT_ID'];
-				}
-
-				//company
-				if ($row['COMPANY_ID'] > 0)
-				{
-					$row['CONTACT_TYPE'] = ($row['CONTACT_TYPE'] ?? 'CRM_COMPANY');
-					$row['CONTACT_ID'] = ($row['CONTACT_ID'] ?? $row['COMPANY_ID']);
-					$this->company[$row['ID']] = $row['COMPANY_ID'];
-				}
-
-				$row['CONTACT_TYPE'] = ($row['CONTACT_TYPE'] ?? '');
-
-				//price converted
-				if ($row['CURRENCY_ID']=='' || $row['CURRENCY_ID'] == $currency)
-				{
-					$row['PRICE'] = doubleval($row['PRICE']);
-					$row['PRICE_FORMATTED'] = \CCrmCurrency::MoneyToString($row['PRICE'], $currency);
-				}
-				else
-				{
-					$row['PRICE'] = \CCrmCurrency::ConvertMoney($row['PRICE'], $row['CURRENCY_ID'], $currency);
-					$row['PRICE_FORMATTED'] = \CCrmCurrency::MoneyToString($row['PRICE'], $currency);
-				}
-				if ($row['DATE'] instanceof \Bitrix\Main\Type\Date)
-				{
-					$row['DATE_UNIX'] = $row['DATE']->getTimestamp();
-				}
-				else
-				{
-					$row['DATE_UNIX'] = \MakeTimeStamp($row['DATE']);
-				}
-				$dateFormat = $this->dateFormats[date('Y') == date('Y', $row['DATE_UNIX']) ? 'short' : 'full'][$this->formatLang];
-				//additional fields
-				$fields = array();
-				foreach ($addSelect as $code)
-				{
-					if (array_key_exists($code, $row) && array_key_exists($code, $addFields))
-					{
-						if ($code == 'ASSIGNED_BY_ID' && isset($row['ASSIGNED_BY']))
-						{
-							$users[] = $row['ASSIGNED_BY'];
-						}
-						elseif ($code == 'RESPONSIBLE_ID' && isset($row['RESPONSIBLE_ID']))
-						{
-							$users[] = $row['RESPONSIBLE_ID'];
-						}
-						elseif ($code == 'USER' && isset($row['USER_ID']))
-						{
-							$users[] = $row['USER_ID'];
-						}
-						if (isset($addTypes[$code]) && isset($addTypes[$code][$row[$code]]))
-						{
-							$row[$code] = $addTypes[$code][$row[$code]];
-						}
-						if (
-							!empty($row[$code]) ||
-							($code == 'OPPORTUNITY')
-						)
-						{
-							$isHtml = false;
-							$boolFieldNames = ['CLOSED', 'PAYED', 'ALLOY_DELIVERY', 'DEDUCTED', 'CANCELED'];
-							if (in_array($code, $boolFieldNames))
-							{
-								$row[$code] = Loc::getMessage('CRM_KANBAN_CHAR_' . $row[$code]);
-							}
-							else if ($code == 'OPPORTUNITY')
-							{
-								$row[$code] = \CCrmCurrency::MoneyToString(
-									$row[$code],
-									$row['CURRENCY_ID']
-								);
-							}
-							else if ($code == 'PAYMENT' || $code == 'SHIPMENT')
-							{
-								$fieldValue = "";
-								$row[$code] = is_array($row[$code]) ? $row[$code] : [$row[$code]];
-								foreach ($row[$code] as $rowCodeItem)
-								{
-									if ($code == 'PAYMENT')
-									{
-										$pathSubItem = CComponentEngine::MakePathFromTemplate(
-											$this->arParams['PATH_TO_ORDER_PAYMENT_DETAILS'],
-											array(
-												'payment_id' => $rowCodeItem['ID']
-											)
-										);
-									}
-									else
-									{
-										$pathSubItem = CComponentEngine::MakePathFromTemplate(
-											$this->arParams['PATH_TO_ORDER_SHIPMENT_DETAILS'],
-											array(
-												'shipment_id' => $rowCodeItem['ID']
-											)
-										);
-									}
-
-									$price = ($code == 'PAYMENT') ? $rowCodeItem['SUM'] : $rowCodeItem['PRICE_DELIVERY'];
-									$sum = \CCrmCurrency::MoneyToString(
-										$price,
-										$rowCodeItem['CURRENCY']
-									);
-
-									$title = '';
-
-									$paySystemName =  ($code == 'PAYMENT') ? $rowCodeItem['PAY_SYSTEM_NAME'] : $rowCodeItem['DELIVERY_NAME'];
-									$paySystemName = htmlspecialcharsbx($paySystemName);
-									if (!empty($paySystemName))
-									{
-										$title .= $paySystemName. " ";
-									}
-
-									if (!empty($sum))
-									{
-										$title .= "({$sum})";
-									}
-
-									if (empty($title))
-									{
-										$title = htmlspecialcharsbx($rowCodeItem['ACCOUNT_NUMBER']);
-									}
-
-									$fieldValue .= "<a href='{$pathSubItem}'>{$title}</a></br>";
-								}
-								$row[$code] = $fieldValue;
-							}
-							else if ($code == 'ORDER_STAGE')
-							{
-								$orderStages = Order\OrderStage::getList();
-								if (isset($orderStages[$row[$code]]))
-								{
-									$row[$code] = [
-										'title' => $orderStages[$row[$code]],
-										'code' => $row[$code]
-									];
-								}
-								else
-								{
-									$row[$code] = [
-										'title' => $row[$code],
-										'code' => $row[$code]
-									];
-									continue;
-								}
-							}
-							else if (
-								$addFields[$code]['type'] == 'money'
-							)
-							{
-								$moneyRow = is_array($row[$code])
-											? $row[$code]
-											: [$row[$code]];
-								$row[$code] = [];
-								foreach ($moneyRow as $moneyItem)
-								{
-									[$money, $moneyCurr] = explode('|', $moneyItem);
-									$row[$code][] = \CCrmCurrency::MoneyToString(
-										$money,
-										$moneyCurr
-									);
-								}
-								$row[$code] = implode('; ', $row[$code]);
-							}
-							else if (
-								$addFields[$code]['type'] == 'employee'
-							)
-							{
-								$this->usersIdFields[] = $code;
-							}
-							else if (
-								$addFields[$code]['type'] == 'boolean'
-							)
-							{
-								$row[$code] = Loc::getMessage('CRM_KANBAN_BOOLEAN_' . (int)$row[$code]);
-							}
-							else if (
-								$addFields[$code]['type'] == 'enumeration'
-							)
-							{
-								$row[$code] = implode(',', array_intersect_key(
-									$addFields[$code]['enumerations'],
-									array_flip((array)$row[$code])
-								));
-							}
-							else if (
-								$addFields[$code]['type'] == 'date' ||
-								mb_strpos($code, 'DATE') !== false
-							)
-							{
-								$row[$code] = (array) $row[$code];
-								foreach ($row[$code] as &$rowDate)
-								{
-									if ($rowDate instanceof \Bitrix\Main\Type\Date || $rowDate instanceof \DateTime)
-									{
-										$timestamp = $rowDate->getTimestamp();
-									}
-									else
-									{
-										$timestamp = \MakeTimeStamp($rowDate);
-									}
-									$rowDate = \FormatDate($this->dateFormats['full'], $timestamp, $timeFull);
-								}
-								unset($rowDate);
-								$row[$code] = implode(',', $row[$code]);
-							}
-							else if ($addFields[$code]['type'] == 'file')
-							{
-								$row[$code] = (array) $row[$code];
-								$fileIds = array_merge(
-									$fileIds,
-									$row[$code]
-								);
-							}
-							else if ($addFields[$code]['type'] == 'crm_status')
-							{
-								$entityType = isset($addFields[$code]['settings']['ENTITY_TYPE'])
-											? $addFields[$code]['settings']['ENTITY_TYPE']
-											: null;
-								$statuses = $this->getStatusesDB($entityType);
-								if (isset($statuses[$row[$code]]))
-								{
-									$row[$code] = $statuses[$row[$code]];
-								}
-								else
-								{
-									continue;
-								}
-							}
-							else if ($addFields[$code]['type'] == 'crm')
-							{
-								$row[$code] = (array) $row[$code];
-								$settings = isset($addFields[$code]['settings'])
-											? (array) $addFields[$code]['settings']
-											: [];
-								$settingsFlip = array_flip($settings);
-								$newRow = [];
-								foreach ($row[$code] as $crmEntity)
-								{
-									if (!mb_strpos($crmEntity, '_'))
-									{
-										if (isset($settingsFlip['Y']))
-										{
-											$crmEntity = $this->makeEntityLetter($settingsFlip['Y']) . '_' . $crmEntity;
-										}
-									}
-									$newRow[] = $crmEntity;
-									if(mb_strpos($crmEntity, '_'))
-									{
-										[$crmEntityType, $crmEntity] = explode('_', $crmEntity);
-									}
-									else
-									{
-										continue;
-									}
-									if (!isset($crmEntities[$crmEntityType]))
-									{
-										$crmEntities[$crmEntityType] = [];
-									}
-									$crmEntities[$crmEntityType][] = $crmEntity;
-								}
-								$row[$code] = $newRow;
-							}
-							elseif ($addFields[$code]['type'] == 'iblock_section')
-							{
-								$row[$code] = (array) $row[$code];
-								$iblockSects = array_merge(
-									$iblockSects,
-									$row[$code]
-								);
-							}
-							elseif ($addFields[$code]['type'] == 'iblock_element')
-							{
-								$row[$code] = (array) $row[$code];
-								$iblockElements = array_merge(
-									$iblockElements,
-									$row[$code]
-								);
-							}
-							elseif ($addFields[$code]['type'] == 'address')
-							{
-								$row[$code] = (array) $row[$code];
-								foreach ($row[$code] as &$location)
-								{
-									if (mb_strpos($location, '|') !== false)
-									{
-										[$location, ] = explode('|', $location);
-									}
-								}
-								unset($location);
-							}
-							elseif ($addFields[$code]['type'] == 'url')
-							{
-								$row[$code] = (array) $row[$code];
-								foreach ($row[$code] as &$url)
-								{
-									$url = \htmlspecialcharsbx($url);
-									$url = '<a href="' . $url . '" target="_blank">' . $url . '</a>';
-								}
-								unset($url);
-								$isHtml = true;
-							}
-							$fields[] = array(
-								'code' => $code,
-								'title' => $addFields[$code]['title'],
-								'type' => $addFields[$code]['type'],
-								'value' => $row[$code],
-								'html' => $isHtml || in_array($code, ['COMMENTS', 'PAYMENT', 'SHIPMENT'])
-							);
-							if (in_array($code, $this->usersIdFields))
-							{
-								$users = array_merge(
-									$users,
-									(array)$row[$code]
-								);
-							}
-						}
-					}
-				}
-				$returnCustomer = isset($row['IS_RETURN_CUSTOMER']) && $row['IS_RETURN_CUSTOMER'] == 'Y';
-				// collect required
-				$required = [];
-				$requiredFm = [];
-				if ($this->requiredFields)
-				{
-					// fm fields check later
-					foreach ($this->allowedFMtypes as $fm)
-					{
-						$fmUp = mb_strtoupper($fm);
-						$requiredFm[$fmUp] = true;
-						$row[$fmUp] = '';
-					}
-					// check each key
-					foreach ($row as $key => $val)
-					{
-						if (
-							$returnCustomer &&
-							isset($this->exclusiveFieldsReturnCustomer[$key])
-						)
-						{
-							continue;
-						}
-						if (isset($this->requiredFields[$key]) && !$val)
-						{
-							foreach ($this->requiredFields[$key] as $status)
-							{
-								if (!isset($required[$status]))
-								{
-									$required[$status] = [];
-								}
-								$required[$status][] = $key;
-							}
-						}
-					}
-					// special keys
-					foreach ($specialReqKeys as $reqKeyOrig => $reqKey)
-					{
-						if (
-							isset($this->requiredFields[$reqKey]) &&
-							(
-								!$row[$reqKeyOrig]
-								||
-								$reqKeyOrig == 'OPPORTUNITY' &&
-								$row['OPPORTUNITY_ACCOUNT'] <= 0
-							)
-						)
-						{
-							foreach ($this->requiredFields[$reqKey] as $status)
-							{
-								if (!isset($required[$status]))
-								{
-									$required[$status] = [];
-								}
-								$required[$status][] = $reqKey;
-							}
-						}
-					}
-				}
-				//add
-				$result[$row['ID']] = array(
-					'id' =>  $row['ID'],
-					'name' => htmlspecialcharsbx($row['TITLE'] != '' ? $row['TITLE'] : '#' . $row['ID']),
-					'link' => str_replace($this->pathMarkers, $row['ID'], $path),
-					'columnId' => $columnId = htmlspecialcharsbx($row[$this->statusKey]),
-					'columnColor' => isset($columns[$columnId]) ? $columns[$columnId]['color'] : '',
-					'price' => $row['PRICE'],
-					'price_formatted' => $row['PRICE_FORMATTED'],
-					'date' => (
-								!$row['FORMAT_TIME']
-								? \FormatDate($dateFormat, $row['DATE_UNIX'], $timeFull)
-								: (
-									(time() - $row['DATE_UNIX']) / 3600 > 48
-									? \FormatDate($dateFormat, $row['DATE_UNIX'], $timeFull)
-									: \FormatDate('x', $row['DATE_UNIX'], $timeFull)
-								)
-							),
-					'contactId' => (int)$row['CONTACT_ID'],
-					'companyId' => (!empty($row['COMPANY_ID']) ? (int)$row['COMPANY_ID'] : null),
-					'contactType' => $row['CONTACT_TYPE'],
-					'modifyById' => isset($row['MODIFY_BY_ID']) ? $row['MODIFY_BY_ID'] : 0,
-					'modifyByAvatar' => '',
-					'activityShow' => 1,
-					'activityErrorTotal' => 0,
-					'activityProgress' => 0,
-					'activityTotal' => 0,
-					'page' => $this->blockPage,
-					'pageCount' => $pageCount,
-					'fields' => $fields,
-					'return' => $returnCustomer,
-					'returnApproach' => isset($row['IS_REPEATED_APPROACH']) && $row['IS_REPEATED_APPROACH'] == 'Y',
-					'assignedBy' => $row['ASSIGNED_BY'],
-					'required' => $required,
-					'required_fm' => $requiredFm
-				);
-			}
-			// get iblock sections
-			if (
-				$iblockSects &&
-				Loader::includeModule('iblock')
-			)
-			{
-				$res = \Bitrix\Iblock\SectionTable::getList([
-					'select' => [
-						'ID', 'NAME'
-					],
-					'filter' => [
-						'ID' => $iblockSects
-					]
-				]);
-				$iblockSects = [];
-				while ($row = $res->fetch())
-				{
-					$iblockSects[$row['ID']] = $row['NAME'];
-				}
-				unset($res, $row);
-			}
-			// get iblock elements
-			if (
-				$iblockElements &&
-				Loader::includeModule('iblock')
-			)
-			{
-				$res = \Bitrix\Iblock\ElementTable::getList([
-					'select' => [
-						'ID', 'NAME'
-					],
-					'filter' => [
-						'ID' => $iblockElements
-					]
-				]);
-				$iblockElements = [];
-				while ($row = $res->fetch())
-				{
-					$iblockElements[$row['ID']] = $row['NAME'];
-				}
-				unset($res, $row);
-			}
-			// get crm entities
-			if ($crmEntities)
-			{
-				foreach ($crmEntities as $entityType => &$entityIds)
-				{
-					$entityType = $this->resolveEntityLetter($entityType);
-					$class = '\Bitrix\Crm\\' . $entityType . 'Table';
-					if (!$entityType || !class_exists($class))
-					{
-						continue;
-					}
-					if ($entityType == 'contact')
-					{
-						$select = ['ID', 'NAME', 'LAST_NAME'];
-					}
-					else
-					{
-						$select = ['ID', 'TITLE'];
-					}
-					$entityPath = $this->getEntityPath($entityType);
-					$res = $class::getList([
-						'select' => $select,
-						'filter' => [
-							'ID' => $entityIds
-						]
-					]);
-					$entityIds = [];
-					while ($row = $res->fetch())
-					{
-						$id = $row['ID'];
-						unset($row['ID']);
-						$entityIds[$id] = \htmlspecialcharsbx(implode(' ', $row));
-						$entityPath = str_replace('#' . $entityType . '_id#', $id, $entityPath);
-						$entityIds[$id] = '<a href="' . $entityPath . '">' . $entityIds[$id] . '</a>';
-					}
-					unset($entityPath, $res, $row, $id);
-				}
-				unset($entityType, $entityIds, $class);
-			}
-			// get observers
-			$observers = [];
-			if (in_array('OBSERVER', $select))
-			{
-				$res = ObserverTable::getList([
-					'select' => [
-						'USER_ID', 'ENTITY_ID'
-					],
-					'filter' => [
-						'=ENTITY_TYPE_ID' => $typeId,
-						'=ENTITY_ID' => array_keys($result)
-					],
-					'order' => [
-						'SORT' => 'ASC'
-					]
-				]);
-				while ($row = $res->fetch())
-				{
-					$users[] = $row['USER_ID'];
-					if (!isset($observers[$row['ENTITY_ID']]))
-					{
-						$observers[$row['ENTITY_ID']] = [];
-					}
-					$observers[$row['ENTITY_ID']][] = $row['USER_ID'];
-				}
-				unset($res, $row);
-			}
-			// get all users in common
-			if ($users)
-			{
-				$res = \Bitrix\Main\UserTable::getList(array(
-					'select' => array(
-						'ID', 'NAME', 'LAST_NAME', 'PERSONAL_PHOTO'
-					),
-					'filter' => array(
-						'ID' => array_unique($users)
+					if (
+						!empty($row[$code]) ||
+						($code === 'OPPORTUNITY')
 					)
-				));
-				$users = [];
-				while ($row = $res->fetch())
-				{
-					if ($row['PERSONAL_PHOTO'])
 					{
-						$row['PERSONAL_PHOTO'] = \CFile::ResizeImageGet(
-							$row['PERSONAL_PHOTO'],
-							$this->avatarSize,
-							BX_RESIZE_IMAGE_EXACT
-						);
-						if ($row['PERSONAL_PHOTO'])
+						$isHtml = false;
+						$boolFieldNames = ['CLOSED', 'PAYED', 'ALLOY_DELIVERY', 'DEDUCTED', 'CANCELED'];
+						if (in_array($code, $boolFieldNames))
 						{
-							$row['PERSONAL_PHOTO'] = $row['PERSONAL_PHOTO']['src'];
+							$row[$code] = Loc::getMessage('CRM_KANBAN_CHAR_' . $row[$code]);
 						}
-					}
-					$buyerLink = '';
-					$link = str_replace(
-						'#user_id#',
-						$row['ID'],
-						$this->arParams['PATH_TO_USER']
-					);
-					if (isset($this->arParams['PATH_TO_BUYER_PROFILE']))
-					{
-						$buyerLink = str_replace(
-							'#user_id#',
-							$row['ID'],
-							$this->arParams['PATH_TO_BUYER_PROFILE']
-						);
-					}
-					$users[$row['ID']] = [
-						'id' => $row['ID'],
-						'title' => \htmlspecialcharsbx(\CUser::FormatName(
-							$this->arParams['~NAME_TEMPLATE'],
-							$row, true, false
-						)),
-						'picture' => $row['PERSONAL_PHOTO'],
-						'link' => $link
-					];
-					// tmp
-					$userTitle = $users[$row['ID']]['title'];
-					$users[$row['ID']]['html'] = '<a href="' . $link . '">' . $userTitle . '</a>';
-					if (!empty($buyerLink))
-					{
-						$users[$row['ID']]['buyerHtml'] = '<a href="' . $buyerLink . '">' . $userTitle . '</a>';
-					}
-				}
-				unset($res, $row);
-			}
-			// get file's infos
-			if ($fileIds)
-			{
-				$fileViewer = new \Bitrix\Crm\UserField\FileViewer($typeId);
-				$fileIds = array_unique($fileIds);
-				$res = \Bitrix\Main\FileTable::getList([
-					'select' => [
-						'ID', 'ORIGINAL_NAME'
-					],
-					'filter' => [
-						'ID' => $fileIds
-					]
-				]);
-				$fileIds = [];
-				while ($row = $res->fetch())
-				{
-					$fileIds[$row['ID']] = \htmlspecialcharsbx($row['ORIGINAL_NAME']);
-				}
-				unset($res, $row);
-			}
-			// tracking analytic
-			$traces = [];
-			if ($result && in_array('TRACKING_SOURCE_ID', $select))
-			{
-				$traces = $this->getTracesById(array_keys($result));
-			}
-			// refill result array, if we have any new data
-			if ($users || $fileIds || $iblockSects || $iblockElements || $crmEntities || $traces)
-			{
-				foreach ($result as $id => &$item)
-				{
-					// add observers in each items
-					if ($observers)
-					{
-						if (isset($observers[$id]))
+						else if ($code === 'OPPORTUNITY')
 						{
-							foreach ($observers[$id] as &$obsId)
-							{
-								if (isset($users[$obsId]))
-								{
-									// tmp, @todo: make more universal
-									$obsId = $users[$obsId]['html'];
-								}
-							}
-							unset($obsId);
-							$item['fields'][] = array(
-								'code' => 'OBSERVER',
-								'title' => Loc::getMessage('CRM_KANBAN_FIELD'),
-								'value' => implode('; ', $observers[$id]),
-								'html' => true
+							$row[$code] = \CCrmCurrency::MoneyToString(
+								$row[$code],
+								$row['CURRENCY_ID']
 							);
 						}
-					}
-					// add other users
-					foreach ($item['fields'] as &$field)
-					{
-						if (in_array($field['code'], $this->usersIdFields))
+						else if ($code === 'PAYMENT' || $code === 'SHIPMENT')
 						{
-							$newValue = [];
-							foreach ((array)$field['value'] as $uid)
+							$fieldValue = "";
+							$row[$code] = is_array($row[$code]) ? $row[$code] : [$row[$code]];
+							foreach ($row[$code] as $rowCodeItem)
 							{
-								if (isset($users[$uid]))
+								if ($code === 'PAYMENT')
 								{
-									// tmp, @todo: make more universal
-									if ($field['code'] == 'ASSIGNED_BY_ID' || $field['code'] == 'RESPONSIBLE_ID')
-									{
-										$newValue[] = $users[$uid];
-									}
-									elseif ($type == $types['order'] && $field['code'] == 'USER')
-									{
-										$newValue[] = $users[$uid]['buyerHtml'];
-									}
-									else
-									{
-										$newValue[] = $users[$uid]['html'];
-									}
+									$pathSubItem = CComponentEngine::MakePathFromTemplate(
+										$this->arParams['PATH_TO_ORDER_PAYMENT_DETAILS'],
+										array(
+											'payment_id' => $rowCodeItem['ID']
+										)
+									);
 								}
+								else
+								{
+									$pathSubItem = CComponentEngine::MakePathFromTemplate(
+										$this->arParams['PATH_TO_ORDER_SHIPMENT_DETAILS'],
+										array(
+											'shipment_id' => $rowCodeItem['ID']
+										)
+									);
+								}
+
+								$price = ($code === 'PAYMENT') ? $rowCodeItem['SUM'] : $rowCodeItem['PRICE_DELIVERY'];
+								$sum = \CCrmCurrency::MoneyToString(
+									$price,
+									$rowCodeItem['CURRENCY']
+								);
+
+								$title = '';
+
+								$paySystemName =  ($code === 'PAYMENT') ? $rowCodeItem['PAY_SYSTEM_NAME'] : $rowCodeItem['DELIVERY_NAME'];
+								$paySystemName = htmlspecialcharsbx($paySystemName);
+								if (!empty($paySystemName))
+								{
+									$title .= $paySystemName. " ";
+								}
+
+								if (!empty($sum))
+								{
+									$title .= "({$sum})";
+								}
+
+								if (empty($title))
+								{
+									$title = htmlspecialcharsbx($rowCodeItem['ACCOUNT_NUMBER']);
+								}
+
+								$fieldValue .= "<a href='{$pathSubItem}'>{$title}</a></br>";
 							}
-							// tmp, @todo: make more universal
-							if ($field['code'] == 'ASSIGNED_BY_ID' || $field['code'] == 'RESPONSIBLE_ID' || $field['code'] == 'USER')
+							$row[$code] = $fieldValue;
+						}
+						else if ($code === 'ORDER_STAGE')
+						{
+							$orderStages = Order\OrderStage::getList();
+							if (isset($orderStages[$row[$code]]))
 							{
-								$field['value'] = array_shift($newValue);
+								$row[$code] = [
+									'title' => $orderStages[$row[$code]],
+									'code' => $row[$code]
+								];
 							}
 							else
 							{
-								$field['value'] = implode('; ', $newValue);
+								$row[$code] = [
+									'title' => $row[$code],
+									'code' => $row[$code]
+								];
+								continue;
 							}
+						}
+						else if (
+							$addFields[$code]['type'] === 'money'
+						)
+						{
+							$moneyRow = is_array($row[$code])
+										? $row[$code]
+										: [$row[$code]];
+							$row[$code] = [];
+							foreach ($moneyRow as $moneyItem)
+							{
+								[$money, $moneyCurr] = explode('|', $moneyItem);
+								$row[$code][] = \CCrmCurrency::MoneyToString(
+									$money,
+									$moneyCurr
+								);
+							}
+							$row[$code] = implode('; ', $row[$code]);
+						}
+						else if (
+							$addFields[$code]['type'] === 'employee'
+						)
+						{
+							$this->usersIdFields[] = $code;
+						}
+						else if (
+							$addFields[$code]['type'] === 'boolean'
+						)
+						{
+							$row[$code] = Loc::getMessage('CRM_KANBAN_BOOLEAN_' . (int)$row[$code]);
+						}
+						else if (
+							$addFields[$code]['type'] === 'enumeration'
+						)
+						{
+							$row[$code] = implode(',', array_intersect_key(
+								$addFields[$code]['enumerations'],
+								array_flip((array)$row[$code])
+							));
+						}
+						else if (
+							$addFields[$code]['type'] === 'date' ||
+							mb_strpos($code, 'DATE') !== false
+						)
+						{
+							$row[$code] = (array) $row[$code];
+							foreach ($row[$code] as &$rowDate)
+							{
+								if ($rowDate instanceof \Bitrix\Main\Type\Date || $rowDate instanceof \DateTime)
+								{
+									$timestamp = $rowDate->getTimestamp();
+								}
+								else
+								{
+									$timestamp = \MakeTimeStamp($rowDate);
+								}
+								$rowDate = \FormatDate($this->dateFormats['full'], $timestamp, $timeFull);
+							}
+							unset($rowDate);
+							$row[$code] = implode(',', $row[$code]);
+						}
+						else if ($addFields[$code]['type'] === 'file')
+						{
+							$row[$code] = (array) $row[$code];
+							$fileIds = array_merge(
+								$fileIds,
+								$row[$code]
+							);
+						}
+						else if ($addFields[$code]['type'] === 'crm_status')
+						{
+							$entityType = $addFields[$code]['settings']['ENTITY_TYPE'] ?? null;
+							$statuses = CCrmStatus::GetStatusList($entityType);
+							if (isset($statuses[$row[$code]]))
+							{
+								$row[$code] = $statuses[$row[$code]];
+							}
+							else
+							{
+								continue;
+							}
+						}
+						else if ($addFields[$code]['type'] === 'crm')
+						{
+							$row[$code] = (array) $row[$code];
+							$settings = isset($addFields[$code]['settings'])
+										? (array) $addFields[$code]['settings']
+										: [];
+							$settingsFlip = array_flip($settings);
+							$newRow = [];
+							foreach ($row[$code] as $crmEntity)
+							{
+								if (!mb_strpos($crmEntity, '_'))
+								{
+									if (isset($settingsFlip['Y']))
+									{
+										$crmEntity = CCrmOwnerTypeAbbr::ResolveByTypeID(CCrmOwnerType::ResolveID($settingsFlip['Y'])) . '_' . $crmEntity;
+									}
+								}
+								$newRow[] = $crmEntity;
+								if(mb_strpos($crmEntity, '_'))
+								{
+									[$crmEntityType, $crmEntity] = explode('_', $crmEntity);
+								}
+								else
+								{
+									continue;
+								}
+								if (!isset($crmEntities[$crmEntityType]))
+								{
+									$crmEntities[$crmEntityType] = [];
+								}
+								$crmEntities[$crmEntityType][] = $crmEntity;
+							}
+							$row[$code] = $newRow;
+						}
+						elseif ($addFields[$code]['type'] === 'iblock_section')
+						{
+							$row[$code] = (array) $row[$code];
+							$iblockSects = array_merge(
+								$iblockSects,
+								$row[$code]
+							);
+						}
+						elseif ($addFields[$code]['type'] === 'iblock_element')
+						{
+							$row[$code] = (array) $row[$code];
+							$iblockElements = array_merge(
+								$iblockElements,
+								$row[$code]
+							);
+						}
+						elseif ($addFields[$code]['type'] === 'address')
+						{
+							$row[$code] = (array) $row[$code];
+							foreach ($row[$code] as &$location)
+							{
+								if (mb_strpos($location, '|') !== false)
+								{
+									[$location, ] = explode('|', $location);
+								}
+							}
+							unset($location);
+						}
+						elseif ($addFields[$code]['type'] === 'url')
+						{
+							$row[$code] = (array) $row[$code];
+							foreach ($row[$code] as &$url)
+							{
+								$url = \htmlspecialcharsbx($url);
+								$url = '<a href="' . $url . '" target="_blank">' . $url . '</a>';
+							}
+							unset($url);
+							$isHtml = true;
+						}
+						$fields[] = array(
+							'code' => $code,
+							'title' => $addFields[$code]['title'],
+							'type' => $addFields[$code]['type'],
+							'value' => $row[$code],
+							'html' => $isHtml || in_array($code, ['COMMENTS', 'PAYMENT', 'SHIPMENT'])
+						);
+						if (in_array($code, $this->usersIdFields))
+						{
+							$users = array_merge(
+								$users,
+								(array)$row[$code]
+							);
+						}
+					}
+				}
+			}
+			$returnCustomer = isset($row['IS_RETURN_CUSTOMER']) && $row['IS_RETURN_CUSTOMER'] === 'Y';
+			// collect required
+			$required = [];
+			$requiredFm = [];
+			if ($this->requiredFields)
+			{
+				// fm fields check later
+				foreach ($this->allowedFMtypes as $fm)
+				{
+					$fmUp = mb_strtoupper($fm);
+					$requiredFm[$fmUp] = true;
+					$row[$fmUp] = '';
+				}
+				// check each key
+				foreach ($row as $key => $val)
+				{
+					if (
+						$returnCustomer &&
+						isset($this->exclusiveFieldsReturnCustomer[$key])
+					)
+					{
+						continue;
+					}
+					if (isset($this->requiredFields[$key]) && !$val)
+					{
+						foreach ($this->requiredFields[$key] as $status)
+						{
+							if (!isset($required[$status]))
+							{
+								$required[$status] = [];
+							}
+							$required[$status][] = $key;
+						}
+					}
+				}
+				// special keys
+				foreach ($specialReqKeys as $reqKeyOrig => $reqKey)
+				{
+					if (
+						isset($this->requiredFields[$reqKey]) &&
+						(
+							!$row[$reqKeyOrig]
+							||
+							(
+								$reqKeyOrig === 'OPPORTUNITY'
+								&& $row['OPPORTUNITY_ACCOUNT'] <= 0
+							)
+						)
+					)
+					{
+						foreach ($this->requiredFields[$reqKey] as $status)
+						{
+							if (!isset($required[$status]))
+							{
+								$required[$status] = [];
+							}
+							$required[$status][] = $reqKey;
+						}
+					}
+				}
+			}
+			//add
+			$dateFormat = $this->dateFormats[date('Y') === date('Y', $row['DATE_UNIX']) ? 'short' : 'full'][$this->formatLang];
+			$result[$row['ID']] = [
+				'id' =>  $row['ID'],
+				'name' => htmlspecialcharsbx($row['TITLE'] ?: '#' . $row['ID']),
+				'link' => str_replace($this->pathMarkers, $row['ID'], $path),
+				'columnId' => $columnId = htmlspecialcharsbx($row[$this->statusKey]),
+				'columnColor' => isset($columns[$columnId]) ? $columns[$columnId]['color'] : '',
+				'price' => $row['PRICE'],
+				'price_formatted' => $row['PRICE_FORMATTED'],
+				'date' => (
+							!$row['FORMAT_TIME']
+							? \FormatDate($dateFormat, $row['DATE_UNIX'], $timeFull)
+							: (
+								(time() - $row['DATE_UNIX']) / 3600 > 48
+								? \FormatDate($dateFormat, $row['DATE_UNIX'], $timeFull)
+								: \FormatDate('x', $row['DATE_UNIX'], $timeFull)
+							)
+						),
+				'contactId' => (int)$row['CONTACT_ID'],
+				'companyId' => (!empty($row['COMPANY_ID']) ? (int)$row['COMPANY_ID'] : null),
+				'contactType' => $row['CONTACT_TYPE'],
+				'modifyById' => $row['MODIFY_BY_ID'] ?? 0,
+				'modifyByAvatar' => '',
+				'activityShow' => 1,
+				'activityErrorTotal' => 0,
+				'activityProgress' => 0,
+				'activityTotal' => 0,
+				'page' => $this->blockPage,
+				'pageCount' => $pageCount,
+				'fields' => $fields,
+				'return' => $returnCustomer,
+				'returnApproach' => isset($row['IS_REPEATED_APPROACH']) && $row['IS_REPEATED_APPROACH'] === 'Y',
+				'assignedBy' => $row['ASSIGNED_BY'],
+				'required' => $required,
+				'required_fm' => $requiredFm
+			];
+		}
+
+		$result = $this->sort($result);
+
+		// get iblock sections
+		if (
+			$iblockSects &&
+			Loader::includeModule('iblock')
+		)
+		{
+			$res = \Bitrix\Iblock\SectionTable::getList([
+				'select' => [
+					'ID', 'NAME'
+				],
+				'filter' => [
+					'ID' => $iblockSects
+				]
+			]);
+			$iblockSects = [];
+			while ($row = $res->fetch())
+			{
+				$iblockSects[$row['ID']] = $row['NAME'];
+			}
+			unset($res, $row);
+		}
+		// get iblock elements
+		if (
+			$iblockElements &&
+			Loader::includeModule('iblock')
+		)
+		{
+			$res = \Bitrix\Iblock\ElementTable::getList([
+				'select' => [
+					'ID', 'NAME'
+				],
+				'filter' => [
+					'ID' => $iblockElements
+				]
+			]);
+			$iblockElements = [];
+			while ($row = $res->fetch())
+			{
+				$iblockElements[$row['ID']] = $row['NAME'];
+			}
+			unset($res, $row);
+		}
+		// get crm entities
+		if ($crmEntities)
+		{
+			foreach ($crmEntities as $entityType => &$entityIds)
+			{
+				$entityType = mb_strtolower(\CCrmOwnerTypeAbbr::ResolveName($entityType));
+				$class = '\Bitrix\Crm\\' . $entityType . 'Table';
+				if (!$entityType || !class_exists($class))
+				{
+					continue;
+				}
+				if ($entityType === 'contact')
+				{
+					$select = ['ID', 'NAME', 'LAST_NAME'];
+				}
+				else
+				{
+					$select = ['ID', 'TITLE'];
+				}
+				$entityPathTemplate = $this->getEntityPath($entityType);
+				$res = $class::getList([
+					'select' => $select,
+					'filter' => [
+						'ID' => $entityIds
+					]
+				]);
+				$entityIds = [];
+				while ($row = $res->fetch())
+				{
+					$id = $row['ID'];
+					unset($row['ID']);
+					$entityIds[$id] = \htmlspecialcharsbx(implode(' ', $row));
+					$entityPath = str_replace('#' . $entityType . '_id#', $id, $entityPathTemplate);
+					$entityIds[$id] = '<a href="' . $entityPath . '">' . $entityIds[$id] . '</a>';
+				}
+				unset($entityPath, $res, $row, $id);
+			}
+			unset($entityType, $entityIds, $class);
+		}
+		// get observers
+		$observers = [];
+		if (in_array('OBSERVER', $select, true))
+		{
+			$res = ObserverTable::getList([
+				'select' => [
+					'USER_ID', 'ENTITY_ID'
+				],
+				'filter' => [
+					'=ENTITY_TYPE_ID' => $typeId,
+					'=ENTITY_ID' => array_keys($result)
+				],
+				'order' => [
+					'SORT' => 'ASC'
+				]
+			]);
+			while ($row = $res->fetch())
+			{
+				$users[] = $row['USER_ID'];
+				if (!isset($observers[$row['ENTITY_ID']]))
+				{
+					$observers[$row['ENTITY_ID']] = [];
+				}
+				$observers[$row['ENTITY_ID']][] = $row['USER_ID'];
+			}
+			unset($res, $row);
+		}
+		// get all users in common
+		if ($users)
+		{
+			$res = \Bitrix\Main\UserTable::getList(array(
+				'select' => array(
+					'ID', 'NAME', 'LAST_NAME', 'PERSONAL_PHOTO'
+				),
+				'filter' => array(
+					'ID' => array_unique($users)
+				)
+			));
+			$users = [];
+			while ($row = $res->fetch())
+			{
+				$row = $this->processAvatar($row);
+				$buyerLink = '';
+				$link = str_replace(
+					'#user_id#',
+					$row['ID'],
+					$this->arParams['PATH_TO_USER']
+				);
+				if (isset($this->arParams['PATH_TO_BUYER_PROFILE']))
+				{
+					$buyerLink = str_replace(
+						'#user_id#',
+						$row['ID'],
+						$this->arParams['PATH_TO_BUYER_PROFILE']
+					);
+				}
+				$users[$row['ID']] = [
+					'id' => $row['ID'],
+					'title' => \htmlspecialcharsbx(\CUser::FormatName(
+						$this->arParams['~NAME_TEMPLATE'],
+						$row, true, false
+					)),
+					'picture' => $row['PERSONAL_PHOTO'],
+					'link' => $link
+				];
+				// tmp
+				$userTitle = $users[$row['ID']]['title'];
+				$users[$row['ID']]['html'] = '<a href="' . $link . '">' . $userTitle . '</a>';
+				if (!empty($buyerLink))
+				{
+					$users[$row['ID']]['buyerHtml'] = '<a href="' . $buyerLink . '">' . $userTitle . '</a>';
+				}
+			}
+			unset($res, $row);
+		}
+		// get file's infos
+		if ($fileIds)
+		{
+			$fileViewer = new \Bitrix\Crm\UserField\FileViewer($typeId);
+			$fileIds = array_unique($fileIds);
+			$res = \Bitrix\Main\FileTable::getList([
+				'select' => [
+					'ID', 'ORIGINAL_NAME'
+				],
+				'filter' => [
+					'ID' => $fileIds
+				]
+			]);
+			$fileIds = [];
+			while ($row = $res->fetch())
+			{
+				$fileIds[$row['ID']] = \htmlspecialcharsbx($row['ORIGINAL_NAME']);
+			}
+			unset($res, $row);
+		}
+		// tracking analytic
+		$traces = [];
+		if ($result && in_array('TRACKING_SOURCE_ID', $select, true))
+		{
+			$traces = $this->getTracesById(array_keys($result));
+		}
+		// refill result array, if we have any new data
+		if ($users || $fileIds || $iblockSects || $iblockElements || $crmEntities || $traces)
+		{
+			foreach ($result as $id => &$row)
+			{
+				// add observers in each items
+				if ($observers)
+				{
+					if (isset($observers[$id]))
+					{
+						foreach ($observers[$id] as &$obsId)
+						{
+							if (isset($users[$obsId]))
+							{
+								// tmp, @todo: make more universal
+								$obsId = $users[$obsId]['html'];
+							}
+						}
+						unset($obsId);
+						$row['fields'][] = array(
+							'code' => 'OBSERVER',
+							'title' => Loc::getMessage('CRM_KANBAN_FIELD'),
+							'value' => implode('; ', $observers[$id]),
+							'html' => true
+						);
+					}
+				}
+				// add other users
+				foreach ($row['fields'] as &$field)
+				{
+					if (in_array($field['code'], $this->usersIdFields, true))
+					{
+						$newValue = [];
+						foreach ((array)$field['value'] as $uid)
+						{
+							if (isset($users[$uid]))
+							{
+								// tmp, @todo: make more universal
+								if ($field['code'] === 'ASSIGNED_BY_ID' || $field['code'] === 'RESPONSIBLE_ID')
+								{
+									$newValue[] = $users[$uid];
+								}
+								elseif ($this->entity->getTypeName() === 'ORDER' && $field['code'] === 'USER')
+								{
+									$newValue[] = $users[$uid]['buyerHtml'];
+								}
+								else
+								{
+									$newValue[] = $users[$uid]['html'];
+								}
+							}
+						}
+						// tmp, @todo: make more universal
+						if ($field['code'] === 'ASSIGNED_BY_ID' || $field['code'] === 'RESPONSIBLE_ID' || $field['code'] === 'USER')
+						{
+							$field['value'] = array_shift($newValue);
+						}
+						else
+						{
+							$field['value'] = implode('; ', $newValue);
+						}
+						$field['html'] = true;
+					}
+				}
+				unset($field);
+				// add files' infos
+				if ($fileIds)
+				{
+					foreach ($row['fields'] as &$field)
+					{
+						if ($field['type'] === 'file')
+						{
+							foreach ($field['value'] as &$fid)
+							{
+								if (isset($fileIds[$fid]))
+								{
+									$fid = '<a href="' . $fileViewer->getUrl($id, $field['code'], $fid) . '">' .
+												$fileIds[$fid] .
+											'</a>';
+									$field['html'] = true;
+								}
+							}
+							unset($fid);
+							$field['value'] = implode('; ', $field['value']);
+						}
+					}
+					unset($field);
+				}
+				// add iblock sections
+				if ($iblockSects)
+				{
+					foreach ($row['fields'] as &$field)
+					{
+						if ($field['type'] === 'iblock_section')
+						{
+							foreach ($field['value'] as &$section)
+							{
+								if (isset($iblockSects[$section]))
+								{
+									$section = $iblockSects[$section];
+								}
+							}
+							unset($section);
+							$field['value'] = implode('; ', $field['value']);
+						}
+					}
+					unset($field);
+				}
+				// add iblock elements
+				if ($iblockElements)
+				{
+					foreach ($row['fields'] as &$field)
+					{
+						if ($field['type'] === 'iblock_element')
+						{
+							foreach ($field['value'] as &$element)
+							{
+								if (isset($iblockElements[$element]))
+								{
+									$element = $iblockElements[$element];
+								}
+							}
+							unset($element);
+							$field['value'] = implode('; ', $field['value']);
+						}
+					}
+					unset($field);
+				}
+				// crm entities
+				if ($crmEntities)
+				{
+					foreach ($row['fields'] as &$field)
+					{
+						if ($field['type'] === 'crm')
+						{
+							foreach ($field['value'] as &$entity)
+							{
+								[$entityType, $entityId] = explode('_', $entity);
+								if (isset($crmEntities[$entityType][$entityId]))
+								{
+									$entity = $crmEntities[$entityType][$entityId];
+								}
+								unset($entityId, $entityType);
+							}
+							unset($entity);
+							$field['value'] = implode('; ', $field['value']);
 							$field['html'] = true;
 						}
 					}
 					unset($field);
-					// add files' infos
-					if ($fileIds)
-					{
-						foreach ($item['fields'] as &$field)
-						{
-							if ($field['type'] == 'file')
-							{
-								foreach ($field['value'] as &$fid)
-								{
-									if (isset($fileIds[$fid]))
-									{
-										$fid = '<a href="' . $fileViewer->getUrl($id, $field['code'], $fid) . '">' .
-											   		$fileIds[$fid] .
-												'</a>';
-										$field['html'] = true;
-									}
-								}
-								unset($fid);
-								$field['value'] = implode('; ', $field['value']);
-							}
-						}
-						unset($field);
-					}
-					// add iblock sections
-					if ($iblockSects)
-					{
-						foreach ($item['fields'] as &$field)
-						{
-							if ($field['type'] == 'iblock_section')
-							{
-								foreach ($field['value'] as &$section)
-								{
-									if (isset($iblockSects[$section]))
-									{
-										$section = $iblockSects[$section];
-									}
-								}
-								unset($section);
-								$field['value'] = implode('; ', $field['value']);
-							}
-						}
-						unset($field);
-					}
-					// add iblock elements
-					if ($iblockElements)
-					{
-						foreach ($item['fields'] as &$field)
-						{
-							if ($field['type'] == 'iblock_element')
-							{
-								foreach ($field['value'] as &$element)
-								{
-									if (isset($iblockElements[$element]))
-									{
-										$element = $iblockElements[$element];
-									}
-								}
-								unset($element);
-								$field['value'] = implode('; ', $field['value']);
-							}
-						}
-						unset($field);
-					}
-					// crm entities
-					if ($crmEntities)
-					{
-						foreach ($item['fields'] as &$field)
-						{
-							if ($field['type'] == 'crm')
-							{
-								foreach ($field['value'] as &$entity)
-								{
-									[$entityType, $entityId] = explode('_', $entity);
-									if (isset($crmEntities[$entityType][$entityId]))
-									{
-										$entity = $crmEntities[$entityType][$entityId];
-									}
-									unset($entityId, $entityType);
-								}
-								unset($entity);
-								$field['value'] = implode('; ', $field['value']);
-								$field['html'] = true;
-							}
-						}
-						unset($field);
-					}
-					// tracking system
-					if (isset($traces[$id]))
-					{
-						$item['fields'][] = array(
-							'code' => 'TRACKING_SOURCE_ID',
-							'title' => Loc::getMessage('CRM_KANBAN_TRACKING_SOURCE_ID'),
-							'value' => $traces[$id]['NAME']
-						);
-					}
 				}
-				unset($item);
+				// tracking system
+				if (isset($traces[$id]))
+				{
+					$row['fields'][] = array(
+						'code' => 'TRACKING_SOURCE_ID',
+						'title' => Loc::getMessage('CRM_KANBAN_TRACKING_SOURCE_ID'),
+						'value' => $traces[$id]['NAME']
+					);
+				}
 			}
-			unset(
-				$assignedIds, $users, $observers, $fileIds,
-				$iblockSects, $iblockElements
-			);
-			if (!$sorting)
-			{
-				$result = $this->sort($result);
-			}
+			unset($row);
 		}
+		unset(
+			$assignedIds, $users, $observers, $fileIds,
+			$iblockSects, $iblockElements
+		);
 
 		return $result;
 	}
@@ -3032,47 +2226,47 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 * @param array $errors Count of errors (deadline).
 	 * @return array
 	 */
-	protected function getActivityCounters($activity, &$errors = array())
+	protected function getActivityCounters($activity, &$errors = []): array
 	{
 		if (empty($activity))
 		{
-			return array();
+			return [];
 		}
 
-		$return = array();
+		$return = [];
 		$activity = array_unique($activity);
 
 		//make filter
-		$filter = array(
-			'BINDINGS' => array()
-		);
-		$typeId = \CCrmOwnerType::ResolveID($this->type);
+		$filter = [
+			'BINDINGS' => []
+		];
+		$typeId = $this->entity->getTypeId();
 		foreach ($activity as $id)
 		{
-			$filter['BINDINGS'][] = array(
+			$filter['BINDINGS'][] = [
 				'OWNER_ID' => $id,
 				'OWNER_TYPE_ID' => $typeId
-			);
+			];
 		}
 
 		// counters
 		$date = new \Bitrix\Main\Type\DateTime;
 		$date->add('-'.date('G').' hours')->add('-'.date('i').' minutes')->add('+1 day');//@ #81166
 		$res = \CCrmActivity::GetList(
-			array(),
+			[],
 			array_merge(
 				$filter,
-				array(
+				[
 					'=COMPLETED' => 'N',
 					'<=DEADLINE' => $date
-				)
+				]
 			),
 			false, false,
-			array(
+			[
 				'ID', 'OWNER_ID'
-			)
+			]
 		);
-		$fetched = array();
+		$fetched = [];
 		while ($row = $res->fetch())
 		{
 			if (!isset($fetched[$row['ID']]))
@@ -3105,13 +2299,13 @@ class CrmKanbanComponent extends \CBitrixComponent
 
 		// get base activity
 		$res = \CCrmActivity::GetList(
-			array(),
+			[],
 			$filter,
 			false,
 			false,
-			array(
+			[
 				'ID', 'COMPLETED', 'OWNER_ID'
-			)
+			]
 		);
 		while ($row = $res->fetch())
 		{
@@ -3166,7 +2360,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 * @param bool $clearCache Clear static cache.
 	 * @return array
 	 */
-	protected function getAdditionalFields($clearCache = false)
+	protected function getAdditionalFields($clearCache = false): array
 	{
 		static $additional = null;
 
@@ -3248,65 +2442,16 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 * Get additional fields for quick form.
 	 * @return array
 	 */
-	protected function getAdditionalEditFields()
+	protected function getAdditionalEditFields(): array
 	{
 		return $this->additionalEdit;
-	}
-
-	/**
-	 * Gets sections for fields popup.
-	 * @param array $config External config.
-	 * @return array
-	 */
-	protected function getFieldsSections($config)
-	{
-		$sections = [];
-		if (is_array($config) && !empty($config))
-		{
-			foreach ($config as $configSection)
-			{
-				if (
-					isset($configSection['elements']) &&
-					is_array($configSection['elements'])
-				)
-				{
-					$tmpItems = $configSection['elements'];
-					$configSection['elements'] = [];
-					foreach ($tmpItems as $item)
-					{
-						if ($item['name'] == 'OPPORTUNITY_WITH_CURRENCY')
-						{
-							$configSection['elements']['OPPORTUNITY'] = [
-								'name' => 'OPPORTUNITY',
-								'title' => ''
-							];
-						}
-						$configSection['elements'][$item['name']] = [
-							'name' => $item['name'],
-							'title' => $item['title']
-						];
-					}
-
-					if (in_array($configSection['name'], ['main', 'additional', 'properties']))
-					{
-						if ($configSection['name'] == 'additional')
-						{
-							$configSection['elements'] = '*';
-						}
-						$sections[] = $configSection;
-					}
-				}
-			}
-		}
-
-		return $sections;
 	}
 
 	/**
 	 * Gets current user perms.
 	 * @return CCrmPerms
 	 */
-	protected function getCurrentUserPermissions()
+	protected function getCurrentUserPermissions(): \CCrmPerms
 	{
 		static $userPerms = null;
 		if ($userPerms === null)
@@ -3320,7 +2465,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 * Make some actions (set, update, etc).
 	 * @return void
 	 */
-	protected function makeAction()
+	protected function processRequestActions(): void
 	{
 		$context = Application::getInstance()->getContext();
 		$request = $context->getRequest();
@@ -3328,7 +2473,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		$id = $request->get('entity_id');
 
 		// some actions for editor
-		if ($action == 'get' && check_bitrix_sessid())
+		if ($action === 'get' && check_bitrix_sessid())
 		{
 			$ajaxParams = (array)$request->get('ajaxParams');
 			if (isset($ajaxParams['editorReset']))
@@ -3348,7 +2493,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 			$status = $request->get('status');
 			$ids = is_array($id) ? $id : [$id];
 			// skip action delete
-			if ($action == 'status' && $status == 'DELETED')
+			if ($action === 'status' && $status === static::COLUMN_NAME_DELETED)
 			{
 				$ids = [];
 			}
@@ -3356,12 +2501,12 @@ class CrmKanbanComponent extends \CBitrixComponent
 			foreach ($ids as $id)
 			{
 				//delete
-				if ($action == 'status' && $status == 'DELETED')
+				if ($action === 'status' && $status === static::COLUMN_NAME_DELETED)
 				{
 					$this->actionDelete($id);
 				}
 				//change status / stage
-				if ($action == 'status' && isset($statuses[$status]))
+				if ($action === 'status' && isset($statuses[$status]))
 				{
 					$result = $this->actionUpdateEntityStatus($id, $status, $statuses);
 					if (!$result->isSuccess())
@@ -3374,26 +2519,26 @@ class CrmKanbanComponent extends \CBitrixComponent
 				}
 			}
 
-			if ($this->arParams['IS_AJAX'] != 'Y')
+			if ($this->arParams['IS_AJAX'] !== 'Y')
 			{
-				$uri = new \Bitrix\Main\Web\Uri($request->getRequestUri());
-				\LocalRedirect($uri->deleteParams(array('action', 'entity_id', 'status'))->getUri());
+				$uri = new Uri($request->getRequestUri());
+				\LocalRedirect($uri->deleteParams(['action', 'entity_id', 'status'])->getUri());
 			}
 		}
 
 		//subscribe / unsunbscribe
 		$supervisor = $request->get('supervisor');
-		if ($request->get('apply_filter') == 'Y')
+		if ($request->get('apply_filter') === 'Y')
 		{
-			if (\Bitrix\Crm\Kanban\SupervisorTable::isSupervisor($this->type))
+			if (Kanban\SupervisorTable::isSupervisor($this->entity->getTypeName()))
 			{
 				$supervisor = 'N';
 			}
 		}
 		if ($supervisor)
 		{
-			\Bitrix\Crm\Kanban\SupervisorTable::set($this->type, $supervisor=='Y');
-			$uri = new \Bitrix\Main\Web\Uri($request->getRequestUri());
+			Kanban\SupervisorTable::set($this->entity->getTypeName(), $supervisor === 'Y');
+			$uri = new Uri($request->getRequestUri());
 			\LocalRedirect($uri->deleteParams(array('supervisor', 'clear_filter'))->getUri());
 		}
 	}
@@ -3402,9 +2547,10 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 * Current user is crm admin?
 	 * @return boolean
 	 */
-	protected function isCrmAdmin()
+	protected function isCrmAdmin(): bool
 	{
-		$crmPerms = new \CCrmPerms($this->uid);
+		$crmPerms = new \CCrmPerms($this->currentUserID);
+
 		return $crmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
 	}
 
@@ -3421,7 +2567,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 * Get admins and group moderators.
 	 * @return array
 	 */
-	protected function getAdmins()
+	protected function getAdmins(): array
 	{
 		$users = array();
 
@@ -3452,7 +2598,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		$date = new \Bitrix\Main\Type\DateTime;
 		$userQuery->setFilter(array(
 			'=ACTIVE' => 'Y',
-			'!ID' => $this->uid,
+			'!ID' => $this->currentUserID,
 			array(
 				'LOGIC' => 'OR',
 				'<=UG.DATE_ACTIVE_FROM' => $date,
@@ -3467,18 +2613,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		$res = $userQuery->exec();
 		while ($row = $res->fetch())
 		{
-			if ($row['PERSONAL_PHOTO'])
-			{
-				$row['PERSONAL_PHOTO'] = \CFile::ResizeImageGet(
-					$row['PERSONAL_PHOTO'],
-					$this->avatarSize,
-					BX_RESIZE_IMAGE_EXACT
-				);
-				if ($row['PERSONAL_PHOTO'])
-				{
-					$row['PERSONAL_PHOTO'] = $row['PERSONAL_PHOTO']['src'];
-				}
-			}
+			$row = $this->processAvatar($row);
 			$users[$row['ID']] = array(
 				'id' => $row['ID'],
 				'name' => \CUser::FormatName(
@@ -3493,157 +2628,6 @@ class CrmKanbanComponent extends \CBitrixComponent
 	}
 
 	/**
-	 * Prepare fields for inline edit scheme.
-	 * @return array
-	 */
-	protected function getSchemeForInlineEditor()
-	{
-		if (
-			$this->type == $this->types['lead'] ||
-			$this->type == $this->types['deal'] ||
-			$this->type == $this->types['order']
-		)
-		{
-			$availableFields = array_keys($this->additionalSelect);
-
-			// include external component class for call public method
-			$componentName = 'bitrix:crm.'.mb_strtolower($this->type) . '.details';
-			$className = \CBitrixComponent::includeComponentClass(
-				$componentName
-			);
-			/** @var CCrmDealDetailsComponent $crmCmp */
-			$crmCmp = new $className;
-			$crmCmp->initComponent($componentName);
-			$crmCmp->arResult = [
-				'READ_ONLY' => false,
-				'PATH_TO_USER_PROFILE' => ''
-			];
-			$crmCmp->setEntityID(0);
-			if ($this->type === $this->types['order'])
-			{
-				/** @var CCrmOrderDetailsComponent $crmCmp */
-				$crmCmp->obtainOrder();
-			}
-			$fieldInfos = $crmCmp->prepareFieldInfos();
-			$this->userFields = $crmCmp->prepareEntityUserFields();
-
-			$configuration =  ($this->type === $this->types['order']) ? $crmCmp->prepareKanbanConfiguration() : $crmCmp->prepareConfiguration();
-			$this->arResult['FIELDS_SECTIONS'] = $this->getFieldsSections(
-				$configuration
-			);
-
-			if (in_array('OPPORTUNITY', $availableFields))
-			{
-				$availableFields[] = 'OPPORTUNITY_WITH_CURRENCY';
-			}
-
-			// prepare fields
-			foreach ($fieldInfos as $field)
-			{
-				if (in_array($field['name'], $availableFields))
-				{
-					$this->schemeFields[$field['name']] = $field;
-				}
-			}
-			if (isset($this->schemeFields['TITLE']['isHeading']))
-			{
-				unset($this->schemeFields['TITLE']['isHeading']);
-			}
-			if (isset($this->schemeFields['TITLE']['visibilityPolicy']))
-			{
-				unset($this->schemeFields['TITLE']['visibilityPolicy']);
-			}
-
-			unset($crmCmp, $field, $componentName, $className, $fieldInfos);
-		}
-
-		// build scheme
-		if ($this->schemeFields)
-		{
-			$scheme = [
-				[
-					'name' => 'main',
-					'title' => '',
-					'type' => 'section',
-					'elements' => array_values($this->schemeFields)
-				]
-			];
-
-			return $scheme;
-		}
-
-		return [];
-	}
-
-	/**
-	 * Gets config ID for editors.
-	 * @return string
-	 */
-	protected function getEditorConfigId()
-	{
-		static $configId = null;
-
-		if ($configId === null)
-		{
-			$configId = 'quick_editor_v6_'.
-				mb_strtolower($this->type) . '_' .
-						(int) $this->categoryId;
-		}
-
-
-		return $configId;
-	}
-
-	/**
-	 * Common or not editor config.
-	 * @return bool
-	 */
-	protected function isEditorConfigCommon()
-	{
-		$scope = \CUserOptions::getOption(
-			'crm.entity.editor',
-			$this->getEditorConfigId() . '_scope'
-		);
-		if (!$scope)
-		{
-			return true;
-		}
-		return ($scope == EntityEditorConfigScope::COMMON);
-	}
-
-	/**
-	 * Runs automation processes on change entity.
-	 * @param int $id Entity id.
-	 * @param array|null $fields Updated fields.
-	 * @return void
-	 */
-	protected function runAutomationOnUpdate(int $id, array $fields = null): void
-	{
-		if (
-			$this->type == $this->types['lead'] ||
-			$this->type == $this->types['deal']
-		)
-		{
-			$errors = null;
-			\CCrmBizProcHelper::autoStartWorkflows(
-				\CCrmOwnerType::resolveID($this->type),
-				$id,
-				\CCrmBizProcEventType::Edit,
-				$errors
-			);
-
-			if ($fields)
-			{
-				$starter = new \Bitrix\Crm\Automation\Starter(
-					($this->type == $this->types['lead']) ? \CCrmOwnerType::Lead : \CCrmOwnerType::Deal,
-					$id
-				);
-				$starter->setUserIdFromCurrent()->runOnUpdate($fields, []);
-			}
-		}
-	}
-
-	/**
 	 * Base executable method.
 	 * @return array
 	 */
@@ -3651,77 +2635,78 @@ class CrmKanbanComponent extends \CBitrixComponent
 	{
 		if (!$this->init())
 		{
-			return;
+			return [];
 		}
 
-		$schemeInlineEdit = $this->getSchemeForInlineEditor();
+		$inlineEditorParameters = $this->entity->getInlineEditorParameters();
+		$this->arResult['FIELDS_SECTIONS'] = $inlineEditorParameters['fieldsSections'];
 
-		$this->arResult['ITEMS'] = array();
+		if ($this->entity->isInlineEditorSupported())
+		{
+			$this->userFields = $this->entity->getUserFields();
+
+			$this->schemeFields = $inlineEditorParameters['schemeFields'];
+
+			if($this->schemeFields)
+			{
+				$schemeInlineEdit = [
+					[
+						'name' => 'main',
+						'title' => '',
+						'type' => 'section',
+						'elements' => array_values($this->schemeFields)
+					]
+				];
+			}
+		}
+
+		$this->arResult['ITEMS'] = [];
 		$this->arResult['ADMINS'] = $this->getAdmins();
 		$this->arResult['MORE_FIELDS'] = $this->getAdditionalFields();
 		$this->arResult['MORE_EDIT_FIELDS'] = $this->getAdditionalEditFields();
 		$this->arResult['FIELDS_DISABLED'] = $this->disableMoreFields;
-		$this->arResult['CATEGORIES'] = array();
+		$this->arResult['CATEGORIES'] = [];
 
-		$isOLinstalled = IsModuleInstalled('imopenlines');
+		$isOLinstalled = \Bitrix\Main\ModuleManager::isModuleInstalled('imopenlines');
 		$context = Application::getInstance()->getContext();
 		$request = $context->getRequest();
 		$action = $request->get('action');
-		$type = $this->type;
-		$types = $this->types;
 
 		//new actions format
-		if ($action && is_callable(array($this, 'action' . $action)))
+		if ($action && is_callable([$this, 'action' . $action]))
 		{
 			if (!check_bitrix_sessid())
 			{
-				return array(
+				return [
 					'ERROR' => Loc::getMessage('CRM_KANBAN_ERROR_SESSION_EXPIRED'),
 					'FATAL' => true
-				);
+				];
 			}
-			else
-			{
-				return $this->{'action' . $action}();
-			}
-		}
-		else
-		{
-			$this->makeAction();
+
+			return $this->{'action' . $action}();
 		}
 
-		if ($this->arParams['EMPTY_RESULT'] != 'Y')
+		$this->processRequestActions();
+
+		if ($this->arParams['EMPTY_RESULT'] !== 'Y')
 		{
-			//check other perms (additional for lead converting)
 			$userPermissions = $this->getCurrentUserPermissions();
 			$this->arResult['ACCESS_CONFIG_PERMS'] = $this->isCrmAdmin();
-			$this->arResult['ACCESS_IMPORT'] = $type == $types['lead']
-													? \CCrmLead::CheckImportPermission($userPermissions)
-													: \CCrmDeal::CheckImportPermission($userPermissions);
-			if ($type == $types['lead'])
-			{
-				$this->arResult['CAN_CONVERT_TO_CONTACT'] = \CCrmContact::CheckCreatePermission($userPermissions);
-				$this->arResult['CAN_CONVERT_TO_COMPANY'] = \CCrmCompany::CheckCreatePermission($userPermissions);
-				$this->arResult['CAN_CONVERT_TO_DEAL'] = \CCrmDeal::CheckCreatePermission($userPermissions);
-				$this->arResult['CONVERSION_CONFIG'] = \Bitrix\Crm\Conversion\DealConversionConfig::load();
-				if ($this->arResult['CONVERSION_CONFIG'] === null)
-				{
-					$this->arResult['CONVERSION_CONFIG'] = \Bitrix\Crm\Conversion\DealConversionConfig::getDefault();
-				}
-			}
+			$this->arResult = array_merge($this->arResult, $this->entity->getPermissionParameters($userPermissions));
 
 			//output
-			if ($this->arParams['ONLY_COLUMNS'] == 'Y')
+			if ($this->arParams['ONLY_COLUMNS'] === 'Y')
 			{
-				$this->arResult['ITEMS'] = array(
-					'items' => array_values($this->items),
+				$this->arResult['ITEMS'] = [
+					'items' => [],
 					'columns' => array_values($this->getColumns())
-				);
+				];
 			}
 			else
 			{
-				$items = array();
+				$items = [];
 				$columns = $this->getColumns();
+				$this->requiredFields = $this->entity->getRequiredFieldsByStages($this->getStatuses());
 				if (!empty($this->arParams['ADDITIONAL_FILTER']))
 				{
 					$filter = $this->arParams['ADDITIONAL_FILTER'];
@@ -3738,7 +2723,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 					{
 						if (!$column['dropzone'])
 						{
-							$filter = array();
+							$filter = [];
 							$filter[$this->statusKey] = $column['id'];
 							$items += $this->getItems($filter);
 						}
@@ -3751,22 +2736,24 @@ class CrmKanbanComponent extends \CBitrixComponent
 				);
 			}
 
-			if ($this->arParams['ONLY_COLUMNS'] == 'N')
+			if ($this->arParams['ONLY_COLUMNS'] === 'N')
 			{
-				$contacts = $this->getContragents('contact');
-				$companies = $this->getContragents('company');
-				if ($type == $types['lead'])
+				$contacts = $this->getClients('contact');
+				$companies = $this->getClients('company');
+				if ($this->entity->hasOwnMultiFields())
 				{
-					$this->arResult['ITEMS']['items'] = $this->fillFMfields($this->arResult['ITEMS']['items'], 'lead');
+					$this->arResult['ITEMS']['items'] = $this->fillFMfields(
+						$this->arResult['ITEMS']['items'],
+						$this->entity->getOwnMultiFieldsClientType()
+					);
 				}
 
-				//set contragents to items
+				//set clients to items
 				if (!empty($this->arResult['ITEMS']['items']))
 				{
 					foreach ($this->arResult['ITEMS']['items'] as &$item)
 					{
-						$contragent = [];
-						$contragents = [];
+						$clients = [];
 
 						if (
 							!empty($item['contactId'])
@@ -3774,14 +2761,14 @@ class CrmKanbanComponent extends \CBitrixComponent
 						)
 						{
 							$contact = $contacts[$item['contactId']];
-							$contragents['contact'] = $contact;
+							$clients['contact'] = $contact;
 							$item['contactName'] = $contact['TITLE'];
 							$item['contactLink'] = $contact['URL'];
 							$item['contactTooltip'] = \CCrmViewHelper::PrepareEntityBaloonHtml([
 								'ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
 								'ENTITY_ID' => $item['contactId'],
 								'TITLE' => $contact['~TITLE'],
-								'PREFIX' => $this->type . '_' . $item['id'],
+								'PREFIX' => $this->entity->getTypeName() . '_' . $item['id'],
 							]);
 						}
 
@@ -3791,64 +2778,37 @@ class CrmKanbanComponent extends \CBitrixComponent
 						)
 						{
 							$company = $companies[$item['companyId']];
-							$contragents['company'] = $company;
+							$clients['company'] = $company;
 							$item['companyName'] = $company['TITLE'];
 							$item['companyLink'] = $company['URL'];
 							$item['companyTooltip'] = \CCrmViewHelper::PrepareEntityBaloonHtml([
 								'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
 								'ENTITY_ID' => $item['companyId'],
 								'TITLE' => $company['~TITLE'],
-								'PREFIX' => $this->type . '_' . $item['id'],
+								'PREFIX' => $this->entity->getTypeName() . '_' . $item['id'],
 							]);
 						}
 
-						//phone, email, chat
-						foreach ($contragents as $contragentType => $contragent)
-						{
-							if (isset($contragent['FM_VALUES']) && !empty($contragent['FM_VALUES']))
+						$fillRequiredMultiFields = static function(
+							array $multiFieldsData,
+							bool $isOpenLinesInstalled,
+							array &$item,
+							string $clientType = null
+						) {
+							if(empty($multiFieldsData))
 							{
-								foreach ($contragent['FM_VALUES'] as $code => $values)
-								{
-									if ($code == 'im') // we need only chat for im
-									{
-										if ($isOLinstalled)
-										{
-											foreach ($values as $val)
-											{
-												$val = isset($val['VALUE'])
-													? $val['VALUE']
-													: $val['value'];
-												if ((mb_strpos($val, 'imol|') === 0))
-												{
-													$item[$code] = $val;
-													break;
-												}
-											}
-										}
-									}
-									else
-									{
-										$item[$code][$contragentType] = $values;
-									}
-									$item['required_fm'][mb_strtoupper($code)] = false;
-								}
+								return;
 							}
-						}
-						//same from leads
-						if (isset($item['FM_VALUES']))
-						{
-							foreach ($item['FM_VALUES'] as $code => $values)
+							foreach ($multiFieldsData as $code => $values)
 							{
-								if ($code == 'im') // we need only chat for im
+								if ($code === 'im') // we need only chat for im
 								{
-									if ($isOLinstalled)
+									if ($isOpenLinesInstalled)
 									{
 										foreach ($values as $val)
 										{
-											$val = isset($val['VALUE'])
-													? $val['VALUE']
-													: $val['value'];
-											if (mb_strpos($val, 'imol|') === 0)
+											$val = $val['VALUE'] ?? $val['value'];
+											if ((mb_strpos($val, 'imol|') === 0))
 											{
 												$item[$code] = $val;
 												break;
@@ -3856,12 +2816,30 @@ class CrmKanbanComponent extends \CBitrixComponent
 										}
 									}
 								}
+								elseif($clientType)
+								{
+									$item[$code][$clientType] = $values;
+								}
 								else
 								{
 									$item[$code] = $values;
 								}
 								$item['required_fm'][mb_strtoupper($code)] = false;
 							}
+						};
+
+						//phone, email, chat
+						foreach ($clients as $clientType => $client)
+						{
+							if (isset($client['FM_VALUES']) && !empty($client['FM_VALUES']))
+							{
+								$fillRequiredMultiFields($client['FM_VALUES'], $isOLinstalled, $item, $clientType);
+							}
+						}
+						//same from leads
+						if (isset($item['FM_VALUES']))
+						{
+							$fillRequiredMultiFields($item['FM_VALUES'], $isOLinstalled, $item);
 							unset($item['FM_VALUES'], $item['FM']);
 						}
 					}
@@ -3871,7 +2849,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 				//get activity
 				if (!empty($this->arResult['ITEMS']['items']))
 				{
-					if ($type == $types['deal'] || $type == $types['lead'] || $type == $types['order'])
+					if ($this->entity->isActivityCountersSupported())
 					{
 						$activityCounters = $this->getActivityCounters(
 							array_keys($this->arResult['ITEMS']['items']),
@@ -3879,8 +2857,8 @@ class CrmKanbanComponent extends \CBitrixComponent
 						);
 						foreach ($activityCounters as $id => $actCC)
 						{
-							$this->arResult['ITEMS']['items'][$id]['activityProgress'] = isset($actCC['N']) ? $actCC['N'] : 0;
-							$this->arResult['ITEMS']['items'][$id]['activityTotal'] = isset($actCC['Y']) ? $actCC['Y'] : 0;
+							$this->arResult['ITEMS']['items'][$id]['activityProgress'] = $actCC['N'] ?? 0;
+							$this->arResult['ITEMS']['items'][$id]['activityTotal'] = $actCC['Y'] ?? 0;
 							if (isset($errors[$id]))
 							{
 								$this->arResult['ITEMS']['items'][$id]['activityErrorTotal'] = $errors[$id];
@@ -3892,44 +2870,25 @@ class CrmKanbanComponent extends \CBitrixComponent
 				}
 			}
 
-			// get categories for deals
-			if (
-				$type == $types['deal']
-			)
+			if ($this->entity->isCategoriesSupported())
 			{
-				$catPerm = array_fill_keys(
-					\CCrmDeal::GetPermittedToReadCategoryIDs($userPermissions),
-					true
-				);
-				foreach (DealCategory::getAll(true) as $k => $catItem)
-				{;
-					if (isset($catPerm[$catItem['ID']]))
-					{
-						$this->arResult['CATEGORIES'][$k] = $catItem;
-					}
-				}
+				$this->arResult['CATEGORIES'] = $this->entity->getCategories($userPermissions);
 			}
 		}
 
 		$this->arResult['ITEMS']['last_id'] = $this->getLastId();
-		$this->arResult['ITEMS']['scheme_inline'] = $schemeInlineEdit;
+		$this->arResult['ITEMS']['scheme_inline'] = $schemeInlineEdit ?? null;
 		$this->arResult['ITEMS']['customFields'] = array_keys($this->arResult['MORE_FIELDS']);
 
 		// items for demo import
 		if (
-			isset($this->arResult['ITEMS']['columns'][0]['id']) &&
-			isset($this->arResult['ITEMS']['columns'][0]['count']) &&
-			(
-				$this->blockPage * $this->blockSize
-				>=
-				$this->arResult['ITEMS']['columns'][0]['count']
+			isset($this->arResult['ITEMS']['columns'][0]['id'], $this->arResult['ITEMS']['columns'][0]['count'])
+			&& (
+				$this->blockPage * $this->blockSize >= $this->arResult['ITEMS']['columns'][0]['count']
 			)
 		)
 		{
-			if (
-				$type == $types['lead'] ||
-				$type == $types['deal']
-			)
+			if ($this->entity->isInlineEditorSupported())
 			{
 				$this->arResult['ITEMS']['items'] = array_merge(
 					$this->arResult['ITEMS']['items'],
@@ -3958,15 +2917,13 @@ class CrmKanbanComponent extends \CBitrixComponent
 			);
 		}
 
-		if ($this->arParams['IS_AJAX'] == 'Y')
+		if ($this->arParams['IS_AJAX'] === 'Y')
 		{
 			return $this->arResult;
 		}
-		else
-		{
-			$GLOBALS['APPLICATION']->setTitle(Loc::getMessage('CRM_KANBAN_TITLE2_' . $this->type));
-			$this->IncludeComponentTemplate();
-		}
+
+		$GLOBALS['APPLICATION']->setTitle(Loc::getMessage('CRM_KANBAN_TITLE2_' . $this->entity->getTypeName()));
+		$this->IncludeComponentTemplate();
 	}
 
 	/**
@@ -3995,7 +2952,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 */
 	protected function convertUtf($data, $fromUtf)
 	{
-		if (SITE_CHARSET != 'UTF-8')
+		if (SITE_CHARSET !== 'UTF-8')
 		{
 			$from = $fromUtf ? 'UTF-8' : SITE_CHARSET;
 			$to = !$fromUtf ? 'UTF-8' : SITE_CHARSET;
@@ -4015,7 +2972,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 * Notify admin for get access.
 	 * @return array
 	 */
-	protected function actionNotifyAdmin()
+	protected function actionNotifyAdmin(): array
 	{
 		if (
 			($userId = $this->request('userId')) &&
@@ -4027,11 +2984,11 @@ class CrmKanbanComponent extends \CBitrixComponent
 			{
 				$params = $this->arParams;
 				//settings page
-				if ($params['ENTITY_TYPE_CHR'] == 'DEAL')
+				if ($params['ENTITY_TYPE_CHR'] === 'DEAL')
 				{
 					$pathColumnEdit = '/crm/configs/status/?ACTIVE_TAB=status_tab_DEAL_STAGE';
 				}
-				elseif ($params['ENTITY_TYPE_CHR'] == 'LEAD')
+				elseif ($params['ENTITY_TYPE_CHR'] === 'LEAD')
 				{
 					$pathColumnEdit = '/crm/configs/status/?ACTIVE_TAB=status_tab_STATUS';
 				}
@@ -4039,32 +2996,119 @@ class CrmKanbanComponent extends \CBitrixComponent
 				{
 					$pathColumnEdit = '/crm/configs/status/?ACTIVE_TAB=status_tab_'. $params['ENTITY_TYPE_CHR'] .'_STATUS';
 				}
-				\CIMNotify::Add(array(
+				\CIMNotify::Add([
 					'TO_USER_ID' => $userId,
-					'FROM_USER_ID' => $this->uid,
+					'FROM_USER_ID' => $this->currentUserID,
 					'NOTIFY_TYPE' => IM_NOTIFY_FROM,
 					'NOTIFY_MODULE' => 'crm',
 					'NOTIFY_TAG' => 'CRM|NOTIFY_ADMIN|'.$userId.'|'.$this->userId,
-					'NOTIFY_MESSAGE' => Loc::getMessage('CRM_ACCESS_NOTIFY_MESSAGE', array(
+					'NOTIFY_MESSAGE' => Loc::getMessage('CRM_ACCESS_NOTIFY_MESSAGE', [
 						'#URL#' => $pathColumnEdit
-					))
-				));
+					])
+				]);
 			}
 		}
-		return array(
+
+		return [
 			'status' => 'success'
-		);
+		];
 	}
 
 	/**
 	 * Add new stage, update stage, move stage.
 	 * @return array
 	 */
-	protected function actionModifyStage()
+	protected function actionModifyStage(): array
 	{
-		if ($this->isCrmAdmin())
+		if (!$this->isCrmAdmin())
 		{
-			// vars
+			return [];
+		}
+		// vars
+		$stages = $this->getColumns(
+			true,
+			true,
+			array(
+				'originalColumns' => true
+			)
+		);
+		$delete = $this->request('delete');
+		$columnId = $this->request('columnId');
+		$columnName = $this->request('columnName');
+		$columnColor = $this->request('columnColor');
+		$afterColumnId = $this->request('afterColumnId');
+
+		$sort = 0;
+		if (
+			$afterColumnId !== null &&
+			$afterColumnId == '0'
+		)
+		{
+			$sort = 0;
+		}
+		elseif (isset($stages[$afterColumnId]))
+		{
+			$sort = $stages[$afterColumnId]['real_sort'];
+		}
+		elseif (isset($stages[$columnId]))
+		{
+			$sort = $stages[$columnId]['real_sort'];
+		}
+		if ($columnName)
+		{
+			$columnName = $this->convertUtf($this->request('columnName'), true);
+		}
+
+		$fields = array(
+			'ENTITY_ID' => $this->entity->getStatusEntityId(),
+			'SORT' => ++$sort
+		);
+		if ($columnName)
+		{
+			$fields['NAME'] = $columnName;
+			$fields['NAME_INIT'] = $columnName;
+		}
+		if ($columnColor)
+		{
+			$fields['COLOR'] = $columnColor;
+		}
+		//todo move to entity
+		$isOrder = ($this->entity->getTypeName() === 'ORDER');
+		if ($columnId !== '' && isset($stages[$columnId]))
+		{
+			if ($delete)
+			{
+				$result = $this->deleteStage($columnId, $stages);
+			}
+			else
+			{
+				$internalId = ($isOrder) ? $columnId : $stages[$columnId]['real_id'];
+				$result = $this->updateStage($internalId, $fields);
+			}
+		}
+		else
+		{
+			$result = $this->addStage($fields);
+			$internalId = $result->getId();
+		}
+		if ($result->isSuccess())
+		{
+			if($delete)
+			{
+				return [];
+			}
+			if ($isOrder)
+			{
+				$statusId = $internalId;
+			}
+			else
+			{
+				$statusEntityId = $this->entity->getStatusEntityId();
+				$status = new \CCrmStatus($statusEntityId);
+				$newStatus = $status->GetStatusById($internalId);
+				$statusId = $newStatus['STATUS_ID'];
+			}
+
 			$stages = $this->getColumns(
 				true,
 				true,
@@ -4072,129 +3116,28 @@ class CrmKanbanComponent extends \CBitrixComponent
 					'originalColumns' => true
 				)
 			);
-			$delete = $this->request('delete');
-			$columnId = $this->request('columnId');
-			$columnName = $this->request('columnName');
-			$columnColor = $this->request('columnColor');
-			$afterColumnId = $this->request('afterColumnId');
-
-			$sort = 0;
-			if (
-				$afterColumnId !== null &&
-				$afterColumnId == '0'
-			)
+			if (isset($stages[$statusId]))
 			{
-				$sort = 0;
-			}
-			elseif (isset($stages[$afterColumnId]))
-			{
-				$sort = $stages[$afterColumnId]['real_sort'];
-			}
-			elseif (isset($stages[$columnId]))
-			{
-				$sort = $stages[$columnId]['real_sort'];
-			}
-			if ($columnName)
-			{
-				$columnName = $this->convertUtf($this->request('columnName'), true);
-			}
-
-			$fields = array(
-				'ENTITY_ID' => $this->getStatusEntityId(),
-				'SORT' => ++$sort
-			);
-			if ($columnName)
-			{
-				$fields['NAME'] = $columnName;
-				$fields['NAME_INIT'] = $columnName;
-			}
-			if ($columnColor)
-			{
-				$fields['COLOR'] = $columnColor;
-			}
-			if ($columnId != '' && isset($stages[$columnId]))
-			{
-				if ($delete)
+				// range sorts
+				$sort = 10;
+				foreach ($stages as $stage)
 				{
-					$deleteResult = [];
-					$r = $this->deleteStage($columnId, $stages);
-					if (!$r->isSuccess())
-					{
-						$errors = $r->getErrorMessages();
-						$deleteResult = [
-							'ERROR' => current($errors)
-						];
-					}
-
-					return $deleteResult;
-				}
-				else
-				{
-					$internalId = ($this->type == $this->types['order']) ? $columnId : $stages[$columnId]['real_id'];
-					$r = $this->updateStage($internalId, $fields);
-				}
-			}
-			else
-			{
-				$r = $this->addStage($fields);
-				$internalId = $r->getId();
-			}
-			if ($r->isSuccess())
-			{
-				if ($this->type == $this->types['order'])
-				{
-					$statusId = $internalId;
-				}
-				else
-				{
-					$statusEntityId = $this->getStatusEntityId();
-					$status = new \CCrmStatus($statusEntityId);
-					$newStatus = $status->GetStatusById($internalId);
-					$statusId = $newStatus['STATUS_ID'];
+					$internalId = ($isOrder) ? $stage['id'] : $stage['real_id'];
+					$this->updateStage($internalId, ['SORT' => $sort]);
+					$sort += 10;
 				}
 
-				$stages = $this->getColumns(
-					true,
-					true,
-					array(
-						'originalColumns' => true
-					)
-				);
-				if (isset($stages[$statusId]))
-				{
-					// range sorts
-					$sort = 10;
-					foreach ($stages as $stage)
-					{
-						$internalId = ($this->type == $this->types['order']) ? $stage['id'] : $stage['real_id'];
-						$this->updateStage($internalId, ['SORT' => $sort]);
-						$sort += 10;
-					}
-					if (!empty($columnColor))
-					{
-						$stages[$statusId]['color'] = $columnColor;
-					}
-					return \htmlspecialcharsback($stages[$statusId]);
-				}
-				else
-				{
-					return array(
-						'ERROR' => 'Unknown error'
-					);
-				}
+				return \htmlspecialcharsback($stages[$statusId]);
 			}
-			else
-			{
-				$errors = $r->getErrorMessages();
-				return ['ERROR' => current($errors)];
-			}
+
+			return [
+				'ERROR' => 'Unknown error'
+			];
 		}
-		return array();
-	}
 
-	private function resortColumns()
-	{
+		$errors = $result->getErrorMessages();
 
+		return ['ERROR' => current($errors)];
 	}
 
 	/**
@@ -4207,25 +3150,26 @@ class CrmKanbanComponent extends \CBitrixComponent
 	{
 		$result = new Result();
 
-		if ($stages[$columnId]['type'] == 'WIN')
+		if ($stages[$columnId]['type'] === 'WIN')
 		{
 			$result->addError(new Error(Loc::getMessage('CRM_KANBAN_ERROR_STAGE_IS_WIN')));
 			return $result;
 		}
 
-		if (!$this->isEmptyStage($columnId))
+		if (!$this->entity->isStageEmpty($columnId))
 		{
 			$result->addError(new Error(Loc::getMessage('CRM_KANBAN_ERROR_STAGE_IS_NOT_EMPTY')));
 			return $result;
 		}
 
-		$statusEntityId = $this->getStatusEntityId();
+		$statusEntityId = $this->entity->getStatusEntityId();
 		if (empty($statusEntityId))
 		{
 			return $result;
 		}
 
-		if ($this->type == $this->types['order'])
+		//todo move to entity
+		if ($this->entity->getTypeName() === 'ORDER')
 		{
 			$defaultStatuses = Order\OrderStatus::getDefaultStatuses();
 			if (isset($defaultStatuses[$columnId]))
@@ -4233,7 +3177,6 @@ class CrmKanbanComponent extends \CBitrixComponent
 				$result->addError(new Error(Loc::getMessage('CRM_KANBAN_ERROR_STAGE_IS_SYSTEM')));
 				return $result;
 			}
-			$statusCode = $columnId;
 
 			if (!Loader::includeModule('sale'))
 			{
@@ -4265,8 +3208,6 @@ class CrmKanbanComponent extends \CBitrixComponent
 				return $result;
 			}
 
-			$statusCode = $statusInfo['STATUS_ID'];
-
 			$statusObject->delete($internalId);
 			if (!empty($statusObject->GetLastError()))
 			{
@@ -4274,56 +3215,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 			}
 		}
 
-		if ($result->isSuccess())
-		{
-			$this->unsetColorSetting($statusCode);
-		}
-
 		return $result;
-	}
-
-	/**
-	 * @param $stageId
-	 *
-	 * @return bool
-	 */
-	private function isEmptyStage($columnId)
-	{
-		if ($this->type == $this->types['order'])
-		{
-			$orderData = Order\Order::getList([
-				'filter' => [$this->statusKey => $columnId]
-			]);
-
-			return !$orderData->fetch();
-		}
-		else
-		{
-			$provider = '\CCrm'.$this->type;
-			$method = method_exists($provider, 'getListEx') ? 'getListEx' : 'getList';
-			if (is_callable(array($provider, $method)))
-			{
-				$checkFilter = array(
-					$this->statusKey => $columnId,
-					'CHECK_PERMISSIONS' => 'N'
-				);
-				if ($this->type == $this->types['deal'])
-				{
-					$checkFilter['CATEGORY_ID'] = intval($this->categoryId);
-				}
-				$entities = $provider::$method(
-					array('ID' => 'DESC'),
-					$checkFilter,
-					false,
-					false,
-					array('ID')
-				);
-
-				return !$entities->fetch();
-			}
-		}
-
-		return true;
 	}
 
 	/**
@@ -4331,29 +3223,22 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 *
 	 * @param $id
 	 * @param array $fields
+	 * @return Result
 	 */
-	private function updateStage($id, array $fields = [])
+	private function updateStage($id, array $fields = []): Result
 	{
 		$result = new Result();
 
-		if (isset($fields['COLOR']))
+		//todo move to entity
+		if ($this->entity->getTypeName() !== 'ORDER')
 		{
-			$columnColor = $fields['COLOR'];
-		}
-
-		if ($this->type !== $this->types['order'])
-		{
-			unset($fields['COLOR']);
-			$statusEntityId = $this->getStatusEntityId();
+			$statusEntityId = $this->entity->getStatusEntityId();
 			$status = new \CCrmStatus($statusEntityId);
 			$status->update($id, $fields);
 			if (!empty($status->GetLastError()))
 			{
 				$result->addError(new Error($status->GetLastError()));
 			}
-
-			$newStatus = $status->GetStatusById($id);
-			$statusId = $newStatus['STATUS_ID'];
 		}
 		else
 		{
@@ -4371,22 +3256,16 @@ class CrmKanbanComponent extends \CBitrixComponent
 			{
 				$result = Sale\Internals\StatusTable::update($id, $updateFields);
 			}
-			if ($result->isSuccess() && !empty($fields['NAME']))
+			if (!empty($fields['NAME']) && $result->isSuccess())
 			{
 				Sale\Internals\StatusLangTable::update(
 					[
 						'STATUS_ID' => $id,
-						'LID' => static::getLanguageId(),
+						'LID' => $this->getLanguageId(),
 					],
 					['NAME' => $fields['NAME']]
 				);
 			}
-			$statusId = $id;
-		}
-
-		if (!empty($columnColor) && $result->isSuccess())
-		{
-			$this->setColorSetting($columnColor, $statusId);
 		}
 
 		return $result;
@@ -4398,19 +3277,14 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 * @param array $fields
 	 * @return AddResult
 	 */
-	private function addStage(array $fields = [])
+	private function addStage(array $fields = []): AddResult
 	{
 		$result = new AddResult();
 
-		if (isset($fields['COLOR']))
+		//todo move to entity
+		if ($this->entity->getTypeName() !== 'ORDER')
 		{
-			$columnColor = $fields['COLOR'];
-		}
-
-		if ($this->type !== $this->types['order'])
-		{
-			unset($fields['COLOR']);
-			$statusEntityId = $this->getStatusEntityId();
+			$statusEntityId = $this->entity->getStatusEntityId();
 			$status = new \CCrmStatus($statusEntityId);
 			$id = $status->add($fields);
 			if (!empty($status->GetLastError()))
@@ -4421,9 +3295,6 @@ class CrmKanbanComponent extends \CBitrixComponent
 			{
 				$result->setId($id);
 			}
-
-			$newStatus = $status->GetStatusById($id);
-			$statusId = $newStatus['STATUS_ID'];
 		}
 		else
 		{
@@ -4445,10 +3316,10 @@ class CrmKanbanComponent extends \CBitrixComponent
 
 			do
 			{
-				$newId = chr(rand(65, 90)); //A-Z
+				$newId = chr(random_int(65, 90)); //A-Z
 				if (is_array($result) && count($result) >= 27)
 				{
-					$newId .= chr(rand(65, 90));
+					$newId .= chr(random_int(65, 90));
 				}
 			}
 			while (isset($orderStatusIds[$newId]));
@@ -4459,137 +3330,24 @@ class CrmKanbanComponent extends \CBitrixComponent
 			{
 				Sale\Internals\StatusLangTable::add([
 					'STATUS_ID' => $result->getId(),
-					'LID' => static::getLanguageId(),
+					'LID' => $this->getLanguageId(),
 					'NAME' => $fields['NAME']
 				]);
 			}
-			$statusId = $result->getId();
-		}
-
-		if (!empty($columnColor) && $result->isSuccess())
-		{
-			$this->setColorSetting($columnColor, $statusId);
 		}
 
 		return $result;
 	}
 
 	/**
-	 * @return string
-	 */
-	private function getStatusEntityId()
-	{
-		switch ($this->type)
-		{
-			case $this->types['quote']:
-				return 'QUOTE_STATUS';
-			case $this->types['invoice']:
-				return 'INVOICE_STATUS';
-			case $this->types['lead']:
-				return 'STATUS';
-			case $this->types['order']:
-				return  Order\OrderStatus::NAME;
-			case $this->types['deal']:
-			{
-				$filter = $this->getFilter();
-				if (isset($filter['CATEGORY_ID']) && $filter['CATEGORY_ID'] > 0)
-				{
-					return 'DEAL_STAGE_' . $filter['CATEGORY_ID'];
-				}
-				else
-				{
-					return 'DEAL_STAGE';
-				}
-			}
-		}
-
-		return '';
-	}
-
-	/**
-	 * @return string
-	 */
-	private function getStatusColorCode()
-	{
-		switch ($this->type)
-		{
-			case $this->types['quote']:
-				return 'CONFIG_STATUS_QUOTE_STATUS';
-			case $this->types['invoice']:
-				return 'CONFIG_STATUS_INVOICE_STATUS';
-			case $this->types['lead']:
-				return 'CONFIG_STATUS_STATUS';
-			case $this->types['order']:
-				return  \Bitrix\Crm\Color\OrderStatusColorScheme::getName();
-			case $this->types['deal']:
-			{
-				$filter = $this->getFilter();
-				if (isset($filter['CATEGORY_ID']) && $filter['CATEGORY_ID'] > 0)
-				{
-					return 'CONFIG_STATUS_DEAL_STAGE_' . $filter['CATEGORY_ID'];
-				}
-				else
-				{
-					return 'CONFIG_STATUS_DEAL_STAGE';
-				}
-			}
-		}
-
-		return '';
-	}
-
-	/**
-	 * Update CRM color status option.
-	 *
-	 * @param $colorValue
-	 * @param $statusId
-	 */
-	private function setColorSetting($colorValue, $statusId)
-	{
-		$codeColor = $this->getStatusColorCode();
-		$colors = $this->getStatusColor($codeColor);
-		if (!isset($colors[$statusId]))
-		{
-			$colors[$statusId] = array();
-		}
-		$colors[$statusId]['COLOR'] = '#' . $colorValue;
-		Option::set('crm', $codeColor, serialize($colors));
-	}
-
-	/**
-	 * Remove CRM color status value from color option.
-	 *
-	 * @param $colorValue
-	 * @param $statusId
-	 */
-	private function unsetColorSetting($statusId)
-	{
-		$codeColor = $this->getStatusColorCode();
-		$colors = $this->getStatusColor($codeColor);
-		if (isset($colors[$statusId]))
-		{
-			unset($colors[$statusId]);
-		}
-		Option::set('crm', $codeColor, serialize($colors));
-	}
-
-	private function resortStages()
-	{
-
-	}
-
-	/**
 	 * Remove all private cards, for setting common.
 	 * @return void
 	 */
-	protected function setCommonCardFields()
+	protected function setCommonCardFields(): void
 	{
 		if ($this->canEditSettings())
 		{
-			$name = 'kanban_select_more_v4_'.
-				mb_strtolower($this->type) .
-					'_' . intval($this->categoryId);
-			\CUserOptions::deleteOptionsByName('crm', $name);
+			$this->entity->removeUserAdditionalSelectFields();
 		}
 	}
 
@@ -4597,72 +3355,22 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 * Reset fields in card.
 	 * @return void
 	 */
-	protected function resetCardFields()
+	protected function resetCardFields(): void
 	{
-		$name = 'kanban_select_more_v4_'.
-			mb_strtolower($this->type) .
-				'_' . intval($this->categoryId);
-		$fields = [
-			'TITLE' => '',
-			'OPPORTUNITY' => '',
-			'DATE_CREATE' => '',
-			'ORDER_STAGE' => '',
-			'CLIENT' => ''
-		];
-		$this->additionalSelect = $fields;
+		$this->additionalSelect = $this->entity->resetAdditionalSelectFields($this->canEditSettings());
 		$this->arResult['MORE_FIELDS'] = $this->getAdditionalFields(true);
-
-		if (
-			$this->canEditSettings() &&
-			$this->isEditorConfigCommon()
-		)
-		{
-			\CUserOptions::setOption('crm', $name . '_common', $fields, true);
-		}
-		else
-		{
-			\CUserOptions::setOption('crm', $name, $fields);
-		}
 	}
 
 	/**
 	 * Save additional fields for card.
 	 * @return array
 	 */
-	protected function actionSaveFields()
+	protected function actionSaveFields(): array
 	{
-		$name = (
-					($this->request('type') == 'view')
-					? 'kanban_select_more_v4_'.mb_strtolower($this->type)
-					: 'kanban_edit_more_v4_'.mb_strtolower($this->type)
-				) . '_' . intval($this->categoryId);
+		$type = (string) $this->request('type');
 		$fields = $this->convertUtf($this->request('fields'), true);
-		$fieldsKeys = $fields ? array_keys($fields) : [];
 
-		$current = \CUserOptions::getOption('crm', $name);
-		$current = $current ? array_keys($current) : [];
-		$diffDel = array_diff($current, $fieldsKeys);
-		$diffAdd = array_diff($fieldsKeys, $current);
-
-		// reset common settings
-		if (
-			$this->canEditSettings() &&
-			$this->isEditorConfigCommon()
-		)
-		{
-			\CUserOptions::setOption('crm', $name . '_common', $fields, true);
-		}
-		else
-		{
-			\CUserOptions::setOption('crm', $name, $fields);
-		}
-
-		unset($name, $fields, $fieldsKeys, $current);
-
-		return [
-			'delete' => array_values($diffDel),
-			'add' => array_values($diffAdd)
-		];
+		return $this->entity->saveAdditionalFields($fields, $type, $this->canEditSettings());
 	}
 
 	/**
@@ -4670,78 +3378,20 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 * @param int|array $ids Optionally id for delete.
 	 * @return array
 	 */
-	protected function actionDelete($ids = null)
+	protected function actionDelete($ids = null): array
 	{
-		$ids = $ids ? $ids : $this->request('id');
-		$ignore = $this->request('ignore');
-		$type = $this->type;
-		$types = $this->types;
-
-		if ($type === $types['order'])
+		$ids = $ids ?: $this->request('id');
+		$ids = (array)$ids;
+		if(empty($ids))
 		{
-			if (!$ids)
-			{
-				return [];
-			}
-
-			$ids = is_array($ids) ? $ids : [$ids];
-			$userPerms = $this->getCurrentUserPermissions();
-			foreach ($ids as $id)
-			{
-				$id = (int)$id;
-				$checkPermission = Order\Permissions\Order::checkDeletePermission($id, $userPerms);
-				if (!$checkPermission)
-				{
-					continue;
-				}
-				Order\Order::delete($id);
-			}
 			return [];
 		}
+		$ignore = ($this->request('ignore') === 'Y');
+		$userPerms = $this->getCurrentUserPermissions();
 
-		$provider = '\CCrm' . $type;
+		$this->entity->deleteItems($ids, $ignore, $userPerms);
 
-		if ($ids && method_exists($provider, 'delete'))
-		{
-			$entity = new $provider();
-			if (!is_array($ids))
-			{
-				$ids = array($ids);
-			}
-			// set to ignore
-			if (
-				$ignore == 'Y' &&
-				(
-					!\Bitrix\Crm\Exclusion\Access::current()->canWrite() ||
-					($type != $types['lead'] && $type != $types['deal'])
-				)
-			)
-			{
-				$ignore = 'N';
-			}
-			// delete
-			foreach ($ids  as $id)
-			{
-				if ($ignore == 'Y')
-				{
-					\Bitrix\Crm\Exclusion\Manager::excludeEntity(
-						($type == $types['lead'])
-							? \CCrmOwnerType::Lead
-							: \CCrmOwnerType::Deal,
-						$id
-					);
-					if ($type == $types['lead'])
-					{
-						$entity->delete($id);
-					}
-				}
-				else
-				{
-					$entity->delete($id);
-				}
-			}
-		}
-		return array();
+		return [];
 	}
 
 	/**
@@ -4755,62 +3405,51 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 */
 	private function actionUpdateEntityStatus($id, $status, array $statuses = [])
 	{
-		$result = new Result();
-		$type = $this->type;
 		$userPerms = $this->getCurrentUserPermissions();
 		$request = Application::getInstance()->getContext()->getRequest();
-		$provider = '\CCrm'.$this->type;
+
+		$result = new Result();
 
 		if (!\CCrmPerms::IsAuthorized())
 		{
-			$result->addError(new Error(Loc::getMessage('CRM_KANBAN_ERROR_ACCESS_DENIED')));
-			return $result;
+			return $result->addError(new Error(Loc::getMessage('CRM_KANBAN_ERROR_ACCESS_DENIED')));
 		}
 
-		if ($this->type == $this->types['order'])
+		$item = $this->entity->getItem($id);
+		if(!$item)
 		{
-			$order = Order\Order::load($id);
-			if (!$order)
-			{
-				$result->addError(new Error(Loc::getMessage('CRM_KANBAN_ERROR_ACCESS_DENIED')));
-				return $result;
-			}
-			$row = $order->getFieldValues();
-		}
-		else
-		{
-			$entity = new $provider(false);
-			$row = $entity->getById($id);
-			if (!$row)
-			{
-				$result->addError(new Error(Loc::getMessage('CRM_KANBAN_ERROR_ACCESS_DENIED')));
-				return $result;
-			}
+			return $result->addError(new Error(Loc::getMessage('CRM_KANBAN_ERROR_ACCESS_DENIED')));
 		}
 
-		if ($this->type == $this->types['order'])
+		if(!$this->entity->checkUpdatePermissions($id, $userPerms))
 		{
-			$checkPermission = Order\Permissions\Order::checkUpdatePermission($id, $userPerms);
-		}
-		else
-		{
-			$checkPermission = $provider::CheckUpdatePermission($id, $userPerms);
+			return $result->addError(new Error(Loc::getMessage('CRM_KANBAN_ERROR_ACCESS_DENIED')));
 		}
 
-		if (!$checkPermission)
-		{
-			$result->addError(new Error(Loc::getMessage('CRM_KANBAN_ERROR_ACCESS_DENIED')));
-			return $result;
-		}
+		Kanban\SortTable::setPrevious([
+			'ENTITY_TYPE_ID' => $this->entity->getTypeName(),
+			'ENTITY_ID' => $id,
+			'PREV_ENTITY_ID' => $request->get('prev_entity_id')
+		]);
+
+		// remember last id
+		$this->rememberLastId($this->getLastId());
 
 		$statusKey = $this->statusKey;
-		$ajaxParamsName = ($request->get('version') == 2) ? 'ajaxParams' : 'status_params';
+		$isStatusChanged = $item[$statusKey] !== $status;
+		if(!$isStatusChanged)
+		{
+			return $result;
+		}
+
+		$ajaxParamsName = ($request->get('version') === 2) ? 'ajaxParams' : 'status_params';
 		$newStateParams = (array)$request->get($ajaxParamsName);
 		//add one more item for old column
-		if ($row[$statusKey] != $status && isset($newStateParams['old_status_lastid']))
+		$isStatusChanged = $item[$statusKey] !== $status;
+		if ($isStatusChanged && isset($newStateParams['old_status_lastid']))
 		{
 			$oneMore = $this->getItems(array(
-				$statusKey => $row[$statusKey],
+				$statusKey => $item[$statusKey],
 				'<ID' => $newStateParams['old_status_lastid'],
 				'!ID' => $id
 			));
@@ -4823,280 +3462,39 @@ class CrmKanbanComponent extends \CBitrixComponent
 			}
 			$this->items += $oneMore;
 		}
-		//change state
 
-		if ($type == $this->types['invoice'])
-		{
-			$statusParams = array();
-			$statusParams['REASON_MARKED'] = $this->convertUtf(
-				isset($newStateParams['comment'])
-					? $newStateParams['comment']
-					: '',
-				true
-			);
-			$statusParams[$status == 'P' ? 'PAY_VOUCHER_DATE' : 'DATE_MARKED'] = $this->convertUtf(
-				isset($newStateParams['date'])
-					? $newStateParams['date']
-					: '',
-				true
-			);
-			$statusParams['PAY_VOUCHER_NUM'] = $this->convertUtf(
-				isset($newStateParams['docnum'])
-					? $newStateParams['docnum']
-					: '',
-				true
-			);
-			$entity->SetStatus(
-				$id,
-				$status,
-				$statusParams,
-				array(
-					'SYNCHRONIZE_LIVE_FEED' => true
-				)
-			);
-		}
-		elseif ($type == $this->types['order'])
-		{
-			$order->setField('STATUS_ID', $status);
-			$order->save();
-		}
-		else
-		{
-			//if lead, check status
-			if ($type == $this->types['lead'] && $row[$statusKey] != $status)
-			{
-				if ($statuses[$row[$statusKey]]['PROGRESS_TYPE'] == 'WIN')
-				{
-					$result->addError(new Error(Loc::getMessage('CRM_KANBAN_ERROR_LEAD_ALREADY_CONVERTED')));
-					return $result;
-				}
-				elseif ($statuses[$status]['PROGRESS_TYPE'] == 'WIN')
-				{
-					return $result;
-				}
-			}
-			//if deal, check status
-			if ($type == $this->types['deal'] && $row[$statusKey] != $status)
-			{
-				$stageCategoryID = DealCategory::resolveFromStageID($status);
-				$dealCategoryID = (int)$row['CATEGORY_ID'];
-				if($dealCategoryID !== $stageCategoryID)
-				{
-					$result->addError(new Error(Loc::getMessage('CRM_KANBAN_ERROR_DEAL_STAGE_MISMATCH')));
-					return $result;
-				}
-			}
 
-			//update
-			if ($row[$statusKey] != $status)
-			{
-				$fields = array($statusKey => $status);
-				$entity->Update(
-					$id,
-					$fields,
-					true,
-					true,
-					array(
-						//'DISABLE_USER_FIELD_CHECK' => $isMulti,
-						'REGISTER_SONET_EVENT' => true
-					)
-				);
-				if (empty($entity->LAST_ERROR) && ($type == $this->types['lead'] || $type == $this->types['deal']))
-				{
-					$errors = array();
-					\CCrmBizProcHelper::AutoStartWorkflows(
-						($type == $this->types['lead']) ? \CCrmOwnerType::Lead : \CCrmOwnerType::Deal,
-						$id, \CCrmBizProcEventType::Edit, $errors
-					);
-					$starter = new \Bitrix\Crm\Automation\Starter(
-						($type == $this->types['lead']) ? \CCrmOwnerType::Lead : \CCrmOwnerType::Deal,
-						$id
-					);
-					$starter->setUserIdFromCurrent()->runOnUpdate($fields, []);
-				}
-				elseif (!empty($entity->LAST_ERROR))
-				{
-					$result->addError(new Error($entity->LAST_ERROR));
-				}
-			}
+		$result = $this->entity->updateItemStage($id, $status, $this->convertUtf($newStateParams, true), $statuses);
+		if(!$result->isSuccess())
+		{
+			return $result;
 		}
 
-		\Bitrix\Crm\Kanban\SortTable::setPrevious(array(
-			'ENTITY_TYPE_ID' => $type,
-			'ENTITY_ID' => $id,
-			'PREV_ENTITY_ID' => $request->get('prev_entity_id')
-		));
-
-		// remember last id
-		$this->rememberLastId($this->getLastId());
 		$this->getColumns(true);
 
 		return $result;
-	}
-
-	private function prepareOrderEntitiesFields(array $orders = [])
-	{
-		$ids = array_keys($orders);
-		static $currencies = [];
-		static $personTypes = [];
-		if (empty($currencies))
-		{
-			$currencies = CCrmCurrencyHelper::PrepareListItems();
-		}
-		if (empty($personTypes))
-		{
-			$personTypes = Order\PersonType::load(SITE_ID);
-		}
-		$orderClientRaw = \Bitrix\Crm\Binding\OrderContactCompanyTable::getList([
-			'filter' => [
-				'=ORDER_ID' => $ids
-			]
-		]);
-		while ($orderClient = $orderClientRaw->fetch())
-		{
-			$orderId = $orderClient['ORDER_ID'];
-			if ((int)$orderClient['ENTITY_TYPE_ID'] === \CCrmOwnerType::Contact)
-			{
-				if (empty($db[$orderId]['CONTACT_ID']) || $orderClient['IS_PRIMARY'] === 'Y')
-				{
-					$orders[$orderId]['CONTACT_ID'] = $orderClient['ENTITY_ID'];
-				}
-			}
-			elseif ((int)$orderClient['ENTITY_TYPE_ID'] === \CCrmOwnerType::Company)
-			{
-				$orders[$orderId]['COMPANY_ID'] = $orderClient['ENTITY_ID'];
-			}
-		}
-
-		$paymentRaw = Order\Payment::getList([
-			'filter' => [
-				'=ORDER_ID' => $ids
-			]
-		]);
-		while ($payment = $paymentRaw->fetch())
-		{
-			$orderId = $payment['ORDER_ID'];
-			$orders[$orderId]['PAYMENT'][$payment['ID']] = $payment;
-		}
-
-		$shipmentRaw = Order\Shipment::getList([
-			'filter' => [
-				'=ORDER_ID' => $ids,
-				'SYSTEM' => 'N'
-			]
-		]);
-		while ($shipment = $shipmentRaw->fetch())
-		{
-			$orderId = $shipment['ORDER_ID'];
-			$orders[$orderId]['SHIPMENT'][$shipment['ID']] = $shipment;
-		}
-
-		$markersRaw = Order\EntityMarker::getList([
-			'filter' => [
-				'=ENTITY_TYPE' => Order\EntityMarker::ENTITY_TYPE_ORDER,
-				'=ENTITY_ID' => $ids,
-				'=SUCCESS' => 'N',
-			],
-			'select' => ['MESSAGE', 'ENTITY_ID']
-		]);
-
-		$markers = [];
-		while ($marker = $markersRaw->fetch())
-		{
-			$markers[$marker['ENTITY_ID']][] = $marker['MESSAGE'];
-		}
-
-		if (!empty($markers))
-		{
-			foreach ($markers as $orderId => $marker )
-			{
-				if (count($marker) > 1)
-				{
-					$value = implode('<br>', $marker);
-				}
-				else
-				{
-					$value = $marker[0];
-				}
-				$orders[$orderId]['PROBLEM_NOTIFICATION'] = $value;
-			}
-		}
-
-		$enumVariants = [];
-		$enumPropertyVariantRaw = Order\PropertyVariant::getList([
-			'select' => ['VALUE', 'NAME', 'ORDER_PROPS_ID']
-		]);
-		while ($variant = $enumPropertyVariantRaw->fetch())
-		{
-			$enumVariants[$variant['ORDER_PROPS_ID']][$variant['VALUE']] = $variant['NAME'];
-		}
-
-		$propertyValuesRaw = Order\PropertyValue::getList([
-			'filter' => [
-				'=ORDER_ID' => $ids
-			],
-			'select' => ['TYPE' => 'PROPERTY.TYPE', 'VALUE', 'ORDER_PROPS_ID', 'ORDER_ID']
-		]);
-		while ($propertyValue = $propertyValuesRaw->fetch())
-		{
-			$value = $propertyValue['VALUE'];
-			$currentPropertyId = $propertyValue['ORDER_PROPS_ID'];
-			if ($propertyValue['TYPE'] === 'ENUM')
-			{
-				$orders[$propertyValue['ORDER_ID']]['PROPERTY_'.$currentPropertyId] = $enumVariants[$currentPropertyId][$value];
-			}
-			if ($propertyValue['TYPE'] === 'Y/N')
-			{
-				$value = ($value === 'Y') ? 'Y' : 'N';
-				$orders[$propertyValue['ORDER_ID']]['PROPERTY_'.$currentPropertyId] = Loc::getMessage('CRM_KANBAN_CHAR_' . $value);
-			}
-			else
-			{
-				$orders[$propertyValue['ORDER_ID']]['PROPERTY_'.$currentPropertyId] = $value;
-			}
-		}
-
-		foreach ($orders as &$order)
-		{
-			if (isset($order['PERSON_TYPE_ID']))
-			{
-				$type = $personTypes[$order['PERSON_TYPE_ID']];
-				$order['PERSON_TYPE_ID'] = $type['NAME'];
-			}
-			$order['CURRENCY_ID'] = $order['CURRENCY'];
-			$order['USER'] = $order['USER_ID'];
-			$order['CURRENCY'] = $currencies[$order['CURRENCY']];
-			$order['TITLE'] = Loc::getMessage('CRM_KANBAN_ORDER_TITLE', [
-				'#ACCOUNT_NUMBER#' => $order['ACCOUNT_NUMBER']
-			]);
-		}
-
-		return $orders;
 	}
 
 	/**
 	 * Refresh deals accounts.
 	 * @return array
 	 */
-	protected function actionRefreshAccount()
+	protected function actionRefreshAccount(): array
 	{
 		$ids = $this->request('id');
-		$idForUpdate = array();
-
-		if ($ids && $this->type == $this->types['deal'])
+		$ids = (array)$ids;
+		if(empty($ids) || $this->entity->getTypeName() !== 'DEAL')
 		{
-			$userPermissions = $this->getCurrentUserPermissions();
-			if (!is_array($ids))
+			return [];
+		}
+		$idForUpdate = [];
+		$userPermissions = $this->getCurrentUserPermissions();
+		foreach ($ids as $id)
+		{
+			$categoryId = $this->entity->getCategoryId();
+			if (\CCrmDeal::checkUpdatePermission($id, $userPermissions, $categoryId))
 			{
-				$ids = array($ids);
-			}
-			foreach ($ids  as $id)
-			{
-				$categoryId = $this->categoryId;
-				if (\CCrmDeal::checkUpdatePermission($id, $userPermissions, $categoryId))
-				{
-					$idForUpdate[] = $id;
-				}
+				$idForUpdate[] = $id;
 			}
 		}
 		if (!empty($idForUpdate))
@@ -5104,67 +3502,26 @@ class CrmKanbanComponent extends \CBitrixComponent
 			\CCrmDeal::refreshAccountingData($idForUpdate);
 		}
 
-		return array();
+		return [];
 	}
 
 	/**
 	 * Set assigned id.
 	 * @return array
 	 */
-	protected function actionSetAssigned()
+	protected function actionSetAssigned(): array
 	{
-		$ids = $this->request('ids');
-		$assignedId = $this->request('assignedId');
-		$type = $this->type;
-		$types = $this->types;
-		$userPerms = $this->getCurrentUserPermissions();
-
-		if ($type === $types['order'])
+		$ids = (array)$this->request('ids');
+		$assignedId = (int)$this->request('assignedId');
+		if($assignedId <= 0 || empty($ids))
 		{
-			$assignedId = (int)$assignedId;
-			if (!empty($ids) && $assignedId > 0)
-			{
-				if (!is_array($ids))
-				{
-					$ids = [$ids];
-				}
-				foreach ($ids as $id)
-				{
-					if (Order\Permissions\Order::checkUpdatePermission($id, $userPerms))
-					{
-						$order = Order\Order::load($id);
-						$order->setField('RESPONSIBLE_ID', $assignedId);
-						$order->save();
-					}
-				}
-			}
 			return [];
 		}
+		$userPerms = $this->getCurrentUserPermissions();
 
-		$provider = '\CCrm'.$type;
+		$this->entity->setItemsAssigned($ids, $assignedId, $userPerms);
 
-		if (
-			$ids && $assignedId &&
-			method_exists($provider, 'update')
-		)
-		{
-			if (!is_array($ids))
-			{
-				$ids = array($ids);
-			}
-			$key = $type == $types['invoice'] ? 'RESPONSIBLE_ID' : 'ASSIGNED_BY_ID';
-			$entity = new $provider();
-			foreach ($ids as $id)
-			{
-				$fields = array(
-					$key => $assignedId
-				);
-				$entity->update($id, $fields);
-				$this->runAutomationOnUpdate($id, $fields);
-			}
-		}
-
-		return array();
+		return [];
 	}
 
 	/**
@@ -5173,33 +3530,16 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 */
 	protected function actionOpen()
 	{
-		$ids = $this->request('id');
-		$flag = $this->request('flag');
-		$type = $this->type;
-		$types = $this->types;
-		$provider = '\CCrm' . $type;
-
-		if (
-			$ids && $type != $types['invoice'] &&
-			method_exists($provider, 'update')
-		)
+		$ids = (array)$this->request('id');
+		if(empty($ids))
 		{
-			if (!is_array($ids))
-			{
-				$ids = array($ids);
-			}
-			$entity = new $provider();
-			foreach ($ids as $id)
-			{
-				$fields = array(
-					'OPENED' => $flag
-				);
-				$entity->update($id, $fields);
-				$this->runAutomationOnUpdate($id, $fields);
-			}
+			return [];
 		}
+		$isOpened = ($this->request('flag') === 'Y');
 
-		return array();
+		$this->entity->updateItemsOpened($ids, $isOpened);
+
+		return [];
 	}
 
 	/**
@@ -5208,80 +3548,14 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 */
 	protected function actionChangeCategory()
 	{
-		$ids = $this->request('id');
-		$category = (int)$this->request('category');
-		$type = $this->type;
-		$types = $this->types;
-		$provider = '\CCrm' . $type;
-
-		$userPermissions = $this->getCurrentUserPermissions();
-		$catPerm = array_fill_keys(
-			\CCrmDeal::GetPermittedToReadCategoryIDs($userPermissions),
-			true
-		);
-
-		if (
-			$ids &&
-			isset($catPerm[$category]) &&
-			$type == $types['deal'] &&
-			method_exists($provider, 'update')
-		)
+		$ids = (array)$this->request('id');
+		if(empty($ids))
 		{
-
-			if (!is_array($ids))
-			{
-				$ids = array($ids);
-			}
-			foreach ($ids as $id)
-			{
-				$id = (int)$id;
-				if (
-					$id > 0 &&
-					\CCrmDeal::checkUpdatePermission($id, $userPermissions) &&
-					\CCrmDeal::CheckCreatePermission($userPermissions, $category)
-				)
-				{
-					// collect options
-					$recurringData = \Bitrix\Crm\Recurring\Manager::getList(
-						[
-							'filter' => ['DEAL_ID' => $id],
-							'limit' => 1
-						],
-						\Bitrix\Crm\Recurring\Manager::DEAL
-					);
-					$options = null;
-					if ($recurringData->fetch())
-					{
-						$options = ['REGISTER_STATISTICS' => false];
-					}
-					// move
-					$error = \CCrmDeal::moveToCategory($id, $category, $options);
-					// automation
-					if ($error === \Bitrix\Crm\Category\DealCategoryChangeError::NONE)
-					{
-						$errors = null;
-						\CCrmBizProcHelper::autoStartWorkflows(
-							\CCrmOwnerType::Deal,
-							$id,
-							\CCrmBizProcEventType::Edit,
-							$errors
-						);
-						$dbResult = \CCrmDeal::GetListEx(
-							array(),
-							array('=ID' => $id, 'CHECK_PERMISSIONS' => 'N'),
-							false,
-							false,
-							['STAGE_ID', 'CATEGORY_ID']
-						);
-						$newFields = $dbResult->Fetch();
-
-						$starter = new Bitrix\Crm\Automation\Starter(CCrmOwnerType::Deal, $id);
-						$starter->setUserIdFromCurrent()->runOnUpdate($newFields, []);
-					}
-				}
-			}
 			return [];
 		}
+		$categoryId = (int)$this->request('category');
+		$userPermissions = $this->getCurrentUserPermissions();
+		$this->entity->updateItemsCategory($ids, $categoryId, $userPermissions);
 
 		return [];
 	}
@@ -5290,16 +3564,16 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 * Show or hide contact center block in option.
 	 * @return array
 	 */
-	protected function actionToggleCC()
+	protected function actionToggleCC(): array
 	{
 		$hidden = \CUserOptions::getOption(
-			'crm',
-			'kanban_cc_hide',
+			static::OPTION_CATEGORY,
+			static::OPTION_NAME_HIDE_CONTACT_CENTER,
 			false
 		);
 		\CUserOptions::setOption(
-			'crm',
-			'kanban_cc_hide',
+			static::OPTION_CATEGORY,
+			static::OPTION_NAME_HIDE_CONTACT_CENTER,
 			!$hidden
 		);
 		return [];
@@ -5309,18 +3583,37 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 * Show or hide REST demo block in option.
 	 * @return array
 	 */
-	protected function actionToggleRest()
+	protected function actionToggleRest(): array
 	{
 		$hidden = \CUserOptions::getOption(
-			'crm',
-			'kanban_rest_hide',
+			static::OPTION_CATEGORY,
+			static::OPTION_NAME_HIDE_REST_DEMO,
 			false
 		);
 		\CUserOptions::setOption(
-			'crm',
-			'kanban_rest_hide',
+			static::OPTION_CATEGORY,
+			static::OPTION_NAME_HIDE_REST_DEMO,
 			!$hidden
 		);
 		return [];
+	}
+
+	protected function processAvatar(array $user): array
+	{
+		$avatar = null;
+		if ($user['PERSONAL_PHOTO'])
+		{
+			$avatar = \CFile::ResizeImageGet(
+				$user['PERSONAL_PHOTO'],
+				$this->avatarSize,
+				BX_RESIZE_IMAGE_EXACT
+			);
+			if ($avatar)
+			{
+				$user['PERSONAL_PHOTO'] = $avatar['src'];
+			}
+		}
+
+		return $user;
 	}
 }

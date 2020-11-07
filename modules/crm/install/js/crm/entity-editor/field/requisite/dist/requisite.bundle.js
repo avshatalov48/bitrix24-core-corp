@@ -742,7 +742,7 @@ this.BX = this.BX || {};
 	    this._entityTypeId = null;
 	    this._entityId = null;
 	    this._contextId = null;
-	    this._mode = BX.Crm.EntityEditorMode.view;
+	    this._mode = BX.UI.EntityEditorMode.view;
 	    this.currentSliderRequisiste = null;
 	  }
 
@@ -914,7 +914,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "isViewMode",
 	    value: function isViewMode() {
-	      return this._mode === BX.Crm.EntityEditorMode.view;
+	      return this._mode === BX.UI.EntityEditorMode.view;
 	    }
 	  }, {
 	    key: "onExternalEvent",
@@ -2328,7 +2328,7 @@ this.BX = this.BX || {};
 	function _arrayLikeToArray$3(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
 	function _templateObject6$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"crm-entity-widget-content-block-inner\">\n\t\t\t", "\n\t\t\t<div class=\"crm-entity-widget-content-block-add-field\">\n\t\t\t\t<span class=\"crm-entity-widget-content-add-field\" onclick=\"", "\">", "</span>\n\t\t\t</div>\n\t\t</div>"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"ui-entity-editor-content-block\">\n\t\t\t", "\n\t\t\t<div class=\"crm-entity-widget-content-block-add-field\">\n\t\t\t\t<span class=\"crm-entity-widget-content-add-field\" onclick=\"", "\">", "</span>\n\t\t\t</div>\n\t\t</div>"]);
 
 	  _templateObject6$1 = function _templateObject6() {
 	    return data;
@@ -2348,7 +2348,7 @@ this.BX = this.BX || {};
 	}
 
 	function _templateObject4$2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"crm-entity-widget-content-block-inner crm-entity-widget-content-block-requisites\">\n\t\t\t<span class=\"crm-entity-widget-client-requisites-add-btn\" onclick=\"", "\">", "</span>\n\t\t</div>"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"ui-entity-editor-content-block crm-entity-widget-content-block-requisites\">\n\t\t\t<span class=\"crm-entity-widget-client-requisites-add-btn\" onclick=\"", "\">", "</span>\n\t\t</div>"]);
 
 	  _templateObject4$2 = function _templateObject4() {
 	    return data;
@@ -2358,7 +2358,7 @@ this.BX = this.BX || {};
 	}
 
 	function _templateObject3$2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-content-block-inner\" \n\t\t\t\tonclick=\"", "\"\n\t\t\t\tonmouseenter=\"", "\">\n\t\t\t\t\t", "\n\t\t\t</div>"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-entity-editor-content-block\" \n\t\t\t\tonclick=\"", "\"\n\t\t\t\tonmouseenter=\"", "\">\n\t\t\t\t\t", "\n\t\t\t</div>"]);
 
 	  _templateObject3$2 = function _templateObject3() {
 	    return data;
@@ -2499,7 +2499,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "createTitleActionControls",
 	    value: function createTitleActionControls() {
-	      if (this._mode !== BX.Crm.EntityEditorMode.edit) {
+	      if (this._mode !== BX.UI.EntityEditorMode.edit) {
 	        return [];
 	      }
 
@@ -2540,7 +2540,7 @@ this.BX = this.BX || {};
 
 	      main_core.Dom.append(this.createTitleNode(this.getTitle()), this._wrapper);
 
-	      if (this._mode === BX.Crm.EntityEditorMode.edit) {
+	      if (this._mode === BX.UI.EntityEditorMode.edit) {
 	        if (this.isAutocompleteEnabled()) {
 	          this._domNodes.addButton = null;
 	          main_core.Dom.append(this.renderAutocompleteForm(), this._wrapper);
@@ -2586,6 +2586,11 @@ this.BX = this.BX || {};
 	      this.updateSelectedRequisiteText();
 	      this.refreshTitleLayout();
 	      this.updateAutocompleteState();
+	    }
+	  }, {
+	    key: "hasContentToDisplay",
+	    value: function hasContentToDisplay() {
+	      return this.hasValue();
 	    }
 	  }, {
 	    key: "hasValue",
@@ -2646,7 +2651,7 @@ this.BX = this.BX || {};
 	      } else {
 	        this._domNodes.selectedRequisiteView.classList.remove('ui-link', 'ui-link-dark', 'ui-link-dotted');
 
-	        this._domNodes.selectedRequisiteView.textContent = BX.Crm.EntityEditorField.messages.isEmpty;
+	        this._domNodes.selectedRequisiteView.textContent = BX.UI.EntityEditorField.messages.isEmpty;
 	      }
 	    }
 	  }, {
@@ -2808,7 +2813,7 @@ this.BX = this.BX || {};
 
 	      main_core_events.EventEmitter.emit(this, 'onDelete', {
 	        id: id,
-	        postponed: this._mode === BX.Crm.EntityEditorMode.edit
+	        postponed: this._mode === BX.UI.EntityEditorMode.edit
 	      });
 	    }
 	  }, {
@@ -3012,7 +3017,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "onViewStringMouseEnter",
 	    value: function onViewStringMouseEnter() {
-	      if (this._mode === BX.Crm.EntityEditorMode.view && this.hasValue()) {
+	      if (this._mode === BX.UI.EntityEditorMode.view && this.hasValue()) {
 	        this._tooltip.showDebounced();
 	      }
 	    }
@@ -3030,7 +3035,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "onFieldMouseEnter",
 	    value: function onFieldMouseEnter() {
-	      if (this._mode === BX.Crm.EntityEditorMode.view && this.hasValue()) {
+	      if (this._mode === BX.UI.EntityEditorMode.view && this.hasValue()) {
 	        this._tooltip.showDebounced(5);
 	      }
 	    }
@@ -3071,6 +3076,10 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "rollback",
 	    value: function rollback() {// rollback will be executed in requisite controller
+	    }
+	  }, {
+	    key: "reset",
+	    value: function reset() {// reset will be executed in requisite controller
 	    }
 	  }, {
 	    key: "onAddressListUpdate",
@@ -3240,7 +3249,8 @@ this.BX = this.BX || {};
 
 	          if (!main_core.Type.isNull(addressValue) && Object.keys(addressValue).length) {
 	            this._addressField = crm_entityEditor_field_address_base.EntityEditorBaseAddressField.create(this._entityInfo.getId(), {
-	              showFirstItemOnly: true
+	              showFirstItemOnly: true,
+	              showAddressTypeInViewMode: true
 	            });
 
 	            this._addressField.setMultiple(true);

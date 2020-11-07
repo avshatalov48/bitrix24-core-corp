@@ -522,6 +522,19 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 		];
 	}
 
+	public function getSmsProviderTileAction(): array
+	{
+		Bitrix\Main\Loader::includeModule("crm");
+		Bitrix\Main\Loader::includeModule("sale");
+		Bitrix\Main\Loader::includeModule("salescenter");
+
+		$tile = $this->getSmsProviderTile();
+
+		return [
+			'active' => $tile['data']['active'],
+		];
+	}
+
 	protected function getCashboxesTile(): array
 	{
 		$cashboxPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.cashbox.panel');

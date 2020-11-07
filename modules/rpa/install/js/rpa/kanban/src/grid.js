@@ -186,7 +186,10 @@ export default class Grid extends Kanban.Grid
 		}
 		// check permissions and next stage
 		const previousColumn = this.getColumn(item.getStageId());
-		/*if(!previousColumn.getPossibleNextStages().includes(targetColumn.getId()) && previousColumn.canMoveTo() && item.getMovedBy() === this.getUserId() && targetColumn.getPossibleNextStages().includes(previousColumn.getId()))
+		//const isPossibleNextStagesIncludesTargetColumn = previousColumn.getPossibleNextStages().includes(targetColumn.getId());
+		//sorry but for now we do not check possible next stages
+		const isPossibleNextStagesIncludesTargetColumn = true;
+		/*if(!isPossibleNextStagesIncludesTargetColumn && previousColumn.canMoveTo() && item.getMovedBy() === this.getUserId() && targetColumn.getPossibleNextStages().includes(previousColumn.getId()))
 		{
 			// item is moving back - no editor just moving
 			item.saveCurrentState().savePosition().catch((response) =>
@@ -194,28 +197,28 @@ export default class Grid extends Kanban.Grid
 				this.onItemMoveError(item, response, itemPreviousState);
 			});
 		}
-		else */if(previousColumn.isCanMoveFrom() && previousColumn.getPossibleNextStages().includes(targetColumn.getId()))
+		else */if(previousColumn.isCanMoveFrom() && isPossibleNextStagesIncludesTargetColumn)
 		{
 			this.moveItemToStage(item, targetColumn.getId(), previousColumn);
 		}
-		else if(!previousColumn.isCanMoveFrom() && previousColumn.getPossibleNextStages().includes(targetColumn.getId()))
+		else if(!previousColumn.isCanMoveFrom() && isPossibleNextStagesIncludesTargetColumn)
 		{
 			BX.UI.Notification.Center.notify({
-				content: Loc.getMessage('RPA_KANBAN_MOVE_PERMISSION_NOTIFY').replace('#STAGE#', previousColumn.getName())
+				content: Loc.getMessage('RPA_KANBAN_MOVE_PERMISSION_NOTIFY').replace('#STAGE#', Text.encode(previousColumn.getName()))
 			});
 			this.moveItem(item, item.getStageId(), item.getCurrentState().nextItemId);
 		}
-		else if(previousColumn.isCanMoveFrom() && !previousColumn.getPossibleNextStages().includes(targetColumn.getId()))
+		else if(previousColumn.isCanMoveFrom() && !isPossibleNextStagesIncludesTargetColumn)
 		{
 			BX.UI.Notification.Center.notify({
-				content: Loc.getMessage('RPA_KANBAN_MOVE_WRONG_STAGE_NOTIFY').replace('#STAGE_FROM#', previousColumn.getName()).replace('#STAGE_TO#', targetColumn.getName())
+				content: Loc.getMessage('RPA_KANBAN_MOVE_WRONG_STAGE_NOTIFY').replace('#STAGE_FROM#', Text.encode(previousColumn.getName())).replace('#STAGE_TO#', Text.encode(targetColumn.getName()))
 			});
 			this.moveItem(item, item.getStageId(), item.getCurrentState().nextItemId);
 		}
 		else
 		{
 			BX.UI.Notification.Center.notify({
-				content: Loc.getMessage('RPA_KANBAN_MOVE_ITEM_PERMISSION_NOTIFY').replace('#ITEM#', item.getName()).replace('#STAGE#', previousColumn.getName())
+				content: Loc.getMessage('RPA_KANBAN_MOVE_ITEM_PERMISSION_NOTIFY').replace('#ITEM#', Text.encode(item.getName())).replace('#STAGE#', Text.encode(previousColumn.getName()))
 			});
 			this.moveItem(item, item.getStageId(), item.getCurrentState().nextItemId);
 		}
@@ -277,7 +280,7 @@ export default class Grid extends Kanban.Grid
 					if(!previousColumn.canAddItems())
 					{
 						BX.UI.Notification.Center.notify({
-							content: Loc.getMessage('RPA_KANBAN_MOVE_ITEM_PERMISSION_NOTIFY').replace('#ITEM#', item.getName()).replace('#STAGE#', previousColumn.getName())
+							content: Loc.getMessage('RPA_KANBAN_MOVE_ITEM_PERMISSION_NOTIFY').replace('#ITEM#', Text.encode(item.getName())).replace('#STAGE#', Text.encode(previousColumn.getName()))
 						});
 						this.onItemMoveError(item, null, itemPreviousState);
 						return;

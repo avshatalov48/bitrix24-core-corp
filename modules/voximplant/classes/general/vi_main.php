@@ -470,7 +470,7 @@ class CVoxImplantMain
 		$arMonthlyStat = COption::GetOptionString("voximplant", "telephony_statistic", "");
 		if ($arMonthlyStat)
 		{
-			$arMonthlyStat = unserialize($arMonthlyStat);
+			$arMonthlyStat = unserialize($arMonthlyStat, ['allowed_classes' => false]);
 		}
 
 		if(!$arMonthlyStat)
@@ -481,7 +481,7 @@ class CVoxImplantMain
 		$lastUncountedMonth = COption::GetOptionString("voximplant", "telephony_statistic_last_month", "");  //last month which wasn't counted
 		if ($lastUncountedMonth)
 		{
-			$lastUncountedMonth = unserialize($lastUncountedMonth);
+			$lastUncountedMonth = unserialize($lastUncountedMonth, ['allowed_classes' => false]);
 		}
 		else
 		{

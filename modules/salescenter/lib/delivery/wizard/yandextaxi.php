@@ -5,8 +5,8 @@ namespace Bitrix\SalesCenter\Delivery\Wizard;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
-use Sale\Handlers\Delivery\Taxi\Yandex\Api\Api;
-use Sale\Handlers\Delivery\Taxi\Yandex\Api\RequestEntity\SearchOptions;
+use Sale\Handlers\Delivery\YandexTaxi\Api\Api;
+use Sale\Handlers\Delivery\YandexTaxi\Api\RequestEntity\SearchOptions;
 
 Loc::loadMessages(__FILE__);
 

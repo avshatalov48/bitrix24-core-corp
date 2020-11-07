@@ -27,7 +27,7 @@ else
 	}
 
 	$APPLICATION->ShowViewContent('crm-grid-filter');
-	
+
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.order.menu',
 		'',
@@ -75,6 +75,7 @@ else
 				'PATH_TO_ORDER_KANBAN' => $arResult['PATH_TO_ORDER_KANBAN'],
 				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
 				'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID'],
+				'BUILDER_CONTEXT' => $arParams['BUILDER_CONTEXT']
 			]
 		],
 		$component

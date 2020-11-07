@@ -1,6 +1,7 @@
 <? if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\Web\Json;
 
 /**
@@ -92,7 +93,7 @@ require 'js_templates.php';
 						$personTypeName = $item['NAME'];
 					}
 					?>
-					<option value="<?=$item['ID']?>" <?=$selected?>><?=$item['NAME']?></option>
+					<option value="<?=$item['ID']?>" <?=$selected?>><?=HtmlFilter::encode($item['NAME'])?></option>
 					<?
 				}
 				?>

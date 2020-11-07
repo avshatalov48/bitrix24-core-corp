@@ -783,7 +783,7 @@ class CVoxImplantCrmHelper
 			{
 				$activityFields = CCrmActivity::GetByID($activityId);
 
-				$storageElementIds = unserialize($activityFields['STORAGE_ELEMENT_IDS']) ?: array();
+				$storageElementIds = unserialize($activityFields['STORAGE_ELEMENT_IDS'], ['allowed_classes' => false]) ?: array();
 				$doSave = false;
 				if($params['CALL_WEBDAV_ID'] > 0)
 				{

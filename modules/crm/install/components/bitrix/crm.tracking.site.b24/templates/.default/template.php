@@ -15,7 +15,8 @@ use Bitrix\Main\Web\Json;
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
 Extension::load([
 	'ui.icons', 'ui.switcher',
-	'sidepanel', 'crm.tracking.connector'
+	'sidepanel', 'crm.tracking.connector',
+	'ui.sidepanel-content'
 ]);
 
 $name = htmlspecialcharsbx($arResult['ROW']['NAME']);
@@ -37,24 +38,17 @@ $containerId = 'crm-tracking-site-b24';
 	<form method="post">
 		<?=bitrix_sessid_post();?>
 
-		<div class="crm-analytics-source-block crm-analytics-source-block-desc">
-			<span class="crm-analytics-source-icon <?=$iconClass?>">
+		<div class="ui-slider-section ui-slider-section-icon-center">
+			<span class="ui-slider-icon <?=$iconClass?>">
 				<i></i>
 			</span>
-
-			<div class="crm-analytics-source-section">
-				<div class="crm-analytics-source-header">
-					<?=Loc::getMessage('CRM_TRACKING_SITE_B24_AUTO_CONNECTED', ['%name%' => $name])?>
-				</div>
-				<div class="crm-analytics-source-desc">
-					<span class="crm-analytics-source-desc-text">
-						<?=Loc::getMessage('CRM_TRACKING_SITE_B24_AUTO_DESC', ['%name%' => $name])?>
-					</span>
-				</div>
+			<div class="ui-slider-content-box">
+				<div class="ui-slider-heading-3"><?=Loc::getMessage('CRM_TRACKING_SITE_B24_AUTO_CONNECTED', ['%name%' => $name])?></div>
+				<p class="ui-slider-paragraph-2"><?=Loc::getMessage('CRM_TRACKING_SITE_B24_AUTO_DESC', ['%name%' => $name])?></p>
 			</div>
 		</div>
 
-		<div class="crm-analytics-source-block">
+		<div class="ui-slider-section">
 			<?if (empty($arResult['SITES'])):?>
 				<div class="crm-analytics-source-empty">
 					<div class="crm-analytics-source-empty-img"></div>

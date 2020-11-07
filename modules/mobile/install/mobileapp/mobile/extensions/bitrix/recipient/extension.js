@@ -18,6 +18,7 @@
 	 */
 	class RecipientList
 	{
+
 		/**
 		 * @param {array<RecipientDataSet>} data
 		 * @param options
@@ -25,14 +26,12 @@
 		 **/
 		constructor(data = null, options = {})
 		{
-			if (data == null)
-			{
+			this.internalResolve = null;
+			if (data == null)  {
 				return null;
 			}
 
 			this.ui = dialogs.createRecipientPicker();
-			this.ui.allowMultipleSelection(true);
-			this.ui.setTitle({text: BX.message("RECIPIENT_TITLE")});
 			this.currentScope = null;
 			this.datasets = {};
 			let entries = Object.values(RecipientDataSet);
@@ -166,6 +165,10 @@
 					if(userList.searcher.currentQueryString === "" && options.useRecentSelected)
 					{
 						return userList.recent.get();
+					}
+					else
+					{
+						userList.recent.read();
 					}
 
 					let hasAllRecipients = false;
@@ -306,8 +309,16 @@
 				reflectFunction(dataset, "init", dataset).call(dataset, false);
 				reflectFunction(dataset.eventHandlers, "onListFill", dataset).call(dataset, data);
 			}
+			else if(event === "onSelectedChanged")
+			{
+				if(this.singleChoose) {
+					this.ui.close(()=>this.callResolve(data.items));
+				}
+			}
 			else
 			{
+
+
 				let dataset = this.datasets[this.currentScope];
 				reflectFunction(dataset.eventHandlers, event, dataset).call(dataset, data)
 			}
@@ -316,74 +327,102 @@
 		/**
 		 * @return {Promise}
 		 */
-		open(options = {})
-		{
-			let defaultOptions = {returnShortFormat: false, allowMultipleSelection: true};
-			if(options != null && typeof options === "object")
-			{
-				options = Object.assign(defaultOptions, options);
+		open(options = {}) {
+			let title = options.title || BX.message("RECIPIENT_TITLE");
+			this.singleChoose = options.singleChoose || false
+			this.ui.setTitle({text: title});
+			let selected = [];
+			if(typeof options.selected === "object"){
+				selected = Object.keys(options.selected)
+					.reduce((result, key) =>
+					{
+						let selected = options.selected[key].map(item => {
+							if (typeof item.id !== "undefined")
+								item.id = key + "/" + item.id;
+							return item
+						});
+
+						return result.concat(selected)
+
+					}, [])
+			}
+
+			this.options = {returnShortFormat: false, allowMultipleSelection: true, singleChoose: false};
+			if(typeof options === "object") {
+				this.options = Object.assign(this.options, options);
 			}
 
 			return new Promise((resolve, reject) =>
 			{
-				let scopes = Object.keys(this.datasets);
-				let initDataFunction = ()=>scopes.reduce((result, value) =>
+				this.internalResolve = resolve;
+				this.ui.allowMultipleSelection(this.options.allowMultipleSelection);
+
+				if(this.options.title)
 				{
-					result[value] = [];
-					return result;
-				}, {});
-				let initResult = initDataFunction();
-				let rawResult = initDataFunction();
-				this.ui.allowMultipleSelection(options.allowMultipleSelection);
-				if(options.title)
-				{
-					if(typeof options.title === "string")
-						this.ui.setTitle({text: options.title});
+					if(typeof this.options.title === "string")
+						this.ui.setTitle({text: this.options.title});
 					else
-						this.ui.setTitle(options.title)
+						this.ui.setTitle(this.options.title)
 				}
 				this.ui.show()
-					.then(data =>
-					{
-						let result = data.reduce((result, item) =>
-						{
-							let splitData = item.id.split("/");
-							if (splitData.length > 1)
-							{
-								let scope = splitData[0];
-								let id = splitData[1];
-								if (scopes.indexOf(scope) >= 0)
-								{
-									if(options.returnShortFormat === true)
-									{
-										result[scope].push(id)
-									}
-									else
-									{
-										result[scope].push({
-											"title": item.title,
-											"subtitle": item.subtitle,
-											"id": id,
-											"params": item.params,
-											"imageUrl": item.imageUrl
-										});
-									}
-
-									rawResult[scope].push(item);
-								}
-							}
-
-
-							return result;
-						}, initResult);
-
-						BX.onCustomEvent("onRecipientSelected", [rawResult]);
-						resolve(result);
-					})
-					.catch(e => reject(e));
+					.then(data => this.callResolve(data))
+					.catch(e => {
+							console.error(e);
+							reject(e);
+						}
+					);
+				setTimeout(()=>{
+					this.ui.setSelected(selected);
+				} , 0)
 			});
 
 		}
+
+		callResolve(data) {
+			let scopes = Object.keys(this.datasets);
+			let initDataFunction = ()=>scopes.reduce((result, value) =>
+			{
+				result[value] = [];
+				return result;
+			}, {});
+			let initResult = initDataFunction();
+			let rawResult = initDataFunction();
+			let result = data.reduce((result, item) =>
+			{
+				let splitData = item.id.split("/");
+				if (splitData.length > 1)
+				{
+					let scope = splitData[0];
+					let id = splitData[1];
+					if (scopes.indexOf(scope) >= 0)
+					{
+						if(this.options.returnShortFormat === true)
+						{
+							result[scope].push(id)
+						}
+						else
+						{
+							result[scope].push({
+								"title": item.title,
+								"subtitle": item.subtitle,
+								"id": id,
+								"params": item.params,
+								"imageUrl": item.imageUrl
+							});
+						}
+
+						rawResult[scope].push(item);
+					}
+				}
+
+
+				return result;
+			}, initResult);
+
+			BX.onCustomEvent("onRecipientSelected", [rawResult]);
+			this.internalResolve.call(null, result)
+		}
+
 	}
 
 	jnexport(RecipientList);

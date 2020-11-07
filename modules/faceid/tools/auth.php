@@ -68,7 +68,7 @@ else
 
 			if($USER->GetParam("APPLICATION_ID") === null)
 			{
-				if (strlen($appUUID) > 0)
+				if ($appUUID <> '')
 				{
 					$result = ApplicationPasswordTable::getList(Array(
 						'select' => Array('ID'),
@@ -92,7 +92,7 @@ else
 					'PASSWORD' => $password,
 					'CODE' => $appUUID,
 					'DATE_CREATE' => new Bitrix\Main\Type\DateTime(),
-					'COMMENT' => Loc::getMessage("FACEID_AUTH_GENERATED_BY_FACEIN") . (strlen($deviceName) > 0 ? " (" . $deviceName . ")" : ""),
+					'COMMENT' => Loc::getMessage("FACEID_AUTH_GENERATED_BY_FACEIN") . ($deviceName <> '' ? " (" . $deviceName . ")" : ""),
 					'SYSCOMMENT' => Loc::getMessage("FACEID_AUTH_FACEIN_APP")
 				));
 

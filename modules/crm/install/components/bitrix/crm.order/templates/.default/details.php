@@ -11,6 +11,9 @@ $APPLICATION->IncludeComponent(
 		'ENTITY_TYPE_ID' => CCrmOwnerType::Order,
 		'ENTITY_ID' => $arResult['VARIABLES']['order_id'],
 		'ENABLE_TITLE_EDIT' => false,
-		'DISABLE_TOP_MENU' => 'Y'
+		'DISABLE_TOP_MENU' => 'Y',
+		'EXTRAS' => array(
+			'BUILDER_CONTEXT' => $arParams['BUILDER_CONTEXT']
+		)
 	)
 );

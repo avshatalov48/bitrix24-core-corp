@@ -123,7 +123,8 @@ class OrderBuilderCrm extends OrderBuilder
 			$formattedPrice
 		);
 
-		return (float)\CCurrencyLang::getUnFormattedValue($formattedPrice, $currency);
+		$result = \CCurrencyLang::getUnFormattedValue($formattedPrice, $currency);
+		return (float)str_replace(' ', '', $result);
 	}
 
 	/**

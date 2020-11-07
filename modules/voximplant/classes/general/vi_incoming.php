@@ -538,7 +538,6 @@ class CVoxImplantIncoming
 
 	public static function getUserByDirectCode($directCode, $checkTimeman = false)
 	{
-		$directCode = (int)$directCode;
 		$userData = \Bitrix\Voximplant\Model\UserTable::getList(Array(
 			'select' => Array('ID', 'IS_ONLINE', 'IS_BUSY', 'UF_VI_PHONE', 'ACTIVE'),
 			'filter' => Array('=UF_PHONE_INNER' => $directCode, '=ACTIVE' => 'Y'),

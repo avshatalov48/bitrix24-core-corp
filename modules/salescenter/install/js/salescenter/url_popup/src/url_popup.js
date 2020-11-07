@@ -1,4 +1,4 @@
-import {Type} from 'main.core';
+import {Type, Text} from 'main.core';
 import {PopupMenu} from 'main.popup';
 import {Vue} from 'ui.vue';
 import {Manager} from 'salescenter.manager';
@@ -273,7 +273,7 @@ Vue.component('bx-salescenter-url-popup',
 				fields.forEach((item) =>
 				{
 					const menu = {
-						text: item.title,
+						text: Text.encode(item.title),
 						dataset: {
 							rootMenu: this.fieldsPopupMenuId,
 						},

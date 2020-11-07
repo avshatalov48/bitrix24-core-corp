@@ -64,3 +64,5 @@ $MESS["SALESCENTER_SP_PAYSYSTEM_LIQPAY_TITLE"] = "LiqPay";
 $MESS["SALESCENTER_SP_PAYSYSTEM_LIQPAY_DESCRIPTION"] = "Принимайте электронные платежи от клиентов LiqPay";
 $MESS["SALESCENTER_SP_PAYSYSTEM_SKB_TITLE"] = "СКБ-банк (оплата через QR-код)";
 $MESS["SALESCENTER_SP_PAYSYSTEM_DELETE_CONFIRM"] = "Вы уверены, что хотите удалить эту платежную систему?";
+$MESS["SALESCENTER_SP_PAYSYSTEM_WOOPPAY_IFRAME_TITLE"] = "Woopkassa. Платежный фрейм";
+$MESS["SALESCENTER_SP_PAYSYSTEM_WOOPPAY_CHECKOUT_TITLE"] = "Woopkassa. Страница оплаты";

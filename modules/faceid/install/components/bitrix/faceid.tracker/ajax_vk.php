@@ -10,7 +10,7 @@ if (!\Bitrix\Faceid\AgreementTable::checkUser($USER->getId()))
 	die;
 }
 
-if (substr($_POST['image'], 0, 5) == 'data:')
+if (mb_substr($_POST['image'], 0, 5) == 'data:')
 {
 	$imageContent = str_replace('data:image/jpeg', 'data://image/jpeg', $_POST['image']);
 	$fileContent = base64_decode(str_replace('data://image/jpeg;base64,', '', $imageContent));
@@ -19,7 +19,7 @@ else
 {
 	$http = new \Bitrix\Main\Web\HttpClient;
 
-	if (substr($_POST['image'], 0, 4) != 'http')
+	if (mb_substr($_POST['image'], 0, 4) != 'http')
 	{
 		$httpRequest = \Bitrix\Main\Context::getCurrent()->getRequest();
 		$_POST['image'] = 'http'.($httpRequest->isHttps()?'s':'').'://'.$httpRequest->getHttpHost().$_POST['image'];

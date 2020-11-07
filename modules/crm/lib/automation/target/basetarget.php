@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Automation\Target;
 
+use Bitrix\Bizproc\Automation\Engine\ConditionGroup;
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Loader;
 use Bitrix\Crm\Automation\Factory;
@@ -160,5 +161,56 @@ abstract class BaseTarget extends \Bitrix\Bizproc\Automation\Target\BaseTarget
 	public function getDocumentType()
 	{
 		return \CCrmBizProcHelper::ResolveDocumentType($this->getEntityTypeId());
+	}
+
+	public function prepareTriggersToSave(array &$triggers)
+	{
+		parent::prepareTriggersToSave($triggers);
+
+		foreach ($triggers as $i => $trigger)
+		{
+			if (isset($trigger['DELETED']) && $trigger['DELETED'] === 'Y')
+			{
+				continue;
+			}
+
+			$triggers[$i]['APPLY_RULES'] = $this->prepareApplyRules($trigger['APPLY_RULES']);
+		}
+	}
+
+	public function prepareTriggersToShow(array &$triggers)
+	{
+		parent::prepareTriggersToShow($triggers);
+		foreach ($triggers as $i => $trigger)
+		{
+			$triggers[$i]['APPLY_RULES'] = $this->prepareApplyRules($trigger['APPLY_RULES'], true);
+		}
+	}
+
+	private function prepareApplyRules($rules, $external = false): ?array
+	{
+		if (!is_array($rules))
+		{
+			return null;
+		}
+
+		foreach (['shipmentCondition', 'taskCondition'] as $key)
+		{
+			if (isset($rules[$key]))
+			{
+				$condition = new ConditionGroup($rules[$key]);
+				if ($external)
+				{
+					$condition->externalizeValues($this->getDocumentType());
+				}
+				else
+				{
+					$condition->internalizeValues($this->getDocumentType());
+				}
+				$rules[$key] = $condition->toArray();
+			}
+		}
+
+		return $rules;
 	}
 }

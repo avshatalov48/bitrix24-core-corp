@@ -245,10 +245,12 @@ class ImOpenLinesManager extends Base
 				'MESSAGE' => $this->createImMessageByPage($page),
 			];
 
-			if($page->isWebform())
+			$formIds = $this->getWebFormIdsByPage($page);
+
+			if(!empty($formIds))
 			{
 				$imOlMessage = new ImOlSalesCenter\Form(ImOlSalesCenter\Form::normalizeChatId($dialogId));
-				$imOlMessage->setFormIds($this->getWebFormIdsByPage($page));
+				$imOlMessage->setFormIds($formIds);
 			}
 			else
 			{
@@ -275,22 +277,20 @@ class ImOpenLinesManager extends Base
 	protected function getWebFormIdsByPage(Page $page): array
 	{
 		$result = [];
-		if ($page->isWebform())
+
+		$landingPageId = $page->getLandingId();
+		if ($landingPageId > 0)
 		{
-			$landingPageId = $page->getLandingId();
-			if ($landingPageId > 0)
+			$forms = LandingManager::getInstance()->getConnectedWebForms();
+			foreach ($forms as $form)
 			{
-				$forms = LandingManager::getInstance()->getConnectedWebForms();
-				foreach ($forms as $form)
+				$landingWebForm = (int)$form['formId'];
+				if (
+					$landingPageId === (int)$form['landingId'] &&
+					!in_array($landingWebForm, $result, true)
+				)
 				{
-					$landingWebForm = (int)$form['formId'];
-					if ($landingPageId === (int)$form['landingId'])
-					{
-						if (!in_array($landingWebForm, $result, true))
-						{
-							$result[] = $landingWebForm;
-						}
-					}
+					$result[] = $landingWebForm;
 				}
 			}
 		}
@@ -422,6 +422,10 @@ class ImOpenLinesManager extends Base
 			if(!$resultSendMessage->isSuccess())
 			{
 				$result->addErrors($resultSendMessage->getErrors());
+			}
+			else
+			{
+				CrmManager::getInstance()->addTimelineEntryOnSend($order, ['DESTINATION' => 'CHAT']);
 			}
 
 			$notifyResult = $this->sendOrderCheckWarning($order, $dialogId);

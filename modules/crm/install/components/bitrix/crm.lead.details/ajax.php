@@ -144,6 +144,9 @@ elseif($action === 'SAVE')
 				'VALUE_TYPE' => $multiField['VALUE_TYPE']
 			);
 		}
+
+		$sourceFields['ORIGINATOR_ID'] = '';
+		$sourceFields['ORIGIN_ID'] = '';
 	}
 
 	foreach(array_keys($fieldsInfo) as $fieldName)

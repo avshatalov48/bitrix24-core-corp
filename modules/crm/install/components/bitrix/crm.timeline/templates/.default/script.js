@@ -234,7 +234,6 @@ if(typeof(BX.CrmTimelineManager) === "undefined")
 				BX.addCustomEvent("onPullEvent-crm", BX.delegate(this.onPullEvent, this));
 				this.extendWatch();
 			}
-
 			this._menuBar = BX.CrmTimelineMenuBar.create(
 				this._id,
 				{
@@ -253,7 +252,7 @@ if(typeof(BX.CrmTimelineManager) === "undefined")
 
 			if(!this._readOnly)
 			{
-				this._menuBar.setActiveItemById("comment");
+				this._menuBar.reset();
 			}
 
 			BX.addCustomEvent(window, "Crm.EntityProgress.Change", BX.delegate(this.onEntityProgressChange, this));
@@ -12072,7 +12071,6 @@ if(typeof(BX.CrmHistoryItemZoom) === "undefined")
 		{
 			return;
 		}
-		console.log(this.getId());
 		this._audioPlayer = this._history.getManager().loadMediaPlayer(
 			"zoom_audio_" + this.getId(),
 			recording["DOWNLOAD_URL"],
@@ -16568,8 +16566,6 @@ if(typeof(BX.CrmTimelineMenuBar) === "undefined")
 		this._id = "";
 		this._ownerInfo = null;
 		this._container = null;
-		this._items = null;
-		this._moreButton = null;
 		this._activityEditor = null;
 		this._commentEditor = null;
 		this._waitEditor = null;
@@ -16578,7 +16574,6 @@ if(typeof(BX.CrmTimelineMenuBar) === "undefined")
 		this._readOnly = false;
 
 		this._menu = null;
-		this._isMenuShown = false;
 		this._manager = null;
 	};
 	BX.CrmTimelineMenuBar.prototype =
@@ -16602,88 +16597,114 @@ if(typeof(BX.CrmTimelineMenuBar) === "undefined")
 			this._zoomEditor = BX.prop.get(this._settings, "zoomEditor");
 			this._restEditor = BX.prop.get(this._settings, "restEditor");
 			this._manager = BX.prop.get(this._settings, "manager");
+
 			if(!(this._manager instanceof BX.CrmTimelineManager))
 			{
 				throw "BX.CrmTimeline. Manager instance is not found.";
 			}
 
-			this._container = BX.prop.getElementNode(this._settings, "container");
-			if(!this._container)
-			{
-				throw "BX.CrmTimelineMenuBar. A required parameter 'container' is missing.";
-			}
-
 			this._readOnly = BX.prop.getBoolean(this._settings, "readOnly", false);
+			this._menu = BX.Main.interfaceButtonsManager.getById(
+				String(this._ownerInfo['ENTITY_TYPE_NAME']).toLowerCase() + "_menu");
 
-			this._items = [];
-			var itemContainers = this._container.querySelectorAll(".crm-entity-stream-section-new-action");
-			for(var i = 0, l = itemContainers.length; i < l; i++)
-			{
-				var itemContainer = itemContainers[i];
-				var item = BX.CrmTimelineMenuBarItem.create(
-					itemContainer.getAttribute("data-item-id"),
-					{ container: itemContainer, owner: this }
-				);
-				this._items.push(item);
-			}
-
-			this._moreButton = this._container.querySelector(".crm-entity-stream-section-new-action-more");
-			if(this._moreButton)
-			{
-				BX.bind(this._moreButton, "click", BX.delegate(this.onMoreButtonClick, this));
-			}
-
-			this.adjust();
-			BX.bind(window, 'resize', BX.delegate(this.onResize, this));
+			BX.addCustomEvent(this._manager.getId() + "_menu", function(id) {
+				this.setActiveItemById(id);
+			}.bind(this));
+			this._activeItem = this._menu.getActive();
+		},
+		reset: function() {
+			var firstId = null;
+			this._menu.getAllItems().forEach(function(item) {
+				if (firstId === null)
+				{
+					var id = item.dataset.id;
+					if (["comment", "wait", "sms", "zoom"].indexOf(id) >= 0 && this[("_" + id + "Editor")])
+					{
+						firstId = id;
+					}
+				}
+			}.bind(this));
+			this.setActiveItemById(firstId||"comment");
 		},
 		getId: function()
 		{
 			return this._id;
 		},
-		getItemById: function(id)
-		{
-			for(var i = 0, length = this._items.length; i < length; i++)
-			{
-				var currentItem = this._items[i];
-				if(currentItem.getId() === id)
-				{
-					return currentItem;
-				}
-			}
-			return null;
-		},
 		setActiveItemById: function(id)
 		{
-			for(var i = 0, length = this._items.length; i < length; i++)
+			if (this.processItemSelection(id) === true)
 			{
-				var currentItem = this._items[i];
-				currentItem.setActive(currentItem.getId() === id);
+				var currentDiv = this._menu.getItemById(id);
+				if (currentDiv && this._activeItem !== currentDiv)
+				{
+					var wasActiveInMoreMenu = this._menu.isActiveInMoreMenu();
+					BX.addClass(currentDiv, this._menu.classes.itemActive);
+					var isActiveData = {};
+					try {
+						isActiveData = JSON.parse(currentDiv.dataset.item);
+					} catch (err) {
+						isActiveData = {};
+					}
+					isActiveData.IS_ACTIVE = true;
+					currentDiv.dataset.item = JSON.stringify(isActiveData);
+					var wasActiveData = {};
+					if (BX.type.isDomNode(this._activeItem))
+					{
+						BX.removeClass(this._activeItem, this._menu.classes.itemActive);
+						try {
+							wasActiveData = JSON.parse(this._activeItem.dataset.item);
+						} catch (err) {
+							wasActiveData = {};
+						}
+						wasActiveData.IS_ACTIVE = false;
+						this._activeItem.dataset.item = JSON.stringify(wasActiveData);
+					}
+					var isActiveInMoreMenu = this._menu.isActiveInMoreMenu();
+
+					if (isActiveInMoreMenu || wasActiveInMoreMenu)
+					{
+						var submenu = this._menu["getSubmenu"] ? this._menu.getSubmenu() :
+							BX.PopupMenu.getMenuById("main_buttons_popup_" +
+								String(this._ownerInfo['ENTITY_TYPE_NAME']).toLowerCase() + "_menu");
+						if (submenu)
+						{
+							submenu.getMenuItems().forEach(function(menuItem) {
+								var container = menuItem.getContainer();
+								if (isActiveInMoreMenu && container.title === currentDiv.title)
+								{
+									BX.addClass(container, this._menu.classes.itemActive);
+								}
+								else if (wasActiveInMoreMenu && container.title === this._activeItem.title)
+								{
+									BX.removeClass(container, this._menu.classes.itemActive);
+								}
+
+							}.bind(this));
+						}
+
+						if (isActiveInMoreMenu)
+						{
+							BX.addClass(this._menu.getMoreButton(), this._menu.classes.itemActive);
+						}
+						else if (wasActiveInMoreMenu)
+						{
+							BX.removeClass(this._menu.getMoreButton(), this._menu.classes.itemActive);
+						}
+					}
+					this._activeItem = currentDiv;
+				}
 			}
+			this._menu.closeSubmenu();
 		},
-		setActiveItem: function(item)
-		{
-			for(var i = 0, length = this._items.length; i < length; i++)
-			{
-				var currentItem = this._items[i];
-				currentItem.setActive(currentItem === item);
-			}
-		},
-		adjust: function()
-		{
-			if(this._moreButton)
-			{
-				this._moreButton.style.display = this.getInvisibleItems().length > 0 ? "" : "none";
-			}
-		},
-		processItemSelection: function(item)
+		processItemSelection: function(menuId)
 		{
 			if(this._readOnly)
 			{
-				return;
+				return false;
 			}
 
 			var planner = null;
-			var action = item.getId();
+			var action = menuId;
 			if(action === "call")
 			{
 				planner = new BX.Crm.Activity.Planner();
@@ -16745,7 +16766,7 @@ if(typeof(BX.CrmTimelineMenuBar) === "undefined")
 				{
 					this._zoomEditor.setVisible(action === "zoom");
 				}
-				this.setActiveItem(item);
+				return true;
 			}
 			else if(action === "visit")
 			{
@@ -16761,203 +16782,12 @@ if(typeof(BX.CrmTimelineMenuBar) === "undefined")
 					this._restEditor.action(action);
 				}
 			}
-		},
-		getInvisibleItems: function()
-		{
-			var results = [];
-			for(var i = 0, length = this._items.length; i < length; i++)
-			{
-				var item = this._items[i];
-				if(!item.isVisible())
-				{
-					results.push(item);
-				}
-			}
-			return results;
-		},
-		openMenu: function()
-		{
-			var items = this.getInvisibleItems();
-			if(items.length === 0)
-			{
-				return;
-			}
-
-			var handler = BX.delegate(this.onMenuItemSelect, this);
-			var menuItems = [];
-			for(var i = 0, length = items.length; i < length; i++)
-			{
-				var item = items[i];
-				menuItems.push(
-					{
-						id: item.getId(),
-						text: item.getTitle(),
-						onclick: handler
-					}
-				);
-			}
-
-			BX.PopupMenu.show(
-				this._id,
-				this._moreButton,
-				menuItems,
-				{
-					offsetTop: 0,
-					offsetLeft: 16,
-					angle: { position: "top", offset: 0 },
-					events:
-					{
-						onPopupShow: BX.delegate(this.onContextMenuShow, this),
-						onPopupClose: BX.delegate(this.onContextMenuClose, this),
-						onPopupDestroy: BX.delegate(this.onContextMenuDestroy, this)
-					}
-				}
-			);
-			this._menu = BX.PopupMenu.currentItem;
-		},
-		closeMenu: function()
-		{
-			if(this._menu)
-			{
-				this._menu.close();
-			}
-		},
-		onMoreButtonClick: function(e)
-		{
-			if(!this._isMenuShown)
-			{
-				this.openMenu();
-			}
-			else
-			{
-				this.closeMenu();
-			}
-			e.preventDefault ? e.preventDefault() : (e.returnValue = false);
-		},
-		onMenuItemSelect: function(e, menuItem)
-		{
-			var item = this.getItemById(menuItem.id);
-			if(item)
-			{
-				this.processItemSelection(item);
-			}
-
-			this.closeMenu();
-		},
-		onContextMenuShow: function()
-		{
-			this._isMenuShown = true;
-		},
-		onContextMenuClose: function()
-		{
-			if(this._menu)
-			{
-				this._menu.popupWindow.destroy();
-			}
-		},
-		onContextMenuDestroy: function()
-		{
-			this._isMenuShown = false;
-			this._menu = null;
-
-			if(typeof(BX.PopupMenu.Data[this._id]) !== "undefined")
-			{
-				delete(BX.PopupMenu.Data[this._id]);
-			}
-		},
-		onResize: function(e)
-		{
-			if(this._isMenuShown)
-			{
-				this.closeMenu();
-			}
-			this.adjust();
+			return false;
 		}
 	};
 	BX.CrmTimelineMenuBar.create = function(id, settings)
 	{
 		var self = new BX.CrmTimelineMenuBar();
-		self.initialize(id, settings);
-		return self;
-	}
-}
-
-if(typeof(BX.CrmTimelineMenuBarItem) === "undefined")
-{
-	BX.CrmTimelineMenuBarItem = function()
-	{
-		this._id = "";
-		this._owner = null;
-		this._container = null;
-		this._isActive = false;
-	};
-	BX.CrmTimelineMenuBarItem.prototype =
-	{
-		initialize: function(id, settings)
-		{
-			this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
-			this._settings = settings ? settings : {};
-
-			this._container = BX.prop.getElementNode(this._settings, "container");
-			if(!this._container)
-			{
-				throw "BX.CrmTimelineMenuBarItem. Container node is not found.";
-			}
-
-			BX.bind(this._container, "click", BX.delegate(this.onClick, this));
-			this._isActive = BX.hasClass(this._container, "crm-entity-stream-section-new-action-active");
-
-			this._owner = BX.prop.get(this._settings, "owner");
-			if(!this._owner)
-			{
-				throw "BX.CrmTimelineMenuBarItem. Owner is not found.";
-			}
-
-		},
-		getId: function()
-		{
-			return this._id;
-		},
-		isActive: function()
-		{
-			return this._isActive;
-		},
-		setActive: function(active)
-		{
-			active = !!active;
-			this._isActive = active;
-			if(active)
-			{
-				BX.addClass(this._container, "crm-entity-stream-section-new-action-active");
-			}
-			else
-			{
-				BX.removeClass(this._container, "crm-entity-stream-section-new-action-active");
-			}
-		},
-		isVisible: function()
-		{
-			return this._container.offsetTop === 0;
-		},
-		getTitle: function()
-		{
-			var title = this._container.getAttribute("data-item-title");
-			if(!BX.type.isNotEmptyString(title))
-			{
-				title = this._container.innerHTML;
-			}
-			return BX.util.htmlspecialcharsback(title);
-		},
-		onClick: function(e)
-		{
-			this._owner.processItemSelection(this);
-			e.preventDefault ? e.preventDefault() : (e.returnValue = false);
-		}
-	};
-
-	BX.CrmTimelineMenuBarItem.create = function(id, settings)
-	{
-		var self = new BX.CrmTimelineMenuBarItem();
 		self.initialize(id, settings);
 		return self;
 	}

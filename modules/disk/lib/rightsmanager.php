@@ -584,6 +584,7 @@ class RightsManager implements IErrorable
 			$this->appendChildRightsForConnectedChildren($parentId, $userId, $restrictIds, $rightsByObjectId);
 		}
 		$this->appendChildCrRightsForChildren($parentId, $userId, $restrictIds, $rightsByObjectId);
+		$this->appendChildAuRightsForChildren($parentId, $userId, $restrictIds, $rightsByObjectId);
 
 		$operations = [];
 		foreach ($rightsByObjectId as $objectId => $rights)
@@ -711,6 +712,54 @@ class RightsManager implements IErrorable
 			{
 				$rightsByObjectId[$row['O_REAL_OBJECT_ID']][] = array(
 					'ACCESS_CODE' => 'CR',
+					'NAME' => $row['NAME'],
+					'TASK_ID' => $row['TASK_ID'],
+					'DOMAIN' => $row['DOMAIN'],
+					'NEGATIVE' => $row['NEGATIVE'],
+					'REAL_OBJECT_ID' => $row['O_REAL_OBJECT_ID'],
+					'OBJECT_ID' => $row['O_OBJECT_ID'],
+				);
+			}
+		}
+	}
+
+	private function appendChildAuRightsForChildren($parentId, $userId, array $restrictIds, &$rightsByObjectId)
+	{
+		$restrictById = '';
+		$restrictIds = array_filter(array_map('intval', $restrictIds));
+		if ($restrictIds)
+		{
+			$restrictById = ' AND o.ID IN (' . implode(',', $restrictIds) . ')';
+		}
+
+		$query = Application::getConnection()->query("
+			SELECT op.NAME, r.TASK_ID, r.DOMAIN, r.NEGATIVE, o.REAL_OBJECT_ID O_REAL_OBJECT_ID, o.ID O_OBJECT_ID
+			FROM b_disk_right r
+				INNER JOIN b_disk_object_path p ON p.PARENT_ID = r.OBJECT_ID
+				INNER JOIN b_disk_object o ON p.OBJECT_ID = o.ID
+				INNER JOIN b_task_operation task_op ON r.TASK_ID = task_op.TASK_ID
+				INNER JOIN b_operation op ON task_op.OPERATION_ID = op.ID
+
+			WHERE o.PARENT_ID = {$parentId} AND r.ACCESS_CODE = 'AU' {$restrictById}
+		"
+		);
+
+		while ($row = $query->fetch())
+		{
+			$rightsByObjectId[$row['O_OBJECT_ID']][] = array(
+				'ACCESS_CODE' => 'AU',
+				'NAME' => $row['NAME'],
+				'TASK_ID' => $row['TASK_ID'],
+				'DOMAIN' => $row['DOMAIN'],
+				'NEGATIVE' => $row['NEGATIVE'],
+				'REAL_OBJECT_ID' => $row['O_REAL_OBJECT_ID'],
+				'OBJECT_ID' => $row['O_OBJECT_ID'],
+			);
+
+			if ($row['O_REAL_OBJECT_ID'] != $row['O_OBJECT_ID'])
+			{
+				$rightsByObjectId[$row['O_REAL_OBJECT_ID']][] = array(
+					'ACCESS_CODE' => 'AU',
 					'NAME' => $row['NAME'],
 					'TASK_ID' => $row['TASK_ID'],
 					'DOMAIN' => $row['DOMAIN'],

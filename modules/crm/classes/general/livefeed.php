@@ -4036,11 +4036,17 @@ class CCrmLiveFeed
 
 			if (!empty($arData['AUX_DATA']))
 			{
-				$arFieldsForSocnet['SHARE_DEST'] = $arData['AUX_DATA'];
+				if (is_array($arData['AUX_DATA']))
+				{
+					$arFieldsForSocnet['MESSAGE'] = $arFieldsForSocnet['TEXT_MESSAGE'] = \Bitrix\Socialnetwork\CommentAux\TaskInfo::getPostText();
+				}
+				else  // old comments, can be removed after forum 20.5.0
+				{
+					$arFieldsForSocnet['SHARE_DEST'] = $arData['AUX_DATA'];
+				}
 			}
 
-			$comment_id = CSocNetLogComments::Add($arFieldsForSocnet, false, false);
-
+			CSocNetLogComments::Add($arFieldsForSocnet, false, false);
 			CCrmLiveFeed::CounterIncrement($arLog);
 		}
 	}

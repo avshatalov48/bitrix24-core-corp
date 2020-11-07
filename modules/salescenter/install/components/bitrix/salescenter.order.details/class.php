@@ -34,6 +34,10 @@ class SalesCenterOrderDetails extends CBitrixPersonalOrderDetailComponent
 		{
 			$params["CUSTOM_SELECT_PROPS"] = [];
 		}
+		if (!in_array('PROPERTY_MORE_PHOTO', $params['CUSTOM_SELECT_PROPS']))
+		{
+			$params['CUSTOM_SELECT_PROPS'][] = 'PROPERTY_MORE_PHOTO';
+		}
 
 		// resample sizes
 		self::tryParseInt($params["PICTURE_WIDTH"], 110);
@@ -179,7 +183,30 @@ class SalesCenterOrderDetails extends CBitrixPersonalOrderDetailComponent
 			$basketItem['FORMATED_PRICE'] = SaleFormatCurrency($basketItem["PRICE"], $basketItem["CURRENCY"]);
 			$basketItem['FORMATED_BASE_PRICE'] = SaleFormatCurrency($basketItem["BASE_PRICE"], $basketItem["CURRENCY"]);
 		}
+	}
 
+	/**
+	 * @param $item
+	 * @return int
+	 */
+	protected function getPictureId($item): int
+	{
+		$result = 0;
+
+		if ((int)$item['PROPERTY_MORE_PHOTO_VALUE'] > 0)
+		{
+			$result = $item['PROPERTY_MORE_PHOTO_VALUE'];
+		}
+		elseif ((int)$item['DETAIL_PICTURE'] > 0)
+		{
+			$result = $item['DETAIL_PICTURE'];
+		}
+		elseif ((int)$item['PREVIEW_PICTURE'] > 0)
+		{
+			$result = $item['PREVIEW_PICTURE'];
+		}
+
+		return (int)$result;
 	}
 
 	private function changeOrderStageDealOnViewedNoPaid($dealId)

@@ -1,7 +1,7 @@
 <?php
 global $MESS;
 $PathInstall = str_replace("\\", "/", __FILE__);
-$PathInstall = substr($PathInstall, 0, strlen($PathInstall)-strlen("/index.php"));
+$PathInstall = mb_substr($PathInstall, 0, mb_strlen($PathInstall) - mb_strlen("/index.php"));
 
 IncludeModuleLangFile($PathInstall."/install.php");
 
@@ -20,9 +20,7 @@ Class transformer extends CModule
 	{
 		$arModuleVersion = array();
 
-		$path = str_replace("\\", "/", __FILE__);
-		$path = substr($path, 0, strlen($path) - strlen("/index.php"));
-		include($path."/version.php");
+		include(__DIR__.'/version.php');
 
 		if (is_array($arModuleVersion) && array_key_exists("VERSION", $arModuleVersion))
 		{
@@ -42,7 +40,7 @@ Class transformer extends CModule
 	function DoInstall()
 	{
 		global $APPLICATION, $step;
-		$step = IntVal($step);
+		$step = intval($step);
 		if($step < 2)
 		{
 			$APPLICATION->IncludeAdminFile(GetMessage("TRANSFORMER_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/transformer/install/step1.php");
@@ -63,7 +61,7 @@ Class transformer extends CModule
 	{
 		global $DB, $APPLICATION;
 		$errors = false;
-		if (strlen($params['PUBLIC_URL']) > 0 && strlen($params['PUBLIC_URL']) < 12)
+		if ($params['PUBLIC_URL'] <> '' && mb_strlen($params['PUBLIC_URL']) < 12)
 		{
 			if (!$errors)
 			{
@@ -74,7 +72,7 @@ Class transformer extends CModule
 
 		if (!$DB->Query("SELECT 'x' FROM b_transformer_command WHERE 1=0", true))
 		{
-			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/transformer/install/db/".strtolower($DB->type)."/install.sql");
+			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/transformer/install/db/".mb_strtolower($DB->type)."/install.sql");
 		}
 
 		if($errors !== false)
@@ -107,7 +105,7 @@ Class transformer extends CModule
 	function DoUninstall()
 	{
 		global $DOCUMENT_ROOT, $APPLICATION, $step;
-		$step = IntVal($step);
+		$step = intval($step);
 		if($step<2)
 		{
 			$APPLICATION->IncludeAdminFile(GetMessage("TRANSFORMER_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/transformer/install/unstep1.php");
@@ -130,7 +128,7 @@ Class transformer extends CModule
 		$errors = false;
 
 		if (!isset($params['savedata']) || $params['savedata'] !== "Y")
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/transformer/install/db/".strtolower($DB->type)."/uninstall.sql");
+			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/transformer/install/db/".mb_strtolower($DB->type)."/uninstall.sql");
 
 		if($errors !== false)
 		{

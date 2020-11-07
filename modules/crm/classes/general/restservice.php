@@ -14,10 +14,6 @@ use Bitrix\Crm\Integration\StorageFileType;
 use Bitrix\Crm\Integration\StorageType;
 use Bitrix\Crm\Integration\DiskManager;
 use Bitrix\Crm\Integration\Bitrix24Manager;
-use Bitrix\Crm\Color\PhaseColorSchemeElement;
-use Bitrix\Crm\Color\DealStageColorScheme;
-use Bitrix\Crm\Color\LeadStatusColorScheme;
-use Bitrix\Crm\Color\QuoteStatusColorScheme;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Rest;
 use Bitrix\Crm\Tracking;
@@ -34,7 +30,6 @@ use Bitrix\Crm\Binding\DealContactTable;
 use Bitrix\Crm\Binding\QuoteContactTable;
 use Bitrix\Crm\Binding\ContactCompanyTable;
 use Bitrix\Crm\Security\EntityAuthorization;
-use Bitrix\Crm\Integration\Rest\AppPlacement;
 
 Loc::loadMessages(__FILE__);
 
@@ -8115,8 +8110,9 @@ class CCrmStatusRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		$entityID = isset($fields['ENTITY_ID']) ? $fields['ENTITY_ID'] : '';
-		$statusID = isset($fields['STATUS_ID']) ? $fields['STATUS_ID'] : '';
+		$entityID = $fields['ENTITY_ID'] ?? '';
+		$statusID = $fields['STATUS_ID'] ?? '';
+		$color = $fields['COLOR'] ?? $fields['EXTRA']['COLOR'] ?? '';
 		if($entityID === '' || $statusID === '')
 		{
 			if($entityID === '')
@@ -8140,15 +8136,12 @@ class CCrmStatusRestProxy extends CCrmRestProxyBase
 		}
 
 		$fields['SYSTEM'] = 'N';
+		$fields['COLOR'] = $color;
 		$entity = new CCrmStatus($entityID);
 		$result = $entity->Add($fields, true);
 		if($result === false)
 		{
 			$errors[] = $entity->GetLastError();
-		}
-		elseif(isset($fields['EXTRA']))
-		{
-			self::saveExtra($fields);
 		}
 		return $result;
 	}
@@ -8217,8 +8210,12 @@ class CCrmStatusRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
+		if(!isset($fields['COLOR']) && isset($fields['EXTRA']['COLOR']))
+		{
+			$fields['COLOR'] = $fields['EXTRA']['COLOR'];
+		}
 		$result = true;
-		if(isset($fields['NAME']) || isset($fields['SORT']) || isset($fields['STATUS_ID']))
+		if(isset($fields['NAME']) || isset($fields['SORT']) || isset($fields['STATUS_ID']) || isset($fields['COLOR']))
 		{
 			if(!isset($fields['NAME']))
 			{
@@ -8235,15 +8232,6 @@ class CCrmStatusRestProxy extends CCrmRestProxyBase
 			{
 				$errors[] = $entity->GetLastError();
 			}
-		}
-		if($result && isset($fields['EXTRA']))
-		{
-			$fields['ENTITY_ID'] = $currentFields['ENTITY_ID'];
-			if(!isset($fields['STATUS_ID']))
-			{
-				$fields['STATUS_ID'] = $currentFields['STATUS_ID'];
-			}
-			self::saveExtra($fields);
 		}
 
 		return $result !== false;
@@ -8290,114 +8278,36 @@ class CCrmStatusRestProxy extends CCrmRestProxyBase
 	}
 	private static function prepareExtra(array &$fields)
 	{
-		$statusID = isset($fields['STATUS_ID']) ? $fields['STATUS_ID'] : '';
+		$statusID = $fields['STATUS_ID'] ?? '';
 		if($statusID === '')
 		{
 			return null;
 		}
 
 		$result = null;
-		$colorScheme = null;
 		$entityID = isset($fields['ENTITY_ID']) ? $fields['ENTITY_ID'] : '';
 		if($entityID === 'STATUS')
 		{
 			$result = array('SEMANTICS' => CCrmLead::GetStatusSemantics($statusID));
-			$colorScheme = LeadStatusColorScheme::getCurrent();
 		}
 		elseif($entityID === 'QUOTE_STATUS')
 		{
 			$result = array('SEMANTICS' => CCrmQuote::GetStatusSemantics($statusID));
-			$colorScheme = QuoteStatusColorScheme::getCurrent();
 		}
 		elseif($entityID === 'DEAL_STAGE')
 		{
 			$result = array('SEMANTICS' => CCrmDeal::GetStageSemantics($statusID, 0));
-			$colorScheme = DealStageColorScheme::getByCategory(0);
 		}
 		elseif(DealCategory::hasStatusEntity($entityID))
 		{
 			$categoryID = DealCategory::convertFromStatusEntityID($entityID);
 			$result = array('SEMANTICS' => CCrmDeal::GetStageSemantics($statusID, $categoryID));
-			$colorScheme = DealStageColorScheme::getByCategory($categoryID);
 		}
 
 		if(is_array($result))
 		{
-			if($colorScheme !== null && $colorScheme->isPersistent())
-			{
-				$element = $colorScheme->getElementByName($statusID);
-				if($element !== null)
-				{
-					$result['COLOR'] = $element->getColor();
-				}
-			}
+			$result['COLOR'] = $fields['COLOR'] ?? '';
 			$fields['EXTRA'] = $result;
-		}
-	}
-	private static function saveExtra(array $fields)
-	{
-		$extra = isset($fields['EXTRA']) && is_array($fields['EXTRA']) ? $fields['EXTRA'] : null;
-		if(empty($extra) || !isset($extra['COLOR']) || !is_string($extra['COLOR']))
-		{
-			return;
-		}
-		$color = $extra['COLOR'];
-
-		$statusID = isset($fields['STATUS_ID']) ? $fields['STATUS_ID'] : '';
-		if($statusID === '')
-		{
-			return;
-		}
-
-		$colorScheme = null;
-		$entityID = isset($fields['ENTITY_ID']) ? $fields['ENTITY_ID'] : '';
-		if($entityID === 'STATUS')
-		{
-			$colorScheme = LeadStatusColorScheme::getCurrent();
-		}
-		elseif($entityID === 'QUOTE_STATUS')
-		{
-			$colorScheme = QuoteStatusColorScheme::getCurrent();
-		}
-		elseif($entityID === 'DEAL_STAGE')
-		{
-			$colorScheme = DealStageColorScheme::getByCategory(0);
-		}
-		elseif(DealCategory::hasStatusEntity($entityID))
-		{
-			$colorScheme = DealStageColorScheme::getByCategory(
-				DealCategory::convertFromStatusEntityID($entityID)
-			);
-		}
-
-		if($colorScheme !== null)
-		{
-			$isChanged = false;
-
-			$element = $colorScheme->getElementByName($statusID);
-			if($element !== null)
-			{
-				if($color === '')
-				{
-					$color = $colorScheme->getDefaultColor($statusID);
-				}
-
-				if($element->getColor() !== $color)
-				{
-					$element->setColor($color);
-					$isChanged = true;
-				}
-			}
-			else
-			{
-				$colorScheme->addElement(new PhaseColorSchemeElement($statusID, $color));
-				$isChanged = true;
-			}
-
-			if($isChanged)
-			{
-				$colorScheme->save();
-			}
 		}
 	}
 	private static function prepareEntityTypes()
@@ -8458,13 +8368,13 @@ class CCrmStatusRestProxy extends CCrmRestProxyBase
 			{
 				return $this->getEntityItems($this->resolveRelationID($arParams, 'entity'));
 			}
-		}
-		elseif($name === 'EXTRA')
-		{
-			$nameSuffix = mb_strtoupper(!empty($nameDetails)? implode('_', $nameDetails) : '');
-			if($nameSuffix === 'FIELDS')
+			elseif($name === 'EXTRA')
 			{
-				return CCrmStatus::GetFieldExtraTypeInfo();
+				$nameSuffix = mb_strtoupper(!empty($nameDetails)? implode('_', $nameDetails) : '');
+				if($nameSuffix === 'FIELDS')
+				{
+					return CCrmStatus::GetFieldExtraTypeInfo();
+				}
 			}
 		}
 		return parent::processMethodRequest($name, $nameDetails, $arParams, $nav, $server);
@@ -8548,7 +8458,7 @@ class CCrmStatusInvoiceRestProxy extends CCrmRestProxyBase
 
 		$filter['ENTITY_ID'] = 'INVOICE_STATUS';
 
-		return CCrmStatusInvoice::GetList($order, $filter, $select);
+		return CCrmStatusInvoice::GetList($order, $filter);
 	}
 	protected function innerUpdate($ID, &$fields, &$errors, array $params = null)
 	{

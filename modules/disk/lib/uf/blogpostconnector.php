@@ -195,6 +195,11 @@ final class BlogPostConnector extends Connector
 				));
 			$post = $queryPost->fetch();
 
+			if (!empty($post['DETAIL_TEXT']))
+			{
+				$post['DETAIL_TEXT'] = \Bitrix\Main\Text\Emoji::decode($post['DETAIL_TEXT']);
+			}
+
 			$cache->endDataCache($post);
 		}
 		if(!$post)

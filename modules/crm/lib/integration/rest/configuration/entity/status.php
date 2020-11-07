@@ -3,11 +3,12 @@
 namespace Bitrix\Crm\Integration\Rest\Configuration\Entity;
 
 use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Crm\StatusTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Rest\Configuration\Helper;
@@ -30,6 +31,20 @@ class Status
 		'QUOTE_STATUS',
 		'CALL_LIST',
 		'INVOICE_STATUS'
+	];
+	private static $statusSemantics = [
+		'STATUS' => [
+			'final' => 'CONVERTED',
+		],
+		'INVOICE_STATUS' => [
+			'final' => 'P',
+		],
+		'QUOTE_STATUS' => [
+			'final' => 'APPROVED',
+		],
+		'DEAL_STAGE' => [
+			'final' => 'WON',
+		],
 	];
 	private static $accessManifest = [
 		'total',
@@ -151,29 +166,17 @@ class Status
 			$return['FILE_NAME'] = $typeList[$step]['ID'];
 			$return['CONTENT']['ENTITY'] = $typeList[$step];
 
-			$res = CCrmStatus::GetList(
-				[
-					'ID' => 'ASC'
+			$list = StatusTable::getList([
+				'order' => [
+					'ID' => 'ASC',
 				],
-				[
-					'ENTITY_ID' => $typeList[$step]['ID']
-				]
-			);
-			while($element = $res->Fetch())
+				'filter' => [
+					'=ENTITY_ID' => $typeList[$step]['ID'],
+				],
+			]);
+			while($status = $list->fetch())
 			{
-				$return['CONTENT']['ITEMS'][] = $element;
-			}
-
-			try
-			{
-				$data = Option::get('crm', 'CONFIG_STATUS_' . $typeList[$step]['ID']);
-				if($data)
-				{
-					$return['CONTENT']['COLOR_SETTING'] = unserialize($data);
-				}
-			}
-			catch (Exception $e)
-			{
+				$return['CONTENT']['ITEMS'][] = $status;
 			}
 		}
 		else
@@ -476,6 +479,7 @@ class Status
 
 		if(!empty($itemList['ENTITY']['ID']) && !empty($itemList['ITEMS']))
 		{
+			\Bitrix\Main\Type\Collection::sortByColumn($itemList['ITEMS'], 'SORT');
 			$entityID = $itemList['ENTITY']['ID'];
 			if(mb_strpos($entityID, static::$customDealStagePrefix) === false)
 			{
@@ -513,12 +517,26 @@ class Status
 					foreach ($itemList['ITEMS'] as $item)
 					{
 						if(!$item['NAME'])
+						{
 							continue;
+						}
+						$color = $item['COLOR'] ?? $oldData['COLOR'] ?? null;
+						if(
+							empty($color)
+							&& is_array($itemList['COLOR_SETTING'])
+							&& isset($itemList['COLOR_SETTING'][$item['STATUS_ID']]['COLOR'])
+						)
+						{
+							$color = $itemList['COLOR_SETTING'][$item['STATUS_ID']]['COLOR'];
+						}
+						$semantics = static::getSemanticsByStatus($item);
 						if(!empty($oldData[$item['STATUS_ID']]))
 						{
 							$saveData = [
 								'SORT' => intVal($item['SORT']),
-								'NAME' => $item['NAME']
+								'NAME' => $item['NAME'],
+								'COLOR' => $color,
+								'SEMANTICS' => $semantics,
 							];
 							if(!empty($saveData))
 							{
@@ -538,26 +556,19 @@ class Status
 									'NAME' => $item['NAME'],
 									'NAME_INIT' => $item['NAME_INIT'],
 									'SORT' => intVal($item['SORT']),
-									'SYSTEM' => 'N'
+									'SYSTEM' => 'N',
+									'COLOR' => $color,
+									'SEMANTICS' => $semantics,
 								]
 							);
 						}
-					}
-
-					if (is_array($itemList['COLOR_SETTING']))
-					{
-						Option::set(
-							'crm',
-							'CONFIG_STATUS_' . $itemList['ENTITY']['ID'],
-							serialize($itemList['COLOR_SETTING'])
-						);
 					}
 
 					if(!empty($oldData))
 					{
 						foreach ($oldData as $item)
 						{
-							if ($item['SYSTEM'] == 'N')
+							if ($item['SYSTEM'] === 'N')
 							{
 								$entity->delete($item['ID']);
 							}
@@ -596,12 +607,26 @@ class Status
 							$oldID = DealCategory::convertFromStatusEntityID($itemList['ENTITY']['ID']);
 							$prefixStatusOld = DealCategory::prepareStageNamespaceID($oldID);
 							$prefixStatus = DealCategory::prepareStageNamespaceID($ID);
+							$oldEntityId = static::$customDealStagePrefix . $oldID;
 							$entityID = static::$customDealStagePrefix . $ID;
 							$entity = new CCrmStatus($entityID);
 
 							$defaultStatus = array_column($entity->GetStatus($entityID), null, 'STATUS_ID');
+							static::$statusSemantics[$oldEntityId] = [
+								'final' => $prefixStatusOld . ':WON',
+							];
 							foreach ($itemList['ITEMS'] as $item)
 							{
+								$color = $item['COLOR'] ?? $defaultStatus['COLOR'] ?? null;
+								if(
+									empty($color)
+									&& is_array($itemList['COLOR_SETTING'])
+									&& isset($itemList['COLOR_SETTING'][$item['STATUS_ID']]['COLOR'])
+								)
+								{
+									$color = $itemList['COLOR_SETTING'][$item['STATUS_ID']]['COLOR'];
+								}
+								$semantics = static::getSemanticsByStatus($item);
 								$statusID = str_replace($prefixStatusOld, $prefixStatus, $item['STATUS_ID']);
 								if (!empty($defaultStatus[$statusID]))
 								{
@@ -610,6 +635,9 @@ class Status
 										[
 											'NAME' => $item['NAME'],
 											'SORT' => intVal($item['SORT']),
+											'SEMANTICS' => $semantics,
+											'COLOR' => $color,
+											'CATEGORY_ID' => $ID,
 										]
 									);
 									unset($defaultStatus[$statusID]);
@@ -627,7 +655,10 @@ class Status
 											'NAME' => $item['NAME'],
 											'NAME_INIT' => $item['NAME_INIT'],
 											'SORT' => intVal($item['SORT']),
-											'SYSTEM' => 'N'
+											'SYSTEM' => 'N',
+											'SEMANTICS' => $semantics,
+											'COLOR' => $color,
+											'CATEGORY_ID' => $ID,
 										]
 									);
 								}
@@ -640,26 +671,6 @@ class Status
 								}
 							}
 							$result['RATIO'][$oldID] = $ID;
-
-							if (is_array($itemList['COLOR_SETTING']))
-							{
-								$colorList = [];
-								foreach ($itemList['COLOR_SETTING'] as $key=>$color)
-								{
-									$key = str_replace(
-										$prefixStatusOld,
-										$prefixStatus,
-										$key
-									);
-									$colorList[$key] = $color;
-								}
-
-								Option::set(
-									'crm',
-									'CONFIG_STATUS_' . $entityID,
-									serialize($colorList)
-								);
-							}
 						}
 					}
 					catch (Exception $e)
@@ -718,5 +729,25 @@ class Status
 		}
 
 		return $result;
+	}
+
+	private static function getSemanticsByStatus(array $status): ?string
+	{
+		if(!empty($status['SEMANTICS']))
+		{
+			return $status['SEMANTICS'];
+		}
+
+		if(isset(static::$statusSemantics[$status['ENTITY_ID']]['isSuccessPassed']))
+		{
+			return PhaseSemantics::FAILURE;
+		}
+		if($status['STATUS_ID'] === static::$statusSemantics[$status['ENTITY_ID']]['final'])
+		{
+			static::$statusSemantics[$status['ENTITY_ID']]['isSuccessPassed'] = true;
+			return PhaseSemantics::SUCCESS;
+		}
+
+		return null;
 	}
 }

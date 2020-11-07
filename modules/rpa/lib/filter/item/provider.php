@@ -195,7 +195,7 @@ class Provider extends EntityDataProvider
 				'params' => [
 					'apiVersion' => 3,
 					'context' => 'PRA_ITEM_'.$this->getSettings()->getType()->getId().'__FILTER_'.$fieldID,
-					'multiple' => 'N',
+					'multiple' => 'Y',
 					'contextCode' => 'U',
 					'useSearch' => 'Y',
 					'departmentFlatEnable' => 'N',
@@ -207,6 +207,7 @@ class Provider extends EntityDataProvider
 					'allowSearchEmailUsers' => 'N',
 					'departmentSelectDisable' => 'Y',
 					'isNumeric' => 'Y',
+					'prefix' => 'U',
 				]
 			];
 		}
@@ -331,11 +332,7 @@ class Provider extends EntityDataProvider
 		{
 			if (isset($requestFilter[$fieldName]) && !empty($requestFilter[$fieldName]))
 			{
-				$userId = (int)mb_substr($requestFilter[$fieldName], 1);
-				if ($userId > 0)
-				{
-					$filter['='.$fieldName] = $userId;
-				}
+				$filter['='.$fieldName] = $requestFilter[$fieldName];
 			}
 		}
 		foreach ($this->getTimeFields() as $fieldName)

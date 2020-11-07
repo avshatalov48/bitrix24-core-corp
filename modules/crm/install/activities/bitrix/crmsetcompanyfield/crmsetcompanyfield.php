@@ -15,6 +15,7 @@ class CBPCrmSetCompanyField
 		}
 
 		$documentId = $this->getCompanyDocumentId();
+		$documentType = CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Company);
 
 		if (!$documentId)
 		{
@@ -27,6 +28,11 @@ class CBPCrmSetCompanyField
 		if (!is_array($fieldValue) || count($fieldValue) <= 0)
 		{
 			return CBPActivityExecutionStatus::Closed;
+		}
+
+		if (method_exists($this, 'prepareFieldsValues'))
+		{
+			$fieldValue = $this->prepareFieldsValues($documentId, $documentType, $fieldValue);
 		}
 
 		$documentService = $this->workflow->GetService("DocumentService");

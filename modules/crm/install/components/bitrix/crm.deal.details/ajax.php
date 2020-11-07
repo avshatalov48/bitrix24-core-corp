@@ -201,6 +201,9 @@ elseif($action === 'SAVE')
 		{
 			$sourceFields = array();
 		}
+
+		$sourceFields['ORIGINATOR_ID'] = '';
+		$sourceFields['ORIGIN_ID'] = '';
 	}
 
 	$initialData = isset($_POST['INITIAL_DATA']) && is_array($_POST['INITIAL_DATA'])

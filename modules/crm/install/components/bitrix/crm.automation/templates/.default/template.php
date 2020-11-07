@@ -457,5 +457,89 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 				}
 			});
 		})();
+
+		(function()//TASK_STATUS
+		{
+			BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-TASK_STATUS', function(trigger, form)
+				{
+					var triggerData = trigger.manager.getAvailableTrigger(trigger.data['CODE']);
+					if (triggerData && triggerData['STATUS_LIST'])
+					{
+						var select = BX.create('select', {
+							attrs: {className: 'bizproc-automation-popup-settings-dropdown'},
+							props: {
+								name: 'STATUS_ID',
+								value: ''
+							},
+							children: [BX.create('option', {
+								props: {value: ''},
+								text: BX.message('CRM_AUTOMATION_CMP_TASK_STATUS_ANY')
+							})]
+						});
+
+						for (var i = 0; i < triggerData['STATUS_LIST'].length; ++i)
+						{
+							var item = triggerData['STATUS_LIST'][i];
+							select.appendChild(BX.create('option', {
+								props: {value: item['id']},
+								text: item['name']
+							}));
+						}
+						if (trigger.data['APPLY_RULES']['taskStatus'])
+						{
+							select.value = trigger.data['APPLY_RULES']['taskStatus'];
+						}
+
+						var div = BX.create('div', {attrs: {className: 'bizproc-automation-popup-settings'},
+							children: [BX.create('span', {attrs: {
+									className: 'bizproc-automation-popup-settings-title'
+								}, text: BX.message('CRM_AUTOMATION_CMP_TASK_STATUS_LABEL') + ':'}), select]
+						});
+						form.appendChild(div);
+					}
+					if (triggerData && triggerData['FIELDS'])
+					{
+						var conditionGroup = new BX.Bizproc.Automation.ConditionGroup(
+							trigger.data['APPLY_RULES']['taskCondition']
+						);
+						var selector = new BX.Bizproc.Automation.ConditionGroupSelector(conditionGroup, {
+							fields: triggerData['FIELDS'],
+							fieldPrefix: 'task_condition_'
+						});
+
+						var selectorDiv =  BX.create("div", {
+							attrs: { className: "bizproc-automation-popup-settings" },
+							children: [
+								BX.create("div", {
+									attrs: { className: "bizproc-automation-popup-settings-block" },
+									children: [
+										BX.create("span", {
+											attrs: { className: "bizproc-automation-popup-settings-title" },
+											text: BX.message('CRM_AUTOMATION_CMP_TASK_STATUS_CONDITION') + ":"
+										}),
+										selector.createNode()
+									]
+								})
+							]
+						});
+
+						form.appendChild(selectorDiv);
+					}
+				}
+			);
+
+			BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onSaveSettings-TASK_STATUS', function(trigger, formData)
+			{
+				var conditionGroup = BX.Bizproc.Automation.ConditionGroup.createFromForm(
+					formData['data'],
+					'task_condition_'
+				);
+
+				trigger.data['APPLY_RULES'] = {
+					taskStatus: formData['data']['STATUS_ID'],
+					taskCondition:  conditionGroup.serialize()
+				}
+			});
+		})();
 	});
 </script>

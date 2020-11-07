@@ -828,7 +828,7 @@ class CVoxImplantRestService extends IRestService
 		{
 			throw new \Bitrix\Rest\RestException("This method is only available for internal usage.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
 		}
-		
+
 		$voxMain = new CVoxImplantMain(static::getCurrentUserId());
 		$voxMain->ClearUserInfo();
 		$voxMain->ClearAccountInfo();
@@ -1312,6 +1312,18 @@ class CVoxImplantRestService extends IRestService
 		if(!$result->isSuccess())
 			throw new \Bitrix\Rest\RestException(implode('; ', $result->getErrorMessages()));
 
+		$code = $row['CODE'] ? : 'webHook' . $server->getPasswordId();
+		if ($code)
+		{
+			AddEventToStatFile(
+				'voximplant',
+				'callRegister',
+				uniqid($code, true),
+				$code,
+				'type' . $params['TYPE']
+			);
+		}
+
 		return $result->getData();
 	}
 
@@ -1515,6 +1527,17 @@ class CVoxImplantRestService extends IRestService
 		if(!$result->isSuccess())
 			throw new \Bitrix\Rest\RestException(implode('; ', $result->getErrorMessages()));
 
+		$code = $row['CODE'] ? : 'webHook' . $server->getPasswordId();
+		if ($code)
+		{
+			AddEventToStatFile(
+				'voximplant',
+				'addExternalLine',
+				uniqid($code, true),
+				$code,
+				'type' . $params['TYPE']
+			);
+		}
 		return $result->getData();
 	}
 
@@ -1604,6 +1627,38 @@ class CVoxImplantRestService extends IRestService
 		/** @var \Bitrix\Main\Event $event */
 		$event = $arParams[0];
 		$eventData = $event->getParameters();
+
+		$eventName = mb_strtoupper($arHandler['EVENT_NAME']);
+		$events = [
+			mb_strtoupper(Rest\Helper::EVENT_START_EXTERNAL_CALL),
+			mb_strtoupper(Rest\Helper::EVENT_START_EXTERNAL_CALLBACK)
+		];
+		if (in_array($eventName, $events, true))
+		{
+			if ((int) $arHandler['APP_ID'] > 0)
+			{
+				$app = \Bitrix\Rest\AppTable::getByClientId((int) $arHandler['APP_ID']);
+				if ($app['CODE'])
+				{
+					$code = $app['CODE'];
+				}
+				else
+				{
+					$code = 'app_'.$arHandler['ID'];
+				}
+			}
+			else
+			{
+				$code = 'event_'.$arHandler['ID'];
+			}
+
+			AddEventToStatFile(
+				'voximplant',
+				'event' . $eventName,
+				uniqid($code, true),
+				$code
+			);
+		}
 
 		if($eventData['APP_ID'] == $arHandler['APP_ID'])
 		{

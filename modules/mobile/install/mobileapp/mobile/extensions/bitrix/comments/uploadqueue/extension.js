@@ -74,7 +74,7 @@
 			{
 				this.handleFileUploadError({
 					commentVirtualId: commentVirtualId,
-					errorText: eventData.error.error.message,
+					errorText: BX.message('MOBILEAPP_EXT_COMMENTS_FILE_UPLOAD_ERROR')
 				});
 			}
 			else if (eventName == 'onfilecreated')
@@ -83,7 +83,7 @@
 				{
 					this.handleFileUploadError({
 						commentVirtualId: commentVirtualId,
-						errorText: eventData.result.errors.map(function(value) { return value.message; }).join(', '),
+						errorText: BX.message('MOBILEAPP_EXT_COMMENTS_FILE_UPLOAD_ERROR')
 					});
 				}
 				else

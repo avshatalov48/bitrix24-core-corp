@@ -42,7 +42,6 @@ class SalesTunnels extends CBitrixComponent
 				}
 
 				$stages = CCrmViewHelper::getDealStageInfos($category['ID']);
-				CCrmViewHelper::prepareDealStageExtraParams($stages, $category['ID']);
 
 				$categoryScheme = array_filter(
 					$tunnelScheme['stages'],
@@ -70,7 +69,7 @@ class SalesTunnels extends CBitrixComponent
 						}
 					}
 
-					$semanticId = CCrmDeal::getSemanticID($stage['STATUS_ID'], $category['ID']);
+					$semanticId = $stage['SEMANTICS'] ?? PhaseSemantics::PROCESS;
 					$reducedStages[$semanticId][] = $stage;
 				}
 

@@ -19,9 +19,13 @@ use Bitrix\Crm\Statistics\DealActivityStatisticEntry;
 use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Counter\EntityCounterManager;
 use Bitrix\Crm\Integration\Channel\DealChannelBinding;
+use Bitrix\Crm\UserField\Visibility\VisibilityManager;
+use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
 
 class CAllCrmDeal
 {
+	use UserFieldPreparer;
+
 	static public $sUFEntityID = 'CRM_DEAL';
 	const USER_FIELD_ENTITY_ID = 'CRM_DEAL';
 	const SUSPENDED_USER_FIELD_ENTITY_ID = 'CRM_DEAL_SPD';
@@ -1446,6 +1450,9 @@ class CAllCrmDeal
 			$arFields['TITLE'] = self::GetDefaultTitle();
 		}
 
+		$fields = self::GetUserFields();
+		$this->fillEmptyFieldValues($arFields, $fields);
+
 		if (!$this->CheckFields($arFields, false, $options))
 		{
 			$result = false;
@@ -2108,8 +2115,7 @@ class CAllCrmDeal
 				}
 			}
 
-			$requiredUserFields = is_array($requiredFields) && isset($requiredFields[Crm\Attribute\FieldOrigin::CUSTOM])
-				? $requiredFields[Crm\Attribute\FieldOrigin::CUSTOM] : array();
+			$requiredUserFields = $this->getRequiredUserFields($requiredFields);
 
 			if (!$USER_FIELD_MANAGER->CheckFields(
 					self::$sUFEntityID,
@@ -2128,6 +2134,29 @@ class CAllCrmDeal
 		}
 
 		return ($this->LAST_ERROR === '');
+	}
+
+	/**
+	 * @param $requiredFields
+	 * @return array
+	 */
+	private function getRequiredUserFields($requiredFields): array
+	{
+		$requiredUserFields = (
+			is_array($requiredFields) && isset($requiredFields[Crm\Attribute\FieldOrigin::CUSTOM])
+			? $requiredFields[Crm\Attribute\FieldOrigin::CUSTOM] : []
+		);
+		return $this->excludeRequiredButNotAvailableFields($requiredUserFields);
+	}
+
+	/**
+	 * @param array $fields
+	 * @return array
+	 */
+	private function excludeRequiredButNotAvailableFields(array $fields): array
+	{
+		$notAccessibleFields = VisibilityManager::getNotAccessibleFields(CCrmOwnerType::Deal);
+		return array_diff($fields, $notAccessibleFields);
 	}
 
 	public function GetCheckExceptions()

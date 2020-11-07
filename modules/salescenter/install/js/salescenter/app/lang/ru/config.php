@@ -95,7 +95,6 @@ $MESS["SALESCENTER_DELIVERY_BLOCK_TEXT"] = "Способ";
 $MESS["SALESCENTER_SEND_ORDER_BY_SMS_SENDER"] = "Отправка через SMS-сервис";
 $MESS["SALESCENTER_SEND_ORDER_BY_SMS_SENDER_TEMPLATE_ERROR"] = "Добавьте #LINK# для отображения ссылки";
 $MESS["SALESCENTER_SEND_ORDER_BY_SMS_SENDER_TEMPLATE_WHAT_DOES_CLIENT_SEE"] = "Что видит клиент?";
-$MESS["SALESCENTER_IMESSAGE_PAYMENT"] = "Принять оплату из Apple Business Chat";
 $MESS["SALESCENTER_TIMELINE_ITEM_CONTENT_VIEW"] = "Посмотреть";
 $MESS["SALESCENTER_SENDER_LIST_CONTENT_SETTINGS"] = "Подключить еще сервис";
 $MESS["SALESCENTER_SMS_MESSAGE_HINT"] = "Полный адрес ссылки будет показан после отправки";

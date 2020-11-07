@@ -3,7 +3,7 @@
 namespace Bitrix\Disk\Ui;
 
 use Bitrix\Disk\BaseObject;
-use Bitrix\Main\IO\Path;
+use Bitrix\Disk\Internals\Path;
 use Bitrix\Main\Text\Emoji;
 
 final class Text
@@ -140,8 +140,6 @@ final class Text
 			return $objectName;
 		}
 
-		return \Bitrix\Main\IO\Path::replaceInvalidFilename($objectName, function(){
-			return '_';
-		});
+		return Path::correctFilename($objectName);
 	}
 }

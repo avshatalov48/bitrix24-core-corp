@@ -59,7 +59,7 @@
 
 .crm-entity-merger-sidebar-inner {
 	/*position: relative;*/
-	margin-right: -35px;
+	margin-right: -30px;
 	padding-right: 30px;
 	overflow-y: auto;
 }
@@ -106,7 +106,7 @@
 	left: 0;
 	bottom: 0;
 	right: 0;
-	background-color: rgba(255,255,255, .77);
+	background-color: rgba(255, 255, 255, .77);
 	filter: blur(10px);
 	z-index: 1;
 }
@@ -131,14 +131,14 @@
 	margin-top: 30px;
 	margin-bottom: 13px;
 	font: 34px "OpenSans-Light", "Helvetica Neue", Arial, Helvetica, sans-serif;
-	color: #525C69;
+	color: #525c69;
 	z-index: 2;
 }
 
 .crm-entity-merger-sidebar-warning-text {
 	position: relative;
 	font: 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
-	color: #525C69;
+	color: #525c69;
 	z-index: 2;
 }
 
@@ -166,7 +166,7 @@
 	left: 0;
 	width: 100%;
 	height: 107px;
-	background: linear-gradient(180deg, rgba(238,242,244,1) 0%, rgba(231,236,238,0) 100%);
+	background: linear-gradient(180deg, rgba(238, 242, 244, 1) 0%, rgba(231, 236, 238, 0) 100%);
 	z-index: 1;
 }
 
@@ -321,7 +321,7 @@
 
 .crm-entity-merger-column-btn-link-dark {
 	display: inline-block;
-	border-bottom: 1px dashed rgba(216,216,216,.4);
+	border-bottom: 1px dashed rgba(216, 216, 216, .4);
 	color: #333;
 	transition: border-bottom .3s;
 }
@@ -479,85 +479,13 @@
 
 /*endregion*/
 
-/*region crm.entity.editor*/
-.crm-entity-card-widget .crm-entity-widget-content {
-	padding-top: 0;
-	padding-bottom: 0;
-}
-
-.crm-entity-widget-content .crm-entity-widget-content-block {
-	margin-bottom: 0 !important;
-	padding-top: 10px !important;
-	padding-bottom: 10px !important;
-	transition: 250ms linear all;
-}
-
-.crm-entity-widget-content .crm-entity-merger-row-odd { background-color: #f4f7f8; }
-
-.crm-entity-widget-content .crm-entity-merger-row-even { background-color: #fff; }
-
-.crm-entity-widget-content .crm-entity-widget-content-block.crm-entity-merger-column-cell-conflict:nth-child(odd) { background-color: #FAF7CA; }
-
-.crm-entity-widget-content .crm-entity-widget-content-block.crm-entity-merger-column-cell-conflict:nth-child(even) { background-color: #fffdda; }
-
-.crm-entity-widget-content .crm-entity-widget-content-block.crm-entity-merger-column-cell-conflict-option:nth-child(odd) { background-color: #DFF4FA; }
-
-.crm-entity-widget-content .crm-entity-widget-content-block.crm-entity-merger-column-cell-conflict-option:nth-child(even) { background-color: #E8FAFF; }
-
-
-.crm-entity-widget-content-block-inner-container { position: relative; }
-
-.crm-entity-widget-content .crm-entity-widget-content-block.crm-entity-merger-column-cell-conflict:not([data-cid=CLIENT]),
-.crm-entity-widget-content .crm-entity-widget-content-block.crm-entity-merger-column-cell-conflict .crm-entity-widget-content-block-inner-container {
-	position: relative;
-	padding-left: 36px;
-}
-
-.crm-entity-widget-content .crm-entity-widget-content-block.crm-entity-merger-column-cell-conflict:not([data-cid=CLIENT]):after,
-.crm-entity-widget-content .crm-entity-widget-content-block.crm-entity-merger-column-cell-conflict .crm-entity-widget-content-block-inner-container:after {
-	content: '';
-	background-color: #FF5752;
-	width: 10px;
-	height: 10px;
-	border-radius: 50%;
-	display: block;
-	position: absolute;
-	top: 50%;
-	margin-top: -5px;
-	left: 10px;
-	animation: crmMerggerShowConflict 150ms;
-	animation-delay: 100ms;
-	animation-fill-mode: backwards;
-}
-
-.crm-entity-widget-content .crm-entity-widget-content-block.crm-entity-merger-column-cell-conflict .crm-entity-widget-content-block-inner-container:after { top: 11px; }
-
-@keyframes crmMerggerShowConflict {
-	from { opacity: 0 }
-	to { opacity: 1; }
-}
-
-.crm-entity-widget-content-block-inner {overflow: hidden;}
-
-.crm-entity-widget-content .crm-entity-widget-content-block.crm-entity-merger-column-cell-conflict-option { position: relative; }
-
-.crm-entity-widget-before-action {
-	transition: 250ms linear all;
-	overflow: hidden;
-	z-index: 10;
-	margin-right: 10px;
-	position: relative;
-	float: left;
-	width: 0;
-}
-
-.crm-entity-merger-column-cell-conflict-option .crm-entity-widget-before-action {
+.crm-entity-merger-column-cell-conflict-option .ui-entity-editor-block-before-action {
 	width: 22px;
 }
 
 .crm-entity-merger-column-cell-switch-checkbox { display: none; }
 
-.crm-entity-widget-before-action,
+.ui-entity-editor-block-before-action,
 .crm-entity-merger-column-cell-switch {
 	/*position: absolute;*/
 	/*left: 10px;*/
@@ -569,16 +497,16 @@
 	height: 20px;
 	background-color: #fff;
 	border-radius: 50%;
-	border: 1px solid rgba(76,86,100,.38);
+	border: 1px solid rgba(76, 86, 100, .38);
 	cursor: pointer;
 	transition: 250ms linear all;
 }
 
-.crm-entity-merger-column-cell-switch-checkbox-btn:hover { border-color: #2FC6F6; }
+.crm-entity-merger-column-cell-switch-checkbox-btn:hover { border-color: #2fc6f6; }
 
 .crm-entity-merger-column-cell-switch-checkbox:checked + .crm-entity-merger-column-cell-switch-checkbox-btn {
-	background-color: #2FC6F6;
-	border-color: #2FC6F6;
+	background-color: #2fc6f6;
+	border-color: #2fc6f6;
 	position: relative;
 }
 
@@ -594,6 +522,100 @@
 	transform: translate(-50%, -50%) rotate(45deg);
 	border-right: 2px solid #fff;
 	border-bottom: 2px solid #fff;
+}
+
+/*region crm.entity.editor*/
+.crm-entity-merger-sidebar .ui-entity-editor-section,
+.crm-entity-merger-column-item .crm-entity-card-container-content .ui-entity-editor-section {
+	padding: 0;
+}
+
+.crm-entity-merger-column-item .ui-entity-editor-section .ui-entity-editor-section-content,
+.crm-entity-merger-column-item .crm-entity-card-widget .crm-entity-widget-content,
+.crm-entity-merger-sidebar  .ui-entity-editor-section .ui-entity-editor-section-content {
+	padding-top: 0;
+	padding-bottom: 0;
+}
+
+div.crm-entity-merger-column-item div.ui-entity-editor-section-header,
+div.crm-entity-merger-sidebar div.ui-entity-editor-section-header,
+.crm-entity-merger-column-item .ui-entity-editor-section-content > .ui-entity-editor-content-block,
+.crm-entity-merger-sidebar .ui-entity-editor-section-content > .ui-entity-editor-content-block,
+.crm-entity-merger-column-item .crm-entity-widget-content .crm-entity-widget-content-block {
+	margin-bottom: 0 !important;
+	padding: 10px 15px;
+	transition: 250ms linear all;
+}
+
+.ui-entity-editor-section .crm-entity-merger-row-odd,
+.crm-entity-widget-content .crm-entity-merger-row-odd { background-color: #f4f7f8; }
+
+.ui-entity-editor-section .crm-entity-merger-row-even,
+.crm-entity-widget-content .crm-entity-merger-row-even { background-color: #fff; }
+
+.ui-entity-editor-section-content .ui-entity-editor-content-block.crm-entity-merger-column-cell-conflict:nth-child(odd),
+.crm-entity-widget-content .crm-entity-widget-content-block.crm-entity-merger-column-cell-conflict:nth-child(odd) { background-color: #faf7ca; }
+
+.ui-entity-editor-section-content .ui-entity-editor-content-block.crm-entity-merger-column-cell-conflict:nth-child(even),
+.crm-entity-widget-content .crm-entity-widget-content-block.crm-entity-merger-column-cell-conflict:nth-child(even) { background-color: #fffdda; }
+
+.ui-entity-editor-section-content .ui-entity-editor-content-block.crm-entity-merger-column-cell-conflict-option:nth-child(odd),
+.crm-entity-widget-content .crm-entity-widget-content-block.crm-entity-merger-column-cell-conflict-option:nth-child(odd) { background-color: #dff4fa; }
+
+.ui-entity-editor-section-content .ui-entity-editor-content-block.crm-entity-merger-column-cell-conflict-option:nth-child(even),
+.crm-entity-widget-content .crm-entity-widget-content-block.crm-entity-merger-column-cell-conflict-option:nth-child(even) { background-color: #e8faff; }
+
+
+.crm-entity-widget-content-block-inner-container { position: relative; }
+
+.ui-entity-editor-section-content .ui-entity-editor-content-block.crm-entity-merger-column-cell-conflict:not([data-cid=CLIENT]),
+.ui-entity-editor-section-content .ui-entity-editor-content-block.crm-entity-merger-column-cell-conflict .crm-entity-widget-content-block-inner-container,
+.crm-entity-widget-content .crm-entity-widget-content-block.crm-entity-merger-column-cell-conflict:not([data-cid=CLIENT]),
+.crm-entity-widget-content .crm-entity-widget-content-block.crm-entity-merger-column-cell-conflict .crm-entity-widget-content-block-inner-container {
+	position: relative;
+	padding-left: 36px !important;
+}
+
+.ui-entity-editor-section-content .ui-entity-editor-content-block.crm-entity-merger-column-cell-conflict:not([data-cid=CLIENT]):after,
+.ui-entity-editor-section-content .ui-entity-editor-content-block.crm-entity-merger-column-cell-conflict .crm-entity-widget-content-block-inner-container:after,
+.crm-entity-widget-content .crm-entity-widget-content-block.crm-entity-merger-column-cell-conflict:not([data-cid=CLIENT]):after,
+.crm-entity-widget-content .crm-entity-widget-content-block.crm-entity-merger-column-cell-conflict .crm-entity-widget-content-block-inner-container:after {
+	content: '';
+	background-color: #ff5752;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	display: block;
+	position: absolute;
+	top: 50%;
+	margin-top: -5px;
+	left: 10px;
+	animation: crmMerggerShowConflict 150ms;
+	animation-delay: 100ms;
+	animation-fill-mode: backwards;
+}
+
+.ui-entity-editor-section-content .ui-entity-editor-content-block.crm-entity-merger-column-cell-conflict .crm-entity-widget-content-block-inner-container:after,
+.crm-entity-widget-content .crm-entity-widget-content-block.crm-entity-merger-column-cell-conflict .crm-entity-widget-content-block-inner-container:after { top: 11px; }
+
+@keyframes crmMerggerShowConflict {
+	from { opacity: 0 }
+	to { opacity: 1; }
+}
+
+.crm-entity-widget-content-block-inner {overflow: hidden;}
+
+.ui-entity-editor-section-content .ui-entity-editor-content-block.crm-entity-merger-column-cell-conflict-option,
+.crm-entity-widget-content .crm-entity-widget-content-block.crm-entity-merger-column-cell-conflict-option { position: relative; }
+
+.ui-entity-editor-block-before-action {
+	transition: 250ms linear all;
+	overflow: hidden;
+	z-index: 10;
+	margin-right: 10px;
+	position: relative;
+	float: left;
+	width: 0;
 }
 
 /*endregion*/
@@ -661,14 +683,14 @@
 	left: 0;
 	display: flex;
 	align-items: center;
-	transform: translate(0,-50%);
+	transform: translate(0, -50%);
 }
 
 .crm-entity-merger-panel-label {
 	display: flex;
 	align-items: center;
 	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
-	color: #525C69;
+	color: #525c69;
 	text-align: left;
 }
 
@@ -698,7 +720,7 @@
 	margin-right: 8px;
 	display: inline-block;
 	font: 12px "OpenSans-Bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-	color: #535C69;
+	color: #535c69;
 	text-transform: uppercase;
 }
 
@@ -761,5 +783,5 @@
 }
 
 .crm-entity-merger-column-container .crm-widget-employee-avatar-container {
-    width: 30px;
+	width: 30px;
 }

@@ -15,7 +15,10 @@ abstract class Base implements HandlerContract
 	 */
 	public function isAvailable(): bool
 	{
-		return true;
+		/** @var \Bitrix\Sale\Delivery\Services\Base $handlerClass */
+		$handlerClass = $this->getHandlerClass();
+
+		return $handlerClass::isHandlerCompatible();
 	}
 
 	/**
@@ -165,9 +168,9 @@ abstract class Base implements HandlerContract
 	/**
 	 * @inheritDoc
 	 */
-	public function getRestHandlerCode(): string
+	public function getRestHandlerCode(): ?string
 	{
-		return '';
+		return null;
 	}
 
 	/**

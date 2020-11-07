@@ -5049,6 +5049,15 @@ class EntityRequisite
 														)
 													)
 												);
+												if ($addressValue !== '')
+												{
+													$typeId = $addressData['TYPE_ID'] ?? 0;
+													$types = RequisiteAddress::getTypesList();
+													if (isset($types[$typeId]))
+													{
+														$addressValue = $types[$typeId]['DESCRIPTION'] . ':<br>' . $addressValue;
+													}
+												}
 
 												if ($valueIsSet)
 												{

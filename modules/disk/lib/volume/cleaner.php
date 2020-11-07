@@ -205,7 +205,7 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 			$cleaner->instanceTask()->fixState();
 
 			$retry = 1;
-			while ($retry <= 2)
+			while ($retry <= 3)
 			{
 				try
 				{
@@ -216,8 +216,8 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 				{
 					if (mb_stripos($exception->getMessage(), 'deadlock found when trying to get lock; try restarting transaction') !== false)
 					{
-						// retrying in a few microseconds
-						usleep(100);
+						// retrying in a few seconds
+						sleep(5);
 						$retry ++;
 						continue;
 					}

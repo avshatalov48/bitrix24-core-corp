@@ -1496,6 +1496,11 @@ BX.Disk.FolderListClass = (function (){
 				}
 
 			}.bind(this));
+			BX.bind(input, 'blur', function(event){
+				event.stopPropagation();
+				event.preventDefault();
+				this.commonGrid.instance.editSelectedSave();
+			}.bind(this));
 
 			BX.focus(input);
 		}
@@ -1592,6 +1597,12 @@ BX.Disk.FolderListClass = (function (){
 	FolderListClass.prototype.copyLinkInternalLink = function (link, target)
 	{
 		target.classList.add('menu-popup-item-accept', 'disk-folder-list-context-menu-item-accept-animate');
+		var textNode = target.querySelector('.menu-popup-item-text');
+		if (textNode)
+		{
+			textNode.style.width = (textNode.offsetWidth - 13 - 20) + 'px'; //html:not(.bx-ie) .disk-folder-list-context-menu-item .menu-popup-item-text, html:not(.bx-ie) .disk-folder-list-sorting-menu .menu-popup-item-text
+			textNode.textContent = BX.message('DISK_FOLDER_LIST_ACT_COPIED_INTERNAL_LINK');
+		}
 
 		BX.clipboard.copy(link);
 	};
@@ -5321,6 +5332,11 @@ BX.Disk.FolderListClass = (function (){
 				}
 
 				event.stopPropagation();
+			}.bind(this));
+
+			BX.bind(this.item.titleInput, 'blur', function(event){
+				this.cancelRenaming();
+				this.runRename();
 			}.bind(this));
 
 			return this.item.titleInput

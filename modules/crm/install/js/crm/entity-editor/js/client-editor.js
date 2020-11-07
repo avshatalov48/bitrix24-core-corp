@@ -956,7 +956,7 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 
 					var sectionId = editorId + '_SECTION';
 
-					var config = BX.Crm.EntityConfig.create(
+					var config = BX.UI.EntityConfig.create(
 						editorId,
 						{
 							data: [
@@ -970,11 +970,12 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 							enableScopeToggle: false,
 							canUpdatePersonalConfiguration: false,
 							canUpdateCommonConfiguration: false,
-							options: []
+							options: [],
+							categoryName: 'crm.entity.editor'
 						}
 					);
 
-					var scheme = BX.Crm.EntityScheme.create(
+					var scheme = BX.UI.EntityScheme.create(
 						editorId,
 						{
 							current: [
@@ -1037,7 +1038,7 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 									'addressFieldId': 'ADDRESS'
 								}
 							}],
-							initialMode: BX.Crm.EntityEditorMode.names.edit,
+							initialMode: BX.UI.EntityEditorMode.names.edit,
 							enableModeToggle: false,
 							enableVisibilityPolicy: false,
 							enableToolPanel: false,
@@ -1517,7 +1518,7 @@ if(typeof BX.Crm.PrimaryClientEditor === "undefined")
 		this._id = "";
 		this._settings = {};
 		this._editor = null;
-		this._mode = BX.Crm.EntityEditorMode.intermediate;
+		this._mode = BX.UI.EntityEditorMode.intermediate;
 		this._entityInfo = null;
 		this._entityTypeName = "";
 		this._container = null;
@@ -1565,7 +1566,7 @@ if(typeof BX.Crm.PrimaryClientEditor === "undefined")
 			},
 			layout: function()
 			{
-				var isViewMode = this._mode === BX.Crm.EntityEditorMode.view;
+				var isViewMode = this._mode === BX.UI.EntityEditorMode.view;
 
 				this._wrapper = BX.create("div", { props: { className: "crm-entity-widget-clients-container" } });
 				this._bindingWrapper = null;
@@ -2078,7 +2079,7 @@ if(typeof BX.Crm.SecondaryClientEditor === "undefined")
 	{
 		this._id = "";
 		this._settings = {};
-		this._mode = BX.Crm.EntityEditorMode.intermediate;
+		this._mode = BX.UI.EntityEditorMode.intermediate;
 		this._container = null;
 		this._wrapper = null;
 		this._entityTypeName = "";
@@ -2349,7 +2350,7 @@ if(typeof BX.Crm.SecondaryClientEditor === "undefined")
 			},
 			layout: function()
 			{
-				var isViewMode = this._mode === BX.Crm.EntityEditorMode.view;
+				var isViewMode = this._mode === BX.UI.EntityEditorMode.view;
 
 				this._wrapper = BX.create("div", {});
 				if(!this._isVisible)
@@ -2774,7 +2775,7 @@ if(typeof BX.Crm.ClientEditorEntityPanel === "undefined")
 		this._useExternalRequisiteBinding = false;
 		this._requisiteInfo = null;
 
-		this._mode = BX.Crm.EntityEditorMode.intermediate;
+		this._mode = BX.UI.EntityEditorMode.intermediate;
 		this._communicationButtons = null;
 		this._deleteButton = null;
 
@@ -2877,7 +2878,7 @@ if(typeof BX.Crm.ClientEditorEntityPanel === "undefined")
 			},
 			layout: function()
 			{
-				var isViewMode = this._mode === BX.Crm.EntityEditorMode.view;
+				var isViewMode = this._mode === BX.UI.EntityEditorMode.view;
 
 				this._wrapper = BX.create("div", { props: { className: "crm-entity-widget-client-block" } });
 				this._container.appendChild(this._wrapper);
@@ -3144,7 +3145,7 @@ if(typeof BX.Crm.ClientEditorEntityBindingPanel === "undefined")
 		this._container = null;
 		this._entityInfo = null;
 		this._editor = null;
-		this._mode = BX.Crm.EntityEditorMode.intermediate;
+		this._mode = BX.UI.EntityEditorMode.intermediate;
 		this._item = null;
 	};
 	BX.Crm.ClientEditorEntityBindingPanel.prototype =
@@ -3212,7 +3213,7 @@ if(typeof BX.Crm.ClientEditorEntityBindingPanel === "undefined")
 			},
 			onItemDelete: function(item)
 			{
-				if(this._mode !== BX.Crm.EntityEditorMode.edit)
+				if(this._mode !== BX.UI.EntityEditorMode.edit)
 				{
 					return;
 				}
@@ -3224,7 +3225,7 @@ if(typeof BX.Crm.ClientEditorEntityBindingPanel === "undefined")
 			},
 			onButtonClick: function(e)
 			{
-				if(this._mode !== BX.Crm.EntityEditorMode.edit)
+				if(this._mode !== BX.UI.EntityEditorMode.edit)
 				{
 					return;
 				}

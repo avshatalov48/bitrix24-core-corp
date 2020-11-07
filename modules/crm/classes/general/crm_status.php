@@ -4,88 +4,123 @@ if(!defined('CACHED_b_crm_status')) define('CACHED_b_crm_status', 360000);
 
 IncludeModuleLangFile(__FILE__);
 
+use Bitrix\Crm\StatusTable;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Category\DealCategory;
 
 class CCrmStatus
 {
+	protected const PREFIX_SEPARATOR = ':';
+
 	protected $entityId = '';
-	private static $FIELD_INFOS = null;
-	private static $STATUSES = array();
-	private static $SETTINGS = null;
+	private static $FIELD_INFOS;
+	private static $STATUSES = [];
 
 	private $LAST_ERROR = '';
-	function __construct($entityId)
+
+	public function __construct($entityId)
 	{
 		$this->entityId = $entityId;
+
 	}
 	// Get Fields Metadata
-	public static function GetFieldsInfo()
+
+	/**
+	 * Returns fields description for rest service.
+	 *
+	 * @return array
+	 */
+	public static function GetFieldsInfo(): array
 	{
 		if(!self::$FIELD_INFOS)
 		{
-			self::$FIELD_INFOS = array(
-				'ID' => array(
+			self::$FIELD_INFOS = [
+				'ID' => [
 					'TYPE' => 'integer',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'ENTITY_ID' => array(
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly]
+				],
+				'ENTITY_ID' => [
 					'TYPE' => 'string',
-					'ATTRIBUTES' => array(
+					'ATTRIBUTES' => [
 						CCrmFieldInfoAttr::Required,
 						CCrmFieldInfoAttr::Immutable
-					)
-				),
-				'STATUS_ID' => array(
+					]
+				],
+				'STATUS_ID' => [
 					'TYPE' => 'string',
-					'ATTRIBUTES' => array(
+					'ATTRIBUTES' => [
 						CCrmFieldInfoAttr::Required,
 						CCrmFieldInfoAttr::Immutable
-					)
-				),
-				'SORT' => array('TYPE' => 'integer'),
-				'NAME' => array(
+					]
+				],
+				'SORT' => ['TYPE' => 'integer'],
+				'NAME' => [
 					'TYPE' => 'string',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Required)
-				),
-				'NAME_INIT' => array(
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::Required]
+				],
+				'NAME_INIT' => [
 					'TYPE' => 'string',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'SYSTEM' => array(
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly]
+				],
+				'SYSTEM' => [
 					'TYPE' => 'char',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'EXTRA' => array('TYPE' => 'crm_status_extra')
-			);
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly]
+				],
+				'CATEGORY_ID' => [
+					'TYPE' => 'integer',
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::Immutable],
+				],
+				'COLOR' => [
+					'TYPE' => 'string',
+				],
+				'SEMANTICS' => [
+					'TYPE' => 'char',
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly]
+				],
+				'EXTRA' => ['TYPE' => 'crm_status_extra'],
+			];
 		}
 		return self::$FIELD_INFOS;
 	}
-	public static function GetFieldCaption($fieldName)
+
+	/**
+	 * Returns language-dependent field name.
+	 *
+	 * @param string $fieldName
+	 * @return string
+	 */
+	public static function GetFieldCaption($fieldName): string
 	{
 		$result = GetMessage("CRM_STATUS_FIELD_{$fieldName}");
+
 		return is_string($result) ? $result : '';
 	}
-	public static function GetEntityTypes()
+
+	/**
+	 * Returns description of statuses entity types.
+	 *
+	 * @return array
+	 */
+	public static function GetEntityTypes(): array
 	{
-		$arEntityType = array(
-			'STATUS' => array(
+		$arEntityType = [
+			'STATUS' => [
 				'ID' =>'STATUS',
 				'NAME' => GetMessage('CRM_STATUS_TYPE_STATUS'),
 				'SEMANTIC_INFO' => self::GetLeadStatusSemanticInfo()
-			),
-			'SOURCE' => array('ID' =>'SOURCE', 'NAME' => GetMessage('CRM_STATUS_TYPE_SOURCE')),
-			'CONTACT_TYPE' => array('ID' =>'CONTACT_TYPE', 'NAME' => GetMessage('CRM_STATUS_TYPE_CONTACT_TYPE')),
-			'COMPANY_TYPE' => array('ID' =>'COMPANY_TYPE', 'NAME' => GetMessage('CRM_STATUS_TYPE_COMPANY_TYPE')),
-			'EMPLOYEES' => array('ID' =>'EMPLOYEES', 'NAME' => GetMessage('CRM_STATUS_TYPE_EMPLOYEES')),
-			'INDUSTRY' => array('ID' =>'INDUSTRY', 'NAME' => GetMessage('CRM_STATUS_TYPE_INDUSTRY')),
-			'DEAL_TYPE' => array('ID' =>'DEAL_TYPE', 'NAME' => GetMessage('CRM_STATUS_TYPE_DEAL_TYPE')),
-			'INVOICE_STATUS' => array(
+			],
+			'SOURCE' => ['ID' =>'SOURCE', 'NAME' => GetMessage('CRM_STATUS_TYPE_SOURCE')],
+			'CONTACT_TYPE' => ['ID' =>'CONTACT_TYPE', 'NAME' => GetMessage('CRM_STATUS_TYPE_CONTACT_TYPE')],
+			'COMPANY_TYPE' => ['ID' =>'COMPANY_TYPE', 'NAME' => GetMessage('CRM_STATUS_TYPE_COMPANY_TYPE')],
+			'EMPLOYEES' => ['ID' =>'EMPLOYEES', 'NAME' => GetMessage('CRM_STATUS_TYPE_EMPLOYEES')],
+			'INDUSTRY' => ['ID' =>'INDUSTRY', 'NAME' => GetMessage('CRM_STATUS_TYPE_INDUSTRY')],
+			'DEAL_TYPE' => ['ID' =>'DEAL_TYPE', 'NAME' => GetMessage('CRM_STATUS_TYPE_DEAL_TYPE')],
+			'INVOICE_STATUS' => [
 				'ID' =>'INVOICE_STATUS',
 				'NAME' => GetMessage('CRM_STATUS_TYPE_INVOICE_STATUS'),
 				'SEMANTIC_INFO' => self::GetInvoiceStatusSemanticInfo()
-			)
-		);
+			]
+		];
 
 		if(DealCategory::isCustomized())
 		{
@@ -93,42 +128,47 @@ class CCrmStatus
 		}
 		else
 		{
-			$arEntityType['DEAL_STAGE'] = array(
+			$arEntityType['DEAL_STAGE'] = [
 				'ID' =>'DEAL_STAGE',
 				'NAME' => GetMessage('CRM_STATUS_TYPE_DEAL_STAGE'),
 				'SEMANTIC_INFO' => self::GetDealStageSemanticInfo()
-			);
+			];
 		}
 
 		$arEntityType = array_merge(
 			$arEntityType,
-			array(
-				'QUOTE_STATUS' => array(
+			[
+				'QUOTE_STATUS' => [
 					'ID' =>'QUOTE_STATUS',
 					'NAME' => GetMessage('CRM_STATUS_TYPE_QUOTE_STATUS'),
 					'SEMANTIC_INFO' => self::GetQuoteStatusSemanticInfo()
-				),
-				'HONORIFIC' => array('ID' =>'HONORIFIC', 'NAME' => GetMessage('CRM_STATUS_TYPE_HONORIFIC')),
-				'EVENT_TYPE' => array('ID' =>'EVENT_TYPE', 'NAME' => GetMessage('CRM_STATUS_TYPE_EVENT_TYPE')),
-				'CALL_LIST' => array('ID' => 'CALL_LIST', 'NAME' => GetMessage('CRM_STATUS_TYPE_CALL_LIST'))
-			)
+				],
+				'HONORIFIC' => ['ID' =>'HONORIFIC', 'NAME' => GetMessage('CRM_STATUS_TYPE_HONORIFIC')],
+				'EVENT_TYPE' => ['ID' =>'EVENT_TYPE', 'NAME' => GetMessage('CRM_STATUS_TYPE_EVENT_TYPE')],
+				'CALL_LIST' => ['ID' => 'CALL_LIST', 'NAME' => GetMessage('CRM_STATUS_TYPE_CALL_LIST')]
+			]
 		);
 
 		if(self::IsDepricatedTypesEnabled())
 		{
-			$arEntityType['PRODUCT'] = array('ID' => 'PRODUCT', 'NAME' => GetMessage('CRM_STATUS_TYPE_PRODUCT'));
+			$arEntityType['PRODUCT'] = ['ID' => 'PRODUCT', 'NAME' => GetMessage('CRM_STATUS_TYPE_PRODUCT')];
 		}
 
 		return $arEntityType;
 	}
+
+	/**
+	 * @deprecated
+	 * @return array
+	 */
 	public static function GetFieldExtraTypeInfo()
 	{
-		return array(
-			'SEMANTICS' => array('TYPE' => 'string', 'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)),
-			'COLOR' => array('TYPE' => 'string')
-		);
+		return [
+			'SEMANTICS' => ['TYPE' => 'string', 'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly]],
+			'COLOR' => ['TYPE' => 'string']
+		];
 	}
-	public static function IsDepricatedTypesEnabled()
+	public static function IsDepricatedTypesEnabled(): bool
 	{
 		return mb_strtoupper(COption::GetOptionString('crm', 'enable_depricated_statuses', 'N')) !== 'N';
 	}
@@ -136,112 +176,183 @@ class CCrmStatus
 	{
 		return COption::SetOptionString('crm', 'enable_depricated_statuses', $enable ? 'Y' : 'N');
 	}
-	private static function GetCachedStatuses($entityId)
+	private static function GetCachedStatuses($entityId): ?array
 	{
-		return isset(self::$STATUSES[$entityId]) ? self::$STATUSES[$entityId] : null;
+		return self::$STATUSES[$entityId] ?? null;
 	}
-	private static function SetCachedStatuses($entityId, $items)
+	private static function SetCachedStatuses($entityId, $items): void
 	{
 		self::$STATUSES[$entityId] = $items;
 	}
-	private static function ClearCachedStatuses($entityId)
+	private static function ClearCachedStatuses($entityId): void
 	{
 		unset(self::$STATUSES[$entityId]);
 	}
-	public function Add($arFields, $bCheckStatusId = true)
+
+	protected function getStatusPrefix(): string
+	{
+		$entityInfo = static::GetEntityTypes()[$this->entityId] ?? [];
+
+		return $entityInfo['PREFIX'] ?? '';
+	}
+
+	public function addPrefixToStatusId(string $statusId): string
+	{
+		$statusId = $this->removePrefixFromStatusId($statusId);
+
+		$prefix = $this->getStatusPrefix();
+
+		return ($prefix ? $this->getStatusPrefix() . static::PREFIX_SEPARATOR : '') . $statusId;
+	}
+
+	protected function removePrefixFromStatusId(string $statusId): string
+	{
+		$prefixPos = mb_strpos($statusId, static::PREFIX_SEPARATOR);
+		if ($prefixPos === false)
+		{
+			return $statusId;
+		}
+		return mb_substr($statusId, $prefixPos + 1);
+	}
+
+	/**
+	 * Creates new status.
+	 * @see StatusTable::add()
+	 *
+	 * @param array $arFields
+	 * @param bool $bCheckStatusId
+	 * @return array|bool|int
+	 * @throws \Bitrix\Main\NotSupportedException
+	 */
+	public function Add(array $arFields, bool $bCheckStatusId = true)
 	{
 		$this->LAST_ERROR = '';
 
 		if (!$this->CheckFields($arFields, $bCheckStatusId))
 			return false;
 
-		if (!is_set($arFields['SORT']) ||
-			(is_set($arFields['SORT']) && !intval($arFields['SORT']) > 0))
+		$arFields['SORT'] = (int)$arFields['SORT'];
+		if($arFields['SORT'] <= 0)
+		{
 			$arFields['SORT'] = 10;
+		}
 
 		if (!is_set($arFields, 'SYSTEM'))
+		{
 			$arFields['SYSTEM'] = 'N';
+		}
 
 		if (!is_set($arFields, 'STATUS_ID'))
+		{
 			$arFields['STATUS_ID'] = '';
+		}
 
+		$categoryId = (int)$arFields['CATEGORY_ID'];
 		$statusID = $arFields['STATUS_ID'];
-		if($statusID === '')
+		if(empty($statusID))
 		{
-			if(DealCategory::hasStatusEntity($this->entityId))
-			{
-				$statusID = DealCategory::issueStageID($this->entityId);
-			}
-			else
-			{
-				$statusID = !empty($arFields['STATUS_ID']) ? $arFields['STATUS_ID'] : $this->GetNextStatusId();
-			}
-		}
-		elseif(DealCategory::hasStatusEntity($this->entityId))
-		{
-			$statusID = DealCategory::prepareStageID(
-				DealCategory::convertFromStatusEntityID($this->entityId),
-				DealCategory::removeStageNamespaceID($statusID)
-			);
+			$statusID = $this->GetNextStatusId();
 		}
 
-		$arFields_i = Array(
+		$statusID = $this->addPrefixToStatusId($statusID);
+
+		if(!empty($arFields['COLOR']) && mb_strpos($arFields['COLOR'], '#') !== 0)
+		{
+			$arFields['COLOR'] = '#' . $arFields['COLOR'];
+		}
+
+		$result = StatusTable::add([
 			'ENTITY_ID'	=> $this->entityId,
 			'STATUS_ID'	=> $statusID,
 			'NAME'		=> $arFields['NAME'],
-			'NAME_INIT'	=> $arFields['SYSTEM'] == 'Y' ? $arFields['NAME'] : '',
-			'SORT'		=> intval($arFields['SORT']),
-			'SYSTEM'	=> $arFields['SYSTEM'] == 'Y'? 'Y': 'N',
-		);
-
-		global $DB;
-		$ID = $DB->Add('b_crm_status', $arFields_i, array(), 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+			'NAME_INIT'	=> $arFields['SYSTEM'] === 'Y' ? $arFields['NAME'] : '',
+			'SORT'		=> $arFields['SORT'],
+			'SYSTEM'	=> $arFields['SYSTEM'] === 'Y'? 'Y': 'N',
+			'CATEGORY_ID' => $categoryId,
+			'COLOR' => $arFields['COLOR'],
+			'SEMANTICS' => $arFields['SEMANTICS'],
+		]);
 		self::ClearCachedStatuses($this->entityId);
-		return $ID;
+
+		if(!$result->isSuccess())
+		{
+			$this->LAST_ERROR = $result->getErrorMessages()[0];
+			return false;
+		}
+
+		return $result->getId();
 	}
-	public function Update($ID, $arFields, $arOptions = array())
+
+	/**
+	 * Updates existing status record.
+	 *
+	 * @param int $ID
+	 * @param array $arFields
+	 * @param array $arOptions
+	 * @return bool|int
+	 * @throws Exception
+	 */
+	public function Update($ID, array $arFields, array $arOptions = array())
 	{
+		$ID = (int) $ID;
 		$this->LAST_ERROR = '';
 
 		if (!$this->CheckFields($arFields))
+		{
 			return false;
+		}
 
-		$ID = intval($ID);
-
-		if (!is_set($arFields['SORT']) ||
-			(is_set($arFields['SORT']) && !intval($arFields['SORT']) > 0))
+		$arFields['SORT'] = (int)$arFields['SORT'];
+		if($arFields['SORT'] <= 0)
+		{
 			$arFields['SORT'] = 10;
+		}
 
-		$arFields_u = array(
-			'NAME'   => $arFields['NAME'],
-			'SORT'   => intval($arFields['SORT'])
-		);
+		$arFields_u['SORT'] = $arFields['SORT'];
+		if(!empty($arFields['NAME']))
+		{
+			$arFields_u['NAME'] = $arFields['NAME'];
+		}
 
 		if (isset($arFields['SYSTEM']))
 		{
 			$arFields_u['SYSTEM'] = ($arFields['SYSTEM'] === 'Y' ? 'Y' : 'N');
 		}
 
-		if(is_array($arOptions)
-			&& isset($arOptions['ENABLE_STATUS_ID'])
+		if(
+			isset($arOptions['ENABLE_STATUS_ID'])
 			&& $arOptions['ENABLE_STATUS_ID']
 			&& isset($arFields['STATUS_ID']))
 		{
 			$arFields_u['STATUS_ID'] = $arFields['STATUS_ID'];
 		}
 
-		if(is_array($arOptions)
-			&& isset($arOptions['ENABLE_NAME_INIT'])
+		if(
+			isset($arOptions['ENABLE_NAME_INIT'])
 			&& $arOptions['ENABLE_NAME_INIT']
 			&& isset($arFields['NAME_INIT']))
 		{
 			$arFields_u['NAME_INIT'] = $arFields['NAME_INIT'];
 		}
 
-		global $DB;
-		$strUpdate = $DB->PrepareUpdate('b_crm_status', $arFields_u);
-		if(!$DB->Query('UPDATE b_crm_status SET '.$strUpdate.' WHERE ID='.$ID, false, array(), 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__))
-			return false;
+		if(isset($arFields['COLOR']))
+		{
+			if(mb_strpos($arFields['COLOR'], '#') !== 0)
+			{
+				$arFields['COLOR'] = '#' . $arFields['COLOR'];
+			}
+			$arFields_u['COLOR'] = $arFields['COLOR'];
+		}
+		if(isset($arFields['SEMANTICS']))
+		{
+			$arFields_u['SEMANTICS'] = $arFields['SEMANTICS'];
+		}
+
+		$result = StatusTable::update($ID, $arFields_u);
+		if(!$result->isSuccess())
+		{
+			$this->LAST_ERROR = $result->getErrorMessages()[0];
+		}
 
 		$fields = $this->GetStatusById($ID);
 		if(is_array($fields))
@@ -251,16 +362,21 @@ class CCrmStatus
 		}
 
 		self::ClearCachedStatuses($this->entityId);
+
 		return $ID;
 	}
 
-	public function Delete($ID)
+	/**
+	 * Deletes status by id.
+	 *
+	 * @param int $ID
+	 * @return bool
+	 */
+	public function Delete(int $ID): bool
 	{
 		$this->LAST_ERROR = '';
-		$ID = intval($ID);
 
-		$dbResult = CCrmStatus::GetList(array(), array('ID' => $ID));
-		$fields = $dbResult ? $dbResult->Fetch() : null;
+		$fields = StatusTable::getById($ID)->fetch();
 		if(!is_array($fields))
 		{
 			$this->LAST_ERROR = GetMessage('CRM_STATUS_ERR_NOT_FOUND');
@@ -270,16 +386,29 @@ class CCrmStatus
 		CCrmLead::ProcessStatusDeletion($fields);
 		CCrmDeal::ProcessStatusDeletion($fields);
 
-		global $DB;
-		$res = $DB->Query("DELETE FROM b_crm_status WHERE ID=$ID", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$result = StatusTable::delete($ID);
+
 		self::ClearCachedStatuses($this->entityId);
 
-		return $res;
+		if(!$result->isSuccess())
+		{
+			$this->LAST_ERROR = $result->getErrorMessages()[0];
+			return false;
+		}
+
+		return true;
 	}
 
+	/**
+	 * @deprecated
+	 * @see StatusTable::getList()
+	 * @param array $arSort
+	 * @param array $arFilter
+	 * @return bool|CDBResult
+	 */
 	public static function GetList($arSort=array(), $arFilter=Array())
 	{
-		$sqlHelper = $connection = \Bitrix\Main\Application::getConnection()->getSqlHelper();
+		$sqlHelper = \Bitrix\Main\Application::getConnection()->getSqlHelper();
 
 		global $DB;
 		$arSqlSearch = Array();
@@ -310,6 +439,12 @@ class CCrmStatus
 					case 'SYSTEM':
 						$arSqlSearch[] = "CS.".$sqlHelper->quote('SYSTEM')."='".(($val == 'Y')? 'Y' : 'N')."'";
 						break;
+					case 'CATEGORY_ID':
+						$arSqlSearch[] = "CS.CATEGORY_ID = '".((int) $val)."'";
+						break;
+					case 'SEMANTICS':
+						$arSqlSearch[] = "CS.SEMANTICS = '".$DB->ForSql($val)."'";
+						break;
 				}
 			}
 		}
@@ -338,6 +473,12 @@ class CCrmStatus
 				case 'SYSTEM':
 					$sOrder .= ", CS.".$sqlHelper->quote('SYSTEM')." ".$ord;
 					break;
+				case 'CATEGORY_ID':
+					$sOrder .= ', CS.CATEGORY_ID '.$ord;
+					break;
+				case 'SEMANTICS':
+					$sOrder .= ', CS.SEMANTICS '.$ord;
+					break;
 			}
 		}
 
@@ -352,12 +493,75 @@ class CCrmStatus
 
 		return $res;
 	}
-	public function CheckStatusId($statusId)
+
+	/**
+	 * Return true if there is a record with the same STATUS_ID.
+	 *
+	 * @param string $statusId
+	 * @return bool
+	 */
+	public function CheckStatusId($statusId): bool
 	{
-		global $DB;
-		$res = $DB->Query("SELECT ID FROM b_crm_status WHERE ENTITY_ID='{$DB->ForSql($this->entityId)}' AND STATUS_ID ='{$DB->ForSql($statusId)}'", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
-		$fields = is_object($res) ? $res->Fetch() : array();
-		return isset($fields['ID']);
+		if(!is_string($statusId))
+		{
+			return false;
+		}
+		return StatusTable::getRow([
+			'filter' => [
+				'=STATUS_ID' => $statusId,
+			]
+		]) !== null;
+	}
+
+	public function validateStatusId(string $statusId): \Bitrix\Main\Result
+	{
+		$statusId = $this->removePrefixFromStatusId($statusId);
+		$statusIdWithPrefix = $this->addPrefixToStatusId($statusId);
+		$prefixLength = mb_strlen($statusIdWithPrefix) - mb_strlen($statusId);
+
+		$result = new \Bitrix\Main\Result();
+
+		$maxStatusIdLength = 50 - $prefixLength; // STATUS_ID in database is varchar(50)
+		$permissionFieldLength = 30 - $prefixLength; // ATTR column in b_crm_entity_perms is varchar(30)
+
+		$useValidationRegex = false;
+		if ($this->entityId === 'STATUS') // lead status
+		{
+			$maxStatusIdLength = $permissionFieldLength  - mb_strlen('STATUS_ID');
+			$useValidationRegex = true;
+		}
+		if ($this->entityId === 'QUOTE_STATUS') // quote status
+		{
+			$maxStatusIdLength = $permissionFieldLength - mb_strlen('QUOTE_ID');
+			$useValidationRegex = true;
+		}
+		if (\Bitrix\Crm\Category\DealCategory::convertFromStatusEntityID($this->entityId) >= 0) // deal status
+		{
+			$maxStatusIdLength = $permissionFieldLength - mb_strlen('STAGE_ID');
+			$useValidationRegex = true;
+		}
+
+		if(mb_strlen($statusId) > $maxStatusIdLength)
+		{
+			$result->addError(new \Bitrix\Main\Error(GetMessage(
+				'CRM_STATUS_ERR_STATUS_ID_MAX_LENGTH_EXCEEDED',
+				array('#MAX_LENGTH#' => (string)$maxStatusIdLength)
+			)));
+			return $result;
+		}
+
+		if ($useValidationRegex && !preg_match('/^[0-9A-Z_-]+$/i', $statusId))
+		{
+			$result->addError(new \Bitrix\Main\Error(GetMessage('CRM_STATUS_ERR_INCORRECT_SYMBOLS')));
+			return $result;
+		}
+
+		if ($this->CheckStatusId($statusIdWithPrefix))
+		{
+			$result->addError(new \Bitrix\Main\Error(GetMessage('CRM_STATUS_ERR_DUPLICATE_STATUS_ID')));
+			return $result;
+		}
+		return $result;
 	}
 
 	/**
@@ -366,114 +570,128 @@ class CCrmStatus
 	 * @param mixed $statusId Status id.
 	 * @return bool
 	 */
-	public function existsEntityWithStatus($statusId)
+	public function existsEntityWithStatus($statusId): bool
 	{
+		if(!is_string($statusId))
+		{
+			return false;
+		}
 		$entityTypes = self::GetEntityTypes();
 
 		if (array_key_exists($this->entityId, $entityTypes))
 		{
-			if ($this->entityId == 'STATUS')
+			if ($this->entityId === 'STATUS')
 			{
 				return CCrmLead::existsEntityWithStatus($statusId);
 			}
-			elseif ($this->entityId == 'INVOICE_STATUS')
+			if ($this->entityId === 'INVOICE_STATUS')
 			{
 				return CCrmInvoice::existsEntityWithStatus($statusId);
 			}
-			elseif ($this->entityId == 'QUOTE_STATUS')
+			if ($this->entityId === 'QUOTE_STATUS')
 			{
 				return CCrmQuote::existsEntityWithStatus($statusId);
 			}
-			elseif (mb_strpos($this->entityId, 'DEAL_STAGE') === 0)
+			if (mb_strpos($this->entityId, 'DEAL_STAGE') === 0)
 			{
 				return CCrmDeal::existsEntityWithStatus($statusId);
 			}
-			return false;
 		}
-		else
-		{
-			return false;
-		}
+
+		return false;
 	}
 
-	public function GetNextStatusId()
+	/**
+	 * Returns next available integer for STATUS_ID.
+	 *
+	 * @return int
+	 */
+	public function GetNextStatusId(): int
 	{
-		global $DB, $DBType;
-		$dbTypeUC = mb_strtoupper($DBType);
+		global $DB;
 
-		if($dbTypeUC === 'MYSQL')
+		$prefix = $this->getStatusPrefix();
+		if(!empty($prefix))
 		{
-			$sql = "SELECT STATUS_ID AS MAX_STATUS_ID FROM b_crm_status WHERE ENTITY_ID = '{$DB->ForSql($this->entityId)}' AND CAST(STATUS_ID AS UNSIGNED) > 0 ORDER BY CAST(STATUS_ID AS UNSIGNED) DESC LIMIT 1";
-		}
-		elseif($dbTypeUC === 'MSSQL')
-		{
-			$sql = "SELECT TOP 1 STATUS_ID AS MAX_STATUS_ID FROM B_CRM_STATUS WHERE ENTITY_ID = '{$DB->ForSql($this->entityId)}' AND CAST((CASE WHEN ISNUMERIC(STATUS_ID) > 0 THEN STATUS_ID ELSE '0' END) AS INT) > 0 ORDER BY CAST((CASE WHEN ISNUMERIC(STATUS_ID) > 0 THEN STATUS_ID ELSE '0' END) AS INT) DESC";
-		}
-		elseif($dbTypeUC === 'ORACLE')
-		{
-			$sql = "SELECT STATUS_ID AS MAX_STATUS_ID FROM (SELECT STATUS_ID FROM B_CRM_STATUS WHERE ENTITY_ID = '{$DB->ForSql($this->entityId)}' AND COALESCE(TO_NUMBER(REGEXP_SUBSTR(STATUS_ID, '^\d+(\.\d+)?')), 0) > 0 ORDER BY COALESCE(TO_NUMBER(REGEXP_SUBSTR(STATUS_ID, '^\d+(\.\d+)?')), 0) DESC) WHERE ROWNUM <= 1";
+			$offset = mb_strlen($prefix) + 2;
+			$sql = "SELECT SUBSTRING(STATUS_ID, {$offset}) AS MAX_STATUS_ID FROM b_crm_status WHERE ENTITY_ID = '{$DB->ForSql($this->entityId)}' AND CAST(SUBSTRING(STATUS_ID, {$offset}) AS UNSIGNED) > 0 ORDER BY CAST(SUBSTRING(STATUS_ID, {$offset}) AS UNSIGNED) DESC LIMIT 1";
 		}
 		else
 		{
-			return 0;
+			$sql = "SELECT STATUS_ID AS MAX_STATUS_ID FROM b_crm_status WHERE ENTITY_ID = '{$DB->ForSql($this->entityId)}' AND CAST(STATUS_ID AS UNSIGNED) > 0 ORDER BY CAST(STATUS_ID AS UNSIGNED) DESC LIMIT 1";
 		}
 
 		$res = $DB->Query($sql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 		$fields = is_object($res) ? $res->Fetch() : array();
+
 		return (isset($fields['MAX_STATUS_ID']) ? intval($fields['MAX_STATUS_ID']) : 0) + 1;
 	}
-	public static function GetStatus($entityId, $internalOnly = false)
+
+	/**
+	 * Load list of records for $entityId from database.
+	 *
+	 * @param string $entityId
+	 * @return array
+	 */
+	public static function loadStatusesByEntityId(string $entityId): array
+	{
+		$result = [];
+
+		$list = StatusTable::getList([
+			'filter' => [
+				'=ENTITY_ID' => $entityId,
+			],
+			'order' => [
+				'SORT' => 'ASC',
+			],
+		]);
+		while($status = $list->fetch())
+		{
+			$result[$status['STATUS_ID']] = $status;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Retrieve list of records for $entityId from static cache, if exists and allowed.
+	 *
+	 * @param string $entityId
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function GetStatus($entityId): array
 	{
 		if(!is_string($entityId))
 		{
-			return array();
+			return [];
 		}
-
-		global $DB;
-		$arStatus = array();
-
-		if(CACHED_b_crm_status===false)
+		if(CACHED_b_crm_status === false)
 		{
-			$squery = "
-				SELECT *
-				FROM b_crm_status
-				WHERE ENTITY_ID = '".$DB->ForSql($entityId)."'
-				ORDER BY SORT ASC
-			";
-			$res = $DB->Query($squery, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
-			while ($row = $res->Fetch())
-			{
-				$arStatus[$row['STATUS_ID']] = $row;
-			}
-
-			return $arStatus;
+			return static::loadStatusesByEntityId($entityId);
+		}
+		$cached = self::GetCachedStatuses($entityId);
+		if($cached !== null)
+		{
+			$result = $cached;
 		}
 		else
 		{
-			$cached = self::GetCachedStatuses($entityId);
-			if($cached !== null)
-			{
-				$arStatus = $cached;
-			}
-			else
-			{
-				$squery = "
-					SELECT *
-					FROM b_crm_status
-					WHERE ENTITY_ID = '".$DB->ForSql($entityId)."'
-					ORDER BY SORT ASC
-				";
-				$res = $DB->Query($squery, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
-				while($row = $res->Fetch())
-				{
-					$arStatus[$row['STATUS_ID']] = $row;
-				}
+			$result = static::loadStatusesByEntityId($entityId);
 
-				self::SetCachedStatuses($entityId, $arStatus);
-			}
-			return $arStatus;
+			self::SetCachedStatuses($entityId, $result);
 		}
+
+		return $result;
 	}
+
+	/**
+	 * @deprecated
+	 * @param $statusId
+	 * @return mixed|string
+	 */
 	public static function GetEntityID($statusId)
 	{
 		global $DB;
@@ -482,43 +700,83 @@ class CCrmStatus
 		return isset($fields['ENTITY_ID']) ? $fields['ENTITY_ID'] : '';
 	}
 
-	public static function GetFirstStatusID($entityId, $internalOnly = false)
+	/**
+	 * Returns first status for $entityId.
+	 *
+	 * @param string $entityId
+	 * @return string|null
+	 */
+	public static function GetFirstStatusID($entityId): ?string
 	{
-		$arStatusList = self::GetStatusList($entityId, $internalOnly);
+		if(!is_string($entityId))
+		{
+			return null;
+		}
+		$arStatusList = self::GetStatusList($entityId);
+
 		return !empty($arStatusList) ? key($arStatusList) : null;
 	}
-	public static function GetStatusList($entityId, $internalOnly = false)
+
+	/**
+	 * Returns flat list of statuses for $entityId, where key is STATUS_ID and value is NAME.
+	 *
+	 * @param string $entityId
+	 * @return array
+	 */
+	public static function GetStatusList($entityId): array
 	{
-		$arStatusList = Array();
-		$ar = self::GetStatus($entityId, $internalOnly);
-		if(is_array($ar))
+		if(!is_string($entityId))
 		{
-			foreach($ar as $arStatus)
-			{
-				$arStatusList[$arStatus['STATUS_ID']] = $arStatus['NAME'];
-			}
+			return [];
+		}
+		$result = [];
+		$statuses = self::GetStatus($entityId);
+
+		foreach($statuses as $status)
+		{
+			$result[$status['STATUS_ID']] = $status['NAME'];
 		}
 
-		return $arStatusList;
+		return $result;
 	}
-	public static function GetStatusListEx($entityId)
-	{
-		$arStatusList = Array();
-		$ar = self::GetStatus($entityId);
-		foreach($ar as $arStatus)
-			$arStatusList[$arStatus['STATUS_ID']] = htmlspecialcharsbx($arStatus['NAME']);
 
-		return $arStatusList;
+	/**
+	 * Returns flat list of statuses for $entityId, where key is STATUS_ID and value is html filtered NAME.
+	 *
+	 * @param string $entityId
+	 * @return array
+	 */
+	public static function GetStatusListEx($entityId): array
+	{
+		if(!is_string($entityId))
+		{
+			return [];
+		}
+		$result = [];
+		$statuses = self::GetStatus($entityId);
+
+		foreach($statuses as $status)
+		{
+			$result[$status['STATUS_ID']] = htmlspecialcharsbx($status['NAME']);
+		}
+
+		return $result;
 	}
+
+	/**
+	 * Returns status by $ID.
+	 *
+	 * @param int $ID
+	 * @return false|array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public function GetStatusById($ID)
 	{
-		if(!is_int($ID))
-		{
-			$ID = (int)$ID;
-		}
-
-		$arStatus = self::GetStatus($this->entityId);
-		foreach($arStatus as $item)
+		$ID = (int) $ID;
+		$statuses = self::GetStatus($this->entityId);
+		foreach($statuses as $item)
 		{
 			$currentID = isset($item['ID']) ? (int)$item['ID'] : 0;
 			if($currentID === $ID)
@@ -526,41 +784,42 @@ class CCrmStatus
 				return $item;
 			}
 		}
+
 		return false;
 	}
+
+	/**
+	 * Returns status by STATUS_ID.
+	 *
+	 * @param string $statusId
+	 * @return false|array
+	 */
 	public function GetStatusByStatusId($statusId)
 	{
-		$arStatus = self::GetStatus($this->entityId);
-		return isset($arStatus[$statusId]) ? $arStatus[$statusId]: false;
-	}
-	private function CheckFields($arFields, $bCheckStatusId = true)
-	{
-		$aMsg = array();
-
-		if(is_set($arFields, 'NAME') && trim($arFields['NAME'])=='')
-			$aMsg[] = array('id'=>'NAME', 'text'=>GetMessage('CRM_STATUS_ERR_NAME'));
-		if(is_set($arFields, 'SYSTEM') && !($arFields['SYSTEM'] == 'Y' || $arFields['SYSTEM'] == 'N'))
-			$aMsg[] = array('id'=>'SYSTEM', 'text'=>GetMessage('CRM_STATUS_ERR_SYSTEM'));
-		if(is_set($arFields, 'STATUS_ID'))
+		if(!is_string($statusId))
 		{
-			$statusId = $arFields['STATUS_ID'];
-			if(trim($statusId)=='')
+			return false;
+		}
+		$arStatus = self::GetStatus($this->entityId);
+
+		return $arStatus[$statusId] ?? false;
+	}
+
+	private function CheckFields(array $arFields, bool $bCheckStatusId = true): bool
+	{
+		$aMsg = [];
+
+		if (
+			$bCheckStatusId
+			&& is_set($arFields, 'STATUS_ID')
+		)
+		{
+			$validationResult = $this->validateStatusId($arFields['STATUS_ID']);
+			if (!$validationResult->isSuccess())
 			{
-				$aMsg[] = array('id'=>'STATUS_ID', 'text'=>GetMessage('CRM_STATUS_ERR_STATUS_ID'));
-			}
-			else if(mb_strlen($statusId) > 50)
-			{
-				$aMsg[] = array(
-					'id'=>'STATUS_ID',
-					'text'=>GetMessage(
-						'CRM_STATUS_ERR_STATUS_ID_MAX_LENGTH_EXCEEDED',
-						array('#MAX_LENGTH#' => "50")
-					)
-				);
+				$aMsg[] = ['id' => 'STATUS_ID', 'text' => implode(', ', $validationResult->getErrorMessages())];
 			}
 		}
-		if (is_set($arFields, 'STATUS_ID') && $bCheckStatusId && $this->CheckStatusId($arFields['STATUS_ID']))
-			$aMsg[] = array('id'=>'STATUS_ID', 'text'=>GetMessage('CRM_STATUS_ERR_DUPLICATE_STATUS_ID'));
 
 		if(!empty($aMsg))
 		{
@@ -573,16 +832,27 @@ class CCrmStatus
 
 			$e = new CAdminException($aMsg);
 			$GLOBALS['APPLICATION']->ThrowException($e);
+
 			return false;
 		}
 
 		return true;
 	}
-	public function GetLastError()
+
+	public function GetLastError(): ?string
 	{
 		return $this->LAST_ERROR;
 	}
-	public static function InstallDefault($entityId, $statusId = null)
+
+	//region default statuses
+	/**
+	 * Installs default statuses for $entityId.
+	 * If $statusId is specified - only this status will be installed.
+	 *
+	 * @param string $entityId
+	 * @param string|null $statusId
+	 */
+	public static function InstallDefault($entityId, $statusId = null): void
 	{
 		if(!is_string($entityId))
 		{
@@ -628,155 +898,174 @@ class CCrmStatus
 			$items = self::GetDefaultInvoiceStatuses();
 		}
 
-		if ($statusId !== null)
+		if ($statusId !== null && is_string($statusId))
 		{
-			$filtered = array();
-			foreach ($items as $item)
-			{
-				if ($item['STATUS_ID'] != $statusId)
-				{
-					continue;
-				}
-
-				$filtered[] = $item;
-			}
-			$items = $filtered;
+			$items = array_filter($items, static function($item) use ($statusId) {
+				return $statusId === $item['STATUS_ID'];
+			});
 		}
 
 		self::BulkCreate($entityId, $items);
 	}
-	public static function GetDefaultLeadStatuses()
+
+	/**
+	 * @internal
+	 * @return array
+	 */
+	public static function GetDefaultLeadStatuses(): array
 	{
-		return array(
-			array(
+		return [
+			[
 				'NAME' => GetMessage('CRM_STATUS_TYPE_STATUS_NEW'),
 				'STATUS_ID' => 'NEW',
 				'SORT' => 10,
-				'SYSTEM' => 'Y'
-			),
-			array(
+				'SYSTEM' => 'Y',
+				'COLOR' => '#39A8EF',
+			],
+			[
 				'NAME' => GetMessage('CRM_STATUS_TYPE_STATUS_IN_PROCESS'),
 				'STATUS_ID' => 'IN_PROCESS',
 				'SORT' => 20,
-				'SYSTEM' => 'N'
-			),
-			array(
+				'SYSTEM' => 'N',
+				'COLOR' => '#2FC6F6',
+			],
+			[
 				'NAME' => GetMessage('CRM_STATUS_TYPE_STATUS_PROCESSED'),
 				'STATUS_ID' => 'PROCESSED',
 				'SORT' => 30,
-				'SYSTEM' => 'N'
-			),
-			array(
+				'SYSTEM' => 'N',
+				'COLOR' => '#55D0E0',
+			],
+			[
 				'NAME' => GetMessage('CRM_STATUS_TYPE_STATUS_CONVERTED'),
 				'STATUS_ID' => 'CONVERTED',
 				'SORT' => 40,
-				'SYSTEM' => 'Y'
-			),
-			array(
+				'SYSTEM' => 'Y',
+				'COLOR' => '#7BD500',
+				'SEMANTICS' => \Bitrix\Crm\PhaseSemantics::SUCCESS,
+			],
+			[
 				'NAME' => GetMessage('CRM_STATUS_TYPE_STATUS_JUNK'),
 				'STATUS_ID' => 'JUNK',
 				'SORT' => 50,
-				'SYSTEM' => 'Y'
-			)
-		);
+				'SYSTEM' => 'Y',
+				'COLOR' => '#FF5752',
+				'SEMANTICS' => \Bitrix\Crm\PhaseSemantics::FAILURE,
+			]
+		];
 	}
-	public static function GetDefaultSources()
+
+	/**
+	 * @internal
+	 * @return array
+	 */
+	public static function GetDefaultSources(): array
 	{
-		return array(
-			array(
+		return [
+			[
 				'NAME' => GetMessage('CRM_STATUS_TYPE_SOURCE_CALL'),
 				'STATUS_ID' => 'CALL',
 				'SORT' => 10,
 				'SYSTEM' => 'Y'
-			),
-			array(
+			],
+			[
 				'NAME' => GetMessage('CRM_STATUS_TYPE_SOURCE_EMAIL'),
 				'STATUS_ID' => 'EMAIL',
 				'SORT' => 20,
-			),
-			array(
+			],
+			[
 				'NAME' => GetMessage('CRM_STATUS_TYPE_SOURCE_WEB'),
 				'STATUS_ID' => 'WEB',
 				'SORT' => 30
-			),
-			array(
+			],
+			[
 				'NAME' => GetMessage('CRM_STATUS_TYPE_SOURCE_ADVERTISING'), //!NEW
 				'STATUS_ID' => 'ADVERTISING',
 				'SORT' => 40
-			),
-			array(
+			],
+			[
 				'NAME' => GetMessage('CRM_STATUS_TYPE_SOURCE_PARTNER'),
 				'STATUS_ID' => 'PARTNER',
 				'SORT' => 50,
-			),
-			array(
+			],
+			[
 				'NAME' => GetMessage('CRM_STATUS_TYPE_SOURCE_RECOMMENDATION'), //!NEW
 				'STATUS_ID' => 'RECOMMENDATION',
 				'SORT' => 60,
-			),
-			array(
+			],
+			[
 				'NAME' => GetMessage('CRM_STATUS_TYPE_SOURCE_TRADE_SHOW'),
 				'STATUS_ID' => 'TRADE_SHOW',
 				'SORT' => 70,
-			),
-			array(
+			],
+			[
 				'NAME' => GetMessage('CRM_STATUS_TYPE_SOURCE_WEBFORM'),
 				'STATUS_ID' => 'WEBFORM',
 				'SORT' => 75,
 				'SYSTEM' => 'Y'
-			),
-			array(
+			],
+			[
 				'NAME' => GetMessage('CRM_STATUS_TYPE_SOURCE_CALLBACK'),
 				'STATUS_ID' => 'CALLBACK',
 				'SORT' => 77,
 				'SYSTEM' => 'Y'
-			),
-			array(
+			],
+			[
 				'NAME' => GetMessage('CRM_STATUS_TYPE_SOURCE_RC_GENERATOR'),
 				'STATUS_ID' => 'RC_GENERATOR',
 				'SORT' => 78,
 				'SYSTEM' => 'Y'
-			),
-			array(
+			],
+			[
 				'NAME' => GetMessage('CRM_STATUS_TYPE_SOURCE_STORE'),
 				'STATUS_ID' => 'STORE',
 				'SORT' => 79,
 				'SYSTEM' => 'Y'
-			),
+			],
 
-			array(
+			[
 				'NAME' => GetMessage('CRM_STATUS_TYPE_SOURCE_OTHER'),
 				'STATUS_ID' => 'OTHER',
 				'SORT' => 80,
-			)
-		);
+			]
+		];
 	}
-	public static function GetDefaultContactTypes()
+
+	/**
+	 * @internal
+	 * @return array
+	 */
+	public static function GetDefaultContactTypes(): array
 	{
-		return array(
-			array(
+		return [
+			[
 				'NAME' => GetMessage('CRM_CONTACT_TYPE_CLIENT'),
 				'STATUS_ID' => 'CLIENT',
 				'SORT' => 10
-			),
-			array(
+			],
+			[
 				'NAME' => GetMessage('CRM_CONTACT_TYPE_SUPPLIER'),
 				'STATUS_ID' => 'SUPPLIER',
 				'SORT' => 20
-			),
-			array(
+			],
+			[
 				'NAME' => GetMessage('CRM_CONTACT_TYPE_PARTNER'),
 				'STATUS_ID' => 'PARTNER',
 				'SORT' => 30
-			),
-			array(
+			],
+			[
 				'NAME' => GetMessage('CRM_CONTACT_TYPE_OTHER'),
 				'STATUS_ID' => 'OTHER',
 				'SORT' => 40
-			)
-		);
+			]
+		];
 	}
-	public static function GetDefaultCompanyTypes()
+
+	/**
+	 * @internal
+	 * @return array
+	 */
+	public static function GetDefaultCompanyTypes(): array
 	{
 		return array(
 			array(
@@ -806,155 +1095,206 @@ class CCrmStatus
 			)
 		);
 	}
-	public static function GetDefaultDealStages($namespace = '')
+
+	/**
+	 * @param string $namespace
+	 * @return array
+	 * @internal
+	 */
+	public static function GetDefaultDealStages($namespace = ''): array
 	{
-		$prefix = is_string($namespace) && $namespace !== '' ? "{$namespace}:" : '';
-		return array(
-			array(
+		$prefix = empty($namespace) ? '' :  "{$namespace}:";
+
+		return [
+			[
 				'NAME' => GetMessage('CRM_DEAL_STAGE_NEW'),
 				'STATUS_ID' => "{$prefix}NEW",
 				'SORT' => 10,
-				'SYSTEM' => 'Y'
-			),
-			array(
+				'SYSTEM' => 'Y',
+				'COLOR' => '#39A8EF',
+			],
+			[
 				'NAME' => GetMessage('CRM_DEAL_STAGE_PREPARATION'),
 				'STATUS_ID' => "{$prefix}PREPARATION",
 				'SORT' => 20,
-				'SYSTEM' => 'N'
-			),
-			array(
+				'SYSTEM' => 'N',
+				'COLOR' => '#2FC6F6',
+			],
+			[
 				'NAME' => GetMessage('CRM_DEAL_STAGE_PREPAYMENT_INVOICE'),
 				'STATUS_ID' => "{$prefix}PREPAYMENT_INVOICE", //PRELIMINARY_INVOICE
 				'SORT' => 30,
-				'SYSTEM' => 'N'
-			),
-			array(
+				'SYSTEM' => 'N',
+				'COLOR' => '#55D0E0',
+			],
+			[
 				'NAME' => GetMessage('CRM_DEAL_STAGE_EXECUTING'),
 				'STATUS_ID' => "{$prefix}EXECUTING",
 				'SORT' => 40,
-				'SYSTEM' => 'N'
-			),
-			array(
+				'SYSTEM' => 'N',
+				'COLOR' => '#47E4C2',
+			],
+			[
 				'NAME' => GetMessage('CRM_DEAL_STAGE_FINAL_INVOICE'),
 				'STATUS_ID' => "{$prefix}FINAL_INVOICE",
 				'SORT' => 50,
-				'SYSTEM' => 'N'
-			),
-			array(
+				'SYSTEM' => 'N',
+				'COLOR' => '#FFA900',
+			],
+			[
 				'NAME' => GetMessage('CRM_DEAL_STAGE_WON'),
 				'STATUS_ID' => "{$prefix}WON",
 				'SORT' => 60,
-				'SYSTEM' => 'Y'
-			),
-			array(
+				'SYSTEM' => 'Y',
+				'COLOR' => '#7BD500',
+				'SEMANTICS' => \Bitrix\Crm\PhaseSemantics::SUCCESS,
+			],
+			[
 				'NAME' => GetMessage('CRM_DEAL_STAGE_LOSE'),
 				'STATUS_ID' => "{$prefix}LOSE",
 				'SORT' => 70,
-				'SYSTEM' => 'Y'
-			),
-			array(
+				'SYSTEM' => 'Y',
+				'COLOR' => '#FF5752',
+				'SEMANTICS' => \Bitrix\Crm\PhaseSemantics::FAILURE,
+			],
+			[
 				'NAME' => GetMessage('CRM_DEAL_STAGE_APOLOGY'),
 				'STATUS_ID' => "{$prefix}APOLOGY",
 				'SORT' => 80,
-				'SYSTEM' => 'N'
-			)
-		);
+				'SYSTEM' => 'N',
+				'COLOR' => '#FF5752',
+				'SEMANTICS' => \Bitrix\Crm\PhaseSemantics::FAILURE,
+			]
+		];
 	}
-	public static function GetDefaultQuoteStatuses()
+
+	/**
+	 * @internal
+	 * @return array
+	 */
+	public static function GetDefaultQuoteStatuses(): array
 	{
-		return array(
-			array(
+		return [
+			[
 				'NAME' => GetMessage('CRM_QUOTE_STATUS_DRAFT'),
 				'STATUS_ID' => 'DRAFT',
 				'SORT' => 10,
-				'SYSTEM' => 'Y'
-			),
-			array(
+				'SYSTEM' => 'Y',
+				'COLOR' => '#39A8EF',
+			],
+			[
 				'NAME' => GetMessage('CRM_QUOTE_STATUS_SENT'),
 				'STATUS_ID' => 'SENT',
 				'SORT' => 20,
-				'SYSTEM' => 'N'
-			),
-			array(
+				'SYSTEM' => 'N',
+				'COLOR' => '#2FC6F6',
+			],
+			[
 				'NAME' => GetMessage('CRM_QUOTE_STATUS_APPROVED'),
 				'STATUS_ID' => 'APPROVED',
 				'SORT' => 30,
-				'SYSTEM' => 'Y'
-			),
-			array(
+				'SYSTEM' => 'Y',
+				'COLOR' => '#7BD500',
+				'SEMANTICS' => \Bitrix\Crm\PhaseSemantics::SUCCESS,
+			],
+			[
 				'NAME' => GetMessage('CRM_QUOTE_STATUS_DECLAINED'),
 				'STATUS_ID' => 'DECLAINED',
 				'SORT' => 40,
-				'SYSTEM' => 'Y'
-			),
-			array(
+				'SYSTEM' => 'Y',
+				'COLOR' => '#FF5752',
+				'SEMANTICS' => \Bitrix\Crm\PhaseSemantics::FAILURE,
+			],
+			[
 				'NAME' => GetMessage('CRM_QUOTE_STATUS_APOLOGY'),
 				'STATUS_ID' => 'APOLOGY',
 				'SORT' => 50,
-				'SYSTEM' => 'N'
-			)
-		);
+				'SYSTEM' => 'N',
+				'COLOR' => '#FF5752',
+				'SEMANTICS' => \Bitrix\Crm\PhaseSemantics::FAILURE,
+			]
+		];
 	}
 
-	public static function GetDefaultInvoiceStatuses()
+	/**
+	 * @internal
+	 * @return array
+	 */
+	public static function GetDefaultInvoiceStatuses(): array
 	{
-		return array(
-			array(
+		return [
+			[
 				'NAME' => GetMessage('CRM_INVOICE_STATUS_NEW'),
 				'STATUS_ID' => 'N',
 				'SORT' => 100,
-				'SYSTEM' => 'Y'
-			),
-			array(
+				'SYSTEM' => 'Y',
+				'COLOR' => '#39A8EF',
+			],
+			[
 				'NAME' => GetMessage('CRM_INVOICE_STATUS_SENT'),
 				'STATUS_ID' => 'S',
 				'SORT' => 110,
-				'SYSTEM' => 'N'
-			),
-			array(
+				'SYSTEM' => 'N',
+				'COLOR' => '#2FC6F6',
+			],
+			[
 				'NAME' => GetMessage('CRM_INVOICE_STATUS_PAID'),
 				'STATUS_ID' => 'P',
 				'SORT' => 130,
-				'SYSTEM' => 'Y'
-			),
-			array(
+				'SYSTEM' => 'Y',
+				'COLOR' => '#7BD500',
+				'SEMANTICS' => \Bitrix\Crm\PhaseSemantics::SUCCESS,
+			],
+			[
 				'NAME' => GetMessage('CRM_INVOICE_STATUS_REFUSED'),
 				'STATUS_ID' => 'D',
 				'SORT' => 140,
-				'SYSTEM' => 'Y'
-			)
-		);
+				'SYSTEM' => 'Y',
+				'COLOR' => '#FF5752',
+				'SEMANTICS' => \Bitrix\Crm\PhaseSemantics::FAILURE,
+			]
+		];
 	}
-	public static function GetDefaultCallListStates()
+
+	/**
+	 * @internal
+	 * @return array
+	 */
+	public static function GetDefaultCallListStates(): array
 	{
-		return array(
-			array(
+		return [
+			[
 				'NAME' => GetMessage('CRM_CALL_LIST_IN_WORK'),
 				'STATUS_ID' => 'IN_WORK',
 				'SORT' => 10,
 				'SYSTEM' => 'Y'
-			),
-			array(
+			],
+			[
 				'NAME' => GetMessage('CRM_CALL_LIST_SUCCESS'),
 				'STATUS_ID' => 'SUCCESS',
 				'SORT' => 20,
 				'SYSTEM' => 'Y'
-			),
-			array(
+			],
+			[
 				'NAME' => GetMessage('CRM_CALL_LIST_WRONG_NUMBER'),
 				'STATUS_ID' => 'WRONG_NUMBER',
 				'SORT' => 30,
 				'SYSTEM' => 'Y'
-			),
-			array(
+			],
+			[
 				'NAME' => GetMessage('CRM_CALL_LIST_STOP_CALLING'),
 				'STATUS_ID' => 'STOP_CALLING',
 				'SORT' => 40,
 				'SYSTEM' => 'Y'
-			),
-		);
+			],
+		];
 	}
-	public static function GetDefaultEmployees()
+
+	/**
+	 * @internal
+	 * @return array
+	 */
+	public static function GetDefaultEmployees(): array
 	{
 		return array(
 			array(
@@ -984,18 +1324,17 @@ class CCrmStatus
 		);
 	}
 
-	public static function GetDefaultLeadStatusName($statusID)
+	public static function GetDefaultLeadStatusName($statusID): string
 	{
-		$s = Loc::getMessage("CRM_STATUS_TYPE_STATUS_{$statusID}");
-		return is_string($s) ? $s : "[{$statusID}]";
-	}
-	public static function GetDefaultDealStageName($stageID)
-	{
-		$s = Loc::getMessage("CRM_DEAL_STAGE_{$stageID}");
-		return is_string($s) ? $s : "[{$stageID}]";
+		return Loc::getMessage("CRM_STATUS_TYPE_STATUS_{$statusID}") ?? "[{$statusID}]";
 	}
 
-	public static function BulkCreate($entityId, array $items)
+	public static function GetDefaultDealStageName($stageID): string
+	{
+		return Loc::getMessage("CRM_DEAL_STAGE_{$stageID}") ?? "[{$stageID}]";
+	}
+
+	public static function BulkCreate($entityId, array $items): void
 	{
 		$entity = new CCrmStatus($entityId);
 		foreach($items as $item)
@@ -1006,122 +1345,120 @@ class CCrmStatus
 			}
 		}
 	}
-	public static function Erase($entityId)
-	{
-		$entity = new CCrmStatus($entityId);
-		$entity->DeleteAll();
-	}
+	//endregion
 
-	public function DeleteAll()
-	{
-		global $DB;
-		$entityId = $this->entityId;
-		$res = $DB->Query("DELETE FROM b_crm_status WHERE ENTITY_ID = '{$entityId}'", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
-		self::ClearCachedStatuses($entityId);
-		return $res;
-	}
-
-	public static function MarkAsEnabled($entityId, $enabled)
+	/**
+	 * Delete all statuses by $entityId
+	 * @param string $entityId
+	 */
+	public static function Erase($entityId): void
 	{
 		if(!is_string($entityId))
 		{
 			return;
 		}
-		$entityId = mb_strtoupper($entityId);
-		$settings = self::GetSettings();
-
-		if(!isset($settings[$entityId]))
-		{
-			$settings[$entityId] = array();
-		}
-		$settings[$entityId]['enabled'] = $enabled ? 'Y' : 'N';
-		self::SaveSettings();
+		$entity = new CCrmStatus($entityId);
+		$entity->DeleteAll();
 	}
+
+	/**
+	 * Delete all statuses
+	 */
+	public function DeleteAll(): void
+	{
+		$statuses = static::GetStatus($this->entityId);
+		foreach($statuses as $status)
+		{
+			$this->Delete($status['ID']);
+		}
+	}
+
+	/**
+	 * @deprecated
+	 * @param $entityId
+	 * @param $enabled
+	 */
+	public static function MarkAsEnabled($entityId, $enabled): void
+	{
+	}
+
+	/**
+	 * @deprecated
+	 * @param $entityId
+	 */
 	public static function CheckIfEnabled($entityId)
 	{
-		if(!is_string($entityId))
-		{
-			return false;
-		}
-		$entityId = mb_strtoupper($entityId);
-		$settings = self::GetSettings();
-		return !isset($settings[$entityId])
-			|| !isset($settings[$entityId]['enabled'])
-			|| mb_strtoupper($settings[$entityId]['enabled']) === 'Y';
-	}
-	private static function GetSettings()
-	{
-		self::$SETTINGS = CUserOptions::GetOption('crm', 'status', null);
-		if(!is_array(self::$SETTINGS))
-		{
-			self::$SETTINGS = array();
-		}
-		return self::$SETTINGS;
-	}
-	private static function SaveSettings()
-	{
-		CUserOptions::SetOption('crm', 'status', self::$SETTINGS);
 	}
 
-	public static function GetLeadStatusSemanticInfo()
+	//region semantic info
+	public static function GetLeadStatusSemanticInfo(): array
 	{
-		return array(
+		return [
 			'START_FIELD' => 'NEW',
 			'FINAL_SUCCESS_FIELD' => 'CONVERTED',
 			'FINAL_UNSUCCESS_FIELD' => 'JUNK',
 			'FINAL_SORT' => 0
-		);
+		];
 	}
-	public static function GetDealStageSemanticInfo($namespace = '')
+
+	public static function GetDealStageSemanticInfo($namespace = ''): array
 	{
 		$prefix = is_string($namespace) && $namespace !== '' ? "{$namespace}:" : '';
-		return array(
+
+		return [
 			'START_FIELD' => "{$prefix}NEW",
 			'FINAL_SUCCESS_FIELD' => "{$prefix}WON",
 			'FINAL_UNSUCCESS_FIELD' => "{$prefix}LOSE",
 			'FINAL_SORT' => 0
-		);
+		];
 	}
-	public static function GetQuoteStatusSemanticInfo()
+
+	public static function GetQuoteStatusSemanticInfo(): array
 	{
-		return array(
+		return [
 			'START_FIELD' => 'DRAFT',
 			'FINAL_SUCCESS_FIELD' => 'APPROVED',
 			'FINAL_UNSUCCESS_FIELD' => 'DECLAINED',
 			'FINAL_SORT' => 0
-		);
+		];
 	}
-	public static function GetInvoiceStatusSemanticInfo()
+
+	public static function GetInvoiceStatusSemanticInfo(): array
 	{
-		return array(
+		return [
 			'START_FIELD' => 'N',
 			'FINAL_SUCCESS_FIELD' => 'P',
 			'FINAL_UNSUCCESS_FIELD' => 'D',
 			'FINAL_SORT' => 0
-		);
+		];
 	}
-	// Checking User Permissions -->
-	public static function CheckCreatePermission()
+	//endregion
+	//region user permissions
+	public static function CheckCreatePermission(): bool
+	{
+		$perms = CCrmPerms::GetCurrentUserPermissions();
+
+		return $perms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+	}
+
+	public static function CheckUpdatePermission($ID): bool
 	{
 		$perms = CCrmPerms::GetCurrentUserPermissions();
 		return $perms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
 	}
-	public static function CheckUpdatePermission($ID)
+
+	public static function CheckDeletePermission($ID): bool
 	{
 		$perms = CCrmPerms::GetCurrentUserPermissions();
 		return $perms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
 	}
-	public static function CheckDeletePermission($ID)
-	{
-		$perms = CCrmPerms::GetCurrentUserPermissions();
-		return $perms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
-	}
-	public static function CheckReadPermission($ID = 0)
+
+	public static function CheckReadPermission($ID = 0): bool
 	{
 		$perms = CCrmPerms::GetCurrentUserPermissions();
 		return $perms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ');
 	}
-	// <-- Checking User Permissions
+	//endregion
 }
 
 ?>

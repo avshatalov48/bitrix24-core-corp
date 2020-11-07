@@ -584,7 +584,7 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 		},
 		getDetailButtons: function()
 		{
-			return document.querySelectorAll('.crm-entity-widget-detail-btn');
+			return document.querySelectorAll('.ui-entity-editor-detail-btn');
 		},
 		getEditorButtons: function()
 		{
@@ -640,19 +640,23 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 		prepareControls: function()
 		{
 			var scheme = this.getScheme();
-			if(!(scheme instanceof BX.Crm.EntityScheme))
+			if(!(scheme instanceof BX.UI.EntityScheme))
 			{
 				throw "Crm.EntityMerger. Could not find editor scheme.";
 			}
 
 			this._controls = [];
-			var elements = scheme.getElements();
-			for(var i = 0, length = elements.length; i < length; i++)
+			var columns = scheme.getElements();
+			for(var columnsIndex = 0, columnsLength = columns.length; columnsIndex < columnsLength; columnsIndex++)
 			{
-				var controls = this.createControlsBySchemeElement(elements[i]);
-				for(var j = 0; j < controls.length; j++)
+				var sections = columns[columnsIndex].getElements();
+				for(var sectionsIndex = 0, sectionsLength = sections.length; sectionsIndex < sectionsLength; sectionsIndex++)
 				{
-					this._controls.push(controls[j]);
+					var controls = this.createControlsBySchemeElement(sections[sectionsIndex]);
+					for(var j = 0; j < controls.length; j++)
+					{
+						this._controls.push(controls[j]);
+					}
 				}
 			}
 		},
@@ -682,8 +686,8 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 					BX.Crm.EntityMergerSection.create(
 						controlId,
 						{
-							merger: this, editorControls:
-							editorControls
+							merger: this,
+							editorControls: editorControls
 						}
 					)
 				);
@@ -2549,6 +2553,10 @@ if(typeof BX.Crm.EntityMergerControl === "undefined")
 
 if(typeof BX.Crm.EntityMergerField === "undefined")
 {
+	/**
+	 * @extends BX.Crm.EntityMergerControl
+	 * @constructor
+	 */
 	BX.Crm.EntityMergerField = function ()
 	{
 		this._controller = null;
@@ -2583,7 +2591,9 @@ if(typeof BX.Crm.EntityMergerField === "undefined")
 			if(!this._editorControls[i].hasLayout())
 			{
 				BX.removeCustomEvent(window, "BX.Crm.EntityEditorField:onLayout", this._editorControlLayoutHandler);
+				BX.removeCustomEvent(window, "BX.UI.EntityEditorField:onLayout", this._editorControlLayoutHandler);
 				BX.addCustomEvent(window, "BX.Crm.EntityEditorField:onLayout", this._editorControlLayoutHandler);
+				BX.addCustomEvent(window, "BX.UI.EntityEditorField:onLayout", this._editorControlLayoutHandler);
 				return;
 			}
 		}
@@ -2684,6 +2694,7 @@ if(typeof BX.Crm.EntityMergerField === "undefined")
 		if(this.getEditorControlIndex(sender) >= 0 && this.checkIfHasLayout())
 		{
 			BX.removeCustomEvent(window, "BX.Crm.EntityEditorField:onLayout", this._editorControlLayoutHandler);
+			BX.removeCustomEvent(window, "BX.UI.EntityEditorField:onLayout", this._editorControlLayoutHandler);
 			window.setTimeout(
 				function(){ this.layout(); }.bind(this),
 				0
@@ -2949,6 +2960,10 @@ if(typeof BX.Crm.EntityMergerField === "undefined")
 
 if(typeof BX.Crm.EntityMergerSection === "undefined")
 {
+	/**
+	 * @extends BX.Crm.EntityMergerControl
+	 * @constructor
+	 */
 	BX.Crm.EntityMergerSection = function ()
 	{
 		BX.Crm.EntityMergerSection.superclass.constructor.apply(this);
@@ -3380,7 +3395,7 @@ if(typeof BX.Crm.EntityMergerFieldSwitch === "undefined")
 
 			var container = this._editorControl.getWrapper();
 			var actionWrapper = null;
-			var actionWrappers = container.querySelectorAll(".crm-entity-widget-before-action");
+			var actionWrappers = container.querySelectorAll(".ui-entity-editor-block-before-action");
 			for(var i = 0; i < actionWrappers.length; ++i)
 			{
 				if(actionWrappers[i].getAttribute("data-field-tag") === this._control.getDataTagName())

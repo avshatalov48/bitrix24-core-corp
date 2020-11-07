@@ -65,6 +65,7 @@ this.BX = this.BX || {};
 	      }
 
 	      settings.enableAutocomplete = this._autocompleteEnabled;
+	      settings.hideDefaultAddressType = true;
 	      this._field = crm_entityEditor_field_address_base.EntityEditorBaseAddressField.create(id, settings);
 
 	      this._field.setMultiple(true);

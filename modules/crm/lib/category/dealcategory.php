@@ -6,7 +6,6 @@ use Bitrix\Main\Entity\Query;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Category\Entity\DealCategoryTable;
 use Bitrix\Crm\DealTable;
-use Bitrix\Crm\Color\DealStageColorScheme;
 use Bitrix\Crm\Entry\AddException;
 use Bitrix\Crm\Entry\UpdateException;
 use Bitrix\Crm\Entry\DeleteException;
@@ -511,6 +510,11 @@ class DealCategory
 			throw new AddException(\CCrmOwnerType::DealCategory, $result->getErrorMessages());
 		}
 
+		if(self::$all !== null)
+		{
+			self::$all = null;
+		}
+
 		$ID = $result->getId();
 		self::createDefaultStages($ID);
 
@@ -536,11 +540,6 @@ class DealCategory
 			$role->Update($roleID, $fields);
 		}
 		//endregion
-
-		if(self::$all !== null)
-		{
-			self::$all = null;
-		}
 
 		return $ID;
 	}
@@ -638,7 +637,6 @@ class DealCategory
 		unset(self::$existMap[$ID]);
 		self::eraseStages($ID);
 		self::erasePermissions($ID);
-		self::removeColorScheme($ID);
 
 		if(self::$all !== null)
 		{
@@ -697,13 +695,15 @@ class DealCategory
 
 			if($ID > 0)
 			{
+				$prefix = self::prepareStageNamespaceID($ID);
 				$typeID = self::convertToStatusEntityID($ID);
 				$entityTypes[$typeID] =
 					array(
 						'ID' => $typeID,
 						'NAME' => GetMessage('CRM_DEAL_CATEGORY_STATUS_ENTITY', array('#CATEGORY#' => $name)),
 						'PARENT_ID' => 'DEAL_STAGE',
-						'SEMANTIC_INFO' => \CCrmStatus::GetDealStageSemanticInfo(self::prepareStageNamespaceID($ID))
+						'SEMANTIC_INFO' => \CCrmStatus::GetDealStageSemanticInfo($prefix),
+						'PREFIX' => $prefix,
 					);
 			}
 			elseif($enableDefault)
@@ -1048,21 +1048,12 @@ class DealCategory
 	}
 
 	/**
-	 * Remove color scheme that is belong to specified deal category entry.
+	 * @deprecated
 	 * @param int $ID Deal category entry ID (must be greater than 0).
 	 * @return void
 	 */
 	public static function removeColorScheme($ID)
 	{
-		if(!is_int($ID))
-		{
-			$ID = (int)$ID;
-		}
-
-		if($ID > 0)
-		{
-			DealStageColorScheme::removeByCategory($ID);
-		}
 	}
 
 	/**

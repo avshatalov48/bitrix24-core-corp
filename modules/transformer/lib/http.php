@@ -124,7 +124,7 @@ class Http
 	 */
 	public function query($command, $guid, $params = array())
 	{
-		if(strlen($command) <= 0)
+		if($command == '')
 		{
 			throw new ArgumentNullException('command');
 		}
@@ -146,7 +146,7 @@ class Http
 		if($params['file'])
 		{
 			$uri = new \Bitrix\Main\Web\Uri($params['file']);
-			if(strlen($uri->getHost()) <= 0)
+			if($uri->getHost() == '')
 			{
 				$params['file'] = (new Uri($this->domain.$params['file']))->getLocator();
 			}
@@ -214,7 +214,7 @@ class Http
 	{
 		$uri = new Uri(self::BACK_URL);
 		$uri->addParams(array('id' => $id));
-		if(strlen($uri->getHost()) <= 0)
+		if($uri->getHost() == '')
 		{
 			$uri = (new Uri($this->domain.$uri->getPathQuery()))->getLocator();
 		}

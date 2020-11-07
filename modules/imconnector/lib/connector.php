@@ -172,8 +172,8 @@ class Connector
 
 			foreach ($connectors as $cell=>$connector)
 			{
-				if(strlen($connector) > $number)
-					$connectors[$cell] = substr($connector, 0, ($number-3)) . '...';
+				if(mb_strlen($connector) > $number)
+					$connectors[$cell] = mb_substr($connector, 0, ($number - 3)).'...';
 			}
 		}
 
@@ -238,8 +238,8 @@ class Connector
 
 			foreach ($connectors as $cell=>$connector)
 			{
-				if(strlen($connector) > $number)
-					$connectors[$cell] = substr($connector, 0, ($number-3)) . '...';
+				if(mb_strlen($connector) > $number)
+					$connectors[$cell] = mb_substr($connector, 0, ($number - 3)).'...';
 			}
 		}
 
@@ -254,7 +254,7 @@ class Connector
 	 */
 	public static function getListConnectorActive($customConnectors = true)
 	{
-		$connectors = strtolower(Option::get(Library::MODULE_ID, "list_connector"));
+		$connectors = mb_strtolower(Option::get(Library::MODULE_ID, "list_connector"));
 		$connectors = explode(",", $connectors);
 
 		if($customConnectors === true)
@@ -632,13 +632,13 @@ class Connector
 	 */
 	public static function getConnectorRealId($id)
 	{
-		$id = strtolower($id);
+		$id = mb_strtolower($id);
 
-		$positionSeparator = strpos($id, '.');
+		$positionSeparator = mb_strpos($id, '.');
 
 		if($positionSeparator != false)
 		{
-			$id = substr($id, 0, $positionSeparator);
+			$id = mb_substr($id, 0, $positionSeparator);
 		}
 
 		return $id;

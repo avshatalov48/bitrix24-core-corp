@@ -153,6 +153,10 @@ elseif($action === 'SAVE')
 				'VALUE_TYPE' => $multiField['VALUE_TYPE']
 			);
 		}
+
+		$sourceFields['ORIGINATOR_ID'] = '';
+		$sourceFields['ORIGIN_ID'] = '';
+		$sourceFields['ORIGIN_VERSION'] = '';
 	}
 
 	foreach($fieldsInfo as $name => $info)

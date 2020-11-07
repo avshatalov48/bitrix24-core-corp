@@ -6,10 +6,13 @@ define('PUBLIC_MODE', 1);
 use Bitrix\Main;
 use Bitrix\Crm\Order;
 use Bitrix\Crm\Tracking;
+use Bitrix\Crm\Product\Url;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Settings\LayoutSettings;
 use \Bitrix\Main\Grid;
 use Bitrix\Crm\Agent\Search\OrderSearchContentRebuildAgent;
+use Bitrix\Iblock\Url\AdminPage\BuilderManager;
+
 
 Loc::loadMessages(__FILE__);
 
@@ -20,7 +23,10 @@ class CCrmOrderListComponent extends \CBitrixComponent
 	protected $errors = array();
 	protected $isInternal = false;
 	private $exportParams = [];
-	
+
+	/** @var null|\Bitrix\Iblock\Url\AdminPage\BaseBuilder  */
+	private $urlBuilder = null;
+
 	public function getEntityTypeId()
 	{
 		return \CCrmOwnerType::Order;
@@ -45,6 +51,15 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		if ($this->isExportMode())
 		{
 			$this->prepareExportParams($arParams);
+		}
+
+		$arParams['BUILDER_CONTEXT'] = isset($arParams['BUILDER_CONTEXT']) ? $arParams['BUILDER_CONTEXT'] : '';
+		if (
+			$arParams['BUILDER_CONTEXT'] != Url\ShopBuilder::TYPE_ID
+			&& $arParams['BUILDER_CONTEXT'] != Url\ProductBuilder::TYPE_ID
+		)
+		{
+			$arParams['BUILDER_CONTEXT'] = Url\ShopBuilder::TYPE_ID;
 		}
 
 		return $arParams;
@@ -126,6 +141,19 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			}
 		}
 
+		return true;
+	}
+
+	protected function initUrlBuilder(): bool
+	{
+		$manager = BuilderManager::getInstance();
+		$this->urlBuilder = $manager->getBuilder($this->arParams['BUILDER_CONTEXT']);
+		unset($manager);
+		if ($this->urlBuilder === null)
+		{
+			$this->addError(Loc::getMessage('CRM_ERR_URL_BUILDER_ABSENT'));
+			return false;
+		}
 		return true;
 	}
 
@@ -719,7 +747,11 @@ class CCrmOrderListComponent extends \CBitrixComponent
 				}
 				else
 				{
-					$result['=ORDER_CHECK_PRINTED.STATUS'] = null;
+					$result[] = [
+						'LOGIC' => 'OR',
+						'=ORDER_CHECK_PRINTED.STATUS' => null,
+						'@ORDER_CHECK_PRINTED.STATUS' => ['N', 'P', 'E']
+					];
 				}
 
 				$runtime[] = new Main\ORM\Fields\Relations\Reference(
@@ -1126,6 +1158,12 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		}
 
 		$this->arParams = $this->prepareParams($this->arParams);
+
+		if (!$this->initUrlBuilder())
+		{
+			$this->showErrors();
+			return false;
+		}
 
 		$currentPage = $APPLICATION->GetCurPage();
 		$this->arResult['CURRENT_USER_ID'] = CCrmSecurityHelper::GetCurrentUserID();
@@ -2490,7 +2528,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			return [];
 		}
 
-		$result = [];		
+		$result = [];
 		$basketItems = [];
 		$dbItemsList = Order\Basket::getList(array(
 			'order' => ['ID' => 'ASC'],
@@ -2512,24 +2550,14 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 			if((int)$item['IBLOCK_ID'] > 0 && (int)$item['PRODUCT__ID'] > 0)
 			{
-				$item['EDIT_PAGE_URL'] = \CIBlock::GetAdminElementEditLink(
-					(int)$item['IBLOCK_ID'],
+				$this->urlBuilder->setIblockId((int)$item['IBLOCK_ID']);
+				$item['EDIT_PAGE_URL'] = $this->urlBuilder->getElementDetailUrl(
 					(int)$item['PRODUCT__ID'],
-					array(
-						"find_section_section" => (int)$item['IBLOCK_SECTION_ID'] > 0 ? (int)$item['IBLOCK_SECTION_ID'] : null,
+					[
+						'find_section_section' => (int)$item['IBLOCK_SECTION_ID'] > 0 ? (int)$item['IBLOCK_SECTION_ID'] : 0,
 						'WF' => 'Y'
-					));
-
-				if($item['EDIT_PAGE_URL'] <> '')
-				{
-					$item['EDIT_PAGE_URL'] = str_replace(
-						[".php","/bitrix/admin/"],
-						["/", "/shop/settings/"],
-						$item['EDIT_PAGE_URL']
-					);
-
-					$item['EDIT_PAGE_URL'] = '/shop/settings/'.$item['EDIT_PAGE_URL'].'&'.bitrix_sessid_get();
-				}
+					]
+				);
 			}
 
 			$item['PRICE'] = SaleFormatCurrency($item['PRICE'], $item['CURRENCY']);

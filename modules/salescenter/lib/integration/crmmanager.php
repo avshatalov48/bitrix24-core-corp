@@ -628,7 +628,7 @@ class CrmManager extends Base
 
 		if($result->isSuccess())
 		{
-			$this->addTimelineEntryOnSend($order);
+			$this->addTimelineEntryOnSend($order, ['DESTINATION' => 'SMS']);
 
 			Sms::addActivity([
 				'AUTHOR_ID' => $order->getField('RESPONSIBLE_ID'),
@@ -724,7 +724,14 @@ class CrmManager extends Base
 		);
 	}
 
-	private function addTimelineEntryOnSend(Order\Order $order): void
+	/**
+	 * @param Order\Order $order
+	 * @param array $options
+	 * @throws Main\ArgumentException
+	 * @throws Main\ArgumentNullException
+	 * @throws Main\SystemException
+	 */
+	public function addTimelineEntryOnSend(Order\Order $order, array $options): void
 	{
 		$orderId = $order->getId();
 		$dealId = $order->getDealBinding()->getDealId();
@@ -751,7 +758,7 @@ class CrmManager extends Base
 					'ORDER_ID' => $orderId,
 					'DEAL_ID' => $dealId,
 					'SENT' => 'Y',
-					'DESTINATION' => 'SMS',
+					'DESTINATION' => isset($options['DESTINATION']) ? $options['DESTINATION'] : '',
 				]
 			],
 			'BINDINGS' => $bindings

@@ -4,6 +4,7 @@ $MESS["IM_CAMERA_ROLL"] = "Take a photo";
 $MESS["IM_CHOOSE_FILE_TITLE"] = "Files";
 $MESS["IM_CHOOSE_PHOTO"] = "Select from gallery";
 $MESS["IM_DIALOG_UNNAMED"] = "Loading...";
+$MESS["IM_LIST_LOADING"] = "Loading...";
 $MESS["IM_EMPTY_BUTTON"] = "Start Conversation";
 $MESS["IM_EMPTY_OL_TEXT_1"] = "Looking for conversations with your clients? They're all here.";
 $MESS["IM_EMPTY_OL_TEXT_2"] = "You'll be notified as soon as a client posts a message to an Open Channel.";

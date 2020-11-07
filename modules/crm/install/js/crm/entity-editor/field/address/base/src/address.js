@@ -1,7 +1,7 @@
 import {Text, Tag, Dom, Type, Loc} from "main.core";
 import {EventEmitter} from "main.core.events";
 import "./address.css"
-import {MenuManager} from "main.popup";
+import {MenuManager, PopupManager} from "main.popup";
 
 export class EntityEditorBaseAddressField
 {
@@ -17,6 +17,8 @@ export class EntityEditorBaseAddressField
 		this._isEditMode = true;
 		this._showFirstItemOnly = BX.prop.getBoolean(settings, 'showFirstItemOnly', false);
 		this._enableAutocomplete = BX.prop.getBoolean(settings, 'enableAutocomplete', true);
+		this._hideDefaultAddressType = BX.prop.getBoolean(this._settings, 'hideDefaultAddressType', false);
+		this._showAddressTypeInViewMode = BX.prop.getBoolean(this._settings, 'showAddressTypeInViewMode', false);
 	}
 
 	setMultiple(isMultiple)
@@ -226,6 +228,7 @@ export class EntityEditorBaseAddressField
 			availableTypesIds: [...this._availableTypesIds],
 			canChangeType: this._isMultiple,
 			enableAutocomplete: this._enableAutocomplete,
+			showAddressTypeInViewMode: this._isMultiple && this._showAddressTypeInViewMode,
 			type,
 			value
 		});
@@ -235,8 +238,11 @@ export class EntityEditorBaseAddressField
 		addressItem.subscribe('onStartLoadAddress', this.onStartLoadAddress.bind(this));
 		addressItem.subscribe('onAddressLoaded', this.onAddressLoaded.bind(this));
 		addressItem.subscribe('onError', this.onError.bind(this));
+		addressItem.subscribe('onCopyAddress', this.onCopyAddress.bind(this));
 		this.updateAvailableTypes(type, null);
 		this._addressList.push(addressItem);
+		this.updateTypeSelectorVisibility(this._addressList.length > 1);
+		return addressItem;
 	}
 
 	removeAddress(id)
@@ -247,6 +253,7 @@ export class EntityEditorBaseAddressField
 			let type = addressItem.getType();
 			this._addressList.splice(this._addressList.indexOf(addressItem), 1);
 			this.updateAvailableTypes(null, type);
+			this.updateTypeSelectorVisibility(this._addressList.length > 1);
 			addressItem.destroy();
 		}
 	}
@@ -280,6 +287,18 @@ export class EntityEditorBaseAddressField
 		for (let addressItem of this._addressList)
 		{
 			addressItem.setAvailableTypesIds([...this._availableTypesIds]);
+		}
+	}
+
+	updateTypeSelectorVisibility(showTypeSelector)
+	{
+		if (!this._hideDefaultAddressType)
+		{
+			return;
+		}
+		for (let addressItem of this._addressList)
+		{
+			addressItem.setTypeSelectorVisibility(showTypeSelector);
 		}
 	}
 
@@ -349,6 +368,41 @@ export class EntityEditorBaseAddressField
 		EventEmitter.emit(this, 'onError', event);
 	}
 
+	onCopyAddress(event)
+	{
+		const data = event.getData();
+		let sourceAddress = this.getAddressById(data.sourceId);
+		if (!sourceAddress)
+		{
+			return;
+		}
+		const sourceAddressData = sourceAddress.getValue();
+		if (!(sourceAddressData).length)
+		{
+			return;
+		}
+
+		for (let i=0; i < data.destinationTypes.length; i++)
+		{
+			const type = data.destinationTypes[i];
+			let destinationAddress = this._addressList
+				.filter((item) => item.getType() == type)
+				.reduce((prev, cur) => prev ? prev : cur, null);
+			if (destinationAddress)
+			{
+				destinationAddress.setValue(sourceAddressData);
+			}
+			else
+			{
+				destinationAddress = this.addAddress(type, sourceAddressData);
+			}
+			destinationAddress.markAsNew();
+
+			this.refreshLayout();
+		}
+		this.emitUpdateEvent();
+	}
+
 	static create(id, settings)
 	{
 		let self = new EntityEditorBaseAddressField();
@@ -373,12 +427,15 @@ class AddressItem extends EventEmitter
 		this.typesMenuId = 'address_type_menu_' + this._id;
 		this._type = BX.prop.getString(settings, 'type', "");
 		this._isEditMode = true;
+		this._isTypeSelectorVisible = BX.prop.getBoolean(settings, 'isTypeSelectorVisible', true);
 		this._isAutocompleteEnabled = BX.prop.getBoolean(settings, 'enableAutocomplete', true);
+		this._showAddressTypeInViewMode = BX.prop.getBoolean(settings, 'showAddressTypeInViewMode', true);
 		this._showDetails = !this._isAutocompleteEnabled || BX.prop.getBoolean(settings, 'showDetails', false);
 		this._isLoading = false;
 		this._addressWidget = null;
 		this._wrapper = null;
 		this._domNodes = {};
+		this._selectedCopyDestinations = [];
 
 		this._isLocationModuleInstalled =
 			!Type.isUndefined(BX.Location) &&
@@ -435,6 +492,24 @@ class AddressItem extends EventEmitter
 	getValue()
 	{
 		return this._value;
+	}
+
+	setValue(value)
+	{
+		this.destroy();
+		this._value = value;
+		this.initializeAddressWidget();
+	}
+
+	markAsNew()
+	{
+		let address = this.getAddress();
+		if (address)
+		{
+			address.id = 0;
+			address.clearLinks();
+		}
+		this._value = address ? address.toJson() : '';
 	}
 
 	setEditMode(isEditMode)
@@ -528,7 +603,8 @@ class AddressItem extends EventEmitter
 			}
 		);
 		let createdMenu = MenuManager.getMenuById(this.typesMenuId);
-		if (createdMenu && Type.isDomNode(this._domNodes.addressTypeSelector))
+		if (createdMenu && Type.isDomNode(this._domNodes.addressTypeSelector)
+			&& this._domNodes.addressTypeSelector.offsetWidth > 200)
 		{
 			createdMenu.getPopupWindow().setWidth(this._domNodes.addressTypeSelector.offsetWidth);
 		}
@@ -541,6 +617,11 @@ class AddressItem extends EventEmitter
 		{
 			menu.close();
 		}
+	}
+
+	setTypeSelectorVisibility(visible)
+	{
+		this._isTypeSelectorVisible = !!visible;
 	}
 
 	getEditHtml(addressString)
@@ -562,21 +643,41 @@ class AddressItem extends EventEmitter
 
 		if (this._canChangeType)
 		{
-			this._domNodes.addressTypeSelector = Tag.render`
-			<div class="ui-ctl ui-ctl-w100 ui-ctl-after-icon ui-ctl-dropdown" onclick="${this.onToggleTypesMenu.bind(this)}">
-				<div class="ui-ctl-after ui-ctl-icon-angle"></div>
-				${this._domNodes.typeName}
-			</div>`;
+			if (this._isTypeSelectorVisible)
+			{
+				this._domNodes.addressTypeSelector = Tag.render`
+					<div class="ui-ctl ui-ctl-inline ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w25" onclick="${this.onToggleTypesMenu.bind(this)}">
+						<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+						${this._domNodes.typeName}
+					</div>`;
+				this._domNodes.addressTypeContainer = null;
 
-			this._domNodes.addressTypeContainer = Tag.render`
-			<div class="location-fields-control-block crm-address-type-block">
-				<div class="ui-entity-editor-content-block ui-entity-editor-field-text">
-					<div class="ui-entity-editor-block-title">
-						<label class="ui-entity-editor-block-title-text">${Loc.getMessage('CRM_ADDRESS_TYPE')}</label>
+				Dom.addClass(this._domNodes.addressContainer, ['ui-ctl-inline', 'ui-ctl-w75']);
+				this._domNodes.addressContainer = Tag.render`
+					<div class="ui-ctl-inline ui-ctl-w100">
+						${this._domNodes.addressTypeSelector}
+						${this._domNodes.addressContainer}
 					</div>
-					${this._domNodes.addressTypeSelector}
-				</div>
-			</div>`;
+				`;
+			}
+			else
+			{
+				this._domNodes.addressTypeSelector = Tag.render`
+					<div class="ui-ctl ui-ctl-w100 ui-ctl-after-icon ui-ctl-dropdown" onclick="${this.onToggleTypesMenu.bind(this)}">
+						<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+						${this._domNodes.typeName}
+					</div>`;
+
+				this._domNodes.addressTypeContainer = Tag.render`
+					<div class="location-fields-control-block crm-address-type-block">
+						<div class="ui-entity-editor-content-block ui-entity-editor-field-text">
+							<div class="ui-entity-editor-block-title">
+								<label class="ui-entity-editor-block-title-text">${Loc.getMessage('CRM_ADDRESS_TYPE')}</label>
+							</div>
+							${this._domNodes.addressTypeSelector}
+						</div>
+					</div>`;
+			}
 			this.refreshTypeName();
 		}
 
@@ -585,18 +686,23 @@ class AddressItem extends EventEmitter
 		this._domNodes.detailsToggler =
 			Tag.render`<span class="ui-link ui-link-secondary ui-entity-editor-block-title-link" onclick="${this.onToggleDetailsVisibility.bind(this)}"></span>`;
 
+		this._domNodes.copyButton =
+				Tag.render`<span class="ui-link ui-link-secondary ui-entity-editor-block-title-link" onclick="${this.onCopyButtonClick.bind(this)}">${Loc.getMessage('CRM_ADDRESS_COPY1')}</span>`;
+
+		this.refreshCopyButtonVisibility();
 		this.setDetailsVisibility(this._showDetails);
 
 		let result = Tag.render`
 			<div class="crm-address-control-item">
 				<div class="crm-address-control-mode-switch">
+					${this._domNodes.copyButton ? this._domNodes.copyButton : ''}
 					${this._domNodes.detailsToggler}
 				</div>
 				${this._domNodes.addressContainer}
 				${this._domNodes.detailsContainer}
 			</div>`;
 
-		if (this._canChangeType)
+		if (this._canChangeType && Type.isDomNode(this._domNodes.addressTypeContainer))
 		{
 			Dom.append(this._domNodes.addressTypeContainer, result);
 		}
@@ -611,8 +717,19 @@ class AddressItem extends EventEmitter
 				<span class="ui-link ui-link-dark ui-link-dotted">${addressString}</span>
 			</div>`;
 
+		let addressType = '';
+		if (this._showAddressTypeInViewMode)
+		{
+			let typeName = this._typesList
+				.filter((item) => item.value == this._type)
+				.map((item) => item.name)
+				.join('')
+
+			addressType = Tag.render`<span class="ui-link ui-link-secondary">${Text.encode(typeName)}:</span>`
+		}
 		return Tag.render`
 			<div class="crm-address-control-item">
+				${addressType}
 				${this._domNodes.addressContainer}
 			</div>`;
 	}
@@ -621,11 +738,14 @@ class AddressItem extends EventEmitter
 	{
 		if (Type.isDomNode(this._domNodes.typeName))
 		{
-			this._domNodes.typeName.textContent =
+			let typeName =
 				this._typesList
 					.filter((item) => item.value === this._type)
 					.map((item) => item.name)
 					.join('');
+
+			this._domNodes.typeName.textContent = typeName;
+			this._domNodes.typeName.title = typeName;
 		}
 	}
 
@@ -654,6 +774,20 @@ class AddressItem extends EventEmitter
 
 			Dom.replace(node, newNode);
 			this._domNodes.icon = newNode;
+		}
+	}
+
+	refreshCopyButtonVisibility()
+	{
+		let node = this._domNodes.copyButton;
+		if (Type.isDomNode(node))
+		{
+			let isVisible = !!this.getAddress();
+			if (isVisible)
+			{
+
+			}
+			Dom.style(node, 'display', isVisible ? '' : 'none');
 		}
 	}
 
@@ -691,6 +825,7 @@ class AddressItem extends EventEmitter
 		this._value = "";
 		this._isLoading = false;
 		this.refreshIcon();
+		this.refreshCopyButtonVisibility();
 	}
 
 	setDetailsVisibility(visible)
@@ -722,6 +857,55 @@ class AddressItem extends EventEmitter
 		}
 	}
 
+	showCopyDestinationPopup()
+	{
+		let popup = PopupManager.create({
+			id: this._id + '_copy_dst_popup',
+			cacheable: false,
+			autoHide: true,
+			titleBar: Loc.getMessage('CRM_ADDRESS_COPY_TITLE'),
+			content: this.getCopyDestinationLayout(),
+			closeIcon: true,
+			closeByEsc: true,
+			buttons: [
+				new BX.UI.Button({
+					id: 'copy',
+					text: Loc.getMessage('CRM_ADDRESS_COPY2'),
+					color: BX.UI.Button.Color.PRIMARY,
+					state: BX.UI.ButtonState.DISABLED,
+					onclick:(button) =>
+					{
+						button.getContext().close();
+						this.emit('onCopyAddress', {
+							sourceId: this.getId(),
+							destinationTypes: this._selectedCopyDestinations});
+					}
+				})
+			]
+		});
+		popup.show();
+	}
+
+	getCopyDestinationLayout()
+	{
+		let types = this._typesList.filter((item) => item.value != this._type);
+		return Tag.render`
+			<div>
+				<div class="ui-title-7">${Loc.getMessage('CRM_ADDRESS_COPY_TO')}</div>
+				<div>
+					${types.map((item) => Tag.render`
+						<div class="ui-ctl ui-ctl-w100 ui-ctl-checkbox ui-ctl-xs">
+							<label>
+								<input onclick="${this.onChangeCopyDestination.bind(this)}" type="checkbox" value="${item.value}">
+								<span class="ui-ctl-label-text">${Text.encode(item.name)}</span>
+							</label>
+						</div>
+					`)}
+				</div>
+			</div>
+		`;
+	}
+
 	destroy()
 	{
 		if (!Type.isNull(this._addressWidget))
@@ -739,6 +923,35 @@ class AddressItem extends EventEmitter
 	{
 		this.clearValue();
 		this.emit('onUpdateAddress', {id: this.getId(), value: this.getValue()});
+	}
+
+	onCopyButtonClick()
+	{
+		this.showCopyDestinationPopup()
+	}
+
+	onChangeCopyDestination(e)
+	{
+		let input = e.target;
+		let value = input ? input.value : null;
+		let isChecked = input ? input.checked : false;
+		if (isChecked && this._selectedCopyDestinations.indexOf(value) < 0)
+		{
+			this._selectedCopyDestinations.push(value);
+		}
+		if (!isChecked && this._selectedCopyDestinations.indexOf(value) >= 0)
+		{
+			this._selectedCopyDestinations.splice(this._selectedCopyDestinations.indexOf(value), 1);
+		}
+		let popup = PopupManager.getPopupById(this._id + '_copy_dst_popup');
+		if (popup)
+		{
+			let button = popup.getButton('copy');
+			if (button)
+			{
+				button.setDisabled(!this._selectedCopyDestinations.length);
+			}
+		}
 	}
 
 	onToggleTypesMenu(event)
@@ -776,6 +989,7 @@ class AddressItem extends EventEmitter
 		if (wasLoading !== this._isLoading)
 		{
 			this.refreshIcon();
+			this.refreshCopyButtonVisibility();
 		}
 		if (state === BX.Location.Widget.State.DATA_LOADING)
 		{
@@ -795,6 +1009,7 @@ class AddressItem extends EventEmitter
 		this._value = Type.isObject(data.address) ? data.address.toJson() : '';
 
 		this.refreshIcon();
+		this.refreshCopyButtonVisibility();
 		this.emit('onUpdateAddress', {id: this.getId(), value: this.getValue()});
 	}
 
@@ -808,6 +1023,7 @@ class AddressItem extends EventEmitter
 
 		this._isLoading = false;
 		this.refreshIcon();
+		this.refreshCopyButtonVisibility();
 
 		this.emit('onError', {id: this.getId(), error: errorMessage});
 	}

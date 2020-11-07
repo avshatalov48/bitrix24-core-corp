@@ -229,8 +229,8 @@ class ImConnectorBotframework extends \CBitrixComponent
 
 		$this->arResult["NAME_TITLE"] = Connector::getNameConnectorReal($this->connector);
 
-		if(strlen($this->arResult["NAME_TITLE"]) > 30)
-			$this->arResult["NAME"] = substr($this->arResult["NAME_TITLE"], 0, 27) . '...';
+		if(mb_strlen($this->arResult["NAME_TITLE"]) > 30)
+			$this->arResult["NAME"] = mb_substr($this->arResult["NAME_TITLE"], 0, 27).'...';
 		else
 			$this->arResult["NAME"] = $this->arResult["NAME_TITLE"];
 

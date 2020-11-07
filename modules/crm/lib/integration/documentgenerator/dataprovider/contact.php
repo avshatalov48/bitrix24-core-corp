@@ -309,14 +309,6 @@ class Contact extends CrmEntityDataProvider implements Nameable
 	}
 
 	/**
-	 * @return string
-	 */
-	public function getAddress()
-	{
-		return $this->getAddressFromRequisite($this->fields['REQUISITE'], 'PRIMARY_ADDRESS');
-	}
-
-	/**
 	 * @return array
 	 * @throws \Bitrix\Main\ArgumentException
 	 */

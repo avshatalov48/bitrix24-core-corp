@@ -430,7 +430,7 @@ foreach (array_keys($arAgentInfo) as $type)
 			$fieldHtml .= '<option value="'.htmlspecialcharsbx($arPropFieldsList[$personTypeId][$i]).'"'.(($fieldType === 'PROPERTY' && $arPropFieldsList[$personTypeId][$i] == $fieldValue) ? ' selected="selected"' : '').'>'.htmlspecialcharsbx($arPropFieldsNameList[$personTypeId][$i]).'</option>'.PHP_EOL;
 		unset($nCount);
 		$fieldHtml .= '</select>'.
-			'<input id="'.'VALUE1_'.$id.'_'.$tabNumber.'" class="crm-exch1c-val-ctrl" type="text" name="'.'VALUE1_'.$id.'_'.$tabNumber.'"'.(($fieldType !== 'ORDER' && $fieldType !== 'PROPERTY') ? ' value="'.$fieldValue.'"' : ' value="" style="display: none;"').' maxlength="180" />';
+			'<input id="'.'VALUE1_'.$id.'_'.$tabNumber.'" class="crm-exch1c-val-ctrl" type="text" name="'.'VALUE1_'.$id.'_'.$tabNumber.'"'.(($fieldType !== 'ORDER' && $fieldType !== 'PROPERTY') ? ' value="'.htmlspecialcharsbx($fieldValue).'"' : ' value="" style="display: none;"').' maxlength="180" />';
 
 		$lastId = 'TYPE_'.$id.'_'.$tabNumber;
 		$fields[] = array(

@@ -46,41 +46,40 @@ class CCrmStatusInvoice extends CCrmStatus
 
 	public static function GetList($arSort = array(), $arFilter = Array())
 	{
-		$arFilter['ENTITY_ID'] = 'INVOICE_STATUS';
-
-		return parent::GetList($arSort, $arFilter);
+		return static::GetStatus('INVOICE_STATUS');
 	}
 
-	public static function isStatusFailed($statusId)
+	public static function isStatusFailed($statusId): bool
 	{
 		$arStatuses = self::getStatusIds('failed');
+
 		return in_array($statusId, $arStatuses);
 	}
 
-	public static function isStatusNeutral($statusId)
+	public static function isStatusNeutral($statusId): bool
 	{
 		$arStatuses = self::getStatusIds('neutral');
-		return in_array($statusId, $arStatuses);
+
+		return in_array($statusId, $arStatuses, true);
 	}
 
-	public static function isStatusSuccess($statusId)
+	public static function isStatusSuccess($statusId): bool
 	{
 		return $statusId === 'P';
 	}
 
-	public static function getByID($statusID)
+	public static function getByID($statusID): ?array
 	{
-		$dbRes = static::GetList(array(), array('STATUS_ID' => $statusID));
-		return $dbRes->Fetch();
+		return static::GetStatus('INVOICE_STATUS')[$statusID] ?? null;
 	}
 
-	public function Add($arFields, $bCheckStatusId = true)
+	public function Add(array $arFields, bool $bCheckStatusId = true)
 	{
-		$arStatus = array(
+		$arStatus = [
 			'STATUS_ID' => self::getNewId(),
 			'ENTITY_ID' => 'INVOICE_STATUS',
 			'NAME' => $arFields['NAME']
-		);
+		];
 
 		if (isset($arFields['SORT']))
 			$arStatus['SORT'] = $arFields['SORT'];
@@ -88,11 +87,11 @@ class CCrmStatusInvoice extends CCrmStatus
 		return parent::Add($arStatus, $bCheckStatusId);
 	}
 
-	private function getNewId()
+	private static function getNewId(): string
 	{
 		do
 		{
-			$newId = chr(rand(65, 90)); //A-Z
+			$newId = chr(random_int(65, 90)); //A-Z
 		}
 		while(self::isIdExist($newId));
 
@@ -100,11 +99,14 @@ class CCrmStatusInvoice extends CCrmStatus
 	}
 
 	/**
-	 * Checks if status with ID alredy exist
+	 * Checks if status with ID already exist
+	 * @param string $statusId
+	 * @return bool
 	 */
-	private function isIdExist($statusId)
+	private static function isIdExist(string $statusId): bool
 	{
 		$statusList = self::getStatusList('INVOICE_STATUS');
+
 		return isset($statusList[$statusId]);
 	}
 }

@@ -107,7 +107,7 @@ this.BX.Mobile.Field = this.BX.Mobile.Field || {};
 	      }
 
 	      if (this.useOnChangeEvent) {
-	        BX.onCustomEvent(this, 'onChange', [this, this.node]);
+	        BX.onCustomEvent(this, 'BX.Mobile.Field:onChangeUserField', [this, this.node]);
 	      }
 	    },
 	    getSelectedItems: function getSelectedItems() {

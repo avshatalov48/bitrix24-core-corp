@@ -58,6 +58,12 @@ class ImageViewer
 		}
 
 		Event.bind(div, 'click', (e) => {
+
+			if (e.target.tagName.toUpperCase() === 'A')
+			{
+				return;
+			}
+
 			let found = false;
 			const siblings = e.target.parentNode.querySelectorAll(targetSelector);
 			for(let i=0; i<siblings.length; i++)

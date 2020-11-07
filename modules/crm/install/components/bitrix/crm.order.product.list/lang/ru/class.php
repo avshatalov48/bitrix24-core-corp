@@ -23,3 +23,4 @@ $MESS["CRM_ORDER_PLC_DIMENSIONS"] = "Габариты";
 $MESS["CRM_ORDER_PLC_SORTING"] = "Сортировка";
 $MESS["CRM_ORDER_PLC_UNKNOWN_DISCOUNT"] = "Неизвестная скидка";
 $MESS["CRM_ORDER_PLC_DEFAULT_WEIGHT_UNIT"] = "кг";
+$MESS["CRM_ORDER_PLC_ERR_URL_BUILDER_ABSENT"] = "Не найден генератор ссылок.";

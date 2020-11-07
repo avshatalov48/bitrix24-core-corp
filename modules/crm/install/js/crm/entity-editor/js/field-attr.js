@@ -2,13 +2,10 @@ BX.namespace("BX.Crm");
 
 if(typeof BX.Crm.EntityFieldAttributeType === "undefined")
 {
-	BX.Crm.EntityFieldAttributeType =
-	{
-		undefined:  0,
-		hidden:     1,
-		readonly:   2,
-		required:   3
-	};
+	/**
+	 * @deprecated
+	 */
+	BX.Crm.EntityFieldAttributeType = BX.UI.EntityFieldAttributeType;
 }
 
 if(typeof BX.Crm.EntityFieldAttributePhaseGroupType === "undefined")
@@ -1450,7 +1447,7 @@ if (typeof BX.Crm.EntityFieldVisibilityConfigurator === "undefined")
 		{
 			if (!this._userSelector)
 			{
-				this._userSelector = BX.Crm.EntityEditorUserSelector.create(
+				this._userSelector = BX.UI.EntityEditorUserSelector.create(
 					this._id,
 					{
 						callback: BX.delegate(this.processItemSelect, this),

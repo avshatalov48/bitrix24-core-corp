@@ -130,7 +130,7 @@ class ImConnectorLiveChat extends \CBitrixComponent
 						$update['PHONE_CODE'] = $this->request->get('PHONE_CODE');
 						if(isset($update['PHONE_CODE']) && $update['PHONE_CODE'][0] === '+')
 						{
-							$update['PHONE_CODE'] = substr($update['PHONE_CODE'], 1);
+							$update['PHONE_CODE'] = mb_substr($update['PHONE_CODE'], 1);
 						}
 
 						$update['TEXT_PHRASES'] = $this->request->get('TEXT_PHRASES');

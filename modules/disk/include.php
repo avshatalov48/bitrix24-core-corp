@@ -12,7 +12,6 @@
 		"bitrix\\disk\\document\\googleviewerhandler" => "lib/document/googleviewerhandler.php",
 		"bitrix\\disk\\document\\localdocumentcontroller" => "lib/document/localdocumentcontroller.php",
 		"bitrix\\disk\\document\\onedrivehandler" => "lib/document/onedrivehandler.php",
-		"bitrix\\disk\\document\\startpage" => "lib/document/startpage.php",
 		"bitrix\\disk\\internals\\error\\error" => "lib/internals/error/error.php",
 		"bitrix\\disk\\internals\\error\\errorcollection" => "lib/internals/error/errorcollection.php",
 		"bitrix\\disk\\internals\\error\\ierrorable" => "lib/internals/error/ierrorable.php",

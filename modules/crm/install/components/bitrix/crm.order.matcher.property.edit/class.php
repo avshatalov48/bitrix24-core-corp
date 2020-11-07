@@ -663,7 +663,9 @@ class ConfigOrderPropertyEdit extends \CBitrixComponent
 
 		if (!empty($this->property['ID']))
 		{
-			$title = Loc::getMessage('CRM_CONFIG_ORDER_TITLE_EDIT').' '."\"{$this->property['NAME']}\"";
+			$propertyName = (string)($this->property['NAME'] ?? '');
+			$propertyName = \Bitrix\Main\Text\HtmlFilter::encode($propertyName);
+			$title = Loc::getMessage('CRM_CONFIG_ORDER_TITLE_EDIT').' '."\"{$propertyName}\"";
 		}
 		else
 		{

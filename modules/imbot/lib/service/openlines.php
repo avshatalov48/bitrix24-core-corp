@@ -1,25 +1,35 @@
 <?php
 namespace Bitrix\ImBot\Service;
 
-use Bitrix\ImBot\Log;
-use Bitrix\Main\Localization\Loc;
-
-Loc::loadMessages(__FILE__);
-
+/**
+ * Class Openlines
+ *
+ * @package Bitrix\ImBot\Service
+ */
 class Openlines
 {
 	const BOT_CODE = "network";
 	const SERVICE_CODE = "openlines";
 
+	/**
+	 * @param string $command
+	 * @param array $params
+	 *
+	 * @return \Bitrix\ImBot\Error|bool|array
+	 */
 	public static function onReceiveCommand($command, $params)
 	{
-		unset($params['BX_BOT_NAME']);
-		unset($params['BX_SERVICE_NAME']);
-		unset($params['BX_COMMAND']);
-		unset($params['BX_TYPE']);
+		unset(
+			$params['BX_BOT_NAME'],
+			$params['BX_SERVICE_NAME'],
+			$params['BX_COMMAND'],
+			$params['BX_TYPE']
+		);
 
 		if (!\Bitrix\Main\Loader::includeModule('imopenlines'))
+		{
 			return false;
+		}
 
 		\Bitrix\ImBot\Log::write(Array($command,$params), 'NETWORK SERVICE');
 
@@ -41,6 +51,11 @@ class Openlines
 		return $result;
 	}
 
+	/**
+	 * @param array $params
+	 *
+	 * @return bool
+	 */
 	public static function operatorMessageAdd($params)
 	{
 		$params['MESSAGE_TEXT'] = $params['MESSAGE_TEXT'] === '0'? '#ZERO#': $params['MESSAGE_TEXT'];
@@ -60,6 +75,11 @@ class Openlines
 		return true;
 	}
 
+	/**
+	 * @param array $params
+	 *
+	 * @return bool
+	 */
 	public static function operatorMessageUpdate($params)
 	{
 		$params['MESSAGE_TEXT'] = $params['MESSAGE_TEXT'] === '0'? '#ZERO#': $params['MESSAGE_TEXT'];
@@ -79,6 +99,11 @@ class Openlines
 		return true;
 	}
 
+	/**
+	 * @param array $params
+	 *
+	 * @return bool
+	 */
 	public static function operatorMessageDelete($params)
 	{
 		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
@@ -94,6 +119,11 @@ class Openlines
 		return true;
 	}
 
+	/**
+	 * @param array $params
+	 *
+	 * @return bool
+	 */
 	public static function operatorStartWriting($params)
 	{
 		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
@@ -110,7 +140,7 @@ class Openlines
 	}
 
 	/**
-	 * @param $params
+	 * @param array $params
 	 *
 	 * @return bool
 	 */
@@ -130,7 +160,7 @@ class Openlines
 	}
 
 	/**
-	 * @param $params
+	 * @param array $params
 	 *
 	 * @return bool
 	 */
@@ -149,6 +179,11 @@ class Openlines
 		return true;
 	}
 
+	/**
+	 * @param array $params
+	 *
+	 * @return bool
+	 */
 	public static function operatorMessageReceived($params)
 	{
 		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);

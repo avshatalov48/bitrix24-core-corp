@@ -16,6 +16,7 @@ $MESS["CRM_STATUS_ERR_NAME"] = "Пустое имя статуса.";
 $MESS["CRM_STATUS_ERR_SYSTEM"] = "Неправильно задан флаг \"системный статус\"";
 $MESS["CRM_STATUS_ERR_STATUS_ID"] = "Пустой идентификатор статуса статуса.";
 $MESS["CRM_STATUS_ERR_DUPLICATE_STATUS_ID"] = "Указанный идентификатор статуса, уже существует.";
+$MESS["CRM_STATUS_ERR_INCORRECT_SYMBOLS"] = "Идентификатор статуса может содержать только латинские буквы, цифры, знаки тире и подчеркивания";
 $MESS["CRM_STATUS_TYPE_INVOICE_STATUS"] = "Статусы счёта";
 $MESS["CRM_STATUS_TYPE_ORDER_STATUS"] = "Статусы заказа";
 $MESS["CRM_STATUS_TYPE_ORDER_SHIPMENT_STATUS"] = "Статусы отгрузки";

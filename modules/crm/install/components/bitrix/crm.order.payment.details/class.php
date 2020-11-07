@@ -452,7 +452,27 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 		}
 		elseif($this->entityID > 0)
 		{
-			$contactBindings = Crm\Binding\OrderContactCompanyTable::getOrderBindings($this->orderPayment->getOrderId());
+			$dbRes = Crm\Order\ContactCompanyCollection::getList([
+				'select' => [
+					'ENTITY_ID', 'SORT', 'ROLE_ID', 'IS_PRIMARY'
+				],
+				'filter' => [
+					'=ENTITY_TYPE_ID' => \CCrmOwnerType::Contact,
+					'=ORDER_ID' => (int)$this->orderPayment->getOrderId()
+				],
+				'order' => ['SORT' => 'ASC']
+			]);
+
+			$contactBindings = [];
+			while ($data = $dbRes->fetch())
+			{
+				$contactBindings[] = [
+					'CONTACT_ID' => (int)$data['ENTITY_ID'],
+					'SORT' => (int)$data['SORT'],
+					'ROLE_ID' => (int)$data['ROLE_ID'],
+					'IS_PRIMARY' => $data['IS_PRIMARY']
+				];
+			}
 		}
 		elseif(isset($this->entityData['CONTACT_ID']))
 		{

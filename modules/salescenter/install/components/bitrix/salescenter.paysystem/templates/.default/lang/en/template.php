@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["SALESCENTER_SP_ADD_PAYMENT_BUTTON"] = "Configure";
 $MESS["SALESCENTER_SP_BUTTON_CLOSE"] = "Cancel";
 $MESS["SALESCENTER_SP_CAHSBOX_HINT"] = "There are no cash registers. <a href='#CASHBOX_SETTINGS_LINK#'>Configure cash registers</a>";
@@ -39,6 +39,8 @@ $MESS["SALESCENTER_SP_PAYSYSTEM_SBERBANKONLINE_TITLE"] = "Credit/debit card (Sbe
 $MESS["SALESCENTER_SP_PAYSYSTEM_SKB_TITLE"] = "SKB bank (payment using QR code)";
 $MESS["SALESCENTER_SP_PAYSYSTEM_WEBMONEY_DESCRIPTION"] = "WebMoney payment";
 $MESS["SALESCENTER_SP_PAYSYSTEM_WEBMONEY_TITLE"] = "WebMoney";
+$MESS["SALESCENTER_SP_PAYSYSTEM_WOOPPAY_CHECKOUT_TITLE"] = "Woopkassa. Payment page";
+$MESS["SALESCENTER_SP_PAYSYSTEM_WOOPPAY_IFRAME_TITLE"] = "Woopkassa. Payment frame";
 $MESS["SALESCENTER_SP_PAYSYSTEM_YANDEXCHECKOUT_ALFABANK_DESCRIPTION"] = "Alfa click payment processed by Yandex.Checkout (version 3.x and higher)";
 $MESS["SALESCENTER_SP_PAYSYSTEM_YANDEXCHECKOUT_ALFABANK_TITLE"] = "Alfa Click via Yandex.Checkout";
 $MESS["SALESCENTER_SP_PAYSYSTEM_YANDEXCHECKOUT_BANK_CARD_DESCRIPTION"] = "Credit/debit card (Yandex.Checkout, version 3.x and higher)";
@@ -64,4 +66,3 @@ $MESS["SALESCENTER_SP_POPUP_BUTTON_CLOSE"] = "Close";
 $MESS["SALESCENTER_SP_POPUP_CONTENT"] = "The changes have not been saved. Are you sure you want to close the slider panel?";
 $MESS["SALESCENTER_SP_POPUP_TITLE"] = "Confirm action";
 $MESS["SALESCENTER_SP_YANDEX_LOGOUT"] = "Disable";
-?>

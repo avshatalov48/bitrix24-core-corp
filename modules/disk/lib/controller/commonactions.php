@@ -154,10 +154,7 @@ class CommonActions extends BaseObject
 			}
 		}
 
-		global $APPLICATION;
-		$APPLICATION->restartBuffer();
-		$zipArchive->send();
-		Application::getInstance()->terminate();
+		return $zipArchive;
 	}
 
 	public function listRecentlyUsedAction()

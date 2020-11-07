@@ -196,13 +196,13 @@ class Client implements ClientInterface
 
 				if (!in_array($unicode, $unicodeReplace))
 				{
-					$unicode = substr($m[1], 0, 4);
+					$unicode = mb_substr($m[1], 0, 4);
 
 					if (!in_array($unicode, $unicodeReplace))
 					{
-						if ("\xE2\x83\xA3" === substr($m[1], 1, 3))
+						if ("\xE2\x83\xA3" === mb_substr($m[1], 1, 3))
 						{
-							$unicode = substr($m[1], 0, 1) . "\xEF\xB8\x8F\xE2\x83\xA3";
+							$unicode = mb_substr($m[1], 0, 1)."\xEF\xB8\x8F\xE2\x83\xA3";
 
 							if (!in_array($unicode, $unicodeReplace))
 							{
@@ -246,14 +246,14 @@ class Client implements ClientInterface
 	 * */
 	public function convert($unicode)
 	{
-		if (stristr($unicode,'-'))
+		if(mb_stristr($unicode, '-'))
 		{
-			$pairs = explode('-',$unicode);
-			return '&#x' . implode(';&#x',$pairs).';';
+			$pairs = explode('-', $unicode);
+			return '&#x'.implode(';&#x', $pairs).';';
 		}
 		else
 		{
-			return '&#x' . $unicode.';';
+			return '&#x'.$unicode.';';
 		}
 	}
 

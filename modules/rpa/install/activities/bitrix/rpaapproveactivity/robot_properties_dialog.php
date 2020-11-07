@@ -107,7 +107,7 @@ $fieldsToSet = $dialog->getMap()['FieldsToSet'];
 					{
 						var selectorContent = document.querySelector('[data-resp="plain"]');
 						var innerSelectorContent = selectorContent.querySelector('.rpa-automation-type-inner');
-						selectorContent.style.height = innerSelectorContent.offsetHeight + 2 + 'px'; // 2 - border width
+						selectorContent.style.height = innerSelectorContent.offsetHeight + 'px';
 					}
 
 					setTimeout(function() {

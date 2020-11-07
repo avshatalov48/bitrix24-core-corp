@@ -11,7 +11,7 @@ export class EntityEditorRequisiteEditor
 		this._entityTypeId = null;
 		this._entityId = null;
 		this._contextId = null;
-		this._mode = BX.Crm.EntityEditorMode.view;
+		this._mode = BX.UI.EntityEditorMode.view;
 
 		this.currentSliderRequisiste = null;
 	}
@@ -186,7 +186,7 @@ export class EntityEditorRequisiteEditor
 
 	isViewMode()
 	{
-		return this._mode === BX.Crm.EntityEditorMode.view;
+		return this._mode === BX.UI.EntityEditorMode.view;
 	}
 
 	onExternalEvent(event)

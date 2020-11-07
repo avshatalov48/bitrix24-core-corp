@@ -124,42 +124,6 @@ class Support24 extends Network
 		return $lang;
 	}
 
-	/**
-	 * @return int[]|null
-	 */
-	public static function getBusinessUsers()
-	{
-		$users = null;
-		$option = Main\Config\Option::get("bitrix24", "business_tools_unlim_users", false);
-		if ($option)
-		{
-			$users = explode(",", $option);
-		}
-
-		return $users;
-	}
-
-	/**
-	 * @return int[]
-	 */
-	public static function getAdministrators()
-	{
-		$users = array();
-		if (Main\Loader::includeModule('bitrix24'))
-		{
-			$users = \CBitrix24::getAllAdminId();
-		}
-		else
-		{
-			$res = \CAllGroup::GetGroupUserEx(1);
-			while($row = $res->fetch())
-			{
-				$users[] = $row["USER_ID"];
-			}
-		}
-
-		return $users;
-	}
 
 	/**
 	 * @return string
@@ -204,11 +168,20 @@ class Support24 extends Network
 	public static function register(array $params = Array())
 	{
 		if (!Main\Loader::includeModule('im'))
+		{
 			return false;
+		}
+
+		if (!Main\Loader::includeModule('bitrix24'))
+		{
+			return false;
+		}
 
 		$botId = parent::join(self::getBotCode());
 		if (!$botId)
+		{
 			return false;
+		}
 
 		Main\Config\Option::set('imbot', self::OPTION_BOT_ID, $botId);
 		Main\Config\Option::set('imbot', self::OPTION_BOT_SUPPORT_LEVEL, self::getSupportLevel());
@@ -227,7 +200,7 @@ class Support24 extends Network
 			'COMMAND' => 'support24',
 			'HIDDEN' => 'Y',
 			'CLASS' => __CLASS__,
-			'METHOD_COMMAND_ADD' => 'onCommandAdd'
+			'METHOD_COMMAND_ADD' => 'onCommandAdd'/** @see \Bitrix\ImBot\Bot\Support24::onCommandAdd */
 		));
 
 		return $botId;
@@ -1127,7 +1100,7 @@ class Support24 extends Network
 		Main\Config\Option::set('imbot', "network_".$previousCode."_bot_id", 0);
 		Main\Config\Option::set('imbot', "network_".$currentCode."_bot_id", self::getBotId());
 
-		$http = new \Bitrix\ImBot\Http(parent::BOT_CODE);
+		$http = self::instanceHttpClient(parent::BOT_CODE);
 		$http->query(
 			'clientChangeLicence',
 			Array(
@@ -1198,7 +1171,7 @@ class Support24 extends Network
 		Main\Config\Option::set('imbot', "network_".$previousCode."_bot_id", 0);
 		Main\Config\Option::set('imbot', "network_".$currentCode."_bot_id", self::getBotId());
 
-		$http = new \Bitrix\ImBot\Http(parent::BOT_CODE);
+		$http = self::instanceHttpClient(parent::BOT_CODE);
 		$http->query(
 			'clientChangeLicence',
 			Array(
@@ -1460,11 +1433,16 @@ class Support24 extends Network
 	}
 
 	/**
-	 * @param string $message
+	 * Sends finalize session notification.
+	 * @param array $params <pre>
+	 * [
+	 * 	(string) MESSAGE
+	 * ]
+	 * </pre>
 	 *
 	 * @return bool
 	 */
-	public static function sendRequestFinalizeSession($message = '')
+	public static function sendRequestFinalizeSession(array $params = [])
 	{
 		if (!Main\Loader::includeModule('im'))
 			return false;
@@ -1486,7 +1464,9 @@ class Support24 extends Network
 			$currentCode = Main\Config\Option::get('imbot', self::OPTION_BOT_FREE_CODE, "");
 		}
 
-		$http = new \Bitrix\ImBot\Http(parent::BOT_CODE);
+		$message = $params['MESSAGE'] ?? '';
+
+		$http = self::instanceHttpClient(parent::BOT_CODE);
 		$http->query(
 			'clientRequestFinalizeSession',
 			Array(
@@ -1575,14 +1555,6 @@ class Support24 extends Network
 			return false;
 		}
 
-		$botData = \Bitrix\Im\User::getInstance(self::getBotId());
-		$userAvatar = \Bitrix\Im\User::uploadAvatar(self::getBotAvatar(), self::getBotId());
-		if ($userAvatar && $botData->getAvatarId() != $userAvatar)
-		{
-			$connection = Main\Application::getConnection();
-			$connection->query("UPDATE b_user SET PERSONAL_PHOTO = ".intval($userAvatar)." WHERE ID = ".intval(self::getBotId()));
-		}
-
 		$botCache = \Bitrix\Im\Bot::getCache(self::getBotId());
 		if ($botCache['APP_ID'] !== self::getBotCode())
 		{
@@ -1590,7 +1562,7 @@ class Support24 extends Network
 			Main\Config\Option::set(self::MODULE_ID, parent::BOT_CODE.'_'.self::getBotCode()."_bot_id", self::getBotId());
 		}
 
-		\Bitrix\Im\Bot::update(Array('BOT_ID' => self::getBotId()), Array(
+		$botParams = [
 			'CLASS' => __CLASS__,
 			'METHOD_MESSAGE_ADD' => 'onMessageAdd',
 			'METHOD_WELCOME_MESSAGE' => 'onWelcomeMessage',
@@ -1599,14 +1571,21 @@ class Support24 extends Network
 			'VERIFIED' => 'Y',
 			'CODE' => 'network_'.self::getBotCode(),
 			'APP_ID' => self::getBotCode(),
-		));
+			'PROPERTIES' => [
+				'LOGIN' => 'bot_imbot_support24',
+				'NAME' => self::getBotName(),
+				'WORK_POSITION' => self::getBotDesc()
+			]
+		];
 
-		$user = new \CUser;
-		$user->Update(self::getBotId(), Array(
-			'LOGIN' => 'bot_imbot_support24',
-			'NAME' => self::getBotName(),
-			'WORK_POSITION' => self::getBotDesc()
-		));
+		$botData = \Bitrix\Im\User::getInstance(self::getBotId());
+		$userAvatar = \Bitrix\Im\User::uploadAvatar(self::getBotAvatar(), self::getBotId());
+		if ($userAvatar && $botData->getAvatarId() != $userAvatar)
+		{
+			$botParams['PROPERTIES']['PERSONAL_PHOTO'] = $userAvatar;
+		}
+
+		\Bitrix\Im\Bot::update(Array('BOT_ID' => self::getBotId()), $botParams);
 
 		return true;
 	}
@@ -1687,18 +1666,7 @@ class Support24 extends Network
 			return $message;
 		}
 
-		if ($userId)
-		{
-			$message = str_replace(Array(
-				'#USER_NAME#',
-				'#USER_LAST_NAME#',
-				'#USER_FULL_NAME#',
-			), Array(
-				\Bitrix\Im\User::getInstance($userId)->getName(false),
-				\Bitrix\Im\User::getInstance($userId)->getLastName(false),
-				\Bitrix\Im\User::getInstance($userId)->getFullName(false),
-			), $message);
-		}
+		$message = parent::replacePlaceholders($message, $userId);
 
 		if (!Main\Loader::includeModule('bitrix24'))
 		{
@@ -2020,7 +1988,10 @@ class Support24 extends Network
 		}
 
 		$optionCode = $supportLevel == self::SUPPORT_LEVEL_FREE? "support24_free_messages": "support24_paid_messages";
-		$messages = unserialize(Main\Config\Option::get('imbot', $optionCode, "a:0:{}"));
+		$messages = unserialize(
+			Main\Config\Option::get('imbot', $optionCode, "a:0:{}"),
+			['allowed_classes' => false]
+		);
 
 		return isset($messages[$code])? $messages[$code]: '';
 	}

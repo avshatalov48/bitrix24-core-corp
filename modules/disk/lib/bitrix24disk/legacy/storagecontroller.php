@@ -37,7 +37,7 @@ Loc::loadMessages(__FILE__);
 
 class StorageController extends Controller
 {
-	const VERSION                               = 901;
+	const VERSION                               = 920;
 	const MIN_API_DISK_VERSION                  = 29;
 	const MIN_API_DISK_VERSION_FOR_NEW_SNAPSHOT = 37;
 

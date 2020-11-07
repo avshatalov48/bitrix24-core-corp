@@ -29,6 +29,8 @@ export class EntityEditorAddressField extends BX.Crm.EntityEditorField
 		settings = Type.isPlainObject(settings) ? settings : {};
 		settings.crmCompatibilityMode = true;
 		settings.enableAutocomplete = this._autocompleteEnabled;
+		settings.hideDefaultAddressType = this._isMultiple; // hide for multiple addresses only
+		settings.showAddressTypeInViewMode = this._isMultiple; //for multiple addresses only
 		this._field = EntityEditorBaseAddressField.create(id, settings);
 		this._field.setMultiple(this._isMultiple);
 		if (this._isMultiple)
@@ -86,21 +88,21 @@ export class EntityEditorAddressField extends BX.Crm.EntityEditorField
 
 		Dom.append(this.createTitleNode(this.getTitle()), this._wrapper);
 
-		if (!this.hasValue() && this._mode === BX.Crm.EntityEditorMode.view)
+		if (!this.hasValue() && this._mode === BX.UI.EntityEditorMode.view)
 		{
 			Dom.append(
 				Tag.render`
-					<div class="crm-entity-widget-content-block-inner" onclick="${this.onViewModeClick.bind(this)}">
-						${BX.Crm.EntityEditorField.messages.isEmpty}
+					<div class="ui-entity-editor-content-block" onclick="${this.onViewModeClick.bind(this)}">
+						${BX.UI.EntityEditorField.messages.isEmpty}
 					</div>`,
 				this._wrapper
 			);
 		}
 		else
 		{
-			let fieldContainer = this._field.layout(this._mode === BX.Crm.EntityEditorMode.edit);
-			fieldContainer.classList.add('crm-entity-widget-content-block-inner');
-			if (this._mode === BX.Crm.EntityEditorMode.view)
+			let fieldContainer = this._field.layout(this._mode === BX.UI.EntityEditorMode.edit);
+			fieldContainer.classList.add('ui-entity-editor-content-block');
+			if (this._mode === BX.UI.EntityEditorMode.view)
 			{
 				Event.bind(fieldContainer, 'click', this.onViewModeClick.bind(this));
 			}
@@ -121,12 +123,23 @@ export class EntityEditorAddressField extends BX.Crm.EntityEditorField
 		this._hasLayout = true;
 	}
 
+	reset()
+	{
+		super.reset();
+		this.initializeFromModel();
+	}
+
 	doClearLayout(options)
 	{
 		if (BX.prop.getBoolean(options, "release", false))
 		{
 			this._field.release();
 		}
+	}
+
+	hasContentToDisplay()
+	{
+		return this.hasValue();
 	}
 
 	hasValue()

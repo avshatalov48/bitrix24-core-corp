@@ -80,7 +80,6 @@ export class MobileDialogApplication
 			.then(() => this.initEnvironment())
 			.then(() => this.initMobileEnvironment())
 			.then(() => this.initPullClient())
-			.then(() => this.requestData())
 			.then(() => this.initComplete())
 		;
 	}
@@ -241,6 +240,7 @@ export class MobileDialogApplication
 		BX.addCustomEvent("onAppPaused", () => {
 			this.windowFocused = false;
 			Vue.event.$emit('bitrixmobile:controller:blur');
+			//app.closeController();z
 		});
 
 		BX.addCustomEvent("onOpenPageAfter", checkWindowFocused);
@@ -688,6 +688,15 @@ export class MobileDialogApplication
 		{
 			//BXMobileApp.UI.Page.TopBar.title.setImageColor(dialog.color);
 			BXMobileApp.UI.Page.TopBar.title.params.imageColor = headerProperties.color;
+		}
+
+		if (Utils.dialog.isChatId(this.controller.application.getDialogId()))
+		{
+			let dialogData = this.controller.application.getDialogData();
+			if (!dialogData.restrictions.extend)
+			{
+				app.exec("setRightButtons", {items:[]});
+			}
 		}
 
 		return true;
@@ -1676,7 +1685,7 @@ export class MobileDialogApplication
 
 	processMarkReadMessages()
 	{
-		this.controller.readMessageExecute(this.controller.application.getChatId(), true);
+		this.controller.application.readMessageExecute(this.controller.application.getChatId(), true);
 		return true;
 	}
 
@@ -1956,7 +1965,7 @@ export class MobileDialogApplication
 				blink: true
 			}
 		});
-		
+
 		let currentUser = this.controller.application.getCurrentUser();
 		let dialog = this.controller.application.getDialogData();
 		let messageUser = message.authorId > 0? this.controller.getStore().getters['users/get'](message.authorId, true): null;
@@ -2526,35 +2535,6 @@ export class MobileDialogApplication
 			users: users,
 			title: this.getLocalize('MOBILE_MESSAGE_LIST_LIKE')
 		});
-	}
-
-	execMessageKeyboardCommand(data)
-	{
-		if (data.action !== 'COMMAND')
-		{
-			return false;
-		}
-
-		let {dialogId, messageId, botId, command, params} = data.params;
-
-		this.controller.restClient.callMethod(RestMethod.imMessageCommand, {
-			'MESSAGE_ID': messageId,
-			'DIALOG_ID': dialogId,
-			'BOT_ID': botId,
-			'COMMAND': command,
-			'COMMAND_PARAMS': params,
-		});
-
-		return true;
-	}
-
-	execMessageOpenChatTeaser(data)
-	{
-		this.controller.application.joinParentChat(data.message.id, 'chat'+data.message.params.CHAT_ID).then((dialogId) => {
-			this.openDialog(dialogId);
-		}).catch(() => {});
-
-		return true;
 	}
 
 	quoteMessageClear()

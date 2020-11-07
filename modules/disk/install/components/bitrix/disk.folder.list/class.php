@@ -579,7 +579,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 						'className' => 'disk-folder-list-context-menu-item',
 						"onclick" =>
 							$this->filterB24Feature(
-								"disk_manual_external_link",
+								$isFolder? 'disk_manual_external_folder' : 'disk_manual_external_link',
 								"BX.Disk['FolderListClass_{$this->componentId}'].openExternalLinkDetailSettingsWithEditing({$objectId});"
 							),
 					);

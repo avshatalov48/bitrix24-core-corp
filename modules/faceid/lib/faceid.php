@@ -400,7 +400,7 @@ class FaceId
 	{
 		$msg = \Bitrix\Main\Localization\Loc::getMessage('FACEID_CLOUD_ERR_'.$errorCode);
 
-		if (!strlen($msg))
+		if ($msg == '')
 		{
 			$msg = \Bitrix\Main\Localization\Loc::getMessage('FACEID_CLOUD_ERR_'.static::CODE_FAIL);
 		}

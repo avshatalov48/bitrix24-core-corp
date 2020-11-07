@@ -492,24 +492,9 @@ final class CallList
 		));
 	}
 	
-	public static function getStatusList()
+	public static function getStatusList(): array
 	{
-		if(!is_null(self::$statusList))
-			return self::$statusList;
-
-		self::$statusList = array();
-		$cursor = \CCrmStatus::GetList(array('SORT' => 'ASC'), array(
-			'ENTITY_ID' => 'CALL_LIST'
-		));
-		while ($row = $cursor->Fetch())
-		{
-			self::$statusList[] = array(
-				'SORT' => $row['SORT'],
-				'STATUS_ID' => $row['STATUS_ID'],
-				'NAME' => $row['NAME'],
-			);
-		}
-		return self::$statusList;
+		return array_values(\CCrmStatus::GetStatus('CALL_LIST'));
 	}
 
 	/**

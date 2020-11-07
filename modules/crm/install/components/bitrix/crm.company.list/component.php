@@ -976,13 +976,16 @@ if($actionData['ACTIVE'])
 						{
 							$DB->Commit();
 
-							$arErrors = array();
-							CCrmBizProcHelper::AutoStartWorkflows(
-								CCrmOwnerType::Company,
-								$ID,
-								CCrmBizProcEventType::Edit,
-								$arErrors
-							);
+							if (!$isMyCompanyMode)
+							{
+								$arErrors = [];
+								CCrmBizProcHelper::AutoStartWorkflows(
+									CCrmOwnerType::Company,
+									$ID,
+									CCrmBizProcEventType::Edit,
+									$arErrors
+								);
+							}
 						}
 						else
 						{
@@ -1068,13 +1071,16 @@ if($actionData['ACTIVE'])
 					{
 						$DB->Commit();
 
-						$arErrors = array();
-						CCrmBizProcHelper::AutoStartWorkflows(
-							CCrmOwnerType::Company,
-							$ID,
-							CCrmBizProcEventType::Edit,
-							$arErrors
-						);
+						if (!$isMyCompanyMode)
+						{
+							$arErrors = [];
+							CCrmBizProcHelper::AutoStartWorkflows(
+								CCrmOwnerType::Company,
+								$ID,
+								CCrmBizProcEventType::Edit,
+								$arErrors
+							);
+						}
 					}
 					else
 					{
@@ -1150,12 +1156,16 @@ if($actionData['ACTIVE'])
 					{
 						$DB->Commit();
 
-						CCrmBizProcHelper::AutoStartWorkflows(
-							CCrmOwnerType::Company,
-							$ID,
-							CCrmBizProcEventType::Edit,
-							$arErrors
-						);
+						if (!$isMyCompanyMode)
+						{
+							$arErrors = [];
+							CCrmBizProcHelper::AutoStartWorkflows(
+								CCrmOwnerType::Company,
+								$ID,
+								CCrmBizProcEventType::Edit,
+								$arErrors
+							);
+						}
 					}
 					else
 					{

@@ -86,12 +86,14 @@ class CBPCrmChangeDealCategoryActivity
 			);
 			$newFields = $dbResult->Fetch();
 
-
-			//Region automation
-			$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Deal, $sourceDealId);
-			$starter->setContextToBizproc();
-			$starter->runOnUpdate($newFields, $sourceFields);
-			//End region
+			if ($newFields)
+			{
+				//Region automation
+				$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Deal, $sourceDealId);
+				$starter->setContextToBizproc();
+				$starter->runOnUpdate($newFields, $sourceFields);
+				//End region
+			}
 
 			//Stop running queue
 			throw new Exception("TerminateWorkflow");

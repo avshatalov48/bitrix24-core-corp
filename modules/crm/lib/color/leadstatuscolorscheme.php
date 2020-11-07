@@ -4,6 +4,9 @@ namespace Bitrix\Crm\Color;
 use Bitrix\Main;
 use Bitrix\Crm;
 
+/**
+ * @deprecated
+ */
 class LeadStatusColorScheme extends PhaseColorScheme
 {
 	/** @var LeadStatusColorScheme|null  */

@@ -6,6 +6,7 @@ namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
 use Bitrix\Crm\EntityAddress;
 use Bitrix\DocumentGenerator\DataProvider\HashDataProvider;
+use Bitrix\Main\Localization\Loc;
 
 class Address extends HashDataProvider
 {
@@ -23,6 +24,12 @@ class Address extends HashDataProvider
 		{
 			$fields[$placeholder] = ['TITLE' => EntityAddress::getLabel($placeholder, $this->getTypeId())];
 		}
+		$fields['TYPE'] = [
+			'TITLE' => Loc::getMessage('CRM_DOCGEN_DATAPROVIDER_ADDRESS_TYPE_TITLE'),
+			'VALUE' => function() {
+				return \Bitrix\Crm\EntityAddressType::getDescription($this->getTypeId());
+			}
+		];
 
 		$fields['TEXT'] = [
 			'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_ADDRESS_TEXT_TITLE'),

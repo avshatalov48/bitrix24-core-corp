@@ -14,6 +14,7 @@ use Bitrix\Disk\Security\FakeSecurityContext;
 use Bitrix\Disk\Uf\UserFieldManager;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Data\Cache;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\SystemException;
@@ -22,37 +23,14 @@ final class Driver implements IErrorable
 {
 	const INTERNAL_MODULE_ID = 'disk';
 
-	/** @var  RightsManager */
-	protected $rightsManager;
-	/** @var  UrlManager */
-	protected $urlManager;
-	/** @var  UserFieldManager */
-	protected $ufManager;
-	/** @var  IndexManager */
-	protected $indexManager;
-	/** @var  RecentlyUsedManager */
-	protected $recentlyUsedManager;
-	/** @var  DocumentHandlersManager */
-	protected $documentHandlersManager;
-	/** @var  Rest\RestManager */
-	protected $restManager;
-	/** @var  SubscriberManager */
-	protected $subscriberManager;
-	/** @var  DeletedLogManager */
-	protected $deletedLogManager;
-	/** @var  DeletionNotifyManager */
-	protected $deletionNotifyManager;
 	/** @var  ErrorCollection */
 	protected $errorCollection;
-	/** @var ExternalLinkAccessControl */
-	protected $externalLinkAccessControl;
 	/** @var  Driver */
 	private static $instance;
 
 	private function __construct()
 	{
 		$this->errorCollection = new ErrorCollection;
-		$this->subscriberManager = new SubscriberManager;
 	}
 
 	private function __clone()
@@ -418,12 +396,7 @@ final class Driver implements IErrorable
 	 */
 	public function getRightsManager()
 	{
-		if($this->rightsManager === null)
-		{
-			$this->rightsManager = new RightsManager;
-		}
-
-		return $this->rightsManager;
+		return ServiceLocator::getInstance()->get('disk.rightsManager');
 	}
 
 	/**
@@ -433,12 +406,7 @@ final class Driver implements IErrorable
 	 */
 	public function getUrlManager()
 	{
-		if($this->urlManager === null)
-		{
-			$this->urlManager = new UrlManager;
-		}
-
-		return $this->urlManager;
+		return ServiceLocator::getInstance()->get('disk.urlManager');
 	}
 
 	/**
@@ -450,12 +418,7 @@ final class Driver implements IErrorable
 	 */
 	public function getUserFieldManager()
 	{
-		if($this->ufManager === null)
-		{
-			$this->ufManager = new UserFieldManager();
-		}
-
-		return $this->ufManager;
+		return ServiceLocator::getInstance()->get('disk.ufManager');
 	}
 
 	/**
@@ -466,12 +429,7 @@ final class Driver implements IErrorable
 	 */
 	public function getIndexManager()
 	{
-		if($this->indexManager === null)
-		{
-			$this->indexManager = new IndexManager();
-		}
-
-		return $this->indexManager;
+		return ServiceLocator::getInstance()->get('disk.indexManager');
 	}
 
 	/**
@@ -481,12 +439,7 @@ final class Driver implements IErrorable
 	 */
 	public function getRecentlyUsedManager()
 	{
-		if($this->recentlyUsedManager === null)
-		{
-			$this->recentlyUsedManager = new RecentlyUsedManager;
-		}
-
-		return $this->recentlyUsedManager;
+		return ServiceLocator::getInstance()->get('disk.recentlyUsedManager');
 	}
 
 	/**
@@ -496,13 +449,7 @@ final class Driver implements IErrorable
 	 */
 	public function getDocumentHandlersManager()
 	{
-		if($this->documentHandlersManager === null)
-		{
-			global $USER;
-			$this->documentHandlersManager = new DocumentHandlersManager($USER);
-		}
-
-		return $this->documentHandlersManager;
+		return ServiceLocator::getInstance()->get('disk.documentHandlersManager');
 	}
 
 	/**
@@ -512,7 +459,7 @@ final class Driver implements IErrorable
 	 */
 	public function getSubscriberManager()
 	{
-		return $this->subscriberManager;
+		return ServiceLocator::getInstance()->get('disk.subscriberManager');
 	}
 
 	/**
@@ -522,22 +469,12 @@ final class Driver implements IErrorable
 	 */
 	public function getDeletedLogManager()
 	{
-		if($this->deletedLogManager === null)
-		{
-			$this->deletedLogManager = new DeletedLogManager();
-		}
-
-		return $this->deletedLogManager;
+		return ServiceLocator::getInstance()->get('disk.deletedLogManager');
 	}
 
 	public function getDeletionNotifyManager(): DeletionNotifyManager
 	{
-		if($this->deletionNotifyManager === null)
-		{
-			$this->deletionNotifyManager = new DeletionNotifyManager();
-		}
-
-		return $this->deletionNotifyManager;
+		return ServiceLocator::getInstance()->get('disk.deletionNotifyManager');
 	}
 
 	/**
@@ -547,27 +484,7 @@ final class Driver implements IErrorable
 	 */
 	public function getRestManager()
 	{
-		if($this->restManager === null)
-		{
-			$this->restManager = new Rest\RestManager();
-		}
-
-		return $this->restManager;
-	}
-
-	/**
-	 * Returns ExternalLinkAccessControl.
-	 *
-	 * @return ExternalLinkAccessControl
-	 */
-	public function getExternalLinkAccessControl()
-	{
-		if($this->externalLinkAccessControl === null)
-		{
-			$this->externalLinkAccessControl = new ExternalLinkAccessControl();
-		}
-
-		return $this->externalLinkAccessControl;
+		return ServiceLocator::getInstance()->get('disk.restManager');
 	}
 
 	/**
@@ -667,7 +584,7 @@ final class Driver implements IErrorable
 	 */
 	public function collectSubscribers(BaseObject $object)
 	{
-		return $this->subscriberManager->collectSubscribers($object);
+		return $this->getSubscriberManager()->collectSubscribers($object);
 	}
 
 	/**

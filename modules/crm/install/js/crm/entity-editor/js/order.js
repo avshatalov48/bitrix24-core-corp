@@ -18,7 +18,7 @@ if(typeof BX.Crm.EntityEditorOrderController === "undefined")
 		};
 	};
 
-	BX.extend(BX.Crm.EntityEditorOrderController, BX.Crm.EntityEditorController);
+	BX.extend(BX.Crm.EntityEditorOrderController, BX.UI.EntityEditorController);
 
 	BX.Crm.EntityEditorOrderController.prototype.setProductList = function(productList)
 	{
@@ -102,7 +102,7 @@ if(typeof BX.Crm.EntityEditorOrderController === "undefined")
 
 	BX.Crm.EntityEditorOrderController.prototype.onEditorModeChange = function(sender)
 	{
-		if(this._editor.getMode() === BX.Crm.EntityEditorMode.edit)
+		if(this._editor.getMode() === BX.UI.EntityEditorMode.edit)
 		{
 			this._editor.addControlChangeListener(this._editorControlChangeHandler);
 		}
@@ -357,7 +357,7 @@ if(typeof BX.Crm.EntityEditorOrderController === "undefined")
 	{
 		if(this._editor.isChanged())
 		{
-			BX.Crm.EditorAuxiliaryDialog.create(
+			BX.UI.EditorAuxiliaryDialog.create(
 				"order_save_confirmation",
 				{
 					title: this.getMessage('saveChanges'),
@@ -613,7 +613,7 @@ if(typeof BX.Crm.EntityEditorOrderController === "undefined")
 
 		var childrenValue = [];
 
-		if (field instanceof BX.Crm.EntityEditorSection)
+		if (field instanceof BX.Crm.EntityEditorSection || field instanceof BX.UI.EntityEditorColumn)
 		{
 			var children = field.getChildren();
 			for (var i=0; i < field.getChildCount(); i++)
@@ -824,7 +824,7 @@ if(typeof BX.Crm.EntityEditorOrderShipmentController === "undefined")
 		this._isRequesting = false;
 	};
 
-	BX.extend(BX.Crm.EntityEditorOrderShipmentController, BX.Crm.EntityEditorController);
+	BX.extend(BX.Crm.EntityEditorOrderShipmentController, BX.UI.EntityEditorController);
 
 	BX.Crm.EntityEditorOrderShipmentController.prototype.setProductList = function(productList)
 	{
@@ -1085,7 +1085,7 @@ if(typeof BX.Crm.EntityEditorOrderShipmentController === "undefined")
 
 		var childrenValue = [];
 
-		if (field instanceof BX.Crm.EntityEditorSection)
+		if (field instanceof BX.Crm.EntityEditorSection || field instanceof BX.UI.EntityEditorColumn)
 		{
 			var children = field.getChildren();
 			for (var i=0; i < field.getChildCount(); i++)
@@ -1371,7 +1371,7 @@ if(typeof BX.Crm.EntityEditorOrderPaymentController === "undefined")
 		this._isRequesting = false;
 	};
 
-	BX.extend(BX.Crm.EntityEditorOrderPaymentController, BX.Crm.EntityEditorController);
+	BX.extend(BX.Crm.EntityEditorOrderPaymentController, BX.UI.EntityEditorController);
 
 	BX.Crm.EntityEditorOrderPaymentController.prototype.doInitialize = function()
 	{
@@ -1466,7 +1466,7 @@ if(typeof BX.Crm.EntityEditorOrderPaymentController === "undefined")
 
 		var childrenValue = [];
 
-		if (field instanceof BX.Crm.EntityEditorSection)
+		if (field instanceof BX.Crm.EntityEditorSection || field instanceof BX.UI.EntityEditorColumn)
 		{
 			var children = field.getChildren();
 			for (var i=0; i < field.getChildCount(); i++)
@@ -1574,7 +1574,7 @@ if(typeof BX.Crm.EntityEditorOrderProductController === "undefined")
 		this._isRequesting = false;
 	};
 
-	BX.extend(BX.Crm.EntityEditorOrderProductController, BX.Crm.EntityEditorController);
+	BX.extend(BX.Crm.EntityEditorOrderProductController, BX.UI.EntityEditorController);
 
 	BX.Crm.EntityEditorOrderProductController.prototype.doInitialize = function()
 	{
@@ -1693,7 +1693,7 @@ if(typeof BX.Crm.EntityEditorPayment === "undefined")
 
 	BX.Crm.EntityEditorPayment.prototype.createPaymentContent = function(index, value)
 	{
-		if(this._mode === BX.Crm.EntityEditorMode.edit)
+		if(this._mode === BX.UI.EntityEditorMode.edit)
 		{
 			return this.createPaymentContentEdit(index, value);
 		}
@@ -1967,7 +1967,7 @@ if(typeof BX.Crm.EntityEditorPayment === "undefined")
 	{
 		if(this._editor.isChanged())
 		{
-			BX.Crm.EditorAuxiliaryDialog.create(
+			BX.UI.EditorAuxiliaryDialog.create(
 				"order_save_confirmation",
 				{
 					title: this.getMessage('saveChanges'),
@@ -2087,6 +2087,7 @@ if(typeof BX.Crm.EntityEditorPayment === "undefined")
 	BX.Crm.EntityEditorPayment.prototype.createPaymentButton = function(index, isPaid)
 	{
 		var paymentButton = BX.create('div', {
+			attrs: { style : "margin-top: 10px;" },
 			props: {
 				className: 'ui-btn-split ui-btn-sm ' + (isPaid ? 'ui-btn-success-light' : 'ui-btn-danger-light'),
 				id: 'crm_entity_editor_is_payment_paid_button_'+ index
@@ -2611,7 +2612,7 @@ if(typeof BX.Crm.EntityEditorPayment === "undefined")
 		var value = this._model.getField(this.getName()), newPaymentBlock;
 		this.clearError();
 
-		if (this._mode === BX.Crm.EntityEditorMode.view)
+		if (this._mode === BX.UI.EntityEditorMode.view)
 		{
 			for(var i in value)
 			{
@@ -2670,7 +2671,7 @@ if(typeof BX.Crm.EntityEditorPayment === "undefined")
 
 	BX.Crm.EntityEditorPayment.prototype.setCurrency = function(index, value)
 	{
-		if(this._mode === BX.Crm.EntityEditorMode.edit)
+		if(this._mode === BX.UI.EntityEditorMode.edit)
 		{
 			this._paySystemInputs[index].value = value.PAY_SYSTEM_ID;
 		}
@@ -2682,7 +2683,7 @@ if(typeof BX.Crm.EntityEditorPayment === "undefined")
 
 	BX.Crm.EntityEditorPayment.prototype.setPaySystem = function(index, value)
 	{
-		if(this._mode === BX.Crm.EntityEditorMode.edit)
+		if(this._mode === BX.UI.EntityEditorMode.edit)
 		{
 			this._paySystemInputs[index].value = parseInt(value.PAY_SYSTEM_ID) > 0 ? value.PAY_SYSTEM_ID : 0;
 		}
@@ -3891,6 +3892,9 @@ if(typeof BX.Crm.EntityEditorShipment === "undefined")
 
 if(typeof BX.Crm.EntityEditorPaymentStatus === "undefined")
 {
+	/**
+	 * @extends BX.UI.EntityEditorField
+	 */
 	BX.Crm.EntityEditorPaymentStatus = function()
 	{
 		BX.Crm.EntityEditorPaymentStatus.superclass.constructor.apply(this);
@@ -3905,7 +3909,6 @@ if(typeof BX.Crm.EntityEditorPaymentStatus === "undefined")
 
 	BX.Crm.EntityEditorPaymentStatus.prototype.layout = function(options)
 	{
-
 		if(this._hasLayout)
 		{
 			return;
@@ -3957,14 +3960,14 @@ if(typeof BX.Crm.EntityEditorPaymentStatus === "undefined")
 			this.initializeDragDropAbilities();
 		}
 
-		options['preservePosision'] = false;
+		options['preservePosition'] = false;
 		this.registerLayout(options);
 		this._hasLayout = true;
 	};
 
 	BX.Crm.EntityEditorPaymentStatus.prototype.getDragObjectType = function()
 	{
-		return BX.Crm.EditorDragObjectType.field;
+		return BX.UI.EditorDragObjectType.field;
 	};
 
 	BX.Crm.EntityEditorPaymentStatus.prototype.createPaymentButton = function(index, isPaid)
@@ -4141,11 +4144,6 @@ if(typeof BX.Crm.EntityEditorPaymentStatus === "undefined")
 
 	BX.Crm.EntityEditorPaymentStatus.prototype.closePaidButtonMenu = function(index)
 	{
-		if(!this._isPaidButtonMenuOpened[index])
-		{
-			return;
-		}
-
 		var menu = BX.PopupMenu.getMenuById(this._id);
 
 		if(menu)
@@ -4153,20 +4151,6 @@ if(typeof BX.Crm.EntityEditorPaymentStatus === "undefined")
 			menu.popupWindow.close();
 		}
 		this._isPaidButtonMenuOpened[index] = false;
-	};
-
-	BX.Crm.EntityEditorPaymentStatus.prototype.getValue = function(defaultValue)
-	{
-		if(!this._model)
-		{
-			return "";
-		}
-		return(
-			this._model.getField(
-				this.getName(),
-				(defaultValue !== undefined ? defaultValue : "")
-			)
-		);
 	};
 
 	BX.Crm.EntityEditorPaymentStatus.prototype.setValue = function(value)
@@ -4387,7 +4371,7 @@ if(typeof BX.Crm.EntityEditorPaymentStatus === "undefined")
 	{
 		if(!this._wrapper)
 		{
-			this._wrapper = BX.create("div", { props: { className: "crm-entity-widget-content-block" } });
+			this._wrapper = BX.create("div", { props: { className: "ui-entity-editor-content-block" } });
 		}
 
 		var classNames = BX.prop.getArray(params, "classNames", []);
@@ -4407,8 +4391,8 @@ if(typeof BX.Crm.EntityEditorPaymentStatus === "undefined")
 		}
 
 		if(this.isInEditMode()
-			&& (this.checkModeOption(BX.Crm.EntityEditorModeOptions.exclusive)
-				|| this.checkModeOption(BX.Crm.EntityEditorModeOptions.individual)
+			&& (this.checkModeOption(BX.UI.EntityEditorModeOptions.exclusive)
+				|| this.checkModeOption(BX.UI.EntityEditorModeOptions.individual)
 			)
 		)
 		{
@@ -4431,30 +4415,6 @@ if(typeof BX.Crm.EntityEditorPaymentStatus === "undefined")
 			this._layoutAttributes = null;
 		}
 		//endregion
-	};
-
-
-	BX.Crm.EntityEditorPaymentStatus.prototype.createDragButton = function()
-	{
-		if(!this._dragButton)
-		{
-			this._dragButton = BX.create(
-				"div",
-				{
-					props: { className: "crm-entity-widget-content-block-draggable-btn-container" },
-					children:
-						[
-							BX.create(
-								"div",
-								{
-									props: { className: "crm-entity-widget-content-block-draggable-btn" }
-								}
-							)
-						]
-				}
-			);
-		}
-		return this._dragButton;
 	};
 
 	BX.Crm.EntityEditorPaymentStatus.prototype.createTitleNode = function(title)
@@ -4496,7 +4456,7 @@ if(typeof BX.Crm.EntityEditorPaymentStatus === "undefined")
 
 	BX.Crm.EntityEditorPaymentStatus.prototype.createTitleMarker = function()
 	{
-		if(this._mode === BX.Crm.EntityEditorMode.view)
+		if(this._mode === BX.UI.EntityEditorMode.view)
 		{
 			return null;
 		}
@@ -4519,10 +4479,10 @@ if(typeof BX.Crm.EntityEditorPaymentStatus === "undefined")
 			return;
 		}
 
-		this._dragItem = BX.Crm.EditorDragItemController.create(
+		this._dragItem = BX.UI.EditorDragItemController.create(
 			"field_" +  this.getId(),
 			{
-				charge: BX.Crm.EditorFieldDragItem.create(
+				charge: BX.UI.EditorFieldDragItem.create(
 					{
 						control: this,
 						contextId: this._draggableContextId
@@ -4598,7 +4558,7 @@ if(typeof BX.Crm.EntityEditorPaymentCheck === "undefined")
 		var items = BX.prop.getArray(data, "items", []);
 		this._totalCount = BX.prop.getInteger(data, "count", 0);
 
-		this._wrapper = BX.create("div", { props: { className: "crm-entity-widget-content-block" } });
+		this._wrapper = BX.create("div", { props: { className: "ui-entity-editor-content-block" } });
 
 		var length = this._itemCount = items.length;
 		var checkNodes = [];
@@ -4871,14 +4831,14 @@ if(typeof BX.Crm.EntityEditorOrderPropertyWrapper === "undefined")
 		var scheme = [];
 		for (var i = 0, l = elementData.length; i < l; i++)
 		{
-			scheme.push(BX.Crm.EntitySchemeElement.create(elementData[i]));
+			scheme.push(BX.UI.EntitySchemeElement.create(elementData[i]));
 		}
 		return scheme;
 	};
 
 	BX.Crm.EntityEditorOrderPropertyWrapper.prototype.addChildren = function()
 	{
-		var element = BX.Crm.EntitySchemeElement.create(
+		var element = BX.UI.EntitySchemeElement.create(
 			{
 				'name': this._id + '_ACTIVE',
 				'type': 'order_property_subsection',
@@ -4898,10 +4858,12 @@ if(typeof BX.Crm.EntityEditorOrderPropertyWrapper === "undefined")
 
 		if(this._activeElementsBlock)
 		{
-			this.addChild(this._activeElementsBlock);
+			this.addChild(this._activeElementsBlock, {
+				enableSaving: false
+			});
 		}
 
-		element = BX.Crm.EntitySchemeElement.create(
+		element = BX.UI.EntitySchemeElement.create(
 			{
 				'name': this._id + '_DISABLED',
 				'type': 'order_property_subsection',
@@ -4922,7 +4884,9 @@ if(typeof BX.Crm.EntityEditorOrderPropertyWrapper === "undefined")
 		this._disabledFieldsBlock._showFieldLink = false;
 		if(this._disabledFieldsBlock)
 		{
-			this.addChild(this._disabledFieldsBlock);
+			this.addChild(this._disabledFieldsBlock, {
+				enableSaving: false
+			});
 		}
 	};
 
@@ -4970,11 +4934,13 @@ if(typeof BX.Crm.EntityEditorOrderPropertyWrapper === "undefined")
 				{ schemeElement: element, model: this._model, parent: parent, mode: this._mode }
 			);
 
-			if (this._mode !== BX.Crm.EntityEditorMode.edit || personType !== element.getDataIntegerParam("personTypeId"))
+			if (this._mode !== BX.UI.EntityEditorMode.edit || personType !== element.getDataIntegerParam("personTypeId"))
 			{
-				field.setDragObjectType(BX.Crm.EditorDragObjectType.intermediate);
+				field.setDragObjectType(BX.UI.EditorDragObjectType.intermediate);
 			}
-			parent.addChild(field);
+			parent.addChild(field, {
+				enableSaving: false
+			});
 		}
 	};
 
@@ -4986,7 +4952,7 @@ if(typeof BX.Crm.EntityEditorOrderPropertyWrapper === "undefined")
 	BX.Crm.EntityEditorOrderPropertyWrapper.prototype.createButtonPanel = function()
 	{
 		this._buttonPanelWrapper = BX.create("div", {
-			props: { className: "crm-entity-widget-content-block" }
+			props: { className: "ui-entity-editor-content-block" }
 		});
 
 		if (this.isCreationEnabled())
@@ -5111,8 +5077,8 @@ if(typeof BX.Crm.EntityEditorOrderPropertyWrapper === "undefined")
 			field._schemeElement._isRequired = (data.REQUIRED === 'Y');
 			field._schemeElement.setTitle(BX.util.htmlspecialchars(data.NAME));
 			if (
-				field instanceof BX.Crm.EntityEditorList
-				||field instanceof BX.Crm.EntityEditorMultiList
+				field instanceof BX.UI.EntityEditorList
+				||field instanceof BX.UI.EntityEditorMultiList
 			)
 			{
 				if (!BX.type.isArray(data.VARIANTS))
@@ -5173,7 +5139,7 @@ if(typeof BX.Crm.EntityEditorOrderPropertyWrapper === "undefined")
 		{
 			return;
 		}
-		var element = BX.Crm.EntitySchemeElement.create(info);
+		var element = BX.UI.EntitySchemeElement.create(info);
 		this._model.setField(
 			element.getName(),
 			""
@@ -5185,12 +5151,12 @@ if(typeof BX.Crm.EntityEditorOrderPropertyWrapper === "undefined")
 			{ schemeElement: element, model: this._model, parent: this, mode: this._mode }
 		);
 		var showAlways = this._editor.getOption("show_always", "Y") === "Y";
-		if(showAlways !== field.checkOptionFlag(BX.Crm.EntityEditorControlOptions.showAlways))
+		if(showAlways !== field.checkOptionFlag(BX.UI.EntityEditorControlOptions.showAlways))
 		{
-			field.toggleOptionFlag(BX.Crm.EntityEditorControlOptions.showAlways);
+			field.toggleOptionFlag(BX.UI.EntityEditorControlOptions.showAlways);
 		}
 
-		if (field instanceof BX.Crm.EntityEditorCustom)
+		if (field instanceof BX.UI.EntityEditorCustom)
 		{
 			this.getOrderController().onDataChanged();
 		}
@@ -5453,7 +5419,7 @@ if(typeof BX.Crm.EntityEditorOrderPropertySubsection === "undefined")
 		BX.Crm.EntityEditorOrderPropertySubsection.superclass.initialize.call(this, id, settings);
 		this._personTypeId = BX.prop.getInteger(this._model.getData(), 'PERSON_TYPE_ID');
 		this._showFieldLink = true;
-		if(this.getChildDragScope() === BX.Crm.EditorDragScope.parent)
+		if(this.getChildDragScope() === BX.UI.EditorDragScope.parent)
 		{
 			this._draggableContextId += "_" + this.getId();
 		}
@@ -5462,14 +5428,14 @@ if(typeof BX.Crm.EntityEditorOrderPropertySubsection === "undefined")
 
 	BX.Crm.EntityEditorOrderPropertySubsection.prototype.getEditPriority = function()
 	{
-		return BX.Crm.EntityEditorPriority.high;
+		return BX.UI.EntityEditorPriority.high;
 	};
 
 	BX.Crm.EntityEditorOrderPropertySubsection.prototype.layoutChild = function(field)
 	{
 		BX.Crm.EntityEditorOrderPropertySubsection.superclass.layoutChild.call(this, field);
 		var linked = BX.prop.getString(field._schemeElement._settings, "linked");
-		if (this._mode !== BX.Crm.EntityEditorMode.view
+		if (this._mode !== BX.UI.EntityEditorMode.view
 			&& field.isContextMenuEnabled()
 			&& BX.type.isNotEmptyString(linked)
 			&& this._showFieldLink
@@ -5527,9 +5493,9 @@ if(typeof BX.Crm.EntityEditorOrderPropertySubsection === "undefined")
 
 		this._fieldConfigurator.setLocked(true);
 		field.setTitle(label);
-		if(showAlways !== null && showAlways !== field.checkOptionFlag(BX.Crm.EntityEditorControlOptions.showAlways))
+		if(showAlways !== null && showAlways !== field.checkOptionFlag(BX.UI.EntityEditorControlOptions.showAlways))
 		{
-			field.toggleOptionFlag(BX.Crm.EntityEditorControlOptions.showAlways);
+			field.toggleOptionFlag(BX.UI.EntityEditorControlOptions.showAlways);
 		}
 		var config = {
 			NAME : label,
@@ -5565,7 +5531,7 @@ if(typeof BX.Crm.EntityEditorOrderPropertySubsection === "undefined")
 		var propertyId = child._schemeElement.getDataStringParam("propertyId");
 		var config = {
 			SETTINGS : {
-				SHOW_ALWAYS : child.checkOptionFlag(BX.Crm.EntityEditorControlOptions.showAlways) ? 'Y' : 'N'
+				SHOW_ALWAYS : child.checkOptionFlag(BX.UI.EntityEditorControlOptions.showAlways) ? 'Y' : 'N'
 			}
 		};
 		this.savePropertyConfig(propertyId, config);
@@ -5574,7 +5540,7 @@ if(typeof BX.Crm.EntityEditorOrderPropertySubsection === "undefined")
 	BX.Crm.EntityEditorOrderPropertySubsection.prototype.processDraggedItemDrop = function(dragContainer, draggedItem)
 	{
 		var containerCharge = dragContainer.getCharge();
-		if(!((containerCharge instanceof BX.Crm.EditorFieldDragContainer) && containerCharge.getSection() === this))
+		if(!((containerCharge instanceof BX.UI.EditorFieldDragContainer) && containerCharge.getSection() === this))
 		{
 			return;
 		}
@@ -5588,7 +5554,7 @@ if(typeof BX.Crm.EntityEditorOrderPropertySubsection === "undefined")
 		}
 
 		var itemCharge = typeof(context["charge"]) !== "undefined" ?  context["charge"] : null;
-		if(!(itemCharge instanceof BX.Crm.EditorFieldDragItem))
+		if(!(itemCharge instanceof BX.UI.EditorFieldDragItem))
 		{
 			return;
 		}
@@ -5737,7 +5703,7 @@ if(typeof BX.Crm.EntityEditorOrderPropertySubsection === "undefined")
 
 	BX.Crm.EntityEditorOrderPropertySubsection.prototype.isDragEnabled = function()
 	{
-		return (this._mode === BX.Crm.EntityEditorMode.edit) && BX.prop.getBoolean(this._schemeElement._settings, "isDragEnabled", false);
+		return (this._mode === BX.UI.EntityEditorMode.edit) && BX.prop.getBoolean(this._schemeElement._settings, "isDragEnabled", false);
 	};
 
 	BX.Crm.EntityEditorOrderPropertySubsection.prototype.refreshProfilesList = function(profiles)
@@ -6023,7 +5989,7 @@ if(typeof BX.Crm.EntityEditorOrderPersonType === "undefined")
 		BX.Crm.EntityEditorOrderPersonType.superclass.constructor.apply(this);
 	};
 
-	BX.extend(BX.Crm.EntityEditorOrderPersonType, BX.Crm.EntityEditorList);
+	BX.extend(BX.Crm.EntityEditorOrderPersonType, BX.UI.EntityEditorList);
 
 	BX.Crm.EntityEditorOrderPersonType.prototype.initialize =  function(id, settings)
 	{
@@ -6034,18 +6000,9 @@ if(typeof BX.Crm.EntityEditorOrderPersonType === "undefined")
 
 	BX.Crm.EntityEditorOrderPersonType.prototype.onItemSelect = function(e, item)
 	{
-		this.closeMenu();
 		if (this._selectedValue !== item.value)
 		{
-			this._selectedValue = this._input.value = item.value;
-			var name = BX.prop.getString(
-				this.getItemByValue(this._selectedValue),
-				"NAME",
-				this._selectedValue
-			);
-
-			this._selectContainer.innerHTML = this.getDataBooleanParam('isHtml', false) ? name : BX.util.htmlspecialchars(name);
-			this.markAsChanged();
+			BX.Crm.EntityEditorOrderPersonType.superclass.onItemSelect.apply(this, [e, item]);
 			for(var i = 0, length = this._editor._controllers.length; i < length; i++)
 			{
 				if (
@@ -6057,12 +6014,16 @@ if(typeof BX.Crm.EntityEditorOrderPersonType === "undefined")
 				}
 			}
 		}
-		BX.PopupMenu.destroy(this._id);
+		else
+		{
+			this.closeMenu();
+			BX.PopupMenu.destroy(this._id);
+		}
 	};
 
 	BX.Crm.EntityEditorOrderPersonType.prototype.getDragObjectType = function()
 	{
-		return BX.Crm.EditorDragObjectType.intermediate;
+		return BX.UI.EditorDragObjectType.intermediate;
 	};
 
 	BX.Crm.EntityEditorOrderPersonType.prototype.onAfterUpdate = function(e, item)
@@ -6132,10 +6093,10 @@ if(typeof BX.Crm.EntityEditorOrderUser === "undefined")
 	};
 	BX.Crm.EntityEditorOrderUser.prototype.getModeSwitchType = function(mode)
 	{
-		var result = BX.Crm.EntityEditorModeSwitchType.common;
-		if(mode === BX.Crm.EntityEditorMode.edit)
+		var result = BX.UI.EntityEditorModeSwitchType.common;
+		if(mode === BX.UI.EntityEditorMode.edit)
 		{
-			result |= BX.Crm.EntityEditorModeSwitchType.button|BX.Crm.EntityEditorModeSwitchType.content;
+			result |= BX.UI.EntityEditorModeSwitchType.button|BX.UI.EntityEditorModeSwitchType.content;
 		}
 		return result;
 	};
@@ -6365,7 +6326,7 @@ if(typeof BX.Crm.EntityEditorOrderUser === "undefined")
 
 	BX.Crm.EntityEditorOrderUser.prototype.getRuntimeValue = function()
 	{
-		if (this._mode === BX.Crm.EntityEditorMode.edit && this._selectedValue)
+		if (this._mode === BX.UI.EntityEditorMode.edit && this._selectedValue)
 		{
 			return this._selectedValue;
 		}
@@ -6382,7 +6343,7 @@ if(typeof BX.Crm.EntityEditorOrderUser === "undefined")
 
 	BX.Crm.EntityEditorOrderUser.prototype.processItemSelect = function(item)
 	{
-		var isViewMode = this._mode === BX.Crm.EntityEditorMode.view;
+		var isViewMode = this._mode === BX.UI.EntityEditorMode.view;
 		var editInView = this.isEditInViewEnabled();
 		var id = BX.prop.getInteger(item, "id", 0);
 		if(isViewMode && !editInView)
@@ -6400,7 +6361,7 @@ if(typeof BX.Crm.EntityEditorOrderUser === "undefined")
 			this._editor.saveControl(this);
 		}
 
-		if(this._mode !== BX.Crm.EntityEditorMode.view)
+		if(!isViewMode)
 		{
 			for(i = 0, length = this._editor._controllers.length; i < length; i++)
 			{
@@ -6746,350 +6707,10 @@ if(typeof BX.Crm.EntityEditorOrderClient === "undefined")
 }
 if(typeof BX.Crm.EntityEditorMultiList === "undefined")
 {
-	BX.Crm.EntityEditorMultiList = function()
-	{
-		BX.Crm.EntityEditorMultiList.superclass.constructor.apply(this);
-		this._items = null;
-		this._input = null;
-		this._selectedValues = [];
-		this._hiddenNode = "";
-		this._selectorClickHandler = BX.delegate(this.onSelectorClick, this);
-		this._innerWrapper = null;
-		this._isOpened = false;
-	};
-	BX.extend(BX.Crm.EntityEditorMultiList, BX.Crm.EntityEditorField);
-	BX.Crm.EntityEditorMultiList.prototype.getModeSwitchType = function(mode)
-	{
-		var result = BX.Crm.EntityEditorModeSwitchType.common;
-		if(mode === BX.Crm.EntityEditorMode.edit)
-		{
-			result |= BX.Crm.EntityEditorModeSwitchType.button|BX.Crm.EntityEditorModeSwitchType.content;
-		}
-		return result;
-	};
-	BX.Crm.EntityEditorMultiList.prototype.getContentWrapper = function()
-	{
-		return this._innerWrapper;
-	};
-	BX.Crm.EntityEditorMultiList.prototype.hasContentToDisplay = function()
-	{
-		var value = this.getValue();
-		return BX.type.isArray(value) && value.length > 0 && BX.type.isNotEmptyString(value[0]);
-	};
-
-	BX.Crm.EntityEditorMultiList.prototype.layout = function(options)
-	{
-		if(this._hasLayout)
-		{
-			return;
-		}
-
-		this.ensureWrapperCreated({ classNames: [ "crm-entity-widget-content-block-field-custom-multiselect" ] });
-		this.adjustWrapper();
-		if(!this.isNeedToDisplay())
-		{
-			this.registerLayout(options);
-			this._hasLayout = true;
-			return;
-		}
-
-		var name = this.getName();
-		var title = this.getTitle();
-
-		var value = this.getValue();
-		this._selectedValues = this.getSelectedValues(value);
-
-		if(this._mode === BX.Crm.EntityEditorMode.edit)
-		{
-			this._wrapper.appendChild(this.createTitleNode(title));
-
-			var params = {
-				'isMulti': true,
-				'fieldName': name
-			};
-
-			this._input = BX.decl({
-				block: 'main-ui-multi-select',
-				name: name,
-				items: this._items,
-				value: this._selectedValues,
-				params: params,
-				valueDelete: true
-			});
-			var selector = BX.create(
-				"div",
-				{
-					props: { className: "fields enumeration field-item" },
-					children: [this._input]
-				}
-			);
-			BX.addCustomEvent(
-				window,
-				'UI::Select::change',
-				BX.delegate(this.onChange, this)
-			);
-
-			BX.bind(selector, 'click', BX.defer(
-				function(){
-					this.onChange({
-						params: params,
-						node: selector.firstChild
-					});
-				}, this));
-
-			this._innerWrapper = BX.create(
-				"div",
-				{
-					props: { className: "crm-entity-widget-content-block-inner" }
-				}
-			);
-
-			this._innerWrapper.appendChild(selector);
-			this.layoutHidden();
-			this._innerWrapper.appendChild(this._hiddenNode);
-		}
-		else// if(this._mode === BX.Crm.EntityEditorMode.view)
-		{
-			this._wrapper.appendChild(this.createTitleNode(title));
-			this._innerWrapper = BX.create(
-				"div",
-				{
-					props: { className: "crm-entity-widget-content-block-inner" }
-				}
-			);
-
-			var text = "";
-			if(!this.hasContentToDisplay())
-			{
-				itemContainer = BX.create("div",
-					{
-						text: this.getMessage("isEmpty")
-					}
-				);
-				this._innerWrapper.appendChild(itemContainer);
-			}
-			else
-			{
-				for (var i=0; i<this._selectedValues.length ;i++)
-				{
-					var item = this.getItemByValue(this._selectedValues[i].VALUE);
-					if (BX.type.isNotEmptyString(item['NAME']))
-					{
-						text = item["NAME"];
-					}
-					else
-					{
-						text = item["VALUE"];
-					}
-
-					if (BX.type.isNotEmptyString(text))
-					{
-						itemContainer = BX.create("div",
-							{
-								props: { className: "crm-entity-widget-content-block-inner" },
-								text: text
-							}
-						);
-
-						this._innerWrapper.appendChild(itemContainer);
-					}
-				}
-			}
-		}
-		this._wrapper.appendChild(this._innerWrapper);
-		//
-		if(this.isDragEnabled())
-		{
-			this._wrapper.appendChild(this.createDragButton());
-		}
-
-		if(this.isContextMenuEnabled())
-		{
-			this._wrapper.appendChild(this.createContextMenuButton());
-		}
-
-		if(this.isDragEnabled())
-		{
-			this.initializeDragDropAbilities();
-		}
-
-		this.registerLayout(options);
-		this._hasLayout = true;
-	};
-	BX.Crm.EntityEditorMultiList.prototype.doClearLayout = function(options)
-	{
-		this._input = null;
-		this._innerWrapper = null;
-	};
-	BX.Crm.EntityEditorMultiList.prototype.layoutHidden = function()
-	{
-		if (!BX.type.isDomNode(this._hiddenNode))
-		{
-			this._hiddenNode =  BX.create("div");
-		}
-		else
-		{
-			this._hiddenNode.innerHTML = '';
-		}
-		var selectedLength = this._selectedValues.length;
-		if (selectedLength > 0)
-		{
-			for (var i=0;i<selectedLength;i++)
-			{
-				this._hiddenNode.appendChild(
-					BX.create('input',{
-						attrs:{
-							type: 'hidden',
-							name: this.getName() + "[]",
-							value: this._selectedValues[i].VALUE
-						}
-					})
-				)
-			}
-		}
-		else
-		{
-			this._hiddenNode.appendChild(
-				BX.create('input',{
-					attrs:{
-						type: 'hidden',
-						name: this.getName() + "[]"
-					}
-				})
-			)
-		}
-	};
-	BX.Crm.EntityEditorMultiList.prototype.validate = function(result)
-	{
-		if(this._mode !== BX.Crm.EntityEditorMode.edit)
-		{
-			throw "BX.Crm.EntityEditorMultiList. Invalid validation context";
-		}
-
-		if(!this.isEditable())
-		{
-			return true;
-		}
-
-		this.clearError();
-
-		if(this.hasValidators())
-		{
-			return this.executeValidators(result);
-		}
-
-		var isValid = !this.isRequired() || BX.util.trim(this._input.value) !== "";
-		if(!isValid)
-		{
-			result.addError(BX.Crm.EntityValidationError.create({ field: this }));
-			this.showRequiredFieldError(this._input);
-		}
-		return isValid;
-	};
-	BX.Crm.EntityEditorMultiList.prototype.showError =  function(error, anchor)
-	{
-		BX.Crm.EntityEditorMultiList.superclass.showError.apply(this, arguments);
-		if(this._input)
-		{
-			BX.addClass(this._input, "crm-entity-widget-content-error");
-		}
-	};
-	BX.Crm.EntityEditorMultiList.prototype.clearError =  function()
-	{
-		BX.Crm.EntityEditorMultiList.superclass.clearError.apply(this);
-		if(this._input)
-		{
-			BX.removeClass(this._input, "crm-entity-widget-content-error");
-		}
-	};
-
-	BX.Crm.EntityEditorMultiList.prototype.onChange = function(e)
-	{
-		if (e.params.fieldName === this.getName() && this._input)
-		{
-			this._selectedValues = JSON.parse(this._input.getAttribute('data-value'));
-			this.layoutHidden();
-			this.markAsChanged();
-		}
-	};
-	BX.Crm.EntityEditorMultiList.prototype.getItems = function()
-	{
-		if(!this._items)
-		{
-			this._items = BX.prop.getArray(this._schemeElement.getData(), "items");
-		}
-		return this._items;
-	};
-	BX.Crm.EntityEditorMultiList.prototype.getItemByValue = function(value)
-	{
-		var items = this.getItems();
-		for(var i = 0, l = items.length; i < l; i++)
-		{
-			var item = items[i];
-			if(value === BX.prop.getString(item, "VALUE", ""))
-			{
-				return item;
-			}
-		}
-		return null;
-	};
-	BX.Crm.EntityEditorMultiList.prototype.getSelectedValues = function(values)
-	{
-		var result = [];
-		var items = this.getItems();
-		if (!BX.type.isArray(values))
-		{
-			return [];
-		}
-
-		for(var j = 0; j < values.length; j++)
-		{
-			value = values[j];
-			for(var i = 0, l = items.length; i < l; i++)
-			{
-				var item = items[i];
-				if(value === BX.prop.getString(item, "VALUE", ""))
-				{
-					result.push(item);
-				}
-			}
-		}
-
-		return result;
-	};
-	BX.Crm.EntityEditorMultiList.prototype.getFirstItem = function()
-	{
-		var items = this.getItems();
-		return items.length > 0 ? items[0] : null;
-	};
-	BX.Crm.EntityEditorMultiList.prototype.save = function()
-	{
-		if(!this.isEditable())
-		{
-			return;
-		}
-
-		this._model.setField(this.getName(), this.getRuntimeValue());
-	};
-	BX.Crm.EntityEditorMultiList.prototype.getRuntimeValue = function()
-	{
-		var value = [];
-		if (this._mode === BX.Crm.EntityEditorMode.edit && this._input)
-		{
-			for (var i=0;i<this._selectedValues.length;i++)
-			{
-				value.push(this._selectedValues[i].VALUE);
-			}
-		}
-
-		return value;
-	};
-	BX.Crm.EntityEditorMultiList.create = function(id, settings)
-	{
-		var self = new BX.Crm.EntityEditorMultiList();
-		self.initialize(id, settings);
-		return self;
-	}
+	/**
+	 * @deprecated
+	 */
+	BX.Crm.EntityEditorMultiList = BX.UI.EntityEditorMultiList;
 }
 if(typeof BX.Crm.EntityEditorOrderQuantity === "undefined")
 {
@@ -7110,10 +6731,10 @@ if(typeof BX.Crm.EntityEditorOrderQuantity === "undefined")
 	BX.extend(BX.Crm.EntityEditorOrderQuantity, BX.Crm.EntityEditorField);
 	BX.Crm.EntityEditorOrderQuantity.prototype.getModeSwitchType = function(mode)
 	{
-		var result = BX.Crm.EntityEditorModeSwitchType.common;
-		if(mode === BX.Crm.EntityEditorMode.edit)
+		var result = BX.UI.EntityEditorModeSwitchType.common;
+		if(mode === BX.UI.EntityEditorMode.edit)
 		{
-			result |= BX.Crm.EntityEditorModeSwitchType.button|BX.Crm.EntityEditorModeSwitchType.content;
+			result |= BX.UI.EntityEditorModeSwitchType.button|BX.UI.EntityEditorModeSwitchType.content;
 		}
 		return result;
 	};
@@ -7206,7 +6827,7 @@ if(typeof BX.Crm.EntityEditorOrderQuantity === "undefined")
 			this._wrapper.appendChild(this.createDragButton());
 		}
 
-		if(this._mode === BX.Crm.EntityEditorMode.edit)
+		if(this._mode === BX.UI.EntityEditorMode.edit)
 		{
 			this._wrapper.appendChild(this.createTitleNode(title));
 
@@ -7283,7 +6904,7 @@ if(typeof BX.Crm.EntityEditorOrderQuantity === "undefined")
 				}
 			);
 		}
-		else //this._mode === BX.Crm.EntityEditorMode.view
+		else //this._mode === BX.UI.EntityEditorMode.view
 		{
 			this._wrapper.appendChild(this.createTitleNode(title));
 			if(this.hasContentToDisplay())
@@ -7459,7 +7080,7 @@ if(typeof BX.Crm.EntityEditorOrderQuantity === "undefined")
 	};
 	BX.Crm.EntityEditorOrderQuantity.prototype.validate = function(result)
 	{
-		if(!(this._mode === BX.Crm.EntityEditorMode.edit && this._amountInput))
+		if(!(this._mode === BX.UI.EntityEditorMode.edit && this._amountInput))
 		{
 			throw "BX.Crm.EntityEditorOrderQuantity. Invalid validation context";
 		}
@@ -7498,7 +7119,7 @@ if(typeof BX.Crm.EntityEditorOrderQuantity === "undefined")
 	BX.Crm.EntityEditorOrderQuantity.prototype.getRuntimeValue = function()
 	{
 		var data = [];
-		if (this._mode === BX.Crm.EntityEditorMode.edit)
+		if (this._mode === BX.UI.EntityEditorMode.edit)
 		{
 			if(this._amountInput)
 			{
@@ -7539,12 +7160,12 @@ if(typeof BX.Crm.EntityEditorOrderPropertyFile === "undefined")
 		BX.Crm.EntityEditorOrderPropertyFile.superclass.constructor.apply(this);
 	};
 
-	BX.extend(BX.Crm.EntityEditorOrderPropertyFile, BX.Crm.EntityEditorCustom);
+	BX.extend(BX.Crm.EntityEditorOrderPropertyFile, BX.UI.EntityEditorCustom);
 
 	BX.Crm.EntityEditorOrderPropertyFile.prototype.layout = function(options)
 	{
 		BX.Crm.EntityEditorOrderPropertyFile.superclass.layout.apply(this, arguments);
-		if (this._mode === BX.Crm.EntityEditorMode.edit)
+		if (this._mode === BX.UI.EntityEditorMode.edit)
 		{
 			setTimeout(
 				BX.delegate(function(){
@@ -7701,7 +7322,7 @@ if(typeof(BX.Crm.EntityEditorOrderUserSelector) === "undefined")
 	{
 		BX.Crm.EntityEditorOrderUserSelector.superclass.constructor.apply(this);
 	};
-	BX.extend(BX.Crm.EntityEditorOrderUserSelector, BX.Crm.EntityEditorUserSelector);
+	BX.extend(BX.Crm.EntityEditorOrderUserSelector, BX.UI.EntityEditorUserSelector);
 
 	BX.Crm.EntityEditorOrderUserSelector.prototype.initialize =  function(id, settings)
 	{
@@ -7794,10 +7415,10 @@ if(typeof BX.Crm.EntityEditorDeliverySelector === "undefined")
 
 	BX.Crm.EntityEditorDeliverySelector.prototype.getModeSwitchType = function(mode)
 	{
-		var result = BX.Crm.EntityEditorModeSwitchType.common;
-		if(mode === BX.Crm.EntityEditorMode.edit)
+		var result = BX.UI.EntityEditorModeSwitchType.common;
+		if(mode === BX.UI.EntityEditorMode.edit)
 		{
-			result |= BX.Crm.EntityEditorModeSwitchType.button|BX.Crm.EntityEditorModeSwitchType.content;
+			result |= BX.UI.EntityEditorModeSwitchType.button|BX.UI.EntityEditorModeSwitchType.content;
 		}
 		return result;
 	};
@@ -7834,7 +7455,7 @@ if(typeof BX.Crm.EntityEditorDeliverySelector === "undefined")
 
 		this._wrapper.appendChild(this.createTitleNode(title));
 
-		if(this._mode === BX.Crm.EntityEditorMode.edit)
+		if(this._mode === BX.UI.EntityEditorMode.edit)
 		{
 			this._deliverySelector = BX.create('select',{
 				events: {
@@ -7918,7 +7539,7 @@ if(typeof BX.Crm.EntityEditorDeliverySelector === "undefined")
 				this.insertStoreSelector();
 			}
 		}
-		else //this._mode === BX.Crm.EntityEditorMode.view
+		else //this._mode === BX.UI.EntityEditorMode.view
 		{
 			var name = this.getModel().getStringField('DELIVERY_SERVICE_NAME') || this.getMessage("notSelected");
 			this.setDeliveryServiceName(name);
@@ -8267,7 +7888,7 @@ if(typeof BX.Crm.EntityEditorDeliverySelector === "undefined")
 			return;
 		}
 
-		if(this._mode === BX.Crm.EntityEditorMode.edit)
+		if(this._mode === BX.UI.EntityEditorMode.edit)
 		{
 			if(!this._deliverySelector)
 			{
@@ -8395,7 +8016,7 @@ if(typeof BX.Crm.EntityEditorDeliverySelector === "undefined")
 
 	BX.Crm.EntityEditorDeliverySelector.prototype.getRuntimeValue = function()
 	{
-		return (this._mode === BX.Crm.EntityEditorMode.edit && this._input
+		return (this._mode === BX.UI.EntityEditorMode.edit && this._input
 				? BX.util.trim(this._input.value) : ""
 		);
 	};
@@ -8404,7 +8025,7 @@ if(typeof BX.Crm.EntityEditorDeliverySelector === "undefined")
 	{
 		var result = '';
 
-		if (mode === BX.Crm.EntityEditorMode.edit)
+		if (mode === BX.UI.EntityEditorMode.edit)
 		{
 			if(profileSelector && changedObject !== 'delivery')
 			{
@@ -8452,7 +8073,7 @@ if(typeof BX.Crm.EntityEditorShipmentExtraServices === "undefined")
 		BX.Crm.EntityEditorDeliverySelector.superclass.constructor.apply(this);
 	};
 
-	BX.extend(BX.Crm.EntityEditorShipmentExtraServices, BX.Crm.EntityEditorCustom);
+	BX.extend(BX.Crm.EntityEditorShipmentExtraServices, BX.UI.EntityEditorCustom);
 
 	BX.Crm.EntityEditorShipmentExtraServices.prototype.getHtmlContent = function()
 	{

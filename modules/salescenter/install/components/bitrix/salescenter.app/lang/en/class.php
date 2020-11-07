@@ -1,4 +1,5 @@
-<?
+<?php
+$MESS["CRM_MODULE_ERROR"] = "The CRM module is not installed.";
 $MESS["SALESCENTER_APP_ADD_TITLE"] = "Add";
 $MESS["SALESCENTER_APP_CASHBOX_INFO"] = "#CASHBOX_NAME# settings";
 $MESS["SALESCENTER_APP_CASHBOX_OFFLINE_INFO"] = "Physical cash register settings";
@@ -26,4 +27,3 @@ $MESS["SALESCENTER_TIMELINE_PAYMENT_TITLE_DEFAULT"] = "Customer is yet to pay th
 $MESS["SALESCENTER_TIMELINE_SENT_CONTENT"] = "Order submitted on #DATE_CREATED# via SMS";
 $MESS["SALESCENTER_TIMELINE_WATCH_CONTENT"] = "Customer viewed order on #DATE_CREATED#";
 $MESS["SALESCENTER_TIMELINE_WATCH_CONTENT_DEFAULT"] = "Customer is yet to click the link";
-?>

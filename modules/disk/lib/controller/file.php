@@ -124,9 +124,9 @@ class File extends BaseObject
 
 		if (!$folder->canAdd($securityContext))
 		{
-			$this->errorCollection[] = new Error(Loc::getMessage('DISK_ERROR_MESSAGE_DENIED'));
+			$this->addError(new Error(Loc::getMessage('DISK_ERROR_MESSAGE_DENIED')));
 
-			return;
+			return null;
 		}
 
 		if ($content->isCloud() && $content->getContentType())
@@ -142,9 +142,9 @@ class File extends BaseObject
 			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
 			if (!$fileId)
 			{
-				$this->errorCollection[] = new Error('Could not save file data by \CFile::saveFile');
+				$this->addError(new Error('Could not save file data by \CFile::saveFile'));
 
-				return;
+				return null;
 			}
 
 			//it's crutch to be similar @see \Bitrix\Disk\Folder::uploadFile()
@@ -178,16 +178,15 @@ class File extends BaseObject
 
 		if (!$file)
 		{
-			$this->errorCollection->add($folder->getErrors());
+			$this->addErrors($folder->getErrors());
 
-			return;
+			return null;
 		}
 
 		$previewFileData = $this->request->getFile('previewFile');
 		if ($previewFileData && \CFile::isImage($previewFileData['name'], $previewFileData['type']))
 		{
 			$previewFileData['MODULE_ID'] = 'main';
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
 			$previewId = \CFile::saveFile($previewFileData, 'main_preview', true);
 			if ($previewId)
 			{
@@ -205,9 +204,7 @@ class File extends BaseObject
 
 		if (empty($fileName) || empty($fileData) || !is_array($fileData))
 		{
-			Application::getInstance()->terminate();
-
-			return;
+			return null;
 		}
 
 		$isImage = TypeFile::isImage($fileName);
@@ -235,7 +232,7 @@ class File extends BaseObject
 	{
 		if (!$file->getView()->getPreviewData())
 		{
-			Application::getInstance()->terminate();
+			return null;
 		}
 
 		$fileName = $file->getView()->getPreviewName();
@@ -243,9 +240,7 @@ class File extends BaseObject
 
 		if (empty($fileName) || empty($fileData) || !is_array($fileData))
 		{
-			Application::getInstance()->terminate();
-
-			return;
+			return null;
 		}
 
 		$response = Response\ResizedImage::createByImageData(
@@ -291,16 +286,16 @@ class File extends BaseObject
 		$securityContext = $file->getStorage()->getCurrentUserSecurityContext();
 		if (!$file->canRestore($securityContext))
 		{
-			$this->errorCollection[] = new Error(Loc::getMessage('DISK_ERROR_MESSAGE_DENIED'));
+			$this->addError(new Error(Loc::getMessage('DISK_ERROR_MESSAGE_DENIED')));
 
-			return;
+			return null;
 		}
 
 		if (!$file->restoreFromVersion($version, $this->getCurrentUser()->getId()))
 		{
-			$this->errorCollection->add($file->getErrors());
+			$this->addErrors($file->getErrors());
 
-			return;
+			return null;
 		}
 
 		return $this->getAction($file);
@@ -325,34 +320,34 @@ class File extends BaseObject
 	{
 		if (!Disk\Integration\Bitrix24Manager::isFeatureEnabled('disk_file_sharing'))
 		{
-			$this->errorCollection[] = new Error('Not allowed');
+			$this->addError(new Error('Not allowed'));
 
-			return;
+			return null;
 		}
 
 		$currentUserId = $this->getCurrentUser()->getId();
 		$securityContext = $file->getStorage()->getSecurityContext($currentUserId);
 		if (!$file->canShare($securityContext))
 		{
-			$this->errorCollection[] = new Error(Loc::getMessage('DISK_ERROR_MESSAGE_DENIED'));
+			$this->addError(new Error(Loc::getMessage('DISK_ERROR_MESSAGE_DENIED')));
 
-			return;
+			return null;
 		}
 
 		$rightsManager = Driver::getInstance()->getRightsManager();
 		if (!$rightsManager->isValidTaskName($taskName))
 		{
-			$this->errorCollection[] = new Error('Invalid task name');
+			$this->addError(new Error('Invalid task name'));
 
-			return;
+			return null;
 		}
 
 		$maxTaskName = $rightsManager->getPseudoMaxTaskByObjectForUser($file, $currentUserId);
 		if ($rightsManager->pseudoCompareTaskName($taskName, $maxTaskName) > 0)
 		{
-			$this->errorCollection[] = new Error(Loc::getMessage('DISK_ERROR_MESSAGE_DENIED'));
+			$this->addError(new Error(Loc::getMessage('DISK_ERROR_MESSAGE_DENIED')));
 
-			return;
+			return null;
 		}
 
 		$sharing = Disk\Sharing::add(
@@ -369,7 +364,7 @@ class File extends BaseObject
 
 		if(!$sharing)
 		{
-			return;
+			return null;
 		}
 
 		return [
@@ -441,14 +436,14 @@ class File extends BaseObject
 		{
 			$this->addError(new Error('Could not find storage for current user'));
 
-			return;
+			return null;
 		}
 		$folder = $userStorage->getFolderForSavedFiles();
 		if (!$folder)
 		{
 			$this->addError(new Error('Could not find folder for created files'));
 
-			return;
+			return null;
 		}
 
 		//so, now we don't copy links in the method copyTo. But here we have to copy content.
@@ -463,7 +458,7 @@ class File extends BaseObject
 		{
 			$this->addError(new Error('Could not copy file to storage for current user'));
 
-			return;
+			return null;
 		}
 
 		return $this->get($newFile);

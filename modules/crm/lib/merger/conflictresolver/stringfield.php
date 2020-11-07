@@ -98,8 +98,8 @@ class StringField extends Base
 
 	public function checkRedundantSpaces(&$seedValue, &$targetValue): bool
 	{
-		$formattedSeedValue = preg_replace("/[ ]+/".BX_UTF_PCRE_MODIFIER, " ", $seedValue);
-		$formattedTargetValue = preg_replace("/[ ]+/".BX_UTF_PCRE_MODIFIER, " ", $targetValue);
+		$formattedSeedValue = $this->removeSpaces($seedValue);
+		$formattedTargetValue = $this->removeSpaces($targetValue);
 
 		if ($formattedSeedValue !== null && $formattedTargetValue !== null)
 		{
@@ -145,5 +145,10 @@ class StringField extends Base
 			// only if $newValue equals to original seed value
 			$this->setNewTargetValue($newValue);
 		}
+	}
+
+	protected function removeSpaces(string $value): string
+	{
+		return preg_replace("/[ ]+/".BX_UTF_PCRE_MODIFIER, " ", $value);
 	}
 }

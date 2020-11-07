@@ -2,6 +2,7 @@
 $MESS["VOX_LINES_ADD_NUMBER_GROUP"] = "Создать группу номеров";
 $MESS["VOX_LINES_NUMBER_GROUP_NAME"] = "Название группы";
 $MESS["VOX_LINES_SELECT_UNASSIGNED_NUMBERS"] = "Выберите номера, входящие в группу";
+$MESS["VOX_LINES_NO_UNASSIGNED_NUMBERS"] = "У вас нет арендованных номеров, или все арендованные номера уже включены в группы номеров";
 $MESS["VOX_LINES_BUTTON_CREATE"] = "Создать";
 $MESS["VOX_LINES_BUTTON_CANCEL"] = "Отмена";
 $MESS["VOX_LINES_CONFIRM_ACTION"] = "Подтвердите действие";

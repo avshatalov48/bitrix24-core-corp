@@ -1,0 +1,444 @@
+<?php
+
+namespace Bitrix\Crm\Kanban\Entity;
+
+use Bitrix\Crm\Binding\OrderContactCompanyTable;
+use Bitrix\Crm\Order\EntityMarker;
+use Bitrix\Crm\Order\OrderStatus;
+use Bitrix\Crm\Order\Payment;
+use Bitrix\Crm\Order\PersonType;
+use Bitrix\Crm\Order\PropertyValue;
+use Bitrix\Crm\Order\PropertyVariant;
+use Bitrix\Crm\Order\Shipment;
+use Bitrix\Crm\Kanban\Entity;
+use Bitrix\Main\Entity\ExpressionField;
+use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Result;
+
+class Order extends Entity
+{
+	protected $loadedOrders = [];
+
+	public function __construct()
+	{
+		Loader::includeModule('sale');
+	}
+
+	public function getTypeName(): string
+	{
+		return \CCrmOwnerType::OrderName;
+	}
+
+	public function getItemsSelectPreset(): array
+	{
+		return ['ID', 'ACCOUNT_NUMBER', 'STATUS_ID', 'DATE_INSERT', 'PAY_VOUCHER_DATE', 'DATE_PAYED', 'ORDER_TOPIC', 'PRICE', 'CURRENCY', 'RESPONSIBLE_ID'];
+	}
+
+	public function getStatusEntityId(): string
+	{
+		return OrderStatus::NAME;
+	}
+
+	public function getFilterPresets(): array
+	{
+		$user = $this->getCurrentUserInfo();
+
+		return [
+			'filter_in_work' => [
+				'name' => Loc::getMessage('CRM_KANBAN_HELPER_ORDER_PRESET_MY_WORK'),
+				'default' => true,
+				'fields' => ['STATUS_ID' => OrderStatus::getSemanticProcessStatuses()],
+			],
+			'filter_my' => [
+				'name' => Loc::getMessage('CRM_KANBAN_HELPER_ORDER_PRESET_MY'),
+				'fields' => [
+					'RESPONSIBLE_ID_name' => $user['name'],
+					'RESPONSIBLE_ID' => $user['id'],
+					'STATUS_ID' => OrderStatus::getSemanticProcessStatuses(),
+				],
+			],
+			'filter_won' => [
+				'name' => Loc::getMessage('CRM_KANBAN_HELPER_ORDER_PRESET_WON'),
+				'fields' => ['STATUS_ID' =>  [OrderStatus::getFinalStatus()]]
+			],
+		];
+	}
+
+	protected function getDefaultAdditionalSelectFields(): array
+	{
+		return [
+			'TITLE' => '',
+			'PRICE' => '',
+			'DATE_INSERT' => '',
+			'CLIENT' => '',
+			'ORDER_STAGE' => '',
+		];
+	}
+
+	public function getAdditionalEditFields(): array
+	{
+		return $this->getAdditionalEditFieldsFromOptions();
+	}
+
+	public function isCustomPriceFieldsSupported(): bool
+	{
+		return false;
+	}
+
+	public function isInlineEditorSupported(): bool
+	{
+		return false;
+	}
+
+	protected function getDetailComponentName(): ?string
+	{
+		return 'bitrix:crm.order.details';
+	}
+
+	protected function getDetailComponent(): ?\CBitrixComponent
+	{
+		/** @var \CCrmOrderDetailsComponent $component */
+		$component = parent::getDetailComponent();
+		if($component)
+		{
+			$component->obtainOrder();
+		}
+
+		return $component;
+	}
+
+	protected function getInlineEditorConfiguration(\CBitrixComponent $component): array
+	{
+		/** @var \CCrmOrderDetailsComponent $component */
+		return $component->prepareKanbanConfiguration();
+	}
+
+	protected function getTotalSumFieldName(): string
+	{
+		return 'SUM';
+	}
+
+	public function getAssignedByFieldName(): string
+	{
+		return 'RESPONSIBLE_ID';
+	}
+
+	public function hasOpenedField(): bool
+	{
+		return false;
+	}
+
+	public function isStageEmpty(string $stageId): bool
+	{
+		$list = \Bitrix\Crm\Order\Order::getList([
+			'filter' => [$this->getStageFieldName() => $stageId],
+			'limit' => 1,
+		]);
+
+		return !$list->fetch();
+	}
+
+	protected function getDataToCalculateTotalSums(string $fieldSum, array $filter, array $runtime): array
+	{
+		$queryParameters = [
+			'filter' => $filter,
+			'select' => [
+				$this->getStageFieldName(),
+				new ExpressionField($fieldSum, 'SUM(%s)', 'PRICE'),
+				new ExpressionField('CNT', 'COUNT(1)'),
+			]
+		];
+		if (!empty($runtime))
+		{
+			$queryParameters['runtime'] = $runtime;
+		}
+		$data = [];
+		$res = \Bitrix\Crm\Order\Order::getList($queryParameters);
+		while ($row = $res->fetch())
+		{
+			$data[] = $row;
+		}
+
+		return $data;
+	}
+
+	public function getItemsSelect(array $additionalFields): array
+	{
+		if(!empty($additionalFields))
+		{
+			$ufSelect = preg_grep( "/^UF_/", $additionalFields);
+			$additionalFields = array_intersect($additionalFields,  \Bitrix\Crm\Order\Order::getAllFields());
+			if (!empty($ufSelect))
+			{
+				global $USER_FIELD_MANAGER;
+				$crmUserType = new \CCrmUserType($USER_FIELD_MANAGER, \Bitrix\Crm\Order\Order::getUfId());
+				$userFields = $crmUserType->GetFields();
+				if (is_array($userFields))
+				{
+					foreach ($ufSelect as $userFieldName)
+					{
+						if (isset($userFields[$userFieldName]))
+						{
+							$additionalFields[] = $userFieldName;
+						}
+					}
+				}
+			}
+
+			if (in_array('SOURCE_ID', $additionalFields, true))
+			{
+				$additionalFields['SOURCE_ID'] = 'TRADING_PLATFORM.TRADING_PLATFORM.NAME';
+			}
+			if (in_array('USER', $additionalFields, true))
+			{
+				$additionalFields[] = 'USER_ID';
+			}
+		}
+
+		return parent::getItemsSelect($additionalFields);
+	}
+
+	public function getItems(array $parameters): \CDBResult
+	{
+		$items = [];
+
+		$list = \Bitrix\Crm\Order\Order::getList($parameters);
+		while($item = $list->fetch())
+		{
+			$items[$item['ID']] = $item;
+		}
+		$items = $this->prepareEntityFields($items);
+
+		$result = new \CDBResult();
+		$result->InitFromArray($items);
+
+		return $result;
+	}
+
+	protected function prepareEntityFields(array $orders): array
+	{
+		static $currencies = [];
+		static $personTypes = [];
+
+		if(empty($orders))
+		{
+			return $orders;
+		}
+		$ids = array_keys($orders);
+		if (empty($currencies))
+		{
+			$currencies = \CCrmCurrencyHelper::PrepareListItems();
+		}
+		if (empty($personTypes))
+		{
+			$personTypes = PersonType::load(SITE_ID);
+		}
+		$orderClientRaw = OrderContactCompanyTable::getList([
+			'filter' => [
+				'=ORDER_ID' => $ids
+			]
+		]);
+		while ($orderClient = $orderClientRaw->fetch())
+		{
+			$orderId = $orderClient['ORDER_ID'];
+			if ((int)$orderClient['ENTITY_TYPE_ID'] === \CCrmOwnerType::Contact)
+			{
+				if (empty($db[$orderId]['CONTACT_ID']) || $orderClient['IS_PRIMARY'] === 'Y')
+				{
+					$orders[$orderId]['CONTACT_ID'] = $orderClient['ENTITY_ID'];
+				}
+			}
+			elseif ((int)$orderClient['ENTITY_TYPE_ID'] === \CCrmOwnerType::Company)
+			{
+				$orders[$orderId]['COMPANY_ID'] = $orderClient['ENTITY_ID'];
+			}
+		}
+
+		$paymentRaw = Payment::getList([
+			'filter' => [
+				'=ORDER_ID' => $ids
+			]
+		]);
+		while ($payment = $paymentRaw->fetch())
+		{
+			$orderId = $payment['ORDER_ID'];
+			$orders[$orderId]['PAYMENT'][$payment['ID']] = $payment;
+		}
+
+		$shipmentRaw = Shipment::getList([
+			'filter' => [
+				'=ORDER_ID' => $ids,
+				'SYSTEM' => 'N'
+			]
+		]);
+		while ($shipment = $shipmentRaw->fetch())
+		{
+			$orderId = $shipment['ORDER_ID'];
+			$orders[$orderId]['SHIPMENT'][$shipment['ID']] = $shipment;
+		}
+
+		$markersRaw = EntityMarker::getList([
+			'filter' => [
+				'=ENTITY_TYPE' => EntityMarker::ENTITY_TYPE_ORDER,
+				'=ENTITY_ID' => $ids,
+				'=SUCCESS' => 'N',
+			],
+			'select' => ['MESSAGE', 'ENTITY_ID']
+		]);
+
+		$markers = [];
+		while ($marker = $markersRaw->fetch())
+		{
+			$markers[$marker['ENTITY_ID']][] = $marker['MESSAGE'];
+		}
+
+		if (!empty($markers))
+		{
+			foreach ($markers as $orderId => $marker )
+			{
+				if (count($marker) > 1)
+				{
+					$value = implode('<br>', $marker);
+				}
+				else
+				{
+					$value = $marker[0];
+				}
+				$orders[$orderId]['PROBLEM_NOTIFICATION'] = $value;
+			}
+		}
+
+		$enumVariants = [];
+		$enumPropertyVariantRaw = PropertyVariant::getList([
+			'select' => ['VALUE', 'NAME', 'ORDER_PROPS_ID']
+		]);
+		while ($variant = $enumPropertyVariantRaw->fetch())
+		{
+			$enumVariants[$variant['ORDER_PROPS_ID']][$variant['VALUE']] = $variant['NAME'];
+		}
+
+		$propertyValuesRaw = PropertyValue::getList([
+			'filter' => [
+				'=ORDER_ID' => $ids
+			],
+			'select' => ['TYPE' => 'PROPERTY.TYPE', 'VALUE', 'ORDER_PROPS_ID', 'ORDER_ID']
+		]);
+		while ($propertyValue = $propertyValuesRaw->fetch())
+		{
+			$value = $propertyValue['VALUE'];
+			$currentPropertyId = $propertyValue['ORDER_PROPS_ID'];
+			if ($propertyValue['TYPE'] === 'ENUM')
+			{
+				$orders[$propertyValue['ORDER_ID']]['PROPERTY_'.$currentPropertyId] = $enumVariants[$currentPropertyId][$value];
+			}
+			if ($propertyValue['TYPE'] === 'Y/N')
+			{
+				$value = ($value === 'Y') ? 'Y' : 'N';
+				$orders[$propertyValue['ORDER_ID']]['PROPERTY_'.$currentPropertyId] = Loc::getMessage('CRM_KANBAN_CHAR_' . $value);
+			}
+			else
+			{
+				$orders[$propertyValue['ORDER_ID']]['PROPERTY_'.$currentPropertyId] = $value;
+			}
+		}
+
+		foreach ($orders as &$order)
+		{
+			if (isset($order['PERSON_TYPE_ID']))
+			{
+				$type = $personTypes[$order['PERSON_TYPE_ID']];
+				$order['PERSON_TYPE_ID'] = $type['NAME'];
+			}
+			$order['CURRENCY_ID'] = $order['CURRENCY'];
+			$order['USER'] = $order['USER_ID'];
+			$order['CURRENCY'] = $currencies[$order['CURRENCY']];
+			$order['TITLE'] = Loc::getMessage('CRM_KANBAN_ORDER_TITLE', [
+				'#ACCOUNT_NUMBER#' => $order['ACCOUNT_NUMBER']
+			]);
+		}
+
+		return $orders;
+	}
+
+	public function prepareItemCommonFields(array $item): array
+	{
+		$item['FORMAT_TIME'] = false;
+		$item['DATE'] = $item['DATE_INSERT'];
+
+		$item = parent::prepareItemCommonFields($item);
+
+		return $item;
+	}
+
+	public function deleteItems(array $ids, bool $isIgnore = false, \CCrmPerms $permissions = null): void
+	{
+		foreach ($ids as $id)
+		{
+			$id = (int)$id;
+			$checkPermission = \Bitrix\Crm\Order\Permissions\Order::checkDeletePermission($id, $permissions);
+			if (!$checkPermission)
+			{
+				continue;
+			}
+			\Bitrix\Crm\Order\Order::delete($id);
+		}
+	}
+
+	public function checkUpdatePermissions(int $id, \CCrmPerms $permissions): bool
+	{
+		return \Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($id, $permissions);
+	}
+
+	public function getItem(int $id): ?array
+	{
+		$order = \Bitrix\Crm\Order\Order::load($id);
+
+		$this->loadedOrders[$id] = $order;
+
+		return ($order instanceof \Bitrix\Crm\Order\Order) ? $order->getFieldValues() : null;
+	}
+
+	public function updateItemStage(int $id, string $stageId, array $newStateParams, array $stages): Result
+	{
+		$result = new Result();
+
+		$order = $this->loadedOrders[$id] ?? null;
+		if(!$order)
+		{
+			$order = \Bitrix\Crm\Order\Order::load($id);
+		}
+		if(!$order)
+		{
+			return $result->addError(new Error('Order not found'));
+		}
+
+		$order->setField('STATUS_ID', $stageId);
+		return $order->save();
+	}
+
+	public function setItemsAssigned(array $ids, int $assignedId, \CCrmPerms $permissions): Result
+	{
+		$result = new Result();
+
+		foreach ($ids as $id)
+		{
+			if ($this->checkUpdatePermissions($id, $permissions))
+			{
+				$order = \Bitrix\Crm\Order\Order::load($id);
+				if($order)
+				{
+					$order->setField('RESPONSIBLE_ID', $assignedId);
+					$saveResult = $order->save();
+					if(!$saveResult->isSuccess())
+					{
+						$result->addErrors($saveResult->getErrors());
+					}
+				}
+			}
+		}
+
+		return $result;
+	}
+}

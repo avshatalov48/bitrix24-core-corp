@@ -59,12 +59,11 @@ class ShipmentChangedTrigger extends BaseTrigger
 	{
 		$result = parent::toArray();
 		if (static::isEnabled() && Loader::includeModule('sale'))
-			if (static::isEnabled())
-			{
-				$result['FIELDS'] = array_values(\Bitrix\Bizproc\Automation\Helper::getDocumentFields(
-					\CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::OrderShipment)
-				));
-			}
+		{
+			$result['FIELDS'] = array_values(\Bitrix\Bizproc\Automation\Helper::getDocumentFields(
+				\CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::OrderShipment)
+			));
+		}
 		return $result;
 	}
 }

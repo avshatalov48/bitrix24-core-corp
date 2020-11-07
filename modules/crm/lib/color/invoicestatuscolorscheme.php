@@ -4,6 +4,9 @@ namespace Bitrix\Crm\Color;
 use Bitrix\Main;
 use Bitrix\Crm;
 
+/**
+ * @deprecated
+ */
 class InvoiceStatusColorScheme extends PhaseColorScheme
 {
 	/** @var InvoiceStatusColorScheme|null */

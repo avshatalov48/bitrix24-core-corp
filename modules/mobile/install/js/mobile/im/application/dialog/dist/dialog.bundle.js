@@ -11,9 +11,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	 * @subpackage mobile
 	 * @copyright 2001-2020 Bitrix
 	 */
-	var MobileImCommandHandler =
-	/*#__PURE__*/
-	function () {
+	var MobileImCommandHandler = /*#__PURE__*/function () {
 	  babelHelpers.createClass(MobileImCommandHandler, null, [{
 	    key: "create",
 	    value: function create() {
@@ -68,9 +66,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	 * @subpackage mobile
 	 * @copyright 2001-2019 Bitrix
 	 */
-	var MobileRestAnswerHandler =
-	/*#__PURE__*/
-	function (_BaseRestHandler) {
+	var MobileRestAnswerHandler = /*#__PURE__*/function (_BaseRestHandler) {
 	  babelHelpers.inherits(MobileRestAnswerHandler, _BaseRestHandler);
 
 	  function MobileRestAnswerHandler(params) {
@@ -434,9 +430,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	 * @subpackage mobile
 	 * @copyright 2001-2020 Bitrix
 	 */
-	var MobileDialogApplication =
-	/*#__PURE__*/
-	function () {
+	var MobileDialogApplication = /*#__PURE__*/function () {
 	  /* region 01. Initialize and store data */
 	  function MobileDialogApplication() {
 	    var _this = this;
@@ -465,8 +459,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      return _this.initMobileEnvironment();
 	    }).then(function () {
 	      return _this.initPullClient();
-	    }).then(function () {
-	      return _this.requestData();
 	    }).then(function () {
 	      return _this.initComplete();
 	    });
@@ -638,7 +630,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      });
 	      BX.addCustomEvent("onAppPaused", function () {
 	        _this5.windowFocused = false;
-	        ui_vue.Vue.event.$emit('bitrixmobile:controller:blur');
+	        ui_vue.Vue.event.$emit('bitrixmobile:controller:blur'); //app.closeController();z
 	      });
 	      BX.addCustomEvent("onOpenPageAfter", checkWindowFocused);
 	      BX.addCustomEvent("onHidePageBefore", function () {
@@ -1040,6 +1032,16 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      } else if (headerProperties.color) {
 	        //BXMobileApp.UI.Page.TopBar.title.setImageColor(dialog.color);
 	        BXMobileApp.UI.Page.TopBar.title.params.imageColor = headerProperties.color;
+	      }
+
+	      if (im_lib_utils.Utils.dialog.isChatId(this.controller.application.getDialogId())) {
+	        var dialogData = this.controller.application.getDialogData();
+
+	        if (!dialogData.restrictions.extend) {
+	          app.exec("setRightButtons", {
+	            items: []
+	          });
+	        }
 	      }
 
 	      return true;
@@ -1915,7 +1917,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "processMarkReadMessages",
 	    value: function processMarkReadMessages() {
-	      this.controller.readMessageExecute(this.controller.application.getChatId(), true);
+	      this.controller.application.readMessageExecute(this.controller.application.getChatId(), true);
 	      return true;
 	    }
 	  }, {
@@ -2577,38 +2579,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      });
 	    }
 	  }, {
-	    key: "execMessageKeyboardCommand",
-	    value: function execMessageKeyboardCommand(data) {
-	      if (data.action !== 'COMMAND') {
-	        return false;
-	      }
-
-	      var _data$params = data.params,
-	          dialogId = _data$params.dialogId,
-	          messageId = _data$params.messageId,
-	          botId = _data$params.botId,
-	          command = _data$params.command,
-	          params = _data$params.params;
-	      this.controller.restClient.callMethod(im_const.RestMethod.imMessageCommand, {
-	        'MESSAGE_ID': messageId,
-	        'DIALOG_ID': dialogId,
-	        'BOT_ID': botId,
-	        'COMMAND': command,
-	        'COMMAND_PARAMS': params
-	      });
-	      return true;
-	    }
-	  }, {
-	    key: "execMessageOpenChatTeaser",
-	    value: function execMessageOpenChatTeaser(data) {
-	      var _this26 = this;
-
-	      this.controller.application.joinParentChat(data.message.id, 'chat' + data.message.params.CHAT_ID).then(function (dialogId) {
-	        _this26.openDialog(dialogId);
-	      }).catch(function () {});
-	      return true;
-	    }
-	  }, {
 	    key: "quoteMessageClear",
 	    value: function quoteMessageClear() {
 	      this.setText('');
@@ -2623,7 +2593,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "editMessage",
 	    value: function editMessage(id) {
-	      var _this27 = this;
+	      var _this26 = this;
 
 	      var message = this.controller.getStore().getters['messages/getMessage'](this.controller.application.getChatId(), id);
 	      this.controller.getStore().dispatch('dialogues/update', {
@@ -2634,14 +2604,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 	      }).then(function () {
 	        setTimeout(function () {
-	          return _this27.controller.application.emit(im_const.EventType.dialog.scrollToBottom, {
+	          return _this26.controller.application.emit(im_const.EventType.dialog.scrollToBottom, {
 	            duration: 300,
 	            cancelIfScrollChange: false,
 	            force: true
 	          });
 	        }, 300);
 
-	        _this27.setTextFocus();
+	        _this26.setTextFocus();
 	      });
 	      this.setText(message.text);
 	    }
@@ -2674,7 +2644,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "deleteMessage",
 	    value: function deleteMessage(id) {
-	      var _this28 = this;
+	      var _this27 = this;
 
 	      var message = this.controller.getStore().getters['messages/getMessage'](this.controller.application.getChatId(), id);
 	      var files = this.controller.getStore().getters['files/getList'](this.controller.application.getChatId());
@@ -2686,9 +2656,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        buttons: [this.getLocalize('MOBILE_MESSAGE_MENU_DELETE_YES'), this.getLocalize('MOBILE_MESSAGE_MENU_DELETE_NO')],
 	        callback: function callback(button) {
 	          if (button === 1) {
-	            _this28.quoteMessageClear();
+	            _this27.quoteMessageClear();
 
-	            _this28.deleteMessageSend(id);
+	            _this27.deleteMessageSend(id);
 	          }
 	        }
 	      });
@@ -2707,15 +2677,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "insertText",
 	    value: function insertText(params) {
-	      var _this29 = this;
+	      var _this28 = this;
 
 	      BXMobileApp.UI.Page.TextPanel.getText(function (text) {
 	        text = text.toString().trim();
 	        text = text ? text + ' ' + params.text : params.text;
 
-	        _this29.setText(text);
+	        _this28.setText(text);
 
-	        _this29.setTextFocus();
+	        _this28.setTextFocus();
 	      });
 	    }
 	  }, {
@@ -2766,8 +2736,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    }
 	  }, {
 	    key: "hideSmiles",
-	    value: function hideSmiles() {} // this.controller.hideSmiles();
-
+	    value: function hideSmiles() {// this.controller.hideSmiles();
+	    }
 	    /* endregion 05. Templates and template interaction */
 
 	    /* region 05. Interaction and utils */

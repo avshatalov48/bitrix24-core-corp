@@ -28,119 +28,219 @@ Extension::load([
 	'ui.alerts',
 	'ui.switcher',
 	'salescenter.manager',
+	'ui.sidepanel-content'
 ]);
 ?>
 
 <div class="salescenter-paysystem-wrapper" id="salescenter-paysystem-wrapper">
 	<form id="salescenter-main-settings-form">
-		<input type="hidden" name="ID" id="ID" value="<?=$arResult['PAYSYSTEM_ID']?>">
-		<input type="hidden" name="SORT" id="SORT" value="<?=$arResult['PAYSYSTEM']['SORT']?>">
-		<input type="hidden" name="XML_ID" value="<?=$arResult['PAYSYSTEM']['XML_ID']?>">
-		<input type="hidden" name="ACTION_FILE" id="ACTION_FILE" value="<?=$arResult['PAYSYSTEM_HANDLER']?>">
-		<input type="hidden" name="PS_MODE" id="PS_MODE" value="<?=$arResult['PAYSYSTEM_PS_MODE']?>">
+		<input type="hidden" name="ID" id="ID" value="<?=htmlspecialcharsbx($arResult['PAYSYSTEM_ID'])?>">
+		<input type="hidden" name="SORT" id="SORT" value="<?=htmlspecialcharsbx($arResult['PAYSYSTEM']['SORT'])?>">
+		<input type="hidden" name="XML_ID" value="<?=htmlspecialcharsbx($arResult['PAYSYSTEM']['XML_ID'])?>">
+		<input type="hidden" name="ACTION_FILE" id="ACTION_FILE" value="<?=htmlspecialcharsbx($arResult['PAYSYSTEM_HANDLER'])?>">
+		<input type="hidden" name="PS_MODE" id="PS_MODE" value="<?=htmlspecialcharsbx($arResult['PAYSYSTEM_PS_MODE'])?>">
 		<input id="salescenter-form-is-saved" type="hidden" value="n">
 
-		<div class="salescenter-wrapper ui-bg-color-white">
-			<div style="padding: 15px; margin-bottom: 15px;">
-				<div class="salescenter-main-header">
-					<div class="salescenter-main-header-left-block">
-						<div class="salescenter-logo-container">
-							<?php
-							$imageName = $imagePsModeName = $arResult['PAYSYSTEM_HANDLER'];
-							if ($arResult['PAYSYSTEM_PS_MODE'])
-							{
-								$imagePsModeName = $imageName.'_'.$arResult['PAYSYSTEM_PS_MODE'];
-							}
+		<div class="ui-slider-section ui-slider-section-icon">
+		    <span class="ui-icon ui-slider-icon">
+				<?php
+				$imageName = $imagePsModeName = $arResult['PAYSYSTEM_HANDLER'];
+				if ($arResult['PAYSYSTEM_PS_MODE'])
+				{
+					$imagePsModeName = $imageName.'_'.$arResult['PAYSYSTEM_PS_MODE'];
+				}
 
-							if (Main\IO\File::isFileExists(Main\Application::getDocumentRoot().$this->GetFolder().'/images/'.$imagePsModeName.'.svg')): ?>
-								<div class="salescenter-<?=$arResult['PAYSYSTEM_HANDLER_STYLE'];?>-icon ui-icon"><i></i></div>
-							<?php elseif (Main\IO\File::isFileExists(Main\Application::getDocumentRoot().$this->GetFolder().'/images/'.$imageName.'.svg')): ?>
-								<div class="salescenter-<?=$arResult['PAYSYSTEM_HANDLER'];?>-icon ui-icon"><i></i></div>
-							<?php else: ?>
-								<div class="salescenter-default-icon ui-icon"><i></i></div>
-							<?php endif; ?>
+				if (Main\IO\File::isFileExists(Main\Application::getDocumentRoot().$this->GetFolder().'/images/'.$imagePsModeName.'.svg')): ?>
+					<div class="salescenter-<?=$arResult['PAYSYSTEM_HANDLER_STYLE'];?>-icon ui-icon"><i></i></div>
+				<?php elseif (Main\IO\File::isFileExists(Main\Application::getDocumentRoot().$this->GetFolder().'/images/'.$imageName.'.svg')): ?>
+					<div class="salescenter-<?=$arResult['PAYSYSTEM_HANDLER'];?>-icon ui-icon"><i></i></div>
+				<?php else: ?>
+					<div class="salescenter-default-icon ui-icon"><i></i></div>
+				<?php endif; ?>
+		    </span>
+			<div class="ui-slider-content-box">
+				<?php
+				$title = Loc::getMessage('SALESCENTER_SP_PAYSYSTEM_'.$arResult['PAYSYSTEM_HANDLER_FULL'].'_TITLE');
+				if (!$title)
+				{
+					$title = Loc::getMessage('SALESCENTER_SP_PAYSYSTEM_'.mb_strtoupper($arResult['PAYSYSTEM_HANDLER']).'_TITLE');
+				}
+				if (!$title)
+				{
+					$title = $arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['FULL_NAME'];
+				}
+				?>
+				<div style="display: flex; align-items: center" class="ui-slider-heading-4">
+					<?=htmlspecialcharsbx($title)?>
+					<div class="salescenter-main-header-feedback-container">
+						<?Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->renderFeedbackButton();?>
+					</div>
+					<?php if($arResult['PAYSYSTEM_ID'] > 0):?>
+						<div class="salescenter-main-header-switcher-container">
+							<span data-switcher="<?=htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode([
+							 'id' => 'salescenter-paysystem-active',
+							 'checked' => ($arResult['PAYSYSTEM']['ACTIVE'] === 'Y'),
+							 'inputName' => "ACTIVE",
+							 'color' => "green"
+						 ]))?>" class="ui-switcher"></span>
+						</div>
+					<?php endif;?>
+				</div>
+				<div class="ui-slider-inner-box">
+					<?php
+					$description = Loc::getMessage('SALESCENTER_SP_PAYSYSTEM_'.$arResult['PAYSYSTEM_HANDLER_FULL'].'_DESCRIPTION');
+					if (!$description)
+					{
+						$description = $arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['DESCRIPTION'];
+					}
+					?>
+					<p class="ui-slider-paragraph-2"><?=htmlspecialcharsbx($description);?></p>
+					<div class="salescenter-button-container">
+						<?php if (mb_strtolower($arResult['PAYSYSTEM_HANDLER_CLASS_NAME']) === mb_strtolower(\Sale\Handlers\PaySystem\SkbHandler::class)):?>
+							<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigSkbPaySystem(event);"><?=Loc::getMessage('SALESCENTER_SP_LINK_SBP_CONNECT')?></a>
+						<?php elseif (mb_strtolower($arResult['PAYSYSTEM_HANDLER_CLASS_NAME']) === mb_strtolower(\Sale\Handlers\PaySystem\BePaidHandler::class)):?>
+							<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigBePaidPaySystem(event);"><?=Loc::getMessage('SALESCENTER_SP_LINK_CONNECT')?></a>
+						<?php elseif (mb_strtolower($arResult['PAYSYSTEM_HANDLER_CLASS_NAME']) === mb_strtolower(\Sale\Handlers\PaySystem\LiqPayHandler::class)):?>
+							<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigLiqPayPaySystem(event);"><?=Loc::getMessage('SALESCENTER_SP_LINK_CONNECT')?></a>
+						<?php elseif (mb_strtolower($arResult['PAYSYSTEM_HANDLER_CLASS_NAME']) === mb_strtolower(\Sale\Handlers\PaySystem\UaPayHandler::class)):?>
+							<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigUaPayPaySystem(event);"><?=Loc::getMessage('SALESCENTER_SP_LINK_CONNECT')?></a>
+						<?php elseif (mb_strtolower($arResult['PAYSYSTEM_HANDLER_CLASS_NAME']) === mb_strtolower(\Sale\Handlers\PaySystem\WooppayHandler::class)):?>
+							<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigWoopkassaPaySystem(event);"><?=Loc::getMessage('SALESCENTER_SP_LINK_CONNECT')?></a>
+						<?php else:?>
+							<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigPaySystem(event);"><?=Loc::getMessage('SALESCENTER_SP_LINK_CONNECT')?></a>
+						<?php endif;?>
+					</div>
+					<div data-bx-salescenter-block="profile" style="display: none;">
+						<div class="salescenter-auth-popup-settings">
+							<div class="salescenter-auth-popup-social salescenter-auth-popup-social-yandex">
+								<div class="salescenter-auth-popup-social-avatar">
+									<div data-bx-salescenter-auth-avatar="" class="salescenter-auth-popup-social-avatar-icon"></div>
+								</div>
+								<div class="salescenter-auth-popup-social-user">
+									<a target="_top" data-bx-salescenter-auth-link="" data-bx-salescenter-auth-name="" class="salescenter-auth-popup-social-user-link" title=""></a>
+								</div>
+								<div class="salescenter-auth-popup-social-shutoff">
+									<span data-bx-salescenter-auth-logout="" class="salescenter-auth-popup-social-shutoff-link"><?=Loc::getMessage('SALESCENTER_SP_YANDEX_LOGOUT')?></span>
+								</div>
+							</div>
 						</div>
 					</div>
-					<div class="salescenter-main-header-right-block">
-						<div class="salescenter-main-header-title-container">
-							<?php
-							$title = Loc::getMessage('SALESCENTER_SP_PAYSYSTEM_'.$arResult['PAYSYSTEM_HANDLER_FULL'].'_TITLE');
-							if (!$title)
-							{
-								$title = Loc::getMessage('SALESCENTER_SP_PAYSYSTEM_'.mb_strtoupper($arResult['PAYSYSTEM_HANDLER']).'_TITLE');
-							}
-							if (!$title)
-							{
-								$title = $arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['FULL_NAME'];
-							}
-							?>
-							<div class="ui-title-3" style="margin-bottom: 0;"><?=$title?></div>
-							<div class="salescenter-main-header-feedback-container">
-								<?Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->renderFeedbackButton();?>
-							</div>
-							<?php if($arResult['PAYSYSTEM_ID'] > 0):?>
-								<div class="salescenter-main-header-switcher-container">
-								<span data-switcher="<?=htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode([
-									'id' => 'salescenter-paysystem-active',
-									'checked' => ($arResult['PAYSYSTEM']['ACTIVE'] === 'Y'),
-									'inputName' => "ACTIVE",
-									'color' => "green"
-								]))?>" class="ui-switcher"></span>
-								</div>
-							<?php endif;?>
-						</div>
-						<hr class="ui-hr" style="margin-bottom: 15px;">
-						<?php
-						$description = Loc::getMessage('SALESCENTER_SP_PAYSYSTEM_'.$arResult['PAYSYSTEM_HANDLER_FULL'].'_DESCRIPTION');
-						if (!$description)
-						{
-							$description = $arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['DESCRIPTION'];
-						}
-						?>
-						<div class="ui-text-2" style="margin-bottom: 15px;"><?=htmlspecialcharsbx($description);?></div>
-						<div class="salescenter-button-container">
-							<?php if (mb_strtolower($arResult['PAYSYSTEM_HANDLER_CLASS_NAME']) === mb_strtolower(\Sale\Handlers\PaySystem\SkbHandler::class)):?>
-								<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigSkbPaySystem(event);"><?=Loc::getMessage('SALESCENTER_SP_LINK_SBP_CONNECT')?></a>
-							<?php elseif (mb_strtolower($arResult['PAYSYSTEM_HANDLER_CLASS_NAME']) === mb_strtolower(\Sale\Handlers\PaySystem\BePaidHandler::class)):?>
-								<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigBePaidPaySystem(event);"><?=Loc::getMessage('SALESCENTER_SP_LINK_CONNECT')?></a>
-							<?php elseif (mb_strtolower($arResult['PAYSYSTEM_HANDLER_CLASS_NAME']) === mb_strtolower(\Sale\Handlers\PaySystem\LiqPayHandler::class)):?>
-								<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigLiqPayPaySystem(event);"><?=Loc::getMessage('SALESCENTER_SP_LINK_CONNECT')?></a>
-							<?php elseif (mb_strtolower($arResult['PAYSYSTEM_HANDLER_CLASS_NAME']) === mb_strtolower(\Sale\Handlers\PaySystem\UaPayHandler::class)):?>
-								<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigUaPayPaySystem(event);"><?=Loc::getMessage('SALESCENTER_SP_LINK_CONNECT')?></a>
-							<?php else:?>
-								<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigPaySystem(event);"><?=Loc::getMessage('SALESCENTER_SP_LINK_CONNECT')?></a>
-							<?php endif;?>
-						</div>
-						<div data-bx-salescenter-block="profile" style="display: none;">
-							<div class="salescenter-auth-popup-settings">
-								<div class="salescenter-auth-popup-social salescenter-auth-popup-social-yandex">
-									<div class="salescenter-auth-popup-social-avatar">
-										<div data-bx-salescenter-auth-avatar="" class="salescenter-auth-popup-social-avatar-icon"></div>
-									</div>
-									<div class="salescenter-auth-popup-social-user">
-										<a target="_top" data-bx-salescenter-auth-link="" data-bx-salescenter-auth-name="" class="salescenter-auth-popup-social-user-link" title=""></a>
-									</div>
-									<div class="salescenter-auth-popup-social-shutoff">
-										<span data-bx-salescenter-auth-logout="" class="salescenter-auth-popup-social-shutoff-link"><?=Loc::getMessage('SALESCENTER_SP_YANDEX_LOGOUT')?></span>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div data-bx-salescenter-block="auth" style="display: none;" class="salescenter-button-container">
-							<div class="ui-text-2"><?=Loc::getMessage('SALESCENTER_SP_CONNECT_HINT')?></div>
-							<a id="bx-salescenter-connect-button" href="javascript: void(0);" class="ui-btn ui-btn-md ui-btn-primary ui-btn-width">
-								<?=Loc::getMessage('SALESCENTER_SP_CONNECT_PAYMENT_BUTTON')?>
-							</a>
-						</div>
-						<div data-bx-salescenter-block="settings" style="display: none;" class="salescenter-button-container">
-							<a id="bx-salescenter-add-button" href="javascript: void(0);" class="ui-btn ui-btn-md ui-btn-light-border ui-btn-width">
-								<?=Loc::getMessage('SALESCENTER_SP_ADD_PAYMENT_BUTTON')?>
-							</a>
-						</div>
+					<div data-bx-salescenter-block="auth" style="display: none;" class="salescenter-button-container">
+						<div class="ui-text-2"><?=Loc::getMessage('SALESCENTER_SP_CONNECT_HINT')?></div>
+						<a id="bx-salescenter-connect-button" href="javascript: void(0);" class="ui-btn ui-btn-md ui-btn-primary ui-btn-width">
+							<?=Loc::getMessage('SALESCENTER_SP_CONNECT_PAYMENT_BUTTON')?>
+						</a>
+					</div>
+					<div data-bx-salescenter-block="settings" style="display: none;" class="salescenter-button-container">
+						<a id="bx-salescenter-add-button" href="javascript: void(0);" class="ui-btn ui-btn-md ui-btn-light-border ui-btn-width">
+							<?=Loc::getMessage('SALESCENTER_SP_ADD_PAYMENT_BUTTON')?>
+						</a>
 					</div>
 				</div>
 			</div>
 		</div>
+
+<!--		<div style="display: none; visibility: hidden" class="salescenter-wrapper ui-bg-color-white">-->
+<!--			<div style="padding: 15px; margin-bottom: 15px;">-->
+<!--				<div class="salescenter-main-header">-->
+<!--					<div class="salescenter-main-header-left-block">-->
+<!--						<div class="salescenter-logo-container">-->
+<!--							--><?php
+//							$imageName = $imagePsModeName = $arResult['PAYSYSTEM_HANDLER'];
+//							if ($arResult['PAYSYSTEM_PS_MODE'])
+//							{
+//								$imagePsModeName = $imageName.'_'.$arResult['PAYSYSTEM_PS_MODE'];
+//							}
+//
+//							if (Main\IO\File::isFileExists(Main\Application::getDocumentRoot().$this->GetFolder().'/images/'.$imagePsModeName.'.svg')): ?>
+<!--								<div class="salescenter---><?//=$arResult['PAYSYSTEM_HANDLER_STYLE'];?><!--icon ui-icon"><i></i></div>-->
+<!--							--><?php //elseif (Main\IO\File::isFileExists(Main\Application::getDocumentRoot().$this->GetFolder().'/images/'.$imageName.'.svg')): ?>
+<!--								<div class="salescenter---><?//=$arResult['PAYSYSTEM_HANDLER'];?><!--icon ui-icon"><i></i></div>-->
+<!--							--><?php //else: ?>
+<!--								<div class="salescenter-default-icon ui-icon"><i></i></div>-->
+<!--							--><?php //endif; ?>
+<!--						</div>-->
+<!--					</div>-->
+<!--					<div class="salescenter-main-header-right-block">-->
+<!--						<div class="salescenter-main-header-title-container">-->
+<!--							--><?php
+//							$title = Loc::getMessage('SALESCENTER_SP_PAYSYSTEM_'.$arResult['PAYSYSTEM_HANDLER_FULL'].'_TITLE');
+//							if (!$title)
+//							{
+//								$title = Loc::getMessage('SALESCENTER_SP_PAYSYSTEM_'.mb_strtoupper($arResult['PAYSYSTEM_HANDLER']).'_TITLE');
+//							}
+//							if (!$title)
+//							{
+//								$title = $arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['FULL_NAME'];
+//							}
+//							?>
+<!--							<div class="ui-title-3" style="margin-bottom: 0;">--><?//=$title?><!--</div>-->
+<!--							<div class="salescenter-main-header-feedback-container">-->
+<!--								--><?//Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->renderFeedbackButton();?>
+<!--							</div>-->
+<!--								--><?php //if($arResult['PAYSYSTEM_ID'] > 0):?>
+<!--								<div class="salescenter-main-header-switcher-container">-->
+<!--								<span data-switcher="--><?//=htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode([
+//									'id' => 'salescenter-paysystem-active',
+//									'checked' => ($arResult['PAYSYSTEM']['ACTIVE'] === 'Y'),
+//									'inputName' => "ACTIVE",
+//									'color' => "green"
+//								]))?><!--<" class="ui-switcher"></span>-->
+<!--								</div>-->
+<!--						--><?php //endif;?>
+<!--						</div>-->
+<!--						<hr class="ui-hr" style="margin-bottom: 15px;">-->
+<!--						--><?php
+//						$description = Loc::getMessage('SALESCENTER_SP_PAYSYSTEM_'.$arResult['PAYSYSTEM_HANDLER_FULL'].'_DESCRIPTION');
+//						if (!$description)
+//						{
+//							$description = $arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['DESCRIPTION'];
+//						}
+//						?>
+<!--						<div class="ui-text-2" style="margin-bottom: 15px;">--><?//=htmlspecialcharsbx($description);?><!--</div>-->
+<!--						<div class="salescenter-button-container">-->
+<!--							--><?php //if (mb_strtolower($arResult['PAYSYSTEM_HANDLER_CLASS_NAME']) === mb_strtolower(\Sale\Handlers\PaySystem\SkbHandler::class)):?>
+<!--								<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigSkbPaySystem(event);">--><?//=Loc::getMessage('SALESCENTER_SP_LINK_SBP_CONNECT')?><!--</a>-->
+<!--							--><?php //elseif (mb_strtolower($arResult['PAYSYSTEM_HANDLER_CLASS_NAME']) === mb_strtolower(\Sale\Handlers\PaySystem\BePaidHandler::class)):?>
+<!--								<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigBePaidPaySystem(event);">--><?//=Loc::getMessage('SALESCENTER_SP_LINK_CONNECT')?><!--</a>-->
+<!--							--><?php //elseif (mb_strtolower($arResult['PAYSYSTEM_HANDLER_CLASS_NAME']) === mb_strtolower(\Sale\Handlers\PaySystem\LiqPayHandler::class)):?>
+<!--								<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigLiqPayPaySystem(event);">--><?//=Loc::getMessage('SALESCENTER_SP_LINK_CONNECT')?><!--</a>-->
+<!--							--><?php //elseif (mb_strtolower($arResult['PAYSYSTEM_HANDLER_CLASS_NAME']) === mb_strtolower(\Sale\Handlers\PaySystem\UaPayHandler::class)):?>
+<!--								<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigUaPayPaySystem(event);">--><?//=Loc::getMessage('SALESCENTER_SP_LINK_CONNECT')?><!--</a>-->
+<!--							--><?php //else:?>
+<!--								<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigPaySystem(event);">--><?//=Loc::getMessage('SALESCENTER_SP_LINK_CONNECT')?><!--</a>-->
+<!--							--><?php //endif;?>
+<!--						</div>-->
+<!--						<div data-bx-salescenter-block="profile" style="display: none;">-->
+<!--							<div class="salescenter-auth-popup-settings">-->
+<!--								<div class="salescenter-auth-popup-social salescenter-auth-popup-social-yandex">-->
+<!--									<div class="salescenter-auth-popup-social-avatar">-->
+<!--										<div data-bx-salescenter-auth-avatar="" class="salescenter-auth-popup-social-avatar-icon"></div>-->
+<!--									</div>-->
+<!--									<div class="salescenter-auth-popup-social-user">-->
+<!--										<a target="_top" data-bx-salescenter-auth-link="" data-bx-salescenter-auth-name="" class="salescenter-auth-popup-social-user-link" title=""></a>-->
+<!--									</div>-->
+<!--									<div class="salescenter-auth-popup-social-shutoff">-->
+<!--										<span data-bx-salescenter-auth-logout="" class="salescenter-auth-popup-social-shutoff-link">--><?//=Loc::getMessage('SALESCENTER_SP_YANDEX_LOGOUT')?><!--</span>-->
+<!--									</div>-->
+<!--								</div>-->
+<!--							</div>-->
+<!--						</div>-->
+<!--						<div data-bx-salescenter-block="auth" style="display: none;" class="salescenter-button-container">-->
+<!--							<div class="ui-text-2">--><?//=Loc::getMessage('SALESCENTER_SP_CONNECT_HINT')?><!--</div>-->
+<!--							<a id="bx-salescenter-connect-button" href="javascript: void(0);" class="ui-btn ui-btn-md ui-btn-primary ui-btn-width">-->
+<!--								--><?//=Loc::getMessage('SALESCENTER_SP_CONNECT_PAYMENT_BUTTON')?>
+<!--							</a>-->
+<!--						</div>-->
+<!--						<div data-bx-salescenter-block="settings" style="display: none;" class="salescenter-button-container">-->
+<!--							<a id="bx-salescenter-add-button" href="javascript: void(0);" class="ui-btn ui-btn-md ui-btn-light-border ui-btn-width">-->
+<!--								--><?//=Loc::getMessage('SALESCENTER_SP_ADD_PAYMENT_BUTTON')?>
+<!--							</a>-->
+<!--						</div>-->
+<!--					</div>-->
+<!--				</div>-->
+<!--			</div>-->
+<!--		</div>-->
 
 		<div data-bx-salescenter-block="form" style="display: none;" class="salescenter-main-settings ui-bg-color-white">
 			<div class="ui-alert ui-alert-danger" style="display: none;">
@@ -170,10 +270,8 @@ Extension::load([
 				$description = $arResult['PAYSYSTEM']['DESCRIPTION'];
 			}
 			?>
-			<div class="salescenter-editor-section-edit">
-				<div class="salescenter-editor-section-header">
-					<span class="salescenter-editor-header-title-text"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_TITLE')?></span>
-				</div>
+			<div class="ui-slider-section">
+				<div class="ui-slider-heading-4"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_TITLE')?></div>
 				<div class="salescenter-editor-section-content">
 					<div class="salescenter-editor-content-block">
 						<div class="ui-ctl-label-text">
@@ -215,7 +313,7 @@ Extension::load([
 								<div class="salescneter-editor-img-container">
 									<img
 											src="<?=$logo['src']?>"
-											alt="<?=$arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['NAME']?>"
+											alt="<?=htmlspecialcharsbx($arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['NAME'])?>"
 											class="salescneter-editor-content-img"
 											id="salescenter-img-preload"
 									>
@@ -230,7 +328,7 @@ Extension::load([
 									<div class="salescneter-editor-img-container">
 										<img
 												src="<?=$arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['LOGO']?>"
-												alt="<?=$arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['NAME']?>"
+												alt="<?=htmlspecialcharsbx($arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['NAME'])?>"
 												class="salescneter-editor-content-img"
 												id="salescenter-img-preload">
 									</div>
@@ -278,9 +376,7 @@ Extension::load([
 				if($arResult['isCashboxEnabled'])
 				{
 					?>
-					<div class="salescenter-editor-section-header">
-						<span class="salescenter-editor-header-title-text"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_CASHBOX_TITLE')?></span>
-					</div>
+					<div class="ui-slider-heading-4"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_CASHBOX_TITLE')?></div>
 					<div class="salescenter-editor-section-content">
 						<div class="salescenter-editor-block-title"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_CASHBOX')?></div>
 						<div class="ui-ctl ui-ctl-checkbox ui-ctl-w100">

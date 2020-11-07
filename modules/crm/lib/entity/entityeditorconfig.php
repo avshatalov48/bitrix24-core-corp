@@ -294,6 +294,12 @@ class EntityEditorConfig
 					{
 						$effectiveElement['optionFlags'] = $data[$i]['elements'][$j]['optionFlags'];
 					}
+					if(isset($data[$i]['elements'][$j]['options'])
+						&& is_array($data[$i]['elements'][$j]['options'])
+					)
+					{
+						$effectiveElement['options'] = $data[$i]['elements'][$j]['options'];
+					}
 
 					$effectiveElements[] = $effectiveElement;
 				}

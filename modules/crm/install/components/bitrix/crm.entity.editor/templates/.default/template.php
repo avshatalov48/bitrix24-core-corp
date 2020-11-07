@@ -82,11 +82,11 @@ if(Main\Loader::includeModule('socialnetwork'))
 		BX.ready(
 			function()
 			{
-				BX.Crm.EntityEditorUserSelector.users =  <?=CUtil::PhpToJSObject($dstUsers)?>;
-				BX.Crm.EntityEditorUserSelector.socnetGroups =  <?=CUtil::PhpToJSObject($socnetGroups)?>;
-				BX.Crm.EntityEditorUserSelector.department = <?=CUtil::PhpToJSObject($department)?>;
-				BX.Crm.EntityEditorUserSelector.departmentRelation = <?=CUtil::PhpToJSObject($departmentRelation)?>;
-				BX.Crm.EntityEditorUserSelector.last = <?=CUtil::PhpToJSObject(array_change_key_case($last, CASE_LOWER))?>;
+				BX.UI.EntityEditorUserSelector.users =  <?=CUtil::PhpToJSObject($dstUsers)?>;
+				BX.UI.EntityEditorUserSelector.socnetGroups =  <?=CUtil::PhpToJSObject($socnetGroups)?>;
+				BX.UI.EntityEditorUserSelector.department = <?=CUtil::PhpToJSObject($department)?>;
+				BX.UI.EntityEditorUserSelector.departmentRelation = <?=CUtil::PhpToJSObject($departmentRelation)?>;
+				BX.UI.EntityEditorUserSelector.last = <?=CUtil::PhpToJSObject(array_change_key_case($last, CASE_LOWER))?>;
 
 				BX.Crm.EntityEditorCrmSelector.contacts = {};
 				BX.Crm.EntityEditorCrmSelector.contactsLast = {};
@@ -213,7 +213,38 @@ if(!empty($htmlEditorConfigs))
 			BX.CrmEntityType.setCaptions(<?=CUtil::PhpToJSObject(CCrmOwnerType::GetJavascriptDescriptions())?>);
 			BX.CrmEntityType.setNotFoundMessages(<?=CUtil::PhpToJSObject(CCrmOwnerType::GetNotFoundMessages())?>);
 
-			var userFieldManager = BX.Crm.EntityUserFieldManager.create(
+			<?php if(\Bitrix\Crm\Integration\Calendar::isResourceBookingAvailableForEntity($arResult['USER_FIELD_ENTITY_ID']))
+			{
+			?>
+            BX.Event.EventEmitter.subscribe('BX.UI.EntityUserFieldManager:getTypes', function(event) {
+                var types = event.getData().types;
+                if(!BX.Type.isArray(types))
+                {
+                    return;
+                }
+                var index = 0;
+                var length = types.length;
+                for(; index < length; index++)
+                {
+                    if(types[index].name === 'address')
+                    {
+                        break;
+                    }
+                }
+                types.splice(index, 0, {
+                    name: "resourcebooking",
+                    title: "<?=GetMessageJS('CRM_ENTITY_ED_UF_RESOURCEBOOKING_TITLE')?>",
+                    legend: "<?=GetMessageJS('CRM_ENTITY_ED_UF_RESOURCEBOOKING_LEGEND')?>"
+                });
+                event.setData({
+                    types: types
+                });
+            });
+			<?php
+			}
+			?>
+
+			var userFieldManager = BX.UI.EntityUserFieldManager.create(
 				"<?=CUtil::JSEscape($guid)?>",
 				{
 					entityId: <?=$arResult['ENTITY_ID']?>,
@@ -221,11 +252,12 @@ if(!empty($htmlEditorConfigs))
 					fieldEntityId: "<?=CUtil::JSEscape($arResult['USER_FIELD_ENTITY_ID'])?>",
 					creationSignature: "<?=CUtil::JSEscape($arResult['USER_FIELD_CREATE_SIGNATURE'])?>",
 					creationPageUrl: "<?=CUtil::JSEscape($arResult['USER_FIELD_CREATE_PAGE_URL'])?>",
-					languages: <?=CUtil::PhpToJSObject($arResult['LANGUAGES'])?>
+					languages: <?=CUtil::PhpToJSObject($arResult['LANGUAGES'])?>,
+					fieldPrefix: "<?=CUtil::JSEscape($arResult['USER_FIELD_PREFIX'])?>",
 				}
 			);
 
-			var config = BX.Crm.EntityConfig.create(
+			var config = BX.UI.EntityConfig.create(
 				"<?=CUtil::JSEscape($arResult['CONFIG_ID'])?>",
 				{
 					data: <?=CUtil::PhpToJSObject($arResult['ENTITY_CONFIG'])?>,
@@ -236,17 +268,19 @@ if(!empty($htmlEditorConfigs))
 					canUpdatePersonalConfiguration: <?=$arResult['CAN_UPDATE_PERSONAL_CONFIGURATION'] ? 'true' : 'false'?>,
 					canUpdateCommonConfiguration: <?=$arResult['CAN_UPDATE_COMMON_CONFIGURATION'] ? 'true' : 'false'?>,
 					options: <?=CUtil::PhpToJSObject($arResult['ENTITY_CONFIG_OPTIONS'])?>,
-					serviceUrl: "<?='/bitrix/components/bitrix/crm.entity.editor/settings.php?'.bitrix_sessid_get()?>"
+                    categoryName: "<?=CUtil::JSEscape($arResult['ENTITY_CONFIG_CATEGORY_NAME'])?>"
 				}
 			);
 
-			var scheme = BX.Crm.EntityScheme.create(
+			var scheme = BX.UI.EntityScheme.create(
 				"<?=CUtil::JSEscape($guid)?>",
 				{
 					current: <?=CUtil::PhpToJSObject($arResult['ENTITY_SCHEME'])?>,
 					available: <?=CUtil::PhpToJSObject($arResult['ENTITY_AVAILABLE_FIELDS'])?>
 				}
 			);
+
+			BX.UI.EntitySchemeElement.userFieldFileUrlTemplate = "<?=CUtil::JSEscape($arResult['USER_FIELD_FILE_URL_TEMPLATE'])?>";
 
 			var model = BX.Crm.EntityEditorModelFactory.create(
 				<?=$arResult['ENTITY_TYPE_ID']?>,
@@ -295,7 +329,7 @@ if(!empty($htmlEditorConfigs))
 				scopeSaved: "<?=GetMessageJS('CRM_ENTITY_ED_CONFIG_SCOPE_SAVED')?>",
 			};
 
-			BX.Crm.EntityUserFieldManager.messages =
+			BX.UI.EntityUserFieldManager.messages =
 			{
 				stringLabel: "<?=GetMessageJS('CRM_ENTITY_ED_UF_STRING_LABEL')?>",
 				doubleLabel: "<?=GetMessageJS('CRM_ENTITY_ED_UF_DOUBLE_LABEL')?>",
@@ -328,14 +362,16 @@ if(!empty($htmlEditorConfigs))
 				customLegend: "<?=GetMessageJS('CRM_ENTITY_ED_UF_CUSTOM_LEGEND')?>"
 			};
 
-			BX.Crm.EntityUserFieldManager.additionalTypeList = <?=\CUtil::PhpToJSObject($arResult['USERFIELD_TYPE_ADDITIONAL'])?>;
+			BX.UI.EntityUserFieldManager.additionalTypeList = <?=\CUtil::PhpToJSObject($arResult['USERFIELD_TYPE_ADDITIONAL'])?>;
 
 			BX.Crm.EntityEditorMoneyPay.messages =
 			{
-				payButtonLabel: "<?=GetMessageJS('CRM_ENTITY_EM_BUTTON_PAY')?>"
+				payButtonLabel: "<?=GetMessageJS('CRM_ENTITY_EM_BUTTON_PAY')?>",
+				showPayButton: "<?=GetMessageJS('CRM_ENTITY_EM_SHOW_BUTTON_PAY')?>",
+				hidePayButton: "<?=GetMessageJS('CRM_ENTITY_EM_HIDE_BUTTON_PAY')?>",
 			};
 
-			BX.Crm.EntityEditorFieldConfigurator.messages =
+			BX.UI.EntityEditorFieldConfigurator.messages =
 			{
 				labelField: "<?=GetMessageJS('CRM_ENTITY_ED_FIELD_TITLE')?>",
 				showAlways: "<?=GetMessageJS('CRM_ENTITY_ED_SHOW_ALWAYS')?>",
@@ -360,7 +396,7 @@ if(!empty($htmlEditorConfigs))
 				add: "<?=GetMessageJS('CRM_ENTITY_ED_ADD')?>"
 			};
 
-			BX.Crm.EntityEditorField.messages =
+			BX.UI.EntityEditorField.messages =
 			{
 				hideButtonHint: "<?=GetMessageJS('CRM_ENTITY_ED_HIDE_BUTTON_HINT')?>",
 				hideButtonDisabledHint: "<?=GetMessageJS('CRM_ENTITY_ED_HIDE_BUTTON_DISABLED_HINT')?>",
@@ -400,7 +436,7 @@ if(!empty($htmlEditorConfigs))
 				openDetails: "<?=GetMessageJS('CRM_ENTITY_ED_SECTION_OPEN_DETAILS')?>"
 			};
 
-			BX.Crm.EntityEditorBoolean.messages =
+			BX.UI.EntityEditorBoolean.messages =
 			{
 				yes: "<?=GetMessageJS('MAIN_YES')?>",
 				no: "<?=GetMessageJS('MAIN_NO')?>"
@@ -426,7 +462,7 @@ if(!empty($htmlEditorConfigs))
 				diskUploadFileLegend: "<?=GetMessageJS('CRM_ENTITY_ED_DISK_UPLOAD_FILE_LEGEND')?>"
 			};
 
-			BX.Crm.EntityEditorHtml.messages =
+			BX.UI.EntityEditorHtml.messages =
 			{
 				expand: "<?=GetMessageJS('CRM_ENTITY_ED_EXPAND_COMMENT')?>",
 				collapse: "<?=GetMessageJS('CRM_ENTITY_ED_COLLAPSE_COMMENT')?>"
@@ -512,12 +548,6 @@ if(!empty($htmlEditorConfigs))
 			{
 				notShown: "<?=GetMessageJS('CRM_ENTITY_ED_PRODUCT_NOT_SHOWN')?>",
 				total: "<?=GetMessageJS('CRM_ENTITY_ED_TOTAL')?>"
-			};
-
-			BX.Crm.EntityEditorFieldSelector.messages =
-			{
-				select: "<?=GetMessageJS('CRM_ENTITY_ED_SELECT')?>",
-				cancel: "<?=GetMessageJS('CRM_ENTITY_ED_CANCEL')?>"
 			};
 
 			BX.Crm.ClientEditorEntityRequisitePanel.messages =
@@ -709,7 +739,7 @@ if(!empty($htmlEditorConfigs))
 						entityId: <?=$arResult['ENTITY_ID']?>,
 						model: model,
 						config: config,
-						category: 'crm',
+						moduleId: 'crm',
 						scheme: scheme,
 						validators: <?=CUtil::PhpToJSObject($arResult['ENTITY_VALIDATORS'])?>,
 						controllers: <?=CUtil::PhpToJSObject($arResult['ENTITY_CONTROLLERS'])?>,

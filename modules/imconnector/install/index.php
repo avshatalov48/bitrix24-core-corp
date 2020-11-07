@@ -34,7 +34,7 @@ Class ImConnector extends CModule
 		global $DB, $DBType, $APPLICATION;
 		$this->errors = false;
 
-		if(strtolower($DB->type) !== 'mysql')
+		if($DB->type !== 'MYSQL')
 		{
 			$this->errors = array(
 				Loc::getMessage('IMCONNECTOR_DB_NOT_SUPPORTED'),

@@ -51,6 +51,8 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 	{
 		$connection = Application::getConnection();
 		$sqlHelper = $connection->getSqlHelper();
+		$indicatorType = $sqlHelper->forSql(static::className());
+		$ownerId = (string)$this->getOwner();
 
 		$storageId = $this->getFilterValue('STORAGE_ID', '=@');
 		$parentId = $this->getFilterValue('PARENT_ID', '=@');
@@ -771,9 +773,6 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 			}
 
 
-			$indicatorType = $sqlHelper->forSql(static::className());
-			$ownerId = (string)$this->getOwner();
-
 			$queries[] = "
 				SELECT 
 					'{$indicatorType}' as INDICATOR_TYPE,
@@ -842,8 +841,6 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 				$buildSharingSql($selectSql, $fromSql, $whereSql, $columns, '', $subWhereSql);
 			}
 
-			$indicatorType = $sqlHelper->forSql(static::className());
-			$ownerId = (string)$this->getOwner();
 
 			$queries[] = "
 				SELECT 
@@ -873,7 +870,7 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 		if ($this->getFilterId() > 0)
 		{
 			$columnList = Volume\QueryHelper::prepareUpdateOnSelect($columns, $this->getSelect(), 'destinationTbl', 'sourceQuery');
-			$connection->queryExecute("
+			$querySql = "
 				UPDATE 
 					{$tableName} destinationTbl, 
 					({$temporallyDataSource}) sourceQuery 
@@ -885,12 +882,21 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 					AND destinationTbl.FOLDER_ID = sourceQuery.FOLDER_ID
 					AND (destinationTbl.PARENT_ID = sourceQuery.PARENT_ID 
 						OR (destinationTbl.PARENT_ID IS NULL AND sourceQuery.PARENT_ID IS NULL))
-			");
+			";
 		}
 		else
 		{
-			$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$temporallyDataSource}");
+			$querySql = "INSERT INTO {$tableName} ({$columnList}) {$temporallyDataSource}";
 		}
+
+		if (!$connection->lock(self::$lockName, self::$lockTimeout))
+		{
+			throw new Main\SystemException('Cannot get table lock for '.$indicatorType);
+		}
+
+		$connection->queryExecute($querySql);
+
+		$connection->unlock(self::$lockName);
 
 		VolumeTable::dropTemporally();
 
@@ -941,7 +947,11 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 
 			$sql = 'UPDATE '.$tableName.' SET PERCENT = ROUND((FILE_SIZE + PREVIEW_SIZE) * 100 / '.$total.', 4) WHERE '.$where;
 
-			$connection->queryExecute($sql);
+			if ($connection->lock(self::$lockName, self::$lockTimeout))
+			{
+				$connection->queryExecute($sql);
+				$connection->unlock(self::$lockName);
+			}
 		}
 		return $this;
 	}

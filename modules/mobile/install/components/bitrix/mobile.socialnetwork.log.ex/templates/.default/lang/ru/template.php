@@ -60,4 +60,5 @@ $MESS['MOBILE_TASKS_VIEW_TAB_CHECKLIST'] = "Чек-лист";
 $MESS['MOBILE_TASKS_VIEW_TAB_FILES'] = "Файлы";
 $MESS['MOBILE_TASKS_VIEW_TAB_TASK'] = "Задача";
 $MESS['MOBILE_LOG_MENU_KNOWLEDGE'] = "База знаний";
+$MESS['MOBILE_LOG_REFRESH_NEEDED'] = "Пожалуйста, обновите ленту новостей";
 ?>

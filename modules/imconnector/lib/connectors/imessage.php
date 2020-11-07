@@ -124,7 +124,7 @@ class IMessage extends Base
 	protected static function getIv(): string
 	{
 		$iv = '0000000000000000';
-		$ivLength = strlen($iv);
+		$ivLength = mb_strlen($iv);
 		$ivResult = '';
 		for ($i = 0; $i < $ivLength; $i++)
 		{
@@ -142,7 +142,7 @@ class IMessage extends Base
 	 */
 	protected static function convertFileKey($key)
 	{
-		$result = substr($key, 2);
+		$result = mb_substr($key, 2);
 		$result = pack('H*', $result);
 
 		return $result;
@@ -174,9 +174,9 @@ class IMessage extends Base
 	 */
 	protected static function getNewFilePath($filePath): string
 	{
-		$pointPosition = strrpos($filePath, '.');
-		$fileName = substr($filePath, 0, $pointPosition);
-		$fileExtension = substr($filePath, $pointPosition);
+		$pointPosition = mb_strrpos($filePath, '.');
+		$fileName = mb_substr($filePath, 0, $pointPosition);
+		$fileExtension = mb_substr($filePath, $pointPosition);
 
 		$newFilePath = $fileName . '-decrypted' . $fileExtension;
 

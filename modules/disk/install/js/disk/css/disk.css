@@ -463,6 +463,7 @@ a.bx-disk-create-file-big-pres{
     overflow-y:auto;
     max-width:600px;
     max-height:300px;
+    min-height:40px;
 }
 .bx-disk-popup-upload-title{
     font-size:12px;

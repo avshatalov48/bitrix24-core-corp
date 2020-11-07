@@ -167,17 +167,8 @@ class EntityAddress
 			return $result;
 		}
 
-		$splitter = ', ';
-		$addressFieldSourceMap = [
-			'ADDRESS_1' => Address\FieldType::ADDRESS_LINE_1,
-			'ADDRESS_2' => Address\FieldType::ADDRESS_LINE_2,
-			'CITY' => Address\FieldType::LOCALITY,
-			'POSTAL_CODE' => Address\FieldType::POSTAL_CODE,
-			'REGION' => Address\FieldType::ADM_LEVEL_1,
-			'PROVINCE' => Address\FieldType::ADM_LEVEL_2,
-			'COUNTRY' => Address\FieldType::COUNTRY
-			//'COUNTRY_CODE' => ?
-		];
+		$addressFieldSourceMap = static::getAddressFieldMap();
+
 		foreach ($addressFieldSourceMap as $crmAddressFieldName => $sourceFieldId)
 		{
 			$result[$crmAddressFieldName] = $address->getFieldValue($sourceFieldId);
@@ -374,16 +365,8 @@ class EntityAddress
 	 */
 	protected static function updateLocationAddressFields(Address $locationAddress, array $fields): bool
 	{
-		$addressFieldMap = [
-			'ADDRESS_1' => Address\FieldType::ADDRESS_LINE_1,
-			'ADDRESS_2' => Address\FieldType::ADDRESS_LINE_2,
-			'CITY' => Address\FieldType::LOCALITY,
-			'POSTAL_CODE' => Address\FieldType::POSTAL_CODE,
-			'REGION' => Address\FieldType::ADM_LEVEL_1,
-			'PROVINCE' => Address\FieldType::ADM_LEVEL_2,
-			'COUNTRY' => Address\FieldType::COUNTRY
-			//'COUNTRY_CODE' => ?
-		];
+		$addressFieldMap = static::getAddressFieldMap();
+
 		$result = false;
 		foreach ($addressFieldMap as $crmAddressFieldName => $locationAddressFieldId)
 		{
@@ -1566,19 +1549,62 @@ class EntityAddress
 			{
 				self::$shortLabels[$typeID] = array(
 					//For backward compatibility
-					'ADDRESS' => GetMessage('CRM_ENTITY_SHORT_ADDRESS_1'),
-					'ADDRESS_1' => GetMessage('CRM_ENTITY_SHORT_ADDRESS_1'),
-					'ADDRESS_2' => GetMessage('CRM_ENTITY_SHORT_ADDRESS_2'),
-					'CITY' => GetMessage('CRM_ENTITY_SHORT_ADDRESS_CITY'),
-					'POSTAL_CODE' => GetMessage('CRM_ENTITY_SHORT_ADDRESS_POSTAL_CODE'),
-					'REGION' => GetMessage('CRM_ENTITY_SHORT_ADDRESS_REGION'),
-					'PROVINCE' => GetMessage('CRM_ENTITY_SHORT_ADDRESS_PROVINCE'),
-					'COUNTRY' => GetMessage('CRM_ENTITY_SHORT_ADDRESS_COUNTRY'),
+					'ADDRESS' => static::getLocationFieldLabel('ADDRESS_1'),
+					'ADDRESS_1' => static::getLocationFieldLabel('ADDRESS_1'),
+					'ADDRESS_2' => static::getLocationFieldLabel('ADDRESS_2'),
+					'CITY' => static::getLocationFieldLabel('CITY'),
+					'POSTAL_CODE' => static::getLocationFieldLabel('POSTAL_CODE'),
+					'REGION' => static::getLocationFieldLabel('REGION'),
+					'PROVINCE' => static::getLocationFieldLabel('PROVINCE'),
+					'COUNTRY' => static::getLocationFieldLabel('COUNTRY'),
 					'LOC_ADDR_ID' => GetMessage('CRM_ENTITY_SHORT_ADDRESS_LOC_ADDR_ID'),
 				);
 			}
 		}
 		return self::$shortLabels[$typeID];
+	}
+
+	protected static function getAddressFieldMap(): array
+	{
+		return [
+			'ADDRESS_1' => Address\FieldType::ADDRESS_LINE_1,
+			'ADDRESS_2' => Address\FieldType::ADDRESS_LINE_2,
+			'CITY' => Address\FieldType::LOCALITY,
+			'POSTAL_CODE' => Address\FieldType::POSTAL_CODE,
+			'PROVINCE' => Address\FieldType::ADM_LEVEL_1,
+			'REGION' => Address\FieldType::ADM_LEVEL_2,
+			'COUNTRY' => Address\FieldType::COUNTRY
+			//'COUNTRY_CODE' => ?
+		];
+	}
+
+	protected static function getLocationFieldLabel(string $fieldCode): string
+	{
+
+		if (Main\Loader::includeModule('location'))
+		{
+			$fieldMap = static::getAddressFieldMap();
+			if ($fieldMap[$fieldCode])
+			{
+				$format = \Bitrix\Location\Service\FormatService::getInstance()
+					->findDefault(LANGUAGE_ID);
+				if ($format)
+				{
+					$field = $format
+						->getFieldCollection()
+						->getItemByType($fieldMap[$fieldCode]);
+					if ($field)
+					{
+						return $field->getName();
+					}
+				}
+			}
+		}
+		if (in_array($fieldCode, ['ADDRESS_1', 'ADDRESS_2']))
+		{
+			$fieldCode = str_replace('ADDRESS_', '', $fieldCode);
+		}
+		return GetMessage('CRM_ENTITY_SHORT_ADDRESS_'. $fieldCode);
 	}
 
 	public static function getCountryByCode($code)

@@ -5,6 +5,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\Ui\EntityForm\Scope;
 use Bitrix\UI\Form\EntityEditorConfigScope;
 
 Loc::loadMessages(__FILE__);
@@ -3510,7 +3511,8 @@ class CCrmMobileHelper
 			);
 
 			$config = [];
-			if($configScope === EntityEditorConfigScope::UNDEFINED)
+
+			if($configScope['scope'] === EntityEditorConfigScope::UNDEFINED)
 			{
 				$config = CUserOptions::GetOption(
 					self::USER_OPTION_CATEGORY,
@@ -3528,7 +3530,7 @@ class CCrmMobileHelper
 					);
 				}
 			}
-			elseif($configScope === EntityEditorConfigScope::COMMON)
+			elseif($configScope['scope'] === EntityEditorConfigScope::COMMON)
 			{
 				$config = CUserOptions::GetOption(
 					self::USER_OPTION_CATEGORY,
@@ -3537,7 +3539,12 @@ class CCrmMobileHelper
 					0
 				);
 			}
-			else
+			elseif($configScope['scope'] === EntityEditorConfigScope::CUSTOM)
+			{
+				$config = Scope::getInstance()->getScopeById($configScope['userScopeId']);
+			}
+
+			if (!is_array($config) || empty($config))
 			{
 				$config = CUserOptions::GetOption(
 					self::USER_OPTION_CATEGORY,
@@ -3548,54 +3555,7 @@ class CCrmMobileHelper
 
 			if($config && count($config))
 			{
-				$fieldNameMap = [
-					'CONTACT_ID' => ['CLIENT', 'CONTACT'],
-					'COMPANY_ID' => ['CLIENT', 'COMPANY'],
-					'PRODUCT_ROWS' => ['PRODUCT_ROW_SUMMARY'],
-					'OPPORTUNITY' => ['OPPORTUNITY_WITH_CURRENCY'],
-					'CURRENCY_ID' => ['OPPORTUNITY_WITH_CURRENCY'],
-					'STATUS_DESCRIPTION' => ['STATUS_ID'],
-					'CONTACT_NAME_PHOTO' => ['PHOTO'],
-					'REVENUE' => ['REVENUE_WITH_CURRENCY'],
-					'ADDRESS_LEGAL' => ['ADDRESS'],
-				];
-				foreach($config as $configCategory)
-				{
-					$categoryFields = [];
-					if (isset($configCategory['elements']))
-					{
-						foreach($configCategory['elements'] as $element)
-						{
-							array_walk(
-								$userFields,
-								function($item, $key) use (&$categoryFields, $element, $fieldNameMap)
-								{
-									if(
-										$item['id'] === $element['name'] ||
-										(
-											isset($fieldNameMap[$item['id']]) &&
-											is_array($fieldNameMap[$item['id']]) &&
-											in_array($element['name'], $fieldNameMap[$item['id']])
-										)
-									)
-									{
-										$categoryFields[] = $item;
-									}
-								});
-						}
-					}
-
-					if(count($categoryFields))
-					{
-						$visibleUserFields[] = [
-							'id' => $configCategory['name'],
-							'fields' => $categoryFields,
-							'title' => $configCategory['title'],
-						];
-					}
-					unset($categoryFields);
-				}
-				$userFields = $visibleUserFields;
+				$this->prepareVisibleUserFieldsSection($config, $userFields, $visibleUserFields);
 			}
 		}
 
@@ -3605,6 +3565,65 @@ class CCrmMobileHelper
 				'id' => 'main',
 				'fields' => $userFields
 			]];
+		}
+
+		return $visibleUserFields;
+	}
+
+	private function prepareVisibleUserFieldsSection(array $config, array $userFields, array &$visibleUserFields): array
+	{
+		$fieldNameMap = [
+			'CONTACT_ID' => ['CLIENT', 'CONTACT'],
+			'COMPANY_ID' => ['CLIENT', 'COMPANY'],
+			'PRODUCT_ROWS' => ['PRODUCT_ROW_SUMMARY'],
+			'OPPORTUNITY' => ['OPPORTUNITY_WITH_CURRENCY'],
+			'CURRENCY_ID' => ['OPPORTUNITY_WITH_CURRENCY'],
+			'STATUS_DESCRIPTION' => ['STATUS_ID'],
+			'CONTACT_NAME_PHOTO' => ['PHOTO'],
+			'REVENUE' => ['REVENUE_WITH_CURRENCY'],
+			'ADDRESS_LEGAL' => ['ADDRESS'],
+		];
+		foreach ($config as $configCategory)
+		{
+			$categoryFields = [];
+			if ($configCategory['type'] === 'column' && isset($configCategory['elements']))
+			{
+				$visibleUserFields = array_merge(
+					$categoryFields,
+					$this->prepareVisibleUserFieldsSection($configCategory['elements'], $userFields, $visibleUserFields)
+				);
+			}
+			elseif ($configCategory['type'] === 'section' && isset($configCategory['elements']))
+			{
+				foreach($configCategory['elements'] as $element)
+				{
+					array_walk(
+						$userFields,
+						static function($item, $key) use (&$categoryFields, $element, $fieldNameMap)
+						{
+							if(
+								$item['id'] === $element['name']
+								|| (
+									isset($fieldNameMap[$item['id']])
+									&& is_array($fieldNameMap[$item['id']])
+									&& in_array($element['name'], $fieldNameMap[$item['id']], true)
+								)
+							)
+							{
+								$categoryFields[] = $item;
+							}
+						});
+				}
+				if(count($categoryFields))
+				{
+					$visibleUserFields[] = [
+						'id' => $configCategory['name'],
+						'fields' => $categoryFields,
+						'title' => $configCategory['title'],
+					];
+				}
+				unset($categoryFields);
+			}
 		}
 
 		return $visibleUserFields;

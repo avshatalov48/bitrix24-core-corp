@@ -158,7 +158,7 @@ if(typeof BX.Crm.Order.Product.List === "undefined")
 
 		showProductExistDialog: function(params)
 		{
-			BX.Crm.EditorAuxiliaryDialog.create(
+			BX.UI.EditorAuxiliaryDialog.create(
 				"order_product_exist_dialog",
 				{
 					title: this._settings.messages['CRM_ORDER_PL_PROD_EXIST_DLG_TITLE'],

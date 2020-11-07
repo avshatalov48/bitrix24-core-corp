@@ -42,7 +42,10 @@ class IBlockElementProperty
 			'ConvertFromDB' => array($className, 'convertFromDB'),
 			'GetValuePrintable' => array($className, 'getValuePrintable'),
 			'AddFilterFields' => array($className, 'addFilterFields'),
-			'GetUIFilterProperty' => array($className, 'getUIFilterProperty')
+			'GetUIFilterProperty' => array($className, 'getUIFilterProperty'),
+			'GetUIEntityEditorProperty' => array($className, 'GetUIEntityEditorProperty'),
+			'GetUIEntityEditorPropertyViewHtml' => array($className, 'GetUIEntityEditorPropertyViewHtml'),
+			'GetUIEntityEditorPropertyEditHtml' => array($className, 'GetUIEntityEditorPropertyEditHtml'),
 		);
 	}
 
@@ -706,5 +709,38 @@ class IBlockElementProperty
 		}
 
 		return true;
+	}
+
+	public static function GetUIEntityEditorProperty($settings, $value)
+	{
+		return [
+			'type' => 'custom'
+		];
+	}
+
+	public static function GetUIEntityEditorPropertyViewHtml(array $params = [])
+	{
+		if (!empty($params['VALUE']))
+		{
+			return static::getPublicViewHTML($params['SETTINGS'], ['VALUE' => $params['VALUE']], ['VALUE' => $params['FIELD_NAME']]);
+		}
+
+		return '';
+	}
+
+	public static function GetUIEntityEditorPropertyEditHtml(array $params = [])
+	{
+		if (is_array($params['VALUE']))
+		{
+			foreach ($params['VALUE'] as $element)
+			{
+				$value[] = ['VALUE' => $element];
+			}
+		}
+		else
+		{
+			$value = ['VALUE' => $params['VALUE']];
+		}
+		return static::getPublicEditHTML($params['SETTINGS'], $value, ['VALUE' => $params['FIELD_NAME']]);
 	}
 }

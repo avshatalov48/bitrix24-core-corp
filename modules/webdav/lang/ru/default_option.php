@@ -1,5 +1,0 @@
-<?
-$MESS["WEBDAV_OPTIONS_FILETYPE_IMAGES"] = "Изображения";
-$MESS["WEBDAV_OPTIONS_FILETYPE_DOCUMENTS"] = "Документы";
-$MESS["WEBDAV_OPTIONS_FILETYPE_MEDIA"] = "Мультимедиа";
-?>

@@ -195,47 +195,44 @@ class rpa extends CModule
 	{
 		$result = new \Bitrix\Main\Result();
 
-		if(\Bitrix\Main\ModuleManager::isModuleInstalled('disk'))
+		$rsUserType = CUserTypeEntity::GetList([], [
+				'ENTITY_ID' => 'RPA_COMMENT',
+				'FIELD_NAME' => 'UF_RPA_COMMENT_FILES',
+			]
+		);
+
+		if (!$rsUserType->fetch())
 		{
-			$rsUserType = CUserTypeEntity::GetList([], [
-					'ENTITY_ID' => 'RPA_COMMENT',
-					'FIELD_NAME' => 'UF_RPA_COMMENT_FILES',
+			$CAllUserTypeEntity = new CUserTypeEntity();
+			$userFieldId = $CAllUserTypeEntity->Add([
+				'ENTITY_ID' => 'RPA_COMMENT',
+				'FIELD_NAME' => 'UF_RPA_COMMENT_FILES',
+				'USER_TYPE_ID' => 'disk_file',
+				'XML_ID' => 'RPA_COMMENT_FILES',
+				'MULTIPLE' => 'Y',
+				'MANDATORY' => null,
+				'SHOW_FILTER' => 'N',
+				'SHOW_IN_LIST' => null,
+				'EDIT_IN_LIST' => null,
+				'IS_SEARCHABLE' => null,
+				'SETTINGS' => [
+					'IBLOCK_TYPE_ID' => '0',
+					'IBLOCK_ID' => '',
+					'UF_TO_SAVE_ALLOW_EDIT' => ''
+				],
+				'EDIT_FORM_LABEL' => [
+					'en' => 'Load files',
+					'ru' => 'Load files',
+					'de' => 'Load files'
 				]
-			);
+			]);
 
-			if (!$rsUserType->fetch())
+			if(!$userFieldId)
 			{
-				$CAllUserTypeEntity = new CUserTypeEntity();
-				$userFieldId = $CAllUserTypeEntity->Add([
-					'ENTITY_ID' => 'RPA_COMMENT',
-					'FIELD_NAME' => 'UF_RPA_COMMENT_FILES',
-					'USER_TYPE_ID' => 'disk_file',
-					'XML_ID' => 'RPA_COMMENT_FILES',
-					'MULTIPLE' => 'Y',
-					'MANDATORY' => null,
-					'SHOW_FILTER' => 'N',
-					'SHOW_IN_LIST' => null,
-					'EDIT_IN_LIST' => null,
-					'IS_SEARCHABLE' => null,
-					'SETTINGS' => [
-						'IBLOCK_TYPE_ID' => '0',
-						'IBLOCK_ID' => '',
-						'UF_TO_SAVE_ALLOW_EDIT' => ''
-					],
-					'EDIT_FORM_LABEL' => [
-						'en' => 'Load files',
-						'ru' => 'Load files',
-						'de' => 'Load files'
-					]
-				]);
-
-				if(!$userFieldId)
+				global $APPLICATION;
+				if($strEx = $APPLICATION->GetException())
 				{
-					global $APPLICATION;
-					if($strEx = $APPLICATION->GetException())
-					{
-						$result->addError(new \Bitrix\Main\Error($strEx->GetString()));
-					}
+					$result->addError(new \Bitrix\Main\Error($strEx->GetString()));
 				}
 			}
 		}

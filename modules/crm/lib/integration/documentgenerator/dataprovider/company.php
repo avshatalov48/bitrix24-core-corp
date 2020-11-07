@@ -100,7 +100,7 @@ class Company extends CrmEntityDataProvider implements Nameable
 			];
 			$this->fields['REVENUE']['TYPE'] = Money::class;
 			$this->fields['REVENUE']['VALUE'] = [$this, 'getRevenue'];
-			$this->fields['ADDRESS']['VALUE'] = [$this, 'getPrimaryAddress'];
+			$this->fields['ADDRESS']['VALUE'] = [$this, 'getAddress'];
 			$this->fields['ADDRESS']['TYPE'] = \Bitrix\Crm\Integration\DocumentGenerator\Value\Address::class;
 			$this->fields['ADDRESS_LEGAL']['VALUE'] = [$this, 'getRegisteredAddress'];
 			$this->fields['ADDRESS_LEGAL']['TYPE'] = \Bitrix\Crm\Integration\DocumentGenerator\Value\Address::class;

@@ -7,6 +7,9 @@ use Bitrix\Disk\TypeFile;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\UI\Extension;
 
+/**
+ * @deprecated
+ */
 class Video extends Base
 {
 	// should be equal to \Bitrix\Transformer\VideoTransformer::MAX_FILESIZE
@@ -47,7 +50,7 @@ class Video extends Base
 	 */
 	public static function isTransformationAllowedInOptions()
 	{
-		return Configuration::allowVideoTransformation();
+		return true;
 	}
 
 	/**

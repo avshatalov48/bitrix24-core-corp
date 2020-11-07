@@ -1090,6 +1090,21 @@ a.crm-kanban-sidepanel:hover {
 	padding-bottom: 7px;
 }
 
+.crm-kanban-quick-form-container .main-ui-select-name{
+	width: 100%;
+}
+
+.crm-kanban-quick-form-container .main-ui-multi-select{
+	width: 100%;
+	display: block;
+	overflow: hidden;
+}
+
+.crm-kanban-quick-form-container .main-ui-square,
+.crm-kanban-quick-form-container .main-ui-square-item{
+	max-width: 100%;
+}
+
 .crm-kanban-quick-form .crm-entity-card-widget,
 .crm-kanban-quick-form .crm-entity-card-widget-edit {
 	box-shadow: none;

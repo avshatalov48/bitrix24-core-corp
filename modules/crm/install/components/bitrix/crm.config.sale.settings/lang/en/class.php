@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_CF_ALLOW_CAN_BUY_ZERO_EXT"] = "Make out-of-stock items available for purchase (also enables negative product quantity)";
 $MESS["CRM_CF_BLOCK_CHECK_TITLE"] = "Receipt printout preferences";
 $MESS["CRM_CF_COUNT_DELIVERY_TAX"] = "Calculate delivery tax";
@@ -41,6 +41,7 @@ $MESS["CRM_CF_STORE"] = "Inventory management";
 $MESS["CRM_CF_SUBSCRIBE_REPEATED_NOTIFY"] = "Notify when product is out of stock again";
 $MESS["CRM_CF_SUBSCRIBE_TITLE"] = "Product subscriptions";
 $MESS["CRM_CF_USE_STORE_CONTROL"] = "Enable stock control";
+$MESS["CRM_CF_USE_STORE_CONTROL_LOCK_TARIFF"] = "Upgrade to Advanced plans";
 $MESS["CRM_CF_VALUE_PRECISION"] = "Rounding precision";
 $MESS["CRM_CF_VALUE_PRECISION_0"] = ".";
 $MESS["CRM_CF_VALUE_PRECISION_1"] = ".0";
@@ -72,4 +73,3 @@ $MESS["CRM_STATUS_FOOTER_PIN_OFF"] = "Unpin bar";
 $MESS["CRM_STATUS_FOOTER_PIN_ON"] = "Pin bar";
 $MESS["CRM_STATUS_TYPE_ORDER_SHIPMENT_STATUS"] = "Shipment statuses";
 $MESS["CRM_STATUS_TYPE_ORDER_STATUS"] = "Order statuses";
-?>

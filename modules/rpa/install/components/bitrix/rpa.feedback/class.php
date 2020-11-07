@@ -45,7 +45,7 @@ class RpaFeedbackComponent extends \Bitrix\Rpa\Components\Base
 		$this->arResult['type'] = 'slider_inline';
 		$this->arResult['fields']['values']['CONTACT_EMAIL'] = CurrentUser::get()->getEmail();
 		$this->arResult['presets'] = [
-			'from_domain' =>  BX24_HOST_NAME,
+			'from_domain' => defined('BX24_HOST_NAME') ? BX24_HOST_NAME : null,
 			'b24_plan' => $b24Manager->getLicenseType(),
 			'b24_zone' => $b24Manager->getPortalZone(),
 			'c_name' => CurrentUser::get()->getFullName(),

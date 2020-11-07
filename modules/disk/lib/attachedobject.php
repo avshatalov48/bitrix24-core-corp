@@ -3,7 +3,7 @@
 
 namespace Bitrix\Disk;
 
-
+use Bitrix\Disk\Integration\TransformerManager;
 use Bitrix\Disk\Internals\AttachedObjectTable;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Uf\Connector;
@@ -11,7 +11,6 @@ use Bitrix\Disk\Uf\StubConnector;
 use Bitrix\Main\Loader;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Main\UI\Viewer\Transformation\TransformerManager;
 
 final class AttachedObject extends Internals\Model
 {
@@ -203,11 +202,15 @@ final class AttachedObject extends Internals\Model
 			$file = $model->getObject();
 			if($file && TypeFile::isVideo($file))
 			{
-				$transformerManager = new TransformerManager();
-				if($transformerManager->isAvailable())
+				if(Loader::includeModule('transformer'))
 				{
-					$transformerManager->transform($file->getFileId());
+					TransformerManager::transformToView($file);
 				}
+//				$transformerManager = new TransformerManager();
+//				if($transformerManager->isAvailable())
+//				{
+//					$transformerManager->transform($file->getFileId());
+//				}
 			}
 		}
 

@@ -9,6 +9,7 @@ use Bitrix\Main\UserField\Access\ActionDictionary;
 use Bitrix\Main\UserField\Access\Permission\UserFieldPermissionTable;
 use Bitrix\Main\UserField\Access\UserFieldAccessController;
 use Bitrix\Main\Localization\Loc;
+use CCrmSecurityHelper;
 use CSocNetLogDestination;
 
 Loc::loadMessages(__FILE__);
@@ -42,6 +43,41 @@ class VisibilityManager
 	public static function saveEntityConfiguration($accessCodes, string $fieldName, int $entityTypeId, string $permissionId): void
 	{
 		UserFieldPermissionTable::saveEntityConfiguration($accessCodes, $fieldName, $entityTypeId, $permissionId);
+	}
+
+	/**
+	 * @param int $entityTypeId
+	 * @param array $userAccessCodes
+	 * @return array
+	 */
+	public static function getNotAccessibleFields(int $entityTypeId, ?array $userAccessCodes = null): array
+	{
+		$accessCodes = static::getUserFieldsAccessCodes($entityTypeId);
+		if ($userAccessCodes === null)
+		{
+			$userAccessCodes = self::getUserAccessCodes();
+		}
+
+		$excludedFields = [];
+		foreach ($accessCodes as $name => $item)
+		{
+			if (isset($item['accessCodes']) && !empty($name))
+			{
+				$fieldAccessCodes = array_keys($item['accessCodes']);
+				if (!count(array_intersect($userAccessCodes, $fieldAccessCodes)))
+				{
+					$excludedFields[] = $name;
+				}
+			}
+		}
+
+		return $excludedFields;
+	}
+
+	private static function getUserAccessCodes(): array
+	{
+		$user = \CCrmSecurityHelper::getCurrentUser();
+		return $user->getAccessCodes();
 	}
 
 	/**
@@ -115,9 +151,14 @@ class VisibilityManager
 	 * @param int $userId
 	 * @return array
 	 */
-	public static function getVisibleUserFields(array $userFields, int $userId): array
+	public static function getVisibleUserFields(array $userFields, ?int $userId = null): array
 	{
 		$userFieldIds = array_column($userFields, 'ID');
+
+		if ($userId === null)
+		{
+			$userId = \CCrmSecurityHelper::getCurrentUserId();
+		}
 
 		$accessibleFields = UserFieldAccessController::getAccessibleFields(
 			$userId,

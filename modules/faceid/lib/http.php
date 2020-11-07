@@ -84,7 +84,7 @@ class Http
 
 	public function query($command, $params = array(), $waitResponse = true)
 	{
-		if (strlen($command) <= 0 || !is_array($params))
+		if ($command == '' || !is_array($params))
 			return false;
 
 		foreach ($params as $key => $value)

@@ -5,6 +5,9 @@ namespace Bitrix\Disk\View;
 use Bitrix\Disk\Configuration;
 use Bitrix\Disk\TypeFile;
 
+/**
+ * @deprecated
+ */
 class Document extends Base
 {
 	/**

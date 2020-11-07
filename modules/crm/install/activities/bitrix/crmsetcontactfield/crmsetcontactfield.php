@@ -15,6 +15,7 @@ class CBPCrmSetContactField
 		}
 
 		$documentId = $this->getContactDocumentId();
+		$documentType = CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Contact);
 
 		if (!$documentId)
 		{
@@ -27,6 +28,11 @@ class CBPCrmSetContactField
 		if (!is_array($fieldValue) || count($fieldValue) <= 0)
 		{
 			return CBPActivityExecutionStatus::Closed;
+		}
+
+		if (method_exists($this, 'prepareFieldsValues'))
+		{
+			$fieldValue = $this->prepareFieldsValues($documentId, $documentType, $fieldValue);
 		}
 
 		$documentService = $this->workflow->GetService("DocumentService");

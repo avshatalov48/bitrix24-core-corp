@@ -318,7 +318,7 @@ class Register
 		foreach ($usersForTransfer as $user)
 		{
 			$bExtranetUser = !isset($user["UF_DEPARTMENT"]) || empty($user["UF_DEPARTMENT"]);
-			$siteIdByDepartmentId = self::getUserSiteId(array(
+			$siteIdByDepartmentId = \CIntranetInviteDialog::getUserSiteId(array(
 				"UF_DEPARTMENT" => isset($user["UF_DEPARTMENT"]) && is_array($user["UF_DEPARTMENT"])
 					? $user["UF_DEPARTMENT"][0] : "",
 				"SITE_ID" => SITE_ID

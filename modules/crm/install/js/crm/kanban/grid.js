@@ -1220,11 +1220,11 @@ BX.CRM.Kanban.Grid.prototype = {
 				}
 				// scheme for inline edit
 				if (
-					typeof BX.Crm.EntityScheme !== "undefined" &&
+					typeof BX.UI.EntityScheme !== "undefined" &&
 					typeof data.scheme_inline !== "undefined"
 				)
 				{
-					gridData.schemeInline = BX.Crm.EntityScheme.create(
+					gridData.schemeInline = BX.UI.EntityScheme.create(
 						"kanban_scheme",
 						{
 							current: data.scheme_inline

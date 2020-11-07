@@ -91,11 +91,12 @@ if($action === 'SAVE')
 
 	$isNew = $ID === 0;
 	$isCopyMode = $isNew && $sourceEntityID > 0;
+	$isMyCompany = isset($params['IS_MY_COMPANY']) && $params['IS_MY_COMPANY'] == 'Y';
 
 	$fields = array();
 	$fieldsInfo = \CCrmCompany::GetFieldsInfo();
 	$userType = new \CCrmUserType($GLOBALS['USER_FIELD_MANAGER'], \CCrmCompany::GetUserFieldEntityID());
-	if(isset($params['IS_MY_COMPANY']) && $params['IS_MY_COMPANY'] == 'Y')
+	if($isMyCompany)
 	{
 		$userType->setOptions(['isMyCompany' => true]);
 	}
@@ -157,6 +158,10 @@ if($action === 'SAVE')
 				'VALUE_TYPE' => $multiField['VALUE_TYPE']
 			);
 		}
+
+		$sourceFields['ORIGINATOR_ID'] = '';
+		$sourceFields['ORIGIN_ID'] = '';
+		$sourceFields['ORIGIN_VERSION'] = '';
 	}
 
 	foreach($fieldsInfo as $name => $info)
@@ -476,14 +481,17 @@ if($action === 'SAVE')
 			$isNew
 		);
 
-		$arErrors = array();
-		\CCrmBizProcHelper::AutoStartWorkflows(
-			\CCrmOwnerType::Company,
-			$ID,
-			$isNew ? \CCrmBizProcEventType::Create : \CCrmBizProcEventType::Edit,
-			$arErrors,
-			isset($_POST['bizproc_parameters']) ? $_POST['bizproc_parameters'] : null
-		);
+		if (!$isMyCompany)
+		{
+			$arErrors = [];
+			\CCrmBizProcHelper::AutoStartWorkflows(
+				\CCrmOwnerType::Company,
+				$ID,
+				$isNew ? \CCrmBizProcEventType::Create : \CCrmBizProcEventType::Edit,
+				$arErrors,
+				isset($_POST['bizproc_parameters']) ? $_POST['bizproc_parameters'] : null
+			);
+		}
 
 		if($conversionWizard !== null)
 		{

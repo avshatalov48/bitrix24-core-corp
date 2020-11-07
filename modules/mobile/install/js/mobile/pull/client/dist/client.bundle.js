@@ -37,9 +37,7 @@
 	  MANUAL: 3004
 	};
 
-	var PullEvents =
-	/*#__PURE__*/
-	function () {
+	var PullEvents = /*#__PURE__*/function () {
 	  function PullEvents() {
 	    babelHelpers.classCallCheck(this, PullEvents);
 	    this._subscribers = {};

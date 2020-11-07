@@ -72,4 +72,5 @@ $MESS["CRM_COLUMN_ORDER_PROPS"] = "Свойства";
 $MESS["CRM_COLUMN_ORDER_CLIENT"] = "Клиент";
 $MESS["CRM_COLUMN_ORDER_COMPANY"] = "Компания";
 $MESS["CRM_COLUMN_ORDER_CONTACT"] = "Контакт";
+$MESS["CRM_ERR_URL_BUILDER_ABSENT"] = "Не найден генератор ссылок.";
 ?>

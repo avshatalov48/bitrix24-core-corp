@@ -3,6 +3,7 @@
 namespace Bitrix\Disk\Volume\Storage;
 
 use Bitrix\Main\Application;
+use Bitrix\Main;
 use Bitrix\Main\DB;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Localization\Loc;
@@ -673,9 +674,14 @@ class Storage
 				$querySql = "INSERT INTO {$tableName} ({$columnList}) {$temporallyDataSource}";
 			}
 
+			if (!$connection->lock(self::$lockName, self::$lockTimeout))
+			{
+				throw new Main\SystemException('Cannot get table lock for '.$indicatorType);
+			}
+
 			$connection->queryExecute($querySql);
 
-
+			$connection->unlock(self::$lockName);
 		}
 
 		VolumeTable::dropTemporally();
@@ -763,7 +769,11 @@ class Storage
 					AND destinationTbl.storage_id = sourceQuery.storage_id
 			";
 
-			$connection->queryExecute($sql);
+			if ($connection->lock(self::$lockName, self::$lockTimeout))
+			{
+				$connection->queryExecute($sql);
+				$connection->unlock(self::$lockName);
+			}
 		}
 
 		return $this;
@@ -776,7 +786,11 @@ class Storage
 	 */
 	public function getMeasurementResult($collectedData = array())
 	{
-		$this->addFilter('!STORAGE_ID', null);
+		$storageId = $this->getFilterValue('STORAGE_ID', '=@');
+		if ($storageId === null)
+		{
+			$this->addFilter('!STORAGE_ID', null);
+		}
 		return parent::getMeasurementResult($collectedData);
 	}
 

@@ -840,6 +840,7 @@ class CCrmEvent
 
 		$query = new Bitrix\Main\Entity\Query(Bitrix\Crm\EventTable::getEntity());
 		$query->addSelect('DATE_CREATE');
+		$query->addSelect('CREATED_BY_ID');
 		$query->addFilter('=EVENT_TYPE', CCrmEvent::TYPE_VIEW);
 		$query->addFilter('>=DATE_CREATE', ConvertTimeStamp(($timestamp - $interval), 'FULL'));
 
@@ -850,12 +851,15 @@ class CCrmEvent
 		$query->addFilter('@ID', new Bitrix\Main\DB\SqlExpression($subQuery->getQuery()));
 
 		$query->addOrder('DATE_CREATE', 'DESC');
-		$query->setLimit(1);
+		$query->setLimit(50);
 
 		$dbResult = $query->exec();
-		if(is_array($dbResult->fetch()))
+		while ($event = $dbResult->fetch())
 		{
-			return false;
+			if ($event['CREATED_BY_ID'] == $userID)
+				{
+					return false;
+				}
 		}
 
 		$entity = new CCrmEvent();

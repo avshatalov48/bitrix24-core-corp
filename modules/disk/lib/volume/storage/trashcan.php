@@ -3,7 +3,6 @@
 namespace Bitrix\Disk\Volume\Storage;
 
 use Bitrix\Main\Application;
-use Bitrix\Main\DB;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Disk\Internals\ObjectTable;
@@ -70,7 +69,11 @@ class TrashCan extends Volume\Storage\Storage
 			$sql = 'UPDATE '.$tableName.' SET PERCENT = ROUND((FILE_SIZE + PREVIEW_SIZE) * 100 / '.$total.', 4) WHERE '.$where;
 
 			$connection = Application::getConnection();
-			$connection->queryExecute($sql);
+			if ($connection->lock(self::$lockName, self::$lockTimeout))
+			{
+				$connection->queryExecute($sql);
+				$connection->unlock(self::$lockName);
+			}
 		}
 
 		return $this;

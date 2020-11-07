@@ -17,6 +17,7 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 	private const PAGE_SECTION_LIST = 'section_list';
 	private const PAGE_SECTION_DETAIL = 'section_detail';
 	private const PAGE_PRODUCT_DETAIL = 'product_detail';
+	private const PAGE_CSV_IMPORT = 'csv_import';
 
 	/** @var  Main\ErrorCollection */
 	protected $errorCollection = null;
@@ -35,6 +36,9 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 
 	/** @var Crm\Product\Url\ProductBuilder */
 	protected $urlBuilder = null;
+
+	/** @var Main\HttpRequest  */
+	protected $request = null;
 
 	/**
 	 * Base constructor.
@@ -186,6 +190,7 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 		$this->iblockListMode = \CIblock::GetAdminListMode($this->iblockId);
 		$this->iblockListMixed = $this->iblockListMode == Iblock\IblockTable::LIST_MODE_COMBINED;
 		unset($iblock, $iblockId);
+		$this->request = Main\Application::getInstance()->getContext()->getRequest();
 	}
 
 	protected function initUrlBuilder(): void
@@ -221,6 +226,27 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 		{
 			$this->addErrorMessage(Loc::getMessage('CRM_CATALOG_CONTROLLER_ERR_PAGE_UNKNOWN'));
 		}
+		if ($this->pageId == self::PAGE_INDEX)
+		{
+			if (
+				!$this->request->isPost()
+				&& !$this->request->isAjaxRequest()
+				&& (
+					$this->request->getQuery('find_section_section') === null
+					|| $this->request->getQuery('SECTION_ID') === null
+					|| $this->request->getQuery('apply_filter') === null
+				)
+			)
+			{
+				$pageUrl = $this->request->getRequestUri();
+				$currentUri = new Main\Web\Uri($pageUrl);
+				LocalRedirect($currentUri->addParams([
+					'find_section_section' => 0,
+					'SECTION_ID' => 0,
+					'apply_filter' => 'Y'
+				])->getUri());
+			}
+		}
 	}
 
 	protected function getTemplateUrls(): array
@@ -232,6 +258,7 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 				self::PAGE_LIST => 'list/#SECTION_ID#/',
 				self::PAGE_PRODUCT_DETAIL => 'product/#PRODUCT_ID#/',
 				self::PAGE_SECTION_DETAIL => 'section/#SECTION_ID#/',
+				self::PAGE_CSV_IMPORT => 'import/'
 			];
 		}
 		else
@@ -242,6 +269,7 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 				self::PAGE_PRODUCT_DETAIL => 'product/#PRODUCT_ID#/',
 				self::PAGE_SECTION_LIST => 'section_list/#SECTION_ID#/',
 				self::PAGE_SECTION_DETAIL => 'section/#SECTION_ID#/',
+				self::PAGE_CSV_IMPORT => 'import/'
 			];
 		}
 	}
@@ -299,7 +327,7 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 	{
 		$result = null;
 
-		$pageUrl = Main\Application::getInstance()->getContext()->getRequest()->getRequestUri();
+		$pageUrl = $this->request->getRequestUri();
 		$currentUri = new Main\Web\Uri($pageUrl);
 		$queryString = $currentUri->getQuery();
 
@@ -381,6 +409,14 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 					]
 				];
 				break;
+			case self::PAGE_CSV_IMPORT:
+				$templateUrls = $this->getTemplateUrls();
+				$result = [
+					'PATH_TO_PRODUCT_LIST' => $this->arParams['SEF_FOLDER'],
+					'PATH_TO_PRODUCT_IMPORT' => $this->arParams['SEF_FOLDER'].$templateUrls[self::PAGE_CSV_IMPORT]
+				];
+				unset($templateUrls);
+				break;
 		}
 
 		return $result;
@@ -420,7 +456,8 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 	protected function getUiExtensions(): array
 	{
 		return [
-			'admin_sidepanel'
+			'admin_interface',
+			'sidepanel'
 		];
 	}
 

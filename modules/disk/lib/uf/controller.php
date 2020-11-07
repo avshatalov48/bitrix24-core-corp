@@ -155,8 +155,6 @@ class Controller extends Internals\Controller
 	{
 		parent::processBeforeAction($actionName);
 
-		\CFile::enableTrackingResizeImage();
-
 		return true;
 	}
 

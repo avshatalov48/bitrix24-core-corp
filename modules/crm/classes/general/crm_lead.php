@@ -5,6 +5,7 @@ use Bitrix\Crm;
 use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\Binding\LeadContactTable;
 use Bitrix\Crm\CustomerType;
+use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
@@ -15,9 +16,12 @@ use Bitrix\Crm\Integrity\DuplicateIndexMismatch;
 use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Counter\EntityCounterManager;
 use Bitrix\Crm\Integration\Channel\LeadChannelBinding;
+use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 
 class CAllCrmLead
 {
+	use UserFieldPreparer;
+
 	static public $sUFEntityID = 'CRM_LEAD';
 	const USER_FIELD_ENTITY_ID = 'CRM_LEAD';
 	const SUSPENDED_USER_FIELD_ENTITY_ID = 'CRM_LEAD_SPD';
@@ -1258,6 +1262,9 @@ class CAllCrmLead
 			$arFields['TITLE'] = self::GetDefaultTitle();
 		}
 
+		$fields = self::GetUserFields();
+		$this->fillEmptyFieldValues($arFields, $fields);
+
 		if(!$this->CheckFields($arFields, false, $options))
 		{
 			$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
@@ -1830,20 +1837,6 @@ class CAllCrmLead
 		}
 		$isSystemAction = isset($options['IS_SYSTEM_ACTION']) && $options['IS_SYSTEM_ACTION'];
 
-		$arFilterTmp = array('ID' => $ID);
-		if (!$this->bCheckPermission)
-		{
-			$arFilterTmp['CHECK_PERMISSIONS'] = 'N';
-		}
-
-		$obRes = self::GetListEx(array(), $arFilterTmp, false, false, array('*', 'UF_*'));
-		if (!($arRow = $obRes->Fetch()))
-		{
-			return false;
-		}
-
-		$arRow['FM'] = Crm\Entity\Lead::getInstance()->getEntityMultifields($ID, array('skipEmpty' => true));
-
 		if(isset($options['CURRENT_USER']))
 		{
 			$iUserId = intval($options['CURRENT_USER']);
@@ -1851,6 +1844,12 @@ class CAllCrmLead
 		else
 		{
 			$iUserId = CCrmSecurityHelper::GetCurrentUserID();
+		}
+
+		$arRow = $this->getCurrentFields($ID);
+		if ($arRow === false)
+		{
+			return false;
 		}
 
 		if (isset($arFields['DATE_CREATE']))
@@ -2782,6 +2781,29 @@ class CAllCrmLead
 		return $bResult;
 	}
 
+	/**
+	 * @param int $id
+	 * @return array|bool
+	 */
+	private function getCurrentFields(int $id)
+	{
+		$filter = ['ID' => $id];
+		if (!$this->bCheckPermission)
+		{
+			$filter['CHECK_PERMISSIONS'] = 'N';
+		}
+
+		$res = self::GetListEx([], $filter, false, false, ['*', 'UF_*']);
+		if (!($fields = $res->fetch()))
+		{
+			return false;
+		}
+
+		$fields['FM'] = Crm\Entity\Lead::getInstance()->getEntityMultifields($id, ['skipEmpty' => true]);
+
+		return $fields;
+	}
+
 	public function Delete($ID, $arOptions = array())
 	{
 		global $DB, $APPLICATION;
@@ -3198,8 +3220,7 @@ class CAllCrmLead
 
 			CCrmEntityHelper::NormalizeUserFields($fieldsToCheck, self::$sUFEntityID, $USER_FIELD_MANAGER, array('IS_NEW' => ($ID == false)));
 
-			$requiredUserFields = is_array($requiredFields) && isset($requiredFields[Crm\Attribute\FieldOrigin::CUSTOM])
-				? $requiredFields[Crm\Attribute\FieldOrigin::CUSTOM] : array();
+			$requiredUserFields = $this->getRequiredUserFields($requiredFields);
 
 			if (!$USER_FIELD_MANAGER->CheckFields(
 					self::$sUFEntityID,
@@ -3218,6 +3239,29 @@ class CAllCrmLead
 		}
 
 		return ($this->LAST_ERROR === '');
+	}
+
+	/**
+	 * @param $requiredFields
+	 * @return array
+	 */
+	private function getRequiredUserFields($requiredFields): array
+	{
+		$requiredUserFields = (
+		is_array($requiredFields) && isset($requiredFields[Crm\Attribute\FieldOrigin::CUSTOM])
+			? $requiredFields[Crm\Attribute\FieldOrigin::CUSTOM] : []
+		);
+		return $this->excludeRequiredButNotAvailableFields($requiredUserFields);
+	}
+
+	/**
+	 * @param array $fields
+	 * @return array
+	 */
+	private function excludeRequiredButNotAvailableFields(array $fields): array
+	{
+		$notAccessibleFields = VisibilityManager::getNotAccessibleFields(CCrmOwnerType::Lead);
+		return array_diff($fields, $notAccessibleFields);
 	}
 
 	public function GetCheckExceptions()

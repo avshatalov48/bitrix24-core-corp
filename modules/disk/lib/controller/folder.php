@@ -105,11 +105,7 @@ class Folder extends BaseObject
 		}
 
 		$securityContext = $storage->getSecurityContext($this->getCurrentUser()->getId());
-		$zipArchive = ZipNginx\Archive::createFromFolder($folder, $securityContext);
 
-		global $APPLICATION;
-		$APPLICATION->restartBuffer();
-		$zipArchive->send();
-		Application::getInstance()->terminate();
+		return ZipNginx\Archive::createFromFolder($folder, $securityContext);
 	}
 }

@@ -20,7 +20,7 @@ if (!function_exists('__SLMGetUFMeta'))
 
 if (!function_exists('__SLMGetLogRecord'))
 {
-	function __SLMGetLogRecord($logID, $arParams, $current_page_date)
+	function __SLMGetLogRecord($logID, $arParams)
 	{
 		global $CACHE_MANAGER;
 

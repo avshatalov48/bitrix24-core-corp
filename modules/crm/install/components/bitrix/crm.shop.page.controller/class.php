@@ -15,6 +15,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\AccessDeniedException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\UI\Extension;
 
 class CCrmShopPageController extends CBitrixComponent
 {
@@ -162,6 +163,6 @@ class CCrmShopPageController extends CBitrixComponent
 
 	protected function initCore()
 	{
-		\CJSCore::init("admin_sidepanel");
+		Extension::load(['admin_interface', 'sidepanel']);
 	}
 }

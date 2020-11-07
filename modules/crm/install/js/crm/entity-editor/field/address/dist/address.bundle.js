@@ -39,7 +39,7 @@ this.BX = this.BX || {};
 	}
 
 	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"crm-entity-widget-content-block-inner\" onclick=\"", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-entity-editor-content-block\" onclick=\"", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>"]);
 
 	  _templateObject = function _templateObject() {
 	    return data;
@@ -79,6 +79,10 @@ this.BX = this.BX || {};
 	      settings = main_core.Type.isPlainObject(settings) ? settings : {};
 	      settings.crmCompatibilityMode = true;
 	      settings.enableAutocomplete = this._autocompleteEnabled;
+	      settings.hideDefaultAddressType = this._isMultiple; // hide for multiple addresses only
+
+	      settings.showAddressTypeInViewMode = this._isMultiple; //for multiple addresses only
+
 	      this._field = crm_entityEditor_field_address_base.EntityEditorBaseAddressField.create(id, settings);
 
 	      this._field.setMultiple(this._isMultiple);
@@ -135,14 +139,14 @@ this.BX = this.BX || {};
 
 	      main_core.Dom.append(this.createTitleNode(this.getTitle()), this._wrapper);
 
-	      if (!this.hasValue() && this._mode === BX.Crm.EntityEditorMode.view) {
-	        main_core.Dom.append(main_core.Tag.render(_templateObject(), this.onViewModeClick.bind(this), BX.Crm.EntityEditorField.messages.isEmpty), this._wrapper);
+	      if (!this.hasValue() && this._mode === BX.UI.EntityEditorMode.view) {
+	        main_core.Dom.append(main_core.Tag.render(_templateObject(), this.onViewModeClick.bind(this), BX.UI.EntityEditorField.messages.isEmpty), this._wrapper);
 	      } else {
-	        var fieldContainer = this._field.layout(this._mode === BX.Crm.EntityEditorMode.edit);
+	        var fieldContainer = this._field.layout(this._mode === BX.UI.EntityEditorMode.edit);
 
-	        fieldContainer.classList.add('crm-entity-widget-content-block-inner');
+	        fieldContainer.classList.add('ui-entity-editor-content-block');
 
-	        if (this._mode === BX.Crm.EntityEditorMode.view) {
+	        if (this._mode === BX.UI.EntityEditorMode.view) {
 	          main_core.Event.bind(fieldContainer, 'click', this.onViewModeClick.bind(this));
 	        }
 
@@ -161,11 +165,22 @@ this.BX = this.BX || {};
 	      this._hasLayout = true;
 	    }
 	  }, {
+	    key: "reset",
+	    value: function reset() {
+	      babelHelpers.get(babelHelpers.getPrototypeOf(EntityEditorAddressField.prototype), "reset", this).call(this);
+	      this.initializeFromModel();
+	    }
+	  }, {
 	    key: "doClearLayout",
 	    value: function doClearLayout(options) {
 	      if (BX.prop.getBoolean(options, "release", false)) {
 	        this._field.release();
 	      }
+	    }
+	  }, {
+	    key: "hasContentToDisplay",
+	    value: function hasContentToDisplay() {
+	      return this.hasValue();
 	    }
 	  }, {
 	    key: "hasValue",

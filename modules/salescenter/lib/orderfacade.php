@@ -3,16 +3,22 @@
 namespace Bitrix\SalesCenter;
 
 use Bitrix\Main;
-use Bitrix\Crm;
 use Bitrix\Catalog;
 use Bitrix\Sale;
 use Bitrix\Sale\Helpers\Order;
 
+/**
+ * Class OrderFacade
+ * @package Bitrix\SalesCenter
+ */
 class OrderFacade
 {
 	private $errorCollection;
 
 	private $fields;
+
+	/** @var ProductCreatorService */
+	private $productCreatorService;
 
 	public function __construct()
 	{
@@ -33,6 +39,8 @@ class OrderFacade
 				]
 			];
 		}
+
+		$this->productCreatorService = new ProductCreatorService();
 	}
 
 	public function setResponsibleId($responsibleId)
@@ -99,8 +107,6 @@ class OrderFacade
 			'PRICE' => $fields['price'],
 			'CUSTOM_PRICE' => $fields['isCustomPrice'] === 'Y' ? 'Y' : 'N',
 			'DISCOUNT_PRICE' => 0,
-			'MEASURE_NAME' => $fields['measureName'],
-			'MEASURE_CODE' => $fields['measureCode'],
 		];
 
 		if ($fields['module'] === 'catalog')
@@ -143,7 +149,8 @@ class OrderFacade
 
 			if ($item['isCreatedProduct'] === 'Y')
 			{
-				$productId = $this->createProduct($item);
+				$productId = $this->productCreatorService->createProduct($item);
+
 				if ($productId)
 				{
 					$basketItems[$code]['MODULE'] = 'catalog';
@@ -176,6 +183,14 @@ class OrderFacade
 		$this->errorCollection->clear();
 
 		$this->checkModules();
+
+		if (Integration\Bitrix24Manager::getInstance()->isPaymentsLimitReached())
+		{
+			$this->errorCollection->setError(
+				new Main\Error('You have reached limit of payments for your tariff')
+			);
+			return null;
+		}
 
 		if ($this->errorCollection->count() > 0)
 		{
@@ -279,113 +294,5 @@ class OrderFacade
 			$this->errorCollection->setError(new Main\Error('module "sale" is not installed.'));
 			return;
 		}
-		if(Integration\Bitrix24Manager::getInstance()->isPaymentsLimitReached())
-		{
-			$this->errorCollection->setError(new Main\Error('You have reached limit of payments for your tariff'));
-			return;
-		}
-	}
-
-	private function createProduct(array $fields)
-	{
-		$basketFields = Main\Web\Json::decode($fields['encodedFields']);
-
-		if (empty($basketFields['CURRENCY']) || empty($basketFields['PRICE']))
-		{
-			return null;
-		}
-
-		$catalogIblockId = Main\Config\Option::get('crm', 'default_product_catalog_id');
-		if (!$catalogIblockId)
-		{
-			return null;
-		}
-
-		$iblockElementFields = [
-			'NAME' => $basketFields['NAME'],
-			'ACTIVE' => 'Y',
-			'IBLOCK_ID' => $catalogIblockId
-		];
-
-		if (!empty($fields['image']))
-		{
-			$files = [];
-			foreach ($fields['image'] as $image)
-			{
-				$files[] = \CAllIBlock::makeFilePropArray($image['data']);
-			}
-
-			$propertyData = \CIBlock::GetProperties($catalogIblockId, [], ['CODE'=>'MORE_PHOTO'])->Fetch();
-			$isMorePhoto = $propertyData ? true : false;
-			if ($isMorePhoto)
-			{
-				$iblockElementFields['PROPERTY_VALUES'] = [
-					'MORE_PHOTO' => $files,
-				];
-			}
-
-			$iblockElementFields['DETAIL_PICTURE'] = current($files)['VALUE'];
-		}
-
-		$elementObject = new \CIBlockElement();
-		$productId = $elementObject->Add($iblockElementFields);
-
-		if ((int)$productId <= 0)
-		{
-			return null;
-		}
-
-		$addFields = [
-			'ID' => $productId,
-			'QUANTITY_TRACE' => Catalog\ProductTable::STATUS_DEFAULT,
-			'CAN_BUY_ZERO' => Catalog\ProductTable::STATUS_DEFAULT,
-			'WEIGHT' => 0,
-		];
-
-		if (!empty($basketFields['MEASURE_CODE']))
-		{
-			$measureRaw = Catalog\MeasureTable::getList(array(
-				'select' => array('ID'),
-				'filter' => ['CODE' => $basketFields['MEASURE_CODE']],
-				'limit' => 1
-			));
-
-			if ($measure = $measureRaw->fetch())
-			{
-				$addFields['MEASURE'] = $measure['ID'];
-			}
-		}
-
-		if (
-			Main\Config\Option::get('catalog', 'default_quantity_trace') === 'Y'
-			&& Main\Config\Option::get('catalog', 'default_can_buy_zero') !== 'Y'
-		)
-		{
-			$addFields['QUANTITY'] = $basketFields['QUANTITY'];
-		}
-
-		$r = Catalog\Model\Product::add($addFields);
-		if (!$r->isSuccess())
-			return null;
-
-		Catalog\MeasureRatioTable::add(array(
-			'PRODUCT_ID' => $productId,
-			'RATIO' => 1
-		));
-
-		$priceBaseGroup = \CCatalogGroup::GetBaseGroup();
-		$r = Catalog\Model\Price::add([
-			'PRODUCT_ID' => $productId,
-			'CATALOG_GROUP_ID' => $priceBaseGroup['ID'],
-			'CURRENCY' => $basketFields['CURRENCY'],
-			'PRICE' => $basketFields['PRICE'],
-		]);
-
-		if (!$r->isSuccess())
-		{
-			return null;
-		}
-
-		return $productId;
 	}
 }

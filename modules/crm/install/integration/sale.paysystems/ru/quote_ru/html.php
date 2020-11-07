@@ -543,30 +543,30 @@ for ($n = 0; $n <= $rowsCnt; $n++)
 	}
 endif;
 
-$sellerInfo = array(
-	'NAME' => htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("SELLER_NAME", false)),
-	'ADDRESS' => htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("SELLER_ADDRESS", false)),
-	'PHONE' => htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("SELLER_PHONE", false)),
-	'EMAIL' => htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("SELLER_EMAIL", false)),
-	'INN' => htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("SELLER_INN", false)),
-	'KPP' => htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("SELLER_KPP", false)),
-	'RS' => htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("SELLER_RS", false)),
-	'BANK' => htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("SELLER_BANK", false)),
-	'BIK' => htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("SELLER_BIK", false)),
-	'BANK_CITY' => htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("SELLER_BCITY", false)),
-	'KS' => htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("SELLER_KS", false)),
+$sellerInfo = [
+	'NAME' => CSalePaySystemAction::GetParamValue("SELLER_NAME", false),
+	'ADDRESS' => CSalePaySystemAction::GetParamValue("SELLER_ADDRESS", false),
+	'PHONE' => CSalePaySystemAction::GetParamValue("SELLER_PHONE", false),
+	'EMAIL' => CSalePaySystemAction::GetParamValue("SELLER_EMAIL", false),
+	'INN' => CSalePaySystemAction::GetParamValue("SELLER_INN", false),
+	'KPP' => CSalePaySystemAction::GetParamValue("SELLER_KPP", false),
+	'RS' => CSalePaySystemAction::GetParamValue("SELLER_RS", false),
+	'BANK' => CSalePaySystemAction::GetParamValue("SELLER_BANK", false),
+	'BIK' => CSalePaySystemAction::GetParamValue("SELLER_BIK", false),
+	'BANK_CITY' => CSalePaySystemAction::GetParamValue("SELLER_BCITY", false),
+	'KS' => CSalePaySystemAction::GetParamValue("SELLER_KS", false),
 
-);
+];
 
-$customerInfo = array(
-	'NAME' => htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("BUYER_NAME", false)),
-	'ADDRESS' => htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("BUYER_ADDRESS", false)),
-	'PAYER_NAME' => htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("BUYER_PAYER_NAME", false)),
-	'PHONE' => htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("BUYER_PHONE", false)),
-	'FAX' => htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("BUYER_FAX", false)),
-	'EMAIL' => htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("BUYER_EMAIL", false)),
-	'INN' => htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("BUYER_INN", false)),
-);
+$customerInfo = [
+	'NAME' => CSalePaySystemAction::GetParamValue("BUYER_NAME", false),
+	'ADDRESS' => CSalePaySystemAction::GetParamValue("BUYER_ADDRESS", false),
+	'PAYER_NAME' => CSalePaySystemAction::GetParamValue("BUYER_PAYER_NAME", false),
+	'PHONE' => CSalePaySystemAction::GetParamValue("BUYER_PHONE", false),
+	'FAX' => CSalePaySystemAction::GetParamValue("BUYER_FAX", false),
+	'EMAIL' => CSalePaySystemAction::GetParamValue("BUYER_EMAIL", false),
+	'INN' => CSalePaySystemAction::GetParamValue("BUYER_INN", false),
+];
 
 $cols = array(array(), array());
 $colRows = array(0, 0);
@@ -719,7 +719,7 @@ for ($col = 0; $col < $nCols; $col++)
 	{
 		if (isset($cols[$col][$i]))
 		{
-			?><div><? echo ($i < $boldCount ? '<b>' : '').$cols[$col][$i].($i < $boldCount ? '</b>' : ''); ?></div><?
+			?><div><? echo ($i < $boldCount ? '<b>' : '').htmlspecialcharsbx($cols[$col][$i]).($i < $boldCount ? '</b>' : ''); ?></div><?
 		}
 	}
 	?></td><?

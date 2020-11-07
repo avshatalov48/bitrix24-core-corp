@@ -44,7 +44,6 @@ class ExternalLinkTable extends ORM\Data\DataManager
 				['=this.DOCUMENT_ID' => 'ref.ID']
 			),
 			new ORM\Fields\DatetimeField('VIEWED_TIME'),
-			new ORM\Fields\StringField('VIEWED_IP'),
 		];
 	}
 

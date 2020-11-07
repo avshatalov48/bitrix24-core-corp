@@ -173,21 +173,6 @@ Class voximplant extends CModule
 
 		CModule::IncludeModule("voximplant");
 
-		if(CVoxImplantMain::isDbMySql() && $DB->Query("CREATE fulltext index IXF_VI_TRANSCRIPT_LINE_1 on b_voximplant_transcript_line (MESSAGE)", true))
-		{
-			\Bitrix\Voximplant\Model\TranscriptLineTable::getEntity()->enableFullTextIndex("MESSAGE");
-		}
-
-		if(CVoxImplantMain::isDbMySql() && $DB->Query("CREATE fulltext index IXF_VI_STATS_1 on b_voximplant_statistic_index (CONTENT)", true))
-		{
-			\Bitrix\Voximplant\Model\StatisticIndexTable::getEntity()->enableFullTextIndex("CONTENT");
-		}
-
-		if(CVoxImplantMain::isDbMySql() && $DB->Query("CREATE fulltext index IXF_VI_ST_1 on b_voximplant_statistic (COMMENT)", true))
-		{
-			\Bitrix\Voximplant\StatisticTable::getEntity()->enableFullTextIndex("COMMENT");
-		}
-
 		return true;
 	}
 

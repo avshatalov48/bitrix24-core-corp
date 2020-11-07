@@ -280,19 +280,13 @@ class CCrmSalesTunnelsController extends \Bitrix\Main\Engine\Controller
 		$id = $status->Add([
 			'NAME' => $data['name'],
 			'SORT' => $data['sort'],
+			'COLOR' => $data['color'],
 		]);
 
 		if (!$id)
 		{
 			$response['errors'][] = Loc::getMessage('CRM_SALES_STAGE_CREATE_ERROR');
 			return $response;
-		}
-
-		$fields = $status->GetStatusById($id);
-
-		if (!empty($data['color']))
-		{
-			$this->saveStageColor($data['entityId'], $fields['STATUS_ID'], $data['color']);
 		}
 
 		$response['success'] = true;
@@ -331,17 +325,14 @@ class CCrmSalesTunnelsController extends \Bitrix\Main\Engine\Controller
 				$fields['SORT'] = (int)$stage['SORT'];
 			}
 
+			$fields['COLOR'] = $data['color'] ?? '';
+
 			$id = $status->Update($data['stageId'], $fields);
 
 			if (!$id)
 			{
 				$response['errors'][] = Loc::getMessage('CRM_SALES_STAGE_UPDATE_ERROR');
 				return $response;
-			}
-
-			if (!empty($data['color']))
-			{
-				$this->saveStageColor($data['entityId'], $stage['STATUS_ID'], $data['color']);
 			}
 
 			$response['success'] = true;
@@ -388,48 +379,6 @@ class CCrmSalesTunnelsController extends \Bitrix\Main\Engine\Controller
 		}
 
 		return $response;
-	}
-
-	private function saveStageColor($entityId, $statusId, $color)
-	{
-		$colorScheme = Crm\Color\DealStageColorScheme::getByCategory(
-			DealCategory::convertFromStatusEntityID($entityId)
-		);
-
-		if ($color[0] !== '#')
-		{
-			$color = '#'.$color;
-		}
-
-		if ($colorScheme !== null)
-		{
-			$isChanged = false;
-
-			$element = $colorScheme->getElementByName($statusId);
-			if ($element !== null)
-			{
-				if ($color === '')
-				{
-					$color = $colorScheme->getDefaultColor($statusId);
-				}
-
-				if ($element->getColor() !== $color)
-				{
-					$element->setColor($color);
-					$isChanged = true;
-				}
-			}
-			else
-			{
-				$colorScheme->addElement(new Crm\Color\PhaseColorSchemeElement($statusId, $color));
-				$isChanged = true;
-			}
-
-			if ($isChanged)
-			{
-				$colorScheme->save();
-			}
-		}
 	}
 
 	public function updateStagesAction($data)

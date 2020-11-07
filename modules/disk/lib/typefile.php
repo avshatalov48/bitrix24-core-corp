@@ -46,12 +46,13 @@ final class TypeFile
 
 	public static function getByExtension($extension)
 	{
-		switch(mb_strtolower($extension))
+		switch(strtolower($extension))
 		{
 			case 'jpe':
 			case 'jpg':
 			case 'jpeg':
 			case 'png':
+			case 'webp':
 			case 'gif':
 			case 'bmp':
 				return self::IMAGE;
@@ -237,6 +238,7 @@ final class TypeFile
 			'jpeg' => 'image/jpeg',
 			'bmp' => 'image/bmp',
 			'png' =>'image/png',
+			'webp' =>'image/webp',
 			'tif' => 'image/tiff',
 			'tiff' => 'image/tiff',
 			'psd' => 'image/vnd.adobe.photoshop',

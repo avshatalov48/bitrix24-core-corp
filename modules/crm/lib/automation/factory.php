@@ -315,6 +315,7 @@ class Factory
 					Trigger\ResourceBookingTrigger::className(),
 					Trigger\DocumentCreateTrigger::className(),
 					Trigger\DocumentViewTrigger::className(),
+					Trigger\TaskStatusTrigger::className(),
 					Trigger\AppTrigger::className(),
 				 ]
 				 as $triggerClass

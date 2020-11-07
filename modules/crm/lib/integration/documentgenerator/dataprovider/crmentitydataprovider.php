@@ -1382,6 +1382,23 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 	}
 
 	/**
+	 * Get Primary Address (it used to be like this).
+	 * If Primary Address is empty - get Delivery Address instead (as this is new by default address type).
+	 *
+	 * @return string
+	 */
+	public function getAddress()
+	{
+		$address = $this->getAddressFromRequisite($this->fields['REQUISITE'], 'PRIMARY_ADDRESS');
+		if(empty($address))
+		{
+			$address = $this->getAddressFromRequisite($this->fields['REQUISITE'], 'DELIVERY_ADDRESS');
+		}
+
+		return $address;
+	}
+
+	/**
 	 * @return string
 	 */
 	public function getPrimaryAddress()
@@ -1401,7 +1418,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 	 * @internal
 	 * @param array $requisiteFieldDescription
 	 * @param string $placeholder
-	 * @return string
+	 * @return array
 	 */
 	protected function getAddressFromRequisite(array $requisiteFieldDescription, $placeholder)
 	{
@@ -1415,9 +1432,12 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		if($requisites instanceof Requisite)
 		{
 			$data = DataProviderManager::getInstance()->getArray($requisites);
-			if(isset($data[$placeholder]) && is_array($data[$placeholder]) && isset($data[$placeholder]['TEXT']) && !empty($data[$placeholder]['TEXT']))
+			if(
+				isset($data[$placeholder])
+				&& is_array($data[$placeholder])
+			)
 			{
-				$address = $data[$placeholder]['TEXT'];
+				$address = $data[$placeholder];
 			}
 		}
 

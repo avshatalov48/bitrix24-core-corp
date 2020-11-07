@@ -120,8 +120,8 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
 			$buyerAddress = CSalePaySystemAction::GetParamValue("BUYER_ADDRESS", false);
 			if (is_array($buyerAddress))
 			{
-				$addrValue = implode('<br>', $buyerAddress)
-				?><div style="display: inline-block; vertical-align: top;"><?= htmlspecialcharsbx($addrValue) ?></div><?
+				$addrValue = implode("\n", $buyerAddress)
+				?><div style="display: inline-block; vertical-align: top;"><?= nl2br(htmlspecialcharsbx($addrValue)) ?></div><?
 				unset($addrValue);
 			}
 			else

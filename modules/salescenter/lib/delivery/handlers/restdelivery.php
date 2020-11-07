@@ -36,7 +36,7 @@ class RestDelivery extends Base
 	/**
 	 * @inheritDoc
 	 */
-	public function getRestHandlerCode(): string
+	public function getRestHandlerCode(): ?string
 	{
 		return $this->restHandlerCode;
 	}

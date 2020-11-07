@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["DESC_LOADING"] = "Loading...";
 $MESS["STRESS_GREEN_1"] = "Perfect work stress balance";
 $MESS["STRESS_GREEN_2"] = "Busy, productive, happy";
@@ -21,6 +21,7 @@ $MESS["STRESS_SHARE_ALERT_TITLE"] = "This feature is not yet available";
 $MESS["STRESS_SHARE_CANCEL"] = "Cancel";
 $MESS["STRESS_SHARE_COMING_SOON"] = "Soon you will be able to share your results!";
 $MESS["STRESS_SHARE_LIVE_STREAM"] = "Activity Stream";
+$MESS["STRESS_SHARE_NEWS"] = "Feed";
 $MESS["STRESS_SHARE_POST_MESSAGE"] = "Here's my stress level
 ";
 $MESS["STRESS_SHARE_POST_TITLE"] = "My stress level!";
@@ -37,4 +38,3 @@ $MESS["STRESS_YELLOW_2"] = "Take. A. Break.";
 $MESS["STRESS_YELLOW_3"] = "When is the weekend?";
 $MESS["STRESS_YELLOW_4"] = "Possible problems ahead";
 $MESS["STRESS_YELLOW_5"] = "Too much on your plate?";
-?>

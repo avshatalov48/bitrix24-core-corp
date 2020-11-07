@@ -28,6 +28,8 @@ use Bitrix\Crm\Timeline\Entity\TimelineTable;
 use Bitrix\Crm\Timeline\Entity\TimelineBindingTable;
 use Bitrix\Rest;
 use \Bitrix\SalesCenter;
+use Bitrix\Crm\Binding\DealContactTable;
+use Bitrix\Location\Entity\Address;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
@@ -135,7 +137,6 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		$this->arResult['disableSendButton'] = $this->arParams['disableSendButton'];
 		$this->arResult['ownerTypeId'] = $this->arParams['ownerTypeId'];
 		$this->arResult['ownerId'] = $this->arParams['ownerId'];
-		$this->arResult['isApplePayAvailable'] = false;
 		$this->arResult['isPaymentsLimitReached'] = Bitrix24Manager::getInstance()->isPaymentsLimitReached();
 		$this->arResult['urlSettingsCompanyContacts'] = $this->getComponentSliderPath('bitrix:salescenter.company.contacts');
 		$this->arResult['urlSettingsSmsSenders'] = $this->getUrlSmsProviderSetting();
@@ -178,6 +179,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				$this->arResult['contactBlock'] = $this->getContactBlockInfo($deal);
 				$this->arResult['contactPhone'] = $this->getDealContactPhoneFormat($deal['ID']);
 				$this->arResult['title'] = Loc::getMessage('SALESCENTER_APP_PAY_TITLE');
+				$this->arResult['orderPropertyValues'] = [];
 
 				if((int)$this->arResult['associatedEntityTypeId'] === CCrmOwnerType::Order)
 				{
@@ -198,6 +200,11 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 					$products = $this->getDealProducts($deal['ID']);
 					$this->arResult['basket'] = $products;
 					$this->arResult['totals'] = $this->getTotalSumList($products);
+				}
+
+				if((int)$this->arResult['associatedEntityTypeId'] !== CCrmOwnerType::Order)
+				{
+					$this->fillAddressToPropertyValue($deal['ID']);
 				}
 
 				if (
@@ -282,31 +289,10 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			}
 
 			$this->arResult['showPaySystemSettingBanner'] = $this->needShowPaySystemSettingBanner();
-			$options = \CUserOptions::GetOption('salescenter', $this->arResult['orderCreationOption'], array());
 			if ($this->arResult['showPaySystemSettingBanner'])
 			{
 				$options = \CUserOptions::GetOption('salescenter', $this->arResult['orderCreationOption'], []);
 				$this->arResult['showPaySystemSettingBanner'] = ($options[$this->arResult['paySystemBannerOptionName']] !== 'Y');
-			}
-
-			$paySystemList = PaySystem\Manager::getList([
-				'select' => ['ID', 'NAME', 'ACTION_FILE', 'PS_MODE', 'ACTIVE'],
-				'filter' => [
-					'!=ACTION_FILE' => 'inner',
-					'ACTIVE' => 'Y',
-				],
-			]);
-			while ($paySystem = $paySystemList->fetch())
-			{
-				if ($paySystem['ACTION_FILE'] !== 'cash')
-				{
-					$this->arResult['showPaySystemSettingBanner'] = false;
-				}
-
-				if (SaleManager::getInstance()->isApplePayPayment($paySystem))
-				{
-					$this->arResult['isApplePayAvailable'] = true;
-				}
 			}
 		}
 
@@ -615,7 +601,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		{
 			$result[] = [
 				'id' => $stage['STATUS_ID'],
-				'name' => $stage['NAME'],
+				'name' => htmlspecialcharsbx($stage['NAME']),
 				'color' => $stage['COLOR'],
 				'colorText' => $this->getStageColorText($stage['COLOR']),
 				'selected' => $stage['STATUS_ID'] === $stageId,
@@ -734,30 +720,169 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	}
 
 	/**
-	 * @param $dealId
+	 * @param int $dealId
 	 * @return string
 	 * @throws Main\ArgumentException
 	 */
-	protected function getDealContactPhoneFormat($dealId)
+	protected function getDealContactPhoneFormat(int $dealId)
 	{
-		$contactList = \Bitrix\Crm\Binding\DealContactTable::getDealBindings($dealId);
-		foreach ($contactList as $contact)
+		$contact = $this->getPrimaryContact($dealId);
+		if (!$contact)
+		{
+			return '';
+		}
+
+		$phones = CCrmFieldMulti::GetEntityFields(
+			'CONTACT',
+			$contact['CONTACT_ID'],
+			'PHONE',
+			true,
+			false
+		);
+		$phone = current($phones);
+		if (!is_array($phone))
+		{
+			return '';
+		}
+
+		return PhoneNumber\Parser::getInstance()->parse($phone['VALUE'])->format();
+	}
+
+	/**
+	 * @param int $dealId
+	 * @return array|null
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function getClientAddresses(int $dealId)
+	{
+		$contact = $this->getPrimaryContact($dealId);
+		if (!$contact)
+		{
+			return null;
+		}
+
+		$requisite = Crm\EntityRequisite::getSingleInstance()->getList(
+			[
+				'filter' => [
+					'=ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
+					'=ENTITY_ID' => (int)$contact['CONTACT_ID']
+				],
+			]
+		)->fetch();
+
+		if (!$requisite)
+		{
+			return [];
+		}
+
+		$result = [];
+
+		$addresses = Crm\AddressTable::getList(
+			[
+				'filter' => [
+					'ENTITY_ID' => (int)$requisite['ID'],
+					'ENTITY_TYPE_ID' => CCrmOwnerType::Requisite,
+					'>LOC_ADDR_ID' => 0,
+				],
+			]
+		)->fetchAll();
+
+		foreach ($addresses as $address)
+		{
+			$result[$address['ENTITY_TYPE_ID']] = $address;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param int $dealId
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function fillAddressToPropertyValue(int $dealId)
+	{
+		if(!Loader::includeModule('location'))
+		{
+			return;
+		}
+
+		$clientAddresses = $this->getClientAddresses($dealId);
+		$defaultAddressTypeId = Crm\RequisiteAddress::getDefaultTypeId();
+
+		$address = null;
+		if (isset($clientAddresses[Crm\EntityAddress::Delivery]))
+		{
+			$address = $clientAddresses[Crm\EntityAddress::Delivery];
+		}
+		elseif (isset($clientAddresses[$defaultAddressTypeId]))
+		{
+			$address = $clientAddresses[$defaultAddressTypeId];
+		}
+		elseif (!empty($clientAddresses))
+		{
+			$address = current($clientAddresses);
+		}
+
+		if (!(is_array($address) && isset($address['LOC_ADDR_ID'])))
+		{
+			return;
+		}
+
+		$locationAddress = Address::load((int)$address['LOC_ADDR_ID']);
+		if (!$locationAddress)
+		{
+			return;
+		}
+
+		$clientAddressProps = Sale\Property::getList(
+			[
+				'filter' => [
+					'=PERSON_TYPE_ID' => $this->arResult['personTypeId'],
+					'ACTIVE' => 'Y',
+					'TYPE' => 'ADDRESS',
+					'CODE' => Sale\Delivery\Services\OrderPropsDictionary::ADDRESS_TO_PROPERTY_CODE,
+				],
+			]
+		)->fetchAll();
+
+		foreach ($clientAddressProps as $clientAddressProp)
+		{
+			$addressArray = $locationAddress->toArray();
+
+			/**
+			 * We should not update existing address, instead, we need a new address each time
+			 */
+			unset($addressArray['id']);
+
+			$this->arResult['orderPropertyValues'][$clientAddressProp['ID']] = $addressArray;
+		}
+	}
+
+	/**
+	 * @param int $dealId
+	 * @return mixed|null
+	 * @throws Main\ArgumentException
+	 */
+	private function getPrimaryContact(int $dealId)
+	{
+		$contacts = DealContactTable::getDealBindings($dealId);
+		foreach ($contacts as $contact)
 		{
 			if ($contact['IS_PRIMARY'] !== 'Y')
 			{
 				continue;
 			}
 
-			$phoneList = CCrmFieldMulti::GetEntityFields('CONTACT', $contact['CONTACT_ID'], 'PHONE', true, false);
-			foreach ($phoneList as $phone)
-			{
-				$parser = PhoneNumber\Parser::getInstance();
 
-				return $parser->parse($phone['VALUE'])->format();
-			}
+			return $contact;
 		}
 
-		return '';
+		return null;
 	}
 
 	protected function hasBindingOrders($dealId)

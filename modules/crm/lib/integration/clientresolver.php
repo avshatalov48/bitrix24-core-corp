@@ -21,6 +21,8 @@ class ClientResolver
 	const PROP_ITIN = 'ITIN';    // Individual Taxpayer Identification Number
 	const PROP_SRO = 'SRO';      // State Register of organizations
 
+	private $compatibilityMode = false;
+
 	/** @var Socialservices\Properties\Client */
 	private static $client = null;
 	/** @var boolean|null */
@@ -77,13 +79,14 @@ class ClientResolver
 
 		return in_array($countryID, static::$allowedCountries, true) && self::isOnline();
 	}
-	public static function resolve($propertyTypeID, $propertyValue, $countryID = 1)
-	{
-		if(!is_int($countryID))
-		{
-			$countryID = (int)$countryID;
-		}
 
+	public function setCompatibilityMode(bool $compatibilityMode): void
+	{
+		$this->compatibilityMode = $compatibilityMode;
+	}
+
+	public function resolveClient(string $propertyTypeID, string $propertyValue, int $countryID = 1): array
+	{
 		if (($countryID === 1 && $propertyTypeID === static::PROP_ITIN
 				&& !RestrictionManager::isDetailsSearchByInnPermitted())
 			|| ($countryID === 14 && $propertyTypeID === static::PROP_SRO
@@ -256,24 +259,41 @@ class ClientResolver
 						$city = "{$settlement}, {$city}";
 					}
 
-					$locationAddress = EntityAddress::makeLocationAddressByFields(
-						[
-							'ADDRESS_1' => $address1,
-							'ADDRESS_2' => $address2,
-							'CITY' => $city,
-							'REGION' => $region,
-							'PROVINCE' => $province,
-							'POSTAL_CODE' => $postalCode,
-							'COUNTRY' => GetMessage('CRM_CLIENT_ADDRESS_COUNTRY_RUSSIA')
-						]
-					);
-					if ($locationAddress)
+					if ($this->compatibilityMode)
 					{
 						$fields['RQ_ADDR'] = array(
-							EntityAddress::Registered => $locationAddress->toJson()
+							EntityAddress::Registered => array(
+								'ADDRESS_1' => $address1,
+								'ADDRESS_2' => $address2,
+								'CITY' => $city,
+								'REGION' => $region,
+								'PROVINCE' => $province,
+								'POSTAL_CODE' => $postalCode,
+								'COUNTRY' => GetMessage('CRM_CLIENT_ADDRESS_COUNTRY_RUSSIA'),
+							)
 						);
 					}
-					unset($locationAddress);
+					else
+					{
+						$locationAddress = EntityAddress::makeLocationAddressByFields(
+							[
+								'ADDRESS_1' => $address1,
+								'ADDRESS_2' => $address2,
+								'CITY' => $city,
+								'REGION' => $region,
+								'PROVINCE' => $province,
+								'POSTAL_CODE' => $postalCode,
+								'COUNTRY' => GetMessage('CRM_CLIENT_ADDRESS_COUNTRY_RUSSIA')
+							]
+						);
+						if ($locationAddress)
+						{
+							$fields['RQ_ADDR'] = array(
+								EntityAddress::Registered => $locationAddress->toJson()
+							);
+						}
+						unset($locationAddress);
+					}
 
 					$directorName = '';
 					$accountantName = '';
@@ -385,29 +405,46 @@ class ClientResolver
 				}
 				$caption = $shortName !== '' ? $shortName : $fullName;
 
-				$address1 = isset($info['ADDRESS']) ? static::cleanStringValue($info['ADDRESS']) : '';
-				$address2 = $city = $region = $province = $postalCode = '';
+				$address2 = isset($info['ADDRESS']) ? static::cleanStringValue($info['ADDRESS']) : '';
+				$address1 = $city = $region = $province = $postalCode = '';
 				$countryList = Crm\EntityPreset::getCountryList();
 				$countryName = isset($countryList[$countryID]) ? $countryList[$countryID] : '';
 
-				$locationAddress = EntityAddress::makeLocationAddressByFields(
-					[
-						'ADDRESS_1' => $address1,
-						'ADDRESS_2' => $address2,
-						'CITY' => $city,
-						'REGION' => $region,
-						'PROVINCE' => $province,
-						'POSTAL_CODE' => $postalCode,
-						'COUNTRY' => $countryName,
-					]
-				);
-				if ($locationAddress)
+				if ($this->compatibilityMode)
 				{
 					$fields['RQ_ADDR'] = array(
-						EntityAddress::Registered => $locationAddress->toJson()
+						EntityAddress::Registered => array(
+							'ADDRESS_1' => $address1,
+							'ADDRESS_2' => $address2,
+							'CITY' => $city,
+							'REGION' => $region,
+							'PROVINCE' => $province,
+							'POSTAL_CODE' => $postalCode,
+							'COUNTRY' => $countryName,
+						)
 					);
 				}
-				unset($locationAddress);
+				else
+				{
+					$locationAddress = EntityAddress::makeLocationAddressByFields(
+						[
+							'ADDRESS_1' => $address1,
+							'ADDRESS_2' => $address2,
+							'CITY' => $city,
+							'REGION' => $region,
+							'PROVINCE' => $province,
+							'POSTAL_CODE' => $postalCode,
+							'COUNTRY' => $countryName,
+						]
+					);
+					if ($locationAddress)
+					{
+						$fields['RQ_ADDR'] = array(
+							EntityAddress::Registered => $locationAddress->toJson()
+						);
+					}
+					unset($locationAddress);
+				}
 
 				if(is_array($fields))
 				{
@@ -471,5 +508,21 @@ class ClientResolver
 		}
 
 		return null;
+	}
+
+
+	/**
+	 * @deprecated Use instanced method $this->resolveClient() instead
+	 * @param $propertyTypeID
+	 * @param $propertyValue
+	 * @param int $countryID
+	 * @throws Main\ArgumentOutOfRangeException
+	 * @throws Main\NotSupportedException
+	 * @return array
+	 */
+	public static function resolve($propertyTypeID, $propertyValue, $countryID = 1)
+	{
+		$instance = new self();
+		return $instance->resolveClient((string)$propertyTypeID, (string)$propertyValue, (int)$countryID);
 	}
 }

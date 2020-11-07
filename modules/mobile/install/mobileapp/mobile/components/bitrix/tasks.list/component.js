@@ -272,7 +272,8 @@ include('InAppNotifier');
 
 			this.setCounterValue(Application.storage.getObject(this.storageName).counterValue || 0);
 			this.setVisualCounters();
-			this.updateCounters();
+
+			BX.addCustomEvent('onAppData', this.updateCounters());
 		}
 
 		updateCounters()

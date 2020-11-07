@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_CALL_LIST_IN_WORK"] = "Scheduled";
 $MESS["CRM_CALL_LIST_STOP_CALLING"] = "Do not call";
 $MESS["CRM_CALL_LIST_SUCCESS"] = "Success";
@@ -38,6 +38,7 @@ $MESS["CRM_QUOTE_STATUS_DECLAINED"] = "Declined";
 $MESS["CRM_QUOTE_STATUS_DRAFT"] = "New";
 $MESS["CRM_QUOTE_STATUS_SENT"] = "Sent to client";
 $MESS["CRM_STATUS_ERR_DUPLICATE_STATUS_ID"] = "The specified status ID already exists.";
+$MESS["CRM_STATUS_ERR_INCORRECT_SYMBOLS"] = "Status ID may include Latin characters, numbers, minus and underscore characters only";
 $MESS["CRM_STATUS_ERR_NAME"] = "The status name is empty.";
 $MESS["CRM_STATUS_ERR_NOT_FOUND"] = "Status was not found.";
 $MESS["CRM_STATUS_ERR_STATUS_ID"] = "The status ID is required.";
@@ -85,4 +86,3 @@ $MESS["CRM_STATUS_TYPE_STATUS_IN_PROCESS"] = "In Progress";
 $MESS["CRM_STATUS_TYPE_STATUS_JUNK"] = "Junk Lead";
 $MESS["CRM_STATUS_TYPE_STATUS_NEW"] = "Unassigned";
 $MESS["CRM_STATUS_TYPE_STATUS_PROCESSED"] = "Processed";
-?>

@@ -1,7 +1,7 @@
 <?
 global $MESS;
 $PathInstall = str_replace("\\", "/", __FILE__);
-$PathInstall = substr($PathInstall, 0, strlen($PathInstall)-strlen("/index.php"));
+$PathInstall = mb_substr($PathInstall, 0, mb_strlen($PathInstall) - mb_strlen("/index.php"));
 
 IncludeModuleLangFile($PathInstall."/install.php");
 
@@ -20,9 +20,7 @@ Class faceid extends CModule
 	{
 		$arModuleVersion = array();
 
-		$path = str_replace("\\", "/", __FILE__);
-		$path = substr($path, 0, strlen($path) - strlen("/index.php"));
-		include($path."/version.php");
+		include(__DIR__.'/version.php');
 
 		if (is_array($arModuleVersion) && array_key_exists("VERSION", $arModuleVersion))
 		{
@@ -42,7 +40,7 @@ Class faceid extends CModule
 	function DoInstall()
 	{
 		global $DOCUMENT_ROOT, $APPLICATION, $step;
-		$step = IntVal($step);
+		$step = intval($step);
 		if($step < 2)
 		{
 			$APPLICATION->IncludeAdminFile(GetMessage("FACEID_INSTALL_TITLE_2"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/faceid/install/step1.php");
@@ -69,7 +67,7 @@ Class faceid extends CModule
 		global $DB, $APPLICATION;
 
 		$this->errors = false;
-		if (strlen($params['PUBLIC_URL']) > 0 && strlen($params['PUBLIC_URL']) < 12)
+		if ($params['PUBLIC_URL'] <> '' && mb_strlen($params['PUBLIC_URL']) < 12)
 		{
 			if (!$this->errors)
 			{
@@ -80,7 +78,7 @@ Class faceid extends CModule
 
 		if (!$DB->Query("SELECT 'x' FROM b_faceid_tracking_visitors WHERE 1=0", true))
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/faceid/install/db/".strtolower($DB->type)."/install.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/faceid/install/db/".mb_strtolower($DB->type)."/install.sql");
 		}
 
 		RegisterModuleDependences("crm", "OnAfterCrmControlPanelBuild", "faceid", "\\Bitrix\\FaceId\\FaceId", "insertIntoCrmMenu");
@@ -130,7 +128,7 @@ Class faceid extends CModule
 	function DoUninstall()
 	{
 		global $DOCUMENT_ROOT, $APPLICATION, $step;
-		$step = IntVal($step);
+		$step = intval($step);
 		if($step<2)
 		{
 			$APPLICATION->IncludeAdminFile(GetMessage("B24_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/faceid/install/unstep1.php");

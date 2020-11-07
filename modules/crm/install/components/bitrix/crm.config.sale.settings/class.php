@@ -1182,15 +1182,35 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 		{
 			if (Loader::includeModule('bitrix24'))
 			{
-				ob_start();
-				\CBitrix24::showTariffRestrictionButtons('catalog_inventory_management');
+				$helpLink = null;
+				if (method_exists('\Bitrix\Catalog\Config\Feature','getInventoryManagementHelpLink'))
+				{
+					$helpLink = Catalog\Config\Feature::getInventoryManagementHelpLink();
+				}
+				if (!empty($helpLink))
+				{
+					ob_start();
+					Catalog\Config\Feature::initUiHelpScope();
+					$tarifLock = ob_get_contents();
+					ob_end_clean();
+					$tarifLock .= '<a href="#" onclick="BX.UI.InfoHelper.show(\'limit_shop_inventory_management\');">'
+						.Loc::getMessage('CRM_CF_USE_STORE_CONTROL_LOCK_TARIFF')
+						.'</a>';
+				}
+				else
+				{
+					ob_start();
+					\CBitrix24::showTariffRestrictionButtons('catalog_inventory_management');
+					$tarifLock = ob_get_contents();
+					ob_end_clean();
+				}
 				$options[] = array(
 					"id" => $this->optionPrefix."default_use_store_control",
 					"name" => Loc::getMessage("CRM_CF_USE_STORE_CONTROL"),
 					"type" => "custom",
-					"value" => ob_get_contents()
+					"value" => $tarifLock
 				);
-				ob_end_clean();
+				unset($tarifLock, $helpLink);
 			}
 		}
 		$options[] = array(

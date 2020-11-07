@@ -298,7 +298,7 @@ if(Loader::includeModule('rest'))
 			$row = AppTable::getByClientId($clientId);
 			$appId = $row['ID'];
 
-			if(strpos($params['ID'], '.') !== false)
+			if(mb_strpos($params['ID'], '.') !== false)
 			{
 				$result = array(
 					'result' => false,
@@ -315,7 +315,7 @@ if(Loader::includeModule('rest'))
 			)
 			{
 				$registerParams = array(
-					'ID' => strtolower($params['ID']),
+					'ID' => mb_strtolower($params['ID']),
 					'NAME' => $params['NAME'],
 					'ICON' => $params['ICON'],
 					'COMPONENT' => Library::COMPONENT_NAME_REST,

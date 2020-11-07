@@ -44,11 +44,6 @@ class Zoom extends Base
 		);
 	}
 
-	public static function getTypesFilterPresets(): array
-	{
-		return static::getTypes();
-	}
-
 	/**
 	 * Returns true if Zoom is available on current portal
 	 *
@@ -75,7 +70,7 @@ class Zoom extends Base
 		return \CZoomInterface::isConnected(\CCrmSecurityHelper::GetCurrentUserID());
 	}
 
-	public static function prepareHistoryItemData($historyFields)
+	public static function prepareHistoryItemData($historyFields): ?array
 	{
 		return isset($historyFields['SETTINGS']) && is_array($historyFields['SETTINGS']) ? $historyFields['SETTINGS'] : [];
 	}

@@ -135,7 +135,7 @@ if($hasNavigationBar)
 <!--	<div class="crm-view-switcher-name">--><?//=GetMessage('CRM_INT_FILTER_NAV_BAR_TITLE')?><!--:</div>-->
 	<div class="crm-view-switcher-list"><?
 
-		$bindingMenuMask = '/(lead|deal|invoice|quote|company|contact)/i';
+		$bindingMenuMask = '/(lead|deal|invoice|quote|company|contact|order)/i';
 		if (
 			preg_match($bindingMenuMask, $arParams['GRID_ID'], $bindingMenuMatches) &&
 			\Bitrix\Main\Loader::includeModule('intranet')

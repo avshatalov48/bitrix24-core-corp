@@ -1,6 +1,5 @@
-import {Tag, Dom, Loc, Type} from "main.core";
+import {Tag, Dom, Loc, Type, Event} from "main.core";
 import {Instance} from "./feed";
-import {Event} from "main.core.events";
 
 class PublicationQueue extends Event.EventEmitter
 {
@@ -71,7 +70,7 @@ class PublicationQueue extends Event.EventEmitter
 			key: 'publicationQueue',
 			callback: (queue) =>
 			{
-				queue = (Type.isPlainObject(queue) ? queue : JSON.parse(queue));
+				queue = (Type.isPlainObject(queue) ? queue : (Type.isStringFilled(queue) ? JSON.parse(queue) : {}));
 
 				if (!Type.isPlainObject(queue))
 				{

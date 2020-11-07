@@ -15,7 +15,7 @@ global $USER;
 $allowToAll = \Bitrix\Socialnetwork\ComponentHelper::getAllowToAllDestination();
 $extranetSite = (Loader::includeModule("extranet") && \CExtranet::isExtranetSite());
 
-$langAdditional = array(
+$langAdditional = [
 	'MOBILE_EXT_LIVEFEED_TASKS_INSTALLED' => (ModuleManager::isModuleInstalled('tasks') ? 'Y' : 'N'),
 	'MOBILE_EXT_LIVEFEED_TIMEMAN_INSTALLED' => (ModuleManager::isModuleInstalled('timeman') ? 'Y' : 'N'),
 	'MOBILE_EXT_LIVEFEED_LISTS_INSTALLED' => (ModuleManager::isModuleInstalled('lists') && \CLists::isFeatureEnabled() ? 'Y' : 'N'),
@@ -33,7 +33,7 @@ $langAdditional = array(
 	'MOBILE_EXT_LIVEFEED_DEST_TO_ALL_DENIED' => ($extranetSite || !$allowToAll ? 'Y' : 'N'),
 	'MOBILE_EXT_LIVEFEED_DEST_TO_ALL_DEFAULT' => (
 		$allowToAll
-			? (Option::get('socialnetwork', 'default_livefeed_toall', 'Y') == 'Y' ? 'Y' : 'N')
+			? (Option::get('socialnetwork', 'default_livefeed_toall', 'Y') === 'Y' ? 'Y' : 'N')
 			: 'N'
 	),
 	'MOBILE_EXT_LIVEFEED_POST_UF_CODE' => (
@@ -46,7 +46,10 @@ $langAdditional = array(
 			: 'UF_BLOG_POST_DOC'
 	),
 	'MOBILE_EXT_LIVEFEED_SITE_TEMPLATE_ID' => 'mobile_app',
-);
+	'MOBILE_EXT_LIVEFEED_SITE_DIR' => SITE_DIR,
+	'MOBILE_EXT_LIVEFEED_CURRENT_EXTRANET_SITE' => ($extranetSite ? 'Y' : 'N'),
+	'MOBILE_EXT_LIVEFEED_CURRENT_USER_ID' => $USER->getId(),
+];
 
 return [
 	'js' => './dist/livefeed.bundle.js',
@@ -54,7 +57,6 @@ return [
 	'lang_additional' => $langAdditional,
 	'rel' => [
 		'main.core',
-		'main.core.events',
 		'mobile.imageviewer',
 		'mobile.utils',
 	],

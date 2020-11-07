@@ -18,6 +18,7 @@ if(Loader::includeModule('rest'))
 }
 
 Extension::load([
+	'admin_interface',
 	'ui.tilegrid',
 	'ui.fonts.opensans',
 	'sidepanel',

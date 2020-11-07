@@ -197,7 +197,7 @@ final class Face extends \IRestService
 
 		if (isset($parameters['force_add']))
 		{
-			$forceAdd = strtolower($parameters['force_add']);
+			$forceAdd = mb_strtolower($parameters['force_add']);
 			static::validateForceAdd($forceAdd);
 		}
 		else

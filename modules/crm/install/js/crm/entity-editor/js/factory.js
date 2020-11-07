@@ -3,18 +3,10 @@ BX.namespace("BX.Crm");
 //region FACTORY
 if(typeof BX.Crm.EntityEditorValidatorFactory === "undefined")
 {
-	BX.Crm.EntityEditorValidatorFactory =
-		{
-			create: function(type, settings)
-			{
-				if(type === "person")
-				{
-					return BX.Crm.EntityPersonValidator.create(settings);
-				}
-
-				return null;
-			}
-		}
+	/**
+	 * @deprecated
+	 */
+	BX.Crm.EntityEditorValidatorFactory = BX.UI.EntityEditorValidatorFactory;
 }
 
 if(typeof BX.Crm.EntityEditorControlFactory === "undefined")
@@ -67,7 +59,11 @@ if(typeof BX.Crm.EntityEditorControlFactory === "undefined")
 				}
 
 
-				if(type === "section")
+				if(type === "column")
+				{
+					return BX.UI.EntityEditorColumn.create(controlId, settings);
+				}
+				else if(type === "section")
 				{
 					return BX.Crm.EntityEditorSection.create(controlId, settings);
 				}
@@ -77,27 +73,27 @@ if(typeof BX.Crm.EntityEditorControlFactory === "undefined")
 				}
 				else if(type === "number")
 				{
-					return BX.Crm.EntityEditorNumber.create(controlId, settings);
+					return BX.UI.EntityEditorNumber.create(controlId, settings);
 				}
 				else if(type === "datetime")
 				{
-					return BX.Crm.EntityEditorDatetime.create(controlId, settings);
+					return BX.UI.EntityEditorDatetime.create(controlId, settings);
 				}
 				else if(type === "boolean")
 				{
-					return BX.Crm.EntityEditorBoolean.create(controlId, settings);
+					return BX.UI.EntityEditorBoolean.create(controlId, settings);
 				}
 				else if(type === "list")
 				{
-					return BX.Crm.EntityEditorList.create(controlId, settings);
+					return BX.UI.EntityEditorList.create(controlId, settings);
 				}
 				else if(type === "multilist")
 				{
-					return BX.Crm.EntityEditorMultiList.create(controlId, settings);
+					return BX.UI.EntityEditorMultiList.create(controlId, settings);
 				}
 				else if(type === "html")
 				{
-					return BX.Crm.EntityEditorHtml.create(controlId, settings);
+					return BX.UI.EntityEditorHtml.create(controlId, settings);
 				}
 				else if(type === "money")
 				{
@@ -193,7 +189,7 @@ if(typeof BX.Crm.EntityEditorControlFactory === "undefined")
 				}
 				else if(type === "custom")
 				{
-					return BX.Crm.EntityEditorCustom.create(controlId, settings);
+					return BX.UI.EntityEditorCustom.create(controlId, settings);
 				}
 				else if(type === "shipment")
 				{

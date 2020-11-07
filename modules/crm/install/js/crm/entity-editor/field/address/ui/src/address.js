@@ -23,6 +23,7 @@ export class EntityEditorUiAddressField extends BX.UI.EntityEditorField
 			this._restrictionsCallback = BX.prop.getString(params, "featureRestrictionCallback", '');
 		}
 		settings.enableAutocomplete = this._autocompleteEnabled;
+		settings.hideDefaultAddressType = true;
 		this._field = EntityEditorBaseAddressField.create(id, settings);
 		this._field.setMultiple(true);
 		this._field.setTypesList(BX.prop.getObject(params, "types", {}));

@@ -27,7 +27,6 @@ export class App
 		isOrderPublicUrlAvailable: false,
 		isCatalogAvailable: false,
 		isOrderPublicUrlExists: false,
-		isApplePayAvailable: false,
 	})
 	{
 		this.slider = BX.SidePanel.Instance.getTopSlider();
@@ -51,8 +50,6 @@ export class App
 		this.sendingMethod = '';
 		this.sendingMethodDesc = {};
 		this.urlSettingsSmsSenders = options.urlSettingsSmsSenders;
-		this.iMessage = false;
-		this.isApplePayAvailable = options.isApplePayAvailable;
 		this.orderPublicUrl = '';
 		this.fileControl = options.fileControl;
 
@@ -496,7 +493,6 @@ export class App
 							lineId: this.lineId,
 							ownerTypeId: this.ownerTypeId,
 							ownerId: this.ownerId,
-							iMessage: this.iMessage,
 							stageOnOrderPaid: this.stageOnOrderPaid,
 							skipPublicMessage,
 							deliveryId: deliveryId,
@@ -506,6 +502,7 @@ export class App
 							personTypeId: personTypeId,
 							propertyValues: propertyValues,
 							deliveryExtraServicesValues: deliveryExtraServicesValues,
+							connector: this.connector,
 						},
 					},
 					analyticsLabel: (this.context === 'deal') ? 'salescenterCreatePaymentSms' : 'salescenterCreatePayment',
@@ -618,10 +615,5 @@ export class App
 		{
 			return new Promise((resolve, reject) => {});
 		}
-	}
-
-	setIMessage(payment, isChecked)
-	{
-		this.iMessage = isChecked;
 	}
 }

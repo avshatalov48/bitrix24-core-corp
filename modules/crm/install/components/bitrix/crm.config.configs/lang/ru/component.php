@@ -75,4 +75,4 @@ $MESS["CRM_FIELD_ENABLE_CONTACT_RECYCLE_BIN"] = "Включить корзину
 $MESS["CRM_FIELD_ENABLE_COMPANY_RECYCLE_BIN"] = "Включить корзину для компаний";
 $MESS["CRM_FIELD_ENABLE_DEAL_RECYCLE_BIN"] = "Включить корзину для сделок";
 $MESS["CRM_FIELD_ENTITY_ADDRESS_FORMAT_LINK"] = "Изменить формат адреса можно в настройках портала";
-?>
+$MESS['CRM_RECYCLEBIN_TTL_TITLE'] = 'Хранить данные в корзине, дней';

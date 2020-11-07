@@ -62,13 +62,14 @@ class CVoxImplantEvent
 		{
 			if ($arFields["UF_PHONE_INNER"] <> '')
 			{
-				$phoneInner = intval(preg_replace("/[^0-9]/i", "", $arFields["UF_PHONE_INNER"]));
-				if ($phoneInner > 0 && $phoneInner < 10000)
+				$phoneInner = preg_replace("/[^0-9]/i", "", $arFields["UF_PHONE_INNER"]);
+				$phoneLength = mb_strlen($phoneInner);
+				if ($phoneLength > 0 && $phoneLength < 5)
 				{
 					$result = \Bitrix\Main\UserTable::getList(array(
 						'select' => array('COUNT'),
 						'filter' => array(
-							'!=ID' => intval($arFields['ID']),
+							'!=ID' => (int)$arFields['ID'],
 							'=UF_PHONE_INNER' => $phoneInner,
 							'=ACTIVE' => 'Y'
 						),
@@ -176,13 +177,14 @@ class CVoxImplantEvent
 			{
 				if ($arFields["UF_PHONE_INNER"] <> '')
 				{
-					$phoneInner = intval(preg_replace("/[^0-9]/i", "", $arFields["UF_PHONE_INNER"]));
-					if ($phoneInner > 0 && $phoneInner < 10000)
+					$phoneInner = preg_replace("/[^0-9]/i", "", $arFields["UF_PHONE_INNER"]);
+					$phoneLength = mb_strlen($phoneInner);
+					if ($phoneLength > 0 && $phoneLength < 5)
 					{
 						$result = \Bitrix\Main\UserTable::getList(array(
 							'select' => array('COUNT'),
 							'filter' => array(
-								'!=ID' => intval($arFields['ID']),
+								'!=ID' => (int)$arFields['ID'],
 								'=UF_PHONE_INNER' => $phoneInner,
 								'=ACTIVE' => 'Y'
 							),
@@ -218,7 +220,7 @@ class CVoxImplantEvent
 				}
 			}
 
-			if ($arFields["ACTIVE"] == 'N' && CVoximplantUser::GetPhoneActive($arFields['ID']))
+			if ($arFields["ACTIVE"] === 'N' && CVoximplantUser::GetPhoneActive($arFields['ID']))
 			{
 				$viUser = new CVoximplantUser();
 				$viUser->UpdateUserPassword($arFields['ID'], CVoxImplantUser::MODE_PHONE);
@@ -245,7 +247,7 @@ class CVoxImplantEvent
 					}
 					else if ($phone <> '')
 					{
-						VI\PhoneTable::add(Array('USER_ID' => intval($arFields['ID']), 'PHONE_NUMBER' => $phone, 'PHONE_MNEMONIC' => $mnemonic));
+						VI\PhoneTable::add(Array('USER_ID' => (int)$arFields['ID'], 'PHONE_NUMBER' => $phone, 'PHONE_MNEMONIC' => $mnemonic));
 					}
 				}
 			}
@@ -260,7 +262,7 @@ class CVoxImplantEvent
 	{
 		if ($fields['RESULT'] && isset($fields['ACTIVE']))
 		{
-			if ($fields['ACTIVE'] == 'N')
+			if ($fields['ACTIVE'] === 'N')
 			{
 				$userId = (int)$fields['ID'];
 				if($userId > 0)

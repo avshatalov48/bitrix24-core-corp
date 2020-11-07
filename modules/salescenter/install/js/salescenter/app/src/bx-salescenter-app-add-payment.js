@@ -107,12 +107,6 @@ Vue.component(config.templateAddPaymentName,
 		{
 			Manager.openControlPanel();
 		},
-
-		handleIMessagePayment(event)
-		{
-			const payment = event.target.name;
-			this.$root.$app.setIMessage(payment, event.target.checked);
-		},
 	},
 	computed:
 	{
@@ -134,11 +128,6 @@ Vue.component(config.templateAddPaymentName,
 		isShowedBanner()
 		{
 			return this.order.showPaySystemSettingBanner;
-		},
-
-		iMessageAvailable()
-		{
-			return this.$root.$app.isApplePayAvailable && this.$root.$app.connector === 'imessage';
 		},
 
 		...Vuex.mapState({
@@ -186,12 +175,6 @@ Vue.component(config.templateAddPaymentName,
 					<div class="salescenter-app-result-grid-item salescenter-app-result-grid-item-currency" v-html="total.result"></div>
 					<div class="salescenter-app-result-grid-item-currency-symbol" v-html="currencySymbol"></div>
 				</div>
-			</div>
-			<div v-if="iMessageAvailable" class="salescenter-app-payment-container">
-				<label class="ui-ctl ui-ctl-checkbox">
-					<input type="checkbox" class="ui-ctl-element" @change="handleIMessagePayment($event)">
-					<div class="ui-ctl-label-text">{{localize.SALESCENTER_IMESSAGE_PAYMENT}}</div>
-				</label>
 			</div>
 			<div class="salescenter-app-banner"  v-if="isShowedBanner">
 				<div class="salescenter-app-banner-inner">

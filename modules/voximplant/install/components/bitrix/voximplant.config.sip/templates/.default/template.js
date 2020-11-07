@@ -135,7 +135,7 @@
 			{
 				if(!result)
 				{
-					return;
+					return Promise.reject("cancel");
 				}
 
 				return BX.Voximplant.showLoader();
@@ -152,6 +152,10 @@
 				BX.Voximplant.hideLoader();
 			}.bind(this)).catch(function (response)
 			{
+				if (response === "cancel")
+				{
+					return;
+				}
 				BX.Voximplant.hideLoader();
 				var error = response.errors[0];
 

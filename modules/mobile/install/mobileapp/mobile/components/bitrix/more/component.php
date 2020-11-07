@@ -139,7 +139,7 @@ if (count($events) > 0)
 }
 
 $editProfilePath = \Bitrix\MobileApp\Janative\Manager::getComponentPath("user.profile");
-$workPosition = $arResult["user"]["WORK_POSITION"];
+$workPosition = \CUtil::addslashes($arResult["user"]["WORK_POSITION"]);
 $canEditProfile = $USER->CanDoOperation('edit_own_profile');
 $apiVersion = Bitrix\MobileApp\Mobile::getApiVersion();
 $arResult["menu"][] = [

@@ -5,6 +5,8 @@ use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Catalog\Product\Price;
 use Bitrix\Sale\DiscountCouponsManager;
+use Bitrix\Crm\Product\Url;
+use Bitrix\Iblock\Url\AdminPage\BuilderManager;
 
 Loc::loadMessages(__FILE__);
 
@@ -16,6 +18,9 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 
 	/** @var Bitrix\Crm\Order\Order */
 	private $order = null;
+
+	/** @var null|\Bitrix\Catalog\Url\AdminPage\CatalogBuilder  */
+	private $urlBuilder = null;
 
 	private function init()
 	{
@@ -102,6 +107,30 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 		$this->initCouponsData($this->order->getUserId(), $this->order->getId());
 		$this->userId = CCrmSecurityHelper::GetCurrentUserID();
 		CUtil::InitJSCore(['ajax', 'tooltip']);
+		return true;
+	}
+
+	private function initUrlBuilder(): bool
+	{
+		if (!isset($this->arParams['BUILDER_CONTEXT']))
+		{
+			$this->arParams['BUILDER_CONTEXT'] = '';
+		}
+		if (
+			$this->arParams['BUILDER_CONTEXT'] != Url\ShopBuilder::TYPE_ID
+			&& $this->arParams['BUILDER_CONTEXT'] != Url\ProductBuilder::TYPE_ID
+		)
+		{
+			$this->arParams['BUILDER_CONTEXT'] = Url\ShopBuilder::TYPE_ID;
+		}
+
+		$manager = BuilderManager::getInstance();
+		$this->urlBuilder = $manager->getBuilder($this->arParams['BUILDER_CONTEXT']);
+		if ($this->urlBuilder === null)
+		{
+			$this->errors[] = new Main\Error(Loc::getMessage('CRM_ORDER_PLC_ERR_URL_BUILDER_ABSENT'));
+			return false;
+		}
 		return true;
 	}
 
@@ -598,6 +627,12 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 			return;
 		}
 
+		if (!$this->initUrlBuilder())
+		{
+			$this->showErrors();
+			return;
+		}
+
 		$this->arResult['GRID_ID'] = 'crm_order_product_list';
 		$this->arResult['HEADERS'] = $this->getHeaders();
 		$this->arResult['AJAX_OPTION_JUMP'] = isset($this->arParams['AJAX_OPTION_JUMP']) ? $this->arParams['AJAX_OPTION_JUMP'] : 'N';
@@ -700,5 +735,3 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 		$this->IncludeComponentTemplate();
 	}
 }
-?>
-

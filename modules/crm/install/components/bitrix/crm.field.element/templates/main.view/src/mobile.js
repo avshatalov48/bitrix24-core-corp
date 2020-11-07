@@ -123,7 +123,7 @@ let nodeElementCrm = (function ()
 
 			if (this.useOnChangeEvent)
 			{
-				BX.onCustomEvent(this, 'onChange', [this, this.node]);
+				BX.onCustomEvent(this,'BX.Mobile.Field:onChangeUserField', [this, this.node]);
 			}
 		},
 		getSelectedItems()

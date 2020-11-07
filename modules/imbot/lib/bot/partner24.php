@@ -42,22 +42,6 @@ class Partner24 extends Network
 	}
 
 	/**
-	 * @return int[]|null
-	 */
-	private static function getBusinessUsers()
-	{
-		return Support24::getBusinessUsers();
-	}
-
-	/**
-	 * @return int[]
-	 */
-	private static function getAdministrators()
-	{
-		return Support24::getAdministrators();
-	}
-
-	/**
 	 * @return string
 	 */
 	public static function getPartnerName()
@@ -91,30 +75,30 @@ class Partner24 extends Network
 
 		if (!Support24::getBotId())
 		{
-			\Bitrix\ImBot\Bot\Support24::register();
+			Support24::register();
 		}
 
 		$supportCode = !empty($params['CODE'])? $params['CODE']: self::getBotCode();
 
 		if (self::getBotId() > 0)
 		{
-			$botId = Network::getNetworkBotId($supportCode, true);
+			$botId = parent::getNetworkBotId($supportCode, true);
 			if ($botId)
 			{
 				return $botId;
 			}
 
-			// use change method instead
+			//todo: use change method instead
 			return false;
 		}
 
-		$search = self::search($supportCode, true);
+		$search = parent::search($supportCode, true);
 		if (!$search)
 		{
 			return false;
 		}
 
-		$botId = \Bitrix\ImBot\Bot\Network::register($search[0]);
+		$botId = parent::register($search[0]);
 		if (!$botId)
 		{
 			return false;
@@ -551,9 +535,11 @@ class Partner24 extends Network
 		Main\Config\Option::set('imbot', "network_".$previousCode."_bot_id", 0);
 		Main\Config\Option::set('imbot', "network_".$currentCode."_bot_id", self::getBotId());
 
-		self::sendRequestFinalizeSession();
+		self::sendRequestFinalizeSession([
+			'MESSAGE' => Partner24::getMessage('PARTNER_INFO_DEACTIVATE')
+		]);
 
-		$http = new \Bitrix\ImBot\Http(parent::BOT_CODE);
+		$http = self::instanceHttpClient(parent::BOT_CODE);
 		$http->query(
 			'clientChangeLicence',
 			Array(
@@ -612,9 +598,16 @@ class Partner24 extends Network
 	}
 
 	/**
+	 * Sends finalize session notification.
+	 * @param array $params <pre>
+	 * [
+	 * 	(string) MESSAGE
+	 * ]
+	 * </pre>
+	 *
 	 * @return bool
 	 */
-	public static function sendRequestFinalizeSession()
+	public static function sendRequestFinalizeSession(array $params = [])
 	{
 		if (!Main\Loader::includeModule('im'))
 			return false;
@@ -628,7 +621,9 @@ class Partner24 extends Network
 		$currentLicence = \CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_CURRENT);
 		$currentCode = self::getBotCode();
 
-		$http = new \Bitrix\ImBot\Http(parent::BOT_CODE);
+		$message = $params['MESSAGE'] ?? '';
+
+		$http = self::instanceHttpClient(parent::BOT_CODE);
 		$http->query(
 			'clientRequestFinalizeSession',
 			Array(
@@ -636,7 +631,7 @@ class Partner24 extends Network
 				'CURRENT_LICENCE_TYPE' => $currentLicence,
 				'CURRENT_LICENCE_NAME' => \CBitrix24::getLicenseName($currentLicence),
 				'CURRENT_BOT_CODE' => $currentCode,
-				'MESSAGE' => Partner24::getMessage('PARTNER_INFO_DEACTIVATE'),
+				'MESSAGE' => $message,
 			),
 			false
 		);
@@ -659,15 +654,7 @@ class Partner24 extends Network
 			return false;
 		}
 
-		$botData = \Bitrix\Im\User::getInstance(self::getBotId());
-		$userAvatar = \Bitrix\Im\User::uploadAvatar(self::getBotAvatar(), self::getBotId());
-		if ($userAvatar && $botData->getAvatarId() != $userAvatar)
-		{
-			$connection = Main\Application::getConnection();
-			$connection->query("UPDATE b_user SET PERSONAL_PHOTO = ".intval($userAvatar)." WHERE ID = ".intval(self::getBotId()));
-		}
-
-		\Bitrix\Im\Bot::update(Array('BOT_ID' => self::getBotId()), Array(
+		$botParams = [
 			'CLASS' => __CLASS__,
 			'METHOD_MESSAGE_ADD' => 'onMessageAdd',
 			'METHOD_WELCOME_MESSAGE' => 'onWelcomeMessage',
@@ -676,14 +663,21 @@ class Partner24 extends Network
 			'VERIFIED' => 'Y',
 			'CODE' => 'network_'.self::getBotCode(),
 			'APP_ID' => self::getBotCode(),
-		));
+			'PROPERTIES' => [
+				'LOGIN' => 'bot_imbot_partner24',
+				'NAME' => self::getBotName(),
+				'WORK_POSITION' => self::getBotDesc()
+			]
+		];
 
-		$user = new \CUser;
-		$user->Update(self::getBotId(), Array(
-			'LOGIN' => 'bot_imbot_partner24',
-			'NAME' => self::getBotName(),
-			'WORK_POSITION' => self::getBotDesc()
-		));
+		$botData = \Bitrix\Im\User::getInstance(self::getBotId());
+		$userAvatar = \Bitrix\Im\User::uploadAvatar(self::getBotAvatar(), self::getBotId());
+		if ($userAvatar && $botData->getAvatarId() != $userAvatar)
+		{
+			$botParams['PROPERTIES']['PERSONAL_PHOTO'] = $userAvatar;
+		}
+
+		\Bitrix\Im\Bot::update(Array('BOT_ID' => self::getBotId()), $botParams);
 
 		return true;
 	}
@@ -706,71 +700,11 @@ class Partner24 extends Network
 	 */
 	public static function getMessage($code)
 	{
-		$messages = unserialize(Main\Config\Option::get('imbot', self::OPTION_BOT_MESSAGES, "a:0:{}"));
+		$messages = unserialize(
+			Main\Config\Option::get('imbot', self::OPTION_BOT_MESSAGES, "a:0:{}"),
+			['allowed_classes' => false]
+		);
 		return isset($messages[$code])? $messages[$code]: '';
-	}
-
-	/**
-	 * @param array $messageFields
-	 *
-	 * @return array
-	 */
-	public static function sendMessage($messageFields)
-	{
-		if (!Main\Loader::includeModule('im'))
-		{
-			return [];
-		}
-
-		$userId = 0;
-
-		if (isset($messageFields['TO_USER_ID']))
-		{
-			$userId = $messageFields['TO_USER_ID'];
-		}
-		else if (isset($messageFields['DIALOG_ID']))
-		{
-			if (preg_match('/^[0-9]+$/i', $messageFields['DIALOG_ID']))
-			{
-				$userId = $messageFields['DIALOG_ID'];
-			}
-			else if (
-				$messageFields['DIALOG_ID'] === 'ADMIN'
-				|| $messageFields['DIALOG_ID'] === 'BUSINESS'
-			)
-			{
-				if ($messageFields['DIALOG_ID'] === 'ADMIN')
-				{
-					$users = self::getAdministrators();
-				}
-				else if ($messageFields['DIALOG_ID'] === 'BUSINESS')
-				{
-					$users = self::getBusinessUsers();
-				}
-
-				$result = [];
-				foreach ($users as $userId)
-				{
-					$messageFields['DIALOG_ID'] = $userId;
-					$result = array_merge($result, self::sendMessage($messageFields));
-				}
-
-				return $result;
-			}
-		}
-
-		$messageFields['FROM_USER_ID'] = self::getBotId();
-		$messageFields['PARAMS']['IMOL_QUOTE_MSG'] = 'Y';
-
-		$messageFields['MESSAGE'] = self::replacePlaceholders($messageFields['MESSAGE'], $userId);
-
-		$messageId = \CIMMessenger::Add($messageFields);
-		if ($messageId)
-		{
-			return [$messageId];
-		}
-
-		return [];
 	}
 
 	/**
@@ -864,7 +798,9 @@ class Partner24 extends Network
 			'ATTACH' => [['MESSAGE' => Partner24::getMessage('PARTNER_INFO_ACTIVATE')]],
 		]);
 
-		Support24::sendRequestFinalizeSession(Partner24::getMessage('SUPPORT_INFO_DEACTIVATE'));
+		Support24::sendRequestFinalizeSession([
+			'MESSAGE' => Partner24::getMessage('SUPPORT_INFO_DEACTIVATE')
+		]);
 
 		return true;
 	}
@@ -884,7 +820,9 @@ class Partner24 extends Network
 		$messageCode = Support24::isActivePaidSupport()? 'DEACTIVATE_PAID': 'DEACTIVATE_FREE';
 		self::sendMessageForRecent(self::getMessage($messageCode));
 
-		self::sendRequestFinalizeSession();
+		self::sendRequestFinalizeSession([
+			'MESSAGE' => Partner24::getMessage('PARTNER_INFO_DEACTIVATE')
+		]);
 
 		Main\Config\Option::set('imbot', self::OPTION_BOT_ACTIVE, false);
 		Main\Config\Option::set('imbot', self::OPTION_BOT_WAIT_ACTIVATION, false);
@@ -915,7 +853,9 @@ class Partner24 extends Network
 		Main\Config\Option::set('imbot', self::OPTION_BOT_ACTIVE, true);
 		Main\Config\Option::set('imbot', self::OPTION_BOT_WAIT_ACTIVATION, false);
 
-		Support24::sendRequestFinalizeSession(Partner24::getMessage('SUPPORT_INFO_DEACTIVATE'));
+		Support24::sendRequestFinalizeSession([
+			'MESSAGE' => Partner24::getMessage('SUPPORT_INFO_DEACTIVATE')
+		]);
 
 		return true;
 	}
@@ -968,7 +908,7 @@ class Partner24 extends Network
 			return false;
 		}
 
-		\Bitrix\ImBot\Bot\Support24::execScheduleAction('ADMIN', 'partner_join');
+		Support24::execScheduleAction('ADMIN', 'partner_join');
 		Main\Config\Option::set('imbot', self::OPTION_BOT_WAIT_ACTIVATION, true);
 
 		return true;

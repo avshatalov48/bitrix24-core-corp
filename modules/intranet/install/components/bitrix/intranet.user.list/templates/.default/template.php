@@ -10,6 +10,8 @@ $component = $this->getComponent();
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
+use Bitrix\Main\Engine\Router;
+use Bitrix\Main\Engine\UrlManager;
 
 \Bitrix\Main\Loader::includeModule('ui');
 
@@ -78,7 +80,8 @@ if(!empty($arResult['TOOLBAR_BUTTONS']))
 			"link" => $button['LINK'],
 			"color" => \Bitrix\UI\Buttons\Color::PRIMARY,
 			"icon" => $icon,
-			"text" => $button['TITLE']
+			"text" => $button['TITLE'],
+			"click" => $button['CLICK']
 		]);
 	}
 }
@@ -145,7 +148,11 @@ $gridContainerId = 'bx-iul-'.$arResult['GRID_ID'].'-container';
 				id: '<?=CUtil::JSEscape($toolbarId)?>',
 				menuButtonId: '<?=\CUtil::JSEscape($buttonID)?>',
 				menuItems: <?=CUtil::PhpToJSObject($arResult['TOOLBAR_MENU'])?>
-			}
+			},
+			invitationLink: '<?=UrlManager::getInstance()->create('getSliderContent', [
+				'c' => 'bitrix:intranet.invitation',
+				'mode' => Router::COMPONENT_MODE_AJAX,
+			]);?>'
 		});
 
 	});

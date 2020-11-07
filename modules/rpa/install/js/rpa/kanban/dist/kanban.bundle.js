@@ -2,9 +2,7 @@ this.BX = this.BX || {};
 (function (exports,ui_buttons,ui_notification,main_kanban,rpa_kanban,main_core,rpa_manager,ui_dialogs_messagebox,main_popup,rpa_fieldspopup) {
 	'use strict';
 
-	var PullManager =
-	/*#__PURE__*/
-	function () {
+	var PullManager = /*#__PURE__*/function () {
 	  function PullManager(grid) {
 	    var _this = this;
 
@@ -415,9 +413,7 @@ this.BX = this.BX || {};
 	  return data;
 	}
 
-	var Column =
-	/*#__PURE__*/
-	function (_Kanban$Column) {
+	var Column = /*#__PURE__*/function (_Kanban$Column) {
 	  babelHelpers.inherits(Column, _Kanban$Column);
 
 	  function Column() {
@@ -1327,9 +1323,7 @@ this.BX = this.BX || {};
 	  return data;
 	}
 
-	var Item =
-	/*#__PURE__*/
-	function (_Kanban$Item) {
+	var Item = /*#__PURE__*/function (_Kanban$Item) {
 	  babelHelpers.inherits(Item, _Kanban$Item);
 
 	  function Item() {
@@ -1980,9 +1974,7 @@ this.BX = this.BX || {};
 	  return Item;
 	}(main_kanban.Kanban.Item);
 
-	var Grid =
-	/*#__PURE__*/
-	function (_Kanban$Grid) {
+	var Grid = /*#__PURE__*/function (_Kanban$Grid) {
 	  babelHelpers.inherits(Grid, _Kanban$Grid);
 
 	  function Grid() {
@@ -2149,8 +2141,11 @@ this.BX = this.BX || {};
 	      } // check permissions and next stage
 
 
-	      var previousColumn = this.getColumn(item.getStageId());
-	      /*if(!previousColumn.getPossibleNextStages().includes(targetColumn.getId()) && previousColumn.canMoveTo() && item.getMovedBy() === this.getUserId() && targetColumn.getPossibleNextStages().includes(previousColumn.getId()))
+	      var previousColumn = this.getColumn(item.getStageId()); //const isPossibleNextStagesIncludesTargetColumn = previousColumn.getPossibleNextStages().includes(targetColumn.getId());
+	      //sorry but for now we do not check possible next stages
+
+	      var isPossibleNextStagesIncludesTargetColumn = true;
+	      /*if(!isPossibleNextStagesIncludesTargetColumn && previousColumn.canMoveTo() && item.getMovedBy() === this.getUserId() && targetColumn.getPossibleNextStages().includes(previousColumn.getId()))
 	      {
 	      	// item is moving back - no editor just moving
 	      	item.saveCurrentState().savePosition().catch((response) =>
@@ -2160,21 +2155,21 @@ this.BX = this.BX || {};
 	      }
 	      else */
 
-	      if (previousColumn.isCanMoveFrom() && previousColumn.getPossibleNextStages().includes(targetColumn.getId())) {
+	      if (previousColumn.isCanMoveFrom() && isPossibleNextStagesIncludesTargetColumn) {
 	        this.moveItemToStage(item, targetColumn.getId(), previousColumn);
-	      } else if (!previousColumn.isCanMoveFrom() && previousColumn.getPossibleNextStages().includes(targetColumn.getId())) {
+	      } else if (!previousColumn.isCanMoveFrom() && isPossibleNextStagesIncludesTargetColumn) {
 	        BX.UI.Notification.Center.notify({
-	          content: main_core.Loc.getMessage('RPA_KANBAN_MOVE_PERMISSION_NOTIFY').replace('#STAGE#', previousColumn.getName())
+	          content: main_core.Loc.getMessage('RPA_KANBAN_MOVE_PERMISSION_NOTIFY').replace('#STAGE#', main_core.Text.encode(previousColumn.getName()))
 	        });
 	        this.moveItem(item, item.getStageId(), item.getCurrentState().nextItemId);
-	      } else if (previousColumn.isCanMoveFrom() && !previousColumn.getPossibleNextStages().includes(targetColumn.getId())) {
+	      } else if (previousColumn.isCanMoveFrom() && !isPossibleNextStagesIncludesTargetColumn) {
 	        BX.UI.Notification.Center.notify({
-	          content: main_core.Loc.getMessage('RPA_KANBAN_MOVE_WRONG_STAGE_NOTIFY').replace('#STAGE_FROM#', previousColumn.getName()).replace('#STAGE_TO#', targetColumn.getName())
+	          content: main_core.Loc.getMessage('RPA_KANBAN_MOVE_WRONG_STAGE_NOTIFY').replace('#STAGE_FROM#', main_core.Text.encode(previousColumn.getName())).replace('#STAGE_TO#', main_core.Text.encode(targetColumn.getName()))
 	        });
 	        this.moveItem(item, item.getStageId(), item.getCurrentState().nextItemId);
 	      } else {
 	        BX.UI.Notification.Center.notify({
-	          content: main_core.Loc.getMessage('RPA_KANBAN_MOVE_ITEM_PERMISSION_NOTIFY').replace('#ITEM#', item.getName()).replace('#STAGE#', previousColumn.getName())
+	          content: main_core.Loc.getMessage('RPA_KANBAN_MOVE_ITEM_PERMISSION_NOTIFY').replace('#ITEM#', main_core.Text.encode(item.getName())).replace('#STAGE#', main_core.Text.encode(previousColumn.getName()))
 	        });
 	        this.moveItem(item, item.getStageId(), item.getCurrentState().nextItemId);
 	      }
@@ -2225,7 +2220,7 @@ this.BX = this.BX || {};
 	          if (isShowEditor) {
 	            if (!previousColumn.canAddItems()) {
 	              BX.UI.Notification.Center.notify({
-	                content: main_core.Loc.getMessage('RPA_KANBAN_MOVE_ITEM_PERMISSION_NOTIFY').replace('#ITEM#', item.getName()).replace('#STAGE#', previousColumn.getName())
+	                content: main_core.Loc.getMessage('RPA_KANBAN_MOVE_ITEM_PERMISSION_NOTIFY').replace('#ITEM#', main_core.Text.encode(item.getName())).replace('#STAGE#', main_core.Text.encode(previousColumn.getName()))
 	              });
 
 	              _this4.onItemMoveError(item, null, itemPreviousState);
@@ -2870,9 +2865,7 @@ this.BX = this.BX || {};
 	  return Grid;
 	}(main_kanban.Kanban.Grid);
 
-	var Command =
-	/*#__PURE__*/
-	function () {
+	var Command = /*#__PURE__*/function () {
 	  function Command(item, action, restore) {
 	    babelHelpers.classCallCheck(this, Command);
 	    this.item = item;

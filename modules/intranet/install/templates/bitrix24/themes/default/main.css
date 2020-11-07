@@ -199,6 +199,18 @@ body {
 .feed-post-block {
 	border-bottom: 15px solid #eef2f4;
 }
+.feed-pinned-panel {
+	margin-bottom: 0;
+	border-bottom: 11px solid #eef2f4;
+}
+
+.feed-post-block.feed-post-block-pinned {
+	margin-bottom: 0;
+}
+
+.feed-post-block.feed-post-block-pinned {
+	border-bottom-width: 4px;
+}
 
 .feed-new-message-informer-place {
 	background-color: #eef2f4;

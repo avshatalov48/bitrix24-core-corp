@@ -89,10 +89,7 @@ $arResult["bTasksAvailable"] = (
 	)
 );
 
-if (isset($arParams["CURRENT_PAGE_DATE"]))
-	$current_page_date = $arParams["CURRENT_PAGE_DATE"];
-
-$arEvent = __SLMGetLogRecord($arParams["LOG_ID"], $arParams, $current_page_date);
+$arEvent = __SLMGetLogRecord($arParams["LOG_ID"], $arParams);
 
 if ($arEvent)
 {

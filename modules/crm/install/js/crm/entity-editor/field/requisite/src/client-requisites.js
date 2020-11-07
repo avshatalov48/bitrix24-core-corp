@@ -140,7 +140,10 @@ export class EntityEditorClientRequisites
 
 				if (!Type.isNull(addressValue) && Object.keys(addressValue).length)
 				{
-					this._addressField = EntityEditorBaseAddressField.create(this._entityInfo.getId(), {showFirstItemOnly: true});
+					this._addressField = EntityEditorBaseAddressField.create(this._entityInfo.getId(), {
+						showFirstItemOnly: true,
+						showAddressTypeInViewMode: true
+					});
 					this._addressField.setMultiple(true);
 					this._addressField.setTypesList(BX.prop.getObject(this._addressConfig, "types", {}));
 					this._addressField.setValue(addressValue);

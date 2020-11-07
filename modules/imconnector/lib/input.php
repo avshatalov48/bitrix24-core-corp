@@ -73,7 +73,7 @@ class Input
 	 */
 	private function authorize($params)
 	{
-		if(strlen($params["BX_HASH"]) <= 0)
+		if($params["BX_HASH"] == '')
 		{
 			$this->result->addError(new Error('Hash is empty', 'HASH_EMPTY', __METHOD__));
 

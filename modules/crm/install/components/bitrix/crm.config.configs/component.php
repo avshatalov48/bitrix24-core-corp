@@ -18,6 +18,8 @@ if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 }
 
 use \Bitrix\Crm\Settings;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
 
 $arParams['PATH_TO_SM_CONFIG'] = CrmCheckPath('PATH_TO_SM_CONFIG', $arParams['PATH_TO_SM_CONFIG'], $APPLICATION->GetCurPage());
 $arResult['ENABLE_CONTROL_PANEL'] = isset($arParams['ENABLE_CONTROL_PANEL']) ? $arParams['ENABLE_CONTROL_PANEL'] : true;
@@ -85,7 +87,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 					mb_strtoupper($_POST['CALENDAR_DISPLAY_COMPLETED_MEETINGS']) === 'Y'
 				);
 			}
-			
+
 			if(isset($_POST['CALENDAR_KEEP_REASSIGNED_CALLS']))
 			{
 				Settings\ActivitySettings::setValue(
@@ -437,6 +439,13 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			{
 				\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->enableUserNameSorting(
 					mb_strtoupper($_POST['ENABLE_USER_NAME_SORTING']) === 'Y'
+				);
+			}
+
+			if(isset($_POST['RECYCLEBIN_TTL']))
+			{
+				\Bitrix\Crm\Settings\RecyclebinSettings::getCurrent()->setTtl(
+					(int) $_POST['RECYCLEBIN_TTL']
 				);
 			}
 
@@ -1107,6 +1116,18 @@ $arResult['FIELDS']['tab_recycle_bin_config'][] = array(
 	'value' => \Bitrix\Crm\Settings\DealSettings::getCurrent()->isRecycleBinEnabled(),
 	'required' => false
 );
+
+if (!ModuleManager::isModuleInstalled('bitrix24'))
+{
+	$arResult['FIELDS']['tab_recycle_bin_config'][] = [
+		'id' => 'RECYCLEBIN_TTL',
+		'name' => Loc::getMessage('CRM_RECYCLEBIN_TTL_TITLE'),
+		'type' => 'list',
+		'items' => Settings\RecyclebinSettings::getTtlValues(),
+		'value' => Settings\RecyclebinSettings::getCurrent()->getTtl(),
+		'required' => false
+	];
+}
 
 $this->IncludeComponentTemplate();
 

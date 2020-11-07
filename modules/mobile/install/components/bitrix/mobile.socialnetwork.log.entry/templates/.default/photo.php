@@ -5,12 +5,15 @@
 /** @var array $arResult */
 /** @var array $arEvent */
 /** @var string $strOnClick */
+/** @var string $pinnedHtml */
 /** @global CDatabase $DB */
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
 
 ?>
 <div id="post_block_check_cont_<?=$arEvent["EVENT"]["ID"]?>" class="post-item-post-<?=($arEvent["EVENT"]["EVENT_ID"] == "photo" ? "block-full" : "img-block")?> post-item-block-inner post-item-contentview" bx-content-view-xml-id="<?=(!empty($arResult["CONTENT_ID"]) ? htmlspecialcharsBx($arResult["CONTENT_ID"]) : "")?>"<?=$strOnClick?>><?
+
+	?><?=$pinnedHtml?><?
 
 	if (
 		isset($arParams['TARGET'])

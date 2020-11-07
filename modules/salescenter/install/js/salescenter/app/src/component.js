@@ -962,7 +962,7 @@ Vue.component(config.templateName, {
 							<div class="ui-sidepanel-menu-link-text">{{localize.SALESCENTER_LEFT_SEND_BY_SMS}}</div>
 						</a>
 					</li>
-					<li class="ui-sidepanel-menu-item ui-sidepanel-menu-item-sm">
+					<li class="ui-sidepanel-menu-item ui-sidepanel-menu-item-sm ui-sidepanel-menu-item-separate">
 						<a class="ui-sidepanel-menu-link" v-on:click="showCompanyContacts(event)">
 							<div class="ui-sidepanel-menu-link-text">{{localize.SALESCENTER_LEFT_PAYMENT_COMPANY_CONTACTS}}</div>
 						</a>

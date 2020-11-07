@@ -2,12 +2,14 @@
 
 namespace Bitrix\Rpa\Controller;
 
+use Bitrix\Main\Engine\ActionFilter\Scope;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UI\FileInputUtility;
 use Bitrix\Rpa\Driver;
 use Bitrix\Rpa\Model\PermissionTable;
@@ -140,6 +142,16 @@ abstract class Base extends Controller
 				}
 			}
 		}
+	}
+
+	protected function prepareDateTimeValue(DateTime $dateTime): string
+	{
+		if($this->getScope() === Scope::REST)
+		{
+			return \CRestUtil::ConvertDateTime($dateTime);
+		}
+
+		return $dateTime->format(DateTime::getFormat());
 	}
 
 	/**

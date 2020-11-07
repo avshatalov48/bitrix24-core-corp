@@ -363,6 +363,14 @@ class Docx extends ZipDocument
 		}
 		$localPath = false;
 		$fileArray = \CFile::MakeFileArray($path);
+		if($fileArray)
+		{
+			$fileArray['type'] = $fileArray['type'] ?? false;
+			if(!\CFile::IsImage($fileArray['name'], $fileArray['type']))
+			{
+				$fileArray = false;
+			}
+		}
 		if($fileArray && $fileArray['tmp_name'])
 		{
 			$localPath = \CBXVirtualIo::getInstance()->getLogicalName($fileArray['tmp_name']);

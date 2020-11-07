@@ -121,14 +121,14 @@ include 'editors.php';
 				<?= \CCrmOwnerType::LeadName?>: "<?= '/bitrix/components/bitrix/crm.lead.details/ajax.php?' . bitrix_sessid_get();?>"
 			};
 
-			var schemeInline = BX.Crm.EntityScheme.create(
+			var schemeInline = BX.UI.EntityScheme.create(
 				'kanban_scheme',
 				{
 					current: <?= \CUtil::phpToJSObject($arResult['ITEMS']['scheme_inline']);?>
 				}
 			);
 
-			var userFieldManagerInline = BX.Crm.EntityUserFieldManager.create(
+			var userFieldManagerInline = BX.UI.EntityUserFieldManager.create(
 				'kanban_ufmanager',
 				{
 					entityId: 0,
@@ -141,7 +141,7 @@ include 'editors.php';
 				change: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_ED_CHANGE_USER'));?>"
 			};
 
-			BX.Crm.EntityEditorBoolean.messages =
+			BX.UI.EntityEditorBoolean.messages =
 			{
 				yes: "<?= CUtil::JSEscape(Loc::getMessage('MAIN_YES'));?>",
 				no: "<?= CUtil::JSEscape(Loc::getMessage('MAIN_NO'));?>"

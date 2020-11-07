@@ -204,7 +204,7 @@ class EntityUfAddressConverter extends EntityAddressConverter
 					}
 					if ($requisiteCount !== 1)
 					{
-						$requisiteId = $this->getEntityDefaultRequisiteId($id);
+						$requisiteId = $this->getEntityDefaultRequisiteId($id, $requisiteAddressMap);
 					}
 					if ($requisiteId <= 0)
 					{

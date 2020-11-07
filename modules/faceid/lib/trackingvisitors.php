@@ -8,6 +8,7 @@
 
 namespace Bitrix\Faceid;
 
+use Bitrix\Crm;
 use Bitrix\Crm\LeadTable;
 use Bitrix\Main,
 	Bitrix\Main\Localization\Loc;
@@ -170,11 +171,11 @@ class TrackingVisitorsTable extends Main\Entity\DataManager
 
 		// get lead source
 		$leadSource = \Bitrix\Main\Config\Option::get('faceid', 'ftracker_lead_source');
-		if (strlen($leadSource))
+		if($leadSource <> '')
 		{
 			// check if it still exists
 			$sources = \CCrmStatus::GetStatusList('SOURCE');
-			if (isset($sources[$leadSource]))
+			if(isset($sources[$leadSource]))
 			{
 				$lead['SOURCE_ID'] = $leadSource;
 			}
@@ -186,14 +187,6 @@ class TrackingVisitorsTable extends Main\Entity\DataManager
 
 		if ($lead['ID'])
 		{
-			/*$CCrmBizProc = new \CCrmBizProc('LEAD');
-			$bizProcParameters = $CCrmBizProc->CheckFields();
-
-			if ($bizProcParameters !== false)
-			{
-				$CCrmBizProc->StartWorkflow($lead['ID'], $bizProcParameters);
-			}*/
-
 			$arErrors = array();
 			\CCrmBizProcHelper::AutoStartWorkflows(
 				\CCrmOwnerType::Lead,
@@ -201,6 +194,11 @@ class TrackingVisitorsTable extends Main\Entity\DataManager
 				\CCrmBizProcEventType::Create,
 				$arErrors
 			);
+			if (class_exists('\Bitrix\Crm\Automation\Starter'))
+			{
+				$starter = new Crm\Automation\Starter(\CCrmOwnerType::Lead, $lead['ID']);
+				$starter->setContextModuleId('faceid')->setUserIdFromCurrent()->runOnAdd();
+			}
 		}
 
 		return $lead;

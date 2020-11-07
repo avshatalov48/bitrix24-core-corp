@@ -83,8 +83,8 @@ class FbInstagram extends Base
 			}
 			elseif (!empty($value['extra']['last_message_id'])) //check that it is a new version
 			{
-				$nickNameStartPosition = strpos($value['chat']['id'], '.');
-				$nickName = substr($value['chat']['id'], $nickNameStartPosition + 1);
+				$nickNameStartPosition = mb_strpos($value['chat']['id'], '.');
+				$nickName = mb_substr($value['chat']['id'], $nickNameStartPosition + 1);
 				if ($nickNameStartPosition > 0)
 				{
 					$value['message']['text'] = '@' . $nickName . ' ' . $value['message']['text'];

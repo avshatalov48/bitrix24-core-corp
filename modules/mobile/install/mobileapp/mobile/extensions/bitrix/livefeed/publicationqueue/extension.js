@@ -86,7 +86,8 @@
 				{
 					this.updateBlogPost(postId, data.item, {
 						key: data.key,
-						pageId: pageId
+						pageId: pageId,
+						pinned: !!data.pinnedContext
 					});
 				}
 				else
@@ -127,7 +128,8 @@
 
 			const
 				queue = this.storage.getObject(this.variableId, {}),
-				postVirtualId = eventData.file.params.postVirtualId;
+				postVirtualId = eventData.file.params.postVirtualId,
+				pinnedContext = !!eventData.file.params.pinnedContext;
 
 			if (!queue[postVirtualId])
 			{
@@ -139,7 +141,7 @@
 				this.handleFileUploadError({
 					key: postVirtualId,
 					queue: queue,
-					errorText: eventData.error.error.message,
+					errorText: BX.message('MOBILEAPP_EXT_LIVEFEED_FILE_UPLOAD_ERROR')
 				});
 			}
 			else if (eventName == 'onfilecreated')
@@ -149,7 +151,7 @@
 					this.handleFileUploadError({
 						key: postVirtualId,
 						queue: queue,
-						errorText: eventData.result.errors.map((value) => { return value.message; }).join(', '),
+						errorText: BX.message('MOBILEAPP_EXT_LIVEFEED_FILE_UPLOAD_ERROR')
 					});
 				}
 				else
@@ -210,7 +212,8 @@
 							{
 								this.updateBlogPost(postData.post_id, postFields, {
 									key: postVirtualId,
-									context: 'afterTask'
+									context: 'afterTask',
+									pinned: pinnedContext
 								});
 							}
 							else
@@ -388,6 +391,7 @@
 						context: context,
 						postId: postId,
 						key: key,
+						pinned: (!!params.pinned)
 					});
 				}
 

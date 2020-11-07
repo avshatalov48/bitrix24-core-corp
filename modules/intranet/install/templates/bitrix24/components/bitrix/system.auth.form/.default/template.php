@@ -172,7 +172,7 @@ else
 			<?if (($bindingItems = Binding\Menu::getMenuItems('top_panel', 'user_menu', ['inline' => true, 'context' => ['USER_ID' => $USER->GetID()]]))):?>
 				<?= \CUtil::phpToJSObject($bindingItems);?>,
 			<?endif;?>
-				{ text : "<?=GetMessageJS("AUTH_LOGOUT")?>", className : "menu-popup-no-icon", href : "/auth/?logout=yes&backurl=" + encodeURIComponent(B24.getBackUrl()) }
+				{ text : "<?=GetMessageJS("AUTH_LOGOUT")?>", className : "menu-popup-no-icon", href : "/auth/?logout=yes&<?=bitrix_sessid_get()?>&backurl=" + encodeURIComponent(B24.getBackUrl()) }
 			],
 			{
 				offsetTop: -9,

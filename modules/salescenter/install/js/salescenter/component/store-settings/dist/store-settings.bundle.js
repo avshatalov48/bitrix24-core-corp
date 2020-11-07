@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Salescenter = this.BX.Salescenter || {};
-(function (exports,ui_vue,rest_client,salescenter_manager,main_popup,salescenter_component_storePreview,salescenter_component_mycompanyRequisiteSettings) {
+(function (exports,ui_vue,rest_client,salescenter_manager,main_popup,main_core,salescenter_component_storePreview,salescenter_component_mycompanyRequisiteSettings) {
     'use strict';
 
     var StoreSettings = /*#__PURE__*/function () {
@@ -116,7 +116,7 @@ this.BX.Salescenter = this.BX.Salescenter || {};
                 });
                 phones.forEach(function (item) {
                   phoneItems.push({
-                    text: item.value,
+                    text: main_core.Text.encode(item.value),
                     id: item.id,
                     onclick: setItem.bind(_this4)
                   });
@@ -256,5 +256,5 @@ this.BX.Salescenter = this.BX.Salescenter || {};
 
     exports.StoreSettings = StoreSettings;
 
-}((this.BX.Salescenter.Component = this.BX.Salescenter.Component || {}),BX,BX,BX.Salescenter,BX.Main,BX.Salescenter.Component,BX.Salescenter.Component));
+}((this.BX.Salescenter.Component = this.BX.Salescenter.Component || {}),BX,BX,BX.Salescenter,BX.Main,BX,BX.Salescenter.Component,BX.Salescenter.Component));
 //# sourceMappingURL=store-settings.bundle.js.map

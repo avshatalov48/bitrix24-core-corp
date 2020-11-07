@@ -301,7 +301,7 @@ class ObjectTable extends DataManager
 		return array(
 			new Entity\Validator\Length(null, 255),
 			new CallableValidator(function($value, $primary, array $row, Entity\Field $field){
-				if($value && !IO\Path::validateFilename($value))
+				if($value && !Path::validateFilename($value))
 				{
 					return Loc::getMessage(
 						"DISK_OBJECT_ENTITY_ERROR_FIELD_NAME_HAS_INVALID_CHARS",

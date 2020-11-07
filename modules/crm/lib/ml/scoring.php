@@ -252,16 +252,8 @@ class Scoring
 		$scheduledId = $insertResult->getId();
 		if($type === self::PREDICTION_REAL_TIME && $scoringModel->isReady())
 		{
-			// Try to execute request immediately, if forking is available. Otherwise, request will be executed with agent.
-			if(\CMain::forkActions([\Bitrix\Crm\Ml\PredictionQueue::class, "executeRequest"], [$scheduledId]))
-			{
-				$scheduledRequest->setState(PredictionQueue::STATE_EXECUTING);
-			}
-			else
-			{
-				// forking is not available
-				$scheduledRequest->setState(PredictionQueue::STATE_IDLE);
-			}
+			\Bitrix\Main\Application::getInstance()->addBackgroundJob([PredictionQueue::class, "executeRequest"], [$scheduledId]);
+			$scheduledRequest->setState(PredictionQueue::STATE_EXECUTING);
 			$scheduledRequest->save();
 		}
 		else if($type === self::PREDICTION_IMMEDIATE && $scoringModel->isReady())

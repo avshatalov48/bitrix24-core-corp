@@ -1251,6 +1251,15 @@ if($actionData['ACTIVE'])
 					{
 						$DB->StartTransaction();
 
+						$dbResult = CCrmDeal::GetListEx(
+							array(),
+							array('=ID' => $ID, 'CHECK_PERMISSIONS' => 'N'),
+							false,
+							false,
+							array_keys($arUpdateData)
+						);
+						$prevFields = is_object($dbResult) ? $dbResult->Fetch() : [];
+
 						if($CCrmDeal->Update($ID, $arUpdateData))
 						{
 							$DB->Commit();
@@ -1263,7 +1272,7 @@ if($actionData['ACTIVE'])
 								$arErrors
 							);
 							$starter = new Bitrix\Crm\Automation\Starter(CCrmOwnerType::Deal, $ID);
-							$starter->setUserIdFromCurrent()->runOnUpdate($arUpdateData, []);
+							$starter->setUserIdFromCurrent()->runOnUpdate($arUpdateData, $prevFields);
 						}
 						else
 						{

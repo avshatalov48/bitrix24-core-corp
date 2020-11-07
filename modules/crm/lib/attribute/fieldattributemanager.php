@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Attribute;
 
+use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Main;
 use Bitrix\Crm;
 
@@ -365,6 +366,13 @@ class FieldAttributeManager
 				$result[$key][] = $fields['FIELD_NAME'];
 			}
 		}
+
+		if (isset($result[FieldOrigin::CUSTOM]))
+		{
+			$notAccessibleFields = VisibilityManager::getNotAccessibleFields($entityTypeID);
+			$result[FieldOrigin::CUSTOM] =  array_diff($result[FieldOrigin::CUSTOM], $notAccessibleFields);
+		}
+
 		return $result;
 	}
 

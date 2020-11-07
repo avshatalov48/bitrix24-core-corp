@@ -4,9 +4,7 @@ this.BX = this.BX || {};
 
 	var instance = null;
 
-	var Manager =
-	/*#__PURE__*/
-	function () {
+	var Manager = /*#__PURE__*/function () {
 	  function Manager() {
 	    babelHelpers.classCallCheck(this, Manager);
 	    babelHelpers.defineProperty(this, "urlTemplates", {});

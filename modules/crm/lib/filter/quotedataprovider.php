@@ -10,7 +10,7 @@ use Bitrix\Crm\PhaseSemantics;
 
 Loc::loadMessages(__FILE__);
 
-class QuoteDataProvider extends EntityDataProvider
+class QuoteDataProvider extends Main\Filter\EntityDataProvider
 {
 	/** @var QuoteSettings|null */
 	protected $settings = null;

@@ -12,6 +12,7 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 		this._entityId = 0;
 		this._fieldNames = null;
 		this._html = null;
+		this._presetValues = {};
 
 		this._editor = null;
 		this._wrapper = null;
@@ -48,6 +49,8 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 
 			this._entityId = BX.prop.getInteger(this._settings, "entityId", 0);
 			this._fieldNames = BX.prop.getArray(this._settings, "fieldNames", []);
+
+			this._presetValues = BX.prop.getObject(this._settings, "presetValues", {});
 
 			this._isAccepted = false;
 		},
@@ -211,7 +214,7 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 			this._isLocked = true;
 			this._isAccepted = true;
 
-			if(!this._editor)
+			if(!this.getEditor())
 			{
 				return;
 			}
@@ -222,7 +225,7 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 			BX.addCustomEvent(window, "onCrmEntityUpdateError", this._entityUpdateFailureHandler);
 			BX.addCustomEvent(window, "BX.Crm.EntityEditor:onFailedValidation", this._entityValidationFailureHandler);
 
-			this._editor.save();
+			this.getEditor().save();
 		},
 		onCancelButtonClick: function(e)
 		{
@@ -292,9 +295,12 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 				if (fieldNames.length)
 				{
 					fieldNames.forEach(function(fieldName){
-						this._notAvailableFieldsErrorText.push(
-							eventParams.checkErrors[fieldName]
-						);
+						if (this.isFieldAvailableForCurrentUser(fieldName))
+						{
+							this._notAvailableFieldsErrorText.push(
+								eventParams.checkErrors[fieldName]
+							);
+						}
 					}, this);
 
 					if (this._notAvailableFieldsErrorText.length)
@@ -327,7 +333,7 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 		},
 		onEntityValidationFailure: function(sender, eventArgs)
 		{
-			if(this._editor !== sender)
+			if(this.getEditor() !== sender)
 			{
 				return;
 			}
@@ -357,8 +363,17 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 					var helpData = BX.prop.getObject(this._settings, "helpData", null);
 					if(helpData)
 					{
-						this._editor.addHelpLink(helpData);
+						this.getEditor().addHelpLink(helpData);
 					}
+
+					if (this._presetValues)
+					{
+						for (var presetFieldName in this._presetValues)
+						{
+							this.addHiddenInputToForm(presetFieldName, this._presetValues[presetFieldName])
+						}
+					}
+
 				}.bind(this)
 			);
 
@@ -366,9 +381,9 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 		},
 		onPopupClose: function()
 		{
-			if(this._editor)
+			if(this.getEditor())
 			{
-				this._editor.release();
+				this.getEditor().release();
 			}
 
 			if(!this._isAccepted)
@@ -402,9 +417,28 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 			}
 			delete BX.Crm.PartialEditorDialog.items[this.getId()];
 		},
+		addHiddenInputToForm: function(inputName, inputValue)
+		{
+			var editor = this.getEditor();
+
+			if (!editor)
+			{
+				return;
+			}
+
+			var formInput = editor._ajaxForm._elementNode.querySelector('input[name="' + inputName + '"]');
+			if (!formInput)
+			{
+				formInput = document.createElement('INPUT');
+				formInput.type = 'hidden';
+				formInput.name = inputName;
+				editor._ajaxForm._elementNode.appendChild(formInput);
+			}
+			formInput.value = inputValue;
+		},
 		getNotAccessibleFieldNames: function(fieldsWithErrors)
 		{
-			var sections = this._editor.getScheme().getElements();
+			var sections = this.getEditor().getScheme().getElements();
 			var visibleFields = [];
 			sections.forEach(function(section){
 				visibleFields = visibleFields.concat(
@@ -417,6 +451,16 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 			return fieldsWithErrors.filter(function(x){
 				return !visibleFields.includes(x)
 			});
+		},
+		isFieldAvailableForCurrentUser: function(fieldName)
+		{
+			return this.getEditor()._scheme._availableElements.some(function(availableField){
+				return availableField._name === fieldName;
+			});
+		},
+		getEditor: function()
+		{
+			return this._editor;
 		}
 	};
 	if(typeof(BX.Crm.PartialEditorDialog.messages) == "undefined")
@@ -462,6 +506,200 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 	BX.Crm.PartialEditorDialog.create = function(id, settings)
 	{
 		var self = new BX.Crm.PartialEditorDialog();
+		self.initialize(id, settings);
+		this.items[self.getId()] = self;
+		return self;
+	};
+}
+
+if(typeof BX.Crm.QuickFormPartialEditorDialog === "undefined")
+{
+	BX.Crm.QuickFormPartialEditorDialog = function()
+	{
+		BX.Crm.PartialEditorDialog.apply(this);
+		this._entityCreateSuccessHandler = BX.delegate(this.onEntityCreateSuccess, this);
+		this._entityCreateFailureHandler = BX.delegate(this.onEntityCreateFailure, this);
+		this._entityValidationFailureHandler = BX.delegate(this.onEntityValidationFailure, this);
+	};
+	BX.Crm.QuickFormPartialEditorDialog.prototype =
+	{
+		__proto__: BX.Crm.PartialEditorDialog.prototype,
+		onSaveButtonClick: function(e)
+		{
+			if(this._isLocked)
+			{
+				return;
+			}
+			this._isLocked = true;
+			this._isAccepted = true;
+
+			if(!this.getEditor())
+			{
+				return;
+			}
+
+			BX.addClass(this._buttons[BX.Crm.DialogButtonType.names.accept], "ui-btn-clock");
+
+			BX.addCustomEvent(window, "onCrmEntityCreate", this._entityCreateSuccessHandler);
+			BX.addCustomEvent(window, "onCrmEntityCreateError", this._entityCreateFailureHandler);
+			BX.addCustomEvent(window, "BX.Crm.EntityEditor:onFailedValidation", this._entityValidationFailureHandler);
+
+			this.getEditor().save();
+		},
+		onCancelButtonClick: function(e)
+		{
+			if(this._isLocked)
+			{
+				return;
+			}
+			this._isLocked = true;
+			this._isAccepted = false;
+
+			if(this._popup)
+			{
+				this._popup.close();
+			}
+		},
+		onEntityCreateSuccess: function(eventParams)
+		{
+			if(this._entityTypeId === BX.prop.getInteger(eventParams, "entityTypeId", 0))
+			{
+				this._isLocked = false;
+
+				BX.removeClass(this._buttons[BX.Crm.DialogButtonType.names.accept], "ui-btn-clock");
+
+				BX.removeCustomEvent(window, "onCrmEntityCreate", this._entityCreateSuccessHandler);
+				BX.removeCustomEvent(window, "onCrmEntityCreateError", this._entityCreateFailureHandler);
+				BX.removeCustomEvent(window, "BX.Crm.EntityEditor:onFailedValidation", this._entityValidationFailureHandler);
+
+				if(this._popup)
+				{
+					this._popup.close();
+				}
+
+				BX.onCustomEvent(
+					window,
+					"Crm.QuickFormPartialEditorDialog.Close",
+					[
+						this,
+						{
+							entityTypeId: this._entityTypeId,
+							entityTypeName: BX.CrmEntityType.resolveName(this._entityTypeId),
+							entityId: BX.prop.getInteger(eventParams, "entityId", null),
+							entityData: BX.prop.getObject(eventParams, "entityData", null),
+							bid: BX.Crm.DialogButtonType.accept,
+							isCancelled: false
+						}
+					]
+				);
+			}
+		},
+		onEntityCreateFailure: function(eventParams)
+		{
+			this._notAvailableFieldsErrorText = [];
+			this._notAvailableFieldsErrorTextWrapper.innerHTML = '';
+			BX.removeClass(
+				this._notAvailableFieldsErrorTextWrapper,
+				'crm-entity-widget-content-error-text'
+			);
+
+			if (eventParams.checkErrors)
+			{
+				var fieldNames = this.getNotAccessibleFieldNames(
+					Object.keys(eventParams.checkErrors)
+				);
+
+				if (fieldNames.length)
+				{
+					fieldNames.forEach(function(fieldName){
+						if (this.isFieldAvailableForCurrentUser(fieldName))
+						{
+							this._notAvailableFieldsErrorText.push(
+								eventParams.checkErrors[fieldName]
+							);
+						}
+					}, this);
+
+					if (this._notAvailableFieldsErrorText.length)
+					{
+						BX.addClass(
+							this._notAvailableFieldsErrorTextWrapper,
+							'crm-entity-widget-content-error-text'
+						);
+
+						this._notAvailableFieldsErrorTextWrapper.innerHTML =
+							BX.Crm.PartialEditorDialog.messages.entityHasInaccessibleFields
+							+ ' '
+							+ this._notAvailableFieldsErrorText.join('; ');
+					}
+				}
+			}
+
+			if(
+				this._entityTypeId === BX.prop.getInteger(eventParams, "entityTypeId", 0)
+				&& this._entityId === BX.prop.getInteger(eventParams, "entityId", 0)
+			)
+			{
+				this._isLocked = false;
+
+				BX.removeClass(this._buttons[BX.Crm.DialogButtonType.names.accept], "ui-btn-clock");
+
+				BX.removeCustomEvent(window, "onCrmEntityCreate", this._entityCreateSuccessHandler);
+				BX.removeCustomEvent(window, "onCrmEntityCreateError", this._entityCreateFailureHandler);
+				BX.removeCustomEvent(window, "BX.Crm.EntityEditor:onFailedValidation", this._entityValidationFailureHandler);
+			}
+		},
+		onEntityValidationFailure: function(sender, eventArgs)
+		{
+			if(this.getEditor() !== sender)
+			{
+				return;
+			}
+
+			this._isLocked = false;
+
+			BX.removeClass(this._buttons[BX.Crm.DialogButtonType.names.accept], "ui-btn-clock");
+
+			BX.removeCustomEvent(window, "onCrmEntityCreate", this._entityCreateSuccessHandler);
+			BX.removeCustomEvent(window, "onCrmEntityCreateError", this._entityCreateFailureHandler);
+			BX.removeCustomEvent(window, "BX.Crm.EntityEditor:onFailedValidation", this._entityValidationFailureHandler);
+		},
+		onPopupClose: function()
+		{
+			this._isLocked = false;
+
+			if(this.getEditor())
+			{
+				this.getEditor().release();
+			}
+
+			if(!this._isAccepted)
+			{
+				BX.onCustomEvent(
+					window,
+					"Crm.QuickFormPartialEditorDialog.Close",
+					[
+						this,
+						{
+							entityTypeId: this._entityTypeId,
+							entityTypeName: BX.CrmEntityType.resolveName(this._entityTypeId),
+							bid: BX.Crm.DialogButtonType.cancel,
+							isCancelled: true
+						}
+					]
+				);
+			}
+
+			if(this._popup)
+			{
+				this._popup.destroy();
+			}
+		},
+	};
+	BX.Crm.QuickFormPartialEditorDialog.items = {};
+	BX.Crm.QuickFormPartialEditorDialog.create = function(id, settings)
+	{
+		var self = new BX.Crm.QuickFormPartialEditorDialog();
 		self.initialize(id, settings);
 		this.items[self.getId()] = self;
 		return self;

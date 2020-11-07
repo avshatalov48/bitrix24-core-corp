@@ -10,7 +10,7 @@ use Bitrix\Crm\Tracking;
 Loc::loadMessages(__FILE__);
 Main\Loader::includeModule('sale');
 
-class OrderDataProvider extends EntityDataProvider
+class OrderDataProvider extends Main\Filter\EntityDataProvider
 {
 	/** @var InvoiceSettings|null */
 	protected $settings = null;

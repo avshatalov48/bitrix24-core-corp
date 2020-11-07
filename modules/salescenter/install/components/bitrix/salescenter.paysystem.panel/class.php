@@ -656,6 +656,10 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 			'cashondelivery' => '#39A68E',
 			'cashondeliverycalc' => '#39A68E',
 			'paymaster' => '#1B7195',
+			'wooppay' => [
+				'iframe' => '#2F80ED',
+				'checkout' => '#2F80ED',
+			],
 		];
 	}
 

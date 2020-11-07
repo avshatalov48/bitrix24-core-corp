@@ -27,7 +27,7 @@ if(CModule::IncludeModule("mobile"))
 	CJSCore::Init(array("mobile_ui"));
 }
 
-define("MOBILE_MODULE_VERSION", "18.5.2.1");
+define("MOBILE_MODULE_VERSION", "20.5.400.1");
 $moduleVersion = (defined("MOBILE_MODULE_VERSION") ? MOBILE_MODULE_VERSION : "default");
 if(array_key_exists("IS_WKWEBVIEW", $_COOKIE) && $_COOKIE["IS_WKWEBVIEW"] == "Y")
 {

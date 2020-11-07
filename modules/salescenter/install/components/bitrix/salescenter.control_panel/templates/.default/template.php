@@ -15,11 +15,9 @@ if(Loader::includeModule('rest'))
 	CJSCore::Init(["marketplace"]);
 }
 
-CJSCore::Init([
-	"admin_sidepanel",
-]);
-
 Extension::load([
+	'admin_interface',
+	'sidepanel',
 	'salescenter.manager',
 	'ui.tilegrid',
 	'ui.fonts.opensans',

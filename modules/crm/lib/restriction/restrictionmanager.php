@@ -8,47 +8,47 @@ class RestrictionManager
 {
 	const SQL_ROW_COUNT_THRESHOLD = 5000;
 	/** @var bool */
-	private static $isInitialized = null;
-	/** @var Bitrix24SqlRestriction|null */
-	private static $sqlRestriction = null;
+	private static $isInitialized;
+	/** @var Bitrix24SqlRestriction */
+	private static $sqlRestriction;
+	/** @var Bitrix24AccessRestriction */
+	private static $conversionRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
-	private static $conversionRestriction = null;
+	private static $dupControlRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
-	private static $dupControlRestriction = null;
-	/** @var Bitrix24AccessRestriction|null  */
-	private static $historyViewRestriction = null;
-	/** @var Bitrix24SearchLimitRestriction|null  */
-	private static $searchLimitRestriction = null;
+	private static $historyViewRestriction;
+	/** @var Bitrix24SearchLimitRestriction  */
+	private static $searchLimitRestriction;
 	/** @var Bitrix24QuantityRestriction|null  */
-	private static $dealCategoryLimitRestriction = null;
+	private static $dealCategoryLimitRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
-	private static $attributeConfigRestriction = null;
+	private static $attributeConfigRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
-	private static $permissionControlRestriction = null;
+	private static $permissionControlRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
-	private static $dealRecurringRestriction = null;
+	private static $dealRecurringRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
-	private static $invoiceRecurringRestriction = null;
+	private static $invoiceRecurringRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
-	private static $detailsSearchByInnRestriction = null;
+	private static $detailsSearchByInnRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
-	private static $detailsSearchByEdrpouRestriction = null;
+	private static $detailsSearchByEdrpouRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
-	private static $automationRestriction = null;
+	private static $automationRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
-	private static $generatorRestriction = null;
+	private static $generatorRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
-	private static $webformRestriction = null;
+	private static $webformRestriction;
 	/** @var Bitrix24QuantityRestriction|null  */
-	private static $webformLimitRestriction = null;
+	private static $webformLimitRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
-	private static $imconnectorRestriction = null;
+	private static $imconnectorRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
-	private static $callListRestriction = null;
+	private static $callListRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
-	private static $addressSearchRestriction = null;
+	private static $addressSearchRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
-	private static $ufAccessRightsRestriction = null;
+	private static $ufAccessRightsRestriction;
 
 	/**
 	* @return SqlRestriction

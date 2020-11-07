@@ -42,6 +42,8 @@
 
 			BX.addCustomEvent("SidePanel.Slider:onLoad", BX.proxy(this.onLoadSlider, this));
 			BX.addCustomEvent("SidePanel.Slider:onClose", BX.proxy(this.onCloseSlider, this));
+
+			BX.addCustomEvent("SidePanel.Slider:onMessage", BX.proxy(this.onMessageSlider, this));
 		},
 
 		onLoadSlider: function(sidePanelManager)
@@ -248,6 +250,18 @@
 			};
 
 			BX.SidePanel.Instance.open(this.getConnectPath(), sliderOptions);
+		},
+
+		onMessageSlider: function (e)
+		{
+			if (BX.util.in_array('destroy', e.data.listActions))
+			{
+				var slider = e.getSender();
+				if (!slider.destroyed)
+				{
+					slider.destroy();
+				}
+			}
 		},
 
 		closeSlider: function()

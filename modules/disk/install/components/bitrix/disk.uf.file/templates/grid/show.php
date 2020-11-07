@@ -188,6 +188,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 									}
 									?> data-src="<?=$file["BASIC"]["src"] ?>"<?
 									?> alt="<?=htmlspecialcharsbx($file["NAME"])?>"<?
+                                    ?> <?=$file['ATTRIBUTES_FOR_VIEWER']?> <?
 									?> border="0"<?
 									?> data-bx-title="<?=htmlspecialcharsbx($file["NAME"])?>"<?
 									?> data-bx-size="<?=$file["SIZE"]?>"<?
@@ -200,7 +201,6 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 									}
 									?> data-bx-src="<?=$file["BASIC"]["src"] ?>"<?
 									?> data-bx-preview="<?=$file["PREVIEW"]["src"] ?>"<?
-									?> data-bx-image="<?=$file["BASIC"]["src"] ?>"<?
 								?> />
 								<?
 							}
@@ -210,7 +210,6 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 								<div <?
 									?> class="<?=implode(' ', $imgClassList)?>"<?
 									?> id="<?=$id?>"<?
-									?> data-viewer-type="image"<?
 									if (
 										isset($arParams["LAZYLOAD"])
 										&& $arParams["LAZYLOAD"] == "Y"
@@ -225,6 +224,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 									}
 									?> data-src="<?=$file["BASIC"]["src"] ?>"<?
 									?> alt="<?=htmlspecialcharsbx($file["NAME"])?>"<?
+                                    ?> <?=$file['ATTRIBUTES_FOR_VIEWER']?> <?
 									?> border="0"<?
 									?> data-bx-title="<?=htmlspecialcharsbx($file["NAME"])?>"<?
 									?> data-bx-size="<?=$file["SIZE"]?>"<?
@@ -237,7 +237,6 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 									}
 									?> data-bx-src="<?=$file["BASIC"]["src"] ?>"<?
 									?> data-bx-preview="<?=$file["PREVIEW"]["src"] ?>"<?
-									?> data-bx-image="<?=$file["BASIC"]["src"] ?>"<?
 								?>/>
 								<?
 							}
@@ -278,7 +277,6 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 							}
 							?> data-bx-src="<?=$file["BASIC"]["src"] ?>"<?
 							?> data-bx-preview="<?=$file["PREVIEW"]["src"] ?>"<?
-							?> data-bx-image="<?=$file["BASIC"]["src"] ?>"<?
 						?> />
 						<?
 					}

@@ -18,7 +18,7 @@ $targetHtml = '';
 
 if(!empty($arResult["Post"]))
 {
-	if ($_REQUEST["empty_get_comments"] == "Y")
+	if ($_REQUEST["empty_get_comments"] === "Y")
 	{
 		$APPLICATION->IncludeComponent(
 			"bitrix:socialnetwork.blog.post.comment",
@@ -36,7 +36,7 @@ if(!empty($arResult["Post"]))
 				"CACHE_TYPE" => $arParams["CACHE_TYPE"],
 				"COMMENTS_COUNT" => "5",
 				"DATE_TIME_FORMAT" => $arParams["DATE_TIME_FORMAT"],
-				"USER_ID" => $GLOBALS["USER"]->GetID(),
+				"USER_ID" => $USER->getId(),
 				"SONET_GROUP_ID" => $arParams["SONET_GROUP_ID"],
 				"NOT_USE_COMMENT_TITLE" => "Y",
 				"USE_SOCNET" => "Y",
@@ -74,7 +74,7 @@ if(!empty($arResult["Post"]))
 	{
 
 		if (
-			$_REQUEST["empty_get_form"] == "Y"
+			$_REQUEST["empty_get_form"] === "Y"
 			|| !$arParams["IS_LIST"]
 		)
 		{
@@ -82,8 +82,8 @@ if(!empty($arResult["Post"]))
 			ob_start();
 
 			if(
-				$_REQUEST["empty_get_form"] == "Y"
-				|| intval($_REQUEST["comment_post_id"]) <= 0
+				$_REQUEST["empty_get_form"] === "Y"
+				|| (int)$_REQUEST["comment_post_id"] <= 0
 			)
 			{
 				?><script>
@@ -92,7 +92,7 @@ if(!empty($arResult["Post"]))
 					commentVarLogID = <?=intval($arParams["LOG_ID"])?>;
 					<?
 					if (
-						$_REQUEST["ACTION"] == "CONVERT"
+						$_REQUEST["ACTION"] === "CONVERT"
 						&& $_REQUEST["ENTITY_TYPE_ID"] <> ''
 						&& intval($_REQUEST["ENTITY_ID"]) > 0
 					)
@@ -135,21 +135,48 @@ if(!empty($arResult["Post"]))
 			ob_end_clean();
 		}
 
-		if ($_REQUEST["empty_get_form"] == "Y")
+		if ($_REQUEST["empty_get_form"] === "Y")
 		{
 			$APPLICATION->RestartBuffer();
 			echo $commentsFormBlock;
 			die();
 		}
 
-		$item_class = (!$arParams["IS_LIST"] ? "post-wrap" : "lenta-item".($arParams["IS_UNREAD"] ? " lenta-item-new" : ""));
+		$itemClassList = [];
+		if (!$arParams['IS_LIST'])
+		{
+			$itemClassList[] = 'post-wrap';
+		}
+		else
+		{
+			$itemClassList[] = 'lenta-item';
+			if ($arParams['IS_UNREAD'])
+			{
+				$itemClassList[] = 'lenta-item-new';
+			}
+		}
+
+		if (!empty($arParams['PINNED_PANEL_DATA']))
+		{
+			$itemClassList[] = 'lenta-item-pinned';
+		}
+
+		$pinned = (
+			!empty($arParams['PINNED_PANEL_DATA'])
+			|| (isset($arParams['PINNED']) && $arParams['PINNED'] === 'Y')
+		);
+
+		if ($pinned)
+		{
+			$itemClassList[] = 'lenta-item-pin-active';
+		}
 
 		if ($arParams["IS_LIST"])
 		{
 			?><script>
 				if (window.arLogTs)
 				{
-					window.arLogTs.entry_<?=intval($arParams["LOG_ID"])?> = <?=intval($arParams["LAST_LOG_TS"])?>;
+					window.arLogTs.entry_<?=(int)$arParams["LOG_ID"]?> = <?=(int)$arParams["LAST_LOG_TS"]?>;
 				}
 			</script><?
 		}
@@ -159,22 +186,22 @@ if(!empty($arResult["Post"]))
 				BX.ready(function()
 				{
 					BX.MobileImageViewer.viewImageBind(
-						'lenta_item_<?=intval($arParams["LOG_ID"])?>',
+						'lenta_item_<?=(int)$arParams["LOG_ID"]?>',
 						'img[data-bx-image]'
 					);
 
 					oMSL.InitDetail({
 						commentsType: 'blog',
 						detailPageId: 'blog_' + <?=$arResult["Post"]["ID"]?>,
-						logId: <?=intval($arParams["LOG_ID"])?>,
-						entityXMLId: 'BLOG_<?=intval($arResult["Post"]["ID"])?>',
-						bUseFollow: <?=($arParams["USE_FOLLOW"] == 'N' ? 'false' : 'true')?>,
-						bFollow: <?=($arParams["FOLLOW"] == 'N' ? 'false' : 'true')?>,
+						logId: <?=(int)$arParams["LOG_ID"]?>,
+						entityXMLId: 'BLOG_<?=(int)$arResult["Post"]["ID"]?>',
+						bUseFollow: <?=($arParams["USE_FOLLOW"] === 'N' ? 'false' : 'true')?>,
+						bFollow: <?=($arParams["FOLLOW"] === 'N' ? 'false' : 'true')?>,
 						feed_id: parseInt(Math.random() * 100000),
 						entryParams: {
 							destinations: <?=CUtil::PhpToJSObject($arResult["Post"]["SPERM"])?>,
 							post_perm: '<?=CUtil::JSEscape($arResult["PostPerm"])?>',
-							post_id: <?=intval($arResult["Post"]["ID"])?>,
+							post_id: <?=(int)$arResult["Post"]["ID"]?>,
 							post_content_type_id: 'BLOG_POST',
 							post_content_id: <?=$arResult["Post"]["ID"]?>
 						},
@@ -184,19 +211,68 @@ if(!empty($arResult["Post"]))
 			</script><?
 		}
 
-		?><div class="<?=($item_class)?>" id="lenta_item_<?=intval($arParams["LOG_ID"])?>"><?
-			?><div 
-				id="post_item_top_wrap_<?=intval($arParams["LOG_ID"])?>"
-				class="post-item-top-wrap<?=($arParams["FOLLOW_DEFAULT"] == "N" && $arParams["FOLLOW"] == "Y" ? " post-item-follow" : "")?> post-item-copyable"
-			><?
-				?><div class="post-item-top" id="post_item_top_<?=intval($arParams["LOG_ID"])?>"><?
-					$avatarId = "post_item_avatar_".intval($arParams["LOG_ID"]);
+		$topWrapClassList = [
+			'post-item-top-wrap',
+			'post-item-copyable'
+		];
+		if (
+			$arParams["FOLLOW_DEFAULT"] === "N"
+			&& $arParams["FOLLOW"] === "Y"
+		)
+		{
+			$topWrapClassList[] = 'post-item-follow';
+		}
+
+		?><div
+			 id="lenta_item_<?=(int)$arParams['LOG_ID']?>"
+			 class="<?=implode(' ', $itemClassList)?>"
+			 data-livefeed-id="<?=(int)$arParams['LOG_ID']?>"
+			 data-livefeed-post-pinned="<?=($pinned ? 'Y' : 'N')?>"
+			 data-livefeed-post-entry-type="blog"
+			 data-livefeed-post-use-follow="<?=($arParams['USE_FOLLOW'] === 'N' ? 'N' : 'Y')?>"
+			 data-livefeed-post-use-tasks="<?=($arResult['bTasksAvailable'] ? 'Y' : 'N')?>"
+			 data-livefeed-post-perm="<?=htmlspecialcharsbx($arResult['PostPerm'])?>"
+			 data-livefeed-post-destinations="<?=htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($arResult['Post']['SPERMX']))?>"
+			 data-livefeed-post-id="<?=(int)$arResult['Post']['ID']?>"
+			 data-livefeed-post-url="<?=htmlspecialcharsbx(str_replace('#log_id#', $arParams['LOG_ID'], $arParams['PATH_TO_LOG_ENTRY']))?>"
+			 data-livefeed-post-entity-xml-id="BLOG_<?=(int)$arResult['Post']['ID']?>"
+			 data-livefeed-post-read-only="<?=((bool)$arResult['ReadOnly'] ? 'Y' : 'N')?>"
+			 data-livefeed-post-content-type-id="BLOG_POST"
+			 data-livefeed-post-content-id="<?=(int)$arResult['Post']['ID']?>"
+		><?
+			?><div id="post_item_top_wrap_<?=(int)$arParams["LOG_ID"]?>" class="<?=implode(' ', $topWrapClassList)?>"><?
+				?><div class="post-item-top" id="post_item_top_<?=(int)$arParams["LOG_ID"]?>"><?
+					$avatarId = "post_item_avatar_".(int)$arParams["LOG_ID"];
 					?><div class="avatar" id="<?=$avatarId?>" <?if($arResult["arUser"]["PERSONAL_PHOTO_resized"]["src"] <> ''):?> data-src="<?=\CHTTP::urnEncode($arResult["arUser"]["PERSONAL_PHOTO_resized"]["src"])?>"<?endif?>></div><?
 
 					if($arResult["arUser"]["PERSONAL_PHOTO_resized"]["src"] <> '')
 					{
 						?><script>BitrixMobile.LazyLoad.registerImage("<?=$avatarId?>");</script><?
 					}
+
+					?><div class="post-item-pinned-block"><?
+
+						if (
+							!empty($arParams['PINNED_PANEL_DATA'])
+							&& $arParams['PINNED_PANEL_DATA']['TITLE'] <> ''
+						)
+						{
+							?><div class="post-item-pinned-title"><?=$arParams['PINNED_PANEL_DATA']['TITLE']?></div><?
+						}
+
+						?><div class="post-item-pinned-text-box"><?
+							?><div class="post-item-pinned-desc"><?
+								if (
+									!empty($arParams['PINNED_PANEL_DATA'])
+									&& $arParams['PINNED_PANEL_DATA']['DESCRIPTION'] <> ''
+								)
+								{
+									?><?=$arParams['PINNED_PANEL_DATA']['DESCRIPTION']?><?
+								}
+							?></div><?
+						?></div><?
+
+					?></div><?
 
 					?><div class="post-item-top-cont"><?
 
@@ -371,7 +447,7 @@ if(!empty($arResult["Post"]))
 							!$arResult["ReadOnly"]
 							&& (
 								!isset($arParams["USE_FAVORITES"])
-								|| $arParams["USE_FAVORITES"] != "N"
+								|| $arParams["USE_FAVORITES"] !== "N"
 							)
 						);
 
@@ -379,22 +455,33 @@ if(!empty($arResult["Post"]))
 							!$arResult["ReadOnly"]
 							&& (
 								!isset($arParams["USE_FOLLOW"])
-								|| $arParams["USE_FOLLOW"] != 'N'
+								|| $arParams["USE_FOLLOW"] !== 'N'
 							)
+						);
+
+						$usePinned = (
+							!$arResult["ReadOnly"]
+							&& $USER->isAuthorized()
 						);
 
 						$favoritesValue = (
 							$useFavorites
 							&& isset($arParams["FAVORITES"])
-							&& $arParams["FAVORITES"] == "Y"
+							&& $arParams["FAVORITES"] === "Y"
 						);
 
 						$followValue = (
 							$useFollow
 							&& (
 								!isset($arParams["FOLLOW"])
-								|| $arParams["FOLLOW"] != 'N'
+								|| $arParams["FOLLOW"] !== 'N'
 							)
+						);
+
+						$pinnedValue = (
+							$usePinned
+							&& isset($arParams["PINNED"])
+							&& $arParams["PINNED"] === 'Y'
 						);
 
 						if ($arResult['MOBILE_API_VERSION'] >= 34)
@@ -402,31 +489,35 @@ if(!empty($arResult["Post"]))
 							$menuClasses = [
 								'lenta-menu'
 							];
-
-							if (
-								!$useFavorites
-							)
+							if ($usePinned)
 							{
-								$menuClasses[] = 'lenta-menu-invisible';
+								$menuClasses[] = 'lenta-menu-use-pinned';
 							}
 
 							?><div
-								id="log-entry-menu-<?=intval($arParams["LOG_ID"])?>"
+								id="log-entry-menu-<?=(int)$arParams["LOG_ID"]?>"
 								data-menu-type="post"
-								data-log-id="<?=intval($arParams['LOG_ID'])?>"
-								data-post-id="<?=intval($arResult['Post']['ID'])?>"
+								data-log-id="<?=(int)$arParams['LOG_ID']?>"
+								data-post-id="<?=(int)$arResult['Post']['ID']?>"
 								data-post-perm="<?=\CUtil::jSEscape($arResult["PostPerm"])?>"
 								data-use-favorites="<?=($useFavorites ? "Y" : "N")?>"
 								data-favorites="<?=($favoritesValue ? "Y" : "N")?>"
+								data-use-pinned="<?=($usePinned ? "Y" : "N")?>"
+								data-pinned="<?=($pinnedValue ? "Y" : "N")?>"
 								data-use-follow="<?=($useFollow ? "Y" : "N")?>"
 								data-follow="<?=($followValue ? "Y" : "N")?>"
 								data-content-type-id="BLOG_POST"
-								data-content-id="<?=intval($arResult['Post']['ID'])?>"
+								data-content-id="<?=(int)$arResult['Post']['ID']?>"
 								class="<?=implode(' ', $menuClasses)?>"
 								onclick="oMSL.showPostMenu(event)"
 							>
 								<div class="lenta-menu-item"></div>
 							</div><?
+
+							if ($usePinned)
+							{
+								?><div class="lenta-item-pin"></div><?
+							}
 						}
 						else
 						{
@@ -436,7 +527,7 @@ if(!empty($arResult["Post"]))
 									id="log_entry_favorites_<?=$arParams["LOG_ID"]?>"
 									data-favorites="<?=($favoritesValue ? "Y" : "N")?>"
 									class="lenta-item-fav<?=($favoritesValue ? " lenta-item-fav-active" : "")?>"
-									onclick="__MSLSetFavorites(<?=$arParams["LOG_ID"]?>, this, '<?=($favoritesValue ? "N" : "Y")?>'); return BX.PreventDefault(this);"
+									onclick="__MSLSetFavorites(<?=$arParams["LOG_ID"]?>, this, event);"
 								></div><?
 							}
 							else
@@ -449,52 +540,61 @@ if(!empty($arResult["Post"]))
 
 				?></div><?
 
-				$arOnClickParams = array(
-					"path" => $arParams["PATH_TO_LOG_ENTRY_EMPTY"],
-					"log_id" => intval($arParams["LOG_ID"]),
-					"entry_type" => "blog",
-					"use_follow" => ($arParams["USE_FOLLOW"] == 'N' ? 'N' : 'Y'),
-					"use_tasks" => ($arResult["bTasksAvailable"] == 'Y' ? 'Y' : 'N'),
-					"post_perm" => $arResult["PostPerm"],
-					"destinations" => $arResult["Post"]["SPERMX"],
-					"post_id" => intval($arResult["Post"]["ID"]),
-					"post_url" => str_replace("#log_id#", $arParams["LOG_ID"], $arParams["PATH_TO_LOG_ENTRY"]),
-					"entity_xml_id" => "BLOG_".intval($arResult["Post"]["ID"]),
-					"focus_comments" => false,
-					"focus_form" => false,
-					"show_full" => false,
-					"read_only" => (!!$arResult["ReadOnly"] ? 'Y' : 'N'),
-					"post_content_type_id" => "BLOG_POST",
-					"post_content_id" => intval($arResult["Post"]["ID"])
-				);
-
-				$strOnClickParams = CUtil::PhpToJSObject($arOnClickParams);
-
-				$post_item_style = (!$arParams["IS_LIST"] && $_REQUEST["show_full"] == "Y" ? "post-item-post-block-full" : "post-item-post-block post-item-block-inner post-item-contentview");
-				$strOnClick = ($arParams["IS_LIST"] ? " onclick=\"__MSLOpenLogEntryNew(".$strOnClickParams.", event);\"" : "");
-
-				if ($arParams["EVENT_ID"] == "blog_post_important")
+				$postItemClassList = [];
+				if (
+					!$arParams["IS_LIST"]
+					&& $_REQUEST["show_full"] === "Y"
+				)
 				{
-					$post_item_style .= " info-block-important";
+					$postItemClassList[] = 'post-item-post-block-full';
+				}
+				else
+				{
+					$postItemClassList[] = 'post-item-post-block';
+					$postItemClassList[] = 'post-item-block-inner';
+					$postItemClassList[] = 'post-item-contentview';
 				}
 
-				?><div class="<?=$post_item_style?>"<?=$strOnClick?> id="post_block_check_cont_<?=$arParams["LOG_ID"]?>" bx-content-view-xml-id="BLOG_POST-<?=intval($arResult["Post"]["ID"])?>"><?
+				if ($arParams["EVENT_ID"] === "blog_post_important")
+				{
+					$postItemClassList[] = 'info-block-important';
+				}
+
+				?><div class="<?=implode(' ', $postItemClassList)?>" id="post_block_check_cont_<?=$arParams["LOG_ID"]?>" bx-content-view-xml-id="BLOG_POST-<?=(int)$arResult["Post"]["ID"]?>"><?
 
 					if (
 						isset($arParams['TARGET'])
-						&& $arParams['TARGET'] == 'postContent'
+						&& $arParams['TARGET'] === 'postContent'
 					)
 					{
 						$targetHtml = '';
 						ob_start();
 					}
 
-					if($arResult["Post"]["MICRO"] != "Y")
+					if($arResult["Post"]["MICRO"] !== "Y")
 					{
-						?><div class="post-text-title<?if($arParams["EVENT_ID"]=="blog_post_important"){?> lenta-important-block-title<?}?>" id="post_text_title_<?=intval($arParams["LOG_ID"])?>"><?=$arResult["Post"]["TITLE"]?></div><?
+						$titleClassList = [ 'post-text-title' ];
+						if ($arParams['EVENT_ID'] === 'blog_post_important')
+						{
+							$titleClassList[] = 'lenta-important-block-title';
+						}
+
+						?><div class="<?=implode(' ', $titleClassList)?>" id="post_text_title_<?=(int)$arParams["LOG_ID"]?>"><?=$arResult["Post"]["TITLE"]?></div><?
 					}
 
-					?><div class="post-item-full-content post-item-text post-item-copytext<?if($arParams["EVENT_ID"]=="blog_post_important"){?> lenta-important-block-text<?}?>" id="post_block_check_<?=intval($arParams["LOG_ID"])?>"><?=$arResult["Post"]["textFormated"]?></div><?
+					$textClassList = [
+						'post-item-full-content',
+						'post-item-text',
+						'post-item-copytext'
+					];
+
+					if ($arParams['EVENT_ID'] === 'blog_post_important')
+					{
+						$textClassList[] = 'lenta-important-block-text';
+					}
+
+					?><div class="<?=implode(' ', $textClassList)?>" id="post_block_check_<?=(int)$arParams["LOG_ID"]?>"><?=$arResult["Post"]["textFormated"]?></div><?
+
 					if (!empty($arResult["Post"]["IMPORTANT"]))
 					{
 						?><div class="post-item-important">
@@ -517,15 +617,14 @@ if(!empty($arResult["Post"]))
 					}
 
 					if(
-						$arResult["POST_PROPERTIES"]["SHOW"] == "Y"
+						$arResult["POST_PROPERTIES"]["SHOW"] === "Y"
 						|| !empty($arResult["GRATITUDE"])
 					)
 					{
 						?><div class="post-item-attached-file-wrap" id="post_block_check_files_<?=$arParams["LOG_ID"]?>"><?
 
-						if($arResult["POST_PROPERTIES"]["SHOW"] == "Y")
+						if($arResult["POST_PROPERTIES"]["SHOW"] === "Y")
 						{
-							$eventHandlerID = false;
 							$eventHandlerID = AddEventHandler('main', 'system.field.view.file', '__blogUFfileShowMobile');
 							foreach ($arResult["POST_PROPERTIES"]["DATA"] as $FIELD_NAME => $arPostField)
 							{
@@ -545,10 +644,7 @@ if(!empty($arResult["Post"]))
 									);?><?
 								}
 							}
-							if (
-								$eventHandlerID !== false
-								&& (intval($eventHandlerID) > 0)
-							)
+							if ((int)$eventHandlerID > 0)
 							{
 								RemoveEventHandler('main', 'system.field.view.file', $eventHandlerID);
 							}
@@ -597,15 +693,15 @@ if(!empty($arResult["Post"]))
 
 					$postMoreBlockStyle = (
 						isset($arParams['TARGET'])
-						&& $arParams['TARGET'] == 'postContent'
+						&& $arParams['TARGET'] === 'postContent'
 							? 'style="display: none;"'
 							: ''
 					);
-					?><div class="post-more-block" id="post_more_block_<?=$arParams["LOG_ID"]?>"<?=$postMoreBlockStyle?> onclick="oMSL.expandText(<?=intval($arParams["LOG_ID"])?>);"></div><?
+					?><div class="post-more-block" id="post_more_block_<?=$arParams["LOG_ID"]?>"<?=$postMoreBlockStyle?>></div><?
 
 					if (
 						isset($arParams['TARGET'])
-						&& $arParams['TARGET'] == 'postContent'
+						&& $arParams['TARGET'] === 'postContent'
 					)
 					{
 						$targetHtml = ob_get_contents();
@@ -617,7 +713,6 @@ if(!empty($arResult["Post"]))
 				{
 					?><div id="post_block_files_<?=$arParams["LOG_ID"]?>" class="post-item-attached-file-wrap post-item-attached-disk-file-wrap"><?
 
-					$eventHandlerID = false;
 					$eventHandlerID = AddEventHandler('main', 'system.field.view.file', '__blogUFfileShowMobile');
 					$arPostField = $arResult["UF_FILE"];
 
@@ -641,7 +736,7 @@ if(!empty($arResult["Post"]))
 
 					if (
 						$eventHandlerID !== false
-						&& (intval($eventHandlerID) > 0)
+						&& ((int)$eventHandlerID > 0)
 					)
 					{
 						RemoveEventHandler('main', 'system.field.view.file', $eventHandlerID);
@@ -649,16 +744,19 @@ if(!empty($arResult["Post"]))
 
 					?></div><?
 				}
-				if ($arResult["is_ajax_post"] != "Y")
+
+				if ($arResult["is_ajax_post"] !== "Y")
 				{
 					ob_start();
 				}
 
+				?><div class="post-item-inform-wrap-left"><?
+
 				if (
-					$arParams["SHOW_RATING"] == "Y"
+					$arParams["SHOW_RATING"] === "Y"
 					&& (
 						!isset($arParams['TARGET'])
-						|| !in_array($arParams["TARGET"], [ 'postContent' ])
+						|| $arParams["TARGET"] !== 'postContent'
 					)
 				)
 				{
@@ -687,7 +785,7 @@ if(!empty($arResult["Post"]))
 				}
 
 				if (
-					$arResult["Post"]["ENABLE_COMMENTS"] == "Y"
+					$arResult["Post"]["ENABLE_COMMENTS"] === "Y"
 					&& (
 						!isset($arParams['TARGET'])
 						|| !in_array($arParams["TARGET"], [ 'postContent' ])
@@ -696,7 +794,7 @@ if(!empty($arResult["Post"]))
 				{
 					$bHasComments = true;
 
-					if ($arResult["is_ajax_post"] != "Y")
+					if ($arResult["is_ajax_post"] !== "Y")
 					{
 						ob_start(); // inner buffer
 					}
@@ -751,7 +849,6 @@ if(!empty($arResult["Post"]))
 							"CAN_USER_COMMENT" => (!isset($arResult["CanComment"]) || $arResult["CanComment"] ? 'Y' : 'N'),
 							"NAV_TYPE_NEW" => "Y",
 //							"MARK_NEW_COMMENTS" => "Y", // show new comments in the list
-							"EMPTY_PAGE_PARAMS" => $arOnClickParams,
 							"SITE_TEMPLATE_ID" => (!empty($arParams["SITE_TEMPLATE_ID"]) ? $arParams["SITE_TEMPLATE_ID"] : '')
 						),
 						$component,
@@ -780,12 +877,6 @@ if(!empty($arResult["Post"]))
 					}
 					else
 					{
-						$arOnClickParamsCommentsTop = $arOnClickParams;
-						$arOnClickParamsCommentsTop["focus_comments"] = true;
-						$arOnClickParamsCommentsTop["show_full"] = false;
-						$strOnClickParamsCommentsTop = CUtil::PhpToJSObject($arOnClickParamsCommentsTop);
-						$strOnClickCommentsTop = ($arParams["IS_LIST"] ? " onclick=\"__MSLOpenLogEntryNew(".$strOnClickParamsCommentsTop.", event);\"" : "");
-
 						$showNewComments = (
 							(
 								$arParams["USE_FOLLOW"] != "Y"
@@ -803,7 +894,7 @@ if(!empty($arResult["Post"]))
 							$commentsBlockClassList[] = 'post-item-inform-likes-active';
 						}
 
-						?><div id="comments_control_<?=$arParams["LOG_ID"]?>" class="<?=implode(' ', $commentsBlockClassList)?>"<?=$strOnClickCommentsTop?>><?
+						?><div id="comments_control_<?=$arParams["LOG_ID"]?>" class="<?=implode(' ', $commentsBlockClassList)?>"><?
 							?><div class="post-item-inform-comments-box"><?
 								?><span class="post-item-inform-icon"></span><?
 
@@ -847,29 +938,21 @@ if(!empty($arResult["Post"]))
 
 				if ($bHasComments)
 				{
-					?><div id="log_entry_follow_<?=intval($arParams["LOG_ID"])?>" data-follow="<?=($arParams["FOLLOW"] == "Y" ? "Y" : "N")?>" style="display: none;"></div><?
+					?><div id="log_entry_follow_<?=(int)$arParams["LOG_ID"]?>" data-follow="<?=($arParams["FOLLOW"] === "Y" ? "Y" : "N")?>" style="display: none;"></div><?
 				}
 
 				if ($arResult["bTasksAvailable"])
 				{
-					?><div id="log_entry_use_tasks_<?=intval($arParams["LOG_ID"])?>" data-use-tasks="Y" style="display: none;"></div><?
+					?><div id="log_entry_use_tasks_<?=(int)$arParams["LOG_ID"]?>" data-use-tasks="Y" style="display: none;"></div><?
 				}
 
-				if ($arParams["IS_LIST"])
-				{
-					$arOnClickParams["focus_comments"] = false;
-					$arOnClickParams["show_full"] = true;
-					$strOnClickParams = CUtil::PhpToJSObject($arOnClickParams);
-					$strOnClickMore = ' onclick="__MSLOpenLogEntryNew('.$strOnClickParams.', event);"';
-				}
-				else
-				{
-					$strOnClickMore = " onclick=\"oMSL.expandText(".intval($arParams["LOG_ID"]).");\"";
-				}
+				?></div><? // class="post-item-inform-wrap-left"
 
-				?><a id="post_more_limiter_<?=intval($arParams["LOG_ID"])?>" <?=$strOnClickMore?> class="post-item-more" ontouchstart="this.classList.toggle('post-item-more-pressed')" ontouchend="this.classList.toggle('post-item-more-pressed')" style="visibility: hidden;"><?
-					?><?=GetMessage("BLOG_LOG_EXPAND")?><?
-				?></a><?
+				?><div class="post-item-inform-wrap-right"><?
+					?><a id="post_more_limiter_<?=(int)$arParams["LOG_ID"]?>" class="post-item-more" ontouchstart="this.classList.toggle('post-item-more-pressed')" ontouchend="this.classList.toggle('post-item-more-pressed')" style="visibility: hidden;"><?
+						?><?=GetMessage("BLOG_LOG_EXPAND")?><?
+					?></a><?
+				?></div><?
 
 				?><script>
 					BX.ready(function() {
@@ -884,7 +967,7 @@ if(!empty($arResult["Post"]))
 				ob_end_clean(); // outer buffer
 
 				if (
-					$arParams["SHOW_RATING"] == "Y"
+					$arParams["SHOW_RATING"] === "Y"
 					&& (
 						!isset($arParams['TARGET'])
 						|| !in_array($arParams['TARGET'], [ 'postContent' ])

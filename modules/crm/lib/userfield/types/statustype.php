@@ -79,9 +79,11 @@ class StatusType extends StringType
 	public static function getStatusList(array &$userField, array $additionalParameters = []): void
 	{
 		$results = (static::getList($userField))->arResult;
+
 		$fields = [
-			''=>''
+			null => Loc::getMessage('MAIN_NO')
 		];
+
 		foreach ($results as $result){
 			$fields[$result['ID']] = $result['VALUE'];
 		}

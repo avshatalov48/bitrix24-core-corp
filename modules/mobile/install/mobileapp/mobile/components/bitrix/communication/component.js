@@ -436,8 +436,17 @@
 	 *  Push notification registration
 	 */
 
-	setTimeout(() =>
+	let pushNotificationRegister = () =>
 	{
+		if (window.registerSuccess)
+		{
+			return true;
+		}
+
+		window.registerSuccess = true;
+
+		console.error(111);
+
 		Cordova.exec(
 			(deviceInfo) =>
 			{
@@ -494,7 +503,10 @@
 			() =>
 			{
 			}, "Device", "getDeviceInfo", []);
-	}, 0);
+	};
+
+	BX.addCustomEvent('onAppData', pushNotificationRegister);
+	setTimeout(pushNotificationRegister, 5000);
 
 	/**
 	 * Push handling

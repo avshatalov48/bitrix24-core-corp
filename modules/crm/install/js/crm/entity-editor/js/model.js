@@ -3,310 +3,45 @@ BX.namespace("BX.Crm");
 //region MODEL
 if(typeof BX.Crm.EntityModel === "undefined")
 {
+	/**
+	 * @extends BX.UI.EntityModel
+	 * @constructor
+	 */
 	BX.Crm.EntityModel = function()
 	{
-		this._id = "";
-		this._settings = {};
-		this._data = null;
-		this._initData = null;
-		this._lockedFields = null;
-		this._changeNotifier = null;
-		this._lockNotifier = null;
+		BX.Crm.EntityModel.superclass.constructor.apply(this);
+		this.eventsNamespace = 'Crm.EntityModel';
 	};
-	BX.Crm.EntityModel.prototype =
-		{
-			initialize: function(id, settings)
-			{
-				this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
-				this._settings = settings ? settings : {};
-				this._data = BX.prop.getObject(this._settings, "data", {});
-				this._initData = BX.clone(this._data);
-				this._lockedFields = {};
-				this._changeNotifier = BX.CrmNotifier.create(this);
-				this._lockNotifier = BX.CrmNotifier.create(this);
 
-				this.doInitialize();
-			},
-			doInitialize: function()
-			{
-			},
-			getEntityTypeId: function()
-			{
-				return BX.CrmEntityType.enumeration.undefined;
-			},
-			getEntityId: function()
-			{
-				return BX.prop.getInteger(this._data, "ID", 0);
-			},
-			getOwnerInfo: function()
-			{
-				return(
-					{
-						ownerID: this.getEntityId(),
-						ownerType: BX.CrmEntityType.resolveName(this.getEntityTypeId())
-					}
-				);
-			},
-			getField: function(name, defaultValue)
-			{
-				if(defaultValue === undefined)
-				{
-					defaultValue = null;
-				}
-				return BX.prop.get(this._data, name, defaultValue);
-			},
-			getStringField: function(name, defaultValue)
-			{
-				if(defaultValue === undefined)
-				{
-					defaultValue = null;
-				}
-				return BX.prop.getString(this._data, name, defaultValue);
-			},
-			getIntegerField: function(name, defaultValue)
-			{
-				if(defaultValue === undefined)
-				{
-					defaultValue = null;
-				}
-				return BX.prop.getInteger(this._data, name, defaultValue);
-			},
-			getNumberField: function(name, defaultValue)
-			{
-				if(defaultValue === undefined)
-				{
-					defaultValue = null;
-				}
-				return BX.prop.getNumber(this._data, name, defaultValue);
-			},
-			getArrayField: function(name, defaultValue)
-			{
-				if(defaultValue === undefined)
-				{
-					defaultValue = null;
-				}
-				return BX.prop.getArray(this._data, name, defaultValue);
-			},
-			registerNewField: function(name, value)
-			{
-				//update data
-				this._data[name] = value;
-				//update initialization data because of rollback.
-				this._initData[name] = value;
-			},
-			setField: function(name, value, options)
-			{
-				if(this._data.hasOwnProperty(name) && this._data[name] === value)
-				{
-					return;
-				}
+	BX.extend(BX.Crm.EntityModel, BX.UI.EntityModel);
 
-				this._data[name] = value;
+	BX.Crm.EntityModel.prototype.initialize = function(id, settings)
+	{
+		BX.Crm.EntityModel.superclass.initialize.apply(this, [id, settings]);
+		this._changeNotifier = BX.CrmNotifier.create(this);
+		this._lockNotifier = BX.CrmNotifier.create(this);
+	};
+	BX.Crm.EntityModel.prototype.getEventArguments = function()
+	{
+		var eventArgs = BX.Crm.EntityModel.superclass.getEventArguments.apply(this);
+		eventArgs.entityTypeId = this.getEntityTypeId();
 
-				if(!BX.type.isPlainObject(options))
-				{
-					options = {};
-				}
-
-				if(BX.prop.getBoolean(options, "enableNotification", true))
-				{
-					this._changeNotifier.notify(
-						[
-							{
-								name: name,
-								originator: BX.prop.get(options, "originator", null)
-							}
-						]
-					);
-					BX.onCustomEvent(
-						window,
-						"Crm.EntityModel.Change",
-						[ this, { entityTypeId: this.getEntityTypeId(), entityId: this.getEntityId(), fieldName: name } ]
-					);
-				}
-			},
-			getData: function()
+		return eventArgs;
+	};
+	BX.Crm.EntityModel.prototype.getEntityTypeId = function()
+	{
+		return BX.CrmEntityType.enumeration.undefined;
+	};
+	BX.Crm.EntityModel.prototype.getOwnerInfo = function()
+	{
+		return(
 			{
-				return this._data;
-			},
-			setData: function(data, options)
-			{
-				this._data = BX.type.isPlainObject(data) ? data : {};
-				this._initData = BX.clone(this._data);
-
-				if(BX.prop.getBoolean(options, "enableNotification", true))
-				{
-					this._changeNotifier.notify(
-						[
-							{
-								forAll: true,
-								originator: BX.prop.get(options, "originator", null)
-							}
-						]
-					);
-					BX.onCustomEvent(
-						window,
-						"Crm.EntityModel.Change",
-						[ this, { entityTypeId: this.getEntityTypeId(), entityId: this.getEntityId(), forAll: true } ]
-					);
-				}
-			},
-			updateData: function(data, options)
-			{
-				if(!BX.type.isPlainObject(data))
-				{
-					return;
-				}
-
-				this._data = BX.mergeEx(this._data, data);
-				if(BX.prop.getBoolean(options, "enableNotification", true))
-				{
-					this._changeNotifier.notify(
-						[
-							{
-								forAll: true,
-								originator: BX.prop.get(options, "originator", null)
-							}
-						]
-					);
-					BX.onCustomEvent(
-						window,
-						"Crm.EntityModel.Change",
-						[ this, { entityTypeId: this.getEntityTypeId(), entityId: this.getEntityId(), forAll: true } ]
-					);
-				}
-			},
-			updateDataObject: function(name, data, options)
-			{
-				if(!this._data.hasOwnProperty(name))
-				{
-					this._data[name] = data;
-				}
-				else
-				{
-					this._data[name] = BX.mergeEx(this._data[name], data);
-				}
-
-				if(BX.prop.getBoolean(options, "enableNotification", true))
-				{
-					this._changeNotifier.notify(
-						[
-							{
-								forAll: true,
-								originator: BX.prop.get(options, "originator", null)
-							}
-						]
-					);
-					BX.onCustomEvent(
-						window,
-						"Crm.EntityModel.Change",
-						[ this, { entityTypeId: this.getEntityTypeId(), entityId: this.getEntityId(), forAll: true } ]
-					);
-				}
-			},
-			getSchemeField: function(schemeElement, name, defaultValue)
-			{
-				return this.getField(schemeElement.getDataStringParam(name, ""), defaultValue);
-			},
-			setSchemeField: function(schemeElement, name, value)
-			{
-				var fieldName = schemeElement.getDataStringParam(name, "");
-				if(fieldName !== "")
-				{
-					this.setField(fieldName, value);
-				}
-			},
-			getMappedField: function(map, name, defaultValue)
-			{
-				var fieldName = BX.prop.getString(map, name, "");
-				return fieldName !== "" ? this.getField(fieldName, defaultValue) : defaultValue;
-			},
-			setMappedField: function(map, name, value)
-			{
-				var fieldName = BX.prop.getString(map, name, "");
-				if(fieldName !== "")
-				{
-					this.setField(fieldName, value);
-				}
-			},
-			getInitFieldValue: function(name, defaultValue)
-			{
-				if(defaultValue === undefined)
-				{
-					defaultValue = null;
-				}
-				return BX.prop.get(this._initData, name, defaultValue);
-			},
-			setInitFieldValue:  function(name, value)
-			{
-				if(this._initData.hasOwnProperty(name) && this._initData[name] === value)
-				{
-					return;
-				}
-				this._initData[name] = value;
-			},
-			save: function()
-			{
-			},
-			rollback: function()
-			{
-				this._data = BX.clone(this._initData);
-			},
-			lockField: function(fieldName)
-			{
-				if(this._lockedFields.hasOwnProperty(fieldName))
-				{
-					return;
-				}
-
-				this._lockedFields[fieldName] = true;
-				this._lockNotifier.notify([ { name: name, isLocked: true } ]);
-			},
-			unlockField: function(fieldName)
-			{
-				if(!this._lockedFields.hasOwnProperty(fieldName))
-				{
-					return;
-				}
-
-				delete this._lockedFields[fieldName];
-				this._lockNotifier.notify([ { name: name, isLocked: false } ]);
-			},
-			isFieldLocked: function(fieldName)
-			{
-				return this._lockedFields.hasOwnProperty(fieldName);
-			},
-			addChangeListener: function(listener)
-			{
-				this._changeNotifier.addListener(listener);
-			},
-			removeChangeListener: function(listener)
-			{
-				this._changeNotifier.removeListener(listener);
-			},
-			addLockListener: function(listener)
-			{
-				this._lockNotifier.addListener(listener);
-			},
-			removeLockListener: function(listener)
-			{
-				this._lockNotifier.removeListener(listener);
-			},
-			isCaptionEditable: function()
-			{
-				return false;
-			},
-			getCaption: function()
-			{
-				return "";
-			},
-			setCaption: function(caption)
-			{
-			},
-			prepareCaptionData: function(data)
-			{
+				ownerID: this.getEntityId(),
+				ownerType: BX.CrmEntityType.resolveName(this.getEntityTypeId())
 			}
-		};
+		);
+	};
+
 	BX.Crm.EntityModel.create = function(id, settings)
 	{
 		var self = new BX.Crm.EntityModel();

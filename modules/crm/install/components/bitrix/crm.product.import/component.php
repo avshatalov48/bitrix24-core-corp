@@ -255,6 +255,10 @@ if(isset($_REQUEST['getSample']) && $_REQUEST['getSample'] == 'csv')
 								$fileExt = ToLower(trim($arFileExt[$randFileExt]));
 							}
 							unset($arFileExt, $nFileExt, $randFileExt);
+							if ($fileExt == 'bmp')
+							{
+								$fileExt = 'png';
+							}
 						}
 						$propValue .= '.'.$fileExt;
 						unset($fileExt);
@@ -701,7 +705,7 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 					$dataUpper = ToUpper($data);
 					$data = ($dataUpper === $upperYes || $dataUpper === 'Y' || $dataUpper === 'YES'
 						|| (is_numeric($dataUpper) && intval($dataUpper) > 0)) ? 'Y' : 'N';
-					
+
 					if ($currentKey === 'VAT_INCLUDED' && isset($arProduct['VAT_ID']) && $arProduct['VAT_ID'] <= 0)
 						$data = 'N';
 				}
@@ -720,7 +724,7 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 				{
 					$data = array_search($data, $arVatRates);
 					$data = ($data === false) ? 0 : intval($data);
-					
+
 					if ($data <= 0 && isset($arProduct['VAT_INCLUDED']) && $arProduct['VAT_INCLUDED'] !== 'N')
 						$arProduct['VAT_INCLUDED'] = 'N';
 				}
@@ -1100,7 +1104,7 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 				}
 				unset($oldPropertyValues);
 			}
-			
+
 			if (!CCrmProduct::Update($productId, $arProduct))
 			{
 				$err = CCrmProduct::GetLastError();

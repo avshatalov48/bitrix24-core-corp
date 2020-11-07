@@ -993,7 +993,7 @@ class Library
 		{
 			$pos = UtfSafeString::getLastPosition($fileName, '?');
 			if ($pos !== false)
-				$fileName = substr($fileName, 0, $pos);
+				$fileName = mb_substr($fileName, 0, $pos);
 		}
 
 		return $fileName;

@@ -7,6 +7,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserField\Dispatcher;
+use Bitrix\Main\UserField\Types\DoubleType;
 use Bitrix\Rpa\Command;
 use Bitrix\Rpa\Driver;
 use Bitrix\Rpa\Model\Item;
@@ -85,13 +86,8 @@ abstract class ItemDetail extends Base implements Controllerable
 				else
 				{
 					$this->item->setStageId($stage->getId());
-					$command = Driver::getInstance()->getFactory()->getUpdateCommand($this->item);
 					$this->editorInitialMode = 'edit';
 				}
-			}
-			else
-			{
-				$command = Driver::getInstance()->getFactory()->getUpdateCommand($this->item);
 			}
 		}
 		else
@@ -104,7 +100,6 @@ abstract class ItemDetail extends Base implements Controllerable
 			else
 			{
 				$this->item = $this->type->createItem();
-				$command = Driver::getInstance()->getFactory()->getAddCommand($this->item);
 			}
 		}
 
@@ -113,14 +108,28 @@ abstract class ItemDetail extends Base implements Controllerable
 			$this->errorCollection[] = new Error(Loc::getMessage('RPA_STAGE_NOT_FOUND_ERROR'));
 		}
 
-		if($command && !$this->getErrors())
+		if(!$this->getErrors())
 		{
-			$checkAccessResult = $command->checkAccess();
+			$checkAccessResult = $this->checkAccess();
 			if(!$checkAccessResult->isSuccess())
 			{
 				$this->errorCollection->add($checkAccessResult->getErrors());
 			}
 		}
+	}
+
+	protected function checkAccess(): Result
+	{
+		if($this->item->getId() > 0)
+		{
+			$command = Driver::getInstance()->getFactory()->getUpdateCommand($this->item);
+		}
+		else
+		{
+			$command = Driver::getInstance()->getFactory()->getAddCommand($this->item);
+		}
+
+		return $command->checkAccess();
 	}
 
 	protected function prepareFormParams(): array
@@ -135,7 +144,7 @@ abstract class ItemDetail extends Base implements Controllerable
 		$params['ENTITY_FIELDS'] = $this->prepareFormFields();
 		$params['ENTITY_CONFIG'] = $this->prepareFormConfig();
 		$params['ENTITY_DATA'] = $this->prepareFormData();
-		$params['ENABLE_SECTION_EDIT'] = false;
+		$params['ENABLE_SECTION_EDIT'] = true;
 		$params['ENABLE_SECTION_CREATION'] = false;
 		$params['ENABLE_SECTION_DRAG_DROP'] = !$this->isEmbedded();
 		$params['ENABLE_FIELDS_CONTEXT_MENU'] = !$this->isEmbedded();
@@ -225,9 +234,55 @@ abstract class ItemDetail extends Base implements Controllerable
 					}
 				}
 			}
+
+			$formFields['ID'] = [
+				'name' => 'ID',
+				'title' => 'ID',
+				'type' => 'number',
+				'editable' => false,
+			];
+
+			$formFields['CREATED_BY'] = $this->getOwnUserFieldDescription('CREATED_BY');
+			$formFields['UPDATED_BY'] = $this->getOwnUserFieldDescription('UPDATED_BY');
+			$formFields['MOVED_BY'] = $this->getOwnUserFieldDescription('MOVED_BY');
+
+			$formFields['CREATED_TIME'] = $this->getOwnDateTimeFieldDescription('CREATED_TIME');
+			$formFields['UPDATED_TIME'] = $this->getOwnDateTimeFieldDescription('UPDATED_TIME');
+			$formFields['MOVED_TIME'] = $this->getOwnDateTimeFieldDescription('MOVED_TIME');
 		}
 
 		return $formFields;
+	}
+
+	protected function getOwnUserFieldDescription(string $fieldName): array
+	{
+		return [
+			'name' => $fieldName,
+			'title' => Loc::getMessage('RPA_ITEM_' . $fieldName),
+			'type' => 'user',
+			'editable' => false,
+			'data' => [
+				'enableEditInView' => false,
+				'formated' => $fieldName . '_FORMATTED_NAME',
+				'position' => $fieldName . '_WORK_POSITION',
+				'photoUrl' => $fieldName . '_PHOTO_URL',
+				'showUrl' => $fieldName . '_SHOW_URL',
+				'pathToProfile' => Driver::getInstance()->getUrlManager()->getUserPersonalUrlTemplate(),
+			],
+		];
+	}
+
+	protected function getOwnDateTimeFieldDescription(string $fieldName): array
+	{
+		return [
+			'name' => $fieldName,
+			'title' => Loc::getMessage('RPA_ITEM_' . $fieldName),
+			'type' => 'datetime',
+			'editable' => false,
+			'data' => [
+				'enableTime' => true,
+			]
+		];
 	}
 
 	protected function isFieldVisible(UserField $userField): bool
@@ -313,7 +368,7 @@ abstract class ItemDetail extends Base implements Controllerable
 		return [
 			[
 				'name' => 'main',
-				'title' => $this->getTitle(),
+				'title' => Loc::getMessage('RPA_ITEM_EDITOR_MAIN_SECTION_TITLE'),
 				'type' => 'section',
 				'elements' => $elements,
 				'data' => [
@@ -345,7 +400,24 @@ abstract class ItemDetail extends Base implements Controllerable
 		$userFields = $this->type->getUserFieldCollection();
 		$formFields = $this->prepareFormFields();
 
-		$data = [];
+		$users = static::getUsers($this->item->getUserIds());
+
+		$data = [
+			'ID' => $this->item->getId(),
+			'CREATED_TIME' => $this->item->getCreatedTime(),
+			'UPDATED_TIME' => $this->item->getUpdatedTime(),
+			'MOVED_TIME' => $this->item->getMovedTime(),
+		];
+
+		foreach(['CREATED_BY', 'MOVED_BY', 'UPDATED_BY'] as $fieldName)
+		{
+			$userId = $this->item->get($fieldName);
+			$data[$fieldName] = $userId;
+			$data[$fieldName . '_FORMATTED_NAME'] = $users[$userId]['fullName'];
+			$data[$fieldName . '_WORK_POSITION'] = $users[$userId]['workPosition'];
+			$data[$fieldName . '_PHOTO_URL'] = $users[$userId]['personalPhoto'];
+			$data[$fieldName . '_SHOW_URL'] = $users[$userId]['link'];
+		}
 
 		foreach($userFields as $userField)
 		{
@@ -460,6 +532,10 @@ abstract class ItemDetail extends Base implements Controllerable
 					{
 						$value = null;
 					}
+				}
+				if($userField->getUserTypeId() === DoubleType::USER_TYPE_ID)
+				{
+					$value = str_replace(',', '.', $value);
 				}
 				$setData[$name] = $value;
 			}

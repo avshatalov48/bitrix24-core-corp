@@ -8,3 +8,4 @@ $MESS["RPA_FIRST_STAGE_PERMISSION_DENIED"] = "У вас нет прав на д�
 $MESS["RPA_ITEM_NOT_FOUND"] = "Элемент не найден";
 $MESS["RPA_ITEM_EDIT_TITLE"] = "Элемент #TYPE# #ID#";
 $MESS["RPA_ITEM_CREATE_TITLE"] = "Создание элемента #TYPE#";
+$MESS["RPA_ITEM_EDITOR_MAIN_SECTION_TITLE"] = "Поля элемента";

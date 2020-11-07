@@ -1853,15 +1853,6 @@ class CCrmViewHelper
 		}
 
 		self::$DEAL_STAGES[$categoryID] = CCrmDeal::GetStages($categoryID);
-		$scheme = Bitrix\Crm\Color\DealStageColorScheme::getByCategory($categoryID);
-		foreach(self::$DEAL_STAGES[$categoryID] as $k => $v)
-		{
-			$element = $scheme->getElementByName($k);
-			if($element !== null)
-			{
-				self::$DEAL_STAGES[$categoryID][$k]['COLOR'] = $element->getColor();
-			}
-		}
 
 		return self::$DEAL_STAGES[$categoryID];
 	}
@@ -1989,16 +1980,6 @@ class CCrmViewHelper
 
 		self::$LEAD_STATUSES = CCrmLead::GetStatuses();
 
-		$scheme = Bitrix\Crm\Color\LeadStatusColorScheme::getCurrent();
-		foreach(self::$LEAD_STATUSES as $ID => &$item)
-		{
-			$element = $scheme->getElementByName($ID);
-			if($element !== null)
-			{
-				$item['COLOR'] = $element->getColor();
-			}
-		}
-		unset($item);
 		return self::$LEAD_STATUSES;
 	}
 	public static function RenderLeadStatusSettings()
@@ -2066,16 +2047,6 @@ class CCrmViewHelper
 
 		self::$INVOICE_STATUSES = CCrmStatus::GetStatus('INVOICE_STATUS');
 
-		$scheme = Bitrix\Crm\Color\InvoiceStatusColorScheme::getCurrent();
-		foreach(self::$INVOICE_STATUSES as $ID => &$item)
-		{
-			$element = $scheme->getElementByName($ID);
-			if($element !== null)
-			{
-				$item['COLOR'] = $element->getColor();
-			}
-		}
-		unset($item);
 		return self::$INVOICE_STATUSES;
 	}
 	public static function RenderInvoiceStatusSettings()
@@ -2729,17 +2700,6 @@ class CCrmViewHelper
 
 		self::$QUOTE_STATUSES = CCrmQuote::GetStatuses();
 
-		$scheme = Bitrix\Crm\Color\QuoteStatusColorScheme::getCurrent();
-		foreach(self::$QUOTE_STATUSES as $ID => &$item)
-		{
-			$element = $scheme->getElementByName($ID);
-			if($element !== null)
-			{
-				$item['COLOR'] = $element->getColor();
-			}
-		}
-		unset($item);
-
 		return self::$QUOTE_STATUSES;
 	}
 	protected static function PrepareOrderStatuses()
@@ -2755,12 +2715,13 @@ class CCrmViewHelper
 		foreach(self::$ORDER_STATUSES as $ID => &$item)
 		{
 			$element = $scheme->getElementByName($ID);
-			if($element !== null)
+			if($element !== null && !isset($item['COLOR']))
 			{
 				$item['COLOR'] = $element->getColor();
 			}
 		}
 		unset($item);
+
 		return self::$ORDER_STATUSES;
 	}
 	protected static function PrepareOrderShipmentStatuses()
@@ -2776,7 +2737,7 @@ class CCrmViewHelper
 		foreach(self::$ORDER_SHIPMENT_STATUSES as $ID => &$item)
 		{
 			$element = $scheme->getElementByName($ID);
-			if($element !== null)
+			if($element !== null && !isset($item['COLOR']))
 			{
 				$item['COLOR'] = $element->getColor();
 			}

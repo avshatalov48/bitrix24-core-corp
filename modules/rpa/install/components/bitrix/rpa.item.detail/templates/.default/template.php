@@ -31,7 +31,7 @@ if($this->getComponent()->getErrors())
 	{
 		/** @var \Bitrix\Main\Error $error */
 		?>
-		<span class="ui-alert-message"><?=$error->getMessage();?></span>
+		<span class="ui-alert-message"><?=htmlspecialcharsbx($error->getMessage());?></span>
 		<?php
 	}
 	?></div>

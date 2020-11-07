@@ -87,7 +87,7 @@ class UserPermissions
 	{
 		if(static::canEditItemOnAnyStage())
 		{
-			return true;
+			return $this->canAddItemsToType($type->getId());
 		}
 		if($this->isSimplePermissionsForTheFirstStage())
 		{

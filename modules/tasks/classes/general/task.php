@@ -5805,7 +5805,7 @@ class CTasks
 			// RESPONSIBLE
 			else if (isset($filter[$roleKey]) && array_key_exists('=RESPONSIBLE_ID', $filter[$roleKey]))
 			{
-				$responsible = $filter[$roleKey]['=RESPONSIBLE_ID'];
+				$responsible = (int)$filter[$roleKey]['=RESPONSIBLE_ID'];
 				unset($filter[$roleKey]);
 
 				$additionalJoins[] = "INNER JOIN b_tasks_member {$joinAlias} ON {$joinAlias}.TASK_ID = {$sourceAlias}.ID AND {$joinAlias}.USER_ID = {$responsible} AND {$joinAlias}.TYPE = 'R'";
@@ -5813,7 +5813,7 @@ class CTasks
 			// CREATOR
 			else if (isset($filter[$roleKey]) && array_key_exists('=CREATED_BY', $filter[$roleKey]))
 			{
-				$creator = $filter[$roleKey]['=CREATED_BY'];
+				$creator = (int)$filter[$roleKey]['=CREATED_BY'];
 				unset($filter[$roleKey]['=CREATED_BY']);
 
 				if (!empty($filter[$roleKey]))

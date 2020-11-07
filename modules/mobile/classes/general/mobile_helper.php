@@ -818,11 +818,30 @@ class CMobileHelper
 						'filter' => array(
 							'ID' => $liveFeedEntity->getLogId()
 						),
-						'select' => array('SOURCE_ID')
+						'select' => [ 'ENTITY_ID', 'EVENT_ID', 'SOURCE_ID' ]
 					));
 					if($logEntryFields = $res->fetch())
 					{
-						return self::getTaskLink($logEntryFields['SOURCE_ID']);
+						if ($logEntryFields['EVENT_ID'] === 'crm_activity_add')
+						{
+							if (
+								Loader::includeModule('crm')
+								&& ($activityFields = \CCrmActivity::getById($logEntryFields['ENTITY_ID'], false))
+								&& $activityFields['TYPE_ID'] == \CCrmActivityType::Task
+							)
+							{
+								$taskId = (int)$activityFields['ASSOCIATED_ENTITY_ID'];
+							}
+						}
+						else
+						{
+							$taskId = (int)$logEntryFields['SOURCE_ID'];
+						}
+
+						if ($taskId > 0)
+						{
+							return self::getTaskLink($taskId);
+						}
 					}
 				}
 			}

@@ -368,6 +368,9 @@ class Task extends Activity\Provider\Base
 		);
 
 		$isFound = false;
+		$isStatusChanged = (isset($currentTaskFields['STATUS']) && (string)$currentTaskFields['STATUS'] !== (string)$previousTaskFields['STATUS']);
+		$taskBindings = [];
+
 		while($activity = $listIterator->fetch())
 		{
 			$isFound = true;
@@ -378,6 +381,7 @@ class Task extends Activity\Provider\Base
 				$activity['COMMUNICATIONS'] = self::prepareCommunications($activity);
 				\CCrmActivity::update($activity['ID'], $activity, false, true, array('SKIP_ASSOCIATED_ENTITY' => true, 'REGISTER_SONET_EVENT' => true));
 				\CCrmLiveFeed::syncTaskEvent($activity, $task);
+				$taskBindings = $activity['BINDINGS'];
 			}
 			else
 			{
@@ -428,7 +432,13 @@ class Task extends Activity\Provider\Base
 					true,
 					array_merge($creationParams, array('SKIP_ASSOCIATED_ENTITY' => true, 'REGISTER_SONET_EVENT' => true))
 				);
+				$taskBindings = $activity['BINDINGS'];
 			}
+		}
+
+		if ($isStatusChanged && $taskBindings)
+		{
+			Crm\Automation\Trigger\TaskStatusTrigger::execute($taskBindings, ['TASK' => $task]);
 		}
 
 		return true;

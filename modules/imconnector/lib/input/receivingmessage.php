@@ -501,7 +501,7 @@ class ReceivingMessage
 				}
 
 				//The definition of the file extension, it is not specified.
-				if(strpos($fileName, '.') === false)
+				if(mb_strpos($fileName, '.') === false)
 				{
 					if(Library::$mimeTypeAssociationExtension[$type])
 						$fileName = $fileName . Library::$mimeTypeAssociationExtension[$type];

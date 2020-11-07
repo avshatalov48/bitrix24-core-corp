@@ -127,7 +127,7 @@ class UserFieldSynchronizer
 
 		/** @var \CUserTypeManager $USER_FIELD_MANAGER */
 		global $USER_FIELD_MANAGER;
-		$srcFields = $USER_FIELD_MANAGER->GetUserFields($srcUfEntityID, 0, $languageID);
+
 		$dstFields = $USER_FIELD_MANAGER->GetUserFields($dstUfEntityID, 0, $languageID);
 
 		$map = array();
@@ -159,6 +159,11 @@ class UserFieldSynchronizer
 
 		self::$existedFieldNameMap = array();
 		$results = array();
+
+		$srcFields = VisibilityManager::getVisibleUserFields(
+			$USER_FIELD_MANAGER->GetUserFields($srcUfEntityID, 0, $languageID)
+		);
+
 		foreach($srcFields as $field)
 		{
 			$label = self::getFieldComplianceCode($field);
@@ -222,6 +227,19 @@ class UserFieldSynchronizer
 
 		$synchronizedFieldNameMap = array();
 		$entity = new \CUserTypeEntity();
+
+		if(isset($options['ENABLE_TRIM']) && $options['ENABLE_TRIM'] === true)
+		{
+			$fieldsToDelete = self::getSynchronizationFields($dstEntityTypeID, $srcEntityTypeID, $languageID, true);
+			foreach($fieldsToDelete as $field)
+			{
+				if(self::isUserFieldTypeSupported($field['USER_TYPE_ID']))
+				{
+					$entity->Delete($field['ID']);
+				}
+			}
+		}
+
 		$entityID = \CCrmOwnerType::ResolveUserFieldEntityID($dstEntityTypeID);
 		$fieldsToCreate = self::getSynchronizationFields($srcEntityTypeID, $dstEntityTypeID, $languageID, true);
 
@@ -360,17 +378,6 @@ class UserFieldSynchronizer
 			$synchronizedFieldNameMap[$srcField['FIELD_NAME']] = $fieldName;
 		}
 
-		if(isset($options['ENABLE_TRIM']) && $options['ENABLE_TRIM'] === true)
-		{
-			$fieldsToDelete = self::getSynchronizationFields($dstEntityTypeID, $srcEntityTypeID, $languageID, true);
-			foreach($fieldsToDelete as $field)
-			{
-				if(self::isUserFieldTypeSupported($field['USER_TYPE_ID']))
-				{
-					$entity->Delete($field['ID']);
-				}
-			}
-		}
 
 		$historyItem = self::getHistoryItem($srcEntityTypeID, $dstEntityTypeID);
 		if($historyItem === null)

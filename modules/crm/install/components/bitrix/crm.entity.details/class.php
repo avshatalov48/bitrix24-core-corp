@@ -2,6 +2,9 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 CModule::IncludeModule("crm");
 use Bitrix\Main;
+use Bitrix\Main\Event;
+use Bitrix\Main\EventManager;
+use Bitrix\Main\EventResult;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -88,6 +91,8 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 
 		$this->arResult['TABS'] = isset($this->arParams['TABS']) && is_array($this->arParams['TABS'])
 			? $this->arParams['TABS'] : array();
+
+		$this->arResult['TABS'] = $this->updateTabsByEvent($this->arResult['TABS']);
 
 		// region rest placement
 		$this->arResult['REST_USE'] = false;
@@ -210,5 +215,29 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 			? $this->arParams['~ANALYTIC_PARAMS'] : array();
 
 		$this->includeComponentTemplate();
+	}
+
+	protected function updateTabsByEvent(array $tabs): array
+	{
+		$event = new Event('crm', 'onEntityDetailsTabsInitialized', [
+			'entityID' => $this->entityID,
+			'entityTypeID' => $this->entityTypeID,
+			'guid' => $this->guid,
+			'tabs' => $tabs,
+		]);
+		EventManager::getInstance()->send($event);
+		foreach($event->getResults() as $result)
+		{
+			if($result->getType() === EventResult::SUCCESS)
+			{
+				$parameters = $result->getParameters();
+				if(is_array($parameters) && is_array($parameters['tabs']))
+				{
+					$tabs = $parameters['tabs'];
+				}
+			}
+		}
+
+		return $tabs;
 	}
 }

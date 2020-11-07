@@ -12,7 +12,7 @@ use Bitrix\Crm\PhaseSemantics;
 
 Loc::loadMessages(__FILE__);
 
-class LeadDataProvider extends EntityDataProvider
+class LeadDataProvider extends Main\Filter\EntityDataProvider
 {
 	/** @var LeadSettings|null */
 	protected $settings = null;

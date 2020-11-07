@@ -289,10 +289,13 @@ class Order extends Sale\Order
 			{
 				Permissions\Order::updatePermission($this->getId(), $this->getField('RESPONSIBLE_ID'));
 
-				Crm\Automation\Trigger\ResponsibleChangedTrigger::execute(
-					[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getId()]],
-					['ORDER' => $this]
-				);
+				if (Crm\Automation\Factory::canUseAutomation())
+				{
+					Crm\Automation\Trigger\ResponsibleChangedTrigger::execute(
+						[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getId()]],
+						['ORDER' => $this]
+					);
+				}
 			}
 
 			static::resetCounters($this->getField('RESPONSIBLE_ID'));

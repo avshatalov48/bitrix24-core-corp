@@ -19,6 +19,7 @@ $MESS["U_STATUS_ONLINE"] = "В сети";
 $MESS["U_STATUS_OFFLINE"] = "Не в сети";
 $MESS["WIDGET_CHAT_CREATE_TITLE"] = "Новый чат";
 $MESS["IM_DIALOG_UNNAMED"] = "Загрузка...";
+$MESS["IM_LIST_LOADING"] = "Загрузка...";
 $MESS["IM_SCOPE_USERS"] = "Сотрудники";
 $MESS["IM_SCOPE_CHATS"] = "Чаты";
 $MESS["IM_SCOPE_DEPARTMENTS"] = "Подразделения";

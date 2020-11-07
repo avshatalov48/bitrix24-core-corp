@@ -17,6 +17,7 @@ use Bitrix\Main\Context;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Loader;
+use Bitrix\UI\Buttons\JsHandler;
 
 $adminsUserIdList = [];
 $res  = \Bitrix\Main\UserGroupTable::getList([
@@ -422,7 +423,10 @@ if (
 {
 	$arResult['TOOLBAR_BUTTONS'][] = [
 		'TYPE' => 'ADD',
-		'LINK' => 'javascript:'.\CIntranetInviteDialog::showInviteDialogLink(),
-		'TITLE' => Loc::getMessage('INTRANET_USER_LIST_BUTTON_INVITE_TITLE')
+		'TITLE' => Loc::getMessage('INTRANET_USER_LIST_BUTTON_INVITE_TITLE'),
+		'CLICK' => new JsHandler(
+			"jsBXIUL.showInvitation",
+			"jsBXIUL"
+		),
 	];
 }

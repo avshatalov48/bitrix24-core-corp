@@ -2,9 +2,6 @@
 
 /** @global CUser $USER */
 
-use Bitrix\Main\Loader;
-use Bitrix\Disk\Driver;
-
 $arResult['TOP_RATING_DATA'] = (
 	\Bitrix\Main\ModuleManager::isModuleInstalled('intranet')
 	&& !empty($arResult["arLogTmpID"])
@@ -16,3 +13,18 @@ $arResult['TOP_RATING_DATA'] = (
 );
 
 $arResult['TARGET'] = (isset($arParams['TARGET']) ? $arParams['TARGET'] : '');
+/*
+AddMessage2Log('reload: '.$arResult["RELOAD"]);
+AddMessage2Log('ajax_call: '.$arResult["AJAX_CALL"]);
+*/
+$arResult['PAGE_MODE'] = 'first';
+if ($arResult["RELOAD"])
+{
+	$arResult['PAGE_MODE'] = 'refresh';
+}
+elseif ($arResult["AJAX_CALL"])
+{
+	$arResult['PAGE_MODE'] = 'next';
+}
+
+//AddMessage2Log($arResult["PAGE_MODE"]);

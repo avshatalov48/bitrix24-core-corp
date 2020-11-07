@@ -464,11 +464,13 @@ BX.CrmConfigStatusClass = (function ()
 		var fieldId = 1;
 		var	color = this.getDefaultColor();
 		var name = BX.message('CRM_STATUS_NEW');
+		var semantics = '';
 
 		if(parentNode.id == 'final-storage-'+this.entityId)
 		{
 			color = this.defaultFinalUnSuccessColor;
 			this.addCellFinalScale();
+			semantics = 'F';
 		}
 		else
 		{
@@ -495,7 +497,8 @@ BX.CrmConfigStatusClass = (function ()
 			SORT: 10,
 			NAME: name,
 			ENTITY_ID: this.entityId,
-			COLOR: color
+			COLOR: color,
+			SEMANTICS: semantics
 		};
 
 		parentNode.insertBefore(this.createStructureHtml(id), element);
@@ -919,6 +922,14 @@ BX.CrmConfigStatusClass = (function ()
 						name: 'LIST['+this.entityId+']['+fieldObject.ID+'][STATUS_ID]',
 						'data-status-id': '1',
 						value: this.getNewStatusId()
+					}
+				}),
+				BX.create('input', {
+					props: {id: 'stage-semantics-'+fieldObject.ID},
+					attrs: {
+						type: 'hidden',
+						name: 'LIST['+this.entityId+']['+fieldObject.ID+'][SEMANTICS]',
+						value: fieldObject.SEMANTICS
 					}
 				})
 			]

@@ -359,7 +359,7 @@ class CVoxImplantWebDavHelper
 		}
 
 		$blockID = 0;
-		$sharedFilesSettings = unserialize(COption::GetOptionString('webdav', 'shared_files', ''));
+		$sharedFilesSettings = unserialize(COption::GetOptionString('webdav', 'shared_files', ''), ['allowed_classes' => false]);
 		if(isset($sharedFilesSettings[$siteID]))
 		{
 			$siteSettings = $sharedFilesSettings[$siteID];

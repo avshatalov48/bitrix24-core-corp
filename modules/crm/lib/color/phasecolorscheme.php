@@ -66,7 +66,7 @@ class PhaseColorScheme
 		return self::PROCESS_COLORS[$offset];
 	}
 	/**
-	 * Check if scheme is persistent.
+	 * @deprecated
 	 * @return bool
 	 */
 	public function isPersistent()

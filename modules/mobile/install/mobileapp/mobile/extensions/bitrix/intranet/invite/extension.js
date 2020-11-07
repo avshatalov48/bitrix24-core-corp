@@ -16,9 +16,31 @@ IntranetInvite.init = function()
 	this.rootStructureSectionId = 1;
 	this.adminConfirm = false;
 
-	this.initRegisterUrl();
+	if (this.isRecentComponent())
+	{
+		this.setRegisterUrl(BX.componentParameters.get('INTRANET_INVITATION_REGISTER_URL', ''));
+	}
+	else
+	{
+		this.initRegisterUrl();
+	}
 
 	BX.addCustomEvent("onSendInvite", this.onSendInvite.bind(this));
+};
+
+IntranetInvite.isRecentComponent = function()
+{
+	if (BX.componentParameters.get('COMPONENT_CODE') === "im.recent")
+	{
+		return true;
+	}
+
+	if (BX.componentParameters.get('COMPONENT_CODE') === "im.openlines.recent")
+	{
+		return true;
+	}
+
+	return false;
 };
 
 IntranetInvite.setCanInvite = function(value)
@@ -220,7 +242,10 @@ IntranetInvite.getAjaxErrorText = function(errors)
 	}).join("\n");
 };
 
-IntranetInvite.init();
+if (!IntranetInvite.isRecentComponent())
+{
+	IntranetInvite.init();
+}
 
 IntranetInvite.event.init = function (params)
 {
@@ -239,20 +264,20 @@ IntranetInvite.event.init = function (params)
 		onHelpLink: this.onHelpLink
 	};
 
-	IntranetInvite.getData({
-		callback: function(data) {
-			if (typeof data.adminConfirm != 'undefined')
-			{
-				IntranetInvite.setAdminConfirm(data.adminConfirm);
-				this.setAdminConfirm(data.adminConfirm);
-			}
-			if (typeof data.registerUrl != 'undefined')
-			{
-				IntranetInvite.setRegisterUrl(data.registerUrl);
-				this.updateLink(data.registerUrl);
-			}
-		}.bind(this.inviteComponent)
-	});
+	let inviteCallback = function(data) {
+		if (typeof data.adminConfirm != 'undefined')
+		{
+			IntranetInvite.setAdminConfirm(data.adminConfirm);
+			this.setAdminConfirm(data.adminConfirm);
+		}
+		if (typeof data.registerUrl != 'undefined')
+		{
+			IntranetInvite.setRegisterUrl(data.registerUrl);
+			this.updateLink(data.registerUrl);
+		}
+	}.bind(this.inviteComponent);
+
+	IntranetInvite.getData({callback: inviteCallback});
 };
 
 IntranetInvite.event.router = function(eventName, eventResult)

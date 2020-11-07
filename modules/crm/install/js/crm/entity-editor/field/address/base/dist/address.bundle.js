@@ -2,8 +2,68 @@ this.BX = this.BX || {};
 (function (exports,main_core,main_core_events,main_popup) {
 	'use strict';
 
-	function _templateObject18() {
+	function _templateObject24() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-checkbox ui-ctl-xs\">\n\t\t\t\t\t\t\t<label>\n\t\t\t\t\t\t\t\t<input onclick=\"", "\" type=\"checkbox\" value=\"", "\">\n\t\t\t\t\t\t\t\t<span class=\"ui-ctl-label-text\">", "</span>\n\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t"]);
+
+	  _templateObject24 = function _templateObject24() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject23() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t<div class=\"ui-title-7\">", "</div>\n\t\t\t\t<div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+
+	  _templateObject23 = function _templateObject23() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject22() {
 	  var data = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-ctl-after ", "\"></span>"]);
+
+	  _templateObject22 = function _templateObject22() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject21() {
+	  var data = babelHelpers.taggedTemplateLiteral(["<button class=\"ui-ctl-after ui-ctl-icon-clear\" onclick=\"", "\"></button>"]);
+
+	  _templateObject21 = function _templateObject21() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject20() {
+	  var data = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-ctl-after ui-ctl-icon-loader\"></span>"]);
+
+	  _templateObject20 = function _templateObject20() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject19() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-address-control-item\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>"]);
+
+	  _templateObject19 = function _templateObject19() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject18() {
+	  var data = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-link ui-link-secondary\">", ":</span>"]);
 
 	  _templateObject18 = function _templateObject18() {
 	    return data;
@@ -13,7 +73,7 @@ this.BX = this.BX || {};
 	}
 
 	function _templateObject17() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<button class=\"ui-ctl-after ui-ctl-icon-clear\" onclick=\"", "\"></button>"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-entity-editor-content-block-text\">\n\t\t\t\t<span class=\"ui-link ui-link-dark ui-link-dotted\">", "</span>\n\t\t\t</div>"]);
 
 	  _templateObject17 = function _templateObject17() {
 	    return data;
@@ -23,7 +83,7 @@ this.BX = this.BX || {};
 	}
 
 	function _templateObject16() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-ctl-after ui-ctl-icon-loader\"></span>"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-address-control-item\">\n\t\t\t\t<div class=\"crm-address-control-mode-switch\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>"]);
 
 	  _templateObject16 = function _templateObject16() {
 	    return data;
@@ -33,7 +93,7 @@ this.BX = this.BX || {};
 	}
 
 	function _templateObject15() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-address-control-item\">\n\t\t\t\t", "\n\t\t\t</div>"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-link ui-link-secondary ui-entity-editor-block-title-link\" onclick=\"", "\">", "</span>"]);
 
 	  _templateObject15 = function _templateObject15() {
 	    return data;
@@ -43,7 +103,7 @@ this.BX = this.BX || {};
 	}
 
 	function _templateObject14() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-entity-editor-content-block-text\">\n\t\t\t\t<span class=\"ui-link ui-link-dark ui-link-dotted\">", "</span>\n\t\t\t</div>"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-link ui-link-secondary ui-entity-editor-block-title-link\" onclick=\"", "\"></span>"]);
 
 	  _templateObject14 = function _templateObject14() {
 	    return data;
@@ -53,7 +113,7 @@ this.BX = this.BX || {};
 	}
 
 	function _templateObject13() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-address-control-item\">\n\t\t\t\t<div class=\"crm-address-control-mode-switch\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"location-fields-control-block crm-address-type-block\">\n\t\t\t\t\t\t<div class=\"ui-entity-editor-content-block ui-entity-editor-field-text\">\n\t\t\t\t\t\t\t<div class=\"ui-entity-editor-block-title\">\n\t\t\t\t\t\t\t\t<label class=\"ui-entity-editor-block-title-text\">", "</label>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>"]);
 
 	  _templateObject13 = function _templateObject13() {
 	    return data;
@@ -63,7 +123,7 @@ this.BX = this.BX || {};
 	}
 
 	function _templateObject12() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-link ui-link-secondary ui-entity-editor-block-title-link\" onclick=\"", "\"></span>"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-after-icon ui-ctl-dropdown\" onclick=\"", "\">\n\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>"]);
 
 	  _templateObject12 = function _templateObject12() {
 	    return data;
@@ -73,7 +133,7 @@ this.BX = this.BX || {};
 	}
 
 	function _templateObject11() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"location-fields-control-block crm-address-type-block\">\n\t\t\t\t<div class=\"ui-entity-editor-content-block ui-entity-editor-field-text\">\n\t\t\t\t\t<div class=\"ui-entity-editor-block-title\">\n\t\t\t\t\t\t<label class=\"ui-entity-editor-block-title-text\">", "</label>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-ctl-inline ui-ctl-w100\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t"]);
 
 	  _templateObject11 = function _templateObject11() {
 	    return data;
@@ -83,7 +143,7 @@ this.BX = this.BX || {};
 	}
 
 	function _templateObject10() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-after-icon ui-ctl-dropdown\" onclick=\"", "\">\n\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t", "\n\t\t\t</div>"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-inline ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w25\" onclick=\"", "\">\n\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>"]);
 
 	  _templateObject10 = function _templateObject10() {
 	    return data;
@@ -205,6 +265,8 @@ this.BX = this.BX || {};
 	      this._isEditMode = true;
 	      this._showFirstItemOnly = BX.prop.getBoolean(settings, 'showFirstItemOnly', false);
 	      this._enableAutocomplete = BX.prop.getBoolean(settings, 'enableAutocomplete', true);
+	      this._hideDefaultAddressType = BX.prop.getBoolean(this._settings, 'hideDefaultAddressType', false);
+	      this._showAddressTypeInViewMode = BX.prop.getBoolean(this._settings, 'showAddressTypeInViewMode', false);
 	    }
 	  }, {
 	    key: "setMultiple",
@@ -468,6 +530,7 @@ this.BX = this.BX || {};
 	        availableTypesIds: babelHelpers.toConsumableArray(this._availableTypesIds),
 	        canChangeType: this._isMultiple,
 	        enableAutocomplete: this._enableAutocomplete,
+	        showAddressTypeInViewMode: this._isMultiple && this._showAddressTypeInViewMode,
 	        type: type,
 	        value: value
 	      });
@@ -477,9 +540,13 @@ this.BX = this.BX || {};
 	      addressItem.subscribe('onStartLoadAddress', this.onStartLoadAddress.bind(this));
 	      addressItem.subscribe('onAddressLoaded', this.onAddressLoaded.bind(this));
 	      addressItem.subscribe('onError', this.onError.bind(this));
+	      addressItem.subscribe('onCopyAddress', this.onCopyAddress.bind(this));
 	      this.updateAvailableTypes(type, null);
 
 	      this._addressList.push(addressItem);
+
+	      this.updateTypeSelectorVisibility(this._addressList.length > 1);
+	      return addressItem;
 	    }
 	  }, {
 	    key: "removeAddress",
@@ -492,6 +559,7 @@ this.BX = this.BX || {};
 	        this._addressList.splice(this._addressList.indexOf(addressItem), 1);
 
 	        this.updateAvailableTypes(null, type);
+	        this.updateTypeSelectorVisibility(this._addressList.length > 1);
 	        addressItem.destroy();
 	      }
 	    }
@@ -547,6 +615,27 @@ this.BX = this.BX || {};
 	        _iterator9.e(err);
 	      } finally {
 	        _iterator9.f();
+	      }
+	    }
+	  }, {
+	    key: "updateTypeSelectorVisibility",
+	    value: function updateTypeSelectorVisibility(showTypeSelector) {
+	      if (!this._hideDefaultAddressType) {
+	        return;
+	      }
+
+	      var _iterator10 = _createForOfIteratorHelper(this._addressList),
+	          _step10;
+
+	      try {
+	        for (_iterator10.s(); !(_step10 = _iterator10.n()).done;) {
+	          var addressItem = _step10.value;
+	          addressItem.setTypeSelectorVisibility(showTypeSelector);
+	        }
+	      } catch (err) {
+	        _iterator10.e(err);
+	      } finally {
+	        _iterator10.f();
 	      }
 	    }
 	  }, {
@@ -620,6 +709,50 @@ this.BX = this.BX || {};
 	    value: function onError(event) {
 	      main_core_events.EventEmitter.emit(this, 'onError', event);
 	    }
+	  }, {
+	    key: "onCopyAddress",
+	    value: function onCopyAddress(event) {
+	      var _this = this;
+
+	      var data = event.getData();
+	      var sourceAddress = this.getAddressById(data.sourceId);
+
+	      if (!sourceAddress) {
+	        return;
+	      }
+
+	      var sourceAddressData = sourceAddress.getValue();
+
+	      if (!sourceAddressData.length) {
+	        return;
+	      }
+
+	      var _loop = function _loop(i) {
+	        var type = data.destinationTypes[i];
+
+	        var destinationAddress = _this._addressList.filter(function (item) {
+	          return item.getType() == type;
+	        }).reduce(function (prev, cur) {
+	          return prev ? prev : cur;
+	        }, null);
+
+	        if (destinationAddress) {
+	          destinationAddress.setValue(sourceAddressData);
+	        } else {
+	          destinationAddress = _this.addAddress(type, sourceAddressData);
+	        }
+
+	        destinationAddress.markAsNew();
+
+	        _this.refreshLayout();
+	      };
+
+	      for (var i = 0; i < data.destinationTypes.length; i++) {
+	        _loop(i);
+	      }
+
+	      this.emitUpdateEvent();
+	    }
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
@@ -635,33 +768,36 @@ this.BX = this.BX || {};
 	  babelHelpers.inherits(AddressItem, _EventEmitter);
 
 	  function AddressItem(id, settings) {
-	    var _this;
+	    var _this2;
 
 	    babelHelpers.classCallCheck(this, AddressItem);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(AddressItem).call(this));
+	    _this2 = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(AddressItem).call(this));
 
-	    _this.setEventNamespace('BX.Crm.AddressItem');
+	    _this2.setEventNamespace('BX.Crm.AddressItem');
 
-	    _this._id = id;
-	    _this._value = BX.prop.getString(settings, 'value', "");
-	    _this._isTypesMenuOpened = false;
-	    _this._typesList = BX.prop.getArray(settings, 'typesList', []);
-	    _this._availableTypesIds = BX.prop.getArray(settings, 'availableTypesIds', []);
-	    _this._canChangeType = BX.prop.getBoolean(settings, 'canChangeType', false);
-	    _this.typesMenuId = 'address_type_menu_' + _this._id;
-	    _this._type = BX.prop.getString(settings, 'type', "");
-	    _this._isEditMode = true;
-	    _this._isAutocompleteEnabled = BX.prop.getBoolean(settings, 'enableAutocomplete', true);
-	    _this._showDetails = !_this._isAutocompleteEnabled || BX.prop.getBoolean(settings, 'showDetails', false);
-	    _this._isLoading = false;
-	    _this._addressWidget = null;
-	    _this._wrapper = null;
-	    _this._domNodes = {};
-	    _this._isLocationModuleInstalled = !main_core.Type.isUndefined(BX.Location) && !main_core.Type.isUndefined(BX.Location.Core) && !main_core.Type.isUndefined(BX.Location.Widget);
+	    _this2._id = id;
+	    _this2._value = BX.prop.getString(settings, 'value', "");
+	    _this2._isTypesMenuOpened = false;
+	    _this2._typesList = BX.prop.getArray(settings, 'typesList', []);
+	    _this2._availableTypesIds = BX.prop.getArray(settings, 'availableTypesIds', []);
+	    _this2._canChangeType = BX.prop.getBoolean(settings, 'canChangeType', false);
+	    _this2.typesMenuId = 'address_type_menu_' + _this2._id;
+	    _this2._type = BX.prop.getString(settings, 'type', "");
+	    _this2._isEditMode = true;
+	    _this2._isTypeSelectorVisible = BX.prop.getBoolean(settings, 'isTypeSelectorVisible', true);
+	    _this2._isAutocompleteEnabled = BX.prop.getBoolean(settings, 'enableAutocomplete', true);
+	    _this2._showAddressTypeInViewMode = BX.prop.getBoolean(settings, 'showAddressTypeInViewMode', true);
+	    _this2._showDetails = !_this2._isAutocompleteEnabled || BX.prop.getBoolean(settings, 'showDetails', false);
+	    _this2._isLoading = false;
+	    _this2._addressWidget = null;
+	    _this2._wrapper = null;
+	    _this2._domNodes = {};
+	    _this2._selectedCopyDestinations = [];
+	    _this2._isLocationModuleInstalled = !main_core.Type.isUndefined(BX.Location) && !main_core.Type.isUndefined(BX.Location.Core) && !main_core.Type.isUndefined(BX.Location.Widget);
 
-	    _this.initializeAddressWidget();
+	    _this2.initializeAddressWidget();
 
-	    return _this;
+	    return _this2;
 	  }
 
 	  babelHelpers.createClass(AddressItem, [{
@@ -711,6 +847,25 @@ this.BX = this.BX || {};
 	      return this._value;
 	    }
 	  }, {
+	    key: "setValue",
+	    value: function setValue(value) {
+	      this.destroy();
+	      this._value = value;
+	      this.initializeAddressWidget();
+	    }
+	  }, {
+	    key: "markAsNew",
+	    value: function markAsNew() {
+	      var address = this.getAddress();
+
+	      if (address) {
+	        address.id = 0;
+	        address.clearLinks();
+	      }
+
+	      this._value = address ? address.toJson() : '';
+	    }
+	  }, {
 	    key: "setEditMode",
 	    value: function setEditMode(isEditMode) {
 	      this._isEditMode = !!isEditMode;
@@ -757,7 +912,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "openTypesMenu",
 	    value: function openTypesMenu(bindElement) {
-	      var _this2 = this;
+	      var _this3 = this;
 
 	      if (this._isTypesMenuOpened) {
 	        return;
@@ -765,12 +920,12 @@ this.BX = this.BX || {};
 
 	      var menu = [];
 
-	      var _iterator10 = _createForOfIteratorHelper(this._typesList),
-	          _step10;
+	      var _iterator11 = _createForOfIteratorHelper(this._typesList),
+	          _step11;
 
 	      try {
-	        for (_iterator10.s(); !(_step10 = _iterator10.n()).done;) {
-	          var item = _step10.value;
+	        for (_iterator11.s(); !(_step11 = _iterator11.n()).done;) {
+	          var item = _step11.value;
 	          var selected = item.value === this._type;
 
 	          if (this._availableTypesIds.indexOf(item.value) < 0 && !selected) {
@@ -785,9 +940,9 @@ this.BX = this.BX || {};
 	          });
 	        }
 	      } catch (err) {
-	        _iterator10.e(err);
+	        _iterator11.e(err);
 	      } finally {
-	        _iterator10.f();
+	        _iterator11.f();
 	      }
 
 	      main_popup.MenuManager.show(this.typesMenuId, bindElement, menu, {
@@ -795,16 +950,16 @@ this.BX = this.BX || {};
 	        cacheable: false,
 	        events: {
 	          onPopupShow: function onPopupShow() {
-	            _this2._isTypesMenuOpened = true;
+	            _this3._isTypesMenuOpened = true;
 	          },
 	          onPopupClose: function onPopupClose() {
-	            _this2._isTypesMenuOpened = false;
+	            _this3._isTypesMenuOpened = false;
 	          }
 	        }
 	      });
 	      var createdMenu = main_popup.MenuManager.getMenuById(this.typesMenuId);
 
-	      if (createdMenu && main_core.Type.isDomNode(this._domNodes.addressTypeSelector)) {
+	      if (createdMenu && main_core.Type.isDomNode(this._domNodes.addressTypeSelector) && this._domNodes.addressTypeSelector.offsetWidth > 200) {
 	        createdMenu.getPopupWindow().setWidth(this._domNodes.addressTypeSelector.offsetWidth);
 	      }
 	    }
@@ -818,6 +973,11 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  }, {
+	    key: "setTypeSelectorVisibility",
+	    value: function setTypeSelectorVisibility(visible) {
+	      this._isTypeSelectorVisible = !!visible;
+	    }
+	  }, {
 	    key: "getEditHtml",
 	    value: function getEditHtml(addressString) {
 	      this._domNodes.typeName = main_core.Tag.render(_templateObject5());
@@ -827,17 +987,27 @@ this.BX = this.BX || {};
 	      this._domNodes.detailsContainer = main_core.Tag.render(_templateObject9());
 
 	      if (this._canChangeType) {
-	        this._domNodes.addressTypeSelector = main_core.Tag.render(_templateObject10(), this.onToggleTypesMenu.bind(this), this._domNodes.typeName);
-	        this._domNodes.addressTypeContainer = main_core.Tag.render(_templateObject11(), main_core.Loc.getMessage('CRM_ADDRESS_TYPE'), this._domNodes.addressTypeSelector);
+	        if (this._isTypeSelectorVisible) {
+	          this._domNodes.addressTypeSelector = main_core.Tag.render(_templateObject10(), this.onToggleTypesMenu.bind(this), this._domNodes.typeName);
+	          this._domNodes.addressTypeContainer = null;
+	          main_core.Dom.addClass(this._domNodes.addressContainer, ['ui-ctl-inline', 'ui-ctl-w75']);
+	          this._domNodes.addressContainer = main_core.Tag.render(_templateObject11(), this._domNodes.addressTypeSelector, this._domNodes.addressContainer);
+	        } else {
+	          this._domNodes.addressTypeSelector = main_core.Tag.render(_templateObject12(), this.onToggleTypesMenu.bind(this), this._domNodes.typeName);
+	          this._domNodes.addressTypeContainer = main_core.Tag.render(_templateObject13(), main_core.Loc.getMessage('CRM_ADDRESS_TYPE'), this._domNodes.addressTypeSelector);
+	        }
+
 	        this.refreshTypeName();
 	      }
 
 	      this.refreshIcon();
-	      this._domNodes.detailsToggler = main_core.Tag.render(_templateObject12(), this.onToggleDetailsVisibility.bind(this));
+	      this._domNodes.detailsToggler = main_core.Tag.render(_templateObject14(), this.onToggleDetailsVisibility.bind(this));
+	      this._domNodes.copyButton = main_core.Tag.render(_templateObject15(), this.onCopyButtonClick.bind(this), main_core.Loc.getMessage('CRM_ADDRESS_COPY1'));
+	      this.refreshCopyButtonVisibility();
 	      this.setDetailsVisibility(this._showDetails);
-	      var result = main_core.Tag.render(_templateObject13(), this._domNodes.detailsToggler, this._domNodes.addressContainer, this._domNodes.detailsContainer);
+	      var result = main_core.Tag.render(_templateObject16(), this._domNodes.copyButton ? this._domNodes.copyButton : '', this._domNodes.detailsToggler, this._domNodes.addressContainer, this._domNodes.detailsContainer);
 
-	      if (this._canChangeType) {
+	      if (this._canChangeType && main_core.Type.isDomNode(this._domNodes.addressTypeContainer)) {
 	        main_core.Dom.append(this._domNodes.addressTypeContainer, result);
 	      }
 
@@ -846,20 +1016,37 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getViewHtml",
 	    value: function getViewHtml(addressString) {
-	      this._domNodes.addressContainer = main_core.Tag.render(_templateObject14(), addressString);
-	      return main_core.Tag.render(_templateObject15(), this._domNodes.addressContainer);
+	      var _this4 = this;
+
+	      this._domNodes.addressContainer = main_core.Tag.render(_templateObject17(), addressString);
+	      var addressType = '';
+
+	      if (this._showAddressTypeInViewMode) {
+	        var typeName = this._typesList.filter(function (item) {
+	          return item.value == _this4._type;
+	        }).map(function (item) {
+	          return item.name;
+	        }).join('');
+
+	        addressType = main_core.Tag.render(_templateObject18(), main_core.Text.encode(typeName));
+	      }
+
+	      return main_core.Tag.render(_templateObject19(), addressType, this._domNodes.addressContainer);
 	    }
 	  }, {
 	    key: "refreshTypeName",
 	    value: function refreshTypeName() {
-	      var _this3 = this;
+	      var _this5 = this;
 
 	      if (main_core.Type.isDomNode(this._domNodes.typeName)) {
-	        this._domNodes.typeName.textContent = this._typesList.filter(function (item) {
-	          return item.value === _this3._type;
+	        var typeName = this._typesList.filter(function (item) {
+	          return item.value === _this5._type;
 	        }).map(function (item) {
 	          return item.name;
 	        }).join('');
+
+	        this._domNodes.typeName.textContent = typeName;
+	        this._domNodes.typeName.title = typeName;
 	      }
 	    }
 	  }, {
@@ -871,19 +1058,30 @@ this.BX = this.BX || {};
 	        var newNode;
 
 	        if (this._isLoading) {
-	          newNode = main_core.Tag.render(_templateObject16());
+	          newNode = main_core.Tag.render(_templateObject20());
 	        } else {
 	          var address = this.getAddress();
 
 	          if (address) {
-	            newNode = main_core.Tag.render(_templateObject17(), this.onDelete.bind(this));
+	            newNode = main_core.Tag.render(_templateObject21(), this.onDelete.bind(this));
 	          } else {
-	            newNode = main_core.Tag.render(_templateObject18(), this._isAutocompleteEnabled ? 'ui-ctl-icon-search' : '');
+	            newNode = main_core.Tag.render(_templateObject22(), this._isAutocompleteEnabled ? 'ui-ctl-icon-search' : '');
 	          }
 	        }
 
 	        main_core.Dom.replace(node, newNode);
 	        this._domNodes.icon = newNode;
+	      }
+	    }
+	  }, {
+	    key: "refreshCopyButtonVisibility",
+	    value: function refreshCopyButtonVisibility() {
+	      var node = this._domNodes.copyButton;
+
+	      if (main_core.Type.isDomNode(node)) {
+	        var isVisible = !!this.getAddress();
+
+	        main_core.Dom.style(node, 'display', isVisible ? '' : 'none');
 	      }
 	    }
 	  }, {
@@ -921,6 +1119,7 @@ this.BX = this.BX || {};
 	      this._value = "";
 	      this._isLoading = false;
 	      this.refreshIcon();
+	      this.refreshCopyButtonVisibility();
 	    }
 	  }, {
 	    key: "setDetailsVisibility",
@@ -950,6 +1149,49 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  }, {
+	    key: "showCopyDestinationPopup",
+	    value: function showCopyDestinationPopup() {
+	      var _this6 = this;
+
+	      var popup = main_popup.PopupManager.create({
+	        id: this._id + '_copy_dst_popup',
+	        cacheable: false,
+	        autoHide: true,
+	        titleBar: main_core.Loc.getMessage('CRM_ADDRESS_COPY_TITLE'),
+	        content: this.getCopyDestinationLayout(),
+	        closeIcon: true,
+	        closeByEsc: true,
+	        buttons: [new BX.UI.Button({
+	          id: 'copy',
+	          text: main_core.Loc.getMessage('CRM_ADDRESS_COPY2'),
+	          color: BX.UI.Button.Color.PRIMARY,
+	          state: BX.UI.ButtonState.DISABLED,
+	          onclick: function onclick(button) {
+	            button.getContext().close();
+
+	            _this6.emit('onCopyAddress', {
+	              sourceId: _this6.getId(),
+	              destinationTypes: _this6._selectedCopyDestinations
+	            });
+	          }
+	        })]
+	      });
+	      popup.show();
+	    }
+	  }, {
+	    key: "getCopyDestinationLayout",
+	    value: function getCopyDestinationLayout() {
+	      var _this7 = this;
+
+	      var types = this._typesList.filter(function (item) {
+	        return item.value != _this7._type;
+	      });
+
+	      return main_core.Tag.render(_templateObject23(), main_core.Loc.getMessage('CRM_ADDRESS_COPY_TO'), types.map(function (item) {
+	        return main_core.Tag.render(_templateObject24(), _this7.onChangeCopyDestination.bind(_this7), item.value, main_core.Text.encode(item.name));
+	      }));
+	    }
+	  }, {
 	    key: "destroy",
 	    value: function destroy() {
 	      if (!main_core.Type.isNull(this._addressWidget)) {
@@ -969,6 +1211,36 @@ this.BX = this.BX || {};
 	        id: this.getId(),
 	        value: this.getValue()
 	      });
+	    }
+	  }, {
+	    key: "onCopyButtonClick",
+	    value: function onCopyButtonClick() {
+	      this.showCopyDestinationPopup();
+	    }
+	  }, {
+	    key: "onChangeCopyDestination",
+	    value: function onChangeCopyDestination(e) {
+	      var input = e.target;
+	      var value = input ? input.value : null;
+	      var isChecked = input ? input.checked : false;
+
+	      if (isChecked && this._selectedCopyDestinations.indexOf(value) < 0) {
+	        this._selectedCopyDestinations.push(value);
+	      }
+
+	      if (!isChecked && this._selectedCopyDestinations.indexOf(value) >= 0) {
+	        this._selectedCopyDestinations.splice(this._selectedCopyDestinations.indexOf(value), 1);
+	      }
+
+	      var popup = main_popup.PopupManager.getPopupById(this._id + '_copy_dst_popup');
+
+	      if (popup) {
+	        var button = popup.getButton('copy');
+
+	        if (button) {
+	          button.setDisabled(!this._selectedCopyDestinations.length);
+	        }
+	      }
 	    }
 	  }, {
 	    key: "onToggleTypesMenu",
@@ -1005,6 +1277,7 @@ this.BX = this.BX || {};
 
 	      if (wasLoading !== this._isLoading) {
 	        this.refreshIcon();
+	        this.refreshCopyButtonVisibility();
 	      }
 
 	      if (state === BX.Location.Widget.State.DATA_LOADING) {
@@ -1026,6 +1299,7 @@ this.BX = this.BX || {};
 	      var data = event.getData();
 	      this._value = main_core.Type.isObject(data.address) ? data.address.toJson() : '';
 	      this.refreshIcon();
+	      this.refreshCopyButtonVisibility();
 	      this.emit('onUpdateAddress', {
 	        id: this.getId(),
 	        value: this.getValue()
@@ -1041,6 +1315,7 @@ this.BX = this.BX || {};
 	      }).join(', ');
 	      this._isLoading = false;
 	      this.refreshIcon();
+	      this.refreshCopyButtonVisibility();
 	      this.emit('onError', {
 	        id: this.getId(),
 	        error: errorMessage

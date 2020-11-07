@@ -343,6 +343,20 @@
 	background-color: #1B7195;
 }
 
+.salescenter-wooppay-iframe-icon{ width: 97px; }
+.salescenter-wooppay-iframe-icon i{
+	background-image: url(images/wooppay_iframe.svg);
+	background-size: 90% auto;
+	background-color: #2F80ED;
+}
+
+.salescenter-wooppay-checkout-icon { width: 97px; }
+.salescenter-wooppay-checkout-icon i {
+	background-image: url(images/wooppay_checkout.svg);
+	background-size: 90% auto;
+	background-color: #2F80ED;
+}
+
 .salescenter-main-header-right-block {
 	width: 100%;
 }

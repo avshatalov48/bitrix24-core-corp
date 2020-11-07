@@ -14,7 +14,7 @@ if (!empty($arResult["ERROR_MESSAGE"])):
 	?><div class="photo-error"><?=ShowError($arResult["ERROR_MESSAGE"])?></div><?
 endif;
 
-if ($arParams["LIVEFEED_EVENT_ID"] == "photo")
+if ($arParams["LIVEFEED_EVENT_ID"] === "photo")
 {
 	$albumToken = randString(6);
 	?><div class="post-item-attached-img-wrap" id="album_wrap_<?=$albumToken?>"><?
@@ -94,7 +94,7 @@ if ($arParams["LIVEFEED_EVENT_ID"] == "photo")
 }
 else
 {
-	?><div id="gallery_wrap"><?
+	?><div id="gallery_wrap" class="post-item-photo-album"><?
 	$jsIds = "";
 	foreach ($arResult["ELEMENTS_LIST"] as $key => $arItem)
 	{

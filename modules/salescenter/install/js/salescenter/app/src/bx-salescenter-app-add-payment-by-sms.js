@@ -93,7 +93,8 @@ Vue.component(config.templateAddPaymentBySms,
 					sort: 600,
 					type: 'DELIVERY',
 					title: Loc.getMessage('SALESCENTER_DELIVERY_BLOCK_TITLE'),
-					stage: 'disabled',
+					stage: this.$root.$app.options.deliveryList.isInstalled ? 'complete' :'disabled',
+					set: this.$root.$app.options.deliveryList.isInstalled,
 					itemData: this.$root.$app.options.deliveryList
 				}
 			);
@@ -125,11 +126,6 @@ Vue.component(config.templateAddPaymentBySms,
 		localize()
 		{
 			return Vue.getFilteredPhrases('SALESCENTER_TIMELINE_');
-		},
-
-		iMessageAvailable()
-		{
-			return this.$root.$app.isApplePayAvailable && this.$root.$app.connector === 'imessage';
 		},
 	},
 
@@ -186,12 +182,6 @@ Vue.component(config.templateAddPaymentBySms,
 						</div>
 					</div>
 				</div>
-			</div>
-			<div v-if="iMessageAvailable" class="salescenter-app-payment-container">
-				<label class="ui-ctl ui-ctl-checkbox">
-					<input type="checkbox" class="ui-ctl-element" @change="handleIMessagePayment($event)">
-					<div class="ui-ctl-label-text">{{localize.SALESCENTER_IMESSAGE_PAYMENT}}</div>
-				</label>
 			</div>
 		<component :is="'timeline-list-block'" :items="timeline.items"/>
 	</div>

@@ -11,257 +11,85 @@ use Bitrix\Crm\Agent\Requisite\ContactUfAddressConvertAgent;
 use Bitrix\Crm\Entity\EntityEditorConfigScope;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Security\EntityAuthorization;
-use Bitrix\Ui\EntityForm\Scope;
 
 Loc::loadMessages(__FILE__);
 
-class CCrmEntityEditorComponent extends CBitrixComponent
+if(!Bitrix\Main\Loader::includeModule('crm'))
+{
+	ShowError(Bitrix\Main\Localization\Loc::getMessage('CRM_MODULE_NOT_INSTALLED'));
+	return;
+}
+if(!Bitrix\Main\Loader::includeModule('ui'))
+{
+	ShowError(Bitrix\Main\Localization\Loc::getMessage('UI_MODULE_NOT_INSTALLED'));
+	return;
+}
+
+CBitrixComponent::includeComponentClass("bitrix:ui.form");
+
+class CCrmEntityEditorComponent extends UIFormComponent
 {
 	/** @var int */
-	protected $userID = 0;
-	/** @var int */
 	protected $entityTypeID = 0;
-	/** @var int */
-	protected $entityID = 0;
-	/** @var string */
-	protected $guid = '';
-	/** @var string */
-	protected $configID = '';
-	/** @var string */
-	protected $optionID = '';
 
-	/** @var array */
-	protected $errors = array();
-
-	public function executeComponent()
+	protected function emitOnUIFormInitializeEvent(): void
 	{
-		$this->initialize();
-		$this->includeComponentTemplate();
+		$event = new Main\Event('crm', 'onCrmEntityEditorInitialize', ['TEMPLATE' => $this->getTemplateName()]);
+		$event->send();
 	}
 
-	protected function initialize()
+	protected function getDefaultParameters(): array
 	{
-		/** @global CMain $APPLICATION */
-		global $APPLICATION;
-
-		if(!Bitrix\Main\Loader::includeModule('crm'))
-		{
-			$this->errors[] = GetMessage('CRM_MODULE_NOT_INSTALLED');
-			return;
-		}
-		if(!Bitrix\Main\Loader::includeModule('ui'))
-		{
-			$this->errors[] = GetMessage('UI_MODULE_NOT_INSTALLED');
-			return;
-		}
-
-		$this->userID = CCrmSecurityHelper::GetCurrentUserID();
-		$this->guid = $this->arResult['GUID'] = isset($this->arParams['GUID']) ? $this->arParams['GUID'] : 'entity_editor';
-		$this->configID = $this->arResult['CONFIG_ID'] = isset($this->arParams['CONFIG_ID']) ? $this->arParams['CONFIG_ID'] : $this->guid;
-
-		$this->arResult['READ_ONLY'] = isset($this->arParams['~READ_ONLY'])
-			&& $this->arParams['~READ_ONLY'];
-
-		$this->arResult['INITIAL_MODE'] = isset($this->arParams['~INITIAL_MODE'])
-			? $this->arParams['~INITIAL_MODE'] : '';
-
-		$this->arResult['ENABLE_MODE_TOGGLE'] = !isset($this->arParams['~ENABLE_MODE_TOGGLE'])
-			|| $this->arParams['~ENABLE_MODE_TOGGLE'];
-
-		$this->arResult['ENABLE_VISIBILITY_POLICY'] = !isset($this->arParams['~ENABLE_VISIBILITY_POLICY'])
-			|| $this->arParams['~ENABLE_VISIBILITY_POLICY'];
-
-		$this->arResult['ENABLE_TOOL_PANEL'] = !isset($this->arParams['~ENABLE_TOOL_PANEL'])
-			|| $this->arParams['~ENABLE_TOOL_PANEL'];
-
-		$this->arResult['ENABLE_BOTTOM_PANEL'] = !isset($this->arParams['~ENABLE_BOTTOM_PANEL'])
-			|| $this->arParams['~ENABLE_BOTTOM_PANEL'];
-
-		$this->arResult['ENABLE_FIELDS_CONTEXT_MENU'] = !isset($this->arParams['~ENABLE_FIELDS_CONTEXT_MENU'])
-			|| $this->arParams['~ENABLE_FIELDS_CONTEXT_MENU'];
-
-		$this->arResult['ENABLE_PAGE_TITLE_CONTROLS'] = !isset($this->arParams['~ENABLE_PAGE_TITLE_CONTROLS'])
-			|| $this->arParams['~ENABLE_PAGE_TITLE_CONTROLS'];
-
-		$this->arResult['ENABLE_COMMUNICATION_CONTROLS'] = !isset($this->arParams['~ENABLE_COMMUNICATION_CONTROLS'])
-			|| $this->arParams['~ENABLE_COMMUNICATION_CONTROLS'];
-
-		$this->arResult['ENABLE_REQUIRED_FIELDS_INJECTION'] = !isset($this->arParams['~ENABLE_REQUIRED_FIELDS_INJECTION'])
-			|| $this->arParams['~ENABLE_REQUIRED_FIELDS_INJECTION'];
-
-		$this->arResult['ENABLE_AVAILABLE_FIELDS_INJECTION'] = isset($this->arParams['~ENABLE_AVAILABLE_FIELDS_INJECTION'])
-			&& $this->arParams['~ENABLE_AVAILABLE_FIELDS_INJECTION'];
-
-		$this->arResult['ENABLE_EXTERNAL_LAYOUT_RESOLVERS'] = isset($this->arParams['~ENABLE_EXTERNAL_LAYOUT_RESOLVERS'])
-			&& $this->arParams['~ENABLE_EXTERNAL_LAYOUT_RESOLVERS'];
-
-		$this->arResult['SHOW_EMPTY_FIELDS'] = isset($this->arParams['~SHOW_EMPTY_FIELDS'])
-			&& $this->arParams['~SHOW_EMPTY_FIELDS'];
-
-		$this->entityTypeID = isset($this->arParams['ENTITY_TYPE_ID'])
-			? (int)$this->arParams['ENTITY_TYPE_ID'] : CCrmOwnerType::Undefined;
-		$this->entityID = isset($this->arParams['ENTITY_ID'])
-			? (int)$this->arParams['ENTITY_ID'] : 0;
-
-		$this->arResult['ENTITY_TYPE_ID'] = $this->entityTypeID;
-		$this->arResult['ENTITY_ID'] = $this->entityID;
-
-		$this->arResult['ENTITY_DATA'] = isset($this->arParams['~ENTITY_DATA']) && is_array($this->arParams['~ENTITY_DATA'])
-			? $this->arParams['~ENTITY_DATA'] : array();
-
-		$this->arResult['ENTITY_FIELDS'] = isset($this->arParams['~ENTITY_FIELDS']) && is_array($this->arParams['~ENTITY_FIELDS'])
-			? $this->arParams['~ENTITY_FIELDS'] : array();
-
-		$this->arResult['ENTITY_VALIDATORS'] = isset($this->arParams['~ENTITY_VALIDATORS']) && is_array($this->arParams['~ENTITY_VALIDATORS'])
-			? $this->arParams['~ENTITY_VALIDATORS'] : array();
-
-		$this->arResult['DETAIL_MANAGER_ID'] = isset($this->arParams['~DETAIL_MANAGER_ID']) ? $this->arParams['~DETAIL_MANAGER_ID'] : '';
-
-		$config = null;
-		if(isset($this->arParams['~SCOPE']) && EntityEditorConfigScope::isDefined($this->arParams['~SCOPE']))
-		{
-			$configScope = $this->arParams['~SCOPE'];
-		}
-		else
-		{
-			$scopePrefix = isset($this->arParams['~SCOPE_PREFIX']) ? $this->arParams['~SCOPE_PREFIX'] : '';
-			if($scopePrefix === '')
-			{
-				$scopePrefix = mb_strtolower($this->configID);
-			}
-
-			$configScope = CUserOptions::GetOption(
-				'crm.entity.editor',
-				"{$scopePrefix}_scope",
-				EntityEditorConfigScope::UNDEFINED
-			);
-		}
-
-		if (
-			is_array($configScope)
-			&&
-			(
-				\CCrmAuthorizationHelper::CheckConfigurationUpdatePermission()
-				|| Scope::getInstance()->isHasScope($configScope['userScopeId'])
-			)
-		)
-		{
-			$userScopeId = $this->arResult['USER_SCOPE_ID'] = $configScope['userScopeId'];
-			$configScope = $configScope['scope'];
-		}
-		// if userScope has been deleted or current user is not a member of this userScope
-		elseif (is_array($configScope) && !Scope::getInstance()->isHasScope($configScope['userScopeId']))
-		{
-			$userScopeId = $this->arResult['USER_SCOPE_ID'] = null;
-			$configScope = EntityEditorConfigScope::COMMON;
-		}
-		else
-		{
-			$userScopeId = $this->arResult['USER_SCOPE_ID'] = null;
-		}
-
-		$this->arResult['USER_SCOPES'] = (
-		isset($scopePrefix)
-			? Scope::getInstance()->getUserScopes($scopePrefix, ($this->arParams['MODULE_ID'] ?? null))
-			: null
+		return array_merge(
+			parent::getDefaultParameters(),
+			[
+				'GUID' =>'entity_editor',
+				'ENABLE_PAGE_TITLE_CONTROLS' => true,
+				'ENABLE_COMMUNICATION_CONTROLS' => true,
+				'ENABLE_REQUIRED_FIELDS_INJECTION' => true,
+				'ENABLE_AVAILABLE_FIELDS_INJECTION' => false,
+				'ENABLE_EXTERNAL_LAYOUT_RESOLVERS' => false,
+				'SHOW_EMPTY_FIELDS' => false,
+				'ENTITY_TYPE_ID' => CCrmOwnerType::Undefined,
+				'DUPLICATE_CONTROL' => [],
+				'USER_FIELD_PREFIX' => 'CRM',
+			]
 		);
+	}
 
-		$config = null;
-		if(!(isset($this->arParams['~FORCE_DEFAULT_CONFIG']) && $this->arParams['~FORCE_DEFAULT_CONFIG']))
-		{
-			if($configScope === EntityEditorConfigScope::UNDEFINED)
-			{
-				$config = CUserOptions::GetOption(
-					'crm.entity.editor',
-					$this->configID,
-					null
-				);
+	protected function getConfigurationCategoryName(): string
+	{
+		return 'crm.entity.editor';
+	}
 
-				if(is_array($config) && !empty($config))
-				{
-					$configScope = EntityEditorConfigScope::PERSONAL;
-				}
-				else
-				{
-					$config = CUserOptions::GetOption(
-						'crm.entity.editor',
-						"{$this->configID}_common",
-						null,
-						0
-					);
-					$configScope = EntityEditorConfigScope::COMMON;
-				}
-			}
-			elseif($configScope === EntityEditorConfigScope::COMMON)
-			{
-				$config = CUserOptions::GetOption(
-					'crm.entity.editor',
-					"{$this->configID}_common",
-					null,
-					0
-				);
-			}
-			elseif($configScope === EntityEditorConfigScope::CUSTOM)
-			{
-				$config = Scope::getInstance()->getScopeById($userScopeId);
-			}
-			else
-			{
-				$config = CUserOptions::GetOption(
-					'crm.entity.editor',
-					$this->configID,
-					null
-				);
-			}
-		}
+	protected function getConfigurationOptionCategoryName(): string
+	{
+		return $this->getConfigurationCategoryName();
+	}
 
-		if(
-			(!$config && $configScope === EntityEditorConfigScope::CUSTOM)
-			|| $configScope === EntityEditorConfigScope::UNDEFINED
-		)
-		{
-			$configScope = is_array(CUserOptions::GetOption('crm.entity.editor', $this->configID, null))
-				? EntityEditorConfigScope::PERSONAL
-				: EntityEditorConfigScope::COMMON;
-		}
-
-		$defaultConfig = array();
-		if(!is_array($config) || empty($config))
-		{
-			$config = isset($this->arParams['~ENTITY_CONFIG']) && is_array($this->arParams['~ENTITY_CONFIG'])
-				? $this->arParams['~ENTITY_CONFIG'] : array();
-		}
-		elseif(isset($this->arParams['~ENTITY_CONFIG']) && is_array($this->arParams['~ENTITY_CONFIG']))
-		{
-			foreach($this->arParams['~ENTITY_CONFIG'] as $element)
-			{
-				$defaultConfig[$element['name']] = $element;
-			}
-		}
-
-		$this->arResult['ENTITY_CONTROLLERS'] = isset($this->arParams['~ENTITY_CONTROLLERS']) && is_array($this->arParams['~ENTITY_CONTROLLERS'])
-				? $this->arParams['~ENTITY_CONTROLLERS'] : array();
-
-		$availableFields = array();
+	protected function getFieldsInfo(array $entityFields, array $entityData): array
+	{
+		$availableFields = [];
 		$requiredFields = array();
 		$hasEmptyRequiredFields = false;
-		$htmlFieldNames = array();
+		$htmlFieldNames = [];
 		$isUfAddressConverterEnabled = $this->isUfAddressConvertionEnabled();
 		foreach($this->arResult['ENTITY_FIELDS'] as $index => $field)
 		{
-			$name = isset($field['name']) ? $field['name'] : '';
+			$name = $field['name'] ?? '';
 			if($name === '')
 			{
 				continue;
 			}
 
-			$typeName = isset($field['type']) ? $field['type'] : '';
+			$typeName = $field['type'] ?? '';
 			if($typeName === 'html')
 			{
 				$htmlFieldNames[] = $name;
 			}
 
-			if ($isUfAddressConverterEnabled
+			if (
+				$isUfAddressConverterEnabled
 				&& $typeName === 'userField'
 				&& is_array($field['data'])
 				&& is_array($field['data']['fieldInfo'])
@@ -275,7 +103,7 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 					$this->arResult['ENTITY_FIELDS'][$index]['data']['options'] = [];
 				}
 				$this->arResult['ENTITY_FIELDS'][$index]['data']['options']['canActivateUfAddressConverter'] =
-					$field['data']['options']['canActivateUfAddressConverter'] = 'Y';
+				$field['data']['options']['canActivateUfAddressConverter'] = 'Y';
 			}
 
 			$availableFields[$name] = $field;
@@ -288,11 +116,10 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 				}
 
 				//HACK: Skip if user field of type Boolean. Absence of value is treated as equivalent to FALSE.
-				$fieldType = isset($field['type']) ? $field['type'] : '';
+				$fieldType = $field['type'] ?? '';
 				if($fieldType === 'userField')
 				{
-					$fieldInfo = isset($field['data']) && isset($field['data']['fieldInfo'])
-						? $field['data']['fieldInfo'] : array();
+					$fieldInfo = $field['data']['fieldInfo'] ?? [];
 
 					if(isset($fieldInfo['USER_TYPE_ID']) && $fieldInfo['USER_TYPE_ID'] === 'boolean')
 					{
@@ -300,9 +127,9 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 					}
 				}
 
-				if(isset($this->arResult['ENTITY_DATA'][$name])
+				if(
+					isset($this->arResult['ENTITY_DATA'][$name]['IS_EMPTY'])
 					&& is_array($this->arResult['ENTITY_DATA'][$name])
-					&& isset($this->arResult['ENTITY_DATA'][$name]['IS_EMPTY'])
 					&& $this->arResult['ENTITY_DATA'][$name]['IS_EMPTY']
 				)
 				{
@@ -311,85 +138,112 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 			}
 		}
 
+		return [
+			'available' => $availableFields,
+			'required' => $requiredFields,
+			'hasEmptyRequiredFields' => $hasEmptyRequiredFields,
+			'html' => $htmlFieldNames,
+		];
+	}
+
+	protected function processScheme(
+		array $config,
+		array $defaultConfig,
+		string $configScope,
+		array &$fieldsInfo
+	): array
+	{
+		$availableFields = $fieldsInfo['available'];
+		$requiredFields = $fieldsInfo['required'];
+
+		$primaryColumnIndex = 0;
 		$primarySectionIndex = 0;
+		$serviceColumnIndex = -1;
 		$serviceSectionIndex = -1;
+		$additionalColumnIndex = -1;
 		$additionalSectionIndex = -1;
-		$scheme = array();
-		for($i = 0, $configQty = count($config); $i < $configQty; $i++)
+		$scheme = [];
+		foreach ($config as $j => $column)
 		{
-			$configItem = $config[$i];
-			$type = isset($configItem['type']) ? $configItem['type'] : '';
-			if($type !== 'section')
-			{
-				continue;
-			}
+			$columnScheme = [];
 
-			$sectionName = isset($configItem['name']) ? $configItem['name'] : '';
-			if($sectionName === 'main')
+			foreach ($column['elements'] as $i => $configItem)
 			{
-				$primarySectionIndex = $i;
-			}
-			elseif($sectionName === 'required')
-			{
-				$serviceSectionIndex = $i;
-			}
-			elseif($sectionName === 'additional')
-			{
-				$additionalSectionIndex = $i;
-			}
+				$type = $configItem['type'] ?? '';
 
-			if (is_array($defaultConfig[$sectionName]) && !empty($defaultConfig[$sectionName]['data']))
-			{
-				$configItem['data'] = $defaultConfig[$sectionName]['data'];
-			}
-
-			$elements = isset($configItem['elements']) && is_array($configItem['elements'])
-				? $configItem['elements'] : array();
-
-			$schemeElements = array();
-			for($j = 0, $elementQty = count($elements); $j < $elementQty; $j++)
-			{
-				$configElement = $elements[$j];
-				$name = isset($configElement['name']) ? $configElement['name'] : '';
-				if($name === '')
+				if ($type !== self::SECTION_TYPE && $type !== self::INCLUDED_AREA_TYPE)
 				{
 					continue;
 				}
 
-				$schemeElement = $availableFields[$name];
-				$fieldType = isset($schemeElement['type']) ? $schemeElement['type'] : '';
-
-				$title = '';
-				if(!($configScope === EntityEditorConfigScope::COMMON && $fieldType === 'userField'))
+				$sectionName = $configItem['name'] ?? '';
+				if ($sectionName === static::SECTION_MAIN)
 				{
-					$title = isset($configElement['title']) ? $configElement['title'] : '';
+					$primaryColumnIndex = $j;
+					$primarySectionIndex = $i;
+				}
+				elseif ($sectionName === static::SECTION_REQUIRED)
+				{
+					$serviceColumnIndex = $j;
+					$serviceSectionIndex = $i;
+				}
+				elseif ($sectionName === static::SECTION_ADDITIONAL)
+				{
+					$additionalColumnIndex = $j;
+					$additionalSectionIndex = $i;
 				}
 
-				if($title !== '')
+				if (is_array($defaultConfig[$sectionName]) && !empty($defaultConfig[$sectionName]['data'])) {
+					$configItem['data'] = $defaultConfig[$sectionName]['data'];
+				}
+
+				$elements = isset($configItem['elements']) && is_array($configItem['elements'])
+					? $configItem['elements'] : array();
+
+				$schemeElements = array();
+				foreach($elements as $configElement)
 				{
-					if(isset($schemeElement['title']))
-					{
-						$schemeElement['originalTitle'] = $schemeElement['title'];
+					$name = $configElement['name'] ?? '';
+					if ($name === '') {
+						continue;
 					}
-					$schemeElement['title'] = $title;
-				}
 
-				$optionFlags = isset($configElement['optionFlags']) ? (int)$configElement['optionFlags'] : 0;
-				if($optionFlags > 0)
-				{
-					$schemeElement['optionFlags'] = $optionFlags;
-				}
+					$schemeElement = $availableFields[$name];
+					$fieldType = $schemeElement['type'] ?? '';
 
-				$schemeElements[] = $schemeElement;
-				unset($availableFields[$name]);
+					$title = '';
+					if (!($configScope === EntityEditorConfigScope::COMMON && $fieldType === 'userField')) {
+						$title = $configElement['title'];
+					}
 
-				if(isset($requiredFields[$name]))
-				{
+					if ($title !== '') {
+						if (isset($schemeElement['title'])) {
+							$schemeElement['originalTitle'] = $schemeElement['title'];
+						}
+						$schemeElement['title'] = $title;
+					}
+
+					$optionFlags = isset($configElement['optionFlags']) ? (int)$configElement['optionFlags'] : 0;
+					if ($optionFlags > 0) {
+						$schemeElement['optionFlags'] = $optionFlags;
+					}
+
+					$schemeElement['options'] = (isset($configElement['options']) && is_array($configElement['options']))
+						? $configElement['options']
+						: [];
+
+					$schemeElements[] = $schemeElement;
+					unset($availableFields[$name]);
 					unset($requiredFields[$name]);
 				}
+
+				$columnScheme[] = array_merge($configItem, ['elements' => $schemeElements]);
 			}
-			$scheme[] = array_merge($configItem, array('elements' => $schemeElements));
+
+			$scheme[] = array_merge($column, ['elements' => $columnScheme]);
 		}
+
+		$hasEmptyRequiredFields = $fieldsInfo['hasEmptyRequiredFields'];
 
 		//Add section 'Required Fields'
 		if(!$this->arResult['READ_ONLY'])
@@ -423,15 +277,16 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 					);
 
 					$serviceSectionIndex = $primarySectionIndex + 1;
+					$serviceColumnIndex = $primaryColumnIndex;
 					array_splice(
-						$config,
+						$config[$serviceColumnIndex]['elements'],
 						$serviceSectionIndex,
 						0,
 						array($configItem)
 					);
 
 					array_splice(
-						$scheme,
+						$scheme[$serviceColumnIndex]['elements'],
 						$serviceSectionIndex,
 						0,
 						array(array_merge($configItem, array('elements' => array())))
@@ -444,7 +299,7 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 					$schemeElements[] = $fieldInfo;
 				}
 
-				$scheme[$serviceSectionIndex]['elements'] = $schemeElements;
+				$scheme[$serviceColumnIndex]['elements'][$serviceSectionIndex]['elements'] = $schemeElements;
 			}
 		}
 
@@ -453,12 +308,12 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 			$schemeElements = array();
 			if($additionalSectionIndex >= 0)
 			{
-				$configItem = $config[$additionalSectionIndex];
-				if(isset($scheme[$additionalSectionIndex]['elements'])
-					&& is_array($scheme[$additionalSectionIndex]['elements'])
+				$configItem = $config[$additionalColumnIndex]['elements'][$additionalSectionIndex];
+				if(isset($scheme[$additionalColumnIndex]['elements'][$additionalSectionIndex]['elements'])
+					&& is_array($scheme[$additionalColumnIndex]['elements'][$additionalSectionIndex]['elements'])
 				)
 				{
-					$schemeElements = $scheme[$additionalSectionIndex]['elements'];
+					$schemeElements = $scheme[$additionalColumnIndex]['elements'][$additionalSectionIndex]['elements'];
 				}
 			}
 			else
@@ -470,16 +325,25 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 					'elements' => array()
 				);
 
-				$additionalSectionIndex = ($serviceSectionIndex >= 0 ? $serviceSectionIndex : $primarySectionIndex) + 1;
+				if ($serviceSectionIndex >= 0)
+				{
+					$additionalColumnIndex = $serviceColumnIndex;
+					$additionalSectionIndex = $serviceSectionIndex;
+				}
+				else
+				{
+					$additionalColumnIndex = $primaryColumnIndex;
+					$additionalSectionIndex = $primarySectionIndex;
+				}
 				array_splice(
-					$config,
+					$config[$additionalColumnIndex]['elements'],
 					$additionalSectionIndex,
 					0,
 					array($configItem)
 				);
 
 				array_splice(
-					$scheme,
+					$scheme[$additionalColumnIndex]['elements'],
 					$additionalSectionIndex,
 					0,
 					array(array_merge($configItem, array('elements' => array())))
@@ -498,32 +362,32 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 				unset($availableFields[$fieldName]);
 			}
 
-			$scheme[$additionalSectionIndex]['elements'] = $schemeElements;
+			$scheme[$additionalColumnIndex]['elements'][$additionalSectionIndex]['elements'] = $schemeElements;
 		}
 
-		$this->arResult['ENABLE_CONFIG_SCOPE_TOGGLE'] = !isset($this->arParams['~ENABLE_CONFIG_SCOPE_TOGGLE'])
-			|| $this->arParams['~ENABLE_CONFIG_SCOPE_TOGGLE'];
-		$this->arResult['ENTITY_CONFIG_SCOPE'] = $configScope;
-		$this->arResult['ENTITY_CONFIG'] = $config;
-		$this->arResult['ENTITY_SCHEME'] = $scheme;
+		$fieldsInfo['available'] = $availableFields;
 
-		$this->arResult['ENTITY_AVAILABLE_FIELDS'] = array_values($availableFields);
-		$this->arResult['ENTITY_HTML_FIELD_NAMES'] = $htmlFieldNames;
+		return $scheme;
+	}
 
-		$this->arResult['ENABLE_AJAX_FORM'] = !isset($this->arParams['~ENABLE_AJAX_FORM'])
-			|| $this->arParams['~ENABLE_AJAX_FORM'];
+	protected function initialize()
+	{
+		/** @global CMain $APPLICATION */
+		global $APPLICATION;
 
-		$this->arResult['ENABLE_REQUIRED_USER_FIELD_CHECK'] = !isset($this->arParams['~ENABLE_REQUIRED_USER_FIELD_CHECK'])
-			|| $this->arParams['~ENABLE_REQUIRED_USER_FIELD_CHECK'];
+		$this->userID = CCrmSecurityHelper::GetCurrentUserID();
 
-		$this->arResult['ENABLE_USER_FIELD_CREATION'] = isset($this->arParams['~ENABLE_USER_FIELD_CREATION'])
-			&& $this->arParams['~ENABLE_USER_FIELD_CREATION'];
-		$this->arResult['USER_FIELD_ENTITY_ID'] = isset($this->arParams['~USER_FIELD_ENTITY_ID'])
-			? $this->arParams['~USER_FIELD_ENTITY_ID'] : '';
-		$this->arResult['USER_FIELD_CREATE_PAGE_URL'] = isset($this->arParams['~USER_FIELD_CREATE_PAGE_URL'])
-			? $this->arParams['~USER_FIELD_CREATE_PAGE_URL'] : '';
-		$this->arResult['USER_FIELD_CREATE_SIGNATURE'] = isset($this->arParams['~USER_FIELD_CREATE_SIGNATURE'])
-			? $this->arParams['~USER_FIELD_CREATE_SIGNATURE'] : '';
+		$this->arResult = $this->prepareParameters($this->arParams);
+
+		$this->guid = $this->arResult['GUID'];
+		$this->configID = $this->arResult['CONFIG_ID'] ?? $this->guid;
+
+		$this->entityID = $this->arResult['ENTITY_ID'];
+		$this->entityTypeID = $this->arResult['ENTITY_TYPE_ID'];
+		$this->entityTypeName = CCrmOwnerType::ResolveName($this->entityTypeID);
+		$this->arResult['ENTITY_TYPE_NAME'] = $this->entityTypeName;
+
+		$this->prepareConfig();
 
 		$this->arResult['ENABLE_SETTINGS_FOR_ALL'] = CCrmAuthorizationHelper::CanEditOtherSettings();
 
@@ -556,28 +420,6 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 		}
 		//endregion
 
-		$this->arResult['ENABLE_SECTION_EDIT'] = isset($this->arParams['~ENABLE_SECTION_EDIT'])
-			&& $this->arParams['~ENABLE_SECTION_EDIT'];
-
-		$this->arResult['ENABLE_SECTION_CREATION'] = isset($this->arParams['~ENABLE_SECTION_CREATION'])
-			&& $this->arParams['~ENABLE_SECTION_CREATION'];
-
-		$this->arResult['SERVICE_URL'] = isset($this->arParams['~SERVICE_URL'])
-			? $this->arParams['~SERVICE_URL'] : '';
-
-		$this->arResult['IS_EMBEDDED'] = isset($this->arParams['~IS_EMBEDDED'])
-			&& $this->arParams['~IS_EMBEDDED'];
-
-		$this->arResult['EXTERNAL_CONTEXT_ID'] = isset($this->arParams['~EXTERNAL_CONTEXT_ID']) ? $this->arParams['~EXTERNAL_CONTEXT_ID'] : '';
-		$this->arResult['CONTEXT_ID'] = isset($this->arParams['~CONTEXT_ID']) ? $this->arParams['~CONTEXT_ID'] : '';
-
-		$this->arResult['CONTEXT'] = isset($this->arParams['~CONTEXT']) && is_array($this->arParams['~CONTEXT'])
-			? $this->arParams['~CONTEXT'] : array();
-		$this->arResult['CONTEXT']['EDITOR_CONFIG_ID'] = $this->configID;
-
-		$this->arResult['DUPLICATE_CONTROL'] = isset($this->arParams['~DUPLICATE_CONTROL']) && is_array($this->arParams['~DUPLICATE_CONTROL'])
-			? $this->arParams['~DUPLICATE_CONTROL'] : array();
-
 		$this->arResult['PATH_TO_ENTITY_DETAILS'] = \CCrmOwnerType::GetDetailsUrl(
 			$this->entityTypeID,
 			$this->entityID,
@@ -587,7 +429,7 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 		$this->arResult['PATH_TO_CONTACT_CREATE'] = CComponentEngine::makePathFromTemplate(
 			\CrmCheckPath(
 				'PATH_TO_CONTACT_DETAILS',
-				isset($this->arParams['~PATH_TO_CONTACT_DETAILS']) ? $this->arParams['~PATH_TO_CONTACT_DETAILS'] : '',
+				$this->arParams['~PATH_TO_CONTACT_DETAILS'] ?? '',
 				$APPLICATION->GetCurPage().'?contact_id=#contact_id#&details'
 			),
 			array('contact_id' => 0)
@@ -595,20 +437,20 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 		$this->arResult['PATH_TO_CONTACT_EDIT'] = CComponentEngine::makePathFromTemplate(
 			\CrmCheckPath(
 				'PATH_TO_CONTACT_DETAILS',
-				isset($this->arParams['~PATH_TO_CONTACT_DETAILS']) ? $this->arParams['~PATH_TO_CONTACT_DETAILS'] : '',
+				$this->arParams['~PATH_TO_CONTACT_DETAILS'] ?? '',
 				$APPLICATION->GetCurPage().'?contact_id=#contact_id#&details'
 			),
 			array('contact_id' => '#id#')
 		);
 		$this->arResult['PATH_TO_CONTACT_REQUISITE_SELECT'] = \CrmCheckPath(
 			'PATH_TO_CONTACT_REQUISITE_SELECT',
-			isset($this->arParams['~PATH_TO_CONTACT_REQUISITE_SELECT']) ? $this->arParams['~PATH_TO_CONTACT_REQUISITE_SELECT'] : '',
+			$this->arParams['~PATH_TO_CONTACT_REQUISITE_SELECT'] ?? '',
 			$APPLICATION->GetCurPage().'?contact_id=#contact_id#&requisiteselect'
 		);
 		$this->arResult['PATH_TO_COMPANY_CREATE'] = CComponentEngine::makePathFromTemplate(
 			\CrmCheckPath(
 				'PATH_TO_COMPANY_DETAILS',
-				isset($this->arParams['~PATH_TO_COMPANY_DETAILS']) ? $this->arParams['~PATH_TO_COMPANY_DETAILS'] : '',
+				$this->arParams['~PATH_TO_COMPANY_DETAILS'] ?? '',
 				$APPLICATION->GetCurPage().'?company_id=#company_id#&details'
 			),
 			array('company_id' => 0)
@@ -616,18 +458,20 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 		$this->arResult['PATH_TO_COMPANY_EDIT'] = CComponentEngine::makePathFromTemplate(
 			\CrmCheckPath(
 				'PATH_TO_COMPANY_DETAILS',
-				isset($this->arParams['~PATH_TO_COMPANY_DETAILS']) ? $this->arParams['~PATH_TO_COMPANY_DETAILS'] : '',
+				$this->arParams['~PATH_TO_COMPANY_DETAILS'] ?? '',
 				$APPLICATION->GetCurPage().'?company_id=#company_id#&details'
 			),
 			array('company_id' => "#id#")
 		);
 		$this->arResult['PATH_TO_COMPANY_REQUISITE_SELECT'] = \CrmCheckPath(
 			'PATH_TO_COMPANY_REQUISITE_SELECT',
-			isset($this->arParams['~PATH_TO_COMPANY_REQUISITE_SELECT']) ? $this->arParams['~PATH_TO_COMPANY_REQUISITE_SELECT'] : '',
+			$this->arParams['~PATH_TO_COMPANY_REQUISITE_SELECT'] ?? '',
 			$APPLICATION->GetCurPage().'?company_id=#company_id#&requisiteselect'
 		);
 
 		$this->arResult['PATH_TO_REQUISITE_EDIT'] = '/bitrix/components/bitrix/crm.requisite.details/slider.ajax.php?requisite_id=#requisite_id#&'.bitrix_sessid_get();
+
+		$this->arResult['USER_FIELD_FILE_URL_TEMPLATE'] = ($this->arParams['~USER_FIELD_FILE_URL_TEMPLATE'] ?? null);
 
 		//region Permissions
 		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
@@ -635,14 +479,7 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 		$this->arResult['CAN_CREATE_COMPANY'] = \CCrmCompany::CheckCreatePermission($userPermissions);
 		//endregion
 
-		//region Languages
-		$this->arResult['LANGUAGES'] = array();
-		$dbResultLangs = \CLanguage::GetList($by = '', $order = '');
-		while($lang = $dbResultLangs->Fetch())
-		{
-			$this->arResult['LANGUAGES'][] = array('LID' => $lang['LID'], 'NAME' => $lang['NAME']);
-		}
-		//endregion
+		$this->arResult['LANGUAGES'] = $this->loadLanguages();
 
 		//region Attribute configuration
 		$this->arResult['ATTRIBUTE_CONFIG'] = null;
@@ -707,32 +544,10 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 		}
 		//end Rest placement and userfield types
 
-		$optionPrefix = isset($this->arParams['~OPTION_PREFIX']) ? $this->arParams['~OPTION_PREFIX'] : '';
-		if($optionPrefix === '')
-		{
-			$optionPrefix = mb_strtolower($this->configID);
-		}
-		if($configScope === EntityEditorConfigScope::COMMON)
-		{
-			$this->optionID = $this->arResult['OPTION_ID'] = "{$optionPrefix}_common_opts";
-			$this->arResult['ENTITY_CONFIG_OPTIONS'] = \CUserOptions::GetOption(
-				'crm.entity.editor',
-				$this->optionID,
-				array('client_layout' => \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->getClientLayoutType()),
-				0
-			);
-		}
-		else
-		{
-			$this->optionID = $this->arResult['OPTION_ID'] = "{$optionPrefix}_opts";
-			$this->arResult['ENTITY_CONFIG_OPTIONS'] = \CUserOptions::GetOption(
-				'crm.entity.editor',
-				$this->optionID,
-				array('client_layout' => \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->getClientLayoutType())
-			);
-		}
+		$this->arResult['ENTITY_CONFIG_OPTIONS'] = $this->getEntityConfigOptions();
 
 		$this->arResult['EDITOR_OPTIONS'] = array('show_always' => 'Y');
+		$this->arResult['ENTITY_CONFIG_CATEGORY_NAME'] = $this->getConfigurationCategoryName();
 
 		//region Spotlight
 		$this->arResult['INLINE_EDIT_SPOTLIGHT_ID'] = "crm-entity-editor-inline-edit-hint";
@@ -746,10 +561,19 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 			\Bitrix\Main\Loader::includeModule('calendar');
 		}
 
+		$this->arResult['CONTEXT']['EDITOR_CONFIG_ID'] = $this->configID;
+
 		$this->prepareUfAccessRightRestriction();
 	}
 
-	protected function getAdditionalUserFieldTypeList()
+	protected function getDefaultEntityConfigOptions(): array
+	{
+		return [
+			'client_layout' => \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->getClientLayoutType()
+		];
+	}
+
+	protected function getAdditionalUserFieldTypeList(): array
 	{
 		$typeList = array();
 		if(Main\Loader::includeModule('rest'))

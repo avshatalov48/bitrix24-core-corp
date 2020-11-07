@@ -1,18 +1,30 @@
 <?php
+
 namespace Bitrix\ImBot\Bot;
 
-use Bitrix\ImBot\Log;
+use Bitrix\Main;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Im;
 use Bitrix\ImBot;
+use Bitrix\ImBot\Log;
 
 Loc::loadMessages(__FILE__);
 
 class Network extends Base
 {
 	const BOT_CODE = "network";
+
+	public const COMMAND_UNREGISTER = 'unregister';
+	public const COMMAND_OPERATOR_MESSAGE_ADD = 'operatorMessageAdd';
+	public const COMMAND_OPERATOR_MESSAGE_UPDATE = 'operatorMessageUpdate';
+	public const COMMAND_OPERATOR_MESSAGE_DELETE = 'operatorMessageDelete';
+	public const COMMAND_OPERATOR_MESSAGE_RECEIVED = 'operatorMessageReceived';
+	public const COMMAND_OPERATOR_START_WRITING = 'operatorStartWriting';
+	public const COMMAND_START_DIALOG_SESSION = 'startDialogSession';
+	public const COMMAND_FINISH_DIALOG_SESSION = 'finishDialogSession';
+	public const COMMAND_CHECK_PUBLIC_URL = 'CheckPublicUrl';
 
 	protected static $blackListOfCodes = Array(
 		'1' => "88c8eccd63f6ff5a59ba04e5b0f2012a",
@@ -26,6 +38,8 @@ class Network extends Base
 		'9' => "239e498332e63b5ee62b9e9fb0ff5a8d",
 	);
 
+	//region Bot commands
+
 	/**
 	 * @param array $params
 	 * @param string $params['CODE']
@@ -33,29 +47,37 @@ class Network extends Base
 	 * @param string $params['LINE_DESC']
 	 * @param string $params['LINE_AVATAR']
 	 * @param string $params['LINE_WELCOME_MESSAGE']
-	 * @param string $params['OPTIONS']
 	 * @param string $params['AGENT'] Agent mode - Y|N
+	 * @param array $params['OPTIONS']
+	 * @param string $params['OPTIONS']['TYPE']
+	 * @param string $params['OPTIONS']['PARTNER_NAME']
 	 *
 	 * @return bool|int|string
 	 */
 	public static function register(array $params = Array())
 	{
 		if (!\Bitrix\Main\Loader::includeModule('im'))
+		{
 			return false;
+		}
 
 		if (empty($params['CODE']))
+		{
 			return false;
+		}
 
 		$agentMode = isset($params['AGENT']) && $params['AGENT'] == 'Y';
 
 		$botId = self::getNetworkBotId($params['CODE'], true);
 		if ($botId)
-			return $agentMode? "": $botId;
+		{
+			return $agentMode ? "" : $botId;
+		}
 
-		$properties = Array(
+		$properties = [
 			'NAME' => $params['LINE_NAME'],
 			'WORK_POSITION' => $params['LINE_DESC']? $params['LINE_DESC']: Loc::getMessage('IMBOT_NETWORK_BOT_WORK_POSITION'),
-		);
+		];
 
 		$avatarData = self::uploadAvatar($params['LINE_AVATAR']);
 		if ($avatarData)
@@ -63,29 +85,42 @@ class Network extends Base
 			$properties['PERSONAL_PHOTO'] = $avatarData;
 		}
 
-		$botId = \Bitrix\Im\Bot::register(Array(
+		$botParams = [
 			'APP_ID' => $params['CODE'],
 			'CODE' => self::BOT_CODE.'_'.$params['CODE'],
 			'MODULE_ID' => self::MODULE_ID,
 			'TYPE' => \Bitrix\Im\Bot::TYPE_NETWORK,
 			'INSTALL_TYPE' => \Bitrix\Im\Bot::INSTALL_TYPE_SILENT,
-			'CLASS' => __CLASS__,
-			'METHOD_MESSAGE_ADD' => 'onMessageAdd',
-			'METHOD_BOT_DELETE' => 'onBotDelete',
-			'TEXT_PRIVATE_WELCOME_MESSAGE' => isset($params['LINE_WELCOME_MESSAGE'])? $params['LINE_WELCOME_MESSAGE']: '',
+			'CLASS' => isset($params['CLASS']) ? $params['CLASS'] : static::class,
+			'METHOD_MESSAGE_ADD' => 'onMessageAdd',/** @see \Bitrix\ImBot\Bot\Network::onMessageAdd */
+			'METHOD_BOT_DELETE' => 'onBotDelete',/** @see \Bitrix\ImBot\Bot\Network::onBotDelete */
+			'TEXT_PRIVATE_WELCOME_MESSAGE' => isset($params['LINE_WELCOME_MESSAGE']) ? $params['LINE_WELCOME_MESSAGE'] : '',
 			'PROPERTIES' => $properties
-		));
+		];
+
+		$botId = static::getBotId();
+		if ($botId > 0)
+		{
+			\Bitrix\Im\Bot::update(['BOT_ID' => $botId], $botParams);
+		}
+		else
+		{
+			$botId = \Bitrix\Im\Bot::register($botParams);
+		}
 
 		if ($botId)
 		{
-			$sendParams = Array('CODE' => $params['CODE'], 'BOT_ID' => $botId);
+			$sendParams = [
+				'CODE' => $params['CODE'],
+				'BOT_ID' => $botId
+			];
 			if (isset($params['OPTIONS']) && !empty($params['OPTIONS']))
 			{
 				$sendParams['OPTIONS'] = $params['OPTIONS'];
 			}
 
-			$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
-			$result = $http->query('RegisterBot', $sendParams, true);
+			$http = self::instanceHttpClient(self::BOT_CODE);
+			$result = $http->query('RegisterBot', $sendParams, true);/** @see \Bitrix\Botcontroller\Bot\Network::registerBot */
 			if (isset($result['error']))
 			{
 				self::unRegister($params['CODE'], false);
@@ -106,23 +141,25 @@ class Network extends Base
 			\Bitrix\Im\Command::register(Array(
 				'MODULE_ID' => self::MODULE_ID,
 				'BOT_ID' => $botId,
-				'COMMAND' => 'unregister',
+				'COMMAND' => self::COMMAND_UNREGISTER,
 				'HIDDEN' => 'Y',
 				'CLASS' => __CLASS__,
-				'METHOD_COMMAND_ADD' => 'onLocalCommandAdd'
+				'METHOD_COMMAND_ADD' => 'onLocalCommandAdd'/** @see \Bitrix\ImBot\Bot\Network::onLocalCommandAdd */
 			));
 		}
 
-		return $agentMode? "": $botId;
+		return $agentMode ? "" : $botId;
 	}
 
 	/**
-	 * @param string $code
-	 * @param bool $serverRequest
+	 * Unregister bot at portal.
 	 *
-	 * @return bool|array
+	 * @param string $code Open Line Id.
+	 * @param bool $notifyController Send unregister notification request to controller.
+	 *
+	 * @return bool
 	 */
-	public static function unRegister($code = '', $serverRequest = true)
+	public static function unRegister($code = '', $notifyController = true)
 	{
 		if (!\Bitrix\Main\Loader::includeModule('im'))
 		{
@@ -143,12 +180,12 @@ class Network extends Base
 		$result = \Bitrix\Im\Bot::unRegister(Array('BOT_ID' => $botId));
 		if (!$result)
 		{
-			return $result;
+			return false;
 		}
 
 		self::setNetworkBotId($code, 0);
 
-		if ($serverRequest)
+		if ($notifyController)
 		{
 			$result = self::sendUnregisterRequest($code, $botId);
 		}
@@ -160,11 +197,11 @@ class Network extends Base
 	 * @param string $code
 	 * @param int $botId
 	 *
-	 * @return bool|array
+	 * @return bool
 	 */
 	public static function sendUnregisterRequest($code, $botId)
 	{
-		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
+		$http = self::instanceHttpClient(self::BOT_CODE);
 
 		$result = $http->query(
 			'UnRegisterBot',
@@ -172,16 +209,249 @@ class Network extends Base
 			true
 		);
 
+		if (isset($result['error']))
+		{
+			$message = Loc::getMessage('IMBOT_NETWORK_ERROR_'.mb_strtoupper($result['error']['code']));
+			if (empty($message))
+			{
+				$message = $result['error']['msg'];
+			}
+			self::$lastError = new ImBot\Error(
+				__METHOD__,
+				$result['error']['code'],
+				$message
+			);
+
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Sends finalize session notification.
+	 * @param array $params <pre>
+	 * [
+	 * 	(string) LICENCE_TYPE
+	 * 	(string) LICENCE_NAME
+	 * 	(string) BOT_CODE
+	 * 	(string) MESSAGE
+	 * ]
+	 * </pre>
+	 *
+	 * @return bool
+	 */
+	public static function sendRequestFinalizeSession(array $params = [])
+	{
+		if (!static::getBotId())
+		{
+			return false;
+		}
+		if (!static::getBotCode())
+		{
+			return false;
+		}
+
+		if (Main\Loader::includeModule('bitrix24'))
+		{
+			$currentLicence = \CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_CURRENT);
+			$currentLicenceName = \CBitrix24::getLicenseName($currentLicence);
+		}
+		elseif (isset($params['LICENCE_TYPE']))
+		{
+			$currentLicence = $params['LICENCE_TYPE'];
+			$currentLicenceName = $params['LICENCE_NAME'];
+		}
+		else
+		{
+			$currentLicence = 'box';
+			$currentLicenceName = 'Box';
+		}
+
+		$message = $params['MESSAGE'] ?? '';
+		$botCode = $params['BOT_CODE'] ?? static::getBotCode();
+
+		$http = self::instanceHttpClient(self::BOT_CODE);
+		$http->query(
+			'clientRequestFinalizeSession', /** @see \Bitrix\Botcontroller\Bot\Network::clientRequestFinalizeSession */
+			Array(
+				'BOT_ID' => static::getBotId(),
+				'CURRENT_LICENCE_TYPE' => $currentLicence,
+				'CURRENT_LICENCE_NAME' => $currentLicenceName,
+				'CURRENT_BOT_CODE' => $botCode,
+				'MESSAGE' => $message,
+			),
+			false
+		);
+
+		return true;
+	}
+
+	/**
+	 * Loads bot settings from controller.
+	 * @return array|null
+	 */
+	public static function getBotSettings()
+	{
+		$portalTariff = 'box';
+		if (Main\Loader::includeModule('bitrix24'))
+		{
+			$portalTariff = \CBitrix24::getLicenseType();
+			if ($portalTariff == 'demo')
+			{
+				$portalTariff = \CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_PREVIOUS);
+				$portalTariff = $portalTariff.'+demo';
+			}
+		}
+
+		$http = self::instanceHttpClient(self::BOT_CODE);
+
+		$result = $http->query(
+			'getSettingsSupportBot',  /** @see \Bitrix\Botcontroller\Bot\Network\Command\SettingsSupport */
+			[
+				'LICENSE_TYPE' => $portalTariff,
+			],
+			true
+		);
+
+		if (isset($result['error']))
+		{
+			$message = Loc::getMessage('IMBOT_NETWORK_ERROR_'. mb_strtoupper($result['error']['code']));
+			if (empty($message))
+			{
+				if ($result['error']['msg'] !== '')
+				{
+					$message = $result['error']['msg'];
+				}
+				else
+				{
+					$message = Loc::getMessage('IMBOT_NETWORK_ERROR_SETTINGS_FAIL', ['#ERROR#' => $result['error']['code']]);
+				}
+			}
+			self::$lastError = new ImBot\Error(
+				__METHOD__,
+				$result['error']['code'],
+				$message
+			);
+
+			return null;
+		}
+
 		return $result;
 	}
 
 	/**
+	 * Checks availability of the external public url.
+	 *
+	 * @param string $publicUrl Portal public url.
+	 * @return bool
+	 */
+	public static function checkPublicUrl($publicUrl = null)
+	{
+		$publicUrl = $publicUrl ?? ImBot\Http::getServerAddress();
+		if (empty($publicUrl))
+		{
+			$message = Loc::getMessage('IMBOT_NETWORK_ERROR_PUBLIC_URL_EMPTY');
+			if (empty($message))
+			{
+				$message = 'Cannot detect a value of the portal public url.';
+			}
+
+			self::$lastError = new ImBot\Error(
+				__METHOD__,
+				'PUBLIC_URL_EMPTY',
+				$message
+			);
+
+			return false;
+		}
+
+		if (!($parsedUrl = \parse_url($publicUrl)) || empty($parsedUrl['host']) || !in_array($parsedUrl['scheme'], ['http', 'https']))
+		{
+			$message = Loc::getMessage('IMBOT_NETWORK_ERROR_PUBLIC_URL_MALFORMED');
+			if (empty($message))
+			{
+				$message = 'Portal public url is malformed.';
+			}
+			self::$lastError = new ImBot\Error(
+				__METHOD__,
+				'PUBLIC_URL_MALFORMED',
+				$message
+			);
+
+			return false;
+		}
+
+		// check for local address
+		$host = $parsedUrl['host'];
+		if (
+			preg_match('#^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$#', $host) &&
+			preg_match('#^(127|10|172\.16|192\.168)\.#', $host)
+		)
+		{
+			$message = Loc::getMessage('IMBOT_NETWORK_ERROR_PUBLIC_URL_LOCALHOST', ['#HOST#' => $host]);
+			if (empty($message))
+			{
+				$message = 'Portal public url points to localhost: '.$host;
+			}
+
+			self::$lastError = new ImBot\Error(
+				__METHOD__,
+				'PUBLIC_URL_LOCALHOST',
+				$message
+			);
+
+			return false;
+		}
+
+		$http = self::instanceHttpClient(self::BOT_CODE);
+
+		//todo: Setup $http->domain from $publicUrl for test purpose.
+
+		$result = $http->query('CheckPublicUrl', [], true);
+
+		if (isset($result['error']))
+		{
+			$message = Loc::getMessage('IMBOT_NETWORK_ERROR_'. mb_strtoupper($result['error']['code']));
+			if (empty($message))
+			{
+				if ($result['error']['msg'] !== '')
+				{
+					$message = $result['error']['msg'];
+				}
+				else
+				{
+					$message = Loc::getMessage('IMBOT_NETWORK_ERROR_PUBLIC_URL_FAIL', ['#ERROR#' => $result['error']['code']]);
+				}
+			}
+			self::$lastError = new ImBot\Error(
+				__METHOD__,
+				$result['error']['code'],
+				$message,
+				[
+					($result['error']['errorStack'] ?? ''),
+					($result['error']['errorResult'] ?? '')
+				]
+			);
+
+			return false;
+		}
+
+		return isset($result['RESULT']) && ($result['RESULT'] === 'OK');
+	}
+
+	/**
+	 * Allows to update bot fields (name, desc, avatar, welcome mess) using data from imcomming message
 	 * @return bool
 	 */
 	public static function isNeedUpdateBotFieldsAfterNewMessage()
 	{
 		return true;
 	}
+
+	//endregion
+
+	//region Command dispacher
 
 	/**
 	 * @param string $command
@@ -191,8 +461,10 @@ class Network extends Base
 	 */
 	public static function onReceiveCommand($command, $params)
 	{
-		if($command == "operatorMessageAdd")
+		if($command === self::COMMAND_OPERATOR_MESSAGE_ADD)
 		{
+			Log::write($params, 'NETWORK: operatorMessageAdd');
+
 			static::operatorMessageAdd($params['MESSAGE_ID'], Array(
 				'BOT_ID' => $params['BOT_ID'],
 				'BOT_CODE' => $params['BOT_CODE'],
@@ -208,7 +480,8 @@ class Network extends Base
 
 			$result = Array('RESULT' => 'OK');
 		}
-		else if($command == "operatorMessageUpdate")
+
+		else if($command === self::COMMAND_OPERATOR_MESSAGE_UPDATE)
 		{
 			Log::write($params, 'NETWORK: operatorMessageUpdate');
 
@@ -223,7 +496,8 @@ class Network extends Base
 			));
 			$result = Array('RESULT' => 'OK');
 		}
-		else if($command == "operatorMessageDelete")
+
+		else if($command === self::COMMAND_OPERATOR_MESSAGE_DELETE)
 		{
 			Log::write($params, 'NETWORK: operatorMessageDelete');
 
@@ -235,7 +509,8 @@ class Network extends Base
 
 			$result = Array('RESULT' => 'OK');
 		}
-		else if($command == "operatorStartWriting")
+
+		else if($command === self::COMMAND_OPERATOR_START_WRITING)
 		{
 			Log::write($params, 'NETWORK: operatorStartWriting');
 
@@ -247,7 +522,8 @@ class Network extends Base
 
 			$result = Array('RESULT' => 'OK');
 		}
-		else if($command == "operatorMessageReceived")
+
+		else if($command === self::COMMAND_OPERATOR_MESSAGE_RECEIVED)
 		{
 			Log::write($params, 'NETWORK: operatorMessageReceived');
 
@@ -263,7 +539,7 @@ class Network extends Base
 		}
 
 		// operator OL session start
-		else if($command == "startDialogSession")
+		else if($command === self::COMMAND_START_DIALOG_SESSION)
 		{
 			Log::write($params, 'NETWORK: startDialogSession');
 
@@ -277,7 +553,7 @@ class Network extends Base
 		}
 
 		// operator OL session finish
-		else if($command == "finishDialogSession")
+		else if($command === self::COMMAND_FINISH_DIALOG_SESSION)
 		{
 			Log::write($params, 'NETWORK: finishDialogSession');
 
@@ -290,6 +566,14 @@ class Network extends Base
 			$result = ['RESULT' => 'OK'];
 		}
 
+		// checking access to public url
+		else if($command === self::COMMAND_CHECK_PUBLIC_URL)
+		{
+			Log::write($params, 'NETWORK: CheckPublicUrl');
+
+			$result = ['PONG' => 'OK'];
+		}
+
 		else
 		{
 			$result = new \Bitrix\ImBot\Error(__METHOD__, 'UNKNOWN_COMMAND', 'Command is not found');
@@ -298,7 +582,9 @@ class Network extends Base
 		return $result;
 	}
 
-	//region Client commands
+	//endregion
+
+	//region Operator commands
 
 	/**
 	 * @param int $messageId
@@ -423,7 +709,7 @@ class Network extends Base
 
 				if (empty($message))
 				{
-					$message = Loc::getMessage('IMBOT_NETWORK_ERROR_BOT_NOT_FOUND');
+					$message = Loc::getMessage('IMBOT_NETWORK_ERROR_LINE_DISABLED');
 				}
 			}
 			else
@@ -512,7 +798,7 @@ class Network extends Base
 		$messageId = (int)is_array($fields['MESSAGE'])? $fields['MESSAGE']['ID']: 0;
 		$messageText = (string)(is_array($fields['MESSAGE'])? $fields['MESSAGE']['TEXT']: $fields['MESSAGE']);
 
-		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
+		$http = self::instanceHttpClient(self::BOT_CODE);
 		$result = $http->query(
 			'clientMessageAdd',
 			Array(
@@ -603,7 +889,7 @@ class Network extends Base
 		}
 
 
-		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
+		$http = self::instanceHttpClient(self::BOT_CODE);
 		$http->query(
 			'clientMessageUpdate',
 			Array(
@@ -666,7 +952,7 @@ class Network extends Base
 		}
 
 
-		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
+		$http = self::instanceHttpClient(self::BOT_CODE);
 		$http->query(
 			'clientMessageDelete',
 			Array(
@@ -696,7 +982,7 @@ class Network extends Base
 	 */
 	protected static function clientStartWriting($params)
 	{
-		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
+		$http = self::instanceHttpClient(self::BOT_CODE);
 		$http->query(
 			'clientStartWriting',
 			Array(
@@ -717,7 +1003,7 @@ class Network extends Base
 	 */
 	protected static function clientSessionVote($params)
 	{
-		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
+		$http = self::instanceHttpClient(self::BOT_CODE);
 		$http->query(
 			'clientSessionVote',
 			Array(
@@ -741,7 +1027,7 @@ class Network extends Base
 	 */
 	protected static function clientMessageReceived($params)
 	{
-		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
+		$http = self::instanceHttpClient(self::BOT_CODE);
 		$query = $http->query(
 			'clientMessageReceived',
 			$params
@@ -767,7 +1053,9 @@ class Network extends Base
 	protected static function operatorMessageAdd($messageId, $messageFields)
 	{
 		if (!\Bitrix\Main\Loader::includeModule('im'))
+		{
 			return false;
+		}
 
 		if (!empty($messageFields['BOT_CODE']))
 		{
@@ -883,7 +1171,8 @@ class Network extends Base
 			}
 		}
 
-		if (!empty($messageFields['LINE']))
+		// Update bot fields (name, desc, avatar, welcome mess) using data from imcomming message
+		if (!empty($messageFields['LINE']) && ($needUpdateBotFields || $needUpdateBotAvatar))
 		{
 			$botData = \Bitrix\Im\User::getInstance($messageFields['BOT_ID']);
 
@@ -954,7 +1243,9 @@ class Network extends Base
 	protected static function operatorMessageUpdate($messageId, $messageFields)
 	{
 		if (!\Bitrix\Main\Loader::includeModule('im'))
+		{
 			return false;
+		}
 
 		$messageParamData = \Bitrix\Im\Model\MessageParamTable::getList(Array(
 			'select' => Array('PARAM_VALUE'),
@@ -1013,7 +1304,9 @@ class Network extends Base
 	protected static function operatorMessageDelete($messageId, $messageFields)
 	{
 		if (!\Bitrix\Main\Loader::includeModule('im'))
+		{
 			return false;
+		}
 
 		$messageParamData = \Bitrix\Im\Model\MessageParamTable::getList(Array(
 			'select' => Array('PARAM_VALUE'),
@@ -1037,7 +1330,9 @@ class Network extends Base
 	protected static function operatorStartWriting($params)
 	{
 		if (!\Bitrix\Main\Loader::includeModule('im'))
+		{
 			return false;
+		}
 
 		$userName = '';
 		if (!empty($params['USER']))
@@ -1064,7 +1359,9 @@ class Network extends Base
 	protected static function operatorMessageReceived($params)
 	{
 		if (!\Bitrix\Main\Loader::includeModule('im'))
+		{
 			return false;
+		}
 
 		$messageData = \Bitrix\Im\Model\MessageTable::getList(Array(
 			'select' => Array('CHAT_ID'),
@@ -1106,7 +1403,9 @@ class Network extends Base
 	//region Event handlers
 
 	/**
-	 * @param int $dialogId
+	 * Event handler when bot join to chat.
+	 *
+	 * @param string $dialogId
 	 * @param array $joinFields
 	 *
 	 * @return bool
@@ -1189,26 +1488,38 @@ class Network extends Base
 	public static function onLocalCommandAdd($messageId, $messageFields)
 	{
 		if ($messageFields['SYSTEM'] == 'Y')
+		{
 			return false;
+		}
 
 		if ($messageFields['COMMAND_CONTEXT'] != 'TEXTAREA')
+		{
 			return false;
+		}
 
 		if ($messageFields['MESSAGE_TYPE'] != IM_MESSAGE_PRIVATE)
+		{
 			return false;
+		}
 
-		if ($messageFields['COMMAND'] != 'unregister')
+		if ($messageFields['COMMAND'] != self::COMMAND_UNREGISTER)
+		{
 			return false;
+		}
 
 		global $GLOBALS;
 		$grantAccess = \IsModuleInstalled('bitrix24')? $GLOBALS['USER']->CanDoOperation('bitrix24_config'): $GLOBALS["USER"]->IsAdmin();
 		if (!$grantAccess)
+		{
 			return false;
+		}
 
 		$botData = \Bitrix\Im\Bot::getCache($messageFields['TO_USER_ID']);
 
 		if ($botData['CLASS'] != __CLASS__)
+		{
 			return false;
+		}
 
 		self::unRegister($botData['APP_ID']);
 
@@ -1255,6 +1566,48 @@ class Network extends Base
 		return $result;
 	}
 
+
+	/**
+	 * List of unlimited users.
+	 *
+	 * @see \CBitrix24BusinessTools::getUnlimUsers
+	 * @return int[]
+	 */
+	public static function getBusinessUsers()
+	{
+		$users = [];
+		$option = Main\Config\Option::get('bitrix24', 'business_tools_unlim_users', false);
+		if ($option)
+		{
+			$users = array_map('intVal', explode(",", $option));
+		}
+
+		return $users;
+	}
+
+	/**
+	 * List of administrator users.
+	 * @return int[]
+	 */
+	public static function getAdministrators()
+	{
+		$users = [];
+		if (Main\Loader::includeModule('bitrix24'))
+		{
+			$users = \CBitrix24::getAllAdminId();
+		}
+		else
+		{
+			$res = \CAllGroup::GetGroupUserEx(1);
+			while ($row = $res->fetch())
+			{
+				$users[] = (int)$row["USER_ID"];
+			}
+		}
+
+		return $users;
+	}
+
 	/**
 	 * @param string $messageCode
 	 *
@@ -1265,6 +1618,100 @@ class Network extends Base
 		return Loc::getMessage($messageCode);
 	}
 
+
+	/**
+	 * @param array $messageFields
+	 *
+	 * @return array
+	 */
+	public static function sendMessage($messageFields)
+	{
+		if (!Main\Loader::includeModule('im'))
+		{
+			return [];
+		}
+
+		$userId = 0;
+
+		if (isset($messageFields['TO_USER_ID']))
+		{
+			$userId = $messageFields['TO_USER_ID'];
+		}
+		else if (isset($messageFields['DIALOG_ID']))
+		{
+			if (preg_match('/^[0-9]+$/i', $messageFields['DIALOG_ID']))
+			{
+				$userId = $messageFields['DIALOG_ID'];
+			}
+			else if (
+				$messageFields['DIALOG_ID'] === 'ADMIN'
+				|| $messageFields['DIALOG_ID'] === 'BUSINESS'
+			)
+			{
+				$users = [];
+				if ($messageFields['DIALOG_ID'] === 'ADMIN')
+				{
+					$users = self::getAdministrators();
+				}
+				else if ($messageFields['DIALOG_ID'] === 'BUSINESS')
+				{
+					$users = self::getBusinessUsers();
+				}
+
+				$result = [];
+				foreach ($users as $userId)
+				{
+					$messageFields['DIALOG_ID'] = $userId;
+					$result = array_merge($result, self::sendMessage($messageFields));
+				}
+
+				return $result;
+			}
+		}
+
+		$messageFields['FROM_USER_ID'] = static::getBotId();
+		$messageFields['PARAMS']['IMOL_QUOTE_MSG'] = 'Y';
+
+		$messageFields['MESSAGE'] = static::replacePlaceholders($messageFields['MESSAGE'], $userId);
+
+		$messageId = \CIMMessenger::Add($messageFields);
+		if ($messageId)
+		{
+			return [$messageId];
+		}
+
+		return [];
+	}
+
+	/**
+	 * @param string $message
+	 * @param int $userId
+	 *
+	 * @return string
+	 */
+	public static function replacePlaceholders($message, $userId = 0)
+	{
+		if (!Main\Loader::includeModule('im'))
+		{
+			return $message;
+		}
+
+		if ($userId)
+		{
+			$message = str_replace(Array(
+				'#USER_NAME#',
+				'#USER_LAST_NAME#',
+				'#USER_FULL_NAME#',
+			), Array(
+				\Bitrix\Im\User::getInstance($userId)->getName(false),
+				\Bitrix\Im\User::getInstance($userId)->getLastName(false),
+				\Bitrix\Im\User::getInstance($userId)->getFullName(false),
+			), $message);
+		}
+
+		return $message;
+	}
+
 	/**
 	 * @param string $avatarUrl
 	 *
@@ -1273,18 +1720,24 @@ class Network extends Base
 	public static function uploadAvatar($avatarUrl = '')
 	{
 		if (!$avatarUrl)
+		{
 			return '';
+		}
 
-		if (!in_array(mb_strtolower(\GetFileExtension($avatarUrl)), Array('png', 'jpg')))
+		if (!in_array(mb_strtolower(\GetFileExtension($avatarUrl)), ['png', 'jpg', 'gif', 'jpeg', 'webp']))
+		{
 			return '';
+		}
 
 		$recordFile = \CFile::MakeFileArray($avatarUrl);
 		if (!\CFile::IsImage($recordFile['name'], $recordFile['type']))
+		{
 			return '';
+		}
 
 		if (is_array($recordFile) && $recordFile['size'] && $recordFile['size'] > 0 && $recordFile['size'] < 1000000)
 		{
-			$recordFile = array_merge($recordFile, array('MODULE_ID' => 'imbot'));
+			$recordFile['MODULE_ID'] = 'imbot';
 		}
 		else
 		{
@@ -1295,6 +1748,8 @@ class Network extends Base
 	}
 
 	/**
+	 * Check if network bot exists and registers it.
+	 *
 	 * @param string $code
 	 * @param array $options
 	 *
@@ -1307,7 +1762,7 @@ class Network extends Base
 			return false;
 		}
 
-		$result = \Bitrix\ImBot\Bot\Network::getNetworkBotId($code, true);
+		$result = self::getNetworkBotId($code, true);
 		if ($result)
 		{
 			return $result;
@@ -1320,19 +1775,32 @@ class Network extends Base
 			{
 				$result[0]['OPTIONS'] = $options;
 			}
-			$result = \Bitrix\ImBot\Bot\Network::register($result[0]);
+			$result = self::register($result[0]);
 		}
 
 		return $result;
 	}
 
 	/**
-	 * @param string $text
-	 * @param bool $register
+	 * Looks for the network openline.
 	 *
-	 * @return bool|mixed
+	 * @param string $text Search string. Openline's name or exact code.
+	 * @param bool $doNotCheckBlackList
+	 *
+	 * @return bool|array <pre>
+	 * [
+	 * 	0 => [
+	 * 		(string) CODE,
+	 * 		(string) LINE_NAME,
+	 * 		(string) LINE_DESC,
+	 * 		(string) LINE_WELCOME_MESSAGE,
+	 * 		(string) LINE_AVATAR,
+	 * 		(bool) VERIFIED,
+	 * 	],
+	 * 	...
+	 * </pre>
 	 */
-	public static function search($text, $register = false)
+	public static function search($text, $doNotCheckBlackList = false)
 	{
 		$text = trim($text);
 		if (mb_strlen($text) <= 3)
@@ -1340,14 +1808,14 @@ class Network extends Base
 			return false;
 		}
 
-		if (!$register && in_array($text, self::$blackListOfCodes))
+		if (!$doNotCheckBlackList && in_array($text, self::$blackListOfCodes))
 		{
 			return false;
 		}
 
-		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
+		$http = self::instanceHttpClient(self::BOT_CODE);
 		$result = $http->query(
-			'clientSearchLine',
+			'clientSearchLine', /** @see \Bitrix\Botcontroller\Bot\Network::clientSearchLine */
 			Array('TEXT' => $text),
 			true
 		);
@@ -1420,7 +1888,7 @@ class Network extends Base
 		$send['ACTIVE'] = isset($fields['ACTIVE']) && $fields['ACTIVE'] == 'N'? 'N': 'Y';
 		$send['HIDDEN'] = isset($fields['HIDDEN']) && $fields['HIDDEN'] == 'Y'? 'Y': 'N';
 
-		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
+		$http = self::instanceHttpClient(self::BOT_CODE);
 		$result = $http->query(
 			'RegisterConnector',
 			$send,
@@ -1516,7 +1984,7 @@ class Network extends Base
 			$update['FIELDS']['HIDDEN'] = $fields['HIDDEN'] == 'Y'? 'Y': 'N';
 		}
 
-		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
+		$http = self::instanceHttpClient(self::BOT_CODE);
 		$result = $http->query(
 			'UpdateConnector',
 			$update,
@@ -1544,7 +2012,7 @@ class Network extends Base
 			return false;
 		}
 
-		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
+		$http = self::instanceHttpClient(self::BOT_CODE);
 		$result = $http->query(
 			'UnRegisterConnector',
 			Array('LINE_ID' => $lineId),
@@ -1662,6 +2130,8 @@ class Network extends Base
 
 	//endregion
 
+	//region Bot's parameters
+
 	/**
 	 * @param string $code
 	 * @param int $id
@@ -1688,11 +2158,13 @@ class Network extends Base
 			return false;
 		}
 
+		$optionId = self::BOT_CODE. '_'. $code. '_bot_id';
+
 		if ($getFromDb)
 		{
 			$row = \Bitrix\Im\Model\BotTable::getList(Array(
 				'filter' => Array(
-					'=TYPE' => 'N',
+					'=TYPE' => \Bitrix\Im\Bot::TYPE_NETWORK,
 					'=APP_ID' => $code
 				)
 			))->fetch();
@@ -1701,16 +2173,16 @@ class Network extends Base
 				return 0;
 			}
 
-			$botId = \Bitrix\Main\Config\Option::get(self::MODULE_ID, self::BOT_CODE.'_'.$code."_bot_id", 0);
+			$botId = \Bitrix\Main\Config\Option::get(self::MODULE_ID, $optionId, 0);
 			if ($botId !== $row['BOT_ID'])
 			{
-				\Bitrix\Main\Config\Option::set(self::MODULE_ID, self::BOT_CODE.'_'.$code."_bot_id", $row['BOT_ID']);
+				self::setNetworkBotId($code, $row['BOT_ID']);
 			}
 
 			return $row['BOT_ID'];
 		}
 
-		return \Bitrix\Main\Config\Option::get(self::MODULE_ID, self::BOT_CODE.'_'.$code."_bot_id", 0);
+		return \Bitrix\Main\Config\Option::get(self::MODULE_ID, $optionId, 0);
 	}
 
 	/**
@@ -1720,6 +2192,19 @@ class Network extends Base
 	{
 		return false;
 	}
+	/**
+	 * @param int $id
+	 *
+	 * @return bool
+	 */
+	public static function setBotId($id)
+	{
+		return false;
+	}
+
+	//endregion
+
+	//region First days customer
 
 	/**
 	 * @param string $text
@@ -1729,16 +2214,6 @@ class Network extends Base
 	public static function isFdcCode($text)
 	{
 		return in_array($text, self::$blackListOfCodes);
-	}
-
-	/**
-	 * @param int $id
-	 *
-	 * @return bool
-	 */
-	public static function setBotId($id)
-	{
-		return false;
 	}
 
 	/**
@@ -1796,4 +2271,6 @@ class Network extends Base
 	{
 		return "";
 	}
+
+	//endregion
 }

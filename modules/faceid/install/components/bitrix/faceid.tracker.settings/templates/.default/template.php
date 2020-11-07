@@ -35,10 +35,10 @@ foreach ($jsMessagesCodes as $code)
 			<input type="hidden" name="form" value="ftracker_settings_edit_form" />
 			<input type="hidden" name="action" value="save" id="fts_config_edit_form_action" />
 			<div class="ftr-set-cont-block">
-				<?if(strlen($arResult["ERROR"])>0):?>
+				<?if($arResult["ERROR"] <> ''):?>
 					<div class="ftr-set-cont-error"><?=$arResult['ERROR']?></div>
 				<?endif;?>
-				<?if(strlen($arResult["INFO"])>0):?>
+				<?if($arResult["INFO"] <> ''):?>
 					<div class="ftr-set-cont-info"><?=$arResult['INFO']?></div>
 				<?endif;?>
 				<div class="ftr-set-item">

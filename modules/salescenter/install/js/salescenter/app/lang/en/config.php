@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["SALESCENTER_ACTION_ADD_CUSTOM_TITLE"] = "Add custom page";
 $MESS["SALESCENTER_AUTOMATION_BLOCK_TEXT"] = "Post-payment actions";
 $MESS["SALESCENTER_AUTOMATION_BLOCK_TITLE"] = "Automation";
@@ -17,7 +17,6 @@ $MESS["SALESCENTER_DELIVERY_BLOCK_TITLE"] = "Delivery";
 $MESS["SALESCENTER_ERROR_TEXT"] = "Please check the settings or remove the page from the list";
 $MESS["SALESCENTER_ERROR_TITLE"] = "Cannot show page";
 $MESS["SALESCENTER_HOW"] = "How does it work?";
-$MESS["SALESCENTER_IMESSAGE_PAYMENT"] = "Receive payment via Apple Business Chat";
 $MESS["SALESCENTER_INFO_CREATE"] = "Create";
 $MESS["SALESCENTER_INFO_ORDER_PAGE_DELETED"] = "The checkout page was not found. It may have been deleted.";
 $MESS["SALESCENTER_INFO_PUBLIC"] = "Publish";
@@ -65,6 +64,7 @@ $MESS["SALESCENTER_PRODUCT_HIDE_DISCOUNT"] = "Hide discount";
 $MESS["SALESCENTER_PRODUCT_IS_NOT_AVAILABLE"] = "Insufficient stock";
 $MESS["SALESCENTER_PRODUCT_MEASURE"] = "Unit of measurement";
 $MESS["SALESCENTER_PRODUCT_NAME"] = "Name";
+$MESS["SALESCENTER_PRODUCT_NAME_PLACEHOLDER"] = "Find or create a new product";
 $MESS["SALESCENTER_PRODUCT_NEW_LABEL"] = "new";
 $MESS["SALESCENTER_PRODUCT_NOT_FOUND"] = "No entries have been found.";
 $MESS["SALESCENTER_PRODUCT_PRICE"] = "Price per unit (#CURRENCY_NAME#)";
@@ -103,4 +103,3 @@ $MESS["SALESCENTER_TIMELINE_ITEM_CONTENT_VIEW"] = "View";
 $MESS["SALESCENTER_VIEW"] = "View";
 $MESS["UI_SIDEPANEL_MENU_BUTTON_CLOSE"] = "Collapse";
 $MESS["UI_SIDEPANEL_MENU_BUTTON_OPEN"] = "Expand";
-?>

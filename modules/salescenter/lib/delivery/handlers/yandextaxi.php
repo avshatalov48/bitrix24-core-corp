@@ -3,7 +3,7 @@
 namespace Bitrix\SalesCenter\Delivery\Handlers;
 
 use Bitrix\Main\Localization\Loc;
-use Sale\Handlers\Delivery\Taxi\Yandex\ServiceContainer;
+use Sale\Handlers\Delivery\YandexTaxi\ServiceContainer;
 
 Loc::loadMessages(__FILE__);
 
@@ -16,17 +16,9 @@ class YandexTaxi extends Base
 	/**
 	 * @inheritDoc
 	 */
-	public function isAvailable(): bool
-	{
-		return ServiceContainer::getRegionalPolicy()->isAvailableInCurrentRegion();
-	}
-
-	/**
-	 * @inheritDoc
-	 */
 	public function getHandlerClass(): string
 	{
-		return '\\' . \Sale\Handlers\Delivery\Taxi\Yandex\YandexTaxi::class;
+		return '\\' . \Sale\Handlers\Delivery\YandextaxiHandler::class;
 	}
 
 	/**
@@ -58,7 +50,7 @@ class YandexTaxi extends Base
 	 */
 	public function getCode(): string
 	{
-		return \Sale\Handlers\Delivery\Taxi\Yandex\YandexTaxi::SERVICE_CODE;
+		return \Sale\Handlers\Delivery\YandextaxiHandler::SERVICE_CODE;
 	}
 
 	/**

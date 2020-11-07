@@ -1,5 +1,5 @@
 <?php
 namespace Bitrix\Crm\Filter;
-class TimelineSettings extends Settings
+class TimelineSettings extends \Bitrix\Main\Filter\Settings
 {
 }

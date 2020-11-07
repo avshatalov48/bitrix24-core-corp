@@ -228,6 +228,59 @@ class NameField extends StringField
 		}
 		// endregion
 
+		if($this->checkRedundantSpacesInAllFields(
+			$seedValue,
+			trim($seedLastNameOriginalValue),
+			$targetValue,
+			trim($targetLastNameOriginalValue))
+		)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * This is somewhat complex peace of code, maybe some refactoring needed.
+	 *
+	 * @param string $seedNameValue
+	 * @param string $seedLastNameValue
+	 * @param string $targetNameValue
+	 * @param string $targetLastNameValue
+	 * @return bool
+	 */
+	protected function checkRedundantSpacesInAllFields(
+		string $seedNameValue,
+		string $seedLastNameValue,
+		string $targetNameValue,
+		string $targetLastNameValue
+	): bool
+	{
+		$seedNameValueWithoutSpaces = $this->removeSpaces($seedNameValue);
+		$seedLastNameValueWithoutSpaces = $this->removeSpaces($seedLastNameValue);
+		$targetNameValueWithoutSpaces = $this->removeSpaces($targetNameValue);
+		$targetLastNameValueWithoutSpaces = $this->removeSpaces($targetLastNameValue);
+
+		if(
+			$seedNameValueWithoutSpaces === $targetNameValueWithoutSpaces
+			&& $seedLastNameValueWithoutSpaces === $targetLastNameValueWithoutSpaces
+		)
+		{
+			if($targetLastNameValue !== $targetLastNameValueWithoutSpaces)
+			{
+				$this->setNewTargetValue($targetNameValue);
+				$this->setNewTargetValue($targetLastNameValueWithoutSpaces, 'LAST_NAME');
+			}
+			if($targetNameValue !== $targetNameValueWithoutSpaces)
+			{
+				$this->setNewTargetValue($targetNameValueWithoutSpaces);
+			}
+
+			
+			return true;
+		}
+		
 		return false;
 	}
 }

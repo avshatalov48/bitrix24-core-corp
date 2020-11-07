@@ -12,6 +12,9 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\UI\Viewer\PreviewManager;
 
+/**
+ * @deprecated
+ */
 class Base
 {
 	const TRANSFORM_STATUS_SUCCESS = 'success';
@@ -331,36 +334,27 @@ class Base
 	 */
 	public function isTransformationAllowed($size = 0)
 	{
-		if(!$this->isTransformationEnabledInStorage)
+		$transformerManager = new \Bitrix\Main\UI\Viewer\Transformation\TransformerManager();
+		if($transformerManager->isAvailable())
 		{
-			return false;
+			$fileData = $this->getFileData($this->fileId);
+			if(!$fileData)
+			{
+				return false;
+			}
+			$transformation = $transformerManager->buildTransformationByFile($fileData);
+
+			if(!$transformation)
+			{
+				return false;
+			}
+
+			$inputMaxSize = $transformation->getInputMaxSize();
+
+			return !($inputMaxSize > 0 && $fileData['FILE_SIZE'] > $inputMaxSize);
 		}
 
-		if(!$this->isTransformationAllowedInOptions())
-		{
-			return false;
-		}
-
-		if(!ModuleManager::isModuleInstalled('transformer'))
-		{
-			return false;
-		}
-
-		$size = intval($size);
-
-		if($size == 0)
-		{
-			$size = $this->getSize();
-		}
-
-		$maxSizeForTransformation = $this->getMaxSizeTransformation();
-
-		if($maxSizeForTransformation > 0 && $size > $maxSizeForTransformation)
-		{
-			return false;
-		}
-
-		return true;
+		return false;
 	}
 
 	/**

@@ -370,6 +370,28 @@ BX.ImMobile.prototype.stopRepeatSound = function(sound, send)
 	BX.MobileCallUI.form.stopSound();
 };
 
+BX.ImMobile.prototype.sendMessage = function(dialogId, text)
+{
+	this.messenger.sendMessage(dialogId, text);
+}
+
+BX.ImMobile.prototype.putMessage = function(text)
+{
+	BXMobileApp.UI.Page.TextPanel.getText(function(currentText){
+		if (currentText)
+		{
+			text = BX.util.trim(currentText)+' '+text;
+		}
+		BXMobileApp.UI.Page.TextPanel.setText(text+' ');
+		BXMobileApp.UI.Page.TextPanel.focus();
+	});
+}
+
+BX.ImMobile.prototype.openMessenger = function(dialogId)
+{
+	BXMobileApp.Events.postToComponent("onOpenDialog", [{dialogId}, true], 'im.recent');
+}
+
 BX.ImMobile.prototype.phoneTo = function(number, params)
 {
 	params = params? params: {};
@@ -811,15 +833,7 @@ BX.ImMobile.prototype.mobileActionReady = function()
 		}
 		else if (BX.proxy_context.getAttribute('data-entity') == 'put')
 		{
-			var putText = BX.proxy_context.nextSibling.innerHTML;
-			BXMobileApp.UI.Page.TextPanel.getText(function(text){
-				if (text)
-				{
-					putText = BX.util.trim(text)+' '+putText;
-				}
-				BXMobileApp.UI.Page.TextPanel.setText(putText+' ');
-				BXMobileApp.UI.Page.TextPanel.focus();
-			});
+			this.BXIM.putMessage(BX.proxy_context.nextSibling.innerHTML);
 		}
 		else if (BX.proxy_context.getAttribute('data-entity') == 'call')
 		{

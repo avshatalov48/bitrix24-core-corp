@@ -34,7 +34,7 @@ function getChangeLayout(array $changeRecord)
 		'<div class="crm-report-salesdynamics-grid-rating">
 			<div class="crm-report-salesdynamics-grid-rating-icon" style="background: ' . $changeRecord['color'] . '"></div>
 			<div class="crm-report-salesdynamics-grid-rating-value">' . $changeRecord['value'] . '%</div>
-			<div class="crm-report-salesdynamics-grid-rating-text" style="color: ' . $changeRecord['color'] . '">' . $changeRecord['label'] . '</div>
+			<div class="crm-report-salesdynamics-grid-rating-text" style="color: ' . $changeRecord['color'] . '">' . htmlspecialcharsEx($changeRecord['label']) . '</div>
 		</div>';
 }
 
@@ -43,12 +43,12 @@ function wrapLink($str, $url, array $classList = [])
 	$classList[] = "crm-report-salesdynamics-grid-value";
 	if($url == '')
 	{
-		return '<div class="'.implode(' ', $classList).'">'.$str.'</div>';
+		return '<div class="'.implode(' ', $classList).'">'.htmlspecialcharsEx($str).'</div>';
 	}
 	else
 	{
 		$classList[] = "crm-report-salesdynamics-grid-value-clickable";
-		return '<div class="'.implode(' ', $classList).'" data-target="'.htmlspecialcharsbx($url).'">'.$str.'</div>';
+		return '<div class="'.implode(' ', $classList).'" data-target="'.htmlspecialcharsbx($url).'">'.htmlspecialcharsEx($str).'</div>';
 	}
 }
 

@@ -51,6 +51,10 @@
 	      }
 
 	      main_core.Event.bind(div, 'click', function (e) {
+	        if (e.target.tagName.toUpperCase() === 'A') {
+	          return;
+	        }
+
 	        var found = false;
 	        var siblings = e.target.parentNode.querySelectorAll(targetSelector);
 

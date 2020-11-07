@@ -780,16 +780,13 @@ $arResult['FIELDS']['tab_config'][] = array(
 );
 // <-- USE SSL
 
-if (PHP_VERSION_ID >= 50600)
-{
-	$arResult['FIELDS']['tab_config'][] = array(
-		'id' => 'SKIP_CERT',
-		'name' => GetMessage('CRM_FIELD_SKIP_CERT'),
-		'type' => 'checkbox',
-		'params' => array(),
-		'value' => $arSettings['USE_TLS'] == 'S' ? 'Y' : 'N'
-	);
-}
+$arResult['FIELDS']['tab_config'][] = array(
+	'id' => 'SKIP_CERT',
+	'name' => GetMessage('CRM_FIELD_SKIP_CERT'),
+	'type' => 'checkbox',
+	'params' => array(),
+	'value' => $arSettings['USE_TLS'] == 'S' ? 'Y' : 'N'
+);
 
 // LOGIN -->
 $arResult['FIELDS']['tab_config'][] = array(

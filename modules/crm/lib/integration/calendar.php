@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Integration;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Entity\EntityEditorConfigScope;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Ui\EntityForm\Scope;
 
 class Calendar
 {
@@ -15,7 +16,9 @@ class Calendar
 	{
 		if (is_null(self::$isResourceBookingEnabled))
 		{
-			self::$isResourceBookingEnabled = \Bitrix\Main\ModuleManager::isModuleInstalled('calendar') && class_exists('\Bitrix\Calendar\UserField\ResourceBooking');
+			self::$isResourceBookingEnabled = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled()
+				&& \Bitrix\Main\ModuleManager::isModuleInstalled('calendar')
+				&& class_exists('\Bitrix\Calendar\UserField\ResourceBooking');
 		}
 		return self::$isResourceBookingEnabled;
 	}
@@ -204,9 +207,15 @@ class Calendar
 					{
 						foreach($section['elements'] as $field)
 						{
-							if (is_array($field) && isset($field['name']))
+							if (is_array($field))
 							{
-								self::$fieldsMap[$configId][$field['name']] = true;
+								if (is_array($field['elements']))
+								{
+									foreach ($field['elements'] as $item)
+									{
+										self::$fieldsMap[$configId][$item['name']] = true;
+									}
+								}
 							}
 						}
 					}
@@ -222,6 +231,34 @@ class Calendar
 			"{$configId}_scope",
 			EntityEditorConfigScope::UNDEFINED
 		);
+
+		if (is_array($configScope))
+		{
+			$userScopeId = $configScope['userScopeId'];
+			$configScope = $configScope['scope'];
+		}
+		else
+		{
+			$userScopeId = null;
+		}
+
+		$userScopes = (
+			isset($configId)
+				? Scope::getInstance()->getUserScopes($configId, 'crm')
+				: null
+		);
+
+		if(
+			$configScope === EntityEditorConfigScope::CUSTOM
+			&& array_key_exists($userScopeId, $userScopes)
+		)
+		{
+			$formSettings = Scope::getInstance()->getScopeById($userScopeId);
+			if(!$formSettings)
+			{
+				$configScope = EntityEditorConfigScope::UNDEFINED;
+			}
+		}
 
 		if($configScope === EntityEditorConfigScope::UNDEFINED)
 		{

@@ -2,6 +2,10 @@ BX.namespace("BX.Crm");
 
 if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 {
+	/**
+	 * @extends BX.UI.EntityEditorField
+	 * @constructor
+	 */
 	BX.Crm.EntityEditorMultipleUser = function()
 	{
 		BX.Crm.EntityEditorMultipleUser.superclass.constructor.apply(this);
@@ -20,7 +24,7 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 		this._topButtonClickHandler = BX.delegate(this.onTopButtonClick, this);
 		this._bottomButtonClickHandler = BX.delegate(this.onBottomButtonClick, this);
 	};
-	BX.extend(BX.Crm.EntityEditorMultipleUser, BX.Crm.EntityEditorField);
+	BX.extend(BX.Crm.EntityEditorMultipleUser, BX.UI.EntityEditorField);
 	BX.Crm.EntityEditorMultipleUser.prototype.isSingleEditEnabled = function()
 	{
 		return true;
@@ -140,7 +144,7 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 	};
 	BX.Crm.EntityEditorMultipleUser.prototype.hasContentToDisplay = function()
 	{
-		if(this._mode === BX.Crm.EntityEditorMode.edit)
+		if(this._mode === BX.UI.EntityEditorMode.edit)
 		{
 			return true;
 		}
@@ -239,7 +243,7 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 	BX.Crm.EntityEditorMultipleUser.prototype.doRegisterLayout = function()
 	{
 		if(this.isInEditMode()
-			&& this.checkModeOption(BX.Crm.EntityEditorModeOptions.individual)
+			&& this.checkModeOption(BX.UI.EntityEditorModeOptions.individual)
 		)
 		{
 			window.setTimeout(
@@ -311,7 +315,7 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 	BX.Crm.EntityEditorMultipleUser.prototype.onTopButtonClick = function(e)
 	{
 		//If any other control has changed try to switch to edit mode.
-		if(this._mode === BX.Crm.EntityEditorMode.view && this.isEditInViewEnabled() && this.getEditor().isChanged())
+		if(this._mode === BX.UI.EntityEditorMode.view && this.isEditInViewEnabled() && this.getEditor().isChanged())
 		{
 			this.switchToSingleEditMode();
 		}
@@ -328,7 +332,7 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 	{
 		if(!this._userSelector)
 		{
-			this._userSelector = BX.Crm.EntityEditorUserSelector.create(
+			this._userSelector = BX.UI.EntityEditorUserSelector.create(
 				this._id,
 				{ callback: BX.delegate(this.processItemSelect, this) }
 			);
@@ -400,7 +404,7 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 	};
 	BX.Crm.EntityEditorMultipleUser.prototype.getRuntimeValue = function()
 	{
-		if (this._mode === BX.Crm.EntityEditorMode.edit && this._selectedData["id"] > 0)
+		if (this._mode === BX.UI.EntityEditorMode.edit && this._selectedData["id"] > 0)
 		{
 			return this._selectedData["id"];
 		}
@@ -436,7 +440,7 @@ if(typeof BX.Crm.EntityEditorMultipleUserItem === "undefined")
 		this._parent = null;
 		this._editor = null;
 
-		this._mode = BX.Crm.EntityEditorMode.view;
+		this._mode = BX.UI.EntityEditorMode.view;
 		this._data = null;
 
 		this._container = null;
@@ -547,7 +551,7 @@ if(typeof BX.Crm.EntityEditorMultipleUserItem === "undefined")
 			this._wrapper = BX.create("div", { props: { className: "crm-widget-employee-container" } });
 			this._deleteButton = null;
 
-			if(this._mode === BX.Crm.EntityEditorMode.edit)
+			if(this._mode === BX.UI.EntityEditorMode.edit)
 			{
 				this._deleteButton = BX.create(
 					"div",

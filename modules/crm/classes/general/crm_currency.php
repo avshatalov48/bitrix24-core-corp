@@ -584,7 +584,9 @@ class CCrmCurrency
 		{
 			// Standard format for float
 			CCurrencyLang::enableUseHideZero();
-			return strip_tags(CCurrencyLang::CurrencyFormat($sum, $currencyID, $formatStr !== '#'));
+			$result = strip_tags(CCurrencyLang::CurrencyFormat($sum, $currencyID, $formatStr !== '#'));
+			CCurrencyLang::disableUseHideZero();
+			return $result;
 		}
 		else
 		{

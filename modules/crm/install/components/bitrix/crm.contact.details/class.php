@@ -629,6 +629,8 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		}
 		//endregion
 
+		$this->arResult['USER_FIELD_FILE_URL_TEMPLATE'] = $this->getFileUrlTemplate();
+
 		$this->includeComponentTemplate();
 	}
 	public function getDefaultConfigID()
@@ -1061,7 +1063,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 			{
 				$fieldInfo['ADDITIONAL'] = array(
 					'URL_TEMPLATE' => \CComponentEngine::MakePathFromTemplate(
-						'/bitrix/components/bitrix/crm.contact.show/show_file.php?ownerId=#owner_id#&fieldName=#field_name#&fileId=#file_id#',
+						$this->getFileUrlTemplate(),
 						array(
 							'owner_id' => $this->entityID,
 							'field_name' => $fieldName
@@ -1563,5 +1565,10 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 
 		$params[$name] = $value;
 		return true;
+	}
+
+	protected function getFileUrlTemplate(): string
+	{
+		return '/bitrix/components/bitrix/crm.contact.show/show_file.php?ownerId=#owner_id#&fieldName=#field_name#&fileId=#file_id#';
 	}
 }

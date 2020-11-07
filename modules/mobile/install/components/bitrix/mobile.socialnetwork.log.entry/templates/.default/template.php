@@ -1,13 +1,13 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
-
-use Bitrix\Main\Localization\Loc;
-
 /** @var CBitrixComponentTemplate $this */
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CDatabase $DB */
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
+
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Json;
 
 $targetHtml = '';
 
@@ -143,7 +143,14 @@ else
 			)
 		)
 		{
-			$strDescription = '<div class="post-item-description'.($arEvent["EVENT_FORMATTED"]["DESCRIPTION_STYLE"] <> '' ? ' post-item-description-'.$arEvent["EVENT_FORMATTED"]["DESCRIPTION_STYLE"].'"' : '').'">'.(is_array($arEvent["EVENT_FORMATTED"]["DESCRIPTION"]) ? '<span>'.implode('</span> <span>', $arEvent["EVENT_FORMATTED"]["DESCRIPTION"]).'</span>' : $arEvent["EVENT_FORMATTED"]["DESCRIPTION"]).'</div>';
+			$descriptionClassList = [ 'post-item-description' ];
+
+			if ($arEvent["EVENT_FORMATTED"]["DESCRIPTION_STYLE"] <> '')
+			{
+				$descriptionClassList[] = 'post-item-description-'.$arEvent["EVENT_FORMATTED"]["DESCRIPTION_STYLE"];
+			}
+
+			$strDescription = '<div class="'.implode(' ', $descriptionClassList).'">'.(is_array($arEvent["EVENT_FORMATTED"]["DESCRIPTION"]) ? '<span>'.implode('</span> <span>', $arEvent["EVENT_FORMATTED"]["DESCRIPTION"]).'</span>' : $arEvent["EVENT_FORMATTED"]["DESCRIPTION"]).'</div>';
 		}
 
 		if ($arParams["IS_LIST"])
@@ -153,32 +160,20 @@ else
 			</script><?
 		}
 
-		if ($arParams["IS_LIST"])
+		$taskId = false;
+		$taskData = null;
+
+		$calendarEventId = false;
+
+		if (
+			$arParams["IS_LIST"]
+			&& isset($arEvent["EVENT"])
+			&& isset($arEvent["EVENT"]["EVENT_ID"])
+		)
 		{
-			$arOnClickParams = array(
-				"path" => $arParams["PATH_TO_LOG_ENTRY_EMPTY"],
-				"log_id" => intval($arEvent["EVENT"]["ID"]),
-				"entry_type" => "non-blog",
-				"use_follow" => ($arParams["USE_FOLLOW"] == 'N' ? 'N' : 'Y'),
-				"use_tasks" => ($arResult["bTasksAvailable"] && $arResult["canGetPostContent"] ? 'Y' : 'N'),
-				"post_content_type_id" => (!empty($arResult["POST_CONTENT_TYPE_ID"]) ? $arResult["POST_CONTENT_TYPE_ID"] : ''),
-				"post_content_id" => (!empty($arResult["POST_CONTENT_ID"]) ? $arResult["POST_CONTENT_ID"] : 0),
-				"site_id" => SITE_ID,
-				"language_id" => LANGUAGE_ID,
-				"datetime_format" => $arParams["DATE_TIME_FORMAT"],
-				"entity_xml_id" => $arEvent["COMMENTS_PARAMS"]["ENTITY_XML_ID"],
-				"focus_form" => false,
-				"focus_comments" => false,
-				"show_full" => in_array($arEvent["EVENT"]["EVENT_ID"], array("timeman_entry", "report", "calendar"))
-			);
-
-			$taskId = false;
-
 			if (
-				isset($arEvent["EVENT"])
-				&& isset($arEvent["EVENT"]["MODULE_ID"])
+				isset($arEvent["EVENT"]["MODULE_ID"])
 				&& ($arEvent["EVENT"]["MODULE_ID"] === "tasks")
-				&& isset($arEvent["EVENT"]["EVENT_ID"])
 				&& ($arEvent["EVENT"]["EVENT_ID"] === "tasks")
 				&& isset($arEvent["EVENT"]["SOURCE_ID"])
 				&& ($arEvent["EVENT"]["SOURCE_ID"] > 0)
@@ -187,10 +182,8 @@ else
 				$taskId = (int)$arEvent["EVENT"]["SOURCE_ID"];
 			}
 			elseif (
-				isset($arEvent["EVENT"])
-				&& isset($arEvent["EVENT"]["MODULE_ID"])
+				isset($arEvent["EVENT"]["MODULE_ID"])
 				&& ($arEvent["EVENT"]["MODULE_ID"] === "crm_shared")
-				&& isset($arEvent["EVENT"]["EVENT_ID"])
 				&& ($arEvent["EVENT"]["EVENT_ID"] === "crm_activity_add")
 				&& isset($arEvent["EVENT"]["ENTITY_ID"])
 				&& ($arEvent["EVENT"]["ENTITY_ID"] > 0)
@@ -200,97 +193,142 @@ else
 			{
 				$taskId = (int)$arParams["CRM_ACTIVITY2TASK"][$arEvent["EVENT"]["ENTITY_ID"]];
 			}
-
-			if ($taskId && \Bitrix\Main\Loader::includeModule('tasks') && \Bitrix\Main\Loader::includeModule('mobileapp'))
-			{
-				if (\Bitrix\MobileApp\Mobile::getApiVersion() >= 31)
-				{
-					try
-					{
-						$taskData = \CTaskItem::getInstanceFromPool($taskId, \Bitrix\Tasks\Util\User::getId())->getData(false);
-
-						$creatorIcon = \Bitrix\Tasks\UI\Avatar::getPerson($taskData['CREATED_BY_PHOTO']);
-						$responsibleIcon = \Bitrix\Tasks\UI\Avatar::getPerson($taskData['RESPONSIBLE_PHOTO']);
-						$title = addslashes(htmlspecialcharsbx($taskData['TITLE']));
-
-						$eventName = "'taskbackground::task::action'";
-						$taskInfoParameter = "{title: '{$title}', creatorIcon: '{$creatorIcon}', responsibleIcon: '{$responsibleIcon}'}";
-						$taskDataParameter = "{id: {$taskId}, title: 'TASK', taskInfo: {$taskInfoParameter}}";
-
-						$str = 'BXMobileApp.Events.postToComponent('
-							.$eventName.', '
-							.'['
-								.$taskDataParameter.', '
-								.$taskId.', '
-								.'{taskId: '.$taskId.', getTaskInfo: true}'
-							.']'
-						.');';
-						$strOnClick = " onclick=\"$str\"";
-					}
-					catch(TasksException $exception)
-					{
-						$strOnClick = '';
-					}
-				}
-				else
-				{
-					$strTaskPath = str_replace(
-						array("__ROUTE_PAGE__", "#USER_ID#"),
-						array("view", (int) $GLOBALS["USER"]->GetID()),
-						$arParams["PATH_TO_TASKS_SNM_ROUTER"]
-						."&TASK_ID=".$taskId
-					);
-					$arOnClickParams["path"] = $strTaskPath;
-					$strOnClickParams = CUtil::PhpToJSObject($arOnClickParams);
-					$strOnClick = " onclick=\"__MSLOpenLogEntryNew(".$strOnClickParams.", event);\"";
-				}
-			}
 			elseif (
-				isset($arEvent["EVENT"])
-				&& isset($arEvent["EVENT"]["EVENT_ID"])
-				&& ($arEvent["EVENT"]["EVENT_ID"] === "calendar")
+				($arEvent["EVENT"]["EVENT_ID"] === "calendar")
 				&& isset($arEvent["EVENT"]["SOURCE_ID"])
 				&& ($arEvent["EVENT"]["SOURCE_ID"] > 0)
 			)
 			{
-				$strEventPath = "/mobile/calendar/view_event.php?event_id=".intval($arEvent["EVENT"]["SOURCE_ID"]);
-				$arOnClickParams["pathComments"] = $arOnClickParams["path"];
-				$arOnClickParams["path"] = $strEventPath;
-				$strOnClickParams = CUtil::PhpToJSObject($arOnClickParams);
-				$strOnClick = " onclick=\"__MSLOpenLogEntryNew(".$strOnClickParams.", event);\"";
+				$calendarEventId = (int)$arEvent["EVENT"]["SOURCE_ID"];
 			}
-			else
+
+			if (
+				$taskId
+				&& \Bitrix\Main\Loader::includeModule('tasks')
+			)
 			{
-				$strOnClickParams = CUtil::PhpToJSObject($arOnClickParams);
-				$strOnClick = " onclick=\"__MSLOpenLogEntryNew(".$strOnClickParams.", event);\"";
+					try
+					{
+						$taskData = \CTaskItem::getInstanceFromPool($taskId, \Bitrix\Tasks\Util\User::getId())->getData(false);
+					}
+					catch(TasksException $exception)
+					{
+					}
 			}
-		}
-		else
-		{
-			$strOnClick = "";
 		}
 
 		$bHasNoCommentsOrLikes = (
 			(
 				!array_key_exists("HAS_COMMENTS", $arEvent)
-				|| $arEvent["HAS_COMMENTS"] != "Y"
+				|| $arEvent["HAS_COMMENTS"] !== "Y"
 			)
 			&& (
-				$arParams["SHOW_RATING"] != "Y"
+				$arParams["SHOW_RATING"] !== "Y"
 				|| $arEvent["RATING_TYPE_ID"] == ''
-				|| intval($arEvent["RATING_ENTITY_ID"]) <= 0
+				|| (int)$arEvent["RATING_ENTITY_ID"] <= 0
 			)
 		);
 
-		$item_class = (!$arParams["IS_LIST"] ? "post-wrap" : "lenta-item".($bUnread ? " lenta-item-new" : "")).($bHasNoCommentsOrLikes ? " post-without-informers" : "");
+		$itemClassList = [];
+		if (!$arParams['IS_LIST'])
+		{
+			$itemClassList[] = 'post-wrap';
+		}
+		else
+		{
+			$itemClassList[] = 'lenta-item';
+			if ($bUnread)
+			{
+				$itemClassList[] = 'lenta-item-new';
+			}
+			if ($bHasNoCommentsOrLikes)
+			{
+				$itemClassList[] = 'post-without-informers';
+			}
+		}
 
-		?><div class="<?=($item_class)?>" id="lenta_item_<?=$arEvent["EVENT"]["ID"]?>"><?
-			?><div 
-				id="post_item_top_wrap_<?=$arEvent["EVENT"]["ID"]?>"
-				class="post-item-top-wrap<?=($arParams["FOLLOW_DEFAULT"] == "N" && $arEvent["EVENT"]["FOLLOW"] == "Y" ? " post-item-follow" : "")?> post-item-copyable"
-			><?
+		if (!empty($arParams['PINNED_PANEL_DATA']))
+		{
+			$itemClassList[] = 'lenta-item-pinned';
+		}
+
+		$pinned = (
+			!empty($arParams['PINNED_PANEL_DATA'])
+			|| (isset($arParams['PINNED']) && $arParams['PINNED'] === 'Y')
+		);
+
+		if ($pinned)
+		{
+			$itemClassList[] = 'lenta-item-pin-active';
+		}
+
+		?><div
+			 id="lenta_item_<?=$arEvent["EVENT"]["ID"]?>"
+			 class="<?=implode(' ', $itemClassList)?>"
+			 data-livefeed-id="<?=(int)$arEvent["EVENT"]["ID"]?>"
+			 data-livefeed-post-pinned="<?=($pinned ? 'Y' : 'N')?>"
+			 data-livefeed-post-entry-type="non-blog"
+			 data-livefeed-post-use-follow="<?=($arParams['USE_FOLLOW'] === 'N' ? 'N' : 'Y')?>"
+			 data-livefeed-post-use-tasks="<?=($arResult['bTasksAvailable'] && $arResult['canGetPostContent'] ? 'Y' : 'N')?>"
+			 data-livefeed-post-entity-xml-id="<?=htmlspecialcharsbx($arEvent['COMMENTS_PARAMS']['ENTITY_XML_ID'])?>"
+			 data-livefeed-post-content-type-id="<?=(!empty($arResult['POST_CONTENT_TYPE_ID']) ? htmlspecialcharsbx($arResult['POST_CONTENT_TYPE_ID']) : '')?>"
+			 data-livefeed-post-content-id="<?=(!empty($arResult['POST_CONTENT_ID']) ? (int)$arResult['POST_CONTENT_ID'] : 0)?>"
+			 data-livefeed-post-show-full="<?=(in_array($arEvent['EVENT']['EVENT_ID'], [ 'timeman_entry', 'report', 'calendar' ]) ? 'Y' : 'N')?>"
+
+			 data-livefeed-task-id="<?=(int)$taskId?>"
+			 data-livefeed-task-data="<?=($taskData ? htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode([
+				 'creatorIcon' => \Bitrix\Tasks\UI\Avatar::getPerson($taskData['CREATED_BY_PHOTO']),
+				 'responsibleIcon' => \Bitrix\Tasks\UI\Avatar::getPerson($taskData['RESPONSIBLE_PHOTO']),
+				 'title' => addslashes(htmlspecialcharsbx($taskData['TITLE']))
+			 ])) : '')?>"
+
+			 data-livefeed-calendar-event-id="<?=(int)$calendarEventId?>"
+		><?
+			$topWrapClassList = [
+				'post-item-top-wrap',
+				'post-item-copyable'
+			];
+			if (
+				$arParams["FOLLOW_DEFAULT"] === "N"
+				&& $arEvent["EVENT"]["FOLLOW"] === "Y"
+			)
+			{
+				$topWrapClassList[] = 'post-item-follow';
+			}
+
+			?><div id="post_item_top_wrap_<?=$arEvent["EVENT"]["ID"]?>" class="<?=implode(' ', $topWrapClassList)?>"><?
 				?><div class="post-item-top" id="post_item_top_<?=$arEvent["EVENT"]["ID"]?>"><?
-					?><div class="avatar<?=($arEvent["EVENT_FORMATTED"]["AVATAR_STYLE"] <> ''? " ".$arEvent["EVENT_FORMATTED"]["AVATAR_STYLE"] : "")?>"<?=($arEvent["AVATAR_SRC"] <> ''? " style=\"background-image:url('".\CHTTP::urnEncode($arEvent["AVATAR_SRC"])."')\"" : "")?>></div><?
+
+					$avatarClassList = [ 'avatar' ];
+					if ($arEvent['EVENT_FORMATTED']['AVATAR_STYLE'] <> '')
+					{
+						$avatarClassList[] = $arEvent['EVENT_FORMATTED']['AVATAR_STYLE'];
+					}
+
+					?><div class="<?=implode(' ', $avatarClassList)?>"<?=($arEvent["AVATAR_SRC"] <> ''? " style=\"background-image:url('".\CHTTP::urnEncode($arEvent["AVATAR_SRC"])."')\"" : "")?>></div><?
+
+					?><div class="post-item-pinned-block"><?
+
+						if (
+							!empty($arParams['PINNED_PANEL_DATA'])
+							&& $arParams['PINNED_PANEL_DATA']['TITLE'] <> ''
+						)
+						{
+							?><div class="post-item-pinned-title"><?=$arParams['PINNED_PANEL_DATA']['TITLE']?></div><?
+						}
+						?><div class="post-item-pinned-text-box"><?
+							?><div class="post-item-pinned-desc"><?
+								if (
+									!empty($arParams['PINNED_PANEL_DATA'])
+									&& $arParams['PINNED_PANEL_DATA']['DESCRIPTION'] <> ''
+								)
+								{
+									?><?=$arParams['PINNED_PANEL_DATA']['DESCRIPTION']?><?
+								}
+							?></div><?
+						?></div><?
+					?></div><?
+
 					?><div class="post-item-top-cont"><?
 						?><?=$strCreatedBy?><?
 						?><div class="post-item-top-topic"><?=$strTopic ?></div><?
@@ -312,56 +350,59 @@ else
 
 						$useFavorites = (
 							!isset($arParams["USE_FAVORITES"])
-							|| $arParams["USE_FAVORITES"] != "N"
+							|| $arParams["USE_FAVORITES"] !== "N"
 						);
 
-						$useFollow = ($arParams["USE_FOLLOW"] != 'N');
+						$useFollow = ($arParams["USE_FOLLOW"] !== 'N');
 
 						$favoritesValue = (
 							$useFavorites
 							&& array_key_exists("FAVORITES", $arParams["EVENT"])
-							&& $arParams["EVENT"]["FAVORITES"] == "Y"
+							&& $arParams["EVENT"]["FAVORITES"] === "Y"
 						);
 
 						$followValue = (
 							$useFollow
-							&& $arEvent["EVENT"]["FOLLOW"] == "Y"
+							&& $arEvent["EVENT"]["FOLLOW"] === "Y"
+						);
+
+						$pinnedValue = (
+							isset($arParams['EVENT']['PINNED'])
+							&& $arParams['EVENT']['PINNED'] === 'Y'
 						);
 
 						if ($arResult['MOBILE_API_VERSION'] >= 34)
 						{
 							$menuClasses = [
-								'lenta-menu'
+								'lenta-menu',
+								'lenta-menu-use-pinned'
 							];
 
-							if (
-								!$useFavorites
-							)
-							{
-								$menuClasses[] = 'lenta-menu-invisible';
-							}
-
 							?><div
-								id="log-entry-menu-<?=intval($arEvent["EVENT"]["ID"])?>"
-								data-menu-type="post"
-								data-log-id="<?=intval($arEvent["EVENT"]["ID"])?>"
-								data-use-favorites="<?=($useFavorites ? "Y" : "N")?>"
-								data-favorites="<?=($favoritesValue ? "Y" : "N")?>"
-								data-use-follow="<?=($useFollow ? "Y" : "N")?>"
-								data-follow="<?=($followValue ? "Y" : "N")?>"
-								data-content-type-id="<?=(!empty($arResult["POST_CONTENT_TYPE_ID"]) ? $arResult["POST_CONTENT_TYPE_ID"] : '')?>>"
-								data-content-id="<?=(!empty($arResult["POST_CONTENT_ID"]) ? $arResult["POST_CONTENT_ID"] : 0)?>"
-								class="<?=implode(' ', $menuClasses)?>"
-								onclick="oMSL.showPostMenu(event)"
+								 id="log-entry-menu-<?=(int)$arEvent["EVENT"]["ID"]?>"
+								 data-menu-type="post"
+								 data-log-id="<?=(int)$arEvent["EVENT"]["ID"]?>"
+								 data-use-favorites="<?=($useFavorites ? "Y" : "N")?>"
+								 data-favorites="<?=($favoritesValue ? "Y" : "N")?>"
+								 data-use-pinned="Y"
+								 data-pinned="<?=($pinnedValue ? "Y" : "N")?>"
+								 data-use-follow="<?=($useFollow ? "Y" : "N")?>"
+								 data-follow="<?=($followValue ? "Y" : "N")?>"
+								 data-content-type-id="<?=(!empty($arResult["POST_CONTENT_TYPE_ID"]) ? $arResult["POST_CONTENT_TYPE_ID"] : '')?>>"
+								 data-content-id="<?=(!empty($arResult["POST_CONTENT_ID"]) ? $arResult["POST_CONTENT_ID"] : 0)?>"
+								 class="<?=implode(' ', $menuClasses)?>"
+								 onclick="oMSL.showPostMenu(event)"
 							>
 								<div class="lenta-menu-item"></div>
 							</div><?
+
+							?><div class="lenta-item-pin"></div><?
 						}
 						else
 						{
 							if ($useFavorites)
 							{
-								?><div id="log_entry_favorites_<?=$arEvent["EVENT"]["ID"]?>" data-favorites="<?=($favoritesValue ? "Y" : "N")?>"  class="lenta-item-fav<?=($favoritesValue ? " lenta-item-fav-active" : "")?>" onclick="__MSLSetFavorites(<?=$arEvent["EVENT"]["ID"]?>, this, '<?=($favoritesValue ? "N" : "Y")?>'); return BX.PreventDefault(this);"></div><?
+								?><div id="log_entry_favorites_<?=$arEvent["EVENT"]["ID"]?>" data-favorites="<?=($favoritesValue ? "Y" : "N")?>"  class="lenta-item-fav<?=($favoritesValue ? " lenta-item-fav-active" : "")?>" onclick="__MSLSetFavorites(<?=$arEvent["EVENT"]["ID"]?>, this, event);"></div><?
 							}
 							else
 							{
@@ -379,6 +420,8 @@ else
 
 				ob_start();
 
+				?><div class="post-item-inform-wrap-left"><?
+
 				if (
 					$arEvent["EVENT"]["RATING_TYPE_ID"] <> ''
 					&& $arEvent["EVENT"]["RATING_ENTITY_ID"] > 0
@@ -393,7 +436,7 @@ else
 							$likeClassList = [ 'bx-ilike-left-wrap' ];
 							if (
 								isset($arEvent["RATING"]["USER_HAS_VOTED"])
-								&& $arEvent["RATING"]["USER_HAS_VOTED"] == "Y" ? ' bx-you-like-button' : '')
+								&& $arEvent["RATING"]["USER_HAS_VOTED"] === "Y" ? ' bx-you-like-button' : '')
 							{
 								$likeClassList[] = 'bx-you-like-button';
 								$likeClassList[] = 'bx-you-like-button-'.mb_strtolower($emotion);
@@ -408,54 +451,10 @@ else
 
 				if (
 					array_key_exists("HAS_COMMENTS", $arEvent)
-					&& $arEvent["HAS_COMMENTS"] == "Y"
+					&& $arEvent["HAS_COMMENTS"] === "Y"
 				)
 				{
 					$bHasComments = true;
-
-					$arOnClickParamsCommentsTop = $arOnClickParams;
-					if (!empty($arOnClickParamsCommentsTop['pathComments']))
-					{
-						$arOnClickParamsCommentsTop['path'] = $arOnClickParamsCommentsTop['pathComments'];
-						unset($arOnClickParamsCommentsTop['pathComments']);
-					}
-					$arOnClickParamsCommentsTop["focus_comments"] = true;
-					$arOnClickParamsCommentsTop["show_full"] = in_array($arEvent["EVENT"]["EVENT_ID"], array("timeman_entry", "report", "calendar"));
-					$strOnClickParamsCommentsTop = CUtil::PhpToJSObject($arOnClickParamsCommentsTop);
-
-					if($taskId && \Bitrix\MobileApp\Mobile::getApiVersion() >= 31 && \Bitrix\Main\Loader::includeModule('tasks'))
-					{
-						try
-						{
-							$taskData = \CTaskItem::getInstanceFromPool($taskId, \Bitrix\Tasks\Util\User::getId())->getData(false);
-
-							$creatorIcon = \Bitrix\Tasks\UI\Avatar::getPerson($taskData['CREATED_BY_PHOTO']);
-							$responsibleIcon = \Bitrix\Tasks\UI\Avatar::getPerson($taskData['RESPONSIBLE_PHOTO']);
-							$title = addslashes(htmlspecialcharsbx($taskData['TITLE']));
-
-							$eventName = "'taskbackground::task::action'";
-							$taskInfoParameter = "{title: '{$title}', creatorIcon: '{$creatorIcon}', responsibleIcon: '{$responsibleIcon}'}";
-							$taskDataParameter = "{id: {$taskId}, title: 'TASK', taskInfo: {$taskInfoParameter}}";
-
-							$str = 'BXMobileApp.Events.postToComponent('
-								.$eventName.', '
-								.'['
-									.$taskDataParameter.', '
-									.$taskId.', '
-									.'{taskId: '.$taskId.', getTaskInfo: true}'
-								.']'
-							.');';
-							$strOnClickCommentsTop = " onclick=\"$str\"";
-						}
-						catch(TasksException $exception)
-						{
-							$strOnClickCommentsTop = '';
-						}
-					}
-					else
-					{
-						$strOnClickCommentsTop = ($arParams["IS_LIST"] ? " onclick=\"__MSLOpenLogEntryNew(".$strOnClickParamsCommentsTop.", event);\"" : "");
-					}
 
 					$showNewComments = (
 						(
@@ -474,7 +473,7 @@ else
 						$commentsBlockClassList[] = 'post-item-inform-likes-active';
 					}
 
-					?><div id="comments_control_<?=intval($arEvent["EVENT"]["ID"])?>" class="<?=implode(' ', $commentsBlockClassList)?>"<?=$strOnClickCommentsTop?>><?
+					?><div id="comments_control_<?=intval($arEvent["EVENT"]["ID"])?>" class="<?=implode(' ', $commentsBlockClassList)?>"><?
 						?><div class="post-item-inform-comments-box"><?
 							?><span class="post-item-inform-icon"></span><?
 
@@ -519,6 +518,8 @@ else
 					?><div id="log_entry_follow_<?=intval($arEvent["EVENT"]["ID"])?>" data-follow="<?=($arEvent["EVENT"]["FOLLOW"] == "Y" ? "Y" : "N")?>" style="display: none;"></div><?
 				}
 
+				?></div><? // class="post-item-inform-wrap-left"
+
 				if (
 					!in_array(
 						$arEvent["EVENT"]["EVENT_ID"], 
@@ -526,31 +527,19 @@ else
 					)
 				)
 				{
-					if ($arParams["IS_LIST"])
-					{
-						$arOnClickParams["focus_comments"] = false;
-						$arOnClickParams["show_full"] = true;
-						$strOnClickParams = CUtil::PhpToJSObject($arOnClickParams);
-						$strOnClickMore = ' onclick="__MSLOpenLogEntryNew('.$strOnClickParams.', event);"';
-					}
-					else
-					{
-						$strOnClickMore = ' onclick="oMSL.expandText('.intval($arEvent["EVENT"]["ID"]).');"';
-					}
-
-					?><a id="post_more_limiter_<?=intval($arEvent["EVENT"]["ID"])?>" <?=$strOnClickMore?> class="post-item-more" ontouchstart="this.classList.toggle('post-item-more-pressed')" ontouchend="this.classList.toggle('post-item-more-pressed')" style="visibility: hidden;"><?
-						?><?=GetMessage("MOBILE_LOG_EXPAND")?><?
-					?></a><?
+					?><div class="post-item-inform-wrap-right"><?
+						?><a id="post_more_limiter_<?=(int)$arEvent["EVENT"]["ID"]?>" class="post-item-more" ontouchstart="this.classList.toggle('post-item-more-pressed')" ontouchend="this.classList.toggle('post-item-more-pressed')" style="visibility: hidden;"><?
+							?><?=GetMessage("MOBILE_LOG_EXPAND")?><?
+						?></a><?
+					?></div><?
 				}
 
 				$strBottomBlock = ob_get_contents();
 				ob_end_clean();
 
-				$post_item_style = (!$arParams["IS_LIST"] && $_REQUEST["show_full"] == "Y" ? "post-item-post-block-full" : "post-item-post-block post-item-contentview");
-
 				$postMoreBlockStyle = (
 					isset($arParams['TARGET'])
-					&& $arParams['TARGET'] == 'postContent'
+					&& $arParams['TARGET'] === 'postContent'
 						? 'style="display: none;"'
 						: ''
 				);
@@ -569,18 +558,27 @@ else
 						&& $arEvent["EVENT_FORMATTED"]["IS_IMPORTANT"]
 					)
 					{
-						$news_item_style = (
-							!$arParams["IS_LIST"]
-							&& $_REQUEST["show_full"] == "Y"
-								? "lenta-info-block-wrapp-full"
-								: "lenta-info-block-wrapp post-item-block-inner post-item-contentview"
-						);
+						$postItemClassList = [];
 
-						?><div class="<?=$news_item_style?>"<?=$strOnClick?> id="post_block_check_cont_<?=$arEvent["EVENT"]["ID"]?>" bx-content-view-xml-id="<?=(!empty($arResult["CONTENT_ID"]) ? htmlspecialcharsBx($arResult["CONTENT_ID"]) : "")?>"><?
+						if (
+							!$arParams["IS_LIST"]
+							&& $_REQUEST["show_full"] === "Y"
+						)
+						{
+							$postItemClassList[] = 'lenta-info-block-wrapp-full';
+						}
+						else
+						{
+							$postItemClassList[] = 'lenta-info-block-wrapp';
+							$postItemClassList[] = 'post-item-block-inner';
+							$postItemClassList[] = 'post-item-contentview';
+						}
+
+						?><div class="<?=implode(' ', $postItemClassList)?>" id="post_block_check_cont_<?=$arEvent["EVENT"]["ID"]?>" bx-content-view-xml-id="<?=(!empty($arResult["CONTENT_ID"]) ? htmlspecialcharsBx($arResult["CONTENT_ID"]) : "")?>"><?
 
 							if (
 								isset($arParams['TARGET'])
-								&& $arParams['TARGET'] == 'postContent'
+								&& $arParams['TARGET'] === 'postContent'
 							)
 							{
 								$targetHtml = '';
@@ -611,21 +609,21 @@ else
 								}
 							?></div><?
 
-							?><div class="post-more-block" id="post_more_block_<?=$arEvent["EVENT"]["ID"]?>"<?=$postMoreBlockStyle?> onclick="oMSL.expandText(<?=$arEvent["EVENT"]["ID"]?>);"></div><?
+							?><div class="post-more-block" id="post_more_block_<?=$arEvent["EVENT"]["ID"]?>"<?=$postMoreBlockStyle?>></div><?
 
 							if (
 								isset($arParams['TARGET'])
-								&& $arParams['TARGET'] == 'postContent'
+								&& $arParams['TARGET'] === 'postContent'
 							)
 							{
-								$targetHtml = ob_get_contents();;
+								$targetHtml = ob_get_contents();
 							}
 
 						?></div><?
 					}
 					elseif (in_array($arEvent["EVENT"]["EVENT_ID"], array("files", "commondocs")))
 					{
-						?><div class="post-item-post-block-full"<?=$strOnClick?>>
+						?><div class="post-item-post-block-full">
 							<div class="post-item-attached-file-wrap">
 								<div class="post-item-attached-file"><span><?=$arEvent["EVENT"]["TITLE"]?></span></div>
 							</div><?
@@ -633,11 +631,17 @@ else
 					}
 					elseif (in_array($arEvent["EVENT"]["EVENT_ID"], array("tasks", "timeman_entry", "report", "calendar", "crm_activity_add")))
 					{
-						?><div id="post_block_check_cont_<?=intval($arEvent["EVENT"]["ID"])?>" class="lenta-info-block-wrapp-full post-item-block-inner post-item-contentview" bx-content-view-xml-id="<?=(!empty($arResult["CONTENT_ID"]) ? htmlspecialcharsBx($arResult["CONTENT_ID"]) : "")?>"<?=$strOnClick?>><?
+						$postItemClassList = [
+							'lenta-info-block-wrapp-full',
+							'post-item-block-inner',
+							'post-item-contentview'
+						];
+
+						?><div id="post_block_check_cont_<?=(int)$arEvent["EVENT"]["ID"]?>" class="<?=implode(' ', $postItemClassList)?>" bx-content-view-xml-id="<?=(!empty($arResult["CONTENT_ID"]) ? htmlspecialcharsBx($arResult["CONTENT_ID"]) : "")?>"><?
 
 							if (
 								isset($arParams['TARGET'])
-								&& $arParams['TARGET'] == 'postContent'
+								&& $arParams['TARGET'] === 'postContent'
 							)
 							{
 								$targetHtml = $arEvent["EVENT_FORMATTED"]["MESSAGE"];
@@ -651,11 +655,25 @@ else
 					}
 					elseif ($arEvent["EVENT_FORMATTED"]["MESSAGE"] <> '') // all other events
 					{
-						?><div class="<?=$post_item_style?>"<?=$strOnClick?> id="post_block_check_cont_<?=$arEvent["EVENT"]["ID"]?>" bx-content-view-xml-id="<?=(!empty($arResult["CONTENT_ID"]) ? htmlspecialcharsBx($arResult["CONTENT_ID"]) : "")?>"><?
+						$postItemClassList = [];
+						if (
+							!$arParams["IS_LIST"]
+							&& $_REQUEST["show_full"] === "Y"
+						)
+						{
+							$postItemClassList[] = 'post-item-post-block-full';
+						}
+						else
+						{
+							$postItemClassList[] = 'post-item-post-block';
+							$postItemClassList[] = 'post-item-contentview';
+						}
+
+						?><div class="<?=implode(' ', $postItemClassList)?>" id="post_block_check_cont_<?=$arEvent["EVENT"]["ID"]?>" bx-content-view-xml-id="<?=(!empty($arResult["CONTENT_ID"]) ? htmlspecialcharsBx($arResult["CONTENT_ID"]) : "")?>"><?
 
 							if (
 								isset($arParams['TARGET'])
-								&& $arParams['TARGET'] == 'postContent'
+								&& $arParams['TARGET'] === 'postContent'
 							)
 							{
 								$targetHtml = '';
@@ -679,7 +697,7 @@ else
 							)
 							{
 								?><div class="post-item-attached-file-wrap" id="post_block_check_files_<?=$arEvent["EVENT"]["ID"]?>"><?
-									$eventHandlerID = false;
+
 									$eventHandlerID = AddEventHandler("main", "system.field.view.file", "__logUFfileShowMobile");
 									foreach ($arEvent["EVENT_FORMATTED"]["UF"] as $FIELD_NAME => $arUserField)
 									{
@@ -699,21 +717,18 @@ else
 										}
 									}
 
-									if (
-										$eventHandlerID !== false 
-										&& (intval($eventHandlerID) > 0)
-									)
+									if ((int)$eventHandlerID > 0)
 									{
 										RemoveEventHandler('main', 'system.field.view.file', $eventHandlerID);
 									}
 								?></div><?
 							}
 
-							?><div class="post-more-block" id="post_more_block_<?=$arEvent["EVENT"]["ID"]?>"<?=$postMoreBlockStyle?> onclick="oMSL.expandText(<?=$arEvent["EVENT"]["ID"]?>);"></div><?
+							?><div class="post-more-block" id="post_more_block_<?=$arEvent["EVENT"]["ID"]?>"<?=$postMoreBlockStyle?>></div><?
 
 							if (
 								isset($arParams['TARGET'])
-								&& $arParams['TARGET'] == 'postContent'
+								&& $arParams['TARGET'] === 'postContent'
 							)
 							{
 								$targetHtml = ob_get_contents();;
@@ -726,7 +741,6 @@ else
 					{
 						?><div id="post_block_files_<?=$arEvent["EVENT"]["ID"]?>" class="post-item-attached-file-wrap post-item-attached-disk-file-wrap"><?
 
-							$eventHandlerID = false;
 							$eventHandlerID = AddEventHandler('main', 'system.field.view.file', '__logUFfileShowMobile');
 							$arPostField = $arResult['UF_FILE'];
 
@@ -941,12 +955,7 @@ else
 						"SHOW_POST_FORM" => (!$arParams["IS_LIST"] ? $arEvent["CAN_ADD_COMMENTS"] : 'N'),
 						"USE_LIVE" => !$arParams["IS_LIST"],
 						"SHOW_MENU" => !$arParams["IS_LIST"],
-						"REPLY_ACTION" => (
-							$arParams["IS_LIST"]
-								? $arResult["replyAction"]
-								: ''
-						),
-
+						"REPLY_ACTION" => '',
 						"IMAGE_SIZE" => $arParams["IMAGE_SIZE"],
 						"mfi" => $arParams["mfi"],
 
@@ -978,7 +987,7 @@ else
 							"bitrix:mobile.comments.pseudoform",
 							"",
 							[
-								'REPLY_ACTION' => $arResult["replyAction"]
+								'REPLY_ACTION' => ''
 							]
 						);
 						$arResult["OUTPUT_LIST"]["HTML"] .= ob_get_clean();
@@ -1041,13 +1050,13 @@ else
 					$arResult["OUTPUT_LIST"]["HTML"] .= ob_get_clean();
 				}
 
-				if ($_REQUEST["empty_get_comments"] == "Y")
+				if ($_REQUEST["empty_get_comments"] === "Y")
 				{
 					$APPLICATION->RestartBuffer();
 					while(ob_get_clean());
 					\CMain::FinalActions(CUtil::PhpToJSObject(array(
 						"TEXT" => $arResult["OUTPUT_LIST"]["HTML"],
-						"POST_NUM_COMMENTS" => intval($arParams["EVENT"]["COMMENTS_COUNT"])
+						"POST_NUM_COMMENTS" => (int)$arParams["EVENT"]["COMMENTS_COUNT"]
 					)));
 					die();
 				}
@@ -1063,7 +1072,7 @@ else
 					app.setPageID('LOG_ENTRY_<?=$arEvent["EVENT"]["ID"]?>');
 				</script><?
 
-				if ($_REQUEST["empty_get_comments"] == "Y")
+				if ($_REQUEST["empty_get_comments"] === "Y")
 				{
 					$APPLICATION->RestartBuffer();
 					ob_start();
@@ -1071,10 +1080,9 @@ else
 						app.setPageID('LOG_ENTRY_<?=$arEvent["EVENT"]["ID"]?>');
 					</script><?
 					$strCommentsText = ob_get_contents();
-
-					echo CUtil::PhpToJSObject(array(
+					\CMain::finalActions(Json::encode(array(
 						"TEXT" => $strCommentsText
-					));
+					)));
 					die();
 				}
 			}

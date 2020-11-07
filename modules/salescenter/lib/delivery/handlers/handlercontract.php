@@ -94,7 +94,7 @@ interface HandlerContract
 	/**
 	 * @return string
 	 */
-	public function getRestHandlerCode(): string;
+	public function getRestHandlerCode(): ?string;
 
 	/**
 	 * @return WizardContract|null

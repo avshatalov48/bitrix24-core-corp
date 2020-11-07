@@ -346,9 +346,14 @@ class UrlManager
 		]);
 	}
 
+	public function getUserPersonalUrlTemplate(): string
+	{
+		return Option::get('intranet', 'path_user', '/company/personal/user/#USER_ID#/', $this->getSiteId());
+	}
+
 	public function getUserPersonalUrl(int $userId): Uri
 	{
-		$template = Option::get('intranet', 'path_user', '/company/personal/user/#USER_ID#/', $this->getSiteId());
+		$template = $this->getUserPersonalUrlTemplate();
 
 		return new Uri(str_replace('#USER_ID#', $userId, $template));
 	}

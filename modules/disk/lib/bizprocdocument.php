@@ -497,10 +497,15 @@ class BizProcDocument
 			{
 				$type['BASE_TYPE'] = 'user';
 			}
-			$result[static::getPrefixForCustomType() . $type['USER_TYPE_ID']] = array(
+			$typeId = static::getPrefixForCustomType().$type['USER_TYPE_ID'];
+			$result[$typeId] = array(
 				'Name' => $type['DESCRIPTION'],
 				'BaseType' => $type['BASE_TYPE'],
 			);
+			if ($type['USER_TYPE_ID'] === 'employee')
+			{
+				$result[$typeId]['typeClass'] = \Bitrix\Bizproc\BaseType\User::class;
+			}
 		}
 		return $result;
 	}

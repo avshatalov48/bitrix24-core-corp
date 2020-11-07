@@ -188,38 +188,6 @@ elseif (!empty($arResult["Event"]["EVENT"]["ID"]))
 	}
 }
 
-$emptyPageParams = [];
-if (
-	$arParams["IS_LIST"]
-	&& $arResult["Event"]
-	&& is_array($arResult["Event"])
-	&& !empty($arResult["Event"])
-)
-{
-	$emptyPageParams = array(
-		"path" => $arParams["PATH_TO_LOG_ENTRY_EMPTY"],
-		"log_id" => intval($arResult["Event"]["EVENT"]["ID"]),
-		"entry_type" => "non-blog",
-		"use_follow" => ($arParams["USE_FOLLOW"] == 'N' ? 'N' : 'Y'),
-		"use_tasks" => ($arResult["bTasksAvailable"] && $arResult["canGetPostContent"] ? 'Y' : 'N'),
-		"post_content_type_id" => (!empty($arResult["POST_CONTENT_TYPE_ID"]) ? $arResult["POST_CONTENT_TYPE_ID"] : ''),
-		"post_content_id" => (!empty($arResult["POST_CONTENT_ID"]) ? $arResult["POST_CONTENT_ID"] : 0),
-		"site_id" => SITE_ID,
-		"language_id" => LANGUAGE_ID,
-		"datetime_format" => $arParams["DATE_TIME_FORMAT"],
-		"entity_xml_id" => $arResult["Event"]["COMMENTS_PARAMS"]["ENTITY_XML_ID"],
-		"focus_form" => true,
-		"focus_comments" => false,
-		"show_full" => in_array($arResult["Event"]["EVENT"]["EVENT_ID"], array("timeman_entry", "report", "calendar"))
-	);
-}
-
-$arResult["replyAction"] = (
-	!empty($emptyPageParams)
-		? "__MSLOpenLogEntryNew(".\CUtil::phpToJSObject($emptyPageParams).", null); event.stopPropagation(); return (event ? event.preventDefault() : false);"
-		: ""
-);
-
 $arResult['MOBILE_API_VERSION'] = (
 	Loader::includeModule('mobileapp')
 	? \CMobile::getApiVersion()

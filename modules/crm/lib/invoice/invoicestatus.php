@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Invoice;
 
+use Bitrix\Crm\StatusTable;
 use Bitrix\Main;
 use Bitrix\Sale;
 
@@ -52,43 +53,9 @@ class InvoiceStatus extends Sale\OrderStatus
 	 */
 	public static function getList(array $parameters = array())
 	{
-		$filter = array(
-			'ENTITY_ID' => 'INVOICE_STATUS'
-		);
+		$parameters['filter']['=ENTITY_ID'] = 'INVOICE_STATUS';
 
-		if (isset($parameters['filter']))
-		{
-			if (isset($parameters['filter']['NAME']))
-			{
-				$filter['NAME'] = $parameters['filter']['NAME'];
-			}
-
-			if (isset($parameters['filter']['ID']))
-			{
-				$filter['STATUS_ID'] = $parameters['filter']['ID'];
-			}
-
-			if (isset($parameters['filter']['SORT']))
-			{
-				$filter['SORT'] = $parameters['filter']['SORT'];
-			}
-		}
-
-		$sort = [];
-		if (isset($parameters['order']) && is_array($parameters['order']))
-		{
-			$sort = $parameters['order'];
-		}
-
-		$result = array();
-
-		$dbRes = \CCrmStatus::GetList($sort, $filter);
-		while ($status = $dbRes->Fetch())
-		{
-			$result[] = $status;
-		}
-
-		return new Main\DB\ArrayResult($result);
+		return StatusTable::getList($parameters);
 	}
 
 	/**

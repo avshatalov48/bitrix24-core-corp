@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\ImBot;
 
+use Bitrix\Main;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
@@ -15,6 +16,9 @@ class Http
 	const TYPE_BITRIX24 = 'B24';
 	const TYPE_CP = 'CP';
 	const VERSION = 1;
+
+	public const ERROR_NETWORK = 'NETWORK_ERROR';
+	public const ERROR_ANSWER = 'ANSWER_MALFORMED';
 
 	private $controllerUrl = 'https://marta.bitrix.info/json/';
 	private $licenceCode = '';
@@ -61,22 +65,48 @@ class Http
 		return $type;
 	}
 
+	/**
+	 * Returns from settings or detects from request external public url.
+	 *
+	 * @return string
+	 */
 	public static function getServerAddress()
 	{
-		$publicUrl = \Bitrix\Main\Config\Option::get(self::MODULE_ID, "portal_url");
+		static $publicUrl;
+		if ($publicUrl === null)
+		{
+			$publicUrl = Main\Config\Option::get(self::MODULE_ID, "portal_url");
 
-		if (defined('BOT_CLIENT_URL'))
-		{
-			return BOT_CLIENT_URL;
+			if (defined('BOT_CLIENT_URL'))
+			{
+				$publicUrl = \BOT_CLIENT_URL;
+			}
+			if (empty($publicUrl))
+			{
+				$context = Main\Application::getInstance()->getContext();
+				$scheme = $context->getRequest()->isHttps() ? 'https' : 'http';
+				$server = $context->getServer();
+				$domain = Main\Config\Option::get('main', 'server_name', '');
+				if (empty($domain))
+				{
+					$domain = $server->getServerName();
+				}
+				if (preg_match('/^(?<domain>.+):(?<port>\d+)$/', $domain, $matches))
+				{
+					$domain = $matches['domain'];
+					$port   = $matches['port'];
+				}
+				else
+				{
+					$port = $server->getServerPort();
+				}
+				$port = in_array($port, array(80, 443)) ? '' : ':'.$port;
+
+				$publicUrl = $scheme.'://'.$domain.$port;
+			}
 		}
-		else if ($publicUrl != '')
-		{
-			return $publicUrl;
-		}
-		else
-		{
-			return (\Bitrix\Main\Context::getCurrent()->getRequest()->isHttps() ? "https" : "http")."://".$_SERVER['SERVER_NAME'].(in_array($_SERVER['SERVER_PORT'], Array(80, 443))?'':':'.$_SERVER['SERVER_PORT']);
-		}
+
+		return $publicUrl;
 	}
 
 
@@ -89,14 +119,35 @@ class Http
 		else
 		{
 			include($_SERVER["DOCUMENT_ROOT"]."/bitrix/license_key.php");
+			/** @global string $LICENSE_KEY */
 			return md5($str.md5($LICENSE_KEY));
 		}
 	}
 
+	/**
+	 * @param string $command
+	 * @param array $params
+	 * @param bool $waitResponse
+	 *
+	 * @return bool|array
+	 * 	Returns controller answer as array in case of waitResponse=true else boolean.
+	 * 	If error throws 'error' field will be added into result array in case of waitResponse=true else boolean false'll return. <pre>
+	 * 	'error' => [
+	 * 		'code' => self::ERROR_ANSWER | self::ERROR_NETWORK,
+	 * 		'msg' => 'Error message',
+	 * 		'errorResult' => 'Server answer',
+	 * 		'errorStack' => [
+	 * 			'errCode' => 'Real error message'
+	 * 		],
+	 * 	]
+	 * </pre>
+	 */
 	public function query($command, $params = array(), $waitResponse = false)
 	{
 		if ($command == '' || !is_array($params) || !$this->botId)
+		{
 			return false;
+		}
 
 		foreach ($params as $key => $value)
 		{
@@ -131,6 +182,7 @@ class Http
 		$httpClient->setHeader('User-Agent', 'Bitrix Bot Client ('.$this->botId.')');
 		$httpClient->setHeader('x-bitrix-licence', $this->licenceCode);
 		$httpClient->setHeader('x-bitrix-imbot', $this->botId);
+
 		$result = $httpClient->post($controllerUrl, $params);
 
 		if (defined('BOT_CONTROLLER_URL'))
@@ -138,21 +190,63 @@ class Http
 			Log::write(Array($result), 'COMMAND RESULT: '.$command);
 		}
 
-		try
+		if ($waitResponse)
 		{
-			$result = $waitResponse? Json::decode($result): true;
+			if ($result === false)
+			{
+				// check for network errors
+				$errors = $httpClient->getError();
+				if (!empty($errors))
+				{
+					$result = [
+						'error' => [
+							'code' => self::ERROR_NETWORK,
+							'msg' => 'Network connection error.',
+							'errorStack' => $errors,
+						]
+					];
+				}
+			}
+			// try to parse result
+			elseif (is_string($result))
+			{
+				try
+				{
+					$result = Json::decode($result);
+				}
+				catch (ArgumentException $exception)
+				{
+					$result = [
+						'error' => [
+							'code' => self::ERROR_ANSWER,
+							'msg' => 'Server answer is malformed.',
+							'errorResult' => $result,
+							'errorStack' => [
+								$exception->getCode() => $exception->getMessage()
+							],
+						]
+					];
+				}
+			}
 		}
-		catch (ArgumentException $e)
+		// don't wait for response body
+		else
 		{
-			$result = Array(
-				'ERROR' => $e,
-				'ERROR_RESULT' => $result
-			);
+			$result = ($result !== false);
 		}
 
 		return $result;
 	}
 
+	/**
+	 * @param int $dialogId
+	 * @param int $messageId
+	 * @param string $messageText
+	 * @param string $userName
+	 * @param int $userAge
+	 *
+	 * @return array|bool
+	 */
 	public function sendMessage($dialogId, $messageId, $messageText, $userName, $userAge = 30)
 	{
 		$params = Array(
@@ -163,19 +257,22 @@ class Http
 			'USER_AGE' => $userAge
 		);
 
-		$query = $this->Query(
+		$query = $this->query(
 			'SendMessage',
 			$params
 		);
-		if (isset($query->error))
+		if (is_array($query) && isset($query['error']))
 		{
-			$this->error = new Error(__METHOD__, $query->error->code, $query->error->msg);
+			$this->error = new Error(__METHOD__, $query['error']['code'], $query['error']['msg']);
 			return false;
 		}
 
 		return $query;
 	}
 
+	/**
+	 * @return Error
+	 */
 	public function getError()
 	{
 		return $this->error;

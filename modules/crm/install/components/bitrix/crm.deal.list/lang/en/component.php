@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BIZPROC_MODULE_NOT_INSTALLED"] = "The Business Processes module is not installed.";
 $MESS["CRM_BPLIST"] = "Business Processes";
 $MESS["CRM_BP_R_P"] = "Business Processes";
@@ -10,7 +10,7 @@ $MESS["CRM_COLUMN_ASSIGNED_BY"] = "Responsible";
 $MESS["CRM_COLUMN_BEGINDATE_1"] = "Start date";
 $MESS["CRM_COLUMN_BINDING"] = "Binding";
 $MESS["CRM_COLUMN_CATEGORY_ID"] = "Pipeline";
-$MESS["CRM_COLUMN_CLIENT"] = "Contact";
+$MESS["CRM_COLUMN_CLIENT"] = "Client";
 $MESS["CRM_COLUMN_CLOSED"] = "Closed";
 $MESS["CRM_COLUMN_CLOSEDATE"] = "Assumed close date";
 $MESS["CRM_COLUMN_COMMENTS"] = "Comment";
@@ -82,4 +82,3 @@ $MESS["CRM_SET_STAGE_NOT_COMPLETED_TITLE"] = "Cannot move deals";
 $MESS["CRM_TASKS"] = "Tasks";
 $MESS["CRM_TASK_TAG"] = "crm";
 $MESS["CRM_TASK_TITLE_PREFIX"] = "CRM:";
-?>

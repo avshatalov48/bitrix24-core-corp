@@ -54,6 +54,7 @@ export class OrderCreationModel extends VuexBuilderModel
 			module: null,
 			measureCode: 0,
 			measureName: '',
+			measureRatio: 1,
 			taxRate: 0,
 			taxIncluded: 'N',
 			isCustomPrice: 'N',

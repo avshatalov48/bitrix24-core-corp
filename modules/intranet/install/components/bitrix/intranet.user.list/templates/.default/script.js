@@ -19,6 +19,7 @@
 			this.gridId = params.gridId;
 			this.filterId = (BX.type.isNotEmptyString(params.filterId) ? params.filterId : null);
 			this.gridContainer = (BX.type.isNotEmptyString(params.gridContainerId) ? BX(params.gridContainerId) : null);
+			this.invitationLink = params.invitationLink;
 
 			params.toolbar.componentName = this.componentName;
 			this.toolbarInstance = new namespace.Toolbar(params.toolbar);
@@ -30,6 +31,11 @@
 					BX.Main.gridManager.reload(this.gridId);
 				}
 			}.bind(this));
+		},
+
+		showInvitation: function ()
+		{
+			BX.SidePanel.Instance.open(this.invitationLink, {cacheable: false, allowChangeHistory: false})
 		},
 
 		addTask: function(userId)

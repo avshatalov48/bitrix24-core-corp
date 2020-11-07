@@ -265,18 +265,28 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 		foreach ($paySystemList as $paySystemElement)
 		{
 			if (!in_array($paySystemElement['ID'], $salesCenterRestrictionIds))
-				continue;
-
-			if (!empty($paySystemElement["LOGOTIP"]))
 			{
-				$paySystemElement["LOGOTIP"] = CFile::GetFileArray($paySystemElement['LOGOTIP']);
-				$fileTemp = CFile::ResizeImageGet(
-					$paySystemElement["LOGOTIP"]["ID"],
+				continue;
+			}
+
+			$logo = null;
+			if ($paySystemElement["LOGOTIP"])
+			{
+				$logo = CFile::GetFileArray($paySystemElement['LOGOTIP']);
+			}
+
+			if ($logo)
+			{
+				$paySystemElement["LOGOTIP"] = CFile::ResizeImageGet(
+					$logo["ID"],
 					array(),
 					BX_RESIZE_IMAGE_PROPORTIONAL,
 					true
-				);
-				$paySystemElement["LOGOTIP"] = $fileTemp["src"];
+				)['src'];
+			}
+			else
+			{
+				$paySystemElement["LOGOTIP"] = null;
 			}
 
 			$formattedPaySystems[] = $paySystemElement;

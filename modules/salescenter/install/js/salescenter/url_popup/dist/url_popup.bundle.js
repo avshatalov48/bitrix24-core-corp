@@ -253,7 +253,7 @@ this.BX = this.BX || {};
 	      var result = [];
 	      fields.forEach(function (item) {
 	        var menu = {
-	          text: item.title,
+	          text: main_core.Text.encode(item.title),
 	          dataset: {
 	            rootMenu: _this8.fieldsPopupMenuId
 	          }

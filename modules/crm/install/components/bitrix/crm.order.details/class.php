@@ -15,6 +15,7 @@ use Bitrix\Crm\Component\ComponentError;
 use Bitrix\Crm\Security\EntityPermissionType;
 use Bitrix\Crm\Component\EntityDetails\ComponentMode;
 use Bitrix\Sale\Helpers\Order\Builder;
+use Bitrix\Crm\Product\Url;
 
 if(!Main\Loader::includeModule('crm'))
 {
@@ -111,6 +112,16 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		{
 			$this->arResult['ORIGIN_ID'] = '';
 		}
+
+		$this->arParams['BUILDER_CONTEXT'] = (isset($this->arParams['BUILDER_CONTEXT']) ? $this->arParams['BUILDER_CONTEXT'] : '');
+		if (
+			$this->arParams['BUILDER_CONTEXT'] != Url\ShopBuilder::TYPE_ID
+			&& $this->arParams['BUILDER_CONTEXT'] != Url\ProductBuilder::TYPE_ID
+		)
+		{
+			$this->arParams['BUILDER_CONTEXT'] = Url\ShopBuilder::TYPE_ID;
+		}
+		$this->arResult['BUILDER_CONTEXT'] = $this->arParams['BUILDER_CONTEXT'];
 	}
 
 	protected function getFileHandlerUrl()
@@ -168,6 +179,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				$this->arResult[$k] = $this->arParams[$k] = (int)$v;
 			}
 		}
+
 	}
 
 	public function obtainOrder()
@@ -427,7 +439,8 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			'PATH_TO_ORDER_PRODUCT_LIST' => '/bitrix/components/bitrix/crm.order.product.list/class.php?&site='.$this->order->getSiteId().'&'.bitrix_sessid_get(),
 			'ACTION_URL' => '/bitrix/components/bitrix/crm.order.product.list/lazyload.ajax.php?&site='.$this->order->getSiteId().'&'.bitrix_sessid_get(),
 			'ORDER_ID' => $this->order->getId(),
-			'SITE_ID' => $this->order->getSiteId()
+			'SITE_ID' => $this->order->getSiteId(),
+			'BUILDER_CONTEXT' => $this->arResult['BUILDER_CONTEXT']
 		];
 
 		if ($this->mode === ComponentMode::CREATION && (int)$this->request->get('FUSER_ID') > 0)
@@ -999,7 +1012,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			)
 		);
 
-		if($this->entityID > 0 && $this->mode !== ComponentMode::COPING)
+		if($this->mode !== ComponentMode::COPING)
 		{
 			$this->arResult['ENTITY_FIELDS'][] = array(
 				'name' => 'ACCOUNT_NUMBER',
@@ -2394,7 +2407,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			'transferable' => false,
 			'linked' => $linked,
 			'isDragEnabled' => ($property['IS_DRAG_ENABLED'] !== false),
-			'optionFlags' => ($property['SETTINGS']['SHOW_ALWAYS'] === 'Y') ? 1 : 0,
+			'optionFlags' => ($property['SHOW_ALWAYS'] === 'Y') ? 1 : 0,
 			'data' => $data
 		);
 	}
@@ -2418,7 +2431,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			)
 		);
 
-		if($this->entityID > 0 && $this->mode !== ComponentMode::COPING)
+		if($this->mode !== ComponentMode::COPING)
 		{
 			$mainConfig['elements'][] = array('name' => 'ACCOUNT_NUMBER');
 		}
@@ -2446,18 +2459,15 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			)
 		);
 
-		if($this->entityID > 0)
-		{
-			$this->arResult['ENTITY_CONFIG'][] =
-				array(
-					'name' => 'products',
-					'title' => Loc::getMessage('CRM_ORDER_SECTION_PRODUCTS'),
-					'type' => 'section',
-					'elements' => array(
-						array('name' => 'PRODUCT_ROW_SUMMARY')
-					)
-				);
-		}
+		$this->arResult['ENTITY_CONFIG'][] =
+			array(
+				'name' => 'products',
+				'title' => Loc::getMessage('CRM_ORDER_SECTION_PRODUCTS'),
+				'type' => 'section',
+				'elements' => array(
+					array('name' => 'PRODUCT_ROW_SUMMARY')
+				)
+			);
 
 		$this->arResult['ENTITY_CONFIG'] = array_merge(
 			$this->arResult['ENTITY_CONFIG'],

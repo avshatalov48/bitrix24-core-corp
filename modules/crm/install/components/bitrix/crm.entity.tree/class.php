@@ -161,73 +161,52 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 		$semantic[\Bitrix\Crm\Order\OrderStatus::NAME] = \Bitrix\Crm\Order\OrderStatus::getSemanticInfo();
 		$semantic[\Bitrix\Crm\Order\DeliveryStatus::NAME] = \Bitrix\Crm\Order\DeliveryStatus::getSemanticInfo();
 
-		$colors = array(
-			'QUOTE_STATUS' => (array)unserialize(\Bitrix\Main\Config\Option::get('crm', 'CONFIG_STATUS_QUOTE_STATUS')),
-			'INVOICE_STATUS' => (array)unserialize(\Bitrix\Main\Config\Option::get('crm', 'CONFIG_STATUS_INVOICE_STATUS')),
-			'ORDER_STATUS' => (array)unserialize(\Bitrix\Main\Config\Option::get('crm', 'CONFIG_STATUS_ORDER_STATUS')),
-			'ORDER_SHIPMENT_STATUS' => (array)unserialize(\Bitrix\Main\Config\Option::get('crm', 'CONFIG_STATUS_ORDER_SHIPMENT_STATUS')),
-			'STATUS' => (array)unserialize(\Bitrix\Main\Config\Option::get('crm', 'CONFIG_STATUS_STATUS')),
-			'DEAL_STAGE' => (array)unserialize(\Bitrix\Main\Config\Option::get('crm', 'CONFIG_STATUS_DEAL_STAGE')),
-		);
-		foreach (\Bitrix\Crm\Category\DealCategory::getList(array())->fetchAll() as $cat)
+		$list = \Bitrix\Crm\StatusTable::getList([
+			'order' => [
+				'SORT' => 'ASC',
+			]
+		]);
+		while ($status = $list->fetch())
 		{
-			$colors['DEAL_STAGE_' . $cat['ID']] = (array)unserialize(\Bitrix\Main\Config\Option::get('crm', 'CONFIG_STATUS_DEAL_STAGE_' . $cat['ID']));
-		}
-
-
-		$res = \CCrmStatus::GetList(array('SORT' => 'ASC'));
-		while ($row = $res->getNext())
-		{
-			if (!in_array($row['ENTITY_ID'], array('STATUS', 'QUOTE_STATUS', 'INVOICE_STATUS',
+			if (
+				!in_array($status['ENTITY_ID'], array('STATUS', 'QUOTE_STATUS', 'INVOICE_STATUS',
 													'COMPANY_TYPE', 'DEAL_STAGE', 'SOURCE'))
-				&& !isset($colors[$row['ENTITY_ID']])
 			)
 			{
 				continue;
 			}
-			if (!isset($statuses[$row['ENTITY_ID']]))
+			if (!isset($statuses[$status['ENTITY_ID']]))
 			{
-				$statuses[$row['ENTITY_ID']] = array();
+				$statuses[$status['ENTITY_ID']] = array();
 			}
-			$row['COLOR'] = !empty($colors[$row['ENTITY_ID']]) && isset($colors[$row['ENTITY_ID']][$row['STATUS_ID']])
-							? $colors[$row['ENTITY_ID']][$row['STATUS_ID']]['COLOR']
-							: '';
-			if (isset($semantic[$row['ENTITY_ID']]) && isset($semantic[$row['ENTITY_ID']]['SEMANTIC_INFO'])
-				&& $semantic[$row['ENTITY_ID']]['SEMANTIC_INFO']['FINAL_SORT'] == 0 &&
+			if (isset($semantic[$status['ENTITY_ID']]) && isset($semantic[$status['ENTITY_ID']]['SEMANTIC_INFO'])
+				&& $semantic[$status['ENTITY_ID']]['SEMANTIC_INFO']['FINAL_SORT'] == 0 &&
 				(
-					$semantic[$row['ENTITY_ID']]['SEMANTIC_INFO']['FINAL_SUCCESS_FIELD'] == $row['STATUS_ID'] ||
-					$semantic[$row['ENTITY_ID']]['SEMANTIC_INFO']['FINAL_UNSUCCESS_FIELD'] == $row['STATUS_ID']
+					$semantic[$status['ENTITY_ID']]['SEMANTIC_INFO']['FINAL_SUCCESS_FIELD'] == $status['STATUS_ID'] ||
+					$semantic[$status['ENTITY_ID']]['SEMANTIC_INFO']['FINAL_UNSUCCESS_FIELD'] == $status['STATUS_ID']
 				)
 			)
 			{
-				$semantic[$row['ENTITY_ID']]['SEMANTIC_INFO']['FINAL_SORT'] = $row['SORT'];
+				$semantic[$status['ENTITY_ID']]['SEMANTIC_INFO']['FINAL_SORT'] = $status['SORT'];
 			}
-			$statuses[$row['ENTITY_ID']][$row['STATUS_ID']] = $row;
+			$statuses[$status['ENTITY_ID']][$status['STATUS_ID']] = $status;
 		}
 
 		$orderStatus = \Bitrix\Crm\Order\OrderStatus::getListInCrmFormat();
 		if ($orderStatus)
 		{
-			foreach ($orderStatus as $row)
+			foreach ($orderStatus as $status)
 			{
-				$row['COLOR'] = !empty($colors[$row['ENTITY_ID']]) && isset($colors[$row['ENTITY_ID']][$row['STATUS_ID']])
-					? $colors[$row['ENTITY_ID']][$row['STATUS_ID']]['COLOR']
-					: '';
-
-				$statuses[$row['ENTITY_ID']][$row['STATUS_ID']] = $row;
+				$statuses[$status['ENTITY_ID']][$status['STATUS_ID']] = $status;
 			}
 		}
 
 		$shipmentStatus = \Bitrix\Crm\Order\DeliveryStatus::getListInCrmFormat();
 		if ($shipmentStatus)
 		{
-			foreach ($shipmentStatus as $row)
+			foreach ($shipmentStatus as $status)
 			{
-				$row['COLOR'] = !empty($colors[$row['ENTITY_ID']]) && isset($colors[$row['ENTITY_ID']][$row['STATUS_ID']])
-					? $colors[$row['ENTITY_ID']][$row['STATUS_ID']]['COLOR']
-					: '';
-
-				$statuses[$row['ENTITY_ID']][$row['STATUS_ID']] = $row;
+				$statuses[$status['ENTITY_ID']][$status['STATUS_ID']] = $status;
 			}
 		}
 

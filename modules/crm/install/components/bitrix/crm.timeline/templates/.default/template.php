@@ -102,92 +102,115 @@ if(!empty($arResult['ERRORS']))
 	<div id="<?=htmlspecialcharsbx($listContainerID)?>" class="crm-entity-stream-container-list">
 		<div id="<?=htmlspecialcharsbx($editorContainerID)?>" class="crm-entity-stream-section crm-entity-stream-section-new">
 			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-new"></div>
-			<div class="crm-entity-stream-section-content crm-entity-stream-section-content-new">
-				<div id="<?=htmlspecialcharsbx($menuBarContainerID)?>" class="crm-entity-stream-section-content-new-header">
-					<a data-item-id="comment" class="crm-entity-stream-section-new-action" href="#">
-						<?=GetMessage('CRM_TIMELINE_COMMENT')?>
-					</a>
-					<?if($arResult['ENABLE_WAIT'])
-					{?>
-					<a data-item-id="wait" data-item-title="<?=GetMessage('CRM_TIMELINE_WAIT')?>" class="crm-entity-stream-section-new-action" href="#">
-							<?=GetMessage('CRM_TIMELINE_WAIT')?>
-					</a>
-					<?}?>
-					<?if(\Bitrix\Crm\Activity\Provider\Zoom::isAvailable())
-					{?>
-						<?if($arResult['ENABLE_ZOOM'])
-						{?>
-						<a data-item-id="zoom" data-item-title="ZOOM" class="crm-entity-stream-section-new-action"
-							href="#"
-							<?=$arResult['STATUS_ZOOM'] ? '' : 'onclick="BX.Crm.Zoom.onNotConnectedHandler('.$arResult['USER_ID'].')"'?>
-						>
-							<?=GetMessage('CRM_TIMELINE_ZOOM')?>
-						</a>
-						<?}
-						else
-						{
-							$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
-						?>
-						<a data-item-id="zoom" data-item-title="ZOOM"
-							class="crm-entity-stream-section-new-action crm-entity-stream-section-new-action-zoom"
-							href="#"
-							onclick="BX.Crm.Zoom.onNotAvailableHandler()"
-						>
-							<?=GetMessage('CRM_TIMELINE_ZOOM')?>
-							<span class="tariff-lock"></span>
-						</a>
-						<?}?>
-					<?}?>
-					<?if($arResult['ENABLE_CALL'])
-					{?>
-					<a data-item-id="call" data-item-title="<?=GetMessage('CRM_TIMELINE_CALL')?>" class="crm-entity-stream-section-new-action" href="#">
-						<?=GetMessage('CRM_TIMELINE_CALL')?>
-					</a>
-					<?}?>
-					<?if($arResult['ENABLE_SMS'])
-					{?>
-					<a data-item-id="sms" data-item-title="SMS" class="crm-entity-stream-section-new-action" href="#">
-						SMS
-					</a>
-					<?}?>
-					<?if($arResult['ENABLE_EMAIL'])
-					{?>
-					<a data-item-id="email" data-item-title="<?=GetMessage('CRM_TIMELINE_EMAIL')?>" class="crm-entity-stream-section-new-action" href="#">
-						<?=GetMessage('CRM_TIMELINE_EMAIL')?>
-					</a>
-					<?}?>
-					<?if($arResult['ENABLE_TASK'])
-					{?>
-					<a data-item-id="task" data-item-title="<?=GetMessage('CRM_TIMELINE_TASK')?>" class="crm-entity-stream-section-new-action" href="#">
-						<?=GetMessage('CRM_TIMELINE_TASK')?>
-					</a>
-					<?}?>
-					<?if($arResult['ENABLE_MEETING'])
-					{?>
-					<a data-item-id="meeting" data-item-title="<?=GetMessage('CRM_TIMELINE_MEETING')?>" class="crm-entity-stream-section-new-action" href="#">
-						<?=GetMessage('CRM_TIMELINE_MEETING')?>
-					</a>
-					<?}?>
-					<?if($arResult['ENABLE_VISIT'])
-					{?>
-					<a data-item-id="visit" data-item-title="<?=GetMessage('CRM_TIMELINE_VISIT')?>" class="crm-entity-stream-section-new-action" href="#">
-						<?=GetMessage('CRM_TIMELINE_VISIT')?>
-					</a>
-					<?}?>
-					<?if(count($arResult['ADDITIONAL_TABS']) > 0)
-					{
-						foreach($arResult['ADDITIONAL_TABS'] as $tab)
-						{?>
-							<a data-item-id="<?=$tab['id']?>" data-item-title="<?=\Bitrix\Main\Text\HtmlFilter::encode($tab['name'])?>" class="crm-entity-stream-section-new-action" href="#">
-								<?=\Bitrix\Main\Text\HtmlFilter::encode($tab['name'])?>
-							</a>
-						<?}
-					}?>
+			<div class="crm-entity-stream-section-content">
+				<?
+				$baseMenuItem = [
+					"TEXT" => "Some item",
+					"URL" => "javascript:void(0);",
+					"ID" => "some",
+					"ON_CLICK" => "BX.onCustomEvent('".$prefix."_menu', ['#ID#']);"
+				];
+				$menuItems = [([
+					"ID" => "comment",
+					"TITLE" => GetMessage("CRM_TIMELINE_COMMENT"),
+					"TEXT" => GetMessage("CRM_TIMELINE_COMMENT"),
+				] + $baseMenuItem)];
 
-					<a class="crm-entity-stream-section-new-action-more" href="#">
-						<?=GetMessage('CRM_TIMELINE_MORE')?>
-					</a>
-				</div>
+				if ($arResult["ENABLE_WAIT"])
+				{
+					$menuItems[] = [
+						"ID" => "wait",
+						"TEXT" => GetMessage("CRM_TIMELINE_WAIT"),
+						"TITLE" => GetMessage("CRM_TIMELINE_WAIT"),
+					] + $baseMenuItem;
+				}
+				if ($arResult["ENABLE_ZOOM"])
+				{
+					$menuItems[] = [
+						"ID" => "zoom",
+						"TEXT" => GetMessage("CRM_TIMELINE_ZOOM"),
+						"TITLE" => GetMessage("CRM_TIMELINE_ZOOM"),
+						"ON_CLICK" => ($arResult['STATUS_ZOOM'] ? "BX.onCustomEvent('".$prefix."_menu', ['#ID#']);" : "BX.Crm.Zoom.onNotConnectedHandler({$arResult["USER_ID"]})")
+					] + $baseMenuItem;
+				}
+				elseif (Bitrix\Main\Loader::includeModule("bitrix24"))
+				{
+					$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
+					$menuItems[] = [
+						"ID" => "zoom",
+						"TEXT" => GetMessage("CRM_TIMELINE_ZOOM"),
+						"TITLE" => GetMessage("CRM_TIMELINE_ZOOM"),
+						"CLASS" => "crm-zoom-tariff-lock",
+						"ON_CLICK" => "BX.Crm.Zoom.onNotAvailableHandler()",
+					] + $baseMenuItem;
+				}
+				if ($arResult["ENABLE_CALL"])
+				{
+					$menuItems[] = [
+						"ID" => "call",
+						"TEXT" => GetMessage("CRM_TIMELINE_CALL"),
+						"TITLE" => GetMessage("CRM_TIMELINE_CALL"),
+					] + $baseMenuItem;
+				}
+				if ($arResult["ENABLE_SMS"])
+				{
+					$menuItems[] = [
+						"ID" => "sms",
+						"TEXT" => "SMS",
+						"TITLE" => "SMS",
+					] + $baseMenuItem;
+				}
+				if ($arResult["ENABLE_EMAIL"])
+				{
+					$menuItems[] = [
+						"ID" => "email",
+						"TEXT" => GetMessage('CRM_TIMELINE_EMAIL'),
+						"TITLE" => GetMessage('CRM_TIMELINE_EMAIL'),
+					] + $baseMenuItem;
+				}
+				if ($arResult["ENABLE_TASK"])
+				{
+					$menuItems[] = [
+						"ID" => "task",
+						"TEXT" => GetMessage('CRM_TIMELINE_TASK'),
+						"TITLE" => GetMessage('CRM_TIMELINE_TASK'),
+					] + $baseMenuItem;
+				}
+				if ($arResult["ENABLE_MEETING"])
+				{
+					$menuItems[] = [
+						"ID" => "meeting",
+						"TEXT" => GetMessage('CRM_TIMELINE_MEETING'),
+						"TITLE" => GetMessage('CRM_TIMELINE_MEETING'),
+					] + $baseMenuItem;
+				}
+				if ($arResult["ENABLE_VISIT"])
+				{
+					$menuItems[] = [
+						"ID" => "visit",
+						"TEXT" => GetMessage('CRM_TIMELINE_VISIT'),
+						"TITLE" => GetMessage('CRM_TIMELINE_VISIT'),
+					] + $baseMenuItem;
+				}
+				foreach($arResult['ADDITIONAL_TABS'] as $tab)
+				{
+					$menuItems[] = [
+						"ID" => $tab['id'],
+						"TEXT" => \Bitrix\Main\Text\HtmlFilter::encode($tab['name']),
+						"TITLE" => \Bitrix\Main\Text\HtmlFilter::encode($tab['name']),
+					] + $baseMenuItem;
+				}
+				?><?$APPLICATION->IncludeComponent(
+					"bitrix:main.interface.buttons",
+					"",
+					array(
+						"ID" => mb_strtolower($arResult['ENTITY_TYPE_NAME']."_menu"),
+						"ITEMS" => array_map(function ($item) {
+							$item["ON_CLICK"] = str_replace("#ID#", $item["ID"], $item["ON_CLICK"]);
+							return $item;
+						}, $menuItems),
+					)
+				);?>
 				<div id="<?=htmlspecialcharsbx($commentContainerID)?>" class="crm-entity-stream-content-new-detail">
 					<textarea id="<?=htmlspecialcharsbx($commentInputID)?>" rows="1" class="crm-entity-stream-content-new-comment-textarea" placeholder="<?=GetMessage('CRM_TIMELINE_COMMENT_PLACEHOLDER')?>"></textarea>
 					<div class="crm-entity-stream-content-new-comment-btn-container">

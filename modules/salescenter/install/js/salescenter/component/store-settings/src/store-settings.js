@@ -2,6 +2,7 @@ import {Vue} from 'ui.vue';
 import {rest as Rest} from 'rest.client';
 import {Manager} from 'salescenter.manager';
 import {PopupMenuWindow} from 'main.popup';
+import {Text} from 'main.core';
 
 import {PreviewBlock} from 'salescenter.component.store-preview';
 import {RequisiteBlock} from 'salescenter.component.mycompany-requisite-settings';
@@ -131,7 +132,7 @@ export class StoreSettings
 							phones.forEach(item => {
 								phoneItems.push(
 									{
-										text: item.value,
+										text: Text.encode(item.value),
 										id: item.id,
 										onclick: setItem.bind(this)
 									}

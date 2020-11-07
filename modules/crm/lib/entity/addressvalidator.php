@@ -40,6 +40,8 @@ class AddressValidator extends FieldValidator
 			|| $this->getFieldValue('ADDRESS_CITY') !== ''
 			|| $this->getFieldValue('ADDRESS_REGION') !== ''
 			|| $this->getFieldValue('ADDRESS_PROVINCE') !== ''
-			|| $this->getFieldValue('ADDRESS_POSTAL_CODE') !== '';
+			|| $this->getFieldValue('ADDRESS_POSTAL_CODE') !== ''
+			|| $this->getFieldValue('ADDRESS_LOC_ADDR_ID') !== ''
+			|| $this->getFieldValue('ADDRESS_LOC_ADDR') !== '';
 	}
 }

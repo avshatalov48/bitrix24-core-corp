@@ -25,7 +25,7 @@ class ConnectorSettingsAjaxController extends \Bitrix\Main\Engine\Controller
 
 		foreach ($queue as $userCode)
 		{
-			$userId = substr($userCode, 1);
+			$userId = mb_substr($userCode, 1);
 			$userId = intval($userId);
 
 			if (\Bitrix\Im\User::getInstance($userId)->isExtranet())

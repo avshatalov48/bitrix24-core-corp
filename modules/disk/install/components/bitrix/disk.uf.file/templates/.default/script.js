@@ -208,6 +208,7 @@
 			{
 				var node = this.agent.getItem(id), TR = node.node;
 				this.bindEventsHandlers(TR, item, {});
+				BX.onCustomEvent(this.params.controller.parentNode, 'onFileIsAppended', [id, item]);
 			},
 			onFileIsBound : function(id, item)
 			{
@@ -351,7 +352,7 @@
 
 							//it's fix for editing comment without ajax. There is no information about file path.
 							//and we have to send request to calculate it.
-							if(ii.toLowerCase() == 'storage' && value === 'disk')
+							if(ii === 'STORAGE' && value === 'disk')
 							{
 								getBreadcrumbsByAttachedObject(file.id).then(function(response){
 									if(response.crumbs)

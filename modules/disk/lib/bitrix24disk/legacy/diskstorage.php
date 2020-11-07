@@ -6,6 +6,7 @@ use Bitrix\Disk\Bitrix24Disk\PageState;
 use Bitrix\Disk\Bitrix24Disk\TmpFile;
 use Bitrix\Disk\Configuration;
 use Bitrix\Disk\Driver;
+use Bitrix\Disk\Internals\Path;
 use Bitrix\Disk\Sharing;
 use Bitrix\Disk\SpecificFolder;
 use Bitrix\Disk\Storage;
@@ -25,7 +26,6 @@ use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\ReferenceField;
-use Bitrix\Main\IO\Path;
 use Bitrix\Main\IO;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Type\DateTime;
@@ -214,7 +214,7 @@ class DiskStorage extends AbstractStorage
 		$cache = Data\Cache::createInstance();
 		if($cache->initCache(15768000, 'storage_isshared_' . $this->storage->getId(), 'disk'))
 		{
-			list($this->sharedData,) = $cache->getVars();
+			[$this->sharedData,] = $cache->getVars();
 		}
 		else
 		{
@@ -263,7 +263,7 @@ class DiskStorage extends AbstractStorage
 		$cache = Data\Cache::createInstance();
 		if($cache->initCache(15768000, 'storage_tr_' . $this->storage->getId(), 'disk'))
 		{
-			list($formattedFolders, $this->cacheBreadcrumbs) = $cache->getVars();
+			[$formattedFolders, $this->cacheBreadcrumbs] = $cache->getVars();
 		}
 		else
 		{

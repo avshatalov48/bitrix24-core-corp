@@ -70,7 +70,7 @@ class OrderCheckController extends EntityController
 				'#SUM_WITH_CURRENCY#' => $entity['SUM_WITH_CURRENCY']
 			]);
 			$data['PRINTED'] = $data['SETTINGS']['PRINTED'];
-			$data['CHECK_URL'] = $check->getUrl();
+			$data['CHECK_URL'] = $check ? $check->getUrl() : '';
 		}
 
 		unset($data['SETTINGS']);

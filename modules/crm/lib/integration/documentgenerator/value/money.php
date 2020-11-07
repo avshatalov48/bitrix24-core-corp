@@ -9,7 +9,6 @@ use Bitrix\DocumentGenerator\Nameable;
 use Bitrix\DocumentGenerator\Value;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use google\protobuf\php\Extension;
 
 class Money extends Value implements Nameable
 {

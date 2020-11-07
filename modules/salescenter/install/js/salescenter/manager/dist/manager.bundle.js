@@ -760,6 +760,11 @@ this.BX = this.BX || {};
 	      Manager.openHelper(event, 'redirect=detail&code=11825299', 'pay_system_connect');
 	    }
 	  }, {
+	    key: "openHowToConfigWoopkassaPaySystem",
+	    value: function openHowToConfigWoopkassaPaySystem(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=12183852', 'pay_system_connect');
+	    }
+	  }, {
 	    key: "openHowToUseOfflineCashBox",
 	    value: function openHowToUseOfflineCashBox(event) {
 	      Manager.openHelper(event, 'redirect=detail&code=11271760', 'cashbox_connect');
@@ -887,8 +892,9 @@ this.BX = this.BX || {};
 	        url.setQueryParams(params);
 	      }
 
+	      var sliderOptions = params.hasOwnProperty('sliderOptions') ? params.sliderOptions : {};
 	      return new Promise(function (resolve, reject) {
-	        Manager.openSlider(url.toString()).then(function (slider) {
+	        Manager.openSlider(url.toString(), sliderOptions).then(function (slider) {
 	          resolve(slider.getData());
 	        }).catch(function (reason) {});
 	      });

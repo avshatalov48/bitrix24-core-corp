@@ -58,7 +58,10 @@ RecentList.init = function()
 	this.generalChatId = BX.componentParameters.get('IM_GENERAL_CHAT_ID', 0);
 
 	this.viewLoaded = false;
-	BX.onViewLoaded(() => this.viewLoaded = true);
+
+	BX.onViewLoaded(() => {
+		this.viewLoaded = true
+	});
 
 	this.imagePath = component.path+'images';
 
@@ -146,11 +149,19 @@ RecentList.init = function()
 		this.action.init();
 		this.topMenu.init();
 		this.promotion.init();
-
 		this.redraw();
 	});
 
-	this.refresh({start: true});
+	if (this.isRecent())
+	{
+		this.refresh({start: true});
+	}
+	else
+	{
+		BX.addCustomEvent('onAppData', this.refresh({start: true}));
+	}
+
+	IntranetInvite.init();
 
 	BX.addCustomEvent("onImDetailShowed", (data) =>
 	{
@@ -277,6 +288,7 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 		let pageParams = {
 			data : dialogParams,
 			unique : true,
+			cache: false,
 			url : env.siteDir+"mobile/im/notify.php"
 		};
 		BX.postWebEvent("onNotifyRefresh", {});
@@ -735,12 +747,13 @@ RecentList.refresh = function(params)
 		requestMethods.recent = ['im.recent.get', recentParams];
 	}
 
-	ChatTimer.start('recent', 'load', 3000, () => {
+	if (this.viewLoaded)
+	{
 		this.loadingFlag = true;
-		if (this.viewLoaded)
-		{
-			dialogList.setTitle({text: BX.message('IM_REFRESH_TITLE'), useProgress:true, largeMode:true});
-		}
+		dialogList.setTitle({text: BX.message('COMPONENT_TITLE'), useProgress:true, largeMode:true});
+	}
+
+	ChatTimer.start('recent', 'load', 3000, () => {
 		console.warn("RecentList.refresh: slow connection show progress icon");
 	});
 
@@ -990,7 +1003,7 @@ RecentList.refresh = function(params)
 					this.loadingFlag = true;
 					if (this.viewLoaded)
 					{
-						dialogList.setTitle({text: BX.message('IM_REFRESH_TITLE'), useProgress:true, largeMode:true});
+						dialogList.setTitle({text: BX.message('COMPONENT_TITLE'), useProgress:true, largeMode:true});
 					}
 
 					console.error("RecentList.refresh: we have some problems with request, we will be check again soon", error.ex);
@@ -1032,9 +1045,22 @@ RecentList.refresh = function(params)
 		{
 			dialogList.stopRefreshing();
 		}
+
+		if (this.isRecent() && params.start)
+		{
+			BX.postWebEvent("onAppData", {});
+			BX.postComponentEvent("onAppData", []);
+		}
+
 	}, false, (xhr) => {
 		ChatRestRequest.register('refresh', xhr);
 	});
+
+	if (this.isRecent() && params.start)
+	{
+		BX.postWebEvent("onAppDataBefore", {});
+		BX.postComponentEvent("onAppDataBefore", []);
+	}
 
 	return true;
 };
@@ -1129,33 +1155,36 @@ RecentList.prepareListWithNewElements = function(newItems)
 	return listConverted;
 };
 
-RecentList.drawBottomLoader = function(id = 'loading')
+RecentList.drawBottomLoader = function()
 {
 	if (!this.viewLoaded)
 	{
 		return false;
 	}
 
-	dialogList.addItems([{
-		id: id,
-		title: BX.message('IM_DIALOG_UNNAMED'),
-		type: "loading",
-		unselectable: true,
-		params: { action: 'progress' },
-		sectionCode: 'general'
-	}]);
+	if (this.listEmpty)
+	{
+		dialogList.removeItem({"params.id" : "empty"});
+	}
+
+	dialogList.addItems(this.getLoadingElement());
 
 	return true;
 };
 
-RecentList.removeBottomLoader = function(id = 'loading')
+RecentList.removeBottomLoader = function()
 {
 	if (!this.viewLoaded)
 	{
 		return false;
 	}
 
-	dialogList.removeItem({'id': id});
+	dialogList.removeItem({'id': 'loading'});
+
+	if (this.listEmpty)
+	{
+		dialogList.addItems(this.getEmptyElement());
+	}
 
 	return true;
 };
@@ -1236,9 +1265,16 @@ RecentList.redraw = function()
 
 	if (listConverted.length <= 0)
 	{
-		listConverted = this.getEmptyElement();
+		if (this.loadingFlag)
+		{
+			listConverted = this.getLoadingElement();
+		}
+		else
+		{
+			listConverted = this.getEmptyElement();
+			this.openEmptyScreen();
+		}
 		this.listEmpty = true;
-		this.openEmptyScreen();
 	}
 	else if (this.listEmpty)
 	{
@@ -1355,6 +1391,18 @@ RecentList.getEmptyElement = function()
 	}
 
 	return list;
+};
+
+RecentList.getLoadingElement = function()
+{
+	return [{
+		id: 'loading',
+		title: BX.message('IM_LIST_LOADING'),
+		type: "loading",
+		unselectable: true,
+		params: { action: 'progress' },
+		sectionCode: 'general'
+	}];
 };
 
 RecentList.getElement = function(elementId, clone)
@@ -1869,7 +1917,7 @@ RecentList.push.updateList = function()
 		};
 
 		event.params.userInChat[event.params.chatId] = [this.base.userId];
-		
+
 		event.params.message.text  = senderMessage.toString().replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 		if (push.senderCut)
@@ -2703,7 +2751,6 @@ RecentList.pull.eventExecute = function(data)
 					});
 				}
 			}
-
 		}
 		else if (command == 'readNotifyList' || command == 'unreadNotifyList' || command == 'confirmNotify')
 		{
@@ -3299,7 +3346,7 @@ RecentList.action.read = function(elementId)
 	}
 
 	BX.rest.callBatch(requestMethods, (result) => {
-		ChatRestRequest.unregister('refresh');
+		ChatRestRequest.unregister('read');
 
 		let unreadError = result.setReadStatus.error();
 		let dialogReadError = element.counter? result.dialogRead.error() : false;

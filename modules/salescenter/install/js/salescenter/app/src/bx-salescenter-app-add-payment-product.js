@@ -244,15 +244,11 @@ Vue.component(config.templateAddPaymentProductName,
 				},
 				changeQuantity(event)
 				{
-					event.target.value = event.target.value.replace(/[^.,\d]/g,'');
+					event.target.value = event.target.value.replace(/[^.\d]/g,'.');
 					let newQuantity = parseFloat(event.target.value);
 					let lastSymbol = event.target.value.substr(-1);
-					if (lastSymbol === ',')
-					{
-						event.target.value = event.target.value.replace(',', ".");
-					}
 
-					if (!newQuantity || lastSymbol === '.' || lastSymbol === ',')
+					if (!newQuantity || lastSymbol === '.')
 					{
 						return;
 					}
@@ -495,18 +491,35 @@ Vue.component(config.templateAddPaymentProductName,
 				{
 					return (this.basketItem.name.length === 0);
 				},
+				calculateCorrectionFactor(quantity, measureRatio)
+				{
+					let factoredQuantity = quantity;
+					let factoredRatio = measureRatio;
+					let correctionFactor = 1;
+
+					while (!(Number.isInteger(factoredQuantity) && Number.isInteger(factoredRatio)))
+					{
+						correctionFactor *= 10;
+						factoredQuantity = quantity * correctionFactor;
+						factoredRatio = measureRatio * correctionFactor;
+					}
+
+					return correctionFactor;
+				},
 				incrementQuantity()
 				{
-					this.basketItem.quantity++;
+					let correctionFactor = this.calculateCorrectionFactor(this.basketItem.quantity, this.basketItem.measureRatio);
+					this.basketItem.quantity = (this.basketItem.quantity * correctionFactor + this.basketItem.measureRatio * correctionFactor) / correctionFactor;
 					this.changeData(this.basketItem);
 
 					this.refreshBasket();
 				},
 				decrementQuantity()
 				{
-					if (this.basketItem.quantity > 1)
+					if (this.basketItem.quantity > this.basketItem.measureRatio)
 					{
-						this.basketItem.quantity--;
+						let correctionFactor = this.calculateCorrectionFactor(this.basketItem.quantity, this.basketItem.measureRatio);
+						this.basketItem.quantity = (this.basketItem.quantity * correctionFactor - this.basketItem.measureRatio * correctionFactor) / correctionFactor;
 						this.changeData(this.basketItem);
 
 						this.refreshBasket();

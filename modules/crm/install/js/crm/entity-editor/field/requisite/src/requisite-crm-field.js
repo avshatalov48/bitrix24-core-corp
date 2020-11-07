@@ -121,7 +121,7 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 
 	createTitleActionControls()
 	{
-		if (this._mode !== BX.Crm.EntityEditorMode.edit)
+		if (this._mode !== BX.UI.EntityEditorMode.edit)
 		{
 			return [];
 		}
@@ -168,7 +168,7 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 
 		Dom.append(this.createTitleNode(this.getTitle()), this._wrapper);
 
-		if (this._mode === BX.Crm.EntityEditorMode.edit)
+		if (this._mode === BX.UI.EntityEditorMode.edit)
 		{
 			if (this.isAutocompleteEnabled())
 			{
@@ -225,6 +225,11 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 		this.updateAutocompleteState();
 	}
 
+	hasContentToDisplay()
+	{
+		return this.hasValue();
+	}
+
 	hasValue()
 	{
 		if (!this.hasRequisites())
@@ -260,7 +265,7 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 		this.updateSelectedRequisiteText();
 		this.updateAutocompleteState();
 		let container = Tag.render`
-			<div class="crm-entity-widget-content-block-inner" 
+			<div class="ui-entity-editor-content-block" 
 				onclick="${this.onViewStringClick.bind(this)}"
 				onmouseenter="${this.onViewStringMouseEnter.bind(this)}">
 					${this._domNodes.selectedRequisiteView}
@@ -284,14 +289,14 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 		else
 		{
 			this._domNodes.selectedRequisiteView.classList.remove('ui-link', 'ui-link-dark', 'ui-link-dotted');
-			this._domNodes.selectedRequisiteView.textContent = BX.Crm.EntityEditorField.messages.isEmpty;
+			this._domNodes.selectedRequisiteView.textContent = BX.UI.EntityEditorField.messages.isEmpty;
 		}
 	}
 
 	renderAddButton()
 	{
 		return Tag.render`
-		<div class="crm-entity-widget-content-block-inner crm-entity-widget-content-block-requisites">
+		<div class="ui-entity-editor-content-block crm-entity-widget-content-block-requisites">
 			<span class="crm-entity-widget-client-requisites-add-btn" onclick="${this.toggleNewRequisitePresetMenu.bind(this)}">${Loc.getMessage('CRM_EDITOR_ADD')}</span>
 		</div>`;
 	}
@@ -306,7 +311,7 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 		this.updateAutocompleteState();
 
 		return Tag.render`
-		<div class="crm-entity-widget-content-block-inner">
+		<div class="ui-entity-editor-content-block">
 			${autocompleteContainer}
 			<div class="crm-entity-widget-content-block-add-field">
 				<span class="crm-entity-widget-content-add-field" onclick="${this.toggleNewRequisitePresetMenu.bind(this)}">${Loc.getMessage('CRM_EDITOR_ADD')}</span>
@@ -414,7 +419,7 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 	{
 		this._tooltip.removeDebouncedEvents();
 		this._tooltip.close();
-		EventEmitter.emit(this, 'onDelete', {id, postponed: this._mode === BX.Crm.EntityEditorMode.edit});
+		EventEmitter.emit(this, 'onDelete', {id, postponed: this._mode === BX.UI.EntityEditorMode.edit});
 	}
 
 	hideRequisite(id)
@@ -641,7 +646,7 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 
 	onViewStringMouseEnter()
 	{
-		if (this._mode === BX.Crm.EntityEditorMode.view && this.hasValue())
+		if (this._mode === BX.UI.EntityEditorMode.view && this.hasValue())
 		{
 			this._tooltip.showDebounced();
 		}
@@ -659,7 +664,7 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 
 	onFieldMouseEnter()
 	{
-		if (this._mode === BX.Crm.EntityEditorMode.view && this.hasValue())
+		if (this._mode === BX.UI.EntityEditorMode.view && this.hasValue())
 		{
 			this._tooltip.showDebounced(5);
 		}

@@ -348,7 +348,7 @@
 							props: {className: "voximplant-control-row"},
 							children: [
 								this.elements.createButton = BX.create("button", {
-									props: {className: "ui-btn ui-btn-primary"},
+									props: {className: "ui-btn ui-btn-primary" + (this.unassignedNumbers.length === 0 ? " ui-btn-disabled" : "")},
 									text: BX.message("VOX_LINES_BUTTON_CREATE"),
 									events: {
 										click: this.onCreateButtonClick.bind(this)
@@ -371,6 +371,18 @@
 
 		renderUnassignedNumbers: function()
 		{
+			if (this.unassignedNumbers.length === 0)
+			{
+				return [BX.create("div", {
+					props: {className: "ui-alert ui-alert-danger"},
+					children: [
+						BX.create("span", {
+							props: {className: "ui-alert-message"},
+							text: BX.message("VOX_LINES_NO_UNASSIGNED_NUMBERS")
+						})
+					]
+				})]
+			}
 			return this.unassignedNumbers.map(function(numberFields)
 			{
 				return BX.create("span", {
@@ -452,6 +464,10 @@
 		onCreateButtonClick: function(e)
 		{
 			this.hideError();
+			if (this.unassignedNumbers.length === 0)
+			{
+				return;
+			}
 			BX.addClass(this.elements.createButton, "ui-btn-wait");
 
 			BX.ajax.runComponentAction("bitrix:voximplant.lines", "createGroup", {

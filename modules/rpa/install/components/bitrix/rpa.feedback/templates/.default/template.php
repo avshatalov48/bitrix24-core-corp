@@ -9,7 +9,7 @@ if($this->getComponent()->getErrors())
 	{
 		/** @var \Bitrix\Main\Error $error */
 		?>
-		<div><?=$error->getMessage();?></div>
+		<div><?=htmlspecialcharsbx($error->getMessage());?></div>
 		<?php
 	}
 

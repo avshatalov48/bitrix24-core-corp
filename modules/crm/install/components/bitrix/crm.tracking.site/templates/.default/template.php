@@ -17,7 +17,7 @@ $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . 
 Extension::load([
 	"sidepanel",
 	"ui.buttons", "ui.buttons.icons", "ui.hint", "ui.progressbar",
-	"ui.icons", "popup", "ui.forms", "crm.tracking.connector"
+	"ui.icons", "popup", "ui.forms", "crm.tracking.connector", "ui.sidepanel-content"
 ]);
 \CUtil::InitJSCore(['clipboard', 'promise']);
 
@@ -50,7 +50,7 @@ $containerId = 'crm-tracking-site';
 	<form method="post" id="crm-tracking-site-form">
 		<?=bitrix_sessid_post();?>
 		<input id="crm-tracking-site-remove-input" type="hidden" name="remove" value="N">
-		<div class="crm-tracking-site-block">
+		<div class="ui-slider-section">
 			<div class="crm-tracking-site-desc">
 				<span class="crm-tracking-site-desc-text">
 					<?=Loc::getMessage('CRM_TRACKING_SITE_DESC')?>

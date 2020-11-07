@@ -109,6 +109,12 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	/** @var string[] Delete constraint list. */
 	public static $deleteConstraintList = array();
 
+	/** @var string Table lock */
+	protected static $lockName = 'volume';
+
+	/** @var int Table lock timeout */
+	protected static $lockTimeout = 15;
+
 	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK,

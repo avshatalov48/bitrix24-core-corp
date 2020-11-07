@@ -8,7 +8,7 @@ use Bitrix\Main\Type\DateTime;
 
 class Sender extends BaseSender
 {
-	protected const DEFAULT_SERVICE_URL = "http://zoom.bx";
+	protected const DEFAULT_SERVICE_URL = "https://zoom.bitrix.info/";
 
 	protected function getServiceUrl(): string
 	{

@@ -996,6 +996,8 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 			CBitrix24::initLicenseInfoPopupJS();
 		}
 
+		$this->arResult['USER_FIELD_FILE_URL_TEMPLATE'] = $this->getFileUrlTemplate();
+
 		$this->includeComponentTemplate();
 	}
 	public function isSearchHistoryEnabled()
@@ -1505,7 +1507,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 			{
 				$fieldInfo['ADDITIONAL'] = array(
 					'URL_TEMPLATE' => \CComponentEngine::MakePathFromTemplate(
-						'/bitrix/components/bitrix/crm.deal.show/show_file.php?ownerId=#owner_id#&fieldName=#field_name#&fileId=#file_id#',
+						$this->getFileUrlTemplate(),
 						array(
 							'owner_id' => $this->entityID,
 							'field_name' => $fieldName
@@ -1623,6 +1625,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 			//endregion
 
 			$this->entityData['IS_MANUAL_OPPORTUNITY'] = 'N';
+			$this->entityData['IS_PAY_BUTTON_CONTROL_VISIBLE'] = 'N';
 
 			//region Default Stage ID
 			$stageList = $this->prepareStageList();
@@ -1758,7 +1761,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 						'CITY_OUT_LOCATION' => 'Y',
 						'LOCATION_VALUE' => $locationID,
 						'ORDER_PROPS_ID' => "DEAL_{$this->entityID}",
-						'ONCITYCHANGE' => 'BX.onCustomEvent(\'CrmProductRowSetLocation\', [\'LOC_CITY\']);',
+						'ONCITYCHANGE' => 'CrmProductRowSetLocation',
 						'SHOW_QUICK_CHOOSE' => 'N'
 					),
 					array(
@@ -2823,5 +2826,10 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 
 		$params[$name] = $value;
 		return true;
+	}
+
+	protected function getFileUrlTemplate(): string
+	{
+		return '/bitrix/components/bitrix/crm.deal.show/show_file.php?ownerId=#owner_id#&fieldName=#field_name#&fileId=#file_id#';
 	}
 }

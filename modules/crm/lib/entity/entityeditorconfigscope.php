@@ -54,21 +54,32 @@ class EntityEditorConfigScope
 	 * @param string $entityTypeId
 	 * @param int|null $scopeId
 	 * @param string|null $moduleId
-	 * @return string|null
+	 * @return string
 	 */
 	public static function getCaption(
 		string $scope,
 		string $entityTypeId = '',
 		?int $scopeId = null,
 		?string $moduleId = null
-	): ?string
+	): string
 	{
 		$captions = self::getCaptions($entityTypeId, $moduleId);
-		if ($scope === self::CUSTOM && $entityTypeId && $scopeId)
+		if (
+			$scope === self::CUSTOM
+			&& $entityTypeId
+			&& $scopeId
+			&& isset($captions[$scope][$scopeId]['NAME'])
+		)
 		{
-			return ($captions[$scope][$scopeId]['NAME'] ?? null);
+			return $captions[$scope][$scopeId]['NAME'];
 		}
-		return ($captions[$scope] ?? "[{$scope}]");
+
+		if (isset($captions[$scope]) && !is_array($captions[$scope]))
+		{
+			return $captions[$scope];
+		}
+
+		return "[{$scope}]";
 	}
 }
 

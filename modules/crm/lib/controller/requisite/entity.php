@@ -14,7 +14,7 @@ class Entity extends Controller
 		$requisiteEntity = new EntityRequisite();
 		$countryId = (int)$requisiteEntity->getCountryIdByPresetId((int)$presetId);
 		$type = ($countryId ? ClientResolver::getPropertyTypeByCountry($countryId) : []);
-		$typeId = empty($type) ? null : $type['VALUE'];
+		$typeId = empty($type) ? null : (string)$type['VALUE'];
 
 		$preparedSearchQuery = "";
 		if ($typeId == ClientResolver::PROP_ITIN && preg_match('/[0-9]{10,12}/', $searchQuery, $matches))
@@ -32,7 +32,7 @@ class Entity extends Controller
 			];
 		}
 
-		$result = ClientResolver::resolve(
+		$result = (new ClientResolver())->resolveClient(
 			$typeId,
 			$preparedSearchQuery,
 			$countryId

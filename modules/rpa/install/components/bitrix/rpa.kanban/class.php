@@ -20,7 +20,7 @@ class RpaKanbanComponent extends \Bitrix\Rpa\Components\ItemList implements \Bit
 	protected $availableNextStages;
 	protected $kanbanStageIds = [];
 
-	const COLUMN_PAGE_SIZE = 10;
+	protected const COLUMN_PAGE_SIZE = 10;
 
 	protected function init(): void
 	{
@@ -92,7 +92,9 @@ class RpaKanbanComponent extends \Bitrix\Rpa\Components\ItemList implements \Bit
 			foreach($items as $item)
 			{
 				/** @var Rpa\Model\Item $item */
-				$data = $itemController->prepareItemData($item);
+				$data = $itemController->prepareItemData($item, [
+					'withUsers' => false,
+				]);
 				$this->getDisplay()->addValues($item->getId(), $data);
 				$kanban['items'][] = [
 					'id' => $item->getId(),
@@ -100,7 +102,7 @@ class RpaKanbanComponent extends \Bitrix\Rpa\Components\ItemList implements \Bit
 					'name' => $item->getName(),
 					'data' => $data,
 				];
-				$userIds += array_keys($data['users']);
+				$userIds = array_merge($userIds, $item->getUserIds());
 			}
 		}
 
@@ -312,7 +314,14 @@ class RpaKanbanComponent extends \Bitrix\Rpa\Components\ItemList implements \Bit
 
 		foreach($items as $item)
 		{
-			$result['items'][] = $controller->prepareItemData($item);
+			$data = $controller->prepareItemData($item);
+			$this->getDisplay()->addValues($item->getId(), $data);
+			$result['items'][] = $data;
+		}
+
+		foreach($result['items'] as &$item)
+		{
+			$item['display'] = $this->getDisplay()->getValues($item['id']);
 		}
 
 		return $result;

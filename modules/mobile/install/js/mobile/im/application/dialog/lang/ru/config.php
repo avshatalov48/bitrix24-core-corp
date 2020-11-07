@@ -64,6 +64,8 @@ $MESS["MOBILE_SCOPE_USERS"] = "Сотрудники";
 $MESS["MOBILE_SCOPE_LINES"] = "Открытые линии";
 $MESS["MOBILE_SCOPE_DEPARTMENTS"] = "Подразделения";
 
+$MESS['MOBILE_CLIPBOARD_COPY_SUCCESS'] = "Скопировано в буфер обмена";
+
 $MESS["MOBILE_MESSAGE_LIST_VIEW"] = "Кто просмотрел";
 $MESS["MOBILE_MESSAGE_LIST_LIKE"] = "Кому понравилось";
 

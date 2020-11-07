@@ -410,6 +410,9 @@ class CCrmEMail
 
 	protected static function log($tag, $message, array $data = null)
 	{
+		//temporary turned off
+		return;
+
 		$logEntry = "$tag: $message";
 
 		if (!empty($data))

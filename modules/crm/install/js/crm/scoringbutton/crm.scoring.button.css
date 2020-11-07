@@ -12,6 +12,7 @@
 	box-shadow: 0 0 0 1px #eaeaea;
 	transition: all .15s linear;
 	cursor: pointer;
+	order:1;
 }
 
 .crm-entity-widget-scoring-animate {
@@ -58,6 +59,7 @@
 	font: 11px/11px 'OpenSans-SemiBold', "Helvetica Neue", Arial, Helvetica, sans-serif;
 	color: #525c69;
 	padding-left: 19px;
+	white-space: nowrap;
 }
 
 .crm-entity-widget-scoring-icon {

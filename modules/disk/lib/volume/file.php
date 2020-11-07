@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk\Volume;
 
+use Bitrix\Main;
 use Bitrix\Main\DB;
 use Bitrix\Main\Application;
 use Bitrix\Main\ObjectException;
@@ -416,18 +417,27 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 		{
 			$filterId = $this->getFilterId();
 			$columnList = Volume\QueryHelper::prepareUpdateOnSelect($columns, $this->getSelect(), 'destinationTbl', 'sourceQuery');
-			$connection->queryExecute("
+			$querySql = "
 				UPDATE 
 				    {$tableName} destinationTbl, 
 				    ({$temporallyDataSource}) sourceQuery 
 				SET {$columnList} 
 				WHERE destinationTbl.ID = {$filterId}
-			");
+			";
 		}
 		else
 		{
-			$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$temporallyDataSource}");
+			$querySql = "INSERT INTO {$tableName} ({$columnList}) {$temporallyDataSource}";
 		}
+
+		if (!$connection->lock(self::$lockName, self::$lockTimeout))
+		{
+			throw new Main\SystemException('Cannot get table lock for '.$indicatorType);
+		}
+
+		$connection->queryExecute($querySql);
+
+		$connection->unlock(self::$lockName);
 
 		VolumeTable::dropTemporally();
 
@@ -482,7 +492,8 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 			)
 		);
 
-		$orderKey = array_shift(array_keys($this->getOrder()));
+		$orderKeys = array_keys($this->getOrder());
+		$orderKey = array_shift($orderKeys);
 
 
 		$sqlHint = '';

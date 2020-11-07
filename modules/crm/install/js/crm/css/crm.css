@@ -4265,6 +4265,10 @@ tr.crm-offer-row[draggable="true"]
 	width: 96%;
 }
 
+.crm-lead-header-edit-field {
+	min-height: 16px;
+}
+
 .crm-lead-header-edit-inp {
 	-webkit-box-sizing: border-box;
 	-moz-box-sizing: border-box;

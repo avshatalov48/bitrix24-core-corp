@@ -24,6 +24,13 @@
 				this.paySystemApp = new BX.TileGrid.Grid(this.paySystemAppParams);
 				this.paySystemApp.draw();
 			}
+
+			if (!top.window["adminSidePanel"] || !BX.is_subclass_of(top.window["adminSidePanel"], BX.adminSidePanel))
+			{
+				top.window["adminSidePanel"] = new BX.adminSidePanel({
+					publicMode: true
+				});
+			}
 		},
 
 		reloadSlider: function(responseData)

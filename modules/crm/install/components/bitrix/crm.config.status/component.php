@@ -87,11 +87,15 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() &&
 		$error = '';
 		if(array_key_exists('REMOVE', $arFields) && is_array($arFields['REMOVE']))
 		{
+			if(mb_strpos($fieldId, 'n') === 0)
+			{
+				continue;
+			}
 			$listField = array();
 			foreach($arFields['REMOVE'] as $fieldId => $field)
 			{
-				$arCurrentData = $CCrmStatus->GetStatusById($fieldId);
-				if ($arCurrentData['SYSTEM'] == 'N')
+				$arCurrentData = $CCrmStatus->GetStatusById((int)$fieldId);
+				if ($arCurrentData['SYSTEM'] === 'N')
 				{
 					$result = $CCrmStatus->Delete($fieldId);
 					if(!$result)
@@ -122,7 +126,6 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() &&
 			LocalRedirect($APPLICATION->GetCurPage().'?ACTIVE_TAB='.$_POST['ACTIVE_TAB'].'&ERROR='.$error);
 		}
 
-		$settings = array();
 		foreach($arFields as $id => $arField)
 		{
 			$arField['SORT'] = (int)$arField['SORT'];
@@ -130,13 +133,17 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() &&
 				$arField['SORT'] = $iPrevSort + 10;
 			$iPrevSort = $arField['SORT'];
 
-			if (mb_substr($id, 0, 1) == 'n')
+			if (mb_strpos($id, 'n') === 0)
 			{
-				if (trim($arField['VALUE']) == "")
+				if (trim($arField['VALUE']) === "")
+				{
 					continue;
+				}
 
 				$arAdd['NAME'] = trim($arField['VALUE']);
 				$arAdd['SORT'] = $arField['SORT'];
+				$arAdd['COLOR'] = $arField['COLOR'];
+				$arAdd['SEMANTICS'] = $arField['SEMANTICS'];
 
 				$id = $CCrmStatus->Add($arAdd);
 				$arCurrentData = $CCrmStatus->GetStatusById($id);
@@ -151,25 +158,24 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() &&
 			}
 			else
 			{
+				$id = (int) $id;
 				$arCurrentData = $CCrmStatus->GetStatusById($id);
-				if(trim($arField['VALUE']) != $arCurrentData['NAME'] ||
-					intval($arField['SORT']) != $arCurrentData['SORT'])
+				if(!$arCurrentData)
+				{
+					continue;
+				}
+				if(
+					trim($arField['VALUE']) != $arCurrentData['NAME'] ||
+					intval($arField['SORT']) != $arCurrentData['SORT'] ||
+					$arField['COLOR'] !== $arCurrentData['COLOR']
+				)
 				{
 					$arUpdate['NAME'] = trim($arField['VALUE']);
 					$arUpdate['SORT'] = $arField['SORT'];
+					$arUpdate['COLOR'] = $arField['COLOR'];
 					$CCrmStatus->Update($id, $arUpdate);
 				}
 			}
-
-			if(isset($arField['COLOR']) && $arField['COLOR'])
-			{
-				$settings[$arField['STATUS_ID']]['COLOR'] = $arField['COLOR'];
-			}
-		}
-
-		if(!empty($settings))
-		{
-			COption::SetOptionString('crm', 'CONFIG_STATUS_'.$entityId, serialize($settings));
 		}
 
 		if($entityId === 'STATUS')
@@ -233,41 +239,16 @@ foreach(CCrmStatus::GetEntityTypes() as $entityId => $arEntityType)
 		}
 		$arResult['ENTITY'][$entityId]['DELETION_CONFIRMATION'] = $deletionConfirmation;
 	}
-
-	$colorScheme = \Bitrix\Crm\Color\PhaseColorSchemeManager::resolveSchemeByName('CONFIG_STATUS_'.$entityId);
-	if($colorScheme)
-	{
-		$colorSchemes[$entityId] = $colorScheme;
-	}
-	else
-	{
-		$settings[$entityId] = unserialize(COption::GetOptionString('crm', 'CONFIG_STATUS_'.$entityId));
-	}
 }
 
-$res = CCrmStatus::GetList(array('SORT' => 'ASC'));
-while($status = $res->Fetch())
+$list = \Bitrix\Crm\StatusTable::getList([
+	'order' => [
+		'SORT' => 'ASC',
+	],
+]);
+while($status = $list->fetch())
 {
 	$arResult['ROWS'][$status['ENTITY_ID']][$status['ID']] = $status;
-
-	$entityId = $status['ENTITY_ID'];
-	if(isset($colorSchemes[$entityId]))
-	{
-		$colorSchemeElement = $colorSchemes[$entityId]->getElementByName($status['STATUS_ID']);
-		if($colorSchemeElement)
-		{
-			$arResult['ROWS'][$entityId][$status['ID']]['COLOR'] = $colorSchemeElement->getColor();
-		}
-	}
-	elseif(!empty($settings))
-	{
-		$arResult['ROWS'][$status['ENTITY_ID']][$status['ID']]['COLOR'] = $settings[$status['ENTITY_ID']][$status['STATUS_ID']]['COLOR'];
-	}
-
-	if($arResult['ENTITY'][$status['ENTITY_ID']]['FINAL_SUCCESS_FIELD'] == $status['STATUS_ID'])
-	{
-		$arResult['ENTITY'][$status['ENTITY_ID']]['FINAL_SORT'] = $status['SORT'];
-	}
 }
 
 /* Preparation of data for different settings */
@@ -288,28 +269,27 @@ foreach($arResult['ENTITY'] as $entityId => $dataEntity)
 			$arResult['INITIAL_FIELDS'][$entityId] = $status;
 			$arResult['SUCCESS_FIELDS'][$entityId][] = $status;
 		}
-		elseif($status['STATUS_ID'] == $dataEntity['FINAL_SUCCESS_FIELD'])
+		elseif($status['SEMANTICS'] === \Bitrix\Crm\PhaseSemantics::SUCCESS)
 		{
 			$arResult['FINAL_FIELDS'][$entityId]['SUCCESSFUL'] = $status;
 			$arResult['SUCCESS_FIELDS'][$entityId][] = $status;
 		}
-		elseif($status['STATUS_ID'] == $dataEntity['FINAL_UNSUCCESS_FIELD'])
+		elseif($status['SEMANTICS'] === \Bitrix\Crm\PhaseSemantics::FAILURE)
 		{
-			$arResult['FINAL_FIELDS'][$entityId]['UNSUCCESSFUL'] = $status;
-			$arResult['UNSUCCESS_FIELDS'][$entityId][] = $status;
-		}
-		else
-		{
-			if($status['SORT'] < $arResult['ENTITY'][$status['ENTITY_ID']]['FINAL_SORT'])
+			if(!isset($arResult['FINAL_FIELDS'][$entityId]['UNSUCCESSFUL']))
 			{
-				$arResult['EXTRA_FIELDS'][$entityId][] = $status;
-				$arResult['SUCCESS_FIELDS'][$entityId][] = $status;
+				$arResult['FINAL_FIELDS'][$entityId]['UNSUCCESSFUL'] = $status;
 			}
 			else
 			{
 				$arResult['EXTRA_FINAL_FIELDS'][$entityId][] = $status;
-				$arResult['UNSUCCESS_FIELDS'][$entityId][] = $status;
 			}
+			$arResult['UNSUCCESS_FIELDS'][$entityId][] = $status;
+		}
+		else
+		{
+			$arResult['EXTRA_FIELDS'][$entityId][] = $status;
+			$arResult['SUCCESS_FIELDS'][$entityId][] = $status;
 		}
 		$number++;
 	}

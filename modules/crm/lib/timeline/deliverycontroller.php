@@ -32,24 +32,9 @@ class DeliveryController extends EntityController
 	 * @return int|null
 	 * @throws Main\ArgumentException
 	 */
-	public function createTaxiEstimationReceivedHistoryMessage($ownerId, array $params)
-	{
-		return $this->createTaxiHistoryMessage(
-			$ownerId,
-			DeliveryCategoryType::TAXI_ESTIMATION_REQUEST,
-			$params
-		);
-	}
-
-	/**
-	 * @param $ownerId
-	 * @param array $params
-	 * @return int|null
-	 * @throws Main\ArgumentException
-	 */
 	public function createTaxiCallHistoryMessage($ownerId, array $params)
 	{
-		return $this->createTaxiHistoryMessage(
+		return $this->createHistoryMessage(
 			$ownerId,
 			DeliveryCategoryType::TAXI_CALL_REQUEST,
 			$params
@@ -64,7 +49,7 @@ class DeliveryController extends EntityController
 	 */
 	public function createTaxiCancelledByManagerMessage($ownerId, array $params)
 	{
-		return $this->createTaxiHistoryMessage(
+		return $this->createHistoryMessage(
 			$ownerId,
 			DeliveryCategoryType::TAXI_CANCELLED_BY_MANAGER,
 			$params
@@ -79,7 +64,7 @@ class DeliveryController extends EntityController
 	 */
 	public function createTaxiCancelledByDriverMessage($ownerId, array $params)
 	{
-		return $this->createTaxiHistoryMessage(
+		return $this->createHistoryMessage(
 			$ownerId,
 			DeliveryCategoryType::TAXI_CANCELLED_BY_DRIVER,
 			$params
@@ -94,7 +79,7 @@ class DeliveryController extends EntityController
 	 */
 	public function createTaxiReturnedFinish($ownerId, array $params)
 	{
-		return $this->createTaxiHistoryMessage(
+		return $this->createHistoryMessage(
 			$ownerId,
 			DeliveryCategoryType::TAXI_RETURNED_FINISH,
 			$params
@@ -109,7 +94,7 @@ class DeliveryController extends EntityController
 	 */
 	public function createTaxiPerformerNotFoundMessage($ownerId, array $params)
 	{
-		return $this->createTaxiHistoryMessage(
+		return $this->createHistoryMessage(
 			$ownerId,
 			DeliveryCategoryType::TAXI_PERFORMER_NOT_FOUND,
 			$params
@@ -124,7 +109,7 @@ class DeliveryController extends EntityController
 	 */
 	public function createTaxiSmsProviderIssueMessage($ownerId, array $params)
 	{
-		return $this->createTaxiHistoryMessage(
+		return $this->createHistoryMessage(
 			$ownerId,
 			DeliveryCategoryType::TAXI_SMS_PROVIDER_ISSUE,
 			$params
@@ -138,7 +123,7 @@ class DeliveryController extends EntityController
 	 * @return int|null
 	 * @throws Main\ArgumentException
 	 */
-	private function createTaxiHistoryMessage($ownerId, int $typeCategoryId, array $params)
+	public function createHistoryMessage($ownerId, int $typeCategoryId, array $params)
 	{
 		if ($ownerId <= 0)
 		{

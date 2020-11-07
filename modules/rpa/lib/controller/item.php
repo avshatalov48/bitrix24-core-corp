@@ -8,6 +8,7 @@ use Bitrix\Main\Engine\Response\BFile;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UI\FileInputUtility;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Main\Engine\Response\Converter;
@@ -456,9 +457,9 @@ class Item extends Base
 		$data['createdBy'] = $item->getCreatedBy();
 		$data['updatedBy'] = $item->getUpdatedBy();
 		$data['movedBy'] = $item->getMovedBy();
-		$data['createdTime'] = $item->getCreatedTime();
-		$data['updatedTime'] = $item->getUpdatedTime() ?: null;
-		$data['movedTime'] = $item->getMovedTime() ?: null;
+		$data['createdTime'] = $this->prepareDateTimeValue($item->getCreatedTime());
+		$data['updatedTime'] = $item->getUpdatedTime() ? $this->prepareDateTimeValue($item->getUpdatedTime()) : null;
+		$data['movedTime'] = $item->getMovedTime() ? $this->prepareDateTimeValue($item->getMovedTime()) : null;
 		$data['detailUrl'] = Driver::getInstance()->getUrlManager()->getItemDetailUrl(
 			$item->getType()->getId(),
 			$item->getId()

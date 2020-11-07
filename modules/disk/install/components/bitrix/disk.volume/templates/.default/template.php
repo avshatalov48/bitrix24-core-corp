@@ -398,6 +398,7 @@ if ($arResult['Storage']['FILE_COUNT'] > 0)
 
 					BX.removeClass(buttonRunCleaner, 'webform-button-wait');
 					BX.removeClass(startMeasureButton, 'webform-button-wait');
+					startMeasureButton.disabled = false;
 
 					BX.addClass(spaceSelectorUnnecessaryVersion, 'disc-volume-space-entity-block-inprocess');
 					BX.addClass(spaceSelectorTrashCan, 'disc-volume-space-entity-block-inprocess');

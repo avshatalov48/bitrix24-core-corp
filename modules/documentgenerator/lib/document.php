@@ -191,6 +191,18 @@ class Document
 	 */
 	public function setValues(array $values): Document
 	{
+		//do not let set default field values to their original chain to prevent recursion
+		$defaultFieldValues = array_intersect_key($this->getDocumentDefaultFieldsValues(), $values);
+		if(!empty($defaultFieldValues))
+		{
+			foreach($defaultFieldValues as $name => $defaultFieldValue)
+			{
+				if($defaultFieldValue === $values[$name])
+				{
+					unset($values[$name]);
+				}
+			}
+		}
 		foreach($values as $placeholder => $value)
 		{
 			if($placeholder === Template::MAIN_PROVIDER_PLACEHOLDER)
@@ -344,7 +356,6 @@ class Document
 			{
 				$data['publicUrlView'] = [
 					'time' => $publicUrl['VIEWED_TIME'],
-					'ip' => $publicUrl['VIEWED_IP'],
 				];
 			}
 			$template = $this->getTemplate();
@@ -1672,7 +1683,16 @@ class Document
 				],
 				'CHAIN' => 'this.DOCUMENT.DOCUMENT_TITLE',
 				'REQUIRED' => 'Y',
-			]
+			],
+		];
+	}
+
+	protected function getDocumentDefaultFieldsValues(): array
+	{
+		return [
+			'DocumentTitle' => 'this.DOCUMENT.DOCUMENT_TITLE',
+			'DocumentNumber' => 'this.DOCUMENT.DOCUMENT_NUMBER',
+			'DocumentCreateTime' => 'this.DOCUMENT.DOCUMENT_CREATE_TIME',
 		];
 	}
 }

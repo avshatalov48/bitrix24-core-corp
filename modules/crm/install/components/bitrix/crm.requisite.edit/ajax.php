@@ -79,9 +79,11 @@ elseif($action === 'RESOLVE_EXTERNAL_CLIENT')
 
 	if (!$skipResolve)
 	{
-		$result = \Bitrix\Crm\Integration\ClientResolver::resolve(
-			$propertyTypeID,
-			$propertyValue,
+		$resolver = new \Bitrix\Crm\Integration\ClientResolver();
+		$resolver->setCompatibilityMode(true);
+		$result = $resolver->resolveClient(
+			(string)$propertyTypeID,
+			(string)$propertyValue,
 			$countryID
 		);
 	}

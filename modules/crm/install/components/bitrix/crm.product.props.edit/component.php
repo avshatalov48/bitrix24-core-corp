@@ -1090,7 +1090,7 @@ else if ("F" == $arProperty['PROPERTY_TYPE'])
 		'style="width: auto; margin-left: 4px;">'.
 		'<option value="-"></option>'.
 		'<option value=""'.('' == $arProperty['FILE_TYPE'] ? ' selected' : '').'>'.GetMessage('CRM_PRODUCT_PE_PROP_FILE_TYPES_ANY').'</option>'.
-		'<option value="jpg, gif, bmp, png, jpeg"'.('jpg, gif, bmp, png, jpeg' == $arProperty['FILE_TYPE'] ? ' selected' : '').'>'.GetMessage('CRM_PRODUCT_PE_PROP_FILE_TYPES_PIC').'</option>'.
+		'<option value="jpg, gif, bmp, png, jpeg, webp"'.('jpg, gif, bmp, png, jpeg, webp' == $arProperty['FILE_TYPE'] ? ' selected' : '').'>'.GetMessage('CRM_PRODUCT_PE_PROP_FILE_TYPES_PIC').'</option>'.
 		'<option value="mp3, wav, midi, snd, au, wma"'.('mp3, wav, midi, snd, au, wma' == $arProperty['FILE_TYPE'] ? ' selected' : '').'>'.GetMessage('CRM_PRODUCT_PE_PROP_FILE_TYPES_SOUND').'</option>'.
 		'<option value="mpg, avi, wmv, mpeg, mpe, flv"'.('mpg, avi, wmv, mpeg, mpe, flv' == $arProperty['FILE_TYPE'] ? ' selected' : '').'>'.GetMessage('CRM_PRODUCT_PE_PROP_FILE_TYPES_VIDEO').'</option>'.
 		'<option value="doc, txt, rtf"'.('doc, txt, rtf' == $arProperty['FILE_TYPE'] ? ' selected' : '').'>'.GetMessage('CRM_PRODUCT_PE_PROP_FILE_TYPES_DOCS').'</option>'.

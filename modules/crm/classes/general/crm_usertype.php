@@ -1411,15 +1411,31 @@ class CCrmUserType
 						$value[] = htmlspecialcharsback($arValue[$ID][$FIELD_NAME][$i]);
 					}
 
-					$arReplaceValue[$ID][$FIELD_NAME] = $this->cUFM->getPublicView(
-						array_merge(
-							$arUserField,
-							['ENTITY_VALUE_ID' => $ID, 'VALUE' => $value]
-						),
-						[
-							'CONTEXT' => 'CRM_GRID'
-						]
-					);
+					if ($textonly)
+					{
+						$arReplaceValue[$ID][$FIELD_NAME] = (new \Bitrix\Main\UserField\Renderer(
+							array_merge(
+								$arUserField,
+								['ENTITY_VALUE_ID' => $ID, 'VALUE' => $value]
+							),
+							[
+								'CONTEXT' => 'CRM_GRID',
+								'mode' => 'main.public_text'
+							])
+						)->render();
+					}
+					else
+					{
+						$arReplaceValue[$ID][$FIELD_NAME] = $this->cUFM->getPublicView(
+							array_merge(
+								$arUserField,
+								['ENTITY_VALUE_ID' => $ID, 'VALUE' => $value]
+							),
+							[
+								'CONTEXT' => 'CRM_GRID'
+							]
+						);
+					}
 				}
 			}
 		}

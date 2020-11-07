@@ -9,7 +9,7 @@ use Bitrix\Crm\RequisiteAddress;
 
 Loc::loadMessages(__FILE__);
 
-class RequisiteDataProvider extends DataProvider
+class RequisiteDataProvider extends Main\Filter\DataProvider
 {
 	/** @var EntitySettings|null */
 	protected $settings = null;

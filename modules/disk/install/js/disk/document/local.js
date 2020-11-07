@@ -221,16 +221,25 @@
 				}
 			}
 
-			console.log('runningCheck to go to bx', link);
-			top.BX.desktopUtils.runningCheck(function() {
-				console.log('Ok, there is running desktop');
-				top.BX.desktopUtils.goToBx(link);
-			}, function() {
-				console.log('Oh no, try to run desktop');
-				this.registerFallback(params.uidRequest);
+			if (typeof (BXFileStorage) == 'undefined')
+			{
+				console.log('runningCheck to go to bx', link);
+				top.BX.desktopUtils.runningCheck(function() {
+					console.log('Ok, there is running desktop');
+					top.BX.desktopUtils.goToBx(link);
+				}, function() {
+					console.log('Oh no, try to run desktop');
+					this.registerFallback(params.uidRequest);
 
+					top.BX.desktopUtils.goToBx(link);
+				}.bind(this));
+			}
+			else
+			{
+				console.log('Seems it\'s Desktop app');
 				top.BX.desktopUtils.goToBx(link);
-			}.bind(this));
+			}
+
 		},
 
 		registerFallback: function(uidRequest)

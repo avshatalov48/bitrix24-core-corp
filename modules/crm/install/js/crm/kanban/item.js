@@ -1108,8 +1108,7 @@ BX.CRM.Kanban.Item.prototype = {
 	clickContact: function()
 	{
 		var type = BX.data(BX.proxy_context, "type");
-		var data = this.getData();
-		var contactInfo = data[type];
+		var contactInfo = this.getContactInfo(type);
 
 		if (
 			typeof contactInfo === 'object'
@@ -1137,8 +1136,8 @@ BX.CRM.Kanban.Item.prototype = {
 		if (item.type === "phone" && typeof(BXIM) !== "undefined")
 		{
 			BXIM.phoneTo(item.value, {
-				ENTITY_TYPE: data.contactType,
-				ENTITY_ID: data.contactId
+				ENTITY_TYPE: (item.clientType !== undefined ? item.clientType : data.contactType),
+				ENTITY_ID: (item.clientId !== undefined ? item.clientId : data.contactId)
 			});
 		}
 		else if (item.type === "im" && typeof(BXIM) !== "undefined")
@@ -1199,9 +1198,25 @@ BX.CRM.Kanban.Item.prototype = {
 			fields = contactCategories[category];
 			for (var i = 0, c = fields.length; i < c; i++)
 			{
+				var clientType = '';
+				var clientId = '';
+				var data = this.getData();
+				if (category === 'company')
+				{
+					clientType = 'CRM_COMPANY';
+					clientId = data.companyId;
+				}
+				else if (category === 'contact')
+				{
+					clientType = 'CRM_CONTACT';
+					clientId = data.contactId;
+				}
+
 				menuItems.push({
 					value: fields[i]["value"],
 					type: type,
+					clientType: clientType,
+					clientId: clientId,
 					text: fields[i]["value"] + " (" + fields[i]["title"] + ")",
 					onclick: BX.proxy(this.clickContactItem, this)
 				});
@@ -1623,6 +1638,12 @@ BX.CRM.Kanban.Item.prototype = {
 			//when we load new items in drag mode
 			this.disableDropping();
 		}
+	},
+
+	getContactInfo: function(type)
+	{
+		var data = this.getData();
+		return data[type];
 	}
 };
 

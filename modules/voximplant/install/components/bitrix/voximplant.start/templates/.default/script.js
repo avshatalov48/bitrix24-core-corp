@@ -180,7 +180,7 @@ BX.Voximplant.Start = {
 						}),
 						BX.create("div", {
 							props: {className: "voximplant-start-text-darkgrey"},
-							text: item["DESCRIPTION"]
+							text: this.decodeHtmlEntities(item["DESCRIPTION"])
 						}),
 					]
 				});
@@ -597,6 +597,13 @@ BX.Voximplant.Start = {
 				this.partnersGrid.redraw(this.partnersMenuItems);
 			}
 		}.bind(this));
+	},
+
+	decodeHtmlEntities: function(str)
+	{
+		var p = document.createElement("p");
+		p.innerHTML = str;
+		return p.innerText;
 	}
 };
 

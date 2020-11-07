@@ -465,15 +465,15 @@ class CDiskUfFileComponent extends BaseComponent implements \Bitrix\Main\Engine\
 				if (!$this->arParams['DISABLE_LOCAL_EDIT'])
 				{
 					$attr->addAction([
-							'type' => 'copyToMe',
-							'text' => Loc::getMessage('DISK_UF_ACTION_SAVE_TO_OWN_FILES'),
-							'action' => 'BX.Disk.Viewer.Actions.runActionCopyToMe',
-							'params' => [
-								'attachedObjectId' => $attachedModel->getId(),
-							],
-							'extension' => 'disk.viewer.actions',
-							'buttonIconClass' => 'ui-btn-icon-cloud',
-						])
+						'type' => 'copyToMe',
+						'text' => Loc::getMessage('DISK_UF_ACTION_SAVE_TO_OWN_FILES'),
+						'action' => 'BX.Disk.Viewer.Actions.runActionCopyToMe',
+						'params' => [
+							'attachedObjectId' => $attachedModel->getId(),
+						],
+						'extension' => 'disk.viewer.actions',
+						'buttonIconClass' => 'ui-btn-icon-cloud',
+					])
 					;
 				}
 
@@ -542,7 +542,7 @@ class CDiskUfFileComponent extends BaseComponent implements \Bitrix\Main\Engine\
 			return FileAttributes::buildByFileId($attachedObject->getFileId(), $sourceUri)
 				->setObjectId($attachedObject->getObjectId())
 				->setAttachedObjectId($attachedObject->getId())
-			;
+				;
 		}
 		catch (ArgumentException $exception)
 		{

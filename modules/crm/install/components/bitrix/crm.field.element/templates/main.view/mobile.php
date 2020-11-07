@@ -69,7 +69,7 @@ $fieldName = HtmlFilter::encode($arResult['userField']['FIELD_NAME']);
 	href="javascript:void(0)"
 	id="<?= $fieldName ?>"
 >
-	<?= Loc::getMessage('CRM_BUTTON_SELECT') ?>
+	<?= Loc::getMessage('CRM_ELEMENT_BUTTON_SELECT') ?>
 </a>
 
 

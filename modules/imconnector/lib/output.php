@@ -164,7 +164,7 @@ final class Output
 		else
 			$data = array();
 
-		if (strlen($command) <= 0 || !is_array($data))
+		if ($command == '' || !is_array($data))
 		{
 			$result->addError(new Error(Loc::getMessage('IMCONNECTOR_INCORRECT_INCOMING_DATA'), self::ERROR_IMCONNECTOR_INCORRECT_INCOMING_DATA, __METHOD__, array($command, $data)));
 		}
@@ -185,7 +185,7 @@ final class Output
 			$params["DATA"] = base64_encode(serialize($params["DATA"]));
 			$params["BX_HASH"] = self::requestSign($this->type, md5(implode("|", $params)));
 
-			if(in_array(strtolower($params['BX_COMMAND']), $this->listCommandNotWaitResponse))
+			if(in_array(mb_strtolower($params['BX_COMMAND']), $this->listCommandNotWaitResponse))
 				$waitResponse = false;
 			else
 				$waitResponse = true;

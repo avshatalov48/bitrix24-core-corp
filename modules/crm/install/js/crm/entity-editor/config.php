@@ -38,6 +38,7 @@ return array(
 		"/bitrix/js/crm/entity-editor/js/field-attr.js",
 		"/bitrix/js/crm/entity-editor/js/multiple-user.js",
 		"/bitrix/js/crm/entity-editor/js/order.js",
+		"/bitrix/js/crm/entity-editor/js/field-configurator.js",
 	],
 	'rel' => [
 		'main.polyfill.promise',
@@ -59,6 +60,7 @@ return array(
 		'crm_disk_uploader',
 		'crm_common',
 		'crm_entity_editor_rel',
-		'ui.forms'
+		'ui.forms',
+		'ui.entity-editor',
 	]
 );

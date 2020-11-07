@@ -601,7 +601,7 @@ MobileWebrtc.prototype.startCall = function (userId, video)
 
 		if(data.userData)
 		{
-			this.appendUserData(data.userData.users, data.userData.hrPhoto);
+			this.appendUserData(data.userData);
 		}
 
 		this.callId = data.call.ID;
@@ -672,16 +672,18 @@ MobileWebrtc.prototype.showIncomingCall = function ()
 		fabric.Answers.sendCustomEvent("incomingCallInternal", {});
 	}
 
+	let options = {
+		"data": {},
+		"video": this.video,
+		"caller": {
+			"name": this.getUserName(this.callUserId),
+			"avatar": this.getUserAvatar(this.callUserId)
+		}
+	};
+
     webrtc.UI.show(
         webrtc.UI.state.INCOMING_CALL,
-        {
-            "data": {},
-            "video": this.video,
-            "caller": {
-                "name": this.getUserName(this.callUserId),
-                "avatar": this.getUserAvatar(this.callUserId)
-            }
-        }
+      	options
     );
 };
 
@@ -868,22 +870,15 @@ MobileWebrtc.prototype.ajaxCall = function (reqParam, reqData, onsuccess, onfail
     });
 };
 
-MobileWebrtc.prototype.appendUserData = function(users, hrphoto)
+MobileWebrtc.prototype.appendUserData = function(userData)
 {
-	if(BX.type.isPlainObject(users))
+	if(BX.type.isPlainObject(userData))
 	{
-		for (let userId in users)
+		for (let userId in userData)
 		{
-			this.userData[userId] = users[userId];
+			this.userData[userId] = userData[userId];
 			this.userData[userId]['name'] = decodeHtml(this.userData[userId]['name']);
-		}
-	}
-
-	if(BX.type.isPlainObject(hrphoto))
-	{
-		for (let userId in hrphoto)
-		{
-			this.userData[userId]['hrPhoto'] = hrphoto[userId];
+			this.userData[userId]['hrPhoto'] = userData[userId]['avatar_hr'] || userData[userId]['avatar'];
 		}
 	}
 };
@@ -1138,7 +1133,7 @@ MobileWebrtc.prototype.onPullCommandInvite = function(params, extra)
 
 		if(params.userData)
 		{
-			this.appendUserData(params.userData.users, params.userData.hrphoto);
+			this.appendUserData(params.userData);
 		}
 
 		this.callId = params.call.ID;

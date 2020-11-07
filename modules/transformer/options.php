@@ -16,20 +16,20 @@ $aTabs = array(
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
-if(strlen($_POST['Update'])>0 && check_bitrix_sessid())
+if($_POST['Update'] <> '' && check_bitrix_sessid())
 {
-	if(strlen($_POST['PUBLIC_URL']) > 0 && strlen($_POST['PUBLIC_URL']) < 12)
+	if($_POST['PUBLIC_URL'] <> '' && mb_strlen($_POST['PUBLIC_URL']) < 12)
 	{
 		$errorMessage = GetMessage('TRANSFORMER_ACCOUNT_ERROR_PUBLIC');
 	}
-	elseif(strlen($_POST['Update']) > 0)
+	elseif($_POST['Update'] <> '')
 	{
 		COption::SetOptionString("transformer", "portal_url", $_POST['PUBLIC_URL']);
 		COption::SetOptionString("transformer", "debug", isset($_POST['DEBUG_MODE']));
 		COption::SetOptionString("transformer", "connection_time", $_POST['CONNECTION_TIME']);
 		COption::SetOptionString("transformer", "stream_time", $_POST['STREAM_TIME']);
 
-		if(strlen($Update) > 0 && strlen($_REQUEST["back_url_settings"]) > 0)
+		if($Update <> '' && $_REQUEST["back_url_settings"] <> '')
 		{
 			LocalRedirect($_REQUEST["back_url_settings"]);
 		}

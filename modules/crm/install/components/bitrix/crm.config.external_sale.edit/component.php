@@ -199,7 +199,12 @@ if ($arResult["FatalErrorMessage"] == '')
 				if ($arResult["BP"]["DATA_SYNC_PERIOD"] > 0)
 				{
 					if ($arAgent["ACTIVE"] != "Y" || intval($arAgent["AGENT_INTERVAL"] / 60) != $arResult["BP"]["DATA_SYNC_PERIOD"])
-						CAgent::Update($arAgent["ID"], array("ACTIVE" => "Y", "AGENT_INTERVAL" => 60 * $arResult["BP"]["DATA_SYNC_PERIOD"]));
+						CAgent::Update($arAgent["ID"], array(
+							"ACTIVE" => "Y",
+							"AGENT_INTERVAL" => 60 * $arResult["BP"]["DATA_SYNC_PERIOD"],
+							"RUNNING" => "N",
+							"RETRY_COUNT" => 0
+						));
 				}
 				else
 				{

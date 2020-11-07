@@ -33,7 +33,7 @@ function getConversionLayout(array $changeRecord)
 		'<div class="crm-report-managersrating-grid-rating">
 			<div class="crm-report-managersrating-grid-rating-icon" style="background: ' . $changeRecord['color'] . '"></div>
 			<div class="crm-report-managersrating-grid-rating-value">' . $changeRecord['value'] . '%</div>
-			<div class="crm-report-managersrating-grid-rating-text" style="color: ' . $changeRecord['color'] . '">' . $changeRecord['label'] . '</div>
+			<div class="crm-report-managersrating-grid-rating-text" style="color: ' . $changeRecord['color'] . '">' . htmlspecialcharsEx($changeRecord['label']) . '</div>
 		</div>';
 }
 
@@ -53,7 +53,7 @@ function wrapLink($str, $url, array $classList = [], $delta = null)
 	{
 		return
 			'<div class="'.implode(' ', $classList).'">
-				<div class="crm-report-managersrating-grid-value-main ' . $extraClass . '">'.$str.'</div>
+				<div class="crm-report-managersrating-grid-value-main ' . $extraClass . '">'.htmlspecialcharsEx($str).'</div>
 				' . $extraValue . '
 			</div>';
 	}
@@ -62,7 +62,7 @@ function wrapLink($str, $url, array $classList = [], $delta = null)
 		$classList[] = "crm-report-managersrating-grid-value-clickable";
 		return
 			'<div class="'.implode(' ', $classList).'" data-target="'.htmlspecialcharsbx($url).'">
-				<div class="crm-report-managersrating-grid-value-main ' . $extraClass . '">'.$str.'</div>
+				<div class="crm-report-managersrating-grid-value-main ' . $extraClass . '">'.htmlspecialcharsEx($str).'</div>
 				' . $extraValue . '
 			</div>';
 	}

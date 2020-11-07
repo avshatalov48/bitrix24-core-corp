@@ -9,13 +9,17 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale;
 use Bitrix\Crm;
-use Bitrix\Catalog;
 use Bitrix\SalesCenter\Integration\Bitrix24Manager;
 use Bitrix\SalesCenter\Integration\CrmManager;
 use Bitrix\SalesCenter\Integration\ImOpenLinesManager;
 use Bitrix\SalesCenter\Integration\SaleManager;
 use Bitrix\Salescenter;
 use Bitrix\SalesCenter\OrderFacade;
+use Bitrix\Crm\Binding\DealContactTable;
+use Bitrix\Crm\EntityRequisite;
+use Bitrix\Crm\RequisiteAddress;
+use Bitrix\Crm\EntityAddress;
+use Bitrix\Sale\Delivery\Services\OrderPropsDictionary;
 
 define('SALESCENTER_RECEIVE_PAYMENT_APP_AREA', true);
 
@@ -174,6 +178,11 @@ class Order extends Base
 		$discountBasket = $discountResult['RESULT']['BASKET'];
 		$discountList = $discountResult['DISCOUNT_LIST'];
 
+		$productIds = array_map(static function ($basketItem) {
+			return $basketItem->getProductId();
+		}, $basket->getBasketItems());
+		$measureRatios = \Bitrix\Catalog\MeasureRatioTable::getCurrentRatio($productIds);
+
 		$resultBasket = [];
 
 		/** @var Sale\BasketItem $basketItem */
@@ -187,9 +196,10 @@ class Order extends Base
 
 			$code = $basketItem->getBasketCode();
 			$sort = $basketItem->getField('SORT');
+			$productId = $basketItem->getProductId();
 			$preparedItem = [
 				'code' => $code,
-				'productId' => $basketItem->getProductId(),
+				'productId' => $productId,
 				'sort' => $sort,
 				'name' => $basketItem->getField('NAME'),
 				'basePrice' => Sale\PriceMaths::roundPrecision($basketItem->getBasePrice()),
@@ -198,7 +208,10 @@ class Order extends Base
 				'formattedPrice' => SaleFormatCurrency($basketItem->getPrice(),  $order->getCurrency(), true),
 				'encodedFields' => Main\Web\Json::encode($basketItem->getFieldValues()),
 				'errors' => $errors,
-				'discountInfos' => []
+				'discountInfos' => [],
+				'measureCode' => $basketItem->getField('MEASURE_CODE'),
+				'measureName' => $basketItem->getField('MEASURE_NAME'),
+				'measureRatio' => (float)($measureRatios[(int)$productId]),
 			];
 			if (isset($sortedDefaultItems[$code]))
 			{
@@ -314,8 +327,6 @@ class Order extends Base
 			return null;
 		}
 
-		$options = $this->processOptions($options);
-
 		$formData = $this->obtainOrderFields($basketItems, $options);
 		$formData['SHIPMENT'] = [$this->obtainShipmentFieldsOnCreate($options)];
 
@@ -347,6 +358,15 @@ class Order extends Base
 				}
 
 				$this->syncOrderProductsWithDeal($dealId, $orderFacade->getField('PRODUCT'), $order);
+
+				$primaryContactId = $this->getDealPrimaryContactId($dealId);
+				if ($primaryContactId)
+				{
+					$this->tryToFillContactDeliveryAddress(
+						$primaryContactId,
+						$order->getId()
+					);
+				}
 			}
 
 			Bitrix24Manager::getInstance()->increasePaymentsCount();
@@ -379,43 +399,34 @@ class Order extends Base
 				if (!isset($options['skipPublicMessage']) || $options['skipPublicMessage'] === 'n')
 				{
 					$paymentData = [];
-					if ($options['iMessage'])
+					$payment = $order->getPaymentCollection()[0];
+					$paySystemService = Sale\PaySystem\Manager::getObjectById($payment->getPaymentSystemId());
+
+					if ($options['connector'] === 'imessage'
+						&& SaleManager::getInstance()->isApplePayPayment($paySystemService->getFieldsValues())
+					)
 					{
-						$payment = $order->getPaymentCollection()[0];
+						$request = Main\Context::getCurrent()->getRequest();
+						$request->set(array_merge($request->toArray(), [
+							"action" => "getIMessagePaymentAction",
+						]));
 
-						$paySystemService = Sale\PaySystem\Manager::getObjectById($payment->getPaymentSystemId());
-						if ($paySystemService)
+						$initiatePayResult = $paySystemService->initiatePay(
+							$payment,
+							$request,
+							Sale\PaySystem\BaseServiceHandler::STRING
+						);
+						if ($initiatePayResult->isSuccess())
 						{
-							$request = Main\Context::getCurrent()->getRequest();
-							$request->set(array_merge($request->toArray(), [
-								"action" => "getIMessagePaymentAction",
-							]));
-
-							$initiatePayResult = $paySystemService->initiatePay(
-								$payment,
-								$request,
-								Sale\PaySystem\BaseServiceHandler::STRING
-							);
-							if ($initiatePayResult->isSuccess())
-							{
-								$paymentData = $initiatePayResult->getData();
-							}
-							else
-							{
-								$this->addErrors($initiatePayResult->getErrors());
-							}
+							$paymentData = $initiatePayResult->getData();
 						}
 						else
 						{
-							$this->addError(new Error('Failed to get paysystem system'));
+							$this->addErrors($initiatePayResult->getErrors());
 						}
 					}
 
-					$result = ImOpenLinesManager::getInstance()->sendOrderMessage(
-						$order,
-						$options['dialogId'],
-						$paymentData
-					);
+					$result = ImOpenLinesManager::getInstance()->sendOrderMessage($order, $options['dialogId'], $paymentData);
 					if (!$result->isSuccess())
 					{
 						$this->addErrors($result->getErrors());
@@ -444,7 +455,7 @@ class Order extends Base
 	{
 		$result = [
 			'SITE_ID' => SITE_ID,
-			'I_MESSAGE' => $options['iMessage']
+			'CONNECTOR' => $options['connector']
 		];
 
 		if (!empty($options['sessionId']))
@@ -536,13 +547,6 @@ class Order extends Base
 		}
 
 		return $result;
-	}
-
-	protected function processOptions(array $options)
-	{
-		$options['iMessage'] = filter_var($options['iMessage'], FILTER_VALIDATE_BOOLEAN);
-
-		return $options;
 	}
 
 	protected function getDealData(int $dealId)
@@ -1158,5 +1162,224 @@ HTML;
 		}
 
 		return '';
+	}
+
+	/**
+	 * @param int $dealId
+	 * @return int|null
+	 * @throws Main\ArgumentException
+	 */
+	private function getDealPrimaryContactId(int $dealId): ?int
+	{
+		$contacts = DealContactTable::getDealBindings($dealId);
+		foreach ($contacts as $contact)
+		{
+			if ($contact['IS_PRIMARY'] !== 'Y')
+			{
+				continue;
+			}
+
+			return (int)$contact['CONTACT_ID'];
+		}
+
+		return null;
+	}
+
+	/**
+	 * @param int $contactId
+	 * @return int|null
+	 */
+	private function getDefaultRequisiteId(int $contactId): ?int
+	{
+		$result = null;
+
+		$requisiteInstance = EntityRequisite::getSingleInstance();
+		$settings = $requisiteInstance->loadSettings(\CCrmOwnerType::Contact, $contactId);
+		if (is_array($settings)
+			&& isset($settings['REQUISITE_ID_SELECTED'])
+			&& $settings['REQUISITE_ID_SELECTED'] > 0)
+		{
+			$requisiteId = (int)$settings['REQUISITE_ID_SELECTED'];
+
+			if ($requisiteInstance->exists($requisiteId))
+			{
+				return $requisiteId;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * @param int $contactId
+	 * @return int|null
+	 */
+	private function getFirstRequisiteId(int $contactId): ?int
+	{
+		$requisite = EntityRequisite::getSingleInstance()->getList(
+			[
+				'order' => [
+					'SORT' => 'ASC',
+					'ID' => 'ASC'
+				],
+				'filter' => [
+					'=ENTITY_TYPE_ID' => \CCrmOwnerType::Contact,
+					'=ENTITY_ID' => $contactId
+				],
+				'limit' => 1,
+			]
+		)->fetch();
+
+		if (!$requisite)
+		{
+			return null;
+		}
+
+		return (int)$requisite['ID'];
+	}
+
+	/**
+	 * @param int $contactId
+	 * @return int|null
+	 */
+	private function getRequisiteId(int $contactId): ?int
+	{
+		$defaultRequisiteId = $this->getDefaultRequisiteId($contactId);
+		if ($defaultRequisiteId)
+		{
+			return $defaultRequisiteId;
+		}
+
+		return $this->getFirstRequisiteId($contactId);
+	}
+
+	/**
+	 * @param int $contactId
+	 * @return int|null
+	 * @throws Main\NotSupportedException
+	 */
+	private function createDefaultRequisite(int $contactId): ?int
+	{
+		$requisiteInstance = EntityRequisite::getSingleInstance();
+
+		$result = $requisiteInstance->add(
+			[
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::Contact,
+				'ENTITY_ID' => $contactId,
+				'PRESET_ID' => $requisiteInstance->getDefaultPresetId(
+					\CCrmOwnerType::Contact
+				),
+				'NAME' => \CCrmOwnerType::GetCaption(
+					\CCrmOwnerType::Contact,
+					$contactId,
+					false
+				),
+				'SORT' => 500,
+				'ADDRESS_ONLY' => 'Y',
+				'ACTIVE' => 'Y'
+			]
+		);
+		if(!$result->isSuccess())
+		{
+			return null;
+		}
+
+		return (int)$result->getId();
+	}
+
+	/**
+	 * @param int $orderId
+	 * @return int|null
+	 * @throws Main\ArgumentException
+	 * @throws Main\ArgumentNullException
+	 * @throws Main\NotImplementedException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function getClientAddressId(int $orderId): ?int
+	{
+		$order = Sale\Order::load($orderId);
+		if (!$order)
+		{
+			return null;
+		}
+
+		/** @var \Bitrix\Sale\PropertyValue $propValue */
+		$propValue = $order->getPropertyCollection()
+			->getItemByOrderPropertyCode(
+				OrderPropsDictionary::ADDRESS_TO_PROPERTY_CODE
+			);
+
+		if (!$propValue)
+		{
+			return null;
+		}
+
+		$addressArray = $propValue->getValue();
+		if (!is_array($addressArray))
+		{
+			return null;
+		}
+
+		return (int)$addressArray['id'];
+	}
+
+	/**
+	 * @param int $contactId
+	 * @param int $orderId
+	 * @throws Main\ArgumentException
+	 * @throws Main\ArgumentNullException
+	 * @throws Main\ArgumentOutOfRangeException
+	 * @throws Main\NotImplementedException
+	 * @throws Main\NotSupportedException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function tryToFillContactDeliveryAddress(int $contactId, int $orderId)
+	{
+		/**
+		 * Get existing requisite or create a new one
+		 */
+		$requisiteId = $this->getRequisiteId($contactId);
+		if (!$requisiteId)
+		{
+			$requisiteId = $this->createDefaultRequisite($contactId);
+		}
+
+		if (!$requisiteId)
+		{
+			return;
+		}
+
+		/**
+		 * Check if address is specified so that we do not overwrite it
+		 */
+		$existingAddress = RequisiteAddress::getByOwner(
+			EntityAddress::Delivery,
+			\CCrmOwnerType::Requisite,
+			$requisiteId
+		);
+		if ($existingAddress)
+		{
+			return;
+		}
+
+		$addressId = $this->getClientAddressId($orderId);
+		if (!$addressId)
+		{
+			return;
+		}
+
+		/**
+		 * Register address
+		 */
+		RequisiteAddress::register(
+			\CCrmOwnerType::Requisite,
+			$requisiteId,
+			EntityAddress::Delivery,
+			[
+				'LOC_ADDR_ID' => $addressId,
+			]
+		);
 	}
 }

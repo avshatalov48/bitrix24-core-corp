@@ -35,25 +35,24 @@ class DeliverySelector extends \Bitrix\Main\Engine\Controller
 		{
 			foreach ($activeServices as $service)
 			{
-				if (
-					(
-						!$installedHandler->getProfileClass()
-						&& $service['CLASS_NAME'] !== $installedHandler->getHandlerClass()
-					)
-					||
-					(
-						$installedHandler->getProfileClass()
-						&& $service['CLASS_NAME'] !== $installedHandler->getProfileClass()
-					)
+				$deliveryObj = Delivery\Services\Manager::createObject($service);
+
+				if ($installedHandler->isRestHandler()
+					&& $service['CLASS_NAME'] === $installedHandler->getProfileClass()
+					&& $installedHandler->getRestHandlerCode() !== $deliveryObj->getParentService()->getHandlerCode()
 				)
 				{
 					continue;
 				}
 
+				$className = $installedHandler->getProfileClass() ?: $installedHandler->getHandlerClass();
+				if ($service['CLASS_NAME'] !== $className)
+				{
+					continue;
+				}
+
 				$name = $service['NAME'];
-				if ($installedHandler->getProfileClass()
-					&& $deliveryObj = Delivery\Services\Manager::createObject($service)
-				)
+				if ($installedHandler->getProfileClass())
 				{
 					$name = $deliveryObj->getNameWithParent();
 				}
@@ -69,20 +68,6 @@ class DeliverySelector extends \Bitrix\Main\Engine\Controller
 		}
 
 		$deliveryServiceIds = array_column($services, 'id');
-
-		/**
-		 * Installed delivery services
-		 */
-		$installedServices = [];
-		$deliveryServices = Delivery\Services\Manager::getActiveList();
-
-		foreach ($deliveryServices as $deliveryService)
-		{
-			$installedServices[] = [
-				'id' => $deliveryService['ID'],
-				'code' => $deliveryService['CODE'],
-			];
-		}
 
 		/**
 		 * Related properties

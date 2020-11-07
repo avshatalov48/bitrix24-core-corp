@@ -87,8 +87,8 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
 			{
 				if (is_array($sellerAddress))
 				{
-					$addrValue = implode('<br>', $sellerAddress)
-					?><div style="display: inline-block; vertical-align: top;"><?= htmlspecialcharsbx($addrValue) ?></div><?
+					$addrValue = implode("\n", $sellerAddress)
+					?><div style="display: inline-block; vertical-align: top;"><?= nl2br(htmlspecialcharsbx($addrValue)) ?></div><?
 					unset($addrValue);
 				}
 				else
@@ -119,8 +119,8 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
 			$buyerAddress = CSalePaySystemAction::GetParamValue("BUYER_ADDRESS", false);
 			if (is_array($buyerAddress))
 			{
-				$addrValue = implode('<br>', $buyerAddress)
-				?><div style="display: inline-block; vertical-align: top;"><?= htmlspecialcharsbx($addrValue) ?></div><?
+				$addrValue = implode("\n", $buyerAddress)
+				?><div style="display: inline-block; vertical-align: top;"><?= nl2br(htmlspecialcharsbx($addrValue)) ?></div><?
 				unset($addrValue);
 			}
 			else

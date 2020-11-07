@@ -112,28 +112,26 @@ class Bitrix24Manager
 
 	public static function filterJsAction($feature, $jsAction, $skip = false)
 	{
+		$map = [
+			'disk_manual_external_link' => 'limit_office_share_file',
+			'disk_manual_external_folder' => 'limit_office_share_link',
+			'disk_file_sharing' => 'limit_office_files_access_permissions',
+			'disk_folder_sharing' => 'limit_office_folders_access_permissions',
+		];
+
+		$helpdeskId = $map[$feature];
+
+		if ($feature === 'disk_manual_external_folder')
+		{
+			$feature = 'disk_manual_external_link';
+		}
+
 		if ($skip || self::isFeatureEnabled($feature))
 		{
 			return $jsAction;
 		}
 
-		['title' => $title, 'descr' => $descr] = self::processFeatureToMessageCode($feature);
 
-		return "BX.Bitrix24.LicenseInfoPopup.show('{$feature}', '{$title}', '{$descr}')";
-	}
-
-	private static function processFeatureToMessageCode($feature): array
-	{
-		if ($feature === 'disk_manual_external_link')
-		{
-			$feature = 'disk_external_link';
-		}
-
-		$featureInMessage = mb_strtoupper($feature);
-
-		return [
-			'title' => GetMessageJS("DISK_B24_FEATURES_{$featureInMessage}_1_TITLE"),
-			'descr' => GetMessageJS("DISK_B24_FEATURES_{$featureInMessage}_1_DESCR")
-		];
+		return "BX.UI.InfoHelper.show('{$helpdeskId}')";
 	}
 }

@@ -244,7 +244,7 @@ abstract class EntityAddressConverter
 		return $requisiteId;
 	}
 
-	protected function getEntityDefaultRequisiteId($entityId)
+	protected function getEntityDefaultRequisiteId($entityId, $requisiteAddressMap)
 	{
 		$requisiteId = 0;
 
@@ -316,7 +316,7 @@ abstract class EntityAddressConverter
 						}
 						else
 						{
-							$requisiteId = $this->getEntityDefaultRequisiteId($id);
+							$requisiteId = $this->getEntityDefaultRequisiteId($id, $requisiteAddressMap);
 						}
 						if ($requisiteId > 0)
 						{

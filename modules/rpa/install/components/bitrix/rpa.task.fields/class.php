@@ -32,6 +32,11 @@ class RpaAutomationTaskFieldsComponent extends Bitrix\Rpa\Components\ItemDetail
 		$this->includeComponentTemplate();
 	}
 
+	protected function checkAccess(): Main\Result
+	{
+		return new Main\Result();
+	}
+
 	protected function prepareFormConfig(): array
 	{
 		$toShow = $this->arParams['fieldsToShow'];

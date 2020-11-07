@@ -76,6 +76,18 @@ Class disk extends CModule
 		);
 	}
 
+	public function migrateToBox()
+	{
+		if (\Bitrix\Main\Loader::includeModule('disk'))
+		{
+			$commonStorage = \Bitrix\Disk\Driver::getInstance()->getStorageByCommonId('shared_files_s1');
+			if ($commonStorage)
+			{
+				$commonStorage->changeBaseUrl('/docs/shared/');
+			}
+		}
+	}
+
 	function InstallDB($install_wizard = true)
 	{
 		global $DB, $DBType, $APPLICATION;

@@ -14,7 +14,7 @@ use Bitrix\Report\VisualConstructor\Helper\Analytic;
 
 Loc::loadMessages(__FILE__);
 
-class DealDataProvider extends EntityDataProvider
+class DealDataProvider extends Main\Filter\EntityDataProvider
 {
 	/** @var DealSettings|null */
 	protected $settings = null;

@@ -654,7 +654,7 @@ Vue.component(config.templateAddPaymentBySmsItem,
 			<div v-if="showCashBoxSettingsHint()" v-on:click="BX.Salescenter.Manager.openHowToConfigCashBox(event)" class="${classModule}-title-info">${Loc.getMessage('SALESCENTER_CASHBOX_BLOCK_SETTINGS_TITLE')}</div>
 			<div v-if="isTemplateBeSendSms()" v-on:click="showCompanyContacts(event)" class="${classModule}-title-info">${Loc.getMessage('SALESCENTER_LEFT_PAYMENT_COMPANY_CONTACTS')}</div>
 		</div>
-		<div class="${classModule}-container" v-bind:class="{ 'salescenter-app-payment-by-sms-item-container-offtop salescenter-app-payment-by-sms-item-container--inline': isTemplateBeSendSms() }">
+		<div class="${classModule}-container" v-bind:class="{ 'salescenter-app-payment-by-sms-item-container-offtop': isTemplateBeSendSms() }">
 			<!--BEE_SEND_SMS-->
 			<template v-if="isTemplateBeSendSms() && smsSenders.length === 0">
 				<component :is="'sms-configure-block'"

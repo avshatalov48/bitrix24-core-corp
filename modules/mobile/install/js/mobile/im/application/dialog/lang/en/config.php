@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["MOBILE_CHAT_EDIT_TITLE"] = "Edit";
 $MESS["MOBILE_CHAT_EMPTY"] = "- The chat is empty -";
 $MESS["MOBILE_CHAT_ERROR_DESC"] = "Please try again later.";
@@ -12,6 +12,7 @@ $MESS["MOBILE_CHAT_PANEL_UPLOAD_DISK_FILES"] = "Files";
 $MESS["MOBILE_CHAT_PANEL_UPLOAD_GALLERY"] = "Select from gallery";
 $MESS["MOBILE_CHAT_QUOTE_FILE_MESSAGE"] = "File";
 $MESS["MOBILE_CHAT_SYSTEM_MESSAGE"] = "System message";
+$MESS["MOBILE_CLIPBOARD_COPY_SUCCESS"] = "Copied to the Clipboard";
 $MESS["MOBILE_EDIT_CANCEL"] = "Cancel";
 $MESS["MOBILE_EDIT_SAVE"] = "Save";
 $MESS["MOBILE_GOTO_CRM"] = "Go to CRM";
@@ -57,9 +58,9 @@ $MESS["MOBILE_MESSAGE_MENU_SELECT_TEXT"] = "Select text";
 $MESS["MOBILE_MESSAGE_MENU_SHARE_CHAT"] = "Discuss in a new chat";
 $MESS["MOBILE_MESSAGE_MENU_SHARE_MENU"] = "Create";
 $MESS["MOBILE_MESSAGE_MENU_SHARE_POST"] = "Discuss in Activity Stream";
+$MESS["MOBILE_MESSAGE_MENU_SHARE_POST_NEWS"] = "Discuss in Feed";
 $MESS["MOBILE_MESSAGE_MENU_SHARE_TASK"] = "Create task";
 $MESS["MOBILE_MESSAGE_MENU_UNREAD"] = "Mark as unread";
 $MESS["MOBILE_SCOPE_DEPARTMENTS"] = "Departments";
 $MESS["MOBILE_SCOPE_LINES"] = "Open Channels";
 $MESS["MOBILE_SCOPE_USERS"] = "Employees";
-?>

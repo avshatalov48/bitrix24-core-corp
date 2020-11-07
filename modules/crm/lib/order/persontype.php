@@ -46,7 +46,7 @@ class PersonType extends Sale\PersonType
 
 		$personTypeRaw = static::getList([
 			'filter' => [
-				'CODE' => $code,
+				'=CODE' => $code,
 			],
 			'select' => ['ID'],
 			'limit' => 1
@@ -68,7 +68,7 @@ class PersonType extends Sale\PersonType
 					[
 						'=this.ID' => 'ref.PERSON_TYPE_ID'
 					],
-					['join_type' => 'LEFT']
+					['join_type' => 'INNER']
 				),
 			],
 			'limit' => 1

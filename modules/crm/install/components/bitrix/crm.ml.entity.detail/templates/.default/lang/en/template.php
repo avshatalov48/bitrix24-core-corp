@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ML_BUTTON_CANCEL"] = "Cancel";
 $MESS["CRM_ML_BUTTON_DISABLE"] = "Disable";
 $MESS["CRM_ML_CONFIRMATION"] = "Confirm action";
@@ -35,6 +35,9 @@ $MESS["CRM_ML_MODEL_TRAINING_LEADS"] = "The AI is now analyzing your CRM to fore
 $MESS["CRM_ML_SCORE_BALLOON"] = "#SCORE# (#DATE#)";
 $MESS["CRM_ML_SCORING_CAN_START_TRAINING"] = "Deal forecast requires that you train the AI model using existing completed deals.";
 $MESS["CRM_ML_SCORING_DESCRIPTION_P1"] = "What is the criteria used by your sales manager when handling deals? Queue? Intuition? All you need is to capture and bring your most promising customers to the top of your list.";
+$MESS["CRM_ML_SCORING_DESCRIPTION_P2_2"] = "AI scoring will analyze the existing deals to show their probability of success. The system will help your employees identify areas requiring most attention. Don't waste your time on those who has no intention to become your customer!";
+$MESS["CRM_ML_SCORING_DESCRIPTION_TITLE_2"] = "AI scoring";
+$MESS["CRM_ML_SCORING_ERROR_TOO_SOON_2"] = "AI scoring has been disabled as per your request. You will be able to train the AI model and enable scoring after #DATE#.";
 $MESS["CRM_ML_SCORING_MODEL_QUALITY_HINT"] = "Learn how to improve forecast precision";
 $MESS["CRM_ML_SCORING_NOT_ENOUGH_DATA"] = "AI Scoring uses existing data. At least 2000 deals are required to make a forecast. We will let you know when you have sufficient data.";
 $MESS["CRM_ML_SCORING_PREDICTION_HINT"] = "Learn more about this number";
@@ -43,4 +46,3 @@ $MESS["CRM_ML_SCORING_TRAIN_FREE_OF_CHARGE"] = "Train for free";
 $MESS["CRM_ML_SUCCESS_PROBABILITY_HIGH"] = "High";
 $MESS["CRM_ML_SUCCESS_PROBABILITY_LOW"] = "Low";
 $MESS["CRM_ML_SUCCESS_PROBABILITY_MEDIUM"] = "Average";
-?>

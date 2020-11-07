@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Order;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Timeline\DeliveryController;
 use Bitrix\Sale;
 use Bitrix\Main;
 
@@ -92,6 +93,63 @@ class Shipment extends Sale\Shipment
 				];
 
 				Crm\Timeline\OrderShipmentController::getInstance()->onDeducted($this->getId(), $timelineParams);
+			}
+		}
+
+		if (!$this->isSystem()
+			&& $isNew
+			&& ($deliveryService = $this->getDelivery())
+		)
+		{
+			if ($deliveryService instanceof Sale\Delivery\Services\Crm\ICrmActivityProvider)
+			{
+				$activity = $deliveryService->provideCrmActivity($this);
+
+				$fields = [
+					'TYPE_ID' => \CCrmActivityType::Provider,
+					'ASSOCIATED_ENTITY_ID' => $this->getId(),
+					'PROVIDER_ID' => 'CRM_DELIVERY',
+					'PROVIDER_TYPE_ID' => 'DELIVERY',
+					'SUBJECT' => $activity->getSubject() ? $activity->getSubject() : 'Delivery',
+					'IS_HANDLEABLE' => $activity->isHandleable() ? 'Y' : 'N',
+					'COMPLETED' => $activity->isCompleted() ? 'Y' : 'N',
+					'STATUS' => $activity->getStatus(),
+					'RESPONSIBLE_ID' => $activity->getResponsibleId(),
+					'PRIORITY' => $activity->getPriority(),
+					'AUTHOR_ID' => $activity->getAuthorId(),
+					'BINDINGS' => $activity->getBindings(),
+					'SETTINGS' => [
+						'FIELDS' => $activity->getFields()
+					],
+				];
+
+				$activityId = (int)\CCrmActivity::add($fields, false);
+
+				if ($activityId > 0)
+				{
+					AddEventToStatFile(
+						'sale',
+						'deliveryActivityCreation',
+						$activityId,
+						$deliveryService->getName(),
+						'delivery_service_name'
+					);
+				}
+			}
+
+			if ($deliveryService instanceof Sale\Delivery\Services\Crm\ICrmEstimationMessageProvider)
+			{
+				$estimationMessage = $deliveryService->provideCrmEstimationMessage($this);
+
+				DeliveryController::getInstance()->createHistoryMessage(
+					$this->getId(),
+					$estimationMessage->getTypeId(),
+					[
+						'AUTHOR_ID' => $estimationMessage->getAuthorId(),
+						'SETTINGS' => ['FIELDS' => $estimationMessage->getFields()],
+						'BINDINGS' => $estimationMessage->getBindings()
+					]
+				);
 			}
 		}
 

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["MOBILE_LOG_BIZPROC"] = "Business Processes";
 $MESS["MOBILE_LOG_BLOG"] = "Messages";
 $MESS["MOBILE_LOG_COMMENT"] = "Comment";
@@ -48,16 +48,16 @@ $MESS["MOBILE_LOG_POST_FORM_PHOTO_GALLERY"] = "Select from gallery";
 $MESS["MOBILE_LOG_POST_FORM_SEND"] = "Send";
 $MESS["MOBILE_LOG_POST_FORM_TABLE_CANCEL"] = "Close";
 $MESS["MOBILE_LOG_POST_FORM_TABLE_OK"] = "Select";
+$MESS["MOBILE_LOG_REFRESH_NEEDED"] = "Please update the feed";
 $MESS["MOBILE_LOG_RELOAD_ERROR"] = "Error updating Activity Stream";
 $MESS["MOBILE_LOG_RELOAD_NEEDED"] = "Reload the Activity Stream";
+$MESS["MOBILE_LOG_RELOAD_NEEDED2"] = "Update the Feed";
 $MESS["MOBILE_LOG_SLIDER_ADD_POST"] = "Add Post";
 $MESS["MOBILE_LOG_SLIDER_FAVORITES"] = "Favorites";
-$MESS["MOBILE_LOG_TITLE"] = "Activity Stream";
-$MESS["MOBILE_LOG_TITLE_NEWS"] = "News";
+$MESS["MOBILE_LOG_TITLE_NEWS"] = "Feed";
 $MESS["MOBILE_LOG_WORK"] = "Work";
 $MESS["MOBILE_PLAYER_ERROR_MESSAGE"] = "Unfortunately the app cannot play this file.<br />You can <span class=\"disk-mobile-player-download\">download it</span> and play it on your device.";
 $MESS["MOBILE_TASKS_VIEW_TAB_CHECKLIST"] = "Checklist";
 $MESS["MOBILE_TASKS_VIEW_TAB_COMMENT"] = "Comments";
 $MESS["MOBILE_TASKS_VIEW_TAB_FILES"] = "Files";
 $MESS["MOBILE_TASKS_VIEW_TAB_TASK"] = "Task";
-?>
