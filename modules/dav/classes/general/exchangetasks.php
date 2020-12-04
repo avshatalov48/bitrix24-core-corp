@@ -979,7 +979,7 @@ class CDavExchangeTasks
 		{
 			$itemBody .= "     <Body";
 			if (array_key_exists("BodyType", $arFields))
-				$itemBody .= " BodyType=\"".(strtolower($arFields["BodyType"]) == "html" ? "HTML" : "Text")."\"";
+				$itemBody .= " BodyType=\"".(mb_strtolower($arFields["BodyType"]) == "html" ? "HTML" : "Text")."\"";
 			$itemBody .= ">".htmlspecialcharsbx($value)."</Body>\r\n";
 		}
 		elseif ($key == "Recurrence")

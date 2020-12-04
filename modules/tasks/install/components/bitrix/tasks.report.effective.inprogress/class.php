@@ -1,9 +1,10 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
+use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UI\PageNavigation;
@@ -16,9 +17,24 @@ Loc::loadMessages(__FILE__);
 CBitrixComponent::includeComponentClass("bitrix:tasks.base");
 CBitrixComponent::includeComponentClass("bitrix:tasks.report.effective.detail");
 
+/**
+ * Class TasksReportEffectiveInprogressComponent
+ */
 class TasksReportEffectiveInprogressComponent extends TasksReportEffectiveDetailComponent
 {
-	protected static function checkBasicParameters(array &$arParams, array &$arResult, Collection $errors, array $auxParams = [])
+	/**
+	 * @param array $arParams
+	 * @param array $arResult
+	 * @param Collection $errors
+	 * @param array $auxParams
+	 * @return bool
+	 */
+	protected static function checkBasicParameters(
+		array &$arParams,
+		array &$arResult,
+		Collection $errors,
+		array $auxParams = []
+	): bool
 	{
 		$isAccessible = (array_key_exists('USER_ID', $arParams) && (int)$arParams['USER_ID']);
 
@@ -30,7 +46,19 @@ class TasksReportEffectiveInprogressComponent extends TasksReportEffectiveDetail
 		return $errors->checkNoFatals();
 	}
 
-	protected static function checkPermissions(array &$arParams, array &$arResult, Collection $errors, array $auxParams = [])
+	/**
+	 * @param array $arParams
+	 * @param array $arResult
+	 * @param Collection $errors
+	 * @param array $auxParams
+	 * @return bool
+	 */
+	protected static function checkPermissions(
+		array &$arParams,
+		array &$arResult,
+		Collection $errors,
+		array $auxParams = []
+	): bool
 	{
 		$currentUser = User::getId();
 		$viewedUser = (int)$arParams['USER_ID'];
@@ -49,7 +77,13 @@ class TasksReportEffectiveInprogressComponent extends TasksReportEffectiveDetail
 		return $errors->checkNoFatals();
 	}
 
-	protected function getData()
+	/**
+	 * @throws Main\Db\SqlQueryException
+	 * @throws Main\ObjectException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	protected function getData(): void
 	{
 		$taskLimitExceeded = TaskLimit::isLimitExceeded();
 
@@ -71,118 +105,110 @@ class TasksReportEffectiveInprogressComponent extends TasksReportEffectiveDetail
 		$this->arResult['TASK_LIMIT_EXCEEDED'] = $taskLimitExceeded;
 	}
 
-	private function getTasksList()
+	/**
+	 * @throws Main\Db\SqlQueryException
+	 * @throws Main\ObjectException
+	 */
+	private function getTasksList(): void
 	{
 		$filterData = $this->getFilterData();
 
 		$userId = $this->arParams['USER_ID'];
-		$groupId = array_key_exists('GROUP_ID', $filterData) ? $filterData['GROUP_ID'] : 0;
+		$groupId = (array_key_exists('GROUP_ID', $filterData) ? $filterData['GROUP_ID'] : 0);
+		$groupCondition = ($groupId > 0 ? "AND T.GROUP_ID = {$groupId}" : '');
 
-		$nav = new PageNavigation("nav");
-		$nav->allowAllRecords(true)->setPageSize($this->getPageSize())->initFromUri();
+		$dateTo = (new Datetime($filterData['DATETIME_to']))->format('Y-m-d H:i:s');
+		$dateFrom = (new Datetime($filterData['DATETIME_from']))->format('Y-m-d H:i:s');
 
 		$sql = "
-            SELECT 
-                #select#
-            FROM 
-                b_tasks as t
-                JOIN b_tasks_member as tm ON tm.TASK_ID = t.ID  AND tm.TYPE IN ('R', 'A')
-            WHERE
-                (
-                    (tm.USER_ID = {$userId} AND tm.TYPE='R' AND t.CREATED_BY != t.RESPONSIBLE_ID)
-                    OR 
-                    (tm.USER_ID = {$userId} AND tm.TYPE='A' AND (t.CREATED_BY != {$userId} AND t.RESPONSIBLE_ID != {$userId}))
-                )
-                
-                ".($groupId > 0 ? "AND t.GROUP_ID = {$groupId}" : '')."
-                
-                AND t.CREATED_DATE <= '".(new Datetime($filterData['DATETIME_to']))->format('Y-m-d H:i:s')."'
-				AND 
+			SELECT #select#
+			FROM b_tasks as T
+				INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID AND TM.TYPE IN ('R', 'A')
+			WHERE
 				(
-					t.CLOSED_DATE >= '".(new Datetime($filterData['DATETIME_from']))->format('Y-m-d H:i:s')."'
-					OR
-					CLOSED_DATE is null
+					(TM.USER_ID = {$userId} AND TM.TYPE = 'R' AND T.CREATED_BY != T.RESPONSIBLE_ID)
+					OR (TM.USER_ID = {$userId} AND TM.TYPE = 'A' AND (T.CREATED_BY != {$userId} AND T.RESPONSIBLE_ID != {$userId}))
 				)
-				
-                AND t.ZOMBIE = 'N'
-                AND t.STATUS != 6
-            
-            ";
+				{$groupCondition}
+				AND T.CREATED_DATE <= '{$dateTo}'
+				AND (T.CLOSED_DATE >= '{$dateFrom}' OR T.CLOSED_DATE is null)
+				AND T.ZOMBIE = 'N'
+				AND T.STATUS != 6
+		";
 
-		$res = \Bitrix\Main\Application::getConnection()->query(str_replace('#select#', 'COUNT(t.ID) as COUNT', $sql))
-									   ->fetch();
-		$count = $res['COUNT'];
+		$connection = Main\Application::getConnection();
+		$countResult = $connection->query(str_replace('#select#', 'COUNT(T.ID) AS COUNT', $sql))->fetch();
+		$count = $countResult['COUNT'];
+
+		$nav = new PageNavigation('nav');
+		$nav->allowAllRecords(true)->setPageSize($this->getPageSize())->initFromUri();
 		$nav->setRecordCount($count);
 
-		$sql.= "LIMIT
-            	".$nav->getOffset().",".$nav->getLimit();
+		$sql .= "LIMIT ".$nav->getOffset().",".$nav->getLimit();
+		$select = ['ID', 'TITLE', 'DEADLINE', 'CREATED_BY', 'CREATED_DATE', 'CLOSED_DATE', 'STATUS'];
 
-		$data = $GLOBALS['DB']->Query(
-			str_replace('#select#', 'ID, TITLE, DEADLINE, CREATED_BY, CREATED_DATE, CLOSED_DATE, STATUS', $sql)
-		);
-
-		$list = [];
-		while ($t = $data->Fetch())
+		$tasksList = [];
+		$tasksResult = $connection->query(str_replace('#select#', implode(', ', $select), $sql));
+		while ($task = $tasksResult->Fetch())
 		{
-			$list[] = $t;
+			$tasksList[] = $task;
 		}
 
-		//region NAV
 		$this->arResult['NAV_OBJECT'] = $nav;
 		$this->arResult['PAGE_SIZES'] = $this->pageSizes;
-
 		$this->arResult['TOTAL_RECORD_COUNT'] = $count;
-		//endregion
-
-		$this->arResult['LIST'] = $list;
+		$this->arResult['LIST'] = $tasksList;
 	}
 
-	private function getGridHeaders()
+	/**
+	 * @return array[]
+	 */
+	private function getGridHeaders(): array
 	{
-		return array(
-			'TASK'         => array(
-				'id'       => 'TASK',
-				'name'     => GetMessage('TASKS_COLUMN_TASK'),
+		return [
+			'TASK' => [
+				'id' => 'TASK',
+				'name' => Loc::getMessage('TASKS_COLUMN_TASK'),
 				'editable' => false,
-				'default'  => true
-			),
-			'STATUS'       => array(
-				'id'       => 'STATUS',
-				'name'     => GetMessage('TASKS_COLUMN_STATUS'),
+				'default' => true,
+			],
+			'STATUS' => [
+				'id' => 'STATUS',
+				'name' => Loc::getMessage('TASKS_COLUMN_STATUS'),
 				'editable' => false,
-				'default'  => true
-			),
-			'DEADLINE'     => array(
-				'id'       => 'DEADLINE',
-				'name'     => GetMessage('TASKS_COLUMN_DEADLINE'),
+				'default' => true,
+			],
+			'DEADLINE' => [
+				'id' => 'DEADLINE',
+				'name' => Loc::getMessage('TASKS_COLUMN_DEADLINE'),
 				'editable' => false,
-				'default'  => false
-			),
-			'CREATED_DATE' => array(
-				'id'       => 'CREATED_DATE',
-				'name'     => GetMessage('TASKS_COLUMN_CREATED_DATE'),
+				'default' => false,
+			],
+			'CREATED_DATE' => [
+				'id' => 'CREATED_DATE',
+				'name' => Loc::getMessage('TASKS_COLUMN_CREATED_DATE'),
 				'editable' => false,
-				'default'  => true
-			),
-			'CLOSED_DATE'  => array(
-				'id'       => 'CLOSED_DATE',
-				'name'     => GetMessage('TASKS_COLUMN_CLOSED_DATE'),
+				'default' => true,
+			],
+			'CLOSED_DATE' => [
+				'id' => 'CLOSED_DATE',
+				'name' => Loc::getMessage('TASKS_COLUMN_CLOSED_DATE'),
 				'editable' => false,
-				'default'  => true
-			),
-			'ORIGINATOR'   => array(
-				'id'       => 'ORIGINATOR',
-				'name'     => GetMessage('TASKS_COLUMN_ORIGINATOR'),
+				'default' => true,
+			],
+			'ORIGINATOR' => [
+				'id' => 'ORIGINATOR',
+				'name' => Loc::getMessage('TASKS_COLUMN_ORIGINATOR'),
 				'editable' => false,
-				'default'  => true
-			),
-			'GROUP'        => array(
-				'id'       => 'GROUP',
-				'name'     => GetMessage('TASKS_COLUMN_GROUP'),
+				'default' => true,
+			],
+			'GROUP' => [
+				'id' => 'GROUP',
+				'name' => Loc::getMessage('TASKS_COLUMN_GROUP'),
 				'editable' => false,
-				'default'  => false
-			),
-		);
+				'default' => false,
+			],
+		];
 	}
 
 }

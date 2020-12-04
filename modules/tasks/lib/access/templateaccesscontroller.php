@@ -23,6 +23,11 @@ class TemplateAccessController extends BaseAccessController
 			$item = TemplateModel::createNew();
 		}
 
+		if ($item->isDeleted())
+		{
+			return false;
+		}
+
 		return parent::check($action, $item, $params);
 	}
 

@@ -580,6 +580,16 @@ if(!$searchRestriction->isExceeded(CCrmOwnerType::Invoice))
 		}
 		unset($arFilter['FIND']);
 	}
+
+	if (
+		($limitWarningValue = $searchRestriction->getLimitWarningValue(CCrmOwnerType::Invoice)) > 0
+	)
+	{
+		$searchRestriction->notifyLimitWarning(
+			CCrmOwnerType::Invoice,
+			$limitWarningValue
+		);
+	}
 }
 else
 {

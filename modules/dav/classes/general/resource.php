@@ -154,7 +154,7 @@ class CDavResource
 						{
 							$ns = $xmlnsHash[$arSubProp['xmlns']];
 						}
-						if (strpos($extraXmlns, $extra = ' xmlns:'.$ns.'="'.$arSubProp['xmlns'].'"') === false)
+						if (mb_strpos($extraXmlns, $extra = ' xmlns:'.$ns.'="'.$arSubProp['xmlns'].'"') === false)
 							$extraXmlns .= $extra;
 						$ns .= ':';
 					}

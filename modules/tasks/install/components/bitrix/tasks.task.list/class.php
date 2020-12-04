@@ -8,6 +8,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
  * @copyright 2001-2025 Bitrix
  */
 
+use Bitrix\Main;
+use Bitrix\Main\Application;
 use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
@@ -15,6 +17,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Tasks\Access;
 use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Helper\Grid;
@@ -133,10 +136,10 @@ class TasksTaskListComponent extends TasksBaseComponent
 	 * @param array $data
 	 * @param array $arParams
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
 	 */
 	public static function prepareGridRowsForTasks(array $taskIds, array $data = [], array $arParams = []): array
 	{
@@ -150,16 +153,6 @@ class TasksTaskListComponent extends TasksBaseComponent
 				'legacyFilter' => ['ID' => $taskIds],
 			];
 			$tasks = Manager\Task::getList(User::getId(), $getListParameters, $parameters)['DATA'];
-
-			$tagResult = TagTable::getList([
-				'select' => ['TASK_ID', 'NAME'],
-				'filter' => ['TASK_ID' => array_keys($tasks)],
-			]);
-			while ($tag = $tagResult->fetch())
-			{
-				$taskId = $tag['TASK_ID'];
-				$tasks[$taskId]['TAG'][] = $tag['NAME'];
-			}
 		}
 		else
 		{
@@ -170,6 +163,24 @@ class TasksTaskListComponent extends TasksBaseComponent
 				| Converter::RECURSIVE
 			);
 			$tasks = $converter->process($data);
+		}
+		$tasks = self::setGroupData($tasks);
+		$tasks = self::setFilesCount($tasks);
+		$tasks = self::setCheckListCount($tasks);
+
+		$tagResult = TagTable::getList([
+			'select' => ['TASK_ID', 'NAME'],
+			'filter' => ['TASK_ID' => array_keys($tasks)],
+		]);
+		while ($tag = $tagResult->fetch())
+		{
+			$taskId = $tag['TASK_ID'];
+			$tasks[$taskId]['TAG'][] = $tag['NAME'];
+		}
+
+		if (array_key_exists('FILTER_ID', $arParams))
+		{
+			$arParams['FILTER_FIELDS'] = (new Options($arParams['FILTER_ID']))->getFilter();
 		}
 
 		$gridRows = [];
@@ -270,8 +281,25 @@ class TasksTaskListComponent extends TasksBaseComponent
 		return $errors->checkNoFatals();
 	}
 
-	public static function getTotalCount($filter, $parameters)
+	public static function getTotalCount($userId, $groupId, $parameters)
 	{
+		$userId = (int) $userId;
+		$groupId = (int) $groupId;
+		if (!$userId)
+		{
+			return 0;
+		}
+
+		$filter = Filter::getInstance($userId, $groupId)->process();
+
+		$listState = \CTaskListState::getInstance($userId);
+		$groupBySubtasks = $listState->isSubmode(\CTaskListState::VIEW_SUBMODE_WITH_SUBTASKS);
+		if (!$groupBySubtasks)
+		{
+			unset($filter['ONLY_ROOT_TASKS']);
+		}
+
+		$parameters = \Bitrix\Main\Web\Json::decode($parameters);
 		return Manager\Task::getCount($filter, $parameters);
 	}
 
@@ -492,6 +520,15 @@ class TasksTaskListComponent extends TasksBaseComponent
 		else
 		{
 			unset($this->listParameters['filter']['ONLY_ROOT_TASKS']);
+		}
+
+		if (
+			Loader::includeModule('socialnetwork')
+			&& isset($this->arParams['GROUP_ID'])
+			&& $this->arParams['GROUP_ID']
+		)
+		{
+			SocialNetwork::setLogDestinationLast(['SG' => [$this->arParams['GROUP_ID']]]);
 		}
 
 		return true;
@@ -1067,14 +1104,154 @@ class TasksTaskListComponent extends TasksBaseComponent
 			$this->arResult['LIST'] = $this->collapseParents($this->arResult['LIST']);
 		}
 
-		$this->arResult['LIST'] = $this->setFilesCount($this->arResult['LIST']);
-		$this->arResult['LIST'] = $this->setCheckListCount($this->arResult['LIST']);
+		$this->arResult['LIST'] = self::setFilesCount($this->arResult['LIST']);
+		$this->arResult['LIST'] = self::setCheckListCount($this->arResult['LIST']);
+		$this->arResult['LIST'] = self::setGroupData($this->arResult['LIST']);
+		$this->arResult['LIST'] = self::setUserData($this->arResult['LIST']);
 		$this->arResult['PAGE_SIZES'] = $this->pageSizes;
+
+		if (!$this->needGroupBySubTasks())
+		{
+			$this->validateCounters();
+		}
 
 		if ($this->errors->checkHasFatals())
 		{
 			return;
 		}
+	}
+
+	/**
+	 * @throws Main\ArgumentException
+	 * @throws Main\DB\SqlQueryException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	protected function validateCounters(): void
+	{
+		$userId = (int) $this->arParams['USER_ID'];
+		if ($this->userId !== $userId)
+		{
+			return;
+		}
+
+		$filter = $this->filter->getOptions()->getFilter($this->filter->getFilters());
+		if (!$filter)
+		{
+			return;
+		}
+
+		$defaultFilter = [
+			'PROBLEM' => \CTaskListState::VIEW_TASK_CATEGORY_EXPIRED,
+			'PRESET_ID' => $filter['PRESET_ID'],
+			'FILTER_ID' => $filter['FILTER_ID'],
+			'FILTER_APPLIED' => true,
+			'FIND' => ''
+		];
+
+		if (array_diff($filter, $defaultFilter))
+		{
+			return;
+		}
+
+		$gridValue = null;
+		if (!$this->arResult['ENABLE_NEXT_PAGE'])
+		{
+			$gridValue = $this->arResult['GET_LIST_PARAMS']['NAV_PARAMS']['nPageSize'] * ($this->arResult['CURRENT_PAGE'] - 1) + count($this->arResult['LIST']);
+		}
+		else
+		{
+			// @ToDo make inspect
+		}
+
+		if ($gridValue === null)
+		{
+			return;
+		}
+
+		$groupId = isset($this->arParams['GROUP_ID']) ? (int) $this->arParams['GROUP_ID'] : 0;
+
+		$counter = \Bitrix\Tasks\Internals\Counter::getInstance($userId);
+		$counterValue = $counter->get(\Bitrix\Tasks\Internals\Counter\CounterDictionary::COUNTER_EXPIRED, $groupId);
+
+		if ($gridValue === $counterValue)
+		{
+			return;
+		}
+
+		if (\Bitrix\Tasks\Internals\Counter\CounterQueue::getInstance()->isInQueue($userId))
+		{
+			return;
+		}
+
+		$application = Application::getInstance();
+		$application && $application->addBackgroundJob(
+			['\Bitrix\Tasks\Internals\Counter\CounterService', 'recountForUser'],
+			[$userId],
+			Application::JOB_PRIORITY_LOW - 5
+		);
+
+		return;
+	}
+
+	private static function setUserData(array $list)
+	{
+		$userIds = array_merge(array_column($list, 'CREATED_BY'), array_column($list, 'RESPONSIBLE_ID'));
+		$userIds = array_unique($userIds);
+
+		$select = [
+			'ID',
+			'PERSONAL_PHOTO',
+			'LOGIN',
+			'NAME',
+			'LAST_NAME',
+			'SECOND_NAME',
+			'TITLE'
+		];
+		$users = User::getData($userIds, $select);
+
+		foreach ($list as $id => $row)
+		{
+			$list[$id]['MEMBERS']['CREATED_BY'] = $users[$row['CREATED_BY']];
+			$list[$id]['MEMBERS']['RESPONSIBLE_ID'] = $users[$row['RESPONSIBLE_ID']];
+		}
+
+		return $list;
+	}
+
+	private static function setGroupData(array $list)
+	{
+		$groupIds = array_unique(array_column($list, 'GROUP_ID'));
+
+		if (count($groupIds) === 1 && $groupIds[0] == 0)
+		{
+			return $list;
+		}
+
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			return $list;
+		}
+
+		$query = new Query(\Bitrix\Socialnetwork\WorkgroupTable::getEntity());
+		$query->setSelect(['ID', 'IMAGE_ID', 'NAME']);
+		$query->setFilter(['ID' => $groupIds]);
+
+		$res = $query->exec();
+
+		$groupData = [];
+		while ($row = $res->fetch())
+		{
+			$groupData[$row['ID']] = $row;
+		}
+
+		foreach ($list as $id => $row)
+		{
+			$list[$id]['GROUP_NAME'] = (isset($groupData[$row['GROUP_ID']])) ? $groupData[$row['GROUP_ID']]['NAME'] : '';
+			$list[$id]['GROUP_IMAGE_ID'] = (isset($groupData[$row['GROUP_ID']])) ? $groupData[$row['GROUP_ID']]['IMAGE_ID'] : 0;
+		}
+
+		return $list;
 	}
 
 	/**
@@ -1142,7 +1319,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 		}
 	}
 
-	private function setFilesCount(array $list)
+	private static function setFilesCount(array $list)
 	{
 		if (Loader::includeModule('disk'))
 		{
@@ -1156,7 +1333,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 		return $list;
 	}
 
-	private function setCheckListCount(array $list)
+	private static function setCheckListCount(array $list)
 	{
 		$query = new Query(Bitrix\Tasks\Internals\Task\CheckListTable::getEntity());
 		$query->setSelect(['TASK_ID', 'IS_COMPLETE', new ExpressionField('CNT', 'COUNT(TASK_ID)')]);

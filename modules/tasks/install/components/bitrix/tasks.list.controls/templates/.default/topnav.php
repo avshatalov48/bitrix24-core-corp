@@ -37,14 +37,15 @@ if ($arParams["SHOW_SECTIONS_BAR"] === "Y")
 {
 	$menuItems = array();
 
-	$oCounters = Counter::getInstance($arParams['USER_ID'], $arParams['GROUP_ID']);
+	$oCounters = Counter::getInstance($arParams['USER_ID']);
+	$groupId = (int) $arParams['GROUP_ID'];
 
 	$menuItems[] = array(
 		"TEXT" => GetMessage("TASKS_PANEL_TAB_TASKS"),
 		"URL" => $arParams["SECTION_URL_PREFIX"].$arResult["VIEW_SECTION_ADVANCED_FILTER_HREF"]
 				 .'&clear_filter=Y&apply_filter=Y',
 		"ID" => "view_all",
-		'COUNTER' => $oCounters->get(\Bitrix\Tasks\Internals\Counter\Name::TOTAL),
+		'COUNTER' => $oCounters->get(\Bitrix\Tasks\Internals\Counter\CounterDictionary::COUNTER_TOTAL, $groupId),
 		'COUNTER_ID' => \CTaskCountersProcessor::COUNTER_TASKS_TOTAL,
 		'COUNTER_ACTIVE'=> 'Y',
 		"IS_ACTIVE" => $arResult["MARK_SECTION_ALL"] === "Y",
@@ -60,10 +61,10 @@ if ($arParams["SHOW_SECTIONS_BAR"] === "Y")
 	);
 
 	$counters = array(
-		"view_role_responsible" => \Bitrix\Tasks\Internals\Counter\Name::MY,
-		"view_role_accomplice" => \Bitrix\Tasks\Internals\Counter\Name::ACCOMPLICES,
-		"view_role_auditor" => \Bitrix\Tasks\Internals\Counter\Name::AUDITOR,
-		"view_role_originator" => \Bitrix\Tasks\Internals\Counter\Name::ORIGINATOR
+		"view_role_responsible" => \Bitrix\Tasks\Internals\Counter\CounterDictionary::COUNTER_MY,
+		"view_role_accomplice" => \Bitrix\Tasks\Internals\Counter\CounterDictionary::COUNTER_ACCOMPLICES,
+		"view_role_auditor" => \Bitrix\Tasks\Internals\Counter\CounterDictionary::COUNTER_AUDITOR,
+		"view_role_originator" => \Bitrix\Tasks\Internals\Counter\CounterDictionary::COUNTER_ORIGINATOR
 	);
 
 	$myPlace = $arParams['USER_ID'] == \Bitrix\Tasks\Util\User::getId();
@@ -83,7 +84,7 @@ if ($arParams["SHOW_SECTIONS_BAR"] === "Y")
 		{
 			$counterName = $counters[mb_strtolower($roleCodename)];
 
-			$counter = $oCounters->get($counterName);
+			$counter = $oCounters->get($counterName, $groupId);
 		}
 
 		if (!$arParams["PATH_TO_REPORTS"])
@@ -147,7 +148,7 @@ if ($arParams["SHOW_SECTIONS_BAR"] === "Y")
 		"URL" => $arParams["SECTION_URL_PREFIX"].'effective/',
 		"ID" => "view_effective",
 		'MAX_COUNTER_SIZE'=>100,
-		'COUNTER' => Counter::getInstance($arParams['USER_ID'])->get(Counter\Name::EFFECTIVE)
+		'COUNTER' => Counter::getInstance($arParams['USER_ID'])->get(Counter\CounterDictionary::COUNTER_EFFECTIVE)
 	);
 
 

@@ -1571,7 +1571,7 @@ Class crm extends CModule
 
 		if($this->errors !== false)
 		{
-			$GLOBALS['errors'] = [$this->errors];
+			$GLOBALS['errors'] = (array)$this->errors;
 		}
 
 		$APPLICATION->IncludeAdminFile(

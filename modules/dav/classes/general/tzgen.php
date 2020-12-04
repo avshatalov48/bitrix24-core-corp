@@ -438,24 +438,24 @@ class TZConvVTimeZoneRule extends TZConvModel
 			foreach ($parts as $part)
 			{
 				list($key, $value) = explode('=', $part);
-				switch (strtolower($key))
+				switch(mb_strtolower($key))
 				{
 					case 'bymonth':
-						$rrule->month = (int) $value;
-						if (!$rrule->month)
+						$rrule->month = (int)$value;
+						if(!$rrule->month)
 						{
 							throw new \Exception('invalid BYDAY month');
 						}
 						break;
 					case 'byday':
-						$icsWkDay = substr($value, -2);
-						if (!array_key_exists($icsWkDay, self::$WEEKDAY_DIGIT_MAP))
+						$icsWkDay = mb_substr($value, -2);
+						if(!array_key_exists($icsWkDay, self::$WEEKDAY_DIGIT_MAP))
 						{
 							throw new \Exception('invalid BYDAY wkday');
 						}
 						$rrule->wkday = self::$WEEKDAY_DIGIT_MAP[$icsWkDay];
-						$rrule->numwk = (int) substr($value, 0, -2);
-						if (!$rrule->numwk)
+						$rrule->numwk = (int)mb_substr($value, 0, -2);
+						if(!$rrule->numwk)
 						{
 							throw new \Exception('invalid BYDAY numwk');
 						}
@@ -534,7 +534,7 @@ class TZGen
 				$transitionRule = TZConvTransitionRule::createFromTransition($transitions->getFirst());
 				foreach ($transitions as $transition)
 				{
-					$expectedTransitionDate = $transitionRule->computeTransitionDate(substr($transition['time'], 0, 4));
+					$expectedTransitionDate = $transitionRule->computeTransitionDate(mb_substr($transition['time'], 0, 4));
 					if ($expectedTransitionDate->format(DateTime::ISO8601) != $transition['time'])
 					{
 						$useRrule = FALSE;
@@ -550,7 +550,7 @@ class TZGen
 
 					foreach ($backTransitions as $backTransition)
 					{
-						$expectedTransitionDate = $transitionRule->computeTransitionDate(substr($backTransition['time'], 0, 4));
+						$expectedTransitionDate = $transitionRule->computeTransitionDate(mb_substr($backTransition['time'], 0, 4));
 						if ($expectedTransitionDate->format(DateTime::ISO8601) != $backTransition['time'])
 						{
 							break;
@@ -657,7 +657,7 @@ $timezone_identifiers = DateTimeZone::listIdentifiers();
 foreach ($timezone_identifiers as $ttt)
 {
 	$vvv = TZGen::toVTimeZone($ttt);
-	if (strlen($vvv) > 80)
+	if (mb_strlen($vvv) > 80)
 	{
 		$tempFile = fopen($_SERVER["DOCUMENT_ROOT"]."/1111111111_1.111", "a");
 		fwrite($tempFile, "\t\"".$ttt."\" => \"");

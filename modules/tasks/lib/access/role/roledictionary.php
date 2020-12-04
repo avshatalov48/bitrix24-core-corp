@@ -8,13 +8,15 @@
 
 namespace Bitrix\Tasks\Access\Role;
 
+use Bitrix\Tasks\Internals\Task\MemberTable;
+
 class RoleDictionary extends \Bitrix\Main\Access\Role\RoleDictionary
 {
 	public const
-		ROLE_DIRECTOR 		= 'O',
-		ROLE_RESPONSIBLE 	= 'R',
-		ROLE_ACCOMPLICE 	= 'A',
-		ROLE_AUDITOR 		= 'U';
+		ROLE_DIRECTOR 		= MemberTable::MEMBER_TYPE_ORIGINATOR,
+		ROLE_RESPONSIBLE 	= MemberTable::MEMBER_TYPE_RESPONSIBLE,
+		ROLE_ACCOMPLICE 	= MemberTable::MEMBER_TYPE_ACCOMPLICE,
+		ROLE_AUDITOR 		= MemberTable::MEMBER_TYPE_AUDITOR;
 
 	public const
 		TASKS_ROLE_ADMIN 	= 'TASKS_ROLE_ADMIN',

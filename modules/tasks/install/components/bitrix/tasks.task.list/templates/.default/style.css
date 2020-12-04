@@ -51,27 +51,39 @@
 	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2210%22%20height%3D%2210%22%20viewBox%3D%220%200%2010%2010%22%3E%0A%20%20%3Cpath%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M390.980999%2C978.210995%20C390.842716%2C978.210995%20390.732089%2C978.107338%20390.732089%2C977.977767%20L390.732089%2C977.018942%20C390.732089%2C976.889371%20390.842716%2C976.785714%20390.980999%2C976.785714%20L397.291098%2C976.785714%20C397.429382%2C976.785714%20397.540008%2C976.889371%20397.540008%2C977.018942%20L397.540008%2C977.977767%20C397.567665%2C978.107338%20397.429382%2C978.210995%20397.291098%2C978.210995%20L390.980999%2C978.210995%20Z%20M390.980999%2C981.068138%20C390.842716%2C981.068138%20390.732089%2C980.964481%20390.732089%2C980.83491%20L390.732089%2C979.876085%20C390.732089%2C979.746514%20390.842716%2C979.642857%20390.980999%2C979.642857%20L397.291098%2C979.642857%20C397.429382%2C979.642857%20397.540008%2C979.746514%20397.540008%2C979.876085%20L397.540008%2C980.83491%20C397.567665%2C980.964481%20397.429382%2C981.068138%20397.291098%2C981.068138%20L390.980999%2C981.068138%20Z%20M390.208292%2C975%20C389.549224%2C975%20389%2C975.518284%20389%2C976.140225%20L389%2C981.849933%20C389%2C982.471873%20389.549224%2C982.990157%20390.208292%2C982.990157%20L394.650811%2C982.990157%20C394.733195%2C982.990157%20394.788117%2C983.016072%20394.843039%2C983.0679%20L396.545633%2C984.804151%20C396.7104%2C984.959636%20396.985012%2C984.855979%20396.985012%2C984.648666%20L396.985012%2C983.223385%20C396.985012%2C983.093814%20397.094856%2C982.990157%20397.232162%2C982.990157%20L397.791708%2C982.990157%20C398.450776%2C982.990157%20399%2C982.471873%20399%2C981.849933%20L399%2C976.140225%20C398.972539%2C975.518284%20398.423315%2C975%20397.764247%2C975%20L390.208292%2C975%20Z%22%20transform%3D%22translate%28-389%20-975%29%22/%3E%0A%3C/svg%3E%0A') center 3px no-repeat;
 }
 
+.tasks-grid-avatar.ui-icon.ui-icon-common-user,
+.tasks-grid-avatar.ui-icon.ui-icon-common-user-group {
+	width: 22px;
+	min-width: 22px;
+	height: 22px;
+}
+
+.tasks-grid-filter-remove {
+	display: none;
+	width: 22px;
+	max-width: 22px;
+	min-width: 22px;
+	min-height: 22px;
+	max-height: 22px;
+	margin-right: -8px;
+	opacity: .3;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2210%22%20height%3D%2210%22%20viewBox%3D%220%200%2010%2010%22%3E%3Cpath%20fill%3D%22%23535C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M5.065%203.682L2.377.994%201.01%202.362%203.696%205.05.99%207.757l1.368%201.37%202.708-2.71%202.7%202.703%201.37-1.368-2.702-2.7%202.682-2.684L7.748%201%205.065%203.682z%22/%3E%3C/svg%3E') center no-repeat;
+	transition: .2s;
+	cursor: pointer;
+}
+.tasks-grid-filter-active .tasks-grid-filter-remove {
+	display: block;
+}
+
+.main-grid-cell-content a:hover .tasks-grid-filter-remove:hover {
+	transition: .1s;
+	opacity: 1;
+}
+
 .tasks-grid-user {
 	display: block;
 	overflow: hidden;
 	white-space: nowrap;
-}
-
-.tasks-grid-avatar {
-	display: inline-block;
-	vertical-align: middle;
-	width: 22px;
-	min-width: 22px;
-	height: 22px;
-	border-radius: 50%;
-	margin: 0 5px 0 0;
-	position: relative;
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2089%2089%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Ccircle%20fill%3D%22%23535C69%22%20cx%3D%2244.5%22%20cy%3D%2244.5%22%20r%3D%2244.5%22/%3E%3Cpath%20d%3D%22M68.18%2071.062c0-3.217-3.61-16.826-3.61-16.826%200-1.99-2.6-4.26-7.72-5.585-1.734-.483-3.383-1.233-4.887-2.223-.33-.188-.28-1.925-.28-1.925l-1.648-.25c0-.142-.14-2.225-.14-2.225%201.972-.663%201.77-4.574%201.77-4.574%201.252.695%202.068-2.4%202.068-2.4%201.482-4.3-.738-4.04-.738-4.04.388-2.625.388-5.293%200-7.918-.987-8.708-15.847-6.344-14.085-3.5-4.343-.8-3.352%209.082-3.352%209.082l.942%202.56c-1.85%201.2-.564%202.65-.5%204.32.09%202.466%201.6%201.955%201.6%201.955.093%204.07%202.1%204.6%202.1%204.6.377%202.556.142%202.12.142%202.12l-1.786.217c.024.58-.023%201.162-.14%201.732-2.1.936-2.553%201.485-4.64%202.4-4.032%201.767-8.414%204.065-9.193%207.16-.78%203.093-3.095%2015.32-3.095%2015.32H68.18z%22%20fill%3D%22%23FFF%22/%3E%3C/svg%3E');
-	background-size: cover;
-}
-
-.tasks-grid-avatar-empty {
-	border-radius: 0;
 }
 
 .tasks-grid-avatar-extranet,
@@ -130,6 +142,7 @@
 	background-color: #f6f8f9;
 }
 
+.tasks-grid-group,
 .tasks-grid-username {
 	max-width: 100%;
 	display: inline-flex;
@@ -148,19 +161,23 @@
 	border-radius: 14.5px;
 }
 
-.tasks-grid-username:hover {
+.tasks-grid-group:hover,
+.tasks-grid-group.tasks-grid-filter-active,
+.tasks-grid-username:hover,
+.tasks-grid-username.tasks-grid-filter-active {
 	background: #C0EDFD;
 	text-decoration: none !important;
 }
 
+.tasks-grid-group-inner,
 .tasks-grid-username-inner {
 	display: inline-block;
 	vertical-align: middle;
+	max-width: 155px;
 	height: 20px;
 	line-height: 20px;
 	color: #525C69;
 	padding-left: 11px;
-	max-width: 100%;
 	overflow: hidden;
 	text-overflow: ellipsis
 }
@@ -169,6 +186,7 @@
 	color: #eb9134;
 }
 
+.tasks-grid-group:hover .tasks-grid-group-inner,
 .tasks-grid-username:hover .tasks-grid-username-inner{
 	color: #525C69;
 	text-decoration: none;

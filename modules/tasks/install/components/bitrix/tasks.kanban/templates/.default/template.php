@@ -67,7 +67,6 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
     $presets = $filterInstance->getPresets();
     $gridID = $filterInstance->getId();
 
-
     if ($isBitrix24Template) {
         $this->SetViewTarget('inside_pagetitle');
     }

@@ -3280,7 +3280,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  var data = _ref.data;
 
 	  if (main_core.Type.isArray(data.errors) && data.errors.length > 0) {
-	    return data.errors.join('<br>');
+	    return data.errors.reduce(function (acc, errorText) {
+	      return "".concat(acc).concat(main_core.Text.encode(errorText), "<br>");
+	    }, '');
 	  }
 
 	  return main_core.Loc.getMessage('CRM_ST_SAVE_ERROR');

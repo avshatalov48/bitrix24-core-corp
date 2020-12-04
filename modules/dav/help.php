@@ -1,5 +1,5 @@
 <?
-$inDialog = (isset($_REQUEST["dialog"]) && (strtoupper($_REQUEST["dialog"]) == "Y"));
+$inDialog = (isset($_REQUEST["dialog"]) && (mb_strtoupper($_REQUEST["dialog"]) == "Y"));
 
 if ($inDialog)
 {

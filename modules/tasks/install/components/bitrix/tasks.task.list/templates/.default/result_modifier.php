@@ -8,6 +8,7 @@ use Bitrix\Main;
 use Bitrix\Main\Grid;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Tasks\Grid\Row;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\UI;
@@ -102,6 +103,7 @@ if (!function_exists('prepareHeaders'))
 				'first_order' => 'desc',
 				'editable' => false,
 				'default' => true,
+				'width' => 250
 			],
 			'DEADLINE' => [
 				'id' => 'DEADLINE',
@@ -655,6 +657,8 @@ if (!empty($arResult['LIST']))
 
 	$users = [];
 	$groups = [];
+
+	$arParams['FILTER_FIELDS'] = (new Options($arParams['FILTER_ID']))->getFilter();
 
 	foreach ($arResult['LIST'] as $row)
 	{

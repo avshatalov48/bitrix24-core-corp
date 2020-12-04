@@ -27,6 +27,7 @@ foreach ($arResult['TASKS']['RUNNING'] as $task)
 				"bitrix:bizproc.workflow.faces",
 				"",
 				array(
+					"SITE_TEMPLATE_ID" => (isset($arParams['SITE_TEMPLATE_ID']) ? $arParams['SITE_TEMPLATE_ID'] : ''),
 					"WORKFLOW_ID" => $arParams["WORKFLOW_ID"]
 				),
 				$component

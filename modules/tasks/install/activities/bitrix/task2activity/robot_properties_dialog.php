@@ -16,14 +16,6 @@ $renderField = function ($fieldId, $field, $value) use ($dialog, $rawValues)
 		<?
 		switch ($field['BaseType'])
 		{
-			case 'string':
-				?>
-				<input name="<?=htmlspecialcharsbx($fieldId)?>" type="text" class="bizproc-automation-popup-input"
-					   value="<?=htmlspecialcharsbx($value)?>"
-					   data-role="inline-selector-target"
-				>
-				<?
-				break;
 			case 'user':
 				$userValue = $rawValues[$fieldId];
 				if (!$userValue && $field['Required'])
@@ -55,15 +47,6 @@ $renderField = function ($fieldId, $field, $value) use ($dialog, $rawValues)
 					<?
 				}
 				break;
-			case 'datetime':
-				?>
-				<input name="<?=htmlspecialcharsbx($fieldId)?>" type="text" class="bizproc-automation-popup-input"
-					   value="<?=htmlspecialcharsbx($value)?>"
-					   data-role="inline-selector-target"
-					   data-selector-type="datetime"
-				>
-				<?
-				break;
 			case 'text':
 				?>
 				<textarea name="<?=htmlspecialcharsbx($fieldId)?>"
@@ -86,6 +69,11 @@ $renderField = function ($fieldId, $field, $value) use ($dialog, $rawValues)
 				</select>
 				<?
 				break;
+			default:
+				$field['Type'] = $field['BaseType'];
+				$field['FieldName'] = $fieldId;
+				echo $dialog->renderFieldControl($field, $value);
+				break;
 		}
 		?>
 	</div>
@@ -95,7 +83,11 @@ $renderField = function ($fieldId, $field, $value) use ($dialog, $rawValues)
 unset($arDocumentFields['PRIORITY']);
 
 //Visible fields
-foreach (['TITLE', 'DESCRIPTION', 'RESPONSIBLE_ID', 'DEADLINE'] as $fieldId)
+$visibleFields = array_merge(
+	['TITLE', 'DESCRIPTION', 'RESPONSIBLE_ID', 'DEADLINE'],
+	array_keys(\Bitrix\Tasks\Integration\Bizproc\Document\Task::getFieldsCreatedByUser())
+);
+foreach ($visibleFields as $fieldId)
 {
 	$value = $arCurrentValues[$fieldId];
 	$renderField($fieldId, $arDocumentFields[$fieldId], $value);

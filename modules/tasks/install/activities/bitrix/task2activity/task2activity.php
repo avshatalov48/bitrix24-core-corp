@@ -11,9 +11,9 @@ class CBPTask2Activity
 	const CYCLE_LIMIT = 3;
 
 	private static $arAllowedTasksFieldNames = array(
-		'TITLE', 'CREATED_BY', 'RESPONSIBLE_ID', 'ACCOMPLICES', 
-		'START_DATE_PLAN', 'END_DATE_PLAN', 'DEADLINE', 'DESCRIPTION', 
-		'PRIORITY', 'GROUP_ID', 'ALLOW_CHANGE_DEADLINE', 'TASK_CONTROL', 
+		'TITLE', 'CREATED_BY', 'RESPONSIBLE_ID', 'ACCOMPLICES',
+		'START_DATE_PLAN', 'END_DATE_PLAN', 'DEADLINE', 'DESCRIPTION',
+		'PRIORITY', 'GROUP_ID', 'ALLOW_CHANGE_DEADLINE', 'TASK_CONTROL',
 		'ADD_IN_REPORT', 'AUDITORS', 'ALLOW_TIME_TRACKING', 'PARENT_ID'
 	);
 
@@ -85,8 +85,6 @@ class CBPTask2Activity
 		$this->Subscribe($this);
 		$this->isInEventActivityMode = false;
 
-		$this->WriteToTrackingService(GetMessage("BPSA_TRACK_SUBSCR"));
-
 		return CBPActivityExecutionStatus::Executing;
 	}
 
@@ -145,6 +143,30 @@ class CBPTask2Activity
 				}
 			}
 		}
+		elseif(!$this->AsChildTask && CBPHelper::isEmptyValue($fields['PARENT_ID']) === false)
+		{
+			$parentId = is_array($fields['PARENT_ID']) ? reset($fields['PARENT_ID']) : $fields['PARENT_ID'];
+			if(is_null(\Bitrix\Tasks\Integration\Bizproc\Document\Task::getDocument($parentId)))
+			{
+				$this->WriteToTrackingService(GetMessage('BPTA1A_TASK_TASK_PRESENCE_ERROR',
+					['#TASK_ID#' => $parentId]
+				));
+				return CBPActivityExecutionStatus::Closed;
+			}
+			elseif(empty($arFieldsChecked['GROUP_ID']))
+			{
+				$res = \CTasks::GetList(
+					array(),
+					['ID' => (int) $parentId, 'CHECK_PERMISSIONS' => 'N'],
+					array('GROUP_ID')
+				);
+				if ($res && ($task = $res->fetch()))
+				{
+					$fields['GROUP_ID'] = $task['GROUP_ID'];
+				}
+			}
+			$fields['PARENT_ID'] = (int) $parentId;
+		}
 
 		$arUnsetFields = [];
 		foreach ($fields as $fieldName => $fieldValue)
@@ -198,21 +220,20 @@ class CBPTask2Activity
 			}
 		}
 
-		foreach (['DEADLINE', 'END_DATE_PLAN', 'START_DATE_PLAN'] as $dateField)
+		$allDateFields = array_merge(
+			['DEADLINE', 'END_DATE_PLAN', 'START_DATE_PLAN'],
+			array_keys(\Bitrix\Tasks\Integration\Bizproc\Document\Task::getFieldsCreatedByUser('datetime'))
+		);
+		foreach ($allDateFields as $dateField)
 		{
-			if (is_object($arFieldsChecked[$dateField]))
+			$checkedDateField = $this->assertDateField($dateField, $arFieldsChecked[$dateField]);
+			if(!$checkedDateField)
 			{
-				$arFieldsChecked[$dateField] = (string)$arFieldsChecked[$dateField];
-			}
-
-			if (!empty($arFieldsChecked[$dateField]) && !CheckDateTime($arFieldsChecked[$dateField]))
-			{
-				$this->WriteToTrackingService(
-					'Incorrect '.$dateField.': '.$arFieldsChecked[$dateField],
-					0,
-					CBPTrackingType::Error
-				);
 				unset($arFieldsChecked[$dateField]);
+			}
+			else
+			{
+				$arFieldsChecked[$dateField] = $checkedDateField;
 			}
 		}
 
@@ -290,6 +311,42 @@ class CBPTask2Activity
 		$this->WriteToTrackingService(str_replace("#VAL#", $result, GetMessage("BPSA_TRACK_OK")));
 
 		return true;
+	}
+
+	protected function assertDateField(string $dateFieldName, $dateFieldValue)
+	{
+		if(is_object($dateFieldValue))
+		{
+			return (string) $dateFieldValue;
+		}
+		elseif(is_array($dateFieldValue))
+		{
+			$realDateField = [];
+			foreach ($dateFieldValue as $date)
+			{
+				$checkedField = $this->assertDateField($dateFieldName, $date);
+				if(is_array($checkedField))
+				{
+					$realDateField = array_merge($realDateField, $checkedField);
+				}
+				elseif($checkedField)
+				{
+					$realDateField[] = $checkedField;
+				}
+			}
+			return $realDateField;
+		}
+
+		if (!empty($dateFieldValue) && !CheckDateTime($dateFieldValue))
+		{
+			$this->WriteToTrackingService(
+				'Incorrect '.$dateFieldName.': '.$dateFieldValue,
+				0,
+				CBPTrackingType::Error
+			);
+			return false;
+		}
+		return $dateFieldValue;
 	}
 
 	public function Subscribe(IBPActivityExternalEventListener $eventHandler)
@@ -627,8 +684,8 @@ class CBPTask2Activity
 
 			if($field["MANDATORY"] == "Y")
 			{
-				if (($field["MULTIPLE"] == "Y" && (!$r || is_array($r) && count($r) <= 0)) ||
-					($field["MULTIPLE"] == "N" && empty($r) && $field['USER_TYPE_ID'] !== 'boolean'))
+				if (($field["MULTIPLE"] == "Y" && (!$r || CBPHelper::isEmptyValue($r))) ||
+					($field["MULTIPLE"] == "N" && $r === '' && $field['USER_TYPE_ID'] !== 'boolean'))
 				{
 					$errors[] = array(
 						"code" => "emptyRequiredField",
@@ -801,6 +858,14 @@ class CBPTask2Activity
 				"Multiple" => true,
 				"BaseType" => "user"
 			),
+			"PARENT_ID" => array(
+				"Name" => GetMessage('BPTA1A_MAKE_SUBTASK'),
+				"Type" => "S",
+				"Editable" => true,
+				"Required" => false,
+				"Multiple" => false,
+				"BaseType" => "int"
+			)
 		);
 
 		$arUserFields = \Bitrix\Tasks\Util\Userfield\Task::getScheme();
@@ -817,7 +882,7 @@ class CBPTask2Activity
 				"Editable" => true,
 				"Required" => ($field["MANDATORY"] == "Y"),
 				"Multiple" => ($field["MULTIPLE"] == "Y"),
-				"BaseType" => $field["USER_TYPE_ID"],
+				"BaseType" => $field["USER_TYPE_ID"] === 'boolean' ? 'bool' : $field['USER_TYPE_ID'],
 				"UserField" => $field
 			);
 		}

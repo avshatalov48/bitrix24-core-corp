@@ -27,6 +27,7 @@ $MESS["MOBILE_MESSAGE_MENU_SHARE_MENU"] = "Создать";
 $MESS["MOBILE_MESSAGE_MENU_SHARE_TASK"] = "Создать задачу";
 $MESS["MOBILE_MESSAGE_MENU_SHARE_CHAT"] = "Обсудить в новом чате";
 $MESS["MOBILE_MESSAGE_MENU_SHARE_POST"] = "Обсудить в живой ленте";
+$MESS["MOBILE_MESSAGE_MENU_SHARE_POST_NEWS"] = "Обсудить в новостях";
 $MESS["MOBILE_MESSAGE_MENU_DELETE"] = "Удалить";
 $MESS["MOBILE_MESSAGE_MENU_DELETE_CONFIRM"] = "Вы уверены, что хотите удалить это сообщение?";
 $MESS["MOBILE_MESSAGE_MENU_DELETE_YES"] = "Да";

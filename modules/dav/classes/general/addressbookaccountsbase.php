@@ -38,17 +38,17 @@ abstract class CDavAddressbookAccountsBase
 		if (intval($account["PERSONAL_BIRTHDAY"]) > 0)
 			$map["BDAY"] = date("Y-m-d", MakeTimeStamp($account["PERSONAL_BIRTHDAY"]));
 
-		if (strlen($account["WORK_PHONE"]) > 0)
+		if ($account["WORK_PHONE"] <> '')
 			$map["TEL"][] = array(
 				"VALUE" => $account["WORK_PHONE"],
 				"PARAMETERS" => array("TYPE" => "WORK")
 			);
-		if (strlen($account["PERSONAL_MOBILE"]) > 0)
+		if ($account["PERSONAL_MOBILE"] <> '')
 			$map["TEL"][] = array(
 				"VALUE" => $account["PERSONAL_MOBILE"],
 				"PARAMETERS" => array("TYPE" => "CELL")
 			);
-		if (strlen($account["PERSONAL_PHONE"]) > 0)
+		if ($account["PERSONAL_PHONE"] <> '')
 			$map["TEL"][] = array(
 				"VALUE" => $account["PERSONAL_PHONE"],
 				"PARAMETERS" => array("TYPE" => "HOME")
@@ -61,7 +61,7 @@ abstract class CDavAddressbookAccountsBase
 			);
 		}
 		$org = '';
-		if (strlen($account["WORK_COMPANY"]) > 0)
+		if ($account["WORK_COMPANY"] <> '')
 		{
 			$org .= $account["WORK_COMPANY"];
 		}
@@ -79,26 +79,26 @@ abstract class CDavAddressbookAccountsBase
 			$map["ORG"] = $org;
 		}
 
-		if (strlen($account["WORK_POSITION"]) > 0)
+		if ($account["WORK_POSITION"] <> '')
 			$map["TITLE"] = $account["WORK_POSITION"];
 
-		if (strlen($account["WORK_WWW"]) > 0)
+		if ($account["WORK_WWW"] <> '')
 			$map["URL"][] = array(
 				"VALUE" => $account["WORK_WWW"],
 				"PARAMETERS" => array("TYPE" => "WORK")
 			);
-		if (strlen($account["PERSONAL_WWW"]) > 0)
+		if ($account["PERSONAL_WWW"] <> '')
 			$map["URL"][] = array(
 				"VALUE" => $account["PERSONAL_WWW"],
 				"PARAMETERS" => array("TYPE" => "HOME")
 			);
 
-		if (strlen($account["PERSONAL_STREET"]) > 0)
+		if ($account["PERSONAL_STREET"] <> '')
 			$map["ADR"][] = array(
 				"VALUE" => ";;" . $account["PERSONAL_STREET"] . ";" . $account["PERSONAL_CITY"] . ";" . $account["PERSONAL_STATE"] . ";" . $account["PERSONAL_ZIP"] . ";" . GetCountryByID($account["PERSONAL_COUNTRY"]) . "",
 				"PARAMETERS" => array("TYPE" => "HOME")
 			);
-		if (strlen($account["WORK_STREET"]) > 0)
+		if ($account["WORK_STREET"] <> '')
 			$map["ADR"][] = array(
 				"VALUE" => ";;" . $account["WORK_STREET"] . ";" . $account["WORK_CITY"] . ";" . $account["WORK_STATE"] . ";" . $account["WORK_ZIP"] . ";" . GetCountryByID($account["WORK_COUNTRY"]) . "",
 				"PARAMETERS" => array("TYPE" => "WORK")

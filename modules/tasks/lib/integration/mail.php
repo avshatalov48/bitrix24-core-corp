@@ -46,21 +46,32 @@ abstract class Mail extends \Bitrix\Tasks\Integration
 		}
 	}
 
-	protected static function processAttachments($message, array $attachments, $userId)
+	/**
+	 * @param $message
+	 * @param array $attachments
+	 * @param $userId
+	 * @return array
+	 */
+	protected static function processAttachments($message, array $attachments, $userId): array
 	{
 		// save attachments
-		$files = array();
-		$relations = array();
-		if(is_array($attachments))
-		{
-			foreach($attachments as $key => $file)
-			{
-				$uResult = Disk::uploadFile($file, $userId);
-				if($uResult->isSuccess())
-				{
-					$uData = $uResult->getData();
+		$files = [];
+		$relations = [];
 
-					$files[] = $relations[$key] = $uData['ATTACHMENT_ID'];
+		if (is_array($attachments))
+		{
+			foreach ($attachments as $key => $file)
+			{
+				if (!is_array($file) || empty($file))
+				{
+					continue;
+				}
+
+				$uploadResult = Disk::uploadFile($file, $userId);
+				if ($uploadResult->isSuccess())
+				{
+					$uploadData = $uploadResult->getData();
+					$files[] = $relations[$key] = $uploadData['ATTACHMENT_ID'];
 				}
 			}
 		}
@@ -68,10 +79,7 @@ abstract class Mail extends \Bitrix\Tasks\Integration
 		// also, translate possible [DISK FILE] tags in the message, if any
 		$message = static::translateRawAttachments($message, $relations);
 
-		return array(
-			$message,
-			$files
-		);
+		return [$message, $files];
 	}
 
 	private static function translateRawAttachments($message, $attachmentRelations)

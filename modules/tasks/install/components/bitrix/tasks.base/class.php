@@ -669,7 +669,7 @@ abstract class TasksBaseComponent extends CBitrixComponent
 		}
 		elseif(\bitrix_sessid() != $csrf)
 		{
-			$errors->add('CSRF_FAIL', 'CSRF token is not valid');
+			$errors->add('CSRF_FAIL', Loc::getMessage("TASKS_TB_CSRF_ERROR"));
 			return false;
 		}
 

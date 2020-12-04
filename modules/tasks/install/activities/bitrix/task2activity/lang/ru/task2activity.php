@@ -28,4 +28,7 @@ $MESS["BPSA_CYCLING_ERROR"] = "Задача не создана. Подозре�
 $MESS["BPSA_CHECK_LIST_ITEMS"] = "Чек-лист";
 $MESS["BPTA1A_TIME_TRACKING_H"] = "Время выполнения, часов";
 $MESS["BPTA1A_TIME_TRACKING_M"] = "Время выполнения, минут";
+
+$MESS["BPTA1A_TASK_TASK_PRESENCE_ERROR"] = "Не существует задачи с id \"#TASK_ID#\"";
+$MESS["BPTA1A_MAKE_SUBTASK"] = "Сделать подзадачей";
 ?>

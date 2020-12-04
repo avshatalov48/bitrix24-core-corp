@@ -39,7 +39,7 @@ class UserTopic extends Forum
 		}
 
 		$lastVisit = ($lastVisit ?? new DateTime());
-		$taskData = $task->getData(false);
+		$taskData = $task->getData(false, [], false);
 
 		if (!$taskData['FORUM_TOPIC_ID'])
 		{

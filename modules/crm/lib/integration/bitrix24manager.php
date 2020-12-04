@@ -215,13 +215,20 @@ class Bitrix24Manager
 			$licenseAllButtonClass = ($params['GLOBAL_SEARCH']? 'ui-btn ui-btn-xs ui-btn-light-border' : 'success');
 			$licenseDemoButtonClass = ($params['GLOBAL_SEARCH']? 'ui-btn ui-btn-xs ui-btn-light' : '');
 
+			$options = [];
+			if (isset($params['ANALYTICS_LABEL']) && $params['ANALYTICS_LABEL'] != '')
+			{
+				$options['ANALYTICS_LABEL'] = $params['ANALYTICS_LABEL'];
+			}
+
 			return \CBitrix24::prepareStubInfo(
 				$title,
 				$content,
 				array(
 					array('ID' => \CBitrix24::BUTTON_LICENSE_ALL, 'CLASS_NAME' => $licenseAllButtonClass),
 					array('ID' => \CBitrix24::BUTTON_LICENSE_DEMO, 'CLASS_NAME' => $licenseDemoButtonClass),
-				)
+				),
+				$options
 			);
 		}
 

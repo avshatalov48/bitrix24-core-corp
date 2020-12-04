@@ -8,8 +8,6 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 	class CDavCalendarHandler
 		extends CDavGroupdavHandler
 	{
-		const ENABLE_ATTENDEE_DESC = true;
-
 		protected function GetMethodMinimumPrivilege($method)
 		{
 			static $arMethodMinimumPrivilegeMap = array(
@@ -137,7 +135,7 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 			if (!is_numeric($principal))
 				return false;
 
-			$principal = IntVal($principal);
+			$principal = intval($principal);
 			$calendarIdNorm = implode("-", $calendarId);
 
 			static $arCalendarPrivilegesCache = [];
@@ -301,7 +299,7 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 					if ($bCalendarData)
 					{
 						$content = $this->GetICalContent($event, $siteId);
-						$resource->AddProperty('getcontentlength', strlen($content));
+						$resource->AddProperty('getcontentlength', mb_strlen($content));
 						$resource->AddProperty('calendar-data', $content, CDavGroupDav::CALDAV);
 					}
 					else
@@ -451,12 +449,13 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 					$iCalEvent["PRIORITY"] = 5;
 			}
 
-			if ((isset($event["DESCRIPTION"]) && strlen($event["DESCRIPTION"]) > 0) || $event['ATTENDEES_CODES'])
+			if ((isset($event["DESCRIPTION"]) && $event["DESCRIPTION"] <> '') || $event['ATTENDEES_CODES'])
 			{
-				if (isset($event['ATTENDEES_CODES']) && self::ENABLE_ATTENDEE_DESC)
+				$event['DESCRIPTION'] = self::replaceBBcodes($event['DESCRIPTION']);
+				if (isset($event['ATTENDEES_CODES']) && count($event['ATTENDEES_CODES']) > 1)
 				{
 					$users = self::GetAttendees($event['ATTENDEES_CODES']);
-					$iCalEvent["DESCRIPTION"] = GetMessage('ATTENDEES_EVENT').': '.$users.' =#=#=#= '.$event["DESCRIPTION"];
+					$iCalEvent["DESCRIPTION"] = GetMessage('ATTENDEES_EVENT').': '.$users.' '.$event["DESCRIPTION"];
 				}
 				else
 				{
@@ -687,7 +686,7 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 						$ar = explode(",", $rrule["BYDAY"]);
 						$ar1 = [];
 						foreach ($ar as $v)
-							$ar1[] = $arWeekDayMap[strtoupper($v)];
+							$ar1[] = $arWeekDayMap[mb_strtoupper($v)];
 						$arFields["PROPERTY_PERIOD_ADDITIONAL"] = implode(",", $ar1);
 					}
 					else
@@ -747,9 +746,9 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 				$arParams["interval"] = 1;
 			$arParams["interval"] = intval($arParams["interval"]);
 
-			if (!isset($arParams["freq"]) || !in_array(strtoupper($arParams["freq"]), array('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY')))
+			if (!isset($arParams["freq"]) || !in_array(mb_strtoupper($arParams["freq"]), array('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY')))
 				$arParams["freq"] = "DAILY";
-			$arParams["freq"] = strtoupper($arParams["freq"]);
+			$arParams["freq"] = mb_strtoupper($arParams["freq"]);
 
 			if ($arParams["freq"] == 'WEEKLY')
 			{
@@ -915,8 +914,8 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 					{
 						$attribute = trim($attribute);
 						list($key, $value) = explode('=', $attribute);
-						if (strtolower($key) == 'charset')
-							$charset = strtolower($value);
+						if (mb_strtolower($key) == 'charset')
+							$charset = mb_strtolower($value);
 					}
 				}
 			}
@@ -1019,9 +1018,9 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 
 			foreach ($codeAttendees as $codeAttend)
 			{
-				if (substr($codeAttend, 0, 1) === 'U')
+				if (mb_substr($codeAttend, 0, 1) === 'U')
 				{
-					$userId = (int)(substr($codeAttend, 1));
+					$userId = (int)(mb_substr($codeAttend, 1));
 					$userIdList[] = $userId;
 				}
 				}
@@ -1042,6 +1041,19 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 			}
 
 			return implode(', ', $userList);
+		}
+
+		public static function replaceBBcodes($text)
+		{
+			$patterns = [
+				'/\[URL=((?:ftp|https?):\/\/[^"><]*?)\]((?:ftp|https?):\/\/[^"><]*?)\[\/URL\]/i',
+			];
+
+			$replace = [
+				'$1',
+			];
+
+			return preg_replace($patterns, $replace, $text);
 		}
 	}
 }

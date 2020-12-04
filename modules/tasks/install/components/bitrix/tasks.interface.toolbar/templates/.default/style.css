@@ -58,6 +58,8 @@
 .tasks-page-name {
 	padding: 0 4px 0 0;
 	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
 }
 
 .tasks-counter-text {

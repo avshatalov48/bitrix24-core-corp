@@ -51,7 +51,7 @@ class RequestHandler
 	 */
 	public function process()
 	{
-		$response = new HttpResponse(Context::getCurrent());
+		$response = new HttpResponse();
 		if (!$this->getHandler() instanceof Base)
 		{
 			$response->addHeader('HTTP/1.0 404 Not Found');

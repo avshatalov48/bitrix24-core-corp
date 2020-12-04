@@ -73,23 +73,37 @@ class Group
 	 */
 	public function getCounters(): array
 	{
-		$select = [];
-		foreach ($this->getMap() as $key)
-		{
-			$select[] = "SUM({$key}) AS {$key}";
-		}
-		$parsedSelect = implode(',', $select);
+		$counters = [
+			'EXPIRED' => 0,
+			'NEW_COMMENTS' => 0
+		];
 
 		$sql = "
-			SELECT GROUP_ID, {$parsedSelect}
-			FROM b_tasks_counters 
+			SELECT 
+			       GROUP_ID,
+			       `TYPE`,
+			       SUM(`VALUE`) as CNT
+			FROM ". CounterTable::getTableName() ." 
 			WHERE
 				GROUP_ID = {$this->getGroupId()}
-			GROUP BY GROUP_ID
+			GROUP BY GROUP_ID, `TYPE`
 		";
 
 		$res = Application::getConnection()->query($sql);
-		$counters = $res->fetch();
+
+
+		while ($row = $res->fetch())
+		{
+			if (in_array($row['TYPE'], CounterDictionary::MAP_EXPIRED))
+			{
+				$counters['EXPIRED'] += $row['CNT'];
+			}
+
+			if (in_array($row['TYPE'], CounterDictionary::MAP_COMMENTS))
+			{
+				$counters['NEW_COMMENTS'] += $row['CNT'];
+			}
+		}
 
 		return [
 			'total' => [

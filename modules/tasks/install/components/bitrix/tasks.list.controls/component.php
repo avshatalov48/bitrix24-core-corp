@@ -129,7 +129,7 @@ if (
 				$employeeId = (int) $employeeId;
 
 				$arResult['SECTION_MANAGE_COUNTER'] += Counter::getInstance($employeeId)
-															  ->get(Counter\Name::TOTAL);
+															  ->get(Counter\CounterDictionary::COUNTER_TOTAL);
 			}
 
 			$oldCounter = (int)\CUserCounter::GetValue($this->arParams['USER_ID'], 'departments_counter', '**');
@@ -262,31 +262,31 @@ if (
 
 		$arResult['VIEW_COUNTERS'] = array(
 			'TOTAL' => array(
-				'COUNTER' => $counter->get(Counter\Name::TOTAL)
+				'COUNTER' => $counter->get(Counter\CounterDictionary::COUNTER_TOTAL)
 			),
 			'ROLES' => array(
 				'VIEW_ROLE_RESPONSIBLE' => array(
 					'TOTAL' => array(
-						'COUNTER' => $counter->get(Counter\Name::MY),//$oListCtrl->getUserRoleCounter(CTaskListState::VIEW_ROLE_RESPONSIBLE),
-						'COUNTER_ID' => Counter::getPrefix().Counter\Name::MY
+						'COUNTER' => $counter->get(Counter\CounterDictionary::COUNTER_MY),//$oListCtrl->getUserRoleCounter(CTaskListState::VIEW_ROLE_RESPONSIBLE),
+						'COUNTER_ID' => Counter\CounterDictionary::getCounterId(Counter\CounterDictionary::COUNTER_MY)
 					)
 				),
 				'VIEW_ROLE_ACCOMPLICE' => array(
 					'TOTAL' => array(
-						'COUNTER' => $counter->get(Counter\Name::ACCOMPLICES),
-						'COUNTER_ID' => Counter::getPrefix().Counter\Name::ACCOMPLICES
+						'COUNTER' => $counter->get(Counter\CounterDictionary::COUNTER_ACCOMPLICES),
+						'COUNTER_ID' => Counter\CounterDictionary::getCounterId(Counter\CounterDictionary::COUNTER_ACCOMPLICES)
 					)
 				),
 				'VIEW_ROLE_ORIGINATOR' => array(
 					'TOTAL' => array(
-						'COUNTER' => $counter->get(Counter\Name::ORIGINATOR),
-						'COUNTER_ID' => Counter::getPrefix().Counter\Name::ORIGINATOR
+						'COUNTER' => $counter->get(Counter\CounterDictionary::COUNTER_ORIGINATOR),
+						'COUNTER_ID' => Counter\CounterDictionary::getCounterId(Counter\CounterDictionary::COUNTER_ORIGINATOR)
 					)
 				),
 				'VIEW_ROLE_AUDITOR' => array(
 					'TOTAL' => array(
-						'COUNTER' => $counter->get(Counter\Name::AUDITOR),
-						'COUNTER_ID' => Counter::getPrefix().Counter\Name::AUDITOR
+						'COUNTER' => $counter->get(Counter\CounterDictionary::COUNTER_AUDITOR),
+						'COUNTER_ID' => Counter\CounterDictionary::getCounterId(Counter\CounterDictionary::COUNTER_AUDITOR)
 					)
 				)
 			)

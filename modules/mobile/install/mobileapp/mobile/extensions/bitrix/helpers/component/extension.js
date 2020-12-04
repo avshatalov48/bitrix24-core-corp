@@ -54,6 +54,32 @@
 					rootWidget: widgetParams
 				});
 		}
+
+
+		/**
+		 *
+		 * @param options - parameters
+		 * @param options.name - name of component (display in debugger)
+		 * @param options.version - name of component (display in debugger)
+		 * @param options.object - name of list object
+		 * @param options.widgetParams - parameters of list widget
+		 * @param options.componentParams - parameters of component which will be available thought BX.componentsParameters
+		 *
+		 */
+		static openLayout(options = {})
+		{
+			let widgetParams = {};
+			widgetParams.name = "layout";
+			widgetParams.settings =  options.widgetParams || {};
+			widgetParams.settings.objectName = "layout";
+			PageManager.openComponent("JSStackComponent",
+				{
+					scriptPath: "/mobileapp/jn/" + options.name + "/?version=" + options.version,
+					componentCode: options.name,
+					params: options.componentParams,
+					rootWidget: widgetParams
+				});
+		}
 	}
 
 	this.ComponentHelper = ComponentHelper;

@@ -5,203 +5,115 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Internals\Fields\Status;
+use Bitrix\Tasks\UI;
+use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\Util\Type\DateTime;
 
-//region TITLE
-$APPLICATION->SetPageProperty(
-	"title",
-	Loc::getMessage(
-		'TASKS_EFFECTIVE_TITLE_FULL',
-		array('#USER_NAME#' => htmlspecialcharsbx($arResult['USER_NAME']))
-	)
-);
-$APPLICATION->SetTitle(
-	Loc::getMessage('TASKS_EFFECTIVE_TITLE_FULL', array('#USER_NAME#' => htmlspecialcharsbx($arResult['USER_NAME'])))
-);
-//endregion TITLE
+$replace = ['#USER_NAME#' => htmlspecialcharsbx($arResult['USER_NAME'])];
+$message = Loc::getMessage('TASKS_EFFECTIVE_TITLE_FULL', $replace);
 
-if (!function_exists('prepareTaskRowUserBaloonHtml'))
+$APPLICATION->SetPageProperty('title', $message);
+$APPLICATION->SetTitle($message);
+
+if (!function_exists('prepareTaskRowUserBalloonHtml'))
 {
-	function prepareTaskRowUserBaloonHtml($userId, $taskId, $arParams)
+	/**
+	 * @param int $userId
+	 * @param int $taskId
+	 * @param array $arParams
+	 * @return string
+	 */
+	function prepareTaskRowUserBalloonHtml(int $userId, int $taskId, array $arParams): string
 	{
-		$pathToUserProfile = $arParams['PATH_TO_USER_PROFILE'];
-
 		$user = $arParams['~USER_DATA'][$userId];
 		$user['NAME'] = $arParams['~USER_NAMES'][$userId];
-
-		$user['AVATAR'] = \Bitrix\Tasks\UI::getAvatar($user['PERSONAL_PHOTO'], 100, 100);
-		$user['IS_EXTERNAL'] = \Bitrix\Tasks\Util\User::isExternalUser($user['ID']);
+		$user['AVATAR'] = UI::getAvatar($user['PERSONAL_PHOTO'], 100, 100);
 		$user['IS_CRM'] = array_key_exists('UF_USER_CRM_ENTITY', $user) && !empty($user['UF_USER_CRM_ENTITY']);
+		$user['IS_EXTERNAL'] = User::isExternalUser($userId);
+		$user['URL'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_USER_PROFILE'], ['user_id' => $userId]);
+		$user['URL'] = ($user['IS_EXTERNAL'] ? Socialnetwork\Task::addContextToURL($user['URL'], $taskId) : $user['URL']);
 
-		$user['URL'] = CComponentEngine::MakePathFromTemplate($pathToUserProfile, array("user_id" => $userId));
-		$user['URL'] = $user['IS_EXTERNAL'] ? \Bitrix\Tasks\Integration\Socialnetwork\Task::addContextToURL(
-			$user['URL'],
-			$taskId
-		) : $user['URL'];
+		$userName = htmlspecialcharsbx($user['NAME']);
+		$userUrl = htmlspecialcharsbx($user['URL']);
 
-		// $arParams['USER']['IS_EXTERNAL']   = true || false
 		$userIcon = '';
 		if ($user['IS_EXTERNAL'])
 		{
-			$userIcon = 'tasks-grid-avatar-extranet';
+			$userIcon = ' tasks-grid-avatar-extranet';
 		}
-		if ($user["EXTERNAL_AUTH_ID"] == 'email')
+		if ($user['EXTERNAL_AUTH_ID'] === 'email')
 		{
-			$userIcon = 'tasks-grid-avatar-mail';
+			$userIcon = ' tasks-grid-avatar-mail';
 		}
-		if ($user["IS_CRM"])
+		if ($user['IS_CRM'])
 		{
-			$userIcon = 'tasks-grid-avatar-crm';
+			$userIcon = ' tasks-grid-avatar-crm';
 		}
 
-		$userAvatar = 'tasks-grid-avatar-empty';
-		if ($user['AVATAR'])
-		{
-			$userAvatar = '';
-		}
+		$emptyAvatar = ($user['AVATAR'] ? '' : ' tasks-grid-avatar-empty');
+		$style = ($user['AVATAR'] ? ' style="background-image: url(\''.$user['AVATAR'].'\')"' : '');
 
-		$userName = '<span class="tasks-grid-avatar  '.$userAvatar.' '.$userIcon.'" 
-			'.($user['AVATAR'] ? 'style="background-image: url(\''.$user['AVATAR'].'\')"' : '').'></span>';
-
-		$userName .= '<span class="tasks-grid-username-inner '.$userIcon.'">'. htmlspecialcharsbx($user['NAME']) .'</span>';
-
-		return '<div class="tasks-grid-username-wrapper"><a href="'.
-			   $user['URL'].
-			   '" class="tasks-grid-username">'.
-			   $userName.
-			   '</a></div>';
+		return
+			'<div class="tasks-grid-username-wrapper">'
+				."<a href='{$userUrl}' class='tasks-grid-username'>"
+					."<span class='ui-icon ui-icon-common-user tasks-grid-avatar{$emptyAvatar}'><i{$style}></i></span>"
+					."<span class='tasks-grid-username-inner{$userIcon}'>{$userName}</span>"
+				.'</a>'
+			.'</div>'
+		;
 	}
 }
 
-$arResult['ROWS'] = array();
+$arResult['ROWS'] = [];
 
-if ($arResult['LIST'])
+if (!isset($arResult['LIST']) || !is_array($arResult['LIST']) || empty($arResult['LIST']))
 {
-	$users = [];
-	foreach ($arResult['LIST'] as $row)
-	{
-		$users[] = $row['CREATED_BY'];
-	}
-	$arParams['~USER_NAMES'] = \Bitrix\Tasks\Util\User::getUserName(array_unique($users));
-	$arParams['~USER_DATA'] = \Bitrix\Tasks\Util\User::getData(array_unique($users));
-
-	foreach ($arResult['LIST'] as $item)
-	{
-		$groupLink = CComponentEngine::MakePathFromTemplate(
-			$arParams['PATH_TO_GROUP_LIST'],
-			array(
-				"user_id" => \Bitrix\Tasks\Util\User::getId(),
-				"group_id" => $item["GROUP_ID"]
-			)
-		);
-
-		$taskLink = CComponentEngine::MakePathFromTemplate(
-			$arParams['PATH_TO_USER_TASKS_TASK'],
-			array(
-				"user_id" => \Bitrix\Tasks\Util\User::getId(),
-				"task_id" => $item["ID"],
-				'action'  => 'view'
-			)
-		);
-
-		$item['STATUS'] = htmlspecialcharsbx(\Bitrix\Tasks\Internals\Fields\Status::getTranslate($item['STATUS']));
-
-		$item['GROUP'] = '<a href="'.$groupLink.'">'.htmlspecialcharsbx($item['GROUP_NAME']).'</a>';
-
-		$item['GROUP'] = '<a href="'.$groupLink.'">'.htmlspecialcharsbx($item['GROUP_NAME']).'</a>';
-		$item['TASK'] = '<a href="'.
-						$taskLink.
-						'">'.
-						htmlspecialcharsbx($item['TITLE']).
-						'</a> '.
-						($item['TASK_ZOMBIE'] == 'Y' ? '<em>'.GetMessage('TASKS_EFFECTIVE_DETAIL_DELETED').'</em>'
-							: '');
-
-		$item['ORIGINATOR'] = prepareTaskRowUserBaloonHtml(
-			$item['CREATED_BY'],
-			$item['TASK_ID'],
-			$arParams
-		);
-
-		if ($item['DEADLINE'])
-		{
-			$time = new \Bitrix\Main\Type\DateTime($item['DEADLINE'], 'Y-m-d H:i:s');
-			$item['DEADLINE'] = \Bitrix\Tasks\Util\Type\DateTime::createFrom($time);
-		}
-
-		if ($item['CREATED_DATE'])
-		{
-			$time = new \Bitrix\Main\Type\DateTime($item['CREATED_DATE'], 'Y-m-d H:i:s');
-			$item['CREATED_DATE'] = \Bitrix\Tasks\Util\Type\DateTime::createFrom($time);
-		}
-
-		if ($item['CLOSED_DATE'])
-		{
-			$time = new \Bitrix\Main\Type\DateTime($item['CLOSED_DATE'], 'Y-m-d H:i:s');
-			$item['CLOSED_DATE'] = \Bitrix\Tasks\Util\Type\DateTime::createFrom($time);
-		}
-
-		$rowItem = array(
-			"id" => $item["ID"],
-			'columns' => $item
-		);
-
-		$arResult['ROWS'][] = $rowItem;
-	}
+	return;
 }
 
-$arResult['TEMPLATE_DATA'] = array(// contains data generated in result_modifier.php
-);
-
-function formatDateTasks($date)
+$users = [];
+foreach ($arResult['LIST'] as $row)
 {
-	$curTimeFormat = "HH:MI:SS";
-	$format = 'j F';
-	if (LANGUAGE_ID == "en")
-	{
-		$format = "F j";
-	}
-	if (LANGUAGE_ID == "de")
-	{
-		$format = "j. F";
-	}
+	$users[$row['CREATED_BY']] = $row['CREATED_BY'];
+}
+$arParams['~USER_NAMES'] = User::getUserName($users);
+$arParams['~USER_DATA'] = User::getData($users);
 
-	if (date('Y') != date('Y', strtotime($date)))
-	{
-		if (LANGUAGE_ID == "en")
-		{
-			$format .= ",";
-		}
+$userId = User::getId();
 
-		$format .= ' Y';
-	}
+foreach ($arResult['LIST'] as $task)
+{
+	$taskId = $task['ID'];
+	$taskLink = CComponentEngine::MakePathFromTemplate(
+		$arParams['PATH_TO_USER_TASKS_TASK'],
+		[
+			'user_id' => User::getId(),
+			'task_id' => $taskId,
+			'action' => 'view',
+		]
+	);
+	$groupLink = CComponentEngine::MakePathFromTemplate(
+		$arParams['PATH_TO_GROUP_LIST'],
+		[
+			'user_id' => User::getId(),
+			'group_id' => $task['GROUP_ID'],
+		]
+	);
 
-	$rsSite = CSite::GetByID(SITE_ID);
-	if ($arSite = $rsSite->Fetch())
-	{
-		$curDateFormat = $arSite["FORMAT_DATE"];
-		$curTimeFormat = str_replace($curDateFormat." ", "", $arSite["FORMAT_DATETIME"]);
-	}
+	$task['TASK'] = "<a href='{$taskLink}'>".htmlspecialcharsbx($task['TITLE'])."</a>";
+	$task['GROUP'] = "<a href='{$groupLink}'>".htmlspecialcharsbx($task['GROUP_NAME'])."</a>";
 
-	if ($curTimeFormat == "HH:MI:SS")
-	{
-		$currentDateTimeFormat = " G:i";
-	}
-	else //($curTimeFormat == "H:MI:SS TT")
-	{
-		$currentDateTimeFormat = " g:i a";
-	}
+	$task['ORIGINATOR'] = prepareTaskRowUserBalloonHtml($task['CREATED_BY'], $taskId, $arParams);
+	$task['STATUS'] = htmlspecialcharsbx(Status::getTranslate($task['STATUS']));
 
-	if (date('Hi', strtotime($date)) > 0)
-	{
-		$format .= ', '.$currentDateTimeFormat;
-	}
+	$task['DEADLINE'] = ($task['DEADLINE'] ? DateTime::createFrom($task['DEADLINE']) : null);
+	$task['CREATED_DATE'] = ($task['CREATED_DATE'] ? DateTime::createFrom($task['CREATED_DATE']) : null);
+	$task['CLOSED_DATE'] = ($task['CLOSED_DATE'] ? DateTime::createFrom($task['CLOSED_DATE']) : null);
 
-	$str = (!$date
-		? GetMessage('TASKS_NOT_PRESENT')
-		: \Bitrix\Tasks\UI::formatDateTime(
-			MakeTimeStamp($date),
-			$format
-		));
-
-	return $str;
+	$arResult['ROWS'][] = [
+		'id' => $taskId,
+		'columns' => $task,
+	];
 }

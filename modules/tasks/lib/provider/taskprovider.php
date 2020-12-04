@@ -2,11 +2,9 @@
 
 namespace Bitrix\Tasks\Provider;
 
-use Bitrix\Main\UserTable;
 use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Tasks\Access\Permission\PermissionDictionary;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
-use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Internals\UserOption;
 use \CDBResult;
 use Bitrix\Tasks\Internals\Counter;
@@ -53,9 +51,6 @@ class TaskProvider
 		$disableOptimization	= false,
 		$canUseOptimization		= false,
 		$countMode				= false;
-
-	/* @var $accessController TaskAccessController */
-	private $accessController;
 
 	public function __construct(\CDatabase $db, \CUserTypeManager $userFieldManager)
 	{
@@ -311,7 +306,7 @@ class TaskProvider
 
 	private function makeFilter(): self
 	{
-		$this->arParams['ENABLE_LEGACY_ACCESS'] = !$this->useAccessAsWhere; // manual legacy access switch
+		$this->arParams['ENABLE_LEGACY_ACCESS'] = false;
 		$this->arSqlSearch = \CTasks::GetFilter($this->arOptimizedFilter, '', $this->arParams);
 
 		if (!$this->bGetZombie)
@@ -332,6 +327,22 @@ class TaskProvider
 		}
 
 		return $this;
+	}
+
+	/**
+	 * @return bool
+	 */
+	private function isJoinMembers(): bool
+	{
+		foreach ($this->arJoins as $row)
+		{
+			if (preg_match('/^INNER JOIN (`)?b_tasks_member/i', $row))
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private function joinTaskMembers()
@@ -601,12 +612,14 @@ class TaskProvider
 
 				case 'originator_name':
 				case 'created_by':
+				case 'created_by_last_name':
 					$this->arSqlOrder[] = " CREATED_BY_LAST_NAME ".$order." ";
 					$needle = 'CREATED_BY_LAST_NAME';
 					break;
 
 				case 'responsible_name':
 				case 'responsible_id':
+				case 'responsible_last_name':
 					$this->arSqlOrder[] = " RESPONSIBLE_LAST_NAME ".$order." ";
 					$needle = 'RESPONSIBLE_LAST_NAME';
 					break;
@@ -731,7 +744,7 @@ class TaskProvider
 				CASE
 					WHEN
 						T.DEADLINE < DATE_ADD(". $this->db->CurrentTimeFunction() .", INTERVAL ".
-				Counter::getDeadlineTimeLimit()." SECOND)
+				Counter\Deadline::getDeadlineTimeLimit()." SECOND)
 						AND T.DEADLINE >= ". $this->db->CurrentTimeFunction() ."
 						AND T.STATUS != '4'
 						AND T.STATUS != '5'
@@ -1063,50 +1076,5 @@ class TaskProvider
 		$order[] = " SORTING ".$direction." ";
 
 		return $order;
-	}
-
-	private function makePossibleForwardedMemberFilter($filter)
-	{
-		$result = array();
-
-		if (is_array($filter) && !empty($filter))
-		{
-			// cannot forward filer with LOGIC OR or LOGIC NOT
-			if (array_key_exists('LOGIC', $filter) && $filter['LOGIC'] != 'AND')
-			{
-				return $result;
-			}
-			if (array_key_exists('::LOGIC', $filter) && $filter['::LOGIC'] != 'AND')
-			{
-				return $result;
-			}
-
-			/** @see \CTasks::GetSqlByFilter() */
-			if (array_key_exists('AUDITOR', $filter)) // we have equality to AUDITOR, not negation
-			{
-				$result[] = [
-					'=TYPE' => 'U',
-					'=USER_ID' => $filter['AUDITOR'],
-				];
-			}
-			else if (array_key_exists('ACCOMPLICE', $filter)) // we have equality to ACCOMPLICE, not negation
-			{
-				$result[] = [
-					'=TYPE' => 'A',
-					'=USER_ID' => $filter['ACCOMPLICE'],
-				];
-			}
-		}
-
-		return $result;
-	}
-
-	private function getAccessController(): TaskAccessController
-	{
-		if (!$this->accessController)
-		{
-			$this->accessController = new TaskAccessController($this->userId);
-		}
-		return $this->accessController;
 	}
 }

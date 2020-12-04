@@ -94,7 +94,7 @@ class TasksTopmenuComponent extends TasksBaseComponent
 			$this->arParams['SHOW_SECTION_MANAGE'] = 'N';
 		}
 
-		$this->arResult['EFFECTIVE_COUNTER'] = Counter::getInstance($this->userId)->get(Counter\Name::EFFECTIVE);//\Bitrix\Tasks\Internals\Effective::getMiddleCounter($this->userId);
+		$this->arResult['EFFECTIVE_COUNTER'] = Counter::getInstance($this->userId)->get(Counter\CounterDictionary::COUNTER_EFFECTIVE);//\Bitrix\Tasks\Internals\Effective::getMiddleCounter($this->userId);
 
 		$this->arResult['SECTION_MANAGE_COUNTER'] = 0;
 		if ($this->arParams['SHOW_SECTION_MANAGE'] == 'Y' && $this->isAccessToCounters())
@@ -123,7 +123,7 @@ class TasksTopmenuComponent extends TasksBaseComponent
 		$this->arResult['OWNER_ID'] = (int)$this->arParams['USER_ID'];
 
 		$this->arResult['ROLES'] = $this->getRoles();
-		$this->arResult['TOTAL'] = Counter::getInstance($this->arParams['USER_ID'])->get(Counter\Name::TOTAL);
+		$this->arResult['TOTAL'] = Counter::getInstance($this->arParams['USER_ID'])->get(Counter\CounterDictionary::COUNTER_TOTAL);
 
 		return true;
 	}
@@ -149,10 +149,10 @@ class TasksTopmenuComponent extends TasksBaseComponent
 	private function roleCodeToCounterId()
 	{
 		return array(
-			Counter\Role::AUDITOR => Counter\Name::AUDITOR,
-			Counter\Role::ACCOMPLICE => Counter\Name::ACCOMPLICES,
-			Counter\Role::RESPONSIBLE => Counter\Name::MY,
-			Counter\Role::ORIGINATOR => Counter\Name::ORIGINATOR,
+			Counter\Role::AUDITOR => Counter\CounterDictionary::COUNTER_AUDITOR,
+			Counter\Role::ACCOMPLICE => Counter\CounterDictionary::COUNTER_ACCOMPLICES,
+			Counter\Role::RESPONSIBLE => Counter\CounterDictionary::COUNTER_MY,
+			Counter\Role::ORIGINATOR => Counter\CounterDictionary::COUNTER_ORIGINATOR,
 		);
 	}
 

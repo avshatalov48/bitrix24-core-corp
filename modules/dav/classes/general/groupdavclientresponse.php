@@ -27,7 +27,7 @@ class CDavGroupdavClientResponce
 		if (count($this->arStatus) <= 0)
 			$this->Parse();
 
-		$name = strtolower($name);
+		$name = mb_strtolower($name);
 		if (array_key_exists($name, $this->arHeaders))
 			return $this->arHeaders[$name];
 
@@ -39,7 +39,7 @@ class CDavGroupdavClientResponce
 		if (count($this->arStatus) <= 0)
 			$this->Parse();
 
-		$name = strtolower($name);
+		$name = mb_strtolower($name);
 		if (array_key_exists($name, $this->arStatus))
 			return $this->arStatus[$name];
 
@@ -93,7 +93,7 @@ class CDavGroupdavClientResponce
 		{
 			list($name, $value) = explode(':', $this->arDraftHeaders[$i]);
 
-			$name = strtolower($name);
+			$name = mb_strtolower($name);
 			if (!array_key_exists($name, $this->arHeaders))
 			{
 				$this->arHeaders[$name] = trim($value);

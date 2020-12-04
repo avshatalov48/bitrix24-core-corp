@@ -6,6 +6,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Socialnetwork\WorkgroupTable;
+use Bitrix\Tasks\Scrum\Service\SprintService;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\FilterLimit;
 
 \Bitrix\Main\Loader::includeModule('socialnetwork');
@@ -29,9 +30,31 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 			$this->arParams['SPRINT_ID']//mark that we are in sprint mode
 		)
 		{
-			$sprints = \Bitrix\Tasks\Kanban\SprintTable::getAllSprints(
-				$this->arParams['GROUP_ID']
-			);
+
+			$group = Bitrix\Socialnetwork\Item\Workgroup::getById($this->arParams['GROUP_ID']);
+			if ($group && $group->isScrumProject())
+			{
+				$sprintService = new SprintService();
+				$listSprints = $sprintService->getSprintsByGroupId($this->arParams['GROUP_ID']);
+				foreach ($listSprints as $sprint)
+				{
+					if ($sprint->isCompletedSprint())
+					{
+						$sprints[$sprint->getId()] = [
+							'ID' => $sprint->getId(),
+							'NAME' => $sprint->getName(),
+							'START_TIME' => $sprint->getDateStart()->format(Bitrix\Main\Type\Date::getFormat()),
+							'FINISH_TIME' => $sprint->getDateEnd()->format(Bitrix\Main\Type\Date::getFormat()),
+						];
+					}
+				}
+			}
+			else
+			{
+				$sprints = \Bitrix\Tasks\Kanban\SprintTable::getAllSprints(
+					$this->arParams['GROUP_ID']
+				);
+			}
 		}
 
 		return $sprints;

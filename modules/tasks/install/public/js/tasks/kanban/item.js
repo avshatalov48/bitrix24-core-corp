@@ -622,7 +622,7 @@ BX.Tasks.Kanban.Item.prototype = {
 
 		if (!this.isSprintView)
 		{
-			if (data.date_deadline)
+			if (data.date_deadline || data.deferred || data.completed_supposedly)
 			{
 				this.deadlineNotificationDate = data.deadline.value.replace('&minus;', '-');
 				this.date_deadline.setText(this.deadlineNotificationDate);
@@ -680,6 +680,14 @@ BX.Tasks.Kanban.Item.prototype = {
 		);
 
 		// new comments
+		if (data.counter.value > 0)
+		{
+			this.task_counter.setColor(data.counter.color);
+			if (Number(this.task_counter.getValue()) !== Number(data.counter.value))
+			{
+				this.task_counter.update(data.counter.value);
+			}
+		}
 		this.switchVisible(this.task_counter_container, (data.counter.value > 0));
 
 		//region checklist

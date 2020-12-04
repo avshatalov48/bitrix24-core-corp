@@ -8,9 +8,9 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\Result;
-use Bitrix\Socialnetwork\LogTable;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Integration;
+use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
 use Bitrix\Tasks\Internals\Task\FavoriteTable;
@@ -221,11 +221,14 @@ if (Loader::includeModule('recyclebin'))
 				$task = \CTaskItem::getInstance($taskId, 1);
 				$task->update([], [
 					'FORCE_RECOUNT_COUNTER' => 'Y',
-					'PIN_IN_STAGE' => false
+					'PIN_IN_STAGE' => false,
 				]);
 
+				Counter\CounterService::addEvent(
+					Counter\CounterDictionary::EVENT_AFTER_TASK_RESTORE,
+					$task->getData(false)
+				);
 				Integration\SocialNetwork\Log::showLogByTaskId($taskId);
-
 				ScrumItem::activateBySourceId($taskId);
 			}
 			catch (\Exception $e)

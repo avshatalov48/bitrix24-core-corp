@@ -18,6 +18,10 @@ class TaskModel
 {
 	use DepartmentTrait;
 
+	private const
+		CACHE_MODEL_KEY = 'model',
+		CACHE_TASK_KEY = 'task';
+
 	private static $cache = [];
 
 	private
@@ -34,6 +38,54 @@ class TaskModel
 		unset(static::$cache[$taskId]);
 	}
 
+	/**
+	 * @param array $ids
+	 * @param int $userId
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function preloadModels(array $ids, int $userId = 0)
+	{
+		$res = \Bitrix\Tasks\Internals\TaskTable::query()
+			->addSelect('ID')
+			->addSelect('GROUP_ID')
+			->addSelect('STATUS')
+			->addSelect('ALLOW_CHANGE_DEADLINE')
+			->addSelect('ALLOW_TIME_TRACKING')
+			->addSelect('ZOMBIE')
+			->whereIn('ID', $ids)
+			->exec();
+
+		while ($row = $res->fetch())
+		{
+			static::$cache[$row['ID']][self::CACHE_TASK_KEY] = $row;
+		}
+
+		if (!$userId)
+		{
+			return;
+		}
+
+		$res = FavoriteTable::getList([
+			'select' => ['TASK_ID'],
+			'filter' => [
+				'=USER_ID' => $userId,
+				'@TASK_ID' => $ids
+			]
+		]);
+		$favorites = array_column($res->fetchAll(), 'TASK_ID');
+
+		foreach (static::$cache as $taskId => $data)
+		{
+			static::$cache[$taskId][self::CACHE_TASK_KEY]['FAVORITES'][$userId] = false;
+			if (in_array($taskId, $favorites))
+			{
+				static::$cache[$taskId][self::CACHE_TASK_KEY]['FAVORITES'][$userId] = true;
+			}
+		}
+	}
+
 	public static function createNew(int $groupId = 0): self
 	{
 		$model = new self();
@@ -45,14 +97,14 @@ class TaskModel
 
 	public static function createFromId(int $taskId): AccessibleItem
 	{
-		if (!array_key_exists($taskId, static::$cache))
+		if (!isset(static::$cache[$taskId][self::CACHE_MODEL_KEY]))
 		{
 			$model = new self();
 			$model->setId($taskId);
-			static::$cache[$taskId] = $model;
+			static::$cache[$taskId][self::CACHE_MODEL_KEY] = $model;
 		}
 
-		return static::$cache[$taskId];
+		return static::$cache[$taskId][self::CACHE_MODEL_KEY];
 	}
 
 	public static function createFromTaskItem(\Bitrix\Tasks\Item\Task $item)
@@ -341,6 +393,12 @@ class TaskModel
 		return $status === \CTasks::STATE_COMPLETED;
 	}
 
+	public function isDeleted(): bool
+	{
+		$task = $this->loadTask();
+		return $task['ZOMBIE'] === 'Y';
+	}
+
 	public function getStatus(): ?int
 	{
 		$task = $this->loadTask();
@@ -398,10 +456,18 @@ class TaskModel
 
 	public function isFavorite(int $userId): bool
 	{
-		return (bool) FavoriteTable::check([
-			'TASK_ID' => $this->id,
-			'USER_ID' => $userId
-		]);
+		if (
+			!isset(static::$cache[$this->id][self::CACHE_TASK_KEY]['FAVORITES'])
+			|| !array_key_exists($userId, static::$cache[$this->id][self::CACHE_TASK_KEY]['FAVORITES'])
+		)
+		{
+			static::$cache[$this->id][self::CACHE_TASK_KEY]['FAVORITES'][$userId] = (bool) FavoriteTable::check([
+				'TASK_ID' => $this->id,
+				'USER_ID' => $userId
+			]);
+		}
+
+		return static::$cache[$this->id][self::CACHE_TASK_KEY]['FAVORITES'][$userId];
 	}
 
 	private function loadTask(): ?array
@@ -410,7 +476,7 @@ class TaskModel
 		{
 			return null;
 		}
-		if ($this->task === null)
+		if (!isset(static::$cache[$this->id][self::CACHE_TASK_KEY]))
 		{
 			$res = \Bitrix\Tasks\Internals\TaskTable::query()
 				->addSelect('ID')
@@ -418,15 +484,16 @@ class TaskModel
 				->addSelect('STATUS')
 				->addSelect('ALLOW_CHANGE_DEADLINE')
 				->addSelect('ALLOW_TIME_TRACKING')
+				->addSelect('ZOMBIE')
 				->where('ID', $this->id)
 				->exec()
 				->fetch();
 
 			if ($res)
             {
-                $this->task = $res;
+				static::$cache[$this->id][self::CACHE_TASK_KEY] = $res;
             }
 		}
-		return $this->task;
+		return static::$cache[$this->id][self::CACHE_TASK_KEY];
 	}
 }

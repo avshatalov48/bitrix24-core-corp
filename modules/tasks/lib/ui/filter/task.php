@@ -81,26 +81,26 @@ class Task
 	//		return static::$gridOptions;
 	//	}
 
-	//	/**
-	//	 * @return string
-	//	 */
-	//	public static function getFilterId()
-	//	{
-	////		if(!static::$filterId)
-	//		{
-	//			$stateInstance = static::getListStateInstance();
-	//			$roleId = 4096;//$stateInstance->getUserRole();
-	////			$section = $stateInstance->getSection();
-	//			$typeFilter = 'ADVANCED';//\CTaskListState::VIEW_SECTION_ADVANCED_FILTER == $section ? 'ADVANCED' : 'MAIN';
-	//
-	////			$state = $stateInstance->getState();
-	//			$presetSelected = 'N';//array_key_exists('PRESET_SELECTED', $state) && $state['PRESET_SELECTED']['ID'] == -10  ? 'Y' : 'N';
-	//
-	//			static::$filterId = 'TASKS_GRID_ROLE_ID_' . $roleId . '_' . (int)(static::getGroupId() > 0).'_'.$typeFilter.'_'.$presetSelected.static::$filterSuffix;
-	//		}
-	//
-	//		return static::$filterId;
-	//	}
+		/**
+		 * @return string
+		 */
+		public static function getFilterId()
+		{
+			if(!static::$filterId)
+			{
+				$stateInstance = static::getListStateInstance();
+				$roleId = $stateInstance->getUserRole();
+				$section = $stateInstance->getSection();
+				$typeFilter = \CTaskListState::VIEW_SECTION_ADVANCED_FILTER == $section ? 'ADVANCED' : 'MAIN';
+
+				$state = $stateInstance->getState();
+				$presetSelected = array_key_exists('PRESET_SELECTED', $state) && $state['PRESET_SELECTED']['ID'] == -10  ? 'Y' : 'N';
+
+				static::$filterId = 'TASKS_GRID_ROLE_ID_' . $roleId . '_' . (int)(static::getGroupId() > 0).'_'.$typeFilter.'_'.$presetSelected.static::$filterSuffix;
+			}
+
+			return static::$filterId;
+		}
 	//
 	//	/**
 	//	 * @param $filterId

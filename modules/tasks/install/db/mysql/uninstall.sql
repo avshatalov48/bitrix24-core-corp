@@ -62,7 +62,9 @@ DROP TABLE IF EXISTS b_tasks_task_stage;
 
 DROP TABLE IF EXISTS b_tasks_projects;
 
-DROP TABLE IF EXISTS b_tasks_counters;
+DROP TABLE IF EXISTS b_tasks_scorer;
+
+DROP TABLE IF EXISTS b_tasks_scorer_queue;
 
 DROP TABLE IF EXISTS b_tasks_effective;
 

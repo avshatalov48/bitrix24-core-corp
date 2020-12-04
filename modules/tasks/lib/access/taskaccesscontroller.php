@@ -25,6 +25,11 @@ class TaskAccessController extends BaseAccessController
 			$item = TaskModel::createNew();
 		}
 
+		if ($item->isDeleted())
+		{
+			return false;
+		}
+
 		return parent::check($action, $item, $params);
 	}
 

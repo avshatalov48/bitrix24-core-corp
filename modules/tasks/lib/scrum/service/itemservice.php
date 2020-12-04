@@ -30,7 +30,32 @@ class ItemService implements Errorable
 		$this->errorCollection = new ErrorCollection;
 	}
 
-	public function createItem(ItemTable $epic): ItemTable
+	public function createTaskItem(ItemTable $taskItem): ItemTable
+	{
+		try
+		{
+			$result = ItemTable::add($taskItem->getFieldsToCreateTaskItem());
+
+			if ($result->isSuccess())
+			{
+				$taskItem->setId($result->getId());
+			}
+			else
+			{
+				$this->setErrors($result, self::ERROR_COULD_NOT_ADD_ITEM);
+			}
+
+			return $taskItem;
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_ADD_ITEM));
+		}
+
+		return $taskItem;
+	}
+
+	public function createEpicItem(ItemTable $epic): ItemTable
 	{
 		try
 		{
@@ -82,7 +107,7 @@ class ItemService implements Errorable
 
 			$queryObject = ItemTable::getList([
 				'select' => [
-					'ID', 'NAME'
+					'ID', 'NAME', 'DESCRIPTION', 'INFO'
 				],
 				'filter' => [
 					'ENTITY_ID'=> $entityId,
@@ -93,10 +118,15 @@ class ItemService implements Errorable
 			foreach ($queryObject->fetchAll() as $itemData)
 			{
 				$itemObject = ItemTable::createItemObject($itemData);
-				$tags[$itemObject->getName()] = [
-					'id' => $itemObject->getId(),
-					'name' => $itemObject->getName()
-				];
+				if (!$itemObject->isEmpty())
+				{
+					$tags[$itemObject->getId()] = [
+						'id' => $itemObject->getId(),
+						'name' => $itemObject->getName(),
+						'description' => $itemObject->getDescription(),
+						'info' => $itemObject->getInfo()
+					];
+				}
 			}
 
 			return $tags;
@@ -290,6 +320,32 @@ class ItemService implements Errorable
 		}
 
 		return '';
+	}
+
+	public function getItemBySourceId(int $sourceId): ItemTable
+	{
+		try
+		{
+			$itemId = 0;
+			$queryObject = ItemTable::getList([
+				'select' => ['ID'],
+				'filter' => [
+					'SOURCE_ID' => $sourceId
+				],
+				'order' => ['SORT' => 'ASC', 'ID' => 'ASC'],
+			]);
+			if ($itemData = $queryObject->fetch())
+			{
+				$itemId = $itemData['ID'];
+			}
+			return $this->getItemById($itemId);
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_ITEM));
+		}
+
+		return ItemTable::createItemObject();
 	}
 
 	public function getItemIdsBySourceIds(int $entityId, array $sourceIds): array

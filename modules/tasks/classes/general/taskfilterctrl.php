@@ -303,7 +303,7 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 								AND T.STATUS != 4
 								AND T.STATUS != 5
 								AND T.ZOMBIE = 'N'
-
+								
 							UNION 
 
 							SELECT T.ID

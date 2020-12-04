@@ -54,14 +54,29 @@
 	width: 64px;
 	max-width: 64px;
 	min-width: 64px;
+	align-items: center;
+	box-sizing: border-box;
 	border-bottom: 1px solid rgba(82, 92, 105, 0.2);
 	padding: 0 13px;
+	display: flex;
 }
 
 .tasks-scrum-epic-header-color-current {
 	width: 19px;
 	height: 19px;
 	border-radius: 2px;
+}
+
+.tasks-scrum-epic-header-color-btn-angle {
+	width: 8px;
+	height: 8px;
+	border-left: 2px solid;
+	border-bottom: 2px solid;
+	border-color: rgba(87, 96, 110, 0.51);
+	transform: rotate(-45deg);
+	margin-left: 11px;
+	margin-top: -4px;
+	box-sizing: border-box;
 }
 
 .tasks-scrum-epic-form-additional {
@@ -77,6 +92,18 @@
 	width: 19px;
 	height: 19px;
 	border-radius: 2px;
+}
+
+.tasks-scrum-epic-grid-tags {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+}
+
+.tasks-scrum-epic-grid-tags div {
+	cursor: pointer;
+	margin-bottom: 7px;
+	margin-right: 0;
 }
 
 .tasks-scrum-epic-name-label {
@@ -121,4 +148,14 @@
 	font: 20px/32px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: #a8adb4;
 	margin-bottom: 47px;
+}
+
+.tasks-scrum-epic-color-popup .main-color-picker-box {
+	width: 30px;
+	height: 30px;
+}
+
+.tasks-scrum-epic-color-popup .main-color-picker-preview {
+	width: 28px;
+	height: 28px;
 }

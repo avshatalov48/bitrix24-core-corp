@@ -16,7 +16,7 @@ global $APPLICATION;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/tasks/css/tasks.css");
 
-Extension::load(['ui.counter', 'ui.label', 'tasks.list.item']);
+Extension::load(['ui.counter', 'ui.label', 'tasks.list.item', 'ui.icons.b24']);
 ?>
 
 <?php
@@ -131,10 +131,24 @@ ob_end_clean();
 //endregion
 
 $rowCountHtml = str_replace(
-	array('%prefix%', '%all%', '%show%', '%filter%', '%parameters%'),
-	array(CUtil::JSEscape(mb_strtolower($arParams['GRID_ID'])), GetMessage('TASKS_ROW_COUNT_TITLE'), GetMessage('TASKS_SHOW_ROW_COUNT'), \CUtil::PhpToJSObject($arParams['GET_LIST_PARAMETERS']['legacyFilter']), \CUtil::PhpToJSObject($arParams['PROVIDER_PARAMETERS'])),
+	[
+		'%prefix%',
+		'%all%',
+		'%show%',
+		'%userid%',
+		'%groupid%',
+		'%parameters%'
+	],
+	[
+		CUtil::JSEscape(mb_strtolower($arParams['GRID_ID'])),
+		GetMessage('TASKS_ROW_COUNT_TITLE'),
+		GetMessage('TASKS_SHOW_ROW_COUNT'),
+		$arParams['USER_ID'],
+		$arParams['GROUP_ID'],
+		\CUtil::PhpToJSObject($arParams['PROVIDER_PARAMETERS'])
+	],
 	'<div id="%prefix%_row_count_wrapper" class="tasks-list-row-count-wrapper">%all%: 
-		<a id="%prefix%_row_count" onclick="BX.Tasks.GridActions.getTotalCount(\'%prefix%\', %filter%, %parameters%)">
+		<a id="%prefix%_row_count" onclick="BX.Tasks.GridActions.getTotalCount(\'%prefix%\', %userid%, %groupid%, %parameters%)">
 			%show%
 		</a>
 		<svg class="tasks-circle-loader-circular" viewBox="25 25 50 50">

@@ -84,6 +84,22 @@
 	        height: 1080
 	      } : null;
 	    });
+	    babelHelpers.defineProperty(this, "getUploadFilename", function (filename, type) {
+	      var mimeType = BX.MobileUtils.getFileMimeType(type),
+	          fileType = BX.MobileUtils.getType(mimeType);
+
+	      if (fileType === 'image' || fileType === 'video') {
+	        var extension = filename.split('.').slice(-1)[0].toLowerCase();
+
+	        if (mimeType === 'image/heic') {
+	          extension = 'jpg';
+	        }
+
+	        filename = 'mobile_file_' + new Date().toJSON().slice(0, 19).replace('T', '_').split(':').join('-') + '.' + extension;
+	      }
+
+	      return filename;
+	    });
 	  }
 
 	  babelHelpers.createClass(Utils, null, [{

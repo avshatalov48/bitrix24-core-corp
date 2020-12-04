@@ -618,7 +618,7 @@ class ActivityController extends EntityController
 				if ($conference !== null)
 				{
 					$data['ZOOM_INFO'] = array(
-						'CONF_START_TIME' => $conference['CONFERENCE_STARTED']->getTimestamp(),
+						'CONF_START_TIME' => $conference['CONFERENCE_STARTED']->format('Y-m-d H:i:s'),
 						'CONF_URL' => $conference['SHORT_LINK'],
 						'DURATION' => $conference['DURATION'],
 						'TOPIC' => $conference['TITLE'],
@@ -754,7 +754,7 @@ class ActivityController extends EntityController
 				{
 					$fields['ZOOM_INFO'] = array(
 						'RECORDINGS' => \Bitrix\SocialServices\Integration\Zoom\Recording::getRecordings($conferenceId)->getData(),
-						'CONF_START_TIME' => $conference['CONFERENCE_STARTED']->getTimestamp(),
+						'CONF_START_TIME' => $conference['CONFERENCE_STARTED']->format('Y-m-d H:i:s'),
 						'CONF_URL' => $conference['SHORT_LINK'],
 						'DURATION' => $conference['DURATION'],
 						'TOPIC' => $conference['TITLE'],

@@ -6,4 +6,5 @@ $MESS["INTRANET_USER_PROFILE_ADMIN_LIMIT_ERROR"] = "";
 $MESS["INTRANET_USER_PROFILE_EMAIL_ERROR"] = "Неверный формат email";
 $MESS["INTRANET_USER_PROFILE_INTEGRATOR_EMAIL_ERROR"] = "Интегратора с таким email не существует";
 $MESS["INTRANET_USER_PROFILE_INTEGRATOR_COUNT_ERROR"] = "Превышено максимальное количество интеграторов";
+$MESS["INTRANET_USER_PROFILE_DELETE_ERROR"] = "Ошибка удаления";
 ?>

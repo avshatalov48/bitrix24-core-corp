@@ -563,24 +563,15 @@ BX.Tasks.Util.hintManager = {
 				));
 			}
 
-			rt.hintPopup[id].popup = BX.PopupWindowManager.create(id,
-				node,
-				{
-					closeByEsc: false,
-					closeIcon: true,
-					angle: {},
-					autoHide: parameters.autoHide === true,
-					offsetLeft: 50,
-					offsetTop : 5,
-					events: {onPopupClose: BX.delegate(this.onViewModeHintClose, this)},
-					content: BX.create("DIV",
-						{
-							attrs: {className: "task-hint-popup-contents"},
-							children: content
-						}
-					)
-				}
-			)
+			rt.hintPopup[id].popup = BX.PopupWindowManager.create(id, node, {
+				closeByEsc: false,
+				closeIcon: true,
+				angle: {},
+				autoHide: parameters.autoHide === true,
+				offsetLeft: 50,
+				offsetTop: 5,
+				content: BX.create('DIV', {attrs: {className: 'task-hint-popup-contents'}, children: content})
+			});
 		}
 
 		rt.hintPopup[id].popup.show();

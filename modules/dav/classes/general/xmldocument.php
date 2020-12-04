@@ -33,7 +33,7 @@ class CDavXmlDocument
 	{
 		$result = new CDavXmlDocument();
 
-		if (strlen($data) > 0)
+		if ($data <> '')
 		{
 			$startFrom = 0;
 			$arData = self::ExtractArrayFromXMLString($data);
@@ -128,7 +128,7 @@ class CDavXMLParsingException
 		$this->xmlLine = $xmlLine;
 		$this->xmlColumn = $xmlColumn;
 
-		if (strlen($messageTemplate) <= 0)
+		if ($messageTemplate == '')
 			$messageTemplate = 'XML parsing error: #MESSAGE# at line #LINE#, column #COLUMN#';
 
 		$message = str_replace(array("#MESSAGE#", "#LINE#", "#COLUMN#"), array(htmlspecialcharsbx($this->xmlMessage), $this->xmlLine, $this->xmlColumn), $messageTemplate);

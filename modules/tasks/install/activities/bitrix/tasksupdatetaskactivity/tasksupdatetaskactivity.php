@@ -75,6 +75,11 @@ class CBPTasksUpdateTaskActivity extends CBPSetFieldActivity
 		}
 		else
 		{
+			if (method_exists($this, 'prepareFieldsValues'))
+			{
+				$fieldValue = $this->prepareFieldsValues($documentId, $this->GetDocumentType(), $fieldValue);
+			}
+
 			$documentService = $this->workflow->GetService("DocumentService");
 			$documentService->UpdateDocument($documentId, $fieldValue, $this->ModifiedBy);
 		}

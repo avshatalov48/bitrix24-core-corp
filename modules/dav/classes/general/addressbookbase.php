@@ -263,7 +263,7 @@ abstract class CDavAddressbookBase
 		if (!is_numeric($principal))
 			return false;
 
-		$principal = IntVal($principal);
+		$principal = intval($principal);
 
 		if (!is_array($collectionId))
 			$collectionId = array($collectionId);
@@ -367,7 +367,7 @@ abstract class CDavAddressbookBase
 				if ($this->IsAddressData($request))
 				{
 					$content = $this->GetVCardContent($entity);
-					$resource->AddProperty('getcontentlength', strlen($content));
+					$resource->AddProperty('getcontentlength', mb_strlen($content));
 					$resource->AddProperty('address-data', $content, CDavGroupDav::CARDDAV);
 				}
 				else
@@ -437,7 +437,7 @@ abstract class CDavAddressbookBase
 	 */
 	private function IsResourcePath($path)
 	{
-		return strpos($path, $this->resourceUri) !== false ? true : false;
+		return mb_strpos($path, $this->resourceUri) !== false ? true : false;
 	}
 
 	/**

@@ -1,147 +1,154 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !==true) die();
+<?php
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !==true)
+{
+	die();
+}
 
-use Bitrix\Main\Error;
+use Bitrix\Main;
 use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Engine\Response\AjaxJson;
-
 use Bitrix\Socialnetwork\WorkgroupTable;
 use Bitrix\Tasks\Import\PersonNameFormatter;
 use Bitrix\Tasks\Manager\Task;
+use Bitrix\Tasks\Util\Error\Collection;
 
 Loc::loadMessages(__FILE__);
 
 /**
  * Class TasksImportAjaxController
  */
-class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
+class TasksImportAjaxController extends Main\Engine\Controller
 {
 	private $usersById;
 	private $usersByName;
 	private $projectsByName;
 	private $importParameters;
 	private static $nameFormats;
-	private static $keysMap = array(
-		'TITLE' => array(
+	private static $keysMap = [
+		'TITLE' => [
 			'RESULT_KEY' => 'TITLE',
-			'CHECK_TYPE' => 'EQUAL'
-		),
-		'DESCRIPTION' => array(
+			'CHECK_TYPE' => 'EQUAL',
+		],
+		'DESCRIPTION' => [
 			'RESULT_KEY' => 'DESCRIPTION',
-			'CHECK_TYPE' => 'EQUAL'
-		),
-		'PRIORITY' => array(
+			'CHECK_TYPE' => 'EQUAL',
+		],
+		'PRIORITY' => [
 			'RESULT_KEY' => 'PRIORITY',
 			'CHECK_TYPE' => 'BOOL',
 			'TRUE_RESULT' => 2,
-			'FALSE_RESULT' => 1
-		),
-		'RESPONSIBLE' => array(
+			'FALSE_RESULT' => 1,
+		],
+		'RESPONSIBLE' => [
 			'RESULT_KEY' => 'RESPONSIBLE_ID',
 			'CHECK_TYPE' => 'FUNCTION',
-			'FUNCTION_NAME' => 'getUserIdByName'
-		),
-		'ORIGINATOR' => array(
+			'FUNCTION_NAME' => 'getUserIdByName',
+		],
+		'ORIGINATOR' => [
 			'RESULT_KEY' => 'CREATED_BY',
 			'CHECK_TYPE' => 'FUNCTION',
-			'FUNCTION_NAME' => 'getUserIdByName'
-		),
-		'ACCOMPLICES' => array(
+			'FUNCTION_NAME' => 'getUserIdByName',
+		],
+		'ACCOMPLICES' => [
 			'RESULT_KEY' => 'ACCOMPLICES',
 			'CHECK_TYPE' => 'FUNCTION',
-			'FUNCTION_NAME' => 'getUserIdsFromStringData'
-		),
-		'AUDITORS' => array(
+			'FUNCTION_NAME' => 'getUserIdsFromStringData',
+		],
+		'AUDITORS' => [
 			'RESULT_KEY' => 'AUDITORS',
 			'CHECK_TYPE' => 'FUNCTION',
-			'FUNCTION_NAME' => 'getUserIdsFromStringData'
-		),
-		'DEADLINE' => array(
+			'FUNCTION_NAME' => 'getUserIdsFromStringData',
+		],
+		'DEADLINE' => [
 			'RESULT_KEY' => 'DEADLINE',
-			'CHECK_TYPE' => 'EQUAL'
-		),
-		'START_DATE_PLAN' => array(
+			'CHECK_TYPE' => 'EQUAL',
+		],
+		'START_DATE_PLAN' => [
 			'RESULT_KEY' => 'START_DATE_PLAN',
-			'CHECK_TYPE' => 'EQUAL'
-		),
-		'END_DATE_PLAN' => array(
+			'CHECK_TYPE' => 'EQUAL',
+		],
+		'END_DATE_PLAN' => [
 			'RESULT_KEY' => 'END_DATE_PLAN',
-			'CHECK_TYPE' => 'EQUAL'
-		),
-		'ALLOW_CHANGE_DEADLINE' => array(
+			'CHECK_TYPE' => 'EQUAL',
+		],
+		'ALLOW_CHANGE_DEADLINE' => [
 			'RESULT_KEY' => 'ALLOW_CHANGE_DEADLINE',
 			'CHECK_TYPE' => 'BOOL',
 			'TRUE_RESULT' => 'Y',
-			'FALSE_RESULT' => 'N'
-		),
-		'MATCH_WORK_TIME' => array(
+			'FALSE_RESULT' => 'N',
+		],
+		'MATCH_WORK_TIME' => [
 			'RESULT_KEY' => 'MATCH_WORK_TIME',
 			'CHECK_TYPE' => 'BOOL',
 			'TRUE_RESULT' => 'Y',
-			'FALSE_RESULT' => 'N'
-		),
-		'TASK_CONTROL' => array(
+			'FALSE_RESULT' => 'N',
+		],
+		'TASK_CONTROL' => [
 			'RESULT_KEY' => 'TASK_CONTROL',
 			'CHECK_TYPE' => 'BOOL',
 			'TRUE_RESULT' => 'Y',
-			'FALSE_RESULT' => 'N'
-		),
-		'PARAM_1' => array(
+			'FALSE_RESULT' => 'N',
+		],
+		'PARAM_1' => [
 			'RESULT_KEY' => 'PARAM_1',
 			'CHECK_TYPE' => 'BOOL',
 			'TRUE_RESULT' => 'Y',
-			'FALSE_RESULT' => 'N'
-		),
-		'PARAM_2' => array(
+			'FALSE_RESULT' => 'N',
+		],
+		'PARAM_2' => [
 			'RESULT_KEY' => 'PARAM_2',
 			'CHECK_TYPE' => 'BOOL',
 			'TRUE_RESULT' => 'Y',
-			'FALSE_RESULT' => 'N'
-		),
-		'PROJECT' => array(
+			'FALSE_RESULT' => 'N',
+		],
+		'PROJECT' => [
 			'RESULT_KEY' => 'GROUP_ID',
 			'CHECK_TYPE' => 'FUNCTION',
-			'FUNCTION_NAME' => 'getProjectIdByName'
-		),
-		'ALLOW_TIME_TRACKING' => array(
+			'FUNCTION_NAME' => 'getProjectIdByName',
+		],
+		'ALLOW_TIME_TRACKING' => [
 			'RESULT_KEY' => 'ALLOW_TIME_TRACKING',
 			'CHECK_TYPE' => 'BOOL',
 			'TRUE_RESULT' => 'Y',
-			'FALSE_RESULT' => 'N'
-		),
-		'TIME_ESTIMATE' => array(
+			'FALSE_RESULT' => 'N',
+		],
+		'TIME_ESTIMATE' => [
 			'RESULT_KEY' => 'TIME_ESTIMATE',
-			'CHECK_TYPE' => 'INT'
-		),
-		'CHECKLIST' => array(
+			'CHECK_TYPE' => 'INT',
+		],
+		'CHECKLIST' => [
 			'RESULT_KEY' => 'SE_CHECKLIST',
 			'CHECK_TYPE' => 'FUNCTION',
-			'FUNCTION_NAME' => 'getCheckListFromStringData'
-		),
-		'TAGS' => array(
+			'FUNCTION_NAME' => 'getCheckListItemsFromStringData',
+		],
+		'TAGS' => [
 			'RESULT_KEY' => 'TAGS',
 			'CHECK_TYPE' => 'FUNCTION',
-			'FUNCTION_NAME' => 'getListFromStringWithDelimiter'
-		)
-	);
+			'FUNCTION_NAME' => 'getListFromStringWithDelimiter',
+		],
+	];
 
 	/**
 	 * Returns parameters for the next import or error's collection
 	 *
 	 * @param $importParameters - Import parameters
-	 * @return static
+	 * @return AjaxJson
 	 */
-	public function startImportAction($importParameters)
+	public function startImportAction($importParameters): AjaxJson
 	{
 		$tmpFilePath = CTempFile::GetDirectoryName(2, 'tasks');
 
 		if ($this->checkPrimaryErrors($importParameters['FILE_HASH'], $tmpFilePath))
+		{
 			return AjaxJson::createError($this->errorCollection);
+		}
 
 		$this->initParameters($importParameters);
 		$headersInFirstRow = $this->importParameters['HEADERS_IN_FIRST_ROW'];
-		$filePath = $tmpFilePath.preg_replace('/[^a-f0-9]/i', '', $this->importParameters['FILE_HASH']).'.tmp';
+
+		$fileHash = preg_replace('/[^a-f0-9]/i', '', $this->importParameters['FILE_HASH']);
+		$filePath = "{$tmpFilePath}{$fileHash}.tmp";
 
 		$csvFile = new CCSVData();
 		$csvFile->LoadFile($filePath);
@@ -150,7 +157,7 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 		$csvFile->SetPos($this->importParameters['FILE_POS']);
 		$csvFile->SetDelimiter($this->importParameters['SEPARATOR']);
 
-		if (intval($this->importParameters['FILE_POS']) == 0)
+		if ((int)$this->importParameters['FILE_POS'] === 0)
 		{
 			$this->importParameters['IMPORTS_TOTAL_COUNT'] = $this->getLinesCount($csvFile);
 			$csvFile->SetPos(0);
@@ -158,9 +165,11 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 		}
 
 		if ($this->parseCsvFile($csvFile))
-			return $this->importParameters;
-		else
-			return AjaxJson::createError($this->errorCollection);
+		{
+			return AjaxJson::createSuccess($this->importParameters);
+		}
+
+		return AjaxJson::createError($this->errorCollection);
 	}
 
 	/**
@@ -170,19 +179,32 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 	 * @param $tmpFilePath - File's path to check
 	 * @return bool - True if errors exist otherwise false
 	 */
-	private function checkPrimaryErrors($fileHash, $tmpFilePath)
+	private function checkPrimaryErrors($fileHash, $tmpFilePath): bool
 	{
 		if (!CModule::IncludeModule('tasks'))
-			$this->errorCollection[] = new Error(Loc::getMessage('TASKS_IMPORT_ERRORS_MODULE_TASKS_NOT_INCLUDED'));
-
+		{
+			$this->errorCollection[] = new Main\Error(
+				Loc::getMessage('TASKS_IMPORT_ERRORS_MODULE_TASKS_NOT_INCLUDED')
+			);
+		}
 		if (!CModule::IncludeModule('socialnetwork'))
-			$this->errorCollection[] = new Error(Loc::getMessage('TASKS_IMPORT_ERRORS_MODULE_SOCIAL_NETWORK_NOT_INCLUDED'));
-
+		{
+			$this->errorCollection[] = new Main\Error(
+				Loc::getMessage('TASKS_IMPORT_ERRORS_MODULE_SOCIAL_NETWORK_NOT_INCLUDED')
+			);
+		}
 		if (!preg_match('/[0-9a-f]{32}\.tmp/i', $fileHash))
-			$this->errorCollection[] = new Error(Loc::getMessage('TASKS_IMPORT_ERRORS_WRONG_FILE_HASH'));
-
+		{
+			$this->errorCollection[] = new Main\Error(
+				Loc::getMessage('TASKS_IMPORT_ERRORS_WRONG_FILE_HASH')
+			);
+		}
 		if (!CheckDirPath($tmpFilePath))
-			$this->errorCollection[] = new Error(Loc::getMessage('TASKS_IMPORT_ERRORS_WRONG_FILE_PATH'));
+		{
+			$this->errorCollection[] = new Main\Error(
+				Loc::getMessage('TASKS_IMPORT_ERRORS_WRONG_FILE_PATH')
+			);
+		}
 
 		return count($this->errorCollection) > 0;
 	}
@@ -192,21 +214,25 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 	 *
 	 * @param $importParameters - Input import parameters
 	 */
-	private function initParameters($importParameters)
+	private function initParameters($importParameters): void
 	{
-		$importParameters['FILE_ENCODING'] = ($importParameters['FILE_ENCODING'] == 'auto') ? $importParameters['FOUND_FILE_ENCODING'] : $importParameters['FILE_ENCODING'];
-		$importParameters['MAX_EXECUTION_TIME'] = intval($importParameters['MAX_EXECUTION_TIME']);
-		$importParameters['HEADERS_IN_FIRST_ROW'] = ($importParameters['HEADERS_IN_FIRST_ROW'] == "true") ? true : false;
-		$importParameters['IMPORTS_TOTAL_COUNT'] = isset($importParameters['IMPORTS_TOTAL_COUNT']) ? $importParameters['IMPORTS_TOTAL_COUNT'] : 0;
-		$importParameters['CURRENT_LINE'] = isset($importParameters['CURRENT_LINE']) ? $importParameters['CURRENT_LINE'] : 0;
+		$fileEncoding = $importParameters['FILE_ENCODING'];
+		$fileEncoding = ($fileEncoding === 'auto' ? $importParameters['FOUND_FILE_ENCODING'] : $fileEncoding);
+
+		$importParameters['FILE_ENCODING'] = $fileEncoding;
+		$importParameters['MAX_EXECUTION_TIME'] = (int)$importParameters['MAX_EXECUTION_TIME'];
+		$importParameters['HEADERS_IN_FIRST_ROW'] = $importParameters['HEADERS_IN_FIRST_ROW'] === "true";
+		$importParameters['IMPORTS_TOTAL_COUNT'] = ($importParameters['IMPORTS_TOTAL_COUNT'] ?? 0);
+		$importParameters['CURRENT_LINE'] = ($importParameters['CURRENT_LINE'] ?? 0);
 		$importParameters['SUCCESSFUL_IMPORTS'] = 0;
 		$importParameters['ERROR_IMPORTS'] = 0;
-		$importParameters['ERROR_IMPORTS_MESSAGES'] = array();
+		$importParameters['ERROR_IMPORTS_MESSAGES'] = [];
 
-		$this->usersById = isset($importParameters['USERS_BY_ID']) ? $importParameters['USERS_BY_ID'] : array();
-		$this->usersByName = isset($importParameters['USERS_BY_NAME']) ? $importParameters['USERS_BY_NAME'] : array();
-		$this->projectsByName = isset($importParameters['PROJECTS_BY_NAME']) ? $importParameters['PROJECTS_BY_NAME'] : array();
+		$this->usersById = ($importParameters['USERS_BY_ID'] ?? []);
+		$this->usersByName = ($importParameters['USERS_BY_NAME'] ?? []);
+		$this->projectsByName = ($importParameters['PROJECTS_BY_NAME'] ?? []);
 		$this->importParameters = $importParameters;
+
 		self::$nameFormats = $this->getNameFormats();
 	}
 
@@ -216,12 +242,13 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 	 * @param CCSVData $csvFile - CSV file
 	 * @return int - The amount of lines
 	 */
-	private function getLinesCount(CCSVData $csvFile)
+	private function getLinesCount(CCSVData $csvFile): int
 	{
 		$linesCount = 0;
-
 		while ($taskData = $csvFile->Fetch())
+		{
 			$linesCount++;
+		}
 
 		return $linesCount;
 	}
@@ -232,7 +259,7 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 	 * @param CCSVData $csvFile - CSV file
 	 * @return bool
 	 */
-	private function parseCsvFile(CCSVData $csvFile)
+	private function parseCsvFile(CCSVData $csvFile): bool
 	{
 		$allLinesLoaded = true;
 		while ($taskData = $csvFile->Fetch())
@@ -240,15 +267,23 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 			$this->importParameters['CURRENT_LINE']++;
 
 			$taskData = $this->encodeDataToSiteCharset($taskData, $this->importParameters['FILE_ENCODING']);
-			$taskProperties = $this->getTaskPropertiesFromTaskData($taskData, $this->importParameters['SELECTED_FIELDS'], $this->importParameters['SKIPPED_COLUMNS']);
-			$taskProperties = $this->checkTaskPropertiesBeforeCreatingTask($taskProperties, $this->importParameters['DEFAULT_ORIGINATOR'], $this->importParameters['DEFAULT_RESPONSIBLE']);
+			$taskProperties = $this->getTaskPropertiesFromTaskData(
+				$taskData,
+				$this->importParameters['SELECTED_FIELDS'],
+				$this->importParameters['SKIPPED_COLUMNS']
+			);
+			$taskProperties = $this->checkTaskPropertiesBeforeCreatingTask(
+				$taskProperties,
+				$this->importParameters['DEFAULT_ORIGINATOR'],
+				$this->importParameters['DEFAULT_RESPONSIBLE']
+			);
 
 			try
 			{
 				$userId = $this->getCurrentUser()->getId();
 				$newTask = Task::add($userId, $taskProperties, ['PUBLIC_MODE' => true, 'RETURN_ENTITY' => false]);
 
-				/** @var \Bitrix\Tasks\Util\Error\Collection $errors */
+				/** @var Collection $errors */
 				$errors = $newTask['ERRORS'];
 				if ($errors->checkNoFatals())
 				{
@@ -256,18 +291,17 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 				}
 				else
 				{
-					self::addImportError(implode('; ', $errors->getMessages()));
+					$this->addImportError(implode('; ', $errors->getMessages()));
 				}
 			}
-			/** @noinspection PhpDeprecationInspection */
-			catch (TasksException $e)
+			catch (\TasksException $e)
 			{
-				$message = unserialize($e->getMessage());
-				self::addImportError($message[0]['text']);
+				$message = unserialize($e->getMessage(), ['allowed_classes' => false]);
+				$this->addImportError($message[0]['text']);
 			}
 			catch (Exception $e)
 			{
-				self::addImportError($e->getMessage());
+				$this->addImportError($e->getMessage());
 			}
 
 			$maxExecutionTime = $this->importParameters['MAX_EXECUTION_TIME'];
@@ -293,12 +327,11 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 	 *
 	 * @param $data - Data to encode
 	 * @param $dataEncoding - Source encoding
-	 * @return array|bool|SplFixedArray|string - Encoded data
+	 * @return mixed - Encoded data
 	 */
 	private function encodeDataToSiteCharset($data, $dataEncoding)
 	{
-		$encodedData = Encoding::convertEncoding($data, $dataEncoding, SITE_CHARSET);
-		return $encodedData;
+		return Encoding::convertEncoding($data, $dataEncoding, SITE_CHARSET);
 	}
 
 	/**
@@ -308,27 +341,23 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 	 * @param $data - Field's data
 	 * @return array - Result property
 	 */
-	private function getResultPropertyData($key, $data)
+	private function getResultPropertyData($key, $data): array
 	{
 		$currentKeyMap = self::$keysMap[$key];
 
-		$result = array(
+		$result = [
 			'KEY' => $currentKeyMap['RESULT_KEY'],
-			'DATA' => null
-		);
+			'DATA' => null,
+		];
 
 		switch ($currentKeyMap['CHECK_TYPE'])
 		{
-			case 'EQUAL':
-				$result['DATA'] = $data;
-				break;
-
 			case 'INT':
-				$result['DATA'] = intval($data);
+				$result['DATA'] = (int)$data;
 				break;
 
 			case 'BOOL':
-				$result['DATA'] = ($data == '1'? $currentKeyMap['TRUE_RESULT'] : $currentKeyMap['FALSE_RESULT']);
+				$result['DATA'] = ($data === '1' ? $currentKeyMap['TRUE_RESULT'] : $currentKeyMap['FALSE_RESULT']);
 				break;
 
 			case 'FUNCTION':
@@ -336,6 +365,7 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 				$result['DATA'] = $this->$functionName($data);
 				break;
 
+			case 'EQUAL':
 			default:
 				$result['DATA'] = $data;
 				break;
@@ -351,11 +381,15 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 	 * @param $skippedColumns - Indexes of skipped columns
 	 * @return array - Array without empty values
 	 */
-	private function removeSkippedColumns($taskData, $skippedColumns)
+	private function removeSkippedColumns($taskData, $skippedColumns): array
 	{
 		if (isset($skippedColumns))
-			foreach ($skippedColumns as $key => $value)
-				unset($taskData[$key]);
+		{
+			foreach (array_keys($skippedColumns) as $column)
+			{
+				unset($taskData[$column]);
+			}
+		}
 
 		return array_values($taskData);
 	}
@@ -368,9 +402,9 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 	 * @param $skippedColumns - Indexes of skipped columns
 	 * @return array - Task's properties
 	 */
-	private function getTaskPropertiesFromTaskData($taskData, $fields, $skippedColumns)
+	private function getTaskPropertiesFromTaskData($taskData, $fields, $skippedColumns): array
 	{
-		$taskProperties = array();
+		$taskProperties = [];
 
 		$taskData = $this->removeSkippedColumns($taskData, $skippedColumns);
 		foreach ($taskData as $key => $data)
@@ -380,11 +414,11 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 				$currentKey = mb_strtoupper($fields[$key]);
 				$data = trim(htmlspecialcharsback($data));
 
-				if ($data == '')
-					continue;
-
-				$resultProperty = $this->getResultPropertyData($currentKey, $data);
-				$taskProperties[$resultProperty['KEY']] = $resultProperty['DATA'];
+				if ($data !== '')
+				{
+					$resultProperty = $this->getResultPropertyData($currentKey, $data);
+					$taskProperties[$resultProperty['KEY']] = $resultProperty['DATA'];
+				}
 			}
 		}
 
@@ -397,19 +431,22 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 	 * @param $taskProperties - Task's properties
 	 * @param $defaultOriginatorUserId - Id of default originator
 	 * @param $defaultResponsibleUserId - Id of default responsible
-	 * @return mixed - Checked task's properties
+	 * @return array - Checked task's properties
 	 */
-	private function checkTaskPropertiesBeforeCreatingTask($taskProperties, $defaultOriginatorUserId, $defaultResponsibleUserId)
+	private function checkTaskPropertiesBeforeCreatingTask(
+		$taskProperties,
+		$defaultOriginatorUserId,
+		$defaultResponsibleUserId
+	): array
 	{
-		$booleanValuesToCheck = array(
+		$booleanValuesToCheck = [
 			'ALLOW_CHANGE_DEADLINE',
 			'MATCH_WORK_TIME',
 			'TASK_CONTROL',
 			'PARAM_1',
 			'PARAM_2',
-			'ALLOW_TIME_TRACKING'
-		);
-
+			'ALLOW_TIME_TRACKING',
+		];
 		foreach ($booleanValuesToCheck as $key)
 		{
 			if ($taskProperties[$key] !== 'Y')
@@ -422,8 +459,7 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 		{
 			$taskProperties['CREATED_BY'] = $defaultOriginatorUserId;
 		}
-
-		if ($taskProperties['RESPONSIBLE_ID'] == 0)
+		if ((int)$taskProperties['RESPONSIBLE_ID'] === 0)
 		{
 			$taskProperties['RESPONSIBLE_ID'] = $defaultResponsibleUserId;
 		}
@@ -432,25 +468,22 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 		{
 			$taskProperties['PRIORITY'] = 1;
 		}
-
 		if ($taskProperties['TIME_ESTIMATE'] < 0)
 		{
 			$taskProperties['TIME_ESTIMATE'] = 0;
 		}
 
-		$taskProperties['SE_PARAMETER'] = array(
-			0 => array(
+		$taskProperties['SE_PARAMETER'] = [
+			0 => [
 				'CODE' => 1,
-				'VALUE' => $taskProperties['PARAM_1']
-			),
-			1 => array(
+				'VALUE' => $taskProperties['PARAM_1'],
+			],
+			1 => [
 				'CODE' => 2,
-				'VALUE' => $taskProperties['PARAM_2']
-			)
-		);
-
-		unset($taskProperties['PARAM_1']);
-		unset($taskProperties['PARAM_2']);
+				'VALUE' => $taskProperties['PARAM_2'],
+			],
+		];
+		unset($taskProperties['PARAM_1'], $taskProperties['PARAM_2']);
 
 		return $taskProperties;
 	}
@@ -460,50 +493,100 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 	 *
 	 * @param $message
 	 */
-	private function addImportError($message)
+	private function addImportError($message): void
 	{
 		$this->importParameters['ERROR_IMPORTS']++;
-		$this->importParameters['ERROR_IMPORTS_MESSAGES'][] = $this->importParameters['CURRENT_LINE'] . ": " . $message;
+		$this->importParameters['ERROR_IMPORTS_MESSAGES'][] = $this->importParameters['CURRENT_LINE'].": ".$message;
 	}
 
 	/**
 	 * Returns checklist from string
 	 *
-	 * @param $data - String data
+	 * @param string $data - String data
 	 * @return array - Result checklist
 	 */
-	private function getCheckListFromStringData($data)
+	private function getCheckListItemsFromStringData(string $data): array
 	{
-		$checklist = array();
-		$checklistTitles = $this->getListFromStringWithDelimiter($data);
-
-		foreach ($checklistTitles as $title)
+		if (!$data)
 		{
-			$checklist[] = array(
-				'TITLE' => $title
-			);
+			return [];
 		}
 
-		return $checklist;
+		if (!mb_strstr($data, '[**]'))
+		{
+			if (!mb_strstr($data, '[*]'))
+			{
+				return [];
+			}
+			$data = '[**]'.Loc::getMessage('TASKS_IMPORT_DEFAULT_CHECKLIST_NAME').$data;
+		}
+
+		$checkListItems = [];
+		$sortIndex = -1;
+		$roots = explode('[**]', $data);
+		foreach ($roots as $nodeId => $checkListData)
+		{
+			if (empty($checkListData))
+			{
+				continue;
+			}
+
+			$isName = true;
+			$itemSortIndex = -1;
+			$checkListItemsData = explode('[*]', $checkListData);
+			foreach ($checkListItemsData as $index => $itemData)
+			{
+				if (empty(trim($itemData)))
+				{
+					if ($isName)
+					{
+						continue 2;
+					}
+					continue;
+				}
+				if ($isName)
+				{
+					$checkListItems[$nodeId] = [
+						'NODE_ID' => $nodeId,
+						'PARENT_NODE_ID' => '',
+						'SORT_INDEX' => ++$sortIndex,
+						'TITLE' => trim($itemData),
+					];
+					$isName = false;
+					continue;
+				}
+
+				$checkListItems[$nodeId.$index] = [
+					'NODE_ID' => $nodeId.$index,
+					'PARENT_NODE_ID' => $nodeId,
+					'SORT_INDEX' => ++$itemSortIndex,
+					'TITLE' => trim($itemData),
+				];
+			}
+		}
+
+		return $checkListItems;
 	}
 
 	/**
 	 * Returns user's ids from string
 	 *
-	 * @param $data - String data
-	 * @throws \Bitrix\Main\NotSupportedException
+	 * @param string $data - String data
 	 * @return array - Result user's ids
+	 * @throws Main\NotSupportedException
 	 */
-	private function getUserIdsFromStringData($data)
+	private function getUserIdsFromStringData(string $data): array
 	{
-		$userIds = array();
+		$userIds = [];
 
 		$names = explode(',', $data);
 		foreach ($names as $name)
 		{
 			$userId = $this->getUserIdByName($name);
-			if ($userId !== 0 && !in_array($userId, $userIds))
+			if ($userId !== 0 && !in_array($userId, $userIds, true))
+			{
 				$userIds[] = $userId;
+			}
 		}
 
 		return $userIds;
@@ -515,15 +598,16 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 	 * @param $string - String
 	 * @return array - Result array
 	 */
-	private function getListFromStringWithDelimiter($string)
+	private function getListFromStringWithDelimiter($string): array
 	{
-		$string = ltrim($string);
-		$result = explode('[*]', $string);
+		$result = explode('[*]', trim($string));
 
 		foreach ($result as $index => $item)
 		{
-			if ($item == '')
+			if ($item === '')
+			{
 				unset($result[$index]);
+			}
 		}
 
 		return $result;
@@ -534,13 +618,15 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 	 *
 	 * @return array - Name's formats
 	 */
-	private function getNameFormats()
+	private function getNameFormats(): array
 	{
-		$nameFormatsDescriptions = PersonNameFormatter::getAllDescriptions();
+		$nameFormats = [];
 
-		$nameFormats = array();
+		$nameFormatsDescriptions = PersonNameFormatter::getAllDescriptions();
 		foreach ($nameFormatsDescriptions as $formatId => $description)
+		{
 			$nameFormats[$formatId] = PersonNameFormatter::getFormatByID($formatId);
+		}
 
 		return $nameFormats;
 	}
@@ -549,24 +635,28 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 	 * Returns project's id by project's name
 	 *
 	 * @param $projectName - Project's name
-	 * @throws Exception
 	 * @return int - Project's id
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
 	 */
-	private function getProjectIdByName($projectName)
+	private function getProjectIdByName($projectName): int
 	{
 		if (isset($this->projectsByName[$projectName]))
+		{
 			return $this->projectsByName[$projectName]['ID'];
+		}
 
 		$projectId = 0;
 
-		$dbGroups = WorkgroupTable::getList(array(
-			'select' => array('ID'),
-			'filter' => array('NAME' => $projectName)
-		));
-		$group = is_object($dbGroups) ? $dbGroups->fetch() : null;
+		$dbGroups = WorkgroupTable::getList([
+			'select' => ['ID'],
+			'filter' => ['NAME' => $projectName],
+		]);
+		$group = (is_object($dbGroups) ? $dbGroups->fetch() : null);
 		if (is_array($group))
 		{
-			$projectId = intval($group['ID']);
+			$projectId = (int)$group['ID'];
 			$this->projectsByName[$projectName]['ID'] = $projectId;
 		}
 
@@ -579,20 +669,28 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 	 * @param $userId - User's id
 	 * @return int - User's id
 	 */
-	private function checkUserExistence($userId)
+	private function checkUserExistence($userId): int
 	{
-		$userId = ($userId < 0) ? 0 : $userId;
+		$userId = ($userId < 0 ? 0 : $userId);
 		if ($userId > 0)
 		{
 			if (isset($this->usersById[$userId]))
+			{
 				return $userId;
+			}
 
-			$dbUsers = CUser::GetList($by = 'ID', $order = 'ASC', array('ID'=> $userId), array('FIELDS' => array('ID')));
-			$user = is_object($dbUsers) ? $dbUsers->Fetch() : null;
+			$by = 'ID';
+			$order = 'ASC';
+			$dbUsers = CUser::GetList($by, $order, ['ID'=> $userId], ['FIELDS' => ['ID']]);
+			$user = (is_object($dbUsers) ? $dbUsers->Fetch() : null);
 			if (is_array($user))
+			{
 				$this->usersById[$userId] = $user;
+			}
 			else
+			{
 				$userId = 0;
+			}
 		}
 
 		return $userId;
@@ -603,31 +701,33 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 	 *
 	 * @param $userName - User's name
 	 * @param $formatId - User name's format
-	 * @throws Bitrix\Main\NotSupportedException
 	 * @return int - User's id
+	 * @throws Main\NotSupportedException
 	 */
-	private function getUserIdByNameAndFormat($userName, $formatId)
+	private function getUserIdByNameAndFormat($userName, $formatId): int
 	{
 		$userId = 0;
 
-		$nameParts = array();
+		$nameParts = [];
 		if (PersonNameFormatter::tryParseName($userName, $formatId, $nameParts))
 		{
-			$userFilter = array();
-			if (isset($nameParts['NAME']))
-				$userFilter['NAME'] = $nameParts['NAME'];
-			if (isset($nameParts['SECOND_NAME']))
-				$userFilter['SECOND_NAME'] = $nameParts['SECOND_NAME'];
-			if (isset($nameParts['LAST_NAME']))
-				$userFilter['LAST_NAME'] = $nameParts['LAST_NAME'];
-			if (isset($nameParts['TITLE']))
-				$userFilter['TITLE'] = $nameParts['TITLE'];
+			$userFilter = [];
+			$parts = ['NAME', 'SECOND_NAME', 'LAST_NAME', 'TITLE'];
+			foreach ($parts as $part)
+			{
+				if (isset($nameParts[$part]))
+				{
+					$userFilter[$part] = $nameParts[$part];
+				}
+			}
 
-			$dbUsers = CUser::GetList($by = 'ID', $order = 'ASC', $userFilter, array('FIELDS' => array('ID')));
-			$user = is_object($dbUsers) ? $dbUsers->Fetch() : null;
+			$by = 'ID';
+			$order = 'ASC';
+			$dbUsers = CUser::GetList($by, $order, $userFilter, ['FIELDS' => ['ID']]);
+			$user = (is_object($dbUsers) ? $dbUsers->Fetch() : null);
 			if (is_array($user))
 			{
-				$userId = $user['ID'] = intval($user['ID']);
+				$userId = $user['ID'] = (int)$user['ID'];
 				$this->usersByName[$userName] = $user;
 			}
 		}
@@ -639,45 +739,40 @@ class TasksImportAjaxController extends \Bitrix\Main\Engine\Controller
 	 * Returns user's id by user's name
 	 *
 	 * @param $userName - User's name
-	 * @throws Bitrix\Main\NotSupportedException
 	 * @return int - User's id
+	 * @throws Main\NotSupportedException
 	 */
-	private function getUserIdByName($userName)
+	private function getUserIdByName($userName): int
 	{
-		$userNameFormat = $this->importParameters['NAME_FORMAT'];
-
 		if (is_numeric($userName))
 		{
-			$userId = $this->checkUserExistence(is_int($userName) ? $userName : intval($userName));
+			return $this->checkUserExistence((int)$userName);
 		}
-		else
+
+		if (preg_match('/^.+\[\s*(\d+)\s*]$/', $userName, $m) === 1)
 		{
-			if (preg_match('/^.+\[\s*(\d+)\s*]$/', $userName, $m) === 1)
+			return $this->checkUserExistence((int)$m[1]);
+		}
+
+		if (isset($this->usersByName[$userName]))
+		{
+			return (int)$this->usersByName[$userName]['ID'];
+		}
+
+		$userId = $this->getUserIdByNameAndFormat($userName, $this->importParameters['NAME_FORMAT']);
+
+		foreach (array_keys(self::$nameFormats) as $formatId)
+		{
+			if ($userId > 0)
 			{
-				$userId = $this->checkUserExistence(intval($m[1]));
+				break;
 			}
-			else
+			if ($formatId === 1 || $formatId === $this->importParameters['NAME_FORMAT'])
 			{
-				if (isset($this->usersByName[$userName]))
-				{
-					$userId = intval($this->usersByName[$userName]['ID']);
-				}
-				else
-				{
-					$userId = $this->getUserIdByNameAndFormat($userName, $userNameFormat);
-
-					foreach (self::$nameFormats as $formatId => $formatString)
-					{
-						if ($userId > 0)
-							break;
-
-						if (($formatId == 1) || ($formatId == $userNameFormat))
-							continue;
-
-						$userId = $this->getUserIdByNameAndFormat($userName, $formatId);
-					}
-				}
+				continue;
 			}
+
+			$userId = $this->getUserIdByNameAndFormat($userName, $formatId);
 		}
 
 		return $userId;

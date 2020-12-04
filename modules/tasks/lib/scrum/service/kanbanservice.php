@@ -18,6 +18,9 @@ class KanbanService implements Errorable
 
 	private $errorCollection;
 
+	private $unFinishedTaskIdsCache = [];
+	private $finishedTaskIdsCache = [];
+
 	public function __construct()
 	{
 		$this->errorCollection = new ErrorCollection;
@@ -141,22 +144,48 @@ class KanbanService implements Errorable
 
 	public function getFinishedTaskIdsInSprint(int $sprintId): array
 	{
-		return $this->getTaskIdsInSprint([
+		if (!isset($this->finishedTaskIdsCache[$sprintId]))
+		{
+			$this->finishedTaskIdsCache[$sprintId] = $this->getTaskIds([
 				'=STAGE.SYSTEM_TYPE' => StagesTable::SYS_TYPE_FINISH,
 				'=STAGE.ENTITY_ID' => $sprintId,
 				'=STAGE.ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
-			]
-		);
+			]);
+		}
+		return $this->finishedTaskIdsCache[$sprintId];
 	}
 
 	public function getUnfinishedTaskIdsInSprint(int $sprintId): array
 	{
-		return $this->getTaskIdsInSprint([
+		if (!isset($this->unFinishedTaskIdsCache[$sprintId]))
+		{
+			$this->unFinishedTaskIdsCache[$sprintId] = $this->getTaskIds([
 				'!=STAGE.SYSTEM_TYPE' => StagesTable::SYS_TYPE_FINISH,
 				'=STAGE.ENTITY_ID' => $sprintId,
 				'=STAGE.ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
-			]
-		);
+			]);
+		}
+		return $this->unFinishedTaskIdsCache[$sprintId];
+	}
+
+	public function extractFinishedTaskIds(array $taskIds): array
+	{
+		$finishedTaskIds = [];
+
+		foreach ($taskIds as $taskId)
+		{
+			if ($this->getTaskIds([
+					'=STAGE.SYSTEM_TYPE' => StagesTable::SYS_TYPE_FINISH,
+					'=TASK_ID' => $taskId,
+					'=STAGE.ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
+				]
+			))
+			{
+				$finishedTaskIds[] = $taskId;
+			}
+		}
+
+		return $finishedTaskIds;
 	}
 
 	public function getKanbanSortValue(int $groupId): String
@@ -181,7 +210,7 @@ class KanbanService implements Errorable
 		return $this->errorCollection->getErrorByCode($code);
 	}
 
-	private function getTaskIdsInSprint(array $filter): array
+	private function getTaskIds(array $filter): array
 	{
 		$taskIds = [];
 

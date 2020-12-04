@@ -8,7 +8,10 @@
 	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 	font-size: 15px;
 	color: #333;
-	transition: 180ms linear all;
+	transition:
+		180ms linear color,
+		180ms linear border-color,
+		180ms linear background-color;
 	position: relative;
 }
 
@@ -17,12 +20,32 @@
 	border-color: rgba(82, 92, 105, 0.44);
 }
 
+.tasks-scrum-item.tasks-scrum-item-group-mode {
+	border: 1px solid #d1eef9;
+	background: #e2f8ff;
+}
+
+.tasks-scrum-item.tasks-scrum-item-group-mode:hover {
+	border: 1px solid #8cb6c6;
+}
+
 .tasks-scrum-item.tasks-scrum-item-decomposition-mode {
 	border: 1px solid #7bd500;
 }
 
 .tasks-scrum-item.tasks-scrum-item-decomposition-mode:hover {
 	border: 1px solid #7bd500;
+}
+
+.tasks-scrum-item-group-mode-container {
+	display: none;
+	position: relative;
+	right: 41px;
+	width: 0;
+}
+
+.tasks-scrum-item-group-mode-container input {
+	cursor: pointer;
 }
 
 .tasks-scrum-item-inner {
@@ -60,7 +83,7 @@
 .tasks-scrum-item-name-field {
 	width: auto !important;
 	min-width: 0;
-	margin-bottom: 8px;
+	margin-bottom: 3px;
 }
 
 .tasks-scrum-item-name-field div.ui-ctl-element[contenteditable] {
@@ -69,12 +92,10 @@
 }
 
 .tasks-scrum-item-params {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
 	white-space: nowrap;
 	margin-left: auto;
-	padding-right: 14px;
+	padding-right: 6px;
 }
 
 /*.tasks-scrum-item-story-points-field .ui-ctl-element {padding-top: 10px !important;}*/
@@ -129,6 +150,7 @@
 .tasks-scrum-item-tags-container div {
 	margin-top: 2px;
 	margin-bottom: 2px;
+	padding-bottom: 2px;
 }
 
 .tasks-scrum-item-epic-label {

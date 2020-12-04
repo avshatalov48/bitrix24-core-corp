@@ -1,5 +1,5 @@
 .tasks-interface-toolbar-button-container {
-	max-width: 140px;
+	min-width: 320px;
 	margin-right: 19px;
 }
 

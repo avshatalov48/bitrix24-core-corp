@@ -462,10 +462,10 @@ class CTasksDepartmentsOverviewComponent extends CBitrixComponent
 
 			$counter = Counter::getInstance($userId);
 
-			$responsiblesNoticedTasks = $counter->get(Counter\Name::MY);
-			$accomplicesNoticedTasks = $counter->get(Counter\Name::ACCOMPLICES);
-			$originatorsNoticedTasks = $counter->get(Counter\Name::ORIGINATOR);
-			$auditorsNoticedTasks = $counter->get(Counter\Name::AUDITOR);
+			$responsiblesNoticedTasks = $counter->get(Counter\CounterDictionary::COUNTER_MY);
+			$accomplicesNoticedTasks = $counter->get(Counter\CounterDictionary::COUNTER_ACCOMPLICES);
+			$originatorsNoticedTasks = $counter->get(Counter\CounterDictionary::COUNTER_ORIGINATOR);
+			$auditorsNoticedTasks = $counter->get(Counter\CounterDictionary::COUNTER_AUDITOR);
 			$effective = CUserCounter::GetValue(
 				$userId,
 				'tasks_effective'

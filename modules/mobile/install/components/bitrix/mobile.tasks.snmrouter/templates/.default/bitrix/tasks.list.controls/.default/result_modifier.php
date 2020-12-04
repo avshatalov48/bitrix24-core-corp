@@ -46,24 +46,6 @@ if (($arParams['SHOW_SECTIONS_BAR'] === 'Y') || ($arParams['SHOW_FILTER_BAR'] ==
 						))
 				);
 
-/*
- * VIEW_ROLE_RESPONSIBLE ->
- *  VIEW_TASK_CATEGORY_NEW
- *  VIEW_TASK_CATEGORY_WO_DEADLINE
- *  VIEW_TASK_CATEGORY_EXPIRED
- *  VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES
- * VIEW_ROLE_ACCOMPLICE
- *  VIEW_TASK_CATEGORY_NEW
- *  VIEW_TASK_CATEGORY_EXPIRED
- *  VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES
- * VIEW_ROLE_AUDITOR
- *  VIEW_TASK_CATEGORY_EXPIRED
- * VIEW_ROLE_ORIGINATOR
- *  VIEW_TASK_CATEGORY_EXPIRED
- *  VIEW_TASK_CATEGORY_WO_DEADLINE
- *  VIEW_TASK_CATEGORY_WAIT_CTRL
-
-*/
 			if (is_object($arResult["LIST_CTRL"]) &&
 				/** @var \CTaskListCtrl $oListCtrl **/
 				($oListCtrl = $arResult["LIST_CTRL"]))
@@ -73,53 +55,53 @@ if (($arParams['SHOW_SECTIONS_BAR'] === 'Y') || ($arParams['SHOW_FILTER_BAR'] ==
 					case 'VIEW_ROLE_RESPONSIBLE':
 						$data['ITEMS'][$roleCode]["COUNTER"]['VIEW_TASK_CATEGORY_WO_DEADLINE'] = array(
 							"ID" => CTaskListState::VIEW_TASK_CATEGORY_WO_DEADLINE,
-							"VALUE" => $counter->get(Counter\Name::MY_WITHOUT_DEADLINE)
+							"VALUE" => 0
 						);
 						$data['ITEMS'][$roleCode]["COUNTER"]['VIEW_TASK_CATEGORY_NEW'] = array(
 							"ID" => CTaskListState::VIEW_TASK_CATEGORY_NEW,
-							"VALUE" => $counter->get(Counter\Name::MY_NOT_VIEWED)
+							"VALUE" => 0
 						);
 						$data['ITEMS'][$roleCode]["COUNTER"]['VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES'] = array(
 							"ID" => CTaskListState::VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES,
-							"VALUE" => $counter->get(Counter\Name::MY_EXPIRED_SOON)
+							"VALUE" => 0
 						);
 						$data['ITEMS'][$roleCode]["COUNTER"]['VIEW_TASK_CATEGORY_EXPIRED'] = array(
 							"ID" => CTaskListState::VIEW_TASK_CATEGORY_EXPIRED,
-							"VALUE" => $counter->get(Counter\Name::MY_EXPIRED)
+							"VALUE" => $counter->get(Counter\CounterDictionary::COUNTER_MY_EXPIRED)
 						);
 					break;
 					case 'VIEW_ROLE_ACCOMPLICE':
 						$data['ITEMS'][$roleCode]["COUNTER"]['VIEW_TASK_CATEGORY_NEW'] = array(
 							"ID" => CTaskListState::VIEW_TASK_CATEGORY_NEW,
-							"VALUE" => $counter->get(Counter\Name::ACCOMPLICES_NOT_VIEWED)
+							"VALUE" => 0
 						);
 						$data['ITEMS'][$roleCode]["COUNTER"]['VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES'] = array(
 							"ID" => CTaskListState::VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES,
-							"VALUE" => $counter->get(Counter\Name::ACCOMPLICES_EXPIRED_SOON)
+							"VALUE" => 0
 						);
 						$data['ITEMS'][$roleCode]["COUNTER"]['VIEW_TASK_CATEGORY_EXPIRED'] = array(
 							"ID" => CTaskListState::VIEW_TASK_CATEGORY_EXPIRED,
-							"VALUE" => $counter->get(Counter\Name::ACCOMPLICES_EXPIRED)
+							"VALUE" => $counter->get(Counter\CounterDictionary::COUNTER_ACCOMPLICES_EXPIRED)
 						);
 						break;
 					case 'VIEW_ROLE_AUDITOR':
 						$data['ITEMS'][$roleCode]["COUNTER"]['VIEW_TASK_CATEGORY_EXPIRED'] = array(
 							"ID" => CTaskListState::VIEW_TASK_CATEGORY_EXPIRED,
-							"VALUE" => $counter->get(Counter\Name::AUDITOR_EXPIRED)
+							"VALUE" => $counter->get(Counter\CounterDictionary::COUNTER_AUDITOR_EXPIRED)
 						);
 					break;
 					case 'VIEW_ROLE_ORIGINATOR':
 						$data['ITEMS'][$roleCode]["COUNTER"]['VIEW_TASK_CATEGORY_WO_DEADLINE'] = array(
 							"ID" => CTaskListState::VIEW_TASK_CATEGORY_WO_DEADLINE,
-							"VALUE" => $counter->get(Counter\Name::ORIGINATOR_WITHOUT_DEADLINE)
+							"VALUE" => 0
 						);
 						$data['ITEMS'][$roleCode]["COUNTER"]['VIEW_TASK_CATEGORY_WAIT_CTRL'] = array(
 							"ID" => CTaskListState::VIEW_TASK_CATEGORY_WAIT_CTRL,
-							"VALUE" => $counter->get(Counter\Name::ORIGINATOR_WAIT_CONTROL)
+							"VALUE" => 0
 						);
 						$data['ITEMS'][$roleCode]["COUNTER"]['VIEW_TASK_CATEGORY_EXPIRED'] = array(
 							"ID" => CTaskListState::VIEW_TASK_CATEGORY_EXPIRED,
-							"VALUE" => $counter->get(Counter\Name::ORIGINATOR_EXPIRED)
+							"VALUE" => $counter->get(Counter\CounterDictionary::COUNTER_ORIGINATOR_EXPIRED)
 						);
 					break;
 				}

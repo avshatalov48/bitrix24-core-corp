@@ -113,7 +113,6 @@ if ($isBitrix24Template)
 		<div class="task-report-container">
 			<div class="task-report-container-title">
 				<span class="task-report-container-title-text"><?=GetMessage('TASKS_CIRCLE_EFFECTIVE_TITLE')?></span>
-				<span class="task-report-container-title-add"><?=GetMessage('TASKS_MY_EFFECTIVE_FROM', array('#DATE#'=>$arResult['EFFECTIVE_DATE_START']))?></span>
 			</div>
 			<div class="task-report-container-content task-report-container-content-graph js-id-effective-circle" id="effective-circle"></div>
 			<div class="task-report-container-help">

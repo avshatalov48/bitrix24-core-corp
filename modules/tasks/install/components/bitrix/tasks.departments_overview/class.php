@@ -202,25 +202,39 @@ class TasksDepartmentsOverviewComponent extends TasksBaseComponent
 	 */
 	private function getUserTasksToNotice(array $userIds): array
 	{
-		$tasksToNotice = [];
-
 		$connection = Application::getConnection();
 		$preparedUserIds = implode(',', $userIds);
 
 		$res = $connection->query("
 			SELECT 
 				USER_ID,
-				SUM(MY_EXPIRED) AS RESPONSIBLE,
-				SUM(ORIGINATOR_EXPIRED) AS ORIGINATOR,
-				SUM(ACCOMPLICES_EXPIRED) AS ACCOMPLICE,
-				SUM(AUDITOR_EXPIRED) AS AUDITOR
-			FROM b_tasks_counters
+			    `TYPE`,
+				SUM(`VALUE`) as CNT
+			FROM ". Counter\CounterTable::getTableName() ."
 			WHERE USER_ID IN ({$preparedUserIds})
-			GROUP BY USER_ID
+			GROUP BY USER_ID, `TYPE`
 		")->fetchAll();
+
+		$tasksToNotice = [];
 		foreach ($res as $row)
 		{
-			$tasksToNotice[$row['USER_ID']] = $row;
+			switch ($row['TYPE'])
+			{
+				case Counter\CounterDictionary::COUNTER_MY_EXPIRED:
+					$tasksToNotice[$row['USER_ID']]['RESPONSIBLE'] = $row['CNT'];
+					break;
+				case Counter\CounterDictionary::COUNTER_ORIGINATOR_EXPIRED:
+					$tasksToNotice[$row['USER_ID']]['ORIGINATOR'] = $row['CNT'];
+					break;
+				case Counter\CounterDictionary::COUNTER_ACCOMPLICES_EXPIRED:
+					$tasksToNotice[$row['USER_ID']]['ACCOMPLICE'] = $row['CNT'];
+					break;
+				case Counter\CounterDictionary::COUNTER_AUDITOR_EXPIRED:
+					$tasksToNotice[$row['USER_ID']]['AUDITOR'] = $row['CNT'];
+					break;
+				default:
+					break;
+			}
 		}
 
 		return $tasksToNotice;

@@ -88,6 +88,8 @@ Class tasks extends CModule
 		RegisterModuleDependences('forum', 'OnCommentTopicAdd', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Topic', 'onBeforeAdd');
 		RegisterModuleDependences('forum', 'OnAfterCommentTopicAdd', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Topic', 'onAfterAdd');
 		RegisterModuleDependences('forum', 'OnBeforeCommentDelete', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onBeforeDelete');
+		RegisterModuleDependences('forum', 'OnCommentDelete', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onAfterDelete');
+		RegisterModuleDependences('forum', 'OnBeforeCommentAdd', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onBeforeAdd');
 		RegisterModuleDependences('forum', 'OnAfterCommentAdd', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onAfterAdd');
 		RegisterModuleDependences('forum', 'OnAfterCommentUpdate', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onAfterUpdate');
 
@@ -187,10 +189,6 @@ Class tasks extends CModule
 				'delay' => 300,
 			],
 			[
-				'class' => \Bitrix\Tasks\Update\CounterRecount::class,
-				'delay' => 300,
-			],
-			[
 				'class' => \Bitrix\Tasks\Update\ExpiredAgentCreator::class,
 				'delay' => 300,
 			],
@@ -285,6 +283,8 @@ Class tasks extends CModule
 		UnRegisterModuleDependences('forum', 'OnCommentTopicAdd', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Topic', 'onBeforeAdd');
 		UnRegisterModuleDependences('forum', 'OnAfterCommentTopicAdd', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Topic', 'onAfterAdd');
 		UnRegisterModuleDependences('forum', 'OnBeforeCommentDelete', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onBeforeDelete');
+		UnRegisterModuleDependences('forum', 'OnCommentDelete', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onAfterDelete');
+		UnRegisterModuleDependences('forum', 'OnBeforeCommentAdd', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onBeforeAdd');
 		UnRegisterModuleDependences('forum', 'OnAfterCommentAdd', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onAfterAdd');
 		UnRegisterModuleDependences('forum', 'OnAfterCommentUpdate', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onAfterUpdate');
 

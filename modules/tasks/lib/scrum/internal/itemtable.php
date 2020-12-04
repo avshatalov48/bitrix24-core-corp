@@ -201,7 +201,7 @@ class ItemTable extends Entity\DataManager
 			$fields['ITEM_TYPE'] = $this->itemType;
 		}
 
-		if ($this->parentId)
+		if ($this->parentId !== null)
 		{
 			$fields['PARENT_ID'] = $this->parentId;
 		}

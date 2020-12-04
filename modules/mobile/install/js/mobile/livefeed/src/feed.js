@@ -34,7 +34,8 @@ class Feed
 			detailPost: 'post-wrap',
 			postItemTopWrap: 'post-item-top-wrap',
 			postItemTop: 'post-item-top',
-			postItemPostBlock: 'post-item-post-block',
+			postItemPostBlock: 'post-item-contentview',
+			postItemDescriptionBlock: 'post-item-description',
 			postItemAttachedFileWrap: 'post-item-attached-disk-file-wrap',
 			postItemInformWrap: 'post-item-inform-wrap',
 			postItemInformWrapTree: 'post-item-inform-wrap-tree',
@@ -755,6 +756,9 @@ class Feed
 			const detailFromNormal = !!(!detailFromPinned && (
 				e.target.classList.contains(this.class.postItemPostBlock)
 				|| e.target.closest(`.${this.class.postItemPostBlock}`)
+				|| e.target.classList.contains(this.class.postItemDescriptionBlock) // tasks
+				|| e.target.closest(`.${this.class.postItemDescriptionBlock}`)
+
 			));
 			const detailToComments = !!(!detailFromPinned && !detailFromNormal && (
 				e.target.classList.contains(this.class.postItemInformComments)

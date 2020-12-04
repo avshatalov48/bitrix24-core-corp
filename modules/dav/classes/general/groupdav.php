@@ -26,7 +26,7 @@ class CDavGroupDav
 	{
 		global $APPLICATION, $USER;
 
-		if (strlen($phpAuthUser) > 0 && strlen($phpAuthPw) > 0)
+		if ($phpAuthUser <> '' && $phpAuthPw <> '')
 		{
 			$arAuthResult = $USER->Login($phpAuthUser, $phpAuthPw, "N");
 			$APPLICATION->arAuthResult = $arAuthResult;
@@ -110,7 +110,7 @@ if (isset($arAllowableMethods["DELETE"])) unset($arAllowableMethods["DELETE"]);
 
 			if ($this->request->GetDepth())
 			{
-				if (strlen($accountPrefixPath) == 1)
+				if (mb_strlen($accountPrefixPath) == 1)
 				{
 					$resource = new CDavResource('/principals/');
 					$resource->AddProperty('displayname', GetMessage("DAV_PRINCIPALS"));
@@ -270,8 +270,8 @@ if (isset($arAllowableMethods["DELETE"])) unset($arAllowableMethods["DELETE"]);
 
 				$class = ($class == 'row1' ? 'row2' : 'row1');
 
-				if (substr($resource->GetPath(), -1) == '/')
-					$name = basename(substr($resource->GetPath(), 0, -1)).'/';
+				if (mb_substr($resource->GetPath(), -1) == '/')
+					$name = basename(mb_substr($resource->GetPath(), 0, -1)).'/';
 				else
 					$name = basename($resource->GetPath());
 
@@ -512,7 +512,7 @@ if (isset($arAllowableMethods["DELETE"])) unset($arAllowableMethods["DELETE"]);
 	private function ParsePath($path)
 	{
 		$path = trim($path, "/");
-		if (strlen($path) <= 0)
+		if ($path == '')
 		{
 			$siteId = $this->request->GetSiteId();
 			$this->response->SetEncoding($siteId);
@@ -585,10 +585,10 @@ if (isset($arAllowableMethods["DELETE"])) unset($arAllowableMethods["DELETE"]);
 		while (count($arParts) > 0)
 		{
 			$part = array_shift($arParts);
-			if (count($arParts) > 0 || (strcasecmp(".ics", substr($part, -4)) && strcasecmp(".vcf", substr($part, -4))))
+			if (count($arParts) > 0 || (strcasecmp(".ics", mb_substr($part, -4)) && strcasecmp(".vcf", mb_substr($part, -4))))
 				$arPath[] = $part;
 			else
-				$id = substr($part, 0, -4);
+				$id = mb_substr($part, 0, -4);
 		}
 
 		return array(

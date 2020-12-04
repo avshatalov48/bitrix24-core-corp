@@ -2,7 +2,7 @@ import {config} from './config';
 import {Vue} from 'ui.vue';
 import {Vuex} from 'ui.vue.vuex';
 import {Manager} from 'salescenter.manager';
-import {Dom, Loc, Tag, ajax as Ajax} from 'main.core';
+import {Dom, Loc, Tag, Text, ajax as Ajax} from 'main.core';
 import {Popup} from 'main.popup';
 import {PopupMenuWindow, PopupWindow, PopupWindowButton} from 'main.popup';
 import 'marketplace';
@@ -172,11 +172,20 @@ Vue.component(config.templateAddPaymentBySmsItem,
 			return this.$root.$app.sendingMethodDesc.text.match(/#LINK#/)
 		},
 
+		getRawSmsMessage()
+		{
+			let text = this.$root.$app.sendingMethodDesc.text;
+			
+			return Text.encode(text);
+		},
+
 		getSmsMessage()
 		{
+			
 			let link = `<span class="${classModule}-container-sms-content-message-link">${this.$root.$app.orderPublicUrl}</span><sapn class="${classModule}-container-sms-content-message-link-ref">xxxxx</sapn>` + ` `;
-
-			return this.$root.$app.sendingMethodDesc.text.replace(/#LINK#/g, link);
+			let text = this.$root.$app.sendingMethodDesc.text;
+			
+			return Text.encode(text).replace(/#LINK#/g, link);
 		},
 
 		updateMessage()
@@ -681,7 +690,7 @@ Vue.component(config.templateAddPaymentBySmsItem,
 								contenteditable="true" 
 								class="${classModule}-container-sms-content-message-text ${classModule}-container-sms-content-message-text-edit"
 								v-on="listeners"
-								v-html="this.$root.$app.sendingMethodDesc.text"
+								v-html="getRawSmsMessage()"
 								ref="smsMessageNode">
 						</div>
 						<div v-else contenteditable="false" class="${classModule}-container-sms-content-message-text" v-html="getSmsMessage()" v-on:mouseenter="showSmsMessagePopupHint($event.target)" v-on:mouseleave="hidePopupHint()">

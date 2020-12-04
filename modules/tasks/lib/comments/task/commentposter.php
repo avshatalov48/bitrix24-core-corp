@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Tasks\Comments\Task;
 
+use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Comments\Internals\Comment;
 use Bitrix\Tasks\Integration\CRM;
@@ -12,12 +13,6 @@ use Bitrix\Tasks\Util\Collection;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util\UserField;
-use CCrmOwnerType;
-use CCrmOwnerTypeAbbr;
-use CTaskItem;
-use CTasks;
-use CTasksTools;
-use TasksException;
 
 Loc::loadMessages(__FILE__);
 
@@ -84,21 +79,21 @@ class CommentPoster
 	 *
 	 * @param int $taskId
 	 * @param int $authorId
-	 * @return CommentPoster
+	 * @return CommentPoster|null
 	 */
-	public static function getInstance(int $taskId, int $authorId): CommentPoster
+	public static function getInstance(int $taskId, int $authorId): ?CommentPoster
 	{
 		if (!$taskId)
 		{
 			return null;
 		}
 
-		if (!isset(static::$instances[$taskId]))
+		if (!isset(static::$instances[$taskId][$authorId]))
 		{
-			static::$instances[$taskId] = new static($taskId, $authorId);
+			static::$instances[$taskId][$authorId] = new static($taskId, $authorId);
 		}
 
-		return static::$instances[$taskId];
+		return static::$instances[$taskId][$authorId];
 	}
 
 	/**
@@ -229,9 +224,9 @@ class CommentPoster
 		foreach ($uniqueElements as $element)
 		{
 			[$type, $id] = explode('_', $element);
-			$typeId = CCrmOwnerType::ResolveID(CCrmOwnerTypeAbbr::ResolveName($type));
-			$title = CCrmOwnerType::GetCaption($typeId, $id);
-			$url = CCrmOwnerType::GetEntityShowPath($typeId, $id);
+			$typeId = \CCrmOwnerType::ResolveID(\CCrmOwnerTypeAbbr::ResolveName($type));
+			$title = \CCrmOwnerType::GetCaption($typeId, $id);
+			$url = \CCrmOwnerType::GetEntityShowPath($typeId, $id);
 
 			if (!isset($collection[$type]))
 			{
@@ -337,42 +332,78 @@ class CommentPoster
 	{
 		$creatorId = (int)$taskData['CREATED_BY'];
 		$responsibleId = (int)$taskData['RESPONSIBLE_ID'];
+		$accomplices = (array)$taskData['ACCOMPLICES'];
+		$auditors = (array)$taskData['AUDITORS'];
 
-		$users = $this->getUserNames([$this->authorId, $responsibleId]);
+		if (in_array($this->authorId, $accomplices, true))
+		{
+			unset($accomplices[array_search($this->authorId, $accomplices, true)]);
+		}
+		if (in_array($this->authorId, $auditors, true))
+		{
+			unset($auditors[array_search($this->authorId, $auditors, true)]);
+		}
 
 		$addComments = [];
 
-		if (!$this->getCommentByType(Comment::TYPE_ADD))
+		if (
+			$this->authorId === $creatorId
+			&& $creatorId === $responsibleId
+			&& empty($accomplices)
+			&& empty($auditors)
+		)
 		{
-			$addMessageKey = 'COMMENT_POSTER_COMMENT_TASK_ADD';
+			return $addComments;
+		}
 
-			if ($creatorId === $responsibleId)
-			{
-				$addMessageKey .= '_MYSELF';
-			}
-			else
-			{
-				$addMessageKey .= '_SOMEONE';
+		if (!($addComment = $this->getCommentByType(Comment::TYPE_ADD)))
+		{
+			$addComment = new Comment('', $this->authorId, Comment::TYPE_ADD);
+			$addComment->deletePart('main');
+			$addComments[] = $addComment;
+		}
 
-				if ($taskData['TASK_CONTROL'] === 'Y')
-				{
-					$addMessageKey .= '_CONTROL';
-				}
-				if (!$taskData['DEADLINE'])
-				{
-					$addMessageKey .= '_DEADLINE';
-				}
-			}
+		$userToLinkFunction = function (int $userId) {
+			return $this->parseUserToLinked($userId);
+		};
 
-			$replace = [
-				'#AUTHOR#' => $users[$this->authorId],
-				'#RESPONSIBLE#' => $users[$responsibleId],
-			];
-
-			$addMessage = Loc::getMessage($addMessageKey, $replace);
-			$addComments[] = new Comment($addMessage, $this->authorId, Comment::TYPE_ADD, [
-				[ $addMessageKey, $replace]
-			]);
+		if ($creatorId !== $responsibleId && $taskData['TASK_CONTROL'] === 'Y')
+		{
+			$messageKey = 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_CONTROL';
+			$addComment->addPart('control', Loc::getMessage($messageKey), [[$messageKey, []]]);
+		}
+		if (!$taskData['DEADLINE'])
+		{
+			$messageKey = 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_DEADLINE_V2';
+			$addComment->addPart('deadline', Loc::getMessage($messageKey), [[$messageKey, []]]);
+		}
+		if ($this->authorId !== $creatorId)
+		{
+			$partName = 'creator';
+			$messageKey = 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_CREATED_BY';
+			$replace = ['#NEW_VALUE#' => $this->parseUserToLinked($creatorId)];
+			$addComment->addPart($partName, Loc::getMessage($messageKey, $replace), [[$messageKey, $replace]]);
+		}
+		if ($this->authorId !== $responsibleId)
+		{
+			$partName = 'responsible';
+			$messageKey = 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_RESPONSIBLE_ID';
+			$replace = ['#NEW_VALUE#' => $this->parseUserToLinked($responsibleId)];
+			$addComment->addPart($partName, Loc::getMessage($messageKey, $replace), [[$messageKey, $replace]]);
+		}
+		if (!empty($accomplices))
+		{
+			$partName = 'accomplices';
+			$messageKey = 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ACCOMPLICES';
+			$replace = ['#NEW_VALUE#' => implode(', ', array_map($userToLinkFunction, $accomplices))];
+			$addComment->addPart($partName, Loc::getMessage($messageKey, $replace), [[$messageKey, $replace]]);
+		}
+		if (!empty($auditors))
+		{
+			$partName = 'auditors';
+			$messageKey = 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_AUDITORS';
+			$replace = ['#NEW_VALUE#' => implode(', ', array_map($userToLinkFunction, $auditors))];
+			$addComment->addPart($partName, Loc::getMessage($messageKey, $replace), [[$messageKey, $replace]]);
 		}
 
 		return $addComments;
@@ -383,7 +414,9 @@ class CommentPoster
 	 * @param array $newFields
 	 * @param array $changes
 	 * @return array|Comment[]
-	 * @throws TasksException
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
 	 */
 	private function prepareCommentsOnTaskUpdate(array $oldFields, array $newFields, array $changes): array
 	{
@@ -403,7 +436,9 @@ class CommentPoster
 	 * @param array $newFields
 	 * @param array $changes
 	 * @return array|Comment[]
-	 * @throws TasksException
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
 	 */
 	private function prepareChangeComments(array $oldFields, array $newFields, array $changes): array
 	{
@@ -454,7 +489,7 @@ class CommentPoster
 
 			$fieldKey = 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_'.$field;
 			$fieldReplaces = ['#OLD_VALUE#' => $values['OLD'], '#NEW_VALUE#' => $values['NEW']];
-			$changeComment->appendPartData('changes', [ $fieldKey, $fieldReplaces ]);
+			$changeComment->appendPartData('changes', [$fieldKey, $fieldReplaces]);
 
 			$field = (Loc::getMessage($fieldKey, $fieldReplaces) ?: $field);
 			$changeComment->appendPartText('changes', $field."\n");
@@ -469,17 +504,17 @@ class CommentPoster
 			$this->appendUserFieldChangesMessage($changeComment, $changes);
 		}
 
-		$newDeadlineExist = (array_key_exists('DEADLINE', $newFields) && $newFields['DEADLINE']);
-		$oldDeadlineExist = (array_key_exists('DEADLINE', $oldFields) && $oldFields['DEADLINE']);
+		$deadlineChanged = array_key_exists('DEADLINE', $changes);
+		$responsibleChanged = array_key_exists('RESPONSIBLE_ID', $changes);
 
-		if (array_key_exists('RESPONSIBLE_ID', $changes) && !$oldDeadlineExist && !$newDeadlineExist)
+		if (
+			$deadlineChanged && !$newFields['DEADLINE']
+			|| $responsibleChanged && !$deadlineChanged && !$oldFields['DEADLINE']
+		)
 		{
-			$deadlineMessageKey = 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_DEADLINE';
-			$changeComment->addPart(
-				'deadline',
-				Loc::getMessage($deadlineMessageKey),
-				[ $deadlineMessageKey, []]
-			);
+			$partName = 'deadline';
+			$deadlineMessageKey = 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_DEADLINE_V2';
+			$changeComment->addPart($partName, Loc::getMessage($deadlineMessageKey), [[$deadlineMessageKey, []]]);
 		}
 
 		return $changeComments;
@@ -491,7 +526,9 @@ class CommentPoster
 	 * @param string $field
 	 * @param array $values
 	 * @return array
-	 * @throws TasksException
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
 	 */
 	private function getFieldValues(string $field, array $values): array
 	{
@@ -530,33 +567,30 @@ class CommentPoster
 
 			case 'CREATED_BY':
 			case 'RESPONSIBLE_ID':
-				$new = ($this->getUserNames([$new])[$new] ?: $noValue);
+				$new = ($this->parseUserToLinked($new) ?: $noValue);
 				break;
 
 			case 'ACCOMPLICES':
 			case 'AUDITORS':
+				$userToLinkFunction = function (int $userId) {
+					return $this->parseUserToLinked($userId);
+				};
 				$oldUsers = array_filter((explode(',', (string)$old) ?: []));
 				$newUsers = array_filter((explode(',', (string)$new) ?: []));
-				$pureNewUsers = array_diff($newUsers, $oldUsers);
+				$pureNewUsers = array_unique(array_map('intval', array_diff($newUsers, $oldUsers)));
 				if (empty($pureNewUsers))
 				{
 					$new = false;
 					break;
 				}
-				$users = array_filter(array_unique($pureNewUsers), static function ($userId) {
-					return (int)$userId > 0;
-				});
-				$userNames = $this->getUserNames($users);
-				$new = (implode(', ', array_intersect_key($userNames, array_flip($pureNewUsers))) ?: $noValue);
+				$new = (implode(', ', array_map($userToLinkFunction, $pureNewUsers)) ?: $noValue);
 				break;
 
 			case 'DEADLINE':
 			case 'START_DATE_PLAN':
 			case 'END_DATE_PLAN':
-				$currentTimeFormat = str_replace(FORMAT_DATE . " ", "", FORMAT_DATETIME);
-				$format = 'j F, '.(mb_strtoupper($currentTimeFormat) === 'HH:MI:SS'? 'G:i' : 'g:i a');
-				$old = ($old ? FormatDate($format, MakeTimeStamp(DateTime::createFromTimestamp($old))) : $noValue);
-				$new = ($new ? FormatDate($format, MakeTimeStamp(DateTime::createFromTimestamp($new))) : $noValue);
+				$old = ($old ? "#DEADLINE_START#{$old}#DEADLINE_END#" : $noValue);
+				$new = ($new ? "#DEADLINE_START#{$new}#DEADLINE_END#" : $noValue);
 				break;
 
 			case 'TAGS':
@@ -607,25 +641,25 @@ class CommentPoster
 
 		if ($minutes < 60)
 		{
-			$minutesMessage = CTasksTools::getMessagePlural($minutes, 'TASKS_TASK_DURATION_MINUTES');
+			$minutesMessage = \CTasksTools::getMessagePlural($minutes, 'TASKS_TASK_DURATION_MINUTES');
 			$duration = "{$minutes} {$minutesMessage}";
 		}
 		elseif ($minutesInRemainder = $minutes % 60)
 		{
-			$hoursMessage = CTasksTools::getMessagePlural($hours, 'TASKS_TASK_DURATION_HOURS');
-			$minutesMessage = CTasksTools::getMessagePlural($minutesInRemainder, 'TASKS_TASK_DURATION_MINUTES');
+			$hoursMessage = \CTasksTools::getMessagePlural($hours, 'TASKS_TASK_DURATION_HOURS');
+			$minutesMessage = \CTasksTools::getMessagePlural($minutesInRemainder, 'TASKS_TASK_DURATION_MINUTES');
 
 			$duration = "{$hours} {$hoursMessage} {$minutesInRemainder} {$minutesMessage}";
 		}
 		else
 		{
-			$hoursMessage = CTasksTools::getMessagePlural($hours, 'TASKS_TASK_DURATION_HOURS');
+			$hoursMessage = \CTasksTools::getMessagePlural($hours, 'TASKS_TASK_DURATION_HOURS');
 			$duration = "{$hours} {$hoursMessage}";
 		}
 
 		if ($seconds < 3600 && ($secondsInRemainder = $seconds % 60))
 		{
-			$secondsMessage = CTasksTools::getMessagePlural($secondsInRemainder, 'TASKS_TASK_DURATION_SECONDS');
+			$secondsMessage = \CTasksTools::getMessagePlural($secondsInRemainder, 'TASKS_TASK_DURATION_SECONDS');
 			$duration .= " {$secondsInRemainder} {$secondsMessage}";
 		}
 
@@ -642,39 +676,73 @@ class CommentPoster
 	{
 		$statusComments = [];
 
-		if (array_key_exists('STATUS', $changes))
+		if (!array_key_exists('STATUS', $changes))
 		{
-			$authorName = $this->getUserNames([$this->authorId])[$this->authorId];
+			return $statusComments;
+		}
 
-			$newStatus = (int)$newFields['STATUS'];
-			$newStatus = ($newStatus === CTasks::STATE_NEW ? CTasks::STATE_PENDING : $newStatus);
+		$creatorId = (isset($newFields['CREATED_BY']) ? (int)$newFields['CREATED_BY'] : (int)$oldFields['CREATED_BY']);
+		$newStatus = (int)$newFields['STATUS'];
+		$oldStatus = (int)$oldFields['REAL_STATUS'];
+		$newStatus = ($newStatus === \CTasks::STATE_NEW ? \CTasks::STATE_PENDING : $newStatus);
+		$oldStatus = ($oldStatus === \CTasks::STATE_NEW ? \CTasks::STATE_PENDING : $oldStatus);
 
-			if (!in_array($newStatus, [CTasks::STATE_SUPPOSEDLY_COMPLETED, CTasks::STATE_COMPLETED], true))
+		$validNewStates = [\CTasks::STATE_PENDING, \CTasks::STATE_SUPPOSEDLY_COMPLETED, \CTasks::STATE_COMPLETED];
+		if (!in_array($newStatus, $validNewStates, true))
+		{
+			return $statusComments;
+		}
+
+		$userToLinkFunction = function (int $userId) {
+			return $this->parseUserToLinked($userId);
+		};
+		$messageKey = "COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_{$newStatus}";
+		$replace = ['#CREATOR#' => $userToLinkFunction($creatorId)];
+
+		if ($newStatus === \CTasks::STATE_PENDING)
+		{
+			$validOldStates = [\CTasks::STATE_SUPPOSEDLY_COMPLETED, \CTasks::STATE_COMPLETED];
+			if (!in_array($oldStatus, $validOldStates, true))
 			{
 				return $statusComments;
 			}
 
-			$statusMessageKey = "COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_{$newStatus}";
-
-			if ($newStatus === CTasks::STATE_PENDING)
+			$messageKey = "{$messageKey}_RENEW_V2";
+			$taskData = [
+				'CREATED_BY' => $creatorId,
+				'RESPONSIBLE_ID' => (
+					isset($newFields['RESPONSIBLE_ID'])
+						? (int)$newFields['RESPONSIBLE_ID']
+						: (int)$oldFields['RESPONSIBLE_ID']
+				),
+				'ACCOMPLICES' => (
+					isset($newFields['ACCOMPLICES'])
+						? (array)$newFields['ACCOMPLICES']
+						: (array)$oldFields['ACCOMPLICES']
+				),
+			];
+			$members = $this->getMembersForExpiredMessages($taskData);
+			if (empty($members))
 			{
-				$oldStatus = (int)$oldFields['REAL_STATUS'];
-				$oldStatus = ($oldStatus === CTasks::STATE_NEW ? CTasks::STATE_PENDING : $oldStatus);
-
-				$statePendingMessages = [
-					CTasks::STATE_IN_PROGRESS => '_PAUSE',
-					CTasks::STATE_SUPPOSEDLY_COMPLETED => '_REDO',
-					CTasks::STATE_COMPLETED => '_RENEW',
-					CTasks::STATE_DEFERRED => '_RENEW',
-				];
-				$statusMessageKey .= $statePendingMessages[$oldStatus];
+				$messageKey = "{$messageKey}_NO_MEMBERS";
 			}
-			$replace = ['#AUTHOR#' => $authorName];
-			$statusMessage = Loc::getMessage($statusMessageKey, $replace);
-			$statusComments[] = new Comment($statusMessage, $this->authorId, Comment::TYPE_STATUS, [
-				[ $statusMessageKey, $replace ]
-			]);
+			else
+			{
+				$replace['#MEMBERS#'] = implode(', ', array_map($userToLinkFunction, $members));
+			}
 		}
+		else if ($newStatus === \CTasks::STATE_COMPLETED && $oldStatus === \CTasks::STATE_SUPPOSEDLY_COMPLETED)
+		{
+			$messageKey = "{$messageKey}_APPROVE_V2";
+		}
+		else
+		{
+			$messageKey = "{$messageKey}_V2";
+		}
+
+		$message = Loc::getMessage($messageKey, $replace);
+		$commentType = Comment::TYPE_STATUS;
+		$statusComments[] = new Comment($message, $this->authorId, $commentType, [[$messageKey, $replace]]);
 
 		return $statusComments;
 	}
@@ -687,14 +755,28 @@ class CommentPoster
 	{
 		$expiredSoonComments = [];
 
-		if (!$this->getCommentByType(Comment::TYPE_EXPIRED_SOON))
+		if ($this->getCommentByType(Comment::TYPE_EXPIRED_SOON))
 		{
-			$expiredSoonMessageKey = 'COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON';
-			$expiredSoonMessage = Loc::getMessage($expiredSoonMessageKey);
-			$expiredSoonComments[] = new Comment($expiredSoonMessage, $this->authorId, Comment::TYPE_EXPIRED_SOON, [
-				[ $expiredSoonMessageKey, [] ]
-			]);
+			return $expiredSoonComments;
 		}
+
+		$members = $this->getMembersForExpiredMessages($taskData);
+		if (empty($members))
+		{
+			$messageKey = 'COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON_V2_NO_MEMBERS';
+			$replace = [];
+		}
+		else
+		{
+			$userToLinkFunction = function (int $userId) {
+				return $this->parseUserToLinked($userId);
+			};
+			$messageKey = 'COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON_V2';
+			$replace = ['#MEMBERS#' => implode(', ', array_map($userToLinkFunction, $members))];
+		}
+		$message = Loc::getMessage($messageKey, $replace);
+		$commentType = Comment::TYPE_EXPIRED_SOON;
+		$expiredSoonComments[] = new Comment($message, $this->authorId, $commentType, [[$messageKey, $replace]]);
 
 		return $expiredSoonComments;
 	}
@@ -707,16 +789,53 @@ class CommentPoster
 	{
 		$expiredComments = [];
 
-		if (!$this->getCommentByType(Comment::TYPE_EXPIRED))
+		if ($this->getCommentByType(Comment::TYPE_EXPIRED))
 		{
-			$expiredMessageKey = 'COMMENT_POSTER_COMMENT_TASK_EXPIRED';
-			$expiredMessage = Loc::getMessage($expiredMessageKey);
-			$expiredComments[] = new Comment($expiredMessage, $this->authorId, Comment::TYPE_EXPIRED, [
-				[ $expiredMessageKey, [] ]
-			]);
+			return $expiredComments;
 		}
 
+		$members = $this->getMembersForExpiredMessages($taskData);
+		if (empty($members))
+		{
+			$messageKey = 'COMMENT_POSTER_COMMENT_TASK_EXPIRED_V2_NO_MEMBERS';
+			$replace = [];
+		}
+		else
+		{
+			$userToLinkFunction = function (int $userId) {
+				return $this->parseUserToLinked($userId);
+			};
+			$messageKey = 'COMMENT_POSTER_COMMENT_TASK_EXPIRED_V2';
+			$replace = ['#MEMBERS#' => implode(', ', array_map($userToLinkFunction, $members))];
+		}
+		$message = Loc::getMessage($messageKey, $replace);
+		$commentType = Comment::TYPE_EXPIRED;
+		$expiredComments[] = new Comment($message, $this->authorId, $commentType, [[$messageKey, $replace]]);
+
 		return $expiredComments;
+	}
+
+	/**
+	 * @param array $taskData
+	 * @return array
+	 */
+	private function getMembersForExpiredMessages(array $taskData): array
+	{
+		$creatorId = (int)$taskData['CREATED_BY'];
+		$responsibleId = (int)$taskData['RESPONSIBLE_ID'];
+		$accomplices = $taskData['ACCOMPLICES'];
+		$accomplices = (is_array($accomplices) ? $accomplices : $accomplices->export());
+		$accomplices = array_map('intval', $accomplices);
+
+		if (in_array($creatorId, $accomplices, true))
+		{
+			unset($accomplices[array_search($creatorId, $accomplices, true)]);
+		}
+
+		$members = ($responsibleId !== $creatorId ? [$responsibleId] : []);
+		$members = array_unique(array_merge($members, $accomplices));
+
+		return $members;
 	}
 
 	/**
@@ -744,7 +863,9 @@ class CommentPoster
 	 * @param array $oldFields
 	 * @param array $newFields
 	 * @param array $changes
-	 * @throws TasksException
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
 	 */
 	public function postCommentsOnTaskUpdate(array $oldFields, array $newFields, array $changes): void
 	{
@@ -802,12 +923,19 @@ class CommentPoster
 	 * Builds comment text by parts data.
 	 *
 	 * @param array $partsData
+	 * @param array $params
 	 * @return string
 	 */
-	public static function getCommentText(array $partsData): string
+	public static function getCommentText(array $partsData, array $params = []): string
 	{
 		$result = '';
 		$textList = [];
+
+		// old comments type compatibility (without AUX_DATA)
+		if (isset($partsData['auxData'], $partsData['text']) && $partsData['text'] !== '')
+		{
+			return $partsData['text'];
+		}
 
 		foreach ($partsData as $partsItems)
 		{
@@ -818,11 +946,12 @@ class CommentPoster
 
 			foreach ($partsItems as [$messageCode, $replace])
 			{
-				if (empty($messageCode))
+				$replace = (is_array($replace) ? $replace : []);
+				if (empty($messageCode) || !($message = Loc::getMessage($messageCode, $replace)))
 				{
 					continue;
 				}
-				$textList[] = Loc::getMessage($messageCode, (is_array($replace) ? $replace : []));
+				$textList[] = static::parseReplaces($message, $params);
 			}
 		}
 
@@ -834,32 +963,52 @@ class CommentPoster
 		return $result;
 	}
 
-	/**
-	 * @param array $partsData
-	 * @return array
-	 */
-	public static function getCommentCodes(array $partsData): array
+	private static function parseReplaces(string $message, array $params): string
 	{
-		$codes = [];
-
-		foreach ($partsData as $partsItems)
+		$replaces = [
+			'EFFICIENCY',
+			'DEADLINE',
+			'DEADLINE_CHANGE',
+			'TASK_APPROVE',
+			'TASK_DISAPPROVE',
+			'TASK_COMPLETE',
+		];
+		$mobileContext = (isset($params['mobile']) && $params['mobile'] === true);
+		foreach ($replaces as $key)
 		{
-			if (!is_array($partsItems))
-			{
-				continue;
-			}
+			$start = "#{$key}_START#";
+			$end = "#{$key}_END#";
+			$userId = User::getId();
 
-			foreach ($partsItems as [$messageCode, $replace])
+			switch ($key)
 			{
-				if (empty($messageCode))
-				{
-					continue;
-				}
-				$codes[] = $messageCode;
+				case 'EFFICIENCY':
+					$message = str_replace(
+						[$start, $end],
+						[ ($mobileContext ? "" : "[URL=/company/personal/user/{$userId}/tasks/effective/]"), ($mobileContext ? "" : "[/URL]") ],
+						$message
+					);
+					break;
+
+				case 'DEADLINE':
+					preg_match_all("/(?<={$start})\d+(?={$end})/", $message, $timestamp);
+					if (!($timestamp = (int)$timestamp[0][0]))
+					{
+						break;
+					}
+					$currentTimeFormat = str_replace(FORMAT_DATE.' ', '', FORMAT_DATETIME);
+					$format = 'j F, '.(mb_strtoupper($currentTimeFormat) === 'HH:MI:SS' ? 'G:i' : 'g:i a');
+					$deadline = FormatDate($format, MakeTimeStamp(DateTime::createFromTimestamp($timestamp)));
+					$message = str_replace([$timestamp, $start, $end], [$deadline, '', ''], $message);
+					break;
+
+				default:
+					$message = str_replace([$start, $end], '', $message);
+					break;
 			}
 		}
 
-		return $codes;
+		return $message;
 	}
 
 	/**
@@ -881,9 +1030,19 @@ class CommentPoster
 	}
 
 	/**
+	 * @param int $userId
+	 * @return string
+	 */
+	private function parseUserToLinked(int $userId): string
+	{
+		$userName = $this->getUserNames([$userId])[$userId];
+		return "[USER={$userId}]{$userName}[/USER]";
+	}
+
+	/**
 	 * @param array $tasks
 	 * @return array
-	 * @throws TasksException
+	 * @throws \TasksException
 	 */
 	private function getTaskNames(array $tasks): array
 	{
@@ -896,7 +1055,7 @@ class CommentPoster
 
 		if (!empty($tasksToFind))
 		{
-			[$foundedTasks] = CTaskItem::fetchList($this->authorId, [], ['ID' => $tasksToFind], [], ['ID', 'TITLE']);
+			[$foundedTasks] = \CTaskItem::fetchList($this->authorId, [], ['ID' => $tasksToFind], [], ['ID', 'TITLE']);
 			foreach ($foundedTasks as $task)
 			{
 				$taskData = $task->getData(false);
@@ -935,6 +1094,9 @@ class CommentPoster
 	/**
 	 * @param array $groups
 	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
 	 */
 	private function getGroupNames(array $groups): array
 	{

@@ -36,8 +36,4 @@ $MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_LOGO"] = "<svg xmlns=\"http://ww
 $MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_NO_OPEN_LINE"] = "You don't have any Open Channel whose communications can be configured. Please create a new Open Channel.";
 $MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_NO_OPEN_LINE_AND_NOT_ADD_OPEN_LINE"] = "You don't have any Open Channel whose communications can be configured. You don't have sufficient permission to create Open Channels.<br>Please contact your portal administrator.";
 $MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_OPEN_LINE"] = "Open Channel:";
-$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_POPUP_LIMITED_TEXT"] = "Your current plan restrict the number of available Open Channels. To add another Open Channel, please upgrade to a major plan.
-<br><br>
-<a href=\"/settings/license_all.php\" target=\"_blank\">Selected commercial plans</a> have no restriction on the number of Open Channels at all.";
-$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_POPUP_LIMITED_TITLE"] = "Extended Open Channels";
 ?>

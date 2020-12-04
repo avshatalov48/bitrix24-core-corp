@@ -28,6 +28,11 @@ class MemberTable extends Main\Entity\DataManager
 		return 'b_tasks_member';
 	}
 
+	public static function getObjectClass()
+	{
+		return MemberObject::class;
+	}
+
 	/**
 	 * @return static
 	 */

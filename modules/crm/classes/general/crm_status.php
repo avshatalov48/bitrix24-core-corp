@@ -247,7 +247,19 @@ class CCrmStatus
 			$arFields['STATUS_ID'] = '';
 		}
 
-		$categoryId = (int)$arFields['CATEGORY_ID'];
+		if (isset($arFields['CATEGORY_ID']))
+		{
+			$categoryId = (int)$arFields['CATEGORY_ID'];
+		}
+		elseif(DealCategory::hasStatusEntity($this->entityId))
+		{
+			$categoryId = DealCategory::convertFromStatusEntityID($this->entityId);
+		}
+		else
+		{
+			$categoryId = 0;
+		}
+
 		$statusID = $arFields['STATUS_ID'];
 		if(empty($statusID))
 		{
@@ -270,7 +282,7 @@ class CCrmStatus
 			'SYSTEM'	=> $arFields['SYSTEM'] === 'Y'? 'Y': 'N',
 			'CATEGORY_ID' => $categoryId,
 			'COLOR' => $arFields['COLOR'],
-			'SEMANTICS' => $arFields['SEMANTICS'],
+			'SEMANTICS' => $arFields['SEMANTICS'] ?? null,
 		]);
 		self::ClearCachedStatuses($this->entityId);
 
@@ -509,6 +521,7 @@ class CCrmStatus
 		return StatusTable::getRow([
 			'filter' => [
 				'=STATUS_ID' => $statusId,
+				'=ENTITY_ID' => $this->entityId,
 			]
 		]) !== null;
 	}

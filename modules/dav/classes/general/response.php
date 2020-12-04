@@ -18,7 +18,7 @@ class CDavResponse
 	public function __construct($requestUri, $encoding)
 	{
 		$this->requestUri = $requestUri;
-		$this->encoding = strtolower($encoding);
+		$this->encoding = mb_strtolower($encoding);
 		$this->outputType = DAV_XML_OUTPUT;
 	}
 
@@ -27,7 +27,7 @@ class CDavResponse
 		$encoding = CDav::GetCharset($siteId);
 		if (is_null($encoding) || empty($encoding))
 			$encoding = "utf-8";
-		$this->encoding = strtolower($encoding);
+		$this->encoding = mb_strtolower($encoding);
 	}
 
 	public function TurnOnBinaryOutput()
@@ -74,7 +74,7 @@ class CDavResponse
 	{
 		if ($mimetype === false)
 		{
-			if (strlen($this->multipartSeparator) <= 0)
+			if ($this->multipartSeparator == '')
 			{
 				$this->multipartSeparator = "bx_dav_".md5(microtime());
 				$this->AddHeader("Content-type: multipart/byteranges; boundary=".$this->multipartSeparator);
@@ -101,7 +101,7 @@ class CDavResponse
 		$this->AddLine("<body><h1>%s</h1>", $error);
 		$this->AddLine("The requested could not be handled by this server.");
 		$this->AddLine("(URI %s)<br>\n<br>", $this->requestUri);
-		if (strlen($message) > 0)
+		if ($message <> '')
 			$this->AddLine("%s<br>\n<br>", $message);
 		$this->AddLine("</body></html>");
 	}
@@ -109,7 +109,7 @@ class CDavResponse
 	public function Render()
 	{
 		$status = $this->httpStatus;
-		if (strlen($status) <= 0)
+		if ($status == '')
 			$status = "200 OK";
 
 		static::sendStatus($status);

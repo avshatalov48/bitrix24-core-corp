@@ -5,10 +5,10 @@
 
 namespace Bitrix\Tasks\Integration\SocialNetwork;
 
-use Bitrix\Main\Entity;
-
+use Bitrix\Main;
+use Bitrix\Main\ORM\Query\Filter;
+use Bitrix\Main\Search\Content;
 use Bitrix\Socialnetwork\WorkgroupTable;
-use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Util\User as UtilUser;
 
 class Group extends \Bitrix\Tasks\Integration\SocialNetwork
@@ -76,35 +76,67 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 		return static::$cache[$cacheKey];
 	}
 
-	public static function getData(array $groupIds)
+	/**
+	 * @param array $groupIds
+	 * @param array $select
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function getData(array $groupIds, array $select = []): array
 	{
-		if(!static::includeModule())
-		{
-			return array(); // no module = no groups
-		}
-
 		$groupIds = array_unique(array_filter($groupIds, 'intval'));
-		if(empty($groupIds))
+
+		if (empty($groupIds) || !static::includeModule())
 		{
-			return array(); // which groups?
+			return [];
 		}
 
-		$expanded = UtilUser::getOption('opened_projects');
-		if(!$expanded)
-		{
-			$expanded = array();
-		}
+		$defaultSelect = ['ID', 'NAME'];
+		$parameters = [
+			'select' => (empty($select) ? $defaultSelect : array_merge($defaultSelect, $select)),
+			'filter' => ['ID' => $groupIds],
+		];
+		$expanded = (UtilUser::getOption('opened_projects') ?: []);
 
-		$result = array();
 		// todo: make static caches here
-		$res = WorkgroupTable::getList(array('filter' => array('ID' => $groupIds)));
-		while($item = $res->fetch())
+		$groups = [];
+		$groupResult = WorkgroupTable::getList($parameters);
+		while ($group = $groupResult->fetch())
 		{
-			$item['EXPANDED'] = array_key_exists($item["ID"], $expanded) && $expanded[$item["ID"]] == "false" ? false : true;
-			$result[$item['ID']] = $item;
+			$groupId = $group['ID'];
+			$group['EXPANDED'] = !(array_key_exists($groupId, $expanded) && $expanded[$groupId] === "false");
+			$groups[$groupId] = $group;
 		}
 
-		return $result;
+		return $groups;
+	}
+
+	/**
+	 * @param string $searchText
+	 * @param array $select
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function searchGroups(string $searchText, array $select = []): array
+	{
+		$defaultSelect = ['ID', 'NAME'];
+		$searchText = Filter\Helper::matchAgainstWildcard(Content::prepareStringToken($searchText));
+
+		if ($searchText === '')
+		{
+			return [];
+		}
+
+		$query = WorkgroupTable::query()
+			->setSelect((empty($select) ? $defaultSelect : array_merge($defaultSelect, $select)))
+			->whereMatch('SEARCH_INDEX', $searchText)
+		;
+
+		return $query->exec()->fetchAll();
 	}
 
 	public static function updateLastActivity($id)

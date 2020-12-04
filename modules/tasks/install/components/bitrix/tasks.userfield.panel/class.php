@@ -3,6 +3,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Localization\LanguageTable;
+use Bitrix\Main\UserField\Types\DateTimeType;
+use Bitrix\Main\UserField\Types\DateType;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\Result;
 use Bitrix\Tasks\Util\Type\DateTime;
@@ -136,15 +138,38 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 		}
 		elseif (isset($ufDesc['SETTINGS']['DEFAULT_VALUE']))
 		{
-			if ($ufDesc['USER_TYPE']['USER_TYPE_ID'] == 'datetime')
+			if ($ufDesc['USER_TYPE']['USER_TYPE_ID'] === DateTimeType::USER_TYPE_ID)
 			{
-				if ($ufDesc['SETTINGS']['DEFAULT_VALUE']['TYPE'] == 'NOW')
+				if ($ufDesc['SETTINGS']['DEFAULT_VALUE']['TYPE'] === DateTimeType::TYPE_NOW)
 				{
 					$ufValue = DateTime::createFromTimestamp(User::getTime());
 				}
 				else
 				{
-					$ufValue = $ufDesc['SETTINGS']['DEFAULT_VALUE']['VALUE'];
+					$ufValue = str_replace(
+						' 00:00:00',
+						'',
+						\CDatabase::formatDate(
+							$ufDesc['SETTINGS']['DEFAULT_VALUE']['VALUE'],
+							'YYYY-MM-DD HH:MI:SS',
+							\CLang::getDateFormat(DateTimeType::FORMAT_TYPE_FULL)
+						)
+					);
+				}
+			}
+			elseif($ufDesc['USER_TYPE']['USER_TYPE_ID'] === DateType::USER_TYPE_ID)
+			{
+				if ($ufDesc['SETTINGS']['DEFAULT_VALUE']['TYPE'] === DateType::TYPE_NOW)
+				{
+					$ufValue = \ConvertTimeStamp(User::getTime(), DateType::FORMAT_TYPE_SHORT);
+				}
+				else
+				{
+					$ufValue = \CDatabase::formatDate(
+						$ufDesc['SETTINGS']['DEFAULT_VALUE']['VALUE'],
+						'YYYY-MM-DD',
+						\CLang::getDateFormat(DateType::FORMAT_TYPE_SHORT)
+					);
 				}
 			}
 			else

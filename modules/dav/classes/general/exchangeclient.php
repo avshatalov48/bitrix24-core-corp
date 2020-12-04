@@ -29,7 +29,7 @@ abstract class CDavExchangeClient
 
 	public function __construct($scheme, $server, $port, $userName, $userPassword)
 	{
-		$this->scheme = ((strtolower($scheme) == "https") ? "https" : "http");
+		$this->scheme = ((mb_strtolower($scheme) == "https") ? "https" : "http");
 		$this->server = $server;
 		$this->port = $port;
 		$this->userName = $userName;
@@ -60,13 +60,13 @@ abstract class CDavExchangeClient
 
 	public function SetProxy($proxyScheme, $proxyServer, $proxyPort, $proxyUserName, $proxyUserPassword)
 	{
-		$this->proxyScheme = ((strtolower($proxyScheme) == "https") ? "https" : "http");
+		$this->proxyScheme = ((mb_strtolower($proxyScheme) == "https") ? "https" : "http");
 		$this->proxyServer = $proxyServer;
 		$this->proxyPort = $proxyPort;
 		$this->proxyUserName = $proxyUserName;
 		$this->proxyUserPassword = $proxyUserPassword;
 
-		$this->proxyUsed = (strlen($this->proxyServer) > 0 && strlen($this->proxyPort) > 0);
+		$this->proxyUsed = ($this->proxyServer <> '' && $this->proxyPort <> '');
 	}
 
 	public function GetPath()
@@ -222,14 +222,14 @@ abstract class CDavExchangeClient
 		{
 			case "BodyType":
 				$bProcessed = true;
-				$arFields[$key] = (strtolower($value) == "html" ? "HTML" : "Text");
+				$arFields[$key] = (mb_strtolower($value) == "html" ? "HTML" : "Text");
 				break;
 
 			case "Importance":
 				$bProcessed = true;
 				$ar = array("low" => "Low", "normal" => "Normal", "high" => "High");
 
-				$value = strtolower($value);
+				$value = mb_strtolower($value);
 				if (array_key_exists($value, $ar))
 					$arFields[$key] = $ar[$value];
 				else
@@ -240,7 +240,7 @@ abstract class CDavExchangeClient
 				$bProcessed = true;
 				$ar = array("free" => "Free", "tentative" => "Tentative", "busy" => "Busy", "oof" => "OOF", "nodata" => "NoData");
 
-				$value = strtolower($value);
+				$value = mb_strtolower($value);
 				if (array_key_exists($value, $ar))
 					$arFields[$key] = $ar[$value];
 				else
@@ -251,7 +251,7 @@ abstract class CDavExchangeClient
 				$bProcessed = true;
 				$ar = array("normal" => "Normal", "personal" => "Personal", "private" => "Private", "confidential" => "Confidential");
 
-				$value = strtolower($value);
+				$value = mb_strtolower($value);
 				if (array_key_exists($value, $ar))
 					$arFields[$key] = $ar[$value];
 				else
@@ -262,7 +262,7 @@ abstract class CDavExchangeClient
 				$bProcessed = true;
 				$ar = array("notstarted" => "NotStarted", "inprogress" => "InProgress", "completed" => "Completed", "waitingonothers" => "WaitingOnOthers", "deferred" => "Deferred");
 
-				$value = strtolower($value);
+				$value = mb_strtolower($value);
 				if (array_key_exists($value, $ar))
 					$arFields[$key] = $ar[$value];
 				else
@@ -300,7 +300,7 @@ abstract class CDavExchangeClient
 
 				if (empty($value))
 					$value = "NONE";
-				$value = strtolower($value);
+				$value = mb_strtolower($value);
 
 				if (array_key_exists($value, $ar))
 				{
@@ -320,7 +320,7 @@ abstract class CDavExchangeClient
 				$bProcessed = true;
 				$ar = array("first" => "First", "second" => "Second", "third" => "Third", "fourth" => "Fourth", "last" => "Last", 1 => "First", 2 => "Second", 3 => "Third", 4 => "Fourth");
 
-				$value = strtolower($value);
+				$value = mb_strtolower($value);
 				if (array_key_exists($value, $ar))
 					$arFields[$key] = $ar[$value];
 				else
@@ -331,7 +331,7 @@ abstract class CDavExchangeClient
 				$bProcessed = true;
 				$ar = array("january" => "January", "february" => "February", "march" => "March", "april" => "April", "may" => "May", "june" => "June", "july" => "July", "august" => "August", "september" => "September", "october" => "October", "november" => "November", "december" => "December", 1 => "January", 2 => "February", 3 => "March", 4 => "April", 5 => "May", 6 => "June", 7 => "July", 8 => "August", 9 => "September", 10 => "October", 11 => "November", 12 => "December");
 
-				$value = strtolower($value);
+				$value = mb_strtolower($value);
 				if (array_key_exists($value, $ar))
 					$arFields[$key] = $ar[$value];
 				else
@@ -342,7 +342,7 @@ abstract class CDavExchangeClient
 				$bProcessed = true;
 				$ar = array("sunday" => "Sunday", "monday" => "Monday", "tuesday" => "Tuesday", "wednesday" => "Wednesday", "thursday" => "Thursday", "friday" => "Friday", "saturday" => "Saturday", "day" => "Day", "weekday" => "Weekday", "weekendday" => "WeekendDay", 0 => "Sunday", 1 => "Monday", 2 => "Tuesday", 3 => "Wednesday", 4 => "Thursday", 5 => "Friday", 6 => "Saturday", 7 => "Sunday");
 
-				$value = strtolower($value);
+				$value = mb_strtolower($value);
 				$arValue = explode(",", $value);
 				foreach ($arValue as $value1)
 				{
@@ -354,7 +354,7 @@ abstract class CDavExchangeClient
 						{
 							if (array_key_exists($value2, $ar))
 							{
-								if (isset($arFields[$key]) && strlen($arFields[$key]) > 0)
+								if (isset($arFields[$key]) && $arFields[$key] <> '')
 									$arFields[$key] .= " ";
 								$arFields[$key] .= $ar[$value2];
 							}
@@ -601,11 +601,11 @@ abstract class CDavExchangeClient
 			foreach ($authenticate as $auth)
 			{
 				$auth = trim($auth);
-				$p = strpos($auth, " ");
+				$p = mb_strpos($auth, " ");
 				if ($p !== false)
-					$arAuth[strtolower(substr($auth, 0, $p))] = trim(substr($auth, $p));
+					$arAuth[mb_strtolower(mb_substr($auth, 0, $p))] = trim(mb_substr($auth, $p));
 				else
-					$arAuth[strtolower($auth)] = "";
+					$arAuth[mb_strtolower($auth)] = "";
 			}
 
 			if (array_key_exists("digest", $arAuth))
@@ -622,11 +622,11 @@ abstract class CDavExchangeClient
 			foreach ($authenticateProxy as $auth)
 			{
 				$auth = trim($auth);
-				$p = strpos($auth, " ");
+				$p = mb_strpos($auth, " ");
 				if ($p !== false)
-					$arAuthProxy[strtolower(substr($auth, 0, $p))] = trim(substr($auth, $p));
+					$arAuthProxy[mb_strtolower(mb_substr($auth, 0, $p))] = trim(mb_substr($auth, $p));
 				else
-					$arAuthProxy[strtolower($auth)] = "";
+					$arAuthProxy[mb_strtolower($auth)] = "";
 			}
 
 			if (array_key_exists("digest", $arAuthProxy))
@@ -735,13 +735,13 @@ abstract class CDavExchangeClient
 			do
 			{
 				$line = fgets($this->fp, 4096);
-				$line = strtolower($line);
+				$line = mb_strtolower($line);
 
 				$chunkSize = "";
 				$i = 0;
-				while ($i < strlen($line))
+				while ($i < mb_strlen($line))
 				{
-					$c = substr($line, $i, 1);
+					$c = mb_substr($line, $i, 1);
 					if (in_array($c, array("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f")))
 						$chunkSize .= $c;
 					else
@@ -762,7 +762,7 @@ abstract class CDavExchangeClient
 							break;
 
 						$body1 .= $d;
-						$lb = $chunkSize - ((function_exists('mb_strlen') ? mb_strlen($body1, 'latin1') : strlen($body1)));
+						$lb = $chunkSize - ((function_exists('mb_strlen')? mb_strlen($body1, 'latin1') : mb_strlen($body1)));
 					}
 
 					$body .= $body1;
@@ -785,7 +785,7 @@ abstract class CDavExchangeClient
 					break;
 
 				$body .= $d;
-				$lb = $contentLength - ((function_exists('mb_strlen') ? mb_strlen($body, 'latin1') : strlen($body)));
+				$lb = $contentLength - ((function_exists('mb_strlen')? mb_strlen($body, 'latin1') : mb_strlen($body)));
 			}
 		}
 		else
@@ -799,9 +799,9 @@ abstract class CDavExchangeClient
 					break;
 
 				$body .= $d;
-				if (substr($body, -9) == "\r\n\r\n0\r\n\r\n")
+				if (mb_substr($body, -9) == "\r\n\r\n0\r\n\r\n")
 				{
-					$body = substr($body, 0, -9);
+					$body = mb_substr($body, 0, -9);
 					break;
 				}
 			}
@@ -842,7 +842,7 @@ abstract class CDavExchangeClient
 		$arKeys = array_keys($arData);
 		foreach ($arKeys as $key)
 		{
-			$keyLower = strtolower($key);
+			$keyLower = mb_strtolower($key);
 			if (array_key_exists($keyLower, $arMap))
 			{
 				$value = $arData[$key];

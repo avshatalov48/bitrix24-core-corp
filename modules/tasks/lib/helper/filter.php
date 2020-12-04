@@ -1015,14 +1015,14 @@ class Filter extends Common
 						{
 							$arrFilter['MEMBER'] = $this->getUserId();
 						}
-						$arrFilter['<=DEADLINE'] = Counter::getExpiredTime();
+						$arrFilter['<=DEADLINE'] = Counter\Deadline::getExpiredTime();
 						$arrFilter['IS_MUTED'] = 'N';
 						$arrFilter['REAL_STATUS'] = [\CTasks::STATE_PENDING, \CTasks::STATE_IN_PROGRESS];
 						break;
 
 					case Counter\Type::TYPE_EXPIRED_CANDIDATES:
-						$arrFilter['>=DEADLINE'] = Counter::getExpiredTime();
-						$arrFilter['<=DEADLINE'] = Counter::getExpiredSoonTime();
+						$arrFilter['>=DEADLINE'] = Counter\Deadline::getExpiredTime();
+						$arrFilter['<=DEADLINE'] = Counter\Deadline::getExpiredSoonTime();
 						break;
 
 					case Counter\Type::TYPE_WAIT_CTRL:

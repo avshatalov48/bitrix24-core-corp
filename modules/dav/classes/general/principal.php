@@ -16,7 +16,7 @@ class CDavPrincipal
 			$this->InitializeFromArray($user);
 		elseif (is_int($user))
 			$this->InitializeFromId($user);
-		elseif (is_bool($user) && $user || is_string($user) && strtolower($user) == "current")
+		elseif (is_bool($user) && $user || is_string($user) && mb_strtolower($user) == "current")
 			$this->InitializeFromCurrent();
 	}
 
@@ -38,7 +38,7 @@ class CDavPrincipal
 	{
 		$this->userId = $arUser['ID'];
 		$this->login = $arUser['LOGIN'];
-		$this->name = $arUser["NAME"].(strlen($arUser["NAME"]) <= 0 || strlen($arUser["LAST_NAME"]) <= 0 ? "" : " ").$arUser["LAST_NAME"];
+		$this->name = $arUser["NAME"].($arUser["NAME"] == '' || $arUser["LAST_NAME"] == '' ? "" : " ").$arUser["LAST_NAME"];
 		if (empty($this->name))
 			$this->name = $this->login;
 		$this->email = $arUser['EMAIL'];
@@ -81,10 +81,10 @@ class CDavPrincipal
 
 	public function GetPrincipalUrl(CDavRequest $request)
 	{
-		if (strlen($this->principalURL) > 0)
+		if ($this->principalURL <> '')
 			return $this->principalURL;
 
-		if (strpos($request->GetBaseUri(), 'http') === 0)
+		if (mb_strpos($request->GetBaseUri(), 'http') === 0)
 			$this->principalURL = CDav::CheckIfRightSlashAdded($request->GetBaseUri());
 		else
 			$this->principalURL = ($request->GetParameter("HTTPS") === "on" ? "https" : "http").'://'.$request->GetParameter('HTTP_HOST').$request->GetParameter('SCRIPT_NAME').'/';

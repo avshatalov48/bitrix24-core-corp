@@ -1229,7 +1229,8 @@ this.BX = this.BX || {};
 	      detailPost: 'post-wrap',
 	      postItemTopWrap: 'post-item-top-wrap',
 	      postItemTop: 'post-item-top',
-	      postItemPostBlock: 'post-item-post-block',
+	      postItemPostBlock: 'post-item-contentview',
+	      postItemDescriptionBlock: 'post-item-description',
 	      postItemAttachedFileWrap: 'post-item-attached-disk-file-wrap',
 	      postItemInformWrap: 'post-item-inform-wrap',
 	      postItemInformWrapTree: 'post-item-inform-wrap-tree',
@@ -1833,7 +1834,8 @@ this.BX = this.BX || {};
 	        return e.preventDefault();
 	      } else if ((e.target.closest(".".concat(this.class.listWrapper)) || e.target.closest(".".concat(this.class.pinnedPanel))) && !(e.target.tagName.toLowerCase() === 'a' && main_core.Type.isStringFilled(e.target.getAttribute('target')) && e.target.getAttribute('target').toLowerCase() === '_blank')) {
 	        var detailFromPinned = !!(e.target.classList.contains(this.class.postItemPinnedBlock) || e.target.closest(".".concat(this.class.postItemPinnedBlock)));
-	        var detailFromNormal = !!(!detailFromPinned && (e.target.classList.contains(this.class.postItemPostBlock) || e.target.closest(".".concat(this.class.postItemPostBlock))));
+	        var detailFromNormal = !!(!detailFromPinned && (e.target.classList.contains(this.class.postItemPostBlock) || e.target.closest(".".concat(this.class.postItemPostBlock)) || e.target.classList.contains(this.class.postItemDescriptionBlock) // tasks
+	        || e.target.closest(".".concat(this.class.postItemDescriptionBlock))));
 	        var detailToComments = !!(!detailFromPinned && !detailFromNormal && (e.target.classList.contains(this.class.postItemInformComments) || e.target.closest(".".concat(this.class.postItemInformComments))));
 	        var detailToExpanded = !!(!detailFromPinned && !detailFromNormal && !detailToComments && (e.target.classList.contains(this.class.postItemInformMore) || e.target.closest(".".concat(this.class.postItemInformMore))));
 

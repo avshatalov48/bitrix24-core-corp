@@ -1,13 +1,19 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+<?php
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
+use Bitrix\Main;
 use Bitrix\Main\HttpRequest;
 use Bitrix\Main\Application;
 use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Access;
 use Bitrix\Tasks\Import\PersonNameFormatter;
 use Bitrix\Tasks\UI;
+use Bitrix\Tasks\Util\Error;
 
 Loc::loadMessages(__FILE__);
 
@@ -18,7 +24,7 @@ CBitrixComponent::includeComponentClass("bitrix:tasks.base");
  */
 class TasksImportComponent extends TasksBaseComponent
 {
-	static $map = array(
+	public static $map = [
 		'FILE_NAME' => 'file_name',
 		'FILE_HASH' => 'hidden_file_hash',
 		'FILE_ENCODING' => 'file_encoding',
@@ -29,12 +35,12 @@ class TasksImportComponent extends TasksBaseComponent
 		'NAME_FORMAT' => 'name_format',
 		'SEPARATOR_TEXT' => 'separator',
 		'HEADERS_IN_FIRST_ROW' => 'headers_in_first_row',
-		'SKIP_EMPTY_COLUMNS' => 'skip_empty_columns'
-	);
+		'SKIP_EMPTY_COLUMNS' => 'skip_empty_columns',
+	];
 
 	protected function getData()
 	{
-		$encodings = array(
+		$encodings = [
 			'auto' => Loc::getMessage('TASKS_IMPORT_FIELDS_FILE_ENCODING_AUTO_DETECT'),
 			'ascii' => 'ASCII',
 			'windows-1251' => 'Windows-1251',
@@ -54,66 +60,74 @@ class TasksImportComponent extends TasksBaseComponent
 			'iso-8859-15' => 'ISO-8859-15',
 			'koi8-r' => 'KOI8-R',
 			'UTF-8' => 'UTF-8',
-			'UTF-16' => 'UTF-16'
-		);
+			'UTF-16' => 'UTF-16',
+		];
 
 		foreach (array_keys($encodings) as $key)
 		{
 			if ($key !== 'auto')
+			{
 				$this->arResult['CHARSETS'][] = $key;
+			}
 		}
 
 		$currentUserId = $this->arParams['VARIABLES']['user_id'];
 		$currentUser = $this->getUsersDataById($currentUserId);
-		$this->arResult['IFRAME'] = (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] == 'Y') ? true : false;
+
+		$this->arResult['IFRAME'] = isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y';
 		$this->arResult['STEP'] = 1;
 		$this->arResult['FORM_ID'] = 'TASKS_IMPORT_FORM';
-		$this->arResult['ERRORS'] = array();
+		$this->arResult['ERRORS'] = [];
 		$this->arResult['CURRENT_USER_ID'] = $currentUserId;
 		$this->arResult['DEFAULT_ORIGINATOR'] = $currentUser;
 		$this->arResult['DEFAULT_RESPONSIBLE'] = $currentUser;
 		$this->arResult['NAME_FORMATS'] = PersonNameFormatter::getAllDescriptions();
 		$this->arResult['ENCODINGS'] = $encodings;
-		$this->arResult['HEADERS'] = array(
-			array('id' => 'TITLE', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_TITLE'), 'mandatory' => 'Y'),
-			array('id' => 'DESCRIPTION', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_DESCRIPTION')),
-			array('id' => 'PRIORITY', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_PRIORITY')),
-			array('id' => 'RESPONSIBLE', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_RESPONSIBLE')),
-			array('id' => 'ORIGINATOR', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_ORIGINATOR')),
-			array('id' => 'ACCOMPLICES', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_ACCOMPLICES')),
-			array('id' => 'AUDITORS', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_AUDITORS')),
-			array('id' => 'DEADLINE', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_DEADLINE')),
-			array('id' => 'START_DATE_PLAN', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_START_DATE_PLAN')),
-			array('id' => 'END_DATE_PLAN', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_END_DATE_PLAN')),
-			array('id' => 'ALLOW_CHANGE_DEADLINE', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_ALLOW_CHANGE_DEADLINE')),
-			array('id' => 'MATCH_WORK_TIME', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_MATCH_WORK_TIME')),
-			array('id' => 'TASK_CONTROL', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_TASK_CONTROL')),
-			array('id' => 'PARAM_1', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_PARAM_1')),
-			array('id' => 'PARAM_2', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_PARAM_2')),
-			array('id' => 'PROJECT', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_PROJECT')),
-			array('id' => 'ALLOW_TIME_TRACKING', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_ALLOW_TIME_TRACKING')),
-			array('id' => 'TIME_ESTIMATE', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_TIME_ESTIMATE')),
-			array('id' => 'CHECKLIST', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_CHECKLIST')),
-			array('id' => 'TAGS', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_TAGS'))
-		);
-		$this->arResult['SEPARATORS'] = array(
+		$this->arResult['HEADERS'] = [
+			['id' => 'TITLE', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_TITLE'), 'mandatory' => 'Y'],
+			['id' => 'DESCRIPTION', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_DESCRIPTION')],
+			['id' => 'PRIORITY', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_PRIORITY')],
+			['id' => 'RESPONSIBLE', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_RESPONSIBLE')],
+			['id' => 'ORIGINATOR', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_ORIGINATOR')],
+			['id' => 'ACCOMPLICES', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_ACCOMPLICES')],
+			['id' => 'AUDITORS', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_AUDITORS')],
+			['id' => 'DEADLINE', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_DEADLINE')],
+			['id' => 'START_DATE_PLAN', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_START_DATE_PLAN')],
+			['id' => 'END_DATE_PLAN', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_END_DATE_PLAN')],
+			['id' => 'ALLOW_CHANGE_DEADLINE', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_ALLOW_CHANGE_DEADLINE')],
+			['id' => 'MATCH_WORK_TIME', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_MATCH_WORK_TIME')],
+			['id' => 'TASK_CONTROL', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_TASK_CONTROL')],
+			['id' => 'PARAM_1', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_PARAM_1')],
+			['id' => 'PARAM_2', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_PARAM_2')],
+			['id' => 'PROJECT', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_PROJECT')],
+			['id' => 'ALLOW_TIME_TRACKING', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_ALLOW_TIME_TRACKING')],
+			['id' => 'TIME_ESTIMATE', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_TIME_ESTIMATE')],
+			['id' => 'CHECKLIST', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_CHECKLIST')],
+			['id' => 'TAGS', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_TAGS')],
+		];
+		$this->arResult['SEPARATORS'] = [
 			'semicolon' => Loc::getMessage('TASKS_IMPORT_FIELDS_FILE_SEPARATOR_SEMICOLON'),
 			'comma' => Loc::getMessage('TASKS_IMPORT_FIELDS_FILE_SEPARATOR_COMMA'),
 			'tab' => Loc::getMessage('TASKS_IMPORT_FIELDS_FILE_SEPARATOR_TAB'),
-			'space' => Loc::getMessage('TASKS_IMPORT_FIELDS_FILE_SEPARATOR_SPACE')
-		);
+			'space' => Loc::getMessage('TASKS_IMPORT_FIELDS_FILE_SEPARATOR_SPACE'),
+		];
 
-		$headers = array();
-		$requiredFields = array();
-		$fields = array('' => '');
-		$upperFields = array();
+		$headers = [];
+		$requiredFields = [];
+		$fields = ['' => ''];
+		$upperFields = [];
 		foreach($this->arResult['HEADERS'] as $header)
 		{
-			$headers[] = $header['name'];
-			$fields[$header['id']] = $header['name'];
-			$upperFields[$header['id']] = ToUpper($header['name']);
-			if ($header['mandatory'] == 'Y')
-				$requiredFields[$header['id']] = $header['name'];
+			$headerId = $header['id'];
+			$headerName = $header['name'];
+
+			$headers[] = $headerName;
+			$fields[$headerId] = $headerName;
+			$upperFields[$headerId] = ToUpper($headerName);
+			if ($header['mandatory'] === 'Y')
+			{
+				$requiredFields[$headerId] = $headerName;
+			}
 		}
 		$this->arResult['IMPORT_FILE_PARAMETERS']['HEADERS'] = $headers;
 		$this->arResult['IMPORT_FILE_PARAMETERS']['REQUIRED_FIELDS'] = $requiredFields;
@@ -124,51 +138,68 @@ class TasksImportComponent extends TasksBaseComponent
 		$this->arResult['IMPORT_FILE_PARAMETERS']['FILE_NAME'] = Loc::getMessage('TASKS_IMPORT_FIELDS_FILE_NAME');
 	}
 
+	/**
+	 * @return bool
+	 */
 	protected function doPreAction()
 	{
-		if (!\Bitrix\Tasks\Access\TaskAccessController::can($this->userId, \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_IMPORT))
+		if (!Access\TaskAccessController::can($this->userId, Access\ActionDictionary::ACTION_TASK_IMPORT))
 		{
-			$this->errors->add('ACCESS_DENIED', Loc::getMessage('TASKS_COMMON_ACCESS_DENIED'), \Bitrix\Tasks\Util\Error::TYPE_FATAL);
+			$this->errors->add(
+				'ACCESS_DENIED',
+				Loc::getMessage('TASKS_COMMON_ACCESS_DENIED'),
+				Error::TYPE_FATAL
+			);
 		}
 		return parent::doPreAction();
 	}
 
+	/**
+	 * @return bool|void
+	 * @throws Main\ArgumentNullException
+	 * @throws Main\ArgumentOutOfRangeException
+	 */
 	protected function doPostAction()
 	{
 		$application = Application::getInstance();
 		$context = $application->getContext();
 		$request = $context->getRequest();
 
-		if ($request->get('download') == 'csv')
+		if ($request->get('download') === 'csv')
+		{
 			$this->downloadSampleCsvFile();
+		}
 
 		if ($request->isPost() && check_bitrix_sessid())
 		{
-			$step = $request->get('step');
-			$this->arResult['STEP'] = intval($step);
+			$step = (int)$request->get('step');
+			$this->arResult['STEP'] = $step;
+
 			if ($request->get('next'))
 			{
-				if ($step == 1)
+				if ($step === 1)
 				{
 					$this->handleStep1($request);
 				}
-				elseif ($step == 2)
+				elseif ($step === 2)
 				{
 					$this->handleStep2Next($request);
 				}
-				elseif ($step == 3)
+				elseif ($step === 3)
 				{
 					if (!$this->arResult['IFRAME'])
+					{
 						$this->moveToCurrentUserTasks();
+					}
 				}
 			}
 			elseif ($request->get('back'))
 			{
-				if ($step == 2)
+				if ($step === 2)
 				{
 					$this->handleStep2Back($request);
 				}
-				elseif ($step == 3)
+				elseif ($step === 3)
 				{
 					$this->arResult['STEP'] = 1;
 				}
@@ -176,7 +207,9 @@ class TasksImportComponent extends TasksBaseComponent
 			elseif ($request->get('cancel'))
 			{
 				if (!$this->arResult['IFRAME'])
+				{
 					$this->moveToCurrentUserTasks();
+				}
 			}
 		}
 	}
@@ -186,21 +219,27 @@ class TasksImportComponent extends TasksBaseComponent
 	 *
 	 * @param HttpRequest $request
 	 */
-	private function handleStep1(HttpRequest $request)
+	private function handleStep1(HttpRequest $request): void
 	{
 		$this->loadRequestValues($request);
 		if (!$this->checkFileErrors())
+		{
 			$this->fillStep2DataFromFile();
+		}
 		else
+		{
 			$this->unselectFile();
+		}
 	}
 
 	/**
 	 * Fills the array with import parameters
 	 *
 	 * @param HttpRequest $request
+	 * @throws Main\ArgumentNullException
+	 * @throws Main\ArgumentOutOfRangeException
 	 */
-	private function handleStep2Next(HttpRequest $request)
+	private function handleStep2Next(HttpRequest $request): void
 	{
 		$headers = $this->parseStringToArray($request->get('hidden_headers'));
 		$requiredFields = $this->parseStringToArray($request->get('hidden_required_fields'));
@@ -208,22 +247,26 @@ class TasksImportComponent extends TasksBaseComponent
 		$rows = $this->parseStringToArray($request->get('hidden_rows'), true);
 		$skippedColumns = $this->parseStringToArray($request->get('hidden_skipped_columns'));
 
-		$upperFields = array();
-		foreach ($fields as $key => $value)
-			$upperFields[$key] = ToUpper($value);
+		$upperFields = $fields;
+		$upperFields = array_map('mb_strtoupper', $upperFields);
 
-		$selectedFields = array();
+		$selectedFields = [];
 		$requiredFieldsWithFlag = $requiredFields;
 		$headersCount = count($headers);
+
 		foreach ($requiredFieldsWithFlag as $key => $value)
+		{
 			$requiredFieldsWithFlag[$key] = 0;
+		}
 		for ($i = 0; $i < $headersCount; $i++)
 		{
 			$fieldValue = $request->get('field_'.$i);
 			foreach ($requiredFieldsWithFlag as $key => $value)
 			{
-				if ($fieldValue == $key)
+				if ($fieldValue === $key)
+				{
 					$requiredFieldsWithFlag[$key] = 1;
+				}
 			}
 			$selectedFields[$i] = $fieldValue;
 		}
@@ -236,14 +279,17 @@ class TasksImportComponent extends TasksBaseComponent
 		$this->arResult['IMPORT_FILE_PARAMETERS']['ROWS'] = $rows;
 		$this->arResult['IMPORT_FILE_PARAMETERS']['SKIPPED_COLUMNS'] = $skippedColumns;
 		$this->arResult['IMPORT_FILE_PARAMETERS']['FILE_POS'] = 0;
-		$this->arResult['IMPORT_FILE_PARAMETERS']['MAX_EXECUTION_TIME'] = Option::get('tasks', 'import_step', 15);
+		$this->arResult['IMPORT_FILE_PARAMETERS']['MAX_EXECUTION_TIME'] =
+			Option::get('tasks', 'import_step', 15);
+
 		$this->loadRequestValues($request);
 
 		foreach ($requiredFieldsWithFlag as $key => $value)
 		{
-			if ($value == 0)
+			if ($value === 0)
 			{
-				$this->arResult['ERRORS']['REQUIRED_FIELDS'] = Loc::getMessage('TASKS_IMPORT_ERRORS_REQUIRED_FIELDS');
+				$this->arResult['ERRORS']['REQUIRED_FIELDS'] =
+					Loc::getMessage('TASKS_IMPORT_ERRORS_REQUIRED_FIELDS');
 				return;
 			}
 		}
@@ -256,13 +302,15 @@ class TasksImportComponent extends TasksBaseComponent
 	 *
 	 * @param HttpRequest $request
 	 */
-	private function handleStep2Back(HttpRequest $request)
+	private function handleStep2Back(HttpRequest $request): void
 	{
 		$this->loadRequestValues($request);
 		$this->arResult['IMPORT_FILE_PARAMETERS']['FROM_TMP_DIR'] = true;
 
-		if (($filePath = $this->getFilePath()) == null)
+		if (($filePath = $this->getFilePath()) === null)
+		{
 			return;
+		}
 
 		$csvFile = $this->getCsvFileByPath($filePath);
 
@@ -286,12 +334,14 @@ class TasksImportComponent extends TasksBaseComponent
 	 * @param CCSVData $csvFile - File
 	 * @return bool
 	 */
-	private function detectUtf8Encoding(CCSVData $csvFile)
+	private function detectUtf8Encoding(CCSVData $csvFile): bool
 	{
 		$stringLineOfFile = '';
 		$arrayLineOfFile = $csvFile->Fetch();
 		foreach ($arrayLineOfFile as $value)
+		{
 			$stringLineOfFile .= $value.$this->arResult['IMPORT_FILE_PARAMETERS']['SEPARATOR'];
+		}
 
 		return Encoding::detectUtf8($stringLineOfFile);
 	}
@@ -299,17 +349,19 @@ class TasksImportComponent extends TasksBaseComponent
 	/**
 	 * Configures step 2 data from loaded file's parameters
 	 */
-	private function fillStep2DataFromFile()
+	private function fillStep2DataFromFile(): void
 	{
 		$this->fillFieldsForMatching();
 
-		if (($filePath = $this->getFilePath()) == null)
+		if (($filePath = $this->getFilePath()) === null)
+		{
 			return;
+		}
 
 		$csvFile = $this->getCsvFileByPath($filePath);
-
 		$this->fillRowsForExampleTableFromCsv($csvFile);
-		if (count($this->arResult['IMPORT_FILE_PARAMETERS']['ROWS']) == 0)
+
+		if (count($this->arResult['IMPORT_FILE_PARAMETERS']['ROWS']) === 0)
 		{
 			$this->arResult['ERRORS']['FILE_LABEL'] = Loc::getMessage('TASKS_IMPORT_ERRORS_FILE_EMPTY');
 			return;
@@ -323,7 +375,7 @@ class TasksImportComponent extends TasksBaseComponent
 	 * @param CCSVData $csvFile - File
 	 * @return array
 	 */
-	private function getEncodedResults(CCSVData $csvFile)
+	private function getEncodedResults(CCSVData $csvFile): array
 	{
 		$csvFile->SetPos();
 
@@ -338,7 +390,6 @@ class TasksImportComponent extends TasksBaseComponent
 					break;
 				}
 			}
-
 			if (mb_strlen($resultLine) > 50)
 			{
 				break;
@@ -346,13 +397,13 @@ class TasksImportComponent extends TasksBaseComponent
 		}
 		$resultLine = mb_substr($resultLine, 0, 50);
 
-		$encodedResult = array();
+		$encodedResult = [];
 		foreach ($this->arResult['CHARSETS'] as $charset)
 		{
 			$encodedResult[$charset] = (
-				$charset == SITE_CHARSET?
-				mb_convert_encoding($resultLine, $charset, $charset) :
-				Encoding::convertEncoding($resultLine, $charset, SITE_CHARSET)
+				$charset === SITE_CHARSET
+					? mb_convert_encoding($resultLine, $charset, $charset)
+					: Encoding::convertEncoding($resultLine, $charset, SITE_CHARSET)
 			);
 
 			$questionsCount = substr_count($encodedResult[$charset], '?');
@@ -372,23 +423,25 @@ class TasksImportComponent extends TasksBaseComponent
 	 *
 	 * @return bool
 	 */
-	private function checkFileErrors()
+	private function checkFileErrors(): bool
 	{
 		if (!is_uploaded_file($_FILES['file']['tmp_name']))
 		{
 			if ($this->arResult['IMPORT_FILE_PARAMETERS']['FROM_TMP_DIR'])
+			{
 				return false;
-			else
-				$this->arResult['ERRORS']['FILE_LABEL'] = Loc::getMessage('TASKS_IMPORT_ERRORS_FILE_NOT_FOUND');
+			}
+			$this->arResult['ERRORS']['FILE_LABEL'] = Loc::getMessage('TASKS_IMPORT_ERRORS_FILE_NOT_FOUND');
 		}
 		else
 		{
 			if ($_FILES['file']['error'] > 0)
 			{
-				if ($_FILES['file']['error'] == 4)
-					$this->arResult['ERRORS']['FILE_LABEL'] = Loc::getMessage('TASKS_IMPORT_ERRORS_FILE_NOT_FOUND');
-				else
-					$this->arResult['ERRORS']['FILE_LABEL'] = Loc::getMessage('TASKS_IMPORT_ERRORS_FILE_ERRORS');
+				$this->arResult['ERRORS']['FILE_LABEL'] = Loc::getMessage((
+					$_FILES['file']['error'] === 4
+						? 'TASKS_IMPORT_ERRORS_FILE_NOT_FOUND'
+						: 'TASKS_IMPORT_ERRORS_FILE_ERRORS'
+				));
 			}
 			if (($error = CFile::CheckFile($_FILES['file'], 0, 0, 'csv')) !== '')
 			{
@@ -403,36 +456,34 @@ class TasksImportComponent extends TasksBaseComponent
 	 * Encodes data to site encoding
 	 *
 	 * @param $data - Data to encode
-	 * @return array|bool|SplFixedArray|string - Encoded data
+	 * @return mixed - Encoded data
 	 */
 	private function encodeDataToSiteCharset($data)
 	{
 		$fileEncoding = $this->arResult['IMPORT_FILE_PARAMETERS']['FILE_ENCODING'];
 
-		if ($fileEncoding == 'auto' && isset($this->arResult['IMPORT_FILE_PARAMETERS']['FOUND_FILE_ENCODING']))
+		if ($fileEncoding === 'auto' && isset($this->arResult['IMPORT_FILE_PARAMETERS']['FOUND_FILE_ENCODING']))
 		{
 			$fileEncoding = $this->arResult['IMPORT_FILE_PARAMETERS']['FOUND_FILE_ENCODING'];
 		}
 
 		if ($fileEncoding !== 'auto' && $fileEncoding !== mb_strtolower(SITE_CHARSET))
 		{
-			$convertCharsetErrorMsg = '';
-
 			//HACK: Remove UTF-8 BOM
 			if ($fileEncoding === 'UTF-8')
 			{
-				if (is_string($data) && mb_substr($data, 0, 3) === "\xEF\xBB\xBF")
+				if (is_string($data) && mb_strpos($data, "\xEF\xBB\xBF") === 0)
 				{
 					$data = mb_substr($data, 3);
 				}
-				elseif (is_array($data) && is_string($data[0]) && mb_substr($data[0], 0, 3) === "\xEF\xBB\xBF")
+				elseif (is_array($data) && is_string($data[0]) && mb_strpos($data[0], "\xEF\xBB\xBF") === 0)
 				{
 					$data[0] = mb_substr($data[0], 3);
 				}
 			}
 
-			$data = Encoding::convertEncoding($data, $fileEncoding, SITE_CHARSET, $convertCharsetErrorMsg);
-			if ($fileEncoding == SITE_CHARSET)
+			$data = Encoding::convertEncoding($data, $fileEncoding, SITE_CHARSET);
+			if ($fileEncoding === SITE_CHARSET)
 			{
 				if (is_array($data))
 				{
@@ -456,48 +507,65 @@ class TasksImportComponent extends TasksBaseComponent
 	 *
 	 * @param CCSVData $csvFile - CSV file
 	 */
-	private function fillRowsForExampleTableFromCsv(CCSVData $csvFile)
+	private function fillRowsForExampleTableFromCsv(CCSVData $csvFile): void
 	{
 		$row = 1;
-		$headers = array();
-		$rows = array();
-		$skippedColumns = array();
+		$headers = [];
+		$rows = [];
+		$skippedColumns = [];
 		$skipEmptyColumns = $this->arResult['IMPORT_FILE_PARAMETERS']['SKIP_EMPTY_COLUMNS'];
 		$headersInFirstRow = $this->arResult['IMPORT_FILE_PARAMETERS']['HEADERS_IN_FIRST_ROW'];
-		$maxExampleRows = ($headersInFirstRow) ? 4 : 3;
+		$maxExampleRows = ($headersInFirstRow ? 4 : 3);
 
 		while ($rowData = $csvFile->Fetch())
 		{
 			$rowData = $this->encodeDataToSiteCharset($rowData);
 
-			if ($row == 1)
+			if ($row === 1)
 			{
 				$columnIndex = 0;
 				foreach ($rowData as $key => $value)
 				{
-					if ($skipEmptyColumns && ($value == ''))
+					if ($skipEmptyColumns && $value === '')
 					{
 						$skippedColumns[$columnIndex] = $columnIndex;
 						$columnIndex++;
 						continue;
 					}
 					if ($headersInFirstRow)
-						$headers[$key] = empty($value) ? Loc::getMessage('TASKS_IMPORT_CUSTOM_HEADER').' '.($key + 1) : trim($value);
+					{
+						$headers[$key] = (
+							empty($value)
+								? Loc::getMessage('TASKS_IMPORT_CUSTOM_HEADER').' '.($key + 1)
+								: trim($value)
+						);
+					}
 					else
+					{
 						$headers[$key] = Loc::getMessage('TASKS_IMPORT_CUSTOM_HEADER').' '.($key + 1);
-
+					}
 					$columnIndex++;
 				}
 				if (!$headersInFirstRow)
+				{
 					foreach ($headers as $key => $value)
+					{
 						$rows[$row][$key] = $rowData[$key];
+					}
+				}
 			}
 			else
+			{
 				foreach ($headers as $key => $value)
+				{
 					$rows[$row][$key] = $rowData[$key];
+				}
+			}
 
 			if ($row >= $maxExampleRows)
+			{
 				break;
+			}
 
 			$row++;
 		}
@@ -509,18 +577,25 @@ class TasksImportComponent extends TasksBaseComponent
 	/**
 	 * Fills the arrays for step 2 tuning field's match
 	 */
-	private function fillFieldsForMatching()
+	private function fillFieldsForMatching(): void
 	{
-		$requiredFields = array();
-		$fields = array('' => '');
-		$upperFields = array();
+		$requiredFields = [];
+		$fields = ['' => ''];
+		$upperFields = [];
+
 		foreach ($this->arResult['HEADERS'] as $header)
 		{
-			$fields[$header['id']] = $header['name'];
-			$upperFields[$header['id']] = ToUpper($header['name']);
-			if ($header['mandatory'] == 'Y')
-				$requiredFields[$header['id']] = $header['name'];
+			$headerId = $header['id'];
+			$headerName = $header['name'];
+
+			$fields[$headerId] = $headerName;
+			$upperFields[$headerId] = ToUpper($headerName);
+			if ($header['mandatory'] === 'Y')
+			{
+				$requiredFields[$headerId] = $headerName;
+			}
 		}
+
 		$this->arResult['IMPORT_FILE_PARAMETERS']['REQUIRED_FIELDS'] = $requiredFields;
 		$this->arResult['IMPORT_FILE_PARAMETERS']['FIELDS'] = $fields;
 		$this->arResult['IMPORT_FILE_PARAMETERS']['UPPER_FIELDS'] = $upperFields;
@@ -531,40 +606,57 @@ class TasksImportComponent extends TasksBaseComponent
 	 *
 	 * @param HttpRequest $request
 	 */
-	private function loadRequestValues(HttpRequest $request)
+	private function loadRequestValues(HttpRequest $request): void
 	{
 		foreach (self::$map as $key => $value)
+		{
 			if ($request->get($value))
+			{
 				$this->arResult['IMPORT_FILE_PARAMETERS'][$key] = $request->get($value);
+			}
+		}
 
-		if ($this->arResult['STEP'] == 2)
+		if ($this->arResult['STEP'] === 2)
 		{
 			if ($request->get('hidden_default_originator'))
-				$this->arResult['IMPORT_FILE_PARAMETERS']['DEFAULT_ORIGINATOR'] = $request->get('hidden_default_originator');
+			{
+				$this->arResult['IMPORT_FILE_PARAMETERS']['DEFAULT_ORIGINATOR'] =
+					$request->get('hidden_default_originator');
+			}
 			if ($request->get('hidden_default_responsible'))
-				$this->arResult['IMPORT_FILE_PARAMETERS']['DEFAULT_RESPONSIBLE'] = $request->get('hidden_default_responsible');
+			{
+				$this->arResult['IMPORT_FILE_PARAMETERS']['DEFAULT_RESPONSIBLE'] =
+					$request->get('hidden_default_responsible');
+			}
 		}
 
 		$headersInFirstRow = $this->arResult['IMPORT_FILE_PARAMETERS']['HEADERS_IN_FIRST_ROW'];
 		$skipEmptyColumns = $this->arResult['IMPORT_FILE_PARAMETERS']['SKIP_EMPTY_COLUMNS'];
 		$fromTmpDir = $this->arResult['IMPORT_FILE_PARAMETERS']['FROM_TMP_DIR'];
-		$this->arResult['IMPORT_FILE_PARAMETERS']['SEPARATOR'] = $this->getSeparatorByText($this->arResult['IMPORT_FILE_PARAMETERS']['SEPARATOR_TEXT']);
-		$this->arResult['IMPORT_FILE_PARAMETERS']['HEADERS_IN_FIRST_ROW'] = isset($headersInFirstRow) ? true : false;
-		$this->arResult['IMPORT_FILE_PARAMETERS']['SKIP_EMPTY_COLUMNS'] = isset($skipEmptyColumns) ? true : false;
-		$this->arResult['IMPORT_FILE_PARAMETERS']['FROM_TMP_DIR'] = ($fromTmpDir == 'Y') ? true : false;
-		$this->arResult['DEFAULT_ORIGINATOR'] = $this->getUsersDataById($this->arResult['IMPORT_FILE_PARAMETERS']['DEFAULT_ORIGINATOR']);
-		$this->arResult['DEFAULT_RESPONSIBLE'] = $this->getUsersDataById($this->arResult['IMPORT_FILE_PARAMETERS']['DEFAULT_RESPONSIBLE']);
+
+		$this->arResult['DEFAULT_ORIGINATOR'] = $this->getUsersDataById(
+			$this->arResult['IMPORT_FILE_PARAMETERS']['DEFAULT_ORIGINATOR']
+		);
+		$this->arResult['DEFAULT_RESPONSIBLE'] = $this->getUsersDataById(
+			$this->arResult['IMPORT_FILE_PARAMETERS']['DEFAULT_RESPONSIBLE']
+		);
+		$this->arResult['IMPORT_FILE_PARAMETERS']['SEPARATOR'] = $this->getSeparatorByText(
+			$this->arResult['IMPORT_FILE_PARAMETERS']['SEPARATOR_TEXT']
+		);
+		$this->arResult['IMPORT_FILE_PARAMETERS']['HEADERS_IN_FIRST_ROW'] = isset($headersInFirstRow);
+		$this->arResult['IMPORT_FILE_PARAMETERS']['SKIP_EMPTY_COLUMNS'] = isset($skipEmptyColumns);
+		$this->arResult['IMPORT_FILE_PARAMETERS']['FROM_TMP_DIR'] = $fromTmpDir === 'Y';
 	}
 
 	/**
 	 * Redirects to current user's tasks page
 	 */
-	private function moveToCurrentUserTasks()
+	private function moveToCurrentUserTasks(): void
 	{
 		LocalRedirect(
 			CComponentEngine::MakePathFromTemplate(
 				$this->arParams['PATH_TO_USER_TASKS'],
-				array('user_id' => $this->arResult['CURRENT_USER_ID'])
+				['user_id' => $this->arResult['CURRENT_USER_ID']]
 			)
 		);
 	}
@@ -572,7 +664,7 @@ class TasksImportComponent extends TasksBaseComponent
 	/**
 	 * Unselect the file
 	 */
-	private function unselectFile()
+	private function unselectFile(): void
 	{
 		$this->arResult['IMPORT_FILE_PARAMETERS']['FILE_NAME'] = Loc::getMessage('TASKS_IMPORT_FIELDS_FILE_NAME');
 	}
@@ -580,10 +672,10 @@ class TasksImportComponent extends TasksBaseComponent
 	/**
 	 * Returns CSV file by path
 	 *
-	 * @param $filePath - Path to file
+	 * @param string $filePath - Path to file
 	 * @return CCSVData - CSV file
 	 */
-	private function getCsvFileByPath($filePath)
+	private function getCsvFileByPath(string $filePath): CCSVData
 	{
 		$csvFile = new CCSVData();
 		$csvFile->LoadFile($filePath);
@@ -612,10 +704,10 @@ class TasksImportComponent extends TasksBaseComponent
 	/**
 	 * Returns true if file's hash name is valid otherwise returns false
 	 *
-	 * @param $fileHashName - Hash name of file
+	 * @param string $fileHashName - Hash name of file
 	 * @return bool
 	 */
-	private function checkFileHashName($fileHashName)
+	private function checkFileHashName(string $fileHashName): bool
 	{
 		if (!preg_match('/[0-9a-f]{32}\.tmp/i', $fileHashName))
 		{
@@ -629,10 +721,10 @@ class TasksImportComponent extends TasksBaseComponent
 	/**
 	 * Returns true if file exists by path
 	 *
-	 * @param $filePath - Path to file
+	 * @param string $filePath - Path to file
 	 * @return bool
 	 */
-	private function checkFileExistenceByPath($filePath)
+	private function checkFileExistenceByPath(string $filePath): bool
 	{
 		if (!file_exists($filePath))
 		{
@@ -648,10 +740,12 @@ class TasksImportComponent extends TasksBaseComponent
 	 *
 	 * @return null|string
 	 */
-	private function getFilePath()
+	private function getFilePath(): ?string
 	{
-		if (($tmpDirPath = $this->getTmpDirPath()) == null)
+		if (($tmpDirPath = $this->getTmpDirPath()) === null)
+		{
 			return null;
+		}
 
 		if ($this->arResult['IMPORT_FILE_PARAMETERS']['FROM_TMP_DIR'])
 		{
@@ -670,18 +764,20 @@ class TasksImportComponent extends TasksBaseComponent
 		}
 
 		if ($this->checkFileHashName($fileHashName) && $this->checkFileExistenceByPath($filePath))
+		{
 			return $filePath;
-		else
-			return null;
+		}
+
+		return null;
 	}
 
 	/**
 	 * Moves file to new location
 	 *
-	 * @param $file - File
-	 * @param $location - New location
+	 * @param string $file - File
+	 * @param string $location - New location
 	 */
-	private function moveFileToLocation($file, $location)
+	private function moveFileToLocation(string $file, string $location): void
 	{
 		move_uploaded_file($file, $location);
 	}
@@ -689,30 +785,34 @@ class TasksImportComponent extends TasksBaseComponent
 	/**
 	 * Changes file mode
 	 *
-	 * @param $filePath - Path to file
-	 * @param $mode - Target mode
+	 * @param string $filePath - Path to file
+	 * @param int $mode - Target mode
 	 */
-	private function changeFileMode($filePath, $mode)
+	private function changeFileMode(string $filePath, int $mode): void
 	{
-		@chmod($filePath, $mode);
+		chmod($filePath, $mode);
 	}
 
 	/**
 	 * Returns user's data by user's id
 	 *
-	 * @param $userId
-	 * @return array|bool|false|mixed|null
+	 * @param int $userId
+	 * @return mixed
 	 */
-	private function getUsersDataById($userId)
+	private function getUsersDataById(int $userId)
 	{
-		$result = array();
-		$fields = array('ID', 'TITLE', 'NAME', 'SECOND_NAME', 'LAST_NAME');
+		$result = [];
+		$fields = ['ID', 'TITLE', 'NAME', 'SECOND_NAME', 'LAST_NAME'];
 
 		$dbUser = CUser::GetByID($userId);
-		$user = is_object($dbUser) ? $dbUser->Fetch() : null;
-
-		foreach ($fields as $field)
-			$result[$field] = $user[$field];
+		$user = (is_object($dbUser) ? $dbUser->Fetch() : null);
+		if (is_array($user))
+		{
+			foreach ($fields as $field)
+			{
+				$result[$field] = $user[$field];
+			}
+		}
 
 		return $result;
 	}
@@ -723,9 +823,9 @@ class TasksImportComponent extends TasksBaseComponent
 	 * @param int $numberOfDemoLines - The amount of line in sample CSV file with demo values
 	 * @return array
 	 */
-	private function generateDemoValues($numberOfDemoLines = 1)
+	private function generateDemoValues(int $numberOfDemoLines = 1): array
 	{
-		$demoValues = array();
+		$demoValues = [];
 		$time = time();
 		$deadline = UI::formatDateTime($time + 86400);
 		$startDatePlan = UI::formatDateTime($time);
@@ -733,7 +833,7 @@ class TasksImportComponent extends TasksBaseComponent
 
 		for ($i = 0; $i < $numberOfDemoLines; $i++)
 		{
-			$demoValues[$i] = array(
+			$demoValues[$i] = [
 				'TITLE' => Loc::getMessage('TASKS_IMPORT_DEMO_VALUES_TITLE'),
 				'DESCRIPTION' => Loc::getMessage('TASKS_IMPORT_DEMO_VALUES_DESCRIPTION'),
 				'PRIORITY' => '1',
@@ -752,9 +852,9 @@ class TasksImportComponent extends TasksBaseComponent
 				'PROJECT' => Loc::getMessage('TASKS_IMPORT_DEMO_VALUES_PROJECT'),
 				'ALLOW_TIME_TRACKING' => '1',
 				'TIME_ESTIMATE' => 43200,
-				'CHECKLIST' => Loc::getMessage('TASKS_IMPORT_DEMO_VALUES_CHECKLIST'),
-				'TAGS' => Loc::getMessage('TASKS_IMPORT_DEMO_VALUES_TAGS')
-			);
+				'CHECKLIST' => Loc::getMessage('TASKS_IMPORT_DEMO_VALUES_CHECKLIST_NEW'),
+				'TAGS' => Loc::getMessage('TASKS_IMPORT_DEMO_VALUES_TAGS'),
+			];
 		}
 
 		return $demoValues;
@@ -763,9 +863,9 @@ class TasksImportComponent extends TasksBaseComponent
 	/**
 	 * Creates file with demo values to download
 	 *
-	 * @param $demoValues - Demo values
+	 * @param array $demoValues - Demo values
 	 */
-	private function createDemoFile($demoValues)
+	private function createDemoFile(array $demoValues): void
 	{
 		Header("Content-Type: application/force-download");
 		Header("Content-Type: application/octet-stream");
@@ -775,16 +875,26 @@ class TasksImportComponent extends TasksBaseComponent
 
 		// add UTF-8 BOM marker
 		if (defined('BX_UTF') && BX_UTF)
+		{
 			echo chr(239).chr(187).chr(191);
+		}
 
 		foreach ($this->arResult['HEADERS'] as $header)
+		{
 			echo '"'.str_replace('"', '""', $header['name']).'";';
+		}
 		echo "\n";
 
 		foreach ($demoValues as $line => $values)
 		{
 			foreach ($this->arResult['HEADERS'] as $header)
-				echo isset($values[$header['id']]) ? '"'.str_replace('"', '""', $values[$header['id']]).'";' : '"";';
+			{
+				echo (
+					isset($values[$header['id']])
+						? '"'.str_replace('"', '""', $values[$header['id']]).'";'
+						: '"";'
+				);
+			}
 			echo "\n";
 		}
 	}
@@ -792,7 +902,7 @@ class TasksImportComponent extends TasksBaseComponent
 	/**
 	 * Downloads sample CSV file
 	 */
-	private function downloadSampleCsvFile()
+	private function downloadSampleCsvFile(): void
 	{
 		global $APPLICATION;
 		$APPLICATION->RestartBuffer();
@@ -801,61 +911,66 @@ class TasksImportComponent extends TasksBaseComponent
 		$this->createDemoFile($demoValues);
 
 		CMain::FinalActions();
-		die();
 	}
 
 	/**
 	 * Returns separator's sign by separator's name
 	 *
-	 * @param $separatorText - Separator's name
+	 * @param string $separatorText - Separator's name
 	 * @return string - Separator's sign
 	 */
-	private function getSeparatorByText($separatorText)
+	private function getSeparatorByText(string $separatorText): string
 	{
 		switch ($separatorText)
 		{
-			case 'semicolon':
-				$separator = ';';
-				break;
 			case 'comma':
 				$separator = ',';
 				break;
+
 			case 'tab':
 				$separator = "\t";
 				break;
+
 			case 'space':
 				$separator = ' ';
 				break;
+
+			case 'semicolon':
 			default:
 				$separator = ';';
 				break;
 		}
+
 		return $separator;
 	}
 
 	/**
-	 * Transforms string with delimiters [*] and [**] ([***] if multipleArray) in array
+	 * Transforms string with delimiters [/] and [//] ([///] if multipleArray) in array
 	 *
-	 * @param $string - String
+	 * @param string $string - String
 	 * @param bool $multipleArray - True if more that 2 divisions
 	 * @return array
 	 */
-	private function parseStringToArray($string, $multipleArray = false)
+	private function parseStringToArray(string $string, bool $multipleArray = false): array
 	{
-		$result = array();
+		$result = [];
 
 		if ($multipleArray)
 		{
 			$explodedRows = explode('[///]', $string);
 			foreach ($explodedRows as $index => $explodedRow)
 			{
-				if ($explodedRow == '')
+				if ($explodedRow === '')
+				{
 					continue;
+				}
 				$explodedResults = explode('[//]', $explodedRow);
 				foreach ($explodedResults as $explodedResult)
 				{
-					if ($explodedResult == '')
+					if ($explodedResult === '')
+					{
 						continue;
+					}
 					$tmp = explode('[/]', $explodedResult);
 					$result[$index][$tmp[0]] = $tmp[1];
 				}
@@ -866,13 +981,19 @@ class TasksImportComponent extends TasksBaseComponent
 			$explodedResults = explode('[//]', $string);
 			foreach ($explodedResults as $explodedResult)
 			{
-				if ($explodedResult == '')
+				if ($explodedResult === '')
+				{
 					continue;
+				}
 				$tmp = explode('[/]', $explodedResult);
 				if ($multipleArray)
+				{
 					$result[0][$tmp[0]] = $tmp[1];
+				}
 				else
+				{
 					$result[$tmp[0]] = $tmp[1];
+				}
 			}
 		}
 

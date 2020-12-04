@@ -732,10 +732,10 @@ else
 					$ar = array("DAILY" => "DAILY", "WEEKLY" => "WEEKLY", "MONTHLY" => "MONTHLY_ABSOLUTE", "YEARLY" => "YEARLY_ABSOLUTE");
 					$arFields["RECURRING_TYPE"] = $ar[$arFields["PROPERTY_PERIOD_TYPE"]];
 
-					if (isset($arFields["PROPERTY_PERIOD_COUNT"]) && strlen($arFields["PROPERTY_PERIOD_COUNT"]) > 0)
+					if (isset($arFields["PROPERTY_PERIOD_COUNT"]) && $arFields["PROPERTY_PERIOD_COUNT"] <> '')
 						$arFields["RECURRING_INTERVAL"] = $arFields["PROPERTY_PERIOD_COUNT"];
 
-					if ($arFields["PROPERTY_PERIOD_TYPE"] == "WEEKLY" && strlen($arFields["PROPERTY_PERIOD_ADDITIONAL"]) > 0)
+					if ($arFields["PROPERTY_PERIOD_TYPE"] == "WEEKLY" && $arFields["PROPERTY_PERIOD_ADDITIONAL"] <> '')
 					{
 						static $arWeekDayMap = array(6 => "Sunday", 0 => "Monday", 1 => "Tuesday", 2 => "Wednesday", 3 => "Thursday", 4 => "Friday", 5 => "Saturday");
 
@@ -872,8 +872,8 @@ else
 			if (count($arBody) > 0)
 			{
 				$arResultItem["DETAIL_TEXT"] = $this->Encode($arBody[0]->GetContent());
-				$arResultItem["DETAIL_TEXT_TYPE"] = strtolower($arBody[0]->GetAttribute("BodyType"));
-				if (strtolower($arResultItem["DETAIL_TEXT_TYPE"]) == "html")
+				$arResultItem["DETAIL_TEXT_TYPE"] = mb_strtolower($arBody[0]->GetAttribute("BodyType"));
+				if (mb_strtolower($arResultItem["DETAIL_TEXT_TYPE"]) == "html")
 					$arResultItem["DETAIL_TEXT"] = trim(strip_tags($arResultItem["DETAIL_TEXT"], '<b><i><u><p><img><a><br><ol><ul><li><hr>'));
 			}
 
@@ -1036,7 +1036,7 @@ else
 			{
 				$itemBody .= "     <Body";
 				if (array_key_exists("BodyType", $arFields))
-					$itemBody .= " BodyType=\"".(strtolower($arFields["BodyType"]) == "html" ? "HTML" : "Text")."\"";
+					$itemBody .= " BodyType=\"".(mb_strtolower($arFields["BodyType"]) == "html" ? "HTML" : "Text")."\"";
 				$itemBody .= ">".htmlspecialcharsbx($value)."</Body>\r\n";
 			}
 			elseif ($key == "RequiredAttendees")
@@ -1327,7 +1327,7 @@ else
 										$ar = preg_split("/[;,\s]/i", $arModifiedCalendarItem["RECURRING_DAYSOFWEEK"]);
 										$ar1 = array();
 										foreach ($ar as $v)
-											$ar1[] = $arWeekDayMap[strtolower($v)];
+											$ar1[] = $arWeekDayMap[mb_strtolower($v)];
 										$arModifyEventArray["PROPERTY_PERIOD_ADDITIONAL"] = implode(",", $ar1);
 									}
 								}
@@ -1393,9 +1393,9 @@ else
 				$arParams["interval"] = 1;
 			$arParams["interval"] = intval($arParams["interval"]);
 
-			if (!isset($arParams["freq"]) || !in_array(strtoupper($arParams["freq"]), array('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY')))
+			if (!isset($arParams["freq"]) || !in_array(mb_strtoupper($arParams["freq"]), array('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY')))
 				$arParams["freq"] = "DAILY";
-			$arParams["freq"] = strtoupper($arParams["freq"]);
+			$arParams["freq"] = mb_strtoupper($arParams["freq"]);
 
 			if ($arParams["freq"] == 'WEEKLY')
 			{

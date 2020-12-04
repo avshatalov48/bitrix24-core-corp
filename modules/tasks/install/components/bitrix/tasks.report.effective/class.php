@@ -79,8 +79,6 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 		$this->arResult['FILTERS'] = static::getFilterList();
 		$this->arResult['PRESETS'] = static::getPresetList();
 
-		$this->arResult['EFFECTIVE_DATE_START'] = $this->getEfficiencyDate();
-
 		$this->arResult['JS_DATA']['userId'] = $this->userId;
 		$this->arResult['JS_DATA']['efficiencyData'] = static::getEfficiencyData($this->userId);
 
@@ -177,39 +175,6 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 	public static function getPresetList(): array
 	{
 		return Effective::getPresetList();
-	}
-
-	/**
-	 * @return string
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	private function getEfficiencyDate(): string
-	{
-		$format = 'Y-m-d H:i:s';
-		$dateFromDb = Option::get('tasks', 'effective_date_start');
-
-		if ($dateFromDb === '')
-		{
-			$currentDate = (new Datetime())->format($format);
-			$firstRecordTime = Effective::getFirstRecordTime();
-			$dateToSet = ($firstRecordTime ? $firstRecordTime->format($format) : $currentDate);
-
-			Option::set('tasks', 'effective_date_start', $dateToSet);
-			$dateFromDb = $dateToSet;
-		}
-
-		$date = new DateTime($dateFromDb, $format);
-
-		return Loc::getMessage('TASKS_EFFECTIVE_DATE_FORMAT', [
-			'#DAY#' => $date->format('d'),
-			'#MONTH_NAME#' => Loc::getMessage('TASKS_MONTH_'.(int)$date->format('m')),
-			'#YEAR_IF_DIFF#' => ((int)$date->format('Y') !== (int)date('Y') ? $date->format('Y') : ''),
-		]);
 	}
 
 	/**

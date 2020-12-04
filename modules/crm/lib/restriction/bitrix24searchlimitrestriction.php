@@ -28,6 +28,12 @@ class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 			return false;
 		}
 
+		$count = $this->getCount($entityTypeID);
+		return ($count > $limit);
+	}
+
+	public function getCount($entityTypeID)
+	{
 		if($entityTypeID === \CCrmOwnerType::Lead)
 		{
 			$count = \CCrmLead::GetTotalCount();
@@ -62,7 +68,7 @@ class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 			throw new Main\NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
 		}
 
-		return ($count > $limit);
+		return $count;
 	}
 
 	/**
@@ -96,7 +102,134 @@ class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 			$title = Loc::getMessage("CRM_B24_SEARCH_LIMIT_RESTRICTION_{$entityTypeName}_TITLE");
 			$title = $params['GLOBAL_SEARCH'] ? str_replace('<br>', '', $title) : $title;
 			$params['TITLE'] = $title;
+			if (!$params['GLOBAL_SEARCH'])
+			{
+				$params['ANALYTICS_LABEL'] = 'CRM_' . $entityTypeName . '_FILTER_LIMITS';
+			}
 		}
 		return $this->restrictionInfo->prepareStubInfo($params);
+	}
+
+	public function notifyLimitWarning(int $entityTypeId, int $warningCount, int $userId = null): void
+	{
+		if ($userId === null)
+		{
+			$userId = \CCrmSecurityHelper::GetCurrentUserID();
+		}
+
+		if (!$userId)
+		{
+			return;
+		}
+
+		$this->setUserNotifiedCount($entityTypeId, $warningCount, $userId);
+
+		$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeId);
+		if (
+			Main\Loader::includeModule("im") &&
+			Main\Loader::includeModule("ui") &&
+			$entityTypeName !== '')
+		{
+			$helpdeskUrl = \Bitrix\UI\Util::getArticleUrlByCode('9745327');
+
+			$message =
+				Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_'.$entityTypeName.'_WARNING_TEXT1', [
+					'#COUNT#' => $warningCount,
+					'#LIMIT#' => $this->getQuantityLimit(),
+				]).
+				"\n\n".
+				Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_'.$entityTypeName.'_WARNING_TEXT2', [
+					'#HELPDESK_LINK#' => '<a href="'.$helpdeskUrl.'">'.Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_HELPDESK_LINK').'</a>'
+				]);
+
+			$messageOut =
+				Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_'.$entityTypeName.'_WARNING_TEXT1', [
+					'#COUNT#' => $warningCount,
+					'#LIMIT#' => $this->getQuantityLimit(),
+				]).
+				' '.
+				Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_'.$entityTypeName.'_WARNING_TEXT2', [
+					'#HELPDESK_LINK#' => '('.Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_HELPDESK_LINK').': '.$helpdeskUrl.')'
+				]);
+
+			$notificationFields = array(
+				"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
+				"TO_USER_ID" => $userId,
+				"NOTIFY_TYPE" => IM_NOTIFY_SYSTEM,
+				"NOTIFY_MODULE" => "crm",
+				"NOTIFY_EVENT" => "search_limit_warning",
+				"NOTIFY_TAG" => "CRM|SEARCH_LIMIT_WARNING|".$entityTypeName,
+				"NOTIFY_MESSAGE" => $message,
+				"NOTIFY_MESSAGE_OUT" => $messageOut
+			);
+			\CIMNotify::Add($notificationFields);
+		}
+	}
+
+	public function getLimitWarningValue(int $entityTypeId, int $userId = null): int
+	{
+		if ($userId === null)
+		{
+			$userId = \CCrmSecurityHelper::GetCurrentUserID();
+		}
+
+		if (!$userId)
+		{
+			return 0;
+		}
+
+		$limit = $this->getQuantityLimit();
+		if($limit <= 0)
+		{
+			return 0;
+		}
+
+		if (\Bitrix\Crm\Integration\Bitrix24Manager::hasPurchasedLicense())
+		{
+			return 0;
+		}
+
+		return $this->calculateLimitWarningValue(
+			$this->getUserNotifiedCount($entityTypeId, $userId),
+			$this->getCount($entityTypeId),
+			$limit
+		);
+	}
+
+	protected function calculateLimitWarningValue(int $notifiedCount, int $count, int $limit): int
+	{
+		if ($count > $limit)
+		{
+			return 0;
+		}
+		$thresholds = [50, 100];
+		if ($notifiedCount < $count)
+		{
+			foreach ($thresholds as $threshold)
+			{
+				$notificationLimit = $limit - $threshold;
+				if ($notificationLimit <= 0)
+				{
+					continue;
+				}
+
+				if ($count > $notificationLimit && $notifiedCount < $notificationLimit)
+				{
+					return $notificationLimit;
+				}
+			}
+		}
+
+		return 0;
+	}
+
+	protected function getUserNotifiedCount(int $entityTypeId, int $userId): int
+	{
+		return (int)\CUserOptions::GetOption('crm', 'crm_entity_search_limit_notification_'.$entityTypeId, 0, $userId);
+	}
+
+	protected function setUserNotifiedCount(int $entityTypeId, int $count, int $userId): void
+	{
+		\CUserOptions::SetOption('crm', 'crm_entity_search_limit_notification_'.$entityTypeId, $count, false, $userId);
 	}
 }

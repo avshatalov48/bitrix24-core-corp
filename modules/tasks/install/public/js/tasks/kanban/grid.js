@@ -288,8 +288,12 @@ BX.Tasks.Kanban.Grid.prototype = {
 				}
 			}
 
-			// remove first
-			if (this.isRealtimeMode() && columnOne && !columnOne.getDraftItem())
+			if (
+				this.isRealtimeMode()
+				&& this.getItem(data.id)
+				&& columnOne
+				&& !columnOne.getDraftItem()
+			)
 			{
 				this.removeItem(data.id);
 				//this.updateItem(data.id, data, true);

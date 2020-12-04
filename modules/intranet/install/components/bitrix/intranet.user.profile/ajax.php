@@ -133,7 +133,8 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 			else
 			{
 				$ex = $APPLICATION->GetException();
-				$error = $ex->GetString();
+				$error = ($ex instanceof CApplicationException)
+					? $ex->GetString() : GetMessage('INTRANET_USER_PROFILE_DELETE_ERROR');
 			}
 
 			$this->addError(new \Bitrix\Main\Error($error));

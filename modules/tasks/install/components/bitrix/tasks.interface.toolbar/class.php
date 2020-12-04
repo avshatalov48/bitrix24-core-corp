@@ -151,13 +151,7 @@ class TasksToolbarComponent extends TasksBaseComponent
 	 */
 	protected function getCounters(): array
 	{
-		// if ($this->arParams['GROUP_ID'] > 0)
-		// {
-		// 	$counterInstance = Counter\Group::getInstance($this->arParams['GROUP_ID']);
-		// 	return $counterInstance->getCounters();
-		// }
-
-		$counterInstance = Counter::getInstance($this->arParams['OWNER_ID'], $this->arParams['GROUP_ID']);
-		return $counterInstance->getCounters($this->getFilterRole());
+		$counterInstance = Counter::getInstance($this->arParams['OWNER_ID']);
+		return $counterInstance->getCounters($this->getFilterRole(), (int) $this->arParams['GROUP_ID']);
 	}
 }

@@ -49,11 +49,6 @@ class LogDestination
 		return $this->destination;
 	}
 
-	private function useTaskRights(): bool
-	{
-		return array_key_exists('TASK_ACCESS', $this->parameters);
-	}
-
 	private function canAddMailUsers(): self
 	{
 		$this->destination['CAN_ADD_MAIL_USERS'] = (

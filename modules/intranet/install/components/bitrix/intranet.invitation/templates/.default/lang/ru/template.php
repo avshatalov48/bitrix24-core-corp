@@ -123,4 +123,5 @@ $MESS["INTRANET_INVITE_DIALOG_ACTIVE_DIRECTORY_DESC4"] = "Для того что
 $MESS["INTRANET_INVITE_DIALOG_ACTIVE_DIRECTORY_MORE"] = "Подробнее об Active Directory и его подключении…";
 $MESS["INTRANET_INVITE_DIALOG_GROUP_OR_DEPARTMENT_TITLE"] = "С привязкой к отделу и группе";
 $MESS["INTRANET_INVITE_DIALOG_MASS_INVITE_HINT"] = "Номера телефонов в массовом приглашении можно указывать только для текущей страны";
+$MESS["INTRANET_INVITE_DIALOG_CONFIRM_CREATOR_EMAIL_ERROR"] = "Перед приглашением необходимо подтвердить email создателя портала по ссылке из письма.";
 ?>

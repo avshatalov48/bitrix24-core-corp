@@ -154,6 +154,21 @@ if ($isBitrix24Template)
 			]
 		]);
 	?>
+
+	<?php if ((\Bitrix\Tasks\Internals\Counter\CounterQueue::getInstance())->isInQueue((int) $arParams['USER_ID'])): ?>
+		<?php \CJSCore::Init(array('update_stepper')); ?>
+		<div class="main-stepper-block">
+			<div class="main-stepper main-stepper-show" >
+				<div class="main-stepper-info"><?= GetMessage('TASKS_FULL_TASK_INDEXING_TITLE'); ?></div>
+				<div class="main-stepper-inner">
+					<div class="main-stepper-bar">
+						<div class="main-stepper-bar-line" style="width:0%;"></div>
+					</div>
+					<div class="main-stepper-error-text"></div>
+				</div>
+			</div>
+		</div>
+	<?php endif; ?>
 </div>
 
 <?php

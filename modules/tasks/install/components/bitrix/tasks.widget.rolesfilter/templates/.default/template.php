@@ -17,7 +17,7 @@ $this->SetViewTarget("sidebar", 200);
 <div class="sidebar-widget sidebar-widget-tasks">
 	<div class="sidebar-widget-top">
 		<div class="sidebar-widget-top-title">
-			<a href="<?=$arParams['PATH_TO_TASKS']?>"><?=GetMessage("TASKS_FILTER_TITLE")?></a>
+			<a href="<?=$arParams['PATH_TO_TASKS']?>"><?=Loc::getMessage('TASKS_FILTER_TITLE')?></a>
 		</div>
 		<?php
 			$path = Socialnetwork\UI\Task::getActionPath();
@@ -25,10 +25,10 @@ $this->SetViewTarget("sidebar", 200);
 		?>
 		<a class="plus-icon" href="<?=$url?>"></a>
 	</div>
-	<div class="sidebar-widget-item-wrap">
-		<?php
-			foreach ($arResult["ROLES"] as $role)
-			{
+	<?php if (is_array($arResult['ROLES'])):?>
+		<div class="sidebar-widget-item-wrap">
+			<?php foreach ($arResult['ROLES'] as $role):?>
+				<?php
 				$counter = ($role['COUNTER'] > 99 ? '99+' : $role['COUNTER']);
 				$counterViolation = ($role['COUNTER_VIOLATIONS'] > 99 ? '99+' : $role['COUNTER_VIOLATIONS']);
 				?>
@@ -41,8 +41,7 @@ $this->SetViewTarget("sidebar", 200);
 						</span>
 					</span>
 				</a>
-		<?php
-			}
-		?>
-	</div>
+			<?php endforeach;?>
+		</div>
+	<?php endif;?>
 </div>

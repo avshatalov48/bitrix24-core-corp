@@ -24,7 +24,7 @@ BX.Mobile.Crm.ConvertSync = {
 						attrs: {
 							className: "mobile-crm-convert-field-item"
 						},
-						html: data.fields[i]
+						html: BX.util.htmlspecialchars(data.fields[i])
 					})
 				);
 			}

@@ -27,6 +27,7 @@ $MESS['TASKS_IMPORT_DEMO_VALUES_ACCOMPLICES'] = 'Иван Иванов,Иван 
 $MESS['TASKS_IMPORT_DEMO_VALUES_AUDITORS'] = 'Иван Иванов,Иван Иванов';
 $MESS['TASKS_IMPORT_DEMO_VALUES_PROJECT'] = 'Название проекта';
 $MESS['TASKS_IMPORT_DEMO_VALUES_CHECKLIST'] = '[*]пункт 1[*]пункт 2[*]пункт 3';
+$MESS['TASKS_IMPORT_DEMO_VALUES_CHECKLIST_NEW'] = '[**]Чек-лист 1[*]пункт 1[*]пункт 2[**]Чек-лист 2[*]пункт 1[*]пункт 2';
 $MESS['TASKS_IMPORT_DEMO_VALUES_TAGS'] = '[*]тег 1[*]тег 2';
 $MESS['TASKS_IMPORT_FIELDS_FILE_NAME'] = 'Файл не выбран';
 $MESS['TASKS_IMPORT_FIELDS_FILE_ENCODING_AUTO_DETECT'] = 'Определить автоматически';

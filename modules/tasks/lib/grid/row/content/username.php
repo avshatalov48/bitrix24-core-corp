@@ -15,47 +15,56 @@ use Bitrix\Tasks\Util\User;
 class UserName extends Content
 {
 	/**
+	 * @param array $row
 	 * @param array $parameters
 	 * @return string
 	 * @throws Main\ArgumentException
 	 */
-	protected static function prepareUserName(array $parameters): string
+	protected static function prepareUserName(array $row, array $parameters): string
 	{
 		static $cache = [];
 
-		$userId = $parameters['USER_ID'];
+		$userId = (int) $row[static::USER_ROLE];
 
-		if (!is_array($parameters))
+		if (isset($row['MEMBERS'][static::USER_ROLE]))
 		{
-			return '';
+			$user = $row['MEMBERS'][static::USER_ROLE];
 		}
-
-		if (isset($cache[$userId]))
+		else if (isset($cache[$userId]))
 		{
 			$user = $cache[$userId];
 		}
 		else
 		{
-			$users = User::getData([$userId]);
+			$select = [
+				'ID',
+				'PERSONAL_PHOTO',
+				'LOGIN',
+				'NAME',
+				'LAST_NAME',
+				'SECOND_NAME',
+				'TITLE'
+			];
+			$users = User::getData([$userId], $select);
 			$user = $users[$userId];
 
 			$cache[$userId] = $user;
 		}
 
 		$user['AVATAR'] = UI::getAvatar($user['PERSONAL_PHOTO'], 100, 100);
-		$user['IS_EXTERNAL'] = User::isExternalUser($user['ID']);
-		$user['IS_CRM'] = array_key_exists('UF_USER_CRM_ENTITY', $user) && !empty($user['UF_USER_CRM_ENTITY']);
+		$user['IS_EXTERNAL'] = $user['IS_EXTRANET_USER'];
+		$user['IS_CRM'] = $user['IS_CRM_EMAIL_USER'];
 
 		$userIcon = '';
-		if ($user['IS_EXTERNAL'])
+		if ($user['IS_EXTRANET_USER'])
 		{
 			$userIcon = ' tasks-grid-avatar-extranet';
 		}
-		if ($user["EXTERNAL_AUTH_ID"] === 'email')
+		if ($user["IS_EMAIL_USER"])
 		{
 			$userIcon = ' tasks-grid-avatar-mail';
 		}
-		if ($user["IS_CRM"])
+		if ($user["IS_CRM_EMAIL_USER"])
 		{
 			$userIcon = ' tasks-grid-avatar-crm';
 		}
@@ -69,14 +78,25 @@ class UserName extends Content
 			$userEmptyAvatar = '';
 		}
 
-		$userRole = $parameters['USER_ROLE'];
 		$userName = htmlspecialcharsbx(User::formatName($user));
-		$userNameElement = "<span class='tasks-grid-avatar{$userEmptyAvatar}{$userIcon}'{$userAvatar}></span>"
-			."<span class='tasks-grid-username-inner{$userIcon}'>{$userName}</span>";
-		$encodedData = Json::encode([$userRole => $user['ID'], $userRole.'_label' => $userName]);
+		$userNameElement = "<span class='tasks-grid-avatar ui-icon ui-icon-common-user{$userEmptyAvatar}{$userIcon}'><i{$userAvatar}></i></span>"
+			."<span class='tasks-grid-username-inner{$userIcon}'>{$userName}</span>"
+			."<span class='tasks-grid-filter-remove'></span>";
+		$encodedData = Json::encode([static::USER_ROLE => [$user['ID']], static::USER_ROLE.'_label' => [$userName]]);
+
+		$selector = 'tasks-grid-username';
+		if (
+			isset($parameters['FILTER_FIELDS'][static::USER_ROLE])
+			&& is_array($parameters['FILTER_FIELDS'][static::USER_ROLE])
+			&& count($parameters['FILTER_FIELDS'][static::USER_ROLE]) === 1
+			&& (int) $parameters['FILTER_FIELDS'][static::USER_ROLE][0] === $userId
+		)
+		{
+			$selector .= ' tasks-grid-filter-active';
+		}
 
 		return "<div class='tasks-grid-username-wrapper'>"
-			."<a class='tasks-grid-username' onclick='BX.PreventDefault(); BX.Tasks.GridActions.filter({$encodedData})' href='javascript:void(0)'>{$userNameElement}</a>"
+			."<a class='". $selector ."' onclick='BX.PreventDefault(); BX.Tasks.GridActions.toggleFilter({$encodedData})' href='javascript:void(0)'>{$userNameElement}</a>"
 			."</div>";
 	}
 }

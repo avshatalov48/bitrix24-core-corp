@@ -13,6 +13,7 @@
 namespace Bitrix\Tasks\Manager;
 
 use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Comments;
 use Bitrix\Tasks\Integration\Extranet;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
@@ -798,6 +799,8 @@ final class Task extends \Bitrix\Tasks\Manager
 		$data = [];
 		$can = [];
 
+		$userId = (int) $userId;
+
 		$errors = static::ensureHaveErrorCollection($parameters);
 
 		// todo: get rid of LIST_PARAMETERS, if can. Move limit, filter, sort, etc.. to the first level
@@ -868,6 +871,8 @@ final class Task extends \Bitrix\Tasks\Manager
 
 		if (is_array($items) && !empty($items))
 		{
+			TaskModel::preloadModels(array_column($items, 'ID'), $userId);
+
 			foreach ($items as $taskData)
 			{
 				$taskId = $taskData['ID'];

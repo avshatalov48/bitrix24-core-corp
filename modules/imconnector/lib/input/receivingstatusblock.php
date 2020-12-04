@@ -3,7 +3,6 @@ namespace Bitrix\ImConnector\Input;
 
 use Bitrix\ImConnector\Connector;
 use Bitrix\ImConnector\Library;
-use Bitrix\ImConnector\Output;
 use Bitrix\ImConnector\Result;
 use Bitrix\Main\Event;
 
@@ -12,7 +11,6 @@ class ReceivingStatusBlock
 	private $connector;
 	private $line;
 	private $data;
-	private $connectorOutput;
 
 	/**
 	 * ReceivingStatusBlock constructor.
@@ -27,7 +25,6 @@ class ReceivingStatusBlock
 		$this->connector = $connector;
 		$this->line = $line;
 		$this->data = $data;
-		$this->connectorOutput = new Output($this->connector, $this->line);
 	}
 
 	/**
@@ -41,19 +38,9 @@ class ReceivingStatusBlock
 	public function receiving(): Result
 	{
 		$result = new Result();
-		$statusDelivered = [];
 
 		foreach ($this->data as $status)
 		{
-			$statusDelivered[] = array(
-				'chat' => array(
-					'id' => $status['chat']['id']
-				),
-				'message' => array(
-					'id' => $status['message']['id']
-				)
-			);
-
 			$user = Connector::getUserByUserCode($status['user'], $this->connector);
 
 			if ($user->isSuccess())
@@ -67,10 +54,6 @@ class ReceivingStatusBlock
 			{
 				$result->addErrors($event->getErrors());
 			}
-		}
-		if (!empty($statusDelivered))
-		{
-			$this->connectorOutput->setStatusDelivered($statusDelivered);
 		}
 
 		return $result;

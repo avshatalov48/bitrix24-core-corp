@@ -88,6 +88,7 @@ class ViewedTable extends Main\Entity\DataManager
 	public static function set(int $taskId, int $userId, ?DateTime $viewedDate = null, array $parameters = []): void
 	{
 		$parameters['SEND_PUSH'] = ($parameters['SEND_PUSH'] ?? !isset($viewedDate));
+		$parameters['UPDATE_TOPIC_LAST_VISIT'] = ($parameters['UPDATE_TOPIC_LAST_VISIT'] ?? true);
 		$parameters['SOURCE_VIEWED_DATE'] = $viewedDate;
 
 		$viewedDate = ($viewedDate ?? new DateTime());
@@ -109,10 +110,7 @@ class ViewedTable extends Main\Entity\DataManager
 	 */
 	private static function onBeforeView(int $taskId, int $userId, DateTime $viewedDate, array $parameters): void
 	{
-		if (!isset($parameters['SOURCE_VIEWED_DATE']))
-		{
-			Counter::onBeforeTaskViewed($taskId, $userId);
-		}
+		Counter\CounterService::getInstance()->collectData($taskId);
 	}
 
 	/**
@@ -161,17 +159,25 @@ class ViewedTable extends Main\Entity\DataManager
 	 */
 	private static function onAfterView(int $taskId, int $userId, DateTime $viewedDate, array $parameters): void
 	{
-		Counter::sendPushCounters([$userId]);
-
 		if ($parameters['SEND_PUSH'])
 		{
 			static::sendPushTaskView($userId, $taskId);
 		}
-
-		Forum\Task\UserTopic::updateLastVisit($taskId, $userId, $viewedDate);
+		if ($parameters['UPDATE_TOPIC_LAST_VISIT'])
+		{
+			Forum\Task\UserTopic::updateLastVisit($taskId, $userId, $viewedDate);
+		}
 
 		$event = new Event('tasks', 'onTaskUpdateViewed', ['taskId' => $taskId, 'userId' => $userId]);
 		$event->send();
+
+		Counter\CounterService::addEvent(
+			Counter\CounterDictionary::EVENT_AFTER_TASK_VIEW,
+			[
+				'TASK_ID' => (int) $taskId,
+				'USER_ID' => (int) $userId
+			]
+		);
 	}
 
 	/**

@@ -516,6 +516,16 @@ if(!$searchRestriction->isExceeded(CCrmOwnerType::Quote))
 		}
 		unset($arFilter['FIND']);
 	}
+
+	if (
+		($limitWarningValue = $searchRestriction->getLimitWarningValue(CCrmOwnerType::Quote)) > 0
+	)
+	{
+		$searchRestriction->notifyLimitWarning(
+			CCrmOwnerType::Quote,
+			$limitWarningValue
+		);
+	}
 }
 else
 {

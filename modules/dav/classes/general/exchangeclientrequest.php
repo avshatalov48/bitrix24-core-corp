@@ -81,7 +81,7 @@ class CDavExchangeClientRequest
 	)
 	{
 		$arMapTmp = array("idonly" => "IdOnly", "id_only" => "IdOnly", "allproperties" => "AllProperties", "all_properties" => "AllProperties");
-		$itemShapeLower = strtolower($itemShape);
+		$itemShapeLower = mb_strtolower($itemShape);
 		if (array_key_exists($itemShapeLower, $arMapTmp))
 			$itemShape = $arMapTmp[$itemShapeLower];
 		else
@@ -189,7 +189,7 @@ class CDavExchangeClientRequest
 	public function CreateGetItemBody($itemId = null, $itemShape = "AllProperties", $arAdditionalExtendedProperties = array())
 	{
 		$arMapTmp = array("idonly" => "IdOnly", "id_only" => "IdOnly", "allproperties" => "AllProperties", "all_properties" => "AllProperties");
-		$itemShapeLower = strtolower($itemShape);
+		$itemShapeLower = mb_strtolower($itemShape);
 		if (array_key_exists($itemShapeLower, $arMapTmp))
 			$itemShape = $arMapTmp[$itemShapeLower];
 		else
@@ -353,7 +353,7 @@ class CDavExchangeClientRequest
 	public function CreateFindFolderBody($arParentFolderId, $folderShape = "AllProperties")
 	{
 		$arMapTmp = array("idonly" => "IdOnly", "id_only" => "IdOnly", "allproperties" => "AllProperties", "all_properties" => "AllProperties");
-		$folderShapeLower = strtolower($folderShape);
+		$folderShapeLower = mb_strtolower($folderShape);
 		if (array_key_exists($folderShapeLower, $arMapTmp))
 			$folderShape = $arMapTmp[$folderShapeLower];
 		else
@@ -410,7 +410,7 @@ class CDavExchangeClientRequest
 	public function CreateGetFolderBody($folderId = null, $folderShape = "AllProperties")
 	{
 		$arMapTmp = array("idonly" => "IdOnly", "id_only" => "IdOnly", "allproperties" => "AllProperties", "all_properties" => "AllProperties");
-		$folderShapeLower = strtolower($folderShape);
+		$folderShapeLower = mb_strtolower($folderShape);
 		if (array_key_exists($folderShapeLower, $arMapTmp))
 			$folderShape = $arMapTmp[$folderShapeLower];
 		else
@@ -615,7 +615,7 @@ class CDavExchangeClientRequest
 			foreach ($value as $value1)
 				$buffer .= sprintf("%s: %s\r\n", $key, $value1);
 		}
-		$buffer .= sprintf("Content-length: %s\r\n", ((function_exists('mb_strlen') ? mb_strlen($this->body, 'latin1') : strlen($this->body))));
+		$buffer .= sprintf("Content-length: %s\r\n", ((function_exists('mb_strlen')? mb_strlen($this->body, 'latin1') : mb_strlen($this->body))));
 		$buffer .= "\r\n";
 		$buffer .= $this->body;
 		return $buffer;

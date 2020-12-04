@@ -10,6 +10,8 @@
 
 namespace Bitrix\Tasks\Util;
 
+use Bitrix\Main;
+use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\OperationTable;
 use Bitrix\Main\TaskOperationTable;
@@ -20,7 +22,6 @@ use Bitrix\Tasks\Integration\IMConnector;
 use Bitrix\Tasks\Integration\Intranet;
 use Bitrix\Tasks\Integration\Mail;
 use Bitrix\Tasks\Integration\Replica;
-use Bitrix\Tasks\Util\UI;
 
 final class User
 {
@@ -30,7 +31,7 @@ final class User
 
 	public static function getList($params)
 	{
-		return \Bitrix\Main\UserTable::getList($params);
+		return UserTable::getList($params);
 	}
 
 	/**
@@ -269,9 +270,10 @@ final class User
 	 * todo: make static cache here, call this function everywhere (at least, in CTaskNotifications)
 	 *
 	 * @param array $userIds
+	 * @param array $select
 	 * @return array
 	 */
-	public static function getData(array $userIds)
+	public static function getData(array $userIds, array $select = ['*'])
 	{
 		$users = array();
 		$current = static::getId();
@@ -284,12 +286,6 @@ final class User
 		$parsed = array_unique(array_filter($userIds, 'intval'));
 		if(!empty($parsed))
 		{
-			$extranetUsers = Extranet\User::getAccessible($current);
-			if(is_array($extranetUsers))
-			{
-				$extranetUsers = array_flip($extranetUsers);
-			}
-
 			// strip away all except mail users
 			$specialEAIds = array_diff(static::getArtificialExternalAuthIds(), array(
 				Mail\User::getExternalCode(), Replica\User::getExternalCode()
@@ -297,12 +293,11 @@ final class User
 
 			$departmentUFCode = Intranet\User::getDepartmentUFCode();
 
-			$select = array('*');
-			if (\Bitrix\Main\Loader::includeModule('crm'))
+			if (Loader::includeModule('crm'))
 			{
 				$select[] = 'UF_USER_CRM_ENTITY';
 			}
-			if(\Bitrix\Tasks\Util\Userfield\User::checkFieldExists($departmentUFCode))
+			if(Userfield\User::checkFieldExists($departmentUFCode))
 			{
 				$select[] = $departmentUFCode;
 			}
@@ -323,17 +318,6 @@ final class User
 				$item['IS_EMAIL_USER'] = Mail\User::isEmail($item);
 				$item['IS_CRM_EMAIL_USER'] = $item['IS_EMAIL_USER'] && $item['UF_USER_CRM_ENTITY'] && !empty($item['UF_USER_CRM_ENTITY']);
 				$item['IS_NETWORK_USER'] = ($item["EXTERNAL_AUTH_ID"] === "replica");
-
-				if($item['ID'] != $current)
-				{
-					// todo: you must check what users you have access to
-					/*
-					if($isExtranetUser && !isset($extranetUsers[$item['ID']]))
-					{
-						continue;
-					}
-					*/
-				}
 
 				$users[$item['ID']] = $item;
 			}
@@ -421,7 +405,7 @@ final class User
 	{
 		if($format === null)
 		{
-			$format = \Bitrix\Tasks\Util\Site::getUserNameFormat($siteId);
+			$format = Site::getUserNameFormat($siteId);
 		}
 
 		return \CUser::formatName($format, $data, true, false);
@@ -707,86 +691,107 @@ final class User
 	    return $users[$userID];
 	}
 
+	/**
+	 * @param array $userIds
+	 * @return array|false
+	 * @throws Main\LoaderException
+	 */
 	public static function isAbsence(array $userIds)
 	{
-		global $DB;
-
-		$list = [];
-
-		if (!\CModule::IncludeModule('intranet'))
+		if (!Loader::includeModule('intranet'))
 		{
 			return false;
 		}
 
-		foreach ($userIds as $key => $value)
+		if (empty($realUserIds = static::parseRealUsers($userIds)))
 		{
-			if (!preg_match('/^[1-9][0-9]*$/', $value))
-			{
-				unset($userIds[$key]);
-			}
-		}
-
-		if (empty($userIds))
-		{
-			return $list;
+			return [];
 		}
 
 		$dateNow = ConvertTimeStamp(false, 'SHORT');
 		$dateTimeNow = MakeTimeStamp(ConvertTimeStamp(false, 'FULL'));
 
 		$absenceData = \CIntranetUtils::GetAbsenceData([
-			'USERS' => $userIds,
+			'USERS' => $realUserIds,
 			'DATE_START' => $dateNow,
 			'DATE_FINISH' => $dateNow,
-			'PER_USER' => false
-		], $MODE = BX_INTRANET_ABSENCE_ALL);
+			'PER_USER' => false,
+		]);
 
-		if (!empty($absenceData))
+		if (empty($absenceData))
 		{
-			foreach ($absenceData as $item)
+			return [];
+		}
+
+		$list = [];
+		$userNames = static::getUserName(array_column($absenceData, 'USER_ID'));
+
+		foreach ($absenceData as $item)
+		{
+			if (array_key_exists('DATE_ACTIVE_FROM', $item) && array_key_exists('DATE_ACTIVE_TO', $item))
 			{
-				if (array_key_exists('DATE_ACTIVE_FROM', $item) && array_key_exists('DATE_ACTIVE_TO', $item))
-				{
-					$absenceFrom = MakeTimeStamp($item['DATE_ACTIVE_FROM']);
-					$absenceTo = MakeTimeStamp($item['DATE_ACTIVE_TO']);
-				}
-				else
-				{
-					$absenceFrom = MakeTimeStamp($item['DATE_FROM']);
-					$absenceTo = MakeTimeStamp($item['DATE_TO']);
-				}
+				$absenceFrom = MakeTimeStamp($item['DATE_ACTIVE_FROM']);
+				$absenceTo = MakeTimeStamp($item['DATE_ACTIVE_TO']);
+			}
+			else
+			{
+				$absenceFrom = MakeTimeStamp($item['DATE_FROM']);
+				$absenceTo = MakeTimeStamp($item['DATE_TO']);
+			}
 
-				$absenceEnd = (\CIntranetUtils::IsDateTime($absenceTo)? $absenceTo : $absenceTo + 86399);
+			$absenceEnd = (\CIntranetUtils::IsDateTime($absenceTo)? $absenceTo : $absenceTo + 86399);
 
-				if ($absenceEnd > $dateTimeNow)
-				{
-					$userId = $item['USER_ID'];
-					$absenceName = $item['NAME'];
-					$absenceFrom = UI::formatDateTime(
-						$absenceFrom,
-						\CSite::GetDateFormat((\CIntranetUtils::IsDateTime($absenceFrom)? 'FULL' : 'SHORT'))
-					);
-					$absenceTo = UI::formatDateTime(
-						$absenceTo,
-						\CSite::GetDateFormat((\CIntranetUtils::IsDateTime($absenceTo)? 'FULL' : 'SHORT'))
-					);
-					$userName = static::getUserName([$userId]);
+			if ($absenceEnd > $dateTimeNow)
+			{
+				$absenceFrom = UI::formatDateTime(
+					$absenceFrom,
+					\CSite::GetDateFormat((\CIntranetUtils::IsDateTime($absenceFrom)? 'FULL' : 'SHORT'))
+				);
+				$absenceTo = UI::formatDateTime(
+					$absenceTo,
+					\CSite::GetDateFormat((\CIntranetUtils::IsDateTime($absenceTo)? 'FULL' : 'SHORT'))
+				);
 
-					$list[]= GetMessageJS('TASKS_WARNING_RESPONSIBLE_IS_ABSENCE', [
-						'#FORMATTED_USER_NAME#' => htmlspecialcharsbx($userName[$userId]),
-						'#DATE_FROM#' => $absenceFrom,
-						'#DATE_TO#' => $absenceTo,
-						'#ABSCENCE_REASON#' => $absenceName
-					]);
-				}
+				$list[]= GetMessageJS('TASKS_WARNING_RESPONSIBLE_IS_ABSENCE', [
+					'#FORMATTED_USER_NAME#' => htmlspecialcharsbx($userNames[$item['USER_ID']]),
+					'#DATE_FROM#' => $absenceFrom,
+					'#DATE_TO#' => $absenceTo,
+					'#ABSCENCE_REASON#' => $item['NAME'],
+				]);
 			}
 		}
 
 		return $list;
 	}
 
-	public static function getUserName(array $userIds, $siteId = null, $nameTemplate = null)
+	/**
+	 * @param array $userIds
+	 * @return array
+	 */
+	private static function parseRealUsers(array $userIds): array
 	{
+		$realUserIds = [];
+
+		foreach ($userIds as $key => $value)
+		{
+			if (preg_match('/^[1-9][0-9]*$/', $value))
+			{
+				$realUserIds[] = (int)$value;
+			}
+		}
+
+		return $realUserIds;
+	}
+
+	/**
+	 * @param array $userIds
+	 * @param null $siteId
+	 * @param null $nameTemplate
+	 * @return array
+	 */
+	public static function getUserName(array $userIds, $siteId = null, $nameTemplate = null): array
+	{
+		$data = [];
 		$usersData = self::getData($userIds);
 
 		foreach ($userIds as $userId)

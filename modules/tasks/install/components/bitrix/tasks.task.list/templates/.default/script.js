@@ -41,12 +41,39 @@ BX.Tasks.GridActions = {
 		}, this));
 	},
 
+	toggleFilter: function (options)
+	{
+		var filterManager = BX.Main.filterManager.getById(this.gridId);
+		if (!filterManager)
+		{
+			console.log('BX.Main.filterManager not initialised');
+			return;
+		}
+		var fields = filterManager.getFilterFieldsValues();
+		var filterApi = filterManager.getApi();
+
+		Object.keys(options).forEach(function(key)
+		{
+			if (fields[key] && JSON.stringify(fields[key]) === JSON.stringify(options[key]))
+			{
+				delete fields[key];
+			}
+			else
+			{
+				fields[key] = options[key];
+			}
+		});
+
+		filterApi.setFields(fields);
+		filterApi.apply();
+	},
+
 	filter: function(options)
 	{
 		var filterManager = BX.Main.filterManager.getById(this.gridId);
 		if (!filterManager)
 		{
-			alert('BX.Main.filterManager not initialised');
+			console.log('BX.Main.filterManager not initialised');
 			return;
 		}
 		var fields = filterManager.getFilterFieldsValues();
@@ -118,7 +145,7 @@ BX.Tasks.GridActions = {
 		return this.query;
 	},
 
-	getTotalCount: function(prefix, filter, params)
+	getTotalCount: function(prefix, userId, groupId, parameters)
 	{
 		if (this.getTotalCountProceed)
 		{
@@ -131,7 +158,14 @@ BX.Tasks.GridActions = {
 
 		var query = new BX.Tasks.Util.Query({url: '/bitrix/components/bitrix/tasks.task.list/ajax.php'});
 		query
-			.run('this.getTotalCount', {filter: filter, parameters: params})
+			.run(
+				'this.getTotalCount',
+				{
+					userId: userId,
+					groupId: groupId,
+					parameters: JSON.stringify(parameters)
+				}
+			)
 			.then(function(result) {
 				this.hideCountLoader(container);
 				if (result.data)
@@ -573,9 +607,14 @@ BX(function() {
 		this.taskList = new Map();
 		this.comments = new Map();
 
-		this.query = new BX.Tasks.Util.Query({
-			url: '/bitrix/components/bitrix/tasks.task.list/ajax.php'
-		});
+		this.query = new BX.Tasks.Util.Query({url: '/bitrix/components/bitrix/tasks.task.list/ajax.php'});
+		this.actions = {
+			taskAdd: 'taskAdd',
+			taskUpdate: 'taskUpdate',
+			taskRemove: 'taskRemove',
+			commentAdd: 'commentAdd',
+			pinChanged: 'pinChanged'
+		};
 
 		this.isMyList = this.userId === this.ownerId;
 		this.canPin = !this.groupId;
@@ -595,10 +634,12 @@ BX(function() {
 		bindEvents: function()
 		{
 			var eventHandlers = {
-				comment_add: this.onPullComment,
+				comment_add: this.onPullCommentAdd,
 				comment_read_all: this.onPullCommentReadAll,
-				task_view: this.onPullView,
-				task_remove: this.onPullRemove,
+				task_add: this.onPullTaskAdd,
+				task_update: this.onPullTaskUpdate,
+				task_view: this.onPullTaskView,
+				task_remove: this.onPullTaskRemove,
 				user_option_changed: this.onUserOptionChanged
 			};
 
@@ -679,36 +720,13 @@ BX(function() {
 			});
 		},
 
-		onPullView: function(data)
+		onPullTaskView: function(data)
 		{
-			if (this.userId !== Number(data.USER_ID))
+			if (this.userId !== Number(data.USER_ID) || !this.isRowExist(data.TASK_ID.toString()))
 			{
 				return;
 			}
-
-			if (this.isRowExist(data.TASK_ID.toString()))
-			{
-				var params = {
-					taskIds: [data.TASK_ID],
-					arParams: this.arParams
-				};
-
-				this.query.run('this.prepareGridRowsForTasks', params).then(function(result) {
-					if (result.data)
-					{
-						Object.keys(result.data).forEach(function(taskId) {
-							if (this.isRowExist(taskId))
-							{
-								this.updateActivityDateCell(
-									this.getRowById(taskId),
-									result.data[taskId].content.ACTIVITY_DATE
-								);
-							}
-						}.bind(this));
-					}
-				}.bind(this));
-				this.query.execute();
-			}
+			this.updateActivityDateCellForTasks([data.TASK_ID]);
 		},
 
 		onPullCommentReadAll: function(data)
@@ -717,11 +735,25 @@ BX(function() {
 			{
 				return;
 			}
+			this.updateActivityDateCellForTasks(Array.from(this.taskList.keys()));
+		},
+
+		updateActivityDateCellForTasks: function(taskIds, rowData, parameters)
+		{
+			rowData = rowData || {};
+			parameters = parameters || {};
 
 			var params = {
-				taskIds: Array.from(this.taskList.keys()),
+				taskIds: taskIds,
+				data: {},
 				arParams: this.arParams
 			};
+			if (rowData)
+			{
+				Object.keys(rowData).forEach(function(rowId) {
+					params.data[rowId] = rowData[rowId];
+				});
+			}
 
 			this.query.run('this.prepareGridRowsForTasks', params).then(function(result) {
 				if (result.data)
@@ -729,10 +761,15 @@ BX(function() {
 					Object.keys(result.data).forEach(function(taskId) {
 						if (this.isRowExist(taskId))
 						{
-							this.updateActivityDateCell(
-								this.getRowById(taskId),
-								result.data[taskId].content.ACTIVITY_DATE
-							);
+							var row = this.getRowById(taskId);
+							if (row.getCellById('ACTIVITY_DATE'))
+							{
+								row.setCellsContent({ACTIVITY_DATE: result.data[taskId].content.ACTIVITY_DATE});
+							}
+							if (parameters.highlightRow === true)
+							{
+								this.highlightGridRow(taskId);
+							}
 						}
 					}.bind(this));
 				}
@@ -740,59 +777,39 @@ BX(function() {
 			this.query.execute();
 		},
 
-		updateActivityDateCell: function(row, activityContent)
-		{
-			var activityCell = row.getCellById('ACTIVITY_DATE');
-			if (activityCell)
-			{
-				if (this.checkCanMove())
-				{
-					row.setCellsContent({ACTIVITY_DATE: activityContent});
-				}
-				else
-				{
-					var div = document.createElement('div');
-					div.innerHTML = activityContent;
-
-					var oldCounter = activityCell.querySelector('.ui-counter');
-					var newCounter = div.firstChild.querySelector('.ui-counter');
-
-					if (newCounter)
-					{
-						if (oldCounter)
-						{
-							BX.replace(oldCounter, newCounter);
-						}
-						else
-						{
-							var counterContainer = activityCell.querySelector('.task-counter-container');
-							if (counterContainer)
-							{
-								counterContainer.appendChild(newCounter);
-							}
-						}
-					}
-					else
-					{
-						BX.remove(oldCounter);
-					}
-				}
-			}
-		},
-
-		onPullComment: function(data)
+		onPullCommentAdd: function(data)
 		{
 			if (this.checkComment(data))
 			{
 				var xmlId = data.entityXmlId.split('_');
 				if (xmlId)
 				{
-					this.checkTask(xmlId[1]);
+					this.checkTask(xmlId[1], {
+						action: this.actions.commentAdd,
+						userId: Number(data.ownerId),
+						isCompleteComment: data.isCompleteComment
+					});
 				}
 			}
 		},
 
-		onPullRemove: function(data)
+		onPullTaskAdd: function(data)
+		{
+			if (data.params.addCommentExists === false)
+			{
+				this.checkTask(data.TASK_ID.toString(), {action: this.actions.taskAdd});
+			}
+		},
+
+		onPullTaskUpdate: function(data)
+		{
+			if (data.params.updateCommentExists === false)
+			{
+				this.checkTask(data.TASK_ID.toString(), {action: this.actions.taskUpdate});
+			}
+		},
+
+		onPullTaskRemove: function(data)
 		{
 			if (this.checkCanMove())
 			{
@@ -818,7 +835,7 @@ BX(function() {
 				case 2:
 					if (this.canPin)
 					{
-						this.onPinChanged(taskId, data.ADDED);
+						this.onPinChanged(taskId);
 					}
 					break;
 
@@ -857,9 +874,14 @@ BX(function() {
 			}
 		},
 
-		onPinChanged: function(taskId, added)
+		onPinChanged: function(taskId)
 		{
-			var params = {
+			this.placeToNearTasks(taskId, null, {action: this.actions.pinChanged});
+		},
+
+		placeToNearTasks: function(taskId, taskData, parameters)
+		{
+			var queryParams = {
 				taskId: taskId,
 				navigation: {
 					pageNumber: this.getPageNumber(),
@@ -868,7 +890,7 @@ BX(function() {
 				arParams: this.arParams
 			};
 
-			this.query.run('this.getNearTasks', params).then(function(result) {
+			this.query.run('this.getNearTasks', queryParams).then(function(result) {
 				if (result.data)
 				{
 					var before = result.data.before;
@@ -876,13 +898,14 @@ BX(function() {
 
 					if ((before && this.isRowExist(before)) || (after && this.isRowExist(after)))
 					{
-						var parameters = {
-							action: 'pinChanged',
-							added: added,
+						var params = {
 							before: before,
 							after: after
 						};
-						this.updateItem(taskId, null, parameters);
+						Object.keys(parameters).forEach(function(key) {
+							params[key] = parameters[key];
+						});
+						this.updateItem(taskId, taskData, params);
 					}
 					else
 					{
@@ -930,62 +953,69 @@ BX(function() {
 			return (participants.includes(this.userId.toString()) || this.groupId === data.groupId);
 		},
 
-		checkTask: function(taskId)
+		checkTask: function(taskId, parameters)
 		{
+			parameters = parameters || {};
+
+			var ajaxActionParams = {RETURN_ACCESS: 'Y'};
+			if (parameters.isCompleteComment === false || parameters.userId === this.userId)
+			{
+				ajaxActionParams.SIFT_THROUGH_FILTER = {
+					userId: this.ownerId,
+					groupId: this.groupId
+				};
+			}
+
 			BX.ajax.runAction('tasks.task.list', {data: {
 				filter: {ID: taskId},
-				params: {
-					RETURN_ACCESS: 'Y',
-					SIFT_THROUGH_FILTER: {
-						userId: this.ownerId,
-						groupId: this.groupId
-					}
-				}
+				params: ajaxActionParams
 			}}).then(function(response) {
+				this.onCheckTaskSuccess(response, taskId, parameters);
+			}.bind(this));
+		},
+
+		onCheckTaskSuccess: function(response, taskId, parameters)
+		{
+			if (!response.data.tasks.length)
+			{
+				this.removeItem(taskId);
+				return;
+			}
+
+			var taskData = response.data.tasks[0];
+
+			if (this.isRowExist(taskId))
+			{
 				if (this.checkCanMove())
 				{
-					if (response.data.tasks.length > 0)
-					{
-						this.updateItem(taskId, response.data.tasks[0]);
-					}
-					else if (this.taskList.has(taskId))
-					{
-						this.removeItem(taskId);
-					}
+					parameters.canMoveRow = (parameters.action !== this.actions.taskUpdate);
+					this.updateGridRow(taskId, taskData, parameters);
 				}
-				else if (this.isRowExist(taskId))
+				else
 				{
-					if (response.data.tasks.length > 0)
+					if (parameters.action === this.actions.commentAdd)
 					{
-						var params = {
-							taskIds: [taskId],
-							data: {},
-							arParams: this.arParams
-						};
-						params.data[taskId] = response.data.tasks[0];
-
-						this.query.run('this.prepareGridRowsForTasks', params).then(function(result) {
-							if (result.data)
-							{
-								Object.keys(result.data).forEach(function(taskId) {
-									if (this.isRowExist(taskId))
-									{
-										this.updateActivityDateCell(
-											this.getRowById(taskId),
-											result.data[taskId].content.ACTIVITY_DATE
-										);
-									}
-								}.bind(this));
-							}
-						}.bind(this));
-						this.query.execute();
+						var rowData = {};
+						rowData[taskId] = taskData;
+						this.updateActivityDateCellForTasks([taskId], rowData, {highlightRow: true});
 					}
-					else
+					else if (parameters.action === this.actions.taskUpdate)
 					{
-						this.removeItem(taskId);
+						this.getGrid().updateRow(taskId);
 					}
 				}
-			}.bind(this));
+			}
+			else if (this.checkCanMove())
+			{
+				if (parameters.action === this.actions.taskUpdate)
+				{
+					this.placeToNearTasks(taskId, taskData, parameters);
+				}
+				else
+				{
+					this.updateItem(taskId, taskData, parameters);
+				}
+			}
 		},
 
 		updateItem: function(taskId, rowData, parameters)
@@ -1044,54 +1074,69 @@ BX(function() {
 
 		updateGridRow: function(rowId, rowData, parameters)
 		{
-			if (this.isRowExist(rowId))
+			if (!this.isRowExist(rowId))
 			{
-				var params = {
-					taskIds: [rowId],
-					data: {},
-					arParams: this.arParams
-				};
-				if (rowData)
-				{
-					params.data[rowId] = rowData;
-				}
-
-				this.query.run('this.prepareGridRowsForTasks', params).then(function(result) {
-					if (result.data && result.data[rowId])
-					{
-						var rowData = result.data[rowId];
-						var row = this.getRowById(rowId);
-						row.setCellsContent(rowData.content);
-						row.setActions(rowData.actions);
-
-						this.handlePinProp(row);
-						this.moveGridRow(rowId, parameters);
-						this.highlightGridRow(rowId);
-						this.handleGridRows();
-					}
-				}.bind(this));
-				this.query.execute();
+				return;
 			}
+
+			var params = {
+				taskIds: [rowId],
+				data: {},
+				arParams: Object.assign(this.arParams, parameters.arParams || {})
+			};
+			if (rowData)
+			{
+				params.data[rowId] = rowData;
+			}
+
+			this.query.run('this.prepareGridRowsForTasks', params).then(function(result) {
+				if (result.data && result.data[rowId])
+				{
+					var rowData = result.data[rowId];
+					var row = this.getRowById(rowId);
+					row.setCellsContent(rowData.content);
+					row.setActions(rowData.actions);
+
+					this.handlePinProp(row);
+					this.moveGridRow(rowId, parameters);
+					this.highlightGridRow(rowId);
+					this.handleGridRows();
+
+					this.getGrid().bindOnRowEvents();
+				}
+			}.bind(this));
+			this.query.execute();
 		},
 
 		removeItem: function(id)
 		{
-			if (this.isRowExist(id))
+			if (!this.isRowExist(id))
 			{
-				this.taskList.delete(id);
-				this.highlightGridRow(id).then(function() {
-					this.getGrid().removeRow(id);
-				}.bind(this));
+				return;
 			}
+
+			this.taskList.delete(id);
+			this.highlightGridRow(id).then(function() {
+				this.getGrid().removeRow(id);
+			}.bind(this));
 		},
 
 		moveGridRow: function(rowId, parameters)
 		{
+			if (parameters.canMoveRow === false)
+			{
+				return;
+			}
+
 			this.getGrid().getRows().reset();
 
 			switch (parameters.action)
 			{
-				case 'pinChanged':
+				case this.actions.pinChanged:
+					this.moveRow(rowId, parameters.after, parameters.before);
+					break;
+
+				case this.actions.taskUpdate:
 					this.moveRow(rowId, parameters.after, parameters.before);
 					break;
 
@@ -1257,7 +1302,7 @@ BX(function() {
 		var filterManager = BX.Main.filterManager.getById(BX.Tasks.GridActions.gridId);
 		if (!filterManager)
 		{
-			alert('BX.Main.filterManager not initialised');
+			console.log('BX.Main.filterManager not initialised');
 			return;
 		}
 
@@ -1275,7 +1320,7 @@ BX(function() {
 		var filterManager = BX.Main.filterManager.getById(BX.Tasks.GridActions.gridId);
 		if (!filterManager)
 		{
-			alert('BX.Main.filterManager not initialised');
+			console.log('BX.Main.filterManager not initialised');
 			return;
 		}
 		var filterApi = filterManager.getApi();

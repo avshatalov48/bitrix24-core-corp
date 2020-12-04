@@ -9,7 +9,7 @@ use Bitrix\Main\Localization\Loc;
 	?></span><?
 ?></div><?
 ?><div class="lenta-notifier" id="lenta_notifier_2" onclick="app.exec('pullDownLoadingStart'); __MSLRefresh(true); return false;"><?
-	?><span class="lenta-notifier-text"><?=Loc::getMessage("MOBILE_LOG_RELOAD_NEEDED")?></span><?
+	?><span class="lenta-notifier-text"><?=Loc::getMessage("MOBILE_LOG_RELOAD_NEEDED2")?></span><?
 ?></div><?
 ?><div class="lenta-notifier" id="lenta_refresh_error" onclick="__MSLRefreshError(false);"><?
 	?><span class="lenta-notifier-text"><?=Loc::getMessage("MOBILE_LOG_RELOAD_ERROR")?></span><?

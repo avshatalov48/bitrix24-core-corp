@@ -578,11 +578,10 @@
 						 return;
 					 }
 
-					 B24.licenseInfoPopup.show(
-						 'imconnector_line_activation',
-						 BX.message('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_POPUP_LIMITED_TITLE'),
-						 '<span>' + BX.message('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_POPUP_LIMITED_TEXT') + '</span>'
-					 );
+					 if(BX.message('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_LIMIT_INFO_HELPER'))
+					 {
+						 BX.UI.InfoHelper.show(BX.message('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_LIMIT_INFO_HELPER'));
+					 }
 				 }
 				 else
 				 {

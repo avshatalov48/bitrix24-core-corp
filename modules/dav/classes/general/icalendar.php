@@ -103,7 +103,7 @@ class CDavICalendarComponent
 		$arComponents = array();
 		foreach ($arContent as $key => $val)
 		{
-			if (is_array($val) && substr($key, 0, 1) == "@")
+			if (is_array($val) && mb_substr($key, 0, 1) == "@")
 			{
 				$arComponents[] = new CDavICalendarComponent($val);
 			}
@@ -131,22 +131,22 @@ class CDavICalendarComponent
 		$finish = null;
 		$subfinish = null;
 
-		$length = strlen($content);
+		$length = mb_strlen($content);
 		$linefrom = 0;
 		while ($linefrom < $length)
 		{
-			$lineto = strpos($content, "\n", $linefrom);
+			$lineto = mb_strpos($content, "\n", $linefrom);
 			if ($lineto === false)
-				$lineto = strpos($content, "\r", $linefrom);
+				$lineto = mb_strpos($content, "\r", $linefrom);
 
 			if ($lineto > 0)
 			{
-				$line = substr($content, $linefrom, $lineto - $linefrom);
+				$line = mb_substr($content, $linefrom, $lineto - $linefrom);
 				$linefrom = $lineto + 1;
 			}
 			else
 			{
-				$line = substr($content, $linefrom);
+				$line = mb_substr($content, $linefrom);
 				$linefrom = $length;
 			}
 			if (preg_match('/^\s*$/', $line))
@@ -305,9 +305,9 @@ class CDavICalendarComponent
 		$arV = explode(';', $v);
 		foreach ($arV as $v1)
 		{
-			$pos = strpos($v1, '=');
-			$name = substr($v1, 0, $pos);
-			$value = substr($v1, $pos + 1);
+			$pos = mb_strpos($v1, '=');
+			$name = mb_substr($v1, 0, $pos);
+			$value = mb_substr($v1, $pos + 1);
 			$arResult[$name] = $value;
 		}
 
@@ -465,10 +465,10 @@ class CDavICalendarProperty
 		}
 		else
 		{
-			$pos = strpos($prop, ':');
+			$pos = mb_strpos($prop, ':');
 
-			$propStart = substr($prop, 0, $pos);
-			$propEnd   = substr($prop, $pos + 1);
+			$propStart = mb_substr($prop, 0, $pos);
+			$propEnd = mb_substr($prop, $pos + 1);
 		}
 
 		$propEnd = str_replace(array('\\N', '\\n'), "\n", $propEnd);
@@ -479,9 +479,9 @@ class CDavICalendarProperty
 		$this->arParameters = array();
 		foreach ($arParams as $val)
 		{
-			$pos = strpos($val, '=');
-			$name = substr($val, 0, $pos);
-			$value = substr($val, $pos + 1);
+			$pos = mb_strpos($val, '=');
+			$name = mb_substr($val, 0, $pos);
+			$value = mb_substr($val, $pos + 1);
 			$this->arParameters[$name] = $value;
 		}
 	}
@@ -526,8 +526,8 @@ class CDavICalendarProperty
 
 		if (in_array($name, $arRender2))
 		{
-			if (isset($this->arParameters['VALUE']) && $this->arParameters['VALUE'] == 'DATE' && !strpos($str, ','))
-				$str = substr($str, 0, 8);
+			if (isset($this->arParameters['VALUE']) && $this->arParameters['VALUE'] == 'DATE' && !mb_strpos($str, ','))
+				$str = mb_substr($str, 0, 8);
 		}
 		elseif (isset($this->arParameters['ENCODING']) && $this->arParameters['ENCODING'] == 'BASE64')
 		{
@@ -539,9 +539,9 @@ class CDavICalendarProperty
 		}
 
 		$name = sprintf("%s%s:", $this->name, $this->RenderParameters());
-		if ((strlen($name) + strlen($str)) <= 72)
+		if ((mb_strlen($name) + mb_strlen($str)) <= 72)
 			$result = $name.$str;
-		elseif ((strlen($name) + strlen($str)) > 72 && (strlen($name) < 72) && (strlen($str) < 72))
+		elseif ((mb_strlen($name) + mb_strlen($str)) > 72 && (mb_strlen($name) < 72) && (mb_strlen($str) < 72))
 			$result = $name."\r\n ".$str;
 		else
 			$result = preg_replace('/(.{72})/'.BX_UTF_PCRE_MODIFIER, '$1'."\r\n ", $name.$str);

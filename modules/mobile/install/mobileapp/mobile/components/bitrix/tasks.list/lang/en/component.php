@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["MOBILE_TASKS_VIEW_TAB_CHECKLIST"] = "Checklist";
 $MESS["MOBILE_TASKS_VIEW_TAB_COMMENT"] = "Comments";
 $MESS["MOBILE_TASKS_VIEW_TAB_FILES"] = "Files";
@@ -35,14 +35,22 @@ $MESS["TASKS_LIST_HEADER_TASKS"] = "Tasks";
 $MESS["TASKS_LIST_NOTHING_NOT_FOUND"] = "No tasks were found";
 $MESS["TASKS_LIST_POPUP_RESPONSIBLE"] = "Responsible person";
 $MESS["TASKS_LIST_POPUP_SELECT_DATE"] = "Deadline";
+$MESS["TASKS_LIST_READ_ALL_NOTIFICATION"] = "Comments read";
 $MESS["TASKS_LIST_SEARCH_EMPTY_RESULT"] = "Your search request returned no results.";
 $MESS["TASKS_LIST_SEARCH_HINT"] = "Enter task name, responsible person name or some other search term";
+$MESS["TASKS_LIST_SEARCH_SECTION_LAST"] = "RECENT SEARCH";
+$MESS["TASKS_LIST_SEARCH_SECTION_SEARCH_RESULTS"] = "SEARCH RESULTS";
 $MESS["TASKS_LIST_STATE_INPROGRESS"] = "In progress";
 $MESS["TASKS_LIST_SUB_HEADER_DEADLINES"] = " (Deadlines)";
 $MESS["TASKS_NO_INTERNET_CONNECTION"] = "There is probably no internet connection. Please try again later.";
+$MESS["TASKS_POPUP_MENU_COUNTER_EXPIRED"] = "Overdue";
+$MESS["TASKS_POPUP_MENU_COUNTER_NEW_COMMENTS"] = "With new comments";
+$MESS["TASKS_POPUP_MENU_COUNTER_SUPPOSEDLY_COMPLETED"] = "Pending review";
 $MESS["TASKS_POPUP_MENU_DEADLINE"] = "Deadlines";
 $MESS["TASKS_POPUP_MENU_HIDE_CLOSED_TASKS"] = "Hide completed";
 $MESS["TASKS_POPUP_MENU_HIDE_GROUPS"] = "Hide groups";
+$MESS["TASKS_POPUP_MENU_ORDER_ACTIVITY"] = "Sort by active status";
+$MESS["TASKS_POPUP_MENU_ORDER_DEADLINE"] = "Sort by deadline";
 $MESS["TASKS_POPUP_MENU_ORDER_DIRECTION_ASC"] = "Descending";
 $MESS["TASKS_POPUP_MENU_ORDER_DIRECTION_DESC"] = "Ascending";
 $MESS["TASKS_POPUP_MENU_ORDER_FIELD"] = "Sort field";
@@ -58,7 +66,9 @@ $MESS["TASKS_POPUP_MENU_ORDER_FIELD_RESPONSIBLE_NAME"] = "Responsible person";
 $MESS["TASKS_POPUP_MENU_ORDER_FIELD_SORTING"] = "My sorting";
 $MESS["TASKS_POPUP_MENU_ORDER_FIELD_TITLE"] = "Title";
 $MESS["TASKS_POPUP_MENU_READ_ALL"] = "Mark all as read";
+$MESS["TASKS_POPUP_MENU_READ_ALL_V2"] = "Read all comments";
 $MESS["TASKS_POPUP_MENU_ROLE_ACCOMPLICE"] = "Assisting";
+$MESS["TASKS_POPUP_MENU_ROLE_ALL"] = "Tasks";
 $MESS["TASKS_POPUP_MENU_ROLE_AUDITOR"] = "Following";
 $MESS["TASKS_POPUP_MENU_ROLE_ORIGINATOR"] = "Set by me";
 $MESS["TASKS_POPUP_MENU_ROLE_RESPONSIBLE"] = "Ongoing";
@@ -76,4 +86,3 @@ $MESS["TASKS_SNACKBAR_HIDE_CLOSED_TASKS"] = "Hide completed tasks";
 $MESS["TASKS_SNACKBAR_SHOW_CLOSED_TASKS"] = "Show completed tasks";
 $MESS["TASKS_SOME_THING_WENT_WRONG"] = "Something's gone wrong. Please try again later.";
 $MESS["TASKS_UNEXPECTED_ANSWER"] = "There are server connection issues. Please try again later.";
-?>

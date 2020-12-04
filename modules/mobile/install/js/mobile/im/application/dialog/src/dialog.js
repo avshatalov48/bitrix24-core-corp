@@ -1302,7 +1302,7 @@ export class MobileDialogApplication
 					dataSource:
 					{
 						multiple:false,
-						url: siteDir + "mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId="+this.getLocalize("USER_ID"),
+						url: siteDir + "mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId="+this.controller.application.getUserId(),
 						TABLE_SETTINGS:
 						{
 							searchField: true,
@@ -2121,7 +2121,7 @@ export class MobileDialogApplication
 							,
 							BackdropMenuItem.create('share_post')
 								.setIcon(BackdropMenuIcon.lifefeed)
-								.setTitle(this.getLocalize('MOBILE_MESSAGE_MENU_SHARE_POST'))
+								.setTitle(this.getLocalize('MOBILE_MESSAGE_MENU_SHARE_POST_NEWS'))
 							,
 							BackdropMenuItem.create('share_chat')
 								.setIcon(BackdropMenuIcon.chat)

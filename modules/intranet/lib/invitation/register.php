@@ -29,6 +29,21 @@ class Register
 		}
 	}
 
+	public static function getMaxEmailCount()
+	{
+		if (Loader::includeModule("bitrix24"))
+		{
+			$licensePrefix = \CBitrix24::getLicensePrefix();
+			$licenseType = \CBitrix24::getLicenseType();
+			if ($licensePrefix === "cn" && $licenseType === "project")
+			{
+				return 5;
+			}
+		}
+
+		return 100;
+	}
+
 	public static function checkItems($items, &$errors)
 	{
 		$emailItems = $phoneItems = [];
@@ -70,7 +85,7 @@ class Register
 			$errors[] = Loc::getMessage("INTRANET_INVITATION_PHONE_LIMIT_EXCEEDED");
 		}
 
-		if ($emailCnt >= 100)
+		if ($emailCnt > self::getMaxEmailCount())
 		{
 			$errors[] = Loc::getMessage("INTRANET_INVITATION_EMAIL_LIMIT_EXCEEDED");
 		}

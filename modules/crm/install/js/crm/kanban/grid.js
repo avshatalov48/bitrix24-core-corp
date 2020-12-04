@@ -2034,12 +2034,27 @@ BX.CRM.Kanban.Grid.prototype = {
 					var filter = BX.Main.filterManager.getById(gridData.gridId);
 					var api = filter.getApi();
 					api.setFields(fields);
-					api.apply();
+					api.apply({'COUNTER': this.getAnalyticsLabel(eventArgs["counterTypeId"])});
 				},
 				this
 			), 0
 		);
 		eventArgs["cancel"] = true;
+	},
+
+	/**
+	 * Get analytics label
+	 * @param int counterTypeId
+	 * @return string
+	 */
+	getAnalyticsLabel: function(counterTypeId)
+	{
+		var entityTypeName = this.getData().entityType;
+		if (entityTypeName && counterTypeId)
+		{
+			return 'CRM_' + entityTypeName + '_COUNTER_TYPE_' + counterTypeId;
+		}
+		return '';
 	},
 
 	/**

@@ -442,7 +442,8 @@
 					'^' + siteDir + 'mail/',
 				],
 				options: {
-					cacheable: false
+					cacheable: false,
+					customLeftBoundary: 0,
 				}
 			},
 			{

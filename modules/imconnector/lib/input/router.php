@@ -41,7 +41,6 @@ class Router
 			$result->addError(new Error(Loc::getMessage('IMCONNECTOR_NOT_SPECIFIED_CORRECT_COMMAND'), Library::ERROR_IMCONNECTOR_NOT_SPECIFIED_CORRECT_COMMAND, __METHOD__, array('$command' => $command, '$connector' => $connector, '$line' => $line, '$data' => $data)));
 		}
 
-
 		if(empty($connector) && Connector::isConnector($connector, true))
 		{
 			$result->addError(new Error(Loc::getMessage('IMCONNECTOR_NOT_SPECIFIED_CORRECT_CONNECTOR'), Library::ERROR_IMCONNECTOR_NOT_SPECIFIED_CORRECT_CONNECTOR, __METHOD__, array('$command' => $command, '$connector' => $connector, '$line' => $line, '$data' => $data)));

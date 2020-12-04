@@ -172,6 +172,22 @@
 					}
 
 					let hasAllRecipients = false;
+
+					if(!loadMore && !hasAllRecipients && userList.searcher.currentQueryString.length  === 0 && options.showAll === true)
+					{
+						items.unshift({
+							title: BX.message("RECIPIENT_ALL"),
+							subtitle: "",
+							color: RecipientUtils.getColor('userAll'),
+							id: "A",
+							params: {id: "A"},
+							sectionCode: "people",
+							sortValues:{
+								name: BX.message("RECIPIENT_ALL")
+							},
+						});
+					}
+
 					let modifiedItems = items
 						.filter(item => options.hideUnnamed ? item.hasName : true)
 						.map(item =>
@@ -193,21 +209,6 @@
 
 							return item;
 						});
-
-					if(!loadMore && !hasAllRecipients && userList.searcher.currentQueryString.length  === 0 && options.showAll === true)
-					{
-						modifiedItems.unshift({
-							title: BX.message("RECIPIENT_ALL"),
-							subtitle: "",
-							color: "#dbf188",
-							id: "A",
-							params: {id: "A"},
-							sectionCode: "people",
-							sortValues:{
-								name: BX.message("RECIPIENT_ALL")
-							},
-						});
-					}
 
 					return modifiedItems;
 				},

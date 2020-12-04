@@ -59,19 +59,23 @@ $APPLICATION->IncludeComponent(
 	['HIDE_ICONS' => 'Y']
 );
 
+$pathToTask = str_replace('#action#', 'view', $arParams['PATH_TO_GROUP_TASKS_TASK']);
+$pathToTask = str_replace('#group_id#', $arParams['GROUP_ID'], $pathToTask);
+
 ?>
 
 <script>
 	BX.ready(function() {
 		BX.message(<?=Json::encode($messages)?>);
-		new BX.Tasks.Scrum.Scrum({
+		new BX.Tasks.Scrum.Entry({
 			signedParameters: '<?=$this->getComponent()->getSignedParameters()?>',
 			debugMode: '<?=$arResult['debugMode']?>',
-			tabs: <?=Json::encode($arResult['tabs'])?>,
-			activeTab: 'activeSprint',
+			views: <?=Json::encode($arResult['views'])?>,
+			activeView: 'activeSprint',
 			activeSprintId: '<?=$arResult['activeSprintId']?>',
 			activeSprintData: <?=Json::encode($arResult['activeSprintData'])?>,
 			sprints: <?=Json::encode($arResult['sprints'])?>,
+			pathToTask: '<?=\CUtil::jSEscape($pathToTask)?>'
 		});
 	});
 </script>

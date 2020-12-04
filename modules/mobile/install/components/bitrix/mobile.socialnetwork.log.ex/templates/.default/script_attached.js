@@ -328,7 +328,14 @@ function __MSLOnFeedInit(params)
 
 						if (Application.getApiVersion() >= 31)
 						{
-							BXMobileApp.Events.postToComponent("taskbackground::task::action", [{groupId: groupID}], "background");
+							BXMobileApp.Events.postToComponent(
+								'taskbackground::task::action',
+								[{
+									groupId: groupID,
+									groupName: BX.message('MSLLogTitle')
+								}],
+								'background'
+							);
 						}
 						else
 						{
@@ -6803,12 +6810,12 @@ BitrixMSL.prototype.buildPostFormFiles = function(postData, attachedFiles, param
 						type: fileData.type,
 						mimeType: mimeType,
 						folderId: parseInt(BX.message('MOBILE_EXT_UTILS_USER_FOLDER_FOR_SAVED_FILES')),
-						chunk: parseInt(BX.message('MOBILE_EXT_UTILS_MAX_UPLOAD_CHUNK_SIZE')),
+//						chunk: parseInt(BX.message('MOBILE_EXT_UTILS_MAX_UPLOAD_CHUNK_SIZE')),
 						params: {
 							postVirtualId: postData.postVirtualId,
 							pinnedContext: !!postData.pinnedContext
 						},
-						name: fileData.name,
+						name: (typeof BX.MobileUtils.getUploadFilename === 'function' ? BX.MobileUtils.getUploadFilename(fileData.name, fileData.type) : fileData.name),
 						url: fileData.url,
 						previewUrl: (fileData.previewUrl ? fileData.previewUrl : null),
 						resize: BX.MobileUtils.getResizeOptions(fileData.type)

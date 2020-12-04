@@ -11,6 +11,8 @@ use Bitrix\Tasks\Grid\Row\Content\UserName;
  */
 class Originator extends UserName
 {
+	protected const USER_ROLE = 'CREATED_BY';
+
 	/**
 	 * @param array $row
 	 * @param array $parameters
@@ -19,11 +21,6 @@ class Originator extends UserName
 	 */
 	public static function prepare(array $row, array $parameters): string
 	{
-		$userRole = 'CREATED_BY';
-
-		return static::prepareUserName([
-			'USER_ROLE' => $userRole,
-			'USER_ID' => $row[$userRole],
-		]);
+		return static::prepareUserName($row, $parameters);
 	}
 }

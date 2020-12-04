@@ -89,6 +89,7 @@ Class ImConnector extends CModule
 			"avito",
 			"whatsappbytwilio",
 			"wechat",
+			"olx",
 		);
 		Option::set($this->MODULE_ID, 'list_connector', implode(",", $listConnector));
 

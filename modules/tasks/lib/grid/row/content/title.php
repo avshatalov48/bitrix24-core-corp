@@ -99,7 +99,7 @@ class Title extends Content
 		$timeEstimate = (int)$row['TIME_ESTIMATE'];
 		$allowTimeTracking = $row['ALLOW_TIME_TRACKING'] === 'Y';
 
-		$timer = $parameters['TIMER'];
+		$timer = (is_array($parameters['TIMER']) ? $parameters['TIMER'] : (bool)$parameters['TIMER']);
 		$currentTaskTimerRunForUser = (
 			$timer !== false
 			&& isset($timer['TASK_ID'])
@@ -107,7 +107,7 @@ class Title extends Content
 		);
 		$taskTimersTotalValue = ($currentTaskTimerRunForUser && $timer['RUN_TIME'] ? (int)$timer['RUN_TIME'] : 0);
 
-		$canStartTask = $row['ACTION']['DAYPLAN.TIMER.TOGGLE'] === true;
+		$canStartTask = (bool)$row['ACTION']['DAYPLAN.TIMER.TOGGLE'];
 
 		ob_start();
 		if ($allowTimeTracking && $canStartTask)

@@ -16,14 +16,6 @@
 	justify-content: space-between;
 }
 
-.tasks-scrum-actions {
-	display: -webkit-box;
-	display: -ms-flexbox;
-	display: flex;
-	justify-content: space-between;
-	padding: 10px 0 0;
-}
-
 .tasks-scrum-action-epic {
 	position: relative;
 	margin-left: 12px;
@@ -38,18 +30,8 @@
 	transform: translateY(-50%);
 }
 
-.tasks-scrum-action-group {
+.tasks-scrum-group-actions-active {
 	position: relative;
-	/*margin-left: 12px;*/
-}
-
-.tasks-scrum-action-group::after {
-	display: block;
-	content: '+';
-	position: absolute;
-	left: -12px;
-	top: 50%;
-	transform: translateY(-50%);
 }
 
 .tasks-scrum-sprints {
@@ -135,7 +117,7 @@
 	width: 100%;
 }
 
-.tasks-scrum-switcher-tabs {
+.tasks-scrum-switcher-views {
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
@@ -160,7 +142,7 @@
 .bitrix24-light-theme .tasks-scrum-switcher-tab,
 .bitrix24-light-theme .tasks-scrum-switcher-tab:link,
 .bitrix24-light-theme .tasks-scrum-switcher-tab:visited {
-	color: rgba(255, 255, 255, 0.5);
+	color: #fff;
 }
 
 .bitrix24-light-theme .tasks-scrum-switcher-tab:hover {
@@ -171,12 +153,13 @@
 
 .tasks-scrum-switcher-tab:hover { color: #1f2127; }
 
-.tasks-scrum-switcher-tabs .tasks-scrum-switcher-tab-active {
-	border-bottom: 2px solid rgba(255, 255, 255, 0.5);
+.tasks-scrum-switcher-views .tasks-scrum-switcher-tab-active {
+	border-bottom: 2px solid #b1b8bf;
 }
 
-.bitrix24-light-theme .tasks-scrum-switcher-tabs .tasks-scrum-switcher-tab-active {
+.bitrix24-light-theme .tasks-scrum-switcher-views .tasks-scrum-switcher-tab-active {
 	color: rgba(255, 255, 255, 0.5);
+	border-bottom: 2px solid rgba(255, 255, 255, 0.5);
 	color: #fff;
 }
 
@@ -199,4 +182,13 @@
 .tasks-scrum-entity-items-faded {
 	opacity: 0.5;
 	pointer-events: none;
+}
+
+.tasks-scrum-completed-sprint-title {
+	width: 100%;
+	text-align: center;
+	color: #fff;
+	text-decoration: none;
+	font-size: 13px;
+	font-weight: bold;
 }

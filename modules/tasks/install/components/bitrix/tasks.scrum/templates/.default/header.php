@@ -29,6 +29,7 @@ Extension::load('ui.icons.b24');
 Extension::load('ui.draganddrop.draggable');
 Extension::load('ui.label');
 Extension::load('ui.entity-selector');
+Extension::load("ui.confetti");
 
 if (Loader::includeModule('disk'))
 {
@@ -49,6 +50,13 @@ $isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
 $filterInstance = Filter::getInstance($arParams['USER_ID'], $arParams['GROUP_ID']);
 
 $filter = $filterInstance->getFilters();
+
+$filter['EPIC'] = [
+	'id' => 'EPIC',
+	'name' => Loc::getMessage("TASKS_SCRUM_ITEM_ACTIONS_EPIC"),
+	'type' => 'list',
+	'items' => $arResult['epics']
+];
 
 $presets = Filter::getPresets();
 foreach ($presets as $presetId => $preset)
@@ -118,7 +126,7 @@ $APPLICATION->includeComponent(
 		'TEMPLATES_LIST' => $arParams['TEMPLATES_LIST'],//todo
 		'USER_ID' => $arParams['USER_ID'],
 		'GROUP_ID' => $arParams['GROUP_ID'],
-		'SPRINT_ID' => $arParams['SPRINT_ID'],
+		'SPRINT_ID' => ($arResult['completedSprintId'] ? $arResult['completedSprintId'] : -1),
 		'MENU_GROUP_ID' => $arParams['GROUP_ID'],
 		'PATH_TO_USER_TASKS_TEMPLATES' => $arParams['PATH_TO_USER_TASKS_TEMPLATES'],
 		'PATH_TO_GROUP_TASKS_TASK' => $arParams['PATH_TO_GROUP_TASKS_TASK'],
@@ -126,7 +134,7 @@ $APPLICATION->includeComponent(
 		'PROJECT_VIEW' => ($arParams['PROJECT_VIEW'] ? 'Y' : 'N'),
 		'USE_GROUP_SELECTOR' => ($arParams['PROJECT_VIEW'] ? 'Y' : 'N'),
 		'USE_EXPORT' => 'N',
-		'SHOW_CREATE_TASK_BUTTON' => 'N',
+		'SHOW_CREATE_TASK_BUTTON' => 'Y',
 		'POPUP_MENU_ITEMS' =>
 			($isKanban)
 				? [
@@ -177,23 +185,30 @@ if ($isBitrix24Template)
 ?>
 
 	<div class="tasks-scrum-switcher">
-		<div class="tasks-scrum-switcher-tabs">
-			<a href="<?=HtmlFilter::encode($arResult['tabs']['planning']['url'])?>" class="tasks-scrum-switcher-tab <?=
-			($arResult['tabs']['planning']['active'] ? 'tasks-scrum-switcher-tab-active' : '')?>">
-				<?= $arResult['tabs']['planning']['name']; ?>
+		<div class="tasks-scrum-switcher-views">
+			<a href="<?=HtmlFilter::encode($arResult['views']['plan']['url'])?>" class="tasks-scrum-switcher-tab <?=
+			($arResult['views']['plan']['active'] ? 'tasks-scrum-switcher-tab-active' : '')?>">
+				<?= $arResult['views']['plan']['name']; ?>
 			</a>
-			<a href="<?=HtmlFilter::encode($arResult['tabs']['activeSprint']['url'])?>" class="tasks-scrum-switcher-tab <?=
-			($arResult['tabs']['activeSprint']['active'] ? 'tasks-scrum-switcher-tab-active' : '')?>">
-				<?= $arResult['tabs']['activeSprint']['name']; ?>
+			<a href="<?=HtmlFilter::encode($arResult['views']['activeSprint']['url'])?>" class="tasks-scrum-switcher-tab <?=
+			($arResult['views']['activeSprint']['active'] ? 'tasks-scrum-switcher-tab-active' : '')?>">
+				<?= $arResult['views']['activeSprint']['name']; ?>
+			</a>
+			<a href="<?=HtmlFilter::encode($arResult['views']['completedSprint']['url'])?>" class="tasks-scrum-switcher-tab <?=
+			($arResult['views']['completedSprint']['active'] ? 'tasks-scrum-switcher-tab-active' : '')?>">
+				<?= $arResult['views']['completedSprint']['name']; ?>
 			</a>
 		</div>
-		<?php if ($arResult['tabs']['activeSprint']['active'] && $arResult['activeSprintId'] > 0): ?>
+		<?php if ($arResult['views']['activeSprint']['active'] && $arResult['activeSprintId'] > 0): ?>
 			<div id="tasks-scrum-active-sprint-stats" class="tasks-scrum-active-sprint-stats"></div>
 			<div id="tasks-scrum-actions-complete-sprint" class="tasks-scrum-actions-complete-sprint">
 				<button class="ui-btn ui-btn-primary ui-btn-round ui-btn-xs">
 					<?=Loc::getMessage('TASKS_SCRUM_ACTIONS_COMPLETE_SPRINT');?>
 				</button>
 			</div>
+		<?php endif; ?>
+		<?php if ($arResult['views']['completedSprint']['active'] && $arResult['completedSprintId'] > 0): ?>
+			<div id="tasks-scrum-completed-sprint-title" class="tasks-scrum-completed-sprint-title"></div>
 		<?php endif; ?>
 	</div>
 

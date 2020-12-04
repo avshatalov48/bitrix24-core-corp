@@ -48,7 +48,7 @@ class CDavCrmContacts
 		$map["FN"] = $contact["NAME"] . ($contact["SECOND_NAME"] ? " " . $contact["SECOND_NAME"] : "") . " " . $contact["LAST_NAME"];
 		$map["REV"] = date("Ymd\\THis\\Z", MakeTimeStamp($contact["DATE_MODIFY"]));
 		$map["UID"] = $contact["ID"];
-		if (strlen($contact["POST"]) > 0)
+		if ($contact["POST"] <> '')
 			$map["TITLE"] = $contact["POST"];
 		if (!empty($contact['COMPANY_TITLE']))
 			$map['ORG'] = $contact['COMPANY_TITLE'];

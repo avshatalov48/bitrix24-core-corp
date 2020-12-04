@@ -108,57 +108,43 @@ if (!function_exists('prepareProjectRowTitle'))
 {
 	function prepareProjectRowTitle($row, $arParams)
 	{
-		$image = \Bitrix\Tasks\UI::getAvatarFile($row['IMAGE_ID'], array('WIDTH' => 50, 'HEIGHT' => 50));
+		$image = \Bitrix\Tasks\UI::getAvatarFile($row['IMAGE_ID'], ['WIDTH' => 50, 'HEIGHT' => 50]);
+		$heads = ($row['MEMBERS']['HEADS'] ?? []);
+		$members = ($row['MEMBERS']['MEMBERS'] ?? []);
 
-		$out = '<div class="tasks-project-owerview-container">';
-
-		$out .= '<div class="tasks-project-overview-group-avatar">';
-
-		$out .= '<a class="tasks-proj-avatar" href="'.$row['PATHES']['TO_GROUP'].'">';
-		if ($image)
+		$out =
+			'<div class="tasks-project-owerview-container">'
+				.'<div class="tasks-project-overview-group-avatar">'
+					.'<a class="tasks-proj-avatar" href="'.$row['PATHES']['TO_GROUP'].'">'
+						.($image ? '<img src="'.$image['RESIZED']['SRC'].'"/>' : '')
+					.'</a>'
+				.'</div>'
+				.'<div class="tasks-project-overview-title">'
+					.'<a class="tasks-project-overview-title-link" target="_top"  href="'.$row['PATHES']['TO_GROUP'].'">'.htmlspecialcharsbx($row['NAME']).'</a>'
+					.'<span class="tasks-project-overview-members">'
+						.'<span class="tasks-project-overview-members-text">'.GetMessage('TASKS_PROJECTS_OVERVIEW_HEADS_'.(int)(count($heads) > 1)).'</span>'
+		;
+		foreach ($heads as $head)
 		{
-			$out .= '<img src="'.$image['RESIZED']['SRC'].'"  />';
-
-		}
-		$out .= '</a>';
-		$out .= '</div>';
-
-		$out .= '<div class="tasks-project-overview-title">';
-		$out .= '<a class="tasks-project-overview-title-link" target="_top"  href="'.$row['PATHES']['TO_GROUP'].'">'.htmlspecialcharsbx($row['NAME']).'</a>';
-
-		$out .= '<span class="tasks-project-overview-members">';
-
-		$out .= '<span class="tasks-project-overview-members-text">'. GetMessage('TASKS_PROJECTS_OVERVIEW_HEADS_'.(int)(count($row['MEMBERS']['HEADS']) > 1)).'</span>';
-		// $out .= GetMessage('TASKS_PROJECTS_OVERVIEW_HEADS_'.(int)(count($row['MEMBERS']['HEADS']) > 1));
-
-		if($row['MEMBERS']['HEADS'])
-		{
-			foreach ($row['MEMBERS']['HEADS'] as $member)
-			{
-				$photoSrc = getUserPictureSrc($member['PHOTO_ID'], $member['USER_GENDER'], 25, 25);
-				$out .= '<a  href="'.
-						$member['HREF'].'" class="ui-icon ui-icon-common-user tasks-project-overview-member-avatar">';
-				if ($photoSrc)
-				{
-					$out .= '<i style="background-image: url('.$photoSrc.')" ></i>';
-				}
-				$out .= '</a>';
-			}
+			$photoSrc = getUserPictureSrc($head['PHOTO_ID'], $head['USER_GENDER'], 25, 25);
+			$out .=
+				'<a href="'.$head['HREF'].'" class="ui-icon ui-icon-common-user tasks-project-overview-member-avatar">'
+					.($photoSrc ? '<i style="background-image: url('.$photoSrc.')"></i>' : '')
+				.'</a>';
 		}
 
-		$countMembers = $row['MEMBERS']['MEMBERS'] ? count($row['MEMBERS']['MEMBERS']) : 0;
-		if($countMembers > 0)
+		if (($countMembers = count($members)) > 0)
 		{
-
-			$out .= '<span class="tasks-project-overview-members-additional-popup">'.CTasksTools::getMessagePlural(
+			$countMembersText = CTasksTools::getMessagePlural(
 				$countMembers,
 				'TASKS_PROJECT_OVERVIEW_MEMBERS_COUNT',
-				array(
-					'#ID#'=>'tasks-project-overviews-'.$row['GROUP_ID'],
-					'#COUNT#'=>$countMembers,
-					'#GROUP_ID#'=>$row['GROUP_ID']
-				)
-			).'</span>';
+				[
+					'#ID#' => 'tasks-project-overviews-'.$row['GROUP_ID'],
+					'#COUNT#' => $countMembers,
+					'#GROUP_ID#' => $row['GROUP_ID'],
+				]
+			);
+			$out .= '<span class="tasks-project-overview-members-additional-popup">'.$countMembersText.'</span>';
 		}
 		$out .= '</span></div></div>';
 
@@ -170,9 +156,9 @@ if (!function_exists('getUserPictureSrc'))
 {
 	function getUserPictureSrc($photoId, $gender = '?', $width = 100, $height = 100)
 	{
-		static $cache = array();
+		static $cache = [];
 
-		$key = $photoId.'.'.$width.'.'.$height;
+		$key = "{$photoId}.{$width}.{$height}";
 
 		if (!array_key_exists($key, $cache))
 		{
@@ -185,7 +171,7 @@ if (!function_exists('getUserPictureSrc'))
 				{
 					$tmpImage = CFile::ResizeImageGet(
 						$imageFile,
-						array("width" => $width, "height" => $height),
+						["width" => $width, "height" => $height],
 						BX_RESIZE_IMAGE_EXACT,
 						false
 					);

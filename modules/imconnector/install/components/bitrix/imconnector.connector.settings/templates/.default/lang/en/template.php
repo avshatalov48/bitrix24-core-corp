@@ -22,9 +22,5 @@ $MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_POPUP_LIMITED_BUSINESS_USERS_TEX
 Only business users can be added to the queue.
 <br><br>
 The number of business users depends on your current Bitrix24 plan.";
-$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_POPUP_LIMITED_TEXT"] = "Your current plan restrict the number of available Open Channels. To add another Open Channel, please upgrade to a major plan.
-<br><br>
-<a href=\"/settings/license_all.php\" target=\"_blank\">Selected commercial plans</a> have no restriction on the number of Open Channels at all.";
-$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_POPUP_LIMITED_TITLE"] = "Extended Open Channels";
 $MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_QUEUE"] = "Users in queue";
 ?>

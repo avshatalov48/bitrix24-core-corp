@@ -438,22 +438,25 @@ final class Output
 	 *
 	 * @param string $lineId ID Line.
 	 * @return Result
+	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\ArgumentNullException
 	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function infoConnectorsLine($lineId)
 	{
 		$result = new Result();
 
-		$resultLiveChat = array();
-		$resultNetwork = array();
-		$resultCustom = array();
-		$resultRest = array();
+		$resultLiveChat = [];
+		$resultNetwork = [];
+		$resultCustom = [];
+		$resultRest = [];
 
 		$connector = new self('all');
 
-		$result->setResult(array($lineId));
+		$result->setResult([$lineId]);
 		$result = $connector->query('infoConnectorsLine', $result);
 
 		if(Loader::includeModule(Library::MODULE_ID_OPEN_LINES))
@@ -466,17 +469,25 @@ final class Output
 			{
 				$resultLiveChat['id'] = $infoLiveChat["ID"];
 
-				if(!Library::isEmpty($infoLiveChat["NAME"]))
-					$resultLiveChat['name'] = $infoLiveChat["NAME"];
+				if(!Library::isEmpty($infoLiveChat["LINE_NAME"]))
+				{
+					$resultLiveChat['name'] = $infoLiveChat["LINE_NAME"];
+				}
 
 				if(!empty($infoLiveChat["PICTURE"]) && is_array($infoLiveChat["PICTURE"]))
+				{
 					$resultLiveChat['picture'] = $infoLiveChat["PICTURE"];
+				}
 
 				if(!empty($infoLiveChat["URL"]))
+				{
 					$resultLiveChat['url'] = $infoLiveChat["URL"];
+				}
 
 				if(!empty($infoLiveChat["URL_IM"]))
+				{
 					$resultLiveChat['url_im'] = $infoLiveChat["URL_IM"];
+				}
 			}
 
 			//network
@@ -497,10 +508,14 @@ final class Output
 						$resultNetwork['url_im'] = $linkNetwork;
 
 						if(!Library::isEmpty($dataNetwork["NAME"]))
+						{
 							$resultNetwork['name'] = $dataNetwork["NAME"];
+						}
 
 						if(!empty($dataNetwork["AVATAR"]))
+						{
 							$resultNetwork['picture']["url"] = \CFile::GetPath($dataNetwork["AVATAR"]);
+						}
 					}
 				}
 			}

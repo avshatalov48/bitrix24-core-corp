@@ -10,7 +10,7 @@
 import {Vue} from "ui.vue";
 import {Vuex} from "ui.vue.vuex";
 import {Logger} from "im.lib.logger";
-import {EventType} from "im.const";
+import {EventType, RestMethod} from "im.const";
 import {Utils} from "im.lib.utils";
 import "im.view.dialog";
 import "im.view.quotepanel";
@@ -224,9 +224,67 @@ Vue.component('bx-mobile-im-component-dialog',
 		{
 			this.$root.$bitrixApplication.openMessageReactionList(event.message.id, event.values);
 		},
-		onDialogMessageClickByKeyboardButton(event)
+		onDialogMessageClickByKeyboardButton(data)
 		{
-			this.$root.$bitrixApplication.execMessageKeyboardCommand(event);
+			if (data.action === 'ACTION')
+			{
+				let {dialogId, messageId, botId, action, value} = data.params;
+
+				if (action === 'SEND')
+				{
+					this.$root.$bitrixApplication.addMessage(value);
+					setTimeout(() => this.$root.$bitrixController.application.emit(EventType.dialog.scrollToBottom, {duration: 300, cancelIfScrollChange: false}), 300);
+				}
+				else if (action === 'PUT')
+				{
+					this.$root.$bitrixApplication.insertText({text: value+' '});
+				}
+				else if (action === 'CALL')
+				{
+					this.$root.$bitrixApplication.openPhoneMenu(value);
+				}
+				else if (action === 'COPY')
+				{
+					app.exec("copyToClipboard", {text: value});
+
+					(new BXMobileApp.UI.NotificationBar({
+						message: BX.message("MOBILE_MESSAGE_MENU_COPY_SUCCESS"),
+						color: "#af000000",
+						textColor: "#ffffff",
+						groupId: "clipboard",
+						maxLines: 1,
+						align: "center",
+						isGlobal: true,
+						useCloseButton: true,
+						autoHideTimeout: 1500,
+						hideOnTap: true
+					}, "copy")).show();
+
+				}
+				else if (action === 'DIALOG')
+				{
+					this.$root.$bitrixApplication.openDialog(value);
+				}
+
+				return true;
+			}
+
+			if (data.action === 'COMMAND')
+			{
+				let {dialogId, messageId, botId, command, params} = data.params;
+
+				this.$root.$bitrixController.restClient.callMethod(RestMethod.imMessageCommand, {
+					'MESSAGE_ID': messageId,
+					'DIALOG_ID': dialogId,
+					'BOT_ID': botId,
+					'COMMAND': command,
+					'COMMAND_PARAMS': params,
+				});
+
+				return true;
+			}
+
+			return false;
 		},
 		onDialogMessageClickByChatTeaser(event)
 		{

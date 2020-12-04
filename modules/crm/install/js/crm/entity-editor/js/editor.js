@@ -44,7 +44,6 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 	{
 		this._controlChangeNotifier = BX.CrmNotifier.create(this);
 		this._modeChangeNotifier = BX.CrmNotifier.create(this);
-		this._modeChangeNotifier.notify([ this ]);
 
 		this._settings = settings ? settings : {};
 
@@ -60,6 +59,8 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 		this._showEmptyFields = BX.prop.getBoolean(this._settings, "showEmptyFields", false);
 
 		BX.Crm.EntityEditor.superclass.initialize.apply(this, [id, settings]);
+
+		this._modeChangeNotifier.notify([ this ]);
 
 		if(!BX.type.isElementNode(this._container))
 		{
@@ -354,28 +355,31 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 	};
 	BX.Crm.EntityEditor.prototype.registerActiveControl = function(control)
 	{
-		BX.Crm.EntityEditor.superclass.registerActiveControl.apply(this, [control]);
 		var index = this.getActiveControlIndex(control);
 		if(index >= 0)
 		{
 			return;
 		}
 
-		if(this._mode !== BX.UI.EntityEditorMode.edit)
+		var mode = this._mode;
+		BX.Crm.EntityEditor.superclass.registerActiveControl.apply(this, [control]);
+
+		if(mode !== BX.UI.EntityEditorMode.edit && this._mode === BX.UI.EntityEditorMode.edit)
 		{
 			this._modeChangeNotifier.notify([ this ]);
 		}
 	};
 	BX.Crm.EntityEditor.prototype.unregisterActiveControl = function(control)
 	{
-		BX.Crm.EntityEditor.superclass.unregisterActiveControl.apply(this, [control]);
 		var index = this.getActiveControlIndex(control);
 		if(index < 0)
 		{
 			return;
 		}
+		var mode = this._mode;
+		BX.Crm.EntityEditor.superclass.unregisterActiveControl.apply(this, [control]);
 
-		if(this._activeControls.length === 0 && this._mode !== BX.UI.EntityEditorMode.view)
+		if(mode !== BX.UI.EntityEditorMode.view && this._activeControls.length === 0 && this._mode === BX.UI.EntityEditorMode.view)
 		{
 			this._modeChangeNotifier.notify([ this ]);
 		}
@@ -391,10 +395,14 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 	};
 	BX.Crm.EntityEditor.prototype.releaseActiveControls = function(options)
 	{
+		var mode = this._mode;
 		BX.Crm.EntityEditor.superclass.releaseActiveControls.apply(this, [options]);
 		if(this._mode !== BX.UI.EntityEditorMode.view)
 		{
 			this._mode = BX.UI.EntityEditorMode.view;
+		}
+		if(mode !== BX.UI.EntityEditorMode.view)
+		{
 			this._modeChangeNotifier.notify([ this ]);
 		}
 	};

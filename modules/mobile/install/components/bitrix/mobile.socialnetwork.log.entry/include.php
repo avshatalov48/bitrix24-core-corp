@@ -49,7 +49,16 @@ if (!function_exists('__SLMGetLogRecord'))
 			else
 				$arCacheID[$param_key] = false;
 		}
-		$cache_id = "log_post_".$logID."_".md5(serialize($arCacheID))."_".SITE_TEMPLATE_ID."_".SITE_ID."_".LANGUAGE_ID."_".FORMAT_DATETIME."_".CTimeZone::GetOffset();
+		$siteTemplateId = SITE_TEMPLATE_ID;
+		if (
+			isset($arParams["SITE_TEMPLATE_ID"])
+			&& $arParams["SITE_TEMPLATE_ID"] <> ''
+		)
+		{
+			$siteTemplateId = $arParams["SITE_TEMPLATE_ID"];
+		}
+
+		$cache_id = "log_post_".$logID."_".md5(serialize($arCacheID))."_".$siteTemplateId."_".SITE_ID."_".LANGUAGE_ID."_".FORMAT_DATETIME."_".CTimeZone::GetOffset();
 		$cache_path = "/sonet/log/".intval(intval($logID) / 1000)."/".$logID."/entry/";
 
 		if (
@@ -762,7 +771,9 @@ if (!function_exists('__SLMGetLogCommentRecord'))
 			$commentAuxProvider = \Bitrix\Socialnetwork\CommentAux\Base::findProvider(
 			array(
 				'POST_TEXT' => $arComments['MESSAGE'],
-				'SHARE_DEST' => $arComments['SHARE_DEST']
+				'SHARE_DEST' => $arComments['SHARE_DEST'],
+				'SOURCE_ID' => (int)$arComments['SOURCE_ID'],
+				'EVENT_ID' => $arComments['EVENT_ID'],
 			),
 			array(
 				'eventId' => $arComments['EVENT_ID']

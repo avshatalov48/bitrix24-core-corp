@@ -21,6 +21,7 @@ use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Integration\Forum\Task\Topic;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
+use Bitrix\Tasks\Internals\Task\ViewedTable;
 use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Manager\Task;
 use Bitrix\Tasks\UI;
@@ -1351,8 +1352,12 @@ class TasksTaskComponent extends TasksBaseComponent
 
 	protected function getReferenceData()
 	{
-		$this->arResult['DATA']['RELATED_TASK'] = static::getTasksData($this->tasks2Get, $this->userId, $this->users2Get);
-		$this->arResult['DATA']['GROUP'] = Group::getData($this->groups2Get);
+		$this->arResult['DATA']['RELATED_TASK'] = static::getTasksData(
+			$this->tasks2Get,
+			$this->userId,
+			$this->users2Get
+		);
+		$this->arResult['DATA']['GROUP'] = Group::getData($this->groups2Get, ['IMAGE_ID']);
 		$this->arResult['DATA']['USER'] = User::getData($this->users2Get);
 
 		$this->getCurrentUserData();
@@ -1411,8 +1416,12 @@ class TasksTaskComponent extends TasksBaseComponent
 		{
 			if ($this->task != null)
 			{
-				// set this task as viewed and update its view time
-				Tasks\Internals\Task\ViewedTable::set($this->task->getId(), $this->userId);
+				ViewedTable::set(
+					$this->task->getId(),
+					$this->userId,
+					null,
+					['UPDATE_TOPIC_LAST_VISIT' => false]
+				);
 				$this->arResult['DATA']['EFFECTIVE'] = $this->getEffective();
 			}
 

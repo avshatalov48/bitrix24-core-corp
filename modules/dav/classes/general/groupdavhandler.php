@@ -39,7 +39,7 @@ abstract class CDavGroupdavHandler
 
 		if (!array_key_exists($application, $handlerCache))
 		{
-			$h = 'CDav' . strtoupper(substr($application, 0, 1)) . substr($application, 1) . 'Handler';
+			$h = 'CDav'.mb_strtoupper(mb_substr($application, 0, 1)).mb_substr($application, 1) . 'Handler';
 			if (!class_exists($h))
 				return null;
 
@@ -70,7 +70,7 @@ abstract class CDavGroupdavHandler
 			if ($request->GetParameter('HTTP_IF_MATCH') !== null)
 			{
 				$m = $request->GetParameter('HTTP_IF_MATCH');
-				if (strstr($m, $etag) === false)
+				if (mb_strstr($m, $etag) === false)
 				{
 					$this->httpIfMatch = $m;
 					return '412 Precondition Failed';

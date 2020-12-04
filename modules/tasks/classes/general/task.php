@@ -15,7 +15,6 @@ global $USER_FIELD_MANAGER;
 use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\Data\Cache;
-use Bitrix\Main\DB\MysqlCommonConnection;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Entity\Query;
@@ -23,7 +22,9 @@ use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserTable;
 use Bitrix\Pull\Event;
+use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
+use Bitrix\Tasks\Comments\Internals\Comment;
 use Bitrix\Tasks\Comments\Task\CommentPoster;
 use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Internals\Counter;
@@ -39,6 +40,9 @@ use Bitrix\Tasks\Internals\Task\UserOptionTable;
 use Bitrix\Tasks\Internals\Task\ViewedTable;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Kanban\TaskStageTable;
+use Bitrix\Tasks\Scrum\Internal\ItemTable;
+use Bitrix\Tasks\Scrum\Service\BacklogService;
+use Bitrix\Tasks\Scrum\Service\ItemService;
 use Bitrix\Tasks\Util\Calendar;
 use Bitrix\Tasks\Util\Replicator;
 use Bitrix\Tasks\Util\Type;
@@ -269,56 +273,59 @@ class CTasks
 				);
 		}
 
-		if (is_set($arFields, "RESPONSIBLE_ID"))
+		if (is_set($arFields, 'RESPONSIBLE_ID'))
 		{
-			$r = CUser::GetByID($arFields["RESPONSIBLE_ID"]);
-			if ($arUser = $r->Fetch())
+			$responsibleId = (int)$arFields['RESPONSIBLE_ID'];
+
+			$by = 'id';
+			$order = 'asc';
+			$userResult = CUser::GetList(
+				$by,
+				$order,
+				['ID_EQUAL_EXACT' => $responsibleId],
+				['SELECT' => ['UF_DEPARTMENT']]
+			);
+			if ($user = $userResult->Fetch())
 			{
+				$currentResponsible = 0;
+
 				if ($ID)
 				{
-					$rsTask = CTasks::GetList(
-						array(),
-						array("ID" => $ID),
-						array("RESPONSIBLE_ID"),
-						array('USER_ID' => $effectiveUserId)
-					);
-					if ($arTask = $rsTask->Fetch())
+					$taskResult = CTasks::GetList([], ['ID' => $ID], ['RESPONSIBLE_ID'], ['USER_ID' => $effectiveUserId]);
+					if ($task = $taskResult->Fetch())
 					{
-						$currentResponsible = $arTask["RESPONSIBLE_ID"];
+						$currentResponsible = (int)$task['RESPONSIBLE_ID'];
 					}
 				}
 
 				// new task or responsible changed
-				if (!$ID || (isset($currentResponsible) && $currentResponsible != $arFields["RESPONSIBLE_ID"]))
+				if (!$ID || ($currentResponsible && $currentResponsible !== $responsibleId))
 				{
 					// check if $createdBy is director for responsible
-					$createdBy = $arFields["CREATED_BY"];
+					$subordinateDepartments = CTasks::GetSubordinateDeps($arFields['CREATED_BY']);
 
-					$arSubDeps = CTasks::GetSubordinateDeps($createdBy);
+					$userDepartment = $user['UF_DEPARTMENT'];
+					$userDepartment = (is_array($userDepartment) ? $userDepartment : [$userDepartment]);
 
-					if (!is_array($arUser["UF_DEPARTMENT"]))
-						$bSubordinate = (sizeof(array_intersect($arSubDeps, array($arUser["UF_DEPARTMENT"]))) > 0);
-					else
-						$bSubordinate = (sizeof(array_intersect($arSubDeps, $arUser["UF_DEPARTMENT"])) > 0);
+					$isSubordinate = count(array_intersect($subordinateDepartments, $userDepartment)) > 0;
 
-					if (!$arFields["STATUS"])
+					if (!$arFields['STATUS'])
 					{
-						$arFields["STATUS"] = self::STATE_PENDING;
+						$arFields['STATUS'] = self::STATE_PENDING;
 					}
-					if (!$bSubordinate)
+					if (!$isSubordinate)
 					{
-						$arFields["ADD_IN_REPORT"] = "N";
+						$arFields['ADD_IN_REPORT'] = 'N';
 					}
-
-					$arFields["DECLINE_REASON"] = false;
+					$arFields['DECLINE_REASON'] = false;
 				}
 			}
 			else
 			{
-				$this->_errors[] = array(
+				$this->_errors[] = [
 					"text" => GetMessage("TASKS_BAD_RESPONSIBLE_ID_EX"),
-					"id"   => "ERROR_TASKS_BAD_RESPONSIBLE_ID_EX"
-				);
+					"id" => "ERROR_TASKS_BAD_RESPONSIBLE_ID_EX",
+				];
 			}
 		}
 
@@ -753,8 +760,10 @@ class CTasks
 							)
 						);
 
-						Counter::onAfterTaskAdd($arFields);
-						Counter::sendPushCounters($participants);
+						Counter\CounterService::addEvent(
+							Counter\CounterDictionary::EVENT_AFTER_TASK_ADD,
+							$arFields
+						);
 
 						CTaskSync::AddItem($arFields); // MS Exchange
 
@@ -803,16 +812,35 @@ class CTasks
 						$cache = Cache::createInstance();
 						$cache->clean(\CTasks::CACHE_TASKS_COUNT, \CTasks::CACHE_TASKS_COUNT_DIR_NAME);
 
+						$addComment = null;
 						$commentPoster = CommentPoster::getInstance($ID, $occurAsUserId);
-						$commentPoster->postCommentsOnTaskAdd($arTask);
+						if ($commentPoster)
+						{
+							if (!($isDeferred = $commentPoster->getDeferredPostMode()))
+							{
+								$commentPoster->enableDeferredPostMode();
+							}
+
+							$commentPoster->postCommentsOnTaskAdd($mergedFields);
+							$addComment = $commentPoster->getCommentByType(Comment::TYPE_ADD);
+
+							if (!$isDeferred)
+							{
+								$commentPoster->disableDeferredPostMode();
+								$commentPoster->postComments();
+								$commentPoster->clearComments();
+							}
+						}
 
 						// Emit pull event
 						$bWasFatalError = !$this->sendAddPullEvent(
 							array_merge($arParams, [
+								'TASK_ID' => (int)$ID,
+								'USER_ID' => (int)$effectiveUserId,
 								'CURRENT_FIELDS' => $mergedFields,
 								'RECIPIENTS' => $participants,
-								'TASK_ID' => (int)$ID,
 								'EVENT_GUID' => $eventGUID,
+								'ADD_COMMENT_EXISTS' => isset($addComment),
 							])
 						);
 
@@ -842,6 +870,12 @@ class CTasks
 						if ($arFields['GROUP_ID'] && CModule::IncludeModule("socialnetwork"))
 						{
 							CSocNetGroup::SetLastActivity($arFields['GROUP_ID']);
+
+							$group = Workgroup::getById($arFields['GROUP_ID']);
+							if ($group && $group->isScrumProject())
+							{
+								$this->createScrumItem($ID, $arFields);
+							}
 						}
 					}
 				}
@@ -884,18 +918,10 @@ class CTasks
 				return true;
 			}
 
-			$after = $params['CURRENT_FIELDS'];
-			$after['GROUP_ID'] = (isset($after['GROUP_ID']) && (int)$after['GROUP_ID'] > 0 ? (int)$after['GROUP_ID'] : 0);
-
 			Event::add($params['RECIPIENTS'], [
 				'module_id' => 'tasks',
 				'command' => 'task_add',
-				'params' => [
-					'TASK_ID' => $params['TASK_ID'],
-					'AFTER' => $after,
-					'TS' => time(),
-					'event_GUID' => $params['EVENT_GUID'],
-				],
+				'params' => $this->prepareAddPullEventParameters($params),
 			]);
 		}
 		catch (Exception $e)
@@ -905,6 +931,26 @@ class CTasks
 		}
 
 		return true;
+	}
+
+	/**
+	 * @param array $params
+	 * @return array
+	 */
+	private function prepareAddPullEventParameters(array $params): array
+	{
+		$after = $params['CURRENT_FIELDS'];
+		$after['GROUP_ID'] = (isset($after['GROUP_ID']) && (int)$after['GROUP_ID'] > 0 ? (int)$after['GROUP_ID'] : 0);
+
+		return [
+			'TASK_ID' => $params['TASK_ID'],
+			'AFTER' => $after,
+			'TS' => time(),
+			'event_GUID' => $params['EVENT_GUID'],
+			'params' => [
+				'addCommentExists' => $params['ADD_COMMENT_EXISTS'],
+			],
+		];
 	}
 
 	private static function processDurationPlanFields(&$arFields, $type)
@@ -999,6 +1045,8 @@ class CTasks
 		$ID = intval($ID);
 		if ($ID < 1)
 			return false;
+
+		Counter\CounterService::getInstance()->collectData($ID);
 
 		$userID = null;
 
@@ -1101,56 +1149,56 @@ class CTasks
 
 				if ($ufCheck)
 				{
-					unset($arFields["ID"]);
-
-					$arBinds = array(
-						"DESCRIPTION"    => $arFields["DESCRIPTION"],
-						"DECLINE_REASON" => $arFields["DECLINE_REASON"]
-					);
+					unset($arFields['ID']);
 
 					$time = \Bitrix\Tasks\UI::formatDateTime(User::getTime());
 
-					$arFields["CHANGED_BY"] = $userID;
-					$arFields["CHANGED_DATE"] = $time;
+					$arFields['CHANGED_BY'] = $userID;
+					$arFields['CHANGED_DATE'] = $time;
 
-					$occurAsUserId = CTasksTools::getOccurAsUserId();
-					if (!$occurAsUserId)
+					if (!($occurAsUserId = CTasksTools::getOccurAsUserId()))
 					{
-						$occurAsUserId = ($arFields["CHANGED_BY"] ? $arFields["CHANGED_BY"] : 1);
+						$occurAsUserId = ($arFields['CHANGED_BY'] ?: 1);
 					}
 
-					if (!$arFields["OUTLOOK_VERSION"])
+					if (!$arFields['OUTLOOK_VERSION'])
 					{
-						$arFields["OUTLOOK_VERSION"] = ($arTask["OUTLOOK_VERSION"] ? $arTask["OUTLOOK_VERSION"] : 1) +
-													   1;
+						$arFields['OUTLOOK_VERSION'] = ($arTask['OUTLOOK_VERSION'] ?: 1) + 1;
 					}
 
 					// If new status code given AND new status code != current status => than update
-					if (isset($arFields["STATUS"]) && (int)$arTask['STATUS'] !== (int)$arFields['STATUS'])
+					$isComplete = false;
+					if (isset($arFields['STATUS']) && (int)$arTask['STATUS'] !== (int)$arFields['STATUS'])
 					{
-						$arFields["STATUS_CHANGED_BY"] = $userID;
-						$arFields["STATUS_CHANGED_DATE"] = $time;
+						$newStatus = (int)$arFields['STATUS'];
 
-						if ($arFields["STATUS"] == 5 || $arFields["STATUS"] == 4)
+						$arFields['STATUS_CHANGED_BY'] = $userID;
+						$arFields['STATUS_CHANGED_DATE'] = $time;
+
+						if ($newStatus === self::STATE_COMPLETED || $newStatus === self::STATE_SUPPOSEDLY_COMPLETED)
 						{
-							$arFields["CLOSED_BY"] = $userID;
-							$arFields["CLOSED_DATE"] = $time;
+							$arFields['CLOSED_BY'] = $userID;
+							$arFields['CLOSED_DATE'] = $time;
+
+							$isComplete = true;
 						}
 						else
 						{
-							$arFields["CLOSED_BY"] = false;
-							$arFields["CLOSED_DATE"] = false;
+							$arFields['CLOSED_BY'] = false;
+							$arFields['CLOSED_DATE'] = false;
 
-							if ($arFields["STATUS"] == 3 && !$arTask["DATE_START"])
+							if ($newStatus === self::STATE_IN_PROGRESS && !$arTask['DATE_START'])
 							{
-								$arFields["DATE_START"] = $time;
+								$arFields['DATE_START'] = $time;
 							}
 						}
 					}
 
-					if (isset($arFields['DEADLINE']) &&
-						(string)$arFields['DEADLINE'] != '' &&
-						$arTask['MATCH_WORK_TIME'] == 'Y')
+					if (
+						isset($arFields['DEADLINE'])
+						&& (string)$arFields['DEADLINE'] != ''
+						&& $arTask['MATCH_WORK_TIME'] === 'Y'
+					)
 					{
 						$arFields['DEADLINE'] = static::getDeadlineMatchWorkTime($arFields['DEADLINE']);
 					}
@@ -1257,15 +1305,12 @@ class CTasks
 						$arFields['STAGE_ID'] = 0;
 					}
 
-					$strUpdate = $DB->PrepareUpdate("b_tasks", $arFields, "tasks");
-					$strSql = "UPDATE b_tasks SET ".$strUpdate." WHERE ID=".$ID;
-					$result = $DB->QueryBind($strSql, $arBinds, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+					$strUpdate = $DB->PrepareUpdate('b_tasks', $arFields, 'tasks');
+					$result = $DB->Query("UPDATE b_tasks SET {$strUpdate} WHERE ID = {$ID}");
 
 					if ($result)
 					{
-						$completedStates = [static::STATE_SUPPOSEDLY_COMPLETED, static::STATE_COMPLETED];
-
-						if (isset($arFields['STATUS']) && in_array((int)$arFields['STATUS'], $completedStates))
+						if ($isComplete)
 						{
 							// stop timer for responsible and accomplices, if exists
 							$responsibleTimer = CTaskTimerManager::getInstance($arTask['RESPONSIBLE_ID']);
@@ -1493,7 +1538,10 @@ class CTasks
 
 						foreach ($addedParticipants as $userId)
 						{
-							ViewedTable::set($ID, $userId, $viewedDate);
+							if ($viewedDate)
+							{
+								ViewedTable::set($ID, $userId, $viewedDate);
+							}
 
 							if ($newAuditors && is_array($newAuditors) && in_array($userId, $newAuditors))
 							{
@@ -1501,8 +1549,17 @@ class CTasks
 							}
 						}
 
-						Counter::onAfterTaskUpdate($arTask, $arFields, $arParams);
-						Counter::sendPushCounters($participants);
+						if (!array_key_exists('FORCE_RECOUNT_COUNTER', $arParams))
+						{
+							Counter\CounterService::addEvent(
+								Counter\CounterDictionary::EVENT_AFTER_TASK_UPDATE,
+								[
+									'OLD_RECORD' => $arTask,
+									'NEW_RECORD' => $arFields,
+									'PARAMS' => $arParams,
+								]
+							);
+						}
 
 						foreach ($removedParticipants as $userId)
 						{
@@ -1515,11 +1572,30 @@ class CTasks
 						}
 						static::clearCache();
 
+						$updateComment = false;
 						$changesForUpdate = static::getChangesForUpdate($changes);
 						if (!empty($changesForUpdate))
 						{
 							$commentPoster = CommentPoster::getInstance($ID, $occurAsUserId);
-							$commentPoster->postCommentsOnTaskUpdate($arTask, $arFields, $changesForUpdate);
+							if ($commentPoster)
+							{
+								if (!($isDeferred = $commentPoster->getDeferredPostMode()))
+								{
+									$commentPoster->enableDeferredPostMode();
+								}
+
+								$commentPoster->postCommentsOnTaskUpdate($arTask, $arFields, $changesForUpdate);
+								$updateComment = $commentPoster->getCommentByType(Comment::TYPE_UPDATE)
+									|| $commentPoster->getCommentByType(Comment::TYPE_STATUS)
+								;
+
+								if (!$isDeferred)
+								{
+									$commentPoster->disableDeferredPostMode();
+									$commentPoster->postComments();
+									$commentPoster->clearComments();
+								}
+							}
 						}
 
 						if (!isset($arParams['SEND_UPDATE_PULL_EVENT']) || $arParams['SEND_UPDATE_PULL_EVENT'])
@@ -1530,9 +1606,11 @@ class CTasks
 									'CURRENT_FIELDS' => $arTask,
 									'NEW_FIELDS' => $arFields,
 									'CHANGES' => $changes,
+									'USER_ID' => $userID,
 									'RECIPIENTS' => $participants,
 									'TASK_ID' => (int)$ID,
 									'EVENT_GUID' => $eventGUID,
+									'UPDATE_COMMENT_EXISTS' => $updateComment,
 								])
 							);
 						}
@@ -1563,6 +1641,29 @@ class CTasks
 						}
 
 						Integration\Bizproc\Listener::onTaskUpdate($ID, $arFields, $arTaskCopy);
+
+						if (isset($arFields['GROUP_ID']) && CModule::IncludeModule("socialnetwork"))
+						{
+							$currentGroupId = ($arFields['GROUP_ID'] > 0 ? $arFields['GROUP_ID'] : $arTask['GROUP_ID']);
+							$group = Workgroup::getById($currentGroupId);
+							if ($group && $group->isScrumProject())
+							{
+								if ($arFields['GROUP_ID'] > 0)
+								{
+									if ($arFields['GROUP_ID'] != $arTask['GROUP_ID'])
+									{
+										$this->updateScrumItem(
+											$ID,
+											array_merge($arTask, ['GROUP_ID' => $arFields['GROUP_ID']])
+										);
+									}
+								}
+								else
+								{
+									$this->deleteScrumItem($ID);
+								}
+							}
+						}
 
 						return true;
 					}
@@ -1635,46 +1736,10 @@ class CTasks
 				return true;
 			}
 
-			$currentFields = $params['CURRENT_FIELDS'];
-			$newFields = $params['NEW_FIELDS'];
-			$changes = $params['CHANGES'];
-
-			$before = [];
-			$after = [];
-
-			foreach ($changes as $field => $value)
-			{
-				$before[$field] = $value['FROM_VALUE'];
-				$after[$field] = $value['TO_VALUE'];
-			}
-
-			$groupId = (
-				isset($currentFields['GROUP_ID']) && (int)$currentFields['GROUP_ID'] > 0
-					? (int)$currentFields['GROUP_ID']
-					: 0
-			);
-			$newGroupId = (
-				isset($newFields['GROUP_ID']) && (int)$newFields['GROUP_ID'] > 0
-					? (int)$newFields['GROUP_ID']
-					: 0
-			);
-
-			$before['GROUP_ID'] = $groupId;
-			$after['GROUP_ID'] = (array_key_exists('GROUP_ID', $newFields) ? $newGroupId : $groupId);
-
 			Event::add($params['RECIPIENTS'], [
 				'module_id' => 'tasks',
 				'command' => 'task_update',
-				'params' => [
-					'TASK_ID' => $params['TASK_ID'],
-					'BEFORE' => $before,
-					'AFTER' => $after,
-					'TS' => time(),
-					'event_GUID' => $params['EVENT_GUID'],
-					'params' => [
-						'HIDE' => (array_key_exists('HIDE', $params) ? (bool)$params['HIDE'] : true),
-					],
-				],
+				'params' => $this->prepareUpdatePullEventParameters($params),
 			]);
 		}
 		catch (Exception $e)
@@ -1684,6 +1749,48 @@ class CTasks
 		}
 
 		return true;
+	}
+
+	/**
+	 * @param array $params
+	 * @return array
+	 */
+	private function prepareUpdatePullEventParameters(array $params): array
+	{
+		$currentFields = $params['CURRENT_FIELDS'];
+		$newFields = $params['NEW_FIELDS'];
+		$changes = $params['CHANGES'];
+
+		$before = [];
+		$after = [];
+
+		foreach ($changes as $field => $value)
+		{
+			$before[$field] = $value['FROM_VALUE'];
+			$after[$field] = $value['TO_VALUE'];
+		}
+
+		$groupId = ($currentFields['GROUP_ID'] ?? 0);
+		$groupId = ((int)$groupId > 0 ? (int)$groupId : 0);
+
+		$newGroupId = ($newFields['GROUP_ID'] ?? 0);
+		$newGroupId = ((int)$newGroupId > 0 ? (int)$newGroupId : 0);
+
+		$before['GROUP_ID'] = $groupId;
+		$after['GROUP_ID'] = (array_key_exists('GROUP_ID', $newFields) ? $newGroupId : $groupId);
+
+		return [
+			'TASK_ID' => $params['TASK_ID'],
+			'USER_ID' => $params['USER_ID'],
+			'BEFORE' => $before,
+			'AFTER' => $after,
+			'TS' => time(),
+			'event_GUID' => $params['EVENT_GUID'],
+			'params' => [
+				'HIDE' => (array_key_exists('HIDE', $params) ? (bool)$params['HIDE'] : true),
+				'updateCommentExists' => $params['UPDATE_COMMENT_EXISTS'],
+			],
+		];
 	}
 
 	/**
@@ -1869,6 +1976,8 @@ class CTasks
 		{
 			return false;
 		}
+
+		Counter\CounterService::getInstance()->collectData($taskId);
 
 		$actorUserId = User::getId();
 		if (!$actorUserId)
@@ -2077,8 +2186,10 @@ class CTasks
 					CTaskSync::DeleteItem($taskData); // MS Exchange
 				}
 
-				Counter::onAfterTaskDelete($taskData);
-				Counter::sendPushCounters($arParticipants);
+				Counter\CounterService::addEvent(
+					Counter\CounterDictionary::EVENT_AFTER_TASK_DELETE,
+					$taskData
+				);
 
 				// Emit pull event
 				static::sendDeletePullEvent([
@@ -2104,6 +2215,8 @@ class CTasks
 				{
 					\Bitrix\Tasks\Internals\TaskTable::delete($taskId);
 				}
+
+				ItemTable::deactivateBySourceId($taskId);
 			}
 
 			return true;
@@ -2149,47 +2262,6 @@ class CTasks
 				],
 			],
 		]);
-	}
-
-	/**
-	 * @param $ID
-	 *
-	 * This method MUST be called after sync with all Outlook clients.
-	 * We can't determine such moment, so we should terminate zombies
-	 * for some time after task been deleted.
-	 */
-	private static function terminateZombie($ID)
-	{
-		global $DB, $USER_FIELD_MANAGER;
-
-		$res = CTasks::GetList(
-			array(),
-			array('ID' => (int)$ID, 'ZOMBIE' => 'Y'),
-			array('ID'),
-			array('bGetZombie' => true)
-		);
-
-		if ($res && ($task = $res->fetch()))
-		{
-			foreach (GetModuleEvents('tasks', 'OnBeforeTaskZombieDelete', true) as $arEvent)
-			{
-				ExecuteModuleEventEx($arEvent, array($ID));
-			}
-
-			CTaskCheckListItem::deleteByTaskId($ID);
-			CTaskLog::DeleteByTaskId($ID);
-
-			$USER_FIELD_MANAGER->Delete("TASKS_TASK", $ID);
-
-			$strSql = "DELETE FROM b_tasks WHERE ID = ".(int)$ID;
-
-			$DB->query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
-
-			foreach (GetModuleEvents('tasks', 'OnTaskZombieDelete', true) as $arEvent)
-			{
-				ExecuteModuleEventEx($arEvent, array($ID));
-			}
-		}
 	}
 
 	protected static function GetSqlByFilter($arFilter, $userID, $sAliasPrefix, $bGetZombie, $bMembersTableJoined = false, $params = [])
@@ -2513,7 +2585,7 @@ class CTasks
 						"T.DEADLINE < DATE_ADD(".
 						$DB->CurrentTimeFunction().
 						", INTERVAL ".
-						Counter::getDeadlineTimeLimit().
+						Counter\Deadline::getDeadlineTimeLimit().
 						" SECOND)
 								AND ".
 						$sAliasPrefix.
@@ -2888,15 +2960,14 @@ class CTasks
 					break;
 
 				case "ONLY_ROOT_TASKS":
-					if ($val == "Y")
+					if ($val === 'Y')
 					{
-						$arSqlSearch[] = "(".
-										 $sAliasPrefix.
-										 "T.PARENT_ID IS NULL OR ".
-										 $sAliasPrefix.
-										 "T.PARENT_ID = '0' OR NOT EXISTS (".
-										 CTasks::GetRootSubQuery($arFilter, $bGetZombie, $sAliasPrefix, $params).
-										 "))";
+						$arSqlSearch[] = "("
+							."{$sAliasPrefix}T.PARENT_ID IS NULL OR "
+							."{$sAliasPrefix}T.PARENT_ID = '0' OR "
+						 	."{$sAliasPrefix}T.PARENT_ID NOT IN ("
+							.CTasks::GetRootSubQuery($arFilter, $bGetZombie, $sAliasPrefix, $params)
+							."))";
 					}
 					break;
 
@@ -3003,6 +3074,7 @@ class CTasks
 					break;
 
 				case 'WITH_NEW_COMMENTS':
+					$expiredCommentType = Comment::TYPE_EXPIRED;
 					$qr = "
 						(
 							({$sAliasPrefix}TV.VIEWED_DATE IS NOT NULL AND {$sAliasPrefix}FM.POST_DATE > {$sAliasPrefix}TV.VIEWED_DATE)
@@ -3010,6 +3082,11 @@ class CTasks
 						)
 						AND {$sAliasPrefix}FM.NEW_TOPIC = 'N'
 						AND {$sAliasPrefix}FM.AUTHOR_ID != {$userID}
+						AND (
+							{$sAliasPrefix}BUF_FM.UF_TASK_COMMENT_TYPE = 0
+							OR {$sAliasPrefix}BUF_FM.UF_TASK_COMMENT_TYPE IS NULL
+							OR {$sAliasPrefix}BUF_FM.UF_TASK_COMMENT_TYPE != {$expiredCommentType} 
+						)
 					";
 
 					$startCounterDate = \COption::GetOptionString("tasks", "tasksDropCommentCounters", null);
@@ -3027,7 +3104,7 @@ class CTasks
 						'IS_MUTED' => UserOption\Option::MUTED,
 						'IS_PINNED' => UserOption\Option::PINNED,
 					];
-					$arSqlSearch[] = ($val === 'N' ? 'NOT ' : '')
+					$arSqlSearch[] = " {$sAliasPrefix}T.ID " . ($val === 'N' ? 'NOT ' : '')
 						.UserOption::getFilterSql($userID, $optionMap[$key], $sAliasPrefix);
 					break;
 
@@ -4560,6 +4637,14 @@ class CTasks
 				],
 				'default' => 'N',
 			],
+			"ALLOW_TIME_TRACKING" => [
+				'type' => 'enum',
+				'values' => [
+					'Y' => Loc::getMessage('TASKS_FIELDS_Y'),
+					'N' => Loc::getMessage('TASKS_FIELDS_N'),
+				],
+				'default' => 'N',
+			],
 			"TASK_CONTROL"          => [
 				'type'    => 'enum',
 				'values'  => [
@@ -4929,14 +5014,21 @@ class CTasks
 					{
 						$tableName = \Bitrix\Forum\MessageTable::getTableName();
 						$relatedJoins[$join] = "LEFT JOIN {$tableName} {$joinAlias}FM "
-							."ON {$joinAlias}FM.TOPIC_ID = {$sourceAlias}.FORUM_TOPIC_ID";
+							."ON {$joinAlias}FM.TOPIC_ID = {$sourceAlias}.FORUM_TOPIC_ID\n";
+						$relatedJoins[$join] .= "LEFT JOIN b_uts_forum_message {$joinAlias}BUF_FM "
+							."ON {$joinAlias}BUF_FM.VALUE_ID = {$joinAlias}FM.ID";
 					}
 					break;
 
 				case 'FULL_SEARCH':
 					if (
 						in_array('MESSAGE_ID', $select, true)
-						|| in_array('FULL_SEARCH_INDEX', $filterKeys, true)
+						||
+						(
+							in_array('FULL_SEARCH_INDEX', $filterKeys, true)
+							&& isset($filter['::SUBFILTER-FULL_SEARCH_INDEX']['*FULL_SEARCH_INDEX'])
+							&& !empty(trim($filter['::SUBFILTER-FULL_SEARCH_INDEX']['*FULL_SEARCH_INDEX']))
+						)
 					)
 					{
 						$tableName = SearchIndexTable::getTableName();
@@ -5669,16 +5761,21 @@ class CTasks
 
 		unset($filter["ONLY_ROOT_TASKS"], $filter["SAME_GROUP_PARENT"]);
 
-		$params = [
+		$searchParams = [];
+		if (array_key_exists('ENABLE_LEGACY_ACCESS', $params))
+		{
+			$searchParams['ENABLE_LEGACY_ACCESS'] = $params['ENABLE_LEGACY_ACCESS'];
+		}
+
+		$optimized = static::tryOptimizeFilter($filter, 'PT', 'PTM_SPEC');
+		$sqlSearch = array_merge($sqlSearch, CTasks::GetFilter($optimized['FILTER'], "P", $searchParams));
+
+		$relatedParams = [
 			'USER_ID' => $userId,
 			'JOIN_ALIAS' => 'P',
 			'SOURCE_ALIAS' => 'PT'
 		];
-
-		$optimized = static::tryOptimizeFilter($filter, 'PT', 'PTM_SPEC');
-		$sqlSearch = array_merge($sqlSearch, CTasks::GetFilter($optimized['FILTER'], "P"));
-
-		$relatedJoins = static::getRelatedJoins([], $filter, [], $params);
+		$relatedJoins = static::getRelatedJoins([], $filter, [], $relatedParams);
 
 		if (isset($relatedJoins['FULL_SEARCH']))
 		{
@@ -5692,7 +5789,7 @@ class CTasks
 		$relatedJoins = array_merge($relatedJoins, $optimized['JOINS']);
 
 		$strSql = "
-			SELECT 'x'
+			SELECT PT.ID
 			FROM b_tasks PT
 			" . implode("\n", $relatedJoins) . "
 			WHERE " . implode(" AND ", $sqlSearch) . "
@@ -6760,9 +6857,6 @@ class CTasks
 			));
 		}
 
-		Counter::onAfterTaskViewed($TASK_ID, $USER_ID);
-		Counter::sendPushCounters([$USER_ID]);
-
 		$pullData = [
 			'USER_ID' => $USER_ID,
 			'TASK_ID' => $TASK_ID,
@@ -7010,8 +7104,7 @@ class CTasks
 		$activeTasksResult = Application::getConnection()->query("
 			SELECT DISTINCT T.ID
 			FROM b_tasks T
-				INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID AND TM.USER_ID = {$userId}
-			WHERE T.ZOMBIE = 'N'
+			INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID AND TM.USER_ID = {$userId}
 		");
 		$activeTasks = [];
 		while ($item = $activeTasksResult->fetch())
@@ -7667,4 +7760,50 @@ class CTasks
 		));
 	}
 
+	private function createScrumItem(int $taskId, array $fields): void
+	{
+		$backlogService = new BacklogService();
+		$backlog = $backlogService->getBacklogByGroupId($fields['GROUP_ID']);
+		if (!$backlogService->getErrors() && !$backlog->isEmpty())
+		{
+			$itemService = new ItemService();
+
+			$scrumItem = ItemTable::createItemObject();
+			$scrumItem->setName($fields['TITLE']);
+			$scrumItem->setCreatedBy($fields['CREATED_BY']);
+			$scrumItem->setEntityId($backlog->getId());
+			$scrumItem->setSourceId($taskId);
+
+			$itemService->createTaskItem($scrumItem);
+		}
+	}
+
+	private function updateScrumItem(int $taskId, $fields): void
+	{
+		$backlogService = new BacklogService();
+		$backlog = $backlogService->getBacklogByGroupId($fields['GROUP_ID']);
+		if (!$backlogService->getErrors() && !$backlog->isEmpty())
+		{
+			$itemService = new ItemService();
+			$scrumItem = $itemService->getItemBySourceId($taskId);
+			if (!$itemService->getErrors() && !$scrumItem->isEmpty())
+			{
+				$scrumItem->setEntityId($backlog->getId());
+				$scrumItem->setSort(0);
+				$scrumItem->setParentId(0);
+				$scrumItem->setModifiedBy($fields['CHANGED_BY']);
+				$itemService->changeItem($scrumItem);
+			}
+		}
+	}
+
+	private function deleteScrumItem(int $taskId): void
+	{
+		$itemService = new ItemService();
+		$scrumItem = $itemService->getItemBySourceId($taskId);
+		if (!$itemService->getErrors() && !$scrumItem->isEmpty())
+		{
+			$itemService->removeItem($scrumItem);
+		}
+	}
 }

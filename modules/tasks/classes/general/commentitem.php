@@ -239,12 +239,19 @@ final class CTaskCommentItem extends CTaskSubItemAbstract
 	 */
 	private static function parseCommentPostMessage(array $comment): array
 	{
-		/** @var Socialnetwork\CommentAux\TaskInfo $commentAuxProvider */
-		$commentAuxProvider = Socialnetwork\CommentAux\Base::findProvider(
+		if (
+			isset($comment['SERVICE_TYPE'])
+			&& $serviceProvider = \Bitrix\Forum\Comments\Service\Manager::find([
+				'SERVICE_TYPE' => (int)$comment['SERVICE_TYPE'],
+			])
+		)
+		{
+			$comment['POST_MESSAGE'] = $serviceProvider->getText($comment['POST_MESSAGE']);
+		} // new
+		elseif ($commentAuxProvider = Socialnetwork\CommentAux\Base::findProvider(
 			['POST_TEXT' => $comment['POST_MESSAGE']],
 			['needSetParams' => false]
-		);
-		if ($commentAuxProvider)
+		)) // old
 		{
 			$forumPostLivefeedProvider = new Socialnetwork\Livefeed\ForumPost();
 			$dbres = Socialnetwork\LogCommentTable::getList([

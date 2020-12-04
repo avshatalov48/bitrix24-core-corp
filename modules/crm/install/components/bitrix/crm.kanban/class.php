@@ -706,6 +706,16 @@ class CrmKanbanComponent extends \CBitrixComponent
 				$entityTypeID,
 				$filter
 			);
+
+			if (
+				($limitWarningValue = $searchRestriction->getLimitWarningValue($entityTypeID)) > 0
+			)
+			{
+				$searchRestriction->notifyLimitWarning(
+					$entityTypeID,
+					$limitWarningValue
+				);
+			}
 		}
 		else
 		{

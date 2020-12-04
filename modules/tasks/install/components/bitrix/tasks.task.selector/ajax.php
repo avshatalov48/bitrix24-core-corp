@@ -15,86 +15,76 @@ CModule::IncludeModule('tasks');
 
 Loc::loadMessages(__FILE__);
 
-$SITE_ID = isset($_GET["SITE_ID"]) ? $_GET["SITE_ID"] : SITE_ID;
+$SITE_ID = ($_GET['SITE_ID'] ?? SITE_ID);
 
-if ($_REQUEST['MODE'] == 'SEARCH')
+if ($_REQUEST['MODE'] === 'SEARCH')
 {
 	CUtil::JSPostUnescape();
 	$APPLICATION->RestartBuffer();
 
 	$search = $_REQUEST['SEARCH_STRING'];
 
-	if(is_numeric($search))
+	if (is_numeric($search))
 	{
-		$arFilter = array(
-			array(
+		$filter = [
+			[
 				'::LOGIC' => 'OR',
-				array("%TITLE" => $search),
-				array('ID' => $search),
-			)
-		);
+				['%TITLE' => $search],
+				['ID' => $search],
+			],
+		];
 	}
 	else
 	{
-		$arFilter = array("%TITLE" => $search);
+		$filter = ['%TITLE' => $search];
 	}
-
-	if (isset($_GET["FILTER"]))
-		$arFilter = array_merge($arFilter, $_GET["FILTER"]);
-
-	// Override CHECK_PERMISSIONS, if it was given in $_GET['FILTER']
-	$arFilter['CHECK_PERMISSIONS'] = 'Y';
+	if (isset($_GET['FILTER']))
+	{
+		$filter = array_merge($filter, $_GET['FILTER']);
+	}
+	$filter['CHECK_PERMISSIONS'] = 'Y';
+	$filter['STATUS'] = [CTasks::STATE_PENDING, CTasks::STATE_IN_PROGRESS];
 
 	$totalTasksToBeSelected = 10;
 
-	// Firstly, get active tasks
-	$arFilter['STATUS'] = array(CTasks::STATE_NEW, CTasks::STATE_PENDING, CTasks::STATE_IN_PROGRESS);
+	$select = ['ID', 'TITLE', 'STATUS'];
+	$order = ['TITLE' => 'ASC'];
+	$params = [
+		'NAV_PARAMS' => ['nTopCount' => $totalTasksToBeSelected],
+	];
 
-	$dbRes = CTasks::GetList(
-		array('TITLE' => 'ASC'), 
-		$arFilter,
-		array('ID', 'TITLE', 'STATUS'),	// fields to be selected
-		$totalTasksToBeSelected			// nPageTop
-	);
-
-	$arTasks = array();
-	while ($arRes = $dbRes->fetch())
+	$tasks = [];
+	$dbRes = CTasks::GetList($order, $filter, $select, $params);
+	while ($task = $dbRes->fetch())
 	{
-		$arTasks[] = array(
-			"ID" => $arRes["ID"],
-			"TITLE" => $arRes["TITLE"],
-			"STATUS" => $arRes["STATUS"]
-		);
+		$tasks[] = [
+			'ID' => $task['ID'],
+			'TITLE' => $task['TITLE'],
+			'STATUS' => $task['STATUS'],
+		];
 	}
 
-	$tasksCount = count($arTasks);
-
-	if (count($arTasks) < 10)
+	$tasksCount = count($tasks);
+	if ($tasksCount < 10)
 	{
 		// Additionally, get not active tasks
-		unset($arFilter['STATUS']);
-		$arFilter['!STATUS'] = array(CTasks::STATE_NEW, CTasks::STATE_PENDING, CTasks::STATE_IN_PROGRESS);
+		unset($filter['STATUS']);
+		$filter['!STATUS'] = [CTasks::STATE_PENDING, CTasks::STATE_IN_PROGRESS];
+		$params['NAV_PARAMS']['nTopCount'] = $totalTasksToBeSelected - $tasksCount;
 
-		$dbRes = CTasks::GetList(
-			array('TITLE' => 'ASC'),
-			$arFilter,
-			array('ID', 'TITLE', 'STATUS'),	// fields to be selected
-			$totalTasksToBeSelected - $tasksCount  // nPageTop
-		);
-
-		while ($arRes = $dbRes->fetch())
+		$dbRes = CTasks::GetList($order, $filter, $select, $params);
+		while ($task = $dbRes->fetch())
 		{
-			$arTasks[] = array(
-				"ID" => $arRes["ID"],
-				"TITLE" => $arRes["TITLE"],
-				"STATUS" => $arRes["STATUS"]
-			);
+			$tasks[] = [
+				'ID' => $task['ID'],
+				'TITLE' => $task['TITLE'],
+				'STATUS' => $task['STATUS'],
+			];
 		}
 	}
 
 	header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
-	echo CUtil::PhpToJsObject($arTasks);
+	echo CUtil::PhpToJsObject($tasks);
 
 	CMain::FinalActions(); // to make events work on bitrix24
-	die();
 }

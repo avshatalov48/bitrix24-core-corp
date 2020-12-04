@@ -270,7 +270,7 @@
 						[
 							BackdropMenuItem.create("stream")
 								.setType("button")
-								.setTitle(BX.message("STRESS_SHARE_LIVE_STREAM"))
+								.setTitle(BX.message("STRESS_SHARE_NEWS"))
 								.setStyles({label:style, title:style})
 							,
 							BackdropMenuItem.create("cancel")

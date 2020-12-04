@@ -49,7 +49,6 @@ class ExpiredAgentCreator extends Stepper
 					ZOMBIE = 'N'
 					AND STATUS < 4
 					AND DEADLINE IS NOT NULL
-					AND DEADLINE <> ''
 					AND DEADLINE > NOW()
 					AND ID > {$parameters['last_id']}
 				ORDER BY ID
@@ -102,8 +101,7 @@ class ExpiredAgentCreator extends Stepper
 				WHERE
 					ZOMBIE = 'N'
 					AND STATUS < 4
-					AND DEADLINE IS NOT NULL
-					AND DEADLINE <> ''
+				  	AND DEADLINE IS NOT NULL
 					AND DEADLINE > NOW()
 			")->fetch();
 

@@ -126,7 +126,7 @@ else
 			if (!is_numeric($principal))
 				return false;
 
-			$principal = IntVal($principal);
+			$principal = intval($principal);
 			$calendarIdNorm = implode("-", $calendarId);
 
 			static $arCalendarPrivilegesCache = array();
@@ -306,7 +306,7 @@ else
 				if ($bCalendarData)
 				{
 					$content = $this->GetICalContent($event, $siteId);
-					$resource->AddProperty('getcontentlength', strlen($content));
+					$resource->AddProperty('getcontentlength', mb_strlen($content));
 					$resource->AddProperty('calendar-data', $content, CDavGroupDav::CALDAV);
 				}
 				else
@@ -419,7 +419,7 @@ else
 			else
 				$arICalEvent["TRANSP"] = 'OPAQUE';
 
-			if (isset($event["PROPERTY_LOCATION"]) && strlen($event["PROPERTY_LOCATION"]) > 0)
+			if (isset($event["PROPERTY_LOCATION"]) && $event["PROPERTY_LOCATION"] <> '')
 				$arICalEvent["LOCATION"] = $event["PROPERTY_LOCATION"];
 
 			if (isset($event["PROPERTY_IMPORTANCE"]))
@@ -432,10 +432,10 @@ else
 					$arICalEvent["PRIORITY"] = 5;
 			}
 
-			if (isset($event["DETAIL_TEXT"]) && strlen($event["DETAIL_TEXT"]) > 0)
+			if (isset($event["DETAIL_TEXT"]) && $event["DETAIL_TEXT"] <> '')
 				$arICalEvent["DESCRIPTION"] = $event["DETAIL_TEXT"];
 
-			if (isset($event["PROPERTY_REMIND_SETTINGS"]) && strlen($event["PROPERTY_REMIND_SETTINGS"]) > 0)
+			if (isset($event["PROPERTY_REMIND_SETTINGS"]) && $event["PROPERTY_REMIND_SETTINGS"] <> '')
 			{
 				$arPeriodMapTmp = array("min" => "M", "hour" => "H", "day" => "D");
 				$ar = explode("_", $event["PROPERTY_REMIND_SETTINGS"]);
@@ -450,12 +450,12 @@ else
 				);
 			}
 
-			if (isset($event["PROPERTY_PERIOD_TYPE"]) && (strlen($event["PROPERTY_PERIOD_TYPE"]) > 0) && (strtoupper($event["PROPERTY_PERIOD_TYPE"]) != "NONE"))
+			if (isset($event["PROPERTY_PERIOD_TYPE"]) && ($event["PROPERTY_PERIOD_TYPE"] <> '') && (mb_strtoupper($event["PROPERTY_PERIOD_TYPE"]) != "NONE"))
 			{
 				$val = "FREQ=".$event["PROPERTY_PERIOD_TYPE"];
-				if (isset($event["PROPERTY_PERIOD_COUNT"]) && strlen($event["PROPERTY_PERIOD_COUNT"]) > 0)
+				if (isset($event["PROPERTY_PERIOD_COUNT"]) && $event["PROPERTY_PERIOD_COUNT"] <> '')
 					$val .= ";INTERVAL=".$event["PROPERTY_PERIOD_COUNT"];
-				if ($event["PROPERTY_PERIOD_TYPE"] == "WEEKLY" && strlen($event["PROPERTY_PERIOD_ADDITIONAL"]) > 0)
+				if ($event["PROPERTY_PERIOD_TYPE"] == "WEEKLY" && $event["PROPERTY_PERIOD_ADDITIONAL"] <> '')
 				{
 					static $arWeekDayMap = array(6 => "SU", 0 => "MO", 1 => "TU", 2 => "WE", 3 => "TH", 4 => "FR", 5 => "SA");
 
@@ -598,7 +598,7 @@ else
 						$ar = explode(",", $rrule["BYDAY"]);
 						$ar1 = array();
 						foreach ($ar as $v)
-							$ar1[] = $arWeekDayMap[strtoupper($v)];
+							$ar1[] = $arWeekDayMap[mb_strtoupper($v)];
 						$arFields["PROPERTY_PERIOD_ADDITIONAL"] = implode(",", $ar1);
 					}
 					else
@@ -643,9 +643,9 @@ else
 				$arParams["interval"] = 1;
 			$arParams["interval"] = intval($arParams["interval"]);
 
-			if (!isset($arParams["freq"]) || !in_array(strtoupper($arParams["freq"]), array('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY')))
+			if (!isset($arParams["freq"]) || !in_array(mb_strtoupper($arParams["freq"]), array('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY')))
 				$arParams["freq"] = "DAILY";
-			$arParams["freq"] = strtoupper($arParams["freq"]);
+			$arParams["freq"] = mb_strtoupper($arParams["freq"]);
 
 			if ($arParams["freq"] == 'WEEKLY')
 			{
@@ -809,8 +809,8 @@ else
 					{
 						$attribute = trim($attribute);
 						list($key, $value) = explode('=', $attribute);
-						if (strtolower($key) == 'charset')
-							$charset = strtolower($value);
+						if (mb_strtolower($key) == 'charset')
+							$charset = mb_strtolower($value);
 					}
 				}
 			}

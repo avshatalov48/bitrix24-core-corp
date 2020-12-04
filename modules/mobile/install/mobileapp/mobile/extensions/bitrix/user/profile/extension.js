@@ -3,6 +3,24 @@
 */
 
 (()=>{
+
+	let statusColor = status =>{
+		let colors = {
+			admin: "#2FC6F6",
+			extranet: "#F7A700",
+			integrator: "#55D0E0",
+			fired: "#A8ADB4",
+			owner: "#FF799C",
+		};
+
+		if(colors[status]) {
+			return colors[status];
+		}
+
+		return colors.fired;
+	}
+
+
 	class Profile
 	{
 		constructor(userId = 0, form, items = [], sections = [])
@@ -430,6 +448,16 @@
 			return this._popupMenu;
 		}
 
+		availableStatus(status) {
+			return [
+				"admin",
+				"extranet",
+				"integrator",
+				"fired",
+				"owner",
+			].indexOf(status) >= 0;
+		}
+
 		render()
 		{
 
@@ -446,7 +474,7 @@
 				{
 					item.type = "info";
 					if(!item.height)
-						item.height = 60;
+						item.height = 80;
 					item.styles = {
 						'title': {
 							'font': {
@@ -467,12 +495,20 @@
 					return item;
 				});
 
+
+
 			BX.onViewLoaded(() =>
 			{
 				let topItem = {
 					imageUrl: encodeURI(this.fieldsValues["PERSONAL_PHOTO"]),
 					title: this.fieldsValues["NAME_FORMATTED"],
 					styles:{
+						tag: {
+							color:"#ffffff",
+							backgroundColor:statusColor(this.fieldsValues["STATUS"]),
+							padding:{top:5,bottom:5, left:10, right:10},
+							cornerRadius:14,
+						},
 						title:{
 							font:{
 								size:18,
@@ -480,16 +516,17 @@
 							}
 						},
 					},
+					// tag: this.availableStatus(this.fieldsValues["STATUS"])? this.fieldsValues["STATUS_NAME"] : undefined,
 					subtitle: this.fieldsValues["WORK_POSITION"],
 					sectionCode: "top",
 					type:"userinfo",
 					id: "userinfo",
+					// height: this.availableStatus(this.fieldsValues["STATUS"])? 130 : 100,
 					height: 100,
 					imageHeight: 80,
 					useLetterImage:true,
 					color:"#2e455a"
 				};
-
 
 				Application.sharedStorage().set("user_head_"+this.userId, JSON.stringify({
 					imageUrl: encodeURI(this.fieldsValues["PERSONAL_PHOTO"]),
@@ -630,6 +667,11 @@
 					sectionCode: "top",
 					type:"userinfo",
 					styles:{
+						tag: {
+							// backgroundColor:"#f0f0f0",
+							padding:{top:5,bottom:5, left:10, right:10},
+							cornerRadius:14,
+						},
 						title:{
 							font:{
 								size:18,

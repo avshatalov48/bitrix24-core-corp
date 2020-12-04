@@ -29,9 +29,9 @@ class Counters extends Base
 			$userId = $this->getCurrentUser()->getId();
 		}
 
-		$counterInstance = Internals\Counter::getInstance($userId, $groupId);
+		$counterInstance = Internals\Counter::getInstance($userId);
 
-		return $counterInstance->getCounters($type);
+		return $counterInstance->getCounters($type, (int) $groupId);
 	}
 
 	private function checkGroupReadAccess($groupId)

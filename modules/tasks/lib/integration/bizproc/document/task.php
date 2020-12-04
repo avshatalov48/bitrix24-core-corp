@@ -314,7 +314,7 @@ class Task implements \IBPWorkflowDocument
 			]
 		];
 
-		if (self::isPlanTask($documentType) || self::isPersonalTask($documentType))
+		if (isset($documentType) && (self::isPlanTask($documentType) || self::isPersonalTask($documentType)))
 		{
 			$fields['MEMBER_ROLE'] = [
 				'Name' => Loc::getMessage('TASKS_BP_DOCUMENT_MEMBER_ROLE'),
@@ -328,7 +328,54 @@ class Task implements \IBPWorkflowDocument
 			];
 		}
 
-		return $fields;
+		return array_merge($fields, self::getFieldsCreatedByUser());
+	}
+
+	public static function getFieldsCreatedByUser(string $type = null)
+	{
+		static $fieldsCreatedByUser = null;
+		if(is_array($fieldsCreatedByUser))
+		{
+			return isset($type) ? self::filterUserFields($type, $fieldsCreatedByUser) : $fieldsCreatedByUser;
+		}
+		$fieldsCreatedByUser = array();
+
+		$userFieldsIds = \Bitrix\Main\UserFieldTable::getList([
+			'select' => array('ID'),
+			'filter' => array(
+				'=ENTITY_ID' => 'TASKS_TASK',
+				'%=FIELD_NAME' => 'UF_AUTO_%'
+			)
+		])->fetchAll();
+
+		foreach ($userFieldsIds as $fieldsId)
+		{
+			$field = Main\UserFieldTable::getFieldData($fieldsId['ID']);
+			$name = in_array(LANGUAGE_ID, $field['LANGUAGE_ID']) ? $field['EDIT_FORM_LABEL'][LANGUAGE_ID] : $field['FIELD_NAME'];
+
+			$fieldsCreatedByUser[$field['FIELD_NAME']] = [
+				'Name' => $name,
+				'Type' => $field['USER_TYPE_ID'] === 'boolean' ? 'bool' : $field['USER_TYPE_ID'],
+				'Editable' => \CBPHelper::getBool($field['EDIT_IN_LIST']),
+				'Required' => \CBPHelper::getBool($field['MANDATORY']),
+				'Multiple' => \CBPHelper::getBool($field['MULTIPLE'])
+			];
+		}
+
+		return isset($type) ? self::filterUserFields($type, $fieldsCreatedByUser) : $fieldsCreatedByUser;
+	}
+
+	protected static function filterUserFields(string $type, array $userFields)
+	{
+		$filteredFields = [];
+		foreach ($userFields as $name => $field)
+		{
+			if($field['Type'] === $type)
+			{
+				$filteredFields[$name] = $field;
+			}
+		}
+		return $filteredFields;
 	}
 
 	public static function getDocument($documentId, $documentType = null)
@@ -434,6 +481,7 @@ class Task implements \IBPWorkflowDocument
 			'TASK_CONTROL',
 			'ADD_IN_REPORT',
 		];
+		$whiteFieldsList = array_merge($whiteFieldsList, array_keys(self::getFieldsCreatedByUser()));
 
 		$fields = array_intersect_key($fields, array_flip($whiteFieldsList));
 
@@ -468,21 +516,31 @@ class Task implements \IBPWorkflowDocument
 			unset($fields['IS_IMPORTANT']);
 		}
 
+		$documentFields = self::getDocumentFields(null);
+		foreach ($fields as $fieldsName => $fieldValue)
+		{
+			if($documentFields[$fieldsName]['Type'] === 'bool')
+			{
+				$isUf = mb_strpos($fieldsName, 'UF_') === 0;
+				$fieldValue = \CBPHelper::getBool($fieldValue);
+				$fields[$fieldsName] = $isUf ? (int) $fieldValue : ($fieldValue ? 'Y' : 'N');
+			}
+		}
+
 		//normalize date fields
-		foreach (['DEADLINE', 'END_DATE_PLAN', 'START_DATE_PLAN'] as $dateField)
+		$userDateFields = self::getFieldsCreatedByUser('datetime');
+		$allDateFields = array_merge(
+			['DEADLINE', 'END_DATE_PLAN', 'START_DATE_PLAN'],
+			array_keys($userDateFields)
+		);
+		foreach ($allDateFields as $dateField)
 		{
 			if (!isset($fields[$dateField]))
 			{
 				continue;
 			}
-			if (is_array($fields[$dateField]))
-			{
-				$fields[$dateField] = reset($fields[$dateField]);
-			}
-			if ($fields[$dateField] && !is_scalar($fields[$dateField]))
-			{
-				$fields[$dateField] = (string) $fields[$dateField];
-			}
+			$isMultiple = isset($userDateFields[$dateField]) && $userDateFields[$dateField]['Multiple'];
+			$fields[$dateField] = self::convertDateValue($fields[$dateField], $isMultiple);
 		}
 
 		if (empty($fields))
@@ -632,12 +690,31 @@ class Task implements \IBPWorkflowDocument
 
 	public static function getUsersFromUserGroup($group, $documentId)
 	{
+		if ($group === 'responsible')
+		{
+			$member = MemberTable::getList([
+				'filter' => ['=TASK_ID' => $documentId, '=TYPE' => MemberTable::MEMBER_TYPE_RESPONSIBLE],
+				'select' => ['USER_ID']
+			])->fetch();
+
+			return $member ? [$member['USER_ID']] : [];
+		}
+
 		return [];
 	}
 
 	private static function convertFieldsToDocument(array &$fields)
 	{
 		$fields['IS_IMPORTANT'] = ($fields['PRIORITY'] > \CTasks::PRIORITY_AVERAGE) ? 'Y' : 'N';
+
+		$documentFields = self::getDocumentFields(null);
+		foreach ($fields as $fieldName => $fieldValue)
+		{
+			if($documentFields[$fieldName]['Type'] === 'bool')
+			{
+				$fields[$fieldName] = self::resolveBoolType($fieldValue);
+			}
+		}
 
 		//users
 		foreach (['RESPONSIBLE_ID', 'CREATED_BY', 'CHANGED_BY', 'CLOSED_BY'] as $userKey)
@@ -692,6 +769,16 @@ class Task implements \IBPWorkflowDocument
 		}
 	}
 
+	protected static function resolveBoolType($value)
+	{
+		if(is_array($value))
+		{
+			return array_map([self::class, 'resolveBoolType'], $value);
+		}
+
+		return \CBPHelper::getBool($value) ? 'Y' : 'N';
+	}
+
 	public static function isFeatureEnabled($documentType, $feature)
 	{
 		return in_array($feature, [\CBPDocumentService::FEATURE_SET_MODIFIED_BY]);
@@ -736,5 +823,30 @@ class Task implements \IBPWorkflowDocument
 	public static function recoverDocumentFromHistory($documentId, $arDocument)
 	{
 		return true;
+	}
+
+	private static function convertDateValue($value, $multiple = false)
+	{
+		if (!is_array($value))
+		{
+			$value = [$value];
+		}
+
+		$result = [];
+
+		foreach ($value as $val)
+		{
+			if (is_object($val))
+			{
+				$result[] = (string) $val;
+			}
+
+			if ($val && is_scalar($val))
+			{
+				$result[] = (string) $val;
+			}
+		}
+
+		return $multiple ? $result : reset($result);
 	}
 }

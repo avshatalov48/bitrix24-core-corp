@@ -37,7 +37,7 @@ foreach ($arResult['PATHS'] as $path):
 			}
 
 			?><span class="crm-tracking-entity-path-icon <?=$icon?>"
-				<?if($desc):?>onmouseover="BX.UI.Hint.show(this, '<?=\CUtil::JSEscape($desc)?>');"
+				<?if($desc):?>onmouseover="BX.UI.Hint.show(this, '<?=htmlspecialcharsbx(\CUtil::JSEscape($desc))?>');"
 				onmouseout="BX.UI.Hint.hide();"<?endif;?>
 				style="width: 14px; height: 14px; margin: 0 5px 0 0; transform: translateY(2px);"
 			><i style="<?=($iconColor ? "background-color: $iconColor;" : '')?>"></i></span><?
@@ -51,7 +51,7 @@ foreach ($arResult['PATHS'] as $path):
 		if ($name)
 		{
 			?><span	class="crm-tracking-entity-path-item" title=""
-				<?if($desc):?>onmouseover="BX.UI.Hint.show(this, '<?=\CUtil::JSEscape($desc)?>');"
+				<?if($desc):?>onmouseover="BX.UI.Hint.show(this, '<?=htmlspecialcharsbx(\CUtil::JSEscape($desc))?>');"
 				onmouseout="BX.UI.Hint.hide();"<?endif;?>
 			><?=$name?></span><?
 		}

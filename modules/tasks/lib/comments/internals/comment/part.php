@@ -17,6 +17,7 @@ class Part
 	 *
 	 * @param string $name
 	 * @param string $text
+	 * @param array $data
 	 */
 	public function __construct(string $name, string $text, array $data)
 	{

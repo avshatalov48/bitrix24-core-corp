@@ -33,7 +33,7 @@ class CDavPrincipalsHandler
 		if (!is_numeric($principal))
 			return false;
 
-		$principal = IntVal($principal);
+		$principal = intval($principal);
 
 		return ($testPrivileges == "DAV::read");
 	}

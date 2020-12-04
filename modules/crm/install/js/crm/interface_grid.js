@@ -1585,12 +1585,16 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 				BX.delegate(
 					function()
 					{
+						var options = eventArgs["counterTypeId"] ? {
+								'analyticsLabel': this.getAnalyticsLabel(eventArgs["counterTypeId"])
+							} : null;
 						this.setFilter(
 							{
 								"ASSIGNED_BY_ID": { 0: eventArgs["userId"] },
 								"ASSIGNED_BY_ID_label": [ eventArgs["userName"] ],
 								"ACTIVITY_COUNTER": { 0: eventArgs["counterTypeId"] }
-							}
+							},
+							options
 						);
 					},
 					this
@@ -1599,12 +1603,19 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 			);
 			eventArgs["cancel"] = true;
 		},
-		setFilter: function(fields)
+		setFilter: function(fields, options)
 		{
 			var filter = BX.Main.filterManager.getById(this.getGridId());
 			var api = filter.getApi();
 			api.setFields(fields);
-			api.apply();
+			if (options.hasOwnProperty('analyticsLabel'))
+			{
+				api.apply({'COUNTER': options.analyticsLabel});
+			}
+			else
+			{
+				api.apply();
+			}
 		},
 		executeGridRequest: function()
 		{
@@ -1613,6 +1624,15 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 			{
 				grid.sendSelected();
 			}
+		},
+		getAnalyticsLabel: function(counterTypeId)
+		{
+			var entityTypeName = this.getSetting('ownerTypeName');
+			if (entityTypeName && counterTypeId)
+			{
+				return 'CRM_' + entityTypeName + '_COUNTER_TYPE_' + counterTypeId;
+			}
+			return '';
 		},
 		openMoveToCategoryDialog: function()
 		{

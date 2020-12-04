@@ -12,12 +12,48 @@ use Bitrix\Main\HttpResponse;
 use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Engine\ActionFilter;
+use Bitrix\Intranet\Internals\InvitationTable;
+use Bitrix\Main\Type\Date;
+use Bitrix\Main\Entity;
 
 class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Controller
 {
 	protected function isInvitingUsersAllowed()
 	{
-		return Invitation::canCurrentUserInvite();
+		if (!Invitation::canCurrentUserInvite())
+		{
+			return false;
+		}
+
+		if (Loader::includeModule("bitrix24"))
+		{
+			if (!\CBitrix24::isEmailConfirmed())
+			{
+				return false;
+			}
+
+			$licensePrefix = \CBitrix24::getLicensePrefix();
+			$licenseType = \CBitrix24::getLicenseType();
+			if ($licensePrefix === "cn" && $licenseType === "project")
+			{
+				$res = InvitationTable::getList([
+					'filter' => [
+						'>=DATE_CREATE' => new Date
+					],
+					'select' => ['CNT'],
+					'runtime' => array(
+						new Entity\ExpressionField('CNT', 'COUNT(*)')
+					)
+				])->fetch();
+
+				if ((int)$res['CNT'] >= 5)
+				{
+					return false;
+				}
+			}
+		}
+
+		return true;
 	}
 
 	public function configureActions()
@@ -250,6 +286,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 		$strError = "";
 		$errorFormatItems = [];
+		$errorLengthItems = [];
 		$newUsers = [];
 		$departmentId = $this->getHeadDepartmentId();
 		$isInvitationBySmsAvailable = $this->isInvitationBySmsAvailable();
@@ -260,10 +297,17 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		{
 			if (check_email($item))
 			{
-				$newUsers["ITEMS"][] = [
-					"EMAIL" => $item,
-					"UF_DEPARTMENT" => [$departmentId]
-				];
+				if (mb_strlen($item) > 50)
+				{
+					$errorLengthItems[] = $item;
+				}
+				else
+				{
+					$newUsers["ITEMS"][] = [
+						"EMAIL" => $item,
+						"UF_DEPARTMENT" => [$departmentId]
+					];
+				}
 			}
 			else if ($isInvitationBySmsAvailable && preg_match("/^[\d+][\d\(\)\ -]{4,22}\d$/", $item))
 			{
@@ -284,6 +328,14 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			$strError = Loc::getMessage("BX24_INVITE_DIALOG_ERROR_"
 										.($this->isInvitationBySmsAvailable() ? "EMAIL_OR_PHONE" : "EMAIL"));
 			$strError.= ": ".implode(", ", $errorFormatItems);
+			$this->addError(new \Bitrix\Main\Error($strError));
+			return false;
+		}
+
+		if (!empty($errorLengthItems))
+		{
+			$strError = Loc::getMessage("INTRANET_INVITE_DIALOG_ERROR_LENGTH");
+			$strError.= ": ".implode(", ", $errorLengthItems);
 			$this->addError(new \Bitrix\Main\Error($strError));
 			return false;
 		}
@@ -405,6 +457,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 		if (!empty($strError))
 		{
+			$strError = str_replace("<br>", " ", $strError);
 			$this->addError(new \Bitrix\Main\Error($strError));
 			return false;
 		}

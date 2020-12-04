@@ -40,3 +40,6 @@ $MESS['TASKS_BTN_SORT_SORTING'] = "Моя сортировка";
 
 $MESS['TASKS_SPOTLIGHT_ADD_TASK'] = "Эта кнопка создает задачу";
 $MESS['TASKS_BTN_GROUP_BY_POPUP_TEXT'] = "При сортировке «по активности» группировка задач не доступна";
+
+$MESS['TASKS_LINK_CREATE_GROUP'] = 'Создать группу';
+$MESS['TASKS_LINK_CREATE_PROJECT'] = 'Создать проект';

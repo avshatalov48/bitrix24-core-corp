@@ -42,6 +42,7 @@ $MESS["STRESS_SHARING_FAILED"] = "К сожалению, что-то пошло 
 $MESS["STRESS_SHARE_POST_TITLE"] = "Мой уровень стресса!";
 $MESS["STRESS_SHARE_POST_MESSAGE"] = "Делюсь своим уровнем стресса\n";
 $MESS["STRESS_SHARE_LIVE_STREAM"] = "Живая лента";
+$MESS["STRESS_SHARE_NEWS"] = "Новости";
 $MESS["STRESS_SHARE_CANCEL"] = "Отменить";
 
 

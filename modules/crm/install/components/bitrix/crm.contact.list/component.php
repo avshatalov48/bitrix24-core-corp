@@ -765,6 +765,16 @@ $searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitR
 if(!$searchRestriction->isExceeded(CCrmOwnerType::Contact))
 {
 	Bitrix\Crm\Search\SearchEnvironment::convertEntityFilterValues(CCrmOwnerType::Contact, $arFilter);
+
+	if (
+		($limitWarningValue = $searchRestriction->getLimitWarningValue(CCrmOwnerType::Contact)) > 0
+	)
+	{
+		$searchRestriction->notifyLimitWarning(
+			CCrmOwnerType::Contact,
+			$limitWarningValue
+		);
+	}
 }
 else
 {

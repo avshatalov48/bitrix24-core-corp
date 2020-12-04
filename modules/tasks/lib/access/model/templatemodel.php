@@ -22,12 +22,22 @@ class TemplateModel
 {
 	use DepartmentTrait;
 
+	private static $cache = [];
+
 	public const ROLE_OWNER = 'OWNER';
 
 	private $id;
 	private $members;
 
 	private $permissions;
+
+	private $template;
+
+
+	public static function invalidateCache(int $templateId)
+	{
+		unset(static::$cache[$templateId]);
+	}
 
 	public static function createNew(): self
 	{
@@ -37,9 +47,14 @@ class TemplateModel
 
 	public static function createFromId(int $id): AccessibleItem
 	{
-		$model = new self();
-		$model->setId($id);
-		return $model;
+		if (!array_key_exists($id, static::$cache))
+		{
+			$model = new self();
+			$model->setId($id);
+			static::$cache[$id] = $model;
+		}
+
+		return static::$cache[$id];
 	}
 
 	private function __construct()
@@ -163,6 +178,12 @@ class TemplateModel
 		return false;
 	}
 
+	public function isDeleted(): bool
+	{
+		$template = $this->loadTemplate();
+		return $template['ZOMBIE'] === 'Y';
+	}
+
 	public function getStatus(): ?int
 	{
 		return null;
@@ -198,5 +219,28 @@ class TemplateModel
 
 		}
 		return $this->permissions;
+	}
+
+	private function loadTemplate(): ?array
+	{
+		if (!$this->id)
+		{
+			return null;
+		}
+		if ($this->template === null)
+		{
+			$res = \Bitrix\Tasks\Internals\Task\TemplateTable::query()
+				->addSelect('ID')
+				->addSelect('ZOMBIE')
+				->where('ID', $this->id)
+				->exec()
+				->fetch();
+
+			if ($res)
+			{
+				$this->template = $res;
+			}
+		}
+		return $this->template;
 	}
 }

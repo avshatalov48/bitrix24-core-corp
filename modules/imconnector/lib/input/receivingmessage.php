@@ -10,7 +10,6 @@ use \Bitrix\Main\Event,
 	\Bitrix\Main\Localization\Loc;
 use \Bitrix\ImConnector\Chat,
 	\Bitrix\ImConnector\Error,
-	\Bitrix\ImConnector\Output,
 	\Bitrix\ImConnector\Result,
 	\Bitrix\ImConnector\Library,
 	\Bitrix\ImConnector\Connector,
@@ -31,7 +30,6 @@ class ReceivingMessage
 	private $connector;
 	private $line;
 	private $data;
-	private $connectorOutput;
 
 	/**
 	 * ReceivingMessage constructor.
@@ -46,7 +44,6 @@ class ReceivingMessage
 		$this->connector = $connector;
 		$this->line = $line;
 		$this->data = $data;
-		$this->connectorOutput = new Output($this->connector, $this->line);
 	}
 
 	/**
@@ -101,20 +98,10 @@ class ReceivingMessage
 	public function receiving(): Result
 	{
 		$result = new Result();
-		$statusDelivered = [];
 
 		//Message about the delivery
 		foreach ($this->data as $message)
 		{
-			$statusDelivered[] = [
-				'chat' => [
-					'id' => $message['chat']['id']
-				],
-				'message' => [
-					'id' => $message['message']['id']
-				]
-			];
-
 			if (!empty($message['extra']['last_message_id']))
 			{
 				Chat::setLastMessage(
@@ -125,11 +112,6 @@ class ReceivingMessage
 					]
 				);
 			}
-		}
-		//Sending a message about the delivery
-		if(!empty($statusDelivered))
-		{
-			$this->connectorOutput->setStatusDelivered($statusDelivered);
 		}
 
 		$interactiveMessage = InteractiveMessage\Input::initialization($this->connector);

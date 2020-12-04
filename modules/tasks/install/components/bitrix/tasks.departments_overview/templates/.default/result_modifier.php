@@ -4,7 +4,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Tasks\Util;
+use Bitrix\Tasks\UI;
+use Bitrix\Tasks\Util\User;
 
 // create template controller with js-dependency injections
 $arResult['HELPER'] = $helper = require(dirname(__FILE__).'/helper.php');
@@ -84,7 +85,7 @@ function prepareRow($row, $arParams, $arResult)
 {
 	$resultRow = array(
 		'ID' => $row['ID'],
-		'NAME' => prepareTaskRowUserBaloonHtml($row, $arParams),
+		'NAME' => prepareTaskRowUserBalloonHtml($row, $arParams),
 		'DEPARTMENTS' => prepareDepartments($row, $arResult),
 
 		'EFFECTIVE' => prepareEffective($row, $arParams),
@@ -97,31 +98,31 @@ function prepareRow($row, $arParams, $arResult)
 	return $resultRow;
 }
 
-function prepareTaskRowUserBaloonHtml($user, $arParams)
+/**
+ * @param array $user
+ * @param array $arParams
+ * @return string
+ */
+function prepareTaskRowUserBalloonHtml(array $user, array $arParams)
 {
-	$user['AVATAR'] = \Bitrix\Tasks\UI::getAvatar($user['PERSONAL_PHOTO'], 100, 100);
-	$user['IS_EXTERNAL'] = Util\User::isExternalUser($user['ID']);
-	$user['URL'] = CComponentEngine::MakePathFromTemplate(
-		$arParams['PATH_TO_USER_PROFILE'],
-		array("user_id" => $user['ID'])
-	);
+	$user['AVATAR'] = UI::getAvatar($user['PERSONAL_PHOTO'], 100, 100);
+	$user['IS_EXTERNAL'] = User::isExternalUser($user['ID']);
+	$user['URL'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_USER_PROFILE'], ['user_id' => $user['ID']]);
 
-	$userAvatar = 'tasks-grid-avatar-empty';
-	if ($user['AVATAR'])
-	{
-		$userAvatar = '';
-	}
+	$userName = htmlspecialcharsbx(User::formatName($user));
+	$userUrl = htmlspecialcharsbx($user['URL']);
 
-	$userName = '<span class="tasks-grid-avatar  '.$userAvatar.' " 
-			'.($user['AVATAR'] ? 'style="background-image: url(\''.$user['AVATAR'].'\')"' : '').'></span>';
+	$emptyAvatar = ($user['AVATAR'] ? '' : ' tasks-grid-avatar-empty');
+	$style = ($user['AVATAR'] ? ' style="background-image: url(\''.$user['AVATAR'].'\')"' : '');
 
-	$userName .= '<span class="tasks-grid-username-inner">'.
-				 htmlspecialcharsbx(\Bitrix\Tasks\Util\User::formatName($user)).
-				 '</span>';
-
-	return '<div class="tasks-grid-username-wrapper">
-				<a href="'.htmlspecialcharsbx($user['URL']).'" class="tasks-grid-username">'.$userName.'</a>
-			</div>';
+	return
+		'<div class="tasks-grid-username-wrapper">'
+			."<a href='{$userUrl}' class='tasks-grid-username'>"
+				."<span class='ui-icon ui-icon-common-user tasks-grid-avatar{$emptyAvatar}'><i{$style}></i></span>"
+				."<span class='tasks-grid-username-inner'>{$userName}</span>"
+			.'</a>'
+		.'</div>'
+	;
 }
 
 $arResult['ROWS'] = [];

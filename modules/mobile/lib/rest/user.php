@@ -1,13 +1,10 @@
 <?php
 
 namespace Bitrix\Mobile\Rest;
-
-use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
-use Bitrix\Main\ObjectPropertyException;
-use Bitrix\Main\SystemException;
-use Bitrix\Main\Type\Date;
+use Bitrix\Main\Localization\Loc;
+
 
 class User extends \IRestService
 {

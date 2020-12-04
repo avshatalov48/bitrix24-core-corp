@@ -756,7 +756,7 @@ class CDavExchangeContacts
 		$arPhysicalAddresses = $contactItem->GetPath("/Contact/PhysicalAddresses/Entry");
 		foreach ($arPhysicalAddresses as $physicalAddress)
 		{
-			$entryKey = strtolower($physicalAddress->GetAttribute("Key"));
+			$entryKey = mb_strtolower($physicalAddress->GetAttribute("Key"));
 
 			if ($entryKey == "business")
 				$prefix = "WORK";
@@ -795,7 +795,7 @@ class CDavExchangeContacts
 		$arPhoneNumbers = $contactItem->GetPath("/Contact/PhoneNumbers/Entry");
 		foreach ($arPhoneNumbers as $phoneNumber)
 		{
-			$entryKey = strtolower($phoneNumber->GetAttribute("Key"));
+			$entryKey = mb_strtolower($phoneNumber->GetAttribute("Key"));
 			$v = $phoneNumber->GetContent();
 
 			if ($entryKey == "businessphone")
@@ -886,10 +886,10 @@ class CDavExchangeContacts
 			elseif ($key == "FileAs")
 			{
 				$v = $arFields["Surname"];
-				if (strlen($v) > 0 && (strlen($arFields["GivenName"]) > 0 || strlen($arFields["MiddleName"]) > 0))
+				if ($v <> '' && ($arFields["GivenName"] <> '' || $arFields["MiddleName"] <> ''))
 					$v .= ", ";
 				$v .= $arFields["GivenName"];
-				if (strlen($v) > 0 && strlen($arFields["MiddleName"]) > 0)
+				if ($v <> '' && $arFields["MiddleName"] <> '')
 					$v .= " ";
 				$v .= $arFields["MiddleName"];
 
@@ -1024,10 +1024,10 @@ class CDavExchangeContacts
 					$itemBody .= "       <Contact>\r\n";
 
 					$v = $arFields["Surname"];
-					if (strlen($v) > 0 && (strlen($arFields["GivenName"]) > 0 || strlen($arFields["MiddleName"]) > 0))
+					if ($v <> '' && ($arFields["GivenName"] <> '' || $arFields["MiddleName"] <> ''))
 						$v .= ", ";
 					$v .= $arFields["GivenName"];
-					if (strlen($v) > 0 && strlen($arFields["MiddleName"]) > 0)
+					if ($v <> '' && $arFields["MiddleName"] <> '')
 						$v .= " ";
 					$v .= $arFields["MiddleName"];
 

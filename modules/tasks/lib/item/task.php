@@ -243,77 +243,7 @@ final class Task extends \Bitrix\Tasks\Item
 
 	public function checkData($result)
 	{
-		if(parent::checkData($result))
-		{
-			// data looks good for orm, now check some high-level conditions...
-
-			//		$data = $this->getTransitionState();
-			//		$result = $data->getResult();
-			//		if($data->isInProgress())
-			//		{
-			//			$id = $this->getId();
-			//
-			//			// checking for update()
-			//			if($id)
-			//			{
-			//				// todo: update action is not implemented currently
-			//
-			//				/*
-			//				if($ID && ((isset($arFields['END_DATE_PLAN']) && (string) $arFields['END_DATE_PLAN'] == '')))
-			//				{
-			//					if(DependenceTable::checkItemLinked($ID))
-			//					{
-			//						$this->_errors[] = array("text" => GetMessage("TASKS_IS_LINKED_END_DATE_PLAN_REMOVE"), "id" => "ERROR_TASKS_IS_LINKED");
-			//					}
-			//				}
-			//
-			//				if($ID && (isset($arFields['PARENT_ID']) && intval($arFields['PARENT_ID']) > 0))
-			//				{
-			//					if(DependenceTable::checkLinkExists($ID, $arFields['PARENT_ID'], array('BIDIRECTIONAL' => true)))
-			//					{
-			//						$this->_errors[] = array("text" => GetMessage("TASKS_IS_LINKED_SET_PARENT"), "id" => "ERROR_TASKS_IS_LINKED");
-			//					}
-			//				}
-			//
-			//				if ($ID !== false && $ID == $arFields["PARENT_ID"])
-			//				{
-			//					$this->_errors[] = array("text" => GetMessage("TASKS_PARENT_SELF"), "id" => "ERROR_TASKS_PARENT_SELF");
-			//				}
-			//
-			//				if ($ID !== false && is_array($arFields["DEPENDS_ON"]) && in_array($ID, $arFields["DEPENDS_ON"]))
-			//				{
-			//					$this->_errors[] = array("text" => GetMessage("TASKS_DEPENDS_ON_SELF"), "id" => "ERROR_TASKS_DEPENDS_ON_SELF");
-			//				}
-			//				 */
-			//			}
-			//
-			//			// common checking for both add() and update()
-			//
-			//			// if plan dates were set
-			//			if (isset($data['START_DATE_PLAN'])
-			//				&& isset($data['END_DATE_PLAN'])
-			//				&& ($data['START_DATE_PLAN'] != '')
-			//				&& ($data['END_DATE_PLAN'] != '')
-			//			)
-			//			{
-			//				$startDate = \MakeTimeStamp($data['START_DATE_PLAN']);
-			//				$endDate   = \MakeTimeStamp($data['END_DATE_PLAN']);
-			//
-			//				// and they were really set
-			//				if (($startDate > 0)
-			//					&& ($endDate > 0)
-			//				)
-			//				{
-			//					// and end date is before start date => then emit error
-			//					if ($endDate < $startDate)
-			//					{
-			//						$result->getErrors()->add('ILLEGAL_PLAN_DATES', Loc::getMessage('TASKS_BAD_PLAN_DATES')); // todo: include lang file
-			//					}
-			//				}
-			//			}
-			//		}
-		}
-
+		parent::checkData($result);
 		return $result->isSuccess();
 	}
 
@@ -383,8 +313,10 @@ final class Task extends \Bitrix\Tasks\Item
 				UserOption::add($taskId, $auditorId, UserOption\Option::MUTED);
 			}
 
-			Counter::onAfterTaskAdd($data);
-			Counter::sendPushCounters($participants);
+			Counter\CounterService::addEvent(
+				Counter\CounterDictionary::EVENT_AFTER_TASK_ADD,
+				$data
+			);
 
 			// changes log
 			$this->addLogRecord([

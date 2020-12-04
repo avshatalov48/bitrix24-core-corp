@@ -208,7 +208,7 @@ class Comment extends Base
 	 */
 	public function onBeforeReadAll(int $userId, int $groupId = 0): void
 	{
-		Counter::onBeforeCommentsReadAll($userId, $groupId);
+
 	}
 
 	/**
@@ -235,8 +235,15 @@ class Comment extends Base
 	 */
 	public function onAfterReadAll(int $userId, int $groupId = 0): void
 	{
-		Counter::sendPushCounters([$userId]);
 		Comments\Task::onAfterCommentsReadAll($userId, $groupId);
+
+		Counter\CounterService::addEvent(
+			Counter\CounterDictionary::EVENT_AFTER_COMMENTS_READ_ALL,
+			[
+				'USER_ID' => $userId,
+				'GROUP_ID' => $groupId
+			]
+		);
 	}
 
 	/**

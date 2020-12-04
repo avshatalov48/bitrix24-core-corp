@@ -1172,7 +1172,7 @@ if ($bTaxMode && !$arParams["RESTRICTED_MODE"])
 			'CITY_OUT_LOCATION' => 'Y',
 			'LOCATION_VALUE' => $locValue,
 			'ORDER_PROPS_ID' => 'QUOTE_'.$arResult['ELEMENT']['ID'],
-			'ONCITYCHANGE' => 'BX.onCustomEvent(\'CrmProductRowSetLocation\', [\'LOC_CITY\']);',
+			'ONCITYCHANGE' => 'CrmProductRowSetLocation',
 			'SHOW_QUICK_CHOOSE' => 'N'/*,
 			'SIZE1' => $arProperties['SIZE1']*/
 		),
@@ -1453,7 +1453,11 @@ else
 
 $value = "";
 if (isset($arResult['ELEMENT']['~CONTENT']))
-	$value = ($fieldType == "textarea") ? htmlspecialcharsback($arResult['ELEMENT']['~CONTENT']) : $arResult['ELEMENT']['~CONTENT'];
+{
+	$value = ($fieldType == "textarea")
+		? htmlspecialcharsback($arResult['ELEMENT']['~CONTENT'])
+		: htmlspecialcharsbx($arResult['ELEMENT']['~CONTENT'], ENT_COMPAT, false);
+}
 $arResult['FIELDS'][] = array(
 	'id' => 'CONTENT',
 	'name' => GetMessage('CRM_QUOTE_FIELD_CONTENT'),
@@ -1463,7 +1467,11 @@ $arResult['FIELDS'][] = array(
 
 $value = "";
 if (isset($arResult['ELEMENT']['~TERMS']))
-	$value = ($fieldType == "textarea") ? htmlspecialcharsback($arResult['ELEMENT']['~TERMS']) : $arResult['ELEMENT']['~TERMS'];
+{
+	$value = ($fieldType == "textarea")
+		? htmlspecialcharsback($arResult['ELEMENT']['~TERMS'])
+		: htmlspecialcharsbx($arResult['ELEMENT']['~TERMS'], ENT_COMPAT, false);
+}
 $arResult['FIELDS'][] = array(
 	'id' => 'TERMS',
 	'name' => GetMessage('CRM_QUOTE_FIELD_TERMS'),
@@ -1473,7 +1481,11 @@ $arResult['FIELDS'][] = array(
 
 $value = "";
 if (isset($arResult['ELEMENT']['~COMMENTS']))
-	$value = ($fieldType == "textarea") ? htmlspecialcharsback($arResult['ELEMENT']['~COMMENTS']) : $arResult['ELEMENT']['~COMMENTS'];
+{
+	$value = ($fieldType == "textarea")
+		? htmlspecialcharsback($arResult['ELEMENT']['~COMMENTS'])
+		: htmlspecialcharsbx($arResult['ELEMENT']['~COMMENTS'], ENT_COMPAT, false);
+}
 $arResult['FIELDS'][] = array(
 	'id' => 'COMMENTS',
 	'name' => GetMessage('CRM_QUOTE_FIELD_COMMENTS'),

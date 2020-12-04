@@ -335,11 +335,19 @@ if (typeof BX.Tasks.SprintSelector === "undefined")
 
 		for (var i = 0, c = sprints.length; i < c; i++)
 		{
+			var baseSprintName = (sprints[i]["NAME"] ? sprints[i]["NAME"] : '');
+			var sprintName = (sprints[i]["NAME"] ? sprints[i]["NAME"] + '&nbsp;' : '');
+			var sprintDate = sprints[i]["START_TIME"] + " &mdash; " + sprints[i]["FINISH_TIME"];
+			if (baseSprintName)
+			{
+				sprintDate = '(' + sprintDate + ')';
+			}
 			menuSprintItems.push({
 				sprintId: sprints[i]["ID"],
-				text: sprints[i]["START_TIME"]
-					+ " &mdash; " +
-					sprints[i]["FINISH_TIME"],
+				text: sprintName + sprintDate,
+				sprintName: baseSprintName,
+				sprintDateStart: sprints[i]["START_TIME"],
+				sprintDateEnd: sprints[i]["FINISH_TIME"],
 				className: (params.sprintId === parseInt(sprints[i]["ID"]))
 					? "menu-popup-item-accept"
 					: "menu-popup-item-none",
@@ -351,7 +359,8 @@ if (typeof BX.Tasks.SprintSelector === "undefined")
 						[
 							{
 								id: params.groupId,
-								sprintId: menuItem.sprintId
+								sprintId: menuItem.sprintId,
+								name: menuItem.sprintName
 							}
 						]
 					);
@@ -368,6 +377,10 @@ if (typeof BX.Tasks.SprintSelector === "undefined")
 						menuItem.layout.item,
 						"menu-popup-item-accept"
 					);
+					menuItem.menuWindow.close();
+					var selectorTextNode = containerId.querySelector('.webform-small-button-text');
+					selectorTextNode.innerHTML = BX.util.htmlspecialchars(menuItem.sprintDateStart) +
+						' &mdash; ' + BX.util.htmlspecialchars(menuItem.sprintDateEnd);
 				}
 			});
 		}

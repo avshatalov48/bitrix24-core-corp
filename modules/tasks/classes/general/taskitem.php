@@ -205,15 +205,24 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		}
 	}
 
+	/**
+	 * CTaskItem constructor.
+	 *
+	 * @param $taskId
+	 * @param $executiveUserId
+	 * @throws CTaskAssertException
+	 */
 	public function __construct($taskId, $executiveUserId)
 	{
-		CTaskAssert::assertLaxIntegers($taskId, $executiveUserId);
-		CTaskAssert::assert( ($taskId > 0) && ($executiveUserId > 0) );
+		CTaskAssert::assertLaxIntegers($taskId);
+		CTaskAssert::assertLaxIntegers($executiveUserId);
+		CTaskAssert::assert($taskId > 0);
+		CTaskAssert::assert($executiveUserId > 0);
 
 		$this->markCacheAsDirty();
 
-		$this->taskId = (int) $taskId;
-		$this->executiveUserId = (int) $executiveUserId;
+		$this->taskId = (int)$taskId;
+		$this->executiveUserId = (int)$executiveUserId;
 	}
 
 
@@ -221,10 +230,11 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	 * @param $taskId
 	 * @param $executiveUserId
 	 * @return CTaskItem returns link to cached object or creates it.
+	 * @throws CTaskAssertException
 	 */
 	public static function getInstance($taskId, $executiveUserId)
 	{
-		return (self::getInstanceFromPool($taskId, $executiveUserId));
+		return self::getInstanceFromPool($taskId, $executiveUserId);
 	}
 
 
@@ -232,21 +242,27 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	 * @param $taskId
 	 * @param $executiveUserId
 	 * @return CTaskItem returns link to cached object or creates it.
+	 * @throws CTaskAssertException
 	 */
 	public static function getInstanceFromPool($taskId, $executiveUserId)
 	{
-		CTaskAssert::assertLaxIntegers($taskId, $executiveUserId);
-		CTaskAssert::assert( ($taskId > 0) && ($executiveUserId > 0) );
+		CTaskAssert::assertLaxIntegers($taskId);
+		CTaskAssert::assertLaxIntegers($executiveUserId);
+		CTaskAssert::assert($taskId > 0);
+		CTaskAssert::assert($executiveUserId > 0);
 
-		$key = (int) $taskId . '|' . (int) $executiveUserId;
+		$taskId = (int)$taskId;
+		$executiveUserId = (int)$executiveUserId;
+
+		$key = "{$taskId}|{$executiveUserId}";
 
 		// Cache instance in pool
-		if ( ! isset(self::$instances[$key]) )
+		if (!isset(self::$instances[$key]))
 		{
 			self::$instances[$key] = new self($taskId, $executiveUserId);
 		}
 
-		return (self::$instances[$key]);
+		return self::$instances[$key];
 	}
 
 
@@ -1155,7 +1171,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	/**
 	 * Get task data (read from DB on demand)
 	 */
-	public function getData($returnEscapedData = true, array $parameters = array())
+	public function getData($returnEscapedData = true, array $parameters = array(), bool $bCheckPermissions = true)
 	{
 		// Preload data, if it isn't in cache
 		if ($this->arTaskData === null)
@@ -1163,7 +1179,6 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			$this->markCacheAsDirty();
 
 			// Load task data
-			$bCheckPermissions = true;
 			$arParams = array_merge(array(
 				'USER_ID'        => $this->executiveUserId,
 				'returnAsArray'  => true,
@@ -1947,7 +1962,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			{
 				if (in_array('NEW_COMMENTS_COUNT', $arSelect, true))
 				{
-					$newComments = Comments\Task::getNewCommentsCountForTasks($arTasksIDs, $userId);
+					$newComments = Bitrix\Tasks\Internals\Counter::getInstance((int) $userId)->getCommentsCount($arTasksIDs);
 					foreach ($newComments as $taskId => $commentsCount)
 					{
 						$arItemsData[$taskId]['NEW_COMMENTS_COUNT'] = $commentsCount;
@@ -2229,6 +2244,15 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	private function proceedAction($actionId, $arActionArguments = null)
 	{
 		$accessParams = null;
+		$skipAccessControl = false;
+		if (
+			is_array($arActionArguments)
+			&& isset($arActionArguments['PARAMETERS']['SKIP_ACCESS_CONTROL'])
+			&& $arActionArguments['PARAMETERS']['SKIP_ACCESS_CONTROL']
+		)
+		{
+			$skipAccessControl = true;
+		}
 
 		$actionId = ActionDictionary::getActionByLegacyId((int) $actionId);
 
@@ -2250,6 +2274,15 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		}
 
 		if (
+			isset($arActionArguments['FIELDS']['STATUS'])
+			&& count($arActionArguments['FIELDS']) === 1
+			&& $arActionArguments['FIELDS']['STATUS'] === \CTasks::STATE_COMPLETED
+		)
+		{
+			$actionId = ActionDictionary::ACTION_TASK_COMPLETE;
+		}
+
+		if (
 			isset($arActionArguments['FIELDS']['ACCOMPLICES'])
 			&& count($arActionArguments['FIELDS']) === 1
 		)
@@ -2268,7 +2301,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			return $this->proceedActionFavorite($arActionArguments);
 		}
 
-		$arTaskData = $this->getData($bSpecialChars = false);
+		$arTaskData = $this->getData($bSpecialChars = false, [], !$skipAccessControl);
 		$arNewFields = null;
 
 		if ($actionId === ActionDictionary::ACTION_TASK_REMOVE)
@@ -2279,8 +2312,6 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		{
 			return $this->proceedActionEdit($arActionArguments, $arTaskData);
 		}
-
-		$skipActionCheck = false;
 
 		switch ($actionId)
 		{
@@ -2303,10 +2334,12 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 				$isOnePersonTask = $arTaskData['CREATED_BY'] == $arTaskData['RESPONSIBLE_ID'];
 				$isCreatorDirector = User::isBoss($arTaskData['CREATED_BY'], $this->executiveUserId);
 
-				if ((($isAdmin || $isCreatorDirector) && $arTaskData['STATUS'] == CTasks::STATE_SUPPOSEDLY_COMPLETED) ||
-					$isOnePersonTask ||
-					$isCreator ||
-					$arTaskData['TASK_CONTROL'] === 'N')
+				if (
+					(($isAdmin || $isCreatorDirector) && $arTaskData['STATUS'] == CTasks::STATE_SUPPOSEDLY_COMPLETED)
+					|| $isOnePersonTask
+					|| $isCreator
+					|| $arTaskData['TASK_CONTROL'] === 'N'
+				)
 				{
 					$arNewFields['STATUS'] = CTasks::STATE_COMPLETED;
 				}
@@ -2315,12 +2348,13 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 					$arNewFields['STATUS'] = CTasks::STATE_SUPPOSEDLY_COMPLETED;
 				}
 
-				if (($isAdmin || $isCreator || $isCreatorDirector) &&
-					$arTaskData['TASK_CONTROL'] == 'Y' &&
-					$this->checkAccess(ActionDictionary::ACTION_TASK_APPROVE) &&
-					!$this->checkAccess($actionId))
+				if (
+					($isAdmin || $isCreator || $isCreatorDirector)
+					&& $arTaskData['TASK_CONTROL'] == 'Y'
+					&& $this->checkAccess(ActionDictionary::ACTION_TASK_APPROVE)
+				)
 				{
-					$skipActionCheck = true;
+					$skipAccessControl = true;
 				}
 
 				break;
@@ -2432,7 +2466,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 		if ($bNeedUpdate)
 		{
-			if (!$this->checkAccess($actionId, $accessParams) && !$skipActionCheck)
+			if (!$skipAccessControl && !$this->checkAccess($actionId, $accessParams))
 			{
 				throw new TasksException(Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'), TasksException::TE_ACTION_NOT_ALLOWED | TasksException::TE_ACCESS_DENIED);
 			}
@@ -3034,45 +3068,56 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 				array_unshift($argsParsed, $executiveUserId);
 
 				// we need to fill default values up to $arParams (4th) argument
-				while ( ! array_key_exists(3, $argsParsed) )
-					$argsParsed[] = array();
+				while (!array_key_exists(3, $argsParsed))
+				{
+					$argsParsed[] = [];
+				}
 
 				if ($navigation['iNumPage'] > 1)
 				{
-					$argsParsed[3]['NAV_PARAMS'] = array(
+					$argsParsed[3]['NAV_PARAMS'] = [
 						'nPageSize' => CTaskRestService::TASKS_LIMIT_PAGE_SIZE,
-						'iNumPage'  => (int) $navigation['iNumPage']
-					);
+						'iNumPage' => (int)$navigation['iNumPage'],
+					];
 				}
 				else if (isset($argsParsed[3]['NAV_PARAMS']))
 				{
 					if (isset($argsParsed[3]['NAV_PARAMS']['nPageTop']))
-						$argsParsed[3]['NAV_PARAMS']['nPageTop'] = min(CTaskRestService::TASKS_LIMIT_TOP_COUNT, (int) $argsParsed[3]['NAV_PARAMS']['nPageTop']);
-
+					{
+						$argsParsed[3]['NAV_PARAMS']['nPageTop'] = min(
+							CTaskRestService::TASKS_LIMIT_TOP_COUNT,
+							(int)$argsParsed[3]['NAV_PARAMS']['nPageTop']
+						);
+					}
 					if (isset($argsParsed[3]['NAV_PARAMS']['nPageSize']))
-						$argsParsed[3]['NAV_PARAMS']['nPageSize'] = min(CTaskRestService::TASKS_LIMIT_PAGE_SIZE, (int) $argsParsed[3]['NAV_PARAMS']['nPageSize']);
-
+					{
+						$argsParsed[3]['NAV_PARAMS']['nPageSize'] = min(
+							CTaskRestService::TASKS_LIMIT_PAGE_SIZE,
+							(int)$argsParsed[3]['NAV_PARAMS']['nPageSize']
+						);
+					}
 					if (
-						( ! isset($argsParsed[3]['NAV_PARAMS']['nPageTop']) )
-						&& ( ! isset($argsParsed[3]['NAV_PARAMS']['nPageSize']) )
+						!isset($argsParsed[3]['NAV_PARAMS']['nPageTop'])
+						&& !isset($argsParsed[3]['NAV_PARAMS']['nPageSize'])
 					)
 					{
-						$argsParsed[3]['NAV_PARAMS'] = array(
+						$argsParsed[3]['NAV_PARAMS'] = [
 							'nPageSize' => CTaskRestService::TASKS_LIMIT_PAGE_SIZE,
-							'iNumPage'  => 1
-						);
+							'iNumPage' => 1,
+						];
 					}
 				}
 				else
 				{
-					$argsParsed[3]['NAV_PARAMS'] = array(
+					$argsParsed[3]['NAV_PARAMS'] = [
 						'nPageSize' => CTaskRestService::TASKS_LIMIT_PAGE_SIZE,
-						'iNumPage'  => 1
-					);
+						'iNumPage' => 1,
+					];
 				}
+				$argsParsed[3]['NAV_PARAMS']['getTotalCount'] = true;
 
 				$filter = $argsParsed[2];
-				$allowedParentIdNullValues = array('0', 'NULL', 'null');
+				$allowedParentIdNullValues = ['0', 'NULL', 'null'];
 
 				if (array_key_exists('PARENT_ID', $filter) && in_array($filter['PARENT_ID'], $allowedParentIdNullValues))
 				{

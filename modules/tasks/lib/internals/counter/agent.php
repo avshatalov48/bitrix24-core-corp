@@ -33,12 +33,12 @@ class Agent
 	 */
 	public static function add($taskId, DateTime $deadline, bool $forceExpired = false): bool
 	{
-		if (Counter::isDeadlineExpired($deadline))
+		if (Deadline::isDeadlineExpired($deadline))
 		{
 			$soon = '';
 			$agentStart = new DateTime();
 		}
-		else if ($forceExpired || Counter::isDeadlineExpiredSoon($deadline))
+		else if ($forceExpired || Deadline::isDeadlineExpiredSoon($deadline))
 		{
 			$soon = '';
 			$agentStart = $deadline;
@@ -46,8 +46,8 @@ class Agent
 		else
 		{
 			$soon = 'Soon';
-			$agentStart = $deadline;
-			$agentStart->addSecond(-Counter::getDeadlineTimeLimit());
+			$agentStart = clone $deadline;
+			$agentStart->addSecond(-Deadline::getDeadlineTimeLimit());
 		}
 
 		$agentName = self::getClass()."::expired{$soon}({$taskId});";
@@ -79,8 +79,6 @@ class Agent
 	/**
 	 * @param $taskId
 	 * @return string
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
 	public static function expired($taskId): string
@@ -100,10 +98,10 @@ class Agent
 			return '';
 		}
 
-		Counter::onTaskExpired($task);
+		Counter\CounterService::addEvent(Counter\CounterDictionary::EVENT_TASK_EXPIRED, $taskData);
 
 		$commentPoster = CommentPoster::getInstance($taskId, (int)$taskData['CREATED_BY']);
-		$commentPoster->postCommentsOnTaskExpired($taskData);
+		$commentPoster && $commentPoster->postCommentsOnTaskExpired($taskData);
 
 		$event = new Event('tasks', self::EVENT_TASK_EXPIRED, [
 			'TASK_ID' => $taskId,
@@ -141,10 +139,10 @@ class Agent
 			return '';
 		}
 
-		Counter::onTaskExpiredSoon($task);
+		Counter\CounterService::addEvent(Counter\CounterDictionary::EVENT_TASK_EXPIRED_SOON, $taskData);
 
 		$commentPoster = CommentPoster::getInstance($taskId, (int)$taskData['CREATED_BY']);
-		$commentPoster->postCommentsOnTaskExpiredSoon($taskData);
+		$commentPoster && $commentPoster->postCommentsOnTaskExpiredSoon($taskData);
 
 		$event = new Event('tasks', self::EVENT_TASK_EXPIRED_SOON, [
 			'TASK_ID' => $taskId,
@@ -158,9 +156,9 @@ class Agent
 	}
 
 	/**
-	 * @deprecated not used
+	 * @deprecated
 	 */
-	public static function start()
+	public static function start(): string
 	{
 		return '';
 	}
@@ -216,7 +214,6 @@ class Agent
 		  		ZOMBIE = 'N'
 		  		AND STATUS < 4
 		  		AND DEADLINE IS NOT NULL
-		  		AND DEADLINE <> ''
 		  		AND DEADLINE > NOW()
 		  		AND ID > {$lastId}
 			LIMIT 100

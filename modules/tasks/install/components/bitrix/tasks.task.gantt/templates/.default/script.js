@@ -267,17 +267,7 @@ BX.addCustomEvent("SidePanel.Slider:onCloseByEsc", function(event) {
 });
 
 BX.addCustomEvent('BX.Main.Filter:apply', function(id, data, ctx, promise, params) {
-	var fields = ctx.getFields();
-
-	if(fields.ROLEID == undefined || fields.ROLEID == 0)
-	{
-		// window.location.href = '?F_CANCEL=Y&F_SECTION=ADVANCED&clear_filter=Y&apply_filter=Y';
-		window.location.href = window.location.href;
-	}
-	else
-	{
-		window.location.reload();
-	}
+	window.location.href = BX.util.remove_url_param(window.location.href, 'F_STATE');
 });
 
 BX.addCustomEvent('Tasks.TopMenu:onItem', function(roleId, url) {

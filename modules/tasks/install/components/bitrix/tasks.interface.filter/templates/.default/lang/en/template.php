@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["TASKS_ADD_QUICK_TASK"] = "Create quick task";
 $MESS["TASKS_AJAX_EMPTY_TEMPLATES"] = "There are no task templates";
 $MESS["TASKS_AJAX_ERROR_LOAD_TEMPLATES"] = "Error loading template list";
@@ -33,6 +33,7 @@ $MESS["TASKS_BTN_SORT_TIME_ESTIMATE"] = "Estimated time required";
 $MESS["TASKS_BTN_SORT_TITLE"] = "Name";
 $MESS["TASKS_BTN_SYNC"] = "Synchronize list";
 $MESS["TASKS_BTN_SYNC_OUTLOOK"] = "with Microsoft Outlook";
+$MESS["TASKS_LINK_CREATE_GROUP"] = "Create group";
+$MESS["TASKS_LINK_CREATE_PROJECT"] = "Create project";
 $MESS["TASKS_SPOTLIGHT_ADD_TASK"] = "Use this button to create a task";
 $MESS["TASKS_USER_SORT"] = "Sort";
-?>

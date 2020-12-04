@@ -6,38 +6,6 @@
 {
 	const pathToExtension = '/bitrix/mobileapp/mobile/extensions/bitrix/task/';
 
-	class TaskView
-	{
-		/**
-		 *
-		 * @param data
-		 */
-		static open(data)
-		{
-			data.canOpenInDefault = data.canOpenInDefault || false;
-			console.log('TaskView.open');
-			PageManager.openComponent("JSStackComponent",
-				{
-					canOpenInDefault: data.canOpenInDefault,
-					scriptPath: data.path,
-					componentCode: "tasks.list",
-					params: data.params,
-					title: BX.message('MOBILE_TASKS_LIST_TITLE'),
-					rootWidget: {
-						name: "tasks.list",
-						settings: {
-							objectName: "list",
-							filter: "view_all",
-							useSearch: true,
-							useLargeTitleMode: true,
-						},
-					}
-				}
-			);
-			console.log('TaskView.open:ed');
-		}
-	}
-
 	class Task
 	{
 		static checkMatchDates(date, datesToMatch)
@@ -192,7 +160,7 @@
 			this.id = row.id;
 			this.title = row.title;
 			this.groupId = row.groupId;
-			this.group = (this.groupId > 0 && row.group ? row.group : {id: 0, name: ''});
+			this.group = (this.groupId > 0 && row.group ? row.group : {id: 0, name: '', image: ''});
 
 			this.status = row.status;
 			this.subStatus = row.subStatus || this.status;
@@ -320,7 +288,7 @@
 			}
 			else
 			{
-				this._newCommentsCount = value;
+				this._newCommentsCount = Number(value);
 			}
 		}
 
@@ -357,6 +325,12 @@
 		isCreator(userId = null)
 		{
 			return Number(userId || this.currentUser.id) === Number(this.creator.id);
+		}
+
+		isPureCreator(userId = null)
+		{
+			return Number(userId || this.currentUser.id) === Number(this.creator.id)
+				&& Number(userId || this.currentUser.id) !== Number(this.responsible.id);
 		}
 
 		isResponsible(userId = null)
@@ -532,7 +506,7 @@
 		get isExpired()
 		{
 			const date = new Date();
-			return this.deadline && this.deadline <= date.getTime();
+			return Boolean(this.deadline) && this.deadline <= date.getTime();
 		}
 
 		get isExpiredCounts()
@@ -717,7 +691,6 @@
 								DEADLINE: this.deadline,
 								GUID: this.guid,
 								ALLOW_CHANGE_DEADLINE: 'Y',
-								TASK_CONTROL: 'Y',
 								GROUP_ID: this.groupId || 0,
 							},
 							params: {
@@ -1244,7 +1217,7 @@
 			const state = this.getState() || {message: '', backgroundColor: '', fontColor: ''};
 			const messageInfo = this.getMessageInfo();
 
-			return {
+			const taskInfo = {
 				id: this.id,
 				title: this.title || '',
 				checked: this.isCompletedCounts,
@@ -1283,6 +1256,16 @@
 					},
 				},
 			};
+
+			if (this.groupId > 0)
+			{
+				taskInfo.project = {
+					id: this.groupId,
+					imageUrl: this.group.image,
+				};
+			}
+
+			return taskInfo;
 		}
 
 		getState()
@@ -1446,6 +1429,5 @@
 		}
 	}
 
-	this.TaskView = TaskView;
 	this.Task = Task;
 })();

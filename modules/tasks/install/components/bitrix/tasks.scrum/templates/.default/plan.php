@@ -24,7 +24,7 @@ $pathToTask = str_replace('#group_id#', $arParams['GROUP_ID'], $pathToTask);
 <script>
 	BX.ready(function() {
 		BX.message(<?=Json::encode($messages)?>);
-		BX.Tasks.Scrum.ScrumManager = new BX.Tasks.Scrum.Scrum({
+		BX.Tasks.Scrum.Entry = new BX.Tasks.Scrum.Entry({
 			signedParameters: '<?=$this->getComponent()->getSignedParameters()?>',
 			debugMode: '<?=$arResult['debugMode']?>',
 			defaultSprintDuration: '<?=(int) $arResult['defaultSprintDuration']?>',
@@ -32,11 +32,12 @@ $pathToTask = str_replace('#group_id#', $arParams['GROUP_ID'], $pathToTask);
 			tags: <?=Json::encode($arResult['tags'])?>,
 			backlog: <?=Json::encode($arResult['backlog'])?>,
 			sprints: <?=Json::encode($arResult['sprints'])?>,
-			tabs: <?=Json::encode($arResult['tabs'])?>,
-			activeTab: 'plan',
+			views: <?=Json::encode($arResult['views'])?>,
+			activeView: 'plan',
 			activeSprintId: '<?=$arResult['activeSprintId']?>',
-			filterId: '<?=$filterId?>'
+			filterId: '<?=$filterId?>',
+			defaultResponsible: <?=Json::encode($arResult['defaultResponsible'])?>
 		});
-		BX.Tasks.Scrum.ScrumManager.renderTo(document.getElementById('tasks-scrum-container'));
+		BX.Tasks.Scrum.Entry.renderTo(document.getElementById('tasks-scrum-container'));
 	});
 </script>

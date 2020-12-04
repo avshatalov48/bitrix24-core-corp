@@ -24,7 +24,7 @@ Loc::loadMessages(__FILE__);
 Loc::loadMessages($_SERVER["DOCUMENT_ROOT"] . '/bitrix/components/bitrix/imconnector.settings/templates/.default/template.php');
 
 
-CJSCore::Init(array("popup"));
+CJSCore::Init(["popup"]);
 $this->addExternalJs('/bitrix/components/bitrix/imconnector.connector.settings/templates/.default/script.js');
 ?>
 <?if(empty($arResult['RELOAD'])):?>
@@ -164,8 +164,6 @@ $this->addExternalJs('/bitrix/components/bitrix/imconnector.connector.settings/t
 	BX.ready(function ()
 	{
 		BX.message({
-			IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_POPUP_LIMITED_TITLE: '<? echo GetMessageJS('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_POPUP_LIMITED_TITLE') ?>',
-			IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_POPUP_LIMITED_TEXT: '<? echo GetMessageJS('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_POPUP_LIMITED_TEXT') ?>',
 			IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_ERROR_ACTION: '<? echo GetMessageJS('IIMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_ERROR_ACTION') ?>',
 			IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CLOSE: '<? echo GetMessageJS('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CLOSE') ?>'
 		});

@@ -1596,7 +1596,11 @@ abstract class Item extends LazyAccess
 			$isReference = is_object($v) ? is_a($v, '\\Bitrix\\Main\\Entity\\ReferenceField') : isset($v['reference']);
 			$isExpression = is_object($v) ? is_a($v, '\\Bitrix\\Main\\Entity\\ExpressionField') : isset($v['expression']);
 
-			if($isReference || $isExpression) // todo: make use of references and expressions too
+			if(
+				$isReference
+				|| $isExpression
+				|| (is_object($v) && !method_exists($v, 'getDefaultValue'))
+			) // todo: make use of references and expressions too
 			{
 				continue;
 			}

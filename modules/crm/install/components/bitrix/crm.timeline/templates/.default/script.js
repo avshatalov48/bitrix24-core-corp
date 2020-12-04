@@ -15684,11 +15684,13 @@ if(typeof(BX.CrmScheduleItemActivityZoom) === "undefined")
 		{
 			var topic = entityData['ZOOM_INFO']['TOPIC'];
 			var duration = entityData['ZOOM_INFO']['DURATION'];
-			var timestamp = parseInt(entityData['ZOOM_INFO']['CONF_START_TIME']);
-			timestamp += BX.CrmTimeline.prototype.getUserTimezoneOffset();
-			var date = new Date();
-			date.setTime(timestamp*1000);
-
+			var startTimeStamp = BX.parseDate(
+				entityData['ZOOM_INFO']['CONF_START_TIME'],
+				false,
+				"YYYY-MM-DD",
+				"YYYY-MM-DD HH:MI:SS"
+			);
+			var date = new Date(startTimeStamp.getTime() + 1000 * BX.CrmTimelineItem.getUserTimezoneOffset());
 			var detailZoomMessage = BX.create("span",
 				{
 					text: this.getMessage("zoomCreatedMessage")

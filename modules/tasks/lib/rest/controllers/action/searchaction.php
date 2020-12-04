@@ -40,11 +40,11 @@ class SearchAction extends Search\SearchAction
 	 * @throws SystemException
 	 * @throws TasksException
 	 */
-	public function provideData($searchQuery, array $options = null, PageNavigation $pageNavigation = null)
+	public function provideData($searchQuery, array $options = null, PageNavigation $pageNavigation = null): array
 	{
 		$result = [];
 
-		if (FilterLimit::isLimitExceeded())
+		if (FilterLimit::isLimitExceeded() || !$this->isSearchQueryValid($searchQuery))
 		{
 			return $result;
 		}
@@ -54,10 +54,10 @@ class SearchAction extends Search\SearchAction
 
 		foreach ($tasksBySearch as $key => $task)
 		{
-			$taskId = $task['ID'];
-			$messageId = $task['MESSAGE_ID'];
+			$taskId = (int)$task['ID'];
+			$messageId = (int)$task['MESSAGE_ID'];
 
-			$path = ($messageId? $this->getPathForTaskComment($taskId, $messageId) : $this->getPathForTask($taskId));
+			$path = ($messageId ? $this->getPathForTaskComment($taskId, $messageId) : $this->getPathForTask($taskId));
 
 			$resultItem = new Search\ResultItem($task['TITLE'], $path, $taskId);
 			$resultItem
@@ -99,8 +99,8 @@ class SearchAction extends Search\SearchAction
 	}
 
 	/**
-	 * @param $searchQuery
-	 * @param $userId
+	 * @param string $searchQuery
+	 * @param int $userId
 	 * @return array
 	 * @throws ArgumentException
 	 * @throws ArgumentNullException
@@ -108,7 +108,7 @@ class SearchAction extends Search\SearchAction
 	 * @throws SystemException
 	 * @throws TasksException
 	 */
-	private function getTasksBySearch($searchQuery, $userId)
+	private function getTasksBySearch(string $searchQuery, int $userId): array
 	{
 		$result = [];
 
@@ -118,10 +118,10 @@ class SearchAction extends Search\SearchAction
 		$select = ['ID', 'TITLE', 'MESSAGE_ID'];
 		$order = [
 			'MESSAGE_ID' => 'ASC',
-			'ID' => 'ASC'
+			'ID' => 'ASC',
 		];
 		$filter = [
-			'::SUBFILTER-FULL_SEARCH_INDEX' => [$operator . 'FULL_SEARCH_INDEX' => $searchValue]
+			'::SUBFILTER-FULL_SEARCH_INDEX' => [$operator.'FULL_SEARCH_INDEX' => $searchValue],
 		];
 		$params = [
 			'USER_ID' => $userId,
@@ -142,7 +142,7 @@ class SearchAction extends Search\SearchAction
 	/**
 	 * @return string
 	 */
-	private function getTaskPathTemplate()
+	private function getTaskPathTemplate(): string
 	{
 		if (self::$taskPathTemplate)
 		{
@@ -172,16 +172,16 @@ class SearchAction extends Search\SearchAction
 	/**
 	 * @return string
 	 */
-	private function getTaskCommentPathTemplate()
+	private function getTaskCommentPathTemplate(): string
 	{
-		return $this->getTaskPathTemplate() . '?MID=#comment_id##com#comment_id#';
+		return $this->getTaskPathTemplate().'?MID=#comment_id##com#comment_id#';
 	}
 
 	/**
-	 * @param $taskId
+	 * @param int $taskId
 	 * @return string
 	 */
-	private function getPathForTask($taskId)
+	private function getPathForTask(int $taskId): string
 	{
 		$userId = $this->getCurrentUser()->getId();
 		$pathTemplate = $this->getTaskPathTemplate();
@@ -190,11 +190,11 @@ class SearchAction extends Search\SearchAction
 	}
 
 	/**
-	 * @param $taskId
-	 * @param $commentId
+	 * @param int $taskId
+	 * @param int $commentId
 	 * @return string
 	 */
-	private function getPathForTaskComment($taskId, $commentId)
+	private function getPathForTaskComment(int $taskId, int $commentId): string
 	{
 		$userId = $this->getCurrentUser()->getId();
 		$pathTemplate = $this->getTaskCommentPathTemplate();
@@ -202,7 +202,16 @@ class SearchAction extends Search\SearchAction
 		return CComponentEngine::MakePathFromTemplate($pathTemplate, [
 			'user_id' => $userId,
 			'task_id' => $taskId,
-			'comment_id' => $commentId
+			'comment_id' => $commentId,
 		]);
+	}
+
+	/**
+	 * @param string $searchQuery
+	 * @return bool
+	 */
+	private function isSearchQueryValid(string $searchQuery): bool
+	{
+		return trim($searchQuery) !== '';
 	}
 }

@@ -49,12 +49,20 @@ $MESS['TASKS_POPUP_MENU_ORDER_FIELD_ORIGINATOR_NAME'] = 'Постановщик'
 $MESS['TASKS_POPUP_MENU_ORDER_FIELD_RESPONSIBLE_NAME'] = 'Исполнитель';
 $MESS['TASKS_POPUP_MENU_ORDER_FIELD_GROUP_ID'] = 'Проект';
 $MESS['TASKS_POPUP_MENU_ORDER_FIELD_SORTING'] = 'Моя сортировка';
-$MESS['TASKS_POPUP_MENU_READ_ALL'] = 'Прочитать все';
-$MESS['TASKS_POPUP_MENU_DEADLINE'] = 'Сроки';
+
+$MESS['TASKS_POPUP_MENU_ROLE_ALL'] = 'Задачи';
 $MESS['TASKS_POPUP_MENU_ROLE_RESPONSIBLE'] = 'Делаю';
 $MESS['TASKS_POPUP_MENU_ROLE_ACCOMPLICE'] = 'Помогаю';
 $MESS['TASKS_POPUP_MENU_ROLE_ORIGINATOR'] = 'Поручил';
 $MESS['TASKS_POPUP_MENU_ROLE_AUDITOR'] = 'Наблюдаю';
+$MESS['TASKS_POPUP_MENU_COUNTER_NEW_COMMENTS'] = 'С новыми комментариями';
+$MESS['TASKS_POPUP_MENU_COUNTER_EXPIRED'] = 'Просроченные';
+$MESS['TASKS_POPUP_MENU_COUNTER_SUPPOSEDLY_COMPLETED'] = 'Ждут контроль';
+$MESS['TASKS_POPUP_MENU_READ_ALL'] = 'Прочитать все';
+$MESS['TASKS_POPUP_MENU_READ_ALL_V2'] = 'Прочитать все комментарии';
+$MESS['TASKS_POPUP_MENU_DEADLINE'] = 'Сроки';
+$MESS['TASKS_POPUP_MENU_ORDER_DEADLINE'] = 'Сортировать по срокам';
+$MESS['TASKS_POPUP_MENU_ORDER_ACTIVITY'] = 'Сортировать по активности';
 
 $MESS['TASKS_CONFIRM_DELETE'] = 'Переместить в корзину?';
 $MESS['TASKS_CONFIRM_DELETE_YES'] = 'Да';
@@ -76,15 +84,18 @@ $MESS['TASKS_LIST_POPUP_SELECT_DATE'] = 'Крайний срок';
 $MESS['TASKS_LIST_BUTTON_NEXT'] = 'Загрузить еще';
 $MESS['TASKS_LIST_BUTTON_NEXT_PROCESS'] = 'Загрузка';
 $MESS['TASKS_LIST_SEARCH_HINT'] = 'Введите название задачи, имя ответственного или что-то еще';
+$MESS['TASKS_LIST_READ_ALL_NOTIFICATION'] = 'Комментарии прочитаны';
 
-$MESS["TASKS_LIST_SEARCH_EMPTY_RESULT"] = "По вашему запросу ничего не найдено";
-$MESS["TASKS_LIST_EMPTY_RESULT"] = "Нет элементов для отображения";
-$MESS["TASKS_LIST_NOTHING_NOT_FOUND"] = "Задач не найдено";
-$MESS["TASKS_LIST_ACTION_DONT_FOLLOW"] = "Не следить";
-$MESS["TASKS_NO_INTERNET_CONNECTION"] = "Вероятно, потеряно соединение с интернетом. Пожалуйста, повторите попытку позже.";
-$MESS["TASKS_UNEXPECTED_ANSWER"] = "Проблемы соединения с сервером. Пожалуйста, повторите попытку позже.";
-$MESS["TASKS_SOME_THING_WENT_WRONG"] = "Что-то пошло не так. Пожалуйста, повторите попытку позже.";
-$MESS["TASKS_ERROR_TITLE"] = "Ошибка";
+$MESS['TASKS_LIST_SEARCH_SECTION_LAST'] = "НЕДАВНИЙ ПОИСК";
+$MESS['TASKS_LIST_SEARCH_SECTION_SEARCH_RESULTS'] = "РЕЗУЛЬТАТЫ ПОИСКА";
+$MESS['TASKS_LIST_SEARCH_EMPTY_RESULT'] = "По вашему запросу ничего не найдено";
+$MESS['TASKS_LIST_EMPTY_RESULT'] = "Нет элементов для отображения";
+$MESS['TASKS_LIST_NOTHING_NOT_FOUND'] = "Задач не найдено";
+$MESS['TASKS_LIST_ACTION_DONT_FOLLOW'] = "Не следить";
+$MESS['TASKS_NO_INTERNET_CONNECTION'] = "Вероятно, потеряно соединение с интернетом. Пожалуйста, повторите попытку позже.";
+$MESS['TASKS_UNEXPECTED_ANSWER'] = "Проблемы соединения с сервером. Пожалуйста, повторите попытку позже.";
+$MESS['TASKS_SOME_THING_WENT_WRONG'] = "Что-то пошло не так. Пожалуйста, повторите попытку позже.";
+$MESS['TASKS_ERROR_TITLE'] = "Ошибка";
 
 
 $MESS['MOBILE_TASKS_VIEW_TAB_COMMENT'] = "Комментарии";

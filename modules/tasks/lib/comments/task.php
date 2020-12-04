@@ -98,16 +98,16 @@ class Task
 
 	/**
 	 * @param int $taskId
-	 * @return DateTime
+	 * @return false|DateTime
 	 * @throws Main\ArgumentException
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	public static function getLastCommentTime(int $taskId): DateTime
+	public static function getLastCommentTime(int $taskId)
 	{
 		if (!$taskId || !Forum::includeModule())
 		{
-			return new DateTime();
+			return false;
 		}
 
 		$query = (new Query(MessageTable::class))
@@ -121,7 +121,7 @@ class Task
 			->where('T.ID', $taskId)
 		;
 
-		$lastCommentTime = new DateTime();
+		$lastCommentTime = false;
 		$lastCommentResult = $query->exec();
 		if ($row = $lastCommentResult->fetch())
 		{

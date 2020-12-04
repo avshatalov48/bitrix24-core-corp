@@ -28,6 +28,7 @@ class Comment
 	 * @param string $message
 	 * @param int $authorId
 	 * @param int $type
+	 * @param array $data
 	 */
 	public function __construct(string $message, int $authorId, int $type = self::TYPE_DEFAULT, array $data = [])
 	{
@@ -35,6 +36,42 @@ class Comment
 		$this->addPart('main', $message, $data);
 		$this->setType($type);
 		$this->setAuthorId($authorId);
+	}
+
+	/**
+	 * @param string $message
+	 * @param int $authorId
+	 * @param int $type
+	 * @param array $data
+	 * @return Comment
+	 */
+	public static function createFromData(
+		string $message,
+		int $authorId,
+		int $type = self::TYPE_DEFAULT,
+		array $data = []
+	): Comment
+	{
+		$c = 0;
+		$comment = new Comment($message, $authorId, $type);
+
+		if (empty($data))
+		{
+			return $comment;
+		}
+
+		foreach ($data as $partData)
+		{
+			if (is_array($partData))
+			{
+				foreach ($partData as $part)
+				{
+					$comment->addPart($c++, '', $part);
+				}
+			}
+		}
+
+		return $comment;
 	}
 
 	/**
@@ -74,6 +111,7 @@ class Comment
 	/**
 	 * @param string $partName
 	 * @param $text
+	 * @param array $data
 	 * @return Part
 	 */
 	public function addPart(string $partName, $text, array $data): Part
@@ -128,7 +166,7 @@ class Comment
 
 	/**
 	 * @param string $partName
-	 * @param string $text
+	 * @param array $data
 	 */
 	public function appendPartData(string $partName, array $data): void
 	{
@@ -138,7 +176,7 @@ class Comment
 		}
 		else
 		{
-			$this->addPart($partName, '', [ $data ]);
+			$this->addPart($partName, '', [$data]);
 		}
 	}
 

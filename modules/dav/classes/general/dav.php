@@ -13,14 +13,14 @@ class CDav
 			(static::IsDavHeaders("check_all") ||
 			!$USER->IsAuthorized()))
 		{
-			if (strlen($_SERVER["PHP_AUTH_USER"]) > 0 and
-				strlen($_SERVER["PHP_AUTH_PW"]) > 0)
+			if ($_SERVER["PHP_AUTH_USER"] <> '' and
+				$_SERVER["PHP_AUTH_PW"] <> '')
 			{
-				if (strpos($_SERVER["PHP_AUTH_USER"], $_SERVER['HTTP_HOST']."\\") === 0)
+				if (mb_strpos($_SERVER["PHP_AUTH_USER"], $_SERVER['HTTP_HOST']."\\") === 0)
 				{
 					$_SERVER["PHP_AUTH_USER"] = str_replace($_SERVER['HTTP_HOST']."\\", "", $_SERVER["PHP_AUTH_USER"]);
 				}
-				elseif (strpos($_SERVER["PHP_AUTH_USER"], $_SERVER['SERVER_NAME']."\\") === 0)
+				elseif (mb_strpos($_SERVER["PHP_AUTH_USER"], $_SERVER['SERVER_NAME']."\\") === 0)
 				{
 					$_SERVER["PHP_AUTH_USER"] = str_replace($_SERVER['SERVER_NAME']."\\", "", $_SERVER["PHP_AUTH_USER"]);
 				}
@@ -33,11 +33,11 @@ class CDav
 			($_SERVER['REQUEST_METHOD']=='OPTIONS' || $_SERVER['REQUEST_METHOD']=='PROPFIND') &&
 			(
 				(
-					strlen($_SERVER["REAL_FILE_PATH"])<=0 &&
-					substr($_SERVER['REQUEST_URI'], -1, 1)=='/'
+					$_SERVER["REAL_FILE_PATH"] == '' &&
+					mb_substr($_SERVER['REQUEST_URI'], -1, 1) == '/'
 				) || (
-					strpos($_SERVER['REQUEST_URI'], 'personal')!==false &&
-					strlen($_SERVER["REAL_FILE_PATH"])<=0 &&
+					mb_strpos($_SERVER['REQUEST_URI'], 'personal') !== false &&
+					$_SERVER["REAL_FILE_PATH"] == '' &&
 					!file_exists($_SERVER['DOCUMENT_ROOT'].$_SERVER['REQUEST_URI'])
 				) // windows scans all the path up to the root, fails if 404, and we have it in /company/personal/...
 			)
@@ -48,7 +48,7 @@ class CDav
 			$file_path = "";
 			foreach($res as $res_detail)
 			{
-				if(strpos($res_detail["ID"], "disk")!==false || strpos($res_detail["ID"], "dav")!==false || strpos($res_detail["ID"], "webdav")!==false || strpos($res_detail["ID"], "socialnetwork")!==false)
+				if(mb_strpos($res_detail["ID"], "disk") !== false || mb_strpos($res_detail["ID"], "dav") !== false || mb_strpos($res_detail["ID"], "webdav") !== false || mb_strpos($res_detail["ID"], "socialnetwork") !== false)
 				{
 					$good_res = (!$USER->IsAuthorized()/* && $APPLICATION->GetFileAccessPermission(Array(SITE_ID, $res_detail["PATH"]), Array(2)) < "R"*/);
 					break;
@@ -58,7 +58,7 @@ class CDav
 			if($good_res)
 			{
 				header("MS-Author-Via: DAV");
-				if ( ( strpos($_SERVER['HTTP_USER_AGENT'], "Microsoft-WebDAV-MiniRedir") !== false ) && // for office 2007, windows xp
+				if ( (mb_strpos($_SERVER['HTTP_USER_AGENT'], "Microsoft-WebDAV-MiniRedir") !== false ) && // for office 2007, windows xp
 					($_SERVER['REQUEST_METHOD'] == "OPTIONS") )
 				{
 					CDavWebDavServer::showOptions();
@@ -123,7 +123,7 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 				$file_path = "";
 				foreach($res as $res_detail)
 				{
-					if(strpos($res_detail["ID"], "dav")!==false || strpos($res_detail["ID"], "disk")!==false || strpos($res_detail["ID"], "webdav")!==false || strpos($res_detail["ID"], "socialnetwork")!==false)
+					if(mb_strpos($res_detail["ID"], "dav") !== false || mb_strpos($res_detail["ID"], "disk") !== false || mb_strpos($res_detail["ID"], "webdav") !== false || mb_strpos($res_detail["ID"], "socialnetwork") !== false)
 					{
 						$good_res = (!$USER->IsAuthorized()/* && $APPLICATION->GetFileAccessPermission(Array(SITE_ID, $res_detail["PATH"]), Array(2)) < "R"*/);
 						break;
@@ -149,7 +149,7 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 	public static function isDigestEnabled()
 	{
 		$digest = true;
-		if (strpos($_SERVER['HTTP_USER_AGENT'], "Microsoft-WebDAV-MiniRedir") !== false)
+		if (mb_strpos($_SERVER['HTTP_USER_AGENT'], "Microsoft-WebDAV-MiniRedir") !== false)
 		{
 			if (preg_match("/([^\/]*)\/(\d+).(\d+).(\d+)/", $_SERVER['HTTP_USER_AGENT'], $matches) > 0) // Redir/5.1.2600
 			{
@@ -160,10 +160,10 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 			}
 		}
 		elseif (
-			(strpos($_SERVER['HTTP_USER_AGENT'], "Microsoft Data Access Internet Publishing Provider") !== false)
+			(mb_strpos($_SERVER['HTTP_USER_AGENT'], "Microsoft Data Access Internet Publishing Provider") !== false)
 			|| (
 				(self::GetWindowsVersion() === 5)
-				&& (strpos($_SERVER['HTTP_USER_AGENT'], "Microsoft Office Protocol Discovery") !== false)
+				&& (mb_strpos($_SERVER['HTTP_USER_AGENT'], "Microsoft Office Protocol Discovery") !== false)
 			)
 		)
 		{
@@ -225,19 +225,19 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 		$result = "";
 
 		if (getenv("HTTP_CLIENT_IP")
-			&& strtolower(getenv("HTTP_CLIENT_IP")) !== "unknown")
+			&& mb_strtolower(getenv("HTTP_CLIENT_IP")) !== "unknown")
 				$result = getenv("HTTP_CLIENT_IP");
 
 		elseif (getenv("HTTP_X_FORWARDED_FOR")
-			&& strtolower(getenv("HTTP_X_FORWARDED_FOR")) !==  "unknown")
+			&& mb_strtolower(getenv("HTTP_X_FORWARDED_FOR")) !== "unknown")
 			$result = getenv("HTTP_X_FORWARDED_FOR");
 
 		elseif (getenv("REMOTE_ADDR"
-			&& strtolower(getenv("REMOTE_ADDR")) !==  "unknown"))
+			&& mb_strtolower(getenv("REMOTE_ADDR")) !== "unknown"))
 			$result = getenv("REMOTE_ADDR");
 
 		elseif (!empty($_SERVER['REMOTE_ADDR'])
-			&& strtolower($_SERVER['REMOTE_ADDR']) !==  "unknown")
+			&& mb_strtolower($_SERVER['REMOTE_ADDR']) !== "unknown")
 			$result = $_SERVER['REMOTE_ADDR'];
 
 		return $result;
@@ -300,8 +300,8 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 			}
 		}
 
-		if (strpos($_SERVER["HTTP_USER_AGENT"], "Microsoft Office") !== false &&
-			strpos($_SERVER['HTTP_USER_AGENT'], "Outlook") === false)
+		if (mb_strpos($_SERVER["HTTP_USER_AGENT"], "Microsoft Office") !== false &&
+			mb_strpos($_SERVER['HTTP_USER_AGENT'], "Outlook") === false)
 		{
 			return true;
 		}
@@ -335,7 +335,7 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 		{
 			$dbSite = CSite::GetByID($siteId);
 			if ($arSite = $dbSite->Fetch())
-				$cs = strtolower($arSite["CHARSET"]);
+				$cs = mb_strtolower($arSite["CHARSET"]);
 		}
 
 		return $cs;
@@ -355,52 +355,52 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 	public static function GetFilterOperation($key)
 	{
 		$strNegative = "N";
-		if (substr($key, 0, 1)=="!")
+		if (mb_substr($key, 0, 1) == "!")
 		{
-			$key = substr($key, 1);
+			$key = mb_substr($key, 1);
 			$strNegative = "Y";
 		}
 
 		$strOrNull = "N";
-		if (substr($key, 0, 1)=="+")
+		if (mb_substr($key, 0, 1) == "+")
 		{
-			$key = substr($key, 1);
+			$key = mb_substr($key, 1);
 			$strOrNull = "Y";
 		}
 
-		if (substr($key, 0, 2)==">=")
+		if (mb_substr($key, 0, 2) == ">=")
 		{
-			$key = substr($key, 2);
+			$key = mb_substr($key, 2);
 			$strOperation = ">=";
 		}
-		elseif (substr($key, 0, 1)==">")
+		elseif (mb_substr($key, 0, 1) == ">")
 		{
-			$key = substr($key, 1);
+			$key = mb_substr($key, 1);
 			$strOperation = ">";
 		}
-		elseif (substr($key, 0, 2)=="<=")
+		elseif (mb_substr($key, 0, 2) == "<=")
 		{
-			$key = substr($key, 2);
+			$key = mb_substr($key, 2);
 			$strOperation = "<=";
 		}
-		elseif (substr($key, 0, 1)=="<")
+		elseif (mb_substr($key, 0, 1) == "<")
 		{
-			$key = substr($key, 1);
+			$key = mb_substr($key, 1);
 			$strOperation = "<";
 		}
-		elseif (substr($key, 0, 1)=="@")
+		elseif (mb_substr($key, 0, 1) == "@")
 		{
-			$key = substr($key, 1);
+			$key = mb_substr($key, 1);
 			$strOperation = "IN";
 		}
-		elseif (substr($key, 0, 1)=="~")
+		elseif (mb_substr($key, 0, 1) == "~")
 		{
-			$key = substr($key, 1);
+			$key = mb_substr($key, 1);
 			$strOperation = "LIKE";
 		}
-		elseif (substr($key, 0, 1)=="%")
+		elseif (mb_substr($key, 0, 1) == "%")
 		{
-			$key = substr($key, 1);
+			$key = mb_substr($key, 1);
 			$strOperation = "QUERY";
 		}
 		else
@@ -431,19 +431,19 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 			$arSelectFields = $arGroupBy;
 			foreach ($arGroupBy as $key => $val)
 			{
-				$val = strtoupper($val);
-				$key = strtoupper($key);
+				$val = mb_strtoupper($val);
+				$key = mb_strtoupper($key);
 				if (array_key_exists($val, $arFields) && !in_array($key, $arGroupByFunct))
 				{
-					if (strlen($strSqlGroupBy) > 0)
+					if ($strSqlGroupBy <> '')
 						$strSqlGroupBy .= ", ";
 					$strSqlGroupBy .= $arFields[$val]["FIELD"];
 
 					if (isset($arFields[$val]["FROM"])
-						&& strlen($arFields[$val]["FROM"]) > 0
+						&& $arFields[$val]["FROM"] <> ''
 						&& !in_array($arFields[$val]["FROM"], $arAlreadyJoined))
 					{
-						if (strlen($strSqlFrom) > 0)
+						if ($strSqlFrom <> '')
 							$strSqlFrom .= " ";
 						$strSqlFrom .= $arFields[$val]["FROM"];
 						$arAlreadyJoined[] = $arFields[$val]["FROM"];
@@ -462,7 +462,7 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 		}
 		else
 		{
-			if (isset($arSelectFields) && !is_array($arSelectFields) && is_string($arSelectFields) && strlen($arSelectFields)>0 && array_key_exists($arSelectFields, $arFields))
+			if (isset($arSelectFields) && !is_array($arSelectFields) && is_string($arSelectFields) && $arSelectFields <> '' && array_key_exists($arSelectFields, $arFields))
 				$arSelectFields = array($arSelectFields);
 
 			if (!isset($arSelectFields)
@@ -478,7 +478,7 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 						continue;
 					}
 
-					if (strlen($strSqlSelect) > 0)
+					if ($strSqlSelect <> '')
 						$strSqlSelect .= ", ";
 
 					if ($arFields[$arFieldsKeys[$i]]["TYPE"] == "datetime")
@@ -499,10 +499,10 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 						$strSqlSelect .= $arFields[$arFieldsKeys[$i]]["FIELD"]." as ".$arFieldsKeys[$i];
 
 					if (isset($arFields[$arFieldsKeys[$i]]["FROM"])
-						&& strlen($arFields[$arFieldsKeys[$i]]["FROM"]) > 0
+						&& $arFields[$arFieldsKeys[$i]]["FROM"] <> ''
 						&& !in_array($arFields[$arFieldsKeys[$i]]["FROM"], $arAlreadyJoined))
 					{
-						if (strlen($strSqlFrom) > 0)
+						if ($strSqlFrom <> '')
 							$strSqlFrom .= " ";
 						$strSqlFrom .= $arFields[$arFieldsKeys[$i]]["FROM"];
 						$arAlreadyJoined[] = $arFields[$arFieldsKeys[$i]]["FROM"];
@@ -513,11 +513,11 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 			{
 				foreach ($arSelectFields as $key => $val)
 				{
-					$val = strtoupper($val);
-					$key = strtoupper($key);
+					$val = mb_strtoupper($val);
+					$key = mb_strtoupper($key);
 					if (array_key_exists($val, $arFields))
 					{
-						if (strlen($strSqlSelect) > 0)
+						if ($strSqlSelect <> '')
 							$strSqlSelect .= ", ";
 
 						if (in_array($key, $arGroupByFunct))
@@ -545,10 +545,10 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 						}
 
 						if (isset($arFields[$val]["FROM"])
-							&& strlen($arFields[$val]["FROM"]) > 0
+							&& $arFields[$val]["FROM"] <> ''
 							&& !in_array($arFields[$val]["FROM"], $arAlreadyJoined))
 						{
-							if (strlen($strSqlFrom) > 0)
+							if ($strSqlFrom <> '')
 								$strSqlFrom .= " ";
 							$strSqlFrom .= $arFields[$val]["FROM"];
 							$arAlreadyJoined[] = $arFields[$val]["FROM"];
@@ -557,9 +557,9 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 				}
 			}
 
-			if (strlen($strSqlGroupBy) > 0)
+			if ($strSqlGroupBy <> '')
 			{
-				if (strlen($strSqlSelect) > 0)
+				if ($strSqlSelect <> '')
 					$strSqlSelect .= ", ";
 				$strSqlSelect .= "COUNT(%%_DISTINCT_%% ".$arFields[$arFieldsKeys[0]]["FIELD"].") as CNT";
 			}
@@ -609,16 +609,16 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 					{
 						if ($arFields[$key]["TYPE"] == "int")
 						{
-							if ((IntVal($val) == 0) && (strpos($strOperation, "=") !== False))
+							if ((intval($val) == 0) && (mb_strpos($strOperation, "=") !== False))
 								$arSqlSearch_tmp[] = "(".$arFields[$key]["FIELD"]." IS ".(($strNegative == "Y") ? "NOT " : "")."NULL) ".(($strNegative == "Y") ? "AND" : "OR")." ".(($strNegative == "Y") ? "NOT " : "")."(".$arFields[$key]["FIELD"]." ".$strOperation." 0)";
 							else
-								$arSqlSearch_tmp[] = (($strNegative == "Y") ? " ".$arFields[$key]["FIELD"]." IS NULL OR NOT " : "")."(".$arFields[$key]["FIELD"]." ".$strOperation." ".IntVal($val)." )";
+								$arSqlSearch_tmp[] = (($strNegative == "Y") ? " ".$arFields[$key]["FIELD"]." IS NULL OR NOT " : "")."(".$arFields[$key]["FIELD"]." ".$strOperation." ".intval($val)." )";
 						}
 						elseif ($arFields[$key]["TYPE"] == "double")
 						{
 							$val = str_replace(",", ".", $val);
 
-							if ((DoubleVal($val) == 0) && (strpos($strOperation, "=") !== False))
+							if ((DoubleVal($val) == 0) && (mb_strpos($strOperation, "=") !== False))
 								$arSqlSearch_tmp[] = "(".$arFields[$key]["FIELD"]." IS ".(($strNegative == "Y") ? "NOT " : "")."NULL) ".(($strNegative == "Y") ? "AND" : "OR")." ".(($strNegative == "Y") ? "NOT " : "")."(".$arFields[$key]["FIELD"]." ".$strOperation." 0)";
 							else
 								$arSqlSearch_tmp[] = (($strNegative == "Y") ? " ".$arFields[$key]["FIELD"]." IS NULL OR NOT " : "")."(".$arFields[$key]["FIELD"]." ".$strOperation." ".DoubleVal($val)." )";
@@ -631,7 +631,7 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 							}
 							else
 							{
-								if ((strlen($val) == 0) && (strpos($strOperation, "=") !== False))
+								if (($val == '') && (mb_strpos($strOperation, "=") !== False))
 									$arSqlSearch_tmp[] = "(".$arFields[$key]["FIELD"]." IS ".(($strNegative == "Y") ? "NOT " : "")."NULL) ".(($strNegative == "Y") ? "AND NOT" : "OR")." (".$DB->Length($arFields[$key]["FIELD"])." <= 0) ".(($strNegative == "Y") ? "AND NOT" : "OR")." (".$arFields[$key]["FIELD"]." ".$strOperation." '".$DB->ForSql($val)."' )";
 								else
 									$arSqlSearch_tmp[] = (($strNegative == "Y") ? " ".$arFields[$key]["FIELD"]." IS NULL OR NOT " : "")."(".$arFields[$key]["FIELD"]." ".$strOperation." '".$DB->ForSql($val)."' )";
@@ -639,14 +639,14 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 						}
 						elseif ($arFields[$key]["TYPE"] == "datetime")
 						{
-							if (strlen($val) <= 0)
+							if ($val == '')
 								$arSqlSearch_tmp[] = ($strNegative=="Y"?"NOT":"")."(".$arFields[$key]["FIELD"]." IS NULL)";
 							else
 								$arSqlSearch_tmp[] = ($strNegative=="Y"?" ".$arFields[$key]["FIELD"]." IS NULL OR NOT ":"")."(".$arFields[$key]["FIELD"]." ".$strOperation." ".$DB->CharToDateFunction($DB->ForSql($val), "FULL").")";
 						}
 						elseif ($arFields[$key]["TYPE"] == "date")
 						{
-							if (strlen($val) <= 0)
+							if ($val == '')
 								$arSqlSearch_tmp[] = ($strNegative=="Y"?"NOT":"")."(".$arFields[$key]["FIELD"]." IS NULL)";
 							else
 								$arSqlSearch_tmp[] = ($strNegative=="Y"?" ".$arFields[$key]["FIELD"]." IS NULL OR NOT ":"")."(".$arFields[$key]["FIELD"]." ".$strOperation." ".$DB->CharToDateFunction($DB->ForSql($val), "SHORT").")";
@@ -655,10 +655,10 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 				}
 
 				if (isset($arFields[$key]["FROM"])
-					&& strlen($arFields[$key]["FROM"]) > 0
+					&& $arFields[$key]["FROM"] <> ''
 					&& !in_array($arFields[$key]["FROM"], $arAlreadyJoined))
 				{
-					if (strlen($strSqlFrom) > 0)
+					if ($strSqlFrom <> '')
 						$strSqlFrom .= " ";
 					$strSqlFrom .= $arFields[$key]["FROM"];
 					$arAlreadyJoined[] = $arFields[$key]["FROM"];
@@ -673,11 +673,11 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 				}
 				if ($strOrNull == "Y")
 				{
-					if (strlen($strSqlSearch_tmp) > 0)
+					if ($strSqlSearch_tmp <> '')
 						$strSqlSearch_tmp .= ($strNegative=="Y" ? " AND " : " OR ");
 					$strSqlSearch_tmp .= "(".$arFields[$key]["FIELD"]." IS ".($strNegative=="Y" ? "NOT " : "")."NULL)";
 
-					if (strlen($strSqlSearch_tmp) > 0)
+					if ($strSqlSearch_tmp <> '')
 						$strSqlSearch_tmp .= ($strNegative=="Y" ? " AND " : " OR ");
 					if ($arFields[$key]["TYPE"] == "int" || $arFields[$key]["TYPE"] == "double")
 						$strSqlSearch_tmp .= "(".$arFields[$key]["FIELD"]." ".($strNegative=="Y" ? "<>" : "=")." 0)";
@@ -692,7 +692,7 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 
 		for ($i = 0, $n = count($arSqlSearch); $i < $n; $i++)
 		{
-			if (strlen($strSqlWhere) > 0)
+			if ($strSqlWhere <> '')
 				$strSqlWhere .= " AND ";
 			$strSqlWhere .= "(".$arSqlSearch[$i].")";
 		}
@@ -702,8 +702,8 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 		$arSqlOrder = Array();
 		foreach ($arOrder as $by => $order)
 		{
-			$by = strtoupper($by);
-			$order = strtoupper($order);
+			$by = mb_strtoupper($by);
+			$order = mb_strtoupper($order);
 
 			if ($order != "ASC")
 				$order = "DESC";
@@ -718,10 +718,10 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 					$arSqlOrder[] = " ".$arFields[$by]["FIELD"]." ".$order." ";
 
 				if (isset($arFields[$by]["FROM"])
-					&& strlen($arFields[$by]["FROM"]) > 0
+					&& $arFields[$by]["FROM"] <> ''
 					&& !in_array($arFields[$by]["FROM"], $arAlreadyJoined))
 				{
-					if (strlen($strSqlFrom) > 0)
+					if ($strSqlFrom <> '')
 						$strSqlFrom .= " ";
 					$strSqlFrom .= $arFields[$by]["FROM"];
 					$arAlreadyJoined[] = $arFields[$by]["FROM"];
@@ -733,12 +733,12 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 		DelDuplicateSort($arSqlOrder);
 		for ($i = 0, $n = count($arSqlOrder); $i < $n; $i++)
 		{
-			if (strlen($strSqlOrderBy) > 0)
+			if ($strSqlOrderBy <> '')
 				$strSqlOrderBy .= ", ";
 
-			if(strtoupper($DB->type)=="ORACLE")
+			if($DB->type == "ORACLE")
 			{
-				if(substr($arSqlOrder[$i], -3)=="ASC")
+				if(mb_substr($arSqlOrder[$i], -3) == "ASC")
 					$strSqlOrderBy .= $arSqlOrder[$i]." NULLS FIRST";
 				else
 					$strSqlOrderBy .= $arSqlOrder[$i]." NULLS LAST";
@@ -759,7 +759,7 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 
 	public static function CheckIfRightSlashAdded($str)
 	{
-		if (substr($str, -1) != '/')
+		if (mb_substr($str, -1) != '/')
 			return $str."/";
 
 		return $str;
@@ -767,24 +767,24 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 
 	public static function EndsWith($haystack, $needle)
 	{
-		$length = strlen($needle);
+		$length = mb_strlen($needle);
 		if ($length == 0)
 			return true;
-		return (substr($haystack, -$length) === $needle);
+		return (mb_substr($haystack, -$length) === $needle);
 	}
 
 	public static function FormatDateTime($date, $format = null)
 	{
 		// 20110118T131500
-		if (strlen($date) < 15)
+		if (mb_strlen($date) < 15)
 			return 0;
 
-		$year = intval(substr($date, 0, 4));
-		$month = intval(substr($date, 4, 2));
-		$day = intval(substr($date, 6, 2));
-		$hour = intval(substr($date, 9, 2));
-		$minute = intval(substr($date, 11, 2));
-		$second = intval(substr($date, 13, 2));
+		$year = intval(mb_substr($date, 0, 4));
+		$month = intval(mb_substr($date, 4, 2));
+		$day = intval(mb_substr($date, 6, 2));
+		$hour = intval(mb_substr($date, 9, 2));
+		$minute = intval(mb_substr($date, 11, 2));
+		$second = intval(mb_substr($date, 13, 2));
 
 		$t = mktime($hour, $minute, $second, $month, $day, $year);
 
@@ -809,7 +809,7 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 		$result = 0;
 		foreach ($arPrivileges as $privilege)
 		{
-			$privilege = trim(strtolower(preg_replace('/^.*:/', '', $privilege)));
+			$privilege = trim(mb_strtolower(preg_replace('/^.*:/', '', $privilege)));
 
 			if (array_key_exists($privilege, $arPrivilegesMap))
 				$result |= $arPrivilegesMap[$privilege];
@@ -882,7 +882,7 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 	{
 		$useProxy = COption::GetOptionString("dav", "use_proxy", "N");
 		$proxyHost = COption::GetOptionString("dav", "proxy_host", "");
-		return (($useProxy == "Y") && (strlen($proxyHost) > 0));
+		return (($useProxy == "Y") && ($proxyHost <> ''));
 	}
 
 	public static function GetProxySettings()

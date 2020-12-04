@@ -3,7 +3,7 @@ define("GW_DEBUG", false); // Debug
 define("DAV_EXCH_DEBUG", false); // Log
 
 global $DB;
-$db_type = strtolower($DB->type);
+$db_type = mb_strtolower($DB->type);
 $arClasses = array(
 	"CDavRequest" => "classes/general/request.php",
 	"CDavResponse" => "classes/general/response.php",

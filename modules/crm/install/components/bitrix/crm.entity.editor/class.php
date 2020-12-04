@@ -259,12 +259,12 @@ class CCrmEntityEditorComponent extends UIFormComponent
 				$schemeElements = array();
 				if($serviceSectionIndex >= 0)
 				{
-					$configItem = $config[$serviceSectionIndex];
-					if(isset($scheme[$serviceSectionIndex]['elements'])
-						&& is_array($scheme[$serviceSectionIndex]['elements'])
+					$configItem = $config[$serviceColumnIndex]['elements'][$serviceSectionIndex];
+					if(isset($scheme[$serviceColumnIndex]['elements'][$serviceSectionIndex]['elements'])
+						&& is_array($scheme[$serviceColumnIndex]['elements'][$serviceSectionIndex]['elements'])
 					)
 					{
-						$schemeElements = $scheme[$serviceSectionIndex]['elements'];
+						$schemeElements = $scheme[$serviceColumnIndex]['elements'][$serviceSectionIndex]['elements'];
 					}
 				}
 				else

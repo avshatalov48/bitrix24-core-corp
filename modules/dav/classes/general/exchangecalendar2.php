@@ -740,7 +740,7 @@ if (!class_exists("CDavExchangeCalendar"))
 
 			if (isset($arFields['ACCESSIBILITY']))
 			{
-				$arFields['ACCESSIBILITY'] = strtolower($arFields['ACCESSIBILITY']);
+				$arFields['ACCESSIBILITY'] = mb_strtolower($arFields['ACCESSIBILITY']);
 				if ($arFields['ACCESSIBILITY'] == "absent")
 				{
 					$arFields["PROPERTY_FREEBUSY"] = "OOF";
@@ -802,10 +802,10 @@ if (!class_exists("CDavExchangeCalendar"))
 					$ar = array("DAILY" => "DAILY", "WEEKLY" => "WEEKLY", "MONTHLY" => "MONTHLY_ABSOLUTE", "YEARLY" => "YEARLY_ABSOLUTE");
 					$arFields["RECURRING_TYPE"] = $ar[$arFields["PROPERTY_PERIOD_TYPE"]];
 
-					if (isset($arFields["PROPERTY_PERIOD_COUNT"]) && strlen($arFields["PROPERTY_PERIOD_COUNT"]) > 0)
+					if (isset($arFields["PROPERTY_PERIOD_COUNT"]) && $arFields["PROPERTY_PERIOD_COUNT"] <> '')
 						$arFields["RECURRING_INTERVAL"] = $arFields["PROPERTY_PERIOD_COUNT"];
 
-					if ($arFields["PROPERTY_PERIOD_TYPE"] == "WEEKLY" && strlen($arFields["PROPERTY_PERIOD_ADDITIONAL"]) > 0)
+					if ($arFields["PROPERTY_PERIOD_TYPE"] == "WEEKLY" && $arFields["PROPERTY_PERIOD_ADDITIONAL"] <> '')
 					{
 						static $arWeekDayMap = array(6 => "Sunday", 0 => "Monday", 1 => "Tuesday", 2 => "Wednesday", 3 => "Thursday", 4 => "Friday", 5 => "Saturday");
 
@@ -940,8 +940,8 @@ if (!class_exists("CDavExchangeCalendar"))
 			if (count($arBody) > 0)
 			{
 				$arResultItem["DESCRIPTION"] = $this->Encode($arBody[0]->GetContent());
-				$arResultItem["DETAIL_TEXT_TYPE"] = strtolower($arBody[0]->GetAttribute("BodyType"));
-				if (strtolower($arResultItem["DETAIL_TEXT_TYPE"]) == "html")
+				$arResultItem["DETAIL_TEXT_TYPE"] = mb_strtolower($arBody[0]->GetAttribute("BodyType"));
+				if (mb_strtolower($arResultItem["DETAIL_TEXT_TYPE"]) == "html")
 				{
 					$arResultItem["DESCRIPTION"] = preg_replace("/[\s|\S]*?<body[^>]*?>([\s|\S]*?)<\/body>[\s|\S]*/is".BX_UTF_PCRE_MODIFIER, "\\1", $arResultItem["DESCRIPTION"]);
 				}
@@ -1157,7 +1157,7 @@ if (!class_exists("CDavExchangeCalendar"))
 			{
 				$itemBody .= "     <Body";
 				if (array_key_exists("BodyType", $arFields))
-					$itemBody .= " BodyType=\"".(strtolower($arFields["BodyType"]) == "html" ? "HTML" : "Text")."\"";
+					$itemBody .= " BodyType=\"".(mb_strtolower($arFields["BodyType"]) == "html" ? "HTML" : "Text")."\"";
 				$itemBody .= ">".htmlspecialcharsbx($value)."</Body>\r\n";
 			}
 			elseif ($key == "RequiredAttendees")
@@ -1468,12 +1468,12 @@ if (!class_exists("CDavExchangeCalendar"))
 										"PROPERTY_REMIND_SETTINGS" => $modifiedItem["PROPERTY_REMIND_SETTINGS"],
 										"PROPERTY_PERIOD_TYPE" => "NONE",
 										"PROPERTY_BXDAVEX_LABEL" => $modifiedItem["MODIFICATION_LABEL"],
-										"PRIVATE_EVENT" => strtolower($modifiedItem["PROPERTY_SENSITIVITY"]) == 'private'
+										"PRIVATE_EVENT" => mb_strtolower($modifiedItem["PROPERTY_SENSITIVITY"]) == 'private'
 									);
 
 									if ($modifiedItem["PROPERTY_FREEBUSY"])
 									{
-										$modifiedItem["PROPERTY_FREEBUSY"] = strtolower($modifiedItem["PROPERTY_FREEBUSY"]);
+										$modifiedItem["PROPERTY_FREEBUSY"] = mb_strtolower($modifiedItem["PROPERTY_FREEBUSY"]);
 										if ($modifiedItem["PROPERTY_FREEBUSY"] == "oof")
 										{
 											$modifyEventFields["PROPERTY_ACCESSIBILITY"] = "absent";
@@ -1495,21 +1495,31 @@ if (!class_exists("CDavExchangeCalendar"))
 
 									if ($modifiedItem["IS_RECURRING"])
 									{
-										if ($modifiedItem["RECURRING_TYPE"] == "MONTHLY_ABSOLUTE" ||
-											$modifiedItem["RECURRING_TYPE"] == "MONTHLY_RELATIVE" ||
-											$modifiedItem["RECURRING_TYPE"] == "MONTHLY")
+										if ($modifiedItem["RECURRING_TYPE"] == "MONTHLY_ABSOLUTE"
+											|| $modifiedItem["RECURRING_TYPE"] == "MONTHLY_RELATIVE"
+											|| $modifiedItem["RECURRING_TYPE"] == "MONTHLY")
+										{
 											$modifyEventFields["PROPERTY_PERIOD_TYPE"] = "MONTHLY";
-										elseif ($modifiedItem["RECURRING_TYPE"] == "YEARLY_ABSOLUTE" ||
-											$modifiedItem["RECURRING_TYPE"] == "YEARLY_RELATIVE" ||
-											$modifiedItem["RECURRING_TYPE"] == "YEARLY")
+										}
+										elseif ($modifiedItem["RECURRING_TYPE"] == "YEARLY_ABSOLUTE"
+											|| $modifiedItem["RECURRING_TYPE"] == "YEARLY_RELATIVE"
+											|| $modifiedItem["RECURRING_TYPE"] == "YEARLY")
+										{
 											$modifyEventFields["PROPERTY_PERIOD_TYPE"] = "YEARLY";
+										}
 										elseif ($modifiedItem["RECURRING_TYPE"] == "WEEKLY")
+										{
 											$modifyEventFields["PROPERTY_PERIOD_TYPE"] = "WEEKLY";
+										}
 										elseif ($modifiedItem["RECURRING_TYPE"] == "DAILY")
+										{
 											$modifyEventFields["PROPERTY_PERIOD_TYPE"] = "DAILY";
+										}
 
 										if (isset($modifiedItem["RECURRING_INTERVAL"]))
+										{
 											$modifyEventFields["PROPERTY_PERIOD_COUNT"] = $modifiedItem["RECURRING_INTERVAL"];
+										}
 
 										if ($modifyEventFields["PROPERTY_PERIOD_TYPE"] == "WEEKLY")
 										{
@@ -1518,14 +1528,16 @@ if (!class_exists("CDavExchangeCalendar"))
 												$ar = preg_split("/[;,\s]/i", $modifiedItem["RECURRING_DAYSOFWEEK"]);
 												$ar1 = array();
 												foreach ($ar as $v)
-													$ar1[] = $arWeekDayMap[strtolower($v)];
+													$ar1[] = $arWeekDayMap[mb_strtolower($v)];
 												$modifyEventFields["PROPERTY_PERIOD_ADDITIONAL"] = implode(",", $ar1);
 											}
 										}
 
 										$modifyEventFields["PROPERTY_EVENT_LENGTH"] = MakeTimeStamp($modifyEventFields["DATE_TO"]) - MakeTimeStamp($modifyEventFields["DATE_FROM"]);
 										if ($modifyEventFields["PROPERTY_EVENT_LENGTH"] <= 0)
+										{
 											$modifyEventFields["PROPERTY_EVENT_LENGTH"] = 86400;
+										}
 
 										if (isset($modifiedItem["RECURRING_NUMBEROFOCCURRENCES"]) && $modifiedItem["RECURRING_NUMBEROFOCCURRENCES"] > 0)
 										{
@@ -1566,7 +1578,7 @@ if (!class_exists("CDavExchangeCalendar"))
 
 												foreach($modifiedItem["ATTENDEES_EMAIL_LIST"] as $email)
 												{
-													$email = strtolower($email);
+													$email = mb_strtolower($email);
 													if ($entityId == $attendeesMap[$email])
 														continue;
 
@@ -2003,7 +2015,7 @@ if (!class_exists("CDavExchangeCalendar"))
 			{
 				$exchangeMailbox = COption::GetOptionString("dav", "exchange_mailbox", "");
 				$exchangeUseLogin = COption::GetOptionString("dav", "exchange_use_login", "Y");
-				$exchangeMailboxStrlen = strlen($exchangeMailbox);
+				$exchangeMailboxStrlen = mb_strlen($exchangeMailbox);
 
 				$strValue = "";
 				foreach($emailList as $email)
@@ -2025,9 +2037,9 @@ if (!class_exists("CDavExchangeCalendar"))
 					$checkedEmails = array();
 					while($entry = $res->Fetch())
 					{
-						$checkedEmails[] = strtolower($entry["UF_BXDAVEX_MAILBOX"]);
+						$checkedEmails[] = mb_strtolower($entry["UF_BXDAVEX_MAILBOX"]);
 						//$users[] = $entry['ID'];
-						$emailMap[strtolower($entry["UF_BXDAVEX_MAILBOX"])] = $entry['ID'];
+						$emailMap[mb_strtolower($entry["UF_BXDAVEX_MAILBOX"])] = $entry['ID'];
 					}
 
 					if ($exchangeUseLogin == "Y")
@@ -2035,9 +2047,9 @@ if (!class_exists("CDavExchangeCalendar"))
 						$strLogins = '';
 						foreach($emailList as $email)
 						{
-							if(!in_array(strtolower($email), $checkedEmails) && strtolower(substr($email, strlen($email) - $exchangeMailboxStrlen)) == strtolower($exchangeMailbox))
+							if(!in_array(mb_strtolower($email), $checkedEmails) && mb_strtolower(mb_substr($email, mb_strlen($email) - $exchangeMailboxStrlen)) == mb_strtolower($exchangeMailbox))
 							{
-								$value = substr($email, 0, strlen($email) - $exchangeMailboxStrlen);
+								$value = mb_substr($email, 0, mb_strlen($email) - $exchangeMailboxStrlen);
 								$strLogins .= ",'".CDatabase::ForSql($value)."'";
 							}
 						}
@@ -2050,7 +2062,7 @@ if (!class_exists("CDavExchangeCalendar"))
 							while($entry = $res->Fetch())
 							{
 								//$users[] = $entry['ID'];
-								$emailMap[strtolower($entry["LOGIN"].$exchangeMailbox)] = $entry['ID'];
+								$emailMap[mb_strtolower($entry["LOGIN"].$exchangeMailbox)] = $entry['ID'];
 							}
 						}
 					}
@@ -2066,7 +2078,7 @@ if (!class_exists("CDavExchangeCalendar"))
 			$map = self::GetUsersEmailMap($emailList);
 			foreach($emailList as $email)
 			{
-				$email = strtolower($email);
+				$email = mb_strtolower($email);
 				if(isset($map[$email]))
 				{
 					$users[] = $map[$email];
@@ -2077,7 +2089,7 @@ if (!class_exists("CDavExchangeCalendar"))
 
 		public static function ConvertExchangeResponse($response)
 		{
-			$response = strtolower($response);
+			$response = mb_strtolower($response);
 			if ($response == 'accept')
 				return 'Y';
 			if ($response == 'decline')

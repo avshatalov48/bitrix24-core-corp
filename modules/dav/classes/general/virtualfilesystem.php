@@ -29,7 +29,7 @@ class CAllDavVirtualFileSystem
 
 	public static function Lock($path, $token, &$timeout, $owner, $scope, $type)
 	{
-		if (strlen($path) <= 0)
+		if ($path == '')
 			return false;
 
 		unset(self::$lockCache[$path]);
@@ -66,7 +66,7 @@ class CAllDavVirtualFileSystem
 
 	public static function UpdateLock($path, $token, &$timeout, &$owner, &$scope, &$type)
 	{
-		if (strlen($path) <= 0 || strlen($token) <= 0)
+		if ($path == '' || $token == '')
 			return false;
 
 		unset(self::$lockCache[$path]);
@@ -110,13 +110,13 @@ class CAllDavVirtualFileSystem
 	{
 		global $DB;
 
-		$mode = strtoupper($mode);
+		$mode = mb_strtoupper($mode);
 		$updateMode = ($mode != "add");
 		$addMode = !$updateMode;
 
 		if (is_set($arFields, "LOCK_TYPE"))
 		{
-			$arFields["LOCK_TYPE"] = strtoupper($arFields["LOCK_TYPE"]);
+			$arFields["LOCK_TYPE"] = mb_strtoupper($arFields["LOCK_TYPE"]);
 			if ($arFields["LOCK_TYPE"] == "WRITE")
 				$arFields["LOCK_TYPE"] = "W";
 			if ($arFields["LOCK_TYPE"] == "READ")
@@ -128,7 +128,7 @@ class CAllDavVirtualFileSystem
 
 		if (is_set($arFields, "LOCK_SCOPE"))
 		{
-			$arFields["LOCK_SCOPE"] = strtoupper($arFields["LOCK_SCOPE"]);
+			$arFields["LOCK_SCOPE"] = mb_strtoupper($arFields["LOCK_SCOPE"]);
 			if ($arFields["LOCK_SCOPE"] == "EXCLUSIVE")
 				$arFields["LOCK_SCOPE"] = "E";
 			if ($arFields["LOCK_SCOPE"] == "SHARED")
@@ -142,7 +142,7 @@ class CAllDavVirtualFileSystem
 		{
 			if (is_numeric($arFields["LOCK_DEPTH"]))
 				$arFields["LOCK_DEPTH"] = intval($arFields["LOCK_DEPTH"]);
-			elseif (strtoupper($arFields["LOCK_DEPTH"]) == "INFINITE" || strtoupper($arFields["LOCK_DEPTH"]) == "I")
+			elseif (mb_strtoupper($arFields["LOCK_DEPTH"]) == "INFINITE" || mb_strtoupper($arFields["LOCK_DEPTH"]) == "I")
 				$arFields["LOCK_DEPTH"] = "I";
 			else
 				throw new Exception("LOCK_DEPTH");
@@ -175,7 +175,7 @@ class CAllDavVirtualFileSystem
 		global $DB;
 
 		$id = trim($id);
-		if (strlen($id) <= 0)
+		if ($id == '')
 			throw new Exception("id");
 
 		self::ParseFields($arFields, "update");

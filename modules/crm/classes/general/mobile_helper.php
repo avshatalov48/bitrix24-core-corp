@@ -3512,7 +3512,7 @@ class CCrmMobileHelper
 
 			$config = [];
 
-			if($configScope['scope'] === EntityEditorConfigScope::UNDEFINED)
+			if(isset($configScope['scope']) && $configScope['scope'] === EntityEditorConfigScope::UNDEFINED)
 			{
 				$config = CUserOptions::GetOption(
 					self::USER_OPTION_CATEGORY,
@@ -3530,7 +3530,7 @@ class CCrmMobileHelper
 					);
 				}
 			}
-			elseif($configScope['scope'] === EntityEditorConfigScope::COMMON)
+			elseif(isset($configScope['scope']) && $configScope['scope'] === EntityEditorConfigScope::COMMON)
 			{
 				$config = CUserOptions::GetOption(
 					self::USER_OPTION_CATEGORY,
@@ -3539,7 +3539,7 @@ class CCrmMobileHelper
 					0
 				);
 			}
-			elseif($configScope['scope'] === EntityEditorConfigScope::CUSTOM)
+			elseif(isset($configScope['scope']) && $configScope['scope'] === EntityEditorConfigScope::CUSTOM)
 			{
 				$config = Scope::getInstance()->getScopeById($configScope['userScopeId']);
 			}

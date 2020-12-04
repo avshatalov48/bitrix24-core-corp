@@ -83,6 +83,8 @@ class ChecklistSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	{
 		$delta = [];
 
+		$new = $this->prepareParams($new);
+
 		$old = array_column($old, null, 'ID');
 		$new = array_column($new, null, 'ID');
 

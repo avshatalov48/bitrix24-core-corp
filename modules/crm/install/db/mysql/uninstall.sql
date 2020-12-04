@@ -153,3 +153,5 @@ DROP TABLE IF EXISTS b_crm_ml_model_training;
 DROP TABLE IF EXISTS b_crm_ml_prediction_history;
 DROP TABLE IF EXISTS b_crm_ml_prediction_queue;
 DROP TABLE IF EXISTS b_crm_rq_conv_log;
+DROP TABLE IF EXISTS b_crm_tracking_trace_source;
+DROP TABLE IF EXISTS b_crm_tracking_source_child;

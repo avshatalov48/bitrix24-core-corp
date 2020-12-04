@@ -331,8 +331,72 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    onDialogMessageReactionListOpen: function onDialogMessageReactionListOpen(event) {
 	      this.$root.$bitrixApplication.openMessageReactionList(event.message.id, event.values);
 	    },
-	    onDialogMessageClickByKeyboardButton: function onDialogMessageClickByKeyboardButton(event) {
-	      this.$root.$bitrixApplication.execMessageKeyboardCommand(event);
+	    onDialogMessageClickByKeyboardButton: function onDialogMessageClickByKeyboardButton(data) {
+	      var _this2 = this;
+
+	      if (data.action === 'ACTION') {
+	        var _data$params = data.params,
+	            dialogId = _data$params.dialogId,
+	            messageId = _data$params.messageId,
+	            botId = _data$params.botId,
+	            action = _data$params.action,
+	            value = _data$params.value;
+
+	        if (action === 'SEND') {
+	          this.$root.$bitrixApplication.addMessage(value);
+	          setTimeout(function () {
+	            return _this2.$root.$bitrixController.application.emit(im_const.EventType.dialog.scrollToBottom, {
+	              duration: 300,
+	              cancelIfScrollChange: false
+	            });
+	          }, 300);
+	        } else if (action === 'PUT') {
+	          this.$root.$bitrixApplication.insertText({
+	            text: value + ' '
+	          });
+	        } else if (action === 'CALL') {
+	          this.$root.$bitrixApplication.openPhoneMenu(value);
+	        } else if (action === 'COPY') {
+	          app.exec("copyToClipboard", {
+	            text: value
+	          });
+	          new BXMobileApp.UI.NotificationBar({
+	            message: BX.message("MOBILE_MESSAGE_MENU_COPY_SUCCESS"),
+	            color: "#af000000",
+	            textColor: "#ffffff",
+	            groupId: "clipboard",
+	            maxLines: 1,
+	            align: "center",
+	            isGlobal: true,
+	            useCloseButton: true,
+	            autoHideTimeout: 1500,
+	            hideOnTap: true
+	          }, "copy").show();
+	        } else if (action === 'DIALOG') {
+	          this.$root.$bitrixApplication.openDialog(value);
+	        }
+
+	        return true;
+	      }
+
+	      if (data.action === 'COMMAND') {
+	        var _data$params2 = data.params,
+	            _dialogId = _data$params2.dialogId,
+	            _messageId = _data$params2.messageId,
+	            _botId = _data$params2.botId,
+	            command = _data$params2.command,
+	            params = _data$params2.params;
+	        this.$root.$bitrixController.restClient.callMethod(im_const.RestMethod.imMessageCommand, {
+	          'MESSAGE_ID': _messageId,
+	          'DIALOG_ID': _dialogId,
+	          'BOT_ID': _botId,
+	          'COMMAND': command,
+	          'COMMAND_PARAMS': params
+	        });
+	        return true;
+	      }
+
+	      return false;
 	    },
 	    onDialogMessageClickByChatTeaser: function onDialogMessageClickByChatTeaser(event) {
 	      this.$root.$bitrixApplication.execMessageOpenChatTeaser(event);
@@ -1550,7 +1614,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            name: this.getLocalize("MOBILE_CHAT_PANEL_UPLOAD_DISK"),
 	            dataSource: {
 	              multiple: false,
-	              url: siteDir + "mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=" + this.getLocalize("USER_ID"),
+	              url: siteDir + "mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=" + this.controller.application.getUserId(),
 	              TABLE_SETTINGS: {
 	                searchField: true,
 	                showtitle: true,
@@ -2292,7 +2356,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        } else if (params.id === 'share') {
 	          var _dialog = _this23.controller.application.getDialogData();
 
-	          var subMenu = BackdropMenu.create('im.dialog.menu.mess.submenu|' + _this23.controller.application.getDialogId()).setItems([BackdropMenuItem.create('share_task').setIcon(BackdropMenuIcon.task).setTitle(_this23.getLocalize('MOBILE_MESSAGE_MENU_SHARE_TASK')), BackdropMenuItem.create('share_post').setIcon(BackdropMenuIcon.lifefeed).setTitle(_this23.getLocalize('MOBILE_MESSAGE_MENU_SHARE_POST')), BackdropMenuItem.create('share_chat').setIcon(BackdropMenuIcon.chat).setTitle(_this23.getLocalize('MOBILE_MESSAGE_MENU_SHARE_CHAT'))]).setEventListener(function (name, params, options, backdrop) {
+	          var subMenu = BackdropMenu.create('im.dialog.menu.mess.submenu|' + _this23.controller.application.getDialogId()).setItems([BackdropMenuItem.create('share_task').setIcon(BackdropMenuIcon.task).setTitle(_this23.getLocalize('MOBILE_MESSAGE_MENU_SHARE_TASK')), BackdropMenuItem.create('share_post').setIcon(BackdropMenuIcon.lifefeed).setTitle(_this23.getLocalize('MOBILE_MESSAGE_MENU_SHARE_POST_NEWS')), BackdropMenuItem.create('share_chat').setIcon(BackdropMenuIcon.chat).setTitle(_this23.getLocalize('MOBILE_MESSAGE_MENU_SHARE_CHAT'))]).setEventListener(function (name, params, options, backdrop) {
 	            if (name !== 'selected') {
 	              return false;
 	            }

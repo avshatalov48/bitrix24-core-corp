@@ -23,6 +23,7 @@ export default class Form extends EventEmitter
 		this.isExtranetInstalled = params.isExtranetInstalled === "Y";
 		this.isCloud = params.isCloud === "Y";
 		this.isInvitationBySmsAvailable = params.isInvitationBySmsAvailable === "Y";
+		this.isCreatorEmailConfirmed = params.isCreatorEmailConfirmed === "Y";
 		this.regenerateUrlBase = params.regenerateUrlBase;
 
 		if (Type.isDomNode(this.contentContainer))
@@ -122,6 +123,14 @@ export default class Form extends EventEmitter
 	changeButton(action)
 	{
 		Event.unbindAll(this.button, 'click');
+
+		if (!this.isCreatorEmailConfirmed)
+		{
+			Event.bind(this.button, 'click', () => {
+				this.showErrorMessage(Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_CREATOR_EMAIL_ERROR'));
+			});
+			return;
+		}
 
 		if (action === "invite")
 		{

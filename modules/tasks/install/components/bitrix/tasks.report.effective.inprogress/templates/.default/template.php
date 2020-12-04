@@ -8,7 +8,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 
-Extension::load(['ui.alerts']);
+Extension::load(['ui.alerts', 'ui.icons']);
 
 Loc::loadMessages(__FILE__);
 

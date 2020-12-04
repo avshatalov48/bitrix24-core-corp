@@ -22,8 +22,6 @@ class EntityTable extends Entity\DataManager
 	const SPRINT_PLANNED = 'planned';
 	const SPRINT_COMPLETED = 'completed';
 
-	const SPRINT_COMPLETED_EVENT = 'sprintCompletedEvent';
-
 	private $id;
 	private $groupId;
 	private $entityType;
@@ -34,7 +32,11 @@ class EntityTable extends Entity\DataManager
 	private $dateStart;
 	private $dateEnd;
 	private $status;
-	private $info = [];
+
+	/**
+	 * @var EntityInfoColumn
+	 */
+	private $info;
 
 	private $children = [];
 	private $taskIds = [];
@@ -103,13 +105,17 @@ class EntityTable extends Entity\DataManager
 
 		$info = new Fields\ArrayField('INFO');
 		$info->configureRequired(false);
-		$info->configureSerializeCallback(function($value)
+		$info->configureSerializeCallback(function(EntityInfoColumn $entityInfoColumn)
 		{
-			return is_array($value) ? Json::encode($value) : null;
+			$value = Json::encode($entityInfoColumn->getInfoData());
+			return ($value ? $value : null);
 		});
 		$info->configureUnserializeCallback(function($value)
 		{
-			return is_string($value) && !empty($value) ? Json::decode($value) : [];
+			$value = (is_string($value) && !empty($value) ? Json::decode($value) : []);
+			$entityInfoColumn = new EntityInfoColumn();
+			$entityInfoColumn->setInfoData($value);
+			return $entityInfoColumn;
 		});
 
 		$items = new OneToMany('ITEMS', ItemTable::class, 'ENTITY');
@@ -395,14 +401,14 @@ class EntityTable extends Entity\DataManager
 		}
 	}
 
-	public function getInfo(): array
+	public function getInfo(): EntityInfoColumn
 	{
-		return $this->info;
+		return ($this->info ? $this->info : new EntityInfoColumn());
 	}
 
-	public function setInfo(array $info): void
+	public function setInfo(EntityInfoColumn $entityInfoColumn): void
 	{
-		$this->info = $info;
+		$this->info = $entityInfoColumn;
 	}
 
 	public function getChildren(): array

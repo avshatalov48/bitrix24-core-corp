@@ -11,6 +11,8 @@ use Bitrix\Tasks\Grid\Row\Content\UserName;
  */
 class Responsible extends UserName
 {
+	protected const USER_ROLE = 'RESPONSIBLE_ID';
+
 	/**
 	 * @param array $row
 	 * @param array $parameters
@@ -19,11 +21,6 @@ class Responsible extends UserName
 	 */
 	public static function prepare(array $row, array $parameters): string
 	{
-		$userRole = 'RESPONSIBLE_ID';
-
-		return static::prepareUserName([
-			'USER_ROLE' => $userRole,
-			'USER_ID' => $row[$userRole],
-		]);
+		return static::prepareUserName($row, $parameters);
 	}
 }

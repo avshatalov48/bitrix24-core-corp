@@ -111,7 +111,6 @@ class SprintService implements Errorable
 		try
 		{
 			$sprint->setStatus(EntityTable::SPRINT_COMPLETED);
-			$sprint->setInfo(array_merge($this->getCurrentInfo($sprint), [$sprint->getInfo()]));
 			$sprint->setSort(0);
 
 			$result = EntityTable::update($sprint->getId(), $sprint->getFieldsToUpdateEntity());
@@ -230,6 +229,40 @@ class SprintService implements Errorable
 		}
 
 		return $sprints;
+	}
+
+	/**
+	 * Returns a last completed sprint by scrum group id.
+	 *
+	 * @param int $groupId Scrum group id.
+	 * @return EntityTable
+	 */
+	public function getLastCompletedSprint(int $groupId): EntityTable
+	{
+		$sprint = EntityTable::createEntityObject();
+
+		try
+		{
+			$queryObject = EntityTable::getList([
+				'filter' => [
+					'GROUP_ID'=> (int) $groupId,
+					'ENTITY_TYPE' => EntityTable::SPRINT_TYPE,
+					'STATUS' => EntityTable::SPRINT_COMPLETED
+				],
+				'order' => ['DATE_END' => 'DESC'],
+				'limit' => 1
+			]);
+			if ($sprintData = $queryObject->fetch())
+			{
+				$sprint = $this->fillSprintObjectByTableData($sprint, $sprintData);
+			}
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_SPRINT));
+		}
+
+		return $sprint;
 	}
 
 	public function getSprintById(int $sprintId): EntityTable
@@ -366,31 +399,6 @@ class SprintService implements Errorable
 			$sprint->setInfo($sprintData['INFO']);
 		}
 		return $sprint;
-	}
-
-	private function getCurrentInfo(EntityTable $sprint): array
-	{
-		try
-		{
-			$queryObject = EntityTable::getList([
-				'select' => ['INFO'],
-				'filter' => [
-					'ID'=> $sprint->getId(),
-					'ENTITY_TYPE' => EntityTable::SPRINT_TYPE
-				],
-				'order' => ['SORT' => 'ASC']
-			]);
-			if ($sprintData = $queryObject->fetch())
-			{
-				return [];
-			}
-		}
-		catch (\Exception $exception)
-		{
-			$this->errorCollection->setError(new Error($exception->getMessage()));
-		}
-
-		return [];
 	}
 
 	private function setErrors(Result $result, string $code): void

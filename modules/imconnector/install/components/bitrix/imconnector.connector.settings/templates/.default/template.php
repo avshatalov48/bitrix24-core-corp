@@ -25,6 +25,7 @@ Loc::loadMessages($_SERVER["DOCUMENT_ROOT"] . '/bitrix/components/bitrix/imconne
 
 if (\Bitrix\Main\Loader::includeModule("bitrix24"))
 {
+	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
 	CBitrix24::initLicenseInfoPopupJS();
 }
 
@@ -46,7 +47,7 @@ if (empty($arResult['RELOAD']) && empty($arResult['URL_RELOAD']))
 		$APPLICATION->IncludeComponent(
 			$arResult['COMPONENT'],
 			"",
-			Array(
+			[
 				"LINE" => $arResult['ACTIVE_LINE']['ID'],
 				"CONNECTOR" => $arResult['ID'],
 				"AJAX_MODE" =>  "N",
@@ -55,7 +56,7 @@ if (empty($arResult['RELOAD']) && empty($arResult['URL_RELOAD']))
 				"AJAX_OPTION_JUMP" => "Y",
 				"AJAX_OPTION_STYLE" => "Y",
 				"INDIVIDUAL_USE" => "Y"
-			)
+			]
 		); ?>
 		<?= $arResult['LANG_JS_SETTING']; ?>
 		<?
@@ -235,11 +236,15 @@ if (empty($arResult['RELOAD']) && empty($arResult['URL_RELOAD']))
 			<?
 			if (count($arResult['LIST_LINE']) > 0)
 			{
+				$limitInfoHelper ='';
+				if(\Bitrix\Main\Loader::includeModule('imopenlines'))
+				{
+					$limitInfoHelper = \Bitrix\Imopenlines\Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_OL_NUMBER;
+				}
 				?>
 				<script>
 					BX.message({
-						IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_POPUP_LIMITED_TITLE: '<?= GetMessageJS('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_POPUP_LIMITED_TITLE') ?>',
-						IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_POPUP_LIMITED_TEXT: '<?= GetMessageJS('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_POPUP_LIMITED_TEXT') ?>',
+						IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_LIMIT_INFO_HELPER: '<?= $limitInfoHelper ?>',
 						IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_ERROR_ACTION: '<?= GetMessageJS('IIMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_ERROR_ACTION') ?>',
 						IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CLOSE: '<?= GetMessageJS('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CLOSE') ?>',
 						IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_QUEUE: '<?= GetMessageJS('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_QUEUE')?>'

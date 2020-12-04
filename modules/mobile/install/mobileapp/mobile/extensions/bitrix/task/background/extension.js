@@ -5,9 +5,9 @@
 		constructor()
 		{
 			BX.addCustomEvent(
-				"taskbackground::task::action",
+				'taskbackground::task::action',
 				(data, taskId, params = {}, extra = false, delay = null) => {
-					TaskBackgroundAction.executeAction(data, taskId, params, extra = false, delay = null);
+					TaskBackgroundAction.executeAction(data, taskId, params, extra, delay);
 				}
 			);
 		}
@@ -17,30 +17,43 @@
 			console.info('TaskBackgroundAction.executeAction', data);
 
 			const currentTaskId = taskId || data.taskId;
-			const {groupId, ownerId} = data;
-
 			if (currentTaskId)
 			{
-				if (Application.getApiVersion() >= 31)
-				{
-					TaskBackgroundAction.openTaskComponentByTaskId(currentTaskId, data, params);
-				}
-				else
-				{
-					TaskBackgroundAction.loadTaskPageByTaskId(currentTaskId, data);
-				}
+				TaskBackgroundAction.openTask(currentTaskId, data, params);
 			}
+			else
+			{
+				TaskBackgroundAction.openTaskList(data, params);
+			}
+		}
 
+		static openTask(taskId, data, params)
+		{
 			if (Application.getApiVersion() >= 31)
 			{
-				if (groupId)
-				{
-					TaskBackgroundAction.openTaskListComponentByGroupId(groupId, {});
-				}
-				else if (ownerId)
-				{
-					TaskBackgroundAction.openTaskListComponentByOwnerId(ownerId, {});
-				}
+				TaskBackgroundAction.openTaskComponentByTaskId(taskId, data, params);
+			}
+			else
+			{
+				TaskBackgroundAction.loadTaskPageByTaskId(taskId, data);
+			}
+		}
+
+		static openTaskList(data, params)
+		{
+			if (Application.getApiVersion() < 31)
+			{
+				return;
+			}
+
+			const {groupId, ownerId} = data;
+			if (groupId)
+			{
+				TaskBackgroundAction.openTaskListComponentByGroupId(groupId, data);
+			}
+			else if (ownerId)
+			{
+				TaskBackgroundAction.openTaskListComponentByOwnerId(ownerId, data);
 			}
 		}
 
@@ -54,20 +67,21 @@
 			console.log('openTaskListComponentByGroupId');
 
 			const {siteDir, siteId, languageId} = env;
-			const componentData = data || {};
-
-			componentData.params = {
-				COMPONENT_CODE: 'tasks.list',
-				GROUP_ID: groupId,
-				SITE_ID: siteId,
-				LANGUAGE_ID: languageId,
-				SITE_DIR: siteDir,
-				PATH_TO_TASK_ADD: `${siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#`,
+			const componentData = {
+				path: availableComponents['tasks.list'].publicUrl,
+				canOpenInDefault: true,
+				params: {
+					COMPONENT_CODE: 'tasks.list',
+					GROUP_ID: groupId,
+					DATA: data,
+					SITE_ID: siteId,
+					LANGUAGE_ID: languageId,
+					SITE_DIR: siteDir,
+					PATH_TO_TASK_ADD: `${siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#`,
+				},
 			};
-			componentData.path = availableComponents['tasks.list']['publicUrl'];
-			componentData.canOpenInDefault = true;
 
-			TaskView.open(componentData);
+			TaskBackgroundAction.openTaskListComponent(componentData);
 		}
 
 		static openTaskListComponentByOwnerId(ownerId, data)
@@ -75,20 +89,40 @@
 			console.log('openTaskListComponentByOwnerId');
 
 			const {siteDir, siteId, languageId} = env;
-			const componentData = data || {};
-
-			componentData.params = {
-				COMPONENT_CODE: 'tasks.list',
-				USER_ID: ownerId,
-				SITE_ID: siteId,
-				LANGUAGE_ID: languageId,
-				SITE_DIR: siteDir,
-				PATH_TO_TASK_ADD: `${siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#`,
+			const componentData = {
+				path: availableComponents['tasks.list'].publicUrl,
+				canOpenInDefault: true,
+				params: {
+					COMPONENT_CODE: 'tasks.list',
+					USER_ID: ownerId,
+					DATA: data,
+					SITE_ID: siteId,
+					LANGUAGE_ID: languageId,
+					SITE_DIR: siteDir,
+					PATH_TO_TASK_ADD: `${siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#`,
+				},
 			};
-			componentData.path = availableComponents['tasks.list'].publicUrl;
-			componentData.canOpenInDefault = true;
 
-			TaskView.open(componentData);
+			TaskBackgroundAction.openTaskListComponent(componentData);
+		}
+
+		static openTaskListComponent(data)
+		{
+			PageManager.openComponent('JSStackComponent', {
+				canOpenInDefault: data.canOpenInDefault || false,
+				scriptPath: data.path,
+				componentCode: 'tasks.list',
+				params: data.params,
+				title: data.title || '',
+				rootWidget: {
+					name: 'tasks.list',
+					settings: {
+						objectName: 'list',
+						useSearch: true,
+						useLargeTitleMode: true,
+					},
+				},
+			});
 		}
 
 		static openTaskComponentByTaskId(taskId, data, params)

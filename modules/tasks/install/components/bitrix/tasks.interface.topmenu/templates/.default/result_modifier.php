@@ -81,7 +81,7 @@ $arResult['ITEMS'][] = array(
 					$arParams["MARK_SECTION_REPORTS"] != "Y") &&
 				   ($arParams['DEFAULT_ROLEID'] == 'view_all' || $arParams['DEFAULT_ROLEID'] == ''), // need refactoring
 	'COUNTER' => $arResult['TOTAL'],
-	'COUNTER_ID' => Counter\Name::TOTAL,
+	'COUNTER_ID' => Counter\CounterDictionary::COUNTER_TOTAL,
 	'COUNTER_ACTIVE' => 'Y'
 );
 

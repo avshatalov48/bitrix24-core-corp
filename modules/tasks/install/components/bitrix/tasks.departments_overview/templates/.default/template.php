@@ -5,7 +5,10 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
+
+Extension::load(['ui.icons']);
 
 Loc::loadMessages(__FILE__);
 

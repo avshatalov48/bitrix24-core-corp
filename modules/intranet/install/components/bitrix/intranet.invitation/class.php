@@ -165,9 +165,11 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 			&& Option::get('bitrix24', 'phone_invite_allowed', 'N') === 'Y';
 
 		$this->prepareMenuItems();
+		$this->arResult["IS_CREATOR_EMAIL_CONFIRMED"] = true;
 		if ($this->arResult["IS_CLOUD"])
 		{
 			$this->prepareLinkRegisterData();
+			$this->arResult["IS_CREATOR_EMAIL_CONFIRMED"] = \CBitrix24::isEmailConfirmed();
 		}
 
 		$this->includeComponentTemplate();

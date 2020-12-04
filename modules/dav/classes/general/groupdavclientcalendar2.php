@@ -1,4 +1,7 @@
 <?
+
+use Bitrix\Main\Web\HttpClient;
+
 define("DAV_CALDAV_DEBUG", false);
 
 if (!class_exists("CDavGroupdavClientCalendar"))
@@ -347,7 +350,7 @@ if (!class_exists("CDavGroupdavClientCalendar"))
 						$ar = explode(",", $rrule["BYDAY"]);
 						$ar1 = array();
 						foreach ($ar as $v)
-							$ar1[] = $arWeekDayMap[strtoupper($v)];
+							$ar1[] = $arWeekDayMap[mb_strtoupper($v)];
 						$arFields["PROPERTY_PERIOD_ADDITIONAL"] = implode(",", $ar1);
 					}
 					else
@@ -400,7 +403,7 @@ if (!class_exists("CDavGroupdavClientCalendar"))
 			if (!array_key_exists("DAV_XML_ID", $arData))
 				$arData["DAV_XML_ID"] = self::GenerateNewCalendarItemName();
 
-			if (substr($path, -strlen("/".$arData["DAV_XML_ID"].".ics")) != "/".$arData["DAV_XML_ID"].".ics")
+			if (mb_substr($path, -mb_strlen("/".$arData["DAV_XML_ID"].".ics")) != "/".$arData["DAV_XML_ID"].".ics")
 			{
 				$path = rtrim($path, "/");
 				$path .= "/".$arData["DAV_XML_ID"].".ics";
@@ -463,7 +466,7 @@ if (!class_exists("CDavGroupdavClientCalendar"))
 			else
 				$iCalEvent["TRANSP"] = 'OPAQUE';
 
-			if (isset($event["LOCATION"]) && is_array($event["LOCATION"]) && isset($event["LOCATION"]["NEW"]) && strlen($event["LOCATION"]["NEW"]) > 0)
+			if (isset($event["LOCATION"]) && is_array($event["LOCATION"]) && isset($event["LOCATION"]["NEW"]) && $event["LOCATION"]["NEW"] <> '')
 				$iCalEvent["LOCATION"] = $event["LOCATION"]["NEW"];
 
 			if (isset($event["IMPORTANCE"]))
@@ -476,10 +479,10 @@ if (!class_exists("CDavGroupdavClientCalendar"))
 					$iCalEvent["PRIORITY"] = 5;
 			}
 
-			if (isset($event["DESCRIPTION"]) && strlen($event["DESCRIPTION"]) > 0)
+			if (isset($event["DESCRIPTION"]) && $event["DESCRIPTION"] <> '')
 				$iCalEvent["DESCRIPTION"] = $event["DESCRIPTION"];
 
-			if (isset($event["PROPERTY_REMIND_SETTINGS"]) && strlen($event["PROPERTY_REMIND_SETTINGS"]) > 0)
+			if (isset($event["PROPERTY_REMIND_SETTINGS"]) && $event["PROPERTY_REMIND_SETTINGS"] <> '')
 			{
 				$arPeriodMapTmp = array("min" => "M", "hour" => "H", "day" => "D");
 				$ar = explode("_", $event["PROPERTY_REMIND_SETTINGS"]);
@@ -519,7 +522,7 @@ if (!class_exists("CDavGroupdavClientCalendar"))
 				}
 				else
 				{
-					$val .= ";UNTIL=".date("Ymd\\THis\\Z", $event['DATE_TO_TS_UTC'] + intVal(date("Z")));
+					$val .= ";UNTIL=".date("Ymd\\THis\\Z", $event['DATE_TO_TS_UTC'] + intval(date("Z")));
 				}
 
 				$iCalEvent["RRULE"] = $val;
@@ -646,12 +649,12 @@ if (!class_exists("CDavGroupdavClientCalendar"))
 					$arErrors = $client->GetErrors();
 					foreach ($arErrors as $arError)
 					{
-						if (strlen($t) > 0)
+						if ($t <> '')
 							$t .= ', ';
 						$t .= '['.$arError[0].'] '.$arError[1];
 					}
 
-					CDavConnection::SetLastResult($arConnection["ID"], ((strlen($t) > 0) ? $t : "[404] Not Found"));
+					CDavConnection::SetLastResult($arConnection["ID"], (($t <> '') ? $t : "[404] Not Found"));
 					if (DAV_CALDAV_DEBUG)
 						CDav::WriteToLog("ERROR: ".$t, "SYNCC");
 					continue;
@@ -691,7 +694,7 @@ if (!class_exists("CDavGroupdavClientCalendar"))
 						$arUserCalendarItems = array();
 						foreach ($arCalendarItemsList as $value)
 						{
-							if (strpos($value["getcontenttype"], "text/calendar") !== false
+							if (mb_strpos($value["getcontenttype"], "text/calendar") !== false
 								&& isset($value["getetag"]))
 							{
 								$arUserCalendarItems[] = array(
@@ -934,6 +937,55 @@ if (!class_exists("CDavGroupdavClientCalendar"))
 				$client->setGoogleCalendarOAuth($oauth['id']);
 
 			return $client->CheckWebdavServer($path);
+		}
+
+		public static function CheckCaldavServer($url, $host, $userName, $userPassword)
+		{
+			$options = [];
+			if (CDav::UseProxy())
+			{
+				$arProxy = CDav::GetProxySettings();
+				$options = [
+					"proxyHost" => $arProxy["PROXY_SCHEME"],
+					"proxyPort" => $arProxy["PROXY_PORT"],
+					"proxyUser" => $arProxy["PROXY_USERNAME"],
+					"proxyPassword" => $arProxy["PROXY_PASSWORD"],
+				];
+			}
+
+			$client = new HttpClient($options);
+			$client->setPrivateIp(true);
+			$client->setHeader("User-Agent", "Bitrix CalDAV/CardDAV/GroupDAV client");
+			$client->setHeader("Connection", "Keep-Alive");
+			$client->setHeader("Host", $host);
+
+			for ($i = 0; $i < 3; $i++)
+			{
+				$client->query(HttpClient::HTTP_OPTIONS, $url);
+
+				if ($client->getStatus() == 401)
+				{
+					$client->setHeader('Authorization', 'Basic ' . base64_encode($userName.":".$userPassword));
+					continue;
+				}
+
+				break;
+			}
+
+			$headers = $client->getHeaders();
+			if (!empty($headers['dav']))
+			{
+				$davPart = explode(",", $headers['dav']);
+				foreach ($davPart as $part)
+				{
+					if (trim($part)."!" == "1!")
+					{
+						return true;
+					}
+				}
+			}
+
+			return false;
 		}
 
 		public function GetRequestEventPath($calendarXmlId = '', $itemXmlId = '')

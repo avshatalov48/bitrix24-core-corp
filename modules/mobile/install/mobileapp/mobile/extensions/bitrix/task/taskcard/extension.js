@@ -292,30 +292,36 @@ include('InAppNotifier');
 
 		onPullComment(data)
 		{
-			console.log('tasks.view.native::onPullComment');
+			console.log('tasks.view.native::onPullComment', data);
 
 			const [entityType, entityId] = data.entityXmlId.split('_');
-			const returnConditions = {
-				wrongEntityType: entityType !== 'TASK',
-				wrongEntityId: entityId !== this.task.id,
-				myComment: Number(data.ownerId) === Number(this.currentUser.id),
-			};
-			let shouldReturn = false;
-
-			Object.keys(returnConditions).forEach((condition) => {
-				if (!shouldReturn && returnConditions[condition])
-				{
-					console.log(`tasks.view.native::onPullComment.${condition}`);
-					shouldReturn = true;
-				}
-			});
-
-			if (shouldReturn)
+			if (
+				entityType !== 'TASK'
+				|| entityId !== this.task.id
+				|| Number(data.ownerId) === Number(this.currentUser.id)
+			)
 			{
+				console.log('tasks.view.native::onPullComment -> return');
 				return;
 			}
 
-			this.updateTask({newCommentsCount: this.task.newCommentsCount + 1});
+			this.rest.call('get', {
+				taskId: entityId,
+				select: TaskCard.selectFields,
+				params: {
+					GET_TASK_LIMIT_EXCEEDED: true,
+				},
+			}).then(
+				(response) => {
+					const {task} = response.result;
+
+					this.task.setData(task);
+					this.taskLimitExceeded = task.taskLimitExceeded;
+
+					this.updateTask();
+				},
+				response => console.log('tasks.view.native::onPullUpdate.get.error', response)
+			);
 		}
 
 		onPullUpdate(data)
@@ -323,8 +329,9 @@ include('InAppNotifier');
 			console.log('tasks.view.native::onPullUpdate', data);
 			const taskId = data.TASK_ID.toString();
 
-			if (taskId !== this.task.id)
+			if (taskId !== this.task.id || data.params.updateCommentExists !== false)
 			{
+				console.log('tasks.view.native::onPullUpdate -> return');
 				return;
 			}
 

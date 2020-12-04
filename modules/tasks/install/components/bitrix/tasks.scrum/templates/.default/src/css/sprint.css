@@ -43,7 +43,7 @@
 	-webkit-box-align: center;
 	-ms-flex-align: center;
 	align-items: center;
-	padding: 4px 0;
+	padding: 8px 0;
 }
 
 .tasks-scrum-sprint-header-active { background-color: #eaf5c5; }
@@ -56,7 +56,7 @@
 
 .tasks-scrum-sprint-header-name {
 	display: block;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	font-size: 18px;
 	color: #333;
 	letter-spacing: 0.4px;
@@ -137,10 +137,14 @@ input.tasks-scrum-sprint-header-name { border-bottom: 1px solid rgba(51, 51, 51,
 }
 
 .tasks-scrum-sprint-header-stats-kanban {
-	color: #fff;
+	color: #545c6a;
 	text-decoration: none;
 	font-size: 13px;
 	font-weight: bold;
+}
+
+.bitrix24-light-theme .tasks-scrum-sprint-header-stats-kanban {
+	color: #fff;
 }
 
 .tasks-scrum-sprint-date {
@@ -180,13 +184,12 @@ input.tasks-scrum-sprint-header-name { border-bottom: 1px solid rgba(51, 51, 51,
 	--ui-btn-border-color-hover: transparent;
 }
 
-.tasks-scrum-sprint-header-events {
-	display: -webkit-box;
-	display: -ms-flexbox;
+.tasks-scrum-sprint-sub-header {
 	display: flex;
-	padding: 10px 33px 9px 20px;
+	padding: 10px 10px 9px 20px;
 	font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: #2066b0;
+	border-bottom: 1px solid #dce2e6;
 }
 
 .tasks-scrum-sprint-story-point-title {
@@ -240,16 +243,16 @@ input.tasks-scrum-sprint-header-name { border-bottom: 1px solid rgba(51, 51, 51,
 }
 
 .tasks-scrum-sprint-actions {
+	justify-content: flex-end;
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
-	padding: 10px 0 0 15px;
+	padding: 10px 11px 0 15px;
 }
 
 .tasks-scrum-sprint-action { padding: 0 15px 7px 0; }
 
 .tasks-scrum-sprint-items {
-	border-top: 1px solid #dce2e6;
 	-webkit-box-flex: 1;
 	-ms-flex: 1;
 	flex: 1;
@@ -264,6 +267,10 @@ input.tasks-scrum-sprint-header-name { border-bottom: 1px solid rgba(51, 51, 51,
 	-ms-flex-pack: start;
 	justify-content: flex-start;
 	padding: 0 10px 10px 10px;
+}
+
+.tasks-scrum-sprint-items.tasks-scrum-sprint-items-group-mode {
+	padding: 0 10px 10px 26px;
 }
 
 .tasks-scrum-sprint-content {

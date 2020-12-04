@@ -31,7 +31,7 @@ class CrmKanbanFilterComponent extends \CBitrixComponent
 		if($searchRestriction->isExceeded($entityTypeID))
 		{
 			$filterParams['LIMITS'] = $searchRestriction->prepareStubInfo(
-				['LIMITS' => $entityTypeID]
+				['ENTITY_TYPE_ID' => $entityTypeID]
 			);
 		}
 

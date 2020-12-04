@@ -11,6 +11,7 @@ use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Result;
 use Bitrix\Tasks\Comments\Task as TaskComments;
 use Bitrix\Tasks\Helper\Filter;
+use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Task\CheckListTable;
 use Bitrix\Tasks\Internals\Task\CheckListTreeTable as CheckListTreeTable;
 use Bitrix\Tasks\Scrum\Internal\ItemTable;
@@ -49,7 +50,7 @@ class TaskService implements Errorable
 		$this->errorCollection = new ErrorCollection;
 	}
 
-	public function createTask(array $taskFields, ItemTable $taskItem): int
+	public function createTask(array $taskFields): int
 	{
 		try
 		{
@@ -62,18 +63,6 @@ class TaskService implements Errorable
 			if ($taskId > 0)
 			{
 				$this->addTags($taskId, $tags);
-
-				$taskItem->setSourceId($taskId);
-				$result = ItemTable::add($taskItem->getFieldsToCreateTaskItem());
-
-				if ($result->isSuccess())
-				{
-					$taskItem->setId($result->getId());
-				}
-				else
-				{
-					$this->setErrors($result, self::ERROR_COULD_NOT_ADD_ITEM);
-				}
 			}
 			else
 			{
@@ -350,7 +339,7 @@ class TaskService implements Errorable
 			$result = $query->exec();
 			while ($row = $result->fetch())
 			{
-				$checkList[$row['IS_COMPLETE'] == 'Y' ? 'complete' : 'all'] = $row['CNT'];
+				$checkList[$row['IS_COMPLETE'] == 'Y' ? 'complete' : 'progress'] = $row['CNT'];
 			}
 
 			return $checkList;
@@ -367,7 +356,7 @@ class TaskService implements Errorable
 	{
 		try
 		{
-			$newComments = TaskComments::getNewCommentsCountForTasks([$taskId], $this->executiveUserId);
+			$newComments = Counter::getInstance((int) $this->executiveUserId)->getCommentsCount([$taskId]);
 			return $newComments[$taskId];
 		}
 		catch (\Exception $exception)

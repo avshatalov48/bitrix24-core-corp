@@ -6,10 +6,6 @@ $MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_OPEN_LINE"] = "Открытая 
 $MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CREATE_OPEN_LINE"] = "Создать открытую линию";
 $MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_NO_OPEN_LINE"] = "У вас нет ни одной открытой линии, у которой вы можете настроить каналы коммуникаций. Пожалуйста, создайте новую открытую линию.";
 $MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_NO_OPEN_LINE_AND_NOT_ADD_OPEN_LINE"] = "У вас нет ни одной открытой линии, у которой вы можете настроить каналы коммуникаций, и у вас нет прав на создание новой открытой линии.<br>Обратитесь к администратору портала.";
-$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_POPUP_LIMITED_TITLE"] = "Расширенные открытые линии";
-$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_POPUP_LIMITED_TEXT"] = "На вашем тарифном плане есть ограничение по количеству Открытых линий. Чтобы добавить еще одну линию (например, для создания нескольких уровней поддержки клиентов), перейдите на другой тарифный план.
-<br><br>
-В верхнем тарифе \"Компания\" число активных открытых линий не ограничено.";
 $MESS["IIMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_ERROR_ACTION"] = "Произошла ошибка. Действие отменено.";
 $MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CLOSE"] = "Закрыть";
 $MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_LOGO"] = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 168 32">

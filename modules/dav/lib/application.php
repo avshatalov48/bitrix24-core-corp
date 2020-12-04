@@ -109,20 +109,20 @@ class Application extends \Bitrix\Main\Authentication\Application
 
 		$userAgentParam = $server->get('HTTP_USER_AGENT');
 		$userAgentString = $userAgentParam ?: '';
-		if (strpos($userAgentString, "Microsoft Office") !== false &&
-			strpos($userAgentString, "Outlook") === false
+		if (mb_strpos($userAgentString, "Microsoft Office") !== false &&
+			mb_strpos($userAgentString, "Outlook") === false
 			||
-			strpos($userAgentString, "MiniRedir") !== false
+			mb_strpos($userAgentString, "MiniRedir") !== false
 			||
-			strpos($userAgentString, "WebDAVFS") !== false
+			mb_strpos($userAgentString, "WebDAVFS") !== false
 			||
-			strpos($userAgentString, "davfs2") !== false
+			mb_strpos($userAgentString, "davfs2") !== false
 			||
-			strpos($userAgentString, "Sardine") !== false
+			mb_strpos($userAgentString, "Sardine") !== false
 			||
-			strpos($userAgentString, "gvfs") !== false
+			mb_strpos($userAgentString, "gvfs") !== false
 			||
-			strpos($userAgentString, "LibreOffice") !== false
+			mb_strpos($userAgentString, "LibreOffice") !== false
 		)
 		{
 			return true;
@@ -147,7 +147,7 @@ class Application extends \Bitrix\Main\Authentication\Application
 		if ($appId)
 		{
 			$typeTitle = Loc::getMessage('DAV_APP_TYPE_' . $appId);
-			if (strlen($typeTitle) > 0)
+			if ($typeTitle <> '')
 			{
 				$message = Loc::getMessage('DAV_APP_SYSCOMMENT_TYPE', array(
 					'#TYPE#' => $typeTitle,

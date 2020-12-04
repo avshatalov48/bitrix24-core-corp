@@ -29,6 +29,7 @@ use \Bitrix\Tasks\Access\ActionDictionary;
 
 use \Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Scrum\Internal\ItemTable;
+use Bitrix\Tasks\Scrum\Service\BacklogService;
 use Bitrix\Tasks\Scrum\Service\ItemService;
 
 class TasksKanbanComponent extends \CBitrixComponent
@@ -137,6 +138,15 @@ class TasksKanbanComponent extends \CBitrixComponent
 				$this->addError('TASK_LIST_ACCESS_TO_GROUP_DENIED');
 				$init = false;
 			}
+		}
+
+		if (
+			Loader::includeModule('socialnetwork')
+			&& isset($this->arParams['GROUP_ID'])
+			&& $this->arParams['GROUP_ID']
+		)
+		{
+			SocialNetwork::setLogDestinationLast(['SG' => [$this->arParams['GROUP_ID']]]);
 		}
 
 		return $init;
@@ -2311,6 +2321,8 @@ class TasksKanbanComponent extends \CBitrixComponent
 
 			$params = $this->arParams;
 
+			$scrumProject = false;
+
 			$responsibleId = $params['USER_ID'];
 			if (StagesTable::getWorkMode() == StagesTable::WORK_MODE_ACTIVE_SPRINT &&
 				Loader::includeModule('socialnetwork'))
@@ -2320,6 +2332,8 @@ class TasksKanbanComponent extends \CBitrixComponent
 				{
 					$responsibleId =$group->getScrumMaster();
 				}
+
+				$scrumProject = true;
 			}
 
 			$stages = StagesTable::getStages($params['STAGES_ENTITY_ID']);
@@ -2386,10 +2400,9 @@ class TasksKanbanComponent extends \CBitrixComponent
 				}
 				\Bitrix\Tasks\Integration\Bizproc\Listener::onTaskAdd($newId, $task->getData());
 
-
-				if (StagesTable::getWorkMode() == StagesTable::WORK_MODE_ACTIVE_SPRINT)
+				if ($scrumProject)
 				{
-					$this->createScrumItem($params['SPRINT_ID'], $newId, $fields);
+					$this->updateScrumItem($params['SPRINT_ID'], $newId, $fields);
 				}
 
 				// output
@@ -2407,20 +2420,26 @@ class TasksKanbanComponent extends \CBitrixComponent
 		return array();
 	}
 
-	private function createScrumItem(int $sprintId, int $taskId, array $fields): void
+	private function updateScrumItem(int $sprintId, int $taskId, array $fields): void
 	{
 		try
 		{
-			$item = ItemTable::createItemObject();
-			$item->setSourceId($taskId);
-			$item->setEntityId($sprintId);
-			$item->setSort(0);
-			$item->setCreatedBy($fields['CREATED_BY']);
-			$item->setItemType(ItemTable::TASK_TYPE);
-			$result = ItemTable::add($item->getFieldsToCreateTaskItem());
-			if (!$result->isSuccess())
+			$itemService = new ItemService();
+
+			$taskItem = ItemTable::createItemObject();
+			$taskItem->setSourceId($taskId);
+			$taskItem->setEntityId($sprintId);
+			$taskItem->setSort(0);
+			$taskItem->setCreatedBy($fields['CREATED_BY']);
+			$taskItem->setItemType(ItemTable::TASK_TYPE);
+
+			$createdItem = $itemService->getItemBySourceId($taskId);
+			$taskItem->setId($createdItem->getId());
+
+			$itemService->changeItem($taskItem);
+			if ($itemService->getErrors())
 			{
-				$this->addError($result->getErrorMessages()[0]);
+				$this->addError($itemService->getErrors()[0]);
 			}
 		}
 		catch(Exception $exception)

@@ -1534,7 +1534,7 @@ if ($bTaxMode && !$arParams["RESTRICTED_MODE"])
 			'CITY_OUT_LOCATION' => 'Y',
 			'LOCATION_VALUE' => $locValue,
 			'ORDER_PROPS_ID' => $arInvoiceProperties['FIELDS']['ID'],
-			'ONCITYCHANGE' => 'BX.onCustomEvent(\'CrmProductRowSetLocation\', [\'LOC_CITY\']);',
+			'ONCITYCHANGE' => 'CrmProductRowSetLocation',
 			'SHOW_QUICK_CHOOSE' => 'N'/*,
 			'SIZE1' => $arProperties['SIZE1']*/
 		),
@@ -1596,22 +1596,38 @@ if ($arResult["IS_EDIT_PERMITTED"])
 else
 	$fieldType = 'label';
 
+
+$value = "";
+if (isset($arResult['ELEMENT']['~COMMENTS']))
+{
+	$value = ($fieldType == "textarea")
+		? htmlspecialcharsback($arResult['ELEMENT']['~COMMENTS'])
+		: htmlspecialcharsbx($arResult['ELEMENT']['~COMMENTS'], ENT_COMPAT, false);
+}
+
 $arResult['FIELDS'][] = array(
 	'id' => 'COMMENTS',
 	'name' => GetMessage('CRM_FIELD_COMMENTS'),
 	'required' => false,
 	'params' => array(),
 	'type' => $fieldType,
-	'value' => htmlspecialcharsback($arResult['ELEMENT']['~COMMENTS'])
+	'value' => $value
 );
 
+$value = "";
+if (isset($arResult['ELEMENT']['~USER_DESCRIPTION']))
+{
+	$value = ($fieldType == "textarea")
+		? htmlspecialcharsback($arResult['ELEMENT']['~USER_DESCRIPTION'])
+		: htmlspecialcharsbx($arResult['ELEMENT']['~USER_DESCRIPTION'], ENT_COMPAT, false);
+}
 $arResult['FIELDS'][] = array(
 	'id' => 'USER_DESCRIPTION',
 	'name' => GetMessage('CRM_FIELD_USER_DESCRIPTION'),
 	'required' => false,
 	'params' => array(),
 	'type' => $fieldType,
-	'value' => htmlspecialcharsback($arResult['ELEMENT']['~USER_DESCRIPTION'])
+	'value' => $value
 );
 
 // Product rows

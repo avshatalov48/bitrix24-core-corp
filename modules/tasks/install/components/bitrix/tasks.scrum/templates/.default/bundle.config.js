@@ -1,5 +1,5 @@
 module.exports = {
-	input: './src/scrum.js',
+	input: './src/entry.js',
 	output: {
 		css: './style.css',
 		js: './script.js',

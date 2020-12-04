@@ -252,8 +252,8 @@ class CDavAddressbookHandler
 				{
 					$attribute = trim($attribute);
 					list($key, $value) = explode('=', $attribute);
-					if (strtolower($key) == 'charset')
-						$charset = strtolower($value);
+					if (mb_strtolower($key) == 'charset')
+						$charset = mb_strtolower($value);
 				}
 			}
 		}

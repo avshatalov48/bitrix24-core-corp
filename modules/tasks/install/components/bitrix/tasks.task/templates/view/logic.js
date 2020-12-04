@@ -179,14 +179,15 @@ BX.namespace('Tasks.Component');
 		{
 			if (this.parameters.componentData.EVENT_TYPE == 'ADD')
 			{
-				window.top.BX.UI.Notification.Center.notify({
+				var top = window.top;
+				top.BX.UI.Notification.Center.notify({
 					content: BX.message('TASKS_NOTIFY_TASK_CREATED'),
 					actions: [{
 						title: BX.message('TASKS_NOTIFY_TASK_DO_VIEW'),
 						events: {
 							click: function(event, balloon, action) {
 								balloon.close();
-								window.top.BX.SidePanel.Instance.open(self.parameters.eventTaskUgly.url);
+								top.BX.SidePanel.Instance.open(self.parameters.eventTaskUgly.url);
 							}
 						}
 					}]

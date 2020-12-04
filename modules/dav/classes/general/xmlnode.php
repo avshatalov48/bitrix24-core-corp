@@ -73,7 +73,7 @@ class CDavXmlNode
 			$searchTagname = $matches1[2];
 		}
 
-		if ($matches[2] == '*' || strtolower($searchTagname) == strtolower($this->tagname) && (empty($searchXmlns) || strtolower($searchXmlns) == strtolower($this->xmlns)))
+		if ($matches[2] == '*' || mb_strtolower($searchTagname) == mb_strtolower($this->tagname) && (empty($searchXmlns) || mb_strtolower($searchXmlns) == mb_strtolower($this->xmlns)))
 		{
 			if ($matches[3] == '')
 			{

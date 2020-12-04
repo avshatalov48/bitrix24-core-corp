@@ -54,8 +54,8 @@ class UserOption
 
 		$tableName = UserOptionTable::getTableName();
 
-		return "EXISTS (
-			SELECT 'x' FROM {$tableName} {$aliasPrefix}TUO
+		return "IN (
+			SELECT {$aliasPrefix}TUO.TASK_ID FROM {$tableName} {$aliasPrefix}TUO
 			WHERE
 				{$aliasPrefix}TUO.OPTION_CODE = {$option}
 				AND {$aliasPrefix}TUO.TASK_ID = {$aliasPrefix}T.ID
@@ -116,6 +116,8 @@ class UserOption
 	 */
 	public static function add(int $taskId, int $userId, int $option): Result
 	{
+		static::onBeforeOptionChanged($taskId, $userId, $option);
+
 		$addResult = new Result();
 
 		if ($taskId <= 0 || $userId <= 0 || !static::isOption($option))
@@ -166,6 +168,8 @@ class UserOption
 	 */
 	public static function delete(int $taskId, int $userId, int $option): Result
 	{
+		static::onBeforeOptionChanged($taskId, $userId, $option);
+
 		$deleteResult = new Result();
 
 		if ($taskId <= 0 || $userId <= 0 || !static::isOption($option))
@@ -264,6 +268,19 @@ class UserOption
 	 * @param int $taskId
 	 * @param int $userId
 	 * @param int $option
+	 */
+	public static function onBeforeOptionChanged(int $taskId, int $userId, int $option): void
+	{
+		if ($option === Option::MUTED)
+		{
+			Counter\CounterService::getInstance()->collectData($taskId);
+		}
+	}
+
+	/**
+	 * @param int $taskId
+	 * @param int $userId
+	 * @param int $option
 	 * @param bool $added
 	 * @throws Main\ArgumentException
 	 * @throws Main\Db\SqlQueryException
@@ -280,8 +297,14 @@ class UserOption
 
 		if ($option === Option::MUTED)
 		{
-			Counter::onAfterTaskMuteChange($taskId, $userId, $added);
-			Counter::sendPushCounters([$userId]);
+			Counter\CounterService::addEvent(
+				Counter\CounterDictionary::EVENT_AFTER_TASK_MUTE,
+				[
+					'TASK_ID' => $taskId,
+					'USER_ID' => $userId,
+					'ADDED' => $added
+				]
+			);
 		}
 
 		static::sendPushOptionChanged($taskId, $userId, $option, $added);

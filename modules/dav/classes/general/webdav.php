@@ -59,7 +59,7 @@ abstract class CDavWebDav
 		$request = $this->request;
 		$response = $this->response;
 
-		if (strstr($request->GetParameter("REQUEST_URI"), '#'))
+		if(mb_strstr($request->GetParameter("REQUEST_URI"), '#'))
 		{
 			$response->SetHttpStatus("400 Bad Request");
 			$response->Render();
@@ -77,7 +77,7 @@ abstract class CDavWebDav
 			if(($this instanceof CDavWebDavServer) && CDav::isDigestEnabled() && COption::GetOptionString("main", "use_digest_auth", "N") == "Y")
 			{
 				// On first try we found that we don't know user digest hash. Let ask only Basic auth first.
-				if($_SESSION["BX_HTTP_DIGEST_ABSENT"] !== true)
+				if(\Bitrix\Main\Application::getInstance()->getKernelSession()["BX_HTTP_DIGEST_ABSENT"] !== true)
 					$response->AddHeader('WWW-Authenticate: Digest realm="'.$this->davPoweredBy.'", nonce="'.uniqid().'"');
 			}
 			$response->Render();
@@ -88,7 +88,7 @@ abstract class CDavWebDav
 		if (!$this->CheckIfHeaderConditions())
 			return;
 
-		$method = strtolower($request->GetParameter("REQUEST_METHOD"));
+		$method = mb_strtolower($request->GetParameter("REQUEST_METHOD"));
 		$wrapper = $method."Wrapper";
 
 		if ($method == "head" && !method_exists($this, "head"))
@@ -127,9 +127,9 @@ abstract class CDavWebDav
 
 		foreach (get_class_methods($this) as $method)
 		{
-			if (!strcasecmp("Wrapper", substr($method, -7)))
+			if (!strcasecmp("Wrapper", mb_substr($method, -7)))
 			{
-				$method = strtoupper(substr($method, 0, -7));
+				$method = mb_strtoupper(mb_substr($method, 0, -7));
 				if (method_exists($this, $method))
 					$arAllowableMethods[$method] = $method;
 			}
@@ -164,10 +164,10 @@ abstract class CDavWebDav
 			if (is_null($authorization))
 				$authorization = $request->GetParameter("REDIRECT_REMOTE_USER");
 
-			if (is_null($phpAuthUser) && !is_null($authorization) && strpos($authorization, 'Basic ') === 0)
+			if (is_null($phpAuthUser) && !is_null($authorization) && mb_strpos($authorization, 'Basic ') === 0)
 			{
-				$hash = base64_decode(substr($authorization, 6));
-				if (strpos($hash, ':') !== false)
+				$hash = base64_decode(mb_substr($authorization, 6));
+				if (mb_strpos($hash, ':') !== false)
 					list($phpAuthUser, $phpAuthPw) = explode(':', $hash, 2);
 			}
 
@@ -188,7 +188,7 @@ abstract class CDavWebDav
 		while (in_array($string{$pos}, array(' ', '\n', '\r', '\t')))
 			++$pos;
 
-		if (strlen($string) <= $pos)
+		if (mb_strlen($string) <= $pos)
 			return false;
 
 		$c = $string{$pos++};
@@ -196,8 +196,8 @@ abstract class CDavWebDav
 		switch ($c)
 		{
 			case "<":
-				$pos2 = strpos($string, ">", $pos);
-				$uri = substr($string, $pos, $pos2 - $pos);
+				$pos2 = mb_strpos($string, ">", $pos);
+				$uri = mb_substr($string, $pos, $pos2 - $pos);
 				$pos = $pos2 + 1;
 				return array("URI", $uri);
 
@@ -211,8 +211,8 @@ abstract class CDavWebDav
 				{
 					$type = "ETAG_STRONG";
 				}
-				$pos2 = strpos($string, "]", $pos);
-				$etag = substr($string, $pos + 1, $pos2 - $pos - 2);
+				$pos2 = mb_strpos($string, "]", $pos);
+				$etag = mb_substr($string, $pos + 1, $pos2 - $pos - 2);
 				$pos = $pos2 + 1;
 				return array($type, $etag);
 
@@ -228,7 +228,7 @@ abstract class CDavWebDav
 	private function ParceIfHeaderConditions($str)
 	{
 		$pos = 0;
-		$len = strlen($str);
+		$len = mb_strlen($str);
 		$arUri = array();
 
 		while ($pos < $len)
@@ -344,7 +344,7 @@ abstract class CDavWebDav
 				foreach ($arConditions as $condition)
 				{
 					// RFC2518 6.3 - 6.4
-					if (!strncmp($condition, "<opaquelocktoken:", strlen("<opaquelocktoken")))
+					if (!strncmp($condition, "<opaquelocktoken:", mb_strlen("<opaquelocktoken")))
 					{
 						if (!preg_match('/^<opaquelocktoken:[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}>$/', $condition))
 						{
@@ -499,7 +499,7 @@ abstract class CDavWebDav
 		elseif (is_string($retVal))
 		{
 			$message = "";
-			if (substr($retVal, 0, 3) == '501')
+			if (mb_substr($retVal, 0, 3) == '501')
 				$message .= "The requested feature is not supported by this server.\n";
 			$response->GenerateError($retVal, $message);
 
@@ -782,7 +782,7 @@ abstract class CDavWebDav
 								while ($size && !feof($arResult['stream']))
 								{
 									$buffer = fread($arResult['stream'], 4096);
-									$size -= strlen($buffer);
+									$size -= mb_strlen($buffer);
 									$response->AddLine($buffer);
 								}
 							}
@@ -835,7 +835,7 @@ abstract class CDavWebDav
 							while ($size && !feof($arResult['stream']))
 							{
 								$buffer = fread($arResult['stream'], 4096);
-								$size -= strlen($buffer);
+								$size -= mb_strlen($buffer);
 								$response->AddLine($buffer);
 							}
 						}
@@ -861,7 +861,7 @@ abstract class CDavWebDav
 				}
 				else
 				{
-					$response->AddHeader("Content-length: ".strlen($arResult['data']));
+					$response->AddHeader("Content-length: ".mb_strlen($arResult['data']));
 					$response->AddLine($arResult['data']);
 				}
 			}
@@ -937,7 +937,7 @@ abstract class CDavWebDav
 			$lock = $this->CheckLock($path);
 			if (is_array($lock) && count($lock))
 			{
-				if ($this->request->GetParameter("HTTP_IF") === null || !strstr($this->request->GetParameter("HTTP_IF"), $lock["ID"]))
+				if ($this->request->GetParameter("HTTP_IF") === null || !mb_strstr($this->request->GetParameter("HTTP_IF"), $lock["ID"]))
 				{
 					if (!$exclusiveOnly || ($lock["LOCK_SCOPE"] !== "shared"))
 						return false;
@@ -982,7 +982,7 @@ abstract class CDavWebDav
 			}
 		}
 
-		if (strlen($errorMessage) > 0)
+		if ($errorMessage <> '')
 		{
 			$response->GenerateError("501 not implemented", $errorMessage);
 			return;
@@ -1069,7 +1069,7 @@ abstract class CDavWebDav
 		{
 			if ($depth != "infinity")
 			{
-				if (strpos(strtolower($request->GetParameter('HTTP_USER_AGENT')), 'webdrive') !== false)
+				if (mb_strpos(mb_strtolower($request->GetParameter('HTTP_USER_AGENT')), 'webdrive') !== false)
 				{
 				}
 				else
@@ -1126,8 +1126,8 @@ abstract class CDavWebDav
 		if ($httpHost == $httpHeaderHost /*&& !strncmp($request->GetParameter("SCRIPT_NAME"), $path, strlen($request->GetParameter("SCRIPT_NAME")))*/)
 		{
 			$dest = $path;
-			if (!strncmp($request->GetParameter("SCRIPT_NAME"), $path, strlen($request->GetParameter("SCRIPT_NAME"))))
-				$dest = substr($path, strlen($request->GetParameter("SCRIPT_NAME")));
+			if (!strncmp($request->GetParameter("SCRIPT_NAME"), $path, mb_strlen($request->GetParameter("SCRIPT_NAME"))))
+				$dest = mb_substr($path, mb_strlen($request->GetParameter("SCRIPT_NAME")));
 			if (!$this->CheckLockStatus($dest))
 			{
 				$response->SetHttpStatus("423 Locked");
@@ -1179,7 +1179,7 @@ abstract class CDavWebDav
 				return;
 			}
 
-			$locktoken = substr($httpIf, 2, -2);
+			$locktoken = mb_substr($httpIf, 2, -2);
 			$updateLock = true;
 			$owner = "id:".$request->GetPrincipal()->Id();
 			$scope = "exclusive";
@@ -1230,7 +1230,7 @@ abstract class CDavWebDav
 
 		$response->SetHttpStatus($httpStat);
 
-		if (substr($httpStat, 0, 1) == 2)
+		if (mb_substr($httpStat, 0, 1) == 2)
 		{
 			// 2xx states are ok
 			if (!is_null($httpTimeout))
@@ -1277,7 +1277,7 @@ abstract class CDavWebDav
 		$response = $this->response;
 
 		$httpLocktoken = $request->GetParameter('HTTP_LOCK_TOKEN');
-		$httpLocktoken = substr(trim($httpLocktoken), 1, -1);
+		$httpLocktoken = mb_substr(trim($httpLocktoken), 1, -1);
 
 		$stat = $this->UNLOCK($httpLocktoken);
 
@@ -1306,7 +1306,7 @@ abstract class CDavWebDav
 				$content .= "<D:".$e."/>\n";
 			$content .=  "</D:error>\n";
 
-			$size = strlen($content);
+			$size = mb_strlen($content);
 			$response->AddLine($content);
 		}
 

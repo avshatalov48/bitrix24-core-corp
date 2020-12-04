@@ -83,7 +83,7 @@ class Client
 
 		$request["BX_TYPE"] = static::getPortalType();
 		$request["BX_LICENCE"] = static::getLicenseCode();
-		$request["SERVER_NAME"] = (\CMain::isHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0) ? SITE_SERVER_NAME : Option::get("main", "server_name"));
+		$request["SERVER_NAME"] = static::getServerName();
 		$request["BX_HASH"] = static::signRequest($request);
 
 		$queryResult = $httpClient->query(HttpClient::HTTP_POST, $url, $request);
@@ -163,6 +163,18 @@ class Client
 		{
 			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/update_client.php");
 			return md5("BITRIX".\CUpdateClient::GetLicenseKey()."LICENCE");
+		}
+	}
+
+	public static function getServerName()
+	{
+		if(defined('BX24_HOST_NAME'))
+		{
+			return "https://" . BX24_HOST_NAME;
+		}
+		else
+		{
+			return (\CMain::isHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') ? SITE_SERVER_NAME : Option::get("main", "server_name"));
 		}
 	}
 

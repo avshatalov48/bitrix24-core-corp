@@ -785,7 +785,7 @@ class StagesTable extends Entity\DataManager
 	 * @param boolean $refreshGroup Refresh sorting in group.
 	 * @return void
 	 */
-	public static function pinInStage($taskId, $users = array(), $refreshGroup = false)
+	public static function pinInStage($taskId, $users = [], $refreshGroup = false)
 	{
 		if (!is_array($users))
 		{
@@ -795,16 +795,7 @@ class StagesTable extends Entity\DataManager
 
 		// get additional data
 		$currentUsers = array();
-		$res = \CTasks::getList(array(
-				//
-			), array(
-				'ID' => $taskId,
-				'CHECK_PERMISSIONS' => 'N'
-			), array(
-				'ID', 'GROUP_ID', 'STAGE_ID',
-				'RESPONSIBLE_ID', 'CREATED_BY'
-			)
-		);
+		$res = Task::getById($taskId);
 		if (($task = $res->fetch()))
 		{
 			$currentUsers[] = $task['RESPONSIBLE_ID'];
@@ -989,13 +980,13 @@ class StagesTable extends Entity\DataManager
 				$res = \CTasks::getList(
 					$sort,
 					$filter,
-					array('ID'),
-					array(
-						'NAV_PARAMS' => array(
+					['ID'],
+					[
+						'NAV_PARAMS' => [
 							'nTopCount' => 1
-						),
+						],
 						'USER_ID' => $userId
-					)
+					]
 				);
 				if ($row = $res->fetch())
 				{

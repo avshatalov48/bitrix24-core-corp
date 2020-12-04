@@ -70,6 +70,12 @@ class SalesTunnels extends CBitrixComponent
 					}
 
 					$semanticId = $stage['SEMANTICS'] ?? PhaseSemantics::PROCESS;
+					$semanticId = in_array((string)$semanticId, [
+						PhaseSemantics::PROCESS,
+						PhaseSemantics::SUCCESS,
+						PhaseSemantics::FAILURE
+					], true) ? $semanticId : PhaseSemantics::PROCESS;
+
 					$reducedStages[$semanticId][] = $stage;
 				}
 

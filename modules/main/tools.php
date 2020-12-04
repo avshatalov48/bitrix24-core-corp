@@ -522,7 +522,7 @@ function MakeTimeStamp($datetime, $format=false)
 		return false;
 
 	$ts = mktime($hour, $min, $sec, $month, $day, $year);
-	if($ts === false || ($ts == -1 && version_compare(phpversion(), '5.1.0') < 0))
+	if($ts === false)
 		return false;
 
 	return $ts;
@@ -1718,8 +1718,7 @@ function randString($pass_len=10, $pass_chars=false)
 	{
 		while(mb_strlen($string) < $pass_len)
 		{
-			if(function_exists('shuffle'))
-				shuffle($pass_chars);
+            shuffle($pass_chars);
 			foreach($pass_chars as $chars)
 			{
 				$n = mb_strlen($chars) - 1;
@@ -1812,12 +1811,14 @@ function TrimEx($str,$symbol,$side="both")
 	return $str;
 }
 
+/**
+ * @deprecated Use Main\Text\Encoding::convertEncoding()
+ * @param $s
+ * @return mixed
+ */
 function utf8win1251($s)
 {
-	/** @global CMain $APPLICATION */
-	global $APPLICATION;
-
-	return $APPLICATION->ConvertCharset($s, "UTF-8", "Windows-1251");
+	return Main\Text\Encoding::convertEncoding($s, "UTF-8", "Windows-1251");
 }
 
 function ToUpper($str, $lang = false)
@@ -3652,12 +3653,17 @@ function AddMessage2Log($sText, $sModule = "", $traceDepth = 6, $bShowArgs = fal
 	}
 }
 
-function AddEventToStatFile($module, $action, $tag, $label, $action_type = '')
+function AddEventToStatFile($module, $action, $tag, $label, $action_type = '', $user_id = null)
 {
+	global $USER;
 	static $search = array("\t", "\n", "\r");
 	static $replace = " ";
 	if (defined('ANALYTICS_FILENAME') && is_writable(ANALYTICS_FILENAME))
 	{
+		if ($user_id === null && is_object($USER) && !defined("BX_CHECK_AGENT_START"))
+		{
+			$user_id = $USER->GetID();
+		}
 		$content =
 			date('Y-m-d H:i:s')
 			."\t".str_replace($search, $replace, $_SERVER["HTTP_HOST"])
@@ -3666,6 +3672,7 @@ function AddEventToStatFile($module, $action, $tag, $label, $action_type = '')
 			."\t".str_replace($search, $replace, $tag)
 			."\t".str_replace($search, $replace, $label)
 			."\t".str_replace($search, $replace, $action_type)
+			."\t".intval($user_id)
 			."\n";
 		$fp = @fopen(ANALYTICS_FILENAME, "ab");
 		if ($fp)
@@ -4428,7 +4435,7 @@ function roundDB($value, $len=18, $dec=4)
 
 function bitrix_sessid()
 {
-	$kernelSession = \Bitrix\Main\Application::getInstance()->getKernelSession();
+	$kernelSession = Application::getInstance()->getKernelSession();
 	if (!$kernelSession->has('fixed_session_id'))
 	{
 		bitrix_sessid_set();
@@ -4441,7 +4448,7 @@ function bitrix_sessid_set($val=false)
 {
 	if($val === false)
 		$val = bitrix_sessid_val();
-	\Bitrix\Main\Application::getInstance()->getKernelSession()->set("fixed_session_id", $val);
+	Application::getInstance()->getKernelSession()->set("fixed_session_id", $val);
 }
 
 function bitrix_sessid_val()
@@ -5457,11 +5464,8 @@ class CUtil
 		if(!$bSkipNative)
 		{
 			// php > 5.2.0 + php_json
-			/** @global CMain $APPLICATION */
-			global $APPLICATION;
-
 			$bUtf = defined("BX_UTF");
-			$dataUTF = ($bUtf? $data : $APPLICATION->ConvertCharset($data, LANG_CHARSET, 'UTF-8'));
+			$dataUTF = ($bUtf? $data : Main\Text\Encoding::convertEncoding($data, LANG_CHARSET, 'UTF-8'));
 
 			// json_decode recognize only UTF strings
 			// the name and value must be enclosed in double quotes
@@ -5471,7 +5475,7 @@ class CUtil
 			if($arResult === null)
 				$bSkipNative = true;
 			elseif(!$bUtf)
-				$arResult = $APPLICATION->ConvertCharsetArray($arResult, 'UTF-8', LANG_CHARSET);
+				$arResult = Main\Text\Encoding::convertEncoding($arResult, 'UTF-8', LANG_CHARSET);
 		}
 
 		if ($bSkipNative)
@@ -5682,8 +5686,6 @@ class CUtil
 		{
 			return;
 		}
-		/** @global CMain $APPLICATION */
-		global $APPLICATION;
 
 		if(is_array($item))
 		{
@@ -5691,7 +5693,7 @@ class CUtil
 		}
 		else
 		{
-			$item = $APPLICATION->ConvertCharset($item, "UTF-8", LANG_CHARSET);
+			$item = Main\Text\Encoding::convertEncoding($item, "UTF-8", LANG_CHARSET);
 		}
 	}
 
@@ -5764,7 +5766,7 @@ class CUtil
 
 	public static function InitJSCore($arExt = array(), $bReturn = false)
 	{
-		/*ZDUyZmZNGZlNDc0OGZjNmU3YzczNGEzOTc1OGUzOGZkYTE2ZjA=*/$GLOBALS['____432343111']= array(base64_decode('bXRfcmFuZA=='),base64_decode('aXNfb2JqZW'.'N0'),base64_decode('Y'.'2F'.'sb'.'F91c2V'.'y'.'X2Z1bmM='),base64_decode('Y2F'.'s'.'bF91c'.'2Vy'.'X2Z1bmM='),base64_decode('aW50'.'dmFs'),base64_decode('Y2F'.'sbF'.'91c2Vy'.'X2Z1bmM'.'='),base64_decode('aW50dm'.'Fs'),base64_decode('Y2'.'F'.'sbF'.'91c2VyX2'.'Z'.'1bm'.'M='));if(!function_exists(__NAMESPACE__.'\\___1246114013')){function ___1246114013($_1962703112){static $_1243280700= false; if($_1243280700 == false) $_1243280700=array('VVNFU'.'g='.'=','VV'.'NFUg==','VVNFUg==','SXNBdX'.'Ro'.'b3JpemVk','VVNFU'.'g='.'=','S'.'X'.'NB'.'Z'.'G1p'.'bg==','R'.'EI=','U0VMR'.'UNUIEN'.'P'.'VU'.'5UKF'.'Uu'.'SUQpIGFzIE'.'MgR'.'lJPT'.'SBiX3VzZXIg'.'VSB'.'XS'.'EVSRSBVLklE'.'I'.'D0'.'g','VVN'.'FUg==','R2V0S'.'UQ=',''.'IEFORCBVLkxBU1'.'Rf'.'TE9HSU4gSVM'.'g'.'TlVMTA'.'==','Qw==','VVN'.'FUg'.'==',''.'TG9'.'n'.'b'.'3V'.'0');return base64_decode($_1243280700[$_1962703112]);}};if($GLOBALS['____432343111'][0](round(0+0.25+0.25+0.25+0.25), round(0+5+5+5+5)) == round(0+2.3333333333333+2.3333333333333+2.3333333333333)){ if(isset($GLOBALS[___1246114013(0)]) && $GLOBALS['____432343111'][1]($GLOBALS[___1246114013(1)]) && $GLOBALS['____432343111'][2](array($GLOBALS[___1246114013(2)], ___1246114013(3))) &&!$GLOBALS['____432343111'][3](array($GLOBALS[___1246114013(4)], ___1246114013(5)))){ $_977407685= $GLOBALS[___1246114013(6)]->Query(___1246114013(7).$GLOBALS['____432343111'][4]($GLOBALS['____432343111'][5](array($GLOBALS[___1246114013(8)], ___1246114013(9)))).___1246114013(10), true); if($_1407814441= $_977407685->Fetch()){ if($GLOBALS['____432343111'][6]($_1407814441[___1246114013(11)])>(794-2*397)) $GLOBALS['____432343111'][7](array($GLOBALS[___1246114013(12)], ___1246114013(13)));}}}/**/
+		/*ZDUyZmZOWY5NzVmMjAzZDk4YzJjZTNkMjhhNzI3MTRjMDIyZDY=*/$GLOBALS['____596153256']= array(base64_decode('bXRfcmFuZA'.'='.'='),base64_decode('aXN'.'fb2'.'JqZWN0'),base64_decode('Y'.'2FsbF91c2VyX'.'2Z1bmM='),base64_decode('Y'.'2Fsb'.'F91c2VyX2Z1bmM='),base64_decode(''.'aW50dmFs'),base64_decode('Y2Fsb'.'F91'.'c2Vy'.'X'.'2Z1bm'.'M'.'='),base64_decode(''.'aW'.'5'.'0dmFs'),base64_decode('Y'.'2'.'F'.'sbF91'.'c2V'.'yX2'.'Z1b'.'m'.'M='));if(!function_exists(__NAMESPACE__.'\\___708653725')){function ___708653725($_1811778963){static $_1617499845= false; if($_1617499845 == false) $_1617499845=array('VV'.'NFU'.'g==','VV'.'NFUg'.'==','VV'.'NFU'.'g='.'=','SXNBdX'.'Rob3J'.'pe'.'mVk','VVN'.'FU'.'g'.'==','SXNB'.'ZG1pbg'.'==','REI'.'=','U0VMRUNUIENPV'.'U5'.'U'.'KFUuSU'.'Q'.'pIGFzIEMgRlJP'.'TSBiX'.'3'.'VzZXI'.'gVSBXSEV'.'S'.'RSBVLklEID0'.'g','VVNFUg==','R2V0SUQ=','IEFORC'.'BVL'.'k'.'xBU1Rf'.'TE9'.'HSU4g'.'SVM'.'g'.'TlVMTA==','Q'.'w==','VVNFUg='.'=',''.'T'.'G9nb3V0');return base64_decode($_1617499845[$_1811778963]);}};if($GLOBALS['____596153256'][0](round(0+0.2+0.2+0.2+0.2+0.2), round(0+5+5+5+5)) == round(0+2.3333333333333+2.3333333333333+2.3333333333333)){ if(isset($GLOBALS[___708653725(0)]) && $GLOBALS['____596153256'][1]($GLOBALS[___708653725(1)]) && $GLOBALS['____596153256'][2](array($GLOBALS[___708653725(2)], ___708653725(3))) &&!$GLOBALS['____596153256'][3](array($GLOBALS[___708653725(4)], ___708653725(5)))){ $_753576124= $GLOBALS[___708653725(6)]->Query(___708653725(7).$GLOBALS['____596153256'][4]($GLOBALS['____596153256'][5](array($GLOBALS[___708653725(8)], ___708653725(9)))).___708653725(10), true); if($_761918135= $_753576124->Fetch()){ if($GLOBALS['____596153256'][6]($_761918135[___708653725(11)])> min(110,0,36.666666666667)) $GLOBALS['____596153256'][7](array($GLOBALS[___708653725(12)], ___708653725(13)));}}}/**/
 		return CJSCore::Init($arExt, $bReturn);
 	}
 
@@ -5902,17 +5904,17 @@ class CUtil
 	}
 
 	/**
-	 * @deprecated Use \Bitrix\Main\Text\BinaryString::getLength()
+	 * @deprecated Use strlen()
 	 * @param $buf
 	 * @return int
 	 */
 	public static function BinStrlen($buf)
 	{
-		return Main\Text\BinaryString::getLength($buf);
+		return strlen($buf);
 	}
 
 	/**
-	 * @deprecated Use \Bitrix\Main\Text\BinaryString::getSubstring()
+	 * @deprecated Use substr()
 	 * @param $buf
 	 * @param $start
 	 * @param array $args
@@ -5920,11 +5922,11 @@ class CUtil
 	 */
 	public static function BinSubstr($buf, $start, ...$args)
 	{
-		return Main\Text\BinaryString::getSubstring($buf, $start, ...$args);
+		return substr($buf, $start, ...$args);
 	}
 
 	/**
-	 * @deprecated Use \Bitrix\Main\Text\BinaryString::getPosition()
+	 * @deprecated Use strpos()
 	 * @param $haystack
 	 * @param $needle
 	 * @param int $offset
@@ -5932,7 +5934,7 @@ class CUtil
 	 */
 	public static function BinStrpos($haystack, $needle, $offset = 0)
 	{
-		return Main\Text\BinaryString::getPosition($haystack, $needle, $offset);
+		return strpos($haystack, $needle, $offset);
 	}
 
 	/**
@@ -6228,7 +6230,7 @@ class CHTTP
 					$strRequest.= "Content-type: application/x-www-form-urlencoded\r\n";
 
 				if(!array_key_exists("Content-Length", $this->additional_headers))
-					$strRequest.= "Content-Length: ".CUtil::BinStrlen($postdata) . "\r\n";
+					$strRequest.= "Content-Length: ".strlen($postdata) . "\r\n";
 			}
 			$strRequest .= "\r\n";
 			fwrite($fp, $strRequest);
@@ -6644,9 +6646,6 @@ class CHTTP
 
 	public static function urnEncode($str, $charset = false)
 	{
-		/** @global CMain $APPLICATION */
-		global $APPLICATION;
-
 		$result = '';
 		$arParts = preg_split("#(://|:\\d+/|/|\\?|=|&)#", $str, -1, PREG_SPLIT_DELIM_CAPTURE);
 
@@ -6663,7 +6662,7 @@ class CHTTP
 			{
 				$result .= ($i % 2)
 					? $part
-					: rawurlencode($APPLICATION->ConvertCharset($part, LANG_CHARSET, $charset));
+					: rawurlencode(Main\Text\Encoding::convertEncoding($part, LANG_CHARSET, $charset));
 			}
 		}
 		return $result;
@@ -6671,9 +6670,6 @@ class CHTTP
 
 	public static function urnDecode($str, $charset = false)
 	{
-		/** @global CMain $APPLICATION */
-		global $APPLICATION;
-
 		$result = '';
 		$arParts = preg_split("#(://|:\\d+/|/|\\?|=|&)#", $str, -1, PREG_SPLIT_DELIM_CAPTURE);
 
@@ -6690,7 +6686,7 @@ class CHTTP
 			{
 				$result .= ($i % 2)
 					? $part
-					: rawurldecode($APPLICATION->ConvertCharset($part, LANG_CHARSET, $charset));
+					: rawurldecode(Main\Text\Encoding::convertEncoding($part, LANG_CHARSET, $charset));
 			}
 		}
 		return $result;
@@ -6927,30 +6923,7 @@ function CheckSerializedData($str, $max_depth = 200)
 		return false;
 	}
 
-	// check max depth in PHP 5.3.0 and earlier
-	if(!version_compare(phpversion(),"5.3.0",">"))
-	{
-		$str1 = preg_replace('/[^{}]+/'.BX_UTF_PCRE_MODIFIER, '', $str);
-		$cnt = 0;
-		for ($i=0, $len = mb_strlen($str1);$i<$len;$i++)
-		{
-			// we've just cleared all possible utf-symbols, so we can use [] syntax
-			if ($str1[$i]=='}')
-				$cnt--;
-			else
-			{
-				$cnt++;
-				if ($cnt > $max_depth)
-					break;
-			}
-		}
-
-		return $cnt <= $max_depth;
-	}
-	else
-	{
-		return true;
-	}
+    return true;
 }
 
 function NormalizePhone($number, $minLength = 10)

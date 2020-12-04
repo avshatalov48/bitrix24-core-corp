@@ -143,8 +143,8 @@ class CTaskListCtrl
 			break;
 
 			case CTaskListState::VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES:
-				$arFilter['>=DEADLINE'] = Counter::getExpiredTime();
-				$arFilter['<DEADLINE'] = Counter::getExpiredSoonTime();
+				$arFilter['>=DEADLINE'] = Counter\Deadline::getExpiredTime();
+				$arFilter['<DEADLINE'] = Counter\Deadline::getExpiredSoonTime();
 				$arFilter['!REAL_STATUS'] = array(
 					CTasks::STATE_SUPPOSEDLY_COMPLETED,
 					CTasks::STATE_COMPLETED,
@@ -171,7 +171,7 @@ class CTaskListCtrl
 						$arFilter['::SUBFILTER-' . (++$subfilterIndex)] = array(
 							'::LOGIC'   => 'OR',
 							'VIEWED'    => 0,
-							'<DEADLINE' => Counter::getExpiredSoonTime()
+							'<DEADLINE' => Counter\Deadline::getExpiredSoonTime()
 							// to be expired soon, it's includes already expired tasks too
 						);
 					break;
@@ -242,24 +242,7 @@ class CTaskListCtrl
 			);
 		}
 
-		$counterId = self::resolveCounterIdByRoleAndCategory(
-			$this->oListState->getUserRole(),
-			$this->oListState->getTaskCategory()
-		);
-
 		$arFilter['CHECK_PERMISSIONS'] = 'Y';
-
-		// Mark filter. So when it will be used by CTasks::GetList(),
-		// CTaskCountersProcessorHomeostasis will check if counter is right
-		// or not.
-
-		// This will work out only when resolved counter is not null and we are in "role-mode"
-//		$arFilter = CTaskCountersProcessorHomeostasis::injectMarker(
-//			$arFilter,
-//			$curSection,
-//			$counterId,
-//			$this->userId
-//		);
 
 		return ($arFilter);
 	}
@@ -301,109 +284,27 @@ class CTaskListCtrl
 
 	private static function __getUserRoleCounter($userRole, $userId)
 	{
-		$cnt = null;
-
-		switch ($userRole)
-		{
-			case CTaskListState::VIEW_ROLE_RESPONSIBLE:
-				$cnt = self::getCounterForUser($userRole, 'TOTAL', $userId);
-			break;
-
-			case CTaskListState::VIEW_ROLE_ACCOMPLICE:
-				$cnt = self::getCounterForUser($userRole, 'TOTAL', $userId);
-			break;
-
-			case CTaskListState::VIEW_ROLE_ORIGINATOR:
-				$cnt = self::getCounterForUser($userRole, 'TOTAL', $userId);
-			break;
-
-			case CTaskListState::VIEW_ROLE_AUDITOR:
-				$cnt = self::getCounterForUser($userRole, 'TOTAL', $userId);
-			break;
-		}
-
-		return ($cnt);
+		return null;
 	}
 
 
 	/**
-	 * @param $userRoleId
-	 * @param string $taskCategoryId
-	 * @return null|string - null if not resolved, or (int) counter id if resolved
+	 * @deprecated since tasks 20.6.400
 	 */
 	public static function resolveCounterIdByRoleAndCategory($userRoleId, $taskCategoryId = 'TOTAL')
 	{
 		$counterId = null;
 
-		if ($userRoleId == CTaskListState::VIEW_ROLE_RESPONSIBLE)
-		{
-			if ($taskCategoryId == CTaskListState::VIEW_TASK_CATEGORY_NEW)
-				$counterId = CTaskCountersProcessor::COUNTER_TASKS_MY_NEW;
-			elseif ($taskCategoryId == CTaskListState::VIEW_TASK_CATEGORY_WO_DEADLINE)
-				$counterId = CTaskCountersProcessor::COUNTER_TASKS_MY_WO_DEADLINE;
-			elseif ($taskCategoryId == CTaskListState::VIEW_TASK_CATEGORY_EXPIRED)
-				$counterId = CTaskCountersProcessor::COUNTER_TASKS_MY_EXPIRED;
-			elseif ($taskCategoryId == CTaskListState::VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES)
-				$counterId = CTaskCountersProcessor::COUNTER_TASKS_MY_EXPIRED_CANDIDATES;
-			elseif ($taskCategoryId === 'TOTAL')
-				$counterId = CTaskCountersProcessor::COUNTER_TASKS_MY;
-		}
-		elseif ($userRoleId == CTaskListState::VIEW_ROLE_ACCOMPLICE)
-		{
-			if ($taskCategoryId == CTaskListState::VIEW_TASK_CATEGORY_NEW)
-				$counterId = CTaskCountersProcessor::COUNTER_TASKS_ACCOMPLICE_NEW;
-			elseif ($taskCategoryId == CTaskListState::VIEW_TASK_CATEGORY_EXPIRED)
-				$counterId = CTaskCountersProcessor::COUNTER_TASKS_ACCOMPLICE_EXPIRED;
-			elseif ($taskCategoryId == CTaskListState::VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES)
-				$counterId = CTaskCountersProcessor::COUNTER_TASKS_ACCOMPLICE_EXPIRED_CANDIDATES;
-			elseif ($taskCategoryId === 'TOTAL')
-				$counterId = CTaskCountersProcessor::COUNTER_TASKS_ACCOMPLICE;
-		}
-		elseif ($userRoleId == CTaskListState::VIEW_ROLE_AUDITOR)
-		{
-			if ($taskCategoryId == CTaskListState::VIEW_TASK_CATEGORY_EXPIRED)
-				$counterId = CTaskCountersProcessor::COUNTER_TASKS_AUDITOR_EXPIRED;
-			elseif ($taskCategoryId === 'TOTAL')
-				$counterId = CTaskCountersProcessor::COUNTER_TASKS_AUDITOR;
-		}
-		elseif ($userRoleId == CTaskListState::VIEW_ROLE_ORIGINATOR)
-		{
-			if ($taskCategoryId == CTaskListState::VIEW_TASK_CATEGORY_EXPIRED)
-				$counterId = CTaskCountersProcessor::COUNTER_TASKS_ORIGINATOR_EXPIRED;
-			elseif ($taskCategoryId == CTaskListState::VIEW_TASK_CATEGORY_WO_DEADLINE)
-				$counterId = CTaskCountersProcessor::COUNTER_TASKS_ORIGINATOR_WO_DEADLINE;
-			elseif ($taskCategoryId == CTaskListState::VIEW_TASK_CATEGORY_WAIT_CTRL)
-				$counterId = CTaskCountersProcessor::COUNTER_TASKS_ORIGINATOR_WAIT_CTRL;
-			elseif ($taskCategoryId === 'TOTAL')
-				$counterId = CTaskCountersProcessor::COUNTER_TASKS_ORIGINATOR;
-		}
-
 		return ($counterId);
 	}
 
-
+	/**
+	 * @deprecated since tasks 20.6.400
+	 */
 	public function getCounter($userRoleId, $taskCategoryId)
 	{
-		return (self::getCounterForUser($userRoleId, $taskCategoryId, $this->userId));
+		return null;
 	}
-
-
-	private static function getCounterForUser($userRoleId, $taskCategoryId, $userId)
-	{return;
-		$counterId = self::resolveCounterIdByRoleAndCategory($userRoleId, $taskCategoryId);
-
-		if ($counterId !== null)
-			$rc = \CTaskCountersProcessor::getCounter($userId, $counterId);
-		else
-		{
-			CTaskAssert::logError('[0x0de6c535] unknown counter for $userRole: ' . $userRoleId . '; $taskCategoryId: ' . $taskCategoryId);
-			$rc = false;
-		}
-
-		return ($rc);
-	}
-
-
 
 	/**
 	 * prevent creating through "new"

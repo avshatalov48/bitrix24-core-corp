@@ -339,7 +339,7 @@ final class Task extends \Bitrix\Tasks\Internals\Runtime
 				{
 					$fields[$v->getName()] = true;
 				}
-				else
+				elseif (is_array($v))
 				{
 					$type = $v['data_type'];
 					if($type == 'integer' || $type == 'string' || $type == 'boolean' || $type == 'datetime')

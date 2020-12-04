@@ -7,6 +7,9 @@ namespace Bitrix\Tasks\Replica;
 //	PARENT_ID int(11) DEFAULT NULL,
 //	FORKED_BY_TEMPLATE_ID int(11) DEFAULT NULL,
 
+use Bitrix\Tasks\Internals\Counter\CounterDictionary;
+use Bitrix\Tasks\Internals\Counter\CounterService;
+
 class TaskHandler extends \Bitrix\Replica\Client\BaseHandler
 {
 	protected $tableName = "b_tasks";
@@ -266,8 +269,11 @@ class TaskHandler extends \Bitrix\Replica\Client\BaseHandler
 				$newRecord['AUDITORS'][] = $item['USER_ID'];
 		}
 
-//		\CTaskCountersProcessor::onAfterTaskAdd($newRecord);
-		\Bitrix\Tasks\Internals\Counter::onAfterTaskAdd($newRecord);
+		CounterService::addEvent(
+			CounterDictionary::EVENT_AFTER_TASK_ADD,
+			$newRecord
+		);
+
 		\CTaskNotifications::sendAddMessage(
 			array_merge($newRecord, array('CHANGED_BY' => $newRecord['CREATED_BY'])),
 			array('SPAWNED_BY_AGENT' => true)
@@ -349,6 +355,8 @@ class TaskHandler extends \Bitrix\Replica\Client\BaseHandler
 	{
 		global $CACHE_MANAGER;
 
+		CounterService::getInstance()->collectData((int) $newRecord['ID']);
+
 		$newRecord['ACCOMPLICES'] = array();
 		$newRecord['AUDITORS'] = array();
 		$list = \Bitrix\Tasks\Internals\Task\MemberTable::getList(array(
@@ -364,8 +372,13 @@ class TaskHandler extends \Bitrix\Replica\Client\BaseHandler
 				$newRecord['AUDITORS'][] = $item['USER_ID'];
 		}
 
-//		\CTaskCountersProcessor::onAfterTaskUpdate($oldRecord, $newRecord);
-		\Bitrix\Tasks\Internals\Counter::onAfterTaskUpdate($oldRecord, $newRecord);
+		CounterService::addEvent(
+			CounterDictionary::EVENT_AFTER_TASK_UPDATE,
+			[
+				'NEW_RECORD' => $newRecord,
+				'OLD_RECORD' => $oldRecord
+			]
+		);
 
 		$arParticipants = array_unique(array_merge(
 			array($newRecord["CREATED_BY"], $newRecord["RESPONSIBLE_ID"]),
@@ -449,6 +462,8 @@ class TaskHandler extends \Bitrix\Replica\Client\BaseHandler
 	{
 		global $CACHE_MANAGER;
 
+		CounterService::getInstance()->collectData((int) $oldRecord['ID']);
+
 		$oldRecord['ACCOMPLICES'] = array();
 		$oldRecord['AUDITORS'] = array();
 		$list = \Bitrix\Tasks\Internals\Task\MemberTable::getList(array(
@@ -513,7 +528,10 @@ class TaskHandler extends \Bitrix\Replica\Client\BaseHandler
 			\CSearch::DeleteIndex("tasks", $oldRecord["ID"]);
 		}
 
-		\Bitrix\Tasks\Internals\Counter::onAfterTaskDelete($oldRecord);
+		CounterService::addEvent(
+			CounterDictionary::EVENT_AFTER_TASK_DELETE,
+			$oldRecord
+		);
 
 		// clear cache
 		$CACHE_MANAGER->ClearByTag("tasks_".$oldRecord["ID"]);

@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -12,16 +12,24 @@
 
 namespace Bitrix\Tasks\Dispatcher\PublicAction\Integration;
 
-use Bitrix\Tasks;
-use Bitrix\Tasks\Util\Result;
-use \Bitrix\Tasks\Dispatcher\PublicAction;
+use Bitrix\Main;
+use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\Dispatcher\PublicAction;
 
+/**
+ * Class Intranet
+ *
+ * @package Bitrix\Tasks\Dispatcher\PublicAction\Integration
+ */
 final class Intranet extends PublicAction
 {
+	/**
+	 * @param array $userIds
+	 * @return array|false
+	 * @throws Main\LoaderException
+	 */
 	public static function absence(array $userIds)
 	{
-		$list = \Bitrix\Tasks\Util\User::isAbsence($userIds);
-
-		return $list;
+		return User::isAbsence($userIds);
 	}
 }

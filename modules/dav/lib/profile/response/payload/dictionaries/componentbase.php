@@ -30,7 +30,7 @@ abstract class ComponentBase extends Base
 		$params['payloadIdentifier'] = 'com.apple.' . static::TEMPLATE_DICT_NAME . '.account.' . $this->getProfileIdentifier();
 		$params['payloadUUID'] = $this->getProfileIdentifier();
 		$templatePath = IO\Path::getDirectory(__DIR__ . '/templates/') . '/' . static::TEMPLATE_DICT_NAME . '.dict';
-		if (!empty($params['port']))
+		if (empty($params['port']))
 		{
 			$params['port'] = $this->getPortWithScheme();
 		}
@@ -39,6 +39,6 @@ abstract class ComponentBase extends Base
 
 	public function getPortWithScheme()
 	{
-		return Context::getCurrent()->getServer()->getRequestScheme() === 'https' ? '443' : '80';
+		return Context::getCurrent()->getRequest()->isHttps() ? '443' : '80';
 	}
 }

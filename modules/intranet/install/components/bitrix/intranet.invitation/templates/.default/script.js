@@ -538,7 +538,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        flagNode: inputNode.parentNode.querySelector("[data-role='phone_flag_" + num + "']"),
 	        flagSize: 16,
 	        onChange: changeCallback(num, inputNode)
-	      });
+	      }); //for ctrl+v paste
+
+	      setTimeout(function () {
+	        if (!inputNode.parentNode.querySelector('#phone_number_' + num).value) {
+	          changeCallback(num, inputNode)({
+	            value: _this.inputStack[num].getValue(),
+	            country: _this.inputStack[num].getCountry()
+	          });
+	        }
+	      }, 100);
 	    }
 	  }, {
 	    key: "showCountrySelector",
@@ -550,7 +559,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}();
 
 	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input \n\t\t\t\t\t\t\ttype=\"text\" \n\t\t\t\t\t\t\tclass=\"ui-ctl-element\" \n\t\t\t\t\t\t\tvalue=\"\" \n\t\t\t\t\t\t\tname=\"integrator_email\" \n\t\t\t\t\t\t\tid=\"integrator_email\" \n\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input \n\t\t\t\t\t\t\ttype=\"text\" \n\t\t\t\t\t\t\tclass=\"ui-ctl-element\" \n\t\t\t\t\t\t\tvalue=\"\" \n\t\t\t\t\t\t\tmaxlength=\"50\"\n\t\t\t\t\t\t\tname=\"integrator_email\" \n\t\t\t\t\t\t\tid=\"integrator_email\" \n\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
 
 	  _templateObject4 = function _templateObject4() {
 	    return data;
@@ -560,7 +569,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 
 	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"text\" name=\"ADD_NAME\" id=\"ADD_NAME\" class=\"ui-ctl-element\">\n\t\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"text\" name=\"ADD_LAST_NAME\" id=\"ADD_LAST_NAME\" class=\"ui-ctl-element\">\n\t\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"text\" name=\"ADD_EMAIL\" id=\"ADD_EMAIL\" class=\"ui-ctl-element\">\n\t\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"text\" name=\"ADD_POSITION\" id=\"ADD_POSITION\" class=\"ui-ctl-element\">\n\t\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t\t</div>\t\t\t\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"text\" name=\"ADD_NAME\" id=\"ADD_NAME\" class=\"ui-ctl-element\">\n\t\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"text\" name=\"ADD_LAST_NAME\" id=\"ADD_LAST_NAME\" class=\"ui-ctl-element\">\n\t\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"text\" name=\"ADD_EMAIL\" id=\"ADD_EMAIL\" class=\"ui-ctl-element\" maxlength=\"50\">\n\t\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"text\" name=\"ADD_POSITION\" id=\"ADD_POSITION\" class=\"ui-ctl-element\">\n\t\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t\t</div>\t\t\t\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
 
 	  _templateObject3 = function _templateObject3() {
 	    return data;
@@ -570,7 +579,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 
 	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"invite-form-row js-form-row\">\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input \n\t\t\t\t\t\t\tname=\"EMAIL[]\" \n\t\t\t\t\t\t\ttype=\"text\" \n\t\t\t\t\t\t\tdata-num=\"", "\" \n\t\t\t\t\t\t\tclass=\"ui-ctl-element js-email-phone-input\" \n\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input name=\"NAME[]\" type=\"text\" class=\"ui-ctl-element\" placeholder=\"", "\">\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input name=\"LAST_NAME[]\" type=\"text\" class=\"ui-ctl-element\" placeholder=\"", "\">\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"invite-form-row js-form-row\">\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input \n\t\t\t\t\t\t\tname=\"EMAIL[]\" \n\t\t\t\t\t\t\ttype=\"text\" \n\t\t\t\t\t\t\tmaxlength=\"50\"\n\t\t\t\t\t\t\tdata-num=\"", "\" \n\t\t\t\t\t\t\tclass=\"ui-ctl-element js-email-phone-input\" \n\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input name=\"NAME[]\" type=\"text\" class=\"ui-ctl-element\" placeholder=\"", "\">\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input name=\"LAST_NAME[]\" type=\"text\" class=\"ui-ctl-element\" placeholder=\"", "\">\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
 
 	  _templateObject2 = function _templateObject2() {
 	    return data;
@@ -580,7 +589,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 
 	function _templateObject$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\tname=\"EMAIL[]\"\n\t\t\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\t\t\tdata-num=\"", "\"\n\t\t\t\t\t\t\t\tclass=\"ui-ctl-element js-email-phone-input\"\n\t\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t\t/>"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\tname=\"EMAIL[]\"\n\t\t\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\t\t\tmaxlength=\"50\"\n\t\t\t\t\t\t\t\tdata-num=\"", "\"\n\t\t\t\t\t\t\t\tclass=\"ui-ctl-element js-email-phone-input\"\n\t\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t\t/>"]);
 
 	  _templateObject$1 = function _templateObject() {
 	    return data;
@@ -757,6 +766,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    _this.isExtranetInstalled = params.isExtranetInstalled === "Y";
 	    _this.isCloud = params.isCloud === "Y";
 	    _this.isInvitationBySmsAvailable = params.isInvitationBySmsAvailable === "Y";
+	    _this.isCreatorEmailConfirmed = params.isCreatorEmailConfirmed === "Y";
 	    _this.regenerateUrlBase = params.regenerateUrlBase;
 
 	    if (main_core.Type.isDomNode(_this.contentContainer)) {
@@ -842,6 +852,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      var _this2 = this;
 
 	      main_core.Event.unbindAll(this.button, 'click');
+
+	      if (!this.isCreatorEmailConfirmed) {
+	        main_core.Event.bind(this.button, 'click', function () {
+	          _this2.showErrorMessage(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_CREATOR_EMAIL_ERROR'));
+	        });
+	        return;
+	      }
 
 	      if (action === "invite") {
 	        this.button.innerText = main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');

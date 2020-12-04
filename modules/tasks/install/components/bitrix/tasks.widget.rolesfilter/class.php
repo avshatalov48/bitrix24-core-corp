@@ -9,6 +9,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\Internals\Task\MemberTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -53,17 +54,19 @@ class TasksWidgetRolesfilterComponent extends TasksBaseComponent
 	 */
 	private function getRoles(): array
 	{
+		$counter = Counter::getInstance((int) $this->arParams['USER_ID']);
+
 		$roles = [];
 		$countersId = $this->roleCodeToCounterId();
-
 		foreach (Counter\Role::getRoles() as $roleId => $role)
 		{
 			$roleCode = $role['CODE'];
+			$counters = $counter->getCounters($roleCode);
 			$roles[$roleId] = [
 				'TITLE' => $role['TITLE'],
 				'COUNTER_ID' => 'tasks_'.$countersId[$roleCode],
 				'COUNTER' => $this->getCounter($roleCode),
-				'COUNTER_VIOLATIONS' => $this->getCounterViolations($roleCode),
+				'COUNTER_VIOLATIONS' => isset($counters[Counter\CounterDictionary::COUNTER_EXPIRED]['counter']) ? $counters[Counter\CounterDictionary::COUNTER_EXPIRED]['counter'] : 0,
 				'HREF' => $this->getRoleUrl($role['ID']),
 			];
 		}
@@ -85,21 +88,22 @@ class TasksWidgetRolesfilterComponent extends TasksBaseComponent
 			CTasks::STATE_PENDING,
 			CTasks::STATE_IN_PROGRESS,
 			CTasks::STATE_SUPPOSEDLY_COMPLETED,
-			CTasks::STATE_DEFERRED,
+			CTasks::STATE_DEFERRED
 		];
 		$statuses = implode(',', $statuses);
 
-		$res = Application::getConnection()->query("
+		$sql = "
 			SELECT COUNT(DISTINCT T.ID) as COUNT
 			FROM b_tasks T
-				INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID
+			INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID
 			WHERE 
 				TM.USER_ID = {$this->arParams['USER_ID']}
 				".($userType === 'O' ? 'AND TM.USER_ID != T.RESPONSIBLE_ID' : '')."
 				AND TM.TYPE = '{$userType}'
-				AND T.ZOMBIE = 'N'
 				AND T.STATUS IN ({$statuses})
-		");
+		";
+
+		$res = Application::getConnection()->query($sql);
 		if ($row = $res->fetch())
 		{
 			$counter = (int)$row['COUNT'];
@@ -114,25 +118,11 @@ class TasksWidgetRolesfilterComponent extends TasksBaseComponent
 	private function roleCodeToUserType(): array
 	{
 		return [
-			Counter\Role::RESPONSIBLE => 'R',
-			Counter\Role::ACCOMPLICE => 'A',
-			Counter\Role::ORIGINATOR => 'O',
-			Counter\Role::AUDITOR => 'U',
+			Counter\Role::RESPONSIBLE => MemberTable::MEMBER_TYPE_RESPONSIBLE,
+			Counter\Role::ACCOMPLICE => MemberTable::MEMBER_TYPE_ACCOMPLICE,
+			Counter\Role::ORIGINATOR => MemberTable::MEMBER_TYPE_ORIGINATOR,
+			Counter\Role::AUDITOR => MemberTable::MEMBER_TYPE_AUDITOR,
 		];
-	}
-
-	/**
-	 * @param string $roleCode
-	 * @return bool|int|mixed
-	 * @throws Main\ArgumentException
-	 * @throws Main\DB\SqlQueryException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 */
-	private function getCounterViolations(string $roleCode)
-	{
-		$countersId = $this->roleCodeToCounterId();
-		return Counter::getInstance($this->arParams['USER_ID'])->get($countersId[$roleCode]);
 	}
 
 	/**
@@ -141,10 +131,10 @@ class TasksWidgetRolesfilterComponent extends TasksBaseComponent
 	private function roleCodeToCounterId(): array
 	{
 		return [
-			Counter\Role::RESPONSIBLE => Counter\Name::MY,
-			Counter\Role::ACCOMPLICE => Counter\Name::ACCOMPLICES,
-			Counter\Role::ORIGINATOR => Counter\Name::ORIGINATOR,
-			Counter\Role::AUDITOR => Counter\Name::AUDITOR,
+			Counter\Role::RESPONSIBLE => Counter\CounterDictionary::COUNTER_MY,
+			Counter\Role::ACCOMPLICE => Counter\CounterDictionary::COUNTER_ACCOMPLICES,
+			Counter\Role::ORIGINATOR => Counter\CounterDictionary::COUNTER_ORIGINATOR,
+			Counter\Role::AUDITOR => Counter\CounterDictionary::COUNTER_AUDITOR,
 		];
 	}
 

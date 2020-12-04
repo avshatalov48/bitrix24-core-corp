@@ -68,6 +68,7 @@ final class Impact extends \Bitrix\Tasks\Processor\Task\Result\Impact
 			$t->update($this->getUpdatedData(), array(
 				'THROTTLE_MESSAGES' => true,
 				'AUTO_CLOSE' => false,
+				'SKIP_ACCESS_CONTROL' => true
 			));
 
 			if($prevUserId)

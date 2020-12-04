@@ -816,6 +816,16 @@ $searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitR
 if(!$searchRestriction->isExceeded(CCrmOwnerType::Lead))
 {
 	Bitrix\Crm\Search\SearchEnvironment::convertEntityFilterValues(CCrmOwnerType::Lead, $arFilter);
+
+	if (
+		($limitWarningValue = $searchRestriction->getLimitWarningValue(CCrmOwnerType::Lead)) > 0
+	)
+	{
+		$searchRestriction->notifyLimitWarning(
+			CCrmOwnerType::Lead,
+			$limitWarningValue
+		);
+	}
 }
 else
 {

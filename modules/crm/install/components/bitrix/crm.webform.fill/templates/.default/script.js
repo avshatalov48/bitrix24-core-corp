@@ -1094,8 +1094,9 @@ function CrmWebForm(params)
 				summaryPrice,
 				this.currency.DECIMALS,
 				this.currency.DEC_POINT,
-				this.currency.THOUSANDS_SEP
+				(this.currency.THOUSANDS_SEP || '').replace('&nbsp;', ' ')
 			);
+
 			summaryPricePrint = BX.util.htmlspecialcharsback(summaryPricePrint);
 			cart.totalNode.innerHTML = this.currency.FORMAT_STRING;
 			cart.totalNode.textContent = cart.totalNode.textContent.replace('#', summaryPricePrint);

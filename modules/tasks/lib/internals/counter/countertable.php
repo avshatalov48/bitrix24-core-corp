@@ -12,7 +12,7 @@ class CounterTable extends DataManager
 {
 	public static function getTableName(): string
 	{
-		return 'b_tasks_counters';
+		return 'b_tasks_scorer';
 	}
 
 	public static function getClass(): string
@@ -32,71 +32,21 @@ class CounterTable extends DataManager
 				'data_type' => 'integer',
 				'required' => true,
 			],
+			'TASK_ID' => [
+				'data_type' => 'integer',
+				'required' => true,
+			],
 			'GROUP_ID' => [
 				'data_type' => 'integer',
 				'required' => true,
 			],
-
-			'OPENED' => [
-				'data_type' => 'integer',
+			'TYPE' => [
+				'data_type' => 'string',
+				'required' => true,
 			],
-			'CLOSED' => [
+			'VALUE' => [
 				'data_type' => 'integer',
-			],
-			'EXPIRED' => [
-				'data_type' => 'integer',
-			],
-			'NEW_COMMENTS' => [
-				'data_type' => 'integer',
-			],
-
-			'MY_EXPIRED' => [
-				'data_type' => 'integer',
-			],
-			'MY_EXPIRED_SOON' => [
-				'data_type' => 'integer',
-			],
-			'MY_NOT_VIEWED' => [
-				'data_type' => 'integer',
-			],
-			'MY_WITHOUT_DEADLINE' => [
-				'data_type' => 'integer',
-			],
-			'MY_NEW_COMMENTS' => [
-				'data_type' => 'integer',
-			],
-
-			'ORIGINATOR_WITHOUT_DEADLINE' => [
-				'data_type' => 'integer',
-			],
-			'ORIGINATOR_EXPIRED' => [
-				'data_type' => 'integer',
-			],
-			'ORIGINATOR_WAIT_CTRL' => [
-				'data_type' => 'integer',
-			],
-			'ORIGINATOR_NEW_COMMENTS' => [
-				'data_type' => 'integer',
-			],
-
-			'AUDITOR_EXPIRED' => [
-				'data_type' => 'integer',
-			],
-			'AUDITOR_NEW_COMMENTS' => [
-				'data_type' => 'integer',
-			],
-
-			'ACCOMPLICES_EXPIRED' => [
-				'data_type' => 'integer',
-			],
-			'ACCOMPLICES_EXPIRED_SOON' => [
-				'data_type' => 'integer',
-			],
-			'ACCOMPLICES_NOT_VIEWED' => [
-				'data_type' => 'integer',
-			],
-			'ACCOMPLICES_NEW_COMMENTS' => [
-				'data_type' => 'integer',
+				'required' => true,
 			],
 
 			// references
@@ -107,6 +57,10 @@ class CounterTable extends DataManager
 			'GROUP' => [
 				'data_type' => 'Bitrix\Socialnetwork\Workgroup',
 				'reference' => ['=this.GROUP_ID' => 'ref.ID'],
+			],
+			'TASK' => [
+				'data_type' => 'Bitrix\Tasks\Internals\TaskTable',
+				'reference' => ['=this.TASK_ID' => 'ref.ID'],
 			],
 		];
 	}

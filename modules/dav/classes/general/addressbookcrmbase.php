@@ -94,9 +94,9 @@ abstract class CDavAddressbookCrmBase
 	protected function SaveImg($content, $type)
 	{
 		$fileContent = base64_decode($content);
-		if ($fileContent !== false && strlen($fileContent) > 0)
+		if ($fileContent !== false && $fileContent <> '')
 		{
-			$fileName = CTempFile::GetFileName(substr(md5(mt_rand()), 0, 3) . '.' . $type);
+			$fileName = CTempFile::GetFileName(mb_substr(md5(mt_rand()), 0, 3).'.' . $type);
 			if (CheckDirPath($fileName))
 			{
 				file_put_contents($fileName, $fileContent);

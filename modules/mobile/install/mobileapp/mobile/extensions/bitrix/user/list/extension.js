@@ -44,6 +44,7 @@
 		{
 			this.list = listObject;
 			this._delegate = delegate;
+			this.options = {};
 			this.inited = false;
 		}
 
@@ -226,7 +227,14 @@
 				}
 			}
 
-			return items;
+			let uniqueItems = [];
+			items.forEach(item => {
+				if (item.id && !uniqueItems[item.id]) {
+					uniqueItems[item.id] = item;
+				}
+			})
+
+			return Object.values(uniqueItems);
 		}
 
 		get eventHandlers()
@@ -614,6 +622,7 @@
 				sectionCode: "people",
 				color: "#5D5C67",
 				useLetterImage: true,
+				id: user.ID,
 				imageUrl: (user.PERSONAL_PHOTO === null ? undefined : encodeURI(user.PERSONAL_PHOTO)),
 				sortValues: {
 					name: user.LAST_NAME

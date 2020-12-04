@@ -1,4 +1,4 @@
-import {Tag, Type} from "main.core";
+import {Type} from "main.core";
 
 class Utils
 {
@@ -93,6 +93,27 @@ class Utils
 				}
 				: null
 		);
+	};
+
+	getUploadFilename = (filename, type) => {
+		const
+			mimeType = BX.MobileUtils.getFileMimeType(type),
+			fileType = BX.MobileUtils.getType(mimeType);
+
+		if (
+			fileType === 'image'
+			|| fileType === 'video'
+		)
+		{
+			let extension = filename.split('.').slice(-1)[0].toLowerCase();
+			if (mimeType === 'image/heic')
+			{
+				extension = 'jpg';
+			}
+			filename = 'mobile_file_' + (new Date).toJSON().slice(0, 19).replace('T', '_').split(':').join('-') + '.' + extension;
+		}
+
+		return filename;
 	};
 
 	static htmlWithInlineJS(node: HTMLElement, html, params = {}): Promise | string
