@@ -42,6 +42,21 @@ class DepartmentProvider extends BaseProvider
 		{
 			$this->options['allowSelectRootDepartment'] = $options['allowSelectRootDepartment'];
 		}
+
+		if (isset($options['userOptions']) && is_array($options['userOptions']))
+		{
+			if (Loader::includeModule('socialnetwork'))
+			{
+				$userProvider = new UserProvider($options['userOptions']); // process options by UserProvider
+				$this->options['userOptions'] = $userProvider->getOptions();
+			}
+		}
+
+		$this->options['hideChatBotDepartment'] = true;
+		if (isset($options['hideChatBotDepartment']) && is_bool($options['hideChatBotDepartment']))
+		{
+			$this->options['hideChatBotDepartment'] = $options['hideChatBotDepartment'];
+		}
 	}
 
 	public function getSelectMode()
@@ -264,8 +279,19 @@ class DepartmentProvider extends BaseProvider
 			$headId = is_array($department['UF_HEAD']) ? (int)$department['UF_HEAD'][0] : (int)$department['UF_HEAD'];
 		}
 
+		$userOptions = [];
+		if (isset($this->getOptions()['userOptions']) && is_array($this->getOptions()['userOptions']))
+		{
+			$userOptions = $this->getOptions()['userOptions'];
+		}
+		elseif ($dialog->getEntity('user') && is_array($dialog->getEntity('user')->getOptions()))
+		{
+			$userOptions = $dialog->getEntity('user')->getOptions();
+		}
+
 		$items = UserProvider::makeItems(
-			UserProvider::getUsers(['departmentId' => $departmentId])
+			UserProvider::getUsers(['departmentId' => $departmentId] + $userOptions),
+			$userOptions
 		);
 
 		usort(
@@ -324,7 +350,16 @@ class DepartmentProvider extends BaseProvider
 			return new EO_Section_Collection();
 		}
 
-		$rootDepartmentFilter = [];
+		$filter = [
+			'=IBLOCK_ID' => $structureIBlockId,
+			'=ACTIVE' => 'Y',
+		];
+
+		if ($this->getOptions()['hideChatBotDepartment'])
+		{
+			$filter['!=XML_ID'] = 'im_bot';
+		}
+
 		$rootDepartmentId = intval(Option::get('main', 'wizard_departament', false, SITE_ID));
 		if ($rootDepartmentId > 0)
 		{
@@ -341,18 +376,16 @@ class DepartmentProvider extends BaseProvider
 
 			if ($rootDepartment)
 			{
-				$rootDepartmentFilter[">=LEFT_MARGIN"] = $rootDepartment->getLeftMargin();
-				$rootDepartmentFilter["<=RIGHT_MARGIN"] = $rootDepartment->getRightMargin();
+				$filter[">=LEFT_MARGIN"] = $rootDepartment->getLeftMargin();
+				$filter["<=RIGHT_MARGIN"] = $rootDepartment->getRightMargin();
 			}
 		}
 
-		return SectionTable::getList(
-			[
-				'select' => ['ID', 'NAME', 'DEPTH_LEVEL', 'IBLOCK_SECTION_ID', 'LEFT_MARGIN', 'RIGHT_MARGIN'],
-				'filter' => ['=IBLOCK_ID' => $structureIBlockId, '=ACTIVE' => 'Y'] + $rootDepartmentFilter,
-				'order' => ["LEFT_MARGIN" => "asc"]
-			]
-		)->fetchCollection();
+		return SectionTable::getList([
+			'select' => ['ID', 'NAME', 'DEPTH_LEVEL', 'IBLOCK_SECTION_ID', 'LEFT_MARGIN', 'RIGHT_MARGIN'],
+			'filter' => $filter,
+			'order' => ["LEFT_MARGIN" => "asc"]
+		])->fetchCollection();
 	}
 
 	public static function getStructureIBlockId()

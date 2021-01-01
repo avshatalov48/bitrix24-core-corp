@@ -13,11 +13,13 @@ class FieldAttribute extends Main\Engine\Controller
 	protected function processBeforeAction(Action $action)
 	{
 		return parent::processBeforeAction($action)
-			&& \CCrmAuthorizationHelper::CheckConfigurationUpdatePermission(self::getCurrentUserPermissions())
-			&& Crm\Attribute\FieldAttributeManager::isEnabled();
+			&& \CCrmAuthorizationHelper::CheckConfigurationUpdatePermission(
+				self::getCurrentUserPermissions()
+			);
 	}
 
-	//BX.ajax.runAction("crm.api.fieldAttribute.saveConfiguration", { data: { config: { typeId: 3, groups: [...] }, fieldName: "UF_CRM_1519828243", entityTypeName: "DEAL", entityScope: "" } });
+	//BX.ajax.runAction("crm.api.fieldAttribute.saveConfiguration", { data: { config: { typeId: 3, groups: [...] },
+	// fieldName: "UF_CRM_1519828243", entityTypeName: "DEAL", entityScope: "" } });
 	public function saveConfigurationAction(array $config, $fieldName, $entityTypeName, $entityScope)
 	{
 		Crm\Attribute\FieldAttributeManager::saveEntityConfiguration(

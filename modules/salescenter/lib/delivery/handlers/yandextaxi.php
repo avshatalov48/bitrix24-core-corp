@@ -83,7 +83,9 @@ class YandexTaxi extends Base
 	public function getWizard()
 	{
 		return new \Bitrix\SalesCenter\Delivery\Wizard\YandexTaxi(
-			ServiceContainer::getApi()
+			ServiceContainer::getApi(),
+			ServiceContainer::getRegionFinder(),
+			ServiceContainer::getRegionCoordinatesMapper()
 		);
 	}
 }

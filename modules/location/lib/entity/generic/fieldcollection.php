@@ -48,6 +48,28 @@ abstract class FieldCollection extends Collection
 	}
 
 	/**
+	 * @return IField[]
+	 */
+	public function getSortedItems()
+	{
+		$result = $this->items;
+
+		uasort(
+			$result,
+			function ($a, $b)
+			{
+				if ($a->getType() == $b->getType())
+				{
+					return 0;
+				}
+				return ($a->getType() < $b->getType()) ? -1 : 1;
+			}
+		);
+
+		return $result;
+	}
+
+	/**
 	 * @param mixed $item
 	 * @return int
 	 * @throws SystemException

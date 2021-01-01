@@ -25,6 +25,8 @@ class CAllCrmCompany
 	const TOTAL_COUNT_CACHE_ID =  'crm_company_total_count';
 
 	public $LAST_ERROR = '';
+	protected $checkExceptions = array();
+	
 	public $cPerms = null;
 	protected $bCheckPermission = true;
 	const TABLE_ALIAS = 'L';
@@ -47,6 +49,13 @@ class CAllCrmCompany
 		}
 
 		$result = GetMessage("CRM_COMPANY_FIELD_{$fieldName}");
+
+		if (!(is_string($result) && $result !== '')
+			&& Crm\Tracking\UI\Details::isTrackingField($fieldName))
+		{
+			$result = Crm\Tracking\UI\Details::getFieldCaption($fieldName);
+		}
+
 		return is_string($result) ? $result : '';
 	}
 	// Get Fields Metadata
@@ -65,7 +74,8 @@ class CAllCrmCompany
 				),
 				'COMPANY_TYPE' => array(
 					'TYPE' => 'crm_status',
-					'CRM_STATUS_TYPE' => 'COMPANY_TYPE'
+					'CRM_STATUS_TYPE' => 'COMPANY_TYPE',
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::HasDefaultValue]
 				),
 				'LOGO' => array(
 					'TYPE' => 'file'
@@ -132,11 +142,13 @@ class CAllCrmCompany
 				),
 				'INDUSTRY' => array(
 					'TYPE' => 'crm_status',
-					'CRM_STATUS_TYPE' => 'INDUSTRY'
+					'CRM_STATUS_TYPE' => 'INDUSTRY',
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::HasDefaultValue]
 				),
 				'EMPLOYEES' => array(
 					'TYPE' => 'crm_status',
-					'CRM_STATUS_TYPE' => 'EMPLOYEES'
+					'CRM_STATUS_TYPE' => 'EMPLOYEES',
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::HasDefaultValue]
 				),
 				'CURRENCY_ID' => array(
 					'TYPE' => 'crm_currency'
@@ -989,6 +1001,7 @@ class CAllCrmCompany
 		}
 
 		$this->LAST_ERROR = '';
+		$this->checkExceptions = [];
 
 		$isRestoration = isset($options['IS_RESTORATION']) && $options['IS_RESTORATION'];
 
@@ -1038,6 +1051,11 @@ class CAllCrmCompany
 
 		$arFields['IS_MY_COMPANY'] = (isset($arFields['IS_MY_COMPANY']) && $arFields['IS_MY_COMPANY'] === 'Y') ?
 			'Y' : 'N';
+
+		if(!isset($arFields['TITLE']) || trim($arFields['TITLE']) === '')
+		{
+			$arFields['TITLE'] = self::GetAutoTitle();
+		}
 
 		if (!$this->CheckFields($arFields, false, $options))
 		{
@@ -1148,14 +1166,30 @@ class CAllCrmCompany
 				}
 			}
 
+			unset($arFields['ID']);
 			$ID = intval($DB->Add('b_crm_company', $arFields, array(), 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__));
+			//Append ID to TITLE if required
+			if($ID > 0 && $arFields['TITLE'] === self::GetAutoTitle())
+			{
+				$arFields['TITLE'] = self::GetAutoTitle($ID);
+				$sUpdate = $DB->PrepareUpdate('b_crm_company', array('TITLE' => $arFields['TITLE']));
+				if($sUpdate <> '')
+				{
+					$DB->Query(
+						"UPDATE b_crm_company SET {$sUpdate} WHERE ID = {$ID}",
+						false,
+						'FILE: '.__FILE__.'<br /> LINE: '.__LINE__
+					);
+				};
+			}
+
+			$result = $arFields['ID'] = $ID;
 
 			if(defined('BX_COMP_MANAGED_CACHE'))
 			{
 				$GLOBALS['CACHE_MANAGER']->CleanDir('b_crm_company');
 			}
 
-			$result = $arFields['ID'] = $ID;
 			CCrmPerms::UpdateEntityAttr('COMPANY', $ID, $arEntityAttr);
 
 			//Statistics & History -->
@@ -1364,6 +1398,8 @@ class CAllCrmCompany
 		global $DB;
 
 		$this->LAST_ERROR = '';
+		$this->checkExceptions = [];
+
 		$ID = (int) $ID;
 		if(!is_array($arOptions))
 		{
@@ -1402,6 +1438,11 @@ class CAllCrmCompany
 			unset($arFields['DATE_MODIFY']);
 		}
 
+		if(isset($arFields['TITLE']) && trim($arFields['TITLE']) === '')
+		{
+			unset($arFields['TITLE']);
+		}
+
 		if(!$isSystemAction)
 		{
 			$arFields['~DATE_MODIFY'] = $DB->CurrentTimeFunction();
@@ -1429,6 +1470,8 @@ class CAllCrmCompany
 		$assignedByID = (int)(isset($arFields['ASSIGNED_BY_ID']) ? $arFields['ASSIGNED_BY_ID'] : $arRow['ASSIGNED_BY_ID']);
 
 		$bResult = false;
+
+		$options['CURRENT_FIELDS'] = $arRow;
 		if (!$this->CheckFields($arFields, $ID, $arOptions))
 		{
 			$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
@@ -2210,6 +2253,7 @@ class CAllCrmCompany
 	{
 		global $APPLICATION, $USER_FIELD_MANAGER;
 		$this->LAST_ERROR = '';
+		$this->checkExceptions = [];
 
 		if (($ID == false || isset($arFields['TITLE'])) && empty($arFields['TITLE']))
 			$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_IS_MISSING', array('%FIELD_NAME%' => GetMessage('CRM_COMPANY_FIELD_TITLE')))."<br />";
@@ -2248,22 +2292,118 @@ class CAllCrmCompany
 		if ($enableUserFieldCheck)
 		{
 			// We have to prepare field data before check (issue #22966)
-			CCrmEntityHelper::NormalizeUserFields($arFields, self::$sUFEntityID, $USER_FIELD_MANAGER, array('IS_NEW' => ($ID == false)));
+			CCrmEntityHelper::NormalizeUserFields(
+				$arFields,
+				self::$sUFEntityID,
+				$USER_FIELD_MANAGER,
+				array('IS_NEW' => ($ID == false))
+			);
 
 			$enableRequiredUserFieldCheck = !(isset($options['DISABLE_REQUIRED_USER_FIELD_CHECK'])
 				&& $options['DISABLE_REQUIRED_USER_FIELD_CHECK'] === true);
 
-			if(!$USER_FIELD_MANAGER->CheckFields(self::$sUFEntityID, $ID, $arFields, false, $enableRequiredUserFieldCheck))
+			$fieldsToCheck = $arFields;
+			$requiredFields = null;
+			if($enableRequiredUserFieldCheck)
+			{
+				/* Comment before status support
+				$currentFields = null;
+				if($ID > 0)
+				{
+					if(isset($options['CURRENT_FIELDS']) && is_array($options['CURRENT_FIELDS']))
+					{
+						$currentFields = $options['CURRENT_FIELDS'];
+					}
+					else
+					{
+						$dbResult = self::GetListEx(
+							array(),
+							array('ID' => $ID, 'CHECK_PERMISSIONS' => 'N'),
+							false,
+							false,
+							array('*', 'UF_*')
+						);
+						$currentFields = $dbResult->Fetch();
+					}
+				}
+
+				if(is_array($currentFields))
+				{
+					CCrmEntityHelper::NormalizeUserFields(
+						$currentFields,
+						self::$sUFEntityID,
+						$USER_FIELD_MANAGER,
+						array('IS_NEW' => ($ID == false))
+					);
+
+					//If Status ID is changed we must perform check of all fields.
+					if(isset($arFields['STATUS_ID']) && $arFields['STATUS_ID'] !== $currentFields['STATUS_ID'])
+					{
+						$fieldsToCheck = array_merge($currentFields, $arFields);
+						if(self::GetSemanticID($arFields['STATUS_ID'], $currentFields['CATEGORY_ID']) ===
+							Bitrix\Crm\PhaseSemantics::FAILURE)
+						{
+							//Disable required fields check for failure status due to backward compatibility.
+							$enableRequiredUserFieldCheck = false;
+						}
+					}
+					elseif(!isset($arFields['STATUS_ID']) && isset($currentFields['STATUS_ID']))
+					{
+						$fieldsToCheck = array_merge($arFields, array('STATUS_ID' => $currentFields['STATUS_ID']));
+					}
+				}*/
+
+				$requiredFields = Crm\Attribute\FieldAttributeManager::getRequiredFields(
+					CCrmOwnerType::Company,
+					$ID,
+					$fieldsToCheck,
+					Crm\Attribute\FieldOrigin::UNDEFINED,
+					is_array($options['FIELD_CHECK_OPTIONS']) ? $options['FIELD_CHECK_OPTIONS'] : array()
+				);
+
+				$requiredSystemFields = isset($requiredFields[Crm\Attribute\FieldOrigin::SYSTEM])
+					? $requiredFields[Crm\Attribute\FieldOrigin::SYSTEM] : array();
+				if(!empty($requiredSystemFields))
+				{
+					$validator = new Crm\Entity\CompanyValidator($ID, $fieldsToCheck);
+					$validationErrors = array();
+					foreach($requiredSystemFields as $fieldName)
+					{
+						$validator->checkFieldPresence($fieldName, $validationErrors);
+					}
+
+					if(!empty($validationErrors))
+					{
+						$e = new CAdminException($validationErrors);
+						$this->checkExceptions[] = $e;
+						$this->LAST_ERROR .= $e->GetString();
+					}
+				}
+			}
+
+			$requiredUserFields = is_array($requiredFields) && isset($requiredFields[Crm\Attribute\FieldOrigin::CUSTOM])
+				? $requiredFields[Crm\Attribute\FieldOrigin::CUSTOM] : array();
+
+			if (!$USER_FIELD_MANAGER->CheckFields(
+				self::$sUFEntityID,
+				$ID,
+				$fieldsToCheck,
+				false,
+				$enableRequiredUserFieldCheck,
+				$requiredUserFields))
 			{
 				$e = $APPLICATION->GetException();
+				$this->checkExceptions[] = $e;
 				$this->LAST_ERROR .= $e->GetString();
 			}
 		}
 
-		if($this->LAST_ERROR <> '')
-			return false;
+		return $this->LAST_ERROR === '';
+	}
 
-		return true;
+	public function GetCheckExceptions()
+	{
+		return $this->checkExceptions;
 	}
 
 	public static function CompareFields(array $arFieldsOrig, array $arFieldsModif, array $arOptions = null)
@@ -2388,11 +2528,14 @@ class CAllCrmCompany
 			&& (int)$arFieldsOrig['ASSIGNED_BY_ID'] != (int)$arFieldsModif['ASSIGNED_BY_ID'])
 		{
 			$arUser = Array();
+			$sort_by = 'last_name';
+			$sort_dir = 'asc';
 			$dbUsers = CUser::GetList(
-				($sort_by = 'last_name'), ($sort_dir = 'asc'),
+				$sort_by, $sort_dir,
 				array('ID' => implode('|', array(intval($arFieldsOrig['ASSIGNED_BY_ID']), intval($arFieldsModif['ASSIGNED_BY_ID'])))),
 				array('FIELDS' => array('ID', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'LOGIN', 'TITLE', 'EMAIL'))
 			);
+			unset($sort_by, $sort_dir);
 			while ($arRes = $dbUsers->Fetch())
 				$arUser[$arRes['ID']] = CUser::FormatName(CSite::GetNameFormat(false), $arRes);
 
@@ -2786,6 +2929,16 @@ class CAllCrmCompany
 	public static function GetDefaultTitle()
 	{
 		return GetMessage('CRM_COMPANY_UNTITLED');
+	}
+
+	public static function GetAutoTitleTemplate()
+	{
+		return GetMessage('CRM_COMPANY_DEFAULT_TITLE_TEMPLATE');
+	}
+
+	public static function GetAutoTitle($number = '')
+	{
+		return GetMessage('CRM_COMPANY_DEFAULT_TITLE_TEMPLATE', array('%NUMBER%' => $number));
 	}
 
 	/**

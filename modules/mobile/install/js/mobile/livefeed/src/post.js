@@ -1,4 +1,5 @@
-import {Loc, Type} from "main.core";
+import {Loc, Type} from 'main.core';
+import {Ajax} from 'mobile.ajax';
 
 class Post
 {
@@ -141,8 +142,7 @@ class Post
 
 			node.setAttribute('data-favorites', newValue);
 
-			const BMAjaxWrapper = new MobileAjaxWrapper;
-			BMAjaxWrapper.runAction('socialnetwork.api.livefeed.changeFavorites', {
+			Ajax.runAction('socialnetwork.api.livefeed.changeFavorites', {
 				data: {
 					logId: this.logId,
 					value: newValue
@@ -204,13 +204,9 @@ class Post
 
 			menuNode.setAttribute('data-pinned', newValue);
 
-			if (context === 'detail')
-			{
-				BXMobileApp.onCustomEvent('Livefeed::showLoader', {}, true, true);
-			}
+			BXMobileApp.onCustomEvent('Livefeed::showLoader', {}, true, true);
 
-			const BMAjaxWrapper = new MobileAjaxWrapper;
-			BMAjaxWrapper.runAction('socialnetwork.api.livefeed.logentry.' + (newValue === 'Y' ? 'pin' : 'unpin'), {
+			Ajax.runAction('socialnetwork.api.livefeed.logentry.' + (newValue === 'Y' ? 'pin' : 'unpin'), {
 				data: {
 					params: {
 						logId: this.logId
@@ -337,13 +333,13 @@ class Post
 			return;
 		}
 
-		var postNode = BX.findParent(menuNode, { className: 'post-wrap' });
+		const postNode = menuNode.closest('.post-wrap');
 		if (!postNode)
 		{
 			return;
 		}
 
-		var pinnedValue = menuNode.getAttribute('data-pinned');
+		const pinnedValue = menuNode.getAttribute('data-pinned');
 		if (pinnedValue === 'Y')
 		{
 			postNode.classList.add('lenta-item-pin-active');

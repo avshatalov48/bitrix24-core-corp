@@ -19,7 +19,6 @@ if (file_exists($_SERVER["DOCUMENT_ROOT"]."/.dev") && file_exists($devUpdater))
 // GOOGLE KEY FOR ADDRESS UF
 
 \CBitrix24::setFilemanGoogleKey();
-\CBitrix24::setLocationGoogleKey();
 
 if(!Bitrix\Main\Loader::includeModule("rest"))
 {

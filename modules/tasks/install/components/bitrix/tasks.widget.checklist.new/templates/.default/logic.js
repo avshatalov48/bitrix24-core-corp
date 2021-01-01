@@ -17,6 +17,8 @@ BX.Tasks.CheckList = (function()
 		});
 		this.loader = new BX.Loader({target: this.renderTo});
 
+		this.suffixDomId = options.suffixDomId;
+
 		this.setOptionManager(this.treeStructure);
 		this.setClickEventHandler(this.treeStructure);
 
@@ -36,7 +38,13 @@ BX.Tasks.CheckList = (function()
 			}, this));
 		}
 
-		BX.bind(BX('addCheckList'), 'click', this.onAddCheckListClick.bind(this));
+		var addChecklistNode = document.getElementById('addCheckList_' + this.suffixDomId);
+		if (!addChecklistNode)
+		{
+			addChecklistNode = top.document.getElementById('addCheckList_' + this.suffixDomId);
+		}
+
+		BX.bind(addChecklistNode, 'click', this.onAddCheckListClick.bind(this));
 		BX.bind(document, 'mousedown', this.onDocumentMouseDown.bind(this));
 		BX.bind(document, 'mouseup', this.onDocumentMouseUp.bind(this));
 	};

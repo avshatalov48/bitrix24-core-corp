@@ -301,10 +301,24 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 	{
 		$res = new Util\Result();
 
-		TasksTemplatePermissionTable::deleteList([
-			'=TEMPLATE_ID' => $template->getId(),
-			'!=ACCESS_CODE' => 'U'.Util\User::getId()
-		]);
+		$permissions = array_values($permissions);
+
+		/**
+		 * Delete all permissions if anyone gets new access
+		 */
+		if (!empty($permissions) && is_array($permissions[0]))
+		{
+			TasksTemplatePermissionTable::deleteList([
+				'=TEMPLATE_ID' => $template->getId()
+			]);
+		}
+		else
+		{
+			TasksTemplatePermissionTable::deleteList([
+				'=TEMPLATE_ID' => $template->getId(),
+				'!=ACCESS_CODE' => 'U'.Util\User::getId()
+			]);
+		}
 
 		foreach ($permissions as $permission)
 		{

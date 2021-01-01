@@ -78,8 +78,18 @@ class Report extends Main\Engine\JsonController
 			'builder',
 			function($className, $sourceId, $from, $to)
 			{
+				$yesterday = new Main\Type\Date();
 				$from = new Main\Type\Date($from);
 				$to = new Main\Type\Date($to);
+				
+				if ($to->getTimestamp() > $yesterday->getTimestamp())
+				{
+					$to = (clone $yesterday);
+				}
+				if ($from->getTimestamp() > $to->getTimestamp())
+				{
+					$from = (clone $to);
+				}
 
 				/** @var Tracking\Ad\ReportBuilder $className */
 				return (new $className())

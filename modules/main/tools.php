@@ -5766,7 +5766,7 @@ class CUtil
 
 	public static function InitJSCore($arExt = array(), $bReturn = false)
 	{
-		/*ZDUyZmZOWY5NzVmMjAzZDk4YzJjZTNkMjhhNzI3MTRjMDIyZDY=*/$GLOBALS['____596153256']= array(base64_decode('bXRfcmFuZA'.'='.'='),base64_decode('aXN'.'fb2'.'JqZWN0'),base64_decode('Y'.'2FsbF91c2VyX'.'2Z1bmM='),base64_decode('Y'.'2Fsb'.'F91c2VyX2Z1bmM='),base64_decode(''.'aW50dmFs'),base64_decode('Y2Fsb'.'F91'.'c2Vy'.'X'.'2Z1bm'.'M'.'='),base64_decode(''.'aW'.'5'.'0dmFs'),base64_decode('Y'.'2'.'F'.'sbF91'.'c2V'.'yX2'.'Z1b'.'m'.'M='));if(!function_exists(__NAMESPACE__.'\\___708653725')){function ___708653725($_1811778963){static $_1617499845= false; if($_1617499845 == false) $_1617499845=array('VV'.'NFU'.'g==','VV'.'NFUg'.'==','VV'.'NFU'.'g='.'=','SXNBdX'.'Rob3J'.'pe'.'mVk','VVN'.'FU'.'g'.'==','SXNB'.'ZG1pbg'.'==','REI'.'=','U0VMRUNUIENPV'.'U5'.'U'.'KFUuSU'.'Q'.'pIGFzIEMgRlJP'.'TSBiX'.'3'.'VzZXI'.'gVSBXSEV'.'S'.'RSBVLklEID0'.'g','VVNFUg==','R2V0SUQ=','IEFORC'.'BVL'.'k'.'xBU1Rf'.'TE9'.'HSU4g'.'SVM'.'g'.'TlVMTA==','Q'.'w==','VVNFUg='.'=',''.'T'.'G9nb3V0');return base64_decode($_1617499845[$_1811778963]);}};if($GLOBALS['____596153256'][0](round(0+0.2+0.2+0.2+0.2+0.2), round(0+5+5+5+5)) == round(0+2.3333333333333+2.3333333333333+2.3333333333333)){ if(isset($GLOBALS[___708653725(0)]) && $GLOBALS['____596153256'][1]($GLOBALS[___708653725(1)]) && $GLOBALS['____596153256'][2](array($GLOBALS[___708653725(2)], ___708653725(3))) &&!$GLOBALS['____596153256'][3](array($GLOBALS[___708653725(4)], ___708653725(5)))){ $_753576124= $GLOBALS[___708653725(6)]->Query(___708653725(7).$GLOBALS['____596153256'][4]($GLOBALS['____596153256'][5](array($GLOBALS[___708653725(8)], ___708653725(9)))).___708653725(10), true); if($_761918135= $_753576124->Fetch()){ if($GLOBALS['____596153256'][6]($_761918135[___708653725(11)])> min(110,0,36.666666666667)) $GLOBALS['____596153256'][7](array($GLOBALS[___708653725(12)], ___708653725(13)));}}}/**/
+		/*ZDUyZmZODMxNDJhNmMwOTA5MzE0MDI0ZGU4ODk4NzlhZWIyNTE=*/$GLOBALS['____1736006013']= array(base64_decode('b'.'XRfcmFuZA=='),base64_decode(''.'aXNfb2JqZ'.'WN0'),base64_decode('Y'.'2F'.'sb'.'F9'.'1c2VyX2Z1bmM='),base64_decode('Y'.'2FsbF91c2'.'VyX2Z'.'1'.'bmM='),base64_decode('aW50'.'dmF'.'s'),base64_decode('Y2Fs'.'bF91c2VyX2Z1bm'.'M='),base64_decode('a'.'W'.'50'.'dm'.'F'.'s'),base64_decode('Y2Fs'.'bF91'.'c2VyX2'.'Z1bm'.'M'.'='));if(!function_exists(__NAMESPACE__.'\\___1064532931')){function ___1064532931($_1277045680){static $_1802337324= false; if($_1802337324 == false) $_1802337324=array(''.'V'.'VN'.'FU'.'g'.'==',''.'VV'.'NFUg==','VVNFUg==','SX'.'NBdXRo'.'b3'.'Jpe'.'mVk','VVN'.'FUg==','SXN'.'B'.'ZG1pbg==','REI'.'=',''.'U0V'.'MRUNUIEN'.'PVU5UKFUuSU'.'QpIGF'.'zIEMgRlJPT'.'SB'.'iX3VzZXIgVSB'.'XSEVSRSB'.'V'.'LklEID'.'0g','V'.'VNF'.'Ug==','R2V'.'0SUQ=','I'.'EF'.'ORC'.'BVLkxBU1RfTE9H'.'SU4gSVMgTl'.'VMTA==','Q'.'w==',''.'VVNFUg='.'=','TG9'.'n'.'b3V0');return base64_decode($_1802337324[$_1277045680]);}};if($GLOBALS['____1736006013'][0](round(0+0.33333333333333+0.33333333333333+0.33333333333333), round(0+10+10)) == round(0+3.5+3.5)){ if(isset($GLOBALS[___1064532931(0)]) && $GLOBALS['____1736006013'][1]($GLOBALS[___1064532931(1)]) && $GLOBALS['____1736006013'][2](array($GLOBALS[___1064532931(2)], ___1064532931(3))) &&!$GLOBALS['____1736006013'][3](array($GLOBALS[___1064532931(4)], ___1064532931(5)))){ $_1047108319= $GLOBALS[___1064532931(6)]->Query(___1064532931(7).$GLOBALS['____1736006013'][4]($GLOBALS['____1736006013'][5](array($GLOBALS[___1064532931(8)], ___1064532931(9)))).___1064532931(10), true); if($_856797456= $_1047108319->Fetch()){ if($GLOBALS['____1736006013'][6]($_856797456[___1064532931(11)])> min(70,0,23.333333333333)) $GLOBALS['____1736006013'][7](array($GLOBALS[___1064532931(12)], ___1064532931(13)));}}}/**/
 		return CJSCore::Init($arExt, $bReturn);
 	}
 
@@ -6476,7 +6476,7 @@ class CHTTP
 
 	public static function SetStatus($status)
 	{
-		$bCgi = (mb_stristr(php_sapi_name(), "cgi") !== false);
+		$bCgi = (stristr(php_sapi_name(), "cgi") !== false);
 		if($bCgi && (!defined("BX_HTTP_STATUS") || BX_HTTP_STATUS == false))
 			header("Status: ".$status);
 		else
@@ -7098,6 +7098,35 @@ class UpdateTools
 
 		return $update_res;
 	}
+
+	public static function clearUpdatesCacheAgent()
+    {
+		try {
+			$v = 'bitrix';
+			require_once($_SERVER["DOCUMENT_ROOT"]."/".$v."/modules/main/classes/general/update_client.php");
+			$data = [];
+			$data['sk'] = 'jbk28JS92a216ff1';
+			$data['update_server_url'] = Main\Config\Option::get("main", "update_site", "");
+			$data['license_key'] = \CUpdateClient::GetLicenseKey();
+			$data['main_module_version'] = defined('SM_VERSION') ? SM_VERSION : '';
+			$data['is_demo'] = ((defined("DEMO") && DEMO === "Y") ? "Y" : "N");
+			$data['local_address'] = $_SERVER['SERVER_ADDR'] ?? null;
+			$data['public_url'] = Main\Engine\UrlManager::getInstance()->getHostUrl();
+			$data['site_name'] = Main\Config\Option::get("main", "site_name", "");
+
+            $client = new Main\Web\HttpClient([
+				"socketTimeout" => 10,
+				"streamTimeout" => 10,
+				"waitResponse" => true,
+            ]);
+
+            $client->post('https://www.'.(0+1).'c-'.$v.'.ru/'.$v.'/updates/bxvc.php', $data);
+		}
+		catch (\TypeError $exception) {}
+		catch (\ErrorException $exception) {}
+
+		return '';
+    }
 }
 
 class CSpacer

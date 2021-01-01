@@ -25,5 +25,14 @@ if (isset($arParams['USER']))
 		$arParams['USER']['TYPE'] = 'extranet';
 	}
 }
+
+if (
+	isset($arParams['PARAMS'])
+	&& isset($arParams['PARAMS']['SITE_TEMPLATE_ID'])
+	&& $arParams['PARAMS']['SITE_TEMPLATE_ID'] <> ''
+)
+{
+	$this->setSiteTemplateId($arParams['PARAMS']['SITE_TEMPLATE_ID']);
+}
 $this->IncludeComponentTemplate();
 ?>

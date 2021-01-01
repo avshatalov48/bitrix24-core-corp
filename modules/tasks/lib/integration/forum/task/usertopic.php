@@ -39,7 +39,14 @@ class UserTopic extends Forum
 		}
 
 		$lastVisit = ($lastVisit ?? new DateTime());
-		$taskData = $task->getData(false, [], false);
+		try
+		{
+			$taskData = $task->getData(false, [], false);
+		}
+		catch (\TasksException $e)
+		{
+			return;
+		}
 
 		if (!$taskData['FORUM_TOPIC_ID'])
 		{
@@ -81,7 +88,7 @@ class UserTopic extends Forum
 		$lastVisit = $sqlHelper->convertToDbDateTime(new DateTime());
 
 		$connection->query("
-			INSERT INTO b_forum_user_topic (TOPIC_ID, USER_ID, FORUM_ID, LAST_VISIT)
+			INSERT IGNORE INTO b_forum_user_topic (TOPIC_ID, USER_ID, FORUM_ID, LAST_VISIT)
 			SELECT DISTINCT T.FORUM_TOPIC_ID, {$currentUserId}, {$forumId}, {$lastVisit}
 			FROM b_tasks T
 				{$userJoin}

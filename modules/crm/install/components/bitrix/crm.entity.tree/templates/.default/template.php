@@ -138,7 +138,7 @@ if (!function_exists('CrmEntityTreeDrawActivity'))
 								}
 							}
 							?>
-							<li class="crm-doc-droplist-item <?= $visual['icon']?>" title="<?= $visual['title']?>"><?= $item['SUBJECT']?></li>
+							<li class="crm-doc-droplist-item <?= $visual['icon']?>" title="<?= \htmlspecialcharsbx($visual['title']);?>"><?= $item['SUBJECT'];?></li>
 						<?endforeach;?>
 					</ul>
 				</div>
@@ -210,9 +210,9 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 							?>
 						<div class="crm-doc-info-progress">
 							<div class="crm-doc-info-progressbar">
-								<div class="crm-doc-info-progressbar-indikator" style="background-color: <?= $color?>; width: <?= $width?>%"></div>
+								<div class="crm-doc-info-progressbar-indikator" style="background-color: <?= \htmlspecialcharsbx($color);?>; width: <?= $width?>%"></div>
 							</div>
-							<div class="crm-doc-info-text"><?= $name?></div>
+							<div class="crm-doc-info-text"><?= \htmlspecialcharsbx($name);?></div>
 						</div>
 						<?endif;?>
 						<?if ($item['ASSIGNED_BY_ID'] > 0):?>
@@ -237,7 +237,7 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 								<?if ($item['SOURCE_ID']):?>
 								<tr>
 									<td><?= $lang['SOURCE']?>:</td>
-									<td><?= $statuses['SOURCE'][$item['SOURCE_ID']]['NAME']?></td>
+									<td><?= \htmlspecialcharsbx($statuses['SOURCE'][$item['SOURCE_ID']]['NAME'])?></td>
 								</tr>
 								<?endif;?>
 								<tr>
@@ -359,9 +359,9 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 										: \Bitrix\Crm\Color\DealStageColorScheme::getDefaultColorByStage($item['STAGE_ID']);
 								?>
 							<div class="crm-doc-info-progressbar">
-								<div class="crm-doc-info-progressbar-indikator" style="background-color: <?= $color?>; width: <?= $width?>%"></div>
+								<div class="crm-doc-info-progressbar-indikator" style="background-color: <?= \htmlspecialcharsbx($color);?>; width: <?= $width?>%"></div>
 							</div>
-							<div class="crm-doc-info-text"><?= $name?></div>
+							<div class="crm-doc-info-text"><?= htmlspecialcharsbx($name);?></div>
 							<?endif;?>
 							<table class="crm-doc-info-table">
 								<tr>
@@ -421,9 +421,9 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 										: \Bitrix\Crm\Color\QuoteStatusColorScheme::getDefaultColorByStatus($item['STATUS_ID']);
 								?>
 							<div class="crm-doc-info-progressbar">
-								<div class="crm-doc-info-progressbar-indikator" style="background-color: <?= $color?>; width: <?= $width?>%"></div>
+								<div class="crm-doc-info-progressbar-indikator" style="background-color: <?= \htmlspecialcharsbx($color);?>; width: <?= $width?>%"></div>
 							</div>
-							<div class="crm-doc-info-text"><?= $name?></div>
+							<div class="crm-doc-info-text"><?= htmlspecialcharsbx($name);?></div>
 							<?endif;?>
 							<table class="crm-doc-info-table">
 								<col class="crm-doc-info-table-1">
@@ -498,9 +498,9 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 								}
 								?>
 							<div class="crm-doc-info-progressbar">
-								<div class="crm-doc-info-progressbar-indikator" style="background-color: <?= $color?>; width: <?= $width?>%"></div>
+								<div class="crm-doc-info-progressbar-indikator" style="background-color: <?= \htmlspecialcharsbx($color);?>; width: <?= $width?>%"></div>
 							</div>
-							<div class="crm-doc-info-text"><?= $name?></div>
+							<div class="crm-doc-info-text"><?= \htmlspecialcharsbx($name);?></div>
 							<?endif;?>
 							<table class="crm-doc-info-table">
 								<tr>

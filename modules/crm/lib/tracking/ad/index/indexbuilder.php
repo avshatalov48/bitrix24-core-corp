@@ -317,9 +317,7 @@ final class IndexBuilder extends Tracking\Ad\Builder
 
 		$rows = &$data['ROWS'];
 
-
-		//TODO: remove test 1000 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		$packId = 1000 ?: Tracking\Internals\ExpensesPackTable::add([
+		$packId = Tracking\Internals\ExpensesPackTable::add([
 			'SOURCE_ID' => $this->sourceId,
 			'TYPE_ID' => Tracking\Internals\ExpensesPackTable::TYPE_AD,
 			'DATE_FROM' => $this->dateFrom,
@@ -348,11 +346,11 @@ final class IndexBuilder extends Tracking\Ad\Builder
 			}
 
 			$date = new Main\Type\Date($row['DATE'], 'Y-m-d');
-			if ($this->minDate && $this->minDate->getTimestamp() <= $date->getTimestamp())
+			if ($this->dateFrom && $this->dateFrom->getTimestamp() > $date->getTimestamp())
 			{
 				continue;
 			}
-			if ($this->maxDate && $this->maxDate->getTimestamp() >= $date->getTimestamp())
+			if ($this->dateTo && $this->dateTo->getTimestamp() < $date->getTimestamp())
 			{
 				continue;
 			}

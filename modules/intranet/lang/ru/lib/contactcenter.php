@@ -25,3 +25,6 @@ $MESS["CONTACT_CENTER_PARTNER_SOLUTIONS"] = "Решения от партнер�
 $MESS["CONTACT_CENTER_ERROR_MODULE_NOT_LOADED"] = "Не установлен модуль #MODULE_ID#";
 $MESS["CONTACT_CENTER_RENT_5_NUMBERS"] = "Пакет 5 номеров";
 $MESS["CONTACT_CENTER_RENT_10_NUMBERS"] = "Пакет 10 номеров";
+
+$MESS["CONTACT_CENTER_IMOPENLINES_CREATE_OPEN_LINE"] = "Создать открытую линию";
+$MESS["CONTACT_CENTER_IMOPENLINES_CONNECTED_CONNECTOR"] = "Канал подключен";

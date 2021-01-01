@@ -409,6 +409,11 @@ class ActualEntitySelector
 	 */
 	public function appendPersonCriterion($lastName, $name = '', $secondName = '')
 	{
+		if (!trim($lastName) || !trim($name))
+		{
+			return $this;
+		}
+
 		$criterion = new DuplicatePersonCriterion($lastName, $name, $secondName);
 		$criterion->setStrictComparison(true);
 		$this->duplicateCriteria[] = $criterion;
@@ -999,12 +1004,43 @@ class ActualEntitySelector
 	protected function findDuplicates()
 	{
 		$result = [];
-		foreach ($this->duplicateCriteria as $criterion)
+
+		$sortedCriteria = [];
+		foreach ($this->duplicateCriteria as $index => $criterion)
 		{
+			$sort = 10000;
+			if ($criterion instanceof DuplicateCommunicationCriterion)
+			{
+				$sort = 1000;
+			}
+			else if ($criterion instanceof DuplicatePersonCriterion)
+			{
+				$sort = 100000;
+			}
+			$sortedCriteria[$sort + $index] = $criterion;
+		}
+		ksort($sortedCriteria);
+
+		$found = false;
+		foreach ($sortedCriteria as $criterion)
+		{
+			if ($found && $criterion instanceof DuplicatePersonCriterion)
+			{
+				if (!$criterion->getSecondName() || !$criterion->getName())
+				{
+					continue;
+				}
+			}
+
 			$criterion->sortDescendingByEntityTypeId();
 			$duplicate = $criterion->find(\CCrmOwnerType::Undefined, 250);
 			if($duplicate !== null)
 			{
+				if ($duplicate->getEntityIDs())
+				{
+					$found = true;
+				}
+
 				$result[] = $duplicate;
 			}
 		}

@@ -207,6 +207,11 @@ class Script
 
 	public static function getPublicUrl(array $formData)
 	{
+		if ($landingUrl = Internals\LandingTable::getLandingPublicUrl($formData['ID']))
+		{
+			return $landingUrl;
+		}
+
 		$link = self::getDomain() . self::$defaultFormPathSef;
 		$link = str_replace(
 			array('#id#', '#form_id#', '#form_code#', '#form_sec#'),
@@ -233,6 +238,11 @@ class Script
 
 	public static function getUrlContext($formData, $formPath = null)
 	{
+		if ($landingUrl = Internals\LandingTable::getLandingPublicUrl($formData['ID']))
+		{
+			return $landingUrl;
+		}
+
 		if(!$formPath)
 		{
 			$formPath = self::getPublicFormPath();

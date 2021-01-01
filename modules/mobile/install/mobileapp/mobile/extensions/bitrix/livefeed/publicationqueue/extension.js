@@ -110,8 +110,9 @@
 		onFileUploadStatusChanged(eventName, eventData, eventTaskId)
 		{
 			if (
-				eventName !== 'onerrorfilecreate'
-				&& eventName !== 'onfilecreated'
+				eventName !== TaskEventConsts.FILE_CREATED_FAILED
+				&& eventName !== TaskEventConsts.FILE_READ_ERROR
+				&& eventName !== TaskEventConsts.FILE_CREATED
 			)
 			{
 				return;
@@ -136,7 +137,10 @@
 				return;
 			}
 
-			if (eventName == 'onerrorfilecreate')
+			if (
+				eventName === TaskEventConsts.FILE_CREATED_FAILED
+				|| eventName === TaskEventConsts.FILE_READ_ERROR
+			)
 			{
 				this.handleFileUploadError({
 					key: postVirtualId,
@@ -144,7 +148,7 @@
 					errorText: BX.message('MOBILEAPP_EXT_LIVEFEED_FILE_UPLOAD_ERROR')
 				});
 			}
-			else if (eventName == 'onfilecreated')
+			else if (eventName === TaskEventConsts.FILE_CREATED)
 			{
 				if (eventData.result.status == 'error')
 				{

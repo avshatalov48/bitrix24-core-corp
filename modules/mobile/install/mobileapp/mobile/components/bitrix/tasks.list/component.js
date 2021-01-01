@@ -207,6 +207,7 @@ include('InAppNotifier');
 			return {
 				activityDate: [
 					{field: 'ACTIVITY_DATE', direction: 'DESC'},
+					{field: 'ID', direction: 'DESC'},
 				],
 				deadline: [
 					{field: 'DEADLINE', direction: 'ASC,NULLS'},
@@ -1373,7 +1374,9 @@ include('InAppNotifier');
 			};
 
 			this.start = 0;
+			this.pageSize = 50;
 			this.canShowSwipeActions = true;
+			this.isRepeating = false;
 
 			this.filter = new Filter(this.list, this.currentUser, this.owner, this.groupId);
 			this.order = new Order();
@@ -1567,6 +1570,7 @@ include('InAppNotifier');
 							RETURN_USER_INFO: 'Y',
 							RETURN_GROUP_INFO: 'Y',
 							SEND_PULL: 'Y',
+							COUNT_TOTAL: 'N',
 						},
 					}],
 				};
@@ -1582,6 +1586,7 @@ include('InAppNotifier');
 							RETURN_USER_INFO: 'Y',
 							RETURN_GROUP_INFO: 'Y',
 							SEND_PULL: 'Y',
+							COUNT_TOTAL: 'N',
 						},
 					}];
 				}
@@ -1598,20 +1603,25 @@ include('InAppNotifier');
 
 			const {all, pinned} = response;
 
-			if (Number(all.status) !== 200 || (pinned && Number(pinned.status) !== 200))
-			{
-				this.isRepeating = true;
-				setTimeout(() => this.reload(taskListOffset, showLoading), 5000);
-				return;
-			}
-			this.isRepeating = false;
+			// if (Number(all.status) !== 200 || (pinned && Number(pinned.status) !== 200))
+			// {
+			// 	this.isRepeating = true;
+			// 	setTimeout(() => this.reload(taskListOffset, showLoading), 5000);
+			// 	return;
+			// }
+			// this.isRepeating = false;
 
 			const tasks = (all ? all.answer.result.tasks : []) || [];
+			const isNextPageExist = tasks.length > this.pageSize;
+			if (isNextPageExist)
+			{
+				tasks.splice(this.pageSize, 1);
+			}
 			const pinnedTasks = (pinned ? pinned.answer.result.tasks : []) || [];
 			const allTasks = pinnedTasks.concat(tasks);
 			const isFirstPage = (taskListOffset === 0);
 
-			this.start = all.answer.next;
+			this.start = taskListOffset + this.pageSize;
 
 			if (isFirstPage)
 			{
@@ -1636,7 +1646,7 @@ include('InAppNotifier');
 				this.fillCache(items);
 			}
 
-			this.renderTaskListItems(items, isFirstPage, this.start);
+			this.renderTaskListItems(items, isFirstPage, isNextPageExist);
 
 			if (showLoading)
 			{

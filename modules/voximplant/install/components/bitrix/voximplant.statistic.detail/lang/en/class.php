@@ -32,5 +32,6 @@ $MESS["TEL_STAT_ACTION_DOWNLOAD"] = "Download recording";
 $MESS["TEL_STAT_ACTION_SHOW_LOG"] = "View log";
 $MESS["TEL_STAT_ACTION_SHOW_TRANSCRIPTION"] = "Open transcription";
 $MESS["TEL_STAT_ACTION_VOX_DOWNLOAD"] = "Upload recording to Bitrix24";
+$MESS["TEL_STAT_DETAIL_SLIDER_TITLE"] = "Calls";
 $MESS["TEL_STAT_EXPORT_LOCK_ERROR"] = "Export data is being prepared at the moment, please try again later.";
 $MESS["TEL_STAT_SHOW_TRANSCRIPT"] = "Open transcription";

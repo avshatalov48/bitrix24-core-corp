@@ -3411,7 +3411,8 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		dealrecurring: 13,
 		order: 14,
 		ordershipment: 16,
-		orderpayment: 17
+		orderpayment: 17,
+		document: 12
 	};
 	BX.CrmEntityType.names =
 	{

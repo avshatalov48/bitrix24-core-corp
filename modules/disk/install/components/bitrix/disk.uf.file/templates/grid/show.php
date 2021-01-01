@@ -265,6 +265,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 							?> src="<?=\Bitrix\Disk\Ui\LazyLoad::getBase64Stub()?>"<?
 							?> data-src="<?=$file["BASIC"]["src"] ?>"<?
 							?> alt="<?=htmlspecialcharsbx($file["NAME"])?>"<?
+							?> <?=$file['ATTRIBUTES_FOR_VIEWER']?> <?
 							?> border="0"<?
 							?> data-bx-title="<?=htmlspecialcharsbx($file["NAME"])?>"<?
 							?> data-bx-size="<?=$file["SIZE"]?>"<?

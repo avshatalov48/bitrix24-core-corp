@@ -35,7 +35,7 @@
 
 .intranet-user-profile-column-block-title {
 	display: flex;
-	padding: 0 0 19px 1px;
+	padding: 0 0 12px 1px;
 	font-family: "OpenSans-Regular", Arial, sans-serif;
 	line-height: 24px;
 	border-bottom: 1px solid rgba(82,92,105,.1);
@@ -92,6 +92,25 @@
 		opacity: 0;
 		transform: scale3d(2.5,2.5,2.5);
 	}
+}
+
+.intranet-user-profile-column-block-title-dropdown:after {
+	content: '';
+	float: right;
+	width: 12px;
+	height: 8px;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2213%22%20height%3D%228%22%20viewBox%3D%220%200%2013%208%22%3E%3Cpolygon%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20points%3D%223%20-.669%206.773%203.104%207.709%204.036%206.773%204.986%203%208.759%204.331%2010.09%2010.376%204.045%204.331%20-2%22%20transform%3D%22rotate%2890%206.688%204.045%29%22/%3E%3C/svg%3E') center no-repeat;
+	margin: 9px 8px 0 0;
+	opacity: .5;
+	transition: .1s;
+}
+
+.intranet-user-profile-column-block-title-dropdown:hover:after {
+	opacity: .8;
+}
+
+.intranet-user-profile-column-block-title-dropdown--open:after {
+	transform: rotate(180deg);
 }
 
 .intranet-user-profile-status-info {
@@ -2107,4 +2126,63 @@ form.profile-post-form {
 	padding-left: 20px;
 }
 
-.ui-page-slider-workarea-content-padding
+.intranet-user-profile-column-block-mailing  {
+	height: 0;
+	overflow: hidden;
+	margin-bottom: -11px;
+	transition: .3s;
+}
+
+.intranet-user-profile-column-block-mailing-wrapper {
+	padding: 15px 0 11px 0;
+}
+
+.intranet-user-profile-column-block-title-dropdown {
+	cursor: pointer;
+	transition: .2s;
+}
+
+.intranet-user-profile-column-block-title-dropdown:not(.intranet-user-profile-column-block-title-dropdown--open) {
+	border-color: transparent;
+}
+
+.intranet-user-profile-column-block-mailing-item {
+	display: flex;
+	overflow: hidden;
+	align-items: center;
+	margin-bottom: 14px;
+	cursor: pointer;
+}
+
+.intranet-user-profile-column-block-mailing-item input {
+	margin-right: 8px;
+}
+
+.intranet-user-profile-column-block-mailing-text {
+	flex: 1;
+	overflow: hidden;
+	font-family: "Helvetica Neue", Arial, sans-serif;
+	font-size: 13px;
+	color: #535c69;
+	line-height: 18px;
+}
+
+.intranet-user-profile-column-block-mailing-text a {
+	display: inline-block;
+	color: #535c69;
+	border-bottom: 1px solid rgba(83,92,105,.7);
+}
+
+.intranet-user-profile-column-block-mailing-text a:hover {
+	color: #535c69;
+	border-bottom: 1px solid rgba(83,92,105,.9);
+}
+
+.intranet-user-profile-column-block-mailing-text span {
+	color: #848c96;
+}
+
+.main-ui-select-inner {
+	max-height: 177px;
+	overflow: auto;
+}

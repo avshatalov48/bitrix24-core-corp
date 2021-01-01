@@ -785,7 +785,6 @@ class EntityAddress
 			if ($requisiteId <= 0)
 			{
 				$isDefaultRequisite = false;
-				$requisiteAddressMap = [];
 				$res = $requisite->getList(
 					array(
 						'order' => ['SORT' => 'ASC', 'ID' => 'ASC'],
@@ -800,7 +799,6 @@ class EntityAddress
 				if ($row = $res->fetch())
 				{
 					$requisiteId = (int)$row['ID'];
-					$requisiteAddressMap[$requisiteId] = EntityRequisite::getAddresses($requisiteId);
 				}
 			}
 			if ($requisiteId <= 0)

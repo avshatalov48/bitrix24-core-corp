@@ -69,21 +69,30 @@ class OpenLineTrigger extends BaseTrigger
 		$result = parent::toArray();
 		if (static::isEnabled())
 		{
-			$configs = [];
-			$orm = \Bitrix\ImOpenLines\Model\ConfigTable::getList(Array(
-				'filter' => Array(
-					'=TEMPORARY' => 'N'
-				)
-			));
-			while ($config = $orm->fetch())
-			{
-				$configs[] = array(
-					'ID' => $config['ID'],
-					'NAME' => $config['LINE_NAME']
-				);
-			}
-			$result['CONFIG_LIST'] = $configs;
+			$result['CONFIG_LIST'] = static::getConfigList();
 		}
 		return $result;
+	}
+
+	protected static function getConfigList()
+	{
+		if (!static::isEnabled())
+		{
+			return [];
+		}
+		$configs = [];
+		$orm = \Bitrix\ImOpenLines\Model\ConfigTable::getList(Array(
+			'filter' => Array(
+				'=TEMPORARY' => 'N'
+			)
+		));
+		while ($config = $orm->fetch())
+		{
+			$configs[] = array(
+				'ID' => $config['ID'],
+				'NAME' => $config['LINE_NAME']
+			);
+		}
+		return $configs;
 	}
 }

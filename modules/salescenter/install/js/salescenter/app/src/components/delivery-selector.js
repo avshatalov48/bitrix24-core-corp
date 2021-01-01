@@ -117,6 +117,7 @@ export default {
 			:init-delivery-service-id="config.deliveryServiceId"
 			:init-related-services-values="config.relatedServicesValues"
 			:init-related-props-values="config.relatedPropsValues"
+			:init-related-props-options="config.relatedPropsOptions"
 			:init-responsible-id="config.responsibleId"
 			:person-type-id="config.personTypeId"
 			:action="'salescenter.api.order.refreshDelivery'"

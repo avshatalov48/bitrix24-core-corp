@@ -1,5 +1,5 @@
 this.BX = this.BX || {};
-(function (exports,main_core,mobile_imageviewer) {
+(function (exports,main_core,mobile_imageviewer,mobile_ajax) {
 	'use strict';
 
 	var DiskFile = /*#__PURE__*/function () {
@@ -80,8 +80,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "toggleViewType",
 	    value: function toggleViewType(params) {
-	      var BMAjaxWrapper = new MobileAjaxWrapper(),
-	          container = params.container && main_core.Type.isDomNode(params.container) ? params.container : null;
+	      var container = params.container && main_core.Type.isDomNode(params.container) ? params.container : null;
 
 	      if (!container) {
 	        return;
@@ -90,7 +89,7 @@ this.BX = this.BX || {};
 	      app.showPopupLoader({
 	        text: ''
 	      });
-	      BMAjaxWrapper.runComponentAction('bitrix:disk.uf.file', 'toggleViewType', {
+	      mobile_ajax.Ajax.runComponentAction('bitrix:disk.uf.file', 'toggleViewType', {
 	        mode: 'class',
 	        signedParameters: this.signedParameters,
 	        data: {
@@ -114,5 +113,5 @@ this.BX = this.BX || {};
 
 	exports.DiskFile = DiskFile;
 
-}((this.BX.Mobile = this.BX.Mobile || {}),BX,BX));
+}((this.BX.Mobile = this.BX.Mobile || {}),BX,BX,BX.Mobile));
 //# sourceMappingURL=diskfile.bundle.js.map

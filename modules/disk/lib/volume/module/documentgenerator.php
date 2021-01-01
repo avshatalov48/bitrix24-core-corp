@@ -84,40 +84,40 @@ class Documentgenerator
 	{
 		if (
 			$storage instanceof \Bitrix\Disk\Storage &&
-			$storage->getId() > 0 &&
-			(
+			$storage->getId() > 0
+		)
+		{
+			if (
 				!isset($this->folderList[$storage->getId()]) ||
 				empty($this->folderList[$storage->getId()])
 			)
-		)
-		{
-			$this->folderList[$storage->getId()] = array();
-			if ($this->isMeasureAvailable())
 			{
-				$typeFolderCodeList = self::getSpecialFolderCode();
-				if (count($typeFolderCodeList) > 0)
+				$this->folderList[$storage->getId()] = array();
+				if ($this->isMeasureAvailable())
 				{
-					foreach ($typeFolderCodeList as $code)
+					$typeFolderCodeList = self::getSpecialFolderCode();
+					if (count($typeFolderCodeList) > 0)
 					{
-						$folder = \Bitrix\Disk\Folder::load(array(
-							'=CODE' => $code,
-							'=STORAGE_ID' => $storage->getId(),
-						));
-
-						if (
-							!($folder instanceof \Bitrix\Disk\Folder) ||
-							($folder->getCode() !== $code)
-						)
+						foreach ($typeFolderCodeList as $code)
 						{
-							continue;
+							$folder = \Bitrix\Disk\Folder::load(array(
+								'=CODE' => $code,
+								'=STORAGE_ID' => $storage->getId(),
+							));
+							if (
+								!($folder instanceof \Bitrix\Disk\Folder) ||
+								($folder->getCode() !== $code)
+							)
+							{
+								continue;
+							}
+							$this->folderList[$storage->getId()][$code] = $folder;
 						}
-
-						$this->folderList[$storage->getId()][$code] = $folder;
 					}
 				}
-
-				return $this->folderList[$storage->getId()];
 			}
+
+			return $this->folderList[$storage->getId()];
 		}
 
 		return array();
@@ -167,7 +167,7 @@ class Documentgenerator
 			$storageList = $this->getStorageList();
 			foreach ($storageList as $storage)
 			{
-				/** @var \Bitrix\Disk\Folder $folder */
+				/** @var \Bitrix\Disk\Folder $fldr */
 				foreach ($this->getFolderList($storage) as $fldr)
 				{
 					$folderIds[] = $fldr->getId();
@@ -175,7 +175,7 @@ class Documentgenerator
 			}
 		}
 
-		// disallow delete Voximplant folder
+		// disallow delete Module's folder
 		return (in_array($folder->getId(), $folderIds) === false);
 	}
 

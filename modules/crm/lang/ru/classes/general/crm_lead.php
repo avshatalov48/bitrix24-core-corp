@@ -82,6 +82,7 @@ $MESS["CRM_LEAD_FIELD_HONORIFIC"] = "Обращение";
 $MESS["CRM_LEAD_FIELD_STATUS_SEMANTIC_ID"] = "Состояние статуса";
 $MESS["CRM_LEAD_FIELD_COMPANY_ID"] = "Компания";
 $MESS["CRM_LEAD_FIELD_CONTACT_ID"] = "Контакт";
+$MESS["CRM_LEAD_FIELD_CLIENT"] = "Клиент";
 $MESS["CRM_LEAD_FIELD_DATE_CLOSED"] = "Дата завершения";
 $MESS["CRM_LEAD_FIELD_ORIGIN_ID"] = "Идентификатор элемента во внешнем источнике";
 $MESS["CRM_LEAD_FIELD_HAS_IMOL"] = "Задана открытая линия";

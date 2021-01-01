@@ -11,6 +11,7 @@ return [
 		'main.core',
 		'mobile.imageviewer',
 		'ui.icons.disk',
+		'mobile.ajax'
 	],
 	'skip_core' => false,
 ];

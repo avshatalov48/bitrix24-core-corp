@@ -8,11 +8,17 @@ export class Popup
 		this.signedParameters = this.parent.signedParameters;
 		this.componentName = this.parent.componentName;
 		this.userInnerBlockNode = this.parent.userInnerBlockNode || "";
+		this.circleNode = this.parent.circleNode || "";
 		this.isPopupShown = false;
 		this.popupCurrentPage = {};
+		this.renderedUsers = [];
 
 		Event.bind(this.userInnerBlockNode, 'click', () => {
 			this.showPopup('getAllOnlineUser', this.userInnerBlockNode);
+		});
+
+		Event.bind(this.circleNode, 'click', () => {
+			this.showPopup('getAllOnlineUser', this.circleNode, -5);
 		});
 
 		if (this.parent.isTimemanAvailable && Type.isDomNode(this.parent.timemanNode))
@@ -49,20 +55,26 @@ export class Popup
 		return title;
 	}
 
-	showPopup(action, bindNode)
+	showPopup(action, bindNode, topOffset)
 	{
 		if (this.isPopupShown)
 		{
 			return;
 		}
 
+		if (Type.isUndefined(topOffset))
+		{
+			topOffset = 7;
+		}
+
 		this.popupCurrentPage[action] = 1;
 		this.popupInnerContainer = "";
+		this.renderedUsers = [];
 
 		this.allOnlineUserPopup = new BX.PopupWindow('intranet-ustat-online-popup', bindNode, {
 			lightShadow : true,
 			offsetLeft: action === 'getClosedTimemanUser' ? -60 : -22,
-			offsetTop: 7,
+			offsetTop: topOffset,
 			autoHide: true,
 			closeByEsc: true,
 			bindOptions: {
@@ -229,6 +241,12 @@ export class Popup
 			{
 				continue;
 			}
+
+			if (this.renderedUsers.indexOf(users[i]['ID']) >= 0)
+			{
+				continue;
+			}
+			this.renderedUsers.push(users[i]['ID']);
 
 			let avatarNode;
 

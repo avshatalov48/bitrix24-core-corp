@@ -1,8 +1,8 @@
 <?php
 namespace Bitrix\Tasks\Internals\Counter;
 
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\MemberTable;
-use Bitrix\Tasks\Internals\TaskObject;
 use Bitrix\Tasks\Util\Type\DateTime;
 
 /**
@@ -28,7 +28,7 @@ class TaskResource
 
 	public function fill(): self
 	{
-		$task = TaskObject::loadById($this->id);
+		$task = TaskRegistry::getInstance()->getObject($this->id, true);
 		if (!$task)
 		{
 			return $this;
@@ -37,9 +37,9 @@ class TaskResource
 		$this->status 		= (int) $task->getStatus();
 		$this->groupId 		= (int) $task->getGroupId();
 		$this->title		= $task->getTitle();
-		$this->members 		= $task->getMembersByRoles();
-		$this->isExpired 	= $task->isExpired();
 		$this->deadline		= $task->getDeadline();
+		$this->isExpired 	= $task->isExpired();
+		$this->members		= $task->getMemberList();
 
 		return $this;
 	}

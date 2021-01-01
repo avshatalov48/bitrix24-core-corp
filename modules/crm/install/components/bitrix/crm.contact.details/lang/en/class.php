@@ -39,4 +39,5 @@ $MESS["CRM_CONTACT_FIELD_ADDRESS"] = "Address";
 $MESS["CRM_CONTACT_NOT_FOUND"] = "Contact was not found.";
 $MESS["CRM_CONTACT_FIELD_ID"] = "ID";
 $MESS["CRM_CONTACT_FIELD_UTM"] = "UTM parameters";
+$MESS["CRM_CONTACT_SOURCE_NOT_SELECTED"] = "Not selected";
 ?>

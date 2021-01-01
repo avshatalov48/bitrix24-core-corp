@@ -404,7 +404,7 @@ final class Manager
 				$propValue = $prop->getValue();
 				if ($propValue)
 				{
-					$files[] = \CAllFile::MakeFileArray($propValue['ID']);
+					$files[] = \CFile::MakeFileArray($propValue['ID']);
 					$properties['PROPERTIES'][$prop->getPropertyId()] = $propValue['ID'];
 				}
 			}

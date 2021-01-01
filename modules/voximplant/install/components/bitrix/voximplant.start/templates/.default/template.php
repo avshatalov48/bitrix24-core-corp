@@ -18,6 +18,7 @@ use Bitrix\Main\Localization\Loc;
 	"currency"
 ]);
 
+$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 $bodyClass = $APPLICATION->getPageProperty("BodyClass");
 $APPLICATION->setPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."no-all-paddings no-background no-hidden");
 ?>
@@ -28,6 +29,13 @@ $APPLICATION->setPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."n
 	</div>
 <? else: ?>
 	<div class="voximplant-start-wrap">
+		<? if ($arResult['SHOW_EOS_WARNING']): ?>
+			<div class="ui-alert ui-alert-warning">
+				<span class="ui-alert-message"><?= GetMessage("VOX_START_NOT_TELEPHONY_FOR_FREE", [
+						"#LINK#" => \Bitrix\UI\Util::getArticleUrlByCode("12757512")
+					])?></span>
+			</div>
+		<? endif ?>
 		<div class="voximplant-start-head-box-container">
 			<div class="voximplant-start-head-box">
 				<div class="voximplant-start-head-box-title">
@@ -45,13 +53,13 @@ $APPLICATION->setPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."n
 					<? endif ?>
 					<? if(isset($arResult['SIP'])): ?>
 						<div style="display:none" data-for-balance-type="sip">
-							<a href="<?=$arResult["LINK_TO_BUY_SIP"]?>" target="_blank" class="ui-btn ui-btn-sm ui-btn-primary">
+							<button id="sip-buy" class="ui-btn ui-btn-sm ui-btn-primary">
 								<? if($arResult['SIP']['PAID']): ?>
 									<?= Loc::getMessage("VOX_START_SIP_PROLONG") ?>
 								<? else: ?>
 									<?= Loc::getMessage("VOX_START_SIP_BUY") ?>
 								<? endif ?>
-							</a>
+							</button>
 						</div>
 					<? endif ?>
 				</div>
@@ -160,7 +168,9 @@ $APPLICATION->setPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."n
 			partnersMenuItems: <?= CUtil::PhpToJSObject($arResult['MENU']['PARTNERS'])?>,
 			applicationUrlTemplate: '<?= CUtil::JSEscape($arResult['MARKETPLACE_DETAIL_URL_TPL']) ?>',
 			tariffsUrl: '<?= CUtil::JSEscape($arResult['LINK_TO_TARIFFS']) ?>',
-			isRestOnly: '<?= $arResult['IS_REST_ONLY'] ? 'Y' : 'N' ?>'
+			linkToBuySip: '<?= CUtil::JSEscape($arResult["LINK_TO_BUY_SIP"]) ?>',
+			isRestOnly: '<?= $arResult['IS_REST_ONLY'] ? 'Y' : 'N' ?>',
+			isTelephonyAvailable: '<?= $arResult['TELEPHONY_AVAILABLE'] ? 'Y' : 'N' ?>',
 		});
 	</script>
 <? endif ?>

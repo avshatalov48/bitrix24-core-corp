@@ -277,6 +277,30 @@ if (
 	));
 }
 
+/* photogallery is not available in slider yet
+if (
+	is_array($arResult["CanView"])
+	&& !!$arResult["CanView"]['photo']
+	&& !IsModuleInstalled("bitrix24")
+)
+{
+	$uri = new \Bitrix\Main\Web\Uri($arResult["Urls"]['photo']);
+	$uri->addParams(array("IFRAME" => "Y"));
+	$redirect = $uri->getUri();
+
+	$items = array_merge($items, array(
+		array
+		(
+			"ID" => "photo",
+			"TEXT" => $arResult["Title"]['photo'],
+			"ON_CLICK" => "BX.SidePanel.Instance.open('".$uri->getUri()."', {
+				width: 1000 
+			})",
+			'IS_ACTIVE' => (mb_strpos($requestUri, $arResult["Urls"]['photo']) === 0)
+		)
+	));
+}*/
+
 $APPLICATION->IncludeComponent(
 	"bitrix:main.interface.buttons",
 	"",

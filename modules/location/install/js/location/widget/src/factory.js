@@ -1,5 +1,7 @@
 import {BaseSource, LocationRepository, SourceCreationError, Format} from 'location.core';
 
+import {OSMFactory} from 'location.osm';
+
 import {Google} from 'location.google';
 
 import Address from './address/address';
@@ -55,6 +57,7 @@ export type FactoryCreateAddressWidgetProps = {
 		forceTop?: boolean,
 		position?: 'right' | 'top' | 'bootom'
 	},
+	presetLocationList?: Array
 };
 
 /**
@@ -79,6 +82,8 @@ export default class Factory
 				BX.message('LOCATION_WIDGET_DEFAULT_FORMAT')
 			));
 
+		let presetLocationList = props.presetLocationList || [];
+
 		const features = [];
 
 		if(!props.useFeatures || props.useFeatures.fields !== false)
@@ -92,7 +97,21 @@ export default class Factory
 
 		if(sourceCode && sourceParams)
 		{
-			source = this.createSource(sourceCode, sourceParams, languageId, sourceLanguageId);
+			try
+			{
+				source = this.createSource(sourceCode, sourceParams, languageId, sourceLanguageId);
+			}
+			catch (e)
+			{
+				if(e instanceof SourceCreationError)
+				{
+					source = null;
+				}
+				else
+				{
+					throw e;
+				}
+			}
 		}
 
 		if(source)
@@ -109,8 +128,8 @@ export default class Factory
 
 			if(!props.useFeatures || props.useFeatures.map !== false)
 			{
-				let showPhotos = (sourceParams.hasOwnProperty('showPhotos') && sourceParams.showPhotos === true);
-				let useGeocodingService = (sourceParams.hasOwnProperty('useGeocodingService') && sourceParams.useGeocodingService === true);
+				const showPhotos = (sourceParams.hasOwnProperty('showPhotos') && sourceParams.showPhotos === true);
+				const useGeocodingService = (sourceParams.hasOwnProperty('useGeocodingService') && sourceParams.useGeocodingService === true);
 
 				const DEFAULT_THUMBNAIL_HEIGHT = 80;
 				const DEFAULT_THUMBNAIL_WIDTH = 150;
@@ -136,7 +155,8 @@ export default class Factory
 			address: props.address,
 			mode: props.mode,
 			addressFormat,
-			languageId
+			languageId,
+			presetLocationList
 		});
 	}
 
@@ -213,32 +233,21 @@ export default class Factory
 		return result;
 	}
 
-
 	// todo: add custom sources
 	createSource(code: string, params: {}, languageId: string, sourceLanguageId: string): BaseSource
 	{
 		let source = null;
 
+		params.languageId = languageId;
+		params.sourceLanguageId = sourceLanguageId;
+
 		if(code === 'GOOGLE')
 		{
-			params.languageId = languageId;
-			params.sourceLanguageId = sourceLanguageId;
-
-			try
-			{
-				source = new Google(params);
-			}
-			catch (e)
-			{
-				if(e instanceof SourceCreationError)
-				{
-					source = null;
-				}
-				else
-				{
-					throw e;
-				}
-			}
+			source = new Google(params);
+		}
+		else if(code === 'OSM')
+		{
+			source = OSMFactory.createOSMSource(params);
 		}
 		else
 		{

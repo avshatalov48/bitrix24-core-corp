@@ -67,74 +67,27 @@
 
 	BX.Voximplant.alert = function (title, text)
 	{
-		var popup = new BX.PopupWindow('voximplant-alert', null, {
-			closeIcon: true,
-			closeByEsc: true,
-			autoHide: false,
-			titleBar: title,
-			content: text,
-			zIndex: 16000,
-			overlay: {
-				color: 'gray',
-				opacity: 30
-			},
-			buttons: [
-				new BX.PopupWindowButton({
-					'id': 'close',
-					'text': BX.message('VOX_JS_COMMON_CLOSE'),
-					'events': {
-						'click': function(){
-							popup.close();
-						}
-					}
-				})
-			],
-			events: {
-				onPopupClose: function() {
-					this.destroy();
-				},
-				onPopupDestroy: function() {
-					popup = null;
-				}
-			}
-		});
-		popup.show();
-	};
-
-	BX.Voximplant.confirm = function (title, text)
-	{
 		return new Promise(function(resolve)
 		{
-			var popup = new BX.PopupWindow('voximplant-confirm', null, {
+			var popup = new BX.PopupWindow('voximplant-alert', null, {
 				closeIcon: true,
 				closeByEsc: true,
 				autoHide: false,
 				titleBar: title,
 				content: text,
+				zIndex: 16000,
+				maxWidth: 800,
 				overlay: {
 					color: 'gray',
 					opacity: 30
 				},
 				buttons: [
 					new BX.PopupWindowButton({
-						id: 'ok',
-						text: BX.message('VOX_JS_COMMON_OK'),
-						events: {
-							click: function()
-							{
+						'id': 'close',
+						'text': BX.message('VOX_JS_COMMON_CLOSE'),
+						'events': {
+							'click': function(){
 								popup.close();
-								resolve(true);
-							}
-						}
-					}),
-					new BX.PopupWindowButtonLink({
-						id: 'cancel',
-						text: BX.message('VOX_JS_COMMON_CANCEL'),
-						events: {
-							click: function()
-							{
-								popup.close();
-								resolve(false);
 							}
 						}
 					})
@@ -142,6 +95,60 @@
 				events: {
 					onPopupClose: function() {
 						this.destroy();
+						resolve();
+					},
+					onPopupDestroy: function() {
+						popup = null;
+					}
+				}
+			});
+			popup.show();
+		})
+	};
+
+	BX.Voximplant.confirm = function (title, text, options)
+	{
+		return new Promise(function(resolve)
+		{
+			var ok = false;
+			var popup = new BX.PopupWindow('voximplant-confirm', null, {
+				closeIcon: BX.prop.getBoolean(options, "closeIcon", true),
+				closeByEsc: BX.prop.getBoolean(options, "closeByEsc", true),
+				autoHide: false,
+				titleBar: title,
+				content: text,
+				overlay: {
+					color: 'gray',
+					opacity: 30
+				},
+				maxWidth: BX.prop.getInteger(options, "maxWidth", 800),
+				buttons: [
+					new BX.PopupWindowButton({
+						id: 'ok',
+						text: BX.prop.getString(options, 'ok', BX.message('VOX_JS_COMMON_OK')),
+						events: {
+							click: function()
+							{
+								ok = true;
+								popup.close();
+							}
+						}
+					}),
+					new BX.PopupWindowButtonLink({
+						id: 'cancel',
+						text: BX.prop.getString(options, 'cancel', BX.message('VOX_JS_COMMON_CANCEL')),
+						events: {
+							click: function()
+							{
+								popup.close();
+							}
+						}
+					})
+				],
+				events: {
+					onPopupClose: function() {
+						this.destroy();
+						resolve(ok);
 					},
 					onPopupDestroy: function() {
 						popup = null;
@@ -168,20 +175,114 @@
 		}
 	};
 
+	BX.Voximplant.openLimitSlider = function(sliderCode)
+	{
+		sliderCode = sliderCode || 'limit_contact_center_telephony';
+		// do not forget to include component bitrix:ui.info.helper
+		if (!BX.UI.InfoHelper)
+		{
+			return;
+		}
+
+		if (BX.UI.InfoHelper.inited)
+		{
+			BX.UI.InfoHelper.show(sliderCode);
+			return;
+		}
+		BX.ajax.runAction("ui.infoHelper.getInitParams").then(function(response)
+		{
+			BX.UI.InfoHelper.init(response.data);
+			BX.UI.InfoHelper.show(sliderCode);
+		})
+	};
+
 	BX.Voximplant.openBilling = function()
 	{
+		var maybeShowDemoWarning = function(title, text)
+		{
+			return new Promise(function(resolve)
+			{
+				if (text == "")
+				{
+					return resolve();
+				}
+
+				BX.Voximplant.alert(title, text).then(function()
+				{
+					resolve();
+				})
+			})
+		};
+
+		var maybeShowDisclaimer = function(disclaimerText)
+		{
+			return new Promise(function (resolve, reject)
+			{
+				if (disclaimerText == "")
+				{
+					return resolve (true);
+				}
+				BX.Voximplant.confirm(
+					BX.message("VOX_JS_COMMON_TERMS_OF_SERVICE"),
+					disclaimerText,
+					{
+						ok: BX.message("VOX_JS_COMMON_AGREE"),
+						maxWidth: 800
+					}
+				).then(function(result)
+				{
+					if (!result)
+					{
+						return resolve(false);
+					}
+					BX.ajax.runAction("voximplant.consent.saveTOSConsent", {}).then(function(response)
+					{
+						resolve(true);
+					}).catch(function(response)
+					{
+						reject(response);
+					})
+				})
+			})
+		};
+
+		var getBillingUrl = function()
+		{
+			//convert BX.Promise to real promise
+			return new Promise(function(resolve, reject)
+			{
+				BX.ajax.runAction("voximplant.urlmanager.getBillingUrl", {})
+					.then(resolve)
+					.catch(reject)
+			})
+		};
+
 		return new Promise(function(resolve)
 		{
-			BX.ajax.runAction("voximplant.urlmanager.getBillingUrl", {}).then(function(response)
+			var responseData;
+			getBillingUrl().then(function(response)
 			{
-				var data = response.data;
-				var billingUrl = data['billingUrl'];
-
-				window.open(billingUrl);
+				responseData = response.data;
+				return maybeShowDemoWarning(responseData.demoWarningTitle, responseData.demoWarning)
+			}).then(function()
+			{
+				return maybeShowDisclaimer(responseData.disclaimerText)
+			}).then(function(disclaimerAccepted)
+			{
+				if (disclaimerAccepted)
+				{
+					window.open(responseData.billingUrl);
+				}
 				resolve();
 			}).catch(function(response)
 			{
+				console.error(response);
 				var errors = response.errors;
+				if (errors && errors.length > 0 && errors[0].code === "paid_plan_required")
+				{
+					BX.Voximplant.openLimitSlider('limit_contact_center_telephony_top_up_balance');
+					return resolve();
+				}
 				var errorMessage = errors.map(function (err){return err.message}).join("\n");
 				BX.Voximplant.alert(BX.message('VOX_JS_COMMON_ERROR'), errorMessage);
 				resolve();

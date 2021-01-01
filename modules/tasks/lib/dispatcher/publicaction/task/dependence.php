@@ -4,7 +4,7 @@
  * @package bitrix
  * @subpackage sale
  * @copyright 2001-2015 Bitrix
- * 
+ *
  * @access private
  *
  * Each method you put here you`ll be able to call as ENTITY_NAME.METHOD_NAME via AJAX and\or REST, so be careful.
@@ -28,7 +28,7 @@ final class Dependence extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 			$task = new \CTaskItem($taskIdTo, User::getId());
 			$task->addDependOn($taskIdFrom, $linkType);
 		}
-		catch(Tree\Exception $e)
+		catch(Tree\Exception | \CTaskAssertException $e)
 		{
 			$this->errors->add('ILLEGAL_NEW_LINK', \Bitrix\Tasks\Dispatcher::proxyExceptionMessage($e));
 		}
@@ -46,7 +46,7 @@ final class Dependence extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 			$task = new \CTaskItem($taskIdTo, User::getId());
 			$task->deleteDependOn($taskIdFrom);
 		}
-		catch(Tree\Exception $e)
+		catch(Tree\Exception | \CTaskAssertException $e)
 		{
 			$this->errors->add('ILLEGAL_LINK', \Bitrix\Tasks\Dispatcher::proxyExceptionMessage($e));
 		}

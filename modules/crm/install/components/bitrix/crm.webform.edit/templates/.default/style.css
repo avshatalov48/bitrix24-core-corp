@@ -2957,3 +2957,83 @@ span.crm-webform-edit-task-options-destination-wrap {
 		transform: rotate(360deg);
 	}
 }
+
+
+.crm-webform-ed-choise {
+	text-align: center;
+}
+.crm-webform-ed-choise-header1 {
+	margin: 10px 0 10px 0;
+	font: 22px "OpenSans-Light", Helvetica, Arial, sans-serif;
+}
+.crm-webform-ed-choise-header2 {
+	margin: 0 0 10px 0;
+	padding: 0 30px;
+	color: #3c3c3c;
+	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.crm-webform-ed-choise-header3 {
+	margin: 0 0 15px 0;
+	padding: 0 50px;
+	color: #7d7d7d;
+	font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.crm-webform-ed-choise-notice {
+	padding: 15px 0;
+	color: #7d7d7d;
+	border-bottom: 1px solid #eaeaea;
+	font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.crm-webform-ed-choise-body {
+	display: flex;
+	padding: 0 10px;
+}
+.crm-webform-ed-choise-item {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: 50%;
+	text-align: center;
+	border: 2px solid #eaeaea;
+	border-radius: 5px;
+	margin: 0 5px;
+	padding: 15px 15px 35px 15px;
+	cursor: pointer;
+	transition: all linear 0.4s;
+}
+.crm-webform-ed-choise-item.selected {
+	border: 2px solid #33beed;
+	background: #f1fafd;
+}
+.crm-webform-ed-choise-item-chip {
+	visibility: hidden;
+	position: absolute;
+	top: -10px;
+	right: -10px;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	color: #fff;
+	background: #33beed;
+}
+.crm-webform-ed-choise-item.selected .crm-webform-ed-choise-item-chip {
+	visibility: visible;
+}
+
+.crm-webform-ed-choise-item-title {
+	font: 16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #3c3c3c;
+	font-weight: bold;
+	margin: 0 0 15px 0;
+}
+.crm-webform-ed-choise-item-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 80px;
+	height: 80px;
+	border-radius: 50%;
+	background: white;
+	border: 2px solid #eaeaea;
+}

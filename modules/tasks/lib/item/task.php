@@ -223,6 +223,10 @@ final class Task extends \Bitrix\Tasks\Item
 				{
 					$this['STATUS_CHANGED_DATE'] = $now;
 				}
+				if(!$this->isFieldModified('ACTIVITY_DATE'))
+				{
+					$this['ACTIVITY_DATE'] = $now;
+				}
 
 				if($this->isFieldModified('DESCRIPTION_IN_BBCODE') && $this['DESCRIPTION_IN_BBCODE'] != 'Y')
 				{
@@ -698,8 +702,11 @@ final class Task extends \Bitrix\Tasks\Item
 				'event_GUID' => isset($data['META::EVENT_GUID']) ? $data['META::EVENT_GUID'] : sha1(uniqid('AUTOGUID', true))
 			);
 
-			Pull::emitMultiple($recipients, 'TASKS_GENERAL_#USER_ID#', 'task_add', $arPullData);
-			Pull::emitMultiple($recipients, 'TASKS_TASK_'.$id, 'task_add', $arPullData);
+			Pull\PushService::addEvent($recipients, [
+				'module_id'  => 'tasks',
+				'command'    => 'task_add',
+				'params'     => $arPullData
+			]);
 		}
 		catch (\Exception $e)
 		{

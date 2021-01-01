@@ -118,6 +118,17 @@ final class Address implements IPoint
 	}
 
 	/**
+	 * @param FieldCollection $fieldCollection
+	 * @return Address
+	 */
+	public function setFieldCollection(FieldCollection $fieldCollection): Address
+	{
+		$this->fieldCollection = $fieldCollection;
+
+		return $this;
+	}
+
+	/**
 	 * @return Location
 	 */
 	public function getLocation():? Location

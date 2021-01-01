@@ -74,6 +74,10 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 			'items' => $offlineCashboxItems,
 		];
 
+		$activeCashboxHandlersByCountry = $this->getActiveCashboxHandlersByCountry();
+		$this->arResult['activeCashboxHandlersByCountry'] = $activeCashboxHandlersByCountry;
+		$this->arResult['isCashboxCountryConflict'] = !(empty($activeCashboxHandlersByCountry['RU']) || empty($activeCashboxHandlersByCountry['UA']));
+
 		$this->includeComponentTemplate();
 	}
 
@@ -87,7 +91,8 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 	{
 		$cashboxes = [];
 		$zone = '';
-		if (Main\Loader::includeModule("bitrix24"))
+		$isCloud = Main\Loader::includeModule("bitrix24");
+		if ($isCloud)
 		{
 			$zone = \CBitrix24::getLicensePrefix();
 		}
@@ -98,7 +103,7 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 
 		$cashboxDescriptions = [];
 		if ($zone === 'ru') {
-			$cashboxDescriptions = [
+			$cashboxDescriptions = array_merge($cashboxDescriptions, [
 				[
 					'id' => 'atol',
 					'title' => Loc::getMessage('SCP_CASHBOX_ATOL'),
@@ -134,27 +139,25 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 						'recommendation' => true,
 					],
 				],
-			];
+			]);
 		}
-		elseif ($zone === 'ua')
+		if ($zone === 'ua' || ($zone === 'ru' && !$isCloud))
 		{
-			$cashboxDescriptions = [
-					[
-					'id' => 'checkbox',
-					'title' => Loc::getMessage('SCP_CASHBOX_CHECKBOX'),
-					'image' => $this->getImagePath() . 'checkbox.svg',
-					'itemSelectedColor' => '#272BED',
-					'itemSelectedImage' => $this->getImagePath() . 'checkbox_s.svg',
-					'itemSelected' => false,
-					'data' => [
-						'type' => 'cashbox',
+			$cashboxDescriptions[] = [
+				'id' => 'checkbox',
+				'title' => Loc::getMessage('SCP_CASHBOX_CHECKBOX'),
+				'image' => $this->getImagePath() . 'checkbox.svg',
+				'itemSelectedColor' => '#272BED',
+				'itemSelectedImage' => $this->getImagePath() . 'checkbox_s.svg',
+				'itemSelected' => false,
+				'data' => [
+					'type' => 'cashbox',
+					'handler' => '\\Bitrix\\Sale\\Cashbox\\CashboxCheckbox',
+					'connectPath' => $this->getCashboxEditUrl([
 						'handler' => '\\Bitrix\\Sale\\Cashbox\\CashboxCheckbox',
-						'connectPath' => $this->getCashboxEditUrl([
-							'handler' => '\\Bitrix\\Sale\\Cashbox\\CashboxCheckbox',
-							'preview' => 'y',
-						]),
-						'showMenu' => false,
-					],
+						'preview' => 'y',
+					]),
+					'showMenu' => false,
 				],
 			];
 		}
@@ -346,6 +349,49 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 				'connectPath' => $feedbackPath->getLocator(),
 			]
 		];
+	}
+
+	/**
+	 * @return array[]
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function getActiveCashboxHandlersByCountry()
+	{
+		$cashboxesByCountry = [
+			'RU' => [],
+			'UA' => [],
+		];
+
+		$filter = SaleManager::getInstance()->getCashboxFilter();
+		$cashboxList = Sale\Cashbox\Internals\CashboxTable::getList([
+			'select' => ['HANDLER', 'NAME'],
+			'filter' => $filter,
+		]);
+		while($cashbox = $cashboxList->fetch())
+		{
+			$handler = $cashbox['HANDLER'];
+			if ($cashbox['ACTIVE'] === 'N' || $handler === '\Bitrix\Sale\Cashbox\CashboxRest')
+			{
+				continue;
+			}
+
+			$handler = $cashbox['HANDLER'];
+
+			if ($handler === '\Bitrix\Sale\Cashbox\CashboxCheckbox')
+			{
+				$country = 'UA';
+			}
+			else
+			{
+				$country = 'RU';
+			}
+
+			$cashboxesByCountry[$country][] = $cashbox['NAME'];
+		}
+
+		return $cashboxesByCountry;
 	}
 
 	/**

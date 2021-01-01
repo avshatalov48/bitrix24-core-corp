@@ -93,7 +93,7 @@
 			{
 				className = 'crm-tracking-list-popup-item crm-tracking-list-popup-item-';
 				className += (item.active ? 'green' : 'gray');
-				item.text = '<span class="crm-tracking-list-popup-item ' + className + '"></span>' + BX.util.htmlspecialchars(item.text);
+				item.html = '<span class="crm-tracking-list-popup-item ' + className + '"></span>' + BX.util.htmlspecialchars(item.text);
 			}
 			item.onclick = function (e, item) {
 				BX.SidePanel.Instance.open(item.href, {width: 735, cacheable: false});

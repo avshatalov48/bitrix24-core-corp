@@ -109,6 +109,7 @@ $APPLICATION->IncludeComponent(
 			'ENTITY_CONTROLLERS' => $arResult['ENTITY_CONTROLLERS'],
 			'ENTITY_FIELDS' => $arResult['ENTITY_FIELDS'],
 			'ENTITY_DATA' => $arResult['ENTITY_DATA'],
+			'ENTITY_VALIDATORS' => $arResult['ENTITY_VALIDATORS'],
 			'ENABLE_SECTION_EDIT' => true,
 			'ENABLE_SECTION_CREATION' => true,
 			'ENABLE_USER_FIELD_CREATION' => $arResult['ENABLE_USER_FIELD_CREATION'],
@@ -201,6 +202,38 @@ if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arRes
 				BX.CrmEntityType.setCaptions(<?=CUtil::PhpToJSObject(CCrmOwnerType::GetJavascriptDescriptions())?>);
 				BX.CrmEntityType.setNotFoundMessages(<?=CUtil::PhpToJSObject(CCrmOwnerType::GetNotFoundMessages())?>);
 				BX.onCustomEvent(window, "BX.CrmEntityConverter:applyPermissions", [BX.CrmEntityType.names.lead]);
+
+				<?php
+				if($arResult['ENTITY_ID'] <= 0 && !empty($arResult['FIELDS_SET_DEFAULT_VALUE']))
+                {?>
+                    var fieldsSetDefaultValue = <?=CUtil::PhpToJSObject($arResult['FIELDS_SET_DEFAULT_VALUE']);?>;
+                    BX.addCustomEvent("onSave", function(fieldConfigurator, params) {
+                        var field = params.field;
+                        if(
+                            fieldConfigurator instanceof BX.Crm.EntityEditorFieldConfigurator
+							&& fieldConfigurator._mandatoryConfigurator
+                            && (field instanceof BX.Crm.EntityEditorField || field instanceof BX.UI.EntityEditorField)
+							//&& field.isChanged()
+							&& fieldsSetDefaultValue.indexOf(field._id) > -1
+                        )
+                        {
+							if(fieldConfigurator._mandatoryConfigurator.isEnabled())
+							{
+                                delete field._model._data[field.getDataKey()];
+                                field.refreshLayout();
+							}
+							else
+							{
+                                if(field.getSchemeElement().getData().defaultValue)
+                                {
+                                    field._model._data[field.getDataKey()] = field.getSchemeElement().getData().defaultValue;
+                                    field.refreshLayout();
+                                }
+							}
+                        }
+                    });
+                <?php
+                }?>
 			}
 		);
 	</script><?

@@ -66,49 +66,24 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 
 	public function fireUserAction()
 	{
-		if (!$this->canEditProfile())
-		{
-			return false;
-		}
+		$currentUser = CurrentUser::get();
 
-		if (
-			Loader::includeModule("bitrix24")
-			&& !Bitrix\Bitrix24\Feature::isFeatureEnabled("user_dismissal")
-			&& !Integrator::isIntegrator($this->userId)
-		)
-		{
-			return false;
-		}
-
-		$user = new CUser;
-		$res = $user->Update($this->userId, array("ACTIVE" => "N"));
-
-		if (!$res)
-		{
-			$this->addError(new \Bitrix\Main\Error($user->LAST_ERROR));
-			return false;
-		}
-
-		return true;
+		return \Bitrix\Intranet\Util::deactivateUser([
+			'userId' => $this->userId,
+			'currentUserId' => $currentUser->getId(),
+			'isCurrentUserAdmin' => $currentUser->isAdmin()
+		]);
 	}
 
 	public function hireUserAction()
 	{
-		if (!$this->canEditProfile())
-		{
-			return false;
-		}
+		$currentUser = CurrentUser::get();
 
-		$user = new CUser;
-		$res = $user->Update($this->userId, array("ACTIVE" => "Y"));
-
-		if (!$res)
-		{
-			$this->addError(new \Bitrix\Main\Error($user->LAST_ERROR));
-			return false;
-		}
-
-		return true;
+		return \Bitrix\Intranet\Util::activateUser([
+			'userId' => $this->userId,
+			'currentUserId' => $currentUser->getId(),
+			'isCurrentUserAdmin' => $currentUser->isAdmin()
+		]);
 	}
 
 	public function deleteUserAction()

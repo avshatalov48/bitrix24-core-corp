@@ -10,7 +10,6 @@ namespace Bitrix\Tasks\Util\Replicator\Task;
 
 use Bitrix\Main\Localization\Loc;
 
-use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\Item;
@@ -294,7 +293,7 @@ final class FromTemplate extends Util\Replicator\Task
 	 * @return mixed|string
 	 * @throws \Bitrix\Main\ArgumentException
 	 */
-	public static function repeatTask($templateId, array $parameters = array())
+	public static function repeatTask($templateId, array $parameters = [])
 	{
 		$templateId = (int)$templateId;
 		if (!$templateId)
@@ -305,10 +304,15 @@ final class FromTemplate extends Util\Replicator\Task
 		static::liftLogAgent();
 
 		// todo: replace this with item\orm call
-		$templateDbRes = \CTaskTemplates::getList(array(),  array('ID' => $templateId), false, false, array('*', 'UF_*'));
+		$templateDbRes = \CTaskTemplates::getList(
+			[],
+			['ID' => $templateId],
+			false,
+			['USER_IS_ADMIN' => true],
+			['*', 'UF_*']
+		);
 		$template = $templateDbRes->Fetch();
-
-		if ($template && $template['REPLICATE'] == 'Y')
+		if ($template && $template['REPLICATE'] === 'Y')
 		{
 			$agentName = str_replace('#ID#', $templateId, $parameters['AGENT_NAME_TEMPLATE']); // todo: when AGENT_NAME_TEMPLATE is not set?
 			$replicateParams = $template['REPLICATE_PARAMS'] = unserialize($template['REPLICATE_PARAMS']);

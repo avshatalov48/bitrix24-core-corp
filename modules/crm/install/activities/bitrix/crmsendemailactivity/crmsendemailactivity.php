@@ -33,7 +33,7 @@ class CBPCrmSendEmailActivity extends CBPActivity
 
 	public function Execute()
 	{
-		if (!$this->MessageText || !CModule::IncludeModule("crm") || !CModule::IncludeModule('subscribe'))
+		if ($this->MessageText === '' || !CModule::IncludeModule("crm") || !CModule::IncludeModule('subscribe'))
 		{
 			return CBPActivityExecutionStatus::Closed;
 		}

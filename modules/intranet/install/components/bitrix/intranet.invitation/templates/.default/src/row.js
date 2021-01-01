@@ -60,7 +60,7 @@ export class Row
 	{
 		if (this.parent.isInvitationBySmsAvailable && Type.isDomNode(element))
 		{
-			const inputNodes = element.querySelectorAll(".js-email-phone-input");
+			const inputNodes = Array.prototype.slice.call(element.querySelectorAll(".js-email-phone-input"));
 			if (inputNodes)
 			{
 				inputNodes.forEach(element => {
@@ -74,7 +74,7 @@ export class Row
 
 	bindCloseIcons(container)
 	{
-		const inputNodes = container.querySelectorAll("input");
+		const inputNodes = Array.prototype.slice.call(container.querySelectorAll("input"));
 
 		(inputNodes || []).forEach((node) => {
 			let closeIcon = node.nextElementSibling;
@@ -96,6 +96,7 @@ export class Row
 							<input
 								name="EMAIL[]"
 								type="text"
+								maxlength="50"
 								data-num="${node.getAttribute('data-num')}"
 								class="ui-ctl-element js-email-phone-input"
 								placeholder="${Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT')}"
@@ -153,6 +154,7 @@ export class Row
 						<input 
 							name="EMAIL[]" 
 							type="text" 
+							maxlength="50"
 							data-num="${this.inputNum++}" 
 							class="ui-ctl-element js-email-phone-input" 
 							placeholder="${Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT')}"
@@ -209,7 +211,7 @@ export class Row
 					<div class="invite-form-col">
 						<div class="ui-ctl-label-text">${Loc.getMessage("BX24_INVITE_DIALOG_ADD_EMAIL_TITLE")}</div>
 						<div class="ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon">
-							<input type="text" name="ADD_EMAIL" id="ADD_EMAIL" class="ui-ctl-element">
+							<input type="text" name="ADD_EMAIL" id="ADD_EMAIL" class="ui-ctl-element" maxlength="50">
 							<button class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
 						</div>
 					</div>
@@ -242,6 +244,7 @@ export class Row
 							type="text" 
 							class="ui-ctl-element" 
 							value="" 
+							maxlength="50"
 							name="integrator_email" 
 							id="integrator_email" 
 							placeholder="${Loc.getMessage("INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL")}"

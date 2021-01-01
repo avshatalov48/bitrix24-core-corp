@@ -1,707 +1,409 @@
-var Bitrix24FormLoader = {
+/** Polyfill Fetch **/
+!function(){var t={searchParams:"URLSearchParams"in self,iterable:"Symbol"in self&&"iterator"in Symbol,blob:"FileReader"in self&&"Blob"in self&&function(){try{return new Blob,!0}catch(t){return!1}}(),formData:"FormData"in self,arrayBuffer:"ArrayBuffer"in self};if(t.arrayBuffer)var e=["[object Int8Array]","[object Uint8Array]","[object Uint8ClampedArray]","[object Int16Array]","[object Uint16Array]","[object Int32Array]","[object Uint32Array]","[object Float32Array]","[object Float64Array]"],r=ArrayBuffer.isView||function(t){return t&&e.indexOf(Object.prototype.toString.call(t))>-1};function o(t){if("string"!=typeof t&&(t=String(t)),/[^a-z0-9\-#$%&'*+.^_`|~]/i.test(t)||""===t)throw new TypeError("Invalid character in header field name");return t.toLowerCase()}function n(t){return"string"!=typeof t&&(t=String(t)),t}function i(e){var r={next:function(){var t=e.shift();return{done:void 0===t,value:t}}};return t.iterable&&(r[Symbol.iterator]=function(){return r}),r}function s(t){this.map={},t instanceof s?t.forEach(function(t,e){this.append(e,t)},this):Array.isArray(t)?t.forEach(function(t){this.append(t[0],t[1])},this):t&&Object.getOwnPropertyNames(t).forEach(function(e){this.append(e,t[e])},this)}function a(t){if(t.bodyUsed)return Promise.reject(new TypeError("Already read"));t.bodyUsed=!0}function h(t){return new Promise(function(e,r){t.onload=function(){e(t.result)},t.onerror=function(){r(t.error)}})}function f(t){var e=new FileReader,r=h(e);return e.readAsArrayBuffer(t),r}function u(t){if(t.slice)return t.slice(0);var e=new Uint8Array(t.byteLength);return e.set(new Uint8Array(t)),e.buffer}function d(){return this.bodyUsed=!1,this._initBody=function(e){var o;this._bodyInit=e,e?"string"==typeof e?this._bodyText=e:t.blob&&Blob.prototype.isPrototypeOf(e)?this._bodyBlob=e:t.formData&&FormData.prototype.isPrototypeOf(e)?this._bodyFormData=e:t.searchParams&&URLSearchParams.prototype.isPrototypeOf(e)?this._bodyText=e.toString():t.arrayBuffer&&t.blob&&((o=e)&&DataView.prototype.isPrototypeOf(o))?(this._bodyArrayBuffer=u(e.buffer),this._bodyInit=new Blob([this._bodyArrayBuffer])):t.arrayBuffer&&(ArrayBuffer.prototype.isPrototypeOf(e)||r(e))?this._bodyArrayBuffer=u(e):this._bodyText=e=Object.prototype.toString.call(e):this._bodyText="",this.headers.get("content-type")||("string"==typeof e?this.headers.set("content-type","text/plain;charset=UTF-8"):this._bodyBlob&&this._bodyBlob.type?this.headers.set("content-type",this._bodyBlob.type):t.searchParams&&URLSearchParams.prototype.isPrototypeOf(e)&&this.headers.set("content-type","application/x-www-form-urlencoded;charset=UTF-8"))},t.blob&&(this.blob=function(){var t=a(this);if(t)return t;if(this._bodyBlob)return Promise.resolve(this._bodyBlob);if(this._bodyArrayBuffer)return Promise.resolve(new Blob([this._bodyArrayBuffer]));if(this._bodyFormData)throw new Error("could not read FormData body as blob");return Promise.resolve(new Blob([this._bodyText]))},this.arrayBuffer=function(){return this._bodyArrayBuffer?a(this)||Promise.resolve(this._bodyArrayBuffer):this.blob().then(f)}),this.text=function(){var t,e,r,o=a(this);if(o)return o;if(this._bodyBlob)return t=this._bodyBlob,e=new FileReader,r=h(e),e.readAsText(t),r;if(this._bodyArrayBuffer)return Promise.resolve(function(t){for(var e=new Uint8Array(t),r=new Array(e.length),o=0;o<e.length;o++)r[o]=String.fromCharCode(e[o]);return r.join("")}(this._bodyArrayBuffer));if(this._bodyFormData)throw new Error("could not read FormData body as text");return Promise.resolve(this._bodyText)},t.formData&&(this.formData=function(){return this.text().then(c)}),this.json=function(){return this.text().then(JSON.parse)},this}s.prototype.append=function(t,e){t=o(t),e=n(e);var r=this.map[t];this.map[t]=r?r+", "+e:e},s.prototype.delete=function(t){delete this.map[o(t)]},s.prototype.get=function(t){return t=o(t),this.has(t)?this.map[t]:null},s.prototype.has=function(t){return this.map.hasOwnProperty(o(t))},s.prototype.set=function(t,e){this.map[o(t)]=n(e)},s.prototype.forEach=function(t,e){for(var r in this.map)this.map.hasOwnProperty(r)&&t.call(e,this.map[r],r,this)},s.prototype.keys=function(){var t=[];return this.forEach(function(e,r){t.push(r)}),i(t)},s.prototype.values=function(){var t=[];return this.forEach(function(e){t.push(e)}),i(t)},s.prototype.entries=function(){var t=[];return this.forEach(function(e,r){t.push([r,e])}),i(t)},t.iterable&&(s.prototype[Symbol.iterator]=s.prototype.entries);var l=["DELETE","GET","HEAD","OPTIONS","POST","PUT"];function y(t,e){var r,o,n=(e=e||{}).body;if(t instanceof y){if(t.bodyUsed)throw new TypeError("Already read");this.url=t.url,this.credentials=t.credentials,e.headers||(this.headers=new s(t.headers)),this.method=t.method,this.mode=t.mode,this.signal=t.signal,n||null==t._bodyInit||(n=t._bodyInit,t.bodyUsed=!0)}else this.url=String(t);if(this.credentials=e.credentials||this.credentials||"same-origin",!e.headers&&this.headers||(this.headers=new s(e.headers)),this.method=(r=e.method||this.method||"GET",o=r.toUpperCase(),l.indexOf(o)>-1?o:r),this.mode=e.mode||this.mode||null,this.signal=e.signal||this.signal,this.referrer=null,("GET"===this.method||"HEAD"===this.method)&&n)throw new TypeError("Body not allowed for GET or HEAD requests");this._initBody(n)}function c(t){var e=new FormData;return t.trim().split("&").forEach(function(t){if(t){var r=t.split("="),o=r.shift().replace(/\+/g," "),n=r.join("=").replace(/\+/g," ");e.append(decodeURIComponent(o),decodeURIComponent(n))}}),e}function p(t,e){e||(e={}),this.type="default",this.status=void 0===e.status?200:e.status,this.ok=this.status>=200&&this.status<300,this.statusText="statusText"in e?e.statusText:"OK",this.headers=new s(e.headers),this.url=e.url||"",this._initBody(t)}y.prototype.clone=function(){return new y(this,{body:this._bodyInit})},d.call(y.prototype),d.call(p.prototype),p.prototype.clone=function(){return new p(this._bodyInit,{status:this.status,statusText:this.statusText,headers:new s(this.headers),url:this.url})},p.error=function(){var t=new p(null,{status:0,statusText:""});return t.type="error",t};var b=[301,302,303,307,308];p.redirect=function(t,e){if(-1===b.indexOf(e))throw new RangeError("Invalid status code");return new p(null,{status:e,headers:{location:t}})};var m=self.DOMException;try{new m}catch(t){(m=function(t,e){this.message=t,this.name=e;var r=Error(t);this.stack=r.stack}).prototype=Object.create(Error.prototype),m.prototype.constructor=m}function w(e,r){return new Promise(function(o,n){var i=new y(e,r);if(i.signal&&i.signal.aborted)return n(new m("Aborted","AbortError"));var a=new XMLHttpRequest;function h(){a.abort()}a.onload=function(){var t,e,r={status:a.status,statusText:a.statusText,headers:(t=a.getAllResponseHeaders()||"",e=new s,t.replace(/\r?\n[\t ]+/g," ").split(/\r?\n/).forEach(function(t){var r=t.split(":"),o=r.shift().trim();if(o){var n=r.join(":").trim();e.append(o,n)}}),e)};r.url="responseURL"in a?a.responseURL:r.headers.get("X-Request-URL");var n="response"in a?a.response:a.responseText;o(new p(n,r))},a.onerror=function(){n(new TypeError("Network request failed"))},a.ontimeout=function(){n(new TypeError("Network request failed"))},a.onabort=function(){n(new m("Aborted","AbortError"))},a.open(i.method,i.url,!0),"include"===i.credentials?a.withCredentials=!0:"omit"===i.credentials&&(a.withCredentials=!1),"responseType"in a&&t.blob&&(a.responseType="blob"),i.headers.forEach(function(t,e){a.setRequestHeader(e,t)}),i.signal&&(i.signal.addEventListener("abort",h),a.onreadystatechange=function(){4===a.readyState&&i.signal.removeEventListener("abort",h)}),a.send(void 0===i._bodyInit?null:i._bodyInit)})}w.polyfill=!0,self.fetch||(self.fetch=w,self.Headers=s,self.Request=y,self.Response=p)}();
 
-	init: function()
+/** Polyfill Promise **/
+!function(n){"use strict";if(void 0===n.Promise||-1===n.Promise.toString().indexOf("[native code]")){var e="[[PromiseStatus]]",t="[[PromiseValue]]",o=function(n,o){"internal pending"===n[e]&&(n=n[t]),"pending"===n[e]?n.deferreds.push(o):(n.handled=!0,setTimeout(function(){var c="resolved"===n[e]?o.onFulfilled:o.onRejected;if(c)try{i(o.promise,c(n[t]))}catch(n){r(o.promise,n)}else"resolved"===n[e]?i(o.promise,n[t]):r(o.promise,n[t])},0))},i=function(n,o){if(o===n)throw new TypeError("A promise cannot be resolved with it promise.");try{if(o&&("object"==typeof o||"function"==typeof o)){if(o instanceof s)return n[e]="internal pending",n[t]=o,void c(n);if("function"==typeof o.then)return void f(o.then.bind(o),n)}n[e]="resolved",n[t]=o,c(n)}catch(e){r(n,e)}},r=function(n,o){n[e]="rejected",n[t]=o,c(n)},c=function(n){"rejected"===n[e]&&0===n.deferreds.length&&setTimeout(function(){n.handled||console.error("Unhandled Promise Rejection: "+n[t])},0),n.deferreds.forEach(function(e){o(n,e)}),n.deferreds=null},f=function(n,e){var t=!1;try{n(function(n){t||(t=!0,i(e,n))},function(n){t||(t=!0,r(e,n))})}catch(n){t||(t=!0,r(e,n))}},u=function(n,e,t){this.onFulfilled="function"==typeof n?n:null,this.onRejected="function"==typeof e?e:null,this.promise=t},s=function(n){this[e]="pending",this[t]=null,this.handled=!1,this.deferreds=[],f(n,this)};s.prototype.catch=function(n){return this.then(null,n)},s.prototype.then=function(n,e){var t=new s(function(){});return o(this,new u(n,e,t)),t},s.all=function(n){var e=[].slice.call(n);return new s(function(n,t){if(0===e.length)n(e);else for(var o=e.length,i=function(r,c){try{if(c&&("object"==typeof c||"function"==typeof c)&&"function"==typeof c.then)return void c.then.call(c,function(n){i(r,n)},t);e[r]=c,0==--o&&n(e)}catch(n){t(n)}},r=0;r<e.length;r++)i(r,e[r])})},s.resolve=function(n){return n&&"object"==typeof n&&n.constructor===s?n:new s(function(e){e(n)})},s.reject=function(n){return new s(function(e,t){t(n)})},s.race=function(n){return new s(function(e,t){for(var o=0,i=n.length;o<i;o++)n[o].then(e,t)})},n.Promise=s}}(window);
+
+
+// PAYLOAD
+(function(){
+
+	function Warn(message)
 	{
-		this.yaId = null;
-		this.forms = {};
-		this.eventHandlers = [];
-		this.frameHeight = '200';
-		this.defaultNodeId = 'bx24_form_';
-
-		if(!window.Bitrix24FormObject || !window[window.Bitrix24FormObject])
-			return;
-
-		var b24form = window[window.Bitrix24FormObject];
-		b24form.forms = b24form.forms || [];
-		var forms = b24form.forms;
-		forms.ntpush = forms.push;
-		forms.push = function (params)
+		if (window.console && console.warn)
 		{
-			forms.ntpush(params);
-			this.preLoad(params);
-		}.bind(this);
-		forms.forEach(this.preLoad, this);
-	},
-	preLoad: function(params)
+			console.warn(message || '[DEPRECATED] This javascript-loader of CRM-forms is deprecated. Please, change to new javascript-loader.');
+		}
+	}
+	Warn();
+
+	function ParseHost(link)
 	{
-		var _this = this;
-		switch(params.type)
+		return link.match(/((http|https):\/\/[^\/]+?)\//)[1];
+	}
+
+	var defaultHost = (function(){
+		var scriptNode = document.querySelector('script[src*="/bitrix/js/crm/form_loader.js"]')
+		if (scriptNode && scriptNode.src)
 		{
-			case 'click':
-			case 'button':
-			case 'link':
-				var defaultNode = document.getElementById(this.defaultNodeId + params.type);
-				var defaultClickClassNodeList = document.getElementsByClassName("b24-web-form-popup-btn-" + params.id);
-				var click = params.click || null;
-				if(!click && defaultClickClassNodeList && defaultClickClassNodeList.length > 0)
-				{
-					click = [];
-					for(var i = 0; i < defaultClickClassNodeList.length; i++)
-					{
-						click.push(defaultClickClassNodeList.item(i));
-					}
-				}
-				else if(!click && defaultNode)
-				{
-					click = defaultNode.nextElementSibling;
-				}
-
-				if(click && Object.prototype.toString.call(click) != "[object Array]")
-				{
-					click = [click];
-				}
-
-				var formInstance = params;
-				if(this.isFormExisted(params))
-				{
-					formInstance = this.forms[this.getUniqueLoadId(params)];
-				}
-				click.forEach(function(buttonNode){
-					var _this = this;
-					this.addEventListener(buttonNode, 'click', function(){_this.showPopup(formInstance);});
-				}, this);
-				break;
-			case 'delay':
-				window.setTimeout(
-					function(){_this.showPopup(params);},
-					1000 * (params.delay ? params.delay : 5)
-				);
-				break;
-			case 'inline':
-			default:
-				this.load(params);
-				break;
+			return ParseHost(scriptNode.src) ;
 		}
-	},
-	createPopup: function(params)
+
+		return null;
+	})();
+
+	var loaders = {};
+	try
 	{
-		if(this.isFormExisted(params))
-			return;
+		loaders = JSON.parse(window.sessionStorage.getItem('b24:form:compatible:loaders')) || {};
+	}
+	catch (e) {}
 
-		var _this = this;
-		var popup = document.createElement('div');
-
-		popup.innerHTML = '' +
-			'<div style="display: none; position: fixed; align-items: center; justify-content: center; width: 100%; min-height: 100%; background-color: rgba(0,0,0,0.5); overflow: hidden;  z-index: 10000; top: 0; right: 0; bottom: 0; left: 0;">' +
-				'<div style="position: relative; min-width: 300px; min-height: 110px; background: #fff; -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; -webkit-box-shadow: 1px 1px 10px 1px rgba(0,0,0,0.5); -moz-box-shadow: 1px 1px 10px 1px rgba(0,0,0,0.5); box-shadow: 1px 1px 10px 1px rgba(0,0,0,0.5);">' +
-					'<div style="position: absolute; top: -10px; right: -10px; cursor: pointer; z-index: 1;">' +
-						'<div data-bx-form-popup-close="" style="width: 20px; height: 20px; -webkit-border-radius: 50%;  -moz-border-radius: 50%; border-radius: 50%; background: rgba(0,0,0, .5);">' +
-							'<svg viewbox="-5 -5 50 50"><path style="stroke: #fff; fill: transparent; stroke-width: 5;" d="M 10,10 L 30,30 M 30,10 L 10,30" /></svg>' +
-						'</div>' +
-					'</div>' +
-					'<div data-bx-form-popup-cont="" style="margin: 0 auto; min-width: 600px; -webkit-overflow-scrolling: touch;"></div>' +
-				'</div>' +
-			'</div>';
-		popup = popup.children[0];
-		var node = popup.querySelector('[data-bx-form-popup-cont]');
-		var btn = popup.querySelector('[data-bx-form-popup-close]');
-		this.addEventListener(popup, 'click', function(){_this.hidePopup(params)});
-		this.addEventListener(btn, 'click', function(){_this.hidePopup(params)});
-		if(document.body.children[0])
-		{
-			document.body.insertBefore(popup, document.body.children[0]);
-		}
-		else
-		{
-			document.body.appendChild(popup);
-		}
-
-		// fix ios form jumping after show keyboard
-		var styleFixNode = document.createElement('STYLE');
-		styleFixNode.setAttribute("type", "text/css");
-		styleFixNode.appendChild(document.createTextNode(
-			'html.bx-ios-fix-frame-focus, .bx-ios-fix-frame-focus body {'
-			+ 'height: 100%;'
-			+ 'overflow: auto;'
-			+ '-webkit-overflow-scrolling: touch;'
-			+ '}'
-		));
-		document.head.appendChild(styleFixNode);
-
-		params.popup = popup;
-		params.node = node;
-
-		this.addEventListener(window, 'resize', function () {
-			_this.resizePopup(params);
-		});
-
-		// add iframe keyboard event handler
-		this.addEventHandler(params, 'keyboard', function (form, keyCode) {
-			if (keyCode == 27) _this.hidePopup(form);
-		});
-
-		// add listener for escape button
-		this.addEventListener(document, 'keyup', function (e) {
-			e = e || window.e;
-			var kc = (typeof e.which == "number") ? e.which : e.keyCode;
-			if (kc == 27)
-			{
-				_this.hidePopup(params);
-			}
-		});
-	},
-	resizePopup: function(form)
+	var parametersList = [];
+	function InvokeLoader(parameters, loaders)
 	{
-		if(!form || !form['popup'] || !form['node'])
-		{
-			return;
-		}
-
-		var interfaceMagic = 100;
-		var heightValues = [
-			document.body.scrollHeight, document.documentElement.scrollHeight,
-			document.body.offsetHeight, document.documentElement.offsetHeight,
-			document.body.clientHeight, document.documentElement.clientHeight
-		];
-		heightValues = heightValues.filter(function (heightValue) {
-			return heightValue > 0;
-		});
-		var windowHeight = Math.min.apply(Math, heightValues);
-
-		var popupHeight = windowHeight - interfaceMagic;
-		var needScroll = popupHeight <= form.frameHeight;
-
-		if(needScroll)
-		{
-			form.node.style['overflow-y'] = 'scroll';
-			form.node.style['height'] = popupHeight + 'px';
-		}
-		else
-		{
-			form.node.style['overflow-y'] = 'hidden';
-			form.node.style.height = null;
-		}
-
-		var width = Math.min(
-			document.body.scrollWidth, document.documentElement.scrollWidth,
-			document.body.offsetWidth, document.documentElement.offsetWidth,
-			document.body.clientWidth, document.documentElement.clientWidth
-		);
-		width -= 20;
-
-		if(width < 300) width = 300;
-		else if(width > 600) width = 600;
-		form.node.style['min-width'] = width + 'px';
-	},
-	showPopup: function(params)
-	{
-		if(!params.popup)
-		{
-			this.createPopup(params);
-			this.load(params);
-		}
-
-		if(params.popup)
-		{
-			if(this.util.isIOS()) this.util.addClass(document.documentElement, 'bx-ios-fix-frame-focus');
-			params.popup.style.display = 'flex';
-		}
-	},
-	hidePopup: function(params)
-	{
-		params.popup.style.display = 'none';
-		if(this.util.isIOS()) this.util.removeClass(document.documentElement, 'bx-ios-fix-frame-focus');
-	},
-	scrollToPopupMiddle: function(uniqueLoadId)
-	{
-		var form = this.forms[uniqueLoadId];
-		if(!form)
-		{
-			return;
-		}
-
-		var h;
-		if (form.popup)
-		{
-			h = form.node.scrollHeight/2 - 200;
-			form.node.scrollTop = h > 0 ? h : 0;
-		}
-		else if (window.BX && window.BX.pos)
-		{
-			h = form.iframe.scrollHeight/2 - 200;
-			var pos = BX.pos(form.iframe);
-			h += pos.top;
-
-			var screenHeight = document.documentElement.clientHeight;
-			var scrollOffset = window.pageYOffset;
-
-			if (h && (h < scrollOffset || h > (scrollOffset + screenHeight)))
-			{
-				window.scrollTo(window.scrollWidth, h);
-			}
-		}
-	},
-	util: {
-		addClass: function(element, className)
-		{
-			if (element && typeof element.className == "string" && element.className.indexOf(className) === -1)
-			{
-				element.className += " " + className;
-				element.className = element.className.replace('  ', ' ');
-			}
-		},
-		removeClass: function(element, className)
-		{
-			if (!element || !element.className)
-			{
-				return;
-			}
-
-			element.className = element.className.replace(className, '').replace('  ', ' ');
-		},
-		hasClass: function(node, className)
-		{
-			var classList = this.nodeListToArray(node.classList);
-			var filtered = classList.filter(function (name) { return name == className});
-			return filtered.length > 0;
-		},
-		isIOS: function()
-		{
-			return (/(iPad;)|(iPhone;)/i.test(navigator.userAgent));
-		},
-		isMobile: function()
-		{
-			return (/(ipad|iphone|android|mobile|touch)/i.test(navigator.userAgent));
-		}
-	},
-	createFrame: function(params)
-	{
-		var formUrl = params.page || (this.domain + '/pub/form.php');
-		formUrl += formUrl.indexOf('?') > -1 ? '&' : '?';
-
-		var frame = document.createElement('iframe');
-		var frameName = 'bx_form_iframe_' + params.id;
-		var locationHash = {
-			domain: window.location.protocol + '//' + window.location.host,
-			from: window.location.href
+		parametersList.push(parameters);
+		parameters.compatibility = {
+			id: Math.random().toString().split('.')[1] + Math.random().toString().split('.')[1]
 		};
-		if(params.fields)
+
+		var anchorScript = document.createElement('div');
+		anchorScript.innerHTML = loaders.form[parameters.type];
+		anchorScript = anchorScript.children[0];
+		anchorScript.dataset.b24Id = parameters.compatibility.id;
+		parameters.compatibility.anchorScript = anchorScript;
+
+		var execScript = document.createElement('script');
+		execScript.type = 'text/javascript';
+		execScript.appendChild(document.createTextNode(anchorScript.textContent))
+
+
+
+		if(parameters.click && parameters.type === 'click')
 		{
-			locationHash.fields = params.fields;
-		}
-		if(params.options)
-		{
-			locationHash.options = params.options;
-		}
-		if(params.presets)
-		{
-			locationHash.presets = params.presets;
-		}
-
-		var frameSrc = formUrl + 'view=frame&' +
-			'form_id=' + params.id + '&widget_user_lang=' + params.lang + '&sec=' + params.sec + '&r=' + (1*new Date()) +
-			'#' + encodeURIComponent(JSON.stringify(locationHash));
-
-		frame.setAttribute('id', frameName);
-		frame.setAttribute('name', frameName);
-		frame.setAttribute('src', frameSrc);
-
-		frame.setAttribute('scrolling', 'no');
-		frame.setAttribute('frameborder', '0');
-		frame.setAttribute('marginheight', '0');
-		frame.setAttribute('marginwidth', '0');
-		frame.setAttribute('style', 'width: 100%; height: ' + this.frameHeight + 'px; border: 0px; overflow: hidden; padding: 0; margin: 0;'); //max-width: 600px;
-
-		return frame;
-	},
-	getUniqueLoadId: function(params)
-	{
-		var type = params.type;
-		switch(type)
-		{
-			case 'click':
-			case 'button':
-			case 'link':
-				type = 'button';
-				break;
-		}
-
-		return type + '_' + params.id;
-	},
-	isFormExisted: function(params)
-	{
-		return !!this.forms[this.getUniqueLoadId(params)];
-	},
-	load: function(params)
-	{
-		if(this.isFormExisted(params))
-			return;
-
-		params.loaded = false;
-		params.handlers = params.handlers || {};
-		params.options = params.options || {};
-
-		this.execEventHandler(params, 'init', [params]);
-
-		var uniqueLoadId = this.getUniqueLoadId(params);
-		this.forms[uniqueLoadId] = params;
-		var node = params.node ? params.node : null;
-		var defaultNode = document.getElementById(this.defaultNodeId + params.type);
-		if(!node && !defaultNode)
-			return;
-
-		if (!params.ref)
-		{
-			var scriptNode = document.querySelector('script[src*="/bitrix/js/crm/form_loader.js"]')
-			if (scriptNode)
-			{
-				params.ref = scriptNode.src;
-			}
-		}
-		
-		this.domain = params.ref.match(/((http|https):\/\/[^\/]+?)\//)[1];
-
-		var iframe = this.createFrame(params);
-		params.iframe = iframe;
-
-		if(node)
-			node.appendChild(iframe);
-		else
-			defaultNode.parentNode.insertBefore(iframe, defaultNode);
-
-		var _this = this;
-		this.addEventListener(iframe, 'load', function(){_this.onFrameLoad(uniqueLoadId);});
-
-
-		if (!this.isMessageListenerAdded)
-		{
-			this.addEventListener(window, 'message', function(event){
-				if(event && event.origin == _this.domain)
-				{
-					_this.doFrameAction(event.data);
-				}
+			parameters.click.forEach(function (node) {
+				node.parentNode.insertBefore(anchorScript.cloneNode(true), node);
 			});
-			this.isMessageListenerAdded = true;
 		}
-	},
-	unload: function(params)
-	{
-		if(!this.isFormExisted(params))
-			return;
-
-		this.execEventHandler(params, 'unload', [params]);
-
-		var uniqueLoadId = this.getUniqueLoadId(params);
-		var iframe = this.forms[uniqueLoadId].iframe;
-		if (iframe && null != iframe.parentNode)
-			iframe.parentNode.removeChild(iframe);
-
-		this.forms[uniqueLoadId] = null;
-	},
-	doFrameAction: function(dataString, uniqueLoadId)
-	{
-		var data = {};
-		try { data = JSON.parse(dataString); } catch (err){}
-		if(!data.action || !data.value) return;
-
-		switch (data.action)
+		else if(parameters.node)
 		{
-			case 'change_height':
-				this.setFrameHeight(data.uniqueLoadId || uniqueLoadId, parseInt(data.value));
-				break;
-			case 'popup_showed':
-				this.scrollToPopupMiddle(data.uniqueLoadId || uniqueLoadId);
-				break;
-			case 'guestLoader':
-				if (!this.isGuestLoaded() && data.value)
-				{
-					eval(data.value);
-					this.guestLoadedChecker();
-				}
-				break;
-			case 'redirect':
-				window.location = data.value;
-				break;
-			case 'keyboard':
-				if (data.value == 27)
-				{
-					var form = this.forms[data.uniqueLoadId || uniqueLoadId];
-					if(form) this.execEventHandler(form, 'keyboard', [form, data.value]);
-				}
-				break;
-			case 'event':
-				var form = this.forms[data.uniqueLoadId || uniqueLoadId];
-				if(form) this.execEventHandler(form, data.eventName, data.value);
-				break;
-			case 'analytics':
-				data.value.forEach(function(item) {
-					if (item.type === 'ga' && window.gtag)
-					{
-						if (item.params[0] === 'pageview')
-						{
-							if (window.dataLayer)
-							{
-								var filtered = window.dataLayer.filter(function(item) {
-									return item[0] === 'config';
-								}).map(function (item) {
-									return item[1]
-								});
-								if (filtered.length > 0)
-								{
-									window.gtag('config', filtered[0], {
-										//'page_title' : item.params[2],
-										'page_path': item.params[1]
-									});
-								}
-							}
-						}
-						else if (item.params[0] === 'event')
-						{
-							window.gtag('event', item.params[2], {
-								'event_category': item.params[1]
-							});
-						}
-					}
-					else if (item.type === 'ga' && window.dataLayer)
-					{
-						if (item.params[0] === 'pageview')
-						{
-							window.dataLayer.push({
-								'event': 'VirtualPageview',
-								//'virtualPageTitle': item.params[2],
-								'virtualPageURL': item.params[1]
-							});
-						}
-						else if (item.params[0] === 'event')
-						{
-							window.dataLayer.push({
-								'event': 'crm-form',
-								'eventCategory': item.params[1],
-								'eventAction': item.params[2]
-							});
-						}
-					}
-					else if (item.type === 'ga' && window.ga)
-					{
-						var isGaExists = window.ga.getAll().filter(function(tracker){
-							return tracker.get('trackingId') == item.gaId
-						}).length > 0;
-						if (!item.gaId || !isGaExists)
-						{
-							if (item.params[2])
-								window.ga('send', item.params[0], item.params[1], item.params[2]);
-							else
-								window.ga('send', item.params[0], item.params[1]);
-						}
-					}
-					else if (item.type === 'ya' && !window['yaCounter' + item.yaId])
-					{
-						if (!this.yaId && window['Ya'])
-						{
-							if (Ya.Metrika && Ya.Metrika.counters()[0])
-							{
-								this.yaId = Ya.Metrika.counters()[0].id;
-							}
-							else if (Ya.Metrika2 && Ya.Metrika2.counters()[0])
-							{
-								this.yaId = Ya.Metrika2.counters()[0].id;
-							}
-
-						}
-						if (this.yaId && window['yaCounter' + this.yaId])
-						{
-							window['yaCounter' + this.yaId].reachGoal(item.params[0]);
-						}
-					}
-				});
-				break;
+			parameters.node.appendChild(anchorScript);
 		}
-	},
-	checkHash: function(uniqueLoadId)
-	{
-		var dataString = window.location.hash.substring(1);
-		this.doFrameAction(dataString, uniqueLoadId);
-
-		var _this = this;
-		setTimeout(function(){_this.checkHash(uniqueLoadId)}, 500);
-	},
-	sendDataToFrame: function(uniqueLoadId, data)
-	{
-		if(typeof window.postMessage !== 'function')
+		else if (parameters.defaultNode)
 		{
-			return;
-		}
-
-		var form = this.forms[uniqueLoadId];
-		data = data || {};
-
-		form.iframe.contentWindow.postMessage(
-			JSON.stringify(data), this.domain
-		);
-	},
-	onFrameLoad: function(uniqueLoadId)
-	{
-		var form = this.forms[uniqueLoadId];
-		if (window.BX && window.BX.onCustomEvent)
-		{
-			BX.onCustomEvent('onFormFrameLoad', [form, uniqueLoadId]);
-		}
-
-		var ie = 0 /*@cc_on + @_jscript_version @*/;
-		if(typeof window.postMessage === 'function' && !ie)
-		{
-			var frameParameters = {
-				'domain': this.domain,
-				'uniqueLoadId': uniqueLoadId
-			};
-
-			if (window.b24Tracker && window.b24Tracker.guest)
+			if (parameters.defaultNode.nextElementSibling)
 			{
-				var pages = window.b24Tracker.guest.getPages();
-				if (pages && pages.length > 0)
-				{
-					frameParameters.visitedPages = pages;
-				}
+				parameters.defaultNode.parentNode.insertBefore(
+					anchorScript,
+					parameters.defaultNode.nextElementSibling
+				);
 			}
-
-			this.execEventHandler(form, 'init-frame-params', [form, frameParameters]);
-			//init postMessage
-			this.sendDataToFrame(uniqueLoadId, frameParameters)
+			else if (parameters.defaultNode)
+			{
+				parameters.defaultNode.parentNode.appendChild(anchorScript);
+			}
 		}
 		else
 		{
-			this.checkHash(uniqueLoadId);
+			return;
 		}
 
-		this.addEventHandler(form, 'send', function (data) {
-			if (window.b24Tracker && window.b24Tracker.guest)
-			{
-				window.b24Tracker.guest.link(data.gid);
-			}
+		if (parametersList.length === 1)
+		{
+			window.addEventListener('b24:form:init:before', function (event) {
+				var options = event.detail.data;
+				var form = event.detail.object;
+				if (!options || !options.identification)
+				{
+					return;
+				}
+
+				var parameters = parametersList.filter(function (parameters) {
+					if (parseInt(options.identification.id) !== parseInt(parameters.id))
+					{
+						return false;
+					}
+
+					if (options.identification.sec !== parameters.sec)
+					{
+						return false;
+					}
+
+					if (options.id && parameters.compatibility && parameters.compatibility.id)
+					{
+						return parseInt(options.id) === parseInt(parameters.compatibility.id);
+					}
+
+					return true;
+				})[0];
+				if (!parameters)
+				{
+					return;
+				}
+
+				if (parameters.compatibility && form)
+				{
+					parameters.compatibility.instance = form;
+				}
+				window.b24form.Compatibility.applyOldenLoaderData(options, parameters);
+			});
+		}
+
+		document.head.appendChild(execScript);
+	}
+
+	var requestPromises = {};
+	function LoadCompatible(parameters)
+	{
+		var host = ParseHost(parameters.ref) || defaultHost;
+		if (!host)
+		{
+			throw new Error('Could not load form without parameter `ref`');
+		}
+
+		var cacheId = host + '|' + parameters.id;
+		if (loaders[cacheId]) // check loaded
+		{
+			InvokeLoader(parameters, loaders[cacheId]);
+			return;
+		}
+
+		if (!requestPromises[cacheId]) // check loading
+		{
+			requestPromises[cacheId] = new Promise(function (resolve, reject) {
+				var uri = host + '/bitrix/services/main/ajax.php?action=crm.site.form.get'
+					+ '&id=' + parameters.id
+					+ '&sec=' + parameters.sec
+					+ '&loaderOnly=y';
+
+				window.fetch(
+					uri,
+					{
+						method: 'GET',
+						mode: 'cors',
+						cache: 'no-cache',
+						headers: {
+							'Origin': window.location.origin
+						}
+					}
+				)
+					.then(function (response) {
+						return response.json();
+					})
+					.then(function (data) {
+						loaders[cacheId] = data.result.loader;
+						try
+						{
+							window.sessionStorage.setItem('b24:form:compatible:loaders', JSON.stringify(loaders));
+						}
+						catch (e) {}
+						resolve(parameters, data.result.loader);
+					})
+					.catch(reject);
+			});
+		}
+
+		requestPromises[cacheId].then(function () {
+			InvokeLoader(parameters, loaders[cacheId]);
 		});
+	}
 
-		form.loaded = true;
-		this.onGuestLoaded();
-		this.execEventHandler(form, 'load', [form]);
-	},
-
-	isGuestLoaded: function()
+	function UnLoadCompatible(parameters)
 	{
-		return window.b24Tracker && window.b24Tracker.guest;
-	},
-	guestLoadedChecker: function()
-	{
-		if (this.onGuestLoaded())
+		if (!parameters.compatibility || !parameters.compatibility.instance)
 		{
 			return;
 		}
 
-		setTimeout(this.guestLoadedChecker.bind(this), 300);
-	},
-	onGuestLoaded: function()
-	{
-		if (!this.isGuestLoaded())
-		{
-			return false;
-		}
+		parameters.compatibility.instance.destroy();
+		parameters.compatibility.anchorScript.remove();
+	}
 
-		for (var uniqueLoadId in this.forms)
+	window.Bitrix24FormLoader = {
+		init: function()
 		{
-			if (!this.forms.hasOwnProperty(uniqueLoadId))
+			this.yaId = null;
+			this.forms = {};
+			this.eventHandlers = [];
+			this.frameHeight = '200';
+			this.defaultNodeId = 'bx24_form_';
+
+			if(!window.Bitrix24FormObject || !window[window.Bitrix24FormObject])
+				return;
+
+			var b24form = window[window.Bitrix24FormObject];
+			b24form.forms = b24form.forms || [];
+			var forms = b24form.forms;
+			forms.ntpush = forms.push;
+			forms.push = function (params)
 			{
-				continue;
+				forms.ntpush(params);
+				this.preLoad(params);
+			}.bind(this);
+			forms.forEach(this.preLoad, this);
+		},
+		preLoad: function(params)
+		{
+			var defaultNode = params.defaultNode = document.getElementById(this.defaultNodeId + params.type);
+			if(!params.node && !params.defaultNode)
+			{
+				throw new Error('Could not load form: node not found.')
 			}
 
-			var form = this.forms[uniqueLoadId];
-			if (!form || form.guestLoaded || !form.loaded)
+			switch(params.type)
 			{
-				continue;
+				case 'click':
+				case 'button':
+				case 'link':
+					var click = params.click || Array.prototype.slice.call(document.getElementsByClassName("b24-web-form-popup-btn-" + params.id));
+					if(click && Object.prototype.toString.call(click) !== "[object Array]")
+					{
+						click = [click];
+					}
+					if(!click && defaultNode)
+					{
+						click = [defaultNode.nextElementSibling];
+					}
+					params.click = click;
+					params.type = 'click';
+					break;
+				case 'delay':
+					params.type = 'auto';
+					break;
+				case 'inline':
+				default:
+					params.type = 'inline';
+					break;
 			}
 
-			form.guestLoaded = true;
-
-			var trace;
-			if (form.options.siteButton && BX.SiteButton && BX.SiteButton.getTrace)
+			this.load(params);
+		},
+		createPopup: function(params)
+		{
+			Warn();
+		},
+		resizePopup: function()
+		{
+			Warn();
+		},
+		showPopup: function(params)
+		{
+			Warn();
+		},
+		hidePopup: function(params)
+		{
+			Warn();
+		},
+		scrollToPopupMiddle: function(uniqueLoadId)
+		{
+			Warn();
+		},
+		util: {
+			addClass: function(element, className)
 			{
-				trace = BX.SiteButton.getTrace();
+				if (element && typeof element.className == "string" && element.className.indexOf(className) === -1)
+				{
+					element.className += " " + className;
+					element.className = element.className.replace('  ', ' ');
+				}
+			},
+			removeClass: function(element, className)
+			{
+				if (!element || !element.className)
+				{
+					return;
+				}
+
+				element.className = element.className.replace(className, '').replace('  ', ' ');
+			},
+			hasClass: function(node, className)
+			{
+				var classList = this.nodeListToArray(node.classList);
+				var filtered = classList.filter(function (name) { return name == className});
+				return filtered.length > 0;
+			},
+			isIOS: function()
+			{
+				return (/(iPad;)|(iPhone;)/i.test(navigator.userAgent));
+			},
+			isMobile: function()
+			{
+				return (/(ipad|iphone|android|mobile|touch)/i.test(navigator.userAgent));
+			}
+		},
+		createFrame: function(params)
+		{
+			Warn();
+		},
+		getUniqueLoadId: function(params)
+		{
+			var type = params.type;
+			switch(type)
+			{
+				case 'click':
+				case 'button':
+				case 'link':
+					type = 'button';
+					break;
+			}
+
+			return type + '_' + params.id;
+		},
+		isFormExisted: function(params)
+		{
+			return !!this.forms[this.getUniqueLoadId(params)];
+		},
+		load: function(params)
+		{
+			params.loaded = false;
+			params.handlers = params.handlers || {};
+			params.options = params.options || {};
+
+			LoadCompatible(params);
+		},
+		unload: function(params)
+		{
+			params = params || {};
+			UnLoadCompatible(params);
+			var uniqueLoadId = this.getUniqueLoadId(params);
+			this.forms[uniqueLoadId] = null;
+		},
+		doFrameAction: function(dataString, uniqueLoadId)
+		{
+			Warn();
+		},
+		checkHash: function(uniqueLoadId)
+		{
+			Warn();
+		},
+		sendDataToFrame: function(uniqueLoadId, data)
+		{
+			Warn();
+		},
+		onFrameLoad: function(uniqueLoadId)
+		{
+			Warn();
+		},
+
+		isGuestLoaded: function()
+		{
+			return window.b24Tracker && window.b24Tracker.guest;
+		},
+		guestLoadedChecker: function()
+		{
+			Warn();
+		},
+		onGuestLoaded: function()
+		{
+			Warn();
+		},
+
+		addEventListener: function(el, eventName, handler)
+		{
+			el = el || window;
+			if (window.addEventListener)
+			{
+				el.addEventListener(eventName, handler, false);
 			}
 			else
 			{
-				trace = window.b24Tracker.guest.getTrace();
+				el.attachEvent('on' + eventName, handler);
 			}
-			this.sendDataToFrame(uniqueLoadId, {action: 'setTrace', trace: trace});
-		}
-
-		return true;
-	},
-
-	addEventListener: function(el, eventName, handler)
-	{
-		el = el || window;
-		if (window.addEventListener)
+		},
+		addEventHandler: function(target, eventName, handler)
 		{
-			el.addEventListener(eventName, handler, false);
-		}
-		else
+			Warn();
+		},
+		execEventHandler: function(target, eventName, params)
 		{
-			el.attachEvent('on' + eventName, handler);
-		}		
-	},
-	addEventHandler: function(target, eventName, handler)
-	{
-		if (!eventName || !handler)
+			Warn();
+		},
+
+		setFrameHeight: function(uniqueLoadId, height)
 		{
-			return;
+			Warn();
 		}
+	};
 
-		this.eventHandlers.push({
-			'target': target,
-			'eventName': eventName,
-			'handler': handler
-		});
-	},
-	execEventHandler: function(target, eventName, params)
-	{
-		params = params || [];
-		if (!eventName)
-		{
-			return;
-		}
-
-		this.eventHandlers.forEach(function (eventHandler) {
-			if (eventHandler.eventName != eventName)
-			{
-				return;
-			}
-			if (eventHandler.target != target)
-			{
-				return;
-			}
-
-			eventHandler.handler.apply(this, params);
-		}, this);
-
-		if(target == this)
-		{
-			// global events
-		}
-		else
-		{
-			if(target.handlers && target.handlers[eventName])
-			{
-				target.handlers[eventName].apply(this, params);
-			}
-		}
-	},
-	
-	setFrameHeight: function(uniqueLoadId, height)
-	{
-		var form = this.forms[uniqueLoadId];
-		if(!form)
-		{
-			return;
-		}
-
-		if(form['frameHeight'] && form.frameHeight == height) return;
-
-		form.frameHeight = height;
-		form.iframe.style['height'] = height + 'px';
-
-		if(form.popup)
-		{
-			this.resizePopup(form);
-		}
-	}
-};
-
-Bitrix24FormLoader.init();
+	window.Bitrix24FormLoader.init();
+})();

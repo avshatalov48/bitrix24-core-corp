@@ -15,6 +15,13 @@ class CVoxImplantOutgoing
 
 	public static function GetConfig($userId, $lineId = '')
 	{
+		if (!VI\Limits::canCall())
+		{
+			return [
+				'error' => ['code' => 'PAID_PLAN_REQUIRED']
+			];
+		}
+
 		$userId = intval($userId);
 
 		if($userId === 0)

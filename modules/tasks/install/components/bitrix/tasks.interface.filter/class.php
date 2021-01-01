@@ -89,8 +89,17 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 			($this->canCreateGroupTasks($groupId)? 'Y' : 'N')
 		);
 
-		$this->arResult['LIMIT_EXCEEDED'] = FilterLimit::isLimitExceeded();
-		$this->arResult['LIMITS'] = FilterLimit::prepareStubInfo();
+		$isLimitExceeded = FilterLimit::isLimitExceeded();
+		if ($isLimitExceeded)
+		{
+			$this->arResult['LIMIT_EXCEEDED'] = true;
+			$this->arResult['LIMITS'] = FilterLimit::prepareStubInfo();
+		}
+		else if (($limitWarningValue = FilterLimit::getLimitWarningValue($this->arParams['USER_ID'])))
+		{
+			FilterLimit::notifyLimitWarning($this->arParams['USER_ID'], $limitWarningValue);
+		}
+
 		$this->arResult['SPRINTS'] = $this->getSprints();
 	}
 

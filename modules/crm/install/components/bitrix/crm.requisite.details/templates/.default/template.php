@@ -48,9 +48,10 @@ $APPLICATION->IncludeComponent(
 	[
 		'INITIAL_MODE' => 'edit',
 		'GUID' => $formParams['FORM_ID'],
-		'CONFIG_ID' => $formParams['FORM_ID'],
+		'CONFIG_ID' => $formParams['CONFIG_ID'],
 		'ENTITY_FIELDS' => $formParams['FIELDS'],
 		'ENABLE_CONFIGURATION_UPDATE' => true,
+		'ENABLE_USER_FIELD_MANDATORY_CONTROL' => false,
 		'ENTITY_CONFIG' => [
 			[
 				'name' => 'REQUISITES_SECTION',

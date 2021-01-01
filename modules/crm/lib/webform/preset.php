@@ -7,6 +7,7 @@
  */
 namespace Bitrix\Crm\WebForm;
 
+use Bitrix\Crm\Settings\LeadSettings;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
@@ -174,13 +175,18 @@ class Preset
 		$presets = static::getList();
 		foreach($presets as $preset)
 		{
-			if($preset['ID'] == $xmlId)
+			if($preset['XML_ID'] == $xmlId)
 			{
 				return $preset;
 			}
 		}
 
 		return null;
+	}
+
+	private static function isLeadEnabled()
+	{
+		return LeadSettings::getCurrent()->isEnabled();
 	}
 
 	public static function getList()
@@ -193,16 +199,19 @@ class Preset
 				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_CD_DESCRIPTION'),
 				'RESULT_SUCCESS_TEXT' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_RESULT_SUCCESS_TEXT'),
 				'RESULT_FAILURE_TEXT' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_RESULT_FAILURE_TEXT'),
-				'ENTITY_SCHEME' => (string) Entity::ENUM_ENTITY_SCHEME_LEAD,
-				'TEMPLATE_ID' => Helper::ENUM_TEMPLATE_LIGHT,
+				'ENTITY_SCHEME' => (string) (self::isLeadEnabled() ? Entity::ENUM_ENTITY_SCHEME_LEAD : Entity::ENUM_ENTITY_SCHEME_DEAL),
+				//'TEMPLATE_ID' => Helper::ENUM_TEMPLATE_LIGHT,
 				'COPYRIGHT_REMOVED' => 'N',
 				'IS_PAY' => 'N',
-				'DUPLICATE_MODE' => ResultEntity::DUPLICATE_CONTROL_MODE_NONE,
+				'DUPLICATE_MODE' => ResultEntity::DUPLICATE_CONTROL_MODE_MERGE,
+				'FORM_SETTINGS' => [
+					'DEAL_DC_ENABLED' => 'Y',
+				],
 				'BUTTON_CAPTION' => '',
 				'FIELDS' => array(
 					array(
 						'TYPE' => 'string',
-						'CODE' => 'LEAD_NAME',
+						'CODE' => self::isLeadEnabled() ? 'LEAD_NAME' : 'CONTACT_NAME',
 						'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_NAME'),
 						'SORT' => 100,
 						'REQUIRED' => 'N',
@@ -211,7 +220,7 @@ class Preset
 					),
 					array(
 						'TYPE' => 'string',
-						'CODE' => 'LEAD_LAST_NAME',
+						'CODE' => self::isLeadEnabled() ? 'LEAD_LAST_NAME' : 'CONTACT_LAST_NAME',
 						'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_LAST_NAME'),
 						'SORT' => 200,
 						'REQUIRED' => 'N',
@@ -220,7 +229,7 @@ class Preset
 					),
 					array(
 						'TYPE' => 'phone',
-						'CODE' => 'LEAD_PHONE',
+						'CODE' => self::isLeadEnabled() ? 'LEAD_PHONE' : 'CONTACT_PHONE',
 						'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_PHONE'),
 						'SORT' => 300,
 						'REQUIRED' => 'N',
@@ -229,7 +238,7 @@ class Preset
 					),
 					array(
 						'TYPE' => 'email',
-						'CODE' => 'LEAD_EMAIL',
+						'CODE' => self::isLeadEnabled() ? 'LEAD_EMAIL' : 'CONTACT_EMAIL',
 						'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_EMAIL'),
 						'SORT' => 400,
 						'REQUIRED' => 'N',
@@ -245,16 +254,19 @@ class Preset
 				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_FB_DESCRIPTION'),
 				'RESULT_SUCCESS_TEXT' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_RESULT_SUCCESS_TEXT'),
 				'RESULT_FAILURE_TEXT' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_RESULT_FAILURE_TEXT'),
-				'ENTITY_SCHEME' => (string) Entity::ENUM_ENTITY_SCHEME_LEAD,
-				'TEMPLATE_ID' => Helper::ENUM_TEMPLATE_LIGHT,
+				'ENTITY_SCHEME' => (string) (self::isLeadEnabled() ? Entity::ENUM_ENTITY_SCHEME_LEAD : Entity::ENUM_ENTITY_SCHEME_DEAL),
+				//'TEMPLATE_ID' => Helper::ENUM_TEMPLATE_LIGHT,
 				'COPYRIGHT_REMOVED' => 'N',
 				'IS_PAY' => 'N',
-				'DUPLICATE_MODE' => ResultEntity::DUPLICATE_CONTROL_MODE_NONE,
+				'DUPLICATE_MODE' => ResultEntity::DUPLICATE_CONTROL_MODE_MERGE,
+				'FORM_SETTINGS' => [
+					'DEAL_DC_ENABLED' => 'Y',
+				],
 				'BUTTON_CAPTION' => '',
 				'FIELDS' => array(
 					array(
 						'TYPE' => 'string',
-						'CODE' => 'LEAD_NAME',
+						'CODE' => self::isLeadEnabled() ? 'LEAD_NAME' : 'CONTACT_NAME',
 						'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_NAME'),
 						'SORT' => 100,
 						'REQUIRED' => 'N',
@@ -263,7 +275,7 @@ class Preset
 					),
 					array(
 						'TYPE' => 'string',
-						'CODE' => 'LEAD_LAST_NAME',
+						'CODE' => self::isLeadEnabled() ? 'LEAD_LAST_NAME' : 'CONTACT_LAST_NAME',
 						'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_LAST_NAME'),
 						'SORT' => 200,
 						'REQUIRED' => 'N',
@@ -272,7 +284,7 @@ class Preset
 					),
 					array(
 						'TYPE' => 'phone',
-						'CODE' => 'LEAD_PHONE',
+						'CODE' => self::isLeadEnabled() ? 'LEAD_PHONE' : 'CONTACT_PHONE',
 						'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_PHONE'),
 						'SORT' => 300,
 						'REQUIRED' => 'N',
@@ -281,7 +293,7 @@ class Preset
 					),
 					array(
 						'TYPE' => 'email',
-						'CODE' => 'LEAD_EMAIL',
+						'CODE' => self::isLeadEnabled() ? 'LEAD_EMAIL' : 'CONTACT_EMAIL',
 						'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_EMAIL'),
 						'SORT' => 400,
 						'REQUIRED' => 'N',
@@ -290,7 +302,7 @@ class Preset
 					),
 					array(
 						'TYPE' => 'text',
-						'CODE' => 'LEAD_COMMENTS',
+						'CODE' => self::isLeadEnabled() ? 'LEAD_COMMENTS' : 'DEAL_COMMENTS',
 						'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_COMMENTS'),
 						'SORT' => 500,
 						'REQUIRED' => 'N',
@@ -313,8 +325,18 @@ class Preset
 		return $list;
 	}
 
-	protected static function getCallback($phoneCode, $phoneCaption)
+	public static function getCallback($phoneCode, $phoneCaption)
 	{
+		if (!$phoneCode && Loader::includeModule('voximplant'))
+		{
+			$callbackNumbers = Callback::getPhoneNumbers();
+			if ($callbackNumbers)
+			{
+				$phoneCode = $callbackNumbers[0]['CODE'];
+				$phoneCaption = $callbackNumbers[0]['NAME'];
+			}
+		}
+
 		$callback = array(
 			'XML_ID' => 'crm_preset_cb_' . $phoneCode, //cb - CallBack
 			'NAME' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_CB_NAME', array('#call_from#' => $phoneCaption)),
@@ -322,19 +344,22 @@ class Preset
 			'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_CB_DESCRIPTION'),
 			'RESULT_SUCCESS_TEXT' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_CB_RESULT_SUCCESS_TEXT'),
 			'RESULT_FAILURE_TEXT' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_RESULT_FAILURE_TEXT'),
-			'ENTITY_SCHEME' => (string) Entity::ENUM_ENTITY_SCHEME_LEAD,
-			'TEMPLATE_ID' => Helper::ENUM_TEMPLATE_LIGHT,
+			'ENTITY_SCHEME' => (string) (self::isLeadEnabled() ? Entity::ENUM_ENTITY_SCHEME_LEAD : Entity::ENUM_ENTITY_SCHEME_DEAL),
+			//'TEMPLATE_ID' => Helper::ENUM_TEMPLATE_LIGHT,
 			'COPYRIGHT_REMOVED' => 'N',
 			'IS_PAY' => 'N',
 			'IS_CALLBACK_FORM' => 'Y',
 			'CALL_FROM' => $phoneCode,
 			'CALL_TEXT' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_CB_CALL_TEXT'),
-			'DUPLICATE_MODE' => ResultEntity::DUPLICATE_CONTROL_MODE_NONE,
+			'DUPLICATE_MODE' => ResultEntity::DUPLICATE_CONTROL_MODE_MERGE,
+			'FORM_SETTINGS' => [
+				'DEAL_DC_ENABLED' => 'Y',
+			],
 			'BUTTON_CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_CB_BUTTON_CAPTION'),
 			'FIELDS' => array(
 				array(
 					'TYPE' => 'phone',
-					'CODE' => 'LEAD_PHONE',
+					'CODE' => self::isLeadEnabled() ? 'LEAD_PHONE' : 'CONTACT_PHONE',
 					'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_PHONE'),
 					'SORT' => 100,
 					'REQUIRED' => 'Y',

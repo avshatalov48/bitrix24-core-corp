@@ -680,6 +680,7 @@ export default class Manager
 						entityId: column.data.entityId,
 						name: column.getName(),
 						sort: newSorting,
+						color: column.getColor(),
 					};
 
 					column.data.stage.SORT = newSorting;

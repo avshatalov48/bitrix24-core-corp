@@ -8,7 +8,6 @@
 
 namespace Bitrix\Tasks\Provider;
 
-
 use Bitrix\Tasks\Access\Permission\PermissionDictionary;
 use Bitrix\Tasks\Access\Permission\TasksTemplatePermissionTable;
 use Bitrix\Tasks\Util\User;
@@ -110,7 +109,7 @@ class TemplateProvider
 			return $this;
 		}
 
-		$isAdmin = (array_key_exists('USER_IS_ADMIN', $this->arParams)? $this->arParams['USER_IS_ADMIN'] : User::isSuper($this->userId));
+		$isAdmin = (array_key_exists('USER_IS_ADMIN', $this->arParams) ? $this->arParams['USER_IS_ADMIN'] : User::isSuper($this->userId));
 		if ($isAdmin)
 		{
 			return $this;
@@ -604,5 +603,7 @@ class TemplateProvider
 		{
 			$this->userId = (int) $arParams['USER_ID'];
 		}
+
+		$this->executorId = $this->userId;
 	}
 }

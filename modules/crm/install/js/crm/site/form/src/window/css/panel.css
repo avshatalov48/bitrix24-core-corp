@@ -13,9 +13,11 @@
 }
 
 @media (max-width: 767px) {
-	height: -webkit-fill-available;
-	height: -moz-fill-available;
-	height: fill-available;
+	.b24-window-panel {
+		height: -webkit-fill-available;
+		height: -moz-fill-available;
+		height: fill-available;
+	}
 }
 
 .b24-window-panel-pos-center {
@@ -37,14 +39,17 @@
 	border-radius: 0;
 }
 
-.b24-window-panel .b24-window-scrollable {
-	background-color: #fff;
-	background-color: var(--b24-background-color);
+.b24-window-panel > div > .b24-window-scrollable {
 	position: absolute;
 	top: 0;
 	right: 0;
 	bottom: 0;
 	left: 0;
+}
+
+.b24-window-panel .b24-window-scrollable {
+	background-color: #fff;
+	background-color: var(--b24-background-color);
 }
 
 .b24-window-panel .b24-form-wrapper {

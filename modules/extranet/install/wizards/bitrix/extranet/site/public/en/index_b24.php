@@ -65,22 +65,20 @@ if(CModule::IncludeModule('calendar')):
 endif;?>
 
 
-<?
-if(CModule::IncludeModule('tasks')):
+<?php
+if (CModule::IncludeModule('tasks')):
 	$APPLICATION->IncludeComponent(
-		"bitrix:tasks.filter.v2",
-		"widget",
-		array(
-			"VIEW_TYPE" => 0,
-			"COMMON_FILTER" => array("ONLY_ROOT_TASKS" => "Y"),
+		"bitrix:tasks.widget.rolesfilter",
+		"",
+		[
 			"USER_ID" => $USER->GetID(),
-			"ROLE_FILTER_SUFFIX" => "",
 			"PATH_TO_TASKS" => "#SITE_DIR#contacts/personal/user/".$USER->GetID()."/tasks/",
-			"CHECK_TASK_IN" => "R"
-		),
+			"PATH_TO_TASKS_CREATE" => "#SITE_DIR#contacts/personal/user/".$USER->GetID()."/tasks/task/edit/0/",
+		],
 		null,
-		array("HIDE_ICONS" => "N")
+		["HIDE_ICONS" => "N"]
 	);
-endif;?>
+endif;
+?>
 
 <?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>

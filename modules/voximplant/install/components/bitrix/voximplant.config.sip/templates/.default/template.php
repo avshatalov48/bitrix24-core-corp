@@ -7,6 +7,8 @@ CJSCore::RegisterExt('voximplant_config_sip', array(
 ));
 CJSCore::Init(['ui.buttons', 'ui.buttons.icons', 'ui.alerts', 'sidepanel', 'voximplant.common', 'voximplant_config_sip', 'ui.sidepanel-content']);
 
+$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
+
 $isBitrix24Template = (SITE_TEMPLATE_ID == "bitrix24");
 if($isBitrix24Template)
 {
@@ -71,6 +73,7 @@ if($isBitrix24Template)
 		publicFolder: '<?=CVoxImplantMain::GetPublicFolder()?>',
 		type: '<?=CUtil::JSEscape($arResult['SIP_TYPE'])?>',
 		sipConnections: <?= CUtil::PhpToJSObject(array_values($arResult['LIST_SIP_NUMBERS']))?>,
-		linkToBuy: '<?=CUtil::JSEscape($arResult['LINK_TO_BUY'])?>'
+		linkToBuy: '<?=CUtil::JSEscape($arResult['LINK_TO_BUY'])?>',
+		isTelephonyAvailable: '<?= $arResult['TELEPHONY_AVAILABLE'] ? 'Y' : 'N'?>'
 	});
 </script>

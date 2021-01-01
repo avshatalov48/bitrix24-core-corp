@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
 }
 
+use \Bitrix\Crm\Integration\PullManager;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Loader;
 use \Bitrix\Main\Application;
@@ -58,18 +59,6 @@ class CrmKanbanComponent extends \CBitrixComponent
 	protected $requiredFields = [];
 	protected $schemeFields = [];
 	protected $userFields = [];
-	protected $dateFormats = [
-		'short' => [
-			'en' => 'F j',
-			'de' => 'j. F',
-			'ru' => 'j F'
-		],
-		'full' => [
-			'en' => 'F j, Y',
-			'de' => 'j. F Y',
-			'ru' => 'j F Y'
-		]
-	];
 	protected $avatarSize = ['width' => 38, 'height' => 38];
 	protected $allowedFMtypes = ['phone', 'email', 'im', 'web'];
 	protected $pathMarkers = ['#lead_id#', '#contact_id#', '#company_id#', '#deal_id#', '#quote_id#', '#invoice_id#', '#order_id#'];
@@ -101,6 +90,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		'WEB' => true,
 		'IM' => true
 	];
+	protected $semanticIds = [];
 
 	public function onPrepareComponentParams($arParams): array
 	{
@@ -146,7 +136,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		];
 
 		$this->allowSemantics = [
-			PhaseSemantics::PROCESS
+//			PhaseSemantics::PROCESS
 		];
 	}
 
@@ -368,6 +358,16 @@ class CrmKanbanComponent extends \CBitrixComponent
 		}
 
 		return $statuses;
+	}
+
+	/**
+	 * @param int $id
+	 * @return array|null
+	 */
+	protected function getStatusById(int $id): ?array
+	{
+		$statuses = $this->getStatuses(true);
+		return ($statuses[$id] ?? null);
 	}
 
 	/**
@@ -655,47 +655,8 @@ class CrmKanbanComponent extends \CBitrixComponent
 			unset($filter['OVERDUE']);
 		}
 		//detect success/fail columns
-		$semanticIds = array();
-		if (isset($filter['STATUS_SEMANTIC_ID']))
-		{
-			$semanticIds = (array)$filter['STATUS_SEMANTIC_ID'];
-		}
-		elseif (isset($filter['STAGE_SEMANTIC_ID']))
-		{
-			$semanticIds = (array)$filter['STAGE_SEMANTIC_ID'];
-		}
-		elseif (
-			isset($filter['=STATUS_ID'])
-			&& $this->entity->getTypeName() === 'QUOTE'
-		)
-		{
-			//todo refactor it somehow
-			$list = \Bitrix\Crm\StatusTable::getList([
-				'order' => [
-					'SORT' => 'ASC',
-				],
-				'filter' => [
-					'=STATUS_ID' => $filter['=STATUS_ID'],
-					'=ENTITY_ID' => 'QUOTE_STATUS',
-				],
-			]);
-			while ($status = $list->fetch())
-			{
-				$this->allowStages[] = $status['STATUS_ID'];
-			}
-		}
-		if (in_array(PhaseSemantics::SUCCESS, $semanticIds, true))
-		{
-			$this->allowSemantics[] = PhaseSemantics::SUCCESS;
-		}
-		if (in_array(PhaseSemantics::FAILURE, $semanticIds, true))
-		{
-			$this->allowSemantics[] = PhaseSemantics::FAILURE;
-		}
-		if (isset($filter[$this->statusKey]))
-		{
-			$this->allowStages = $filter[$this->statusKey];
-		}
+		$this->prepareSemanticIdsAndStages($filter);
+
 
 		$entityTypeID = $this->entity->getTypeId();
 		//region Apply Search Restrictions
@@ -731,8 +692,6 @@ class CrmKanbanComponent extends \CBitrixComponent
 			'=%',
 			false
 		);
-
-		unset($filter['STAGE_SEMANTIC_ID']);
 
 		return $filter;
 	}
@@ -822,7 +781,66 @@ class CrmKanbanComponent extends \CBitrixComponent
 			}
 		}
 
+		$this->prepareSemanticIdsAndStages($filterFields);
+
 		return $filterFields;
+	}
+
+	/**
+	 * @param $filter
+	 */
+	protected function prepareSemanticIdsAndStages(array $filter = []): void
+	{
+		$this->semanticIds = [];
+		if (isset($filter['STATUS_SEMANTIC_ID']))
+		{
+			$this->semanticIds = (array)$filter['STATUS_SEMANTIC_ID'];
+		}
+		elseif (isset($filter['STAGE_SEMANTIC_ID']))
+		{
+			$this->semanticIds = (array)$filter['STAGE_SEMANTIC_ID'];
+		}
+		elseif (
+			isset($filter['=STATUS_ID'])
+			&& $this->entity->getTypeName() === 'QUOTE'
+		)
+		{
+			//todo refactor it somehow
+			$list = \Bitrix\Crm\StatusTable::getList([
+				'order' => [
+					'SORT' => 'ASC',
+				],
+				'filter' => [
+					'=STATUS_ID' => $filter['=STATUS_ID'],
+					'=ENTITY_ID' => 'QUOTE_STATUS',
+				],
+			]);
+			while ($status = $list->fetch())
+			{
+				$this->allowStages[] = $status['STATUS_ID'];
+			}
+		}
+
+		if (in_array(PhaseSemantics::PROCESS, $this->semanticIds, true))
+		{
+			$this->allowSemantics[] = PhaseSemantics::PROCESS;
+		}
+		if (in_array(PhaseSemantics::SUCCESS, $this->semanticIds, true))
+		{
+			$this->allowSemantics[] = PhaseSemantics::SUCCESS;
+		}
+		if (in_array(PhaseSemantics::FAILURE, $this->semanticIds, true))
+		{
+			$this->allowSemantics[] = PhaseSemantics::FAILURE;
+		}
+		if (empty($this->allowSemantics))
+		{
+			$this->allowSemantics[] = PhaseSemantics::PROCESS;
+		}
+		if (isset($filter[$this->statusKey]))
+		{
+			$this->allowStages = $filter[$this->statusKey];
+		}
 	}
 
 	/**
@@ -1097,8 +1115,8 @@ class CrmKanbanComponent extends \CBitrixComponent
 				}
 			}
 
-			$columns = $columns + $winColumn;
-			$lastColumn = array_values($columns)[count($columns) - 1];
+			$columns += $winColumn;
+			$lastColumn = end($columns);
 
 			if (!isset($columns[static::COLUMN_NAME_DELETED]))
 			{
@@ -1659,7 +1677,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 								{
 									$timestamp = \MakeTimeStamp($rowDate);
 								}
-								$rowDate = \FormatDate($this->dateFormats['full'], $timestamp, $timeFull);
+								$rowDate = \FormatDate($this->entity->getDateFormats('full'), $timestamp, $timeFull);
 							}
 							unset($rowDate);
 							$row[$code] = implode(',', $row[$code]);
@@ -1837,7 +1855,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 				}
 			}
 			//add
-			$dateFormat = $this->dateFormats[date('Y') === date('Y', $row['DATE_UNIX']) ? 'short' : 'full'][$this->formatLang];
+			$dateFormat = $this->entity->getDateFormats(date('Y') === date('Y', $row['DATE_UNIX']) ? 'short' : 'full')[$this->formatLang];
 			$result[$row['ID']] = [
 				'id' =>  $row['ID'],
 				'name' => htmlspecialcharsbx($row['TITLE'] ?: '#' . $row['ID']),
@@ -1985,6 +2003,22 @@ class CrmKanbanComponent extends \CBitrixComponent
 			}
 			unset($res, $row);
 		}
+
+		if (isset($this->requiredFields['OBSERVER']))
+		{
+			foreach($result as $resultId => $item)
+			{
+				foreach($this->requiredFields['OBSERVER'] as $status)
+				{
+					if(empty($observers[$resultId]))
+					{
+						$result[$resultId]['required'][$status][] = 'OBSERVER';
+					}
+				}
+			}
+			unset($resultId);
+		}
+
 		// get all users in common
 		if ($users)
 		{
@@ -2372,80 +2406,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 */
 	protected function getAdditionalFields($clearCache = false): array
 	{
-		static $additional = null;
-
-		if ($clearCache)
-		{
-			$additional = null;
-		}
-
-		if ($additional === null)
-		{
-			$additional = array();
-			$ufExist = false;
-			$exist = $this->additionalSelect;
-
-			//base fields
-			foreach ($this->additionalSelect as $key => $title)
-			{
-				if (mb_strpos($key, 'UF_') === 0)
-				{
-					$ufExist = true;
-				}
-				else
-				{
-					$additional[$key] = array(
-						'title' => \htmlspecialcharsbx($title),
-						'type' => 'string',
-						'code' => $key
-					);
-				}
-			}
-			unset($key, $title);
-
-			//user fields
-			if ($ufExist)
-			{
-				$enumerations = array();
-				foreach ($this->userFields as $row)
-				{
-					if (isset($this->additionalSelect[$row['FIELD_NAME']]))
-					{
-						$additional[$row['FIELD_NAME']] = array(
-							'title' => htmlspecialcharsbx($row['EDIT_FORM_LABEL']),
-							'new' => !in_array($row['FIELD_NAME'], $exist) ? 1 : 0,
-							'type' => $row['USER_TYPE_ID'],
-							'code' => $row['FIELD_NAME'],
-							'settings' => $row['SETTINGS'],
-							'enumerations' => [],
-						);
-						if ($row['USER_TYPE_ID'] == 'enumeration')
-						{
-							$enumerations[$row['ID']] = $row['FIELD_NAME'];
-						}
-					}
-				}
-				unset($row);
-
-				if (!empty($enumerations))
-				{
-					$enumUF = new CUserFieldEnum;
-					$resEnum = $enumUF->getList(
-						array(),
-						array(
-							'USER_FIELD_ID' => array_keys($enumerations)
-						)
-					);
-					while ($rowEnum = $resEnum->fetch())
-					{
-						$additional[$enumerations[$rowEnum['USER_FIELD_ID']]]['enumerations'][$rowEnum['ID']] = $rowEnum['VALUE'];
-					}
-					unset($enumerations, $enumUF, $resEnum, $rowEnum);
-				}
-			}
-		}
-
-		return $additional;
+		return $this->entity->getAdditionalFields($clearCache);
 	}
 
 	/**
@@ -2892,6 +2853,8 @@ class CrmKanbanComponent extends \CBitrixComponent
 
 		// items for demo import
 		if (
+			$this->arParams['IS_AJAX'] !== 'Y'
+			&&
 			isset($this->arResult['ITEMS']['columns'][0]['id'], $this->arResult['ITEMS']['columns'][0]['count'])
 			&& (
 				$this->blockPage * $this->blockSize >= $this->arResult['ITEMS']['columns'][0]['count']
@@ -2926,6 +2889,11 @@ class CrmKanbanComponent extends \CBitrixComponent
 				 ]]
 			);
 		}
+
+		PullManager::getInstance()->subscribeOnKanbanUpdate(
+			$this->arParams['ENTITY_TYPE'],
+			($this->arParams['EXTRA'] ?? null)
+		);
 
 		if ($this->arParams['IS_AJAX'] === 'Y')
 		{
@@ -3093,7 +3061,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 			else
 			{
 				$internalId = ($isOrder) ? $columnId : $stages[$columnId]['real_id'];
-				$result = $this->updateStage($internalId, $fields);
+				$result = $this->updateStage($internalId, $fields, ['STATUS_ID' => $columnId]);
 			}
 		}
 		else
@@ -3223,6 +3191,18 @@ class CrmKanbanComponent extends \CBitrixComponent
 			{
 				$result->addError(new Error($statusObject->GetLastError()));
 			}
+			else
+			{
+				$item = Kanban\Entity::getInstance($this->entity->getTypeName())
+					->createPullStage($statusInfo);
+				PullManager::getInstance()->sendStageDeletedEvent(
+					$item,
+					[
+						'TYPE' => $this->entity->getTypeName(),
+						'CATEGORY_ID' => $this->arParams['EXTRA']['CATEGORY_ID']
+					]
+				);
+			}
 		}
 
 		return $result;
@@ -3233,9 +3213,10 @@ class CrmKanbanComponent extends \CBitrixComponent
 	 *
 	 * @param $id
 	 * @param array $fields
+	 * @param array|null $params
 	 * @return Result
 	 */
-	private function updateStage($id, array $fields = []): Result
+	private function updateStage($id, array $fields = [], ?array $params = []): Result
 	{
 		$result = new Result();
 
@@ -3248,6 +3229,19 @@ class CrmKanbanComponent extends \CBitrixComponent
 			if (!empty($status->GetLastError()))
 			{
 				$result->addError(new Error($status->GetLastError()));
+			}
+			else if (isset($params['STATUS_ID']))
+			{
+				$data = array_merge($fields, $params);
+				$item = Kanban\Entity::getInstance($this->entity->getTypeName())
+					->createPullStage($data);
+				PullManager::getInstance()->sendStageUpdatedEvent(
+					$item,
+					[
+						'TYPE' => $this->entity->getTypeName(),
+						'CATEGORY_ID' => $this->arParams['EXTRA']['CATEGORY_ID']
+					]
+				);
 			}
 		}
 		else
@@ -3345,7 +3339,18 @@ class CrmKanbanComponent extends \CBitrixComponent
 				]);
 			}
 		}
-
+		if($result->isSuccess())
+		{
+			$item = Kanban\Entity::getInstance($this->entity->getTypeName())
+				->createPullStage($fields);
+			PullManager::getInstance()->sendStageAddedEvent(
+				$item,
+				[
+					'TYPE' => $this->entity->getTypeName(),
+					'CATEGORY_ID' => $this->arParams['EXTRA']['CATEGORY_ID']
+				]
+			);
+		}
 		return $result;
 	}
 

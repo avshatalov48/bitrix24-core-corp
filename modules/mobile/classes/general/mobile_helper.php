@@ -759,44 +759,10 @@ class CMobileHelper
 			$params = explode("|", $tag);
 			$result = $link."&ENTITY_TYPE_ID=".$params[2]."&ENTITY_ID=".$params[3];
 		}
-		else if (mb_substr($tag, 0, 7) == 'RATING|')
-		{
-			$params = explode("|", $tag);
-			if ($params[1] == 'TASK')
-			{
-				if (!empty(($taskId = $params[2]) && Loader::includeModule('tasks')))
-				{
-					return self::getTaskLink($taskId);
-				}
-			}
-			elseif ($params[1] == 'BLOG_COMMENT')
-			{
-				$result = $link."&ENTITY_TYPE_ID=".$params[1]."&ENTITY_ID=".$params[2].'#com'.$params[2];
-			}
-			else
-			{
-				$result = $link."&ENTITY_TYPE_ID=".$params[1]."&ENTITY_ID=".$params[2];
-			}
-		}
-		else if (mb_substr($tag, 0, 15) == 'CALENDAR|INVITE' ||
-			mb_substr($tag, 0, 16) == 'CALENDAR|COMMENT' ||
-			mb_substr($tag, 0, 15) == 'CALENDAR|STATUS'
-		)
-		{
-			$params = explode("|", $tag);
-			if (count($params) >= 5 && $params[4] == 'cancel')
-				$result = false;
-			else
-				$result = SITE_DIR.'mobile/calendar/view_event.php?event_id='.$params[2];
-		}
-		else if (mb_substr($tag, 0, 21) == 'FORUM|COMMENT_MENTION')
-		{
-			$params = explode("|", $tag);
-			$result = $link."&ENTITY_TYPE_ID=LOG_COMMENT&ENTITY_ID=".$params[2];
-		}
 		else if (
-			mb_substr($tag, 0, 13) == 'FORUM|COMMENT'
-			|| mb_substr($tag, 0, 26) == 'RATING_MENTION|FORUM_POST|'
+			mb_substr($tag, 0, 13) === 'FORUM|COMMENT'
+			|| mb_substr($tag, 0, 26) === 'RATING_MENTION|FORUM_POST|'
+			|| mb_substr($tag, 0, 18) === 'RATING|FORUM_POST|'
 		)
 		{
 			$params = explode("|", $tag);
@@ -812,7 +778,7 @@ class CMobileHelper
 				]);
 
 				$suffix = $liveFeedEntity->getSuffix();
-				if ($suffix == 'TASK')
+				if ($suffix === 'TASK')
 				{
 					$res = LogTable::getList(array(
 						'filter' => array(
@@ -850,6 +816,41 @@ class CMobileHelper
 			{
 				$result = $link."&ENTITY_TYPE_ID=FORUM_POST&ENTITY_ID=".$params[2];
 			}
+		}
+		else if (mb_substr($tag, 0, 7) == 'RATING|')
+		{
+			$params = explode("|", $tag);
+			if ($params[1] == 'TASK')
+			{
+				if (!empty(($taskId = $params[2]) && Loader::includeModule('tasks')))
+				{
+					return self::getTaskLink($taskId);
+				}
+			}
+			elseif ($params[1] == 'BLOG_COMMENT')
+			{
+				$result = $link."&ENTITY_TYPE_ID=".$params[1]."&ENTITY_ID=".$params[2].'#com'.$params[2];
+			}
+			else
+			{
+				$result = $link."&ENTITY_TYPE_ID=".$params[1]."&ENTITY_ID=".$params[2];
+			}
+		}
+		else if (mb_substr($tag, 0, 15) == 'CALENDAR|INVITE' ||
+			mb_substr($tag, 0, 16) == 'CALENDAR|COMMENT' ||
+			mb_substr($tag, 0, 15) == 'CALENDAR|STATUS'
+		)
+		{
+			$params = explode("|", $tag);
+			if (count($params) >= 5 && $params[4] == 'cancel')
+				$result = false;
+			else
+				$result = SITE_DIR.'mobile/calendar/view_event.php?event_id='.$params[2];
+		}
+		else if (mb_substr($tag, 0, 21) == 'FORUM|COMMENT_MENTION')
+		{
+			$params = explode("|", $tag);
+			$result = $link."&ENTITY_TYPE_ID=LOG_COMMENT&ENTITY_ID=".$params[2];
 		}
 		else if (mb_substr($tag, 0, 7) == 'VOTING|')
 		{

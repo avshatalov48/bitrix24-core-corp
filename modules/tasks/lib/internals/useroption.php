@@ -2,11 +2,10 @@
 namespace Bitrix\Tasks\Internals;
 
 use Bitrix\Main;
-use Bitrix\Pull\Event;
+use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Internals\Task\UserOptionTable;
 use Bitrix\Tasks\Internals\UserOption\Option;
 use Bitrix\Tasks\Util\Result;
-use CPullChannel;
 use Exception;
 use ReflectionClass;
 
@@ -331,18 +330,15 @@ class UserOption
 	 */
 	private static function sendPushOptionChanged(int $taskId, int $userId, int $option, bool $added): void
 	{
-		if (Main\Loader::includeModule('pull'))
-		{
-			Event::add([$userId], [
-				'module_id' => 'tasks',
-				'command' => 'user_option_changed',
-				'params' => [
-					'TASK_ID' => $taskId,
-					'USER_ID' => $userId,
-					'OPTION' => $option,
-					'ADDED' => $added,
-				],
-			]);
-		}
+		PushService::addEvent([$userId], [
+			'module_id' => 'tasks',
+			'command' => 'user_option_changed',
+			'params' => [
+				'TASK_ID' => $taskId,
+				'USER_ID' => $userId,
+				'OPTION' => $option,
+				'ADDED' => $added,
+			],
+		]);
 	}
 }

@@ -9,11 +9,9 @@ use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Main\UserTable;
 use Bitrix\Pull\MobileCounter;
 use Bitrix\Tasks\AnalyticLogger;
-use Bitrix\Tasks\Comments;
 use Bitrix\Tasks\Exception;
 use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Integration\SocialNetwork;
-use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\SearchIndex;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
 use Bitrix\Tasks\Internals\UserOption;
@@ -88,9 +86,16 @@ final class Task extends Base
 		$list = [];
 		foreach ($users as $userId)
 		{
-			$list[$userId] = $this->translateAllowedActionNames(
-				\CTaskItem::getAllowedActionsArray($userId, $task->getData(false), $returnAsString)
-			);
+			try
+			{
+				$list[$userId] = $this->translateAllowedActionNames(
+					\CTaskItem::getAllowedActionsArray($userId, $task->getData(false), $returnAsString)
+				);
+			}
+			catch (TasksException $e)
+			{
+
+			}
 		}
 
 		return ['allowedActions' => $list];
@@ -176,7 +181,14 @@ final class Task extends Base
 		}
 
 		$params['select'] = $this->prepareSelect($select);
-		$row = $task->getData(false, $params);
+		try
+		{
+			$row = $task->getData(false, $params);
+		}
+		catch (TasksException $e)
+		{
+			return [];
+		}
 
 		if (array_key_exists('STATUS', $row))
 		{
@@ -184,18 +196,9 @@ final class Task extends Base
 			unset($row['REAL_STATUS']);
 		}
 
-		$this->formatGroupInfo($row);
-		$this->formatUserInfo($row);
+		$row = $this->fillGroupInfo([$row])[0];
+		$row = $this->fillUserInfo([$row])[0];
 		$this->formatDateFieldsForOutput($row);
-
-		if (in_array('NEW_COMMENTS_COUNT', $params['select'], true))
-		{
-			$taskId = $task->getId();
-			$userId = $this->getCurrentUser()->getId();
-
-			$newComments = Counter::getInstance((int) $userId)->getCommentsCount([$taskId]);
-			$row['NEW_COMMENTS_COUNT'] = $newComments[$taskId];
-		}
 
 		$action = $this->getAccessAction($task);
 		$row['action'] = $action['allowedActions'][$this->getCurrentUser()->getId()];
@@ -214,7 +217,7 @@ final class Task extends Base
 	 */
 	private function prepareSelect(array $select): array
 	{
-		$validKeys = array_keys(\CTasks::getFieldsInfo());
+		$validKeys = array_keys(\CTasks::getFieldsInfo($this->isUfExist($select)));
 
 		$select = (!empty($select) && !in_array('*', $select, true) ? $select : $validKeys);
 		$select = array_intersect($select, $validKeys);
@@ -228,69 +231,137 @@ final class Task extends Base
 	}
 
 	/**
-	 * @param $row
+	 * @param array $rows
+	 *
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
 	 */
-	private function formatUserInfo(&$row): void
+	private function fillUserInfo(array $rows): array
 	{
-		if (array_key_exists('CREATED_BY', $row))
+		static $users = [];
+
+		$userIds = [];
+		foreach ($rows as $row)
 		{
-			try
+			if (array_key_exists('CREATED_BY', $row) && !$users[$row['CREATED_BY']])
 			{
-				$row['CREATOR'] = $this->getUserInfo($row['CREATED_BY']);
+				$userIds[] = (int)$row['CREATED_BY'];
 			}
-			catch (\Exception $e)
+			if (array_key_exists('RESPONSIBLE_ID', $row) && !$users[$row['RESPONSIBLE_ID']])
 			{
-				$row['CREATOR']['ID'] = $row['CREATED_BY'];
+				$userIds[] = (int)$row['RESPONSIBLE_ID'];
 			}
 		}
-		if (array_key_exists('RESPONSIBLE_ID', $row))
+		$userIds = array_unique($userIds);
+
+		$userResult = UserTable::getList([
+			'select' => ['ID', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN', 'PERSONAL_PHOTO'],
+			'filter' => ['ID' => $userIds],
+		]);
+		while ($user = $userResult->fetch())
 		{
-			try
+			$userId = $user['ID'];
+			$userName = \CUser::FormatName(
+				'#NOBR##LAST_NAME# #NAME##/NOBR#',
+				[
+					'LOGIN' => $user['LOGIN'],
+					'NAME' => $user['NAME'],
+					'LAST_NAME' => $user['LAST_NAME'],
+					'SECOND_NAME' => $user['SECOND_NAME'],
+				],
+				true,
+				false
+			);
+			$replaceList = ['user_id' => $userId];
+			$link = \CComponentEngine::makePathFromTemplate('/company/personal/user/#user_id#/', $replaceList);
+
+			$users[$userId] = [
+				'ID' => $userId,
+				'NAME' => $userName,
+				'LINK' => $link,
+				'ICON' => UI\Avatar::getPerson($user['PERSONAL_PHOTO']),
+			];
+		}
+
+		foreach ($rows as $id => $row)
+		{
+			if (array_key_exists('CREATED_BY', $row) && array_key_exists($row['CREATED_BY'], $users))
 			{
-				$row['RESPONSIBLE'] = $this->getUserInfo($row['RESPONSIBLE_ID']);
+				$rows[$id]['CREATOR'] = $users[$row['CREATED_BY']];
 			}
-			catch (\Exception $e)
+			if (array_key_exists('RESPONSIBLE_ID', $row) && array_key_exists($row['RESPONSIBLE_ID'], $users))
 			{
-				$row['RESPONSIBLE']['ID'] = $row['RESPONSIBLE_ID'];
+				$rows[$id]['RESPONSIBLE'] = $users[$row['RESPONSIBLE_ID']];
 			}
 		}
+
+		return $rows;
 	}
 
 	/**
-	 * @param $row
+	 * @param array $rows
+	 *
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
 	 */
-	private function formatGroupInfo(&$row): void
+	private function fillGroupInfo(array $rows): array
 	{
-		if (array_key_exists('GROUP_ID', $row))
+		static $groups = [];
+
+		$groupIds = [];
+		foreach ($rows as $id => $row)
 		{
-			try
+			if (array_key_exists('GROUP_ID', $row) && !$groups[$row['GROUP_ID']])
 			{
-				$row['GROUP'] = $this->getGroupInfo($row['GROUP_ID']);
+				$groupIds[] = (int)$row['GROUP_ID'];
 			}
-			catch (\Exception $e)
+			$rows[$id]['GROUP'] = [];
+		}
+		$groupIds = array_unique($groupIds);
+
+		$groupsData = SocialNetwork\Group::getData($groupIds, ['IMAGE_ID']);
+		$groupsData = array_map(
+			static function ($group) {
+				return [
+					'ID' => $group['ID'],
+					'NAME' => $group['NAME'],
+					'IMAGE' => (is_array($file = \CFile::GetFileArray($group['IMAGE_ID'])) ? $file['SRC'] : ''),
+				];
+			},
+			$groupsData
+		);
+		foreach ($groupsData as $id => $data)
+		{
+			$groups[$id] = $data;
+		}
+
+		foreach ($rows as $id => $row)
+		{
+			if (array_key_exists('GROUP_ID', $row) && array_key_exists($row['GROUP_ID'], $groups))
 			{
-				$row['GROUP']['ID'] = $row['GROUP_ID'];
+				$rows[$id]['GROUP'] = $groups[$row['GROUP_ID']];
 			}
 		}
+
+		return $rows;
 	}
 
 	/**
 	 * Returns fields of type datetime for task entity
 	 *
+	 * @param bool $getUf
 	 * @return array
 	 */
-	private function getDateFields(): array
+	private function getDateFields($getUf = true): array
 	{
 		return array_filter(
-			\CTasks::getFieldsInfo(),
-			static function ($item)
-			{
-				if ($item['type'] === 'datetime')
-				{
-					return $item;
-				}
-
-				return null;
+			\CTasks::getFieldsInfo($getUf),
+			static function ($item) {
+				return ($item['type'] === 'datetime' ? $item : null);
 			}
 		);
 	}
@@ -303,7 +374,9 @@ final class Task extends Base
 	 */
 	private function formatDateFieldsForInput(array $fields): array
 	{
-		foreach ($this->getDateFields() as $fieldName => $fieldData)
+		$getUf = $this->isUfExist(array_keys($fields));
+
+		foreach ($this->getDateFields($getUf) as $fieldName => $fieldData)
 		{
 			$date = $fields[$fieldName];
 			if ($date)
@@ -332,7 +405,7 @@ final class Task extends Base
 
 		if (!$dateFields)
 		{
-			$dateFields = $this->getDateFields();
+			$dateFields = $this->getDateFields($this->isUfExist(array_keys($row)));
 		}
 
 		$localOffset = (new \DateTime())->getOffset();
@@ -399,6 +472,7 @@ final class Task extends Base
 	 *
 	 * @return array
 	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
@@ -409,7 +483,10 @@ final class Task extends Base
 
 		$task->update($fields, $params);
 
-		MobileCounter::send($this->getCurrentUser()->getId());
+		if (Loader::includeModule('pull'))
+		{
+			MobileCounter::send($this->getCurrentUser()->getId());
+		}
 
 		return $this->getAction($task);
 	}
@@ -420,16 +497,17 @@ final class Task extends Base
 	 */
 	private function filterFields(array $fields): array
 	{
-		foreach (array_keys($fields) as $field)
+		$fieldNames = array_keys($fields);
+		foreach ($fieldNames as $field)
 		{
-			if (strpos($field, '~') === 0)
+			if (mb_strpos($field, '~') === 0)
 			{
 				$fields[str_replace('~', '', $field)] = $fields[$field];
 				unset($fields[$field]);
 			}
 		}
 
-		return array_intersect_key($fields, \CTasks::getFieldsInfo());
+		return $fields;
 	}
 
 	/**
@@ -479,7 +557,8 @@ final class Task extends Base
         }
 
 		$filter = $this->getFilter($filter);
-		$dateFields = $this->getDateFields();
+		$getUf = $this->isUfExist($select) || $this->isUfExist(array_keys($filter));
+		$dateFields = $this->getDateFields($getUf);
 
 		foreach ($filter as $fieldName => $fieldData)
 		{
@@ -501,18 +580,20 @@ final class Task extends Base
 			$filter = array_merge($filter, $filterInstance->process());
 			unset($filter['ONLY_ROOT_TASKS']);
 		}
+		$navParams = [
+			'nPageSize' => $pageNavigation->getLimit(),
+			'iNumPageSize' => $pageNavigation->getOffset(),
+			'iNumPage' => $pageNavigation->getCurrentPage(),
+		];
+		$key = (isset($params['COUNT_TOTAL']) && $params['COUNT_TOTAL'] === 'N' ? 'getPlusOne' : 'getTotalCount');
+		$navParams[$key] = true;
 
 		$getListParams = [
 			'select' => $this->prepareSelect($select),
 			'legacyFilter' => ($filter ?: []),
 			'order' => ($order ?: []),
 			'group' => ($group ?: []),
-			'NAV_PARAMS' => [
-				'nPageSize' => $pageNavigation->getLimit(),
-				'iNumPageSize' => $pageNavigation->getOffset(),
-				'iNumPage' => $pageNavigation->getCurrentPage(),
-				'getTotalCount' => true,
-			],
+			'NAV_PARAMS' => $navParams,
 		];
 
 		$params['PUBLIC_MODE'] = 'Y'; // VERY VERY BAD HACK! DONT REPEAT IT !
@@ -520,22 +601,21 @@ final class Task extends Base
 		$params['RETURN_ACCESS'] = ($params['RETURN_ACCESS'] ?? 'N'); // VERY VERY BAD HACK! DONT REPEAT IT !
 
 		$result = Manager\Task::getList($this->getCurrentUser()->getId(), $getListParams, $params);
-		$list = array_values($result['DATA']);
+		$tasks = array_values($result['DATA']);
+		$tasks = $this->fillGroupInfo($tasks);
+		$tasks = $this->fillUserInfo($tasks);
 
-		foreach ($list as &$row)
+		foreach ($tasks as &$task)
 		{
-			if (array_key_exists('STATUS', $row))
+			if (array_key_exists('STATUS', $task))
 			{
-				$row['SUB_STATUS'] = $row['STATUS'];
-				$row['STATUS'] = $row['REAL_STATUS'];
-				unset($row['REAL_STATUS']);
+				$task['SUB_STATUS'] = $task['STATUS'];
+				$task['STATUS'] = $task['REAL_STATUS'];
+				unset($task['REAL_STATUS']);
 			}
 
-			$this->formatGroupInfo($row);
-			$this->formatUserInfo($row);
-			$this->formatDateFieldsForOutput($row);
-
-			$row = $this->convertKeysToCamelCase($row);
+			$this->formatDateFieldsForOutput($task);
+			$task = $this->convertKeysToCamelCase($task);
 
 			if (
 				isset($params['SEND_PULL'])
@@ -543,18 +623,18 @@ final class Task extends Base
 				&& Loader::includeModule('pull')
 			)
 			{
-				$users = array_unique(array_merge([$row['CREATED_BY']], [$row['RESPONSIBLE_ID']]));
+				$users = array_unique(array_merge([$task['CREATED_BY']], [$task['RESPONSIBLE_ID']]));
 				foreach ($users as $userId)
 				{
-					\CPullWatch::Add($userId, 'TASK_'.$row['ID']);
+					\CPullWatch::Add($userId, 'TASK_'.$task['ID']);
 				}
 			}
 		}
-		unset($row);
+		unset($task);
 
 		return new Engine\Response\DataType\Page(
 			'tasks',
-			$list,
+			$tasks,
 			static function() use ($result) {
 				return $result['AUX']['OBJ_RES']->nSelectedCount;
 			}
@@ -629,10 +709,11 @@ final class Task extends Base
 			return $filter;
 		}
 
-		$operator = (($isFullTextIndexEnabled = SearchIndexTable::isFullTextIndexEnabled())? '*' : '*%');
-		$searchValue = SearchIndex::prepareStringToSearch($filter['SEARCH_INDEX'], $isFullTextIndexEnabled);
-
-		$filter['::SUBFILTER-FULL_SEARCH_INDEX'][$operator.'FULL_SEARCH_INDEX'] = $searchValue;
+		$searchValue = SearchIndex::prepareStringToSearch($filter['SEARCH_INDEX']);
+		if ($searchValue !== '')
+		{
+			$filter['::SUBFILTER-FULL_SEARCH_INDEX']['*FULL_SEARCH_INDEX'] = $searchValue;
+		}
 
 		return $filter;
 	}
@@ -799,6 +880,22 @@ final class Task extends Base
 	}
 
 	/**
+	 * @param array $fields
+	 * @return bool
+	 */
+	private function isUfExist(array $fields): bool
+	{
+		foreach ($fields as $field)
+		{
+			if (mb_strpos($field, 'UF_') === 0)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * @param \CTaskItem $task
 	 * @return array|null
 	 * @throws Main\ArgumentException
@@ -887,7 +984,15 @@ final class Task extends Base
 	 */
 	public function startAction(\CTaskItem $task, array $params = []): ?array
 	{
-		$row = $task->getData(true);
+		try
+		{
+			$row = $task->getData(true);
+		}
+		catch (TasksException $e)
+		{
+			return null;
+		}
+
 		if ($row['ALLOW_TIME_TRACKING'] === 'Y' && !$this->startTimer($task, true))
 		{
 			return null;
@@ -959,7 +1064,15 @@ final class Task extends Base
 	 */
 	public function pauseAction(\CTaskItem $task, array $params = []): ?array
 	{
-		$row = $task->getData(true);
+		try
+		{
+			$row = $task->getData(true);
+		}
+		catch (TasksException $e)
+		{
+			return null;
+		}
+
 		if ($row['ALLOW_TIME_TRACKING'] === 'Y' && !$this->stopTimer($task))
 		{
 			return null;
@@ -1119,7 +1232,15 @@ final class Task extends Base
 			return $this->getAction($task);
 		}
 
-		$taskData = $task->getData(false);
+		try
+		{
+			$taskData = $task->getData(false);
+		}
+		catch (TasksException $e)
+		{
+			return $this->getAction($task);
+		}
+
 		$auditors = array_merge($taskData['AUDITORS'], $auditorsIds);
 		$task->update(['AUDITORS' => $auditors]);
 
@@ -1141,95 +1262,20 @@ final class Task extends Base
 			return $this->getAction($task);
 		}
 
-		$taskData = $task->getData(false);
+		try
+		{
+			$taskData = $task->getData(false);
+		}
+		catch (TasksException $e)
+		{
+			return $this->getAction($task);
+		}
+
 		$accomplices = array_merge($taskData['ACCOMPLICES'], $accomplicesIds);
 		$task->update(['ACCOMPLICES' => $accomplices]);
 
 		return $this->getAction($task);
 	}
-
-	/**
-	 * @param int $groupId
-	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 */
-	private function getGroupInfo(int $groupId): array
-    {
-		static $groups = [];
-
-		if ($groupId)
-		{
-			if (!$groups[$groupId])
-			{
-				$group = SocialNetwork\Group::getData([$groupId], ['IMAGE_ID'])[$groupId];
-				$groups[$groupId] = [
-					'ID' => $groupId,
-                    'NAME' => $group['NAME'],
-					'IMAGE' => (is_array($file = \CFile::GetFileArray($group['IMAGE_ID'])) ? $file['SRC'] : ''),
-                ];
-			}
-		}
-		else
-		{
-			$groups[$groupId] = [];
-		}
-
-		return $groups[$groupId];
-    }
-
-	/**
-	 * @param $userId
-	 *
-	 * @return array|null
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 */
-	private function getUserInfo($userId): ?array
-	{
-		if (!$userId)
-		{
-			return null;
-		}
-
-		static $users = [];
-
-		if (!$users[$userId])
-		{
-			$replaceList = ['user_id' => $userId];
-			$link = \CComponentEngine::makePathFromTemplate('/company/personal/user/#user_id#/', $replaceList);
-
-			$userFields = UserTable::getRowById($userId);
-			if (!$userFields)
-			{
-				return null;
-			}
-
-			$userName = \CUser::FormatName(
-				'#NOBR##LAST_NAME# #NAME##/NOBR#',
-				[
-					'LOGIN' => $userFields['LOGIN'],
-					'NAME' => $userFields['NAME'],
-					'LAST_NAME' => $userFields['LAST_NAME'],
-					'SECOND_NAME' => $userFields['SECOND_NAME'],
-				],
-				true,
-				false
-			);
-
-			$users[$userId] = [
-				'ID' => $userId,
-				'NAME' => $userName,
-				'LINK' => $link,
-				'ICON' => UI\Avatar::getPerson($userFields['PERSONAL_PHOTO']),
-			];
-		}
-
-		return $users[$userId];
-	}
-
 
 	/**
 	 * @param \Exception $exception

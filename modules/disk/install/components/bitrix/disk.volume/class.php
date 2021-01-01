@@ -3932,6 +3932,7 @@ class CDiskVolumeComponent extends BaseComponent
 
 			if (!($storage instanceof \Bitrix\Disk\Storage))
 			{
+				$fragment = $this->getFragmentResult($row);
 				$storage = $fragment->getStorage();
 			}
 

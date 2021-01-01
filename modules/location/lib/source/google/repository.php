@@ -12,9 +12,9 @@ use Bitrix\Location\Repository\Location\Capability\IFindByPoint;
 use Bitrix\Location\Repository\Location\Capability\IFindByText;
 use Bitrix\Location\Repository\Location\Capability\IFindParents;
 use Bitrix\Location\Repository\Location\IRepository;
-use Bitrix\Location\Repository\Location\IScope;
 use Bitrix\Location\Repository\Location\ISource;
 use Bitrix\Location\Service\LocationService;
+use Bitrix\Location\Source\BaseRepository;
 use Bitrix\Location\Source\Google\Converters;
 use Bitrix\Location\Source\Google\Converters\BaseConverter;
 use Bitrix\Location\Source\Google\Requesters;
@@ -29,8 +29,8 @@ Loc::loadMessages(__FILE__);
  * Class Google
  * @package Bitrix\Location\Source
  */
-class Repository
-	implements IRepository, IFindByExternalId, IFindByPoint, IFindByText, IFindParents, IScope, ISource
+class Repository extends BaseRepository
+	implements IRepository, IFindByExternalId, IFindByPoint, IFindByText, IFindParents, ISource
 {
 	/** @var string  */
 	protected $apiKey = '';
@@ -54,11 +54,6 @@ class Repository
 		$this->httpClient = $httpClient;
 		$this->cachePool = $cachePool;
 		$this->googleSource = $googleSource;
-	}
-
-	public function isScopeSatisfy(int $scope): bool
-	{
-		return $scope === LOCATION_SEARCH_SCOPE_ALL || $scope === LOCATION_SEARCH_SCOPE_EXTERNAL;
 	}
 
 	/** @inheritDoc */

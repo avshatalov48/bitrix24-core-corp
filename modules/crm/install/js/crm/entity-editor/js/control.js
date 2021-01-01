@@ -8563,7 +8563,8 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 					parentField: this,
 					clientEditorEnabled: this._schemeElement.getData().hasOwnProperty('clientEditorFieldsParams'),
 					clientEditorFields: this.getClientVisibleFieldsList(BX.CrmEntityType.names.company),
-					clientEditorFieldsParams: this.getClientEditorFieldsParams(BX.CrmEntityType.names.company)
+					clientEditorFieldsParams: this.getClientEditorFieldsParams(BX.CrmEntityType.names.company),
+					isRequired: (this.isRequired() || this.isRequiredByAttribute())
 				}
 			)
 		);
@@ -8672,7 +8673,8 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 					parentField: this,
 					clientEditorEnabled: this._schemeElement.getData().hasOwnProperty('clientEditorFieldsParams'),
 					clientEditorFields: this.getClientVisibleFieldsList(BX.CrmEntityType.names.contact),
-					clientEditorFieldsParams: this.getClientEditorFieldsParams(BX.CrmEntityType.names.contact)
+					clientEditorFieldsParams: this.getClientEditorFieldsParams(BX.CrmEntityType.names.contact),
+					isRequired: (this.isRequired() || this.isRequiredByAttribute())
 				}
 			)
 		);
@@ -8838,20 +8840,47 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 	};
 	BX.Crm.EntityEditorClientLight.prototype.validate = function(result)
 	{
+		var isEmpty = !this.hasCompanies() && !this.hasContacts();
+		var isRequired = (this.isRequired() || this.isRequiredByAttribute());
+		var isValid = !isRequired || !isEmpty;
+		if(!isValid)
+		{
+			this.addValidationErrorToResult(result);
+			return false;
+		}
+
 		var validator = BX.UI.EntityAsyncValidator.create();
-		this.validateSearchBoxes(this._companySearchBoxes, validator, result);
-		this.validateSearchBoxes(this._contactSearchBoxes, validator, result);
+		var hasValidCompanies = this.validateSearchBoxes(this._companySearchBoxes, validator, result);
+		var hasValidContacts = this.validateSearchBoxes(this._contactSearchBoxes, validator, result);
+		if (!hasValidCompanies && !hasValidContacts && isRequired)
+		{
+			this.addValidationErrorToResult(result);
+			return false;
+		}
 		return validator.validate();
+	};
+	BX.Crm.EntityEditorClientLight.prototype.addValidationErrorToResult = function(result)
+	{
+		result.addError(BX.UI.EntityValidationError.create({ field: this }));
+		this.showRequiredFieldError(this.getContentWrapper());
 	};
 	BX.Crm.EntityEditorClientLight.prototype.validateSearchBoxes = function(searchBoxes, validator, result)
 	{
+		var hasValidValue = false;
+		var validationResult;
 		if (BX.Type.isArray(searchBoxes))
 		{
 			for(var i = 0, length = searchBoxes.length; i < length; i++)
 			{
-				validator.addResult(searchBoxes[i].validate(result));
+				validationResult = searchBoxes[i].validate(result);
+				validator.addResult(validationResult);
+				if (validationResult !== false)
+				{
+					hasValidValue = true;
+				}
 			}
 		}
+		return hasValidValue;
 	};
 	BX.Crm.EntityEditorClientLight.prototype.release = function()
 	{

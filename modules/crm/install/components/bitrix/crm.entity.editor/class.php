@@ -8,6 +8,7 @@ use Bitrix\Crm\Agent\Requisite\CompanyAddressConvertAgent;
 use Bitrix\Crm\Agent\Requisite\ContactAddressConvertAgent;
 use Bitrix\Crm\Agent\Requisite\CompanyUfAddressConvertAgent;
 use Bitrix\Crm\Agent\Requisite\ContactUfAddressConvertAgent;
+use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Entity\EntityEditorConfigScope;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Security\EntityAuthorization;
@@ -107,9 +108,13 @@ class CCrmEntityEditorComponent extends UIFormComponent
 			}
 
 			$availableFields[$name] = $field;
-			if(isset($field['required']) && $field['required'] === true)
+			if(isset($field['required']) && $field['required'] === true
+				|| is_array($field['data'])
+					&& isset($field['data']['isRequiredByAttribute'])
+					&& $field['data']['isRequiredByAttribute'])
 			{
 				$requiredFields[$name] = $field;
+
 				if($hasEmptyRequiredFields)
 				{
 					continue;
@@ -117,7 +122,7 @@ class CCrmEntityEditorComponent extends UIFormComponent
 
 				//HACK: Skip if user field of type Boolean. Absence of value is treated as equivalent to FALSE.
 				$fieldType = $field['type'] ?? '';
-				if($fieldType === 'userField')
+				if ($fieldType === 'userField')
 				{
 					$fieldInfo = $field['data']['fieldInfo'] ?? [];
 
@@ -126,10 +131,14 @@ class CCrmEntityEditorComponent extends UIFormComponent
 						continue;
 					}
 				}
+				else if (isset($this->arResult['ENTITY_DATA']['EMPTY_REQUIRED_SYSTEM_FIELD_MAP'][$name]))
+				{
+					$hasEmptyRequiredFields = true;
+					continue;
+				}
 
-				if(
-					isset($this->arResult['ENTITY_DATA'][$name]['IS_EMPTY'])
-					&& is_array($this->arResult['ENTITY_DATA'][$name])
+				if (is_array($this->arResult['ENTITY_DATA'][$name])
+					&& isset($this->arResult['ENTITY_DATA'][$name]['IS_EMPTY'])
 					&& $this->arResult['ENTITY_DATA'][$name]['IS_EMPTY']
 				)
 				{
@@ -485,16 +494,25 @@ class CCrmEntityEditorComponent extends UIFormComponent
 		$this->arResult['ATTRIBUTE_CONFIG'] = null;
 		if(CCrmAuthorizationHelper::CheckConfigurationUpdatePermission())
 		{
-			$this->arResult['ATTRIBUTE_CONFIG'] = isset($this->arParams['~ATTRIBUTE_CONFIG']) && is_array($this->arParams['~ATTRIBUTE_CONFIG'])
-				? $this->arParams['~ATTRIBUTE_CONFIG'] : null;
+			$this->arResult['ATTRIBUTE_CONFIG'] = is_array($this->arParams['~ATTRIBUTE_CONFIG']) ?
+				$this->arParams['~ATTRIBUTE_CONFIG'] : null;
 			if(isset($this->arResult['ATTRIBUTE_CONFIG']))
 			{
-				$restriction = RestrictionManager::getAttributeConfigRestriction();
-				$this->arResult['ATTRIBUTE_CONFIG']['IS_PERMITTED'] = $restriction->hasPermission();
-				if(!$this->arResult['ATTRIBUTE_CONFIG']['IS_PERMITTED'])
+				$isPermitted = FieldAttributeManager::isEnabled();
+				$isPhaseDependent = FieldAttributeManager::isPhaseDependent();
+				$this->arResult['ATTRIBUTE_CONFIG']['IS_PERMITTED'] = $isPermitted;
+				$this->arResult['ATTRIBUTE_CONFIG']['IS_PHASE_DEPENDENT'] = $isPhaseDependent;
+				$this->arResult['ATTRIBUTE_CONFIG']['IS_ATTR_CONFIG_BUTTON_HIDDEN'] = in_array(
+					$this->entityTypeID,
+					[CCrmOwnerType::Company, CCrmOwnerType::Contact],
+					true
+				);
+				if(!($isPermitted && $isPhaseDependent))
 				{
-					$this->arResult['ATTRIBUTE_CONFIG']['LOCK_SCRIPT'] = $restriction->prepareInfoHelperScript();
+					$this->arResult['ATTRIBUTE_CONFIG']['LOCK_SCRIPT'] =
+						RestrictionManager::getAttributeConfigRestriction()->prepareInfoHelperScript();
 				}
+				unset($isPermitted, $isPhaseDependent);
 			}
 		}
 		//endregion

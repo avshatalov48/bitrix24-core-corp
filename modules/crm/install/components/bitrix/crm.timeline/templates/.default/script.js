@@ -37,6 +37,7 @@ if(typeof(BX.CrmTimelineManager) === "undefined")
 			this._ownerInfo = this.getSetting("ownerInfo");
 			this._progressSemantics = BX.prop.getString(this._settings, "progressSemantics", "");
 			this._spotlightFastenShowed = this.getSetting("spotlightFastenShowed", true);
+			this._audioPlaybackRate = parseFloat(this.getSetting("audioPlaybackRate", 1));
 			var containerId = this.getSetting("containerId");
 			if(!BX.type.isNotEmptyString(containerId))
 			{
@@ -272,8 +273,8 @@ if(typeof(BX.CrmTimelineManager) === "undefined")
 		},
 		onPullEvent: function(command, params)
 		{
-			//console.log("Pull command %s", command);
-			//console.dir(params);
+			// console.log("Pull command %s", command);
+			// console.dir(params);
 
 			if(this._pullTagName !== BX.prop.getString(params, "TAG", ""))
 			{
@@ -565,17 +566,35 @@ if(typeof(BX.CrmTimelineManager) === "undefined")
 		},
 		processDocumentExternalDelete: function(params)
 		{
-			var entityId = BX.prop.getInteger(params, "ENTITY_ID", 0);
 			window.setTimeout(
 				BX.delegate(function() {
-					var deleteItem = this._history.findItemById(entityId);
-					if (deleteItem instanceof BX.CrmHistoryItemDocument)
-						this._history.deleteItem(deleteItem);
-					var deleteFixedItem = this._fixedHistory.findItemById(entityId);
-					if (deleteFixedItem instanceof BX.CrmHistoryItemDocument)
-						this._fixedHistory.deleteItem(deleteFixedItem);
+					var historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
+					var i, length;
+					var associatedEntityId = BX.prop.getInteger(historyItemData, "ASSOCIATED_ENTITY_ID", 0);
+					var historyItems = this._history.getItemsByAssociatedEntity(
+						BX.CrmEntityType.enumeration.document,
+						associatedEntityId
+					);
+					for(i = 0, length = historyItems.length; i < length; i++)
+					{
+						if(historyItems[i] instanceof BX.CrmHistoryItemDocument)
+						{
+							this._history.deleteItem(historyItems[i]);
+						}
+					}
+					historyItems = this._fixedHistory.getItemsByAssociatedEntity(
+						BX.CrmEntityType.enumeration.document,
+						associatedEntityId
+					);
+					for(i = 0, length = historyItems.length; i < length; i++)
+					{
+						if(historyItems[i] instanceof BX.CrmHistoryItemDocument)
+						{
+							this._fixedHistory.deleteItem(historyItems[i]);
+						}
+					}
 				}, this),
-				1200
+				100
 			);
 		},
 		processDocumentExternalUpdate: function(params)
@@ -911,6 +930,25 @@ if(typeof(BX.CrmTimelineManager) === "undefined")
 
 			return item;
 		},
+		renderAudioDummy: function(durationText, onClick)
+		{
+			return BX.create("DIV", {
+				attrs: { className: "crm-audio-cap-wrap-container"},
+				children: [
+					BX.create("DIV", {
+						attrs: { className: "crm-audio-cap-wrap" },
+						children:
+							[
+								BX.create("DIV", {
+									attrs: { className: "crm-audio-cap-time" },
+									text: durationText
+								})
+							],
+						events: { click: onClick }
+					})
+				]
+			});
+		},
 		loadMediaPlayer: function(id, filePath, mediaType, node, duration, options)
 		{
 			if(!duration)
@@ -933,6 +971,7 @@ if(typeof(BX.CrmTimelineManager) === "undefined")
 				width: options.width || 350,
 				height: options.height || 30,
 				duration: duration,
+				playbackRate: options.playbackRate || null,
 				onInit: function(player)
 				{
 					player.vjsPlayer.controlBar.removeChild('timeDivider');
@@ -949,6 +988,11 @@ if(typeof(BX.CrmTimelineManager) === "undefined")
 			BX.cleanNode(node, false);
 			node.appendChild(player.createElement());
 			player.init();
+			// todo remove this after player will be able to get float playbackRate
+			if(options.playbackRate > 1)
+			{
+				player.vjsPlayer.playbackRate(options.playbackRate);
+			}
 			return player;
 		},
 		onActivityCreated: function(activity, data)
@@ -962,7 +1006,42 @@ if(typeof(BX.CrmTimelineManager) === "undefined")
 		setSpotlightShowed: function()
 		{
 			this._spotlightFastenShowed = true;
-		}
+		},
+		getAudioPlaybackRateSelector: function()
+		{
+			if(!this.audioPlaybackRateSelector)
+			{
+				this.audioPlaybackRateSelector = new BX.CrmTimelineAudioPlaybackRateSelector({
+					name: 'timeline_audio_playback',
+					currentRate: this._audioPlaybackRate,
+					availableRates: [
+						{
+							rate: 1,
+							text: BX.Loc.getMessage('CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_1')
+								.replace('#RATE#', '<span class="crm-audio-cap-speed-param">1x</span>')
+						},
+						{
+							rate: 1.5,
+							text: BX.Loc.getMessage('CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_1.5')
+								.replace('#RATE#', '<span class="crm-audio-cap-speed-param">1.5x</span>')
+						},
+						{
+							rate: 2,
+							text: BX.Loc.getMessage('CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_2')
+								.replace('#RATE#', '<span class="crm-audio-cap-speed-param">2x</span>')
+						},
+						{
+							rate: 3,
+							text: BX.Loc.getMessage('CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_3')
+								.replace('#RATE#', '<span class="crm-audio-cap-speed-param">3x</span>')
+						}
+					],
+					textMessageCode: 'CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_TEXT'
+				});
+			}
+
+			return this.audioPlaybackRateSelector;
+		},
 	};
 	BX.CrmTimelineManager.instances = {};
 	BX.CrmTimelineManager.create = function(id, settings)
@@ -9764,7 +9843,7 @@ if(typeof(BX.CrmHistoryItemCall) === "undefined")
 		{
 			var callInfoWrapper = BX.create("DIV",
 				{
-					attrs: { className: "crm-entity-stream-content-detail-call" }
+					attrs: { className: "crm-entity-stream-content-detail-call crm-entity-stream-content-detail-call-inline" }
 				}
 			);
 			detailWrapper.appendChild(callInfoWrapper);
@@ -9772,30 +9851,11 @@ if(typeof(BX.CrmHistoryItemCall) === "undefined")
 			this._mediaFileInfo = BX.prop.getObject(entityData, "MEDIA_FILE_INFO", null);
 			if(this._mediaFileInfo !== null)
 			{
-				this._playerWrapper = BX.create("DIV",
-					{
-						attrs: { className: "crm-audio-cap-wrap-container"}
-					}
-				);
-				this._playerWrapper.appendChild(
-					BX.create("DIV",
-						{
-							attrs: { className: "crm-audio-cap-wrap" },
-							children:
-								[
-									BX.create(
-										"DIV",
-										{ attrs: { className: "crm-audio-cap-time" }, text: durationText }
-									)
-								],
-							events: { click: this._playerDummyClickHandler }
-						}
-					)
-				);
+				this._playerWrapper = this._history.getManager().renderAudioDummy(durationText, this._playerDummyClickHandler);
 				callInfoWrapper.appendChild(
-					//crm-entity-stream-content-detail-call
 					this._playerWrapper
 				);
+				callInfoWrapper.appendChild(this._history.getManager().getAudioPlaybackRateSelector().render());
 			}
 
 			if(hasTranscript)
@@ -9944,13 +10004,16 @@ if(typeof(BX.CrmHistoryItemCall) === "undefined")
 			BX.addClass(stubNode, "crm-audio-cap-wrap-loader");
 		}
 
-		this._history.getManager().loadMediaPlayer(
+		this._history.getManager().getAudioPlaybackRateSelector().addPlayer(this._history.getManager().loadMediaPlayer(
 			"history_" + this.getId(),
 			this._mediaFileInfo["URL"],
 			this._mediaFileInfo["TYPE"],
 			this._playerWrapper,
-			this._mediaFileInfo["DURATION"]
-		);
+			this._mediaFileInfo["DURATION"],
+			{
+				playbackRate: this._history.getManager().getAudioPlaybackRateSelector().getRate()
+			}
+		));
 	};
 	BX.CrmHistoryItemCall.create = function(id, settings)
 	{
@@ -10506,6 +10569,12 @@ if(typeof(BX.CrmHistoryItemDocument) === "undefined")
 	BX.extend(BX.CrmHistoryItemDocument, BX.CrmHistoryItem);
 	BX.CrmHistoryItemDocument.prototype.getTitle = function()
 	{
+		var typeCategoryId = BX.prop.getInteger(this._data, "TYPE_CATEGORY_ID", 0);
+		if(typeCategoryId === 3)
+		{
+			return BX.Loc.getMessage('CRM_TIMELINE_DOCUMENT_VIEWED');
+		}
+
 		return this.getMessage("document");
 	};
 	BX.CrmHistoryItemDocument.prototype.prepareTitleLayout = function()
@@ -10521,6 +10590,30 @@ if(typeof(BX.CrmHistoryItemDocument) === "undefined")
 			]
 		});
 	};
+	BX.CrmHistoryItemDocument.prototype.prepareTitleStatusLayout = function()
+	{
+		var typeCategoryId = BX.prop.getInteger(this._data, "TYPE_CATEGORY_ID", 0);
+		if(typeCategoryId === 3)
+		{
+			return BX.create("SPAN",
+				{
+					attrs: { className: "crm-entity-stream-content-event-done" },
+					text: BX.Loc.getMessage('CRM_TIMELINE_DOCUMENT_VIEWED_STATUS')
+				}
+			);
+		}
+		if(typeCategoryId === 2)
+		{
+			return BX.create("SPAN",
+				{
+					attrs: { className: "crm-entity-stream-content-event-sent" },
+					text: BX.Loc.getMessage('CRM_TIMELINE_DOCUMENT_CREATED_STATUS')
+				}
+			);
+		}
+
+		return null;
+	};
 	BX.CrmHistoryItemDocument.prototype.prepareTimeLayout = function()
 	{
 		return BX.create("SPAN",
@@ -10530,10 +10623,21 @@ if(typeof(BX.CrmHistoryItemDocument) === "undefined")
 			}
 		);
 	};
+	BX.CrmHistoryItemDocument.prototype.isContextMenuEnabled = function()
+	{
+		var typeCategoryId = BX.prop.getInteger(this._data, "TYPE_CATEGORY_ID", 0);
+
+		return typeCategoryId !== 3;
+	};
 	BX.CrmHistoryItemDocument.prototype.prepareHeaderLayout = function()
 	{
 		var header = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-header" } });
 		header.appendChild(this.prepareTitleLayout());
+		var statusLayout = this.prepareTitleStatusLayout();
+		if(statusLayout)
+		{
+			header.appendChild(statusLayout);
+		}
 		header.appendChild(this.prepareTimeLayout());
 
 		return header;
@@ -11881,26 +11985,8 @@ if(typeof(BX.CrmHistoryItemZoom) === "undefined")
 
 				BX.UI.Hint.init(this._videoDummy);
 
-				this._audioDummy = BX.create("DIV",
-					{
-						attrs: { className: "crm-audio-cap-wrap-container"},
-						children: [
-							BX.create("DIV",
-								{
-									attrs: { className: "crm-audio-cap-wrap" },
-									children:
-										[
-											this._audioLengthElement = BX.create(
-												"DIV",
-												{ attrs: { className: "crm-audio-cap-time" }, text: "00:15" }
-											)
-										],
-									events: { click: this._onAudioDummyClick.bind(this) }
-								}
-							)
-						]
-					}
-				);
+				this._audioDummy = this._history.getManager().renderAudioDummy("00:15", this._onAudioDummyClick.bind(this));
+				this._audioLengthElement = this._audioDummy.querySelector('.crm-audio-cap-time');
 
 				if (zoomData['RECORDINGS'][0]['VIDEO'])
 				{
@@ -11942,7 +12028,15 @@ if(typeof(BX.CrmHistoryItemZoom) === "undefined")
 				}
 				if (zoomData['RECORDINGS'][0]['AUDIO'])
 				{
-					entityDetailWrapper.appendChild(this._audioDummy);
+					var zoomAudioDetailWrapper = BX.create("DIV",
+						{
+							attrs: { className: "crm-entity-stream-content-detail-call crm-entity-stream-content-detail-call-inline" },
+						}
+					);
+
+					zoomAudioDetailWrapper.appendChild(this._audioDummy);
+					zoomAudioDetailWrapper.appendChild(this._history.getManager().getAudioPlaybackRateSelector().render());
+					entityDetailWrapper.appendChild(zoomAudioDetailWrapper);
 				}
 
 				this._downloadWrapper = BX.create("DIV", {
@@ -12071,13 +12165,16 @@ if(typeof(BX.CrmHistoryItemZoom) === "undefined")
 		{
 			return;
 		}
-		this._audioPlayer = this._history.getManager().loadMediaPlayer(
+		this._history.getManager().getAudioPlaybackRateSelector().addPlayer(this._audioPlayer = this._history.getManager().loadMediaPlayer(
 			"zoom_audio_" + this.getId(),
 			recording["DOWNLOAD_URL"],
 			"audio/mp4",
 			this._audioDummy,
-			recording["LENGTH"]
-		);
+			recording["LENGTH"],
+			{
+				playbackRate: this._history.getManager().getAudioPlaybackRateSelector().getRate()
+			}
+		));
 	};
 	BX.CrmHistoryItemZoom.prototype._onTabChange = function(event)
 	{
@@ -12123,8 +12220,9 @@ if(typeof(BX.CrmHistoryItemZoom) === "undefined")
 		BX.clean(this._downloadWrapper);
 		if(audioRecording || videoRecording)
 		{
+			var lengthHuman = audioRecording ? audioRecording["LENGTH_HUMAN"] : videoRecording["LENGTH_HUMAN"];
 			this._downloadWrapper.appendChild(this._downloadSubject);
-			this._downloadSubject.innerHTML = BX.util.htmlspecialchars(BX.message("CRM_TIMELINE_ZOOM_MEETING_RECORD").replace("#DURATION#", audioRecording["LENGTH_HUMAN"])) + " &mdash; "
+			this._downloadSubject.innerHTML = BX.util.htmlspecialchars(BX.message("CRM_TIMELINE_ZOOM_MEETING_RECORD").replace("#DURATION#", lengthHuman)) + " &mdash; "
 			this._downloadWrapper.appendChild(this._downloadSubjectDetail);
 		}
 		if (videoRecording)
@@ -12471,7 +12569,7 @@ if(typeof(BX.CrmHistoryItemVisit) === "undefined")
 		//Details
 		var detailWrapper = BX.create("DIV",
 			{
-				attrs: { className: "crm-entity-stream-content-detail" }
+				attrs: { className: "crm-entity-stream-content-detail crm-entity-stream-content-detail-call-inline" }
 			}
 		);
 		wrapper.appendChild(detailWrapper);
@@ -12479,30 +12577,12 @@ if(typeof(BX.CrmHistoryItemVisit) === "undefined")
 		this._mediaFileInfo = BX.prop.getObject(entityData, "MEDIA_FILE_INFO", null);
 		if(this._mediaFileInfo !== null && recordLength > 0)
 		{
-			this._playerWrapper = BX.create("DIV",
-				{
-					attrs: { className: "crm-audio-cap-wrap-container"}
-				}
-			);
-			this._playerWrapper.appendChild(
-				BX.create("DIV",
-					{
-						attrs: { className: "crm-audio-cap-wrap" },
-						children:
-							[
-								BX.create(
-									"DIV",
-									{ attrs: { className: "crm-audio-cap-time" }, text: recordLengthFormatted }
-								)
-							],
-						events: { click: this._playerDummyClickHandler }
-					}
-				)
-			);
+			this._playerWrapper = this._history.getManager().renderAudioDummy(recordLengthFormatted, this._playerDummyClickHandler);
 			detailWrapper.appendChild(
 				//crm-entity-stream-content-detail-call
 				this._playerWrapper
 			);
+			detailWrapper.appendChild(this._history.getManager().getAudioPlaybackRateSelector().render());
 		}
 
 		var communicationWrapper = BX.create("DIV",
@@ -12510,7 +12590,7 @@ if(typeof(BX.CrmHistoryItemVisit) === "undefined")
 				attrs: { className: "crm-entity-stream-content-detail-contact-info" }
 			}
 		);
-		detailWrapper.appendChild(communicationWrapper);
+		wrapper.appendChild(communicationWrapper);
 
 		//Communications
 		if(communicationTitle !== "")
@@ -12572,13 +12652,16 @@ if(typeof(BX.CrmHistoryItemVisit) === "undefined")
 			BX.addClass(stubNode, "crm-audio-cap-wrap-loader");
 		}
 
-		this._history.getManager().loadMediaPlayer(
+		this._history.getManager().getAudioPlaybackRateSelector().addPlayer(this._history.getManager().loadMediaPlayer(
 			"history_" + this.getId(),
 			this._mediaFileInfo["URL"],
 			this._mediaFileInfo["TYPE"],
 			this._playerWrapper,
-			this._mediaFileInfo["DURATION"]
-		);
+			this._mediaFileInfo["DURATION"],
+			{
+				playbackRate: this._history.getManager().getAudioPlaybackRateSelector().getRate()
+			}
+		));
 	};
 
 	BX.CrmHistoryItemVisit.prototype.getVkProfileUrl = function(profile)
@@ -16850,3 +16933,156 @@ if(typeof(BX.CrmSmsWatcher) === "undefined")
 	};
 }
 //endregion
+if(typeof(BX.CrmTimelineAudioPlaybackRateSelector) === "undefined")
+{
+	BX.CrmTimelineAudioPlaybackRateSelector = function(params) {
+		this.name = params.name || 'crm-timeline-audio-playback-rate-selector';
+		this.menuId = this.name + '-menu';
+		if(BX.Type.isArray(params.availableRates))
+		{
+			this.availableRates = params.availableRates;
+		}
+		else
+		{
+			this.availableRates = [1, 1.5, 2, 3];
+		}
+		this.currentRate = this.normalizeRate(params.currentRate);
+		this.textMessageCode = params.textMessageCode;
+		this.renderedItems = [];
+		this.players = [];
+	};
+	BX.CrmTimelineAudioPlaybackRateSelector.prototype.isRateCurrent = function(rateDescription, rate)
+	{
+		return ((rateDescription.rate && rate === rateDescription.rate) || rate === rateDescription);
+	}
+	BX.CrmTimelineAudioPlaybackRateSelector.prototype.normalizeRate = function(rate)
+	{
+		rate = parseFloat(rate);
+		for(var i = 0, length = this.availableRates.length; i < length; i++)
+		{
+			if(this.isRateCurrent(this.availableRates[i], rate))
+			{
+				return rate;
+			}
+		}
+
+		return (this.availableRates[0].rate || this.availableRates[0]);
+	};
+
+	BX.CrmTimelineAudioPlaybackRateSelector.prototype.getMenuItems = function() {
+		var selectedRate = this.getRate();
+
+		return this.availableRates.map(function(item) {
+			return {
+				text: (item.text || item) + '',
+				className: (this.isRateCurrent(item, selectedRate)) ? 'menu-popup-item-text-active' : null,
+				onclick: function() {
+					this.setRate(item.rate || item)
+				}.bind(this)
+			}
+		}.bind(this))
+	};
+
+	BX.CrmTimelineAudioPlaybackRateSelector.prototype.getPopup = function(node) {
+		var popupMenu = BX.Main.MenuManager.getMenuById(this.menuId);
+		if(popupMenu)
+		{
+			 popupMenu.bindElement = node;
+		}
+		else
+		{
+			popupMenu = BX.Main.MenuManager.create({
+				id: this.menuId,
+				bindElement: node,
+				items: this.getMenuItems(),
+				className: 'crm-audio-cap-speed-popup'
+			});
+		}
+
+		return popupMenu;
+	};
+
+	BX.CrmTimelineAudioPlaybackRateSelector.prototype.getRate = function() {
+		return this.normalizeRate(this.currentRate);
+	};
+
+	BX.CrmTimelineAudioPlaybackRateSelector.prototype.setRate = function(rate) {
+		this.getPopup().destroy();
+
+		rate = this.normalizeRate(rate);
+		if(this.currentRate === rate)
+		{
+			return;
+		}
+		this.currentRate = rate;
+		BX.userOptions.save("crm", this.name, 'rate', rate);
+
+		for(var i = 0, length = this.renderedItems.length; i < length; i++)
+		{
+			var textNode = this.renderedItems[i].querySelector('.crm-audio-cap-speed-text');
+			if(textNode)
+			{
+				textNode.innerHTML = this.getText();
+			}
+		}
+
+		for(i = 0, length = this.players.length; i < length; i++)
+		{
+			this.players[i].vjsPlayer.playbackRate(this.getRate());
+		}
+	};
+
+	BX.CrmTimelineAudioPlaybackRateSelector.prototype.getText = function() {
+		var text;
+
+		if(this.textMessageCode)
+		{
+			text = BX.Loc.getMessage(this.textMessageCode);
+		}
+		if(!text)
+		{
+			text = '#RATE#';
+		}
+
+		return text.replace('#RATE#', '<span>' + this.getRate() + 'x</span>');
+	};
+
+	BX.CrmTimelineAudioPlaybackRateSelector.prototype.render = function() {
+		var item = BX.Dom.create('div', {
+			attrs: {
+				className: 'crm-audio-cap-speed-wrapper'
+			},
+			children: [
+				BX.Dom.create('div', {
+					attrs: {
+						className: 'crm-audio-cap-speed',
+					},
+					children: [
+						BX.Dom.create('div', {
+							attrs: {
+								className: 'crm-audio-cap-speed-text'
+							},
+							html: this.getText()
+						})
+					],
+				})
+			],
+			events: {
+				click: function(event) {
+					event.preventDefault();
+					this.getPopup(event.target).show()
+				}.bind(this)
+			}
+		});
+		this.renderedItems.push(item);
+
+		return item;
+	};
+
+	BX.CrmTimelineAudioPlaybackRateSelector.prototype.addPlayer = function(player) {
+		if(BX.Fileman.Player && player instanceof BX.Fileman.Player)
+		{
+			this.players.push(player);
+		}
+	};
+}

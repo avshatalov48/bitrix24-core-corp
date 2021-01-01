@@ -2,6 +2,8 @@
 
 use Bitrix\Bitrix24\Feature;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Location\Entity\Source\ConfigItem;
+use Bitrix\Location;
 
 \CJsCore::init(array('access'));
 
@@ -300,21 +302,8 @@ use Bitrix\Main\Localization\Loc;
 				{
 					if (!Feature::isFeatureEnabled("disk_version_limit_per_file"))
 					{
-						CBitrix24::initLicenseInfoPopupJS("disk_version_limit_per_file");
-						?>
-						<img src="<?=$this->GetFolder();?>/images/lock.png" data-role="config-disk-version-limit-per-file" style="position: relative;bottom: -1px; margin-left: 5px;"/>
-						<script>
-							BX.ready(function(){
-								var lock4 = document.querySelector("[data-role='config-disk-version-limit-per-file']");
-								if (lock4)
-								{
-									BX.bind(lock4, "click", function(){
-										B24.licenseInfoPopup.show('disk_version_limit_per_file', '<?=GetMessageJS("CONFIG_DISK_LIMIT_LOCK_POPUP_TITLE")?>',
-											'<?=GetMessageJS("CONFIG_DISK_LIMIT_HISTORY_LOCK_POPUP_TEXT")?>');
-									});
-								}
-							});
-						</script>
+					?>
+						<img src="<?=$this->GetFolder();?>/images/lock.png" onclick="BX.UI.InfoHelper.show('limit_max_entries_in_document_history'); " style="position: relative;bottom: -1px; margin-left: 5px;"/>
 					<?
 					}
 
@@ -322,7 +311,7 @@ use Bitrix\Main\Localization\Loc;
 					?>
 					<br>
 					<span><?=Loc::getMessage("CONFIG_LIMIT_MAX_TIME_IN_DOCUMENT_HISTORY", [
-						"#NUM#" => $maxTimeInDocumentHistory
+						"#NUM#" => $maxTimeInDocumentHistory,
 					])?></span>
 					<a href="javascript:void(0)" onclick="BX.UI.InfoHelper.show('limit_max_time_in_document_history')">
 						<?=Loc::getMessage("CONFIG_MORE")?>
@@ -345,22 +334,7 @@ use Bitrix\Main\Localization\Loc;
 			<td class="content-edit-form-field-name content-edit-form-field-name-left">
 				<label for="disk_allow_use_external_link"><?=GetMessage('CONFIG_DISK_ALLOW_USE_EXTERNAL_LINK')?></label>
 				<?if ($arResult["IS_BITRIX24"] && !Feature::isFeatureEnabled("disk_switch_external_link")):?>
-					<?
-					CBitrix24::initLicenseInfoPopupJS("disk_switch_external_link");
-					?>
-					<img src="<?=$this->GetFolder();?>/images/lock.png" data-role="config-lock-disk-external-link" style="position: relative;bottom: -1px; margin-left: 5px;"/>
-					<script>
-						BX.ready(function(){
-							var lock1 = document.querySelector("[data-role='config-lock-disk-external-link']");
-							if (lock1)
-							{
-								BX.bind(lock1, "click", function(){
-									B24.licenseInfoPopup.show('disk_switch_external_link', '<?=GetMessageJS("CONFIG_DISK_LOCK_POPUP_TITLE")?>',
-										'<?=GetMessageJS("CONFIG_DISK_LOCK_POPUP_TEXT")?>');
-								});
-							}
-						});
-					</script>
+					<img src="<?=$this->GetFolder();?>/images/lock.png" onclick="BX.UI.InfoHelper.show('limit_admin_share_link'); " style="position: relative;bottom: -1px; margin-left: 5px;"/>
 				<?endif?>
 			</td>
 			<td class="content-edit-form-field-input">
@@ -384,22 +358,7 @@ use Bitrix\Main\Localization\Loc;
 			<td class="content-edit-form-field-name content-edit-form-field-name-left">
 				<label for="disk_object_lock_enabled"><?=GetMessage('CONFIG_DISK_OBJECT_LOCK_ENABLED')?></label>
 				<?if ($arResult["IS_BITRIX24"] && !Feature::isFeatureEnabled("disk_object_lock_enabled")):?>
-					<?
-					CBitrix24::initLicenseInfoPopupJS("disk_object_lock_enabled");
-					?>
-					<img src="<?=$this->GetFolder();?>/images/lock.png" data-role="config-lock-disk-object-lock" style="position: relative;bottom: -1px; margin-left: 5px;"/>
-					<script>
-						BX.ready(function(){
-							var lock2 = document.querySelector("[data-role='config-lock-disk-object-lock']");
-							if (lock2)
-							{
-								BX.bind(lock2, "click", function(){
-									B24.licenseInfoPopup.show('disk_object_lock_enabled', '<?=GetMessageJS("CONFIG_DISK_LOCK_POPUP_TITLE")?>',
-										'<?=GetMessageJS("CONFIG_DISK_LOCK_POPUP_TEXT")?>');
-								});
-							}
-						});
-					</script>
+					<img src="<?=$this->GetFolder();?>/images/lock.png" onclick="BX.UI.InfoHelper.show('limit_document_lock');" style="position: relative;bottom: -1px; margin-left: 5px;"/>
 				<?endif?>
 			</td>
 			<td class="content-edit-form-field-input">
@@ -412,22 +371,7 @@ use Bitrix\Main\Localization\Loc;
 			<td class="content-edit-form-field-name content-edit-form-field-name-left">
 				<label for="disk_allow_use_extended_fulltext"><?=GetMessage('CONFIG_DISK_ALLOW_USE_EXTENDED_FULLTEXT')?></label>
 				<?if ($arResult["IS_BITRIX24"] && !Feature::isFeatureEnabled("disk_allow_use_extended_fulltext")):?>
-					<?
-					CBitrix24::initLicenseInfoPopupJS("disk_allow_use_extended_fulltext");
-					?>
-					<img src="<?=$this->GetFolder();?>/images/lock.png" data-role="config-lock-disk-allow-use-extended-fulltext" style="position: relative;bottom: -1px; margin-left: 5px;"/>
-					<script>
-						BX.ready(function(){
-							var lockDiskFullText = document.querySelector("[data-role='config-lock-disk-allow-use-extended-fulltext']");
-							if (BX.type.isDomNode(lockDiskFullText))
-							{
-								BX.bind(lockDiskFullText, "click", function(){
-									B24.licenseInfoPopup.show('disk_allow_use_extended_fulltext', '<?=GetMessageJS("CONFIG_DISK_LOCK_POPUP_TITLE")?>',
-										'<?=GetMessageJS("CONFIG_DISK_LOCK_EXTENDED_FULLTEXT_POPUP_TEXT")?>', false);
-								});
-							}
-						});
-					</script>
+					<img src="<?=$this->GetFolder();?>/images/lock.png" onclick="BX.UI.InfoHelper.show('limit_in_text_search');" style="position: relative;bottom: -1px; margin-left: 5px;"/>
 				<?endif?>
 			</td>
 			<td class="content-edit-form-field-input">
@@ -478,8 +422,8 @@ use Bitrix\Main\Localization\Loc;
 							'departmentSelectDisable' => 'N',
 							'userSearchArea' => 'I',
 							'enableAll' => 'Y',
-							'departmentFlatEnable' => 'Y'
-						)
+							'departmentFlatEnable' => 'Y',
+						),
 					]
 				);
 				?>
@@ -526,8 +470,8 @@ use Bitrix\Main\Localization\Loc;
 							'departmentSelectDisable' => 'N',
 							'userSearchArea' => 'I',
 							'enableAll' => 'Y',
-							'departmentFlatEnable' => 'Y'
-						)
+							'departmentFlatEnable' => 'Y',
+						),
 					]
 				);
 				?>
@@ -591,8 +535,8 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 							'departmentSelectDisable' => 'N',
 							'userSearchArea' => 'I',
 							'enableAll' => 'Y',
-							'departmentFlatEnable' => 'Y'
-						)
+							'departmentFlatEnable' => 'Y',
+						),
 					]
 				);
 			?>
@@ -638,22 +582,9 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 						onmouseover="BX.hint(this, '<?=htmlspecialcharsbx(CUtil::JSEscape(GetMessage('CONFIG_NETWORK_AVAILABLE_NOT_CONFIRMED')))?>')"/>
 					<?
 					elseif ($arResult['ALLOW_NETWORK_CHANGE'] === 'N'):
-					CBitrix24::initLicenseInfoPopupJS("network_available");
 					?>
-					<img src="<?=$this->GetFolder();?>/images/lock.png" data-role="config-lock-network-available"
+					<img src="<?=$this->GetFolder();?>/images/lock.png" onclick="BX.UI.InfoHelper.show('limit_office_network');"
 						style="position: relative;bottom: -1px; margin-left: 5px;"/>
-						<script>
-							BX.ready(function () {
-								var lock3 = document.querySelector("[data-role='config-lock-network-available']");
-								if (lock3)
-								{
-									BX.bind(lock3, "click", function () {
-										B24.licenseInfoPopup.show('network-available', '<?=GetMessageJS("CONFIG_NETWORK_AVAILABLE_TITLE")?>',
-											'<?=GetMessageJS("CONFIG_NETWORK_AVAILABLE_TEXT_NEW", array("#PRICE#" => $arResult["PROJECT_PRICE"]))?>', false);
-									});
-								}
-							});
-						</script>
 					<?
 					endif; ?>
 				</td>
@@ -671,7 +602,7 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 			}
 			?>
 			<tr>
-				<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="show_year_for_female"><?=GetMessage('CONFIG_SHOW_YEAR_FOR_FEMALE')?></label></td>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="show_year_for_female"><?=GetMessage('CONFIG_SHOW_YEAR')?></label></td>
 				<td class="content-edit-form-field-input"><input type="checkbox" name="show_year_for_female" value="N" id="show_year_for_female" <?if ($arResult["SHOW_YEAR_FOR_FEMALE"] == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
 				<td class="content-edit-form-field-error"></td>
 			</tr>
@@ -856,6 +787,34 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 		?>
 	<!-- //GDPR for Europe-->
 
+		<?if($arResult['SHOW_GOOGLE_API_KEY_FIELD']):?>
+			<tr>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_NAME_FILEMAN_GOOGLE_API_KEY')?></td>
+				<td class="content-edit-form-field-input">
+					<input class="content-edit-form-field-input-text" name="google_api_key" value="<?=\Bitrix\Main\Text\HtmlFilter::encode($arResult['GOOGLE_API_KEY'])?>">
+				</td>
+				<td class="content-edit-form-field-error"></td>
+			</tr>
+			<?/*if($arResult['GOOGLE_API_KEY_HOST'] <> '' && $arResult['GOOGLE_API_KEY'] <> ''):?>
+				<tr>
+					<td colspan="3">
+						<div class="config_notify_message" style="margin: 10px 20px 10px 20px">
+							<?=GetMessage("CONFIG_NAME_GOOGLE_API_HOST_HINT", array(
+								'#domain#' => \Bitrix\Main\Text\HtmlFilter::encode($arResult['GOOGLE_API_KEY_HOST'])
+							))?>
+						</div>
+					</td>
+				</tr>
+			<?else:?>
+				<tr>
+					<td colspan="3">
+						<div class="config_notify_message" style="margin: 10px 20px 10px 20px">
+							<?=GetMessage("CONFIG_NAME_GOOGLE_API_KEY_HINT")?>
+						</div>
+					</td>
+				</tr>
+			<?endif;*/?>
+		<?endif;?>
 	<?
 	if ($arResult["SECURITY_MODULE"])
 	{
@@ -970,12 +929,12 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 						<?foreach($arIps as $ip):?>
 							<div>
 								<input name="ip_access_rights_<?=$right?>[]" value="<?=$ip?>" size="30"/>
-								<a href="javascript:void(0);" onclick="B24ConfigsIpObj.DeleteIpAccessRow(this);" class="access-delete" title="<?=GetMessage("CONFIG_TOALL_DEL")?>"></a>
+								<a href="javascript:void(0);" data-role="ip-right-delete" class="access-delete" title="<?=GetMessage("CONFIG_TOALL_DEL")?>"></a>
 							</div>
 						<?endforeach?>
 						<div>
 							<input name="ip_access_rights_<?=$right?>[]" size="30" onclick="B24ConfigsIpObj.addInputForIp(this)"/>
-							<a href="javascript:void(0);" onclick="B24ConfigsIpObj.DeleteIpAccessRow(this);" class="access-delete" title="<?=GetMessage("CONFIG_TOALL_DEL")?>"></a>
+							<a href="javascript:void(0);" data-role="ip-right-delete" class="access-delete" title="<?=GetMessage("CONFIG_TOALL_DEL")?>"></a>
 						</div>
 					</td>
 				</tr>
@@ -1045,78 +1004,83 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 	<?
 	}
 
-	if($arResult['SHOW_GOOGLE_API_KEY_FIELD'])
+	if($arResult['SHOW_LOCATION_SOURCES_SETTINGS'])
 	{
-	?>
+		?>
 		<tr>
 			<td class="content-edit-form-header " colspan="3">
-				<div class="content-edit-form-header-wrap content-edit-form-header-wrap-blue"><?=GetMessage('CONFIG_NAME_GOOGLE_API_KEY')?></div>
+				<div class="content-edit-form-header-wrap content-edit-form-header-wrap-blue"><?=GetMessage('CONFIG_LOCATION_SOURCES_SETTINGS')?></div>
 			</td>
 		</tr>
-		<tr>
-			<td class="content-edit-form-field-name" style="width:370px; padding-right:30px"><?=GetMessage('CONFIG_NAME_GOOGLE_API_KEY_FIELD2')?></td>
-			<td class="content-edit-form-field-input" colspan="2">
-				<a name="google_api_key"></a>
-				<input class="content-edit-form-field-input-text" name="google_api_key" value="<?=\Bitrix\Main\Text\HtmlFilter::encode($arResult['GOOGLE_API_KEY'])?>">
-			</td>
-		</tr>
-		<?if($arResult['SHOW_USE_GOOGLE_API']):?>
-			<tr>
-				<td class="content-edit-form-field-name" style="width:370px; padding-right:30px"><?=GetMessage('CONFIG_LOCATION_USE_GOOGLE_API')?></td>
-				<td class="content-edit-form-field-input" colspan="2">
-					<input type="hidden" name="use_google_api" value="N">
-					<input type="checkbox" name="use_google_api" id="use_google_api_cb" value="Y"<?=($arResult['USE_GOOGLE_API'] ? ' checked' : '')?>>
-				</td>
+
+		<?
+		/** @var Bitrix\Location\Entity\Source $source */
+		foreach ($arResult['LOCATION_SOURCES'] as $source):
+			$sourceCode = $source->getCode();
+			$config = $source->getConfig();
+			$note = Loc::getMessage(
+				sprintf(
+					'CONFIG_LOCATION_SOURCE_%s_NOTE',
+					$sourceCode
+				)
+			);
+			?>
+			<tr class="heading">
+				<td></td>
+				<td><strong><?=htmlspecialcharsbx($source->getName())?></strong></td>
 			</tr>
-			<tr>
-				<td class="content-edit-form-field-name" style="width:370px; padding-right:30px">
-					<?=GetMessage('CONFIG_LOCATION_GOOGLE_SHOW_PLACE_PHOTOS')?>
-				</td>
-				<td class="content-edit-form-field-input" colspan="2">
-					<input type="hidden" name="google_map_show_photos" value="N">
-					<input type="checkbox" name="google_map_show_photos" value="Y"<?=($arResult['GOOGLE_MAP_SHOW_PHOTOS'] ? ' checked' : '')?>>
-				</td>
-			</tr>
-			<tr>
-				<td class="content-edit-form-field-name" style="width:370px; padding-right:30px">
-					<?=GetMessage('CONFIG_LOCATION_GOOGLE_USE_GEOCODING_SERVICE')?>
-				</td>
-				<td class="content-edit-form-field-input" colspan="2">
-					<input type="hidden" name="google_use_geocoding_service" value="N">
-					<input type="checkbox" name="google_use_geocoding_service" value="Y"<?=($arResult['GOOGLE_USE_GEOCODING_SERVICE'] ? ' checked' : '')?>>
-				</td>
-			</tr>
-			<tr id="google_api_key_backend_row"<?=$arResult['USE_GOOGLE_API'] ? '' : ' style="display:none;"'?>>
-				<td class="content-edit-form-field-name" style="width:370px; padding-right:30px"><?=GetMessage('CONFIG_NAME_GOOGLE_API_KEY_FIELD_BACKEND')?></td>
-				<td class="content-edit-form-field-input" colspan="2">
-					<input class="content-edit-form-field-input-text" name="google_api_key_backend" value="<?=\Bitrix\Main\Text\HtmlFilter::encode($arResult['GOOGLE_API_KEY_BACK'])?>">
-				</td>
-			</tr>
-		<?endif;?>
-<?
-		if($arResult['GOOGLE_API_KEY_HOST'] <> '' && $arResult['GOOGLE_API_KEY'] <> ''):
-?>
-			<tr>
-				<td colspan="3">
-					<div class="config_notify_message" style="margin: 10px 20px 10px 20px">
-						<?=GetMessage("CONFIG_NAME_GOOGLE_API_HOST_HINT", array(
-							'#domain#' => \Bitrix\Main\Text\HtmlFilter::encode($arResult['GOOGLE_API_KEY_HOST'])
-						))?>
-					</div>
-				</td>
-			</tr>
-<?
-		else:
-?>
-			<tr>
-				<td colspan="3">
-					<div class="config_notify_message" style="margin: 10px 20px 10px 20px">
-						<?=GetMessage("CONFIG_NAME_GOOGLE_API_KEY_HINT")?>
-					</div>
-				</td>
-			</tr>
-<?
-		endif;
+			<?if (!is_null($config)):?>
+				<?
+				/** @var ConfigItem $configItem */
+				foreach ($config as $configItem):
+					if (!$configItem->isVisible())
+					{
+						continue;
+					}
+
+					$code = $configItem->getCode();
+
+					$inputName = sprintf(
+						'LOCATION_SOURCE[%s][CONFIG][%s]',
+						$sourceCode,
+						$code
+					);
+					$name = Loc::getMessage(
+						sprintf(
+							'CONFIG_LOCATION_SOURCE_%s_%s',
+							$sourceCode,
+							$code
+						)
+					);
+					?>
+					<tr>
+						<td class="content-edit-form-field-name">
+							<?=$name?>
+						</td>
+						<td class="content-edit-form-field-input" colspan="2">
+							<?if ($configItem->getType() == ConfigItem::STRING_TYPE):?>
+								<input class="content-edit-form-field-input-text" type="text" name="<?=htmlspecialcharsbx($inputName)?>" value="<?=htmlspecialcharsbx($configItem->getValue())?>">
+							<?elseif ($configItem->getType() == ConfigItem::BOOL_TYPE):?>
+								<input type="hidden" name="<?=htmlspecialcharsbx($inputName)?>" value="N">
+								<input type="checkbox" name="<?=htmlspecialcharsbx($inputName)?>" value="Y" <?=($configItem->getValue() ? ' checked' : '')?> >
+							<?endif;?>
+						</td>
+					</tr>
+				<?endforeach;?>
+			<?endif;?>
+
+			<?if ($note):?>
+				<tr>
+					<td colspan="3">
+						<div class="config_notify_message" style="margin: 10px 20px 10px 20px">
+							<?=$note?>
+						</div>
+					</td>
+				</tr>
+			<?endif;?>
+		<?endforeach;?>
+
+		<?
 	}
 	?>
 	</table>

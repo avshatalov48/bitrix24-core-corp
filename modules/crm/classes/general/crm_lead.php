@@ -6,6 +6,7 @@ use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\Binding\LeadContactTable;
 use Bitrix\Crm\CustomerType;
 use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
+use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
@@ -54,6 +55,13 @@ class CAllCrmLead
 		}
 
 		$result = GetMessage("CRM_LEAD_FIELD_{$fieldName}");
+
+		if (!(is_string($result) && $result !== '')
+			&& Crm\Tracking\UI\Details::isTrackingField($fieldName))
+		{
+			$result = Crm\Tracking\UI\Details::getFieldCaption($fieldName);
+		}
+
 		return is_string($result) ? $result : '';
 	}
 	// Get Fields Metadata
@@ -95,7 +103,8 @@ class CAllCrmLead
 				),
 				'SOURCE_ID' => array(
 					'TYPE' => 'crm_status',
-					'CRM_STATUS_TYPE' => 'SOURCE'
+					'CRM_STATUS_TYPE' => 'SOURCE',
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::HasDefaultValue],
 				),
 				'SOURCE_DESCRIPTION' => array(
 					'TYPE' => 'string'
@@ -167,7 +176,7 @@ class CAllCrmLead
 					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
 				),
 				'ASSIGNED_BY_ID' => array(
-					'TYPE' => 'user'
+					'TYPE' => 'user',
 				),
 				'CREATED_BY_ID' => array(
 					'TYPE' => 'user',
@@ -1739,6 +1748,17 @@ class CAllCrmLead
 
 		\Bitrix\Crm\Kanban\SupervisorTable::sendItem($ID, CCrmOwnerType::LeadName, 'kanban_add');
 
+		if ($ID>0)
+		{
+			$item = Crm\Kanban\Entity::getInstance(self::$TYPE_NAME)
+				->createPullItem($arFields);
+
+			PullManager::getInstance()->sendItemAddedEvent(
+				$item,
+				['TYPE' => self::$TYPE_NAME]
+			);
+		}
+
 		return $ID;
 	}
 
@@ -2776,6 +2796,17 @@ class CAllCrmLead
 					'EVENT_TYPE' => Crm\Ml\Scoring::EVENT_ENTITY_UPDATE
 				]);
 			}
+
+			if ($bResult)
+			{
+				$item = Crm\Kanban\Entity::getInstance(self::$TYPE_NAME)
+					->createPullItem(array_merge($arRow, $arFields));
+
+				PullManager::getInstance()->sendItemUpdatedEvent(
+					$item,
+					['TYPE' => self::$TYPE_NAME]
+				);
+			}
 		}
 
 		return $bResult;
@@ -3051,6 +3082,15 @@ class CAllCrmLead
 				ExecuteModuleEventEx($arEvent, array($ID));
 			}
 		}
+
+		$item = Crm\Kanban\Entity::getInstance(self::$TYPE_NAME)
+			->createPullItem($arFields);
+
+		PullManager::getInstance()->sendItemDeletedEvent(
+			$item,
+			['TYPE' => self::$TYPE_NAME]
+		);
+
 		return true;
 	}
 
@@ -3187,15 +3227,13 @@ class CAllCrmLead
 					}
 				}
 
-				$requiredFields = Crm\Attribute\FieldAttributeManager::isEnabled()
-					? Crm\Attribute\FieldAttributeManager::getRequiredFields(
-						CCrmOwnerType::Lead,
-						$ID,
-						$fieldsToCheck,
-						Crm\Attribute\FieldOrigin::UNDEFINED,
-						isset($options['FIELD_CHECK_OPTIONS']) && is_array($options['FIELD_CHECK_OPTIONS']) ? $options['FIELD_CHECK_OPTIONS'] : array()
-					)
-					: array();
+				$requiredFields = Crm\Attribute\FieldAttributeManager::getRequiredFields(
+					CCrmOwnerType::Lead,
+					$ID,
+					$fieldsToCheck,
+					Crm\Attribute\FieldOrigin::UNDEFINED,
+					is_array($options['FIELD_CHECK_OPTIONS']) ? $options['FIELD_CHECK_OPTIONS'] : array()
+				);
 
 				$requiredSystemFields = isset($requiredFields[Crm\Attribute\FieldOrigin::SYSTEM])
 					? $requiredFields[Crm\Attribute\FieldOrigin::SYSTEM] : array();

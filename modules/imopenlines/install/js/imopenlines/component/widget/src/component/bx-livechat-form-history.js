@@ -99,7 +99,7 @@ Vue.component('bx-livechat-form-history',
 	},
 	template: `
 		<transition enter-active-class="bx-livechat-consent-window-show" leave-active-class="bx-livechat-form-close" @after-enter="formShowed">
-			<div class="bx-livechat-alert-box bx-livechat-form-show" key="welcome">	
+			<div v-if="false" class="bx-livechat-alert-box bx-livechat-form-show" key="welcome">	
 				<div class="bx-livechat-alert-close" @click="hideForm"></div>
 				<div class="bx-livechat-alert-form-box">
 					<h4 class="bx-livechat-alert-title bx-livechat-alert-title-sm">{{localize.BX_LIVECHAT_MAIL_TITLE_NEW}}</h4>

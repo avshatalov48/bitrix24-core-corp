@@ -1,5 +1,6 @@
 <?
 $MESS["MENU_LIVE_FEED"] = "Живая лента";
+$MESS["MENU_LIVE_FEED2"] = "Новости";
 $MESS["MENU_TASKS"] = "Задачи и Проекты";
 $MESS["MENU_CALENDAR"] = "Календарь";
 $MESS["MENU_SITES"] = "Сайты";
@@ -16,6 +17,7 @@ $MESS["MENU_COMPANY_SECTION"] = "Компания";
 $MESS["MENU_SETTINGS_SECTION"] = "Настройки";
 $MESS["MENU_TARIFF"] = "Мой тариф";
 $MESS["MENU_TELEPHONY_SECTION"] = "Телефония";
+$MESS["MENU_CONFERENCE_SECTION"] = "Видеоконференции";
 $MESS["MENU_OPENLINES_LINES_SINGLE"] = "Открытые линии";
 $MESS["MENU_DISK_SECTION"] = "Диск";
 $MESS["MENU_TIMEMAN_SECTION"] = "Время и отчеты";

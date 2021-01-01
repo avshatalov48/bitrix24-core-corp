@@ -124,6 +124,29 @@ class ThemePicker
 		return !Loader::includeModule("bitrix24") || \Bitrix\Bitrix24\Release::isAvailable("17.5.0");
 	}
 
+	public static function canSetDefaultTheme()
+	{
+		if (!static::isAdmin())
+		{
+			return false;
+		}
+
+		if (!Loader::includeModule("bitrix24"))
+		{
+			return true;
+		}
+
+		if (\CBitrix24::isLicensePaid())
+		{
+			return true;
+		}
+
+		return (
+			\CBitrix24::isDemoLicense() &&
+			in_array(\CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_PREVIOUS), \CBitrix24::PAID_EDITIONS, true)
+		);
+	}
+
 	public function showHeadAssets()
 	{
 		$this->registerJsExtension();
@@ -141,6 +164,7 @@ class ThemePicker
 				"maxUploadSize" => static::getMaxUploadSize(),
 				"ajaxHandlerPath" => $this->getAjaxHandlerPath(),
 				"isAdmin" => static::isAdmin(),
+				"allowSetDefaultTheme" => static::canSetDefaultTheme(),
 				"isVideo" => isset($theme["video"])
 		 	),
 			false,
@@ -619,7 +643,7 @@ class ThemePicker
 		);
 
 		Option::set("intranet", $this->getDefaultThemeOptionName(), serialize($themeOptions));
-		
+
 		return true;
 	}
 

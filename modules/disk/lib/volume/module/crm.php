@@ -531,41 +531,41 @@ class Crm
 	{
 		if (
 			$storage instanceof \Bitrix\Disk\Storage &&
-			$storage->getId() > 0 &&
-			(
+			$storage->getId() > 0
+		)
+		{
+			if (
 				!isset($this->folderList[$storage->getId()]) ||
 				empty($this->folderList[$storage->getId()])
 			)
-		)
-		{
-			$this->folderList[$storage->getId()] = array();
-			if ($this->isMeasureAvailable())
 			{
-				$typeFolderXmlId = self::getSpecialFolderXmlId();
-				if (count($typeFolderXmlId) > 0)
+				$this->folderList[$storage->getId()] = array();
+				if ($this->isMeasureAvailable())
 				{
-					foreach ($typeFolderXmlId as $xmlId)
+					$typeFolderXmlId = self::getSpecialFolderXmlId();
+					if (count($typeFolderXmlId) > 0)
 					{
-						$folder = \Bitrix\Disk\Folder::load(array(
-							'=XML_ID' => $xmlId,
-							'=STORAGE_ID' => $storage->getId(),
-						));
-
-						if (!$folder instanceof \Bitrix\Disk\Folder)
+						foreach ($typeFolderXmlId as $xmlId)
 						{
-							continue;
+							$folder = \Bitrix\Disk\Folder::load(array(
+								'=XML_ID' => $xmlId,
+								'=STORAGE_ID' => $storage->getId(),
+							));
+							if (!$folder instanceof \Bitrix\Disk\Folder)
+							{
+								continue;
+							}
+							if ($folder->getXmlId() !== $xmlId)
+							{
+								continue;
+							}
+							$this->folderList[$storage->getId()][$xmlId] = $folder;
 						}
-						if ($folder->getXmlId() !== $xmlId)
-						{
-							continue;
-						}
-
-						$this->folderList[$storage->getId()][$xmlId] = $folder;
 					}
 				}
-
-				return $this->folderList[$storage->getId()];
 			}
+
+			return $this->folderList[$storage->getId()];
 		}
 
 		return array();

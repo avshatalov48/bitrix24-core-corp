@@ -14,9 +14,10 @@ if (!CModule::IncludeModule('mobile'))
 }
 
 CModule::IncludeModule('fileman');
+
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Format\CompanyAddressFormatter;
 use Bitrix\Crm\Format\AddressSeparator;
-use Bitrix\Crm\EntityAddress;
 
 if (IsModuleInstalled('bizproc'))
 {
@@ -1053,7 +1054,7 @@ if ($arParams["RESTRICTED_MODE"])
 {
 	$addressHtml = Bitrix\Crm\Format\CompanyAddressFormatter::format(
 		$arResult['ELEMENT'],
-		array('SEPARATOR' => AddressSeparator::HtmlLineBreak, 'TYPE_ID' => EntityAddress::Primary, 'NL2BR' => true)
+		array('SEPARATOR' => AddressSeparator::HtmlLineBreak, 'TYPE_ID' => EntityAddressType::Primary, 'NL2BR' => true)
 	);
 }
 else
@@ -1090,7 +1091,7 @@ if ($arParams["RESTRICTED_MODE"])
 {
 	$addressHtml = CompanyAddressFormatter::format(
 		$arResult['ELEMENT'],
-		array('SEPARATOR' => AddressSeparator::HtmlLineBreak, 'TYPE_ID' => EntityAddress::Registered, 'NL2BR' => true)
+		array('SEPARATOR' => AddressSeparator::HtmlLineBreak, 'TYPE_ID' => EntityAddressType::Registered, 'NL2BR' => true)
 	);
 }
 else

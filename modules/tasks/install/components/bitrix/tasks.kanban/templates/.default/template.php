@@ -12,6 +12,7 @@ if (!empty($arResult['ERRORS'])) {
 }
 
 use \Bitrix\Main\Localization\Loc;
+use \Bitrix\Main\Type\Date;
 use \Bitrix\Tasks\UI\Filter;
 
 Loc::loadMessages(__FILE__);
@@ -40,6 +41,9 @@ $demoAccess = $arParams['PERSONAL'] != 'Y' &&
 
 $emptyKanban = $arParams['GROUP_ID'] == 0 &&
     $arParams['PERSONAL'] != 'Y';
+
+$clientDate = date(Date::convertFormatToPhp(FORMAT_DATE), (time() + \CTimeZone::GetOffset()));
+$clientTime = date(Date::convertFormatToPhp(FORMAT_DATETIME), (time() + \CTimeZone::GetOffset()));
 
 // js extension reg
 \CJSCore::Init([
@@ -162,18 +166,18 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
 					? array(
 							array(
 								'tabId' => 'popupMenuOptions',
-								'text' => '<b>' . Loc::getMessage('KANBAN_SORT_TITLE_MY') . '</b>'
+								'html' => '<b>' . Loc::getMessage('KANBAN_SORT_TITLE_MY') . '</b>'
 							),
 							array(
 								'tabId' => 'popupMenuOptions',
-								'text' => Loc::getMessage('KANBAN_SORT_ACTUAL').'<span class=\"menu-popup-item-sort-field-label\">'.Loc::getMessage("KANBAN_SORT_ACTUAL_RECOMMENDED_LABEL").'</span>',
+								'html' => Loc::getMessage('KANBAN_SORT_ACTUAL').'<span class=\"menu-popup-item-sort-field-label\">'.Loc::getMessage("KANBAN_SORT_ACTUAL_RECOMMENDED_LABEL").'</span>',
 								'className' => ($arResult['NEW_TASKS_ORDER'] == 'actual') ? 'menu-popup-item-accept' : 'menu-popup-item-none',
 								'onclick' => 'BX.delegate(BX.Tasks.KanbanComponent.ClickSort)',
 								'params' => '{order: "actual"}'
 							),
 							array(
 								'tabId' => 'popupMenuOptions',
-								'text' => '<b>' . Loc::getMessage('KANBAN_SORT_TITLE') . '</b>'
+								'html' => '<b>' . Loc::getMessage('KANBAN_SORT_TITLE') . '</b>'
 							),
 							array(
 								'tabId' => 'popupMenuOptions',
@@ -288,9 +292,9 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
                 gridId: "<?= \CUtil::JSEscape($gridID)?>",
                 newTaskOrder: "<?= $arResult['NEW_TASKS_ORDER']?>",
 				setClientDate: <?= $arResult['NEED_SET_CLIENT_DATE'] ? 'true' : 'false'?>,
-				clientDate: BX.date.format(BX.date.convertBitrixFormat(BX.message('FORMAT_DATE'))),
-				clientTime: BX.date.format(BX.date.convertBitrixFormat(BX.message('FORMAT_DATETIME'))),
-                rights: {
+				clientDate: '<?=\CUtil::JSEscape($clientDate)?>',
+				clientTime: '<?=\CUtil::JSEscape($clientTime)?>',
+				rights: {
                     canAddColumn: <?= ($arResult['ACCESS_CONFIG_PERMS'] && $arParams['TIMELINE_MODE'] == 'N') ? 'true' : 'false'?>,
                     canEditColumn: <?= ($arResult['ACCESS_CONFIG_PERMS'] && $arParams['TIMELINE_MODE'] == 'N') ? 'true' : 'false'?>,
                     canRemoveColumn: <?= ($arResult['ACCESS_CONFIG_PERMS'] && $arParams['TIMELINE_MODE'] == 'N') ? 'true' : 'false'?>,

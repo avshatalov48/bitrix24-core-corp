@@ -522,7 +522,7 @@
 
 .ui-sidepanel-sidebar.salescenter-app-sidebar {
 	width: 260px;
-	margin: 0 0 0 -21px;
+	margin: 0;
 }
 
 .btn-send-crm {
@@ -577,6 +577,7 @@
 }
 
 .salescenter-form-error{
+	position: absolute;
 	font-size: 13px;
 	color: #FF5752;
 	line-height: 22px;

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["TASKS_COUNTER_EMPTY"] = "There are no tasks requiring immediate attention";
 $MESS["TASKS_COUNTER_EXPIRED_CANDIDATES_PLURAL_0"] = "almost overdue";
 $MESS["TASKS_COUNTER_EXPIRED_CANDIDATES_PLURAL_1"] = "almost overdue";
@@ -14,6 +14,7 @@ $MESS["TASKS_COUNTER_NEW_PLURAL_0"] = "not viewed";
 $MESS["TASKS_COUNTER_NEW_PLURAL_1"] = "not viewed";
 $MESS["TASKS_COUNTER_NEW_PLURAL_2"] = "not viewed";
 $MESS["TASKS_COUNTER_TOTAL"] = "Tasks:";
+$MESS["TASKS_COUNTER_TOTAL_EMPL"] = "Employee's tasks:";
 $MESS["TASKS_COUNTER_TOTAL_PLURAL_0"] = "task";
 $MESS["TASKS_COUNTER_TOTAL_PLURAL_1"] = "tasks";
 $MESS["TASKS_COUNTER_TOTAL_PLURAL_2"] = "tasks";
@@ -38,4 +39,3 @@ Counters for new comments and overdue tasks will help you focus on areas requiri
 The tasks in any view (List, Planner, Deadline or Kanban) are sorted according to their active state. The task moves up in the list if it receives a new comment or changes deadline.<br>";
 $MESS["TASKS_TEMPLATE_SPOTLIGHT_SIMPLE_COUNTERS_BUTTON"] = "Details";
 $MESS["TASKS_TEMPLATE_SPOTLIGHT_TIMELINE"] = "Use the new view to plan your tasks and watch deadlines.";
-?>

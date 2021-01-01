@@ -41,17 +41,6 @@ $containerId = 'form-editor-v2';
 	<input type="hidden" name="ID" value="<?=$arResult['FORM']['ID']?>">
 	<?=bitrix_sessid_post();?>
 
-	<div class="crm-webform-editor-activate">
-		<span data-switcher="<?=htmlspecialcharsbx(Json::encode([
-			'id' => 'crm-form-enable',
-			'checked' => $arResult['EMBEDDING_ENABLED'],
-			'inputName' => "EMBEDDING_ENABLED",
-		]))?>" class="ui-switcher"></span>
-			<span class="crm-webform-editor-activate-text">
-			<?=Loc::getMessage('CRM_WEBFORM_EDIT_V2_ENABLE_DESIGN')?>
-		</span>
-	</div>
-
 	<div class="crm-webform-editor-content">
 		<div class="crm-webform-editor-form">
 			<div class="crm-webform-editor-form-inner">

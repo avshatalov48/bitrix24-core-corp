@@ -88,31 +88,6 @@ else
 		TASKS_CLOSE_PAGE_CONFIRM: '<?=GetMessageJS('TASKS_CLOSE_PAGE_CONFIRM')?>'
     });
 
-    // tmp BEGIN
-    /*
-     window.getUTCDate = function(oldDate){
-
-     var date = BX.clone(oldDate);
-
-     return date.getUTCDate()+'.'+date.getUTCMonth()+'.'+date.getUTCFullYear()+' '+date.getUTCHours()+':'+date.getUTCMinutes()+':'+date.getUTCSeconds();
-     }
-     window.getTaskDates = function(taskId){
-     return getUTCDate(ganttChart.tasks[taskId].dateStart)+' - '+getUTCDate(ganttChart.tasks[taskId].dateEnd);
-     }
-     window.getTimeStamp = function(oldDate){
-     var date = BX.clone(oldDate);
-
-     return (oldDate.getTime() / 1000);
-     }
-
-     window.getGmtInfo = function(oldDate){
-     var date = BX.clone(oldDate);
-
-     return getUTCDate(date)+' ('+getTimeStamp(date)+')';
-     }
-     */
-    // tmp END
-
 	<?
 		$filter = $arResult["GET_LIST_PARAMS"]["legacyFilter"];
 		unset($filter['ONLY_ROOT_TASKS']);
@@ -659,7 +634,7 @@ $APPLICATION->IncludeComponent(
 	[
 		'PAGE_NUM' => $arResult['CURRENT_PAGE'],
 		'ENABLE_NEXT_PAGE' => $arResult['ENABLE_NEXT_PAGE'],
-		'URL' => $APPLICATION->GetCurPage()
+		'URL' => $APPLICATION->GetCurPage() . '?F_STATE=sVg0'
 	],
 	$component,
 	array('HIDE_ICONS' => 'Y')

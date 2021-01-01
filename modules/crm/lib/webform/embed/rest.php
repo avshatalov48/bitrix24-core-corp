@@ -165,6 +165,7 @@ class Rest
 	{
 		$formId = empty($query['id']) ? null : (int) $query['id'];
 		$securityCode = empty($query['sec']) ? null : $query['sec'];
+		$loaderOnly = !empty($query['loaderOnly']);
 
 		if (!WebForm\Manager::isEmbeddingAvailable())
 		{
@@ -195,10 +196,12 @@ class Rest
 		$scripts = WebForm\Script::getListContext($form->get(), []);
 
 		return [
-			'config' => (new Config($form))->toArray(),
+			'config' => $loaderOnly ? null : (new Config($form))->toArray(),
 			'loader' => [
 				'form' => [
 					'inline' => $scripts['INLINE']['text'],
+					'click' => $scripts['CLICK']['text'],
+					'auto' => $scripts['AUTO']['text'],
 				],
 				'app' => [
 					'link' => $appPack->getEmbeddedFileUrl(),

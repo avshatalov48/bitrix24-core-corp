@@ -1,5 +1,5 @@
 import {ajax, Loc, Type} from 'main.core';
-import {MessageBox} from "ui.dialogs.messagebox";
+import {MessageBox} from 'ui.dialogs.messagebox';
 
 type ErrorResponse = {
 	data: string,
@@ -15,12 +15,12 @@ export class RequestSender
 		this.debugMode = options.debugMode;
 	}
 
-	getSignedParameters()
+	getSignedParameters(): string
 	{
 		return this.signedParameters;
 	}
 
-	sendRequest(data = {}, action)
+	sendRequest(data = {}, action): Promise
 	{
 		data.debugMode = this.debugMode;
 		return new Promise((resolve, reject) => {
@@ -32,184 +32,214 @@ export class RequestSender
 		});
 	}
 
-	batchUpdateItem(data)
+	batchUpdateItem(data): Promise
 	{
 		return this.sendRequest(data, 'batchUpdateItem');
 	}
 
-	batchRemoveItem(data)
+	batchRemoveItem(data): Promise
 	{
 		return this.sendRequest(data, 'batchRemoveItem');
 	}
 
-	updateItemSort(data)
+	updateItemSort(data): Promise
 	{
 		return this.sendRequest(data, 'updateItemSort');
 	}
 
-	updateSprintSort(data)
+	updateSprintSort(data): Promise
 	{
 		return this.sendRequest(data, 'updateSprintSort');
 	}
 
-	createSprint(data)
+	createSprint(data): Promise
 	{
 		return this.sendRequest(data, 'createSprint');
 	}
 
-	startSprint(data)
+	startSprint(data): Promise
 	{
 		return this.sendRequest(data, 'startSprint');
 	}
 
-	completeSprint(data)
+	completeSprint(data): Promise
 	{
 		return this.sendRequest(data, 'completeSprint');
 	}
 
-	createTask(data)
+	createTask(data): Promise
 	{
 		return this.sendRequest(data, 'createTask');
 	}
 
-	updateItem(data)
+	updateItem(data): Promise
 	{
 		return this.sendRequest(data, 'updateItem');
 	}
 
-	removeItem(data)
+	removeItem(data): Promise
 	{
 		return this.sendRequest(data, 'removeItem');
 	}
 
-	changeTaskResponsible(data)
+	changeTaskResponsible(data): Promise
 	{
 		return this.sendRequest(data, 'changeTaskResponsible');
 	}
 
-	removeSprint(data)
+	removeSprint(data): Promise
 	{
 		return this.sendRequest(data, 'removeSprint');
 	}
 
-	changeSprintName(data)
+	changeSprintName(data): Promise
 	{
 		return this.sendRequest(data, 'changeSprintName');
 	}
 
-	changeSprintDeadline(data)
+	changeSprintDeadline(data): Promise
 	{
 		return this.sendRequest(data, 'changeSprintDeadline');
 	}
 
-	getSprintCompletedItems(data)
+	getSprintCompletedItems(data): Promise
 	{
 		return this.sendRequest(data, 'getSprintCompletedItems');
 	}
 
-	getEpicDescriptionEditor(data)
+	getEpicDescriptionEditor(data): Promise
 	{
 		return this.sendRequest(data, 'getEpicDescriptionEditor');
 	}
 
-	getEpicDescription(data)
+	getEpicDescription(data): Promise
 	{
 		return this.sendRequest(data, 'getEpicDescription');
 	}
 
-	getEpicFiles(data)
+	getEpicFiles(data): Promise
 	{
 		return this.sendRequest(data, 'getEpicFiles');
 	}
 
-	getAddEpicFormButtons(data)
+	getAddEpicFormButtons(data): Promise
 	{
 		return this.sendRequest(data, 'getAddEpicFormButtons');
 	}
 
-	getViewEpicFormButtonsAction(data)
+	getViewEpicFormButtonsAction(data): Promise
 	{
 		return this.sendRequest(data, 'getViewEpicFormButtons');
 	}
 
-	createEpic(data)
+	createEpic(data): Promise
 	{
 		return this.sendRequest(data, 'createEpic');
 	}
 
-	getEpicsList(data)
+	getEpicsList(data): Promise
 	{
 		return this.sendRequest(data, 'getEpicsList');
 	}
 
-	getEpicListUrl()
+	getEpicListUrl(): string
 	{
 		return '/bitrix/services/main/ajax.php?mode=class&c=bitrix:tasks.scrum&action=getEpicsList';
 	}
 
-	attachFilesToTask(data)
+	attachFilesToTask(data): Promise
 	{
 		return this.sendRequest(data, 'attachFilesToTask');
 	}
 
-	attachTagToTask(data)
+	attachTagToTask(data): Promise
 	{
 		return this.sendRequest(data, 'attachTagToTask');
 	}
 
-	batchAttachTagToTask(data)
+	batchAttachTagToTask(data): Promise
 	{
 		return this.sendRequest(data, 'batchAttachTagToTask');
 	}
 
-	deAttachTagToTask(data)
+	deAttachTagToTask(data): Promise
 	{
 		return this.sendRequest(data, 'deAttachTagToTask');
 	}
 
-	batchDeattachTagToTask(data)
+	batchDeattachTagToTask(data): Promise
 	{
 		return this.sendRequest(data, 'batchDeattachTagToTask');
 	}
 
-	updateItemEpic(data)
+	updateItemEpic(data): Promise
 	{
 		return this.sendRequest(data, 'updateItemEpic');
 	}
 
-	batchUpdateItemEpic(data)
+	batchUpdateItemEpic(data): Promise
 	{
 		return this.sendRequest(data, 'batchUpdateItemEpic');
 	}
 
-	getEpic(data)
+	getEpic(data): Promise
 	{
 		return this.sendRequest(data, 'getEpic');
 	}
 
-	editEpic(data)
+	editEpic(data): Promise
 	{
 		return this.sendRequest(data, 'editEpic');
 	}
 
-	removeEpic(data)
+	removeEpic(data): Promise
 	{
 		return this.sendRequest(data, 'removeEpic');
 	}
 
-	applyFilter(data)
+	applyFilter(data): Promise
 	{
 		return this.sendRequest(data, 'applyFilter');
 	}
 
-	getSprintStartButtons(data)
+	getSprintStartButtons(data): Promise
 	{
 		return this.sendRequest(data, 'getSprintStartButtons');
 	}
 
-	getSprintCompleteButtons(data)
+	getSprintCompleteButtons(data): Promise
 	{
 		return this.sendRequest(data, 'getSprintCompleteButtons');
+	}
+
+	getBurnDownChartData(data): Promise
+	{
+		return this.sendRequest(data, 'getBurnDownChartData');
+	}
+
+	getTeamSpeedChartData(data): Promise
+	{
+		return this.sendRequest(data, 'getTeamSpeedChartData');
+	}
+
+	getDodPanelData(data): Promise
+	{
+		return this.sendRequest(data, 'getDodPanelData');
+	}
+
+	getDodComponent(data): Promise
+	{
+		return this.sendRequest(data, 'getDodComponent');
+	}
+
+	getDodButtons(data): Promise
+	{
+		return this.sendRequest(data, 'getDodButtons');
+	}
+
+	saveDod(data): Promise
+	{
+		return this.sendRequest(data, 'saveDod');
 	}
 
 	showErrorAlert(response: ErrorResponse, alertTitle?: string)

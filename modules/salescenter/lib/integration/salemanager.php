@@ -619,7 +619,8 @@ class SaleManager extends Base
 	{
 		$result = [];
 		$zone = '';
-		if (Main\Loader::includeModule("bitrix24"))
+		$isCloud = Main\Loader::includeModule("bitrix24");
+		if ($isCloud)
 		{
 			$zone = \CBitrix24::getLicensePrefix();
 		}
@@ -629,16 +630,14 @@ class SaleManager extends Base
 		}
 		if ($zone === 'ru')
 		{
-			$result = [
+			$result = array_merge($result, [
 				'\Bitrix\Sale\Cashbox\CashboxAtolFarmV4',
 				'\Bitrix\Sale\Cashbox\CashboxOrangeData',
-			];
+			]);
 		}
-		elseif ($zone === 'ua')
+		if ($zone === 'ua' || ($zone === 'ru' && !$isCloud))
 		{
-			$result = [
-				'\Bitrix\Sale\Cashbox\CashboxCheckbox',
-			];
+			$result[] ='\Bitrix\Sale\Cashbox\CashboxCheckbox';
 		}
 
 		return $result;
@@ -924,5 +923,16 @@ class SaleManager extends Base
 		}
 
 		return Sale\Delivery\Services\EmptyDeliveryService::getEmptyDeliveryServiceId();
+	}
+
+	public function isAvailableCorrection()
+	{
+		if ($this->isEnabled())
+		{
+			return Sale\Cashbox\CheckManager::isAvailableCorrection();
+		}
+
+		return false;
+
 	}
 }

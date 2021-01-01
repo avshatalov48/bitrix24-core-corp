@@ -17,6 +17,7 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Main\Engine\CurrentUser;
 
 Loc::loadMessages(__FILE__);
 
@@ -456,6 +457,21 @@ class Util
 		);
 	}
 
+	public static function isCurrentUserAdmin()
+	{
+		$currentUser = CurrentUser::get();
+
+		if (
+			Loader::includeModule("bitrix24") && \CBitrix24::isPortalAdmin($currentUser->getId())
+			|| $currentUser->isAdmin()
+		)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
 	public static function setAdminRights($params)
 	{
 		$userId = (!empty($params['userId']) ? intval($params['userId']) : 0);
@@ -616,6 +632,69 @@ class Util
 		return true;
 	}
 
+	public static function deactivateUser($params)
+	{
+		$userId = (!empty($params['userId']) ? intval($params['userId']) : 0);
+		$currentUserId = (!empty($params['currentUserId']) ? intval($params['currentUserId']) : 0);
+		$isCurrentUserAdmin = !!$params['isCurrentUserAdmin'];
+
+		if (
+			Loader::includeModule("bitrix24")
+			&& !\Bitrix\Bitrix24\Feature::isFeatureEnabled("user_dismissal")
+			&& !\Bitrix\Bitrix24\Integrator::isIntegrator($userId)
+		)
+		{
+			return false;
+		}
+
+		if (
+			!(
+				Loader::includeModule("bitrix24") && \CBitrix24::IsPortalAdmin($currentUserId)
+				|| $isCurrentUserAdmin
+			)
+		)
+		{
+			return false;
+		}
+
+		$user = new \CUser;
+		$res = $user->Update($userId, array("ACTIVE" => "N"));
+
+		if (!$res)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	public static function activateUser($params)
+	{
+		$userId = (!empty($params['userId']) ? intval($params['userId']) : 0);
+		$currentUserId = (!empty($params['currentUserId']) ? intval($params['currentUserId']) : 0);
+		$isCurrentUserAdmin = !!$params['isCurrentUserAdmin'];
+
+		if (
+		!(
+			Loader::includeModule("bitrix24") && \CBitrix24::IsPortalAdmin($currentUserId)
+			|| $isCurrentUserAdmin
+		)
+		)
+		{
+			return false;
+		}
+
+		$user = new \CUser;
+		$res = $user->Update($userId, array("ACTIVE" => "Y"));
+
+		if (!$res)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
 	public static function getGroupsId()
 	{
 		$employeesGroupId = "";
@@ -643,6 +722,80 @@ class Util
 		}
 
 		return [ $employeesGroupId, $portalAdminGroupId ];
+	}
+
+	public static function getUserStatus($id)
+	{
+		global $USER;
+		$status = "";
+
+		$result = \Bitrix\Main\UserTable::getList([
+			'select' => ['ID', 'ACTIVE', 'CONFIRM_CODE', 'EXTERNAL_AUTH_ID', 'UF_DEPARTMENT'],
+			'filter' => ['=ID' => $id],
+		]);
+
+		if ($user = $result->fetch())
+		{
+			$groups = $USER->getUserGroup($id);
+
+			$extranetGroupId = (
+			Loader::includeModule('extranet')
+				? intval(\CExtranet::getExtranetUserGroupId())
+				: 0
+			);
+
+			if(in_array(1, $groups))
+			{
+				$status = "admin";
+			}
+			else
+			{
+				$status = "employee";
+
+				if(
+					!is_array($user['UF_DEPARTMENT'])
+					|| empty($user['UF_DEPARTMENT'][0])
+				)
+				{
+					if (
+						$extranetGroupId
+						&& in_array($extranetGroupId, $groups)
+					)
+					{
+						$status = "extranet";
+					}
+				}
+			}
+
+			if (Loader::includeModule("bitrix24") && \Bitrix\Bitrix24\Integrator::isIntegrator($user["ID"]))
+			{
+				$status = "integrator";
+			}
+
+			if($user["ACTIVE"] == "N")
+			{
+				$status = "fired";
+			}
+
+			if (
+				$user["ACTIVE"] == "Y"
+				&& !empty($user["CONFIRM_CODE"])
+			)
+			{
+				$status = "invited";
+			}
+
+			if (in_array($user["EXTERNAL_AUTH_ID"], [ 'email' ]))
+			{
+				$status = $user["EXTERNAL_AUTH_ID"];
+			}
+			elseif (in_array($user["EXTERNAL_AUTH_ID"], [ 'shop', 'sale', 'saleanonymous' ]))
+			{
+				$status = 'shop';
+			}
+		}
+
+		return $status;
 	}
 }
 

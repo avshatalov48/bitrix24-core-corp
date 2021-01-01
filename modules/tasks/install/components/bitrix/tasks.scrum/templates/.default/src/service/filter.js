@@ -26,6 +26,8 @@ export class Filter extends EventEmitter
 	{
 		super(params);
 
+		this.setEventNamespace('BX.Tasks.Scrum.Filter');
+
 		this.filterId = params.filterId;
 		this.scrumManager = params.scrumManager;
 		this.requestSender = params.requestSender;

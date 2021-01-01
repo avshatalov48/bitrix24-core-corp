@@ -64,7 +64,7 @@ div.b24-form-loader {
 /*endregion*/
 
 /*region b24-form-success*/
-.b24-form-success { background-color: #a0be47; }
+.b24-form-state-container .b24-form-success { background-color: #a0be47; }
 
 .b24-form-success-inner {
 	max-width: 330px;
@@ -95,7 +95,9 @@ div.b24-form-loader {
 /*endregion*/
 
 /*region b24-form-error*/
-.b24-form-error { background-color: #f25830; }
+.b24-form-state-container .b24-form-error {
+	background-color: #f25830;
+}
 
 .b24-form-error-inner {
 	max-width: 285px;
@@ -119,12 +121,16 @@ div.b24-form-loader {
 	color: #fff;
 }
 
-.b24-form-error .b24-form-btn { margin: 0 0 15px; }
+.b24-form-error .b24-form-btn {
+	margin: 0 0 15px;
+	color: #fff;
+	border-color: #fff;
+}
 
 /*endregion*/
 
 /*region b24-form-warning*/
-.b24-form-warning { background-color: #fff; }
+.b24-form-state-container .b24-form-warning { background-color: #fff; }
 
 .b24-form-warning-inner {
 	max-width: 330px;

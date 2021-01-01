@@ -9,7 +9,6 @@ class SupervisorTable extends Entity\DataManager
 
 	const TTL_ACTIVITY = 1200;
 
-	protected static $pathMarkers = array('#lead_id#', '#contact_id#', '#company_id#', '#deal_id#', '#quote_id#', '#invoice_id#');
 	protected static $avatarSize = array('width' => 38, 'height' => 38);
 
 	/**
@@ -413,7 +412,7 @@ class SupervisorTable extends Entity\DataManager
 	 */
 	protected function getUrl($id, $type)
 	{
-		return str_replace(self::$pathMarkers, $id, \CrmCheckPath('PATH_TO_'.mb_strtoupper($type).'_SHOW', '', ''));
+		return str_replace(\Bitrix\Crm\Kanban\Entity::getPathMarkers(), $id, \CrmCheckPath('PATH_TO_'.mb_strtoupper($type).'_SHOW', '', ''));
 	}
 
 	/**

@@ -18,8 +18,10 @@ $result = $ViHttp->GetSipInfo();
 $arResult['SIP_ENABLE'] = (bool)$result->ACTIVE;
 $arResult['TEST_MINUTES'] = intval($result->FREE);
 $arResult['DATE_END'] = ($result->DATE_END <> '' ? new \Bitrix\Main\Type\Date($result->DATE_END, 'd.m.Y') : '');
+$arResult['TELEPHONY_AVAILABLE'] = \Bitrix\Voximplant\Limits::canManageTelephony();
+$arResult['SLIDER_CODE'] = \Bitrix\Voximplant\Limits::canManageTelephony();
 
-$arResult['LINK_TO_BUY'] = CVoxImplantSip::getBuyLink();
+$arResult['LINK_TO_BUY'] = $arResult['TELEPHONY_AVAILABLE'] ? CVoxImplantSip::getBuyLink() : "";
 if (IsModuleInstalled('bitrix24'))
 {
 	$account = new CVoxImplantAccount();

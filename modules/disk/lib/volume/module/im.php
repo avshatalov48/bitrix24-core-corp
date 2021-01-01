@@ -155,20 +155,22 @@ class Im extends Volume\Module\Module
 	{
 		if (
 			$storage instanceof \Bitrix\Disk\Storage &&
-			$storage->getId() > 0 &&
-			(
+			$storage->getId() > 0
+		)
+		{
+			if (
 				!isset($this->folderList[$storage->getId()]) ||
 				empty($this->folderList[$storage->getId()])
 			)
-		)
-		{
-			$this->folderList[$storage->getId()] = array();
-			if ($this->isMeasureAvailable())
 			{
-				$this->folderList[$storage->getId()][] = $storage->getRootObject();
-
-				return $this->folderList[$storage->getId()];
+				$this->folderList[$storage->getId()] = array();
+				if ($this->isMeasureAvailable())
+				{
+					$this->folderList[$storage->getId()][] = $storage->getRootObject();
+				}
 			}
+
+			return $this->folderList[$storage->getId()];
 		}
 
 		return array();

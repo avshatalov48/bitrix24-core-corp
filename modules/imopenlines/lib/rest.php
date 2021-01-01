@@ -798,6 +798,11 @@ class Rest extends \IRestService
 			throw new \Bitrix\Rest\RestException("Form fields is not specified.", "FIELDS_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
+		if ($params['FORM'] === \Bitrix\ImOpenLines\Widget\Form::FORM_HISTORY)
+		{
+			return true; // TODO temporary blocked fix 0134384
+		}
+
 		$control = new \Bitrix\ImOpenLines\Widget\Form($params['CHAT_ID']);
 		$result = $control->saveForm($params['FORM'], $params['FIELDS']);
 		if (!$result->isSuccess())

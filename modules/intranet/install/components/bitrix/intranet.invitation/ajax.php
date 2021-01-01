@@ -457,7 +457,6 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 		if (!empty($strError))
 		{
-			$strError = str_replace("<br>", " ", $strError);
 			$this->addError(new \Bitrix\Main\Error($strError));
 			return false;
 		}

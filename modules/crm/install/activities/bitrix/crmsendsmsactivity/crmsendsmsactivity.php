@@ -30,7 +30,7 @@ class CBPCrmSendSmsActivity extends CBPActivity
 		}
 
 		$messageText = $this->MessageText;
-		if (!$messageText || !is_scalar($messageText))
+		if ($messageText === '' || !is_scalar($messageText))
 		{
 			$this->writeError(GetMessage("CRM_SSMSA_EMPTY_TEXT"));
 			return CBPActivityExecutionStatus::Closed;

@@ -375,6 +375,8 @@ class CAllCrmActivity
 			$options = array();
 		}
 
+		$ID = (int)$ID;
+
 		$arPrevEntity = self::GetByID($ID, false);
 
 		if(!$arPrevEntity)

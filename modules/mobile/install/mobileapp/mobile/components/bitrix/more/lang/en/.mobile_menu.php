@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["MB_BP_MAIN_MENU_ITEM"] = "Workflows";
 $MESS["MB_BP_MAIN_STRESS_LEVEL"] = "Stress level";
 $MESS["MB_CALENDAR_LIST"] = "Calendar";
@@ -17,7 +17,7 @@ $MESS["MB_CURRENT_USER_FILES_MAIN_MENU_ITEM"] = "Files";
 $MESS["MB_CURRENT_USER_FILES_MAIN_MENU_ITEM_NEW"] = "My Drive";
 $MESS["MB_LIVE_FEED"] = "Activity Stream";
 $MESS["MB_LOGOUT"] = "Log out";
-$MESS["MB_MARKETPLACE_GROUP_TITLE"] = "Applications";
+$MESS["MB_MARKETPLACE_GROUP_TITLE_2"] = "Market";
 $MESS["MB_MESSAGES"] = "Chats";
 $MESS["MB_SEC_EXTRANET"] = "Extranet Groups";
 $MESS["MB_SEC_FAVORITE"] = "Favorites";
@@ -42,4 +42,3 @@ $MESS["TASKS_ROLE_AUDITOR"] = "Following";
 $MESS["TASKS_ROLE_ORIGINATOR"] = "Set by me";
 $MESS["TASKS_ROLE_RESPONSIBLE"] = "Ongoing";
 $MESS["TASKS_ROLE_VIEW_ALL"] = "All tasks";
-?>

@@ -24,6 +24,7 @@ import {SourceCreationError, MethodNotImplemented} from './common/error';
 import ErrorPublisher from './common/errorpublisher';
 
 import Limit from './common/limit';
+import Point from './common/point';
 
 export {
 	Location,
@@ -52,5 +53,6 @@ export {
 	MethodNotImplemented,
 
 	ErrorPublisher,
-	Limit
+	Limit,
+	Point
 };

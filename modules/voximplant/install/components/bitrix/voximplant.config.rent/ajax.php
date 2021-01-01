@@ -66,6 +66,12 @@ class VoximplantRentAjaxController extends \Bitrix\Main\Engine\Controller
 
 	public function attachNumbersAction($country, $category, $region, $numbers = null, $count = 0, $state = '', $verificationId = '', $singleSubscription = 'N', $name = '')
 	{
+		if (!\Bitrix\Voximplant\Limits::canManageTelephony())
+		{
+			$this->errorCollection[] = new \Bitrix\Main\Error('PAID_PLAN_REQUIRED');
+			return null;
+		}
+
 		if (!\Bitrix\Voximplant\Limits::canRentNumber())
 		{
 			$this->errorCollection[] = new \Bitrix\Main\Error('LIMIT_REACHED');

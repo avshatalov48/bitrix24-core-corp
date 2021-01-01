@@ -13,6 +13,8 @@ class TasksWidgetButtonsComponent extends TasksBaseComponent
 	{
 		$this->tryParseArrayParameter($this->arParams['SCHEME'], array());
 
+		$this->tryParseBooleanParameter($this->arParams['IS_SCRUM_TASK']);
+
 		$buttons = array();
 		$groups = array();
 		$metGroups = array();

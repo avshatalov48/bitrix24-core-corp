@@ -79,13 +79,15 @@
 	height: 32px;
 	margin-bottom: 4px;
 	transition: .2s;
-	overflow: hidden;
+	/*overflow: hidden;*/
 }
 
 .intranet-ustat-online-icon-inner {
+	position: relative;
 	display: flex;
 	align-items: center;
-	flex-direction: row-reverse;
+	width: 100%;
+	/*flex-direction: row-reverse;*/
 	transition: .2s;
 }
 
@@ -94,37 +96,89 @@
 }
 
 .intranet-ustat-online-icon {
+	position: relative;
 	display: inline-block;
-	margin-left: -7.5px;
-	width: 26px;
-	height: 26px;
-	min-width: 26px;
-	min-height: 26px;
+	margin-right: -7.5px;
+	width: 30px;
+	height: 30px;
+	min-width: 30px;
+	/*min-height: 26px;*/
 	border: 2px solid #fff;
 	border-radius: 100%;
-	transition: opacity .3s;
-	opacity: 0;
+	transform-origin: 50% 50%;
+	transition: opacity .5s, width .5s;
 	overflow: hidden;
+	box-sizing: border-box;
+}
+
+.intranet-ustat-online-icon-hide {
+	animation: intranet-ustat-online-icon-hide 1.2s ease forwards;
+}
+
+@keyframes intranet-ustat-online-icon-hide {
+	0% {
+		opacity: 1;
+	}
+	35% {
+		opacity: 0;
+		position: absolute;
+		right: 17px;
+		z-index: -1;
+	}
+	100% {
+		opacity: 0;
+		position: absolute;
+		right: 17px;
+		z-index: -1;
+	}
+}
+
+.intranet-ustat-online-icon-show {
+	animation: intranet-ustat-online-icon-show 1.2s ease forwards;
+}
+
+@keyframes intranet-ustat-online-icon-show {
+	0% {
+		width: 0;
+		min-width: 0;
+		opacity: 0;
+		transform: scale(0);
+	}
+	30% {
+		width: 30px;
+		min-width: 30px;
+		opacity: 0;
+		transform: scale(0);
+	}
+	50% {
+		width: 30px;
+		min-width: 30px;
+		opacity: 1;
+		transform: scale(1.2);
+	}
+	65% {
+		width: 30px;
+		min-width: 30px;
+		opacity: 1;
+		transform: scale(1);
+	}
+	80% {
+		width: 30px;
+		min-width: 30px;
+		opacity: 1;
+		transform: scale(1.05);
+	}
+	100% {
+		width: 30px;
+		min-width: 30px;
+		opacity: 1;
+		transform: scale(1);
+	}
 }
 
 .bx-ie .intranet-ustat-online-icon.ui-icon,
 .bx-ie .intranet-ustat-online-icon.ui-icon-md {
-	width: 26px;
-}
-
-.intranet-ustat-online-icon:first-child {
-	animation: none;
-	opacity: 1;
-}
-
-.intranet-ustat-online-icon-show {
-	/*animation: intranet-ustat-online-icon-show 1s forwards .3s;*/
-	opacity: 1;
-}
-
-.intranet-ustat-online-icon-hide {
-	/*animation: intranet-ustat-online-icon-hide 1s forwards .3s;*/
-	opacity: 0;
+	width: 30px;
 }
 
 .intranet-ustat-online-icon:last-child {

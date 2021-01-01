@@ -189,7 +189,7 @@ if($arParams['TYPE'] === 'list')
 	if ($bImport)
 	{
 		$arResult['BUTTONS'][] = array(
-			'TEXT' => GetMessage('CRM_CONTACT_IMPORT_VCARD'),
+			'HTML' => GetMessage('CRM_CONTACT_IMPORT_VCARD'),
 			'TITLE' => GetMessage('CRM_CONTACT_IMPORT_VCARD_TITLE'),
 			'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_IMPORTVCARD'], array()),
 			'ICON' => 'btn-import'
@@ -198,14 +198,14 @@ if($arParams['TYPE'] === 'list')
 		$importUrl = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_IMPORT'], array());
 
 		$arResult['BUTTONS'][] = array(
-			'TEXT' => GetMessage('CRM_CONTACT_IMPORT_GMAIL'),
+			'HTML' => GetMessage('CRM_CONTACT_IMPORT_GMAIL'),
 			'TITLE' => GetMessage('CRM_CONTACT_IMPORT_GMAIL_TITLE'),
 			'LINK' => CCrmUrlUtil::AddUrlParams($importUrl, array('origin' => 'gmail')),
 			'ICON' => 'btn-import'
 		);
 
 		$arResult['BUTTONS'][] = array(
-			'TEXT' => GetMessage('CRM_CONTACT_IMPORT_OUTLOOK'),
+			'HTML' => GetMessage('CRM_CONTACT_IMPORT_OUTLOOK'),
 			'TITLE' => GetMessage('CRM_CONTACT_IMPORT_OUTLOOK_TITLE'),
 			'LINK' => CCrmUrlUtil::AddUrlParams($importUrl, array('origin' => 'outlook')),
 			'ICON' => 'btn-import'
@@ -214,7 +214,7 @@ if($arParams['TYPE'] === 'list')
 		if(LANGUAGE_ID === 'ru' || LANGUAGE_ID === 'ua')
 		{
 			$arResult['BUTTONS'][] = array(
-				'TEXT' => GetMessage('CRM_CONTACT_IMPORT_YANDEX'),
+				'HTML' => GetMessage('CRM_CONTACT_IMPORT_YANDEX'),
 				'TITLE' => GetMessage('CRM_CONTACT_IMPORT_YANDEX_TITLE'),
 				'LINK' => CCrmUrlUtil::AddUrlParams($importUrl, array('origin' => 'yandex')),
 				'ICON' => 'btn-import'
@@ -222,7 +222,7 @@ if($arParams['TYPE'] === 'list')
 		}
 
 		$arResult['BUTTONS'][] = array(
-			'TEXT' => GetMessage('CRM_CONTACT_IMPORT_YAHOO'),
+			'HTML' => GetMessage('CRM_CONTACT_IMPORT_YAHOO'),
 			'TITLE' => GetMessage('CRM_CONTACT_IMPORT_YAHOO_TITLE'),
 			'LINK' => CCrmUrlUtil::AddUrlParams($importUrl, array('origin' => 'yahoo')),
 			'ICON' => 'btn-import'
@@ -231,7 +231,7 @@ if($arParams['TYPE'] === 'list')
 		if(LANGUAGE_ID === 'ru' || LANGUAGE_ID === 'ua')
 		{
 			$arResult['BUTTONS'][] = array(
-				'TEXT' => GetMessage('CRM_CONTACT_IMPORT_MAILRU'),
+				'HTML' => GetMessage('CRM_CONTACT_IMPORT_MAILRU'),
 				'TITLE' => GetMessage('CRM_CONTACT_IMPORT_MAILRU_TITLE'),
 				'LINK' => CCrmUrlUtil::AddUrlParams($importUrl, array('origin' => 'mailru')),
 				'ICON' => 'btn-import'

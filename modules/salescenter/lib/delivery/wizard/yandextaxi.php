@@ -6,7 +6,9 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Sale\Handlers\Delivery\YandexTaxi\Api\Api;
-use Sale\Handlers\Delivery\YandexTaxi\Api\RequestEntity\SearchOptions;
+use Sale\Handlers\Delivery\YandexTaxi\Api\RequestEntity\TariffsOptions;
+use Sale\Handlers\Delivery\YandexTaxi\Common\RegionCoordinatesMapper;
+use Sale\Handlers\Delivery\YandexTaxi\Common\RegionFinder;
 
 Loc::loadMessages(__FILE__);
 
@@ -19,13 +21,23 @@ class YandexTaxi extends Base
 	/** @var Api */
 	private $api;
 
+	/** @var RegionFinder */
+	private $regionFinder;
+
+	/** @var RegionCoordinatesMapper */
+	private $regionCoordinatesMapper;
+
 	/**
 	 * YandexTaxi constructor.
 	 * @param Api $api
+	 * @param RegionFinder $regionFinder
+	 * @param RegionCoordinatesMapper $regionCoordinatesMapper
 	 */
-	public function __construct(Api $api)
+	public function __construct(Api $api, RegionFinder $regionFinder, RegionCoordinatesMapper $regionCoordinatesMapper)
 	{
 		$this->api = $api;
+		$this->regionFinder = $regionFinder;
+		$this->regionCoordinatesMapper = $regionCoordinatesMapper;
 	}
 
 	/**
@@ -81,10 +93,19 @@ class YandexTaxi extends Base
 		{
 			$this->api->getTransport()->getOauthTokenProvider()->setToken($settings['OAUTH_TOKEN']);
 
-			$searchResult = $this->api->searchActiveClaims(
-				(new SearchOptions())->setLimit(1)
+			$currentRegion = $this->regionFinder->getCurrentRegion();
+			if (!$currentRegion)
+			{
+				return $validationResult->addError(new Error('Unexpected region'));
+			}
+
+			$tariffsResult = $this->api->getTariffs(
+				(new TariffsOptions)->setStartPoint(
+					$this->regionCoordinatesMapper->getRegionCoordinates($currentRegion)
+				)
 			);
-			if (!$searchResult->isSuccess())
+
+			if (!$tariffsResult->isSuccess())
 			{
 				return $validationResult->addError(
 					new Error(
@@ -92,8 +113,25 @@ class YandexTaxi extends Base
 					)
 				);
 			}
+
+			if (!in_array('express', $tariffsResult->getTariffs()))
+			{
+				return $validationResult->addError(
+					new Error(
+						Loc::getMessage('SALESCENTER_CONTROLLER_DELIVERY_INSTALLATION_YANDEX_ERROR_TARIFF_NOT_SUPPORTED')
+					)
+				);
+			}
 		}
 
 		return $validationResult;
+	}
+
+	/**
+	 * @return RegionFinder
+	 */
+	public function getYandexTaxiRegionFinder(): RegionFinder
+	{
+		return $this->regionFinder;
 	}
 }

@@ -76,6 +76,7 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 		this._hasFocus = false;
 		this._hasLayout = false;
 		this._hasMultifieldLayout = false;
+		this._isRequired = false;
 	};
 	BX.Crm.EntityEditorClientSearchBox.prototype =
 		{
@@ -87,6 +88,8 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 				this._editor = BX.prop.get(this._settings, "editor", null);
 				this._parentField = BX.prop.get(this._settings, "parentField", null);
 				this._container = BX.prop.getElementNode(this._settings, "container", null);
+
+				this._isRequired = BX.prop.getBoolean(this._settings, 'isRequired', false);
 
 				var entityInfo = BX.prop.get(this._settings, "entityInfo", null);
 				if(entityInfo)
@@ -376,6 +379,10 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 			},
 			validate: function(result)
 			{
+				if (this._isRequired && this._searchInput && this._searchInput.value == '')
+				{
+					return false;
+				}
 				if (this._clientEntityEditorEnabled && this._clientEntityEditor)
 				{
 					return this._clientEntityEditor.validate(result);

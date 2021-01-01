@@ -447,21 +447,24 @@ if ($presetId == "custom")
 	if ($customItems)
 	{
 		$customItems= unserialize($customItems);
-		foreach ($customItems as $item)
+		if (is_array($customItems))
 		{
-			if (!isset($newItems[$item["ID"]]))
+			foreach ($customItems as $item)
 			{
-				$newItems[$item["ID"]] = array(
-					"TEXT" => htmlspecialcharsbx($item["TEXT"]),
-					"LINK" => htmlspecialcharsbx($item["LINK"]),
-					"PERMISSION" => "X",
-					"PARAMS" => array(
-						"menu_item_id" => htmlspecialcharsbx($item["ID"])
-					),
-					"ITEM_TYPE" => "custom",
-					"DELETE_PERM" => "A",
-					"OPEN_IN_NEW_PAGE" => isset($item["NEW_PAGE"]) && $item["NEW_PAGE"] == "Y" ? true : false
-				);
+				if (!isset($newItems[$item["ID"]]))
+				{
+					$newItems[$item["ID"]] = array(
+						"TEXT" => htmlspecialcharsbx($item["TEXT"]),
+						"LINK" => htmlspecialcharsbx($item["LINK"]),
+						"PERMISSION" => "X",
+						"PARAMS" => array(
+							"menu_item_id" => htmlspecialcharsbx($item["ID"])
+						),
+						"ITEM_TYPE" => "custom",
+						"DELETE_PERM" => "A",
+						"OPEN_IN_NEW_PAGE" => isset($item["NEW_PAGE"]) && $item["NEW_PAGE"] == "Y" ? true : false
+					);
+				}
 			}
 		}
 	}
@@ -564,18 +567,25 @@ if (!$arResult["IS_EXTRANET"] && $GLOBALS["USER"]->isAuthorized())
 
 $arResult["IS_PUBLIC_CONVERTED"] = file_exists($_SERVER["DOCUMENT_ROOT"].SITE_DIR."stream/");
 
-$arResult["SPOTLIGHT_ID"] = "new-collapsed-menu";
-
 //license button
 $arResult["SHOW_LICENSE_BUTTON"] = false;
 if (
 	Loader::includeModule('bitrix24')
-	&& \CBitrix24::getLicenseFamily() !== "company"
 	&& !(Loader::includeModule("extranet") && CExtranet::IsExtranetSite())
 )
 {
-	$arResult["SHOW_LICENSE_BUTTON"] = true;
-	$arResult["B24_LICENSE_PATH"] = CBitrix24::PATH_LICENSE_ALL;
-	$arResult["LICENSE_BUTTON_COUNTER_URL"] = CBitrix24::PATH_COUNTER;
-	$arResult["HOST_NAME"] = BX24_HOST_NAME;
+	$licenseFamily = \CBitrix24::getLicenseFamily();
+	if ($licenseFamily !== "company")
+	{
+		$arResult["SHOW_LICENSE_BUTTON"] = true;
+		$arResult["B24_LICENSE_PATH"] = CBitrix24::PATH_LICENSE_ALL;
+		$arResult["LICENSE_BUTTON_COUNTER_URL"] = CBitrix24::PATH_COUNTER;
+		$arResult["HOST_NAME"] = BX24_HOST_NAME;
+		$arResult["IS_DEMO_LICENSE"] = \CBitrix24::getLicenseFamily() === "demo";
+		if ($arResult["IS_DEMO_LICENSE"])
+		{
+			$demoStart = COption::GetOptionInt("bitrix24", "DEMO_START");
+			$arResult["DEMO_DAYS"] = FormatDate("ddiff", time(), $demoStart + 30*24*60*60);
+		}
+	}
 }

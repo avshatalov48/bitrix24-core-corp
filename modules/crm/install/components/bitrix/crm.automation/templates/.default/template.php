@@ -189,6 +189,60 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 		BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-OPENLINE_MSG', OLTriggerDialogHandler);
 		BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onSaveSettings-OPENLINE_MSG', OLTriggerSaveHandler);
 
+		(function()//OPENLINE_ANSWER
+		{
+			var triggerDialogHandler = function(trigger, form)
+			{
+				var triggerData = trigger.manager.getAvailableTrigger(trigger.data['CODE']);
+
+				if (triggerData && triggerData['CONFIG_LIST'])
+				{
+					var select = BX.create('select', {
+						attrs: {className: 'bizproc-automation-popup-settings-dropdown'},
+						props: {
+							name: 'config_id',
+							value: ''
+						},
+						children: [BX.create('option', {
+							props: {value: ''},
+							text: BX.message('BIZPROC_AUTOMATION_TRIGGER_WEBFORM_ANY')
+						})]
+					});
+
+					for (var i = 0; i < triggerData['CONFIG_LIST'].length; ++i)
+					{
+						var item = triggerData['CONFIG_LIST'][i];
+						select.appendChild(BX.create('option', {
+							props: {value: item['ID']},
+							text: item['NAME']
+						}));
+					}
+					if (BX.type.isPlainObject(trigger.data['APPLY_RULES']) && trigger.data['APPLY_RULES']['config_id'])
+					{
+						select.value = trigger.data['APPLY_RULES']['config_id'];
+					}
+
+					var div = BX.create('div', {attrs: {className: 'bizproc-automation-popup-settings'},
+						children: [BX.create('span', {attrs: {
+								className: 'bizproc-automation-popup-settings-title'
+							}, text: BX.message('BIZPROC_AUTOMATION_TRIGGER_OPENLINE_LABEL') + ':'}), select]
+					});
+					form.appendChild(div);
+				}
+			};
+
+			var triggerSaveHandler = function(trigger, formData)
+			{
+				trigger.data['APPLY_RULES'] = {
+					config_id:  formData['data']['config_id']
+				}
+			};
+
+			BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-OPENLINE_ANSWER', triggerDialogHandler);
+			BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onSaveSettings-OPENLINE_ANSWER', triggerSaveHandler);
+		})();
+
+
 		(function(){
 			var code = 'FIELD_CHANGED';
 			var menuId = 'FIELD_CHANGED' + Math.random();
@@ -409,8 +463,9 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 
 		})();
 
-		(function()
+		(function() //SHIPMENT_CHANGED
 		{
+			var selector;
 			BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-SHIPMENT_CHANGED', function(trigger, form)
 				{
 					var triggerData = trigger.manager.getAvailableTrigger(trigger.data['CODE']);
@@ -419,7 +474,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 						var conditionGroup = new BX.Bizproc.Automation.ConditionGroup(
 							trigger.data['APPLY_RULES']['shipmentCondition']
 						);
-						var selector = new BX.Bizproc.Automation.ConditionGroupSelector(conditionGroup, {
+						selector = new BX.Bizproc.Automation.ConditionGroupSelector(conditionGroup, {
 							fields: triggerData['FIELDS'],
 							fieldPrefix: 'shipping_condition_'
 						});
@@ -455,11 +510,72 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 				trigger.data['APPLY_RULES'] = {
 					shipmentCondition:  conditionGroup.serialize()
 				}
+
+				if (selector && BX.type.isFunction(selector.destroy))
+				{
+					selector.destroy();
+				}
+			});
+		})();
+
+		(function() //OPENLINE_ANSWER_CTRL
+		{
+			var selector;
+			BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-OPENLINE_ANSWER_CTRL', function(trigger, form)
+				{
+					var triggerData = trigger.manager.getAvailableTrigger(trigger.data['CODE']);
+					if (triggerData && triggerData['FIELDS'])
+					{
+						var conditionGroup = new BX.Bizproc.Automation.ConditionGroup(
+							trigger.data['APPLY_RULES']['imolCondition']
+						);
+						selector = new BX.Bizproc.Automation.ConditionGroupSelector(conditionGroup, {
+							fields: triggerData['FIELDS'],
+							fieldPrefix: 'imol_condition_'
+						});
+
+						var selectorDiv =  BX.create("div", {
+							attrs: { className: "bizproc-automation-popup-settings" },
+							children: [
+								BX.create("div", {
+									attrs: { className: "bizproc-automation-popup-settings-block" },
+									children: [
+										BX.create("span", {
+											attrs: { className: "bizproc-automation-popup-settings-title" },
+											text: BX.message('CRM_AUTOMATION_CMP_OPENLINE_ANSWER_CTRL_CONDITION') + ":"
+										}),
+										selector.createNode()
+									]
+								})
+							]
+						});
+
+						form.appendChild(selectorDiv);
+					}
+				}
+			);
+
+			BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onSaveSettings-OPENLINE_ANSWER_CTRL', function(trigger, formData)
+			{
+				var conditionGroup = BX.Bizproc.Automation.ConditionGroup.createFromForm(
+					formData['data'],
+					'imol_condition_'
+				);
+
+				trigger.data['APPLY_RULES'] = {
+					imolCondition:  conditionGroup.serialize()
+				}
+
+				if (selector && BX.type.isFunction(selector.destroy))
+				{
+					selector.destroy();
+				}
 			});
 		})();
 
 		(function()//TASK_STATUS
 		{
+			var selector;
 			BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-TASK_STATUS', function(trigger, form)
 				{
 					var triggerData = trigger.manager.getAvailableTrigger(trigger.data['CODE']);
@@ -502,7 +618,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 						var conditionGroup = new BX.Bizproc.Automation.ConditionGroup(
 							trigger.data['APPLY_RULES']['taskCondition']
 						);
-						var selector = new BX.Bizproc.Automation.ConditionGroupSelector(conditionGroup, {
+						selector = new BX.Bizproc.Automation.ConditionGroupSelector(conditionGroup, {
 							fields: triggerData['FIELDS'],
 							fieldPrefix: 'task_condition_'
 						});
@@ -538,6 +654,10 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 				trigger.data['APPLY_RULES'] = {
 					taskStatus: formData['data']['STATUS_ID'],
 					taskCondition:  conditionGroup.serialize()
+				}
+				if (selector && BX.type.isFunction(selector.destroy))
+				{
+					selector.destroy();
 				}
 			});
 		})();

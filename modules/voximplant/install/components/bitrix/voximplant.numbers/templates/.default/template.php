@@ -151,4 +151,11 @@ $APPLICATION->IncludeComponent(
 		users: <?=CUtil::PhpToJSObject($arResult['USERS'])?>,
 		isPhoneAllowed: <?= $arResult['IS_PHONE_ALLOWED'] ? 'true' : 'false'?>
 	});
+
+	BX.addCustomEvent(window, 'Grid::beforeRequest', function(gridData, requestParams)
+	{
+		BX.Voximplant.UserEditor.setDefaults({
+			lastGridUrl: requestParams.url
+		});
+	});
 </script>

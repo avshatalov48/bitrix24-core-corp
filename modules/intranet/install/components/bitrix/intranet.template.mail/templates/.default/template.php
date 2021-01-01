@@ -67,8 +67,8 @@ if (
 																	</span>
 																	<?if (\Bitrix\Main\ModuleManager::isModuleInstalled("bitrix24")):?>
 																		<br/>
-																		<a href="<?=$httpPrefix?>://<?=BX24_HOST_NAME?>" style="color: #525c69; font-size: 13px; font-family: Helvetica Neue, Helvetica, Arial, sans-serif; text-decoration: none;">
-																			<?=BX24_HOST_NAME?>
+																		<a href="<?=$httpPrefix?>://<?=$arResult["HOST_NAME"]?>" style="color: #525c69; font-size: 13px; font-family: Helvetica Neue, Helvetica, Arial, sans-serif; text-decoration: none;">
+																			<?=$arResult["HOST_NAME"]?>
 																		</a>
 																	<?endif;?>
 																</td>

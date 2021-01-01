@@ -2,19 +2,33 @@
 
 global $APPLICATION;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Loader;
 
 $this->setFrameMode(true);
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
 
-\CJSCore::Init("loader");
-if(\Bitrix\Main\Loader::includeModule('rest'))
+\CJSCore::Init([
+	"loader",
+	"voximplant.common"
+]);
+if(Loader::includeModule('rest'))
 {
 	\CJSCore::Init(["marketplace"]);
 }
 
-\Bitrix\Main\UI\Extension::load(["ui.icons", "applayout"]);
+\Bitrix\Main\UI\Extension::load(["ui.icons", "applayout", "ui.hint"]);
+
+if(\Bitrix\Main\ModuleManager::isModuleInstalled('imconnector'))
+{
+	if (Loader::includeModule('bitrix24'))
+	{
+		$APPLICATION->IncludeComponent('bitrix:ui.info.helper', '', []);
+	}
+
+	Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/components/bitrix/imconnector.connector.settings/templates/.default/script.js');
+}
 
 if(!empty($arResult["ADDITIONAL_STYLES"]))
 {
@@ -29,6 +43,10 @@ if(!empty($arResult["ADDITIONAL_STYLES"]))
 	BX.ready(function() {
 		new BX.ContactCenter.Init(params);
 	})
+
+	BX.message({
+		IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_LIMIT_INFO_HELPER: 'limit_contact_center_ol_number',
+	});
 </script>
 <div class="intranet-contact-block">
 	<div class="intranet-contact-wrap" id="intranet-contact-wrap">

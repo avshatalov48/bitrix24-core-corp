@@ -356,6 +356,7 @@ BX.Tasks.Kanban.Item.prototype = {
 			value: value,
 			currentTime: value,
 			bTime: true,
+			bCompatibility: false,
 			callback: function(data)
 			{
 				this.getGrid().ajax({
@@ -508,6 +509,69 @@ BX.Tasks.Kanban.Item.prototype = {
 		{
 			BX.hide(el);
 		}
+	},
+
+	/**
+	 *
+	 * @param {Element} itemNode
+	 * @param {number} x
+	 * @param {number} y
+	 */
+	onDragDrop: function(itemNode, x, y)
+	{
+		if(this.selectable && this.getGrid().getSelectedItems().size > 1)
+		{
+			return this.onDragDropMultiple();
+		}
+
+		this.hideDragTarget();
+		var draggableItem = this.getGrid().getItemByElement(itemNode);
+
+		var event = new BX.Kanban.DragEvent();
+		event.setItem(draggableItem);
+		event.setTargetColumn(this.getColumn());
+		event.setTargetItem(this);
+
+		BX.onCustomEvent(this.getGrid(), "Kanban.Grid:onBeforeItemMoved", [event]);
+		if (!event.isActionAllowed())
+		{
+			return;
+		}
+
+		var taskCompletePromise = new BX.Promise();
+
+		if (
+			this.isSprintView &&
+			(this.getColumn().type === this.getColumn().finishStatus) &&
+			(draggableItem.getColumn().type !== this.getColumn().finishStatus)
+		)
+		{
+			if (typeof BX.Tasks.Scrum === 'undefined' || typeof BX.Tasks.Scrum.ScrumDod === 'undefined')
+			{
+				taskCompletePromise.fulfill();
+			}
+
+			this.scrumDod = new BX.Tasks.Scrum.ScrumDod({
+				groupId: this.getData()['groupId']
+			});
+
+			var choiceMadePromise = this.scrumDod.showList(draggableItem.getId());
+			choiceMadePromise.then(function() {
+				taskCompletePromise.fulfill();
+			}.bind(this));
+		}
+		else
+		{
+			taskCompletePromise.fulfill();
+		}
+
+		taskCompletePromise.then(function() {
+			var success = this.getGrid().moveItem(draggableItem, this.getColumn(), this);
+			if (success)
+			{
+				BX.onCustomEvent(this.getGrid(), "Kanban.Grid:onItemMoved", [draggableItem, this.getColumn(), this]);
+			}
+		}.bind(this));
 	},
 
 	/**

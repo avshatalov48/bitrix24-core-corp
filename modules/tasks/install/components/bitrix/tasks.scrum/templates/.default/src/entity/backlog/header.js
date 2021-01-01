@@ -24,7 +24,16 @@ export class Header extends EventEmitter
 			<div class="tasks-scrum-backlog-epics-title ui-btn ui-btn-xs ui-btn-secondary">
 				${Loc.getMessage('TASKS_SCRUM_BACKLOG_EPICS_TITLE')}
 			</div>
+			<div title="Definition of Done" class="tasks-scrum-entity-title-btn tasks-scrum-entity-title-btn-dod">
+				<span class="tasks-scrum-entity-dod-icon"></span>
+			</div>
 			<div class="tasks-scrum-backlog-title-spacer"></div>
+			<div class="tasks-scrum-entity-title-btn tasks-scrum-entity-title-btn-task">
+				<span class="tasks-scrum-entity-tasks-icon"></span>
+				<span class="tasks-scrum-entity-tasks-title">
+					${this.entity.getNumberTasks()}
+				</span>
+			</div>
 			<div class="tasks-scrum-backlog-story-point-title">
 				${Loc.getMessage('TASKS_SCRUM_BACKLOG_TITLE_STORY_POINTS')}
 			</div>
@@ -37,6 +46,10 @@ export class Header extends EventEmitter
 			this.emit('openListEpicGrid');
 		});
 
+		Event.bind(this.getElementByClassName(this.element, 'tasks-scrum-entity-title-btn-dod'), 'click', () => {
+			this.emit('openDefinitionOfDone');
+		});
+
 		return this.element;
 	}
 
@@ -46,6 +59,15 @@ export class Header extends EventEmitter
 			this.element,
 			'tasks-scrum-backlog-story-point'
 		).textContent = Text.encode(storyPoints);
+	}
+
+	updateNumberTasks()
+	{
+		const parentNode = this.getElementByClassName(
+			this.element,
+			'tasks-scrum-entity-title-btn-task'
+		);
+		parentNode.querySelector('.tasks-scrum-entity-tasks-title').textContent = this.entity.getNumberTasks();
 	}
 
 	getElementByClassName(elements: HTMLElement[], className: string): HTMLElement

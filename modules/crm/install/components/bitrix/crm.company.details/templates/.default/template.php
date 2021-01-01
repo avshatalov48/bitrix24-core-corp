@@ -87,6 +87,7 @@ $APPLICATION->IncludeComponent(
 			'DUPLICATE_CONTROL' => $arResult['DUPLICATE_CONTROL'],
 			'ENTITY_FIELDS' => $arResult['ENTITY_FIELDS'],
 			'ENTITY_DATA' => $arResult['ENTITY_DATA'],
+			'ENTITY_VALIDATORS' => $arResult['ENTITY_VALIDATORS'],
 			'ENABLE_SECTION_EDIT' => true,
 			'ENABLE_SECTION_CREATION' => true,
 			'ENABLE_USER_FIELD_CREATION' => $arResult['ENABLE_USER_FIELD_CREATION'],
@@ -97,7 +98,17 @@ $APPLICATION->IncludeComponent(
 			'SERVICE_URL' => '/bitrix/components/bitrix/crm.company.details/ajax.php?'.bitrix_sessid_get(),
 			'EXTERNAL_CONTEXT_ID' => $arResult['EXTERNAL_CONTEXT_ID'],
 			'CONTEXT_ID' => $arResult['CONTEXT_ID'],
-			'CONTEXT' => $editorContext
+			'CONTEXT' => $editorContext,
+			'ATTRIBUTE_CONFIG' => [
+				'ENTITY_SCOPE' => $arResult['ENTITY_ATTRIBUTE_SCOPE'],
+				'CAPTIONS' => [
+					'REQUIRED_SHORT' => GetMessage('CRM_COMPANY_DETAIL_ATTR_REQUIRED_SHORT'),
+					'REQUIRED_FULL' => GetMessage('CRM_COMPANY_DETAIL_ATTR_REQUIRED_SHORT'),
+					'GROUP_TYPE_GENERAL' => GetMessage('CRM_COMPANY_DETAIL_ATTR_GR_TYPE_GENERAL'),
+					'GROUP_TYPE_PIPELINE' => GetMessage('CRM_COMPANY_DETAIL_ATTR_GR_TYPE_PIPELINE'),
+					'GROUP_TYPE_JUNK' => GetMessage('CRM_COMPANY_DETAIL_ATTR_GR_TYPE_JUNK')
+				]
+			]
 		),
 		'TIMELINE' => array(
 			'GUID' => "{$guid}_timeline",
@@ -113,3 +124,37 @@ $APPLICATION->IncludeComponent(
 		'ENABLE_PROGRESS_BAR' => false
 	)
 );
+
+if($arResult['ENTITY_ID'] <= 0 && !empty($arResult['FIELDS_SET_DEFAULT_VALUE']))
+{?>
+	<script type="text/javascript">
+		BX.ready(function () {
+			var fieldsSetDefaultValue = <?= CUtil::PhpToJSObject($arResult['FIELDS_SET_DEFAULT_VALUE']) ?>;
+			BX.addCustomEvent("onSave", function(fieldConfigurator, params) {
+				var field = params.field;
+				if(
+					fieldConfigurator instanceof BX.Crm.EntityEditorFieldConfigurator
+					&& fieldConfigurator._mandatoryConfigurator
+					&& (field instanceof BX.Crm.EntityEditorField || field instanceof BX.UI.EntityEditorField)
+					//&& field.isChanged()
+					&& fieldsSetDefaultValue.indexOf(field._id) > -1
+				)
+				{
+					if(fieldConfigurator._mandatoryConfigurator.isEnabled())
+					{
+						delete field._model._data[field.getDataKey()];
+						field.refreshLayout();
+					}
+					else
+					{
+						if(field.getSchemeElement().getData().defaultValue)
+						{
+							field._model._data[field.getDataKey()] = field.getSchemeElement().getData().defaultValue;
+							field.refreshLayout();
+						}
+					}
+				}
+			});
+		});
+	</script><?php
+}

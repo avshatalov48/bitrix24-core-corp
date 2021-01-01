@@ -399,7 +399,18 @@ class CCrmWebFormFillComponent extends \CBitrixComponent
 			$this->errors[] = Loc::getMessage('CRM_WEBFORM_ERROR_SECURITY');
 			return false;
 		}
-		elseif(!$this->form->isActive())
+		if ($this->arParams['VIEW_TYPE'] !== 'frame')
+		{
+			$landingUrl = $this->form->getLandingUrl();
+			if ($landingUrl)
+			{
+				$getParameters = $this->request->getQueryList()->toArray();
+				unset($getParameters['form_code'], $getParameters['sec']);
+				$landingUrl = (new \Bitrix\Main\Web\Uri($landingUrl))->addParams($getParameters)->getLocator();
+				LocalRedirect($landingUrl, true);
+			}
+		}
+		if(!$this->form->isActive())
 		{
 			$this->errors[] = Loc::getMessage('CRM_WEBFORM_ERROR_DEACTIVATED');
 			return false;

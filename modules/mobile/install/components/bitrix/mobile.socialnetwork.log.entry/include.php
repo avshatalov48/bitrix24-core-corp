@@ -774,6 +774,7 @@ if (!function_exists('__SLMGetLogCommentRecord'))
 				'SHARE_DEST' => $arComments['SHARE_DEST'],
 				'SOURCE_ID' => (int)$arComments['SOURCE_ID'],
 				'EVENT_ID' => $arComments['EVENT_ID'],
+				'RATING_TYPE_ID' => $arComments['RATING_TYPE_ID'],
 			),
 			array(
 				'eventId' => $arComments['EVENT_ID']

@@ -514,6 +514,16 @@ class CVoxImplantSip
 		return $result;
 	}
 
+	public static function hasConnection()
+	{
+		$row = \Bitrix\Voximplant\SipTable::getRow([
+			'select' => ['ID'],
+			'limit' => 1,
+			'cache' => ['ttl' => 31536000]
+		]);
+		return $row ? true : false;
+	}
+
 	public static function getConnectionDescription($connectionFields)
 	{
 		return Loc::getMessage("VI_SIP_DESCRIPTION", [

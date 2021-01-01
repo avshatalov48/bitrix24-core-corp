@@ -41,6 +41,7 @@ $MESS["MOBILE_LOG_COMMENT"] = "Комментарий";
 $MESS["MOBILE_LOG_MORE"] = "Читать далее...";
 $MESS["MOBILE_LOG_EXPAND"] = "Ещё";
 $MESS["MOBILE_LOG_POST_FORM_SEND"] = "Отправить";
+$MESS["MOBILE_LOG_POST_FORM_CANCEL"] = "Отменить";
 $MESS["MOBILE_LOG_POST_FORM_TABLE_OK"] = "Выбрать";
 $MESS["MOBILE_LOG_POST_FORM_TABLE_CANCEL"] = "Отмена";
 $MESS["MOBILE_LOG_POST_FORM_DEST_UA"] = "Всем сотрудникам";
@@ -54,11 +55,13 @@ $MESS["MOBILE_LOG_MENU_EXPERT_MODE_Y"] = "Экспертный режим (вк�
 $MESS["MOBILE_LOG_MENU_EXPERT_MODE_N"] = "Экспертный режим (отключен)";
 $MESS["MOBILE_LOG_CREATE_TASK_ERROR_GET_DATA"] = "Не удалось получить данные для создания задачи.";
 $MESS["MOBILE_LOG_ERROR_ENTRY_NOT_FOUND"] = "Ошибка: запись живой ленты не найдена.";
-$MESS["MOBILE_PLAYER_ERROR_MESSAGE"] = "К сожалению, приложение не может воспроизвести этот файл.<br />Вы можете <span class=\"disk-mobile-player-download\">скачать</span> и посмотреть его на вашем устройстве";
 $MESS['MOBILE_TASKS_VIEW_TAB_COMMENT'] = "Комментарии";
 $MESS['MOBILE_TASKS_VIEW_TAB_CHECKLIST'] = "Чек-лист";
 $MESS['MOBILE_TASKS_VIEW_TAB_FILES'] = "Файлы";
 $MESS['MOBILE_TASKS_VIEW_TAB_TASK'] = "Задача";
 $MESS['MOBILE_LOG_MENU_KNOWLEDGE'] = "База знаний";
 $MESS['MOBILE_LOG_REFRESH_NEEDED'] = "Пожалуйста, обновите ленту новостей";
+$MESS['MOBILE_LOG_PINNED_COLLAPSED_COUNTER_POSTS'] = "Закрепленных постов:";
+$MESS['MOBILE_LOG_PINNED_COLLAPSED_COUNTER_COMMENTS'] = "Новых комментариев:";
+$MESS['MOBILE_LOG_PINNED_COLLAPSED_COUNTER_BUTTON'] = "развернуть";
 ?>

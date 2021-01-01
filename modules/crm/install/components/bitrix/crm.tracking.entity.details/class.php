@@ -10,16 +10,18 @@ Loc::loadMessages(__FILE__);
 
 class CCrmTrackingEntityDetailsComponent extends CBitrixComponent
 {
+	private $componentResult = ['SELECTED_SOURCE_ID' => null];
+
 	public function executeComponent()
 	{
 		if (!Loader::includeModule("crm"))
 		{
-			return;
+			return $this->componentResult;
 		}
 
 		if (!Tracking\Manager::isAccessible())
 		{
-			return;
+			return $this->componentResult;
 		}
 
 		if (empty($this->arParams['SHOW_FIELD']))
@@ -30,6 +32,8 @@ class CCrmTrackingEntityDetailsComponent extends CBitrixComponent
 		{
 			$this->showTrackingField();
 		}
+
+		return $this->componentResult;
 	}
 
 	public function showTrackingBanner()
@@ -60,6 +64,10 @@ class CCrmTrackingEntityDetailsComponent extends CBitrixComponent
 		if ($actualSources === null)
 		{
 			$actualSources = Tracking\Provider::getActualSources();
+			array_unshift($actualSources, [
+				'ID' => null,
+				'NAME' => Loc::getMessage('CRM_TRACKING_ENTITY_DETAILS_EMPTY_OPTION'),
+			]);
 			$actualSources = array_combine(
 				array_column($actualSources, 'ID'),
 				array_values($actualSources)
@@ -159,6 +167,11 @@ class CCrmTrackingEntityDetailsComponent extends CBitrixComponent
 
 		$this->arResult['TRACES'] = $traces;
 		$this->arResult['SOURCES'] = $actualSources;
+		$trace = current($traces);
+		$this->componentResult['SELECTED_SOURCE_ID'] = $this->arResult['SELECTED_SOURCE_ID'] = (
+			(is_array($trace['SOURCE']) && array_key_exists('ID', $trace['SOURCE'])) ?
+				$trace['SOURCE']['ID'] : ($this->arParams['IS_REQUIRED'] === true ? null : 0)
+		);
 		$this->includeComponentTemplate();
 	}
 }

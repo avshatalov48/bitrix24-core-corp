@@ -197,7 +197,7 @@
 
 		isDarkColor: function(hex)
 		{
-			if(hex.substring(0,1) === '#')
+			if(typeof(hex) === 'string' && hex.substring(0,1) === '#')
 			{
 				hex = hex.substring(1);
 			}

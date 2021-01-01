@@ -269,7 +269,8 @@
 	-ms-flex: 1;
 	flex: 1;
 	margin-right: 0.5%;
-	width: 49.5%;
+	width: 40%;
+	max-width: 40%;
 }
 
 .crm-webform-list-widget-right {
@@ -278,7 +279,7 @@
 	-ms-flex: 1;
 	flex: 1;
 	margin-left: 0.5%;
-	width: 49.5%;
+	width: 60%;
 }
 
 .crm-webform-list-widget-inactive {

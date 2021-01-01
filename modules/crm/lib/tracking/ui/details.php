@@ -20,6 +20,58 @@ Loc::loadMessages(__FILE__);
 class Details
 {
 	const SourceId = 'TRACKING_SOURCE_ID';
+
+	/**
+	 * Check whether is tracking field.
+	 *
+	 * @param $fieldName
+	 * @return string
+	 */
+	public static function isTrackingField($fieldName)
+	{
+		return ($fieldName === self::SourceId);
+	}
+
+	/**
+	 * Get field caption.
+	 *
+	 * @param $fieldName
+	 * @return string
+	 */
+	public static function getFieldCaption($fieldName)
+	{
+		return ($fieldName === self::SourceId) ? Loc::getMessage('CRM_TRACKING_UI_DETAILS_FIELD_NAME') : '';
+	}
+
+	/**
+	 *
+	 * Check that the field value is filled
+	 *
+	 * @param $fieldName
+	 * @param $fieldValue
+	 * @return false
+	 */
+	public static function isTrackingFieldFilled(array $data)
+	{
+		$result = false;
+
+		if (array_key_exists(self::SourceId, $data))
+		{
+			$sourceId = isset($data[self::SourceId]) ? $data[self::SourceId] : null;
+			$actualSources = Tracking\Provider::getActualSources();
+			$actualSources = array_combine(
+				array_column($actualSources, 'ID'),
+				array_values($actualSources)
+			);
+			if ($sourceId !== null && isset($actualSources[$sourceId]))
+			{
+				$result = true;
+			}
+		}
+
+		return $result;
+	}
+
 	/**
 	 * Append entity fields.
 	 *
@@ -30,7 +82,7 @@ class Details
 	{
 		$fields[] = [
 			'name' => self::SourceId,
-			'title' => Loc::getMessage('CRM_TRACKING_UI_DETAILS_FIELD_NAME'),
+			'title' => self::getFieldCaption(self::SourceId),
 			//'type' => 'tracking-source',
 			'type' => 'custom',
 			'mergeable' => false,
@@ -38,9 +90,23 @@ class Details
 				'view' => self::SourceId . '_VIEW_HTML',
 				'edit' => self::SourceId . '_EDIT_HTML',
 			],
-			'editable' => true,
-			'enableAttributes' => false
+			'editable' => true/*,
+			'enableAttributes' => false*/
 		];
+	}
+
+	/**
+	 * Append entity field value.
+	 *
+	 * @param array $entityFields
+	 * @param array $data
+	 */
+	public static function appendEntityFieldValue(array &$entityFields, array $data)
+	{
+		if (array_key_exists(self::SourceId, $data))
+		{
+			$entityFields[self::SourceId] = $data[self::SourceId];
+		}
 	}
 
 	/**
@@ -49,13 +115,14 @@ class Details
 	 * @param int $entityTypeId Entity type ID.
 	 * @param int $entityId Entity ID.
 	 * @param array &$data Entity data.
+	 * @param bool $isRequired
 	 * @return void
 	 */
-	public static function prepareEntityData($entityTypeId, $entityId, array &$data)
+	public static function prepareEntityData($entityTypeId, $entityId, array &$data, bool $isRequired = false)
 	{
 		ob_start();
 		/** @var \CALLMain {$GLOBALS['APPLICATION']} */
-		$GLOBALS['APPLICATION']->includeComponent(
+		$componentResult = $GLOBALS['APPLICATION']->includeComponent(
 			'bitrix:crm.tracking.entity.details',
 			'view',
 			[
@@ -69,7 +136,7 @@ class Details
 
 		ob_start();
 		/** @var \CALLMain {$GLOBALS['APPLICATION']} */
-		$GLOBALS['APPLICATION']->includeComponent(
+		$componentResult = $GLOBALS['APPLICATION']->includeComponent(
 			'bitrix:crm.tracking.entity.details',
 			'edit',
 			[
@@ -77,9 +144,12 @@ class Details
 				'ENTITY_TYPE_ID' => $entityTypeId,
 				'ENTITY_ID' => $entityId,
 				'SOURCE_INPUT_NAME' => self::SourceId,
+				'IS_REQUIRED' => $isRequired,
 			]
 		);
 		$data[self::SourceId . '_EDIT_HTML'] = ob_get_clean();
+		$data[self::SourceId] = (is_array($componentResult) && isset($componentResult['SELECTED_SOURCE_ID'])) ?
+			$componentResult['SELECTED_SOURCE_ID'] : null;
 	}
 
 

@@ -6,7 +6,7 @@ namespace Bitrix\Tasks\Internals\Counter;
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
-use Bitrix\Pull\Event;
+use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Internals\Counter;
 
 class PushSender
@@ -59,7 +59,7 @@ class PushSender
 				}
 			}
 
-			Event::add([$userId], [
+			PushService::addEvent([$userId], [
 				'module_id' => 'tasks',
 				'command' => 'user_counter',
 				'params' => $pushData,

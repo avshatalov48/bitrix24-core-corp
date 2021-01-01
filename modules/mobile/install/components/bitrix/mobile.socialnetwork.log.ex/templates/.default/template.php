@@ -174,6 +174,7 @@ else
 			MSLPostFormTableOk: '<?=GetMessageJS("MOBILE_LOG_POST_FORM_TABLE_OK")?>',
 			MSLPostFormTableCancel: '<?=GetMessageJS("MOBILE_LOG_POST_FORM_TABLE_CANCEL")?>',
 			MSLPostFormSend: '<?=GetMessageJS("MOBILE_LOG_POST_FORM_SEND")?>',
+			MSLPostFormCancel: '<?=GetMessageJS("MOBILE_LOG_POST_FORM_CANCEL")?>',
 			MSLPostDestUA: '<?=GetMessageJS("MOBILE_LOG_POST_FORM_DEST_UA")?>',
 			MSLGroupName: '<?=(!empty($arResult["GROUP_NAME"]) ? CUtil::JSEscape($arResult["GROUP_NAME"]) : '')?>',
 			MSLPostFormPhotoCamera: '<?=GetMessageJS("MOBILE_LOG_POST_FORM_PHOTO_CAMERA")?>',
@@ -315,7 +316,6 @@ else
 				MSLFirstPageLastTS : <?=intval($arResult["dateLastPageTS"])?>,
 				MSLSliderAddPost: '<?=GetMessageJS("MOBILE_LOG_SLIDER_ADD_POST")?>',
 				MSLSliderFavorites: '<?=GetMessageJS("MOBILE_LOG_SLIDER_FAVORITES")?>',
-				MSLMobilePlayerErrorMessage: '<?=GetMessageJS("MOBILE_PLAYER_ERROR_MESSAGE")?>',
 				MSLLoadScriptsNeeded: '<?=(COption::GetOptionString('main', 'optimize_js_files', 'N') == 'Y' ? 'N' : 'Y')?>',
 				MSLLogTitle: '<?=$pageTitle?>'
 				<?
@@ -389,7 +389,6 @@ else
 				MSLEmptyDetailCommentFormTitle: '<?=GetMessageJS("MOBILE_LOG_EMPTY_COMMENT_ADD_TITLE")?>',
 				MSLEmptyDetailCommentFormButtonTitle: '<?=GetMessageJS("MOBILE_LOG_EMPTY_COMMENT_ADD_BUTTON_SEND")?>',
 				MSLLoadScriptsNeeded: '<?=(COption::GetOptionString('main', 'optimize_js_files', 'N') == 'Y' ? 'N' : 'Y')?>',
-				MSLMobilePlayerErrorMessage: '<?=GetMessageJS("MOBILE_PLAYER_ERROR_MESSAGE")?>',
 				MSLDateTimeFormat: '<?=CUtil::JSEscape(CDatabase::DateFormatToPHP($arParams["DATE_TIME_FORMAT"] <> '' ? $arParams["DATE_TIME_FORMAT"] : FORMAT_DATETIME))?>'
 			});
 		</script><?
@@ -435,7 +434,6 @@ else
 				MSLDestinationHidden8: '<?=GetMessageJS("MOBILE_LOG_DESTINATION_HIDDEN_8")?>',
 				MSLDestinationHidden9: '<?=GetMessageJS("MOBILE_LOG_DESTINATION_HIDDEN_9")?>',
 				MSLDestinationHidden0: '<?=GetMessageJS("MOBILE_LOG_DESTINATION_HIDDEN_0")?>',
-				MSLMobilePlayerErrorMessage: '<?=GetMessageJS("MOBILE_PLAYER_ERROR_MESSAGE")?>',
 				MSLDateTimeFormat: '<?=CUtil::JSEscape(CDatabase::DateFormatToPHP($arParams["DATE_TIME_FORMAT"] <> '' ? $arParams["DATE_TIME_FORMAT"] : FORMAT_DATETIME))?>'
 			});
 
@@ -510,8 +508,7 @@ else
 			BX.message({
 				MSLSiteDir: '<?=CUtil::JSEscape(SITE_DIR)?>',
 				MSLLogEntryTitle: '<?=GetMessageJS("MOBILE_LOG_ENTRY_TITLE")?>',
-				MSLEditPost: '<?=GetMessageJS("MOBILE_LOG_EDIT_POST")?>',
-				MSLMobilePlayerErrorMessage: '<?=GetMessageJS("MOBILE_PLAYER_ERROR_MESSAGE")?>'
+				MSLEditPost: '<?=GetMessageJS("MOBILE_LOG_EDIT_POST")?>'
 			});
 		</script><?
 	}
@@ -657,16 +654,17 @@ else
 	}
 	elseif (!$arResult["AJAX_CALL"])
 	{
-		if ($arParams["LOG_ID"] <= 0)
-		{
-			?><div class="lenta-block-empty" id="lenta_block_empty"><?=Loc::getMessage("MOBILE_LOG_MESSAGE_EMPTY");?></div><?
-		}
-		else
+		if ($arParams["LOG_ID"] > 0)
 		{
 			?><div class="post-wrap">
 				<div class="lenta-block-empty"><?=Loc::getMessage("MOBILE_LOG_ERROR_ENTRY_NOT_FOUND");?></div>
 			</div><?
 		}
+		elseif (empty($arResult['pinnedEvents']))
+		{
+			?><div class="lenta-block-empty" id="lenta_block_empty"><?=Loc::getMessage("MOBILE_LOG_MESSAGE_EMPTY");?></div><?
+		}
+
 	}
 
 	if ($arResult["AJAX_CALL"])

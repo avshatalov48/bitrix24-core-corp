@@ -161,6 +161,7 @@
 					LANGUAGE_ID: languageId,
 					GUID: guid,
 					GET_TASK_INFO: getTaskInfo || false,
+					TASK_OBJECT: params.taskObject,
 				},
 			};
 

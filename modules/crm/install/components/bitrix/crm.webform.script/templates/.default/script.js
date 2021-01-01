@@ -94,8 +94,7 @@ CrmWebFormEditScript.prototype =
 
 	getCurrentCopyText: function ()
 	{
-		var isOld = (!this.selectorButton || this.selectorButton.checked) ? '="old"' : '';
-		var selector = '[' + this.kindAttribute + isOld + ']';
+		var selector = '[' + this.kindAttribute + ']';
 		var parentNode = this.currentTabNode.querySelector(selector);
 		var copyTextNode = parentNode.querySelector('[' + this.copyTextAttribute + ']');
 		if (copyTextNode)
@@ -129,8 +128,7 @@ CrmWebFormEditScript.prototype =
 			}
 
 			BX.bind(buttonNode, 'click', function () {
-				var isOld = (!this.selectorButton || this.selectorButton.checked) ? '="old"' : '';
-				var selector = '[' + this.kindAttribute + isOld + ']';
+				var selector = '[' + this.kindAttribute + ']';
 				var copyButtonText = this.context.querySelector(selector + ' [' + this.copyTextAttribute + '="' + id + '"]');
 				if(!copyButtonText)
 				{

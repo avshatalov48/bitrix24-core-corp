@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST')
 		$attachedFiles = array();
 		if(!empty($postFiles))
 		{
-			CAllFile::ConvertFilesToPost($postFiles, $attachedFiles);
+			CFile::ConvertFilesToPost($postFiles, $attachedFiles);
 		}
 
 		$CCrmEvent = new CCrmEvent();

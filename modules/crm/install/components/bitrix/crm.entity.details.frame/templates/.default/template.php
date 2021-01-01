@@ -208,6 +208,17 @@ elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::OrderCheck)
 		)
 	);
 }
+elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::CheckCorrection)
+{
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.check.correction.details',
+		'',
+		array(
+			'ENTITY_ID' => $arResult['ENTITY_ID'],
+			'EXTRAS' => $arResult['EXTRAS']
+		)
+	);
+}
 elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::OrderShipment)
 {
 	$APPLICATION->IncludeComponent(

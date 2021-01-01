@@ -126,33 +126,46 @@
 
 		constructor(currentUser)
 		{
-			this.id = `tmp-id-${(new Date()).getTime()}`;
-			this.guid = '';
-			this.isNewRecord = true;
-
 			this.currentUser = currentUser;
 
 			const defaultTaskUrl = `${env.siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#`;
 			this.taskUrlTemplate = BX.componentParameters.get('PATH_TO_TASK_ADD', defaultTaskUrl);
 			this.error = false;
 
-			this.deadline = null;
-			this.activityDate = null;
+			this.setDefaultData();
+
+			this.isNewRecord = true;
+		}
+
+		setDefaultData()
+		{
+			this.id = `tmp-id-${(new Date()).getTime()}`;
+			this.guid = '';
+
+			this.title = '';
+			this.groupId = 0;
+			this.group = {id: 0, name: '', image: ''};
+
 			this.status = Task.statusList.pending;
 			this.subStatus = Task.statusList.pending;
+
+			this.creator = {};
+			this.responsible = {};
+
+			this.commentsCount = 0;
+			this.newCommentsCount = 0;
+
 			this.isMuted = false;
 			this.isPinned = false;
 			this.notViewed = false;
-			this.messageCount = 0;
-			this.commentsCount = 0;
-			this.newCommentsCount = 0;
+
 			this.accomplices = [];
 			this.auditors = [];
 
-			this.params = {};
-			this.params.allowChangeDeadline = true;
-
 			this.rawAccess = {};
+
+			this.deadline = null;
+			this.activityDate = null;
 		}
 
 		setData(row)
@@ -205,9 +218,10 @@
 
 		cloneData(data)
 		{
-			for (let key in data)
+			const has = Object.prototype.hasOwnProperty;
+			for (const key in data)
 			{
-				if (this.hasOwnProperty(key))
+				if (has.call(this, key))
 				{
 					this[key] = data[key];
 				}
@@ -1201,8 +1215,12 @@
 					title: 'TASK',
 					taskInfo: this.getTaskInfo(),
 				};
+				const params = {
+					userId: this.currentUser.id,
+					taskObject: this,
+				};
 
-				BX.postComponentEvent('taskbackground::task::action', [taskData, taskId, {userId: this.currentUser.id}], 'background');
+				BX.postComponentEvent('taskbackground::task::action', [taskData, taskId, params]);
 				console.log(`sendEvent to open task #${taskId}`);
 			}
 		}

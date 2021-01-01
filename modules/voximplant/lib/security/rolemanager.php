@@ -15,6 +15,8 @@ class RoleManager
 	protected static $permissions; // array:  ['ROLE_ID']['ENTITY']['ACTION']['PERMISSION']
 	protected static $accessCodeToRole; //array: 'ACCESS_CODE' => string[] 'ROLES'
 
+	protected static $cacheTtl = 86400;
+
 	public static function loadRoles()
 	{
 		if(is_array(static::$roles))
@@ -24,7 +26,11 @@ class RoleManager
 
 		if(Helper::canUse())
 		{
-			$cursor = RoleTable::getList();
+			$cursor = RoleTable::getList([
+				'cache' => [
+					'ttl' => static::$cacheTtl
+				]
+			]);
 			while ($row = $cursor->fetch())
 			{
 				static::$roles[$row['ID']] = $row['NAME'];
@@ -48,7 +54,11 @@ class RoleManager
 
 		if(Helper::canUse())
 		{
-			$cursor = RolePermissionTable::getList();
+			$cursor = RolePermissionTable::getList([
+				'cache' => [
+					'ttl' => static::$cacheTtl
+				]
+			]);
 			while ($row = $cursor->fetch())
 			{
 				static::$permissions[$row['ROLE_ID']][$row['ENTITY']][$row['ACTION']] = $row['PERMISSION'];
@@ -67,7 +77,6 @@ class RoleManager
 				}
 			}
 		}
-
 	}
 
 	public static function loadRoleAccess()
@@ -79,7 +88,11 @@ class RoleManager
 
 		if(Helper::canUse())
 		{
-			$cursor = RoleAccessTable::getList();
+			$cursor = RoleAccessTable::getList([
+				'cache' => [
+					'ttl' => static::$cacheTtl
+				]
+			]);
 			while($row = $cursor->fetch())
 			{
 				if(!static::$accessCodeToRole[$row['ACCESS_CODE']])
@@ -184,9 +197,6 @@ class RoleManager
 	 */
 	public static function getUserPermissions($userId)
 	{
-		static::loadPermission();
-		static::loadRoleAccess();
-
 		//administrators should have full access despite everything
 		if(Helper::isAdmin($userId))
 		{
@@ -211,7 +221,6 @@ class RoleManager
 				}
 			}
 		}
-
 		return $result;
 	}
 

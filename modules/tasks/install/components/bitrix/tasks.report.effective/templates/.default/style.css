@@ -316,14 +316,19 @@
 	text-align: right;
 }
 
-.task-report-container-help a {
+.task-report-container-help span {
 	display: inline-block;
 	position: relative;
 	font-size: 12px;
 	color: #989898;
+	cursor: pointer;
 }
 
-.task-report-container-help a:before {
+.task-report-container-help span:hover {
+	color: #1a67b2;
+}
+
+.task-report-container-help span:before {
 	content: '';
 	display: inline-block;
 	margin-right: 1px;
@@ -333,7 +338,7 @@
 	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2014%2014%22%3E%0A%20%20%3Cpath%20fill%3D%22%23989898%22%20fill-rule%3D%22evenodd%22%20d%3D%22M611%2C506%20L609%2C506%20L609%2C507%20L610%2C507%20L610%2C510%20L609%2C510%20L609%2C511%20L613%2C511%20L613%2C510%20L612%2C510%20L612%2C506%20L611%2C506%20Z%20M611%2C514%20C607.134007%2C514%20604%2C510.865993%20604%2C507%20C604%2C503.134007%20607.134007%2C500%20611%2C500%20C614.865993%2C500%20618%2C503.134007%20618%2C507%20C618%2C510.865993%20614.865993%2C514%20611%2C514%20Z%20M610%2C503%20L610%2C505%20L612%2C505%20L612%2C503%20L610%2C503%20Z%22%20transform%3D%22translate%28-604%20-500%29%22/%3E%0A%3C/svg%3E%0A') no-repeat;
 }
 
-.task-report-container-help a:hover:before {
+.task-report-container-help span:hover:before {
 	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2014%2014%22%3E%0A%20%20%3Cpath%20fill%3D%22%232067b0%22%20fill-rule%3D%22evenodd%22%20d%3D%22M611%2C506%20L609%2C506%20L609%2C507%20L610%2C507%20L610%2C510%20L609%2C510%20L609%2C511%20L613%2C511%20L613%2C510%20L612%2C510%20L612%2C506%20L611%2C506%20Z%20M611%2C514%20C607.134007%2C514%20604%2C510.865993%20604%2C507%20C604%2C503.134007%20607.134007%2C500%20611%2C500%20C614.865993%2C500%20618%2C503.134007%20618%2C507%20C618%2C510.865993%20614.865993%2C514%20611%2C514%20Z%20M610%2C503%20L610%2C505%20L612%2C505%20L612%2C503%20L610%2C503%20Z%22%20transform%3D%22translate%28-604%20-500%29%22/%3E%0A%3C/svg%3E%0A') no-repeat;
 }
 

@@ -166,5 +166,4 @@
 			BX.SocialnetworkUICommon.hideButtonWait(button);
 		});
 	};
-
 })();

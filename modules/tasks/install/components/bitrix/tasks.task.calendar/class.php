@@ -63,6 +63,7 @@ class TasksTaskCalendarComponent extends TasksTaskListComponent implements  \Bit
 		{
 			$parameters = ['ERRORS' => $this->errors];
 			$parameters['MAKE_ACCESS_FILTER'] = true;
+			$this->listParameters['filter']['ONLY_ROOT_TASKS'] = 'N';
 
 			$getListParameters = [
 				'order'        => $this->getOrder(),
@@ -101,6 +102,11 @@ class TasksTaskCalendarComponent extends TasksTaskListComponent implements  \Bit
 			if (array_key_exists('clear_nav', $_REQUEST) && $_REQUEST['clear_nav'] == 'Y')
 			{
 				$getListParameters['NAV_PARAMS']['iNumPage'] = 1;
+			}
+
+			if (array_key_exists('USER_ID', $this->arParams))
+			{
+				$parameters['TARGET_USER_ID'] = $this->arParams['USER_ID'];
 			}
 
 			$mgrResult = Manager\Task::getList($this->userId, $getListParameters, $parameters);

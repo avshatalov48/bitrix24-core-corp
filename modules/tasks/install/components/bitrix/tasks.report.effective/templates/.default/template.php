@@ -116,9 +116,9 @@ if ($isBitrix24Template)
 			</div>
 			<div class="task-report-container-content task-report-container-content-graph js-id-effective-circle" id="effective-circle"></div>
 			<div class="task-report-container-help">
-				<a onclick="BX.Helper.show('redirect=detail&code=6576263'); return false;" href="javascript:void(0)" target="_blank">
+				<span onclick="top.BX.Helper.show('redirect=detail&code=6576263');">
 					<?=GetMessage('TASKS_EFFECTIVE_HELP_TEXT');?>
-				</a>
+				</span>
 			</div>
 		</div>
 		<div class="task-report-container task-report-container-widget">

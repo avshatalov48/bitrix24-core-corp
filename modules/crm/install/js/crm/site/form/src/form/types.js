@@ -95,6 +95,12 @@ type Dependence = {
 	condition: DependenceCondition;
 	action: DependenceAction;
 };
+type DependenceGroup = {
+	id: string;
+	typeId: number;
+	logic: string;
+	list: Array<Dependence>;
+};
 
 type SubmitResponseRedirect = {
 	url: ?string;
@@ -119,7 +125,7 @@ type Options = {
 	desc: ?string;
 	buttonCaption: ?string;
 	useSign: ?boolean;
-	view: ?string;
+	view: ?string|View;
 	node: ?Element;
 	design: ?string;
 	fields: Array<Field.Options>;
@@ -129,7 +135,7 @@ type Options = {
 	currency: ?Currency;
 	analytics: ?Analytics;
 	recaptcha: ?ReCaptcha;
-	dependencies: ?Array<Dependence>;
+	dependencies: ?Array<DependenceGroup>;
 	handlers: ?Object;
 };
 
@@ -148,6 +154,7 @@ export {
 	Analytics,
 	AnalyticsItem,
 	ReCaptcha,
+	DependenceGroup,
 	Dependence,
 	DependenceAction,
 	DependenceCondition,

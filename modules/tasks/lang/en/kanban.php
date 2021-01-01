@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["MAIN_KANBAN_NOTIFY_CHANGE_DEADLINE"] = "Task deadline changed to #date#";
 $MESS["MAIN_KANBAN_NOTIFY_REMOVE_DEADLINE"] = "Task deadline was removed";
 $MESS["MAIN_KANBAN_TITLE_PLACEHOLDER"] = "Name #tag";
@@ -13,6 +13,34 @@ $MESS["TASKS_KANBAN_NOTIFY_BUTTON"] = "Send message";
 $MESS["TASKS_KANBAN_NOTIFY_HEADER"] = "Insufficient permissions to edit stages.";
 $MESS["TASKS_KANBAN_NOTIFY_TEXT"] = "Only your Bitrix24's administrator or project manager can create a new stage. Please send them a message or talk to them to add the task stages you require.";
 $MESS["TASKS_KANBAN_NOTIFY_TITLE"] = "Insufficient permissions";
+$MESS["TASKS_KANBAN_NO_DATE"] = "No deadline";
+$MESS["TASKS_KANBAN_PANEL_ADDACCOMPLICETASK"] = "Participant assigned to tasks: #entityName#";
+$MESS["TASKS_KANBAN_PANEL_ADDAUDITORTASK"] = "Observer assigned to tasks: #entityName#";
+$MESS["TASKS_KANBAN_PANEL_ADDFAVORITETASK"] = "Tasks added to favorites";
+$MESS["TASKS_KANBAN_PANEL_CHANGEAUTHORTASK"] = "Creator assigned to tasks: #entityName#";
+$MESS["TASKS_KANBAN_PANEL_CHANGEGROUPTASK"] = "Workgroup assigned to tasks: #entityName#";
+$MESS["TASKS_KANBAN_PANEL_COMPLETE"] = "Finish";
+$MESS["TASKS_KANBAN_PANEL_COMPLETETASK"] = "Tasks completed";
+$MESS["TASKS_KANBAN_PANEL_CONFIRM_MESS_COMPLETE"] = "Are sure you want to finish the selected tasks?";
+$MESS["TASKS_KANBAN_PANEL_CONFIRM_MESS_DELETE"] = "Are sure you want to delete the selected tasks?";
+$MESS["TASKS_KANBAN_PANEL_CONFIRM_TITLE"] = "Confirm action";
+$MESS["TASKS_KANBAN_PANEL_DEADLINE"] = "Deadline";
+$MESS["TASKS_KANBAN_PANEL_DEADLINETASK"] = "Deadline set for tasks: #deadline#";
+$MESS["TASKS_KANBAN_PANEL_DELEGATETASK"] = "Responsible person assigned to tasks: #entityName#";
+$MESS["TASKS_KANBAN_PANEL_DELETE"] = "Delete";
+$MESS["TASKS_KANBAN_PANEL_DELETEFAVORITETASK"] = "Tasks removed from favorites";
+$MESS["TASKS_KANBAN_PANEL_DELETETASK"] = "Tasks deleted";
+$MESS["TASKS_KANBAN_PANEL_FAVORITE"] = "Favorites";
+$MESS["TASKS_KANBAN_PANEL_FAVORITE_ADD"] = "Add to favorites";
+$MESS["TASKS_KANBAN_PANEL_FAVORITE_REMOVE"] = "Remove from favorites";
+$MESS["TASKS_KANBAN_PANEL_GROUP"] = "Set workgroup";
+$MESS["TASKS_KANBAN_PANEL_MEMBERS"] = "Participants";
+$MESS["TASKS_KANBAN_PANEL_MEMBERS_AUDITOR"] = "Add observer";
+$MESS["TASKS_KANBAN_PANEL_MEMBERS_CORESPONSE"] = "Add participant";
+$MESS["TASKS_KANBAN_PANEL_MEMBERS_CREATED"] = "Change creator";
+$MESS["TASKS_KANBAN_PANEL_MEMBERS_RESPONSE"] = "Change responsible person";
+$MESS["TASKS_KANBAN_PANEL_MOVETASK"] = "Tasks moved to column #columnName#";
+$MESS["TASKS_KANBAN_PANEL_STAGE"] = "Stage";
 $MESS["TASKS_KANBAN_STATUS_COMPLETED"] = "Completed";
 $MESS["TASKS_KANBAN_STATUS_COMPLETED_SUPPOSEDLY"] = "Pending review";
 $MESS["TASKS_KANBAN_STATUS_DEFERRED"] = "Deferred";
@@ -34,4 +62,3 @@ $MESS["TASKS_KANBAN_WO_GROUP_LABEL"] = "Group (project)";
 $MESS["TASKS_KANBAN_WO_GROUP_VALUE"] = "none";
 $MESS["TASKS_TASK_CONFIRM_START_TIMER"] = "You are already using time tracker for \"{{TITLE}}\". This task will be paused. Continue?";
 $MESS["TASKS_TASK_CONFIRM_START_TIMER_TITLE"] = "You are already using time tracker for \"{{TITLE}}\". This task will be paused. Continue?";
-?>

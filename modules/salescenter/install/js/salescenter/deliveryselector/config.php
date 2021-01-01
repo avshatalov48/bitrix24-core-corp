@@ -11,6 +11,8 @@ return [
 	'js' => 'dist/deliveryselector.bundle.js',
 	'rel' => [
 		'salescenter.manager',
+		'location.core',
+		'location.widget',
 		'ui.vue',
 		'main.core',
 		'currency',

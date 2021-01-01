@@ -1172,8 +1172,10 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 		}
 
 		// restrict delete root folder
+		$isRootFolder = false;
 		if ($folder->getStorage()->getRootObjectId() == $folder->getId())
 		{
+			$isRootFolder = true;
 			$emptyOnly = true;
 		}
 
@@ -1209,12 +1211,25 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 			{
 				continue;
 			}
+			if ($isRootFolder)
+			{
+				// allow delete only files in root folder
+				if ($row['PARENT_ID'] != $folder->getId() || $row['TYPE'] != \Bitrix\Disk\Internals\ObjectTable::TYPE_FILE)
+				{
+					continue;
+				}
+			}
 
 			$object = \Bitrix\Disk\BaseObject::buildFromArray($row);
 
 			/** @var Folder|File $object */
-			if($object instanceof \Bitrix\Disk\Folder)
+			if ($object instanceof \Bitrix\Disk\Folder)
 			{
+				if ($isRootFolder)
+				{
+					// disallow recursive delete from root
+					continue;
+				}
 				/** @var \Bitrix\Disk\File $object */
 				$securityContext = $this->getSecurityContext($this->getOwner(), $object);
 				if ($object->canDelete($securityContext))

@@ -76,6 +76,7 @@ $userBlockController = new CrmWebFormEditUserBlockController(
 			isFrame: <?=CUtil::PhpToJSObject($arParams['IFRAME'])?>,
 			isSaved: <?=CUtil::PhpToJSObject($arParams['IS_SAVED'])?>,
 			reloadList: <?=CUtil::PhpToJSObject($arParams['RELOAD_LIST'])?>,
+			editorChoise: <?=CUtil::PhpToJSObject($arResult['EDITOR_CHOISE'])?>,
 			templates: {
 				field: 'tmpl_field_%type%',
 				dependency: 'tmpl_field_dependency',
@@ -111,6 +112,14 @@ $userBlockController = new CrmWebFormEditUserBlockController(
 				'dlgChoose' => Loc::getMessage('CRM_WEBFORM_EDIT_CHOOSE'),
 				'dlgTitleFieldCreate' => Loc::getMessage('CRM_WEBFORM_EDIT_FIELD_CREATE_TITLE'),
 				'dlgFieldPresetRemoveConfirm' => Loc::getMessage('CRM_WEBFORM_EDIT_TMPL_PRESET_DEL_CONFIRM'),
+				'dlgEditorChoiseBtnApply' => Loc::getMessage('CRM_WEBFORM_EDIT_EDITOR_CHOISE_BTN_APPLY'),
+				'dlgEditorChoiseBtnHoldOver' => Loc::getMessage('CRM_WEBFORM_EDIT_EDITOR_CHOISE_BTN_HOLD_OVER'),
+				'dlgEditorChoiseNew' => Loc::getMessage('CRM_WEBFORM_EDIT_EDITOR_CHOISE_NEW'),
+				'dlgEditorChoiseOld' => Loc::getMessage('CRM_WEBFORM_EDIT_EDITOR_CHOISE_OLD'),
+				'dlgEditorChoiseH1' => Loc::getMessage('CRM_WEBFORM_EDIT_EDITOR_H1'),
+				'dlgEditorChoiseH2' => Loc::getMessage('CRM_WEBFORM_EDIT_EDITOR_H2'),
+				'dlgEditorChoiseH3' => Loc::getMessage('CRM_WEBFORM_EDIT_EDITOR_H3'),
+				'dlgEditorChoiseNotice' => Loc::getMessage('CRM_WEBFORM_EDIT_EDITOR_NOTICE'),
 			))?>
 		});
 	});
@@ -136,7 +145,7 @@ if (!empty($arResult['ERRORS']))
 }
 ?>
 
-<form id="crm_webform_edit_form" name="crm_webform_edit_form" method="POST" enctype="multipart/form-data" action="<?=$APPLICATION->GetCurPageParam()?>">
+<form id="crm_webform_edit_form" name="crm_webform_edit_form" method="POST" enctype="multipart/form-data" action="<?=htmlspecialcharsbx($arResult['FORM_ACTION'])?>">
 <input type="hidden" name="ID" value="<?=$arResult['FORM']['ID']?>">
 <?=bitrix_sessid_post();?>
 
@@ -165,8 +174,11 @@ if (!empty($arResult['ERRORS']))
 	</div>
 
 	<?if($arResult['IS_AVAILABLE_EMBEDDING_PORTAL']):?>
-	<div class="crm-webform-edit-v2-settings" <?=($isAvailableDesign ? '' : 'onclick="return false;"')?>>
-		<span class="ui-btn ui-btn-light-border ui-btn-xs <?=($isAvailableDesign ? '' : 'ui-btn-disabled')?>">
+	<div class="crm-webform-edit-v2-settings">
+		<span id="crm-webform-editor-choise-btn" class="ui-btn ui-btn-light-border ui-btn-xs">
+			<?=Loc::getMessage('CRM_WEBFORM_EDIT_EDITOR_CHOISE_NEW')?>
+		</span>
+		<span id="crm-webform-edit-design-btn" class="ui-btn ui-btn-light-border ui-btn-xs">
 			<?=Loc::getMessage('CRM_WEBFORM_EDIT_V2_DESIGN_SETUP')?>
 		</span>
 		<span class="crm-webform-edit-v2-settings-item-label">

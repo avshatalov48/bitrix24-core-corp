@@ -98,7 +98,7 @@ class CommentEntry extends TimelineEntry
 		$updateData = array();
 
 		if (isset($params['COMMENT']))
-			$updateData['COMMENT'] = $params['COMMENT'];
+			$updateData['COMMENT'] = \Bitrix\Main\Text\Emoji::encode($params['COMMENT']);
 
 		if (isset($params['SETTINGS']) && is_array($params['SETTINGS']))
 			$updateData['SETTINGS'] = $params['SETTINGS'];

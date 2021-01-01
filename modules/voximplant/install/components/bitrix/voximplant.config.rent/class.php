@@ -45,6 +45,9 @@ class CVoxImplantComponentConfigRent extends \CBitrixComponent
 		if(!$permissions->canPerform(\Bitrix\Voximplant\Security\Permissions::ENTITY_LINE, \Bitrix\Voximplant\Security\Permissions::ACTION_MODIFY))
 			return false;
 
+		if(!Limits::canManageTelephony())
+			return false;
+
 		$this->init();
 		$this->prepareData();
 		if ($this->showTemplate)

@@ -1,8 +1,9 @@
 <?php
 namespace Bitrix\Crm\Entity;
 
-use Bitrix\Crm;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm;
+use Bitrix\Crm\Tracking;
 
 class LeadValidator extends EntityValidator
 {
@@ -14,6 +15,8 @@ class LeadValidator extends EntityValidator
 	protected $addressValidator = null;
 	/** @var MultifieldValidator|null */
 	protected $multifieldValidator = null;
+    /** @var LeadClientValidator|null  */
+    protected $clientValidator = null;
 
 	/** @var array */
 	protected static $exclusiveFields = array(
@@ -49,7 +52,8 @@ class LeadValidator extends EntityValidator
 			$entityID,
 			$entityFields
 		);
-	}
+        $this->clientValidator = new LeadClientValidator($entityID, $entityFields);
+    }
 
 	public function getEntityTypeID()
 	{
@@ -97,7 +101,14 @@ class LeadValidator extends EntityValidator
 		}
 
 		$message = null;
-		if($fieldName === 'OPPORTUNITY_WITH_CURRENCY')
+		if ($fieldName === 'TITLE')
+		{
+			$result = !$this->isNeedToCheck($fieldName)
+				|| (is_string($this->entityFields[$fieldName])
+					&& $this->entityFields[$fieldName] !== ''
+					&& $this->entityFields[$fieldName] !== \CCrmLead::GetDefaultTitle());
+		}
+		elseif($fieldName === 'OPPORTUNITY_WITH_CURRENCY')
 		{
 			$result = !$this->isNeedToCheck('OPPORTUNITY')
 				||  (isset($this->entityFields['OPPORTUNITY']) && $this->entityFields['OPPORTUNITY'] > 0);
@@ -117,6 +128,17 @@ class LeadValidator extends EntityValidator
 		elseif(\CCrmFieldMulti::IsSupportedType($fieldName))
 		{
 			$result = $this->multifieldValidator->checkPresence(array('TYPE_ID' => $fieldName));
+		}
+        elseif($fieldName === 'CLIENT')
+        {
+            $result = $this->clientValidator->checkPresence();
+        }
+		else if (Tracking\UI\Details::isTrackingField($fieldName))
+		{
+			$isNeedToCheck = $this->isNeedToCheck($fieldName);
+			$isFilled = Tracking\UI\Details::isTrackingFieldFilled($this->entityFields);
+			$result = !$isNeedToCheck || $isFilled;
+			unset($isNeedToCheck, $isFilled);
 		}
 		else
 		{

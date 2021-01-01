@@ -9,6 +9,7 @@
 namespace Bitrix\Crm\WebForm;
 
 use Bitrix\Rest\RestException;
+use Bitrix\Crm\UI\Webpack;
 
 /**
  * Class Rest
@@ -38,7 +39,8 @@ class Rest
 	 */
 	public static function getFormList()
 	{
-		$result = array();
+		$result = [];
+
 		$res = Internals\FormTable::getList(array(
 			'select' => array(
 				'ID', 'NAME', 'SECURITY_CODE', 'IS_CALLBACK_FORM'
@@ -50,9 +52,17 @@ class Rest
 				'ID' => 'DESC'
 			)
 		));
-		while ($row = $res->fetch())
+		while ($form = $res->fetch())
 		{
-			$result[] = $row;
+			$webpack = Webpack\Form::instance($form['ID']);
+			if (!$webpack->isBuilt())
+			{
+				$webpack->build();
+				$webpack = Webpack\Form::instance($form['ID']);
+			}
+			$url = $webpack->getLoader()->getFileUrl();
+
+			$result[] = array_merge($form, ['URL' => $url]);
 		}
 
 		return $result;

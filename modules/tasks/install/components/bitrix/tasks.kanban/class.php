@@ -29,7 +29,6 @@ use \Bitrix\Tasks\Access\ActionDictionary;
 
 use \Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Scrum\Internal\ItemTable;
-use Bitrix\Tasks\Scrum\Service\BacklogService;
 use Bitrix\Tasks\Scrum\Service\ItemService;
 
 class TasksKanbanComponent extends \CBitrixComponent
@@ -506,7 +505,15 @@ class TasksKanbanComponent extends \CBitrixComponent
 						'ID' => implode(' | ', $users),
 						'ACTIVE' => 'Y',
 						'!ID' => $this->userId
-					)
+					),
+					[
+						'FIELDS' => [
+							'ID',
+							'PERSONAL_PHOTO',
+							'LOGIN', 'NAME', 'LAST_NAME',
+							'SECOND_NAME', 'TITLE', 'EMAIL'
+						]
+					]
 			);
 			$users = array();
 			while ($row = $res->fetch())
@@ -746,14 +753,25 @@ class TasksKanbanComponent extends \CBitrixComponent
 				'ACCOMPLICES',
 				'ALLOW_CHANGE_DEADLINE',
 				'ALLOW_TIME_TRACKING',
-				'NEW_COMMENTS_COUNT',
 				'TIME_SPENT_IN_LOGS',
 				'TIME_ESTIMATE',
 				'STAGE_ID',
 				'SORTING',
 				'IS_MUTED',
+				'GROUP_ID'
 			]
 		);
+
+		$currentUserId = (int)$this->userId;
+		$viewedUserId = (int)$this->arParams['USER_ID'];
+		if (
+			$currentUserId === $viewedUserId
+			|| \Bitrix\Tasks\Util\User::isAdmin($currentUserId)
+			|| CTasks::IsSubordinate($viewedUserId, $currentUserId)
+		)
+		{
+			$this->select[] = 'NEW_COMMENTS_COUNT';
+		}
 
 		$this->select = array_unique($this->select);
 
@@ -922,15 +940,31 @@ class TasksKanbanComponent extends \CBitrixComponent
 			$params['filter']['STAGES_ID'] = $params['filter']['STAGE_ID'];
 			unset($params['filter']['STAGE_ID']);
 		}
+
+		if (array_key_exists('USER_ID', $this->arParams))
+		{
+			$params['navigate']['TARGET_USER_ID'] = $this->arParams['USER_ID'];
+		}
+
+
 		[$rows, $res] = \CTaskItem::fetchList(
 			$this->userId,
-			isset($params['order']) ? $params['order'] : array(),
-			isset($params['filter']) ? $params['filter'] : array(),
-			isset($params['navigate']) ? $params['navigate'] : array(),
-			isset($params['select']) ? $params['select'] : array()
+			($params['order'] ?? []),
+			($params['filter'] ?? []),
+			($params['navigate'] ?? []),
+			($params['select'] ?? [])
 		);
 
-		return $asIs ? array($rows, $res) : $rows;
+		$taskIds = [];
+		foreach ($rows as $row)
+		{
+			$id = $row->getId();
+			$taskIds[$id] = $id;
+		}
+
+		\Bitrix\Tasks\Internals\Registry\TaskRegistry::getInstance()->load($taskIds, true);
+
+		return ($asIs ? [$rows, $res] : $rows);
 	}
 
 	/**
@@ -1275,7 +1309,12 @@ class TasksKanbanComponent extends \CBitrixComponent
 			|| ($status === CTasks::STATE_SUPPOSEDLY_COMPLETED && (int)$taskData['CREATED_BY'] !== $this->userId)
 		);
 
-		$value = ((int)$taskData['NEW_COMMENTS_COUNT'] > 0 ? (int)$taskData['NEW_COMMENTS_COUNT'] : 0);
+		$value = 0;
+		if (array_key_exists('NEW_COMMENTS_COUNT', $taskData))
+		{
+			$value = ((int)$taskData['NEW_COMMENTS_COUNT'] > 0 ? (int)$taskData['NEW_COMMENTS_COUNT'] : 0);
+		}
+
 		$color = 'success';
 
 		if ($isExpired && !$isCompletedCounts && !$isWaitCtrlCounts && !$isDeferred)
@@ -1290,7 +1329,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 		}
 
 		return [
-			'value' => ($this->isMember($this->userId, $taskData) ? $value : 0),
+			'value' => $value,
 			'color' => "ui-counter-{$color}",
 		];
 	}
@@ -1443,11 +1482,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 					$filter,
 					$stage['ADDITIONAL_FILTER']
 				);
-				[$rows, ] = $this->getList(array(
-					'select' => ['ID'],
-					'filter' => $filterTmp
-				), true);
-				$count = count($rows);
+				$count = CTasks::GetCountInt($filterTmp);
 			}
 			else
 			{
@@ -1501,7 +1536,14 @@ class TasksKanbanComponent extends \CBitrixComponent
 			$endDayTime = Option::get('calendar', 'work_time_end', 19);
 		}
 
-		$item = $task->getData();
+		try
+		{
+			$item = $task->getData();
+		}
+		catch (TasksException $e)
+		{
+			return null;
+		}
 
 		$storyPoints = '';
 		if ($this->arParams['SPRINT_SELECTED'] == 'Y')
@@ -1515,6 +1557,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 			// base
 			'id' => $item['ID'],
 			'stage_id' => $item['STAGE_ID'],
+			'groupId' => (int) $item['GROUP_ID'],
 			'name' => $item['TITLE'],
 			'background' => '',
 			'author' => $item['CREATED_BY'],
@@ -1537,13 +1580,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 			// dates
 			'date_activity' => $item['ACTIVITY_DATE'],
 			'date_activity_ts' => MakeTimeStamp($item['ACTIVITY_DATE']),
-			'date_deadline' => MakeTimeStamp($item['DEADLINE']),
+			'date_deadline' => !is_null($item['DEADLINE']) ? (MakeTimeStamp($item['DEADLINE']) - \CTimeZone::GetOffset()) : null,
 			'date_deadline_parse' => ParseDateTime($item['DEADLINE']),
 			'date_start' => $item['DATE_START'] != '' ? new DateTime($item['DATE_START']) : '',
 			'date_view' => new DateTime($item['CREATED_DATE']),
 			'date_day_end' => mktime($endDayTime - $this->timeOffset/3600, 0, 0),
 			// counts
-			'count_comments' => (int)$item['COMMENTS_COUNT'],
+			'count_comments' => (int)$item['NEW_COMMENTS_COUNT'],
 			'count_files' => 0,
 			'count_members' => count(array_unique(array_merge(
 				$item['AUDITORS'],
@@ -1733,9 +1776,14 @@ class TasksKanbanComponent extends \CBitrixComponent
 			{
 				break;
 			}
+
 			foreach ($rows as $row)
 			{
 				$item = $this->fillData($row);
+				if (!$item)
+				{
+					continue;
+				}
 				$items[$item['id']] = array(
 					'id' => $item['id'],
 					'columnId' => $column['ID'],
@@ -1869,7 +1917,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 		$this->arResult['MP_CONVERTER'] = 0;
 
 		// for sprint's kanban create by default
-		if ($params['SPRINT_ID'])
+		if ($params['SPRINT_ID'] > 0)
 		{
 			return true;
 		}
@@ -2398,7 +2446,15 @@ class TasksKanbanComponent extends \CBitrixComponent
 						$this->request('afterItemId')
 					);
 				}
-				\Bitrix\Tasks\Integration\Bizproc\Listener::onTaskAdd($newId, $task->getData());
+
+				try
+				{
+					\Bitrix\Tasks\Integration\Bizproc\Listener::onTaskAdd($newId, $task->getData());
+				}
+				catch (TasksException $e)
+				{
+
+				}
 
 				if ($scrumProject)
 				{
@@ -2580,16 +2636,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 							$task->update($data['id'], array(
 								'STAGE_ID' => $columnId
 							));
-							if (\Bitrix\Main\Loader::includeModule('pull'))
-							{
-								\Bitrix\Pull\Event::add($this->getMembersTask($data), [
-									'module_id' => 'tasks',
-									'command' => 'stage_change',
-									'params' => [
-										'taskId' => $data['id']
-									]
-								]);
-							}
+							\Bitrix\Tasks\Integration\Pull\PushService::addEvent($this->getMembersTask($data), [
+								'module_id' => 'tasks',
+								'command' => 'stage_change',
+								'params' => [
+									'taskId' => $data['id']
+								]
+							]);
 						}
 					}
 
@@ -3026,7 +3079,16 @@ class TasksKanbanComponent extends \CBitrixComponent
 			foreach ($taskIds as $taskId)
 			{
 				$task = \CTaskItem::getInstance($taskId, $this->userId);
-				$taskData = $task->getData();
+
+				try
+				{
+					$taskData = $task->getData();
+				}
+				catch (TasksException $e)
+				{
+					$this->addError('TASK_LIST_ERROR_CHANGE_DEADLINE');
+					return [];
+				}
 
 				if (
 					$taskData['CREATED_BY'] == $this->userId
@@ -3225,7 +3287,16 @@ class TasksKanbanComponent extends \CBitrixComponent
 					$update = array(
 						'DEADLINE' => $deadline
 					);
-					$fields = $task->getData();
+					try
+					{
+						$fields = $task->getData();
+					}
+					catch (TasksException $e)
+					{
+						$this->addError('TASK_LIST_ERROR_CHANGE_DEADLINE');
+						return array();
+					}
+
 					// if date start great then deadline
 					if ($fields['START_DATE_PLAN'] != '')
 					{

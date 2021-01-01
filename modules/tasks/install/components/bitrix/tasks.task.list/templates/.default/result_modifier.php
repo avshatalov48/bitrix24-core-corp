@@ -670,7 +670,7 @@ if (!empty($arResult['LIST']))
 			$groups[$groupId] = $groupId;
 		}
 	}
-	$arParams['~USER_NAMES'] = Util\User::getUserName(array_unique($users));
+
 	$groups = SocialNetwork\Group::getData($groups);
 
 	foreach ($arResult['LIST'] as $key => $row)

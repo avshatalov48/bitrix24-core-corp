@@ -17,6 +17,7 @@ use Bitrix\Crm\Ads;
 use Bitrix\Crm\WebForm\Helper;
 use Bitrix\Crm\WebForm\ResultEntity;
 use Bitrix\Crm\WebForm\Entity as WebFormEntity;
+use Bitrix\Crm\Integration;
 
 Loc::loadMessages(__FILE__);
 
@@ -94,10 +95,7 @@ class FormTable extends ORM\Data\DataManager
 				'data_type' => 'integer',
 			),
 			'TEMPLATE_ID' => array(
-				'data_type' => 'enum',
-				'required' => true,
-				'default_value' => Helper::ENUM_TEMPLATE_LIGHT,
-				'values' => array_keys(Helper::getTemplateList())
+				'data_type' => 'string',
 			),
 			'ENTITY_SCHEME' => array(
 				'data_type' => 'enum',
@@ -215,6 +213,11 @@ class FormTable extends ORM\Data\DataManager
 				'default_value' => 'N',
 				'values' => array('N', 'Y')
 			),
+
+			'LANDING' => array(
+				'data_type' => LandingTable::class,
+				'reference' => array('=this.ID' => 'ref.FORM_ID'),
+			),
 		);
 	}
 
@@ -288,6 +291,14 @@ class FormTable extends ORM\Data\DataManager
 
 		// delete Ads links
 		Ads\AdsForm::unlinkForm($formId);
+		$landingRows = LandingTable::getList([
+			'select' => ['ID'],
+			'filter' => ['=FORM_ID' => $formId]
+		]);
+		foreach ($landingRows as $ladingRow)
+		{
+			LandingTable::delete($ladingRow['ID']);
+		}
 
 		// delete fields
 		$fieldDb = FieldTable::getList(array(

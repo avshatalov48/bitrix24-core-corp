@@ -743,5 +743,11 @@ $arUrlRewrite = array(
 		"ID" => "bitrix:rest.devops",
 		"PATH" => "/devops/index.php",
 	),
+	array (
+		'CONDITION' => '#^/conference/#',
+		'RULE' => '',
+		'ID' => 'bitrix:im.conference.center',
+		'PATH' => '/conference/index.php',
+	),
 );
 ?>

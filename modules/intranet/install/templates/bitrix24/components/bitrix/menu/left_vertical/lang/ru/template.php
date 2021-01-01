@@ -94,7 +94,8 @@ $MESS["MENU_MY_WORKGROUPS_FAVORITES"] = "Избранное";
 $MESS["MENU_LANDING_SPOTLIGHT"] = "Создайте сайт, который поможет вам продавать!";
 $MESS["MENU_SETTINGS_MODE"] = "Изменить порядок";
 $MESS["MENU_LICENSE_ALL"] = "Расширить тариф";
+$MESS["MENU_LICENSE_DEMO"] = "Осталось #NUM_DAYS#";
+$MESS["MENU_LICENSE_BUY"] = "Купить";
 $MESS["MENU_DELETE_FROM_FAVORITE_ALL"] = "Удалить из избранного для всех";
 $MESS["MENU_SITE_MAP"] = "Карта сайта";
-$MESS["MENU_SPOTLIGHT_HINT"] = "Теперь меню можно свернуть и оставить только иконки. Вернуть полный вариант меню всегда можно здесь.";
 ?>

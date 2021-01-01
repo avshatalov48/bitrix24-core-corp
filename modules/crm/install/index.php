@@ -509,6 +509,7 @@ Class crm extends CModule
 				$CCrmStatus->Add($ar);
 
 			CCrmStatus::InstallDefault('QUOTE_STATUS');
+			CCrmStatus::InstallDefault('INVOICE_STATUS');
 
 			\Bitrix\Crm\Honorific::installDefault();
 
@@ -951,6 +952,22 @@ Class crm extends CModule
 			'\Bitrix\Crm\Product\Url\Registry',
 			'getBuilderList'
 		);
+		
+		$eventManager->registerEventHandler('landing', '\Bitrix\Landing\Internals\Landing::OnBeforeDelete', 'crm', '\Bitrix\Crm\Integration\Landing\EventHandler', 'onBeforeLandingDelete');
+		$eventManager->registerEventHandler('landing', 'onBeforeLandingRecycle', 'crm', '\Bitrix\Crm\Integration\Landing\EventHandler', 'onBeforeLandingRecycle');
+		$eventManager->registerEventHandler('landing', 'onBeforeSiteRecycle', 'crm', '\Bitrix\Crm\Integration\Landing\EventHandler', 'onBeforeSiteRecycle');
+		
+		$eventManager->registerEventHandler(
+			'pull',
+			'onGetDependentModule',
+			'crm',
+			'\Bitrix\Crm\Integration\PullManager',
+			'onGetDependentModule'
+		);
+
+		$eventManager->registerEventHandler('main', 'onAfterSetEnumValues', 'crm', '\Bitrix\Crm\Integration\Main\EventHandler', 'onAfterSetEnumValues');
+		$eventManager->registerEventHandler('main', 'OnAfterUserTypeDelete', 'crm', '\Bitrix\Crm\Integration\Main\EventHandler', 'onAfterUserTypeDelete');
+
 
 		//region Search Content
 		$startTime = ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 60, 'FULL');
@@ -1206,6 +1223,10 @@ Class crm extends CModule
 
 		$eventManager->unRegisterEventHandler('ml', 'onModelStateChange', 'crm', '\Bitrix\Crm\Ml\Scoring', 'onMlModelStateChange');
 
+		$eventManager->unRegisterEventHandler('landing', '\Bitrix\Landing\Internals\Landing::OnBeforeDelete', 'crm', '\Bitrix\Crm\Integration\Landing\EventHandler', 'onBeforeLandingDelete');
+		$eventManager->unRegisterEventHandler('landing', 'onBeforeLandingRecycle', 'crm', '\Bitrix\Crm\Integration\Landing\EventHandler', 'onBeforeLandingRecycle');
+		$eventManager->unRegisterEventHandler('landing', 'onBeforeSiteRecycle', 'crm', '\Bitrix\Crm\Integration\Landing\EventHandler', 'onBeforeSiteRecycle');
+
 		$eventManager->unregisterEventHandler('rest', 'OnRestApplicationConfigurationImport', 'crm', '\Bitrix\Crm\Integration\Rest\Configuration\Controller', 'onImport');
 		$eventManager->unregisterEventHandler('rest', 'OnRestApplicationConfigurationExport', 'crm', '\Bitrix\Crm\Integration\Rest\Configuration\Controller', 'onExport');
 		$eventManager->unregisterEventHandler('rest', 'OnRestApplicationConfigurationClear', 'crm', '\Bitrix\Crm\Integration\Rest\Configuration\Controller', 'onClear');
@@ -1236,6 +1257,17 @@ Class crm extends CModule
 			'\Bitrix\Crm\Product\Url\Registry',
 			'getBuilderList'
 		);
+
+		$eventManager->unRegisterEventHandler(
+			'pull',
+			'onGetDependentModule',
+			'crm',
+			'\Bitrix\Crm\Integration\PullManager',
+			'onGetDependentModule'
+		);
+
+		$eventManager->unRegisterEventHandler('main', 'onAfterSetEnumValues', 'crm', '\Bitrix\Crm\Integration\Main\EventHandler', 'onAfterSetEnumValues');
+		$eventManager->unRegisterEventHandler('main', 'OnAfterUserTypeDelete', 'crm', '\Bitrix\Crm\Integration\Main\EventHandler', 'onAfterUserTypeDelete');
 
 		CAgent::RemoveAgent('\Bitrix\Crm\Ml\PredictionQueue::processQueue();', 'crm');
 		CAgent::RemoveAgent('\Bitrix\Crm\Ml\Agent\Retraining::run();', 'crm');

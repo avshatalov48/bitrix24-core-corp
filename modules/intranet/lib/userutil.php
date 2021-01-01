@@ -8,6 +8,7 @@
 
 namespace Bitrix\Intranet;
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 
 class UserUtil

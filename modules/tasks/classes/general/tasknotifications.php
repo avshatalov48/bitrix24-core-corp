@@ -183,79 +183,40 @@ class CTaskNotifications
 				}
 			}
 
-			$taskName = self::formatTaskName($arFields['ID'], $arFields['TITLE'], $arFields['GROUP_ID'], false);
-			$addMessage = self::getGenderMessage($occurAsUserId, "TASKS_NEW_TASK_MESSAGE");
+			$taskName = self::formatTaskName($arFields['ID'], $arFields['TITLE'], $arFields['GROUP_ID']);
+			$addMessage = self::getGenderMessage($occurAsUserId, 'TASKS_NEW_TASK_MESSAGE');
 
-			$instant = str_replace(
-				array(
-					"#TASK_TITLE#"
-				),
-				array(
-					$taskName
-				),
-				$addMessage
-			);
-
-			$email = str_replace(
-				array(
-					"#TASK_TITLE#"
-				),
-				array(
-					strip_tags($taskName)
-				),
-				$addMessage
-			);
-
-			CTaskNotifications::sendMessageEx($arFields["ID"], $occurAsUserId, $arRecipientsIDs, array(
-				'INSTANT' => $instant,
-				'EMAIL' => $email,
-				'PUSH' => self::makePushMessage('TASKS_NEW_TASK_MESSAGE', $occurAsUserId, $arFields)
-			), array(
+			$messages = [
+				'INSTANT' => str_replace('#TASK_TITLE#', $taskName, $addMessage),
+				'EMAIL' => str_replace('#TASK_TITLE#', strip_tags($taskName), $addMessage),
+				'PUSH' => self::makePushMessage('TASKS_NEW_TASK_MESSAGE', $occurAsUserId, $arFields),
+			];
+			$parameters = [
 				'ENTITY_CODE' => 'TASK',
 				'ENTITY_OPERATION' => 'ADD',
-				'EVENT_DATA' => array(
-					'ACTION'   => 'TASK_ADD',
-					'arFields' => $arFields
-				),
-				'CALLBACK' => array(
-					'BEFORE_SEND' => function($message) use($isBbCodeDescription, $invariantDescription, $descs)
-					{
+				'EVENT_DATA' => [
+					'ACTION' => 'TASK_ADD',
+					'arFields' => $arFields,
+				],
+				'CALLBACK' => [
+					'BEFORE_SEND' => function ($message) use ($isBbCodeDescription, $invariantDescription, $descs) {
 						$description = $invariantDescription.$descs[$message['TO_USER_IDS'][0]];
-
 						$message['MESSAGE']['INSTANT'] = str_replace(
-							array(
-								"#TASK_EXTRA#"
-							),
-							array(
-								$description
-							),
+							'#TASK_EXTRA#',
+							$description,
 							$message['MESSAGE']['INSTANT']
 						);
-
-						if ($isBbCodeDescription)
-						{
-							$parser = new CTextParser();
-							$description = str_replace(
-								"\t",
-								' &nbsp; &nbsp;',
-								$parser->convertText($description)
-							);
-						}
-
 						$message['MESSAGE']['EMAIL'] = str_replace(
-							array(
-								"#TASK_EXTRA#"
-							),
-							array(
-								$description
-							),
+							'#TASK_EXTRA#',
+							$description,
 							$message['MESSAGE']['EMAIL']
 						);
-
 						return $message;
 					}
-				)
-			));
+				],
+			];
+
+			self::sendMessageEx($arFields['ID'], $occurAsUserId, $arRecipientsIDs, $messages, $parameters);
 		}
 
 		// sonet log, not for CRM
@@ -481,7 +442,7 @@ class CTaskNotifications
 										$description .= $toValueAsString;
 									}
 
-									$arVolatileDescriptions[$tzOffset][$placeholder] = $description;
+									$arVolatileDescriptions[$tzOffset][$placeholder] = trim($description);
 								}
 
 								$arRecipientsIDsByTimezone[$tzOffset][] = $userId;
@@ -592,7 +553,7 @@ class CTaskNotifications
 					}
 					if ($tmpStr !== '')
 					{
-						$changeMessage .= ": ".$tmpStr;
+						$changeMessage .= ": ".trim($tmpStr);
 					}
 
 					$arInvariantChangesStrs[] = $changeMessage;
@@ -722,38 +683,45 @@ class CTaskNotifications
 		}
 	}
 
-	function SendDeleteMessage($arFields, bool $safeDelete = false)
+	/**
+	 * @param $arFields
+	 * @param bool $safeDelete
+	 */
+	function SendDeleteMessage($arFields, bool $safeDelete = false): void
 	{
 		$cacheWasEnabled = CTaskNotifications::enableStaticCache();
 
-		$arRecipientsIDs = CTaskNotifications::GetRecipientsIDs($arFields);
-		if (sizeof($arRecipientsIDs) && (User::getId() || $arFields["CREATED_BY"]))
+		$recipientIds = CTaskNotifications::GetRecipientsIDs($arFields);
+		if (count($recipientIds) > 0 && (User::getId() || $arFields['CREATED_BY']))
 		{
-			$occurAsUserId = CTasksTools::getOccurAsUserId();
-			if ( ! $occurAsUserId )
-				$occurAsUserId = User::getId() ? User::getId() : $arFields["CREATED_BY"];
+			if (!($occurAsUserId = CTasksTools::getOccurAsUserId()))
+			{
+				$occurAsUserId = (User::getId() ? User::getId() : $arFields['CREATED_BY']);
+			}
 
+			$messageCode = 'TASKS_TASK_DELETED_MESSAGE_V2';
 			$messageInstant = str_replace(
-				"#TASK_TITLE#",
-				self::formatTaskName(
-					$arFields['ID'],
-					$arFields['TITLE'],
-					$arFields['GROUP_ID'],
-					false
-				),
-				self::getGenderMessage($occurAsUserId, 'TASKS_TASK_DELETED_MESSAGE')
+				'#TASK_TITLE#',
+				self::formatTaskName($arFields['ID'], $arFields['TITLE'], $arFields['GROUP_ID']),
+				self::getGenderMessage($occurAsUserId, $messageCode)
 			);
+			$messagePush = CTaskNotifications::makePushMessage($messageCode, $occurAsUserId, $arFields);
 
-			CTaskNotifications::sendMessageEx($arFields["ID"], $occurAsUserId, $arRecipientsIDs, array(
-				'INSTANT' => $messageInstant,
-				//'EMAIL' => $messageEmail,
-				'PUSH' => CTaskNotifications::makePushMessage('TASKS_TASK_DELETED_MESSAGE', $occurAsUserId, $arFields)
-			), array(
-				'EVENT_DATA' => array(
-					'ACTION'   => 'TASK_DELETE',
-					'arFields' => $arFields
-				),
-			));
+			CTaskNotifications::sendMessageEx(
+				$arFields['ID'],
+				$occurAsUserId,
+				$recipientIds,
+				[
+					'INSTANT' => $messageInstant,
+					'PUSH' => $messagePush,
+				],
+				[
+					'EVENT_DATA' => [
+						'ACTION' => 'TASK_DELETE',
+						'arFields' => $arFields,
+					],
+				]
+			);
 		}
 
 		// sonet log
@@ -766,7 +734,7 @@ class CTaskNotifications
 			\Bitrix\Tasks\Integration\SocialNetwork\Log::deleteLogByTaskId((int) $arFields['ID']);
 		}
 
-		if($cacheWasEnabled)
+		if ($cacheWasEnabled)
 		{
 			CTaskNotifications::disableStaticCache();
 		}
@@ -1969,7 +1937,15 @@ class CTaskNotifications
 
 			if($oTaskItems[0] instanceof CTaskItem)
 			{
-				$data = $oTaskItems[0]->getData(false);
+				try
+				{
+					$data = $oTaskItems[0]->getData(false);
+				}
+				catch (TasksException $e)
+				{
+					return false;
+				}
+
 				if(intval($data['CREATED_BY']))
 					return intval($data['CREATED_BY']);
 			}
@@ -2063,7 +2039,7 @@ class CTaskNotifications
 							return Loc::getMessage('TASKS_IM_ANSWER_SUCCESS');
 						}
 					}
-					catch(\TasksException $e)
+					catch(\TasksException | CTaskAssertException $e)
 					{
 						$message = unserialize($e->getMessage());
 

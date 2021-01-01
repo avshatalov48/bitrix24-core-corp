@@ -1,9 +1,11 @@
 import {Type, Event} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 import {Address as AddressEntity, AddressType, ControlMode, Format,
-		AddressStringConverter, LocationRepository, ErrorPublisher} from 'location.core';
+		AddressStringConverter, LocationRepository, ErrorPublisher, Location} from 'location.core';
 import State from '../state';
 import BaseFeature from './features/basefeature';
+import AutocompleteFeature from './features/autocompletefeature';
+import {FeatureEvent} from './featurevent';
 
 /**
  * Props for the address widget constructor
@@ -14,7 +16,8 @@ export type AddressConstructorProps = {
 	addressFormat: Format,
 	address?: AddressEntity,
 	needWarmBackendAfterAddressChanged?: boolean,
-	locationRepository?: LocationRepository
+	locationRepository?: LocationRepository,
+	presetLocationList?: Array
 };
 
 /**
@@ -38,6 +41,8 @@ export default class Address extends EventEmitter
 	static onAddressChangedEvent = 'onAddressChanged';
 	/* If state of the widget was changed */
 	static onStateChangedEvent = 'onStateChanged';
+	/* Any feature-related events */
+	static onFeatureEvent = 'onFeatureEvent';
 
 	#mode;
 	#state;
@@ -57,6 +62,8 @@ export default class Address extends EventEmitter
 
 	#needWarmBackendAfterAddressChanged = true;
 	#locationRepository;
+
+	#presetLocationList = [];
 
 	/**
 	 * Constructor
@@ -122,6 +129,24 @@ export default class Address extends EventEmitter
 			this.#locationRepository = new LocationRepository();
 		}
 
+		if(props.presetLocationList)
+		{
+			if(!Type.isArray(props.presetLocationList))
+			{
+				throw new TypeError('Preset location list must be an array');
+			}
+
+			for (let location of props.presetLocationList)
+			{
+				if(!(location instanceof Location))
+				{
+					BX.debug('location must be instance of Location');
+				}
+
+				this.#presetLocationList.push(location);
+			}
+		}
+
 		this.#state = State.INITIAL;
 	}
 
@@ -140,15 +165,23 @@ export default class Address extends EventEmitter
 			this.#address.id = addressId;
 		}
 
+		this.#isAddressChangedByFeature = true;
+		this.#setInputValue(address);
+
 		this.#executeFeatureMethod('setAddress', [address], sourceFeature);
 
 		if(this.#state !== State.DATA_INPUTTING)
 		{
 			this.#emitOnAddressChanged();
 		}
+	}
 
-		this.#isAddressChangedByFeature = true;
-		this.#setInputValue(address);
+	emitFeatureEvent(featureEvent: FeatureEvent)
+	{
+		this.emit(
+			Address.onFeatureEvent,
+			featureEvent
+		);
 	}
 
 	/**
@@ -193,7 +226,7 @@ export default class Address extends EventEmitter
 			{address: this.#address}
 		);
 
-		if(this.#needWarmBackendAfterAddressChanged)
+		if(this.#address && this.#needWarmBackendAfterAddressChanged)
 		{
 			this.#warmBackendAfterAddressChanged(this.#address);
 		}
@@ -209,12 +242,34 @@ export default class Address extends EventEmitter
 
 	#onInputFocus(e: KeyboardEvent)
 	{
-		let value = this.#inputNode;
+		let value = this.#inputNode.value;
 
 		if(value.length > 0)
 		{
 			BX.setCaretPosition(this.#inputNode, value.length - 1)
 		}
+	}
+
+	#onInputClick(e: MouseEvent)
+	{
+		let value = this.#inputNode.value;
+
+		if(value.length === 0 && this.#presetLocationList.length > 0)
+		{
+			this.#showPresetLocations();
+		}
+	}
+
+	#showPresetLocations()
+	{
+		let autocompleteFeature = this.#getAutocompleteFeature();
+
+		if (!autocompleteFeature.autocomplete || !autocompleteFeature.autocomplete.prompt)
+		{
+			return;
+		}
+
+		autocompleteFeature.autocomplete.prompt.show(this.#presetLocationList, '');
 	}
 
 	#convertAddressToString(address: ?Address): string
@@ -235,9 +290,14 @@ export default class Address extends EventEmitter
 	{
 		if(this.#inputNode)
 		{
+			let selectionStart = this.#inputNode.selectionStart;
+			let selectionEnd = this.#inputNode.selectionEnd;
+
 			const addressString = this.#convertAddressToString(address);
 			this.#inputNode.value = addressString;
 			this.#inputNode.title = addressString;
+
+			this.#inputNode.setSelectionRange(selectionStart, selectionEnd);
 		}
 	}
 
@@ -259,6 +319,8 @@ export default class Address extends EventEmitter
 
 	onInputKeyup(e: KeyboardEvent)
 	{
+		let value = this.#inputNode.value;
+
 		switch (e.code)
 		{
 			case 'Tab':
@@ -269,6 +331,11 @@ export default class Address extends EventEmitter
 				break;
 			default:
 				this.#isInputNodeValueUpdated = true;
+		}
+
+		if(value.length === 0 && this.#presetLocationList.length > 0)
+		{
+			this.#showPresetLocations();
 		}
 	}
 
@@ -302,6 +369,7 @@ export default class Address extends EventEmitter
 			Event.bind(this.#inputNode, 'focus', this.#onInputFocus.bind(this));
 			Event.bind(this.#inputNode, 'focusout', this.#onInputFocusOut.bind(this));
 			Event.bind(this.#inputNode, 'keyup', this.onInputKeyup.bind(this));
+			Event.bind(this.#inputNode, 'click', this.#onInputClick.bind(this));
 		}
 
 		this.#executeFeatureMethod('render', [props]);
@@ -373,6 +441,22 @@ export default class Address extends EventEmitter
 		);
 	}
 
+	#getAutocompleteFeature()
+	{
+		let result = null;
+
+		for( let feature of this.#features)
+		{
+			if(feature instanceof AutocompleteFeature)
+			{
+				result = feature;
+				break;
+			}
+		}
+
+		return result;
+	}
+
 	subscribeOnStateChangedEvent(listener: Function): void
 	{
 		this.subscribe(Address.onStateChangedEvent, listener);
@@ -381,6 +465,11 @@ export default class Address extends EventEmitter
 	subscribeOnAddressChangedEvent(listener: Function): void
 	{
 		this.subscribe(Address.onAddressChangedEvent, listener);
+	}
+
+	subscribeOnFeatureEvent(listener: Function): void
+	{
+		this.subscribe(Address.onFeatureEvent, listener);
 	}
 
 	subscribeOnErrorEvent(listener: Function): void
@@ -399,6 +488,7 @@ export default class Address extends EventEmitter
 		Event.unbind(this.#inputNode, 'focus', this.#onInputFocus);
 		Event.unbind(this.#inputNode, 'focusout', this.#onInputFocusOut);
 		Event.unbind(this.#inputNode, 'keyup', this.onInputKeyup);
+		Event.unbind(this.#inputNode, 'click', this.onInputClick);
 
 		this.#executeFeatureMethod('destroy');
 		this.#destroyFeatures();

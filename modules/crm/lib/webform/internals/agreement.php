@@ -46,6 +46,12 @@ class AgreementTable extends ORM\Data\DataManager
 				'default_value' => 'N',
 				'values' => array('N','Y')
 			),
+			'REQUIRED' => array(
+				'data_type' => 'boolean',
+				'required' => true,
+				'default_value' => 'Y',
+				'values' => array('N','Y')
+			),
 		);
 	}
 }

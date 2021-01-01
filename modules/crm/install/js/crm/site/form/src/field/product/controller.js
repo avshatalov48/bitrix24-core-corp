@@ -67,7 +67,7 @@ class Controller extends ListField.Controller
 
 	formatMoney(val)
 	{
-		return Util.Conv.formatMoney(val, this.currency.format);
+		return Util.Conv.formatMoney(val.toFixed(2), this.currency.format);
 	}
 
 	getCurrencyFormatArray()

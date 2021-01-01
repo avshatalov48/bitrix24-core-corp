@@ -6,6 +6,7 @@ use Bitrix\Main\Event;
 use Bitrix\Main\UserTable;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Tasks\Integration\Forum;
+use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\MemberTable;
@@ -187,16 +188,13 @@ class ViewedTable extends Main\Entity\DataManager
 	 */
 	public static function sendPushTaskView(int $userId, int $taskId): void
 	{
-		if (Main\Loader::includeModule('pull'))
-		{
-			\Bitrix\Pull\Event::add([$userId], [
-				'module_id' => 'tasks',
-				'command' => 'task_view',
-				'params' => [
-					'TASK_ID' => $taskId,
-					'USER_ID' => $userId,
-				],
-			]);
-		}
+		PushService::addEvent([$userId], [
+			'module_id' => 'tasks',
+			'command' => 'task_view',
+			'params' => [
+				'TASK_ID' => $taskId,
+				'USER_ID' => $userId,
+			],
+		]);
 	}
 }

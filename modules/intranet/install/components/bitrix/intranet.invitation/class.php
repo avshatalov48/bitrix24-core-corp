@@ -112,7 +112,8 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 		$this->arResult["REGISTER_SETTINGS"] = $registerSettings;
 
 		$request = \Bitrix\Main\Context::getCurrent()->getRequest();
-		$this->arResult["REGISTER_URL_BASE"] = ($request->isHttps() ? "https://" : "http://").BX24_HOST_NAME."/?secret=";
+		$this->arResult["REGISTER_URL_BASE"] = ($request->isHttps() ? "https://" : "http://").
+			(defined('BX24_HOST_NAME') ? BX24_HOST_NAME : SITE_SERVER_NAME)."/?secret=";
 
 		if(strlen($this->arResult["REGISTER_SETTINGS"]["REGISTER_SECRET"]) > 0)
 		{

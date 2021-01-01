@@ -8,11 +8,15 @@ type Options = {
 
 class Controller extends BaseField.Controller
 {
+	randomId: number;
+
 	constructor(options: Options)
 	{
 		super(options);
 		this.booking = options.booking;
 		this.multiple = true;
+
+		this.randomId = Math.random();
 	}
 
 	static type(): string

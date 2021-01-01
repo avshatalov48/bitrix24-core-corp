@@ -10,6 +10,7 @@ class CVoxImplantAccount
 	const ACCOUNT_CURRENCY = "account_currency";
 	const ACCOUNT_BALANCE = "account_balance";
 	const ACCOUNT_NAME = "account_name";
+	const LAST_TOP_UP_TIMESTAMP = "last_top_up_timestamp";
 
 	private $account_name = null;
 	private $account_balance = 0;
@@ -97,6 +98,7 @@ class CVoxImplantAccount
 
 	public function SetAccountBalance($balance)
 	{
+		$isTopUp = ($balance > $this->GetAccountBalance());
 		if ($this->GetAccountBalance() == $balance)
 		{
 			return true;
@@ -104,10 +106,19 @@ class CVoxImplantAccount
 		$this->account_balance = floatval($balance);
 
 		COption::SetOptionString("voximplant", self::ACCOUNT_BALANCE, $this->account_balance);
+		if ($isTopUp)
+		{
+			COption::SetOptionString("voximplant", self::LAST_TOP_UP_TIMESTAMP, time());
+		}
 
 		\Bitrix\Voximplant\Integration\Pull::sendBalanceUpdate($this->account_balance, $this->GetAccountCurrency(false));
 
 		return true;
+	}
+
+	public function GetLastTopUpTimestamp()
+	{
+		return COption::GetOptionInt("voximplant", self::LAST_TOP_UP_TIMESTAMP, 0);
 	}
 
 	public function GetAccountBalance($liveBalance = false)

@@ -9,6 +9,7 @@ use Bitrix\Crm\WebForm\Script;
 use Bitrix\Crm\WebForm\Form;
 use Bitrix\Crm\WebForm\Preset;
 use Bitrix\Crm\WebForm\Entity;
+use Bitrix\Crm\UI\Webpack;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\UserTable;
@@ -26,6 +27,11 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 
 	public function prepareResult()
 	{
+		if ($this->request->get('rebuildResources') === 'y')
+		{
+			Webpack\Form::rebuildResources();
+		}
+
 		/**@var \CUser $USER*/
 		global $USER;
 

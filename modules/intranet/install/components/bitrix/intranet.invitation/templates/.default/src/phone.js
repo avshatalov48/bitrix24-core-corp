@@ -68,6 +68,17 @@ export class Phone
 			flagSize: 16,
 			onChange: changeCallback(num, inputNode)
 		});
+
+		//for ctrl+v paste
+		setTimeout(() => {
+			if (!inputNode.parentNode.querySelector('#phone_number_' + num).value)
+			{
+				changeCallback(num, inputNode)({
+					value: this.inputStack[num].getValue(),
+					country: this.inputStack[num].getCountry()
+				});
+			}
+		}, 100);
 	}
 
 	showCountrySelector(i)

@@ -36,11 +36,11 @@ if (
 	&& check_bitrix_sessid()
 )
 {
-	if (strlen($_POST["RestoreDefaults"]) > 0)
+	if ($_POST["RestoreDefaults"] <> '')
 	{
 		COption::RemoveOption($module_id);
 	}
-	elseif (strlen($Update) > 0)
+	elseif ($Update <> '')
 	{
 		for ($i=0; $i<count($arAllOptions); $i++)
 		{
@@ -94,7 +94,7 @@ $tabControl->BeginNextTab();
 			?><input type="checkbox" name="<?echo htmlspecialcharsbx($Option[0])?>" id="<?echo htmlspecialcharsbx($Option[0])?>" value="Y"<?if($val=="Y")echo" checked";?>><?
 		elseif($type[0]=="text"):
 			?><input type="text" size="<?echo $type[1]?>" maxlength="255" value="<?echo htmlspecialcharsbx($val)?>" name="<?echo htmlspecialcharsbx($Option[0])?>"><?
-			if (strlen($Option[4])>0) :
+			if ($Option[4] <> '') :
 				?>&nbsp;<label for="<?echo htmlspecialcharsbx($Option[0])?>_clear"><?=GetMessage("EXTRANET_CLEAR")?>:</label><input type="checkbox" name="<?echo htmlspecialcharsbx($Option[0])?>_clear" id="<?echo htmlspecialcharsbx($Option[0])?>_clear" value="Y"><?
 			endif;
 		elseif($type[0]=="textarea"):

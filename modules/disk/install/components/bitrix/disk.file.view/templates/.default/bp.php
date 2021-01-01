@@ -75,7 +75,7 @@ $sortBpLog = false;
 				<li class="bizproc-list-item <?= $trClass ?>">
 					<table class="bizproc-table-main" id="<?= $bizProcArray['ID'] ?>">
 						<tr>
-							<th class="bizproc-field-name"><?= $bizProcArray['TEMPLATE_NAME'] ?></th>
+							<th class="bizproc-field-name"><?=htmlspecialcharsbx($bizProcArray['TEMPLATE_NAME'])?></th>
 							<th class="bizproc-field-value">
 								<? if($bizProcArray["WORKFLOW_STATUS"] <> '') { ?>
 									<a class="webform-small-button webform-button-transparent" href="<?= $strStopBizProc ?>"><?= Loc::getMessage('DISK_FILE_VIEW_BIZPROC_STOP_BUTTON') ?></a>
@@ -153,7 +153,7 @@ $sortBpLog = false;
 				<li class="bizproc-list-item <?= $trClass ?>">
 				<table class="bizproc-table-main" id="<?= $idWorkflow ?>">
 					<tr>
-						<th class="bizproc-field-name"><?= $arResult['BIZPROC_LIST'][$_GET['log_workflow']]['TEMPLATE_NAME'] ?></th>
+						<th class="bizproc-field-name"><?=htmlspecialcharsbx($arResult['BIZPROC_LIST'][$_GET['log_workflow']]['TEMPLATE_NAME'])?></th>
 						<th class="bizproc-field-value">
 							<? if($arResult['BIZPROC_LIST'][$_GET['log_workflow']]["WORKFLOW_STATUS"] <> '') { ?>
 								<a class="webform-small-button webform-button-transparent" href="<?= $strStopBizProc ?>"><?= Loc::getMessage('DISK_FILE_VIEW_BIZPROC_STOP_BUTTON') ?></a>

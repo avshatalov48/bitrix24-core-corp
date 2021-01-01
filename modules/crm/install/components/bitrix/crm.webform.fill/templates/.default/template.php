@@ -30,7 +30,7 @@ $this->addExternalJs($this->GetFolder() . '/form_checker.js');
 
 if($arResult['FORM']['CSS_PATH'])
 {
-	$this->addExternalCss($arResult['FORM']['CSS_PATH']);
+	$this->addExternalCss(htmlspecialcharsbx($arResult['FORM']['CSS_PATH']));
 }
 
 if($arResult['HAS_PHONE_FIELD'])

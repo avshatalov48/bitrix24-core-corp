@@ -1,4 +1,7 @@
 <?
+
+use Bitrix\Crm\Integration\PullManager;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
 if (!CModule::IncludeModule('crm'))
@@ -102,6 +105,27 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() &&
 					{
 						$listField[] = '"'.$arCurrentData['NAME'].'"';
 					}
+					else
+					{
+						$type = false;
+						if ($arCurrentData['ENTITY_ID'] === 'STATUS')
+						{
+							$type = \CCrmOwnerType::LeadName;
+						}
+						else if ($arCurrentData['ENTITY_ID'] === 'DEAL_STAGE')
+						{
+							$type = \CCrmOwnerType::DealName;
+						}
+
+						if ($type)
+						{
+							PullManager::getInstance()
+								->sendStageDeletedEvent($arCurrentData, [
+									'TYPE' => $type,
+									'CATEGORY_ID' => $arCurrentData['CATEGORY_ID']
+								]);
+						}
+					}
 				}
 				else
 				{
@@ -144,6 +168,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() &&
 				$arAdd['SORT'] = $arField['SORT'];
 				$arAdd['COLOR'] = $arField['COLOR'];
 				$arAdd['SEMANTICS'] = $arField['SEMANTICS'];
+				$arAdd['STATUS_ID'] = $arField['STATUS_ID'] ?? null;
 
 				$id = $CCrmStatus->Add($arAdd);
 				$arCurrentData = $CCrmStatus->GetStatusById($id);
@@ -153,7 +178,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() &&
 				}
 				else
 				{
-					$field["STATUS_ID"] = $id;
+					$field["STATUS_ID"] = $$id;
 				}
 			}
 			else
@@ -251,6 +276,8 @@ while($status = $list->fetch())
 	$arResult['ROWS'][$status['ENTITY_ID']][$status['ID']] = $status;
 }
 
+$entityNumbers = [];
+
 /* Preparation of data for different settings */
 foreach($arResult['ENTITY'] as $entityId => $dataEntity)
 {
@@ -292,6 +319,26 @@ foreach($arResult['ENTITY'] as $entityId => $dataEntity)
 			$arResult['SUCCESS_FIELDS'][$entityId][] = $status;
 		}
 		$number++;
+	}
+	$entityNumbers[$entityId] = $number;
+}
+
+foreach($arResult['ENTITY'] as $entityId => $dataEntity)
+{
+	if(empty($arResult['FINAL_FIELDS'][$entityId]['SUCCESSFUL']))
+	{
+		$sort = 1000;
+		if(!empty($arResult['FINAL_FIELDS'][$entityId]['UNSUCCESSFUL']))
+		{
+			$sort = $arResult['FINAL_FIELDS'][$entityId]['UNSUCCESSFUL']['SORT'] - 5;
+		}
+		$arResult['FINAL_FIELDS'][$entityId]['SUCCESSFUL'] = [
+			'ID' => 'n' . $entityNumbers[$entityId],
+			'NUMBER' => $entityNumbers[$entityId],
+			'SEMANTICS' => \Bitrix\Crm\PhaseSemantics::SUCCESS,
+			'SORT' => $sort,
+			'STATUS_ID' => $dataEntity['FINAL_SUCCESS_FIELD'],
+		];
 	}
 }
 

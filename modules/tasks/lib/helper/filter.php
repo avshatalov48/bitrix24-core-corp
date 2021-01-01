@@ -7,8 +7,8 @@ use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\SearchIndex;
-use Bitrix\Tasks\Internals\Task\SearchIndexTable;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\FilterLimit;
+use Bitrix\Tasks\Util\User;
 
 class Filter extends Common
 {
@@ -185,9 +185,13 @@ class Filter extends Common
 		return $filter;
 	}
 
-	private function processUFFilter()
+	/**
+	 * @return array
+	 */
+	private function processUFFilter(): array
 	{
-		$arrFilter = $rawFilter = [];
+		$ufFilter = [];
+		$fieldsToSkipEmptyClearing = [];
 
 		$filters = $this->getFilters();
 		foreach ($filters as $fieldId => $filterRow)
@@ -199,73 +203,70 @@ class Filter extends Common
 
 			switch ($filterRow['type'])
 			{
-				default:
-					//					$field = $this->getFilterFieldData($fieldId);
-					//					if ($field)
-					//					{
-					//						if (is_numeric($field) && $fieldId != 'TITLE')
-					//						{
-					//							$rawFilter[$fieldId] = $field;
-					//						}
-					//						else
-					//						{
-					//							$rawFilter['%'.$fieldId] = $field;
-					//						}
-					//					}
-					//
-					//					$arrFilter[$fieldId] = $field[$fieldId];
-					break;
 				case 'crm':
 				case 'string':
-					$arrFilter['%'.$fieldId] = $this->getFilterFieldData($fieldId);
+					$ufFilter["%{$fieldId}"] = $this->getFilterFieldData($fieldId);
 					break;
+
 				case 'date':
 					$data = $this->getDateFilterFieldData($filterRow);
 					if ($data)
 					{
-						$arrFilter = array_merge($arrFilter, $data);
+						$ufFilter = array_merge($ufFilter, $data);
 					}
 					break;
+
 				case 'number':
 					$data = $this->getNumberFilterFieldData($filterRow);
 					if ($data)
 					{
-						$arrFilter = array_merge($arrFilter, $data);
+						$ufFilter = array_merge($ufFilter, $data);
 					}
 					break;
+
 				case 'list':
 					$data = $this->getListFilterFieldData($filterRow);
 					if ($data)
 					{
-						$arrFilter = array_merge($arrFilter, $data);
+						$map = [
+							1 => null,
+							2 => 1,
+						];
+						$key = key($data);
+						$value = current($data);
+						if (array_key_exists($value, $map))
+						{
+							$data[$key] = $map[$value];
+						}
+						$ufFilter = array_merge($ufFilter, $data);
+						$fieldsToSkipEmptyClearing[] = $key;
 					}
 					break;
+
 				case 'dest_selector':
 					$data = $this->getDestSelectorFilterFieldData($filterRow);
 					if ($data)
 					{
-						$arrFilter = array_merge($arrFilter, $data);
+						$ufFilter = array_merge($ufFilter, $data);
 					}
+					break;
+
+				default:
 					break;
 			}
 		}
 
-		$arrFilter = array_filter($arrFilter);
+		$ufFilter = array_filter(
+			$ufFilter,
+			static function ($value, $key) use ($fieldsToSkipEmptyClearing) {
+				return in_array($key, $fieldsToSkipEmptyClearing, true)
+					|| $value === '0'
+					|| !empty($value);
+			},
+			ARRAY_FILTER_USE_BOTH
+		);
 
-		$map = [
-			1 => null,
-			2 => 1
-		];
-
-		foreach ($arrFilter as $key => $value)
-		{
-			if (in_array($value, array_keys($map)))
-			{
-				$arrFilter[$key] = $map[$value];
-			}
-		}
-
-		return $arrFilter;
+		return $ufFilter;
 	}
 
 	private function processMainFilter()
@@ -290,10 +291,11 @@ class Filter extends Common
 
 		if ($this->getFilterFieldData('FIND') && !FilterLimit::isLimitExceeded())
 		{
-			$operator = (($isFullTextIndexEnabled = SearchIndexTable::isFullTextIndexEnabled())? '*' : '*%');
-			$value = SearchIndex::prepareStringToSearch($this->getFilterFieldData('FIND'), $isFullTextIndexEnabled);
-
-			$filter['::SUBFILTER-FULL_SEARCH_INDEX'][$operator . 'FULL_SEARCH_INDEX'] = $value;
+			$value = SearchIndex::prepareStringToSearch($this->getFilterFieldData('FIND'));
+			if ($value !== '')
+			{
+				$filter['::SUBFILTER-FULL_SEARCH_INDEX']['*FULL_SEARCH_INDEX'] = $value;
+			}
 		}
 
 		foreach ($filters as $fieldId => $filterRow)
@@ -368,36 +370,39 @@ class Filter extends Common
 	 */
 	private function postProcessMainFilter(array $filter): array
 	{
-		$prefix = "::SUBFILTER-";
-		$searchKey = $prefix.'COMMENT_SEARCH_INDEX';
-		$statusKey = $prefix.'STATUS';
+		$prefix = '::SUBFILTER-';
+		$searchKey = "{$prefix}COMMENT_SEARCH_INDEX";
+		$statusKey = "{$prefix}STATUS";
 
-		if (isset($filter[$prefix.'PARAMS']['::REMOVE-MEMBER']))
+		if (isset($filter["{$prefix}PARAMS"]['::REMOVE-MEMBER']))
 		{
-			unset($filter[$prefix.'ROLEID']['MEMBER'], $filter[$prefix.'PARAMS']['::REMOVE-MEMBER']);
+			unset($filter["{$prefix}ROLEID"]['MEMBER'], $filter["{$prefix}PARAMS"]['::REMOVE-MEMBER']);
 		}
 
 		if (isset($filter[$searchKey]))
 		{
 			reset($filter[$searchKey]);
 
-			$operator = (($isFullTextIndexEnabled = SearchIndexTable::isFullTextIndexEnabled())? '*' : '*%');
 			$key = key($filter[$searchKey]);
-			$value = SearchIndex::prepareStringToSearch(current($filter[$searchKey]), $isFullTextIndexEnabled);
-
+			$value = SearchIndex::prepareStringToSearch(current($filter[$searchKey]));
+			if ($value !== '')
+			{
+				$filter[$searchKey]["*{$key}"] = $value;
+			}
 			unset($filter[$searchKey][$key]);
-			$filter[$searchKey][$operator.$key] = $value;
 		}
 
-		if (isset($filter[$statusKey]))
+		if (
+			isset($filter[$statusKey])
+			&& (int) $this->getUserId() === (int) User::getId()
+		)
 		{
 			$filter[$statusKey] = [
 				'::LOGIC' => 'OR',
 				'::SUBFILTER-1' => $filter[$statusKey],
 				'::SUBFILTER-2' => [
-					'WITH_NEW_COMMENTS' => 'Y',
-					'REAL_STATUS' => \CTasks::STATE_COMPLETED,
-					'MEMBER' => $this->getUserId(),
+					'WITH_COMMENT_COUNTERS' => 'Y',
+					'REAL_STATUS' => \CTasks::STATE_COMPLETED
 				],
 			];
 		}

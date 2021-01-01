@@ -1,6 +1,5 @@
 <?
 
-use Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker;
 use Bitrix\Main\Localization\Loc;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
@@ -258,16 +257,37 @@ $groupPopupExists = false;
 							if (BX.getClass('B24.upgradeButtonRedirect'))
 								B24.upgradeButtonRedirect(<?=CUtil::PhpToJSObject($arJsParams)?>)"
 					>
+						<span class="menu-license-all-icon"></span>
 						<span class="menu-license-all-text"></span>
 					</span>
-					<span
-						class="menu-license-all menu-license-all-default"
-						onclick="
-							if (BX.getClass('B24.upgradeButtonRedirect'))
+					<?if ($arResult["IS_DEMO_LICENSE"]):?>
+						<span
+							class="menu-license-all menu-license-all-default"
+							onclick="
+								if (BX.getClass('B24.upgradeButtonRedirect'))
 								B24.upgradeButtonRedirect(<?=CUtil::PhpToJSObject($arJsParams)?>)"
-					>
-					<span class="menu-license-all-text"><?=Loc::getMessage("MENU_LICENSE_ALL")?></span>
-				</span>
+						>
+							<span class="menu-license-all-icon"></span>
+							<span class="menu-license-all-text menu-license-demo-text">
+								<?=Loc::getMessage("MENU_LICENSE_DEMO", [
+									"#NUM_DAYS#" => '<span class="menu-license-all-days">'.$arResult["DEMO_DAYS"].'</span>'
+								])?>
+							</span>
+							<span class="ui-btn ui-btn-xs ui-btn-light-border ui-btn-round ui-btn-themes menu-license-demo-button">
+								<?=Loc::getMessage("MENU_LICENSE_BUY")?>
+							</span>
+						</span>
+					<?else:?>
+						<span
+							class="menu-license-all menu-license-all-default"
+							onclick="
+								if (BX.getClass('B24.upgradeButtonRedirect'))
+									B24.upgradeButtonRedirect(<?=CUtil::PhpToJSObject($arJsParams)?>)"
+						>
+							<span class="menu-license-all-icon"></span>
+							<span class="menu-license-all-text"><?=Loc::getMessage("MENU_LICENSE_ALL")?></span>
+						</span>
+					<?endif?>
 				</div>
 			<?endif?>
 		</div>
@@ -288,7 +308,6 @@ $arJSParams = array(
 	"isBitrix24" => IsModuleInstalled("bitrix24") ? "Y" : "N",
 	"siteId" => SITE_ID,
 	"siteDir" => SITE_DIR,
-	"spotlightId" => $arResult["SPOTLIGHT_ID"],
 	"isExtranet" => $arResult["IS_EXTRANET"] ? "Y" : "N",
 	"isCompositeMode" => $isCompositeMode,
 	"isCollapsedMode" => CUserOptions::GetOption("intranet", "left_menu_collapsed") === "Y",
@@ -482,24 +501,3 @@ $filter = CUserOptions::GetOption("intranet", "left_menu_group_filter_".SITE_ID,
 	<div class="sitemap-close-link group-panel-close-link" id="group-panel-close-link"></div>
 </div>
 <? endif ?>
-
-
-<?
-
-$APPLICATION->includeComponent("bitrix:spotlight", "", [
-	"ID" => $arResult["SPOTLIGHT_ID"],
-	"JS_OPTIONS" => [
-		"targetElement" => ".menu-items-header .menu-switcher",
-		"content" => Loc::getMessage("MENU_SPOTLIGHT_HINT"),
-		"targetVertex" => "middle-center",
-		"observerTimeout" => 100,
-		"events" => [
-			"onTargetEnter" => "BX.Bitrix24.LeftMenu.handleSpotlightMouseEnter"
-		],
-		"lightMode" => ThemePicker::getInstance()->getCurrentBaseThemeId() !== "dark",
-		"END_DATE" => gmmktime(8, 30, 0, 6, 7, 2019),
-	]
-]
-);
-
-?>

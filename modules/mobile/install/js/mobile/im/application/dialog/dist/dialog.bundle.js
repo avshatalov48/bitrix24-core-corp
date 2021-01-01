@@ -83,6 +83,16 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }
 
 	  babelHelpers.createClass(MobileRestAnswerHandler, [{
+	    key: "handleImCallGetCallLimitsSuccess",
+	    value: function handleImCallGetCallLimitsSuccess(data) {
+	      this.store.commit('application/set', {
+	        call: {
+	          serverEnabled: data.callServerEnabled,
+	          maxParticipants: data.maxParticipants
+	        }
+	      });
+	    }
+	  }, {
 	    key: "handleImChatGetSuccess",
 	    value: function handleImChatGetSuccess(data) {
 	      this.store.commit('application/set', {
@@ -99,8 +109,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          fields: data.restrictions
 	        });
 	      }
-
-	      this.context.redrawHeader();
 	    }
 	  }, {
 	    key: "handleImChatGetError",
@@ -399,7 +407,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      return false;
 	    },
 	    onDialogMessageClickByChatTeaser: function onDialogMessageClickByChatTeaser(event) {
-	      this.$root.$bitrixApplication.execMessageOpenChatTeaser(event);
+	      var _this3 = this;
+
+	      this.$root.$bitrixController.application.joinParentChat(event.message.id, 'chat' + event.message.params.CHAT_ID).then(function (dialogId) {
+	        _this3.$root.$bitrixApplication.openDialog(dialogId);
+	      }).catch(function () {});
 	    },
 	    onDialogClick: function onDialogClick(event) {//this.$root.$bitrixApplication.controller.hideSmiles();
 	    },
@@ -737,24 +749,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        });
 	      }, 500);
 
-	      if (im_lib_utils.Utils.dialog.isChatId(this.controller.application.getDialogId())) {
-	        var dialogData = this.controller.application.getDialogData();
-	        var type = dialogData.type;
-
-	        if (type !== im_const.DialogType.call && dialogData.restrictions.extend) {
-	          app.exec("setRightButtons", {
-	            items: [{
-	              type: "user_plus",
-	              callback: function callback() {
-	                fabric.Answers.sendCustomEvent("vueChatAddUserButton", {});
-
-	                _this5.openAddUserDialog();
-	              }
-	            }]
-	          });
-	        }
-	      }
-
 	      if (!im_lib_utils.Utils.dialog.isChatId(this.controller.application.getDialogId())) {
 	        this.userShowWorkPosition = true;
 	        setTimeout(function () {
@@ -765,6 +759,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        setInterval(function () {
 	          _this5.redrawHeader();
 	        }, 60000);
+	      } else {
+	        this.chatShowUserCounter = false;
+	        setTimeout(function () {
+	          _this5.chatShowUserCounter = true;
+
+	          _this5.redrawHeader();
+	        }, 1500);
 	      }
 
 	      this.redrawHeader();
@@ -871,7 +872,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }]), babelHelpers.defineProperty(_query, im_const.RestMethodHandler.imRecentUnread, [im_const.RestMethod.imRecentUnread, {
 	          dialog_id: _this7.controller.application.getDialogId(),
 	          action: 'N'
-	        }]), _query);
+	        }]), babelHelpers.defineProperty(_query, im_const.RestMethodHandler.imCallGetCallLimits, [im_const.RestMethod.imCallGetCallLimits, {}]), _query);
 
 	        if (im_lib_utils.Utils.dialog.isChatId(_this7.controller.application.getDialogId())) {
 	          query[im_const.RestMethodHandler.imUserGet] = [im_const.RestMethod.imUserGet, {}];
@@ -897,6 +898,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            _this7.controller.executeRestAnswer(im_const.RestMethodHandler.mobileBrowserConstGet, constGet);
 	          }
 
+	          var callLimits = response[im_const.RestMethodHandler.imCallGetCallLimits];
+
+	          if (callLimits && !callLimits.error()) {
+	            _this7.controller.executeRestAnswer(im_const.RestMethodHandler.imCallGetCallLimits, callLimits);
+	          }
+
 	          var userGet = response[im_const.RestMethodHandler.imUserGet];
 
 	          if (userGet && !userGet.error()) {
@@ -912,6 +919,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          var chatGetResult = response[im_const.RestMethodHandler.imChatGet];
 
 	          _this7.controller.executeRestAnswer(im_const.RestMethodHandler.imChatGet, chatGetResult);
+
+	          _this7.redrawHeader();
 
 	          var dialogMessagesGetResult = response[im_const.RestMethodHandler.imDialogMessagesGetInit];
 
@@ -1066,17 +1075,16 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        this.changeChatKeyboardStatus();
 	      } else {
 	        headerProperties = this.getUserHeaderParams();
-	        this.setCallMenu();
 	      }
 
 	      if (!headerProperties) {
 	        return false;
 	      }
 
-	      if (!this.headerMenuInited) {
-	        //BXMobileApp.UI.Page.TopBar.title.setUseLetterImage();
-	        BXMobileApp.UI.Page.TopBar.title.params.useLetterImage = true; // TODO remove this
+	      this.setHeaderButtons();
 
+	      if (!this.headerMenuInited) {
+	        BXMobileApp.UI.Page.TopBar.title.params.useLetterImage = true;
 	        BXMobileApp.UI.Page.TopBar.title.setCallback(function () {
 	          return _this8.openHeaderMenu();
 	        });
@@ -1096,16 +1104,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      } else if (headerProperties.color) {
 	        //BXMobileApp.UI.Page.TopBar.title.setImageColor(dialog.color);
 	        BXMobileApp.UI.Page.TopBar.title.params.imageColor = headerProperties.color;
-	      }
-
-	      if (im_lib_utils.Utils.dialog.isChatId(this.controller.application.getDialogId())) {
-	        var dialogData = this.controller.application.getDialogData();
-
-	        if (!dialogData.restrictions.extend) {
-	          app.exec("setRightButtons", {
-	            items: []
-	          });
-	        }
 	      }
 
 	      return true;
@@ -1180,7 +1178,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      result.name = dialog.name;
 	      var chatTypeTitle = this.getLocalize('MOBILE_HEADER_MENU_CHAT_TYPE_CHAT_NEW');
 
-	      if (this.getLocalize()['MOBILE_HEADER_MENU_CHAT_TYPE_' + dialog.type.toUpperCase() + '_NEW']) {
+	      if (this.chatShowUserCounter && this.getLocalize()['MOBILE_HEADER_MENU_CHAT_USER_COUNT']) {
+	        chatTypeTitle = this.getLocalize('MOBILE_HEADER_MENU_CHAT_USER_COUNT').replace('#COUNT#', dialog.userCounter);
+	      } else if (this.getLocalize()['MOBILE_HEADER_MENU_CHAT_TYPE_' + dialog.type.toUpperCase() + '_NEW']) {
 	        chatTypeTitle = this.getLocalize('MOBILE_HEADER_MENU_CHAT_TYPE_' + dialog.type.toUpperCase() + '_NEW');
 	      }
 
@@ -1218,46 +1218,99 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      return this.keyboardShowFlag;
 	    }
 	  }, {
-	    key: "setCallMenu",
-	    value: function setCallMenu() {
+	    key: "setHeaderButtons",
+	    value: function setHeaderButtons() {
 	      var _this9 = this;
 
 	      if (this.callMenuSetted) {
 	        return true;
 	      }
 
-	      var userData = this.controller.getStore().getters['users/get'](this.controller.application.getDialogId(), true);
+	      if (im_lib_utils.Utils.dialog.isChatId(this.controller.application.getDialogId())) {
+	        var dialogData = this.controller.application.getDialogData();
 
-	      if (!userData.init) {
-	        return false;
-	      }
+	        if (!dialogData.init) {
+	          return false;
+	        }
 
-	      if (this.controller.application.getUserId() === parseInt(this.controller.application.getDialogId()) || userData.bot || userData.network) {
-	        app.exec("setRightButtons", {
-	          items: []
-	        });
-	        this.callMenuSetted = true;
-	        return true;
+	        var isAvailableChatCall = Application.getApiVersion() >= 36;
+	        var maxParticipants = this.controller.application.getData().call.maxParticipants;
+
+	        if (dialogData.userCounter > maxParticipants || !isAvailableChatCall) {
+	          if (dialogData.type !== im_const.DialogType.call && dialogData.restrictions.extend) {
+	            app.exec("setRightButtons", {
+	              items: [{
+	                type: "user_plus",
+	                callback: function callback() {
+	                  fabric.Answers.sendCustomEvent("vueChatAddUserButton", {});
+
+	                  _this9.openAddUserDialog();
+	                }
+	              }]
+	            });
+	          } else {
+	            app.exec("setRightButtons", {
+	              items: []
+	            });
+	          }
+
+	          this.callMenuSetted = true;
+	          return true;
+	        }
+	      } else {
+	        var userData = this.controller.getStore().getters['users/get'](this.controller.application.getDialogId(), true);
+
+	        if (!userData.init) {
+	          return false;
+	        }
+
+	        if (userData.bot || userData.network || this.controller.application.getUserId() === parseInt(this.controller.application.getDialogId())) {
+	          app.exec("setRightButtons", {
+	            items: []
+	          });
+	          this.callMenuSetted = true;
+	          return true;
+	        }
 	      }
 
 	      app.exec("setRightButtons", {
 	        items: [{
 	          type: "call_audio",
 	          callback: function callback() {
-	            _this9.openCallMenu();
+	            if (im_lib_utils.Utils.dialog.isChatId(_this9.controller.application.getDialogId())) {
+	              BXMobileApp.Events.postToComponent("onCallInvite", {
+	                dialogId: _this9.controller.application.getDialogId(),
+	                video: false,
+	                chatData: _this9.controller.application.getDialogData()
+	              }, "calls");
+	            } else {
+	              _this9.openCallMenu();
+	            }
 	          }
 	        }, {
 	          type: "call_video",
 	          badgeCode: "call_video",
 	          callback: function callback() {
 	            fabric.Answers.sendCustomEvent("vueChatCallVideoButton", {});
-	            var userData = {};
-	            userData[_this9.controller.application.getDialogId()] = _this9.controller.getStore().getters['users/get'](_this9.controller.application.getDialogId(), true);
-	            BXMobileApp.Events.postToComponent("onCallInvite", {
-	              userId: _this9.controller.application.getDialogId(),
-	              video: true,
-	              userData: userData
-	            }, "calls");
+
+	            if (im_lib_utils.Utils.dialog.isChatId(_this9.controller.application.getDialogId())) {
+	              console.warn({
+	                dialogId: _this9.controller.application.getDialogId(),
+	                video: true,
+	                chatData: _this9.controller.application.getDialogData()
+	              });
+	              BXMobileApp.Events.postToComponent("onCallInvite", {
+	                dialogId: _this9.controller.application.getDialogId(),
+	                video: true,
+	                chatData: _this9.controller.application.getDialogData()
+	              }, "calls");
+	            } else {
+	              BXMobileApp.Events.postToComponent("onCallInvite", {
+	                dialogId: _this9.controller.application.getDialogId(),
+	                video: true,
+	                userData: babelHelpers.defineProperty({}, _this9.controller.application.getDialogId(), _this9.controller.getStore().getters['users/get'](_this9.controller.application.getDialogId(), true))
+	              }, "calls");
+	            }
 	          }
 	        }]
 	      });
@@ -1507,6 +1560,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    /* region 02. Push & Pull */
 	    value: function eventStoreInteraction(data) {
 	      if (data.type === 'dialogues/update' && data.payload && data.payload.fields) {
+	        if (typeof data.payload.fields.name !== 'undefined' || typeof data.payload.fields.userCounter !== 'undefined') {
+	          if (typeof data.payload.fields.userCounter !== 'undefined') {
+	            this.callMenuSetted = false;
+	          }
+
+	          this.redrawHeader();
+	        }
+
 	        if (typeof data.payload.fields.counter !== 'undefined' && typeof data.payload.dialogId !== 'undefined') {
 	          BXMobileApp.Events.postToComponent("chatdialog::counter::change", [{
 	            dialogId: data.payload.dialogId,

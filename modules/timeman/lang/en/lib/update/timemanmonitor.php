@@ -1,0 +1,3 @@
+<?php
+$MESS["TIMEMAN_MONITOR_DEFAULT_GROUP_OTHERS"] = "Other apps";
+$MESS["TIMEMAN_MONITOR_DEFAULT_GROUP_WORK"] = "Working Time Management apps";

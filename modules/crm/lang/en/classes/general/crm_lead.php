@@ -53,6 +53,7 @@ $MESS["CRM_LEAD_FIELD_COMPANY_ID"] = "Company";
 $MESS["CRM_LEAD_FIELD_COMPANY_TITLE"] = "Company name";
 $MESS["CRM_LEAD_FIELD_COMPARE"] = "Changed the field \"#FIELD_NAME#\"";
 $MESS["CRM_LEAD_FIELD_CONTACT_ID"] = "Contact";
+$MESS["CRM_LEAD_FIELD_CLIENT"] = "Client";
 $MESS["CRM_LEAD_FIELD_CREATED_BY_ID"] = "Created by";
 $MESS["CRM_LEAD_FIELD_CURRENCY_ID"] = "Currency";
 $MESS["CRM_LEAD_FIELD_DATE_CLOSED"] = "Completed on";

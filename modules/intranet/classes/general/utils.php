@@ -1747,7 +1747,7 @@ class CIntranetUtils
 				'select' => array('SERVER_NAME')
 			))->fetch();
 
-			$host = isModuleInstalled('bitrix24') ? BX24_HOST_NAME
+			$host = isModuleInstalled('bitrix24') && defined('BX24_HOST_NAME') ? BX24_HOST_NAME
 				: ($site['SERVER_NAME'] ?: COption::getOptionString('main', 'server_name', ''));
 		}
 
@@ -1851,27 +1851,11 @@ class CIntranetUtils
 		$woYear = (!empty($params['woYear']) && $params['woYear']);
 		$woTime = (!empty($params['woTime']) && $params['woTime']);
 
-		$rsSite = CSite::GetByID(SITE_ID);
-		if ($arSite = $rsSite->Fetch())
-		{
-			$curDateFormat = $arSite["FORMAT_DATE"];
-			$curTimeFormat = str_replace($curDateFormat." ", "", $arSite["FORMAT_DATETIME"]);
-		}
-
-		$currentDateTimeFormat = ($woYear ? "j F" : "j F Y");
-		if (LANGUAGE_ID == "de")
-			$currentDateTimeFormat = ($woYear ? "j. F" : "j. F Y");
-		else if (LANGUAGE_ID == "en")
-			$currentDateTimeFormat = ($woYear ? "F j" : "F j, Y");
-		else if (in_array(LANGUAGE_ID, array("sc", "tc", "ja")))
-			$currentDateTimeFormat = ($woYear ? "Fj" : "Y&#24180;Fj");
-
+		$culture = \Bitrix\Main\Context::getCurrent()->getCulture();
+		$currentDateTimeFormat = ($woYear ? $culture->getDayMonthFormat() : $culture->getLongDateFormat());
 		if (!$woTime)
 		{
-			if ($curTimeFormat == "HH:MI:SS")
-				$currentDateTimeFormat.= " G:i";
-			else //($curTimeFormat == "H:MI:SS TT")
-				$currentDateTimeFormat.= " g:i a";
+			$currentDateTimeFormat .= ' '.$culture->getShortTimeFormat();
 		}
 
 		return $currentDateTimeFormat;

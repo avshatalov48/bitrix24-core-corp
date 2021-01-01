@@ -3,3 +3,4 @@ $MESS['SP_AJAX_SEO_MODULE_ERROR'] = "Модуль \"Поисковая опти�
 $MESS['SP_AJAX_SAVE_PAYSYSTEM_ERROR_HANDLER'] = "Не указан обработчик платежной системы";
 $MESS['SP_AJAX_SAVE_PAYSYSTEM_ERROR_NAME'] = "Не указано название платежной системы.";
 $MESS["SP_AJAX_SAVE_PAYSYSTEM_ERROR_HANDLER_TYPE"] = "Обработчик не найден";
+$MESS["SP_AJAX_SAVE_PAYSYSTEM_ERROR_RSRT_CURRENCY_SAVE"] = "Ошибка при сохранении ограничения по валютам";

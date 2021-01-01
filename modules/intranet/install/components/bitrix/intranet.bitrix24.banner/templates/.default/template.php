@@ -7,11 +7,11 @@ $this->SetViewTarget("sidebar", 500);
 <div class="b24-app-block b24-app-desktop">
 	<div class="b24-app-block-header"><?=GetMessage("B24_BANNER_MESSENGER_TITLE")?></div>
 	<div class="b24-app-block-content">
-		<a href="http://dl.bitrix24.com/b24/bitrix24_desktop.dmg" target="_blank" style="width: 33%;" class="b24-app-block-content-apps">
+		<a href="https://dl.bitrix24.com/b24/bitrix24_desktop.dmg" target="_blank" style="width: 33%;" class="b24-app-block-content-apps">
 			<span class="b24-app-icon b24-app-icon-macos"></span>
 			<span>Mac OS</span>
 		</a>
-		<a href="http://dl.bitrix24.com/b24/bitrix24_desktop.exe" target="_blank" style="width: 37%;" class="b24-app-block-content-apps b24-app-block-separate">
+		<a href="https://dl.bitrix24.com/b24/bitrix24_desktop.exe" target="_blank" style="width: 37%;" class="b24-app-block-content-apps b24-app-block-separate">
 			<span class="b24-app-icon b24-app-icon-windows"></span>
 			<span>Windows</span>
 		</a>

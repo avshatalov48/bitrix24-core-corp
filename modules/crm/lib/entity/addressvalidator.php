@@ -1,6 +1,9 @@
 <?php
 namespace Bitrix\Crm\Entity;
 
+use Bitrix\Crm\EntityAddress;
+use Bitrix\Location\Entity\Address;
+
 class AddressValidator extends FieldValidator
 {
 	protected $fieldsMap = null;
@@ -14,7 +17,10 @@ class AddressValidator extends FieldValidator
 	protected function getFieldValue($key)
 	{
 		$fieldName = isset($this->fieldsMap[$key]) ? $this->fieldsMap[$key] : $key;
-		return isset($this->entityFields[$fieldName]) ? $this->entityFields[$fieldName] : '';
+		return (
+			isset($this->entityFields[$fieldName])
+			&& is_string($this->entityFields[$fieldName])
+		) ? $this->entityFields[$fieldName] : '';
 	}
 
 	public function isNeedToCheck()
@@ -25,7 +31,8 @@ class AddressValidator extends FieldValidator
 			|| array_key_exists('ADDRESS_CITY', $this->entityFields)
 			|| array_key_exists('ADDRESS_REGION', $this->entityFields)
 			|| array_key_exists('ADDRESS_PROVINCE', $this->entityFields)
-			|| array_key_exists('ADDRESS_POSTAL_CODE', $this->entityFields);
+			|| array_key_exists('ADDRESS_POSTAL_CODE', $this->entityFields)
+			|| array_key_exists('ADDRESS_LOC_ADDR', $this->entityFields);
 	}
 
 	public function checkPresence(array $params = null)
@@ -41,7 +48,9 @@ class AddressValidator extends FieldValidator
 			|| $this->getFieldValue('ADDRESS_REGION') !== ''
 			|| $this->getFieldValue('ADDRESS_PROVINCE') !== ''
 			|| $this->getFieldValue('ADDRESS_POSTAL_CODE') !== ''
-			|| $this->getFieldValue('ADDRESS_LOC_ADDR_ID') !== ''
-			|| $this->getFieldValue('ADDRESS_LOC_ADDR') !== '';
+			|| $this->getFieldValue('ADDRESS_LOC_ADDR_ID') > 0
+			|| isset($this->entityFields['ADDRESS_LOC_ADDR'])
+			&& EntityAddress::isLocationModuleIncluded()
+			&& $this->entityFields['ADDRESS_LOC_ADDR'] instanceof Address;
 	}
 }

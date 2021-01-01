@@ -28,7 +28,7 @@ $APPLICATION->IncludeComponent(
 					'sberbank' => '#2C9B47',
 					'sberbank_sms' => '#289D37',
 					'alfabank' => '#EE2A23',
-					'yandex_money' => '#FFA900',
+					'yoo_money' => '#FFA900',
 					'qiwi' => '#E9832C',
 					'webmoney' => '#006FA8',
 					'embedded' => '#0697F2',

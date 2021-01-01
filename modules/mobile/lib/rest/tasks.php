@@ -87,6 +87,12 @@ class Tasks extends \IRestService
 				$lastGroups[$sgId] = $group;
 			}
 		}
+		$lastGroups = array_filter(
+			$lastGroups,
+			static function ($group) {
+				return is_array($group);
+			}
+		);
 
 		return array_values($lastGroups);
 	}

@@ -4,7 +4,7 @@
  * @package bitrix
  * @subpackage sale
  * @copyright 2001-2015 Bitrix
- * 
+ *
  * @access private
  *
  * Each method you put here you`ll be able to call as ENTITY_NAME.METHOD_NAME via AJAX and\or REST, so be careful.
@@ -23,11 +23,18 @@ final class Favorite extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	{
 		$result = array();
 
-		if($taskId = $this->checkTaskId($taskId))
+		try
 		{
-			// user can add a task ONLY to his OWN favorite-list
-			$task = new \CTaskItem($taskId, User::getId());
-			$task->addToFavorite();
+			if($taskId = $this->checkTaskId($taskId))
+			{
+				// user can add a task ONLY to his OWN favorite-list
+				$task = new \CTaskItem($taskId, User::getId());
+				$task->addToFavorite();
+			}
+		}
+		catch (\CTaskAssertException $e)
+		{
+			return $result;
 		}
 
 		return $result;
@@ -40,11 +47,18 @@ final class Favorite extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	{
 		$result = array();
 
-		if($taskId = $this->checkTaskId($taskId))
+		try
 		{
-			// user can add a task ONLY to his OWN favorite-list
-			$task = new \CTaskItem($taskId, User::getId());
-			$task->deleteFromFavorite();
+			if($taskId = $this->checkTaskId($taskId))
+			{
+				// user can add a task ONLY to his OWN favorite-list
+				$task = new \CTaskItem($taskId, User::getId());
+				$task->deleteFromFavorite();
+			}
+		}
+		catch (\CTaskAssertException $e)
+		{
+			return $result;
 		}
 
 		return $result;

@@ -10,6 +10,8 @@ use Bitrix\Tasks\CheckList\CheckListFacade;
 use Bitrix\Tasks\CheckList\Internals\CheckList;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
+use Bitrix\Tasks\Scrum\Checklist\EntityChecklistFacade;
+use Bitrix\Tasks\Scrum\Checklist\ItemChecklistFacade;
 use Bitrix\Tasks\Util\User;
 
 Loc::loadMessages(__FILE__);
@@ -44,8 +46,24 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 				'PREFIX' => 'template_options_checklist_',
 			],
 		],
+		'SCRUM_ENTITY' => [
+			'FACADE' => EntityChecklistFacade::class,
+		],
+		'SCRUM_ITEM' => [
+			'FACADE' => ItemChecklistFacade::class,
+		],
 	];
 	private static $optionsMap = [];
+
+	public function getSignature()
+	{
+		$seedPhrase = ToLower($this->getName().$this->getTemplateName());
+		if ($this->arParams['SIGNATURE_SEED'])
+		{
+			$seedPhrase = trim(ToLower($this->arParams['SIGNATURE_SEED']));
+		}
+		return preg_replace('#[^a-zA-Z0-9]#', '_', $seedPhrase).'_'.$this->getInPageNumber();
+	}
 
 	/**
 	 * @return bool

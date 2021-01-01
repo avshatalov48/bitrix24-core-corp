@@ -190,7 +190,15 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 		/** @var $error Error */
 		foreach ($this->errors as $error)
 		{
-			$result .= htmlspecialcharsbx($error->getMessage()).'<br>';
+			$errorMessage = $error->getMessage();
+			$errorMessageLines = explode('<br>', $errorMessage);
+			foreach ($errorMessageLines as $errorMessageLine)
+			{
+				if ($errorMessageLine !== '')
+				{
+					$result .= htmlspecialcharsbx($errorMessageLine) . '<br>';
+				}
+			}
 		}
 
 		return $result;
@@ -1154,7 +1162,7 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 				{
 					$this->saveData();
 				}
-				else
+				elseif ($this->isJsonResponse)
 				{
 					$this->validateData();
 				}
@@ -1621,6 +1629,7 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 				Loc::getMessage('CRM_REQUISITE_DETAILS_FORM_TITLE')
 		);
 		$params['FORM_ID'] = $this->getFormId();
+		$params['CONFIG_ID'] = $this->getFormConfigId();
 		$params['FIELDS'] = $this->prepareFormFields();
 		$params['DATA'] = $this->prepareFormData();
 		$params['READ_ONLY'] = $this->isReadOnly;
@@ -1653,6 +1662,11 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 	{
 		$formElementId = $this->requisiteId > 0 ? $this->requisiteId : $this->pseudoId;
 		return "CRM_REQUISITE_EDIT_{$formElementId}_PID{$this->presetId}";
+	}
+
+	protected function getFormConfigId()
+	{
+		return "CRM_REQUISITE_EDIT_0_PID{$this->presetId}";
 	}
 
 	protected function prepareJsParams()

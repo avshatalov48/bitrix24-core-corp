@@ -261,7 +261,7 @@ class StagesTable extends Entity\DataManager
 			),
 			'order' => array(
 				'SORT' => 'ASC'
-			)
+			),
 		));
 		while ($row = $res->fetch())
 		{

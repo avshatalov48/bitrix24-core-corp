@@ -38,15 +38,63 @@ class Helper
 	 */
 	public static function getFieldStringTypes()
 	{
-		$types = array(
+		$types = [
 			Internals\FieldTable::TYPE_ENUM_PHONE,
 			Internals\FieldTable::TYPE_ENUM_EMAIL,
 			Internals\FieldTable::TYPE_ENUM_INT,
 			Internals\FieldTable::TYPE_ENUM_FLOAT,
-		);
+		];
 
 		$names = Internals\FieldTable::getTypeList();
-		$result = array();
+		$result = [];
+		foreach($types as $type)
+		{
+			$result[$type] = $names[$type];
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Get field listable types.
+	 *
+	 * @return array
+	 */
+	public static function getFieldListableTypes()
+	{
+		$types = [
+			Internals\FieldTable::TYPE_ENUM_CHECKBOX,
+			Internals\FieldTable::TYPE_ENUM_RADIO,
+			Internals\FieldTable::TYPE_ENUM_LIST,
+			Internals\FieldTable::TYPE_ENUM_PRODUCT,
+		];
+
+		$names = Internals\FieldTable::getTypeList();
+		$result = [];
+		foreach($types as $type)
+		{
+			$result[$type] = $names[$type];
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Get field non value types.
+	 *
+	 * @return array
+	 */
+	public static function getFieldNonValueTypes()
+	{
+		$types = [
+			Internals\FieldTable::TYPE_ENUM_BR,
+			Internals\FieldTable::TYPE_ENUM_HR,
+			Internals\FieldTable::TYPE_ENUM_SECTION,
+			Internals\FieldTable::TYPE_ENUM_PAGE,
+		];
+
+		$names = Internals\FieldTable::getTypeList();
+		$result = [];
 		foreach($types as $type)
 		{
 			$result[$type] = $names[$type];

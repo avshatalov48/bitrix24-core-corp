@@ -4,7 +4,7 @@
  * @package bitrix
  * @subpackage tasks
  * @copyright 2001-2013 Bitrix
- * 
+ *
  * @deprecated
  */
 
@@ -20,7 +20,7 @@ class CTaskReminders
 {
 	const REMINDER_TRANSPORT_JABBER = "J";
 	const REMINDER_TRANSPORT_EMAIL = "E";
-	
+
 	const REMINDER_TYPE_DEADLINE = "D";
 	const REMINDER_TYPE_COMMON = "A";
 
@@ -309,8 +309,15 @@ class CTaskReminders
 						$userTo = $arReminder["USER_ID"];
 
 						// need to check access
-						$task = new CTaskItem($arReminder["TASK_ID"], $userTo);
-						if(!$task->checkCanRead()) // no access at this moment, drop reminder
+						try
+						{
+							$task = new CTaskItem($arReminder["TASK_ID"], $userTo);
+							if(!$task->checkCanRead()) // no access at this moment, drop reminder
+							{
+								$userTo = false;
+							}
+						}
+						catch (CTaskAssertException $e)
 						{
 							$userTo = false;
 						}
@@ -346,7 +353,7 @@ class CTaskReminders
 
 							if (
 								$arReminder["TRANSPORT"] == self::REMINDER_TRANSPORT_EMAIL
-								|| !CModule::IncludeModule("socialnetwork") 
+								|| !CModule::IncludeModule("socialnetwork")
 								|| !CTaskReminders::__SendJabberReminder($arUser["ID"], $arTask)
 							)
 							{
@@ -372,10 +379,10 @@ class CTaskReminders
 			$reminderMessage = str_replace(
 				array(
 					"#TASK_TITLE#"
-				), 
+				),
 				array(
 					$arTask["TITLE"]
-				), 
+				),
 				GetMessage("TASKS_REMINDER")
 			);
 

@@ -3,6 +3,7 @@
 namespace Bitrix\Location\Infrastructure;
 
 use Bitrix\Location\Entity\Address;
+use Bitrix\Location\Entity\Source\Factory;
 use Bitrix\Location\Model\AddressTable;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Loader;
@@ -67,13 +68,22 @@ final class AddressLimit
 
 		if($location = $address->getLocation())
 		{
-			if($location->getSourceCode() === 'GOOGLE')
+			if(static::isSourceLimited($location->getSourceCode()))
 			{
 				$result = true;
 			}
 		}
 
 		return  $result;
+	}
+
+	/**
+	 * @param string $code
+	 * @return bool
+	 */
+	public static function isSourceLimited(string $code): bool
+	{
+		return $code === Factory::GOOGLE_SOURCE_CODE;
 	}
 
 	private static function getLimitValue(): int

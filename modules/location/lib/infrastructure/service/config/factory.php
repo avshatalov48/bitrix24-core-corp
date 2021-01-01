@@ -2,9 +2,9 @@
 
 namespace Bitrix\Location\Infrastructure\Service\Config;
 
-use Bitrix\Location\Common\CachedPool;
-use Bitrix\Location\Common\Pool;
+use Bitrix\Location\Entity\Source;
 use Bitrix\Location\Infrastructure\Service\LoggerService;
+use Bitrix\Location\Infrastructure\SourceCodePicker;
 use Bitrix\Location\Repository\AddressRepository;
 use	Bitrix\Location\Exception\ErrorCodes;
 use Bitrix\Location\Repository\Format\DataCollection;
@@ -12,7 +12,6 @@ use Bitrix\Location\Repository\FormatRepository;
 use Bitrix\Location\Repository;
 use Bitrix\Location\Repository\Location\Database;
 use Bitrix\Location\Service\SourceService;
-use Bitrix\Location\Source;
 use Bitrix\Location\Repository\Location\Strategy\Delete;
 use Bitrix\Location\Repository\Location\Strategy\Find;
 use Bitrix\Location\Repository\Location\Strategy\Save;
@@ -22,7 +21,6 @@ use Bitrix\Location\Infrastructure\Service\ErrorService;
 use Bitrix\Location\Service\FormatService;
 use Bitrix\Location\Service\LocationService;
 use Bitrix\Main\Config\Option;
-use Bitrix\Main\Web\HttpClient;
 
 class Factory implements IFactory
 {
@@ -57,6 +55,11 @@ class Factory implements IFactory
 		self::$delegate = $factory;
 	}
 
+	protected static function getLogLevel(): int
+	{
+		return (int)Option::get('location', 'log_level', LoggerService\LogLevel::ERROR);
+	}
+
 	protected static function getServiceConfig(string $serviceType)
 	{
 		switch ($serviceType)
@@ -64,8 +67,7 @@ class Factory implements IFactory
 			case LoggerService::class:
 				$result = [
 					'logger' => new LoggerService\CEventLogger(),
-					// todo: module option
-					'logLevel'=> LoggerService\LogLevel::ERROR,
+					'logLevel'=> static::getLogLevel(),
 					'eventsToLog' => []
 				];
 				break;
@@ -94,14 +96,18 @@ class Factory implements IFactory
 
 			case SourceService::class:
 				$result = [
-					'source' => self::obtainSource()
+					'source' => self::obtainSource(
+						SourceCodePicker::getSourceCode()
+					)
 				];
 				break;
 
 			case LocationService::class:
 				$result = [
 					'repository' => static::createLocationRepository(
-						self::obtainSource()
+						self::obtainSource(
+							SourceCodePicker::getSourceCode()
+						)
 					)
 				];
 				break;
@@ -114,11 +120,11 @@ class Factory implements IFactory
 	}
 
 	/**
-	 * @param Source\BaseSource|null  $source
+	 * @param Source|null $source
 	 * @return LocationRepository
 	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
-	private static function createLocationRepository(Source\BaseSource $source = null): LocationRepository
+	private static function createLocationRepository(Source $source = null): LocationRepository
 	{
 		$cacheTTL = 2592000; //month
 		$poolSize = 30;
@@ -139,7 +145,7 @@ class Factory implements IFactory
 
 		if($source)
 		{
-			$repositories[] = $source->getRepository();
+			$repositories[] = $source->makeRepository();
 		}
 
 		return new LocationRepository(
@@ -149,53 +155,17 @@ class Factory implements IFactory
 		);
 	}
 
-	private static function obtainSource(): ?Source\BaseSource
+	/**
+	 * @param string $code
+	 * @return Source|null
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private static function obtainSource(string $code): ?Source
 	{
-		if(Option::get('location', 'use_google_api', 'Y') === 'N')
-		{
-			return null;
-		}
-
-		static $result = null;
-
-		if($result === null)
-		{
-			$httpClient = new HttpClient([
-				"version" => "1.1",
-				"socketTimeout" => 30,
-				"streamTimeout" => 30,
-				"redirect" => true,
-				"redirectMax" => 5,
-			]);
-
-			if(defined('LOCATION_GOOGLE_PROXY_HOST'))
-			{
-				$proxyHost = LOCATION_GOOGLE_PROXY_HOST;
-				$proxyPort = null;
-
-				if(defined('LOCATION_GOOGLE_PROXY_PORT'))
-				{
-					$proxyPort = LOCATION_GOOGLE_PROXY_PORT;
-				}
-
-				$httpClient->setProxy($proxyHost, $proxyPort);
-			}
-
-			$cacheTTL = 2592000; //month
-			$poolSize = 100;
-			$pool = new Pool($poolSize);
-
-			$cachePool = new CachedPool(
-				$pool,
-				$cacheTTL,
-				'locationSourceGoogleRequester',
-				\Bitrix\Main\Data\Cache::createInstance(),
-				\Bitrix\Main\EventManager::getInstance()
-			);
-
-			$result = new Source\Google\GoogleSource($httpClient, $cachePool);
-		}
-
-		return $result;
+		return (new Repository\SourceRepository(
+			new Source\OrmConverter()
+		))->findByCode($code);
 	}
 }

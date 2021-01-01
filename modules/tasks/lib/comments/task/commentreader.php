@@ -4,10 +4,9 @@ namespace Bitrix\Tasks\Comments\Task;
 use Bitrix\Main;
 use Bitrix\Tasks\Comments;
 use Bitrix\Tasks\Comments\Internals\Comment;
-use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Internals\Task\ViewedTable;
-use Bitrix\Tasks\Internals\TaskObject;
 use Bitrix\Tasks\Util\User;
 
 /**
@@ -78,15 +77,21 @@ class CommentReader
 	 */
 	private function fillTaskData(): void
 	{
-		if (!$this->taskId || !($task = TaskObject::loadById($this->taskId)))
+		if (!$this->taskId)
 		{
 			return;
 		}
 
-		$this->members = $task->getMembersByRoles();
+		$task = TaskRegistry::getInstance()->get($this->taskId, true);
+		if (!$task)
+		{
+			return;
+		}
+
+		$this->members = $task['MEMBER_LIST'];
 		$this->getUserNames(array_map(
 			static function($member) {
-				return $member->getUserId();
+				return $member['USER_ID'];
 			},
 			$this->members
 		));
@@ -113,7 +118,7 @@ class CommentReader
 
 		foreach ($this->members as $member)
 		{
-			$memberId = $member->getUserId();
+			$memberId = $member['USER_ID'];
 
 			if (
 				array_key_exists($memberId, $commentsCountByUser)
@@ -154,16 +159,16 @@ class CommentReader
 				case 'COMMENT_POSTER_COMMENT_TASK_EXPIRED_V2':
 					foreach ($this->members as $member)
 					{
-						$usersToSkipReading[] = $member->getUserId();
+						$usersToSkipReading[] = $member['USER_ID'];
 					}
 					break;
 
 				case 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_RESPONSIBLE_ID':
 					foreach ($this->members as $member)
 					{
-						if ($member->getType() === MemberTable::MEMBER_TYPE_RESPONSIBLE)
+						if ($member['TYPE'] === MemberTable::MEMBER_TYPE_RESPONSIBLE)
 						{
-							$usersToSkipReading[] = $member->getUserId();
+							$usersToSkipReading[] = $member['USER_ID'];
 						}
 					}
 					break;
@@ -171,9 +176,9 @@ class CommentReader
 				case 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_CREATED_BY':
 					foreach ($this->members as $member)
 					{
-						if ($member->getType() === MemberTable::MEMBER_TYPE_ORIGINATOR)
+						if ($member['TYPE'] === MemberTable::MEMBER_TYPE_ORIGINATOR)
 						{
-							$usersToSkipReading[] = $member->getUserId();
+							$usersToSkipReading[] = $member['USER_ID'];
 						}
 					}
 					break;
@@ -185,9 +190,9 @@ class CommentReader
 					];
 					foreach ($this->members as $member)
 					{
-						if (in_array($member->getType(), $rolesToSkip, true))
+						if (in_array($member['TYPE'], $rolesToSkip, true))
 						{
-							$usersToSkipReading[] = $member->getUserId();
+							$usersToSkipReading[] = $member['USER_ID'];
 						}
 					}
 					break;
@@ -287,7 +292,7 @@ class CommentReader
 		];
 		foreach ($this->members as $member)
 		{
-			$res[$member->getType()][] = $member->getUserId();
+			$res[$member['TYPE']][] = $member['USER_ID'];
 		}
 		return $res;
 	}

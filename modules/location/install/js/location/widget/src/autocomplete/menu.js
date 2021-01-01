@@ -5,6 +5,14 @@ export default class Menu extends MainMenu
 {
 	choseItemIdx = -1;
 
+	constructor(options)
+	{
+		super(options);
+
+		const elRect = options.bindElement.getBoundingClientRect();
+		this.popupWindow.setMaxWidth(elRect.width);
+	}
+
 	isMenuEmpty(): boolean
 	{
 		return this.menuItems.length <= 0;

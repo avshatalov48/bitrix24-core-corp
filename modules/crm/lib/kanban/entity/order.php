@@ -16,6 +16,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
+use Bitrix\Main\UI\Filter\FieldAdapter;
 
 class Order extends Entity
 {
@@ -386,7 +387,12 @@ class Order extends Entity
 		}
 	}
 
-	public function checkUpdatePermissions(int $id, \CCrmPerms $permissions): bool
+	public function checkReadPermissions(int $id = 0, ?\CCrmPerms $permissions = null): bool
+	{
+		return \Bitrix\Crm\Order\Permissions\Order::checkReadPermission();
+	}
+
+	public function checkUpdatePermissions(int $id, ?\CCrmPerms $permissions = null): bool
 	{
 		return \Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($id, $permissions);
 	}
@@ -440,5 +446,80 @@ class Order extends Entity
 		}
 
 		return $result;
+	}
+
+	protected function getPopupGeneralFields(): array
+	{
+		$result = [];
+
+		$filter = $this->getFilter();
+		foreach ($filter->getFields() as $field)
+		{
+			if(strpos($field->getId(), "PROPERTY_") === 0)
+			{
+				continue;
+			}
+
+			$result[$field->getId()] = FieldAdapter::adapt($field->toArray(
+				['lightweight' => true]
+			));
+		}
+
+		return $result;
+	}
+
+	protected function getPopupAdditionalFields(): array
+	{
+		$result = parent::getPopupAdditionalFields();
+
+		$additionalFields = [
+			'TITLE' =>  Loc::getMessage('CRM_KANBAN_FIELD_ORDER_TITLE'),
+			'PAYMENT' =>  Loc::getMessage('CRM_KANBAN_FIELD_ORDER_PAYMENTS'),
+			'SHIPMENT' =>  Loc::getMessage('CRM_KANBAN_FIELD_ORDER_SHIPMENTS'),
+			'PROBLEM_NOTIFICATION' =>  Loc::getMessage('CRM_KANBAN_FIELD_ORDER_PROBLEM_NOTIFICATION'),
+		];
+		foreach ($additionalFields as $fieldName => $fieldLabel)
+		{
+			$result[$fieldName] =  [
+				'ID' => 'field_' . $fieldName,
+				'NAME' => $fieldName,
+				'LABEL' => $fieldLabel
+			];
+		}
+
+		$propertiesRaw = \Bitrix\Crm\Order\Property::getList(
+			array(
+				'filter' => array(
+					'=ACTIVE' => 'Y',
+					'=TYPE' => ['STRING', 'NUMBER', 'Y/N', 'ENUM', 'DATE']
+				),
+				'order' => array(
+					"PERSON_TYPE_ID" => "ASC", "SORT" => "ASC"
+				),
+				'select' => array(
+					"ID", "NAME", "PERSON_TYPE_NAME" => "PERSON_TYPE.NAME", "LID" => "PERSON_TYPE.LID", "PERSON_TYPE_ID"
+				),
+			)
+		);
+
+		while ($property = $propertiesRaw->fetch())
+		{
+			$fieldName = 'PROPERTY_'.$property['ID'];
+			$fieldLabel = htmlspecialcharsbx("{$property['NAME']} ({$property['PERSON_TYPE_NAME']}) [{$property['LID']}]");
+			$result[$fieldName] =  [
+				'ID' => 'field_' . $fieldName,
+				'NAME' => $fieldName,
+				'LABEL' => $fieldLabel
+			];
+		}
+
+		return $result;
+	}
+
+	protected function getPopupHiddenFields(): array
+	{
+		return array_merge(parent::getPopupHiddenFields(), [
+			'COUPON', 'PAY_SYSTEM', 'DELIVERY_SERVICE', 'CREATED_BY', 'SHIPMENT_TRACKING_NUMBER', 'SHIPMENT_DELIVERY_DOC_DATE'
+		]);
 	}
 }

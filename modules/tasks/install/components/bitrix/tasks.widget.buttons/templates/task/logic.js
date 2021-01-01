@@ -207,6 +207,36 @@ BX.namespace('Tasks.Component');
 					});
 					this.doDynamicTaskAction(code, args);
 				}
+				else if(code == 'COMPLETE')
+				{
+					var taskCompletePromise = new BX.Promise();
+
+					if (this.option('isScrumTask'))
+					{
+						if (typeof BX.Tasks.Scrum === 'undefined' || typeof BX.Tasks.Scrum.ScrumDod === 'undefined')
+						{
+							taskCompletePromise.fulfill();
+						}
+
+						this.scrumDod = new BX.Tasks.Scrum.ScrumDod({
+							groupId: this.option('groupId')
+						});
+
+						var choiceMadePromise = this.scrumDod.showList(this.option('taskId'));
+						choiceMadePromise.then(function() {
+							taskCompletePromise.fulfill();
+						}.bind(this));
+					}
+					else
+					{
+						taskCompletePromise.fulfill();
+					}
+
+					taskCompletePromise.then(function() {
+						this.doDynamicTaskAction(code, args);
+						this.reFetchTaskData(code);
+					}.bind(this));
+				}
 				else
 				{
 					this.doDynamicTaskAction(code, args);
@@ -547,8 +577,8 @@ BX.namespace('Tasks.Component');
 
 					menu.push({
 						code: '',
-						text: BX.message('TASKS_REST_BUTTON_TITLE'),
-						title: BX.message('TASKS_REST_BUTTON_TITLE'),
+						text: BX.message('TASKS_REST_BUTTON_TITLE_2'),
+						title: BX.message('TASKS_REST_BUTTON_TITLE_2'),
 						className: 'menu-popup-item-',
 						items: items
 					});

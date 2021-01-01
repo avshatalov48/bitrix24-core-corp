@@ -116,7 +116,7 @@ class Comment
 	 */
 	public function addPart(string $partName, $text, array $data): Part
 	{
-		$part = new Part($partName, $text, $data);
+		$part = new Part($partName, $text?:"", $data);
 		$this->parts->offsetSet($partName, $part);
 
 		return $part;

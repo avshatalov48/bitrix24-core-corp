@@ -504,12 +504,22 @@ class File extends BaseObject
 			return true;
 		}
 
-		if(!$objectLock->canUnlock($unlockedBy))
+		if (!$objectLock->canUnlock($unlockedBy))
 		{
-			$this->errorCollection[] = new Error(
-				Loc::getMessage('DISK_FILE_MODEL_ERROR_INVALID_USER_FOR_UNLOCK'),
-				self::ERROR_INVALID_USER_FOR_UNLOCK
-			);
+			$createLockUser = $objectLock->getCreateUser();
+			if ($createLockUser)
+			{
+				$this->errorCollection->addOne(new Error(Loc::getMessage('DISK_FILE_MODEL_ERROR_INVALID_USER_FOR_UNLOCK_2', [
+					'#USER#' => "<a href='{$createLockUser->getDetailUrl()}'>" . htmlspecialcharsbx($createLockUser->getFormattedName()) . "</a>",
+				]), self::ERROR_INVALID_USER_FOR_UNLOCK));
+			}
+			else
+			{
+				$this->errorCollection->addOne(new Error(
+					Loc::getMessage('DISK_FILE_MODEL_ERROR_INVALID_USER_FOR_UNLOCK'),
+					self::ERROR_INVALID_USER_FOR_UNLOCK
+				));
+			}
 			return false;
 		}
 
@@ -1342,11 +1352,10 @@ class File extends BaseObject
 		if(!$this->isLink())
 		{
 			//todo potential - very hard operation.
-			foreach(File::getModelList(array('filter' => array('REAL_OBJECT_ID' => $this->id, '!=REAL_OBJECT_ID' => $this->id))) as $link)
+			foreach(File::getModelList(array('filter' => array('REAL_OBJECT_ID' => $this->id))) as $link)
 			{
 				$link->delete($deletedBy);
 			}
-			unset($link);
 		}
 
 		$event = new Event(Driver::INTERNAL_MODULE_ID, "onAfterDeleteFile", array($this->getId(), $deletedBy, array(

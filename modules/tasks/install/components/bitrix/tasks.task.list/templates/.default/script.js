@@ -248,13 +248,9 @@ BX.Tasks.GridActions = {
             bTime: true,
             currentTime: Math.round((new Date()) / 1000) - (new Date()).getTimezoneOffset() * 60,
             bHideTimebar: true,
+			bCompatibility: false,
             callback_after: (function (node, taskId) {
-                return function (value, bTimeIn) {
-                    var bTime = true;
-
-                    if (typeof bTimeIn !== 'undefined')
-                        bTime = bTimeIn;
-
+                return function (value) {
                     var path = BX.CJSTask.ajaxUrl;
 					BX.CJSTask.ajaxUrl = BX.CJSTask.ajaxUrl + '&_CODE=CHANGE_DEADLINE&viewType=VIEW_MODE_LIST';
                     BX.CJSTask.batchOperations(
@@ -263,7 +259,7 @@ BX.Tasks.GridActions = {
                                 operation: 'CTaskItem::update()',
                                 taskData: {
                                     ID: taskId,
-                                    DEADLINE: BX.calendar.ValueToString(value, bTime)
+                                    DEADLINE: BX.calendar.ValueToString(value, true)
                                 }
                             }
                         ],
@@ -807,6 +803,13 @@ BX(function() {
 			{
 				this.checkTask(data.TASK_ID.toString(), {action: this.actions.taskUpdate});
 			}
+			else if (
+				data.params.removedParticipants.includes(this.ownerId.toString())
+				&& (!this.groupId || this.groupId !== Number(data.AFTER.GROUP_ID))
+			)
+			{
+				this.removeItem(data.TASK_ID.toString());
+			}
 		},
 
 		onPullTaskRemove: function(data)
@@ -1311,7 +1314,7 @@ BX(function() {
 			additional: {ROLEID: (roleId === 'view_all' ? 0 : roleId)}
 		};
 		var filterApi = filterManager.getApi();
-		filterApi.setFilter(fields);
+		filterApi.setFilter(fields, {ROLE_TYPE: 'TASKS_ROLE_TYPE_' + (roleId === '' ? 'view_all' : roleId)});
 
 		window.history.pushState(null, null, url);
 	});
@@ -1333,7 +1336,7 @@ BX(function() {
 				PROBLEM: counterId
 			};
 			filterApi.setFields(fields);
-			filterApi.apply();
+			filterApi.apply({COUNTER_TYPE: 'TASKS_COUNTER_TYPE_' + counterId});
 		}
 		else
 		{

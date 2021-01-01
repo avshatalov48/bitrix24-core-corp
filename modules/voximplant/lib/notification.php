@@ -2,6 +2,11 @@
 
 namespace Bitrix\Voximplant;
 
+use Bitrix\Bitrix24\Feature;
+use Bitrix\Main\Data\LocalStorage\SessionLocalStorage;
+use Bitrix\Main\Data\LocalStorage\SessionLocalStorageManager;
+use Bitrix\Main\Loader;
+
 class Notification
 {
 	public static function isBalanceTooLow()
@@ -35,5 +40,38 @@ class Notification
 		}
 
 		return (\CVoxImplantPhone::getRentedNumbersCount() > 0 && $hasCallsInLastFiveDays && $balanceThreshold > 0 && $balance < $balanceThreshold);
+	}
+
+	/**
+	 * @return string|false
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public static function shouldShowWarningForFreePortals($ignoreClosed = false)
+	{
+		if (Limits::canManageTelephony(false))
+		{
+			return false;
+		}
+
+		if (!$ignoreClosed)
+		{
+			$ls = \Bitrix\Main\Application::getInstance()->getLocalSession('telephony_notification_free_plan');
+			if ($ls->get('closed') === 'Y')
+			{
+				return false;
+			}
+		}
+
+		if (\CVoxImplantPhone::getRentedNumbersCount() > 0)
+		{
+			return 'rent';
+		}
+		if (\CVoxImplantSip::hasConnection())
+		{
+			return 'sip';
+		}
+		$account = new \CVoxImplantAccount();
+		$balance = $account->getAccountBalance(false);
+		return $balance > 0 ? 'rent' : false;
 	}
 }

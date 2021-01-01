@@ -28,62 +28,71 @@
 			this.isFireUserEnabled = params.isFireUserEnabled === "Y";
 			this.showSonetAdmin = params.showSonetAdmin === "Y";
 			this.languageId = params.languageId;
+			this.initialFields = params.initialFields;
 			this.siteId = params.siteId;
 			this.isCloud = params.isCloud === "Y";
 			this.isRusCloud = params.isRusCloud === "Y";
 			this.isCurrentUserIntegrator = params.isCurrentUserIntegrator === "Y";
+			this.personalMobile = this.initialFields["PERSONAL_MOBILE"];
 
-			this.tagsManagerInstance = new namespace.Tags({
+			this.entityEditorInstance = new namespace.EntityEditor({
 				managerInstance: this,
-				inputNode: document.getElementById('intranet-user-profile-tags-input'),
-				tagsNode: document.getElementById('intranet-user-profile-tags')
+				params: params
 			});
 
-			this.stressLevelManagerInstance = new namespace.StressLevel({
-				managerInstance: this,
-				options: params
-			});
+			BX.ready(function () {
+				this.tagsManagerInstance = new namespace.Tags({
+					managerInstance: this,
+					inputNode: document.getElementById('intranet-user-profile-tags-input'),
+					tagsNode: document.getElementById('intranet-user-profile-tags')
+				});
 
-			this.gratsManagerInstance = new namespace.Grats({
-				managerInstance: this,
-				options: params
-			});
+				this.stressLevelManagerInstance = new namespace.StressLevel({
+					managerInstance: this,
+					options: params
+				});
 
-			this.profilePostManagerInstance = new namespace.ProfilePost({
-				managerInstance: this,
-				options: params
-			});
+				this.gratsManagerInstance = new namespace.Grats({
+					managerInstance: this,
+					options: params
+				});
 
+				this.profilePostManagerInstance = new namespace.ProfilePost({
+					managerInstance: this,
+					options: params
+				});
 
-			this.initAvailableActions();
-			this.initAvatarLoader();
+				this.initAvailableActions();
+				this.initAvatarLoader();
+				this.initAppsInstall();
 
-			var subordinateMoreButton = BX("intranet-user-profile-subordinate-more");
-			if (BX.type.isDomNode(subordinateMoreButton))
-			{
-				BX.bind(subordinateMoreButton, "click", function () {
-					this.loadMoreUsers(subordinateMoreButton);
-				}.bind(this));
-			}
+				var subordinateMoreButton = BX("intranet-user-profile-subordinate-more");
+				if (BX.type.isDomNode(subordinateMoreButton))
+				{
+					BX.bind(subordinateMoreButton, "click", function () {
+						this.loadMoreUsers(subordinateMoreButton);
+					}.bind(this));
+				}
 
-			var managerMoreButton = BX("intranet-user-profile-manages-more");
-			if (BX.type.isDomNode(subordinateMoreButton))
-			{
-				BX.bind(managerMoreButton, "click", function () {
-					this.loadMoreUsers(managerMoreButton);
-				}.bind(this));
-			}
+				var managerMoreButton = BX("intranet-user-profile-manages-more");
+				if (BX.type.isDomNode(subordinateMoreButton))
+				{
+					BX.bind(managerMoreButton, "click", function () {
+						this.loadMoreUsers(managerMoreButton);
+					}.bind(this));
+				}
 
-			//hack for form view button
-			var bottomContainer = document.querySelector('.intranet-user-profile-bottom-controls');
-			var cardButton = document.getElementById('intranet-user-profile_buttons');
-			if (BX.type.isDomNode(bottomContainer) && BX.type.isDomNode(cardButton))
-			{
-				var cardButtonLink = cardButton.querySelector('.ui-entity-settings-link');
-				cardButtonLink.setAttribute('class', 'ui-btn ui-btn-xs ui-btn-light-border ui-btn-themes');
-				cardButton.parentNode.removeChild(cardButton);
-				bottomContainer.appendChild(cardButtonLink);
-			}
+				//hack for form view button
+				var bottomContainer = document.querySelector('.intranet-user-profile-bottom-controls');
+				var cardButton = document.getElementById('intranet-user-profile_buttons');
+				if (BX.type.isDomNode(bottomContainer) && BX.type.isDomNode(cardButton))
+				{
+					var cardButtonLink = cardButton.querySelector('.ui-entity-settings-link');
+					cardButtonLink.setAttribute('class', 'ui-btn ui-btn-xs ui-btn-light-border ui-btn-themes');
+					cardButton.parentNode.removeChild(cardButton);
+					bottomContainer.appendChild(cardButtonLink);
+				}
+			}.bind(this));
 		},
 
 		initAvailableActions: function()
@@ -131,6 +140,25 @@
 					this.showConfirmPopup(BX.message("INTRANET_USER_PROFILE_PHOTO_DELETE_CONFIRM"), this.deletePhoto.bind(this));
 				}
 			}, this))
+		},
+
+		initAppsInstall: function()
+		{
+			var androidIcon = document.querySelector("[data-role='profile-android-app']");
+			if (BX.type.isDomNode(androidIcon))
+			{
+				BX.bind(androidIcon, "click", BX.proxy(function () {
+					this.showSmsPopup(this.personalMobile);
+				}, this));
+			}
+
+			var iosIcon = document.querySelector("[data-role='profile-ios-app']");
+			if (BX.type.isDomNode(iosIcon))
+			{
+				BX.bind(iosIcon, "click", BX.proxy(function () {
+					this.showSmsPopup(this.personalMobile);
+				}, this));
+			}
 		},
 
 		showActionPopup: function(bindElement)
@@ -338,6 +366,46 @@
 						this.destroy();
 					}
 				}
+			}).show();
+		},
+
+		showFireInvitedUserPopup: function(callback)
+		{
+			BX.PopupWindowManager.create({
+				id: "intranet-user-profile-fire-invited-popup",
+				content:
+					BX.create("div", {
+						props : {
+							style : "max-width: 450px"
+						},
+						html: BX.message('INTRANET_USER_PROFILE_FIRE_INVITED_USER')
+					}),
+				closeIcon : true,
+				lightShadow : true,
+				offsetLeft : 100,
+				overlay : false,
+				contentPadding: 10,
+				buttons: [
+					new BX.UI.CreateButton({
+						text: BX.message("INTRANET_USER_PROFILE_YES"),
+						events: {
+							click: function (button) {
+								button.setWaiting();
+								this.context.close();
+								callback();
+							}
+						}
+					}),
+
+					new BX.UI.CancelButton({
+						text : BX.message("INTRANET_USER_PROFILE_NO"),
+						events : {
+							click: function () {
+								this.context.close();
+							}
+						}
+					})
+				]
 			}).show();
 		},
 
@@ -576,7 +644,8 @@
 				}
 			}, function (response) {
 				this.hideLoader({loader: loader});
-				this.showErrorPopup(response["errors"][0].message);
+				//this.showErrorPopup(response["errors"][0].message);
+				this.showFireInvitedUserPopup(this.fireUser.bind(this));
 			}.bind(this));
 		},
 
@@ -791,6 +860,83 @@
 					params.callback();
 				}
 			}.bind(this));
+		},
+
+		showSmsPopup: function (personalMobile)
+		{
+			BX.PopupWindowManager.create({
+				id: "intranet-user-profile-sms-popup",
+				className: "intranet-user-profile-popup",
+				titleBar: BX.message("INTRANET_USER_PROFILE_APP_INSTALL"),
+				maxWidth: 450,
+				contentColor: "white",
+				content:
+					BX.create("div", {
+						children: [
+							BX.create("div", {
+								props: {
+									className: "intranet-user-profile-popup-title"
+								},
+								html: BX.message("INTRANET_USER_PROFILE_APP_PHONE")
+							}),
+							BX.create('div', {
+								props: {
+									className: 'ui-ctl ui-ctl-textbox ui-ctl-wa'
+								},
+								children: [
+									BX.create('input', {
+										props: {
+											value: personalMobile,
+											className: 'ui-ctl-element',
+											type: "text"
+										},
+										events: {
+											"input" : function () {
+												personalMobile = this.value;
+											}
+										}
+									})
+								]
+							}),
+							BX.create("div", {
+								props: {
+									className: "intranet-user-profile-popup-text"
+								},
+								html: BX.message("INTRANET_USER_PROFILE_APP_INSTALL_TEXT")
+							})
+						]
+					}),
+				closeIcon : true,
+				contentPadding: 10,
+				buttons: [
+					new BX.UI.CreateButton({
+						text: BX.message("INTRANET_USER_PROFILE_APP_SEND"),
+						className: "ui-btn-primary",
+						events: {
+							click: BX.proxy(function (button) {
+								button.setWaiting();
+								var popup = button.context;
+
+								BX.ajax.runAction('intranet.controller.sms.sendsmsforapp', {
+									data: {
+										phone: personalMobile
+									}
+								}).then(function (response) {
+									popup.close();
+								}.bind(this), function (response) {
+									popup.close();
+								}.bind(this));
+							}, this)
+						}
+					})
+				],
+				events : {
+					onPopupClose: function ()
+					{
+						this.destroy();
+					}
+				}
+			}).show();
 		}
 	}
 })();

@@ -65,28 +65,28 @@ class Form
 			);
 		}
 
-		$personalBirthdayFormat = "j F Y";
+		$culture = \Bitrix\Main\Context::getCurrent()->getCulture();
+		$personalBirthdayFormat = $culture->getLongDateFormat();
+		$dateTimeFormat = $culture->getLongDateFormat().' '.$culture->getShortTimeFormat();
+
 		if (ModuleManager::isModuleInstalled('bitrix24'))
 		{
-			if ($user["PERSONAL_GENDER"] === "F")
+			if (\Bitrix\Main\Config\Option::get("intranet", "show_year_for_female", "N") === "N")
 			{
-				if (\Bitrix\Main\Config\Option::get("intranet", "show_year_for_female", "N") === "N")
-				{
-					$personalBirthdayFormat = "j F";
-				}
+				$personalBirthdayFormat = $culture->getDayMonthFormat();
 			}
 		}
 		elseif (isset($componentParams['SHOW_YEAR']))
 		{
 			if (
-				$componentParams['SHOW_YEAR'] == 'N'
+				$componentParams['SHOW_YEAR'] === 'N'
 				|| (
-					$componentParams['SHOW_YEAR'] == 'M'
-					&& $user["PERSONAL_GENDER"] != "M"
+					$componentParams['SHOW_YEAR'] === 'M'
+					&& $user["PERSONAL_GENDER"] !== "M"
 				)
 			)
 			{
-				$personalBirthdayFormat = "j F";
+				$personalBirthdayFormat = $culture->getDayMonthFormat();
 			}
 		}
 
@@ -249,14 +249,22 @@ class Form
 			"title" => Loc::getMessage("INTRANET_USER_PROFILE_FIELD_DATE_REGISTER"),
 			"name" => "DATE_REGISTER",
 			"type" => "datetime",
-			"editable" => false
+			"editable" => false,
+			"data" =>  array(
+				"enableTime" => true,
+				"dateViewFormat" => $dateTimeFormat
+			)
 		);
 
 		$fields[] = array(
 			"title" => Loc::getMessage("INTRANET_USER_PROFILE_FIELD_LAST_ACTIVITY_DATE"),
 			"name" => "LAST_ACTIVITY_DATE",
 			"type" => "datetime",
-			"editable" => false
+			"editable" => false,
+			"data" =>  array(
+				"enableTime" => true,
+				"dateViewFormat" => $dateTimeFormat
+			)
 		);
 
 		if (!ModuleManager::isModuleInstalled("bitrix24"))

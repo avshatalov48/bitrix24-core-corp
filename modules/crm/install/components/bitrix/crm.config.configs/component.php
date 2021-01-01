@@ -351,6 +351,13 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 				);
 			}
 
+			if(isset($_POST['WEBFORM_EDITOR']))
+			{
+				\Bitrix\Crm\Settings\WebFormSettings::getCurrent()->setEditorId(
+					(int) $_POST['WEBFORM_EDITOR'] ?? 0
+				);
+			}
+
 			if(isset($_POST['ENABLE_EXPORT_EVENT']))
 			{
 				\Bitrix\Crm\Settings\HistorySettings::getCurrent()->enableExportEvent(
@@ -707,6 +714,21 @@ $arResult['FIELDS']['tab_main'][] = array(
 	'name' => GetMessage('CRM_FIELD_CONVERSION_ENABLE_AUTOCREATION'),
 	'type' => $conversionEnableAutocreationType,
 	'value' => $conversionEnableAutocreationValue,
+	'required' => false
+);
+
+$arResult['FIELDS']['tab_main'][] = array(
+	'id' => 'WEBFORM_CONFIG',
+	'name' => GetMessage('CRM_SECTION_WEBFORM_CONFIG'),
+	'type' => 'section'
+);
+
+$arResult['FIELDS']['tab_main'][] = array(
+	'id' => 'WEBFORM_EDITOR',
+	'name' => GetMessage('CRM_FIELD_WEBFORM_EDITOR'),
+	'type' => 'list',
+	'items' => Settings\WebFormSettings::getEditorItems(),
+	'value' => Settings\WebFormSettings::getCurrent()->getEditorId(),
 	'required' => false
 );
 

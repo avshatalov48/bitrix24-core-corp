@@ -177,12 +177,17 @@ abstract class CheckListFacade
 			Join::on('this.ID', 'ref.CHILD_ID')->where('ref.LEVEL', 1),
 			['join_type' => 'LEFT']
 		));
-		$query->registerRuntimeField('', new ReferenceField(
-			'IM',
-			static::getCheckListMemberDataController(),
-			Join::on('this.ID', 'ref.ITEM_ID'),
-			['join_type' => 'LEFT']
-		));
+
+		$checkListMemberDataController = static::getCheckListMemberDataController();
+		if ($checkListMemberDataController)
+		{
+			$query->registerRuntimeField('', new ReferenceField(
+				'IM',
+				$checkListMemberDataController,
+				Join::on('this.ID', 'ref.ITEM_ID'),
+				['join_type' => 'LEFT']
+			));
+		}
 
 		$res = $query->exec();
 
@@ -505,17 +510,25 @@ abstract class CheckListFacade
 		$dataControllers = [
 			static::getCheckListDataController(),
 			static::getCheckListTreeDataController(),
-			static::getCheckListMemberDataController(),
 		];
+
+		$checkListMemberDataController = static::getCheckListMemberDataController();
+		if ($checkListMemberDataController)
+		{
+			$dataControllers[] = $checkListMemberDataController;
+		}
 
 		foreach ($dataControllers as $controller)
 		{
 			$controller::deleteByCheckListsIds($checkListsIds);
 		}
 
-		foreach ($checkLists as $id)
+		if (static::$userFieldsEntityIdName)
 		{
-			$USER_FIELD_MANAGER->Delete(static::$userFieldsEntityIdName, $id);
+			foreach ($checkLists as $id)
+			{
+				$USER_FIELD_MANAGER->Delete(static::$userFieldsEntityIdName, $id);
+			}
 		}
 	}
 
@@ -1341,7 +1354,7 @@ abstract class CheckListFacade
 	 * @param array $items
 	 * @return mixed
 	 */
-	protected static function fillActionsForItems($entityId, $userId, $items)
+	public static function fillActionsForItems($entityId, $userId, $items)
 	{
 		if (empty($items))
 		{

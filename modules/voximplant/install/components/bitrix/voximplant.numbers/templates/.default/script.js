@@ -5,9 +5,10 @@
 
 	var defaults = {
 		gridId: '',
-		numbers: null,
-		users: null,
-		isPhoneAllowed: null
+		numbers: {},
+		users: {},
+		isPhoneAllowed: false,
+		lastGridUrl: null,
 	};
 
 	BX.Voximplant.UserEditor = function(config)
@@ -15,6 +16,7 @@
 		this.userId = config.userId;
 		this.popup = null;
 		this.loader = null;
+		this.lastGridUrl = null;
 
 		this.passwordEdit = false;
 
@@ -34,16 +36,15 @@
 				return defaults;
 			}
 		});
-
-		window.test = this;
 	};
 
 	BX.Voximplant.UserEditor.setDefaults = function(params)
 	{
-		defaults.numbers = params.numbers ? params.numbers : {};
-		defaults.gridId = params.gridId ? params.gridId : {};
-		defaults.users = params.users ? params.users : {};
-		defaults.isPhoneAllowed = params.isPhoneAllowed;
+		defaults.numbers = BX.prop.getObject(params, "numbers", defaults.numbers);
+		defaults.gridId = BX.prop.getString(params, "gridId", defaults.gridId);
+		defaults.users = BX.prop.getObject(params, "users", defaults.users);
+		defaults.isPhoneAllowed = BX.prop.getBoolean(params, "isPhoneAllowed", defaults.isPhoneAllowed);
+		defaults.lastGridUrl = BX.prop.getString(params, "lastGridUrl", defaults.lastGridUrl)
 	};
 
 	BX.Voximplant.UserEditor.prototype = {
@@ -369,7 +370,7 @@
 				var grid = BX.Main.gridManager.getInstanceById(defaults.gridId);
 				if(grid)
 				{
-					grid.reload();
+					grid.reload(defaults.lastGridUrl);
 				}
 
 				saveButton.buttonNode.classList.remove('ui-btn-wait');

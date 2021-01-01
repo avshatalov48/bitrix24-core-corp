@@ -88,14 +88,14 @@ class TasksWidgetRolesfilterComponent extends TasksBaseComponent
 			CTasks::STATE_PENDING,
 			CTasks::STATE_IN_PROGRESS,
 			CTasks::STATE_SUPPOSEDLY_COMPLETED,
-			CTasks::STATE_DEFERRED
+			CTasks::STATE_DEFERRED,
 		];
 		$statuses = implode(',', $statuses);
 
 		$sql = "
 			SELECT COUNT(DISTINCT T.ID) as COUNT
 			FROM b_tasks T
-			INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID
+				INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID
 			WHERE 
 				TM.USER_ID = {$this->arParams['USER_ID']}
 				".($userType === 'O' ? 'AND TM.USER_ID != T.RESPONSIBLE_ID' : '')."

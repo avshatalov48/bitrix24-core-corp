@@ -110,6 +110,10 @@ class CrmWebFormEditTemplate
 		{
 			$params['CAPTION'] = '';
 		}
+		if(!$params['PLACEHOLDER'])
+		{
+			$params['PLACEHOLDER'] = '';
+		}
 		if(!$params['VALUE'])
 		{
 			$params['VALUE'] = '';
@@ -162,6 +166,7 @@ class CrmWebFormEditTemplate
 					self::callGetFieldItemByType($type, $item),
 					array(
 						'name' => $params['CODE'],
+						'placeholder' => $params['PLACEHOLDER'],
 						'item_id' => $item['ID'],
 						'item_value' => $item['VALUE'],
 						'item_discount' => $item['DISCOUNT'] ?: '',

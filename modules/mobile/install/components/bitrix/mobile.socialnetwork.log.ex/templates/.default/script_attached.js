@@ -148,7 +148,9 @@ function __MSLOnFeedPreInit(params) // only for the list
 				&& parseInt(blocks[0]['PROPS']['TS']) > 0
 			)
 			{
-				oMSL.iframeCacheTs = parseInt(blocks[0]['PROPS']['TS']);
+				BX.MobileLivefeed.Instance.setOptions({
+					frameCacheTs: parseInt(blocks[0]['PROPS']['TS'])
+				});
 			}
 		}
 
@@ -999,23 +1001,24 @@ function __MSLOnFeedInit(params)
 			}
 		}
 	});
-
-	BX.Event.EventEmitter.subscribe(
-		'MobilePlayer:onError',
-		oMSL.onMobilePlayerError
-	);
 }
 
 function __MSLOnFeedScroll()
 {
 	var windowScroll = BX.GetWindowScrollPos();
+	var deviceMaxScroll = BX.MobileLivefeed.Instance.getMaxScroll();
+
 	if (!(
-		windowScroll.scrollTop >= BX.MobileLivefeed.Instance.getMaxScroll()
+		(
+			windowScroll.scrollTop >= deviceMaxScroll
+			|| document.documentElement.scrollHeight <= window.innerHeight // when small workarea
+		)
 		&& (
 			windowScroll.scrollTop > 0 // refresh patch
-			|| BX.MobileLivefeed.Instance.getMaxScroll() > 0
+			|| deviceMaxScroll > 0
 		)
 		&& !window.bRefreshing
+		&& !window.bGettingNextPage
 	))
 	{
 		return;
@@ -1028,10 +1031,9 @@ function __MSLOnFeedScroll()
 
 	BX.unbind(window, 'scroll', __MSLOnFeedScroll);
 
-	bGettingNextPage = true;
+	window.bGettingNextPage = true;
 
-	var BMAjaxWrapper = new MobileAjaxWrapper;
-	BMAjaxWrapper.Wrap({
+	nextPageXHR = BX.Mobile.Ajax.wrap({
 		type: 'json',
 		method: 'GET',
 		url: url_next,
@@ -1080,15 +1082,13 @@ function __MSLOnFeedScroll()
 			}
 
 			BX.bind(window, 'scroll', __MSLOnFeedScroll);
-			bGettingNextPage = false;
+			window.bGettingNextPage = false;
 		},
 		callback_failure: function() {
 			nextPageXHR = null;
-			bGettingNextPage = false;
+			window.bGettingNextPage = false;
 		}
 	});
-
-	nextPageXHR = BMAjaxWrapper.xhr;
 }
 
 function __MSLOpenLogEntryNew(params, event)
@@ -1320,13 +1320,12 @@ function __MSLLogEntryRead(log_id, ts, bPull)
 			BX.remove(BX('informer_comments_all_' + log_id));
 			BX('informer_comments_' + log_id).innerHTML = val;
 
-			var
-				commentsControlNode = BX('informer_comments_' + log_id).closest('.post-item-informers');
-
+			var commentsControlNode = BX('informer_comments_' + log_id).closest('.post-item-informers');
 			if (commentsControlNode)
 			{
 				commentsControlNode.classList.remove('post-item-inform-likes-active');
 			}
+			BX.MobileLivefeed.PinnedPanelInstance.adjustCollapsedPostsPanel();
 		}
 	}
 	if (BX('lenta_item_' + log_id))
@@ -1356,8 +1355,7 @@ function __MSLGetHiddenDestinations(log_id, author_id, bindElement)
 		author_id: parseInt(author_id)
 	};
 
-	var BMAjaxWrapper = new MobileAjaxWrapper;
-	BMAjaxWrapper.Wrap({
+	BX.Mobile.Ajax.wrap({
 		type: 'json',
 		method: 'POST',
 		url: BX.message('MSLSiteDir') + 'mobile/ajax.php',
@@ -1500,8 +1498,7 @@ function __MSLRefresh(bScroll, params)
 		{ name: "BX-APPCACHE-URL", value: (typeof BX.frameCache != 'undefined' && typeof BX.frameCache.vars != 'undefined' && typeof BX.frameCache.vars.PAGE_URL != 'undefined' ? BX.frameCache.vars.PAGE_URL : oMSL.curUrl) }
 	];
 
-	var BMAjaxWrapper = new MobileAjaxWrapper;
-	BMAjaxWrapper.Wrap({
+	oMSL.xhr.refresh = BX.Mobile.Ajax.wrap({
 		type: 'json',
 		method: 'GET',
 		url: reload_url,
@@ -1549,6 +1546,9 @@ function __MSLRefresh(bScroll, params)
 					type: 'refresh',
 					callback: function()
 					{
+						BX.MobileLivefeed.PinnedPanelInstance.resetFlags();
+						BX.MobileLivefeed.PinnedPanelInstance.init();
+
 						if (
 							typeof BX.frameCache != 'undefined'
 							&& BX("bxdynamic_feed_refresh")
@@ -1558,27 +1558,23 @@ function __MSLRefresh(bScroll, params)
 							)
 						)
 						{
-							var props = {
-								USE_BROWSER_STORAGE: true,
-								AUTO_UPDATE: true,
-								USE_ANIMATION: false
-							};
-
-							if (
+							var serverTimestamp = (
 								typeof (data.TS) != 'undefined'
 								&& parseInt(data.TS) > 0
-							)
+									? parseInt(data.TS)
+									: 0
+							);
+
+							if (serverTimestamp > 0)
 							{
-								props.TS = parseInt(data.TS);
-								oMSL.iframeCacheTs = props.TS;
+								BX.MobileLivefeed.Instance.setOptions({
+									frameCacheTs: serverTimestamp
+								});
 							}
 
-							BX.frameCache.writeCacheWithID(
-								"framecache-block-feed",
-								BX("bxdynamic_feed_refresh").innerHTML,
-								parseInt(Math.random() * 100000),
-								JSON.stringify(props)
-							);
+							BX.MobileLivefeed.Instance.updateFrameCache({
+								timestamp: serverTimestamp
+							});
 						}
 
 						oMSL.registerBlocksToCheck();
@@ -1608,7 +1604,8 @@ function __MSLRefresh(bScroll, params)
 				}
 
 				if (
-					data.isManifestUpdated == "1"
+					window.applicationCache
+					&& data.isManifestUpdated == "1"
 					&& !oMSL.appCacheDebug
 					&& (
 						window.applicationCache.status == window.applicationCache.IDLE
@@ -1640,8 +1637,6 @@ function __MSLRefresh(bScroll, params)
 			bRefreshing = false;
 		}
 	});
-
-	oMSL.xhr.refresh = BMAjaxWrapper.xhr;
 }
 
 function __MSLPullDownInit(enable, bRefresh)
@@ -1931,8 +1926,7 @@ function blogCommentsNativeInputCallback(params)
 		app.clearInput();
 	}
 
-	var BMAjaxWrapper = new MobileAjaxWrapper;
-	BMAjaxWrapper.Wrap({
+	BX.Mobile.Ajax.wrap({
 		type: 'json',
 		method: 'POST',
 		url: commentVarURL,
@@ -2108,8 +2102,7 @@ function commentsNativeInputCallback(params)
 		app.clearInput();
 	}
 
-	var BMAjaxWrapper = new MobileAjaxWrapper;
-	BMAjaxWrapper.Wrap({
+	BX.Mobile.Ajax.wrap({
 		type: 'json',
 		method: 'POST',
 		url: BX.message('MSLSiteDir') + 'mobile/ajax.php',
@@ -2187,9 +2180,7 @@ function commentsNativeInputCallback(params)
 
 __MSLSendError = function(message, url, linenumber)
 {
-	var BMAjaxWrapper = new MobileAjaxWrapper;
-
-	BMAjaxWrapper.runAction('socialnetwork.api.livefeed.mobileLogError', {
+	BX.Mobile.Ajax.runAction('socialnetwork.api.livefeed.mobileLogError', {
 		data: {
 			message: message,
 			url: url,
@@ -2233,7 +2224,6 @@ BitrixMSL = function ()
 	this.arBlockToCheck = {};
 	this.iLastActivityDate = null;
 	this.iDetailTs = 0;
-	this.iframeCacheTs = 0;
 	this.newPostFormParams = {};
 	this.newPostFormExtraData = {};
 	this.arRatingLikeProcess = {};
@@ -2295,14 +2285,6 @@ BitrixMSL.prototype.getFollowDefaultValue = function()
 	return this.bFollowDefault;
 };
 
-BitrixMSL.prototype.registerScripts = function(path)
-{
-	if (!BX.util.in_array(path, this.scriptsAttached))
-	{
-		this.scriptsAttached.push(path);
-	}
-};
-
 BitrixMSL.prototype.loadScripts = function()
 {
 	for (var i = 0; i < this.scriptsAttached.length; i++)
@@ -2344,8 +2326,7 @@ BitrixMSL.prototype.deleteBlogPost = function(data)
 					b24statContext: 'mobile'
 				});
 
-				var BMAjaxWrapper = new MobileAjaxWrapper;
-				BMAjaxWrapper.Wrap({
+				BX.Mobile.Ajax.wrap({
 					type: 'json',
 					method: 'POST',
 					url: actionUrl,
@@ -2391,8 +2372,7 @@ BitrixMSL.prototype.getBlogPostData = function(post_id, callbackFunc)
 	{
 		app.showPopupLoader();
 
-		var BMAjaxWrapper = new MobileAjaxWrapper;
-		BMAjaxWrapper.Wrap({
+		BX.Mobile.Ajax.wrap({
 			type: 'json',
 			method: 'POST',
 			url: BX.message('MSLSiteDir') + 'mobile/ajax.php',
@@ -2504,8 +2484,7 @@ BitrixMSL.prototype.getCommentData = function(params, callbackFunc)
 			requestData.log_id = parseInt(params.postId);
 		}
 
-		var BMAjaxWrapper = new MobileAjaxWrapper;
-		BMAjaxWrapper.Wrap({
+		BX.Mobile.Ajax.wrap({
 			type: 'json',
 			method: 'POST',
 			url: BX.message('MSLSiteDir') + 'mobile/ajax.php',
@@ -2581,48 +2560,50 @@ BitrixMSL.prototype.editBlogPost = function(data)
 			{
 				for (var key in postData.PostDestination)
 				{
-					if (postData.PostDestination.hasOwnProperty(key))
+					if (!postData.PostDestination.hasOwnProperty(key))
 					{
-						if (
-							postData.PostDestination[key]["STYLE"] != 'undefined'
-							&& postData.PostDestination[key]["STYLE"] == 'all-users'
-						)
-						{
-							oMSL.addPostFormDestination(
-								selectedDestinations,
-								{
-									type: 'UA'
-								}
-							);
-						}
-						else if (
-							postData.PostDestination[key]["TYPE"] != 'undefined'
-							&& postData.PostDestination[key]["TYPE"] == 'U'
-						)
-						{
-							oMSL.addPostFormDestination(
-								selectedDestinations,
-								{
-									type: 'U',
-									id: postData.PostDestination[key]["ID"],
-									name: BX.util.htmlspecialcharsback(postData.PostDestination[key]["TITLE"])
-								}
-							);
-						}
-						else if (
-							postData.PostDestination[key]["TYPE"] != 'undefined'
-							&& postData.PostDestination[key]["TYPE"] == 'SG'
-						)
-						{
-							oMSL.addPostFormDestination(
-								selectedDestinations,
-								{
-									type: 'SG',
-									id: postData.PostDestination[key]["ID"],
-									name: BX.util.htmlspecialcharsback(postData.PostDestination[key]["TITLE"])
-								}
-							);
-						}
+						continue;
+					}
+
+					if (
+						postData.PostDestination[key]["STYLE"] != 'undefined'
+						&& postData.PostDestination[key]["STYLE"] == 'all-users'
+					)
+					{
+						oMSL.addPostFormDestination(
+							selectedDestinations,
+							{
+								type: 'UA'
+							}
+						);
+					}
+					else if (
+						postData.PostDestination[key]["TYPE"] != 'undefined'
+						&& postData.PostDestination[key]["TYPE"] == 'U'
+					)
+					{
+						oMSL.addPostFormDestination(
+							selectedDestinations,
+							{
+								type: 'U',
+								id: postData.PostDestination[key]["ID"],
+								name: BX.util.htmlspecialcharsback(postData.PostDestination[key]["TITLE"])
+							}
+						);
+					}
+					else if (
+						postData.PostDestination[key]["TYPE"] != 'undefined'
+						&& postData.PostDestination[key]["TYPE"] == 'SG'
+					)
+					{
+						oMSL.addPostFormDestination(
+							selectedDestinations,
+							{
+								type: 'SG',
+								id: postData.PostDestination[key]["ID"],
+								name: BX.util.htmlspecialcharsback(postData.PostDestination[key]["TITLE"])
+							}
+						);
 					}
 				}
 			}
@@ -3166,7 +3147,7 @@ BitrixMSL.prototype.changeCounter = function(cnt, zeroTS, serverTime)
 	{
 		this.counterTimeout = setTimeout(function()
 		{
-			if (zeroTime > oMSL.iframeCacheTs) // counter is null but cache is too old
+			if (zeroTime > BX.MobileLivefeed.Instance.getOption('frameCacheTs', 0)) // counter is null but cache is too old
 			{
 				BX.MobileLivefeed.Instance.setRefreshNeeded(true);
 			}
@@ -3274,12 +3255,9 @@ BitrixMSL.prototype.deleteComment = function(params)
 	});
 	BXMobileApp.UI.Page.TextPanel.clear();
 
-	var BMAjaxWrapper = false;
-
 	if (commentType == 'blog')
 	{
-		BMAjaxWrapper = new MobileAjaxWrapper;
-		BMAjaxWrapper.Wrap({
+		BX.Mobile.Ajax.wrap({
 			'type': 'html',
 			'method': 'GET',
 			'url': commentVarURL + '&sessid=' + BX.bitrix_sessid() + '&delete_comment_id=' + params.commentId,
@@ -3340,8 +3318,7 @@ BitrixMSL.prototype.deleteComment = function(params)
 			mobile_action: 'delete_comment'
 		};
 
-		BMAjaxWrapper = new MobileAjaxWrapper;
-		BMAjaxWrapper.Wrap({
+		BX.Mobile.Ajax.wrap({
 			'type': 'json',
 			'method': 'POST',
 			'url': BX.message('MSLSiteDir') + 'mobile/ajax.php',
@@ -4276,8 +4253,7 @@ BitrixMSL.prototype.setFollow = function(params)
 
 	if (bAjax)
 	{
-		var BMAjaxWrapper = new MobileAjaxWrapper;
-		BMAjaxWrapper.runAction('socialnetwork.api.livefeed.changeFollow', {
+		BX.Mobile.Ajax.runAction('socialnetwork.api.livefeed.changeFollow', {
 			data: {
 				logId: logId,
 				value: strFollowNew
@@ -4463,8 +4439,7 @@ BitrixMSL.prototype.changeListMode = function(post_data, successCallbackFunc, fa
 		return;
 	}
 
-	var BMAjaxWrapper = new MobileAjaxWrapper;
-	BMAjaxWrapper.runAction(action, {
+	BX.Mobile.Ajax.runAction(action, {
 		data: {
 			value: post_data.value
 		},
@@ -4550,8 +4525,7 @@ BitrixMSL.prototype.getComment = function(params)
 
 	if (url.length > 0)
 	{
-		var BMAjaxWrapper = new MobileAjaxWrapper;
-		BMAjaxWrapper.Wrap({
+		BX.Mobile.Ajax.wrap({
 			'type': 'json',
 			'method': 'GET',
 			'url': url,
@@ -4877,8 +4851,7 @@ BitrixMSL.prototype.copyPostLink = function(params)
 		return;
 	}
 
-	var BMAjaxWrapper = new MobileAjaxWrapper;
-	BMAjaxWrapper.runAction('socialnetwork.api.livefeed.getRawEntryData', {
+	BX.Mobile.Ajax.runAction('socialnetwork.api.livefeed.getRawEntryData', {
 		data: {
 			params: {
 				entityType: contentTypeId,
@@ -5720,13 +5693,17 @@ BitrixMSL.prototype.isUserCurrent = function(userId)
 
 BitrixMSL.prototype.checkNodesHeight = function()
 {
-	var
-		blockHeight = false,
-		nodeToCheckId = null,
-		nodeMoreOverlay = null;
+	var blockHeight = false;
+	var nodeToCheckId = null;
+	var nodeMoreOverlay = null;
 
 	for (var logId in this.arBlockToCheck)
 	{
+		if (!this.arBlockToCheck.hasOwnProperty(logId))
+		{
+			continue
+		}
+
 		nodeToCheckId = this.arBlockToCheck[logId];
 		nodeMoreOverlay = (
 			BX(nodeToCheckId.lenta_item_id)
@@ -5983,9 +5960,7 @@ BitrixMSL.prototype.getComments = function(params)
 		ratingEmojiSelectorPopup.classList.add('feed-post-emoji-popup-invisible-final-mobile');
 	}
 
-	var BMAjaxWrapper = new MobileAjaxWrapper;
-
-	oMSL.emptyCommentsXhr = BMAjaxWrapper.Wrap({
+	oMSL.emptyCommentsXhr = BX.Mobile.Ajax.wrap({
 		type: 'json',
 		method: 'GET',
 		url: BX.message('MSLPathToLogEntry').replace("#log_id#", logID) + "&empty_get_comments=Y" + (typeof ts != 'undefined' && ts != null ? "&LAST_LOG_TS=" + ts : ""),
@@ -6144,8 +6119,7 @@ BitrixMSL.prototype.getComments = function(params)
 
 BitrixMSL.prototype.refreshPostDetail = function()
 {
-	var BMAjaxWrapper = new MobileAjaxWrapper;
-	BMAjaxWrapper.runAction('socialnetwork.api.livefeed.mobileGetDetail', {
+	BX.Mobile.Ajax.runAction('socialnetwork.api.livefeed.mobileGetDetail', {
 		data: {
 			logId: this.getLogId()
 		}
@@ -6193,7 +6167,7 @@ BitrixMSL.prototype.createTask = function(params)
 {
 	app.showPopupLoader();
 
-	BMAjaxWrapper.runAction('socialnetwork.api.livefeed.getRawEntryData', {
+	BX.Mobile.Ajax.runAction('socialnetwork.api.livefeed.getRawEntryData', {
 		data: {
 			params: {
 				entityType: params.entityType,
@@ -6271,7 +6245,7 @@ BitrixMSL.prototype.createTask = function(params)
 						{
 							this.createTaskSetContentSuccess(data.RESULT.DATA.ID);
 
-							BMAjaxWrapper.runAction('socialnetwork.api.livefeed.createTaskComment', {
+							BX.Mobile.Ajax.runAction('socialnetwork.api.livefeed.createTaskComment', {
 								data: {
 									params: {
 										postEntityType: (BX.type.isNotEmptyString(params.postEntityType) ? params.postEntityType : params.entityType),
@@ -6354,8 +6328,7 @@ BitrixMSL.prototype.copyLink = function(params)
 		return;
 	}
 
-	var BMAjaxWrapper = new MobileAjaxWrapper;
-	BMAjaxWrapper.runAction('socialnetwork.api.livefeed.getRawEntryData', {
+	BX.Mobile.Ajax.runAction('socialnetwork.api.livefeed.getRawEntryData', {
 		data: {
 			params: {
 				entityType: entityType,
@@ -6540,6 +6513,15 @@ BitrixMSL.prototype.showNewPostForm = function(params)
 				}
 			},
 			name: BX.message('MSLPostFormSend')
+		},
+		cancelButton: {
+			callback: function ()
+			{
+				oMSL.initPostForm({
+					groupId: (params.groupId ? params.groupId : null)
+				});
+			},
+			name: BX.message('MSLPostFormCancel')
 		}
 	};
 
@@ -6884,21 +6866,25 @@ BitrixMSL.prototype.postProgressingFiles = function(postData, attachedFiles, par
 
 	for (var keyOld in oMSL.newPostFormParams.messageFiles) /* existing */
 	{
-		if (oMSL.newPostFormParams.messageFiles.hasOwnProperty(keyOld))
+		if (!oMSL.newPostFormParams.messageFiles.hasOwnProperty(keyOld))
 		{
-			for (var keyNew in attachedFiles)
+			continue;
+		}
+
+		for (var keyNew in attachedFiles)
+		{
+			if (!attachedFiles.hasOwnProperty(keyNew))
 			{
-				if (
-					attachedFiles.hasOwnProperty(keyNew)
-					&& (
-						oMSL.newPostFormParams.messageFiles[keyOld]["id"] == attachedFiles[keyNew]["id"]
-						|| oMSL.newPostFormParams.messageFiles[keyOld]["id"] == attachedFiles[keyNew]["ID"]
-					)
-				)
-				{
-					postData[ufCode].push(oMSL.newPostFormParams.messageFiles[keyOld]["id"]);
-					break;
-				}
+				continue;
+			}
+
+			if (
+				oMSL.newPostFormParams.messageFiles[keyOld]["id"] == attachedFiles[keyNew]["id"]
+				|| oMSL.newPostFormParams.messageFiles[keyOld]["id"] == attachedFiles[keyNew]["ID"]
+			)
+			{
+				postData[ufCode].push(oMSL.newPostFormParams.messageFiles[keyOld]["id"]);
+				break;
 			}
 		}
 	}
@@ -6965,55 +6951,59 @@ BitrixMSL.prototype.buildPostFormDestinations = function(postData, selectedRecip
 	{
 		for (key in selectedRecipients.b_groups)
 		{
-			if (selectedRecipients.b_groups.hasOwnProperty(key))
+			if (!selectedRecipients.b_groups.hasOwnProperty(key))
 			{
-				prefix = 'SG';
-				if (typeof postData.SPERM[prefix] == 'undefined')
-				{
-					postData.SPERM[prefix] = [];
-				}
-
-				if (typeof postData.SPERM_NAME[prefix] == 'undefined')
-				{
-					postData.SPERM_NAME[prefix] = [];
-				}
-
-				id = (
-					typeof selectedRecipients.b_groups[key].ID != 'undefined'
-						? selectedRecipients.b_groups[key].ID
-						: selectedRecipients.b_groups[key].id
-				);
-
-				name = (
-					typeof selectedRecipients.b_groups[key].NAME != 'undefined'
-						? selectedRecipients.b_groups[key].NAME
-						: selectedRecipients.b_groups[key].name
-				);
-
-				value = 'SG' + id;
-
-				postData.SPERM[prefix].push(value);
-				postData.DEST.push(value);
-				postData.SPERM_NAME[prefix].push(name);
+				continue;
 			}
-		}
-	}
 
-	for (key in hiddenRecipients)
-	{
-		if (hiddenRecipients.hasOwnProperty(key))
-		{
-			prefix = hiddenRecipients[key]['TYPE'];
+			prefix = 'SG';
 			if (typeof postData.SPERM[prefix] == 'undefined')
 			{
 				postData.SPERM[prefix] = [];
 			}
 
-			value = (hiddenRecipients[key]['TYPE'] + hiddenRecipients[key]['ID']);
+			if (typeof postData.SPERM_NAME[prefix] == 'undefined')
+			{
+				postData.SPERM_NAME[prefix] = [];
+			}
+
+			id = (
+				typeof selectedRecipients.b_groups[key].ID != 'undefined'
+					? selectedRecipients.b_groups[key].ID
+					: selectedRecipients.b_groups[key].id
+			);
+
+			name = (
+				typeof selectedRecipients.b_groups[key].NAME != 'undefined'
+					? selectedRecipients.b_groups[key].NAME
+					: selectedRecipients.b_groups[key].name
+			);
+
+			value = 'SG' + id;
 
 			postData.SPERM[prefix].push(value);
 			postData.DEST.push(value);
+			postData.SPERM_NAME[prefix].push(name);
 		}
+	}
+
+	for (key in hiddenRecipients)
+	{
+		if (!hiddenRecipients.hasOwnProperty(key))
+		{
+			continue;
+		}
+
+		prefix = hiddenRecipients[key]['TYPE'];
+		if (typeof postData.SPERM[prefix] == 'undefined')
+		{
+			postData.SPERM[prefix] = [];
+		}
+
+		value = (hiddenRecipients[key]['TYPE'] + hiddenRecipients[key]['ID']);
+
+		postData.SPERM[prefix].push(value);
+		postData.DEST.push(value);
 	}
 };
 
@@ -7033,32 +7023,34 @@ BitrixMSL.prototype.buildSelectedDestinations = function(postData, selectedDesti
 	{
 		for (key in postData.SPERM.U)
 		{
-			if (postData.SPERM.U.hasOwnProperty(key))
+			if (!postData.SPERM.U.hasOwnProperty(key))
 			{
-				if (postData.SPERM.U[key] == 'UA')
+				continue
+			}
+
+			if (postData.SPERM.U[key] == 'UA')
+			{
+				this.addPostFormDestination(
+					selectedDestinations,
+					{
+						type: 'UA'
+					}
+				);
+			}
+			else
+			{
+				arMatch = postData.SPERM.U[key].match(/^U([\d]+)$/);
+				if (arMatch != null)
 				{
 					this.addPostFormDestination(
 						selectedDestinations,
 						{
-							type: 'UA'
+							type: 'U',
+							id: arMatch[1],
+							name: postData.SPERM_NAME.U[key]
+
 						}
 					);
-				}
-				else
-				{
-					arMatch = postData.SPERM.U[key].match(/^U([\d]+)$/);
-					if (arMatch != null)
-					{
-						this.addPostFormDestination(
-							selectedDestinations,
-							{
-								type: 'U',
-								id: arMatch[1],
-								name: postData.SPERM_NAME.U[key]
-
-							}
-						);
-					}
 				}
 			}
 		}
@@ -7068,20 +7060,22 @@ BitrixMSL.prototype.buildSelectedDestinations = function(postData, selectedDesti
 	{
 		for (key in postData.SPERM.SG)
 		{
-			if (postData.SPERM.SG.hasOwnProperty(key))
+			if (!postData.SPERM.SG.hasOwnProperty(key))
 			{
-				arMatch = postData.SPERM.SG[key].match(/^SG([\d]+)$/);
-				if (arMatch != null)
-				{
-					this.addPostFormDestination(
-						selectedDestinations,
-						{
-							type: 'SG',
-							id: arMatch[1],
-							name: postData.SPERM_NAME.SG[key]
-						}
-					);
-				}
+				continue;
+			}
+
+			arMatch = postData.SPERM.SG[key].match(/^SG([\d]+)$/);
+			if (arMatch != null)
+			{
+				this.addPostFormDestination(
+					selectedDestinations,
+					{
+						type: 'SG',
+						id: arMatch[1],
+						name: postData.SPERM_NAME.SG[key]
+					}
+				);
 			}
 		}
 	}
@@ -7316,17 +7310,19 @@ BitrixMSL.prototype.clearPostFormDestination = function(selectedDestinations, gr
 	{
 		for (key in window.arAvailableGroup)
 		{
-			if (window.arAvailableGroup.hasOwnProperty(key))
+			if (!window.arAvailableGroup.hasOwnProperty(key))
 			{
-				oMSL.addPostFormDestination(
-					selectedDestinations,
-					{
-						type: 'SG',
-						id:  parseInt(window.arAvailableGroup[key]['entityId']),
-						name: window.arAvailableGroup[key]['name']
-					}
-				);
+				continue;
 			}
+
+			oMSL.addPostFormDestination(
+				selectedDestinations,
+				{
+					type: 'SG',
+					id:  parseInt(window.arAvailableGroup[key]['entityId']),
+					name: window.arAvailableGroup[key]['name']
+				}
+			);
 		}
 	}
 	else if (BX.message('MOBILE_EXT_LIVEFEED_DEST_TO_ALL_DEFAULT') == 'Y')
@@ -7510,71 +7506,6 @@ BitrixMSL.prototype.registerEmptyBlockToCheck = function()
 			more_button_id: 'post_more_limiter'
 		}
 	};
-};
-
-
-BitrixMSL.prototype.onMobilePlayerError = function(event)
-{
-	var
-		eventData = event.getData(),
-		player = eventData[0],
-		src = eventData[1];
-
-	if(!BX.type.isDomNode(player))
-	{
-		return;
-	}
-	if(!src)
-	{
-		return;
-	}
-	var container = player.parentNode;
-	if(container)
-	{
-		if(BX.findChildByClassName(container, 'disk-mobile-player-error-container'))
-		{
-			return;
-		}
-	}
-	else
-	{
-		if(BX.findChildByClassName(player, 'disk-mobile-player-error-container'))
-		{
-			return;
-		}
-	}
-	var sources = player.getElementsByTagName('source');
-	var sourcesLeft = sources.length;
-	for(var i = 0; i < sources.length; i++)
-	{
-		if(sources[i].src && sources[i].src == src)
-		{
-			BX.remove(sources[i]);
-			sourcesLeft--;
-		}
-	}
-	if(sourcesLeft > 0)
-	{
-		return;
-	}
-	var errorContainer = BX.create('div', {props: {className: 'disk-mobile-player-error-container'}, children: [
-		BX.create('div', {props: {className: 'disk-mobile-player-error-icon'}, html: ''}),
-		BX.create('div', {props: {className: 'disk-mobile-player-error-message'}, html: BX.message('MSLMobilePlayerErrorMessage')})
-	]});
-	var downloadLink = BX.findChildByClassName(errorContainer, 'disk-mobile-player-download');
-	if(downloadLink)
-	{
-		BX.adjust(downloadLink, {events: {click: function(){app.openDocument({url: src});}}});
-	}
-	if(container)
-	{
-		BX.hide(player);
-		BX.append(errorContainer, container);
-	}
-	else
-	{
-		BX.adjust(player, {children: [errorContainer]});
-	}
 };
 
 BitrixMSL.prototype.getCopyText = function(block)

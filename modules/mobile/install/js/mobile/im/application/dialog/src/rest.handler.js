@@ -23,6 +23,14 @@ export class MobileRestAnswerHandler extends BaseRestHandler
 		}
 	}
 
+	handleImCallGetCallLimitsSuccess(data)
+	{
+		this.store.commit('application/set', {call: {
+			serverEnabled: data.callServerEnabled,
+			maxParticipants: data.maxParticipants,
+		}});
+	}
+
 	handleImChatGetSuccess(data)
 	{
 		this.store.commit('application/set', {dialog: {
@@ -38,8 +46,6 @@ export class MobileRestAnswerHandler extends BaseRestHandler
 				fields: data.restrictions
 			});
 		}
-
-		this.context.redrawHeader();
 	}
 	handleImChatGetError(error)
 	{

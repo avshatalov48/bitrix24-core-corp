@@ -13,8 +13,14 @@ class Listener
 			return false;
 		}
 
+		//fix meta statuses
+		if (!empty($fields['REAL_STATUS']))
+		{
+			$fields['STATUS'] = $fields['REAL_STATUS'];
+		}
+
 		//fix creation from template
-		if (!isset($fields['STATUS']))
+		if (empty($fields['STATUS']))
 		{
 			$fields['STATUS'] = \CTasks::STATE_PENDING;
 		}

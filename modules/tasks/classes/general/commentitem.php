@@ -142,7 +142,15 @@ final class CTaskCommentItem extends CTaskSubItemAbstract
 			return true; // you can view the task (if you reached this point, you obviously can)
 		}
 
-		$taskData = $this->oTaskItem->getData();
+		try
+		{
+			$taskData = $this->oTaskItem->getData();
+		}
+		catch (TasksException $e)
+		{
+			return false;
+		}
+
 		$forumTopicId = $taskData['FORUM_TOPIC_ID'];
 
 		if (!(int)$forumTopicId) // task even doesnt have a forum topic
@@ -246,7 +254,8 @@ final class CTaskCommentItem extends CTaskSubItemAbstract
 			])
 		)
 		{
-			$comment['POST_MESSAGE'] = $serviceProvider->getText($comment['POST_MESSAGE']);
+			$serviceData = ($comment['SERVICE_DATA'] ?? $comment['POST_MESSAGE']);
+			$comment['POST_MESSAGE'] = $serviceProvider->getText($serviceData);
 		} // new
 		elseif ($commentAuxProvider = Socialnetwork\CommentAux\Base::findProvider(
 			['POST_TEXT' => $comment['POST_MESSAGE']],
@@ -417,7 +426,7 @@ final class CTaskCommentItem extends CTaskSubItemAbstract
 				CTaskAssert::assert(Main\Loader::includeModule('forum'));
 				CTaskAssert::assert(Main\Loader::includeModule('socialnetwork'));
 
-				$returnValue = $comment->getData();
+				$returnValue = $comment->getData(false);
 				$returnValue = static::parseCommentPostMessage($returnValue);
 				$returnValue = static::getCommentAttachmentIds($returnValue);
 			}
@@ -488,7 +497,7 @@ final class CTaskCommentItem extends CTaskSubItemAbstract
 	 * This method is not part of public API.
 	 * Its purpose is for internal use only.
 	 * It can be changed without any notifications
-	 * 
+	 *
 	 * @access private
 	 */
 	public static function getManifest()

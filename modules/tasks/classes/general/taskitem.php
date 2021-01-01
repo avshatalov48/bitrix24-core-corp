@@ -10,11 +10,9 @@
 
 use Bitrix\Main\Localization\Loc;
 
-use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\CheckList\Internals\CheckList;
-use Bitrix\Tasks\Comments;
 use Bitrix\Tasks\Comments\Task\CommentPoster;
 use \Bitrix\Tasks\Internals\Task\FavoriteTable;
 use \Bitrix\Tasks\Task\DependenceTable;
@@ -363,9 +361,16 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 		$newTaskItem = new CTaskItem( (int) $rc, $executiveUserId);
 
-		if (!isset($parameters['DISABLE_BIZPROC_RUN']))
+		try
 		{
-			Bizproc\Listener::onTaskAdd($rc, $newTaskItem->getData());
+			if (!isset($parameters['DISABLE_BIZPROC_RUN']))
+			{
+				Bizproc\Listener::onTaskAdd($rc, $newTaskItem->getData());
+			}
+		}
+		catch (TasksException $e)
+		{
+			static::throwExceptionVerbose();
 		}
 
 		return $newTaskItem;
@@ -420,162 +425,173 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			$parameters['CLONE_FILES'] = true;
 
 		$result = array();
-		$data = $this->getData(false); // ensure we have access to the task
-		if(is_array($data))
+
+		try
 		{
-			$data = array_merge($data, $overrideTaskData);
+			$data = $this->getData(false); // ensure we have access to the task
+		}
+		catch(TasksException $e)
+		{
+			return $result;
+		}
 
-			unset(
-				// drop unwanted
-				$data['ID'],
-				$data['GUID'],
-				$data['STATUS'],
-				$data['CHANGED_BY'],
-				// detach forum, if any
-				$data['FORUM_TOPIC_ID'],
-				$data['COMMENTS_COUNT'],
-				// clean dates
-				$data['CREATED_DATE'],
-				$data['CHANGED_DATE'],
-				$data['VIEWED_DATE'],
-				$data['STATUS_CHANGED_DATE'],
-				$data['ACTIVITY_DATE']
-			);
+		if (!is_array($data))
+		{
+			return $result;
+		}
 
-			$files = array();
-			if(is_array($data['UF_TASK_WEBDAV_FILES']) && !empty($data['UF_TASK_WEBDAV_FILES']))
+		$data = array_merge($data, $overrideTaskData);
+
+		unset(
+			// drop unwanted
+			$data['ID'],
+			$data['GUID'],
+			$data['STATUS'],
+			$data['CHANGED_BY'],
+			// detach forum, if any
+			$data['FORUM_TOPIC_ID'],
+			$data['COMMENTS_COUNT'],
+			// clean dates
+			$data['CREATED_DATE'],
+			$data['CHANGED_DATE'],
+			$data['VIEWED_DATE'],
+			$data['STATUS_CHANGED_DATE'],
+			$data['ACTIVITY_DATE']
+		);
+
+		$files = array();
+		if(is_array($data['UF_TASK_WEBDAV_FILES']) && !empty($data['UF_TASK_WEBDAV_FILES']))
+		{
+			$files = $data['UF_TASK_WEBDAV_FILES'];
+		}
+
+		unset($data['UF_TASK_WEBDAV_FILES']);
+
+		$taskDupId = 0;
+		try
+		{
+			$clone = static::add($data, $this->getExecutiveUserId());
+			$taskDupId = $clone->getId();
+		}
+		catch(Exception $e)
+		{
+		}
+
+		if(intval($taskDupId))
+		{
+			$result[$clone->getId()] = $clone;
+
+			if($parameters['CLONE_CHECKLIST_ITEMS'])
 			{
-				$files = $data['UF_TASK_WEBDAV_FILES'];
+				list($arChecklistItems, $arMetaData) = CTaskCheckListItem::fetchList($this, array('SORT_INDEX' => 'ASC'));
+				unset($arMetaData);
+
+				foreach ($arChecklistItems as $oChecklistItem)
+				{
+					$cliData = $oChecklistItem->getData();
+					$cliCloneData = array(
+						'TITLE' => 				$cliData['TITLE'],
+						'IS_COMPLETE' => 		$cliData['IS_COMPLETE'],
+						'SORT_INDEX' => 			$cliData['SORT_INDEX']
+					);
+
+					CTaskCheckListItem::add($clone, $cliCloneData);
+				}
 			}
 
-			unset($data['UF_TASK_WEBDAV_FILES']);
-
-			$taskDupId = 0;
-			try
+			if($parameters['CLONE_TAGS'])
 			{
-				$clone = static::add($data, $this->getExecutiveUserId());
-				$taskDupId = $clone->getId();
+				$tags = $this->getTags();
+				if(is_array($tags))
+				{
+					foreach($tags as $tag)
+					{
+						if((string) $tag != '')
+						{
+							$oTag = new CTaskTags();
+							$oTag->Add(array(
+								'TASK_ID' => 	$taskDupId,
+								'NAME' => 		$tag
+							), $this->getExecutiveUserId());
+						}
+					}
+				}
 			}
-			catch(Exception $e)
+
+			if($parameters['CLONE_REMINDERS'])
 			{
+				$res = CTaskReminders::GetList(false, array('TASK_ID' => $this->getId()));
+				while($item = $res->fetch())
+				{
+					$item['TASK_ID'] = $taskDupId;
+					$item['USER_ID'] = $this->getExecutiveUserId();
+
+					$oReminder = new CTaskReminders();
+					$oReminder->Add($item);
+				}
 			}
 
-			if(intval($taskDupId))
+			if($parameters['CLONE_TASK_DEPENDENCY'])
 			{
-				$result[$clone->getId()] = $clone;
-
-				if($parameters['CLONE_CHECKLIST_ITEMS'])
+				$res = CTaskDependence::GetList(array(), array('TASK_ID' => $this->getId()));
+				while($item = $res->fetch())
 				{
-					list($arChecklistItems, $arMetaData) = CTaskCheckListItem::fetchList($this, array('SORT_INDEX' => 'ASC'));
-					unset($arMetaData);
-
-					foreach ($arChecklistItems as $oChecklistItem)
+					$depInstance = new CTaskDependence();
+					if(is_array($item))
 					{
-						$cliData = $oChecklistItem->getData();
-						$cliCloneData = array(
-							'TITLE' => 				$cliData['TITLE'],
-							'IS_COMPLETE' => 		$cliData['IS_COMPLETE'],
-							'SORT_INDEX' => 			$cliData['SORT_INDEX']
-						);
+						$depInstance->Add(array(
+							'TASK_ID' => $taskDupId,
+							'DEPENDS_ON_ID' => $item['DEPENDS_ON_ID']
+						));
+					}
+				}
+			}
 
-						CTaskCheckListItem::add($clone, $cliCloneData);
+			if($parameters['CLONE_FILES'] && !empty($files) && \Bitrix\Main\Loader::includeModule('disk'))
+			{
+				// find which files are new and which are old
+				$old = array();
+				$new = array();
+				foreach($files as $fileId)
+				{
+					if((string) $fileId)
+					{
+						if(mb_strpos($fileId, 'n') === 0)
+							$new[] = $fileId;
+						else
+							$old[] = $fileId;
 					}
 				}
 
-				if($parameters['CLONE_TAGS'])
+				if(!empty($old))
 				{
-					$tags = $this->getTags();
-					if(is_array($tags))
+					$userFieldManager = \Bitrix\Disk\Driver::getInstance()->getUserFieldManager();
+					$old = $userFieldManager->cloneUfValuesFromAttachedObject($old, $this->getExecutiveUserId());
+
+					if(is_array($old) && !empty($old))
 					{
-						foreach($tags as $tag)
-						{
-							if((string) $tag != '')
-							{
-								$oTag = new CTaskTags();
-								$oTag->Add(array(
-									'TASK_ID' => 	$taskDupId,
-									'NAME' => 		$tag
-								), $this->getExecutiveUserId());
-							}
-						}
+						$new = array_merge($new, $old);
 					}
 				}
 
-				if($parameters['CLONE_REMINDERS'])
-				{
-					$res = CTaskReminders::GetList(false, array('TASK_ID' => $this->getId()));
-					while($item = $res->fetch())
-					{
-						$item['TASK_ID'] = $taskDupId;
-						$item['USER_ID'] = $this->getExecutiveUserId();
+				if(!empty($new))
+					$clone->update(array('UF_TASK_WEBDAV_FILES' => $new));
+			}
 
-						$oReminder = new CTaskReminders();
-						$oReminder->Add($item);
-					}
+			if($parameters['CLONE_CHILD_TASKS'])
+			{
+				$notifADWasDisabled = CTaskNotifications::disableAutoDeliver();
+
+				$clones = $this->duplicateChildTasks($clone);
+				if(is_array($clones))
+				{
+					foreach($clones as $cId => $cInst)
+						$result[$cId] = $cInst;
 				}
 
-				if($parameters['CLONE_TASK_DEPENDENCY'])
+				if($notifADWasDisabled)
 				{
-					$res = CTaskDependence::GetList(array(), array('TASK_ID' => $this->getId()));
-					while($item = $res->fetch())
-					{
-						$depInstance = new CTaskDependence();
-						if(is_array($item))
-						{
-							$depInstance->Add(array(
-								'TASK_ID' => $taskDupId,
-								'DEPENDS_ON_ID' => $item['DEPENDS_ON_ID']
-							));
-						}
-					}
-				}
-
-				if($parameters['CLONE_FILES'] && !empty($files) && \Bitrix\Main\Loader::includeModule('disk'))
-				{
-					// find which files are new and which are old
-					$old = array();
-					$new = array();
-					foreach($files as $fileId)
-					{
-						if((string) $fileId)
-						{
-							if(mb_strpos($fileId, 'n') === 0)
-								$new[] = $fileId;
-							else
-								$old[] = $fileId;
-						}
-					}
-
-					if(!empty($old))
-					{
-						$userFieldManager = \Bitrix\Disk\Driver::getInstance()->getUserFieldManager();
-						$old = $userFieldManager->cloneUfValuesFromAttachedObject($old, $this->getExecutiveUserId());
-
-						if(is_array($old) && !empty($old))
-						{
-							$new = array_merge($new, $old);
-						}
-					}
-
-					if(!empty($new))
-						$clone->update(array('UF_TASK_WEBDAV_FILES' => $new));
-				}
-
-				if($parameters['CLONE_CHILD_TASKS'])
-				{
-					$notifADWasDisabled = CTaskNotifications::disableAutoDeliver();
-
-					$clones = $this->duplicateChildTasks($clone);
-					if(is_array($clones))
-					{
-						foreach($clones as $cId => $cInst)
-							$result[$cId] = $cInst;
-					}
-
-					if($notifADWasDisabled)
-					{
-						CTaskNotifications::enableAutoDeliver();
-					}
+					CTaskNotifications::enableAutoDeliver();
 				}
 			}
 		}
@@ -602,7 +618,15 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 		$duplicates = array();
 
-		$data = $this->getData(false); // check rights here
+		try
+		{
+			$data = $this->getData(false);
+		}
+		catch (TasksException $e)
+		{
+			return $duplicates;
+		}
+
 		if($data)
 		{
 			// getting tree data and checking for dead loops
@@ -972,7 +996,15 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		$taskId = $this->getId();
 
 		// ensure we have access to this task
-		$data = $this->getData(false);
+		try
+		{
+			$data = $this->getData(false);
+		}
+		catch (TasksException $e)
+		{
+			return [];
+		}
+
 
 		if(is_array($data))
 		{
@@ -1145,16 +1177,6 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		return ($this->executiveUserId);
 	}
 
-
-	/**
-	 * Synonym for getData();
-	 * @deprecated
-	 */
-	public function getTaskData($returnEscapedData = true)
-	{
-		return ($this->getData($returnEscapedData));
-	}
-
 	public function checkCanRead(array $parameters = [])
 	{
 		return $this->checkAccess(ActionDictionary::ACTION_TASK_READ);
@@ -1171,7 +1193,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	/**
 	 * Get task data (read from DB on demand)
 	 */
-	public function getData($returnEscapedData = true, array $parameters = array(), bool $bCheckPermissions = true)
+	public function getData($returnEscapedData = true, array $parameters = [], bool $bCheckPermissions = true)
 	{
 		// Preload data, if it isn't in cache
 		if ($this->arTaskData === null)
@@ -1179,16 +1201,16 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			$this->markCacheAsDirty();
 
 			// Load task data
-			$arParams = array_merge(array(
-				'USER_ID'        => $this->executiveUserId,
-				'returnAsArray'  => true,
+			$defaultParams = [
+				'USER_ID' => $this->executiveUserId,
+				'returnAsArray' => true,
 				'bSkipExtraData' => false,
-			), $parameters);
+			];
+			$arParams = array_merge($defaultParams, $parameters);
 
 			/** @noinspection PhpDeprecationInspection */
 			$arTask = CTasks::getById($this->taskId, $bCheckPermissions, $arParams);
-
-			if ( !isset($arTask['ID']) || !is_array($arTask) )
+			if (!isset($arTask['ID']) || !is_array($arTask))
 			{
 				$this->throwExceptionNotAccessible();
 			}
@@ -1196,7 +1218,6 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			$this->arTaskData = $arTask;
 		}
 
-		$returnData = array();
 		if ($returnEscapedData)
 		{
 			// Prepare escaped data on-demand
@@ -1207,11 +1228,17 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 					$this->arTaskDataEscaped['~' . $field] = $value;
 
 					if ($field === 'DESCRIPTION')
+					{
 						$this->arTaskDataEscaped[$field] = $this->getDescription();
-					elseif (is_numeric($value) || ( ! is_string($value) ) )
+					}
+					elseif (is_numeric($value) || (!is_string($value)))
+					{
 						$this->arTaskDataEscaped[$field] = $value;
+					}
 					else
+					{
 						$this->arTaskDataEscaped[$field] = htmlspecialcharsex($value);
+					}
 				}
 			}
 
@@ -1244,7 +1271,14 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			true
 		));
 
-		$arTask = $this->getData($bSpecialChars = false);
+		try
+		{
+			$arTask = $this->getData($bSpecialChars = false);
+		}
+		catch (TasksException $e)
+		{
+			CTaskAssert::assert(false);
+		}
 
 		$description = $arTask['DESCRIPTION'];
 
@@ -1343,17 +1377,25 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			return ($this->getAllowedActionsAsStrings());
 		}
 
+		if ($this->arTaskAllowedActions !== null)
+		{
+			return ($this->arTaskAllowedActions);
+		}
+
 		// Lazy load and cache allowed actions list
-		if ($this->arTaskAllowedActions === null)
+		try
 		{
 			$this->arTaskAllowedActions = self::getAllowedActionsArrayInternal(
 				$this->executiveUserId,
-				$this->getData($bSpecialChars = false),
-				$this->getUserRoles()
+				$this->getData($bSpecialChars = false)
 			);
 		}
+		catch (TasksException $e)
+		{
+			return [];
+		}
 
-		return ($this->arTaskAllowedActions);
+		return $this->arTaskAllowedActions;
 	}
 
 	public static function getAllowedActionsArray($executiveUserId, array $arTaskData, $bReturnAsStrings = false)
@@ -1637,7 +1679,15 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	{
 		// Force reload cache
 		$this->markCacheAsDirty();
-		$arTask = $this->getData($bEscaped = false);
+
+		try
+		{
+			$arTask = $this->getData($bEscaped = false);
+		}
+		catch (TasksException $e)
+		{
+			static::throwExceptionVerbose();
+		}
 
 		if(!($userId = intval($userId)))
 		{
@@ -1676,7 +1726,15 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	{
 		// Force reload cache
 		$this->markCacheAsDirty();
-		$arTask = $this->getData($bEscaped = false);
+
+		try
+		{
+			$arTask = $this->getData($bEscaped = false);
+		}
+		catch (TasksException $e)
+		{
+			static::throwExceptionVerbose();
+		}
 
 		if(!($userId = intval($userId)))
 		{
@@ -1910,6 +1968,10 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 				'PERMISSION_CHECK_VERSION' => 2, // new sql code to check permissions
 			);
 
+			if (array_key_exists('TARGET_USER_ID', $arParams))
+			{
+				$arParamsOut['TARGET_USER_ID'] = $arParams['TARGET_USER_ID'];
+			}
 			if (isset($arParams['SORTING_GROUP_ID']))
 			{
 				$arParamsOut['SORTING_GROUP_ID'] = $arParams['SORTING_GROUP_ID'];
@@ -1960,15 +2022,6 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 			if(is_array($arTasksIDs) && !empty($arTasksIDs))
 			{
-				if (in_array('NEW_COMMENTS_COUNT', $arSelect, true))
-				{
-					$newComments = Bitrix\Tasks\Internals\Counter::getInstance((int) $userId)->getCommentsCount($arTasksIDs);
-					foreach ($newComments as $taskId => $commentsCount)
-					{
-						$arItemsData[$taskId]['NEW_COMMENTS_COUNT'] = $commentsCount;
-					}
-				}
-
 				if(in_array('AUDITORS', $arSelect) || in_array('ACCOMPLICES', $arSelect) || in_array('*', $arSelect))
 				{
 					// fill ACCOMPLICES and AUDITORS
@@ -2104,7 +2157,40 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 		$newTask = \Bitrix\Tasks\Access\Model\TaskModel::createFromArray($arFields, $arTaskData);
 
-		if ($arGivenFieldsNames === array_intersect($arGivenFieldsNames, $actionChangeDeadlineFields))
+		if (array_key_exists('STATUS', $arFields) && count($arFields) === 1)
+		{
+			$status = (int) $arFields['STATUS'];
+			switch ($status)
+			{
+				case \CTasks::STATE_IN_PROGRESS:
+					$action = ActionDictionary::ACTION_TASK_START;
+					break;
+				case \CTasks::STATE_SUPPOSEDLY_COMPLETED:
+				case \CTasks::STATE_COMPLETED:
+					$action = ActionDictionary::ACTION_TASK_APPROVE;
+					break;
+				case \CTasks::STATE_DEFERRED:
+					$action = ActionDictionary::ACTION_TASK_DEFER;
+					break;
+				case \CTasks::STATE_DECLINED:
+					$action = ActionDictionary::ACTION_TASK_DECLINE;
+					break;
+				case \CTasks::STATE_PENDING:
+					$action = ActionDictionary::ACTION_TASK_PAUSE;
+					break;
+				default:
+					$action = ActionDictionary::ACTION_TASK_SAVE;
+			}
+
+			if (!$this->checkAccess($action))
+			{
+				throw new TasksException(
+					GetMessage('TASKS_ACCESS_DENIED_TO_TASK_UPDATE'),
+					TasksException::TE_ACTION_NOT_ALLOWED
+				);
+			}
+		}
+		elseif ($arGivenFieldsNames === array_intersect($arGivenFieldsNames, $actionChangeDeadlineFields))
 		{
 			if (!$this->checkAccess(ActionDictionary::ACTION_TASK_DEADLINE))
 			{
@@ -2301,7 +2387,15 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			return $this->proceedActionFavorite($arActionArguments);
 		}
 
-		$arTaskData = $this->getData($bSpecialChars = false, [], !$skipAccessControl);
+		try
+		{
+			$arTaskData = $this->getData($bSpecialChars = false, [], !$skipAccessControl);
+		}
+		catch (TasksException $e)
+		{
+			throw new TasksException(Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'), TasksException::TE_ACTION_NOT_ALLOWED | TasksException::TE_ACCESS_DENIED);
+		}
+
 		$arNewFields = null;
 
 		if ($actionId === ActionDictionary::ACTION_TASK_REMOVE)
@@ -2706,7 +2800,15 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 	private function getUserRoles()
 	{
-		$arTask = $this->getData($bEscaped = false);
+		try
+		{
+			$arTask = $this->getData($bEscaped = false);
+		}
+		catch (TasksException $e)
+		{
+			return [];
+		}
+
 		$userId = $this->executiveUserId;
 
 		// Is there precached data?
@@ -2804,8 +2906,16 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 				else
 				{
 					$scheduler = \Bitrix\Tasks\Processor\Task\Scheduler::getInstance($this->executiveUserId);
-					$scheduler->defineTaskDates($this->getData())->save();
-					$scheduler->defineTaskDates($parentTask->getData())->save();
+
+					try
+					{
+						$scheduler->defineTaskDates($this->getData())->save();
+						$scheduler->defineTaskDates($parentTask->getData())->save();
+					}
+					catch (TasksException $e)
+					{
+						throw new ActionFailedException(Loc::getMessage('TASK_CANT_ADD_LINK'), $exceptionInfo);
+					}
 
 					$result = DependenceTable::createLink($this->getId(), $parentId, array(
 						//'TASK_DATA' => 			$this->getData(false),
@@ -3693,7 +3803,14 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	 */
 	public function setStartDatePlan(DateTime $date)
 	{
-		$this->ensureDataLoaded();
+		try
+		{
+			$this->ensureDataLoaded();
+		}
+		catch (TasksException $e)
+		{
+			return;
+		}
 
 		$this->arTaskData['START_DATE_PLAN'] = $date;
 		$this->startDatePlanGmt = null;
@@ -3704,7 +3821,14 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	 */
 	public function setEndDatePlan(DateTime $date)
 	{
-		$this->ensureDataLoaded();
+		try
+		{
+			$this->ensureDataLoaded();
+		}
+		catch (TasksException $e)
+		{
+			return;
+		}
 
 		$this->arTaskData['END_DATE_PLAN'] = $date;
 		$this->endDatePlanGmt = null;
@@ -3719,7 +3843,14 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	 */
 	public function getStartDatePlan($getCreatedDateOnNull = false)
 	{
-		$this->ensureDataLoaded();
+		try
+		{
+			$this->ensureDataLoaded();
+		}
+		catch (TasksException $e)
+		{
+			return null;
+		}
 
 		$date = $this->getStartDateOrCreatedDate($getCreatedDateOnNull);
 
@@ -3745,7 +3876,14 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	 */
 	public function getEndDatePlan()
 	{
-		$this->ensureDataLoaded();
+		try
+		{
+			$this->ensureDataLoaded();
+		}
+		catch (TasksException $e)
+		{
+			return null;
+		}
 
 		if(is_string($this->arTaskData['END_DATE_PLAN']) && !empty($this->arTaskData['END_DATE_PLAN']))
 		{
@@ -3770,7 +3908,14 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	 */
 	public function getStartDatePlanGmt($getCreatedDateOnNull = false)
 	{
-		$this->ensureDataLoaded();
+		try
+		{
+			$this->ensureDataLoaded();
+		}
+		catch (TasksException $e)
+		{
+			return null;
+		}
 
 		$date = $this->getStartDateOrCreatedDate($getCreatedDateOnNull);
 
@@ -3799,7 +3944,14 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	 */
 	public function getEndDatePlanGmt()
 	{
-		$this->ensureDataLoaded();
+		try
+		{
+			$this->ensureDataLoaded();
+		}
+		catch (TasksException $e)
+		{
+			return null;
+		}
 
 		if((string) $this->arTaskData['END_DATE_PLAN'] == '')
 		{
@@ -3829,7 +3981,14 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	 */
 	public function setStartDatePlanUserTimeGmt($timeString)
 	{
-		$this->ensureDataLoaded();
+		try
+		{
+			$this->ensureDataLoaded();
+		}
+		catch (TasksException $e)
+		{
+			return;
+		}
 
 		if((string) $timeString == '')
 		{
@@ -3851,7 +4010,14 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	 */
 	public function setEndDatePlanUserTimeGmt($timeString)
 	{
-		$this->ensureDataLoaded();
+		try
+		{
+			$this->ensureDataLoaded();
+		}
+		catch (TasksException $e)
+		{
+			return;
+		}
 
 		if((string) $timeString == '')
 		{
@@ -3872,21 +4038,42 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	 */
 	public function setMatchWorkTime($flag)
 	{
-		$this->ensureDataLoaded();
+		try
+		{
+			$this->ensureDataLoaded();
+		}
+		catch (TasksException $e)
+		{
+			return;
+		}
 
 		$this->arTaskData['MATCH_WORK_TIME'] = $flag ? 'Y' : 'N';
 	}
 
 	public function getMatchWorkTime()
 	{
-		$this->ensureDataLoaded();
+		try
+		{
+			$this->ensureDataLoaded();
+		}
+		catch (TasksException $e)
+		{
+			return false;
+		}
 
 		return $this->arTaskData['MATCH_WORK_TIME'] == 'Y';
 	}
 
 	public function getDurationType()
 	{
-		$this->ensureDataLoaded();
+		try
+		{
+			$this->ensureDataLoaded();
+		}
+		catch (TasksException $e)
+		{
+			return CTasks::TIME_UNIT_TYPE_HOUR;
+		}
 
 		if((string) $this->arTaskData['DURATION_TYPE'] == '' || !in_array($this->arTaskData['DURATION_TYPE'], array(
 			CTasks::TIME_UNIT_TYPE_DAY,
@@ -3906,7 +4093,14 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	 */
 	public function calculateDuration()
 	{
-		$this->ensureDataLoaded();
+		try
+		{
+			$this->ensureDataLoaded();
+		}
+		catch (TasksException $e)
+		{
+			return 0;
+		}
 
 		if(!$this->getEndDatePlan()) // limitless task
 		{
@@ -3953,13 +4147,27 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 	public function offsetExists($offset)
 	{
-		$data = $this->getData(false);
+		try
+		{
+			$data = $this->getData(false);
+		}
+		catch (TasksException $e)
+		{
+			return false;
+		}
 
 		return isset($data[$offset]);
 	}
 	public function offsetGet($offset)
 	{
-		$data = $this->getData(false);
+		try
+		{
+			$data = $this->getData(false);
+		}
+		catch (TasksException $e)
+		{
+			return null;
+		}
 
 		return $data[$offset];
 	}

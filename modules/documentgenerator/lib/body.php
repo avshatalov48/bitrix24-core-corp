@@ -330,6 +330,16 @@ abstract class Body
 		return $names;
 	}
 
+	protected static function getModifierFromPlaceholder(string $placeholder): string
+	{
+		if(preg_match(static::$valuesPattern, $placeholder, $matches))
+		{
+			return $matches[3] ?? '';
+		}
+
+		return '';
+	}
+
 	/**
 	 * Generates string from value.
 	 *

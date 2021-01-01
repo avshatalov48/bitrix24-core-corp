@@ -1345,6 +1345,12 @@ class CCrmDocument
 
 		if (($objDocument = $dbDocumentList->Fetch()) !== false)
 		{
+			$objDocument = static::fillDocumentAddressFields(
+					CCrmOwnerType::ResolveID($arDocumentID['TYPE']),
+					$arDocumentID['ID'],
+					$objDocument
+			);
+
 			$assignedByID = isset($objDocument['ASSIGNED_BY_ID'])
 				? intval($objDocument['ASSIGNED_BY_ID']) : 0;
 
@@ -1617,6 +1623,99 @@ class CCrmDocument
 			return $objDocument;
 		}
 		return null;
+	}
+
+	protected static function fillDocumentAddressFields(int $entityTypeId, int $entityId, array $documentFields): array
+	{
+		if(($entityTypeId !== CCrmOwnerType::Contact && $entityTypeId !== CCrmOwnerType::Company) || $entityId <= 0)
+		{
+			return $documentFields;
+		}
+
+		$settings = \Bitrix\Crm\EntityRequisite::getSingleInstance()->loadSettings($entityTypeId, $entityId);
+
+		$filter = [
+			'=ENTITY_TYPE_ID' => $entityTypeId,
+			'=ENTITY_ID' => $entityId
+		];
+		if(array_key_exists('REQUISITE_ID_SELECTED', $settings))
+		{
+			$filter['=ID'] = $settings['REQUISITE_ID_SELECTED'];
+		}
+
+		$requisiteId = \Bitrix\Crm\EntityRequisite::getSingleInstance()->getList([
+			'select' => ['ID'],
+			'filter' => $filter,
+			'order' => [
+				'SORT' => 'ASC',
+				'ID' => 'ASC'
+			]
+		])->fetch();
+
+		if($requisiteId === false)
+		{
+			return $documentFields;
+		}
+
+		$addressFields = \Bitrix\Crm\EntityRequisite::getAddresses($requisiteId['ID']);
+
+		$primaryAddressFields = current($addressFields);
+		foreach ($addressFields as $addressTypeId => $addressTypeFields)
+		{
+			if($entityTypeId === CCrmOwnerType::Company && $addressTypeId === \Bitrix\Crm\EntityAddressType::Registered)
+			{
+				continue;
+			}
+			if(!CBPHelper::isEmptyValue($addressTypeFields))
+			{
+				$primaryAddressFields = $addressTypeFields;
+				break;
+			}
+		}
+
+		$registeredAddressFields = $addressFields[\Bitrix\Crm\EntityAddressType::Registered];
+
+		$primaryAddressFields = [
+			'ADDRESS' => $primaryAddressFields['ADDRESS_1'],
+			'ADDRESS_2' => $primaryAddressFields['ADDRESS_2'],
+			'ADDRESS_CITY' => $primaryAddressFields['CITY'],
+			'ADDRESS_POSTAL_CODE' => $primaryAddressFields['POSTAL_CODE'],
+			'ADDRESS_REGION' => $primaryAddressFields['REGION'],
+			'ADDRESS_PROVINCE' => $primaryAddressFields['PROVINCE'],
+			'ADDRESS_COUNTRY' => $primaryAddressFields['COUNTRY'],
+			'ADDRESS_COUNTRY_CODE' => $primaryAddressFields['COUNTRY_CODE'],
+			'ADDRESS_LOC_ADDR_ID' => $primaryAddressFields['LOC_ADDR_ID'],
+			'ADDRESS_LOC_ADDR' => $primaryAddressFields['LOC_ADDR'],
+		];
+
+		$registeredAddressFields = [
+			'REG_ADDRESS' => $registeredAddressFields['ADDRESS_1'],
+			'ADDRESS_LEGAL' => $registeredAddressFields['ADDRESS_1'],
+			'REG_ADDRESS_2' => $registeredAddressFields['ADDRESS_2'],
+			'REG_ADDRESS_CITY' => $registeredAddressFields['CITY'],
+			'REG_ADDRESS_POSTAL_CODE' => $registeredAddressFields['POSTAL_CODE'],
+			'REG_ADDRESS_REGION' => $registeredAddressFields['REGION'],
+			'REG_ADDRESS_PROVINCE' => $registeredAddressFields['PROVINCE'],
+			'REG_ADDRESS_COUNTRY' => $registeredAddressFields['COUNTRY'],
+			'REG_ADDRESS_COUNTRY_CODE' => $registeredAddressFields['COUNTRY_CODE'],
+			'REG_ADDRESS_LOC_ADDR_ID' => $registeredAddressFields['LOC_ADDR_ID'],
+			'REG_ADDRESS_LOC_ADDR' => $registeredAddressFields['LOC_ADDR'],
+		];
+
+		$entityAddressFields = [$primaryAddressFields];
+		if($entityTypeId === CCrmOwnerType::Company)
+		{
+			$entityAddressFields[] = $registeredAddressFields;
+		}
+		foreach ($entityAddressFields as $addressTypeFields)
+		{
+			if (CBPHelper::isEmptyValue(array_intersect_key($documentFields, $addressTypeFields)))
+			{
+				$documentFields = array_merge($documentFields, $addressTypeFields);
+			}
+		}
+
+		return $documentFields;
 	}
 
 	private static function getDocumentFieldMulti($document, $entityType, $entityId)

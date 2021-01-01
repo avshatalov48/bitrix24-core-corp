@@ -2,6 +2,7 @@
 
 namespace Bitrix\DocumentGenerator\Body;
 
+use Bitrix\DocumentGenerator\Value;
 use Bitrix\Main\Error;
 use Bitrix\Main\IO\File;
 use Bitrix\Main\Result;
@@ -257,7 +258,7 @@ class Docx extends ZipDocument
 		/** @var \DOMDocument $document */
 		$document = $relationshipsData['document'];
 		$relFilesToDelete = $nodesToDelete = [];
-		foreach($imageData as $placeholder => $data)
+		foreach($imageData as $fieldName => $data)
 		{
 			if(!isset($data['innerIDs']))
 			{
@@ -286,7 +287,7 @@ class Docx extends ZipDocument
 						$originalNode->parentNode->insertBefore($newNode, $originalNode);
 						$this->importImage($image, $newNode, $imageID);
 						$isDocumentChanged = true;
-						$this->excludedPlaceholders[] = $placeholder;
+						$this->excludedPlaceholders[] = $fieldName;
 					}
 				}
 				if($originalImageID)
@@ -298,9 +299,21 @@ class Docx extends ZipDocument
 					$nodesToDelete[] = $originalNode;
 				}
 			}
-			elseif(isset($this->values[$placeholder]) && !empty(trim($this->values[$placeholder])))
+			elseif(isset($this->values[$fieldName]) && !empty(trim($this->values[$fieldName])))
 			{
-				$image = $this->getImage($this->values[$placeholder]);
+				$image = $this->getImage($this->values[$fieldName]);
+				if(!$image && $this->isArrayValue($this->values[$fieldName], $fieldName))
+				{
+					$placeholder = $data['placeholder'] ?? '';
+					$modifier = static::getModifierFromPlaceholder($placeholder);
+					$modifierData = Value::parseModifier($modifier);
+					$index = (int) $modifierData[static::ARRAY_INDEX_MODIFIER];
+					$value = $this->values[$fieldName];
+					$valueNameParts = explode('.', $value);
+					$name = implode('.', array_slice($valueNameParts, 2));
+					$arrayProvider = $this->values[$valueNameParts[0]];
+					$image = $this->getImage($this->printArrayValueByIndex($arrayProvider, $fieldName, $name, $index, $modifier));
+				}
 				if($image && $image->isExists() && $image->isReadable())
 				{
 					$originalImageID = $originalNode = false;
@@ -321,7 +334,7 @@ class Docx extends ZipDocument
 						$originalNode->parentNode->insertBefore($newNode, $originalNode);
 						$this->importImage($image, $newNode, $imageID);
 						$isDocumentChanged = true;
-						$this->excludedPlaceholders[] = $placeholder;
+						$this->excludedPlaceholders[] = $fieldName;
 					}
 					if($originalImageID)
 					{

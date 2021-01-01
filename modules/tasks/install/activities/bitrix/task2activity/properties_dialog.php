@@ -64,16 +64,58 @@ foreach ($arDocumentFields as $fieldKey => $fieldValue)
 					}
 					$fieldValue["UserField"]["ENTITY_VALUE_ID"] = 1; //hack to not empty value
 				}
-				$GLOBALS["APPLICATION"]->IncludeComponent(
-					"bitrix:system.field.edit",
-					$fieldValue["UserField"]["USER_TYPE"]["USER_TYPE_ID"],
-					array(
-						"bVarsFromForm" => false,
-						"arUserField" => $fieldValue["UserField"],
-						"form_name" => $formName,
-						'SITE_ID' => $currentSiteId,
-					), null, array("HIDE_ICONS" => "Y")
-				);
+				$userFieldTypes = [
+					\Bitrix\Bizproc\FieldType::STRING,
+					\Bitrix\Bizproc\FieldType::DOUBLE,
+					\Bitrix\Bizproc\FieldType::DATETIME,
+					'boolean'
+				];
+				if(in_array($fieldValue['UserField']['USER_TYPE_ID'], $userFieldTypes)
+					&& mb_substr($fieldValue['UserField']['FIELD_NAME'], 0, mb_strlen('UF_AUTO_')) === 'UF_AUTO_')
+				{
+					$fieldType = $fieldValue['UserField']['USER_TYPE_ID'];
+					$fieldMap = [
+						'Name' => $fieldValue['Name'],
+						'FieldName' => $fieldValue['UserField']['FIELD_NAME'],
+						'Type' => $fieldType === 'boolean' ? 'bool' : $fieldType,
+						'Required' => $fieldValue['UserField']['MANDATORY'],
+						'Multiple' => $fieldValue['UserField']['MULTIPLE']
+					];
+					$field = $dialog->getFieldTypeObject($fieldMap);
+					echo $field->renderControl(array(
+						'Form' => $dialog->getFormName(),
+						'Field' => $fieldMap['FieldName']
+					), $dialog->getCurrentValue($fieldMap['FieldName']), true, 0);
+				}
+				else
+				{
+					$GLOBALS["APPLICATION"]->IncludeComponent(
+						"bitrix:system.field.edit",
+						$fieldValue["UserField"]["USER_TYPE"]["USER_TYPE_ID"],
+						array(
+							"bVarsFromForm" => false,
+							"arUserField" => $fieldValue["UserField"],
+							"form_name" => $formName,
+							'SITE_ID' => $currentSiteId,
+						), null, array("HIDE_ICONS" => "Y")
+					);
+					if ($fieldKey === "UF_TASK_WEBDAV_FILES" || $fieldKey === "UF_CRM_TASK")
+					{
+						$fieldMap = [
+							'FieldName' => $fieldValue['UserField']['FIELD_NAME'] . '_text',
+							'Type' => \Bitrix\Bizproc\FieldType::STRING,
+							'Required' => $fieldValue['MANDATORY'] === 'Y',
+							'Multiple' => $fieldValue['MULTIPLE'] === 'Y'
+						];
+
+						$fieldType = $dialog->getFieldTypeObject($fieldMap);
+
+						echo $fieldType->renderControl(array(
+							'Form' => $dialog->getFormName(),
+							'Field' => $fieldMap['FieldName']
+						), $dialog->getCurrentValue($fieldMap['FieldName']), true, 0);
+					}
+				}
 			}
 			else
 			{

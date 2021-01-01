@@ -242,8 +242,8 @@ class ImportHelper
 			'REGION',
 			'PROVINCE',
 			'COUNTRY',
-			'COUNTRY_CODE',
-			'LOC_ADDR_ID'
+			'COUNTRY_CODE'/*,
+			'LOC_ADDR_ID'*/
 		);
 		$rqAddrTypes = array_keys($rqAddrTypeInfos);
 		if (is_array($fields)
@@ -504,7 +504,7 @@ class ImportHelper
 								}
 								foreach ($addressFields as $addrFieldName)
 								{
-									if ($addrFieldName === 'COUNTRY_CODE')
+									if ($addrFieldName === 'COUNTRY_CODE' || $addrFieldName === 'LOC_ADDR_ID')
 									{
 										continue;
 									}
@@ -1451,8 +1451,8 @@ class ImportHelper
 						'REGION',
 						'PROVINCE',
 						'COUNTRY',
-						'COUNTRY_CODE',
-						'LOC_ADDR_ID'
+						'COUNTRY_CODE'/*,
+						'LOC_ADDR_ID'*/
 					);
 					$rqAddrTypes = array_keys($rqAddrTypeInfos);
 					if (is_array($requisiteFields)

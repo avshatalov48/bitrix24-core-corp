@@ -6,6 +6,8 @@ if(isset($_REQUEST['site_id']) && is_string($_REQUEST['site_id']))
 	$siteId = mb_substr(preg_replace('/[^a-z0-9_]/i', '', $_REQUEST['site_id']), 0, 2);
 }
 
+global $APPLICATION;
+
 if($siteId)
 {
 	define('SITE_ID', $siteId);
@@ -38,6 +40,25 @@ if (($showChecks = $request->get('show_checks')) && $showChecks == 'y')
 		array(
 			'PAGE_PATH' => '/shop/settings/sale_cashbox_check.php',
 			'PAGE_PARAMS' => $pageParams,
+			'SEF_FOLDER' => '/shop/settings/',
+			'INTERNAL_PAGE' => 'Y',
+		),
+		false
+	);
+}
+elseif (($showChecksCorrection = $request->get('show_checks_correction')) && $showChecksCorrection == 'y')
+{
+	$pageParams = [
+		'lang' => LANGUAGE_ID,
+		'publicSidePanel' => 'Y'
+	];
+
+	$APPLICATION->IncludeComponent(
+		'bitrix:salescenter.page.include',
+		'',
+		array(
+			'PAGE_PATH' => '/shop/settings/sale_cashbox_correction.php',
+			'PAGE_PARAMS' => http_build_query($pageParams),
 			'SEF_FOLDER' => '/shop/settings/',
 			'INTERNAL_PAGE' => 'Y',
 		),

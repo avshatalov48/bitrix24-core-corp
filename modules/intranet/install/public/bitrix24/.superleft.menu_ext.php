@@ -35,7 +35,7 @@ if (defined("BX_COMP_MANAGED_CACHE"))
 
 $arMenu = array(
 	array(
-		GetMessage("MENU_LIVE_FEED"),
+		GetMessage("MENU_LIVE_FEED2"),
 		"/stream/",
 		array(),
 		array(
@@ -503,6 +503,22 @@ if (CModule::IncludeModule('voximplant') && \Bitrix\Voximplant\Security\Helper::
 		),
 		""
 	);
+}
+
+if (CModule::IncludeModule('im'))
+{
+	$arMenu[] = [
+		GetMessage("MENU_CONFERENCE_SECTION"),
+		"/conference/",
+		[],
+		[
+			"class" => "menu-conference",
+			"menu_item_id" => "menu_conference",
+			"top_menu_id" => "top_menu_id_conference",
+			"is_beta" => true
+		],
+		""
+	];
 }
 
 if (IsModuleInstalled("bitrix24"))

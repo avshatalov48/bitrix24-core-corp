@@ -39,6 +39,17 @@ var CONFIG = {
 	PULL_CONFIG: BX.componentParameters.get('PULL_CONFIG', {}),
 };
 
+var MAX_IDS_TO_STORE = 10;
+
+// Protobuf message models
+var Response = protobuf ? protobuf.roots['push-server']['Response'] : null;
+var ResponseBatch = protobuf ? protobuf.roots['push-server']['ResponseBatch'] : null;
+var Request = protobuf ? protobuf.roots['push-server']['Request'] : null;
+var RequestBatch = protobuf ? protobuf.roots['push-server']['RequestBatch'] : null;
+var IncomingMessagesRequest = protobuf ? protobuf.roots['push-server']['IncomingMessagesRequest'] : null;
+var IncomingMessage = protobuf ? protobuf.roots['push-server']['IncomingMessage'] : null;
+var Receiver = protobuf ? protobuf.roots['push-server']['Receiver'] : null;
+
 /**
  * Interface for delegate of connector
  * @constructor
@@ -120,6 +131,8 @@ var WebSocketConnector = function (delegate, params)
 	this.delegate = delegate;
 	this.offline = false;
 
+	this.hasActiveCall = false;
+
 	Object.defineProperty(this, "socket", {
 		set : (value) =>
 		{
@@ -145,12 +158,9 @@ var WebSocketConnector = function (delegate, params)
 	});
 	if (this.params.disconnectOnBackground)
 	{
-		BX.addCustomEvent("onAppActive", () =>
-		{
-			this.waitingConnectionAfterBackground = true;
-			this.connect(true);
-		});
-		BX.addCustomEvent("onAppPaused", () => this.disconnect(1000, "App is in background"));
+		BX.addCustomEvent("onAppActive", this.onAppActive.bind(this));
+		BX.addCustomEvent("onAppPaused", this.onAppPaused.bind(this));
+		BX.addCustomEvent("CallEvents::hasActiveCall", this.onActiveCallStateChange.bind(this))
 	}
 
 	BX.addCustomEvent("onPullForceBackgroundConnect", () => {
@@ -218,7 +228,15 @@ WebSocketConnector.prototype = {
 			this.connectionTimeoutId = null;
 			this.connectionTimeoutTime = 0;
 
-			this.createWebSocket()
+			let connectPath = this.delegate.getPath();
+			if (connectPath)
+			{
+				this.createWebSocket(connectPath)
+			}
+			else
+			{
+				this.delegate.updateConfig();
+			}
 		}, connectTimeout);
 	},
 	disconnect : function (code, message)
@@ -232,21 +250,15 @@ WebSocketConnector.prototype = {
 			this.socket.close(code, message);
 		}
 	},
-	createWebSocket : function ()
+	createWebSocket : function (connectPath)
 	{
-		let connectPath = this.delegate.getPath();
-		if (connectPath)
-		{
-			this.socket = new WebSocket(connectPath);
-			this.socket.onclose = this.onclose.bind(this);
-			this.socket.onerror = this.onerror.bind(this);
-			this.socket.onmessage = this.onmessage.bind(this);
-			this.socket.onopen = this.onopen.bind(this);
-		}
-		else
-		{
-			this.delegate.updateConfig();
-		}
+		this.socket = new WebSocket(connectPath);
+		this.socket.binaryType = 'arraybuffer';
+
+		this.socket.onclose = this.onclose.bind(this);
+		this.socket.onerror = this.onerror.bind(this);
+		this.socket.onmessage = this.onmessage.bind(this);
+		this.socket.onopen = this.onopen.bind(this);
 	},
 	sendPullStatus : function (status)
 	{
@@ -257,6 +269,21 @@ WebSocketConnector.prototype = {
 		}
 		BX.postWebEvent("onPullStatus", {status : status});
 		BX.postComponentEvent("onPullStatus", [{status : status}]);
+	},
+	/**
+	 * Sends some data to the server via websocket connection.
+	 * @param {ArrayBuffer} buffer Data to send.
+	 * @return {boolean}
+	 */
+	send: function (buffer)
+	{
+		if(!this.socket || this.socket.readyState !== 1)
+		{
+			console.error("Send error: WebSocket is not connected");
+			return false;
+		}
+
+		this.socket.send(new Uint8Array(buffer));
 	},
 	onopen : function ()
 	{
@@ -301,6 +328,26 @@ WebSocketConnector.prototype = {
 	{
 		console.log("WebSocket -> onmessage", this.debug? arguments: true);
 		this.delegate.onMessage.apply(this.delegate, arguments);
+	},
+	onActiveCallStateChange : function (hasActiveCall)
+	{
+		this.hasActiveCall = hasActiveCall;
+		if (!this.hasActiveCall && Application.isBackground())
+		{
+			this.disconnect(1000, "App is in background")
+		}
+	},
+	onAppPaused : function ()
+	{
+		if (!this.hasActiveCall)
+		{
+			this.disconnect(1000, "App is in background")
+		}
+	},
+	onAppActive : function ()
+	{
+		this.waitingConnectionAfterBackground = true;
+		this.connect(!this.hasActiveCall);
 	}
 };
 
@@ -331,10 +378,12 @@ function Connection(config)
 		time : null,
 		lastId: 0,
 		history: {},
+		lastMessageIds: [],
 		messageCount: 0
 	};
 
 	this.connector = new WebSocketConnector(this, new WebSocketConnectorParams());
+	this.channelManager = new ChannelManager();
 
 	this.expireCheckInterval = 60000;
 	this.expireCheckTimeoutId = null;
@@ -344,6 +393,9 @@ function Connection(config)
 	this.configRequestAfterErrorInterval = 60000;
 
 	BX.addCustomEvent("onPullGetDebugInfo", this.sendDebugInfo.bind(this));
+	BX.addCustomEvent("onPullGetPublishingState", this.sendPublishingState.bind(this));
+	BX.addCustomEvent("onPullSetPublicIds", this.setPublicIds.bind(this));
+	BX.addCustomEvent("onPullSendMessageBatch", this.sendMessageBatch.bind(this));
 	BX.addCustomEvent("onPullExtendWatch", data => this.extendWatch(data.id, data.force));
 	BX.addCustomEvent("onPullClearWatch", data => this.clearWatchTag(data.id));
 	BX.addCustomEvent("onUpdateServerTime", this.updateTimeShift.bind(this));
@@ -411,6 +463,7 @@ Connection.prototype.setConfig = function (config)
 
 	console.info("Connection.setConfig: new config set\n", this.config);
 	this.config.actual = true;
+	this.sendPublishingState();
 
 	if (
 		typeof config.api != 'undefined'
@@ -523,7 +576,219 @@ Connection.prototype.updateConfig = function ()
 
 	return updateConfigPromise;
 };
+Connection.prototype.getServerVersion = function()
+{
+	return (this.config && this.config.server) ? this.config.server.version : 0;
+};
+Connection.prototype.isPublishingEnabled = function ()
+{
+	if(!this.isProtobufSupported())
+	{
+		return false;
+	}
+
+	return (this.config && this.config.server && this.config.server.publish_enabled === true);
+};
+Connection.prototype.sendPublishingState = function ()
+{
+	BX.postComponentEvent("onPullPublishingState", [this.isPublishingEnabled()]);
+};
+Connection.prototype.isProtobufSupported = function()
+{
+	return (this.getServerVersion() > 3 && ("protobuf" in window));
+};
 Connection.prototype.parseResponse = function (response)
+{
+	var events = this.extractMessages(response);
+	var messages = [];
+	if (events.length === 0)
+	{
+		this.session.mid = null;
+		return;
+	}
+
+	for (var i = 0; i < events.length; i++)
+	{
+		var event = events[i];
+
+		if (event.mid && this.session.lastMessageIds.includes(event.mid))
+		{
+			console.warn("Duplicate message " + event.mid + " skipped");
+			continue;
+		}
+
+		this.session.mid = event.mid || null;
+		this.session.tag = event.tag || null;
+		this.session.time = event.time || null;
+
+		messages.push(event.text);
+
+		if (!this.session.history[event.text.module_id])
+		{
+			this.session.history[event.text.module_id] = {};
+		}
+		if (!this.session.history[event.text.module_id][event.text.command])
+		{
+			this.session.history[event.text.module_id][event.text.command] = 0;
+		}
+		this.session.history[event.text.module_id][event.text.command]++;
+		this.session.messageCount++;
+	}
+
+	if (this.session.lastMessageIds.length > MAX_IDS_TO_STORE)
+	{
+		this.session.lastMessageIds = this.session.lastMessageIds.slice( - MAX_IDS_TO_STORE);
+	}
+	this.broadcastMessages(messages);
+};
+Connection.prototype.extractMessages = function (pullEvent)
+{
+	if(pullEvent instanceof ArrayBuffer)
+	{
+		return this.extractProtobufMessages(pullEvent);
+	}
+	else if(Utils.isNotEmptyString(pullEvent))
+	{
+		return this.extractPlainTextMessages(pullEvent)
+	}
+};
+Connection.prototype.extractProtobufMessages = function(pullEvent)
+{
+	let result = [];
+	try
+	{
+		let responseBatch = ResponseBatch.decode(new Uint8Array(pullEvent));
+		for (let i = 0; i < responseBatch.responses.length; i++)
+		{
+			let response = responseBatch.responses[i];
+			if (response.command != "outgoingMessages")
+			{
+				continue;
+			}
+
+			let messages = responseBatch.responses[i].outgoingMessages.messages;
+			for (let m = 0; m < messages.length; m++)
+			{
+				let message = messages[m];
+				let messageFields;
+				try
+				{
+					messageFields = JSON.parse(message.body)
+				}
+				catch (e)
+				{
+					console.error("Pull: Could not parse message body", e);
+					continue;
+				}
+
+				if(!messageFields.extra)
+				{
+					messageFields.extra = {}
+				}
+				messageFields.extra.sender = {
+					type: message.sender.type
+				};
+
+				if(message.sender.id instanceof Uint8Array)
+				{
+					messageFields.extra.sender.id = this.decodeId(message.sender.id)
+				}
+
+				let compatibleMessage = {
+					mid: this.decodeId(message.id),
+					text: messageFields
+				};
+
+				result.push(compatibleMessage);
+			}
+		}
+	}
+	catch(e)
+	{
+		console.error("Pull: Could not parse message", e)
+	}
+	return result;
+};
+Connection.prototype.extractPlainTextMessages = function(pullEvent)
+{
+	let result = [];
+	let dataArray = pullEvent.match(/#!NGINXNMS!#(.*?)#!NGINXNME!#/gm);
+	if (dataArray === null)
+	{
+		text = "\n========= PULL ERROR ===========\n"+
+			"Error type: parseResponse error parsing message\n"+
+			"\n"+
+			"Data string: " + pullEvent + "\n"+
+			"================================\n\n";
+		console.warn(text);
+		return result;
+	}
+	for (let i = 0; i < dataArray.length; i++)
+	{
+		dataArray[i] = dataArray[i].substring(12, dataArray[i].length - 12);
+		if (dataArray[i].length <= 0)
+		{
+			continue;
+		}
+
+		try
+		{
+			var data = JSON.parse(dataArray[i])
+		}
+		catch(e)
+		{
+			continue;
+		}
+
+		result.push(data);
+	}
+	return result;
+};
+/**
+ * Converts message id from byte[] to string
+ * @param {Uint8Array} encodedId
+ * @return {string}
+ */
+Connection.prototype.decodeId = function(encodedId)
+{
+	if(!(encodedId instanceof Uint8Array))
+	{
+		throw new Error("encodedId should be an instance of Uint8Array");
+	}
+
+	var result = "";
+	for (var i = 0; i < encodedId.length; i++)
+	{
+		var hexByte = encodedId[i].toString(16);
+		if (hexByte.length === 1)
+		{
+			result += '0';
+		}
+		result += hexByte;
+	}
+	return result;
+};
+/**
+ * Converts message id from hex-encoded string to byte[]
+ * @param {string} id Hex-encoded string.
+ * @return {Uint8Array}
+ */
+Connection.prototype.encodeId = function(id)
+{
+	if (!id)
+	{
+		return new Uint8Array();
+	}
+
+	var result = [];
+	for (var i = 0; i < id.length; i += 2)
+	{
+		result.push(parseInt(id.substr(i, 2), 16));
+	}
+
+	return new Uint8Array(result);
+};
+/*Connection.prototype.parseResponse = function (response)
 {
 	let dataArray = response.match(/#!NGINXNMS!#(.*?)#!NGINXNME!#/gm);
 	if (dataArray === null)
@@ -540,7 +805,7 @@ Connection.prototype.parseResponse = function (response)
 			continue;
 		}
 
-		let data = BX.parseJSON(dataArray[i]);
+		let data = JSON.parse(dataArray[i]);
 
 		this.session.lastId = data.id;
 
@@ -584,7 +849,7 @@ Connection.prototype.parseResponse = function (response)
 			"================================\n\n";
 		console.error(text);
 	}
-};
+};*/
 Connection.prototype.broadcastMessages = function (messages)
 {
 	if (this.config.debug.log)
@@ -614,7 +879,7 @@ Connection.prototype.broadcastMessages = function (messages)
 
 		if(message.extra.sender && message.extra.sender.type === SenderType.Client)
 		{
-			BX.postComponentEvent('onPullClientEvent-' + moduleId, [command, message.params, message.extra, moduleId], true);
+			BX.postComponentEvent('onPullClientEvent-' + moduleId, [command, message.params, message.extra, moduleId]);
 			BX.postWebEvent('onPullClient-' + moduleId, {command : message.command, params : message.params, extra : message.extra, module_id : message.module_id, }, true);
 		}
 		else if (moduleId === 'pull')
@@ -759,6 +1024,124 @@ Connection.prototype.updateTimeShift = function(serverTime)
 };
 
 /**
+ *
+ * @param {object[]} publicIds
+ * @param {integer} publicIds.user_id
+ * @param {string} publicIds.public_id
+ * @param {string} publicIds.signature
+ * @param {Date} publicIds.start
+ * @param {Date} publicIds.end
+ */
+Connection.prototype.setPublicIds = function(publicIds)
+{
+	return this.channelManager.setPublicIds(publicIds);
+};
+
+/**
+ * Send single message to the specified public channel.
+ *
+ * @param {integer[]} users User ids the message receivers.
+ * @param {string} moduleId Name of the module to receive message,
+ * @param {string} command Command name.
+ * @param {object} params Command parameters.
+ * @param {integer} [expiry] Message expiry time in seconds.
+ * @return {BX.Promise<bool>}
+ */
+Connection.prototype.sendMessage = function(users, moduleId, command, params, expiry)
+{
+	return this.sendMessageBatch([{
+		users: users,
+		moduleId: moduleId,
+		command: command,
+		params: params,
+		expiry: expiry
+	}]);
+};
+
+/**
+ * Sends batch of messages to the multiple public channels.
+ *
+ * @param {object[]} messageBatch Array of messages to send.
+ * @param  {int[]} messageBatch.users User ids the message receivers.
+ * @param {string} messageBatch.moduleId Name of the module to receive message,
+ * @param {string} messageBatch.command Command name.
+ * @param {object} messageBatch.params Command parameters.
+ * @param {integer} [messageBatch.expiry] Message expiry time in seconds.
+ * @return {BX.Promise<bool>}
+ */
+Connection.prototype.sendMessageBatch = function(messageBatch)
+{
+	if(!this.isPublishingEnabled())
+	{
+		console.error('Client publishing is not supported or is disabled');
+		return false;
+	}
+
+	let userIds = {};
+	for(let i = 0; i < messageBatch.length; i++)
+	{
+		for(let j = 0; j < messageBatch[i].users.length; j++)
+		{
+			userIds[messageBatch[i].users[j]] = true;
+		}
+	}
+
+	this.channelManager.getPublicIds(Object.keys(userIds)).then((publicIds) =>
+	{
+		let buffer = this.encodeMessageBatch(messageBatch, publicIds);
+		this.connector.send(buffer);
+	})
+};
+
+Connection.prototype.encodeMessageBatch = function(messageBatch, publicIds)
+{
+	let messages = [];
+	messageBatch.forEach((messageFields) =>
+	{
+		let messageBody = {
+			module_id: messageFields.moduleId,
+			command: messageFields.command,
+			params: messageFields.params
+		};
+		let message = IncomingMessage.create({
+			receivers: this.createMessageReceivers(messageFields.users, publicIds),
+			body: JSON.stringify(messageBody),
+			expiry: messageFields.expiry || 0
+		});
+		messages.push(message);
+	});
+
+	let requestBatch = RequestBatch.create({
+		requests: [{
+			incomingMessages: {
+				messages: messages
+			}
+		}]
+	});
+
+	return RequestBatch.encode(requestBatch).finish();
+};
+
+Connection.prototype.createMessageReceivers = function(users, publicIds)
+{
+	let result = [];
+	for(let i = 0; i < users.length; i++)
+	{
+		let userId = users[i];
+		if(!publicIds[userId] || !publicIds[userId].publicId)
+		{
+			throw new Error('Could not determine public id for user ' + userId);
+		}
+
+		result.push(Receiver.create({
+			id: this.encodeId(publicIds[userId].publicId),
+			signature: this.encodeId(publicIds[userId].signature)
+		}))
+	}
+	return result;
+};
+
+/**
  * WebSocketConnectorDelegate methods
  */
 Connection.prototype.onMessage = function (message)
@@ -853,6 +1236,10 @@ Connection.prototype.getPath = function ()
 	if (this.config.server.mode === "shared")
 	{
 		path = path+"&clientId=" + this.config.clientId;
+	}
+	if (this.isProtobufSupported())
+	{
+		path = path+"&binaryMode=true";
 	}
 
 	return path;
@@ -1003,4 +1390,78 @@ Connection.prototype.getSessionHistory = function ()
 
 	text = text + "===================";
 	console.info(text);
+};
+
+var ChannelManager = function ()
+{
+	this.publicIds = {};
+};
+/**
+ *
+ * @param {Array} users Array of user ids.
+ * @return {BX.Promise}
+ */
+ChannelManager.prototype.getPublicIds = function(users)
+{
+	return new Promise((resolve) =>
+	{
+		let result = {};
+		let now = new Date();
+		let unknownUsers = [];
+
+		for(let i = 0; i < users.length; i++)
+		{
+			let userId = users[i];
+			if(this.publicIds[userId] && this.publicIds[userId]['end'] > now)
+			{
+				result[userId] = this.publicIds[userId];
+			}
+			else
+			{
+				unknownUsers.push(userId);
+			}
+		}
+
+		if(unknownUsers.length === 0)
+		{
+			return resolve(result);
+		}
+
+		BX.rest.callMethod("pull.channel.public.list", {users: unknownUsers}).then((response) =>
+		{
+			if(response.error())
+			{
+				return resolve({});
+			}
+			let data = response.data();
+			this.setPublicIds(Object.values(data));
+			unknownUsers.forEach(userId => result[userId] = this.publicIds[userId]);
+
+			resolve(result);
+		});
+	})
+};
+/**
+ *
+ * @param {object[]} publicIds
+ * @param {integer} publicIds.user_id
+ * @param {string} publicIds.public_id
+ * @param {string} publicIds.signature
+ * @param {Date} publicIds.start
+ * @param {Date} publicIds.end
+ */
+ChannelManager.prototype.setPublicIds = function(publicIds)
+{
+	for(let i = 0; i < publicIds.length; i++)
+	{
+		let publicIdDescriptor = publicIds[i];
+		let userId = publicIdDescriptor.user_id;
+		this.publicIds[userId] = {
+			userId: userId,
+			publicId: publicIdDescriptor.public_id,
+			signature: publicIdDescriptor.signature,
+			start: new Date(publicIdDescriptor.start),
+			end: new Date(publicIdDescriptor.end)
+		}
+	}
 };

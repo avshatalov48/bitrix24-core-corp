@@ -679,25 +679,28 @@ class DocxXml extends Xml
 			{
 				$name = $description->attributes->getNamedItem('name');
 				$descr = $description->attributes->getNamedItem('descr');
-				$placeholder = null;
+				$fieldName = null;
 				if($descr)
 				{
-					$placeholder = static::getCodeFromPlaceholder($descr->nodeValue);
+					$fieldName = static::getCodeFromPlaceholder($descr->nodeValue);
+					$placeholder = $descr->nodeValue;
 				}
-				if(!$placeholder && $name)
+				if(!$fieldName && $name)
 				{
-					$placeholder = static::getCodeFromPlaceholder($name->nodeValue);
+					$fieldName = static::getCodeFromPlaceholder($name->nodeValue);
+					$placeholder = $name->nodeValue;
 				}
-				if($placeholder)
+				if($fieldName)
 				{
-					if(!isset($placeholders[$placeholder]))
+					if(!isset($placeholders[$fieldName]))
 					{
-						$placeholders[$placeholder] = [
+						$placeholders[$fieldName] = [
 							'drawingNode' => [],
 							'innerIDs' => [],
+							'placeholder' => $placeholder,
 						];
 					}
-					$placeholders[$placeholder]['drawingNode'][] = $description->parentNode->parentNode;
+					$placeholders[$fieldName]['drawingNode'][] = $description->parentNode->parentNode;
 					$embeds = $description->parentNode->getElementsByTagNameNS(static::getNamespaces()['a'], 'blip');
 					if($embeds->length > 0)
 					{
@@ -710,16 +713,16 @@ class DocxXml extends Xml
 							if($generateNewImageIds && !isset($this->arrayImageValues['originalId'][$imageId]))
 							{
 								$newImageId = static::getRandomId('rId', true);
-								$placeholders[$placeholder]['originalId'][$newImageId] = $imageId;
+								$placeholders[$fieldName]['originalId'][$newImageId] = $imageId;
 								$imageId = $innerImageId->value = $newImageId;
 							}
-							if(!in_array($imageId, $placeholders[$placeholder]['innerIDs']))
+							if(!in_array($imageId, $placeholders[$fieldName]['innerIDs']))
 							{
-								$placeholders[$placeholder]['innerIDs'][] = $imageId;
+								$placeholders[$fieldName]['innerIDs'][] = $imageId;
 								if(isset($this->arrayImageValues['values'][$imageId]))
 								{
-									$placeholders[$placeholder]['values'][$imageId] = $this->arrayImageValues['values'][$imageId];
-									$placeholders[$placeholder]['originalId'][$imageId] = $this->arrayImageValues['originalId'][$imageId];
+									$placeholders[$fieldName]['values'][$imageId] = $this->arrayImageValues['values'][$imageId];
+									$placeholders[$fieldName]['originalId'][$imageId] = $this->arrayImageValues['originalId'][$imageId];
 								}
 							}
 						}

@@ -118,6 +118,14 @@ Vue.component(config.templateAddPaymentBySmsItem,
 				relatedServicesValues = this.$root.$app.options.shipmentData.extraServicesValues;
 			}
 
+			let relatedPropsOptions = {};
+			if (this.$root.$app.options.hasOwnProperty('deliveryOrderPropOptions')
+				&& !Array.isArray(this.$root.$app.options.deliveryOrderPropOptions)
+			)
+			{
+				relatedPropsOptions = this.$root.$app.options.deliveryOrderPropOptions;
+			}
+
 			let isExistingItem = parseInt(this.$root.$app.options.associatedEntityId) > 0;
 
 			return {
@@ -130,6 +138,7 @@ Vue.component(config.templateAddPaymentBySmsItem,
 				ownerId: this.$root.$app.options.ownerId,
 				sessionId: this.$root.$app.options.sessionId,
 				relatedPropsValues,
+				relatedPropsOptions,
 				relatedServicesValues,
 				deliveryServiceId,
 				responsibleId,
@@ -175,16 +184,16 @@ Vue.component(config.templateAddPaymentBySmsItem,
 		getRawSmsMessage()
 		{
 			let text = this.$root.$app.sendingMethodDesc.text;
-			
+
 			return Text.encode(text);
 		},
 
 		getSmsMessage()
 		{
-			
+
 			let link = `<span class="${classModule}-container-sms-content-message-link">${this.$root.$app.orderPublicUrl}</span><sapn class="${classModule}-container-sms-content-message-link-ref">xxxxx</sapn>` + ` `;
 			let text = this.$root.$app.sendingMethodDesc.text;
-			
+
 			return Text.encode(text).replace(/#LINK#/g, link);
 		},
 

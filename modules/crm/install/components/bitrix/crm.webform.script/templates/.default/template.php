@@ -40,12 +40,6 @@ $isFormInline = $defaultTemplateContainerId == $templateContainerId;
 		<br>
 	<?endif;?>
 
-	<?if ($arResult['IS_AVAILABLE_EMBEDDING']):?>
-		<label ><input type="checkbox" data-bx-webform-script-selector="">
-			<?=Loc::getMessage('CRM_WEBFORM_SCRIPT_SELECTOR')?>
-		</label><br><br>
-	<?endif;?>
-
 	<div class="crm-webform-script-tab-container">
 		<div class="crm-webform-script-tab-list">
 			<?
@@ -142,13 +136,6 @@ $isFormInline = $defaultTemplateContainerId == $templateContainerId;
 							</div>
 						<?endif;?>
 					<?endif;?>
-				</div>
-				<div data-bx-webform-script-kind="old" style="<?=(!$arResult['IS_AVAILABLE_EMBEDDING'] ? '' : 'display: none;')?>">
-					<div class="crm-webform-script-tab-body-item-inner">
-						<div data-bx-webform-script-copy-text="SCRIPT_<?=$type?>" class="crm-webform-script-tab-body-item-content">
-							<?=$getFormattedScript($arResult['SCRIPTS'][$type]['old'])?>
-						</div>
-					</div>
 				</div>
 			</div>
 		</div>

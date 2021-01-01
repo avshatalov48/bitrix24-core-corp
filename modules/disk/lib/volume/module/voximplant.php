@@ -217,40 +217,40 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 	{
 		if (
 			$storage instanceof \Bitrix\Disk\Storage &&
-			$storage->getId() > 0 &&
-			(
+			$storage->getId() > 0
+		)
+		{
+			if (
 				!isset($this->folderList[$storage->getId()]) ||
 				empty($this->folderList[$storage->getId()])
 			)
-		)
-		{
-			$this->folderList[$storage->getId()] = array();
-			if ($this->isMeasureAvailable())
 			{
-				$typeFolderCodeList = self::getSpecialFolderCode();
-				if (count($typeFolderCodeList) > 0)
+				$this->folderList[$storage->getId()] = array();
+				if ($this->isMeasureAvailable())
 				{
-					foreach ($typeFolderCodeList as $code)
+					$typeFolderCodeList = self::getSpecialFolderCode();
+					if (count($typeFolderCodeList) > 0)
 					{
-						$folder = \Bitrix\Disk\Folder::load(array(
-							'=CODE' => $code,
-							'=STORAGE_ID' => $storage->getId(),
-						));
-
-						if (
-							!($folder instanceof \Bitrix\Disk\Folder) ||
-							($folder->getCode() !== $code)
-						)
+						foreach ($typeFolderCodeList as $code)
 						{
-							continue;
+							$folder = \Bitrix\Disk\Folder::load(array(
+								'=CODE' => $code,
+								'=STORAGE_ID' => $storage->getId(),
+							));
+							if (
+								!($folder instanceof \Bitrix\Disk\Folder) ||
+								($folder->getCode() !== $code)
+							)
+							{
+								continue;
+							}
+							$this->folderList[$storage->getId()][$code] = $folder;
 						}
-
-						$this->folderList[$storage->getId()][$code] = $folder;
 					}
 				}
-
-				return $this->folderList[$storage->getId()];
 			}
+
+			return $this->folderList[$storage->getId()];
 		}
 
 		return array();

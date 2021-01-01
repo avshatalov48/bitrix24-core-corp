@@ -28,7 +28,9 @@ export default class Form extends EventEmitter
 
 		if (Type.isDomNode(this.contentContainer))
 		{
-			const blocks = this.contentContainer.querySelectorAll(".js-intranet-invitation-block");
+			const blocks = Array.prototype.slice.call(
+				this.contentContainer.querySelectorAll(".js-intranet-invitation-block")
+			);
 			(blocks || []).forEach((block) => {
 				let blockType = block.getAttribute("data-role");
 				blockType = blockType.replace("-block", "");
@@ -45,7 +47,7 @@ export default class Form extends EventEmitter
 
 		if (Type.isDomNode(this.menuContainer))
 		{
-			this.menuItems = this.menuContainer.querySelectorAll("a");
+			this.menuItems = Array.prototype.slice.call(this.menuContainer.querySelectorAll("a"));
 
 			(this.menuItems || []).forEach((item) => {
 				Event.bind(item, 'click', () => {

@@ -228,6 +228,7 @@ if (Loader::includeModule('recyclebin'))
 					Counter\CounterDictionary::EVENT_AFTER_TASK_RESTORE,
 					$task->getData(false)
 				);
+
 				Integration\SocialNetwork\Log::showLogByTaskId($taskId);
 				ScrumItem::activateBySourceId($taskId);
 			}

@@ -541,7 +541,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 							"BX.Disk['FolderListClass_{$this->getComponentId()}'].openConfirmRestore({
 							object: {
 								id: {$object->getId()},
-								name: '{$object->getName()}',
+								name: '" . CUtil::JSEscape($name) . "',
 								isFolder: " . ($isFolder? 'true' : 'false') . "
 							 }
 						})",
@@ -644,7 +644,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 									ajaxUrl: '/bitrix/components/bitrix/disk.folder.list/ajax.php',
 									object: {
 										id: {$objectId},
-										name: '{$name}',
+										name: '" . CUtil::JSEscape($name) . "',
 										isFolder: " . ($isFolder? 'true' : 'false') . "
 									 }
 								})"
@@ -663,7 +663,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 								"BX.Disk['FolderListClass_{$this->componentId}'].showSharingDetailWithChangeRights({
 									object: {
 										id: {$objectId},
-										name: '{$name}',
+										name: '" . CUtil::JSEscape($name) . "',
 										isFolder: " . ($isFolder? 'true' : 'false') . "
 									 }
 								})"
@@ -682,7 +682,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 								"BX.Disk['FolderListClass_{$this->componentId}'].showSharingDetailWithSharing({
 									object: {
 										id: {$objectId},
-										name: '{$name}',
+										name: '" . CUtil::JSEscape($name) . "',
 										isFolder: " . ($isFolder? 'true' : 'false') . "
 									 }
 								})"
@@ -714,7 +714,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 							"BX.Disk['FolderListClass_{$this->componentId}'].showRightsOnObjectDetail({
 								object: {
 									id: {$objectId},
-									name: '{$name}',
+									name: '" . CUtil::JSEscape($name) . "',
 									isFolder: " . ($isFolder? 'true' : 'false') . "
 								 }
 							})",
@@ -828,7 +828,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 							"BX.Disk['FolderListClass_{$this->componentId}'].openConfirmDetach({
 								object: {
 									id: {$objectId},
-									name: '{$name}',
+									name: '" . CUtil::JSEscape($name) . "',
 									isFolder: " . ($isFolder? 'true' : 'false') . "
 								 }
 							})",
@@ -844,7 +844,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 							"BX.Disk['FolderListClass_{$this->componentId}'].openConfirmDelete({
 								object: {
 									id: {$objectId},
-									name: '{$name}',
+									name: '" . CUtil::JSEscape($name) . "',
 									isDeleted: " . ($object->isDeleted()? 'true' : 'false') . ",
 									isFolder: " . ($isFolder? 'true' : 'false') . "
 								 },
@@ -903,7 +903,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 						{
 							$items[] = [
 								'text' => $handlerData['name'],
-								'onclick' => "BX.Disk.Viewer.Actions.runActionEdit({name: '{$documentName}', objectId: {$objectId}, serviceCode: '{$handlerData['code']}'})",
+								'onclick' => "BX.Disk.Viewer.Actions.runActionEdit({name: '" . CUtil::JSEscape($documentName) . "', objectId: {$objectId}, serviceCode: '{$handlerData['code']}'})",
 							];
 						}
 					}

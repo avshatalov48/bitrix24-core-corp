@@ -3230,10 +3230,10 @@ class CAllCrmInvoice
 			$crmStatus = new CCrmStatus('INVOICE_STATUS');
 			if (!empty($statuses))
 			{
-				$defStatusNameList = [];
+				$defaultStatuses = [];
 				foreach (CCrmStatus::GetDefaultInvoiceStatuses() as $statusInfo)
 				{
-					$defStatusNameList[$statusInfo['STATUS_ID']] = $statusInfo['NAME'];
+					$defaultStatuses[$statusInfo['STATUS_ID']] = $statusInfo;
 				}
 				unset($statusInfo);
 
@@ -3241,14 +3241,17 @@ class CAllCrmInvoice
 				{
 					if (!in_array($statusId, $existStatuses, true))
 					{
-						$nameExist = isset($defStatusNameList[$statusId]);
-						if (!$nameExist)
+						if(!isset($defaultStatuses[$statusId]))
+						{
 							continue;
+						}
 
 						$status = array(
 							'STATUS_ID' => $statusId,
 							'SORT' => $statusSort,
-							'NAME' => $defStatusNameList[$statusId]
+							'NAME' => $defaultStatuses[$statusId]['NAME'],
+							'SEMANTICS' => $defaultStatuses[$statusId]['SEMANTICS'] ?? null,
+							'COLOR' => $defaultStatuses[$statusId]['COLOR'] ?? null,
 						);
 
 						if ($statusId === 'N'
@@ -3257,7 +3260,7 @@ class CAllCrmInvoice
 						)
 						{
 							$status['SYSTEM'] = 'Y';
-							$status['NAME_INIT'] = $defStatusNameList[$statusId];
+							$status['NAME_INIT'] = $defaultStatuses[$statusId];
 						}
 						else
 						{

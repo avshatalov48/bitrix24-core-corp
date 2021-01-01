@@ -2,8 +2,6 @@
 namespace Bitrix\Tasks\Rest\Controllers\Action;
 
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\ArgumentNullException;
-use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Search;
@@ -26,6 +24,7 @@ use TasksException;
 class SearchAction extends Search\SearchAction
 {
 	private static $taskPathTemplate = '';
+	private $maxSearchSize = 10;
 
 	/**
 	 * BX.ajax.runAction("tasks.task.search", {data: {searchQuery: "text"}});
@@ -34,9 +33,7 @@ class SearchAction extends Search\SearchAction
 	 * @param array|null $options
 	 * @param PageNavigation|null $pageNavigation
 	 * @return array|Search\ResultItem[]
-	 * @throws ArgumentException
-	 * @throws ArgumentNullException
-	 * @throws ArgumentOutOfRangeException
+	 * @throws ObjectPropertyException
 	 * @throws SystemException
 	 * @throws TasksException
 	 */
@@ -49,10 +46,8 @@ class SearchAction extends Search\SearchAction
 			return $result;
 		}
 
-		$userId = $this->getCurrentUser()->getId();
-		$tasksBySearch = $this->getTasksBySearch($searchQuery, $userId);
-
-		foreach ($tasksBySearch as $key => $task)
+		$tasksBySearch = $this->getTasksBySearch($searchQuery);
+		foreach ($tasksBySearch as $task)
 		{
 			$taskId = (int)$task['ID'];
 			$messageId = (int)$task['MESSAGE_ID'];
@@ -100,40 +95,114 @@ class SearchAction extends Search\SearchAction
 
 	/**
 	 * @param string $searchQuery
-	 * @param int $userId
 	 * @return array
 	 * @throws ArgumentException
-	 * @throws ArgumentNullException
-	 * @throws ArgumentOutOfRangeException
+	 * @throws ObjectPropertyException
 	 * @throws SystemException
 	 * @throws TasksException
 	 */
-	private function getTasksBySearch(string $searchQuery, int $userId): array
+	private function getTasksBySearch(string $searchQuery): array
+	{
+		$tasks = $this->getTasksWithSearchInBody($searchQuery);
+		if (count($tasks) < $this->maxSearchSize)
+		{
+			$tasksWithSearchInComments = $this->getTasksWithSearchInComments($searchQuery);
+			$tasksWithSearchInComments = $this->clearDuplicates($tasksWithSearchInComments, $tasks);
+			$tasksWithSearchInComments = $this->fillMessageIds($tasksWithSearchInComments);
+
+			$tasks = array_merge($tasks, $tasksWithSearchInComments);
+		}
+
+		return array_slice($tasks, 0, 20);
+	}
+
+	/**
+	 * @param string $searchQuery
+	 * @return array
+	 * @throws TasksException
+	 */
+	private function getTasksWithSearchInBody(string $searchQuery): array
+	{
+		return $this->runGetList($searchQuery, ['SEARCH_TASK_ONLY' => 'Y']);
+	}
+
+	/**
+	 * @param string $searchQuery
+	 * @return array
+	 * @throws TasksException
+	 */
+	private function getTasksWithSearchInComments(string $searchQuery): array
+	{
+		return $this->runGetList($searchQuery, ['SEARCH_COMMENT_ONLY' => 'Y']);
+	}
+
+	/**
+	 * @param string $searchQuery
+	 * @param array $filterParams
+	 * @return array
+	 * @throws TasksException
+	 */
+	private function runGetList(string $searchQuery, array $filterParams): array
 	{
 		$result = [];
 
-		$operator = (($isFullTextIndexEnabled = SearchIndexTable::isFullTextIndexEnabled())? '*' : '*%');
-		$searchValue = SearchIndex::prepareStringToSearch($searchQuery, $isFullTextIndexEnabled);
-
-		$select = ['ID', 'TITLE', 'MESSAGE_ID'];
+		$select = ['ID', 'TITLE'];
 		$order = [
-			'MESSAGE_ID' => 'ASC',
 			'ID' => 'ASC',
 		];
 		$filter = [
-			'::SUBFILTER-FULL_SEARCH_INDEX' => [$operator.'FULL_SEARCH_INDEX' => $searchValue],
-		];
-		$params = [
-			'USER_ID' => $userId,
-			'NAV_PARAMS' => [
-				'nTopCount' => 20,
+			'::SUBFILTER-FULL_SEARCH_INDEX' => [
+				'*FULL_SEARCH_INDEX' => SearchIndex::prepareStringToSearch($searchQuery),
 			],
 		];
+		$params = [
+			'USER_ID' => $this->getCurrentUser()->getId(),
+			'NAV_PARAMS' => [
+				'nTopCount' => $this->maxSearchSize,
+			],
+			'FILTER_PARAMS' => $filterParams,
+		];
 
-		$taskDbResult = CTasks::GetList($order, $filter, $select, $params, []);
+		$taskDbResult = CTasks::GetList($order, $filter, $select, $params);
 		while ($task = $taskDbResult->Fetch())
 		{
-			$result[] = $task;
+			$task['MESSAGE_ID'] = 0;
+			$result[$task['ID']] = $task;
+		}
+
+		return $result;
+	}
+
+	private function clearDuplicates(array $array, array $duplicates): array
+	{
+		return array_diff_key($array, $duplicates);
+	}
+
+	/**
+	 * @param array $tasks
+	 * @return array
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
+	private function fillMessageIds(array $tasks): array
+	{
+		$list = SearchIndexTable::getList([
+			'select' => ['TASK_ID', 'MESSAGE_ID'],
+			'filter' => [
+				'!MESSAGE_ID' => 0,
+				'TASK_ID' => array_keys($tasks),
+			],
+		])->fetchAll();
+
+		$result = $tasks;
+		foreach ($list as $item)
+		{
+			$taskId = $item['TASK_ID'];
+			if (array_key_exists($taskId, $result))
+			{
+				$result[$taskId]['MESSAGE_ID'] = $item['MESSAGE_ID'];
+			}
 		}
 
 		return $result;
@@ -212,6 +281,6 @@ class SearchAction extends Search\SearchAction
 	 */
 	private function isSearchQueryValid(string $searchQuery): bool
 	{
-		return trim($searchQuery) !== '';
+		return SearchIndex::prepareStringToSearch($searchQuery) !== '';
 	}
 }

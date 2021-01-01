@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm;
 
+use Bitrix\Crm\Communication\Validator;
 use \Bitrix\Main\Application;
 use \Bitrix\Main\Localization\Loc;
 
@@ -18,6 +19,7 @@ class PresetEditComponent extends \CBitrixComponent
 	protected $bCopy;
 	protected $gridId;
 	protected $actionData;
+	protected $isAjaxCall;
 	protected $ajaxMode;
 	protected $ajaxId;
 	protected $ajaxOptionJump;
@@ -71,6 +73,7 @@ class PresetEditComponent extends \CBitrixComponent
 			'ALL_ROWS',
 			'AJAX_CALL' => false
 		);
+		$this->isAjaxCall = false;
 		$this->ajaxMode = false;
 		$this->ajaxId = '';
 		$this->ajaxOptionJump = false;
@@ -209,6 +212,7 @@ class PresetEditComponent extends \CBitrixComponent
 		$this->presetListUrl = isset($this->arParams['PRESET_LIST_URL']) ? $this->arParams['PRESET_LIST_URL'] : '';
 		$this->presetEditUrl = isset($this->arParams['PRESET_EDIT_URL']) ? $this->arParams['PRESET_EDIT_URL'] : '';
 
+		$this->isAjaxCall = (isset($_REQUEST['bxajaxid']) || isset($_REQUEST['AJAX_CALL']));
 		$this->ajaxMode = isset($this->arParams['AJAX_MODE']) ? $this->arParams['AJAX_MODE'] === 'Y' : true;
 		$this->ajaxId = isset($this->arParams['AJAX_ID']) ? $this->arParams['AJAX_ID'] : '';
 		$this->ajaxOptionJump = isset($this->arParams['AJAX_OPTION_JUMP']) ?
@@ -430,8 +434,12 @@ class PresetEditComponent extends \CBitrixComponent
 		$res->InitFromArray($fieldList);
 		$res->NavStart($pageSize);
 		$res->bShowAll = false;
+		$i = 1;
 		while ($row = $res->Fetch())
-			$this->listData[$row['ID']] = $row;
+		{
+			$this->listData[$i++.'_'.$row['ID']] = $row;
+		}
+		unset($i);
 		$this->rowsCount = $res->SelectedRowsCount();
 		$this->navObject = $res;
 
@@ -518,7 +526,19 @@ class PresetEditComponent extends \CBitrixComponent
 			{
 				$arId = array();
 				if (is_array($this->actionData['ID']))
-					$arId = $this->actionData['ID'];
+				{
+					foreach ($this->actionData['ID'] as $value)
+					{
+						if (is_string($value) && $value !== '')
+						{
+							$parts = explode('_', $value, 2);
+							if (count($parts) > 1)
+							{
+								$arId[(int)$parts[1]] = true;
+							}
+						}
+					}
+				}
 				$bAllRows = $this->actionData['ALL_ROWS'];
 				if (!empty($arId) || $bAllRows)
 				{
@@ -527,10 +547,10 @@ class PresetEditComponent extends \CBitrixComponent
 					{
 						foreach ($this->presetData['SETTINGS']['FIELDS'] as $index => $row)
 						{
-							if ($bAllRows || in_array(strval($row['ID']), $arId, true))
+							if ($bAllRows || isset($arId[(int)$row['ID']]))
 							{
 								if ($this->preset->settingsDeleteField($this->presetData['SETTINGS'],
-									intval($row['ID']), $index))
+									(int)($row['ID']), $index))
 								{
 									$modified++;
 								}
@@ -779,6 +799,7 @@ class PresetEditComponent extends \CBitrixComponent
 		$this->arResult['PRESET_EDIT_URL'] = $this->presetEditUrl;
 		$this->arResult['HEADERS'] = $this->listHeaders;
 		$this->arResult['COMPONENT_ID'] = $this->componentId;
+		$this->arResult['IS_AJAX_CALL'] = $this->isAjaxCall;
 		$this->arResult['AJAX_MODE'] = $this->ajaxMode ? 'Y' : 'N';
 		$this->arResult['AJAX_ID'] = $this->ajaxId;
 		$this->arResult['AJAX_OPTION_JUMP'] = $this->ajaxOptionJump ? 'Y' : 'N';

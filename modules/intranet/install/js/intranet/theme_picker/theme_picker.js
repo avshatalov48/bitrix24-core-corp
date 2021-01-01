@@ -16,6 +16,7 @@ BX.Intranet.Bitrix24.ThemePicker = function(options)
 	this.maxUploadSize = BX.type.isNumber(options.maxUploadSize) ? options.maxUploadSize : 5 * 1024 * 1024;
 	this.ajaxHandlerPath = BX.type.isNotEmptyString(options.ajaxHandlerPath) ? options.ajaxHandlerPath : null;
 	this.isAdmin = options.isAdmin === true;
+	this.allowSetDefaultTheme = options.allowSetDefaultTheme === true;
 	this.isVideo = options.isVideo === true;
 
 	if (BX.type.isDomNode(options.link))
@@ -509,9 +510,14 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 		return this.maxUploadSize;
 	},
 
-	canSetDefaultTheme: function()
+	isCurrentUserAdmin: function()
 	{
 		return this.isAdmin;
+	},
+
+	canSetDefaultTheme: function()
+	{
+		return this.allowSetDefaultTheme;
 	},
 
 	setThemes: function(themes)
@@ -523,7 +529,7 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 	},
 
 	/**
-	 * 
+	 *
 	 * @returns {Array}
 	 */
 	getThemes: function()
@@ -577,7 +583,7 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 		this.selectItem(newItem);
 	},
 
-	createItem: function(theme) 
+	createItem: function(theme)
 	{
 		var className = "theme-dialog-item";
 		if (theme["video"])
@@ -640,7 +646,7 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 		{
 			div.style.backgroundColor = theme.previewColor;
 		}
-		
+
 		return div;
 	},
 
@@ -792,6 +798,12 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 			return this.popup;
 		}
 
+		var checkboxBtn = null;
+		if (this.isCurrentUserAdmin())
+		{
+			checkboxBtn = new BX.Intranet.Bitrix24.ThemePickerCheckboxButton(this);
+		}
+
 		this.popup = new BX.PopupWindow("bitrix24-theme-list-dialog", null, {
 			width: 800,
 			height: 500,
@@ -833,9 +845,7 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 						click: this.handleNewThemeButtonClick.bind(this)
 					}
 				})
-			].concat(
-				this.canSetDefaultTheme() ? [new BX.Intranet.Bitrix24.ThemePickerCheckboxButton({ id: "checkbox" })] : []
-			)
+			].concat(checkboxBtn ? [checkboxBtn] : [])
 		});
 
 		return this.popup;
@@ -971,35 +981,43 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 
 /**
  *
- * @param params
- * @extends {BX.PopupWindowButton}
+ * @extends {BX.Intranet.Bitrix24.ThemePicker}
  * @constructor
+ * @param themePicker
  */
-BX.Intranet.Bitrix24.ThemePickerCheckboxButton = function(params)
+BX.Intranet.Bitrix24.ThemePickerCheckboxButton = function(themePicker)
 {
-	BX.PopupWindowButton.apply(this, arguments);
+	BX.PopupWindowButton.call(this, { id: "checkbox" });
+
+	/** @var {BX.Intranet.Bitrix24.ThemePicker} */
+	this.themePicker = themePicker;
 
 	this.buttonNode = BX.create("div", {
 		props: {
 			className: "theme-dialog-checkbox-button"
 		},
 		children: [
-			this.checkbox = BX.create("input", {
+			(this.checkbox = BX.create("input", {
 				attrs: {
 					type: "checkbox",
 					name: "defaultTheme",
 					value: "Y",
 					id: "theme-dialog-checkbox-input",
 					className: "theme-dialog-checkbox-input"
+				},
+				events: {
+					click: this.handleCheckboxClick.bind(this)
 				}
-			}),
+			})),
 			BX.create("label", {
 				props: {
 					htmlFor: "theme-dialog-checkbox-input",
 					className: "theme-dialog-checkbox-label"
 				},
 				text: BX.message("BITRIX24_THEME_SET_AS_DEFAULT")
-			})
+			}),
+			(!this.themePicker.canSetDefaultTheme() ? BX.create("span", { props: { className: "tariff-lock" }}) : null)
+
 		]
 	});
 
@@ -1022,6 +1040,21 @@ BX.Intranet.Bitrix24.ThemePickerCheckboxButton.prototype = {
 	uncheck: function()
 	{
 		this.checkbox.checked = false;
+	},
+
+	handleCheckboxClick: function()
+	{
+		if (this.themePicker.canSetDefaultTheme())
+		{
+			return;
+		}
+
+		if (BX.getClass("BX.UI.InfoHelper"))
+		{
+			BX.UI.InfoHelper.show("limit_office_background_to_all");
+		}
+
+		this.uncheck();
 	}
 };
 

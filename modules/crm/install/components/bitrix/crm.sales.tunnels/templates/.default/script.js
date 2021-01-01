@@ -566,7 +566,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          var id = menu.getMenuItems().length;
 	          menu.addMenuItem({
 	            id: "#".concat(id),
-	            text: destination.name,
+	            text: main_core.Text.encode(destination.name),
 	            events: {
 	              onMouseEnter: function onMouseEnter() {
 	                Marker.highlightLink(link);
@@ -3895,7 +3895,8 @@ this.BX.Crm = this.BX.Crm || {};
 	            stageId: column.data.stageId,
 	            entityId: column.data.entityId,
 	            name: column.getName(),
-	            sort: newSorting
+	            sort: newSorting,
+	            color: column.getColor()
 	          };
 	          column.data.stage.SORT = newSorting;
 	          return columnData;

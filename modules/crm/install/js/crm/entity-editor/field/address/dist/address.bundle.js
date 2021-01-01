@@ -175,6 +175,8 @@ this.BX = this.BX || {};
 	    value: function doClearLayout(options) {
 	      if (BX.prop.getBoolean(options, "release", false)) {
 	        this._field.release();
+	      } else {
+	        this._field.resetView();
 	      }
 	    }
 	  }, {

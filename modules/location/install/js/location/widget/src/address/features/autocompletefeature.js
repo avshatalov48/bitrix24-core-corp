@@ -7,6 +7,9 @@ import Autocomplete from '../../autocomplete/autocomplete';
  */
 export default class AutocompleteFeature extends BaseFeature
 {
+	static searchStartedEvent = 'searchStarted';
+	static searchCompletedEvent = 'searchCompleted';
+
 	#autocomplete;
 	#addressWidget = null;
 
@@ -33,6 +36,32 @@ export default class AutocompleteFeature extends BaseFeature
 			{
 				const data = event.getData();
 				this.#addressWidget.setStateByFeature(data.state);
+			});
+
+		this.#autocomplete.onSearchStartedEventSubscribe(
+			(event) =>
+			{
+				const data = event.getData();
+				this.#addressWidget.emitFeatureEvent(
+					{
+						feature: this,
+						eventCode: AutocompleteFeature.searchStartedEvent,
+						payload: data
+					}
+				);
+			});
+
+		this.#autocomplete.onSearchCompletedEventSubscribe(
+			(event) =>
+			{
+				const data = event.getData();
+				this.#addressWidget.emitFeatureEvent(
+					{
+						feature: this,
+						eventCode: AutocompleteFeature.searchCompletedEvent,
+						payload: data
+					}
+				);
 			});
 	}
 
@@ -61,6 +90,11 @@ export default class AutocompleteFeature extends BaseFeature
 	setAddressWidget(addressWidget)
 	{
 		this.#addressWidget = addressWidget;
+	}
+
+	get autocomplete()
+	{
+		return this.#autocomplete;
 	}
 
 	destroy()

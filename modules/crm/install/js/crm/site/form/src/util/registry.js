@@ -127,6 +127,10 @@ const Conv = {
 		}, text);
 
 		return result ? result : text ;
+	},
+	cloneDeep (object: Object): Object
+	{
+		return JSON.parse(JSON.stringify(object));
 	}
 };
 
@@ -159,7 +163,7 @@ const Color = {
 	{
 		return 'rgba(' + numbers.join(', ') + ')';
 	},
-	fillHex (hex, fillAlpha)
+	fillHex (hex: string, fillAlpha: boolean = false, alpha: string = null)
 	{
 		if (hex.length === 4 || (fillAlpha && hex.length === 5))
 		{
@@ -169,6 +173,11 @@ const Color = {
 		if (fillAlpha && hex.length === 7)
 		{
 			hex += 'ff';
+		}
+
+		if (alpha)
+		{
+			hex = hex.substr(0, 7) + (alpha.toLowerCase() + 'ff').substr(0, 2);
 		}
 
 		return hex;

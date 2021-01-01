@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
 \Bitrix\Main\Loader::includeModule('documentgenerator');
 
+use Bitrix\Catalog\MeasureTable;
 use Bitrix\Crm\Discount;
 use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
@@ -104,6 +105,15 @@ class Product extends HashDataProvider
 					'FORMAT' => ['CURRENCY_ID' => $currencyId, 'NO_SIGN' => true, 'WITH_ZEROS' => false],
 				],
 				'QUANTITY' => ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_PRODUCT_QUANTITY_TITLE'),],
+				'QUANTITY_WORDS' => [
+					'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_PRODUCT_QUANTITY_WORDS_TITLE'),
+					'TYPE' => Money::class,
+					'FORMAT' => [
+						'WORDS' => true,
+						'NO_SIGN' => true,
+					],
+					'VALUE' => 'QUANTITY',
+				],
 				'PRICE_EXCLUSIVE' => [
 					'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_PRODUCT_PRICE_EXCLUSIVE_TITLE'),
 					'TYPE' => Money::class,
@@ -653,6 +663,24 @@ class Product extends HashDataProvider
 				Loc::setCurrentLang($languageId);
 				static::$measureInfo[$languageId][$code] = \CCatalogMeasureClassifier::getMeasureInfoByCode($code);
 				Loc::setCurrentLang($originalLanguageId);
+
+				$tableData = MeasureTable::getList([
+					'select' => ['SYMBOL_INTL', 'SYMBOL_LETTER_INTL'],
+					'filter' => [
+						'=CODE' => $code,
+					],
+				])->fetch();
+				if($tableData)
+				{
+					if(!empty($tableData['SYMBOL_INTL']))
+					{
+						static::$measureInfo[$languageId][$code]['SYMBOL_INTL'] = $tableData['SYMBOL_INTL'];
+					}
+					if(!empty($tableData['SYMBOL_LETTER_INTL']))
+					{
+						static::$measureInfo[$languageId][$code]['SYMBOL_LETTER_INTL'] = $tableData['SYMBOL_LETTER_INTL'];
+					}
+				}
 			}
 		}
 

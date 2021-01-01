@@ -302,7 +302,6 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 								AND TM.USER_ID = $this->userId
 								AND T.STATUS != 4
 								AND T.STATUS != 5
-								AND T.ZOMBIE = 'N'
 								
 							UNION 
 
@@ -313,7 +312,6 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 								AND TM.USER_ID = $this->userId
 								AND T.STATUS != 4
 								AND T.STATUS != 5
-								AND T.ZOMBIE = 'N'
 
 							UNION 
 

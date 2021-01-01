@@ -194,23 +194,45 @@ abstract class BaseTarget extends \Bitrix\Bizproc\Automation\Target\BaseTarget
 			return null;
 		}
 
-		foreach (['shipmentCondition', 'taskCondition'] as $key)
+		foreach (['shipmentCondition', 'taskCondition', 'imolCondition'] as $key)
 		{
 			if (isset($rules[$key]))
 			{
 				$condition = new ConditionGroup($rules[$key]);
+				$docType = self::getConditionDocumentType($key);
 				if ($external)
 				{
-					$condition->externalizeValues($this->getDocumentType());
+					$condition->externalizeValues($docType);
 				}
 				else
 				{
-					$condition->internalizeValues($this->getDocumentType());
+					$condition->internalizeValues($docType);
 				}
 				$rules[$key] = $condition->toArray();
 			}
 		}
 
 		return $rules;
+	}
+
+	private function getConditionDocumentType($conditionId)
+	{
+		$docType = $this->getDocumentType();
+		switch ($conditionId)
+		{
+			case 'shipmentCondition':
+				$docType = \CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::OrderShipment);
+				break;
+			case 'taskCondition':
+				if (Loader::includeModule('tasks'))
+				{
+					$docType = ['tasks', \Bitrix\Tasks\Integration\Bizproc\Document\Task::class, 'TASK'];
+				}
+				break;
+			case 'imolCondition':
+				$docType = \Bitrix\Crm\Automation\Trigger\OpenLineAnswerControlTrigger::getConditionDocumentType();
+				break;
+		}
+		return $docType;
 	}
 }

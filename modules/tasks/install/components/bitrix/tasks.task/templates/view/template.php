@@ -16,6 +16,11 @@ if ($arResult["LIKE_TEMPLATE"] == 'like_react')
 	UI\Extension::load("main.rating");
 }
 
+if ($arParams['IS_SCRUM_TASK'])
+{
+	UI\Extension::load('tasks.scrum.dod');
+}
+
 $templateData = $arResult["TEMPLATE_DATA"];
 
 if (isset($templateData["ERROR"]))
@@ -61,7 +66,8 @@ if ($arParams["ENABLE_MENU_TOOLBAR"])
 			'PATH_TO_USER_TASKS_REPORT' => $arParams['PATH_TO_USER_TASKS_REPORT'],
 			'PATH_TO_USER_TASKS_TEMPLATES' => $arParams['PATH_TO_USER_TASKS_TEMPLATES'],
 			'PATH_TO_USER_TASKS_PROJECTS_OVERVIEW' => $arParams['PATH_TO_USER_TASKS_PROJECTS_OVERVIEW'],
-			'PATH_TO_CONPANY_DEPARTMENT' => $arParams['PATH_TO_CONPANY_DEPARTMENT']
+			'PATH_TO_CONPANY_DEPARTMENT' => $arParams['PATH_TO_CONPANY_DEPARTMENT'],
+			'PARENT_COMPONENT' => 'tasks.task'
 		),
 		$component,
 		array('HIDE_ICONS' => true)
@@ -337,6 +343,7 @@ if ($arParams["ENABLE_MENU_TOOLBAR"])
 				"NAME_TEMPLATE" => $templateData["NAME_TEMPLATE"],
 				"CAN" => $can,
 				"TASK_ID" => $taskData["ID"],
+				"IS_SCRUM_TASK" => $arParams['IS_SCRUM_TASK'],
 				"TASK" => $taskData,
 				"TIMER_IS_RUNNING_FOR_CURRENT_USER" => !!$templateData["TIMER_IS_RUNNING_FOR_CURRENT_USER"],
 				"TIMER" => $templateData["TIMER"],
@@ -350,39 +357,40 @@ if ($arParams["ENABLE_MENU_TOOLBAR"])
 		?>
 	</div>
 
-	<? if ($templateData["SUBTASKS_EXIST"]):?>
-	<div class="task-detail-list">
-		<div class="task-detail-list-title"><?=Loc::getMessage("TASKS_TASK_SUBTASKS")?></div>
-		<?
-		$APPLICATION->IncludeComponent(
-			"bitrix:tasks.list",
-			"",
-			array(
-				"HIDE_VIEWS" => "Y",
-				"HIDE_MENU" => "Y",
-				"HIDE_GROUP_ACTIONS" => "Y",
-				"FORCE_LIST_MODE" => "Y",
-				"PREVENT_PAGE_ONE_COLUMN" => "Y",
-				"PREVENT_FLEXIBLE_LAYOUT" => ($arResult["IS_IFRAME"] ? "N" : "Y"),
-				"COMMON_FILTER" => array(),
-				"ORDER" => array("GROUP_ID"  => "ASC"),
-				"PREORDER" => array("REAL_STATUS" => "ASC"),
-				"FILTER" => array("PARENT_ID" => $taskData["ID"]),
-				"VIEW_STATE" => array(),
-				"CONTEXT_ID" => CTaskColumnContext::CONTEXT_TASK_DETAIL,
-				"PATH_TO_USER_PROFILE" => $arParams["PATH_TO_USER_PROFILE"],
-				"PATH_TO_USER_TASKS" => $arParams["PATH_TO_USER_TASKS"],
-				"PATH_TO_USER_TASKS_TASK" => $arParams["PATH_TO_TASKS_TASK"],
-				"TASKS_ALWAYS_EXPANDED" => "Y",
-				"PUBLIC_MODE" => $arParams["PUBLIC_MODE"],
-				'SET_TITLE' => 'N',
-			),
-			null,
-			array("HIDE_ICONS" => "Y")
-		);
-		?>
-	</div>
-	<? endif ?>
+	<?php if ($templateData["SUBTASKS_EXIST"]):?>
+		<div class="task-detail-list">
+			<div class="task-detail-list-title"><?=Loc::getMessage("TASKS_TASK_SUBTASKS")?></div>
+			<?php
+			$APPLICATION->IncludeComponent(
+				'bitrix:tasks.list',
+				'',
+				[
+					'HIDE_VIEWS' => 'Y',
+					'HIDE_MENU' => 'Y',
+					'HIDE_GROUP_ACTIONS' => 'Y',
+					'FORCE_LIST_MODE' => 'Y',
+					'PREVENT_PAGE_ONE_COLUMN' => 'Y',
+					'PREVENT_FLEXIBLE_LAYOUT' => ($arResult['IS_IFRAME'] ? 'N' : 'Y'),
+					'COMMON_FILTER' => [],
+					'ORDER' => ['GROUP_ID'  => 'ASC'],
+					'PREORDER' => ['REAL_STATUS' => 'ASC'],
+					'FILTER' => ['PARENT_ID' => $taskData['ID']],
+					'VIEW_STATE' => [],
+					'CONTEXT_ID' => CTaskColumnContext::CONTEXT_TASK_DETAIL,
+					'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
+					'PATH_TO_USER_TASKS' => $arParams['PATH_TO_USER_TASKS'],
+					'PATH_TO_USER_TASKS_TASK' => $arParams['PATH_TO_TASKS_TASK'],
+					'TASKS_ALWAYS_EXPANDED' => 'Y',
+					'PUBLIC_MODE' => $arParams['PUBLIC_MODE'],
+					'SET_TITLE' => 'N',
+					'SKIP_GROUP_SORT' => 'Y',
+				],
+				null,
+				['HIDE_ICONS' => 'Y']
+			);
+			?>
+		</div>
+	<?php endif; ?>
 
 	<? if (count($templateData["PREDECESSORS"])):?>
 
@@ -453,7 +461,7 @@ if ($arParams["ENABLE_MENU_TOOLBAR"])
 					<span class="task-switcher-text">
 						<span class="task-switcher-text-inner">
 							<?=Loc::getMessage("TASKS_TASK_COMMENTS")?>
-							<span class="task-switcher-text-counter"><?=$taskData["COMMENTS_COUNT"]?></span>
+							<span class="task-switcher-text-counter"><?= ($taskData["COMMENTS_COUNT"] - $taskData["SERVICE_COMMENTS_COUNT"]) ?></span>
 						</span>
 					</span>
 				</span>

@@ -169,7 +169,7 @@ Vue.component('bx-livechat-head',
 					<div class="bx-livechat-control-box">
 						<span class="bx-livechat-control-box-active" v-if="widget.common.dialogStart && widget.dialog.sessionId">
 							<button v-if="widget.common.vote.enable && voteActive" :class="'bx-livechat-control-btn bx-livechat-control-btn-like bx-livechat-dialog-vote-'+(widget.dialog.userVote)" :title="localize.BX_LIVECHAT_VOTE_BUTTON" @click="like"></button>
-							<button class="bx-livechat-control-btn bx-livechat-control-btn-mail" :title="localize.BX_LIVECHAT_MAIL_BUTTON_NEW" @click="history"></button>
+							<button v-if="false" class="bx-livechat-control-btn bx-livechat-control-btn-mail" :title="localize.BX_LIVECHAT_MAIL_BUTTON_NEW" @click="history"></button>
 						</span>	
 						<button v-if="!widget.common.pageMode" class="bx-livechat-control-btn bx-livechat-control-btn-close" :title="localize.BX_LIVECHAT_CLOSE_BUTTON" @click="close"></button>
 					</div>

@@ -1,4 +1,6 @@
 import ClosableDirective from '../closabledirective';
+import {Location} from 'location.core';
+import {State, AutocompleteFeature} from 'location.widget'
 
 import '../css/address.css';
 
@@ -10,6 +12,7 @@ export default {
 		name: {type: String, required: true},
 		initValue: {},
 		settings: {},
+		options: {required: false},
 		editable: {type: Boolean, default: true},
 	},
 	data()
@@ -17,6 +20,7 @@ export default {
 		return {
 			enterTookPlace: false,
 			isEntering: false,
+			isLoading: false,
 			editMode: false,
 			value: null,
 			addressWidgetState: null,
@@ -167,7 +171,7 @@ export default {
 				!this.isEntering
 				&& this.enterTookPlace
 				&& !this.value
-				&& this.addressWidgetState !== BX.Location.Widget.State.DATA_LOADING
+				&& this.addressWidgetState !== State.DATA_LOADING
 			);
 
 			return {
@@ -187,6 +191,10 @@ export default {
 			this.value = this.initValue;
 		}
 
+		let presetLocationList = this.options && this.options.hasOwnProperty('defaultItems')
+			? this.options.defaultItems.map((item) => new Location(item))
+			: [];
+
 		this.addressWidget = (new BX.Location.Widget.Factory).createAddressWidget({
 			address: this.initValue ? this.buildAddress(this.initValue) : null,
 			mapBehavior: 'manual',
@@ -198,7 +206,8 @@ export default {
 				fields: false,
 				map: true,
 				autocomplete: true
-			}
+			},
+			presetLocationList
 		});
 
 
@@ -246,10 +255,28 @@ export default {
 			let data = event.getData();
 
 			this.addressWidgetState = data.state;
-			if (data.state === BX.Location.Widget.State.DATA_INPUTTING)
+
+			if (data.state === State.DATA_INPUTTING)
 			{
 				this.changeValue(null);
 				this.closeMap();
+			}
+			else if (data.state === State.DATA_LOADING)
+			{
+				this.isLoading = true;
+			}
+			else if (data.state === State.DATA_LOADED)
+			{
+				this.isLoading = false;
+			}
+		});
+
+		this.addressWidget.subscribeOnFeatureEvent((event) => {
+			let data = event.getData();
+
+			if (data.feature instanceof AutocompleteFeature)
+			{
+				this.isLoading = (data.eventCode === AutocompleteFeature.searchStartedEvent);
 			}
 		});
 
@@ -272,9 +299,13 @@ export default {
 		>
 			<div :class="wrapperClass" ref="control-wrapper">
 				<div
-					v-show="isEditMode"
+					v-show="!isLoading && isEditMode"
 					@click="onClearClicked"
 					class="ui-ctl-after ui-ctl-icon-btn ui-ctl-icon-clear"
+				></div>
+				<div
+					v-show="isLoading"
+					class="ui-ctl-after ui-ctl-icon-loader"
 				></div>
 				<input
 					v-show="isEditMode"

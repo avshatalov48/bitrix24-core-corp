@@ -22,3 +22,4 @@ $MESS["CRM_DOCUMENT_VIEW_NO_AVAILABLE_FILES"] = "Нет доступных к о
 $MESS["CRM_DOCUMENT_VIEW_TRY_AGAIN"] = "Попробовать ещё раз";
 $MESS["CRM_DOCUMENT_VIEW_CREATE_OR_EDIT_MY_COMPANY_REQUISITES"] = "<a href=\"#URL#\" target=\"_blank\" class=\"docs-preview-details-link\">Заполнить <br> или редактировать</a>
 <span class=\"docs-preview-details-text\">реквизиты моей компании</span>";
+$MESS["CRM_DOCUMENT_VIEW_PUBLIC_URL_VIEWED_TIME"] = "Клиент перешел по публичной ссылке <span>#TIME#</span>";

@@ -3,6 +3,7 @@ IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Crm;
 use Bitrix\Crm\CustomerType;
+use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\Category\DealCategory;
@@ -21,6 +22,7 @@ use Bitrix\Crm\Counter\EntityCounterManager;
 use Bitrix\Crm\Integration\Channel\DealChannelBinding;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
+use Bitrix\Main\Text\HtmlFilter;
 
 class CAllCrmDeal
 {
@@ -51,6 +53,13 @@ class CAllCrmDeal
 	public static function GetFieldCaption($fieldName)
 	{
 		$result = GetMessage("CRM_DEAL_FIELD_{$fieldName}");
+
+		if (!(is_string($result) && $result !== '')
+			&& Crm\Tracking\UI\Details::isTrackingField($fieldName))
+		{
+			$result = Crm\Tracking\UI\Details::getFieldCaption($fieldName);
+		}
+
 		return is_string($result) ? $result : '';
 	}
 	// Get Fields Metadata
@@ -69,7 +78,8 @@ class CAllCrmDeal
 				),
 				'TYPE_ID' => array(
 					'TYPE' => 'crm_status',
-					'CRM_STATUS_TYPE' => 'DEAL_TYPE'
+					'CRM_STATUS_TYPE' => 'DEAL_TYPE',
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::HasDefaultValue],
 				),
 				'CATEGORY_ID' => array(
 					'TYPE' => 'crm_category',
@@ -144,10 +154,12 @@ class CAllCrmDeal
 					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
 				),
 				'BEGINDATE' => array(
-					'TYPE' => 'date'
+					'TYPE' => 'date',
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::HasDefaultValue],
 				),
 				'CLOSEDATE' => array(
-					'TYPE' => 'date'
+					'TYPE' => 'date',
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::HasDefaultValue],
 				),
 				'OPENED' => array(
 					'TYPE' => 'char'
@@ -159,7 +171,7 @@ class CAllCrmDeal
 					'TYPE' => 'string'
 				),
 				'ASSIGNED_BY_ID' => array(
-					'TYPE' => 'user'
+					'TYPE' => 'user',
 				),
 				'CREATED_BY_ID' => array(
 					'TYPE' => 'user',
@@ -611,10 +623,15 @@ class CAllCrmDeal
 		return self::$sUFEntityID;
 	}
 
-	public static function GetUserFields($langID = false)
+	/**
+	 * @param bool|string $langId
+	 * @param int $valueId
+	 * @return array|mixed
+	 */
+	public static function GetUserFields($langId = false, int $valueId = 0)
 	{
 		global $USER_FIELD_MANAGER;
-		return $USER_FIELD_MANAGER->GetUserFields(self::$sUFEntityID, 0, $langID);
+		return $USER_FIELD_MANAGER->GetUserFields(self::$sUFEntityID, $valueId, $langId);
 	}
 
 	// GetList with navigation support
@@ -1953,6 +1970,22 @@ class CAllCrmDeal
 			}
 
 			\Bitrix\Crm\Kanban\SupervisorTable::sendItem($ID, CCrmOwnerType::DealName, 'kanban_add');
+
+
+			if ($ID>0)
+			{
+				$item = Crm\Kanban\Entity::getInstance(self::$TYPE_NAME)
+					->createPullItem($arFields);
+
+				PullManager::getInstance()->sendItemAddedEvent(
+					$item,
+					[
+						'TYPE' => self::$TYPE_NAME,
+						'CATEGORY_ID' => \CCrmDeal::GetCategoryID($ID)
+					]
+				);
+			}
+
 		}
 
 		return $result;
@@ -2085,15 +2118,13 @@ class CAllCrmDeal
 					}
 				}
 
-				$requiredFields = Crm\Attribute\FieldAttributeManager::isEnabled()
-					? Crm\Attribute\FieldAttributeManager::getRequiredFields(
-						CCrmOwnerType::Deal,
-						$ID,
-						$fieldsToCheck,
-						Crm\Attribute\FieldOrigin::UNDEFINED,
-						isset($options['FIELD_CHECK_OPTIONS']) && is_array($options['FIELD_CHECK_OPTIONS']) ? $options['FIELD_CHECK_OPTIONS'] : array()
-					)
-					: array();
+				$requiredFields = Crm\Attribute\FieldAttributeManager::getRequiredFields(
+					CCrmOwnerType::Deal,
+					$ID,
+					$fieldsToCheck,
+					Crm\Attribute\FieldOrigin::UNDEFINED,
+					is_array($options['FIELD_CHECK_OPTIONS']) ? $options['FIELD_CHECK_OPTIONS'] : array()
+				);
 
 				$requiredSystemFields = isset($requiredFields[Crm\Attribute\FieldOrigin::SYSTEM])
 					? $requiredFields[Crm\Attribute\FieldOrigin::SYSTEM] : array();
@@ -3226,7 +3257,23 @@ class CAllCrmDeal
 					]);
 				}
 			}
+
+
+			if ($bResult)
+			{
+				$item = Crm\Kanban\Entity::getInstance(self::$TYPE_NAME)
+					->createPullItem(array_merge($arRow, $arFields));
+
+				PullManager::getInstance()->sendItemUpdatedEvent(
+					$item,
+					[
+						'TYPE' => self::$TYPE_NAME,
+						'CATEGORY_ID' => \CCrmDeal::GetCategoryID($ID)
+					]
+				);
+			}
 		}
+
 		return $bResult;
 	}
 
@@ -3440,6 +3487,17 @@ class CAllCrmDeal
 			{
 				ExecuteModuleEventEx($arEvent, array($ID));
 			}
+
+			$item = Crm\Kanban\Entity::getInstance(self::$TYPE_NAME)
+				->createPullItem($arFields);
+
+			PullManager::getInstance()->sendItemDeletedEvent(
+				$item,
+				[
+					'TYPE' => self::$TYPE_NAME,
+					'CATEGORY_ID' => $categoryID
+				]
+			);
 		}
 		return true;
 	}

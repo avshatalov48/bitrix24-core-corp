@@ -66,6 +66,7 @@ RecentList.init = function()
 	this.imagePath = component.path+'images';
 
 	this.list = [];
+	this.callList = [];
 	this.listEmpty = true;
 	this.blocked = {};
 
@@ -95,6 +96,7 @@ RecentList.init = function()
 	this.listRequestAfterErrorInterval = 10000;
 	this.updateCounterInterval = 1000;
 
+	this.firstLoadFlag = false;
 	this.loadingFlag = true;
 
 	this.cache.database = new ReactDatabase(ChatDatabaseName, this.userId, this.languageId);
@@ -656,21 +658,22 @@ RecentList.dialogOptionInit = function()
 		return false;
 	}
 
-	if (this.isRecent())
+	if (!this.isRecent())
 	{
 		dialogList.setSections([
-			{title : '', id : "pinned", backgroundColor: "#ffffff", sortItemParams:{order: "desc"}},
-			{title : '', id : "general", backgroundColor: "#ffffff", sortItemParams:{order: "desc"}}
+			{title : '', id : "general", backgroundColor: "#ffffff", sortItemParams:{order: "asc"}},
+			{title : BX.message("OL_SECTION_PIN"), id : "pinned", backgroundColor: "#f6f6f6", sortItemParams:{order: "asc"}},
+			{title : BX.message("OL_SECTION_WORK"), id : "work", backgroundColor: "#ffffff", height: 15, styles : { title: {font: {size:15, color:"#e66467", fontStyle: "medium"}}}, sortItemParams:{order: "asc"}},
+			{title : BX.message("OL_SECTION_ANSWERED"), id : "answered", backgroundColor: "#ffffff", height: 15, styles: { title : {font: {size:15, color:"#6EA44E", fontStyle: "medium"}}}, sortItemParams:{order: "desc"}}
 		]);
 
 		return true;
 	}
 
 	dialogList.setSections([
-		{title : '', id : "general", backgroundColor: "#ffffff", sortItemParams:{order: "asc"}},
-		{title : BX.message("OL_SECTION_PIN"), id : "pinned", backgroundColor: "#f6f6f6", sortItemParams:{order: "asc"}},
-		{title : BX.message("OL_SECTION_WORK"), id : "work", backgroundColor: "#ffffff", height: 15, styles : { title: {font: {size:15, color:"#e66467", fontStyle: "medium"}}}, sortItemParams:{order: "asc"}},
-		{title : BX.message("OL_SECTION_ANSWERED"), id : "answered", backgroundColor: "#ffffff", height: 15, styles: { title : {font: {size:15, color:"#6EA44E", fontStyle: "medium"}}}, sortItemParams:{order: "desc"}}
+		{title : '', id : "call", backgroundColor: "#ffffff", sortItemParams:{order: "desc"}},
+		{title : '', id : "pinned", backgroundColor: "#ffffff", sortItemParams:{order: "desc"}},
+		{title : '', id : "general", backgroundColor: "#ffffff", sortItemParams:{order: "desc"}}
 	]);
 
 	return true;
@@ -678,7 +681,10 @@ RecentList.dialogOptionInit = function()
 
 RecentList.refresh = function(params)
 {
-	params = params || {start: false};
+	if (!params)
+	{
+		params = {start: !this.firstLoadFlag};
+	}
 
 	clearTimeout(this.refreshTimeout);
 
@@ -707,7 +713,7 @@ RecentList.refresh = function(params)
 	if (this.lastRecentRequest)
 	{
 		sendRecentLimit = true;
-		recentParams['LAST_UPDATE'] = this.lastMessageDate;
+		recentParams['LAST_UPDATE'] = this.lastRecentRequest;
 	}
 
 	ChatRestRequest.abort('refresh');
@@ -994,18 +1000,18 @@ RecentList.refresh = function(params)
 
 			if (error)
 			{
+				this.loadingFlag = true;
+				if (this.viewLoaded)
+				{
+					dialogList.setTitle({text: BX.message('COMPONENT_TITLE'), useProgress:true, largeMode:true});
+				}
+
 				if (error.ex.error == 'REQUEST_CANCELED')
 				{
 					console.error("RecentList.refresh: execute request canceled by user", error.ex);
 				}
 				else
 				{
-					this.loadingFlag = true;
-					if (this.viewLoaded)
-					{
-						dialogList.setTitle({text: BX.message('COMPONENT_TITLE'), useProgress:true, largeMode:true});
-					}
-
 					console.error("RecentList.refresh: we have some problems with request, we will be check again soon", error.ex);
 
 					clearTimeout(this.refreshTimeout);
@@ -1037,6 +1043,10 @@ RecentList.refresh = function(params)
 		}
 		else
 		{
+			if (!this.firstLoadFlag)
+			{
+				this.firstLoadFlag = true;
+			}
 			this.errorNoticeFlag = false;
 			ChatTimer.stop('recent', 'error', true);
 		}
@@ -1086,8 +1096,7 @@ RecentList.loadMore = function()
 			let listConverted = this.prepareListWithNewElements(result);
 			if (this.viewLoaded)
 			{
-				dialogList.setItems(listConverted);
-
+				dialogList.setItems([...this.callList,...listConverted]);
 				if (result.length === this.elementsPerPage)
 				{
 					this.drawBottomLoader();
@@ -1215,7 +1224,7 @@ RecentList.clearAllCounters = function()
 {
 	if (this.viewLoaded)
 	{
-		let newList = [];
+		let newList = [...this.callList];
 
 		this.list.forEach(element => {
 			element.counter = 0;
@@ -1245,7 +1254,8 @@ RecentList.redraw = function()
 {
 	this.queue.clear();
 
-	let listConverted = [];
+	let listConverted = [...this.callList];
+
 	this.list.forEach((element) =>
 	{
 		if (this.viewLoaded)
@@ -1581,6 +1591,48 @@ RecentList.isElementBlocked = function (elementId)
 {
 	return this.blocked[elementId] === true;
 };
+
+RecentList.drawCall = function(call)
+{
+	let elementIndex = this.callList.findIndex(element => element.id === call.id);
+	if (elementIndex >= 0)
+	{
+		this.callList[elementIndex] = call;
+	}
+	else
+	{
+		this.callList.push(call);
+	}
+
+	this.drawCallNative(call);
+}
+
+RecentList.drawCallNative = function(element)
+{
+	dialogList.findItem({id: element.id}, (find) =>
+	{
+		if (find)
+		{
+			dialogList.updateItem({id: element.id}, element);
+		}
+		else
+		{
+			dialogList.addItems([element]);
+		}
+	});
+}
+
+RecentList.removeCall = function(id)
+{
+	console.warn("removeCall", id);
+	this.callList = this.callList.filter(element => element.id !== id);
+	dialogList.removeItem({id});
+}
+
+RecentList.updateCallState = function()
+{
+	this.callList.forEach(element => this.drawCallNative(element));
+}
 
 RecentList.updateRuntimeDataElement = function(element)
 {
@@ -3770,7 +3822,10 @@ RecentList.event = {};
 RecentList.event.init = function ()
 {
 	this.debug = false;
-	this.handlersList = {
+	this.lastSearchList = [];
+
+	this.handlersList =
+	{
 		onItemSelected : this.onItemSelected,
 		onItemAction : this.onItemAction,
 		onRefresh : this.onRefresh,
@@ -3783,18 +3838,26 @@ RecentList.event.init = function ()
 		onScroll: ChatUtils.throttle(this.onScroll, 50, this),
 	};
 
-	this.lastSearchList = [];
+	this.handlersCustomEventList =
+	{
+		onOpenProfile: this.onOpenProfile,
+		onOpenDialog: this.onOpenDialog,
+		onDialogIsOpen: this.onDialogIsOpen,
+		onLoadLastMessage: this.onLoadLastMessage,
+		"chatdialog::init::complete": this.onDialogInitComplete,
+		"chatdialog::counter::change": this.onDialogCounterChange,
+		"chatdialog::notification::readAll": this.onNotificationReadAll,
+		"chatbackground::task::status::success": this.onReadMessage,
+		"CallEvents::active": this.callActive,
+		"CallEvents::inactive": this.callInactive,
+	};
 
 	dialogList.setListener(this.router.bind(this));
 
-	BX.addCustomEvent("onOpenProfile", this.onOpenProfile.bind(this));
-	BX.addCustomEvent("onOpenDialog", this.onOpenDialog.bind(this));
-	BX.addCustomEvent("onDialogIsOpen", this.onDialogIsOpen.bind(this));
-	BX.addCustomEvent("onLoadLastMessage", this.onLoadLastMessage.bind(this));
-	BX.addCustomEvent("chatdialog::init::complete", this.onDialogInitComplete.bind(this));
-	BX.addCustomEvent("chatdialog::counter::change", this.onDialogCounterChange.bind(this));
-	BX.addCustomEvent("chatdialog::notification::readAll", this.onNotificationReadAll.bind(this));
-	BX.addCustomEvent("chatbackground::task::status::success", this.onReadMessage.bind(this));
+	for (let eventName in this.handlersCustomEventList)
+	{
+		BX.addCustomEvent(eventName, this.handlersCustomEventList[eventName].bind(this));
+	}
 };
 
 RecentList.event.router = function(eventName, listElement)
@@ -3885,6 +3948,17 @@ RecentList.event.onItemSelected = function(listElement)
 			dialogList.showSearchBar();
 		}
 	}
+	else if (listElement.params.type == 'call')
+	{
+		if (listElement.params.canJoin)
+		{
+			BX.postComponentEvent("CallEvents::joinCall", [listElement.params.call.id], 'calls');
+		}
+		else
+		{
+			this.base.openDialog(listElement.params.call.associatedEntity.id);
+		}
+	}
 	else
 	{
 		console.info('RecentList.event.onItemSelected: open dialog', listElement.params.id);
@@ -3970,7 +4044,6 @@ RecentList.event.onItemAction = function(listElement)
 
 RecentList.event.onRefresh = function()
 {
-	//reloadAllScripts();
 	this.base.refresh();
 };
 
@@ -4042,7 +4115,19 @@ RecentList.event.onScroll = function(event)
 	}
 };
 
+RecentList.event.callActive = function(call, joinStatus)
+{
+	console.log('RecentList: call active', joinStatus, call);
+	this.base.drawCall(
+		ChatDataConverter.getCallListElement(joinStatus, call)
+	);
+};
 
+RecentList.event.callInactive = function(callId)
+{
+	console.log('RecentList: call inactive', callId);
+	this.base.removeCall('call'+callId);
+};
 
 /* CreateChat API */
 RecentList.chatCreate = {};

@@ -1201,7 +1201,11 @@ if ($arResult['SORTF'] === "SORTING")
 }
 else
 {
-	$arOrder = array_merge($arParams['PREORDER'], array("GROUP_ID" => "ASC"), $arOrder);
+	$arOrder = array_merge($arParams['PREORDER'], $arOrder);
+	if ($arParams['SKIP_GROUP_SORT'] !== 'Y')
+	{
+		$arOrder = array_merge(['GROUP_ID' => 'ASC'], $arOrder);
+	}
 }
 
 //Sorting selector

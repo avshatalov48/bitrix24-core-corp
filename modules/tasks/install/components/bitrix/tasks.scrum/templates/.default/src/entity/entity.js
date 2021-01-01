@@ -6,6 +6,8 @@ import {StoryPoints} from '../utility/story.points';
 import {GroupActionsButton} from './group.actions.button';
 import {ListItems} from './list.items';
 
+import '../css/entity.css';
+
 type entityParams = {
 	id: number,
 	views: {
@@ -24,7 +26,8 @@ type entityParams = {
 			url: string,
 			active: boolean
 		}
-	}
+	},
+	numberTasks?: number,
 };
 
 export class Entity extends EventEmitter
@@ -36,6 +39,8 @@ export class Entity extends EventEmitter
 		this.id = (Type.isInteger(entityData.id) ? parseInt(entityData.id, 10) : 0);
 
 		this.views = entityData.views;
+
+		this.numberTasks = (Type.isInteger(entityData.numberTasks) ? parseInt(entityData.numberTasks, 10) : 0);
 
 		this.items = new Map();
 
@@ -72,6 +77,16 @@ export class Entity extends EventEmitter
 	getId()
 	{
 		return this.id;
+	}
+
+	setId(id: number)
+	{
+		this.id = (Type.isInteger(id) ? parseInt(id, 10) : 0);
+
+		if (this.listItems)
+		{
+			this.listItems.setEntityId(this.id);
+		}
 	}
 
 	getEntityType()
@@ -111,6 +126,8 @@ export class Entity extends EventEmitter
 		[...this.items.values()].map((item) => {
 			this.setItemMoveActivity(item);
 		});
+
+		this.addNumberTasks(1);
 	}
 
 	setItemMoveActivity(item: Item)
@@ -127,6 +144,34 @@ export class Entity extends EventEmitter
 			[...this.items.values()].map((item) => {
 				this.setItemMoveActivity(item);
 			});
+
+			this.subtractNumberTasks(1);
+		}
+	}
+
+	getNumberTasks(): number
+	{
+		return (this.numberTasks ? this.numberTasks : this.getItems().size);
+	}
+
+	setNumberTasks(numberTasks: number)
+	{
+		this.numberTasks = (Type.isInteger(numberTasks) ? parseInt(numberTasks, 10) : 0);
+	}
+
+	addNumberTasks(value: number)
+	{
+		if (!Type.isUndefined(value) && !isNaN(parseInt(value, 10)))
+		{
+			this.numberTasks = (this.numberTasks + parseInt(value, 10));
+		}
+	}
+
+	subtractNumberTasks(value: number)
+	{
+		if (!Type.isUndefined(value) && !isNaN(parseInt(value, 10)))
+		{
+			this.numberTasks = (this.numberTasks - parseInt(value, 10));
 		}
 	}
 

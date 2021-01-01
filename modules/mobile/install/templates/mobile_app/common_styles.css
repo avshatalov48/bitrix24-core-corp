@@ -225,6 +225,11 @@ a {
 	margin-bottom: 7px;
 }
 
+.lenta-item-pinned.lenta-item:last-child {
+	/*margin-bottom: 2px!important;*/
+	margin-bottom: 14px!important;
+}
+
 .post-item-top-wrap {
 	background-color: #fff;
 	position: relative;
@@ -440,16 +445,22 @@ a {
 }
 
 .lenta-item-pin {
-	background: url("data:image/svg+xml,%3Csvg width='21' height='20' viewBox='0 0 21 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg opacity='0.3'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M18.6553 5.42832C19.0515 5.82549 19.031 6.48856 18.6094 6.90933C18.1877 7.3301 17.5247 7.34924 17.1284 6.95207L16.3892 6.21288L11.6867 12.3783L12.4084 13.1C12.7785 13.5012 12.7472 14.1429 12.3374 14.5527C11.9276 14.9625 11.2859 14.9938 10.8847 14.6237L9.12196 12.8642L4.58023 16.2847C4.5127 16.3602 4.41105 16.3944 4.3163 16.3736C4.22155 16.3528 4.14933 16.2803 4.12879 16.1855C4.10824 16.0907 4.14275 15.9891 4.2184 15.9218L7.58842 11.3285L5.86081 9.60195C5.48309 9.2018 5.51139 8.55398 5.92462 8.14103C6.33785 7.72808 6.98566 7.70025 7.38553 8.07827L8.10719 8.79993L14.2737 4.09736L13.5397 3.36332C13.162 2.96317 13.1903 2.31534 13.6035 1.90239C14.0167 1.48944 14.6645 1.46161 15.0644 1.83963L18.6553 5.42832Z' fill='%23525C69'/%3E%3C/g%3E%3C/svg%3E%0A") no-repeat center center;
+	background: url("data:image/svg+xml,%3Csvg width='21' height='20' viewBox='0 0 21 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg opacity='0.3'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M18.6553 5.42832C19.0515 5.82549 19.031 6.48856 18.6094 6.90933C18.1877 7.3301 17.5247 7.34924 17.1284 6.95207L16.3892 6.21288L11.6867 12.3783L12.4084 13.1C12.7785 13.5012 12.7472 14.1429 12.3374 14.5527C11.9276 14.9625 11.2859 14.9938 10.8847 14.6237L9.12196 12.8642L4.58023 16.2847C4.5127 16.3602 4.41105 16.3944 4.3163 16.3736C4.22155 16.3528 4.14933 16.2803 4.12879 16.1855C4.10824 16.0907 4.14275 15.9891 4.2184 15.9218L7.58842 11.3285L5.86081 9.60195C5.48309 9.2018 5.51139 8.55398 5.92462 8.14103C6.33785 7.72808 6.98566 7.70025 7.38553 8.07827L8.10719 8.79993L14.2737 4.09736L13.5397 3.36332C13.162 2.96317 13.1903 2.31534 13.6035 1.90239C14.0167 1.48944 14.6645 1.46161 15.0644 1.83963L18.6553 5.42832Z' fill='%23525C69'/%3E%3C/g%3E%3C/svg%3E%0A") no-repeat left center;
 	display: flex;
 	height: 21px;
 	vertical-align: top;
 	width: 21px;
-	margin: 10px;
+	margin-left: 10px;
+	padding: 10px 10px 10px 0;
 }
 
 .lenta-item-pin-active .lenta-item-pin {
-	background-image: url("data:image/svg+xml,%3Csvg width='10' height='18' viewBox='0 0 10 18' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg opacity='0.271647'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M7.80253 0.668007C8.31682 0.668595 8.73328 1.11171 8.73273 1.65774C8.73218 2.20377 8.31482 2.64593 7.80053 2.64534H6.84227L7.7905 9.68979H8.72605C9.22607 9.70992 9.62164 10.1461 9.62164 10.6774C9.62164 11.2086 9.22607 11.6449 8.72605 11.665L6.44301 11.6671L5.71627 16.8281C5.72141 16.9208 5.67771 17.0089 5.6028 17.0568C5.52789 17.1047 5.43413 17.1046 5.35935 17.0564C5.28457 17.0083 5.24111 16.9201 5.2465 16.8274L4.45356 11.6657L2.21467 11.6664C1.71047 11.6519 1.3089 11.2136 1.30908 10.6781C1.30926 10.1426 1.71113 9.70465 2.21534 9.69049H3.15088L4.09979 2.64534H3.14821C2.64401 2.6308 2.24244 2.19255 2.24262 1.65704C2.2428 1.12152 2.64466 0.683584 3.14887 0.669426L7.80253 0.668007Z' fill='%23525C69'/%3E%3C/g%3E%3C/svg%3E%0A");
+	background-image: url("data:image/svg+xml,%3Csvg width='10' height='18' viewBox='0 0 10 18' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg opacity='0.7'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M7.80253 0.668007C8.31682 0.668595 8.73328 1.11171 8.73273 1.65774C8.73218 2.20377 8.31482 2.64593 7.80053 2.64534H6.84227L7.7905 9.68979H8.72605C9.22607 9.70992 9.62164 10.1461 9.62164 10.6774C9.62164 11.2086 9.22607 11.6449 8.72605 11.665L6.44301 11.6671L5.71627 16.8281C5.72141 16.9208 5.67771 17.0089 5.6028 17.0568C5.52789 17.1047 5.43413 17.1046 5.35935 17.0564C5.28457 17.0083 5.24111 16.9201 5.2465 16.8274L4.45356 11.6657L2.21467 11.6664C1.71047 11.6519 1.3089 11.2136 1.30908 10.6781C1.30926 10.1426 1.71113 9.70465 2.21534 9.69049H3.15088L4.09979 2.64534H3.14821C2.64401 2.6308 2.24244 2.19255 2.24262 1.65704C2.2428 1.12152 2.64466 0.683584 3.14887 0.669426L7.80253 0.668007Z' fill='%23525C69'/%3E%3C/g%3E%3C/svg%3E%0A");
+}
+
+.lenta-pinned-panel .lenta-item-pin-active .lenta-item-pin {
+	background-image: url("data:image/svg+xml,%3Csvg width='10' height='18' viewBox='0 0 10 18' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg opacity='0.27'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M7.80253 0.668007C8.31682 0.668595 8.73328 1.11171 8.73273 1.65774C8.73218 2.20377 8.31482 2.64593 7.80053 2.64534H6.84227L7.7905 9.68979H8.72605C9.22607 9.70992 9.62164 10.1461 9.62164 10.6774C9.62164 11.2086 9.22607 11.6449 8.72605 11.665L6.44301 11.6671L5.71627 16.8281C5.72141 16.9208 5.67771 17.0089 5.6028 17.0568C5.52789 17.1047 5.43413 17.1046 5.35935 17.0564C5.28457 17.0083 5.24111 16.9201 5.2465 16.8274L4.45356 11.6657L2.21467 11.6664C1.71047 11.6519 1.3089 11.2136 1.30908 10.6781C1.30926 10.1426 1.71113 9.70465 2.21534 9.69049H3.15088L4.09979 2.64534H3.14821C2.64401 2.6308 2.24244 2.19255 2.24262 1.65704C2.2428 1.12152 2.64466 0.683584 3.14887 0.669426L7.80253 0.668007Z' fill='%23525C69'/%3E%3C/g%3E%3C/svg%3E%0A");
+	background-position: 5px center;
 }
 
 .lenta-item-fav.lenta-item-fav-active {
@@ -1133,7 +1144,7 @@ a {
 
 .post-item-inform-right {
 	display: inline-block;
-	vertical-align: top;
+	vertical-align: baseline;
 }
 
 .post-item-inform-count {
@@ -1151,19 +1162,29 @@ a {
 
 .post-item-inform-right-new {
 	display: inline-block;
-	background: #ffa303;
+	background: #9ACB00;
 	vertical-align: top;
 	color: #fff;
 	font-weight: bold;
-	padding: 0 6px 0 3px;
+	padding: 0 6px 0 5px;
 	border-radius: 10.5px;
 	margin-left: 5px;
+	font-size: 13px;
+	line-height: 17px;
+}
+
+.bx-ios .post-item-inform-right-new {
+	position: relative;
+	bottom: -1px;
+}
+
+.lenta-pinned-panel .post-item-inform-right-new {
+	font: 11px/15px apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 .post-item-inform-right-new > span.post-item-inform-right-new-sign {
-	font-size: 9px;
+	font-size: 13px;
 	position: relative;
-	top: -2px;
 	opacity: .8;
 }
 
@@ -2944,6 +2965,44 @@ table.forum-spoiler th {
 	content: ")"
 }
 
+.post-comments-link-cont {
+	display: flex;
+	align-items: baseline;
+	justify-content: flex-start;
+}
+
+.post-comments-link-loader-informer {
+	display: inline-flex;
+	align-items: stretch;
+	font-size: 15px;
+	line-height: 18px;
+	color: #a8adb4;
+	position: relative;
+	bottom: -1px;
+	padding-left: 12px;
+	min-height: 18px;
+}
+
+.post-comments-link-loader-informer:before {
+	content: '';
+	position: relative;
+	border-radius: 7px;
+	width: 14px;
+	height: 14px;
+	bottom: -2px;
+	box-sizing: border-box;
+	border: 1.5px solid #cbced2;
+	border-right-color: transparent;
+	animation: normal infinite postCommentLinkLoader 1s;
+	transform-origin: center;
+	margin-right: 4.61px;
+}
+
+@keyframes postCommentLinkLoader {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+}
+
 .post-comment-block {
 	display: flex;
 	padding-top: 9px;
@@ -3071,7 +3130,6 @@ table.forum-spoiler th {
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	overflow: hidden;
-	flex: 1;
 }
 
 .post-comment-author.feed-com-name-email,
@@ -3144,7 +3202,7 @@ table.forum-spoiler th {
 
 .post-item-informers,
 .post-comment-control-item {
-	font: 15px -apple-system, BlinkMacSystemFont, Arial, Helvetica, sans-serif;
+	font: 15px -apple-system, BlinkMacSystemFont, Roboto, Arial, Helvetica, sans-serif;
 	color: #828B95;
 	text-decoration: none;
 	white-space: nowrap;
@@ -8577,4 +8635,142 @@ a.process-step-more {
 .mobile-grid-data-label-container
 {
     -webkit-user-select: text;
+}
+
+.post-pinned-cancel-panel {
+	display: flex;
+	align-items: center;
+	margin: 12px 0;
+	padding: 0 16px;
+	height: 60px;
+	background: rgba(255, 255, 255, .7);
+}
+
+.post-pinned-cancel-panel-content {
+	overflow: hidden;
+}
+
+.post-pinned-cancel-panel-label {
+	position: relative;
+	display: block;
+	padding-left: 22px;
+	margin-bottom: 2px;
+	font-size: 15px;
+	color: #333;
+	opacity: .7;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.post-pinned-cancel-panel-label:before {
+	content: '';
+	position: absolute;
+	top: 2px;
+	left: 0;
+	width: 15px;
+	height: 15px;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2215%22%20height%3D%2215%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M14.607%203.96c.398.4.377%201.066-.046%201.489-.424.423-1.09.442-1.489.043l-.743-.743-4.727%206.197.726.725c.372.404.34%201.049-.072%201.46-.411.412-1.056.444-1.46.072l-1.771-1.769L.46%2014.872a.279.279%200%2001-.266.09.245.245%200%2001-.188-.19.279.279%200%2001.09-.264L3.483%209.89%201.747%208.155c-.38-.402-.351-1.053.064-1.468.415-.415%201.066-.443%201.468-.063l.726.725%206.198-4.726-.738-.738c-.38-.402-.351-1.053.064-1.469.415-.415%201.066-.443%201.468-.063l3.61%203.607z%22%20fill%3D%22%23525C69%22/%3E%3C/svg%3E') no-repeat;
+}
+
+.post-pinned-cancel-panel-text {
+	display: block;
+	font-size: 14px;
+	color: #525C69;
+	opacity: .57;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.post-pinned-cancel-panel-btn {
+	padding: 0 13px;
+	margin-left: auto;
+	text-transform: capitalize;
+}
+
+.lenta-pinned-panel {
+	overflow: hidden;
+}
+
+.lenta-pinned-panel.lenta-pinned-panel-active {
+	margin-bottom: -12px;
+}
+
+.lenta-pinned-collapsed-posts {
+	display: none;
+	align-items: center;
+	padding: 0 16px;
+	margin-bottom: 12px;
+	margin-top: 10px;
+	height: 60px;
+	background: rgba(255, 255, 255, 0.7);
+	overflow: hidden;
+}
+
+.lenta-pinned-panel-collapsed .lenta-pinned-collapsed-posts {
+	display: flex;
+}
+
+.lenta-pinned-collapsed-posts-content {
+	flex: 1;
+	margin-right: 15px;
+}
+
+.lenta-pinned-collapsed-posts-title {
+	display: flex;
+	align-items: center;
+	margin-bottom: 4px;
+	font-size: 15px;
+	color: #333333;
+	opacity: 0.7;
+}
+
+.lenta-pinned-collapsed-posts-title .lenta-pinned-collapsed-count {
+	margin-left: 5px;
+}
+
+.lenta-pinned-collapsed-posts-comments {
+	align-items: center;
+	font-size: 14px;
+	color: #525C69;
+	opacity: 0.57;
+	display: none;
+}
+
+.lenta-pinned-collapsed-posts-comments.lenta-pinned-collapsed-posts-comments-active {
+	display: flex;
+}
+
+.lenta-pinned-collapsed-posts-comments .lenta-pinned-collapsed-count {
+	display: inline-block;
+	margin-left: 5px;
+	padding: 0 5px 0 4px;
+	height: 15px;
+	border-radius: 8px;
+	background: #9ACB00;
+	font-weight: 500;
+	font-size: 11px;
+	color: #fff;
+	font-family: apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
+	line-height: 15px;
+}
+
+.lenta-pinned-collapsed-posts-control {
+	margin-left: auto;
+}
+
+.lenta-pinned-collapsed-posts-btn {
+	display: block;
+	padding: 20px 0;
+	margin: 0;
+	border: none;
+	font-size: 14px;
+	color: #525C69;
+	text-transform: capitalize;
+	opacity: 0.57;
+}
+
+.lenta-pinned-panel-collapsed .lenta-item {
+	display: none;
 }

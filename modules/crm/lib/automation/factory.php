@@ -312,6 +312,8 @@ class Factory
 					Trigger\GuestReturnTrigger::className(),
 					Trigger\OpenLineTrigger::className(),
 					Trigger\OpenLineMessageTrigger::className(),
+					Trigger\OpenLineAnswerControlTrigger::className(),
+					Trigger\OpenLineAnswerTrigger::className(),
 					Trigger\ResourceBookingTrigger::className(),
 					Trigger\DocumentCreateTrigger::className(),
 					Trigger\DocumentViewTrigger::className(),

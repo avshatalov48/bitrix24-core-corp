@@ -3,6 +3,7 @@ export default {
 		name: {type: String, required: true},
 		initValue: {required: false},
 		settings: {required: false},
+		options: {required: false},
 		editable: {required: true, type: Boolean},
 	},
 	created()

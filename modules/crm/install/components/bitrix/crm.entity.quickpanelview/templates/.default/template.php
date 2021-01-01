@@ -337,7 +337,7 @@ if(!function_exists('__CrmQuickPanelViewRenderSection'))
 			elseif($type === 'money')
 			{
 				echo '<div class="crm-lead-header-text-wrapper">';
-				echo '<div class="crm-lead-header-text-view-wrapper">', isset($data['formatted_sum']) ? $data['formatted_sum'] : '', '</div>';
+				echo '<div class="crm-lead-header-text-view-wrapper">', ($data['formatted_sum'] ?? $data['text'] ?? ''), '</div>';
 				echo '<div class="crm-lead-header-text-edit-wrapper" style="display: none;"></div>';
 				echo '</div>';
 			}

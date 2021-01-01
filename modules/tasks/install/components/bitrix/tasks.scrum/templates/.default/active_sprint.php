@@ -11,10 +11,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var array $messages */
 
 use Bitrix\Main\Web\Json;
+use Bitrix\Main\UI\Extension;
 
 $isKanban = true;
 
 require_once __DIR__.'/header.php';
+
+Extension::load('tasks.scrum.dod');
 
 $APPLICATION->IncludeComponent(
 	'bitrix:tasks.kanban',

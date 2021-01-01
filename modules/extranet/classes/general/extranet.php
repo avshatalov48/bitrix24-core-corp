@@ -15,7 +15,7 @@ class CExtranet
 	public static function GetExtranetSiteID()
 	{
 		$extranet_site_id = COption::GetOptionString("extranet", "extranet_site");
-		if (strlen($extranet_site_id) > 0)
+		if ($extranet_site_id <> '')
 		{
 			if(CSite::GetArrayByID($extranet_site_id))
 				return $extranet_site_id;
@@ -35,7 +35,7 @@ class CExtranet
 
 	public static function OnUserLogout($ID)
 	{
-		unset($_SESSION["aExtranetUser_".$ID]);
+		unset(\Bitrix\Main\Application::getInstance()->getKernelSession()["aExtranetUser_".$ID]);
 	}
 
 	public static function IsIntranetUser($site = SITE_ID, $userID = 0)
@@ -92,7 +92,7 @@ class CExtranet
 			return false;
 		}
 
-		if(isset($_SESSION["aExtranetUser_{$userID}"][$site]))
+		if(isset(\Bitrix\Main\Application::getInstance()->getKernelSession()["aExtranetUser_{$userID}"][$site]))
 		{
 			return true;
 		}
@@ -102,7 +102,7 @@ class CExtranet
 			|| (CModule::IncludeModule("socialnetwork") && CSocNetUser::IsCurrentUserModuleAdmin($site))
 		)
 		{
-			$_SESSION["aExtranetUser_{$userID}"][$site] = true;
+			\Bitrix\Main\Application::getInstance()->getKernelSession()["aExtranetUser_{$userID}"][$site] = true;
 			return true;
 		}
 
@@ -129,7 +129,7 @@ class CExtranet
 
 			if ($result)
 			{
-				$_SESSION["aExtranetUser_{$userID}"][$site] = true;
+				\Bitrix\Main\Application::getInstance()->getKernelSession()["aExtranetUser_{$userID}"][$site] = true;
 			}
 		}
 
@@ -220,24 +220,24 @@ class CExtranet
 		if(
 			(!defined("ADMIN_SECTION") || ADMIN_SECTION !== true)
 			&& (!defined("EXTRANET_NO_REDIRECT") || EXTRANET_NO_REDIRECT !== true)
-			&& (strpos($curPage, "/bitrix/") !== 0)
-			&& (strpos($curPage, "/upload/") !== 0)
-			&& (strpos($curPage, "/oauth/") !== 0)
-			&& (strpos($curPage, "/desktop_app/") !== 0)
-			&& (strpos($curPage, "/docs/pub/") !== 0)
-			&& (strpos($curPage, "/extranet/confirm/") !== 0)
-			&& (strpos($curPage, "/mobile/ajax.php") !== 0)
-			&& (strpos($curPage, "/mobile/mobile_component/") !== 0)
-			&& (strpos($curPage, "/mobile/web_mobile_component/") !== 0)
-			&& (strpos($curPage, "/mobileapp/") !== 0)
-			&& (strpos($curPage, "/pub/") !== 0)
-			&& (strpos($curPage, "/rest/") !== 0)
+			&& (mb_strpos($curPage, "/bitrix/") !== 0)
+			&& (mb_strpos($curPage, "/upload/") !== 0)
+			&& (mb_strpos($curPage, "/oauth/") !== 0)
+			&& (mb_strpos($curPage, "/desktop_app/") !== 0)
+			&& (mb_strpos($curPage, "/docs/pub/") !== 0)
+			&& (mb_strpos($curPage, "/extranet/confirm/") !== 0)
+			&& (mb_strpos($curPage, "/mobile/ajax.php") !== 0)
+			&& (mb_strpos($curPage, "/mobile/mobile_component/") !== 0)
+			&& (mb_strpos($curPage, "/mobile/web_mobile_component/") !== 0)
+			&& (mb_strpos($curPage, "/mobileapp/") !== 0)
+			&& (mb_strpos($curPage, "/pub/") !== 0)
+			&& (mb_strpos($curPage, "/rest/") !== 0)
 			&& !preg_match("/^\\/online\\/([\\.\\-0-9a-zA-Z]+)(\\/?)([^\\/]*)$/i", $curPage)
 			&& (!CExtranet::IsExtranetSite())
 		)
 		{
 			if (
-				strlen(CExtranet::GetExtranetSiteID()) > 0
+				CExtranet::GetExtranetSiteID() <> ''
 				&& $USER->IsAuthorized()
 				&& !$USER->IsAdmin()
 				&& !CExtranet::IsIntranetUser()
@@ -254,26 +254,26 @@ class CExtranet
 
 					$userSEFFolder = COption::GetOptionString("socialnetwork", "user_page", false, SITE_ID);
 					$workgroupSEFFolder = COption::GetOptionString("socialnetwork", "workgroups_page", false, SITE_ID);
-					if (strpos($curPage, $userSEFFolder) === 0)
+					if (mb_strpos($curPage, $userSEFFolder) === 0)
 					{
 						$userSEFFolderExtranet = COption::GetOptionString("socialnetwork", "user_page", false, $arExtranetSite['LID']);
 						if ($userSEFFolderExtranet)
 						{
-							$URLToRedirect = $userSEFFolderExtranet.substr($curPage, strlen($userSEFFolder));
+							$URLToRedirect = $userSEFFolderExtranet.mb_substr($curPage, mb_strlen($userSEFFolder));
 						}
 					}
-					elseif (strpos($curPage, $workgroupSEFFolder) === 0)
+					elseif (mb_strpos($curPage, $workgroupSEFFolder) === 0)
 					{
 						$workgroupSEFFolderExtranet = COption::GetOptionString("socialnetwork", "workgroups_page", false, $arExtranetSite['LID']);
 						if ($workgroupSEFFolderExtranet)
 						{
-							$URLToRedirect = $workgroupSEFFolderExtranet.substr($curPage, strlen($workgroupSEFFolder));
+							$URLToRedirect = $workgroupSEFFolderExtranet.mb_substr($curPage, mb_strlen($workgroupSEFFolder));
 						}
 					}
 
 					if (!$URLToRedirect)
 					{
-						$URLToRedirect = (strlen($arExtranetSite["SERVER_NAME"]) > 0 ? (CMain::IsHTTPS() ? "https" : "http") . "://" . $arExtranetSite["SERVER_NAME"] : "") . $arExtranetSite["DIR"];
+						$URLToRedirect = ($arExtranetSite["SERVER_NAME"] <> '' ? (CMain::IsHTTPS() ? "https" : "http") . "://" . $arExtranetSite["SERVER_NAME"] : "") . $arExtranetSite["DIR"];
 					}
 
 					$urlParams = array();
@@ -312,7 +312,7 @@ class CExtranet
 	{
 		global $USER, $obUsersCache;
 
-		if (strlen($site) < 0)
+		if (mb_strlen($site) < 0)
 		{
 			return array();
 		}
@@ -429,7 +429,7 @@ class CExtranet
 
 		$result = array();
 
-		if (strlen($extranetSite) < 0)
+		if (mb_strlen($extranetSite) < 0)
 		{
 			return $result;
 		}
@@ -768,7 +768,7 @@ class CExtranet
 		)
 			return true;
 
-		if (IntVal($user_id) > 0 && strlen(CExtranet::GetExtranetSiteID()) > 0)
+		if (intval($user_id) > 0 && CExtranet::GetExtranetSiteID() <> '')
 		{
 			$dbUser = CUser::GetByID($user_id);
 			$arUser = $dbUser->Fetch();
@@ -1573,7 +1573,7 @@ class CUsersInMyGroupsCache
 
 		$result = false;
 
-		if (strlen($site) < 0)
+		if (mb_strlen($site) < 0)
 		{
 			return $result;
 		}
@@ -1609,7 +1609,7 @@ class CUsersInMyGroupsCache
 	{
 		global $USER;
 
-		if (strlen($site) <= 0)
+		if ($site == '')
 		{
 			return false;
 		}
@@ -1638,7 +1638,7 @@ class CUsersInMyGroupsCache
 
 	function setForKey($key, $arValue = array())
 	{
-		if (strlen($key) <= 0)
+		if ($key == '')
 		{
 			return false;
 		}

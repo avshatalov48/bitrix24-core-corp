@@ -57,7 +57,19 @@ if ($GLOBALS['USER']->CanDoOperation('bitrix24_config'))
 			""
 		);
 	}
-
+	if (
+		(bool)(\Bitrix\Main\Loader::includeModule("bitrix24") &&
+		\CBitrix24::IsPortalAdmin(\Bitrix\Main\Engine\CurrentUser::get()->getId()))
+	)
+	{
+		$aMenuLinks[] = array(
+			GetMessage("MENU_MAIL_BLACKLIST"),
+			"/settings/configs/mail_blacklist.php",
+			Array(),
+			Array("menu_item_id"=>"menu_mail_blacklist"),
+			""
+		);
+	}
 	/*if (IsModuleInstalled("bitrix24"))
 	{
 		$aMenuLinks[] = Array(

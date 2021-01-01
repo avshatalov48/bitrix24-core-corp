@@ -12,6 +12,7 @@ use Bitrix\Sale\PaySystem;
 use Bitrix\Sale\BusinessValue;
 use Bitrix\Sale\Helpers\Admin;
 use Bitrix\SalesCenter\Integration\SaleManager;
+use Bitrix\Seo;
 
 class SalesCenterPaySystemComponent extends CBitrixComponent
 {
@@ -132,7 +133,14 @@ class SalesCenterPaySystemComponent extends CBitrixComponent
 		$this->arResult['PAYSYSTEM_HANDLER_CLASS_NAME'] = $className;
 		if (mb_strtolower($className) === mb_strtolower(\Sale\Handlers\PaySystem\YandexCheckoutHandler::class))
 		{
-			$this->initYandexAuthAdapter();
+			if ($this->isYandexOauth())
+			{
+				$this->initYandexProfile();
+			}
+			elseif ($this->isYookassaOauth())
+			{
+				$this->initYookassaProfile();
+			}
 
 			if ($this->arResult['PAYSYSTEM_ID'] === 0)
 			{
@@ -198,21 +206,49 @@ class SalesCenterPaySystemComponent extends CBitrixComponent
 	}
 
 	/**
-	 * @throws Main\ArgumentException
+	 * @return bool
 	 * @throws Main\SystemException
 	 */
-	private function initYandexAuthAdapter()
+	private function isYandexOauth(): bool
 	{
-		$authAdapter = Bitrix\Seo\Checkout\Service::getAuthAdapter('yandex');
+		$authAdapter = Seo\Checkout\Service::getAuthAdapter(Seo\Checkout\Service::TYPE_YANDEX);
+		$this->arResult['AUTH']['TYPE'] = Seo\Checkout\Service::TYPE_YANDEX;
 		$this->arResult['AUTH']['URL'] = $authAdapter->getAuthUrl();
 		$this->arResult['AUTH']['HAS_AUTH'] = $authAdapter->hasAuth();
 
-		if ($this->arResult['AUTH']['HAS_AUTH'])
-		{
-			$yandex = new Bitrix\Seo\Checkout\Services\AccountYandex();
-			$yandex->setService(Bitrix\Seo\Checkout\Service::getInstance());
-			$this->arResult['AUTH']['PROFILE'] = $yandex->getProfile();
-		}
+		return (bool)$this->arResult['AUTH']['HAS_AUTH'];
+	}
+
+	private function initYandexProfile()
+	{
+		$yandex = new Seo\Checkout\Services\AccountYandex();
+		$yandex->setService(Seo\Checkout\Service::getInstance());
+		$this->arResult['AUTH']['PROFILE'] = $yandex->getProfile();
+	}
+
+	/**
+	 * @return bool
+	 * @throws Main\SystemException
+	 */
+	private function isYookassaOauth()
+	{
+		$authAdapter = Seo\Checkout\Service::getAuthAdapter(Seo\Checkout\Service::TYPE_YOOKASSA);
+		$this->arResult['AUTH']['TYPE'] = Seo\Checkout\Service::TYPE_YOOKASSA;
+		$this->arResult['AUTH']['URL'] = $authAdapter->getAuthUrl();
+		$this->arResult['AUTH']['HAS_AUTH'] = $authAdapter->hasAuth();
+
+		return (bool)$this->arResult['AUTH']['HAS_AUTH'];
+	}
+
+	/**
+	 * @throws Main\ArgumentException
+	 * @throws Main\SystemException
+	 */
+	private function initYookassaProfile()
+	{
+		$yookassa = new Seo\Checkout\Services\AccountYookassa();
+		$yookassa->setService(Seo\Checkout\Service::getInstance());
+		$this->arResult['AUTH']['PROFILE'] = $yookassa->getProfile();
 	}
 
 	/**

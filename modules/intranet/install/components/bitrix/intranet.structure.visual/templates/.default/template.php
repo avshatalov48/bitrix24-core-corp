@@ -59,7 +59,7 @@ if (!function_exists('__intr_vis_get_div')):
 				'ID' => $arEntry['UF_HEAD'],
 				'NAME' => strip_tags($headName),
 				'POSITION' => $arUsers[$arEntry['UF_HEAD']]['WORK_POSITION'],
-				'PHOTO' => \CHTTP::urnEncode($arUsers[$arEntry['UF_HEAD']]['PERSONAL_PHOTO']['CACHE']['src']),
+				'PHOTO' => (isset($arUsers[$arEntry['UF_HEAD']]['PERSONAL_PHOTO']['CACHE']) ? \CHTTP::urnEncode($arUsers[$arEntry['UF_HEAD']]['PERSONAL_PHOTO']['CACHE']['src']) : ''),
 				'PROFILE' => $arUsers[$arEntry['UF_HEAD']]['PROFILE_URL']
 			);
 

@@ -97,7 +97,6 @@
 
 	BX.Intranet.UserFieldEmployee.prototype.storeUser = function(user)
 	{
-		user.name = BX.util.htmlspecialcharsback(user.name);
 		userStack[user.entityId] = user;
 	};
 
@@ -290,9 +289,9 @@
 			var field = this.getField();
 			var squareData = {
 				block: 'main-ui-square',
-				name: label,
+				name: BX.util.htmlspecialcharsback(label),
 				item: {
-					'_label': label,
+					'_label': BX.util.htmlspecialcharsback(label),
 					'_value': value
 				}
 			};

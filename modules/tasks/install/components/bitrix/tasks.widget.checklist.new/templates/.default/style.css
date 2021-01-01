@@ -644,12 +644,14 @@
 /*endregion*/
 
 .tasks-checklist-item-content-block {
-	margin-top: 10px;
+	margin-top: 9px;
 	-webkit-box-flex: 1;
 	-ms-flex: 1;
 	flex: 1;
 	min-height: 22px;
 	line-height: normal;
+	display: flex;
+	align-items: flex-start;
 }
 
 .tasks-checklist-item-new .tasks-checklist-item-content-block {
@@ -661,13 +663,14 @@
 .tasks-checklist-item-number::after { content: '. '; }
 
 .tasks-checklist-item-number,
-.tasks-checklist-item-description,
-.tasks-checklist-item-description-text {
+.tasks-checklist-item-description {
 	position: relative;
-	display: inline;
+	display: inline-block;
 	font: 14px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: #525c69;
 }
+
+.tasks-checklist-item-description-text { display: inline; }
 
 .tasks-checklist-item-new > .tasks-checklist-item-content-block .tasks-checklist-item-description-text,
 .tasks-checklist-item-solved > .tasks-checklist-item-content-block .tasks-checklist-item-description-text { text-decoration: line-through; }
@@ -682,6 +685,7 @@
 	-webkit-box-align: baseline;
 	-ms-flex-align: baseline;
 	align-items: baseline;
+	padding-left: 24px;
 }
 
 .tasks-checklist-item-auditor-link {
@@ -693,11 +697,11 @@
 .tasks-checklist-item-auditor-link:hover { border-bottom: 1px solid; }
 
 .tasks-checklist-item-auditor-icon {
-	content: '';
 	display: inline-block;
 	width: 20px;
-	position: relative;
-	bottom: -2px;
+	position: absolute;
+	top: 2px;
+	left: 0;
 	height: 12px;
 	margin-right: 5px;
 	background: no-repeat center right url(images/watcher.svg);
@@ -715,6 +719,7 @@
 	-webkit-box-align: baseline;
 	-ms-flex-align: baseline;
 	align-items: baseline;
+	padding-left: 20px;
 }
 
 .tasks-checklist-item-accomplice-link {
@@ -727,13 +732,13 @@
 .tasks-checklist-item-accomplice-link:hover { border-bottom: 1px solid; }
 
 .tasks-checklist-item-accomplice-icon {
-	content: '';
-	display: inline-block;
+	display: block;
+	position: absolute;
 	width: 20px;
-	position: relative;
-	bottom: -6px;
+	top: 0;
+	left: 0;
+	bottom: 0;
 	height: 18px;
-	margin-right: 5px;
 	background: no-repeat center url(images/responsible.svg);
 }
 

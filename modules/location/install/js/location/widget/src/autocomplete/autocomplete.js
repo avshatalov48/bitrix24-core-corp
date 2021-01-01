@@ -3,15 +3,17 @@ import {EventEmitter, BaseEvent} from 'main.core.events';
 import {LocationRepository, AutocompleteServiceBase, Format, Address, Location, AddressType, AddressStringConverter, ErrorPublisher} from 'location.core';
 import Prompt from './prompt';
 import State from '../state';
+import {Loc} from 'main.core';
 
 /**
  * @mixes EventEmitter
- * todo: prompt if no locations was found, or error happened
  */
 export default class Autocomplete extends EventEmitter
 {
 	static #onAddressChangedEvent = 'onAddressChanged';
 	static #onStateChangedEvent = 'onStateChanged';
+	static #onSearchStartedEvent = 'onSearchStarted';
+	static #onSearchCompletedEvent = 'onSearchCompleted';
 
 	/** {Address} */
 	#address;
@@ -32,6 +34,8 @@ export default class Autocomplete extends EventEmitter
 	/** {number} miliseconds promptDelay before the searching will start */
 	#promptDelay;
 	/** {number} */
+	#maxPromptDelay;
+	/** {number} */
 	#timerId = null;
 	/** {Element} */
 	#inputNode;
@@ -48,6 +52,7 @@ export default class Autocomplete extends EventEmitter
 	#prevKeyUpTime;
 	#avgKeyUpDelay;
 
+	#isAutocompleteRequestStarted = false;
 
 	constructor(props)
 	{
@@ -78,6 +83,7 @@ export default class Autocomplete extends EventEmitter
 		this.#address = props.address;
 		this.#locationRepository = props.locationRepository || new LocationRepository();
 		this.#promptDelay = props.promptDelay || 500;
+		this.#maxPromptDelay = props.maxPromptDelay || 1500;
 		this.#minCharsCountToAutocomplete = props.minCharsCountToAutocomplete || 3;
 		this.#setState(State.INITIAL);
 		this.#avgKeyUpDelay = this.#promptDelay;
@@ -155,6 +161,11 @@ export default class Autocomplete extends EventEmitter
 	set address(address: ?Address): void
 	{
 		this.#address = address;
+
+		if(this.#inputNode)
+		{
+			this.#addressString = this.#inputNode.value;
+		}
 	}
 
 	#getInputValue()
@@ -177,6 +188,14 @@ export default class Autocomplete extends EventEmitter
 		return this.#address;
 	}
 
+	/**
+	 * @returns {Prompt}
+	 */
+	get prompt(): ?Prompt
+	{
+		return this.#prompt;
+	}
+
 	#setAddressFromInput()
 	{
 		this.#address = this.#convertStringToAddress(
@@ -188,10 +207,16 @@ export default class Autocomplete extends EventEmitter
 
 	/**
 	 * Close menu on mouse click outside
+	 * @param {MouseEvent} event
 	 */
-	#onDocumentClick()
+	#onDocumentClick(event: MouseEvent)
 	{
 		if(this.#isDestroyed)
+		{
+			return;
+		}
+
+		if (event.target === this.#inputNode)
 		{
 			return;
 		}
@@ -221,6 +246,22 @@ export default class Autocomplete extends EventEmitter
 	}
 
 	/**
+	 * @param {Function} listener
+	 */
+	onSearchStartedEventSubscribe(listener: Function): void
+	{
+		this.subscribe(Autocomplete.#onSearchStartedEvent, listener);
+	}
+
+	/**
+	 * @param {Function} listener
+	 */
+	onSearchCompletedEventSubscribe(listener: Function): void
+	{
+		this.subscribe(Autocomplete.#onSearchCompletedEvent, listener);
+	}
+
+	/**
 	 * Is called when autocompleteService returned location list
 	 * @param {array} locationsList
 	 * @param {object} params
@@ -240,6 +281,22 @@ export default class Autocomplete extends EventEmitter
 			if(this.#searchPhrase.current.length > 0)
 			{
 				this.#showPromptInner(this.#searchPhrase.current, params, 1);
+			}
+			else
+			{
+				this.#prompt.getMenu().clearItems();
+
+				this.#prompt.getMenu().addMenuItem(
+					{
+						id: 'notFound',
+						html: `<span>${Loc.getMessage('LOCATION_WIDGET_PROMPT_RESULTS_NOT_FOUND')}</span>`,
+						onclick: (event, item) => {
+							this.#prompt.close();
+						}
+					}
+				);
+
+				this.#prompt.getMenu().show();
 			}
 		}
 	}
@@ -303,7 +360,7 @@ export default class Autocomplete extends EventEmitter
 					this.#onLocationSelect(location);
 					return true;
 				},
-				error => BX.debug(error)
+				response => ErrorPublisher.getInstance().notify(response.errors)
 			);
 		}
 		else
@@ -390,7 +447,10 @@ export default class Autocomplete extends EventEmitter
 
 		this.#prevKeyUpTime = now;
 
-		if(this.#state !== State.DATA_INPUTTING)
+		if(
+			this.#state !== State.DATA_INPUTTING
+			&& this.#addressString.trim() !== this.#getInputValue().trim()
+		)
 		{
 			this.#setState(State.DATA_INPUTTING);
 		}
@@ -431,7 +491,6 @@ export default class Autocomplete extends EventEmitter
 		if(this.#addressString.trim() !== this.#getInputValue().trim())
 		{
 			this.showPrompt(this.#inputNode.value, {});
-			this.#setAddressFromInput();
 		}
 	}
 
@@ -444,8 +503,16 @@ export default class Autocomplete extends EventEmitter
 		this.#searchPhrase.requested = searchPhrase;
 		this.#searchPhrase.current = searchPhrase;
 		this.#searchPhrase.dropped = '';
+		this.#showPromptInner(searchPhrase, params, this.#computePromptDelay());
+	}
+
+	/**
+	 * @returns {number}
+	 */
+	#computePromptDelay(): number
+	{
 		const delay = this.#promptDelay > this.#avgKeyUpDelay ? this.#promptDelay : this.#avgKeyUpDelay * 1.5;
-		this.#showPromptInner(searchPhrase, params, delay);
+		return delay > this.#maxPromptDelay ? this.#maxPromptDelay : delay;
 	}
 
 	closePrompt(): void
@@ -487,12 +554,31 @@ export default class Autocomplete extends EventEmitter
 	#createTimer(searchPhrase: string, params: Object, promptDelay: number): number
 	{
 		return setTimeout(() => {
+
+			// to avoid multiple parallel requests, if server responses are too slow.
+			if(this.#isAutocompleteRequestStarted)
+			{
+				clearTimeout(this.#timerId);
+				this.#timerId = this.#createTimer(searchPhrase, params, promptDelay);
+				return;
+			}
+
+			this.emit(Autocomplete.#onSearchStartedEvent);
+			this.#isAutocompleteRequestStarted = true;
 			this.#autocompleteService.autocomplete(searchPhrase, params)
-			.then((locationsList) => {
-					this.#timerId = null;
-					this.#onPromptsReceived(locationsList, params);
-				},
-				error => BX.debug(error));
+				.then(
+					(locationsList: Array<Location>) => {
+						this.#timerId = null;
+						this.#onPromptsReceived(locationsList, params);
+						this.emit(Autocomplete.#onSearchCompletedEvent);
+						this.#isAutocompleteRequestStarted = false;
+					},
+					(error) => {
+						this.emit(Autocomplete.#onSearchCompletedEvent);
+						this.#isAutocompleteRequestStarted = false;
+						BX.debug(error);
+					}
+				);
 			},
 			promptDelay
 		);

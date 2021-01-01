@@ -22,7 +22,7 @@ if (!function_exists("getLeftMenuItemLink"))
 	{
 		$settings = CUserOptions::GetOption("UI", $sectionId);
 		return
-			is_array($settings) && isset($settings["firstPageLink"]) && strlen($settings["firstPageLink"]) ?
+			is_array($settings) && isset($settings["firstPageLink"]) && mb_strlen($settings["firstPageLink"]) ?
 				$settings["firstPageLink"] :
 				$defaultLink;
 	}
@@ -37,7 +37,7 @@ $userFeatures = CSocNetFeatures::GetActiveFeatures(SONET_ENTITY_USER, $userId);
 
 $menuItems = array(
 	array(
-		GetMessage("EXTRANET_LEFT_MENU_LIVE_FEED"),
+		GetMessage("EXTRANET_LEFT_MENU_LIVE_FEED2"),
 		SITE_DIR,
 		array(),
 		array("name" => "live_feed", "counter_id" => "live-feed", "menu_item_id"=>"menu_live_feed"),

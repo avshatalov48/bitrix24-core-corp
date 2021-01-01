@@ -943,7 +943,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		{
 			if (Option::get("intranet", "show_year_for_female", "N") === "N")
 			{
-				$actualValue = 'M';
+				$actualValue = 'N';
 			}
 		}
 		elseif (

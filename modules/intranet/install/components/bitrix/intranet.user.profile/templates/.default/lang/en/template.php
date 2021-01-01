@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["INTRANET_USER_FIILDS_SETTINGS"] = "Field view settings";
 $MESS["INTRANET_USER_PROFILE_ADDITIONAL_INFO"] = "Additional information";
 $MESS["INTRANET_USER_PROFILE_ADD_PHOTO"] = "Change photo";
@@ -33,6 +33,8 @@ $MESS["INTRANET_USER_PROFILE_FIRE"] = "Dismiss";
 $MESS["INTRANET_USER_PROFILE_FIRE_CONFIRM"] = "The employee will not be able to log on to Bitrix24, and will not be seen in the company structure. All of their data (files, messages, tasks etc.) will remain intact.
 <br/><br/>
 Are you sure you want to dismiss the employee?";
+$MESS["INTRANET_USER_PROFILE_FIRE_INVITED_USER"] = "You cannot delete the invited user from Bitrix24 because there are bindings to other entities. Deactivate (dismiss) the user to close their access to this Bitrix24.
+<br><br>Do you want to dismiss the user?";
 $MESS["INTRANET_USER_PROFILE_HIRE"] = "Hire";
 $MESS["INTRANET_USER_PROFILE_HIRE_CONFIRM"] = "The employee will be able to log on to Bitrix24 and will be seen in the company structure.
 <br/><br/>
@@ -107,4 +109,3 @@ $MESS["INTRANET_USER_PROFILE_invited"] = "Invited";
 $MESS["INTRANET_USER_PROFILE_shop"] = "Web store user";
 $MESS["INTRANET_USER_PROFILE_visitor"] = "Guest";
 $MESS["NTRANET_USER_PROFILE_MOBILE_GOOGLE_PLAY_URL"] = "https://play.google.com/store/apps/details?id=com.bitrix24.android";
-?>

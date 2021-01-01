@@ -192,6 +192,14 @@ Class tasks extends CModule
 				'class' => \Bitrix\Tasks\Update\ExpiredAgentCreator::class,
 				'delay' => 300,
 			],
+			[
+				'class' => \Bitrix\Tasks\Update\TaskCheckListConverter::class,
+				'delay' => 300,
+			],
+			[
+				'class' => \Bitrix\Tasks\Update\TemplateCheckListConverter::class,
+				'delay' => 300,
+			],
 		];
 		foreach ($map as $stepper)
 		{

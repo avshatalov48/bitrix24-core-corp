@@ -181,6 +181,17 @@ class CTimeManUser
 					ExecuteModuleEventEx($a, [$data]);
 				}
 
+				if (\Bitrix\Main\Loader::includeModule('pull'))
+				{
+					\Bitrix\Pull\Event::add($this->USER_ID, [
+						'module_id' => 'timeman',
+						'command' => 'changeDayState',
+						'params' => [
+							'state' => \Bitrix\Timeman\Monitor\State::START
+						],
+					]);
+				}
+
 				return $data;
 			}
 			if ($result->getErrors()[0]->getCode() === WorktimeServiceResult::ERROR_FOR_USER)
@@ -252,6 +263,17 @@ class CTimeManUser
 					ExecuteModuleEventEx($a, [$recordFields]);
 				}
 
+				if (\Bitrix\Main\Loader::includeModule('pull'))
+				{
+					\Bitrix\Pull\Event::add($this->USER_ID, [
+						'module_id' => 'timeman',
+						'command' => 'changeDayState',
+						'params' => [
+							'state' => \Bitrix\Timeman\Monitor\State::STOP
+						],
+					]);
+				}
+
 				return $recordFields;
 			}
 			else
@@ -317,6 +339,17 @@ class CTimeManUser
 				while ($a = $e->Fetch())
 				{
 					ExecuteModuleEventEx($a, [$data]);
+				}
+
+				if (\Bitrix\Main\Loader::includeModule('pull'))
+				{
+					\Bitrix\Pull\Event::add($this->USER_ID, [
+						'module_id' => 'timeman',
+						'command' => 'changeDayState',
+						'params' => [
+							'state' => \Bitrix\Timeman\Monitor\State::START
+						],
+					]);
 				}
 
 				return $data;
@@ -386,6 +419,17 @@ class CTimeManUser
 				while ($a = $e->Fetch())
 				{
 					ExecuteModuleEventEx($a, [$data]);
+				}
+
+				if (\Bitrix\Main\Loader::includeModule('pull'))
+				{
+					\Bitrix\Pull\Event::add($this->USER_ID, [
+						'module_id' => 'timeman',
+						'command' => 'changeDayState',
+						'params' => [
+							'state' => \Bitrix\Timeman\Monitor\State::STOP
+						],
+					]);
 				}
 
 				return $data;

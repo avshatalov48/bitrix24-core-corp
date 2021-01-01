@@ -38,7 +38,7 @@
 	left: 50%;
 	width: 1px;
 	height: 15px;
-	background-color: );
+	background-color: #fff;
 	background-color: var(--b24-primary-text-color);
 	transform: translate(-50%, -50%) rotate(45deg)
 }

@@ -1,8 +1,14 @@
 <?php
+
+use Bitrix\Location\Entity\Source\Config;
+use Bitrix\Location\Entity\Source\ConfigItem;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Config\Option;
 use Bitrix\Location\Service\FormatService;
+use Bitrix\Location\Repository\SourceRepository;
+use Bitrix\Location\Entity\Source\OrmConverter;
+use Bitrix\Location\Infrastructure\Service\LoggerService\LogLevel;
+use Bitrix\Main\Config\Option;
 
 $module_id = 'location';
 $moduleAccess = $APPLICATION::GetGroupRight($module_id);
@@ -19,43 +25,78 @@ if($moduleAccess >= 'W' && Loader::includeModule($module_id)):
 
 	$aTabs = array(
 		array('DIV' => 'edit1', 'TAB' => Loc::getMessage('LOCATION_OPT_TAB_OPTIONS'), 'ICON' => "", 'TITLE' => Loc::getMessage('LOCATION_OPT_TAB_OPTIONS')),
-		array('DIV' => 'edit2', 'TAB' => Loc::getMessage('MAIN_TAB_RIGHTS'), 'ICON' => "", 'TITLE' => Loc::getMessage('MAIN_TAB_TITLE_RIGHTS'))
+		array('DIV' => 'edit2', 'TAB' => Loc::getMessage('LOCATION_OPT_TAB_SOURCES_OPTIONS'), 'ICON' => "", 'TITLE' => Loc::getMessage('LOCATION_OPT_TAB_SOURCES_OPTIONS')),
+		array('DIV' => 'edit3', 'TAB' => Loc::getMessage('MAIN_TAB_RIGHTS'), 'ICON' => "", 'TITLE' => Loc::getMessage('MAIN_TAB_TITLE_RIGHTS')),
 	);
 
 	$tabControl = new CAdminTabControl('tabControl', $aTabs);
 
-	if($_SERVER['REQUEST_METHOD'] === 'POST' && $_REQUEST['Update'] !== "" && check_bitrix_sessid())
+	$sourceRepository = new SourceRepository(new OrmConverter());
+	$sources = $sourceRepository->findAll();
+
+	if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_REQUEST['Update'] !== "" && check_bitrix_sessid())
 	{
-
-		if(isset($_REQUEST['use_google_api']))
-		{
-			$useGoogleApi = $_REQUEST['use_google_api'] === 'Y' ? 'Y' : 'N';
-			Option::set('location', 'use_google_api', $useGoogleApi);
-		}
-		if(isset($_REQUEST['google_map_show_photos']))
-		{
-			$googleMapShowPhotos = $_REQUEST['google_map_show_photos'] === 'Y' ? 'Y' : 'N';
-			Option::set('location', 'google_map_show_photos', $googleMapShowPhotos);
-		}
-		if(isset($_REQUEST['google_use_geocoding_service']))
-		{
-			$googleUseGeocodingService = $_REQUEST['google_use_geocoding_service'] === 'Y' ? 'Y' : 'N';
-			Option::set('location', 'google_use_geocoding_service', $googleUseGeocodingService);
-		}
-
-		if(isset($_REQUEST['google_map_api_key']))
-		{
-			Option::set('location', 'google_map_api_key', $_REQUEST['google_map_api_key']);
-		}
-
-		if(isset($_REQUEST['google_map_api_key_backend']))
-		{
-			Option::set('location', 'google_map_api_key_backend', $_REQUEST['google_map_api_key_backend']);
-		}
-
+		/**
+		 * Common settings
+		 */
 		if(isset($_REQUEST['address_format_code']))
 		{
 			Bitrix\Location\Infrastructure\FormatCode::setCurrent($_REQUEST['address_format_code']);
+		}
+
+		if(isset($_REQUEST['log_level']))
+		{
+			Option::set('location', 'log_level', (string)$_REQUEST['log_level']);
+		}
+
+		/**
+		 * Sources
+		 */
+		foreach ($sources as $source)
+		{
+			$sourceCode = $source->getCode();
+			$sourceConfig = $source->getConfig() ?? new Config();
+
+			if (!isset($_REQUEST['SOURCE'][$sourceCode]))
+			{
+				continue;
+			}
+			$sourceRequest = $_REQUEST['SOURCE'][$sourceCode];
+
+			/**
+			 * Update source config
+			 */
+			$sourceConfigRequest = $_REQUEST['SOURCE'][$sourceCode]['CONFIG'] ?? [];
+			/** @var ConfigItem $configItem */
+			foreach ($sourceConfig as $configItem)
+			{
+				if (!$configItem->isVisible())
+				{
+					continue;
+				}
+				if (!isset($sourceConfigRequest[$configItem->getCode()]))
+				{
+					continue;
+				}
+
+				$value = null;
+				if ($configItem->getType() === ConfigItem::STRING_TYPE)
+				{
+					$value = $sourceConfigRequest[$configItem->getCode()];
+				}
+				elseif ($configItem->getType() === ConfigItem::BOOL_TYPE)
+				{
+					$value = $sourceConfigRequest[$configItem->getCode()] === 'Y';
+				}
+
+				$configItem->setValue($value);
+			}
+			$source->setConfig($sourceConfig);
+
+			/**
+			 * Save updated source to database
+			 */
+			$sourceRepository->save($source);
 		}
 
 		ob_start();
@@ -84,60 +125,18 @@ if($moduleAccess >= 'W' && Loader::includeModule($module_id)):
 		}
 	}
 
-	$useGoogleApi = Option::get('location', 'use_google_api', $location_default_option['use_google_api']);
-	$googleMapShowPhotos = Option::get('location', 'google_map_show_photos', $location_default_option['google_map_show_photos']);
-	$googleUseGeocodingService = Option::get('location', 'google_use_geocoding_service', $location_default_option['google_use_geocoding_service']);
-	$googleApiKey = Option::get('location', 'google_map_api_key', $location_default_option['google_map_api_key']);
-	$googleApiKeyBakend = Option::get('location', 'google_map_api_key_backend', $location_default_option['google_map_api_key_backend']);
+	$currentLogLevel = (int)Option::get('location', 'log_level', LogLevel::ERROR);
+	$logLevels = [
+		LogLevel::NONE => loc::getMessage('LOCATION_OPT_LOG_LEVEL_NONE'),
+		LogLevel::ERROR => loc::getMessage('LOCATION_OPT_LOG_LEVEL_ERROR'),
+		LogLevel::INFO => loc::getMessage('LOCATION_OPT_LOG_LEVEL_INFO'),
+		LogLevel::DEBUG => loc::getMessage('LOCATION_OPT_LOG_LEVEL_DEBUG')
+	];
 
-	$apiKeyDisplayString = $useGoogleApi === 'Y' ? '' : ' style="display:none;"';
 	$tabControl->Begin();
 	?>
 	<form method="post" action="<?echo $APPLICATION->GetCurPage()?>?mid=<?=urlencode($module_id)?>&amp;lang=<?=LANGUAGE_ID?>">
 	<?$tabControl->BeginNextTab();?>
-		<tr>
-			<td width="40%" valign="top"><?=Loc::getMessage('LOCATION_OPT_USE_GOOGLE')?>:</td>
-			<td width="60%">
-				<input type="hidden" name="use_google_api" value="N">
-				<input type="checkbox" name="use_google_api" value="Y"<?=($useGoogleApi === 'Y' ? ' checked' : '')?> onclick="onUseGoogleApiChange(this.checked);">
-			</td>
-		</tr>
-		<tr id="location-key-input-row-0"<?=$apiKeyDisplayString?>>
-			<td width="40%" valign="top"><?=Loc::getMessage('LOCATION_OPT_GOOGLE_SHOW_PLACE_PHOTOS')?>:</td>
-			<td width="60%">
-				<input type="hidden" name="google_map_show_photos" value="N">
-				<input type="checkbox" name="google_map_show_photos" value="Y"<?=($googleMapShowPhotos === 'Y' ? ' checked' : '')?> >
-				<?=BeginNote();?><?=Loc::getMessage('LOCATION_OPT_GOOGLE_SHOW_PLACE_PHOTOS_WARNING')?><?=EndNote();?>
-			</td>
-		</tr>
-		<tr id="location-key-input-row-1"<?=$apiKeyDisplayString?>>
-			<td width="40%" valign="top"><?=Loc::getMessage('LOCATION_OPT_GOOGLE_USE_GEOCODING_SERVICE')?>:</td>
-			<td width="60%">
-				<input type="hidden" name="google_use_geocoding_service" value="N">
-				<input type="checkbox" name="google_use_geocoding_service" value="Y"<?=($googleUseGeocodingService === 'Y' ? ' checked' : '')?> >
-				<?=BeginNote();?><?=Loc::getMessage('LOCATION_OPT_GOOGLE_SHOW_PLACE_PHOTOS_WARNING')?><?=EndNote();?>
-			</td>
-		</tr>
-		<tr id="location-key-input-row-2"<?=$apiKeyDisplayString?>>
-			<td width="40%" valign="top"><?=Loc::getMessage('LOCATION_OPT_GOOGLE_API_KEY2')?>:</td>
-			<td width="60%">
-				<input type="text" name="google_map_api_key" size="40" value="<?=htmlspecialcharsbx($googleApiKey)?>">
-			</td>
-		</tr>
-		<tr id="location-key-input-row-3"<?=$apiKeyDisplayString?>>
-			<td width="40%" valign="top"><?=Loc::getMessage('LOCATION_OPT_GOOGLE_API_KEY_BACK')?>:</td>
-			<td width="60%">
-				<input type="text" name="google_map_api_key_backend" size="40" value="<?=htmlspecialcharsbx($googleApiKeyBakend)?>">
-				<?=BeginNote();?>
-				<?=GetMessage(
-					"LOCATION_OPT_GOOGLE_API_KEY_NOTE",
-					[
-						"#KEY_LINK#" => '<a href="https://developers.google.com/maps/documentation/javascript/get-api-key">https://developers.google.com/maps/documentation/javascript/get-api-key</a>'
-					]
-				)?>
-				<?=EndNote();?>
-			</td>
-		</tr>
 		<tr>
 			<td width="40%" valign="top"><?=Loc::getMessage("LOCATION_OPT_FORMAT")?>:</td>
 			<td width="60%">
@@ -157,6 +156,73 @@ if($moduleAccess >= 'W' && Loader::includeModule($module_id)):
 				<?=EndNote();?>
 			</td>
 		</tr>
+		<tr>
+			<td width="40%" valign="top"><?=Loc::getMessage("LOCATION_OPT_LOG_LEVEL")?>:</td>
+			<td width="60%">
+				<select name="log_level">
+					<?foreach($logLevels as $level => $name):?>
+						<option value="<?=$level?>"<?=($level === $currentLogLevel ? ' selected' : '')?>><?=$name?></option>
+					<?endforeach;?>
+				</select>
+			</td>
+		</tr>
+	<?$tabControl->BeginNextTab();?>
+		<?foreach ($sources as $source):
+			$sourceCode = $source->getCode();
+			$config = $source->getConfig();
+		?>
+			<tr class="heading">
+				<td colspan="2"><b><?=htmlspecialcharsbx($source->getName())?></b></td>
+			</tr>
+
+			<?if (!is_null($config)):?>
+				<?
+				/** @var ConfigItem $configItem */
+				foreach ($config as $configItem):
+					if (!$configItem->isVisible())
+					{
+						continue;
+					}
+
+					$code = $configItem->getCode();
+
+					$inputName = sprintf(
+						'SOURCE[%s][CONFIG][%s]',
+						$sourceCode,
+						$code
+					);
+					$name = Loc::getMessage(
+						sprintf(
+							'LOCATION_OPT_SOURCE_%s_%s',
+							$sourceCode,
+							$code
+						)
+					);
+					$note = Loc::getMessage(
+						sprintf(
+							'LOCATION_OPT_SOURCE_%s_%s_NOTE',
+							$sourceCode,
+							$code
+						)
+					);
+				?>
+					<tr>
+						<td width="40%" valign="top"><?=$name?>:</td>
+						<td width="60%">
+							<?if ($configItem->getType() == ConfigItem::STRING_TYPE):?>
+								<input type="text" name="<?=htmlspecialcharsbx($inputName)?>" size="40" value="<?=htmlspecialcharsbx($configItem->getValue())?>">
+							<?elseif ($configItem->getType() == ConfigItem::BOOL_TYPE):?>
+								<input type="hidden" name="<?=htmlspecialcharsbx($inputName)?>" value="N">
+								<input type="checkbox" name="<?=htmlspecialcharsbx($inputName)?>" value="Y" <?=($configItem->getValue() ? ' checked' : '')?> >
+							<?endif;?>
+							<?if ($note):?>
+								<?=BeginNote();?><?=$note?><?=EndNote();?>
+							<?endif;?>
+						</td>
+					</tr>
+				<?endforeach;?>
+			<?endif;?>
+		<?endforeach;?>
 	<?$tabControl->BeginNextTab();?>
 		<?require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/admin/group_rights.php");?>
 
@@ -177,15 +243,5 @@ if($moduleAccess >= 'W' && Loader::includeModule($module_id)):
 			var note = document.getElementById('location_address_format_description');
 			note.innerHTML = formatDescriptionsList[formatCode];
 		}
-
-		function onUseGoogleApiChange(checked)
-		{
-			var display = checked ? '' : 'none';
-			BX('location-key-input-row-0').style.display = display;
-			BX('location-key-input-row-1').style.display = display;
-			BX('location-key-input-row-2').style.display = display;
-			BX('location-key-input-row-3').style.display = display;
-		}
-
 	</script>
 <?endif;?>

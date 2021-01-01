@@ -27,6 +27,7 @@
 	--b24-field-border-color: rgba(0, 0, 0, .1);
 	--b24-field-background-color: rgba(0, 0, 0, .08);
 	--b24-field-focus-background-color: #fff;
+	--b24-popup-background-color: #fff;
 	--b24-font-family-default: "Helvetica Neue", Helvetica, Arial, sans-serif;
 	--b24-font-family: var(--b24-font-family-default);
 }
@@ -40,6 +41,7 @@
 	--b24-field-border-color: rgba(255, 255, 255, .1);
 	--b24-field-background-color: rgba(255, 255, 255, .08);
 	--b24-field-focus-background-color: rgba(0, 0, 0, .17);
+	--b24-popup-background-color: #282D30;
 	--b24-font-family-default: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	--b24-font-family: var(--b24-font-family-default);
 }

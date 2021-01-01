@@ -1,5 +1,5 @@
-import {EventEmitter} from "main.core.events";
-import {Location} from "location.core";
+import {EventEmitter} from 'main.core.events';
+import {Location} from 'location.core';
 
 /**
  * Base class for source maps

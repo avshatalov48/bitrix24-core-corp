@@ -465,7 +465,8 @@ final class CB24SearchTitle
 			"bitrix:menu",
 			"left_vertical",
 			array(
-				"ROOT_MENU_TYPE" => isModuleInstalled("bitrix24") ? "superleft" : "top",
+				"ROOT_MENU_TYPE" => file_exists($_SERVER["DOCUMENT_ROOT"].SITE_DIR.".superleft.menu_ext.php")
+					? "superleft" : "top",
 				"MENU_CACHE_TYPE" => "Y",
 				"MENU_CACHE_TIME" => "604800",
 				"MENU_CACHE_USE_GROUPS" => "N",

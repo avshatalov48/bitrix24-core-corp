@@ -756,6 +756,7 @@ Vue.component(config.templateAddPaymentProductName,
 									:placeholder="localize.SALESCENTER_PRODUCT_NAME_PLACEHOLDER"
 								>
 							</div>
+							<div class="salescenter-form-error" v-if="hasNameError">{{localize.SALESCENTER_PRODUCT_CHOOSE_PRODUCT}}</div>
 						</div>
 						<div v-if="getBasketFileControl" class="salescenter-app-form-col-img">
 							<!-- loaded product -->
@@ -863,6 +864,7 @@ Vue.component(config.templateAddPaymentProductName,
 								<input type="text" class="ui-ctl-element ui-ctl-textbox" @change="changeName" :value="basketItem.name">
 								<div class="ui-ctl-tag">{{localize.SALESCENTER_PRODUCT_NEW_LABEL}}</div>
 							</div>
+							<div class="salescenter-form-error" v-if="hasNameError">{{localize.SALESCENTER_PRODUCT_EMPTY_PRODUCT_NAME}}</div>
 						</div>
 						<div class="salescenter-app-form-col-img">
 							<!-- new product -->

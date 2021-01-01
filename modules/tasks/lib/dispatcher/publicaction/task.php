@@ -280,7 +280,14 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 			$result['ID' ] = $id;
 
 			$task = \CTaskItem::getInstance($id, Util\User::getId());
-			$arTask = $task->getData(false);
+			try
+			{
+				$arTask = $task->getData(false);
+			}
+			catch (\TasksException $e)
+			{
+				return [];
+			}
 
 			if (empty($arTask['DEADLINE']))
 			{
@@ -525,7 +532,14 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		$result = array();
 
 		$task = \CTaskItem::getInstance($id, Util\User::getId());
-		$arTask = $task->getData(false);
+		try
+		{
+			$arTask = $task->getData(false);
+		}
+		catch (\TasksException $e)
+		{
+			return [];
+		}
 		$arTask['AUDITORS'][] = $auditorId;
 		$task->update(array('AUDITORS' => $arTask['AUDITORS']));
 
@@ -537,7 +551,15 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		$result = array();
 
 		$task = \CTaskItem::getInstance($id, Util\User::getId());
-		$arTask = $task->getData(false);
+		try
+		{
+			$arTask = $task->getData(false);
+		}
+		catch (\TasksException $e)
+		{
+			return [];
+		}
+
 		$arTask['ACCOMPLICES'][] = $accompliceId;
 		$task->update(array('ACCOMPLICES' => $arTask['ACCOMPLICES']));
 

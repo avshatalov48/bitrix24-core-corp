@@ -62,7 +62,7 @@ class CVoxImplantHistory
 			"CALL_ID" =>			$params["CALL_ID"],
 			"CALL_CATEGORY" =>		$params["CALL_CATEGORY"],
 			"SESSION_ID" =>			$call->getSessionId(),
-			"TRANSCRIPT_PENDING" => $params['TRANSCRIPT_PENDING'] == 'Y' ? 'Y' : 'N',
+			"TRANSCRIPT_PENDING" => $params['TRANSCRIPT_PENDING'] === 'Y' ? 'Y' : 'N',
 		);
 
 		if ($params["PHONE_NUMBER"] <> '')
@@ -418,11 +418,7 @@ class CVoxImplantHistory
 		}
 
 		VI\StatisticTable::update($historyID, ['CALL_RECORD_ID' => $fileId]);
-		$elementId = CVoxImplantDiskHelper::SaveFile(
-			$arHistory,
-			CFile::GetFileArray($fileId),
-			CSite::GetDefSite()
-		);
+		$elementId = CVoxImplantDiskHelper::SaveFile($arHistory, CFile::GetFileArray($fileId));
 		$elementId = (int)$elementId;
 		VI\StatisticTable::update($historyID, ['CALL_WEBDAV_ID' => $elementId]);
 
@@ -777,7 +773,7 @@ class CVoxImplantHistory
 
 	public static function getStatusText($statusCode)
 	{
-		return in_array($statusCode, array("200","304","603-S","603","403","404","486","484","503","480","402","423")) ? GetMessage("VI_STATUS_".$statusCode) : GetMessage("VI_STATUS_OTHER");
+		return in_array($statusCode, array("200","304","603-S","603","403","404","486","484","503","480","402","423", "402-B24")) ? GetMessage("VI_STATUS_".$statusCode) : GetMessage("VI_STATUS_OTHER");
 	}
 
 	/**
@@ -875,7 +871,7 @@ class CVoxImplantHistory
 			$queue = VI\Queue::createWithId($call->getQueueId());
 			if($queue instanceof VI\Queue)
 			{
-				$queueUser = $queue->getFirstUserId($config['TIMEMAN'] == 'Y');
+				$queueUser = $queue->getFirstUserId();
 				if ($queueUser > 0)
 				{
 					$queue->touchUser($queueUser);
@@ -883,7 +879,6 @@ class CVoxImplantHistory
 				}
 			}
 		}
-
 
 		if(is_array($config) && $config['CRM'] == 'Y' && $config['CRM_FORWARD'] == 'Y')
 		{
@@ -897,8 +892,8 @@ class CVoxImplantHistory
 			}
 			else
 			{
-				$responsibleInfo = CVoxImplantIncoming::getCrmResponsible($call, $config['TIMEMAN'] == 'Y');
-				if($responsibleInfo && $responsibleInfo['AVAILABLE'] == 'Y')
+				$responsibleInfo = CVoxImplantIncoming::getCrmResponsible($call, false);
+				if($responsibleInfo)
 				{
 					return $responsibleInfo['USER_ID'];
 				}
@@ -910,7 +905,7 @@ class CVoxImplantHistory
 			$queue = VI\Queue::createWithId($config['QUEUE_ID']);
 			if($queue instanceof VI\Queue)
 			{
-				$queueUser = $queue->getFirstUserId($config['TIMEMAN'] == 'Y');
+				$queueUser = $queue->getFirstUserId();
 				if ($queueUser > 0)
 				{
 					$queue->touchUser($queueUser);

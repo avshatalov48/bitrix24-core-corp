@@ -211,6 +211,17 @@ $APPLICATION->IncludeComponent(
 			</div>
 		</div>
 		<?}?>
+		<?php
+        if(isset($arResult['publicUrlView']))
+		{
+			?><div class="docs-preview-sidebar docs-preview-sidebar-details">
+			    <div class="docs-preview-public-view-info">
+                    <?=Loc::getMessage('CRM_DOCUMENT_VIEW_PUBLIC_URL_VIEWED_TIME', [
+                        '#TIME#' => $arResult['publicUrlView']['time'],
+                    ]);?>
+                </div>
+            </div>
+		<?}?>
 	</div>
 	<?}?>
 </div>

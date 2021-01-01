@@ -41,6 +41,9 @@ class CCrmProductSection
 				),
 				'XML_ID' => array(
 					'TYPE' => 'string'
+				),
+				'CODE' => array(
+					'TYPE' => 'string'
 				)
 			);
 		}
@@ -54,7 +57,7 @@ class CCrmProductSection
 		return is_string($result) ? $result : '';
 	}
 	// CRUD -->
-	public static function Add(&$arFields)
+	public static function Add(&$arFields, $options = [])
 	{
 		if (!CModule::IncludeModule('iblock'))
 		{
@@ -78,6 +81,34 @@ class CCrmProductSection
 		$sectionFields = CCrmProductSectionDbResult::MapKeys($arFields);
 		$sectionFields['CHECK_PERMISSIONS'] = 'N';
 
+		$generateCode =
+			!isset($sectionFields['CODE']) &&
+			isset($options['GENERATE_CODE']) &&
+			$options['GENERATE_CODE'];
+
+		if ($generateCode)
+		{
+			$iblock = \CIBlock::GetArrayByID($catalogID);
+			if (
+				isset($iblock['FIELDS']['SECTION_CODE']['DEFAULT_VALUE']) &&
+				$iblock['FIELDS']['SECTION_CODE']['DEFAULT_VALUE']['TRANSLITERATION'] == 'Y' &&
+				$iblock['FIELDS']['SECTION_CODE']['DEFAULT_VALUE']['USE_GOOGLE'] != 'Y'
+			)
+			{
+				$translitOptions = $iblock['FIELDS']['SECTION_CODE']['DEFAULT_VALUE'];
+				$sectionFields['CODE'] = \CUtil::translit(
+					$sectionFields["NAME"],
+					LANGUAGE_ID,
+					[
+						"max_len" => $translitOptions['TRANS_LEN'],
+						"change_case" => $translitOptions['TRANS_CASE'],
+						"replace_space" => $translitOptions['TRANS_SPACE'],
+						"replace_other" => $translitOptions['TRANS_OTHER'],
+						"delete_repeat_replace" => ($translitOptions['TRANS_EAT'] == 'Y'),
+					]
+				);
+			}
+		}
 		$section = new CIBlockSection();
 		$result = $section->Add($sectionFields);
 
@@ -105,7 +136,7 @@ class CCrmProductSection
 				'CHECK_PERMISSIONS' => 'N'
 			),
 			false,
-			array('ID', 'NAME', 'IBLOCK_ID', 'IBLOCK_SECTION_ID', 'XML_ID'),
+			array('ID', 'NAME', 'IBLOCK_ID', 'IBLOCK_SECTION_ID', 'XML_ID', 'CODE'),
 			false
 		);
 
@@ -367,7 +398,8 @@ class CCrmProductSectionDbResult extends CDBResult
 		'SECTION_ID' => 'IBLOCK_SECTION_ID',
 		'NAME' => 'NAME',
 		'XML_ID' => 'XML_ID',
-		'SORT' => 'SORT'
+		'SORT' => 'SORT',
+		'CODE' => 'CODE'
 	);
 	function Fetch()
 	{

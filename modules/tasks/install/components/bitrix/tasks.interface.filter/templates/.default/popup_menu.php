@@ -28,7 +28,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 		<?php if($arParams['USE_GROUP_BY_SUBTASKS'] == 'Y'):?>
 		<?php
-		$instance = \CTaskListState::getInstance(\Bitrix\Tasks\Util\User::getId());
+		$instance = \CTaskListState::getInstance($arParams['USER_ID']);
 		$state = $instance->getState();
 		$submodes = $state['SUBMODES'];
 		$groupBySubTasks = $submodes['VIEW_SUBMODE_WITH_SUBTASKS']['SELECTED'] == 'Y';
@@ -41,40 +41,47 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 			className: (groupBySubTasks ? 'menu-popup-item-accept' : 'menu-popup-item-none'),
 			onclick: function(event, item) {
 				var query = new BX.Tasks.Util.Query({autoExec: true});
-				query.add('ui.listcontrols.togglegroupbytasks', {}, {}, BX.delegate(function(errors, data) {
-					if (!errors.checkHasErrors())
+				query.add(
+					'ui.listcontrols.togglegroupbytasks',
 					{
-						if (BX.hasClass(item.layout.item, "menu-popup-item-accept"))
+						userId: <?= $arParams['USER_ID'] ?>
+					},
+					{},
+					BX.delegate(function(errors, data) {
+						if (!errors.checkHasErrors())
 						{
-							BX.removeClass(item.layout.item, "menu-popup-item-accept");
-							BX.addClass(item.layout.item, "menu-popup-item-none");
-						}
-						else
-						{
-							BX.addClass(item.layout.item, "menu-popup-item-accept");
-							BX.removeClass(item.layout.item, "menu-popup-item-none");
-						}
+							if (BX.hasClass(item.layout.item, "menu-popup-item-accept"))
+							{
+								BX.removeClass(item.layout.item, "menu-popup-item-accept");
+								BX.addClass(item.layout.item, "menu-popup-item-none");
+							}
+							else
+							{
+								BX.addClass(item.layout.item, "menu-popup-item-accept");
+								BX.removeClass(item.layout.item, "menu-popup-item-none");
+							}
 
-						if (BX.Main.gridManager)
-						{
-							groupBySubTasks = !groupBySubTasks;
-							var gridInstance = BX.Main.gridManager.getById('<?=$arParams['GRID_ID']?>').instance;
-							gridInstance.reloadTable();
-							BX.onCustomEvent('BX.Tasks.Filter.group', [gridInstance, 'groupBySubTasks', groupBySubTasks]);
+							if (BX.Main.gridManager)
+							{
+								groupBySubTasks = !groupBySubTasks;
+								var gridInstance = BX.Main.gridManager.getById('<?=$arParams['GRID_ID']?>').instance;
+								gridInstance.reloadTable();
+								BX.onCustomEvent('BX.Tasks.Filter.group', [gridInstance, 'groupBySubTasks', groupBySubTasks]);
+							}
+							else
+							{
+								window.location.reload();
+							}
 						}
-						else
-						{
-							window.location.reload();
-						}
-					}
-				}));
+					})
+				);
 			}
 		});
 		<?php endif?>
 
 		<?php if($arParams['USE_GROUP_BY_GROUPS'] == 'Y'):?>
 		<?php
-		$instance = \CTaskListState::getInstance(\Bitrix\Tasks\Util\User::getId());
+		$instance = \CTaskListState::getInstance($arParams['USER_ID']);
 		$state = $instance->getState();
 		$submodes = $state['SUBMODES'];
 		$groupByGroups = $submodes['VIEW_SUBMODE_WITH_GROUPS']['SELECTED'] == 'Y';
@@ -87,33 +94,40 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 			className: (groupByGroups ? 'menu-popup-item-accept' : 'menu-popup-item-none'),
 			onclick: function(event, item) {
 				var query = new BX.Tasks.Util.Query({autoExec: true});
-				query.add('ui.listcontrols.togglegroupbygroups', {}, {}, BX.delegate(function(errors, data) {
-					if (!errors.checkHasErrors())
+				query.add(
+					'ui.listcontrols.togglegroupbygroups',
 					{
-						if (BX.hasClass(item.layout.item, "menu-popup-item-accept"))
+						userId: <?= $arParams['USER_ID'] ?>
+					},
+					{},
+					BX.delegate(function(errors, data) {
+					if (!errors.checkHasErrors())
 						{
-							BX.removeClass(item.layout.item, "menu-popup-item-accept");
-							BX.addClass(item.layout.item, "menu-popup-item-none");
-						}
-						else
-						{
-							BX.addClass(item.layout.item, "menu-popup-item-accept");
-							BX.removeClass(item.layout.item, "menu-popup-item-none");
-						}
+							if (BX.hasClass(item.layout.item, "menu-popup-item-accept"))
+							{
+								BX.removeClass(item.layout.item, "menu-popup-item-accept");
+								BX.addClass(item.layout.item, "menu-popup-item-none");
+							}
+							else
+							{
+								BX.addClass(item.layout.item, "menu-popup-item-accept");
+								BX.removeClass(item.layout.item, "menu-popup-item-none");
+							}
 
-						if (BX.Main.gridManager)
-						{
-							groupByGroups = !groupByGroups;
-							var gridInstance = BX.Main.gridManager.getById('<?=$arParams['GRID_ID']?>').instance;
-							gridInstance.reloadTable();
-							BX.onCustomEvent('BX.Tasks.Filter.group', [gridInstance, 'groupByGroups', groupByGroups]);
+							if (BX.Main.gridManager)
+							{
+								groupByGroups = !groupByGroups;
+								var gridInstance = BX.Main.gridManager.getById('<?=$arParams['GRID_ID']?>').instance;
+								gridInstance.reloadTable();
+								BX.onCustomEvent('BX.Tasks.Filter.group', [gridInstance, 'groupByGroups', groupByGroups]);
+							}
+							else
+							{
+								window.location.reload();
+							}
 						}
-						else
-						{
-							window.location.reload();
-						}
-					}
-				}));
+					})
+				);
 			}
 		});
 		<?php endif?>
@@ -210,7 +224,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 			items: [
 				<?php foreach($sortFields as $sortField):?>
 				{
-					text: '<?=GetMessageJS('TASKS_BTN_SORT_'.$sortField)?><?php if($sortField === "ACTIVITY_DATE"):?><span class="menu-popup-item-sort-field-label"><?=GetMessageJS('TASKS_BTN_SORT_RECOMMENDED_LABEL')?></span><?php endif;?>',
+					html: '<?=GetMessageJS('TASKS_BTN_SORT_'.$sortField)?><?php if($sortField === "ACTIVITY_DATE"):?><span class="menu-popup-item-sort-field-label"><?=GetMessageJS('TASKS_BTN_SORT_RECOMMENDED_LABEL')?></span><?php endif;?>',
 					value: '<?=$sortField?>',
 					className: "menu-popup-item-sort-field menu-popup-item-none",
 					onclick: function(event, menuItem)
@@ -287,7 +301,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 					tabId: "popupMenuOptions",
 					text: '<?=GetMessageJS('TASKS_BTN_EXPORT_EXCEL')?>',
 					className: "tasks-interface-filter-icon-excel",
-					href: '<?=$arParams['PATH_TO_TASKS']?>?EXPORT_AS=EXCEL&ncc=1'
+					href: '<?=$arParams['PATH_TO_TASKS']?>?F_STATE=sV<?= CTaskListState::encodeState(CTaskListState::VIEW_MODE_LIST); ?>&EXPORT_AS=EXCEL&ncc=1'
 				}
 			]
 		});
@@ -321,6 +335,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 		menuItemsOptions.push({
 			tabId: "<?= isset($menuItem['tabId']) ? $menuItem['tabId'] : ''?>",
 			text: "<?= isset($menuItem['text']) ? $menuItem['text'] : ''?>",
+			html: "<?= isset($menuItem['html']) ? $menuItem['html'] : ''?>",
 			href: "<?= isset($menuItem['href']) ? $menuItem['href'] : ''?>",
 			className: "<?= isset($menuItem['className']) ? $menuItem['className'] : ''?>",
 			onclick: <?= isset($menuItem['onclick']) ? $menuItem['onclick'] : '""'?>,

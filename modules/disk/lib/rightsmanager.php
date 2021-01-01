@@ -14,6 +14,7 @@ use Bitrix\Disk\Internals\SimpleRightTable;
 use Bitrix\Main\Application;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
+use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Collection;
 
@@ -1130,7 +1131,15 @@ class RightsManager implements IErrorable
 		$parameters['runtime'][] = new ExpressionField('RIGHTS_CHECK',
 			'CASE WHEN ' . $securityContext->getSqlExpressionForList('%1$s', '%2$s') . ' THEN 1 ELSE 0 END', $specificColumns, array('data_type' => 'boolean',)
 		);
-		$parameters['filter']['=RIGHTS_CHECK'] = true;
+
+		if ($parameters['filter'] instanceof ConditionTree)
+		{
+			$parameters['filter']->addCondition(Query::filter()->where('RIGHTS_CHECK', true));
+		}
+		else
+		{
+			$parameters['filter']['=RIGHTS_CHECK'] = true;
+		}
 
 		return $parameters;
 	}

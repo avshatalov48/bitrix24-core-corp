@@ -2,8 +2,10 @@
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
+use Bitrix\Main\Engine\Response\AjaxJson;
 use Bitrix\Main\Loader;
 use Bitrix\Crm\Integration\Recyclebin\RecyclingManager;
+use Bitrix\Crm\Kanban;
 use Bitrix\Recyclebin\Recyclebin;
 
 class KanbanAjaxController extends \Bitrix\Main\Engine\Controller
@@ -41,5 +43,26 @@ class KanbanAjaxController extends \Bitrix\Main\Engine\Controller
 
 			return null;
 		}
+	}
+
+	public function getFieldsAction(string $entityType, string $viewType): array
+	{
+		Loader::includeModule('crm');
+
+		$entity = Kanban\Entity::getInstance($entityType);
+		if(!$entity)
+		{
+			$this->addError(new \Bitrix\Main\Error('Entity not found'));
+		}
+		elseif(!$entity->checkReadPermissions())
+		{
+			$this->addError(new \Bitrix\Main\Error('Access denied'));
+		}
+		if($this->getErrors())
+		{
+			return [];
+		}
+
+		return array_values($entity->getPopupFields($viewType));
 	}
 }

@@ -192,7 +192,7 @@
 				this.popupMenuItems = result.popupMenuItems;
 			}
 
-			BX.componentParameters.set("invite", result.invite);
+			Application.sharedStorage('menuComponentSettings').set('invite', JSON.stringify(result.invite));
 
 			if (menuStructure)
 			{

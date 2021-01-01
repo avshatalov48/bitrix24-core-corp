@@ -437,7 +437,7 @@ class DuplicatePersonCriterion extends DuplicateCriterion
 				'ENTITY_TYPE_ID' => $this->sortDescendingByEntityTypeId ? 'DESC' : 'ASC',
 				'ENTITY_ID' => 'ASC'
 			),
-			'filter' => array('LAST_NAME' => $lastName)
+			'filter' => array('=LAST_NAME' => $lastName)
 		);
 
 		if(\CCrmOwnerType::IsDefined($entityTypeID))
@@ -447,12 +447,12 @@ class DuplicatePersonCriterion extends DuplicateCriterion
 
 		if($name !== '')
 		{
-			$listParams['filter']['NAME'] = $name;
+			$listParams['filter']['=NAME'] = $name;
 		}
 
 		if($secondName !== '')
 		{
-			$listParams['filter']['SECOND_NAME'] = $secondName;
+			$listParams['filter']['=SECOND_NAME'] = $secondName;
 		}
 
 		if($limit > 0)

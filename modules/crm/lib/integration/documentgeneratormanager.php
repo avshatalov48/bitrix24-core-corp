@@ -260,13 +260,14 @@ class DocumentGeneratorManager
 	public static function onPublicView(Event $event)
 	{
 		$document = $event->getParameter('document');
+		$isFirstTime = ($event->getParameter('isFirstTime') === true);
 		/** @var Document $document */
 		if($document)
 		{
 			$provider = $document->getProvider();
 			if($provider && $provider instanceof CrmEntityDataProvider)
 			{
-				$provider->onPublicView($document);
+				$provider->onPublicView($document, $isFirstTime);
 			}
 		}
 

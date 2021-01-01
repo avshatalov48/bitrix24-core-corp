@@ -8,9 +8,11 @@
 
 use Bitrix\Tasks\Integration\Rest\ElapsedTimeTable;
 use Bitrix\Tasks\Util\User;
-use \Bitrix\Tasks\TaskTable;
 use \Bitrix\Tasks\Access\ActionDictionary;
 
+/**
+ * Class CTaskElapsedItem
+ */
 final class CTaskElapsedItem extends CTaskSubItemAbstract
 {
 	const ACTION_ELAPSED_TIME_ADD    = 0x01;
@@ -23,49 +25,46 @@ final class CTaskElapsedItem extends CTaskSubItemAbstract
 
 
 	/**
-	 * @param CTaskItemInterface $oTaskItem
-	 * @param array $arFields with mandatory elements MINUTES, COMMENT_TEXT
-	 * @throws TasksException
+	 * @param CTaskItemInterface $task
+	 * @param array $fields with mandatory elements MINUTES, COMMENT_TEXT
 	 * @return CTaskElapsedItem
+	 * @throws TasksException
 	 */
-	public static function add(CTaskItemInterface $oTaskItem, $arFields)
+	public static function add(CTaskItemInterface $task, array $fields)
 	{
-		CTaskAssert::assert(
-			is_array($arFields)
-			&& isset($arFields['COMMENT_TEXT'])
-			&& (
-				(
-					isset($arFields['MINUTES'])
-					&& CTaskAssert::isLaxIntegers($arFields['MINUTES'])
-				)
-				|| (
-					isset($arFields['SECONDS'])
-					&& CTaskAssert::isLaxIntegers($arFields['SECONDS'])
-				)
-			)
-			&& is_string($arFields['COMMENT_TEXT'])
-		);
-
-		if ( ! $oTaskItem->checkAccess(ActionDictionary::ACTION_TASK_ELAPSED_TIME) )
+		if (!$task->checkAccess(ActionDictionary::ACTION_TASK_ELAPSED_TIME))
+		{
 			throw new TasksException('', TasksException::TE_ACTION_NOT_ALLOWED);
+		}
 
-		if (!isset($arFields['USER_ID']) || $arFields['USER_ID'] == '0')
-			$arFields['USER_ID'] = $oTaskItem->getExecutiveUserId();
-		$arFields['TASK_ID'] = $oTaskItem->getId();
+		if (!isset($fields['USER_ID']) || (int)$fields['USER_ID'] === 0)
+		{
+			$fields['USER_ID'] = $task->getExecutiveUserId();
+		}
+		$fields['TASK_ID'] = $task->getId();
+		$fields['COMMENT_TEXT'] = (string)$fields['COMMENT_TEXT'];
+		$fields['MINUTES'] = (isset($fields['MINUTES']) ? (int)$fields['MINUTES'] : null);
+		$fields['SECONDS'] = (isset($fields['SECONDS']) ? (int)$fields['SECONDS'] : null);
 
 		/** @noinspection PhpDeprecationInspection */
-		$obElapsed = new CTaskElapsedTime();
-		$id = $obElapsed->Add($arFields);
+		$id = (new CTaskElapsedTime())->Add($fields);
 
 		// Reset tagged system cache by tag 'tasks_user_' . $userId for each task member
-		self::__resetSystemWideTasksCacheByTag($oTaskItem->getData(false));
+		try
+		{
+			self::__resetSystemWideTasksCacheByTag($task->getData(false));
+		}
+		catch (TasksException $e)
+		{
+			throw new TasksException('', TasksException::TE_ACTION_FAILED_TO_BE_PROCESSED);
+		}
 
 		if ($id === false)
 		{
 			throw new TasksException('', TasksException::TE_ACTION_FAILED_TO_BE_PROCESSED);
 		}
 
-		return (new self($oTaskItem, (int) $id));
+		return (new self($task, (int)$id));
 	}
 
 
@@ -87,25 +86,30 @@ final class CTaskElapsedItem extends CTaskSubItemAbstract
 			throw new TasksException('', TasksException::TE_ACTION_FAILED_TO_BE_PROCESSED);
 	}
 
-
-	public function update($arFields)
+	/**
+	 * @param array $fields
+	 * @throws TasksException
+	 */
+	public function update(array $fields): void
 	{
-		static $allowedFields = array('MINUTES', 'SECONDS', 'COMMENT_TEXT', 'CREATED_DATE');
-
-		if ( ! $this->isActionAllowed(self::ACTION_ELAPSED_TIME_MODIFY) )
-			throw new TasksException('', TasksException::TE_ACTION_NOT_ALLOWED);
-
-		// Ensure that only allowed fields given
-		foreach (array_keys($arFields) as $fieldName)
-			CTaskAssert::assert(in_array($fieldName, $allowedFields));
-
-		// Nothing to do?
-		if (empty($arFields))
+		if (empty($fields))
+		{
 			return;
+		}
+
+		if (!$this->isActionAllowed(self::ACTION_ELAPSED_TIME_MODIFY))
+		{
+			throw new TasksException('', TasksException::TE_ACTION_NOT_ALLOWED);
+		}
+
+		static $allowedFields = ['MINUTES', 'SECONDS', 'COMMENT_TEXT', 'CREATED_DATE'];
+		if (count(array_diff(array_keys($fields), $allowedFields)) > 0)
+		{
+			throw new TasksException('', TasksException::TE_WRONG_ARGUMENTS);
+		}
 
 		/** @noinspection PhpDeprecationInspection */
-		$o  = new CTaskElapsedTime();
-		$rc = $o->Update($this->itemId, $arFields, array('USER_ID' => $this->executiveUserId));
+		$rc = (new CTaskElapsedTime())->Update($this->itemId, $fields, ['USER_ID' => $this->executiveUserId]);
 
 		// Reset tagged system cache by tag 'tasks_user_' . $userId for each task member
 		$this->resetSystemWideTasksCacheByTag();
@@ -113,10 +117,10 @@ final class CTaskElapsedItem extends CTaskSubItemAbstract
 		// Reset cache
 		$this->resetCache();
 
-		if ( ! $rc )
+		if (!$rc)
+		{
 			throw new TasksException('', TasksException::TE_ACTION_FAILED_TO_BE_PROCESSED);
-
-		return;
+		}
 	}
 
 
@@ -251,8 +255,15 @@ final class CTaskElapsedItem extends CTaskSubItemAbstract
 
 	private function resetSystemWideTasksCacheByTag()
 	{
-		$arData = $this->oTaskItem->getData($bEscape = false);
-		self::__resetSystemWideTasksCacheByTag($arData);
+		try
+		{
+			$arData = $this->oTaskItem->getData($bEscape = false);
+			self::__resetSystemWideTasksCacheByTag($arData);
+		}
+		catch (TasksException $e)
+		{
+
+		}
 	}
 
 

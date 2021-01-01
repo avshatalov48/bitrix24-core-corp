@@ -24,7 +24,7 @@ export class Submit extends EventEmitter
 		let errorInputData = [];
 		let items = [];
 		const phoneExp = /^[\d+][\d\(\)\ -]{4,22}\d$/;
-		const rows = form.querySelectorAll(".js-form-row");
+		const rows = Array.prototype.slice.call(form.querySelectorAll(".js-form-row"));
 
 		(rows || []).forEach((row) => {
 			const emailInput = row.querySelector("input[name='EMAIL[]']");

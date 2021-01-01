@@ -1028,9 +1028,23 @@ class Order extends Sale\Order
 
 		return $this->dealBinding;
 	}
+
 	/**
-	 * @return Main\ORM\Entity
+	 * @return array
 	 * @throws Main\ArgumentException
 	 * @throws Main\SystemException
 	 */
+	public function toArray() : array
+	{
+		$result = parent::toArray();
+
+		$result['CONTACTS_COMPANIES'] = $this->getContactCompanyCollection()->toArray();
+
+		if ($this->getDealBinding())
+		{
+			$result['DEAL_BINDING'] = $this->getDealBinding()->toArray();
+		}
+
+		return $result;
+	}
 }

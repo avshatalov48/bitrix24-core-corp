@@ -12,7 +12,7 @@ export class ExpiredStatsHeader extends StatsHeader
 		const expiredDay = this.getExpiredDay(this.getEndDate());
 
 		const label = Loc.getMessage('TASKS_SCRUM_SPRINT_STATS_EXPIRED_LABEL').
-			replace('#percent#', '<b>' + percentage + '</b>').
+			replace('#percent#', '<b>' + percentage + '%</b>').
 			replace('#date#', expiredDay);
 
 		this.headerNode = Tag.render`

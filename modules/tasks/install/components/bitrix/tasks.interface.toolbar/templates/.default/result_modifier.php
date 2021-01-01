@@ -13,6 +13,18 @@ if($helper->checkHasFatals())
 }
 
 $isMyTasks = $arResult['USER_ID'] === $arResult['OWNER_ID'];
+
+$emptyMessage = '';
+if (
+	$isMyTasks
+	|| \Bitrix\Tasks\Util\User::isAdmin()
+	|| CTasks::IsSubordinate($this->arParams['USER_ID'], $this->arResult['USER_ID'])
+)
+{
+	$emptyMessage = GetMessageJS('TASKS_COUNTER_EMPTY');
+}
+
+
 $readAllTitle = Loc::getMessage('TASKS_COUNTER_NEW_COMMENTS_READ_ALL_TITLE');
 $readAllButton =
 	'<a href="javascript:;" class="tasks-counter-counter-button" data-counter-id="new_comments" id="tasksCommentsReadAll">'
@@ -48,8 +60,8 @@ $arResult['JS_DATA'] = [
 		'new_comments' => 'success',
 	],
 	'messages' => [
-		'empty' => GetMessageJS('TASKS_COUNTER_EMPTY'),
-		'total' => GetMessageJS('TASKS_COUNTER_TOTAL'),
+		'empty' => $emptyMessage,
+		'total' => ($arResult['USER_ID'] === $arResult['OWNER_ID']) ? GetMessageJS('TASKS_COUNTER_TOTAL') : GetMessageJS('TASKS_COUNTER_TOTAL_EMPL'),
 		'not_viewed_0' => GetMessageJS('TASKS_COUNTER_NEW_PLURAL_0'),
 		'not_viewed_1' => GetMessageJS('TASKS_COUNTER_NEW_PLURAL_1'),
 		'not_viewed_2' => GetMessageJS('TASKS_COUNTER_NEW_PLURAL_2'),

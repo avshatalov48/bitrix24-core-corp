@@ -44,7 +44,7 @@ const Form = {
 						v-if="form.pager.iterable()"
 					></component>
 								
-					<div>		
+					<div v-if="!form.disabled">		
 						<component v-bind:is="'field'"
 							v-for="field in form.pager.current().fields"
 							v-bind:key="field.id"

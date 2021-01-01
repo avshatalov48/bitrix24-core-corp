@@ -1,5 +1,5 @@
 import {Dom} from 'main.core';
-import {EventEmitter} from 'main.core.events';
+import {EventEmitter, BaseEvent} from 'main.core.events';
 
 export class SidePanel extends EventEmitter
 {
@@ -18,16 +18,20 @@ export class SidePanel extends EventEmitter
 
 	bindEvents()
 	{
-		/* eslint-disable */
-		BX.addCustomEvent(window, 'SidePanel.Slider:onLoad', (event) => {
-			const sidePanel = event.getSlider();
+		EventEmitter.subscribe('SidePanel.Slider:onLoad', (event: BaseEvent) => {
+			const [sliderEvent] = event.getCompatData();
+			const sidePanel = sliderEvent.getSlider();
 			sidePanel.setCacheable(false);
 			this.emit('onLoadSidePanel', sidePanel);
 		});
-		BX.addCustomEvent(window, 'SidePanel.Slider:onClose', (event) => {
-			const sidePanel = event.getSlider();
+
+		EventEmitter.subscribe('SidePanel.Slider:onClose', (event: BaseEvent) => {
+			const [sliderEvent] = event.getCompatData();
+			const sidePanel = sliderEvent.getSlider();
 			this.emit('onCloseSidePanel', sidePanel);
 		});
+
+		/* eslint-disable */
 		BX.addCustomEvent(window, 'onAfterPopupShow', (popupWindow) => {
 			const topSlider = this.sidePanelManager.getTopSlider();
 			const topSidePanelZIndex = (topSlider ? topSlider.getZindex() : 1000);

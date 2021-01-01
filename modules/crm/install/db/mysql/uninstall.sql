@@ -73,6 +73,7 @@ DROP TABLE IF EXISTS b_crm_webform_field_preset;
 DROP TABLE IF EXISTS b_crm_webform_result;
 DROP TABLE IF EXISTS b_crm_webform_result_entity;
 DROP TABLE IF EXISTS b_crm_webform_queue;
+DROP TABLE IF EXISTS b_crm_webform_landing;
 DROP TABLE IF EXISTS b_crm_webpack;
 DROP TABLE IF EXISTS b_crm_ads_form_link;
 DROP TABLE IF EXISTS b_sale_pay_system_ac_bu;

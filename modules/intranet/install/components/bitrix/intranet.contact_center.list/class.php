@@ -198,7 +198,23 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 						'moduleId' => 'crm',
 						'itemCode' => $itemCode
 					);
-					$crmItem["LIST"] = $this->setMenuItemsClickAction($crmItem["LIST"], $itemParams);
+					$newEditorEnabled = class_exists('Bitrix\Crm\Settings\WebFormSettings') && Bitrix\Crm\Settings\WebFormSettings::getCurrent()->isNewEditorEnabled();
+					if (in_array($itemCode, ['form', 'call']) && $newEditorEnabled)
+					{
+						$crmItem["LIST"] = array_map(
+							function ($item)
+							{
+								$link = CUtil::JSEscape($item['LINK']);
+								$item['ONCLICK'] = "window.location='{$link}'";
+								return $item;
+							},
+							$crmItem["LIST"]
+						);
+					}
+					else
+					{
+						$crmItem["LIST"] = $this->setMenuItemsClickAction($crmItem["LIST"], $itemParams);
+					}
 
 					$this->jsParams["menu"][] = array(
 						"element" => "menu" . $itemCode,
@@ -251,7 +267,13 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 					'allowChangeHistory' => false
 				);
 
-				if(empty($item['CONNECTION_INFO_HELPER_LIMIT']))
+				$this->jsParams["menu"][] = array(
+					"element" => "menu" . $itemCode,
+					"bindElement" => "feed-add-post-form-link-text-" . $itemCode,
+					"items" => ($item["LIST"] ?: "")
+				);
+
+				if(!$item['CONNECTION_INFO_HELPER_LIMIT'])
 				{
 					$item['ONCLICK'] = $this->getOnclickScript($item['LINK'], $itemParams);
 				}
@@ -259,7 +281,6 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 				{
 					$item['ONCLICK'] = 'BX.UI.InfoHelper.show(\'' . $item['CONNECTION_INFO_HELPER_LIMIT'] . '\');';
 				}
-
 			}
 		}
 

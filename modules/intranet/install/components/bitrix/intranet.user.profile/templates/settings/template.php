@@ -85,6 +85,7 @@ use \Bitrix\Main\Web\Json;
 			<div class="ui-entity-section-control-error-block" style="max-height: 0px;"></div></div>
 		</div>
 	</form>
+	<div style="height: 65px;"></div>
 </div>
 
 <script>

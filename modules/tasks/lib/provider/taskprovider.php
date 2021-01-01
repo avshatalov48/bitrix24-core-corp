@@ -288,17 +288,6 @@ class TaskProvider
 
 	private function makeGroupBy(): self
 	{
-		if (
-			!$this->countMode
-			&&
-			(
-				isset($this->relatedJoins['FULL_SEARCH'])
-				|| isset($this->relatedJoins['COMMENT_SEARCH'])
-			)
-		)
-		{
-			$this->arGroup[] = "T.ID";
-		}
 		$this->strGroupBy = (!empty($this->arGroup)? 'GROUP BY ' . implode(',', $this->arGroup) : "");
 
 		return $this;
@@ -309,7 +298,7 @@ class TaskProvider
 		$this->arParams['ENABLE_LEGACY_ACCESS'] = false;
 		$this->arSqlSearch = \CTasks::GetFilter($this->arOptimizedFilter, '', $this->arParams);
 
-		if (!$this->bGetZombie)
+		if (!$this->bGetZombie && !$this->isJoinMembers())
 		{
 			$this->arSqlSearch[] = " T.ZOMBIE = 'N' ";
 		}
@@ -352,7 +341,18 @@ class TaskProvider
 
 	private function makeAccessSql(): self
 	{
-		if ($this->useAccessAsWhere && \CTasks::needAccessRestriction($this->arOptimizedFilter, $this->arParams))
+		if (!$this->useAccessAsWhere)
+		{
+			return $this;
+		}
+
+		if ($this->userId !== $this->executorId)
+		{
+			$this->buildAccessSql();
+			return $this;
+		}
+
+		if (\CTasks::needAccessRestriction($this->arOptimizedFilter, $this->arParams))
 		{
 			$buildAccessSql = true;
 			$this->arParams['APPLY_FILTER'] = \CTasks::makePossibleForwardedFilter($this->arOptimizedFilter);
@@ -395,16 +395,23 @@ class TaskProvider
 
 	private function buildAccessSql(): self
 	{
+		// admin can see all tasks
+		$ar = \CUser::GetUserGroup($this->executorId);
+		if (in_array(1, $ar))
+		{
+			return $this;
+		}
+
 		$this->joinTaskMembers();
 
 		$query = [];
 		$permissions = $this->getPermissions();
 
 		// user in tasks
-		$query[] = 'TMACCESS.USER_ID = '. $this->userId;
+		$query[] = 'TMACCESS.USER_ID = '. $this->executorId;
 
 		// user can view subordinate tasks
-		$subordinate = (UserModel::createFromId($this->userId))->getAllSubordinates();
+		$subordinate = (UserModel::createFromId($this->executorId))->getAllSubordinates();
 		if (!empty($subordinate))
 		{
 			$query[] = 'TMACCESS.user_id IN ('. implode(',', $subordinate) .')';
@@ -434,7 +441,7 @@ class TaskProvider
 		}
 
 		// user can view group tasks
-		$userGroups = Integration\SocialNetwork\Group::getIdsByAllowedAction('view_all', true, $this->userId);
+		$userGroups = Integration\SocialNetwork\Group::getIdsByAllowedAction('view_all', true, $this->executorId);
 		if (!empty($userGroups))
 		{
 			$query[] = '
@@ -718,7 +725,7 @@ class TaskProvider
 
 		if (!Integration\Forum::isInstalled())
 		{
-			$this->arSelect = array_diff($this->arSelect, ['COMMENTS_COUNT', 'FORUM_ID']);
+			$this->arSelect = array_diff($this->arSelect, ['COMMENTS_COUNT', 'FORUM_ID', 'SERVICE_COMMENTS_COUNT']);
 		}
 
 		if ($this->deleteMessageId)
@@ -850,6 +857,8 @@ class TaskProvider
 			"FORUM_TOPIC_ID" => "T.FORUM_TOPIC_ID",
 			"PARENT_ID" => "T.PARENT_ID",
 			"COMMENTS_COUNT" => "FT.POSTS",
+			"SERVICE_COMMENTS_COUNT" => "FT.POSTS_SERVICE",
+			"NEW_COMMENTS_COUNT" => "CASE WHEN TSC.VALUE IS NULL THEN 0 ELSE TSC.VALUE END",
 			"FORUM_ID" => "FT.FORUM_ID",
 			"MESSAGE_ID" => "MIN(TSIF.MESSAGE_ID)",
 			"SITE_ID" => "T.SITE_ID",
@@ -981,7 +990,8 @@ class TaskProvider
 		$this->setUserId();
 
 		if (
-			array_key_exists('NAV_PARAMS', $this->arParams)
+			is_array($this->arParams)
+			&& array_key_exists('NAV_PARAMS', $this->arParams)
 			&& is_array($this->arParams['NAV_PARAMS'])
 			&& array_key_exists('getPlusOne', $this->arParams['NAV_PARAMS'])
 		)
@@ -992,17 +1002,34 @@ class TaskProvider
 
 	private function setUserId(): void
 	{
+		$this->executorId = (int) User::getId();
 		if (
 			is_array($this->arParams)
 			&& array_key_exists('USER_ID', $this->arParams)
 			&& ($this->arParams['USER_ID'] > 0)
 		)
 		{
-			$this->userId = (int) $this->arParams['USER_ID'];
+			$this->executorId = (int) $this->arParams['USER_ID'];
 		}
-		else
+
+		$this->userId = $this->executorId;
+		if (
+			is_array($this->arParams)
+			&& array_key_exists('TARGET_USER_ID', $this->arParams)
+			&& ($this->arParams['TARGET_USER_ID'] > 0)
+		)
 		{
-			$this->userId = (int) User::getId();
+			$this->userId = (int) $this->arParams['TARGET_USER_ID'];
+		}
+
+		if ($this->userId && !$this->executorId)
+		{
+			$this->executorId = $this->userId;
+		}
+
+		if ($this->executorId && !$this->userId)
+		{
+			$this->userId = $this->executorId;
 		}
 	}
 

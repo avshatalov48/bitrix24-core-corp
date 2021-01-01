@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_BUTTON_SELECT"] = "Select";
 $MESS["CRM_CONTACT_EDIT_FIELD_BIRTHDATE"] = "Date of birth";
 $MESS["CRM_CONTACT_EDIT_FIELD_DATE_CREATE"] = "Created on";
@@ -25,7 +25,7 @@ $MESS["CRM_FIELD_COMPANY_ID_START_TEXT"] = "(Enter the company name)";
 $MESS["CRM_FIELD_CONTACT"] = "Contact";
 $MESS["CRM_FIELD_CONTACT_EVENT"] = "Contact's events";
 $MESS["CRM_FIELD_EMAIL"] = "E-mail";
-$MESS["CRM_FIELD_EXPORT"] = "Use when exporting contacts";
+$MESS["CRM_FIELD_EXPORT_NEW"] = "Included in export";
 $MESS["CRM_FIELD_FIND"] = "Search";
 $MESS["CRM_FIELD_HONORIFIC"] = "Salutation";
 $MESS["CRM_FIELD_ID"] = "ID";
@@ -49,4 +49,3 @@ $MESS["CRM_HONORIFIC_NOT_SELECTED"] = "Not selected";
 $MESS["CRM_MOBILE_MODULE_NOT_INSTALLED"] = "The \"Mobile\" module is not installed.";
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "The CRM module is not installed.";
 $MESS["CRM_PERMISSION_DENIED"] = "Access denied";
-?>

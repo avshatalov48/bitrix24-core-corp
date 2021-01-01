@@ -251,6 +251,65 @@ class DataCollection
 					]
 				]
 			],
+			'BR' => [
+				'name' => Loc::getMessage('LOCATION_REPO_FRMT_BR_NAME', null, $languageId),
+				'description' => Loc::getMessage('LOCATION_REPO_FRMT_BR_DESCR', null, $languageId),
+				'delimiter' => ', ',
+				'sort' => 600,
+				'template' => "{{#ADDRESS_LINE_1#}}{{, #ADDRESS_LINE_2#}}\n{{#SUB_LOCALITY_LEVEL_1# }}\n{{#LOCALITY# }} {{#ADM_LEVEL_2# - }} {{#ADM_LEVEL_1#}}\n{{#POSTAL_CODE#}}\n{{#COUNTRY#}}",
+				'code' => 'BR',
+				'fieldForUnRecognized' => FieldType::ADDRESS_LINE_2,
+				'fieldCollection' => [
+					[
+						'sort' => 800,
+						'type' => FieldType::ADDRESS_LINE_2,
+						'name' => Loc::getMessage('LOCATION_REPO_FRMT_ADDR_2', null, $languageId),
+						'description' => ''
+					],
+					[
+						'sort' => 700,
+						'type' => FieldType::ADDRESS_LINE_1,
+						'name' => Loc::getMessage('LOCATION_REPO_FRMT_ADDR_1', null, $languageId),
+						'description' => ''
+					],
+					[
+						'sort' => 600,
+						'type' => FieldType::LOCALITY,
+						'name' => Loc::getMessage('LOCATION_REPO_FRMT_LOCALITY', null, $languageId),
+						'description' => ''
+					],
+					[
+						'sort' => 500,
+						'type' => FieldType::SUB_LOCALITY_LEVEL_1,
+						'name' => Loc::getMessage('LOCATION_REPO_FRMT_SUB_LOCALITY_LEVEL_1_NEIGHBORHOOD', null, $languageId),
+						'description' => ''
+					],
+					[
+						'sort' => 400,
+						'type' => FieldType::ADM_LEVEL_2,
+						'name' => Loc::getMessage('LOCATION_REPO_FRMT_ADM_LEVEL_2_MUNICIPALITY', null, $languageId),
+						'description' => ''
+					],
+					[
+						'sort' => 300,
+						'type' => FieldType::ADM_LEVEL_1,
+						'name' => Loc::getMessage('LOCATION_REPO_FRMT_STATE', null, $languageId),
+						'description' =>''
+					],
+					[
+						'sort' => 200,
+						'type' => FieldType::POSTAL_CODE,
+						'name' => Loc::getMessage('LOCATION_REPO_FRMT_POSTAL_CODE', null, $languageId),
+						'description' => ''
+					],
+					[
+						'sort' => 100,
+						'type' => FieldType::COUNTRY,
+						'name' => Loc::getMessage('LOCATION_REPO_FRMT_COUNTRY', null, $languageId),
+						'description' => ''
+					],
+				]
+			],
 		];
 	}
 

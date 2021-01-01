@@ -129,6 +129,8 @@ class CounterService
 
 		foreach ($this->registry as $event)
 		{
+			/* @var $event CounterEvent */
+			$userId = $event->getUserId();
 			$taskId = $event->getTaskId();
 			$eventType = $event->getType();
 
@@ -160,8 +162,16 @@ class CounterService
 			/**
 			 * need to update comments counter
 			 */
+			if ($eventType === CounterDictionary::EVENT_AFTER_TASK_VIEW)
+			{
+				$counts = Counter::getInstance($userId)->getCommentsCount([$taskId]);
+				if (isset($counts[$taskId]) && $counts[$taskId] > 0)
+				{
+					$toUpdate[CounterDictionary::COUNTER_NEW_COMMENTS][] = $taskId;
+				}
+			}
+
 			if (in_array($eventType, [
-				CounterDictionary::EVENT_AFTER_TASK_VIEW,
 				CounterDictionary::EVENT_AFTER_COMMENT_ADD,
 				CounterDictionary::EVENT_AFTER_COMMENT_DELETE,
 				CounterDictionary::EVENT_AFTER_TASK_MUTE

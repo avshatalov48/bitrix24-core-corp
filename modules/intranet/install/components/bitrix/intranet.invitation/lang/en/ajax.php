@@ -15,3 +15,4 @@ $MESS["BX24_INVITE_DIALOG_SELF"] = "<b>Congratulations!</b><br><br>Quick registr
 $MESS["BX24_INVITE_DIALOG_SELF_SUCCESS"] = "Quick registration settings have been updated.";
 $MESS["BX24_INVITE_DIALOG_WARNING_CREATE_MAILBOX_ERROR"] = "Error creating new mailbox:";
 $MESS["BX24_INVITE_DIALOG_WARNING_MAILBOX_PASSWORD_CONFIRM"] = "Your password and confirmation password do not match";
+$MESS["INTRANET_INVITE_DIALOG_ERROR_LENGTH"] = "Maximum length of 50 characters exceeded";

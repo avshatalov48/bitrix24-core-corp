@@ -161,6 +161,7 @@ class CAllCrmMailTemplate
 		{
 			$options = array();
 		}
+		$ID = (int)$ID;
 
 		if (!self::CheckFields('UPDATE', $arFields, $ID))
 		{

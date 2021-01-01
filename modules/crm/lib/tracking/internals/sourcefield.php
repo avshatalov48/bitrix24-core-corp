@@ -133,6 +133,22 @@ class SourceFieldTable extends Main\ORM\Data\DataManager
 	}
 
 	/**
+	 * Get source fields defaults.
+	 *
+	 * @return array
+	 */
+	public static function getSourceFieldsDefaults()
+	{
+		$defaults = [];
+		foreach (static::getFieldCodes() as $code)
+		{
+			$defaults[$code] = [];
+		}
+
+		return $defaults;
+	}
+
+	/**
 	 * Get source fields.
 	 *
 	 * @return array
@@ -140,11 +156,7 @@ class SourceFieldTable extends Main\ORM\Data\DataManager
 	public static function getSourceFields()
 	{
 		$fields = [];
-		$defaults = [];
-		foreach (static::getFieldCodes() as $code)
-		{
-			$defaults[$code] = [];
-		}
+		$defaults = static::getSourceFieldsDefaults();
 
 		$list = static::getList([
 			'cache' => ['ttl' => 3600]

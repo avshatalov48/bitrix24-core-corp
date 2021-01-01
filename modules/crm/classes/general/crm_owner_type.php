@@ -34,8 +34,10 @@ class CCrmOwnerType
 	const InvoiceRecurring = 27;
 	const Scoring = 28;
 
+	const CheckCorrection = 29;
+
 	const FirstOwnerType = 1;
-	const LastOwnerType = 28;
+	const LastOwnerType = 29;
 
 	//Special quasi-types
 	const System = 1024;
@@ -57,6 +59,7 @@ class CCrmOwnerType
 	const InvoiceRecurringName = 'INVOICE_RECURRING';
 	const OrderName = 'ORDER';
 	const OrderCheckName = 'ORDER_CHECK';
+	const CheckCorrectionName = 'CHECK_CORRECTION';
 	const OrderShipmentName = 'ORDER_SHIPMENT';
 	const OrderPaymentName = 'ORDER_PAYMENT';
 

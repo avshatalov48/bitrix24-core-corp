@@ -5,10 +5,12 @@ import {PublicationQueue} from "./publicationqueue";
 import {PostMenu} from "./menu/postmenu";
 import {Post} from "./post";
 import {PinnedPanel} from "./pinned";
-import {Dom, Tag, Loc, Type, ajax, Runtime, Event} from "main.core";
+import {Dom, Tag, Loc, Type, ajax, Runtime} from "main.core";
+import {BaseEvent, EventEmitter} from "main.core.events";
 
 import "mobile.imageviewer";
 import {Utils} from "mobile.utils";
+import {Ajax} from 'mobile.ajax';
 
 class Feed
 {
@@ -34,7 +36,8 @@ class Feed
 			detailPost: 'post-wrap',
 			postItemTopWrap: 'post-item-top-wrap',
 			postItemTop: 'post-item-top',
-			postItemPostBlock: 'post-item-contentview',
+			postItemPostBlock: 'post-item-post-block',
+			postItemPostContentView: 'post-item-contentview',
 			postItemDescriptionBlock: 'post-item-description',
 			postItemAttachedFileWrap: 'post-item-attached-disk-file-wrap',
 			postItemInformWrap: 'post-item-inform-wrap',
@@ -65,13 +68,13 @@ class Feed
 		BXMobileApp.addCustomEvent('Livefeed.PinnedPanel::change', this.onPinnedPanelChange.bind(this));
 		BXMobileApp.addCustomEvent('Livefeed.PostDetail::pinChanged', this.onPostPinChanged.bind(this));
 
-		Event.EventEmitter.subscribe('BX.LazyLoad:ImageLoaded', this.onLazyLoadImageLoaded.bind(this));
+		EventEmitter.subscribe('BX.LazyLoad:ImageLoaded', this.onLazyLoadImageLoaded.bind(this));
+		EventEmitter.subscribe('MobilePlayer:onError', this.onMobilePlayerError);
 
 		document.addEventListener('DOMContentLoaded', () =>
 		{
 			document.addEventListener('click', this.handleClick.bind(this));
 		});
-
 	}
 
 	setPageId(value)
@@ -214,8 +217,7 @@ class Feed
 
 		const context = (Type.isStringFilled(params.context) ? params.context : '');
 		const groupId = (params.groupId ? params.groupId : '');
-
-		var selectedDestinations = {
+		const selectedDestinations = {
 			a_users: [],
 			b_groups: []
 		};
@@ -339,7 +341,6 @@ class Feed
 		}
 
 		const logId = (params.logId ? parseInt(params.logId) : 0);
-		const BMAjaxWrapper = new MobileAjaxWrapper;
 
 		if (
 			logId <= 0
@@ -352,7 +353,7 @@ class Feed
 			return;
 		}
 
-		BMAjaxWrapper.runComponentAction('bitrix:mobile.socialnetwork.log.ex', 'getEntryContent', {
+		Ajax.runComponentAction('bitrix:mobile.socialnetwork.log.ex', 'getEntryContent', {
 			mode: 'class',
 			signedParameters: this.getOption('signedParameters', {}),
 			data: {
@@ -361,14 +362,14 @@ class Feed
 					pinned: (!!params.pinned ? 'Y' : 'N'),
 					entityType: (Type.isStringFilled(params.entityType) ? params.entityType : ''),
 					entityId: (parseInt(params.entityId) > 0 ? parseInt(params.entityId) : 0),
-					siteTemplateId: BX.message('MOBILE_EXT_LIVEFEED_SITE_TEMPLATE_ID')
+					siteTemplateId: Loc.getMessage('MOBILE_EXT_LIVEFEED_SITE_TEMPLATE_ID')
 				}
 			}
 		}).then((response) =>
 		{
 			if (logId <= 0)
 			{
-				BMAjaxWrapper.runComponentAction('bitrix:mobile.socialnetwork.log.ex', 'getEntryLogId', {
+				Ajax.runComponentAction('bitrix:mobile.socialnetwork.log.ex', 'getEntryLogId', {
 					mode: 'class',
 					data: {
 						params: {
@@ -385,18 +386,21 @@ class Feed
 							content: response.data.html,
 							postId: params.postId,
 							queueKey: params.queueKey,
-							action: params.action
+							action: params.action,
+							serverTimestamp: parseInt(response.data.componentResult.serverTimestamp)
 						});
 					}
 				});
-			} else
+			}
+			else
 			{
 				this.insertPost({
 					logId: logId,
 					content: response.data.html,
 					postId: params.postId,
 					queueKey: params.queueKey,
-					action: params.action
+					action: params.action,
+					serverTimestamp: parseInt(response.data.componentResult.serverTimestamp)
 				});
 			}
 		});
@@ -478,7 +482,8 @@ class Feed
 				});
 				this.processDetailBlock(postContainer, contentWrapper, `.${this.class.postItemInformWrap}`);
 				this.processDetailBlock(postContainer, contentWrapper, `.${this.class.postItemInformWrapTree}`);
-			} else
+			}
+			else
 			{
 				postContainer = postContainer.querySelector(`div.${this.class.postItemTopWrap}`);
 
@@ -491,18 +496,37 @@ class Feed
 			}
 
 			contentWrapper.remove();
-		} else if (action === 'add')
+		}
+		else if (action === 'add')
 		{
 			this.setNewPostContainer(Tag.render`<div class="${this.class.postNewContainerTransformNew} ${this.class.postLazyLoadCheck}" ontransitionend="${this.handleInsertPostTransitionEnd.bind(this)}"></div>`);
 			Dom.prepend(this.getNewPostContainer(), containerNode);
 			Utils.htmlWithInlineJS(this.getNewPostContainer(), content).then(() =>
 			{
 				const postNode = this.getNewPostContainer().querySelector(`div.${this.class.listPost}`);
-				Dom.style(this.getNewPostContainer(), 'height', `${postNode.scrollHeight + 15/*margin-bottom*/}px`);
+				Dom.style(this.getNewPostContainer(), 'height', `${postNode.scrollHeight + 12/*margin-bottom*/}px`);
+
+				const serverTimestamp = (
+					typeof (params.serverTimestamp) != 'undefined'
+					&& parseInt(params.serverTimestamp) > 0
+						? parseInt(params.serverTimestamp)
+						: 0
+				);
+
+				if (serverTimestamp > 0)
+				{
+					this.setOptions({
+						frameCacheTs: serverTimestamp
+					});
+				}
+
+				this.updateFrameCache({
+					timestamp: serverTimestamp
+				});
 			});
 		}
 
-		PublicationQueueInstance.emit('onPostInserted', new Event.BaseEvent({
+		PublicationQueueInstance.emit('onPostInserted', new BaseEvent({
 			data: {
 				key: queueKey
 			}
@@ -591,11 +615,6 @@ class Feed
 		}
 	}
 
-	getPinnedPanelNode()
-	{
-		return document.querySelector('[data-livefeed-pinned-panel]');
-	}
-
 	onPinnedPanelChange(params)
 	{
 		const logId = (params.logId ? parseInt(params.logId) : 0);
@@ -605,13 +624,11 @@ class Feed
 		if (
 			!logId
 			|| !value
-			|| !this.getPinnedPanelNode()
+			|| !PinnedPanelInstance.getPinnedPanelNode()
 		)
 		{
 			return;
 		}
-
-		const pinnedPanel = new PinnedPanel({});
 
 		let postNode = (Type.isDomNode(params.postNode) ? params.postNode: null);
 		if (!Type.isDomNode(params.postNode)) // from detail in list
@@ -626,33 +643,33 @@ class Feed
 
 		if (value === 'N')
 		{
-			pinnedPanel.extractEntry({
+			PinnedPanelInstance.extractEntry({
+				logId: logId,
 				postNode: postNode,
 				containerNode: document.getElementById(this.nodeId.feedContainer)
 			});
 		}
 		else if (value === 'Y')
 		{
-			if (pinActionContext === 'list')
+			if (Type.isDomNode(params.postNode))
 			{
-				app.showPopupLoader({text: ""});
-			}
+				app.showPopupLoader({text:""});
 
-			pinnedPanel.getPinnedData({
-				logId: logId
-			}).then((pinnedData) =>
-			{
-				app.hidePopupLoader();
-				pinnedPanel.insertEntry({
-					logId: logId,
-					postNode: postNode,
-					pinnedPanelNode: this.getPinnedPanelNode(),
-					pinnedContent: pinnedData
-				});
-			}, (response) =>
-			{
-				app.hidePopupLoader();
-			})
+				PinnedPanelInstance.getPinnedData({
+					logId: logId
+				}).then((pinnedData) => {
+					app.hidePopupLoader();
+
+					PinnedPanelInstance.insertEntry({
+						logId: logId,
+						postNode: params.postNode,
+						pinnedContent: pinnedData
+					});
+
+				}, (response) => {
+					app.hidePopupLoader();
+				})
+			}
 		}
 	}
 
@@ -754,11 +771,10 @@ class Feed
 				|| e.target.closest(`.${this.class.postItemPinnedBlock}`)
 			);
 			const detailFromNormal = !!(!detailFromPinned && (
-				e.target.classList.contains(this.class.postItemPostBlock)
-				|| e.target.closest(`.${this.class.postItemPostBlock}`)
+				e.target.classList.contains(this.class.postItemPostContentView)
+				|| e.target.closest(`.${this.class.postItemPostContentView}`)
 				|| e.target.classList.contains(this.class.postItemDescriptionBlock) // tasks
 				|| e.target.closest(`.${this.class.postItemDescriptionBlock}`)
-
 			));
 			const detailToComments = !!(!detailFromPinned && !detailFromNormal && (
 				e.target.classList.contains(this.class.postItemInformComments)
@@ -873,6 +889,134 @@ class Feed
 
 		return result;
 	}
+
+	updateFrameCache(params)
+	{
+		let contentNode = document.getElementById('framecache-block-feed');
+		if (!Type.isDomNode(contentNode))
+		{
+			contentNode = document.getElementById('bxdynamic_feed_refresh');
+		}
+		if (!Type.isDomNode(contentNode))
+		{
+			return;
+		}
+
+		const props = {
+			USE_BROWSER_STORAGE: true,
+			AUTO_UPDATE: true,
+			USE_ANIMATION: false
+		};
+
+		const timestamp = (typeof params.timestamp != 'undefined' ? parseInt(params.timestamp) : 0);
+		if (timestamp > 0)
+		{
+			props.TS = timestamp;
+		}
+
+		BX.frameCache.writeCacheWithID(
+			'framecache-block-feed',
+			contentNode.innerHTML,
+			parseInt(Math.random() * 100000),
+			JSON.stringify(props)
+		);
+	}
+
+	onMobilePlayerError(event)
+	{
+		const [player, src] = event.getData();
+
+		if (!Type.isDomNode(player))
+		{
+			return;
+		}
+
+		if (!Type.isStringFilled(src))
+		{
+			return;
+		}
+
+		const container = player.parentNode;
+		if (container)
+		{
+			if (container.querySelector('.disk-mobile-player-error-container'))
+			{
+				return;
+			}
+		}
+		else
+		{
+			if (player.querySelector('.disk-mobile-player-error-container'))
+			{
+				return;
+			}
+		}
+
+		const sources = player.getElementsByTagName('source');
+		let sourcesLeft = sources.length;
+
+		Array.from(sources).forEach((source) => {
+			if (
+				Type.isStringFilled(source.src)
+				&& source.src === src
+			)
+			{
+				Dom.remove(source);
+				sourcesLeft--;
+			}
+		});
+
+		if (sourcesLeft > 0)
+		{
+			return;
+		}
+
+		const errorContainer = Dom.create('div', {
+			props: {
+				className: 'disk-mobile-player-error-container'
+			},
+			children: [
+				Dom.create('div', {
+					props: {
+						className: 'disk-mobile-player-error-icon'
+					},
+					html: ''
+				}),
+				Dom.create('div', {
+					props: {
+						className: 'disk-mobile-player-error-message'
+					},
+					html: Loc.getMessage('MOBILE_EXT_LIVEFEED_PLAYER_ERROR_MESSAGE')
+				})
+			]
+		});
+
+		const downloadLink = errorContainer.querySelector('.disk-mobile-player-download');
+		if (downloadLink)
+		{
+			Dom.adjust(downloadLink, {
+				events: {
+					click: () => {
+						app.openDocument({
+							url: src
+						});
+					}
+				}
+			});
+		}
+
+		if (container)
+		{
+			player.style.display = 'none';
+			container.appendChild(errorContainer);
+		}
+		else
+		{
+			Dom.adjust(player, {
+				children: [ errorContainer ]
+			});
+		}
+	}
 }
 
 const Instance = new Feed();
@@ -881,6 +1025,7 @@ const NotificationBarInstance = new NotificationBar();
 const DatabaseUnsentPostInstance = new Database();
 const PublicationQueueInstance = new PublicationQueue();
 const PostMenuInstance = new PostMenu();
+const PinnedPanelInstance = new PinnedPanel();
 
 export {
 	Instance,
@@ -888,5 +1033,6 @@ export {
 	NotificationBarInstance,
 	DatabaseUnsentPostInstance,
 	PublicationQueueInstance,
-	PostMenuInstance
+	PostMenuInstance,
+	PinnedPanelInstance
 };

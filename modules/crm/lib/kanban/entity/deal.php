@@ -4,12 +4,16 @@ namespace Bitrix\Crm\Kanban\Entity;
 
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Category\DealCategoryChangeError;
+use Bitrix\Crm\Integration\Socialnetwork\Livefeed\CrmDeal;
 use Bitrix\Crm\Recurring;
 use Bitrix\Crm\Kanban\Entity;
+use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Crm\Filter;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
+use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\Main\Type\Date;
 
 class Deal extends Entity
 {
@@ -35,12 +39,17 @@ class Deal extends Entity
 
 	protected function getFilter(): Filter\Filter
 	{
-		return Filter\Factory::createEntityFilter(
-			new Filter\DealSettings([
-				'ID' => $this->getGridId(),
-				'categoryID' => $this->getCategoryId(),
-			])
-		);
+		if(!$this->filter)
+		{
+			$this->filter = Filter\Factory::createEntityFilter(
+				new Filter\DealSettings([
+					'ID' => $this->getGridId(),
+					'categoryID' => $this->getCategoryId(),
+				])
+			);
+		}
+
+		return $this->filter;
 	}
 
 	public function getFilterPresets(): array
@@ -279,5 +288,14 @@ class Deal extends Entity
 			'GET_LIST' => $path . '&action=list',
 			'GET_FIELD' => $path . '&action=field'
 		];
+	}
+
+	/**
+	 * @param array $data
+	 * @return string
+	 */
+	protected function getColumnId(array $data): string
+	{
+		return $data['STAGE_ID'];
 	}
 }

@@ -25,6 +25,7 @@ export default {
 		initDeliveryServiceId: {required: false},
 		initRelatedServicesValues: {required: false},
 		initRelatedPropsValues: {required: false},
+		initRelatedPropsOptions: {required: false},
 		initResponsibleId: {default: null, required: false},
 		initEstimatedDeliveryPrice: {required: false},
 		initEnteredDeliveryPrice: {required: false},
@@ -352,14 +353,34 @@ export default {
 		},
 		getPropValue(relatedProp)
 		{
+			if (!this.relatedPropsValues)
+			{
+				return null;
+			}
 			return this.relatedPropsValues.hasOwnProperty(relatedProp.id) ? this.relatedPropsValues[relatedProp.id] : null;
+		},
+		getPropOptions(relatedProp)
+		{
+			if (!this.initRelatedPropsOptions)
+			{
+				return null;
+			}
+			return this.initRelatedPropsOptions.hasOwnProperty(relatedProp.id) ? this.initRelatedPropsOptions[relatedProp.id] : null;
 		},
 		getServiceValue(relatedService)
 		{
+			if (!this.relatedServicesValues)
+			{
+				return null;
+			}
 			return this.relatedServicesValues.hasOwnProperty(relatedService.id) ? this.relatedServicesValues[relatedService.id] : null;
 		},
 		getCustomServiceValue(customService)
 		{
+			if (!this.relatedServicesValues)
+			{
+				return null;
+			}
 			return this.relatedServicesValues.hasOwnProperty(customService.service.id) ? this.relatedServicesValues[customService.service.id] : null;
 		},
 		onAddMoreClicked()
@@ -688,6 +709,7 @@ export default {
 							:name="'PROPS_' + relatedProp.id"							
 							:initValue="getPropValue(relatedProp)"
 							:editable="editable"
+							:options="getPropOptions(relatedProp)"
 							@change="onPropValueChanged($event, relatedProp)"
 						></component>
 					</div>
@@ -709,6 +731,7 @@ export default {
 							:editable="editable"
 							:initValue="getPropValue(relatedProp)"
 							:settings="relatedProp.settings"
+							:options="getPropOptions(relatedProp)"
 							@change="onPropValueChanged($event, relatedProp)"
 						></component>
 					</div>
@@ -728,7 +751,9 @@ export default {
 			<div v-show="!selectedNoDelivery">
 				<template v-if="calculateErrors">
 					<div v-for="(error, index) in calculateErrors" class="ui-alert ui-alert-danger ui-alert-icon-danger salescenter-delivery-errors-container-alert">
-						<span  class="ui-alert-message">{{error}}</span>
+						<span  class="ui-alert-message">
+							<span v-html="error"></span>
+						</span>
 					</div>
 				</template>
 				<div class="salescenter-delivery-bottom">

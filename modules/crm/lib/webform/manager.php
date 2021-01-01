@@ -9,6 +9,7 @@ namespace Bitrix\Crm\WebForm;
 
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
+use Bitrix\Crm;
 
 class Manager
 {
@@ -61,11 +62,15 @@ class Manager
 	 * Get path to crm-form edit page.
 	 *
 	 * @param integer $formId Form Id.
+	 * @param bool $landingOnly Get link in landing editor.
 	 * @return string
 	 */
-	public static function getEditUrl($formId = 0)
+	public static function getEditUrl($formId = 0, $landingOnly = false)
 	{
-		return str_replace('#id#', $formId, Option::get('crm', 'path_to_webform_edit', '/crm/webform/edit/#id#/'));
+		return ($formId && ($landingOnly || Crm\Settings\WebFormSettings::getCurrent()->isNewEditorEnabled()))
+			? Internals\LandingTable::getLandingEditUrl($formId)
+			: str_replace('#id#', $formId, Option::get('crm', 'path_to_webform_edit', '/crm/webform/edit/#id#/'))
+		;
 	}
 
 	/**
@@ -128,28 +133,61 @@ class Manager
 
 	public static function isEmbeddingEnabled($formId)
 	{
-		if (!self::isEmbeddingAvailable())
-		{
-			return false;
-		}
-
-		static $lastResult = [];
-		if (!isset($lastResult[$formId]))
-		{
-			$form = new Form($formId);
-			$lastResult[$formId] = $form->isEmbeddingEnabled() && $form->isEmbeddingAvailable();
-		}
-
-		return $lastResult[$formId];
+		return !!$formId;
 	}
 
 	public static function isEmbeddingAvailable()
 	{
-		return Option::get('crm', '~webfrom_embedding_available', 'N') === 'Y';
+		return true;
 	}
 
 	public static function isOrdersAvailable()
 	{
-		return Option::get('crm', '~webform_add_orders', 'N') === 'Y' && Loader::includeModule('salescenter');
+		return Loader::includeModule('salescenter');
+	}
+
+	public static function updateScriptCache($fromFormId = null)
+	{
+		$filter = [];
+		if ($fromFormId)
+		{
+			$filter['>=ID'] = $fromFormId;
+		}
+		$forms = Internals\FormTable::getList([
+			'select' => ['ID'],
+			'filter' => $filter,
+			'order' => ['ID' => 'ASC']
+		]);
+		foreach ($forms as $item)
+		{
+			$form = new Form();
+			$form->loadOnlyForm($item['ID']);
+			if (!$form->buildScript())
+			{
+				return $form->getId();
+			}
+		}
+
+		return null;
+	}
+
+	public static function updateScriptCacheAgent($fromFormId = null)
+	{
+		/*@var $USER CUser*/
+		global $USER;
+		if (!is_object($USER))
+		{
+			$USER = new \CUser();
+		}
+
+		$resultId = self::updateScriptCache($fromFormId);
+		if ($resultId)
+		{
+			return '\\Bitrix\\Crm\\WebForm\\Manager::updateScriptCacheAgent(' . $resultId . ');';
+		}
+		else
+		{
+			return '';
+		}
 	}
 }

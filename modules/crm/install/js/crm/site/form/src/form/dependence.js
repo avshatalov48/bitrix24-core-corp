@@ -28,6 +28,7 @@ class Manager
 {
 	#form: Controller;
 	#list: Array<Type.Dependence> = [];
+	#groups: Array<Type.DependenceGroup> = [];
 
 	constructor(form: Controller)
 	{
@@ -56,14 +57,24 @@ class Manager
 		this.trigger(data.field, event);
 	}
 
-	setDependencies(deps: Array<Type.Dependence> = [])
+	setDependencies(depGroups: Array<Type.DependenceGroup> = [])
 	{
 		this.#list = [];
-		deps.forEach(dep => this.addDependence(dep));
+		this.#groups = depGroups.filter(depGroup => {
+			return Array.isArray(depGroup.list) && depGroup.list.length > 0;
+		}).map(depGroup => {
+			const group = {
+				logic: depGroup.logic || 'or',
+				list: [],
+			};
+			depGroup.list.forEach(dep => this.addDependence(dep, group));
+			return group;
+		}).filter(group => group.list.length > 0);
+
 		this.#form.getFields().forEach(field => this.trigger(field, ConditionEvents.change));
 	}
 
-	addDependence(dep: Type.Dependence)
+	addDependence(dep: Type.Dependence, group: Type.DependenceGroup)
 	{
 		if (typeof dep !== 'object' || typeof dep.condition !== 'object' || typeof dep.action !== 'object')
 		{
@@ -99,27 +110,62 @@ class Manager
 		};
 
 		this.#list.push(item);
+		if (group)
+		{
+			group.list.push(item);
+			item.group = group;
+		}
+
+		return item;
 	}
 
 	trigger(field: BaseField, event: string)
 	{
-		this.#list.forEach(dep => {
+		this.#list.filter(dep => {
+
 			// 1. check event
 			if (dep.condition.event !== event)
 			{
-				return;
+				return false;
 			}
 
 			// 2. check target
 			if (dep.condition.target !== field.name)
 			{
-				return;
+				return false;
+			}
+
+			// 3. check group
+
+			return true;
+
+		}).forEach(dep => {
+
+			let list;
+			if (dep.group && dep.group.logic === 'and')
+			{
+				list = dep.group.list.map(dep => {
+					let field = this.#form.getFields().filter(field => dep.condition.target === field.name)[0];
+					return {dep, field};
+				});
+			}
+			else
+			{
+				list = [{dep, field}];
 			}
 
 			// 3.check value&operation
-			const isOpposite = field.values()
-				.filter(value => this.compare(value, dep.condition.value, dep.condition.operation))
-				.length === 0;
+			const isOpposite = list.some(({dep, field}) => {
+				let values = field.values();
+				if (values.length === 0)
+				{
+					values.push('');
+				}
+				return values
+					.filter(value => this.compare(value, dep.condition.value, dep.condition.operation))
+					.length === 0;
+			});
+
 
 			// 4. run action
 			this.#form.getFields().forEach(field => {
@@ -163,6 +209,9 @@ class Manager
 
 	compare(a: string, b: string, operation: string)
 	{
+		a = a === null ? '' : a;
+		b = b === null ? '' : b;
+
 		switch(operation)
 		{
 			case Operations.greater:

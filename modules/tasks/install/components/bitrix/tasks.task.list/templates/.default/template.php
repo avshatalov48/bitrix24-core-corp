@@ -121,7 +121,7 @@ $APPLICATION->IncludeComponent(
 	[
 		'PAGE_NUM' => $arResult['CURRENT_PAGE'],
 		'ENABLE_NEXT_PAGE' => $arResult['ENABLE_NEXT_PAGE'],
-		'URL' => $APPLICATION->GetCurPage()
+		'URL' => $APPLICATION->GetCurPage() . '?F_STATE=sV80'
 	],
 	$component,
 	array('HIDE_ICONS' => 'Y')
@@ -214,8 +214,8 @@ $APPLICATION->IncludeComponent(
 			BX.Tasks.GridActions.gridId = '<?=$arParams['GRID_ID']?>';
 			BX.Tasks.GridActions.defaultPresetId = '<?=$arResult['DEFAULT_PRESET_KEY']?>';
 			BX.message({
-				TASKS_CONFIRM_GROUP_ACTION: '<?=GetMessage('TASKS_CONFIRM_GROUP_ACTION')?>',
-				TASKS_DELETE_SUCCESS: '<?=GetMessage('TASKS_DELETE_SUCCESS')?>',
+				TASKS_CONFIRM_GROUP_ACTION: '<?=GetMessageJS('TASKS_CONFIRM_GROUP_ACTION')?>',
+				TASKS_DELETE_SUCCESS: '<?=GetMessageJS('TASKS_DELETE_SUCCESS')?>',
 
 				TASKS_MARK: '<?=GetMessageJS('TASKS_JS_MARK')?>',
 				TASKS_MARK_NONE: '<?=GetMessageJS('TASKS_JS_MARK_NONE')?>',

@@ -3,6 +3,8 @@ this.BX.Location = this.BX.Location || {};
 (function (exports,main_core,location_core,main_core_events) {
 	'use strict';
 
+	var _type = new WeakMap();
+
 	var Field = /*#__PURE__*/function () {
 	  function Field(props) {
 	    babelHelpers.classCallCheck(this, Field);
@@ -28,13 +30,13 @@ this.BX.Location = this.BX.Location || {};
 	  return Field;
 	}();
 
-	var _type = new WeakMap();
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
-	function _createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = _unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
-
-	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
 	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+	var _fields = new WeakMap();
 
 	var FieldCollection = /*#__PURE__*/function () {
 	  function FieldCollection() {
@@ -119,7 +121,7 @@ this.BX.Location = this.BX.Location || {};
 	  return FieldCollection;
 	}();
 
-	var _fields = new WeakMap();
+	var _value = new WeakMap();
 
 	var AddressField = /*#__PURE__*/function (_Field) {
 	  babelHelpers.inherits(AddressField, _Field);
@@ -152,8 +154,6 @@ this.BX.Location = this.BX.Location || {};
 	  }]);
 	  return AddressField;
 	}(Field);
-
-	var _value = new WeakMap();
 
 	var AddressFieldCollection = /*#__PURE__*/function (_FieldCollection) {
 	  babelHelpers.inherits(AddressFieldCollection, _FieldCollection);
@@ -191,6 +191,10 @@ this.BX.Location = this.BX.Location || {};
 	  return AddressFieldCollection;
 	}(FieldCollection);
 
+	var _entityId = new WeakMap();
+
+	var _entityType = new WeakMap();
+
 	var AddressLink = /*#__PURE__*/function () {
 	  function AddressLink(props) {
 	    babelHelpers.classCallCheck(this, AddressLink);
@@ -223,15 +227,13 @@ this.BX.Location = this.BX.Location || {};
 	  return AddressLink;
 	}();
 
-	var _entityId = new WeakMap();
+	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
-	var _entityType = new WeakMap();
-
-	function _createForOfIteratorHelper$1(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = _unsupportedIterableToArray$1(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
-
-	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
+	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
 
 	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+	var _links = new WeakMap();
 
 	var AddressLinkCollection = /*#__PURE__*/function () {
 	  function AddressLinkCollection() {
@@ -288,7 +290,11 @@ this.BX.Location = this.BX.Location || {};
 	  return AddressLinkCollection;
 	}();
 
-	var _links = new WeakMap();
+	var _sort = new WeakMap();
+
+	var _name = new WeakMap();
+
+	var _description = new WeakMap();
 
 	var FormatField = /*#__PURE__*/function (_Field) {
 	  babelHelpers.inherits(FormatField, _Field);
@@ -349,12 +355,6 @@ this.BX.Location = this.BX.Location || {};
 	  return FormatField;
 	}(Field);
 
-	var _sort = new WeakMap();
-
-	var _name = new WeakMap();
-
-	var _description = new WeakMap();
-
 	var FormatFieldCollection = /*#__PURE__*/function (_FieldCollection) {
 	  babelHelpers.inherits(FormatFieldCollection, _FieldCollection);
 
@@ -385,6 +385,22 @@ this.BX.Location = this.BX.Location || {};
 	/**
 	 * Class defines how the Address will look like
 	 */
+
+	var _code = new WeakMap();
+
+	var _name$1 = new WeakMap();
+
+	var _description$1 = new WeakMap();
+
+	var _languageId = new WeakMap();
+
+	var _template = new WeakMap();
+
+	var _fieldCollection = new WeakMap();
+
+	var _delimiter = new WeakMap();
+
+	var _fieldForUnRecognized = new WeakMap();
 
 	var Format$$1 = /*#__PURE__*/function () {
 	  function Format$$1(props) {
@@ -511,22 +527,6 @@ this.BX.Location = this.BX.Location || {};
 	  return Format$$1;
 	}();
 
-	var _code = new WeakMap();
-
-	var _name$1 = new WeakMap();
-
-	var _description$1 = new WeakMap();
-
-	var _languageId = new WeakMap();
-
-	var _template = new WeakMap();
-
-	var _fieldCollection = new WeakMap();
-
-	var _delimiter = new WeakMap();
-
-	var _fieldForUnRecognized = new WeakMap();
-
 	var LocationType = function LocationType() {
 	  babelHelpers.classCallCheck(this, LocationType);
 	};
@@ -564,9 +564,9 @@ this.BX.Location = this.BX.Location || {};
 	babelHelpers.defineProperty(AddressType, "RECIPIENT", 710);
 	babelHelpers.defineProperty(AddressType, "PO_BOX", 800);
 
-	function _createForOfIteratorHelper$2(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = _unsupportedIterableToArray$2(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper$2(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$2(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
-	function _unsupportedIterableToArray$2(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$2(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$2(o, minLen); }
+	function _unsupportedIterableToArray$2(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$2(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$2(o, minLen); }
 
 	function _arrayLikeToArray$2(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
@@ -821,11 +821,25 @@ this.BX.Location = this.BX.Location || {};
 	  return result;
 	};
 
-	function _createForOfIteratorHelper$3(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = _unsupportedIterableToArray$3(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper$3(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$3(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
-	function _unsupportedIterableToArray$3(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$3(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$3(o, minLen); }
+	function _unsupportedIterableToArray$3(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$3(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$3(o, minLen); }
 
 	function _arrayLikeToArray$3(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+	var _id = new WeakMap();
+
+	var _languageId$1 = new WeakMap();
+
+	var _latitude = new WeakMap();
+
+	var _longitude = new WeakMap();
+
+	var _fieldCollection$1 = new WeakMap();
+
+	var _links$1 = new WeakMap();
+
+	var _location = new WeakMap();
 
 	var Address = /*#__PURE__*/function () {
 	  /**
@@ -1118,19 +1132,7 @@ this.BX.Location = this.BX.Location || {};
 	  return Address;
 	}();
 
-	var _id = new WeakMap();
-
-	var _languageId$1 = new WeakMap();
-
-	var _latitude = new WeakMap();
-
-	var _longitude = new WeakMap();
-
-	var _fieldCollection$1 = new WeakMap();
-
-	var _links$1 = new WeakMap();
-
-	var _location = new WeakMap();
+	var _value$1 = new WeakMap();
 
 	var LocationField = /*#__PURE__*/function (_Field) {
 	  babelHelpers.inherits(LocationField, _Field);
@@ -1162,8 +1164,6 @@ this.BX.Location = this.BX.Location || {};
 	  }]);
 	  return LocationField;
 	}(Field);
-
-	var _value$1 = new WeakMap();
 
 	var LocationFieldCollection = /*#__PURE__*/function (_FieldCollection) {
 	  babelHelpers.inherits(LocationFieldCollection, _FieldCollection);
@@ -1286,6 +1286,28 @@ this.BX.Location = this.BX.Location || {};
 	  }]);
 	  return LocationJsonConverter;
 	}();
+
+	var _id$1 = new WeakMap();
+
+	var _code$1 = new WeakMap();
+
+	var _externalId = new WeakMap();
+
+	var _sourceCode = new WeakMap();
+
+	var _type$1 = new WeakMap();
+
+	var _name$2 = new WeakMap();
+
+	var _languageId$2 = new WeakMap();
+
+	var _latitude$1 = new WeakMap();
+
+	var _longitude$1 = new WeakMap();
+
+	var _address = new WeakMap();
+
+	var _fieldCollection$2 = new WeakMap();
 
 	var Location = /*#__PURE__*/function () {
 	  function Location() {
@@ -1503,27 +1525,7 @@ this.BX.Location = this.BX.Location || {};
 	  return Location;
 	}();
 
-	var _id$1 = new WeakMap();
-
-	var _code$1 = new WeakMap();
-
-	var _externalId = new WeakMap();
-
-	var _sourceCode = new WeakMap();
-
-	var _type$1 = new WeakMap();
-
-	var _name$2 = new WeakMap();
-
-	var _languageId$2 = new WeakMap();
-
-	var _latitude$1 = new WeakMap();
-
-	var _longitude$1 = new WeakMap();
-
-	var _address = new WeakMap();
-
-	var _fieldCollection$2 = new WeakMap();
+	var _path = new WeakMap();
 
 	var ActionRunner = /*#__PURE__*/function () {
 	  function ActionRunner(props) {
@@ -1556,13 +1558,13 @@ this.BX.Location = this.BX.Location || {};
 	  return ActionRunner;
 	}();
 
-	var _path = new WeakMap();
+	function _createForOfIteratorHelper$4(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$4(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
-	function _createForOfIteratorHelper$4(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = _unsupportedIterableToArray$4(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
-
-	function _unsupportedIterableToArray$4(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$4(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$4(o, minLen); }
+	function _unsupportedIterableToArray$4(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$4(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$4(o, minLen); }
 
 	function _arrayLikeToArray$4(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+	var _actionRunner = new WeakMap();
 
 	var BaseRepository = /*#__PURE__*/function () {
 	  function BaseRepository() {
@@ -1630,9 +1632,11 @@ this.BX.Location = this.BX.Location || {};
 	  return BaseRepository;
 	}();
 
-	var _actionRunner = new WeakMap();
-
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+
+	var _convertCollection = new WeakSet();
+
+	var _convertLocation = new WeakSet();
 
 	var LocationRepository = /*#__PURE__*/function (_BaseRepository) {
 	  babelHelpers.inherits(LocationRepository, _BaseRepository);
@@ -1691,10 +1695,6 @@ this.BX.Location = this.BX.Location || {};
 	  }]);
 	  return LocationRepository;
 	}(BaseRepository);
-
-	var _convertCollection = new WeakSet();
-
-	var _convertLocation = new WeakSet();
 
 	var _convertCollection2 = function _convertCollection2(collectionJsonData) {
 	  var _this2 = this;
@@ -1908,8 +1908,9 @@ this.BX.Location = this.BX.Location || {};
 	}(BaseRepository);
 
 	/**
-	 * Base class for AutocompleteServices
+	 * Base class for autocomplete source services
 	 */
+
 	var AutocompleteServiceBase = /*#__PURE__*/function () {
 	  function AutocompleteServiceBase() {
 	    babelHelpers.classCallCheck(this, AutocompleteServiceBase);
@@ -1918,7 +1919,7 @@ this.BX.Location = this.BX.Location || {};
 	  babelHelpers.createClass(AutocompleteServiceBase, [{
 	    key: "autocomplete",
 	    value: function autocomplete(text, params) {
-	      throw new Error('Must be implemented');
+	      throw new Error('Method autocomplete() Must be implemented');
 	    }
 	  }]);
 	  return AutocompleteServiceBase;
@@ -2026,6 +2027,10 @@ this.BX.Location = this.BX.Location || {};
 	  return SourceBase;
 	}();
 
+	/**
+	 * Base class for the source geocoding service
+	 */
+
 	var GeocodingServiceBase = /*#__PURE__*/function () {
 	  function GeocodingServiceBase() {
 	    babelHelpers.classCallCheck(this, GeocodingServiceBase);
@@ -2034,7 +2039,7 @@ this.BX.Location = this.BX.Location || {};
 	  babelHelpers.createClass(GeocodingServiceBase, [{
 	    key: "geocode",
 	    value: function geocode(addressString) {
-	      throw new Error('Must be implemented');
+	      throw new Error('Method geocode() must be implemented');
 	    }
 	  }]);
 	  return GeocodingServiceBase;
@@ -2159,6 +2164,53 @@ this.BX.Location = this.BX.Location || {};
 	  return Limit;
 	}();
 
+	var _latitude$2 = new WeakMap();
+
+	var _longitude$2 = new WeakMap();
+
+	/**
+	 * Base class for the working with latitude and longitude
+	 */
+	var Point = /*#__PURE__*/function () {
+	  /** {String} */
+
+	  /** {String} */
+	  function Point(latitude, longitude) {
+	    babelHelpers.classCallCheck(this, Point);
+
+	    _latitude$2.set(this, {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    _longitude$2.set(this, {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    babelHelpers.classPrivateFieldSet(this, _latitude$2, latitude);
+	    babelHelpers.classPrivateFieldSet(this, _longitude$2, longitude);
+	  }
+
+	  babelHelpers.createClass(Point, [{
+	    key: "toArray",
+	    value: function toArray() {
+	      return [this.latitude, this.longitude];
+	    }
+	  }, {
+	    key: "latitude",
+	    get: function get() {
+	      return babelHelpers.classPrivateFieldGet(this, _latitude$2);
+	    }
+	  }, {
+	    key: "longitude",
+	    get: function get() {
+	      return babelHelpers.classPrivateFieldGet(this, _longitude$2);
+	    }
+	  }]);
+	  return Point;
+	}();
+
 	exports.Location = Location;
 	exports.Address = Address;
 	exports.Format = Format$$1;
@@ -2180,6 +2232,7 @@ this.BX.Location = this.BX.Location || {};
 	exports.MethodNotImplemented = MethodNotImplemented;
 	exports.ErrorPublisher = ErrorPublisher;
 	exports.Limit = Limit;
+	exports.Point = Point;
 
 }((this.BX.Location.Core = this.BX.Location.Core || {}),BX,BX.Location.Core,BX.Event));
 //# sourceMappingURL=core.bundle.js.map

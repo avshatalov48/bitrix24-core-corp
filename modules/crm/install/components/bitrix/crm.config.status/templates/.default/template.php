@@ -306,6 +306,9 @@ else
 								<input type="hidden" name="LIST[<?=$entityId?>][<?=$finalFields[$entityId]['SUCCESSFUL']['ID']?>][STATUS_ID]"
 									   id="stage-status-id-<?=$finalFields[$entityId]['SUCCESSFUL']['ID']?>" data-status-id="1"
 									   value="<?=htmlspecialcharsbx($finalFields[$entityId]['SUCCESSFUL']['STATUS_ID'])?>">
+                                <input type="hidden" name="LIST[<?=$entityId?>][<?=$finalFields[$entityId]['SUCCESSFUL']['ID']?>][SEMANTICS]"
+                                       id="stage-semantics-<?=$finalFields[$entityId]['SUCCESSFUL']['ID']?>"
+                                       value="<?=htmlspecialcharsbx($finalFields[$entityId]['SUCCESSFUL']['SEMANTICS'])?>">
 							</div>
 						</div>
 					</div>

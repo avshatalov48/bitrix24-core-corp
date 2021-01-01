@@ -491,6 +491,7 @@ class ResultEntity
 			if($isNeedAddProducts && ($isLeadOrQuoteOrDeal || $isEntityInvoice))
 			{
 				$entityFields["CURRENCY_ID"] = $this->currencyId;
+				$entityFields["OPPORTUNITY"] = $this->getProductRowsSum();
 			}
 
 			if($isNeedAddProducts && $isEntityInvoice)
@@ -571,8 +572,8 @@ class ResultEntity
 
 			if (
 				!$isEntityAdded
-				&& $this->duplicateMode === self::DUPLICATE_CONTROL_MODE_REPLACE
-				&& $entityName === \CCrmOwnerType::LeadName
+				&& in_array($this->duplicateMode, [self::DUPLICATE_CONTROL_MODE_REPLACE, self::DUPLICATE_CONTROL_MODE_MERGE])
+				&& in_array($entityName, [\CCrmOwnerType::LeadName, \CCrmOwnerType::DealName])
 			)
 			{
 				$previousFields = $entityClassName::GetByID($id, false);

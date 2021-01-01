@@ -1,5 +1,5 @@
 ;(function () {
-	
+
 "use strict";
 
 var namespace = BX.namespace('BX.Intranet.UserProfile');
@@ -13,8 +13,11 @@ namespace.EntityEditor = function(params) {
 
 namespace.EntityEditor.prototype =
 {
-	init: function(params)
+	init: function(options)
 	{
+		var params = options.params;
+		this.managerInstance = options.managerInstance;
+
 		this.signedParameters = params.signedParameters;
 		this.componentName = params.componentName;
 		this.initialFields = params.initialFields || {};
@@ -102,7 +105,8 @@ namespace.EntityEditor.prototype =
 
 			if (personalMobile && this.initialFields["PERSONAL_MOBILE"] != personalMobile)
 			{
-				this.showSmsPopup(personalMobile);
+				this.managerInstance.showSmsPopup(personalMobile);
+				this.managerInstance.personalMobile = personalMobile;
 			}
 		}
 
@@ -153,78 +157,6 @@ namespace.EntityEditor.prototype =
 		{
 			BX.SidePanel.Instance.updateBrowserTitle();
 		}
-	},
-
-	showSmsPopup: function (personalMobile)
-	{
-		BX.PopupWindowManager.create({
-			id: "intranet-user-profile-sms-popup",
-			className: "intranet-user-profile-popup",
-			titleBar: BX.message("INTRANET_USER_PROFILE_APP_INSTALL"),
-			maxWidth: 450,
-			contentColor: "white",
-			content:
-				BX.create("div", {
-					children: [
-						BX.create("div", {
-							props: {
-								className: "intranet-user-profile-popup-title"
-							},
-							html: BX.message("INTRANET_USER_PROFILE_APP_PHONE")
-						}),
-						BX.create('div', {
-							props: {
-								className: 'ui-ctl ui-ctl-textbox ui-ctl-wa'
-							},
-							children: [
-								BX.create('input', {
-									props: {
-										value: personalMobile,
-										className: 'ui-ctl-element',
-										type: "text"
-									}
-								})
-							]
-						}),
-						BX.create("div", {
-							props: {
-								className: "intranet-user-profile-popup-text"
-							},
-							html: BX.message("INTRANET_USER_PROFILE_APP_INSTALL_TEXT")
-						})
-					]
-				}),
-			closeIcon : true,
-			contentPadding: 10,
-			buttons: [
-				new BX.UI.CreateButton({
-					text: BX.message("INTRANET_USER_PROFILE_APP_SEND"),
-					className: "ui-btn-primary",
-					events: {
-						click: BX.proxy(function (button) {
-							button.setWaiting();
-							var popup = button.context;
-
-							BX.ajax.runAction('intranet.controller.sms.sendsmsforapp', {
-								data: {
-									phone: personalMobile
-								}
-							}).then(function (response) {
-								popup.close();
-							}.bind(this), function (response) {
-								popup.close();
-							}.bind(this));
-						}, this)
-					}
-				})
-			],
-			events : {
-				onPopupClose: function ()
-				{
-					this.destroy();
-				}
-			}
-		}).show();
 	},
 
 	showFieldsSettings: function ()

@@ -41,7 +41,7 @@ class TimeLineTable// *Table for unity structure
 		{
 			return self::$dateClient;
 		}
-		return date(self::getDatePhpFormat(FORMAT_DATE));
+		return date(self::getDatePhpFormat(FORMAT_DATE), (time() + \CTimeZone::GetOffset()));
 	}
 
 	/**
@@ -67,7 +67,7 @@ class TimeLineTable// *Table for unity structure
 		{
 			return self::$timeClient;
 		}
-		return date(self::getDatePhpFormat(FORMAT_DATETIME));
+		return date(self::getDatePhpFormat(FORMAT_DATETIME), (time() + \CTimeZone::GetOffset()));
 	}
 
 	/**

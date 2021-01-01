@@ -129,6 +129,7 @@ $this->arResult["LICENSE_PREFIX"] = "";
 if (Loader::includeModule("bitrix24"))
 {
 	$this->arResult["LICENSE_PREFIX"] = \CBitrix24::getLicensePrefix();
+	$this->arResult["HOST_NAME"] = defined('BX24_HOST_NAME') ? BX24_HOST_NAME : SITE_SERVER_NAME;
 }
 
 if (

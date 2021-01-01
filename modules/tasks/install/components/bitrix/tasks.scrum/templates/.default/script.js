@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,ui_entitySelector,ui_confetti,main_loader,main_popup,ui_draganddrop_draggable,ui_label,main_core_events,ui_dialogs_messagebox,main_core) {
+(function (exports,ui_entitySelector,ui_confetti,main_loader,main_popup,ui_draganddrop_draggable,ui_label,ui_dialogs_messagebox,main_core_events,main_core) {
 	'use strict';
 
 	var RequestSender = /*#__PURE__*/function () {
@@ -211,6 +211,36 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "getSprintCompleteButtons",
 	    value: function getSprintCompleteButtons(data) {
 	      return this.sendRequest(data, 'getSprintCompleteButtons');
+	    }
+	  }, {
+	    key: "getBurnDownChartData",
+	    value: function getBurnDownChartData(data) {
+	      return this.sendRequest(data, 'getBurnDownChartData');
+	    }
+	  }, {
+	    key: "getTeamSpeedChartData",
+	    value: function getTeamSpeedChartData(data) {
+	      return this.sendRequest(data, 'getTeamSpeedChartData');
+	    }
+	  }, {
+	    key: "getDodPanelData",
+	    value: function getDodPanelData(data) {
+	      return this.sendRequest(data, 'getDodPanelData');
+	    }
+	  }, {
+	    key: "getDodComponent",
+	    value: function getDodComponent(data) {
+	      return this.sendRequest(data, 'getDodComponent');
+	    }
+	  }, {
+	    key: "getDodButtons",
+	    value: function getDodButtons(data) {
+	      return this.sendRequest(data, 'getDodButtons');
+	    }
+	  }, {
+	    key: "saveDod",
+	    value: function saveDod(data) {
+	      return this.sendRequest(data, 'saveDod');
 	    }
 	  }, {
 	    key: "showErrorAlert",
@@ -2341,6 +2371,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function getElement() {
 	      return this.element;
 	    }
+	  }, {
+	    key: "setEntityId",
+	    value: function setEntityId(entityId) {
+	      this.element.dataset.entityId = parseInt(entityId, 10);
+	    }
 	  }]);
 	  return ListItems;
 	}();
@@ -2356,6 +2391,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Entity).call(this, entityData));
 	    _this.id = main_core.Type.isInteger(entityData.id) ? parseInt(entityData.id, 10) : 0;
 	    _this.views = entityData.views;
+	    _this.numberTasks = main_core.Type.isInteger(entityData.numberTasks) ? parseInt(entityData.numberTasks, 10) : 0;
 	    _this.items = new Map();
 	    _this.groupMode = false;
 	    _this.groupModeItems = new Map();
@@ -2388,6 +2424,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "getId",
 	    value: function getId() {
 	      return this.id;
+	    }
+	  }, {
+	    key: "setId",
+	    value: function setId(id) {
+	      this.id = main_core.Type.isInteger(id) ? parseInt(id, 10) : 0;
+
+	      if (this.listItems) {
+	        this.listItems.setEntityId(this.id);
+	      }
 	    }
 	  }, {
 	    key: "getEntityType",
@@ -2429,6 +2474,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      babelHelpers.toConsumableArray(this.items.values()).map(function (item) {
 	        _this2.setItemMoveActivity(item);
 	      });
+	      this.addNumberTasks(1);
 	    }
 	  }, {
 	    key: "setItemMoveActivity",
@@ -2446,6 +2492,31 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        babelHelpers.toConsumableArray(this.items.values()).map(function (item) {
 	          _this3.setItemMoveActivity(item);
 	        });
+	        this.subtractNumberTasks(1);
+	      }
+	    }
+	  }, {
+	    key: "getNumberTasks",
+	    value: function getNumberTasks() {
+	      return this.numberTasks ? this.numberTasks : this.getItems().size;
+	    }
+	  }, {
+	    key: "setNumberTasks",
+	    value: function setNumberTasks(numberTasks) {
+	      this.numberTasks = main_core.Type.isInteger(numberTasks) ? parseInt(numberTasks, 10) : 0;
+	    }
+	  }, {
+	    key: "addNumberTasks",
+	    value: function addNumberTasks(value) {
+	      if (!main_core.Type.isUndefined(value) && !isNaN(parseInt(value, 10))) {
+	        this.numberTasks = this.numberTasks + parseInt(value, 10);
+	      }
+	    }
+	  }, {
+	    key: "subtractNumberTasks",
+	    value: function subtractNumberTasks(value) {
+	      if (!main_core.Type.isUndefined(value) && !isNaN(parseInt(value, 10))) {
+	        this.numberTasks = this.numberTasks - parseInt(value, 10);
 	      }
 	    }
 	  }, {
@@ -2860,18 +2931,27 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    babelHelpers.classCallCheck(this, StatsHeader);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(StatsHeader).call(this, sprint));
 
+	    _this.setEventNamespace('BX.Tasks.Scrum.StatsHeader');
+
 	    _this.setSprintData(sprint);
 
 	    _this.statsCalculator = new StatsCalculator();
 	    _this.headerNode = null;
 	    _this.headerClass = 'tasks-scrum-sprint-header-stats';
+	    _this.kanbanMode = false;
 	    return _this;
 	  }
 
 	  babelHelpers.createClass(StatsHeader, [{
 	    key: "setKanbanStyle",
 	    value: function setKanbanStyle() {
+	      this.kanbanMode = true;
 	      this.headerClass = 'tasks-scrum-sprint-header-stats-kanban';
+	    }
+	  }, {
+	    key: "isKanbanMode",
+	    value: function isKanbanMode() {
+	      return this.kanbanMode;
 	    }
 	  }, {
 	    key: "render",
@@ -2994,7 +3074,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function render() {
 	      var percentage = this.statsCalculator.calculatePercentage(this.getStoryPoints(), this.getCompletedStoryPoints());
 	      var expiredDay = this.getExpiredDay(this.getEndDate());
-	      var label = main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_STATS_EXPIRED_LABEL').replace('#percent#', '<b>' + percentage + '</b>').replace('#date#', expiredDay);
+	      var label = main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_STATS_EXPIRED_LABEL').replace('#percent#', '<b>' + percentage + '%</b>').replace('#date#', expiredDay);
 	      this.headerNode = main_core.Tag.render(_templateObject$a(), this.headerClass, label);
 	      return this.headerNode;
 	    }
@@ -3325,8 +3405,18 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return EventsHeader;
 	}();
 
+	function _templateObject5$3() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-entity-title-btn tasks-scrum-entity-title-btn-burn-down-chart\">\n\t\t\t\t<span class=\"tasks-scrum-entity-burn-down-chart-icon\"></span>\n\t\t\t</div>\n\t\t"]);
+
+	  _templateObject5$3 = function _templateObject5() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
 	function _templateObject4$3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t", "\n\t\t\t", "\n\t\t\t", "\n\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t", "\n\t\t\t<div class=\"tasks-scrum-entity-title-btn tasks-scrum-entity-title-btn-task\">\n\t\t\t\t<span class=\"tasks-scrum-entity-tasks-icon\"></span>\n\t\t\t\t<span class=\"tasks-scrum-entity-tasks-title\">\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t</div>\n\t\t\t", "\n\t\t\t", "\n\t\t\t", "\n\t\t"]);
 
 	  _templateObject4$3 = function _templateObject4() {
 	    return data;
@@ -3364,21 +3454,50 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	  return data;
 	}
-	var StoryPointsHeader = /*#__PURE__*/function () {
+	var StoryPointsHeader = /*#__PURE__*/function (_EventEmitter) {
+	  babelHelpers.inherits(StoryPointsHeader, _EventEmitter);
+
 	  function StoryPointsHeader(sprint) {
+	    var _this;
+
 	    babelHelpers.classCallCheck(this, StoryPointsHeader);
-	    this.sprint = sprint;
-	    this.element = null;
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(StoryPointsHeader).call(this, sprint));
+
+	    _this.setEventNamespace('BX.Tasks.Scrum.StoryPointsHeader');
+
+	    _this.sprint = sprint;
+	    _this.element = null;
+	    return _this;
 	  }
 
 	  babelHelpers.createClass(StoryPointsHeader, [{
 	    key: "render",
 	    value: function render() {
+	      var _this2 = this;
+
 	      this.totalStoryPointsNode = main_core.Tag.render(_templateObject$e(), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_TITLE_STORY_POINTS'), this.sprint.getStoryPoints().getPoints());
 	      this.inWorkStoryPointsNode = this.sprint.isActive() ? main_core.Tag.render(_templateObject2$4(), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_TITLE_STORY_POINTS_IN_WORK'), this.sprint.getUncompletedStoryPoints().getPoints()) : '';
 	      this.doneStoryPointsNode = this.sprint.isPlanned() ? '' : main_core.Tag.render(_templateObject3$3(), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_TITLE_STORY_POINTS_DONE'), this.sprint.getCompletedStoryPoints().getPoints());
-	      this.element = main_core.Tag.render(_templateObject4$3(), this.totalStoryPointsNode, this.inWorkStoryPointsNode, this.doneStoryPointsNode);
+	      this.element = main_core.Tag.render(_templateObject4$3(), this.renderBurnDownChartIcon(), this.sprint.getNumberTasks(), this.totalStoryPointsNode, this.inWorkStoryPointsNode, this.doneStoryPointsNode);
+	      main_core.Event.bind(this.getElementByClassName(this.element, 'tasks-scrum-entity-title-btn-burn-down-chart'), 'click', function () {
+	        return _this2.emit('showSprintBurnDownChart');
+	      });
 	      return this.element;
+	    }
+	  }, {
+	    key: "renderBurnDownChartIcon",
+	    value: function renderBurnDownChartIcon() {
+	      if (this.sprint.isPlanned()) {
+	        return '';
+	      }
+
+	      return main_core.Tag.render(_templateObject5$3());
+	    }
+	  }, {
+	    key: "updateNumberTasks",
+	    value: function updateNumberTasks() {
+	      var parentNode = this.getElementByClassName(this.element, 'tasks-scrum-entity-title-btn-task');
+	      parentNode.querySelector('.tasks-scrum-entity-tasks-title').textContent = this.sprint.getNumberTasks();
 	    }
 	  }, {
 	    key: "setStoryPoints",
@@ -3408,7 +3527,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    }
 	  }]);
 	  return StoryPointsHeader;
-	}();
+	}(main_core_events.EventEmitter);
 
 	function _templateObject3$4() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<input type=\"text\" class=\"tasks-scrum-sprint-header-name\" value=\"", "\">\n\t\t\t"]);
@@ -3470,7 +3589,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	    _this.completedStoryPoints = new StoryPoints();
 	    _this.uncompletedStoryPoints = new StoryPoints();
-	    _this.numberTasks = main_core.Type.isInteger(sprintData.numberTasks) ? parseInt(sprintData.numberTasks, 10) : 0;
 	    _this.completedTasks = main_core.Type.isInteger(sprintData.completedTasks) ? parseInt(sprintData.completedTasks, 10) : 0;
 	    _this.unCompletedTasks = main_core.Type.isInteger(sprintData.unCompletedTasks) ? parseInt(sprintData.unCompletedTasks, 10) : 0;
 	    _this.defaultSprintDuration = main_core.Type.isInteger(sprintData.defaultSprintDuration) ? parseInt(sprintData.defaultSprintDuration, 10) : 0;
@@ -3494,13 +3612,30 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.createClass(Sprint, [{
 	    key: "addSprintHeader",
 	    value: function addSprintHeader(sprintHeader) {
+	      var _this2 = this;
+
 	      this.sprintHeader = sprintHeader;
 	      this.sprintHeader.initStyle();
+	      this.sprintHeader.subscribe('changeName', this.onChangeName.bind(this));
+	      this.sprintHeader.subscribe('removeSprint', this.onRemoveSprint.bind(this));
+	      this.sprintHeader.subscribe('completeSprint', function () {
+	        return _this2.emit('completeSprint');
+	      });
+	      this.sprintHeader.subscribe('startSprint', function () {
+	        return _this2.emit('startSprint');
+	      });
+	      this.sprintHeader.subscribe('changeSprintDeadline', this.onChangeSprintDeadline.bind(this));
+	      this.sprintHeader.subscribe('toggleVisibilityContent', this.toggleVisibilityContent.bind(this));
 	    }
 	  }, {
 	    key: "addStoryPointsHeader",
 	    value: function addStoryPointsHeader(storyPointsHeader) {
+	      var _this3 = this;
+
 	      this.storyPointsHeader = storyPointsHeader;
+	      this.storyPointsHeader.subscribe('showSprintBurnDownChart', function () {
+	        return _this3.emit('showSprintBurnDownChart');
+	      });
 	    }
 	  }, {
 	    key: "addEventsHeader",
@@ -3561,11 +3696,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.updateStoryPoints();
 	    }
 	  }, {
-	    key: "setId",
-	    value: function setId(id) {
-	      this.sprintId = parseInt(id, 10);
-	    }
-	  }, {
 	    key: "getSort",
 	    value: function getSort() {
 	      return this.sort;
@@ -3621,9 +3751,22 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      return this.uncompletedStoryPoints;
 	    }
 	  }, {
-	    key: "getNumberTasks",
-	    value: function getNumberTasks() {
-	      return this.numberTasks ? this.numberTasks : this.getItems().size;
+	    key: "addNumberTasks",
+	    value: function addNumberTasks(value) {
+	      babelHelpers.get(babelHelpers.getPrototypeOf(Sprint.prototype), "addNumberTasks", this).call(this, value);
+
+	      if (this.storyPointsHeader) {
+	        this.storyPointsHeader.updateNumberTasks();
+	      }
+	    }
+	  }, {
+	    key: "subtractNumberTasks",
+	    value: function subtractNumberTasks(value) {
+	      babelHelpers.get(babelHelpers.getPrototypeOf(Sprint.prototype), "subtractNumberTasks", this).call(this, value);
+
+	      if (this.storyPointsHeader) {
+	        this.storyPointsHeader.updateNumberTasks();
+	      }
 	    }
 	  }, {
 	    key: "setCompletedTasks",
@@ -3681,12 +3824,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "setStatus",
 	    value: function setStatus(status) {
-	      var _this2 = this;
+	      var _this4 = this;
 
 	      this.status = status;
 	      this.initStyle();
 	      this.items.forEach(function (item) {
-	        item.setDisableStatus(_this2.isDisabled());
+	        item.setDisableStatus(_this4.isDisabled());
 	      });
 
 	      if (this.isDisabled()) {
@@ -3717,8 +3860,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onAfterAppend",
 	    value: function onAfterAppend() {
-	      var _this3 = this;
-
 	      this.contentNode = this.node.querySelector('.tasks-scrum-sprint-content');
 
 	      if (!this.isCompleted()) {
@@ -3727,16 +3868,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	      if (this.sprintHeader) {
 	        this.sprintHeader.onAfterAppend();
-	        this.sprintHeader.subscribe('changeName', this.onChangeName.bind(this));
-	        this.sprintHeader.subscribe('removeSprint', this.onRemoveSprint.bind(this));
-	        this.sprintHeader.subscribe('completeSprint', function () {
-	          return _this3.emit('completeSprint');
-	        });
-	        this.sprintHeader.subscribe('startSprint', function () {
-	          return _this3.emit('startSprint');
-	        });
-	        this.sprintHeader.subscribe('changeSprintDeadline', this.onChangeSprintDeadline.bind(this));
-	        this.sprintHeader.subscribe('toggleVisibilityContent', this.toggleVisibilityContent.bind(this));
 	      }
 
 	      babelHelpers.get(babelHelpers.getPrototypeOf(Sprint.prototype), "onAfterAppend", this).call(this);
@@ -3744,19 +3875,19 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "updateStoryPoints",
 	    value: function updateStoryPoints() {
-	      var _this4 = this;
+	      var _this5 = this;
 
 	      babelHelpers.get(babelHelpers.getPrototypeOf(Sprint.prototype), "updateStoryPoints", this).call(this);
 	      this.completedStoryPoints.clearPoints();
 	      babelHelpers.toConsumableArray(this.getItems().values()).map(function (item) {
 	        if (item.isCompleted()) {
-	          _this4.completedStoryPoints.addPoints(item.getStoryPoints().getPoints());
+	          _this5.completedStoryPoints.addPoints(item.getStoryPoints().getPoints());
 	        }
 	      });
 	      this.uncompletedStoryPoints.clearPoints();
 	      babelHelpers.toConsumableArray(this.getItems().values()).map(function (item) {
 	        if (!item.isCompleted()) {
-	          _this4.uncompletedStoryPoints.addPoints(item.getStoryPoints().getPoints());
+	          _this5.uncompletedStoryPoints.addPoints(item.getStoryPoints().getPoints());
 	        }
 	      });
 
@@ -3837,23 +3968,23 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "subscribeToItem",
 	    value: function subscribeToItem(item) {
-	      var _this5 = this;
+	      var _this6 = this;
 
 	      babelHelpers.get(babelHelpers.getPrototypeOf(Sprint.prototype), "subscribeToItem", this).call(this, item);
 	      item.subscribe('moveToBacklog', function (baseEvent) {
-	        _this5.emit('moveToBacklog', {
-	          sprint: _this5,
+	        _this6.emit('moveToBacklog', {
+	          sprint: _this6,
 	          item: baseEvent.getTarget()
 	        });
 	      });
 	      item.subscribe('updateActiveSprintStoryPoints', function (baseEvent) {
-	        _this5.updateTotalStoryPoints(baseEvent.getTarget());
+	        _this6.updateTotalStoryPoints(baseEvent.getTarget());
 	      });
 	    }
 	  }, {
 	    key: "onChangeName",
 	    value: function onChangeName(baseEvent) {
-	      var _this6 = this;
+	      var _this7 = this;
 
 	      var createInput = function createInput(value) {
 	        return main_core.Tag.render(_templateObject3$4(), main_core.Text.encode(value));
@@ -3864,12 +3995,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      main_core.Event.bind(inputNode, 'change', function (event) {
 	        var newValue = event.target['value'];
 
-	        _this6.emit('changeSprintName', {
-	          sprintId: _this6.getId(),
+	        _this7.emit('changeSprintName', {
+	          sprintId: _this7.getId(),
 	          name: newValue
 	        });
 
-	        _this6.name = newValue;
+	        _this7.name = newValue;
 	        inputNode.blur();
 	      }, true);
 
@@ -3880,7 +4011,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      main_core.Event.bind(inputNode, 'keydown', blockEnterInput);
 	      main_core.Event.bindOnce(inputNode, 'blur', function () {
 	        main_core.Event.unbind(inputNode, 'keydown', blockEnterInput);
-	        nameNode.textContent = main_core.Text.encode(_this6.name);
+	        nameNode.textContent = main_core.Text.encode(_this7.name);
 	        main_core.Dom.replace(inputNode, nameNode);
 	      }, true);
 	      main_core.Dom.replace(nameNode, inputNode);
@@ -3890,11 +4021,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onRemoveSprint",
 	    value: function onRemoveSprint() {
-	      var _this7 = this;
+	      var _this8 = this;
 
 	      babelHelpers.toConsumableArray(this.items.values()).map(function (item) {
-	        _this7.emit('moveToBacklog', {
-	          sprint: _this7,
+	        _this8.emit('moveToBacklog', {
+	          sprint: _this8,
 	          item: item
 	        });
 	      });
@@ -4003,18 +4134,27 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function bindEvents() {
 	      var _this2 = this;
 
-	      /* eslint-disable */
-	      BX.addCustomEvent(window, 'SidePanel.Slider:onLoad', function (event) {
-	        var sidePanel = event.getSlider();
+	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onLoad', function (event) {
+	        var _event$getCompatData = event.getCompatData(),
+	            _event$getCompatData2 = babelHelpers.slicedToArray(_event$getCompatData, 1),
+	            sliderEvent = _event$getCompatData2[0];
+
+	        var sidePanel = sliderEvent.getSlider();
 	        sidePanel.setCacheable(false);
 
 	        _this2.emit('onLoadSidePanel', sidePanel);
 	      });
-	      BX.addCustomEvent(window, 'SidePanel.Slider:onClose', function (event) {
-	        var sidePanel = event.getSlider();
+	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onClose', function (event) {
+	        var _event$getCompatData3 = event.getCompatData(),
+	            _event$getCompatData4 = babelHelpers.slicedToArray(_event$getCompatData3, 1),
+	            sliderEvent = _event$getCompatData4[0];
+
+	        var sidePanel = sliderEvent.getSlider();
 
 	        _this2.emit('onCloseSidePanel', sidePanel);
 	      });
+	      /* eslint-disable */
+
 	      BX.addCustomEvent(window, 'onAfterPopupShow', function (popupWindow) {
 	        var topSlider = _this2.sidePanelManager.getTopSlider();
 
@@ -4060,8 +4200,129 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return SidePanel;
 	}(main_core_events.EventEmitter);
 
-	function _templateObject7$1() {
+	//todo import amchart4 like es6
+	var BurnDownChart = /*#__PURE__*/function () {
+	  function BurnDownChart(data) {
+	    babelHelpers.classCallCheck(this, BurnDownChart);
+	    this.data = data;
+	  }
+
+	  babelHelpers.createClass(BurnDownChart, [{
+	    key: "createChart",
+	    value: function createChart(chartDiv) {
+	      am4core.useTheme(am4themes_animated);
+	      this.chart = am4core.create(chartDiv, am4charts.XYChart);
+	      this.chart.data = this.data;
+	      this.chart.paddingRight = 40;
+	      this.createAxises();
+	      this.createIdealLine();
+	      this.createRemainLine();
+	      this.createLegend();
+	    }
+	  }, {
+	    key: "createAxises",
+	    value: function createAxises() {
+	      var categoryAxis = this.chart.xAxes.push(new am4charts.CategoryAxis());
+	      categoryAxis.renderer.grid.template.location = 0;
+	      categoryAxis.dataFields.category = 'day';
+	      categoryAxis.renderer.minGridDistance = 60;
+	      var valueAxis = this.chart.yAxes.push(new am4charts.ValueAxis());
+	      valueAxis.min = -0.1;
+	    }
+	  }, {
+	    key: "createIdealLine",
+	    value: function createIdealLine() {
+	      var lineSeries = this.chart.series.push(new am4charts.LineSeries());
+	      lineSeries.name = main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_IDEAL_BURN_DOWN_CHART_LINE_TITLE'); //todo move from class
+
+	      lineSeries.stroke = am4core.color('#2882b3');
+	      lineSeries.strokeWidth = 2;
+	      lineSeries.dataFields.categoryX = 'day';
+	      lineSeries.dataFields.valueY = 'idealValue';
+	      var circleColor = '#2882b3';
+	      var circleBullet = new am4charts.CircleBullet();
+	      circleBullet.circle.radius = 4;
+	      circleBullet.circle.fill = am4core.color(circleColor);
+	      circleBullet.circle.stroke = am4core.color(circleColor);
+	      lineSeries.bullets.push(circleBullet);
+	      var segment = lineSeries.segments.template;
+	      var hoverState = segment.states.create('hover');
+	      hoverState.properties.strokeWidth = 4;
+	    }
+	  }, {
+	    key: "createRemainLine",
+	    value: function createRemainLine() {
+	      var lineSeries = this.chart.series.push(new am4charts.LineSeries());
+	      lineSeries.name = main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_REMAIN_BURN_DOWN_CHART_LINE_TITLE'); //todo move from class
+
+	      lineSeries.stroke = am4core.color('#9c1f1f');
+	      lineSeries.strokeWidth = 2;
+	      lineSeries.dataFields.categoryX = 'day';
+	      lineSeries.dataFields.valueY = 'remainValue';
+	      var circleColor = '#9c1f1f';
+	      var circleBullet = new am4charts.CircleBullet();
+	      circleBullet.circle.radius = 4;
+	      circleBullet.circle.fill = am4core.color(circleColor);
+	      circleBullet.circle.stroke = am4core.color(circleColor);
+	      lineSeries.bullets.push(circleBullet);
+	      var segment = lineSeries.segments.template;
+	      var hoverState = segment.states.create('hover');
+	      hoverState.properties.strokeWidth = 4;
+	    }
+	  }, {
+	    key: "createLegend",
+	    value: function createLegend() {
+	      var _this = this;
+
+	      this.chart.legend = new am4charts.Legend();
+	      this.chart.legend.itemContainers.template.clickable = false;
+	      this.chart.legend.position = 'bottom';
+	      this.chart.legend.itemContainers.template.events.on('over', function (event) {
+	        _this.processOver(event.target.dataItem.dataContext);
+	      });
+	      this.chart.legend.itemContainers.template.events.on('out', function () {
+	        return _this.processOut();
+	      });
+	    }
+	  }, {
+	    key: "processOver",
+	    value: function processOver(hoveredLine) {
+	      hoveredLine.toFront();
+	      hoveredLine.segments.each(function (segment) {
+	        return segment.setState('hover');
+	      });
+	    }
+	  }, {
+	    key: "processOut",
+	    value: function processOut() {
+	      this.chart.series.each(function (series) {
+	        series.segments.each(function (segment) {
+	          return segment.setState('default');
+	        });
+	        series.bulletsContainer.setState('default');
+	      });
+	    }
+	  }, {
+	    key: "destroyBurnDownChart",
+	    value: function destroyBurnDownChart() {
+	      this.chart.dispose();
+	    }
+	  }]);
+	  return BurnDownChart;
+	}();
+
+	function _templateObject8$1() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-block\">\n\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-content\">\n\t\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-info-box tasks-scrum-sprint-sidepanel-info-box-w100\">\n\t\t\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-info-title\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-info-content\">\n\t\t\t\t\t\t\t<span class=\"tasks-scrum-sprint-sidepanel-info-value\">\n\t\t\t\t\t\t\t\t", "%\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t<span class=\"tasks-scrum-sprint-sidepanel-info-dif ", "\">\n\t\t\t\t\t\t\t\t<span class=\"tasks-scrum-sprint-sidepanel-info-dif-arrow\"></span>\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-info-dif-block\">\n\t\t\t\t\t\t\t\t\t<span class=\"tasks-scrum-sprint-sidepanel-info-dif-val\">", "</span>\n\t\t\t\t\t\t\t\t\t<span class=\"tasks-scrum-sprint-sidepanel-info-dif-icon\">%</span>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+
+	  _templateObject8$1 = function _templateObject8() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject7$1() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-speed\">\n\t\t\t\t\t<span class=\"tasks-scrum-sprint-sidepanel-subtitle\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t\t<span class=\"tasks-scrum-sprint-sidepanel-result\">", "</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-graph\"></div>\n\t\t\t"]);
 
 	  _templateObject7$1 = function _templateObject7() {
 	    return data;
@@ -4071,7 +4332,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	}
 
 	function _templateObject6$2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-speed\">\n\t\t\t\t\t<span class=\"tasks-scrum-sprint-sidepanel-subtitle\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t\t<span class=\"tasks-scrum-sprint-sidepanel-result\">", "</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-graph\"></div>\n\t\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-block\">\n\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-title tasks-scrum-sprint-sidepanel-title-icon\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-content\">\n\t\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-field\">\n\t\t\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-label\">\n\t\t\t\t\t\t\t<span class=\"tasks-scrum-sprint-sidepanel-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t\t<select class=\"ui-ctl-element\">\n\t\t\t\t\t\t\t\t<option value=\"backlog\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</option>\n\t\t\t\t\t\t\t\t<option value=\"0\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</option>\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</select>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-uncompleted\">\n\t\t\t\t\t\t<span class=\"tasks-scrum-sprint-sidepanel-subtitle\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-uncompleted-list\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
 
 	  _templateObject6$2 = function _templateObject6() {
 	    return data;
@@ -4080,10 +4341,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return data;
 	}
 
-	function _templateObject5$3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-block\">\n\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-title tasks-scrum-sprint-sidepanel-title-icon\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-content\">\n\t\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-field\">\n\t\t\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-label\">\n\t\t\t\t\t\t\t<span class=\"tasks-scrum-sprint-sidepanel-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t\t<select class=\"ui-ctl-element\">\n\t\t\t\t\t\t\t\t<option value=\"backlog\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</option>\n\t\t\t\t\t\t\t\t<option value=\"0\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</option>\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</select>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-uncompleted\">\n\t\t\t\t\t\t<span class=\"tasks-scrum-sprint-sidepanel-subtitle\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-uncompleted-list\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+	function _templateObject5$4() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-block\">\n\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-content\">\n\t\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t </div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
 
-	  _templateObject5$3 = function _templateObject5() {
+	  _templateObject5$4 = function _templateObject5() {
 	    return data;
 	  };
 
@@ -4091,7 +4352,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	}
 
 	function _templateObject4$4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-block\">\n\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-content\">\n\t\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t </div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-sprint-sidepanel\">\n\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-header\">\n\t\t\t\t\t<span class=\"tasks-scrum-sprint-sidepanel-header-title\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-chart\"></div>\n\t\t\t\t<div class=\"tasks-scrum-sprint-sidepanel-buttons\"></div>\n\t\t\t</div>\n\t\t"]);
 
 	  _templateObject4$4 = function _templateObject4() {
 	    return data;
@@ -4132,7 +4393,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var SprintSidePanel = /*#__PURE__*/function () {
 	  function SprintSidePanel(params) {
 	    babelHelpers.classCallCheck(this, SprintSidePanel);
-	    this.sprints = params.sprints;
+	    this.sprints = params.sprints ? params.sprints : new Map();
 	    this.sidePanel = params.sidePanel;
 	    this.requestSender = params.requestSender;
 	    this.views = params.views;
@@ -4160,6 +4421,42 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      });
 	    }
 	  }, {
+	    key: "showCompleteSidePanel",
+	    value: function showCompleteSidePanel(sprint) {
+	      var _this2 = this;
+
+	      this.sidePanelId = 'tasks-scrum-start-' + main_core.Text.getRandom();
+	      this.currentSprint = sprint;
+	      this.sidePanel.subscribeOnce('onLoadSidePanel', this.onLoadCompletePanel.bind(this));
+	      this.sidePanel.openSidePanel(this.sidePanelId, {
+	        contentCallback: function contentCallback() {
+	          return new Promise(function (resolve, reject) {
+	            resolve(_this2.buildCompletePanel());
+	          });
+	        },
+	        zIndex: 1000,
+	        width: 600
+	      });
+	    }
+	  }, {
+	    key: "showBurnDownChart",
+	    value: function showBurnDownChart(sprint) {
+	      var _this3 = this;
+
+	      this.sidePanelId = 'tasks-scrum-burn-down-chart-' + main_core.Text.getRandom();
+	      this.currentSprint = sprint;
+	      this.sidePanel.subscribeOnce('onLoadSidePanel', this.onLoadSprintBurnDownPanel.bind(this));
+	      this.sidePanel.subscribe('onCloseSidePanel', this.onCloseBurnDownChart.bind(this));
+	      this.sidePanel.openSidePanel(this.sidePanelId, {
+	        contentCallback: function contentCallback() {
+	          return new Promise(function (resolve, reject) {
+	            resolve(_this3.buildBurnDownPanel());
+	          });
+	        },
+	        zIndex: 1000
+	      });
+	    }
+	  }, {
 	    key: "buildStartPanel",
 	    value: function buildStartPanel() {
 	      var differenceStoryPoints = this.currentSprint.getTotalStoryPoints().getPoints();
@@ -4176,36 +4473,23 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onLoadStartPanel",
 	    value: function onLoadStartPanel(baseEvent) {
-	      var _this2 = this;
+	      var _this4 = this;
 
 	      var sidePanel = baseEvent.getData();
 	      this.form = sidePanel.getContainer().querySelector('.tasks-scrum-sprint-sidepanel');
 	      this.onLoadStartButtons().then(function (buttonsContainer) {
-	        main_core.Event.bind(buttonsContainer.querySelector('[name=save]'), 'click', _this2.onStartSprint.bind(_this2));
-	      });
-	    }
-	  }, {
-	    key: "showCompleteSidePanel",
-	    value: function showCompleteSidePanel(sprint) {
-	      var _this3 = this;
-
-	      this.sidePanelId = 'tasks-scrum-start-' + main_core.Text.getRandom();
-	      this.currentSprint = sprint;
-	      this.sidePanel.subscribeOnce('onLoadSidePanel', this.onLoadCompletePanel.bind(this));
-	      this.sidePanel.openSidePanel(this.sidePanelId, {
-	        contentCallback: function contentCallback() {
-	          return new Promise(function (resolve, reject) {
-	            resolve(_this3.buildCompletePanel());
-	          });
-	        },
-	        zIndex: 1000,
-	        width: 600
+	        main_core.Event.bind(buttonsContainer.querySelector('[name=save]'), 'click', _this4.onStartSprint.bind(_this4));
 	      });
 	    }
 	  }, {
 	    key: "buildCompletePanel",
 	    value: function buildCompletePanel() {
 	      return main_core.Tag.render(_templateObject3$5(), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETE_HEADER'), this.buildSprintGoal(), this.buildSprintActions(), this.buildSprintPlan());
+	    }
+	  }, {
+	    key: "buildBurnDownPanel",
+	    value: function buildBurnDownPanel() {
+	      return main_core.Tag.render(_templateObject4$4(), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_IDEAL_BURN_DOWN_CHART_HEADER'));
 	    }
 	  }, {
 	    key: "buildSprintGoal",
@@ -4217,12 +4501,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        return '';
 	      }
 
-	      return main_core.Tag.render(_templateObject4$4(), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_GOAL_TITLE'), main_core.Text.encode(sprintGoal));
+	      return main_core.Tag.render(_templateObject5$4(), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_GOAL_TITLE'), main_core.Text.encode(sprintGoal));
 	    }
 	  }, {
 	    key: "buildSprintActions",
 	    value: function buildSprintActions() {
-	      var _this4 = this;
+	      var _this5 = this;
 
 	      var uncompletedTasks = this.currentSprint.getUnCompletedTasks();
 
@@ -4236,10 +4520,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          listSprintsOptions += "<option value=\"".concat(sprint.getId(), "\">").concat(main_core.Text.encode(sprint.getName()), "</option>");
 	        }
 	      });
-	      return main_core.Tag.render(_templateObject5$3(), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETE_ACTIONS_TITLE'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETE_ACTIONS_SELECT'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETE_POPUP_MOVE_SELECTOR_BACKLOG'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETE_POPUP_NEW_SPRINT'), listSprintsOptions, main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETE_ACTIONS_ITEM_LIST'), babelHelpers.toConsumableArray(this.currentSprint.getUncompletedItems().values()).map(function (item) {
+	      return main_core.Tag.render(_templateObject6$2(), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETE_ACTIONS_TITLE'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETE_ACTIONS_SELECT'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETE_POPUP_MOVE_SELECTOR_BACKLOG'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETE_POPUP_NEW_SPRINT'), listSprintsOptions, main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETE_ACTIONS_ITEM_LIST'), babelHelpers.toConsumableArray(this.currentSprint.getUncompletedItems().values()).map(function (item) {
 	        var previewItem = item.getPreviewVersion();
 
-	        _this4.uncompletedItems.set(previewItem.getItemId(), previewItem);
+	        _this5.uncompletedItems.set(previewItem.getItemId(), previewItem);
 
 	        return previewItem.render();
 	      }));
@@ -4262,15 +4546,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var renderSpeed = function renderSpeed(speedInfoMessage) {
 	        return ''; //todo chart
 
-	        return main_core.Tag.render(_templateObject6$2(), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETE_TEAM_SPEED'), speedInfoMessage);
+	        return main_core.Tag.render(_templateObject7$1(), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETE_TEAM_SPEED'), speedInfoMessage);
 	      };
 
-	      return main_core.Tag.render(_templateObject7$1(), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETE_PLAN_TITLE'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETE_PLAN_DONE'), percentage, percentageNodeClass, absoluteValue, renderSpeed());
+	      return main_core.Tag.render(_templateObject8$1(), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETE_PLAN_TITLE'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETE_PLAN_DONE'), percentage, percentageNodeClass, absoluteValue, renderSpeed());
 	    }
 	  }, {
 	    key: "onLoadCompletePanel",
 	    value: function onLoadCompletePanel(baseEvent) {
-	      var _this5 = this;
+	      var _this6 = this;
 
 	      var sidePanel = baseEvent.getData();
 	      this.form = sidePanel.getContainer().querySelector('.tasks-scrum-sprint-sidepanel');
@@ -4278,12 +4562,42 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      babelHelpers.toConsumableArray(this.uncompletedItems.values()).map(function (previewItem) {
 	        previewItem.onAfterAppend(itemsContainer);
 	        previewItem.subscribe('showTask', function () {
-	          _this5.currentSprint.emit('showTask', previewItem);
+	          _this6.currentSprint.emit('showTask', previewItem);
 	        });
 	      });
 	      this.onLoadCompleteButtons().then(function (buttonsContainer) {
-	        main_core.Event.bind(buttonsContainer.querySelector('[name=save]'), 'click', _this5.onCompleteSprint.bind(_this5, sidePanel));
+	        main_core.Event.bind(buttonsContainer.querySelector('[name=save]'), 'click', _this6.onCompleteSprint.bind(_this6, sidePanel));
 	      });
+	    }
+	  }, {
+	    key: "onLoadSprintBurnDownPanel",
+	    value: function onLoadSprintBurnDownPanel(baseEvent) {
+	      var _this7 = this;
+
+	      var sidePanel = baseEvent.getData();
+	      this.form = sidePanel.getContainer().querySelector('.tasks-scrum-sprint-sidepanel');
+	      this.getBurnDownChartData().then(function (data) {
+	        setTimeout(function () {
+	          _this7.burnDownChart = new BurnDownChart(data);
+
+	          _this7.burnDownChart.createChart(_this7.form.querySelector('.tasks-scrum-sprint-sidepanel-chart'));
+	        }, 300);
+	      });
+	    }
+	  }, {
+	    key: "onCloseBurnDownChart",
+	    value: function onCloseBurnDownChart(baseEvent) {
+	      var _this8 = this;
+
+	      var sidePanel = baseEvent.getData();
+
+	      if (this.sidePanelId === sidePanel.getUrl()) {
+	        setTimeout(function () {
+	          _this8.burnDownChart.destroyBurnDownChart();
+
+	          _this8.burnDownChart = null;
+	        }, 300);
+	      }
 	    }
 	  }, {
 	    key: "getTasksCountLabel",
@@ -4325,10 +4639,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "getStartButtons",
 	    value: function getStartButtons() {
-	      var _this6 = this;
+	      var _this9 = this;
 
 	      return new Promise(function (resolve, reject) {
-	        _this6.requestSender.getSprintStartButtons().then(function (response) {
+	        _this9.requestSender.getSprintStartButtons().then(function (response) {
 	          resolve(response.data.html);
 	        });
 	      });
@@ -4336,21 +4650,32 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "getCompleteButtons",
 	    value: function getCompleteButtons() {
-	      var _this7 = this;
+	      var _this10 = this;
 
 	      return new Promise(function (resolve, reject) {
-	        _this7.requestSender.getSprintCompleteButtons().then(function (response) {
+	        _this10.requestSender.getSprintCompleteButtons().then(function (response) {
 	          resolve(response.data.html);
+	        });
+	      });
+	    }
+	  }, {
+	    key: "getBurnDownChartData",
+	    value: function getBurnDownChartData() {
+	      var _this11 = this;
+
+	      return new Promise(function (resolve, reject) {
+	        _this11.requestSender.getBurnDownChartData(_this11.getRequestDataToGetBurnDownChartData()).then(function (response) {
+	          resolve(response.data);
 	        });
 	      });
 	    }
 	  }, {
 	    key: "onLoadStartButtons",
 	    value: function onLoadStartButtons() {
-	      var _this8 = this;
+	      var _this12 = this;
 
 	      return this.getStartButtons().then(function (buttonsHtml) {
-	        var buttonsContainer = _this8.form.querySelector('.tasks-scrum-sprint-sidepanel-buttons');
+	        var buttonsContainer = _this12.form.querySelector('.tasks-scrum-sprint-sidepanel-buttons');
 
 	        return main_core.Runtime.html(buttonsContainer, buttonsHtml).then(function () {
 	          return buttonsContainer;
@@ -4360,10 +4685,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onLoadCompleteButtons",
 	    value: function onLoadCompleteButtons() {
-	      var _this9 = this;
+	      var _this13 = this;
 
 	      return this.getCompleteButtons().then(function (buttonsHtml) {
-	        var buttonsContainer = _this9.form.querySelector('.tasks-scrum-sprint-sidepanel-buttons');
+	        var buttonsContainer = _this13.form.querySelector('.tasks-scrum-sprint-sidepanel-buttons');
 
 	        return main_core.Runtime.html(buttonsContainer, buttonsHtml).then(function () {
 	          return buttonsContainer;
@@ -4373,22 +4698,22 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onStartSprint",
 	    value: function onStartSprint() {
-	      var _this10 = this;
+	      var _this14 = this;
 
 	      this.requestSender.startSprint(this.getRequestDataToStartSprint()).then(function (response) {
-	        _this10.currentSprint.setStatus('active');
+	        _this14.currentSprint.setStatus('active');
 
-	        location.href = _this10.views['activeSprint'].url;
+	        location.href = _this14.views['activeSprint'].url;
 	      }).catch(function (response) {
-	        _this10.removeClockIconFromButton();
+	        _this14.removeClockIconFromButton();
 
-	        _this10.requestSender.showErrorAlert(response, main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_START_ERROR_TITLE_POPUP'));
+	        _this14.requestSender.showErrorAlert(response, main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_START_ERROR_TITLE_POPUP'));
 	      });
 	    }
 	  }, {
 	    key: "onCompleteSprint",
 	    value: function onCompleteSprint(sidePanel) {
-	      var _this11 = this;
+	      var _this15 = this;
 
 	      this.requestSender.completeSprint(this.getRequestDataToCompleteSprint()).then(function (response) {
 	        if (ui_confetti.Confetti) {
@@ -4401,15 +4726,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            },
 	            zIndex: sidePanel.getZindex() + 1
 	          }).then(function () {
-	            location.href = _this11.views['plan'].url;
+	            location.href = _this15.views['plan'].url;
 	          });
 	        } else {
-	          location.href = _this11.views['plan'].url;
+	          location.href = _this15.views['plan'].url;
 	        }
 	      }).catch(function (response) {
-	        _this11.removeClockIconFromButton();
+	        _this15.removeClockIconFromButton();
 
-	        _this11.requestSender.showErrorAlert(response, main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_START_ERROR_TITLE_POPUP'));
+	        _this15.requestSender.showErrorAlert(response, main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_START_ERROR_TITLE_POPUP'));
 	      });
 	    }
 	  }, {
@@ -4427,6 +4752,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      requestData.sprintId = this.currentSprint.getId();
 	      var directionSelectNode = this.form.querySelector('select');
 	      requestData.direction = directionSelectNode ? directionSelectNode.value : 'backlog';
+	      return requestData;
+	    }
+	  }, {
+	    key: "getRequestDataToGetBurnDownChartData",
+	    value: function getRequestDataToGetBurnDownChartData() {
+	      var requestData = {};
+	      requestData.sprintId = this.currentSprint.getId();
 	      return requestData;
 	    }
 	  }, {
@@ -4476,7 +4808,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "initDomNodes",
 	    value: function initDomNodes() {
 	      this.sprintStatsContainer = document.getElementById('tasks-scrum-active-sprint-stats');
-	      this.completeSprintButtonNode = document.getElementById('tasks-scrum-actions-complete-sprint');
+	      var buttonsContainer = document.getElementById('tasks-scrum-actions-complete-sprint');
+	      this.chartSprintButtonNode = buttonsContainer.firstElementChild;
+	      this.completeSprintButtonNode = buttonsContainer.lastElementChild;
 	    }
 	  }, {
 	    key: "createSprintStats",
@@ -4488,6 +4822,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "bindHandlers",
 	    value: function bindHandlers() {
+	      main_core.Event.bind(this.chartSprintButtonNode, 'click', this.onShowSprintBurnDownChart.bind(this));
 	      main_core.Event.bind(this.completeSprintButtonNode, 'click', this.onCompleteSprint.bind(this));
 
 	      if (window.Kanban) {
@@ -4586,12 +4921,22 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        }
 	      });
 	    }
+	  }, {
+	    key: "onShowSprintBurnDownChart",
+	    value: function onShowSprintBurnDownChart() {
+	      var sprintSidePanel = new SprintSidePanel({
+	        sidePanel: this.sidePanel,
+	        requestSender: this.requestSender,
+	        views: this.views
+	      });
+	      sprintSidePanel.showBurnDownChart(this.sprint);
+	    }
 	  }]);
 	  return ActiveSprint;
 	}();
 
 	function _templateObject$h() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-backlog-title\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t\t<div class=\"tasks-scrum-backlog-epics-title ui-btn ui-btn-xs ui-btn-secondary\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t\t<div class=\"tasks-scrum-backlog-title-spacer\"></div>\n\t\t\t<div class=\"tasks-scrum-backlog-story-point-title\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t\t<div class=\"tasks-scrum-backlog-story-point\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-backlog-title\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t\t<div class=\"tasks-scrum-backlog-epics-title ui-btn ui-btn-xs ui-btn-secondary\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t\t<div title=\"Definition of Done\" class=\"tasks-scrum-entity-title-btn tasks-scrum-entity-title-btn-dod\">\n\t\t\t\t<span class=\"tasks-scrum-entity-dod-icon\"></span>\n\t\t\t</div>\n\t\t\t<div class=\"tasks-scrum-backlog-title-spacer\"></div>\n\t\t\t<div class=\"tasks-scrum-entity-title-btn tasks-scrum-entity-title-btn-task\">\n\t\t\t\t<span class=\"tasks-scrum-entity-tasks-icon\"></span>\n\t\t\t\t<span class=\"tasks-scrum-entity-tasks-title\">\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t</div>\n\t\t\t<div class=\"tasks-scrum-backlog-story-point-title\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t\t<div class=\"tasks-scrum-backlog-story-point\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"]);
 
 	  _templateObject$h = function _templateObject() {
 	    return data;
@@ -4620,9 +4965,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function render() {
 	      var _this2 = this;
 
-	      this.element = main_core.Tag.render(_templateObject$h(), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_TITLE'), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_EPICS_TITLE'), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_TITLE_STORY_POINTS'), main_core.Text.encode(this.entity.getStoryPoints().getPoints()));
+	      this.element = main_core.Tag.render(_templateObject$h(), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_TITLE'), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_EPICS_TITLE'), this.entity.getNumberTasks(), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_TITLE_STORY_POINTS'), main_core.Text.encode(this.entity.getStoryPoints().getPoints()));
 	      main_core.Event.bind(this.getElementByClassName(this.element, 'tasks-scrum-backlog-epics-title'), 'click', function () {
 	        _this2.emit('openListEpicGrid');
+	      });
+	      main_core.Event.bind(this.getElementByClassName(this.element, 'tasks-scrum-entity-title-btn-dod'), 'click', function () {
+	        _this2.emit('openDefinitionOfDone');
 	      });
 	      return this.element;
 	    }
@@ -4630,6 +4978,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "setStoryPoints",
 	    value: function setStoryPoints(storyPoints) {
 	      this.getElementByClassName(this.element, 'tasks-scrum-backlog-story-point').textContent = main_core.Text.encode(storyPoints);
+	    }
+	  }, {
+	    key: "updateNumberTasks",
+	    value: function updateNumberTasks() {
+	      var parentNode = this.getElementByClassName(this.element, 'tasks-scrum-entity-title-btn-task');
+	      parentNode.querySelector('.tasks-scrum-entity-tasks-title').textContent = this.entity.getNumberTasks();
 	    }
 	  }, {
 	    key: "getElementByClassName",
@@ -4725,6 +5079,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.header.subscribe('openListEpicGrid', function () {
 	        return _this2.emit('openListEpicGrid');
 	      });
+	      this.header.subscribe('openDefinitionOfDone', function () {
+	        return _this2.emit('openDefinitionOfDone');
+	      });
 	    }
 	  }, {
 	    key: "addEpicCreationButton",
@@ -4763,6 +5120,24 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function removeItem(item) {
 	      babelHelpers.get(babelHelpers.getPrototypeOf(Backlog.prototype), "removeItem", this).call(this, item);
 	      this.updateStoryPoints();
+	    }
+	  }, {
+	    key: "addNumberTasks",
+	    value: function addNumberTasks(value) {
+	      babelHelpers.get(babelHelpers.getPrototypeOf(Backlog.prototype), "addNumberTasks", this).call(this, value);
+
+	      if (this.header) {
+	        this.header.updateNumberTasks();
+	      }
+	    }
+	  }, {
+	    key: "subtractNumberTasks",
+	    value: function subtractNumberTasks(value) {
+	      babelHelpers.get(babelHelpers.getPrototypeOf(Backlog.prototype), "subtractNumberTasks", this).call(this, value);
+
+	      if (this.header) {
+	        this.header.updateNumberTasks();
+	      }
 	    }
 	  }, {
 	    key: "updateStoryPoints",
@@ -4820,10 +5195,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return data;
 	}
 
-	function _templateObject5$4() {
+	function _templateObject5$5() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-epics-empty\">\n\t\t\t\t<div class=\"tasks-scrum-epics-empty-first-title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-epics-empty-image\">\n\t\t\t\t\t<svg width=\"124px\" height=\"123px\" viewBox=\"0 0 124 123\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n\t\t\t\t\t\t<g stroke=\"none\" stroke-width=\"1\" fill=\"none\" fill-rule=\"evenodd\" opacity=\"0.28\">\n\t\t\t\t\t\t\t<path d=\"M83,105 L83,81.4375 L105,81.4375 L105,18 L17,18 L17,81.4375 L39,81.4375 L39,105 L83,105 Z M10.9411765,0 L113.058824,0 C119.101468,0 124,4.85902727 124,10.8529412 L124,112.147059 C124,118.140973 119.101468,123 113.058824,123 L10.9411765,123 C4.89853156,123 0,118.140973 0,112.147059 L0,10.8529412 C0,4.85902727 4.89853156,0 10.9411765,0 Z M44.0142862,47.0500004 L54.2142857,57.4416671 L79.7142857,32 L87,42.75 L54.2142857,75 L36,57.0833333 L44.0142862,47.0500004 Z\" fill=\"#A8ADB4\" />\n\t\t\t\t\t\t</g>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-epics-empty-second-title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-epics-empty-button\">\n\t\t\t\t\t<button class=\"ui-btn ui-btn-primary ui-btn-lg\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</button>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
 
-	  _templateObject5$4 = function _templateObject5() {
+	  _templateObject5$5 = function _templateObject5() {
 	    return data;
 	  };
 
@@ -5227,7 +5602,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function getEpicsList() {
 	      var _this16 = this;
 
-	      this.gridId = 'EpicsGrid' + main_core.Text.getRandom();
+	      this.gridId = 'EntityEpicsGrid_' + this.entity.getId();
 	      return new Promise(function (resolve, reject) {
 	        _this16.requestSender.getEpicsList({
 	          entityId: _this16.entity.getId(),
@@ -5264,7 +5639,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "getEmptyEpicListForm",
 	    value: function getEmptyEpicListForm() {
-	      return main_core.Tag.render(_templateObject5$4(), main_core.Loc.getMessage('TASKS_SCRUM_EPICS_EMPTY_FIRST_TITLE'), main_core.Loc.getMessage('TASKS_SCRUM_EPICS_EMPTY_SECOND_TITLE'), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_LIST_ACTIONS_EPIC_ADD'));
+	      return main_core.Tag.render(_templateObject5$5(), main_core.Loc.getMessage('TASKS_SCRUM_EPICS_EMPTY_FIRST_TITLE'), main_core.Loc.getMessage('TASKS_SCRUM_EPICS_EMPTY_SECOND_TITLE'), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_LIST_ACTIONS_EPIC_ADD'));
 	    }
 	  }, {
 	    key: "buildFormHeader",
@@ -5552,6 +5927,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	    babelHelpers.classCallCheck(this, Filter);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Filter).call(this, params));
+
+	    _this.setEventNamespace('BX.Tasks.Scrum.Filter');
+
 	    _this.filterId = params.filterId;
 	    _this.scrumManager = params.scrumManager;
 	    _this.requestSender = params.requestSender;
@@ -5646,6 +6024,281 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Filter;
 	}(main_core_events.EventEmitter);
 
+	//todo import amchart4 like es6
+	var TeamSpeedChart = /*#__PURE__*/function () {
+	  function TeamSpeedChart(data) {
+	    babelHelpers.classCallCheck(this, TeamSpeedChart);
+	    this.data = data;
+	    this.chart = null;
+	  }
+
+	  babelHelpers.createClass(TeamSpeedChart, [{
+	    key: "createChart",
+	    value: function createChart(chartDiv) {
+	      am4core.useTheme(am4themes_animated);
+	      this.chart = am4core.create(chartDiv, am4charts.XYChart);
+	      this.chart.data = this.data;
+	      this.chart.paddingRight = 40;
+	      this.chart.scrollbarX = new am4core.Scrollbar();
+	      this.chart.scrollbarX.parent = this.chart.bottomAxesContainer;
+	      this.createAxises();
+	      this.createColumn('plan', main_core.Loc.getMessage('TASKS_SCRUM_TEAM_SPEED_CHART_PLAN_COLUMN'), '#2882b3');
+	      this.createColumn('done', main_core.Loc.getMessage('TASKS_SCRUM_TEAM_SPEED_CHART_DONE_COLUMN'), '#9c1f1f');
+	      this.createLegend();
+	    }
+	  }, {
+	    key: "createAxises",
+	    value: function createAxises() {
+	      var xAxis = this.chart.xAxes.push(new am4charts.CategoryAxis());
+	      xAxis.dataFields.category = 'sprintName';
+	      xAxis.renderer.grid.template.location = 0;
+	      var yAxis = this.chart.yAxes.push(new am4charts.ValueAxis());
+	      yAxis.min = 0;
+	    }
+	  }, {
+	    key: "createColumn",
+	    value: function createColumn(valueY, name, color) {
+	      var series = this.chart.series.push(new am4charts.ColumnSeries());
+	      series.dataFields.valueY = valueY;
+	      series.dataFields.categoryX = 'sprintName';
+	      series.name = name;
+	      series.stroke = am4core.color(color);
+	      series.fill = am4core.color(color); // const bullet = series.bullets.push(new am4charts.LabelBullet())
+	      // bullet.dy = 10;
+	      // bullet.label.text = '{valueY}';
+	      // bullet.label.fill = am4core.color('#ffffff');
+
+	      return series;
+	    }
+	  }, {
+	    key: "createLegend",
+	    value: function createLegend() {
+	      this.chart.legend = new am4charts.Legend();
+	      this.chart.legend.position = 'bottom';
+	      this.chart.legend.paddingBottom = 20;
+	      this.chart.legend.itemContainers.template.clickable = false;
+	    }
+	  }, {
+	    key: "destroyChart",
+	    value: function destroyChart() {
+	      this.chart.dispose();
+	    }
+	  }]);
+	  return TeamSpeedChart;
+	}();
+
+	function _templateObject2$8() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-project-side-panel\">\n\t\t\t\t<div class=\"tasks-scrum-project-side-panel-header\">\n\t\t\t\t\t<span class=\"tasks-scrum-project-side-panel-header-title\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-project-dod-panel\"></div>\n\t\t\t\t<div class=\"tasks-scrum-project-dod-options\">\n\t\t\t\t\t<label class=\"ui-ctl ui-ctl-checkbox\">\n\t\t\t\t\t\t<input type=\"checkbox\" class=\"ui-ctl-element dod-items-required\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-project-side-panel-buttons\"></div>\n\t\t\t</div>\n\t\t"]);
+
+	  _templateObject2$8 = function _templateObject2() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject$m() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-project-side-panel\">\n\t\t\t\t<div class=\"tasks-scrum-project-side-panel-header\">\n\t\t\t\t\t<span class=\"tasks-scrum-project-side-panel-header-title\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-project-side-panel-chart\"></div>\n\t\t\t\t<div class=\"tasks-scrum-project-side-panel-buttons\"></div>\n\t\t\t</div>\n\t\t"]);
+
+	  _templateObject$m = function _templateObject() {
+	    return data;
+	  };
+
+	  return data;
+	}
+	var ProjectSidePanel = /*#__PURE__*/function () {
+	  function ProjectSidePanel(params) {
+	    babelHelpers.classCallCheck(this, ProjectSidePanel);
+	    this.sprints = params.sprints ? params.sprints : new Map();
+	    this.sidePanel = params.sidePanel;
+	    this.requestSender = params.requestSender;
+	  }
+
+	  babelHelpers.createClass(ProjectSidePanel, [{
+	    key: "showTeamSpeedChart",
+	    value: function showTeamSpeedChart() {
+	      var _this = this;
+
+	      this.sidePanelId = 'tasks-scrum-start-' + main_core.Text.getRandom();
+	      this.sidePanel.subscribeOnce('onLoadSidePanel', this.onLoadTeamSpeedChartPanel.bind(this));
+	      this.sidePanel.subscribe('onCloseSidePanel', this.onCloseTeamSpeedChart.bind(this));
+	      this.sidePanel.openSidePanel(this.sidePanelId, {
+	        contentCallback: function contentCallback() {
+	          return new Promise(function (resolve, reject) {
+	            resolve(_this.buildTeamSpeedPanel());
+	          });
+	        },
+	        zIndex: 1000
+	      });
+	    }
+	  }, {
+	    key: "showDefinitionOfDone",
+	    value: function showDefinitionOfDone(entity) {
+	      var _this2 = this;
+
+	      this.sidePanelId = 'tasks-scrum-dod-' + main_core.Text.getRandom();
+	      this.entity = entity;
+	      this.sidePanel.subscribeOnce('onLoadSidePanel', this.onLoadDodPanel.bind(this));
+	      this.sidePanel.openSidePanel(this.sidePanelId, {
+	        contentCallback: function contentCallback() {
+	          return new Promise(function (resolve, reject) {
+	            resolve(_this2.buildDodPanel());
+	          });
+	        },
+	        zIndex: 1000
+	      });
+	    }
+	  }, {
+	    key: "buildTeamSpeedPanel",
+	    value: function buildTeamSpeedPanel() {
+	      return main_core.Tag.render(_templateObject$m(), main_core.Loc.getMessage('TASKS_SCRUM_TEAM_SPEED_CHART_HEADER'));
+	    }
+	  }, {
+	    key: "buildDodPanel",
+	    value: function buildDodPanel() {
+	      return main_core.Tag.render(_templateObject2$8(), main_core.Loc.getMessage('TASKS_SCRUM_DOD_HEADER'), main_core.Loc.getMessage('TASKS_SCRUM_DOD_OPTIONS_REQUIRED_LABEL'));
+	    }
+	  }, {
+	    key: "onLoadTeamSpeedChartPanel",
+	    value: function onLoadTeamSpeedChartPanel(baseEvent) {
+	      var _this3 = this;
+
+	      var sidePanel = baseEvent.getData();
+	      this.form = sidePanel.getContainer().querySelector('.tasks-scrum-project-side-panel');
+	      this.getTeamSpeedChartData().then(function (data) {
+	        setTimeout(function () {
+	          _this3.teamSpeedChart = new TeamSpeedChart(data);
+
+	          _this3.teamSpeedChart.createChart(_this3.form.querySelector('.tasks-scrum-project-side-panel-chart'));
+	        }, 300);
+	      });
+	    }
+	  }, {
+	    key: "onCloseTeamSpeedChart",
+	    value: function onCloseTeamSpeedChart(baseEvent) {
+	      var _this4 = this;
+
+	      var sidePanel = baseEvent.getData();
+
+	      if (this.sidePanelId === sidePanel.getUrl()) {
+	        setTimeout(function () {
+	          _this4.teamSpeedChart.destroyChart();
+
+	          _this4.teamSpeedChart = null;
+	        }, 300);
+	      }
+	    }
+	  }, {
+	    key: "onLoadDodPanel",
+	    value: function onLoadDodPanel(baseEvent) {
+	      var _this5 = this;
+
+	      var sidePanel = baseEvent.getData();
+	      this.form = sidePanel.getContainer().querySelector('.tasks-scrum-project-side-panel');
+	      this.getDodComponent().then(function (data) {
+	        var dodContainer = _this5.form.querySelector('.tasks-scrum-project-dod-panel');
+
+	        main_core.Runtime.html(dodContainer, data.html);
+	      }).then(function () {
+	        _this5.getDodPanelData().then(function (data) {
+	          _this5.prepareDodOptionsContainer(data);
+	        });
+	      }).then(function () {
+	        _this5.requestSender.getDodButtons().then(function (response) {
+	          var buttonsContainer = _this5.form.querySelector('.tasks-scrum-project-side-panel-buttons');
+
+	          main_core.Runtime.html(buttonsContainer, response.data.html).then(function () {
+	            main_core.Event.bind(buttonsContainer.querySelector('[name=save]'), 'click', function () {
+	              _this5.requestSender.saveDod(_this5.getRequestDataForSaveList()).then(function (response) {
+	                sidePanel.close();
+	              });
+	            });
+	          });
+	        });
+	      });
+	    }
+	  }, {
+	    key: "getTeamSpeedChartData",
+	    value: function getTeamSpeedChartData() {
+	      var _this6 = this;
+
+	      return new Promise(function (resolve, reject) {
+	        _this6.requestSender.getTeamSpeedChartData().then(function (response) {
+	          resolve(response.data);
+	        });
+	      });
+	    }
+	  }, {
+	    key: "getDodComponent",
+	    value: function getDodComponent() {
+	      var _this7 = this;
+
+	      return new Promise(function (resolve, reject) {
+	        _this7.requestSender.getDodComponent({
+	          entityId: _this7.entity.getId()
+	        }).then(function (response) {
+	          resolve(response.data);
+	        }).catch(function (response) {
+	          _this7.requestSender.showErrorAlert(response, main_core.Loc.getMessage('TASKS_SCRUM_ERROR_TITLE_POPUP'));
+	        });
+	      });
+	    }
+	  }, {
+	    key: "getDodPanelData",
+	    value: function getDodPanelData() {
+	      var _this8 = this;
+
+	      return new Promise(function (resolve, reject) {
+	        _this8.requestSender.getDodPanelData({
+	          entityId: _this8.entity.getId()
+	        }).then(function (response) {
+	          resolve(response.data);
+	        }).catch(function (response) {
+	          _this8.requestSender.showErrorAlert(response, main_core.Loc.getMessage('TASKS_SCRUM_ERROR_TITLE_POPUP'));
+	        });
+	      });
+	    }
+	  }, {
+	    key: "getRequestDataForSaveList",
+	    value: function getRequestDataForSaveList() {
+	      var requestData = {};
+	      requestData.entityId = this.entity.getId();
+	      requestData.items = this.getEntityChecklistItems();
+	      requestData.required = this.getDodItemsRequired();
+	      return requestData;
+	    }
+	  }, {
+	    key: "getEntityChecklistItems",
+	    value: function getEntityChecklistItems() {
+	      /* eslint-disable */
+	      if (typeof BX.Tasks.CheckListInstance === 'undefined') {
+	        return [];
+	      }
+
+	      var treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
+	      return treeStructure.getRequestData();
+	      /* eslint-enable */
+	    }
+	  }, {
+	    key: "getDodItemsRequired",
+	    value: function getDodItemsRequired() {
+	      var optionsContainer = this.form.querySelector('.tasks-scrum-project-dod-options');
+	      var option = optionsContainer.querySelector('.dod-items-required');
+	      return option.checked === true ? 'Y' : 'N';
+	    }
+	  }, {
+	    key: "prepareDodOptionsContainer",
+	    value: function prepareDodOptionsContainer(data) {
+	      if (data['dodItemsRequired']) {
+	        var optionsContainer = this.form.querySelector('.tasks-scrum-project-dod-options');
+	        var option = optionsContainer.querySelector('.dod-items-required');
+	        option.checked = data['dodItemsRequired'] === 'Y';
+	      }
+	    }
+	  }]);
+	  return ProjectSidePanel;
+	}();
+
 	function _templateObject4$6() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-sprints\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"]);
 
@@ -5666,20 +6319,20 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return data;
 	}
 
-	function _templateObject2$8() {
+	function _templateObject2$9() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div id=\"", "\">\n\t\t\t\t\t<label class=\"ui-ctl ui-ctl-file-drop tasks-scrum-sprint-sprint-add-drop\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t<small>", "</small>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</label>\n\t\t\t\t</div>\n\t\t\t"]);
 
-	  _templateObject2$8 = function _templateObject2() {
+	  _templateObject2$9 = function _templateObject2() {
 	    return data;
 	  };
 
 	  return data;
 	}
 
-	function _templateObject$m() {
+	function _templateObject$n() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div id=\"", "\" class=\"tasks-scrum-sprint-create ui-btn ui-btn-md ui-btn-themes ui-btn-light-border ui-btn-icon-add\">\n\t\t\t\t\t<span>", "</span>\n\t\t\t\t</div>\n\t\t\t"]);
 
-	  _templateObject$m = function _templateObject() {
+	  _templateObject$n = function _templateObject() {
 	    return data;
 	  };
 
@@ -5789,8 +6442,31 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      });
 	      this.draggableItems.subscribe('end', function (baseEvent) {
 	        var dragEndEvent = baseEvent.getData();
+	        var sourceContainer = dragEndEvent.sourceContainer;
+	        var sourceEntityId = parseInt(sourceContainer.dataset.entityId, 10);
 
-	        _this2.onItemMove(dragEndEvent);
+	        var sourceEntity = _this2.findEntityByEntityId(sourceEntityId);
+
+	        var endContainer = dragEndEvent.endContainer;
+	        var endEntityId = parseInt(endContainer.dataset.entityId, 10);
+
+	        if (sourceEntityId === endEntityId) {
+	          _this2.onItemMove(dragEndEvent);
+	        } else {
+	          var message = main_core.Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASK_FROM_ACTIVE');
+
+	          _this2.onMoveConfirm(sourceEntity, message).then(function () {
+	            _this2.onItemMove(dragEndEvent);
+	          }).catch(function () {
+	            var itemNode = dragEndEvent.source;
+	            var itemId = itemNode.dataset.itemId;
+
+	            var item = _this2.findItemByItemId(itemId);
+
+	            var itemNodeAfterSourceItem = sourceEntity.getListItemsNode().children[item.getSort()];
+	            main_core.Dom.insertBefore(itemNode, itemNodeAfterSourceItem);
+	          });
+	        }
 	      });
 	      this.draggableSprints = new ui_draganddrop_draggable.Draggable({
 	        container: this.sprintListNode.querySelector('.tasks-scrum-sprint-planned-list'),
@@ -5808,6 +6484,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "bindHandlers",
 	    value: function bindHandlers(newSprint) {
 	      var _this3 = this;
+
+	      this.teamSpeedChartButtonContainerNode = document.getElementById('tasks-scrum-team-speed-button-container');
+	      main_core.Event.bind(this.teamSpeedChartButtonContainerNode, 'click', this.onShowTeamSpeedChart.bind(this));
 
 	      var createTaskItem = function createTaskItem(baseEvent) {
 	        var data = baseEvent.getData();
@@ -5940,6 +6619,17 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        sprintSidePanel.showCompleteSidePanel(sprint);
 	      };
 
+	      var onShowSprintBurnDownChart = function onShowSprintBurnDownChart(baseEvent) {
+	        var sprint = baseEvent.getTarget();
+	        var sprintSidePanel = new SprintSidePanel({
+	          sprints: _this3.sprints,
+	          sidePanel: _this3.sidePanel,
+	          requestSender: _this3.requestSender,
+	          views: _this3.views
+	        });
+	        sprintSidePanel.showBurnDownChart(sprint);
+	      };
+
 	      var onChangeTaskResponsible = function onChangeTaskResponsible(baseEvent) {
 	        _this3.requestSender.changeTaskResponsible({
 	          itemId: baseEvent.getData().getItemId(),
@@ -6001,6 +6691,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	          _this3.tagSearcher.addEpicToSearcher(updatedEpicInfo);
 	        });
+	      };
+
+	      var onOpenDefinitionOfDone = function onOpenDefinitionOfDone(baseEvent) {
+	        var entity = baseEvent.getTarget();
+	        var projectSidePanel = new ProjectSidePanel({
+	          sidePanel: _this3.sidePanel,
+	          requestSender: _this3.requestSender
+	        });
+	        projectSidePanel.showDefinitionOfDone(entity);
 	      };
 
 	      var onShowTagSearcher = function onShowTagSearcher(baseEvent) {
@@ -6346,6 +7045,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        sprint.subscribe('activateGroupMode', onActivateGroupMode);
 	        sprint.subscribe('deactivateGroupMode', onDeactivateGroupMode);
 	        sprint.subscribe('getSprintCompletedItems', onGetSprintCompletedItems);
+	        sprint.subscribe('showSprintBurnDownChart', onShowSprintBurnDownChart);
 	      };
 
 	      if (newSprint) {
@@ -6362,6 +7062,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.backlog.subscribe('changeTaskResponsible', onChangeTaskResponsible);
 	      this.backlog.subscribe('openAddEpicForm', onOpenAddEpicForm);
 	      this.backlog.subscribe('openListEpicGrid', onOpenListEpicGrid);
+	      this.backlog.subscribe('openDefinitionOfDone', onOpenDefinitionOfDone);
 	      this.backlog.subscribe('attachFilesToTask', onAttachFilesToTask);
 	      this.backlog.subscribe('showTagSearcher', onShowTagSearcher);
 	      this.backlog.subscribe('showEpicSearcher', onShowEpicSearcher);
@@ -6386,7 +7087,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	      var createCreatingButton = function createCreatingButton() {
 	        _this4.sprintCreatingButtonNodeId = 'tasks-scrum-sprint-creating-button';
-	        return main_core.Tag.render(_templateObject$m(), _this4.sprintCreatingButtonNodeId, main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_ADD'));
+	        return main_core.Tag.render(_templateObject$n(), _this4.sprintCreatingButtonNodeId, main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_ADD'));
 	      };
 
 	      var createCreatingDropZone = function createCreatingDropZone() {
@@ -6395,7 +7096,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        }
 
 	        _this4.sprintCreatingDropZoneNodeId = 'tasks-scrum-sprint-creating-drop-zone';
-	        return main_core.Tag.render(_templateObject2$8(), _this4.sprintCreatingDropZoneNodeId, main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_ADD_DROP'));
+	        return main_core.Tag.render(_templateObject2$9(), _this4.sprintCreatingDropZoneNodeId, main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_ADD_DROP'));
 	      };
 
 	      var createSprintsList = function createSprintsList() {
@@ -6435,29 +7136,24 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var dateStart = Math.floor(Date.now() / 1000);
 	      var dateEnd = Math.floor(Date.now() / 1000) + parseInt(this.defaultSprintDuration, 10);
 	      var sprintListNode = this.sprintListNode.querySelector('.tasks-scrum-sprint-planned-list');
-	      var data = {
+	      var sort = sprintListNode.children.length ? sprintListNode.children.length + 1 : 1;
+	      var sprint = Sprint.buildSprint({
 	        name: title,
-	        sort: 1,
+	        sort: sort,
 	        dateStart: dateStart,
 	        dateEnd: dateEnd,
-	        sortInfo: this.calculateSprintSort(1)
+	        storyPoints: storyPoints
+	      });
+	      main_core.Dom.append(sprint.render(), sprintListNode);
+	      var requestData = {
+	        name: title,
+	        sort: sort,
+	        dateStart: dateStart,
+	        dateEnd: dateEnd,
+	        sortInfo: this.calculateSprintSort()
 	      };
-	      return this.requestSender.createSprint(data).then(function (response) {
-	        var sprint = Sprint.buildSprint({
-	          id: response.data.sprintId,
-	          name: title,
-	          sort: 1,
-	          dateStart: dateStart,
-	          dateEnd: dateEnd,
-	          storyPoints: storyPoints
-	        });
-
-	        if (sprintListNode.children.length) {
-	          main_core.Dom.insertBefore(sprint.render(), sprintListNode.firstElementChild);
-	        } else {
-	          main_core.Dom.insertBefore(sprint.render(), sprintListNode);
-	        }
-
+	      return this.requestSender.createSprint(requestData).then(function (response) {
+	        sprint.setId(response.data.sprintId);
 	        sprint.onAfterAppend();
 	        sprint.getNode().scrollIntoView(true);
 
@@ -6544,11 +7240,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function moveToAnotherEntity(entityFrom, item, targetEntity, bindButton) {
 	      var _this6 = this;
 
-	      var isTargetSprintEntity = main_core.Type.isNull(targetEntity);
-	      var sprints = isTargetSprintEntity ? this.getAvailableSprintsToMove() : null;
+	      var isMoveToSprint = main_core.Type.isNull(targetEntity);
+	      var sprints = isMoveToSprint ? this.getAvailableSprintsToMove() : null;
 
 	      if (entityFrom.isGroupMode()) {
-	        if (isTargetSprintEntity) {
+	        if (isMoveToSprint) {
 	          if (sprints.size > 1) {
 	            this.showListSprintsToMove(entityFrom, item, bindButton);
 	          } else {
@@ -6563,38 +7259,21 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            }
 	          }
 	        } else {
-	          if (entityFrom.isActive()) {
-	            ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASKS_FROM_ACTIVE'), function (messageBox) {
-	              messageBox.close();
-
-	              _this6.moveToWithGroupMode(entityFrom, targetEntity, item, false, false);
-	            }, main_core.Loc.getMessage('TASKS_SCRUM_BUTTON_TEXT_MOVE'));
-	          } else {
-	            this.moveToWithGroupMode(entityFrom, targetEntity, item, false, false);
-	          }
+	          var message = main_core.Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASKS_FROM_ACTIVE');
+	          this.onMoveConfirm(entityFrom, message).then(function () {
+	            _this6.moveToWithGroupMode(entityFrom, targetEntity, item, false, false);
+	          });
 	        }
 	      } else {
-	        if (isTargetSprintEntity) {
+	        if (isMoveToSprint) {
 	          if (sprints.size > 1) {
 	            this.showListSprintsToMove(entityFrom, item, bindButton);
 	          } else {
-	            if (entityFrom.isActive()) {
-	              ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASK_FROM_ACTIVE'), function (messageBox) {
-	                messageBox.close();
+	            var _message = main_core.Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASK_FROM_ACTIVE');
 
-	                if (sprints.size === 0) {
-	                  _this6.createSprint().then(function (sprint) {
-	                    _this6.moveTo(entityFrom, sprint, item);
-	                  });
-	                } else {
-	                  sprints.forEach(function (sprint) {
-	                    _this6.moveTo(entityFrom, sprint, item);
-	                  });
-	                }
-	              }, main_core.Loc.getMessage('TASKS_SCRUM_BUTTON_TEXT_MOVE'));
-	            } else {
+	            this.onMoveConfirm(entityFrom, _message).then(function () {
 	              if (sprints.size === 0) {
-	                this.createSprint().then(function (sprint) {
+	                _this6.createSprint().then(function (sprint) {
 	                  _this6.moveTo(entityFrom, sprint, item);
 	                });
 	              } else {
@@ -6602,18 +7281,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	                  _this6.moveTo(entityFrom, sprint, item);
 	                });
 	              }
-	            }
+	            });
 	          }
 	        } else {
-	          if (entityFrom.isActive()) {
-	            ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASK_FROM_ACTIVE'), function (messageBox) {
-	              messageBox.close();
+	          var _message2 = main_core.Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASK_FROM_ACTIVE');
 
-	              _this6.moveTo(entityFrom, targetEntity, item, false);
-	            }, main_core.Loc.getMessage('TASKS_SCRUM_BUTTON_TEXT_MOVE'));
-	          } else {
-	            this.moveTo(entityFrom, targetEntity, item, false);
-	          }
+	          this.onMoveConfirm(entityFrom, _message2).then(function () {
+	            _this6.moveTo(entityFrom, targetEntity, item, false);
+	          });
 	        }
 	      }
 	    }
@@ -6744,27 +7419,19 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          _this9.moveToSprintMenu.addMenuItem({
 	            text: sprint.getName(),
 	            onclick: function onclick(event, menuItem) {
+	              var message = main_core.Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASK_FROM_ACTIVE');
+
 	              if (entityFrom.isGroupMode()) {
-	                if (entityFrom.isActive()) {
-	                  ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASKS_FROM_ACTIVE'), function (messageBox) {
-	                    messageBox.close();
+	                message = main_core.Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASKS_FROM_ACTIVE');
+	              }
 
-	                    _this9.moveToWithGroupMode(entityFrom, sprint, item, true, false);
-	                  }, main_core.Loc.getMessage('TASKS_SCRUM_BUTTON_TEXT_MOVE'));
-	                } else {
+	              _this9.onMoveConfirm(entityFrom, message).then(function () {
+	                if (entityFrom.isGroupMode()) {
 	                  _this9.moveToWithGroupMode(entityFrom, sprint, item, true, false);
-	                }
-	              } else {
-	                if (entityFrom.isActive()) {
-	                  ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASK_FROM_ACTIVE'), function (messageBox) {
-	                    messageBox.close();
-
-	                    _this9.moveTo(entityFrom, sprint, item);
-	                  }, main_core.Loc.getMessage('TASKS_SCRUM_BUTTON_TEXT_MOVE'));
 	                } else {
 	                  _this9.moveTo(entityFrom, sprint, item);
 	                }
-	              }
+	              });
 
 	              menuItem.getMenuWindow().close();
 	            }
@@ -6914,6 +7581,23 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	        moveInAnotherContainer();
 	      }
+	    }
+	  }, {
+	    key: "onMoveConfirm",
+	    value: function onMoveConfirm(entity, message) {
+	      return new Promise(function (resolve, reject) {
+	        if (entity.isActive()) {
+	          ui_dialogs_messagebox.MessageBox.confirm(message, function (messageBox) {
+	            messageBox.close();
+	            resolve();
+	          }, main_core.Loc.getMessage('TASKS_SCRUM_BUTTON_TEXT_MOVE'), function (messageBox) {
+	            messageBox.close();
+	            reject();
+	          });
+	        } else {
+	          resolve();
+	        }
+	      });
 	    }
 	  }, {
 	    key: "onSprintMove",
@@ -7255,24 +7939,54 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        _this18.requestSender.showErrorAlert(response);
 	      });
 	    }
+	  }, {
+	    key: "onShowTeamSpeedChart",
+	    value: function onShowTeamSpeedChart() {
+	      var projectSidePanel = new ProjectSidePanel({
+	        sidePanel: this.sidePanel,
+	        requestSender: this.requestSender
+	      });
+	      projectSidePanel.showTeamSpeedChart();
+	    }
 	  }]);
 	  return Plan;
 	}();
 
 	var CompletedSprint = /*#__PURE__*/function () {
 	  function CompletedSprint(params) {
+	    var _this = this;
+
 	    babelHelpers.classCallCheck(this, CompletedSprint);
 	    this.completedSprint = params.completedSprint;
+	    this.requestSender = new RequestSender({
+	      signedParameters: params.signedParameters
+	    });
+	    this.sidePanel = new SidePanel();
+	    this.sprints = new Map();
+	    params.sprints.forEach(function (sprintData) {
+	      var sprint = Sprint.buildSprint(sprintData);
+
+	      _this.sprints.set(sprint.getId(), sprint);
+	    });
+	    this.views = params.views;
+	    this.initDomNodes();
 	    this.bindHandlers();
 	    this.createTitle();
 	  }
 
 	  babelHelpers.createClass(CompletedSprint, [{
+	    key: "initDomNodes",
+	    value: function initDomNodes() {
+	      this.chartSprintButtonNode = document.getElementById('tasks-scrum-completed-sprint-chart');
+	    }
+	  }, {
 	    key: "bindHandlers",
 	    value: function bindHandlers() {
 	      /* eslint-disable */
 	      BX.addCustomEvent('onTasksGroupSelectorChange', this.onSprintSelectorChange.bind(this));
 	      /* eslint-enable */
+
+	      main_core.Event.bind(this.chartSprintButtonNode, 'click', this.onShowSprintBurnDownChart.bind(this));
 	    }
 	  }, {
 	    key: "createTitle",
@@ -7283,7 +7997,25 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onSprintSelectorChange",
 	    value: function onSprintSelectorChange(currentSprint) {
+	      this.completedSprint = this.findSprintBySprintId(currentSprint.sprintId);
 	      this.titleContainer.textContent = main_core.Text.encode(currentSprint.name);
+	    }
+	  }, {
+	    key: "onShowSprintBurnDownChart",
+	    value: function onShowSprintBurnDownChart() {
+	      var sprintSidePanel = new SprintSidePanel({
+	        sidePanel: this.sidePanel,
+	        requestSender: this.requestSender,
+	        views: this.views
+	      });
+	      sprintSidePanel.showBurnDownChart(this.completedSprint);
+	    }
+	  }, {
+	    key: "findSprintBySprintId",
+	    value: function findSprintBySprintId(sprintId) {
+	      return babelHelpers.toConsumableArray(this.sprints.values()).find(function (sprint) {
+	        return sprint.getId() === parseInt(sprintId, 10);
+	      });
 	    }
 	  }]);
 	  return CompletedSprint;
@@ -7306,7 +8038,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	      case 'completedSprint':
 	        this.scrumView = new CompletedSprint({
-	          completedSprint: new Sprint(params.completedSprint)
+	          completedSprint: new Sprint(params.completedSprint),
+	          signedParameters: params.signedParameters,
+	          sprints: params.sprints,
+	          views: params.views
 	        });
 	        break;
 	    }
@@ -7338,5 +8073,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.Entry = Entry;
 
-}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.UI.EntitySelector,BX.UI,BX,BX.Main,BX.UI.DragAndDrop,BX.UI,BX.Event,BX.UI.Dialogs,BX));
+}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.UI.EntitySelector,BX.UI,BX,BX.Main,BX.UI.DragAndDrop,BX.UI,BX.UI.Dialogs,BX.Event,BX));
 //# sourceMappingURL=script.js.map

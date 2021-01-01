@@ -295,34 +295,6 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 				return;
 			}
 
-			var fieldName = this.getSetting("dataFieldName", "PRODUCT_ROW_DATA");
-			var field = BX.findChild(
-				this._form,
-				{ tagName: "input", attr: { name: fieldName } },
-				true,
-				false
-			);
-			if(!field)
-			{
-				this._form.appendChild(
-					BX.create("input", { attrs: { type: "hidden", name: fieldName } })
-				);
-			}
-
-			var settingFieldName = fieldName + "_SETTINGS";
-			var settingField = BX.findChild(
-				form,
-				{ tagName: "input", attr: { name: settingFieldName } },
-				true,
-				false
-			);
-			if(!settingField)
-			{
-				this._form.appendChild(
-					BX.create("input", { attrs: { type: "hidden", name: settingFieldName } })
-				);
-			}
-
 			BX.bind(this._form, "submit", BX.delegate(this.handleFormSubmit, this));
 		},
 		getTable: function()
@@ -472,17 +444,23 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 				true,
 				false
 			);
+			if(!field)
+			{
+				field = BX.create("input", { attrs: { type: "hidden", name: fieldName } });
+				this._form.appendChild(field);
+			}
 
+			var settingFieldName = fieldName + "_SETTINGS";
 			var settingField = BX.findChild(
 				this._form,
-				{ tagName: "input", attr: { name: fieldName + "_SETTINGS" } },
+				{ tagName: "input", attr: { name: settingFieldName } },
 				true,
 				false
 			);
-
-			if(!field)
+			if(!settingField)
 			{
-				return;
+				settingField = BX.create("input", { attrs: { type: "hidden", name: settingFieldName } });
+				this._form.appendChild(settingField);
 			}
 
 			if(this._hasLayout)
@@ -492,11 +470,37 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 			}
 
 			field.value = this.productsToJson();
+			settingField.value = '{"ENABLE_DISCOUNT": "' + (this.isDiscountEnabled() ? 'Y' : 'N') + '",' +
+				'"ENABLE_TAX": "' + (this.isTaxEnabled() ? 'Y' : 'N') + '"}';
 
+		},
+		removeFormFields: function()
+		{
+			if(!this._form)
+			{
+				return;
+			}
+			var fieldName = this.getSetting("dataFieldName", "PRODUCT_ROW_DATA");
+			var field = BX.findChild(
+				this._form,
+				{ tagName: "input", attr: { name: fieldName } },
+				true,
+				false
+			);
+			if(field)
+			{
+				BX.remove(field);
+			}
+			var settingFieldName = fieldName + "_SETTINGS";
+			var settingField = BX.findChild(
+				this._form,
+				{ tagName: "input", attr: { name: settingFieldName } },
+				true,
+				false
+			);
 			if(settingField)
 			{
-				settingField.value = '{"ENABLE_DISCOUNT": "' + (this.isDiscountEnabled() ? 'Y' : 'N') + '",' +
-					'"ENABLE_TAX": "' + (this.isTaxEnabled() ? 'Y' : 'N') + '"}';
+				BX.remove(settingField);
 			}
 		},
 		handleControlSave: function(data)

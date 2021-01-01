@@ -793,7 +793,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 				$result[] = [
 					"={$propertyTableName}.ORDER_PROPS_ID" => $propertyId,
-					$propertyValueCode => $v
+					"%{$propertyValueCode}" => $v
 				];
 
 				$propertyItterator++;

@@ -1,6 +1,10 @@
 <?
+
+use Bitrix\Crm\Integration\UserConsent;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
+use Bitrix\Crm;
+use Bitrix\Crm\WebForm;
 use Bitrix\Crm\WebForm\Manager;
 use Bitrix\Crm\WebForm\Helper;
 use Bitrix\Crm\WebForm\Form;
@@ -92,7 +96,7 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 				{
 					$unknownItemKeys = array_diff(
 						array_keys($item),
-						array('ID', 'VALUE', 'PRICE', 'CUSTOM_PRICE', 'DISCOUNT', 'NAME', 'SELECTED')
+						array('ID', 'VALUE', 'PRICE', 'CUSTOM_PRICE', 'DISCOUNT', 'NAME', 'SELECTED', 'DISABLED')
 					);
 					if(count($unknownItemKeys) == 0)
 					{
@@ -388,6 +392,16 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 			'CALL_TEXT' => ($canUseCallBack) ? $request->get('CALL_TEXT') : '',
 			'CALL_FROM' => ($canUseCallBack) ? $request->get('CALL_FROM') : '',
 		);
+
+		$agreements = $this->crmWebForm->get()['AGREEMENTS'] ?? [];
+		if ($agreements)
+		{
+			if (!$request->get('AGREEMENT_ID') || $request->get('AGREEMENT_ID') !=  $this->crmWebForm->get()['AGREEMENT_ID'])
+			{
+				array_shift($agreements);
+				$params['AGREEMENTS'] = $agreements;
+			}
+		}
 
 		if ($request->get('ACTIVE') == 'Y')
 		{
@@ -877,7 +891,7 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 		if($CrmPerms->HavePerm('WEBFORM', BX_CRM_PERM_NONE))
 		{
 			ShowError(Loc::getMessage('CRM_PERMISSION_DENIED'));
-			return;
+			return false;
 		}
 		$this->arResult['PERM_CAN_EDIT'] = !$CrmPerms->HavePerm('WEBFORM', BX_CRM_PERM_NONE, 'WRITE');
 
@@ -909,11 +923,94 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 		) ? 'Y' : 'N';
 
 		/* Case for making new callback form from contact-center*/
+		$formCreated = false;
 		if (intval($id) === 0)
 		{
 			$canUseCallBack = Loader::includeModule('voximplant');
 			$this->arResult['FORM']['IS_CALLBACK_FORM'] = $canUseCallBack && ($this->request->get('IS_CALLBACK_FORM') === 'Y') ? 'Y' : false;
+
+			$formData = [
+				'XML_ID' => '',
+				'ACTIVE' => 'Y',
+				'CAPTION' => '',
+				'DESCRIPTION' => '',
+				'IS_SYSTEM' => 'N',
+				'ACTIVE_CHANGE_BY' => is_object($GLOBALS['USER']) ? $GLOBALS['USER']->getId() : null,
+				'IS_CALLBACK_FORM' => $this->arResult['FORM']['IS_CALLBACK_FORM'] ?: 'N',
+			];
+
+			$agreementId = UserConsent::getDefaultAgreementId();
+			$formData['USE_LICENCE'] = $agreementId ? 'Y': 'N';
+			if ($agreementId)
+			{
+				$formData['AGREEMENTS'] = [[
+					'ID' => $agreementId,
+					'CHECKED' => 'Y',
+					'REQUIRED' => 'Y',
+				]];
+			}
+
+			if(!$formData['BUTTON_CAPTION'])
+			{
+				$formData['BUTTON_CAPTION'] = $this->crmWebForm->getButtonCaption();
+			}
+			$formData = $formData + ($this->arResult['FORM']['IS_CALLBACK_FORM']
+				? WebForm\Preset::getCallback('', '')
+				: WebForm\Preset::getById('crm_preset_cd')
+			);
+			$formData['TEMPLATE_ID'] = !$this->arResult['FORM']['IS_CALLBACK_FORM']
+				? 'contacts'
+				: 'callback';
+
+			$this->crmWebForm->merge($formData);
+			$this->crmWebForm->save();
+			if ($this->crmWebForm->hasErrors())
+			{
+				$this->errors = $this->crmWebForm->getErrors();
+				$this->showErrors();
+				return true;
+			}
+			$formCreated = true;
 		}
+
+
+		$this->arResult['FORM_ACTION'] = $GLOBALS['APPLICATION']->GetCurPageParam();
+
+		//////////////////////////////////////
+		//// REDIRECTED (compatible mode)
+		//////////////////////////////////////
+		$landingUrl = WebForm\Internals\LandingTable::getLandingEditUrl($this->crmWebForm->getId());
+		$crmFormSettings = Crm\Settings\WebFormSettings::getCurrent();
+		if ($crmFormSettings->isNewEditorEnabled() && $landingUrl)
+		{
+			if (intval($id) === 0)
+			{
+				$landingUrl = (new \Bitrix\Main\Web\Uri($landingUrl))->addParams(['formCreated' => 'y'])->getLocator();
+			}
+
+			if ($this->request->get('IFRAME') === 'Y')
+			{
+				echo "<script>top.location.href='" . \CUtil::JSEscape($landingUrl) . "';</script>";
+				return false;
+			}
+			else
+			{
+				LocalRedirect($landingUrl);
+			}
+		}
+		elseif ($formCreated)
+		{
+			$this->arResult['FORM'] = $this->crmWebForm->get();
+			$this->arResult['FORM']['ID'] = $id = $this->crmWebForm->getId();
+			$this->arResult['FORM_ACTION'] = str_replace('/0/', "/$id/", $this->arResult['FORM_ACTION']);
+		}
+
+		$this->arResult['EDITOR_CHOISE'] = [
+			'newLink' => Manager::getEditUrl($this->crmWebForm->getId(), true),
+			'new' => Crm\Settings\WebFormSettings::EditorLanding,
+			'old' => Crm\Settings\WebFormSettings::EditorCrm,
+			'confirm' => $crmFormSettings->isEditorConfirmEnabled(),
+		];
 
 		/* Set invoice payer types */
 		$this->initInvoicePayerTypes();
@@ -925,7 +1022,7 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 			if(!$this->arResult['PERM_CAN_EDIT'])
 			{
 				ShowError(Loc::getMessage('CRM_PERMISSION_DENIED'));
-				return;
+				return true;
 			}
 			elseif ($this->arResult['FORM']['IS_READONLY'] !== 'Y')
 			{
@@ -988,6 +1085,8 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 
 		$replaceList = array('id' => $id, 'form_id' => $id);
 		$this->arResult['PATH_TO_WEB_FORM_LIST'] = CComponentEngine::makePathFromTemplate($this->arParams['PATH_TO_WEB_FORM_LIST'], $replaceList);
+
+		return true;
 	}
 
 	public function checkParams()
@@ -1024,7 +1123,10 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 			$APPLICATION->SetTitle(Loc::getMessage('CRM_WEBFORM_EDIT_TITLE'));
 		}
 
-		$this->prepareResult();
+		if (!$this->prepareResult())
+		{
+			return;
+		}
 
 		if ($this->arResult['FORM']['ID'] && $this->arResult['FORM']['IS_READONLY'] == 'Y')
 		{

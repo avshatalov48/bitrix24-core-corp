@@ -1,8 +1,13 @@
 .salescenter-delivery {
 	display: block;
-	width: 100%;
+	max-width: 100%;
 	overflow: hidden;
 	padding: 10px 0 0 0;
+}
+
+.crm-entity-stream-section-content .salescenter-delivery {
+	width: auto;
+	margin-right: 13px;
 }
 
 .salescenter-delivery-header {
@@ -12,7 +17,8 @@
 }
 
 .salescenter-delivery-header-method {
-	display: inline-block;
+	/*display: inline-block;*/
+	display: none;
 	margin-right: 13px;
 }
 
@@ -329,6 +335,10 @@
 	display: block;
 	position: relative;
 	overflow: hidden;
+}
+
+.salescenter-delivery-path-item:last-child {
+	margin-bottom: 30px;
 }
 
 .salescenter-delivery-path-item + .salescenter-delivery-path-item {

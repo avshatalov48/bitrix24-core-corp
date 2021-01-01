@@ -1631,8 +1631,9 @@ BX.namespace('BX.Crm.Activity');
 				departmentSelectDisable: true,
 				sendAjaxSearch: true,
 				callback : {
-					select : function(item, type, search, bUndeleted)
+					select : function(selectedItem, type, search, bUndeleted)
 					{
+						var item = Object.assign({}, selectedItem);
 						if (BX.type.isString(item.name))
 						{
 							item.name = BX.util.htmlspecialcharsback(item.name);

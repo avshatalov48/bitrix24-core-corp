@@ -19,7 +19,8 @@ return [
 		'ui.common',
 		'ui.viewer',
 		'location.core',
-		'location.google'
+		'location.google',
+		'location.osm'
 	],
 	'skip_core' => false,
 	'oninit' => static function()
@@ -35,12 +36,7 @@ return [
 
 		if($source = Service\SourceService::getInstance()->getSource())
 		{
-			$salescenterReceivePaymentAppArea = (defined('SALESCENTER_RECEIVE_PAYMENT_APP_AREA')
-				&& SALESCENTER_RECEIVE_PAYMENT_APP_AREA === true
-			);
-
-			if($salescenterReceivePaymentAppArea || !Service\AddressService::getInstance()->isLimitReached()
-			)
+			if(!Service\AddressService::getInstance()->isLimitReached())
 			{
 				$sourceCode = $source->getCode();
 				$sourceParams = $source->getJSParams();

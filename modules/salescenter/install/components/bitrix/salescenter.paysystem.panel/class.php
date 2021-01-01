@@ -602,7 +602,7 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 	private function isPaySystemAvailable($handler, $psMode = null): bool
 	{
 		$description = Sale\PaySystem\Manager::getHandlerDescription($handler);
-		$isAvailable = !(isset($description['IS_AVAILABLE']) && !$description['IS_AVAILABLE']);
+		$isAvailable = $description && !(isset($description['IS_AVAILABLE']) && !$description['IS_AVAILABLE']);
 		if (!$psMode)
 		{
 			return $isAvailable;
@@ -630,7 +630,7 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 				'sberbank' => '#2C9B47',
 				'sberbank_sms' => '#289D37',
 				'alfabank' => '#EE2A23',
-				'yandex_money' => '#FFA900',
+				'yoo_money' => '#FFA900',
 				'qiwi' => '#E9832C',
 				'webmoney' => '#006FA8',
 				'embedded' => '#0697F2',
@@ -659,6 +659,13 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 			'wooppay' => [
 				'iframe' => '#2F80ED',
 				'checkout' => '#2F80ED',
+			],
+			'alfabank' => '#EF3124',
+			'roboxchange' => [
+				'bank_card' => '#19D0C8',
+				'alfa_bank' => '#EF3124',
+				'apple_pay' => '#8F8F8F',
+				'samsung_pay' => '#1429A1',
 			],
 		];
 	}

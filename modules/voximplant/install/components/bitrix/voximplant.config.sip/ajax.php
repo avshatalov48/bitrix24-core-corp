@@ -3,6 +3,7 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Voximplant\Limits;
 
 Loc::loadLanguageFile(__DIR__.'/component.php');
 
@@ -17,6 +18,12 @@ class VoximplantSipAjaxController extends \Bitrix\Main\Engine\Controller
 
 	public function createSipConnectionAction($type, $title, $server, $login, $password, $authUser = "", $outboundProxy = "")
 	{
+		if (!Limits::canManageTelephony())
+		{
+			$this->addError(new \Bitrix\Main\Error(Loc::getMessage("VOX_CONF_SIP_PAID_PLAN_REQUIRED"), "paid_plan_required"));
+			return null;
+		}
+
 		$type = $type == CVoxImplantSip::TYPE_CLOUD ? CVoxImplantSip::TYPE_CLOUD : CVoxImplantSip::TYPE_OFFICE;
 
 		$permissions = \Bitrix\Voximplant\Security\Permissions::createWithCurrentUser();

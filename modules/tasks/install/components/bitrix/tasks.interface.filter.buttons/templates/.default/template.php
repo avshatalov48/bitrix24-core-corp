@@ -66,10 +66,9 @@ elseif ($section === 'VIEW_TASK')
 			<?php
 			$restPlacementHandlerList = \Bitrix\Rest\PlacementTable::getHandlersList(\CTaskRestService::PLACEMENT_TASK_VIEW_TOP_PANEL);
 			\CJSCore::Init('applayout');
-
 			foreach ($restPlacementHandlerList as $app):?>
 				<div class="task-top-panel-restapp-<?=$app['APP_ID']?>">
-					<a href="#" onclick="BX.rest.AppLayout.openApplication(<?=$app['APP_ID']?>, {}, {PLACEMENT: '<?=\CTaskRestService::PLACEMENT_TASK_VIEW_TOP_PANEL?>', PLACEMENT_ID: '<?=$app['ID']?>'});">
+					<a href="#" onclick="BX.rest.AppLayout.openApplication(<?=$app['APP_ID']?>, {TASK_ID: '<?=$arResult['ENTITY_ID']?>'}, {PLACEMENT: '<?=\CTaskRestService::PLACEMENT_TASK_VIEW_TOP_PANEL?>', PLACEMENT_ID: '<?=$app['ID']?>'});">
 						<?=(trim($app['TITLE']) ? $app['TITLE'] : $app['APP_NAME'])?>
 					</a>
 				</div>

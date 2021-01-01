@@ -86,13 +86,13 @@ else
 	if (
 		WIZARD_USE_SITE_LOGO
 		&& (
-			strpos(WIZARD_TEMPLATE_ID, "light") === 0
+			mb_strpos(WIZARD_TEMPLATE_ID, "light") === 0
 			|| WIZARD_TEMPLATE_ID == "bitrix24"
 		)
 	)
 	{
 		CheckDirPath(WIZARD_SITE_PATH."/include/");
-		$rnd = substr(time(), -4);
+		$rnd = mb_substr(time(), -4);
 
 		if($logo > 0)
 		{
@@ -135,7 +135,7 @@ if ($arSite = $obSite->Fetch())
 	$obTemplate = CSite::GetTemplateList($arSite["LID"]);
 	while($arTemplate = $obTemplate->Fetch())
 	{
-		if(!$found && strlen(trim($arTemplate["CONDITION"]))<=0)
+		if(!$found && trim($arTemplate["CONDITION"]) == '')
 		{
 			$arTemplate["TEMPLATE"] = WIZARD_TEMPLATE_ID;
 			$found = true;
@@ -166,7 +166,7 @@ if ($arSite = $obSite->Fetch())
 	$rsTemplate = CSite::GetTemplateList($arSite["LID"]);
 	while($arTemplate = $rsTemplate->Fetch())
 	{
-		if(strlen(trim($arTemplate["CONDITION"]))<=0)
+		if(trim($arTemplate["CONDITION"]) == '')
 		{
 			$current_template = $arTemplate["TEMPLATE"];
 		}

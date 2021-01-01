@@ -2,8 +2,12 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm;
+use Bitrix\Crm\Attribute\FieldAttributeManager;
+use Bitrix\Crm\Attribute\FieldAttributePhaseGroupType;
+use Bitrix\Crm\Attribute\FieldAttributeType;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Recurring;
+use Bitrix\Crm\Tracking;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
@@ -69,6 +73,8 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 	private $types = null;
 	/** @var bool */
 	private $enableSearchHistory = true;
+	/** @var array */
+	private $defaultEntityData = [];
 
 	public function __construct($component = null)
 	{
@@ -379,7 +385,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 		$this->arResult['CATEGORY_ID'] = $this->categoryID = max($categoryID, 0);
 		//endregion
 
-		$this->arResult['ENTITY_ATTRIBUTE_SCOPE'] = Crm\Attribute\FieldAttributeManager::resolveEntityScope(
+		$this->arResult['ENTITY_ATTRIBUTE_SCOPE'] = FieldAttributeManager::resolveEntityScope(
 			CCrmOwnerType::Deal,
 			$this->entityID,
 			array('CATEGORY_ID' => $this->categoryID)
@@ -605,6 +611,10 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 		);
 		//endregion
 
+		//region Validators
+		$this->prepareValidators();
+		//endregion
+
 		//region TABS
 		$this->arResult['TABS'] = array();
 
@@ -614,44 +624,44 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 			$currencyID = $this->entityData['CURRENCY_ID'];
 		}
 
-		ob_start();
-		$APPLICATION->IncludeComponent('bitrix:crm.product_row.list',
-			'',
-			array(
-				'ID' => $this->arResult['PRODUCT_EDITOR_ID'],
-				'PREFIX' => $this->arResult['PRODUCT_EDITOR_ID'],
-				'FORM_ID' => '',
-				'OWNER_ID' => $this->entityID,
-				'OWNER_TYPE' => 'D',
-				'PERMISSION_TYPE' => $this->arResult['READ_ONLY'] ? 'READ' : 'WRITE',
-				'PERMISSION_ENTITY_TYPE' => $this->arResult['PERMISSION_ENTITY_TYPE'],
-				'PERSON_TYPE_ID' => $this->resolvePersonTypeID($this->entityData),
-				'CURRENCY_ID' => $currencyID,
-				'LOCATION_ID' => $this->isTaxMode && isset($this->entityData['LOCATION_ID']) ? $this->entityData['LOCATION_ID'] : '',
-				'CLIENT_SELECTOR_ID' => '', //TODO: Add Client Selector
-				'PRODUCT_ROWS' =>  isset($this->entityData['PRODUCT_ROWS']) ? $this->entityData['PRODUCT_ROWS'] : null,
-				'HIDE_MODE_BUTTON' => !$this->isEditMode ? 'Y' : 'N',
-				'TOTAL_SUM' => isset($this->entityData['OPPORTUNITY']) ? $this->entityData['OPPORTUNITY'] : null,
-				'TOTAL_TAX' => isset($this->entityData['TAX_VALUE']) ? $this->entityData['TAX_VALUE'] : null,
-				'PRODUCT_DATA_FIELD_NAME' => $this->arResult['PRODUCT_DATA_FIELD_NAME'],
-				'PATH_TO_PRODUCT_EDIT' => $this->arResult['PATH_TO_PRODUCT_EDIT'],
-				'PATH_TO_PRODUCT_SHOW' => $this->arResult['PATH_TO_PRODUCT_SHOW'],
-				'INIT_LAYOUT' => 'N',
-				'INIT_EDITABLE' => $this->arResult['READ_ONLY'] ? 'N' : 'Y',
-				'ENABLE_MODE_CHANGE' => 'N',
+			ob_start();
+			$APPLICATION->IncludeComponent('bitrix:crm.product_row.list',
+				'',
+				array(
+					'ID' => $this->arResult['PRODUCT_EDITOR_ID'],
+					'PREFIX' => $this->arResult['PRODUCT_EDITOR_ID'],
+					'FORM_ID' => '',
+					'OWNER_ID' => $this->entityID,
+					'OWNER_TYPE' => 'D',
+					'PERMISSION_TYPE' => $this->arResult['READ_ONLY'] ? 'READ' : 'WRITE',
+					'PERMISSION_ENTITY_TYPE' => $this->arResult['PERMISSION_ENTITY_TYPE'],
+					'PERSON_TYPE_ID' => $this->resolvePersonTypeID($this->entityData),
+					'CURRENCY_ID' => $currencyID,
+					'LOCATION_ID' => $this->isTaxMode && isset($this->entityData['LOCATION_ID']) ? $this->entityData['LOCATION_ID'] : '',
+					'CLIENT_SELECTOR_ID' => '', //TODO: Add Client Selector
+					'PRODUCT_ROWS' => isset($this->entityData['PRODUCT_ROWS']) ? $this->entityData['PRODUCT_ROWS'] : null,
+					'HIDE_MODE_BUTTON' => !$this->isEditMode ? 'Y' : 'N',
+					'TOTAL_SUM' => isset($this->entityData['OPPORTUNITY']) ? $this->entityData['OPPORTUNITY'] : null,
+					'TOTAL_TAX' => isset($this->entityData['TAX_VALUE']) ? $this->entityData['TAX_VALUE'] : null,
+					'PRODUCT_DATA_FIELD_NAME' => $this->arResult['PRODUCT_DATA_FIELD_NAME'],
+					'PATH_TO_PRODUCT_EDIT' => $this->arResult['PATH_TO_PRODUCT_EDIT'],
+					'PATH_TO_PRODUCT_SHOW' => $this->arResult['PATH_TO_PRODUCT_SHOW'],
+					'INIT_LAYOUT' => 'N',
+					'INIT_EDITABLE' => $this->arResult['READ_ONLY'] ? 'N' : 'Y',
+					'ENABLE_MODE_CHANGE' => 'N',
 				'USE_ASYNC_ADD_PRODUCT' => 'Y'
-			),
-			false,
+				),
+				false,
 			array('HIDE_ICONS' => 'Y', 'ACTIVE_COMPONENT'=>'Y')
-		);
-		$html = ob_get_contents();
-		ob_end_clean();
+			);
+			$html = ob_get_contents();
+			ob_end_clean();
 
-		$this->arResult['TABS'][] = array(
-			'id' => 'tab_products',
-			'name' => Loc::getMessage('CRM_DEAL_TAB_PRODUCTS'),
-			'html' => $html
-		);
+			$this->arResult['TABS'][] = array(
+				'id' => 'tab_products',
+				'name' => Loc::getMessage('CRM_DEAL_TAB_PRODUCTS'),
+				'html' => $html
+			);
 
 		if ($this->entityData['IS_RECURRING'] !== "Y")
 		{
@@ -1193,7 +1203,16 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 				'title' => Loc::getMessage('CRM_DEAL_FIELD_TYPE_ID'),
 				'type' => 'list',
 				'editable' => true,
-				'data' => array('items' => \CCrmInstantEditorHelper::PrepareListOptions($this->prepareTypeList()))
+				'data' => [
+					'items' => \CCrmInstantEditorHelper::PrepareListOptions(
+						$this->prepareTypeList(),
+						[
+							'NOT_SELECTED' => Loc::getMessage('CRM_DEAL_SOURCE_NOT_SELECTED'),
+							'NOT_SELECTED_VALUE' => ''
+						]
+					),
+					'defaultValue' => $this->defaultEntityData['TYPE_ID'] ?? null,
+				]
 			),
 			array(
 				'name' => 'SOURCE_ID',
@@ -1252,14 +1271,20 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 				'title' => Loc::getMessage('CRM_DEAL_FIELD_CLOSEDATE'),
 				'type' => 'datetime',
 				'editable' => true,
-				'data' =>  array('enableTime' => false)
+				'data' => [
+					'enableTime' => false,
+					'defaultValue' => $this->defaultEntityData['CLOSEDATE'] ?? null,
+				],
 			),
 			array(
 				'name' => 'BEGINDATE',
 				'title' => Loc::getMessage('CRM_DEAL_FIELD_BEGINDATE'),
 				'type' => 'datetime',
 				'editable' => true,
-				'data' => array('enableTime' => false)
+				'data' => [
+					'enableTime' => false,
+					'defaultValue' => $this->defaultEntityData['BEGINDATE'] ?? null,
+				],
 			),
 			array(
 				"name" => "PROBABILITY",
@@ -1347,7 +1372,8 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 					'showUrl' => 'PATH_TO_ASSIGNED_BY_USER',
 					'pathToProfile' => $this->arResult['PATH_TO_USER_PROFILE']
 
-				)
+				),
+				'enableAttributes' => false
 			),
 			array(
 				'name' => 'OBSERVER',
@@ -1398,7 +1424,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 			),
 		);
 
-		Crm\Tracking\UI\Details::appendEntityFields($this->entityFieldInfos);
+		Tracking\UI\Details::appendEntityFields($this->entityFieldInfos);
 		$this->entityFieldInfos[] = array(
 			'name' => 'UTM',
 			'title' => Loc::getMessage('CRM_DEAL_FIELD_UTM'),
@@ -1442,6 +1468,21 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 		}
 		return $this->entityDataScheme;
 	}
+	public function prepareValidators()
+	{
+		if(isset($this->arResult['ENTITY_VALIDATORS']))
+		{
+			return $this->arResult['ENTITY_VALIDATORS'];
+		}
+
+		$this->arResult['ENTITY_VALIDATORS'] = [
+			[
+				'type' => 'trackingSource',
+				'data' => ['fieldName' => Tracking\UI\Details::SourceId]
+			]
+		];
+		return $this->arResult['ENTITY_VALIDATORS'];
+	}
 	public function prepareEntityUserFields()
 	{
 		if($this->userFields === null)
@@ -1454,21 +1495,14 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 	{
 		if(!$this->entityFieldAttributeConfig)
 		{
-			if(!Crm\Attribute\FieldAttributeManager::isEnabled())
-			{
-				$this->entityFieldAttributeConfig = array();
-			}
-			else
-			{
-				$this->entityFieldAttributeConfig = Crm\Attribute\FieldAttributeManager::getEntityConfigurations(
+			$this->entityFieldAttributeConfig = FieldAttributeManager::getEntityConfigurations(
+				CCrmOwnerType::Deal,
+				FieldAttributeManager::resolveEntityScope(
 					CCrmOwnerType::Deal,
-					Crm\Attribute\FieldAttributeManager::resolveEntityScope(
-						CCrmOwnerType::Deal,
-						$this->entityID,
-						array('CATEGORY_ID' => $this->categoryID)
-					)
-				);
-			}
+					$this->entityID,
+					array('CATEGORY_ID' => $this->categoryID)
+				)
+			);
 		}
 		return $this->entityFieldAttributeConfig;
 	}
@@ -1553,6 +1587,31 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 
 		return $this->userFieldInfos;
 	}
+
+	protected function isFieldHasDefaultValueAttribute(array $fieldsInfo, string $fieldName): bool
+	{
+		return (
+			isset($fieldsInfo[$fieldName]['ATTRIBUTES'])
+			&& in_array(
+				CCrmFieldInfoAttr::HasDefaultValue,
+				$fieldsInfo[$fieldName]['ATTRIBUTES'],
+				true
+			));
+	}
+
+	protected function isSetDefaultValueForField(
+		array $fieldsInfo,
+		array $requiredFields,
+		string $fieldName
+	): bool
+	{
+		// if field is not required and has an attribute
+		return (
+			!in_array($fieldName, $requiredFields, true)
+			&& $this->isFieldHasDefaultValueAttribute($fieldsInfo, $fieldName)
+		);
+	}
+
 	public function prepareEntityData()
 	{
 		/** @global \CMain $APPLICATION */
@@ -1565,6 +1624,8 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 
 		$this->prepareEntityUserFields();
 		$this->prepareEntityUserFieldInfos();
+
+		$isTrackingFieldRequired = false;
 
 		if($this->conversionWizard !== null)
 		{
@@ -1602,14 +1663,40 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 		}
 		elseif($this->entityID <= 0)
 		{
-			$this->entityData = array();
+			$requiredFields = Crm\Attribute\FieldAttributeManager::isEnabled()
+				? Crm\Attribute\FieldAttributeManager::getRequiredFields(
+					CCrmOwnerType::Deal,
+					$this->entityID,
+					['TYPE_ID', 'BEGINDATE', 'CLOSEDATE', Tracking\UI\Details::SourceId],
+					Crm\Attribute\FieldOrigin::SYSTEM
+				)
+				: [];
+			$isTrackingFieldRequired = in_array(Tracking\UI\Details::SourceId, $requiredFields, true);
+			$fieldsInfo = CCrmDeal::GetFieldsInfo();
+			$this->entityData = [];
 			//region Default Dates
 			$beginDate = time() + \CTimeZone::GetOffset();
 			$time = localtime($beginDate, true);
 			$beginDate -= $time['tm_sec'] + 60 * $time['tm_min'] + 3600 * $time['tm_hour'];
 
-			$this->entityData['BEGINDATE'] = ConvertTimeStamp($beginDate, 'SHORT', SITE_ID);
-			$this->entityData['CLOSEDATE'] = ConvertTimeStamp($beginDate + 7 * 86400, 'SHORT', SITE_ID);
+			if($this->isFieldHasDefaultValueAttribute($fieldsInfo, 'BEGINDATE'))
+			{
+				$this->arResult['FIELDS_SET_DEFAULT_VALUE'][] = 'BEGINDATE';
+				$this->defaultEntityData['BEGINDATE'] = ConvertTimeStamp($beginDate, 'SHORT', SITE_ID);;
+				if($this->isSetDefaultValueForField($fieldsInfo, $requiredFields, 'BEGINDATE'))
+				{
+					$this->entityData['BEGINDATE'] = $this->defaultEntityData['BEGINDATE'];
+				}
+			}
+			if($this->isFieldHasDefaultValueAttribute($fieldsInfo, 'CLOSEDATE'))
+			{
+				$this->arResult['FIELDS_SET_DEFAULT_VALUE'][] = 'CLOSEDATE';
+				$this->defaultEntityData['CLOSEDATE'] = ConvertTimeStamp($beginDate + 7 * 86400, 'SHORT', SITE_ID);
+				if($this->isSetDefaultValueForField($fieldsInfo, $requiredFields, 'CLOSEDATE'))
+				{
+					$this->entityData['CLOSEDATE'] = $this->defaultEntityData['CLOSEDATE'];
+				}
+			}
 			//endregion
 			//leave OPPORTUNITY unassigned
 			//$this->entityData['OPPORTUNITY'] = 0.0;
@@ -1643,11 +1730,20 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 			}
 			//endregion
 
+			// set first option by default if the field is not required
 			$typeList = $this->prepareTypeList();
-			if(!empty($typeList))
+			if(
+				!empty($typeList)
+				&& $this->isFieldHasDefaultValueAttribute($fieldsInfo, 'TYPE_ID'))
 			{
-				$this->entityData['TYPE_ID'] = current(array_keys($typeList));
+				$this->arResult['FIELDS_SET_DEFAULT_VALUE'][] = 'TYPE_ID';
+				$this->defaultEntityData['TYPE_ID'] = current(array_keys($typeList));
+				if($this->isSetDefaultValueForField($fieldsInfo, $requiredFields, 'TYPE_ID'))
+				{
+					$this->entityData['TYPE_ID'] = $this->defaultEntityData['TYPE_ID'];
+				}
 			}
+			unset($by, $order);
 
 			if(isset($this->arResult['INITIAL_DATA']) && !empty($this->arResult['INITIAL_DATA']))
 			{
@@ -1806,9 +1902,10 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 		//region Responsible
 		if(isset($this->entityData['ASSIGNED_BY_ID']) && $this->entityData['ASSIGNED_BY_ID'] > 0)
 		{
+			$by = 'ID';
+			$order = 'ASC';
 			$dbUsers = \CUser::GetList(
-				$by = 'ID',
-				$order = 'ASC',
+				$by, $order,
 				array('ID' => $this->entityData['ASSIGNED_BY_ID']),
 				array(
 					'FIELDS' => array(
@@ -1817,6 +1914,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 					)
 				)
 			);
+			unset($by, $order);
 			$user = is_object($dbUsers) ? $dbUsers->Fetch() : null;
 			if(is_array($user))
 			{
@@ -1939,12 +2037,14 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 		{
 			$this->entityData['OBSERVER_INFOS'] = array();
 
+			$by = 'ID';
+			$order = 'ASC';
 			$userDbResult = \CUser::GetList(
-				($by = 'ID'),
-				($order = 'ASC'),
+				$by, $order,
 				array('ID' => implode('||', $this->entityData['OBSERVER_IDS'])),
 				array('FIELDS' => array('ID', 'PERSONAL_PHOTO', 'WORK_POSITION', 'NAME', 'SECOND_NAME', 'LAST_NAME'))
 			);
+			unset($by, $order);
 
 			$observerMap = array();
 			while($userData = $userDbResult->Fetch())
@@ -2316,10 +2416,11 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 		}
 		//endregion
 
-		Crm\Tracking\UI\Details::prepareEntityData(
+		Tracking\UI\Details::prepareEntityData(
 			\CCrmOwnerType::Deal,
 			$this->entityID,
-			$this->entityData
+			$this->entityData,
+			$isTrackingFieldRequired
 		);
 
 		return ($this->arResult['ENTITY_DATA'] = $this->entityData);
@@ -2407,16 +2508,27 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 		return $this->stages;
 	}
 
-	protected function prepareEntityFieldAttributes()
+	public function prepareEntityFieldAttributes()
 	{
 		if($this->entityFieldInfos === null)
 		{
 			return;
 		}
 
+		$isEntityDataModified = false;
 		$attrConfigs = $this->prepareEntityFieldAttributeConfigs();
 		for($i = 0, $length = count($this->entityFieldInfos); $i < $length; $i++)
 		{
+			$isPhaseDependent = FieldAttributeManager::isPhaseDependent();
+			if (!$isPhaseDependent)
+			{
+				if (!is_array($this->entityFieldInfos[$i]['data']))
+				{
+					$this->entityFieldInfos[$i]['data'] = [];
+				}
+				$this->entityFieldInfos[$i]['data']['isPhaseDependent'] = false;
+			}
+
 			$fieldName = $this->entityFieldInfos[$i]['name'];
 			if(!isset($attrConfigs[$fieldName]))
 			{
@@ -2429,9 +2541,211 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 			}
 
 			$this->entityFieldInfos[$i]['data']['attrConfigs'] = $attrConfigs[$fieldName];
+
+			if (is_array($attrConfigs[$fieldName]) && !empty($attrConfigs[$fieldName]))
+			{
+				$isRequiredByAttribute = false;
+				$ready = false;
+				$attrConfig = $attrConfigs[$fieldName];
+				foreach ($attrConfig as $item)
+				{
+					if (is_array($item) && isset($item['typeId'])
+						&& $item['typeId'] === FieldAttributeType::REQUIRED)
+					{
+						if ($isPhaseDependent)
+						{
+							if (is_array($item['groups']))
+							{
+								foreach ($item['groups'] as $group)
+								{
+									if (is_array($group) && isset($group['phaseGroupTypeId'])
+										&& $group['phaseGroupTypeId'] === FieldAttributePhaseGroupType::ALL)
+									{
+										$isRequiredByAttribute = true;
+										$ready = true;
+										break;
+									}
+								}
+							}
+						}
+						else
+						{
+							$isRequiredByAttribute = true;
+							$ready = true;
+						}
+						if ($ready)
+						{
+							break;
+						}
+					}
+				}
+				if ($isRequiredByAttribute)
+				{
+					if (!is_array($this->entityFieldInfos[$i]['data']))
+					{
+						$this->entityFieldInfos[$i]['data'] = [];
+					}
+					$this->entityFieldInfos[$i]['data']['isRequiredByAttribute'] = true;
+
+					// This block allows in the component crm.entity.editor to determine the presence of mandatory
+					// standard entity fields with empty values.
+					if (is_array($this->entityData)
+						&& $this->isEntityFieldHasEmpyValue($this->entityFieldInfos[$i]))
+					{
+						if (!is_array($this->entityData['EMPTY_REQUIRED_SYSTEM_FIELD_MAP']))
+						{
+							$this->entityData['EMPTY_REQUIRED_SYSTEM_FIELD_MAP'] = [];
+						}
+						$this->entityData['EMPTY_REQUIRED_SYSTEM_FIELD_MAP'][$fieldName] = true;
+						$isEntityDataModified = true;
+					}
+				}
+			}
+		}
+
+		if ($isEntityDataModified)
+		{
+			$this->arResult['ENTITY_DATA'] = $this->entityData;
 		}
 	}
+	protected function isEntityFieldHasEmpyValue($fieldInfo)
+	{
+		$result = false;
+		$isResultReady = false;
 
+		if (is_array($fieldInfo) && isset($fieldInfo['name'])
+			&& is_string($fieldInfo['name']) && $fieldInfo['name'] !== '')
+		{
+			$fieldName = $fieldInfo['name'];
+			$fieldType = $fieldInfo['type'] ?? '';
+
+			if ($fieldType === 'userField')
+			{
+				$fieldInfo = $fieldInfo['data']['fieldInfo'] ?? [];
+
+				if(isset($fieldInfo['USER_TYPE_ID']) && $fieldInfo['USER_TYPE_ID'] === 'boolean')
+				{
+					$isResultReady = true;
+				}
+			}
+
+			if (!$isResultReady
+				&& isset($this->entityData[$fieldName]['IS_EMPTY'])
+				&& is_array($this->entityData[$fieldName])
+				&& $this->entityData[$fieldName]['IS_EMPTY']
+			)
+			{
+				$result = true;
+				$isResultReady = true;
+			}
+
+			if (!$isResultReady)
+			{
+				$fieldsToCheck = [
+					'TITLE',                             // text
+					'OPPORTUNITY_WITH_CURRENCY',         // money
+					'BEGINDATE',                         // datetime
+					'CLOSEDATE',                         // datetime
+					'CLIENT',                            // client_light
+					Tracking\UI\Details::SourceId,       // custom
+					'PROBABILITY',                       // number
+					'TYPE_ID',                           // list
+					'SOURCE_ID',                         // list
+					'SOURCE_DESCRIPTION',                // text
+					'OBSERVER',                          // multiple_user
+					'COMMENTS'                           // html
+				];
+				if (in_array($fieldName, $fieldsToCheck, true))
+				{
+					switch ($fieldType)
+					{
+						case 'text':
+						case 'html':
+						case 'list':
+							if (array_key_exists($fieldName, $this->entityData)
+								&& (!is_string($this->entityData[$fieldName])
+									|| $this->entityData[$fieldName] === ''))
+							{
+								$result = true;
+								$isResultReady = true;
+							}
+							break;
+						case 'number':
+							if (array_key_exists($fieldName, $this->entityData)
+								&& $this->entityData[$fieldName] == 0)
+							{
+								$result = true;
+								$isResultReady = true;
+							}
+							break;
+						case 'money':
+							if ($fieldName === 'OPPORTUNITY_WITH_CURRENCY')
+							{
+								$dataFieldName = 'OPPORTUNITY';
+								if (array_key_exists($dataFieldName, $this->entityData)
+									&& empty($this->entityData[$dataFieldName]))
+								{
+									$result = true;
+									$isResultReady = true;
+								}
+							}
+							break;
+						case 'datetime':
+							if (array_key_exists($fieldName, $this->entityData)
+								&& ($this->entityData[$fieldName] === null
+									|| $this->entityData[$fieldName] === ''
+									|| !is_string($this->entityData[$fieldName])))
+							{
+								$result = true;
+								$isResultReady = true;
+							}
+							break;
+						case 'client_light':
+							if ($fieldName === 'CLIENT')
+							{
+								if (is_array($this->entityData['CLIENT_INFO'])
+									&& (!is_array($this->entityData['CLIENT_INFO']['COMPANY_DATA'])
+										|| empty($this->entityData['CLIENT_INFO']['COMPANY_DATA']))
+									&& (!is_array($this->entityData['CLIENT_INFO']['CONTACT_DATA'])
+										|| empty($this->entityData['CLIENT_INFO']['CONTACT_DATA'])))
+								{
+									$result = true;
+									$isResultReady = true;
+								}
+							}
+							break;
+						case 'multiple_user':
+							if ($fieldName === 'OBSERVER')
+							{
+								$dataFieldName = 'OBSERVER_IDS';
+								if (array_key_exists($dataFieldName, $this->entityData)
+									&& (!is_array($this->entityData[$dataFieldName])
+										|| empty($this->entityData[$dataFieldName])))
+								{
+									$result = true;
+									$isResultReady = true;
+								}
+							}
+							break;
+						case 'custom':
+							if ($fieldName === Tracking\UI\Details::SourceId)
+							{
+								if (array_key_exists($fieldName, $this->entityData)
+									&& ($this->entityData[$fieldName] === null
+										|| $this->entityData[$fieldName] < 0))
+								{
+									$result = true;
+									$isResultReady = true;
+								}
+							}
+							break;
+					}
+				}
+			}
+		}
+
+		return $result;
+	}
 	protected function prepareRecurringElements()
 	{
 		if (!$this->isEnableRecurring || $this->arResult['READ_ONLY'] === true)

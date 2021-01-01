@@ -115,6 +115,14 @@ class Counter
 			}
 			elseif ($result['COUNTER_TYPE'] == \CUserCounter::LIVEFEED_CODE)
 			{
+				\CUserCounter::clearByUser(
+					$result['currentUserId'],
+					[ SITE_ID, \CUserCounter::ALL_SITES ],
+					$result['COUNTER_TYPE'],
+					false,
+					false
+				);
+
 				$result['COUNTER_TO_CLEAR'] = $result['COUNTER_TYPE'];
 			}
 

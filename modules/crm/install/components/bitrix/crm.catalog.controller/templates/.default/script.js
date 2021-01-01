@@ -18,7 +18,8 @@
 					{
 						condition: [
 							"/crm/catalog/product/(\\d+)/",
-							"/crm/catalog/section/(\\d+)/"
+							"/crm/catalog/section/(\\d+)/",
+							"/shop/settings/"
 						],
 						handler: this.adjustSidePanelOpener
 					}

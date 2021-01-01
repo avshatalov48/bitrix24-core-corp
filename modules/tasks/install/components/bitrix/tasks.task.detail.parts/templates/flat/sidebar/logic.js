@@ -433,6 +433,7 @@ BX.Tasks.Component.TaskViewSidebar.prototype.syncAuditor = function()
 			bTime: true,
 			value: this.deadline ? this.deadline : today,
 			bHideTimebar: false,
+			bCompatibility: false,
 			callback_after: BX.proxy(function(value, time) {
 				this.setDeadline(value);
 			}, this)

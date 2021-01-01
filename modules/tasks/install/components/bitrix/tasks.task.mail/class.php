@@ -256,6 +256,19 @@ class TasksMailTaskComponent extends TasksTaskComponent
 
 	protected function getChanges()
 	{
+		$previousFields = $this->arParams['PREVIOUS_FIELDS'];
+		foreach ($previousFields as $name => $value)
+		{
+			if (
+				is_array($value)
+				&& array_key_exists('FROM_VALUE', $value)
+				&& array_key_exists('TO_VALUE', $value)
+			)
+			{
+				$this->arParams['PREVIOUS_FIELDS'][$name] = $value['FROM_VALUE'];
+			}
+		}
+
 		return CTaskLog::getChanges($this->arParams['PREVIOUS_FIELDS'], $this->arResult['DATA']['TASK']);
 	}
 }

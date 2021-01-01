@@ -17,7 +17,7 @@ class FieldSynchronizer
 {
 	protected $isCreateMode = false;
 
-	public function getSynchronizeFields($schemeId, $fieldNames, $invoicePayerEntityName = null)
+	public function getSynchronizeFields($schemeId, $fieldNames)
 	{
 		$this->isCreateMode = false;
 
@@ -45,6 +45,51 @@ class FieldSynchronizer
 		}
 
 		return $syncFieldCodes;
+	}
+
+	public function replaceOptionFields(Options $options)
+	{
+		$this->isCreateMode = true;
+
+		$form = $options->getForm();
+		$fields = $form->getFields();
+		$dependencies = $form->get()['DEPENDENCIES'];
+		$schemeId = $form->get()['ENTITY_SCHEME'];
+		$srcFieldCodes = array_column($fields, 'CODE');
+		$fields = array_combine(
+			$srcFieldCodes,
+			$fields
+		);
+
+		$srcFieldMap = $this->getFieldMap($schemeId, $srcFieldCodes);
+		foreach($srcFieldMap as $entityTypeName => $entityFields)
+		{
+			foreach($entityFields as $fieldName => $entityField)
+			{
+				$oldFieldCode = $entityField['OLD_FIELD_CODE'];
+				$newFieldCode = $entityField['NEW_FIELD_CODE'];
+
+				if($oldFieldCode == $newFieldCode)
+				{
+					continue;
+				}
+
+				// replace field
+				self::replaceField($fields, $entityField);
+
+				// replace dependencies
+				self::replaceFieldDependencies($dependencies, $entityField);
+
+				unset($fields[$entityField['OLD_FIELD_CODE']]);
+			}
+		}
+
+		$form->merge([
+			'FIELDS' => array_values($fields),
+			'DEPENDENCIES' => $dependencies,
+		]);
+
+		Options\Fields::clearCache();
 	}
 
 	public function replacePostFields($schemeId, &$fields, &$dependencies, $invoicePayerEntityName = null)
@@ -174,7 +219,12 @@ class FieldSynchronizer
 		}
 
 		// replace field codes and items
-		$fields[$newFieldCode] = $fields[$oldFieldCode];
+		$field = $fields[$oldFieldCode];
+		if (!empty($field['CODE']))
+		{
+			$field['CODE'] = $newFieldCode;
+		}
+		$fields[$newFieldCode] = $field;
 		if(!$fields[$newFieldCode]['ITEMS'])
 		{
 			return;

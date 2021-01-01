@@ -304,7 +304,7 @@ if(typeof BX.Crm.EntityEditorProductRowProxy === "undefined")
 			this._editor.removeControlChangeListener(this._editorControlChangeHandler);
 		}
 
-		this._isChanged = false;
+		this._isChanged = !!this._editor.isNew();
 	};
 	BX.Crm.EntityEditorProductRowProxy.prototype.onEditorControlChange = function(sender, params)
 	{
@@ -366,6 +366,10 @@ if(typeof BX.Crm.EntityEditorProductRowProxy === "undefined")
 			BX.Dom.remove(this._manualOpportunityHiddenInput);
 			this._manualOpportunityHiddenInput = null;
 		}
+		if(this._externalEditor)
+		{
+			this._externalEditor.removeFormFields();
+		}
 	};
 	BX.Crm.EntityEditorProductRowProxy.prototype.rollback = function()
 	{
@@ -383,10 +387,11 @@ if(typeof BX.Crm.EntityEditorProductRowProxy === "undefined")
 			this.setManualOpportunity(this._isManualOpportunity === 'Y');
 		}
 		this.adjustLocks();
+		this._isChanged = false;
 	};
 	BX.Crm.EntityEditorProductRowProxy.prototype.onBeforeSubmit = function()
 	{
-		if(this._externalEditor)
+		if(this._externalEditor && this.isChanged())
 		{
 			this._externalEditor.handleFormSubmit();
 		}
@@ -418,7 +423,7 @@ if(typeof BX.Crm.EntityEditorProductRowProxy === "undefined")
 	};
 	BX.Crm.EntityEditorProductRowProxy.prototype.onBeforesSaveControl = function(data)
 	{
-		if(this._externalEditor)
+		if(this._externalEditor && this.isChanged())
 		{
 			data = this._externalEditor.handleControlSave(data);
 		}

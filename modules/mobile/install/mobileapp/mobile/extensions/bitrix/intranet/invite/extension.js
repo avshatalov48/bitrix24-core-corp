@@ -187,7 +187,8 @@ IntranetInvite.onSendInvite = function(params)
 			fields: {
 				PHONE: phoneList,
 				PHONE_COUNTRY: countryCodeList,
-				DEPARTMENT_ID: this.rootStructureSectionId
+				DEPARTMENT_ID: this.rootStructureSectionId,
+				CONTEXT: 'mobile'
 			}
 		}
 	}).then(response => {

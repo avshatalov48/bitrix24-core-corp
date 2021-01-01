@@ -3,6 +3,11 @@ let handleOutsideClick;
 export default {
 	bind (el, binding, vnode) {
 		handleOutsideClick = (e) => {
+			if (e.type === 'mousedown' && e.which !== 1)
+			{
+				return;
+			}
+
 			e.stopPropagation();
 			const { handler, exclude } = binding.value;
 			let clickedOnExcludedEl = false;
@@ -12,11 +17,20 @@ export default {
 					clickedOnExcludedEl = excludedEl.contains(e.target);
 				}
 			});
+
+			/**
+			 * Click inside map wrapper
+			 */
+			if (e.target.closest('.location-map-wrapper'))
+			{
+				clickedOnExcludedEl = true;
+			}
+
 			if (!el.contains(e.target) && !clickedOnExcludedEl) {
 				vnode.context[handler]()
 			}
 		};
-		document.addEventListener('click', handleOutsideClick);
+		document.addEventListener('mousedown', handleOutsideClick);
 		document.addEventListener('touchstart', handleOutsideClick);
 	},
 

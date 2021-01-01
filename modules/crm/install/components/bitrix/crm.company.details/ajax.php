@@ -8,6 +8,7 @@ require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_befo
 
 use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Crm\Tracking;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -233,6 +234,8 @@ if($action === 'SAVE')
 			}
 		}
 	}
+	/** @global $USER_FIELD_MANAGER CUserTypeManager */
+	global $USER_FIELD_MANAGER;
 	$USER_FIELD_MANAGER->EditFormAddFields(\CCrmCompany::USER_FIELD_ENTITY_ID, $fields, [
 		'FORM' => $fields,
 		'FILES' => [],
@@ -363,6 +366,7 @@ if($action === 'SAVE')
 	}
 
 	$errorMessage = '';
+	$checkExceptions = null;
 	if(!empty($fields) || !empty($updateEntityInfos) || !empty($entityRequisites) || !empty($entityBankDetails))
 	{
 		if(!empty($fields))
@@ -395,6 +399,8 @@ if($action === 'SAVE')
 				$fields['COMMENTS'] = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($fields['COMMENTS']);
 			}
 
+			Tracking\UI\Details::appendEntityFieldValue($fields, $_POST);
+
 			$entity = new \CCrmCompany(false);
 			if($isNew)
 			{
@@ -421,6 +427,7 @@ if($action === 'SAVE')
 				$ID = $entity->Add($fields, true, array('REGISTER_SONET_EVENT' => true));
 				if($ID <= 0)
 				{
+					$checkExceptions = $entity->GetCheckExceptions();
 					$errorMessage = $entity->LAST_ERROR;
 				}
 			}
@@ -428,12 +435,14 @@ if($action === 'SAVE')
 			{
 				if(!$entity->Update($ID, $fields, true, true,  array('REGISTER_SONET_EVENT' => true)))
 				{
+					$checkExceptions = $entity->GetCheckExceptions();
 					$errorMessage = $entity->LAST_ERROR;
 				}
 			}
 		}
 
-		if($errorMessage !== '')
+		$hasErrors = (!empty($checkExceptions) || $errorMessage);
+		if($hasErrors)
 		{
 			//Deletion early created entities
 			foreach($createdEntities as $entityTypeID => $entityIDs)
@@ -443,10 +452,32 @@ if($action === 'SAVE')
 					\Bitrix\Crm\Component\EntityDetails\BaseComponent::deleteEntity($entityTypeID, $entityID);
 				}
 			}
-			__CrmCompanyDetailsEndJsonResonse(array('ERROR' => $errorMessage));
+
+			$responseData = array();
+			if(!empty($checkExceptions))
+			{
+				$checkErrors = array();
+				foreach($checkExceptions as $exception)
+				{
+					if($exception instanceof \CAdminException)
+					{
+						foreach($exception->GetMessages() as $message)
+						{
+							$checkErrors[$message['id']] = $message['text'];
+						}
+					}
+				}
+				$responseData['CHECK_ERRORS'] = $checkErrors;
+			}
+
+			if($errorMessage !== '')
+			{
+				$responseData['ERROR'] = $errorMessage;
+			}
+			__CrmCompanyDetailsEndJsonResonse($responseData);
 		}
 
-		if(!empty($updateEntityInfos))
+		if(!$hasErrors)
 		{
 			foreach($updateEntityInfos as $entityTypeID => $entityInfos)
 			{
@@ -474,7 +505,7 @@ if($action === 'SAVE')
 		);
 		//endregion
 
-		\Bitrix\Crm\Tracking\UI\Details::saveEntityData(
+		Tracking\UI\Details::saveEntityData(
 			\CCrmOwnerType::Company,
 			$ID,
 			$_POST,
@@ -515,6 +546,9 @@ if($action === 'SAVE')
 	$component = new CCrmCompanyDetailsComponent();
 	$component->initializeParams($params);
 	$component->setEntityID($ID);
+	$component->prepareEntityData();
+	$component->prepareFieldInfos();
+	$component->prepareEntityFieldAttributes();
 	$result = array(
 		'ENTITY_ID' => $ID,
 		'ENTITY_DATA' => $component->prepareEntityData(),
@@ -696,6 +730,10 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 		$context['PARAMS'] = array();
 	}
 	$context['PARAMS'] = array_merge($params, $context['PARAMS']);
+
+	$component->prepareEntityData();
+	$component->prepareFieldInfos();
+	$component->prepareEntityFieldAttributes();
 
 	if(empty($fieldNames))
 	{

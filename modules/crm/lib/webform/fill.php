@@ -141,8 +141,6 @@ class Fill
 						continue;
 					}
 
-					$filePos = mb_strpos($fileData['content'], 'base64');
-					$fileData['content'] = mb_substr($fileData['content'], $filePos + 6);
 					$files[] = \CRestUtil::saveFile($fileData['content'], $fileData['name']);
 				}
 				$fieldValues = $files;
@@ -162,7 +160,7 @@ class Fill
 				$fieldValues = array_map(
 					function ($value)
 					{
-						return htmlspecialcharsbx($value);
+						return nl2br(htmlspecialcharsbx($value));
 					},
 					$fieldValues
 				);

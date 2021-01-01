@@ -156,8 +156,8 @@ if(!empty($arResult['ERRORS']))
 				{
 					$menuItems[] = [
 						"ID" => "sms",
-						"TEXT" => "SMS",
-						"TITLE" => "SMS",
+						"TEXT" => GetMessage("CRM_TIMELINE_SMS_TITLE"),
+						"TITLE" => GetMessage("CRM_TIMELINE_SMS") ,
 					] + $baseMenuItem;
 				}
 				if ($arResult["ENABLE_EMAIL"])
@@ -712,6 +712,15 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 				"CRM_TIMELINE_ZOOM_LOGIN_REQUIRED": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_LOGIN_REQUIRED")?>',
 				"CRM_TIMELINE_ZOOM_PLAY_LINK_VIDEO": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_PLAY_LINK_VIDEO")?>',
 				"CRM_TIMELINE_ZOOM_COPY_PASSWORD": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_COPY_PASSWORD")?>',
+                "CRM_TIMELINE_DOCUMENT_VIEWED": '<?=GetMessageJS("CRM_TIMELINE_DOCUMENT_VIEWED")?>',
+                "CRM_TIMELINE_DOCUMENT_VIEWED_STATUS": '<?=GetMessageJS("CRM_TIMELINE_DOCUMENT_VIEWED_STATUS")?>',
+                "CRM_TIMELINE_ORDER_VIEWED": '<?=GetMessageJS("CRM_TIMELINE_ORDER_VIEWED")?>',
+                "CRM_TIMELINE_DOCUMENT_CREATED_STATUS": '<?=GetMessageJS("CRM_TIMELINE_DOCUMENT_CREATED_STATUS")?>',
+				"CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_1": '<?=GetMessageJS("CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_1")?>',
+                "CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_1.5": '<?=GetMessageJS("CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_1.5")?>',
+                "CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_2": '<?=GetMessageJS("CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_2")?>',
+                "CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_3": '<?=GetMessageJS("CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_3")?>',
+                "CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_TEXT": '<?=GetMessageJS("CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_TEXT")?>',
 				"DISK_TMPLT_THUMB": '',
 				"DISK_TMPLT_THUMB2": '',
 			});
@@ -767,7 +776,8 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 					smsStatusSemantics: <?=CUtil::PhpToJSObject($arResult['SMS_STATUS_SEMANTICS'])?>,
 					editorZoomContainer: "<?=CUtil::JSEscape($zoomContainerID)?>",
 					visitParameters: <?= \CUtil::PhpToJSObject($arResult['VISIT_PARAMETERS'])?>,
-					spotlightFastenShowed: <?=$spotlightFastenShowed ? 'true' : 'false'?>
+					spotlightFastenShowed: <?=$spotlightFastenShowed ? 'true' : 'false'?>,
+                    audioPlaybackRate: <?= (float) $arResult['AUDIO_PLAYBACK_RATE'] ?>
 				}
 			);
 		}

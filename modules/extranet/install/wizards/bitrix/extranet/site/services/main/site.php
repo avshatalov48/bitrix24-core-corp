@@ -101,7 +101,10 @@ if (WIZARD_IS_RERUN !== true || WIZARD_B24_TO_CP)
 	}
 
 	CExtranetWizardServices::ReplaceMacrosRecursive(WIZARD_SITE_PATH."/", Array("SITE_DIR" => WIZARD_SITE_DIR));
-	CExtranetWizardServices::ReplaceMacrosRecursive(WIZARD_TEMPLATE_ABSOLUTE_PATH."/", Array("SITE_DIR" => WIZARD_SITE_DIR));
+	if (defined('WIZARD_TEMPLATE_ABSOLUTE_PATH'))
+	{
+		CExtranetWizardServices::ReplaceMacrosRecursive(WIZARD_TEMPLATE_ABSOLUTE_PATH."/", Array("SITE_DIR" => WIZARD_SITE_DIR));
+	}
 
 	CUrlRewriter::Add(
 		array(
@@ -149,7 +152,7 @@ else
 	COption::SetOptionString("main", "wizard_site_id", WIZARD_SITE_ID);
 
 	$siteName = COption::GetOptionString("main", "site_name", "", WIZARD_SITE_ID, true);
-	if (strlen($siteName) > 0)
+	if ($siteName <> '')
 	{
 		$arFields = Array(
 			"NAME" => $siteName

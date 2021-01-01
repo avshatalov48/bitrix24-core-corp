@@ -686,6 +686,33 @@ class CVoxImplantMain
 		return array('TITLE' => $title, 'TEXT' => $text);
 	}
 
+	public static function GetTOS()
+	{
+		$account = new CVoxImplantAccount();
+		if ($account->GetAccountLang(false) !== "ru")
+		{
+			return "";
+		}
+
+		$sanitizer = new \CBXSanitizer();
+		$sanitizer->SetLevel(CBXSanitizer::SECURE_LEVEL_HIGH);
+		$sanitizer->AddTags([
+			"a" => ["href", "target"]
+		]);
+		return $sanitizer->SanitizeHtml(GetMessage("VI_TOS_RU"));
+	}
+
+	public static function GetDemoTopUpWarning()
+	{
+		return GetMessage("VI_DEMO_TOPUP_WARNING", [
+			"#LINK#" => \Bitrix\Main\Loader::includeModule("ui") ? \Bitrix\UI\Util::getArticleUrlByCode("5435221") : ""
+		]);
+	}
+	public static function GetDemoTopUpWarningTitle()
+	{
+		return GetMessage("VI_DEMO_TOPUP_WARNING_TITLE");
+	}
+
 	public static function GetPublicFolder()
 	{
 		return '/telephony/';
@@ -862,7 +889,13 @@ class CVoxImplantMain
 
 		if(\Bitrix\Main\Loader::includeModule('currency'))
 		{
-			return CCurrencyLang::CurrencyFormat($amount, $currency);
+			//TODO: temporary fix
+			$result = CCurrencyLang::CurrencyFormat($amount, $currency);
+			if (!\Bitrix\Main\Loader::includeModule('bitrix24'))
+			{
+				$result = htmlspecialcharsEx($result);
+			}
+			return $result;
 		}
 		else
 		{

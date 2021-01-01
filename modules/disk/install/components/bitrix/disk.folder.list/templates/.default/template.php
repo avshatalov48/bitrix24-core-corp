@@ -454,7 +454,11 @@ BX.message({
 });
 </script>
 
-<?php include('only_grid.php') ?>
+<?php
+echo $isInIframe? "<div id='bx-disk-container' class='bx-disk-container'>" : "";
+include('only_grid.php');
+echo $isInIframe? "</div>" : "";
+?>
 
 <script type="text/javascript">
 BX(function () {
@@ -576,7 +580,7 @@ BX(function () {
 
 	menuItemsLists.push({
 		className: "menu-popup-no-icon menu-popup-item-upload-file",
-		text: "<span id='menuItemsListsUpload'></span><?= CUtil::JSEscape(Loc::getMessage('DISK_FOLDER_LIST_TITLE_UPLOAD_FILE')) ?>",
+		html: "<span id='menuItemsListsUpload'></span><?= CUtil::JSEscape(Loc::getMessage('DISK_FOLDER_LIST_TITLE_UPLOAD_FILE')) ?>",
 		onclick: function(){
 
 		}

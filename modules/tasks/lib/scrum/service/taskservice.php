@@ -14,7 +14,8 @@ use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Task\CheckListTable;
 use Bitrix\Tasks\Internals\Task\CheckListTreeTable as CheckListTreeTable;
-use Bitrix\Tasks\Scrum\Internal\ItemTable;
+use Bitrix\Tasks\Util\Type\DateTime as TasksDateTime;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Tasks\UI;
 
 class TaskService implements Errorable
@@ -239,6 +240,36 @@ class TaskService implements Errorable
 		}
 
 		return [];
+	}
+
+	/**
+	 * @param $taskId
+	 * @return DateTime|null
+	 */
+	public function getTaskClosedDate($taskId)
+	{
+		try
+		{
+			$taskItemObject = $this->getTaskItemObject($taskId);
+
+			$taskData = $taskItemObject->getData(false, [
+				'select' => [
+					'CLOSED_DATE'
+				]
+			]);
+
+			if ($taskData['CLOSED_DATE'])
+			{
+				return TasksDateTime::createFrom($taskData['CLOSED_DATE']);
+			}
+		}
+		catch (\Exception $exception)
+		{
+			$message = $exception->getMessage().$exception->getTraceAsString();
+			$this->errorCollection->setError(new Error($message, self::ERROR_COULD_NOT_READ_TASK));
+		}
+
+		return null;
 	}
 
 	public function removeTask(int $taskId): bool

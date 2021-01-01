@@ -25,4 +25,9 @@ export class ListItems
 	{
 		return this.element;
 	}
+
+	setEntityId(entityId: number)
+	{
+		this.element.dataset.entityId = parseInt(entityId, 10);
+	}
 }

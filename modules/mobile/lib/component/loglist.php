@@ -263,8 +263,6 @@ class LogList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\
 			return $result;
 		}
 
-
-
 		$result['AJAX_CALL'] = $this->ajaxCall;
 		$result['RELOAD'] = $this->reloadCall;
 		$result['RELOAD_JSON'] = (
@@ -272,7 +270,7 @@ class LogList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\
 			&& $request->get('RELOAD_JSON') === 'Y'
 		);
 		$result['currentUserId'] = (int)$USER->getId();
-
+		$result['serverTimestamp'] = time();
 
 		$this->setExtranetData($result);
 
@@ -302,6 +300,7 @@ class LogList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\
 			$this->getEntriesData($result);
 			$processorInstance->processEventsList($result, 'main');
 			$processorInstance->processEventsList($result, 'pinned');
+			$processorInstance->warmUpStaticCache($result);
 			$logPageProcessorInstance->deleteLogPageData($result);
 			$processorInstance->processNextPageSize($result);
 			$processorInstance->processContentList($result);

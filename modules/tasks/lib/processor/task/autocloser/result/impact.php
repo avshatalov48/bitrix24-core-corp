@@ -76,7 +76,7 @@ final class Impact extends \Bitrix\Tasks\Processor\Task\Result\Impact
 				User::setOccurAsId($prevUserId);
 			}
 		}
-		catch(\TasksException $e)
+		catch(\TasksException | \CTaskAssertException $e)
 		{
 			$result->addException($e, Loc::getMessage('TASKS_WORKER_TASK_IMPACT_SAVE_ERROR'));
 		}

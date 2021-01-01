@@ -354,19 +354,24 @@ BX.namespace('Tasks.Component');
 				BX.addCustomEvent("SidePanel.Slider:onLoad", this.setEditorBeforeUnloadEvent.bind(this, true));
 				BX.addCustomEvent("SidePanel.Slider:onClose", this.setEditorBeforeUnloadEvent.bind(this, false));
 				BX.addCustomEvent('SidePanel.Slider:onMessage', BX.delegate(function(event) {
-					if (event.getEventId() == 'sonetGroupEvent')
+					if (event.getEventId() === 'sonetGroupEvent')
 					{
 						var eventData = event.getData();
 						if (
 							BX.type.isNotEmptyString(eventData.code)
-							&& eventData.code == 'afterCreate'
+							&& eventData.code === 'afterCreate'
 							&& typeof eventData.data != 'undefined'
 							&& typeof eventData.data.group != 'undefined'
 						)
 						{
-							var data = eventData.data.group;
+							var group = eventData.data.group;
 							var instance = BX.Tasks.Component.TasksWidgetMemberSelector.getInstance(this.sys.id + '-project');
-							instance.getSelector().onSelectorItemSelected({id:data.ID, entityType:"SG", networkId:'', DISPLAY:data.FIELDS.NAME});
+							instance.getSelector().onSelectorItemSelected({
+								id: group.ID,
+								entityType: 'SG',
+								networkId: '',
+								DISPLAY: BX.util.htmlspecialcharsback(group.FIELDS.NAME)
+							});
 						}
 					}
 				}, this));
@@ -684,12 +689,12 @@ BX.namespace('Tasks.Component');
 			onToggleFlag: function(node)
 			{
 				var target = BX.data(node, 'target');
-				if(typeof target != 'undefined' && BX.type.isNotEmptyString(target))
+				if (typeof target != 'undefined' && BX.type.isNotEmptyString(target))
 				{
 					var flagNode = this.control(target);
 					var flagName = BX.data(node, 'flag-name');
 
-					if(BX.type.isElementNode(flagNode))
+					if (BX.type.isElementNode(flagNode))
 					{
 						flagNode.value = node.checked ? 'Y' : 'N';
 					}
@@ -700,11 +705,13 @@ BX.namespace('Tasks.Component');
 						&& this.option('auxData').TASK_LIMIT_EXCEEDED
 					)
 					{
+						flagNode.value = 'N';
 						node.checked = false;
 						BX.UI.InfoHelper.show('limit_tasks_recurring_tasks');
+						return;
 					}
 
-					this.processToggleFlag(flagName, flagNode.value == 'Y');
+					this.processToggleFlag(flagName, flagNode.value === 'Y');
 				}
 			},
 

@@ -212,37 +212,58 @@ if(!empty($htmlEditorConfigs))
 		{
 			BX.CrmEntityType.setCaptions(<?=CUtil::PhpToJSObject(CCrmOwnerType::GetJavascriptDescriptions())?>);
 			BX.CrmEntityType.setNotFoundMessages(<?=CUtil::PhpToJSObject(CCrmOwnerType::GetNotFoundMessages())?>);
-
-			<?php if(\Bitrix\Crm\Integration\Calendar::isResourceBookingAvailableForEntity($arResult['USER_FIELD_ENTITY_ID']))
-			{
-			?>
-            BX.Event.EventEmitter.subscribe('BX.UI.EntityUserFieldManager:getTypes', function(event) {
-                var types = event.getData().types;
-                if(!BX.Type.isArray(types))
-                {
-                    return;
-                }
-                var index = 0;
-                var length = types.length;
-                for(; index < length; index++)
-                {
-                    if(types[index].name === 'address')
-                    {
-                        break;
-                    }
-                }
-                types.splice(index, 0, {
-                    name: "resourcebooking",
-                    title: "<?=GetMessageJS('CRM_ENTITY_ED_UF_RESOURCEBOOKING_TITLE')?>",
-                    legend: "<?=GetMessageJS('CRM_ENTITY_ED_UF_RESOURCEBOOKING_LEGEND')?>"
-                });
-                event.setData({
-                    types: types
-                });
-            });
-			<?php
-			}
-			?>
+			<?php if (
+				!empty($arResult['USERFIELD_TYPE_REST_CREATE_URL'])
+				|| \Bitrix\Crm\Integration\Calendar::isResourceBookingAvailableForEntity($arResult['USER_FIELD_ENTITY_ID'])
+			):?>
+			BX.Event.EventEmitter.subscribe(
+				'BX.UI.EntityUserFieldManager:getTypes',
+				function(event)
+				{
+					var types = event.getData().types;
+					if (!BX.Type.isArray(types))
+					{
+						return;
+					}
+					<?php if (\Bitrix\Crm\Integration\Calendar::isResourceBookingAvailableForEntity($arResult['USER_FIELD_ENTITY_ID'])):?>
+						var index = 0;
+						var length = types.length;
+						for (; index < length; index++)
+						{
+							if (types[index].name === 'address')
+							{
+								break;
+							}
+						}
+						types.splice(index, 0, {
+							name: "resourcebooking",
+							title: "<?=GetMessageJS('CRM_ENTITY_ED_UF_RESOURCEBOOKING_TITLE')?>",
+							legend: "<?=GetMessageJS('CRM_ENTITY_ED_UF_RESOURCEBOOKING_LEGEND')?>"
+						});
+					<?php endif;?>
+					<?php if (!empty($arResult['USERFIELD_TYPE_REST_CREATE_URL'])):?>
+						types.push({
+							name: "rest_field_type",
+							title: "<?=GetMessageJS('CRM_ENTITY_ED_UF_REST_TITLE')?>",
+							legend: "<?=GetMessageJS('CRM_ENTITY_ED_UF_REST_LEGEND')?>",
+							callback: function()
+							{
+								BX.SidePanel.Instance.open(
+									'<?=$arResult['USERFIELD_TYPE_REST_CREATE_URL']?>',
+									{
+										cacheable: false,
+										allowChangeHistory: false
+									}
+								);
+							}
+						});
+					<?php endif;?>
+					event.setData({
+						types: types
+					});
+				}
+			);
+			<?php endif;?>
 
 			var userFieldManager = BX.UI.EntityUserFieldManager.create(
 				"<?=CUtil::JSEscape($guid)?>",

@@ -432,7 +432,15 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 				/** @var CTaskItem $item */
 				foreach($list as $item)
 				{
-					$data = $item->getData(false);
+					try
+					{
+						$data = $item->getData(false);
+					}
+					catch (TasksException $e)
+					{
+						continue;
+					}
+
 					$tasks[$data['ID']] = array_intersect_key($data, $select);
 
 					$this->users2Get[] = $data['RESPONSIBLE_ID']; // get also these users

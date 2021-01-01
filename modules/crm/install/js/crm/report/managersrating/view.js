@@ -106,7 +106,7 @@
 
 			return '<div class="crm-report-financial-rating-modal" style="border-color: ' + color + ';">' +
 				'			<div class="crm-report-financial-rating-modal-title">' +
-				data.userName +
+				BX.util.htmlspecialchars(data.userName) +
 				'			</div>' +
 				'            <div class="crm-report-financial-rating-group-values">' +
 				'				<div class="crm-report-financial-rating-modal-line">' +

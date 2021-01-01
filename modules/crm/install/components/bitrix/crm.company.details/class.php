@@ -1,14 +1,16 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-use Bitrix\Location\Service\FormatService;
-use Bitrix\Location\Service\SourceService;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
+use Bitrix\Crm\Attribute\FieldAttributeManager;
+use Bitrix\Crm\Attribute\FieldAttributeType;
+use Bitrix\Crm\Attribute\FieldAttributePhaseGroupType;
+use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\Format\CompanyAddressFormatter;
 use Bitrix\Crm\Format\AddressSeparator;
-use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\Tracking;
 
 if(!Main\Loader::includeModule('crm'))
 {
@@ -41,11 +43,17 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 	/** @var int */
 	private $entityID = 0;
 	/** @var array|null */
+	private $entityFieldInfos = null;
+	/** @var array|null */
 	private $entityData = null;
 	/** @var array */
 	private $rawEntityData;
 	/** @var array|null */
 	private $entityDataScheme = null;
+	/** @var array|null */
+	private $entityFieldAttributeConfig = null;
+	/** @var array|null */
+	private $entityFieldRequiredByAttributes = null;
 	/** @var array|null */
 	private $multiFieldInfos = null;
 	/** @var array|null */
@@ -66,8 +74,12 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 	private $enableOutmodedFields;
 	/** @var array|null */
 	private $defaultFieldValues = null;
+	/** @var array|null */
+	private $types = null;
 	/** @var bool */
 	private $enableSearchHistory = true;
+	/** @var array */
+	private $defaultEntityData = [];
 
 	public function __construct($component = null)
 	{
@@ -352,6 +364,14 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 
 		//region Fields
 		$this->prepareFieldInfos();
+
+		$this->prepareEntityFieldAttributes();
+
+		$this->arResult['ENTITY_FIELDS'] = $this->entityFieldInfos;
+		$this->arResult['ENTITY_ATTRIBUTE_SCOPE'] = FieldAttributeManager::resolveEntityScope(
+			CCrmOwnerType::Company,
+			$this->entityID
+		);
 		//endregion
 
 		//region Config
@@ -369,6 +389,10 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 				)
 			),
 		);
+		//endregion
+
+		//region Validators
+		$this->prepareValidators();
 		//endregion
 
 		//region TABS
@@ -779,14 +803,30 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		}
 		return $this->entityDataScheme;
 	}
-	public function prepareFieldInfos()
+	public function prepareValidators()
 	{
-		if(isset($this->arResult['ENTITY_FIELDS']))
+		if(isset($this->arResult['ENTITY_VALIDATORS']))
 		{
-			return $this->arResult['ENTITY_FIELDS'];
+			return $this->arResult['ENTITY_VALIDATORS'];
 		}
 
-		$this->arResult['ENTITY_FIELDS'] = array(
+		$this->arResult['ENTITY_VALIDATORS'] = [
+			[
+				'type' => 'trackingSource',
+				'data' => ['fieldName' => Tracking\UI\Details::SourceId]
+			]
+		];
+
+		return $this->arResult['ENTITY_VALIDATORS'];
+	}
+	public function prepareFieldInfos()
+	{
+		if(isset($this->entityFieldInfos))
+		{
+			return $this->entityFieldInfos;
+		}
+
+		$this->entityFieldInfos = array(
 			array(
 				'name' => 'ID',
 				'title' => Loc::getMessage('CRM_COMPANY_FIELD_ID'),
@@ -800,7 +840,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 				'type' => 'text',
 				'isHeading' => true,
 				'visibilityPolicy' => 'edit',
-				'required' => true,
+				'placeholders' => array('creation' => \CCrmCompany::GetAutoTitle()),
 				'editable' => true,
 				'data' => array('duplicateControl' => array('groupId' => 'title', 'field' => array('id' => 'TITLE')))
 			),
@@ -816,7 +856,8 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 					'photoUrl' => 'ASSIGNED_BY_PHOTO_URL',
 					'showUrl' => 'PATH_TO_ASSIGNED_BY_USER',
 					'pathToProfile' => $this->arResult['PATH_TO_USER_PROFILE']
-				)
+				),
+				'enableAttributes' => false
 			),
 			array(
 				'name' => 'LOGO',
@@ -830,21 +871,49 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 				'title' => Loc::getMessage('CRM_COMPANY_FIELD_COMPANY_TYPE'),
 				'type' => 'list',
 				'editable' => true,
-				'data' => array('items'=> \CCrmInstantEditorHelper::PrepareListOptions(CCrmStatus::GetStatusList('COMPANY_TYPE')))
+				'data' => [
+					'items'=> \CCrmInstantEditorHelper::PrepareListOptions(
+						$this->prepareTypeList(),
+						[
+							'NOT_SELECTED' => Loc::getMessage('CRM_COMPANY_TYPE_NOT_SELECTED'),
+							'NOT_SELECTED_VALUE' => ''
+						]
+					),
+					'defaultValue' => $this->defaultEntityData['COMPANY_TYPE'] ?? null
+				]
 			),
 			array(
 				'name' => 'INDUSTRY',
 				'title' => Loc::getMessage('CRM_COMPANY_FIELD_INDUSTRY'),
 				'type' => 'list',
 				'editable' => true,
-				'data' => array('items'=> \CCrmInstantEditorHelper::PrepareListOptions(CCrmStatus::GetStatusList('INDUSTRY')))
+				'data' => [
+					'items'=> \CCrmInstantEditorHelper::PrepareListOptions(
+						CCrmStatus::GetStatusList('INDUSTRY'),
+						[
+							'NOT_SELECTED' => Loc::getMessage('CRM_COMPANY_INDUSTRY_NOT_SELECTED'),
+							'NOT_SELECTED_VALUE' => ''
+						]
+					),
+					'defaultValue' => $this->defaultEntityData['INDUSTRY'] ?? null
+				]
+
 			),
 			array(
 				'name' => 'EMPLOYEES',
 				'title' => Loc::getMessage('CRM_COMPANY_FIELD_EMPLOYEES'),
 				'type' => 'list',
 				'editable' => true,
-				'data' => array('items'=> \CCrmInstantEditorHelper::PrepareListOptions(CCrmStatus::GetStatusList('EMPLOYEES')))
+				'data' => [
+					'items'=> \CCrmInstantEditorHelper::PrepareListOptions(
+						CCrmStatus::GetStatusList('EMPLOYEES'),
+						[
+							'NOT_SELECTED' => Loc::getMessage('CRM_COMPANY_EMPLOYEES_NOT_SELECTED'),
+							'NOT_SELECTED_VALUE' => ''
+						]
+					),
+					'defaultValue' => $this->defaultEntityData['EMPLOYEES'] ?? null
+				]
 			),
 			array(
 				'name' => 'REVENUE_WITH_CURRENCY',
@@ -931,12 +1000,13 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 				'title' => Loc::getMessage('CRM_COMPANY_FIELD_REQUISITES'),
 				'type' => 'requisite',
 				'editable' => true,
-				'data' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company,'requisite')
+				'data' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company,'requisite'),
+                'enableAttributes' => false
 			)
 		);
 
-		\Bitrix\Crm\Tracking\UI\Details::appendEntityFields($this->arResult['ENTITY_FIELDS']);
-		$this->arResult['ENTITY_FIELDS'][] = array(
+		Tracking\UI\Details::appendEntityFields($this->entityFieldInfos);
+		$this->entityFieldInfos[] = array(
 			'name' => 'UTM',
 			'title' => Loc::getMessage('CRM_COMPANY_FIELD_UTM'),
 			'type' => 'custom',
@@ -947,11 +1017,12 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 
 		if($this->enableOutmodedFields)
 		{
-			$this->arResult['ENTITY_FIELDS'][] = array(
+			$this->entityFieldInfos[] = array(
 				'name' => 'ADDRESS',
 				'title' => Loc::getMessage('CRM_COMPANY_FIELD_ADDRESS'),
 				'type' => 'address_form',
 				'editable' => true,
+                'enableAttributes' => false,
 				'data' => array(
 					'fields' => array(
 						'ADDRESS' => array('NAME' => 'ADDRESS', 'IS_MULTILINE' => true),
@@ -967,11 +1038,12 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 				)
 			);
 
-			$this->arResult['ENTITY_FIELDS'][] = array(
+			$this->entityFieldInfos[] = array(
 				'name' => 'ADDRESS_LEGAL',
 				'title' => Loc::getMessage('CRM_COMPANY_FIELD_ADDRESS_LEGAL'),
 				'type' => 'address_form',
 				'editable' => true,
+                'enableAttributes' => false,
 				'data' => array(
 					'fields' => array(
 						'ADDRESS' => array('NAME' => 'REG_ADDRESS', 'IS_MULTILINE' => true),
@@ -989,11 +1061,12 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		}
 		elseif (CModule::IncludeModule('location'))
 		{
-			$this->arResult['ENTITY_FIELDS'][] = array(
+			$this->entityFieldInfos[] = array(
 				'name' => 'ADDRESS',
 				'title' => Loc::getMessage('CRM_CONTACT_FIELD_ADDRESS'),
 				'type' => 'requisite_address',
 				'editable' => true,
+                'enableAttributes' => false,
 				'virtual' => true,
 				'data' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company,'requisite_address')
 			);
@@ -1023,7 +1096,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 				$data['duplicateControl'] = array('groupId' => 'email');
 			}
 
-			$this->arResult['ENTITY_FIELDS'][] = array(
+			$this->entityFieldInfos[] = array(
 				'name' => $typeName,
 				'title' => $typeInfo['NAME'],
 				'type' => 'multifield',
@@ -1031,12 +1104,12 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 				'data' => $data
 			);
 		}
-		$this->arResult['ENTITY_FIELDS'] = array_merge(
-			$this->arResult['ENTITY_FIELDS'],
+		$this->entityFieldInfos = array_merge(
+			$this->entityFieldInfos,
 			array_values($this->userFieldInfos)
 		);
 
-		return $this->arResult['ENTITY_FIELDS'];
+		return $this->entityFieldInfos;
 	}
 	public function prepareEntityUserFields()
 	{
@@ -1049,6 +1122,20 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 			$this->userFields = $this->userType->GetEntityFields($this->entityID);
 		}
 		return $this->userFields;
+	}
+	public function prepareEntityFieldAttributeConfigs()
+	{
+		if(!$this->entityFieldAttributeConfig)
+		{
+			$this->entityFieldAttributeConfig = FieldAttributeManager::getEntityConfigurations(
+				CCrmOwnerType::Company,
+				FieldAttributeManager::resolveEntityScope(
+					CCrmOwnerType::Company,
+					$this->entityID
+				)
+			);
+		}
+		return $this->entityFieldAttributeConfig;
 	}
 	public function prepareEntityUserFieldInfos()
 	{
@@ -1131,6 +1218,248 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 
 		return $this->userFieldInfos;
 	}
+	protected function isFieldHasDefaultValueAttribute(array $fieldsInfo, string $fieldName): bool
+	{
+		return (
+			isset($fieldsInfo[$fieldName]['ATTRIBUTES'])
+			&& in_array(
+				CCrmFieldInfoAttr::HasDefaultValue,
+				$fieldsInfo[$fieldName]['ATTRIBUTES'],
+				true
+			)
+		);
+	}
+	protected function isSetDefaultValueForField(array $fieldsInfo, array $requiredFields, string $fieldName): bool
+	{
+		// if field is not required and has an attribute
+		return (
+			!in_array($fieldName, $requiredFields, true)
+			&& $this->isFieldHasDefaultValueAttribute($fieldsInfo, $fieldName)
+		);
+	}
+	public function prepareEntityFieldAttributes()
+	{
+		if($this->entityFieldInfos === null)
+		{
+			return;
+		}
+
+		$isEntityDataModified = false;
+		$attrConfigs = $this->prepareEntityFieldAttributeConfigs();
+		for($i = 0, $length = count($this->entityFieldInfos); $i < $length; $i++)
+		{
+			$isPhaseDependent = FieldAttributeManager::isPhaseDependent();
+			if (!$isPhaseDependent)
+			{
+				if (!is_array($this->entityFieldInfos[$i]['data']))
+				{
+					$this->entityFieldInfos[$i]['data'] = [];
+				}
+				$this->entityFieldInfos[$i]['data']['isPhaseDependent'] = false;
+			}
+
+			$fieldName = $this->entityFieldInfos[$i]['name'];
+			if(!isset($attrConfigs[$fieldName]))
+			{
+				continue;
+			}
+
+			if(!isset($this->entityFieldInfos[$i]['data']))
+			{
+				$this->entityFieldInfos[$i]['data'] = array();
+			}
+
+			$this->entityFieldInfos[$i]['data']['attrConfigs'] = $attrConfigs[$fieldName];
+
+			if (is_array($attrConfigs[$fieldName]) && !empty($attrConfigs[$fieldName]))
+			{
+				$isRequiredByAttribute = false;
+				$ready = false;
+				$attrConfig = $attrConfigs[$fieldName];
+				foreach ($attrConfig as $item)
+				{
+					if (is_array($item) && isset($item['typeId'])
+						&& $item['typeId'] === FieldAttributeType::REQUIRED)
+					{
+						if ($isPhaseDependent)
+						{
+							if (is_array($item['groups']))
+							{
+								foreach ($item['groups'] as $group)
+								{
+									if (is_array($group) && isset($group['phaseGroupTypeId'])
+										&& $group['phaseGroupTypeId'] === FieldAttributePhaseGroupType::ALL)
+									{
+										$isRequiredByAttribute = true;
+										$ready = true;
+										break;
+									}
+								}
+							}
+						}
+						else
+						{
+							$isRequiredByAttribute = true;
+							$ready = true;
+						}
+						if ($ready)
+						{
+							break;
+						}
+					}
+				}
+				if ($isRequiredByAttribute)
+				{
+					if (!is_array($this->entityFieldInfos[$i]['data']))
+					{
+						$this->entityFieldInfos[$i]['data'] = [];
+					}
+					$this->entityFieldInfos[$i]['data']['isRequiredByAttribute'] = true;
+
+					// This block allows in the component crm.entity.editor to determine the presence of mandatory
+					// standard entity fields with empty values.
+					if (is_array($this->entityData)
+						&& $this->isEntityFieldHasEmpyValue($this->entityFieldInfos[$i]))
+					{
+						if (!is_array($this->entityData['EMPTY_REQUIRED_SYSTEM_FIELD_MAP']))
+						{
+							$this->entityData['EMPTY_REQUIRED_SYSTEM_FIELD_MAP'] = [];
+						}
+						$this->entityData['EMPTY_REQUIRED_SYSTEM_FIELD_MAP'][$fieldName] = true;
+						$isEntityDataModified = true;
+					}
+				}
+			}
+		}
+
+		if ($isEntityDataModified)
+		{
+			$this->arResult['ENTITY_DATA'] = $this->entityData;
+		}
+	}
+	protected function isEntityFieldHasEmpyValue($fieldInfo)
+	{
+		$result = false;
+		$isResultReady = false;
+
+		if (is_array($fieldInfo) && isset($fieldInfo['name'])
+			&& is_string($fieldInfo['name']) && $fieldInfo['name'] !== '')
+		{
+			$fieldName = $fieldInfo['name'];
+			$fieldType = $fieldInfo['type'] ?? '';
+
+			if ($fieldType === 'userField')
+			{
+				$fieldInfo = $fieldInfo['data']['fieldInfo'] ?? [];
+
+				if(isset($fieldInfo['USER_TYPE_ID']) && $fieldInfo['USER_TYPE_ID'] === 'boolean')
+				{
+					$isResultReady = true;
+				}
+			}
+
+			if (!$isResultReady
+				&& isset($this->entityData[$fieldName]['IS_EMPTY'])
+				&& is_array($this->entityData[$fieldName])
+				&& $this->entityData[$fieldName]['IS_EMPTY']
+			)
+			{
+				$result = true;
+				$isResultReady = true;
+			}
+
+			if (!$isResultReady)
+			{
+				$fieldsToCheck = [
+					'TITLE',                             // text
+					'LOGO',                              // image
+					'COMPANY_TYPE',                      // list
+					'INDUSTRY',                          // list
+					'REVENUE_WITH_CURRENCY',             // money
+					'PHONE',                             // multifield
+					'EMAIL',                             // multifield
+					'WEB',                               // multifield
+					'IM',                                // multifield
+					'CONTACT',                           // client_light
+					'BANKING_DETAILS',                   // text
+					Tracking\UI\Details::SourceId,       // custom
+					'EMPLOYEES',                         // list
+					'COMMENTS'                           // html
+				];
+				if (in_array($fieldName, $fieldsToCheck, true))
+				{
+					switch ($fieldType)
+					{
+						case 'text':
+						case 'html':
+						case 'list':
+							if (array_key_exists($fieldName, $this->entityData)
+								&& (!is_string($this->entityData[$fieldName])
+									|| $this->entityData[$fieldName] === ''))
+							{
+								$result = true;
+								$isResultReady = true;
+							}
+							break;
+						case 'image':
+							if (array_key_exists($fieldName, $this->entityData)
+								&& $this->entityData[$fieldName] <= 0)
+							{
+								$result = true;
+								$isResultReady = true;
+							}
+							break;
+						case 'money':
+							if ($fieldName === 'REVENUE_WITH_CURRENCY')
+							{
+								$dataFieldName = 'REVENUE';
+								if (array_key_exists($dataFieldName, $this->entityData)
+									&& empty($this->entityData[$dataFieldName]))
+								{
+									$result = true;
+									$isResultReady = true;
+								}
+							}
+							break;
+						case 'multifield':
+							if (!is_array($this->entityData[$fieldName])
+								|| empty($this->entityData[$fieldName]))
+							{
+								$result = true;
+								$isResultReady = true;
+							}
+							break;
+						case 'client_light':
+							if ($fieldName === 'CONTACT')
+							{
+								if (is_array($this->entityData['CLIENT_INFO'])
+									&& (!is_array($this->entityData['CLIENT_INFO']['CONTACT_DATA'])
+										|| empty($this->entityData['CLIENT_INFO']['CONTACT_DATA'])))
+								{
+									$result = true;
+									$isResultReady = true;
+								}
+							}
+							break;
+						case 'custom':
+							if ($fieldName === Tracking\UI\Details::SourceId)
+							{
+								if (array_key_exists($fieldName, $this->entityData)
+									&& ($this->entityData[$fieldName] === null
+										|| $this->entityData[$fieldName] < 0))
+								{
+									$result = true;
+									$isResultReady = true;
+								}
+							}
+							break;
+					}
+				}
+			}
+		}
+
+		return $result;
+	}
 	public function prepareEntityData()
 	{
 		/** @global \CMain $APPLICATION */
@@ -1140,6 +1469,8 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		{
 			return $this->entityData;
 		}
+
+		$isTrackingFieldRequired = false;
 
 		$file = new \CFile();
 		if($this->conversionWizard !== null)
@@ -1166,7 +1497,17 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		}
 		else if($this->entityID <= 0)
 		{
-			$this->entityData = array();
+			$requiredFields = Crm\Attribute\FieldAttributeManager::isEnabled()
+				? Crm\Attribute\FieldAttributeManager::getRequiredFields(
+					CCrmOwnerType::Company,
+					$this->entityID,
+					['COMPANY_TYPE', 'INDUSTRY', 'EMPLOYEES', Tracking\UI\Details::SourceId],
+					Crm\Attribute\FieldOrigin::SYSTEM
+				)
+				: [];
+			$isTrackingFieldRequired = in_array(Tracking\UI\Details::SourceId, $requiredFields, true);
+			$fieldsInfo = CCrmCompany::GetFieldsInfo();
+			$this->entityData = [];
 			//leave REVENUE unassigned
 			//$this->entityData['REVENUE'] = 0.0;
 			$this->entityData['CURRENCY_ID'] = \CCrmCurrency::GetBaseCurrencyID();
@@ -1175,6 +1516,43 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 			if($this->isMyCompany())
 			{
 				$this->entityData['IS_MY_COMPANY'] = 'Y';
+			}
+
+			// set first option by default if the field is not required
+			$typeList = $this->prepareTypeList();
+			if(
+				!empty($typeList)
+				&& $this->isFieldHasDefaultValueAttribute($fieldsInfo, 'COMPANY_TYPE'))
+			{
+				$this->arResult['FIELDS_SET_DEFAULT_VALUE'][] = 'COMPANY_TYPE';
+				$this->defaultEntityData['COMPANY_TYPE'] = current(array_keys($typeList));
+				if($this->isSetDefaultValueForField($fieldsInfo, $requiredFields, 'COMPANY_TYPE'))
+				{
+					$this->entityData['COMPANY_TYPE'] = $this->defaultEntityData['COMPANY_TYPE'];
+				}
+			}
+			unset($typeList);
+
+			if($this->isFieldHasDefaultValueAttribute($fieldsInfo, 'INDUSTRY'))
+			{
+				$this->arResult['FIELDS_SET_DEFAULT_VALUE'][] = 'INDUSTRY';
+				$statusList = CCrmStatus::GetStatusList('INDUSTRY');
+				$this->defaultEntityData['INDUSTRY'] = current(array_keys($statusList));
+				if($this->isSetDefaultValueForField($fieldsInfo, $requiredFields, 'INDUSTRY'))
+				{
+					$this->entityData['INDUSTRY'] = $this->defaultEntityData['INDUSTRY'];
+				}
+			}
+			
+			if($this->isFieldHasDefaultValueAttribute($fieldsInfo, 'EMPLOYEES'))
+			{
+				$this->arResult['FIELDS_SET_DEFAULT_VALUE'][] = 'EMPLOYEES';
+				$statusList = CCrmStatus::GetStatusList('EMPLOYEES');
+				$this->defaultEntityData['EMPLOYEES'] = current(array_keys($statusList));
+				if($this->isSetDefaultValueForField($fieldsInfo, $requiredFields, 'EMPLOYEES'))
+				{
+					$this->entityData['EMPLOYEES'] = $this->defaultEntityData['EMPLOYEES'];
+				}
 			}
 
 			//region Default Responsible
@@ -1231,9 +1609,10 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		//region Responsible
 		if(isset($this->entityData['ASSIGNED_BY_ID']) && $this->entityData['ASSIGNED_BY_ID'] > 0)
 		{
+			$by = 'ID';
+			$order = 'ASC';
 			$dbUsers = \CUser::GetList(
-				$by = 'ID',
-				$order = 'ASC',
+				$by, $order,
 				array('ID' => $this->entityData['ASSIGNED_BY_ID']),
 				array(
 					'FIELDS' => array(
@@ -1242,6 +1621,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 					)
 				)
 			);
+			unset($by, $order);
 			$user = is_object($dbUsers) ? $dbUsers->Fetch() : null;
 			if(is_array($user))
 			{
@@ -1556,13 +1936,22 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 			);
 		}
 
-		\Bitrix\Crm\Tracking\UI\Details::prepareEntityData(
+		Tracking\UI\Details::prepareEntityData(
 			\CCrmOwnerType::Company,
 			$this->entityID,
-			$this->entityData
+			$this->entityData,
+			$isTrackingFieldRequired
 		);
 
 		return ($this->arResult['ENTITY_DATA'] = $this->entityData);
+	}
+	protected function prepareTypeList()
+	{
+		if($this->types === null)
+		{
+			$this->types = \CCrmStatus::GetStatusList('COMPANY_TYPE');
+		}
+		return $this->types;
 	}
 	public function prepareEntityInfo()
 	{

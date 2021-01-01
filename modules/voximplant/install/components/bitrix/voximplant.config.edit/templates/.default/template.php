@@ -61,17 +61,17 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 						<div class="voximplant-control-row">
 							<div class="voximplant-control-subtitle"><?=GetMessage('VI_CONFIG_SIP_T_SERVER')?></div>
 							<input type="text" name="SIP[SERVER]" value="<?=htmlspecialcharsbx($arResult['SIP_CONFIG']['SERVER'])?>" class="voximplant-control-input">
-							<div class="voximplant-control-description"><?= Loc::getMessage("VI_CONFIG_SIP_T_SERVER_HINT") ?></div>
+							<div class="voximplant-control-description"><?= Loc::getMessage("VI_CONFIG_SIP_T_SERVER_HINT_2") ?></div>
 						</div>
 						<div class="voximplant-control-row">
 							<div class="voximplant-control-subtitle"><?=GetMessage('VI_CONFIG_SIP_T_LOGIN')?></div>
 							<input type="text" name="SIP[LOGIN]" value="<?=htmlspecialcharsbx($arResult['SIP_CONFIG']['LOGIN'])?>" class="voximplant-control-input">
-							<div class="voximplant-control-description"><?= Loc::getMessage("VI_CONFIG_SIP_T_LOGIN_HINT") ?></div>
+							<div class="voximplant-control-description"><?= Loc::getMessage("VI_CONFIG_SIP_T_LOGIN_HINT_2") ?></div>
 						</div>
 						<div class="voximplant-control-row">
 							<div class="voximplant-control-subtitle"><?=GetMessage('VI_CONFIG_SIP_T_PASS')?></div>
 							<input type="password" name="SIP[PASSWORD]" value="<?=htmlspecialcharsbx($arResult['SIP_CONFIG']['PASSWORD'])?>" class="voximplant-control-input">
-							<div class="voximplant-control-description"><?= Loc::getMessage("VI_CONFIG_SIP_T_PASS_HINT") ?></div>
+							<div class="voximplant-control-description"><?= Loc::getMessage("VI_CONFIG_SIP_T_PASS_HINT_2") ?></div>
 						</div>
 						<? if($arResult["SIP_CONFIG"]['TYPE'] == CVoxImplantSip::TYPE_CLOUD): ?>
 							<div class="voximplant-control-row">

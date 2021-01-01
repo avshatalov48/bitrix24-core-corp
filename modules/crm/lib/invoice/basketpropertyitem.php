@@ -52,4 +52,16 @@ class BasketPropertyItem extends Sale\BasketPropertyItem
 		return Internals\BasketPropertyTable::getMap();
 	}
 
+	/**
+	 * @param array $parameters
+	 * @return Main\ORM\Query\Result
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function getList(array $parameters = [])
+	{
+		return Internals\BasketPropertyTable::getList($parameters);
+	}
+
 }

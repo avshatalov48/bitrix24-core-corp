@@ -5,6 +5,7 @@ namespace Bitrix\Location\Source\Google\Converters;
 use Bitrix\Location\Entity\Address;
 use Bitrix\Location\Entity\Address\FieldType;
 use Bitrix\Location\Entity\Location;
+use Bitrix\Location\Source\AddressLine1Composer;
 
 /**
  * Class ConverterBase
@@ -64,54 +65,20 @@ abstract class BaseConverter
 	protected function createAddress(array $addressComponents): Address
 	{
 		$address = new Address($this->languageId);
-		$isAddressLine1Present = false;
 
 		foreach ($addressComponents as $item)
 		{
-			if($type = $this->convertTypes($item['types'], FieldType::class))
+			if ($type = $this->convertTypes($item['types'], FieldType::class))
 			{
 				$address->setFieldValue((int)$type, (string)$item['long_name']);
 			}
-
-			if($type === FieldType::ADDRESS_LINE_1)
-			{
-				$isAddressLine1Present = true;
-			}
 		}
 
-		if(!$isAddressLine1Present)
+		if (!AddressLine1Composer::isAddressLine1Present($address))
 		{
-			$address = $this->composeLine1($address);
-		}
-
-		return $address;
-	}
-
-	protected function composeLine1(Address $address): Address
-	{
-		$addressLine1 = '';
-
-		if($address->getFieldValue(FieldType::STREET))
-		{
-			$addressLine1 = (string)$address->getFieldValue(FieldType::STREET);
-		}
-
-		if($address->getFieldValue(FieldType::BUILDING))
-		{
-			if($addressLine1 !== '')
-			{
-				$addressLine1 .= ', ';
-			}
-
-			$addressLine1 .= (string)$address->getFieldValue(FieldType::BUILDING);
-		}
-
-		if($addressLine1 !== '')
-		{
-			$address->setFieldValue(FieldType::ADDRESS_LINE_1, $addressLine1);
+			AddressLine1Composer::composeAddressLine1($address);
 		}
 
 		return $address;
 	}
 }
-

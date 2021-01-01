@@ -6,28 +6,40 @@ export function performEventOfWidgetFormInit(b24options: B24Options, options: Op
 {
 	const compatibleData = createEventData(b24options, options);
 	BX.SiteButton.onWidgetFormInit(compatibleData);
+	applyOldenLoaderData(options, compatibleData);
+}
 
-	if (options.fields && typeof compatibleData.fields === 'object' && typeof compatibleData.fields.values === 'object')
+export function applyOldenLoaderData(options: Options, oldenLoaderData: Object)
+{
+	if (options.fields && typeof oldenLoaderData.fields === 'object' && typeof oldenLoaderData.fields.values === 'object')
 	{
-		Object.keys(compatibleData.fields.values).forEach(key => {
+		Object.keys(oldenLoaderData.fields.values).forEach(key => {
 			options.fields.filter(field => field.name === key)
-				.forEach(field => field.value = compatibleData.fields.values[key]);
+				.forEach(field => field.value = oldenLoaderData.fields.values[key]);
 		});
 	}
 
-	if (typeof compatibleData.presets === 'object')
+	if (typeof oldenLoaderData.presets === 'object')
 	{
 		options.properties = options.properties || {};
-		Object.keys(compatibleData.presets).forEach(key => {
-			options.properties[key] = compatibleData.presets[key];
+		Object.keys(oldenLoaderData.presets).forEach(key => {
+			options.properties[key] = oldenLoaderData.presets[key];
 		});
 	}
 
-	if (typeof compatibleData.handlers === 'object')
+	if (oldenLoaderData.type === 'auto' && oldenLoaderData.delay)
+	{
+		if (typeof options.view === 'object' && parseInt(oldenLoaderData.delay) > 0)
+		{
+			options.view.delay = parseInt(oldenLoaderData.delay);
+		}
+	}
+
+	if (typeof oldenLoaderData.handlers === 'object')
 	{
 		options.handlers = options.handlers || {};
-		Object.keys(compatibleData.handlers).forEach(key => {
-			const value = compatibleData.handlers[key];
+		Object.keys(oldenLoaderData.handlers).forEach(key => {
+			const value = oldenLoaderData.handlers[key];
 			if (typeof value !== "function")
 			{
 				return;
@@ -40,7 +52,7 @@ export function performEventOfWidgetFormInit(b24options: B24Options, options: Op
 				case 'load':
 					type = EventTypes.init;
 					handler = (data: Object, form: Controller) => {
-						value(compatibleData, form);
+						value(oldenLoaderData, form);
 					};
 					break;
 				case 'fill':
@@ -71,7 +83,7 @@ export function performEventOfWidgetFormInit(b24options: B24Options, options: Op
 				case 'unload':
 					type = EventTypes.destroy;
 					handler = (data: Object, form: Controller) => {
-						value(compatibleData, form);
+						value(oldenLoaderData, form);
 					};
 					break;
 			}
@@ -83,6 +95,7 @@ export function performEventOfWidgetFormInit(b24options: B24Options, options: Op
 		});
 	}
 }
+
 
 function createEventData(b24options: B24Options)
 {

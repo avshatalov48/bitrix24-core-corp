@@ -260,7 +260,7 @@ class CCrmProductRowListComponent extends \CBitrixComponent implements \Bitrix\M
 											'VALUE' => $propID . '[' . $key . '][VALUE]',
 											'DESCRIPTION' => '',
 											'FORM_NAME' => $settings['formId'],
-											'MODE' => 'FORM_FILL',
+											'MODE' => ($arProp['USER_TYPE'] == 'HTML' ? 'SIMPLE' : 'FORM_FILL'),
 											'COPY' => false,
 										),
 									)) . '</td></tr>';
@@ -292,7 +292,7 @@ class CCrmProductRowListComponent extends \CBitrixComponent implements \Bitrix\M
 										'VALUE' => $propID . '[' . $key . '][VALUE]',
 										'DESCRIPTION' => '',
 										'FORM_NAME' => $settings['formId'],
-										'MODE' => 'FORM_FILL',
+										'MODE' => ($arProp['USER_TYPE'] == 'HTML' ? 'SIMPLE' : 'FORM_FILL'),
 									),
 								));
 							break;

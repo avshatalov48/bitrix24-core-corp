@@ -43,6 +43,9 @@ return array(
 			'crm.kanban.entity.order' => [
 				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\Order',
 			],
+			'crm.integration.pullmanager' => [
+				'className' => '\\Bitrix\\Crm\\Integration\\PullManager',
+			],
 		],
 	],
 );

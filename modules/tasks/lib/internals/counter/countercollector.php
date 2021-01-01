@@ -85,7 +85,6 @@ class CounterCollector
 			WHERE
 				{$taskFilter}
 				AND T.DEADLINE < '{$expiredTime}'
-				AND T.ZOMBIE = 'N'
 				AND T.STATUS IN ({$statuses})
 		";
 
@@ -154,7 +153,6 @@ class CounterCollector
 				{$userTypeJoin}
 			WHERE
 				{$taskFilter}
-				AND T.ZOMBIE = 'N'
 				AND (
 					(TV.VIEWED_DATE IS NOT NULL AND FM.POST_DATE > TV.VIEWED_DATE)
 					OR (TV.VIEWED_DATE IS NULL AND FM.POST_DATE >= T.CREATED_DATE)

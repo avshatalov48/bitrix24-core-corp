@@ -13,11 +13,11 @@
 namespace Bitrix\Tasks\Manager;
 
 use Bitrix\Tasks\Access\ActionDictionary;
-use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Comments;
 use Bitrix\Tasks\Integration\Extranet;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Integration\Timeman;
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
 use Bitrix\Tasks\Manager\Task\Accomplice;
 use Bitrix\Tasks\Manager\Task\Auditor;
@@ -89,8 +89,15 @@ final class Task extends \Bitrix\Tasks\Manager
 
 				if ($parameters[ 'RETURN_ENTITY' ])
 				{
-					$data = $task->getData(false);
-					$data[ static::ACT_KEY ] = $can = static::translateAllowedActionNames($task->getAllowedActions(true));
+					try
+					{
+						$data = $task->getData(false);
+						$data[ static::ACT_KEY ] = $can = static::translateAllowedActionNames($task->getAllowedActions(true));
+					}
+					catch (\TasksException $e)
+					{
+
+					}
 				}
 			}
 		}
@@ -350,8 +357,15 @@ final class Task extends \Bitrix\Tasks\Manager
 
 				if ($parameters[ 'RETURN_ENTITY' ])
 				{
-					$data = $task->getData(false);
-					$data[ static::ACT_KEY ] = $can = static::translateAllowedActionNames($task->getAllowedActions(true));
+					try
+					{
+						$data = $task->getData(false);
+						$data[ static::ACT_KEY ] = $can = static::translateAllowedActionNames($task->getAllowedActions(true));
+					}
+					catch (\TasksException $e)
+					{
+
+					}
 				}
 			}
 		}
@@ -534,23 +548,42 @@ final class Task extends \Bitrix\Tasks\Manager
 			$code = Tag::getCode(true);
 			if (isset($entitySelect[ Tag::getCode() ]))
 			{
-				$mgrResult = Tag::getList($userId, $taskId);
-				$data[ $code ] = $mgrResult[ 'DATA' ];
-				if (!empty($mgrResult[ 'CAN' ]))
+				if (array_key_exists('TAGS', $data) && is_array($data['TAGS']))
 				{
-					$can[ $code ] = $mgrResult[ 'CAN' ];
+					$can[$code] = [];
+					foreach ($data['TAGS'] as $tag)
+					{
+						$data[$code][] = ['NAME' => $tag];
+					}
 				}
+				else
+				{
+					$mgrResult = Tag::getList($userId, $taskId);
+					$data[ $code ] = $mgrResult[ 'DATA' ];
+					if (!empty($mgrResult[ 'CAN' ]))
+					{
+						$can[ $code ] = $mgrResult[ 'CAN' ];
+					}
 
-				Tag::adaptSet($data); // for compatibility
+					Tag::adaptSet($data); // for compatibility
+				}
 			}
 
 			$code = Checklist::getCode(true);
 			if (isset($entitySelect[ 'CHECKLIST' ]))
 			{
-				$mgrResult = TaskCheckListFacade::getItemsForEntity($taskId, $userId);
+				if (array_key_exists('CHECKLIST', $data) && is_array($data['CHECKLIST']))
+				{
+					$data['CHECKLIST'] = TaskCheckListFacade::fillActionsForItems($taskId, $userId, $data['CHECKLIST']);
+					$data[$code] = $data['CHECKLIST'];
+				}
+				else
+				{
+					$mgrResult = TaskCheckListFacade::getItemsForEntity($taskId, $userId);
+					$data[$code] = $mgrResult;
+				}
 
-				$data[$code] = $mgrResult;
-				foreach ($mgrResult as $id => $item)
+				foreach ($data[$code] as $id => $item)
 				{
 					$can[$code][$id]['ACTION'] = $item['ACTION'];
 				}
@@ -825,6 +858,11 @@ final class Task extends \Bitrix\Tasks\Manager
 			}
 		}
 
+		if (array_key_exists('TARGET_USER_ID', $parameters))
+		{
+			$params['TARGET_USER_ID'] = $parameters['TARGET_USER_ID'];
+		}
+
 		$getNewCommentsCount = in_array('NEW_COMMENTS_COUNT', $listParameters['select'], true);
 
 		if (
@@ -871,7 +909,7 @@ final class Task extends \Bitrix\Tasks\Manager
 
 		if (is_array($items) && !empty($items))
 		{
-			TaskModel::preloadModels(array_column($items, 'ID'), $userId);
+			TaskRegistry::getInstance()->load(array_column($items, 'ID'), true);
 
 			foreach ($items as $taskData)
 			{

@@ -198,7 +198,7 @@ if ($arParams["SHOW_SECTIONS_BAR"] === "Y")
 	if ($arResult["BX24_RU_ZONE"])
 	{
 		$menuItems[] = array(
-			"TEXT" => GetMessage("TASKS_PANEL_TAB_APPLICATIONS"),
+			"TEXT" => GetMessage("TASKS_PANEL_TAB_APPLICATIONS_2"),
 			"URL" => "/marketplace/category/tasks/",
 			"ID" => "view_apps",
 		);

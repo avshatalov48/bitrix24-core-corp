@@ -36,7 +36,10 @@ $APPLICATION->IncludeComponent('bitrix:crm.config.preset.edit',	'',	array(
 		'PRESET_ID' => $arResult['VARIABLES']['preset_id'],
 		'PRESET_LIST_URL' => $arResult['FOLDER'].$arResult['URL_TEMPLATES']['list'],
 		'PRESET_EDIT_URL' => $arResult['FOLDER'].$arResult['URL_TEMPLATES']['edit'],
-		'PRESET_UFIELDS_URL' => $arResult['FOLDER'].$arResult['URL_TEMPLATES']['ufields']
+		'PRESET_UFIELDS_URL' => $arResult['FOLDER'].$arResult['URL_TEMPLATES']['ufields'],
+		'AJAX_MODE' => 'Y',
+		'AJAX_OPTION_SHADOW' => 'N',
+		'AJAX_OPTION_JUMP' => 'N'
 	),
 	$component
 );?>

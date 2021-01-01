@@ -1,5 +1,4 @@
 import {Event, Runtime, Tag, Text, Loc, Type, Dom} from 'main.core';
-import {MessageBox} from 'ui.dialogs.messagebox';
 import {BaseEvent, EventEmitter} from 'main.core.events';
 import {Label} from 'ui.label';
 
@@ -342,7 +341,7 @@ export class Epic extends EventEmitter
 
 	getEpicsList() : Promise
 	{
-		this.gridId = 'EpicsGrid' + Text.getRandom();
+		this.gridId = 'EntityEpicsGrid_' + this.entity.getId();
 		return new Promise((resolve, reject) => {
 			this.requestSender.getEpicsList({
 				entityId: this.entity.getId(),

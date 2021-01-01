@@ -31,7 +31,7 @@ class DocumentEntry extends TimelineEntry
 		$result = TimelineTable::add(
 			array(
 				'TYPE_ID' => TimelineType::DOCUMENT,
-				'TYPE_CATEGORY_ID' => 0,
+				'TYPE_CATEGORY_ID' => (int)$params['TYPE_CATEGORY_ID'],
 				'CREATED' => $created,
 				'AUTHOR_ID' => $authorID,
 				'COMMENT' => $text,

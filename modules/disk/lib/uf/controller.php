@@ -187,16 +187,19 @@ class Controller extends Internals\Controller
 			$taggedCache = Application::getInstance()->getTaggedCache();
 			$taggedCache->startTagCache($cachePath);
 
+			$conditionTree = \Bitrix\Main\ORM\Query\Query::filter();
+			$conditionTree
+				->where('STORAGE.ENTITY_TYPE', ProxyType\Group::class)
+				->where('UG.USER_ID', $userId)
+				->where('UG.GROUP.ACTIVE', 'Y')
+				->where('UG.GROUP.CLOSED', 'N')
+			;
+
 			$diskSecurityContext = new DiskSecurityContext($userId);
 			$storages = Storage::getReadableList(
 				$diskSecurityContext,
 				array(
-					'filter' => array(
-						'=STORAGE.ENTITY_TYPE' => ProxyType\Group::className(),
-						'=UG.USER_ID' => $userId,
-						'=UG.GROUP.ACTIVE' => 'Y',
-						'=UG.GROUP.CLOSED' => 'N',
-					),
+					'filter' => $conditionTree,
 					'runtime' => array(
 						new ReferenceField('UG',
 							'Bitrix\Socialnetwork\UserToGroupTable',
@@ -227,10 +230,13 @@ class Controller extends Internals\Controller
 
 	protected function getCommonStorages()
 	{
-		return Storage::getReadableList($this->getSecurityContextByUser($this->getUser()), array('filter' => array(
-			'=STORAGE.ENTITY_TYPE' => ProxyType\Common::className(),
-			'=STORAGE.SITE_ID' => SITE_ID,
-		)));
+		$conditionTree = \Bitrix\Main\ORM\Query\Query::filter();
+		$conditionTree
+			->where('STORAGE.ENTITY_TYPE', ProxyType\Common::class)
+			->where('STORAGE.SITE_ID', SITE_ID)
+		;
+
+		return Storage::getReadableList($this->getSecurityContextByUser($this->getUser()), ['filter' => $conditionTree]);
 	}
 
 	private function getSecurityContextByUser($user)

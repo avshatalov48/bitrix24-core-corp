@@ -41,17 +41,17 @@ const AgreementBlock = {
 					
 					<div class="b24-form-btn-container" style="padding: 12px 0 0;">
 						<div class="b24-form-btn-block"
-							@click.prevent="reject"						
-						>
-							<button type="button" class="b24-form-btn b24-form-btn-white b24-form-btn-border">
-								{{ messages.get('consentReject') }}
-							</button>
-						</div>
-						<div class="b24-form-btn-block"
 							@click.prevent="apply"						
 						>
 							<button type="button" class="b24-form-btn">
 								{{ messages.get('consentAccept') }}
+							</button>
+						</div>
+						<div class="b24-form-btn-block"
+							@click.prevent="reject"						
+						>
+							<button type="button" class="b24-form-btn b24-form-btn-white b24-form-btn-border">
+								{{ messages.get('consentReject') }}
 							</button>
 						</div>
 					</div>

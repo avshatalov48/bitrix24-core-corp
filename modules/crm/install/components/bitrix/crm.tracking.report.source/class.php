@@ -103,6 +103,11 @@ class CrmTrackingReportSourceComponent extends \CBitrixComponent
 			}
 		}
 
+		$this->arResult['PARENT'] = [
+			'NAME' => $this->arParams['LEVEL']
+				? Tracking\Source\Level\Type::getCaption(Tracking\Source\Level\Type::getPrevId($this->arParams['LEVEL']))
+				: Loc::getMessage('CRM_TRACKING_REPORT_SOURCE_AD_ACCOUNT')
+		];
 
 		$this->arResult['ERRORS'] = array();
 		$this->arResult['ROWS'] = $builder->getRows($this->arParams['LEVEL'], $this->arParams['PARENT_ID']);
@@ -198,9 +203,21 @@ class CrmTrackingReportSourceComponent extends \CBitrixComponent
 				'align' => 'right',
 			],
 			[
+				'id' => 'ctr',
+				'name' => Loc::getMessage('CRM_TRACKING_REPORT_SOURCE_COLUMN_CTR'),
+				'default' => true,
+				'align' => 'right',
+			],
+			[
 				'id' => 'outcome',
 				'name' => Loc::getMessage('CRM_TRACKING_REPORT_SOURCE_COLUMN_OUTCOME'),
 				'default' => true,
+				'align' => 'right',
+			],
+			[
+				'id' => 'cpc',
+				'name' => Loc::getMessage('CRM_TRACKING_REPORT_SOURCE_COLUMN_CPC'),
+				'default' => false,
 				'align' => 'right',
 			],
 			[
@@ -231,18 +248,6 @@ class CrmTrackingReportSourceComponent extends \CBitrixComponent
 				'id' => 'roi',
 				'name' => Loc::getMessage('CRM_TRACKING_REPORT_SOURCE_COLUMN_ROI'),
 				'default' => true,
-				'align' => 'right',
-			],
-			[
-				'id' => 'ctr',
-				'name' => Loc::getMessage('CRM_TRACKING_REPORT_SOURCE_COLUMN_CTR'),
-				'default' => true,
-				'align' => 'right',
-			],
-			[
-				'id' => 'cpc',
-				'name' => Loc::getMessage('CRM_TRACKING_REPORT_SOURCE_COLUMN_CPC'),
-				'default' => false,
 				'align' => 'right',
 			],
 		];

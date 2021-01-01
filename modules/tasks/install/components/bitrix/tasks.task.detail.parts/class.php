@@ -210,21 +210,42 @@ class TasksTaskDetailPartsComponent extends TasksBaseComponent
 							}
 							catch (Exception $e)
 							{
-								$arTaskData = $oTask->getData(false);
-								CTaskAssert::logError(
-									'[0x05b70569] Can\'t create checklist item, exception $e->getCode() = ' . $e->getCode()
-									. ', file: ' . $e->getFile() . ', line: ' . $e->getLine() . ', data: '
-									. serialize(array(
-										'LOGGED_USER_ID' => $userId,
-										'TASK_ID' => $arTaskData['ID'],
-										'CREATED_BY' => $arTaskData['CREATED_BY'],
-										'RESPONSIBLE_ID' => $arTaskData['RESPONSIBLE_ID'],
-										'ACCOMPLICES' => $arTaskData['ACCOMPLICES'],
-										'AUDITORS' => $arTaskData['AUDITORS'],
-										'ALLOWED_ACTIONS' => $oTask->getAllowedActions(true)
-									))
-									. '___END OF DATA'
-								);
+								$arTaskData = null;
+								try
+								{
+									$arTaskData = $oTask->getData(false);
+								}
+								catch (TasksException $e)
+								{
+
+								}
+
+								if ($arTaskData)
+								{
+									CTaskAssert::logError(
+										'[0x05b70569] Can\'t create checklist item, exception $e->getCode() = ' . $e->getCode()
+										. ', file: ' . $e->getFile() . ', line: ' . $e->getLine() . ', data: '
+										. serialize(array(
+											'LOGGED_USER_ID' => $userId,
+											'TASK_ID' => $arTaskData['ID'],
+											'CREATED_BY' => $arTaskData['CREATED_BY'],
+											'RESPONSIBLE_ID' => $arTaskData['RESPONSIBLE_ID'],
+											'ACCOMPLICES' => $arTaskData['ACCOMPLICES'],
+											'AUDITORS' => $arTaskData['AUDITORS'],
+											'ALLOWED_ACTIONS' => $oTask->getAllowedActions(true)
+										))
+										. '___END OF DATA'
+									);
+								}
+								else
+								{
+									CTaskAssert::logError(
+										'[0x05b70569] Can\'t create checklist item, exception $e->getCode() = ' . $e->getCode()
+										. ', file: ' . $e->getFile() . ', line: ' . $e->getLine() . ', data: []'
+										. '___END OF DATA'
+									);
+								}
+
 							}
 						}
 
@@ -261,7 +282,15 @@ class TasksTaskDetailPartsComponent extends TasksBaseComponent
 			{
 				$oTask = CTaskItem::getInstance($this->arParams['TASK_ID'], $this->arResult['LOGGED_IN_USER']);
 				$this->arResult['ALLOWED_ACTIONS'] = $oTask->getAllowedActions($asStrings = true);
-				$this->arResult['TASK'] = $oTask->getData();
+
+				try
+				{
+					$this->arResult['TASK'] = $oTask->getData();
+				}
+				catch (TasksException $e)
+				{
+					throw new \Bitrix\Main\SystemException();
+				}
 
 				$this->arResult['TASK']['META:ALLOWED_ACTIONS_CODES'] = $oTask->getAllowedTaskActions();
 				$this->arResult['TASK']['META:ALLOWED_ACTIONS'] = $this->arResult['ALLOWED_ACTIONS'];

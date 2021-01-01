@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BPCDA_FIELD_REQUIED"] = "The field '#FIELD#' is required.";
 $MESS["BPSA_CHECK_LIST_ITEMS"] = "Checklist";
 $MESS["BPSA_CYCLING_ERROR"] = "Task was not created because one or more actions may cause infinite recursion.";
@@ -13,6 +13,7 @@ $MESS["BPTA1A_ADD_TO_REPORT_2"] = "Include task in efficiency report";
 $MESS["BPTA1A_ALLOW_TIME_TRACKING"] = "Enable time tracking for task";
 $MESS["BPTA1A_CHANGE_DEADLINE"] = "Responsible person may change deadline";
 $MESS["BPTA1A_CHECK_RESULT"] = "Task requires approval to be closed";
+$MESS["BPTA1A_MAKE_SUBTASK"] = "Subtask of";
 $MESS["BPTA1A_TASKACCOMPLICES"] = "Participants";
 $MESS["BPTA1A_TASKACTIVEFROM"] = "Start";
 $MESS["BPTA1A_TASKACTIVETO"] = "End";
@@ -25,7 +26,7 @@ $MESS["BPTA1A_TASKGROUPID"] = "Social network group";
 $MESS["BPTA1A_TASKNAME"] = "Task name";
 $MESS["BPTA1A_TASKPRIORITY_V2"] = "Priority";
 $MESS["BPTA1A_TASKTRACKERS"] = "Observers";
+$MESS["BPTA1A_TASK_TASK_PRESENCE_ERROR"] = "The task with the ID '#TASK_ID#' does not exist.";
 $MESS["BPTA1A_TIME_TRACKING_H"] = "Planned time, hours";
 $MESS["BPTA1A_TIME_TRACKING_M"] = "Planned time, minutes";
 $MESS["TASK_EMPTY_GROUP"] = "Personal task";
-?>

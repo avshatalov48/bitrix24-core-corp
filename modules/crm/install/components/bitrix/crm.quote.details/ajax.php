@@ -25,6 +25,7 @@ use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
 use Bitrix\Crm\Conversion\QuoteConversionConfig;
 use Bitrix\Crm\Conversion\QuoteConversionWizard;
+use Bitrix\Crm\Tracking;
 
 Main\Localization\Loc::loadMessages(__FILE__);
 if(!function_exists('__CrmQuoteDetailsEndJsonResonse'))
@@ -131,6 +132,8 @@ elseif($action === 'SAVE')
 			$fields[$fieldName] = $_POST[$fieldName];
 		}
 	}
+	/** @global $USER_FIELD_MANAGER CUserTypeManager */
+	global $USER_FIELD_MANAGER;
 	$USER_FIELD_MANAGER->EditFormAddFields(\CCrmQuote::USER_FIELD_ENTITY_ID, $fields, [
 		'FORM' => $fields,
 		'FILES' => [],
@@ -430,7 +433,7 @@ elseif($action === 'SAVE')
 			\CCrmProductRow::SaveSettings(\CCrmQuote::OWNER_TYPE, $ID, $productRowSettings);
 		}
 
-		\Bitrix\Crm\Tracking\UI\Details::saveEntityData(
+		Tracking\UI\Details::saveEntityData(
 			\CCrmOwnerType::Quote,
 			$ID,
 			$_POST,

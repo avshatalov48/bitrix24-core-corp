@@ -1,4 +1,5 @@
 import {B24Options} from './type';
+import {Conv} from './util/registry';
 import * as Form from './form/registry';
 import * as Compatibility from './compatibility';
 
@@ -238,7 +239,7 @@ class Application
 		// noinspection JSUnresolvedVariable
 		if (b24options.usedBySiteButton)
 		{
-			this.createWidgetForm24(b24options, options);
+			this.createWidgetForm24(b24options, Conv.cloneDeep(b24options.data));
 			return;
 		}
 
@@ -257,6 +258,12 @@ class Application
 			}
 
 			node.setAttribute('data-b24-loaded', true);
+			const options = Conv.cloneDeep(b24options.data);
+			const id = node.getAttribute('data-b24-id');
+			if (id)
+			{
+				options.id = id;
+			}
 
 			switch (attributes[0])
 			{
@@ -264,7 +271,7 @@ class Application
 					setTimeout(() => {
 						this.createForm24(
 							b24options,
-							Object.assign({}, options, {
+							Object.assign(options, {
 								view: b24options.views.auto
 							})
 						).show();
@@ -280,7 +287,7 @@ class Application
 							{
 								form = this.createForm24(
 									b24options,
-									Object.assign({}, options, {
+									Object.assign(options, {
 										view: b24options.views.click
 									})
 								);
@@ -295,7 +302,7 @@ class Application
 					node.parentElement.insertBefore(target, node);
 					this.createForm24(
 						b24options,
-						Object.assign({}, options, {
+						Object.assign(options, {
 							node: target
 						})
 					);
@@ -307,5 +314,6 @@ class Application
 
 const App = new Application();
 export {
-	App
+	App,
+	Compatibility,
 }

@@ -118,6 +118,7 @@ BX.Tasks.Util.DatePicker = BX.Tasks.Util.Widget.extend({
 				bTime: this.option('displayFormat') == 'system-long',
 				value: this.getInitialValue(),
 				bHideTime: false,
+				bCompatibility: false,
 				callback_after: BX.delegate(this.onTimeSelected, this)
 			});
 

@@ -52,46 +52,60 @@ if ($arResult['IFRAME'])
 				<?$helper->displayWarnings();?>
 				<?CJSCore::Init(array('tasks_encoding_handler'));?>
 
-				<form class="js-id-import-tasks-import-form" id="<?= $arResult['FORM_ID'];?>" method="POST" enctype="multipart/form-data">
+				<form class="js-id-import-tasks-import-form" id="<?= HtmlFilter::encode($arResult['FORM_ID']) ?>" method="POST" enctype="multipart/form-data">
 					<?= bitrix_sessid_post();?>
-					<input type="hidden" name="step" id="step" value="<?= $arResult['STEP']?>">
+					<input type="hidden" name="step" id="step" value="<?= HtmlFilter::encode($arResult['STEP']) ?>">
 					<input type="hidden" name="hidden_found_file_encoding" id="hidden_found_file_encoding" value="<?= HtmlFilter::encode($arResult['IMPORT_FILE_PARAMETERS']['FOUND_FILE_ENCODING'])?>">
 					<input type="hidden" name="hidden_file_hash" id="hidden_file_hash" value="<?= HtmlFilter::encode($arResult['IMPORT_FILE_PARAMETERS']['FILE_HASH'])?>">
 					<input type="hidden" name="hidden_default_originator" id="hidden_default_originator" value="<?= HtmlFilter::encode($arResult['IMPORT_FILE_PARAMETERS']['DEFAULT_ORIGINATOR'])?>">
 					<input type="hidden" name="hidden_default_responsible" id="hidden_default_responsible" value="<?= HtmlFilter::encode($arResult['IMPORT_FILE_PARAMETERS']['DEFAULT_RESPONSIBLE'])?>">
 					<input type="hidden" name="hidden_show_encoding_choice" id="hidden_show_encoding_choice" value="<?= HtmlFilter::encode($arResult['IMPORT_FILE_PARAMETERS']['SHOW_ENCODING_CHOICE'])?>">
 					<input type="hidden" name="hidden_from_tmp_dir" id="hidden_from_tmp_dir" value="<?= ($arResult['IMPORT_FILE_PARAMETERS']['FROM_TMP_DIR']) ? 'Y' : 'N'?>">
-					<?
+					<?php
 					if ($arResult['STEP'] == 2)
 					{
 						$headers = '';
 						foreach ($arResult['IMPORT_FILE_PARAMETERS']['HEADERS'] as $key => $value)
+						{
 							$headers .= $key.'[/]'.$value.'[//]';
-						echo "<input type='hidden' name='hidden_headers' id='hidden_headers' value='".HtmlFilter::encode($headers)."'>";
+						}
+						echo '<input type="hidden" name="hidden_headers" id="hidden_headers" value="'.HtmlFilter::encode($headers).'">';
 
 						$requiredFields = '';
 						foreach ($arResult['IMPORT_FILE_PARAMETERS']['REQUIRED_FIELDS'] as $key => $value)
+						{
 							$requiredFields .= $key.'[/]'.$value.'[//]';
-						echo "<input type='hidden' name='hidden_required_fields' id='hidden_required_fields' value='".HtmlFilter::encode($requiredFields)."'>";
+						}
+						echo '<input type="hidden" name="hidden_required_fields" id="hidden_required_fields" value="'.HtmlFilter::encode($requiredFields).'">';
 
 						$fields = '';
 						foreach ($arResult['IMPORT_FILE_PARAMETERS']['FIELDS'] as $key => $value)
+						{
 							$fields .= $key.'[/]'.$value.'[//]';
-						echo "<input type='hidden' name='hidden_fields' id='hidden_fields' value='".HtmlFilter::encode($fields)."'>";
+						}
+						echo '<input type="hidden" name="hidden_fields" id="hidden_fields" value="'.HtmlFilter::encode($fields).'">';
 
-						$rows = array();
+						$rows = [];
 						foreach ($arResult['IMPORT_FILE_PARAMETERS']['ROWS'] as $rowIndex => $row)
+						{
 							foreach ($row as $key => $value)
+							{
 								$rows[$rowIndex] .= $key.'[/]'.$value.'[//]';
+							}
+						}
 						$rowString = '';
 						foreach ($rows as $row)
+						{
 							$rowString .= $row.'[///]';
-						echo "<input type='hidden' name='hidden_rows' id='hidden_rows' value='".HtmlFilter::encode($rowString)."'>";
+						}
+						echo '<input type="hidden" name="hidden_rows" id="hidden_rows" value="'.HtmlFilter::encode($rowString).'">';
 
 						$skippedColumns = '';
 						foreach ($arResult['IMPORT_FILE_PARAMETERS']['SKIPPED_COLUMNS'] as $key => $value)
+						{
 							$skippedColumns .= $key.'[/]'.$value.'[//]';
-						echo "<input type='hidden' name='hidden_skipped_columns' id='hidden_skipped_columns' value='".HtmlFilter::encode($skippedColumns)."'>";
+						}
+						echo '<input type="hidden" name="hidden_skipped_columns" id="hidden_skipped_columns" value="'.HtmlFilter::encode($skippedColumns).'">';
 					}
 					?>
 					<table class="tasks-main-table" id="main_table">
@@ -334,7 +348,7 @@ if ($arResult['IFRAME'])
 											<div class="tasks-entity-widget-content">
 												<div class="tasks-import-required-fields" id="required_fields_container">
 													<?= Loc::getMessage('TASKS_IMPORT_FIELDS_REQUIRED_FIELDS')?>:
-													<?= implode(', ', $arResult['IMPORT_FILE_PARAMETERS']['REQUIRED_FIELDS'])?>.
+													<?= HtmlFilter::encode(implode(', ', $arResult['IMPORT_FILE_PARAMETERS']['REQUIRED_FIELDS'])) ?>.
 												</div>
 												<?
 												$rows = array();
@@ -378,7 +392,7 @@ if ($arResult['IFRAME'])
 																		<div class="tasks-entity-widget-content-block-title"><?= HtmlFilter::encode($value)?></div>
 																		<div class="tasks-entity-widget-content-block-inner">
 																			<div class="tasks-entity-widget-content-block-select">
-																				<select class="tasks-entity-widget-content-select" id="field_<?= $key?>" name="field_<?= $key?>">
+																				<select class="tasks-entity-widget-content-select" id="<?= HtmlFilter::encode("field_{$key}")?>" name="<?= HtmlFilter::encode("field_{$key}")?>">
 																					<?
 																					$selectedValue = isset($arResult['IMPORT_FILE_PARAMETERS']['FIELDS'][ToUpper($value)]) ?
 																						ToUpper($value) : array_search(ToUpper($value), $arResult['IMPORT_FILE_PARAMETERS']['UPPER_FIELDS']);
@@ -429,7 +443,7 @@ if ($arResult['IFRAME'])
 													</table>
 												</div>
 												<script type="text/javascript">
-													formWidth = BX(<?= $arResult['FORM_ID']?>).offsetWidth;
+													formWidth = BX('<?= CUtil::JSEscape($arResult['FORM_ID']) ?>').offsetWidth;
 													rightColumnWidth = formWidth - 40;
 													BX('tasks_import_example_table_container').style.width = rightColumnWidth + 'px';
 												</script>
@@ -467,19 +481,26 @@ if ($arResult['IFRAME'])
 				BX.ready(
 					function ()
 					{
-						var tasksImport = new BX.TasksImport(<?= Json::encode(array(
+						var tasksImport = new BX.TasksImport(<?= Json::encode([
 							'formId' => $arResult['FORM_ID'],
 							'step' => $arResult['STEP'],
 							'importFileParameters' => $arResult['IMPORT_FILE_PARAMETERS'],
 							'errors' => $arResult['ERRORS'],
-							'isFramePopup' => $arResult['IFRAME']
-						));?>);
+							'isFramePopup' => $arResult['IFRAME'],
+						]) ?>);
 
 						var encodingHandler = new BX.EncodingHandler({});
-						BX.bind(BX('next'), 'click', function()
-						{
-							if (BX('step').value === "1" && BX('hidden_from_tmp_dir').value === 'N' && !tasksImport.validateFile(BX('file').files[0]))
+						var formId = '<?= CUtil::JSEscape($arResult['FORM_ID']) ?>';
+
+						BX.bind(BX('next'), 'click', function() {
+							if (
+								BX('step').value === "1"
+								&& BX('hidden_from_tmp_dir').value === 'N'
+								&& !tasksImport.validateFile(BX('file').files[0])
+							)
+							{
 								return;
+							}
 
 							if (BX('step').value === "1" && BX('file_encoding').value === 'auto')
 							{
@@ -488,27 +509,29 @@ if ($arResult['IFRAME'])
 									if (BX('hidden_show_encoding_choice').value === 'Y')
 									{
 										encodingHandler.createPopup(
-											<?= Json::encode($arResult['ENCODED_RESULTS']);?>,
-											<?= $arResult['FORM_ID']?>,
+											<?= Json::encode($arResult['ENCODED_RESULTS']) ?>,
+											formId,
 											'hidden_found_file_encoding'
 										);
 									}
 									else
 									{
-										BX.submit(BX(<?= $arResult['FORM_ID'];?>), 'next');
+										BX.submit(BX(formId), 'next');
 									}
 								}
 								else
+								{
 									encodingHandler.handleEncodings({
-											formId: <?= $arResult['FORM_ID'];?>,
-											resultEncodingElementId: 'hidden_found_file_encoding',
-											file: BX('file').files[0],
-											charsets: <?= Json::encode($arResult['CHARSETS'])?>
+										formId: formId,
+										resultEncodingElementId: 'hidden_found_file_encoding',
+										file: BX('file').files[0],
+										charsets: <?= Json::encode($arResult['CHARSETS']) ?>
 									});
+								}
 							}
 							else
 							{
-								BX.submit(BX(<?= $arResult['FORM_ID'];?>), 'next');
+								BX.submit(BX(formId), 'next');
 							}
 						});
 					}

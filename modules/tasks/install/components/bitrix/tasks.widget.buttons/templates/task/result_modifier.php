@@ -134,7 +134,7 @@ if (Bitrix\Main\Loader::includeModule('rest'))
 
 	$this->arResult['ADDITIONAL_TABS'][] = array(
 		'ID'     => 'activity_rest_applist',
-		'NAME'   => \Bitrix\Main\Localization\Loc::getMessage('TASKS_REST_BUTTON_TITLE'),
+		'NAME'   => \Bitrix\Main\Localization\Loc::getMessage('TASKS_REST_BUTTON_TITLE_2'),
 		'SLIDER' => true,
 		'ONCLICK' =>'BX.rest.Marketplace.open({PLACEMENT:"'.\CUtil::JSEscape($this->arResult['REST_PLACEMENT']).'"})'
 	);
@@ -183,4 +183,6 @@ $arResult['JS_DATA'] = [
 	'additional_actions' => $actions,
 	'additional_tabs'    => $this->arResult['ADDITIONAL_TABS'],
 	'taskLimitExceeded' => $arResult['TASK_LIMIT_EXCEEDED'],
+	'groupId' => $arParams['TASK']['GROUP_ID'],
+	'isScrumTask' => $arParams['IS_SCRUM_TASK'],
 ];

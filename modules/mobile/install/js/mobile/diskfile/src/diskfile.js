@@ -1,5 +1,6 @@
 import {Type,Event,Runtime,Dom} from "main.core";
 import {MobileImageViewer} from "mobile.imageviewer";
+import {Ajax} from "mobile.ajax";
 
 class DiskFile
 {
@@ -94,9 +95,7 @@ class DiskFile
 
 	toggleViewType(params)
 	{
-		const
-			BMAjaxWrapper = new MobileAjaxWrapper,
-			container = (params.container && Type.isDomNode(params.container) ? params.container : null);
+		const container = (params.container && Type.isDomNode(params.container) ? params.container : null);
 
 		if (!container)
 		{
@@ -105,7 +104,7 @@ class DiskFile
 
 		app.showPopupLoader({text: ''});
 
-		BMAjaxWrapper.runComponentAction('bitrix:disk.uf.file', 'toggleViewType', {
+		Ajax.runComponentAction('bitrix:disk.uf.file', 'toggleViewType', {
 			mode: 'class',
 			signedParameters: this.signedParameters,
 			data: {

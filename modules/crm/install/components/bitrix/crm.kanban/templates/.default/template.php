@@ -10,6 +10,7 @@ if (isset($arResult['ERROR']))
 	return;
 }
 
+use \Bitrix\Crm\Integration\PullManager;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Crm\Kanban\Helper;
 use \Bitrix\Crm\Conversion\LeadConversionScheme;
@@ -61,7 +62,8 @@ $langRoot = BX_ROOT . '/modules/crm/lang/' . LANGUAGE_ID . '/';
 			$assetRoot . 'kanban/grid.js',
 			$assetRoot . 'kanban/item.js',
 			$assetRoot . 'kanban/column.js',
-			$assetRoot . 'kanban/dropzone.js'
+			$assetRoot . 'kanban/dropzone.js',
+			$assetRoot . 'kanban/pullmanager.js'
 		),
 		'css' => array(
 			$assetRoot . 'kanban/css/kanban.css',
@@ -96,7 +98,6 @@ include 'editors.php';
 <div id="crm_kanban"></div>
 
 <script type="text/javascript">
-
 	var Kanban;
 	var ajaxHandlerPath = "<?= $this->getComponent()->getPath()?>/ajax.old.php";
 
@@ -233,7 +234,12 @@ include 'editors.php';
 									}
 								}
 							},
-							categories: <?= \CUtil::phpToJsObject(array_values($arResult['CATEGORIES']));?>
+							categories: <?= \CUtil::phpToJsObject(array_values($arResult['CATEGORIES']));?>,
+							pullTag: "<?= \CUtil::JSEscape(PullManager::getInstance()->subscribeOnKanbanUpdate(
+								$arParams['ENTITY_TYPE_CHR'],
+								$arParams['EXTRA']
+							)) ?>",
+							moduleId: "<?= \CUtil::JSEscape(PullManager::MODULE_ID) ?>"
 						}
 				}
 			);
@@ -264,6 +270,8 @@ include 'editors.php';
 					CRM_KANBAN_DELETE_RESTORE_SUCCESS: "<?= GetMessageJS('CRM_KANBAN_DELETE_RESTORE_SUCCESS') ?>",
 				}
 			);
+
+			new BX.Crm.Kanban.PullManager(Kanban);
 		}
 	);
 </script>

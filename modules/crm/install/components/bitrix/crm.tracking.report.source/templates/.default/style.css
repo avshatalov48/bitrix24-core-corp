@@ -15,6 +15,11 @@
 	margin: 10px 0 0 0;
 	color: #8f8f8f;
 }
+.crm-tracking-report-source-selector-text {
+	position: relative;
+	font-size: 14px;
+	margin: 10px 5px 0 0;
+}
 .crm-tracking-report-source-selector-link {
 	position: relative;
 	font-size: 14px;

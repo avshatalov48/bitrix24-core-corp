@@ -22,6 +22,7 @@ class FieldTable extends Entity\DataManager
 	const TYPE_ENUM_PHONE = 'phone';
 	const TYPE_ENUM_INT = 'integer';
 	const TYPE_ENUM_FLOAT = 'double';
+	const TYPE_ENUM_MONEY = 'money';
 	const TYPE_ENUM_STRING = 'string';
 	const TYPE_ENUM_TYPED_STRING = 'typed_string';
 	const TYPE_ENUM_LIST = 'list';
@@ -32,7 +33,7 @@ class FieldTable extends Entity\DataManager
 	const TYPE_ENUM_DATE = 'date';
 	const TYPE_ENUM_DATETIME = 'datetime';
 	const TYPE_ENUM_PRODUCT = 'product';
-	const TYPE_ENUM_BOOL = 'boolean';
+	const TYPE_ENUM_BOOL = 'bool';
 	const TYPE_ENUM_HR = 'hr';
 	const TYPE_ENUM_BR = 'br';
 	const TYPE_ENUM_RESOURCEBOOKING = 'resourcebooking';
@@ -115,11 +116,13 @@ class FieldTable extends Entity\DataManager
 			self::TYPE_ENUM_EMAIL => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_EMAIL'),
 			self::TYPE_ENUM_INT => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_INT1'),
 			self::TYPE_ENUM_FLOAT => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_FLOAT'),
+			self::TYPE_ENUM_MONEY => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_FLOAT'),
 			self::TYPE_ENUM_PHONE => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_PHONE'),
 			self::TYPE_ENUM_LIST => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_LIST'),
 			self::TYPE_ENUM_DATE => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_DATE'),
 			self::TYPE_ENUM_DATETIME => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_DATETIME'),
 			self::TYPE_ENUM_CHECKBOX => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_CHECKBOX'),
+			self::TYPE_ENUM_BOOL => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_CHECKBOX'),
 			self::TYPE_ENUM_RADIO => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_RADIO'),
 			self::TYPE_ENUM_TEXT => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_TEXT'),
 			self::TYPE_ENUM_FILE => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_FILE'),

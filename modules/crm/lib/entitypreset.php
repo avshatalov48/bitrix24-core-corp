@@ -422,6 +422,11 @@ class EntityPreset
 		$fields['DATE_CREATE'] = new \Bitrix\Main\Type\DateTime();
 		$fields['CREATED_BY_ID'] = \CCrmSecurityHelper::GetCurrentUserID();
 
+		if (isset($fields['SETTINGS']))
+		{
+			$fields['SETTINGS'] = $this->settingsPrepareFieldsBeforeSave($fields['SETTINGS']);
+		}
+
 		return PresetTable::add($fields);
 	}
 
@@ -429,7 +434,12 @@ class EntityPreset
 	{
 		unset($fields['DATE_CREATE'], $fields['CREATED_BY_ID']);
 		$fields['DATE_MODIFY'] = new \Bitrix\Main\Type\DateTime();
-		$fields['MODIFY_BY_ID'] = \CCrmSecurityHelper::GetCurrentUserID();
+		$fields['MODIFY_BY_ID '] = \CCrmSecurityHelper::GetCurrentUserID();
+
+		if (isset($fields['SETTINGS']))
+		{
+			$fields['SETTINGS'] = $this->settingsPrepareFieldsBeforeSave($fields['SETTINGS']);
+		}
 
 		return PresetTable::update($id, $fields);
 	}
@@ -663,6 +673,72 @@ class EntityPreset
 			$settings['LAST_FIELD_ID'] = 0;
 
 		return true;
+	}
+
+	protected function settingsPrepareFieldsBeforeSave($settings)
+	{
+		$result = $settings;
+
+		if (is_array($settings['FIELDS']) && !empty($settings['FIELDS']))
+		{
+			$fields = [];
+			$fieldIdMap = [];
+			$fieldNameMap = [];
+			$lastFieldId = 0;
+			$fieldsModified = false;
+			$lastFieldIdModified = false;
+			$settingsLastFieldId = isset($settings['LAST_FIELD_ID']) ? (int)$settings['LAST_FIELD_ID'] : 0;
+			foreach ($settings['FIELDS'] as $fieldInfo)
+			{
+				if (isset($fieldInfo['ID'])
+					&& $fieldInfo['ID'] > 0
+					&& isset($fieldInfo['FIELD_NAME'])
+					&& is_string($fieldInfo['FIELD_NAME'])
+					&& $fieldInfo['FIELD_NAME'] !== '')
+				{
+					$fieldId = (int)$fieldInfo['ID'];
+					$fieldName = $fieldInfo['FIELD_NAME'];
+					if (!isset($fieldNameMap[$fieldName]))
+					{
+						if (isset($fieldIdMap[$fieldId]))
+						{
+							$fieldId = $lastFieldId + 1;
+							$fieldInfo['ID'] = $fieldId;
+							$fieldsModified = true;
+						}
+						$fieldIdMap[$fieldId] = true;
+						$fieldNameMap[$fieldName] = true;
+						$fields[] = $fieldInfo;
+						if ($fieldId > $lastFieldId)
+						{
+							$lastFieldId = $fieldId;
+						}
+					}
+					else
+					{
+						$fieldsModified = true;
+					}
+				}
+				else
+				{
+					$fieldsModified = true;
+				}
+			}
+			if ($lastFieldId === 0 || $lastFieldId > $settingsLastFieldId)
+			{
+				$lastFieldIdModified = true;
+			}
+			if ($fieldsModified)
+			{
+				$result['FIELDS'] = $fields;
+			}
+			if ($lastFieldIdModified)
+			{
+				$result['LAST_FIELD_ID'] = $lastFieldId;
+			}
+		}
+
+		return $result;
 	}
 
 	public function getSettingsFieldsOfPresets($entityTypeId, $type = 'all', $options = array())

@@ -143,7 +143,6 @@ $MESS["CONFIG_NAME_CHANGE_INFO"] = "Обратите внимание, изме�
 $MESS["CONFIG_NAME_GOOGLE_API_KEY"] = "Настройки интеграции с Google API";
 $MESS["CONFIG_NAME_GOOGLE_API_KEY_FIELD"] = "Ключ для интеграции Битрикс24 с Google Maps API";
 $MESS["CONFIG_NAME_GOOGLE_API_HOST_HINT"] = "Ключ был получен для домена <b>#domain#</b>. Если Google-карты не работают, поменяйте настройки ключа или <a href=\"https://developers.google.com/maps/documentation/javascript/get-api-key\" target=\"_blank\">получите новый</a>.";
-$MESS["CONFIG_NAME_GOOGLE_API_KEY_HINT"] = "Для работы с картами нужен ключ Google API. Чтобы получить его, <a href=\"https://developers.google.com/maps/documentation/javascript/get-api-key\" target=\"_blank\">воспользуйтесь формой</a>.";
 $MESS["CONFIG_DISK_LOCK_POPUP_TITLE"] = "Доступно только в расширенном Диске «Битрикс24»";
 $MESS["CONFIG_DISK_ALLOW_DOCUMENT_TRANSFORMATION"] = "Включить автоматическую генерацию pdf и jpg файлов для документов";
 $MESS["CONFIG_DISK_ALLOW_VIDEO_TRANSFORMATION"] = "Включить автоматическую генерацию mp4 и jpg для видео файлов";
@@ -170,6 +169,7 @@ $MESS["CONFIG_NETWORK_AVAILABLE"] = "Разрешить общение в гло
 $MESS["CONFIG_NETWORK_AVAILABLE_NOT_CONFIRMED"] = "Данная возможность доступна после подтверждения учетной записи администратора.";
 $MESS["CONFIG_NETWORK_AVAILABLE_TITLE"] = "Доступно только в коммерческих тарифах \"Битрикс24\"";
 $MESS["CONFIG_SHOW_YEAR_FOR_FEMALE"] = "Показывать год рождения в профиле женщин";
+$MESS["CONFIG_SHOW_YEAR"] = "Показывать год рождения в профиле сотрудников";
 $MESS["CONFIG_STRESSLEVEL_AVAILABLE"] = "Разрешить замер и показ уровня стресса в профиле сотрудников";
 $MESS["CONFIG_DISK_ALLOW_USE_EXTENDED_FULLTEXT"] = "Искать по содержимому документов Диска";
 $MESS["CONFIG_DISK_LOCK_EXTENDED_FULLTEXT_POPUP_TEXT"] = "Доступно только при повышении тарифа";
@@ -210,9 +210,15 @@ $MESS["CONFIG_NETWORK_AVAILABLE_TEXT_NEW"] = "Общение в сети Бит�
 $MESS["CONFIG_SEND_OTP_PUSH"] = "Отправлять нотификацию с кодом авторизации в веб-мессенджер (только для OTP по времени)";
 $MESS["CONFIG_LIMIT_MAX_TIME_IN_DOCUMENT_HISTORY"] = "Версии документа хранятся: #NUM# дней.";
 $MESS["CONFIG_LOCATION_ADDRESS_FORMAT"] = "Формат адреса";
+$MESS["CONFIG_LOCATION_SOURCES_SETTINGS"] = "Настройки источников для адресов и местоположений";
+$MESS["CONFIG_LOCATION_DEFAULT_SOURCE"] = "Источник по умолчанию";
+$MESS["CONFIG_LOCATION_SOURCE_GOOGLE_API_KEY_FRONTEND"] = "Ключ с правами на Google Maps JavaScript API, Places API, Geocoding API для использования в браузере пользователя";
+$MESS["CONFIG_LOCATION_SOURCE_GOOGLE_API_KEY_BACKEND"] = "Ключ с правами на Google Places API, Geocoding API для использования на сервере";
+$MESS["CONFIG_LOCATION_SOURCE_GOOGLE_SHOW_PHOTOS_ON_MAP"] = "Показывать фотографии мест при показе карты (Google может взимать дополнительную плату за использование данной опции)";
+$MESS["CONFIG_LOCATION_SOURCE_GOOGLE_USE_GEOCODING_SERVICE"] = "Показывать карту для нераспознанных адресов (Google может взимать дополнительную плату за использование данной опции)";
+$MESS["CONFIG_LOCATION_SOURCE_GOOGLE_NOTE"] = "Для работы с картами нужен ключ Google API. Чтобы получить его, <a href=\"https://developers.google.com/maps/documentation/javascript/get-api-key\" target=\"_blank\">воспользуйтесь формой</a>.";
+$MESS["CONFIG_NAME_GOOGLE_API_KEY_HINT"] = "Для работы с картами нужен ключ Google API. Чтобы получить его, <a href=\"https://developers.google.com/maps/documentation/javascript/get-api-key\" target=\"_blank\">воспользуйтесь формой</a>.";
 $MESS["CONFIG_NAME_GOOGLE_API_KEY_FIELD2"] = "Ключ с правами на Google Maps JavaScript API, Places API, Geocoding API для использования в браузере пользователя";
-$MESS["CONFIG_NAME_GOOGLE_API_KEY_FIELD_BACKEND"] = "Ключ с правами на Google Places API, Geocoding API для использования на сервере";
-$MESS["CONFIG_LOCATION_USE_GOOGLE_API"] = "Использовать Google API для подсказок при вводе адреса и для показа карты";
-$MESS["CONFIG_LOCATION_GOOGLE_SHOW_PLACE_PHOTOS"] = "Показывать фотографии мест при показе карты (Google может взимать дополнительную плату за использование данной опции)";
-$MESS["CONFIG_LOCATION_GOOGLE_USE_GEOCODING_SERVICE"] = "Показывать карту для нераспознанных адресов (Google может взимать дополнительную плату за использование данной опции)";
+$MESS["CONFIG_NAME_FILEMAN_GOOGLE_API_KEY"] = "Ключ для интеграции с Google Maps модуля Управление структурой";
+$MESS["CONFIG_LOCATION_SOURCE_OSM_SERVICE_URL"] = "Адрес сервиса";
 ?>

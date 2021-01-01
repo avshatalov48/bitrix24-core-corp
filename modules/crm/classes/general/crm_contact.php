@@ -26,6 +26,8 @@ class CAllCrmContact
 	const TOTAL_COUNT_CACHE_ID =  'crm_contact_total_count';
 
 	public $LAST_ERROR = '';
+	protected $checkExceptions = array();
+
 	public $cPerms = null;
 	protected $bCheckPermission = true;
 	const TABLE_ALIAS = 'L';
@@ -48,6 +50,13 @@ class CAllCrmContact
 		}
 
 		$result = GetMessage("CRM_CONTACT_FIELD_{$fieldName}");
+
+		if (!(is_string($result) && $result !== '')
+			&& Crm\Tracking\UI\Details::isTrackingField($fieldName))
+		{
+			$result = Crm\Tracking\UI\Details::getFieldCaption($fieldName);
+		}
+
 		return is_string($result) ? $result : '';
 	}
 	// Get Fields Metadata
@@ -92,11 +101,13 @@ class CAllCrmContact
 				),
 				'TYPE_ID' => array(
 					'TYPE' => 'crm_status',
-					'CRM_STATUS_TYPE' => 'CONTACT_TYPE'
+					'CRM_STATUS_TYPE' => 'CONTACT_TYPE',
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::HasDefaultValue]
 				),
 				'SOURCE_ID' => array(
 					'TYPE' => 'crm_status',
-					'CRM_STATUS_TYPE' => 'SOURCE'
+					'CRM_STATUS_TYPE' => 'SOURCE',
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::HasDefaultValue]
 				),
 				'SOURCE_DESCRIPTION' => array(
 					'TYPE' => 'string'
@@ -1057,6 +1068,7 @@ class CAllCrmContact
 		}
 
 		$this->LAST_ERROR = '';
+		$this->checkExceptions = [];
 
 		$isRestoration = isset($options['IS_RESTORATION']) && $options['IS_RESTORATION'];
 
@@ -1099,6 +1111,12 @@ class CAllCrmContact
 			{
 				$arFields['ASSIGNED_BY_ID'] = $userID;
 			}
+		}
+
+		if((!isset($arFields['LAST_NAME']) || trim($arFields['LAST_NAME']) === '')
+			&& (!isset($arFields['NAME']) || trim($arFields['NAME']) === ''))
+		{
+			$arFields['LAST_NAME'] = self::GetDefaultTitle();
 		}
 
 		if (!$this->CheckFields($arFields, false, $options))
@@ -1275,14 +1293,30 @@ class CAllCrmContact
 			}
 			//endregion
 
+			unset($arFields['ID']);
 			$ID = intval($DB->Add('b_crm_contact', $arFields, array(), 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__));
+			//Append ID to LAST_NAME if required
+			if($ID > 0 && $arFields['LAST_NAME'] === self::GetDefaultTitle())
+			{
+				$arFields['LAST_NAME'] = self::GetDefaultTitle($ID);
+				$sUpdate = $DB->PrepareUpdate('b_crm_contact', array('LAST_NAME' => $arFields['LAST_NAME']));
+				if($sUpdate <> '')
+				{
+					$DB->Query(
+						"UPDATE b_crm_contact SET {$sUpdate} WHERE ID = {$ID}",
+						false,
+						'FILE: '.__FILE__.'<br /> LINE: '.__LINE__
+					);
+				};
+			}
+
+			$result = $arFields['ID'] = $ID;
 
 			if(defined('BX_COMP_MANAGED_CACHE'))
 			{
 				$GLOBALS['CACHE_MANAGER']->CleanDir('b_crm_contact');
 			}
 
-			$result = $arFields['ID'] = $ID;
 			CCrmPerms::UpdateEntityAttr('CONTACT', $ID, $arEntityAttr);
 
 			//Statistics & History -->
@@ -1547,6 +1581,8 @@ class CAllCrmContact
 		global $DB;
 
 		$this->LAST_ERROR = '';
+		$this->checkExceptions = [];
+
 		$ID = (int) $ID;
 		if(!is_array($arOptions))
 		{
@@ -1602,6 +1638,8 @@ class CAllCrmContact
 		$assignedByID = (int)(isset($arFields['ASSIGNED_BY_ID']) ? $arFields['ASSIGNED_BY_ID'] : $arRow['ASSIGNED_BY_ID']);
 
 		$bResult = false;
+
+		$options['CURRENT_FIELDS'] = $arRow;
 		if (!$this->CheckFields($arFields, $ID, $arOptions))
 		{
 			$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
@@ -2494,6 +2532,7 @@ class CAllCrmContact
 	{
 		global $APPLICATION, $USER_FIELD_MANAGER;
 		$this->LAST_ERROR = '';
+		$this->checkExceptions = [];
 
 		if (($ID == false || (isset($arFields['NAME']) && isset($arFields['LAST_NAME'])))
 			&& (empty($arFields['NAME']) && empty($arFields['LAST_NAME'])))
@@ -2535,20 +2574,118 @@ class CAllCrmContact
 
 		if($enableUserFieldCheck)
 		{
-			// We have to prepare field data before check (issue #22966)
-			CCrmEntityHelper::NormalizeUserFields($arFields, self::$sUFEntityID, $USER_FIELD_MANAGER, array('IS_NEW' => ($ID == false)));
+			CCrmEntityHelper::NormalizeUserFields(
+				$arFields,
+				self::$sUFEntityID,
+				$USER_FIELD_MANAGER,
+				array('IS_NEW' => ($ID == false))
+			);
 
 			$enableRequiredUserFieldCheck = !(isset($options['DISABLE_REQUIRED_USER_FIELD_CHECK'])
 				&& $options['DISABLE_REQUIRED_USER_FIELD_CHECK'] === true);
 
-			if(!$USER_FIELD_MANAGER->CheckFields(self::$sUFEntityID, $ID, $arFields, false, $enableRequiredUserFieldCheck))
+			$fieldsToCheck = $arFields;
+			$requiredFields = null;
+			if($enableRequiredUserFieldCheck)
+			{
+				/* Comment before status support
+				$currentFields = null;
+				if($ID > 0)
+				{
+					if(isset($options['CURRENT_FIELDS']) && is_array($options['CURRENT_FIELDS']))
+					{
+						$currentFields = $options['CURRENT_FIELDS'];
+					}
+					else
+					{
+						$dbResult = self::GetListEx(
+							array(),
+							array('ID' => $ID, 'CHECK_PERMISSIONS' => 'N'),
+							false,
+							false,
+							array('*', 'UF_*')
+						);
+						$currentFields = $dbResult->Fetch();
+					}
+				}
+
+				if(is_array($currentFields))
+				{
+					CCrmEntityHelper::NormalizeUserFields(
+						$currentFields,
+						self::$sUFEntityID,
+						$USER_FIELD_MANAGER,
+						array('IS_NEW' => ($ID == false))
+					);
+
+					//If Status ID is changed we must perform check of all fields.
+					if(isset($arFields['STATUS_ID']) && $arFields['STATUS_ID'] !== $currentFields['STATUS_ID'])
+					{
+						$fieldsToCheck = array_merge($currentFields, $arFields);
+						if(self::GetSemanticID($arFields['STATUS_ID'], $currentFields['CATEGORY_ID']) ===
+							Bitrix\Crm\PhaseSemantics::FAILURE)
+						{
+							//Disable required fields check for failure status due to backward compatibility.
+							$enableRequiredUserFieldCheck = false;
+						}
+					}
+					elseif(!isset($arFields['STATUS_ID']) && isset($currentFields['STATUS_ID']))
+					{
+						$fieldsToCheck = array_merge($arFields, array('STATUS_ID' => $currentFields['STATUS_ID']));
+					}
+				}*/
+
+				$requiredFields = Crm\Attribute\FieldAttributeManager::getRequiredFields(
+					CCrmOwnerType::Contact,
+					$ID,
+					$fieldsToCheck,
+					Crm\Attribute\FieldOrigin::UNDEFINED,
+					is_array($options['FIELD_CHECK_OPTIONS']) ? $options['FIELD_CHECK_OPTIONS'] : array()
+				);
+
+				$requiredSystemFields = isset($requiredFields[Crm\Attribute\FieldOrigin::SYSTEM])
+					? $requiredFields[Crm\Attribute\FieldOrigin::SYSTEM] : array();
+				if(!empty($requiredSystemFields))
+				{
+					$validator = new Crm\Entity\ContactValidator($ID, $fieldsToCheck);
+					$validationErrors = array();
+					foreach($requiredSystemFields as $fieldName)
+					{
+						$validator->checkFieldPresence($fieldName, $validationErrors);
+					}
+
+					if(!empty($validationErrors))
+					{
+						$e = new CAdminException($validationErrors);
+						$this->checkExceptions[] = $e;
+						$this->LAST_ERROR .= $e->GetString();
+					}
+				}
+			}
+
+			$requiredUserFields = is_array($requiredFields) && isset($requiredFields[Crm\Attribute\FieldOrigin::CUSTOM])
+				? $requiredFields[Crm\Attribute\FieldOrigin::CUSTOM] : array();
+
+			if (!$USER_FIELD_MANAGER->CheckFields(
+					self::$sUFEntityID,
+					$ID,
+					$fieldsToCheck,
+					false,
+					$enableRequiredUserFieldCheck,
+					$requiredUserFields))
 			{
 				$e = $APPLICATION->GetException();
+				$this->checkExceptions[] = $e;
 				$this->LAST_ERROR .= $e->GetString();
 			}
 		}
 
 		return $this->LAST_ERROR === '';
+	}
+
+	public function GetCheckExceptions()
+	{
+		return $this->checkExceptions;
 	}
 
 	/**
@@ -3270,6 +3407,16 @@ class CAllCrmContact
 	public static function GetDefaultName()
 	{
 		return GetMessage('CRM_CONTACT_UNNAMED');
+	}
+
+	public static function GetDefaultTitleTemplate()
+	{
+		return GetMessage('CRM_CONTACT_DEFAULT_TITLE_TEMPLATE');
+	}
+
+	public static function GetDefaultTitle($number = '')
+	{
+		return GetMessage('CRM_CONTACT_DEFAULT_TITLE_TEMPLATE', array('%NUMBER%' => $number));
 	}
 }
 ?>

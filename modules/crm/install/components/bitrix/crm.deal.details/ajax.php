@@ -6,13 +6,16 @@ define('DisableEventsCheck', true);
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
+use Bitrix\Crm\Kanban\Driver;
 use Bitrix\Main;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
 use Bitrix\Crm\Conversion\DealConversionConfig;
 use Bitrix\Crm\Conversion\DealConversionWizard;
 use Bitrix\Crm\Recurring;
+use Bitrix\Crm\Tracking;
 use Bitrix\Crm;
+use Bitrix\Main\Text\HtmlFilter;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -219,6 +222,8 @@ elseif($action === 'SAVE')
 			$fields[$fieldName] = $initialData[$fieldName];
 		}
 	}
+	/** @global $USER_FIELD_MANAGER CUserTypeManager */
+	global $USER_FIELD_MANAGER;
 	$USER_FIELD_MANAGER->EditFormAddFields(\CCrmDeal::USER_FIELD_ENTITY_ID, $fields, [
 		'FORM' => $fields,
 		'FILES' => [],
@@ -753,6 +758,8 @@ elseif($action === 'SAVE')
 				$fields['COMMENTS'] = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($fields['COMMENTS']);
 			}
 
+			Tracking\UI\Details::appendEntityFieldValue($fields, $_POST);
+
 			$entity = new \CCrmDeal(!CCrmPerms::IsAdmin());
 			if($isNew)
 			{
@@ -925,7 +932,7 @@ elseif($action === 'SAVE')
 		}
 
 
-		\Bitrix\Crm\Tracking\UI\Details::saveEntityData(
+		Tracking\UI\Details::saveEntityData(
 			\CCrmOwnerType::Deal,
 			$ID,
 			$_POST,
@@ -1033,6 +1040,9 @@ elseif($action === 'SAVE')
 	$component = new CCrmDealDetailsComponent();
 	$component->initializeParams($params);
 	$component->setEntityID($ID);
+	$component->prepareEntityData();
+	$component->prepareFieldInfos();
+	$component->prepareEntityFieldAttributes();
 	$result = array('ENTITY_ID' => $ID, 'ENTITY_DATA' => $component->prepareEntityData());
 
 	if($isNew)
@@ -1249,6 +1259,7 @@ elseif($action === 'DELETE')
 			)
 		);
 	}
+
 	__CrmDealDetailsEndJsonResonse(array('ENTITY_ID' => $ID));
 }
 elseif($action === 'GET_BINDING_INFOS')
@@ -1529,6 +1540,10 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 		$context['PARAMS'] = array();
 	}
 	$context['PARAMS'] = array_merge($params, $context['PARAMS']);
+
+	$component->prepareEntityData();
+	$component->prepareFieldInfos();
+	$component->prepareEntityFieldAttributes();
 
 	if(empty($fieldNames))
 	{

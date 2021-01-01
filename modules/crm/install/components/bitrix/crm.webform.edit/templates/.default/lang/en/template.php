@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_WEBFORM_EDIT_ADD_CAPTION"] = "Add title";
 $MESS["CRM_WEBFORM_EDIT_ADD_DESCRIPTION"] = "Add description";
 $MESS["CRM_WEBFORM_EDIT_ADS_LINKED"] = "This form was linked to an ad to receive data from it.";
@@ -67,6 +67,14 @@ $MESS["CRM_WEBFORM_EDIT_DOC_SECTION"] = "Create CRM entities";
 $MESS["CRM_WEBFORM_EDIT_DOC_SECTION_NAV"] = "CRM entities";
 $MESS["CRM_WEBFORM_EDIT_DOC_TITLE"] = "Save form data to CRM entities";
 $MESS["CRM_WEBFORM_EDIT_EDIT"] = "configure";
+$MESS["CRM_WEBFORM_EDIT_EDITOR_CHOISE_BTN_APPLY"] = "Save my choice";
+$MESS["CRM_WEBFORM_EDIT_EDITOR_CHOISE_BTN_HOLD_OVER"] = "I'll decide later";
+$MESS["CRM_WEBFORM_EDIT_EDITOR_CHOISE_NEW"] = "New form designer";
+$MESS["CRM_WEBFORM_EDIT_EDITOR_CHOISE_OLD"] = "Classic form designer";
+$MESS["CRM_WEBFORM_EDIT_EDITOR_H1"] = "New form designer is available";
+$MESS["CRM_WEBFORM_EDIT_EDITOR_H2"] = "Now you can use the new form designer to create a form. <br>It provides full support for Bitrix24.Sites design features.";
+$MESS["CRM_WEBFORM_EDIT_EDITOR_H3"] = "Attention! Only the basic forms are currently supported. <br>Products and complex Facebook forms are temporarily unavailable.";
+$MESS["CRM_WEBFORM_EDIT_EDITOR_NOTICE"] = "You can always change the default form designer here: CRM > Settings > Other > Other settings.";
 $MESS["CRM_WEBFORM_EDIT_EXTERNAL_ANALYTICS_AUTO_EVENTS"] = "If the form is published on your site and you use Google Analytics, events and goals will be auto registered. You don't have to enter parameters here in this case.";
 $MESS["CRM_WEBFORM_EDIT_EXTERNAL_ANALYTICS_BUTTON_ADD"] = "add";
 $MESS["CRM_WEBFORM_EDIT_EXTERNAL_ANALYTICS_GA"] = "Google Analytics ID";
@@ -204,4 +212,3 @@ $MESS["CRM_WEBFORM_EDIT_V2_DESIGN_SETUP"] = "Form design";
 $MESS["CRM_WEBFORM_EDIT_V2_DESIGN_TEXT"] = "Select design, dark theme and form colors";
 $MESS["CRM_WEBFORM_EDIT_V2_DESIGN_TEXT_AFTER_CREATE"] = "Available only after the form is created.";
 $MESS["CRM_WEBFORM_EDIT_V2_DESIGN_TEXT_UNAVAILABLE"] = "Custom design is temporarily unavailable for resource booking forms or forms containing dependencies";
-?>

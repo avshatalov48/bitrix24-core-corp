@@ -499,6 +499,8 @@ if(CModule::IncludeModule("socialnetwork"))
 										"AVATAR" => $arResult["arCommentFormatted"]["AVATAR_SRC"]
 									),
 									"FILES" => false,
+									"POST_CONTENT_TYPE_ID" => $postContentTypeId,
+									"COMMENT_CONTENT_TYPE_ID" => $commentContentTypeId,
 									"UF" => $arComment["UF"],
 									"~POST_MESSAGE_TEXT" => $arComment["~TEXT_MESSAGE"],
 									"WEB" => array(
@@ -1194,12 +1196,13 @@ if(CModule::IncludeModule("socialnetwork"))
 					"UF" => $arComment["UF"],
 					"~POST_MESSAGE_TEXT" => $arComment["EVENT"]["MESSAGE"],
 					"POST_MESSAGE_TEXT" => CSocNetTextParser::closetags(htmlspecialcharsback((
-					array_key_exists("EVENT_FORMATTED", $arComment)
-					&& array_key_exists("MESSAGE", $arComment["EVENT_FORMATTED"])
-						? $arComment["EVENT_FORMATTED"]["MESSAGE"]
-						: $arComment["EVENT"]["MESSAGE"]
+						array_key_exists("EVENT_FORMATTED", $arComment)
+						&& array_key_exists("MESSAGE", $arComment["EVENT_FORMATTED"])
+							? $arComment["EVENT_FORMATTED"]["MESSAGE"]
+							: $arComment["EVENT"]["MESSAGE"]
 					))),
-					"RATING_VOTE_ID" => $arComment["EVENT"]["RATING_TYPE_ID"].'_'.$arComment["EVENT"]["RATING_ENTITY_ID"].'-'.(time()+rand(0, 1000))
+					"RATING_VOTE_ID" => $arComment["EVENT"]["RATING_TYPE_ID"].'_'.$arComment["EVENT"]["RATING_ENTITY_ID"].'-'.(time()+random_int(0, 1000)),
+					"AUX" => (isset($arComment["AUX"]) ? $arComment["AUX"] : ''),
 				);
 
 				// find all inline images and remove them from UF

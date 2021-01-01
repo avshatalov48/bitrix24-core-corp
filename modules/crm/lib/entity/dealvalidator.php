@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Entity;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Tracking;
 
 class DealValidator extends EntityValidator
 {
@@ -32,7 +33,14 @@ class DealValidator extends EntityValidator
 	public function checkFieldPresence($fieldName, array &$messages = null)
 	{
 		$message = null;
-		if($fieldName === 'OPPORTUNITY_WITH_CURRENCY')
+		if ($fieldName === 'TITLE')
+		{
+			$result = !$this->isNeedToCheck($fieldName)
+				|| (is_string($this->entityFields[$fieldName])
+					&& $this->entityFields[$fieldName] !== ''
+					&& $this->entityFields[$fieldName] !== \CCrmDeal::GetDefaultTitle());
+		}
+		elseif($fieldName === 'OPPORTUNITY_WITH_CURRENCY')
 		{
 			$result = !$this->isNeedToCheck('OPPORTUNITY')
 				||  (isset($this->entityFields['OPPORTUNITY']) && $this->entityFields['OPPORTUNITY'] > 0);
@@ -48,6 +56,13 @@ class DealValidator extends EntityValidator
 		elseif($fieldName === 'CLIENT')
 		{
 			$result = $this->clientValidator->checkPresence();
+		}
+		else if (Tracking\UI\Details::isTrackingField($fieldName))
+		{
+			$isNeedToCheck = $this->isNeedToCheck($fieldName);
+			$isFilled = Tracking\UI\Details::isTrackingFieldFilled($this->entityFields);
+			$result = !$isNeedToCheck || $isFilled;
+			unset($isNeedToCheck, $isFilled);
 		}
 		else
 		{

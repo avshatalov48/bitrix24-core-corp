@@ -1,7 +1,8 @@
 import {Tag, Dom, Loc, Type, Event} from "main.core";
 import {Instance} from "./feed";
+import {EventEmitter} from 'main.core.events';
 
-class PublicationQueue extends Event.EventEmitter
+class PublicationQueue extends EventEmitter
 {
 	constructor()
 	{

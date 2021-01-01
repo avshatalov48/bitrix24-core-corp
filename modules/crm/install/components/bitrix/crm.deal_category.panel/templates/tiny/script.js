@@ -11,14 +11,14 @@ this.BX.Crm.Deal = this.BX.Crm.Deal || {};
 	    value: function createMenuItem(options) {
 	      var item = {
 	        id: options.ID,
-	        text: main_core.Text.encode(options.NAME),
+	        html: main_core.Text.encode(options.NAME),
 	        href: options.URL
 	      };
 	      var count = Number.parseInt(options.COUNTER, 10);
 
 	      if (main_core.Type.isNumber(count) && count > 0) {
 	        var counter = "<span class=\"main-buttons-item-counter\">".concat(options.COUNTER, "</span>");
-	        item.text = "".concat(item.text, " ").concat(counter);
+	        item.html = "".concat(item.html, " ").concat(counter);
 	      }
 
 	      return item;

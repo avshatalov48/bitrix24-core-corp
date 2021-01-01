@@ -6,6 +6,7 @@ $MESS["LEFT_MENU_CRM"] = "CRM";
 $MESS["LEFT_MENU_DISC"] = "My Drive";
 $MESS["LEFT_MENU_IM_MESSENGER"] = "Chat and Calls";
 $MESS["LEFT_MENU_LIVE_FEED"] = "Activity Stream";
+$MESS["LEFT_MENU_LIVE_FEED2"] = "Feed";
 $MESS["LEFT_MENU_MAIL"] = "Webmail";
 $MESS["LEFT_MENU_MAIL_SETTING"] = "Edit settings";
 $MESS["LEFT_MENU_MY_PROCESS"] = "My Requests";

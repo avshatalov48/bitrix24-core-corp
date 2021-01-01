@@ -1,5 +1,5 @@
 this.BX = this.BX || {};
-(function (exports,salescenter_manager,ui_vue,main_core) {
+(function (exports,salescenter_manager,location_core,location_widget,ui_vue,main_core) {
 	'use strict';
 
 	var StringControl = {
@@ -12,6 +12,9 @@ this.BX = this.BX || {};
 	      required: false
 	    },
 	    settings: {
+	      required: false
+	    },
+	    options: {
 	      required: false
 	    },
 	    editable: {
@@ -45,6 +48,10 @@ this.BX = this.BX || {};
 	var ClosableDirective = {
 	  bind: function bind(el, binding, vnode) {
 	    handleOutsideClick = function handleOutsideClick(e) {
+	      if (e.type === 'mousedown' && e.which !== 1) {
+	        return;
+	      }
+
 	      e.stopPropagation();
 	      var _binding$value = binding.value,
 	          handler = _binding$value.handler,
@@ -56,13 +63,20 @@ this.BX = this.BX || {};
 	          clickedOnExcludedEl = excludedEl.contains(e.target);
 	        }
 	      });
+	      /**
+	       * Click inside map wrapper
+	       */
+
+	      if (e.target.closest('.location-map-wrapper')) {
+	        clickedOnExcludedEl = true;
+	      }
 
 	      if (!el.contains(e.target) && !clickedOnExcludedEl) {
 	        vnode.context[handler]();
 	      }
 	    };
 
-	    document.addEventListener('click', handleOutsideClick);
+	    document.addEventListener('mousedown', handleOutsideClick);
 	    document.addEventListener('touchstart', handleOutsideClick);
 	  },
 	  unbind: function unbind() {
@@ -71,9 +85,9 @@ this.BX = this.BX || {};
 	  }
 	};
 
-	function _createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = _unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
-	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
 	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 	var AddressControl = {
@@ -87,6 +101,9 @@ this.BX = this.BX || {};
 	    },
 	    initValue: {},
 	    settings: {},
+	    options: {
+	      required: false
+	    },
 	    editable: {
 	      type: Boolean,
 	      default: true
@@ -96,6 +113,7 @@ this.BX = this.BX || {};
 	    return {
 	      enterTookPlace: false,
 	      isEntering: false,
+	      isLoading: false,
 	      editMode: false,
 	      value: null,
 	      addressWidgetState: null
@@ -218,7 +236,7 @@ this.BX = this.BX || {};
 	      return this.editMode || !this.value;
 	    },
 	    wrapperClass: function wrapperClass() {
-	      var showDangerIndicator = !this.isEntering && this.enterTookPlace && !this.value && this.addressWidgetState !== BX.Location.Widget.State.DATA_LOADING;
+	      var showDangerIndicator = !this.isEntering && this.enterTookPlace && !this.value && this.addressWidgetState !== location_widget.State.DATA_LOADING;
 	      return {
 	        'ui-ctl': true,
 	        'ui-ctl-textbox': true,
@@ -236,6 +254,9 @@ this.BX = this.BX || {};
 	      this.value = this.initValue;
 	    }
 
+	    var presetLocationList = this.options && this.options.hasOwnProperty('defaultItems') ? this.options.defaultItems.map(function (item) {
+	      return new location_core.Location(item);
+	    }) : [];
 	    this.addressWidget = new BX.Location.Widget.Factory().createAddressWidget({
 	      address: this.initValue ? this.buildAddress(this.initValue) : null,
 	      mapBehavior: 'manual',
@@ -247,7 +268,8 @@ this.BX = this.BX || {};
 	        fields: false,
 	        map: true,
 	        autocomplete: true
-	      }
+	      },
+	      presetLocationList: presetLocationList
 	    });
 	    /**
 	     * Redefine native onInputKeyup
@@ -291,10 +313,21 @@ this.BX = this.BX || {};
 	      var data = event.getData();
 	      _this.addressWidgetState = data.state;
 
-	      if (data.state === BX.Location.Widget.State.DATA_INPUTTING) {
+	      if (data.state === location_widget.State.DATA_INPUTTING) {
 	        _this.changeValue(null);
 
 	        _this.closeMap();
+	      } else if (data.state === location_widget.State.DATA_LOADING) {
+	        _this.isLoading = true;
+	      } else if (data.state === location_widget.State.DATA_LOADED) {
+	        _this.isLoading = false;
+	      }
+	    });
+	    this.addressWidget.subscribeOnFeatureEvent(function (event) {
+	      var data = event.getData();
+
+	      if (data.feature instanceof location_widget.AutocompleteFeature) {
+	        _this.isLoading = data.eventCode === location_widget.AutocompleteFeature.searchStartedEvent;
 	      }
 	    });
 	    /**
@@ -307,7 +340,7 @@ this.BX = this.BX || {};
 	      controlWrapper: this.$refs['control-wrapper']
 	    });
 	  },
-	  template: "\n\t\t<div\n\t\t\tv-closable=\"{\n\t\t\t\texclude: ['input-node'],\n\t\t\t\thandler: 'onInputBlur'\n\t\t\t}\"\n\t\t\tclass=\"ui-ctl-w100\"\n\t\t>\n\t\t\t<div :class=\"wrapperClass\" ref=\"control-wrapper\">\n\t\t\t\t<div\n\t\t\t\t\tv-show=\"isEditMode\"\n\t\t\t\t\t@click=\"onClearClicked\"\n\t\t\t\t\tclass=\"ui-ctl-after ui-ctl-icon-btn ui-ctl-icon-clear\"\n\t\t\t\t></div>\n\t\t\t\t<input\n\t\t\t\t\tv-show=\"isEditMode\"\n\t\t\t\t\t@click=\"onInputClicked\"\n\t\t\t\t\t@focus=\"onInputFocus\"\n\t\t\t\t\t@keydown.enter=\"onInputEnterKeyDown\"\n\t\t\t\t\t:disabled=\"!editable\"\n\t\t\t\t\tref=\"input-node\"\n\t\t\t\t\ttype=\"text\"\n\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t/>\n\t\t\t\t<span\n\t\t\t\t\tv-show=\"!isEditMode\"\n\t\t\t\t\t@click=\"onTextClicked\"\n\t\t\t\t\ttype=\"text\"\n\t\t\t\t\tclass=\"ui-ctl-element ui-ctl-textbox sale-address-control-path-input\"\n\t\t\t\t\tcontenteditable=\"false\"\n\t\t\t\t\tv-html=\"addressFormatted\"\n\t\t\t\t></span>\n\t\t\t\t<input v-model=\"value\" :name=\"name\" type=\"hidden\" />\n\t\t\t</div>\t\t\t\t\t\n\t\t</div>\n\t"
+	  template: "\n\t\t<div\n\t\t\tv-closable=\"{\n\t\t\t\texclude: ['input-node'],\n\t\t\t\thandler: 'onInputBlur'\n\t\t\t}\"\n\t\t\tclass=\"ui-ctl-w100\"\n\t\t>\n\t\t\t<div :class=\"wrapperClass\" ref=\"control-wrapper\">\n\t\t\t\t<div\n\t\t\t\t\tv-show=\"!isLoading && isEditMode\"\n\t\t\t\t\t@click=\"onClearClicked\"\n\t\t\t\t\tclass=\"ui-ctl-after ui-ctl-icon-btn ui-ctl-icon-clear\"\n\t\t\t\t></div>\n\t\t\t\t<div\n\t\t\t\t\tv-show=\"isLoading\"\n\t\t\t\t\tclass=\"ui-ctl-after ui-ctl-icon-loader\"\n\t\t\t\t></div>\n\t\t\t\t<input\n\t\t\t\t\tv-show=\"isEditMode\"\n\t\t\t\t\t@click=\"onInputClicked\"\n\t\t\t\t\t@focus=\"onInputFocus\"\n\t\t\t\t\t@keydown.enter=\"onInputEnterKeyDown\"\n\t\t\t\t\t:disabled=\"!editable\"\n\t\t\t\t\tref=\"input-node\"\n\t\t\t\t\ttype=\"text\"\n\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t/>\n\t\t\t\t<span\n\t\t\t\t\tv-show=\"!isEditMode\"\n\t\t\t\t\t@click=\"onTextClicked\"\n\t\t\t\t\ttype=\"text\"\n\t\t\t\t\tclass=\"ui-ctl-element ui-ctl-textbox sale-address-control-path-input\"\n\t\t\t\t\tcontenteditable=\"false\"\n\t\t\t\t\tv-html=\"addressFormatted\"\n\t\t\t\t></span>\n\t\t\t\t<input v-model=\"value\" :name=\"name\" type=\"hidden\" />\n\t\t\t</div>\t\t\t\t\t\n\t\t</div>\n\t"
 	};
 
 	var CheckboxService = {
@@ -406,9 +439,9 @@ this.BX = this.BX || {};
 	  'SERVICE_YANDEX_TAXI_VEHICLE_TYPE': YandexTaxiVehicleType
 	};
 
-	function _createForOfIteratorHelper$1(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = _unsupportedIterableToArray$1(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
-	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
+	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
 
 	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 	var deliveryselector = {
@@ -432,6 +465,9 @@ this.BX = this.BX || {};
 	      required: false
 	    },
 	    initRelatedPropsValues: {
+	      required: false
+	    },
+	    initRelatedPropsOptions: {
 	      required: false
 	    },
 	    initResponsibleId: {
@@ -800,12 +836,31 @@ this.BX = this.BX || {};
 	      return false;
 	    },
 	    getPropValue: function getPropValue(relatedProp) {
+	      if (!this.relatedPropsValues) {
+	        return null;
+	      }
+
 	      return this.relatedPropsValues.hasOwnProperty(relatedProp.id) ? this.relatedPropsValues[relatedProp.id] : null;
 	    },
+	    getPropOptions: function getPropOptions(relatedProp) {
+	      if (!this.initRelatedPropsOptions) {
+	        return null;
+	      }
+
+	      return this.initRelatedPropsOptions.hasOwnProperty(relatedProp.id) ? this.initRelatedPropsOptions[relatedProp.id] : null;
+	    },
 	    getServiceValue: function getServiceValue(relatedService) {
+	      if (!this.relatedServicesValues) {
+	        return null;
+	      }
+
 	      return this.relatedServicesValues.hasOwnProperty(relatedService.id) ? this.relatedServicesValues[relatedService.id] : null;
 	    },
 	    getCustomServiceValue: function getCustomServiceValue(customService) {
+	      if (!this.relatedServicesValues) {
+	        return null;
+	      }
+
 	      return this.relatedServicesValues.hasOwnProperty(customService.service.id) ? this.relatedServicesValues[customService.service.id] : null;
 	    },
 	    onAddMoreClicked: function onAddMoreClicked() {
@@ -1074,10 +1129,10 @@ this.BX = this.BX || {};
 	      return result;
 	    }
 	  },
-	  template: "\n\t\t<div class=\"salescenter-delivery\">\n\t\t\t<div class=\"salescenter-delivery-header\">\n\t\t\t\t<span class=\"salescenter-delivery-header-method\">\n\t\t\t\t\t{{localize.SALE_DELIVERY_SERVICE_SELECTOR_DELIVERY_SERVICE}}\n\t\t\t\t</span>\n\t\t\t\t\n\t\t\t\t<div\n\t\t\t\t\tv-for=\"deliveryService in deliveryServices\"\n\t\t\t\t\t@click=\"onDeliveryServiceChanged(deliveryService)\"\n\t\t\t\t\t:class=\"{'salescenter-delivery-method-item': true, 'salescenter-delivery-method-item--selected': (selectedDeliveryService && deliveryService.id == selectedDeliveryService.id) ? true : false}\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"salescenter-delivery-method-image\">\n\t\t\t\t\t\t<img :src=\"deliveryService.logo\">\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"salescenter-delivery-method-info\">\n\t\t\t\t\t\t<div v-if=\"deliveryService.title\" class=\"salescenter-delivery-method-title\">{{deliveryService.title}}</div>\n\t\t\t\t\t\t<div v-else=\"deliveryService.title\" class=\"salescenter-delivery-method-title\"></div>\n\t\t\t\t\t\t<div class=\"salescenter-delivery-method-name\">{{deliveryService.name}}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div @click=\"onAddMoreClicked\" class=\"salescenter-delivery-method-item salescenter-delivery-method-item--add\">\n\t\t\t\t\t<div class=\"salescenter-delivery-method-image-more\"></div>\n\t\t\t\t\t<div class=\"salescenter-delivery-method-info\">\n\t\t\t\t\t\t<div class=\"salescenter-delivery-method-name\">\n\t\t\t\t\t\t\t{{localize.SALE_DELIVERY_SERVICE_SELECTOR_ADD_MORE}}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t\n\t\t\t<component\n\t\t\t\tv-for=\"customService in customServices\"\n\t\t\t\tv-show=\"customService.service.deliveryServiceIds.includes(selectedDeliveryServiceId)\"\n\t\t\t\t:is=\"customService.name\"\n\t\t\t\t:key=\"customService.service.id\"\n\t\t\t\t:name=\"customService.service.name\"\n\t\t\t\t:initValue=\"getCustomServiceValue(customService)\"\n\t\t\t\t:options=\"customService.service.options\"\n\t\t\t\t:editable=\"editable\"\n\t\t\t\t@change=\"onServiceValueChanged($event, customService.service)\"\n\t\t\t>\n\t\t\t</component>\n\t\t\t\n\t\t\t<div v-show=\"extraServiceCheckboxesCount > 0\" class=\"salescenter-delivery-additionally\">\n\t\t\t\t<div class=\"salescenter-delivery-additionally-options\">\n\t\t\t\t\t<component\n\t\t\t\t\t\tv-for=\"relatedService in relatedServicesOfCheckboxType\"\n\t\t\t\t\t\tv-show=\"relatedService.deliveryServiceIds.includes(selectedDeliveryServiceId)\"\n\t\t\t\t\t\t:is=\"'checkbox-service'\"\n\t\t\t\t\t\t:key=\"relatedService.id\"\n\t\t\t\t\t\t:name=\"relatedService.name\"\n\t\t\t\t\t\t:initValue=\"getServiceValue(relatedService)\"\t\t\t\t\t\t\n\t\t\t\t\t\t:options=\"relatedService.options\"\n\t\t\t\t\t\t:editable=\"editable\"\n\t\t\t\t\t\t@change=\"onServiceValueChanged($event, relatedService)\"\n\t\t\t\t\t>\n\t\t\t\t\t</component>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div v-show=\"relatedPropsOfAddressTypeCount > 0\" class=\"salescenter-delivery-path\">\n\t\t\t\t<div\n\t\t\t\t\tv-for=\"(relatedProp, index) in relatedPropsOfAddressType\"\n\t\t\t\t\tv-show=\"relatedProp.deliveryServiceIds.includes(selectedDeliveryServiceId)\"\n\t\t\t\t\tclass=\"salescenter-delivery-path-item\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"salescenter-delivery-path-title\">{{relatedProp.name}}</div>\n\t\t\t\t\t<div class=\"salescenter-delivery-path-control\">\n\t\t\t\t\t\t<div :class=\"{'salescenter-delivery-path-icon': true, 'salescenter-delivery-path-icon--green': index > 0}\"></div>\n\t\t\t\t\t\t<component\n\t\t\t\t\t\t\t:is=\"'ADDRESS-control'\"\n\t\t\t\t\t\t\t:key=\"relatedProp.id\"\n\t\t\t\t\t\t\t:name=\"'PROPS_' + relatedProp.id\"\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t:initValue=\"getPropValue(relatedProp)\"\n\t\t\t\t\t\t\t:editable=\"editable\"\n\t\t\t\t\t\t\t@change=\"onPropValueChanged($event, relatedProp)\"\n\t\t\t\t\t\t></component>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t\n\t\t\t<div v-show=\"relatedPropsOfOtherTypeCount > 0\" class=\"salescenter-delivery-path\">\n\t\t\t\t<div\n\t\t\t\t\tv-for=\"(relatedProp, index) in relatedPropsOfOtherTypes\"\n\t\t\t\t\tv-show=\"relatedProp.deliveryServiceIds.includes(selectedDeliveryServiceId)\"\n\t\t\t\t\tclass=\"salescenter-delivery-path-item\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"salescenter-delivery-path-title-ordinary\">{{relatedProp.name}}</div>\n\t\t\t\t\t<div class=\"salescenter-delivery-path-control\">\n\t\t\t\t\t\t<component\n\t\t\t\t\t\t\t:is=\"relatedProp.type + '-control'\"\n\t\t\t\t\t\t\t:key=\"relatedProp.id\"\n\t\t\t\t\t\t\t:name=\"'PROPS_' + relatedProp.id\"\n\t\t\t\t\t\t\t:editable=\"editable\"\n\t\t\t\t\t\t\t:initValue=\"getPropValue(relatedProp)\"\n\t\t\t\t\t\t\t:settings=\"relatedProp.settings\"\n\t\t\t\t\t\t\t@change=\"onPropValueChanged($event, relatedProp)\"\n\t\t\t\t\t\t></component>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div v-if=\"isResponsibleUserSectionVisible\" class=\"salescenter-delivery-manager-wrapper\">\n\t\t\t\t<div class=\"ui-ctl-label-text\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_RESPONSIBLE_MANAGER}}</div>\n\t\t\t\t<div class=\"salescenter-delivery-manager\">\n\t\t\t\t\t<div class=\"salescenter-delivery-manager-avatar\" :style=\"responsibleUser.photo ? {'background-image': 'url(' + responsibleUser.photo + ')'} : {}\"></div>\n\t\t\t\t\t<div class=\"salescenter-delivery-manager-content\">\n\t\t\t\t\t\t<div @click=\"responsibleUserClicked\" class=\"salescenter-delivery-manager-name\">{{responsibleUser.name}}</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div v-if=\"editable\" @click=\"openChangeResponsibleDialog\" class=\"salescenter-delivery-manager-edit\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CHANGE_RESPONSIBLE}}</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t\t\t\n\t\t\t<div v-show=\"!selectedNoDelivery\">\n\t\t\t\t<template v-if=\"calculateErrors\">\n\t\t\t\t\t<div v-for=\"(error, index) in calculateErrors\" class=\"ui-alert ui-alert-danger ui-alert-icon-danger salescenter-delivery-errors-container-alert\">\n\t\t\t\t\t\t<span  class=\"ui-alert-message\">{{error}}</span>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<div class=\"salescenter-delivery-bottom\">\n\t\t\t\t\t<div v-if=\"editable\" class=\"salescenter-delivery-bottom-row\">\t\t\t\t\t\n\t\t\t\t\t\t<div class=\"salescenter-delivery-bottom-col\">\n\t\t\t\t\t\t\t<span v-show=\"!isCalculating\" @click=\"calculate\" :class=\"calculateDeliveryPriceButtonClass\">{{isCalculated ? localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATE_UPDATE : localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATE}}</span>\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t<span v-show=\"isCalculating\" class=\"salescenter-delivery-waiter\">\n\t\t\t\t\t\t\t\t<span class=\"salescenter-delivery-waiter-alert\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATING_LABEL}}</span>\n\t\t\t\t\t\t\t\t<span class=\"salescenter-delivery-waiter-text\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATING_REQUEST_SENT}} {{selectedDeliveryService ? selectedDeliveryService.name : ''}}</span>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div v-show=\"isCalculated\" class=\"salescenter-delivery-bottom-row\">\n\t\t\t\t\t\t<div class=\"salescenter-delivery-bottom-col\"></div>\n\t\t\t\t\t\t<div class=\"salescenter-delivery-bottom-col\">\n\t\t\t\t\t\t\t<table class=\"salescenter-delivery-table-total\">\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_EXPECTED_DELIVERY_PRICE}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<span v-html=\"estimatedDeliveryPriceFormatted\"></span>&nbsp;<span v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CLIENT_DELIVERY_PRICE}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-md ui-ctl-wa salescenter-delivery-bottom-input-symbol\">\n\t\t\t\t\t\t\t\t\t\t\t<input :disabled=\"!editable\" v-model=\"enteredDeliveryPrice\" @keypress=\"isNumber($event)\" type=\"text\" class=\"ui-ctl-element ui-ctl-textbox\">\n\t\t\t\t\t\t\t\t\t\t\t<span v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>{{externalSumLabel}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<span v-html=\"externalSumFormatted\"></span><span class=\"salescenter-delivery-table-total-symbol\" v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_DELIVERY_DELIVERY}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<span v-show=\"deliveryPrice > 0\">\n\t\t\t\t\t\t\t\t\t\t\t<span v-html=\"deliveryPriceFormatted\"></span>&nbsp;<span v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t<span v-show=\"!deliveryPrice\" class=\"salescenter-delivery-status salescenter-delivery-status--success\">\n\t\t\t\t\t\t\t\t\t\t\t{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CLIENT_DELIVERY_PRICE_FREE}}\n\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t<tr class=\"salescenter-delivery-table-total-result\">\n\t\t\t\t\t\t\t\t\t<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_TOTAL}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<span v-html=\"totalPriceFormatted\"></span>\n\t\t\t\t\t\t\t\t\t\t<span class=\"salescenter-delivery-table-total-symbol\" v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"salescenter-delivery\">\n\t\t\t<div class=\"salescenter-delivery-header\">\n\t\t\t\t<span class=\"salescenter-delivery-header-method\">\n\t\t\t\t\t{{localize.SALE_DELIVERY_SERVICE_SELECTOR_DELIVERY_SERVICE}}\n\t\t\t\t</span>\n\t\t\t\t\n\t\t\t\t<div\n\t\t\t\t\tv-for=\"deliveryService in deliveryServices\"\n\t\t\t\t\t@click=\"onDeliveryServiceChanged(deliveryService)\"\n\t\t\t\t\t:class=\"{'salescenter-delivery-method-item': true, 'salescenter-delivery-method-item--selected': (selectedDeliveryService && deliveryService.id == selectedDeliveryService.id) ? true : false}\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"salescenter-delivery-method-image\">\n\t\t\t\t\t\t<img :src=\"deliveryService.logo\">\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"salescenter-delivery-method-info\">\n\t\t\t\t\t\t<div v-if=\"deliveryService.title\" class=\"salescenter-delivery-method-title\">{{deliveryService.title}}</div>\n\t\t\t\t\t\t<div v-else=\"deliveryService.title\" class=\"salescenter-delivery-method-title\"></div>\n\t\t\t\t\t\t<div class=\"salescenter-delivery-method-name\">{{deliveryService.name}}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div @click=\"onAddMoreClicked\" class=\"salescenter-delivery-method-item salescenter-delivery-method-item--add\">\n\t\t\t\t\t<div class=\"salescenter-delivery-method-image-more\"></div>\n\t\t\t\t\t<div class=\"salescenter-delivery-method-info\">\n\t\t\t\t\t\t<div class=\"salescenter-delivery-method-name\">\n\t\t\t\t\t\t\t{{localize.SALE_DELIVERY_SERVICE_SELECTOR_ADD_MORE}}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t\n\t\t\t<component\n\t\t\t\tv-for=\"customService in customServices\"\n\t\t\t\tv-show=\"customService.service.deliveryServiceIds.includes(selectedDeliveryServiceId)\"\n\t\t\t\t:is=\"customService.name\"\n\t\t\t\t:key=\"customService.service.id\"\n\t\t\t\t:name=\"customService.service.name\"\n\t\t\t\t:initValue=\"getCustomServiceValue(customService)\"\n\t\t\t\t:options=\"customService.service.options\"\n\t\t\t\t:editable=\"editable\"\n\t\t\t\t@change=\"onServiceValueChanged($event, customService.service)\"\n\t\t\t>\n\t\t\t</component>\n\t\t\t\n\t\t\t<div v-show=\"extraServiceCheckboxesCount > 0\" class=\"salescenter-delivery-additionally\">\n\t\t\t\t<div class=\"salescenter-delivery-additionally-options\">\n\t\t\t\t\t<component\n\t\t\t\t\t\tv-for=\"relatedService in relatedServicesOfCheckboxType\"\n\t\t\t\t\t\tv-show=\"relatedService.deliveryServiceIds.includes(selectedDeliveryServiceId)\"\n\t\t\t\t\t\t:is=\"'checkbox-service'\"\n\t\t\t\t\t\t:key=\"relatedService.id\"\n\t\t\t\t\t\t:name=\"relatedService.name\"\n\t\t\t\t\t\t:initValue=\"getServiceValue(relatedService)\"\t\t\t\t\t\t\n\t\t\t\t\t\t:options=\"relatedService.options\"\n\t\t\t\t\t\t:editable=\"editable\"\n\t\t\t\t\t\t@change=\"onServiceValueChanged($event, relatedService)\"\n\t\t\t\t\t>\n\t\t\t\t\t</component>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div v-show=\"relatedPropsOfAddressTypeCount > 0\" class=\"salescenter-delivery-path\">\n\t\t\t\t<div\n\t\t\t\t\tv-for=\"(relatedProp, index) in relatedPropsOfAddressType\"\n\t\t\t\t\tv-show=\"relatedProp.deliveryServiceIds.includes(selectedDeliveryServiceId)\"\n\t\t\t\t\tclass=\"salescenter-delivery-path-item\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"salescenter-delivery-path-title\">{{relatedProp.name}}</div>\n\t\t\t\t\t<div class=\"salescenter-delivery-path-control\">\n\t\t\t\t\t\t<div :class=\"{'salescenter-delivery-path-icon': true, 'salescenter-delivery-path-icon--green': index > 0}\"></div>\n\t\t\t\t\t\t<component\n\t\t\t\t\t\t\t:is=\"'ADDRESS-control'\"\n\t\t\t\t\t\t\t:key=\"relatedProp.id\"\n\t\t\t\t\t\t\t:name=\"'PROPS_' + relatedProp.id\"\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t:initValue=\"getPropValue(relatedProp)\"\n\t\t\t\t\t\t\t:editable=\"editable\"\n\t\t\t\t\t\t\t:options=\"getPropOptions(relatedProp)\"\n\t\t\t\t\t\t\t@change=\"onPropValueChanged($event, relatedProp)\"\n\t\t\t\t\t\t></component>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t\n\t\t\t<div v-show=\"relatedPropsOfOtherTypeCount > 0\" class=\"salescenter-delivery-path\">\n\t\t\t\t<div\n\t\t\t\t\tv-for=\"(relatedProp, index) in relatedPropsOfOtherTypes\"\n\t\t\t\t\tv-show=\"relatedProp.deliveryServiceIds.includes(selectedDeliveryServiceId)\"\n\t\t\t\t\tclass=\"salescenter-delivery-path-item\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"salescenter-delivery-path-title-ordinary\">{{relatedProp.name}}</div>\n\t\t\t\t\t<div class=\"salescenter-delivery-path-control\">\n\t\t\t\t\t\t<component\n\t\t\t\t\t\t\t:is=\"relatedProp.type + '-control'\"\n\t\t\t\t\t\t\t:key=\"relatedProp.id\"\n\t\t\t\t\t\t\t:name=\"'PROPS_' + relatedProp.id\"\n\t\t\t\t\t\t\t:editable=\"editable\"\n\t\t\t\t\t\t\t:initValue=\"getPropValue(relatedProp)\"\n\t\t\t\t\t\t\t:settings=\"relatedProp.settings\"\n\t\t\t\t\t\t\t:options=\"getPropOptions(relatedProp)\"\n\t\t\t\t\t\t\t@change=\"onPropValueChanged($event, relatedProp)\"\n\t\t\t\t\t\t></component>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div v-if=\"isResponsibleUserSectionVisible\" class=\"salescenter-delivery-manager-wrapper\">\n\t\t\t\t<div class=\"ui-ctl-label-text\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_RESPONSIBLE_MANAGER}}</div>\n\t\t\t\t<div class=\"salescenter-delivery-manager\">\n\t\t\t\t\t<div class=\"salescenter-delivery-manager-avatar\" :style=\"responsibleUser.photo ? {'background-image': 'url(' + responsibleUser.photo + ')'} : {}\"></div>\n\t\t\t\t\t<div class=\"salescenter-delivery-manager-content\">\n\t\t\t\t\t\t<div @click=\"responsibleUserClicked\" class=\"salescenter-delivery-manager-name\">{{responsibleUser.name}}</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div v-if=\"editable\" @click=\"openChangeResponsibleDialog\" class=\"salescenter-delivery-manager-edit\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CHANGE_RESPONSIBLE}}</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t\t\t\n\t\t\t<div v-show=\"!selectedNoDelivery\">\n\t\t\t\t<template v-if=\"calculateErrors\">\n\t\t\t\t\t<div v-for=\"(error, index) in calculateErrors\" class=\"ui-alert ui-alert-danger ui-alert-icon-danger salescenter-delivery-errors-container-alert\">\n\t\t\t\t\t\t<span  class=\"ui-alert-message\">\n\t\t\t\t\t\t\t<span v-html=\"error\"></span>\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<div class=\"salescenter-delivery-bottom\">\n\t\t\t\t\t<div v-if=\"editable\" class=\"salescenter-delivery-bottom-row\">\t\t\t\t\t\n\t\t\t\t\t\t<div class=\"salescenter-delivery-bottom-col\">\n\t\t\t\t\t\t\t<span v-show=\"!isCalculating\" @click=\"calculate\" :class=\"calculateDeliveryPriceButtonClass\">{{isCalculated ? localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATE_UPDATE : localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATE}}</span>\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t<span v-show=\"isCalculating\" class=\"salescenter-delivery-waiter\">\n\t\t\t\t\t\t\t\t<span class=\"salescenter-delivery-waiter-alert\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATING_LABEL}}</span>\n\t\t\t\t\t\t\t\t<span class=\"salescenter-delivery-waiter-text\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATING_REQUEST_SENT}} {{selectedDeliveryService ? selectedDeliveryService.name : ''}}</span>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div v-show=\"isCalculated\" class=\"salescenter-delivery-bottom-row\">\n\t\t\t\t\t\t<div class=\"salescenter-delivery-bottom-col\"></div>\n\t\t\t\t\t\t<div class=\"salescenter-delivery-bottom-col\">\n\t\t\t\t\t\t\t<table class=\"salescenter-delivery-table-total\">\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_EXPECTED_DELIVERY_PRICE}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<span v-html=\"estimatedDeliveryPriceFormatted\"></span>&nbsp;<span v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CLIENT_DELIVERY_PRICE}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-md ui-ctl-wa salescenter-delivery-bottom-input-symbol\">\n\t\t\t\t\t\t\t\t\t\t\t<input :disabled=\"!editable\" v-model=\"enteredDeliveryPrice\" @keypress=\"isNumber($event)\" type=\"text\" class=\"ui-ctl-element ui-ctl-textbox\">\n\t\t\t\t\t\t\t\t\t\t\t<span v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>{{externalSumLabel}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<span v-html=\"externalSumFormatted\"></span><span class=\"salescenter-delivery-table-total-symbol\" v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_DELIVERY_DELIVERY}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<span v-show=\"deliveryPrice > 0\">\n\t\t\t\t\t\t\t\t\t\t\t<span v-html=\"deliveryPriceFormatted\"></span>&nbsp;<span v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t<span v-show=\"!deliveryPrice\" class=\"salescenter-delivery-status salescenter-delivery-status--success\">\n\t\t\t\t\t\t\t\t\t\t\t{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CLIENT_DELIVERY_PRICE_FREE}}\n\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t<tr class=\"salescenter-delivery-table-total-result\">\n\t\t\t\t\t\t\t\t\t<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_TOTAL}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<span v-html=\"totalPriceFormatted\"></span>\n\t\t\t\t\t\t\t\t\t\t<span class=\"salescenter-delivery-table-total-symbol\" v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	exports.default = deliveryselector;
 
-}((this.BX.Salescenter = this.BX.Salescenter || {}),BX.Salescenter,BX,BX));
+}((this.BX.Salescenter = this.BX.Salescenter || {}),BX.Salescenter,BX.Location.Core,BX.Location.Widget,BX,BX));
 //# sourceMappingURL=deliveryselector.bundle.js.map

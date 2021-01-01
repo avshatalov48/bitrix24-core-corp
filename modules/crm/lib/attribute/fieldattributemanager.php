@@ -9,6 +9,10 @@ class FieldAttributeManager
 {
 	public static function isEnabled()
 	{
+		return true;
+	}
+	public static function isPhaseDependent()
+	{
 		return Crm\Restriction\RestrictionManager::getAttributeConfigRestriction()->hasPermission();
 	}
 	public static function resolveEntityScope($entityTypeID, $entityID, array $options = null)
@@ -92,7 +96,7 @@ class FieldAttributeManager
 			);
 		}
 
-		$results = self::getUserFieldAttributes($entityTypeID, $entityScope);
+		$results = self::getFieldAttributes($entityTypeID, $entityScope);
 
 		$configs = array();
 		foreach ($results as $fieldName => $fieldData)
@@ -100,7 +104,10 @@ class FieldAttributeManager
 			$configs[$fieldName] = array();
 			foreach ($fieldData as $typeID => $typeData)
 			{
-				$config = array('typeId' => $typeID, 'groups' => array());
+				$config = [
+					'typeId' => $typeID,
+					'groups' => array()
+				];
 				foreach ($typeData as $phaseGroupTypeID => $phaseGroupTypeData)
 				{
 					$config['groups'][] = array(
@@ -115,7 +122,7 @@ class FieldAttributeManager
 		return $configs;
 	}
 
-	private static function getUserFieldAttributes(int $entityTypeID, string $entityScope):array
+	private static function getFieldAttributes(int $entityTypeID, string $entityScope):array
 	{
 		$query = new Main\Entity\Query(Crm\Attribute\Entity\FieldAttributeTable::getEntity());
 		//$query->addSelect('ID');
@@ -347,7 +354,14 @@ class FieldAttributeManager
 		$dbResult = $query->exec();
 		while($fields = $dbResult->fetch())
 		{
-			if(!self::checkPhaseCondition($entityTypeID, $entityData, $fields['START_PHASE'], $fields['FINISH_PHASE'], $options))
+			if(self::isPhaseDependent()
+				&& !self::checkPhaseCondition(
+					$entityTypeID,
+					$entityData,
+					$fields['START_PHASE'],
+					$fields['FINISH_PHASE'],
+					$options
+				))
 			{
 				continue;
 			}
@@ -367,7 +381,7 @@ class FieldAttributeManager
 			}
 		}
 
-		if (isset($result[FieldOrigin::CUSTOM]))
+		if (is_array($result[FieldOrigin::CUSTOM]))
 		{
 			$notAccessibleFields = VisibilityManager::getNotAccessibleFields($entityTypeID);
 			$result[FieldOrigin::CUSTOM] =  array_diff($result[FieldOrigin::CUSTOM], $notAccessibleFields);
@@ -480,6 +494,16 @@ class FieldAttributeManager
 			$statusSort = \CCrmLead::GetStatusSort($statusID);
 
 			return($statusSort >= $startStatusSort && $statusSort <= $finishStatusSort);
+		}
+		if($entityTypeID === \CCrmOwnerType::Contact)
+		{
+			// There are no statuses for contacts yet
+			return true;
+		}
+		if($entityTypeID === \CCrmOwnerType::Company)
+		{
+			// There are no statuses for companies yet
+			return true;
 		}
 
 		return false;

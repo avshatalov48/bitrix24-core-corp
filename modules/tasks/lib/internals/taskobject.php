@@ -2,8 +2,6 @@
 namespace Bitrix\Tasks\Internals;
 
 use Bitrix\Main;
-use Bitrix\Tasks\Comments;
-use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Util\Type\DateTime;
 
 /**
@@ -14,42 +12,41 @@ use Bitrix\Tasks\Util\Type\DateTime;
 class TaskObject extends EO_Task
 {
 	/**
-	 * @param int $taskId
-	 * @return TaskObject|null
+	 * @param $data
+	 * @return TaskObject
 	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	public static function loadById(int $taskId): ?TaskObject
+	public static function wakeUpObject($data): TaskObject
 	{
-		return TaskTable::getByPrimary($taskId)->fetchObject();
-	}
-
-	/**
-	 * @param array $roles
-	 * @return array
-	 */
-	public function getMembersByRoles(
-		array $roles = [
-			MemberTable::MEMBER_TYPE_ORIGINATOR,
-			MemberTable::MEMBER_TYPE_RESPONSIBLE,
-			MemberTable::MEMBER_TYPE_ACCOMPLICE,
-			MemberTable::MEMBER_TYPE_AUDITOR,
-		]
-	): array
-	{
-		$this->fillMemberList();
-
-		$res = [];
-		foreach ($this->getMemberList() as $member)
+		if (!is_array($data))
 		{
-			if (in_array($member->getType(), $roles, true))
+			return parent::wakeUp($data);
+		}
+
+		$fields = TaskTable::getEntity()->getFields();
+
+		$wakeUpData = [];
+		$customData = [];
+		foreach ($data as $field => $value)
+		{
+			if (array_key_exists($field, $fields))
 			{
-				$res[] = $member;
+				$wakeUpData[$field] = $value;
+			}
+			else
+			{
+				$customData[$field] = $value;
 			}
 		}
 
-		return $res;
+		$object = parent::wakeUp($wakeUpData);
+		foreach ($customData as $field => $value)
+		{
+			$object->customData->set($field, $value);
+		}
+
+		return $object;
 	}
 
 	/**

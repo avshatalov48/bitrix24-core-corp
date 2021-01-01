@@ -536,6 +536,24 @@ class CAllCrmCatalog
 			['#CATALOG#' => $catalogTitle]
 		);
 
+		$fields = \CIBlock::GetFieldsDefaults();
+
+		$code = $fields['CODE'];
+		$code['DEFAULT_VALUE'] = unserialize($code['DEFAULT_VALUE']);
+		$code['DEFAULT_VALUE']['TRANSLITERATION'] = 'Y';
+		$code['DEFAULT_VALUE']['USE_GOOGLE'] = 'N';
+		$code['DEFAULT_VALUE']['TRANS_LEN'] = 255;
+
+		$sectionCode = $fields['SECTION_CODE'];
+		$sectionCode['DEFAULT_VALUE'] = unserialize($sectionCode['DEFAULT_VALUE']);
+		$sectionCode['DEFAULT_VALUE']['TRANSLITERATION'] = 'Y';
+		$sectionCode['DEFAULT_VALUE']['USE_GOOGLE'] = 'N';
+		$sectionCode['DEFAULT_VALUE']['TRANS_LEN'] = 255;
+
+		$fields['CODE'] = $code;
+		$fields['SECTION_CODE'] = $sectionCode;
+		unset($sectionCode, $code);
+
 		//creation of iblock
 		$iblock = new CIBlock();
 		$iblockID = $iblock->Add(
@@ -551,7 +569,8 @@ class CAllCrmCatalog
 				'BIZPROC' => 'N',
 				'VERSION' => 1,
 				'GROUP_ID' => array(1 => 'X', 2 => 'R'),
-				'LIST_MODE' => Iblock\IblockTable::LIST_MODE_COMBINED
+				'LIST_MODE' => Iblock\IblockTable::LIST_MODE_COMBINED,
+				'FIELDS' => $fields
 			)
 		);
 
@@ -593,7 +612,8 @@ class CAllCrmCatalog
 					'BIZPROC' => 'N',
 					'VERSION' => 1,
 					'GROUP_ID' => array(1 => 'X', 2 => 'R'),
-					'LIST_MODE' => 'S'
+					'LIST_MODE' => 'S',
+					'FIELDS' => $fields
 				]
 			);
 			if ($offersId === false)

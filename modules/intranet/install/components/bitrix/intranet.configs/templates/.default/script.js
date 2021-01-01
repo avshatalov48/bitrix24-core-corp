@@ -75,6 +75,13 @@ BX.Bitrix24.Configs.IpSettingsClass = (function()
 	var IpSettingsClass = function(arCurIpRights)
 	{
 		this.arCurIpRights = arCurIpRights;
+
+		var deleteButtons = document.querySelectorAll("[data-role='ip-right-delete']");
+		deleteButtons.forEach(function (button) {
+			BX.bind(button, "click", function () {
+				this.DeleteIpAccessRow(button);
+			}.bind(this));
+		}.bind(this));
 	};
 
 	IpSettingsClass.prototype.DeleteIpAccessRow = function(ob)
@@ -287,16 +294,6 @@ BX.Bitrix24.Configs.Functions = {
 			});
 		}
 
-		var useGoogleApiSwitch = BX('use_google_api_cb');
-
-		if(useGoogleApiSwitch)
-		{
-			BX.bind(useGoogleApiSwitch, 'click', function ()
-			{
-				BX('google_api_key_backend_row').style.display = (useGoogleApiSwitch.checked ? "" : "none");
-			});
-		}
-
 		if (BX.type.isDomNode((BX("smtp_use_auth"))))
 		{
 			BX.bind(BX("smtp_use_auth"), "change", BX.proxy(function ()
@@ -311,7 +308,7 @@ BX.Bitrix24.Configs.Functions = {
 		BX.addClass(button, 'webform-button-wait webform-button-active');
 		BX.submit(BX('configPostForm'));
 	},
-	
+
 	otpSwitchOffInfo : function(elem)
 	{
 		if (!elem.checked)
@@ -388,5 +385,5 @@ BX.Bitrix24.Configs.Functions = {
 				}
 			});
 		}
-	}
+	},
 };

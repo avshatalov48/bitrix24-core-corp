@@ -49,6 +49,7 @@ $langAdditional = [
 	'MOBILE_EXT_LIVEFEED_SITE_DIR' => SITE_DIR,
 	'MOBILE_EXT_LIVEFEED_CURRENT_EXTRANET_SITE' => ($extranetSite ? 'Y' : 'N'),
 	'MOBILE_EXT_LIVEFEED_CURRENT_USER_ID' => $USER->getId(),
+	'MOBILE_EXT_LIVEFEED_COLLAPSED_PINNED_PANEL_ITEMS_LIMIT' => \Bitrix\Mobile\Component\LogList\Util::getCollapsedPinnedPanelItemsLimit()
 ];
 
 return [
@@ -57,8 +58,10 @@ return [
 	'lang_additional' => $langAdditional,
 	'rel' => [
 		'main.core',
+		'main.core.events',
 		'mobile.imageviewer',
 		'mobile.utils',
+		'mobile.ajax',
 	],
 	'skip_core' => false,
 ];

@@ -3927,8 +3927,15 @@ class CCrmLiveFeed
 			$occurAsUserId = ($messageAuthorId ? $messageAuthorId : 1);
 		}
 
-		$oTask = new \CTaskItem($taskId, Bitrix\Tasks\Util\User::getAdminId());
-		$arTask = $oTask->getData();
+		try
+		{
+			$oTask = new \CTaskItem($taskId, Bitrix\Tasks\Util\User::getAdminId());
+			$arTask = $oTask->getData();
+		}
+		catch (TasksException | CTaskAssertException $e)
+		{
+			return;
+		}
 
 		if (
 			!isset($arTask)

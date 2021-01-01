@@ -41,7 +41,7 @@ class TaskSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		// the task should be in the group and tasks enabled on this group
 		if (
 			$this->newTask->getGroup()
-			&& !$this->newTask->getGroup()->isTasksEnabled()
+			&& !$this->newTask->getGroup()['TASKS_ENABLED']
 		)
 		{
 			return false;

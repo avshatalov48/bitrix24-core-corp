@@ -110,6 +110,10 @@ class CBPTask2Activity
 			$fields["SITE_ID"] = SITE_ID;
 		}
 
+		if(!is_array($fields['UF_CRM_TASK']))
+		{
+			$fields['UF_CRM_TASK'] = isset($fields['UF_CRM_TASK']) ? [$fields['UF_CRM_TASK']] : [];
+		}
 		if ($this->AUTO_LINK_TO_CRM_ENTITY && $documentId[0] === 'crm' && CModule::IncludeModule('crm'))
 		{
 			$documentId   = $this->GetDocumentId();
@@ -117,13 +121,7 @@ class CBPTask2Activity
 
 			$letter = CCrmOwnerTypeAbbr::ResolveByTypeID(CCrmOwnerType::ResolveID($documentType[2]));
 
-			$fields['UF_CRM_TASK'] = array(
-				str_replace(
-					$documentType[2],
-					$letter,
-					$documentId[2]
-				)
-			);
+			$fields['UF_CRM_TASK'][] = str_replace($documentType[2], $letter, $documentId[2]);
 		}
 
 		if ($documentId[0] === 'tasks' && $this->AsChildTask)
@@ -193,7 +191,13 @@ class CBPTask2Activity
 				\Bitrix\Tasks\Util\Userfield::isUFKey($fieldName)
 			)
 			{
-				if('UF_TASK_WEBDAV_FILES' == $fieldName && is_array($fields[$fieldName]))
+				$rawFields = $this->getRawProperty('Fields');
+				if('UF_TASK_WEBDAV_FILES' == $fieldName && $this->canUploadFilesToDisk($rawFields[$fieldName])
+					&& CModule::IncludeModule('disk') && Bitrix\Disk\Configuration::isSuccessfullyConverted())
+				{
+					$fields[$fieldName] = $this->uploadFilesToDisk($fields[$fieldName], $fields['CREATED_BY']);
+				}
+				elseif('UF_TASK_WEBDAV_FILES' == $fieldName && is_array($fields[$fieldName]))
 				{
 					foreach($fields[$fieldName] as $key => $fileId)
 					{
@@ -308,9 +312,39 @@ class CBPTask2Activity
 		}
 
 		$this->TaskId = $result;
+		$this->markAsBPTask($result);
 		$this->WriteToTrackingService(str_replace("#VAL#", $result, GetMessage("BPSA_TRACK_OK")));
 
-		return true;
+		return $result > 0;
+	}
+
+	protected function canUploadFilesToDisk($value) : bool
+	{
+		return is_string($value) && CBPActivity::isExpression($value);
+	}
+
+	protected function uploadFilesToDisk($fileIds, $userId) : array
+	{
+		if(is_null($fileIds))
+		{
+			return [];
+		}
+		if(!is_array($fileIds))
+		{
+			$fileIds = [$fileIds];
+		}
+
+		$diskFilesIds = [];
+		foreach ($fileIds as $id)
+		{
+			$file = CFile::MakeFileArray($id);
+			if(is_array($file))
+			{
+				$uploadedFile = \Bitrix\Tasks\Integration\Disk\UserField::uploadFile($file, $userId);
+				$diskFilesIds[] = $uploadedFile->getData()['ATTACHMENT_ID'];
+			}
+		}
+		return $diskFilesIds;
 	}
 
 	protected function assertDateField(string $dateFieldName, $dateFieldValue)
@@ -349,6 +383,67 @@ class CBPTask2Activity
 		return $dateFieldValue;
 	}
 
+	protected function markAsBPTask(int $taskId): void
+	{
+		if(!CModule::IncludeModule('crm'))
+		{
+			return;
+		}
+
+		list($documentType, $documentId) = explode('_', $this->GetDocumentId()[2]);
+
+		$documentStage = $this->getDocumentStage($documentType);
+
+		if($documentStage !== '')
+		{
+			$activity = CCrmActivity::GetList(
+				[],
+				[
+					'OWNER_ID' => $documentId,
+					'OWNER_TYPE_ID' => CCrmOwnerType::ResolveID($documentType),
+					'TYPE_ID' => CCrmActivityType::Task,
+					'ASSOCIATED_ENTITY_ID' => $taskId
+				],
+				false,
+				false,
+				['ID']
+			)->Fetch();
+
+			if($activity)
+			{
+				CCrmActivity::Update(
+					$activity['ID'],
+					['SETTINGS' => ['OWNER_STAGE' => $documentStage]],
+					false,
+					false
+				);
+			}
+		}
+	}
+
+	protected function getDocumentStage(string $documentType): string
+	{
+		if(!CModule::IncludeModule('crm'))
+		{
+			return '';
+		}
+
+		$runtime = CBPRuntime::GetRuntime();
+		$runtime->StartRuntime();
+		$documentService = $runtime->GetService('DocumentService');
+		$document = $documentService->GetDocument($this->GetDocumentId());
+
+		switch ($documentType)
+		{
+			case CCrmOwnerType::LeadName:
+				return $document['STATUS_ID'];
+			case CCrmOwnerType::DealName:
+				return $document['STAGE_ID'];
+			default:
+				return '';
+		}
+	}
+
 	public function Subscribe(IBPActivityExternalEventListener $eventHandler)
 	{
 		$this->isInEventActivityMode = true;
@@ -362,9 +457,15 @@ class CBPTask2Activity
 			}
 		}
 
+		$taskId = (int)$this->TaskId;
+		if (!$taskId)
+		{
+			return false;
+		}
+
 		$schedulerService = $this->workflow->GetService("SchedulerService");
-		$schedulerService->SubscribeOnEvent($this->workflow->GetInstanceId(), $this->name, "tasks", "OnTaskUpdate", $this->TaskId);
-		$schedulerService->SubscribeOnEvent($this->workflow->GetInstanceId(), $this->name, "tasks", "OnTaskDelete", $this->TaskId);
+		$schedulerService->SubscribeOnEvent($this->workflow->GetInstanceId(), $this->name, "tasks", "OnTaskUpdate", $taskId);
+		$schedulerService->SubscribeOnEvent($this->workflow->GetInstanceId(), $this->name, "tasks", "OnTaskDelete", $taskId);
 
 		$this->workflow->AddEventHandler($this->name, $eventHandler);
 		$this->WriteToTrackingService(GetMessage("BPSA_TRACK_SUBSCR"));
@@ -372,9 +473,15 @@ class CBPTask2Activity
 
 	public function Unsubscribe(IBPActivityExternalEventListener $eventHandler)
 	{
+		$taskId = (int)$this->TaskId;
+
 		$schedulerService = $this->workflow->GetService("SchedulerService");
-		$schedulerService->UnSubscribeOnEvent($this->workflow->GetInstanceId(), $this->name, "tasks", "OnTaskUpdate", $this->TaskId);
-		$schedulerService->UnSubscribeOnEvent($this->workflow->GetInstanceId(), $this->name, "tasks", "OnTaskDelete", $this->TaskId);
+		$schedulerService->UnSubscribeOnEvent($this->workflow->GetInstanceId(), $this->name, "tasks", "OnTaskUpdate", $taskId);
+		$schedulerService->UnSubscribeOnEvent($this->workflow->GetInstanceId(), $this->name, "tasks", "OnTaskDelete", $taskId);
+
+		//delete invalid subscriptions
+		$schedulerService->UnSubscribeOnEvent($this->workflow->GetInstanceId(), $this->name, "tasks", "OnTaskUpdate", null);
+		$schedulerService->UnSubscribeOnEvent($this->workflow->GetInstanceId(), $this->name, "tasks", "OnTaskDelete", null);
 
 		$this->workflow->RemoveEventHandler($this->name, $eventHandler);
 	}
@@ -454,6 +561,8 @@ class CBPTask2Activity
 				&& array_key_exists("Fields", $arCurrentActivity["Properties"])
 				&& is_array($arCurrentActivity["Properties"]["Fields"]))
 			{
+				$textUserFields = ["UF_TASK_WEBDAV_FILES", "UF_CRM_TASK"];
+
 				foreach ($arCurrentActivity["Properties"]["Fields"] as $k => $v)
 				{
 					$arCurrentValues[$k] = $v;
@@ -474,7 +583,14 @@ class CBPTask2Activity
 						$rawValues[$k] = $ar;
 						$arCurrentValues[$k] = CBPHelper::UsersArrayToString($ar, $arWorkflowTemplate, $documentType);
 					}
-					if('UF_TASK_WEBDAV_FILES' == $k && is_array($arCurrentValues[$k]) && CModule::IncludeModule("disk") && \Bitrix\Disk\Configuration::isSuccessfullyConverted())
+					if(in_array($k, $textUserFields)
+						&& is_string($arCurrentValues[$k])
+						&& CBPActivity::isExpression($arCurrentValues[$k]))
+					{
+						$arCurrentValues["{$k}_text"] = $arCurrentValues[$k];
+						unset($arCurrentValues[$k]);
+					}
+					elseif('UF_TASK_WEBDAV_FILES' == $k && is_array($arCurrentValues[$k]) && CModule::IncludeModule("disk") && \Bitrix\Disk\Configuration::isSuccessfullyConverted())
 					{
 						foreach($arCurrentValues[$k] as $key => $fileId)
 						{
@@ -680,12 +796,17 @@ class CBPTask2Activity
 		$arUserFields = \Bitrix\Tasks\Util\Userfield\Task::getScheme();
 		foreach ($arUserFields as $field)
 		{
-			$r = $arCurrentValues[$field["FIELD_NAME"]];
+			$fieldValue = $arCurrentValues[$field["FIELD_NAME"]];
+			$fieldValueText = $arCurrentValues["{$field['FIELD_NAME']}_text"];
+			if(CBPHelper::isEmptyValue($fieldValue) && !CBPHelper::isEmptyValue($fieldValueText))
+			{
+				$fieldValue = $fieldValueText;
+			}
 
 			if($field["MANDATORY"] == "Y")
 			{
-				if (($field["MULTIPLE"] == "Y" && (!$r || CBPHelper::isEmptyValue($r))) ||
-					($field["MULTIPLE"] == "N" && $r === '' && $field['USER_TYPE_ID'] !== 'boolean'))
+				if (($field["MULTIPLE"] == "Y" && (!$fieldValue || CBPHelper::isEmptyValue($fieldValue))) ||
+					($field["MULTIPLE"] == "N" && $fieldValue === '' && $field['USER_TYPE_ID'] !== 'boolean'))
 				{
 					$errors[] = array(
 						"code" => "emptyRequiredField",
@@ -694,7 +815,7 @@ class CBPTask2Activity
 				}
 			}
 
-			$properties["Fields"][$field["FIELD_NAME"]] = $r;
+			$properties["Fields"][$field["FIELD_NAME"]] = $fieldValue;
 		}
 
 		$properties["HoldToClose"] = ((mb_strtoupper($arCurrentValues["HOLD_TO_CLOSE"]) == "Y") ? true : false);

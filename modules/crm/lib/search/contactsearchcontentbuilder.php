@@ -65,7 +65,19 @@ class ContactSearchContentBuilder extends SearchContentBuilder
 		}
 
 		$map->add($entityID);
-		$map->addField($fields, 'LAST_NAME');
+		
+		$lastName = isset($fields['LAST_NAME']) ? $fields['LAST_NAME'] : '';
+		if($lastName !== '')
+		{
+			$map->addText($lastName);
+			$map->addText(SearchEnvironment::prepareSearchContent($lastName));
+
+			$customerNumber = $this->parseCustomerNumber($lastName, \CCrmContact::GetDefaultTitleTemplate());
+			if($customerNumber != $entityID)
+			{
+				$map->addTextFragments($customerNumber);
+			}
+		}
 		$map->addField($fields, 'NAME');
 		$map->addField($fields, 'SECOND_NAME');
 

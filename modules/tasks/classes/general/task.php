@@ -21,7 +21,6 @@ use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserTable;
-use Bitrix\Pull\Event;
 use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Comments\Internals\Comment;
@@ -283,7 +282,10 @@ class CTasks
 				$by,
 				$order,
 				['ID_EQUAL_EXACT' => $responsibleId],
-				['SELECT' => ['UF_DEPARTMENT']]
+				[
+					'FIELDS' => ['ID'],
+					'SELECT' => ['UF_DEPARTMENT'],
+				]
 			);
 			if ($user = $userResult->Fetch())
 			{
@@ -913,12 +915,7 @@ class CTasks
 	{
 		try
 		{
-			if (!CModule::IncludeModule('pull'))
-			{
-				return true;
-			}
-
-			Event::add($params['RECIPIENTS'], [
+			Integration\Pull\PushService::addEvent($params['RECIPIENTS'], [
 				'module_id' => 'tasks',
 				'command' => 'task_add',
 				'params' => $this->prepareAddPullEventParameters($params),
@@ -1404,9 +1401,9 @@ class CTasks
 							);
 						}
 
-						if (isset($arFields["TAGS"]) && isset($changes["TAGS"]))
+						if (isset($arFields['TAGS'], $changes['TAGS']))
 						{
-							CTasks::AddTags($ID, $arTask["CREATED_BY"], $arFields["TAGS"], $userID);
+							$this->AddTags($ID, $userID, $arFields['TAGS'], $userID);
 						}
 
 						if (isset($arFields["DEPENDS_ON"]) && isset($changes["DEPENDS_ON"]))
@@ -1611,6 +1608,7 @@ class CTasks
 									'TASK_ID' => (int)$ID,
 									'EVENT_GUID' => $eventGUID,
 									'UPDATE_COMMENT_EXISTS' => $updateComment,
+									'REMOVED_PARTICIPANTS' => array_values($removedParticipants),
 								])
 							);
 						}
@@ -1650,12 +1648,17 @@ class CTasks
 							{
 								if ($arFields['GROUP_ID'] > 0)
 								{
-									if ($arFields['GROUP_ID'] != $arTask['GROUP_ID'])
+									$oldGroupId = (int) $arTask['GROUP_ID'];
+									if ($oldGroupId && $arFields['GROUP_ID'] != $oldGroupId)
 									{
 										$this->updateScrumItem(
 											$ID,
 											array_merge($arTask, ['GROUP_ID' => $arFields['GROUP_ID']])
 										);
+									}
+									if (!$oldGroupId)
+									{
+										$this->createScrumItem($ID, $arFields);
 									}
 								}
 								else
@@ -1731,12 +1734,7 @@ class CTasks
 	{
 		try
 		{
-			if (!CModule::IncludeModule('pull'))
-			{
-				return true;
-			}
-
-			Event::add($params['RECIPIENTS'], [
+			Integration\Pull\PushService::addEvent($params['RECIPIENTS'], [
 				'module_id' => 'tasks',
 				'command' => 'task_update',
 				'params' => $this->prepareUpdatePullEventParameters($params),
@@ -1789,6 +1787,7 @@ class CTasks
 			'params' => [
 				'HIDE' => (array_key_exists('HIDE', $params) ? (bool)$params['HIDE'] : true),
 				'updateCommentExists' => $params['UPDATE_COMMENT_EXISTS'],
+				'removedParticipants' => $params['REMOVED_PARTICIPANTS'],
 			],
 		];
 	}
@@ -2250,7 +2249,7 @@ class CTasks
 			);
 		}
 
-		Event::add($pushRecipients, [
+		Integration\Pull\PushService::addEvent($pushRecipients, [
 			'module_id' => 'tasks',
 			'command' => 'task_remove',
 			'params' => [
@@ -2296,6 +2295,8 @@ class CTasks
 		}
 
 		$arSqlSearch = array();
+
+		$targetUserId = isset($params['TARGET_USER_ID']) ? $params['TARGET_USER_ID'] : $userID;
 
 		foreach ($arFilter as $key => $val)
 		{
@@ -2451,23 +2452,36 @@ class CTasks
 					break;
 
 				case 'FULL_SEARCH_INDEX':
-					$arSqlSearch[] = CTasks::FilterCreate(
-						$sAliasPrefix."TSIF.SEARCH_INDEX",
-						$val,
-						"fulltext",
-						$bFullJoin,
-						$cOperationType
-					);
-					break;
-
 				case 'COMMENT_SEARCH_INDEX':
-					$arSqlSearch[] = CTasks::FilterCreate(
-						$sAliasPrefix."TSIC.SEARCH_INDEX",
-						$val,
-						"fulltext",
-						$bFullJoin,
-						$cOperationType
-					);
+					$isComment = $key === 'COMMENT_SEARCH_INDEX';
+					$tableName = SearchIndexTable::getTableName();
+					$tableAlias = $sAliasPrefix.($isComment ? 'TSIC' : 'TSIF');
+					$columnName = "{$tableAlias}.SEARCH_INDEX";
+					$where = self::FilterCreate($columnName, $val, 'fulltext', $bFullJoin, $cOperationType);
+
+					$filterParams = $params['FILTER_PARAMS'];
+					$searchTaskOnly = isset($filterParams['SEARCH_TASK_ONLY'])
+						&& $filterParams['SEARCH_TASK_ONLY'] === 'Y';
+					$searchCommentOnly = isset($filterParams['SEARCH_COMMENT_ONLY'])
+						&& $filterParams['SEARCH_COMMENT_ONLY'] === 'Y';
+
+					$join = "";
+					if ($searchTaskOnly)
+					{
+						$join = "AND {$tableAlias}.MESSAGE_ID = 0";
+					}
+					else if ($isComment || $searchCommentOnly)
+					{
+						$join = "AND {$tableAlias}.MESSAGE_ID != 0";
+					}
+
+					$innerQuery = "
+						"."SELECT {$sAliasPrefix}ST.ID"."
+						"."FROM b_tasks {$sAliasPrefix}ST"."
+						"."INNER JOIN {$tableName} {$tableAlias} ON {$tableAlias}.TASK_ID = {$sAliasPrefix}ST.ID {$join}"."
+						"."WHERE {$where}"
+					;
+					$arSqlSearch[] = "({$sAliasPrefix}T.ID IN ({$innerQuery}))";
 					break;
 
 				case "TAG":
@@ -2975,8 +2989,8 @@ class CTasks
 					if ($val == "Y")
 					{
 						$arSubSqlSearch = array(
-							$sAliasPrefix."T.CREATED_BY = ".$userID,
-							$sAliasPrefix."T.RESPONSIBLE_ID = ".$userID,
+							$sAliasPrefix."T.CREATED_BY = ".$targetUserId,
+							$sAliasPrefix."T.RESPONSIBLE_ID = ".$targetUserId,
 							"EXISTS(
 								SELECT 'x'
 								FROM
@@ -2984,11 +2998,11 @@ class CTasks
 								WHERE
 									".$sAliasPrefix."TM.TASK_ID = ".$sAliasPrefix."T.ID
 									AND
-									".$sAliasPrefix."TM.USER_ID = ".$userID."
+									".$sAliasPrefix."TM.USER_ID = ".$targetUserId."
 							)"
 						);
 						// subordinate check
-						if ($strSql = CTasks::GetSubordinateSql($sAliasPrefix, array('USER_ID' => $userID)))
+						if ($strSql = CTasks::GetSubordinateSql($sAliasPrefix, array('USER_ID' => $targetUserId)))
 						{
 							$arSubSqlSearch[] = "EXISTS(".$strSql.")";
 						}
@@ -3073,6 +3087,10 @@ class CTasks
 					);
 					break;
 
+				case 'WITH_COMMENT_COUNTERS':
+					$arSqlSearch[] = "{$sAliasPrefix}TSC.ID IS NOT NULL";
+					break;
+
 				case 'WITH_NEW_COMMENTS':
 					$expiredCommentType = Comment::TYPE_EXPIRED;
 					$qr = "
@@ -3081,7 +3099,7 @@ class CTasks
 							OR ({$sAliasPrefix}TV.VIEWED_DATE IS NULL AND {$sAliasPrefix}FM.POST_DATE >= {$sAliasPrefix}T.CREATED_DATE)
 						)
 						AND {$sAliasPrefix}FM.NEW_TOPIC = 'N'
-						AND {$sAliasPrefix}FM.AUTHOR_ID != {$userID}
+						AND {$sAliasPrefix}FM.AUTHOR_ID != {$targetUserId}
 						AND (
 							{$sAliasPrefix}BUF_FM.UF_TASK_COMMENT_TYPE = 0
 							OR {$sAliasPrefix}BUF_FM.UF_TASK_COMMENT_TYPE IS NULL
@@ -3105,7 +3123,7 @@ class CTasks
 						'IS_PINNED' => UserOption\Option::PINNED,
 					];
 					$arSqlSearch[] = " {$sAliasPrefix}T.ID " . ($val === 'N' ? 'NOT ' : '')
-						.UserOption::getFilterSql($userID, $optionMap[$key], $sAliasPrefix);
+						.UserOption::getFilterSql($targetUserId, $optionMap[$key], $sAliasPrefix);
 					break;
 
 				default:
@@ -3959,19 +3977,19 @@ class CTasks
 						break;
 
 					case "number":
-
-						if (($vals[$key] === false) || ($val == ''))
-							$res[] = ($cOperationType == "N" ? "NOT" : "")."(".$fname." IS NULL)";
+						$isOperationTypeN = $cOperationType === 'N';
+						if ($vals[$key] === false || strlen($val) <= 0)
+						{
+							$res[] = ($isOperationTypeN ? 'NOT' : '')."({$fname} IS NULL)";
+						}
 						else
-							$res[] = "(".
-									 ($cOperationType == "N" ? " ".$fname." IS NULL OR NOT (" : "").
-									 $fname.
-									 " ".
-									 $strOperation.
-									 " '".
-									 DoubleVal($val).
-									 ($cOperationType == "N" ? "')" : "'").
-									 ")";
+						{
+							$res[] = "("
+								.($isOperationTypeN ? "{$fname} IS NULL OR NOT (" : "")
+								."{$fname} {$strOperation} '".DoubleVal($val)."'"
+								.($isOperationTypeN ? ")" : "")
+								.")";
+						}
 						break;
 
 					case "number_wo_nulls":
@@ -4070,17 +4088,20 @@ class CTasks
 	 * This method is deprecated. Use CTaskItem class instead.
 	 * @deprecated
 	 */
-	public static function GetByID($ID, $bCheckPermissions = true, $arParams = array())
+	public static function GetByID($ID, $bCheckPermissions = true, $arParams = [])
 	{
 		$bReturnAsArray = false;
 		$bSkipExtraData = false;
-		$arGetListParams = array();
+		$arGetListParams = [];
 
 		if (isset($arParams['returnAsArray']))
+		{
 			$bReturnAsArray = ($arParams['returnAsArray'] === true);
-
+		}
 		if (isset($arParams['bSkipExtraData']))
+		{
 			$bSkipExtraData = ($arParams['bSkipExtraData'] === true);
+		}
 
 		if (isset($arParams['USER_ID']))
 		{
@@ -4439,205 +4460,77 @@ class CTasks
 		$params = [
 			'USER_ID' => $userId,
 			'JOIN_ALIAS' => $alias,
-			'SOURCE_ALIAS' => $alias . "T"
+			'SOURCE_ALIAS' => "{$alias}T"
 		];
 		$relatedJoins = static::getRelatedJoins([], $filter, [], $params);
 		$relatedJoins = array_merge($relatedJoins, $optimized['JOINS']);
 
-		$needGroup = isset($relatedJoins['FULL_SEARCH']) || isset($relatedJoins['COMMENT_SEARCH']);
-
-		$sql = "
+		return "
 			SELECT {$alias}T.ID
 			FROM b_tasks {$alias}T
 			INNER JOIN b_user {$alias}CU ON {$alias}CU.ID = {$alias}T.CREATED_BY
 			INNER JOIN b_user {$alias}RU ON {$alias}RU.ID = {$alias}T.RESPONSIBLE_ID
 			" . implode("\n", $relatedJoins) . "
 			" . $obUserFieldsSql->GetJoin($alias."T.ID") . "
-			" . (sizeof($sqlSearch)? " WHERE " . implode(" AND ", $sqlSearch) : "") . "
-			" . ($needGroup? "GROUP BY {$alias}T.ID" : ""). "
+			" . (count($sqlSearch) ? " WHERE " . implode(" AND ", $sqlSearch) : "") . "
 		";
-
-		return $sql;
 	}
 
 	/**
 	 * Get tasks fields info (for rest, etc)
 	 *
+	 * @param bool $getUf
 	 * @return array
 	 */
-	public static function getFieldsInfo()
+	public static function getFieldsInfo($getUf = true): array
 	{
 		global $USER_FIELD_MANAGER;
 
 		$fields = [
-			"ID"          => [
-				'type'    => 'integer',
-				'primary' => true
+			'ID' => [
+				'type' => 'integer',
+				'primary' => true,
 			],
-			"PARENT_ID"   => [
-				'type'    => 'integer',
-				'default' => 0
+			'PARENT_ID' => [
+				'type' => 'integer',
+				'default' => 0,
 			],
-			"TITLE"       => [
-				'type'     => 'string',
-				'required' => true
+			'TITLE' => [
+				'type' => 'string',
+				'required' => true,
 			],
-			"DESCRIPTION" => [
+			'DESCRIPTION' => [
 				'type' => 'string',
 			],
-			"MARK"        => [
-				'type'    => 'enum',
-				'values'  => [
+			'MARK' => [
+				'type' => 'enum',
+				'values' => [
 					self::MARK_NEGATIVE => Loc::getMessage('TASKS_FIELDS_MARK_NEGATIVE'),
-					self::MARK_POSITIVE => Loc::getMessage('TASKS_FIELDS_MARK_POSITIVE')
+					self::MARK_POSITIVE => Loc::getMessage('TASKS_FIELDS_MARK_POSITIVE'),
 				],
-				'default' => null
-			],
-			"PRIORITY"    => [
-				'type'    => 'enum',
-				'values'  => [
-					self::PRIORITY_HIGH    => Loc::getMessage('TASKS_FIELDS_PRIORITY_HIGH'),
-					self::PRIORITY_AVERAGE => Loc::getMessage('TASKS_FIELDS_PRIORITY_AVERAGE'),
-					self::PRIORITY_LOW     => Loc::getMessage('TASKS_FIELDS_PRIORITY_LOW')
-				],
-				'default' => self::PRIORITY_AVERAGE
-			],
-			"STATUS"      => [
-				'type'    => 'enum',
-				'values'  => [
-					self::STATE_PENDING              => Loc::getMessage('TASKS_FIELDS_STATUS_PENDING'),
-					self::STATE_IN_PROGRESS          => Loc::getMessage('TASKS_FIELDS_STATUS_IN_PROGRESS'),
-					self::STATE_SUPPOSEDLY_COMPLETED => Loc::getMessage('TASKS_FIELDS_STATUS_SUPPOSEDLY_COMPLETED'),
-					self::STATE_COMPLETED            => Loc::getMessage('TASKS_FIELDS_STATUS_COMPLETED'),
-					self::STATE_DEFERRED             => Loc::getMessage('TASKS_FIELDS_STATUS_DEFERRED')
-				],
-				'default' => self::STATE_PENDING
-			],
-
-			"MULTITASK" => [
-				'type'    => 'enum',
-				'values'  => [
-					'Y' => Loc::getMessage('TASKS_FIELDS_Y'),
-					'N' => Loc::getMessage('TASKS_FIELDS_N'),
-				],
-				'default' => 'N'
-			],
-			"NOT_VIEWED" => [
-				'type'    => 'enum',
-				'values'  => [
-					'Y' => Loc::getMessage('TASKS_FIELDS_Y'),
-					'N' => Loc::getMessage('TASKS_FIELDS_N'),
-				],
-				'default' => 'N'
-			],
-			"REPLICATE" => [
-				'type'    => 'enum',
-				'values'  => [
-					'Y' => Loc::getMessage('TASKS_FIELDS_Y'),
-					'N' => Loc::getMessage('TASKS_FIELDS_N'),
-				],
-				'default' => 'N'
-			],
-
-			"GROUP_ID" => [
-				'type'    => 'integer',
-				'default' => 0
-			],
-			"STAGE_ID" => [
-				'type'    => 'integer',
-				'default' => 0
-			],
-
-			"CREATED_BY"     => [
-				'type'     => 'integer',
-				'required' => true
-			],
-			"CREATED_DATE"        => [
-				'type' => 'datetime'
-			],
-			"RESPONSIBLE_ID" => [
-				'type'     => 'integer',
-				'required' => true
-			],
-			"ACCOMPLICES" => [
-				'type'     => 'array'
-			],
-			"AUDITORS" => [
-				'type'     => 'array'
-			],
-
-			"CHANGED_BY"          => [
-				'type' => 'integer',
-			],
-			"CHANGED_DATE"        => [
-				'type' => 'datetime'
-			],
-			"STATUS_CHANGED_BY"   => [
-				'type' => 'integer',
-			],
-			"STATUS_CHANGED_DATE" => [
-				'type' => 'datetime'
-			],
-
-			"CLOSED_BY"   => [
-				'type'    => 'integer',
-				'default' => null
-			],
-			"CLOSED_DATE" => [
-				'type'    => 'datetime',
-				'default' => null
-			],
-
-			"ACTIVITY_DATE" => [
-				'type' => 'datetime',
 				'default' => null,
 			],
-
-			"DATE_START" => [
-				'type'    => 'datetime',
-				'default' => null
-			],
-			"DEADLINE"   => [
-				'type'    => 'datetime',
-				'default' => null
-			],
-
-			"START_DATE_PLAN" => [
-				'type'    => 'datetime',
-				'default' => null
-			],
-			"END_DATE_PLAN"   => [
-				'type'    => 'datetime',
-				'default' => null
-			],
-
-			'GUID'   => [
-				'type'    => 'string',
-				'default' => null
-			],
-			"XML_ID" => [
-				'type'    => 'string',
-				'default' => null
-			],
-
-			"COMMENTS_COUNT" => [
-				'type'    => 'integer',
-				'default' => 0
-			],
-			"NEW_COMMENTS_COUNT" => [
-				'type'    => 'integer',
-				'default' => 0
-			],
-
-			"ALLOW_CHANGE_DEADLINE" => [
-				'type'    => 'enum',
-				'values'  => [
-					'Y' => Loc::getMessage('TASKS_FIELDS_Y'),
-					'N' => Loc::getMessage('TASKS_FIELDS_N'),
+			'PRIORITY' => [
+				'type' => 'enum',
+				'values' => [
+					self::PRIORITY_HIGH => Loc::getMessage('TASKS_FIELDS_PRIORITY_HIGH'),
+					self::PRIORITY_AVERAGE => Loc::getMessage('TASKS_FIELDS_PRIORITY_AVERAGE'),
+					self::PRIORITY_LOW => Loc::getMessage('TASKS_FIELDS_PRIORITY_LOW'),
 				],
-				'default' => 'N',
+				'default' => self::PRIORITY_AVERAGE,
 			],
-			"ALLOW_TIME_TRACKING" => [
+			'STATUS' => [
+				'type' => 'enum',
+				'values' => [
+					self::STATE_PENDING => Loc::getMessage('TASKS_FIELDS_STATUS_PENDING'),
+					self::STATE_IN_PROGRESS => Loc::getMessage('TASKS_FIELDS_STATUS_IN_PROGRESS'),
+					self::STATE_SUPPOSEDLY_COMPLETED => Loc::getMessage('TASKS_FIELDS_STATUS_SUPPOSEDLY_COMPLETED'),
+					self::STATE_COMPLETED => Loc::getMessage('TASKS_FIELDS_STATUS_COMPLETED'),
+					self::STATE_DEFERRED => Loc::getMessage('TASKS_FIELDS_STATUS_DEFERRED'),
+				],
+				'default' => self::STATE_PENDING,
+			],
+			'MULTITASK' => [
 				'type' => 'enum',
 				'values' => [
 					'Y' => Loc::getMessage('TASKS_FIELDS_Y'),
@@ -4645,112 +4538,222 @@ class CTasks
 				],
 				'default' => 'N',
 			],
-			"TASK_CONTROL"          => [
-				'type'    => 'enum',
-				'values'  => [
+			'NOT_VIEWED' => [
+				'type' => 'enum',
+				'values' => [
 					'Y' => Loc::getMessage('TASKS_FIELDS_Y'),
 					'N' => Loc::getMessage('TASKS_FIELDS_N'),
 				],
-				'default' => 'N'
+				'default' => 'N',
 			],
-			"ADD_IN_REPORT"         => [
-				'type'    => 'enum',
-				'values'  => [
+			'REPLICATE' => [
+				'type' => 'enum',
+				'values' => [
 					'Y' => Loc::getMessage('TASKS_FIELDS_Y'),
 					'N' => Loc::getMessage('TASKS_FIELDS_N'),
 				],
-				'default' => 'N'
+				'default' => 'N',
 			],
-			"FORKED_BY_TEMPLATE_ID" => [
-				'type'    => 'enum',
-				'values'  => [
-					'Y' => Loc::getMessage('TASKS_FIELDS_Y'),
-					'N' => Loc::getMessage('TASKS_FIELDS_N'),
-				],
-				'default' => 'N'
-			],
-
-			"TIME_ESTIMATE" => [
+			'GROUP_ID' => [
 				'type' => 'integer',
+				'default' => 0,
 			],
-
-			"TIME_SPENT_IN_LOGS" => [
+			'STAGE_ID' => [
 				'type' => 'integer',
+				'default' => 0,
 			],
-			"MATCH_WORK_TIME"    => [
+			'CREATED_BY' => [
 				'type' => 'integer',
+				'required' => true,
 			],
-
-			"FORUM_TOPIC_ID" => [
+			'CREATED_DATE' => [
+				'type' => 'datetime',
+			],
+			'RESPONSIBLE_ID' => [
 				'type' => 'integer',
+				'required' => true,
 			],
-			"FORUM_ID"       => [
-				'type' => 'integer',
-			],
-			"SITE_ID"        => [
-				'type' => 'string',
-			],
-			"SUBORDINATE"    => [
-				'type'    => 'enum',
-				'values'  => [
-					'Y' => Loc::getMessage('TASKS_FIELDS_Y'),
-					'N' => Loc::getMessage('TASKS_FIELDS_N'),
-				],
-				'default' => null
-			],
-			"FAVORITE"    => [
-				'type'    => 'enum',
-				'values'  => [
-					'Y' => Loc::getMessage('TASKS_FIELDS_Y'),
-					'N' => Loc::getMessage('TASKS_FIELDS_N'),
-				],
-				'default' => null
-			],
-
-			"EXCHANGE_MODIFIED" => [
-				'type'    => 'datetime',
-				'default' => null
-			],
-			"EXCHANGE_ID"       => [
-				'type'    => 'integer',
-				'default' => null
-			],
-			"OUTLOOK_VERSION"   => [
-				'type'    => 'integer',
-				'default' => null
-			],
-
-			"VIEWED_DATE" => [
-				'type' => 'datetime'
-			],
-
-			"SORTING" => [
-				'type' => 'double',
-			],
-
-			"DURATION_PLAN" => [
-				'type' => 'integer',
-			],
-			"DURATION_FACT" => [
-				'type' => 'integer',
-			],
-			"CHECKLIST" => [
+			'ACCOMPLICES' => [
 				'type' => 'array',
 			],
-			"DURATION_TYPE" => [
-				'type'    => 'enum',
-				'values'  => [
+			'AUDITORS' => [
+				'type' => 'array',
+			],
+			'CHANGED_BY' => [
+				'type' => 'integer',
+			],
+			'CHANGED_DATE' => [
+				'type' => 'datetime',
+			],
+			'STATUS_CHANGED_BY' => [
+				'type' => 'integer',
+			],
+			'STATUS_CHANGED_DATE' => [
+				'type' => 'datetime',
+			],
+			'CLOSED_BY' => [
+				'type' => 'integer',
+				'default' => null,
+			],
+			'CLOSED_DATE' => [
+				'type' => 'datetime',
+				'default' => null,
+			],
+			'ACTIVITY_DATE' => [
+				'type' => 'datetime',
+				'default' => null,
+			],
+			'DATE_START' => [
+				'type' => 'datetime',
+				'default' => null,
+			],
+			'DEADLINE' => [
+				'type' => 'datetime',
+				'default' => null,
+			],
+			'START_DATE_PLAN' => [
+				'type' => 'datetime',
+				'default' => null,
+			],
+			'END_DATE_PLAN' => [
+				'type' => 'datetime',
+				'default' => null,
+			],
+			'GUID' => [
+				'type' => 'string',
+				'default' => null,
+			],
+			'XML_ID' => [
+				'type' => 'string',
+				'default' => null,
+			],
+			'COMMENTS_COUNT' => [
+				'type' => 'integer',
+				'default' => 0,
+			],
+			'SERVICE_COMMENTS_COUNT' => [
+				'type' => 'integer',
+				'default' => 0,
+			],
+			'NEW_COMMENTS_COUNT' => [
+				'type' => 'integer',
+				'default' => 0,
+			],
+			'ALLOW_CHANGE_DEADLINE' => [
+				'type' => 'enum',
+				'values' => [
+					'Y' => Loc::getMessage('TASKS_FIELDS_Y'),
+					'N' => Loc::getMessage('TASKS_FIELDS_N'),
+				],
+				'default' => 'N',
+			],
+			'ALLOW_TIME_TRACKING' => [
+				'type' => 'enum',
+				'values' => [
+					'Y' => Loc::getMessage('TASKS_FIELDS_Y'),
+					'N' => Loc::getMessage('TASKS_FIELDS_N'),
+				],
+				'default' => 'N',
+			],
+			'TASK_CONTROL' => [
+				'type' => 'enum',
+				'values' => [
+					'Y' => Loc::getMessage('TASKS_FIELDS_Y'),
+					'N' => Loc::getMessage('TASKS_FIELDS_N'),
+				],
+				'default' => 'N',
+			],
+			'ADD_IN_REPORT' => [
+				'type' => 'enum',
+				'values' => [
+					'Y' => Loc::getMessage('TASKS_FIELDS_Y'),
+					'N' => Loc::getMessage('TASKS_FIELDS_N'),
+				],
+				'default' => 'N',
+			],
+			'FORKED_BY_TEMPLATE_ID' => [
+				'type' => 'enum',
+				'values' => [
+					'Y' => Loc::getMessage('TASKS_FIELDS_Y'),
+					'N' => Loc::getMessage('TASKS_FIELDS_N'),
+				],
+				'default' => 'N',
+			],
+			'TIME_ESTIMATE' => [
+				'type' => 'integer',
+			],
+			'TIME_SPENT_IN_LOGS' => [
+				'type' => 'integer',
+			],
+			'MATCH_WORK_TIME' => [
+				'type' => 'integer',
+			],
+			'FORUM_TOPIC_ID' => [
+				'type' => 'integer',
+			],
+			'FORUM_ID' => [
+				'type' => 'integer',
+			],
+			'SITE_ID' => [
+				'type' => 'string',
+			],
+			'SUBORDINATE'=> [
+				'type' => 'enum',
+				'values' => [
+					'Y' => Loc::getMessage('TASKS_FIELDS_Y'),
+					'N' => Loc::getMessage('TASKS_FIELDS_N'),
+				],
+				'default' => null,
+			],
+			'FAVORITE' => [
+				'type' => 'enum',
+				'values' => [
+					'Y' => Loc::getMessage('TASKS_FIELDS_Y'),
+					'N' => Loc::getMessage('TASKS_FIELDS_N'),
+				],
+				'default' => null,
+			],
+			'EXCHANGE_MODIFIED' => [
+				'type' => 'datetime',
+				'default' => null,
+			],
+			'EXCHANGE_ID' => [
+				'type' => 'integer',
+				'default' => null,
+			],
+			'OUTLOOK_VERSION'   => [
+				'type'    => 'integer',
+				'default' => null
+			],
+			'VIEWED_DATE' => [
+				'type' => 'datetime',
+			],
+			'SORTING' => [
+				'type' => 'double',
+			],
+			'DURATION_PLAN' => [
+				'type' => 'integer',
+			],
+			'DURATION_FACT' => [
+				'type' => 'integer',
+			],
+			'CHECKLIST' => [
+				'type' => 'array',
+			],
+			'DURATION_TYPE' => [
+				'type' => 'enum',
+				'values' => [
 					'secs',
 					'mins',
 					'hours',
 					'days',
 					'weeks',
 					'monts',
-					'years'
+					'years',
 				],
-				'default' => 'days'
+				'default' => 'days',
 			],
-			"IS_MUTED" => [
+			'IS_MUTED' => [
 				'type' => 'enum',
 				'values' => [
 					'Y' => Loc::getMessage('TASKS_FIELDS_Y'),
@@ -4758,7 +4761,7 @@ class CTasks
 				],
 				'default' => 'N',
 			],
-			"IS_PINNED" => [
+			'IS_PINNED' => [
 				'type' => 'enum',
 				'values' => [
 					'Y' => Loc::getMessage('TASKS_FIELDS_Y'),
@@ -4774,13 +4777,16 @@ class CTasks
 		}
 		unset($fieldData);
 
-		$uf = $USER_FIELD_MANAGER->GetUserFields("TASKS_TASK");
-		foreach ($uf as $key=>$item)
+		if ($getUf)
 		{
-			$fields[$key]=[
-				'title'=>$item['USER_TYPE']['DESCRIPTION'],
-				'type'=>$item['USER_TYPE_ID']
-			];
+			$uf = $USER_FIELD_MANAGER->GetUserFields('TASKS_TASK');
+			foreach ($uf as $key => $item)
+			{
+				$fields[$key] = [
+					'title' => $item['USER_TYPE']['DESCRIPTION'],
+					'type' => $item['USER_TYPE_ID'],
+				];
+			}
 		}
 
 		return $fields;
@@ -4795,7 +4801,7 @@ class CTasks
 	 * @return bool|CDBResult
 	 * @throws TasksException
 	 */
-	public static function GetList($arOrder=array(), $arFilter=array(), $arSelect = array(), $arParams = array(), array $arGroup = array())
+	public static function GetList($arOrder = [], $arFilter = [], $arSelect = [], $arParams = [], array $arGroup = [])
 	{
 		global $DB, $USER_FIELD_MANAGER;
 
@@ -4830,7 +4836,6 @@ class CTasks
             'MATCH_WORK_TIME',
             'FAVORITE',
             'SORTING',
-            'MESSAGE_ID',
 			'IS_PINNED',
         ];
     }
@@ -4885,9 +4890,8 @@ class CTasks
 			'STAGES',
 			'FORUM',
 			'FORUM_MESSAGE',
-			'FULL_SEARCH',
-			'COMMENT_SEARCH',
 			'USER_OPTION',
+			'COUNTERS',
 		];
 
 		foreach ($possibleJoins as $join)
@@ -4896,8 +4900,7 @@ class CTasks
 			{
 				case 'CREATOR':
 					if (
-						in_array('CREATED_BY', $select, true)
-						|| in_array('CREATED_BY_NAME', $select, true)
+						in_array('CREATED_BY_NAME', $select, true)
 						|| in_array('CREATED_BY_LAST_NAME', $select, true)
 						|| in_array('CREATED_BY_SECOND_NAME', $select, true)
 						|| in_array('CREATED_BY_LOGIN', $select, true)
@@ -4915,8 +4918,7 @@ class CTasks
 
 				case 'RESPONSIBLE':
 					if (
-						in_array('RESPONSIBLE_ID', $select, true)
-						|| in_array('RESPONSIBLE_NAME', $select, true)
+						in_array('RESPONSIBLE_NAME', $select, true)
 						|| in_array('RESPONSIBLE_LAST_NAME', $select, true)
 						|| in_array('RESPONSIBLE_SECOND_NAME', $select, true)
 						|| in_array('RESPONSIBLE_LOGIN', $select, true)
@@ -4996,6 +4998,7 @@ class CTasks
 					}
 					if (
 						in_array('COMMENTS_COUNT', $select, true)
+						|| in_array('SERVICE_COMMENTS_COUNT', $select, true)
 						|| in_array('FORUM_ID', $select, true)
 					)
 					{
@@ -5020,38 +5023,26 @@ class CTasks
 					}
 					break;
 
-				case 'FULL_SEARCH':
-					if (
-						in_array('MESSAGE_ID', $select, true)
-						||
-						(
-							in_array('FULL_SEARCH_INDEX', $filterKeys, true)
-							&& isset($filter['::SUBFILTER-FULL_SEARCH_INDEX']['*FULL_SEARCH_INDEX'])
-							&& !empty(trim($filter['::SUBFILTER-FULL_SEARCH_INDEX']['*FULL_SEARCH_INDEX']))
-						)
-					)
-					{
-						$tableName = SearchIndexTable::getTableName();
-						$relatedJoins[$join] = "INNER JOIN {$tableName} {$joinAlias}TSIF "
-							."ON {$joinAlias}TSIF.TASK_ID = {$sourceAlias}.ID";
-					}
-					break;
-
-				case 'COMMENT_SEARCH':
-					if (in_array('COMMENT_SEARCH_INDEX', $filterKeys, true))
-					{
-						$tableName = SearchIndexTable::getTableName();
-						$relatedJoins[$join] = "INNER JOIN {$tableName} {$joinAlias}TSIC "
-							."ON {$joinAlias}TSIC.TASK_ID = {$sourceAlias}.ID AND {$joinAlias}TSIC.MESSAGE_ID <> 0";
-					}
-					break;
-
 				case 'USER_OPTION':
 					if (array_key_exists('IS_PINNED', $order))
 					{
 						$tableName = UserOptionTable::getTableName();
 						$relatedJoins[$join] = "LEFT JOIN {$tableName} {$joinAlias}TUO "
 							."ON {$joinAlias}TUO.TASK_ID = {$sourceAlias}.ID AND {$joinAlias}TUO.USER_ID = {$userId}";
+					}
+					break;
+
+				case 'COUNTERS':
+					if (
+						in_array('NEW_COMMENTS_COUNT', $select, true)
+						|| in_array('WITH_COMMENT_COUNTERS', $filterKeys, true)
+					)
+					{
+						$tableName = Counter\CounterTable::getTableName();
+						$relatedJoins[$join] = "LEFT JOIN {$tableName} {$joinAlias}TSC 
+							ON {$joinAlias}TSC.USER_ID = {$userId}
+							AND {$joinAlias}TSC.TYPE IN ('my_new_comments', 'accomplices_new_comments', 'auditor_new_comments', 'originator_new_comments', 'my_muted_new_comments', 'accomplices_muted_new_comments', 'auditor_muted_new_comments', 'originator_muted_new_comments') 
+							AND {$joinAlias}TSC.TASK_ID = {$sourceAlias}.ID";
 					}
 					break;
 			}
@@ -5776,26 +5767,14 @@ class CTasks
 			'SOURCE_ALIAS' => 'PT'
 		];
 		$relatedJoins = static::getRelatedJoins([], $filter, [], $relatedParams);
-
-		if (isset($relatedJoins['FULL_SEARCH']))
-		{
-			$relatedJoins['FULL_SEARCH'] = str_replace('INNER', 'LEFT', $relatedJoins['FULL_SEARCH']);
-		}
-		if (isset($relatedJoins['COMMENT_SEARCH']))
-		{
-			$relatedJoins['COMMENT_SEARCH'] = str_replace('INNER', 'LEFT', $relatedJoins['COMMENT_SEARCH']);
-		}
-
 		$relatedJoins = array_merge($relatedJoins, $optimized['JOINS']);
 
-		$strSql = "
+		return "
 			SELECT PT.ID
 			FROM b_tasks PT
 			" . implode("\n", $relatedJoins) . "
 			WHERE " . implode(" AND ", $sqlSearch) . "
 		";
-
-		return $strSql;
 	}
 
 

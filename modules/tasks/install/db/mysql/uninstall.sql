@@ -85,3 +85,11 @@ DROP TABLE IF EXISTS b_tasks_template_permission;
 DROP TABLE IF EXISTS b_tasks_scrum_entity;
 
 DROP TABLE IF EXISTS b_tasks_scrum_item;
+
+DROP TABLE IF EXISTS b_tasks_scrum_entity_checklist_items;
+
+DROP TABLE IF EXISTS b_tasks_scrum_entity_checklist_tree;
+
+DROP TABLE IF EXISTS b_tasks_scrum_item_checklist_items;
+
+DROP TABLE IF EXISTS b_tasks_scrum_item_checklist_tree;

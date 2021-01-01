@@ -25,7 +25,8 @@ if (isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
 	$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
 }
 
-$jsMessages = array();
+$jsMessages = [];
+$jsMessagesCodes = [];
 
 if($arResult['RESTRICTED_LICENCE'] === true)
 {

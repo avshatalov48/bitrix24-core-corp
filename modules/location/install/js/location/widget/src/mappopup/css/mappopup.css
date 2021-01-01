@@ -9,6 +9,7 @@
 	display: -ms-flexbox;
 	display: flex;
 	align-items: stretch;
+	overflow: hidden;
 }
 
 .location-map-inner {

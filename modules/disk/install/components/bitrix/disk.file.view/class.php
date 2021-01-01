@@ -59,6 +59,18 @@ class CDiskFileViewComponent extends DiskComponent implements Controllerable, Si
 		parent::processBeforeAction($actionName);
 		$this->findFile();
 
+		if (!$this->file)
+		{
+			global $APPLICATION;
+			$APPLICATION->includeComponent(
+				'bitrix:disk.error.page',
+				'',
+				[]
+			);
+
+			return false;
+		}
+
 		$securityContext = $this->storage->getCurrentUserSecurityContext();
 		if(!$this->file->canRead($securityContext))
 		{
@@ -492,10 +504,6 @@ class CDiskFileViewComponent extends DiskComponent implements Controllerable, Si
 			$this->file = \Bitrix\Disk\File::loadById($this->arParams['FILE_ID'], array('REAL_OBJECT', 'CREATE_USER'));
 		}
 
-		if(!$this->file)
-		{
-			throw new \Bitrix\Main\SystemException("Invalid file.");
-		}
 		return $this;
 	}
 

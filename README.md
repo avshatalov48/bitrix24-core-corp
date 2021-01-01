@@ -4,6 +4,7 @@
 
 ## История версий (Главный модуль)
 
+* 20.200.550 (18.12.2020)
 * 20.200.300 (26.11.2020)
 * 20.5.475 (28.09.2020)
 * 20.5.462 (08.10.2020)
@@ -35,6 +36,7 @@
 ![PHPStorm](./images/phpstorm.png "Подключение в PHPStorm")
 
 ## Разное
+
 * 20.100.0 и выше - Совместимость с PHP 8
 * 20.5.393 и выше - php mbstring.func_overload 0
 
@@ -42,8 +44,8 @@
 
 * [История версий. Последние изменения в "1С-Битрикс: Корпоративный портал"](https://www.bitrix24.ru/features/box/box-versions.php)
 * [Ядро "1С-Битрикс: Управление сайтом" Бизнес. Каталог /modules/](https://github.com/avshatalov48/bitrix-core-business/)
-* [Комплексный компонент для работы с элементами Highload-блоков Битрикс](https://github.com/avshatalov48/highloadblock.complex/)
 * [Скачать "1C-Битрикс24"](https://www.1c-bitrix.ru/download/intranet.php)
 * [Регистрация пробных версий продуктов и решений «1С-Битрикс»](https://www.1c-bitrix.ru/bsm_register.php)
 * [bxApiDocs](https://github.com/matiaspub/bxApiDocs/)
-* [bxApiDocs-1](https://github.com/nordeveloper/bxApiDocs-1/)
+
+Если данный репозиторий помог Вам, поставьте звездочку! :thumbsup:

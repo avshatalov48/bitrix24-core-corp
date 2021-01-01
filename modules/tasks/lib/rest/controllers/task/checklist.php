@@ -59,7 +59,16 @@ class Checklist extends Base
 	 */
 	public function getAction($taskId, CheckListItem $checkListItem)
 	{
-		$task = new CTaskItem($taskId, CurrentUser::get()->getId());
+		try
+		{
+			$task = new CTaskItem($taskId, CurrentUser::get()->getId());
+		}
+		catch (\CTaskAssertException $e)
+		{
+			$this->errorCollection->add([new Error(Loc::getMessage('TASKS_REST_TASK_CHECKLIST_ACCESS_DENIED'))]);
+			return null;
+		}
+
 		if (!$task->checkCanRead())
 		{
 			$this->errorCollection->add([new Error(Loc::getMessage('TASKS_REST_TASK_CHECKLIST_ACCESS_DENIED'))]);
@@ -80,7 +89,16 @@ class Checklist extends Base
 	 */
 	public function listAction($taskId, array $filter = [], array $select = [], array $order = [])
 	{
-		$task = new CTaskItem($taskId, CurrentUser::get()->getId());
+		try
+		{
+			$task = new CTaskItem($taskId, CurrentUser::get()->getId());
+		}
+		catch (\CTaskAssertException $e)
+		{
+			$this->errorCollection->add([new Error(Loc::getMessage('TASKS_REST_TASK_CHECKLIST_ACCESS_DENIED'))]);
+			return null;
+		}
+
 		if (!$task->checkCanRead())
 		{
 			$this->errorCollection->add([new Error(Loc::getMessage('TASKS_REST_TASK_CHECKLIST_ACCESS_DENIED'))]);

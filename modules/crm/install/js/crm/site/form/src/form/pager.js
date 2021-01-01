@@ -28,6 +28,19 @@ class Navigation
 		this.index -= (this.index > 1) ? 1 : 0;
 	}
 
+	first()
+	{
+		this.index = 1;
+	}
+
+	last(validate = true)
+	{
+		if (!validate || this.current().validate())
+		{
+			this.index = this.count();
+		}
+	}
+
 	current(): Page
 	{
 		return this.pages[this.index - 1];

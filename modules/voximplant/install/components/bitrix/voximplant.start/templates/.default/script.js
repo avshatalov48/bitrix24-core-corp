@@ -13,15 +13,22 @@ BX.Voximplant.Start = {
 	tariffsUrl: '',
 	isRestOnly: null,
 	balanceMenu: null,
+	isTelephonyAvailable: null,
 
 	balanceElements: [], // Element[]
 	lines: [],
 
 	init: function(config)
 	{
-		this.mainMenuItems = config.mainMenuItems.map(this.parseMenuItem, this);
-		this.settingsMenuItems = config.settingsMenuItems.map(this.parseMenuItem, this);
-		this.partnersMenuItems = config.partnersMenuItems.map(this.parseMenuItem, this);
+		this.isTelephonyAvailable = BX.prop.getString(config, "isTelephonyAvailable", "Y") === "Y";
+		this.linkToBuySip = BX.prop.getString(config, "linkToBuySip", "");
+		var mainMenuItems = BX.prop.getArray(config, "mainMenuItems", []);
+		var settingsMenuItems = BX.prop.getArray(config, "settingsMenuItems", []);
+		var partnersMenuItems = BX.prop.getArray(config, "partnersMenuItems", []);
+
+		this.mainMenuItems = mainMenuItems.map(this.parseMenuItem, this);
+		this.settingsMenuItems = settingsMenuItems.map(this.parseMenuItem, this);
+		this.partnersMenuItems = partnersMenuItems.map(this.parseMenuItem, this);
 		this.lines = config.lines;
 
 		this.applicationUrlTemplate = config.applicationUrlTemplate || '';
@@ -81,6 +88,7 @@ BX.Voximplant.Start = {
 
 		BX.bind(BX('balance-top-up'), 'click', this.onTopUpButtonClick.bind(this));
 		BX.bind(BX('balance-menu'), 'click', this.onBalanceMenuButtonClick.bind(this));
+		BX.bind(BX('sip-buy'), 'click', this.onBuySipButtonClick.bind(this));
 
 		if(BX.PULL)
 		{
@@ -298,6 +306,19 @@ BX.Voximplant.Start = {
 		});
 	},
 
+	onBuySipButtonClick: function()
+	{
+		if (!this.isTelephonyAvailable)
+		{
+			BX.Voximplant.openLimitSlider('limit_contact_center_telephony_SIP_connector');
+			return;
+		}
+		if (this.linkToBuySip)
+		{
+			window.open(this.linkToBuySip);
+		}
+	},
+
 	onBalanceMenuButtonClick: function()
 	{
 		if(!this.balanceMenu)
@@ -357,6 +378,11 @@ BX.Voximplant.Start = {
 
 	onRentButtonClick: function(packetSize)
 	{
+		if (!this.isTelephonyAvailable)
+		{
+			BX.Voximplant.openLimitSlider('limit_contact_center_telephony_number_rent');
+			return;
+		}
 		packetSize = parseInt(packetSize) || 1;
 		BX.Voximplant.NumberRent.create({packetSize: packetSize}).show();
 	},
@@ -376,6 +402,12 @@ BX.Voximplant.Start = {
 
 	onAddCallerIdButtonClick: function(e)
 	{
+		if (!this.isTelephonyAvailable)
+		{
+			BX.Voximplant.openLimitSlider();
+			return;
+		}
+
 		var a = new BX.Voximplant.CallerIdSlider({
 			onClose: this.reload.bind(this)
 		});

@@ -6,6 +6,7 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Bitrix24;
+use Bitrix\Main\Type\Date;
 
 class Limits
 {
@@ -284,5 +285,42 @@ class Limits
 	public static function canInterceptCall()
 	{
 		return \CVoxImplantAccount::IsPro();
+	}
+
+	public static function canManageTelephony($withGracePeriod = true)
+	{
+		if (!Loader::includeModule("bitrix24"))
+		{
+			return true;
+		}
+
+		if (Bitrix24\Feature::isFeatureEnabled("voximplant_manage_telephony"))
+		{
+			return true;
+		}
+
+		$gracePeriodEnd = Bitrix24\Feature::getVariable("voximplant_disable_telephony_for_free_date");
+		$gracePeriodEndDate = new Date($gracePeriodEnd, 'Y-m-d');
+		return $withGracePeriod && time() < $gracePeriodEndDate->getTimestamp();
+	}
+
+	public static function canCall()
+	{
+		if (!Loader::includeModule("bitrix24"))
+		{
+			return true;
+		}
+
+		if (Bitrix24\Feature::isFeatureEnabled("voximplant_calls"))
+		{
+			return true;
+		}
+
+		if (Bitrix24\Feature::isFeatureEnabled("voximplant_calls_for_grace_period"))
+		{
+			return true;
+		}
+
+		return false;
 	}
 }

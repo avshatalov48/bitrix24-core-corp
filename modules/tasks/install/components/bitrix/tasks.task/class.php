@@ -8,6 +8,7 @@
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
+use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -173,7 +174,6 @@ class TasksTaskComponent extends TasksBaseComponent
 		{
 			$action = Tasks\Access\ActionDictionary::ACTION_CHECKLIST_SAVE;
 			$accessCheckParams = isset($request['ACTION'][0]['ARGUMENTS']['items']) ? $request['ACTION'][0]['ARGUMENTS']['items'] : [];
-			$error->setType(Util\Error::TYPE_ERROR);
 			$error->setMessage(Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'));
 		}
 		else if ($arParams['ACTION'] === "edit" && $taskId)
@@ -236,6 +236,8 @@ class TasksTaskComponent extends TasksBaseComponent
 
 		static::tryParseBooleanParameter($this->arParams['REDIRECT_ON_SUCCESS'], true);
 		static::tryParseURIParameter($this->arParams['BACKURL']);
+
+		static::tryParseStringParameter($this->arParams['PLATFORM'], 'web');
 
 		return $this->errors->checkNoFatals();
 	}
@@ -901,6 +903,9 @@ class TasksTaskComponent extends TasksBaseComponent
 				// applying form data on top, what changed
 				$data['DATA'] = Task::mergeData($this->formData, $data['DATA']);
 			}
+
+			$group = Bitrix\Socialnetwork\Item\Workgroup::getById($data['DATA']['GROUP_ID']);
+			$this->arParams['IS_SCRUM_TASK'] = ($group && $group->isScrumProject());
 		}
 		else // get from other sources: default task data, or other task data, or template data
 		{
@@ -1422,7 +1427,10 @@ class TasksTaskComponent extends TasksBaseComponent
 					null,
 					['UPDATE_TOPIC_LAST_VISIT' => false]
 				);
-				$this->arResult['DATA']['EFFECTIVE'] = $this->getEffective();
+				if ($this->arParams['PLATFORM'] === 'web')
+				{
+					$this->arResult['DATA']['EFFECTIVE'] = $this->getEffective();
+				}
 			}
 
 			$this->getEventData(); // put some data to $arResult for emitting javascript event when page loads
@@ -1430,18 +1438,27 @@ class TasksTaskComponent extends TasksBaseComponent
 		}
 	}
 
-	private function getEffective()
+	/**
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function getEffective(): array
 	{
-		$filter['=IS_VIOLATION'] = 'Y';
-		$filter['TASK_ID']=$this->task->getId();
+		$res = Tasks\Internals\Counter\EffectiveTable::getList([
+			'filter' => [
+				'TASK_ID' => $this->task->getId(),
+				'=IS_VIOLATION' => 'Y',
+			],
+			'order' => ['DATETIME' => 'DESC'],
+			'count_total' => true,
+		]);
 
-		$res = Tasks\Internals\Counter\EffectiveTable::getList(array(
-			'filter' => $filter,
-			'order' => array('DATETIME' => 'DESC'),
-			'count_total' => true
-		));
-
-		return array('COUNT'=>$res->getCount(), 'ITEMS'=> $res->fetchAll());
+		return [
+			'COUNT' => $res->getCount(),
+			'ITEMS' => $res->fetchAll(),
+		];
 	}
 
 	// this method should be called "addEventData" :(

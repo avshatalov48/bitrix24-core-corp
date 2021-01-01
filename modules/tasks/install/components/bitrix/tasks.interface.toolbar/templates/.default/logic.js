@@ -71,12 +71,14 @@ BX.namespace('Tasks.Component');
 			onUserCounter: function(data)
 			{
 				var userId = Number(this.option('userId'));
+				var ownerId = Number(this.option('ownerId'));
 				var groupId = Number(this.option('groupId'));
 
 				if (
 					!this.option('showCounters')
-					|| userId !== Number(data.userId)
 					|| !data.hasOwnProperty(groupId)
+					|| userId !== ownerId
+					|| userId !== Number(data.userId)
 				)
 				{
 					return;

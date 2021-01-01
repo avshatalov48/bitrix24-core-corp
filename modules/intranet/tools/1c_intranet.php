@@ -1,5 +1,13 @@
 <?
 define("BX_FORCE_DISABLE_SEPARATED_SESSION_MODE", true);
+
+if($_SERVER["REQUEST_METHOD"] == "GET")
+{
+	//from main 20.0.1300 only POST allowed
+	$_POST["USER_LOGIN"] = $_GET["USER_LOGIN"];
+	$_POST["USER_PASSWORD"] = $_GET["USER_PASSWORD"];
+}
+
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 ?>
 

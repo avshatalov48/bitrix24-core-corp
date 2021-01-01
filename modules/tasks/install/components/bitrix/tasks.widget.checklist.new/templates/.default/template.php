@@ -39,6 +39,8 @@ if (Loader::includeModule('disk'))
 	]);
 }
 
+$suffixDomId = $this->getComponent()->getId();
+
 $helper = $arResult['HELPER'];
 $arParams =& $helper->getComponent()->arParams; // make $arParams the same variable as $this->__component->arParams, as it really should be
 ?>
@@ -59,10 +61,10 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 	<div id="<?=$helper->getScopeId()?>" class="tasks">
 		<?php $helper->displayWarnings();?>
 
-		<div id="checklistArea"></div>
+		<div id="checklistArea_<?=$suffixDomId?>"></div>
 		<?php if ($arResult['COMMON_ACTION']['CAN_ADD']):?>
 			<div class="tasks-checklist-list-actions">
-				<a id="addCheckList" class="tasks-checklist-item-add-btn"><?=Loc::getMessage('TASKS_CHECKLIST_TEMPLATE_ADD_CHECKLIST')?></a>
+				<a id="addCheckList_<?=$suffixDomId?>" class="tasks-checklist-item-add-btn"><?=Loc::getMessage('TASKS_CHECKLIST_TEMPLATE_ADD_CHECKLIST')?></a>
 			</div>
 		<?php endif?>
 	</div>
@@ -80,8 +82,14 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 				}
 			});
 
+			var checklistNode = document.getElementById('checklistArea_' + '<?=$suffixDomId?>');
+			if (!checklistNode)
+			{
+				checklistNode = top.document.getElementById('checklistArea_' + '<?=$suffixDomId?>');
+			}
+
 			var renderTo = {
-				renderTo: BX('checklistArea')
+				renderTo: checklistNode
 			};
 			var data = Object.assign(renderTo, <?=Json::encode([
 				'userId' => $arResult['USER_ID'],
@@ -105,6 +113,7 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 					'urlDeleteFile' => '/bitrix/tools/disk/uf.php?action=deleteFile',
 					'urlUpload' => '/bitrix/tools/disk/uf.php?action=uploadFile&ncc=1',
 				],
+				'suffixDomId' => $suffixDomId
 			])?>);
 
 			BX.Tasks.CheckListInstance = new BX.Tasks.CheckList(data);

@@ -1,10 +1,15 @@
-import {Loc, Tag, Text} from 'main.core';
+import {Event, Loc, Tag, Text} from 'main.core';
+import {EventEmitter} from 'main.core.events';
 import {Sprint} from './sprint';
 
-export class StoryPointsHeader
+export class StoryPointsHeader extends EventEmitter
 {
 	constructor(sprint: Sprint)
 	{
+		super(sprint);
+
+		this.setEventNamespace('BX.Tasks.Scrum.StoryPointsHeader');
+
 		this.sprint = sprint;
 
 		this.element = null;
@@ -39,14 +44,45 @@ export class StoryPointsHeader
 			</div>
 		`);
 
-
 		this.element = Tag.render`
+			${this.renderBurnDownChartIcon()}
+			<div class="tasks-scrum-entity-title-btn tasks-scrum-entity-title-btn-task">
+				<span class="tasks-scrum-entity-tasks-icon"></span>
+				<span class="tasks-scrum-entity-tasks-title">
+					${this.sprint.getNumberTasks()}
+				</span>
+			</div>
 			${this.totalStoryPointsNode}
 			${this.inWorkStoryPointsNode}
 			${this.doneStoryPointsNode}
 		`;
 
+		Event.bind(this.getElementByClassName(
+			this.element,
+			'tasks-scrum-entity-title-btn-burn-down-chart'
+		), 'click', () => this.emit('showSprintBurnDownChart'));
+
 		return this.element;
+	}
+
+	renderBurnDownChartIcon(): HTMLElement
+	{
+		if (this.sprint.isPlanned())
+		{
+			return '';
+		}
+
+		return Tag.render`
+			<div class="tasks-scrum-entity-title-btn tasks-scrum-entity-title-btn-burn-down-chart">
+				<span class="tasks-scrum-entity-burn-down-chart-icon"></span>
+			</div>
+		`;
+	}
+
+	updateNumberTasks()
+	{
+		const parentNode = this.getElementByClassName(this.element, 'tasks-scrum-entity-title-btn-task');
+		parentNode.querySelector('.tasks-scrum-entity-tasks-title').textContent = this.sprint.getNumberTasks();
 	}
 
 	setStoryPoints(storyPoints: string)

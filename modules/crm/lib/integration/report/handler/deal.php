@@ -326,7 +326,7 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 			case self::WHAT_WILL_CALCULATE_DEAL_DATA_FOR_FUNNEL:
 				$query->addSelect(Query::expr()->max('OPPORTUNITY_ACCOUNT'), 'MAX_OPPORTUNITY_ACCOUNT');
 				$query->addSelect('FULL_HISTORY.OWNER_ID', 'FULL_HISTORY_OWNER_ID');
-				$query->addSelect('FULL_HISTORY.IS_SUPPOSED', 'FULL_HISTORY_IS_SUPPOSED');
+				$query->addSelect(Query::expr()->min('FULL_HISTORY.IS_SUPPOSED'), 'FULL_HISTORY_IS_SUPPOSED');
 				$query->addSelect(Query::expr()->max('FULL_HISTORY.SPENT_TIME'), 'FULL_HISTORY_SPENT_TIME');
 				$query->addSelect(Query::expr()->max('ACCOUNT_CURRENCY_ID'), 'MAX_ACCOUNT_CURRENCY_ID');
 				break;

@@ -25,7 +25,7 @@ class Limit extends Bitrix24Restriction
 		$limit = ($limit > 0 ? $limit : static::getLimit());
 		$currentValue = static::getCurrentValue();
 
-		return (static::isLimitExist($limit) ? ($currentValue >= $limit) : false);
+		return (static::isLimitExist($limit) ? ($currentValue > $limit) : false);
 	}
 
 	/**
@@ -56,7 +56,7 @@ class Limit extends Bitrix24Restriction
 	 *
 	 * @return int
 	 */
-	private static function getLimit(): int
+	protected static function getLimit(): int
 	{
 		return max((int)static::getVariable(), 0);
 	}

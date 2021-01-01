@@ -63,12 +63,7 @@ class DiskStorage extends AbstractStorage
 		$this->userId = User::resolveUserId($user?: $USER);
 		$this->connection = Application::getConnection();
 
-		if (!\CMain::ForkActions([$this, 'finalize']))
-		{
-			register_shutdown_function(function(){
-				$this->finalize();
-			});
-		}
+		Application::getInstance()->addBackgroundJob([$this, 'finalize']);
 	}
 
 	public function finalize()

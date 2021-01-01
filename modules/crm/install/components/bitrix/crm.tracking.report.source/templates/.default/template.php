@@ -111,6 +111,7 @@ foreach ($arResult['ROWS'] as $item)
 
 
 ?>
+<span data-role="grid/selector/title" class="crm-tracking-report-source-selector-text"><?=htmlspecialcharsbx($arResult['PARENT']['NAME'])?></span>
 <span data-role="grid/selector" data-options="<?=htmlspecialcharsbx(Json::encode([
 	'items' => (count($arResult['SIBLINGS']['LIST']) > 1 ? $arResult['SIBLINGS']['LIST'] : []),
 ]))?>" class="crm-tracking-report-source-selector<?=(count($arResult['SIBLINGS']['LIST']) > 1 ? '-link' : '')?>">

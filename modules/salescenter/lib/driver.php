@@ -6,6 +6,7 @@ use Bitrix\Landing\Internals\LandingTable;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Query\Query;
+use Bitrix\Sale\Cashbox\CheckManager;
 use Bitrix\SalesCenter\Fields\Manager;
 use Bitrix\SalesCenter\Integration\Bitrix24Manager;
 use Bitrix\SalesCenter\Integration\CrmManager;
@@ -144,32 +145,42 @@ final class Driver
 		}
 
 		$cashboxCheckUrl = $pages['sale_cashbox_check'];
-		$cashboxIsSlider = false;
-		$cashboxPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.cashbox');
-		$cashboxPath = getLocalPath('components'.$cashboxPath.'/slider.php');
-		if($cashboxPath)
-		{
-			$cashboxCheckUrl = $cashboxPath.'?show_checks=y';
-			$cashboxIsSlider = true;
-		}
+		$checkCorrectionCheckUrl = $pages['sale_cashbox_correction'];
 
-		if($cashboxIsSlider)
-		{
-			$cashboxOnClick = 'BX.Salescenter.Manager.openSlider(\''.$cashboxCheckUrl.'\');';
-		}
-		else
-		{
-			$cashboxOnClick = 'window.open(\''.$cashboxCheckUrl.'\', \'_blank\');';
-		}
+		$cashboxOnClick = 'window.open(\''.$cashboxCheckUrl.'\', \'_blank\');';
+		$checkCorrectionOnClick = 'window.open(\''.$checkCorrectionCheckUrl.'\', \'_blank\');';
 
 		if(SaleManager::getInstance()->isFullAccess() && $this->isCashboxEnabled())
 		{
+			$subItems = [
+				[
+					'ID' => 'check_list',
+					'TEXT' => Loc::getMessage('SALESCENTER_DRIVER_TOP_PANEL_CHECK'),
+					'PARENT_ID' => 'cashbox_check',
+					'URL_CONSTANT' => true,
+					'SORT' => 60,
+					'ON_CLICK' => $cashboxOnClick,
+				]
+			];
+
+			if (CheckManager::isAvailableCorrection())
+			{
+				$subItems[] = [
+					'ID' => 'correction',
+					'TEXT' => Loc::getMessage('SALESCENTER_DRIVER_TOP_PANEL_CHECK_CORRECTION'),
+					'PARENT_ID' => 'cashbox_check',
+					'URL_CONSTANT' => true,
+					'SORT' => 70,
+					'ON_CLICK' => $checkCorrectionOnClick,
+				];
+			}
+
 			$items[] = [
-				'TEXT' => Loc::getMessage('SALESCENTER_DRIVER_TOP_PANEL_CHECK'),
-				'URL' => $cashboxCheckUrl,
-				'URL_CONSTANT' => true,
-				'SORT' => 60,
-				'ON_CLICK' => $cashboxOnClick,
+				'TEXT' => Loc::getMessage('SALESCENTER_DRIVER_TOP_PANEL_CHECK_BLOCK'),
+				'ID' => 'cashbox_check',
+				'PARENT_ID' => '',
+				'SORT' => 70,
+				'ITEMS' => $subItems
 			];
 		}
 

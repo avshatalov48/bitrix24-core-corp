@@ -10,13 +10,10 @@ if(typeof BX.Crm.EntityFieldAttributeType === "undefined")
 
 if(typeof BX.Crm.EntityFieldAttributePhaseGroupType === "undefined")
 {
-	BX.Crm.EntityFieldAttributePhaseGroupType =
-	{
-		undefined:  0,
-		general:    1,
-		pipeline:   2,
-		junk:       3
-	};
+	/**
+	 * @deprecated
+	 */
+	BX.Crm.EntityFieldAttributePhaseGroupType = BX.UI.EntityFieldAttributePhaseGroupType;
 }
 
 if(typeof BX.Crm.EntityFieldAttributeManager === "undefined")
@@ -43,14 +40,31 @@ if(typeof BX.Crm.EntityFieldAttributeManager === "undefined")
 		{
 			return BX.prop.getBoolean(this._settings, "isPermitted", true);
 		},
+		isPhaseDependent: function()
+		{
+			return BX.prop.getBoolean(this._settings, "isPhaseDependent", true);
+		},
 		getEntityPhases: function()
 		{
-			var progressManager = BX.CrmProgressManager.current.resolve(this._entityTypeId);
+			var progressManager;
+
+			if (typeof(BX.CrmProgressManager) !== "undefined"
+				&& BX.CrmProgressManager.hasOwnProperty("current"))
+			{
+				progressManager = BX.CrmProgressManager.current.resolve(this._entityTypeId);
+			}
+
 			return progressManager ? progressManager.getInfos(this._entityScope) : [];
 		},
 		areMultiTypePhasesEnabled: function()
 		{
-			return BX.CrmProgressManager.current.isMultiType(this._entityTypeId);
+			if (typeof(BX.CrmProgressManager) !== "undefined"
+				&& BX.CrmProgressManager.hasOwnProperty("current"))
+			{
+				return BX.CrmProgressManager.current.isMultiType(this._entityTypeId);
+			}
+
+			return false;
 		},
 		createFieldConfigurator: function(field, typeId)
 		{
@@ -62,7 +76,9 @@ if(typeof BX.Crm.EntityFieldAttributeManager === "undefined")
 					areMultiTypePhasesEnabled: this.areMultiTypePhasesEnabled(),
 					captions: BX.prop.getObject(this._settings, "captions", {}),
 					config: field ? field.getAttributeConfiguration(typeId) : null,
-					isPermitted: BX.prop.getBoolean(this._settings, "isPermitted", true),
+					isPermitted: this.isPermitted(),
+					isPhaseDependent: this.isPhaseDependent(),
+					isAttrConfigButtonHidden: BX.prop.getBoolean(this._settings, "isAttrConfigButtonHidden", false),
 					lockScript: BX.prop.getString(this._settings, "lockScript", "")
 				}
 			);
@@ -141,6 +157,7 @@ if(typeof BX.Crm.EntityFieldAttributeConfigurator === "undefined")
 		this._areMultiTypePhasesEnabled = false;
 
 		this._isPermitted = true;
+		this._isPhaseDependent = true;
 		this._isEnabled = true;
 		this._isOpened = false;
 		this._isChanged = false;
@@ -156,6 +173,7 @@ if(typeof BX.Crm.EntityFieldAttributeConfigurator === "undefined")
 			this._settings = settings ? settings : {};
 
 			this._isPermitted = BX.prop.getBoolean(this._settings, "isPermitted", true);
+			this._isPhaseDependent = BX.prop.getBoolean(this._settings, "isPhaseDependent", true);
 			this._typeId = BX.prop.getInteger(this._settings, "type", BX.Crm.EntityFieldAttributeType.required);
 			this._fieldName = BX.prop.getString(this._settings, "fieldName", "");
 
@@ -241,7 +259,8 @@ if(typeof BX.Crm.EntityFieldAttributeConfigurator === "undefined")
 		{
 			if(this._typeId === BX.Crm.EntityFieldAttributeType.required)
 			{
-				return(this.getCaption("REQUIRED_FULL") + ":");
+				var isAttrConfigButtonHidden = BX.prop.getBoolean(this._settings, "isAttrConfigButtonHidden", false);
+				return (this.getCaption("REQUIRED_FULL") + ((isAttrConfigButtonHidden) ? "" : ":"));
 			}
 			return "";
 		},
@@ -392,6 +411,10 @@ if(typeof BX.Crm.EntityFieldAttributeConfigurator === "undefined")
 		{
 			return this._isPermitted;
 		},
+		isPhaseDependent: function()
+		{
+			return this._isPhaseDependent;
+		},
 		runLockScript: function()
 		{
 			var lockScript = BX.prop.getString(this._settings, "lockScript", "");
@@ -419,14 +442,16 @@ if(typeof BX.Crm.EntityFieldAttributeConfigurator === "undefined")
 		},
 		acceptChanges: function()
 		{
-			if(!(this._isPermitted && this._isChanged))
+			if(!(this.isPermitted() && this.isChanged()))
 			{
 				return;
 			}
 
 			this._config = this.getEmptyConfiguration();
 			if(this._groups["general"].isSelected()
-				|| (this._groups["pipeline"].isFullySelected() && !this._groups["junk"].isSelected() && !this._areMultiTypePhasesEnabled)
+				|| (this._groups["pipeline"].isFullySelected()
+					&& !this._groups["junk"].isSelected()
+					&& !this._areMultiTypePhasesEnabled)
 			)
 			{
 				this._config["groups"].push({ phaseGroupTypeId: BX.Crm.EntityFieldAttributePhaseGroupType.general });
@@ -462,7 +487,7 @@ if(typeof BX.Crm.EntityFieldAttributeConfigurator === "undefined")
 				{
 					title: title,
 					configurator: this,
-					isReadOnly: !this._isPermitted,
+					isReadOnly: !this.isPhaseDependent(),
 					phases: phases,
 					phaseGroupTypeId: BX.prop.getInteger(
 						options,
@@ -491,7 +516,7 @@ if(typeof BX.Crm.EntityFieldAttributeConfigurator === "undefined")
 		},
 		processGroupChange: function(group)
 		{
-			if(!this._isPermitted)
+			if(!this.isPhaseDependent())
 			{
 				this.runLockScript();
 				return;
@@ -537,7 +562,7 @@ if(typeof BX.Crm.EntityFieldAttributeConfigurator === "undefined")
 
 			this.setEnabled(this.hasSelectedGroup());
 
-			if(!this._isChanged)
+			if(!this.isChanged())
 			{
 				this._isChanged = true;
 			}
@@ -619,7 +644,7 @@ if(typeof BX.Crm.EntityFieldAttributeConfigurator === "undefined")
 		},
 		onPopupClose: function()
 		{
-			if(this._isPermitted)
+			if(this.isPermitted())
 			{
 				this.acceptChanges();
 
@@ -651,7 +676,13 @@ if(typeof BX.Crm.EntityFieldAttributeConfigurator === "undefined")
 		{
 			if(!this._button)
 			{
-				this._button = BX.Crm.EntityFieldAttributeConfigButton.create(this._id, { configurator: this });
+				this._button = BX.Crm.EntityFieldAttributeConfigButton.create(
+					this._id,
+					{
+						configurator: this,
+						isHidden: BX.prop.getBoolean(this._settings, "isAttrConfigButtonHidden", false)
+					}
+				);
 			}
 			return this._button;
 		},
@@ -1075,6 +1106,10 @@ if(typeof BX.Crm.EntityFieldAttributeConfigButton === "undefined")
 
 			this._configurator = BX.prop.get(this._settings, "configurator", null);
 		},
+		isHidden: function()
+		{
+			return BX.prop.getBoolean(this._settings, "isHidden", false);
+		},
 		onClick: function(e)
 		{
 			if(this._configurator.isEnabled())
@@ -1146,6 +1181,11 @@ if(typeof BX.Crm.EntityFieldAttributeConfigButton === "undefined")
 						]
 				}
 			);
+
+			if (this.isHidden())
+			{
+				this._wrapper.style.display = "none";
+			}
 
 			BX.bind(this._wrapper, "click", BX.delegate(this.onClick, this));
 			return [ this._wrapper ];
@@ -1432,6 +1472,12 @@ if (typeof BX.Crm.EntityFieldVisibilityConfigurator === "undefined")
 			{
 				this._isChanged = true;
 				this.setEnabled(this._switchCheckBox.checked);
+
+				if (!this._switchCheckBox.checked)
+				{
+					this._items = [];
+				}
+
 				this.adjust();
 			}
 		},

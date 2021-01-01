@@ -11,6 +11,7 @@ $MESS["CRM_TRACKING_SOURCE_EDIT_DISCONNECT"] = "Отключить";
 $MESS["CRM_TRACKING_SOURCE_EDIT_CONNECTED"] = "Источник \"%name%\" подключен";
 $MESS["CRM_TRACKING_SOURCE_EDIT_AUTO_CONFIGURED"] = "Работает в автоматическом режиме и не требует настройки.";
 $MESS["CRM_TRACKING_SOURCE_EDIT_DESC_ORGANIC1"] = "Прочий трафик - это все клиенты, которые не были отнесены к настроенным источникам. Работает в автоматическом режиме и не требует настройки. Статистику можно увидеть в отчете.";
+$MESS["CRM_TRACKING_SOURCE_EDIT_DESC_SENDER-MAIL"] = "Email Маркетинг - это все клиенты, которые пришли из писем, отправленных в CRM-маркетинге. Работает в автоматическом режиме и не требует настройки. Статистику можно увидеть в отчете.";
 $MESS["CRM_TRACKING_SOURCE_EDIT_UTM_NAME"] = "Название источника";
 $MESS["CRM_TRACKING_SOURCE_EDIT_UTM_NAME_DESC"] = "Будет отображаться в отчетах. Пример: Рассылки, Радио, Пост Instagram";
 $MESS["CRM_TRACKING_SOURCE_EDIT_UTM_TAGS"] = "UTM-метки";

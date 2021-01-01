@@ -40,7 +40,7 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 			if (Loader::includeModule('bitrix24'))
 			{
 				$isNeedSocServTab = false;
-				if (isset($activeSocServ['zoom']))
+				if (isset($activeSocServ['zoom'])				)
 				{
 					if (\CBitrix24::IsLicensePaid() || \CBitrix24::IsNfrLicense() || \CBitrix24::IsDemoLicense())
 					{
@@ -48,9 +48,13 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 					}
 				}
 			}
-			else
+			elseif (!empty($activeSocServ))
 			{
 				$isNeedSocServTab = true;
+			}
+			else
+			{
+				$isNeedSocServTab = false;
 			}
 		}
 

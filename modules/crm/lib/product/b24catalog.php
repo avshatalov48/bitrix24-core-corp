@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Product;
 
 use Bitrix\Main\Loader;
 use Bitrix\Iblock;
+use Bitrix\Main\Localization\Loc;
 
 if (Loader::includeModule('catalog'))
 {
@@ -139,13 +140,17 @@ if (Loader::includeModule('catalog'))
 		private static function createMorePhotoIfNotExists(int $iblockId): bool
 		{
 			$result = false;
+			$name = static::getDefaultId() === $iblockId
+				? Loc::getMessage('CRM_PRODUCT_MORE_PHOTO_NAME')
+				: Loc::getMessage('CRM_PRODUCT_VARIATION_MORE_PHOTO_NAME');
 			$propertyId = \CIBlockPropertyTools::createProperty(
 				$iblockId,
 				\CIBlockPropertyTools::CODE_MORE_PHOTO,
 				[
 					'XML_ID' => \CIBlockPropertyTools::CODE_MORE_PHOTO,
 					'MULTIPLE_CNT' => 1,
-					'WITH_DESCRIPTION' => 'Y'
+					'WITH_DESCRIPTION' => 'Y',
+					'NAME' => $name,
 				]
 			);
 			if (empty($propertyId))

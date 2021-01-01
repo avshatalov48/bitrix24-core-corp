@@ -512,8 +512,8 @@ if(!function_exists('__CrmImportCompanyAddressesToRequisite'))
 			'ADDRESS_POSTAL_CODE',
 			'ADDRESS_REGION',
 			'ADDRESS_PROVINCE',
-			'ADDRESS_COUNTRY',
-			'ADDRESS_LOC_ADDR_ID'
+			'ADDRESS_COUNTRY'/*,
+			'ADDRESS_LOC_ADDR_ID'*/
 		);
 		$addressFields = array(
 			'ADDRESS_1',
@@ -523,8 +523,8 @@ if(!function_exists('__CrmImportCompanyAddressesToRequisite'))
 			'REGION',
 			'PROVINCE',
 			'COUNTRY',
-			'COUNTRY_CODE',
-			'LOC_ADDR_ID'
+			'COUNTRY_CODE'/*,
+			'LOC_ADDR_ID'*/
 		);
 		$addresses = array();
 		$addrPrefs = array(
@@ -650,8 +650,8 @@ if ($enableOutmodedFields)
 			array('id' => 'ADDRESS_REGION', 'name' => $addressLabels['REGION']),
 			array('id' => 'ADDRESS_PROVINCE', 'name' => $addressLabels['PROVINCE']),
 			array('id' => 'ADDRESS_POSTAL_CODE', 'name' => $addressLabels['POSTAL_CODE']),
-			array('id' => 'ADDRESS_COUNTRY', 'name' => $addressLabels['COUNTRY']),
-			array('id' => 'ADDRESS_LOC_ADDR_ID', 'name' => $addressLabels['LOC_ADDR_ID']),
+			array('id' => 'ADDRESS_COUNTRY', 'name' => $addressLabels['COUNTRY'])/*,
+			array('id' => 'ADDRESS_LOC_ADDR_ID', 'name' => $addressLabels['LOC_ADDR_ID'])*/,
 			array('id' => 'FULL_REG_ADDRESS', 'name' => EntityAddress::getFullAddressLabel(EntityAddress::Registered)),
 			array('id' => 'REG_ADDRESS', 'name' => $regAddressLabels['ADDRESS']),
 			array('id' => 'REG_ADDRESS_2', 'name' => $regAddressLabels['ADDRESS_2']),
@@ -659,8 +659,8 @@ if ($enableOutmodedFields)
 			array('id' => 'REG_ADDRESS_REGION', 'name' => $regAddressLabels['REGION']),
 			array('id' => 'REG_ADDRESS_PROVINCE', 'name' => $regAddressLabels['PROVINCE']),
 			array('id' => 'REG_ADDRESS_POSTAL_CODE', 'name' => $regAddressLabels['POSTAL_CODE']),
-			array('id' => 'REG_ADDRESS_COUNTRY', 'name' => $regAddressLabels['COUNTRY']),
-			array('id' => 'REG_ADDRESS_LOC_ADDR_ID', 'name' => $regAddressLabels['LOC_ADDR_ID'])
+			array('id' => 'REG_ADDRESS_COUNTRY', 'name' => $regAddressLabels['COUNTRY'])/*,
+			array('id' => 'REG_ADDRESS_LOC_ADDR_ID', 'name' => $regAddressLabels['LOC_ADDR_ID'])*/
 		)
 	);
 }

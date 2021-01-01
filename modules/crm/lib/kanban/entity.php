@@ -8,13 +8,16 @@ use Bitrix\Crm\Entity\EntityEditorConfigScope;
 use Bitrix\Crm\Filter;
 use Bitrix\Crm\Statistics\StatisticEntryManager;
 use Bitrix\Crm\Exclusion;
+use Bitrix\Main\Application;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
+use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\Type\Date;
+use Bitrix\Main\UI\Filter\FieldAdapter;
 use Bitrix\Main\UI\Filter\Options;
 use Bitrix\UI\Form\EntityEditorConfiguration;
 
@@ -26,13 +29,36 @@ abstract class Entity
 	protected const OPTION_NAME_VIEW_FIELDS_PREFIX = 'kanban_select_more_v4_';
 	protected const OPTION_NAME_EDIT_FIELDS_PREFIX = 'kanban_edit_more_v4_';
 
+	protected $filter;
 	protected $categoryId = 0;
 	protected $itemLastId;
 	protected $entityEditorConfiguration;
 	protected $userFields;
 	protected $loadedItems = [];
 
+	protected $dateFormats = [
+		'short' => [
+			'en' => 'F j',
+			'de' => 'j. F',
+			'ru' => 'j F'
+		],
+		'full' => [
+			'en' => 'F j, Y',
+			'de' => 'j. F Y',
+			'ru' => 'j F Y'
+		]
+	];
+
 	protected static $instances = [];
+
+	protected const PATH_MARKERS = [
+		'#lead_id#',
+		'#contact_id#',
+		'#company_id#',
+		'#deal_id#',
+		'#quote_id#',
+		'#invoice_id#'
+	];
 
 	/**
 	 * Set current category id to work with.
@@ -639,12 +665,11 @@ abstract class Entity
 		{
 			foreach($stages as $stage)
 			{
-				$statusKey = ($this->getTypeId() === \CCrmOwnerType::Deal ? 'STAGE_ID' : 'STATUS_ID');
 				$stageRequiredFields = FieldAttributeManager::getRequiredFields(
 					$this->getTypeId(),
 					0,
 					[
-						$statusKey => $stage['STATUS_ID']
+						$this->getStageFieldName() => $stage['STATUS_ID']
 					]
 				);
 				foreach ($stageRequiredFields as $requiredFieldsBlock)
@@ -978,11 +1003,25 @@ abstract class Entity
 	 * @param \CCrmPerms $permissions
 	 * @return bool
 	 */
-	public function checkUpdatePermissions(int $id, \CCrmPerms $permissions): bool
+	public function checkUpdatePermissions(int $id, ?\CCrmPerms $permissions = null): bool
 	{
 		$provider = $this->getItemsProvider();
 
 		return $provider::CheckUpdatePermission($id, $permissions);
+	}
+
+	/**
+	 * Returns true if user with $permissions can read item with $id.
+	 *
+	 * @param int $id
+	 * @param \CCrmPerms $permissions
+	 * @return bool
+	 */
+	public function checkReadPermissions(int $id = 0, ?\CCrmPerms $permissions = null): bool
+	{
+		$provider = $this->getItemsProvider();
+
+		return $provider::CheckReadPermission($id, $permissions);
 	}
 
 	/**
@@ -1228,9 +1267,14 @@ abstract class Entity
 
 	protected function getFilter(): Filter\Filter
 	{
-		return Filter\Factory::createEntityFilter(
-			Filter\Factory::createEntitySettings($this->getTypeId(), $this->getGridId())
-		);
+		if(!$this->filter)
+		{
+			$this->filter = Filter\Factory::createEntityFilter(
+				Filter\Factory::createEntitySettings($this->getTypeId(), $this->getGridId())
+			);
+		}
+
+		return $this->filter;
 	}
 
 	protected function getPersistentFilterFields(): array
@@ -1282,9 +1326,140 @@ abstract class Entity
 		return '\CCrm' . $this->getTypeName();
 	}
 
+	public function getPopupFields(string $viewType): array
+	{
+		$result = $this->getPopupGeneralFields();
+
+		$result = array_merge($result, $this->getPopupUserFields($viewType), $this->getPopupAdditionalFields());
+
+		if (isset($result['OPPORTUNITY']))
+		{
+			$result['OPPORTUNITY']['LABEL'] = Loc::getMessage('CRM_KANBAN_FIELD_OPPORTUNITY_WITH_CURRENCY');
+		}
+
+		foreach ($this->getPopupHiddenFields() as $code)
+		{
+			unset($result[$code]);
+		}
+
+		return $result;
+	}
+
+	protected function getPopupFieldsBeforeUserFields(): array
+	{
+		return [
+			'OBSERVER' => [
+				'ID' => 'field_OBSERVER',
+				'NAME' => 'OBSERVER',
+				'LABEL' => Loc::getMessage('CRM_KANBAN_FIELD_OBSERVER')
+			],
+			'SOURCE_DESCRIPTION' => [
+				'ID' => 'field_SOURCE_DESCRIPTION',
+				'NAME' => 'SOURCE_DESCRIPTION',
+				'LABEL' => Loc::getMessage('CRM_KANBAN_FIELD_SOURCE_DESCRIPTION')
+			]
+		];
+	}
+
+	protected function getPopupGeneralFields(): array
+	{
+		$result = [];
+
+		$fields = $this->getPopupFieldsBeforeUserFields();
+		$isFieldsInserted = empty($fields);
+		$filter = $this->getFilter();
+
+		foreach ($filter->getFields() as $field)
+		{
+			// if this is the first user field - insert additional fields before it
+			if (!$isFieldsInserted && mb_strpos($field->getId(), 'UF_') === 0)
+			{
+				/** @noinspection SlowArrayOperationsInLoopInspection */
+				$result = array_merge(
+					$result,
+					$fields
+				);
+				$isFieldsInserted = true;
+			}
+
+			$result[$field->getId()] = FieldAdapter::adapt($field->toArray(
+				['lightweight' => true]
+			));
+		}
+
+		return $result;
+	}
+
+	protected function getPopupUserFields(string $viewType): array
+	{
+		$result = [];
+
+		$labelCodes = [
+			'LIST_FILTER_LABEL', 'LIST_COLUMN_LABEL', 'EDIT_FORM_LABEL'
+		];
+		foreach($this->getUserFields() as $fieldName => $userField)
+		{
+			if(isset($result[$fieldName]))
+			{
+				continue;
+			}
+			// detect field's label
+			$fieldLabel = '';
+			foreach ($labelCodes as $code)
+			{
+				if (isset($userField[$code]))
+				{
+					$fieldLabel = trim($userField[$code]);
+					if ($fieldLabel)
+					{
+						break;
+					}
+				}
+			}
+			if (!$fieldLabel)
+			{
+				$fieldLabel = $fieldName;
+			}
+			// add to the result
+			$result[$fieldName] =  [
+				'ID' => 'field_' . $fieldName,
+				'NAME' => $fieldName,
+				'LABEL' => $fieldLabel
+			];
+			if ($userField['USER_TYPE_ID'] === 'resourcebooking')
+			{
+				unset($result[$fieldName]);
+				continue;
+			}
+			if (
+				$viewType === 'edit' &&
+				$userField['USER_TYPE_ID'] === 'money'
+			)
+			{
+				unset($result[$fieldName]);
+				continue;
+			}
+		}
+
+		return $result;
+	}
+
+	protected function getPopupAdditionalFields(): array
+	{
+		return [];
+	}
+
+	protected function getPopupHiddenFields(): array
+	{
+		return [
+			'STAGE_ID', 'STATUS', 'STATUS_ID'
+		];
+	}
+
 	public static function getInstance(string $entityTypeName): ?Entity
 	{
 		Loc::loadMessages(Path::combine(__DIR__, 'helper.php'));
+		Loc::loadMessages(Application::getDocumentRoot() . BX_ROOT . '/components'.\CComponentEngine::makeComponentPath('bitrix:crm.kanban') . '/ajax.fields.php');
 		if(!array_key_exists($entityTypeName, static::$instances))
 		{
 			$instance = null;
@@ -1313,5 +1488,198 @@ abstract class Entity
 		}
 
 		return static::$instances[$entityTypeName];
+	}
+
+	/**
+	 * @param string|null $type
+	 * @return array|mixed
+	 */
+	public function getDateFormats(?string $type)
+	{
+		return ($type === null ? $this->dateFormats : $this->dateFormats[$type]);
+	}
+
+	/**
+	 * @param array|null $data
+	 * @param array|null $params
+	 * @return array
+	 */
+	public function createPullItem(?array $data = null, ?array $params = null): array
+	{
+		$timeOffset = \CTimeZone::GetOffset();
+		$timeFull = time() + $timeOffset;
+		$data = $this->prepareItemCommonFields($data);
+		$dateFormats = $this->getDateFormats(
+			date('Y') === date('Y', $data['DATE_UNIX'])
+				? 'short'
+				: 'full'
+		);
+		$dateFormat = $dateFormats[LANGUAGE_ID];
+
+		$itemFields = [];
+
+		$fields = $this->getAdditionalFields(true);
+		foreach ($fields as $fieldName => $field)
+		{
+			if (mb_strpos($fieldName, 'UF_') !== 0)
+			{
+				$itemFields[] = [
+					'code' => $fieldName,
+					'html' => 'false',
+					'title' => $field['title'],
+					'type' => $field['type'],
+					'value' => HtmlFilter::encode($data[$fieldName])
+				];
+			}
+		}
+
+		return [
+			'id'=> $data['ID'],
+			'data' => [
+				'id' =>  $data['ID'],
+				'name' => HtmlFilter::encode($data['TITLE'] ?: '#' . $data['ID']),
+				'link' => $this->getUrl($data['ID']),
+				'columnId' => $this->getColumnId($data),
+				'price' => $data['PRICE'],
+				'price_formatted' => $data['PRICE_FORMATTED'],
+				'date' => (
+				!$data['FORMAT_TIME']
+					? \FormatDate($dateFormat, $data['DATE_UNIX'], $timeFull)
+					: (
+				(time() - $data['DATE_UNIX']) / 3600 > 48
+					? \FormatDate($dateFormat, $data['DATE_UNIX'], $timeFull)
+					: \FormatDate('x', $data['DATE_UNIX'], $timeFull)
+				)),
+				'fields' => $itemFields
+			]
+		];
+	}
+
+	/**
+	 * @param int $id
+	 * @return mixed
+	 */
+	protected function getUrl(int $id)
+	{
+		return str_replace(
+			static::PATH_MARKERS,
+			$id,
+			\CrmCheckPath(
+				'PATH_TO_'.mb_strtoupper($this->getTypeName()).'_SHOW',
+				'',
+				''
+			)
+		);
+	}
+
+	/**
+	 * @param array $data
+	 * @return string
+	 */
+	protected function getColumnId(array $data): string
+	{
+		return '';
+	}
+
+	/**
+	 * @param array|null $fields
+	 * @param array|null $params
+	 * @return array
+	 */
+	public function createPullStage(?array $fields = null, ?array $params = null): array
+	{
+		return [
+			'id' => ($fields['STATUS_ID'] ?? ''),
+			'sort' => ($fields['SORT'] ?? ''),
+			'name' => ($fields['NAME'] ?? ''),
+			'name_init' => ($fields['NAME_INIT'] ?? ''),
+			'color' => ($fields['COLOR'] ?? '')
+		];
+	}
+
+	/**
+	 * @param bool $clearCache Clear static cache.
+	 * @return array
+	 */
+	public function getAdditionalFields(bool $clearCache = false): array
+	{
+		static $additional = null;
+
+		if ($clearCache)
+		{
+			$additional = null;
+		}
+
+		if ($additional === null)
+		{
+			$additional = [];
+			$ufExist = false;
+			$exist = $this->getAdditionalSelectFields();
+
+			//base fields
+			foreach ($exist as $key => $title)
+			{
+				if (mb_strpos($key, 'UF_') === 0)
+				{
+					$ufExist = true;
+				}
+				else
+				{
+					$additional[$key] = array(
+						'title' => HtmlFilter::encode($title),
+						'type' => 'string',
+						'code' => $key
+					);
+				}
+			}
+
+			//user fields
+			if ($ufExist)
+			{
+				$enumerations = [];
+				$userFields = $this->getUserFields();
+				foreach ($userFields as $row)
+				{
+					if (isset($exist[$row['FIELD_NAME']]))
+					{
+						$additional[$row['FIELD_NAME']] = [
+							'title' => HtmlFilter::encode($row['EDIT_FORM_LABEL']),
+							'new' => (!in_array($row['FIELD_NAME'], $exist) ? 1 : 0),
+							'type' => $row['USER_TYPE_ID'],
+							'code' => $row['FIELD_NAME'],
+							'settings' => $row['SETTINGS'],
+							'enumerations' => [],
+						];
+						if ($row['USER_TYPE_ID'] === 'enumeration')
+						{
+							$enumerations[$row['ID']] = $row['FIELD_NAME'];
+						}
+					}
+				}
+
+				if (!empty($enumerations))
+				{
+					$enumUF = new \CUserFieldEnum;
+					$resEnum = $enumUF->getList(
+						[],
+						['USER_FIELD_ID' => array_keys($enumerations)]
+					);
+					while ($rowEnum = $resEnum->fetch())
+					{
+						$additional[$enumerations[$rowEnum['USER_FIELD_ID']]]['enumerations'][$rowEnum['ID']] = $rowEnum['VALUE'];
+					}
+				}
+			}
+		}
+
+		return $additional;
+	}
+
+	/**
+	 * @return array
+	 */
+	public static function getPathMarkers(): array
+	{
+		return static::PATH_MARKERS;
 	}
 }

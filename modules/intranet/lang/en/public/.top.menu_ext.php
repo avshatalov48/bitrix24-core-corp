@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["MENU_RPA_SECTION"] = "Robotic Process Automation (RPA)";
 $MESS["MENU_SALESCENTER_SECTION"] = "Sales Center";
 $MESS["TOP_MENU_ABOUT"] = "Company";
@@ -13,13 +13,16 @@ $MESS["TOP_MENU_CRM"] = "CRM";
 $MESS["TOP_MENU_CRM_ANALYTICS"] = "CRM Analytics";
 $MESS["TOP_MENU_CRM_TRACKING"] = "Sales Intelligence";
 $MESS["TOP_MENU_DEPARTMENTS"] = "Departments";
+$MESS["TOP_MENU_DEVOPS"] = "Developer resources";
 $MESS["TOP_MENU_DISK"] = "Drive";
 $MESS["TOP_MENU_FAVORITE"] = "My Workspace";
 $MESS["TOP_MENU_GROUPS"] = "Workgroups";
 $MESS["TOP_MENU_GROUPS_EXTRANET"] = "Extranet Workgroups";
+$MESS["TOP_MENU_IM_CONFERENCE"] = "Video Conferencing";
 $MESS["TOP_MENU_IM_MESSENGER"] = "Chat and Calls";
 $MESS["TOP_MENU_KNOWLEDGE"] = "Knowledge base";
 $MESS["TOP_MENU_LIVE_FEED"] = "Activity Stream";
+$MESS["TOP_MENU_LIVE_FEED2"] = "Feed";
 $MESS["TOP_MENU_MAIL"] = "Mail";
 $MESS["TOP_MENU_MARKETING"] = "CRM Marketing";
 $MESS["TOP_MENU_MARKETPLACE"] = "Applications";
@@ -32,5 +35,3 @@ $MESS["TOP_MENU_SITES"] = "Sites";
 $MESS["TOP_MENU_TASKS"] = "Tasks and Projects";
 $MESS["TOP_MENU_TELEPHONY"] = "Telephony";
 $MESS["TOP_MENU_TIMEMAN"] = "Time and Reports";
-$MESS["TOP_MENU_DEVOPS"] = "Developer resources";
-?>

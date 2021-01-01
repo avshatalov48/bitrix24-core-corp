@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_COLUMN_ACCOUNT_NUMBER"] = "Order number";
 $MESS["CRM_COLUMN_ACTIVITY"] = "Activities";
 $MESS["CRM_COLUMN_ACTIVITY_COUNTER_V2"] = "Activities";
@@ -58,6 +58,7 @@ $MESS["CRM_COLUMN_SUM"] = "Amount/Currency";
 $MESS["CRM_COLUMN_SUM_PAID"] = "Amount paid";
 $MESS["CRM_COLUMN_TAX_VALUE"] = "Tax";
 $MESS["CRM_COLUMN_USER_ID"] = "Customer";
+$MESS["CRM_ERR_URL_BUILDER_ABSENT"] = "Link builder was not found.";
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "The CRM module is not installed.";
 $MESS["CRM_MODULE_NOT_INSTALLED_CATALOG"] = "The Commercial Catalog module is not installed.";
 $MESS["CRM_MODULE_NOT_INSTALLED_CURRENCY"] = "The Currency module is not installed.";
@@ -72,4 +73,3 @@ $MESS["CRM_PRESET_MY"] = "My orders";
 $MESS["CRM_PRESET_WON"] = "Completed";
 $MESS["CRM_TASK_TAG"] = "crm";
 $MESS["CRM_TASK_TITLE_PREFIX"] = "CRM: ";
-?>

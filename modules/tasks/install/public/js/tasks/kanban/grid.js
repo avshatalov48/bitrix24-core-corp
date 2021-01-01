@@ -257,7 +257,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 		)
 		{
 			// for realtime mode we try to find place by actual date
-			if (this.isRealtimeMode() && !data.targetId && columnItems.length > 0)
+			if (this.isRealtimeMode() && columnItems.length > 0)
 			{
 				if (typeof data.data["date_activity_ts"] !== "undefined")
 				{
@@ -279,7 +279,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 				}
 			}
 			// get first item in column
-			else if (!data.targetId && columnItems.length > 0)
+			else if (columnItems.length > 0)
 			{
 				data.targetId = columnItems[0].getId();
 				if (data.targetId === data.id && columnItems[1])
@@ -295,11 +295,16 @@ BX.Tasks.Kanban.Grid.prototype = {
 				&& !columnOne.getDraftItem()
 			)
 			{
-				this.removeItem(data.id);
-				//this.updateItem(data.id, data, true);
+				this.updateItem(data.id, data, true);
+				if (data.targetId)
+				{
+					this.moveItem(data.id, data.columnId, data.targetId);
+				}
 			}
-
-			this.addItem(data);
+			else
+			{
+				this.addItem(data);
+			}
 		}
 		// new task - in bottom (only if not exist next page)
 		else if (columnOne && columnItems.length >= columnOne.total)

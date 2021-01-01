@@ -1,4 +1,4 @@
 <?
 return [
-	"version" => "1.0.57"
+	"version" => "1.0.58"
 ];

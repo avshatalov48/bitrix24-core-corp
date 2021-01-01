@@ -28,7 +28,6 @@ BX.Bitrix24.LeftMenu = {
 		this.topMenuSelectedNode = null;
 		this.topItemSelectedObj = null;
 		this.isPublicConverted = params.isPublicConverted === "Y";
-		this.spotlightId = BX.type.isNotEmptyString(params.spotlightId) ? params.spotlightId : null;
 		this.lastScrollOffset = 0;
 
 		this.logoMaskNeeded = null;
@@ -741,15 +740,30 @@ BX.Bitrix24.LeftMenu = {
 		});
 
 		//custom preset
-		if (this.isCustomPresetAvailable && this.isAdmin)
+		if (this.isAdmin)
 		{
+			var itemText = BX.message("MENU_SAVE_CUSTOM_PRESET");
+			var showLock = !this.isCustomPresetAvailable;
+
+			if (showLock)
+			{
+				itemText+= "<span class='menu-lock-icon'></span>";
+			}
+
 			menuItems.push({
-				text: BX.message("MENU_SAVE_CUSTOM_PRESET"),
-				className: "menu-popup-no-icon",
+				text: itemText,
+				className: "menu-popup-no-icon" + (showLock ? ' menu-popup-disable-text' : ''),
 				onclick: function ()
 				{
 					this.popupWindow.close();
-					self.showCustomPresetPopup();
+					if (showLock)
+					{
+						BX.UI.InfoHelper.show('limit_office_menu_to_all');
+					}
+					else
+					{
+						self.showCustomPresetPopup();
+					}
 				}
 			});
 		}
@@ -2538,41 +2552,6 @@ BX.Bitrix24.LeftMenu = {
 		}*/
 	},
 
-	//Temporary method
-	adjustSpotlight: function(show)
-	{
-		if (this.spotlightId === null)
-		{
-			return;
-		}
-
-		var manager = BX.getClass("BX.SpotLight.Manager");
-		if (manager === null)
-		{
-			return;
-		}
-
-		var spotlight = manager.get(this.spotlightId);
-		if (spotlight)
-		{
-			if (show)
-			{
-				spotlight.show();
-			}
-			else
-			{
-				spotlight.close();
-			}
-
-		}
-	},
-
-	//Temporary method
-	handleSpotlightMouseEnter: function()
-	{
-		BX.Bitrix24.LeftMenu.spotlightId = null;
-	},
-
 	handleBurgerClick: function(open)
 	{
 		this.menuHeaderBurger.classList.add("menu-switcher-hover");
@@ -2896,8 +2875,6 @@ BX.Bitrix24.LeftMenu = {
 		{
 			if (this.isScrollMode === true)
 			{
-				this.adjustSpotlight(true); //temporary
-
 				BX.removeClass(this.mainTable, "menu-scroll-mode");
 				this.isScrollMode = false;
 			}
@@ -2906,8 +2883,6 @@ BX.Bitrix24.LeftMenu = {
 		{
 			if (this.isScrollMode === false)
 			{
-				this.adjustSpotlight(false); //temporary
-
 				BX.addClass(this.mainTable, "menu-scroll-mode");
 				this.isScrollMode = true;
 			}
@@ -3034,7 +3009,13 @@ BX.Bitrix24.LeftMenu = {
 
 		var licenseContainer = leftColumn.querySelector('.menu-license-all-container');
 		var licenseBtn = leftColumn.querySelector('.menu-license-all-default');
+
+		if (licenseBtn) {
+			var licenseHeight = licenseBtn.offsetHeight;
+		}
+
 		var licenseCollapsedBtn = leftColumn.querySelector('.menu-license-all-collapsed');
+
 		var menuTextDivider = leftColumn.querySelector('.menu-item-separator');
 		var menuMoreCounter = leftColumn.querySelector('.menu-item-index-more');
 
@@ -3049,6 +3030,7 @@ BX.Bitrix24.LeftMenu = {
 				translateText: isOpen ? 0 : -100,
 				translateMoreBtn: isOpen ? 0 : -84,
 				translateLicenseBtn: isOpen ? 0 : -100,
+				heightLicenseBtn: isOpen ? licenseHeight : 40,
 				burgerMenuWidth: isOpen ? 33 : 66,
 				sidebarWidth: isOpen ? 240 : 66, /* these values are duplicated in style.css as well */
 				opacity: isOpen ? 100 : 0,
@@ -3059,6 +3041,7 @@ BX.Bitrix24.LeftMenu = {
 				translateText: isOpen ? -100 : -18,
 				translateMoreBtn: isOpen ? -84 : 0,
 				translateLicenseBtn: isOpen ? -100 : 0,
+				heightLicenseBtn: isOpen ? 40 : licenseHeight,
 				burgerMenuWidth: isOpen ? 66 : 33,
 				sidebarWidth: isOpen ? 66 : 240,
 				opacity: isOpen ? 0 : 100,
@@ -3127,6 +3110,7 @@ BX.Bitrix24.LeftMenu = {
 					{
 						licenseBtn.style.transform = "translateX(" + state.translateLicenseBtn + "px)";
 						licenseBtn.style.opacity = state.opacity / 100;
+						licenseBtn.style.height = state.heightLicenseBtn + "px";
 
 						licenseCollapsedBtn.style.transform = "translateX(" + state.translateIcon + "px)";
 						licenseCollapsedBtn.style.opacity = state.opacityRevert / 100;
@@ -3200,13 +3184,14 @@ BX.Bitrix24.LeftMenu = {
 					{
 						licenseBtn.style.transform = "translateX(" + state.translateLicenseBtn + "px)";
 						licenseBtn.style.opacity = state.opacity / 100;
+						licenseBtn.style.height = state.heightLicenseBtn + "px";
 
 						licenseCollapsedBtn.style.transform = "translateX(" + state.translateIcon + "px)";
 						licenseCollapsedBtn.style.opacity = state.opacityRevert / 100;
 					}
 
 					menuLinks.forEach(function(item) {
-						var menuIcon = item.querySelector(".menu-item-icon-box");;
+						var menuIcon = item.querySelector(".menu-item-icon-box");
 						var menuLinkText = item.querySelector(".menu-item-link-text");
 						var menuCounter = item.querySelector(".menu-item-index");
 

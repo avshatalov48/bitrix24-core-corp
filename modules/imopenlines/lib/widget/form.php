@@ -299,6 +299,16 @@ class Form
 				}
 				else if ($type == self::FORM_HISTORY)
 				{
+					//TODO: fix 0134384
+					if(
+						isset($fields['EMAIL']) &&
+						$user->getEmail() &&
+						!Tools\Email::isSame($user->getEmail(), $fields['EMAIL'])
+					)
+					{
+						return $result;
+					}
+
 					$userUpdate = Array();
 					if (isset($fields['EMAIL']) && Tools\Email::validate($fields['EMAIL']) && !$user->getEmail())
 					{

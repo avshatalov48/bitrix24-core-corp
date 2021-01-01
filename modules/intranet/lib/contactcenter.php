@@ -2,11 +2,15 @@
 namespace Bitrix\Intranet;
 
 
+use Bitrix\ImOpenLines\Common;
+use Bitrix\ImOpenlines\Security\Helper;
+use Bitrix\ImOpenlines\Security\Permissions;
 use Bitrix\Main\Application;
 use \Bitrix\Main\Error;
 use \Bitrix\Main\Loader;
 use \Bitrix\Main\Result;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 use \Bitrix\Main\Web\Uri;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Config\Option;
@@ -196,16 +200,24 @@ class ContactCenter
 					if(Limits::canRentMultiple() && $permissions->canModifyLines())
 					{
 						Extension::load(["voximplant.numberrent"]);
+						$canManageTelephony = (
+							!method_exists(\Bitrix\Voximplant\Limits::class,"canManageTelephony")
+							|| Limits::canManageTelephony()
+						);
 						$itemsList["voximplant_rent5"] = array(
 							"NAME" => Loc::getMessage("CONTACT_CENTER_RENT_5_NUMBERS"),
-							"ONCLICK" => "BX.Voximplant.NumberRent.create({packetSize: 5}).show();",
+							$canManageTelephony ?
+								"BX.Voximplant.NumberRent.create({packetSize: 5}).show();"
+								: "BX.Voximplant.openLimitSlider('limit_contact_center_telephony_number_rent');",
 							"SELECTED" => \CVoxImplantPhone::hasRentedNumberPacket(5),
 							"LOGO_CLASS" => "ui-icon ui-icon-package-numbers-five"
 
 						);
 						$itemsList["voximplant_rent10"] = array(
 							"NAME" => Loc::getMessage("CONTACT_CENTER_RENT_10_NUMBERS"),
-							"ONCLICK" => "BX.Voximplant.NumberRent.create({packetSize: 10}).show();",
+							"ONCLICK" => $canManageTelephony ?
+								"BX.Voximplant.NumberRent.create({packetSize: 10}).show();"
+								: "BX.Voximplant.openLimitSlider('limit_contact_center_telephony_number_rent');",
 							"SELECTED" => \CVoxImplantPhone::hasRentedNumberPacket(10),
 							"LOGO_CLASS" => "ui-icon ui-icon-package-numbers-ten"
 						);
@@ -308,10 +320,11 @@ class ContactCenter
 			//For whole list of botframework instances use getListConnector()
 			$connectors = \Bitrix\ImConnector\Connector::getListConnectorMenu(true);
 			$statusList = \Bitrix\ImConnector\Status::getInstanceAll();
-			$linkTemplate = \Bitrix\ImOpenLines\Common::getPublicFolder() . "connector/";
+			$linkTemplate = Common::getPublicFolder() . "connector/";
 			$codeMap = \Bitrix\ImConnector\Connector::getIconClassMap();
 			$cisOnlyConnectors = array("vkgroup", "vkgrouporder", "yandex");
 			$cisCheck = $this->cisCheck() && $filter["CHECK_REGION"] !== "N";
+			$configList = $this->getImopenlinesConfigList();
 
 			foreach ($connectors as $code => $connector)
 			{
@@ -367,11 +380,23 @@ class ContactCenter
 				{
 					$itemsList[$code] = array(
 						"NAME" => $connector["name"],
-						"LINK" => !empty($connector["link"]) ? $connector["link"] : \CUtil::JSEscape( $linkTemplate . "?ID=" . $code),
 						"SELECTED" => $selected,
 						"CONNECTION_INFO_HELPER_LIMIT" => $connectionInfoHelperLimit,
 						"LOGO_CLASS" => "ui-icon ui-icon-service-" . $codeMap[$code]
 					);
+
+					if (empty($connector["link"]))
+					{
+						$itemsList[$code]["LINK"] = \CUtil::JSEscape( $linkTemplate . "?ID=" . $code);
+					}
+					else
+					{
+						$itemsList[$code]["LIST"] =  $this->getConnectorListItem($code, $configList, $statusList);
+						if (empty($itemsList[$code]["LIST"]))
+						{
+							$itemsList[$code]["LINK"] = \CUtil::JSEscape( $linkTemplate . "?ID=" . $code);
+						}
+					}
 
 					if ($code == "vkgroup")
 					{
@@ -396,6 +421,62 @@ class ContactCenter
 		}
 
 		$result->setData($itemsList);
+
+		return $result;
+	}
+
+	private function getImopenlinesConfigList(): array
+	{
+		if (!Loader::includeModule("imopenlines"))
+		{
+			return [];
+		}
+		$userPermissions = Permissions::createWithCurrentUser();
+
+		$allowedUserIds = Helper::getAllowedUserIds(
+			Helper::getCurrentUserId(),
+			$userPermissions->getPermission(Permissions::ENTITY_CONNECTORS, Permissions::ACTION_MODIFY)
+		);
+
+		$limit = null;
+		if (is_array($allowedUserIds))
+		{
+			$limit = array();
+			$orm = \Bitrix\ImOpenlines\Model\QueueTable::getList(Array(
+				'filter' => Array(
+					'=USER_ID' => $allowedUserIds
+				)
+			));
+			while ($row = $orm->fetch())
+			{
+				$limit[$row['CONFIG_ID']] = $row['CONFIG_ID'];
+			}
+		}
+
+		$configManager = new \Bitrix\ImOpenLines\Config();
+		$result = $configManager->getList([
+			'select' => [
+				'ID',
+				'NAME' => 'LINE_NAME',
+				'IS_ACTIVE' => 'ACTIVE',
+				'MODIFY_USER_ID'
+			],
+			'filter' => ['=TEMPORARY' => 'N'],
+			'order' => ['LINE_NAME']
+		]);
+		foreach ($result as $id => $config)
+		{
+			if (!is_null($limit))
+			{
+				if (!isset($limit[$config['ID']]) && !in_array($config['MODIFY_USER_ID'], $allowedUserIds, true))
+				{
+					unset($result[$id]);
+					continue;
+				}
+			}
+
+			$result[$id] = $config;
+		}
 
 		return $result;
 	}
@@ -711,6 +792,91 @@ class ContactCenter
 		}
 
 		return $marketplaceInstalledApps;
+	}
+
+	private function getConnectorListItem(string $connectorCode, array $configList, array $statusList): array
+	{
+		if (!Loader::includeModule("imconnector") || !Loader::includeModule("imopenlines"))
+		{
+			return [];
+		}
+
+		$openLineSliderPath = Common::getPublicFolder() . "connector/?ID={$connectorCode}&LINE=#LINE#&action-line=create";
+		$infoConnectors = \Bitrix\ImConnector\InfoConnectors::getInfoConnectorsList();
+
+		if (count($configList) > 0)
+		{
+			foreach ($configList as &$configItem)
+			{
+				//getting status if connector is connected for the open line
+				$status = $statusList[$connectorCode][$configItem["ID"]];
+				if (!empty($status) && ($status instanceof \Bitrix\ImConnector\Status) && $status->isStatus())
+				{
+					$configItem["STATUS"] = 1;
+				}
+				else
+				{
+					$configItem["STATUS"] = 0;
+				}
+
+				//getting connected channel name
+				$channelInfo = $infoConnectors[$configItem["ID"]];
+				try
+				{
+					$channelData = JSON::decode($channelInfo['DATA']);
+					$channelName = trim($channelData[$connectorCode]['name']);
+				}
+				catch (\Exception $exception)
+				{
+					$channelName = '';
+				}
+
+				$configItem["NAME"] = htmlspecialcharsbx($configItem["NAME"]);
+				if (!empty($channelName))
+				{
+					$channelName = htmlspecialcharsbx($channelName);
+					$configItem["NAME"] .= " ({$channelName})";
+				}
+				elseif ($configItem["STATUS"] === 1)
+				{
+					$connectedMessage = Loc::getMessage("CONTACT_CENTER_IMOPENLINES_CONNECTED_CONNECTOR");
+					$configItem["NAME"] .= " ({$connectedMessage})";
+				}
+
+				$itemPath = str_replace('#LINE#', $configItem["ID"], $openLineSliderPath);
+				$configItem["ONCLICK"] = "BX.SidePanel.Instance.open('".$itemPath."', {width: 700})";
+
+			}
+			unset($configItem);
+
+			//configured open lines are higher than not configured
+			usort($configList, static function($first, $second){
+				return ($second['STATUS'] - $first['STATUS']);
+			});
+
+			//delimiter between configured open lines and not configured
+			foreach ($configList as $key => $configItem)
+			{
+				if ($configItem['STATUS'] === 0)
+				{
+					$configList[$key]['DELIMITER_BEFORE'] = true;
+					break;
+				}
+			}
+
+			$userPermissions = Permissions::createWithCurrentUser();
+			if ($userPermissions->canPerform(Permissions::ENTITY_LINES, Permissions::ACTION_MODIFY))
+			{
+				$configList[] = [
+					"NAME" => Loc::getMessage("CONTACT_CENTER_IMOPENLINES_CREATE_OPEN_LINE"),
+					"ID" => 0,
+					'DELIMITER_BEFORE' => true,
+					"ONCLICK" => "BX.OpenLinesConfigEdit.createLineAction('{$openLineSliderPath}', true);",
+				];
+			}
+		}
+
+		return $configList;
 	}
 
 	/**

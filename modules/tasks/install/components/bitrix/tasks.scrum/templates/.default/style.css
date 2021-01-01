@@ -180,6 +180,16 @@
 }
 
 .tasks-scrum-actions-complete-sprint {
+	padding-left: 10px;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	white-space: nowrap;
+	margin-left: auto;
+}
+
+.tasks-scrum-team-speed-button-container {
+	padding-left: 10px;
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
@@ -199,6 +209,32 @@
 	text-decoration: none;
 	font-size: 13px;
 	font-weight: bold;
+}
+
+.tasks-scrum-project-side-panel {
+	padding: 0 20px;
+	color: #333;
+	font-family: "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	margin-bottom: 20px;
+}
+
+.tasks-scrum-project-side-panel-header {
+	padding-left: 5px;
+	margin: 20px 0 23px;
+}
+
+.tasks-scrum-project-side-panel-header-title {
+	font: 24px/30px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.tasks-scrum-project-side-panel-chart {
+	padding: 15px 0 0 0;
+	background: white;
+	height: 600px;
+}
+
+.tasks-scrum-project-dod-options {
+	margin-top: 15px;
 }
 .tasks-scrum-sprint-dragndrop {
 	width: 18px;
@@ -768,6 +804,11 @@ input.tasks-scrum-sprint-header-name { border-bottom: 1px solid rgba(51, 51, 51,
 	padding: 10px 0 1px 17px;
 }
 
+.tasks-scrum-sprint-sidepanel-chart {
+	padding: 15px 0 0 0;
+	background: white;
+	height: 600px;
+}
 .tasks-scrum-item {
 	margin: 10px 0 0;
 	padding: 8px 0 4px 17px;
@@ -1081,6 +1122,49 @@ input.tasks-scrum-sprint-header-name { border-bottom: 1px solid rgba(51, 51, 51,
 
 .tasks-scrum-backlog-items.tasks-scrum-backlog-items-group-mode {
 	padding: 0 0 10px 16px;
+}
+.tasks-scrum-entity-title-btn {
+	height: 20px;
+}
+
+.tasks-scrum-entity-title-btn-dod {
+	padding-left: 10px;
+}
+
+.tasks-scrum-entity-title-btn-dod .tasks-scrum-entity-dod-icon {
+	background: url(images/dod.svg) no-repeat 0 center;
+	width: 20px;
+	height: 20px;
+	display: inline-block;
+	vertical-align: middle;
+	cursor: pointer;
+}
+
+.tasks-scrum-entity-title-btn-task .tasks-scrum-entity-tasks-icon {
+	background: url(images/number-task.svg) no-repeat 0 center;
+	width: 13px;
+	height: 20px;
+	display: inline-block;
+	vertical-align: top;
+}
+
+.tasks-scrum-entity-title-btn-burn-down-chart .tasks-scrum-entity-burn-down-chart-icon {
+	background: url(images/burn-down-chart.svg) no-repeat 0 center;
+	width: 23px;
+	height: 21px;
+	display: inline-block;
+	vertical-align: top;
+	cursor: pointer;
+}
+
+.tasks-scrum-entity-tasks-title {
+	font: 13px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: rgba(82, 92, 105, 0.9);
+	letter-spacing: 0;
+	text-align: center;
+	padding: 0 12px 0 0;
+	font-size: 14px;
+	color: #525c69;
 }
 .tasks-scrum-epic-form { padding: 0 12px 0 20px; }
 

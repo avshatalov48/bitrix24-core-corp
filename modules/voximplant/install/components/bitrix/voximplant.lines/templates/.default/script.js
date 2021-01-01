@@ -5,8 +5,10 @@
 	var gridId = "voximplant_lines_list";
 
 	BX.Voximplant.Lines = {
-		init: function()
+		init: function(config)
 		{
+			this.isTelephonyAvailable = config.isTelephonyAvailable === 'Y';
+
 			BX.bind(BX("add-group"), "click", this.addGroup.bind(this));
 		},
 

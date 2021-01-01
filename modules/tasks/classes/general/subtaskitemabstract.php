@@ -62,11 +62,10 @@ abstract class CTaskSubItemAbstract
 	{
 		if ($this->cachedData === null)
 		{
-			// Ensure that we have read access for task
-			$this->oTaskItem->getData();
-
 			try
 			{
+				// Ensure that we have read access for task
+				$this->oTaskItem->getData();
 				$this->cachedData = static::fetchDataFromDb($this->taskId, $this->itemId);
 			}
 			catch (Exception $e)
@@ -112,13 +111,10 @@ abstract class CTaskSubItemAbstract
 		$arItems = array();
 		CTaskAssert::assert($oTaskItem instanceof CTaskItemInterface);
 
-		$taskId = (int) $oTaskItem->getId();
-
-		// Ensure that we have read access for task
-		$taskData = $oTaskItem->getData();
-
 		try
 		{
+			// Ensure that we have read access for task
+			$taskData = $oTaskItem->getData();
 			list($arItemsData, $rsData) = static::fetchListFromDb($taskData, $arOrder, $arFilter);
 		}
 		catch (Exception $e)

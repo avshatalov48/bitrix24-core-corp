@@ -540,7 +540,6 @@ class Effective
 			)
 			->where('CLOSED_DATE', NULL)
 			->where('DEADLINE', '<', Deadline::getExpiredTime())
-			->where('ZOMBIE', 'N')
 			->where('STATUS', '<', \CTasks::STATE_SUPPOSEDLY_COMPLETED)
 			->where(($groupId? Query::filter()->where('GROUP_ID', $groupId) : []));
 
@@ -592,7 +591,6 @@ class Effective
 							->where('RESPONSIBLE_ID', '<>', $userId)
 					)
 			)
-			->where('ZOMBIE', 'N')
 			->where(
 				Query::filter()
 					->logic('or')

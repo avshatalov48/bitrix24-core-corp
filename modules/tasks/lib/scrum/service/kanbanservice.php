@@ -15,6 +15,8 @@ class KanbanService implements Errorable
 	const ERROR_COULD_NOT_REMOVE_TASK = 'TASKS_KS_02';
 	const ERROR_COULD_NOT_GET_TASKS = 'TASKS_KS_03';
 	const ERROR_COULD_NOT_GET_STAGES = 'TASKS_KS_04';
+	const ERROR_COULD_NOT_ADD_ONE_TASK = 'TASKS_KS_05';
+	const ERROR_COULD_NOT_GET_FINISH_STAGE = 'TASKS_KS_06';
 
 	private $errorCollection;
 
@@ -68,6 +70,28 @@ class KanbanService implements Errorable
 	public function getFinishStatus(): string
 	{
 		return StagesTable::SYS_TYPE_FINISH;
+	}
+
+	public function addTaskToFinishStatus(int $sprintId, int $taskId): void
+	{
+		try
+		{
+			StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
+
+			$finishStageId = $this->getFinishStageId($sprintId);
+
+			if ($finishStageId)
+			{
+				TaskStageTable::add([
+					'TASK_ID' => $taskId,
+					'STAGE_ID' => $finishStageId
+				]);
+			}
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_ADD_ONE_TASK));
+		}
 	}
 
 	/**
@@ -281,5 +305,32 @@ class KanbanService implements Errorable
 		}
 
 		return $stages;
+	}
+
+	private function getFinishStageId(int $sprintId): int
+	{
+		try
+		{
+			$stageId = 0;
+
+			$stages = StagesTable::getStages($sprintId, true);
+			foreach ($stages as $stage)
+			{
+				if ($stage['SYSTEM_TYPE'] == $this->getFinishStatus())
+				{
+					$stageId = (int) $stage['ID'];
+				}
+			}
+
+			return $stageId;
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_GET_FINISH_STAGE)
+			);
+		}
+
+		return 0;
 	}
 }

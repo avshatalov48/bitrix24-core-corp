@@ -238,7 +238,15 @@ JS
 			"attrs" => [
 				"onclick" =>
 <<<JS
-					var inviteParams = BX.componentParameters.get("invite");
+					var inviteParams = {};
+					try
+					{
+						inviteParams = JSON.parse(Application.sharedStorage('menuComponentSettings').get("invite"));
+					}
+					catch (e)
+					{
+						//do nothing
+					}
 
 					PageManager.openComponent(
 					"JSComponentList", 
@@ -411,7 +419,7 @@ if (CModule::IncludeModule("rest"))
 	if (count($arMenuApps) > 0)
 	{
 		$menuStructure[] = [
-			"title" => Loc::getMessage("MB_MARKETPLACE_GROUP_TITLE"),
+			"title" => Loc::getMessage("MB_MARKETPLACE_GROUP_TITLE_2"),
 			"sort" => 110,
 			"hidden" => CMobile::getInstance()->getApiVersion() <= 15,
 			"items" => $arMenuApps

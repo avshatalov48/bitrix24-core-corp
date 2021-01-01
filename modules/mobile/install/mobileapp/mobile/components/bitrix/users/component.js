@@ -60,6 +60,7 @@
 							PHONE_COUNTRY:[],
 							MESSAGE_TEXT:"",
 							DEPARTMENT_ID:1,
+							CONTEXT: 'mobile'
 						};
 						users.forEach(
 							user =>

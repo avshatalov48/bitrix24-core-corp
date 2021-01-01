@@ -466,13 +466,15 @@ class ItemService implements Errorable
 			foreach($sortInfo as $itemId => $info)
 			{
 				$itemId = (is_numeric($itemId) ? (int) $itemId : 0);
+				$sort = (is_numeric($info['sort']) ? (int) $info['sort'] : 0);
 				if ($itemId)
 				{
 					$itemIds[] = $itemId;
-					$sortWhens[] = 'WHEN ID = '.$itemId.' THEN '.$info['sort'];
-					if (!empty($info['entityId']))
+					$sortWhens[] = 'WHEN ID = '.$itemId.' THEN '.$sort;
+					$entityId = (is_numeric($info['entityId']) ? (int) $info['entityId'] : 0);
+					if ($entityId)
 					{
-						$entityIdWhens[] = 'WHEN ID = '.$itemId.' THEN '.$info['entityId'];
+						$entityIdWhens[] = 'WHEN ID = '.$itemId.' THEN '.$entityId;
 					}
 				}
 			}

@@ -47,8 +47,8 @@ class TaskCreateRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		// tasks disabled for group
 		// the group is archived
 		if (
-			!$group->isTasksEnabled()
-			|| $group->isArchived()
+			!$group['TASKS_ENABLED']
+			|| $group['CLOSED'] === 'Y'
 		)
 		{
 			return false;

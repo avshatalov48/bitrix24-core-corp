@@ -22,7 +22,7 @@ $arComponentVariables = array("group_id", "user_id", "page");
 if ($_REQUEST["auth"]=="Y" && $USER->IsAuthorized())
 	LocalRedirect($APPLICATION->GetCurPageParam("", array("login", "logout", "register", "forgot_password", "change_password", "backurl", "auth")));
 
-if (!array_key_exists("PATH_TO_GROUP", $arParams) || strlen($arParams["PATH_TO_GROUP"]) <= 0)
+if (!array_key_exists("PATH_TO_GROUP", $arParams) || $arParams["PATH_TO_GROUP"] == '')
 	$arParams["PATH_TO_GROUP"] = SITE_DIR."workgroups/group/#group_id#/";
 
 if ($arParams["SEF_MODE"] == "Y")
@@ -46,7 +46,7 @@ if ($arParams["SEF_MODE"] == "Y")
 	CComponentEngine::InitComponentVariables($componentPage, $arComponentVariables, $arVariableAliases, $arVariables);
 
 	foreach ($arUrlTemplates as $url => $value)
-		$arResult["PATH_TO_".strToUpper($url)] = $arParams["SEF_FOLDER"].$value;
+		$arResult["PATH_TO_".mb_strtoupper($url)] = $arParams["SEF_FOLDER"].$value;
 
 	if ($_REQUEST["auth"] == "Y")
 		$componentPage = "auth";
@@ -92,7 +92,7 @@ else
 					"section_id", "element_id", "action", "user_id", "group_id", "action", "use_light_view", "AJAX_CALL",
 					"edit_section", "sessid", "post_id", "category", "topic_id", "result", "MESSAGE_TYPE");
 			$arParamsKill = array_merge($arParamsKill, $arParams["VARIABLE_ALIASES"]);
-			$arResult["PATH_TO_".strToUpper($url)] = $GLOBALS["APPLICATION"]->GetCurPageParam($value, $arParamsKill);
+			$arResult["PATH_TO_".mb_strtoupper($url)] = $GLOBALS["APPLICATION"]->GetCurPageParam($value, $arParamsKill);
 		}
 		if (array_key_exists($arVariables["page"], $arDefaultUrlTemplates404))
 			$componentPage = $arVariables["page"];
@@ -107,9 +107,9 @@ else
 		$componentPage = "auth";
 }
 
-if ($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["skip"]) > 0)
+if ($_SERVER["REQUEST_METHOD"]=="POST" && $_POST["skip"] <> '')
 {
-	if (strpos($arParams["PATH_TO_GROUP"], "#group_id#") !== false && intval($arVariables["group_id"]) > 0)
+	if (mb_strpos($arParams["PATH_TO_GROUP"], "#group_id#") !== false && intval($arVariables["group_id"]) > 0)
 	{
 		$redirect_path = str_replace("#group_id#", intval($arVariables["group_id"]), $arParams["PATH_TO_GROUP"]);
 		LocalRedirect($redirect_path);

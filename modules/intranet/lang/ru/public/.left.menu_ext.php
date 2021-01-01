@@ -1,5 +1,6 @@
 <?
 $MESS["LEFT_MENU_LIVE_FEED"] = "Живая лента";
+$MESS["LEFT_MENU_LIVE_FEED2"] = "Новости";
 $MESS["LEFT_MENU_IM_MESSENGER"] = "Чат и звонки";
 $MESS["LEFT_MENU_TASKS"] = "Задачи и Проекты";
 $MESS["LEFT_MENU_CALENDAR"] = "Календарь";

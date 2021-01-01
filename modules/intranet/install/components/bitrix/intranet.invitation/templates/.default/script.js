@@ -3,7 +3,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 (function (exports,main_core,main_core_events) {
 	'use strict';
 
-	var Submit = /*#__PURE__*/function (_EventEmitter) {
+	var Submit =
+	/*#__PURE__*/
+	function (_EventEmitter) {
 	  babelHelpers.inherits(Submit, _EventEmitter);
 
 	  function Submit(parent) {
@@ -32,7 +34,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      var errorInputData = [];
 	      var items = [];
 	      var phoneExp = /^[\d+][\d\(\)\ -]{4,22}\d$/;
-	      var rows = form.querySelectorAll(".js-form-row");
+	      var rows = Array.prototype.slice.call(form.querySelectorAll(".js-form-row"));
 	      (rows || []).forEach(function (row) {
 	        var emailInput = row.querySelector("input[name='EMAIL[]']");
 	        var phoneInput = row.querySelector("input[name='PHONE[]']");
@@ -357,7 +359,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return Submit;
 	}(main_core_events.EventEmitter);
 
-	var SelfRegister = /*#__PURE__*/function () {
+	var SelfRegister =
+	/*#__PURE__*/
+	function () {
 	  function SelfRegister(parent) {
 	    babelHelpers.classCallCheck(this, SelfRegister);
 	    this.parent = parent;
@@ -486,7 +490,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	  return data;
 	}
-	var Phone = /*#__PURE__*/function () {
+	var Phone =
+	/*#__PURE__*/
+	function () {
 	  function Phone(parent) {
 	    babelHelpers.classCallCheck(this, Phone);
 	    this.parent = parent;
@@ -597,7 +603,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	  return data;
 	}
-	var Row = /*#__PURE__*/function () {
+	var Row =
+	/*#__PURE__*/
+	function () {
 	  function Row(parent, params) {
 	    babelHelpers.classCallCheck(this, Row);
 	    this.parent = parent;
@@ -656,7 +664,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      var _this2 = this;
 
 	      if (this.parent.isInvitationBySmsAvailable && main_core.Type.isDomNode(element)) {
-	        var inputNodes = element.querySelectorAll(".js-email-phone-input");
+	        var inputNodes = Array.prototype.slice.call(element.querySelectorAll(".js-email-phone-input"));
 
 	        if (inputNodes) {
 	          inputNodes.forEach(function (element) {
@@ -672,7 +680,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    value: function bindCloseIcons(container) {
 	      var _this3 = this;
 
-	      var inputNodes = container.querySelectorAll("input");
+	      var inputNodes = Array.prototype.slice.call(container.querySelectorAll("input"));
 	      (inputNodes || []).forEach(function (node) {
 	        var closeIcon = node.nextElementSibling;
 	        main_core.Event.bind(node, 'input', function () {
@@ -748,7 +756,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return Row;
 	}();
 
-	var Form = /*#__PURE__*/function (_EventEmitter) {
+	var Form =
+	/*#__PURE__*/
+	function (_EventEmitter) {
 	  babelHelpers.inherits(Form, _EventEmitter);
 
 	  function Form(formParams) {
@@ -770,8 +780,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    _this.regenerateUrlBase = params.regenerateUrlBase;
 
 	    if (main_core.Type.isDomNode(_this.contentContainer)) {
-	      var blocks = _this.contentContainer.querySelectorAll(".js-intranet-invitation-block");
-
+	      var blocks = Array.prototype.slice.call(_this.contentContainer.querySelectorAll(".js-intranet-invitation-block"));
 	      (blocks || []).forEach(function (block) {
 	        var blockType = block.getAttribute("data-role");
 	        blockType = blockType.replace("-block", "");
@@ -785,7 +794,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    _this.button = document.querySelector("#intranet-invitation-btn");
 
 	    if (main_core.Type.isDomNode(_this.menuContainer)) {
-	      _this.menuItems = _this.menuContainer.querySelectorAll("a");
+	      _this.menuItems = Array.prototype.slice.call(_this.menuContainer.querySelectorAll("a"));
 	      (_this.menuItems || []).forEach(function (item) {
 	        main_core.Event.bind(item, 'click', function () {
 	          _this.changeContent(item.getAttribute('data-action'));

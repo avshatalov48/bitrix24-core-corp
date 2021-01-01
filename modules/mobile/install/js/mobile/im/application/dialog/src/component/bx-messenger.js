@@ -288,7 +288,9 @@ Vue.component('bx-mobile-im-component-dialog',
 		},
 		onDialogMessageClickByChatTeaser(event)
 		{
-			this.$root.$bitrixApplication.execMessageOpenChatTeaser(event);
+			this.$root.$bitrixController.application.joinParentChat(event.message.id, 'chat'+event.message.params.CHAT_ID).then((dialogId) => {
+				this.$root.$bitrixApplication.openDialog(dialogId);
+			}).catch(() => {});
 		},
 		onDialogClick(event)
 		{

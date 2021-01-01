@@ -4,6 +4,7 @@ import * as EmailField from './email/controller';
 import * as PhoneField from './phone/controller';
 import * as IntegerField from './integer/controller';
 import * as DoubleField from './double/controller';
+import * as MoneyField from './money/controller';
 import * as TextField from './text/controller';
 import * as BoolField from './bool/controller';
 import * as RadioField from './radio/controller';
@@ -29,6 +30,7 @@ let controllers = [
 	EmailField.Controller,
 	IntegerField.Controller,
 	DoubleField.Controller,
+	MoneyField.Controller,
 	TextField.Controller,
 	BoolField.Controller,
 	RadioField.Controller,

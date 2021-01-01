@@ -1,13 +1,16 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-use Bitrix\Location\Service\FormatService;
-use Bitrix\Location\Service\SourceService;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
+use Bitrix\Crm\Attribute\FieldAttributeManager;
+use Bitrix\Crm\Attribute\FieldAttributeType;
+use Bitrix\Crm\Attribute\FieldAttributePhaseGroupType;
+use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\Format\ContactAddressFormatter;
 use Bitrix\Crm\Format\AddressSeparator;
+use Bitrix\Crm\Tracking;
 
 if(!Main\Loader::includeModule('crm'))
 {
@@ -40,9 +43,13 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 	/** @var int */
 	private $entityID = 0;
 	/** @var array|null */
+	private $entityFieldInfos = null;
+	/** @var array|null */
 	private $entityData = null;
 	/** @var array|null */
 	private $entityDataScheme = null;
+	/** @var array|null */
+	private $entityFieldAttributeConfig = null;
 	/** @var array|null */
 	private $multiFieldInfos = null;
 	/** @var array|null */
@@ -61,8 +68,12 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 	private $enableOutmodedFields;
 	/** @var array|null */
 	private $defaultFieldValues = null;
+	/** @var array|null */
+	private $types = null;
 	/** @var bool */
 	private $enableSearchHistory = true;
+	/** @var array */
+	private $defaultEntityData = [];
 
 	public function __construct($component = null)
 	{
@@ -334,6 +345,14 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 
 		//region Fields
 		$this->prepareFieldInfos();
+
+		$this->prepareEntityFieldAttributes();
+
+		$this->arResult['ENTITY_FIELDS'] = $this->entityFieldInfos;
+		$this->arResult['ENTITY_ATTRIBUTE_SCOPE'] = FieldAttributeManager::resolveEntityScope(
+			CCrmOwnerType::Contact,
+			$this->entityID
+		);
 		//endregion
 
 		//region Config
@@ -747,26 +766,32 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 			return $this->arResult['ENTITY_VALIDATORS'];
 		}
 
-		$this->arResult['ENTITY_VALIDATORS'] = array(
-			array(
+		$this->arResult['ENTITY_VALIDATORS'] = [
+			/*[
 				'type' => 'person',
 				'message' => Loc::getMessage('CRM_CONTACT_PERSON_VALIDATOR_MESSAGE'),
-				'data' => array(
+				'data' => [
 					'nameField' => 'NAME',
 					'lastNameField' => 'LAST_NAME'
-				)
-			)
-		);
+				]
+			],*/
+			[
+				'type' => 'trackingSource',
+				'data' => ['fieldName' => Tracking\UI\Details::SourceId]
+			]
+		];
 		return $this->arResult['ENTITY_VALIDATORS'];
 	}
 	public function prepareFieldInfos()
 	{
-		if(isset($this->arResult['ENTITY_FIELDS']))
+		if(isset($this->entityFieldInfos))
 		{
-			return $this->arResult['ENTITY_FIELDS'];
+			return $this->entityFieldInfos;
 		}
 
-		$this->arResult['ENTITY_FIELDS'] = array(
+		$dateFormat = Main\Type\Date::convertFormatToPhp(Main\Application::getInstance()->getContext()->getCulture()->getDateFormat());
+
+		$this->entityFieldInfos = array(
 			array(
 				'name' => 'ID',
 				'title' => Loc::getMessage('CRM_CONTACT_FIELD_ID'),
@@ -779,13 +804,16 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 				'title' => Loc::getMessage('CRM_CONTACT_FIELD_HONORIFIC'),
 				'type' => 'list',
 				'editable' => true,
-				'visibilityPolicy' => 'edit',
-				'data' => array(
+				'data' => [
 					'items'=> \CCrmInstantEditorHelper::PrepareListOptions(
 						CCrmStatus::GetStatusList('HONORIFIC'),
-						array('NOT_SELECTED' => Loc::getMessage('CRM_CONTACT_HONORIFIC_NOT_SELECTED'))
-					)
-				)
+						[
+							'NOT_SELECTED' => Loc::getMessage('CRM_CONTACT_HONORIFIC_NOT_SELECTED'),
+							'NOT_SELECTED_VALUE' => '',
+						]
+					),
+					'defaultValue' => $this->defaultEntityData['HONORIFIC'] ?? null,
+				]
 			),
 			array(
 				'name' => 'LAST_NAME',
@@ -793,7 +821,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 				'type' => 'text',
 				'isHeading' => true,
 				'visibilityPolicy' => 'edit',
-				'requiredConditionally' => true,
+				'placeholders' => array('creation' => \CCrmContact::GetDefaultTitle()),
 				'editable' => true,
 				'data' => array('duplicateControl' => array('groupId' => 'fullName', 'field' => array('id' => 'LAST_NAME')))
 			),
@@ -802,7 +830,6 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 				'title' => Loc::getMessage('CRM_CONTACT_FIELD_NAME'),
 				'type' => 'text',
 				'visibilityPolicy' => 'edit',
-				'requiredConditionally' => true,
 				'editable' => true,
 				'data' => array('duplicateControl' => array('groupId' => 'fullName', 'field' => array('id' => 'NAME')))
 			),
@@ -826,7 +853,11 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 				'title' => Loc::getMessage('CRM_CONTACT_FIELD_BIRTHDATE'),
 				'type' => 'datetime',
 				'editable' => true,
-				'data' =>  array('enableTime' => false)
+				'data' =>  [
+					'enableTime' => false,
+					'defaultValue' => $this->defaultEntityData['BIRTHDATE'] ?? null,
+					'dateViewFormat' => $dateFormat
+				]
 			),
 			array(
 				'name' => 'POST',
@@ -852,7 +883,8 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 					'photoUrl' => 'ASSIGNED_BY_PHOTO_URL',
 					'showUrl' => 'PATH_TO_ASSIGNED_BY_USER',
 					'pathToProfile' => $this->arResult['PATH_TO_USER_PROFILE']
-				)
+				),
+				'enableAttributes' => false
 			),
 			array(
 				'name' => 'OPENED',
@@ -871,14 +903,32 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 				'title' => Loc::getMessage('CRM_CONTACT_FIELD_TYPE_ID'),
 				'type' => 'list',
 				'editable' => true,
-				'data' => array('items'=> \CCrmInstantEditorHelper::PrepareListOptions(CCrmStatus::GetStatusList('CONTACT_TYPE')))
+				'data' => [
+					'items'=> \CCrmInstantEditorHelper::PrepareListOptions(
+						$this->prepareTypeList(),
+						[
+							'NOT_SELECTED' => Loc::getMessage('CRM_CONTACT_SOURCE_NOT_SELECTED'),
+							'NOT_SELECTED_VALUE' => ''
+						]
+					),
+					'defaultValue' => $this->defaultEntityData['TYPE_ID'] ?? null
+				]
 			),
 			array(
 				'name' => 'SOURCE_ID',
 				'title' => Loc::getMessage('CRM_CONTACT_FIELD_SOURCE_ID'),
 				'type' => 'list',
 				'editable' => true,
-				'data' => array('items'=> \CCrmInstantEditorHelper::PrepareListOptions(CCrmStatus::GetStatusList('SOURCE')))
+				'data' => [
+					'items'=> \CCrmInstantEditorHelper::PrepareListOptions(
+						CCrmStatus::GetStatusList('SOURCE'),
+						[
+							'NOT_SELECTED' => Loc::getMessage('CRM_CONTACT_SOURCE_NOT_SELECTED'),
+							'NOT_SELECTED_VALUE' => ''
+						]
+					),
+					'defaultValue' => $this->defaultEntityData['SOURCE_ID'] ?? null
+				]
 			),
 			array(
 				'name' => 'SOURCE_DESCRIPTION',
@@ -932,12 +982,13 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 				'title' => Loc::getMessage('CRM_CONTACT_FIELD_REQUISITES'),
 				'type' => 'requisite',
 				'editable' => true,
-				'data' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact,'requisite')
+				'data' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact,'requisite'),
+                'enableAttributes' => false
 			)
 		);
 
-		\Bitrix\Crm\Tracking\UI\Details::appendEntityFields($this->arResult['ENTITY_FIELDS']);
-		$this->arResult['ENTITY_FIELDS'][] = array(
+		Tracking\UI\Details::appendEntityFields($this->entityFieldInfos);
+		$this->entityFieldInfos[] = array(
 			'name' => 'UTM',
 			'title' => Loc::getMessage('CRM_CONTACT_FIELD_UTM'),
 			'type' => 'custom',
@@ -948,11 +999,12 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 
 		if($this->enableOutmodedFields)
 		{
-			$this->arResult['ENTITY_FIELDS'][] = array(
+			$this->entityFieldInfos[] = array(
 				'name' => 'ADDRESS',
 				'title' => Loc::getMessage('CRM_CONTACT_FIELD_ADDRESS'),
 				'type' => 'address_form',
 				'editable' => true,
+                'enableAttributes' => false,
 				'data' => array(
 					'fields' => array(
 						'ADDRESS' => array('NAME' => 'ADDRESS', 'IS_MULTILINE' => true),
@@ -963,7 +1015,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 						'POSTAL_CODE' => array('NAME' => 'ADDRESS_POSTAL_CODE'),
 						'COUNTRY' => array('NAME' => 'ADDRESS_COUNTRY')
 					),
-					'labels' => \Bitrix\Crm\EntityAddress::getLabels(),
+					'labels' => EntityAddress::getLabels(),
 					'view' => 'ADDRESS_HTML'
 				)
 			);
@@ -971,11 +1023,12 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		elseif (CModule::IncludeModule('location'))
 		{
 
-			$this->arResult['ENTITY_FIELDS'][] = array(
+			$this->entityFieldInfos[] = array(
 				'name' => 'ADDRESS',
 				'title' => Loc::getMessage('CRM_CONTACT_FIELD_ADDRESS'),
 				'type' => 'requisite_address',
 				'editable' => true,
+                'enableAttributes' => false,
 				'virtual' => true,
 				'data' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact,'requisite_address')
 			);
@@ -1005,7 +1058,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 				$data['duplicateControl'] = array('groupId' => 'email');
 			}
 
-			$this->arResult['ENTITY_FIELDS'][] = array(
+			$this->entityFieldInfos[] = array(
 				'name' => $typeName,
 				'title' => $typeInfo['NAME'],
 				'type' => 'multifield',
@@ -1013,12 +1066,12 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 				'data' => $data
 			);
 		}
-		$this->arResult['ENTITY_FIELDS'] = array_merge(
-			$this->arResult['ENTITY_FIELDS'],
+		$this->entityFieldInfos = array_merge(
+			$this->entityFieldInfos,
 			array_values($this->userFieldInfos)
 		);
 
-		return $this->arResult['ENTITY_FIELDS'];
+		return $this->entityFieldInfos;
 	}
 	public function prepareEntityUserFields()
 	{
@@ -1027,6 +1080,20 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 			$this->userFields = $this->userType->GetEntityFields($this->entityID);
 		}
 		return $this->userFields;
+	}
+	public function prepareEntityFieldAttributeConfigs()
+	{
+		if(!$this->entityFieldAttributeConfig)
+		{
+			$this->entityFieldAttributeConfig = FieldAttributeManager::getEntityConfigurations(
+				CCrmOwnerType::Contact,
+				FieldAttributeManager::resolveEntityScope(
+					CCrmOwnerType::Contact,
+					$this->entityID
+				)
+			);
+		}
+		return $this->entityFieldAttributeConfig;
 	}
 	public function prepareEntityUserFieldInfos()
 	{
@@ -1109,6 +1176,249 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 
 		return $this->userFieldInfos;
 	}
+	protected function isFieldHasDefaultValueAttribute(array $fieldsInfo, string $fieldName): bool
+	{
+		return (
+			isset($fieldsInfo[$fieldName]['ATTRIBUTES'])
+			&& in_array(
+				CCrmFieldInfoAttr::HasDefaultValue,
+				$fieldsInfo[$fieldName]['ATTRIBUTES'],
+				true
+			)
+		);
+	}
+	protected function isSetDefaultValueForField(array $fieldsInfo, array $requiredFields, string $fieldName): bool
+	{
+		// if field is not required and has an attribute
+		return (
+			!in_array($fieldName, $requiredFields, true)
+			&& $this->isFieldHasDefaultValueAttribute($fieldsInfo, $fieldName)
+		);
+	}
+	public function prepareEntityFieldAttributes()
+	{
+		if($this->entityFieldInfos === null)
+		{
+			return;
+		}
+
+		$isEntityDataModified = false;
+		$attrConfigs = $this->prepareEntityFieldAttributeConfigs();
+		for($i = 0, $length = count($this->entityFieldInfos); $i < $length; $i++)
+		{
+			$isPhaseDependent = FieldAttributeManager::isPhaseDependent();
+			if (!$isPhaseDependent)
+			{
+				if (!is_array($this->entityFieldInfos[$i]['data']))
+				{
+					$this->entityFieldInfos[$i]['data'] = [];
+				}
+				$this->entityFieldInfos[$i]['data']['isPhaseDependent'] = false;
+			}
+
+			$fieldName = $this->entityFieldInfos[$i]['name'];
+			if(!isset($attrConfigs[$fieldName]))
+			{
+				continue;
+			}
+
+			if(!isset($this->entityFieldInfos[$i]['data']))
+			{
+				$this->entityFieldInfos[$i]['data'] = array();
+			}
+
+			$this->entityFieldInfos[$i]['data']['attrConfigs'] = $attrConfigs[$fieldName];
+
+			if (is_array($attrConfigs[$fieldName]) && !empty($attrConfigs[$fieldName]))
+			{
+				$isRequiredByAttribute = false;
+				$ready = false;
+				$attrConfig = $attrConfigs[$fieldName];
+				foreach ($attrConfig as $item)
+				{
+					if (is_array($item) && isset($item['typeId'])
+						&& $item['typeId'] === FieldAttributeType::REQUIRED)
+					{
+						if ($isPhaseDependent)
+						{
+							if (is_array($item['groups']))
+							{
+								foreach ($item['groups'] as $group)
+								{
+									if (is_array($group) && isset($group['phaseGroupTypeId'])
+										&& $group['phaseGroupTypeId'] === FieldAttributePhaseGroupType::ALL)
+									{
+										$isRequiredByAttribute = true;
+										$ready = true;
+										break;
+									}
+								}
+							}
+						}
+						else
+						{
+							$isRequiredByAttribute = true;
+							$ready = true;
+						}
+						if ($ready)
+						{
+							break;
+						}
+					}
+				}
+				if ($isRequiredByAttribute)
+				{
+					if (!is_array($this->entityFieldInfos[$i]['data']))
+					{
+						$this->entityFieldInfos[$i]['data'] = [];
+					}
+					$this->entityFieldInfos[$i]['data']['isRequiredByAttribute'] = true;
+
+					// This block allows in the component crm.entity.editor to determine the presence of mandatory
+					// standard entity fields with empty values.
+					if (is_array($this->entityData)
+						&& $this->isEntityFieldHasEmpyValue($this->entityFieldInfos[$i]))
+					{
+						if (!is_array($this->entityData['EMPTY_REQUIRED_SYSTEM_FIELD_MAP']))
+						{
+							$this->entityData['EMPTY_REQUIRED_SYSTEM_FIELD_MAP'] = [];
+						}
+						$this->entityData['EMPTY_REQUIRED_SYSTEM_FIELD_MAP'][$fieldName] = true;
+						$isEntityDataModified = true;
+					}
+				}
+			}
+		}
+
+		if ($isEntityDataModified)
+		{
+			$this->arResult['ENTITY_DATA'] = $this->entityData;
+		}
+	}
+	protected function isEntityFieldHasEmpyValue($fieldInfo)
+	{
+		$result = false;
+		$isResultReady = false;
+
+		if (is_array($fieldInfo) && isset($fieldInfo['name'])
+			&& is_string($fieldInfo['name']) && $fieldInfo['name'] !== '')
+		{
+			$fieldName = $fieldInfo['name'];
+			$fieldType = $fieldInfo['type'] ?? '';
+
+			if ($fieldType === 'userField')
+			{
+				$fieldInfo = $fieldInfo['data']['fieldInfo'] ?? [];
+
+				if(isset($fieldInfo['USER_TYPE_ID']) && $fieldInfo['USER_TYPE_ID'] === 'boolean')
+				{
+					$isResultReady = true;
+				}
+			}
+
+			if (!$isResultReady
+				&& isset($this->entityData[$fieldName]['IS_EMPTY'])
+				&& is_array($this->entityData[$fieldName])
+				&& $this->entityData[$fieldName]['IS_EMPTY']
+			)
+			{
+				$result = true;
+				$isResultReady = true;
+			}
+
+			if (!$isResultReady)
+			{
+				$fieldsToCheck = [
+					'HONORIFIC',                         // list
+					'LAST_NAME',                         // text
+					'NAME',                              // text
+					'SECOND_NAME',                       // text
+					'PHOTO',                             // image
+					'BIRTHDATE',                         // datetime
+					'POST',                              // text
+					'PHONE',                             // multifield
+					'EMAIL',                             // multifield
+					'WEB',                               // multifield
+					'IM',                                // multifield
+					'COMPANY',                           // client_light
+					Tracking\UI\Details::SourceId,       // custom
+					'TYPE_ID',                           // list
+					'SOURCE_ID',                         // list
+					'SOURCE_DESCRIPTION',                // text
+					'COMMENTS'                           // html
+				];
+				if (in_array($fieldName, $fieldsToCheck, true))
+				{
+					switch ($fieldType)
+					{
+						case 'text':
+						case 'html':
+						case 'list':
+							if (array_key_exists($fieldName, $this->entityData)
+								&& (!is_string($this->entityData[$fieldName])
+									|| $this->entityData[$fieldName] === ''))
+							{
+								$result = true;
+								$isResultReady = true;
+							}
+							break;
+						case 'image':
+							if (array_key_exists($fieldName, $this->entityData)
+								&& $this->entityData[$fieldName] <= 0)
+							{
+								$result = true;
+								$isResultReady = true;
+							}
+							break;
+						case 'datetime':
+							if (array_key_exists($fieldName, $this->entityData)
+								&& ($this->entityData[$fieldName] === null
+									|| $this->entityData[$fieldName] === ''
+									|| !is_string($this->entityData[$fieldName])))
+							{
+								$result = true;
+								$isResultReady = true;
+							}
+							break;
+						case 'multifield':
+							if (!is_array($this->entityData[$fieldName])
+								|| empty($this->entityData[$fieldName]))
+							{
+								$result = true;
+								$isResultReady = true;
+							}
+							break;
+						case 'client_light':
+							if ($fieldName === 'COMPANY')
+							{
+								if (is_array($this->entityData['CLIENT_INFO'])
+									&& (!is_array($this->entityData['CLIENT_INFO']['COMPANY_DATA'])
+										|| empty($this->entityData['CLIENT_INFO']['COMPANY_DATA'])))
+								{
+									$result = true;
+									$isResultReady = true;
+								}
+							}
+							break;
+						case 'custom':
+							if ($fieldName === Tracking\UI\Details::SourceId)
+							{
+								if (array_key_exists($fieldName, $this->entityData)
+									&& ($this->entityData[$fieldName] === null
+										|| $this->entityData[$fieldName] < 0))
+								{
+									$result = true;
+									$isResultReady = true;
+								}
+							}
+							break;
+					}
+				}
+			}
+		}
+
+		return $result;
+	}
 	public function prepareEntityData()
 	{
 		/** @global \CMain $APPLICATION */
@@ -1118,6 +1428,8 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		{
 			return $this->entityData;
 		}
+
+		$isTrackingFieldRequired = false;
 
 		$file = new \CFile();
 		if($this->conversionWizard !== null)
@@ -1142,9 +1454,56 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		}
 		else if($this->entityID <= 0)
 		{
-			$this->entityData = array();
+			$requiredFields = Crm\Attribute\FieldAttributeManager::isEnabled()
+				? Crm\Attribute\FieldAttributeManager::getRequiredFields(
+					CCrmOwnerType::Contact,
+					$this->entityID,
+					['HONORIFIC', 'TYPE_ID', 'SOURCE_ID', Tracking\UI\Details::SourceId],
+					Crm\Attribute\FieldOrigin::SYSTEM
+				)
+				: [];
+			$isTrackingFieldRequired = in_array(Tracking\UI\Details::SourceId, $requiredFields, true);
+			$fieldsInfo = CCrmContact::GetFieldsInfo();
+			$this->entityData = [];
 			$this->entityData['OPENED'] = \Bitrix\Crm\Settings\ContactSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N';
 			$this->entityData['EXPORT'] = 'Y';
+
+			if($this->isFieldHasDefaultValueAttribute($fieldsInfo, 'HONORIFIC'))
+			{
+				$this->arResult['FIELDS_SET_DEFAULT_VALUE'][] = 'HONORIFIC';
+				$honorificList = CCrmStatus::GetStatusList('HONORIFIC');
+				$this->defaultEntityData['HONORIFIC'] = current(array_keys($honorificList));
+				if($this->isSetDefaultValueForField($fieldsInfo, $requiredFields, 'HONORIFIC'))
+				{
+					$this->entityData['HONORIFIC'] = $this->defaultEntityData['HONORIFIC'];
+				}
+			}
+
+			// set first option by default if the field is not required
+			$typeList = $this->prepareTypeList();
+			if(
+				!empty($typeList)
+				&& $this->isFieldHasDefaultValueAttribute($fieldsInfo, 'TYPE_ID'))
+			{
+				$this->arResult['FIELDS_SET_DEFAULT_VALUE'][] = 'TYPE_ID';
+				$this->defaultEntityData['TYPE_ID'] = current(array_keys($typeList));
+				if($this->isSetDefaultValueForField($fieldsInfo, $requiredFields, 'TYPE_ID'))
+				{
+					$this->entityData['TYPE_ID'] = $this->defaultEntityData['TYPE_ID'];
+				}
+			}
+			unset($typeList);
+
+			if($this->isFieldHasDefaultValueAttribute($fieldsInfo, 'SOURCE_ID'))
+			{
+				$this->arResult['FIELDS_SET_DEFAULT_VALUE'][] = 'SOURCE_ID';
+				$statusList = CCrmStatus::GetStatusList('SOURCE');
+				$this->defaultEntityData['SOURCE_ID'] = current(array_keys($statusList));
+				if($this->isSetDefaultValueForField($fieldsInfo, $requiredFields, 'SOURCE_ID'))
+				{
+					$this->entityData['SOURCE_ID'] = $this->defaultEntityData['SOURCE_ID'];
+				}
+			}
 
 			//region Default Responsible
 			if($this->userID > 0)
@@ -1222,9 +1581,10 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		//region Responsible
 		if(isset($this->entityData['ASSIGNED_BY_ID']) && $this->entityData['ASSIGNED_BY_ID'] > 0)
 		{
+			$by = 'ID';
+			$order = 'ASC';
 			$dbUsers = \CUser::GetList(
-				$by = 'ID',
-				$order = 'ASC',
+				$by, $order,
 				array('ID' => $this->entityData['ASSIGNED_BY_ID']),
 				array(
 					'FIELDS' => array(
@@ -1233,6 +1593,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 					)
 				)
 			);
+			unset($by, $order);
 			$user = is_object($dbUsers) ? $dbUsers->Fetch() : null;
 			if(is_array($user))
 			{
@@ -1530,13 +1891,22 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 			);
 		}
 
-		\Bitrix\Crm\Tracking\UI\Details::prepareEntityData(
+		Tracking\UI\Details::prepareEntityData(
 			\CCrmOwnerType::Contact,
 			$this->entityID,
-			$this->entityData
+			$this->entityData,
+			$isTrackingFieldRequired
 		);
 
 		return ($this->arResult['ENTITY_DATA'] = $this->entityData);
+	}
+	protected function prepareTypeList()
+	{
+		if($this->types === null)
+		{
+			$this->types = \CCrmStatus::GetStatusList('CONTACT_TYPE');
+		}
+		return $this->types;
 	}
 	public function prepareEntityInfo()
 	{

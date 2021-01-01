@@ -1,4 +1,8 @@
-<?
+<?php
+/** @deprecated
+ * @see \KanbanAjaxController::getFieldsAction()
+ * This file is deprecated and will be removed soon.
+ */
 /**
  * Full copy from crm.lead.list/filter.ajax.php
  * with some changes from crm.deal.list/filter.ajax.php
@@ -248,9 +252,5 @@ else
 	}
 }
 
-$response = new Main\HttpResponse();
-$response->addHeader('Content-Type', 'application/json');
-$response->flush(Main\Web\Json::encode(array_values($result)));
-
-require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/epilog_after.php');
-die();
+$response = Main\Context::getCurrent()->getResponse()->copyHeadersTo(new Main\Engine\Response\Json(array_values($result)));
+Main\Application::getInstance()->end(0, $response);

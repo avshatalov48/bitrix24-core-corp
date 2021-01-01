@@ -75,15 +75,6 @@ export default Vue.extend({
 					this.showError(result.errors.map((item) => item.message).join());
 				});
 		},
-		openTrackingLink()
-		{
-			if (!this.fields.TRACKING_LINK)
-			{
-				return;
-			}
-
-			window.open(this.fields.TRACKING_LINK, '_blank');
-		},
 		showError(message)
 		{
 			BX.loadExt('ui.notification').then(() => { BX.UI.Notification.Center.notify({content: message}); });
@@ -180,10 +171,6 @@ export default Vue.extend({
 		{
 			return this.fields && this.fields.REQUEST_CANCELLATION_AVAILABLE;
 		},
-		isTrackingButtonVisible()
-		{
-			return (this.fields.STATUS && this.fields.STATUS === 'on_its_way' && this.fields.TRACKING_LINK);
-		},
 		cancelRequestButtonStyle()
 		{
 			return {
@@ -213,13 +200,6 @@ export default Vue.extend({
 						<div class="crm-entity-stream-content-delivery-row crm-entity-stream-content-delivery-row--flex">
 							<span v-if="isSendRequestButtonVisible" @click="makeRequest" class="ui-btn ui-btn-sm ui-btn-primary">
 								{{localize.TIMELINE_DELIVERY_TAXI_SEND_REQUEST}}
-							</span>
-							<span
-								v-if="isTrackingButtonVisible"
-								@click="openTrackingLink"
-								class="ui-btn ui-btn-sm ui-btn-light-border crm-entity-stream-content-delivery-icon-location"
-							>
-								{{localize.TIMELINE_DELIVERY_TAXI_TRACK}}
 							</span>
 							<span v-if="isSearchingLabelVisible" class="crm-entity-stream-content-delivery-status">
 								{{localize.TIMELINE_DELIVERY_TAXI_SEARCHING_CAR}}

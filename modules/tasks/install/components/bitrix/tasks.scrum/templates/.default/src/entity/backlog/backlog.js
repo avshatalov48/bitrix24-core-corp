@@ -1,4 +1,4 @@
-import {Dom, Tag} from 'main.core';
+import {Dom, Tag, Type} from 'main.core';
 import {BaseEvent} from 'main.core.events';
 import {Entity} from '../entity';
 import {Header} from './header';
@@ -44,6 +44,7 @@ export class Backlog extends Entity
 	{
 		this.header = header;
 		this.header.subscribe('openListEpicGrid', () => this.emit('openListEpicGrid'));
+		this.header.subscribe('openDefinitionOfDone', () => this.emit('openDefinitionOfDone'));
 	}
 
 	addEpicCreationButton(epicCreationButton: EpicCreationButton)
@@ -93,6 +94,26 @@ export class Backlog extends Entity
 		super.removeItem(item);
 
 		this.updateStoryPoints();
+	}
+
+	addNumberTasks(value: number)
+	{
+		super.addNumberTasks(value);
+
+		if (this.header)
+		{
+			this.header.updateNumberTasks();
+		}
+	}
+
+	subtractNumberTasks(value: number)
+	{
+		super.subtractNumberTasks(value);
+
+		if (this.header)
+		{
+			this.header.updateNumberTasks();
+		}
 	}
 
 	updateStoryPoints()

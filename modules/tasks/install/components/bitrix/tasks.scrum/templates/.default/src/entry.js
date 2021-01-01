@@ -67,7 +67,10 @@ export class Entry
 				break;
 			case 'completedSprint':
 				this.scrumView = new CompletedSprint({
-					completedSprint: new Sprint(params.completedSprint)
+					completedSprint: new Sprint(params.completedSprint),
+					signedParameters: params.signedParameters,
+					sprints: params.sprints,
+					views: params.views
 				});
 				break;
 		}

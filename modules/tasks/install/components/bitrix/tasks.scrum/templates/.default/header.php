@@ -29,7 +29,8 @@ Extension::load('ui.icons.b24');
 Extension::load('ui.draganddrop.draggable');
 Extension::load('ui.label');
 Extension::load('ui.entity-selector');
-Extension::load("ui.confetti");
+Extension::load('ui.confetti');
+Extension::load(['amcharts4', 'amcharts4_theme_animated']);
 
 if (Loader::includeModule('disk'))
 {
@@ -140,11 +141,11 @@ $APPLICATION->includeComponent(
 				? [
 				[
 					'tabId' => 'popupMenuOptions',
-					'text' => '<b>' . Loc::getMessage('KANBAN_SORT_TITLE_MY') . '</b>'
+					'html' => '<b>' . Loc::getMessage('KANBAN_SORT_TITLE_MY') . '</b>'
 				],
 				[
 					'tabId' => 'popupMenuOptions',
-					'text' => Loc::getMessage('KANBAN_SORT_ACTUAL').
+					'html' => Loc::getMessage('KANBAN_SORT_ACTUAL').
 						'<span class=\"menu-popup-item-sort-field-label\">'.
 						Loc::getMessage("KANBAN_SORT_ACTUAL_RECOMMENDED_LABEL").'</span>',
 					'className' => ($arResult['orderNewTask'] == 'actual') ?
@@ -154,7 +155,7 @@ $APPLICATION->includeComponent(
 				],
 				[
 					'tabId' => 'popupMenuOptions',
-					'text' => '<b>' . Loc::getMessage('KANBAN_SORT_TITLE') . '</b>'
+					'html' => '<b>' . Loc::getMessage('KANBAN_SORT_TITLE') . '</b>'
 				],
 				[
 					'tabId' => 'popupMenuOptions',
@@ -199,9 +200,19 @@ if ($isBitrix24Template)
 				<?= $arResult['views']['completedSprint']['name']; ?>
 			</a>
 		</div>
+		<?php if ($arResult['views']['plan']['active']): ?>
+			<div id="tasks-scrum-team-speed-button-container" class="tasks-scrum-team-speed-button-container">
+				<button class="ui-btn ui-btn-primary ui-btn-xs">
+					<?=Loc::getMessage('TASKS_SCRUM_TEAM_SPEED_BUTTON');?>
+				</button>
+			</div>
+		<?php endif; ?>
 		<?php if ($arResult['views']['activeSprint']['active'] && $arResult['activeSprintId'] > 0): ?>
 			<div id="tasks-scrum-active-sprint-stats" class="tasks-scrum-active-sprint-stats"></div>
 			<div id="tasks-scrum-actions-complete-sprint" class="tasks-scrum-actions-complete-sprint">
+				<button class="ui-btn ui-btn-primary-dark ui-btn-round ui-btn-xs">
+					<?=Loc::getMessage('TASKS_SCRUM_ACTIVE_SPRINT_BUTTON');?>
+				</button>
 				<button class="ui-btn ui-btn-primary ui-btn-round ui-btn-xs">
 					<?=Loc::getMessage('TASKS_SCRUM_ACTIONS_COMPLETE_SPRINT');?>
 				</button>
@@ -209,6 +220,11 @@ if ($isBitrix24Template)
 		<?php endif; ?>
 		<?php if ($arResult['views']['completedSprint']['active'] && $arResult['completedSprintId'] > 0): ?>
 			<div id="tasks-scrum-completed-sprint-title" class="tasks-scrum-completed-sprint-title"></div>
+			<div id="tasks-scrum-completed-sprint-chart" class="tasks-scrum-actions-complete-sprint">
+				<button class="ui-btn ui-btn-primary-dark ui-btn-round ui-btn-xs">
+					<?=Loc::getMessage('TASKS_SCRUM_ACTIVE_SPRINT_BUTTON');?>
+				</button>
+			</div>
 		<?php endif; ?>
 	</div>
 

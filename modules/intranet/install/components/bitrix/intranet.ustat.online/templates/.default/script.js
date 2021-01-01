@@ -3,7 +3,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 (function (exports,main_core,rest_client,pull_client) {
 	'use strict';
 
-	var Popup = /*#__PURE__*/function () {
+	var Popup =
+	/*#__PURE__*/
+	function () {
 	  function Popup(parent) {
 	    var _this2 = this;
 
@@ -12,10 +14,15 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    this.signedParameters = this.parent.signedParameters;
 	    this.componentName = this.parent.componentName;
 	    this.userInnerBlockNode = this.parent.userInnerBlockNode || "";
+	    this.circleNode = this.parent.circleNode || "";
 	    this.isPopupShown = false;
 	    this.popupCurrentPage = {};
+	    this.renderedUsers = [];
 	    main_core.Event.bind(this.userInnerBlockNode, 'click', function () {
 	      _this2.showPopup('getAllOnlineUser', _this2.userInnerBlockNode);
+	    });
+	    main_core.Event.bind(this.circleNode, 'click', function () {
+	      _this2.showPopup('getAllOnlineUser', _this2.circleNode, -5);
 	    });
 
 	    if (this.parent.isTimemanAvailable && main_core.Type.isDomNode(this.parent.timemanNode)) {
@@ -47,17 +54,22 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }
 	  }, {
 	    key: "showPopup",
-	    value: function showPopup(action, bindNode) {
+	    value: function showPopup(action, bindNode, topOffset) {
 	      if (this.isPopupShown) {
 	        return;
 	      }
 
+	      if (main_core.Type.isUndefined(topOffset)) {
+	        topOffset = 7;
+	      }
+
 	      this.popupCurrentPage[action] = 1;
 	      this.popupInnerContainer = "";
+	      this.renderedUsers = [];
 	      this.allOnlineUserPopup = new BX.PopupWindow('intranet-ustat-online-popup', bindNode, {
 	        lightShadow: true,
 	        offsetLeft: action === 'getClosedTimemanUser' ? -60 : -22,
-	        offsetTop: 7,
+	        offsetTop: topOffset,
 	        autoHide: true,
 	        closeByEsc: true,
 	        bindOptions: {
@@ -206,6 +218,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          continue;
 	        }
 
+	        if (this.renderedUsers.indexOf(users[i]['ID']) >= 0) {
+	          continue;
+	        }
+
+	        this.renderedUsers.push(users[i]['ID']);
 	        var avatarNode = void 0;
 
 	        if (BX.type.isNotEmptyString(users[i]['AVATAR'])) {
@@ -295,7 +312,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	var namespace = main_core.Reflection.namespace('BX.Intranet');
 
-	var UstatOnline = /*#__PURE__*/function () {
+	var UstatOnline =
+	/*#__PURE__*/
+	function () {
 	  function UstatOnline(params) {
 	    var _this = this;
 
@@ -312,6 +331,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    this.currentUserId = parseInt(params.currentUserId);
 	    this.isTimemanAvailable = params.isTimemanAvailable === "Y";
 	    this.limitOnlineSeconds = params.limitOnlineSeconds;
+	    this.renderingFinished = true;
 	    var users = params.users;
 	    var allOnlineUserIdToday = params.allOnlineUserIdToday;
 	    this.users = users.map(function (user) {
@@ -428,15 +448,19 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    value: function setUserOnline(params) {
 	      var _this3 = this;
 
-	      var userId = parseInt(params.id);
+	      var userId = this.getNumberUserId(params.id);
 	      this.findUser(userId).then(function (user) {
+	        user.id = _this3.getNumberUserId(user.id);
+
 	        if (typeof params.last_activity_date !== "undefined") {
 	          user.last_activity_date = params.last_activity_date;
 	        }
 
-	        _this3.setUserToLocal(user);
+	        if (user.isExtranet !== "Y") {
+	          _this3.setUserToLocal(user);
 
-	        _this3.checkOnline();
+	          _this3.checkOnline();
+	        }
 	      }).catch(function (error) {});
 	    }
 	  }, {
@@ -614,7 +638,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        BX.indexedDB.getValue(_this6.ITEMS.obClientDb, "users", "U" + userId).then(function (user) {
 	          if (user && babelHelpers.typeof(user) === 'object') {
 	            if (user.hasOwnProperty("entityId")) {
-	              user.id = user.entityId;
+	              user.id = _this6.getNumberUserId(user.entityId);
 	            }
 
 	            resolve(user);
@@ -644,7 +668,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        rest_client.rest.callMethod('im.user.get', {
 	          id: userId
 	        }).then(function (result) {
-	          if (result.data()) {
+	          if (result.data() && result.data().external_auth_id !== "__controller") {
 	            var user = {};
 	            user.id = parseInt(result.data().id);
 	            user.name = result.data().name;
@@ -737,17 +761,57 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      var valueSum = 0;
 
 	      if (main_core.Type.isArrayLike(this.timemanTextNodes)) {
-	        this.timemanTextNodes.forEach(function (text) {
-	          var textItems = text.textContent.length;
-	          textSum += textItems;
-	        });
+	        var _iteratorNormalCompletion = true;
+	        var _didIteratorError = false;
+	        var _iteratorError = undefined;
+
+	        try {
+	          for (var _iterator = this.timemanTextNodes[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+	            var text = _step.value;
+	            var textItems = text.textContent.length;
+	            textSum += textItems;
+	          }
+	        } catch (err) {
+	          _didIteratorError = true;
+	          _iteratorError = err;
+	        } finally {
+	          try {
+	            if (!_iteratorNormalCompletion && _iterator.return != null) {
+	              _iterator.return();
+	            }
+	          } finally {
+	            if (_didIteratorError) {
+	              throw _iteratorError;
+	            }
+	          }
+	        }
 	      }
 
 	      if (main_core.Type.isArrayLike(this.timemanValueNodes)) {
-	        this.timemanValueNodes.forEach(function (value) {
-	          var valueItems = value.textContent.length;
-	          valueSum += valueItems;
-	        });
+	        var _iteratorNormalCompletion2 = true;
+	        var _didIteratorError2 = false;
+	        var _iteratorError2 = undefined;
+
+	        try {
+	          for (var _iterator2 = this.timemanValueNodes[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+	            var value = _step2.value;
+	            var valueItems = value.textContent.length;
+	            valueSum += valueItems;
+	          }
+	        } catch (err) {
+	          _didIteratorError2 = true;
+	          _iteratorError2 = err;
+	        } finally {
+	          try {
+	            if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
+	              _iterator2.return();
+	            }
+	          } finally {
+	            if (_didIteratorError2) {
+	              throw _iteratorError2;
+	            }
+	          }
+	        }
 	      }
 
 	      if (textSum >= 17 && valueSum >= 6 || textSum >= 19 && valueSum >= 4) {
@@ -757,10 +821,25 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      }
 	    }
 	  }, {
+	    key: "getNumberUserId",
+	    value: function getNumberUserId(id) {
+	      if (!id) {
+	        return;
+	      }
+
+	      var userId = String(id);
+	      userId = userId.replace('U', '');
+	      return parseInt(userId);
+	    }
+	  }, {
 	    key: "redrawOnline",
 	    value: function redrawOnline() {
 	      this.showCircleAnimation(this.circleNode, this.counter, this.maxOnlineUserCountToday);
-	      this.renderAllUser();
+
+	      if (this.renderingFinished) {
+	        this.renderingFinished = false;
+	        this.renderAllUser();
+	      }
 	    }
 	  }, {
 	    key: "renderAllUser",
@@ -772,6 +851,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      this.online.forEach(function (item) {
 	        newUserIds.push(parseInt(item.id));
 	      });
+	      var onlineToShow = newUserIds.slice(0, this.maxUserToShow);
 	      var renderedUserNodes = this.userBlockNode.querySelectorAll(".js-ustat-online-user");
 
 	      if (renderedUserNodes) {
@@ -785,6 +865,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          if (newUserIds.indexOf(renderedItemId) === -1) {
 	            if (main_core.Type.isDomNode(renderedUserNodes[item])) {
 	              main_core.Dom.remove(renderedUserNodes[item]); //remove offline avatars
+
+	              /*renderedUserNodes[item].classList.add('intranet-ustat-online-icon-hide');
+	              setTimeout( () => {
+	              	}, 800);*/
 	            }
 	          } else {
 	            renderedUserIds.push(parseInt(renderedItemId));
@@ -794,37 +878,86 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	      renderedUserNodes = this.userBlockNode.querySelectorAll(".js-ustat-online-user");
 	      var renderedUserCount = renderedUserNodes.length;
-	      this.online.forEach(function (item, i) {
-	        if (i >= _this8.maxUserToShow || !item.hasOwnProperty("id")) {
+	      var showAnimation = renderedUserCount !== 0;
+	      this.userIndex = this.online.length;
+
+	      var stepRender = function stepRender(i) {
+	        if (i >= _this8.maxUserToShow || i >= _this8.online.length) {
+	          _this8.renderingFinished = true;
 	          return;
 	        }
 
-	        if (renderedUserIds.indexOf(item.id) === -1) {
+	        new Promise(function (resolve) {
+	          var item = _this8.online[i];
+
+	          if (renderedUserIds.indexOf(item.id) >= 0) {
+	            resolve();
+	            return;
+	          }
+
 	          if (renderedUserCount < _this8.maxUserToShow) {
-	            _this8.renderUser(item);
+	            if (showAnimation) {
+	              _this8.userIndex++;
+	            }
 
+	            _this8.renderUser(item, showAnimation);
+
+	            renderedUserIds.push(item.id);
 	            renderedUserCount++;
+
+	            if (!showAnimation) {
+	              _this8.userIndex = _this8.userIndex - 1;
+	            }
+
+	            resolve();
 	          } else {
-	            var element = _this8.userBlockNode.querySelector(".js-ustat-online-user");
+	            var elements = _this8.userBlockNode.querySelectorAll(".js-ustat-online-user");
 
-	            if (main_core.Type.isDomNode(element)) {
-	              var removedUserId = parseInt(element.getAttribute("data-user-id"));
-	              main_core.Dom.remove(element);
+	            var firstElement = elements[0];
+	            var lastElement = "";
 
-	              _this8.renderUser(item);
+	            for (var _i = elements.length - 1; _i >= 0; _i--) {
+	              if (main_core.Type.isDomNode(elements[_i])) {
+	                var elementUserId = parseInt(elements[_i].getAttribute("data-user-id"));
+
+	                if (onlineToShow.indexOf(elementUserId) === -1) {
+	                  lastElement = elements[_i];
+	                  break;
+	                }
+	              }
+	            }
+
+	            if (main_core.Type.isDomNode(lastElement)) {
+	              var removedUserId = parseInt(lastElement.getAttribute("data-user-id"));
+	              main_core.Dom.removeClass(lastElement, 'intranet-ustat-online-icon-show');
+	              main_core.Dom.addClass(lastElement, 'intranet-ustat-online-icon-hide');
+	              _this8.userIndex = parseInt(firstElement.style.zIndex);
+	              _this8.userIndex++;
+
+	              _this8.renderUser(item, showAnimation);
 
 	              renderedUserIds = renderedUserIds.filter(function (id) {
 	                return id !== removedUserId;
 	              });
 	              renderedUserIds.push(item.id);
+	              main_core.Event.bind(lastElement, 'animationend', function (event) {
+	                main_core.Dom.remove(lastElement);
+	                resolve();
+	              });
+	            } else {
+	              resolve();
 	            }
 	          }
-	        }
-	      });
+	        }).then(function () {
+	          stepRender(++i);
+	        });
+	      };
+
+	      stepRender(0);
 	    }
 	  }, {
 	    key: "renderUser",
-	    value: function renderUser(user) {
+	    value: function renderUser(user, showAnimation) {
 	      if (!user || babelHelpers.typeof(user) !== 'object') {
 	        return;
 	      }
@@ -835,10 +968,15 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        userStyle = 'background-image: url("' + user.avatar + '");';
 	      }
 
+	      var userId = this.getNumberUserId(user.id);
+	      var itemsClasses = "ui-icon ui-icon-common-user intranet-ustat-online-icon js-ustat-online-user\n\t\t\t".concat(showAnimation ? ' intranet-ustat-online-icon-show' : '');
 	      this.userItem = BX.create('span', {
 	        attrs: {
-	          className: 'ui-icon ui-icon-common-user intranet-ustat-online-icon intranet-ustat-online-icon-show js-ustat-online-user',
-	          "data-user-id": user.id
+	          className: itemsClasses,
+	          "data-user-id": userId
+	        },
+	        style: {
+	          zIndex: this.userIndex
 	        },
 	        children: [BX.create('i', {
 	          attrs: {
@@ -846,8 +984,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          }
 	        })]
 	      });
-	      this.userBlockNode.appendChild(this.userInnerBlockNode);
-	      this.userInnerBlockNode.appendChild(this.userItem);
+
+	      if (showAnimation) {
+	        main_core.Dom.prepend(this.userItem, this.userInnerBlockNode);
+	      } else {
+	        this.userInnerBlockNode.appendChild(this.userItem);
+	      }
 	    }
 	  }, {
 	    key: "showCircleAnimation",

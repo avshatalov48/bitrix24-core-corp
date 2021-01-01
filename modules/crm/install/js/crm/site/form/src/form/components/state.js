@@ -25,7 +25,7 @@ const StateBlock = {
 					<div class="b24-form-success-inner">
 						<div class="b24-form-success-icon"></div>
 						<div class="b24-form-success-text">
-							<p>{{ form.messages.get('stateSuccessTitle') }}</p>
+							<p v-if="!form.stateText">{{ form.messages.get('stateSuccessTitle') }}</p>
 							<p>{{ form.stateText }}</p>
 						</div>
 						<button class="b24-form-btn b24-form-btn-border b24-form-btn-tight"

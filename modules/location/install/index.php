@@ -3,6 +3,7 @@
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use \Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
 
 Loc::loadMessages(__FILE__);
 
@@ -43,6 +44,7 @@ Class location extends CModule
 
 		$GLOBALS["errors"] = $this->errors;
 		$this->setDefaultFormatCode();
+		$this->installSources();
 		$APPLICATION->IncludeAdminFile(Loc::getMessage("LOCATION_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/location/install/step1.php");
 	}
 
@@ -76,6 +78,52 @@ Class location extends CModule
 		}
 
 		Bitrix\Location\Infrastructure\FormatCode::setCurrent($formatCode);
+	}
+
+	public function installSources()
+	{
+		global $DB;
+
+		$DB->query(
+			"
+				INSERT INTO b_location_source (
+					CODE,
+					NAME,
+					CONFIG
+				) VALUES (
+					 'GOOGLE',
+					 'Google',
+				     '" . $DB->forSql(serialize(
+						[
+							[
+								'code' => 'API_KEY_FRONTEND',
+								'type' => 'string',
+								'sort' => 10,
+								'value' => '',
+							],
+							[
+								'code' => 'API_KEY_BACKEND',
+								'type' => 'string',
+								'sort' => 20,
+								'value' => '',
+							],
+							[
+								'code' => 'SHOW_PHOTOS_ON_MAP',
+								'type' => 'bool',
+								'sort' => 30,
+								'value' => true,
+							],
+							[
+								'code' => 'USE_GEOCODING_SERVICE',
+								'type' => 'bool',
+								'sort' => 40,
+								'value' => true,
+							],
+						]
+					)) . "'
+				 );
+			"
+		);
 	}
 
 	public function DoUninstall()

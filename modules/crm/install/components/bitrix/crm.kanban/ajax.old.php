@@ -6,6 +6,9 @@
  * Please, use new ajax.php class for new features
  */
 
+use Bitrix\Crm\Kanban\Driver;
+use Bitrix\Main\Text\HtmlFilter;
+
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
 define('NO_AGENT_CHECK', true);

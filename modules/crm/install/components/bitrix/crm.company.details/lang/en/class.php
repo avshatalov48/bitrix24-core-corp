@@ -35,4 +35,7 @@ $MESS["CRM_COMPANY_NOT_FOUND"] = "Company was not found.";
 $MESS["CRM_COMPANY_FIELD_ID"] = "ID";
 $MESS["CRM_COMPANY_TAB_TREE"] = "Dependencies";
 $MESS["CRM_COMPANY_FIELD_UTM"] = "UTM parameters";
+$MESS["CRM_COMPANY_TYPE_NOT_SELECTED"] = "Not selected";
+$MESS["CRM_COMPANY_INDUSTRY_NOT_SELECTED"] = "Not selected";
+$MESS["CRM_COMPANY_EMPLOYEES_NOT_SELECTED"] = "Not selected";
 ?>

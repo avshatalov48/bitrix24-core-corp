@@ -408,6 +408,14 @@ class CVoxImplantConfig
 		return $result;
 	}
 
+	public static function DetectNumberCountry ($config)
+	{
+		if ($config['PORTAL_MODE'] != self::MODE_RENT)
+		{
+			return false;
+		}
+	}
+
 	public static function GetModeStatus($mode)
 	{
 		if (!in_array($mode, Array(self::MODE_LINK, self::MODE_RENT, self::MODE_SIP)))
@@ -612,7 +620,8 @@ class CVoxImplantConfig
 				'NO_ANSWER_RULE' => 'QUEUE.NO_ANSWER_RULE',
 				'QUEUE_TYPE' => 'QUEUE.TYPE',
 				'QUEUE_TIME' => 'QUEUE.WAIT_TIME', // compatibility fix
-				'FORWARD_NUMBER' => 'QUEUE.FORWARD_NUMBER'
+				'FORWARD_NUMBER' => 'QUEUE.FORWARD_NUMBER',
+				'NUMBER_COUNTRY_CODE' => 'NUMBER.COUNTRY_CODE'
 			),
 			'filter' => $filter
 		));

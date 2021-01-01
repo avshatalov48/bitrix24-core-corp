@@ -23,6 +23,8 @@ BX.CRM.Kanban.Item = function(options)
 	this.fieldsWrapper = null;
 	this.clientName = null;
 	this.clientNameItems = [];
+	this.useAnimation = false;
+	this.isAnimationInProgress = false;
 };
 
 BX.CRM.Kanban.Item.prototype = {
@@ -181,6 +183,7 @@ BX.CRM.Kanban.Item.prototype = {
 		BX.style(this.container, "border-left", "3px solid " + rgba);
 		// item link
 		this.link.innerHTML = this.clipTitle(data.name);
+
 		this.link.setAttribute(
 			"href",
 			data.link
@@ -1405,12 +1408,7 @@ BX.CRM.Kanban.Item.prototype = {
 		{
 			this.switchVisible(this.activityExist, true);
 			this.switchVisible(this.activityEmpty, false);
-			this.activityExist.innerHTML = BX.message("CRM_KANBAN_ACTIVITY_MY") +
-											(
-												(data.activityErrorTotal && columnData.type === "PROGRESS")
-												? " <span>" + data.activityErrorTotal + "</span>"
-												: ""
-											);
+			this.setActivityExistInnerHtml();
 		}
 		else
 		{
@@ -1431,6 +1429,19 @@ BX.CRM.Kanban.Item.prototype = {
 				this.activityEmpty.innerHTML = BX.message("CRM_KANBAN_ACTIVITY_MY");
 			}
 		}
+	},
+
+	setActivityExistInnerHtml: function()
+	{
+		var data = this.getData();
+		var column = this.getColumn();
+		var columnData = column.getData();
+		this.activityExist.innerHTML = BX.message("CRM_KANBAN_ACTIVITY_MY") +
+			(
+				(data.activityErrorTotal && columnData.type === "PROGRESS")
+					? " <span>" + data.activityErrorTotal + "</span>"
+					: ""
+			);
 	},
 
 	/**
@@ -1644,7 +1655,64 @@ BX.CRM.Kanban.Item.prototype = {
 	{
 		var data = this.getData();
 		return data[type];
+	},
+
+	getStageId: function ()
+	{
+		return this.getData().stageId;
+	},
+
+	animate: function(params)
+	{
+		var duration = params.duration;
+		var draw = params.draw;
+
+		// linear function by default, you can set non-linear animation function in timing key
+		var timing = (params.timing || function(timeFraction){
+			return timeFraction;
+		});
+
+		var useAnimation = ((params.useAnimation && !this.isAnimationInProgress) || false);
+
+		var start = performance.now();
+
+		return new Promise(
+			function(resolve, reject)
+			{
+				if (!useAnimation)
+				{
+					this.isAnimationInProgress = false;
+					return resolve();
+				}
+
+				var self = this;
+				self.isAnimationInProgress = true;
+
+				requestAnimationFrame(function animate(time)
+				{
+					var timeFraction = (time - start) / duration;
+					if (timeFraction > 1)
+					{
+						timeFraction = 1;
+					}
+
+					var progress = timing(timeFraction);
+					draw(progress);
+
+					if (timeFraction < 1)
+					{
+						requestAnimationFrame(animate);
+					}
+
+					if (progress === 1)
+					{
+						self.isAnimationInProgress = false;
+						resolve();
+					}
+				}.bind(this));
+			}.bind(this)
+		);
 	}
-};
+}
 
 })();

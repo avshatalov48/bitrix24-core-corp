@@ -1300,7 +1300,6 @@ if(typeof(BX.CrmFormSettingManager) === "undefined")
 		},
 		processFieldRemove: function(field)
 		{
-			console.info("BX.CrmFormSettingManager: processFieldRemove - ", field);
 			var fieldId = field.getId();
 			delete this._fieldSettings[fieldId];
 

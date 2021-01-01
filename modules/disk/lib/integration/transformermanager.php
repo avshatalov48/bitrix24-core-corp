@@ -57,34 +57,21 @@ class TransformerManager implements InterfaceCallback
 		{
 			FileTransformer::clearInfoCache($params['fileId']);
 		}
-		if($status == Command::STATUS_ERROR && isset($params['id']))
-		{
-			Application::getInstance()->getTaggedCache()->clearByTag("disk_file_".$params['id']);
-			BlogPostConnector::clearCacheByObjectId($params['id']);
-			BlogPostCommentConnector::clearCacheByObjectId($params['id']);
-			return true;
-		}
 
-		if(!isset($params['id']) || !isset($params['fileId']) || !isset($result['files']))
+		if(!isset($params['id']) || !isset($params['fileId']))
 		{
 			return 'wrong parameters';
 		}
 
-		if($status != Command::STATUS_UPLOAD)
-		{
-			return 'wrong command status';
-		}
-
-		$previewId = $viewId = 0;
 		$file = File::getById($params['id']);
 		if(!$file)
 		{
 			return 'file '.$params['id'].' not found';
 		}
-		$view = $file->getView();
 
+		$view = $file->getView();
 		if(
-			$view->isNeededLimitRightsOnTransformTime()
+			$view->isNeededLimitRightsOnTransformTime(false)
 			&& Loader::includeModule('socialnetwork')
 		)
 		{
@@ -99,7 +86,6 @@ class TransformerManager implements InterfaceCallback
 		}
 
 		static::clearCacheByFile($file);
-		static::addToStack($file, $viewId, $previewId);
 
 		return true;
 	}

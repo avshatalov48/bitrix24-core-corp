@@ -403,6 +403,13 @@ BX.Tasks.Util.Dispatcher = BX.Tasks.Util.Base.extend({
 
 			return this.vars.registry[id];
 		},
+		remove: function(id)
+		{
+			if(typeof this.vars.registry[id] !== 'undefined')
+			{
+				delete this.vars.registry[id];
+			}
+		},
 		find: function(id)
 		{
 			var p = new BX.Promise();

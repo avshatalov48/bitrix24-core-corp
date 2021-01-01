@@ -29,7 +29,7 @@ export default class Prompt extends EventEmitter
 		});
 	}
 
-	#getMenu(): Menu
+	getMenu(): Menu
 	{
 		if(!this.#menu || this.#menu.isDestroyed())
 		{
@@ -50,13 +50,13 @@ export default class Prompt extends EventEmitter
 		if(locationsList.length > 0)
 		{
 			this.#setMenuItems(locationsList, searchPhrase);
-			this.#getMenu().show();
+			this.getMenu().show();
 		}
 	}
 
 	close(): void
 	{
-		this.#getMenu().close();
+		this.getMenu().close();
 	}
 
 	/**
@@ -66,14 +66,14 @@ export default class Prompt extends EventEmitter
 	 */
 	#setMenuItems(locationsList: array<Location>, searchPhrase: string): Menu
 	{
-		this.#getMenu().clearItems();
+		this.getMenu().clearItems();
 
 		if(Array.isArray(locationsList))
 		{
 			this.#locationList = locationsList.slice();
 
 			locationsList.forEach((location) => {
-				this.#getMenu().addMenuItem(
+				this.getMenu().addMenuItem(
 					this.#createMenuItem(location, searchPhrase)
 				);
 			});
@@ -91,7 +91,8 @@ export default class Prompt extends EventEmitter
 
 		return {
 			id: externalId,
-			text: Prompt.createMenuItemText(location.name, searchPhrase),
+			title: location.name,
+			html: Prompt.createMenuItemText(location.name, searchPhrase),
 			onclick: (event, item) => {
 				this.#onItemSelect(externalId);
 				this.close();
@@ -135,7 +136,7 @@ export default class Prompt extends EventEmitter
 
 		for(let location of this.#locationList)
 		{
-			if(location.externalId === externalId )
+			if(location.externalId === externalId)
 			{
 				result = location;
 				break;
@@ -153,7 +154,7 @@ export default class Prompt extends EventEmitter
 	choosePrevItem()
 	{
 		let result = null;
-		const item = this.#getMenu().choosePrevItem();
+		const item = this.getMenu().choosePrevItem();
 
 		if(item)
 		{
@@ -166,7 +167,7 @@ export default class Prompt extends EventEmitter
 	chooseNextItem()
 	{
 		let result = null;
-		const item = this.#getMenu().chooseNextItem();
+		const item = this.getMenu().chooseNextItem();
 
 		if(item)
 		{
@@ -196,7 +197,7 @@ export default class Prompt extends EventEmitter
 
 	isShown(): boolean
 	{
-		return this.#getMenu().isShown();
+		return this.getMenu().isShown();
 	}
 
 	destroy()

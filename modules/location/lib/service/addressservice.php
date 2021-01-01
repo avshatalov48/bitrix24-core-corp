@@ -82,11 +82,7 @@ final class AddressService extends BaseService
 	 */
 	public function save(Entity\Address $address)
 	{
-		$salescenterReceivePaymentAppArea = (defined('SALESCENTER_RECEIVE_PAYMENT_APP_AREA')
-			&& SALESCENTER_RECEIVE_PAYMENT_APP_AREA === true
-		);
-
-		if(!$salescenterReceivePaymentAppArea && $this->isLimitReached() && AddressLimit::isAddressForLimitation($address))
+		if(AddressLimit::isAddressForLimitation($address) && $this->isLimitReached())
 		{
 			return (new Result())
 				->addError(
@@ -118,7 +114,25 @@ final class AddressService extends BaseService
 	 */
 	public function isLimitReached(): bool
 	{
-		return AddressLimit::isLimitReached();
+		$salescenterReceivePaymentAppArea = (defined('SALESCENTER_RECEIVE_PAYMENT_APP_AREA')
+			&& SALESCENTER_RECEIVE_PAYMENT_APP_AREA === true
+		);
+		$crmOrderDetailsArea = (defined('CRM_ORDER_DETAILS_AREA')
+			&& CRM_ORDER_DETAILS_AREA === true
+		);
+
+		$isSourceLimited = false;
+		if($source = SourceService::getInstance()->getSource())
+		{
+			$isSourceLimited = AddressLimit::isSourceLimited($source->getCode());
+		}
+
+		return (
+			!$salescenterReceivePaymentAppArea
+			&& !$crmOrderDetailsArea
+			&& $isSourceLimited
+			&& AddressLimit::isLimitReached()
+		);
 	}
 
 	/**

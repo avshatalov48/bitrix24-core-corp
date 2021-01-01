@@ -6,65 +6,75 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Text\HtmlFilter;
 
-$APPLICATION->AddHeadScript($this->__component->GetPath().'/templates/.default/tasks.js');
+$taskJs = $this->__component->GetPath().'/templates/.default/tasks.js';
+$APPLICATION->AddHeadScript($taskJs);
 
 $name = $arResult["NAME"];
 ?>
 
 <script type="text/javascript">
-	var O_<?=$name?> = new TasksTask("<?=$name?>", <?=($arParams["MULTIPLE"]? "true" : "false")?>);
-
-	TasksTask.ajaxUrl = '<?=$this->__component->GetPath()."/ajax.php?lang=".LANGUAGE_ID."&SITE_ID=".$arParams["SITE_ID"]?>';
-	TasksTask.filter = <?=CUtil::PhpToJSObject($arParams["FILTER"])?>;
-
-	O_<?=$name?>.filter = <?=CUtil::PhpToJSObject($arParams["FILTER"])?>;
-
-	<?foreach ($arResult["CURRENT_TASKS"] as $task):?>
-		O_<?=$name?>.arSelected[<?=$task["ID"]?>] = {
-			id : '<?=CUtil::JSEscape($task["ID"])?>',
-			name : "<?=CUtil::JSEscape($task["TITLE"])?>",
-			status : <?=$task["STATUS"]?>
-		};
-		TasksTask.arTasksData[<?=$task["ID"]?>] = {
-			id : '<?=CUtil::JSEscape($task["ID"])?>',
-			name : "<?=CUtil::JSEscape($task["TITLE"])?>",
-			status : <?=$task["STATUS"]?>
-		};
-	<?endforeach?>
-
-	<?foreach ($arResult["LAST_TASKS"] as $task):?>
-		TasksTask.arTasksData[<?=$task["ID"]?>] = {
-			id : '<?=CUtil::JSEscape($task["ID"])?>',
-			name : "<?=CUtil::JSEscape($task["TITLE"])?>",
-			status : <?=$task["STATUS"]?>
-		};
-	<?endforeach?>
-
-	<?if ((string)$arParams['PATH_TO_TASKS_TASK'] != ''):?>
-		BX.message({TASKS_PATH_TO_TASK: "<?=CUtil::JSEscape($arParams['PATH_TO_TASKS_TASK'])?>"});
-	<?endif?>
-
+	var O_<?=$name?> = null;
+	if (typeof TasksTask === "function")
+	{
+		O_<?=$name?> = new TasksTask("<?=$name?>", <?=($arParams["MULTIPLE"]? "true" : "false")?>);
+	}
 	BX.ready(function()
 	{
-		<?if ($arParams["FORM_NAME"] <> '' && $arParams["INPUT_NAME"] <> ''):?>
+		BX.loadScript('<?=$taskJs?>', function() {
+			if (!O_<?=$name?>)
+			{
+				O_<?=$name?> = new TasksTask("<?=$name?>", <?=($arParams["MULTIPLE"]? "true" : "false")?>);
+			}
+			TasksTask.ajaxUrl = '<?=$this->__component->GetPath()."/ajax.php?lang=".LANGUAGE_ID."&SITE_ID=".$arParams["SITE_ID"]?>';
+			TasksTask.filter = <?=CUtil::PhpToJSObject($arParams["FILTER"])?>;
+
+			O_<?=$name?>.filter = <?=CUtil::PhpToJSObject($arParams["FILTER"])?>;
+
+			<?foreach ($arResult["CURRENT_TASKS"] as $task):?>
+			O_<?=$name?>.arSelected[<?=$task["ID"]?>] = {
+				id : '<?=CUtil::JSEscape($task["ID"])?>',
+				name : "<?=CUtil::JSEscape($task["TITLE"])?>",
+				status : <?=$task["STATUS"]?>
+			};
+			TasksTask.arTasksData[<?=$task["ID"]?>] = {
+				id : '<?=CUtil::JSEscape($task["ID"])?>',
+				name : "<?=CUtil::JSEscape($task["TITLE"])?>",
+				status : <?=$task["STATUS"]?>
+			};
+			<?endforeach?>
+
+			<?foreach ($arResult["LAST_TASKS"] as $task):?>
+			TasksTask.arTasksData[<?=$task["ID"]?>] = {
+				id : '<?=CUtil::JSEscape($task["ID"])?>',
+				name : "<?=CUtil::JSEscape($task["TITLE"])?>",
+				status : <?=$task["STATUS"]?>
+			};
+			<?endforeach?>
+
+			<?if ((string)$arParams['PATH_TO_TASKS_TASK'] != ''):?>
+			BX.message({TASKS_PATH_TO_TASK: "<?=CUtil::JSEscape($arParams['PATH_TO_TASKS_TASK'])?>"});
+			<?endif?>
+
+			<?if ($arParams["FORM_NAME"] <> '' && $arParams["INPUT_NAME"] <> ''):?>
 			O_<?=$name?>.searchInput = document.forms["<?=CUtil::JSEscape($arParams["FORM_NAME"])?>"].element["<?=CUtil::JSEscape($arParams["INPUT_NAME"])?>"];
-		<?elseif ($arParams["INPUT_NAME"] <> ''):?>
+			<?elseif ($arParams["INPUT_NAME"] <> ''):?>
 			O_<?=$name?>.searchInput = BX("<?=CUtil::JSEscape($arParams["INPUT_NAME"])?>");
-		<?else:?>
+			<?else:?>
 			O_<?=$name?>.searchInput = BX("<?=$name?>_task_input");
-		<?endif?>
+			<?endif?>
 
-		<?if ($arParams["ON_CHANGE"] <> ''):?>
+			<?if ($arParams["ON_CHANGE"] <> ''):?>
 			O_<?=$name?>.onChange = <?=CUtil::JSEscape($arParams["ON_CHANGE"])?>;
-		<?endif?>
+			<?endif?>
 
-		<?if ($arParams["ON_SELECT"] <> ''):?>
+			<?if ($arParams["ON_SELECT"] <> ''):?>
 			O_<?=$name?>.onSelect= <?=CUtil::JSEscape($arParams["ON_SELECT"])?>;
-		<?endif?>
+			<?endif?>
 
-		BX.bind(O_<?=$name?>.searchInput, "keyup", BX.debounce(
-			BX.proxy(O_<?=$name?>.search, O_<?=$name?>), 700)
-		);
+			BX.bind(O_<?=$name?>.searchInput, "keyup", BX.debounce(
+				BX.proxy(O_<?=$name?>.search, O_<?=$name?>), 700)
+			);
+		});
 	});
 </script>
 

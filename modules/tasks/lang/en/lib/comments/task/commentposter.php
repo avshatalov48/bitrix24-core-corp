@@ -13,11 +13,11 @@ Efficiency KPI lowered.
 Consider changing the deadline or closing the task.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON"] = "Task is almost overdue.
 It will be marked as overdue in 24 hours thus decreasing efficiency KPI unless you change the deadline.";
-$MESS["COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON_V2"] = "#MEMBERS# task is almost overdue.
-Consider #TASK_COMPLETE_START#closing the task#TASK_COMPLETE_END# or #DEADLINE_CHANGE_START#changing the deadline#DEADLINE_CHANGE_END# within a day.";
+$MESS["COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON_V2"] = "#MEMBERS# task is almost overdue. #EFFICIENCY_START#Efficiency KPI#EFFICIENCY_END# will be lowered.
+Consider #TASK_COMPLETE_START#closing the task#TASK_COMPLETE_END# or #DEADLINE_CHANGE_START#changing the deadline#DEADLINE_CHANGE_END# within a day to avoid this.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON_V2_NO_MEMBERS"] = "Task is almost overdue.
 Consider #TASK_COMPLETE_START#closing the task#TASK_COMPLETE_END# or #DEADLINE_CHANGE_START#changing the deadline#DEADLINE_CHANGE_END#.";
-$MESS["COMMENT_POSTER_COMMENT_TASK_EXPIRED_V2"] = "#MEMBERS# task is overdue.
+$MESS["COMMENT_POSTER_COMMENT_TASK_EXPIRED_V2"] = "#MEMBERS# task is overdue. #EFFICIENCY_START#Efficiency KPI#EFFICIENCY_END# lowered.
 Consider #TASK_COMPLETE_START#closing the task#TASK_COMPLETE_END# or #DEADLINE_CHANGE_START#changing the deadline#DEADLINE_CHANGE_END#.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_EXPIRED_V2_NO_MEMBERS"] = "Task is overdue.
 Consider #TASK_COMPLETE_START#closing the task#TASK_COMPLETE_END# or #DEADLINE_CHANGE_START#changing the deadline#DEADLINE_CHANGE_END#.";

@@ -239,6 +239,7 @@ class CrmManager extends Base
 			}
 
 			$result['sale_cashbox_check'] = $shopUrls['sale_cashbox_check'];
+			$result['sale_cashbox_correction'] = $shopUrls['sale_cashbox_correction'];
 			$result['cat_vat_admin'] = $shopUrls['cat_vat_admin'];
 			$result['sale_tax'] = $shopUrls['sale_tax'];
 			$result['sale_tax_rate'] = $shopUrls['sale_tax_rate'];

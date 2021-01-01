@@ -14,4 +14,5 @@ $MESS["BX24_INVITE_DIALOG_ERROR_EXTRANET_NO_SONET_GROUP_ADD"] = "Для доба
 $MESS["BX24_INVITE_DIALOG_WARNING_CREATE_MAILBOX_ERROR"] = "Ошибка при создании почтового ящика:";
 $MESS["BX24_INVITE_DIALOG_WARNING_MAILBOX_PASSWORD_CONFIRM"] = "Подтверждение пароля не совпадает с паролем";
 $MESS["BX24_INVITE_DIALOG_INTEGRATOR_INVITE_TEXT"] = "Приглашаю вас в наш Битрикс24! Вы получаете все права Интегратора, чтобы помочь нам с настройками и реализацией новых бизнес-сценариев в Битрикс24. Это полные права доступа, за исключением возможности приглашать или увольнять администраторов.";
+$MESS["INTRANET_INVITE_DIALOG_ERROR_LENGTH"] = "Превышена максимально допустимая длина в 50 символов";
 ?>

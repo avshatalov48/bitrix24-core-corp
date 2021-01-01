@@ -59,6 +59,7 @@
 			this.actFailure = BX.delegate(this.actFailure, this);
 
 			this.stub = null;
+			this.topPanelHeight = 75;
 			this.platformDelta = (window.platform === 'ios' ? 60 : 0);
 			this.formInterface = BX.Mobile.Grid.Form.getByFormId(this.option('formId'));
 			this.forceHideButtons = false;
@@ -225,32 +226,17 @@
 			BX.addCustomEvent("onTextPanelShown", BX.delegate(function(obj) {
 				if (!this.webViewHeight)
 				{
-					this.webViewHeight = obj.webViewHeight || document.body.clientHeight - 75;
+					this.webViewHeight = obj.webViewHeight || document.body.clientHeight - this.topPanelHeight;
 				}
-				var commentsBlockBody = BX('post-comments-wrap');
-
-				if (commentsBlockBody)
+				if (BX('post-comments-wrap'))
 				{
-					var firstNewComment = BX.findChild(commentsBlockBody, {className: 'post-comment-block-new'}, true);
-					if (firstNewComment)
-					{
-						var scrollTo = firstNewComment.offsetTop - 75;
-					}
-					else
-					{
-						var firstComment = BX.findChild(commentsBlockBody, {className: 'post-comment-block'}, true);
-						if (firstComment)
-						{
-							scrollTo = firstComment.offsetTop - 75;
-						}
-						else
-						{
-							this.showCommentsStub(commentsBlockBody);
-							scrollTo = this.stub.offsetTop;
-						}
-					}
-					window.scrollTo(0, scrollTo);
+					window.scrollTo(0, this.getCommentElementScrollTo());
 				}
+				BXMobileApp.Events.postToComponent(
+					'task.view.onPageLoaded',
+					{taskId: this.task.ID},
+					'tasks.view'
+				);
 				BXMobileApp.UI.Page.LoadingScreen.hide();
 			}, this));
 
@@ -385,8 +371,8 @@
 			}
 
 			var scrollTop = this.getScrollTop();
-			var bottomBorder = document.body.scrollHeight - 2 * this.webViewHeight + 75 + this.platformDelta;
-			var topBorder = this.webViewHeight - 75;
+			var bottomBorder = document.body.scrollHeight - 2 * this.webViewHeight + this.topPanelHeight + this.platformDelta;
+			var topBorder = this.webViewHeight - this.topPanelHeight;
 			var upButton = BX('up_button');
 			var downButton = BX('down_button');
 			var showClass = 'task-show-button';
@@ -472,6 +458,35 @@
 			return null;
 		},
 
+		getCommentElementScrollTo: function()
+		{
+			var commentsBlockBody = BX('post-comments-wrap');
+			var firstNewComment = BX.findChild(commentsBlockBody, {className: 'post-comment-block-new'}, true);
+			if (firstNewComment)
+			{
+				return firstNewComment.offsetTop - this.topPanelHeight;
+			}
+
+			var firstComment = BX.findChild(commentsBlockBody, {className: 'post-comment-block'}, true);
+			if (!firstComment)
+			{
+				this.showCommentsStub(commentsBlockBody);
+				return this.stub.offsetTop;
+			}
+			if (firstComment.offsetTop > 0)
+			{
+				return firstComment.offsetTop - this.topPanelHeight;
+			}
+
+			var collapsedBlock = BX.findChild(commentsBlockBody, {className: 'feed-com-collapsed'}, true);
+			if (collapsedBlock)
+			{
+				return collapsedBlock.offsetTop - this.topPanelHeight;
+			}
+
+			return commentsBlockBody.offsetTop - this.topPanelHeight;
+		},
+
 		hideCommentsStub: function()
 		{
 			if (this.stub && BX.isShown(this.stub))
@@ -485,7 +500,7 @@
 			if (!this.stub)
 			{
 				this.stub = BX('commentsStub');
-				this.stub.style.height = this.webViewHeight - 75 + 'px';
+				this.stub.style.height = this.webViewHeight - this.topPanelHeight + 'px';
 
 				BX.append(this.stub, commentsBlockBody);
 				BX.show(this.stub);

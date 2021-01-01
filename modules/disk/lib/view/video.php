@@ -328,9 +328,10 @@ class Video extends Base
 	/**
 	 * Returns true if attached object with this file should have limited rights while transform in progress.
 	 *
+	 * @param bool $isCheckLastTransformationStatus
 	 * @return bool
 	 */
-	public function isNeededLimitRightsOnTransformTime()
+	public function isNeededLimitRightsOnTransformTime(bool $isCheckLastTransformationStatus = true): bool
 	{
 		if($this->id > 0)
 		{
@@ -348,7 +349,7 @@ class Video extends Base
 			return false;
 		}
 
-		if($this->isLastTransformationFailed())
+		if($isCheckLastTransformationStatus && $this->isLastTransformationFailed())
 		{
 			return false;
 		}

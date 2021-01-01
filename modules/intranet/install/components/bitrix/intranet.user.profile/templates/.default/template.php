@@ -252,28 +252,29 @@ if (
 						.intranet-user-profile-apps-icon-active
 						.intranet-user-profile-apps-icon-complete
 						.intranet-user-profile-apps-icon-download
-					*/?>
+					*/
+					?>
 					<div class="intranet-user-profile-apps-title"><?=Loc::getMessage("INTRANET_USER_PROFILE_MOBILE_APP")?></div>
-					<a href="<?=Loc::getMessage("INTRANET_USER_PROFILE_MOBILE_GOOGLE_PLAY_URL")?>" target="_blank"
+					<span data-role="profile-android-app"
 						class="intranet-user-profile-apps-icon  intranet-user-profile-apps-icon-android
 						<?if ($arResult["User"]["APP_ANDROID_INSTALLED"]):?>
 							intranet-user-profile-apps-icon-active
 						<?else:?>
 							intranet-user-profile-apps-icon-download
 						<?endif?>"
-					></a>
-					<a href="<?=Loc::getMessage("INTRANET_USER_PROFILE_MOBILE_APPSTORE_URL")?>" target="_blank"
+					></span>
+					<span data-role="profile-ios-app"
 						class="intranet-user-profile-apps-icon intranet-user-profile-apps-icon-appstore
 						<?if ($arResult["User"]["APP_IOS_INSTALLED"]):?>
 							intranet-user-profile-apps-icon-active
 						<?else:?>
 							intranet-user-profile-apps-icon-download
 						<?endif?>"
-					></a>
+					></span>
 				</div>
 				<div class="intranet-user-profile-apps-item">
 					<div class="intranet-user-profile-apps-title"><?=Loc::getMessage("INTRANET_USER_PROFILE_DESKTOP_APP")?></div>
-					<a href="http://dl.bitrix24.com/b24/bitrix24_desktop.exe" target="_blank"
+					<a href="https://dl.bitrix24.com/b24/bitrix24_desktop.exe" target="_blank"
 						class="intranet-user-profile-apps-icon intranet-user-profile-apps-icon-windows
 						<?if ($arResult["User"]["APP_WINDOWS_INSTALLED"]):?>
 							intranet-user-profile-apps-icon-active
@@ -281,7 +282,7 @@ if (
 							intranet-user-profile-apps-icon-download
 						<?endif?>"
 					></a>
-					<a href="http://dl.bitrix24.com/b24/bitrix24_desktop.dmg" target="_blank"
+					<a href="https://dl.bitrix24.com/b24/bitrix24_desktop.dmg" target="_blank"
 						class="intranet-user-profile-apps-icon intranet-user-profile-apps-icon-iphone
 						<?if ($arResult["User"]["APP_MAC_INSTALLED"]):?>
 							intranet-user-profile-apps-icon-active
@@ -676,88 +677,81 @@ if ($arResult["adminRightsRestricted"])
 ?>
 
 <script>
-	BX.ready(function () {
-		BX.message({
-			"INTRANET_USER_PROFILE_REINVITE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_REINVITE"))?>",
-			"INTRANET_USER_PROFILE_DELETE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_DELETE"))?>",
-			"INTRANET_USER_PROFILE_FIRE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_FIRE"))?>",
-			"INTRANET_USER_PROFILE_MOVE_TO_INTRANET" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_MOVE_TO_INTRANET"))?>",
-			"INTRANET_USER_PROFILE_HIRE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_HIRE"))?>",
-			"INTRANET_USER_PROFILE_ADMIN_MODE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_ADMIN_MODE"))?>",
-			"INTRANET_USER_PROFILE_QUIT_ADMIN_MODE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_QUIT_ADMIN_MODE"))?>",
-			"INTRANET_USER_PROFILE_SET_ADMIN_RIGHTS" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_SET_ADMIN_RIGHTS"))?>",
-			"INTRANET_USER_PROFILE_REMOVE_ADMIN_RIGHTS" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_REMOVE_ADMIN_RIGHTS"))?>",
-			"INTRANET_USER_PROFILE_SYNCHRONIZE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_SYNCHRONIZE"))?>",
-			"INTRANET_USER_PROFILE_FIRE_CONFIRM" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_FIRE_CONFIRM"))?>",
-			"INTRANET_USER_PROFILE_DELETE_CONFIRM" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_DELETE_CONFIRM"))?>",
-			"INTRANET_USER_PROFILE_HIRE_CONFIRM" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_HIRE_CONFIRM"))?>",
-			"INTRANET_USER_PROFILE_YES" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_YES"))?>",
-			"INTRANET_USER_PROFILE_NO" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_NO"))?>",
-			"INTRANET_USER_PROFILE_MOVE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_MOVE"))?>",
-			"INTRANET_USER_PROFILE_CLOSE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_CLOSE"))?>",
-			"INTRANET_USER_PROFILE_SAVE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_SAVE"))?>",
-			"INTRANET_USER_PROFILE_MOVE_TO_INTRANET_TITLE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_MOVE_TO_INTRANET_TITLE"))?>",
-			"INTRANET_USER_PROFILE_REINVITE_SUCCESS" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_REINVITE_SUCCESS"))?>",
-			"INTRANET_USER_PROFILE_PHOTO_DELETE_CONFIRM" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_PHOTO_DELETE_CONFIRM"))?>",
-			"INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_CONFIRM" : "<?=\CUtil::JSEscape($moveRightsConfirmText)?>",
-			"INTRANET_USER_PROFILE_FIELD_NAME" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_FIELD_NAME"))?>",
-			"INTRANET_USER_PROFILE_FIELD_LAST_NAME" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_FIELD_LAST_NAME"))?>",
-			"INTRANET_USER_PROFILE_FIELD_SECOND_NAME" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_FIELD_SECOND_NAME"))?>",
-			"INTRANET_USER_PROFILE_TAGS_POPUP_ADD" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_TAGS_POPUP_ADD"))?>",
-			"INTRANET_USER_PROFILE_CONFIRM_PASSWORD" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_CONFIRM_PASSWORD"))?>",
-			"INTRANET_USER_PROFILE_TAGS_POPUP_TITLE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_TAGS_POPUP_TITLE"))?>",
-			"INTRANET_USER_PROFILE_TAGS_POPUP_SEARCH_TITLE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_TAGS_POPUP_SEARCH_TITLE"))?>",
-			"INTRANET_USER_PROFILE_TAGS_POPUP_HINT_3" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_TAGS_POPUP_HINT_3"))?>",
-			"INTRANET_USER_PROFILE_TAGS_POPUP_HINT_2" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_TAGS_POPUP_HINT_2"))?>",
-			"INTRANET_USER_PROFILE_APP_INSTALL" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_APP_INSTALL"))?>",
-			"INTRANET_USER_PROFILE_APP_SEND" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_APP_SEND"))?>",
-			"INTRANET_USER_PROFILE_APP_INSTALL_TEXT" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_APP_INSTALL_TEXT"))?>",
-			"INTRANET_USER_PROFILE_APP_PHONE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_APP_PHONE"))?>",
-			"INTRANET_USER_FIILDS_SETTINGS" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_FIILDS_SETTINGS"))?>",
-			"INTRANET_USER_PROFILE_SET_INEGRATOR_RIGHTS" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_SET_INEGRATOR_RIGHTS"))?>",
-			"INTRANET_USER_PROFILE_SET_INTEGRATOR_RIGHTS_CONFIRM" : "<?=\CUtil::JSEscape(
-				Loc::getMessage("INTRANET_USER_PROFILE_SET_INTEGRATOR_RIGHTS_CONFIRM", array(
-					"#NAME#" => "<b>".$arResult["User"]["FULL_NAME"]."</b>",
-					"#LINK_START#" => "<a href=\"javascript:void(0)\" onclick='top.BX.Helper.show(\"redirect=detail&code=7725333\");'>",
-					"#LINK_END#" => "</a>"
-				))
-			)?>",
-			"INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT"))?>"
-		});
-
-		new BX.Intranet.UserProfile.Manager({
-			signedParameters: '<?=$this->getComponent()->getSignedParameters()?>',
-			componentName: '<?=$this->getComponent()->getName() ?>',
-			canEditProfile: '<?=$arResult["Permissions"]['edit'] ? "Y" : "N"?>',
-			badgesData: <?=(\CUtil::phpToJSObject(!empty($arResult['Gratitudes']['BADGES']) ? $arResult['Gratitudes']['BADGES'] : array()))?>,
-			gratPostListPageSize: <?=intval($arParams['GRAT_POST_LIST_PAGE_SIZE'])?>,
-			userId: <?=intval($arResult["User"]["ID"])?>,
-			userStatus: <?=\CUtil::PhpToJSObject($arResult["User"]["STATUS"])?>,
-			isOwnProfile: '<?=$arResult["IsOwnProfile"] ? "Y" : "N"?>',
-			urls: <?=\CUtil::PhpToJSObject($arResult["Urls"])?>,
-			isSessionAdmin: "<?=$arResult["User"]["IS_SESSION_ADMIN"] ? "Y" : "N"?>",
-			showSonetAdmin: "<?=$arResult["User"]["SHOW_SONET_ADMIN"] ? "Y" : "N"?>",
-			isExtranetUser: "<?=$arResult["User"]["IS_EXTRANET"] ? "Y" : "N"?>",
-			isCurrentUserIntegrator: "<?=$arResult["IS_CURRENT_USER_INTEGRATOR"] ? "Y" : "N"?>",
-			languageId: "<?=LANGUAGE_ID?>",
-			siteId: "<?=SITE_ID?>",
-			isCloud: "<?=$arResult["isCloud"] ? "Y" : "N"?>",
-			isRusCloud: "<?=$arResult["isRusCloud"] ? "Y" : "N"?>",
-			adminRightsRestricted: "<?=$arResult["adminRightsRestricted"] ? "Y" : "N"?>",
-			delegateAdminRightsRestricted: "<?=$arResult["delegateAdminRightsRestricted"] ? "Y" : "N"?>",
-			isFireUserEnabled: "<?=$arResult["isFireUserEnabled"] ? "Y" : "N"?>",
-			profilePostData: {
-				formId: '<?=(!empty($arResult["ProfileBlogPost"]["formParams"]) ? \CUtil::JSEscape($arResult["ProfileBlogPost"]["formParams"]["FORM_ID"]) : '')?>',
-				lheId: '<?=(!empty($arResult["ProfileBlogPost"]["formParams"]) ? \CUtil::JSEscape($arResult["ProfileBlogPost"]["formParams"]["LHE"]["id"]) : '')?>'
-			}
-		});
+	BX.message({
+		"INTRANET_USER_PROFILE_REINVITE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_REINVITE"))?>",
+		"INTRANET_USER_PROFILE_DELETE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_DELETE"))?>",
+		"INTRANET_USER_PROFILE_FIRE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_FIRE"))?>",
+		"INTRANET_USER_PROFILE_MOVE_TO_INTRANET" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_MOVE_TO_INTRANET"))?>",
+		"INTRANET_USER_PROFILE_HIRE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_HIRE"))?>",
+		"INTRANET_USER_PROFILE_ADMIN_MODE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_ADMIN_MODE"))?>",
+		"INTRANET_USER_PROFILE_QUIT_ADMIN_MODE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_QUIT_ADMIN_MODE"))?>",
+		"INTRANET_USER_PROFILE_SET_ADMIN_RIGHTS" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_SET_ADMIN_RIGHTS"))?>",
+		"INTRANET_USER_PROFILE_REMOVE_ADMIN_RIGHTS" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_REMOVE_ADMIN_RIGHTS"))?>",
+		"INTRANET_USER_PROFILE_SYNCHRONIZE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_SYNCHRONIZE"))?>",
+		"INTRANET_USER_PROFILE_FIRE_CONFIRM" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_FIRE_CONFIRM"))?>",
+		"INTRANET_USER_PROFILE_DELETE_CONFIRM" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_DELETE_CONFIRM"))?>",
+		"INTRANET_USER_PROFILE_HIRE_CONFIRM" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_HIRE_CONFIRM"))?>",
+		"INTRANET_USER_PROFILE_YES" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_YES"))?>",
+		"INTRANET_USER_PROFILE_NO" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_NO"))?>",
+		"INTRANET_USER_PROFILE_MOVE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_MOVE"))?>",
+		"INTRANET_USER_PROFILE_CLOSE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_CLOSE"))?>",
+		"INTRANET_USER_PROFILE_SAVE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_SAVE"))?>",
+		"INTRANET_USER_PROFILE_MOVE_TO_INTRANET_TITLE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_MOVE_TO_INTRANET_TITLE"))?>",
+		"INTRANET_USER_PROFILE_REINVITE_SUCCESS" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_REINVITE_SUCCESS"))?>",
+		"INTRANET_USER_PROFILE_PHOTO_DELETE_CONFIRM" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_PHOTO_DELETE_CONFIRM"))?>",
+		"INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_CONFIRM" : "<?=\CUtil::JSEscape($moveRightsConfirmText)?>",
+		"INTRANET_USER_PROFILE_FIELD_NAME" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_FIELD_NAME"))?>",
+		"INTRANET_USER_PROFILE_FIELD_LAST_NAME" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_FIELD_LAST_NAME"))?>",
+		"INTRANET_USER_PROFILE_FIELD_SECOND_NAME" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_FIELD_SECOND_NAME"))?>",
+		"INTRANET_USER_PROFILE_TAGS_POPUP_ADD" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_TAGS_POPUP_ADD"))?>",
+		"INTRANET_USER_PROFILE_CONFIRM_PASSWORD" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_CONFIRM_PASSWORD"))?>",
+		"INTRANET_USER_PROFILE_TAGS_POPUP_TITLE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_TAGS_POPUP_TITLE"))?>",
+		"INTRANET_USER_PROFILE_TAGS_POPUP_SEARCH_TITLE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_TAGS_POPUP_SEARCH_TITLE"))?>",
+		"INTRANET_USER_PROFILE_TAGS_POPUP_HINT_3" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_TAGS_POPUP_HINT_3"))?>",
+		"INTRANET_USER_PROFILE_TAGS_POPUP_HINT_2" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_TAGS_POPUP_HINT_2"))?>",
+		"INTRANET_USER_PROFILE_APP_INSTALL" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_APP_INSTALL"))?>",
+		"INTRANET_USER_PROFILE_APP_SEND" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_APP_SEND"))?>",
+		"INTRANET_USER_PROFILE_APP_INSTALL_TEXT" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_APP_INSTALL_TEXT"))?>",
+		"INTRANET_USER_PROFILE_APP_PHONE" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_APP_PHONE"))?>",
+		"INTRANET_USER_FIILDS_SETTINGS" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_FIILDS_SETTINGS"))?>",
+		"INTRANET_USER_PROFILE_SET_INEGRATOR_RIGHTS" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_SET_INEGRATOR_RIGHTS"))?>",
+		"INTRANET_USER_PROFILE_FIRE_INVITED_USER" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_FIRE_INVITED_USER"))?>",
+		"INTRANET_USER_PROFILE_SET_INTEGRATOR_RIGHTS_CONFIRM" : "<?=\CUtil::JSEscape(
+			Loc::getMessage("INTRANET_USER_PROFILE_SET_INTEGRATOR_RIGHTS_CONFIRM", array(
+				"#NAME#" => "<b>".$arResult["User"]["FULL_NAME"]."</b>",
+				"#LINK_START#" => "<a href=\"javascript:void(0)\" onclick='top.BX.Helper.show(\"redirect=detail&code=7725333\");'>",
+				"#LINK_END#" => "</a>"
+			))
+		)?>",
+		"INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT" : "<?=\CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT"))?>"
 	});
 
-	new BX.Intranet.UserProfile.EntityEditor({
+	new BX.Intranet.UserProfile.Manager({
 		signedParameters: '<?=$this->getComponent()->getSignedParameters()?>',
 		componentName: '<?=$this->getComponent()->getName() ?>',
+		canEditProfile: '<?=$arResult["Permissions"]['edit'] ? "Y" : "N"?>',
+		badgesData: <?=(\CUtil::phpToJSObject(!empty($arResult['Gratitudes']['BADGES']) ? $arResult['Gratitudes']['BADGES'] : array()))?>,
+		gratPostListPageSize: <?=intval($arParams['GRAT_POST_LIST_PAGE_SIZE'])?>,
+		userId: <?=intval($arResult["User"]["ID"])?>,
+		userStatus: <?=\CUtil::PhpToJSObject($arResult["User"]["STATUS"])?>,
+		isOwnProfile: '<?=$arResult["IsOwnProfile"] ? "Y" : "N"?>',
+		urls: <?=\CUtil::PhpToJSObject($arResult["Urls"])?>,
+		isSessionAdmin: "<?=$arResult["User"]["IS_SESSION_ADMIN"] ? "Y" : "N"?>",
+		showSonetAdmin: "<?=$arResult["User"]["SHOW_SONET_ADMIN"] ? "Y" : "N"?>",
+		isExtranetUser: "<?=$arResult["User"]["IS_EXTRANET"] ? "Y" : "N"?>",
+		isCurrentUserIntegrator: "<?=$arResult["IS_CURRENT_USER_INTEGRATOR"] ? "Y" : "N"?>",
+		languageId: "<?=LANGUAGE_ID?>",
+		siteId: "<?=SITE_ID?>",
+		isCloud: "<?=$arResult["isCloud"] ? "Y" : "N"?>",
+		isRusCloud: "<?=$arResult["isRusCloud"] ? "Y" : "N"?>",
+		adminRightsRestricted: "<?=$arResult["adminRightsRestricted"] ? "Y" : "N"?>",
+		delegateAdminRightsRestricted: "<?=$arResult["delegateAdminRightsRestricted"] ? "Y" : "N"?>",
+		isFireUserEnabled: "<?=$arResult["isFireUserEnabled"] ? "Y" : "N"?>",
+		profilePostData: {
+			formId: '<?=(!empty($arResult["ProfileBlogPost"]["formParams"]) ? \CUtil::JSEscape($arResult["ProfileBlogPost"]["formParams"]["FORM_ID"]) : '')?>',
+			lheId: '<?=(!empty($arResult["ProfileBlogPost"]["formParams"]) ? \CUtil::JSEscape($arResult["ProfileBlogPost"]["formParams"]["LHE"]["id"]) : '')?>'
+		},
 		initialFields: <?=CUtil::PhpToJSObject($arResult["User"])?>,
-		isCloud: '<?=$arResult["isCloud"] ? "Y" : "N"?>',
 		gridId: '<?='INTRANET_USER_GRID_'.SITE_ID?>',
 		isCurrentUserAdmin: '<?=$arResult["IS_CURRENT_USER_ADMIN"] ? "Y" : "N"?>',
 		voximplantEnablePhones: <?=CUtil::PhpToJSObject($arResult["User"]["VOXIMPLANT_ENABLE_PHONES"])?>

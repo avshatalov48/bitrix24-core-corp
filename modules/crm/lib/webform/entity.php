@@ -103,6 +103,9 @@ class Entity
 					),
 					'OPENED' => array(
 						'TEMPLATE' => 'Y'
+					),
+					'SOURCE_ID' => array(
+						'TEMPLATE' => 'WEBFORM'
 					)
 				)
 			),

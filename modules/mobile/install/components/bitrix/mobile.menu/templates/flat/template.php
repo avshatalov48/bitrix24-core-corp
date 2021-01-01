@@ -168,7 +168,7 @@ if (CModule::IncludeModule('im'))
 		<?endif;?>
 	</div>
 	<? if (CMobile::getInstance()->getApiVersion()>15 && count($arResult["MARKETPLACE_MENU"]) > 0): ?>
-		<div class="menu-separator"><?= Loc::getMessage("MB_MARKETPLACE_GROUP_TITLE"); ?></div>
+		<div class="menu-separator"><?= Loc::getMessage("MB_MARKETPLACE_GROUP_TITLE_2"); ?></div>
 		<div class="menu-section menu-section-groups">
 			<? foreach ($arResult["MARKETPLACE_MENU"] as $key => $value): ?>
 				<div class="menu-item" data-bx24ModernStyle="Y" data-mp-app-id="<?=$value["id"]?>" data-mp-app="Y" data-url="<?= $value["url"] ?>">

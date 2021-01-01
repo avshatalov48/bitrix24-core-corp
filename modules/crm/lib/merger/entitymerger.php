@@ -1601,6 +1601,17 @@ abstract class EntityMerger
 			$isMultiple = $fieldInfo['MULTIPLE'] === 'Y';
 			$typeID = $fieldInfo['USER_TYPE_ID'];
 
+			if (
+				!$isMultiple &&
+				$typeID == 'boolean' &&
+				isset($targ[$fieldID]) &&
+				isset($seed[$fieldID]) &&
+				(in_array($targ[$fieldID], [false, 0, '0', 'N', ''], true))
+			)
+			{
+				unset($targ[$fieldID]);
+			}
+
 			if(!$isMultiple
 				&& isset($targ[$fieldID])
 				&& isset($seed[$fieldID])

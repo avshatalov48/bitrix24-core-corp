@@ -1,5 +1,6 @@
 <?
 $MESS["EXTRANET_LEFT_MENU_LIVE_FEED"] = "Живая лента";
+$MESS["EXTRANET_LEFT_MENU_LIVE_FEED2"] = "Новости";
 $MESS["EXTRANET_LEFT_MENU_TASKS"] = "Задачи и Проекты";
 $MESS["EXTRANET_LEFT_MENU_CALENDAR"] = "Календарь";
 $MESS["EXTRANET_LEFT_MENU_DISK"] = "Мой диск";

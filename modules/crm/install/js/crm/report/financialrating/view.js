@@ -101,7 +101,7 @@
 
 			return '<div class="crm-report-financial-rating-modal" style="border-color: ' + data.color + ';">' +
 			'			<div class="crm-report-financial-rating-modal-title">' +
-							data.clientTitle +
+							BX.util.htmlspecialchars(data.clientTitle) +
 			'			</div>' +
 			'            <div class="crm-report-financial-rating-group-values">' +
 			'				<div class="crm-report-financial-rating-modal-line">' +

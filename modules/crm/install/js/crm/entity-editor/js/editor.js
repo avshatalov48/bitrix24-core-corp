@@ -345,6 +345,10 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 						entityTypeId: this.getEntityTypeId(),
 						entityScope: BX.prop.getString(settings, "ENTITY_SCOPE", ""),
 						isPermitted: BX.prop.getBoolean(settings, "IS_PERMITTED", true),
+							isPhaseDependent: BX.prop.getBoolean(settings, "IS_PHASE_DEPENDENT", true),
+							isAttrConfigButtonHidden: BX.prop.getBoolean(
+								settings, "IS_ATTR_CONFIG_BUTTON_HIDDEN", true
+							),
 						lockScript: BX.prop.getString(settings, "LOCK_SCRIPT", ""),
 						captions: BX.prop.getObject(settings, "CAPTIONS", {})
 					}
@@ -416,7 +420,9 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 	};
 	BX.Crm.EntityEditor.prototype.processControlRemove = function(control)
 	{
-		if(control instanceof BX.Crm.EntityEditorField || control instanceof BX.Crm.EntityEditorSubsection)
+		if(control instanceof BX.Crm.EntityEditorField
+			|| control instanceof BX.UI.EntityEditorField
+			|| control instanceof BX.Crm.EntityEditorSubsection)
 		{
 			this.addAvailableSchemeElement(control.getSchemeElement());
 		}

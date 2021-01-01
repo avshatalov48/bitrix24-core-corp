@@ -1095,6 +1095,67 @@ ChatDataConverter.getListElementByDepartment = function(element)
 	return item;
 };
 
+ChatDataConverter.getCallListElement = function (callStatus, call)
+{
+	let elementConfig = {};
+	if (callStatus === 'local')
+	{
+		elementConfig = {
+			text: BX.message('CALL_STATUS_OPEN'),
+			color: "#EEF2F4",
+			background: "#47AADE",
+			canJoin: true,
+		}
+	}
+	else if (callStatus === 'none')
+	{
+		elementConfig = {
+			text: BX.message('CALL_STATUS_JOIN'),
+			color: "#EEF2F4",
+			background: "#91C000",
+			canJoin: true,
+		}
+	}
+	else
+	{
+		elementConfig = {
+			text: BX.message('CALL_STATUS_REMOTE'),
+			color: "#525C69",
+			background: "#EEF2F4",
+			canJoin: false
+		}
+	}
+
+	return {
+		id: 'call'+call.id,
+		title: call.associatedEntity.name,
+		subtitle: elementConfig.text,
+		imageUrl: ChatUtils.getAvatar(call.associatedEntity.avatar),
+		useLetterImage: true,
+		unselectable: true,
+		color: "#368c00",
+		sectionCode: 'call',
+		params: {
+			call: {id: call.id, provider: call.provider, associatedEntity: call.associatedEntity},
+			isLocal: callStatus === 'local',
+			canJoin: elementConfig.canJoin,
+			type: 'call',
+		},
+		styles: {
+			title: {
+				image: { name: "status_call", sizeMultiplier: 1.4},
+				font: { fontStyle: "semibold" }
+			},
+			subtitle: {
+				font: { size: '13', fontStyle: 'medium', color: elementConfig.color },
+				cornerRadius: 12,
+				backgroundColor: elementConfig.background,
+				padding: {top:3.5, right:12, bottom:3.5, left:12}
+			}
+		},
+	}
+}
+
 ChatDataConverter.getPushFormat = function(push)
 {
 	if (typeof (push) !== 'object' || typeof (push.params) === 'undefined')

@@ -912,7 +912,7 @@ function ShowIntranetButtonHelloBlock($params)
 					<?=Loc::getMessage('CRM_WEBFORM_EDIT_HELLO_PAGES_EXCLUDE')?>:
 				<?endif;?>
 			</span>
-			<span data-hint="<?=htmlspecialcharsbx(nl2br(Loc::getMessage('CRM_WEBFORM_EDIT_HINT_ANY')))?>"></span>
+			<span data-hint-html data-hint="<?=htmlspecialcharsbx(nl2br(Loc::getMessage('CRM_WEBFORM_EDIT_HINT_ANY')))?>"></span>
 		</div>
 		<div class="crm-button-edit-hello-input">
 			<?

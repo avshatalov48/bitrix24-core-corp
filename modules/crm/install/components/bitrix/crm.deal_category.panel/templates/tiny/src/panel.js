@@ -27,7 +27,7 @@ export class Panel extends Event.EventEmitter
 	{
 		const item = {
 			id: options.ID,
-			text: Text.encode(options.NAME),
+			html: Text.encode(options.NAME),
 			href: options.URL,
 		};
 
@@ -36,7 +36,7 @@ export class Panel extends Event.EventEmitter
 		if (Type.isNumber(count) && count > 0)
 		{
 			const counter = `<span class="main-buttons-item-counter">${options.COUNTER}</span>`;
-			item.text = `${item.text} ${counter}`;
+			item.html = `${item.html} ${counter}`;
 		}
 
 		return item;

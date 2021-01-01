@@ -35,7 +35,16 @@ class Task
 		{
 			return false;
 		}
-		$task = new \CTaskItem($taskId, static::getUser()->GetID());
+
+		try
+		{
+			$task = new \CTaskItem($taskId, static::getUser()->GetID());
+		}
+		catch (\CTaskAssertException $e)
+		{
+			return false;
+		}
+
 		$access = $task->checkCanRead();
 
 		return !!$access;

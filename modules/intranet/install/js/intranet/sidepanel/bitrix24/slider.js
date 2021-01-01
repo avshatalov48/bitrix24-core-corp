@@ -244,6 +244,7 @@ BX.Intranet.Bitrix24.Slider.prototype =
 		if (this.getImBar() && !this.isMessengerOpen())
 		{
 			var pos = this.getImBar().getBoundingClientRect();
+			this.getImBar().style.top = window.pageYOffset + 'px';
 			this.getImBar().style.height = document.documentElement.clientHeight - pos.top + "px";
 		}
 	},

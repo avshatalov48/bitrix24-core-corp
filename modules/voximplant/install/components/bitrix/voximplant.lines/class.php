@@ -135,6 +135,7 @@ class VoximplantLinesComponent extends \CBitrixComponent
 			array("id" => "DESCRIPTION", "name" => GetMessage("VOX_LINES_HEADER_DESCRIPTION"), "default" => true, "editable" => false),
 		);
 		$result["GRID_ID"] = $this->gridId;
+		$result["TELEPHONY_AVAILABLE"] = \Bitrix\Voximplant\Limits::canManageTelephony();
 
 		return $result;
 	}

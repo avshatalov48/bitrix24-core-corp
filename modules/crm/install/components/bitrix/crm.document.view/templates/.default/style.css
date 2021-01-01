@@ -716,3 +716,10 @@
 #crm-document-pdf .toolbarViewerMiddle {
 	left: 55%;
 }
+.docs-preview-public-view-info {
+	color: #535c6a;
+	font-size: 13px;
+}
+.docs-preview-public-view-info span {
+	font-weight: bold;
+}

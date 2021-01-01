@@ -822,6 +822,22 @@ $APPLICATION->RestartBuffer();
 			}
 			elseif($blockCode == 'ACCESS_TEMPLATE')
 			{
+				if ($editMode)
+				{
+					$permissions = $template->getAccessPermissions();
+				}
+				else
+				{
+					$permissions = \Bitrix\Tasks\Access\Permission\TasksTemplatePermissionTable::wakeUpCollection([
+						[
+							'ID' => 0,
+							'ACCESS_CODE' => 'U' . (int) $arParams["USER_ID"],
+							'PERMISSION_ID' => \Bitrix\Tasks\Access\Permission\PermissionDictionary::TEMPLATE_FULL,
+							'VALUE' => 1
+						]
+					]);
+				}
+
 				$APPLICATION->IncludeComponent(
 					'bitrix:tasks.widget.template.access',
 					'',
@@ -832,7 +848,7 @@ $APPLICATION->RestartBuffer();
 						'CAN_READ' => 'Y',
 						'CAN_UPDATE' => $template->canUpdateRights(),
 						'USER_DATA' => $arResult['DATA']['USER'],
-						'PERMISSIONS' => $template->getAccessPermissions(),
+						'PERMISSIONS' => $permissions,
 						'EDIT_MODE' => $editMode,
 						'TEMPLATE_ID' => $template->getId(),
 					),

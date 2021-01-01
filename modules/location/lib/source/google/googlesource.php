@@ -2,71 +2,97 @@
 
 namespace Bitrix\Location\Source\Google;
 
-use Bitrix\Location\Source\BaseSource;
-use \Bitrix\Location\Common\CachedPool;
-use Bitrix\Main\Config\Option;
-use Bitrix\Main\Loader;
+use Bitrix\Location\Common\Pool;
+use Bitrix\Location\Entity\Source;
+use Bitrix\Location\Repository\Location\IRepository;
+use Bitrix\Location\Common\CachedPool;
+use Bitrix\Main\Data\Cache;
+use Bitrix\Main\EventManager;
 use Bitrix\Main\Web\HttpClient;
 
-final class GoogleSource extends BaseSource
+/**
+ * Class GoogleSource
+ * @package Bitrix\Location\Source\Google
+ * @internal
+ */
+class GoogleSource extends Source
 {
-	protected $code = 'GOOGLE';
-	protected $apiKey = '';
-
 	/**
-	 * GoogleSource constructor.
-	 * @param HttpClient $httpClient
-	 * @param CachedPool|null $cachePool
+	 * @inheritDoc
 	 */
-	public function __construct(HttpClient $httpClient, CachedPool $cachePool = null)
+	public function makeRepository(): IRepository
 	{
-		$apiKey = static::findApiKey();
-		$apiKeyBack = static::findApiKeyBackend();
-		$this->apiKey = $apiKey;
-		$this->repository = new Repository($apiKeyBack, $httpClient, $this, $cachePool);
-	}
+		static $result = null;
 
-	/**
-	 * @return string|null
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
-	 */
-	public static function findApiKey(): ?string
-	{
-		$result = '';
+		if (!is_null($result))
+		{
+			return $result;
+		}
 
-		if($apiKey = Option::get('location', 'google_map_api_key', ''))
+		$httpClient = new HttpClient(
+			[
+				'version' => '1.1',
+				'socketTimeout' => 30,
+				'streamTimeout' => 30,
+				'redirect' => true,
+				'redirectMax' => 5,
+			]
+		);
+
+		if (defined('LOCATION_GOOGLE_PROXY_HOST'))
 		{
-			$result = $apiKey;
+			$proxyHost = LOCATION_GOOGLE_PROXY_HOST;
+			$proxyPort = null;
+
+			if(defined('LOCATION_GOOGLE_PROXY_PORT'))
+			{
+				$proxyPort = LOCATION_GOOGLE_PROXY_PORT;
+			}
+
+			$httpClient->setProxy($proxyHost, $proxyPort);
 		}
-		else if(Loader::includeModule('fileman'))
-		{
-			$result = \Bitrix\Fileman\UserField\Types\AddressType::getApiKey();
-		}
+
+		$cacheTTL = 2592000; //month
+		$poolSize = 100;
+		$pool = new Pool($poolSize);
+
+		$cachePool = new CachedPool(
+			$pool,
+			$cacheTTL,
+			'locationSourceGoogleRequester',
+			Cache::createInstance(),
+			EventManager::getInstance()
+		);
+
+		$result = new Repository(
+			$this->config->getValue('API_KEY_BACKEND'),
+			$httpClient,
+			$this,
+			$cachePool
+		);
 
 		return $result;
 	}
 
-	public static function findApiKeyBackend(): ?string
-	{
-		return Option::get('location', 'google_map_api_key_backend', '');
-	}
-
+	/**
+	 * @inheritDoc
+	 */
 	public function getJSParams(): array
 	{
 		return [
-			'apiKey' => $this->apiKey,
-			'showPhotos' => Option::get('location', 'google_map_show_photos', 'N') === 'Y',
-			'useGeocodingService' => Option::get('location', 'google_use_geocoding_service', 'N') === 'Y',
+			'apiKey' => $this->config->getValue('API_KEY_FRONTEND'),
+			'showPhotos' => $this->config->getValue('SHOW_PHOTOS_ON_MAP'),
+			'useGeocodingService' => $this->config->getValue('USE_GEOCODING_SERVICE'),
 		];
 	}
 
-	/** @inheritDoc */
+	/**
+	 * @inheritDoc
+	 *
+	 * @see https://developers.google.com/maps/faq#languagesupport
+	 */
 	public function convertLang(string $bitrixLang): string
 	{
-		// https://developers.google.com/maps/faq#languagesupport
-
 		$langMap = [
 			'br' => 'pt-BR',	// Portuguese (Brazil)
 			'la' => 'es', 		// Spanish

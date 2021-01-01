@@ -1,7 +1,7 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 <?
 
-if (array_key_exists("CATEGORY", $arParams) && strlen($arParams["CATEGORY"]) > 0)
+if (array_key_exists("CATEGORY", $arParams) && $arParams["CATEGORY"] <> '')
 	echo GetMessage("BLOG_BLOG_BLOG_CATEGORY_FILTER", array("#CATEGORY#" => htmlspecialcharsbx($arParams["CATEGORY"])));
 
 if(count($arResult["POSTS"])>0)
@@ -18,7 +18,7 @@ if(count($arResult["POSTS"])>0)
 						<span class="blog-post-date"><b><?=$CurPost["DATE_PUBLISH_FORMATED"]?></b></span><br />
 						<span class="blog-author"><b><a href="<?=$CurPost["urlToAuthor"]?>" class="blog-user"></a>&nbsp;<?
 						
-						if (COption::GetOptionString("blog", "allow_alias", "Y") == "Y" && (strlen($CurPost["urlToBlog"]) > 0 || strlen($CurPost["urlToAuthor"]) > 0) && array_key_exists("BLOG_USER_ALIAS", $CurPost) && strlen($CurPost["BLOG_USER_ALIAS"]) > 0)
+						if (COption::GetOptionString("blog", "allow_alias", "Y") == "Y" && ($CurPost["urlToBlog"] <> '' || $CurPost["urlToAuthor"] <> '') && array_key_exists("BLOG_USER_ALIAS", $CurPost) && $CurPost["BLOG_USER_ALIAS"] <> '')
 						{
 							$arTmpUser = array(
 								"NAME" => "",
@@ -28,7 +28,7 @@ if(count($arResult["POSTS"])>0)
 								"NAME_LIST_FORMATTED" => $CurPost["~BLOG_USER_ALIAS"],
 							);
 						}
-						elseif (strlen($CurPost["urlToBlog"]) > 0 || strlen($CurPost["urlToAuthor"]) > 0)
+						elseif ($CurPost["urlToBlog"] <> '' || $CurPost["urlToAuthor"] <> '')
 							$arTmpUser = array(
 								"NAME" => $CurPost["~AUTHOR_NAME"],
 								"LAST_NAME" => $CurPost["~AUTHOR_LAST_NAME"],
@@ -105,7 +105,7 @@ if(count($arResult["POSTS"])>0)
 					<?if($arResult["enable_trackback"] == "Y" && $CurPost["ENABLE_TRACKBACK"]=="Y"):?>
 						<a href="<?=$CurPost["urlToPost"]?>#trackback">Trackbacks: <?=$CurPost["NUM_TRACKBACKS"];?></a>&nbsp;|&nbsp;
 					<?endif;?>
-					<a href="<?=$CurPost["urlToPost"]?>"><?=GetMessage("BLOG_BLOG_BLOG_VIEWS")?> <?=IntVal($CurPost["VIEWS"]);?></a>&nbsp;|&nbsp;
+					<a href="<?=$CurPost["urlToPost"]?>"><?=GetMessage("BLOG_BLOG_BLOG_VIEWS")?> <?=intval($CurPost["VIEWS"]);?></a>&nbsp;|&nbsp;
 					<a href="<?=$CurPost["urlToPost"]?>#comment"><?=GetMessage("BLOG_BLOG_BLOG_COMMENTS")?> <?=$CurPost["NUM_COMMENTS"];?></a></td>
 				</tr>
 				</table>
@@ -115,7 +115,7 @@ if(count($arResult["POSTS"])>0)
 		<br />
 		<?
 	}
-	if(strlen($arResult["NAV_STRING"])>0)
+	if($arResult["NAV_STRING"] <> '')
 		echo $arResult["NAV_STRING"];
 }
 ?>	

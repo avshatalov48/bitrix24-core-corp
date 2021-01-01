@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Main\Localization\Loc;
 
 CJSCore::Init(["voximplant.common", "voximplant.callerid", "voximplant.numberrent", "ui.notification", "ui.alerts", "ui.buttons", "ui.buttons.icons", "sidepanel"]);
+$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 
 $isBitrix24Template = (SITE_TEMPLATE_ID == "bitrix24");
 if($isBitrix24Template)
@@ -71,6 +72,8 @@ $APPLICATION->IncludeComponent(
 
 	BX.ready(function()
 	{
-		BX.Voximplant.Lines.init();
+		BX.Voximplant.Lines.init({
+			isTelephonyAvailable: '<?= $arResult['TELEPHONY_AVAILABLE'] ? 'Y' : 'N' ?>',
+		});
 	});
 </script>

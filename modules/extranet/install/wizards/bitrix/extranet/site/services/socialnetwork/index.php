@@ -36,13 +36,12 @@ if (WIZARD_B24_TO_CP)
 	$calendarGroupIBlockID = 0;
 	$photoUserIBlockID = 0;
 	$photoGroupIBlockID = 0;
-	$tasksIblockId = 0;
 
 	if (CModule::IncludeModule("iblock"))
 	{
 		$ib = new CIBlock;
 		$default_site_id = CSite::GetDefSite();
-		if (strlen($default_site_id) > 0)
+		if ($default_site_id <> '')
 		{
 			$dbRes = CIBlock::GetList(array(), array("SITE_ID" => $default_site_id, "CODE" => "user_files"));
 			if ($arRes = $dbRes->Fetch())
@@ -69,11 +68,6 @@ if (WIZARD_B24_TO_CP)
 			{
 				$photoGroupIBlockID = $arRes["ID"];
 			}
-			$dbRes = CIBlock::GetList(array(), array("SITE_ID" => $default_site_id, "CODE" => "intranet_tasks"));
-			if ($arRes = $dbRes->Fetch())
-			{
-				$tasksIblockId = $arRes["ID"];
-			}
 		}
 	}
 
@@ -83,8 +77,7 @@ if (WIZARD_B24_TO_CP)
 		"PHOTO_USER_IBLOCK_ID" => $photoUserIBlockID,
 		"FILES_GROUP_IBLOCK_ID" => $filesGroupIBlockID,
 		"CALENDAR_GROUP_IBLOCK_ID" => $calendarGroupIBlockID,
-		"PHOTO_GROUP_IBLOCK_ID" => $photoGroupIBlockID,
-		"TASKS_IBLOCK_ID" => $tasksIblockId,
+		"PHOTO_GROUP_IBLOCK_ID" => $photoGroupIBlockID
 	);
 
 	CWizardUtil::ReplaceMacros(WIZARD_SITE_PATH."/workgroups/index.php", $arReplace);
@@ -94,7 +87,7 @@ if (WIZARD_B24_TO_CP)
 }
 
 $cnt = CSocNetGroupSubject::GetList(array(), array("SITE_ID" => WIZARD_SITE_ID), array());
-if (IntVal($cnt) > 0)
+if (intval($cnt) > 0)
 	return;
 
 $arGroupSubjects = array();
@@ -116,7 +109,7 @@ foreach ($arGroupSubjects as $ind => $arGroupSubject)
 	$idTmp = CSocNetGroupSubject::Add($arGroupSubject);
 	if ($idTmp)
 	{
-		$arGroupSubjectsId[$ind] = IntVal($idTmp);
+		$arGroupSubjectsId[$ind] = intval($idTmp);
 	}
 	else
 	{
@@ -125,7 +118,7 @@ foreach ($arGroupSubjects as $ind => $arGroupSubject)
 	}
 }
 
-if (StrLen($errorMessage) <= 0)
+if ($errorMessage == '')
 {
 
 	$filesUserIBlockID = 0;
@@ -140,7 +133,7 @@ if (StrLen($errorMessage) <= 0)
 		$ib = new CIBlock;
 
 		$default_site_id = CSite::GetDefSite();
-		if (strlen($default_site_id) > 0)
+		if ($default_site_id <> '')
 		{
 			$dbRes = CIBlock::GetList(array(), array("SITE_ID" => $default_site_id, "CODE" => "user_files"));
 			if ($arRes = $dbRes->Fetch())
@@ -246,37 +239,6 @@ if (StrLen($errorMessage) <= 0)
 		}
 	}
 
-	// tasks
-	$tasksIblockId = 0;
-	if (CModule::IncludeModule("iblock") && strlen($default_site_id) > 0)
-	{
-		$ib = new CIBlock;
-
-		$ibtype_tasks = COption::GetOptionString('intranet', 'iblock_type_tasks', '', '');	
-		if (strlen($ibtype_tasks) <= 0)
-		{
-			$ibtype_tasks = "services";
-			COption::SetOptionString("intranet", 'iblock_type_tasks', $ibtype_tasks);
-		}
-
-		$dbRes = CIBlock::GetList(array(), array("SITE_ID" => $default_site_id, "CODE" => "intranet_tasks"));
-		if ($arRes = $dbRes->Fetch())
-		{
-			$tasksIblockId = $arRes["ID"];
-
-			$arSiteID = array(WIZARD_SITE_ID);
-			$rsSites = CIBlock::GetSite($tasksIblockId);
-			while($arSite = $rsSites->Fetch())
-				$arSiteID[] = $arSite["SITE_ID"];
-
-			$arIBlockFields = Array(
-				"ACTIVE" => $arRes["ACTIVE"],
-				"SITE_ID" => $arSiteID
-			);
-			$res = $ib->Update($tasksIblockId, $arIBlockFields);
-		}
-	}
-
 	$arReplace = Array(
 		"FILES_USER_IBLOCK_ID" => $filesUserIBlockID,
 		"CALENDAR_USER_IBLOCK_ID" => $calendarUserIBlockID,
@@ -284,7 +246,6 @@ if (StrLen($errorMessage) <= 0)
 		"FILES_GROUP_IBLOCK_ID" => $filesGroupIBlockID,
 		"CALENDAR_GROUP_IBLOCK_ID" => $calendarGroupIBlockID,
 		"PHOTO_GROUP_IBLOCK_ID" => $photoGroupIBlockID,
-		"TASKS_IBLOCK_ID" => $tasksIblockId,
 	);
 
 	CWizardUtil::ReplaceMacros(WIZARD_SITE_PATH."/workgroups/index.php", $arReplace);

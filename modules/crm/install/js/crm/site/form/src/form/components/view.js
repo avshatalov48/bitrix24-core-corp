@@ -68,6 +68,7 @@ const Wrapper = {
 				fieldBorder: '--b24-field-border-color',
 				fieldBackground: '--b24-field-background-color',
 				fieldFocusBackground: '--b24-field-focus-background-color',
+				popupBackground: '--b24-popup-background-color',
 			};
 			for (let key in color)
 			{

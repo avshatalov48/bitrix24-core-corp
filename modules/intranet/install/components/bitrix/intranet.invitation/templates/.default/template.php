@@ -72,7 +72,7 @@ $APPLICATION->IncludeComponent(
 	'',
 	[
 		'ID' => 'intranet-invitation',
-		'VIEW_TARGET' => 'pagetitle',
+		'VIEW_TARGET' => 'inside_pagetitle',
 		'FORMS' => [
 			['zones' => ['com.br'], 'id' => '259','lang' => 'br', 'sec' => 'wfjn1i'],
 			['zones' => ['es'], 'id' => '257','lang' => 'la', 'sec' => 'csaico'],
@@ -87,8 +87,10 @@ $APPLICATION->IncludeComponent(
 $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 	"ID" => $menuContainerId,
 	"ITEMS" => $arResult["MENU_ITEMS"],
+	"TITLE" => Loc::getMessage("INTRANET_INVITE_DIALOG_TITLE")
 ));
 ?>
+
 <div data-id="<?=$contentContainerId?>" class="popup-window-tabs-box">
 	<div class="ui-alert ui-alert-danger" data-role="error-message" style="display: none;">
 		<span class="ui-alert-message"></span>
@@ -357,7 +359,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 		?>
 		<div class="invite-wrap js-intranet-invitation-block" data-role="extranet-block">
 			<div class="invite-title-container">
-				<div class="invite-title-icon invite-title-icon-message"></div>
+				<div class="invite-title-icon invite-title-icon-extranet"></div>
 				<div class="invite-title-text"><?=Loc::getMessage("INTRANET_INVITE_DIALOG_EXTRANET_TITLE")?></div>
 			</div>
 
@@ -468,61 +470,19 @@ $APPLICATION->IncludeComponent("bitrix:ui.button.panel", "", array(
 ));
 ?>
 
-<?/*$this->SetViewTarget("below_page", 10);?>
-<div style="position: absolute;bottom: 75px;right: 50%;margin-right: 39px;">
-	<svg width="382px" height="204px" viewBox="0 0 382 204" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-		<defs>
-			<filter x="-8.6%" y="-14.8%" width="117.1%" height="129.5%" filterUnits="objectBoundingBox" id="filter-5">
-				<feOffset dx="0" dy="3" in="SourceAlpha" result="shadowOffsetOuter1" />
-				<feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.09 0" type="matrix" in="shadowOffsetOuter1" result="shadowMatrixOuter1" />
-				<feMerge>
-					<feMergeNode in="shadowMatrixOuter1" />
-					<feMergeNode in="SourceGraphic" />
-				</feMerge>
-			</filter>
-		</defs>
-		<g  stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-			<path d="M112.654315,21 C149.105393,21 178.654573,50.5486641 178.654573,87.0002578 C178.654573,123.45082 149.105393,153 112.654315,153 C76.2032368,153 46.6545727,123.45082 46.6545727,87.0002578 C46.6545727,50.5486641 76.2037524,21 112.654315,21 Z" fill="#2FC6F6" fill-rule="nonzero" opacity="0.113560268" />
-			<g transform="translate(15, 45)">
-				<g transform="translate(61.193103, 10.782918)" fill-rule="nonzero">
-					<polygon fill="#38BBE5" points="75.0280308 21.9826949 0 21.9826949 37.5140154 0"/>
-					<polygon fill="#1DB2E1" points="0 21.6903915 75.0280308 21.6903915 75.0280308 65.6565476 0 65.6565476"/>
-				</g>
-				<polygon fill="#fff" fill-rule="nonzero" points="117.344828 0.142348754 127.924138 10.7829181 127.924138 76.6725979 68.5172414 76.6725979 68.5172414 0.142734902"/>
-				<g transform="translate(75.841379, 12.829181)" fill="#A8ADB4" opacity="0.3">
-					<rect x="0" y="0" width="11.3931034" height="12.6868327" rx="2"/>
-					<path d="M15.2621549,0.409252669 L41.7033624,0.409252669 C42.0423984,0.409252669 42.3172414,0.684095661 42.3172414,1.02313167 C42.3172414,1.36216768 42.0423984,1.63701068 41.7033624,1.63701068 L15.2621549,1.63701068 C14.9231189,1.63701068 14.6482759,1.36216768 14.6482759,1.02313167 C14.6482759,0.684095661 14.9231189,0.409252669 15.2621549,0.409252669 Z"/>
-					<path d="M15.2621549,3.68327402 L41.7033624,3.68327402 C42.0423984,3.68327402 42.3172414,3.95811701 42.3172414,4.29715302 C42.3172414,4.63618904 42.0423984,4.91103203 41.7033624,4.91103203 L15.2621549,4.91103203 C14.9231189,4.91103203 14.6482759,4.63618904 14.6482759,4.29715302 C14.6482759,3.95811701 14.9231189,3.68327402 15.2621549,3.68327402 Z"/>
-					<path d="M0.613879004,16.7793594 L41.7033624,16.7793594 C42.0423984,16.7793594 42.3172414,17.0542024 42.3172414,17.3932384 C42.3172414,17.7322744 42.0423984,18.0071174 41.7033624,18.0071174 L0.613879004,18.0071174 C0.274842992,18.0071174 4.15199367e-17,17.7322744 0,17.3932384 C-4.15199367e-17,17.0542024 0.274842992,16.7793594 0.613879004,16.7793594 Z"/>
-					<path d="M15.2621549,6.95729537 L41.7033624,6.95729537 C42.0423984,6.95729537 42.3172414,7.23213837 42.3172414,7.57117438 C42.3172414,7.91021039 42.0423984,8.18505338 41.7033624,8.18505338 L15.2621549,8.18505338 C14.9231189,8.18505338 14.6482759,7.91021039 14.6482759,7.57117438 C14.6482759,7.23213837 14.9231189,6.95729537 15.2621549,6.95729537 Z"/>
-					<path d="M0.613879004,20.0533808 L41.7033624,20.0533808 C42.0423984,20.0533808 42.3172414,20.3282238 42.3172414,20.6672598 C42.3172414,21.0062958 42.0423984,21.2811388 41.7033624,21.2811388 L0.613879004,21.2811388 C0.274842992,21.2811388 4.15199367e-17,21.0062958 0,20.6672598 C-4.15199367e-17,20.3282238 0.274842992,20.0533808 0.613879004,20.0533808 Z"/>
-					<path d="M15.2621549,10.2313167 L26.64819,10.2313167 C26.987226,10.2313167 27.262069,10.5061597 27.262069,10.8451957 C27.262069,11.1842317 26.987226,11.4590747 26.64819,11.4590747 L15.2621549,11.4590747 C14.9231189,11.4590747 14.6482759,11.1842317 14.6482759,10.8451957 C14.6482759,10.5061597 14.9231189,10.2313167 15.2621549,10.2313167 Z"/>
-					<path d="M0.613879004,23.3274021 L41.7033624,23.3274021 C42.0423984,23.3274021 42.3172414,23.6022451 42.3172414,23.9412811 C42.3172414,24.2803172 42.0423984,24.5551601 41.7033624,24.5551601 L0.613879004,24.5551601 C0.274842992,24.5551601 4.15199367e-17,24.2803172 0,23.9412811 C-4.15199367e-17,23.6022451 0.274842992,23.3274021 0.613879004,23.3274021 Z"/>
-					<path d="M0.613879004,26.6014235 L18.1033624,26.6014235 C18.4423984,26.6014235 18.7172414,26.8762665 18.7172414,27.2153025 C18.7172414,27.5543385 18.4423984,27.8291815 18.1033624,27.8291815 L0.613879004,27.8291815 C0.274842992,27.8291815 4.15199367e-17,27.5543385 0,27.2153025 C-4.15199367e-17,26.8762665 0.274842992,26.6014235 0.613879004,26.6014235 Z"/>
-				</g>
-				<text font-family="OpenSans-Light, Open Sans" font-size="20" font-weight="300" fill="#525C69">
-					<tspan x="3.51367188" y="134">Invite text! :)</tspan>
-				</text>
-				<polygon fill="#E0E3E9" fill-rule="nonzero" points="117.344828 0.142348754 117.344828 10.7829181 127.924138 10.7829181"/>
-				<g filter="url(#filter-5)" transform="translate(61.193103, 33.291815)" fill-rule="nonzero">
-					<polygon fill="#67D9FE" points="0 0 37.5140154 21.747724 0 43.4962063"/>
-					<polygon fill="#67D9FE" points="75.3553947 0 37.8413793 21.747724 75.3553947 43.4962063"/>
-					<polygon fill="#2FC6F6" points="37.637931 14.3238434 0 43.3807829 75.2758621 43.3807829"/>
-				</g>
-				<g transform="translate(29, 7.914591)">
-					<path d="M67.9586207,0.149466192 C76.7950432,0.149466192 83.9586207,7.31278191 83.9586207,16.1494662 C83.9586207,24.9861505 76.7947815,32.1494662 67.9586207,32.1494662 C59.1216747,32.1494662 51.9586207,24.985627 51.9586207,16.1494662 C51.9586207,7.31252016 59.1221982,0.149466192 67.9586207,0.149466192 Z" fill="#9DCF00" fill-rule="nonzero"/>
-					<path d="M70,8.08540925 L70,14.0854093 L76,14.0854093 L76,18.0854093 L70,18.0854093 L70,24.0854093 L66,24.0854093 L66,18.0844093 L60,18.0854093 L60,14.0854093 L66,14.0844093 L66,8.08540925 L70,8.08540925 Z" fill="#FFF"/>
-					<path d="M19,13 L44,13 C45.1045695,13 46,13.8954305 46,15 C46,16.1045695 45.1045695,17 44,17 L19,17 C17.8954305,17 17,16.1045695 17,15 C17,13.8954305 17.8954305,13 19,13 Z" fill="#55D0E0" opacity="0.426"/>
-				</g>
+<?$this->SetViewTarget("below_page", 10);?>
+<div class="invite-wrap-decal">
+	<div class="invite-wrap-decal-image"><?=Loc::getMessage("INTRANET_INVITE_DIALOG_PICTURE_TITLE")?></div>
+	<div class="invite-wrap-decal-arrow">
+		<svg width="200" height="100" style="width: 100%;height: 100px;" viewBox="0 0 200 100">
+			<g  fill="none" fill-rule="evenodd" opacity="0.73" stroke-linecap="round" stroke-linejoin="round"  transform="translate(1, 1)" stroke="#2FC6F6" stroke-width="2">
+				<path d="M157.401367,95.4106445 C128.701497,40.6785482 76.4322917,9.12760417 0.59375,0.7578125" />
+				<polyline transform="translate(154.187500, 91.278809) rotate(-11) translate(-154.187500, -91.278809) " points="161.375 86 156.862305 96.5576172 147 91.2788086" />
 			</g>
-			<g opacity="0.73" transform="translate(218, 105)" stroke="#2FC6F6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
-				<path d="M157.401367,95.4106445 C128.701497,40.6785482 76.4322917,9.12760417 0.59375,0.7578125" id="Path-4" />
-				<polyline id="Path-5" transform="translate(154.187500, 91.278809) rotate(-11) translate(-154.187500, -91.278809)" points="161.375 86 156.862305 96.5576172 147 91.2788086" />
-			</g>
-		</g>
-	</svg>
+		</svg>
+	</div>
 </div>
-<?$this->EndViewTarget();*/?>
+<?$this->EndViewTarget();?>
 
 <script type="text/javascript">
 	BX.message(<?=CUtil::phpToJsObject(Loc::loadLanguageFile(__FILE__))?>);

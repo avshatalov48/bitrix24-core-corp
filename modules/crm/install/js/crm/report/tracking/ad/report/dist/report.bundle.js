@@ -125,6 +125,7 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 	          }));
 	        });
 	      });
+	      var selectorTitle = this.getNode('grid/selector/title');
 	      var selector = this.getNode('grid/selector');
 
 	      if (selector) {
@@ -132,10 +133,13 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 
 	        if (container.children.length > 0) {
 	          selector.parentElement.removeChild(selector);
+	          selectorTitle.parentElement.removeChild(selectorTitle);
 	          return;
 	        }
 
 	        selector.dataset.role = '';
+	        selectorTitle.dataset.role = '';
+	        container.appendChild(selectorTitle);
 	        container.appendChild(selector);
 	        main_core.Event.bind(selector, 'click', function () {
 	          var options = JSON.parse(selector.dataset.options);

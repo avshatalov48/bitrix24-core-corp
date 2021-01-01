@@ -13,7 +13,9 @@ use Bitrix\Sale\PaySystem;
 use Bitrix\Sale\Internals;
 use Bitrix\Sale\BusinessValue;
 use Bitrix\Sale\Helpers\Admin;
+use Bitrix\Sale\Services\PaySystem\Restrictions;
 use Bitrix\SalesCenter\Integration\SaleManager;
+use Bitrix\Seo;
 
 /**
  * Class SalesCenterPaySystemAjaxController
@@ -227,34 +229,70 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 
 		if ($id > 0)
 		{
-			$result = Internals\PaySystemActionTable::update($id, $fields);
-
-			if (!$result->isSuccess())
-			{
-				$this->errorCollection->add($result->getErrors());
-			}
-			else
+			$result = PaySystem\Manager::update($id, $fields);
+			if ($result->isSuccess())
 			{
 				if ($isBusinessValue)
 				{
 					$this->saveBusinessValue($handler, $id, false);
 				}
 			}
-		}
-		else
-		{
-			$result = Internals\PaySystemActionTable::add($fields);
-			if (!$result->isSuccess())
+			else
 			{
 				$this->errorCollection->add($result->getErrors());
 			}
-			else
+		}
+		else
+		{
+			$result = PaySystem\Manager::add($fields);
+			if ($result->isSuccess())
 			{
 				$id = $result->getId();
-				if ($isBusinessValue)
+				if ($id > 0)
 				{
-					$this->saveBusinessValue($handler, $id, true);
+					$fields = [
+						'PARAMS' => serialize(
+							[
+								'BX_PAY_SYSTEM_ID' => $id,
+							]
+						),
+						'PAY_SYSTEM_ID' => $id,
+					];
+
+					$result = PaySystem\Manager::update($id, $fields);
+					if ($result->isSuccess())
+					{
+						$service = PaySystem\Manager::getObjectById($id);
+						$currency = $service->getCurrency();
+						if ($currency)
+						{
+							$params = [
+								'SERVICE_ID' => $id,
+								'SERVICE_TYPE' => Restrictions\Manager::SERVICE_TYPE_PAYMENT,
+								'PARAMS' => ['CURRENCY' => $currency]
+							];
+							Restrictions\Manager::getClassesList();
+							$saveResult = Restrictions\Currency::save($params);
+							if (!$saveResult->isSuccess())
+							{
+								$this->errorCollection->add([new Error(Loc::getMessage('SP_AJAX_SAVE_PAYSYSTEM_ERROR_RSRT_CURRENCY_SAVE'))]);
+							}
+						}
+					}
+					else
+					{
+						$this->errorCollection->add($result->getErrors());
+					}
+
+					if ($isBusinessValue)
+					{
+						$this->saveBusinessValue($handler, $id, true);
+					}
 				}
+			}
+			else
+			{
+				$this->errorCollection->add($result->getErrors());
 			}
 		}
 
@@ -301,11 +339,12 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 	}
 
 	/**
+	 * @param string $type
 	 * @return array
 	 * @throws \Bitrix\Main\LoaderException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function logoutProfileAction()
+	public function logoutProfileAction(string $type)
 	{
 		if (!Loader::includeModule('seo'))
 		{
@@ -313,27 +352,39 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 			return [];
 		}
 
-		$webhookList = $this->getRegisteredWebhookList();
+		$oauthService = Seo\Checkout\Services\Factory::createService($type);
+
+		$webhookList = $this->getRegisteredWebhookList($oauthService);
 		if ($webhookList)
 		{
-			$this->removeWebhooks($webhookList);
+			$this->removeWebhooks($oauthService, $webhookList);
 		}
 
-		Bitrix\Seo\Checkout\Services\AccountYandex::removeAuth();
-		Option::set('sale', 'YANDEX_CHECKOUT_OAUTH', false);
+		$this->removeAuth($type);
 
 		return [];
 	}
 
 	/**
+	 * @param string $type
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private function removeAuth(string $type): void
+	{
+		$authAdapter = Seo\Checkout\Service::getAuthAdapter($type);
+		$authAdapter->removeAuth();
+		Option::set('sale', 'YANDEX_CHECKOUT_OAUTH', false);
+	}
+
+	/**
+	 * @param Seo\Checkout\Services\AccountYandex|Seo\Checkout\Services\AccountYookassa $oauthService
 	 * @return array
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	private function getRegisteredWebhookList()
+	private function getRegisteredWebhookList($oauthService): array
 	{
-		$yandex = new Bitrix\Seo\Checkout\Services\AccountYandex();
-		$yandex->setService(Bitrix\Seo\Checkout\Service::getInstance());
-		$webhookListResult = $yandex->getWebhookList();
+		$webhookListResult = $oauthService->getWebhookList();
 		if ($webhookListResult->isSuccess())
 		{
 			$webhookList = $webhookListResult->getData();
@@ -348,27 +399,29 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 	}
 
 	/**
+	 * @param Seo\Checkout\Services\AccountYandex|Seo\Checkout\Services\AccountYookassa $oauthService
 	 * @param $webhookList
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	private function removeWebhooks($webhookList)
+	private function removeWebhooks($oauthService, $webhookList): void
 	{
-		$yandex = new Bitrix\Seo\Checkout\Services\AccountYandex();
-		$yandex->setService(Bitrix\Seo\Checkout\Service::getInstance());
-
 		foreach ($webhookList['items'] as $webhookItem)
 		{
-			$yandex->removeWebhook($webhookItem['id']);
+			$oauthService->removeWebhook($webhookItem['id']);
 		}
+
+		Option::delete('sale', ['name' => 'YANDEX_CHECKOUT_OAUTH_WEBHOOK_REGISTER']);
 	}
 
 	/**
+	 * @param string $type
 	 * @return array
 	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 * @throws \Bitrix\Main\LoaderException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function getProfileStatusAction()
+	public function getProfileStatusAction(string $type)
 	{
 		if (!Loader::includeModule('seo'))
 		{
@@ -381,25 +434,25 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 			'profile' => [],
 		];
 
-		$authAdapter = Bitrix\Seo\Checkout\Service::getAuthAdapter('yandex');
+		$authAdapter = Seo\Checkout\Service::getAuthAdapter($type);
 		$hasAuth = $authAdapter->hasAuth();
 		if ($hasAuth)
 		{
 			Option::set('sale', 'YANDEX_CHECKOUT_OAUTH', true);
-			$yandex = new Bitrix\Seo\Checkout\Services\AccountYandex();
-			$yandex->setService(Bitrix\Seo\Checkout\Service::getInstance());
 
-			$this->registerWebhooks();
+			$oauthService = Seo\Checkout\Services\Factory::createService($authAdapter->getType());
+
+			$this->registerWebhooks($oauthService);
 			if ($this->errorCollection->isEmpty())
 			{
 				$result = [
 					'hasAuth' => true,
-					'profile' => $yandex->getProfile(),
+					'profile' => $oauthService->getProfile(),
 				];
 			}
 			else
 			{
-				$this->logoutProfileAction();
+				$this->logoutProfileAction($authAdapter->getType());
 			}
 		}
 
@@ -407,11 +460,12 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 	}
 
 	/**
+	 * @param Seo\Checkout\Services\AccountYandex|Seo\Checkout\Services\AccountYookassa $oauthService
 	 * @return array
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function registerWebhooks()
+	private function registerWebhooks($oauthService): array
 	{
 		if (!Loader::includeModule('seo'))
 		{
@@ -419,10 +473,7 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 			return [];
 		}
 
-		$yandex = new Bitrix\Seo\Checkout\Services\AccountYandex();
-		$yandex->setService(Bitrix\Seo\Checkout\Service::getInstance());
-
-		$registerPaymentSucceededResult = $yandex->registerPaymentSucceededWebhook();
+		$registerPaymentSucceededResult = $oauthService->registerPaymentSucceededWebhook();
 		if ($registerPaymentSucceededResult->isSuccess())
 		{
 			Option::set('sale', 'YANDEX_CHECKOUT_OAUTH_WEBHOOK_REGISTER', true);

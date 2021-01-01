@@ -283,7 +283,7 @@ BX.addCustomEvent('Tasks.TopMenu:onItem', function(roleId, url) {
 		additional: {ROLEID: (roleId === 'view_all' ? 0 : roleId)}
 	};
 	var filterApi = filterManager.getApi();
-	filterApi.setFilter(fields);
+	filterApi.setFilter(fields, {ROLE_TYPE: 'TASKS_ROLE_TYPE_' + (roleId === '' ? 'view_all' : roleId)});
 
 	window.history.pushState(null, null, url);
 });
@@ -305,7 +305,7 @@ BX.addCustomEvent('Tasks.Toolbar:onItem', function(counterId) {
 			PROBLEM: counterId
 		};
 		filterApi.setFields(fields);
-		filterApi.apply();
+		filterApi.apply({COUNTER_TYPE: 'TASKS_COUNTER_TYPE_' + counterId});
 	}
 	else
 	{

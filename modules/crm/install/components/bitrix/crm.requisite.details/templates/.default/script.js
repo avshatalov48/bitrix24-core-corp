@@ -199,6 +199,11 @@ if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 			var editor = control.getEditor();
 			if (editor)
 			{
+				var userFieldManager = BX.UI.EntityUserFieldManager.getById(editor.getId());
+				if (userFieldManager && typeof userFieldManager.setValidationEnabled === 'function')
+				{
+					userFieldManager.setValidationEnabled(false);
+				}
 				BX.Event.EventEmitter.subscribe("BX.UI.EntityEditor:onSave", this.onSaveNewPreset.bind(this, prevPresetId));
 				editor.releaseAjaxForm();
 				editor.save();

@@ -181,7 +181,7 @@ if ($arParams["SHOW_SECTION_REPORTS"] == "Y" && (!$_REQUEST['IFRAME'] || ($_REQU
 if ($arResult["BX24_RU_ZONE"])
 {
 	$arResult['ITEMS'][] = array(
-		"TEXT" => GetMessage("TASKS_PANEL_TAB_APPLICATIONS"),
+		"TEXT" => GetMessage("TASKS_PANEL_TAB_APPLICATIONS_2"),
 		"URL" => "/marketplace/category/tasks/",
 		"ID" => "view_apps",
 	);

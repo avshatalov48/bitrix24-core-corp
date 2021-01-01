@@ -282,7 +282,7 @@ class CCrmStatus
 			'SYSTEM'	=> $arFields['SYSTEM'] === 'Y'? 'Y': 'N',
 			'CATEGORY_ID' => $categoryId,
 			'COLOR' => $arFields['COLOR'],
-			'SEMANTICS' => $arFields['SEMANTICS'] ?? null,
+			'SEMANTICS' => $arFields['SEMANTICS'],
 		]);
 		self::ClearCachedStatuses($this->entityId);
 

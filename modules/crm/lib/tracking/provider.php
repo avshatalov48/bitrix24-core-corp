@@ -12,6 +12,7 @@ use Bitrix\Intranet;
 use Bitrix\Landing;
 use Bitrix\Crm\Communication;
 use Bitrix\Crm\Integration\Bitrix24\Product;
+use Bitrix\Crm\Integration;
 
 /**
  * Class Provider
@@ -253,6 +254,20 @@ class Provider
 			'HAS_PATH_TO_LIST' => true,
 		];
 
+		if (Integration\Sender\Utm::canUse())
+		{
+			$list[] = [
+				'CODE' => Source\Base::Sender,
+				'ICON_CLASS' => 'ui-icon ui-icon-service-campaign',
+				'ICON_COLOR' => '#2ebef0',
+				'CONFIGURED' => true,
+				'CONFIGURABLE' => false,
+				'SAVEABLE' => true,
+				'HAS_PATH_TO_LIST' => true,
+				'UTM_SOURCE' => Integration\Sender\Utm::getUtmSources()
+			];
+		}
+
 		foreach ($list as $index => $item)
 		{
 			$item['NAME'] = Source\Base::getNameByCode($item['CODE']);
@@ -345,6 +360,8 @@ class Provider
 		$adsSources = self::getStaticSources();
 		$adsSources = array_combine(array_column($adsSources, 'CODE'), $adsSources);
 		$sourceFields = Internals\SourceFieldTable::getSourceFields();
+		$sourceFieldsDefaults = Internals\SourceFieldTable::getSourceFieldsDefaults();
+
 
 		$list = Internals\SourceTable::getList([
 			'select' => ['ID', 'CODE', 'NAME', 'ICON_COLOR', 'AD_CLIENT_ID', 'AD_ACCOUNT_ID'],
@@ -357,6 +374,7 @@ class Provider
 			if ($item['CODE'] && isset($adsSources[$item['CODE']]))
 			{
 				$item = ['NAME' => $item['NAME']] + $adsSources[$item['CODE']] + $item;
+				$adsSources[$item['CODE']]['SAVED'] = true;
 			}
 
 			if (!$item['CODE'])
@@ -365,10 +383,7 @@ class Provider
 				$item['ICON_COLOR'] = $item['ICON_COLOR'] ?: '#55d0e0';
 			}
 
-			if (isset($sourceFields[$item['ID']]))
-			{
-				$item = $item + $sourceFields[$item['ID']];
-			}
+			$item = $item + ($sourceFields[$item['ID']] ?? $sourceFieldsDefaults);
 
 			$list[$index] = $item + [
 				'DESCRIPTION' => Source\Base::getDescriptionByCode($item['CODE'], $item['NAME']),
@@ -382,12 +397,30 @@ class Provider
 
 		foreach ($adsSources as $sourceCode => $source)
 		{
-			if (!$source['CONFIGURED'] || $source['CONFIGURABLE'])
+			if (!$source['CONFIGURED'] || $source['CONFIGURABLE'] || !empty($source['SAVED']))
 			{
 				continue;
 			}
 
 			$list[] = $source;
+		}
+
+		foreach ($list as $index => $source)
+		{
+			if (!empty($source['ID']) || empty($source['SAVEABLE']))
+			{
+				continue;
+			}
+
+			$saveResult = Internals\SourceTable::add([
+				'CODE' => $source['CODE'],
+				'NAME' => $source['NAME'],
+			]);
+			if ($saveResult->isSuccess())
+			{
+				$source['ID'] = $saveResult->getId();
+			}
+			$list[$index] = $source;
 		}
 
 		usort($list, [__CLASS__, 'sortSourcesByCode']);

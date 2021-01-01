@@ -40,6 +40,10 @@ class VoximplantStartComponent extends \CBitrixComponent
 		$userOptions = CUserOptions::GetOption("voximplant", "start", []);
 		$result['BALANCE_TYPE'] = $userOptions["balance_type"] === "sip" ? "sip" : "balance";
 		$result['RECORD_LIMIT'] = \CVoxImplantAccount::GetRecordLimit();
+		$result['TELEPHONY_AVAILABLE'] = \Bitrix\Voximplant\Limits::canManageTelephony();
+
+		$result['SHOW_EOS_WARNING'] = \Bitrix\Voximplant\Limits::canManageTelephony(true)
+			&& !\Bitrix\Voximplant\Limits::canManageTelephony(false);
 
 		if(!$this->isRestOnly())
 		{

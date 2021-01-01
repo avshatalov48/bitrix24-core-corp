@@ -994,3 +994,6 @@ input.mobile-grid-field-subtasks-more-input[type=checkbox]:checked ~ .mobile-gri
 	line-height: normal;
 	color: #525c69;
 }
+.post-comments-wrap {
+	padding-bottom: 15px;
+}

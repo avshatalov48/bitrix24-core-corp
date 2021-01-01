@@ -137,7 +137,9 @@ class CrmTrackingExpensesComponent extends \CBitrixComponent implements Controll
 		$filterOptions = new FilterOptions($this->arParams['FILTER_ID']);
 		$requestFilter = $filterOptions->getFilter($this->arResult['FILTERS']);
 
-		$filter = [];
+		$filter = [
+			'=TYPE_ID' => Tracking\Internals\SourceExpensesTable::TYPE_MANUAL,
+		];
 		if ($this->arParams['ID'])
 		{
 			$filter['=SOURCE_ID'] = (int) $this->arParams['ID'];

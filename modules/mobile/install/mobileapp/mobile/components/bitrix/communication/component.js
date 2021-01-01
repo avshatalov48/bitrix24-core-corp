@@ -1,6 +1,5 @@
 "use strict";
 (()=>{
-
 	if (typeof this.SocketConnection == 'undefined')
 	{
 		this.SocketConnection = new Connection();

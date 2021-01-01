@@ -327,6 +327,7 @@ BX.Tasks.QuickForm.prototype.calendar = function(event)
 		field: deadlineInput.name,
 		bTime: true,
 		bSetFocus: false,
+		bCompatibility: false,
 		value: BX.CJSTask.ui.getInputDateTimeValue(deadlineInput),
 		bHideTimebar: false
 	});

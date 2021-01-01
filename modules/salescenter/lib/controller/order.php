@@ -12,6 +12,7 @@ use Bitrix\Crm;
 use Bitrix\SalesCenter\Integration\Bitrix24Manager;
 use Bitrix\SalesCenter\Integration\CrmManager;
 use Bitrix\SalesCenter\Integration\ImOpenLinesManager;
+use Bitrix\SalesCenter\Integration\LocationManager;
 use Bitrix\SalesCenter\Integration\SaleManager;
 use Bitrix\Salescenter;
 use Bitrix\SalesCenter\OrderFacade;
@@ -368,6 +369,8 @@ class Order extends Base
 					);
 				}
 			}
+
+			$this->saveDeliveryAddressFrom($order->getId());
 
 			Bitrix24Manager::getInstance()->increasePaymentsCount();
 			$data = [
@@ -1298,6 +1301,35 @@ HTML;
 	 */
 	private function getClientAddressId(int $orderId): ?int
 	{
+		return $this->getAddressId($orderId, OrderPropsDictionary::ADDRESS_TO_PROPERTY_CODE);
+	}
+
+	/**
+	 * @param int $orderId
+	 * @return int|null
+	 * @throws Main\ArgumentException
+	 * @throws Main\ArgumentNullException
+	 * @throws Main\NotImplementedException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function getDeliveryFromAddressId(int $orderId): ?int
+	{
+		return $this->getAddressId($orderId, OrderPropsDictionary::ADDRESS_FROM_PROPERTY_CODE);
+	}
+
+	/**
+	 * @param int $orderId
+	 * @param string $propertyCode
+	 * @return int|null
+	 * @throws Main\ArgumentException
+	 * @throws Main\ArgumentNullException
+	 * @throws Main\NotImplementedException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function getAddressId(int $orderId, string $propertyCode)
+	{
 		$order = Sale\Order::load($orderId);
 		if (!$order)
 		{
@@ -1306,9 +1338,7 @@ HTML;
 
 		/** @var \Bitrix\Sale\PropertyValue $propValue */
 		$propValue = $order->getPropertyCollection()
-			->getItemByOrderPropertyCode(
-				OrderPropsDictionary::ADDRESS_TO_PROPERTY_CODE
-			);
+			->getItemByOrderPropertyCode($propertyCode);
 
 		if (!$propValue)
 		{
@@ -1381,5 +1411,25 @@ HTML;
 				'LOC_ADDR_ID' => $addressId,
 			]
 		);
+	}
+
+	/**
+	 * @param int $orderId
+	 * @throws Main\ArgumentException
+	 * @throws Main\ArgumentNullException
+	 * @throws Main\ArgumentOutOfRangeException
+	 * @throws Main\NotImplementedException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function saveDeliveryAddressFrom(int $orderId)
+	{
+		$addressId = $this->getDeliveryFromAddressId($orderId);
+		if (!$addressId)
+		{
+			return;
+		}
+
+		LocationManager::getInstance()->setDefaultLocationFrom($addressId);
 	}
 }

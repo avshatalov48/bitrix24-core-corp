@@ -51,13 +51,37 @@ this.BX.Location = this.BX.Location || {};
 	  value: null
 	};
 
-	function _createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = _unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
-	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
 	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+
+	var _languageId = new WeakMap();
+
+	var _googleAutocompleteService = new WeakMap();
+
+	var _loaderPromise = new WeakMap();
+
+	var _googleSource = new WeakMap();
+
+	var _localStorageKey = new WeakMap();
+
+	var _localStorageResCount = new WeakMap();
+
+	var _getLocalStoredResults = new WeakSet();
+
+	var _getPredictionPromiseLocalStorage = new WeakSet();
+
+	var _setPredictionResult = new WeakSet();
+
+	var _getPredictionPromise = new WeakSet();
+
+	var _initAutocompleteService = new WeakSet();
+
+	var _convertToLocationsList = new WeakSet();
 
 	var AutocompleteService = /*#__PURE__*/function (_AutocompleteServiceB) {
 	  babelHelpers.inherits(AutocompleteService, _AutocompleteServiceB);
@@ -152,30 +176,6 @@ this.BX.Location = this.BX.Location || {};
 	  }]);
 	  return AutocompleteService;
 	}(location_core.AutocompleteServiceBase);
-
-	var _languageId = new WeakMap();
-
-	var _googleAutocompleteService = new WeakMap();
-
-	var _loaderPromise = new WeakMap();
-
-	var _googleSource = new WeakMap();
-
-	var _localStorageKey = new WeakMap();
-
-	var _localStorageResCount = new WeakMap();
-
-	var _getLocalStoredResults = new WeakSet();
-
-	var _getPredictionPromiseLocalStorage = new WeakSet();
-
-	var _setPredictionResult = new WeakSet();
-
-	var _getPredictionPromise = new WeakSet();
-
-	var _initAutocompleteService = new WeakSet();
-
-	var _convertToLocationsList = new WeakSet();
 
 	var _getLocalStoredResults2 = function _getLocalStoredResults2(query, params) {
 	  var result = null,
@@ -335,6 +335,50 @@ this.BX.Location = this.BX.Location || {};
 	/**
 	 * Class for the autocomplete locations and addresses inputs
 	 */
+
+	var _languageId$1 = new WeakMap();
+
+	var _googleMap = new WeakMap();
+
+	var _googleSource$1 = new WeakMap();
+
+	var _zoom = new WeakMap();
+
+	var _locationMarker = new WeakMap();
+
+	var _mode = new WeakMap();
+
+	var _location = new WeakMap();
+
+	var _geocoder = new WeakMap();
+
+	var _locationRepository = new WeakMap();
+
+	var _timerId = new WeakMap();
+
+	var _isUpdating = new WeakMap();
+
+	var _changeDelay = new WeakMap();
+
+	var _loaderPromise$1 = new WeakMap();
+
+	var _convertLocationToPosition = new WeakSet();
+
+	var _adjustZoom = new WeakSet();
+
+	var _getPositionToLocationPromise = new WeakSet();
+
+	var _emitOnLocationChangedEvent = new WeakSet();
+
+	var _onMarkerUpdatePosition = new WeakSet();
+
+	var _createTimer = new WeakSet();
+
+	var _fulfillOnChangedEvent = new WeakSet();
+
+	var _onMapClick = new WeakSet();
+
+	var _initGoogleMap = new WeakSet();
 
 	var Map = /*#__PURE__*/function (_MapBase) {
 	  babelHelpers.inherits(Map, _MapBase);
@@ -541,50 +585,6 @@ this.BX.Location = this.BX.Location || {};
 	  return Map;
 	}(location_core.MapBase);
 
-	var _languageId$1 = new WeakMap();
-
-	var _googleMap = new WeakMap();
-
-	var _googleSource$1 = new WeakMap();
-
-	var _zoom = new WeakMap();
-
-	var _locationMarker = new WeakMap();
-
-	var _mode = new WeakMap();
-
-	var _location = new WeakMap();
-
-	var _geocoder = new WeakMap();
-
-	var _locationRepository = new WeakMap();
-
-	var _timerId = new WeakMap();
-
-	var _isUpdating = new WeakMap();
-
-	var _changeDelay = new WeakMap();
-
-	var _loaderPromise$1 = new WeakMap();
-
-	var _convertLocationToPosition = new WeakSet();
-
-	var _adjustZoom = new WeakSet();
-
-	var _getPositionToLocationPromise = new WeakSet();
-
-	var _emitOnLocationChangedEvent = new WeakSet();
-
-	var _onMarkerUpdatePosition = new WeakSet();
-
-	var _createTimer = new WeakSet();
-
-	var _fulfillOnChangedEvent = new WeakSet();
-
-	var _onMapClick = new WeakSet();
-
-	var _initGoogleMap = new WeakSet();
-
 	var _chooseZoomByLocation = function _chooseZoomByLocation(location) {
 	  var result = 18;
 
@@ -753,13 +753,23 @@ this.BX.Location = this.BX.Location || {};
 	  babelHelpers.classPrivateFieldSet(this, _geocoder, new google.maps.Geocoder());
 	};
 
-	function _createForOfIteratorHelper$1(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = _unsupportedIterableToArray$1(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
-	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
+	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
 
 	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
 	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+
+	var _map = new WeakMap();
+
+	var _service = new WeakMap();
+
+	var _googleSource$2 = new WeakMap();
+
+	var _loadingPromise$1 = new WeakMap();
+
+	var _getLoaderPromise = new WeakSet();
 
 	var PhotoService = /*#__PURE__*/function (_PhotoServiceBase) {
 	  babelHelpers.inherits(PhotoService, _PhotoServiceBase);
@@ -877,16 +887,6 @@ this.BX.Location = this.BX.Location || {};
 	  return PhotoService;
 	}(location_core.PhotoServiceBase);
 
-	var _map = new WeakMap();
-
-	var _service = new WeakMap();
-
-	var _googleSource$2 = new WeakMap();
-
-	var _loadingPromise$1 = new WeakMap();
-
-	var _getLoaderPromise = new WeakSet();
-
 	var _getLoaderPromise2 = function _getLoaderPromise2() {
 	  var _this3 = this;
 
@@ -904,13 +904,27 @@ this.BX.Location = this.BX.Location || {};
 	  return babelHelpers.classPrivateFieldGet(this, _loadingPromise$1);
 	};
 
-	function _createForOfIteratorHelper$2(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = _unsupportedIterableToArray$2(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper$2(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$2(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
-	function _unsupportedIterableToArray$2(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$2(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$2(o, minLen); }
+	function _unsupportedIterableToArray$2(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$2(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$2(o, minLen); }
 
 	function _arrayLikeToArray$2(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
 	function _classPrivateMethodGet$3(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+
+	var _map$1 = new WeakMap();
+
+	var _geocoder$1 = new WeakMap();
+
+	var _loadingPromise$2 = new WeakMap();
+
+	var _googleSource$3 = new WeakMap();
+
+	var _getLoaderPromise$1 = new WeakSet();
+
+	var _convertLocationType = new WeakSet();
+
+	var _convertResultToLocations = new WeakSet();
 
 	var GeocodingService = /*#__PURE__*/function (_GeocodingServiceBase) {
 	  babelHelpers.inherits(GeocodingService, _GeocodingServiceBase);
@@ -988,20 +1002,6 @@ this.BX.Location = this.BX.Location || {};
 	  }]);
 	  return GeocodingService;
 	}(location_core.GeocodingServiceBase);
-
-	var _map$1 = new WeakMap();
-
-	var _geocoder$1 = new WeakMap();
-
-	var _loadingPromise$2 = new WeakMap();
-
-	var _googleSource$3 = new WeakMap();
-
-	var _getLoaderPromise$1 = new WeakSet();
-
-	var _convertLocationType = new WeakSet();
-
-	var _convertResultToLocations = new WeakSet();
 
 	var _getLoaderPromise2$1 = function _getLoaderPromise2() {
 	  var _this3 = this;
@@ -1089,6 +1089,22 @@ this.BX.Location = this.BX.Location || {};
 
 	  return result;
 	};
+
+	var _code = new WeakMap();
+
+	var _languageId$2 = new WeakMap();
+
+	var _sourceLanguageId = new WeakMap();
+
+	var _loaderPromise$2 = new WeakMap();
+
+	var _map$2 = new WeakMap();
+
+	var _photoService = new WeakMap();
+
+	var _geocodingService = new WeakMap();
+
+	var _autocompleteService = new WeakMap();
 
 	var Google = /*#__PURE__*/function (_BaseSource) {
 	  babelHelpers.inherits(Google, _BaseSource);
@@ -1213,22 +1229,6 @@ this.BX.Location = this.BX.Location || {};
 	  }]);
 	  return Google;
 	}(location_core.BaseSource);
-
-	var _code = new WeakMap();
-
-	var _languageId$2 = new WeakMap();
-
-	var _sourceLanguageId = new WeakMap();
-
-	var _loaderPromise$2 = new WeakMap();
-
-	var _map$2 = new WeakMap();
-
-	var _photoService = new WeakMap();
-
-	var _geocodingService = new WeakMap();
-
-	var _autocompleteService = new WeakMap();
 
 	exports.Google = Google;
 

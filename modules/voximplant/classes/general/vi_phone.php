@@ -744,7 +744,7 @@ class CVoxImplantPhone
 			$insertResult = VI\Model\NumberTable::add([
 				'NUMBER' => $phone,
 				'NAME' => $phone,
-				'VERIFIED' => $phoneObj['VERIFICATION_STATUS'] == 'VERIFIED'? 'Y': 'N',
+				'VERIFIED' => $phoneObj['VERIFICATION_STATUS'] === 'VERIFIED'? 'Y': 'N',
 				'COUNTRY_CODE' => $phoneObj['COUNTRY_CODE'],
 				'CONFIG_ID' => $configId,
 				'SUBSCRIPTION_ID' => $phoneObj['SUBSCRIPTION_ID'],

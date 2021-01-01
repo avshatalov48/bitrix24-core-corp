@@ -749,7 +749,18 @@ class Event
 				for ($i = count($files) - 1; $i >= 0; $i--)
 				{
 					\CFile::Delete((int)$files[$i]);
+
 					//todo: How to count fail here
+
+					unset($files[$i]);
+				}
+				if (count($files) > 0)
+				{
+					Crm\EventTable::update($eventId, array('FILES' => serialize($files)));
+				}
+				else
+				{
+					Crm\EventTable::update($eventId, array('FILES' => null));
 				}
 			}
 		}

@@ -5,11 +5,12 @@ import {RequestSender} from '../../utility/request.sender';
 import {BaseEvent} from 'main.core.events';
 import {Confetti} from 'ui.confetti';
 import {StatsCalculator} from '../../utility/stats.calculator';
+import {BurnDownChart} from '../../utility/burn.down.chart';
 
 import '../../css/sprint.side.panel.css';
 
 type Params = {
-	sprints: Map,
+	sprints?: Map,
 	sidePanel: SidePanel,
 	requestSender: RequestSender,
 	views: {
@@ -52,11 +53,15 @@ type RequestDataToCompleteSprint = {
 	direction: number|string
 }
 
+type RequestDataToGetBurnDownChartData = {
+	sprintId: number
+}
+
 export class SprintSidePanel
 {
 	constructor(params: Params)
 	{
-		this.sprints = params.sprints;
+		this.sprints = params.sprints ? params.sprints : new Map();
 		this.sidePanel = params.sidePanel;
 		this.requestSender = params.requestSender;
 		this.views = params.views;
@@ -82,6 +87,42 @@ export class SprintSidePanel
 			},
 			zIndex: 1000,
 			width: 600
+		});
+	}
+
+	showCompleteSidePanel(sprint: Sprint)
+	{
+		this.sidePanelId = 'tasks-scrum-start-' + Text.getRandom();
+
+		this.currentSprint = sprint;
+
+		this.sidePanel.subscribeOnce('onLoadSidePanel', this.onLoadCompletePanel.bind(this));
+		this.sidePanel.openSidePanel(this.sidePanelId, {
+			contentCallback: () => {
+				return new Promise((resolve, reject) => {
+					resolve(this.buildCompletePanel());
+				});
+			},
+			zIndex: 1000,
+			width: 600
+		});
+	}
+
+	showBurnDownChart(sprint: Sprint)
+	{
+		this.sidePanelId = 'tasks-scrum-burn-down-chart-' + Text.getRandom();
+
+		this.currentSprint = sprint;
+
+		this.sidePanel.subscribeOnce('onLoadSidePanel', this.onLoadSprintBurnDownPanel.bind(this));
+		this.sidePanel.subscribe('onCloseSidePanel', this.onCloseBurnDownChart.bind(this));
+		this.sidePanel.openSidePanel(this.sidePanelId, {
+			contentCallback: () => {
+				return new Promise((resolve, reject) => {
+					resolve(this.buildBurnDownPanel());
+				});
+			},
+			zIndex: 1000
 		});
 	}
 
@@ -176,24 +217,6 @@ export class SprintSidePanel
 		});
 	}
 
-	showCompleteSidePanel(sprint: Sprint)
-	{
-		this.sidePanelId = 'tasks-scrum-start-' + Text.getRandom();
-
-		this.currentSprint = sprint;
-
-		this.sidePanel.subscribeOnce('onLoadSidePanel', this.onLoadCompletePanel.bind(this));
-		this.sidePanel.openSidePanel(this.sidePanelId, {
-			contentCallback: () => {
-				return new Promise((resolve, reject) => {
-					resolve(this.buildCompletePanel());
-				});
-			},
-			zIndex: 1000,
-			width: 600
-		});
-	}
-
 	buildCompletePanel(): HTMLElement
 	{
 		return Tag.render`
@@ -206,6 +229,21 @@ export class SprintSidePanel
 				${this.buildSprintGoal()}
 				${this.buildSprintActions()}
 				${this.buildSprintPlan()}
+				<div class="tasks-scrum-sprint-sidepanel-buttons"></div>
+			</div>
+		`;
+	}
+
+	buildBurnDownPanel(): HTMLElement
+	{
+		return Tag.render`
+			<div class="tasks-scrum-sprint-sidepanel">
+				<div class="tasks-scrum-sprint-sidepanel-header">
+					<span class="tasks-scrum-sprint-sidepanel-header-title">
+						${Loc.getMessage('TASKS_SCRUM_SPRINT_IDEAL_BURN_DOWN_CHART_HEADER')}
+					</span>
+				</div>
+				<div class="tasks-scrum-sprint-sidepanel-chart"></div>
 				<div class="tasks-scrum-sprint-sidepanel-buttons"></div>
 			</div>
 		`;
@@ -384,6 +422,33 @@ export class SprintSidePanel
 		});
 	}
 
+	onLoadSprintBurnDownPanel(baseEvent: BaseEvent)
+	{
+		const sidePanel = baseEvent.getData();
+
+		this.form = sidePanel.getContainer().querySelector('.tasks-scrum-sprint-sidepanel');
+
+		this.getBurnDownChartData().then((data) => {
+			setTimeout(() => {
+				this.burnDownChart = new BurnDownChart(data);
+				this.burnDownChart.createChart(this.form.querySelector('.tasks-scrum-sprint-sidepanel-chart'));
+			}, 300);
+		});
+	}
+
+	onCloseBurnDownChart(baseEvent: BaseEvent)
+	{
+		const sidePanel = baseEvent.getData();
+
+		if (this.sidePanelId === sidePanel.getUrl())
+		{
+			setTimeout(() => {
+				this.burnDownChart.destroyBurnDownChart();
+				this.burnDownChart = null;
+			}, 300);
+		}
+	}
+
 	getTasksCountLabel(count)
 	{
 		if (count > 5)
@@ -452,6 +517,15 @@ export class SprintSidePanel
 		return new Promise((resolve, reject) => {
 			this.requestSender.getSprintCompleteButtons().then(response => {
 				resolve(response.data.html);
+			})
+		});
+	}
+
+	getBurnDownChartData(): Promise
+	{
+		return new Promise((resolve, reject) => {
+			this.requestSender.getBurnDownChartData(this.getRequestDataToGetBurnDownChartData()).then(response => {
+				resolve(response.data);
 			})
 		});
 	}
@@ -527,6 +601,15 @@ export class SprintSidePanel
 		requestData.sprintId = this.currentSprint.getId();
 		const directionSelectNode = this.form.querySelector('select');
 		requestData.direction = (directionSelectNode ? directionSelectNode.value : 'backlog');
+
+		return requestData;
+	}
+
+	getRequestDataToGetBurnDownChartData(): RequestDataToGetBurnDownChartData
+	{
+		const requestData = {};
+
+		requestData.sprintId = this.currentSprint.getId();
 
 		return requestData;
 	}

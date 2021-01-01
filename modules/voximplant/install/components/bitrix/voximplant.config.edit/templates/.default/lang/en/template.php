@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["LM_ADD1"] = "All employees";
 $MESS["LM_ADD2"] = "Add more";
 $MESS["TELEPHONY_ALREADY_CONNECT_RENT"] = "You have a rented number set up. Before completing this action, you must deactivate all rented numbers.";
@@ -202,21 +202,21 @@ $MESS["VI_CONFIG_SIP_T_INC_LOGIN"] = "Login";
 $MESS["VI_CONFIG_SIP_T_INC_PASS"] = "Password";
 $MESS["VI_CONFIG_SIP_T_INC_SERVER"] = "Server";
 $MESS["VI_CONFIG_SIP_T_LOGIN"] = "Login";
-$MESS["VI_CONFIG_SIP_T_LOGIN_HINT"] = "your cloud PBX login";
+$MESS["VI_CONFIG_SIP_T_LOGIN_HINT_2"] = "your PBX login, e.g. 005847";
 $MESS["VI_CONFIG_SIP_T_NUMBER"] = "Phone number";
 $MESS["VI_CONFIG_SIP_T_OUTBOUND_PROXY"] = "Proxy server";
 $MESS["VI_CONFIG_SIP_T_PASS"] = "Password";
-$MESS["VI_CONFIG_SIP_T_PASS_HINT"] = "your cloud PBX password";
+$MESS["VI_CONFIG_SIP_T_PASS_HINT_2"] = "your PBX password";
 $MESS["VI_CONFIG_SIP_T_SERVER"] = "Server";
-$MESS["VI_CONFIG_SIP_T_SERVER_HINT"] = "your cloud PBX address. Ex.: cloudpbx.com";
+$MESS["VI_CONFIG_SIP_T_SERVER_HINT_2"] = "your PBX address, e.g. cloudpbx.com";
 $MESS["VI_CONFIG_TEST_1"] = "USA";
+$MESS["VI_CONFIG_TEST_7_499"] = "Russia, Moscow";
 $MESS["VI_CONFIG_TEST_14"] = "Canada";
 $MESS["VI_CONFIG_TEST_39"] = "Italy";
 $MESS["VI_CONFIG_TEST_42"] = "Czech Republic";
 $MESS["VI_CONFIG_TEST_44"] = "Great Britain";
 $MESS["VI_CONFIG_TEST_48"] = "Poland";
 $MESS["VI_CONFIG_TEST_61"] = "Australia";
-$MESS["VI_CONFIG_TEST_7_499"] = "Russia, Moscow";
 $MESS["VI_CONFIG_TEST_81"] = "Japan";
 $MESS["VI_CONFIG_TEST_97"] = "Israel";
 $MESS["VI_CONFIG_TEST_ABOUT_PAGE"] = "Use this page to change call routing preferences to test various cases and scenarios your company may require.";
@@ -243,4 +243,3 @@ $MESS["VOX_CONFIG_NUMBER_DELETE_CONFIRM"] = "Are you sure you want to disconnect
 $MESS["VOX_CONFIG_NUMBER_DISCONNECTION"] = "Disconnect number";
 $MESS["VOX_CONFIG_NUMBER_SET_TO_DELETE"] = "The number will be disconnected on #DATE#";
 $MESS["VOX_CONFIG_TELEPHONY_24"] = "Telephony";
-?>

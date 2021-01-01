@@ -65,7 +65,8 @@ class CIntranetUstatOnlineComponent extends CBitrixComponent implements \Bitrix\
 		$filter = [
 			'=ACTIVE'       => true,
 			'=IS_REAL_USER' => true,
-			'>=LAST_ACTIVITY_DATE' => $date->add('-'.$this->arResult["LIMIT_ONLINE_SECONDS"].' seconds')
+			'>=LAST_ACTIVITY_DATE' => $date->add('-'.$this->arResult["LIMIT_ONLINE_SECONDS"].' seconds'),
+			"!UF_DEPARTMENT" => false,
 		];
 
 		$result = \Bitrix\Main\UserTable::getList([
@@ -214,7 +215,8 @@ class CIntranetUstatOnlineComponent extends CBitrixComponent implements \Bitrix\
 		$filter = [
 			'=ACTIVE'       => true,
 			'=IS_REAL_USER' => true,
-			'>=LAST_ACTIVITY_DATE' => $date->add('-'.$this->getLimitOnlineSeconds().' seconds')
+			'>=LAST_ACTIVITY_DATE' => $date->add('-'.$this->getLimitOnlineSeconds().' seconds'),
+			"!UF_DEPARTMENT" => false,
 		];
 
 		$result = \Bitrix\Main\UserTable::getList([
@@ -263,7 +265,8 @@ class CIntranetUstatOnlineComponent extends CBitrixComponent implements \Bitrix\
 		$filter = [
 			'=ACTIVE'       => true,
 			'=IS_REAL_USER' => true,
-			'ID' => $userIds
+			'ID' => $userIds,
+			"!UF_DEPARTMENT" => false,
 		];
 
 		$users = [];

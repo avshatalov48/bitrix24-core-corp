@@ -3,9 +3,10 @@
 use Bitrix\Main\Localization\CultureTable;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
-use Bitrix\Main\Config\Option;
 use Bitrix\Bitrix24\Feature;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Location\Repository\SourceRepository;
+use Bitrix\Location;
 
 final class IntranetConfigsComponent extends CBitrixComponent
 {
@@ -36,11 +37,11 @@ final class IntranetConfigsComponent extends CBitrixComponent
 				{
 					$res = \CIBlockSection::getList(
 						array(
-							'LEFT_MARGIN' => 'ASC'
+							'LEFT_MARGIN' => 'ASC',
 						),
 						array(
 							'IBLOCK_ID' => $iblockId,
-							'ACTIVE' => 'Y'
+							'ACTIVE' => 'Y',
 						),
 						false,
 						array('ID')
@@ -89,7 +90,7 @@ final class IntranetConfigsComponent extends CBitrixComponent
 		$arFile = $arFile + Array(
 				"del" => ($oldFileID ? "Y" : ""),
 				"old_file" => (intval($oldFileID) > 0 ? intval($oldFileID): 0 ),
-				"MODULE_ID" => "bitrix24"
+				"MODULE_ID" => "bitrix24",
 			);
 
 		$max_file_size = (array_key_exists("max_file_size", $arRestriction) ? intval($arRestriction["max_file_size"]) : 0);
@@ -701,7 +702,7 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			if (!empty($manualModulesChangedList))
 			{
 				$event = new Bitrix\Main\Event("bitrix24", "OnManualModuleAddDelete", array(
-					'modulesList' => $manualModulesChangedList
+					'modulesList' => $manualModulesChangedList,
 				));
 				$event->send();
 			}
@@ -791,45 +792,77 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			}
 		}
 
+		if(isset($_REQUEST['address_format_code']) && $this->arResult['SHOW_ADDRESS_FORMAT'])
+		{
+			Location\Infrastructure\FormatCode::setCurrent($_REQUEST['address_format_code']);
+		}
+
+		if ($this->arResult['SHOW_LOCATION_SOURCES_SETTINGS'])
+		{
+			/** @var Bitrix\Location\Entity\Source $source */
+			foreach ($this->arResult['LOCATION_SOURCES'] as $source)
+			{
+				$sourceCode = $source->getCode();
+				$sourceConfig = $source->getConfig() ?? new Location\Entity\Source\Config();
+
+				if (!isset($_REQUEST['LOCATION_SOURCE'][$sourceCode]))
+				{
+					continue;
+				}
+				$sourceRequest = $_REQUEST['LOCATION_SOURCE'][$sourceCode];
+
+				/**
+				 * Update source config
+				 */
+				$sourceConfigRequest = $_REQUEST['LOCATION_SOURCE'][$sourceCode]['CONFIG'] ?? [];
+				/** @var Location\Entity\Source\ConfigItem $configItem */
+				foreach ($sourceConfig as $configItem)
+				{
+					if (!$configItem->isVisible())
+					{
+						continue;
+					}
+					if (!isset($sourceConfigRequest[$configItem->getCode()]))
+					{
+						continue;
+					}
+
+					$value = null;
+					if ($configItem->getType() === Location\Entity\Source\ConfigItem::STRING_TYPE)
+					{
+						$value = $sourceConfigRequest[$configItem->getCode()];
+					}
+					elseif ($configItem->getType() === Location\Entity\Source\ConfigItem::BOOL_TYPE)
+					{
+						$value = $sourceConfigRequest[$configItem->getCode()] === 'Y';
+					}
+
+					$configItem->setValue($value);
+				}
+				$source->setConfig($sourceConfig);
+
+				/**
+				 * Save updated source to database
+				 */
+				$this->arResult['LOCATION_SOURCE_REPOSITORY']->save($source);
+			}
+		}
 
 		if($this->arResult['SHOW_GOOGLE_API_KEY_FIELD'])
 		{
 			if($this->arResult['IS_BITRIX24'])
 			{
 				\Bitrix\Main\Config\Option::set('bitrix24', 'google_map_api_key', $_POST['google_api_key']);
-				\Bitrix\Main\Config\Option::set('bitrix24', 'google_map_api_key_host', BX24_HOST_NAME);
-				\Bitrix\Main\Config\Option::set('location', 'google_map_api_key', $_POST['google_api_key']);
+				\Bitrix\Main\Config\Option::set(
+					'bitrix24',
+					'google_map_api_key_host',
+					defined('BX24_HOST_NAME')? BX24_HOST_NAME: SITE_SERVER_NAME
+				);
 			}
 			else
 			{
 				\Bitrix\Main\Config\Option::set('fileman', 'google_map_api_key', $_POST['google_api_key']);
-				\Bitrix\Main\Config\Option::set('location', 'google_map_api_key', $_POST['google_api_key']);
 			}
-		}
-
-		if($this->arResult['SHOW_USE_GOOGLE_API'] && array_key_exists('google_api_key_backend', $_POST))
-		{
-			\Bitrix\Main\Config\Option::set('location', 'google_map_api_key_backend', $_POST['google_api_key_backend']);
-		}
-
-		if($this->arResult['SHOW_USE_GOOGLE_API'] && array_key_exists('use_google_api', $_POST))
-		{
-			\Bitrix\Main\Config\Option::set('location', 'use_google_api', $_POST['use_google_api']);
-		}
-
-		if($this->arResult['SHOW_USE_GOOGLE_API'] && array_key_exists('google_map_show_photos', $_POST))
-		{
-			\Bitrix\Main\Config\Option::set('location', 'google_map_show_photos', $_POST['google_map_show_photos']);
-		}
-
-		if($this->arResult['SHOW_USE_GOOGLE_API'] && array_key_exists('google_use_geocoding_service', $_POST))
-		{
-			\Bitrix\Main\Config\Option::set('location', 'google_use_geocoding_service', $_POST['google_use_geocoding_service']);
-		}
-
-		if(isset($_REQUEST['address_format_code']) && $this->arResult['SHOW_ADDRESS_FORMAT'])
-		{
-			\Bitrix\Location\Infrastructure\FormatCode::setCurrent($_REQUEST['address_format_code']);
 		}
 
 		//gdpr
@@ -907,7 +940,7 @@ final class IntranetConfigsComponent extends CBitrixComponent
 						Bitrix\Bitrix24\OptionTable::add(
 							array(
 								"NAME" => "ip_access_rights",
-								"VALUE" => $arIpSettingsSer
+								"VALUE" => $arIpSettingsSer,
 							)
 						);
 					}
@@ -934,25 +967,33 @@ final class IntranetConfigsComponent extends CBitrixComponent
 		$this->arResult["IS_BITRIX24"] = IsModuleInstalled("bitrix24");
 		$this->arResult['IS_LOCATION_MODULE_INCLUDED'] = Loader::includeModule('location');
 		$this->arResult['SHOW_ADDRESS_FORMAT'] = $this->arResult['IS_LOCATION_MODULE_INCLUDED'];
-		$this->arResult['GOOGLE_MAP_SHOW_PHOTOS'] = (\Bitrix\Main\Config\Option::get('location', 'google_map_show_photos', 'N') === 'Y');
-		$this->arResult['GOOGLE_USE_GEOCODING_SERVICE'] = (\Bitrix\Main\Config\Option::get('location', 'google_use_geocoding_service', 'N') === 'Y');
 
 		if (Loader::includeModule("bitrix24"))
 		{
 			$this->arResult["LICENSE_TYPE"] = CBitrix24::getLicenseType();
 			$this->arResult["LICENSE_PREFIX"] = CBitrix24::getLicensePrefix();
 			$this->arResult["IS_LICENSE_PAID"] = CBitrix24::IsLicensePaid();
-			$this->arResult['SHOW_GOOGLE_API_KEY_FIELD'] = \CBitrix24::isCustomDomain();
-			$this->arResult['SHOW_USE_GOOGLE_API'] = false;
 		}
-		elseif(
-			(Loader::includeModule('fileman') && class_exists('Bitrix\Fileman\UserField\Address'))
-			|| IsModuleInstalled("location")
-		)
+
+		$this->arResult['SHOW_LOCATION_SOURCES_SETTINGS'] = false;
+		$this->arResult['LOCATION_SOURCES'] = [];
+		if ($this->arResult['IS_LOCATION_MODULE_INCLUDED'])
+		{
+			$this->arResult['SHOW_LOCATION_SOURCES_SETTINGS'] = Loader::includeModule("bitrix24")
+				? \CBitrix24::isCustomDomain()
+				: true;
+
+			$this->arResult['LOCATION_SOURCE_REPOSITORY'] = new SourceRepository(new Location\Entity\Source\OrmConverter());
+			$this->arResult['LOCATION_SOURCES'] = $this->arResult['LOCATION_SOURCE_REPOSITORY']->findAll();
+		}
+
+		if (Loader::includeModule("bitrix24"))
+		{
+			$this->arResult['SHOW_GOOGLE_API_KEY_FIELD'] = \CBitrix24::isCustomDomain();
+		}
+		elseif(Loader::includeModule('fileman') && class_exists('Bitrix\Fileman\UserField\Address'))
 		{
 			$this->arResult['SHOW_GOOGLE_API_KEY_FIELD'] = true;
-			$this->arResult['SHOW_USE_GOOGLE_API'] = true;
-			$this->arResult['USE_GOOGLE_API'] = $this->arResult['IS_LOCATION_MODULE_INCLUDED'] && \Bitrix\Main\Config\Option::get('location', 'use_google_api', 'Y') === 'Y';
 		}
 
 		$this->arResult["DATE_FORMATS"] = array("DD.MM.YYYY", "DD/MM/YYYY", "MM.DD.YYYY", "MM/DD/YYYY", "YYYY/MM/DD", "YYYY-MM-DD");
@@ -1023,7 +1064,7 @@ final class IntranetConfigsComponent extends CBitrixComponent
 		{
 			$this->arResult["IP_RIGHTS"] = array();
 			$dbIpRights = Bitrix\Bitrix24\OptionTable::getList(array(
-				"filter" => array("=NAME" => "ip_access_rights")
+				"filter" => array("=NAME" => "ip_access_rights"),
 			));
 			if ($arIpRights = $dbIpRights->Fetch())
 			{
@@ -1088,19 +1129,9 @@ final class IntranetConfigsComponent extends CBitrixComponent
 
 		$this->arResult['STRESSLEVEL_AVAILABLE'] = COption::GetOptionString("intranet", "stresslevel_available", "Y");
 
-		$this->arResult['GOOGLE_API_KEY_BACK']  = '';
-
 		if($this->arResult['SHOW_GOOGLE_API_KEY_FIELD'])
 		{
-			//todo: split up fileman and location keys?
-			if($this->arResult['IS_LOCATION_MODULE_INCLUDED'])
-			{
-				$this->arResult['GOOGLE_API_KEY'] = \Bitrix\Location\Source\Google\GoogleSource::findApiKey();
-			}
-			else
-			{
-				$this->arResult['GOOGLE_API_KEY'] = \Bitrix\Fileman\UserField\Address::getApiKey();
-			}
+			$this->arResult['GOOGLE_API_KEY'] = \Bitrix\Fileman\UserField\Address::getApiKey();
 
 			if($this->arResult['IS_BITRIX24'])
 			{
@@ -1108,20 +1139,15 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			}
 		}
 
-		if($this->arResult['IS_LOCATION_MODULE_INCLUDED'])
-		{
-			$this->arResult['GOOGLE_API_KEY_BACK'] = \Bitrix\Location\Source\Google\GoogleSource::findApiKeyBackend();
-		}
-
 		if($this->arResult['SHOW_ADDRESS_FORMAT'])
 		{
-			$this->arResult['LOCATION_ADDRESS_FORMAT_CODE'] = \Bitrix\Location\Infrastructure\FormatCode::getCurrent();
+			$this->arResult['LOCATION_ADDRESS_FORMAT_CODE'] = Location\Infrastructure\FormatCode::getCurrent();
 			$this->arResult['LOCATION_ADDRESS_FORMAT_LIST'] = [];
 			$this->arResult['LOCATION_ADDRESS_FORMAT_DESCRIPTION_LIST'] = [];
 			$this->arResult['LOCATION_ADDRESS_FORMAT_DESCRIPTION'] = [];
 			$sanitizer = new CBXSanitizer();
 
-			foreach(\Bitrix\Location\Service\FormatService::getInstance()->findAll(LANGUAGE_ID) as $format)
+			foreach(Location\Service\FormatService::getInstance()->findAll(LANGUAGE_ID) as $format)
 			{
 				$this->arResult['LOCATION_ADDRESS_FORMAT_LIST'][$format->getCode()] = $format->getName();
 				$this->arResult['LOCATION_ADDRESS_FORMAT_DESCRIPTION_LIST'][$format->getCode()] = $format->getDescription();

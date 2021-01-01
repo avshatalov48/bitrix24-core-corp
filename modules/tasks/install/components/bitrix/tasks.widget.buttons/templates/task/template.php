@@ -107,7 +107,7 @@ $taskData = $arParams["TASK"];
 
 	<script>
 		BX.message({
-			TASKS_REST_BUTTON_TITLE: '<?=Loc::getMessage('TASKS_REST_BUTTON_TITLE')?>',
+			TASKS_REST_BUTTON_TITLE_2: '<?=Loc::getMessage('TASKS_REST_BUTTON_TITLE_2')?>',
 			TASKS_DELETE_SUCCESS: '<?=GetMessage('TASKS_DELETE_SUCCESS')?>'
 		});
 	</script>

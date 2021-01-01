@@ -1,4 +1,7 @@
-<?
+<?php
+$MESS["CALL_STATUS_JOIN"] = "Join call";
+$MESS["CALL_STATUS_OPEN"] = "Open call";
+$MESS["CALL_STATUS_REMOTE"] = "Call is on a different device";
 $MESS["ELEMENT_MENU_ABOUT_CHAT"] = "About Chat";
 $MESS["ELEMENT_MENU_ANSWER"] = "Reply";
 $MESS["ELEMENT_MENU_CALL"] = "Call";
@@ -9,8 +12,8 @@ $MESS["ELEMENT_MENU_INVITE_CANCEL"] = "Cancel invitation";
 $MESS["ELEMENT_MENU_INVITE_RESEND"] = "Invite again";
 $MESS["ELEMENT_MENU_LEAVE"] = "Leave";
 $MESS["ELEMENT_MENU_MUTE"] = "Unfollow";
-$MESS["ELEMENT_MENU_PROFILE"] = "Profile";
 $MESS["ELEMENT_MENU_PIN"] = "Pin";
+$MESS["ELEMENT_MENU_PROFILE"] = "Profile";
 $MESS["ELEMENT_MENU_READ"] = "Read";
 $MESS["ELEMENT_MENU_SKIP"] = "Skip";
 $MESS["ELEMENT_MENU_SPAM"] = "Spam";
@@ -25,4 +28,3 @@ $MESS["IM_YOU"] = "it's you";
 $MESS["IM_YOU_2"] = "You: ";
 $MESS["NOTIFICATION_TITLE"] = "Notifications";
 $MESS["USER_INVITED"] = "Invitation has been sent";
-?>

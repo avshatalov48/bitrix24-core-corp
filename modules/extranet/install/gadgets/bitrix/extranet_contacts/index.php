@@ -112,7 +112,7 @@ if (!function_exists('_ShowUserString'))
 
 				$link = CComponentEngine::MakePathFromTemplate($arGadgetParams["DETAIL_URL"], array("user_id" => $arUser["ID"], "USER_ID" => $arUser["ID"], "ID" => $arUser["ID"]));
 
-				if (strlen($arUser["PERSONAL_PHOTO"]) <= 0)
+				if ($arUser["PERSONAL_PHOTO"] == '')
 				{
 					switch ($arUser["PERSONAL_GENDER"])
 					{

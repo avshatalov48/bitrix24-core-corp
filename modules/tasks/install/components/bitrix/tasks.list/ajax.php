@@ -224,7 +224,19 @@ if (check_bitrix_sessid())
 			else
 			{
 				$oTask = CTaskItem::getInstanceFromPool($_POST['id'], \Bitrix\Tasks\Util\User::getId());
-				$arTask = $oTask->getData($bEscape = false);
+				try
+				{
+					$arTask = $oTask->getData($bEscape = false);
+				}
+				catch (TasksException $e)
+				{
+					$jsonReply = array('status' => 'failure');
+					$APPLICATION->RestartBuffer();
+					header('Content-Type: application/x-javascript; charset=' . LANG_CHARSET);
+					echo CUtil::PhpToJsObject($jsonReply);
+					CMain::FinalActions();
+					exit();
+				}
 
 				if ($_POST["mode"] == "delete" && $oTask->checkAccess(ActionDictionary::ACTION_TASK_REMOVE))
 				{
@@ -381,7 +393,19 @@ if (check_bitrix_sessid())
 					if ( ! empty($arFields) )
 						$oTask->update($arFields);
 
-					$task = $oTask->getData();
+					try
+					{
+						$task = $oTask->getData();
+					}
+					catch (TasksException $e)
+					{
+						$jsonReply = array('status' => 'failure');
+						$APPLICATION->RestartBuffer();
+						header('Content-Type: application/x-javascript; charset=' . LANG_CHARSET);
+						echo CUtil::PhpToJsObject($jsonReply);
+						CMain::FinalActions();
+						exit();
+					}
 
 					// count children tasks
 					$childrenCnt = 0;
@@ -430,8 +454,22 @@ if (check_bitrix_sessid())
 
 					$arAdditionalFields = array('html' => "'" . CUtil::JSEscape(ob_get_clean()) . "'");
 
+					try
+					{
+						$task = $oTask->getData();
+					}
+					catch (TasksException $e)
+					{
+						$jsonReply = array('status' => 'failure');
+						$APPLICATION->RestartBuffer();
+						header('Content-Type: application/x-javascript; charset=' . LANG_CHARSET);
+						echo CUtil::PhpToJsObject($jsonReply);
+						CMain::FinalActions();
+						exit();
+					}
+
 					ob_start();
-					tasksRenderJSON($oTask->getData(), $childrenCnt, $arPaths, true, $bGannt, false, $nameTemplate, $arAdditionalFields);
+					tasksRenderJSON($task, $childrenCnt, $arPaths, true, $bGannt, false, $nameTemplate, $arAdditionalFields);
 
 					if ($jsonReply === null)
 					{

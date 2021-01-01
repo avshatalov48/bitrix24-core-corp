@@ -30,7 +30,7 @@ if (check_bitrix_sessid() && $USER->isAuthorized() && $request->getPost("templat
 	if ($theme && $request->getPost("action") === "save")
 	{
 		$success = $theme->setCurrentThemeId($request->getPost("themeId"));
-		if ($success && $request->getPost("setDefaultTheme") === "true" && ThemePicker::isAdmin())
+		if ($success && $request->getPost("setDefaultTheme") === "true" && ThemePicker::canSetDefaultTheme())
 		{
 			$theme->setDefaultTheme($request->getPost("themeId"));
 		}

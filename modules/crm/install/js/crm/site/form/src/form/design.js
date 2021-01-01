@@ -98,6 +98,7 @@ type Color = {
 	fieldBorder: ?string;
 	fieldBackground: ?string;
 	fieldFocusBackground: ?string;
+	popupBackground: ?string;
 };
 
 type Options = {
@@ -125,6 +126,7 @@ class Model
 		fieldBorder: '',
 		fieldBackground: '',
 		fieldFocusBackground: '',
+		popupBackground: '',
 	};
 	border: Border = {
 		top: false,
@@ -164,6 +166,7 @@ class Model
 					fieldBorder: '',
 					fieldBackground: '',
 					fieldFocusBackground: '',
+					popupBackground: '',
 				},
 				theme.color
 			));
@@ -298,7 +301,12 @@ class Model
 		}
 		if (typeof color.background !== 'undefined')
 		{
+			const isPopupColorDepend = this.color.popupBackground === this.color.background;
 			this.color.background = Util.Color.fillHex(color.background, true);
+			if (isPopupColorDepend || this.color.popupBackground.length === 0)
+			{
+				this.color.popupBackground = Util.Color.fillHex(color.background, true, 'ff');
+			}
 		}
 
 		if (typeof color.fieldBorder !== 'undefined')
@@ -312,6 +320,10 @@ class Model
 		if (typeof color.fieldFocusBackground !== 'undefined')
 		{
 			this.color.fieldFocusBackground = Util.Color.fillHex(color.fieldFocusBackground, true);
+		}
+		if (typeof color.popupBackground !== 'undefined')
+		{
+			this.color.popupBackground = Util.Color.fillHex(color.popupBackground, true);
 		}
 	}
 

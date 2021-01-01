@@ -71,7 +71,8 @@ $APPLICATION->IncludeComponent(
 			views: <?=Json::encode($arResult['views'])?>,
 			activeView: 'completedSprint',
 			completedSprint: <?=Json::encode($arResult['completedSprint'])?>,
-			filterId: '<?=$filterId?>'
+			filterId: '<?=$filterId?>',
+			sprints: <?=Json::encode($arResult['sprints'])?>
 		});
 	});
 </script>

@@ -6,6 +6,9 @@
 	var restClient = '';
 
 	var accessTokenKey = 'bx-voximplant-at';
+	var loginKey = 'bx-voximplant-login';
+	var serverKey = 'bx-voximplant-server';
+	var ttl = 30 * 24 * 60 * 60;
 
 	BX.namespace("BX.Voximplant");
 
@@ -103,7 +106,12 @@
 
 							resolve(loginResult)
 						})
-						.catch(reject)
+						.catch(function(err)
+						{
+							BX.localStorage.remove(loginKey);
+							BX.localStorage.remove(serverKey);
+							reject(err)
+						})
 
 				}).catch(reject);
 		});
@@ -113,11 +121,6 @@
 	{
 		return new Promise(function(resolve, reject)
 		{
-			if(!BX.localStorage)
-			{
-				return resolve(false);
-			}
-
 			var accessToken = BX.localStorage.get(accessTokenKey);
 			if(!accessToken)
 			{
@@ -188,11 +191,6 @@
 	 */
 	var storeTokens = function(tokens)
 	{
-		if(!BX.localStorage)
-		{
-			return;
-		}
-
 		BX.localStorage.set(accessTokenKey, tokens.accessToken, tokens.accessExpire);
 		//BX.localStorage.set(refreshTokenKey, tokens.refreshToken, tokens.refreshExpire);
 	};
@@ -201,53 +199,46 @@
 	{
 		return new Promise(function(resolve, reject)
 		{
-			if(BX.type.isNotEmptyString(login))
+			login = login || BX.localStorage.get(loginKey);
+			server = server || BX.localStorage.get(serverKey);
+			if(BX.type.isNotEmptyString(login) && BX.type.isNotEmptyString(server))
 			{
 				return resolve({
 					login: login,
 					server: server
 				});
 			}
-			else if(BX.message('voximplantLogin'))
+
+			restClient.callMethod('voximplant.authorization.get').then(function(result)
 			{
-				login = BX.message('voximplantLogin');
-				server = BX.message('voximplantServer');
+				var data = result.data();
 
-				return resolve({
-					login: login,
-					server: server
-				});
-			}
-			else
+				if(BX.type.isNotEmptyString(data.LOGIN) && BX.type.isNotEmptyString(data.SERVER))
+				{
+					login = data.LOGIN;
+					server = data.SERVER;
+					BX.localStorage.set(serverKey, server, ttl);
+					BX.localStorage.set(loginKey, login, ttl);
+
+					resolve({
+						login: login,
+						server: server
+					});
+				}
+				else
+				{
+					var e = {
+						name: "AuthResult",
+						code: "LOGIN_EMPTY",
+						message: "Could not get voximplant login for user"
+					};
+
+					reject(e);
+				}
+			}).catch(function(error)
 			{
-				restClient.callMethod('voximplant.authorization.get').then(function(result)
-				{
-					var data = result.data();
-
-					if(BX.type.isNotEmptyString(data.LOGIN) && BX.type.isNotEmptyString(data.SERVER))
-					{
-						login = data.LOGIN;
-						server = data.SERVER;
-						resolve({
-							login: login,
-							server: server
-						});
-					}
-					else
-					{
-						var e = {
-							name: "AuthResult",
-							code: "LOGIN_EMPTY",
-							message: "Could not get voximplant login for user"
-						};
-
-						reject(e);
-					}
-				}).catch(function(error)
-				{
-					reject(error);
-				})
-			}
+				reject(error);
+			})
 		});
 	};
 
@@ -310,6 +301,7 @@
 			var clientParameters = {
 				micRequired: false,
 				progressTone: false,
+				//serverIp: "web-gw-yy-01-148.voximplant.com", //todo: remove
 				experiments: {
 					preventRendering: true
 				}
@@ -341,7 +333,7 @@
 			{
 				console.error(err);
 
-				if(err.name === "AuthResult")
+				if("name" in err && err.name === "AuthResult")
 				{
 					restClient.callMethod('voximplant.authorization.onError');
 				}

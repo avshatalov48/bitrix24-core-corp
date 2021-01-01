@@ -233,7 +233,7 @@ else
 		"services" => [
 			[
 				"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("calls"),
-				"name" => "JSComponent",
+				"name" => \Bitrix\MobileApp\Mobile::getApiVersion() >= 36 ? "JNUIComponent" : "JSComponent",
 				"componentCode" => "calls",
 				"params" => [
 					"userId" => $USER->getId(),
@@ -249,6 +249,7 @@ else
 					"turnServer" => Main\Config\Option::get("im", "turn_server", ""),
 					"turnServerLogin" => Main\Config\Option::get("im", "turn_server_login", ""),
 					"turnServerPassword" => Main\Config\Option::get("im", "turn_server_password", ""),
+					"callLogService" => Main\Config\Option::get("im", "call_log_service", ""),
 				]
 			],
 			[

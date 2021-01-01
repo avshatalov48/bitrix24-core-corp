@@ -10,6 +10,7 @@ $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-hidden no-background");
 $APPLICATION->SetTitle(Loc::getMessage('SCP_SALESCENTER_TITLE'));
 Extension::load([
+	'ui.alerts',
 	'ui.tilegrid',
 	'ui.fonts.opensans',
 	'sidepanel',
@@ -17,6 +18,16 @@ Extension::load([
 	'salescenter.manager',
 ]);
 ?>
+
+<?php if ($arResult['isCashboxCountryConflict']): ?>
+	<div class="ui-alert ui-alert-warning">
+		<span class="ui-alert-message">
+			<?= Loc::getMessage('SALESCENTER_CASHBOX_ZONE_CONFLICT'); ?>
+			<?= Loc::getMessage('SALESCENTER_CASHBOX_ZONE_CONFLICT_RU_LIST', ['#CASHBOXES#' => implode(', ', $arResult['activeCashboxHandlersByCountry']['RU'])]); ?>
+			<?= Loc::getMessage('SALESCENTER_CASHBOX_ZONE_CONFLICT_UA_LIST', ['#CASHBOXES#' => implode(', ', $arResult['activeCashboxHandlersByCountry']['UA'])]); ?>
+		</span>
+	</div>
+<?php endif; ?>
 
 <div class="salescenter-cashbox-title"><?=Loc::getMessage('SCP_SALESCENTER_CASHBOX_SUB_TITLE')?></div>
 <div id="salescenter-cashbox" class="salescenter-cashbox"></div>

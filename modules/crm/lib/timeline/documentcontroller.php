@@ -7,7 +7,8 @@ use Bitrix\Main\Loader;
 final class DocumentController extends EntityController
 {
 	/** @var DocumentController|null */
-	private static $instance = null;
+	private static $instance;
+	protected $processedDeletedEntryIds = [];
 
 	private function __construct()
 	{
@@ -20,7 +21,7 @@ final class DocumentController extends EntityController
 	/**
 	 * @return DocumentController
 	 */
-	public static function getInstance()
+	public static function getInstance(): DocumentController
 	{
 		if(self::$instance === null)
 		{
@@ -62,6 +63,12 @@ final class DocumentController extends EntityController
 		{
 			throw new ArgumentException('id must be greater than zero.');
 		}
+		if(isset($this->processedDeletedEntryIds[$id]))
+		{
+			return;
+		}
+
+		$this->processedDeletedEntryIds[$id] = $id;
 
 		$text = $params['COMMENT'];
 		if(!$text)
@@ -69,8 +76,13 @@ final class DocumentController extends EntityController
 			$text = GetMessage('CRM_DOCUMENT_CONTROLLER_HISTORY_DELETE_MESSAGE');
 		}
 
-		$this->addEvent($text, $params);
+		if((int)$params['TYPE_CATEGORY_ID'] !== TimelineType::MODIFICATION)
+		{
+			$this->addEvent($text, $params);
+		}
+
 		$this->addToStack($id, 'timeline_document_delete', $params);
+		DocumentEntry::delete($id);
 
 		parent::onDelete($id, $params);
 	}
@@ -135,7 +147,7 @@ final class DocumentController extends EntityController
 		], false);
 	}
 
-	protected function addToStack($id, $command, array $params)
+	public function addToStack(int $id, $command, array $params)
 	{
 		if(Loader::includeModule('pull') && \CPullOptions::GetQueueServerStatus())
 		{
@@ -150,7 +162,10 @@ final class DocumentController extends EntityController
 				[
 					'module_id' => 'crm',
 					'command' => $command,
-					'params' => ['TAG' => $tag, 'HISTORY_ITEM' => $items[$id]],
+					'params' => [
+						'TAG' => $tag,
+						'HISTORY_ITEM' => $items[$id]
+					],
 				]
 			);
 		}

@@ -12,7 +12,7 @@ if(SITE_TEMPLATE_ID === 'bitrix24')
 {
 	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
 }
-$titleName = $arParams['IS_RECURRING'] === "Y" ? 'CRM_INVOICE_RECUR_SHOW_TITLE' : 'CRM_INVOICE_SHOW_TITLE';	
+$titleName = $arParams['IS_RECURRING'] === "Y" ? 'CRM_INVOICE_RECUR_SHOW_TITLE' : 'CRM_INVOICE_SHOW_TITLE';
 $arResult['CRM_CUSTOM_PAGE_TITLE'] = GetMessage(
 	$titleName,
 	array(
@@ -278,7 +278,7 @@ function generateExternalLink(event)
 						event,
 						[
 							{
-								text : '<input type="text" value="' + result.LINK + '" style="margin-top: 6px; ' +
+								html : '<input type="text" value="' + result.LINK + '" style="margin-top: 6px; ' +
 									'width : 100%" id="generated-link"><span class="crm-invoice-edit-url-link-icon" ' +
 									'title="<?=GetMessage('CRM_INVOICE_PUBLIC_LINK_COPY');?>" ' +
 									'id="clipboard-copy"></span>'

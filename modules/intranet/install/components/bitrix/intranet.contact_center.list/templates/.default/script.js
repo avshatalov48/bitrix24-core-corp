@@ -132,6 +132,12 @@
 				maxHeight: 300
 			};
 
+			var existedPopup = BX.PopupWindowManager.getPopupById('menu-popup-' + this.element);
+			if (existedPopup)
+			{
+				existedPopup.destroy();
+			}
+
 			this.menu = new BX.PopupMenuWindow(
 				this.element,
 				this.bindElement,
@@ -190,6 +196,15 @@
 			newItem.text = item.NAME;
 			newItem.delimiterAfter = item.DELIMITER_AFTER;
 			newItem.delimiterBefore = item.DELIMITER_BEFORE;
+
+			if (item.IS_ACTIVE === 'Y')
+			{
+				newItem.className = 'contact-center-list-item-status-active';
+			}
+			else if (item.IS_ACTIVE === 'N')
+			{
+				newItem.className = 'contact-center-list-item-status-inactive';
+			}
 
 			if (item.FIXED)
 			{

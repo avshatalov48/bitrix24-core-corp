@@ -17,6 +17,7 @@ use Bitrix\Tasks\Access\Permission\TasksPermissionTable;
 trait UserProviderTrait
 {
 	private $userId;
+	private $executorId;
 	private $userModel;
 	private $departmentMembers;
 	private $roles;
@@ -26,7 +27,7 @@ trait UserProviderTrait
 	{
 		if (!$this->userModel)
 		{
-			$this->userModel = UserModel::createFromId($this->userId);
+			$this->userModel = UserModel::createFromId($this->executorId);
 		}
 		return $this->userModel;
 	}

@@ -15,14 +15,17 @@ use CTimeZone;
  */
 class Deadline extends Date
 {
+	private static $workTimeSettings = [];
+
 	public static function prepare(array $row, array $parameters): string
 	{
 		$state = static::getDeadlineStateData($row);
 		$timestamp = (
 			$row['DEADLINE']
 				? static::getDateTimestamp($row['DEADLINE'])
-				: (new DateTime())->getTimestamp() + CTimeZone::GetOffset()
+				: self::getCompanyWorkTimeEnd()
 		);
+
 		$jsDeadline = DateTime::createFromTimestamp($timestamp - CTimeZone::GetOffset());
 		$deadline = ($state['state'] ?: static::formatDate($row['DEADLINE']));
 
@@ -325,5 +328,19 @@ class Deadline extends Date
 		}
 
 		return false;
+	}
+
+	private static function getCompanyWorkTimeEnd(): int
+	{
+		if (empty(self::$workTimeSettings))
+		{
+			self::$workTimeSettings = \Bitrix\Tasks\Util\Calendar::getSettings();
+		}
+
+		return (new DateTime())->setTime(
+			self::$workTimeSettings['HOURS']['END']['H'],
+			self::$workTimeSettings['HOURS']['END']['M'],
+			self::$workTimeSettings['HOURS']['END']['S']
+		)->getTimestamp();
 	}
 }

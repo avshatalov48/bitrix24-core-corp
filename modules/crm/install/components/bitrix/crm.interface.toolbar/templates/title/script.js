@@ -88,6 +88,7 @@ if(typeof(BX.InterfaceToolBar) === "undefined")
 				menuItems.push(
 					{
 						text:  typeof(item["TEXT"]) !== "undefined" ? item["TEXT"] : "",
+						html:  typeof(item["HTML"]) !== "undefined" ? item["HTML"] : "",
 						onclick: this._autoClose ? this.onMenuItemClick.bind(this, hdlr) : hdlr,
 						className: typeof(item["CLASS_NAME"]) !== "undefined" ? item["CLASS_NAME"] : "",
 						disabled: typeof(item["DISABLED"]) !== "undefined" ? item["DISABLED"] : false

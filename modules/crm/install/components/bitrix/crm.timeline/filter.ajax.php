@@ -67,9 +67,5 @@ else
 	}
 }
 
-$response = new Main\HttpResponse();
-$response->addHeader('Content-Type', 'application/json');
-$response->flush(Main\Web\Json::encode($result));
-
-require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/epilog_after.php');
-die();
+$response = Main\Context::getCurrent()->getResponse()->copyHeadersTo(new Main\Engine\Response\Json($result));
+Main\Application::getInstance()->end(0, $response);

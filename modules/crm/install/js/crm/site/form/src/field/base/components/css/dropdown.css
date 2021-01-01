@@ -24,7 +24,7 @@
 	max-height: 400px;
 	overflow-y: auto;
 	background-color: #fff;
-	background-color: var(--b24-background-color);
+	background-color: var(--b24-popup-background-color);
 	box-shadow: 0 6px 21px rgba(0, 0, 0, 0.5);
 	border-radius: 0 0 4px 4px;
 }

@@ -1,6 +1,7 @@
 import BaseRepository from './baserepository';
 import LocationJsonConverter from '../entity/location/locationjsonconverter';
 import Location from '../entity/location';
+import Address from '../entity/address';
 import LocationObjectConverter from '../entity/location/locationobjectconverter';
 
 export default class LocationRepository extends BaseRepository

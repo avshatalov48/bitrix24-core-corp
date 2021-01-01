@@ -4,7 +4,15 @@ import * as Messages from "../../form/messages";
 import * as Design from "../../form/design";
 import Event from "../../util/event";
 
+type Entity = {
+	id: number;
+	name: string;
+	fieldName: string;
+	type: string;
+};
+
 type Options = {
+	entity: ?Entity;
 	type: ?string;
 	id: ?string;
 	name: ?string;
@@ -12,6 +20,7 @@ type Options = {
 	multiple: ?Boolean;
 	visible: ?Boolean;
 	required: ?Boolean;
+	placeholder: ?string;
 	items: ?Array;
 	value: ?string;
 	checked: ?Boolean;
@@ -42,6 +51,7 @@ class Controller extends Event
 	multiple: Boolean;
 	visible: Boolean;
 	required: Boolean;
+	placeholder: String;
 	label: String;
 	items: Array<Item.Item> = [];
 
@@ -249,6 +259,7 @@ class Controller extends Event
 		this.multiple = !!this.options.multiple;
 		this.visible = !!this.options.visible;
 		this.required = !!this.options.required;
+		this.placeholder = this.options.placeholder || '';
 
 		if (options.messages || !this.messages)
 		{

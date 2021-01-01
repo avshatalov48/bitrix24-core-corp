@@ -22,6 +22,7 @@
 			this.publicFolder = params.publicFolder;
 			this.sipConnections = params.sipConnections;
 			this.linkToBuy = params.linkToBuy;
+			this.isTelephonyAvailable = params.isTelephonyAvailable === 'Y';
 			this.connectionsPlaceholder = BX('phone-config-sip-wrap');
 			this.addConnectionButton = BX('add-connection');
 
@@ -171,6 +172,11 @@
 
 		onAddConnectionButtonClick: function(e)
 		{
+			if (!this.isTelephonyAvailable)
+			{
+				BX.Voximplant.openLimitSlider('limit_contact_center_telephony_SIP_connector');
+				return;
+			}
 			this.editor = new BX.Voximplant.PbxEditor({
 				mode: this.type,
 				onSuccess: this.onSipConnectionSaved.bind(this),
@@ -207,8 +213,13 @@
 
 		connectModule: function(url)
 		{
-			//statistics
+			if (!this.isTelephonyAvailable)
+			{
+				BX.Voximplant.openLimitSlider('limit_contact_center_telephony_SIP_connector');
+				return;
+			}
 
+			//statistics
 			BX.ajax.runComponentAction("bitrix:voximplant.config.sip", "buySipConnector", {
 				analyticsLabel: "buySipConnector"
 			});

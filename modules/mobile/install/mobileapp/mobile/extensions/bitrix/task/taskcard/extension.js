@@ -13,17 +13,20 @@ include('InAppNotifier');
 			this.restNamespace = namespace;
 		}
 
-		call(method, params)
+		call(methodName, params)
 		{
+			const method = this.restNamespace + methodName;
+
 			this.currentAnswer = null;
 			this.abortCurrentRequest();
-			return new Promise((resolve, reject) =>
-			{
-				BX.rest.callMethod(this.restNamespace + method, params || {}, (response) => {
-					this.currentAnswer = response;
 
+			return new Promise((resolve, reject) => {
+				console.log({method, params});
+				BX.rest.callMethod(method, params || {}, (response) => {
+					this.currentAnswer = response;
 					if (response.error())
 					{
+						console.log(response.error());
 						reject(response);
 					}
 					else
@@ -173,11 +176,14 @@ include('InAppNotifier');
 			this.userId = userId || parseInt(BX.componentParameters.get('USER_ID', 0), 10);
 			this.taskId = BX.componentParameters.get('TASK_ID', 0);
 			this.guid = BX.componentParameters.get('GUID', '');
+			this.taskObjectData = BX.componentParameters.get('TASK_OBJECT', {});
 
 			this.currentUser = result.settings.userInfo;
 			this.deadlines = result.deadlines;
 
 			this.task = new Task(this.currentUser);
+			this.task.cloneData(this.taskObjectData);
+
 			this.rest = new Request();
 			this.options = new Options();
 			this.taskCardHandler = null;
@@ -186,6 +192,7 @@ include('InAppNotifier');
 
 		setListeners()
 		{
+			BX.addCustomEvent('task.view.onPageLoaded', eventData => this.onPageLoaded(eventData));
 			BX.addCustomEvent('onMobileGridFormDataChange', eventData => this.onMobileGridFormDataChange(eventData));
 			BX.addCustomEvent('onTaskDetailOptionsButtonClick', eventData => this.onTaskDetailOptionsButtonClick(eventData));
 			BX.addCustomEvent('task.view.onCommentsRead', eventData => this.onCommentsRead(eventData));
@@ -203,6 +210,14 @@ include('InAppNotifier');
 				{
 					handlers[command].apply(this, [params]);
 				}
+			});
+		}
+
+		onPageLoaded()
+		{
+			this.rest.call('Limit.isExceeded').then((response) => {
+				console.log('Limit.isExceeded', response.result);
+				this.taskLimitExceeded = response.result || false;
 			});
 		}
 
@@ -403,6 +418,7 @@ include('InAppNotifier');
 			let taskInfo = this.task.getTaskInfo();
 
 			taskInfo = this.handleItemActions(taskInfo);
+			delete taskInfo.project;
 
 			return taskInfo;
 		}
@@ -1079,6 +1095,13 @@ include('InAppNotifier');
 
 			this.mode = 'view';
 
+			if (this.task.id === this.taskId)
+			{
+				this.task.newCommentsCount = 0;
+				this.onInitSuccess();
+				return;
+			}
+
 			this.rest.call('get', {
 				taskId: this.taskId,
 				select: TaskCard.selectFields,
@@ -1092,25 +1115,32 @@ include('InAppNotifier');
 				this.task.setData(task);
 				this.taskLimitExceeded = task.taskLimitExceeded;
 
-				BX.onViewLoaded(() => {
-					this.taskCardHandler = new TaskCardHandler(taskcard);
-					this.checklistController = new ChecklistController(this.taskId, this.userId, this.guid, this.mode);
+				this.onInitSuccess();
+			});
+		}
 
-					const taskInfo = this.getTaskInfo();
-					this.taskCardHandler.setTaskInfo(this.handleSwipeActionsShow(taskInfo));
-					this.taskCardHandler.setTaskInfo(this.handleSwipeActionsShow(taskInfo));
+		onInitSuccess()
+		{
+			BX.onViewLoaded(() => {
+				this.taskCardHandler = new TaskCardHandler(taskcard);
+				this.checklistController = new ChecklistController(this.taskId, this.userId, this.guid, this.mode);
 
-					this.taskPopupMenu = dialogs.createPopupMenu();
-					this.taskPopupMenu.setPosition('center');
-					this.redrawTaskPopupMenu();
+				const taskInfo = this.getTaskInfo();
+				delete taskInfo.project;
 
-					taskcard.setRightButtons([{
-						type: 'more',
-						callback: () => {
-							this.taskPopupMenu.show();
-						},
-					}]);
-				});
+				this.taskCardHandler.setTaskInfo(this.handleSwipeActionsShow(taskInfo));
+				this.taskCardHandler.setTaskInfo(this.handleSwipeActionsShow(taskInfo));
+
+				this.taskPopupMenu = dialogs.createPopupMenu();
+				this.taskPopupMenu.setPosition('center');
+				this.redrawTaskPopupMenu();
+
+				taskcard.setRightButtons([{
+					type: 'more',
+					callback: () => {
+						this.taskPopupMenu.show();
+					},
+				}]);
 			});
 		}
 	}

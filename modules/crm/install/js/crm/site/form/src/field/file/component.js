@@ -8,7 +8,8 @@ const FieldFileItem = {
 			<div v-if="file.content" class="b24-form-control-file-item">
 				<div class="b24-form-control-file-item-preview">
 					<img class="b24-form-control-file-item-preview-image" 
-						:src="file.content"
+						:src="fileIcon"
+						v-if="hasIcon"
 					>
 				</div>
 				<div class="b24-form-control-file-item-name">
@@ -60,6 +61,17 @@ const FieldFileItem = {
 		file: function () {
 			return this.item.value || {};
 		},
+		hasIcon ()
+		{
+			return this.file.type.split('/')[0] === 'image';
+		},
+		fileIcon ()
+		{
+			return (this.hasIcon
+				? 'data:' + this.file.type + ';base64,' + this.file.content
+				: null
+			);
+		},
 	},
 	methods: {
 		setFiles() {
@@ -72,10 +84,12 @@ const FieldFileItem = {
 			{
 				let reader = new FileReader();
 				reader.onloadend = () => {
+					const result = reader.result.split(';');
 					this.value = {
 						name: file.name,
 						size: file.size,
-						content: reader.result
+						type: result[0].split(':')[1],
+						content: result[1].split(',')[1],
 					};
 				};
 				reader.readAsDataURL(file);

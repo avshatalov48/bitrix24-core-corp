@@ -120,15 +120,15 @@ abstract class Bitrix24 extends \Bitrix\Tasks\Integration
 	 * @param array $params
 	 * @return array|null
 	 */
-	public static function prepareStubInfo(array $params)
+	public static function prepareStubInfo(array $params): ?array
 	{
 		if (static::includeModule() && method_exists('CBitrix24', 'prepareStubInfo'))
 		{
-			$title = (isset($params['TITLE'])? $params['TITLE'] : '');
-			$content = (isset($params['CONTENT'])? $params['CONTENT'] : '');
+			$title = ($params['TITLE'] ?? '');
+			$content = ($params['CONTENT'] ?? '');
 
-			$replacements = (isset($params['REPLACEMENTS']) && is_array($params['REPLACEMENTS'])
-				? $params['REPLACEMENTS'] : []);
+			$replacements = $params['REPLACEMENTS'];
+			$replacements = (isset($replacements) && is_array($replacements) ? $replacements : []);
 
 			if (!empty($replacements))
 			{
@@ -139,17 +139,18 @@ abstract class Bitrix24 extends \Bitrix\Tasks\Integration
 				$content = str_replace($search, $replace, $content);
 			}
 
-			$licenseAllButtonClass = ($params['GLOBAL_SEARCH']? 'ui-btn ui-btn-xs ui-btn-light-border' : 'success');
-			$licenseDemoButtonClass = ($params['GLOBAL_SEARCH']? 'ui-btn ui-btn-xs ui-btn-light' : '');
+			$licenseAllButtonClass = ($params['GLOBAL_SEARCH'] ? 'ui-btn ui-btn-xs ui-btn-light-border' : 'success');
+			$licenseDemoButtonClass = ($params['GLOBAL_SEARCH'] ? 'ui-btn ui-btn-xs ui-btn-light' : '');
+			$buttons = [
+				['ID' => \CBitrix24::BUTTON_LICENSE_ALL, 'CLASS_NAME' => $licenseAllButtonClass],
+				['ID' => \CBitrix24::BUTTON_LICENSE_DEMO, 'CLASS_NAME' => $licenseDemoButtonClass],
+			];
+			$parameters = [
+				'ANALYTICS_LABEL' => 'TASK_FILTER_LIMITS',
+			];
+			$parameters = ($params['GLOBAL_SEARCH'] ? [] : $parameters);
 
-			return \CBitrix24::prepareStubInfo(
-				$title,
-				$content,
-				[
-					['ID' => \CBitrix24::BUTTON_LICENSE_ALL, 'CLASS_NAME' => $licenseAllButtonClass],
-					['ID' => \CBitrix24::BUTTON_LICENSE_DEMO, 'CLASS_NAME' => $licenseDemoButtonClass],
-				]
-			);
+			return \CBitrix24::prepareStubInfo($title, $content, $buttons, $parameters);
 		}
 
 		return null;

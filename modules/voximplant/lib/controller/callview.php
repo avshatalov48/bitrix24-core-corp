@@ -46,6 +46,13 @@ class CallView extends Engine\Controller
 		);
 	}
 
+	public function getLinesAction($showResApps = true)
+	{
+		return \CVoxImplantConfig::GetLinesEx([
+			'showRestApps' => $showResApps
+		]);
+	}
+
 	public function configureActions()
 	{
 		$result = parent::configureActions();

@@ -45,7 +45,7 @@ final class PageState
 	public static function createFromSignedString($signedData)
 	{
 		$signer = new Signer;
-		$signedData = unserialize(base64_decode($signer->unsign($signedData, static::SIGNER_SALT)));
+		$signedData = unserialize(base64_decode($signer->unsign($signedData, static::SIGNER_SALT)), ['allowed_classes' => false]);
 
 		$pageState = new static($signedData['step'], $signedData['data']);
 		$pageState

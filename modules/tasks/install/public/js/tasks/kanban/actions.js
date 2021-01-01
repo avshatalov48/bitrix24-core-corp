@@ -104,6 +104,7 @@
 			BX.calendar({
 				node: node,//BX.proxy_context,
 				bTime: true,
+				bCompatibility: false,
 				callback: function(data)
 				{
 					var format = BX.date.convertBitrixFormat(BX.message("FORMAT_DATETIME"));

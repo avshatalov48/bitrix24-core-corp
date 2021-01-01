@@ -129,7 +129,9 @@ final class MobileLivefeed extends \Bitrix\Mobile\Component\LogList
 		$this->arParams['TARGET'] = ($pinnedContext ? 'ENTRIES_ONLY_PINNED' : 'ENTRIES_ONLY');
 		$this->arParams['IS_LIST'] = 'Y';
 
-		return new Engine\Response\Component($this->getName(), '', $this->arParams);
+		return new Engine\Response\Component($this->getName(), '', $this->arParams, [], [
+			'serverTimestamp'
+		]);
 	}
 
 	public function executeComponent()

@@ -195,3 +195,9 @@
 .tasks-scrum-sprint-sidepanel .tasks-scrum-item {
 	padding: 10px 0 1px 17px;
 }
+
+.tasks-scrum-sprint-sidepanel-chart {
+	padding: 15px 0 0 0;
+	background: white;
+	height: 600px;
+}

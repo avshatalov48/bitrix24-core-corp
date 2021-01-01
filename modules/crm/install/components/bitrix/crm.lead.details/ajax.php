@@ -6,8 +6,10 @@ define('DisableEventsCheck', true);
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
+use Bitrix\Crm\Kanban\Driver;
 use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Crm\Tracking;
 use Bitrix\Location;
 
 if (!CModule::IncludeModule('crm'))
@@ -165,6 +167,8 @@ elseif($action === 'SAVE')
 			$fields[$fieldName] = $_POST[$fieldName];
 		}
 	}
+	/** @global $USER_FIELD_MANAGER CUserTypeManager */
+	global $USER_FIELD_MANAGER;
 	$USER_FIELD_MANAGER->EditFormAddFields(\CCrmLead::USER_FIELD_ENTITY_ID, $fields, [
 		'FORM' => $fields,
 		'FILES' => [],
@@ -483,6 +487,8 @@ elseif($action === 'SAVE')
 				$fields['COMMENTS'] = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($fields['COMMENTS']);
 			}
 
+			Tracking\UI\Details::appendEntityFieldValue($fields, $_POST);
+
 			$entity = new \CCrmLead(!CCrmPerms::IsAdmin());
 			if($isNew)
 			{
@@ -642,7 +648,7 @@ elseif($action === 'SAVE')
 			\CCrmProductRow::SaveSettings('L', $ID, $productRowSettings);
 		}
 
-		\Bitrix\Crm\Tracking\UI\Details::saveEntityData(
+		Tracking\UI\Details::saveEntityData(
 			\CCrmOwnerType::Lead,
 			$ID,
 			$_POST,
@@ -707,6 +713,10 @@ elseif($action === 'SAVE')
 	$component = new CCrmLeadDetailsComponent();
 	$component->initializeParams($params);
 	$component->setEntityID($ID);
+
+	$component->prepareEntityData();
+	$component->prepareFieldInfos();
+
 	$result = array('ENTITY_ID' => $ID, 'ENTITY_DATA' => $component->prepareEntityData());
 
 	if($isNew)
@@ -917,6 +927,9 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 	{
 		$optionPrefix = $component->getDefaultConfigID();
 	}
+
+	$component->prepareEntityData();
+	$component->prepareFieldInfos();
 
 	$GLOBALS['APPLICATION']->RestartBuffer();
 	Header('Content-Type: text/html; charset='.LANG_CHARSET);

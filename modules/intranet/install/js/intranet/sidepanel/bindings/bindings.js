@@ -487,7 +487,9 @@
 				],
 				options: {
 					cacheable: false,
-					width: 960
+					label: {
+						text: BX.message('INTRANET_BINDINGS_VARIATION')
+					}
 				}
 			},
 			{

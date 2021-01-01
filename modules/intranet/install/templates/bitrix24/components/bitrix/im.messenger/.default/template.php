@@ -101,7 +101,8 @@ $this->SetViewTarget("im", 100);
 	if ($arResult["SHOW_HELP_SPOTLIGHT"])
 	{
 		$APPLICATION->includeComponent("bitrix:spotlight", "", array(
-			"ID" => "help-spotlight",
+			"ID" => "help-spotlight2",
+			"USER_TYPE" => "ALL",
 			"JS_OPTIONS" => array(
 				"targetElement" => "#bx-help-block",
 				"content"       => Loc::getMessage("IM_HELP_SPOTLIGHT"),

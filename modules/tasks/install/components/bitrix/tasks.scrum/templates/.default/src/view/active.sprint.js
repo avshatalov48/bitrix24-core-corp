@@ -44,7 +44,9 @@ export class ActiveSprint
 	initDomNodes()
 	{
 		this.sprintStatsContainer = document.getElementById('tasks-scrum-active-sprint-stats');
-		this.completeSprintButtonNode = document.getElementById('tasks-scrum-actions-complete-sprint');
+		const buttonsContainer = document.getElementById('tasks-scrum-actions-complete-sprint');
+		this.chartSprintButtonNode = buttonsContainer.firstElementChild;
+		this.completeSprintButtonNode = buttonsContainer.lastElementChild;
 	}
 
 	createSprintStats()
@@ -56,6 +58,7 @@ export class ActiveSprint
 
 	bindHandlers()
 	{
+		Event.bind(this.chartSprintButtonNode, 'click', this.onShowSprintBurnDownChart.bind(this));
 		Event.bind(this.completeSprintButtonNode, 'click', this.onCompleteSprint.bind(this));
 
 		if (window.Kanban)
@@ -164,5 +167,15 @@ export class ActiveSprint
 				scrumItem.setCompleted(false);
 			}
 		});
+	}
+
+	onShowSprintBurnDownChart()
+	{
+		const sprintSidePanel = new SprintSidePanel({
+			sidePanel: this.sidePanel,
+			requestSender: this.requestSender,
+			views: this.views
+		});
+		sprintSidePanel.showBurnDownChart(this.sprint);
 	}
 }

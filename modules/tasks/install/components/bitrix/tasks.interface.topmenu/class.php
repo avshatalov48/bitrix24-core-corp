@@ -55,6 +55,7 @@ class TasksTopmenuComponent extends TasksBaseComponent
 			$arParams['TASKS_GROUP_CREATE_URL_TEMPLATE'],
 			'/company/personal/user/#user_id#/groups/create/?firstRow=project'
 		);
+		static::tryParseStringParameter($arParams['PARENT_COMPONENT'], '');
 
 		return parent::checkParameters();
 	}
@@ -94,7 +95,15 @@ class TasksTopmenuComponent extends TasksBaseComponent
 			$this->arParams['SHOW_SECTION_MANAGE'] = 'N';
 		}
 
-		$this->arResult['EFFECTIVE_COUNTER'] = Counter::getInstance($this->userId)->get(Counter\CounterDictionary::COUNTER_EFFECTIVE);//\Bitrix\Tasks\Internals\Effective::getMiddleCounter($this->userId);
+		$this->arResult['EFFECTIVE_COUNTER'] = 0;
+		if (
+			$this->arParams['PARENT_COMPONENT'] !== 'tasks.task'
+			|| !array_key_exists('IFRAME', $_REQUEST)
+			|| $_REQUEST['IFRAME'] !== 'Y'
+		)
+		{
+			$this->arResult['EFFECTIVE_COUNTER'] = Counter::getInstance($this->userId)->get(Counter\CounterDictionary::COUNTER_EFFECTIVE);
+		}
 
 		$this->arResult['SECTION_MANAGE_COUNTER'] = 0;
 		if ($this->arParams['SHOW_SECTION_MANAGE'] == 'Y' && $this->isAccessToCounters())
@@ -122,8 +131,18 @@ class TasksTopmenuComponent extends TasksBaseComponent
 		$this->arResult['USER_ID'] = (int)$this->userId;
 		$this->arResult['OWNER_ID'] = (int)$this->arParams['USER_ID'];
 
-		$this->arResult['ROLES'] = $this->getRoles();
-		$this->arResult['TOTAL'] = Counter::getInstance($this->arParams['USER_ID'])->get(Counter\CounterDictionary::COUNTER_TOTAL);
+		$this->arResult['ROLES'] = [];
+		$this->arResult['TOTAL'] = 0;
+
+		if (
+			$this->arParams['PARENT_COMPONENT'] !== 'tasks.task'
+			|| !array_key_exists('IFRAME', $_REQUEST)
+			|| $_REQUEST['IFRAME'] !== 'Y'
+		)
+		{
+			$this->arResult['ROLES'] = $this->getRoles();
+			$this->arResult['TOTAL'] = Counter::getInstance($this->arParams['USER_ID'])->get(Counter\CounterDictionary::COUNTER_TOTAL);
+		}
 
 		return true;
 	}

@@ -949,7 +949,11 @@ BX.CrmConfigStatusClass = (function ()
 
 		for(var k = 0; k < listInputStatusId.length; k++)
 		{
-			var statusId = +listInputStatusId[k].value;
+			var parsedInputValue = listInputStatusId[k].value;
+			parsedInputValue = parsedInputValue.indexOf(':') > 0 ?
+				parsedInputValue.substring(parsedInputValue.indexOf(':') + 1) : parsedInputValue;
+
+			var statusId = parseInt(parsedInputValue);
 			if(!isNaN(statusId))
 			{
 				if(statusId > newStatusId)

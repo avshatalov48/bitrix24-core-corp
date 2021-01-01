@@ -208,18 +208,13 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 			case self::WHAT_WILL_CALCULATE_SUCCESS_LEAD_DATA_FOR_FUNNEL:
 				$query->addSelect(Query::expr()->max('OPPORTUNITY_ACCOUNT'), 'MAX_OPPORTUNITY_ACCOUNT');
 				$query->addSelect('FULL_HISTORY.OWNER_ID', 'FULL_HISTORY_OWNER_ID');
-				$query->addSelect('FULL_HISTORY.IS_SUPPOSED', 'FULL_HISTORY_IS_SUPPOSED');
+				$query->addSelect(Query::expr()->min('FULL_HISTORY.IS_SUPPOSED'), 'FULL_HISTORY_IS_SUPPOSED');
 				$query->addSelect(Query::expr()->max('FULL_HISTORY.SPENT_TIME'), 'FULL_HISTORY_SPENT_TIME');
 				$query->addSelect(Query::expr()->max('ACCOUNT_CURRENCY_ID'), 'MAX_ACCOUNT_CURRENCY_ID');
 				break;
 			default:
 				$query->addSelect(new \Bitrix\Main\Entity\ExpressionField('VALUE', 'COUNT(DISTINCT %s)', 'FULL_HISTORY.OWNER_ID'));
 		}
-
-
-
-
-
 
 		switch ($calculateValue)
 		{
@@ -243,10 +238,8 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 				break;
 		}
 
-
 		$this->addToQueryFilterCase($query);
 		$this->addPermissionsCheck($query);
-
 
 		switch ($calculateValue)
 		{
@@ -260,8 +253,6 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 			default:
 				$results = $query->exec()->fetchAll();
 		}
-
-
 
 		$amountLeadCount = 0;
 		$amountLeadSum = 0;
@@ -320,7 +311,6 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 							'VALUE' => 0
 						];
 					}
-
 				}
 
 				$amountLeadCount = $allAmountLeadCount ? (($successAmountLeadCount / $allAmountLeadCount) * 100) : 0;
@@ -379,14 +369,11 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 							'VALUE' => 0
 						];
 					}
-
 				}
 
 				$amountLeadCount = $allAmountLeadCount ? (($losesAmountLeadCount / $allAmountLeadCount) * 100) : 0;
 				break;
 		}
-
-
 
 		$leadCalculatedValue = [];
 		$percentageMetricsList = [
@@ -421,8 +408,6 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 					}
 
 					$leadCalculatedValue[$result['STATUS_KEY']]['value'] = $result['VALUE'];
-
-
 					$leadCalculatedValue[$result['STATUS_KEY']]['additionalValues']['sum']['VALUE'] = 0;
 					$leadCalculatedValue[$result['STATUS_KEY']]['additionalValues']['sum']['currencyId'] = 'RUB';
 
@@ -463,9 +448,7 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 				default:
 					$leadCalculatedValue['withoutGrouping'] = $result['VALUE'];
 					break;
-
 			}
-
 		}
 
 		if ($groupingValue === self::GROUPING_BY_STATE && isset($statusNameListByStatusId) && $calculateValue !==self::WHAT_WILL_CALCULATE_SUCCESS_LEAD_DATA_FOR_FUNNEL)
@@ -489,7 +472,6 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 			$leadCalculatedValue = $sortedLeadCountListByStatus;
 		}
 
-
 		$leadCalculatedValue['amount']['count'] = $amountLeadCount;
 		$leadCalculatedValue['amount']['sum'] = $amountLeadSum;
 
@@ -498,13 +480,10 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 			$leadCalculatedValue['amount']['successPassTime'] = $this->getLeadPassingTime();
 		}
 
-
 		if ($disableSuccessStatesValue)
 		{
 			unset($leadCalculatedValue['CONVERTED']);
 		}
-
-
 
 		//replace converted value to the end in column funnel
 		if ($calculateValue === self::WHAT_WILL_CALCULATE_LEAD_DATA_FOR_FUNNEL)
@@ -591,8 +570,6 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 		$this->addToQueryFilterCase($query);
 		$this->addPermissionsCheck($query);
 
-
-
 		$connection = Application::getConnection();
 
 		$querySql = 'SELECT SUM(res.OPPORTUNITY_ACCOUNT) as SUM, COUNT(res.DISTINCT_OWNER_ID) COUNT, res.CURRENCY as CURRENCY FROM(';
@@ -606,7 +583,6 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 	private function addToQueryFilterCase(Query $query)
 	{
 		$filterParameters = $this->getFilterParameters();
-
 
 		if (!$this->isConversionCalculateMode())
 		{
@@ -668,7 +644,6 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 				case 'dest_selector':
 					$query->addFilter($key, $value['value']);
 					break;
-
 			}
 
 			if ($key === 'STAGE_SEMANTIC_ID')
@@ -769,7 +744,6 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 
 		return $map;
 	}
-
 
 	private function addPermissionsCheck(Query $query, $userId = 0)
 	{

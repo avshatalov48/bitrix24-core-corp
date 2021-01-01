@@ -255,7 +255,7 @@ if (CModule::IncludeModule("rest"))
 	if(count($arMenuApps) > 0)
 	{
 		$menuStructure[] = array(
-			"name"=>Loc::getMessage("MB_MARKETPLACE_GROUP_TITLE"),
+			"name"=>Loc::getMessage("MB_MARKETPLACE_GROUP_TITLE_2"),
 			"sort"=>110,
 			"hidden"=>CMobile::getInstance()->getApiVersion()<=15,
 			"items"=> $arMenuApps

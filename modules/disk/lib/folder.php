@@ -1068,11 +1068,10 @@ class Folder extends BaseObject
 		if(!$this->isLink())
 		{
 			//todo potential - very hard operation.
-			foreach(Folder::getModelList(array('filter' => array('REAL_OBJECT_ID' => $this->id, '!=REAL_OBJECT_ID' => $this->id))) as $link)
+			foreach(Folder::getModelList(array('filter' => array('REAL_OBJECT_ID' => $this->id))) as $link)
 			{
 				$link->deleteTree($deletedBy);
 			}
-			unset($link);
 		}
 
 		$event = new Event(Driver::INTERNAL_MODULE_ID, "onAfterDeleteFolder", array($this->getId(), $deletedBy));

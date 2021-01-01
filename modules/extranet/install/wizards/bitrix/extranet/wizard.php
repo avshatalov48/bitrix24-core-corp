@@ -38,7 +38,7 @@ class WelcomeStep extends CWizardStep
 	function ShowStep()
 	{
 		$wizard =& $this->GetWizard();
-		if (strlen($wizard->GetVar("templateID")) > 0)
+		if ($wizard->GetVar("templateID") <> '')
 		{
 			$this->content .= GetMessage("WELCOME_TEXT_SHORT");
 		}
@@ -91,7 +91,7 @@ class SelectTemplateStep extends CWizardStep
 			return;
 
 		$defaultTemplateID = COption::GetOptionString("main", "wizard_template_id_extranet", "");
-		if (strlen($defaultTemplateID) > 0 && 
+		if ($defaultTemplateID <> '' &&
 			(
 				array_key_exists($defaultTemplateID, $arTemplates)
 				|| $defaultTemplateID == "current_intranet_template"
@@ -185,7 +185,7 @@ class SelectThemeStep extends CWizardStep
 		$themeVarName = $templateID."_themeID";
 
 		$defaultThemeID = COption::GetOptionString("main", "wizard_".$templateID."_theme_id_extranet", "");
-		if (strlen($defaultThemeID) > 0 && array_key_exists($defaultThemeID, $arThemes))
+		if ($defaultThemeID <> '' && array_key_exists($defaultThemeID, $arThemes))
 			$wizard->SetDefaultVar($themeVarName, $defaultThemeID);
 		else
 		{
@@ -231,10 +231,10 @@ class SiteSettingsStep extends CWizardStep
 		if (
 			file_exists($filename)
 			&& ($siteLogo = file_get_contents($filename)) !== false
-			&& strlen($siteLogo) > 0
+			&& $siteLogo <> ''
 		)
 		{
-			if (strpos($siteLogo, "default_logo") !== false)
+			if (mb_strpos($siteLogo, "default_logo") !== false)
 			{
 				$siteLogo = $default_value;
 			}
@@ -267,7 +267,7 @@ class SiteSettingsStep extends CWizardStep
 
 		$wizard =& $this->GetWizard();
 
-		if (strlen(COption::GetOptionString("extranet", "extranet_site")) > 0)
+		if (COption::GetOptionString("extranet", "extranet_site") <> '')
 		{
 			$siteId = COption::GetOptionString("extranet", "extranet_site");
 			$rsSites = CSite::GetList(
@@ -288,7 +288,7 @@ class SiteSettingsStep extends CWizardStep
 		{
 			$siteId = "co";
 			$siteName = (
-				strlen(COption::GetOptionString("main", "site_name")) > 0
+				COption::GetOptionString("main", "site_name") <> ''
 					? COption::GetOptionString("main", "site_name").GetMessage("site_name_suffix")
 					: $siteName = GetMessage("wiz_slogan")
 			);
@@ -367,7 +367,7 @@ class SiteSettingsStep extends CWizardStep
 	{
 		$wizard =& $this->GetWizard();
 
-		if (strpos($wizard->GetVar("templateID"), "light") === 0)
+		if (mb_strpos($wizard->GetVar("templateID"), "light") === 0)
 		{
 			$this->SaveFile("siteLogo", Array("extensions" => "gif,jpg,jpeg,png", "max_height" => 72, "max_width" => 285, "make_preview" => "Y"));
 		}
@@ -380,7 +380,7 @@ class SiteSettingsStep extends CWizardStep
 			$this->SaveFile("siteLogo", Array("extensions" => "gif,jpg,jpeg,png", "max_height" => 80, "max_width" => 90, "make_preview" => "Y"));
 		}
 
-		if (strlen(COption::GetOptionString("extranet", "extranet_site")) > 0)
+		if (COption::GetOptionString("extranet", "extranet_site") <> '')
 		{
 			COption::SetOptionString("main", "wizard_extranet_rerun", "Y");
 			define("WIZARD_IS_RERUN", true);
@@ -391,20 +391,18 @@ class SiteSettingsStep extends CWizardStep
 			define("WIZARD_IS_RERUN", false);
 		}
 
-		define("WIZARD_IS_RERUN", strlen(COption::GetOptionString("extranet", "extranet_site")) > 0);
-		
 		if ($wizard->IsNextButtonClick() && WIZARD_IS_RERUN !== true)
 		{
 			$siteID = $wizard->GetVar("siteID");
 			$siteFolder = $wizard->GetVar("siteFolder");
 			$siteName = $wizard->GetVar("siteName");
 
-			if (strlen($siteID) != 2)
+			if (mb_strlen($siteID) != 2)
 			{
 				$this->SetError(GetMessage("wiz_site_id_error"));
 				return;
 			}
-			elseif (strlen(trim($siteFolder, " /")) == 0)
+			elseif (trim($siteFolder, " /") == '')
 			{
 				$this->SetError(GetMessage("wiz_site_folder_error"));	
 				return;
@@ -528,7 +526,7 @@ JS;
 			$this->content .= '</td></tr>';
 		}
 */
-		define("WIZARD_IS_RERUN", strlen(COption::GetOptionString("extranet", "extranet_site")) > 0);
+		define("WIZARD_IS_RERUN", COption::GetOptionString("extranet", "extranet_site") <> '');
 		
 		if(WIZARD_IS_RERUN !== true)
 		{
@@ -668,7 +666,7 @@ class DataInstallStep extends CWizardStep
 			<div id="error_notice">
 				<div class="inst-note-block inst-note-block-red">
 					<div class="inst-note-block-icon"></div>
-					<div class="inst-note-block-label">'.GetMessage("INST_ERROR_OCCURED").'</div><br />
+					<div class="inst-note-block-label">'.GetMessage("INST_ERROR_OCCURED").'</div><br style="clear:both" />
 					<div class="inst-note-block-text">'.GetMessage("INST_ERROR_NOTICE").'<div id="error_text"></div></div>
 				</div>
 			</div>
@@ -729,7 +727,7 @@ class DataInstallStep extends CWizardStep
 		{
 			define("WIZARD_SITE_ID", $siteID);
 			define("WIZARD_SITE_DIR", $siteFolder);
-			define("WIZARD_SITE_NAME", $siteName);			
+			define("WIZARD_SITE_NAME", $siteName);
 			define("WIZARD_SITE_PATH", $_SERVER["DOCUMENT_ROOT"].$siteFolder);
 			define("WIZARD_SITE_LOGO", intval($wizard->GetVar("siteLogo")));
 			define("WIZARD_USE_SITE_LOGO", $wizard->GetVar("useSiteLogo") == "Y");
@@ -776,8 +774,6 @@ class DataInstallStep extends CWizardStep
 		
 		$b24ToCp = file_exists(WIZARD_SITE_PATH.".superleft.menu.php") ? true : false;
 		define("WIZARD_B24_TO_CP", $b24ToCp);
-		
-		define("WIZARD_SITE_LOGO", intval($wizard->GetVar("siteLogo")));
 
 		if (!file_exists(WIZARD_SERVICE_ABSOLUTE_PATH."/".$serviceStage))
 			return false;
@@ -863,7 +859,7 @@ class FinishStep extends CWizardStep
 	function ShowStep()
 	{
 		$DefaultSiteID = CSite::GetDefSite();
-		if (strlen($DefaultSiteID) > 0)
+		if ($DefaultSiteID <> '')
 		{
 			$rsSites = CSite::GetByID($DefaultSiteID);
 			if ($arSite = $rsSites->Fetch())
@@ -872,20 +868,11 @@ class FinishStep extends CWizardStep
 			}
 		}
 		
-		if (strlen($dir) <= 0)
+		if ($dir == '')
 			$dir = "/";
 	
 		$wizard =& $this->GetWizard();
 		$wizard->SetFormActionScript($dir);
-
-		if ( file_exists($_SERVER["DOCUMENT_ROOT"].$dir.".superleft.menu.php"))
-		{
-			DeleteDirFilesEx($dir.".superleft.menu.php");
-		}
-		if ( file_exists($_SERVER["DOCUMENT_ROOT"].$dir.".superleft.menu_ext.php"))
-		{
-			DeleteDirFilesEx($dir.".superleft.menu_ext.php");
-		}
 		
 		$this->content .= GetMessage("FINISH_STEP_CONTENT");
 	}

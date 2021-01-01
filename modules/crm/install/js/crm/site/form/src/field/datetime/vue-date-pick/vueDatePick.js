@@ -133,7 +133,7 @@ const VueDatePick = {
         isDateDisabled: {type: Function, default: () => false},
         nextMonthCaption: {type: String, default: 'Next month'},
         prevMonthCaption: {type: String, default: 'Previous month'},
-        setTimeCaption: {type: String, default: 'Set time:'},
+        setTimeCaption: {type: String, default: 'Set time'},
         closeButtonCaption: {type: String, default: 'Close'},
         mobileBreakpointWidth: {type: Number, default: 530},
         weekdays: {
@@ -422,6 +422,19 @@ const VueDatePick = {
                 list.push({
                     value: hours,
                     name: isAmPm ? hoursDisplay : hours
+                });
+            }
+            return list;
+        },
+
+        getMinuteList()
+        {
+            let list = [];
+            for (let i = 0; i <= 60; i++)
+            {
+                list.push({
+                    value: paddNum(i, 2),
+                    name: paddNum(i, 2),
                 });
             }
             return list;
@@ -748,17 +761,20 @@ const VueDatePick = {
                         </div>
                         <span v-if="pickMinutes" class="vdpTimeSeparator">:</span>
                         <div v-if="pickMinutes" class="vdpTimeUnit">
-                            <pre><span>{{ currentTime.minutesPadded }}</span><br></pre>
-                            <input
+                            <select class="vdpHoursInput"
                                 v-if="pickMinutes"
-                                type="number" pattern="\\d*" class="vdpMinutesInput"
                                 v-on:input="inputTime('setMinutes', $event)"
+                                v-on:change="inputTime('setMinutes', $event)"
                                 v-bind:value="currentTime.minutesPadded"
                             >
+                                <option
+                                    v-for="item in getMinuteList()"
+                                    :value="item.value"
+                                >{{ item.name }}</option>
+                            </select>
                         </div>
                         <span v-if="pickSeconds" class="vdpTimeSeparator">:</span>
                         <div v-if="pickSeconds" class="vdpTimeUnit">
-                            <pre><span>{{ currentTime.secondsPadded }}</span><br></pre>
                             <input
                                 v-if="pickSeconds"
                                 type="number" pattern="\\d*" class="vdpSecondsInput"
@@ -766,9 +782,7 @@ const VueDatePick = {
                                 v-bind:value="currentTime.secondsPadded"
                             >
                         </div>
-                        <span class="vdpTimeCaption">
-                            <button type="button" @click="$emit('close');">{{ closeButtonCaption }}</button>
-                        </span>
+                        <span class="vdpTimeCloseBtn" @click="$emit('close');">{{ closeButtonCaption }}</span>
                     </div>
                 </div>
             </div>

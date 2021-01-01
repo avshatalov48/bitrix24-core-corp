@@ -62,9 +62,15 @@ if (check_bitrix_sessid())
 			}
 
 			$task = \CTaskItem::getInstance($arTask['ID'], $USER->GetID());
-			$taskData = $task->getData(false);
+			try
+			{
+				$taskData = $task->getData(false);
+				CTasks::Index($taskData, $arTags);
+			}
+			catch (TasksException $e)
+			{
 
-			CTasks::Index($taskData, $arTags);
+			}
 		}
 	}
 

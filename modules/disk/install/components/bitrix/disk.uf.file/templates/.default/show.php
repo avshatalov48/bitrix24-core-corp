@@ -237,8 +237,8 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 					}
 					?><span class="feed-con-file-changes-link feed-con-file-changes-link-more" onclick="return DiskActionFileMenu('<?= $file['ID'] ?>', this, BX.Disk.Files['<?= $file['ID'] ?>']); return false;"><?=Loc::getMessage('WDUF_MORE_ACTIONS') ?></span>
 				</span>
-			</div><?      
-		} 
+			</div><?
+		}
 		foreach($arResult['DELETED_FILES'] as $file)
 		{
 			?><div class="<?=$className?>">
@@ -297,6 +297,30 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 				BX.message({disk_document_service: 'g'});
 			}
 			<?
+		}
+
+		if(!empty($arResult['FILES']))
+		{
+			$files = [];
+			foreach ($arResult['FILES'] as $file)
+			{
+				$files[] = [
+					'id' => $file['ID'],
+					'url' => $file['DOWNLOAD_URL'],
+					'extension' => $file['EXTENSION'],
+					'name' => $file['NAME'],
+					'size' => $file['SIZE'],
+				];
+			}
+			?>
+			BX.Event.EventEmitter.emit(
+				'BX.Disk.Files:onShowFiles',
+				{
+					files: <?= CUtil::PhpToJSObject($files) ?>,
+					entityValueId: <?= (int) $arParams['arUserField']['ENTITY_VALUE_ID'] ?>
+				}
+			);
+		<?php
 		}
 		?>
 	});

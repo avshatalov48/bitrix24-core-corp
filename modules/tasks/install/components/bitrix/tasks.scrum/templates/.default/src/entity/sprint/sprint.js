@@ -68,7 +68,6 @@ export class Sprint extends Entity
 		this.completedStoryPoints = new StoryPoints();
 		this.uncompletedStoryPoints = new StoryPoints();
 
-		this.numberTasks = (Type.isInteger(sprintData.numberTasks) ? parseInt(sprintData.numberTasks, 10) : 0);
 		this.completedTasks = (Type.isInteger(sprintData.completedTasks) ? parseInt(sprintData.completedTasks, 10) : 0);
 		this.unCompletedTasks = Type.isInteger(sprintData.unCompletedTasks) ?
 			parseInt(sprintData.unCompletedTasks, 10) : 0;
@@ -92,7 +91,7 @@ export class Sprint extends Entity
 		this.storyPointsHeader = null;
 	}
 
-	static buildSprint(sprintData: sprintParams = {}): Sprint
+	static buildSprint(sprintData: SprintParams = {}): Sprint
 	{
 		const sprint = new Sprint(sprintData);
 		sprint.addSprintHeader(SprintHeader.buildHeader(sprint));
@@ -107,11 +106,20 @@ export class Sprint extends Entity
 	{
 		this.sprintHeader = sprintHeader;
 		this.sprintHeader.initStyle();
+
+		this.sprintHeader.subscribe('changeName', this.onChangeName.bind(this));
+		this.sprintHeader.subscribe('removeSprint', this.onRemoveSprint.bind(this));
+		this.sprintHeader.subscribe('completeSprint', () => this.emit('completeSprint'));
+		this.sprintHeader.subscribe('startSprint', () => this.emit('startSprint'));
+		this.sprintHeader.subscribe('changeSprintDeadline', this.onChangeSprintDeadline.bind(this));
+		this.sprintHeader.subscribe('toggleVisibilityContent', this.toggleVisibilityContent.bind(this));
 	}
 
 	addStoryPointsHeader(storyPointsHeader: StoryPointsHeader)
 	{
 		this.storyPointsHeader = storyPointsHeader;
+
+		this.storyPointsHeader.subscribe('showSprintBurnDownChart', () => this.emit('showSprintBurnDownChart'));
 	}
 
 	addEventsHeader(eventsHeader: EventsHeader)
@@ -175,11 +183,6 @@ export class Sprint extends Entity
 		this.updateStoryPoints();
 	}
 
-	setId(id)
-	{
-		this.sprintId = parseInt(id, 10);
-	}
-
 	getSort()
 	{
 		return this.sort;
@@ -235,9 +238,24 @@ export class Sprint extends Entity
 		return this.uncompletedStoryPoints;
 	}
 
-	getNumberTasks(): number
+	addNumberTasks(value: number)
 	{
-		return (this.numberTasks ? this.numberTasks : this.getItems().size);
+		super.addNumberTasks(value);
+
+		if (this.storyPointsHeader)
+		{
+			this.storyPointsHeader.updateNumberTasks();
+		}
+	}
+
+	subtractNumberTasks(value: number)
+	{
+		super.subtractNumberTasks(value);
+
+		if (this.storyPointsHeader)
+		{
+			this.storyPointsHeader.updateNumberTasks();
+		}
 	}
 
 	setCompletedTasks(completedTasks)
@@ -367,12 +385,6 @@ export class Sprint extends Entity
 		if (this.sprintHeader)
 		{
 			this.sprintHeader.onAfterAppend();
-			this.sprintHeader.subscribe('changeName', this.onChangeName.bind(this));
-			this.sprintHeader.subscribe('removeSprint', this.onRemoveSprint.bind(this));
-			this.sprintHeader.subscribe('completeSprint', () => this.emit('completeSprint'));
-			this.sprintHeader.subscribe('startSprint', () => this.emit('startSprint'));
-			this.sprintHeader.subscribe('changeSprintDeadline', this.onChangeSprintDeadline.bind(this));
-			this.sprintHeader.subscribe('toggleVisibilityContent', this.toggleVisibilityContent.bind(this));
 		}
 
 		super.onAfterAppend();

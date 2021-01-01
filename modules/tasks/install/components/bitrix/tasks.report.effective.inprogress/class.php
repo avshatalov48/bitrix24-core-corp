@@ -132,7 +132,6 @@ class TasksReportEffectiveInprogressComponent extends TasksReportEffectiveDetail
 				{$groupCondition}
 				AND T.CREATED_DATE <= '{$dateTo}'
 				AND (T.CLOSED_DATE >= '{$dateFrom}' OR T.CLOSED_DATE is null)
-				AND T.ZOMBIE = 'N'
 				AND T.STATUS != 6
 		";
 

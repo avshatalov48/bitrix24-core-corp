@@ -84,6 +84,9 @@ class Design
 			{
 				continue;
 			}
+
+			$value = is_bool($value) ? ($value ? 'Y' : 'N') : $value;
+
 			switch ($key)
 			{
 				case 'theme':
@@ -100,6 +103,10 @@ class Design
 					{
 						$value = 'N';
 					}
+					break;
+
+				case 'shadow':
+					$value = $value === 'Y' ? 'Y' : 'N';
 					break;
 
 				case 'font':
@@ -123,6 +130,7 @@ class Design
 					$value = array_intersect_key($value, $this->options['border']);
 					foreach ($value as $index => $val)
 					{
+						$val = is_bool($val) ? ($val ? 'Y' : 'N') : $val;
 						$value[$index] = $val === 'Y' ? 'Y' : 'N';
 					}
 					break;
@@ -161,9 +169,10 @@ class Design
 		$data['shadow'] = $data['shadow'] === 'Y';
 		$data['dark'] = $data['dark'] === 'Y'
 			? true
-			: $data['dark'] === 'N'
+			: ($data['dark'] === 'N'
 				? false
-				: $data['dark'];
+				: $data['dark']
+				);
 
 		foreach ($data['border'] as $key => $value)
 		{

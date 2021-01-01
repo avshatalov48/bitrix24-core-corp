@@ -340,6 +340,12 @@ class CCrmTimelineComponent extends CBitrixComponent
 		{
 			$this->arResult['SMS_CONFIG']['isFilesEnabled'] = false;
 		}
+		$defaultRateOption = [
+			'rate' => 1,
+		];
+		$audioPlaybackOptions = CUserOptions::GetOption('crm', 'timeline_audio_playback');
+
+		$this->arResult['AUDIO_PLAYBACK_RATE'] = $audioPlaybackOptions['rate'] ?? $defaultRateOption['rate'];
 	}
 
 	public function getHistoryFilter()

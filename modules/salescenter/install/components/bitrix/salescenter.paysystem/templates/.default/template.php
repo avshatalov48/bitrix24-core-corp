@@ -16,11 +16,8 @@ use Bitrix\Main,
 Loc::loadMessages(__FILE__);
 $messages = Loc::loadLanguageFile(__FILE__);
 
-CJSCore::Init([
-	"admin_interface",
-]);
-
 Extension::load([
+	'admin_interface',
 	'ui.buttons',
 	'ui.icons',
 	'ui.common',
@@ -113,9 +110,7 @@ Extension::load([
 					<div data-bx-salescenter-block="profile" style="display: none;">
 						<div class="salescenter-auth-popup-settings">
 							<div class="salescenter-auth-popup-social salescenter-auth-popup-social-yandex">
-								<div class="salescenter-auth-popup-social-avatar">
-									<div data-bx-salescenter-auth-avatar="" class="salescenter-auth-popup-social-avatar-icon"></div>
-								</div>
+								<div class="salescenter-auth-popup-social-delimiter"></div>
 								<div class="salescenter-auth-popup-social-user">
 									<a target="_top" data-bx-salescenter-auth-link="" data-bx-salescenter-auth-name="" class="salescenter-auth-popup-social-user-link" title=""></a>
 								</div>

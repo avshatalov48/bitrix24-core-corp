@@ -5,7 +5,6 @@ BX.listeners = {};
 
 // region Constants
 
-console.log("success");
 var Sound = {
 	incoming: "incoming",
 	startCall: "startcall"
@@ -121,6 +120,7 @@ function getCrmShowPath(entityType, entityId)
 
 function decodeHtml(input)
 {
+	intput = input.toString();
     return input.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ');
 }
 
@@ -140,6 +140,11 @@ if(typeof calls == "undefined")
 {
 	include("Calls");
 	var calls = new WebRTC();
+}
+
+if (Application.getApiVersion() >= 36 && typeof media == "undefined")
+{
+	include("media");
 }
 
 var callsModuleWrapper = function ()
@@ -335,6 +340,20 @@ MobileWebrtc = function ()
 	this.nativeCalls = new NativeCallsWrapper();
 	this.nativeCallUUID = '';
 
+	this.signalingHandlers = {
+		'Call::answer': this.logged('Call::answer', this.onPullCommandAnswer.bind(this)),
+		'Call::hangup': this.logged('Call::hangup', this.onPullCommandHangup.bind(this)),
+		'Call::finish': this.logged('Call::finish', this.onPullCommandFinish.bind(this)),
+		'Call::ping': this.logged('Call::ping', this.onPullCommandPing.bind(this)),
+		'Call::negotiationNeeded': this.logged('Call::negotiationNeeded', this.onPullCommandNegotiationNeeded.bind(this)),
+		'Call::connectionOffer': this.logged('Call::connectionOffer', this.onPullCommandConnectionOffer.bind(this)),
+		'Call::connectionAnswer': this.logged('Call::connectionAnswer', this.onPullCommandConnectionAnswer.bind(this)),
+		'Call::iceCandidate': this.logged('Call::iceCandidate', this.onPullCommandIceCandidate.bind(this)),
+		'Call::voiceStarted': this.logged('Call::voiceStarted', this.onPullCommandVoiceStarted.bind(this)),
+		'Call::voiceStopped': this.logged('Call::voiceStopped', this.onPullCommandVoiceStopped.bind(this)),
+		'Call::usersInvited': this.logged('Call::usersInvited', this.onPullCommandUsersInvited.bind(this)),
+	};
+
 	this.init();
 };
 
@@ -347,13 +366,26 @@ MobileWebrtc.prototype.init = function ()
 		{
 			this.appendUserData(e['userData']);
 		}
-		this.startCall(e.userId, e.video);
+		if ('userId' in e)
+		{
+			this.startCall(e.userId, e.video);
+		}
+		else if ('dialogId' in e && !e.dialogId.startsWith('chat'))
+		{
+			this.startCall(e.dialogId, e.video);
+		}
+		else
+		{
+			navigator.notification.alert(BX.message("MOBILE_CALL_UNSUPPORTED_VERSION"));
+		}
 	});
-
-	this.attachListeners();
 	BX.addCustomEvent("onPullEvent-im", this.onPullEvent.bind(this));
+	BX.addCustomEvent("onPullClientEvent-im", this.onPullClientEvent.bind(this));
+
 	BX.addCustomEvent("onAppActive", this.onAppActive.bind(this));
 	this.onAppActive();
+
+	this.attachListeners();
 	this.checkActiveCall();
 
 	this.nativeCalls.setEventListener("onConnectCall", this.onCallKitConnectCall.bind(this));
@@ -653,7 +685,8 @@ MobileWebrtc.prototype.sendInvite = function(repeat)
 	BX.rest.callMethod(RestMethods.invite, {
 		callId: this.callId,
 		userIds: [this.callUserId],
-		video: this.video ? 'Y' : 'N'
+		video: this.video ? 'Y' : 'N',
+		legacyMobile: 'Y'
 	}).catch(e => {
 		console.error(e);
 
@@ -906,7 +939,8 @@ MobileWebrtc.prototype.onUiAnswer = function ()
 		console.log("getLocalMedia success, try to execute im.call.answer");
     	BX.rest.callMethod(RestMethods.answer, {
     		callId: this.callId,
-			callInstanceId: this.callInstanceId
+			callInstanceId: this.callInstanceId,
+			legacyMobile: "Y"
 		}).then(response => {
 			console.warn("success!");
 		}).catch(err =>
@@ -1070,23 +1104,22 @@ MobileWebrtc.prototype.onPullEvent = function(command, params, extra)
 		return;
 	}
 
-	const handlers = {
-		'Call::answer': this.logged('Call::answer', this.onPullCommandAnswer.bind(this)),
-		'Call::hangup': this.logged('Call::hangup', this.onPullCommandHangup.bind(this)),
-		'Call::finish': this.logged('Call::finish', this.onPullCommandFinish.bind(this)),
-		'Call::ping': this.logged('Call::ping', this.onPullCommandPing.bind(this)),
-		'Call::negotiationNeeded': this.logged('Call::negotiationNeeded', this.onPullCommandNegotiationNeeded.bind(this)),
-		'Call::connectionOffer': this.logged('Call::connectionOffer', this.onPullCommandConnectionOffer.bind(this)),
-		'Call::connectionAnswer': this.logged('Call::connectionAnswer', this.onPullCommandConnectionAnswer.bind(this)),
-		'Call::iceCandidate': this.logged('Call::iceCandidate', this.onPullCommandIceCandidate.bind(this)),
-		'Call::voiceStarted': this.logged('Call::voiceStarted', this.onPullCommandVoiceStarted.bind(this)),
-		'Call::voiceStopped': this.logged('Call::voiceStopped', this.onPullCommandVoiceStopped.bind(this)),
-		'Call::usersInvited': this.logged('Call::usersInvited', this.onPullCommandUsersInvited.bind(this)),
-	};
-
-	if (handlers.hasOwnProperty(command))
+	if (this.signalingHandlers.hasOwnProperty(command))
 	{
-		handlers[command](params, extra);
+		this.signalingHandlers[command](params, extra);
+	}
+};
+
+MobileWebrtc.prototype.onPullClientEvent = function(command, params, extra)
+{
+	if(params['callId'] != this.callId)
+	{
+		return;
+	}
+
+	if (this.signalingHandlers.hasOwnProperty(command))
+	{
+		this.signalingHandlers[command](params, extra);
 	}
 };
 
@@ -1387,7 +1420,7 @@ MobileWebrtc.prototype.sendConnectionOffer = function()
 		userId: this.callUserId,
 		connectionId: this.peerConnectionId,
 		sdp: this.sessionDescription.sdp,
-		userAgent: 'Bitrix Mobile'
+		userAgent: 'Bitrix Legacy Mobile'
 	}).catch(err => {
 		console.error(err);
 		navigator.notification.alert(err.error_description ? err.error_description() : BX.message("IM_M_CALL_ERR"), () => {}, BX.message("MOBILEAPP_ERROR_AUTH"));
@@ -1409,7 +1442,7 @@ MobileWebrtc.prototype.sendConnectionAnswer = function()
 		userId: this.callUserId,
 		connectionId: this.peerConnectionId,
 		sdp: this.sessionDescription.sdp,
-		userAgent: 'Bitrix Mobile'
+		userAgent: 'Bitrix Legacy Mobile'
 	}).catch(err => {
 		console.error(err);
 		navigator.notification.alert(err.error_description ? err.error_description() : BX.message("IM_M_CALL_ERR"), () => {}, BX.message("MOBILEAPP_ERROR_AUTH"));
@@ -1604,7 +1637,7 @@ MobileTelephony = function()
 	// flags
 	this.callInit = false;
 	this.callActive = false;
-	this.debug = false;
+	this.debug = true;
 	this.connected = false;
 	this.authorized = false;
 	this.ignoreAnswerSelf = false;
@@ -1638,6 +1671,9 @@ MobileTelephony.prototype.init = function()
 			onOneTimeKeyGenerated: this._onOneTimeKeyGenerated.bind(this)
 		}
 	});
+
+	//VIClient.getInstance().on(VIClient.Events.LogMessage, (m) => console.log(m));
+
 	BX.addCustomEvent("onPhoneTo", this.onPhoneTo.bind(this));
 	BX.addCustomEvent("onNumpadRequestShow", this.onNumpadRequestShow.bind(this));
 	BX.addCustomEvent("onPullEvent-voximplant", this.onPullEvent.bind(this));
@@ -2403,6 +2439,7 @@ MobileTelephony.prototype._onIncomingCall = function(e)
 MobileTelephony.prototype._onConnectionEstablished = function(e)
 {
 	this.log("_onConnectionEstablished", e);
+	console.log("_onConnectionEstablished", e);
 	this.connected = true;
 	if(this.promises.connection)
 	{
@@ -3119,7 +3156,10 @@ TelephonyCall.prototype.executeCallback = function (eventName, data)
 
 // region Initialization
 
-var mwebrtc = new MobileWebrtc();
+if (Application.getApiVersion() < 36)
+{
+	var mwebrtc = new MobileWebrtc();
+}
 var mtelephony = new MobileTelephony();
 
 console.log("Initialized");

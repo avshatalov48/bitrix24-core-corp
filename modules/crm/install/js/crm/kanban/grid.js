@@ -299,11 +299,14 @@ BX.CRM.Kanban.Grid.prototype = {
 			}
 		});
 
-		var styles = document.createTextNode(".main-kanban-dropzone:first-child, main-kanban-dropzone:last-child {" +
-			"max-width: " + (this.layout.gridContainer.firstChild.offsetWidth + 3) +  "px; " +
-			"min-width: " + (this.layout.gridContainer.firstChild.offsetWidth + 3) +  "px;}");
-		styleNode.appendChild(styles);
-		head.appendChild(styleNode);
+		if (this.layout.gridContainer.firstChild !== null)
+		{
+			var styles = document.createTextNode(".main-kanban-dropzone:first-child, main-kanban-dropzone:last-child {" +
+				"max-width: " + (this.layout.gridContainer.firstChild.offsetWidth + 3) + "px; " +
+				"min-width: " + (this.layout.gridContainer.firstChild.offsetWidth + 3) + "px;}");
+			styleNode.appendChild(styles);
+			head.appendChild(styleNode);
+		}
 	},
 
 	/**
@@ -355,6 +358,7 @@ BX.CRM.Kanban.Grid.prototype = {
 		data.entity_type = gridData.entityType;
 		data.version = 2;
 		data.ajaxParams = this.ajaxParams;
+		data.entityPath = gridData.entityPath;
 
 		this.setAjaxParams({});
 
@@ -654,8 +658,10 @@ BX.CRM.Kanban.Grid.prototype = {
 			return;
 		}
 
-		currentColumn.removeItem(item);
-		targetColumn.addItem(item, beforeItem);
+		item.beforeItem = beforeItem;
+		currentColumn.removeItem(item).then(function(){
+			targetColumn.addItem(item, item.beforeItem);
+		});
 
 		return true;
 	},
@@ -666,7 +672,7 @@ BX.CRM.Kanban.Grid.prototype = {
 	 * @param {boolean} force Force load without filter.
 	 * @returns {void}
 	 */
-	loadNew: function(id, force)
+	loadNew: function(id, force, changePriceInColumn)
 	{
 		var gridData = this.getData();
 		var entityId = typeof id !== "undefined" ? id : 0;
@@ -676,90 +682,97 @@ BX.CRM.Kanban.Grid.prototype = {
 			return;
 		}
 
-		this.ajax(
-			entityId
-			? {
-				action: "get",
-				entity_id: entityId,
-				force: force === true ? "Y" : "N"
-			}
-			: {
-				action: "get",
-				min_entity_id: gridData.lastId,
-				force: force === true ? "Y" : "N"
-			},
-			function(data)
-			{
-				if (data && data.items)
+		return new Promise(function(resolve, reject)
+		{
+			this.ajax(
+				entityId
+					? {
+						action: "get",
+						entity_id: entityId,
+						force: force === true ? "Y" : "N"
+					}
+					: {
+						action: "get",
+						min_entity_id: gridData.lastId,
+						force: force === true ? "Y" : "N"
+					},
+				function (data)
 				{
-					var worked = false;
-					if (data.items.length > 0)
+					if (data && data.items)
 					{
-						var titlesForRender = {};
-						for (var i = data.items.length-1; i >= 0; i--)
+						var worked = false;
+						if (data.items.length > 0)
 						{
-							var item = data.items[i];
-							var existItem = this.getItem(item.id);
-							if (item.id <= 0)
+							var titlesForRender = {};
+							for (var i = data.items.length - 1; i >= 0; i--)
 							{
-								continue;
-							}
-							worked = true;
-							if (existItem)
-							{
-								var existData = existItem.getData();
-								var existColumn = existItem.getColumn();
-								var newColumn = this.getColumn(item.columnId);
-
-								existColumn.decPrice(parseFloat(existData.price));
-								titlesForRender[existColumn.getId()] = existColumn;
-
-								if (newColumn)
+								var item = data.items[i];
+								var existItem = this.getItem(item.id);
+								if (item.id <= 0)
 								{
-									newColumn.incPrice(parseFloat(item.data.price));
-									this.updateItem(item.id, item);
-									titlesForRender[newColumn.getId()] = newColumn;
+									continue;
 								}
-								else
+								worked = true;
+								if (existItem)
 								{
-									this.removeItem(item.id);
+									var existData = existItem.getData();
+									var existColumn = existItem.getColumn();
+									var newColumn = this.getColumn(item.columnId);
+
+									existColumn.decPrice(parseFloat(existData.price));
+
+									titlesForRender[existColumn.getId()] = existColumn;
+
+									if (newColumn)
+									{
+										newColumn.incPrice(parseFloat(item.data.price));
+										existItem.data.price = item.data.price;
+									}
+
+									if (newColumn && newColumn !== existColumn)
+									{
+										this.updateItem(item.id, item);
+										titlesForRender[newColumn.getId()] = newColumn;
+									}
+								}
+								else if (item.id)
+								{
+									this.addItemTop(item);
+								}
+								if (!entityId)
+								{
+									gridData.lastId = item.id;
+									this.setData(gridData);
 								}
 							}
-							else if (item.id)
+
+							for (var key in titlesForRender)
 							{
-								this.addItemTop(item);
-							}
-							if (!entityId)
-							{
-								gridData.lastId = item.id;
-								this.setData(gridData);
+								titlesForRender[key].renderSubTitle();
 							}
 						}
 
-						for (var key in titlesForRender)
+						if (!worked && entityId)
 						{
-							titlesForRender[key].renderSubTitle();
+							var item = this.getItem(entityId);
+							if (item)
+							{
+								var itemData = item.getData();
+								var column = item.getColumn();
+
+								column.decPrice(itemData.price);
+								this.removeItem(entityId);
+							}
 						}
 					}
-
-					if (!worked && entityId)
-					{
-						var item = this.getItem(entityId);
-						if (item)
-						{
-							var itemData = item.getData();
-							var column = item.getColumn();
-
-							column.decPrice(itemData.price);
-							this.removeItem(entityId);
-						}
-					}
-				}
-			}.bind(this),
-			function(error)
-			{
-			}.bind(this)
-		);
+					resolve(data);
+				}.bind(this),
+				function (error)
+				{
+					reject();
+				}.bind(this)
+			);
+		}.bind(this));
 	},
 
 	/**
@@ -998,7 +1011,14 @@ BX.CRM.Kanban.Grid.prototype = {
 						)
 					}
 				);
-				this.progressBarEditor.open();
+
+				window.setTimeout(
+					function(){
+						this.progressBarEditor.open();
+					}.bind(this),
+					150
+				);
+
 				BX.addClass(
 					item.layout.container,
 					"main-kanban-item-waiting"
@@ -1812,194 +1832,193 @@ BX.CRM.Kanban.Grid.prototype = {
 			}
 
 			// get fields by ajax and build popup content
-			BX.ajax({
-				method: "GET",
-				dataType: "json",
-				url: "/bitrix/components/bitrix/crm.kanban/ajax.fields.php" +
-				//url: "/bitrix/components/bitrix/crm." + entityType + ".list/filter.ajax.php" +
-					"?filter_id=" + gridData.gridId + "&siteID=" + BX.message("SITE_ID") +
-					"&sessid=" + BX.bitrix_sessid() + "&entityType=" + gridData.entityType +
-					"&viewType=" + viewType,
-				onsuccess: function(result)
+			BX.ajax.runComponentAction('bitrix:crm.kanban', 'getFields', {
+				mode: 'ajax',
+				data: {
+					entityType: gridData.entityType,
+					viewType: viewType,
+				}
+			}).then(function(response) {
+				var result = response.data;
+				loader.destroy();
+
+				result.push({
+					ID: "CLIENT",
+					NAME: "CLIENT",
+					LABEL: BX.message("CRM_EDITOR_FIELD_CLIENT")
+				});
+
+				if (viewType === "edit")
 				{
-					loader.destroy();
-					
 					result.push({
-						ID: "CLIENT",
-						NAME: "CLIENT",
-						LABEL: BX.message("CRM_EDITOR_FIELD_CLIENT")
+						ID: "OPPORTUNITY_WITH_CURRENCY",
+						NAME: "OPPORTUNITY_WITH_CURRENCY",
+						LABEL: BX.message("CRM_EDITOR_FIELD_OPPORTUNITY_WITH_CURRENCY")
 					});
+				}
 
-					if (viewType === "edit")
+				var containerChildren = [];
+				var data = [];
+				var reminder = result;
+				var formContent = [];
+				var firstItem = true;
+
+				for (var k = 0, ck = popupHeaders.length; k < ck; k++)
+				{
+					data = reminder;
+					reminder = [];
+					formContent = [];
+					firstItem = true;
+					for (var i = 0, c = data.length; i < c; i++)
 					{
-						result.push({
-							ID: "OPPORTUNITY_WITH_CURRENCY",
-							NAME: "OPPORTUNITY_WITH_CURRENCY",
-							LABEL: BX.message("CRM_EDITOR_FIELD_OPPORTUNITY_WITH_CURRENCY")
-						});
-					}
-
-					var containerChildren = [];
-					var data = [];
-					var reminder = result;
-					var formContent = [];
-					var firstItem = true;
-
-					for (var k = 0, ck = popupHeaders.length; k < ck; k++)
-					{
-						data = reminder;
-						reminder = [];
-						formContent = [];
-						firstItem = true;
-						for (var i = 0, c = data.length; i < c; i++)
+						if (disabledFields[data[i].NAME] === true)
 						{
-							if (disabledFields[data[i].NAME] === true)
+							continue;
+						}
+						// if fields in the current section
+						if (popupHeaders[k]["elements"] !== "*")
+						{
+							if (!popupHeaders[k]["elements"][data[i].NAME])
 							{
+								reminder.push(data[i]);
 								continue;
 							}
-							// if fields in the current section
-							if (popupHeaders[k]["elements"] !== "*")
+							if (popupHeaders[k]["elements"][data[i].NAME]["title"])
 							{
-								if (!popupHeaders[k]["elements"][data[i].NAME])
-								{
-									reminder.push(data[i]);
-									continue;
-								}
-								if (popupHeaders[k]["elements"][data[i].NAME]["title"])
-								{
-									data[i].LABEL = popupHeaders[k]["elements"][data[i].NAME]["title"];
-								}
+								data[i].LABEL = popupHeaders[k]["elements"][data[i].NAME]["title"];
 							}
-							// header of section
-							if (firstItem && ck > 1)
-							{
-								firstItem = false;
-								containerChildren.push(BX.create("div", {
-									props: {
-										className: "crm-kanban-popup-field-title"
-									},
-									text: popupHeaders[k]["title"]
-								}));
-							}
-							// one field
-
-							var inputParam, labelParam;
-
-							var checked = false;
-
-							if (viewType === "edit")
-							{
-								checked = sectionEditor.getChildById(data[i].NAME) !== null;
-							}
-							else
-							{
-								checked = BX.util.in_array(data[i].NAME, customFields);
-							}
-
-							formContent.push(BX.create("div", {
+						}
+						// header of section
+						if (firstItem && ck > 1)
+						{
+							firstItem = false;
+							containerChildren.push(BX.create("div", {
 								props: {
-									className: "crm-kanban-popup-field-item",
-									title: data[i].LABEL
+									className: "crm-kanban-popup-field-title"
 								},
-								children: [
-									inputParam = BX.create(
-										"input", {
-											props: {
-												id: "cf_" + data[i].ID,
-												type: "checkbox",
-												name: data[i].NAME,
-												checked: checked,
-												className: "crm-kanban-popup-field-item-input"
-											},
-											dataset: {
-												label: data[i].LABEL
-											}
-										}
-									),
-									labelParam = BX.create(
-										"label", {
-											attrs: {
-												"for": "cf_" + data[i].ID,
-												className: "crm-kanban-popup-field-item-label"
-											},
-											text: data[i].LABEL,
-											events: {
-												click: function(ev) {
-													var checkedSelectors = customFieldsContainer.querySelectorAll('.crm-kanban-popup-field-item-input:checked');
-													var input = this.parentNode.querySelector(".crm-kanban-popup-field-item-input");
-
-													if(input.checked && checkedSelectors.length <= 1)
-													{
-														this.parentNode.style.pointerEvents = "none";
-
-														var popupHint = BX.PopupWindowManager.create(null, input, {
-															autoHide: true,
-															animation: "fading-slide",
-															darkMode: true,
-															content: BX.message("CRM_KANBAN_POPUP_AT_LEAST_ONE_FIELD"),
-															zIndex: 9999,
-															events: {
-																onPopupClose: function() {
-																	this.parentNode.style.pointerEvents = null;
-																	popupHint.destroy();
-																}.bind(this)
-															}
-														});
-
-														popupHint.show();
-
-														setTimeout(function() {
-															this.parentNode.style.pointerEvents = null;
-															popupHint.destroy();
-														}.bind(this),2000);
-
-														BX.PreventDefault(ev);
-														return
-													}
-
-													if(input.checked)
-													{
-														this.parentNode.classList.remove('crm-kanban-popup-field-item-checked');
-														input.checked = false
-													}
-													else
-													{
-														this.parentNode.classList.add('crm-kanban-popup-field-item-checked');
-														input.checked= true
-													}
-													BX.PreventDefault(ev);
-												}
-											}
-										}
-									)
-								]
+								text: popupHeaders[k]["title"]
 							}));
 						}
+						// one field
 
-						containerChildren.push(BX.create("div", {
+						var inputParam, labelParam;
+
+						var checked = false;
+
+						if (viewType === "edit")
+						{
+							checked = sectionEditor.getChildById(data[i].NAME) !== null;
+						}
+						else
+						{
+							checked = BX.util.in_array(data[i].NAME, customFields);
+						}
+
+						formContent.push(BX.create("div", {
 							props: {
-								className: "crm-kanban-popup-field-wrapper"
+								className: "crm-kanban-popup-field-item",
+								title: data[i].LABEL
 							},
-							children: formContent
+							children: [
+								inputParam = BX.create(
+									"input", {
+										props: {
+											id: "cf_" + data[i].ID,
+											type: "checkbox",
+											name: data[i].NAME,
+											checked: checked,
+											className: "crm-kanban-popup-field-item-input"
+										},
+										dataset: {
+											label: data[i].LABEL
+										}
+									}
+								),
+								labelParam = BX.create(
+									"label", {
+										attrs: {
+											"for": "cf_" + data[i].ID,
+											className: "crm-kanban-popup-field-item-label"
+										},
+										text: data[i].LABEL,
+										events: {
+											click: function(ev) {
+												var checkedSelectors = customFieldsContainer.querySelectorAll('.crm-kanban-popup-field-item-input:checked');
+												var input = this.parentNode.querySelector(".crm-kanban-popup-field-item-input");
+
+												if(input.checked && checkedSelectors.length <= 1)
+												{
+													this.parentNode.style.pointerEvents = "none";
+
+													var popupHint = BX.PopupWindowManager.create(null, input, {
+														autoHide: true,
+														animation: "fading-slide",
+														darkMode: true,
+														content: BX.message("CRM_KANBAN_POPUP_AT_LEAST_ONE_FIELD"),
+														zIndex: 9999,
+														events: {
+															onPopupClose: function() {
+																this.parentNode.style.pointerEvents = null;
+																popupHint.destroy();
+															}.bind(this)
+														}
+													});
+
+													popupHint.show();
+
+													setTimeout(function() {
+														this.parentNode.style.pointerEvents = null;
+														popupHint.destroy();
+													}.bind(this),2000);
+
+													BX.PreventDefault(ev);
+													return
+												}
+
+												if(input.checked)
+												{
+													this.parentNode.classList.remove('crm-kanban-popup-field-item-checked');
+													input.checked = false
+												}
+												else
+												{
+													this.parentNode.classList.add('crm-kanban-popup-field-item-checked');
+													input.checked= true
+												}
+												BX.PreventDefault(ev);
+											}
+										}
+									}
+								)
+							]
 						}));
 					}
 
-					this.customFieldsContainer = BX.create("div", {
+					containerChildren.push(BX.create("div", {
 						props: {
-							className: "crm-kanban-popup-field"
+							className: "crm-kanban-popup-field-wrapper"
 						},
-						children: containerChildren
-					});
+						children: formContent
+					}));
+				}
 
-					var customFieldsContainer = this.customFieldsContainer;
+				this.customFieldsContainer = BX.create("div", {
+					props: {
+						className: "crm-kanban-popup-field"
+					},
+					children: containerChildren
+				});
 
-					customFieldsPopup.setContent(
-						this.customFieldsContainer
-					);
+				var customFieldsContainer = this.customFieldsContainer;
 
-					customFieldsPopup.adjustPosition();
+				customFieldsPopup.setContent(
+					this.customFieldsContainer
+				);
 
-				}.bind(this)
+				customFieldsPopup.adjustPosition();
+			}.bind(this))
+			.catch(function(response) {
+				BX.Kanban.Utils.showErrorDialog(response.errors.pop().message);
 			});
 		}
 		customFieldsPopup.show();
@@ -2140,6 +2159,13 @@ BX.CRM.Kanban.Grid.prototype = {
 					{
 						itrError = false;
 					}
+					else if (
+						key === "OBSERVER" &&
+						eventParams.entityData["OBSERVER_IDS"].length
+					)
+					{
+						itrError = false;
+					}
 					else
 					{
 						itrError = true;
@@ -2225,32 +2251,32 @@ BX.CRM.Kanban.Grid.prototype = {
 		var gridData = this.getData();
 
 		// new activity
-		if (command === "activity_add" && /*params.COMPLETED !== "Y" &&*/
-			params.OWNER_TYPE_NAME === gridData.entityType
-		)
-		{
-			var item = this.getItem(params.OWNER_ID);
-			if (item)
-			{
-				this.loadNew(item.getId());
-			}
-			else
-			{
-				this.loadNew();
-			}
-		}
+		// if (command === "activity_add" && /*params.COMPLETED !== "Y" &&*/
+		// 	params.OWNER_TYPE_NAME === gridData.entityType
+		// )
+		// {
+		// 	var item = this.getItem(params.OWNER_ID);
+		// 	if (item)
+		// 	{
+		// 		this.loadNew(item.getId());
+		// 	}
+		// 	else
+		// 	{
+		// 		this.loadNew();
+		// 	}
+		// }
 
 		// new element by delegate
 		if (command === "notify")
 		{
 			// lead / deal
-			var matches = params.originalTag.match(
-				new RegExp("CRM\\|" + gridData.entityType + "_RESPONSIBLE\\|([\\d]+)")
-			);
-			if (matches && matches[1])
-			{
-				this.loadNew(matches[1]);
-			}
+			// var matches = params.originalTag.match(
+			// 	new RegExp("CRM\\|" + gridData.entityType + "_RESPONSIBLE\\|([\\d]+)")
+			// );
+			// if (matches && matches[1])
+			// {
+			// 	this.loadNew(matches[1]);
+			// }
 			// invoice
 			if (
 				gridData.entityType === "INVOICE" &&
@@ -2785,7 +2811,38 @@ BX.CRM.Kanban.Grid.prototype = {
 			editorSetCommon: "Y"
 		});
 		this.onApplyFilter();
-	}
+	},
+
+	insertItem: function(item)
+	{
+		var beforeItem = null;
+
+		var newColumn = this.getColumn(item.getData().columnId);
+		if(newColumn)
+		{
+			beforeItem = newColumn.getFirstItem();
+			this.moveItem(item, item.getData().columnId, beforeItem);
+		}
+		else
+		{
+			this.removeItem(item);
+		}
+	},
+
+	removeItem: function(itemId)
+	{
+		var item = this.getItem(itemId);
+		if (item)
+		{
+			item.useAnimation = true;
+			var column = item.getColumn();
+			delete this.items[item.getId()];
+			column.removeItem(item);
+			item.dispose();
+		}
+
+		return item;
+	},
 };
 
 })();

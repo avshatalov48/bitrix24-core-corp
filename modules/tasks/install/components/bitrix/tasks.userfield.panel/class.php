@@ -86,19 +86,24 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 	 *
 	 * @return array
 	 */
-	protected static function getLanguages()
+	protected static function getLanguages(): array
 	{
-		$languages = array();
+		$languages = [];
 
 		try
 		{
-			$languageList = LanguageTable::getList(array('order' => 'SORT'));
+			$languageList = LanguageTable::getList([
+				'order' => 'SORT',
+				'cache' => [
+					'ttl' => 86400,
+				],
+			]);
 			while ($language = $languageList->fetch())
 			{
 				$languages[] = $language['LID'];
 			}
 		}
-		catch(Exception $ex)
+		catch (Exception $ex)
 		{
 			return $languages;
 		}

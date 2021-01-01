@@ -15,6 +15,7 @@ import {TagSearcher} from '../utility/tag.searcher';
 import {Decomposition} from '../item/task/decomposition';
 import {Filter} from '../service/filter';
 import {MessageBox} from 'ui.dialogs.messagebox';
+import {ProjectSidePanel} from '../utility/project.side.panel';
 
 import '../css/base.css';
 
@@ -161,7 +162,28 @@ export class Plan
 		});
 		this.draggableItems.subscribe('end', (baseEvent) => {
 			const dragEndEvent = baseEvent.getData();
-			this.onItemMove(dragEndEvent);
+			const sourceContainer = dragEndEvent.sourceContainer;
+			const sourceEntityId = parseInt(sourceContainer.dataset.entityId, 10);
+			const sourceEntity = this.findEntityByEntityId(sourceEntityId);
+			const endContainer = dragEndEvent.endContainer;
+			const endEntityId = parseInt(endContainer.dataset.entityId, 10);
+			if (sourceEntityId === endEntityId)
+			{
+				this.onItemMove(dragEndEvent);
+			}
+			else
+			{
+				const message = Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASK_FROM_ACTIVE');
+				this.onMoveConfirm(sourceEntity, message).then(() => {
+					this.onItemMove(dragEndEvent);
+				}).catch(() => {
+					const itemNode = dragEndEvent.source;
+					const itemId = itemNode.dataset.itemId;
+					const item = this.findItemByItemId(itemId);
+					const itemNodeAfterSourceItem = sourceEntity.getListItemsNode().children[item.getSort()];
+					Dom.insertBefore(itemNode, itemNodeAfterSourceItem);
+				});
+			}
 		});
 
 		this.draggableSprints = new Draggable({
@@ -178,6 +200,9 @@ export class Plan
 
 	bindHandlers(newSprint)
 	{
+		this.teamSpeedChartButtonContainerNode = document.getElementById('tasks-scrum-team-speed-button-container');
+		Event.bind(this.teamSpeedChartButtonContainerNode, 'click', this.onShowTeamSpeedChart.bind(this));
+
 		const createTaskItem = (baseEvent: BaseEvent) => {
 			const data = baseEvent.getData();
 			const entity = baseEvent.getTarget();
@@ -292,6 +317,16 @@ export class Plan
 			});
 			sprintSidePanel.showCompleteSidePanel(sprint);
 		};
+		const onShowSprintBurnDownChart = (baseEvent: BaseEvent) => {
+			const sprint = baseEvent.getTarget();
+			const sprintSidePanel = new SprintSidePanel({
+				sprints: this.sprints,
+				sidePanel: this.sidePanel,
+				requestSender: this.requestSender,
+				views: this.views
+			});
+			sprintSidePanel.showBurnDownChart(sprint);
+		};
 		const onChangeTaskResponsible = (baseEvent: BaseEvent) => {
 			this.requestSender.changeTaskResponsible({
 				itemId: baseEvent.getData().getItemId(),
@@ -341,6 +376,14 @@ export class Plan
 				this.tagSearcher.removeEpicFromSearcher(oldEpicInfo);
 				this.tagSearcher.addEpicToSearcher(updatedEpicInfo);
 			});
+		};
+		const onOpenDefinitionOfDone = (baseEvent: BaseEvent) => {
+			const entity = baseEvent.getTarget();
+			const projectSidePanel = new ProjectSidePanel({
+				sidePanel: this.sidePanel,
+				requestSender: this.requestSender
+			});
+			projectSidePanel.showDefinitionOfDone(entity);
 		};
 		const onShowTagSearcher = (baseEvent: BaseEvent) => {
 			//todo refactor and test
@@ -650,6 +693,7 @@ export class Plan
 			sprint.subscribe('activateGroupMode', onActivateGroupMode);
 			sprint.subscribe('deactivateGroupMode', onDeactivateGroupMode);
 			sprint.subscribe('getSprintCompletedItems', onGetSprintCompletedItems);
+			sprint.subscribe('showSprintBurnDownChart', onShowSprintBurnDownChart);
 		};
 
 		if (newSprint)
@@ -667,6 +711,7 @@ export class Plan
 		this.backlog.subscribe('changeTaskResponsible', onChangeTaskResponsible);
 		this.backlog.subscribe('openAddEpicForm', onOpenAddEpicForm);
 		this.backlog.subscribe('openListEpicGrid', onOpenListEpicGrid);
+		this.backlog.subscribe('openDefinitionOfDone', onOpenDefinitionOfDone);
 		this.backlog.subscribe('attachFilesToTask', onAttachFilesToTask);
 		this.backlog.subscribe('showTagSearcher', onShowTagSearcher);
 		this.backlog.subscribe('showEpicSearcher', onShowEpicSearcher);
@@ -768,7 +813,7 @@ export class Plan
 		`;
 	}
 
-	createSprint()
+	createSprint(): Promise
 	{
 		Dom.remove(this.sprintCreatingDropZoneNode);
 
@@ -779,32 +824,27 @@ export class Plan
 		const dateEnd = (Math.floor(Date.now() / 1000) + parseInt(this.defaultSprintDuration, 10));
 
 		const sprintListNode = this.sprintListNode.querySelector('.tasks-scrum-sprint-planned-list');
+		const sort = (sprintListNode.children.length ? sprintListNode.children.length + 1 : 1);
 
-		const data = {
+		const sprint = Sprint.buildSprint({
 			name: title,
-			sort: 1,
+			sort: sort,
 			dateStart: dateStart,
 			dateEnd: dateEnd,
-			sortInfo: this.calculateSprintSort(1)
+			storyPoints: storyPoints
+		});
+		Dom.append(sprint.render(), sprintListNode);
+
+		const requestData = {
+			name: title,
+			sort: sort,
+			dateStart: dateStart,
+			dateEnd: dateEnd,
+			sortInfo: this.calculateSprintSort()
 		};
 
-		return this.requestSender.createSprint(data).then((response) => {
-			const sprint = Sprint.buildSprint({
-				id: response.data.sprintId,
-				name: title,
-				sort: 1,
-				dateStart: dateStart,
-				dateEnd: dateEnd,
-				storyPoints: storyPoints
-			});
-			if (sprintListNode.children.length)
-			{
-				Dom.insertBefore(sprint.render(), sprintListNode.firstElementChild);
-			}
-			else
-			{
-				Dom.insertBefore(sprint.render(), sprintListNode);
-			}
+		return this.requestSender.createSprint(requestData).then((response) => {
+			sprint.setId(response.data.sprintId);
 			sprint.onAfterAppend();
 			sprint.getNode().scrollIntoView(true);
 			this.sprints.set(sprint.getId(), sprint);
@@ -888,13 +928,13 @@ export class Plan
 
 	moveToAnotherEntity(entityFrom: Entity, item: Item, targetEntity: ?Entity, bindButton?: HTMLElement)
 	{
-		const isTargetSprintEntity = (Type.isNull(targetEntity));
+		const isMoveToSprint = (Type.isNull(targetEntity));
 
-		const sprints = (isTargetSprintEntity ? this.getAvailableSprintsToMove() : null);
+		const sprints = (isMoveToSprint ? this.getAvailableSprintsToMove() : null);
 
 		if (entityFrom.isGroupMode())
 		{
-			if (isTargetSprintEntity)
+			if (isMoveToSprint)
 			{
 				if (sprints.size > 1)
 				{
@@ -918,26 +958,15 @@ export class Plan
 			}
 			else
 			{
-				if (entityFrom.isActive())
-				{
-					MessageBox.confirm(
-						Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASKS_FROM_ACTIVE'),
-						(messageBox) => {
-							messageBox.close();
-							this.moveToWithGroupMode(entityFrom, targetEntity, item, false, false);
-						},
-						Loc.getMessage('TASKS_SCRUM_BUTTON_TEXT_MOVE'),
-					);
-				}
-				else
-				{
+				const message = Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASKS_FROM_ACTIVE');
+				this.onMoveConfirm(entityFrom, message).then(() => {
 					this.moveToWithGroupMode(entityFrom, targetEntity, item, false, false);
-				}
+				});
 			}
 		}
 		else
 		{
-			if (isTargetSprintEntity)
+			if (isMoveToSprint)
 			{
 				if (sprints.size > 1)
 				{
@@ -945,30 +974,8 @@ export class Plan
 				}
 				else
 				{
-					if (entityFrom.isActive())
-					{
-						MessageBox.confirm(
-							Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASK_FROM_ACTIVE'),
-							(messageBox) => {
-								messageBox.close();
-								if (sprints.size === 0)
-								{
-									this.createSprint().then((sprint: Sprint) => {
-										this.moveTo(entityFrom, sprint, item);
-									});
-								}
-								else
-								{
-									sprints.forEach((sprint: Sprint) => {
-										this.moveTo(entityFrom, sprint, item);
-									});
-								}
-							},
-							Loc.getMessage('TASKS_SCRUM_BUTTON_TEXT_MOVE'),
-						);
-					}
-					else
-					{
+					const message = Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASK_FROM_ACTIVE');
+					this.onMoveConfirm(entityFrom, message).then(() => {
 						if (sprints.size === 0)
 						{
 							this.createSprint().then((sprint: Sprint) => {
@@ -981,26 +988,15 @@ export class Plan
 								this.moveTo(entityFrom, sprint, item);
 							});
 						}
-					}
+					});
 				}
 			}
 			else
 			{
-				if (entityFrom.isActive())
-				{
-					MessageBox.confirm(
-						Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASK_FROM_ACTIVE'),
-						(messageBox) => {
-							messageBox.close();
-							this.moveTo(entityFrom, targetEntity, item, false);
-						},
-						Loc.getMessage('TASKS_SCRUM_BUTTON_TEXT_MOVE'),
-					);
-				}
-				else
-				{
+				const message = Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASK_FROM_ACTIVE');
+				this.onMoveConfirm(entityFrom, message).then(() => {
 					this.moveTo(entityFrom, targetEntity, item, false);
-				}
+				});
 			}
 		}
 	}
@@ -1138,42 +1134,22 @@ export class Plan
 				this.moveToSprintMenu.addMenuItem({
 					text: sprint.getName(),
 					onclick: (event, menuItem) => {
+						let message = Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASK_FROM_ACTIVE');
 						if (entityFrom.isGroupMode())
 						{
-							if (entityFrom.isActive())
-							{
-								MessageBox.confirm(
-									Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASKS_FROM_ACTIVE'),
-									(messageBox) => {
-										messageBox.close();
-										this.moveToWithGroupMode(entityFrom, sprint, item, true, false);
-									},
-									Loc.getMessage('TASKS_SCRUM_BUTTON_TEXT_MOVE'),
-								);
-							}
-							else
+							message = Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASKS_FROM_ACTIVE');
+						}
+						this.onMoveConfirm(entityFrom, message).then(() => {
+							if (entityFrom.isGroupMode())
 							{
 								this.moveToWithGroupMode(entityFrom, sprint, item, true, false);
-							}
-						}
-						else
-						{
-							if (entityFrom.isActive())
-							{
-								MessageBox.confirm(
-									Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASK_FROM_ACTIVE'),
-									(messageBox) => {
-										messageBox.close();
-										this.moveTo(entityFrom, sprint, item);
-									},
-									Loc.getMessage('TASKS_SCRUM_BUTTON_TEXT_MOVE'),
-								);
 							}
 							else
 							{
 								this.moveTo(entityFrom, sprint, item);
 							}
-						}
+
+						});
 						menuItem.getMenuWindow().close();
 					}
 				});
@@ -1316,6 +1292,31 @@ export class Plan
 			};
 			moveInAnotherContainer();
 		}
+	}
+
+	onMoveConfirm(entity: Entity, message: string): Promise
+	{
+		return new Promise((resolve, reject) => {
+			if (entity.isActive())
+			{
+				MessageBox.confirm(
+					message,
+					(messageBox) => {
+						messageBox.close();
+						resolve();
+					},
+					Loc.getMessage('TASKS_SCRUM_BUTTON_TEXT_MOVE'),
+					(messageBox) => {
+						messageBox.close();
+						reject();
+					},
+				);
+			}
+			else
+			{
+				resolve();
+			}
+		});
 	}
 
 	onSprintMove(dragEndEvent)
@@ -1645,5 +1646,14 @@ export class Plan
 			this.fadeInAll();
 			this.requestSender.showErrorAlert(response);
 		});
+	}
+
+	onShowTeamSpeedChart()
+	{
+		const projectSidePanel = new ProjectSidePanel({
+			sidePanel: this.sidePanel,
+			requestSender: this.requestSender
+		});
+		projectSidePanel.showTeamSpeedChart();
 	}
 }

@@ -7,9 +7,10 @@
  */
 namespace Bitrix\Crm\Tracking\Analytics\Provider;
 
-use Bitrix\Crm\Tracking;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Orm;
+use Bitrix\Crm\Tracking;
+use Bitrix\Crm\Integration;
 
 /**
  * Class Action
@@ -50,7 +51,10 @@ class Action extends Base
 		$dateFrom = $this->dateFrom ? Date::createFromTimestamp($this->dateFrom->getTimestamp()) : null;
 		$dateTo = $this->dateTo ? Date::createFromTimestamp($this->dateTo->getTimestamp()) : null;
 
-		$list = static::getAdExpenses($dateFrom, $dateTo);
+		$list = array_merge(
+			static::getAdExpenses($dateFrom, $dateTo),
+			static::getSenderExpenses($dateFrom, $dateTo)
+		);
 		foreach (static::getUserExpenses($dateFrom, $dateTo) as $row)
 		{
 			$isFound = false;
@@ -129,6 +133,7 @@ class Action extends Base
 				'=SOURCE_ID' => $sourceIds,
 				'>=DATE_STAT' => $dateFrom,
 				'<=DATE_STAT' => $dateTo,
+				'=TYPE_ID' => Tracking\Internals\SourceExpensesTable::TYPE_MANUAL,
 			],
 			'runtime' => [
 				new Orm\Fields\ExpressionField('SUM', 'SUM(%s)', ['EXPENSES']),
@@ -195,6 +200,32 @@ class Action extends Base
 				'ASSIGNED_BY_ID' => null,
 				'TRACKING_SOURCE_ID' => $sourceId,
 			];
+		}
+
+		return $list;
+	}
+
+	private static function getSenderExpenses($dateFrom, $dateTo)
+	{
+		$list = [];
+		foreach (Tracking\Provider::getActualSources() as $source)
+		{
+			switch ($source['CODE'])
+			{
+				case Tracking\Source\Base::Sender:
+					if (!empty($source['UTM_SOURCE']))
+					{
+						$stat = Integration\Sender\Utm::getStatByUtmSources($source['UTM_SOURCE'], $dateFrom, $dateTo);
+						$list[] = [
+							'CNT' => $stat['click'] ?: 0,
+							'SUM' => 0,
+							'VIEWS' => $stat['read'] ?: 0,
+							'ASSIGNED_BY_ID' => null,
+							'TRACKING_SOURCE_ID' => $source['ID'],
+						];
+					}
+					break;
+			}
 		}
 
 		return $list;

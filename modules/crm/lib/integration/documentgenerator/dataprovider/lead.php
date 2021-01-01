@@ -12,6 +12,7 @@ use Bitrix\DocumentGenerator\Nameable;
 class Lead extends ProductsDataProvider implements Nameable
 {
 	protected $contacts;
+	protected $honorific;
 
 	/**
 	 * @return array
@@ -23,6 +24,10 @@ class Lead extends ProductsDataProvider implements Nameable
 			parent::getFields();
 			$this->fields['STATUS'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_LEAD_STATUS_TITLE'),];
 			$this->fields['SOURCE'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_LEAD_SOURCE_TITLE'),];
+			$this->fields['HONORIFIC'] = [
+				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_LEAD_HONORIFIC_TITLE'),
+				'VALUE' => [$this, 'getHonorificName'],
+			];
 			$this->fields['IMOL'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_LEAD_IMOL_TITLE'),
 				'VALUE' => [$this, 'getClientIm'],
@@ -146,6 +151,8 @@ class Lead extends ProductsDataProvider implements Nameable
 	protected function fetchData()
 	{
 		parent::fetchData();
+		$this->honorific = $this->data['HONORIFIC'];
+		unset($this->data['HONORIFIC']);
 		if(empty($this->data['ADDRESS']))
 		{
 			unset($this->data['ADDRESS']);
@@ -285,5 +292,16 @@ class Lead extends ProductsDataProvider implements Nameable
 		}
 
 		return $result;
+	}
+
+	public function getHonorificName(): string
+	{
+		if($this->honorific)
+		{
+			$all = \CCrmStatus::GetStatusList('HONORIFIC');
+			return $all[$this->honorific];
+		}
+
+		return '';
 	}
 }

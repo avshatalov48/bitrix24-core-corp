@@ -403,6 +403,14 @@ export class EntityEditorBaseAddressField
 		this.emitUpdateEvent();
 	}
 
+	resetView(): void
+	{
+		for (const addressItem of this._addressList)
+		{
+			addressItem.resetView();
+		}
+	}
+
 	static create(id, settings)
 	{
 		let self = new EntityEditorBaseAddressField();
@@ -432,6 +440,7 @@ class AddressItem extends EventEmitter
 		this._showAddressTypeInViewMode = BX.prop.getBoolean(settings, 'showAddressTypeInViewMode', true);
 		this._showDetails = !this._isAutocompleteEnabled || BX.prop.getBoolean(settings, 'showDetails', false);
 		this._isLoading = false;
+		this._isDropdownLoading = false;
 		this._addressWidget = null;
 		this._wrapper = null;
 		this._domNodes = {};
@@ -476,6 +485,7 @@ class AddressItem extends EventEmitter
 
 		this._addressWidget.subscribeOnStateChangedEvent(this.onAddressWidgetChangedState.bind(this));
 		this._addressWidget.subscribeOnAddressChangedEvent(this.onAddressChanged.bind(this));
+		this._addressWidget.subscribeOnFeatureEvent(this.onFeatureEvent.bind(this));
 		this._addressWidget.subscribeOnErrorEvent(this.onError.bind(this));
 	}
 
@@ -777,6 +787,13 @@ class AddressItem extends EventEmitter
 		}
 	}
 
+	getIconState()
+	{
+		let isAddressSet = !!this.getAddress();
+
+		return this._isLoading.toString() + isAddressSet.toString();
+	}
+
 	refreshCopyButtonVisibility()
 	{
 		let node = this._domNodes.copyButton;
@@ -984,7 +1001,8 @@ class AddressItem extends EventEmitter
 			state = data.state;
 
 		let wasLoading = this._isLoading;
-		this._isLoading = (state === BX.Location.Widget.State.DATA_LOADING);
+
+		this.computeIsLoading();
 
 		if (wasLoading !== this._isLoading)
 		{
@@ -1003,14 +1021,40 @@ class AddressItem extends EventEmitter
 
 	onAddressChanged(event)
 	{
+		let oldIconState = this.getIconState();
+
 		this._isLoading = false;
 
 		let data = event.getData();
 		this._value = Type.isObject(data.address) ? data.address.toJson() : '';
 
-		this.refreshIcon();
+		if (oldIconState !== this.getIconState())
+		{
+			this.refreshIcon();
+		}
+
 		this.refreshCopyButtonVisibility();
 		this.emit('onUpdateAddress', {id: this.getId(), value: this.getValue()});
+	}
+
+	onFeatureEvent(event)
+	{
+		let data = event.getData();
+
+		if (data.feature instanceof BX.Location.Widget.AutocompleteFeature)
+		{
+			this._isDropdownLoading = (data.eventCode === BX.Location.Widget.AutocompleteFeature.searchStartedEvent);
+
+			let wasLoading = this._isLoading;
+
+			this.computeIsLoading();
+
+			if (wasLoading !== this._isLoading)
+			{
+				this.refreshIcon();
+				this.refreshCopyButtonVisibility();
+			}
+		}
 	}
 
 	onError(event)
@@ -1026,5 +1070,17 @@ class AddressItem extends EventEmitter
 		this.refreshCopyButtonVisibility();
 
 		this.emit('onError', {id: this.getId(), error: errorMessage});
+	}
+
+	computeIsLoading()
+	{
+		this._isLoading = (this._addressWidget.state === BX.Location.Widget.State.DATA_LOADING
+			|| this._isDropdownLoading
+		);
+	}
+
+	resetView(): void
+	{
+		this._addressWidget.resetView();
 	}
 }

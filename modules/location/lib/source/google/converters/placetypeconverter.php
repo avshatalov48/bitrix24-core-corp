@@ -28,7 +28,7 @@ final class PlaceTypeConverter
 		'sublocality_level_1' => FieldType::SUB_LOCALITY_LEVEL_1,
 		'sublocality_level_2' => FieldType::SUB_LOCALITY_LEVEL_2,
 		'street_number' => FieldType::BUILDING,
-		'premise' => FieldType::ADDRESS_LINE_2
+		'premise' => FieldType::BUILDING
 	];
 
 	/**

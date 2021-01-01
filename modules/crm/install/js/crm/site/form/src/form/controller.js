@@ -158,11 +158,6 @@ class Controller extends Event
 
 	load()
 	{
-		if (this.#fields.length === 0)
-		{
-			this.disabled = true;
-		}
-
 		if (this.visible)
 		{
 			this.show();
@@ -357,6 +352,7 @@ class Controller extends Event
 		}
 		if (Array.isArray(options.agreements))
 		{
+			this.agreements = [];
 			options.agreements.forEach(fieldOptions => {
 				fieldOptions.messages = this.messages;
 				fieldOptions.design = this.design;
@@ -503,6 +499,11 @@ class Controller extends Event
 					break;
 			}
 
+			if (Array.isArray(options.items) && options.items.length > 0)
+			{
+				options.items = options.items.filter(item => !item.disabled);
+			}
+
 			options.messages = this.messages;
 			options.design = this.design;
 
@@ -515,6 +516,8 @@ class Controller extends Event
 		});
 		this.pager.removeEmpty();
 		this.basket = new Basket(this.#fields, this.currency);
+
+		this.disabled = (!this.pager.current() || this.pager.current().fields.length === 0);
 	}
 
 	getId()
@@ -563,6 +566,11 @@ class Controller extends Event
 		return this.#properties[key];
 	}
 
+	getProperties()
+	{
+		return this.#properties;
+	}
+
 	isOnState()
 	{
 		return this.disabled || this.error || this.sent || this.loading;
@@ -596,6 +604,7 @@ class Controller extends Event
 		this.emit(Type.EventTypes.destroy);
 		this.unsubscribeAll();
 		this.#vue.$destroy();
+		this.#vue.$el.remove();
 		this.#vue = null;
 	}
 }

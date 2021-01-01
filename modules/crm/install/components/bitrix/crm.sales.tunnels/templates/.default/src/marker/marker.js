@@ -1,4 +1,4 @@
-import {Dom, Event, Loc, Tag, Type, Cache, Runtime} from 'main.core';
+import {Dom, Event, Loc, Tag, Type, Cache, Runtime, Text} from 'main.core';
 import {PopupMenuWindow} from 'main.popup';
 import * as d3 from 'main.d3js';
 import isOverlap from './internal/is-overlap';
@@ -533,7 +533,7 @@ export default class Marker extends Event.EventEmitter
 
 				menu.addMenuItem({
 					id: `#${id}`,
-					text: destination.name,
+					text: Text.encode(destination.name),
 					events: {
 						onMouseEnter() {
 							Marker.highlightLink(link);

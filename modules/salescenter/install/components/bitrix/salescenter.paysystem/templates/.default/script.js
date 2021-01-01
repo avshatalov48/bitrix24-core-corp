@@ -19,7 +19,6 @@
 			this.checkedAuthStatus = false;
 
 			this.uiNodes = {
-				'avatar': this.containerNode.querySelector('[data-bx-salescenter-auth-avatar]'),
 				'name': this.containerNode.querySelector('[data-bx-salescenter-auth-name]'),
 				'link': this.containerNode.querySelector('[data-bx-salescenter-auth-link]'),
 				'logout': this.containerNode.querySelector('[data-bx-salescenter-auth-logout]')
@@ -27,6 +26,17 @@
 
 			this.showBlockByAuth();
 			this.bindEvents();
+
+			var adminSidePanel = top.BX.adminSidePanel || BX.adminSidePanel;
+			if (adminSidePanel)
+			{
+				if (!top.window["adminSidePanel"] || !BX.is_subclass_of(top.window["adminSidePanel"], adminSidePanel))
+				{
+					top.window["adminSidePanel"] = new adminSidePanel({
+						publicMode: true
+					});
+				}
+			}
 		},
 
 		bindEvents: function()
@@ -92,7 +102,10 @@
 				'bitrix:salescenter.paysystem',
 				'logoutProfile',
 				{
-					mode: 'ajax'
+					mode: 'ajax',
+					data: {
+						type: this.auth.TYPE
+					}
 				}
 			).then(
 				function (response)
@@ -115,7 +128,10 @@
 				'bitrix:salescenter.paysystem',
 				'getProfileStatus',
 				{
-					mode: 'ajax'
+					mode: 'ajax',
+					data: {
+						type: this.auth.TYPE
+					}
 				}
 			).then(
 				function(response)
@@ -145,18 +161,27 @@
 		toggleLogoutBlock: function()
 		{
 			this.showBlock(['auth']);
+
+			if(this.slider)
+			{
+				this.slider.reload();
+			}
 		},
 
 		setProfileData: function(profile)
 		{
-			if (this.uiNodes.avatar && profile.PICTURE)
-			{
-				this.uiNodes.avatar.style['background-image'] = 'url(' + profile.PICTURE + ')';
-			}
 			if (this.uiNodes.name && profile.NAME)
 			{
-				this.uiNodes.name.innerText = profile.NAME;
+				if (this.auth.TYPE === 'yookassa')
+				{
+					this.uiNodes.name.innerText = 'Shop ID ' + profile.NAME;
+				}
+				else
+				{
+					this.uiNodes.name.innerText = profile.NAME;
+				}
 			}
+
 			if (this.uiNodes.link)
 			{
 				if (profile.LINK)

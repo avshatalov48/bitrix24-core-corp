@@ -189,7 +189,7 @@ else
 
 <div class="user-block" id="user-block" onclick="showUserMenu()">
 	<span class="ui-icon ui-icon-common-user user-img">
-		<i <?if ($arResult["USER_PERSONAL_PHOTO_SRC"]):?>style="background: url('<?=$arResult["USER_PERSONAL_PHOTO_SRC"]?>') no-repeat center; background-size: cover;"<?endif?>></i>
+		<i <?if ($arResult["USER_PERSONAL_PHOTO_SRC"]):?>style="background: url('<?=CHTTP::urnEncode($arResult["USER_PERSONAL_PHOTO_SRC"])?>') no-repeat center; background-size: cover;"<?endif?>></i>
 	</span>
 	<span class="user-name" id="user-name"><?=$arResult["USER_NAME"]?></span>
 </div>

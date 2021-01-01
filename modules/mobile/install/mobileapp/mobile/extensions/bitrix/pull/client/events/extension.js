@@ -39,6 +39,8 @@
 		MANUAL : 3004,
 	};
 
+	var publishingState = undefined;
+
 	class PullEvents
 	{
 		constructor()
@@ -270,6 +272,46 @@
 					}
 				});
 			}
+		}
+
+		setPublicIds(publicIds)
+		{
+			BX.postComponentEvent("onPullSetPublicIds", publicIds);
+		}
+
+		getPublishingState()
+		{
+			return new Promise((resolve) =>
+			{
+				if (typeof(publishingState) === "boolean")
+				{
+					return resolve(publishingState);
+				}
+
+				let responseHandler = (newPublishingState) => {
+					publishingState = newPublishingState;
+					resolve(publishingState);
+					BX.removeCustomEvent("onPullPublishingState", responseHandler);
+				};
+				BX.addCustomEvent("onPullPublishingState", responseHandler);
+				BX.postComponentEvent("onPullGetPublishingState", [], "communication");
+			});
+		}
+
+		sendMessage(users, moduleId, command, params, expiry)
+		{
+			return this.sendMessageBatch([{
+				users: users,
+				moduleId: moduleId,
+				command: command,
+				params: params,
+				expiry: expiry
+			}]);
+		}
+
+		sendMessageBatch(messageBatch)
+		{
+			BX.postComponentEvent("onPullSendMessageBatch", [messageBatch], "communication");
 		}
 
 		/**

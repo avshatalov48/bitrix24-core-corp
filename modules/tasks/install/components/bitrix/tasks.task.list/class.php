@@ -44,6 +44,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 	protected $grid;
 
 	protected $exportAs = false;
+	protected $getChildRowsAction = false;
 	protected $pageSizes = array(
 		array("NAME" => "5", "VALUE" => "5"),
 		array("NAME" => "10", "VALUE" => "10"),
@@ -143,6 +144,9 @@ class TasksTaskListComponent extends TasksBaseComponent
 	 */
 	public static function prepareGridRowsForTasks(array $taskIds, array $data = [], array $arParams = []): array
 	{
+
+		static::tryParseIntegerParameter($arParams['USER_ID'], User::getId());
+
 		if (empty($data))
 		{
 			$parameters = [
@@ -152,7 +156,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 				'select' => array_keys(\CTasks::getFieldsInfo()),
 				'legacyFilter' => ['ID' => $taskIds],
 			];
-			$tasks = Manager\Task::getList(User::getId(), $getListParameters, $parameters)['DATA'];
+			$tasks = Manager\Task::getList($arParams['USER_ID'], $getListParameters, $parameters)['DATA'];
 		}
 		else
 		{
@@ -300,6 +304,10 @@ class TasksTaskListComponent extends TasksBaseComponent
 		}
 
 		$parameters = \Bitrix\Main\Web\Json::decode($parameters);
+		if (!array_key_exists('TARGET_USER_ID', $parameters))
+		{
+			$parameters['TARGET_USER_ID'] = $userId;
+		}
 		return Manager\Task::getCount($filter, $parameters);
 	}
 
@@ -339,6 +347,15 @@ class TasksTaskListComponent extends TasksBaseComponent
 			static::tryParseBooleanParameter($arParams['USE_PAGINATION'], true);
 			static::tryParseNonNegativeIntegerParameter($arParams['PAGINATION_PAGE_SIZE'], 10);
 		}
+
+		$this->getChildRowsAction = false;
+		if (
+			array_key_exists('action', $_REQUEST)
+			&& $_REQUEST['action'] === 'getChildRows'
+		)
+		{
+			$this->getChildRowsAction = true;
+		}
 	}
 
 	/**
@@ -365,7 +382,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 			return;
 		}
 
-		$listState = \CTaskListState::getInstance(User::getId());
+		$listState = \CTaskListState::getInstance($this->arParams['USER_ID']);
 		if ($listState->isSubmode(\CTaskListState::VIEW_SUBMODE_WITH_GROUPS))
 		{
 			$listState->switchOffSubmode(\CTaskListState::VIEW_SUBMODE_WITH_GROUPS);
@@ -385,7 +402,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 	 */
 	protected function isGroupByProjectMode(): bool
 	{
-		$listState = \CTaskListState::getInstance(User::getId());
+		$listState = \CTaskListState::getInstance($this->arParams['USER_ID']);
 		return $listState->isSubmode(\CTaskListState::VIEW_SUBMODE_WITH_GROUPS);
 	}
 
@@ -394,7 +411,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 	 */
 	protected function needGroupBySubTasks(): bool
 	{
-		$listState = \CTaskListState::getInstance(User::getId());
+		$listState = \CTaskListState::getInstance($this->arParams['USER_ID']);
 		return $listState->isSubmode(\CTaskListState::VIEW_SUBMODE_WITH_SUBTASKS);
 	}
 
@@ -642,7 +659,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 				'select'       => array('ID'),
 				'legacyFilter' => array_merge($this->listParameters['filter'], array('ONLY_ROOT_TASKS' => 'N'))
 			);
-			$mgrResult = Manager\Task::getList($this->userId, $getListParameters, $parameters);
+			$mgrResult = Manager\Task::getList($this->arParams['USER_ID'], $getListParameters, $parameters);
 			$rows = array();
 			foreach ($mgrResult['DATA'] as $item)
 			{
@@ -798,10 +815,10 @@ class TasksTaskListComponent extends TasksBaseComponent
 		$this->arParams['COLUMNS'] = $this->getSelect();
 		$this->arParams['UF'] = $this->getUF();
 
-		$listState = \CTaskListState::getInstance(User::getId());
+		$listState = \CTaskListState::getInstance($this->arParams['USER_ID']);
 		$this->arParams['VIEW_STATE'] = $listState->getState();
 
-		if ($this->userId != $this->arParams['USER_ID'])
+		if (!$this->isMyList())
 		{
 			$users = \Bitrix\Tasks\Util\User::getData(array($this->arParams['USER_ID']));
 			$this->arResult['USER'] = $users[$this->arParams['USER_ID']];
@@ -810,7 +827,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 		$this->arResult['CAN'] = ['SORT' => $this->canSortTasks()];
 		$this->arResult['SORTING'] = $this->grid->getOptions()->getSorting($this->getDefaultSorting());
 
-		$oTimer = CTaskTimerManager::getInstance(\Bitrix\Tasks\Util\User::getId());
+		$oTimer = CTaskTimerManager::getInstance($this->arParams['USER_ID']);
 		$this->arParams['TIMER']  = $oTimer->getRunningTask(true);	// false => allow use static cache
 	}
 
@@ -835,8 +852,6 @@ class TasksTaskListComponent extends TasksBaseComponent
 				'CHANGED_DATE',
 				'ACTIVITY_DATE',
 				'DEADLINE',
-				'COMMENTS_COUNT',
-				'NEW_COMMENTS_COUNT',
 				'GROUP_ID',
 				'PRIORITY',
 				'ALLOW_CHANGE_DEADLINE',
@@ -848,6 +863,15 @@ class TasksTaskListComponent extends TasksBaseComponent
 				'IS_MUTED',
 				'IS_PINNED',
 			];
+
+			if (
+				(int) $this->arParams['USER_ID'] === (int) $this->arResult['USER_ID']
+				|| User::isAdmin()
+				|| CTasks::IsSubordinate($this->arParams['USER_ID'], $this->arResult['USER_ID'])
+			)
+			{
+				$preferredColumns[] = 'NEW_COMMENTS_COUNT';
+			}
 
 			$columns = array_merge($columns, $preferredColumns, array_keys($this->getUF()));
 		}
@@ -1041,16 +1065,38 @@ class TasksTaskListComponent extends TasksBaseComponent
 			'MAKE_ACCESS_FILTER' => true,
 		];
 
+		$legacyFilter = $this->listParameters['filter'];
+
+		/**
+		 * Group by subtask should be ignored for fulltext search
+		 * See #134428 for more information
+		 */
+		$listStateIsModified = false;
+		if (array_key_exists('::SUBFILTER-FULL_SEARCH_INDEX', $legacyFilter))
+		{
+			unset($legacyFilter['ONLY_ROOT_TASKS']);
+
+			$listState = \CTaskListState::getInstance($this->arParams['USER_ID']);
+			if ($listState->isSubmode(\CTaskListState::VIEW_SUBMODE_WITH_SUBTASKS))
+			{
+				$listStateIsModified = true;
+				$listState->switchOffSubmode(\CTaskListState::VIEW_SUBMODE_WITH_SUBTASKS);
+			}
+		}
+
 		$getListParameters = [
 			'select' => $this->getSelect(),
-			'legacyFilter' => $this->listParameters['filter'],
+			'legacyFilter' => $legacyFilter,
 			'order' => $this->getOrder(),
 		];
 
 		$page = $this->getPageNum();
 		$this->savePageNumToStorage($page);
 
-		if ($this->exportAs === false)
+		if (
+			$this->exportAs === false
+			&& $this->getChildRowsAction === false
+		)
 		{
 			$getListParameters['NAV_PARAMS'] = [
 				'nPageSize' => $this->getPageSize(),
@@ -1077,7 +1123,8 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 		$parameters = $this->arParams['PROVIDER_PARAMETERS'];
 		$parameters['ERRORS'] = $this->errors;
-		$mgrResult = Manager\Task::getList($this->userId, $getListParameters, $parameters);
+		$parameters['TARGET_USER_ID'] = $this->arParams['USER_ID'];
+		$mgrResult = Manager\Task::getList(User::getId(), $getListParameters, $parameters);
 
 		$this->arResult['CURRENT_PAGE'] = (int) $mgrResult['AUX']['OBJ_RES']->PAGEN;
 
@@ -1115,6 +1162,11 @@ class TasksTaskListComponent extends TasksBaseComponent
 			$this->validateCounters();
 		}
 
+		if ($listStateIsModified)
+		{
+			$listState->switchOnSubmode(\CTaskListState::VIEW_SUBMODE_WITH_SUBTASKS);
+		}
+
 		if ($this->errors->checkHasFatals())
 		{
 			return;
@@ -1130,7 +1182,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 	protected function validateCounters(): void
 	{
 		$userId = (int) $this->arParams['USER_ID'];
-		if ($this->userId !== $userId)
+		if (!$this->isMyList())
 		{
 			return;
 		}
@@ -1206,7 +1258,8 @@ class TasksTaskListComponent extends TasksBaseComponent
 			'NAME',
 			'LAST_NAME',
 			'SECOND_NAME',
-			'TITLE'
+			'TITLE',
+			'EMAIL'
 		];
 		$users = User::getData($userIds, $select);
 
@@ -1409,7 +1462,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 			];
 			$level++;
 
-			$mgrResult = Manager\Task::getList($this->userId, $getListParameters);
+			$mgrResult = Manager\Task::getList($this->arParams['USER_ID'], $getListParameters);
 			if ($mgrResult['DATA'])
 			{
 				if (array_key_exists('TAG', array_flip($getListParameters['select'])))

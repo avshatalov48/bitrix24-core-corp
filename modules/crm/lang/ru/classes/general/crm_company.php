@@ -79,6 +79,7 @@ $MESS["CRM_COMPANY_USER_TYPE_DOCGEN_LOGO_TITLE"] = "Логотип";
 $MESS["CRM_COMPANY_USER_TYPE_DIRECTOR_SIGN_TITLE"] = "Подпись директора";
 $MESS["CRM_COMPANY_USER_TYPE_ACCOUNTANT_SIGN_TITLE"] = "Подпись гл. бухгалтера";
 $MESS["CRM_COMPANY_FIELD_CONTACT_ID"] = "Контакт";
+$MESS["CRM_COMPANY_FIELD_CONTACT"] = "Контакт";
 $MESS["CRM_COMPANY_FIELD_LOCATION_ID"] = "Местоположение";
 $MESS["CRM_COMPANY_FIELD_HAS_IMOL"] = "Задана открытая линия";
 $MESS["CRM_COMPANY_FIELD_IS_MY_COMPANY"] = "Моя компания";
@@ -94,4 +95,5 @@ $MESS["CRM_COMPANY_FIELD_UTM_TERM"] = "Условие поиска кампан�
 $MESS["CRM_COMPANY_UNTITLED"] = "Без названия";
 $MESS["CRM_PERMISSION_USER_NOT_DEFINED"] = "Не удалось выполнить проверку прав. Не задан пользователь.";
 $MESS["CRM_COMPANY_FIELD_UTM"] = "UTM-метки";
+$MESS["CRM_COMPANY_DEFAULT_TITLE_TEMPLATE"] = "Компания #%NUMBER%";
 ?>

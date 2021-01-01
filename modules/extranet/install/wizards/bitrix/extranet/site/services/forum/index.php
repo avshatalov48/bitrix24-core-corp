@@ -174,7 +174,7 @@ $arForums = Array(
 );
 
 $default_site_id = CSite::GetDefSite();
-if (strlen($default_site_id) > 0)
+if ($default_site_id <> '')
 {
 	foreach ($arForums as $arForum)
 	{
@@ -237,7 +237,7 @@ CWizardUtil::ReplaceMacros(WIZARD_SITE_PATH."/index_b24.php", Array("PHOTOGALLER
 CWizardUtil::ReplaceMacros(WIZARD_SITE_PATH."/contacts/personal.php", Array("PHOTOGALLERY_FORUM_ID" => $PhotogallerySocnetCommentsForumID));
 CWizardUtil::ReplaceMacros(WIZARD_SITE_PATH."/workgroups/index.php", Array("PHOTOGALLERY_FORUM_ID" => $PhotogallerySocnetCommentsForumID));
 
-if (strlen($default_site_id) > 0)
+if ($default_site_id <> '')
 {
 	$wikiForumID = COption::GetOptionString('wiki', 'socnet_forum_id', false, $default_site_id);
 	if (intval($wikiForumID) > 0)

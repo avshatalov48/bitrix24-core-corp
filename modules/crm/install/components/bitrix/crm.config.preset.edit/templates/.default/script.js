@@ -94,6 +94,17 @@ BX.Crm.PresetFieldListManagerClass = (function ()
 		},
 		editField: function (fieldId)
 		{
+			var fieldKey, fieldNameValue, parts;
+
+			fieldKey = fieldId;
+			if (BX.Type.isStringFilled(fieldId))
+			{
+				parts = fieldId.split("_");
+				if (parts.length > 1)
+				{
+					fieldId = parts[1];
+				}
+			}
 			fieldId = parseInt(fieldId);
 			if (fieldId < 0)
 				fieldId = 0;
@@ -101,7 +112,7 @@ BX.Crm.PresetFieldListManagerClass = (function ()
 			if (this.dlg && this.dlg.popup)
 				return;
 
-			var fieldNameValue = "";
+			fieldNameValue = "";
 
 			this.dlg = {
 				popupId: this.settings['id'] + ((fieldId === 0) ? '_FieldAdd' : '_FieldEdit'),
@@ -126,8 +137,8 @@ BX.Crm.PresetFieldListManagerClass = (function ()
 					"IN_SHORT_LIST": this.getMessage('defaultInShortList')
 				}
 			};
-			if (fieldId > 0 && this.settings.fieldData[fieldId])
-				this.dlg.fieldData = this.settings.fieldData[fieldId];
+			if (fieldId > 0 && this.settings.fieldData[fieldKey])
+				this.dlg.fieldData = this.settings.fieldData[fieldKey];
 
 
 			this.dlg.popup = new BX.PopupWindow(
@@ -486,7 +497,6 @@ BX.Crm.PresetFieldListManagerClass = (function ()
 								BX.delegate(this._continueHanleFieldEditDialogSave, this)
 							);
 							return;
-							break;
 					}
 				}
 			}
@@ -507,9 +517,15 @@ BX.Crm.PresetFieldListManagerClass = (function ()
 		},
 		_continueHanleFieldEditDialogSave: function()
 		{
-			BX.showWait();
 			if (this._form)
-				this._form.submit();
+			{
+				var submitButton = BX(this._form.id + "_save");
+				if (submitButton)
+				{
+					setTimeout(function () { submitButton.click(); }, 0);
+					this.dlg.popup.close();
+				}
+			}
 		},
 		_hanleFieldEditDialogCancel: function()
 		{

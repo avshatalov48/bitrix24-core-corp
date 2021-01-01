@@ -11,7 +11,8 @@ namespace Bitrix\Tasks\Access\Model;
 use Bitrix\Main\Access\AccessibleItem;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
-use Bitrix\Tasks\Internals\Task\FavoriteTable;
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
+use Bitrix\Tasks\Internals\Registry\GroupRegistry;
 
 class TaskModel
 	implements \Bitrix\Tasks\Access\AccessibleTask
@@ -19,8 +20,7 @@ class TaskModel
 	use DepartmentTrait;
 
 	private const
-		CACHE_MODEL_KEY = 'model',
-		CACHE_TASK_KEY = 'task';
+		CACHE_MODEL_KEY = 'model';
 
 	private static $cache = [];
 
@@ -31,61 +31,19 @@ class TaskModel
 		$status,
 		$group;
 
-	private $task;
-
+	/**
+	 * @param int $taskId
+	 */
 	public static function invalidateCache(int $taskId)
 	{
 		unset(static::$cache[$taskId]);
+		TaskRegistry::getInstance()->drop($taskId);
 	}
 
 	/**
-	 * @param array $ids
-	 * @param int $userId
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @param int $groupId
+	 * @return static
 	 */
-	public static function preloadModels(array $ids, int $userId = 0)
-	{
-		$res = \Bitrix\Tasks\Internals\TaskTable::query()
-			->addSelect('ID')
-			->addSelect('GROUP_ID')
-			->addSelect('STATUS')
-			->addSelect('ALLOW_CHANGE_DEADLINE')
-			->addSelect('ALLOW_TIME_TRACKING')
-			->addSelect('ZOMBIE')
-			->whereIn('ID', $ids)
-			->exec();
-
-		while ($row = $res->fetch())
-		{
-			static::$cache[$row['ID']][self::CACHE_TASK_KEY] = $row;
-		}
-
-		if (!$userId)
-		{
-			return;
-		}
-
-		$res = FavoriteTable::getList([
-			'select' => ['TASK_ID'],
-			'filter' => [
-				'=USER_ID' => $userId,
-				'@TASK_ID' => $ids
-			]
-		]);
-		$favorites = array_column($res->fetchAll(), 'TASK_ID');
-
-		foreach (static::$cache as $taskId => $data)
-		{
-			static::$cache[$taskId][self::CACHE_TASK_KEY]['FAVORITES'][$userId] = false;
-			if (in_array($taskId, $favorites))
-			{
-				static::$cache[$taskId][self::CACHE_TASK_KEY]['FAVORITES'][$userId] = true;
-			}
-		}
-	}
-
 	public static function createNew(int $groupId = 0): self
 	{
 		$model = new self();
@@ -95,18 +53,26 @@ class TaskModel
 		return $model;
 	}
 
+	/**
+	 * @param int $taskId
+	 * @return AccessibleItem
+	 */
 	public static function createFromId(int $taskId): AccessibleItem
 	{
-		if (!isset(static::$cache[$taskId][self::CACHE_MODEL_KEY]))
+		if (!isset(static::$cache[$taskId]))
 		{
 			$model = new self();
 			$model->setId($taskId);
-			static::$cache[$taskId][self::CACHE_MODEL_KEY] = $model;
+			static::$cache[$taskId] = $model;
 		}
 
-		return static::$cache[$taskId][self::CACHE_MODEL_KEY];
+		return static::$cache[$taskId];
 	}
 
+	/**
+	 * @param \Bitrix\Tasks\Item\Task $item
+	 * @return TaskModel
+	 */
 	public static function createFromTaskItem(\Bitrix\Tasks\Item\Task $item)
 	{
 		$item = $item->getRawValues();
@@ -136,6 +102,10 @@ class TaskModel
 		return $model;
 	}
 
+	/**
+	 * @param array $request
+	 * @return static
+	 */
 	public static function createFromRequest(array $request): self
 	{
 		$model = new self();
@@ -193,6 +163,11 @@ class TaskModel
 		return $model;
 	}
 
+	/**
+	 * @param array $data
+	 * @param array $default
+	 * @return static
+	 */
 	public static function createFromArray(array $data, array $default = []): self
 	{
 		$model = new self();
@@ -207,6 +182,11 @@ class TaskModel
 			$id = (int) $default['ID'];
 		}
 		$model->setId($id);
+
+		if (isset($data['STATUS']))
+		{
+			$model->setStatus((int) $data['STATUS']);
+		}
 
 		$groupId = 0;
 		if (isset($data['GROUP_ID']))
@@ -292,6 +272,10 @@ class TaskModel
 	{
 	}
 
+	/**
+	 * @param string|null $role
+	 * @return array
+	 */
 	public function getMembers(string $role = null): array
 	{
 		if ($this->members === null)
@@ -302,16 +286,16 @@ class TaskModel
 				return $this->members;
 			}
 
-			$members = \Bitrix\Tasks\Internals\Task\MemberTable::query()
-				->addSelect('USER_ID')
-				->addSelect('TYPE')
-				->where('TASK_ID', $this->id)
-				->exec()
-				->fetchAll();
+			$task = $this->getTask(true);
 
-			foreach ($members as $member)
+			if (!$task)
 			{
-				$this->members[$member['TYPE']][] = (int) $member['USER_ID'];
+				return [];
+			}
+
+			foreach ($task['MEMBER_LIST'] as $member)
+			{
+				$this->members[$member['TYPE']][] = $member['USER_ID'];
 			}
 		}
 
@@ -328,22 +312,28 @@ class TaskModel
 		return [];
 	}
 
+	/**
+	 * @return int
+	 */
 	public function getGroupId(): int
 	{
 		if ($this->groupId === null)
 		{
 			$this->groupId = 0;
 
-			$res = $this->loadTask();
-			if (!empty($res))
+			$task = $this->getTask();
+			if ($task)
 			{
-				$this->groupId = (int) $res['GROUP_ID'];
+				$this->groupId = (int) $task['GROUP_ID'];
 			}
 		}
 		return $this->groupId;
 	}
 
-	public function getGroup(): ?GroupModel
+	/**
+	 * @return array|null
+	 */
+	public function getGroup(): ?array
 	{
 		$groupId = $this->getGroupId();
 		if (!$groupId)
@@ -351,72 +341,138 @@ class TaskModel
 			return null;
 		}
 
-		if (!$this->group)
+		if ($this->group)
 		{
-			$this->group = GroupModel::createFromId($groupId);
+			return $this->group;
 		}
+
+		$task = $this->getTask();
+		if ($task && (int) $task['GROUP_ID'] === $groupId)
+		{
+			$this->group = $task['GROUP_INFO'];
+		}
+		else
+		{
+			$this->group = GroupRegistry::getInstance()->get($groupId);
+		}
+
 		return $this->group;
 	}
 
+	/**
+	 * @return int
+	 */
 	public function getId(): int
 	{
 		return $this->id;
 	}
 
+	/**
+	 * @param int $id
+	 * @return $this
+	 */
 	public function setId(int $id): self
 	{
 		$this->id = $id;
 		return $this;
 	}
 
+	/**
+	 * @param array $members
+	 * @return $this
+	 */
 	public function setMembers(array $members): self
 	{
 		$this->members = $members;
 		return $this;
 	}
 
+	/**
+	 * @param int $groupId
+	 * @return $this
+	 */
 	public function setGroupId(int $groupId): self
 	{
 		$this->groupId = $groupId;
 		return $this;
 	}
 
+	/**
+	 * @param int $value
+	 * @return $this
+	 */
 	public function setStatus(int $value): self
 	{
 		$this->status = $value;
 		return $this;
 	}
 
+	/**
+	 * @return bool
+	 */
 	public function isClosed(): bool
 	{
 		$status = $this->getStatus();
 		return $status === \CTasks::STATE_COMPLETED;
 	}
 
+	/**
+	 * @return bool
+	 */
 	public function isDeleted(): bool
 	{
-		$task = $this->loadTask();
+		$task = $this->getTask();
+		if (!$task)
+		{
+			return false;
+		}
 		return $task['ZOMBIE'] === 'Y';
 	}
 
+	/**
+	 * @return int|null
+	 */
 	public function getStatus(): ?int
 	{
-		$task = $this->loadTask();
+		$task = $this->getTask();
+		if (!$task)
+		{
+			return 0;
+		}
 		return (int) $task['STATUS'];
 	}
 
+	/**
+	 * @return bool
+	 */
 	public function isAllowedChangeDeadline()
 	{
-		$task = $this->loadTask();
+		$task = $this->getTask();
+		if (!$task)
+		{
+			return false;
+		}
 		return $task['ALLOW_CHANGE_DEADLINE'] === 'Y';
 	}
 
+	/**
+	 * @return bool
+	 */
 	public function isAllowedTimeTracking()
 	{
-		$task = $this->loadTask();
+		$task = $this->getTask();
+		if (!$task)
+		{
+			return false;
+		}
 		return $task['ALLOW_TIME_TRACKING'] === 'Y';
 	}
 
+	/**
+	 * @param int $userId
+	 * @param string|null $role
+	 * @return bool
+	 */
 	public function isMember(int $userId, string $role = null): bool
 	{
 		$roles = $this->getUserRoles($userId);
@@ -427,6 +483,10 @@ class TaskModel
 		return in_array($role, $roles);
 	}
 
+	/**
+	 * @param int $userId
+	 * @return array
+	 */
 	public function getUserRoles(int $userId): array
 	{
 		$roles = [];
@@ -445,6 +505,12 @@ class TaskModel
 		return $roles;
 	}
 
+	/**
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\NotImplementedException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public function getChecklist()
 	{
 		if (!$this->id)
@@ -454,46 +520,30 @@ class TaskModel
 		return TaskCheckListFacade::getByEntityId($this->id);
 	}
 
+	/**
+	 * @param int $userId
+	 * @return bool
+	 */
 	public function isFavorite(int $userId): bool
 	{
-		if (
-			!isset(static::$cache[$this->id][self::CACHE_TASK_KEY]['FAVORITES'])
-			|| !array_key_exists($userId, static::$cache[$this->id][self::CACHE_TASK_KEY]['FAVORITES'])
-		)
+		$task = $this->getTask(true);
+		if (!$task)
 		{
-			static::$cache[$this->id][self::CACHE_TASK_KEY]['FAVORITES'][$userId] = (bool) FavoriteTable::check([
-				'TASK_ID' => $this->id,
-				'USER_ID' => $userId
-			]);
+			return false;
 		}
-
-		return static::$cache[$this->id][self::CACHE_TASK_KEY]['FAVORITES'][$userId];
+		return in_array($userId, $task['IN_FAVORITES']);
 	}
 
-	private function loadTask(): ?array
+	/**
+	 * @param bool $withRelations
+	 * @return array|null
+	 */
+	private function getTask(bool $withRelations = false): ?array
 	{
 		if (!$this->id)
 		{
 			return null;
 		}
-		if (!isset(static::$cache[$this->id][self::CACHE_TASK_KEY]))
-		{
-			$res = \Bitrix\Tasks\Internals\TaskTable::query()
-				->addSelect('ID')
-				->addSelect('GROUP_ID')
-				->addSelect('STATUS')
-				->addSelect('ALLOW_CHANGE_DEADLINE')
-				->addSelect('ALLOW_TIME_TRACKING')
-				->addSelect('ZOMBIE')
-				->where('ID', $this->id)
-				->exec()
-				->fetch();
-
-			if ($res)
-            {
-				static::$cache[$this->id][self::CACHE_TASK_KEY] = $res;
-            }
-		}
-		return static::$cache[$this->id][self::CACHE_TASK_KEY];
+		return TaskRegistry::getInstance()->get($this->id, $withRelations);
 	}
 }

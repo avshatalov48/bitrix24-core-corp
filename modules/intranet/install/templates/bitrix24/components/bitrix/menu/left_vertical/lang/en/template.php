@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["MAP_CLOSE_LINK"] = "Close";
 $MESS["MENU_ADD_BUTTON"] = "Add";
 $MESS["MENU_ADD_ITEM_TO_ALL"] = "Add menu item for all employees";
@@ -51,6 +51,8 @@ $MESS["MENU_ITEM_WAS_DELETED_FROM_ALL"] = "Page was removed from left<br/>menu f
 $MESS["MENU_ITEM_WAS_DELETED_FROM_LEFT"] = "Page was removed<br/>from left menu";
 $MESS["MENU_LANDING_SPOTLIGHT"] = "Create free site or landing page!";
 $MESS["MENU_LICENSE_ALL"] = "Upgrade your plan";
+$MESS["MENU_LICENSE_BUY"] = "Buy";
+$MESS["MENU_LICENSE_DEMO"] = "Trial ends in #NUM_DAYS#";
 $MESS["MENU_MORE_ITEMS_HIDE"] = "Hide";
 $MESS["MENU_MORE_ITEMS_SHOW"] = "More...";
 $MESS["MENU_MY_WORKGROUPS"] = "My groups";
@@ -58,20 +60,20 @@ $MESS["MENU_MY_WORKGROUPS_EXTRANET"] = "Extranet";
 $MESS["MENU_MY_WORKGROUPS_FAVORITES"] = "Favorites";
 $MESS["MENU_OPEN_IN_NEW_PAGE"] = "Open in new tab";
 $MESS["MENU_PRESET_CRM_DESC1"] = "Automate sales";
-$MESS["MENU_PRESET_CRM_DESC11"] = "Automate sales";
 $MESS["MENU_PRESET_CRM_DESC2"] = "improve conversions and communicate with customers";
+$MESS["MENU_PRESET_CRM_DESC11"] = "Automate sales";
 $MESS["MENU_PRESET_CRM_TITLE"] = "CRM";
 $MESS["MENU_PRESET_DESC"] = "This will streamline your daily routine: the selected tool will show up first, and the menu will include only the required items. You can edit the menu any time you want.";
 $MESS["MENU_PRESET_SITES_DESC1"] = "Create beautiful sites that sell";
 $MESS["MENU_PRESET_SITES_DESC2"] = "no coding skills required";
 $MESS["MENU_PRESET_SITES_TITLE"] = "Sites";
 $MESS["MENU_PRESET_SOCIAL_DESC1"] = "Communicate with colleagues";
-$MESS["MENU_PRESET_SOCIAL_DESC11"] = "Communicate and collaborate ";
 $MESS["MENU_PRESET_SOCIAL_DESC2"] = "resolve issues in no time";
+$MESS["MENU_PRESET_SOCIAL_DESC11"] = "Communicate and collaborate ";
 $MESS["MENU_PRESET_SOCIAL_TITLE1"] = "Communications";
 $MESS["MENU_PRESET_TASKS_DESC1"] = "Manage projects";
-$MESS["MENU_PRESET_TASKS_DESC11"] = "Work together and stay on schedule";
 $MESS["MENU_PRESET_TASKS_DESC2"] = "teamwork made easy";
+$MESS["MENU_PRESET_TASKS_DESC11"] = "Work together and stay on schedule";
 $MESS["MENU_PRESET_TASKS_TITLE"] = "Tasks";
 $MESS["MENU_PRESET_TASKS_TITLE1"] = "Tasks and projects";
 $MESS["MENU_PRESET_TITLE"] = "Select your <span class=\"left-menu-popup-header-link\">Bitrix24</span> most used items";
@@ -93,8 +95,6 @@ $MESS["MENU_SHOW"] = "show";
 $MESS["MENU_SHOW_ITEM"] = "Show item";
 $MESS["MENU_SITE_MAP"] = "Sitemap";
 $MESS["MENU_SORT_ITEMS"] = "Configure menu items";
-$MESS["MENU_SPOTLIGHT_HINT"] = "You can now make the menu more compact by hiding the menu item texts. You can restore full menu mode here anytime.";
 $MESS["MENU_STAR_TITLE_DEFAULT_PAGE"] = "Page is already in left menu";
 $MESS["MENU_STAR_TITLE_DEFAULT_PAGE_DELETE_ERROR"] = "Page cannot  be removed from left menu";
 $MESS["MENU_TOP_ITEM_LAST_HIDDEN"] = "The last element cannot be hidden";
-?>

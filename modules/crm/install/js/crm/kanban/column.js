@@ -39,6 +39,7 @@
 		loader: null,
 		isKeyMetaPressed: false,
 		clickStatus: null,
+		animationDuration: 800,
 
 		/**
 		 * Custom format method from BXcrm-kanban-quick-form-show .2s cubic-bezier(0.88, -0.08, 0.46, 0.91) forwards.Currency.
@@ -196,6 +197,14 @@
 			{
 				this.items.push(item);
 			}
+
+			item.animate({
+				duration: this.animationDuration,
+				draw: function(progress) {
+					item.layout.container.style.opacity = progress*100+'%';
+				},
+				useAnimation: item.useAnimation
+			});
 
 			if (item.isCountable())
 			{
@@ -1184,6 +1193,54 @@
 			jsDD.registerDest(columnBody, 10);
 
 			this.disableDropping();
+		},
+
+		/**
+		 *
+		 * @param {BX.Kanban.Item} itemToRemove
+		 */
+		removeItem: function(itemToRemove)
+		{
+			return new Promise(function(resolve, reject)
+			{
+				var found = false;
+				this.items = this.items.filter(function(item) {
+
+					if (item === itemToRemove)
+					{
+						found = true;
+						return false;
+					}
+
+					return true;
+				});
+
+				if (found)
+				{
+					itemToRemove.animate({
+						duration: this.animationDuration,
+						draw: function(progress) {
+							itemToRemove.layout.container.style.opacity = 100-progress*100+'%';
+						},
+						useAnimation: itemToRemove.useAnimation
+					}).then(function(value){
+						if (itemToRemove.isCountable() && itemToRemove.isVisible())
+						{
+							this.decrementTotal();
+						}
+
+						if (this.getGrid().isRendered())
+						{
+							this.render();
+						}
+						resolve();
+					}.bind(this));
+				}
+				else
+				{
+					resolve();
+				}
+			}.bind(this));
 		}
 	};
 

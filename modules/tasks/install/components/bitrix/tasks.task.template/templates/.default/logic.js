@@ -338,8 +338,10 @@ BX.namespace('Tasks.Component');
 
 					if (flagName === 'REPLICATE' && node.checked && this.vars.taskLimitExceeded)
 					{
+						flagNode.value = 'N';
 						node.checked = false;
 						BX.UI.InfoHelper.show('limit_tasks_recurring_tasks');
+						return;
 					}
 
 					this.processToggleFlag(flagName, flagNode.value == yesValue);

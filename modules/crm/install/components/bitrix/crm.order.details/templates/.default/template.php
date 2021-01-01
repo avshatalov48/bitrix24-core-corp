@@ -98,7 +98,7 @@ $APPLICATION->IncludeComponent(
 		'READ_ONLY' => $arResult['COMPONENT_MODE'] === ComponentMode::VIEW,
 		'TABS' => $arResult['TABS'],
 		'SERVICE_URL' => '/bitrix/components/bitrix/crm.order.details/ajax.php?action=convert&'.bitrix_sessid_get(),
-		'REST_USE' => 'N',
+		'REST_USE' => 'Y',
 		'EDITOR' => array(
 			'GUID' => "{$guid}_editor",
 			'CONFIG_ID' => $arResult['EDITOR_CONFIG_ID'],

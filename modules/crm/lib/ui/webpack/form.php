@@ -46,7 +46,11 @@ class Form extends Webpack\Base
 	 */
 	public static function rebuildResources()
 	{
-		return Form\Polyfill::instance()->build() && Form\App::instance()->build();
+		return (
+			Form\Polyfill::instance()->build() &&
+			Form\ResourceBooking::instance()->build() &&
+			Form\App::instance()->build()
+		);
 	}
 
 	/**

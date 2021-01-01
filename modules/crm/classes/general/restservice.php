@@ -4883,7 +4883,7 @@ class CCrmProductSectionRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		$result = CCrmProductSection::Add($fields);
+		$result = CCrmProductSection::Add($fields, ['GENERATE_CODE' => true]);
 		if(!(is_int($result) && $result > 0))
 		{
 			$errors[] = CCrmProductSection::GetLastError();

@@ -14,6 +14,7 @@ use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Timeline\DocumentController;
 use Bitrix\Crm\Timeline\DocumentEntry;
+use Bitrix\Crm\Timeline\TimelineType;
 use Bitrix\DocumentGenerator\CreationMethod;
 use Bitrix\DocumentGenerator\DataProvider;
 use Bitrix\DocumentGenerator\DataProvider\EntityDataProvider;
@@ -57,6 +58,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 			'TEXT' => $text,
 			'AUTHOR_ID' => $userId,
 			'BINDINGS' => [['ENTITY_TYPE_ID' => $this->getCrmOwnerType(), 'ENTITY_ID' => $this->source]],
+			'TYPE_CATEGORY_ID' => TimelineType::CREATION,
 		], $document->ID);
 		if($entryID > 0)
 		{
@@ -94,8 +96,11 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		$entries = DocumentEntry::getListByDocumentId($document->ID);
 		foreach($entries as $entry)
 		{
-			DocumentController::getInstance()->onDelete($entry['ID'], $entry);
-			DocumentEntry::delete($entry['ID']);
+			DocumentController::getInstance()->onDelete($entry['ID'], [
+				'TYPE_CATEGORY_ID' => (int)$entry['TYPE_CATEGORY_ID'],
+				'ENTITY_TYPE_ID' => $this->getCrmOwnerType(),
+				'ENTITY_ID' => $this->source,
+			]);
 		}
 	}
 
@@ -108,10 +113,17 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 	public function onDocumentUpdate(Document $document)
 	{
 		Loc::loadLanguageFile(__FILE__);
-		$text = Loc::getMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_COMMENT', ['#TITLE#' => htmlspecialcharsbx($document->getTitle())]);
 		$entries = DocumentEntry::getListByDocumentId($document->ID);
 		foreach($entries as $entry)
 		{
+			if($entry['TYPE_CATEGORY_ID'] === TimelineType::MODIFICATION)
+			{
+				$text = Loc::getMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_PULIC_LINK_VIEWED', ['#TITLE#' => htmlspecialcharsbx($document->getTitle())]);
+			}
+			else
+			{
+				$text = Loc::getMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_COMMENT', ['#TITLE#' => htmlspecialcharsbx($document->getTitle())]);
+			}
 			if($entry['COMMENT'] != $text)
 			{
 				$entry['COMMENT'] = $text;
@@ -130,8 +142,9 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 
 	/**
 	 * @param Document $document
+	 * @param bool $isFirstTime
 	 */
-	public function onPublicView(Document $document)
+	public function onPublicView(Document $document, bool $isFirstTime = false)
 	{
 		//call automation trigger
 		$template = $document->getTemplate();
@@ -142,6 +155,27 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 			],
 			['TEMPLATE_ID' => $template->ID]
 		);
+
+		if($isFirstTime)
+		{
+			$text = Loc::getMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_PULIC_LINK_VIEWED', ['#TITLE#' => htmlspecialcharsbx($document->getTitle())]);
+			$entryId = DocumentEntry::create([
+				'TEXT' => $text,
+				'BINDINGS' => [['ENTITY_TYPE_ID' => $this->getCrmOwnerType(), 'ENTITY_ID' => $this->source]],
+				'TYPE_CATEGORY_ID' => TimelineType::MODIFICATION,
+			], $document->ID);
+
+			if($entryId > 0)
+			{
+				$saveData = array(
+					'COMMENT' => $text,
+					'ENTITY_TYPE_ID' => $this->getCrmOwnerType(),
+					'ENTITY_ID' => $this->source,
+					'DOCUMENT_ID' => $document->ID,
+				);
+				DocumentController::getInstance()->addToStack($entryId, 'timeline_document_add', $saveData);
+			}
+		}
 	}
 
 	/**

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["TASKS_ABOUT_DEADLINE"] = "Before deadline";
 $MESS["TASKS_ACCEPT_TASK"] = "Accept Task";
 $MESS["TASKS_ADD_BACK_TO_TASKS_LIST"] = "Back to Tasks";
@@ -148,7 +148,7 @@ $MESS["TASKS_REMIND_VIA_JABBER_EX"] = "Send instant message";
 $MESS["TASKS_RENEW_TASK"] = "Resume";
 $MESS["TASKS_REPORTS"] = "Reports";
 $MESS["TASKS_RESPONSIBLE"] = "Responsible";
-$MESS["TASKS_REST_BUTTON"] = "Applications";
+$MESS["TASKS_REST_BUTTON_2"] = "Market";
 $MESS["TASKS_SELECT"] = "Select";
 $MESS["TASKS_START_TASK"] = "Start";
 $MESS["TASKS_STATUS"] = "Status";
@@ -213,4 +213,3 @@ $MESS["TASKS_TITLE"] = "Tasks";
 $MESS["TASKS_TTDP_PROJECT_TASK_IN"] = "This task is in group (project)";
 $MESS["TASKS_TTV_SUB_TITLE"] = "Task ##ID#";
 $MESS["TASKS_TT_VIEW"] = "View task";
-?>

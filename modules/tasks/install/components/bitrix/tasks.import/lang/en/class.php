@@ -29,6 +29,7 @@ $MESS["TASKS_IMPORT_HEADERS_CHECKLIST"] = "Checklist";
 $MESS["TASKS_IMPORT_HEADERS_DEADLINE"] = "Deadline";
 $MESS["TASKS_IMPORT_HEADERS_DESCRIPTION"] = "Description";
 $MESS["TASKS_IMPORT_HEADERS_END_DATE_PLAN"] = "Complete task by";
+$MESS["TASKS_IMPORT_HEADERS_END_DATE_PLAN_V2"] = "Complete task on";
 $MESS["TASKS_IMPORT_HEADERS_MATCH_WORK_TIME"] = "Skip weekends and holidays";
 $MESS["TASKS_IMPORT_HEADERS_ORIGINATOR"] = "Created by";
 $MESS["TASKS_IMPORT_HEADERS_PARAM_1"] = "Derive task dates from subtask dates";

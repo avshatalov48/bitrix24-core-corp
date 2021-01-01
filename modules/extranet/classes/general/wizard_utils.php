@@ -153,7 +153,7 @@ class CExtranetWizardServices
 
 	function GetCurrentSiteID($selectedSiteID = null)
 	{
-		if (strlen($selectedSiteID) > 0)
+		if ($selectedSiteID <> '')
 		{
 			$obSite = CSite::GetList($by = "def", $order = "desc", Array("LID" => $selectedSiteID));
 			if (!$arSite = $obSite->Fetch())
@@ -231,13 +231,13 @@ class CExtranetWizardServices
 
 		$path = rtrim($path, "/");
 
-		if (strlen($path) <= 0)
+		if ($path == '')
 			$path = "/";
 
-		if( ($position = strrpos($path, "/")) !== false)
+		if( ($position = mb_strrpos($path, "/")) !== false)
 		{
-			$pathFile = substr($path, $position+1);
-			$pathDir = substr($path, 0, $position);
+			$pathFile = mb_substr($path, $position + 1);
+			$pathDir = mb_substr($path, 0, $position);
 		}
 		else
 			return false;
@@ -290,7 +290,7 @@ class CExtranetWizardServices
 		if (!is_array($siteID))
 			$siteID = Array($siteID);
 
-		require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/iblock/classes/".strtolower($GLOBALS["DB"]->type)."/cml2.php");
+		require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/iblock/classes/".mb_strtolower($GLOBALS["DB"]->type)."/cml2.php");
 		ImportXMLFile($xmlFile, $iblockType, $siteID, $section_action = "N", $element_action = "N");
 
 		$iblockID = false;
@@ -312,7 +312,7 @@ class CExtranetWizardServices
 	function SetIBlockFormSettings($iblockID, $settings)
 	{
 		global $DBType;
-		require_once($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/main/classes/".strtolower($DBType)."/favorites.php");
+		require_once($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/main/classes/".mb_strtolower($DBType)."/favorites.php");
 
 		CUserOptions::SetOption(
 			"form", 
@@ -325,7 +325,7 @@ class CExtranetWizardServices
 	public static function SetUserOption($category, $option, $settings, $common = false, $userID = false)
 	{
 		global $DBType;
-		require_once($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/main/classes/".strtolower($DBType)."/favorites.php");
+		require_once($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/main/classes/".mb_strtolower($DBType)."/favorites.php");
 
 		CUserOptions::SetOption(
 			$category, 

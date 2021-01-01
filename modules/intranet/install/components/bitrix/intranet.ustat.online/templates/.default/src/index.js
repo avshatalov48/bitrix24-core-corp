@@ -1,6 +1,6 @@
 import {Popup} from './popup';
 
-import {Type, Dom, Reflection} from 'main.core';
+import {Type, Dom, Reflection, Event} from 'main.core';
 import {rest} from "rest.client";
 import {PULL, PullClient} from "pull.client";
 
@@ -22,6 +22,7 @@ class UstatOnline
 		this.currentUserId = parseInt(params.currentUserId);
 		this.isTimemanAvailable = params.isTimemanAvailable === "Y";
 		this.limitOnlineSeconds = params.limitOnlineSeconds;
+		this.renderingFinished = true;
 
 		let users = params.users;
 		let allOnlineUserIdToday = params.allOnlineUserIdToday;
@@ -37,6 +38,7 @@ class UstatOnline
 		});
 
 		this.online = [].concat(this.users);
+
 		this.counter = 0;
 
 		//-------------- for IndexedDb
@@ -150,16 +152,21 @@ class UstatOnline
 
 	setUserOnline(params)
 	{
-		let userId = parseInt(params.id);
+		let userId = this.getNumberUserId(params.id);
+
 		this.findUser(userId).then(user => {
+			user.id = this.getNumberUserId(user.id);
 
 			if (typeof params.last_activity_date !== "undefined")
 			{
 				user.last_activity_date = params.last_activity_date;
 			}
 
-			this.setUserToLocal(user);
-			this.checkOnline();
+			if (user.isExtranet !== "Y")
+			{
+				this.setUserToLocal(user);
+				this.checkOnline();
+			}
 		}).catch(error => {});
 	}
 
@@ -295,7 +302,6 @@ class UstatOnline
 				}).catch(error => {
 					reject(null);
 				});
-
 			});
 
 			return true;
@@ -337,12 +343,12 @@ class UstatOnline
 	getUserFromDb(userId)
 	{
 		return new Promise((resolve, reject) => {
-			BX.indexedDB.getValue(this.ITEMS.obClientDb, "users", "U" + userId).then(function(user){
+			BX.indexedDB.getValue(this.ITEMS.obClientDb, "users", "U" + userId).then((user) => {
 				if (user && typeof user === 'object')
 				{
 					if (user.hasOwnProperty("entityId"))
 					{
-						user.id = user.entityId;
+						user.id = this.getNumberUserId(user.entityId);
 					}
 					resolve(user);
 				}
@@ -373,7 +379,7 @@ class UstatOnline
 			}
 
 			rest.callMethod('im.user.get', {id: userId}).then(result => {
-				if (result.data())
+				if (result.data() && result.data().external_auth_id !== "__controller")
 				{
 					let user = {};
 					user.id = parseInt(result.data().id);
@@ -503,10 +509,26 @@ class UstatOnline
 		}
 	}
 
+	getNumberUserId(id)
+	{
+		if (!id)
+		{
+			return;
+		}
+
+		let userId = String(id);
+		userId = userId.replace('U', '');
+		return parseInt(userId);
+	}
+
 	redrawOnline()
 	{
 		this.showCircleAnimation(this.circleNode, this.counter, this.maxOnlineUserCountToday);
-		this.renderAllUser();
+		if (this.renderingFinished)
+		{
+			this.renderingFinished = false;
+			this.renderAllUser();
+		}
 	}
 
 	renderAllUser()
@@ -518,7 +540,10 @@ class UstatOnline
 			newUserIds.push(parseInt(item.id));
 		});
 
+		const onlineToShow = newUserIds.slice(0, this.maxUserToShow);
+
 		let renderedUserNodes = this.userBlockNode.querySelectorAll(".js-ustat-online-user");
+
 		if (renderedUserNodes)
 		{
 			for (let item in renderedUserNodes)
@@ -534,6 +559,10 @@ class UstatOnline
 					if (Type.isDomNode(renderedUserNodes[item]))
 					{
 						Dom.remove(renderedUserNodes[item]); //remove offline avatars
+						/*renderedUserNodes[item].classList.add('intranet-ustat-online-icon-hide');
+						setTimeout( () => {
+
+						}, 800);*/
 					}
 				}
 				else
@@ -544,39 +573,95 @@ class UstatOnline
 		}
 
 		renderedUserNodes = this.userBlockNode.querySelectorAll(".js-ustat-online-user");
-		let renderedUserCount = renderedUserNodes.length;
 
-		this.online.forEach((item, i) => {
-			if (i >= this.maxUserToShow || !item.hasOwnProperty("id"))
+		let renderedUserCount = renderedUserNodes.length;
+		const showAnimation = renderedUserCount !== 0;
+		this.userIndex = this.online.length;
+
+		let stepRender = (i) => {
+			if (i >= this.maxUserToShow || i >= this.online.length)
 			{
+				this.renderingFinished = true;
 				return;
 			}
 
-			if (renderedUserIds.indexOf(item.id) === -1)
-			{
+			new Promise((resolve) => {
+				let item = this.online[i];
+
+				if (renderedUserIds.indexOf(item.id) >= 0)
+				{
+					resolve();
+					return;
+				}
+
 				if (renderedUserCount < this.maxUserToShow)
 				{
-					this.renderUser(item);
+					if (showAnimation)
+					{
+						this.userIndex++;
+					}
+					this.renderUser(item, showAnimation);
+					renderedUserIds.push(item.id);
 					renderedUserCount++;
+					if (!showAnimation)
+					{
+						this.userIndex = this.userIndex - 1;
+					}
+
+					resolve();
 				}
 				else
 				{
-					let element = this.userBlockNode.querySelector(".js-ustat-online-user");
+					const elements = this.userBlockNode.querySelectorAll(".js-ustat-online-user");
+					const firstElement = elements[0];
+					let lastElement = "";
 
-					if (Type.isDomNode(element))
+					for (let i = elements.length - 1; i >= 0; i--)
 					{
-						const removedUserId = parseInt(element.getAttribute("data-user-id"));
-						Dom.remove(element);
-						this.renderUser(item);
+						if (Type.isDomNode(elements[i]))
+						{
+							const elementUserId = parseInt(elements[i].getAttribute("data-user-id"));
+							if (onlineToShow.indexOf(elementUserId) === -1)
+							{
+								lastElement = elements[i];
+								break;
+							}
+						}
+					}
+
+					if (Type.isDomNode(lastElement))
+					{
+						const removedUserId = parseInt(lastElement.getAttribute("data-user-id"));
+
+						Dom.removeClass(lastElement, 'intranet-ustat-online-icon-show');
+						Dom.addClass(lastElement, 'intranet-ustat-online-icon-hide');
+
+						this.userIndex = parseInt(firstElement.style.zIndex);
+						this.userIndex++;
+
+						this.renderUser(item, showAnimation);
 						renderedUserIds = renderedUserIds.filter(id => id !== removedUserId);
-						renderedUserIds.push(item.id)
+						renderedUserIds.push(item.id);
+
+						Event.bind(lastElement, 'animationend', (event) => {
+							Dom.remove(lastElement);
+							resolve();
+						});
+					}
+					else
+					{
+						resolve();
 					}
 				}
-			}
-		});
+			}).then(() => {
+				stepRender(++i);
+			});
+		};
+
+		stepRender(0);
 	}
 
-	renderUser(user)
+	renderUser(user, showAnimation)
 	{
 		if (!user || typeof user !== 'object')
 		{
@@ -589,10 +674,18 @@ class UstatOnline
 			userStyle = 'background-image: url("' + user.avatar + '");';
 		}
 
+		const userId = this.getNumberUserId(user.id);
+
+		let itemsClasses = `ui-icon ui-icon-common-user intranet-ustat-online-icon js-ustat-online-user
+			${showAnimation ? ' intranet-ustat-online-icon-show' : ''}`;
+
 		this.userItem = BX.create('span', {
 			attrs: {
-				className: 'ui-icon ui-icon-common-user intranet-ustat-online-icon intranet-ustat-online-icon-show js-ustat-online-user',
-				"data-user-id" : user.id
+				className: itemsClasses,
+				"data-user-id" : userId
+			},
+			style: {
+				zIndex: this.userIndex
 			},
 			children: [
 				BX.create('i', {
@@ -601,8 +694,14 @@ class UstatOnline
 			]
 		});
 
-		this.userBlockNode.appendChild(this.userInnerBlockNode);
-		this.userInnerBlockNode.appendChild(this.userItem);
+		if (showAnimation)
+		{
+			Dom.prepend(this.userItem, this.userInnerBlockNode);
+		}
+		else
+		{
+			this.userInnerBlockNode.appendChild(this.userItem);
+		}
 	}
 
 	showCircleAnimation(circleNode, currentUserOnlineCount, maxUserOnlineCount)

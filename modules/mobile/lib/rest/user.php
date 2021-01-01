@@ -1,10 +1,11 @@
 <?php
 
 namespace Bitrix\Mobile\Rest;
+use Bitrix\Intranet\Util;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-
+use Bitrix\Main\Engine\CurrentUser;
 
 class User extends \IRestService
 {
@@ -13,6 +14,11 @@ class User extends \IRestService
 		return [
 			'mobile.user.get' => ['callback' => [__CLASS__, 'get'], 'options' => ['private' => false]],
 			'mobile.user.canUseTelephony' => ['callback' => [__CLASS__, 'canUseTelephony'], 'options' => ['private' => false]],
+			'mobile.user.canEditUsers' => ['callback' => [__CLASS__, 'canEditUsers'], 'options' => ['private' => false]],
+			'mobile.user.setAdminRights' => ['callback' => [__CLASS__, 'setAdminRights'], 'options' => ['private' => false]],
+			'mobile.user.removeAdminRights' => ['callback' => [__CLASS__, 'removeAdminRights'], 'options' => ['private' => false]],
+			'mobile.user.fireUser' => ['callback' => [__CLASS__, 'fireUser'], 'options' => ['private' => false]],
+			'mobile.user.hireUser' => ['callback' => [__CLASS__, 'hireUser'], 'options' => ['private' => false]],
 		];
 	}
 
@@ -84,6 +90,17 @@ class User extends \IRestService
 
 			$users[$index]["NAME_FORMATTED"] = \CUser::FormatName(\CSite::GetNameFormat(false), $user);
 			$users[$index]["COMPANY_STRUCTURE_RELATIONS"] = $depsData;
+
+			if(Loader::includeModule("intranet"))
+			{
+				$status = Util::getUserStatus($user["ID"]);
+				if($status)
+				{
+					$users[$index]["STATUS"] = $status;
+					$status = toUpper($status);
+					$users[$index]["STATUS_NAME"] = Loc::getMessage("MOBILE_REST_USER_STATUS_{$status}");
+				}
+			}
 		}
 
 		$result = $users;
@@ -94,6 +111,107 @@ class User extends \IRestService
 	public static function canUseTelephony($params, $n, \CRestServer $server)
 	{
 		return Loader::includeModule('voximplant') && \Bitrix\Voximplant\Security\Helper::canCurrentUserPerformCalls();
+	}
+
+	public static function canEditUsers($params, $n, \CRestServer $server)
+	{
+		return Loader::includeModule('intranet') && Util::isCurrentUserAdmin();
+	}
+
+	public static function setAdminRights($params, $n, \CRestServer $server)
+	{
+		$userId = null;
+		if (isset($params['id']))
+		{
+			$userId = intval($params['id']);
+			if ($userId <= 0)
+			{
+				throw new Bitrix\Rest\RestException("User ID can't be empty", "ID_EMPTY", CRestServer::STATUS_WRONG_REQUEST);
+			}
+		}
+
+		if (Loader::includeModule('intranet'))
+		{
+			$currentUser = CurrentUser::get();
+
+			Util::setAdminRights([
+				'userId' => $userId,
+				'currentUserId' => $currentUser->getId(),
+				'isCurrentUserAdmin' => $currentUser->isAdmin()
+			]);
+		}
+	}
+
+	public static function fireUser($params, $n, \CRestServer $server)
+	{
+		$userId = null;
+		if (isset($params['id']))
+		{
+			$userId = intval($params['id']);
+			if ($userId <= 0)
+			{
+				throw new Bitrix\Rest\RestException("User ID can't be empty", "ID_EMPTY", CRestServer::STATUS_WRONG_REQUEST);
+			}
+		}
+
+		if (Loader::includeModule('intranet'))
+		{
+			$currentUser = CurrentUser::get();
+
+			Util::deactivateUser([
+				'userId' => $userId,
+				'currentUserId' => $currentUser->getId(),
+				'isCurrentUserAdmin' => $currentUser->isAdmin()
+			]);
+		}
+	}
+
+	public static function hireUser($params, $n, \CRestServer $server)
+	{
+		$userId = null;
+		if (isset($params['id']))
+		{
+			$userId = intval($params['id']);
+			if ($userId <= 0)
+			{
+				throw new Bitrix\Rest\RestException("User ID can't be empty", "ID_EMPTY", CRestServer::STATUS_WRONG_REQUEST);
+			}
+		}
+
+		if (Loader::includeModule('intranet'))
+		{
+			$currentUser = CurrentUser::get();
+
+			Util::activateUser([
+				'userId' => $userId,
+				'currentUserId' => $currentUser->getId(),
+				'isCurrentUserAdmin' => $currentUser->isAdmin()
+			]);
+		}
+	}
+
+	public static function removeAdminRights($params, $n, \CRestServer $server)
+	{
+		$userId = null;
+		if (isset($params['id']))
+		{
+			$userId = intval($params['id']);
+			if ($userId <= 0)
+			{
+				throw new Bitrix\Rest\RestException("User ID can't be empty", "ID_EMPTY", CRestServer::STATUS_WRONG_REQUEST);
+			}
+		}
+
+		if (Loader::includeModule('intranet'))
+		{
+			$currentUser = CurrentUser::get();
+
+			Util::removeAdminRights([
+				'userId' => $userId,
+				'currentUserId' => $currentUser->getId(),
+				'isCurrentUserAdmin' => $currentUser->isAdmin()
+			]);
+		}
 	}
 
 	public static function allowedFields()

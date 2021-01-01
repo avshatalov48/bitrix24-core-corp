@@ -7,10 +7,9 @@ use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Entity\ReferenceField;
-use Bitrix\Main\Loader;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Pull\Event;
 use Bitrix\Tasks\Integration\Forum;
+use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Internals\Task\ViewedTable;
 use Bitrix\Tasks\Internals\TaskTable;
 use COption;
@@ -145,8 +144,19 @@ class Task
 		if (
 			!$taskId || !$userId || !$commentId
 			|| !Forum::includeModule()
-			|| !(new CTaskItem($taskId, $userId))->checkCanRead()
 		)
+		{
+			return false;
+		}
+
+		try
+		{
+			if (!(new CTaskItem($taskId, $userId))->checkCanRead())
+			{
+				return false;
+			}
+		}
+		catch (\CTaskAssertException $e)
 		{
 			return false;
 		}
@@ -209,16 +219,13 @@ class Task
 	 */
 	public static function onAfterCommentsReadAll(int $userId, int $groupId = 0): void
 	{
-		if (Loader::includeModule('pull'))
-		{
-			Event::add($userId, [
-				'module_id' => 'tasks',
-				'command' => 'comment_read_all',
-				'params' => [
-					'USER_ID' => $userId,
-					'GROUP_ID' => $groupId,
-				]
-			]);
-		}
+		PushService::addEvent($userId, [
+			'module_id' => 'tasks',
+			'command' => 'comment_read_all',
+			'params' => [
+				'USER_ID' => $userId,
+				'GROUP_ID' => $groupId,
+			]
+		]);
 	}
 }

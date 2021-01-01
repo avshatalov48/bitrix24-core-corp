@@ -753,6 +753,23 @@ this.BX = this.BX || {};
 
 	      this.emitUpdateEvent();
 	    }
+	  }, {
+	    key: "resetView",
+	    value: function resetView() {
+	      var _iterator11 = _createForOfIteratorHelper(this._addressList),
+	          _step11;
+
+	      try {
+	        for (_iterator11.s(); !(_step11 = _iterator11.n()).done;) {
+	          var addressItem = _step11.value;
+	          addressItem.resetView();
+	        }
+	      } catch (err) {
+	        _iterator11.e(err);
+	      } finally {
+	        _iterator11.f();
+	      }
+	    }
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
@@ -789,6 +806,7 @@ this.BX = this.BX || {};
 	    _this2._showAddressTypeInViewMode = BX.prop.getBoolean(settings, 'showAddressTypeInViewMode', true);
 	    _this2._showDetails = !_this2._isAutocompleteEnabled || BX.prop.getBoolean(settings, 'showDetails', false);
 	    _this2._isLoading = false;
+	    _this2._isDropdownLoading = false;
 	    _this2._addressWidget = null;
 	    _this2._wrapper = null;
 	    _this2._domNodes = {};
@@ -828,6 +846,8 @@ this.BX = this.BX || {};
 	      this._addressWidget.subscribeOnStateChangedEvent(this.onAddressWidgetChangedState.bind(this));
 
 	      this._addressWidget.subscribeOnAddressChangedEvent(this.onAddressChanged.bind(this));
+
+	      this._addressWidget.subscribeOnFeatureEvent(this.onFeatureEvent.bind(this));
 
 	      this._addressWidget.subscribeOnErrorEvent(this.onError.bind(this));
 	    }
@@ -920,12 +940,12 @@ this.BX = this.BX || {};
 
 	      var menu = [];
 
-	      var _iterator11 = _createForOfIteratorHelper(this._typesList),
-	          _step11;
+	      var _iterator12 = _createForOfIteratorHelper(this._typesList),
+	          _step12;
 
 	      try {
-	        for (_iterator11.s(); !(_step11 = _iterator11.n()).done;) {
-	          var item = _step11.value;
+	        for (_iterator12.s(); !(_step12 = _iterator12.n()).done;) {
+	          var item = _step12.value;
 	          var selected = item.value === this._type;
 
 	          if (this._availableTypesIds.indexOf(item.value) < 0 && !selected) {
@@ -940,9 +960,9 @@ this.BX = this.BX || {};
 	          });
 	        }
 	      } catch (err) {
-	        _iterator11.e(err);
+	        _iterator12.e(err);
 	      } finally {
-	        _iterator11.f();
+	        _iterator12.f();
 	      }
 
 	      main_popup.MenuManager.show(this.typesMenuId, bindElement, menu, {
@@ -1072,6 +1092,12 @@ this.BX = this.BX || {};
 	        main_core.Dom.replace(node, newNode);
 	        this._domNodes.icon = newNode;
 	      }
+	    }
+	  }, {
+	    key: "getIconState",
+	    value: function getIconState() {
+	      var isAddressSet = !!this.getAddress();
+	      return this._isLoading.toString() + isAddressSet.toString();
 	    }
 	  }, {
 	    key: "refreshCopyButtonVisibility",
@@ -1273,7 +1299,7 @@ this.BX = this.BX || {};
 	      var data = event.getData(),
 	          state = data.state;
 	      var wasLoading = this._isLoading;
-	      this._isLoading = state === BX.Location.Widget.State.DATA_LOADING;
+	      this.computeIsLoading();
 
 	      if (wasLoading !== this._isLoading) {
 	        this.refreshIcon();
@@ -1295,15 +1321,36 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "onAddressChanged",
 	    value: function onAddressChanged(event) {
+	      var oldIconState = this.getIconState();
 	      this._isLoading = false;
 	      var data = event.getData();
 	      this._value = main_core.Type.isObject(data.address) ? data.address.toJson() : '';
-	      this.refreshIcon();
+
+	      if (oldIconState !== this.getIconState()) {
+	        this.refreshIcon();
+	      }
+
 	      this.refreshCopyButtonVisibility();
 	      this.emit('onUpdateAddress', {
 	        id: this.getId(),
 	        value: this.getValue()
 	      });
+	    }
+	  }, {
+	    key: "onFeatureEvent",
+	    value: function onFeatureEvent(event) {
+	      var data = event.getData();
+
+	      if (data.feature instanceof BX.Location.Widget.AutocompleteFeature) {
+	        this._isDropdownLoading = data.eventCode === BX.Location.Widget.AutocompleteFeature.searchStartedEvent;
+	        var wasLoading = this._isLoading;
+	        this.computeIsLoading();
+
+	        if (wasLoading !== this._isLoading) {
+	          this.refreshIcon();
+	          this.refreshCopyButtonVisibility();
+	        }
+	      }
 	    }
 	  }, {
 	    key: "onError",
@@ -1320,6 +1367,16 @@ this.BX = this.BX || {};
 	        id: this.getId(),
 	        error: errorMessage
 	      });
+	    }
+	  }, {
+	    key: "computeIsLoading",
+	    value: function computeIsLoading() {
+	      this._isLoading = this._addressWidget.state === BX.Location.Widget.State.DATA_LOADING || this._isDropdownLoading;
+	    }
+	  }, {
+	    key: "resetView",
+	    value: function resetView() {
+	      this._addressWidget.resetView();
 	    }
 	  }]);
 	  return AddressItem;

@@ -108,7 +108,7 @@
 			{
 				userActive = 'Y';
 			}
-			else if (action == 'deactivate')
+			else if (action == 'deactivate' || action == 'deactivateInvited')
 			{
 				userActive = 'D';
 			}
@@ -132,14 +132,21 @@
 						&& BX.type.isArray(response.errors)
 					)
 					{
-						var DeleteErrorPopup = BX.PopupWindowManager.create('delete_error' + Math.floor(Math.random() * 1000), null, {
-							content: response.errors[0].message,
-							offsetLeft: -10,
-							offsetTop: 7,
-							autoHide: true
-						});
+						if (action === "delete")
+						{
+							this.activityAction("deactivateInvited", userId);
+						}
+						else
+						{
+							var DeleteErrorPopup = BX.PopupWindowManager.create('delete_error' + Math.floor(Math.random() * 1000), null, {
+								content: response.errors[0].message,
+								offsetLeft: -10,
+								offsetTop: 7,
+								autoHide: true
+							});
 
-						DeleteErrorPopup.show();
+							DeleteErrorPopup.show();
+						}
 					}
 				}.bind(this));
 			}
@@ -156,6 +163,10 @@
 			else if (action == 'delete')
 			{
 				confirmMess = BX.message('INTRANET_USER_LIST_ACTION_DELETE_CONFIRM');
+			}
+			else if (action == 'deactivateInvited')
+			{
+				confirmMess = BX.message('INTRANET_USER_LIST_ACTION_DEACTIVATE_INVITED_CONFIRM');
 			}
 			else
 			{

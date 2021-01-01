@@ -1225,7 +1225,7 @@ $arResult['FIELDS'][] = array(
 	'id' => 'EXPORT',
 	'type' => 'checkbox',
 	"items" => array(
-		"Y" => GetMessage('CRM_FIELD_EXPORT')
+		"Y" => GetMessage('CRM_FIELD_EXPORT_NEW')
 	),
 	'params' => $arResult["IS_EDIT_PERMITTED"] ? array() : array('disabled' => true),
 	'value' => isset($arResult['ELEMENT']['EXPORT']) ? $arResult['ELEMENT']['EXPORT'] : 'Y'

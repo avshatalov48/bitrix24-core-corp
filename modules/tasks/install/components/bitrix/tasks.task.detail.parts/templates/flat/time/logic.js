@@ -172,6 +172,7 @@ BX.namespace("Tasks.Component");
 		var seconds = parseInt(this.form.seconds.value, 10);
 		hours = BX.type.isNumber(hours) ? hours : 0;
 		minutes = BX.type.isNumber(minutes) ? minutes : 0;
+		seconds = BX.type.isNumber(seconds) ? seconds : 0;
 
 		var data = {
 			COMMENT_TEXT: BX.util.trim(this.form.comment.value),

@@ -128,7 +128,7 @@ $descImagePath .= ".png";
 		<div class="crm-webform-list-widget-container crm-webform-list-widget-left">
 			<div class="crm-webform-list-widget crm-webform-list-widget-number <?=$item['viewClassName']?> <?=($item['ACTIVE'] == 'Y' ? '' : 'crm-webform-list-widget-inactive')?>" data-bx-crm-webform-item-view="">
 				<div class="crm-webform-list-widget-head">
-					<span class="crm-widget-settings" data-bx-crm-webform-item-view-settings=""></span>
+					<span class="crm-widget-settings" data-bx-crm-webform-item-view-settings="" style="display: none;"></span>
 					<span class="crm-webform-list-widget-title-container">
 						<span class="crm-webform-list-widget-title-inner">
 							<a data-bx-slider-opener="" data-bx-edit-link="" href="<?=htmlspecialcharsbx($item['PATH_TO_WEB_FORM_EDIT'])?>">
@@ -164,7 +164,7 @@ $descImagePath .= ".png";
 							endforeach;?>
 						</div>
 						<span class="crm-webform-list-widget-content-image"></span>
-						<div style="position: relative;left: 118px;">
+						<div style="position: relative;left: 118px; display: none;">
 							<?foreach($item['itemViewList'] as $viewType => $view):?>
 							<div class="crm-webform-list-widget-content-item <?=($view['SELECTED'] ? 'crm-webform-list-widget-content-item-show' : '')?>" data-bx-crm-webform-view-info="<?=$viewType?>">
 								<div class="crm-crm-webform-list-widget-content-title"><?=$view['TEXT']?></div>
@@ -174,7 +174,7 @@ $descImagePath .= ".png";
 							</div>
 							<?endforeach;?>
 						</div>
-						<div class="crm-webform-list-widget-content-attempt" style="top: 67px; position: relative;">
+						<div class="crm-webform-list-widget-content-attempt" style="display: none; top: 67px; position: relative;">
 							<span class="crm-webform-list-widget-content-attempt-total">
 								<span class="crm-webform-list-widget-content-attempt-total-element"><?=Loc::getMessage('CRM_WEBFORM_LIST_ITEM_FILL_START')?></span>
 								<div class="crm-webform-list-widget-content-attempt-total-number">
@@ -198,7 +198,10 @@ $descImagePath .= ".png";
 				<div class="crm-webform-list-creation-date-container">
 					<div class="crm-webform-list-creation-date-element">
 						<span class="crm-webform-list-text"><?=Loc::getMessage('CRM_WEBFORM_LIST_ITEM_DATE_CREATE')?>:</span>
-						<span class="crm-webform-list-date"><?=htmlspecialcharsbx($item['DATE_CREATE_DISPLAY'])?></span>
+						<span class="crm-webform-list-date">
+							<?=htmlspecialcharsbx($item['DATE_CREATE_DISPLAY'])?>,
+							ID: <?=intval($item['ID'])?>
+						</span>
 					</div>
 				</div><!--crm-webform-list-creation-date-container-->
 				<div class="crm-webform-list-active-info-container">

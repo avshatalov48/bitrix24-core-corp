@@ -80,7 +80,7 @@ BX.Tasks.KanbanComponent.onReady = function()
 			additional: {ROLEID: (roleId === 'view_all' ? 0 : roleId)}
 		};
 		var filterApi = filterManager.getApi();
-		filterApi.setFilter(fields);
+		filterApi.setFilter(fields, {ROLE_TYPE: 'TASKS_ROLE_TYPE_' + (roleId === '' ? 'view_all' : roleId)});
 
 		window.history.pushState(null, null, url);
 	});
@@ -102,7 +102,7 @@ BX.Tasks.KanbanComponent.onReady = function()
 				PROBLEM: counterId
 			};
 			filterApi.setFields(fields);
-			filterApi.apply();
+			filterApi.apply({COUNTER_TYPE: 'TASKS_COUNTER_TYPE_' + counterId});
 		}
 		else
 		{

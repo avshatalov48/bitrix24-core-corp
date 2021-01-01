@@ -9,6 +9,7 @@ return [
 		'lib/assign.js',
 		'lib/objectkeys.js',
 		'lib/fetch.js',
+		'lib/customevent.js',
 		'lib/formdata/formdata.js',
 	],
 

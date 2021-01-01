@@ -347,7 +347,7 @@ class UserList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract
 
 		if (
 			$userId <= 0
-			|| !in_array($action, ['restore', 'delete', 'deactivate'])
+			|| !in_array($action, ['restore', 'delete', 'deactivate', 'deactivateInvited'])
 			|| !Loader::includeModule('socialnetwork')
 		)
 		{
@@ -396,6 +396,7 @@ class UserList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract
 					break;
 				case 'restore':
 				case 'deactivate':
+				case 'deactivateInvited':
 					if (
 						$action === "setActivity"
 						&& Loader::includeModule("bitrix24")

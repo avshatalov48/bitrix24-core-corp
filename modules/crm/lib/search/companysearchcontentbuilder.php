@@ -72,7 +72,7 @@ class CompanySearchContentBuilder extends SearchContentBuilder
 			$map->addText($title);
 			$map->addText(SearchEnvironment::prepareSearchContent($title));
 
-			$customerNumber = $this->parseCustomerNumber($title, '');
+			$customerNumber = $this->parseCustomerNumber($title, \CCrmCompany::GetAutoTitleTemplate());
 			if($customerNumber != $entityID)
 			{
 				$map->addTextFragments($customerNumber);

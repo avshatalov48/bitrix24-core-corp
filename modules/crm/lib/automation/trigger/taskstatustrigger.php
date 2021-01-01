@@ -55,6 +55,14 @@ class TaskStatusTrigger extends BaseTrigger
 		{
 			$task = $this->getInputData('TASK');
 
+			if (
+				!empty($trigger['APPLY_RULES']['taskStatus'])
+				&& (int)$trigger['APPLY_RULES']['taskStatus'] !== (int)$task['REAL_STATUS']
+			)
+			{
+				return false;
+			}
+
 			$conditionGroup = new ConditionGroup($trigger['APPLY_RULES']['taskCondition']);
 			$documentType = ['tasks', Tasks\Integration\Bizproc\Document\Task::class, 'TASK'];
 			$documentId = Tasks\Integration\Bizproc\Document\Task::resolveDocumentId($task['ID']);

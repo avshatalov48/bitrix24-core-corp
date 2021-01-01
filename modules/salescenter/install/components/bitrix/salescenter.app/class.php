@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Location\Entity\Address\Converter\StringConverter;
+use Bitrix\Location\Service\FormatService;
 use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Main\Application;
@@ -148,13 +150,13 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			'ownerId' => $this->arResult['ownerId'],
 		]);
 
-		if (!empty($clientInfo['COMPANY_ID']))
+		$this->arResult['personTypeId'] = (!empty($clientInfo['COMPANY_ID']))
+			? (int)Crm\Order\PersonType::getCompanyPersonTypeId()
+			: (int)Crm\Order\PersonType::getContactPersonTypeId();
+
+		if ($this->arResult['personTypeId'] <= 0)
 		{
-			$this->arResult['personTypeId'] = Crm\Order\PersonType::getCompanyPersonTypeId();
-		}
-		else
-		{
-			$this->arResult['personTypeId'] = Crm\Order\PersonType::getContactPersonTypeId();
+			$this->arResult['personTypeId'] = (int)Sale\Helpers\Admin\Blocks\OrderBuyer::getDefaultPersonType(SITE_ID);
 		}
 
 		if ($this->arParams['context'] === 'deal')
@@ -205,6 +207,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				if((int)$this->arResult['associatedEntityTypeId'] !== CCrmOwnerType::Order)
 				{
 					$this->fillAddressToPropertyValue($deal['ID']);
+					$this->fillAddressFromPropertyValue();
 				}
 
 				if (
@@ -750,17 +753,17 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 
 	/**
 	 * @param int $dealId
-	 * @return array|null
+	 * @return array
 	 * @throws Main\ArgumentException
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	private function getClientAddresses(int $dealId)
+	private function getClientLocationsList(int $dealId)
 	{
 		$contact = $this->getPrimaryContact($dealId);
 		if (!$contact)
 		{
-			return null;
+			return [];
 		}
 
 		$requisite = Crm\EntityRequisite::getSingleInstance()->getList(
@@ -789,12 +792,99 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			]
 		)->fetchAll();
 
+		$defaultAddressTypeId = Crm\RequisiteAddress::getDefaultTypeId();
+
+		$sortingMap = [
+			Crm\EntityAddress::Delivery => 10,
+			$defaultAddressTypeId => 20,
+		];
+
 		foreach ($addresses as $address)
 		{
-			$result[$address['ENTITY_TYPE_ID']] = $address;
+			$locationArray = SalesCenter\Integration\LocationManager::getInstance()
+				->getFormattedLocationArray(
+					(int)$address['LOC_ADDR_ID']
+				);
+
+			if (!$locationArray)
+			{
+				continue;
+			}
+
+			$result[$address['TYPE_ID']] = [
+				'VALUE' => $locationArray,
+				'SORT' => isset($sortingMap[$address['TYPE_ID']]) ? $sortingMap[$address['TYPE_ID']] : 100,
+			];
 		}
 
-		return $result;
+		uasort($result, function ($a, $b) {
+			return $a['SORT'] < $b['SORT'] ? -1 : 1;
+		});
+
+		return array_column($result, 'VALUE');
+	}
+
+	/**
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function getMyCompanyLocationsList()
+	{
+		$requisite = Crm\EntityRequisite::getSingleInstance()->getList(
+			[
+				'filter' => [
+					'=ENTITY_TYPE_ID' => CCrmOwnerType::Company,
+					'=ENTITY_ID' => (int)Crm\Requisite\EntityLink::getDefaultMyCompanyId()
+				],
+			]
+		)->fetch();
+
+		if (!$requisite)
+		{
+			return [];
+		}
+
+		$result = [];
+
+		$addresses = Crm\AddressTable::getList(
+			[
+				'filter' => [
+					'ENTITY_ID' => (int)$requisite['ID'],
+					'ENTITY_TYPE_ID' => CCrmOwnerType::Requisite,
+					'>LOC_ADDR_ID' => 0,
+				],
+			]
+		)->fetchAll();
+
+		$sortingMap = [
+			Crm\EntityAddress::Primary => 10,
+			Crm\EntityAddress::Delivery => 20,
+		];
+
+		foreach ($addresses as $address)
+		{
+			$locationArray = SalesCenter\Integration\LocationManager::getInstance()
+				->getFormattedLocationArray(
+					(int)$address['LOC_ADDR_ID']
+				);
+			if (!$locationArray)
+			{
+				continue;
+			}
+
+			$result[$address['TYPE_ID']] = [
+				'VALUE' => $locationArray,
+				'SORT' => isset($sortingMap[$address['TYPE_ID']]) ? $sortingMap[$address['TYPE_ID']] : 100,
+			];
+		}
+
+		uasort($result, function ($a, $b) {
+			return $a['SORT'] < $b['SORT'] ? -1 : 1;
+		});
+
+		return array_column($result, 'VALUE');
 	}
 
 	/**
@@ -811,35 +901,13 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			return;
 		}
 
-		$clientAddresses = $this->getClientAddresses($dealId);
-		$defaultAddressTypeId = Crm\RequisiteAddress::getDefaultTypeId();
-
-		$address = null;
-		if (isset($clientAddresses[Crm\EntityAddress::Delivery]))
-		{
-			$address = $clientAddresses[Crm\EntityAddress::Delivery];
-		}
-		elseif (isset($clientAddresses[$defaultAddressTypeId]))
-		{
-			$address = $clientAddresses[$defaultAddressTypeId];
-		}
-		elseif (!empty($clientAddresses))
-		{
-			$address = current($clientAddresses);
-		}
-
-		if (!(is_array($address) && isset($address['LOC_ADDR_ID'])))
+		$clientLocationsList = $this->getClientLocationsList($dealId);
+		if (!$clientLocationsList)
 		{
 			return;
 		}
 
-		$locationAddress = Address::load((int)$address['LOC_ADDR_ID']);
-		if (!$locationAddress)
-		{
-			return;
-		}
-
-		$clientAddressProps = Sale\Property::getList(
+		$props = Sale\Property::getList(
 			[
 				'filter' => [
 					'=PERSON_TYPE_ID' => $this->arResult['personTypeId'],
@@ -850,16 +918,60 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			]
 		)->fetchAll();
 
-		foreach ($clientAddressProps as $clientAddressProp)
+		foreach ($props as $prop)
 		{
-			$addressArray = $locationAddress->toArray();
+			$this->arResult['orderPropertyValues'][$prop['ID']] = $clientLocationsList[0]['address'];
 
-			/**
-			 * We should not update existing address, instead, we need a new address each time
-			 */
-			unset($addressArray['id']);
+			$this->arResult['deliveryOrderPropOptions'][$prop['ID']] = [
+				'defaultItems' => $clientLocationsList
+			];
+		}
+	}
 
-			$this->arResult['orderPropertyValues'][$clientAddressProp['ID']] = $addressArray;
+	/**
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function fillAddressFromPropertyValue()
+	{
+		if(!Loader::includeModule('location'))
+		{
+			return;
+		}
+
+		$locationsList = $this->getMyCompanyLocationsList();
+		$defaultLocationFrom = SalesCenter\Integration\LocationManager::getInstance()->getDefaultLocationFrom();
+
+		if ($defaultLocationFrom)
+		{
+			array_unshift($locationsList, $defaultLocationFrom);
+		}
+
+		if (!$locationsList)
+		{
+			return;
+		}
+
+		$props = Sale\Property::getList(
+			[
+				'filter' => [
+					'=PERSON_TYPE_ID' => $this->arResult['personTypeId'],
+					'ACTIVE' => 'Y',
+					'TYPE' => 'ADDRESS',
+					'CODE' => Sale\Delivery\Services\OrderPropsDictionary::ADDRESS_FROM_PROPERTY_CODE,
+				],
+			]
+		)->fetchAll();
+
+		foreach ($props as $prop)
+		{
+			$this->arResult['orderPropertyValues'][$prop['ID']] = $locationsList[0]['address'];
+
+			$this->arResult['deliveryOrderPropOptions'][$prop['ID']] = [
+				'defaultItems' => $locationsList
+			];
 		}
 	}
 
@@ -1003,9 +1115,15 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 						$queryParams['PS_MODE'] = $psMode;
 						$paySystemPath->addParams($queryParams);
 
+						$psModeImage = $img.'_'.$psMode.'.svg';
+						if (!Main\IO\File::isFileExists(Main\Application::getDocumentRoot().$psModeImage))
+						{
+							$psModeImage = $img.'.svg';
+						}
+
 						$result['items'][] = [
 							'name' => $handlerDescription['NAME'] ?? $handlerList['SYSTEM'][$systemHandler],
-							'img' => $img.'_'.$psMode.'.svg',
+							'img' => $psModeImage,
 							'info' => Loc::getMessage(
 								'SALESCENTER_APP_PAYSYSTEM_MODE_INFO',
 								[

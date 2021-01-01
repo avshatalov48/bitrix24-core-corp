@@ -157,6 +157,11 @@ class BaseTrigger extends \Bitrix\Bizproc\Automation\Trigger\BaseTrigger
 		/** @var \Bitrix\Crm\Automation\Target\BaseTarget $target */
 		$target = $this->getTarget();
 
+		if (is_callable([$this, 'getReturnValues']))
+		{
+			$trigger['RETURN'] = $this->getReturnValues();
+		}
+
 		$target->setAppliedTrigger($trigger);
 		$result = $target->setEntityStatus($statusId);
 		if ($result !== false)

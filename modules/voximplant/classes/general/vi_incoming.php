@@ -39,6 +39,12 @@ class CVoxImplantIncoming
 	 */
 	public static function GetConfig($params)
 	{
+		if (!VI\Limits::canCall())
+		{
+			return [
+				'error' => ['code' => 'PAID_PLAN_REQUIRED']
+			];
+		}
 		$result = CVoxImplantConfig::GetConfigBySearchId($params['PHONE_NUMBER']);
 
 		if(!$result['ID'])
@@ -53,7 +59,7 @@ class CVoxImplantIncoming
 		}
 		$result = CVoxImplantIncoming::RegisterCall($result, $params);
 
-		$isNumberInBlacklist = CVoxImplantIncoming::IsNumberInBlackList($params["CALLER_ID"]);
+		$isNumberInBlacklist = CVoxImplantIncoming::IsNumberInBlackList($params["CALLER_ID"], $result['NUMBER_COUNTRY_CODE']);
 		$isBlacklistAutoEnable = Bitrix\Main\Config\Option::get("voximplant", "blacklist_auto", "N") == "Y";
 
 		if ($result["WORKTIME_SKIP_CALL"] == "Y" && !$isNumberInBlacklist && $isBlacklistAutoEnable)
@@ -446,12 +452,22 @@ class CVoxImplantIncoming
 		return $config;
 	}
 
-	public static function IsNumberInBlackList($number)
+	public static function IsNumberInBlackList($number, $countryCode = null)
 	{
+		$numberE164 = \Bitrix\Main\PhoneNumber\Parser::getInstance()
+			->parse($number, $countryCode)
+			->format(\Bitrix\Main\PhoneNumber\Format::E164);
+
+		$numberStripped = CVoxImplantPhone::stripLetters($number);
 		$dbBlacklist = VI\BlacklistTable::getList(
-			array(
-				"filter" => array("PHONE_NUMBER" => $number)
-			)
+			[
+				"select" => ["ID"],
+				"filter" => [
+					"LOGIC" => "OR",
+					"=NUMBER_E164" => $numberE164,
+					"=NUMBER_STRIPPED" => $numberStripped
+				]
+			]
 		);
 		if ($dbBlacklist->fetch())
 		{

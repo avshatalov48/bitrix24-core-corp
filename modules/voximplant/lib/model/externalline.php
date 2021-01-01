@@ -53,7 +53,7 @@ class ExternalLineTable extends Base
 
 	public static function getMergeFields()
 	{
-		return ["SIP_ID", "NUMBER"];
+		return ["SIP_ID", "NORMALIZED_NUMBER", "TYPE"];
 	}
 
 	public static function onBeforeAdd(Entity\Event $event)

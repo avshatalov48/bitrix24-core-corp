@@ -165,7 +165,7 @@ abstract class Impact implements \ArrayAccess
 				User::setOccurAsId($prevUserId);
 			}
 		}
-		catch(\TasksException $e)
+		catch(\TasksException | \CTaskAssertException $e)
 		{
 			$result->addException($e, Loc::getMessage('TASKS_WORKER_TASK_IMPACT_SAVE_ERROR'));
 		}

@@ -135,6 +135,10 @@ export class EntityEditorAddressField extends BX.Crm.EntityEditorField
 		{
 			this._field.release();
 		}
+		else
+		{
+			this._field.resetView();
+		}
 	}
 
 	hasContentToDisplay()

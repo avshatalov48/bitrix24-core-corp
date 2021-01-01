@@ -911,9 +911,37 @@ class CVoxImplantHttp
 		return $this->Query("generateInvoice", ["INVOICE_NUMBER" => $invoiceNumber], ['returnRaw' => true]);
 	}
 
-	public function getBillingUrl()
+	public function getBillingUrl($userId = 0)
 	{
-		return $this->Query("getBillingUrl", [], ['returnArray' => true]);
+		global $USER;
+		$userId = (int)$userId;
+		if (!$userId && $USER)
+		{
+			$userId = (int)$USER->getId();
+		}
+
+		return $this->Query("getBillingUrl", ['USER_ID' => $userId], ['returnArray' => true]);
+	}
+
+	public function saveTOSConsent($ipAddress, $userAgent, $userId = 0)
+	{
+		global $USER;
+		$userId = (int)$userId;
+		if (!$userId && $USER)
+		{
+			$userId = (int)$USER->getId();
+		}
+
+		return $this->Query(
+			"saveConsent",
+			[
+				"USER_ID" => $userId,
+				"IP_ADDRESS" => $ipAddress,
+				"USER_AGENT" => $userAgent,
+				"CONSENT_TYPE" => "TOS_RU"
+			],
+			['returnArray' => true]
+		);
 	}
 
 	public function GetError()
@@ -998,7 +1026,7 @@ class CVoxImplantHttp
 			catch (\Bitrix\Main\ArgumentException $e)
 			{
 				CVoxImplantHistory::WriteToLog($response, 'ERROR QUERY EXECUTE');
-				return (object)array('error' => array('code' => 'CONNECT_ERROR', 'msg' => $e->getMessage()));
+				return array('error' => array('code' => 'CONNECT_ERROR', 'msg' => $e->getMessage()));
 			}
 		}
 		else

@@ -7,8 +7,11 @@ namespace Bitrix\Tasks\Replica;
 //	PARENT_ID int(11) DEFAULT NULL,
 //	FORKED_BY_TEMPLATE_ID int(11) DEFAULT NULL,
 
+use Bitrix\Main;
 use Bitrix\Tasks\Internals\Counter\CounterDictionary;
 use Bitrix\Tasks\Internals\Counter\CounterService;
+use Bitrix\Tasks\Internals\SearchIndex;
+use Bitrix\Tasks\Internals\Task\SearchIndexTable;
 
 class TaskHandler extends \Bitrix\Replica\Client\BaseHandler
 {
@@ -282,6 +285,7 @@ class TaskHandler extends \Bitrix\Replica\Client\BaseHandler
 		//\CTaskSync::AddItem($arFields); // MS Exchange
 
 		\CTasks::Index($newRecord, $newRecord["TAGS"]);
+		SearchIndex::setTaskSearchIndex($newRecord['ID'], $newRecord);
 
 		$arParticipants = array_unique(array_merge(
 			array($newRecord["CREATED_BY"], $newRecord["RESPONSIBLE_ID"]),
@@ -440,6 +444,7 @@ class TaskHandler extends \Bitrix\Replica\Client\BaseHandler
 		//\CTaskComments::onAfterTaskUpdate($newRecord['ID'], $oldRecord, $newRecord);
 
 		\CTasks::Index($newRecord, $newRecord["TAGS"]); // search index
+		SearchIndex::setTaskSearchIndex($newRecord['ID'], $newRecord);
 
 		// clear cache
 		$CACHE_MANAGER->ClearByTag("tasks_".$newRecord["ID"]);
@@ -527,6 +532,7 @@ class TaskHandler extends \Bitrix\Replica\Client\BaseHandler
 		{
 			\CSearch::DeleteIndex("tasks", $oldRecord["ID"]);
 		}
+		$this->clearSearchIndex((int)$oldRecord['ID']);
 
 		CounterService::addEvent(
 			CounterDictionary::EVENT_AFTER_TASK_DELETE,
@@ -536,10 +542,31 @@ class TaskHandler extends \Bitrix\Replica\Client\BaseHandler
 		// clear cache
 		$CACHE_MANAGER->ClearByTag("tasks_".$oldRecord["ID"]);
 
-
 		foreach($arParticipants as $userId)
 		{
 			$CACHE_MANAGER->ClearByTag("tasks_user_".$userId);
+		}
+	}
+
+	/**
+	 * @param int $taskId
+	 *
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 * @throws \Exception
+	 */
+	private function clearSearchIndex(int $taskId): void
+	{
+		$tableResult = SearchIndexTable::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'=TASK_ID' => $taskId,
+			],
+		]);
+		while ($item = $tableResult->fetch())
+		{
+			SearchIndexTable::delete($item);
 		}
 	}
 }

@@ -132,6 +132,8 @@ class Report
 				});
 			});
 		});
+
+		const selectorTitle = this.getNode('grid/selector/title');
 		const selector = this.getNode('grid/selector');
 		if (selector)
 		{
@@ -139,10 +141,13 @@ class Report
 			if (container.children.length > 0)
 			{
 				selector.parentElement.removeChild(selector);
+				selectorTitle.parentElement.removeChild(selectorTitle);
 				return;
 			}
 
 			selector.dataset.role = '';
+			selectorTitle.dataset.role = '';
+			container.appendChild(selectorTitle);
 			container.appendChild(selector);
 
 			Event.bind(selector, 'click', () => {

@@ -50,8 +50,16 @@ final class Sorting extends RestrictedAction
 			return array();
 		}
 
-		$sourceTask = new \CTaskItem($sourceId, $userId);
-		if (!$sourceTask->checkCanRead())
+		try
+		{
+			$sourceTask = new \CTaskItem($sourceId, $userId);
+			if (!$sourceTask->checkCanRead())
+			{
+				$this->errors->add("SOURCE_TASK_NOT_FOUND", Loc::getMessage("TASKS_SORTING_WRONG_SOURCE_TASK"));
+				return false;
+			}
+		}
+		catch (\CTaskAssertException $e)
 		{
 			$this->errors->add("SOURCE_TASK_NOT_FOUND", Loc::getMessage("TASKS_SORTING_WRONG_SOURCE_TASK"));
 			return false;
@@ -96,8 +104,16 @@ final class Sorting extends RestrictedAction
 			return array();
 		}
 
-		$targetTask = new \CTaskItem($targetId, $userId);
-		if (!$targetTask->checkCanRead())
+		try
+		{
+			$targetTask = new \CTaskItem($targetId, $userId);
+			if (!$targetTask->checkCanRead())
+			{
+				$this->errors->add("TARGET_TASK_NOT_FOUND", Loc::getMessage("TASKS_SORTING_WRONG_TARGET_TASK"));
+				return false;
+			}
+		}
+		catch (\CTaskAssertException $e)
 		{
 			$this->errors->add("TARGET_TASK_NOT_FOUND", Loc::getMessage("TASKS_SORTING_WRONG_TARGET_TASK"));
 			return false;

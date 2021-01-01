@@ -187,7 +187,15 @@ final class CTaskTimerManager
 		$this->stop();
 
 		$oTaskItem = CTaskItem::getInstance($taskId, $this->userId);
-		$arTask = $oTaskItem->getData(false);
+
+		try
+		{
+			$arTask = $oTaskItem->getData(false);
+		}
+		catch (TasksException $e)
+		{
+			return false;
+		}
 
 		if ( ! $oTaskItem->checkAccess(ActionDictionary::ACTION_TASK_TIME_TRACKING) )
 			return (false);
@@ -278,7 +286,15 @@ final class CTaskTimerManager
 			);
 
 			$oTaskItem = CTaskItem::getInstance($arTimer['TASK_ID'], $this->userId);
-			$arTask = $oTaskItem->getData(false);
+
+			try
+			{
+				$arTask = $oTaskItem->getData(false);
+			}
+			catch (TasksException $e)
+			{
+				return false;
+			}
 
 			$arAffectedUsers = array_unique(array_merge(
 				array($this->userId, $arTask['RESPONSIBLE_ID']),

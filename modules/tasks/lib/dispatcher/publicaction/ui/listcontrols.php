@@ -101,7 +101,15 @@ final class ListControls extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		$taskData = Tasks\Manager\Task::add(User::getId(), $fields);
 		$taskItem = \CTaskItem::getInstance($taskData["DATA"]["ID"], User::getId());
 
-		$task = $taskItem->getData();
+		try
+		{
+			$task = $taskItem->getData();
+		}
+		catch (\TasksException $e)
+		{
+			throw new Tasks\Exception();
+		}
+
 		$task["GROUP_NAME"] = "";
 		if ($task["GROUP_ID"])
 		{
@@ -219,14 +227,23 @@ final class ListControls extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		return $jsonString;
 	}
 
-	public function toggleGroupByTasks()
+	public function toggleGroupByTasks($userId = null)
 	{
 		if (!User::isAuthorized())
 		{
 			throw new Tasks\Exception("Authentication is required.");
 		}
 
-		$userId = User::getId();
+		if (!is_null($userId))
+		{
+			$userId = (int) $userId;
+		}
+
+		if (!$userId)
+		{
+			$userId = User::getId();
+		}
+
 		$instance = \CTaskListState::getInstance($userId);
 		$state = $instance->getState();
 		$submodes = $state['SUBMODES'];
@@ -249,14 +266,23 @@ final class ListControls extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		return array('RESULT' => $groupBySubTasks);
 	}
 
-	public function toggleGroupByGroups()
+	public function toggleGroupByGroups($userId = null)
 	{
 		if (!User::isAuthorized())
 		{
 			throw new Tasks\Exception("Authentication is required.");
 		}
 
-		$userId = User::getId();
+		if (!is_null($userId))
+		{
+			$userId = (int) $userId;
+		}
+
+		if (!$userId)
+		{
+			$userId = User::getId();
+		}
+
 		$instance = \CTaskListState::getInstance($userId);
 		$state = $instance->getState();
 		$submodes = $state['SUBMODES'];
