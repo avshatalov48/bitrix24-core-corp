@@ -1,4 +1,4 @@
-import {Tag} from 'main.core';
+import {Tag, Text} from 'main.core';
 import {Type} from 'main.core';
 import "ui.forms";
 
@@ -126,18 +126,18 @@ export class Form
 		let hint = '';
 		if(field.hint)
 		{
-			hint = Tag.render`<span class="ui-ctl-after" data-hint="${field.hint}"></span>`;
+			hint = Tag.render`<span class="ui-ctl-after" data-hint="${Text.encode(field.hint)}"></span>`;
 		}
 
 		let title = '';
 		if(field.title)
 		{
-			title = `<div class="${this.classes.get('controlTitle')} ${field.required ? this.classes.get('controlRequired') : ''}">${field.title}</div>`;
+			title = `<div class="${this.classes.get('controlTitle')} ${field.required ? this.classes.get('controlRequired') : ''}">${Text.encode(field.title)}</div>`;
 		}
 
 		if(field.html.indexOf('type="checkbox"') > 0)
 		{
-			label = Tag.render`<label class="${this.classes.get('controlInner')} ${this.classes.get('controlCheckbox')}">${field.input}${field.title ? '<div class="' + this.classes.get('controlCheckboxLabel') + '">' + field.title + '</div>' : ''}${hint}</label>`;
+			label = Tag.render`<label class="${this.classes.get('controlInner')} ${this.classes.get('controlCheckbox')}">${field.input}${field.title ? '<div class="' + this.classes.get('controlCheckboxLabel') + '">' + Text.encode(field.title) + '</div>' : ''}${hint}</label>`;
 		}
 		else if(field.type === 'file')
 		{
@@ -155,7 +155,7 @@ export class Form
 				${title}
 				<label class="${this.classes.get('controlInner')} ${this.classes.get('controlFile')}">
 				${field.input}
-				${field.label ? '<div class="ui-ctl-label-text">' + field.label + '</div>' : ''}
+				${field.label ? '<div class="ui-ctl-label-text">' + Text.encode(field.label) + '</div>' : ''}
 				</label>
 				<span></span>
 				${hiddenFileInput}
@@ -202,11 +202,11 @@ export class Form
 		let value = '';
 		if(field.hasOwnProperty('value'))
 		{
-			value = field.value;
+			value = Text.encode(field.value);
 		}
 		else if(this.data[field.name])
 		{
-			value = this.data[field.name];
+			value = Text.encode(this.data[field.name]);
 		}
 
 		let required = '';
@@ -226,24 +226,24 @@ export class Form
 		else if(type === 'boolean')
 		{
 			value = 'Y';
-			result =`<input type="checkbox" name="${field.name}"${this.data[field.name] === value ? ' checked="checked"' : ''}${field.disabled ? ' disabled="disabled"' : ''}${required}
+			result =`<input type="checkbox" name="${Text.encode(field.name)}"${this.data[field.name] === value ? ' checked="checked"' : ''}${field.disabled ? ' disabled="disabled"' : ''}${required}
 				value="${value}" class="${this.classes.get('controlInput')}">`;
 		}
 		else if(type === 'list')
 		{
-			result = `<select class="${this.classes.get('controlInput')}" name="${field.name}"${required}>`;
+			result = `<select class="${this.classes.get('controlInput')}" name="${Text.encode(field.name)}"${required}>`;
 			if(field.data && Type.isArray(field.data.items))
 			{
 				field.data.items.forEach((item) =>
 				{
-					result += `<option${Type.isString(item.VALUE) ? ' value="' + item.VALUE + '"' : ''}${item.SELECTED ? ' selected="selected"' : ''}>${item.NAME}</option>`;
+					result += `<option${Type.isString(item.VALUE) ? ' value="' + Text.encode(item.VALUE) + '"' : ''}${item.SELECTED ? ' selected="selected"' : ''}>${Text.encode(item.NAME)}</option>`;
 				});
 			}
 			result += `</select>`;
 		}
 		else if(type === 'hidden')
 		{
-			result = `<input name="${field.name}"
+			result = `<input name="${Text.encode(field.name)}"
 				value="${value}"
 				type="hidden">`
 			;
@@ -253,11 +253,11 @@ export class Form
 			const onFileChange = ({target}) =>
 			{
 				const value = target.value.split(/(\\|\/)/g).pop();
-				target.parentNode.nextSibling.innerText = value;
+				target.parentNode.nextSibling.innerText = Text.encode(value);
 			};
 			result = Tag.render`<input 
 				onchange="${onFileChange}" 
-				name="${field.name}"
+				name="${Text.encode(field.name)}"
 				value=""
 				class="${this.classes.get('controlInput')}"
 				type="file">`
@@ -293,7 +293,7 @@ export class Form
 		result = `<div${sectionId} class="${this.classes.get('sectionContainer')}">`;
 		if(section.title)
 		{
-			result += `<div class="${this.classes.get('sectionTitle')}">${section.title}</div><hr class="ui-hr ui-mb-15">`;
+			result += `<div class="${this.classes.get('sectionTitle')}">${Text.encode(section.title)}</div><hr class="ui-hr ui-mb-15">`;
 		}
 		result += `</div>`;
 
@@ -374,12 +374,12 @@ export class Form
 				{
 					if(input.checked)
 					{
-						result[field.name] = input.value;
+						result[field.name] = Text.decode(input.value);
 					}
 				}
 				else
 				{
-					result[field.name] = input.value;
+					result[field.name] = Text.decode(input.value);
 				}
 			}
 		});

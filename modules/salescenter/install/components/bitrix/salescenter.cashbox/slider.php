@@ -80,6 +80,7 @@ else
 				'page' => $request->get('page'),
 				'isFrame' => $request->get('IFRAME') === 'Y',
 				'preview' => $request->get('preview') === 'y',
+				'restHandler' => $request->get('restHandler'),
 			],
 			'PLAIN_VIEW' => $isPlainView,
 			'USE_PADDING' => $isUsePadding,

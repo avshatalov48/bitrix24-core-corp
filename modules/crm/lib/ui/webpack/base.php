@@ -314,8 +314,8 @@ abstract class Base
 		{
 			$this->fileId = $result->getId();
 
-			Internals\WebpackTable::delete(self::getWebpackPrimary());
-			$data = self::getWebpackPrimary();
+			Internals\WebpackTable::delete($this->getWebpackPrimary());
+			$data = $this->getWebpackPrimary();
 			$data['FILE_ID'] = $this->fileId;
 			Internals\WebpackTable::add($data);
 		}

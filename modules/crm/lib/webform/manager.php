@@ -146,20 +146,31 @@ class Manager
 		return Loader::includeModule('salescenter');
 	}
 
-	public static function updateScriptCache($fromFormId = null)
+	public static function updateScriptCache($fromFormId = null, $limit = 50)
 	{
 		$filter = [];
 		if ($fromFormId)
 		{
 			$filter['>=ID'] = $fromFormId;
 		}
-		$forms = Internals\FormTable::getList([
+
+		$parameters = [
 			'select' => ['ID'],
 			'filter' => $filter,
-			'order' => ['ID' => 'ASC']
-		]);
-		foreach ($forms as $item)
+			'order' => ['ID' => 'ASC'],
+		];
+		if ($limit)
 		{
+			$parameters['limit'] = $limit + 1;
+		}
+		$forms = Internals\FormTable::getList($parameters);
+		foreach ($forms as $index => $item)
+		{
+			if ($limit && $index >= $limit)
+			{
+				return $item['ID'];
+			}
+
 			$form = new Form();
 			$form->loadOnlyForm($item['ID']);
 			if (!$form->buildScript())

@@ -12,7 +12,6 @@ import {config} from "./config";
 import './component';
 import './component.css';
 import './bx-salescenter-app-add-payment';
-import './bx-salescenter-app-add-payment-by-sms';
 
 export class App
 {
@@ -46,7 +45,7 @@ export class App
 		this.fillPagesQueue = [];
 		this.ownerTypeId = '';
 		this.ownerId = '';
-		this.stageOnOrderPaid = '';
+		this.stageOnOrderPaid = null;
 		this.sendingMethod = '';
 		this.sendingMethodDesc = {};
 		this.urlSettingsSmsSenders = options.urlSettingsSmsSenders;
@@ -482,28 +481,34 @@ export class App
 
 		this.store.dispatch('orderCreation/refreshBasket', {
 			onsuccess: () => {
+				let data = {
+					dialogId: this.dialogId,
+					sendingMethod: this.sendingMethod,
+					sendingMethodDesc: this.sendingMethodDesc,
+					sessionId: this.sessionId,
+					lineId: this.lineId,
+					ownerTypeId: this.ownerTypeId,
+					ownerId: this.ownerId,
+					skipPublicMessage,
+					deliveryId: deliveryId,
+					deliveryPrice: delivery,
+					expectedDeliveryPrice: expectedDelivery,
+					deliveryResponsibleId: deliveryResponsibleId,
+					personTypeId: personTypeId,
+					propertyValues: propertyValues,
+					deliveryExtraServicesValues: deliveryExtraServicesValues,
+					connector: this.connector,
+				};
+				
+				if (this.stageOnOrderPaid !== null)
+				{
+					data.stageOnOrderPaid = this.stageOnOrderPaid;
+				}
+				
 				BX.ajax.runAction('salescenter.order.createPayment', {
 					data: {
 						basketItems: basket,
-						options: {
-							dialogId: this.dialogId,
-							sendingMethod: this.sendingMethod,
-							sendingMethodDesc: this.sendingMethodDesc,
-							sessionId: this.sessionId,
-							lineId: this.lineId,
-							ownerTypeId: this.ownerTypeId,
-							ownerId: this.ownerId,
-							stageOnOrderPaid: this.stageOnOrderPaid,
-							skipPublicMessage,
-							deliveryId: deliveryId,
-							deliveryPrice: delivery,
-							expectedDeliveryPrice: expectedDelivery,
-							deliveryResponsibleId: deliveryResponsibleId,
-							personTypeId: personTypeId,
-							propertyValues: propertyValues,
-							deliveryExtraServicesValues: deliveryExtraServicesValues,
-							connector: this.connector,
-						},
+						options: data,
 					},
 					analyticsLabel: (this.context === 'deal') ? 'salescenterCreatePaymentSms' : 'salescenterCreatePayment',
 					getParameters: {

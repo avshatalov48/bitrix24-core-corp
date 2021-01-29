@@ -2,12 +2,17 @@
 	margin-top: 5px;
 }
 
+.sale-address-control-top-margin-width-820 {
+	max-width: 820px !important;
+}
+
 .sale-address-control-path-input {
 	display: inline-flex;
 	align-items: center;
 }
 
-.sale-address-control-path-input[contenteditable="false"] {
+.ui-ctl-element.sale-address-control-path-input,
+.ui-ctl-element.sale-address-control-path-input:hover {
 	flex: none;
 	display: block;
 	overflow: hidden;
@@ -15,10 +20,13 @@
 	position: relative;
 	width: auto;
 	margin-left: 1px;
-	padding: 0 !important;
-	max-height: 20px;
+	padding: 8px 0 !important;
+	max-height: none;
+	white-space: normal;
+	height: auto;
 	border: 1px solid transparent !important;
-	border-bottom: 1px dashed rgba(32, 102, 176, .4) !important;
+	/*border-bottom: 1px dashed rgba(32, 102, 176, .4) !important;*/
+	text-decoration: underline;
 	color: #2066b0;
 	cursor: pointer;
 	transition: .1s;

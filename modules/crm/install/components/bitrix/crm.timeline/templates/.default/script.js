@@ -9260,7 +9260,7 @@ if(typeof(BX.CrmHistoryItemCreation) === "undefined")
 				var linkAttrs = { attrs: { href: showUrl }, text: title };
 				if (htmlTitle !== "")
 				{
-					linkAttrs = { attrs: { href: showUrl }, html: htmlTitle };
+					linkAttrs = { attrs: { href: showUrl }, html: BX.util.htmlspecialchars(htmlTitle) };
 				}
 				nodes.push(BX.create("A", linkAttrs));
 			}
@@ -12908,7 +12908,7 @@ if(typeof(BX.CrmHistoryItemOrderCreation) === "undefined")
 		var entityData = this.getAssociatedEntityData();
 		var entityTypeId = this.getAssociatedEntityTypeId();
 		var entityId = this.getAssociatedEntityId();
-		var title = BX.prop.getString(entityData, "TITLE");
+		var title = BX.util.htmlspecialchars(BX.prop.getString(entityData, "TITLE", ""));
 		var showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
 		var legend =  BX.prop.getString(entityData, "LEGEND", "");
 		if(legend !== "")
@@ -13153,7 +13153,7 @@ if(typeof(BX.CrmHistoryItemOrderModification) === "undefined")
 			if (sublegend !== '')
 			{
 				descriptionNode.appendChild(BX.create("BR"));
-				descriptionNode.appendChild(BX.create("SPAN", { html: " " + sublegend}));
+				descriptionNode.appendChild(BX.create("SPAN", { text: " " + sublegend}));
 			}
 			nodes.push(descriptionNode);
 		}
@@ -13493,7 +13493,7 @@ if(typeof(BX.CrmHistoryItemOrderModification) === "undefined")
 
 		var errorDetailNode = BX.create('DIV', {
 			attrs: { className: 'crm-entity-stream-content-detail-notice' },
-			html: this.getMessage('orderPaymentStatusErrorReason').replace("#PAYSYSTEM_ERROR#", paySystemError),
+			text: this.getMessage('orderPaymentStatusErrorReason').replace("#PAYSYSTEM_ERROR#", paySystemError),
 		});
 
 		nodes.push(errorDetailNode);

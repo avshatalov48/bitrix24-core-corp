@@ -4,6 +4,11 @@ if (mb_strpos($_SERVER['SCRIPT_NAME'], "/bitrix/groupdav.php") === 0)
 
 if ($_SERVER['REQUEST_METHOD'] == 'PROPFIND' || $_SERVER['REQUEST_METHOD'] == 'OPTIONS')
 {
+	if (preg_match("/Livechat-Auth-Id/i", $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
+	{
+		return;
+	}
+
 	if (preg_match("/(bitrix|coredav|iphone|davkit|dataaccess|sunbird|lightning|cfnetwork|zideone|webkit|khtml|ical4ol|ios\\/([5-9]|\d{2})|mac\\sos|mac_os_x|carddavbitrix24|caldavbitrix24|mac\+?os\+?x?\/(x|\d{2}))/i", $_SERVER['HTTP_USER_AGENT']))
 	{
 		CHTTP::SetStatus("302 Found");

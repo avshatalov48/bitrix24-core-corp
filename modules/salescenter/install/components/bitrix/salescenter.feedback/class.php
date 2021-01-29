@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Cashbox\Internals\CashboxTable;
@@ -81,7 +82,7 @@ class SalesCenterFeedbackComponent extends CBitrixComponent
 		$this->arResult['type'] = 'slider_inline';
 		$this->arResult['fields']['values']['CONTACT_EMAIL'] = CurrentUser::get()->getEmail();
 		$this->arResult['presets'] = [
-			'from_domain' =>  BX24_HOST_NAME,
+			'from_domain' => defined('BX24_HOST_NAME') ? BX24_HOST_NAME : Option::get('main', 'server_name', ''),
 			'b24_plan' => Bitrix24Manager::getInstance()->getLicenseType(),
 			'b24_zone' => Bitrix24Manager::getInstance()->getPortalZone(),
 			'c_name' => CurrentUser::get()->getFullName(),

@@ -70,5 +70,3 @@ $MESS["SALESCENTER_SP_PAYSYSTEM_ROBOXCHANGE_BANK_CARD_TITLE"] = "Оплата б
 $MESS["SALESCENTER_SP_PAYSYSTEM_ROBOXCHANGE_ALFA_BANK_TITLE"] = "Альфа-Клик. Оплата через Robokassa";
 $MESS["SALESCENTER_SP_PAYSYSTEM_ROBOXCHANGE_APPLE_PAY_TITLE"] = "Apple Pay. Оплата через Robokassa";
 $MESS["SALESCENTER_SP_PAYSYSTEM_ROBOXCHANGE_SAMSUNG_PAY_TITLE"] = "Samsung Pay. Оплата через Robokassa";
-$MESS["SALESCENTER_SP_PAYSYSTEM_ROBOXCHANGE_DESCRIPTION"] = "Принимайте электронные платежи от клиентов через систему платежей Robokassa. Доступные методы платежа: Apple Pay, Samsung Pay, Альфа-клик и оплата картой";
-$MESS["SALESCENTER_SP_PAYSYSTEM_ALFABANK_DESCRIPTION"] = "Прием платежей через платежные методы Альфа-банка";

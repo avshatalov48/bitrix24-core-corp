@@ -236,6 +236,10 @@ class TemplateParams
 				'hint-no-icon' => true,
 				'hint' => $hint,
 			];
+			if ($workedByShifted && $this->shift)
+			{
+				$this->hintDataset .= 'data-hint-html';
+			}
 			foreach ($attrs as $name => $value)
 			{
 				$this->hintDataset .= ' data-' . $name . '="' . htmlspecialcharsbx($value) . '"';

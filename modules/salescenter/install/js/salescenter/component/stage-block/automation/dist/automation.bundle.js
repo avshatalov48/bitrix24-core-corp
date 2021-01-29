@@ -1,0 +1,128 @@
+this.BX = this.BX || {};
+this.BX.Salescenter = this.BX.Salescenter || {};
+this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
+(function (exports,main_core,main_popup) {
+	'use strict';
+
+	var SelectItem = {
+	  props: {
+	    name: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  template: "\n\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-select-item\" id=\"stageOnOrderPaid\">{{name}}</div>\n"
+	};
+
+	var SelectArrow = {
+	  template: "\n\t\t\t<span class=\"salescenter-app-payment-by-sms-item-container-select-arrow\" /> \n"
+	};
+
+	function _templateObject2() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<div data-item-value=\"", "\" class=\"salescenter-app-payment-by-sms-select-popup-option\" style=\"background-color:", ";\" onclick=\"", "\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t"]);
+
+	  _templateObject2 = function _templateObject2() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject() {
+	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"salescenter-app-payment-by-sms-select-popup\"></div>"]);
+
+	  _templateObject = function _templateObject() {
+	    return data;
+	  };
+
+	  return data;
+	}
+	var StageList = {
+	  props: {
+	    stages: {
+	      type: Array,
+	      required: true
+	    }
+	  },
+	  components: {
+	    'select-item-block': SelectItem,
+	    'select-arrow-block': SelectArrow
+	  },
+	  computed: {
+	    classesObject: function classesObject() {
+	      return {
+	        'salescenter-app-payment-by-sms-item-container-select-inner': true
+	      };
+	    }
+	  },
+	  methods: {
+	    styleObject: function styleObject(stage) {
+	      return {
+	        background: stage.color
+	      };
+	    },
+	    showSelectPopup: function showSelectPopup(target, options) {
+	      var _this = this;
+
+	      if (!target) {
+	        return;
+	      }
+
+	      this.selectPopup = new main_popup.Popup(null, target, {
+	        closeByEsc: true,
+	        autoHide: true,
+	        width: 250,
+	        offsetTop: 5,
+	        events: {
+	          onPopupClose: function onPopupClose() {
+	            _this.selectPopup.destroy();
+	          }
+	        },
+	        content: this.getSelectPopupContent(options)
+	      });
+	      this.selectPopup.show();
+	    },
+	    getSelectPopupContent: function getSelectPopupContent(options) {
+	      var _this2 = this;
+
+	      if (!this.selectPopupContent) {
+	        this.selectPopupContent = main_core.Tag.render(_templateObject());
+
+	        var onClickOptionHandler = function onClickOptionHandler(event) {
+	          _this2.onChooseSelectOption(event);
+	        };
+
+	        for (var i = 0; i < options.length; i++) {
+	          var option = main_core.Tag.render(_templateObject2(), options[i].id, options[i].color ? options[i].color : '', onClickOptionHandler.bind(this), main_core.Text.encode(options[i].name));
+
+	          if (options[i].colorText === 'light') {
+	            option.style.color = '#fff';
+	          }
+
+	          main_core.Dom.append(option, this.selectPopupContent);
+	        }
+	      }
+
+	      return this.selectPopupContent;
+	    },
+	    onChooseSelectOption: function onChooseSelectOption(event) {
+	      var currentOption = document.getElementById('stageOnOrderPaid');
+	      currentOption.textContent = event.currentTarget.textContent;
+	      currentOption.style.color = event.currentTarget.style.color;
+	      currentOption.nextElementSibling.style.borderColor = event.currentTarget.style.color;
+	      currentOption.parentNode.style.background = event.currentTarget.style.backgroundColor;
+	      this.$emit('on-choose-select-option', {
+	        data: event.currentTarget.getAttribute('data-item-value')
+	      });
+	      this.selectPopup.destroy();
+	    }
+	  },
+	  template: "\n\t<div class=\"salescenter-app-payment-by-sms-item-container-select\">\n\t\t<div class=\"salescenter-app-payment-by-sms-item-container-select-text\">\n\t\t\t<slot name=\"stage-list-text\"/>\n\t\t</div>\n\t\t<template v-for=\"stage in stages\">\n\t\t\t<div \n\t\t\t\tv-if=\"stage.selected\" \n\t\t\t\t:class=\"classesObject\" \n\t\t\t\t:style=\"styleObject(stage)\" \n\t\t\t\tv-on:click=\"showSelectPopup($event.currentTarget, stages, 'stageOnOrderPaid')\"\n\t\t\t>\n\t\t\t\t<select-item-block :name=\"stage.name\"/>\n\t\t\t\t<select-arrow-block/>\n\t\t\t</div>\n\t\t</template>\n\t</div>\n\t"
+	};
+
+	exports.StageList = StageList;
+	exports.SelectItem = SelectItem;
+	exports.SelectArrow = SelectArrow;
+
+}((this.BX.Salescenter.Component.StageBlock = this.BX.Salescenter.Component.StageBlock || {}),BX,BX.Main));
+//# sourceMappingURL=automation.bundle.js.map

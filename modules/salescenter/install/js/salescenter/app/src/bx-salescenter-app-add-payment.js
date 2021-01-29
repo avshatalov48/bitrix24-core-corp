@@ -6,7 +6,7 @@ import {Manager} from 'salescenter.manager';
 import "currency";
 
 import "./bx-salescenter-app-add-payment-product";
-import {MixinTemplatesType} from "./components/templates-type-mixin";
+import {MixinTemplatesType} from "./components/deal-receiving-payment/templates-type-mixin";
 import {BasketItemAddBlock} from "./components/basket-item-add";
 
 Vue.component(config.templateAddPaymentName,
@@ -149,32 +149,41 @@ Vue.component(config.templateAddPaymentName,
 				/>
 			</div>
 			<div class="salescenter-app-result-container"  style="padding-right: 15px">
-				
-				<div class="salescenter-app-result-grid-row salescenter-app-result-grid-total-sm">
-					<component :is="'basket-item-add-block'" v-if="editable"
-						v-on:on-refresh-basket="refreshBasket"
-						v-on:on-add-basket-item="addBasketItemForm"
-						v-on:on-change-basket-item="changeBasketItem"
-					>
-						<template v-slot:product-add-title>{{localize.SALESCENTER_PRODUCT_ADD_PRODUCT}}</template>
-						<template v-slot:product-add-from-catalog-title>{{localize.SALESCENTER_PRODUCT_ADD_PRODUCT_FROM_CATALOG}}</template>
-					</component>
-					<div class="salescenter-app-form-col" style="flex: 1; display: flex; justify-content: flex-end; padding: 0;">
-						<div class="salescenter-app-result-grid-item">{{localize.SALESCENTER_PRODUCT_TOTAL_SUM}}:</div>
-						<div class="salescenter-app-result-grid-item salescenter-app-result-grid-item-currency" :class="total.result !== total.sum ? 'salescenter-app-text-line-through' : ''" v-html="total.sum"></div>
-						<div class="salescenter-app-result-grid-item-currency-symbol" v-html="currencySymbol"></div>
-					</div>
-				</div>
-				<div class="salescenter-app-result-grid-row salescenter-app-result-grid-benefit salescenter-app-result-grid-total-sm">
-					<div class="salescenter-app-result-grid-item">{{localize.SALESCENTER_PRODUCT_TOTAL_DISCOUNT}}:</div>
-					<div class="salescenter-app-result-grid-item salescenter-app-result-grid-item-currency" v-html="total.discount"></div>
-					<div class="salescenter-app-result-grid-item-currency-symbol salescenter-app-result-grid-item" v-html="currencySymbol"></div>
-				</div>
-				<div class="salescenter-app-result-grid-row salescenter-app-result-grid-total salescenter-app-result-grid-total-big">
-					<div class="salescenter-app-result-grid-item">{{localize.SALESCENTER_PRODUCT_PRODUCTS_PRICE}}:</div>
-					<div class="salescenter-app-result-grid-item salescenter-app-result-grid-item-currency" v-html="total.result"></div>
-					<div class="salescenter-app-result-grid-item-currency-symbol" v-html="currencySymbol"></div>
-				</div>
+				<table class="salescenter-app-payment-side-table">
+					<tr>
+						<td colspan="2">
+							<component :is="'basket-item-add-block'" v-if="editable"
+								v-on:on-refresh-basket="refreshBasket"
+								v-on:on-add-basket-item="addBasketItemForm"
+								v-on:on-change-basket-item="changeBasketItem"
+							>
+								<template v-slot:product-add-title>{{localize.SALESCENTER_PRODUCT_ADD_PRODUCT}}</template>
+								<template v-slot:product-add-from-catalog-title>{{localize.SALESCENTER_PRODUCT_ADD_PRODUCT_FROM_CATALOG}}</template>
+							</component>
+						</td>
+					</tr>
+					<tr style="text-align: right;">
+						<td>{{localize.SALESCENTER_PRODUCT_TOTAL_SUM}}:</td>
+						<td>
+							<span :class="total.result !== total.sum ? 'salescenter-app-text-line-through' : ''" v-html="total.sum"></span>
+							<span class="salescenter-app-result-grid-item-currency-symbol" v-html="currencySymbol"></span>
+						</td>
+					</tr>
+					<tr style="text-align: right;">
+						<td class="salescenter-app-result-grid-benefit salescenter-app-payment-side-table-td-border">{{localize.SALESCENTER_PRODUCT_TOTAL_DISCOUNT}}:</td>
+						<td class="salescenter-app-payment-side-table-td-border">
+							<span v-html="total.discount"></span>
+							<span class="salescenter-app-result-grid-item-currency-symbol" v-html="currencySymbol"></span>
+						</td>
+					</tr>
+					<tr style="text-align: right;">
+						<td class="salescenter-app-result-grid-total-big">{{localize.SALESCENTER_PRODUCT_PRODUCTS_PRICE}}:</td>
+						<td class="salescenter-app-result-grid-total-big">
+							<span v-html="total.result"></span>
+							<span class="salescenter-app-result-grid-item-currency-symbol" v-html="currencySymbol"></span>
+						</td>
+					</tr>
+				</table>
 			</div>
 			<div class="salescenter-app-banner"  v-if="isShowedBanner">
 				<div class="salescenter-app-banner-inner">

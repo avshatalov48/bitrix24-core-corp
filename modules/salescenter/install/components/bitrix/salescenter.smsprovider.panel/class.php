@@ -284,23 +284,31 @@ class SalesCenterSmsProviderPanel extends CBitrixComponent implements Controller
 	 */
 	private function getPartnerItems(): array
 	{
-		$result = array_filter(
-			$this->getMarketplaceItems($this->getMarketPlacePartnerItemCodeList()),
-			static function ($item) {
-				return ($item['itemSelected']) === false;
-			}
-		);
+		$result = [];
 
-		$result[] = $this->getSmsProviderAppsCount();
+		if (RestManager::getInstance()->isEnabled())
+		{
+			$result = array_filter(
+				$this->getMarketplaceItems($this->getMarketPlacePartnerItemCodeList()),
+				static function ($item) {
+					return ($item['itemSelected']) === false;
+				}
+			);
+
+			$result[] = $this->getSmsProviderAppsCount();
+		}
 
 		if (Bitrix24Manager::getInstance()->isEnabled())
 		{
 			$result[] = $this->getRecommendItem();
 		}
 
-		foreach ($this->getActionboxItems() as $actionboxItem)
+		if (RestManager::getInstance()->isEnabled())
 		{
-			$result[] = $actionboxItem;
+			foreach ($this->getActionboxItems() as $actionboxItem)
+			{
+				$result[] = $actionboxItem;
+			}
 		}
 
 		return $result;

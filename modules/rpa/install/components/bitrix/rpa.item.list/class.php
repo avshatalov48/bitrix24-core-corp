@@ -117,7 +117,11 @@ class RpaItemListComponent extends \Bitrix\Rpa\Components\ItemList
 			$data['STAGE_ID'] = htmlspecialcharsbx($stage->getName());
 		}
 
-		$data = array_merge($data, $this->getDisplay()->getValues($item->getId()));
+		$displayedValues = $this->getDisplay()->getValues($item->getId());
+		if(!empty($displayedValues))
+		{
+			$data = array_merge($data, $displayedValues);
+		}
 		$tasks = 0;
 		$taskManager = Driver::getInstance()->getTaskManager();
 		if($taskManager)

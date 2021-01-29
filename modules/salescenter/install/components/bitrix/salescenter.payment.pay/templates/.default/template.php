@@ -6,7 +6,7 @@ use Bitrix\Main,
 	Bitrix\Main\Localization\Loc,
 	Bitrix\Main\UI\Extension;
 
-CJSCore::Init(["popup", "loader"]);
+CJSCore::Init(["popup", "loader", "documentpreview", "sidepanel"]);
 
 Extension::load(["ui.fonts.ruble"]);
 $payment = $arResult['PAYMENT'];
@@ -108,8 +108,7 @@ else
 	if ($arParams['ALLOW_SELECT_PAY_SYSTEM'] !== 'Y')
 	{
 		?>
-		<div class="order-payment-container order-payment-sibling-container <?= $additionalContainerClasses ?> mb-4"
-			 id="<?= $wrapperId ?>">
+		<div class="order-payment-container order-payment-sibling-container <?= $additionalContainerClasses ?> mb-4" id="<?= $wrapperId ?>">
 			<div class="order-payment-title"><?= $title ?></div>
 			<div class="order-payment-inner d-flex align-items-center justify-content-between">
 				<div class="order-payment-operator">
@@ -182,8 +181,7 @@ else
 			$title = '';
 		}
 		?>
-		<div class="page-section order-payment-method-container <?= $additionalContainerClasses ?>"
-			 id="<?= $wrapperId ?>">
+		<div class="page-section order-payment-method-container <?= $additionalContainerClasses ?>" id="<?= $wrapperId ?>">
 			<?php if ($title !== ''): ?>
 				<div class="page-section-title"><?= $title ?></div>
 			<?php endif; ?>

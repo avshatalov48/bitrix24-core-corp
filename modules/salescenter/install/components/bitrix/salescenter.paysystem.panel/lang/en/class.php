@@ -1,6 +1,6 @@
 <?php
 $MESS["SPP_ACCESS_DENIED"] = "Access denied.";
-$MESS["SPP_ACTIONBOX_APPS"] = "Marketplace";
+$MESS["SPP_ACTIONBOX_APPS"] = "Bitrix24.Market";
 $MESS["SPP_PAYSYSTEM_ADD"] = "Add payment system";
 $MESS["SPP_PAYSYSTEM_APP_INTEGRATION_REQUIRED"] = "Need integration?";
 $MESS["SPP_PAYSYSTEM_APP_RECOMMEND"] = "Recommend";
@@ -17,6 +17,7 @@ $MESS["SPP_PAYSYSTEM_ORDERDOCUMENT_TITLE"] = "Printable invoice";
 $MESS["SPP_PAYSYSTEM_PAYPAL_TITLE"] = "PayPal payment";
 $MESS["SPP_PAYSYSTEM_QIWI_TITLE"] = "Qiwi payment";
 $MESS["SPP_PAYSYSTEM_SBERBANKONLINE_TITLE"] = "Credit/debit card (Sberbank)";
+$MESS["SPP_PAYSYSTEM_SBP_RECOMMEND"] = "Recommend a bank";
 $MESS["SPP_PAYSYSTEM_SETTINGS"] = "Configure #PAYSYSTEM_NAME#";
 $MESS["SPP_PAYSYSTEM_SKB_SKB_TITLE"] = "Rapid payment system";
 $MESS["SPP_PAYSYSTEM_UAPAY_TITLE"] = "UAPAY payment";

@@ -102,7 +102,7 @@ final class Fields
 			switch ($type)
 			{
 				case 'resourcebooking':
-					if (!$field['multiple'])
+					if (!$options['multiple'])
 					{
 						$options['booking'] = [
 							'name' => $field['CODE'],
@@ -112,13 +112,20 @@ final class Fields
 						];
 					}
 					break;
+				case 'bool':
+				case 'radio':
 				case 'checkbox':
-					if (!$field['multiple'])
+					if ($data['TYPE_ORIGINAL'] == 'radio' || ($data['TYPE_ORIGINAL'] == 'checkbox' && $data['MULTIPLE_ORIGINAL']))
+					{
+						$type = $options['multiple'] ? 'checkbox' : 'radio';
+					}
+					else
 					{
 						$type = 'bool';
 						$options['checked'] = false;
 						$options['value'] = 'Y';
 					}
+
 					break;
 				case 'typed_string':
 					$stringType = strtolower($data['ENTITY_FIELD_NAME']);
@@ -483,7 +490,7 @@ final class Fields
 		return $field;
 	}
 
-	private function getTabletFieldType(array $options)
+	private function getTabletFieldType(array $options, $field)
 	{
 		$type = $options['type'];
 		switch ($type)
@@ -492,8 +499,18 @@ final class Fields
 			case 'email':
 			case 'string':
 			case 'page':
-			case 'bool':
 			case 'money':
+				return $type;
+
+			case 'bool':
+				if ($field['TYPE_ORIGINAL'] === 'checkbox')
+				{
+					return $field['MULTIPLE_ORIGINAL'] ? 'checkbox' : 'bool';
+				}
+				if ($field['TYPE_ORIGINAL'] === 'radio')
+				{
+					return 'radio';
+				}
 				return $type;
 
 			case 'layout':
@@ -518,7 +535,7 @@ final class Fields
 		$options = self::filterFieldOptions($options);
 		$field = self::$fields[$options['name']];
 
-		$type = $this->getTabletFieldType($options);
+		$type = $this->getTabletFieldType($options, $field);
 		$data = array(
 			'ID' => $options['editing']['id'] ?? null,
 			'CODE' => $options['name'],

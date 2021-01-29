@@ -695,7 +695,7 @@
 				return;
 			}
 
-			if (deviceName == "receiver")
+			if (deviceName == "receiver" && this.currentCall)
 			{
 				this._selectSpeaker();
 			}
@@ -1122,7 +1122,7 @@
 
 		_selectSpeaker()
 		{
-			this.skipNextDeviceChangeEvent;
+			this.skipNextDeviceChangeEvent = true;
 			JNVIAudioManager.selectAudioDevice("speaker");
 		}
 

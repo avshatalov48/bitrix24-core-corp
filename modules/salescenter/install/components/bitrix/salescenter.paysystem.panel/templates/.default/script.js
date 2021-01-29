@@ -130,7 +130,7 @@
 					style: {
 						top: this.data.recommendation ? '22px' : null,
 						backgroundSize: this.outerImage ? '50px' : '',
-						backgroundImage: this.image ? 'url(' + encodeURI(this.image) + ')' : null
+						backgroundImage: this.image ? 'url("' + encodeURI(this.image) + '")' : null
 					}
 				});
 

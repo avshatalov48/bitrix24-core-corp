@@ -152,6 +152,11 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 			$this->errorCollection->setError(new Main\Error(Loc::getMessage('SPP_MODULE_CRM_NOT_INSTALL')));
 			return false;
 		}
+		if (!Loader::includeModule('documentgenerator'))
+		{
+			$this->errorCollection->setError(new Main\Error(Loc::getMessage('SPP_MODULE_DOCUMENTGENERATOR_NOT_INSTALL')));
+			return false;
+		}
 
 		return true;
 	}
@@ -454,7 +459,13 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 						$paySystemObject->getContext()->setUrl($returnUrl);
 					}
 
-					$result = $paySystemObject->initiatePay($this->payment, null, PaySystem\BaseServiceHandler::STRING);
+					$request = null;
+					if ($this->isPaySystemOrderDocument($paySystemObject))
+					{
+						$request = Main\Context::getCurrent()->getRequest();
+						$request->set(["template" => "template_download"]);
+					}
+					$result = $paySystemObject->initiatePay($this->payment, $request, PaySystem\BaseServiceHandler::STRING);
 				}
 				else
 				{
@@ -515,5 +526,18 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 		];
 
 		Crm\Timeline\OrderPaymentController::getInstance()->onClick($payment->getId(), $timelineParams);
+	}
+
+	/**
+	 * @param PaySystem\Service $service
+	 * @return bool
+	 */
+	private function isPaySystemOrderDocument(Sale\PaySystem\Service $service): bool
+	{
+		$handlerClassName = Sale\PaySystem\Manager::getFolderFromClassName(
+			\Sale\Handlers\PaySystem\OrderDocumentHandler::class
+		);
+
+		return $handlerClassName === $service->getField('ACTION_FILE');
 	}
 }

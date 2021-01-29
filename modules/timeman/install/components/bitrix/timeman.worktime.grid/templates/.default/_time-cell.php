@@ -135,7 +135,7 @@ htmlspecialcharsbx($templateParams->absence['ABSENCE_PART']) ?>"
 								$templateParams->getViolationIndividualCss() . $extraIndividualClass; ?>"
 									data-hint-no-icon
 									data-type="individual"
-									data-role="violation-icon"
+									data-role="violation-icon" data-hint-html
 									data-hint="<?php echo htmlspecialcharsbx($templateParams->getViolationIndividualHint()); ?>">
 							</span>
 						<? endif; ?>
@@ -145,6 +145,7 @@ htmlspecialcharsbx($templateParams->absence['ABSENCE_PART']) ?>"
 									data-hint-no-icon
 									data-type="common"
 									data-role="violation-icon"
+									data-hint-html
 									data-hint="<?php echo htmlspecialcharsbx($templateParams->getViolationCommonHint()); ?>">
 							</span>
 						<? endif; ?>

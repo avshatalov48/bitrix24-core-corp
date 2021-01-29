@@ -36,6 +36,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 			'page' => $arParams['page'],
 			'isFrame' => $arParams['isFrame'],
 			'preview' => $arParams['preview'],
+			'restHandler' => $arParams['restHandler'],
 		];
 
 		return parent::onPrepareComponentParams($arParams);
@@ -445,6 +446,10 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 	 */
 	protected function getCashboxSettings()
 	{
+		if ($this->handler === '\Bitrix\Sale\Cashbox\CashboxRest')
+		{
+			return Cashbox\CashboxRest::getConfigStructure($this->arParams['restHandler']);
+		}
 		return $this->handler::getSettings();
 	}
 
@@ -821,6 +826,13 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 					'code' => 'checkbox',
 					'title' => 'SC_CASHBOX_CHECKBOX_TITLE',
 					'description' => 'SC_CASHBOX_CHECKBOX_DESCRIPTION',
+				];
+			case '\Bitrix\Sale\Cashbox\CashboxRest':
+				$handlerName = Cashbox\Manager::getRestHandlersList()[$this->arParams['restHandler']]["NAME"];
+				return [
+					'code' => 'rest',
+					'title' => $handlerName,
+					'description' => 'SC_CASHBOX_REST_DESCRITION',
 				];
 			default:
 				return [

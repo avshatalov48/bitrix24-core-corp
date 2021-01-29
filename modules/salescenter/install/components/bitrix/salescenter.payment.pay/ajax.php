@@ -34,6 +34,8 @@ $salesCenterPaymentObject->initComponent('bitrix:salescenter.payment.pay');
 $params = $salesCenterPaymentObject->onPrepareComponentParams($params);
 $initiatePayResult = null;
 
+$result = [];
+
 if ($salesCenterPaymentObject->getErrorCollection()->isEmpty())
 {
 	$initiatePayResult = $salesCenterPaymentObject->initiatePayAction($params);
@@ -75,6 +77,9 @@ if (($initiatePayResult && !$initiatePayResult->isSuccess())
 		$result['errors'][$error->getCode()][] = $error->getMessage();
 	}
 }
+
+global $APPLICATION;
+$APPLICATION->RestartBuffer();
 
 echo \Bitrix\Main\Web\Json::encode($result);
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/epilog_after.php');

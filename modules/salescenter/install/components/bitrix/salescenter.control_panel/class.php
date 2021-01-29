@@ -33,6 +33,10 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 			ShowError(Loc::getMessage('SALESCENTER_CONTROL_PANEL_MODULE_ERROR'));
 			return;
 		}
+		if (Loader::includeModule('crm'))
+		{
+			CAllCrmInvoice::installExternalEntities();
+		}
 
 		if(!Driver::getInstance()->isEnabled())
 		{
@@ -52,9 +56,12 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 
 		$paymentItemTiles[] = $this->getCrmStoreTile();
 
-		foreach ($this->getMarketplaceItemsTile($this->getMarketplaceSalescenterItemCodeList()) as $marketplaceItem)
+		if (RestManager::getInstance()->isEnabled())
 		{
-			$paymentItemTiles[] = $marketplaceItem;
+			foreach ($this->getMarketplaceItemsTile($this->getMarketplaceSalescenterItemCodeList()) as $marketplaceItem)
+			{
+				$paymentItemTiles[] = $marketplaceItem;
+			}
 		}
 
 		$paymentItemTiles = array_merge($paymentItemTiles, [

@@ -143,11 +143,12 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 				{
 					$paySystemExtraItems[] = $marketplaceItem;
 				}
+
+				$paySystemExtraItems[] = $this->getShowAllItem();
 			}
 
 			if (Bitrix24Manager::getInstance()->isEnabled())
 			{
-				$paySystemExtraItems[] = $this->getShowAllItem();
 				$paySystemExtraItems[] = $this->getRecommendItem();
 
 				if ($this->getZone() === self::RUSSIAN_PORTAL_ZONE_CODE)
@@ -156,9 +157,12 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 				}
 			}
 
-			foreach ($this->getActionboxItems() as $actionboxItem)
+			if (RestManager::getInstance()->isEnabled())
 			{
-				$paySystemExtraItems[] = $actionboxItem;
+				foreach ($this->getActionboxItems() as $actionboxItem)
+				{
+					$paySystemExtraItems[] = $actionboxItem;
+				}
 			}
 		}
 

@@ -219,10 +219,10 @@ abstract class ItemList extends Base
 			'maxWidth' => '400px',
 		]);
 
-		if($userPermissions->canModifyType($this->type->getId()))
-		{
-			$isTypeSettingsRestricted = Driver::getInstance()->getBitrix24Manager()->isTypeSettingsRestricted($this->type->getId());
+		$isTypeSettingsRestricted = Driver::getInstance()->getBitrix24Manager()->isTypeSettingsRestricted($this->type->getId());
 
+		if($userPermissions->canAddItemsToType($this->type->getId()))
+		{
 			$buttons[ButtonLocation::AFTER_TITLE][] = new Buttons\Button(
 				[
 					'color' => Buttons\Color::PRIMARY,
@@ -233,7 +233,10 @@ abstract class ItemList extends Base
 					'maxWidth' => '400px',
 				]
 			);
+		}
 
+		if($userPermissions->canModifyType($this->type->getId()))
+		{
 			$onClick = $isTypeSettingsRestricted ? new Buttons\JsHandler('BX.Rpa.Manager.Instance.showFeatureSlider') : new Buttons\JsHandler('BX.Rpa.Manager.Instance.closeSettingsMenu');
 			$buttons[ButtonLocation::AFTER_FILTER][] = new Buttons\SettingsButton([
 				'menu' => [

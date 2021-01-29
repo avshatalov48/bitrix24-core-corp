@@ -162,9 +162,35 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 			];
 		}
 
+		$restHandlers = Sale\Cashbox\Manager::getRestHandlersList();
+		foreach ($restHandlers as $restHandlerCode => $restHandlerConfig)
+		{
+			$restHandlerDescription = [
+				'id' => $restHandlerCode,
+				'title' => $restHandlerConfig['NAME'],
+				// TODO: image
+				'image' => $this->getImagePath().'offline.svg',
+				'itemSelectedColor' => '#359FD0',
+				'itemSelectedImage' => $this->getImagePath().'offline_s.svg',
+				'itemSelected' => false,
+				'data' => [
+					'type' => 'cashbox',
+					'handler' => '\\Bitrix\\Sale\\Cashbox\\CashboxRest',
+					'connectPath' => $this->getCashboxEditUrl([
+						'handler' => '\\Bitrix\\Sale\\Cashbox\\CashboxRest',
+						'preview' => 'y',
+						'restHandler' => $restHandlerCode,
+					]),
+					'showMenu' => false,
+				]
+			];
+
+			$cashboxDescriptions[] = $restHandlerDescription;
+		}
+
 		$filter = SaleManager::getInstance()->getCashboxFilter(false);
 		$cashboxList = Sale\Cashbox\Internals\CashboxTable::getList([
-			'select' => ['ID', 'ACTIVE', 'NAME', 'HANDLER'],
+			'select' => ['ID', 'ACTIVE', 'NAME', 'HANDLER', 'SETTINGS'],
 			'filter' => $filter,
 		]);
 		while($cashbox = $cashboxList->fetch())
@@ -173,15 +199,41 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 			{
 				$cashboxes[$cashbox['HANDLER']] = [];
 			}
-			$cashboxes[$cashbox['HANDLER']][] = $cashbox;
+
+			$isRestCashbox = $cashbox['HANDLER'] === '\Bitrix\Sale\Cashbox\CashboxRest';
+			if ($isRestCashbox)
+			{
+				$restHandlerCode = $cashbox['SETTINGS']['REST']['REST_CODE'];
+				if(!isset($cashboxes[$cashbox['HANDLER']][$restHandlerCode]))
+				{
+					$cashboxes[$cashbox['HANDLER']][$restHandlerCode] = [];
+				}
+				$cashboxes[$cashbox['HANDLER']][$restHandlerCode][] = $cashbox;
+			}
+			else
+			{
+				$cashboxes[$cashbox['HANDLER']][] = $cashbox;
+			}
 		}
 
 		foreach($cashboxDescriptions as &$cashboxDescription)
 		{
-			if(isset($cashboxes[$cashboxDescription['data']['handler']]) && is_array($cashboxes[$cashboxDescription['data']['handler']]))
+			$isRestCashbox = $cashboxDescription['data']['handler'] === '\\Bitrix\\Sale\\Cashbox\\CashboxRest';
+
+			if ($isRestCashbox)
 			{
-				$cashboxDescription['data']['menuItems'] = $this->getCashboxMenu($cashboxes[$cashboxDescription['data']['handler']]);
-				foreach($cashboxes[$cashboxDescription['data']['handler']] as $handlerCashbox)
+				$restHandlerCode = $cashboxDescription['id'];
+				$handlerCashboxes = $cashboxes[$cashboxDescription['data']['handler']][$restHandlerCode];
+			}
+			else
+			{
+				$handlerCashboxes = $cashboxes[$cashboxDescription['data']['handler']];
+			}
+
+			if(isset($handlerCashboxes) && is_array($handlerCashboxes))
+			{
+				$cashboxDescription['data']['menuItems'] = $this->getCashboxMenu($handlerCashboxes);
+				foreach($handlerCashboxes as $handlerCashbox)
 				{
 					if($handlerCashbox['ACTIVE'] === 'Y')
 					{
@@ -231,25 +283,35 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 
 		foreach($cashboxes as $cashbox)
 		{
+			$isRestHandler = $cashbox['HANDLER'] === '\Bitrix\Sale\Cashbox\CashboxRest';
 			if(empty($result))
 			{
+				$addUrlParams = ['handler' => $cashbox['HANDLER']];
+				if ($isRestHandler)
+				{
+					$addUrlParams['restHandler'] = $cashbox['SETTINGS']['REST']['REST_CODE'];
+				}
+
 				$result = [
 					[
 						'NAME' => Loc::getMessage('SCP_CASHBOX_ADD'),
-						'LINK' => $this->getCashboxEditUrl([
-							'handler' => $cashbox['HANDLER'],
-						]),
+						'LINK' => $this->getCashboxEditUrl($addUrlParams),
 					],
 					[
 						'DELIMITER' => true,
 					],
 				];
 			}
+			$editUrlParams = ['id' => $cashbox['ID'], 'handler' => $cashbox['HANDLER']];
+			if ($isRestHandler)
+			{
+				$editUrlParams['restHandler'] = $cashbox['SETTINGS']['REST']['REST_CODE'];
+			}
 			$result[] = [
 				'NAME' => Loc::getMessage('SCP_CASHBOX_SETTINGS', [
 					'#CASHBOX_NAME#' => htmlspecialcharsbx($cashbox['NAME'])
 				]),
-				'LINK' => $this->getCashboxEditUrl(['id' => $cashbox['ID'], 'handler' => $cashbox['HANDLER']]),
+				'LINK' => $this->getCashboxEditUrl($editUrlParams),
 			];
 		}
 
@@ -299,7 +361,7 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function reloadCashboxItemAction($handler = null): array
+	public function reloadCashboxItemAction($handler = null, $cashboxId = null): array
 	{
 		Loader::includeModule('sale');
 
@@ -314,9 +376,11 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 
 		$cashboxItems = $this->getCashboxItems();
 
+		$isRestHandler = $handler === '\Bitrix\Sale\Cashbox\CashboxRest';
+
 		foreach($cashboxItems as $cashboxItem)
 		{
-			if($cashboxItem['data']['handler'] == $handler)
+			if((!$isRestHandler && $cashboxItem['data']['handler'] == $handler) || ($isRestHandler && $cashboxItem["id"] === $cashboxId))
 			{
 				$result['itemSelected'] = $cashboxItem['itemSelected'];
 				$result['menuItems'] = $cashboxItem['data']['menuItems'];

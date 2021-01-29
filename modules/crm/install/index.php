@@ -1621,6 +1621,8 @@ Class crm extends CModule
 		}
 		elseif ($step == 2)
 		{
+			\Bitrix\Main\Loader::includeModule('crm');
+
 			$this->UnInstallDB(array(
 				'savedata' => $_REQUEST['savedata']
 			));

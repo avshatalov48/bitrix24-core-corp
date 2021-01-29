@@ -23,6 +23,10 @@ class CBPRpaRequestActivity extends CBPRpaApproveActivity
 
 			'TaskId' => 0,
 		];
+
+		$this->SetPropertiesTypes([
+			'TaskId' => ['Type' => 'int'],
+		]);
 	}
 
 	protected function buildTaskParameters()
@@ -87,7 +91,7 @@ class CBPRpaRequestActivity extends CBPRpaApproveActivity
 
 		$taskId = $this->taskId;
 		$this->Unsubscribe($this);
-		$this->ExecuteAction($this->Actions[0], $taskId, $this->LastApprover, $arEventParameters['FIELDS']);
+		$this->ExecuteAction($this->Actions[0], $taskId, 'user_'.$arEventParameters['REAL_USER_ID'], $arEventParameters['FIELDS']);
 	}
 
 	public static function PostTaskForm($arTask, $userId, $arRequest, &$arErrors, $userName = "", $realUserId = null)

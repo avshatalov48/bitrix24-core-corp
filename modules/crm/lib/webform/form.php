@@ -366,7 +366,7 @@ class Form
 
 		$assignedById = $result['ASSIGNED_BY_ID'];
 		$assignedWorkTime = $result['ASSIGNED_WORK_TIME'];
-		unset($result['ASSIGNED_BY_ID']);
+		$result['ASSIGNED_BY_ID'] = null;
 		unset($result['ASSIGNED_WORK_TIME']);
 
 		// captcha
@@ -590,7 +590,18 @@ class Form
 		{
 			$dependency['GROUP_ID'] = !empty($dependency['GROUP_ID']) ? $dependency['GROUP_ID'] : 0;
 			$dependency['FORM_ID'] = $this->id;
-			$dependency['GROUP_ID'] = $depGroupMap[$dependency['GROUP_ID']] ?? 0;
+			if (isset($depGroupMap[$dependency['GROUP_ID']]))
+			{
+				$dependency['GROUP_ID'] = $depGroupMap[$dependency['GROUP_ID']];
+			}
+			elseif (count($depGroupMap) === 1)
+			{
+				$dependency['GROUP_ID'] = current($depGroupMap);
+			}
+			else
+			{
+				$dependency['GROUP_ID'] = 0;
+			}
 			$dependencies[$depIndex] = $dependency;
 		}
 
@@ -920,6 +931,12 @@ class Form
 						{
 							$discount = 0;
 						}
+
+						if (empty($item['ID']))
+						{
+							continue;
+						}
+
 						$preparedItem = array(
 							'title' => $item['VALUE'],
 							'value' => $item['ID'],

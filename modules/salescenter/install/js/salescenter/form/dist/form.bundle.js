@@ -191,17 +191,17 @@ this.BX = this.BX || {};
 	      var hint = '';
 
 	      if (field.hint) {
-	        hint = main_core.Tag.render(_templateObject3(), field.hint);
+	        hint = main_core.Tag.render(_templateObject3(), main_core.Text.encode(field.hint));
 	      }
 
 	      var title = '';
 
 	      if (field.title) {
-	        title = "<div class=\"".concat(this.classes.get('controlTitle'), " ").concat(field.required ? this.classes.get('controlRequired') : '', "\">").concat(field.title, "</div>");
+	        title = "<div class=\"".concat(this.classes.get('controlTitle'), " ").concat(field.required ? this.classes.get('controlRequired') : '', "\">").concat(main_core.Text.encode(field.title), "</div>");
 	      }
 
 	      if (field.html.indexOf('type="checkbox"') > 0) {
-	        label = main_core.Tag.render(_templateObject4(), this.classes.get('controlInner'), this.classes.get('controlCheckbox'), field.input, field.title ? '<div class="' + this.classes.get('controlCheckboxLabel') + '">' + field.title + '</div>' : '', hint);
+	        label = main_core.Tag.render(_templateObject4(), this.classes.get('controlInner'), this.classes.get('controlCheckbox'), field.input, field.title ? '<div class="' + this.classes.get('controlCheckboxLabel') + '">' + main_core.Text.encode(field.title) + '</div>' : '', hint);
 	      } else if (field.type === 'file') {
 	        var hiddenFileInput = '';
 
@@ -214,7 +214,7 @@ this.BX = this.BX || {};
 	          hiddenFileInput = this.renderFieldInput(hiddenFileField);
 	        }
 
-	        label = main_core.Tag.render(_templateObject5(), title, this.classes.get('controlInner'), this.classes.get('controlFile'), field.input, field.label ? '<div class="ui-ctl-label-text">' + field.label + '</div>' : '', hiddenFileInput);
+	        label = main_core.Tag.render(_templateObject5(), title, this.classes.get('controlInner'), this.classes.get('controlFile'), field.input, field.label ? '<div class="ui-ctl-label-text">' + main_core.Text.encode(field.label) + '</div>' : '', hiddenFileInput);
 	      } else if (field.type === 'list' || field.html.indexOf('select') > 0) {
 	        label = main_core.Tag.render(_templateObject6(), title, this.classes.get('controlSelect'), this.classes.get('controlInner'), this.classes.get('controlSelectIcon'), field.input);
 	      } else {
@@ -242,9 +242,9 @@ this.BX = this.BX || {};
 	      var value = '';
 
 	      if (field.hasOwnProperty('value')) {
-	        value = field.value;
+	        value = main_core.Text.encode(field.value);
 	      } else if (this.data[field.name]) {
-	        value = this.data[field.name];
+	        value = main_core.Text.encode(this.data[field.name]);
 	      }
 
 	      var required = '';
@@ -257,27 +257,27 @@ this.BX = this.BX || {};
 	        result = "<input name=\"".concat(field.name, "\"\n\t\t\t\tclass=\"").concat(this.classes.get('controlInput'), "\"\n\t\t\t\tvalue=\"").concat(value, "\"").concat(required, "\n\t\t\t\ttype=\"text\">");
 	      } else if (type === 'boolean') {
 	        value = 'Y';
-	        result = "<input type=\"checkbox\" name=\"".concat(field.name, "\"").concat(this.data[field.name] === value ? ' checked="checked"' : '').concat(field.disabled ? ' disabled="disabled"' : '').concat(required, "\n\t\t\t\tvalue=\"").concat(value, "\" class=\"").concat(this.classes.get('controlInput'), "\">");
+	        result = "<input type=\"checkbox\" name=\"".concat(main_core.Text.encode(field.name), "\"").concat(this.data[field.name] === value ? ' checked="checked"' : '').concat(field.disabled ? ' disabled="disabled"' : '').concat(required, "\n\t\t\t\tvalue=\"").concat(value, "\" class=\"").concat(this.classes.get('controlInput'), "\">");
 	      } else if (type === 'list') {
-	        result = "<select class=\"".concat(this.classes.get('controlInput'), "\" name=\"").concat(field.name, "\"").concat(required, ">");
+	        result = "<select class=\"".concat(this.classes.get('controlInput'), "\" name=\"").concat(main_core.Text.encode(field.name), "\"").concat(required, ">");
 
 	        if (field.data && main_core.Type.isArray(field.data.items)) {
 	          field.data.items.forEach(function (item) {
-	            result += "<option".concat(main_core.Type.isString(item.VALUE) ? ' value="' + item.VALUE + '"' : '').concat(item.SELECTED ? ' selected="selected"' : '', ">").concat(item.NAME, "</option>");
+	            result += "<option".concat(main_core.Type.isString(item.VALUE) ? ' value="' + main_core.Text.encode(item.VALUE) + '"' : '').concat(item.SELECTED ? ' selected="selected"' : '', ">").concat(main_core.Text.encode(item.NAME), "</option>");
 	          });
 	        }
 
 	        result += "</select>";
 	      } else if (type === 'hidden') {
-	        result = "<input name=\"".concat(field.name, "\"\n\t\t\t\tvalue=\"").concat(value, "\"\n\t\t\t\ttype=\"hidden\">");
+	        result = "<input name=\"".concat(main_core.Text.encode(field.name), "\"\n\t\t\t\tvalue=\"").concat(value, "\"\n\t\t\t\ttype=\"hidden\">");
 	      } else if (type === 'file') {
 	        var onFileChange = function onFileChange(_ref) {
 	          var target = _ref.target;
 	          var value = target.value.split(/(\\|\/)/g).pop();
-	          target.parentNode.nextSibling.innerText = value;
+	          target.parentNode.nextSibling.innerText = main_core.Text.encode(value);
 	        };
 
-	        result = main_core.Tag.render(_templateObject9(), onFileChange, field.name, this.classes.get('controlInput'));
+	        result = main_core.Tag.render(_templateObject9(), onFileChange, main_core.Text.encode(field.name), this.classes.get('controlInput'));
 	      }
 
 	      return result;
@@ -311,7 +311,7 @@ this.BX = this.BX || {};
 	      result = "<div".concat(sectionId, " class=\"").concat(this.classes.get('sectionContainer'), "\">");
 
 	      if (section.title) {
-	        result += "<div class=\"".concat(this.classes.get('sectionTitle'), "\">").concat(section.title, "</div><hr class=\"ui-hr ui-mb-15\">");
+	        result += "<div class=\"".concat(this.classes.get('sectionTitle'), "\">").concat(main_core.Text.encode(section.title), "</div><hr class=\"ui-hr ui-mb-15\">");
 	      }
 
 	      result += "</div>";
@@ -390,10 +390,10 @@ this.BX = this.BX || {};
 	        if (main_core.Type.isDomNode(input)) {
 	          if (input.getAttribute('type') === 'checkbox') {
 	            if (input.checked) {
-	              result[field.name] = input.value;
+	              result[field.name] = main_core.Text.decode(input.value);
 	            }
 	          } else {
-	            result[field.name] = input.value;
+	            result[field.name] = main_core.Text.decode(input.value);
 	          }
 	        }
 	      });

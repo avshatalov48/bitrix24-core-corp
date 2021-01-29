@@ -44,7 +44,7 @@ $showContainer = $violationForm->showViolationContainer($scheduleForm->isShifted
 							>
 							<label class="timeman-schedule-form-violation-hidden-label" for="violation-option-right-time"><?=
 								htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_VIOLATION_EXACT_TIME_BLOCK_TITLE')); ?></label>
-							<span class="timeman-schedule-form-violation-help" data-hint="<?php echo htmlspecialcharsbx($arResult['hintExactStartEndDay']); ?>"></span>
+							<span class="timeman-schedule-form-violation-help" data-hint-html data-hint="<?php echo htmlspecialcharsbx($arResult['hintExactStartEndDay']); ?>"></span>
 						</div>
 						<div class="timeman-schedule-form-violation-detail timeman-schedule-form-violation-detail-start-end">
 							<div class="timeman-schedule-form-violation-detail-inner" data-role="start-control">
@@ -94,7 +94,7 @@ $showContainer = $violationForm->showViolationContainer($scheduleForm->isShifted
 							<label class="timeman-schedule-form-violation-hidden-label" for="timeline-relative-time"><?=
 								htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_VIOLATION_RELATIVE_TIME_BLOCK_TITLE'))
 								?></label>
-							<span class="timeman-schedule-form-violation-help" data-hint="<?php echo htmlspecialcharsbx($arResult['hintRelativeStartEndDay']); ?>"></span>
+							<span class="timeman-schedule-form-violation-help" data-hint-html data-hint="<?php echo htmlspecialcharsbx($arResult['hintRelativeStartEndDay']); ?>"></span>
 						</div>
 						<div class="timeman-schedule-form-violation-detail">
 							<div class="timeman-schedule-form-violation-detail-inner" data-role="start-control">
@@ -173,7 +173,7 @@ $showContainer = $violationForm->showViolationContainer($scheduleForm->isShifted
 							>
 							<label class="timeman-schedule-form-violation-hidden-label" for="violation-option-offset-time"><?=
 								htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_VIOLATION_OFFSET_TIME_BLOCK_TITLE')); ?></label>
-							<span class="timeman-schedule-form-violation-help" data-hint="<?php echo htmlspecialcharsbx($arResult['hintOffsetStartEndDay']); ?>"></span>
+							<span class="timeman-schedule-form-violation-help" data-hint-html data-hint="<?php echo htmlspecialcharsbx($arResult['hintOffsetStartEndDay']); ?>"></span>
 						</div>
 						<div class="timeman-schedule-form-violation-detail timeman-schedule-form-violation-detail-start-end">
 							<div class="timeman-schedule-form-violation-detail-inner" data-role="start-control">

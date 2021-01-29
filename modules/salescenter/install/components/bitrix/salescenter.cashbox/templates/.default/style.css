@@ -64,10 +64,10 @@
 	background-color: #272BED;
 }
 
-.salescenter-offline-icon { width: 97px; }
+.salescenter-offline-icon, .salescenter-rest-icon { width: 97px; }
 
-.salescenter-offline-icon i {
-	background-image: url(images/checkbox.svg);
+.salescenter-offline-icon i, .salescenter-rest-icon i {
+	background-image: url(images/offline.svg);
 	background-size: 50% auto;
 	background-color: #359FD0;
 }

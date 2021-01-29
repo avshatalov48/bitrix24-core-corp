@@ -3,7 +3,8 @@ import {Vuex} from 'ui.vue.vuex';
 import {Manager} from 'salescenter.manager';
 import {Loader} from 'main.loader';
 import {Type, Uri} from 'main.core';
-import {MixinTemplatesType} from "./components/templates-type-mixin";
+import {MixinTemplatesType} from "./components/deal-receiving-payment/templates-type-mixin";
+import {StageBlocksList} from "./components/deal-receiving-payment/stage-blocks-list";
 
 import 'popup';
 import 'ui.buttons';
@@ -45,6 +46,10 @@ Vue.component(config.templateName, {
 		};
 	},
 
+	components:
+	{
+		'deal-receiving-payment'	:	StageBlocksList
+	},
 	created()
 	{
 		this.$root.$on("on-show-company-contacts", (value) => {
@@ -259,7 +264,7 @@ Vue.component(config.templateName, {
 		},
 		showCompanyContacts({target})
 		{
-			BX.Salescenter.Manager.openSlider(this.$root.$app.options.urlSettingsCompanyContacts, {});
+			BX.Salescenter.Manager.openSlider(this.$root.$app.options.urlSettingsCompanyContacts, {width: 1200} );
 		},
 		showAddPageActionPopup({target}, isWebform = false)
 		{
@@ -1038,9 +1043,7 @@ Vue.component(config.templateName, {
 			        <component v-if="isShowPayment && !isShowStartInfo" :is="config.templateAddPaymentName"></component>
 		        </template>
 		        <template v-if="isShowPaymentBySms && !isShowStartInfo">
-			        <component :is="config.templateAddPaymentBySms" 
-			        @send="send" 
-			        :isAllowedSubmitButton="isAllowedSubmitButton"></component>
+			        <deal-receiving-payment v-on:stage-block-send-on-send="send" :sendAllowed="isAllowedSubmitButton"/>
 		        </template>
 			</div>
 			<div class="ui-button-panel-wrapper salescenter-button-panel" ref="buttonsPanel">

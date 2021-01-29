@@ -50,7 +50,7 @@ $userHelper = $arResult['userHelper'];
 				<div class="timeman-report-title">
 					<div class="timeman-report-title-text"><?= htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_WORKTIME')) ?></div>
 					<? if ($arResult['worktimeInfoHint']): ?>
-						<span class="timeman-report-title-info-icon" data-hint="<?php echo htmlspecialcharsbx($arResult['worktimeInfoHint']); ?>"></span>
+						<span class="timeman-report-title-info-icon" data-hint-html data-hint="<?php echo htmlspecialcharsbx($arResult['worktimeInfoHint']); ?>"></span>
 					<? endif; ?>
 					<? if ($arResult['canUpdateWorktime']): ?>
 						<div class="timeman-report-title-change" data-role="edit-worktime-btn"><?= htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_EDIT')) ?></div>

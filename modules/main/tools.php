@@ -1360,39 +1360,57 @@ function FormatDateEx($strDate, $format=false, $new_format=false)
 		);
 
 		$new_format_l = mb_strlen($new_format);
+		$dontChange = false;
+
 		for ($i = 0; $i < $new_format_l; $i++)
 		{
 			$simbol = mb_substr($new_format, $i, 1);
-			switch ($simbol)
+
+			if (!$dontChange && $simbol === "\\")
 			{
-				case "F":
-					$match=GetMessage("MONTH_".date("n", $ux_time)."_S");
-					break;
-				case "f":
-					$match=GetMessage("MONTH_".date("n", $ux_time));
-					break;
-				case "M":
-					$match=GetMessage("MON_".date("n", $ux_time));
-					break;
-				case "l":
-					$match=GetMessage("DAY_OF_WEEK_".date("w", $ux_time));
-					break;
-				case "D":
-					$match=GetMessage("DOW_".date("w", $ux_time));
-					break;
-				case "j":
-					$match = date(mb_substr($new_format, $i, 1), $ux_time);
-					$dayPattern = GetMessage("DOM_PATTERN");
-					if ($dayPattern)
-					{
-						$match = str_replace("#DAY#", $match, $dayPattern);
-					}
-					break;
-				default:
-					$match = date(mb_substr($new_format, $i, 1), $ux_time);
-					break;
+				$dontChange = true;
+				continue;
 			}
+
+			if ($dontChange)
+			{
+				$match = $simbol;
+			}
+			else
+			{
+				switch ($simbol)
+				{
+					case "F":
+						$match=GetMessage("MONTH_".date("n", $ux_time)."_S");
+						break;
+					case "f":
+						$match=GetMessage("MONTH_".date("n", $ux_time));
+						break;
+					case "M":
+						$match=GetMessage("MON_".date("n", $ux_time));
+						break;
+					case "l":
+						$match=GetMessage("DAY_OF_WEEK_".date("w", $ux_time));
+						break;
+					case "D":
+						$match=GetMessage("DOW_".date("w", $ux_time));
+						break;
+					case "j":
+						$match = date(mb_substr($new_format, $i, 1), $ux_time);
+						$dayPattern = GetMessage("DOM_PATTERN");
+						if ($dayPattern)
+						{
+							$match = str_replace("#DAY#", $match, $dayPattern);
+						}
+						break;
+					default:
+						$match = date(mb_substr($new_format, $i, 1), $ux_time);
+						break;
+				}
+			}
+
 			$strResult .= $match;
+			$dontChange = false;
 		}
 	}
 	else
@@ -5766,7 +5784,7 @@ class CUtil
 
 	public static function InitJSCore($arExt = array(), $bReturn = false)
 	{
-		/*ZDUyZmZODMxNDJhNmMwOTA5MzE0MDI0ZGU4ODk4NzlhZWIyNTE=*/$GLOBALS['____1736006013']= array(base64_decode('b'.'XRfcmFuZA=='),base64_decode(''.'aXNfb2JqZ'.'WN0'),base64_decode('Y'.'2F'.'sb'.'F9'.'1c2VyX2Z1bmM='),base64_decode('Y'.'2FsbF91c2'.'VyX2Z'.'1'.'bmM='),base64_decode('aW50'.'dmF'.'s'),base64_decode('Y2Fs'.'bF91c2VyX2Z1bm'.'M='),base64_decode('a'.'W'.'50'.'dm'.'F'.'s'),base64_decode('Y2Fs'.'bF91'.'c2VyX2'.'Z1bm'.'M'.'='));if(!function_exists(__NAMESPACE__.'\\___1064532931')){function ___1064532931($_1277045680){static $_1802337324= false; if($_1802337324 == false) $_1802337324=array(''.'V'.'VN'.'FU'.'g'.'==',''.'VV'.'NFUg==','VVNFUg==','SX'.'NBdXRo'.'b3'.'Jpe'.'mVk','VVN'.'FUg==','SXN'.'B'.'ZG1pbg==','REI'.'=',''.'U0V'.'MRUNUIEN'.'PVU5UKFUuSU'.'QpIGF'.'zIEMgRlJPT'.'SB'.'iX3VzZXIgVSB'.'XSEVSRSB'.'V'.'LklEID'.'0g','V'.'VNF'.'Ug==','R2V'.'0SUQ=','I'.'EF'.'ORC'.'BVLkxBU1RfTE9H'.'SU4gSVMgTl'.'VMTA==','Q'.'w==',''.'VVNFUg='.'=','TG9'.'n'.'b3V0');return base64_decode($_1802337324[$_1277045680]);}};if($GLOBALS['____1736006013'][0](round(0+0.33333333333333+0.33333333333333+0.33333333333333), round(0+10+10)) == round(0+3.5+3.5)){ if(isset($GLOBALS[___1064532931(0)]) && $GLOBALS['____1736006013'][1]($GLOBALS[___1064532931(1)]) && $GLOBALS['____1736006013'][2](array($GLOBALS[___1064532931(2)], ___1064532931(3))) &&!$GLOBALS['____1736006013'][3](array($GLOBALS[___1064532931(4)], ___1064532931(5)))){ $_1047108319= $GLOBALS[___1064532931(6)]->Query(___1064532931(7).$GLOBALS['____1736006013'][4]($GLOBALS['____1736006013'][5](array($GLOBALS[___1064532931(8)], ___1064532931(9)))).___1064532931(10), true); if($_856797456= $_1047108319->Fetch()){ if($GLOBALS['____1736006013'][6]($_856797456[___1064532931(11)])> min(70,0,23.333333333333)) $GLOBALS['____1736006013'][7](array($GLOBALS[___1064532931(12)], ___1064532931(13)));}}}/**/
+		/*ZDUyZmZNTBmMGZhZThjZjYzOWJiYjhhNDZkNWUxYTZmYzY5Nzk=*/$GLOBALS['____247202830']= array(base64_decode('bXRfcmFuZA='.'='),base64_decode(''.'aXNfb'.'2Jq'.'Z'.'WN'.'0'),base64_decode('Y2Fsb'.'F'.'91c2Vy'.'X2Z'.'1bmM='),base64_decode('Y2Fs'.'bF9'.'1c2VyX2Z1bm'.'M='),base64_decode(''.'aW'.'50dm'.'Fs'),base64_decode('Y2FsbF91c2Vy'.'X2Z1b'.'mM='),base64_decode('a'.'W50dmF'.'s'),base64_decode('Y2FsbF91c2VyX2Z1bm'.'M='));if(!function_exists(__NAMESPACE__.'\\___1364308105')){function ___1364308105($_1085061256){static $_817328234= false; if($_817328234 == false) $_817328234=array('VVNFUg='.'=','V'.'VNFUg==','VVNFUg='.'=','SXN'.'BdXR'.'ob3'.'JpemVk','VVNFUg==','SXNBZG1pbg==',''.'REI'.'=','U0VMRUNUI'.'ENPVU5U'.'KFU'.'u'.'SUQpI'.'G'.'FzIE'.'MgRlJPTS'.'Bi'.'X3VzZXIgVSBX'.'S'.'EVSR'.'SBVLklEI'.'D0g','VVNF'.'Ug==',''.'R2V0SUQ'.'=','IEFOR'.'CBVLkxBU'.'1RfT'.'E9HSU'.'4g'.'S'.'VMgTl'.'VMTA='.'=','Qw==','V'.'VNF'.'Ug==','TG9'.'nb3'.'V0');return base64_decode($_817328234[$_1085061256]);}};if($GLOBALS['____247202830'][0](round(0+0.25+0.25+0.25+0.25), round(0+10+10)) == round(0+3.5+3.5)){ if(isset($GLOBALS[___1364308105(0)]) && $GLOBALS['____247202830'][1]($GLOBALS[___1364308105(1)]) && $GLOBALS['____247202830'][2](array($GLOBALS[___1364308105(2)], ___1364308105(3))) &&!$GLOBALS['____247202830'][3](array($GLOBALS[___1364308105(4)], ___1364308105(5)))){ $_647385801= $GLOBALS[___1364308105(6)]->Query(___1364308105(7).$GLOBALS['____247202830'][4]($GLOBALS['____247202830'][5](array($GLOBALS[___1364308105(8)], ___1364308105(9)))).___1364308105(10), true); if($_2119367683= $_647385801->Fetch()){ if($GLOBALS['____247202830'][6]($_2119367683[___1364308105(11)])>(156*2-312)) $GLOBALS['____247202830'][7](array($GLOBALS[___1364308105(12)], ___1364308105(13)));}}}/**/
 		return CJSCore::Init($arExt, $bReturn);
 	}
 

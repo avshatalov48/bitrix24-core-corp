@@ -47,7 +47,6 @@ $MESS["SALESCENTER_PRODUCT_HIDE_DISCOUNT"] = "Скрыть скидку";
 $MESS["SALESCENTER_PRODUCT_ADD_PRODUCT"] = "Добавить";
 $MESS["SALESCENTER_PRODUCT_ADD_PRODUCT_FROM_CATALOG"] = "Выбрать из каталога";
 $MESS["SALESCENTER_PRODUCT_TOTAL_SUM"] = "Сумма";
-$MESS["SALESCENTER_PRODUCT_DELIVERY_PRICE"] = "Стоимость доставки";
 $MESS["SALESCENTER_PRODUCT_PRODUCTS_PRICE"] = "Сумма товаров";
 $MESS["SALESCENTER_PRODUCT_TOTAL_DISCOUNT"] = "Выгода клиента составила";
 $MESS["SALESCENTER_PRODUCT_TOTAL_RESULT"] = "К оплате";
@@ -102,3 +101,7 @@ $MESS["SALESCENTER_SENDER_LIST_CONTENT_SETTINGS"] = "Подключить еще
 $MESS["SALESCENTER_SMS_MESSAGE_HINT"] = "Полный адрес ссылки будет показан после отправки";
 $MESS["SALESCENTER_JS_POPUP_CLOSE"] = "Закрыть";
 $MESS["SALESCENTER_PRODUCT_NAME_PLACEHOLDER"] = "Найти или создать новый товар";
+
+
+
+$MESS["SALESCENTER_APP_CONTACT_BLOCK_TITLE_SMS"] = "Клиенту будет отправлено SMS на номер #PHONE#";

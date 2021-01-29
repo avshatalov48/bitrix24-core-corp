@@ -174,6 +174,7 @@ class ResultEntity
 
 		/** @var  $merger \Bitrix\Crm\Merger\EntityMerger */
 		$mergerClass = $entity['DUPLICATE_CHECK']['MERGER_CLASS_NAME'];
+		$mergerOptions = ['ENABLE_UPLOAD' => true, 'ENABLE_UPLOAD_CHECK' => false];
 		switch($this->duplicateMode)
 		{
 			case self::DUPLICATE_CONTROL_MODE_MERGE:
@@ -197,7 +198,7 @@ class ResultEntity
 					}
 				}
 				$merger = new $mergerClass(0, false);
-				$merger->mergeFields($fields, $entityFields, false, array('ENABLE_UPLOAD' => true));
+				$merger->mergeFields($fields, $entityFields, false, $mergerOptions);
 
 				$entityObject->Update($rowId, $entityFields);
 				break;
@@ -209,7 +210,7 @@ class ResultEntity
 					$entityFields['FM'] = $entityMultiFields;
 				}
 				$merger = new $mergerClass(0, false);
-				$merger->mergeFields($fields, $entityFields, false, array('ENABLE_UPLOAD' => true));
+				$merger->mergeFields($fields, $entityFields, false, $mergerOptions);
 				$entityObject->Update($rowId, $entityFields);
 				break;
 		}

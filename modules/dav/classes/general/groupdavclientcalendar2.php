@@ -928,6 +928,7 @@ if (!class_exists("CDavGroupdavClientCalendar"))
 			}
 
 			$client = new CDavGroupdavClientCalendar($scheme, $host, $port, $username, $password);
+			$client->SetPrivateIp(false);
 			if (CDav::UseProxy())
 			{
 				$arProxy = CDav::GetProxySettings();

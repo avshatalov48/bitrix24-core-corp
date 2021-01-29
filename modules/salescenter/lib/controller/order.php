@@ -360,13 +360,10 @@ class Order extends Base
 
 				$this->syncOrderProductsWithDeal($dealId, $orderFacade->getField('PRODUCT'), $order);
 
-				$primaryContactId = $this->getDealPrimaryContactId($dealId);
-				if ($primaryContactId)
+				$dealPrimaryContactId = $this->getDealPrimaryContactId($dealId);
+				if ($dealPrimaryContactId)
 				{
-					$this->tryToFillContactDeliveryAddress(
-						$primaryContactId,
-						$order->getId()
-					);
+					$this->tryToFillContactDeliveryAddress($dealPrimaryContactId, $order->getId());
 				}
 			}
 
@@ -567,7 +564,7 @@ class Order extends Base
 		foreach ($products as $product)
 		{
 			$item = [
-				'id' => $product['ID'],
+				'id' => $product['PRODUCT_ID'],
 				'name' => $product['PRODUCT_NAME'],
 				'price' => $product['PRICE'],
 				'quantity' => $product['QUANTITY'],
@@ -1166,6 +1163,64 @@ HTML;
 
 		return '';
 	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	/**
 	 * @param int $dealId

@@ -1,6 +1,7 @@
 import {Vue} from 'ui.vue';
 import {ajax} from 'main.core';
 import {Manager} from 'salescenter.manager';
+import {Ears} from 'ui.ears';
 import StringControl from './properties/string';
 import AddressControl from './properties/address';
 import CheckboxService from './services/checkbox';
@@ -82,6 +83,15 @@ export default {
 
 			calculateErrors: [],
 		};
+	},
+	mounted() {
+		let methodEars = new Ears({
+			container: this.$refs['delivery-methods'],
+			smallSize: true,
+			noScrollbar: true
+		});
+
+		methodEars.init();
 	},
 	methods: {
 		initialize()
@@ -637,29 +647,27 @@ export default {
 	template: `
 		<div class="salescenter-delivery">
 			<div class="salescenter-delivery-header">
-				<span class="salescenter-delivery-header-method">
-					{{localize.SALE_DELIVERY_SERVICE_SELECTOR_DELIVERY_SERVICE}}
-				</span>
-				
-				<div
-					v-for="deliveryService in deliveryServices"
-					@click="onDeliveryServiceChanged(deliveryService)"
-					:class="{'salescenter-delivery-method-item': true, 'salescenter-delivery-method-item--selected': (selectedDeliveryService && deliveryService.id == selectedDeliveryService.id) ? true : false}"
-				>
-					<div class="salescenter-delivery-method-image">
-						<img :src="deliveryService.logo">
+				<div class="salescenter-delivery-method" ref="delivery-methods">
+					<div
+						v-for="deliveryService in deliveryServices"
+						@click="onDeliveryServiceChanged(deliveryService)"
+						:class="{'salescenter-delivery-method-item': true, 'salescenter-delivery-method-item--selected': (selectedDeliveryService && deliveryService.id == selectedDeliveryService.id) ? true : false}"
+					>
+						<div class="salescenter-delivery-method-image">
+							<img :src="deliveryService.logo">
+						</div>
+						<div class="salescenter-delivery-method-info">
+							<div v-if="deliveryService.title" class="salescenter-delivery-method-title">{{deliveryService.title}}</div>
+							<div v-else="deliveryService.title" class="salescenter-delivery-method-title"></div>
+							<div class="salescenter-delivery-method-name">{{deliveryService.name}}</div>
+						</div>
 					</div>
-					<div class="salescenter-delivery-method-info">
-						<div v-if="deliveryService.title" class="salescenter-delivery-method-title">{{deliveryService.title}}</div>
-						<div v-else="deliveryService.title" class="salescenter-delivery-method-title"></div>
-						<div class="salescenter-delivery-method-name">{{deliveryService.name}}</div>
-					</div>
-				</div>
-				<div @click="onAddMoreClicked" class="salescenter-delivery-method-item salescenter-delivery-method-item--add">
-					<div class="salescenter-delivery-method-image-more"></div>
-					<div class="salescenter-delivery-method-info">
-						<div class="salescenter-delivery-method-name">
-							{{localize.SALE_DELIVERY_SERVICE_SELECTOR_ADD_MORE}}
+					<div @click="onAddMoreClicked" class="salescenter-delivery-method-item salescenter-delivery-method-item--add">
+						<div class="salescenter-delivery-method-image-more"></div>
+						<div class="salescenter-delivery-method-info">
+							<div class="salescenter-delivery-method-name">
+								{{localize.SALE_DELIVERY_SERVICE_SELECTOR_ADD_MORE}}
+							</div>
 						</div>
 					</div>
 				</div>
@@ -693,7 +701,7 @@ export default {
 					>
 					</component>
 				</div>
-			</div>
+			</div>			
 			<div v-show="relatedPropsOfAddressTypeCount > 0" class="salescenter-delivery-path">
 				<div
 					v-for="(relatedProp, index) in relatedPropsOfAddressType"

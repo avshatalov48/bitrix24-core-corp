@@ -87,9 +87,12 @@ class SalesCenterDeliveryPanel extends CBitrixComponent implements Main\Engine\C
 			$items[] = $this->getRecommendItem();
 		}
 
-		foreach ($this->getActionboxItems() as $actionboxItem)
+		if (RestManager::getInstance()->isEnabled())
 		{
-			$items[] = $actionboxItem;
+			foreach ($this->getActionboxItems() as $actionboxItem)
+			{
+				$items[] = $actionboxItem;
+			}
 		}
 
 		$this->arResult['deliveryPanelParams'] = [

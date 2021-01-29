@@ -1,11 +1,12 @@
 import {config} from "./config";
 import {Vue} from "ui.vue";
 import {PopupMenuWindow} from 'main.popup';
+import {Popup} from 'main.popup';
 
 import "ui.dropdown";
 import "ui.common";
 import "ui.alerts";
-import {MixinTemplatesType} from "./components/templates-type-mixin";
+import {MixinTemplatesType} from "./components/deal-receiving-payment/templates-type-mixin";
 import {type BaseEvent, EventEmitter} from 'main.core.events';
 
 Vue.component(config.templateAddPaymentProductName,
@@ -643,6 +644,26 @@ Vue.component(config.templateAddPaymentProductName,
 							}
 						];
 					}
+				},
+				showProductTooltip(e)
+				{
+					if(!this.productTooltip)
+					{
+						this.productTooltip = new Popup({
+							bindElement: e.target,
+							maxWidth: 400,
+							darkMode: true,
+							innerHTML: e.target.value,
+							animation: 'fading-slide'
+						});
+					}
+
+					this.productTooltip.setContent(e.target.value);
+					e.target.value.length > 0 ? this.productTooltip.show() : null;
+				},
+				hideProductTooltip()
+				{
+					this.productTooltip ? this.productTooltip.close() : null;
 				}
 			},
 		watch: {
@@ -726,11 +747,10 @@ Vue.component(config.templateAddPaymentProductName,
 						'ui-ctl-after-icon': true,
 						'ui-ctl-danger': this.hasNameError,
 					};
-
-				},
+				}
 			},
 		template: `
-		<div>
+		<div class="salescenter-app-page-content-item">
 			<!--counters anr remover-->
 			<div class="salescenter-app-counter">{{basketItemIndex + 1}}</div>
 			<div class="salescenter-app-remove" @click="removeItem" v-if="countItems > 1 && editable"></div>
@@ -753,7 +773,9 @@ Vue.component(config.templateAddPaymentProductName,
 									:value="basketItem.name"
 									v-bx-search-product="{selector: productSelector, restrictedIds: restrictedSearchIds}"
 									:disabled="!editable"
-									:placeholder="localize.SALESCENTER_PRODUCT_NAME_PLACEHOLDER"
+									:placeholder="localize.SALESCENTER_PRODUCT_NAME_PLACEHOLDER" 
+									@mouseover="showProductTooltip(event)"
+									@mouseleave="hideProductTooltip(event)"
 								>
 							</div>
 							<div class="salescenter-form-error" v-if="hasNameError">{{localize.SALESCENTER_PRODUCT_CHOOSE_PRODUCT}}</div>
@@ -861,7 +883,14 @@ Vue.component(config.templateAddPaymentProductName,
 							<label class="salescenter-app-ctl-label-text ui-ctl-label-text">{{localize.SALESCENTER_PRODUCT_TITLE}}</label>
 							<div :class="productInputWrapperClass">
 								<button class="ui-ctl-after ui-ctl-icon-clear" @click="hideCreationForm"> </button>
-								<input type="text" class="ui-ctl-element ui-ctl-textbox" @change="changeName" :value="basketItem.name">
+								<input 
+									type="text" 
+									class="ui-ctl-element ui-ctl-textbox" 
+									@change="changeName" 
+									:value="basketItem.name"
+									@mouseover="showProductTooltip(event)"
+									@mouseleave="hideProductTooltip(event)"
+								>
 								<div class="ui-ctl-tag">{{localize.SALESCENTER_PRODUCT_NEW_LABEL}}</div>
 							</div>
 							<div class="salescenter-form-error" v-if="hasNameError">{{localize.SALESCENTER_PRODUCT_EMPTY_PRODUCT_NAME}}</div>

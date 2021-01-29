@@ -90,8 +90,11 @@ Extension::load([
 					{
 						$description = $arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['DESCRIPTION'];
 					}
+					$sanitizer = new CBXSanitizer();
+					$sanitizer->SetLevel(\CBXSanitizer::SECURE_LEVEL_LOW);
+					$description = $sanitizer->SanitizeHtml($description);
 					?>
-					<p class="ui-slider-paragraph-2"><?=htmlspecialcharsbx($description);?></p>
+					<p class="ui-slider-paragraph-2"><?=$description?></p>
 					<div class="salescenter-button-container">
 						<?php if (mb_strtolower($arResult['PAYSYSTEM_HANDLER_CLASS_NAME']) === mb_strtolower(\Sale\Handlers\PaySystem\SkbHandler::class)):?>
 							<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigSkbPaySystem(event);"><?=Loc::getMessage('SALESCENTER_SP_LINK_SBP_CONNECT')?></a>

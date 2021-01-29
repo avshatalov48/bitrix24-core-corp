@@ -600,7 +600,8 @@ $fieldsToSet = $dialog->getMap()['FieldsToSet'];
 						{
 							popup.destroy();
 						}
-					}
+					},
+					overlay: { backgroundColor: 'transparent' },
 				}
 			);
 		};

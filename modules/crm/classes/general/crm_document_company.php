@@ -606,6 +606,20 @@ class CCrmDocumentCompany extends CCrmDocument
 
 	static public function PrepareDocument(array &$arFields)
 	{
+		$arFields['ADDRESS'] = \Bitrix\Crm\Format\CompanyAddressFormatter::format(
+			$arFields,
+			array(
+				'SEPARATOR' => \Bitrix\Crm\Format\AddressSeparator::Comma,
+				'TYPE_ID' => \Bitrix\Crm\EntityAddressType::Delivery
+			)
+		);
+		$arFields['ADDRESS_LEGAL'] = \Bitrix\Crm\Format\CompanyAddressFormatter::format(
+			$arFields,
+			array(
+				'SEPARATOR' => \Bitrix\Crm\Format\AddressSeparator::Comma,
+				'TYPE_ID' => \Bitrix\Crm\EntityAddressType::Registered
+			)
+		);
 		$arFields['CONTACT_ID'] = \Bitrix\Crm\Binding\ContactCompanyTable::getCompanyContactIDs($arFields['ID']);
 	}
 

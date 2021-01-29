@@ -186,9 +186,7 @@ this.BX = this.BX || {};
 	 * @mixes EventEmitter
 	 */
 
-	var Task =
-	/*#__PURE__*/
-	function (_Timeline$Item) {
+	var Task = /*#__PURE__*/function (_Timeline$Item) {
 	  babelHelpers.inherits(Task, _Timeline$Item);
 
 	  function Task(props) {
@@ -497,9 +495,7 @@ this.BX = this.BX || {};
 
 	  return data;
 	}
-	var TaskComplete =
-	/*#__PURE__*/
-	function (_Timeline$History) {
+	var TaskComplete = /*#__PURE__*/function (_Timeline$History) {
 	  babelHelpers.inherits(TaskComplete, _Timeline$History);
 
 	  function TaskComplete() {

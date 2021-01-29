@@ -25,10 +25,12 @@ Extension::load([
 </div>
 <div id="salescenter-smsprovider" class="salescenter-smsprovider"></div>
 
-<div class="salescenter-smsprovider-title">
-	<?=Loc::getMessage('SPP_SALESCENTER_SMSPROVIDER_OTHER_SUB_TITLE')?>
-</div>
-<div id="salescenter-smsprovider-app" class="salescenter-smsprovider"></div>
+<?php if (!empty($arResult['smsProviderAppPanelParams']['items'])):?>
+	<div class="salescenter-smsprovider-title">
+		<?=Loc::getMessage('SPP_SALESCENTER_SMSPROVIDER_OTHER_SUB_TITLE')?>
+	</div>
+	<div id="salescenter-smsprovider-app" class="salescenter-smsprovider"></div>
+<?php endif;?>
 
 <script>
 	BX.ready(function()

@@ -65,6 +65,8 @@ class ProductCreatorService
 			}
 		}
 
+		$this->prepareProductCode($iblockElementFields);
+
 		$elementObject = new \CIBlockElement();
 		$productId = $elementObject->Add($iblockElementFields);
 
@@ -125,5 +127,22 @@ class ProductCreatorService
 		}
 
 		return $productId;
+	}
+
+	private function prepareProductCode(&$fields): void
+	{
+		$productName = $fields['NAME'] ?? '';
+
+		if ($productName !== '')
+		{
+			$fields['CODE'] = mb_strtolower(\CUtil::translit(
+					$productName,
+					LANGUAGE_ID,
+					[
+						'replace_space' => '_',
+						'replace_other' => '',
+					]
+				)).'_'.random_int(0, 1000);
+		}
 	}
 }

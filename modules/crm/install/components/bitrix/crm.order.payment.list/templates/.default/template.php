@@ -171,7 +171,7 @@ foreach($arResult['ORDER_PAYMENT'] as $sKey => $payment)
 		'columns' => array(
 			'PAYMENT_SUMMARY' => CCrmViewHelper::RenderInfo(
 				$payment['PATH_TO_ORDER_PAYMENT_DETAILS'],
-				$paymentSummaryText,
+				htmlspecialcharsbx($paymentSummaryText),
 				'', // type
 				array('TARGET' => '_self')
 			),

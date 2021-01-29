@@ -1,5 +1,6 @@
 <?
 
+use Bitrix\Crm\Color\PhaseColorScheme;
 use Bitrix\Crm\Integration\PullManager;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
@@ -178,7 +179,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() &&
 				}
 				else
 				{
-					$field["STATUS_ID"] = $$id;
+					$field["STATUS_ID"] = $id;
 				}
 			}
 			else
@@ -288,9 +289,23 @@ foreach($arResult['ENTITY'] as $entityId => $dataEntity)
 	$arResult['SUCCESS_FIELDS'][$entityId] = array();
 	$arResult['UNSUCCESS_FIELDS'][$entityId] = array();
 	$number = 1;
+	$colorOffset = -1;
 	foreach($arResult['ROWS'][$entityId] as $status)
 	{
 		$status['NUMBER'] = $number;
+		if(
+			$status['SEMANTICS'] !== \Bitrix\Crm\PhaseSemantics::SUCCESS
+			&& $status['SEMANTICS'] !== \Bitrix\Crm\PhaseSemantics::FAILURE
+		)
+		{
+			$colorOffset++;
+		}
+		if(empty($status['COLOR']))
+		{
+			$status['COLOR'] = PhaseColorScheme::getDefaultColorBySemantics($status['SEMANTICS'], [
+				'offset' => $colorOffset,
+			]);
+		}
 		if (empty($arResult['INITIAL_FIELDS'][$entityId]))
 		{
 			$arResult['INITIAL_FIELDS'][$entityId] = $status;
@@ -332,12 +347,18 @@ foreach($arResult['ENTITY'] as $entityId => $dataEntity)
 		{
 			$sort = $arResult['FINAL_FIELDS'][$entityId]['UNSUCCESSFUL']['SORT'] - 5;
 		}
+		$finalStatusId = $dataEntity['FINAL_SUCCESS_FIELD'];
+		$existingStatusIds = array_column($arResult['ROWS'][$entityId], 'STATUS_ID');
+		if(in_array($finalStatusId, $existingStatusIds))
+		{
+			$finalStatusId = \Bitrix\Main\Security\Random::getString(5);
+		}
 		$arResult['FINAL_FIELDS'][$entityId]['SUCCESSFUL'] = [
 			'ID' => 'n' . $entityNumbers[$entityId],
 			'NUMBER' => $entityNumbers[$entityId],
 			'SEMANTICS' => \Bitrix\Crm\PhaseSemantics::SUCCESS,
 			'SORT' => $sort,
-			'STATUS_ID' => $dataEntity['FINAL_SUCCESS_FIELD'],
+			'STATUS_ID' => $finalStatusId,
 		];
 	}
 }

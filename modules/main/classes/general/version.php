@@ -1,3 +1,3 @@
 <?php
-define("SM_VERSION", "20.200.550");
-define("SM_VERSION_DATE", "2020-12-18 14:06:39"); // YYYY-MM-DD HH:MI:SS
+define("SM_VERSION", "20.200.800");
+define("SM_VERSION_DATE", "2021-01-25 16:34:42"); // YYYY-MM-DD HH:MI:SS

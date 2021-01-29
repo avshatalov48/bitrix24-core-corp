@@ -9,61 +9,50 @@ Loc::loadMessages(__DIR__.'/template.php');
 Extension::load(['ui.buttons', 'ui.icons', 'ui.common', 'ui.alerts', 'ui.sidepanel-content', 'salescenter.manager']);
 ?>
 
-<div class="salescenter-cashbox-wrapper">
-	<div id="salescenter-wrapper" class="salescenter-wrapper">
-		<div id="salescenter-cashbox-info">
-			<div style="padding: 15px; margin-bottom: 15px;" class="ui-bg-color-white">
-				<div class="salescenter-main-header">
-
-					<div class="salescenter-main-header-left-block">
-						<div class="salescenter-logo-container">
-							<div class="salescenter-<?=$arResult['handlerDescription']['code'];?>-icon ui-icon" style="width:97px;"><i></i></div>
-						</div>
+<div id="salescenter-wrapper" class="salescenter-wrapper">
+	<div id="salescenter-cashbox-info">
+		<div class="ui-slider-section ui-slider-section-icon">
+			<div class="ui-icon ui-slider-icon salescenter-<?=$arResult['handlerDescription']['code'];?>-icon">
+				<i></i>
+			</div>
+			<div class="ui-slider-content-box">
+				<div class="ui-slider-heading-4 salescenter-main-header-title-container">
+					<?=Loc::getMessage($arResult['handlerDescription']['title'])?>
+					<div class="salescenter-main-header-feedback-container">
+						<?Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->renderFeedbackButton();?>
 					</div>
-
-					<div class="salescenter-main-header-right-block">
-
-						<div class="salescenter-main-header-title-container">
-							<div style="margin-bottom: 15px;" class="ui-title-3"><?=Loc::getMessage($arResult['handlerDescription']['title'])?></div>
-							<div class="salescenter-main-header-feedback-container">
-								<?Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->renderFeedbackButton();?>
-							</div>
-						</div>
-						<hr class="ui-hr" style="margin-bottom: 15px;">
-						<div class="ui-text-2" style="margin-bottom: 20px;"><?=Loc::getMessage($arResult['handlerDescription']['description'])?></div>
-						<div class="salescenter-button-container">
+				</div>
+				<p class="ui-slider-paragraph"><?=Loc::getMessage($arResult['handlerDescription']['description'])?></p>
+				<div class="salescenter-button-container">
 					<?php if (mb_strtolower($arResult['handler']) === mb_strtolower('\Bitrix\Sale\Cashbox\CashboxCheckbox')): ?>
 					<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigCheckboxCashBox(event);"><?=Loc::getMessage('SC_CASHBOX_CHECKBOX_LINK_CONNECT')?></a>
 					<?php else:?>
-							<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigCashBox(event);"><?=Loc::getMessage('SC_CASHBOX_LINK_CONNECT')?></a>
+					<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigCashBox(event);"><?=Loc::getMessage('SC_CASHBOX_LINK_CONNECT')?></a>
 					<?php endif; ?>
-						</div>
-						<div style="padding-top: 20px;padding-bottom: 20px;" class="salescenter-button-container">
-							<button class="ui-btn ui-btn-md ui-btn-primary" onclick="location.href='<?=$arResult['addUrl'];?>';"><?=Loc::getMessage("SC_ADD_CASHBOX_BUTTOM")?></button>
+				</div>
+				<div style="padding-top: 20px;padding-bottom: 20px;" class="salescenter-button-container">
+					<button class="ui-btn ui-btn-md ui-btn-primary" onclick="location.href='<?=$arResult['addUrl'];?>';"><?=Loc::getMessage("SC_ADD_CASHBOX_BUTTOM")?></button>
 					<?php if ($arResult['connectionInfoUrl']): ?>
 					<button class="ui-btn ui-btn-md ui-btn-light-border" onclick="window.open('<?= $arResult['connectionInfoUrl'] ?>');"><?=Loc::getMessage("SC_CASHBOX_CONNECTION_INFORMATION")?></button>
 					<?php endif; ?>
-						</div>
-
-					</div>
-
 				</div>
 			</div>
+		</div>
 
-			<?php
-			if(is_array($arResult['errors']) && !empty($arResult['errors']))
-			{?>
+		<?php
+		if(is_array($arResult['errors']) && !empty($arResult['errors']))
+		{?>
 			<div class="ui-alert ui-alert-danger">
 				<span class="ui-alert-message" id="salescenter-cashbox-error"><?php
 					echo implode('<br />', $arResult['errors']);
 					?></span>
 			</div>
 			<?php
-			}
-			else
-			{
+		}
+		else
+		{
 			?>
-			<div style="padding: 15px; margin-bottom: 15px;" class="ui-bg-color-white">
+			<div class="ui-slider-section">
 			<?php if (mb_strtolower($arResult['handler']) === mb_strtolower('\Bitrix\Sale\Cashbox\CashboxCheckbox')): ?>
 				<div class="ui-title-4"><?=Loc::getMessage("SC_CASHBOX_CHECKBOX_INSTRUCTION_TITLE")?></div>
 				<hr class="ui-hr">
@@ -88,8 +77,7 @@ Extension::load(['ui.buttons', 'ui.icons', 'ui.common', 'ui.alerts', 'ui.sidepan
 			<?php endif; ?>
 
 			<?php
-			}
-			?>
-		</div>
+		}
+		?>
 	</div>
 </div>

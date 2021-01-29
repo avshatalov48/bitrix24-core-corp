@@ -130,6 +130,7 @@ class TaskRegistry
 
 		$res = \Bitrix\Tasks\Internals\TaskTable::query()
 			->addSelect('ID')
+			->addSelect('TITLE')
 			->addSelect('GROUP_ID')
 			->addSelect('STATUS')
 			->addSelect('ALLOW_CHANGE_DEADLINE')

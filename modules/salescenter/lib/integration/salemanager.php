@@ -530,47 +530,11 @@ class SaleManager extends Base
 	 */
 	public function getPaySystemFilter()
 	{
-		$paySystemHandlerList = [
-			'cash',
-			'paypal',
-			'sberbankonline',
-			'qiwi',
-			'webmoney',
-			'liqpay',
-			'adyen',
-			'uapay',
-		];
-
-		$paySystemHandlerWithMode = [
-			'yandexcheckout',
-			'skb',
-		];
-
-		$paySystemModeList = [
-			'bank_card',
-			'sberbank',
-			'sberbank_sms',
-			'alfabank',
-			'yandex_money',
-			'webmoney',
-			'qiwi',
-			'embedded',
-			'skb',
-		];
-
 		return [
 			'ACTIVE' => 'Y',
-			[
-				'LOGIC' => 'OR',
-				[
-					'=ACTION_FILE' => $paySystemHandlerList,
-				],
-				[
-					'=ACTION_FILE' => $paySystemHandlerWithMode,
-					'=PS_MODE' => $paySystemModeList,
-				]
+			'!=ACTION_FILE' => [
+				'inner',
 			],
-
 		];
 	}
 
@@ -640,6 +604,8 @@ class SaleManager extends Base
 			$result[] ='\Bitrix\Sale\Cashbox\CashboxCheckbox';
 		}
 
+		$result[] = '\Bitrix\Sale\Cashbox\CashboxRest';
+
 		return $result;
 	}
 
@@ -671,7 +637,7 @@ class SaleManager extends Base
 	public function getCashboxList($limit = 0) : array
 	{
 		$params = [
-			'select' => ['ID', 'NAME', 'HANDLER'],
+			'select' => ['ID', 'NAME', 'HANDLER', 'SETTINGS'],
 			'filter' => $this->getCashboxFilter(true),
 			'order' => ['ID' => 'DESC']
 		];
@@ -687,6 +653,11 @@ class SaleManager extends Base
 
 		while ($item = $dbRes->fetch())
 		{
+			if (isset($item['SETTINGS']['REST']['REST_CODE']))
+			{
+				$item['REST_CODE'] = $item['SETTINGS']['REST']['REST_CODE'];
+				unset($item['SETTINGS']);
+			}
 			$result[$item['ID']] = $item;
 		}
 

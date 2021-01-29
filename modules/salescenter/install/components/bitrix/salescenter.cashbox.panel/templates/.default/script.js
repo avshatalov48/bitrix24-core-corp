@@ -38,6 +38,7 @@
 			buttonAction: null,
 			price: null
 		};
+		this.cashboxId = options.id;
 		this.data = options.data || {};
 	};
 
@@ -208,7 +209,7 @@
 					events: {
 						onCloseComplete: function (e)
 						{
-							this.reloadCashboxItem(this.data.handler);
+							this.reloadCashboxItem(this.data.handler, this.cashboxId);
 						}.bind(this),
 					}
 				};
@@ -294,7 +295,7 @@
 			item.moreTabsMenu.popupWindow.show();
 		},
 
-		reloadCashboxItem: function(handler)
+		reloadCashboxItem: function(handler, cashboxId)
 		{
 			var self = this;
 			BX.ajax.runComponentAction(
@@ -304,6 +305,7 @@
 					mode: 'class',
 					data: {
 						handler: handler,
+						cashboxId: cashboxId,
 					}
 				}
 			).then(function(response)

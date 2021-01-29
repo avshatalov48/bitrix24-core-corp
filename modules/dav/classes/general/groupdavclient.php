@@ -1,4 +1,7 @@
 <?
+
+use Bitrix\Main\Web\IpAddress;
+
 IncludeModuleLangFile(__FILE__);
 
 class CDavGroupdavClient
@@ -31,6 +34,8 @@ class CDavGroupdavClient
 
 	private $googleAuth = null;
 	private $googleOAuth = null;
+	private $privateIp = true;
+	private $effectiveIp;
 
 	public function __construct($scheme, $server, $port, $userName, $userPassword)
 	{
@@ -318,6 +323,12 @@ class CDavGroupdavClient
 		return $APPLICATION->ConvertCharset($text, $this->encoding, "utf-8");
 	}
 
+	public function SetPrivateIp($value)
+	{
+		$this->privateIp = (bool)$value;
+		return $this;
+	}
+
 	private function FormatUri($path)
 	{
 		return $path;
@@ -370,6 +381,21 @@ class CDavGroupdavClient
 				fwrite($f, $request ? $request->ToString() : "???");
 				fwrite($f, "\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n");
 				fclose($f);
+			}
+
+			if ($this->privateIp === false)
+			{
+				$parsedUrl = new \Bitrix\Main\Web\Uri($this->scheme. '://'
+					. $this->server . ':'
+					. ($this->port) . '/'
+					. $request->GetPath()
+				);
+				$ip = IpAddress::createByUri($parsedUrl);
+				if($ip->isPrivate())
+				{
+					$this->AddError("401", GetMessage("DAV_GDC_INCORRECT_SERVER"));
+					return null;
+				}
 			}
 
 			$this->SendRequest($request);

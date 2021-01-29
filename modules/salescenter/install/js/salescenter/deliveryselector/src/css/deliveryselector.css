@@ -1,8 +1,10 @@
 .salescenter-delivery {
 	display: block;
+	width: 100%;
 	max-width: 100%;
 	overflow: hidden;
 	padding: 10px 0 0 0;
+	box-sizing: border-box;
 }
 
 .crm-entity-stream-section-content .salescenter-delivery {
@@ -12,7 +14,6 @@
 
 .salescenter-delivery-header {
 	display: block;
-	margin-bottom: 26px;
 	font-size: 0;
 }
 
@@ -142,7 +143,7 @@
 .salescenter-delivery-car {
 	display: block;
 	white-space: nowrap;
-	margin: 0 -9px 15px -9px;
+	margin: 26px -9px 15px -9px;
 }
 
 .salescenter-delivery-car-item {
@@ -301,6 +302,20 @@
 	overflow: hidden;
 }
 
+.salescenter-delivery-path-item:last-child .salescenter-delivery-path-control {
+	position: relative;
+}
+
+.salescenter-delivery-path-item:last-child .salescenter-delivery-path-control:before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 35px;
+	width: 30px;
+	bottom: 0;
+	background: #fff;
+}
+
 .salescenter-delivery-path-item:last-child {
 	margin-bottom: 30px;
 }
@@ -345,13 +360,17 @@
 	justify-content: flex-start;
 }
 
+.sale-address-control-top-margin-width-820 {
+	max-width: 820px;
+}
+
 .salescenter-delivery-path-icon {
 	flex: 1;
 	min-width: 26px;
 	max-height: 39px;
 	min-height: 39px;
 	margin-bottom: 0;
-	margin-top: auto;
+	margin-top: 3px;
 	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2223%22%20height%3D%2230%22%20viewBox%3D%220%200%2023%2030%22%3E%3Cpath%20fill%3D%22%2338B1FF%22%20fill-rule%3D%22evenodd%22%20stroke%3D%22%23FFF%22%20stroke-width%3D%223%22%20d%3D%22M8.25031499%2C-1.5%20C10.9535749%2C-1.5%2013.390376%2C-0.412620715%2015.1518952%2C1.34889851%20C16.9131449%2C3.11014815%2018.00063%2C5.54661309%2018.00063%2C8.25031499%20C18.00063%2C12.3387234%2015.4823354%2C17.6254607%2010.1695245%2C24.0476173%20C9.41775784%2C24.7342631%208.77959484%2C24.9321778%208.20557085%2C24.9346596%20C7.47672382%2C24.9378109%206.80791491%2C24.630851%206.32717062%2C24.0598336%20L6.32717062%2C24.0598336%20L5.97953039%2C23.6436987%20C0.907859656%2C17.5235307%20-1.5%2C12.3721575%20-1.5%2C8.25031499%20C-1.5%2C5.54661309%20-0.412514891%2C3.11014815%201.34873474%2C1.34889851%20C3.11025397%2C-0.412620715%205.54705504%2C-1.5%208.25031499%2C-1.5%20Z%20M8.25031499%2C5.99847003%20C7.62011955%2C5.99847003%207.05437236%2C6.24058446%206.64827555%2C6.64668128%20C6.2420239%2C7.05293292%205.99991%2C7.61886103%205.99991%2C8.24887502%20C5.99991%2C8.87907047%206.24202443%2C9.44481765%206.64812125%2C9.85091447%20C7.05437289%2C10.2571661%207.620301%2C10.49928%208.25031499%2C10.49928%20C8.88033352%2C10.49928%209.44625711%2C10.2571661%209.85250488%2C9.85091833%20C10.2586056%2C9.44481764%2010.50072%2C8.87906593%2010.50072%2C8.24887502%20C10.50072%2C7.61867958%2010.2586056%2C7.05293239%209.85250874%2C6.64683557%20C9.44625709%2C6.24058393%208.88032898%2C5.99847003%208.25031499%2C5.99847003%20Z%22%20transform%3D%22translate%283%203%29%22/%3E%3C/svg%3E') center no-repeat
 }
 
@@ -536,11 +555,13 @@ span + .salescenter-delivery-status {
 	font-size: 21px;
 }
 
+.ui-ctl.salescenter-delivery-bottom-input-symbol,
 .salescenter-delivery-bottom-input-symbol {
 	display: inline-flex;
 	position: relative;
 	flex-direction: row;
 	align-items: initial;
+	max-width: 116px;
 }
 
 .salescenter-delivery-bottom-input-symbol .ui-ctl-element {
@@ -677,6 +698,8 @@ textarea.ui-ctl-element.salescenter-delivery-comment-textarea {
 	height: auto;
 	min-height: auto;
 	padding: 10.5px 11px;
+	max-width: 846px;
+	box-sizing: border-box;
 }
 
 .salescenter-delivery-manager-wrapper {
@@ -688,10 +711,9 @@ textarea.ui-ctl-element.salescenter-delivery-comment-textarea {
 	max-width: 450px;
 	position: relative;
 	padding: 13px 10px;
-	margin-bottom: 15px;
 	border: 1px solid #edeef0;
 	border-radius: 1px;
-	background-color: #f9fafb;
+	background-color: #fdfdfd;
 }
 
 .salescenter-delivery-manager-avatar {
@@ -721,18 +743,18 @@ textarea.ui-ctl-element.salescenter-delivery-comment-textarea {
 
 .salescenter-delivery-manager-edit {
 	position: absolute;
-	top: -8px;
+	top: -7px;
 	right: 6px;
 	z-index: 11;
-	background-color: #f5f5f5;
+	background-color: #fdfdfd;
 	border-radius: 7px;
 	padding: 0 5px;
-	color: #767B81;
-	font: 10px/14px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #767b81;
+	font: 8px/14px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	vertical-align: middle;
 	opacity: 0;
 	cursor: pointer;
-	transition: .1s;
+	transition: .2s;
 }
 
 .salescenter-delivery-manager:hover .salescenter-delivery-manager-edit {
@@ -741,15 +763,30 @@ textarea.ui-ctl-element.salescenter-delivery-comment-textarea {
 
 .salescenter-delivery-method {
 	display: block;
-	overflow: hidden;
-	max-width: 0 -7px;
+	margin: 0 -7px;
+}
+
+.salescenter-delivery-method.ui-ear-container {
+	padding: 7px 0 4px 0;
+}
+
+.salescenter-delivery-header .ui-ear {
+	background-size: contain;
+}
+
+.salescenter-delivery-header .ui-ear-left {
+	background-position: left center;
+}
+
+.salescenter-delivery-header .ui-ear-right {
+
 }
 
 .salescenter-delivery-method-item {
 	display: inline-flex;
 	position: relative;
 	width: 194px;
-	margin: 0 7px 7px 7px;
+	margin: 0 7px;
 	box-sizing: border-box;
 	padding: 6px 7px;
 	border: 1px solid rgba(168,173,180,.58);
@@ -886,5 +923,4 @@ textarea.ui-ctl-element.salescenter-delivery-comment-textarea {
 	display: inline-flex;
 	width: auto;
 	padding: 11px 24px 11px 11px;
-	margin-top: 6px;
 }

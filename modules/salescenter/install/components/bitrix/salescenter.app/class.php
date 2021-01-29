@@ -416,7 +416,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			$result = $this->getSmsSenderList();
 		}
 		return $result;
- 	}
+	}
 
 	/**
 	 * @param $orderId
@@ -591,11 +591,9 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	{
 		$result = [
 			[
-				'id' => '',
+				'type' => 'invariable',
 				'name' => Loc::getMessage('SALESCENTER_AUTOMATION_STEPS_STAY'),
-				'color' => '#2fc6f6',
-				'colorText' => 'dark',
-				'selected' => $stageId === '',
+				'selected' => $stageId === ''
 			],
 		];
 
@@ -604,10 +602,11 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		{
 			$result[] = [
 				'id' => $stage['STATUS_ID'],
-				'name' => htmlspecialcharsbx($stage['NAME']),
+				'type' => 'stage',
+				'name' => $stage['NAME'],
 				'color' => $stage['COLOR'],
 				'colorText' => $this->getStageColorText($stage['COLOR']),
-				'selected' => $stage['STATUS_ID'] === $stageId,
+				'selected' => $stage['STATUS_ID'] === $stageId
 			];
 		}
 
@@ -1052,10 +1051,10 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 
 			Main\Type\Collection::sortByColumn($result['items'], ['sort' => SORT_ASC]);
 
-			$result['paysystemPanel'] = [
+			$result['items'][] = [
 				'name' => Loc::getMessage('SALESCENTER_APP_ADD_TITLE'),
 				'link' => $this->getComponentSliderPath('bitrix:salescenter.paysystem.panel')->getLocator(),
-				'type' => 'panel',
+				'type' => 'more',
 			];
 
 			if (Bitrix24Manager::getInstance()->isEnabled())
@@ -1067,11 +1066,11 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				];
 				$feedbackPath->addParams($queryParams);
 
-				$result['paysystemForm'] = [
+				$result['items'][] = [
 					'name' => Loc::getMessage('SALESCENTER_APP_RECOMMENDATION_TITLE'),
 					'link' => $feedbackPath->getLocator(),
 					'width' => 735,
-					'type' => 'form',
+					'type' => 'offer',
 				];
 			}
 		}
@@ -1187,7 +1186,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			$result['items'][] = [
 				'name' => Loc::getMessage('SALESCENTER_APP_PAYSYSTEM_ITEM_EXTRA'),
 				'link' => $this->getComponentSliderPath('bitrix:salescenter.paysystem.panel')->getLocator(),
-				'type' => 'panel',
+				'type' => 'more',
 			];
 
 			if (Bitrix24Manager::getInstance()->isEnabled())
@@ -1203,11 +1202,10 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 					'name' => Loc::getMessage('SALESCENTER_APP_OFFER_TITLE'),
 					'link' => $feedbackPath->getLocator(),
 					'width' => 735,
-					'type' => 'form',
+					'type' => 'offer',
 				];
 			}
 		}
-
 		return $result;
 	}
 
@@ -1314,6 +1312,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				'info' => $handler->getShortDescription(),
 				'type' => 'delivery',
 				'showTitle' => $showTitle,
+				'width' => 835
 			];
 		}
 
@@ -1338,7 +1337,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				'name' => Loc::getMessage('SALESCENTER_APP_RECOMMENDATION_TITLE'),
 				'link' => $feedbackPath->getLocator(),
 				'width' => 735,
-				'type' => 'form',
+				'type' => 'offer',
 			];
 		}
 
@@ -1434,17 +1433,23 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			{
 				$queryParams['id'] = $item['ID'];
 				$queryParams['handler'] = $item['HANDLER'];
+				if (isset($item['REST_CODE']))
+				{
+					$queryParams['restHandler'] = $item['REST_CODE'];
+				}
 				$cashboxPath->addParams($queryParams);
 
 				$result['items'][] = [
 					'name' => $item['NAME'],
 					'link' => $cashboxPath->getLocator(),
+					'type' => 'cashbox'
 				];
 			}
 
-			$result['cashboxPanel'] = [
+			$result['items'][] = [
 				'name' => Loc::getMessage('SALESCENTER_APP_ADD_TITLE'),
 				'link' => $this->getComponentSliderPath('bitrix:salescenter.cashbox.panel')->getLocator(),
+				'type' => 'more'
 			];
 
 			if (Bitrix24Manager::getInstance()->isEnabled())
@@ -1456,11 +1461,11 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				];
 				$feedbackPath->addParams($queryParams);
 
-				$result['cashboxForm'] = [
+				$result['items'][] = [
 					'name' => Loc::getMessage('SALESCENTER_APP_RECOMMENDATION_TITLE'),
 					'link' => $feedbackPath->getLocator(),
 					'width' => 735,
-					'type' => 'form',
+					'type' => 'offer',
 				];
 			}
 		}
@@ -1486,21 +1491,51 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				{
 					$img = '/bitrix/components/bitrix/salescenter.cashbox.panel/templates/.default/images/checkbox.svg';
 				}
+				elseif (mb_strpos($queryParams['handler'], Cashbox\CashboxRest::class) !== false)
+				{
+					$img = '/bitrix/components/bitrix/salescenter.cashbox.panel/templates/.default/images/offline.svg';
+				}
 
-				$name = $cashboxHandler::getName();
-				$result['items'][] = [
-					'name' => $cashboxHandler::getName(),
-					'img' => $img,
-					'link' => $cashboxPath->getLocator(),
-					'info' => Loc::getMessage(
-						'SALESCENTER_APP_CASHBOX_INFO',
-						[
-							'#CASHBOX_NAME#' => $name,
-						]
-					),
-					'type' => 'cashbox',
-					'showTitle' => false,
-				];
+				if (!mb_strpos($queryParams['handler'], Cashbox\CashboxRest::class))
+				{
+					$name = $cashboxHandler::getName();
+					$result['items'][] = [
+						'name' => $cashboxHandler::getName(),
+						'img' => $img,
+						'link' => $cashboxPath->getLocator(),
+						'info' => Loc::getMessage(
+							'SALESCENTER_APP_CASHBOX_INFO',
+							[
+								'#CASHBOX_NAME#' => $name,
+							]
+						),
+						'type' => 'cashbox',
+						'showTitle' => false,
+					];
+				}
+				else
+				{
+					$restHandlers = Cashbox\Manager::getRestHandlersList();
+					foreach ($restHandlers as $restHandlerCode => $restHandler)
+					{
+						$queryParams['restHandler'] = $restHandlerCode;
+						$cashboxPath->addParams($queryParams);
+						$name = $restHandler['NAME'];
+						$result['items'][] = [
+							'name' => $name,
+							'img' => $img,
+							'link' => $cashboxPath->getLocator(),
+							'info' => Loc::getMessage(
+								'SALESCENTER_APP_CASHBOX_INFO',
+								[
+									'#CASHBOX_NAME#' => $name,
+								]
+							),
+							'type' => 'cashbox',
+							'showTitle' => true,
+						];
+					}
+				}
 			}
 
 			$queryParams['handler'] = 'offline';
@@ -1527,13 +1562,12 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 					'name' => Loc::getMessage('SALESCENTER_APP_RECOMMENDATION_TITLE'),
 					'link' => $feedbackPath->getLocator(),
 					'width' => 735,
-					'type' => 'form',
+					'type' => 'offer',
 				];
 			}
 
 			$result['isSet'] = false;
 		}
-
 		return $result;
 	}
 
@@ -1838,6 +1872,13 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		return array_values($itemsMap);
 	}
 
+	protected function getDefaultSmsProvider()
+	{
+		$list = $this->getSmsSenderList();
+
+		return count($list)>0 ? $list[0]['id']:'';
+	}
+
 	protected function getSendingMethodDescByType($type)
 	{
 		if ($type === 'sms')
@@ -1852,7 +1893,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			}
 
 			return [
-				'provider' => '',
+				'provider' => $this->getDefaultSmsProvider(),
 				'text' => $text <> ''? $text:CrmManager::getInstance()->getSmsTemplate(),
 			];
 		}

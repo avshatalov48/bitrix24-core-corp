@@ -180,7 +180,7 @@ export default {
 				'ui-ctl-danger': showDangerIndicator,
 				'ui-ctl-w100': true,
 				'ui-ctl-after-icon': true,
-				'sale-address-control-top-margin-5': this.isEditMode
+				'sale-address-control-top-margin-5 sale-address-control-top-margin-width-820': this.isEditMode
 			}
 		},
 	},

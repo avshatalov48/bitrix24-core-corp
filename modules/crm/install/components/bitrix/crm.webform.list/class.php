@@ -4,6 +4,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Context;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Config\Option;
+use Bitrix\Crm\WebForm;
 use Bitrix\Crm\WebForm\Internals;
 use Bitrix\Crm\WebForm\Script;
 use Bitrix\Crm\WebForm\Form;
@@ -27,9 +28,13 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 
 	public function prepareResult()
 	{
-		if ($this->request->get('rebuildResources') === 'y')
+		if ($this->request->get('rebuildResources') === 'y' || $this->request->get('rebuildAll') === 'y')
 		{
 			Webpack\Form::rebuildResources();
+		}
+		if ($this->request->get('rebuildForms') === 'y' || $this->request->get('rebuildAll') === 'y')
+		{
+			WebForm\Manager::updateScriptCache(null, 0);
 		}
 
 		/**@var \CUser $USER*/

@@ -111,7 +111,10 @@ final class Deps
 				$groupId = (string) $dep['GROUP_ID'];
 				if (!isset($groups[$groupId]))
 				{
-					continue;
+					if (count($groups) === 1)
+					{
+						$groupId = (string) current($groups)['id'];
+					}
 				}
 
 				$groups[$groupId]['list'][] = [
