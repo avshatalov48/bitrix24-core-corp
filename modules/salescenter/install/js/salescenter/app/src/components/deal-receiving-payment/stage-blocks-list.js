@@ -50,6 +50,7 @@ const StageBlocksList = {
 									this.$root.$app.options.paySystemList.items),
 				installed:			this.$root.$app.options.paySystemList.isSet,
 			},
+			cashbox:{},
 			delivery:{
 				status: 			this.$root.$app.options.deliveryList.isInstalled
 									?	Status.complete

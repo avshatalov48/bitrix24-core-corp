@@ -2,6 +2,7 @@
 
 namespace Bitrix\Transformer;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Error;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Result;
@@ -178,12 +179,21 @@ class FileUploader
 		$result = new Result();
 
 		$file = new \Bitrix\Main\IO\File($fileName);
+		if(!static::isCorrectFile($file))
+		{
+			$result->addError(new Error('Wrong fileName'));
+		}
 		if(!$file->putContents($data, \Bitrix\Main\IO\File::APPEND))
 		{
 			$result->addError(new Error('Cant write local file'));
 		}
 
 		return $result;
+	}
+
+	public static function isCorrectFile(\Bitrix\Main\IO\File $file): bool
+	{
+		return (mb_strpos($file->getPath(), \CTempFile::GetAbsoluteRoot()) === 0);
 	}
 
 	/**

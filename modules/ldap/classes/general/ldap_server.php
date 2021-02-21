@@ -631,7 +631,7 @@ class __CLDAPServerDBResult extends CDBResult
 		if($res = parent::Fetch())
 		{
 			$res["ADMIN_PASSWORD"] = CLdapUtil::Decrypt($res["ADMIN_PASSWORD"]);
-			$res["FIELD_MAP"] = unserialize($res["FIELD_MAP"]);
+			$res["FIELD_MAP"] = unserialize($res["FIELD_MAP"], ['allowed_classes' => false]);
 			if(!is_array($res["FIELD_MAP"]))
 				$res["FIELD_MAP"] = Array();
 		}

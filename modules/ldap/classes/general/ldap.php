@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Authentication\ApplicationPasswordTable;
 
 /**
  * Bitrix Framework
@@ -265,9 +266,9 @@ class CLDAP
 	function Query($str = '(ObjectClass=*)', $fields = false)
 	{
 		$info = $this->QueryArray($str, $fields);
+		$info = is_array($info) ? $info : [];
 		$result = new CDBResult;
 		$result->InitFromArray($info);
-
 		return $result;
 	}
 
@@ -344,83 +345,133 @@ class CLDAP
 		return $result;
 	}
 
+	protected static function isApplicationPassword(string $login, string $password, bool $isPasswordOriginal): bool
+	{
+		if(!ApplicationPasswordTable::isPassword($password))
+		{
+			return false;
+		}
+
+		$externalUserId = static::OnFindExternalUser($login);
+
+		if($externalUserId <= 0)
+		{
+			return false;
+		}
+
+		return ApplicationPasswordTable::findPassword($externalUserId, $password, $isPasswordOriginal) !== false;
+	}
+
 	function OnUserLogin(&$arArgs)
 	{
 		global $APPLICATION;
 
 		if(!function_exists("ldap_connect"))
-			return false;
-
-		$LOGIN = $arArgs["LOGIN"];
-		$PASSWORD = $arArgs["PASSWORD"];
-
-		if($LOGIN == '' || $PASSWORD == '')
-			return false;
-
-		$arFilter = Array("ACTIVE"=>"Y");
-		$p = mb_strpos($LOGIN, "\\");
-
-		if( $p===false && COption::GetOptionString("ldap", "ntlm_auth_without_prefix", "Y") != "Y")
 		{
-			return false;
-		}
-		elseif( $p > 0 )
-		{
-			$arFilter["CODE"] = mb_substr($LOGIN, 0, $p);
-			$LOGIN = mb_substr($LOGIN, $p + 1);
+			return 0;
 		}
 
-		$arParams = Array(
-			"LOGIN" => &$LOGIN,
-			"PASSWORD" => &$PASSWORD,
-			"LDAP_FILTER" => &$arFilter,
-		);
+		$login = (string)$arArgs["LOGIN"];
+		$password = (string)$arArgs["PASSWORD"];
+
+		if($login === '' || $password === '')
+		{
+			return 0;
+		}
+
+		$isPasswordOriginal = isset($arArgs["PASSWORD_ORIGINAL"]) && $arArgs["PASSWORD_ORIGINAL"] === "Y";
+
+		if(static::isApplicationPassword($login, $password, $isPasswordOriginal))
+		{
+			return 0;
+		}
+
+		$filter = ["ACTIVE" => "Y"];
+		$prefix = mb_strpos($login, "\\");
+
+		if($prefix===false && COption::GetOptionString("ldap", "ntlm_auth_without_prefix", "Y") !== "Y")
+		{
+			return 0;
+		}
+
+		if($prefix > 0)
+		{
+			$filter["CODE"] = mb_substr($login, 0, $prefix);
+			$login = mb_substr($login, $prefix + 1);
+		}
+
+		$params = [
+			"LOGIN" => &$login,
+			"PASSWORD" => &$password,
+			"LDAP_FILTER" => &$filter,
+		];
 
 		$APPLICATION->ResetException();
 		foreach(GetModuleEvents("ldap", "OnBeforeUserLogin", true) as $arEvent)
 		{
-			// TODO check whether wrapping of &$arParams into another array is reasonable as part of migration from ExecuteModuleEvent to ExecuteModuleEventEx
-			if(ExecuteModuleEventEx($arEvent, array(&$arParams))===false)
+			if(ExecuteModuleEventEx($arEvent, [&$params]) === false)
 			{
 				if($err = $APPLICATION->GetException())
 				{
-					$arArgs['RESULT_MESSAGE'] = Array("MESSAGE"=>$err->GetString()."<br>", "TYPE"=>"ERROR");
+					$arArgs['RESULT_MESSAGE'] = ["MESSAGE"=>$err->GetString()."<br>", "TYPE"=>"ERROR"];
 				}
 				else
 				{
 					$APPLICATION->ThrowException("Unknown error");
-					$arArgs['RESULT_MESSAGE'] = Array("MESSAGE"=>"Unknown error"."<br>", "TYPE"=>"ERROR");
+					$arArgs['RESULT_MESSAGE'] = ["MESSAGE"=>"Unknown error"."<br>", "TYPE"=>"ERROR"];
 				}
 
-				return false;
+				return 0;
 			}
 		}
 
-		$db_ldap_serv = CLdapServer::GetList(Array(), $arFilter);
+		/**
+		 * variants:
+		 * password = 12345678 otp = '' <- no otp
+		 * password = 12345678 otp = 345678 <- with otp
+		 * password = 12345678 otp = 876543 <- with otp
+		 * password = 12345678 otp = 345678 <- no otp
+		 */
+		$otp = (string)($arArgs["OTP"] ?? '');
 
-		while($xLDAP = $db_ldap_serv->GetNextServer())
+		if ($otp !== '' && mb_substr($password, -6) === $otp)
+		{
+			$password = mb_substr($password, 0, -6);
+		}
+
+		$userId = 0;
+		$dbRes = CLdapServer::GetList([], $filter);
+
+		while($xLDAP = $dbRes->GetNextServer())
 		{
 			if($xLDAP->Connect())
 			{
-				// user AD parameters are queried here, inside FindUser function
-				if(!$arLdapUser = $xLDAP->FindUser($LOGIN, $PASSWORD))
-				{
+				$arLdapUser = false;
 
-					if(isset($arArgs["OTP"]) && $arArgs["OTP"] <> '')
-						if(mb_substr($PASSWORD, -6) == $arArgs["OTP"])
-							$arLdapUser = $xLDAP->FindUser($LOGIN, mb_substr($PASSWORD, 0, -6));	//It can be with otp
+				if($otp !== '')
+				{
+					$arLdapUser = $xLDAP->FindUser($login, $password.$otp);
 				}
 
+				if(!$arLdapUser && $password !== '')
+				{
+					$arLdapUser = $xLDAP->FindUser($login, $password);
+				}
+
+				// user AD parameters are queried here, inside FindUser function
 				if($arLdapUser)
 				{
+					$userId = (int)$xLDAP->SetUser(
+						$arLdapUser,
+						(COption::GetOptionString("ldap", "add_user_when_auth", "Y") === "Y")
+					);
 
-					$ID = $xLDAP->SetUser($arLdapUser, (COption::GetOptionString("ldap", "add_user_when_auth", "Y")=="Y"));
+					$xLDAP->Disconnect();
 
-					if ($ID > 0)
+					if ($userId > 0)
 					{
 						$arArgs["STORE_PASSWORD"] = "N";
-						$xLDAP->Disconnect();
-						return $ID;
+						break;
 					}
 
 					if(\Bitrix\Ldap\Limit::isUserLimitExceeded())
@@ -429,12 +480,14 @@ class CLDAP
 						break;
 					}
 				}
-
-				$xLDAP->Disconnect();
+				else
+				{
+					$xLDAP->Disconnect();
+				}
 			}
 		}
 
-		return false;
+		return $userId;
 	}
 
 	// this function is called on user logon (either normal or ntlm) to find user in ldap
@@ -546,23 +599,38 @@ class CLDAP
 
 	public static function OnFindExternalUser($login)
 	{
-		if($login == '')
-			return 0;
+		$login = (string)$login;
 
-		$filter = array("ACTIVE" => "Y");
-		$p = mb_strpos($login, "\\");
-
-		if($p === false && COption::GetOptionString("ldap", "ntlm_auth_without_prefix", "Y") != "Y")
+		if($login === '')
 		{
 			return 0;
 		}
-		elseif( $p > 0 )
+
+		// Hit cache
+		static $result = [];
+
+		if(isset($result[$login]))
 		{
-			$filter["CODE"] = mb_substr($login, 0, $p);
-			$login = mb_substr($login, $p + 1);
+			return $result[$login];
 		}
 
-		$dbServ = CLdapServer::GetList(array(),	$filter);
+		$filter = ["ACTIVE" => "Y"];
+		$prefix = mb_strpos($login, "\\");
+
+		if($prefix === false && COption::GetOptionString("ldap", "ntlm_auth_without_prefix", "Y") !== "Y")
+		{
+			return 0;
+		}
+
+		if($prefix > 0)
+		{
+			$filter["CODE"] = mb_substr($login, 0, $prefix);
+			$login = mb_substr($login, $prefix + 1);
+		}
+
+		$userId = 0;
+
+		$dbServ = CLdapServer::GetList([], $filter);
 
 		while($serv = $dbServ->GetNextServer())
 		{
@@ -570,20 +638,23 @@ class CLDAP
 			{
 				if($arLdapUser = $serv->FindUser($login))
 				{
-					$id = $serv->SetUser($arLdapUser, (COption::GetOptionString("ldap", "add_user_when_auth", "Y") == "Y"));
-
-					if($id > 0)
-					{
-						$serv->Disconnect();
-						return $id;
-					}
+					$userId = (int)$serv->SetUser(
+						$arLdapUser,
+						(COption::GetOptionString("ldap", "add_user_when_auth", "Y") === "Y")
+					);
 				}
 
 				$serv->Disconnect();
+
+				if($userId > 0)
+				{
+					break;
+				}
 			}
 		}
 
-		return 0;
+		$result[$login] = $userId;
+		return $userId;
 	}
 
 	// converts LDAP values to those suitable for user fields
@@ -1140,8 +1211,6 @@ class CLDAP
 				}
 			}
 
-			$arLdapUser['PASSWORD'] = uniqid(rand(), true);
-
 			if($bitrixUserId <= 0 && $ldapUserID <= 0)
 			{
 				if($bAddNew && !\Bitrix\Ldap\Limit::isUserLimitExceeded())
@@ -1151,6 +1220,7 @@ class CLDAP
 						$arLdapUser["EMAIL"] = COption::GetOptionString("ldap", "default_email", 'no@email');
 					}
 
+					$arLdapUser['PASSWORD'] = uniqid(rand(), true);
 					$ID = $USER->Add($arLdapUser);
 				}
 				else

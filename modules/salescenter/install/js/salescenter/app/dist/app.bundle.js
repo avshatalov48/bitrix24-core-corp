@@ -2094,6 +2094,7 @@ this.BX = this.BX || {};
 	        tiles: this.getTileCollection(this.$root.$app.options.paySystemList.items),
 	        installed: this.$root.$app.options.paySystemList.isSet
 	      },
+	      cashbox: {},
 	      delivery: {
 	        status: this.$root.$app.options.deliveryList.isInstalled ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.disabled,
 	        tiles: this.getTileCollection(this.$root.$app.options.deliveryList.items),

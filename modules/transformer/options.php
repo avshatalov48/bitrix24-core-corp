@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Main\Config\Option;
+
 if(!$USER->IsAdmin())
 	return;
 
@@ -24,10 +27,11 @@ if($_POST['Update'] <> '' && check_bitrix_sessid())
 	}
 	elseif($_POST['Update'] <> '')
 	{
-		COption::SetOptionString("transformer", "portal_url", $_POST['PUBLIC_URL']);
-		COption::SetOptionString("transformer", "debug", isset($_POST['DEBUG_MODE']));
-		COption::SetOptionString("transformer", "connection_time", $_POST['CONNECTION_TIME']);
-		COption::SetOptionString("transformer", "stream_time", $_POST['STREAM_TIME']);
+		Option::set("transformer", "portal_url", $_POST['PUBLIC_URL']);
+		Option::set("transformer", "debug", isset($_POST['DEBUG_MODE']));
+		Option::set("transformer", "connection_time", $_POST['CONNECTION_TIME']);
+		Option::set("transformer", "stream_time", $_POST['STREAM_TIME']);
+		Option::set("transformer", "transformer_controller_url", $_POST['TRANSFORMER_CONTROLLER_URL']);
 
 		if($Update <> '' && $_REQUEST["back_url_settings"] <> '')
 		{
@@ -40,7 +44,12 @@ if($_POST['Update'] <> '' && check_bitrix_sessid())
 	}
 }
 ?>
-<form method="post" action="<?echo $APPLICATION->GetCurPage()?>?mid=<?=htmlspecialcharsbx($mid)?>&lang=<?echo LANG?>">
+<style>
+    .transformer-options tr td input.have-url {
+        width: 80%;
+    }
+</style>
+<form method="post" action="<?echo $APPLICATION->GetCurPage()?>?mid=<?=htmlspecialcharsbx($mid)?>&lang=<?echo LANG?>" class="transformer-options">
 	<?php echo bitrix_sessid_post()?>
 	<?php
 	$tabControl->Begin();
@@ -50,9 +59,13 @@ if($_POST['Update'] <> '' && check_bitrix_sessid())
 			<td colspan="2" align="center"><b style="color:red"><?=$errorMessage?></b></td>
 		</tr>
 	<?endif;?>
-	<tr>
+    <tr>
+        <td width="40%"><?=GetMessage("TRANSFORMER_CONTROLLER_URL")?>:</td>
+        <td width="60%"><input type="text" class="have-url" name="TRANSFORMER_CONTROLLER_URL" value="<?=htmlspecialcharsbx(Option::get('transformer', 'transformer_controller_url'));?>" /></td>
+    </tr>
+    <tr>
 		<td width="40%"><?=GetMessage("TRANSFORMER_PUBLIC_URL")?>:</td>
-		<td width="60%"><input type="text" name="PUBLIC_URL" value="<?=htmlspecialcharsbx(\Bitrix\Transformer\Http::getServerAddress())?>" /></td>
+		<td width="60%"><input type="text" class="have-url" name="PUBLIC_URL" value="<?=htmlspecialcharsbx(\Bitrix\Transformer\Http::getServerAddress())?>" /></td>
 	</tr>
 	<tr>
 		<td width="40%"><?=GetMessage("TRANSFORMER_ACCOUNT_DEBUG")?>:</td>

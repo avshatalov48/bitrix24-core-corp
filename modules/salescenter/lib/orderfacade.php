@@ -162,6 +162,17 @@ class OrderFacade
 					$encodedFields['PRODUCT_ID'] = $productId;
 
 					$basketItems[$code]['encodedFields'] = Main\Web\Json::encode($encodedFields);
+
+					if (isset($item['FIELDS_VALUES']))
+					{
+						$fieldsValues = Main\Web\Json::decode($item['FIELDS_VALUES']);
+
+						$fieldsValues['MODULE'] = 'catalog';
+						$fieldsValues['PRODUCT_PROVIDER_CLASS'] = Catalog\Product\Basket::getDefaultProviderName();
+						$fieldsValues['PRODUCT_ID'] = $fieldsValues['OFFER_ID'] = $productId;
+
+						$basketItems[$code]['FIELDS_VALUES'] = Main\Web\Json::encode($fieldsValues);
+					}
 				}
 			}
 		}

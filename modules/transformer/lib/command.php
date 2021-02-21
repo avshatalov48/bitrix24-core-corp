@@ -397,9 +397,24 @@ class Command
 	 */
 	protected static function initFromArray($commandItem)
 	{
-		$commandItem['CALLBACK'] = unserialize(base64_decode($commandItem['CALLBACK']));
-		$commandItem['MODULE'] = unserialize(base64_decode($commandItem['MODULE']));
-		$commandItem['PARAMS'] = unserialize(base64_decode($commandItem['PARAMS']));
+		$commandItem['CALLBACK'] = unserialize(
+			base64_decode($commandItem['CALLBACK']),
+			[
+				'allowed_classes' => false,
+			]
+		);
+		$commandItem['MODULE'] = unserialize(
+			base64_decode($commandItem['MODULE']),
+			[
+				'allowed_classes' => false,
+			]
+		);
+		$commandItem['PARAMS'] = unserialize(
+			base64_decode($commandItem['PARAMS']),
+			[
+				'allowed_classes' => false,
+			]
+		);
 		$commandItem['ID'] = intval($commandItem['ID']);
 		return new self($commandItem['COMMAND'], $commandItem['PARAMS'], $commandItem['MODULE'], $commandItem['CALLBACK'], $commandItem['STATUS'], $commandItem['ID'], $commandItem['GUID'], $commandItem['UPDATE_TIME'], $commandItem['ERROR'], $commandItem['ERROR_CODE']);
 	}

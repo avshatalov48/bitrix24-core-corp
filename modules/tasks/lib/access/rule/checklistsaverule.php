@@ -20,8 +20,14 @@ class ChecklistSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 
 	private const
 		ADDED = 'added',
-		CHANGED = 'changed';
+		CHANGED = 'changed',
+		STATUS_CHANGED = 'status_changed';
 
+	/**
+	 * @param AccessibleItem|null $task
+	 * @param null $params
+	 * @return bool
+	 */
 	public function execute(AccessibleItem $task = null, $params = null): bool
 	{
 		if (!$task)
@@ -76,9 +82,22 @@ class ChecklistSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			}
 		}
 
+		foreach ($delta[self::STATUS_CHANGED] as $row)
+		{
+			if (!$this->controller->check(ActionDictionary::ACTION_CHECKLIST_TOGGLE, $task, $row))
+			{
+				return false;
+			}
+		}
+
 		return true;
 	}
 
+	/**
+	 * @param array $old
+	 * @param array $new
+	 * @return array
+	 */
 	private function getDelta(array $old, array $new)
 	{
 		$delta = [];
@@ -103,18 +122,47 @@ class ChecklistSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			{
 				$delta[self::CHANGED][] = $row;
 			}
+
+			if (
+				array_key_exists($id, $new)
+				&& $this->isStatusChanged($row, $new[$id])
+			)
+			{
+				$delta[self::STATUS_CHANGED][] = $row;
+			}
 		}
 
 		return $delta;
 	}
 
+	/**
+	 * @param $old
+	 * @param $new
+	 * @return bool
+	 */
+	private function isStatusChanged($old, $new): bool
+	{
+		$new['IS_COMPLETE'] = ((int) $new['IS_COMPLETE']) ? 'Y' : 'N';
+
+		if ($old['IS_COMPLETE'] !== $new['IS_COMPLETE'])
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * @param $old
+	 * @param $new
+	 * @return bool
+	 */
 	private function isUpdated($old, $new): bool
 	{
 		$fields = [
 			'PARENT_ID',
 			'TITLE',
 			'SORT_INDEX',
-			'IS_COMPLETE',
 			'IS_IMPORTANT',
 			'MEMBERS',
 			'ATTACHMENTS'

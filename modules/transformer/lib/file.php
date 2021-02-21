@@ -156,7 +156,7 @@ class File
 	 */
 	public function delete()
 	{
-		if($this->ioFile)
+		if($this->ioFile && FileUploader::isCorrectFile($this->ioFile))
 		{
 			return $this->ioFile->delete();
 		}

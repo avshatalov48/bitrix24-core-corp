@@ -60,4 +60,10 @@ class App extends Webpack\Base
 		$this->addExtension('crm.site.form.embed');
 		$this->embeddedModuleName = 'crm.site.form.loader';
 	}
+
+	protected function configureFile()
+	{
+		$this->fileDir = 'form';
+		$this->fileName = 'app.js';
+	}
 }

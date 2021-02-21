@@ -5,6 +5,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Json;
@@ -16,14 +17,16 @@ class Http
 	const MODULE_ID = 'transformer';
 
 	const TYPE_BITRIX24 = 'B24';
-	const TYPE_CP = 'CP';
+	const TYPE_CP = 'BOX';
 	const VERSION = 1;
 
 	const BACK_URL = '/bitrix/tools/transformer_result.php';
 
 	const CONNECTION_ERROR = 'no connection with controller';
 
-	private $controllerUrl = 'https://transformer.bitrix.info/json/add_queue.php';
+	public const CLOUD_CONVERTER_URL = 'https://transformer-de.bitrix.info/bitrix/tools/transformercontroller/add_queue.php';
+
+	private $controllerUrl;
 	private $licenceCode = '';
 	private $domain = '';
 	private $type = '';
@@ -36,7 +39,7 @@ class Http
 		}
 		else
 		{
-			$optionsControllerUrl = Option::get(self::MODULE_ID, 'transformer_controller_url', 'https://transformer-de.bitrix.info/json/add_queue.php');
+			$optionsControllerUrl = Option::get(self::MODULE_ID, 'transformer_controller_url', static::CLOUD_CONVERTER_URL);
 			if(!empty($optionsControllerUrl))
 			{
 				$uri = new Uri($optionsControllerUrl);
@@ -84,10 +87,12 @@ class Http
 	{
 		$publicUrl = \Bitrix\Main\Config\Option::get(self::MODULE_ID, 'portal_url');
 
-		if($publicUrl != '')
+		if(!empty($publicUrl))
+		{
 			return $publicUrl;
-		else
-			return (\Bitrix\Main\Context::getCurrent()->getRequest()->isHttps() ? 'https' : 'http').'://'.$_SERVER['SERVER_NAME'].(in_array($_SERVER['SERVER_PORT'], Array(80, 443))?'':':'.$_SERVER['SERVER_PORT']);
+		}
+
+		return UrlManager::getInstance()->getHostUrl();
 	}
 
 
